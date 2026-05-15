@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { RANGE_LABELS, type RangeKey } from "@/lib/date-ranges";
+import { PRODUCTS } from "@/lib/products";
 import { cn } from "@/lib/utils";
 
 const RANGE_ORDER: Exclude<RangeKey, "custom">[] = [
@@ -23,12 +24,14 @@ export function FilterBar({
   customers,
   currentRange,
   currentCustomerId,
+  currentProduct,
   customFrom,
   customTo,
 }: {
   customers: Customer[];
   currentRange: RangeKey;
   currentCustomerId: string | null;
+  currentProduct: string | null;
   customFrom?: string;
   customTo?: string;
 }) {
@@ -69,6 +72,42 @@ export function FilterBar({
               )}
             >
               {RANGE_LABELS[key]}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 border-t border-[color:var(--border)] pt-4">
+        <span className="mr-1 text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
+          Produkt
+        </span>
+        <button
+          type="button"
+          onClick={() => update({ product: null })}
+          className={cn(
+            "rounded-full border px-3.5 py-1.5 text-sm font-medium transition",
+            currentProduct === null
+              ? "border-[color:var(--brand)] bg-[color:var(--brand)] text-white shadow-sm hover:bg-[color:var(--brand-dark)]"
+              : "border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]",
+          )}
+        >
+          Alle
+        </button>
+        {PRODUCTS.map((p) => {
+          const active = currentProduct === p;
+          return (
+            <button
+              key={p}
+              type="button"
+              onClick={() => update({ product: p })}
+              className={cn(
+                "rounded-full border px-3.5 py-1.5 text-sm font-medium transition",
+                active
+                  ? "border-[color:var(--brand)] bg-[color:var(--brand)] text-white shadow-sm hover:bg-[color:var(--brand-dark)]"
+                  : "border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]",
+              )}
+            >
+              {p}
             </button>
           );
         })}

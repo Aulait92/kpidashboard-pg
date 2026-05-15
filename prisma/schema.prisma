@@ -66,6 +66,9 @@ model Cost {
   id         String    @id @default(cuid())
   customerId String?
   kind       CostKind
+  // Produkt-Zuordnung (z. B. "Wechsel", "Neugeschäft") für LEAD-Kosten aus Meta.
+  // null für OTHER-Kosten oder LEAD-Kosten ohne erkennbares Produkt.
+  product    String?
   amount     Decimal   @db.Decimal(12, 2)
   occurredAt DateTime  @default(now())
   note       String?
@@ -74,4 +77,5 @@ model Cost {
 
   @@index([customerId, occurredAt])
   @@index([kind, occurredAt])
+  @@index([kind, product, occurredAt])
 }

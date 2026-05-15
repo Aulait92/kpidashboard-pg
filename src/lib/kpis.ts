@@ -1,9 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import type { DateRange } from "@/lib/date-ranges";
 
+export { PRODUCTS, type Product } from "@/lib/products";
+
 export type KpiFilters = {
   range: DateRange;
   customerId?: string | null;
+  product?: string | null;
 };
 
 export type Kpis = {
@@ -35,8 +38,16 @@ function decToNumber(v: unknown): number {
 }
 
 export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
-  const { range, customerId } = filters;
+  const { range, customerId, product } = filters;
   const customerClause = customerId ? { customerId } : {};
+  const productLeadClause = product ? { source: product } : {};
+  const productRevenueClause = product
+    ? { lead: { is: { source: product } } }
+    : {};
+  // LEAD-Kosten haben jetzt ein product-Feld (aus Meta). Beim Produktfilter
+  // exakt darauf einschränken; OTHER-Kosten sind nicht produkt-spezifisch
+  // und werden ausgeblendet, wenn ein Produkt gefiltert ist.
+  const productLeadCostClause = product ? { product } : {};
 
   const [
     leads,
@@ -47,6 +58,7 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
     prisma.lead.findMany({
       where: {
         ...customerClause,
+        ...productLeadClause,
         createdAt: { gte: range.from, lte: range.to },
       },
       select: {
@@ -62,6 +74,7 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
       _sum: { amount: true },
       where: {
         ...customerClause,
+        ...productRevenueClause,
         occurredAt: { gte: range.from, lte: range.to },
       },
     }),
@@ -69,6 +82,7 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
       _sum: { amount: true },
       where: {
         ...customerClause,
+        ...productLeadCostClause,
         kind: "LEAD",
         occurredAt: { gte: range.from, lte: range.to },
       },
@@ -78,6 +92,8 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
       where: {
         ...customerClause,
         kind: "OTHER",
+        // OTHER-Kosten nur in der Gesamtansicht (kein Produktfilter) zählen.
+        ...(product ? { id: "__never__" } : {}),
         occurredAt: { gte: range.from, lte: range.to },
       },
     }),

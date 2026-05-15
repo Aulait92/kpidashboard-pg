@@ -3,7 +3,7 @@ import { FilterBar } from "@/components/filter-bar";
 import { KpiCard } from "@/components/kpi-card";
 import { SyncButton } from "@/components/sync-button";
 import { parseRangeFromSearchParams } from "@/lib/date-ranges";
-import { computeKpis, listCustomers } from "@/lib/kpis";
+import { computeKpis, listCustomers, PRODUCTS } from "@/lib/kpis";
 import {
   formatDate,
   formatDuration,
@@ -17,6 +17,7 @@ type SearchParams = Promise<{
   from?: string;
   to?: string;
   customerId?: string;
+  product?: string;
 }>;
 
 export const dynamic = "force-dynamic";
@@ -34,6 +35,10 @@ export default async function DashboardPage({
   const { key: rangeKey, range } = parseRangeFromSearchParams(sp);
   const customerId =
     sp.customerId && sp.customerId.length > 0 ? sp.customerId : null;
+  const product =
+    sp.product && (PRODUCTS as readonly string[]).includes(sp.product)
+      ? sp.product
+      : null;
 
   return (
     <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-10 sm:px-6 lg:px-8">
@@ -57,6 +62,7 @@ export default async function DashboardPage({
         <FiltersSection
           currentRange={rangeKey}
           currentCustomerId={customerId}
+          currentProduct={product}
           customFrom={sp.from}
           customTo={sp.to}
         />
@@ -67,7 +73,7 @@ export default async function DashboardPage({
           <div className="mt-6 text-sm text-[color:var(--muted)]">Lade Kennzahlen…</div>
         }
       >
-        <KpiGrid range={range} customerId={customerId} />
+        <KpiGrid range={range} customerId={customerId} product={product} />
       </Suspense>
     </main>
   );
@@ -92,11 +98,13 @@ function SetupNotice() {
 async function FiltersSection({
   currentRange,
   currentCustomerId,
+  currentProduct,
   customFrom,
   customTo,
 }: {
   currentRange: ReturnType<typeof parseRangeFromSearchParams>["key"];
   currentCustomerId: string | null;
+  currentProduct: string | null;
   customFrom?: string;
   customTo?: string;
 }) {
@@ -107,6 +115,7 @@ async function FiltersSection({
         customers={customers}
         currentRange={currentRange}
         currentCustomerId={currentCustomerId}
+        currentProduct={currentProduct}
         customFrom={customFrom}
         customTo={customTo}
       />
@@ -117,11 +126,13 @@ async function FiltersSection({
 async function KpiGrid({
   range,
   customerId,
+  product,
 }: {
   range: { from: Date; to: Date };
   customerId: string | null;
+  product: string | null;
 }) {
-  const k = await computeKpis({ range, customerId });
+  const k = await computeKpis({ range, customerId, product });
 
   return (
     <div className="mt-8 space-y-8">
