@@ -1,3 +1,15 @@
+import {
+  addDays,
+  eachDayOfInterval,
+  eachMonthOfInterval,
+  eachWeekOfInterval,
+  endOfMonth,
+  format,
+  startOfDay,
+  startOfMonth,
+  startOfWeek,
+} from "date-fns";
+import { de } from "date-fns/locale";
 import { prisma } from "@/lib/prisma";
 import type { DateRange } from "@/lib/date-ranges";
 
@@ -443,4 +455,227 @@ export async function computeCustomerLeaderboard(params: {
   return rows.filter(
     (r) => r.totalLeads > 0 || r.revenue > 0 || r.leadCosts > 0,
   );
+}
+
+export type Granularity = "day" | "week" | "month";
+
+export type TimeSeriesPoint = {
+  bucket: string; // ISO start date "YYYY-MM-DD"
+  label: string;
+  leads: number;
+  revenue: number;
+  leadCosts: number;
+  costPerLead: number | null;
+};
+
+function pickGranularity(range: DateRange): Granularity {
+  const days =
+    (range.to.getTime() - range.from.getTime()) / (24 * 3600 * 1000);
+  if (days <= 14) return "day";
+  if (days <= 92) return "week";
+  return "month";
+}
+
+function bucketStartFor(d: Date, g: Granularity): Date {
+  if (g === "day") return startOfDay(d);
+  if (g === "week") return startOfWeek(d, { weekStartsOn: 1 });
+  return startOfMonth(d);
+}
+
+function generateBucketStarts(range: DateRange, g: Granularity): Date[] {
+  const interval = { start: range.from, end: range.to };
+  if (g === "day") return eachDayOfInterval(interval);
+  if (g === "week")
+    return eachWeekOfInterval(interval, { weekStartsOn: 1 });
+  return eachMonthOfInterval(interval);
+}
+
+function formatBucketLabel(d: Date, g: Granularity): string {
+  if (g === "day") return format(d, "dd.MM.", { locale: de });
+  if (g === "week") return `KW ${format(d, "II", { locale: de })}`;
+  return format(d, "MMM yy", { locale: de });
+}
+
+export async function computeTimeSeries(params: {
+  range: DateRange;
+  customerId: string | null;
+  product: string | null;
+}): Promise<{ points: TimeSeriesPoint[]; granularity: Granularity }> {
+  const { range, customerId, product } = params;
+  const granularity = pickGranularity(range);
+
+  const customerClause = customerId ? { customerId } : {};
+  const productLeadClause = product ? { source: product } : {};
+  const productRevenueClause = product
+    ? { lead: { is: { source: product } } }
+    : {};
+  const productCostClause = product ? { product } : {};
+
+  const [leads, revenues, allLeadCosts] = await Promise.all([
+    prisma.lead.findMany({
+      where: {
+        ...customerClause,
+        ...productLeadClause,
+        createdAt: { gte: range.from, lte: range.to },
+      },
+      select: { createdAt: true },
+    }),
+    prisma.revenue.findMany({
+      where: {
+        ...customerClause,
+        ...productRevenueClause,
+        occurredAt: { gte: range.from, lte: range.to },
+      },
+      select: { amount: true, occurredAt: true },
+    }),
+    prisma.cost.findMany({
+      where: {
+        ...productCostClause,
+        kind: "LEAD",
+        occurredAt: { gte: range.from, lte: range.to },
+      },
+      select: {
+        customerId: true,
+        product: true,
+        amount: true,
+        occurredAt: true,
+      },
+    }),
+  ]);
+
+  // Buckets initialisieren
+  const points = new Map<string, TimeSeriesPoint>();
+  for (const start of generateBucketStarts(range, granularity)) {
+    const key = format(start, "yyyy-MM-dd");
+    points.set(key, {
+      bucket: key,
+      label: formatBucketLabel(start, granularity),
+      leads: 0,
+      revenue: 0,
+      leadCosts: 0,
+      costPerLead: null,
+    });
+  }
+
+  function addToBucket(date: Date, mutate: (p: TimeSeriesPoint) => void) {
+    const start = bucketStartFor(date, granularity);
+    const key = format(start, "yyyy-MM-dd");
+    const p = points.get(key);
+    if (p) mutate(p);
+  }
+
+  for (const l of leads) {
+    addToBucket(l.createdAt, (p) => {
+      p.leads += 1;
+    });
+  }
+  for (const r of revenues) {
+    const amount = decToNumber(r.amount);
+    addToBucket(r.occurredAt, (p) => {
+      p.revenue += amount;
+    });
+  }
+
+  // Direkte LEAD-Kosten (customerId gesetzt) buchen wir am occurredAt;
+  // globale Meta-Kosten verteilen wir gleichmäßig über die Tage des Monats,
+  // damit Wochen-/Tages-Charts nicht nur am Monatsersten Spitzen zeigen.
+  const directCosts = customerId
+    ? allLeadCosts.filter((c) => c.customerId === customerId)
+    : allLeadCosts.filter((c) => c.customerId != null);
+  const globalCosts = allLeadCosts.filter(
+    (c) => c.customerId == null && c.product != null,
+  );
+
+  for (const c of directCosts) {
+    const amount = decToNumber(c.amount);
+    addToBucket(c.occurredAt, (p) => {
+      p.leadCosts += amount;
+    });
+  }
+
+  if (globalCosts.length > 0) {
+    let customerShare: Map<string, number> | null = null;
+    if (customerId) {
+      const costMonthKeys = globalCosts.map((c) => monthKey(c.occurredAt));
+      const minKey = costMonthKeys.reduce((a, b) => (a < b ? a : b));
+      const maxKey = costMonthKeys.reduce((a, b) => (a > b ? a : b));
+      const usedProducts = Array.from(
+        new Set(
+          globalCosts
+            .map((c) => c.product)
+            .filter((p): p is string => p !== null),
+        ),
+      );
+      const leadsForShare = await prisma.lead.findMany({
+        where: {
+          source: { in: usedProducts },
+          createdAt: {
+            gte: parseMonthStart(minKey),
+            lte: parseMonthEnd(maxKey),
+          },
+        },
+        select: { source: true, customerId: true, createdAt: true },
+      });
+      const buckets = new Map<
+        string,
+        { total: number; forCustomer: number }
+      >();
+      for (const l of leadsForShare) {
+        if (!l.source) continue;
+        const key = `${monthKey(l.createdAt)}|${l.source}`;
+        const s = buckets.get(key) ?? { total: 0, forCustomer: 0 };
+        s.total += 1;
+        if (l.customerId === customerId) s.forCustomer += 1;
+        buckets.set(key, s);
+      }
+      customerShare = new Map();
+      for (const [k, v] of buckets) {
+        customerShare.set(k, v.total > 0 ? v.forCustomer / v.total : 0);
+      }
+    }
+
+    for (const c of globalCosts) {
+      let amount = decToNumber(c.amount);
+      if (customerShare) {
+        const share =
+          customerShare.get(`${monthKey(c.occurredAt)}|${c.product}`) ?? 0;
+        amount *= share;
+      }
+      if (amount === 0) continue;
+
+      const monthStart = startOfMonth(c.occurredAt);
+      const monthEnd = endOfMonth(c.occurredAt);
+      const daysInMonth =
+        Math.round(
+          (monthEnd.getTime() - monthStart.getTime()) / (24 * 3600 * 1000),
+        ) + 1;
+      const perDay = amount / daysInMonth;
+
+      const effectiveStart =
+        monthStart.getTime() > range.from.getTime() ? monthStart : range.from;
+      const effectiveEnd =
+        monthEnd.getTime() < range.to.getTime() ? monthEnd : range.to;
+
+      for (
+        let day = startOfDay(effectiveStart);
+        day.getTime() <= effectiveEnd.getTime();
+        day = addDays(day, 1)
+      ) {
+        addToBucket(day, (p) => {
+          p.leadCosts += perDay;
+        });
+      }
+    }
+  }
+
+  for (const p of points.values()) {
+    p.costPerLead = p.leads > 0 ? p.leadCosts / p.leads : null;
+  }
+
+  return {
+    points: Array.from(points.values()).sort((a, b) =>
+      a.bucket.localeCompare(b.bucket),
+    ),
+    granularity,
+  };
 }

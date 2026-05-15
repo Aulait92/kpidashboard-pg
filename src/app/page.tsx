@@ -3,10 +3,12 @@ import { CustomerLeaderboard } from "@/components/customer-leaderboard";
 import { FilterBar } from "@/components/filter-bar";
 import { KpiCard, type Delta } from "@/components/kpi-card";
 import { SyncButton } from "@/components/sync-button";
+import { TrendCharts } from "@/components/trend-charts";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
 import {
   computeCustomerLeaderboard,
   computeKpis,
+  computeTimeSeries,
   listCustomers,
   PRODUCTS,
   type Kpis,
@@ -85,12 +87,54 @@ export default async function DashboardPage({
 
       <Suspense
         fallback={
+          <div className="mt-10 text-sm text-[color:var(--muted)]">Lade Trends…</div>
+        }
+      >
+        <TrendsSection
+          range={range}
+          customerId={customerId}
+          product={product}
+        />
+      </Suspense>
+
+      <Suspense
+        fallback={
           <div className="mt-8 text-sm text-[color:var(--muted)]">Lade Buyer-Übersicht…</div>
         }
       >
         <LeaderboardSection range={range} product={product} />
       </Suspense>
     </main>
+  );
+}
+
+async function TrendsSection({
+  range,
+  customerId,
+  product,
+}: {
+  range: { from: Date; to: Date };
+  customerId: string | null;
+  product: string | null;
+}) {
+  const { points, granularity } = await computeTimeSeries({
+    range,
+    customerId,
+    product,
+  });
+
+  return (
+    <section className="mt-10">
+      <div className="mb-4">
+        <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--brand)]">
+          Trends
+        </div>
+        <h2 className="mt-1 text-lg font-semibold tracking-tight">
+          Verlauf im Zeitraum
+        </h2>
+      </div>
+      <TrendCharts points={points} granularity={granularity} />
+    </section>
   );
 }
 
