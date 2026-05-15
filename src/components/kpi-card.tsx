@@ -14,24 +14,37 @@ export function KpiCard({
   tone?: Tone;
 }) {
   const valueColor = {
-    default: "text-zinc-900 dark:text-zinc-50",
-    positive: "text-emerald-600 dark:text-emerald-400",
-    negative: "text-rose-600 dark:text-rose-400",
-    neutral: "text-zinc-500 dark:text-zinc-400",
+    default: "text-[color:var(--foreground)]",
+    positive: "text-emerald-600",
+    negative: "text-rose-600",
+    neutral: "text-[color:var(--muted)]",
+  }[tone];
+
+  const dotColor = {
+    default: "bg-[color:var(--brand)]",
+    positive: "bg-emerald-500",
+    negative: "bg-rose-500",
+    neutral: "bg-zinc-400",
   }[tone];
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-      <div className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-        {label}
+    <div className="group relative overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.15)] transition hover:shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_30px_-12px_rgba(37,99,235,0.25)]">
+      <div className="flex items-center gap-2">
+        <span className={cn("h-2 w-2 rounded-full", dotColor)} aria-hidden />
+        <div className="text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
+          {label}
+        </div>
       </div>
-      <div className={cn("mt-2 text-2xl font-semibold tabular-nums", valueColor)}>
+      <div
+        className={cn(
+          "mt-3 text-3xl font-bold tabular-nums tracking-tight",
+          valueColor,
+        )}
+      >
         {value}
       </div>
       {hint ? (
-        <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          {hint}
-        </div>
+        <div className="mt-1.5 text-xs text-[color:var(--muted)]">{hint}</div>
       ) : null}
     </div>
   );

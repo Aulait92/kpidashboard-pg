@@ -1,7 +1,9 @@
 "use client";
 
+import { RefreshCw, CheckCircle2, XCircle } from "lucide-react";
 import { useTransition, useState } from "react";
 import { runAirtableSync, type SyncActionResult } from "@/lib/actions";
+import { cn } from "@/lib/utils";
 
 export function SyncButton() {
   const [pending, startTransition] = useTransition();
@@ -21,16 +23,20 @@ export function SyncButton() {
         type="button"
         onClick={handleClick}
         disabled={pending}
-        className="rounded-md border border-zinc-900 bg-zinc-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:opacity-60 dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+        className="inline-flex items-center gap-2 rounded-lg bg-[color:var(--brand)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60"
       >
+        <RefreshCw
+          className={cn("h-4 w-4", pending && "animate-spin")}
+          strokeWidth={2.5}
+        />
         {pending ? "Synchronisiere…" : "Aus Airtable synchronisieren"}
       </button>
 
       {result?.ok ? (
-        <span className="text-xs text-emerald-600 dark:text-emerald-400">
-          ✓ {result.result.leads} Leads, {result.result.revenues} Umsätze,{" "}
-          {result.result.customers} Kunden, {result.result.costs} Kosten-Posten
-          synchronisiert
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          {result.result.leads} Leads, {result.result.revenues} Umsätze,{" "}
+          {result.result.customers} Kunden, {result.result.costs} Kosten
           {result.result.errors.length > 0
             ? ` (${result.result.errors.length} Fehler)`
             : ""}
@@ -38,7 +44,8 @@ export function SyncButton() {
       ) : null}
 
       {result && !result.ok ? (
-        <span className="text-xs text-rose-600 dark:text-rose-400">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-xs font-medium text-rose-700">
+          <XCircle className="h-3.5 w-3.5" />
           Fehler: {result.error}
         </span>
       ) : null}

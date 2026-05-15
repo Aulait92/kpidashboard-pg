@@ -52,7 +52,7 @@ export function FilterBar({
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="flex flex-col gap-4 rounded-2xl border border-[color:var(--border)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
       <div className="flex flex-wrap items-center gap-2">
         {RANGE_ORDER.map((key) => {
           const active = currentRange === key;
@@ -62,10 +62,10 @@ export function FilterBar({
               type="button"
               onClick={() => update({ range: key })}
               className={cn(
-                "rounded-md border px-3 py-1.5 text-sm font-medium transition",
+                "rounded-full border px-3.5 py-1.5 text-sm font-medium transition",
                 active
-                  ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
-                  : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800",
+                  ? "border-[color:var(--brand)] bg-[color:var(--brand)] text-white shadow-sm hover:bg-[color:var(--brand-dark)]"
+                  : "border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]",
               )}
             >
               {RANGE_LABELS[key]}
@@ -74,9 +74,9 @@ export function FilterBar({
         })}
       </div>
 
-      <div className="flex flex-wrap items-end gap-4">
+      <div className="flex flex-wrap items-end gap-4 border-t border-[color:var(--border)] pt-4">
         <label className="flex flex-col text-sm">
-          <span className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          <span className="mb-1.5 text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
             Kunde
           </span>
           <select
@@ -84,7 +84,7 @@ export function FilterBar({
             onChange={(e) =>
               update({ customerId: e.target.value === "" ? null : e.target.value })
             }
-            className="min-w-[200px] rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+            className="min-w-[220px] rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm transition focus:border-[color:var(--brand)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-soft)]"
           >
             <option value="">Alle Kunden</option>
             {customers.map((c) => (
@@ -96,7 +96,7 @@ export function FilterBar({
         </label>
 
         <fieldset className="flex flex-col">
-          <legend className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          <legend className="mb-1.5 text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
             Eigener Zeitraum
           </legend>
           <div className="flex flex-wrap items-center gap-2">
@@ -104,20 +104,20 @@ export function FilterBar({
               type="date"
               value={customFrom ?? ""}
               onChange={(e) => update({ range: "custom", from: e.target.value })}
-              className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              className="rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm transition focus:border-[color:var(--brand)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-soft)]"
             />
-            <span className="text-zinc-500">–</span>
+            <span className="text-[color:var(--muted)]">–</span>
             <input
               type="date"
               value={customTo ?? ""}
               onChange={(e) => update({ range: "custom", to: e.target.value })}
-              className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              className="rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm transition focus:border-[color:var(--brand)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-soft)]"
             />
           </div>
         </fieldset>
 
         {isPending ? (
-          <span className="text-xs text-zinc-500">Aktualisiere…</span>
+          <span className="text-xs text-[color:var(--brand)]">Aktualisiere…</span>
         ) : null}
       </div>
     </div>

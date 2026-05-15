@@ -36,20 +36,24 @@ export default async function DashboardPage({
     sp.customerId && sp.customerId.length > 0 ? sp.customerId : null;
 
   return (
-    <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-10 sm:px-6 lg:px-8">
+      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            KPI-Dashboard
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-3 py-1 text-xs font-medium text-[color:var(--brand-dark)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--brand)]" />
+            Live KPI-Übersicht
+          </span>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+            KPI-<span className="text-[color:var(--brand)]">Dashboard</span>.
           </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mt-2 text-sm text-[color:var(--muted)]">
             Zeitraum: {formatDate(range.from)} – {formatDate(range.to)}
           </p>
         </div>
         <SyncButton />
       </header>
 
-      <Suspense fallback={<div className="text-sm text-zinc-500">Lade Filter…</div>}>
+      <Suspense fallback={<div className="text-sm text-[color:var(--muted)]">Lade Filter…</div>}>
         <FiltersSection
           currentRange={rangeKey}
           currentCustomerId={customerId}
@@ -60,7 +64,7 @@ export default async function DashboardPage({
 
       <Suspense
         fallback={
-          <div className="mt-6 text-sm text-zinc-500">Lade Kennzahlen…</div>
+          <div className="mt-6 text-sm text-[color:var(--muted)]">Lade Kennzahlen…</div>
         }
       >
         <KpiGrid range={range} customerId={customerId} />
@@ -72,10 +76,10 @@ export default async function DashboardPage({
 function SetupNotice() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-16 sm:px-6">
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900 shadow-sm">
         <h1 className="text-xl font-semibold">Setup erforderlich</h1>
         <p className="mt-2 text-sm">
-          Die Umgebungsvariable <code className="rounded bg-amber-100 px-1 py-0.5 dark:bg-amber-900">DATABASE_URL</code> ist nicht gesetzt.
+          Die Umgebungsvariable <code className="rounded bg-amber-100 px-1 py-0.5">DATABASE_URL</code> ist nicht gesetzt.
           Bitte verbinde den App-Service mit deiner PostgreSQL-Datenbank
           (z.&nbsp;B. via Variable Reference auf den Postgres-Service in Railway)
           und starte den Service neu.
@@ -120,8 +124,11 @@ async function KpiGrid({
   const k = await computeKpis({ range, customerId });
 
   return (
-    <>
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="mt-8 space-y-8">
+      <KpiSection
+        eyebrow="Lead-Performance"
+        title="Wie performt dein Funnel"
+      >
         <KpiCard
           label="Erreichbarkeitsquote"
           value={formatPercent(k.reachabilityRate)}
@@ -142,9 +149,12 @@ async function KpiGrid({
           value={formatPercent(k.closingRate)}
           hint={`${k.closedLeads} von ${k.totalLeads} abgeschlossen`}
         />
-      </section>
+      </KpiSection>
 
-      <section className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <KpiSection
+        eyebrow="Wirtschaftlichkeit"
+        title="Umsatz & Profit"
+      >
         <KpiCard label="Umsatz" value={formatEUR(k.revenue)} tone="positive" />
         <KpiCard
           label="Cost per Lead"
@@ -162,9 +172,12 @@ async function KpiGrid({
           hint={`Weitere Kosten: ${formatEUR(k.otherCosts)}`}
           tone={k.profitAfterOther >= 0 ? "positive" : "negative"}
         />
-      </section>
+      </KpiSection>
 
-      <section className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <KpiSection
+        eyebrow="Margen & Volumen"
+        title="Effizienz im Überblick"
+      >
         <KpiCard
           label="Marge vor weiteren Kosten"
           value={formatPercent(k.marginBeforeOther)}
@@ -193,7 +206,31 @@ async function KpiGrid({
           value={formatNumber(k.closedLeads)}
           tone="neutral"
         />
-      </section>
-    </>
+      </KpiSection>
+    </div>
+  );
+}
+
+function KpiSection({
+  eyebrow,
+  title,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <div className="mb-4">
+        <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--brand)]">
+          {eyebrow}
+        </div>
+        <h2 className="mt-1 text-lg font-semibold tracking-tight">{title}</h2>
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {children}
+      </div>
+    </section>
   );
 }
