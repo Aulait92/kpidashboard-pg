@@ -21,6 +21,7 @@ export type MetaProduct = "Wechsel" | "Neugeschäft";
 export type MetaSyncResult = {
   accounts: { id: string; rows: number }[];
   costs: number;
+  matched: { campaign: string; product: MetaProduct; spend: number }[];
   unmatched: { campaign: string; spend: number }[];
   errors: string[];
 };
@@ -101,6 +102,7 @@ export async function syncMeta(): Promise<MetaSyncResult> {
   const result: MetaSyncResult = {
     accounts: [],
     costs: 0,
+    matched: [],
     unmatched: [],
     errors: [],
   };
@@ -148,6 +150,8 @@ export async function syncMeta(): Promise<MetaSyncResult> {
           result.unmatched.push({ campaign: name, spend: amount });
           continue;
         }
+
+        result.matched.push({ campaign: name, product, spend: amount });
 
         toInsert.push({
           product,
