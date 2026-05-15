@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 import { FilterBar } from "@/components/filter-bar";
-import { KpiCard } from "@/components/kpi-card";
+import { KpiCard, type Delta } from "@/components/kpi-card";
 import { SyncButton } from "@/components/sync-button";
-import { parseRangeFromSearchParams } from "@/lib/date-ranges";
-import { computeKpis, listCustomers, PRODUCTS } from "@/lib/kpis";
+import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
+import { computeKpis, listCustomers, PRODUCTS, type Kpis } from "@/lib/kpis";
 import {
   formatDate,
   formatDuration,
@@ -123,6 +123,23 @@ async function FiltersSection({
   );
 }
 
+// Δ-Berechnung: relative Veränderung gegenüber Vorperiode.
+// null, wenn Vorperiode 0 ist (Division durch 0) oder beide Werte nicht
+// vergleichbar. Bei Raten (z.B. closingRate) liefert sie ebenfalls
+// relative Änderung.
+function delta(
+  current: number | null,
+  previous: number | null,
+  lowerIsBetter = false,
+): Delta {
+  if (current == null || previous == null) return { pct: null, lowerIsBetter };
+  if (previous === 0) {
+    if (current === 0) return { pct: 0, lowerIsBetter };
+    return { pct: null, lowerIsBetter };
+  }
+  return { pct: (current - previous) / Math.abs(previous), lowerIsBetter };
+}
+
 async function KpiGrid({
   range,
   customerId,
@@ -132,7 +149,11 @@ async function KpiGrid({
   customerId: string | null;
   product: string | null;
 }) {
-  const k = await computeKpis({ range, customerId, product });
+  const prev = previousRange(range);
+  const [k, p] = await Promise.all([
+    computeKpis({ range, customerId, product }),
+    computeKpis({ range: prev, customerId, product }) as Promise<Kpis>,
+  ]);
 
   return (
     <div className="mt-8 space-y-8">
@@ -144,21 +165,25 @@ async function KpiGrid({
           label="Erreichbarkeitsquote"
           value={formatPercent(k.reachabilityRate)}
           hint={`${k.reachedLeads} von ${k.totalLeads} Leads erreicht`}
+          delta={delta(k.reachabilityRate, p.reachabilityRate)}
         />
         <KpiCard
           label="Kontaktversuche / Lead"
           value={formatNumber(k.avgContactAttempts)}
           hint="Durchschnitt im Zeitraum"
+          delta={delta(k.avgContactAttempts, p.avgContactAttempts, true)}
         />
         <KpiCard
           label="Zeit bis Erstkontakt"
           value={formatDuration(k.avgHoursToFirstContact)}
           hint="Durchschnitt"
+          delta={delta(k.avgHoursToFirstContact, p.avgHoursToFirstContact, true)}
         />
         <KpiCard
           label="Closing Rate"
           value={formatPercent(k.closingRate)}
           hint={`${k.closedLeads} von ${k.totalLeads} abgeschlossen`}
+          delta={delta(k.closingRate, p.closingRate)}
         />
       </KpiSection>
 
@@ -166,24 +191,32 @@ async function KpiGrid({
         eyebrow="Wirtschaftlichkeit"
         title="Umsatz & Profit"
       >
-        <KpiCard label="Umsatz" value={formatEUR(k.revenue)} tone="positive" />
+        <KpiCard
+          label="Umsatz"
+          value={formatEUR(k.revenue)}
+          tone="positive"
+          delta={delta(k.revenue, p.revenue)}
+        />
         <KpiCard
           label="Cost per Lead"
           value={formatEUR(k.costPerLead)}
           hint={`Lead-Kosten gesamt: ${formatEUR(k.leadCosts)}${
             customerId ? " (anteilig nach Lead-Anteil)" : ""
           }`}
+          delta={delta(k.costPerLead, p.costPerLead, true)}
         />
         <KpiCard
           label="Gewinn vor weiteren Kosten"
           value={formatEUR(k.profitBeforeOther)}
           tone={k.profitBeforeOther >= 0 ? "positive" : "negative"}
+          delta={delta(k.profitBeforeOther, p.profitBeforeOther)}
         />
         <KpiCard
           label="Gewinn nach weiteren Kosten"
           value={formatEUR(k.profitAfterOther)}
           hint={`Weitere Kosten: ${formatEUR(k.otherCosts)}`}
           tone={k.profitAfterOther >= 0 ? "positive" : "negative"}
+          delta={delta(k.profitAfterOther, p.profitAfterOther)}
         />
       </KpiSection>
 
@@ -199,6 +232,7 @@ async function KpiGrid({
               ? "positive"
               : "negative"
           }
+          delta={delta(k.marginBeforeOther, p.marginBeforeOther)}
         />
         <KpiCard
           label="Marge nach weiteren Kosten"
@@ -208,16 +242,19 @@ async function KpiGrid({
               ? "positive"
               : "negative"
           }
+          delta={delta(k.marginAfterOther, p.marginAfterOther)}
         />
         <KpiCard
           label="Leads gesamt"
           value={formatNumber(k.totalLeads)}
           tone="neutral"
+          delta={delta(k.totalLeads, p.totalLeads)}
         />
         <KpiCard
           label="Abschlüsse"
           value={formatNumber(k.closedLeads)}
           tone="neutral"
+          delta={delta(k.closedLeads, p.closedLeads)}
         />
       </KpiSection>
     </div>

@@ -78,6 +78,16 @@ export function resolveRange(key: RangeKey, now: Date = new Date()): DateRange {
   }
 }
 
+// Direkt vorangehender Zeitraum gleicher Länge. Wird für Δ-Vergleiche
+// im Dashboard verwendet.
+export function previousRange(range: DateRange): DateRange {
+  const durationMs = range.to.getTime() - range.from.getTime() + 1;
+  return {
+    from: new Date(range.from.getTime() - durationMs),
+    to: new Date(range.from.getTime() - 1),
+  };
+}
+
 export function parseRangeFromSearchParams(params: {
   range?: string;
   from?: string;
