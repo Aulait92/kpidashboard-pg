@@ -1,0 +1,76 @@
+// KPI Dashboard – Datenmodell
+// Modelliert Leads, Kontaktversuche, Umsätze und Kosten pro Kunde.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  leads    Lead[]
+  revenues Revenue[]
+  costs    Cost[]
+
+  @@index([name])
+}
+
+model Lead {
+  id              String    @id @default(cuid())
+  customerId      String
+  createdAt       DateTime  @default(now())
+  firstContactAt  DateTime?
+  closedAt        DateTime?
+  reached         Boolean   @default(false)
+  contactAttempts Int       @default(0)
+  acquisitionCost Decimal   @default(0) @db.Decimal(12, 2)
+
+  customer Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  revenues Revenue[]
+
+  @@index([customerId, createdAt])
+  @@index([createdAt])
+}
+
+model Revenue {
+  id         String   @id @default(cuid())
+  customerId String
+  leadId     String?
+  amount     Decimal  @db.Decimal(12, 2)
+  occurredAt DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  lead     Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@index([customerId, occurredAt])
+  @@index([occurredAt])
+}
+
+// Kosten:
+// kind = LEAD  → direkte Lead-/Akquisekosten (fließen in "Gewinn vor weiteren Kosten")
+// kind = OTHER → weitere Betriebskosten (fließen in "Gewinn nach weiteren Kosten")
+enum CostKind {
+  LEAD
+  OTHER
+}
+
+model Cost {
+  id         String   @id @default(cuid())
+  customerId String
+  kind       CostKind
+  amount     Decimal  @db.Decimal(12, 2)
+  occurredAt DateTime @default(now())
+  note       String?
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, occurredAt])
+  @@index([kind, occurredAt])
+}
