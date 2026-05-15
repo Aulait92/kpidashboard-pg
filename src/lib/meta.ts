@@ -119,7 +119,7 @@ export async function syncMeta(): Promise<MetaSyncResult> {
   const until = today.toISOString().slice(0, 10);
 
   type Insertable = {
-    product: MetaProduct | null;
+    product: MetaProduct;
     amount: number;
     occurredAt: Date;
     note: string;
@@ -143,11 +143,16 @@ export async function syncMeta(): Promise<MetaSyncResult> {
         const product = classifyProduct(name);
         const occurredAt = monthStart(startStr);
 
-        if (product) {
-          result.matched.push({ campaign: name, product, spend: amount });
-        } else {
+        if (!product) {
+          // Unmatched-Kampagnen werden nur für Transparenz im SyncResult
+          // gesammelt und nicht in die Cost-Tabelle geschrieben — sie sollen
+          // weder im "Alle"-Filter noch unter einem Produkt-Filter in den
+          // Lead-Kosten auftauchen.
           result.unmatched.push({ campaign: name, spend: amount });
+          continue;
         }
+
+        result.matched.push({ campaign: name, product, spend: amount });
 
         toInsert.push({
           product,
