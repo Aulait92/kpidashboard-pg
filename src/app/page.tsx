@@ -25,6 +25,10 @@ export default async function DashboardPage({
 }: {
   searchParams: SearchParams;
 }) {
+  if (!process.env.DATABASE_URL) {
+    return <SetupNotice />;
+  }
+
   const sp = await searchParams;
   const { key: rangeKey, range } = parseRangeFromSearchParams(sp);
   const customerId =
@@ -59,6 +63,22 @@ export default async function DashboardPage({
       >
         <KpiGrid range={range} customerId={customerId} />
       </Suspense>
+    </main>
+  );
+}
+
+function SetupNotice() {
+  return (
+    <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-16 sm:px-6">
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">
+        <h1 className="text-xl font-semibold">Setup erforderlich</h1>
+        <p className="mt-2 text-sm">
+          Die Umgebungsvariable <code className="rounded bg-amber-100 px-1 py-0.5 dark:bg-amber-900">DATABASE_URL</code> ist nicht gesetzt.
+          Bitte verbinde den App-Service mit deiner PostgreSQL-Datenbank
+          (z.&nbsp;B. via Variable Reference auf den Postgres-Service in Railway)
+          und starte den Service neu.
+        </p>
+      </div>
     </main>
   );
 }
