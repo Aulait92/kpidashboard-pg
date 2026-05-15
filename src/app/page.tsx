@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { FilterBar } from "@/components/filter-bar";
 import { KpiCard } from "@/components/kpi-card";
+import { SyncButton } from "@/components/sync-button";
 import { parseRangeFromSearchParams } from "@/lib/date-ranges";
 import { computeKpis, listCustomers } from "@/lib/kpis";
 import {
@@ -36,7 +37,7 @@ export default async function DashboardPage({
 
   return (
     <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-2">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
             KPI-Dashboard
@@ -45,6 +46,7 @@ export default async function DashboardPage({
             Zeitraum: {formatDate(range.from)} – {formatDate(range.to)}
           </p>
         </div>
+        <SyncButton />
       </header>
 
       <Suspense fallback={<div className="text-sm text-zinc-500">Lade Filter…</div>}>

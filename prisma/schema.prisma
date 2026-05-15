@@ -12,24 +12,25 @@ datasource db {
 
 model Customer {
   id        String   @id @default(cuid())
-  name      String
+  name      String   @unique
   createdAt DateTime @default(now())
 
   leads    Lead[]
   revenues Revenue[]
   costs    Cost[]
-
-  @@index([name])
 }
 
 model Lead {
   id              String    @id @default(cuid())
+  airtableId      String?   @unique
+  source          String?
   customerId      String
   createdAt       DateTime  @default(now())
   firstContactAt  DateTime?
   closedAt        DateTime?
   reached         Boolean   @default(false)
   contactAttempts Int       @default(0)
+  status          String?
   acquisitionCost Decimal   @default(0) @db.Decimal(12, 2)
 
   customer Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
