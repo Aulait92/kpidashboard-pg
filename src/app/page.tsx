@@ -1,9 +1,16 @@
 import { Suspense } from "react";
+import { CustomerLeaderboard } from "@/components/customer-leaderboard";
 import { FilterBar } from "@/components/filter-bar";
 import { KpiCard, type Delta } from "@/components/kpi-card";
 import { SyncButton } from "@/components/sync-button";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
-import { computeKpis, listCustomers, PRODUCTS, type Kpis } from "@/lib/kpis";
+import {
+  computeCustomerLeaderboard,
+  computeKpis,
+  listCustomers,
+  PRODUCTS,
+  type Kpis,
+} from "@/lib/kpis";
 import {
   formatDate,
   formatDuration,
@@ -75,7 +82,43 @@ export default async function DashboardPage({
       >
         <KpiGrid range={range} customerId={customerId} product={product} />
       </Suspense>
+
+      <Suspense
+        fallback={
+          <div className="mt-8 text-sm text-[color:var(--muted)]">Lade Buyer-Übersicht…</div>
+        }
+      >
+        <LeaderboardSection range={range} product={product} />
+      </Suspense>
     </main>
+  );
+}
+
+async function LeaderboardSection({
+  range,
+  product,
+}: {
+  range: { from: Date; to: Date };
+  product: string | null;
+}) {
+  const rows = await computeCustomerLeaderboard({ range, product });
+
+  return (
+    <section className="mt-10">
+      <div className="mb-4">
+        <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--brand)]">
+          Buyer-Vergleich
+        </div>
+        <h2 className="mt-1 text-lg font-semibold tracking-tight">
+          Wer performt — und wer kostet dich?
+        </h2>
+        <p className="mt-1 text-xs text-[color:var(--muted)]">
+          Lead-Kosten enthalten den anteiligen Meta-Spend pro Buyer (nach
+          Lead-Anteil pro Monat × Produkt).
+        </p>
+      </div>
+      <CustomerLeaderboard rows={rows} />
+    </section>
   );
 }
 

@@ -257,3 +257,190 @@ export async function listCustomers() {
     orderBy: { name: "asc" },
   });
 }
+
+export type CustomerKpiRow = {
+  customerId: string;
+  customerName: string;
+  totalLeads: number;
+  reachedLeads: number;
+  closedLeads: number;
+  reachabilityRate: number | null;
+  closingRate: number | null;
+  revenue: number;
+  leadCosts: number;
+  costPerLead: number | null;
+  profit: number;
+  margin: number | null;
+};
+
+// Pro-Kunde-KPIs für die Leaderboard-Tabelle. Globale Meta-Kosten werden
+// pro (Monat × Produkt) nach Lead-Anteil auf die Kunden umgelegt — Summe
+// über alle Kunden entspricht damit dem ungefilterten Gesamtwert.
+export async function computeCustomerLeaderboard(params: {
+  range: DateRange;
+  product: string | null;
+}): Promise<CustomerKpiRow[]> {
+  const { range, product } = params;
+  const productLeadClause = product ? { source: product } : {};
+  const productRevenueClause = product
+    ? { lead: { is: { source: product } } }
+    : {};
+  const productCostClause = product ? { product } : {};
+
+  const [customers, leads, revenueByCustomer, directCostByCustomer, globalCosts] =
+    await Promise.all([
+      prisma.customer.findMany({ select: { id: true, name: true } }),
+      prisma.lead.findMany({
+        where: {
+          ...productLeadClause,
+          createdAt: { gte: range.from, lte: range.to },
+        },
+        select: { customerId: true, reached: true, closedAt: true },
+      }),
+      prisma.revenue.groupBy({
+        by: ["customerId"],
+        _sum: { amount: true },
+        where: {
+          ...productRevenueClause,
+          occurredAt: { gte: range.from, lte: range.to },
+        },
+      }),
+      prisma.cost.groupBy({
+        by: ["customerId"],
+        _sum: { amount: true },
+        where: {
+          ...productCostClause,
+          kind: "LEAD",
+          customerId: { not: null },
+          occurredAt: { gte: range.from, lte: range.to },
+        },
+      }),
+      prisma.cost.findMany({
+        where: {
+          ...productCostClause,
+          customerId: null,
+          kind: "LEAD",
+          product: { not: null },
+          occurredAt: { gte: range.from, lte: range.to },
+        },
+        select: { product: true, amount: true, occurredAt: true },
+      }),
+    ]);
+
+  const proratedByCustomer = new Map<string, number>();
+  if (globalCosts.length > 0) {
+    const costMonthKeys = globalCosts.map((c) => monthKey(c.occurredAt));
+    const minKey = costMonthKeys.reduce((a, b) => (a < b ? a : b));
+    const maxKey = costMonthKeys.reduce((a, b) => (a > b ? a : b));
+    const usedProducts = Array.from(
+      new Set(
+        globalCosts
+          .map((c) => c.product)
+          .filter((p): p is string => p !== null),
+      ),
+    );
+    const leadsForProration = await prisma.lead.findMany({
+      where: {
+        source: { in: usedProducts },
+        createdAt: {
+          gte: parseMonthStart(minKey),
+          lte: parseMonthEnd(maxKey),
+        },
+      },
+      select: { source: true, customerId: true, createdAt: true },
+    });
+
+    const buckets = new Map<
+      string,
+      { total: number; perCustomer: Map<string, number> }
+    >();
+    for (const l of leadsForProration) {
+      if (!l.source) continue;
+      const key = `${monthKey(l.createdAt)}|${l.source}`;
+      let b = buckets.get(key);
+      if (!b) {
+        b = { total: 0, perCustomer: new Map() };
+        buckets.set(key, b);
+      }
+      b.total += 1;
+      b.perCustomer.set(
+        l.customerId,
+        (b.perCustomer.get(l.customerId) ?? 0) + 1,
+      );
+    }
+
+    for (const c of globalCosts) {
+      const key = `${monthKey(c.occurredAt)}|${c.product}`;
+      const b = buckets.get(key);
+      if (!b || b.total === 0) continue;
+      const amount = decToNumber(c.amount);
+      for (const [customerId, count] of b.perCustomer) {
+        proratedByCustomer.set(
+          customerId,
+          (proratedByCustomer.get(customerId) ?? 0) +
+            (amount * count) / b.total,
+        );
+      }
+    }
+  }
+
+  const leadStatsByCustomer = new Map<
+    string,
+    { total: number; reached: number; closed: number }
+  >();
+  for (const l of leads) {
+    let s = leadStatsByCustomer.get(l.customerId);
+    if (!s) {
+      s = { total: 0, reached: 0, closed: 0 };
+      leadStatsByCustomer.set(l.customerId, s);
+    }
+    s.total += 1;
+    if (l.reached) s.reached += 1;
+    if (l.closedAt != null) s.closed += 1;
+  }
+
+  const revenueByCustomerId = new Map<string, number>();
+  for (const r of revenueByCustomer) {
+    if (r.customerId) {
+      revenueByCustomerId.set(r.customerId, decToNumber(r._sum.amount));
+    }
+  }
+
+  const directCostByCustomerId = new Map<string, number>();
+  for (const c of directCostByCustomer) {
+    if (c.customerId) {
+      directCostByCustomerId.set(c.customerId, decToNumber(c._sum.amount));
+    }
+  }
+
+  const rows: CustomerKpiRow[] = customers.map((c) => {
+    const stat = leadStatsByCustomer.get(c.id) ?? {
+      total: 0,
+      reached: 0,
+      closed: 0,
+    };
+    const revenue = revenueByCustomerId.get(c.id) ?? 0;
+    const direct = directCostByCustomerId.get(c.id) ?? 0;
+    const prorated = proratedByCustomer.get(c.id) ?? 0;
+    const leadCosts = direct + prorated;
+    const profit = revenue - leadCosts;
+    return {
+      customerId: c.id,
+      customerName: c.name,
+      totalLeads: stat.total,
+      reachedLeads: stat.reached,
+      closedLeads: stat.closed,
+      reachabilityRate: stat.total > 0 ? stat.reached / stat.total : null,
+      closingRate: stat.total > 0 ? stat.closed / stat.total : null,
+      revenue,
+      leadCosts,
+      costPerLead: stat.total > 0 ? leadCosts / stat.total : null,
+      profit,
+      margin: revenue > 0 ? profit / revenue : null,
+    };
+  });
+
+  return rows.filter(
+    (r) => r.totalLeads > 0 || r.revenue > 0 || r.leadCosts > 0,
+  );
+}
