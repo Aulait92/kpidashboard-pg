@@ -170,7 +170,9 @@ async function KpiGrid({
         <KpiCard
           label="Cost per Lead"
           value={formatEUR(k.costPerLead)}
-          hint={`Lead-Kosten gesamt: ${formatEUR(k.leadCosts)}`}
+          hint={`Lead-Kosten gesamt: ${formatEUR(k.leadCosts)}${
+            customerId ? " (anteilig nach Lead-Anteil)" : ""
+          }`}
         />
         <KpiCard
           label="Gewinn vor weiteren Kosten"
