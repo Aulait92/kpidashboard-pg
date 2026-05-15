@@ -30,6 +30,9 @@ const TABLES = [
   },
 ];
 
+const BUYERS_TABLE = process.env.AIRTABLE_TABLE_BUYERS ?? "Buyer";
+const BUYER_NAME_FIELDS = ["Name", "Buyer", "Firma", "Company"];
+
 function getEnv() {
   const token = process.env.AIRTABLE_TOKEN;
   const baseId = process.env.AIRTABLE_BASE_ID;
@@ -79,6 +82,54 @@ function readString(fields: Record<string, unknown>, key: string): string | null
   if (typeof v === "string" && v.trim().length > 0) return v.trim();
   if (Array.isArray(v) && v.length > 0 && typeof v[0] === "string") return v[0];
   return null;
+}
+
+function readLinkedIds(fields: Record<string, unknown>, key: string): string[] {
+  const v = fields[key];
+  if (!Array.isArray(v)) return [];
+  return v.filter(
+    (x): x is string => typeof x === "string" && x.startsWith("rec"),
+  );
+}
+
+async function fetchBuyersById(
+  ids: string[],
+): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  if (ids.length === 0) return map;
+
+  let records: AirtableRecord[];
+  try {
+    records = await fetchAllRecords(BUYERS_TABLE);
+  } catch (err) {
+    throw new Error(
+      `Buyer-Tabelle "${BUYERS_TABLE}" konnte nicht gelesen werden. ` +
+        `Setze ggf. AIRTABLE_TABLE_BUYERS auf den richtigen Tabellennamen. ` +
+        `Original: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+
+  for (const rec of records) {
+    let name: string | null = null;
+    for (const candidate of BUYER_NAME_FIELDS) {
+      name = readString(rec.fields, candidate);
+      if (name) break;
+    }
+    if (!name) {
+      // Fallback: erstes String-Feld nehmen
+      for (const value of Object.values(rec.fields)) {
+        if (typeof value === "string" && value.trim().length > 0) {
+          name = value.trim();
+          break;
+        }
+      }
+    }
+    if (name) {
+      map.set(rec.id, name);
+    }
+  }
+
+  return map;
 }
 
 function readNumber(fields: Record<string, unknown>, key: string): number {
@@ -135,25 +186,61 @@ export async function syncAirtable(): Promise<SyncResult> {
     return customer.id;
   }
 
+  // 1. Alle Lead-Tabellen einlesen
+  const tableRecords = new Map<string, AirtableRecord[]>();
   for (const table of TABLES) {
-    let records: AirtableRecord[];
     try {
-      records = await fetchAllRecords(table.name);
+      const records = await fetchAllRecords(table.name);
+      tableRecords.set(table.name, records);
+      result.tables.push({
+        name: table.name,
+        source: table.source,
+        records: records.length,
+      });
     } catch (err) {
       result.errors.push(
         `Tabelle "${table.name}": ${err instanceof Error ? err.message : String(err)}`,
       );
-      continue;
     }
-    result.tables.push({
-      name: table.name,
-      source: table.source,
-      records: records.length,
-    });
+  }
+
+  // 2. Alle referenzierten Buyer-IDs sammeln und gegen Buyer-Tabelle auflösen
+  const buyerIds = new Set<string>();
+  for (const records of tableRecords.values()) {
+    for (const rec of records) {
+      for (const id of readLinkedIds(rec.fields, "Buyer")) {
+        buyerIds.add(id);
+      }
+    }
+  }
+  let buyerMap = new Map<string, string>();
+  if (buyerIds.size > 0) {
+    try {
+      buyerMap = await fetchBuyersById([...buyerIds]);
+    } catch (err) {
+      result.errors.push(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  function resolveBuyer(fields: Record<string, unknown>): string | null {
+    // Fall 1: Buyer ist Linked Record → IDs zu Namen auflösen
+    const ids = readLinkedIds(fields, "Buyer");
+    if (ids.length > 0) {
+      const names = ids.map((id) => buyerMap.get(id)).filter((n): n is string => !!n);
+      if (names.length > 0) return names.join(", ");
+    }
+    // Fall 2: Buyer ist Single-Line-Text
+    return readString(fields, "Buyer");
+  }
+
+  // 3. Records verarbeiten
+  for (const table of TABLES) {
+    const records = tableRecords.get(table.name);
+    if (!records) continue;
 
     for (const rec of records) {
       try {
-        const buyer = readString(rec.fields, "Buyer");
+        const buyer = resolveBuyer(rec.fields);
         if (!buyer) continue; // ohne Buyer kein Customer
 
         const createdAt =
@@ -237,6 +324,16 @@ export async function syncAirtable(): Promise<SyncResult> {
       }
     }
   }
+
+  // 4. Verwaiste Kunden aus früheren (fehlerhaften) Syncs aufräumen.
+  // Ein Customer ohne Leads, Umsätze und Kosten ist sicher entfernbar.
+  await prisma.customer.deleteMany({
+    where: {
+      leads: { none: {} },
+      revenues: { none: {} },
+      costs: { none: {} },
+    },
+  });
 
   result.customers = customerCache.size;
   return result;
