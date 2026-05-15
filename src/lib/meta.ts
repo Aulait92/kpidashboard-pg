@@ -119,7 +119,7 @@ export async function syncMeta(): Promise<MetaSyncResult> {
   const until = today.toISOString().slice(0, 10);
 
   type Insertable = {
-    product: MetaProduct;
+    product: MetaProduct | null;
     amount: number;
     occurredAt: Date;
     note: string;
@@ -143,15 +143,11 @@ export async function syncMeta(): Promise<MetaSyncResult> {
         const product = classifyProduct(name);
         const occurredAt = monthStart(startStr);
 
-        if (!product) {
-          // Kampagnen ohne "wechsel"/"neugeschäft" im Namen gehören nicht zu
-          // den getrackten PKV-Produkten und dürfen die Lead-Kosten nicht
-          // erhöhen. Nur für Transparenz im SyncResult vermerken.
+        if (product) {
+          result.matched.push({ campaign: name, product, spend: amount });
+        } else {
           result.unmatched.push({ campaign: name, spend: amount });
-          continue;
         }
-
-        result.matched.push({ campaign: name, product, spend: amount });
 
         toInsert.push({
           product,
