@@ -63,14 +63,14 @@ enum CostKind {
 }
 
 model Cost {
-  id         String   @id @default(cuid())
-  customerId String
+  id         String    @id @default(cuid())
+  customerId String?
   kind       CostKind
-  amount     Decimal  @db.Decimal(12, 2)
-  occurredAt DateTime @default(now())
+  amount     Decimal   @db.Decimal(12, 2)
+  occurredAt DateTime  @default(now())
   note       String?
 
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
 
   @@index([customerId, occurredAt])
   @@index([kind, occurredAt])

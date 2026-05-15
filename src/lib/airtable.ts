@@ -32,6 +32,35 @@ const TABLES = [
 
 const BUYERS_TABLE = process.env.AIRTABLE_TABLE_BUYERS ?? "Buyer";
 const BUYER_NAME_FIELDS = ["Name", "Buyer", "Firma", "Company"];
+const FINANZEN_TABLE = process.env.AIRTABLE_TABLE_FINANZEN ?? "Finanzen";
+
+const GERMAN_MONTHS: Record<string, number> = {
+  januar: 1,
+  februar: 2,
+  märz: 3,
+  maerz: 3,
+  april: 4,
+  mai: 5,
+  juni: 6,
+  juli: 7,
+  august: 8,
+  september: 9,
+  oktober: 10,
+  november: 11,
+  dezember: 12,
+};
+
+// Parst Spaltennamen wie "Kosten Mai 25" oder "Kosten Mai 2025"
+// und liefert Jahr/Monat zurück.
+function parseKostenColumn(name: string): { year: number; month: number } | null {
+  const match = /^Kosten\s+([A-Za-zÄÖÜäöüß]+)\s+(\d{2,4})$/.exec(name.trim());
+  if (!match) return null;
+  const month = GERMAN_MONTHS[match[1].toLowerCase()];
+  if (!month) return null;
+  let year = Number.parseInt(match[2], 10);
+  if (year < 100) year += 2000;
+  return { year, month };
+}
 
 function getEnv() {
   const token = process.env.AIRTABLE_TOKEN;
@@ -158,6 +187,7 @@ export type SyncResult = {
   customers: number;
   leads: number;
   revenues: number;
+  costs: number;
   errors: string[];
 };
 
@@ -167,6 +197,7 @@ export async function syncAirtable(): Promise<SyncResult> {
     customers: 0,
     leads: 0,
     revenues: 0,
+    costs: 0,
     errors: [],
   };
 
@@ -325,7 +356,48 @@ export async function syncAirtable(): Promise<SyncResult> {
     }
   }
 
-  // 4. Verwaiste Kunden aus früheren (fehlerhaften) Syncs aufräumen.
+  // 4. Finanzen-Tabelle (weitere Kosten / Overhead) einlesen.
+  try {
+    const finanzenRecords = await fetchAllRecords(FINANZEN_TABLE);
+    result.tables.push({
+      name: FINANZEN_TABLE,
+      source: "Finanzen",
+      records: finanzenRecords.length,
+    });
+
+    // Komplette Neuauffüllung: alte OTHER-Kosten löschen, dann frisch einfügen.
+    await prisma.cost.deleteMany({ where: { kind: "OTHER" } });
+
+    for (const rec of finanzenRecords) {
+      const vendor = readString(rec.fields, "Name") ?? "Unbekannt";
+      for (const [field, raw] of Object.entries(rec.fields)) {
+        const parsed = parseKostenColumn(field);
+        if (!parsed) continue;
+        const amount =
+          typeof raw === "number" ? raw : Number.parseFloat(String(raw));
+        if (!Number.isFinite(amount) || amount <= 0) continue;
+
+        const occurredAt = new Date(
+          Date.UTC(parsed.year, parsed.month - 1, 1, 12),
+        );
+        await prisma.cost.create({
+          data: {
+            kind: "OTHER",
+            amount,
+            occurredAt,
+            note: `${vendor} (${field})`,
+          },
+        });
+        result.costs += 1;
+      }
+    }
+  } catch (err) {
+    result.errors.push(
+      `Tabelle "${FINANZEN_TABLE}": ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+
+  // 5. Verwaiste Kunden aus früheren (fehlerhaften) Syncs aufräumen.
   // Ein Customer ohne Leads, Umsätze und Kosten ist sicher entfernbar.
   await prisma.customer.deleteMany({
     where: {

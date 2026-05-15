@@ -29,7 +29,8 @@ export function SyncButton() {
       {result?.ok ? (
         <span className="text-xs text-emerald-600 dark:text-emerald-400">
           ✓ {result.result.leads} Leads, {result.result.revenues} Umsätze,{" "}
-          {result.result.customers} Kunden synchronisiert
+          {result.result.customers} Kunden, {result.result.costs} Kosten-Posten
+          synchronisiert
           {result.result.errors.length > 0
             ? ` (${result.result.errors.length} Fehler)`
             : ""}
