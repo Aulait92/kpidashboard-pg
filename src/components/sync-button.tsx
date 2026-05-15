@@ -29,7 +29,7 @@ export function SyncButton() {
           className={cn("h-4 w-4", pending && "animate-spin")}
           strokeWidth={2.5}
         />
-        {pending ? "Synchronisiere…" : "Aus Airtable synchronisieren"}
+        {pending ? "Synchronisiere…" : "Daten synchronisieren"}
       </button>
 
       {result?.ok ? (
