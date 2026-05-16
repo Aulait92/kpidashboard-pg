@@ -182,12 +182,20 @@ function readChecked(fields: Record<string, unknown>, key: string): boolean {
   return fields[key] === true;
 }
 
+export type NewSale = {
+  buyer: string;
+  product: string;
+  amount: number;
+  airtableId: string;
+};
+
 export type SyncResult = {
   tables: { name: string; source: string; records: number }[];
   customers: number;
   leads: number;
   revenues: number;
   costs: number;
+  newSales: NewSale[];
   errors: string[];
 };
 
@@ -198,6 +206,7 @@ export async function syncAirtable(): Promise<SyncResult> {
     leads: 0,
     revenues: 0,
     costs: 0,
+    newSales: [],
     errors: [],
   };
 
@@ -339,6 +348,13 @@ export async function syncAirtable(): Promise<SyncResult> {
                 customerId,
                 leadId: lead.id,
               },
+            });
+            // Erst-Insert eines Verkaufs → Push-Trigger merken.
+            result.newSales.push({
+              buyer,
+              product: table.source,
+              amount: price,
+              airtableId: rec.id,
             });
           }
           result.revenues += 1;

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { FilterBar } from "@/components/filter-bar";
 import { FunnelHero } from "@/components/funnel-hero";
 import { KpiCard, type Delta } from "@/components/kpi-card";
+import { NotificationsButton } from "@/components/notifications-button";
 import { PerformanceTable } from "@/components/performance-table";
 import { SyncButton } from "@/components/sync-button";
 import { TrendCharts } from "@/components/trend-charts";
@@ -81,6 +82,7 @@ export default async function DashboardPage({
               customTo={sp.to}
             />
           </Suspense>
+          <NotificationsButton />
           <SyncButton />
         </div>
       </header>

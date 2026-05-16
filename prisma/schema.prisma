@@ -79,3 +79,15 @@ model Cost {
   @@index([kind, occurredAt])
   @@index([kind, product, occurredAt])
 }
+
+// Web-Push-Subscriptions für PWA-Benachrichtigungen. Single-User-Setup:
+// jede Subscription bekommt jede Benachrichtigung.
+model PushSubscription {
+  id         String   @id @default(cuid())
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+}
