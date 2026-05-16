@@ -1,7 +1,9 @@
 import { Suspense } from "react";
+import { AutoRefresh } from "@/components/auto-refresh";
 import { FilterBar } from "@/components/filter-bar";
 import { FunnelHero } from "@/components/funnel-hero";
 import { KpiCard, type Delta } from "@/components/kpi-card";
+import { LiveUpdated } from "@/components/live-updated";
 import { NotificationsButton } from "@/components/notifications-button";
 import { PerformanceTable } from "@/components/performance-table";
 import { PnLStatement } from "@/components/pnl-statement";
@@ -54,15 +56,17 @@ export default async function DashboardPage({
     sp.product && (PRODUCTS as readonly string[]).includes(sp.product)
       ? sp.product
       : null;
+  const renderedAt = Date.now();
 
   return (
     <PullToRefresh>
+      <AutoRefresh />
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
         <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-3 py-1 text-xs font-medium text-[color:var(--brand-dark)]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--brand)]" />
-              Live KPI-Übersicht
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[color:var(--brand)]" />
+              Live · aktualisiert <LiveUpdated since={renderedAt} />
             </span>
             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
               KPI-<span className="text-[color:var(--brand)]">Dashboard</span>.
