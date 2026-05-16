@@ -4,12 +4,14 @@ import { FunnelHero } from "@/components/funnel-hero";
 import { KpiCard, type Delta } from "@/components/kpi-card";
 import { NotificationsButton } from "@/components/notifications-button";
 import { PerformanceTable } from "@/components/performance-table";
+import { PnLStatement } from "@/components/pnl-statement";
 import { SyncButton } from "@/components/sync-button";
 import { TrendCharts } from "@/components/trend-charts";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
 import {
   computeCustomerLeaderboard,
   computeKpis,
+  computePnL,
   computeProductBreakdown,
   computeTimeSeries,
   listCustomers,
@@ -112,18 +114,20 @@ async function DashboardBody({
   product: string | null;
 }) {
   const prev = previousRange(range);
-  const [k, p, ts, customerRows, productRows] = await Promise.all([
+  const [k, p, ts, customerRows, productRows, pnl] = await Promise.all([
     computeKpis({ range, customerId, product }),
     computeKpis({ range: prev, customerId, product }) as Promise<Kpis>,
     computeTimeSeries({ range, customerId, product }),
     computeCustomerLeaderboard({ range, product }),
     computeProductBreakdown({ range, customerId }),
+    computePnL({ range, customerId, product }),
   ]);
 
   return (
     <div className="mt-6 space-y-8">
       <FunnelHero kpis={k} />
       <KpiGrid kpis={k} prev={p} points={ts.points} customerId={customerId} />
+      <PnLStatement pnl={pnl} />
       <PerformanceTable customerRows={customerRows} productRows={productRows} />
       <TrendCharts points={ts.points} granularity={ts.granularity} />
     </div>

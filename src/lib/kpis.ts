@@ -12,6 +12,7 @@ import {
 import { de } from "date-fns/locale";
 import { prisma } from "@/lib/prisma";
 import type { DateRange } from "@/lib/date-ranges";
+import { previousRange } from "@/lib/date-ranges";
 
 export { PRODUCTS, type Product } from "@/lib/products";
 
@@ -896,5 +897,197 @@ export async function computeTimeSeries(params: {
       .map((a) => a.point)
       .sort((x, y) => x.bucket.localeCompare(y.bucket)),
     granularity,
+  };
+}
+
+// ─── P&L (Gewinn- und Verlustrechnung) ───────────────────────────────────
+
+export type PnLRow = {
+  label: string;
+  current: number;
+  previous: number;
+};
+
+export type PnLSection = {
+  rows: PnLRow[];
+  totalCurrent: number;
+  totalPrevious: number;
+};
+
+export type PnL = {
+  range: DateRange;
+  previousRange: DateRange;
+  revenue: PnLSection;
+  leadCosts: PnLSection;
+  // null wenn Produkt-Filter aktiv (OTHER-Kosten sind nicht produktspezifisch).
+  otherCosts: PnLSection | null;
+  grossProfit: { current: number; previous: number };
+  grossMargin: { current: number | null; previous: number | null };
+  netProfit: { current: number; previous: number };
+  netMargin: { current: number | null; previous: number | null };
+};
+
+function parseVendorFromNote(note: string | null | undefined): string {
+  if (!note) return "Unbekannt";
+  // Format aus airtable.ts: "Vendor (Kosten Mai 25)"
+  const match = /^(.+?)\s*\(.*\)\s*$/.exec(note);
+  return (match ? match[1] : note).trim() || "Unbekannt";
+}
+
+async function fetchOtherByVendor(params: {
+  range: DateRange;
+  customerId: string | null;
+}): Promise<{ vendor: string; amount: number }[]> {
+  const { range, customerId } = params;
+  const customerClause = customerId ? { customerId } : {};
+
+  const costs = await prisma.cost.findMany({
+    where: {
+      ...customerClause,
+      kind: "OTHER",
+      occurredAt: { gte: range.from, lte: range.to },
+    },
+    select: { amount: true, note: true },
+  });
+
+  const byVendor = new Map<string, number>();
+  for (const c of costs) {
+    const vendor = parseVendorFromNote(c.note);
+    byVendor.set(
+      vendor,
+      (byVendor.get(vendor) ?? 0) + decToNumber(c.amount),
+    );
+  }
+
+  return Array.from(byVendor.entries())
+    .map(([vendor, amount]) => ({ vendor, amount }))
+    .sort((a, b) => b.amount - a.amount);
+}
+
+export async function computePnL(params: {
+  range: DateRange;
+  customerId: string | null;
+  product: string | null;
+}): Promise<PnL> {
+  const { range, customerId, product } = params;
+  const prev = previousRange(range);
+
+  // Produkt-Breakdown für beide Perioden parallel.
+  const [curProducts, prevProducts] = await Promise.all([
+    computeProductBreakdown({ range, customerId }),
+    computeProductBreakdown({ range: prev, customerId }),
+  ]);
+
+  const filterByProduct = (rows: ProductKpiRow[]) =>
+    product ? rows.filter((r) => r.product === product) : rows;
+
+  const curRows = filterByProduct(curProducts);
+  const prevRows = filterByProduct(prevProducts);
+
+  const prevByProduct = new Map(prevRows.map((r) => [r.product, r]));
+  const allProducts = Array.from(
+    new Set([
+      ...curRows.map((r) => r.product),
+      ...prevRows.map((r) => r.product),
+    ]),
+  ).sort();
+
+  const revenueRows: PnLRow[] = allProducts.map((p) => {
+    const cur = curRows.find((r) => r.product === p);
+    const prv = prevByProduct.get(p);
+    return {
+      label: p,
+      current: cur?.revenue ?? 0,
+      previous: prv?.revenue ?? 0,
+    };
+  });
+
+  const leadCostRows: PnLRow[] = allProducts.map((p) => {
+    const cur = curRows.find((r) => r.product === p);
+    const prv = prevByProduct.get(p);
+    return {
+      label: p,
+      current: cur?.leadCosts ?? 0,
+      previous: prv?.leadCosts ?? 0,
+    };
+  });
+
+  const sumCurrent = (rows: PnLRow[]) =>
+    rows.reduce((acc, r) => acc + r.current, 0);
+  const sumPrevious = (rows: PnLRow[]) =>
+    rows.reduce((acc, r) => acc + r.previous, 0);
+
+  const revenueTotal = sumCurrent(revenueRows);
+  const revenuePrev = sumPrevious(revenueRows);
+  const leadCostsTotal = sumCurrent(leadCostRows);
+  const leadCostsPrev = sumPrevious(leadCostRows);
+
+  // OTHER-Kosten nur ohne Produkt-Filter — sie sind keinem Produkt zugeordnet.
+  let otherCostsSection: PnLSection | null = null;
+  if (!product) {
+    const [curOther, prevOther] = await Promise.all([
+      fetchOtherByVendor({ range, customerId }),
+      fetchOtherByVendor({ range: prev, customerId }),
+    ]);
+    const prevByVendor = new Map(prevOther.map((r) => [r.vendor, r.amount]));
+    const allVendors = Array.from(
+      new Set([
+        ...curOther.map((r) => r.vendor),
+        ...prevOther.map((r) => r.vendor),
+      ]),
+    );
+    const otherRows: PnLRow[] = allVendors
+      .map((v) => {
+        const cur = curOther.find((r) => r.vendor === v);
+        return {
+          label: v,
+          current: cur?.amount ?? 0,
+          previous: prevByVendor.get(v) ?? 0,
+        };
+      })
+      .sort((a, b) => b.current - a.current);
+
+    otherCostsSection = {
+      rows: otherRows,
+      totalCurrent: sumCurrent(otherRows),
+      totalPrevious: sumPrevious(otherRows),
+    };
+  }
+
+  const grossProfit = {
+    current: revenueTotal - leadCostsTotal,
+    previous: revenuePrev - leadCostsPrev,
+  };
+  const otherCur = otherCostsSection?.totalCurrent ?? 0;
+  const otherPrev = otherCostsSection?.totalPrevious ?? 0;
+  const netProfit = {
+    current: grossProfit.current - otherCur,
+    previous: grossProfit.previous - otherPrev,
+  };
+
+  return {
+    range,
+    previousRange: prev,
+    revenue: {
+      rows: revenueRows,
+      totalCurrent: revenueTotal,
+      totalPrevious: revenuePrev,
+    },
+    leadCosts: {
+      rows: leadCostRows,
+      totalCurrent: leadCostsTotal,
+      totalPrevious: leadCostsPrev,
+    },
+    otherCosts: otherCostsSection,
+    grossProfit,
+    grossMargin: {
+      current: revenueTotal > 0 ? grossProfit.current / revenueTotal : null,
+      previous: revenuePrev > 0 ? grossProfit.previous / revenuePrev : null,
+    },
+    netProfit,
+    netMargin: {
+      current: revenueTotal > 0 ? netProfit.current / revenueTotal : null,
+      previous: revenuePrev > 0 ? netProfit.previous / revenuePrev : null,
+    },
   };
 }
