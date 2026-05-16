@@ -24,8 +24,11 @@ export type KpiFilters = {
 export type Kpis = {
   totalLeads: number;
   reachedLeads: number;
+  terminLeads: number;
   closedLeads: number;
   reachabilityRate: number | null; // 0..1
+  terminRate: number | null; // termin / reached
+  closingFromTerminRate: number | null; // closed / termin
   avgContactAttempts: number | null;
   avgHoursToFirstContact: number | null;
   closingRate: number | null; // 0..1
@@ -184,6 +187,7 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
         closedAt: true,
         reached: true,
         contactAttempts: true,
+        status: true,
       },
     }),
     prisma.revenue.aggregate({
@@ -213,10 +217,16 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
 
   const totalLeads = leads.length;
   const reachedLeads = leads.filter((l) => l.reached).length;
+  const terminLeads = leads.filter(
+    (l) => l.status != null && TERMIN_STATUSES.has(l.status),
+  ).length;
   const closedLeads = leads.filter((l) => l.closedAt != null).length;
 
   const reachabilityRate =
     totalLeads > 0 ? reachedLeads / totalLeads : null;
+  const terminRate = reachedLeads > 0 ? terminLeads / reachedLeads : null;
+  const closingFromTerminRate =
+    terminLeads > 0 ? closedLeads / terminLeads : null;
   const closingRate = totalLeads > 0 ? closedLeads / totalLeads : null;
 
   const avgContactAttempts =
@@ -247,8 +257,11 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
   return {
     totalLeads,
     reachedLeads,
+    terminLeads,
     closedLeads,
     reachabilityRate,
+    terminRate,
+    closingFromTerminRate,
     avgContactAttempts,
     avgHoursToFirstContact,
     closingRate,
@@ -262,6 +275,12 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
     marginAfterOther,
   };
 }
+
+const TERMIN_STATUSES = new Set([
+  "Termin vereinbart",
+  "Angebot/Beratung läuft",
+  "Abschluss",
+]);
 
 export async function listCustomers() {
   return prisma.customer.findMany({
@@ -457,15 +476,134 @@ export async function computeCustomerLeaderboard(params: {
   );
 }
 
+export type ProductKpiRow = {
+  product: string;
+  totalLeads: number;
+  reachedLeads: number;
+  closedLeads: number;
+  reachabilityRate: number | null;
+  closingRate: number | null;
+  revenue: number;
+  leadCosts: number;
+  costPerLead: number | null;
+  profit: number;
+  margin: number | null;
+};
+
+export async function computeProductBreakdown(params: {
+  range: DateRange;
+  customerId: string | null;
+}): Promise<ProductKpiRow[]> {
+  const { range, customerId } = params;
+  const customerClause = customerId ? { customerId } : {};
+
+  const [leads, revenues] = await Promise.all([
+    prisma.lead.findMany({
+      where: {
+        ...customerClause,
+        source: { not: null },
+        createdAt: { gte: range.from, lte: range.to },
+      },
+      select: {
+        source: true,
+        reached: true,
+        closedAt: true,
+      },
+    }),
+    prisma.revenue.findMany({
+      where: {
+        ...customerClause,
+        occurredAt: { gte: range.from, lte: range.to },
+        lead: { is: { source: { not: null } } },
+      },
+      select: { amount: true, lead: { select: { source: true } } },
+    }),
+  ]);
+
+  const stats = new Map<
+    string,
+    {
+      total: number;
+      reached: number;
+      closed: number;
+      revenue: number;
+      leadCosts: number;
+    }
+  >();
+  function s(p: string) {
+    let x = stats.get(p);
+    if (!x) {
+      x = { total: 0, reached: 0, closed: 0, revenue: 0, leadCosts: 0 };
+      stats.set(p, x);
+    }
+    return x;
+  }
+
+  for (const l of leads) {
+    if (!l.source) continue;
+    const x = s(l.source);
+    x.total += 1;
+    if (l.reached) x.reached += 1;
+    if (l.closedAt != null) x.closed += 1;
+  }
+  for (const r of revenues) {
+    const src = r.lead?.source;
+    if (!src) continue;
+    s(src).revenue += decToNumber(r.amount);
+  }
+
+  // Lead-Kosten pro Produkt — wenn Kunden-Filter aktiv, anteilig; sonst
+  // direkt summiert. Wir nutzen computeLeadCosts pro Produkt einmal.
+  for (const p of Array.from(stats.keys())) {
+    const cost = await computeLeadCosts({
+      range,
+      customerId: customerId ?? null,
+      product: p,
+    });
+    s(p).leadCosts = cost;
+  }
+
+  return Array.from(stats.entries())
+    .map(([product, x]) => {
+      const profit = x.revenue - x.leadCosts;
+      return {
+        product,
+        totalLeads: x.total,
+        reachedLeads: x.reached,
+        closedLeads: x.closed,
+        reachabilityRate: x.total > 0 ? x.reached / x.total : null,
+        closingRate: x.total > 0 ? x.closed / x.total : null,
+        revenue: x.revenue,
+        leadCosts: x.leadCosts,
+        costPerLead: x.total > 0 ? x.leadCosts / x.total : null,
+        profit,
+        margin: x.revenue > 0 ? profit / x.revenue : null,
+      };
+    })
+    .sort((a, b) => b.totalLeads - a.totalLeads);
+}
+
 export type Granularity = "day" | "week" | "month";
 
 export type TimeSeriesPoint = {
   bucket: string; // ISO start date "YYYY-MM-DD"
   label: string;
   leads: number;
+  reachedLeads: number;
+  terminLeads: number;
+  closedLeads: number;
+  reachabilityRate: number | null;
+  closingRate: number | null;
+  avgContactAttempts: number | null;
+  avgHoursToFirstContact: number | null;
   revenue: number;
   leadCosts: number;
+  otherCosts: number;
   costPerLead: number | null;
+  profitBeforeOther: number;
+  profitAfterOther: number;
+  marginBeforeOther: number | null;
+  marginAfterOther: number | null;
 };
 
 function pickGranularity(range: DateRange): Granularity {
@@ -511,14 +649,21 @@ export async function computeTimeSeries(params: {
     : {};
   const productCostClause = product ? { product } : {};
 
-  const [leads, revenues, allLeadCosts] = await Promise.all([
+  const [leads, revenues, allLeadCosts, allOtherCosts] = await Promise.all([
     prisma.lead.findMany({
       where: {
         ...customerClause,
         ...productLeadClause,
         createdAt: { gte: range.from, lte: range.to },
       },
-      select: { createdAt: true },
+      select: {
+        createdAt: true,
+        firstContactAt: true,
+        closedAt: true,
+        reached: true,
+        contactAttempts: true,
+        status: true,
+      },
     }),
     prisma.revenue.findMany({
       where: {
@@ -541,39 +686,79 @@ export async function computeTimeSeries(params: {
         occurredAt: true,
       },
     }),
+    // OTHER-Kosten nur wenn kein Produkt-Filter aktiv ist (OTHER ist nicht
+    // produktspezifisch). Bei Customer-Filter ebenfalls bewusst gefiltert.
+    product
+      ? Promise.resolve([] as { amount: unknown; occurredAt: Date }[])
+      : prisma.cost.findMany({
+          where: {
+            ...customerClause,
+            kind: "OTHER",
+            occurredAt: { gte: range.from, lte: range.to },
+          },
+          select: { amount: true, occurredAt: true },
+        }),
   ]);
 
-  // Buckets initialisieren
-  const points = new Map<string, TimeSeriesPoint>();
+  // Buckets initialisieren — pro Bucket halten wir Hilfssummen für
+  // anschließende Mittelwert-Berechnungen.
+  type Accumulator = {
+    point: TimeSeriesPoint;
+    contactSum: number;
+    hoursList: number[];
+  };
+
+  const acc = new Map<string, Accumulator>();
   for (const start of generateBucketStarts(range, granularity)) {
     const key = format(start, "yyyy-MM-dd");
-    points.set(key, {
-      bucket: key,
-      label: formatBucketLabel(start, granularity),
-      leads: 0,
-      revenue: 0,
-      leadCosts: 0,
-      costPerLead: null,
+    acc.set(key, {
+      point: {
+        bucket: key,
+        label: formatBucketLabel(start, granularity),
+        leads: 0,
+        reachedLeads: 0,
+        terminLeads: 0,
+        closedLeads: 0,
+        reachabilityRate: null,
+        closingRate: null,
+        avgContactAttempts: null,
+        avgHoursToFirstContact: null,
+        revenue: 0,
+        leadCosts: 0,
+        otherCosts: 0,
+        costPerLead: null,
+        profitBeforeOther: 0,
+        profitAfterOther: 0,
+        marginBeforeOther: null,
+        marginAfterOther: null,
+      },
+      contactSum: 0,
+      hoursList: [],
     });
   }
 
-  function addToBucket(date: Date, mutate: (p: TimeSeriesPoint) => void) {
+  function bucketFor(date: Date): Accumulator | undefined {
     const start = bucketStartFor(date, granularity);
-    const key = format(start, "yyyy-MM-dd");
-    const p = points.get(key);
-    if (p) mutate(p);
+    return acc.get(format(start, "yyyy-MM-dd"));
   }
 
   for (const l of leads) {
-    addToBucket(l.createdAt, (p) => {
-      p.leads += 1;
-    });
+    const b = bucketFor(l.createdAt);
+    if (!b) continue;
+    b.point.leads += 1;
+    if (l.reached) b.point.reachedLeads += 1;
+    if (l.status && TERMIN_STATUSES.has(l.status)) b.point.terminLeads += 1;
+    if (l.closedAt != null) b.point.closedLeads += 1;
+    b.contactSum += l.contactAttempts;
+    if (l.firstContactAt) {
+      b.hoursList.push(
+        (l.firstContactAt.getTime() - l.createdAt.getTime()) / 1000 / 3600,
+      );
+    }
   }
   for (const r of revenues) {
-    const amount = decToNumber(r.amount);
-    addToBucket(r.occurredAt, (p) => {
-      p.revenue += amount;
-    });
+    const b = bucketFor(r.occurredAt);
+    if (b) b.point.revenue += decToNumber(r.amount);
   }
 
   // Direkte LEAD-Kosten (customerId gesetzt) buchen wir am occurredAt;
@@ -587,10 +772,8 @@ export async function computeTimeSeries(params: {
   );
 
   for (const c of directCosts) {
-    const amount = decToNumber(c.amount);
-    addToBucket(c.occurredAt, (p) => {
-      p.leadCosts += amount;
-    });
+    const b = bucketFor(c.occurredAt);
+    if (b) b.point.leadCosts += decToNumber(c.amount);
   }
 
   if (globalCosts.length > 0) {
@@ -661,21 +844,57 @@ export async function computeTimeSeries(params: {
         day.getTime() <= effectiveEnd.getTime();
         day = addDays(day, 1)
       ) {
-        addToBucket(day, (p) => {
-          p.leadCosts += perDay;
-        });
+        const b = bucketFor(day);
+        if (b) b.point.leadCosts += perDay;
       }
     }
   }
 
-  for (const p of points.values()) {
+  // OTHER-Kosten ebenfalls über die Tage des Monats verteilen — analog Meta.
+  for (const c of allOtherCosts) {
+    const amount = decToNumber(c.amount);
+    if (amount === 0) continue;
+    const monthStart = startOfMonth(c.occurredAt);
+    const monthEnd = endOfMonth(c.occurredAt);
+    const daysInMonth =
+      Math.round(
+        (monthEnd.getTime() - monthStart.getTime()) / (24 * 3600 * 1000),
+      ) + 1;
+    const perDay = amount / daysInMonth;
+    const effectiveStart =
+      monthStart.getTime() > range.from.getTime() ? monthStart : range.from;
+    const effectiveEnd =
+      monthEnd.getTime() < range.to.getTime() ? monthEnd : range.to;
+    for (
+      let day = startOfDay(effectiveStart);
+      day.getTime() <= effectiveEnd.getTime();
+      day = addDays(day, 1)
+    ) {
+      const b = bucketFor(day);
+      if (b) b.point.otherCosts += perDay;
+    }
+  }
+
+  for (const a of acc.values()) {
+    const p = a.point;
+    p.reachabilityRate = p.leads > 0 ? p.reachedLeads / p.leads : null;
+    p.closingRate = p.leads > 0 ? p.closedLeads / p.leads : null;
+    p.avgContactAttempts = p.leads > 0 ? a.contactSum / p.leads : null;
+    p.avgHoursToFirstContact =
+      a.hoursList.length > 0
+        ? a.hoursList.reduce((x, y) => x + y, 0) / a.hoursList.length
+        : null;
     p.costPerLead = p.leads > 0 ? p.leadCosts / p.leads : null;
+    p.profitBeforeOther = p.revenue - p.leadCosts;
+    p.profitAfterOther = p.revenue - p.leadCosts - p.otherCosts;
+    p.marginBeforeOther = p.revenue > 0 ? p.profitBeforeOther / p.revenue : null;
+    p.marginAfterOther = p.revenue > 0 ? p.profitAfterOther / p.revenue : null;
   }
 
   return {
-    points: Array.from(points.values()).sort((a, b) =>
-      a.bucket.localeCompare(b.bucket),
-    ),
+    points: Array.from(acc.values())
+      .map((a) => a.point)
+      .sort((x, y) => x.bucket.localeCompare(y.bucket)),
     granularity,
   };
 }

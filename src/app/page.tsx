@@ -1,17 +1,20 @@
 import { Suspense } from "react";
-import { CustomerLeaderboard } from "@/components/customer-leaderboard";
 import { FilterBar } from "@/components/filter-bar";
+import { FunnelHero } from "@/components/funnel-hero";
 import { KpiCard, type Delta } from "@/components/kpi-card";
+import { PerformanceTable } from "@/components/performance-table";
 import { SyncButton } from "@/components/sync-button";
 import { TrendCharts } from "@/components/trend-charts";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
 import {
   computeCustomerLeaderboard,
   computeKpis,
+  computeProductBreakdown,
   computeTimeSeries,
   listCustomers,
   PRODUCTS,
   type Kpis,
+  type TimeSeriesPoint,
 } from "@/lib/kpis";
 import {
   formatDate,
@@ -50,8 +53,8 @@ export default async function DashboardPage({
       : null;
 
   return (
-    <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-10 sm:px-6 lg:px-8">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-3 py-1 text-xs font-medium text-[color:var(--brand-dark)]">
             <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--brand)]" />
@@ -79,36 +82,20 @@ export default async function DashboardPage({
 
       <Suspense
         fallback={
-          <div className="mt-6 text-sm text-[color:var(--muted)]">Lade Kennzahlen…</div>
+          <div className="mt-6 text-sm text-[color:var(--muted)]">Lade Dashboard…</div>
         }
       >
-        <KpiGrid range={range} customerId={customerId} product={product} />
-      </Suspense>
-
-      <Suspense
-        fallback={
-          <div className="mt-10 text-sm text-[color:var(--muted)]">Lade Trends…</div>
-        }
-      >
-        <TrendsSection
+        <DashboardBody
           range={range}
           customerId={customerId}
           product={product}
         />
       </Suspense>
-
-      <Suspense
-        fallback={
-          <div className="mt-8 text-sm text-[color:var(--muted)]">Lade Buyer-Übersicht…</div>
-        }
-      >
-        <LeaderboardSection range={range} product={product} />
-      </Suspense>
     </main>
   );
 }
 
-async function TrendsSection({
+async function DashboardBody({
   range,
   customerId,
   product,
@@ -117,52 +104,22 @@ async function TrendsSection({
   customerId: string | null;
   product: string | null;
 }) {
-  const { points, granularity } = await computeTimeSeries({
-    range,
-    customerId,
-    product,
-  });
+  const prev = previousRange(range);
+  const [k, p, ts, customerRows, productRows] = await Promise.all([
+    computeKpis({ range, customerId, product }),
+    computeKpis({ range: prev, customerId, product }) as Promise<Kpis>,
+    computeTimeSeries({ range, customerId, product }),
+    computeCustomerLeaderboard({ range, product }),
+    computeProductBreakdown({ range, customerId }),
+  ]);
 
   return (
-    <section className="mt-10">
-      <div className="mb-4">
-        <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--brand)]">
-          Trends
-        </div>
-        <h2 className="mt-1 text-lg font-semibold tracking-tight">
-          Verlauf im Zeitraum
-        </h2>
-      </div>
-      <TrendCharts points={points} granularity={granularity} />
-    </section>
-  );
-}
-
-async function LeaderboardSection({
-  range,
-  product,
-}: {
-  range: { from: Date; to: Date };
-  product: string | null;
-}) {
-  const rows = await computeCustomerLeaderboard({ range, product });
-
-  return (
-    <section className="mt-10">
-      <div className="mb-4">
-        <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--brand)]">
-          Buyer-Vergleich
-        </div>
-        <h2 className="mt-1 text-lg font-semibold tracking-tight">
-          Wer performt — und wer kostet dich?
-        </h2>
-        <p className="mt-1 text-xs text-[color:var(--muted)]">
-          Lead-Kosten enthalten den anteiligen Meta-Spend pro Buyer (nach
-          Lead-Anteil pro Monat × Produkt).
-        </p>
-      </div>
-      <CustomerLeaderboard rows={rows} />
-    </section>
+    <div className="mt-6 space-y-8">
+      <FunnelHero kpis={k} />
+      <KpiGrid kpis={k} prev={p} points={ts.points} customerId={customerId} />
+      <PerformanceTable customerRows={customerRows} productRows={productRows} />
+      <TrendCharts points={ts.points} granularity={ts.granularity} />
+    </div>
   );
 }
 
@@ -210,10 +167,9 @@ async function FiltersSection({
   );
 }
 
-// Δ-Berechnung: relative Veränderung gegenüber Vorperiode.
-// null, wenn Vorperiode 0 ist (Division durch 0) oder beide Werte nicht
-// vergleichbar. Bei Raten (z.B. closingRate) liefert sie ebenfalls
-// relative Änderung.
+// Δ-Berechnung: relative Veränderung gegenüber Vorperiode. Bei Raten
+// (closingRate etc.) ist es ebenfalls relative Änderung — Prozentpunkte
+// wären präziser, aber für Sparkline-Cards genügt eine Richtungsanzeige.
 function delta(
   current: number | null,
   previous: number | null,
@@ -227,76 +183,78 @@ function delta(
   return { pct: (current - previous) / Math.abs(previous), lowerIsBetter };
 }
 
-async function KpiGrid({
-  range,
+function KpiGrid({
+  kpis: k,
+  prev: p,
+  points,
   customerId,
-  product,
 }: {
-  range: { from: Date; to: Date };
+  kpis: Kpis;
+  prev: Kpis;
+  points: TimeSeriesPoint[];
   customerId: string | null;
-  product: string | null;
 }) {
-  const prev = previousRange(range);
-  const [k, p] = await Promise.all([
-    computeKpis({ range, customerId, product }),
-    computeKpis({ range: prev, customerId, product }) as Promise<Kpis>,
-  ]);
-
   return (
-    <div className="mt-8 space-y-8">
-      <KpiSection
-        eyebrow="Lead-Performance"
-        title="Wie performt dein Funnel"
-      >
+    <div className="space-y-6">
+      <KpiSection eyebrow="Sektion · Funnel" title="Wie performt dein Funnel">
         <KpiCard
           label="Erreichbarkeitsquote"
           value={formatPercent(k.reachabilityRate)}
           hint={`${k.reachedLeads} von ${k.totalLeads} Leads erreicht`}
           delta={delta(k.reachabilityRate, p.reachabilityRate)}
+          sparkline={{ points, dataKey: "reachabilityRate" }}
         />
         <KpiCard
           label="Kontaktversuche / Lead"
           value={formatNumber(k.avgContactAttempts)}
           hint="Durchschnitt im Zeitraum"
           delta={delta(k.avgContactAttempts, p.avgContactAttempts, true)}
+          sparkline={{ points, dataKey: "avgContactAttempts" }}
         />
         <KpiCard
           label="Zeit bis Erstkontakt"
           value={formatDuration(k.avgHoursToFirstContact)}
-          hint="Durchschnitt"
+          hint="Median über Zeitraum"
           delta={delta(k.avgHoursToFirstContact, p.avgHoursToFirstContact, true)}
+          sparkline={{ points, dataKey: "avgHoursToFirstContact" }}
         />
         <KpiCard
           label="Closing Rate"
           value={formatPercent(k.closingRate)}
           hint={`${k.closedLeads} von ${k.totalLeads} abgeschlossen`}
           delta={delta(k.closingRate, p.closingRate)}
+          sparkline={{ points, dataKey: "closingRate" }}
         />
       </KpiSection>
 
       <KpiSection
-        eyebrow="Wirtschaftlichkeit"
+        eyebrow="Sektion · Wirtschaftlichkeit"
         title="Umsatz & Profit"
       >
         <KpiCard
           label="Umsatz"
           value={formatEUR(k.revenue)}
+          hint="Brutto im Zeitraum"
           tone="positive"
           delta={delta(k.revenue, p.revenue)}
+          sparkline={{ points, dataKey: "revenue" }}
         />
         <KpiCard
           label="Cost per Lead"
           value={formatEUR(k.costPerLead)}
           hint={`Lead-Kosten gesamt: ${formatEUR(k.leadCosts)}${
-            customerId ? " (anteilig nach Lead-Anteil)" : ""
+            customerId ? " (anteilig)" : ""
           }`}
           delta={delta(k.costPerLead, p.costPerLead, true)}
+          sparkline={{ points, dataKey: "costPerLead" }}
         />
         <KpiCard
           label="Gewinn vor weiteren Kosten"
           value={formatEUR(k.profitBeforeOther)}
+          hint="Vor Werbe- & Toolkosten"
           tone={k.profitBeforeOther >= 0 ? "positive" : "negative"}
           delta={delta(k.profitBeforeOther, p.profitBeforeOther)}
+          sparkline={{ points, dataKey: "profitBeforeOther" }}
         />
         <KpiCard
           label="Gewinn nach weiteren Kosten"
@@ -304,44 +262,53 @@ async function KpiGrid({
           hint={`Weitere Kosten: ${formatEUR(k.otherCosts)}`}
           tone={k.profitAfterOther >= 0 ? "positive" : "negative"}
           delta={delta(k.profitAfterOther, p.profitAfterOther)}
+          sparkline={{ points, dataKey: "profitAfterOther" }}
         />
       </KpiSection>
 
       <KpiSection
-        eyebrow="Margen & Volumen"
+        eyebrow="Sektion · Margen & Volumen"
         title="Effizienz im Überblick"
       >
         <KpiCard
           label="Marge vor weiteren Kosten"
           value={formatPercent(k.marginBeforeOther)}
+          hint="Operativ vor Fixkosten"
           tone={
             k.marginBeforeOther != null && k.marginBeforeOther >= 0
               ? "positive"
               : "negative"
           }
           delta={delta(k.marginBeforeOther, p.marginBeforeOther)}
+          sparkline={{ points, dataKey: "marginBeforeOther" }}
         />
         <KpiCard
           label="Marge nach weiteren Kosten"
           value={formatPercent(k.marginAfterOther)}
+          hint="Nach Werbe- & Toolkosten"
           tone={
             k.marginAfterOther != null && k.marginAfterOther >= 0
               ? "positive"
               : "negative"
           }
           delta={delta(k.marginAfterOther, p.marginAfterOther)}
+          sparkline={{ points, dataKey: "marginAfterOther" }}
         />
         <KpiCard
           label="Leads gesamt"
           value={formatNumber(k.totalLeads)}
+          hint="Volumen im Zeitraum"
           tone="neutral"
           delta={delta(k.totalLeads, p.totalLeads)}
+          sparkline={{ points, dataKey: "leads", tone: "neutral" }}
         />
         <KpiCard
           label="Abschlüsse"
           value={formatNumber(k.closedLeads)}
+          hint="Closings im Zeitraum"
           tone="neutral"
           delta={delta(k.closedLeads, p.closedLeads)}
+          sparkline={{ points, dataKey: "closedLeads", tone: "neutral" }}
         />
       </KpiSection>
     </div>
@@ -359,11 +326,11 @@ function KpiSection({
 }) {
   return (
     <section>
-      <div className="mb-4">
-        <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--brand)]">
+      <div className="mb-3">
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--brand)]">
           {eyebrow}
         </div>
-        <h2 className="mt-1 text-lg font-semibold tracking-tight">{title}</h2>
+        <h2 className="mt-0.5 text-lg font-semibold tracking-tight">{title}</h2>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {children}
