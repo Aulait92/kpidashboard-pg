@@ -106,7 +106,7 @@ export default async function DashboardPage({
                 customTo={sp.to}
               />
             </Suspense>
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex items-center justify-end gap-1.5 sm:gap-2">
               <NotificationsButton />
               <UserMenu />
             </div>
