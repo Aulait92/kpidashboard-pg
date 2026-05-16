@@ -54,7 +54,7 @@ export default async function DashboardPage({
 
   return (
     <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-3 py-1 text-xs font-medium text-[color:var(--brand-dark)]">
             <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--brand)]" />
@@ -67,18 +67,23 @@ export default async function DashboardPage({
             Zeitraum: {formatDate(range.from)} – {formatDate(range.to)}
           </p>
         </div>
-        <SyncButton />
+        <div className="flex flex-wrap items-center gap-2">
+          <Suspense
+            fallback={
+              <div className="text-xs text-[color:var(--muted)]">Lade Filter…</div>
+            }
+          >
+            <FiltersSection
+              currentRange={rangeKey}
+              currentCustomerId={customerId}
+              currentProduct={product}
+              customFrom={sp.from}
+              customTo={sp.to}
+            />
+          </Suspense>
+          <SyncButton />
+        </div>
       </header>
-
-      <Suspense fallback={<div className="text-sm text-[color:var(--muted)]">Lade Filter…</div>}>
-        <FiltersSection
-          currentRange={rangeKey}
-          currentCustomerId={customerId}
-          currentProduct={product}
-          customFrom={sp.from}
-          customTo={sp.to}
-        />
-      </Suspense>
 
       <Suspense
         fallback={
@@ -154,16 +159,14 @@ async function FiltersSection({
 }) {
   const customers = await listCustomers();
   return (
-    <div className="mb-6">
-      <FilterBar
-        customers={customers}
-        currentRange={currentRange}
-        currentCustomerId={currentCustomerId}
-        currentProduct={currentProduct}
-        customFrom={customFrom}
-        customTo={customTo}
-      />
-    </div>
+    <FilterBar
+      customers={customers}
+      currentRange={currentRange}
+      currentCustomerId={currentCustomerId}
+      currentProduct={currentProduct}
+      customFrom={customFrom}
+      customTo={customTo}
+    />
   );
 }
 

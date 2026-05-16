@@ -2,9 +2,13 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
+import {
+  Dropdown,
+  DropdownDivider,
+  DropdownItem,
+} from "@/components/dropdown";
 import { RANGE_LABELS, type RangeKey } from "@/lib/date-ranges";
 import { PRODUCTS } from "@/lib/products";
-import { cn } from "@/lib/utils";
 
 const RANGE_ORDER: Exclude<RangeKey, "custom">[] = [
   "today",
@@ -54,111 +58,126 @@ export function FilterBar({
     });
   }
 
+  const rangeLabel =
+    currentRange === "custom"
+      ? customFrom && customTo
+        ? `${customFrom} – ${customTo}`
+        : "Eigener Zeitraum"
+      : RANGE_LABELS[currentRange];
+
+  const customerName =
+    currentCustomerId
+      ? customers.find((c) => c.id === currentCustomerId)?.name ?? "Alle Kunden"
+      : "Alle Kunden";
+
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-[color:var(--border)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
-      <div className="flex flex-wrap items-center gap-2">
-        {RANGE_ORDER.map((key) => {
-          const active = currentRange === key;
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => update({ range: key })}
-              className={cn(
-                "rounded-full border px-3.5 py-1.5 text-sm font-medium transition",
-                active
-                  ? "border-[color:var(--brand)] bg-[color:var(--brand)] text-white shadow-sm hover:bg-[color:var(--brand-dark)]"
-                  : "border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]",
-              )}
-            >
-              {RANGE_LABELS[key]}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2 border-t border-[color:var(--border)] pt-4">
-        <span className="mr-1 text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
-          Produkt
-        </span>
-        <button
-          type="button"
-          onClick={() => update({ product: null })}
-          className={cn(
-            "rounded-full border px-3.5 py-1.5 text-sm font-medium transition",
-            currentProduct === null
-              ? "border-[color:var(--brand)] bg-[color:var(--brand)] text-white shadow-sm hover:bg-[color:var(--brand-dark)]"
-              : "border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]",
-          )}
-        >
-          Alle
-        </button>
-        {PRODUCTS.map((p) => {
-          const active = currentProduct === p;
-          return (
-            <button
-              key={p}
-              type="button"
-              onClick={() => update({ product: p })}
-              className={cn(
-                "rounded-full border px-3.5 py-1.5 text-sm font-medium transition",
-                active
-                  ? "border-[color:var(--brand)] bg-[color:var(--brand)] text-white shadow-sm hover:bg-[color:var(--brand-dark)]"
-                  : "border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]",
-              )}
-            >
-              {p}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="flex flex-wrap items-end gap-4 border-t border-[color:var(--border)] pt-4">
-        <label className="flex flex-col text-sm">
-          <span className="mb-1.5 text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
-            Kunde
-          </span>
-          <select
-            value={currentCustomerId ?? ""}
-            onChange={(e) =>
-              update({ customerId: e.target.value === "" ? null : e.target.value })
-            }
-            className="min-w-[220px] rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm transition focus:border-[color:var(--brand)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-soft)]"
-          >
-            <option value="">Alle Kunden</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
+    <div className="flex flex-wrap items-center gap-2">
+      <Dropdown label="Zeitraum" value={rangeLabel}>
+        {(close) => (
+          <>
+            {RANGE_ORDER.map((key) => (
+              <DropdownItem
+                key={key}
+                active={currentRange === key}
+                onClick={() => {
+                  update({ range: key });
+                  close();
+                }}
+              >
+                {RANGE_LABELS[key]}
+              </DropdownItem>
             ))}
-          </select>
-        </label>
+            <DropdownDivider />
+            <div className="px-2 pt-1 pb-2">
+              <div className="mb-1.5 px-1 text-[11px] uppercase tracking-wide text-[color:var(--muted)]">
+                Eigener Zeitraum
+              </div>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="date"
+                  value={customFrom ?? ""}
+                  onChange={(e) =>
+                    update({ range: "custom", from: e.target.value })
+                  }
+                  className="min-w-0 flex-1 rounded-md border border-[color:var(--border)] bg-white px-2 py-1 text-xs focus:border-[color:var(--brand)] focus:outline-none"
+                />
+                <span className="text-[color:var(--muted)]">–</span>
+                <input
+                  type="date"
+                  value={customTo ?? ""}
+                  onChange={(e) =>
+                    update({ range: "custom", to: e.target.value })
+                  }
+                  className="min-w-0 flex-1 rounded-md border border-[color:var(--border)] bg-white px-2 py-1 text-xs focus:border-[color:var(--brand)] focus:outline-none"
+                />
+              </div>
+            </div>
+          </>
+        )}
+      </Dropdown>
 
-        <fieldset className="flex flex-col">
-          <legend className="mb-1.5 text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
-            Eigener Zeitraum
-          </legend>
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              type="date"
-              value={customFrom ?? ""}
-              onChange={(e) => update({ range: "custom", from: e.target.value })}
-              className="rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm transition focus:border-[color:var(--brand)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-soft)]"
-            />
-            <span className="text-[color:var(--muted)]">–</span>
-            <input
-              type="date"
-              value={customTo ?? ""}
-              onChange={(e) => update({ range: "custom", to: e.target.value })}
-              className="rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm transition focus:border-[color:var(--brand)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-soft)]"
-            />
+      <Dropdown label="Produkt" value={currentProduct ?? "Alle"}>
+        {(close) => (
+          <>
+            <DropdownItem
+              active={currentProduct === null}
+              onClick={() => {
+                update({ product: null });
+                close();
+              }}
+            >
+              Alle
+            </DropdownItem>
+            {PRODUCTS.map((p) => (
+              <DropdownItem
+                key={p}
+                active={currentProduct === p}
+                onClick={() => {
+                  update({ product: p });
+                  close();
+                }}
+              >
+                {p}
+              </DropdownItem>
+            ))}
+          </>
+        )}
+      </Dropdown>
+
+      <Dropdown label="Kunde" value={customerName}>
+        {(close) => (
+          <div className="max-h-72 overflow-y-auto">
+            <DropdownItem
+              active={currentCustomerId === null}
+              onClick={() => {
+                update({ customerId: null });
+                close();
+              }}
+            >
+              Alle Kunden
+            </DropdownItem>
+            {customers.length > 0 ? <DropdownDivider /> : null}
+            {customers.map((c) => (
+              <DropdownItem
+                key={c.id}
+                active={currentCustomerId === c.id}
+                onClick={() => {
+                  update({ customerId: c.id });
+                  close();
+                }}
+              >
+                {c.name}
+              </DropdownItem>
+            ))}
           </div>
-        </fieldset>
+        )}
+      </Dropdown>
 
-        {isPending ? (
-          <span className="text-xs text-[color:var(--brand)]">Aktualisiere…</span>
-        ) : null}
-      </div>
+      {isPending ? (
+        <span className="text-[11px] text-[color:var(--brand)]">
+          Aktualisiere…
+        </span>
+      ) : null}
     </div>
   );
 }
