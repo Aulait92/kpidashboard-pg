@@ -1,8 +1,5 @@
-import { LogOut, Users } from "lucide-react";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { logoutAction } from "@/app/login/actions";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { FilterBar } from "@/components/filter-bar";
 import { FunnelHero } from "@/components/funnel-hero";
@@ -16,6 +13,7 @@ import { PnLStatement } from "@/components/pnl-statement";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { SpeedToLeadCard } from "@/components/speed-to-lead-card";
 import { TrendCharts } from "@/components/trend-charts";
+import { UserMenu } from "@/components/user-menu";
 import { getCurrentSession } from "@/lib/auth";
 import { computeMonthlyForecast } from "@/lib/forecast";
 import { computeMonthlyGoalProgress } from "@/lib/goals";
@@ -94,7 +92,7 @@ export default async function DashboardPage({
               Zeitraum: {formatDate(range.from)} – {formatDate(range.to)}
             </p>
           </div>
-          <div className="flex flex-wrap items-start gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-2">
             <Suspense
               fallback={
                 <div className="text-xs text-[color:var(--muted)]">Lade Filter…</div>
@@ -108,27 +106,10 @@ export default async function DashboardPage({
                 customTo={sp.to}
               />
             </Suspense>
-            <NotificationsButton />
-            <Link
-              href="/admin/buyers"
-              aria-label="Buyer verwalten"
-              title="Buyer verwalten"
-              className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm transition hover:border-[color:var(--brand)] sm:min-h-0 sm:py-1.5"
-            >
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Buyer</span>
-            </Link>
-            <form action={logoutAction}>
-              <button
-                type="submit"
-                aria-label="Abmelden"
-                title="Abmelden"
-                className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm transition hover:border-[color:var(--brand)] sm:min-h-0 sm:py-1.5"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Abmelden</span>
-              </button>
-            </form>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <NotificationsButton />
+              <UserMenu />
+            </div>
           </div>
         </header>
 

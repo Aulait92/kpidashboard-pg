@@ -87,7 +87,7 @@ export default async function BuyerPage({
               Zeitraum: {formatDate(range.from)} – {formatDate(range.to)}
             </p>
           </div>
-          <div className="flex flex-wrap items-start gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-2">
             <BuyerFilterBar
               currentRange={rangeKey}
               customFrom={sp.from}
