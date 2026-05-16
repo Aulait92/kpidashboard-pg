@@ -159,7 +159,7 @@ export function PerformanceTable({
       <div className="flex flex-wrap items-baseline justify-between gap-2 px-5 pt-5">
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--brand)]">
-            Drilldown
+            Leaderboard
           </div>
           <h2 className="mt-0.5 text-lg font-semibold tracking-tight">
             {mode === "customer" ? "Performance pro Kunde" : "Performance pro Produkt"}

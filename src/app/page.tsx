@@ -280,7 +280,7 @@ function KpiGrid({
           sparkline={{ points, dataKey: "revenue" }}
         />
         <KpiCard
-          label="Cost per Lead"
+          label="Kosten / Lead"
           value={formatEUR(k.costPerLead)}
           hint={`Lead-Kosten gesamt: ${formatEUR(k.leadCosts)}${
             customerId ? " (anteilig)" : ""
@@ -289,20 +289,30 @@ function KpiGrid({
           sparkline={{ points, dataKey: "costPerLead" }}
         />
         <KpiCard
-          label="Gewinn vor weiteren Kosten"
-          value={formatEUR(k.profitBeforeOther)}
-          hint="Vor Werbe- & Toolkosten"
-          tone={k.profitBeforeOther >= 0 ? "positive" : "negative"}
-          delta={delta(k.profitBeforeOther, p.profitBeforeOther)}
-          sparkline={{ points, dataKey: "profitBeforeOther" }}
+          label="Kosten / Termin"
+          value={formatEUR(
+            k.terminLeads > 0 ? k.leadCosts / k.terminLeads : null,
+          )}
+          hint={`Aus ${formatNumber(k.terminLeads)} Terminen`}
+          delta={delta(
+            k.terminLeads > 0 ? k.leadCosts / k.terminLeads : null,
+            p.terminLeads > 0 ? p.leadCosts / p.terminLeads : null,
+            true,
+          )}
+          sparkline={{ points, dataKey: "costPerTermin" }}
         />
         <KpiCard
-          label="Gewinn nach weiteren Kosten"
-          value={formatEUR(k.profitAfterOther)}
-          hint={`Weitere Kosten: ${formatEUR(k.otherCosts)}`}
-          tone={k.profitAfterOther >= 0 ? "positive" : "negative"}
-          delta={delta(k.profitAfterOther, p.profitAfterOther)}
-          sparkline={{ points, dataKey: "profitAfterOther" }}
+          label="Kosten / Abschluss"
+          value={formatEUR(
+            k.closedLeads > 0 ? k.leadCosts / k.closedLeads : null,
+          )}
+          hint={`Aus ${formatNumber(k.closedLeads)} Abschlüssen`}
+          delta={delta(
+            k.closedLeads > 0 ? k.leadCosts / k.closedLeads : null,
+            p.closedLeads > 0 ? p.leadCosts / p.closedLeads : null,
+            true,
+          )}
+          sparkline={{ points, dataKey: "costPerClosed" }}
         />
       </KpiSection>
 
@@ -335,30 +345,20 @@ function KpiGrid({
           sparkline={{ points, dataKey: "marginAfterOther" }}
         />
         <KpiCard
-          label="Kosten / Termin"
-          value={formatEUR(
-            k.terminLeads > 0 ? k.leadCosts / k.terminLeads : null,
-          )}
-          hint={`Aus ${formatNumber(k.terminLeads)} Terminen`}
-          delta={delta(
-            k.terminLeads > 0 ? k.leadCosts / k.terminLeads : null,
-            p.terminLeads > 0 ? p.leadCosts / p.terminLeads : null,
-            true,
-          )}
-          sparkline={{ points, dataKey: "costPerTermin" }}
+          label="Gewinn vor weiteren Kosten"
+          value={formatEUR(k.profitBeforeOther)}
+          hint="Vor Werbe- & Toolkosten"
+          tone={k.profitBeforeOther >= 0 ? "positive" : "negative"}
+          delta={delta(k.profitBeforeOther, p.profitBeforeOther)}
+          sparkline={{ points, dataKey: "profitBeforeOther" }}
         />
         <KpiCard
-          label="Kosten / Abschluss"
-          value={formatEUR(
-            k.closedLeads > 0 ? k.leadCosts / k.closedLeads : null,
-          )}
-          hint={`Aus ${formatNumber(k.closedLeads)} Abschlüssen`}
-          delta={delta(
-            k.closedLeads > 0 ? k.leadCosts / k.closedLeads : null,
-            p.closedLeads > 0 ? p.leadCosts / p.closedLeads : null,
-            true,
-          )}
-          sparkline={{ points, dataKey: "costPerClosed" }}
+          label="Gewinn nach weiteren Kosten"
+          value={formatEUR(k.profitAfterOther)}
+          hint={`Weitere Kosten: ${formatEUR(k.otherCosts)}`}
+          tone={k.profitAfterOther >= 0 ? "positive" : "negative"}
+          delta={delta(k.profitAfterOther, p.profitAfterOther)}
+          sparkline={{ points, dataKey: "profitAfterOther" }}
         />
       </KpiSection>
     </div>
