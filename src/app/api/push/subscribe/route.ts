@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 type SubscribeBody = {
@@ -7,6 +8,11 @@ type SubscribeBody = {
 };
 
 export async function POST(req: Request) {
+  const session = await getCurrentSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const userAgent = req.headers.get("user-agent") ?? null;
 
   let body: SubscribeBody;
@@ -31,11 +37,13 @@ export async function POST(req: Request) {
       p256dh: keys.p256dh,
       auth: keys.auth,
       userAgent,
+      userId: session.userId,
     },
     update: {
       p256dh: keys.p256dh,
       auth: keys.auth,
       userAgent,
+      userId: session.userId,
       lastUsedAt: new Date(),
     },
   });

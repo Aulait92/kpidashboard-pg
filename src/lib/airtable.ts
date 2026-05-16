@@ -206,6 +206,14 @@ export type NewSale = {
   airtableId: string;
 };
 
+export type NewLead = {
+  buyer: string;
+  customerId: string;
+  product: string;
+  name: string | null;
+  airtableId: string;
+};
+
 export type SyncResult = {
   tables: { name: string; source: string; records: number }[];
   customers: number;
@@ -213,6 +221,7 @@ export type SyncResult = {
   revenues: number;
   costs: number;
   newSales: NewSale[];
+  newLeads: NewLead[];
   errors: string[];
 };
 
@@ -224,6 +233,7 @@ export async function syncAirtable(): Promise<SyncResult> {
     revenues: 0,
     costs: 0,
     newSales: [],
+    newLeads: [],
     errors: [],
   };
 
@@ -318,6 +328,15 @@ export async function syncAirtable(): Promise<SyncResult> {
 
         const customerId = await getCustomerId(buyer);
 
+        // Vor dem Upsert prüfen, ob der Lead schon existiert — nur dann
+        // weiß die Sync-Pipeline, dass der Lead neu ist und einen Push
+        // auslösen muss.
+        const existingLead = await prisma.lead.findUnique({
+          where: { airtableId: rec.id },
+          select: { id: true },
+        });
+        const isNewLead = !existingLead;
+
         const lead = await prisma.lead.upsert({
           where: { airtableId: rec.id },
           create: {
@@ -381,6 +400,15 @@ export async function syncAirtable(): Promise<SyncResult> {
         }
 
         result.leads += 1;
+        if (isNewLead) {
+          result.newLeads.push({
+            buyer,
+            customerId,
+            product: table.source,
+            name,
+            airtableId: rec.id,
+          });
+        }
         // billed-Flag derzeit nicht gesondert gespeichert; Umsatz wird laut
         // Vereinbarung bereits bei Lead-Übergabe gezählt.
         void billed;

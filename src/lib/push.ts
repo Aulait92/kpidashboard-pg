@@ -20,25 +20,17 @@ export type PushPayload = {
   tag?: string;
 };
 
-// Verschickt eine Benachrichtigung an alle gespeicherten Subscriptions.
-// Subscriptions, die das Push-Gateway als 404/410 abweist, werden gelöscht
-// (Device deregistriert die PWA oder Subscription abgelaufen).
-export async function sendToAll(
-  payload: PushPayload,
-): Promise<{ sent: number; removed: number; errors: string[] }> {
-  if (!configure()) {
-    return {
-      sent: 0,
-      removed: 0,
-      errors: ["VAPID-Schlüssel nicht konfiguriert"],
-    };
-  }
+type SendOutcome = { sent: number; removed: number; errors: string[] };
 
-  const subs = await prisma.pushSubscription.findMany();
+// Niedrig-Level: schickt Payload an exakt diese Subscriptions.
+// Beendete Endpunkte (404/410) werden direkt aufgeräumt.
+async function sendToSubscriptions(
+  subs: { id: string; endpoint: string; p256dh: string; auth: string }[],
+  payload: PushPayload,
+): Promise<SendOutcome> {
   const errors: string[] = [];
   let sent = 0;
   let removed = 0;
-
   for (const sub of subs) {
     try {
       await webpush.sendNotification(
@@ -63,6 +55,64 @@ export async function sendToAll(
       }
     }
   }
-
   return { sent, removed, errors };
+}
+
+// An alle Admin-User. Legacy-Subscriptions mit userId=NULL werden hier
+// mitbehandelt (vor der Auth-Einführung gab's nur den Admin).
+export async function sendToAdmins(
+  payload: PushPayload,
+): Promise<SendOutcome> {
+  if (!configure()) {
+    return { sent: 0, removed: 0, errors: ["VAPID nicht konfiguriert."] };
+  }
+  const adminIds = (
+    await prisma.user.findMany({
+      where: { role: "ADMIN" },
+      select: { id: true },
+    })
+  ).map((u) => u.id);
+
+  const subs = await prisma.pushSubscription.findMany({
+    where: {
+      OR: [{ userId: { in: adminIds } }, { userId: null }],
+    },
+  });
+  return sendToSubscriptions(subs, payload);
+}
+
+// An alle Buyer-User eines bestimmten Kunden.
+export async function sendToBuyersOfCustomer(
+  customerId: string,
+  payload: PushPayload,
+): Promise<SendOutcome> {
+  if (!configure()) {
+    return { sent: 0, removed: 0, errors: ["VAPID nicht konfiguriert."] };
+  }
+  const buyerIds = (
+    await prisma.user.findMany({
+      where: { role: "BUYER", customerId },
+      select: { id: true },
+    })
+  ).map((u) => u.id);
+  if (buyerIds.length === 0) return { sent: 0, removed: 0, errors: [] };
+
+  const subs = await prisma.pushSubscription.findMany({
+    where: { userId: { in: buyerIds } },
+  });
+  return sendToSubscriptions(subs, payload);
+}
+
+// Test-Endpoint: an Subscriptions des aktuell eingeloggten Users.
+export async function sendToUser(
+  userId: string,
+  payload: PushPayload,
+): Promise<SendOutcome> {
+  if (!configure()) {
+    return { sent: 0, removed: 0, errors: ["VAPID nicht konfiguriert."] };
+  }
+  const subs = await prisma.pushSubscription.findMany({
+    where: { userId },
+  });
+  return sendToSubscriptions(subs, payload);
 }

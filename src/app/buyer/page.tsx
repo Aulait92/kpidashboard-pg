@@ -10,10 +10,13 @@ import {
 import { FunnelHero } from "@/components/funnel-hero";
 import { KpiCard, type Delta } from "@/components/kpi-card";
 import { LiveUpdated } from "@/components/live-updated";
+import { MonthlyForecast } from "@/components/monthly-forecast";
 import { PullToRefresh } from "@/components/pull-to-refresh";
+import { SpeedToLeadCard } from "@/components/speed-to-lead-card";
 import { logoutAction } from "@/app/login/actions";
 import { getCurrentSession } from "@/lib/auth";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
+import { computeMonthlyForecast } from "@/lib/forecast";
 import {
   computeCustomerLeaderboard,
   computeKpis,
@@ -21,6 +24,7 @@ import {
   type Kpis,
   type TimeSeriesPoint,
 } from "@/lib/kpis";
+import { computeSpeedToLeadAnalysis } from "@/lib/speed-to-lead";
 import {
   formatDate,
   formatDuration,
@@ -137,7 +141,8 @@ async function BuyerDashboardBody({
   range: { from: Date; to: Date };
 }) {
   const prev = previousRange(range);
-  const [k, p, ts, leadRows, leaderboardRows] = await Promise.all([
+  const [k, p, ts, leadRows, leaderboardRows, speedAnalysis, forecast] =
+    await Promise.all([
     computeKpis({ range, customerId, product: null }) as Promise<Kpis>,
     computeKpis({ range: prev, customerId, product: null }) as Promise<Kpis>,
     computeTimeSeries({ range, customerId, product: null }),
@@ -163,6 +168,8 @@ async function BuyerDashboardBody({
       },
     }),
     computeCustomerLeaderboard({ range, product: null }),
+    computeSpeedToLeadAnalysis({ range, customerId }),
+    computeMonthlyForecast({ customerId }),
   ]);
 
   const leads: BuyerLeadRow[] = leadRows.map((l) => ({
@@ -180,6 +187,10 @@ async function BuyerDashboardBody({
   return (
     <div className="mt-6 space-y-6">
       <FunnelHero kpis={k} />
+
+      <MonthlyForecast forecast={forecast} />
+
+      <SpeedToLeadCard data={speedAnalysis} />
 
       <section>
         <div className="mb-3">
