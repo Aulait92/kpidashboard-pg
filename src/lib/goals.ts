@@ -120,7 +120,12 @@ export async function computeMonthlyGoalProgress(params: {
     differenceInCalendarDays(now, monthStart) + 1,
   );
   const daysTotal = differenceInCalendarDays(monthEnd, monthStart) + 1;
-  const paceFraction = daysElapsed / daysTotal;
+  // Pace nicht über Kalender-Tage rechnen, sondern über exakt vergangene
+  // Zeit: mitten am Tag X soll der Sollwert auch nur "halbtags-X" sein,
+  // nicht "Ende-Tag-X". Sonst wirkt der Pace eine ganze Tagesportion zu hoch.
+  const monthMs = Math.max(1, monthEnd.getTime() - monthStart.getTime());
+  const elapsedMs = Math.max(0, now.getTime() - monthStart.getTime());
+  const paceFraction = Math.min(1, elapsedMs / monthMs);
 
   function buildVolumeRow(
     key: GoalKey,
