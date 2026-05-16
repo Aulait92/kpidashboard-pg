@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AutoRefresh } from "@/components/auto-refresh";
+import { BuyerComparison } from "@/components/buyer-comparison";
 import { BuyerFilterBar } from "@/components/buyer-filter-bar";
 import {
   BuyerLeadsTable,
@@ -14,6 +15,7 @@ import { logoutAction } from "@/app/login/actions";
 import { getCurrentSession } from "@/lib/auth";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
 import {
+  computeCustomerLeaderboard,
   computeKpis,
   computeTimeSeries,
   type Kpis,
@@ -135,7 +137,7 @@ async function BuyerDashboardBody({
   range: { from: Date; to: Date };
 }) {
   const prev = previousRange(range);
-  const [k, p, ts, leadRows] = await Promise.all([
+  const [k, p, ts, leadRows, leaderboardRows] = await Promise.all([
     computeKpis({ range, customerId, product: null }) as Promise<Kpis>,
     computeKpis({ range: prev, customerId, product: null }) as Promise<Kpis>,
     computeTimeSeries({ range, customerId, product: null }),
@@ -160,6 +162,7 @@ async function BuyerDashboardBody({
         },
       },
     }),
+    computeCustomerLeaderboard({ range, product: null }),
   ]);
 
   const leads: BuyerLeadRow[] = leadRows.map((l) => ({
@@ -257,23 +260,36 @@ async function BuyerDashboardBody({
             )}
           />
           <KpiCard
-            label="Termine"
-            value={formatNumber(k.terminLeads)}
-            tone="neutral"
-            hint="Aus Erreicht weitergekommen"
-            delta={delta(k.terminLeads, p.terminLeads)}
-            sparkline={{ points: ts.points, dataKey: "terminLeads", tone: "neutral" }}
+            label="Kosten / Termin"
+            value={formatEUR(
+              k.terminLeads > 0 ? k.revenue / k.terminLeads : null,
+            )}
+            hint={`Aus ${formatNumber(k.terminLeads)} Terminen`}
+            delta={delta(
+              k.terminLeads > 0 ? k.revenue / k.terminLeads : null,
+              p.terminLeads > 0 ? p.revenue / p.terminLeads : null,
+              true,
+            )}
           />
           <KpiCard
-            label="Abschlüsse"
-            value={formatNumber(k.closedLeads)}
-            tone="neutral"
-            hint="Closings im Zeitraum"
-            delta={delta(k.closedLeads, p.closedLeads)}
-            sparkline={{ points: ts.points, dataKey: "closedLeads", tone: "neutral" }}
+            label="Kosten / Abschluss"
+            value={formatEUR(
+              k.closedLeads > 0 ? k.revenue / k.closedLeads : null,
+            )}
+            hint={`Aus ${formatNumber(k.closedLeads)} Abschlüssen`}
+            delta={delta(
+              k.closedLeads > 0 ? k.revenue / k.closedLeads : null,
+              p.closedLeads > 0 ? p.revenue / p.closedLeads : null,
+              true,
+            )}
           />
         </div>
       </section>
+
+      <BuyerComparison
+        rows={leaderboardRows}
+        selfCustomerId={customerId}
+      />
 
       <BuyerLeadsTable leads={leads} />
     </div>

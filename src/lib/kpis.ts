@@ -295,9 +295,11 @@ export type CustomerKpiRow = {
   customerName: string;
   totalLeads: number;
   reachedLeads: number;
+  terminLeads: number;
   closedLeads: number;
   reachabilityRate: number | null;
   closingRate: number | null;
+  avgHoursToFirstContact: number | null;
   revenue: number;
   leadCosts: number;
   costPerLead: number | null;
@@ -327,7 +329,14 @@ export async function computeCustomerLeaderboard(params: {
           ...productLeadClause,
           createdAt: { gte: range.from, lte: range.to },
         },
-        select: { customerId: true, reached: true, closedAt: true },
+        select: {
+          customerId: true,
+          reached: true,
+          closedAt: true,
+          status: true,
+          createdAt: true,
+          firstContactAt: true,
+        },
       }),
       prisma.revenue.groupBy({
         by: ["customerId"],
@@ -418,17 +427,29 @@ export async function computeCustomerLeaderboard(params: {
 
   const leadStatsByCustomer = new Map<
     string,
-    { total: number; reached: number; closed: number }
+    {
+      total: number;
+      reached: number;
+      termin: number;
+      closed: number;
+      hours: number[];
+    }
   >();
   for (const l of leads) {
     let s = leadStatsByCustomer.get(l.customerId);
     if (!s) {
-      s = { total: 0, reached: 0, closed: 0 };
+      s = { total: 0, reached: 0, termin: 0, closed: 0, hours: [] };
       leadStatsByCustomer.set(l.customerId, s);
     }
     s.total += 1;
     if (l.reached) s.reached += 1;
+    if (l.status && TERMIN_STATUSES.has(l.status)) s.termin += 1;
     if (l.closedAt != null) s.closed += 1;
+    if (l.firstContactAt) {
+      s.hours.push(
+        (l.firstContactAt.getTime() - l.createdAt.getTime()) / 1000 / 3600,
+      );
+    }
   }
 
   const revenueByCustomerId = new Map<string, number>();
@@ -449,21 +470,29 @@ export async function computeCustomerLeaderboard(params: {
     const stat = leadStatsByCustomer.get(c.id) ?? {
       total: 0,
       reached: 0,
+      termin: 0,
       closed: 0,
+      hours: [] as number[],
     };
     const revenue = revenueByCustomerId.get(c.id) ?? 0;
     const direct = directCostByCustomerId.get(c.id) ?? 0;
     const prorated = proratedByCustomer.get(c.id) ?? 0;
     const leadCosts = direct + prorated;
     const profit = revenue - leadCosts;
+    const avgHoursToFirstContact =
+      stat.hours.length > 0
+        ? stat.hours.reduce((a, b) => a + b, 0) / stat.hours.length
+        : null;
     return {
       customerId: c.id,
       customerName: c.name,
       totalLeads: stat.total,
       reachedLeads: stat.reached,
+      terminLeads: stat.termin,
       closedLeads: stat.closed,
       reachabilityRate: stat.total > 0 ? stat.reached / stat.total : null,
       closingRate: stat.total > 0 ? stat.closed / stat.total : null,
+      avgHoursToFirstContact,
       revenue,
       leadCosts,
       costPerLead: stat.total > 0 ? leadCosts / stat.total : null,
