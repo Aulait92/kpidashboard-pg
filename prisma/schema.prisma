@@ -26,6 +26,7 @@ model Lead {
   airtableId      String?   @unique
   source          String?
   customerId      String
+  name            String?
   createdAt       DateTime  @default(now())
   firstContactAt  DateTime?
   closedAt        DateTime?

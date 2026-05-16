@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 export type BuyerLeadRow = {
   id: string;
   createdAt: Date;
+  name: string | null;
   source: string | null;
   status: string | null;
   reached: boolean;
@@ -43,13 +44,14 @@ export function BuyerLeadsTable({ leads }: { leads: BuyerLeadRow[] }) {
         </h2>
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-[480px] w-full text-sm">
+        <table className="min-w-[560px] w-full text-sm">
           <thead className="bg-[color:var(--brand-soft)]/30 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
             <tr>
               <th className="px-3 py-2.5 text-left">Datum</th>
+              <th className="px-3 py-2.5 text-left">Name</th>
               <th className="px-3 py-2.5 text-left">Produkt</th>
               <th className="px-3 py-2.5 text-left">Status</th>
-              <th className="px-3 py-2.5 text-right">Umsatz</th>
+              <th className="px-3 py-2.5 text-right">Lead-Kosten</th>
             </tr>
           </thead>
           <tbody>
@@ -62,6 +64,11 @@ export function BuyerLeadsTable({ leads }: { leads: BuyerLeadRow[] }) {
                 >
                   <td className="px-3 py-2.5 tabular-nums text-[color:var(--foreground)]">
                     {formatDate(l.createdAt)}
+                  </td>
+                  <td className="px-3 py-2.5 font-medium text-[color:var(--foreground)]">
+                    {l.name ?? (
+                      <span className="text-[color:var(--muted)]">–</span>
+                    )}
                   </td>
                   <td className="px-3 py-2.5 text-[color:var(--foreground)]">
                     {l.source ?? "–"}

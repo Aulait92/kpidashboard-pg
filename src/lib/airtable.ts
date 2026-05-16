@@ -182,6 +182,23 @@ function readChecked(fields: Record<string, unknown>, key: string): boolean {
   return fields[key] === true;
 }
 
+// Versucht den Lead-Namen aus mehreren möglichen Airtable-Spalten zu lesen,
+// in der Reihenfolge wahrscheinlichster Treffer. Wenn "Vorname" + "Nachname"
+// getrennt vorhanden sind, werden sie zusammengesetzt.
+function resolveLeadName(fields: Record<string, unknown>): string | null {
+  const direct = ["Name", "Lead", "Kontakt", "Kontaktname", "Lead-Name"];
+  for (const key of direct) {
+    const v = readString(fields, key);
+    if (v) return v;
+  }
+  const vorname = readString(fields, "Vorname");
+  const nachname = readString(fields, "Nachname");
+  if (vorname && nachname) return `${vorname} ${nachname}`;
+  if (vorname) return vorname;
+  if (nachname) return nachname;
+  return null;
+}
+
 export type NewSale = {
   buyer: string;
   product: string;
@@ -293,6 +310,7 @@ export async function syncAirtable(): Promise<SyncResult> {
         );
         const price = readNumber(rec.fields, "Preis");
         const billed = readChecked(rec.fields, "Abgerechnet");
+        const name = resolveLeadName(rec.fields);
 
         const reached = status ? REACHED_STATUSES.has(status) : false;
         const isClosed = status === CLOSED_STATUS;
@@ -306,6 +324,7 @@ export async function syncAirtable(): Promise<SyncResult> {
             airtableId: rec.id,
             source: table.source,
             customerId,
+            name,
             createdAt,
             firstContactAt,
             closedAt,
@@ -316,6 +335,7 @@ export async function syncAirtable(): Promise<SyncResult> {
           update: {
             source: table.source,
             customerId,
+            name,
             createdAt,
             firstContactAt,
             closedAt,

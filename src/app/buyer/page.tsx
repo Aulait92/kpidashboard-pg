@@ -149,6 +149,7 @@ async function BuyerDashboardBody({
       select: {
         id: true,
         createdAt: true,
+        name: true,
         source: true,
         status: true,
         reached: true,
@@ -164,6 +165,7 @@ async function BuyerDashboardBody({
   const leads: BuyerLeadRow[] = leadRows.map((l) => ({
     id: l.id,
     createdAt: l.createdAt,
+    name: l.name,
     source: l.source,
     status: l.status,
     reached: l.reached,
@@ -235,15 +237,15 @@ async function BuyerDashboardBody({
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KpiCard
-            label="Umsatz (von dir)"
+            label="Lead-Kosten"
             value={formatEUR(k.revenue)}
-            tone="positive"
+            tone="neutral"
             hint="Brutto im Zeitraum"
-            delta={delta(k.revenue, p.revenue)}
+            delta={delta(k.revenue, p.revenue, true)}
             sparkline={{ points: ts.points, dataKey: "revenue" }}
           />
           <KpiCard
-            label="Ø pro Lead"
+            label="Ø Lead-Kosten / Lead"
             value={formatEUR(
               k.totalLeads > 0 ? k.revenue / k.totalLeads : null,
             )}
@@ -251,6 +253,7 @@ async function BuyerDashboardBody({
             delta={delta(
               k.totalLeads > 0 ? k.revenue / k.totalLeads : null,
               p.totalLeads > 0 ? p.revenue / p.totalLeads : null,
+              true,
             )}
           />
           <KpiCard
