@@ -1,3 +1,4 @@
+import { LogOut, Users } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -110,16 +111,22 @@ export default async function DashboardPage({
             <NotificationsButton />
             <Link
               href="/admin/buyers"
-              className="inline-flex min-h-[40px] items-center rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm transition hover:border-[color:var(--brand)] sm:min-h-0 sm:py-1.5"
+              aria-label="Buyer verwalten"
+              title="Buyer verwalten"
+              className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm transition hover:border-[color:var(--brand)] sm:min-h-0 sm:py-1.5"
             >
-              Buyer
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Buyer</span>
             </Link>
             <form action={logoutAction}>
               <button
                 type="submit"
-                className="inline-flex min-h-[40px] items-center rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm transition hover:border-[color:var(--brand)] sm:min-h-0 sm:py-1.5"
+                aria-label="Abmelden"
+                title="Abmelden"
+                className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm transition hover:border-[color:var(--brand)] sm:min-h-0 sm:py-1.5"
               >
-                Abmelden
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Abmelden</span>
               </button>
             </form>
           </div>
