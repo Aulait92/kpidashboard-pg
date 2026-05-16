@@ -121,7 +121,7 @@ function GoalRowView({ row }: { row: GoalRow }) {
         </span>
         {row.pace != null ? (
           <span className="ml-auto text-[11px] tabular-nums text-[color:var(--muted)]">
-            Pace: {formatValue(row.pace, row.format)}
+            Soll heute: {formatValue(row.pace, row.format)}
           </span>
         ) : null}
       </div>
