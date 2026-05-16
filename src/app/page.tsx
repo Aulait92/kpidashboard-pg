@@ -7,12 +7,16 @@ import { FilterBar } from "@/components/filter-bar";
 import { FunnelHero } from "@/components/funnel-hero";
 import { KpiCard, type Delta } from "@/components/kpi-card";
 import { LiveUpdated } from "@/components/live-updated";
+import { MonthlyForecast } from "@/components/monthly-forecast";
 import { NotificationsButton } from "@/components/notifications-button";
 import { PerformanceTable } from "@/components/performance-table";
 import { PnLStatement } from "@/components/pnl-statement";
 import { PullToRefresh } from "@/components/pull-to-refresh";
+import { SpeedToLeadCard } from "@/components/speed-to-lead-card";
 import { TrendCharts } from "@/components/trend-charts";
 import { getCurrentSession } from "@/lib/auth";
+import { computeMonthlyForecast } from "@/lib/forecast";
+import { computeSpeedToLeadAnalysis } from "@/lib/speed-to-lead";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
 import {
   computeCustomerLeaderboard,
@@ -145,20 +149,29 @@ async function DashboardBody({
   product: string | null;
 }) {
   const prev = previousRange(range);
-  const [k, p, ts, customerRows, productRows, pnl] = await Promise.all([
-    computeKpis({ range, customerId, product }),
-    computeKpis({ range: prev, customerId, product }) as Promise<Kpis>,
-    computeTimeSeries({ range, customerId, product }),
-    computeCustomerLeaderboard({ range, product }),
-    computeProductBreakdown({ range, customerId }),
-    computePnL({ range, customerId, product }),
-  ]);
+  const [k, p, ts, customerRows, productRows, pnl, forecast, speed] =
+    await Promise.all([
+      computeKpis({ range, customerId, product }),
+      computeKpis({ range: prev, customerId, product }) as Promise<Kpis>,
+      computeTimeSeries({ range, customerId, product }),
+      computeCustomerLeaderboard({ range, product }),
+      computeProductBreakdown({ range, customerId }),
+      computePnL({ range, customerId, product }),
+      computeMonthlyForecast({
+        customerId,
+        product,
+        revenueLabel: "Umsatz",
+      }),
+      computeSpeedToLeadAnalysis({ range, customerId, product }),
+    ]);
 
   return (
     <div className="mt-6 space-y-8">
       <FunnelHero kpis={k} />
       <KpiGrid kpis={k} prev={p} points={ts.points} customerId={customerId} />
       <PnLStatement pnl={pnl} />
+      <MonthlyForecast forecast={forecast} />
+      <SpeedToLeadCard data={speed} />
       <PerformanceTable customerRows={customerRows} productRows={productRows} />
       <TrendCharts points={ts.points} granularity={ts.granularity} />
     </div>

@@ -25,6 +25,10 @@ const monthFmt = new Intl.DateTimeFormat("de-DE", {
 
 export async function computeMonthlyForecast(params: {
   customerId: string | null;
+  product?: string | null;
+  // Label für die Umsatz-Zeile — aus Admin-Sicht „Umsatz", aus
+  // Kunden-Sicht „Lead-Kosten" (sie zahlen die Summe an uns).
+  revenueLabel?: string;
   // Tageszahlung: optional injizierbar für Tests, default = jetzt.
   now?: Date;
 }): Promise<Forecast> {
@@ -42,12 +46,12 @@ export async function computeMonthlyForecast(params: {
     computeKpis({
       range: { from: monthStart, to: now },
       customerId: params.customerId,
-      product: null,
+      product: params.product ?? null,
     }) as Promise<Kpis>,
     computeKpis({
       range: { from: prevStart, to: prevEnd },
       customerId: params.customerId,
-      product: null,
+      product: params.product ?? null,
     }) as Promise<Kpis>,
   ]);
 
@@ -87,7 +91,7 @@ export async function computeMonthlyForecast(params: {
       format: "number",
     },
     {
-      label: "Lead-Kosten",
+      label: params.revenueLabel ?? "Lead-Kosten",
       mtd: mtd.revenue,
       projected: (mtd.revenue / daysElapsed) * daysTotal,
       previousFull: prevFull.revenue,

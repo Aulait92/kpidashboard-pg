@@ -43,13 +43,15 @@ function pickBucketIndex(hours: number): number {
 
 export async function computeSpeedToLeadAnalysis(params: {
   range: DateRange;
-  customerId: string;
+  customerId?: string | null;
+  product?: string | null;
 }): Promise<SpeedToLeadAnalysis> {
-  const { range, customerId } = params;
+  const { range, customerId, product } = params;
 
   const leads = await prisma.lead.findMany({
     where: {
-      customerId,
+      ...(customerId ? { customerId } : {}),
+      ...(product ? { source: product } : {}),
       createdAt: { gte: range.from, lte: range.to },
     },
     select: {
