@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
@@ -16,6 +16,22 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "KPI-Dashboard | performancegrowth",
   description: "Lead-, Umsatz- und Profitabilitäts-KPIs",
+  applicationName: "KPI Dashboard",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "KPI Dashboard",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#2563eb",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
