@@ -62,7 +62,7 @@ function LineRow({
     <tr className="text-sm">
       <td
         className={cn(
-          "py-1.5 pl-6",
+          "py-1.5 pl-3 pr-2 sm:pl-6",
           emphasized
             ? "font-semibold text-[color:var(--foreground)]"
             : "text-[color:var(--foreground)]",
@@ -72,18 +72,18 @@ function LineRow({
       </td>
       <td
         className={cn(
-          "py-1.5 text-right tabular-nums",
+          "whitespace-nowrap py-1.5 px-1 text-right tabular-nums sm:px-2",
           emphasized && "font-semibold",
         )}
       >
         {formatEUR(row.current)}
       </td>
-      <td className="hidden py-1.5 text-right tabular-nums text-[color:var(--muted)] sm:table-cell">
+      <td className="hidden whitespace-nowrap py-1.5 px-2 text-right tabular-nums text-[color:var(--muted)] sm:table-cell">
         {formatEUR(row.previous)}
       </td>
       <td
         className={cn(
-          "py-1.5 pr-1 text-right text-xs tabular-nums",
+          "whitespace-nowrap py-1.5 pl-1 pr-1 text-right text-[10px] tabular-nums sm:pl-2 sm:text-xs",
           TONE_CLASS[tone],
         )}
       >
@@ -98,7 +98,7 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
     <tr>
       <td
         colSpan={4}
-        className="pb-1 pt-5 text-[10px] font-semibold uppercase tracking-wider text-[color:var(--brand)]"
+        className="pb-1 pt-5 pl-3 text-[10px] font-semibold uppercase tracking-wider text-[color:var(--brand)] sm:pl-6"
       >
         {children}
       </td>
@@ -120,16 +120,16 @@ function SubtotalRow({
   const tone = deltaTone(current, previous, lowerIsBetter);
   return (
     <tr className="border-t border-[color:var(--border)] text-sm">
-      <td className="py-1.5 pl-6 font-semibold">{label}</td>
-      <td className="py-1.5 text-right font-semibold tabular-nums">
+      <td className="py-1.5 pl-3 pr-2 font-semibold sm:pl-6">{label}</td>
+      <td className="whitespace-nowrap py-1.5 px-1 text-right font-semibold tabular-nums sm:px-2">
         {formatEUR(current)}
       </td>
-      <td className="hidden py-1.5 text-right tabular-nums text-[color:var(--muted)] sm:table-cell">
+      <td className="hidden whitespace-nowrap py-1.5 px-2 text-right tabular-nums text-[color:var(--muted)] sm:table-cell">
         {formatEUR(previous)}
       </td>
       <td
         className={cn(
-          "py-1.5 pr-1 text-right text-xs tabular-nums",
+          "whitespace-nowrap py-1.5 pl-1 pr-1 text-right text-[10px] tabular-nums sm:pl-2 sm:text-xs",
           TONE_CLASS[tone],
         )}
       >
@@ -158,24 +158,24 @@ function HighlightRow({
         ? "text-emerald-600"
         : "text-rose-600";
   return (
-    <tr className="border-y-2 border-[color:var(--border)] text-base">
-      <td className="py-2.5 pl-3 font-bold uppercase tracking-wide text-[color:var(--foreground)]">
+    <tr className="border-y-2 border-[color:var(--border)] text-sm sm:text-base">
+      <td className="py-2.5 pl-2 pr-1 font-bold uppercase tracking-wide text-[color:var(--foreground)] sm:pl-3 sm:pr-2">
         {label}
       </td>
       <td
         className={cn(
-          "py-2.5 text-right text-lg font-bold tabular-nums",
+          "whitespace-nowrap py-2.5 px-1 text-right text-base font-bold tabular-nums sm:px-2 sm:text-lg",
           valueColor,
         )}
       >
         {formatEUR(current)}
       </td>
-      <td className="hidden py-2.5 text-right tabular-nums text-[color:var(--muted)] sm:table-cell">
+      <td className="hidden whitespace-nowrap py-2.5 px-2 text-right tabular-nums text-[color:var(--muted)] sm:table-cell">
         {formatEUR(previous)}
       </td>
       <td
         className={cn(
-          "py-2.5 pr-1 text-right text-xs tabular-nums",
+          "whitespace-nowrap py-2.5 pl-1 pr-1 text-right text-[10px] tabular-nums sm:pl-2 sm:text-xs",
           TONE_CLASS[tone],
         )}
       >
@@ -198,16 +198,18 @@ function MarginRow({
   const tone = deltaTone(current, previous);
   return (
     <tr className="text-xs">
-      <td className="py-1 pl-6 italic text-[color:var(--muted)]">{label}</td>
-      <td className="py-1 text-right italic tabular-nums text-[color:var(--muted)]">
+      <td className="py-1 pl-3 pr-2 italic text-[color:var(--muted)] sm:pl-6">
+        {label}
+      </td>
+      <td className="whitespace-nowrap py-1 px-1 text-right italic tabular-nums text-[color:var(--muted)] sm:px-2">
         <PercentCell value={current} />
       </td>
-      <td className="hidden py-1 text-right italic tabular-nums text-zinc-400 sm:table-cell">
+      <td className="hidden whitespace-nowrap py-1 px-2 text-right italic tabular-nums text-zinc-400 sm:table-cell">
         <PercentCell value={previous} />
       </td>
       <td
         className={cn(
-          "py-1 pr-1 text-right text-[10px] tabular-nums",
+          "whitespace-nowrap py-1 pl-1 pr-1 text-right text-[10px] tabular-nums sm:pl-2",
           TONE_CLASS[tone],
         )}
       >
@@ -219,8 +221,8 @@ function MarginRow({
 
 export function PnLStatement({ pnl }: { pnl: PnL }) {
   return (
-    <div className="rounded-2xl border border-[color:var(--border)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
-      <header className="mb-2 flex flex-wrap items-baseline justify-between gap-3">
+    <div className="rounded-2xl border border-[color:var(--border)] bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)] sm:p-5">
+      <header className="mb-2 flex flex-wrap items-baseline justify-between gap-3 px-1 sm:px-0">
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--brand)]">
             Finanzen · GuV
@@ -240,16 +242,16 @@ export function PnLStatement({ pnl }: { pnl: PnL }) {
         </div>
       </header>
 
-      <div className="-mx-1 overflow-x-auto">
-        <table className="w-full min-w-[420px]">
+      <div>
+        <table className="w-full table-auto">
           <thead>
             <tr className="border-b border-[color:var(--border)] text-[10px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
-              <th className="pb-2 pl-6 text-left">Position</th>
-              <th className="pb-2 text-right">Aktuell</th>
-              <th className="hidden pb-2 text-right sm:table-cell">
+              <th className="pb-2 pl-3 pr-2 text-left sm:pl-6">Position</th>
+              <th className="pb-2 px-1 text-right sm:px-2">Aktuell</th>
+              <th className="hidden pb-2 px-2 text-right sm:table-cell">
                 Vorperiode
               </th>
-              <th className="pb-2 pr-1 text-right">Δ</th>
+              <th className="pb-2 pl-1 pr-1 text-right sm:pl-2">Δ</th>
             </tr>
           </thead>
           <tbody>
