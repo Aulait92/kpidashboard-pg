@@ -134,3 +134,17 @@ model PasswordResetToken {
   @@index([userId])
   @@index([expiresAt])
 }
+
+// Monatsziele für das Admin-Cockpit. Ein Eintrag pro Monat
+// (monthKey = "YYYY-MM"). Alle Goal-Felder sind optional — wenn null,
+// wird das Ziel im UI als "nicht gesetzt" angezeigt.
+model MonthlyGoal {
+  id          String   @id @default(cuid())
+  monthKey    String   @unique // "YYYY-MM"
+  leadsGoal   Int?
+  closedGoal  Int?
+  revenueGoal Decimal? @db.Decimal(12, 2)
+  marginGoal  Decimal? @db.Decimal(5, 4) // 0..1
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

@@ -8,6 +8,7 @@ import { FunnelHero } from "@/components/funnel-hero";
 import { KpiCard, type Delta } from "@/components/kpi-card";
 import { LiveUpdated } from "@/components/live-updated";
 import { MonthlyForecast } from "@/components/monthly-forecast";
+import { MonthlyGoalsCard } from "@/components/monthly-goals";
 import { NotificationsButton } from "@/components/notifications-button";
 import { PerformanceTable } from "@/components/performance-table";
 import { PnLStatement } from "@/components/pnl-statement";
@@ -16,6 +17,7 @@ import { SpeedToLeadCard } from "@/components/speed-to-lead-card";
 import { TrendCharts } from "@/components/trend-charts";
 import { getCurrentSession } from "@/lib/auth";
 import { computeMonthlyForecast } from "@/lib/forecast";
+import { computeMonthlyGoalProgress } from "@/lib/goals";
 import { computeSpeedToLeadAnalysis } from "@/lib/speed-to-lead";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
 import {
@@ -149,7 +151,7 @@ async function DashboardBody({
   product: string | null;
 }) {
   const prev = previousRange(range);
-  const [k, p, ts, customerRows, productRows, pnl, forecast, speed] =
+  const [k, p, ts, customerRows, productRows, pnl, forecast, speed, goals] =
     await Promise.all([
       computeKpis({ range, customerId, product }),
       computeKpis({ range: prev, customerId, product }) as Promise<Kpis>,
@@ -163,11 +165,13 @@ async function DashboardBody({
         revenueLabel: "Umsatz",
       }),
       computeSpeedToLeadAnalysis({ range, customerId, product }),
+      computeMonthlyGoalProgress(),
     ]);
 
   return (
     <div className="mt-6 space-y-8">
       <FunnelHero kpis={k} />
+      <MonthlyGoalsCard progress={goals} />
       <KpiGrid kpis={k} prev={p} points={ts.points} customerId={customerId} />
       <PnLStatement pnl={pnl} />
       <MonthlyForecast forecast={forecast} />
