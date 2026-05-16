@@ -20,6 +20,7 @@ const RANGE_ORDER: Exclude<RangeKey, "custom">[] = [
   "thisMonth",
   "lastMonth",
   "thisYear",
+  "max",
 ];
 
 export type Customer = { id: string; name: string };

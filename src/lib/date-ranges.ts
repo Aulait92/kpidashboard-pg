@@ -22,6 +22,7 @@ export type RangeKey =
   | "thisMonth"
   | "lastMonth"
   | "thisYear"
+  | "max"
   | "custom";
 
 export type DateRange = { from: Date; to: Date };
@@ -36,6 +37,7 @@ export const RANGE_LABELS: Record<Exclude<RangeKey, "custom">, string> = {
   thisMonth: "Dieser Monat",
   lastMonth: "Letzter Monat",
   thisYear: "Dieses Jahr",
+  max: "Maximum",
 };
 
 // Wochenstart auf Montag (DE).
@@ -73,6 +75,9 @@ export function resolveRange(key: RangeKey, now: Date = new Date()): DateRange {
     }
     case "thisYear":
       return { from: startOfYear(now), to: endOfYear(now) };
+    case "max":
+      // Beliebig weit zurück; deckt jeden realistischen Daten-Eintrag ab.
+      return { from: new Date("2020-01-01T00:00:00Z"), to: endOfDay(now) };
     case "custom":
       return { from: startOfMonth(now), to: endOfDay(now) };
   }
@@ -103,6 +108,7 @@ export function parseRangeFromSearchParams(params: {
     "thisMonth",
     "lastMonth",
     "thisYear",
+    "max",
     "custom",
   ];
 
