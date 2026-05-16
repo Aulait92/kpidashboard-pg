@@ -5,7 +5,7 @@ import { KpiCard, type Delta } from "@/components/kpi-card";
 import { NotificationsButton } from "@/components/notifications-button";
 import { PerformanceTable } from "@/components/performance-table";
 import { PnLStatement } from "@/components/pnl-statement";
-import { SyncButton } from "@/components/sync-button";
+import { PullToRefresh } from "@/components/pull-to-refresh";
 import { TrendCharts } from "@/components/trend-charts";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
 import {
@@ -56,51 +56,52 @@ export default async function DashboardPage({
       : null;
 
   return (
-    <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-3 py-1 text-xs font-medium text-[color:var(--brand-dark)]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--brand)]" />
-            Live KPI-Übersicht
-          </span>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-            KPI-<span className="text-[color:var(--brand)]">Dashboard</span>.
-          </h1>
-          <p className="mt-2 text-sm text-[color:var(--muted)]">
-            Zeitraum: {formatDate(range.from)} – {formatDate(range.to)}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-start gap-2">
-          <Suspense
-            fallback={
-              <div className="text-xs text-[color:var(--muted)]">Lade Filter…</div>
-            }
-          >
-            <FiltersSection
-              currentRange={rangeKey}
-              currentCustomerId={customerId}
-              currentProduct={product}
-              customFrom={sp.from}
-              customTo={sp.to}
-            />
-          </Suspense>
-          <NotificationsButton />
-          <SyncButton />
-        </div>
-      </header>
+    <PullToRefresh>
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+        <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-3 py-1 text-xs font-medium text-[color:var(--brand-dark)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--brand)]" />
+              Live KPI-Übersicht
+            </span>
+            <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+              KPI-<span className="text-[color:var(--brand)]">Dashboard</span>.
+            </h1>
+            <p className="mt-2 text-sm text-[color:var(--muted)]">
+              Zeitraum: {formatDate(range.from)} – {formatDate(range.to)}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-start gap-2">
+            <Suspense
+              fallback={
+                <div className="text-xs text-[color:var(--muted)]">Lade Filter…</div>
+              }
+            >
+              <FiltersSection
+                currentRange={rangeKey}
+                currentCustomerId={customerId}
+                currentProduct={product}
+                customFrom={sp.from}
+                customTo={sp.to}
+              />
+            </Suspense>
+            <NotificationsButton />
+          </div>
+        </header>
 
-      <Suspense
-        fallback={
-          <div className="mt-6 text-sm text-[color:var(--muted)]">Lade Dashboard…</div>
-        }
-      >
-        <DashboardBody
-          range={range}
-          customerId={customerId}
-          product={product}
-        />
-      </Suspense>
-    </main>
+        <Suspense
+          fallback={
+            <div className="mt-6 text-sm text-[color:var(--muted)]">Lade Dashboard…</div>
+          }
+        >
+          <DashboardBody
+            range={range}
+            customerId={customerId}
+            product={product}
+          />
+        </Suspense>
+      </main>
+    </PullToRefresh>
   );
 }
 
