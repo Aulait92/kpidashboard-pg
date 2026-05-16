@@ -91,7 +91,7 @@ export function BuyerComparison({
         customerId: r.customerId,
         displayName: isSelf
           ? "Du"
-          : `Buyer ${letterFor.get(r.customerId) ?? "?"}`,
+          : `Kunde ${letterFor.get(r.customerId) ?? "?"}`,
         isSelf,
         totalLeads: r.totalLeads,
         reachabilityRate: r.reachabilityRate,
@@ -125,7 +125,7 @@ export function BuyerComparison({
   if (total <= 1) {
     return (
       <div className="rounded-2xl border border-[color:var(--border)] bg-white p-5 text-sm text-[color:var(--muted)] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
-        Aktuell gibt es keine vergleichbaren Buyer im Zeitraum.
+        Aktuell gibt es keine vergleichbaren Kunden im Zeitraum.
       </div>
     );
   }
@@ -143,7 +143,7 @@ export function BuyerComparison({
             Wie du im Vergleich liegst
           </h2>
           <p className="mt-1 text-xs text-[color:var(--muted)]">
-            Andere Buyer sind anonymisiert. Sortierung bestimmt deinen
+            Andere Kunden sind anonymisiert. Sortierung bestimmt deinen
             aktuellen Rang.
           </p>
         </div>
@@ -165,7 +165,7 @@ export function BuyerComparison({
           <thead className="bg-[color:var(--brand-soft)]/30 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
             <tr>
               <th className="px-3 py-2.5 text-left">#</th>
-              <th className="px-3 py-2.5 text-left">Buyer</th>
+              <th className="px-3 py-2.5 text-left">Kunde</th>
               {COLUMNS.map((col) => {
                 const active = sortKey === col.key;
                 const Icon = !active
@@ -240,7 +240,7 @@ export function BuyerComparison({
         </table>
       </div>
       <div className="px-5 pb-4 pt-2 text-[11px] text-[color:var(--muted)]">
-        Andere Buyer-Namen werden niemals offengelegt — nur deren Werte.
+        Andere Kundennamen werden niemals offengelegt — nur deren Werte.
       </div>
     </div>
   );
