@@ -1,19 +1,19 @@
 import Link from "next/link";
-import { LoginForm } from "./login-form";
+import { ResetPasswordForm } from "./reset-form";
 
-type SearchParams = Promise<{ next?: string }>;
+type SearchParams = Promise<{ token?: string }>;
 
 export const metadata = {
-  title: "Login | KPI-Dashboard",
+  title: "Neues Passwort | KPI-Dashboard",
 };
 
-export default async function LoginPage({
+export default async function ResetPasswordPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
   const sp = await searchParams;
-  const next = sp.next && sp.next.startsWith("/") ? sp.next : "";
+  const token = sp.token ?? "";
 
   return (
     <main className="mx-auto flex min-h-[calc(100dvh-6rem)] w-full max-w-md flex-col justify-center px-4 py-12">
@@ -24,21 +24,27 @@ export default async function LoginPage({
             performancegrowth
           </span>
           <h1 className="mt-3 text-2xl font-bold tracking-tight">
-            Anmelden
+            Neues Passwort
           </h1>
           <p className="mt-1 text-sm text-[color:var(--muted)]">
-            Mit deinem Buyer- oder Admin-Account.
+            Wähle ein neues Passwort (mind. 8 Zeichen).
           </p>
         </div>
-        <LoginForm next={next} />
-        <div className="mt-4 text-center text-xs text-[color:var(--muted)]">
-          <Link
-            href="/forgot-password"
-            className="text-[color:var(--brand)] hover:underline"
-          >
-            Passwort vergessen?
-          </Link>
-        </div>
+
+        {token ? (
+          <ResetPasswordForm token={token} />
+        ) : (
+          <div className="rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            Kein Reset-Token in der URL. Bitte fordere einen{" "}
+            <Link
+              href="/forgot-password"
+              className="font-medium underline"
+            >
+              neuen Reset-Link
+            </Link>{" "}
+            an.
+          </div>
+        )}
       </div>
     </main>
   );

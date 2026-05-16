@@ -110,7 +110,24 @@ model User {
   createdAt    DateTime @default(now())
   lastLoginAt  DateTime?
 
-  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customer      Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  resetTokens   PasswordResetToken[]
 
   @@index([customerId])
+}
+
+// Einmalige Tokens für Passwort-Reset. Nur der SHA-256-Hash wird gespeichert
+// — der eigentliche Token landet nur als URL-Parameter in der Reset-Email.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }

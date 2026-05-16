@@ -1,20 +1,11 @@
 import Link from "next/link";
-import { LoginForm } from "./login-form";
-
-type SearchParams = Promise<{ next?: string }>;
+import { ForgotPasswordForm } from "./forgot-form";
 
 export const metadata = {
-  title: "Login | KPI-Dashboard",
+  title: "Passwort vergessen | KPI-Dashboard",
 };
 
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
-  const sp = await searchParams;
-  const next = sp.next && sp.next.startsWith("/") ? sp.next : "";
-
+export default function ForgotPasswordPage() {
   return (
     <main className="mx-auto flex min-h-[calc(100dvh-6rem)] w-full max-w-md flex-col justify-center px-4 py-12">
       <div className="rounded-2xl border border-[color:var(--border)] bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_30px_-12px_rgba(37,99,235,0.18)]">
@@ -24,19 +15,16 @@ export default async function LoginPage({
             performancegrowth
           </span>
           <h1 className="mt-3 text-2xl font-bold tracking-tight">
-            Anmelden
+            Passwort vergessen
           </h1>
           <p className="mt-1 text-sm text-[color:var(--muted)]">
-            Mit deinem Buyer- oder Admin-Account.
+            Wir schicken dir einen Reset-Link an deine Email-Adresse.
           </p>
         </div>
-        <LoginForm next={next} />
+        <ForgotPasswordForm />
         <div className="mt-4 text-center text-xs text-[color:var(--muted)]">
-          <Link
-            href="/forgot-password"
-            className="text-[color:var(--brand)] hover:underline"
-          >
-            Passwort vergessen?
+          <Link href="/login" className="text-[color:var(--brand)] hover:underline">
+            ← Zurück zum Login
           </Link>
         </div>
       </div>

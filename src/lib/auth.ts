@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import { jwtVerify, SignJWT } from "jose";
 import { cookies } from "next/headers";
@@ -143,4 +144,88 @@ export async function login(
 
 export async function logout() {
   await clearSessionCookie();
+}
+
+// ─── Passwort-Reset ──────────────────────────────────────────────────
+
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 Stunde
+
+function hashToken(rawToken: string): string {
+  return crypto.createHash("sha256").update(rawToken).digest("hex");
+}
+
+// Erzeugt ein Reset-Token für den User (falls vorhanden). Schreibt nur den
+// SHA-256-Hash in die DB; gibt den Klartext-Token nur einmal zurück, der
+// dann in die Email kommt. Existiert der User nicht, gibt es kein Token —
+// die UI muss trotzdem generisch antworten (Existenz nicht verraten).
+export async function issuePasswordResetToken(
+  emailRaw: string,
+): Promise<{ rawToken: string; userId: string } | null> {
+  const email = emailRaw.trim().toLowerCase();
+  if (!email) return null;
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
+  if (!user) return null;
+
+  // Alte, ungenutzte Tokens dieses Users entwerten, um Token-Sammelei
+  // zu verhindern.
+  await prisma.passwordResetToken.updateMany({
+    where: { userId: user.id, usedAt: null, expiresAt: { gt: new Date() } },
+    data: { usedAt: new Date() },
+  });
+
+  const rawToken = crypto.randomBytes(32).toString("base64url");
+  await prisma.passwordResetToken.create({
+    data: {
+      userId: user.id,
+      tokenHash: hashToken(rawToken),
+      expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+    },
+  });
+  return { rawToken, userId: user.id };
+}
+
+export type ResetResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+export async function consumePasswordResetToken(
+  rawToken: string,
+  newPassword: string,
+): Promise<ResetResult> {
+  if (!rawToken) return { ok: false, error: "Token fehlt." };
+  if (newPassword.length < 8) {
+    return {
+      ok: false,
+      error: "Passwort muss mindestens 8 Zeichen lang sein.",
+    };
+  }
+
+  const record = await prisma.passwordResetToken.findUnique({
+    where: { tokenHash: hashToken(rawToken) },
+    select: { id: true, userId: true, expiresAt: true, usedAt: true },
+  });
+  if (!record) {
+    return { ok: false, error: "Reset-Link ist ungültig." };
+  }
+  if (record.usedAt) {
+    return { ok: false, error: "Reset-Link wurde bereits verwendet." };
+  }
+  if (record.expiresAt.getTime() < Date.now()) {
+    return { ok: false, error: "Reset-Link ist abgelaufen." };
+  }
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: record.userId },
+      data: { passwordHash: await hashPassword(newPassword) },
+    }),
+    prisma.passwordResetToken.update({
+      where: { id: record.id },
+      data: { usedAt: new Date() },
+    }),
+  ]);
+  return { ok: true };
 }

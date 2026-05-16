@@ -6,6 +6,8 @@ const SESSION_COOKIE = "kpi_session";
 // Pfade, die ohne Login erreichbar bleiben müssen.
 const PUBLIC_PREFIXES = [
   "/login",
+  "/forgot-password",
+  "/reset-password",
   "/api/auth", // login/logout server actions tunneln über server actions, hier sind direkte API-Routen nur Logout
   "/api/sync", // cron-job.org braucht Zugriff (per Token gesichert)
   "/api/push", // service worker registriert Subscriptions
