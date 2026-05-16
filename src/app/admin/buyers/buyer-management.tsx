@@ -1,0 +1,118 @@
+"use client";
+
+import { useActionState } from "react";
+import {
+  createBuyerAccount,
+  deleteBuyerAccount,
+  type CreateBuyerState,
+} from "./actions";
+
+export function CreateBuyerForm({
+  customers,
+}: {
+  customers: { id: string; name: string }[];
+}) {
+  const [state, formAction, pending] = useActionState<
+    CreateBuyerState,
+    FormData
+  >(createBuyerAccount, {});
+
+  return (
+    <form action={formAction} className="mt-3 space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="block">
+          <span className="text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
+            Email
+          </span>
+          <input
+            name="email"
+            type="email"
+            required
+            placeholder="buyer@example.com"
+            className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
+            Passwort (min. 8 Zeichen)
+          </span>
+          <input
+            name="password"
+            type="text"
+            required
+            minLength={8}
+            placeholder="zufällig generieren oder selber wählen"
+            className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
+          />
+        </label>
+      </div>
+      <label className="block">
+        <span className="text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
+          Kunde verknüpfen
+        </span>
+        <select
+          name="customerId"
+          required
+          defaultValue=""
+          className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
+        >
+          <option value="" disabled>
+            – Kunde wählen –
+          </option>
+          {customers.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      {state.error ? (
+        <div className="rounded-lg bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
+          {state.error}
+        </div>
+      ) : null}
+      {state.ok && state.createdEmail ? (
+        <div className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+          Account für {state.createdEmail} angelegt. Schick die
+          Zugangsdaten dem Buyer.
+        </div>
+      ) : null}
+
+      <button
+        type="submit"
+        disabled={pending}
+        className="rounded-lg bg-[color:var(--brand)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60"
+      >
+        {pending ? "Lege an…" : "Account anlegen"}
+      </button>
+    </form>
+  );
+}
+
+export function DeleteBuyerButton({
+  userId,
+  email,
+}: {
+  userId: string;
+  email: string;
+}) {
+  return (
+    <form
+      action={deleteBuyerAccount}
+      onSubmit={(e) => {
+        if (!confirm(`Buyer-Account "${email}" wirklich löschen?`)) {
+          e.preventDefault();
+        }
+      }}
+    >
+      <input type="hidden" name="userId" value={userId} />
+      <button
+        type="submit"
+        className="text-xs font-medium text-rose-600 hover:underline"
+      >
+        Löschen
+      </button>
+    </form>
+  );
+}

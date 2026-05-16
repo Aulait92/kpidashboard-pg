@@ -1,4 +1,7 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { logoutAction } from "@/app/login/actions";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { FilterBar } from "@/components/filter-bar";
 import { FunnelHero } from "@/components/funnel-hero";
@@ -9,6 +12,7 @@ import { PerformanceTable } from "@/components/performance-table";
 import { PnLStatement } from "@/components/pnl-statement";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { TrendCharts } from "@/components/trend-charts";
+import { getCurrentSession } from "@/lib/auth";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
 import {
   computeCustomerLeaderboard,
@@ -46,6 +50,14 @@ export default async function DashboardPage({
 }) {
   if (!process.env.DATABASE_URL) {
     return <SetupNotice />;
+  }
+
+  const session = await getCurrentSession();
+  if (!session) {
+    redirect("/login");
+  }
+  if (session.role === "BUYER") {
+    redirect("/buyer");
   }
 
   const sp = await searchParams;
@@ -90,6 +102,20 @@ export default async function DashboardPage({
               />
             </Suspense>
             <NotificationsButton />
+            <Link
+              href="/admin/buyers"
+              className="inline-flex min-h-[40px] items-center rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm transition hover:border-[color:var(--brand)] sm:min-h-0 sm:py-1.5"
+            >
+              Buyer
+            </Link>
+            <form action={logoutAction}>
+              <button
+                type="submit"
+                className="inline-flex min-h-[40px] items-center rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm transition hover:border-[color:var(--brand)] sm:min-h-0 sm:py-1.5"
+              >
+                Abmelden
+              </button>
+            </form>
           </div>
         </header>
 

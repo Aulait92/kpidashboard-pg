@@ -18,6 +18,7 @@ model Customer {
   leads    Lead[]
   revenues Revenue[]
   costs    Cost[]
+  users    User[]
 }
 
 model Lead {
@@ -90,4 +91,25 @@ model PushSubscription {
   userAgent  String?
   createdAt  DateTime @default(now())
   lastUsedAt DateTime @default(now())
+}
+
+enum UserRole {
+  ADMIN
+  BUYER
+}
+
+// Auth-Accounts. Admins sehen das ganze Dashboard, Buyer nur die eigene
+// Customer-Sicht (customerId verknüpft, NULL für Admins).
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         UserRole
+  customerId   String?
+  createdAt    DateTime @default(now())
+  lastLoginAt  DateTime?
+
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([customerId])
 }
