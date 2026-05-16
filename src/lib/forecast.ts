@@ -1,4 +1,10 @@
-import { endOfMonth, startOfMonth, subMonths } from "date-fns";
+import {
+  differenceInCalendarDays,
+  endOfDay,
+  endOfMonth,
+  startOfMonth,
+  subMonths,
+} from "date-fns";
 import { computeKpis, type Kpis } from "@/lib/kpis";
 
 export type ForecastRow = {
@@ -36,6 +42,12 @@ export async function computeMonthlyForecast(params: {
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
 
+  // MTD-Range geht bis Ende des aktuellen Tages, nicht bis zur exakten
+  // Sekunde. Sonst werden Airtable-Leads, deren "Datum" als UTC-Mitternacht
+  // geparst ist und die für später am heutigen Tag stehen, fälschlich nicht
+  // mitgezählt.
+  const mtdEnd = endOfDay(now);
+
   const prevDate = subMonths(now, 1);
   const prevStart = startOfMonth(prevDate);
   const prevEnd = endOfMonth(prevDate);
@@ -44,7 +56,7 @@ export async function computeMonthlyForecast(params: {
   // (die respektiert customerId und liefert die uns interessierenden Zahlen).
   const [mtd, prevFull] = await Promise.all([
     computeKpis({
-      range: { from: monthStart, to: now },
+      range: { from: monthStart, to: mtdEnd },
       customerId: params.customerId,
       product: params.product ?? null,
     }) as Promise<Kpis>,
@@ -55,14 +67,13 @@ export async function computeMonthlyForecast(params: {
     }) as Promise<Kpis>,
   ]);
 
-  // Tage abgelaufen (mindestens 1, damit wir nicht durch 0 teilen am 1.
-  // des Monats kurz nach Mitternacht).
-  const msPerDay = 24 * 3600 * 1000;
-  const daysElapsedRaw = (now.getTime() - monthStart.getTime()) / msPerDay;
-  const daysElapsed = Math.max(1, daysElapsedRaw);
-  const daysTotal = Math.round(
-    (monthEnd.getTime() - monthStart.getTime()) / msPerDay,
-  ) + 1;
+  // Kalendertage statt 24h-Intervallen: heute zählt als ein voller Tag,
+  // die Gesamtmenge ist die Anzahl Tage des Monats (28-31).
+  const daysElapsed = Math.max(
+    1,
+    differenceInCalendarDays(now, monthStart) + 1,
+  );
+  const daysTotal = differenceInCalendarDays(monthEnd, monthStart) + 1;
 
   function project(value: number): number {
     return Math.round((value / daysElapsed) * daysTotal);
@@ -102,7 +113,7 @@ export async function computeMonthlyForecast(params: {
   return {
     monthStart,
     monthEnd,
-    daysElapsed: Math.floor(daysElapsedRaw) + 1,
+    daysElapsed,
     daysTotal,
     rows,
     previousMonthLabel: monthFmt.format(prevDate),
