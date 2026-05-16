@@ -43,25 +43,19 @@ export async function runFullSync(): Promise<FullSyncResult> {
     pushRemoved += r.removed;
   }
 
-  // Neue Leads: Admin sieht „Buyer · Lead-Name", der Kunde selber nur
-  // „Neuer Lead: Lead-Name". Beide Notifications haben dieselbe tag,
-  // sodass doppelte Syncs nicht doppelt notifyen.
+  // Neue Leads: nur an den jeweiligen Kunden. Der Admin bekommt schon
+  // den Sale-Push und braucht für jeden eingehenden Lead keine Extra-
+  // Notification.
   for (const lead of airtable.newLeads) {
     const leadName = lead.name ?? "ohne Name";
-    const adminRes = await sendToAdmins({
-      title: `📥 Neuer Lead · ${lead.buyer}`,
-      body: `${leadName} · ${lead.product}`,
-      tag: `lead-admin:${lead.airtableId}`,
-      url: "/",
-    });
     const buyerRes = await sendToBuyersOfCustomer(lead.customerId, {
       title: `🆕 Neuer Lead: ${leadName}`,
       body: lead.product,
       tag: `lead-buyer:${lead.airtableId}`,
       url: "/buyer",
     });
-    pushSent += adminRes.sent + buyerRes.sent;
-    pushRemoved += adminRes.removed + buyerRes.removed;
+    pushSent += buyerRes.sent;
+    pushRemoved += buyerRes.removed;
   }
 
   return { airtable, meta, push: { sent: pushSent, removed: pushRemoved } };
