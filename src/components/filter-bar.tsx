@@ -72,7 +72,7 @@ export function FilterBar({
       : "Alle Kunden";
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <>
       <Dropdown label="Zeitraum" value={rangeLabel}>
         {(close) => (
           <>
@@ -179,6 +179,6 @@ export function FilterBar({
           Aktualisiere…
         </span>
       ) : null}
-    </div>
+    </>
   );
 }

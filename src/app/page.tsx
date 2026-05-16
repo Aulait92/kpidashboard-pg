@@ -92,7 +92,7 @@ export default async function DashboardPage({
               Zeitraum: {formatDate(range.from)} – {formatDate(range.to)}
             </p>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Suspense
               fallback={
                 <div className="text-xs text-[color:var(--muted)]">Lade Filter…</div>
@@ -106,7 +106,7 @@ export default async function DashboardPage({
                 customTo={sp.to}
               />
             </Suspense>
-            <div className="flex items-center justify-end gap-1.5 sm:gap-2">
+            <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
               <NotificationsButton />
               <UserMenu />
             </div>
