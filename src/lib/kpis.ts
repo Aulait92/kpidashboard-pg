@@ -630,6 +630,8 @@ export type TimeSeriesPoint = {
   leadCosts: number;
   otherCosts: number;
   costPerLead: number | null;
+  costPerTermin: number | null;
+  costPerClosed: number | null;
   profitBeforeOther: number;
   profitAfterOther: number;
   marginBeforeOther: number | null;
@@ -757,6 +759,8 @@ export async function computeTimeSeries(params: {
         leadCosts: 0,
         otherCosts: 0,
         costPerLead: null,
+        costPerTermin: null,
+        costPerClosed: null,
         profitBeforeOther: 0,
         profitAfterOther: 0,
         marginBeforeOther: null,
@@ -915,6 +919,10 @@ export async function computeTimeSeries(params: {
         ? a.hoursList.reduce((x, y) => x + y, 0) / a.hoursList.length
         : null;
     p.costPerLead = p.leads > 0 ? p.leadCosts / p.leads : null;
+    p.costPerTermin =
+      p.terminLeads > 0 ? p.leadCosts / p.terminLeads : null;
+    p.costPerClosed =
+      p.closedLeads > 0 ? p.leadCosts / p.closedLeads : null;
     p.profitBeforeOther = p.revenue - p.leadCosts;
     p.profitAfterOther = p.revenue - p.leadCosts - p.otherCosts;
     p.marginBeforeOther = p.revenue > 0 ? p.profitBeforeOther / p.revenue : null;

@@ -335,20 +335,30 @@ function KpiGrid({
           sparkline={{ points, dataKey: "marginAfterOther" }}
         />
         <KpiCard
-          label="Leads gesamt"
-          value={formatNumber(k.totalLeads)}
-          hint="Volumen im Zeitraum"
-          tone="neutral"
-          delta={delta(k.totalLeads, p.totalLeads)}
-          sparkline={{ points, dataKey: "leads", tone: "neutral" }}
+          label="Kosten / Termin"
+          value={formatEUR(
+            k.terminLeads > 0 ? k.leadCosts / k.terminLeads : null,
+          )}
+          hint={`Aus ${formatNumber(k.terminLeads)} Terminen`}
+          delta={delta(
+            k.terminLeads > 0 ? k.leadCosts / k.terminLeads : null,
+            p.terminLeads > 0 ? p.leadCosts / p.terminLeads : null,
+            true,
+          )}
+          sparkline={{ points, dataKey: "costPerTermin" }}
         />
         <KpiCard
-          label="Abschlüsse"
-          value={formatNumber(k.closedLeads)}
-          hint="Closings im Zeitraum"
-          tone="neutral"
-          delta={delta(k.closedLeads, p.closedLeads)}
-          sparkline={{ points, dataKey: "closedLeads", tone: "neutral" }}
+          label="Kosten / Abschluss"
+          value={formatEUR(
+            k.closedLeads > 0 ? k.leadCosts / k.closedLeads : null,
+          )}
+          hint={`Aus ${formatNumber(k.closedLeads)} Abschlüssen`}
+          delta={delta(
+            k.closedLeads > 0 ? k.leadCosts / k.closedLeads : null,
+            p.closedLeads > 0 ? p.leadCosts / p.closedLeads : null,
+            true,
+          )}
+          sparkline={{ points, dataKey: "costPerClosed" }}
         />
       </KpiSection>
     </div>
