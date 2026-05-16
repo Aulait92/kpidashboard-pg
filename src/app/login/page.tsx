@@ -27,7 +27,7 @@ export default async function LoginPage({
             Anmelden
           </h1>
           <p className="mt-1 text-sm text-[color:var(--muted)]">
-            Mit deinem Buyer- oder Admin-Account.
+            Mit deinem Kunden- oder Admin-Account.
           </p>
         </div>
         <LoginForm next={next} />
