@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { login, logout } from "@/lib/auth";
+import { login, logout, type LoginResult } from "@/lib/auth";
 
 export type LoginActionState = {
   error?: string;
@@ -15,7 +15,17 @@ export async function loginAction(
   const password = String(formData.get("password") ?? "");
   const next = String(formData.get("next") ?? "");
 
-  const result = await login(email, password);
+  let result: LoginResult;
+  try {
+    result = await login(email, password);
+  } catch (err) {
+    // Liefert die echte Ursache (fehlendes AUTH_SECRET, kaputte DB,
+    // fehlende User-Tabelle …) statt einer leeren 500-Seite ins UI.
+    return {
+      error: err instanceof Error ? err.message : "Login fehlgeschlagen.",
+    };
+  }
+
   if (!result.ok) {
     return { error: result.error };
   }
