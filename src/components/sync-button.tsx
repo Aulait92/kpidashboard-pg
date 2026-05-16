@@ -117,13 +117,16 @@ export function SyncButton() {
         type="button"
         onClick={handleClick}
         disabled={pending}
-        className="inline-flex items-center gap-2 rounded-lg bg-[color:var(--brand)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60"
+        aria-label={pending ? "Synchronisiere" : "Daten synchronisieren"}
+        className="inline-flex min-h-[40px] items-center gap-2 rounded-lg bg-[color:var(--brand)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60 sm:min-h-0 sm:px-4 sm:py-2"
       >
         <RefreshCw
           className={cn("h-4 w-4", pending && "animate-spin")}
           strokeWidth={2.5}
         />
-        {pending ? "Synchronisiere…" : "Daten synchronisieren"}
+        <span className="hidden sm:inline">
+          {pending ? "Synchronisiere…" : "Daten synchronisieren"}
+        </span>
       </button>
 
       {result?.ok ? (

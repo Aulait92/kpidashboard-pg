@@ -36,7 +36,7 @@ function Stage({
           <div className="text-[11px] font-medium uppercase tracking-wide text-[color:var(--muted)]">
             {label}
           </div>
-          <div className="mt-1 text-3xl font-bold tabular-nums tracking-tight text-[color:var(--foreground)]">
+          <div className="mt-1 text-2xl font-bold tabular-nums tracking-tight text-[color:var(--foreground)] sm:text-3xl">
             {formatNumber(count)}
           </div>
           {hint ? (
@@ -76,12 +76,12 @@ export function FunnelHero({ kpis }: { kpis: Kpis }) {
             Wie performt dein Funnel
           </h2>
         </div>
-        <div className="flex items-center gap-6 text-right">
+        <div className="flex flex-wrap items-center gap-4 sm:gap-6 sm:text-right">
           <div>
             <div className="text-[11px] uppercase tracking-wide text-[color:var(--muted)]">
               Closing Rate
             </div>
-            <div className="text-xl font-bold tabular-nums">
+            <div className="text-lg font-bold tabular-nums sm:text-xl">
               {formatPercent(kpis.closingRate)}
             </div>
           </div>
@@ -89,7 +89,7 @@ export function FunnelHero({ kpis }: { kpis: Kpis }) {
             <div className="text-[11px] uppercase tracking-wide text-[color:var(--muted)]">
               Throughput
             </div>
-            <div className="text-xl font-bold tabular-nums">
+            <div className="text-lg font-bold tabular-nums sm:text-xl">
               {formatNumber(kpis.closedLeads)} / {formatNumber(kpis.totalLeads)}
             </div>
           </div>

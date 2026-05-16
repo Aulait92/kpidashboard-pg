@@ -47,14 +47,14 @@ export function Dropdown({
         type="button"
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          "inline-flex items-center gap-2 rounded-lg border bg-white px-3 py-1.5 text-sm transition",
+          "inline-flex min-h-[40px] items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm transition sm:min-h-0 sm:py-1.5",
           open
             ? "border-[color:var(--brand)] shadow-sm"
             : "border-[color:var(--border)] hover:border-[color:var(--brand)]",
         )}
       >
         <span className="text-xs text-[color:var(--muted)]">{label}</span>
-        <span className="max-w-[160px] truncate font-medium text-[color:var(--foreground)]">
+        <span className="max-w-[140px] truncate font-medium text-[color:var(--foreground)] sm:max-w-[180px]">
           {value}
         </span>
         <ChevronDown
@@ -67,8 +67,13 @@ export function Dropdown({
       {open ? (
         <div
           className={cn(
-            "absolute z-30 mt-2 min-w-[220px] rounded-xl border border-[color:var(--border)] bg-white p-1 shadow-[0_8px_24px_-8px_rgba(15,23,42,0.18)]",
-            align === "right" ? "right-0" : "left-0",
+            "absolute z-30 mt-2 max-h-[70vh] min-w-[220px] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl border border-[color:var(--border)] bg-white p-1 shadow-[0_8px_24px_-8px_rgba(15,23,42,0.18)]",
+            // Mobile fällt der Container in eine eigene Zeile am linken Rand;
+            // erst ab sm rechts ausrichten, damit das Panel nicht aus dem
+            // Viewport rutscht.
+            align === "right"
+              ? "left-0 sm:left-auto sm:right-0"
+              : "left-0",
           )}
         >
           {children(() => setOpen(false))}
@@ -92,7 +97,7 @@ export function DropdownItem({
       type="button"
       onClick={onClick}
       className={cn(
-        "block w-full rounded-md px-3 py-1.5 text-left text-sm transition",
+        "block w-full rounded-md px-3 py-2 text-left text-sm transition sm:py-1.5",
         active
           ? "bg-[color:var(--brand-soft)] font-medium text-[color:var(--brand-dark)]"
           : "text-[color:var(--foreground)] hover:bg-zinc-50",

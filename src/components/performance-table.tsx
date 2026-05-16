@@ -199,7 +199,7 @@ export function PerformanceTable({
         </div>
       ) : (
         <div className="mt-3 overflow-x-auto">
-          <table className="min-w-full text-sm">
+          <table className="min-w-[720px] text-sm">
             <thead className="bg-[color:var(--brand-soft)]/30 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
               <tr>
                 {COLUMNS.map((col) => {
