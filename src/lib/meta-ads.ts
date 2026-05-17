@@ -118,6 +118,31 @@ export async function getFirstAdSetForCampaign(
   return active ? { id: active.id, name: active.name } : null;
 }
 
+// Liest die Landing-Page-URL aus einer bestehenden Anzeige im AdSet aus.
+// Damit übernimmt der Bot pro Kampagne automatisch die richtige URL
+// (inkl. UTM-Parameter), ohne dass wir das pro Kampagne konfigurieren
+// müssten. Liefert null, wenn das AdSet noch keine Anzeige mit Link hat.
+export async function getLinkFromExistingAdInAdSet(
+  adSetId: string,
+): Promise<string | null> {
+  const data = (await metaGet(`${adSetId}/ads`, {
+    fields: "id,name,creative{object_story_spec,effective_object_story_id}",
+    limit: "10",
+  })) as {
+    data: {
+      id: string;
+      creative?: {
+        object_story_spec?: { link_data?: { link?: string } };
+      };
+    }[];
+  };
+  for (const ad of data.data) {
+    const link = ad.creative?.object_story_spec?.link_data?.link;
+    if (link) return link;
+  }
+  return null;
+}
+
 // ─── Image Upload zu Ad Account ──────────────────────────────────────
 
 export async function uploadAdImageFromUrl(
@@ -233,6 +258,17 @@ export async function publishVariantToCampaign(opts: {
     );
   }
 
+  // 2b. Landing-URL: aus einer bestehenden Ad im selben AdSet ableiten,
+  // damit pro Kampagne die richtige URL (inkl. UTMs) verwendet wird.
+  // META_DEFAULT_LINK_URL ist nur Fallback wenn das AdSet noch leer ist.
+  const inheritedLink = await getLinkFromExistingAdInAdSet(adSet.id);
+  const linkUrl = inheritedLink ?? process.env.META_DEFAULT_LINK_URL;
+  if (!linkUrl) {
+    throw new Error(
+      `Keine Landing-URL gefunden: AdSet "${adSet.name}" hat keine bestehende Ad und META_DEFAULT_LINK_URL ist nicht gesetzt.`,
+    );
+  }
+
   // 3. Bild zu Meta hochladen (Hash bekommen)
   const { hash } = await uploadAdImageFromUrl(opts.imageUrl);
 
@@ -245,6 +281,7 @@ export async function publishVariantToCampaign(opts: {
     headline: opts.headline,
     body: opts.body,
     cta: opts.cta,
+    linkUrl,
   });
 
   // 5. Ad anlegen
