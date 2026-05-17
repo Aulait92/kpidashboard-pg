@@ -121,7 +121,10 @@ async function generateImage(prompt: string): Promise<Buffer> {
     throw new Error("REPLICATE_API_TOKEN nicht gesetzt.");
   }
 
-  const replicate = new Replicate({ auth: apiToken });
+  // useFileOutput: false → SDK liefert plain URL-Strings statt FileOutput-
+  // Objekten. Macht die Behandlung der Antwort deterministisch.
+  const replicate = new Replicate({ auth: apiToken, useFileOutput: false });
+
   // Flux 1.1 Pro: photorealistic, hand+text-treu, ~10s pro Bild
   const output = await replicate.run("black-forest-labs/flux-1.1-pro", {
     input: {
@@ -133,22 +136,47 @@ async function generateImage(prompt: string): Promise<Buffer> {
     },
   });
 
-  // Replicate liefert je nach Version eine URL (string) oder ein File-Objekt.
-  // Wir lesen das zu Buffer für R2-Upload.
-  const url =
-    typeof output === "string"
-      ? output
-      : Array.isArray(output) && typeof output[0] === "string"
-        ? (output[0] as string)
-        : null;
+  const url = extractUrl(output);
   if (!url) {
-    throw new Error(`Replicate-Output unerwartet: ${JSON.stringify(output).slice(0, 200)}`);
+    throw new Error(
+      `Replicate-Output unerwartet: ${JSON.stringify(output)?.slice(0, 300) ?? String(output)}`,
+    );
   }
   const imgRes = await fetch(url);
   if (!imgRes.ok) {
     throw new Error(`Bild-Download fehlgeschlagen: ${imgRes.status}`);
   }
   return Buffer.from(await imgRes.arrayBuffer());
+}
+
+// Replicate-Output kann je nach Modell + SDK-Version unterschiedlich
+// strukturiert sein: string | string[] | FileOutput | FileOutput[].
+// Wir laufen rekursiv durch und ziehen die erste URL raus, die wir finden.
+function extractUrl(o: unknown): string | null {
+  if (!o) return null;
+  if (typeof o === "string") return o;
+  if (Array.isArray(o)) {
+    for (const item of o) {
+      const u = extractUrl(item);
+      if (u) return u;
+    }
+    return null;
+  }
+  if (typeof o === "object") {
+    const obj = o as { url?: unknown; href?: unknown };
+    if (typeof obj.url === "function") {
+      try {
+        const u = (obj.url as () => unknown)();
+        if (u instanceof URL) return u.toString();
+        if (typeof u === "string") return u;
+      } catch {
+        // Fallback unten
+      }
+    }
+    if (typeof obj.url === "string") return obj.url;
+    if (typeof obj.href === "string") return obj.href;
+  }
+  return null;
 }
 
 // ─── Orchestrator ────────────────────────────────────────────────────
