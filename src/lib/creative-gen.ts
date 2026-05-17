@@ -968,23 +968,55 @@ Schreibe eine NEUE Facebook-Headline (max 40 Zeichen). Ergänzt die visuelle Hea
 // der bereits vorhandenen (oder gerade abgelehnten) Varianten — Claude
 // soll bewusst etwas anderes liefern.
 
-// Behält Headline/Body/CTA/Texte, designt nur das Creative-Bild neu —
-// andere Mechanic, andere Komposition, gleiche Copy.
+// Behält Headline/Body/CTA/Texte UND die ursprüngliche Mechanic — designt
+// nur die konkrete Komposition (Foto/Layout/Farben) neu. Wenn der User
+// nochmal auf "Bild neu" klickt, kommt eine neue Variation der GLEICHEN
+// Mechanic, kein Format-Wechsel.
 export async function regenerateCreativeImage(
   brief: CreativeBrief,
   requestId: string,
-  fixed: { headline: string; body: string; cta: string; currentImagePrompt?: string },
+  fixed: {
+    headline: string;
+    body: string;
+    cta: string;
+    mechanic?: string;
+    currentImagePrompt?: string;
+  },
 ): Promise<{ imageUrl: string; imagePrompt: string }> {
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
 
-  // Random Visual-Style — 60% Foto/Comic, 40% Typography für sichtbare
-  // Abwechslung gegenüber dem aktuellen Bild.
-  const visualStyle: "photo" | "typography" =
-    Math.random() < 0.6 ? "photo" : "typography";
+  // Visual-Style aus der Mechanic ableiten — Bild-Regen behält das Format,
+  // generiert nur eine andere Komposition innerhalb dieser Mechanic.
+  const mechanic = fixed.mechanic ?? "";
+  const visualStyle: "photo" | "ugc" | "comic" | "typography" = /^UGC-/i.test(
+    mechanic,
+  )
+    ? "ugc"
+    : /^Comic-/i.test(mechanic)
+      ? "comic"
+      : /^(Brand-Photo|Person-Quote|Lifestyle-Background|Newspaper-Mockup|Photo-Big-Headline)/i.test(
+            mechanic,
+          )
+        ? "photo"
+        : mechanic
+          ? "typography"
+          : // Fallback wenn alte Variante ohne mechanic: 50/50 photo|typo
+            Math.random() < 0.5
+            ? "photo"
+            : "typography";
 
-  const userPrompt = `Designe ein KOMPLETT NEUES Creative-Bild für eine bestehende ${brief.campaignKey}-Meta-Ad. Die TEXTE bleiben unverändert — du gestaltest nur die visuelle Umsetzung neu.
+  const styleHint =
+    visualStyle === "ugc"
+      ? `Visual-Style: UGC (native iPhone-Screenshot-Look). MUSS enthalten: {{UNSPLASH:keywords}}-Foto full-bleed + signature schwarze Caption-Box unten (background:#000, color:#fff, font-weight:900, border-radius). Bei UGC-Whiteboard zusätzlich Caveat/Permanent-Marker-Handwriting-Overlay.`
+      : visualStyle === "comic"
+        ? `Visual-Style: Comic. MUSS enthalten: {{COMIC:englische beschreibung}}-Element als zentrale Illustration.`
+        : visualStyle === "photo"
+          ? `Visual-Style: polished Photo. MUSS enthalten: {{UNSPLASH:keywords}}-Foto.`
+          : `Visual-Style: typografisch. KEIN Bild-Platzhalter.`;
+
+  const userPrompt = `Designe ein NEUES Creative-Bild für eine bestehende ${brief.campaignKey}-Meta-Ad. Die TEXTE bleiben unverändert UND das Format/die Mechanic bleibt dieselbe — du gestaltest nur die konkrete Komposition (Foto-Motiv, Layout, Farben) neu.
 
 ${campaignContext}
 
@@ -996,13 +1028,20 @@ FIXIERTE TEXTE (musst du genau so verwenden):
 - Body im Creative: "${fixed.body}"
 - CTA-Button: "${fixed.cta}"
 
-VORGABEN:
-- Visual-Style: ${visualStyle}${visualStyle === "photo" ? ` (mit {{UNSPLASH:keywords}} ODER {{COMIC:keywords}})` : " (rein typografisch, KEIN Bild-Platzhalter)"}
-- Wähle eine ANDERE Mechanic als beim ursprünglichen Bild — andere Komposition, anderes Farb-Schema, anderer Aufbau
-- Texte bleiben wörtlich gleich, NICHT umformulieren
-- PKV-Anchor MUSS prominent sichtbar bleiben (siehe Regel im System-Prompt)
+${mechanic ? `MECHANIC (bleibt fix): ${mechanic}` : ""}
+${styleHint}
 
-Antworte mit GENAU EINEM <creative_html>-Block, KEINE anderen Tags (keine <variant>, kein <headline>, etc.):
+WAS DU VARIIEREN SOLLST:
+- Bei photo/UGC: anderes Foto-Motiv (andere {{UNSPLASH:keywords}})
+- Bei comic: andere Comic-Beschreibung (anderes {{COMIC:...}})
+- Bei allen: anderes Farb-Schema, andere Komposition (z.B. Headline links statt rechts, anderer Hintergrund-Ton), aber GLEICHE Mechanic
+
+WAS NICHT ÄNDERN:
+- Texte (Headline/Body/CTA wörtlich gleich)
+- Mechanic / Format
+- PKV-Anchor MUSS prominent bleiben
+
+Antworte mit GENAU EINEM <creative_html>-Block, KEINE anderen Tags:
 
 <creative_html>
 <!DOCTYPE html>
