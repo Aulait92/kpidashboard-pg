@@ -201,7 +201,17 @@ ${campaignContext}
 ${brief.audience ? `ZIELGRUPPE-FOKUS (zusätzlich): ${brief.audience}` : ""}
 ${brief.tone ? `TONE: ${brief.tone}` : ""}
 
-Jede Variante MUSS eine andere Direct-Response-Mechanic nutzen und einen anderen Hook-Angle (Pain / Curiosity / Promise / Story). Mindestens 1 von ${brief.count} Varianten sollte ein Foto via {{UNSPLASH:…}} nutzen (Brand-Photo / Person-Quote / Lifestyle-Background), der Rest typografisch. Antworte mit <variant>-Blöcken im definierten Format.`;
+Jede Variante MUSS eine andere Direct-Response-Mechanic nutzen und einen anderen Hook-Angle (Pain / Curiosity / Promise / Story).
+
+PFLICHT-VERTEILUNG für ${brief.count} ${brief.count === 1 ? "Variante" : "Varianten"}:
+${
+  brief.count === 1
+    ? "- 50%-Chance: Foto-Creative ODER typografisch (wähle bewusst, was für den Hook besser passt)"
+    : `- Mindestens ${Math.max(1, Math.ceil(brief.count / 2))} Variante(n) MUSS Foto-driven sein (Brand-Photo / Person-Quote / Lifestyle-Background / Newspaper-Mockup) mit {{UNSPLASH:…}}-Platzhalter
+- Die übrigen typografisch (Big-Number / STOPP / Highlighter / Konto-Mockup / 3-Fragen-Quiz)`
+}
+
+Antworte mit <variant>-Blöcken im definierten Format.`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
