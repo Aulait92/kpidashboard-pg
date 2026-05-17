@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
   generateCreatives,
+  generateReplacementCreative,
   parseIntent,
   regenerateAdText,
   regenerateFbHeadline,
@@ -245,7 +246,7 @@ function variantButtons(variantId: string): { id: string; title: string }[][] {
   return [
     [
       { id: `approve:${variantId}`, title: "✅ Genehmigen" },
-      { id: `reject:${variantId}`, title: "❌ Ablehnen" },
+      { id: `replace:${variantId}`, title: "🔁 Ersetzen" },
     ],
     [
       { id: `regen_text:${variantId}`, title: "📝 Text neu" },
@@ -277,15 +278,78 @@ async function handleButtonClick(chatId: string, data: string) {
     return;
   }
 
-  if (action === "reject") {
+  if (action === "replace") {
+    const intent = (variant.request.parsedIntent ?? {}) as ParsedIntent;
+    const campaignKey = intent.campaignKey ?? "Wechsel";
     await prisma.creativeVariant.update({
       where: { id: variant.id },
       data: { status: "rejected" },
     });
     await sendTelegramText({
       chatId,
-      text: `❌ Variante #${variant.index} abgelehnt.`,
+      text: `🔁 Variante #${variant.index} verworfen — generiere Ersatz mit anderer Mechanic…`,
     });
+    try {
+      // Vermeidungs-Headlines: alle Geschwister-Varianten im selben Request
+      // + die gerade abgelehnte.
+      const siblings = await prisma.creativeVariant.findMany({
+        where: { requestId: variant.requestId },
+        select: { headline: true },
+      });
+      const avoidHeadlines = siblings.map((s) => s.headline);
+
+      const replacement = await generateReplacementCreative(
+        {
+          campaignKey,
+          audience: intent.audience,
+          tone: intent.tone,
+          count: 1,
+        },
+        variant.requestId,
+        avoidHeadlines,
+      );
+
+      const maxIndex = await prisma.creativeVariant.aggregate({
+        where: { requestId: variant.requestId },
+        _max: { index: true },
+      });
+      const newIndex = (maxIndex._max.index ?? 0) + 1;
+
+      const newVariant = await prisma.creativeVariant.create({
+        data: {
+          requestId: variant.requestId,
+          index: newIndex,
+          headline: replacement.headline,
+          body: replacement.body,
+          cta: replacement.cta,
+          adText: replacement.adText,
+          fbHeadline: replacement.fbHeadline,
+          imagePrompt: replacement.imagePrompt,
+          imageUrl: replacement.imageUrl,
+          status: "pending",
+        },
+      });
+      const { messageId } = await sendTelegramPhotoWithButtons({
+        chatId,
+        imageUrl: replacement.imageUrl,
+        caption: buildVariantCaption({
+          fbHeadline: replacement.fbHeadline,
+          adText: replacement.adText,
+          index: newIndex,
+        }),
+        buttons: variantButtons(newVariant.id),
+      });
+      await prisma.creativeVariant.update({
+        where: { id: newVariant.id },
+        data: { telegramMsgId: String(messageId) },
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "unbekannt";
+      await sendTelegramText({
+        chatId,
+        text: `❌ Ersatz-Generation fehlgeschlagen: ${escapeHtml(msg)}`,
+      });
+    }
     return;
   }
 
