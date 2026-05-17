@@ -7,7 +7,11 @@ FROM mcr.microsoft.com/playwright:v1.60.0-jammy
 WORKDIR /app
 
 # Dependencies separat installieren für besseres Layer-Caching.
-COPY package.json package-lock.json ./
+# prisma/ + prisma.config.ts müssen vor `npm ci` da sein, weil das
+# postinstall-Script `prisma generate` ausführt und sonst das Schema
+# nicht findet.
+COPY package.json package-lock.json prisma.config.ts ./
+COPY prisma ./prisma
 RUN npm ci
 
 COPY . .
