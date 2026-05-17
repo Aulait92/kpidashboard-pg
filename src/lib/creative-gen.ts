@@ -45,6 +45,25 @@ ZIEL: PKV-Beratungs-Termin buchen.
 - VERBOTEN: "Jetzt sparen", "Top-Tarif", "Kostenlos", "Spitzenmäßig"
 - Native-Feeling, kein Werbe-Sprech
 
+═══ PKV-ANCHOR (PFLICHT — sonst wird's geclickt aber falsch verstanden) ═══
+Jedes Creative MUSS klar machen, dass es um PKV (Private Krankenversicherung)
+geht. Ein abstrakter Hook ("−38%", "STOPP.") allein reicht NICHT — User
+müssen in <1 Sekunde wissen welche Vertical das ist.
+
+Mindestens EINES der folgenden Elemente MUSS sichtbar im Creative-Bild stehen:
+- Headline enthält "PKV" / "Krankenversicherung" / "Krankenkasse"
+- Body/Sub-Headline enthält "PKV-Beitrag" / "PKV-Tarif" / "private Krankenversicherung"
+- Bei Mockup-Mechaniken: das Mockup-Subject ist PKV-spezifisch (Browser-URL
+  enthält "pkv", Brief vom "PKV-Versicherer", Konto-Vergleich-Card heißt
+  "PKV-Beitrag heute vs. nach Wechsel")
+- Bei reinen Big-Number-Creatives: Sub-Zeile mit "deines PKV-Beitrags" o.ä.
+
+NIE NUR: "−38%" + "Jetzt prüfen" → könnte alles bedeuten. IMMER: "−38%" +
+"deines PKV-Beitrags" + "Tarif prüfen".
+
+Im AdText (Facebook-Primary-Text) muss "PKV" oder "private Krankenversicherung"
+ebenfalls in den ersten 80 Zeichen vorkommen — sonst scrollt der User weiter.
+
 ═══ ADTEXT (Facebook Primary-Text, NICHT im Creative) ═══
 Zusätzlich zum visuellen Creative braucht jede Variante einen Post-Text,
 der über dem Bild im Facebook-Feed steht. Das ist KEIN Bestandteil des
@@ -289,7 +308,23 @@ async function brainstormConcepts(brief: CreativeBrief): Promise<Concept[]> {
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
 
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
-  const photoMin = brief.count === 1 ? 0 : Math.max(1, Math.ceil(brief.count / 2));
+
+  // Pro Slot expliziter visualStyle, statt "mindestens N müssen photo sein"
+  // — Claude ignoriert weichere Quoten. Schema: ceil(N/2) photo zuerst, dann
+  // typography. Bei N=1: 50/50.
+  const slotStyles: ("photo" | "typography")[] = (() => {
+    if (brief.count === 1) {
+      return [Math.random() < 0.5 ? "photo" : "typography"];
+    }
+    const photoCount = Math.ceil(brief.count / 2);
+    return Array.from({ length: brief.count }, (_, i) =>
+      i < photoCount ? "photo" : "typography",
+    );
+  })();
+
+  const slotInstructions = slotStyles
+    .map((s, i) => `  Konzept ${i + 1}: visualStyle = "${s}"`)
+    .join("\n");
 
   const userPrompt = `Du brainstormst ${brief.count} ${brief.count === 1 ? "Konzept" : "distinkte Konzepte"} für Meta-Ad-Creatives zur ${brief.campaignKey}-Kampagne.
 
@@ -302,23 +337,28 @@ WICHTIG: maximale Varianz zwischen den Konzepten. Jedes Konzept braucht:
 - ANDEREN hookAngle (Pain ≠ Curiosity ≠ Promise ≠ Story ≠ Outrage ≠ Insight)
 - ANDERE mechanic (keine zwei Big-Number-Konzepte, keine zwei STOPP-Konzepte)
 - ANDEREN copyLength wenn möglich (mische short/medium/long)
-${brief.count > 1 ? `- VERTEILUNG visualStyle: mindestens ${photoMin} "photo", Rest "typography"` : ""}
 
-VERFÜGBARE MECHANIKEN (wähle ${brief.count} verschiedene):
-- Big-Number / STOPP-Interrupt / Highlighter-Hook / Konto-Vergleich-Mockup
-- Zeitungs-Meldung / 3-Fragen-Quiz / Google-Autocomplete / Reddit-Native
-- Brand-Photo-Hero / Person-Quote / Lifestyle-Background / Newspaper-Mockup
-- SMS-Screenshot / WhatsApp-Chat-Mockup / Rechnungs-Closeup / Brief-vom-Versicherer
-- Photo-Big-Headline (full-bleed Foto + EINE fette Headline, nichts sonst — sehr beliebt, bei N≥3 möglichst dabei haben)
+VISUAL-STYLE PRO SLOT (FEST VORGEGEBEN, NICHT ABWEICHEN):
+${slotInstructions}
 
-OUTPUT (strict, NUR <concept>-Blöcke, kein Drumherum):
+Für "photo"-Slots: wähle eine foto-getragene Mechanic (Brand-Photo-Hero, Person-Quote, Lifestyle-Background, Newspaper-Mockup, Photo-Big-Headline). Das Konzept MUSS ein {{UNSPLASH:…}}-Foto nutzen.
+Für "typography"-Slots: wähle eine typografische Mechanic (Big-Number, STOPP-Interrupt, Highlighter-Hook, Konto-Mockup, 3-Fragen-Quiz, Google-Autocomplete, Reddit-Native, SMS/WhatsApp-Mockup, Rechnungs-Closeup, Brief-vom-Versicherer).
+
+PKV-ANCHOR (PFLICHT):
+Jedes Konzept MUSS unmissverständlich PKV/Private-Krankenversicherung-Kontext setzen. Abstrakte Hooks wie nur "−38%" oder "STOPP." reichen NICHT — die Description muss klar machen wo "PKV", "PKV-Beitrag", "Krankenversicherung" oder "Tarif" sichtbar wird.
+
+VERFÜGBARE MECHANIKEN:
+- Photo-Mechaniken: Brand-Photo-Hero / Person-Quote / Lifestyle-Background / Newspaper-Mockup / Photo-Big-Headline
+- Typo-Mechaniken: Big-Number / STOPP-Interrupt / Highlighter-Hook / Konto-Vergleich-Mockup / Zeitungs-Meldung / 3-Fragen-Quiz / Google-Autocomplete / Reddit-Native / SMS-Screenshot / WhatsApp-Chat-Mockup / Rechnungs-Closeup / Brief-vom-Versicherer
+
+OUTPUT (strict, NUR <concept>-Blöcke, kein Drumherum, EXAKT in der Reihenfolge oben):
 
 <concept>
 <hookAngle>Pain</hookAngle>
 <mechanic>Konto-Vergleich-Mockup</mechanic>
 <visualStyle>typography</visualStyle>
 <copyLength>medium</copyLength>
-<description>GKV-vs-PKV Konto-Vergleich-Screenshot mit Browser-Chrome. 824€ → 412€. Handschriftlicher Pfeil "−50%". AdText: 3-Satz-Story einer Wechslerin.</description>
+<description>GKV-vs-PKV Konto-Vergleich-Screenshot mit Browser-Chrome, Headline "Dein PKV-Beitrag heute vs. nach Wechsel". 824€ → 412€. Handschriftlicher Pfeil "−50%". AdText: 3-Satz-Story einer Wechslerin.</description>
 </concept>`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -344,11 +384,19 @@ OUTPUT (strict, NUR <concept>-Blöcke, kein Drumherum):
   if (concepts.length === 0) {
     throw new Error(`Brainstorm enthielt keine <concept>-Blöcke: ${text.slice(0, 300)}…`);
   }
+
+  // Hard-enforce: visualStyle MUSS dem Slot-Schema folgen. Falls Claude die
+  // Vorgabe ignoriert hat, override (Execution-Phase adaptiert dann das HTML).
+  const enforced = concepts.slice(0, brief.count).map((c, i) => ({
+    ...c,
+    visualStyle: slotStyles[i] ?? c.visualStyle,
+  }));
+
   console.log(
     "[creative-gen] Brainstormed concepts:",
-    concepts.map((c) => `${c.mechanic}/${c.hookAngle}/${c.visualStyle}/${c.copyLength}`),
+    enforced.map((c) => `${c.mechanic}/${c.hookAngle}/${c.visualStyle}/${c.copyLength}`),
   );
-  return concepts;
+  return enforced;
 }
 
 function parseConceptBlocks(text: string): Concept[] {
@@ -387,7 +435,7 @@ async function generateOneCreative(
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
   const photoLine =
     concept.visualStyle === "photo"
-      ? `Dieses Creative MUSS ein {{UNSPLASH:keywords}}-Platzhalter-Foto nutzen.`
+      ? `FOTO-PFLICHT: Dieses Creative MUSS GENAU EIN {{UNSPLASH:englische keywords}}-Element enthalten, entweder als <img src="{{UNSPLASH:…}}"> ODER als background-image: url({{UNSPLASH:…}}). Wenn du keinen Platzhalter im HTML hast, ist das Creative ungültig. Die Foto-Komposition soll der Mechanic entsprechen (full-bleed bei Photo-Big-Headline / Lifestyle-Background, neben Headline bei Brand-Photo-Hero, etc.).`
       : `Dieses Creative ist typografisch — KEIN Foto, kein {{UNSPLASH}}-Platzhalter.`;
   const lengthRange =
     concept.copyLength === "long"
@@ -439,7 +487,15 @@ Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm,
       `Execution für Konzept "${concept.mechanic}" lieferte keinen <variant>: ${text.slice(0, 300)}…`,
     );
   }
-  return variants[0];
+  const result = variants[0];
+  // Sanity-Check: bei Photo-Konzepten muss ein UNSPLASH-Platzhalter im HTML
+  // sein, sonst war die ganze Foto-Anweisung umsonst.
+  if (concept.visualStyle === "photo" && !result.html.includes("{{UNSPLASH:")) {
+    console.warn(
+      `[creative-gen] Photo-Konzept "${concept.mechanic}" lieferte HTML ohne {{UNSPLASH:}} — Claude hat die Foto-Pflicht ignoriert.`,
+    );
+  }
+  return result;
 }
 
 // ─── Orchestrator: brainstorm → parallel execution ───────────────────
