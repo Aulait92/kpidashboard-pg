@@ -48,21 +48,37 @@ ZIEL: PKV-Beratungs-Termin buchen.
 - VERBOTEN: "Jetzt sparen", "Top-Tarif", "Kostenlos", "Spitzenmäßig"
 - Native-Feeling, kein Werbe-Sprech
 
-═══ PKV-ANCHOR (PFLICHT — sonst wird's geclickt aber falsch verstanden) ═══
-Jedes Creative MUSS klar machen, dass es um PKV (Private Krankenversicherung)
-geht. Ein abstrakter Hook ("−38%", "STOPP.") allein reicht NICHT — User
-müssen in <1 Sekunde wissen welche Vertical das ist.
+═══ PKV-ANCHOR (PFLICHT, PROMINENT — sonst wird's geclickt aber falsch verstanden) ═══
+Jedes Creative MUSS in <1 Sekunde signalisieren, dass es um PKV (Private
+Krankenversicherung) geht. Das Wort "PKV" oder "Krankenversicherung"
+darf NIE nur in kleinem Body-Text versteckt sein.
 
-Mindestens EINES der folgenden Elemente MUSS sichtbar im Creative-Bild stehen:
-- Headline enthält "PKV" / "Krankenversicherung" / "Krankenkasse"
-- Body/Sub-Headline enthält "PKV-Beitrag" / "PKV-Tarif" / "private Krankenversicherung"
-- Bei Mockup-Mechaniken: das Mockup-Subject ist PKV-spezifisch (Browser-URL
-  enthält "pkv", Brief vom "PKV-Versicherer", Konto-Vergleich-Card heißt
-  "PKV-Beitrag heute vs. nach Wechsel")
-- Bei reinen Big-Number-Creatives: Sub-Zeile mit "deines PKV-Beitrags" o.ä.
+GRÖßEN-PFLICHT für den PKV-Anchor:
+- Das Wort "PKV" (Großbuchstaben) oder "Krankenversicherung" MUSS in
+  einem visuell prominenten Element stehen: entweder in der Headline
+  (>=60pt) oder in einer eigenen Anchor-Zeile (>=40pt), gut lesbar.
+- KEIN PKV-Anchor im Body-Text <30pt — der ist auf dem Smartphone-Feed
+  unleserlich.
+- "PKV" IMMER in Großbuchstaben schreiben (nicht "Pkv" oder "pkv").
+- Bei Big-Number-Creatives: direkt unter/über der Zahl die Anchor-Zeile,
+  z.B. "Dein PKV-BEITRAG" oder "PKV-Tarif heute" (>=50pt).
+- Bei Photo-Big-Headline: PKV im Headline-Text selbst (Hero-Größe), nicht
+  nur im CTA-Button.
+- Bei Mockup-Mechaniken: das Subject im Mockup ist sichtbar PKV-bezogen
+  (Browser-URL enthält "/pkv", Brief-Header "Ihre PKV-Versicherung", Konto-
+  Vergleich-Card-Title "PKV-Beitrag: heute vs. nach Wechsel" — alles in
+  groß lesbarer Schrift).
 
-NIE NUR: "−38%" + "Jetzt prüfen" → könnte alles bedeuten. IMMER: "−38%" +
-"deines PKV-Beitrags" + "Tarif prüfen".
+PRÜF-CHECK vor finalem HTML:
+1. Steht "PKV" oder "Krankenversicherung" prominent (>=40pt) sichtbar?
+2. Wäre die Vertical für jemanden im Feed-Scroll in <1s klar?
+3. Wenn ich nur den ersten visuellen Eindruck habe (ohne Body zu lesen),
+   weiß ich dass es um PKV geht?
+Wenn 1 Nein → vergrößern. Wenn 2/3 Nein → PKV-Anchor an prominenter
+Stelle nachziehen.
+
+NIE NUR: "−38%" + "Jetzt prüfen" → könnte alles bedeuten.
+IMMER: große Zahl + große Anchor-Zeile "Dein PKV-BEITRAG" + CTA.
 
 Im AdText (Facebook-Primary-Text) muss "PKV" oder "private Krankenversicherung"
 ebenfalls in den ersten 80 Zeichen vorkommen — sonst scrollt der User weiter.
@@ -842,24 +858,50 @@ Schreibe eine NEUE Facebook-Headline (max 40 Zeichen). Ergänzt die visuelle Hea
 // der bereits vorhandenen (oder gerade abgelehnten) Varianten — Claude
 // soll bewusst etwas anderes liefern.
 
-export async function generateReplacementCreative(
+// Behält Headline/Body/CTA/Texte, designt nur das Creative-Bild neu —
+// andere Mechanic, andere Komposition, gleiche Copy.
+export async function regenerateCreativeImage(
   brief: CreativeBrief,
   requestId: string,
-  avoidHeadlines: string[],
-): Promise<GeneratedCreative> {
+  fixed: { headline: string; body: string; cta: string; currentImagePrompt?: string },
+): Promise<{ imageUrl: string; imagePrompt: string }> {
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
-  // Single-Konzept-Brainstorm mit expliziter Avoid-Liste.
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
 
+  // Random Visual-Style — 60% Foto/Comic, 40% Typography für sichtbare
+  // Abwechslung gegenüber dem aktuellen Bild.
   const visualStyle: "photo" | "typography" =
-    Math.random() < 0.5 ? "photo" : "typography";
+    Math.random() < 0.6 ? "photo" : "typography";
 
-  const avoidBlock = avoidHeadlines.length
-    ? `\nDie folgenden Hooks sind im selben Request schon vorhanden (oder abgelehnt). NEUE Variante MUSS einen klar anderen Angle und eine andere Mechanic haben:\n${avoidHeadlines.map((h) => `- "${h}"`).join("\n")}`
-    : "";
+  const userPrompt = `Designe ein KOMPLETT NEUES Creative-Bild für eine bestehende ${brief.campaignKey}-Meta-Ad. Die TEXTE bleiben unverändert — du gestaltest nur die visuelle Umsetzung neu.
 
-  const conceptRes = await fetch("https://api.anthropic.com/v1/messages", {
+${campaignContext}
+
+${brief.audience ? `ZIELGRUPPE: ${brief.audience}` : ""}
+${brief.tone ? `TONE: ${brief.tone}` : ""}
+
+FIXIERTE TEXTE (musst du genau so verwenden):
+- Headline im Creative: "${fixed.headline}"
+- Body im Creative: "${fixed.body}"
+- CTA-Button: "${fixed.cta}"
+
+VORGABEN:
+- Visual-Style: ${visualStyle}${visualStyle === "photo" ? ` (mit {{UNSPLASH:keywords}} ODER {{COMIC:keywords}})` : " (rein typografisch, KEIN Bild-Platzhalter)"}
+- Wähle eine ANDERE Mechanic als beim ursprünglichen Bild — andere Komposition, anderes Farb-Schema, anderer Aufbau
+- Texte bleiben wörtlich gleich, NICHT umformulieren
+- PKV-Anchor MUSS prominent sichtbar bleiben (siehe Regel im System-Prompt)
+
+Antworte mit GENAU EINEM <creative_html>-Block, KEINE anderen Tags (keine <variant>, kein <headline>, etc.):
+
+<creative_html>
+<!DOCTYPE html>
+<html lang="de">
+…
+</html>
+</creative_html>`;
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "x-api-key": apiKey,
@@ -868,55 +910,23 @@ export async function generateReplacementCreative(
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 800,
-      system: `Du bist Senior Direct-Response-Creative-Director für deutsche PKV-Lead-Gen-Ads. Du brainstormst EIN Ersatz-Konzept, das sich klar von bereits vorhandenen Varianten abhebt.`,
-      messages: [
-        {
-          role: "user",
-          content: `Brainstorm EIN Konzept für eine ${brief.campaignKey}-Meta-Ad.
-
-${campaignContext}
-
-${brief.audience ? `ZIELGRUPPE: ${brief.audience}` : ""}
-${brief.tone ? `TONE: ${brief.tone}` : ""}
-${avoidBlock}
-
-Vorgaben: visualStyle MUSS "${visualStyle}" sein.
-
-OUTPUT (genau EIN <concept>-Block, nichts sonst):
-
-<concept>
-<hookAngle>Pain|Curiosity|Promise|Story|Outrage|Insight</hookAngle>
-<mechanic>z.B. Photo-Big-Headline / STOPP-Interrupt / Brief-vom-Versicherer / SMS-Screenshot / …</mechanic>
-<visualStyle>${visualStyle}</visualStyle>
-<copyLength>short|medium|long</copyLength>
-<description>1-2 Sätze konkrete Konzept-Skizze, MUSS sich von den vorhandenen Varianten unterscheiden.</description>
-</concept>`,
-        },
-      ],
+      max_tokens: 8000,
+      system: CREATIVE_SYSTEM_PROMPT,
+      messages: [{ role: "user", content: userPrompt }],
     }),
   });
-  if (!conceptRes.ok) {
-    throw new Error(`Replacement-Brainstorm ${conceptRes.status}: ${await conceptRes.text()}`);
+  if (!res.ok) {
+    throw new Error(`Image-Regen ${res.status}: ${await res.text()}`);
   }
-  const conceptData = (await conceptRes.json()) as {
-    content: { type: string; text: string }[];
-  };
-  const conceptText = conceptData.content.find((c) => c.type === "text")?.text ?? "";
-  const parsedConcepts = parseConceptBlocks(conceptText);
-  if (parsedConcepts.length === 0) {
-    throw new Error(`Replacement-Brainstorm lieferte keinen Concept: ${conceptText.slice(0, 200)}`);
+  const data = (await res.json()) as { content: { type: string; text: string }[] };
+  const text = data.content.find((c) => c.type === "text")?.text ?? "";
+  const html = extractTag(text, "creative_html");
+  if (!html) {
+    throw new Error(`Image-Regen lieferte kein <creative_html>: ${text.slice(0, 300)}`);
   }
-  const concept: Concept = { ...parsedConcepts[0], visualStyle };
-  console.log(
-    `[creative-gen] Replacement-Concept: ${concept.mechanic}/${concept.hookAngle}/${concept.visualStyle}/${concept.copyLength}`,
-  );
 
-  // Phase 2: das eine Konzept umsetzen.
-  const variant = await generateOneCreative(brief, concept);
-
-  // Render + Upload (gleicher Pipeline-Teil wie in generateCreatives).
-  let resolvedHtml = await resolveUnsplashPlaceholders(variant.html);
+  // Render + Upload — gleicher Pipeline-Teil wie generateCreatives.
+  let resolvedHtml = await resolveUnsplashPlaceholders(html);
   resolvedHtml = await resolveComicPlaceholders(resolvedHtml);
   const buffer = await renderHtmlToImage(resolvedHtml, {
     width: 1080,
@@ -924,22 +934,13 @@ OUTPUT (genau EIN <concept>-Block, nichts sonst):
     format: "jpeg",
     quality: 92,
   });
-  const key = `creatives/${requestId}/replacement-${Date.now()}.jpg`;
+  const key = `creatives/${requestId}/regen-${Date.now()}.jpg`;
   const imageUrl = await uploadImageToR2({
     buffer,
     key,
     contentType: "image/jpeg",
   });
-
-  return {
-    headline: variant.headline,
-    body: variant.body,
-    cta: variant.cta,
-    adText: variant.adText,
-    fbHeadline: variant.fbHeadline,
-    imagePrompt: variant.html,
-    imageUrl,
-  } satisfies GeneratedCreative;
+  return { imageUrl, imagePrompt: html };
 }
 
 // ─── Intent Parsing aus Telegram-Text ────────────────────────────────
