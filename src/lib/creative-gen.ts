@@ -42,6 +42,23 @@ ZIEL: PKV-Beratungs-Termin buchen.
 - VERBOTEN: "Jetzt sparen", "Top-Tarif", "Kostenlos", "Spitzenmäßig"
 - Native-Feeling, kein Werbe-Sprech
 
+═══ TEXT-MINIMALISMUS (sehr wichtig) ═══
+Weniger Text = stärkeres Creative. Default-Modus: EIN Hero-Element dominiert
+visuell (Zahl, kurzes Statement, einzelne Frage), drumherum viel Whitespace.
+
+- IDEAL: Headline (3-5 Wörter) + CTA. Body ist OPTIONAL — wenn er nicht
+  zwingend mehr Information liefert, weglassen oder auf 1 kurzen Satz
+  reduzieren (max 60 Zeichen, nicht 90).
+- KEINE Bullet-Listen mit 3+ Items, außer die Mechanic verlangt es
+  explizit (Highlighter-Hook ✗-Liste, 3-Fragen-Quiz). Selbst dort: max
+  3 Items, jedes max 6 Wörter.
+- KEINE erklärenden Absätze, KEINE Fußnoten, KEINE Disclaimer-Zeilen
+  (außer dezentem "ANZEIGE"-Label oben rechts).
+- Faustregel: Wenn das Creative auf einem Smartphone-Feed in 1.5
+  Sekunden nicht lesbar UND verständlich ist → zu viel Text, kürzen.
+- Typografie macht den Impact, nicht Wortmenge. Eine 200pt-Zahl
+  schlägt einen kompletten Absatz.
+
 ═══ DIRECT-RESPONSE-MECHANIKEN ═══
 Wähle pro Variante eine Mechanic und führe sie konsequent aus:
 
