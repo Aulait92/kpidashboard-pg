@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
   generateCreatives,
-  generateReplacementCreative,
   parseIntent,
   regenerateAdText,
+  regenerateCreativeImage,
   regenerateFbHeadline,
   type ParsedIntent,
 } from "@/lib/creative-gen";
@@ -246,7 +246,7 @@ function variantButtons(variantId: string): { id: string; title: string }[][] {
   return [
     [
       { id: `approve:${variantId}`, title: "✅ Genehmigen" },
-      { id: `replace:${variantId}`, title: "🔁 Ersetzen" },
+      { id: `regen_img:${variantId}`, title: "🖼 Bild neu" },
     ],
     [
       { id: `regen_text:${variantId}`, title: "📝 Text neu" },
@@ -278,27 +278,15 @@ async function handleButtonClick(chatId: string, data: string) {
     return;
   }
 
-  if (action === "replace") {
+  if (action === "regen_img") {
     const intent = (variant.request.parsedIntent ?? {}) as ParsedIntent;
     const campaignKey = intent.campaignKey ?? "Wechsel";
-    await prisma.creativeVariant.update({
-      where: { id: variant.id },
-      data: { status: "rejected" },
-    });
     await sendTelegramText({
       chatId,
-      text: `🔁 Variante #${variant.index} verworfen — generiere Ersatz mit anderer Mechanic…`,
+      text: `🖼 Generiere neues Bild für Variante #${variant.index} (Texte bleiben)…`,
     });
     try {
-      // Vermeidungs-Headlines: alle Geschwister-Varianten im selben Request
-      // + die gerade abgelehnte.
-      const siblings = await prisma.creativeVariant.findMany({
-        where: { requestId: variant.requestId },
-        select: { headline: true },
-      });
-      const avoidHeadlines = siblings.map((s) => s.headline);
-
-      const replacement = await generateReplacementCreative(
+      const result = await regenerateCreativeImage(
         {
           campaignKey,
           audience: intent.audience,
@@ -306,48 +294,35 @@ async function handleButtonClick(chatId: string, data: string) {
           count: 1,
         },
         variant.requestId,
-        avoidHeadlines,
+        {
+          headline: variant.headline,
+          body: variant.body,
+          cta: variant.cta,
+          currentImagePrompt: variant.imagePrompt,
+        },
       );
-
-      const maxIndex = await prisma.creativeVariant.aggregate({
-        where: { requestId: variant.requestId },
-        _max: { index: true },
-      });
-      const newIndex = (maxIndex._max.index ?? 0) + 1;
-
-      const newVariant = await prisma.creativeVariant.create({
+      await prisma.creativeVariant.update({
+        where: { id: variant.id },
         data: {
-          requestId: variant.requestId,
-          index: newIndex,
-          headline: replacement.headline,
-          body: replacement.body,
-          cta: replacement.cta,
-          adText: replacement.adText,
-          fbHeadline: replacement.fbHeadline,
-          imagePrompt: replacement.imagePrompt,
-          imageUrl: replacement.imageUrl,
-          status: "pending",
+          imageUrl: result.imageUrl,
+          imagePrompt: result.imagePrompt,
         },
       });
-      const { messageId } = await sendTelegramPhotoWithButtons({
+      await sendTelegramPhotoWithButtons({
         chatId,
-        imageUrl: replacement.imageUrl,
+        imageUrl: result.imageUrl,
         caption: buildVariantCaption({
-          fbHeadline: replacement.fbHeadline,
-          adText: replacement.adText,
-          index: newIndex,
+          fbHeadline: variant.fbHeadline,
+          adText: variant.adText,
+          index: variant.index,
         }),
-        buttons: variantButtons(newVariant.id),
-      });
-      await prisma.creativeVariant.update({
-        where: { id: newVariant.id },
-        data: { telegramMsgId: String(messageId) },
+        buttons: variantButtons(variant.id),
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "unbekannt";
       await sendTelegramText({
         chatId,
-        text: `❌ Ersatz-Generation fehlgeschlagen: ${escapeHtml(msg)}`,
+        text: `❌ Bild-Regeneration fehlgeschlagen: ${escapeHtml(msg)}`,
       });
     }
     return;
