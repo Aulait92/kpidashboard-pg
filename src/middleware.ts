@@ -11,6 +11,7 @@ const PUBLIC_PREFIXES = [
   "/api/auth", // login/logout server actions tunneln über server actions, hier sind direkte API-Routen nur Logout
   "/api/sync", // cron-job.org braucht Zugriff (per Token gesichert)
   "/api/push", // service worker registriert Subscriptions
+  "/api/whatsapp", // WhatsApp Cloud API webhook (Whitelist intern via ADMIN_WHATSAPP_NUMBER)
   "/manifest.webmanifest",
   "/icon",
   "/apple-icon",

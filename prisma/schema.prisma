@@ -148,3 +148,47 @@ model MonthlyGoal {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+// Eine Anfrage des Admins per WhatsApp, neue Meta-Ad-Creatives zu generieren.
+// Bündelt mehrere Varianten (Headline + Body + Bild + CTA), die separat
+// genehmigt werden können.
+model CreativeRequest {
+  id              String   @id @default(cuid())
+  whatsappFrom    String   // E.164 Telefonnummer des Anfragenden
+  rawPrompt       String   // Originaler WhatsApp-Text
+  parsedIntent    Json     // {count, campaign, tone, audience, …} von Claude
+  status          String   @default("generating") // generating | partial | completed | failed
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  variants CreativeVariant[]
+
+  @@index([whatsappFrom, createdAt])
+}
+
+// Eine konkrete Creative-Variante. Hat eigenen Approval-Status, weil der
+// Admin pro Variante "Genehmigen" / "Ablehnen" / "Neu generieren" entscheidet.
+model CreativeVariant {
+  id              String   @id @default(cuid())
+  requestId       String
+  index           Int      // 1..N innerhalb der Anfrage
+  headline        String
+  body            String
+  cta             String   // z.B. "Termin in 30 Sek"
+  imagePrompt     String   // englischer Flux-Prompt
+  imageUrl        String   // public R2-URL
+  // Meta-Side: gesetzt wenn approved + zur Kampagne gepusht.
+  metaCampaignId  String?
+  metaAdId        String?
+  metaImageHash   String?
+  status          String   @default("pending") // pending | approved | rejected | live | failed
+  whatsappMsgId   String?  // Message-ID der WhatsApp-Nachricht mit dieser Variante
+  errorMessage    String?
+  createdAt       DateTime @default(now())
+  approvedAt      DateTime?
+
+  request CreativeRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId, status])
+  @@index([whatsappMsgId])
+}
