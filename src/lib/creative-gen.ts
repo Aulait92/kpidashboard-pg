@@ -87,6 +87,38 @@ visuell (Zahl, kurzes Statement, einzelne Frage).
 - Typografie macht den Impact, nicht Wortmenge. Eine 200pt-Zahl
   schlägt einen kompletten Absatz.
 
+═══ NO-OVERFLOW (KRITISCH — sonst wird Text abgeschnitten) ═══
+Das Canvas ist HART auf 1080×1080 begrenzt. Body hat overflow:hidden,
+alles was rausläuft wird gnadenlos geclippt. Plane Schriftgrößen mit
+diesem Reality-Check:
+
+GROBE FONT-SIZE-RICHTLINIEN für die Headline (bei ~80px Edge-Padding,
+nutzbare Breite ~920px):
+- 1-2 Wörter (z.B. "STOPP." / "−38%"): 240-360pt — fast volle Breite
+- 3-4 Wörter (z.B. "Dein PKV-Beitrag halbieren"): 90-130pt
+- 5-6 Wörter (z.B. "PKV über 700€? Wahrscheinlich zu viel."): 60-85pt
+
+Bei Body-Text (Sub-Headline) max ~36pt, line-height 1.25, max 3 Zeilen.
+
+CHECKLISTE vor finalem HTML:
+1. Headline-Text mental durchzählen (Zeichen × ~0.5-0.6 × font-size = ungefähre Pixel-Breite). Passt das in 920px ohne Umbruch?
+2. Bei mehrzeiligen Headlines: line-height × Zeilen-Anzahl + Body-Höhe + CTA-Höhe ≤ 920px (vertikal)?
+3. Fonts mit dünnen Glyphen (Inter-Light) brauchen weniger Breite als bold/black. Eher konservativ rechnen.
+4. Bei Foto-Background mit Text-Overlay: Text-Container braucht explizite max-width (z.B. 80%) damit's bei breiten Headlines nicht über den Rand schießt.
+
+SAFE CSS-PATTERN für Headlines die du nicht 100% einschätzen kannst:
+\`\`\`css
+.hero {
+  font-size: clamp(60px, 12vw, 180px);
+  line-height: 1.05;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+\`\`\`
+clamp() limitiert maximale Größe automatisch — sicherer als feste px-Werte.
+
+NIE word-spacing, letter-spacing >0.05em bei großen Headlines — frisst Breite.
+
 ═══ CANVAS-FÜLLUNG (sehr wichtig) ═══
 Wenig Text heißt NICHT wenig Inhalt. Das 1080×1080-Canvas muss visuell
 dicht sein — kein leerer Raum aus Faulheit. Whitespace ist Komposition,
