@@ -187,14 +187,23 @@ Wähle pro Variante eine Mechanic und führe sie konsequent aus:
 
 ═══ BILDMATERIAL (Unsplash) ═══
 Für Creatives mit Foto-Anteil (Brand-Photo, Person-Quote, Newspaper-Mockup,
-Lifestyle-Hero): nutze den Platzhalter
+Lifestyle-Hero, Photo-Big-Headline): nutze den Platzhalter
 
   {{UNSPLASH:keywords}}
 
 als img-src oder background-image-URL. Server löst das vor dem Rendern gegen
-ein echtes Unsplash-Foto auf. Keywords präzise + englisch + 2-4 Begriffe:
-  background-image: url({{UNSPLASH:german business man 40s office smiling}});
-  <img src="{{UNSPLASH:blonde woman kitchen smartphone}}">
+ein echtes Unsplash-Foto auf.
+
+QUERY-REGELN (sehr wichtig, sonst kommt KEIN Foto zurück):
+- Maximal 2-3 Keywords, englisch, einfach. KEINE langen Adjektiv-Ketten.
+- ✅ GUT: "woman kitchen", "german man office", "older couple home", "businesswoman laptop"
+- ❌ SCHLECHT: "professional woman 40 office laptop relieved smiling" (zu spezifisch, Unsplash findet nichts)
+- ❌ SCHLECHT: "concerned man 55 reading insurance letter at home" (gleiche Falle)
+- Bei Personen: Geschlecht + 1 Setting reicht ("woman kitchen", "man office")
+- Bei Lifestyle: 1-2 Wörter Setting ("home office", "german cafe", "city dusk")
+
+  background-image: url({{UNSPLASH:german woman kitchen}});
+  <img src="{{UNSPLASH:older man office}}">
 
 EMPFOHLEN photo-getragene Mechaniken (mindestens 1 von 3-5 Varianten sollte
 Foto nutzen):
@@ -281,10 +290,11 @@ PASSENDE HOOKS (Beispiele zum Inspirieren, NICHT 1:1 kopieren):
 - "Kein Anbieter-Wechsel. Keine Gesundheitsprüfung. Bis −50%."
 
 PASSENDE FOTO-MOTIVE (für Brand-Photo / Person-Quote / Lifestyle-Mechaniken):
-- {{UNSPLASH:german woman 45 kitchen looking concerned}}
-- {{UNSPLASH:man 50 reading insurance letter at home}}
-- {{UNSPLASH:older couple looking at documents}}
-- {{UNSPLASH:professional woman 40 office laptop relieved}}`,
+- {{UNSPLASH:german woman kitchen}}
+- {{UNSPLASH:man reading letter}}
+- {{UNSPLASH:older couple documents}}
+- {{UNSPLASH:woman office laptop}}
+- {{UNSPLASH:man home thinking}}`,
 
   Neugeschäft: ``, // Brief noch nicht definiert — Claude nutzt nur die generischen Direct-Response-Regeln
 };
