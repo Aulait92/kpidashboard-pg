@@ -3,12 +3,16 @@
 //
 // Voraussetzungen (Env):
 //   META_ACCESS_TOKEN      — System-User-Token mit ads_management
-//   META_AD_ACCOUNT_ID     — Format "act_1234567890"
+//   META_AD_ACCOUNT_IDS    — Kommagetrennte Liste von Ad-Account-IDs (mit oder
+//                            ohne "act_"-Prefix). Bot nutzt die erste ID für
+//                            Creative-Pushes — bei mehreren Accounts also die
+//                            relevante zuerst eintragen.
 //   META_DEFAULT_PAGE_ID   — Facebook-Page der Werbeanzeigen
-//   META_DEFAULT_LINK_URL  — Landing-Page-URL (z.B. https://start.pkv-tarife.com/pkv-angebote)
 //
 // Optional:
-//   META_DEFAULT_PIXEL_ID  — Conversion-Pixel für Tracking
+//   META_DEFAULT_LINK_URL  — Fallback-Landing-URL falls kein bestehender Ad
+//                            im AdSet liegt (sonst wird URL automatisch von
+//                            dort übernommen).
 
 const GRAPH_VERSION = "v22.0";
 
@@ -19,12 +23,14 @@ function getToken(): string {
 }
 
 function getAdAccount(): string {
-  const id = process.env.META_AD_ACCOUNT_ID;
-  if (!id) throw new Error("META_AD_ACCOUNT_ID nicht gesetzt.");
-  if (!id.startsWith("act_")) {
-    throw new Error(`META_AD_ACCOUNT_ID muss mit "act_" anfangen: ${id}`);
-  }
-  return id;
+  const raw = process.env.META_AD_ACCOUNT_IDS;
+  if (!raw) throw new Error("META_AD_ACCOUNT_IDS nicht gesetzt.");
+  const first = raw
+    .split(",")
+    .map((s) => s.trim().replace(/^act_/, ""))
+    .find((s) => s.length > 0);
+  if (!first) throw new Error("META_AD_ACCOUNT_IDS ist leer.");
+  return `act_${first}`;
 }
 
 async function metaGet(
