@@ -64,6 +64,15 @@ type TelegramUpdate = {
 // ─── Router ──────────────────────────────────────────────────────────
 
 async function handleUpdate(update: TelegramUpdate) {
+  console.log(
+    `[telegram] update received: ${JSON.stringify({
+      hasMessage: !!update.message,
+      hasCallback: !!update.callback_query,
+      from: update.message?.from?.id ?? update.callback_query?.from.id,
+      text: update.message?.text?.slice(0, 80),
+      callbackData: update.callback_query?.data,
+    })}`,
+  );
   if (update.callback_query) {
     await handleCallback(update.callback_query);
     return;
@@ -76,8 +85,17 @@ async function handleUpdate(update: TelegramUpdate) {
 
 function isAdmin(userId: number): boolean {
   const adminId = process.env.TELEGRAM_ADMIN_USER_ID;
-  if (!adminId) return false;
-  return String(userId) === adminId;
+  if (!adminId) {
+    console.warn("[telegram] TELEGRAM_ADMIN_USER_ID not set — rejecting all.");
+    return false;
+  }
+  const match = String(userId) === adminId.trim();
+  if (!match) {
+    console.warn(
+      `[telegram] non-admin user blocked: got userId=${userId}, expected=${adminId.trim()}`,
+    );
+  }
+  return match;
 }
 
 // ─── Text-Commands ───────────────────────────────────────────────────
