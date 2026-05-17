@@ -1,6 +1,7 @@
 import { uploadImageToR2 } from "@/lib/r2";
 import { renderHtmlToImage } from "@/lib/html-to-png";
 import { resolveUnsplashPlaceholders } from "@/lib/unsplash";
+import { resolveComicPlaceholders } from "@/lib/replicate-image";
 
 // Brief der Creative-Generation. Claude designt komplette HTML-Creatives,
 // Playwright rendert zu PNG, Upload zu R2.
@@ -187,6 +188,7 @@ Wähle pro Variante eine Mechanic und führe sie konsequent aus:
 7. GOOGLE-AUTOCOMPLETE — Search-Input mit Dropdown-Suggestions die einen Pain-Point verraten
 8. REDDIT-NATIVE — r/Finanzen-Header, Post-Title als Frage, Body wie ein AMA-Antwort-Snippet
 9. PHOTO-BIG-HEADLINE — Foto full-bleed (ganzflächig 1080×1080) mit dunklem Gradient-Overlay unten, eine FETTE Headline als Overlay (Inter-Black oder Playfair-Bold, 90-150pt), KEIN Body, KEIN Highlight-Element. Nur: ANZEIGE-Label, Foto, Headline, CTA-Button. Maximum-Impact-Minimalism. Beispiele: "Dein PKV-Beitrag halbieren." über Foto einer nachdenklichen Frau am Küchentisch — sonst nichts.
+10. COMIC-ILLUSTRATION — AI-generierte Comic-Bild via {{COMIC:keywords}} als zentrales visuelles Element (50-80% der Fläche), oben oder daneben eine kurze Headline, dezenter CTA unten. Playful, designed, abstrakt-konzeptuell. Beispiel: Comic einer überraschten Person mit Geldscheinen die wegfliegen, Headline „824€/Monat — und keiner spricht drüber?".
 
 ═══ HTML-CONSTRAINTS ═══
 - Exakt 1080×1080 Pixel
@@ -200,7 +202,32 @@ Wähle pro Variante eine Mechanic und führe sie konsequent aus:
 - Top-Right: kleines "ANZEIGE"-Label in grau (10px, uppercase, letter-spacing)
 - Bottom: CTA-Button (volle Breite oder rechts), klar erkennbar mit Pfeil →
 
-═══ BILDMATERIAL (Unsplash) ═══
+═══ BILDMATERIAL ZWEI WEGE — Unsplash (Foto) ODER Comic (AI) ═══
+
+Du hast zwei verschiedene Bild-Quellen je nach Stil-Ziel:
+
+(A) ECHTE FOTOS via {{UNSPLASH:keywords}} — für native, emotionale,
+    realistische Szenen (Küche, Café, Büro, Mensch).
+
+(B) COMIC-ILLUSTRATIONEN via {{COMIC:keywords}} — für playful, klar
+    abstrahierte, designed wirkende Konzepte (Charakter mit Schock-
+    Gesicht, abstrakte Metapher, Erklär-Illustration, Stilisierte Szene).
+    Wird AI-generiert mit Comic-Buch-Stil (flache Farben, bold outlines).
+
+WANN COMIC:
+- Wenn die Mechanic playful ist (z.B. „Aha-Moment"-Illustration)
+- Wenn ein abstraktes Konzept visualisiert werden soll (Geld fließt weg,
+  Erleuchtung, Verzweiflung)
+- Wenn ein Foto zu generisch/stock wirken würde
+- Für Comic-Strip-Style Single-Panel-Creatives
+
+WANN FOTO:
+- Pain-Point-Storys mit echten Menschen-Emotionen
+- Authentische Lifestyle-Szenen
+- Brand-Photo Hero
+- Newspaper-Mockup
+
+═══ UNSPLASH-FOTOS — {{UNSPLASH:keywords}} ═══
 Für Creatives mit Foto-Anteil (Brand-Photo, Person-Quote, Newspaper-Mockup,
 Lifestyle-Hero, Photo-Big-Headline): nutze den Platzhalter
 
@@ -231,6 +258,29 @@ Foto nutzen):
 VERBOTEN: generische "Business-Handshake-Stock-Photos", Smiling-Stockfoto-
 Models in Anzug. Stattdessen: konkrete Alltags-Situationen (Küche, Café,
 Schreibtisch, Spaziergang) mit normalen Menschen 30-55 Jahre.
+
+═══ COMIC-ILLUSTRATIONEN — {{COMIC:keywords}} ═══
+Pattern wie Unsplash, gleiche Verwendung als img-src oder background-image:
+
+  <img src="{{COMIC:woman shocked looking at bill, modern flat illustration}}">
+  background-image: url({{COMIC:man with money flying away}});
+
+QUERY-REGELN:
+- 3-6 englische Beschreibungs-Wörter, KEINE Style-Modifier (die hängt der Server an)
+- Visuelles Konzept beschreiben: Subjekt + Situation/Emotion
+- ✅ GUT: "woman shocked looking at bill", "man celebrating new contract", "head with lightbulb"
+- ✅ GUT: "wallet with euros flying away", "two people comparing prices"
+- ❌ SCHLECHT: "comic illustration in flat style of …" — Style wird automatisch angehängt
+- ❌ SCHLECHT: nur ein Wort wie "shock" — zu wenig Info für Bild-Generation
+
+ASPECT-RATIO: immer quadratisch (1:1), für 1080×1080 Canvas.
+
+KOMPOSITION im HTML:
+- Comic-Bilder funktionieren gut als HERO mit Headline drüber oder daneben
+- Background: helles, neutrales (Cream / Soft-Yellow) damit der Comic
+  pops, NICHT mit dunklem Foto-Overlay arbeiten (das ist für Fotos)
+- Padding um den Comic ist okay — Comic-Bilder haben oft selbst Whitespace
+- KEINE Text-Overlay-Boxes ÜBER dem Comic-Bild (verdeckt die Illustration)
 
 ═══ FARB-PALETTEN (eine pro Variante wählen) ═══
 - Cream/Black: Background #FAF6F0, Text #0E0E0E, Accent-Yellow #FFD84D
@@ -433,8 +483,11 @@ PKV-ANCHOR (PFLICHT):
 Jedes Konzept MUSS unmissverständlich PKV/Private-Krankenversicherung-Kontext setzen. Abstrakte Hooks wie nur "−38%" oder "STOPP." reichen NICHT — die Description muss klar machen wo "PKV", "PKV-Beitrag", "Krankenversicherung" oder "Tarif" sichtbar wird.
 
 VERFÜGBARE MECHANIKEN:
-- Photo-Mechaniken: Brand-Photo-Hero / Person-Quote / Lifestyle-Background / Newspaper-Mockup / Photo-Big-Headline
+- Photo-Mechaniken (echte Fotos via {{UNSPLASH:…}}): Brand-Photo-Hero / Person-Quote / Lifestyle-Background / Newspaper-Mockup / Photo-Big-Headline
+- Comic-Mechaniken (AI-generiert via {{COMIC:…}}): Comic-Illustration / Comic-Big-Headline / Comic-Strip-Single-Panel
 - Typo-Mechaniken: Big-Number / STOPP-Interrupt / Highlighter-Hook / Konto-Vergleich-Mockup / Zeitungs-Meldung / 3-Fragen-Quiz / Google-Autocomplete / Reddit-Native / SMS-Screenshot / WhatsApp-Chat-Mockup / Rechnungs-Closeup / Brief-vom-Versicherer
+
+Bei "photo"-Slots im Brainstorm: meist Photo-Mechaniken nutzen, gelegentlich (~25% Wahrscheinlichkeit) Comic-Mechanik für Abwechslung.
 
 OUTPUT (strict, NUR <concept>-Blöcke, kein Drumherum, EXAKT in der Reihenfolge oben):
 
@@ -518,10 +571,13 @@ async function generateOneCreative(
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
 
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
+  const isComicMechanic = /comic/i.test(concept.mechanic);
   const photoLine =
     concept.visualStyle === "photo"
-      ? `FOTO-PFLICHT: Dieses Creative MUSS GENAU EIN {{UNSPLASH:englische keywords}}-Element enthalten, entweder als <img src="{{UNSPLASH:…}}"> ODER als background-image: url({{UNSPLASH:…}}). Wenn du keinen Platzhalter im HTML hast, ist das Creative ungültig. Die Foto-Komposition soll der Mechanic entsprechen (full-bleed bei Photo-Big-Headline / Lifestyle-Background, neben Headline bei Brand-Photo-Hero, etc.).`
-      : `Dieses Creative ist typografisch — KEIN Foto, kein {{UNSPLASH}}-Platzhalter.`;
+      ? isComicMechanic
+        ? `COMIC-PFLICHT: Dieses Creative MUSS GENAU EIN {{COMIC:englische beschreibung}}-Element enthalten (img-src oder background-image). Comic-Illustration wird AI-generiert mit Comic-Buch-Stil. Beschreibung 3-6 Wörter, KEINE Style-Modifier (Server hängt sie an). Beispiel: {{COMIC:woman shocked looking at bill}}.`
+        : `FOTO-PFLICHT: Dieses Creative MUSS GENAU EIN {{UNSPLASH:englische keywords}}-Element enthalten, entweder als <img src="{{UNSPLASH:…}}"> ODER als background-image: url({{UNSPLASH:…}}). Wenn du keinen Platzhalter im HTML hast, ist das Creative ungültig. Die Foto-Komposition soll der Mechanic entsprechen.`
+      : `Dieses Creative ist typografisch — KEIN Foto, kein {{UNSPLASH}}- oder {{COMIC}}-Platzhalter.`;
   const lengthRange =
     concept.copyLength === "long"
       ? "400-800 Zeichen, AIDA-Story-Struktur, mehrere Absätze"
@@ -573,11 +629,15 @@ Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm,
     );
   }
   const result = variants[0];
-  // Sanity-Check: bei Photo-Konzepten muss ein UNSPLASH-Platzhalter im HTML
-  // sein, sonst war die ganze Foto-Anweisung umsonst.
-  if (concept.visualStyle === "photo" && !result.html.includes("{{UNSPLASH:")) {
+  // Sanity-Check: bei photo-Konzepten muss ein UNSPLASH- oder COMIC-
+  // Platzhalter im HTML sein, sonst war die ganze Bild-Anweisung umsonst.
+  if (
+    concept.visualStyle === "photo" &&
+    !result.html.includes("{{UNSPLASH:") &&
+    !result.html.includes("{{COMIC:")
+  ) {
     console.warn(
-      `[creative-gen] Photo-Konzept "${concept.mechanic}" lieferte HTML ohne {{UNSPLASH:}} — Claude hat die Foto-Pflicht ignoriert.`,
+      `[creative-gen] Photo-Konzept "${concept.mechanic}" lieferte HTML ohne {{UNSPLASH:}}/{{COMIC:}} — Claude hat die Bild-Pflicht ignoriert.`,
     );
   }
   return result;
@@ -657,7 +717,8 @@ export async function generateCreatives(
   // R2-Fehler in einer Variante soll nicht den ganzen Batch killen.
   const settled = await Promise.allSettled(
     variants.map(async (v, i) => {
-      const resolvedHtml = await resolveUnsplashPlaceholders(v.html);
+      let resolvedHtml = await resolveUnsplashPlaceholders(v.html);
+      resolvedHtml = await resolveComicPlaceholders(resolvedHtml);
       const buffer = await renderHtmlToImage(resolvedHtml, {
         width: 1080,
         height: 1080,
@@ -855,7 +916,8 @@ OUTPUT (genau EIN <concept>-Block, nichts sonst):
   const variant = await generateOneCreative(brief, concept);
 
   // Render + Upload (gleicher Pipeline-Teil wie in generateCreatives).
-  const resolvedHtml = await resolveUnsplashPlaceholders(variant.html);
+  let resolvedHtml = await resolveUnsplashPlaceholders(variant.html);
+  resolvedHtml = await resolveComicPlaceholders(resolvedHtml);
   const buffer = await renderHtmlToImage(resolvedHtml, {
     width: 1080,
     height: 1080,
