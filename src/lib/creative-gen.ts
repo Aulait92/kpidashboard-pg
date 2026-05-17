@@ -75,13 +75,22 @@ Wähle pro Variante eine Mechanic und führe sie konsequent aus:
 - Konto-Mockup: Background #ECEEF1 (Browser-Grau), Card #FFFFFF, Akzent-Grün #06A77D
 
 ═══ OUTPUT-FORMAT ═══
-Strict JSON-Array, kein Markdown, kein Fließtext drumherum. Jedes Element:
-{
-  "headline": string,  // entspricht der visuellen Hero-Zeile
-  "body": string,      // sub-headline aus dem Creative
-  "cta": string,       // Text des CTA-Buttons
-  "html": string       // komplettes <!DOCTYPE html>-Dokument
-}`;
+Antworte mit einer Sequenz von <variant>…</variant>-Blöcken, EIN Block pro
+Creative. KEIN Markdown, KEIN JSON, KEIN Fließtext drumherum. Format exakt:
+
+<variant>
+<headline>Visuelle Hero-Zeile (max 6 Wörter)</headline>
+<body>Sub-Headline (max 90 Zeichen)</body>
+<cta>CTA-Button-Text (max 18 Zeichen)</cta>
+<creative_html>
+<!DOCTYPE html>
+<html lang="de">
+…vollständiges HTML-Dokument hier, inkl. <html>…</html>-Tags, unescaped…
+</html>
+</creative_html>
+</variant>
+
+Wichtig: NIEMALS </creative_html> innerhalb des HTML-Contents schreiben — der äußere Tag ist die einzige Closing-Marke.`;
 
 async function generateCreativeVariants(
   brief: CreativeBrief,
@@ -96,7 +105,7 @@ async function generateCreativeVariants(
 ${brief.audience ? `ZIELGRUPPE-FOKUS: ${brief.audience}` : ""}
 ${brief.tone ? `TONE: ${brief.tone}` : ""}
 
-Jede Variante MUSS eine andere Direct-Response-Mechanic nutzen und einen anderen Hook-Angle (Pain / Curiosity / Promise / Story). Antworte mit strict JSON-Array.`;
+Jede Variante MUSS eine andere Direct-Response-Mechanic nutzen und einen anderen Hook-Angle (Pain / Curiosity / Promise / Story). Antworte mit <variant>-Blöcken im definierten Format.`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -121,22 +130,40 @@ Jede Variante MUSS eine andere Direct-Response-Mechanic nutzen und einen anderen
   };
   const text = data.content.find((c) => c.type === "text")?.text ?? "";
 
-  const cleaned = text
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/```\s*$/i, "")
-    .trim();
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(cleaned);
-  } catch {
+  const variants = parseVariantBlocks(text);
+  if (variants.length === 0) {
     throw new Error(
-      `Claude-Response nicht parsebar: ${text.slice(0, 200)}…`,
+      `Claude-Response enthielt keine <variant>-Blöcke: ${text.slice(0, 300)}…`,
     );
   }
-  if (!Array.isArray(parsed)) {
-    throw new Error("Claude-Response war kein Array");
+  return variants;
+}
+
+// Parst Claude's strukturierten XML-Output. Robust gegen umliegendes
+// Geschwafel ("Hier sind 3 Creatives:"), Markdown-Fences und Whitespace.
+// Greedy-Match auf <creative_html> ist absichtlich — die HTML-Bodies dürfen
+// alle anderen Tags enthalten (inkl. <html>…</html>), nur <creative_html>
+// selbst nicht.
+function parseVariantBlocks(text: string): CreativeVariant[] {
+  const variantRe = /<variant>([\s\S]*?)<\/variant>/g;
+  const blocks: CreativeVariant[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = variantRe.exec(text)) !== null) {
+    const inner = match[1];
+    const headline = extractTag(inner, "headline");
+    const body = extractTag(inner, "body");
+    const cta = extractTag(inner, "cta");
+    const html = extractTag(inner, "creative_html");
+    if (!headline || !body || !cta || !html) continue;
+    blocks.push({ headline, body, cta, html });
   }
-  return parsed as CreativeVariant[];
+  return blocks;
+}
+
+function extractTag(source: string, tag: string): string | null {
+  const re = new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`);
+  const m = source.match(re);
+  return m ? m[1].trim() : null;
 }
 
 // ─── Orchestrator ────────────────────────────────────────────────────
