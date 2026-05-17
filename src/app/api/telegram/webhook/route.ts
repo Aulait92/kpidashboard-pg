@@ -77,7 +77,7 @@ async function handleUpdateAsync(update: TelegramUpdate) {
 }
 
 function isAuthorized(chatId: number): boolean {
-  const admin = process.env.TELEGRAM_ADMIN_CHAT_ID;
+  const admin = process.env.TELEGRAM_ADMIN_USER_ID;
   if (!admin) return false;
   return String(chatId) === admin;
 }
