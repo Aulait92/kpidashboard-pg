@@ -302,6 +302,7 @@ async function handleButtonClick(chatId: string, data: string) {
           headline: variant.headline,
           body: variant.body,
           cta: variant.cta,
+          mechanic: variant.mechanic,
           currentImagePrompt: variant.imagePrompt,
         },
       );
