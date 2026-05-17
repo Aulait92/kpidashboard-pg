@@ -173,7 +173,13 @@ async function handleTextCommand(chatId: string, text: string) {
 
     for (let i = 0; i < creatives.length; i++) {
       const c = creatives[i];
-      const caption = `<b>${escapeHtml(c.headline)}</b>\n\n${escapeHtml(c.body)}\n\nCTA: ${escapeHtml(c.cta)}`;
+      // Telegram-Caption ist auf 1024 Zeichen begrenzt — adText ggf. kürzen.
+      const adTextPreview = c.adText
+        ? `\n\n<i>Facebook-Text:</i>\n${escapeHtml(c.adText)}`
+        : "";
+      const captionRaw = `<b>${escapeHtml(c.headline)}</b>\n\n${escapeHtml(c.body)}\n\nCTA: ${escapeHtml(c.cta)}${adTextPreview}`;
+      const caption =
+        captionRaw.length > 1024 ? captionRaw.slice(0, 1021) + "…" : captionRaw;
       const variant = await prisma.creativeVariant.create({
         data: {
           requestId: request.id,
@@ -181,6 +187,7 @@ async function handleTextCommand(chatId: string, text: string) {
           headline: c.headline,
           body: c.body,
           cta: c.cta,
+          adText: c.adText,
           imagePrompt: c.imagePrompt,
           imageUrl: c.imageUrl,
           status: "pending",
@@ -279,6 +286,7 @@ async function handleButtonClick(chatId: string, data: string) {
         campaignKey: intent.campaignKey ?? "Wechsel",
         headline: variant.headline,
         body: variant.body,
+        adText: variant.adText || variant.body, // Fallback für alte Varianten ohne adText
         cta: variant.cta,
         imageUrl: variant.imageUrl,
         activate: true,

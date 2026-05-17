@@ -142,7 +142,8 @@ export async function createAdCreative(opts: {
   name: string;
   imageHash: string;
   headline: string;
-  body: string;
+  body: string; // visuelle Sub-Headline IM Creative (90 Zeichen)
+  adText: string; // Facebook Primary-Text ÜBER dem Bild im Feed (kann long-form)
   cta: string; // freier Text, wird in Meta nur als CTA-Button-Type übersetzt
   linkUrl?: string;
   pageId?: string;
@@ -161,8 +162,13 @@ export async function createAdCreative(opts: {
     link_data: {
       image_hash: opts.imageHash,
       link: linkUrl,
-      message: opts.body,
+      // message = Primary-Text über dem Bild im Facebook-Feed.
+      // Fallback auf body, falls adText leer (alte Daten ohne adText).
+      message: opts.adText || opts.body,
+      // name = Headline unter dem Bild.
       name: opts.headline,
+      // description = optionaler kleiner Untertitel unter der Headline.
+      description: opts.body,
       call_to_action: {
         type: ctaType,
         value: { link: linkUrl },
@@ -210,6 +216,7 @@ export async function publishVariantToCampaign(opts: {
   campaignKey: string; // Keyword für Campaign-Match ("Wechsel", "Neugeschäft")
   headline: string;
   body: string;
+  adText: string; // Facebook Primary-Text (long-form möglich)
   cta: string;
   imageUrl: string; // public URL (R2)
   activate: boolean;
@@ -244,6 +251,7 @@ export async function publishVariantToCampaign(opts: {
     imageHash: hash,
     headline: opts.headline,
     body: opts.body,
+    adText: opts.adText,
     cta: opts.cta,
   });
 
