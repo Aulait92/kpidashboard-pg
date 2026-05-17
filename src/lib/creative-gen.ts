@@ -206,6 +206,46 @@ Wähle pro Variante eine Mechanic und führe sie konsequent aus:
 9. PHOTO-BIG-HEADLINE — Foto full-bleed (ganzflächig 1080×1080) mit dunklem Gradient-Overlay unten, eine FETTE Headline als Overlay (Inter-Black oder Playfair-Bold, 90-150pt), KEIN Body, KEIN Highlight-Element. Nur: ANZEIGE-Label, Foto, Headline, CTA-Button. Maximum-Impact-Minimalism. Beispiele: "Dein PKV-Beitrag halbieren." über Foto einer nachdenklichen Frau am Küchentisch — sonst nichts.
 10. COMIC-ILLUSTRATION — AI-generierte Comic-Bild via {{COMIC:keywords}} als zentrales visuelles Element (50-80% der Fläche), oben oder daneben eine kurze Headline, dezenter CTA unten. Playful, designed, abstrakt-konzeptuell. Beispiel: Comic einer überraschten Person mit Geldscheinen die wegfliegen, Headline „824€/Monat — und keiner spricht drüber?".
 
+═══ NATIVE-UGC-FAMILIE (sehr wichtig — wirkt wie iPhone-Screenshot, NICHT wie Ad) ═══
+Diese Mechaniken sollen aussehen wie organischer User-Content auf TikTok/
+Instagram-Reels: kein Logo, kein "ANZEIGE"-Label sichtbar oben (nur subtil),
+keine Designer-Typo, keine Farb-Akzente. Foto sieht selbst-gemacht aus,
+einziges grafisches Element ist die signature **CAPTION-BOX** unten.
+
+CAPTION-BOX (das visuelle Wiedererkennungsmerkmal aller UGC-Creatives):
+- Schwarzer rounded-rectangle, position: absolute, bottom: ~30-60px, links/rechts ~30-50px Abstand
+- Padding ~24-32px horizontal, ~20-26px vertikal, border-radius: 14-20px
+- Weißer Text in Inter / -apple-system, font-weight: 900, font-size: 48-64pt (variabel je Textlänge)
+- line-height: 1.15, letter-spacing: -0.01em
+- Text MAX 2-3 Zeilen, anti-aliased white auf solid black
+- Beispiel-Texte aus echten UGC-Ads:
+  „Der größte Fehler beim Wechsel in die PKV."
+  „Gleiche Leistung, gleicher Anbieter. Aber 240€ weniger."
+  „Wenn dein Beitrag unter 700€ liegt, wisch weiter."
+
+UGC-MECHANIKEN:
+
+11. UGC-WHITEBOARD — Full-bleed-Foto eines Whiteboards (Unsplash: "whiteboard office empty" o. ä.). Optional: handgeschriebene PKV-Aussage als CSS-Overlay über der Whiteboard-Fläche mit Caveat- oder Permanent-Marker-Font (size ~80-110pt, color: #1a1a1a oder echtes Marker-Schwarz). Wenn die Whiteboard-Schrift nicht direkt zum Hook passt, einfach das leere Whiteboard zeigen — die Caption-Box trägt die Botschaft. Bei Bedarf ein angedeuteter Hand-mit-Marker als zweites Unsplash-Asset.
+
+12. UGC-DESK-DOCUMENTS — Full-bleed-Foto eines Schreibtischs mit Papieren / Briefen / Rechnungen (Unsplash: "desk documents paper" / "letters table"). Caption-Box unten. Optional: kleines farbiges Marker-Highlight (CSS-Streifen) über einem Wort/einer Zahl im Brief, simuliert Marker-Hervorhebung — Pink/Gelb/Grün, 60% opacity, leicht schief gedreht (rotate: -2deg).
+
+13. UGC-SELFIE-NOTE — Selfie-Foto eines normalen Menschen 30-50J (Unsplash: "selfie casual man home", "woman selfie phone"). Optional: über das Foto ein angedeutetes Notizpapier-Element mit handgeschriebener PKV-Frage. Caption-Box unten. Wirkt wie Creator-Reel.
+
+14. UGC-PHONE-SCREENSHOT — Sieht aus wie iPhone-Screenshot, dunkler oder heller Background (background-color, kein Foto nötig), Status-Bar oben (Caveat-Text "21:47", Mini-Antennen-SVG, Battery-SVG), Notification oder Card-UI in der Mitte. Caption-Box unten. Funktioniert ähnlich wie WhatsApp-Chat-Mockup aber ohne Foto.
+
+15. UGC-CLOSE-UP-PERSON — Halbportrait einer Person (Unsplash: "man portrait honest", "woman thinking close-up"), KEINE designed-Elemente, einziges Overlay ist die Caption-Box unten. Pain-Story-Geeignet.
+
+WANN UGC, WANN POLISHED PHOTO?
+- UGC bei Trust/Curiosity-Hooks ("Der größte Fehler...", "Wenn dein Beitrag...")
+- UGC bei Story-Mode (selber Mann, eigenes Erlebnis, Authentizität wichtig)
+- Polished Photo wenn Brand-Vertrauen wichtig (Newspaper-Mockup, Brand-Photo-Hero)
+
+VERBOTEN bei UGC:
+- KEIN designed Gradient, KEIN Backdrop-Blur, KEIN Drop-Shadow auf Texten
+- KEIN farbiges Brand-CTA-Button — der CTA ist Teil der Caption-Box oder gar nicht sichtbar (Facebook macht den CTA-Button selbst)
+- KEINE Custom-Typo außerhalb der Caption-Box
+- KEIN "ANZEIGE"-Label groß oben — nur sehr klein und unauffällig oder weglassen
+
 ═══ HTML-CONSTRAINTS ═══
 - Exakt 1080×1080 Pixel
 - Eine einzige <html>-Datei, alle CSS inline im <style>
@@ -449,7 +489,7 @@ PASSENDE FOTO-MOTIVE (für photo-Mechaniken):
 type Concept = {
   hookAngle: string;       // Pain | Curiosity | Promise | Story | Outrage | Insight
   mechanic: string;        // Big-Number | STOPP | Highlighter | Konto-Mockup | Reddit-Native | ...
-  visualStyle: "photo" | "typography";
+  visualStyle: "photo" | "typography" | "comic";
   copyLength: "short" | "medium" | "long"; // betrifft adText-Länge
   description: string;     // 1-2 Sätze konkrete Konzept-Skizze
 };
@@ -460,17 +500,35 @@ async function brainstormConcepts(brief: CreativeBrief): Promise<Concept[]> {
 
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
 
-  // Pro Slot expliziter visualStyle, statt "mindestens N müssen photo sein"
-  // — Claude ignoriert weichere Quoten. Schema: ceil(N/2) photo zuerst, dann
-  // typography. Bei N=1: 50/50.
-  const slotStyles: ("photo" | "typography")[] = (() => {
+  // Pro Slot expliziter visualStyle. Drei Buckets: photo (echtes Unsplash-
+  // Foto), comic (AI-generierte Illustration), typography (rein textbasiert).
+  // Verteilung für N>=3: ~40% photo, ~25% comic, ~35% typography. Bei N=1
+  // random 1:1:1. Bei N=2: photo + (50/50 comic|typography).
+  const slotStyles: ("photo" | "typography" | "comic")[] = (() => {
     if (brief.count === 1) {
-      return [Math.random() < 0.5 ? "photo" : "typography"];
+      const r = Math.random();
+      if (r < 0.4) return ["photo"];
+      if (r < 0.65) return ["comic"];
+      return ["typography"];
     }
-    const photoCount = Math.ceil(brief.count / 2);
-    return Array.from({ length: brief.count }, (_, i) =>
-      i < photoCount ? "photo" : "typography",
-    );
+    if (brief.count === 2) {
+      return ["photo", Math.random() < 0.5 ? "comic" : "typography"];
+    }
+    const n = brief.count;
+    const photoCount = Math.max(1, Math.round(n * 0.4));
+    const comicCount = Math.max(1, Math.round(n * 0.25));
+    const typoCount = n - photoCount - comicCount;
+    const styles: ("photo" | "typography" | "comic")[] = [
+      ...Array(photoCount).fill("photo"),
+      ...Array(comicCount).fill("comic"),
+      ...Array(Math.max(0, typoCount)).fill("typography"),
+    ];
+    // Shuffle damit photo/comic/typo nicht in Blöcken am Anfang/Ende stehen.
+    for (let i = styles.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [styles[i], styles[j]] = [styles[j], styles[i]];
+    }
+    return styles.slice(0, n) as ("photo" | "typography" | "comic")[];
   })();
 
   const slotInstructions = slotStyles
@@ -493,17 +551,19 @@ VISUAL-STYLE PRO SLOT (FEST VORGEGEBEN, NICHT ABWEICHEN):
 ${slotInstructions}
 
 Für "photo"-Slots: wähle eine foto-getragene Mechanic (Brand-Photo-Hero, Person-Quote, Lifestyle-Background, Newspaper-Mockup, Photo-Big-Headline). Das Konzept MUSS ein {{UNSPLASH:…}}-Foto nutzen.
-Für "typography"-Slots: wähle eine typografische Mechanic (Big-Number, STOPP-Interrupt, Highlighter-Hook, Konto-Mockup, 3-Fragen-Quiz, Google-Autocomplete, Reddit-Native, SMS/WhatsApp-Mockup, Rechnungs-Closeup, Brief-vom-Versicherer).
+Für "comic"-Slots: wähle eine Comic-Mechanic (Comic-Illustration, Comic-Big-Headline, Comic-Strip-Single-Panel). Das Konzept MUSS ein {{COMIC:…}}-Element nutzen (AI-generierte Illustration).
+Für "typography"-Slots: wähle eine typografische Mechanic (Big-Number, STOPP-Interrupt, Highlighter-Hook, Konto-Mockup, 3-Fragen-Quiz, Google-Autocomplete, Reddit-Native, SMS/WhatsApp-Mockup, Rechnungs-Closeup, Brief-vom-Versicherer). KEIN Bild-Platzhalter.
 
 PKV-ANCHOR (PFLICHT):
 Jedes Konzept MUSS unmissverständlich PKV/Private-Krankenversicherung-Kontext setzen. Abstrakte Hooks wie nur "−38%" oder "STOPP." reichen NICHT — die Description muss klar machen wo "PKV", "PKV-Beitrag", "Krankenversicherung" oder "Tarif" sichtbar wird.
 
 VERFÜGBARE MECHANIKEN:
 - Photo-Mechaniken (echte Fotos via {{UNSPLASH:…}}): Brand-Photo-Hero / Person-Quote / Lifestyle-Background / Newspaper-Mockup / Photo-Big-Headline
+- Native-UGC-Mechaniken (Foto + signature schwarze Caption-Box, wirkt wie iPhone-Screenshot): UGC-Whiteboard / UGC-Desk-Documents / UGC-Selfie-Note / UGC-Phone-Screenshot / UGC-Close-Up-Person
 - Comic-Mechaniken (AI-generiert via {{COMIC:…}}): Comic-Illustration / Comic-Big-Headline / Comic-Strip-Single-Panel
 - Typo-Mechaniken: Big-Number / STOPP-Interrupt / Highlighter-Hook / Konto-Vergleich-Mockup / Zeitungs-Meldung / 3-Fragen-Quiz / Google-Autocomplete / Reddit-Native / SMS-Screenshot / WhatsApp-Chat-Mockup / Rechnungs-Closeup / Brief-vom-Versicherer
 
-Bei "photo"-Slots im Brainstorm: meist Photo-Mechaniken nutzen, gelegentlich (~25% Wahrscheinlichkeit) Comic-Mechanik für Abwechslung.
+UGC-Mechaniken sind eine Untermenge der Photo-Slots — sie nutzen ebenfalls {{UNSPLASH:…}}-Fotos, aber mit der signature Caption-Box-Komposition. Bei "photo"-Slots im Brainstorm: ca. 40% sollten UGC-Mechaniken sein (sehr beliebt auf Meta), 60% klassische Photo-Mechaniken.
 
 OUTPUT (strict, NUR <concept>-Blöcke, kein Drumherum, EXAKT in der Reihenfolge oben):
 
@@ -568,7 +628,12 @@ function parseConceptBlocks(text: string): Concept[] {
     out.push({
       hookAngle,
       mechanic,
-      visualStyle: visualStyle === "photo" ? "photo" : "typography",
+      visualStyle:
+        visualStyle === "photo"
+          ? "photo"
+          : visualStyle === "comic"
+            ? "comic"
+            : "typography",
       copyLength:
         copyLength === "long" ? "long" : copyLength === "medium" ? "medium" : "short",
       description,
@@ -587,13 +652,12 @@ async function generateOneCreative(
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
 
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
-  const isComicMechanic = /comic/i.test(concept.mechanic);
   const photoLine =
     concept.visualStyle === "photo"
-      ? isComicMechanic
+      ? `FOTO-PFLICHT: Dieses Creative MUSS GENAU EIN {{UNSPLASH:englische keywords}}-Element enthalten, entweder als <img src="{{UNSPLASH:…}}"> ODER als background-image: url({{UNSPLASH:…}}). Wenn du keinen Platzhalter im HTML hast, ist das Creative ungültig. Die Foto-Komposition soll der Mechanic entsprechen.`
+      : concept.visualStyle === "comic"
         ? `COMIC-PFLICHT: Dieses Creative MUSS GENAU EIN {{COMIC:englische beschreibung}}-Element enthalten (img-src oder background-image). Comic-Illustration wird AI-generiert mit Comic-Buch-Stil. Beschreibung 3-6 Wörter, KEINE Style-Modifier (Server hängt sie an). Beispiel: {{COMIC:woman shocked looking at bill}}.`
-        : `FOTO-PFLICHT: Dieses Creative MUSS GENAU EIN {{UNSPLASH:englische keywords}}-Element enthalten, entweder als <img src="{{UNSPLASH:…}}"> ODER als background-image: url({{UNSPLASH:…}}). Wenn du keinen Platzhalter im HTML hast, ist das Creative ungültig. Die Foto-Komposition soll der Mechanic entsprechen.`
-      : `Dieses Creative ist typografisch — KEIN Foto, kein {{UNSPLASH}}- oder {{COMIC}}-Platzhalter.`;
+        : `Dieses Creative ist typografisch — KEIN Bild, kein {{UNSPLASH}}- oder {{COMIC}}-Platzhalter.`;
   const lengthRange =
     concept.copyLength === "long"
       ? "400-800 Zeichen, AIDA-Story-Struktur, mehrere Absätze"
@@ -645,15 +709,16 @@ Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm,
     );
   }
   const result = variants[0];
-  // Sanity-Check: bei photo-Konzepten muss ein UNSPLASH- oder COMIC-
-  // Platzhalter im HTML sein, sonst war die ganze Bild-Anweisung umsonst.
-  if (
-    concept.visualStyle === "photo" &&
-    !result.html.includes("{{UNSPLASH:") &&
-    !result.html.includes("{{COMIC:")
-  ) {
+  // Sanity-Check pro visualStyle: photo→UNSPLASH, comic→COMIC,
+  // typography→keiner. Bei Verstoß: warnen, nicht crashen.
+  if (concept.visualStyle === "photo" && !result.html.includes("{{UNSPLASH:")) {
     console.warn(
-      `[creative-gen] Photo-Konzept "${concept.mechanic}" lieferte HTML ohne {{UNSPLASH:}}/{{COMIC:}} — Claude hat die Bild-Pflicht ignoriert.`,
+      `[creative-gen] Photo-Konzept "${concept.mechanic}" lieferte HTML ohne {{UNSPLASH:}} — Claude hat die Foto-Pflicht ignoriert.`,
+    );
+  }
+  if (concept.visualStyle === "comic" && !result.html.includes("{{COMIC:")) {
+    console.warn(
+      `[creative-gen] Comic-Konzept "${concept.mechanic}" lieferte HTML ohne {{COMIC:}} — Claude hat die Comic-Pflicht ignoriert.`,
     );
   }
   return result;
