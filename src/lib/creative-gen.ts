@@ -296,7 +296,66 @@ PASSENDE FOTO-MOTIVE (für Brand-Photo / Person-Quote / Lifestyle-Mechaniken):
 - {{UNSPLASH:woman office laptop}}
 - {{UNSPLASH:man home thinking}}`,
 
-  Neugeschäft: ``, // Brief noch nicht definiert — Claude nutzt nur die generischen Direct-Response-Regeln
+  Neugeschäft: `═══ KAMPAGNEN-KONTEXT: NEUGESCHÄFT ═══
+ZIELGRUPPE:
+- Aktuell GESETZLICH versichert (GKV), NICHT PKV
+- Einkommen ÜBER der Jahresarbeitsentgeltgrenze (JAEG, 2026: ~73.800€/Jahr) — ODER selbstständig, ODER Beamter
+- Zahlen oft den GKV-Höchstbeitrag (2026: ~1.000€/Monat inkl. Pflege)
+- Genervt von: steigenden GKV-Beiträgen, vollen Wartezimmern, langen Terminen, Mehrbett-Zimmer im Krankenhaus, keinem Chefarzt
+
+PAIN-POINTS:
+- "Ich zahle 1.014€ GKV-Höchstbeitrag, bekomme aber die gleichen Leistungen wie ein 22-jähriger Azubi"
+- "Termin beim Facharzt: 3 Monate Wartezeit. Privatpatienten: nächste Woche."
+- "Ich verdiene gut, könnte längst raus aus der GKV — aber niemand erklärt mir die PKV-Optionen"
+- "Subventioniere ich gerade die GKV-Solidargemeinschaft auf meine Kosten?"
+
+KEY-INSIGHT (das ist der eigentliche Hook):
+Wer ÜBER der JAEG verdient (oder selbstständig/Beamter ist), kann die GKV
+verlassen und in die PKV wechseln. Bei jungen, gesunden Verdienern oft
+deutlich GÜNSTIGER als der GKV-Höchstbeitrag — bei DEUTLICH besseren
+Leistungen (Chefarzt, Einzelzimmer, kürzere Wartezeiten, freie Arztwahl).
+
+PROMISE (mit echten Zahlen arbeiten):
+- GKV-Höchstbeitrag 2026: ~1.014€/Monat (inkl. Pflegeversicherung)
+- PKV bei 35-jährigem Angestellten/Selbstständigem: oft 380-550€/Monat
+- Spar-Größenordnung: 400-600€/Monat = 4.800-7.200€/Jahr
+- Plus: deutlich bessere Leistungen
+- Steuerlich: PKV-Beiträge sind als Vorsorgeaufwendungen absetzbar
+
+USPs (das macht das Angebot stark):
+- Chefarzt-Behandlung als Standard
+- Einzel- oder Zweibettzimmer im Krankenhaus
+- Termine in Tagen statt Wochen (Privatpatient-Privileg)
+- Freie Arzt- und Klinikwahl
+- Heilpraktiker, Osteopathie, alternative Medizin meist mit drin
+- Beitrag richtet sich nach Gesundheit + Alter, NICHT nach Einkommen (bei jung+gesund = sehr günstig)
+
+VORAUSSETZUNGEN nennen:
+- Einkommen über JAEG (2026: 73.800€) ODER selbstständig ODER Beamter ODER Student
+- Gesundheitsprüfung erforderlich (kein Hindernis bei normaler Gesundheit)
+
+VERMEIDE bei Neugeschäft:
+- "Tarifwechsel" / "interner Wechsel" → das ist WECHSEL-Kampagne, nicht Neugeschäft
+- "Anbieter bleibt" → falsches Mental Model (User ist noch GAR NICHT in PKV)
+- "Bis zu 50% Ersparnis" → das ist Wechsel-Promise. Hier: konkrete €-Zahl statt Prozent
+- "Kostenlos prüfen" / "Spitzentarif"
+- Ziel-Vermischung: nicht alle GKV-Versicherten ansprechen, nur die über JAEG / SE / Beamte
+
+PASSENDE HOOKS (Beispiele zum Inspirieren, NICHT 1:1 kopieren):
+- "GKV-Höchstbeitrag: 1.014€. PKV mit 35: 412€."
+- "Verdienst du über 73.800€? Du musst NICHT in der GKV bleiben."
+- "1.014€/Monat GKV — und du wartest 3 Monate auf den Termin?"
+- "Selbstständig? Dann zahlst du GKV freiwillig. Nicht clever."
+- "Privatpatient sein kostet weniger als du denkst — wenn du richtig wählst."
+- "73.800€+ und immer noch gesetzlich? Du subventionierst 22-jährige Azubis."
+
+PASSENDE FOTO-MOTIVE (für photo-Mechaniken):
+- {{UNSPLASH:young businessman laptop}}
+- {{UNSPLASH:woman office laptop}}
+- {{UNSPLASH:freelancer home office}}
+- {{UNSPLASH:doctor waiting room}}
+- {{UNSPLASH:hospital waiting}}
+- {{UNSPLASH:man home thinking}}`,
 };
 
 // ─── Phase 1: Konzept-Brainstorm ─────────────────────────────────────
