@@ -28,7 +28,9 @@ async function generateComicImage(keywords: string): Promise<string> {
     );
     return FALLBACK_DATA_URL;
   }
-  const replicate = new Replicate({ auth: token });
+  // useFileOutput:false → Replicate gibt raw URLs zurück statt FileOutput-
+  // Objekte (Breaking-Change in SDK v1). Sonst kriegen wir [{}] retour.
+  const replicate = new Replicate({ auth: token, useFileOutput: false });
   const prompt = `${keywords}${STYLE_SUFFIX}`;
   try {
     const output = await replicate.run("black-forest-labs/flux-schnell", {
@@ -41,8 +43,7 @@ async function generateComicImage(keywords: string): Promise<string> {
         go_fast: true,
       },
     });
-    // Flux-Schnell-Output ist je nach Version: string | string[] | File[]
-    // Wir normalisieren auf die erste URL.
+    // Output ist je nach Version: string | string[] — normalisieren.
     const url =
       typeof output === "string"
         ? output
