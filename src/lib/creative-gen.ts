@@ -72,7 +72,7 @@ ADTEXT-STIL:
 
 ═══ TEXT-MINIMALISMUS (sehr wichtig) ═══
 Weniger Text = stärkeres Creative. Default-Modus: EIN Hero-Element dominiert
-visuell (Zahl, kurzes Statement, einzelne Frage), drumherum viel Whitespace.
+visuell (Zahl, kurzes Statement, einzelne Frage).
 
 - IDEAL: Headline (3-5 Wörter) + CTA. Body ist OPTIONAL — wenn er nicht
   zwingend mehr Information liefert, weglassen oder auf 1 kurzen Satz
@@ -86,6 +86,28 @@ visuell (Zahl, kurzes Statement, einzelne Frage), drumherum viel Whitespace.
   Sekunden nicht lesbar UND verständlich ist → zu viel Text, kürzen.
 - Typografie macht den Impact, nicht Wortmenge. Eine 200pt-Zahl
   schlägt einen kompletten Absatz.
+
+═══ CANVAS-FÜLLUNG (sehr wichtig) ═══
+Wenig Text heißt NICHT wenig Inhalt. Das 1080×1080-Canvas muss visuell
+dicht sein — kein leerer Raum aus Faulheit. Whitespace ist Komposition,
+nicht Default.
+
+- Hero-Element (Zahl, Headline, Foto, Mockup) füllt mindestens 70%
+  der Canvas-Höhe ODER -Breite. Bei nur Headline + CTA: Headline-
+  font-size meist 100-180pt, randvoll bis ~50px vom Rand.
+- Background reicht IMMER bis zum Rand (volle 1080×1080-Fläche). Keine
+  weißen Säume außenrum.
+- Edge-Padding: max ~60px außenrum. Bei textlastigen Konzepten weniger.
+- Foto-Creatives: Foto entweder full-bleed (ganzflächig mit Overlay)
+  oder mindestens 50% einer Achse. Kein kleines 400×400-Foto in der
+  Mitte mit Whitespace drumherum.
+- Bei Bullet-Mechaniken: Items füllen die volle Liste-Spalte, große
+  Schriftgrößen (30-50pt), keine winzigen Items mit viel Luft dazwischen.
+- "Anzeige"-Label und CTA-Button DARF in den Eckpolstern wohnen — alles
+  dazwischen muss Inhalt sein.
+- Goldene Regel: wenn beim Anschauen eine Achtelfläche komplett leer
+  wirkt, ist die Komposition unfertig. Headline vergrößern, Foto
+  ausdehnen, Sub-Headline oder Highlight-Element ergänzen.
 
 ═══ DIRECT-RESPONSE-MECHANIKEN ═══
 Wähle pro Variante eine Mechanic und führe sie konsequent aus:
@@ -107,7 +129,7 @@ Wähle pro Variante eine Mechanic und führe sie konsequent aus:
 - SVG inline für Icons/Pfeile/Checkmarks ist explizit erwünscht
 - Border-radius, box-shadow, backdrop-filter erlaubt
 - Body: { margin:0; padding:0; width:1080px; height:1080px; overflow:hidden; font-family:... }
-- Saubere Hierarchie: Hero-Element nimmt 60-70% visuellen Raum, drumherum Whitespace
+- Saubere Hierarchie: Hero-Element füllt mindestens 70% einer Achse (siehe CANVAS-FÜLLUNG)
 - Top-Right: kleines "ANZEIGE"-Label in grau (10px, uppercase, letter-spacing)
 - Bottom: CTA-Button (volle Breite oder rechts), klar erkennbar mit Pfeil →
 
