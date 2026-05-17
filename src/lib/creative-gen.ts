@@ -455,7 +455,7 @@ OUTPUT (strict, NUR <concept>-Blöcke, kein Drumherum, EXAKT in der Reihenfolge 
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 2000,
+      max_tokens: 4000,
       system: `Du bist Senior Direct-Response-Creative-Director für deutsche PKV-Lead-Gen-Ads. Du brainstormst maximal diverse Konzept-Sets — jedes Konzept eine andere Mechanic, ein anderer Hook, eine andere visuelle Sprache.`,
       messages: [{ role: "user", content: userPrompt }],
     }),
@@ -589,9 +589,31 @@ async function generateCreativeVariants(
   brief: CreativeBrief,
 ): Promise<CreativeVariant[]> {
   const concepts = await brainstormConcepts(brief);
-  // Parallele Execution — keiner sieht die anderen Outputs, max. Diversität
-  // im finalen HTML/Copy. Jeder Call ist auf sein Konzept eingelocht.
-  return Promise.all(concepts.map((c) => generateOneCreative(brief, c)));
+  if (concepts.length < brief.count) {
+    console.warn(
+      `[creative-gen] Brainstorm lieferte nur ${concepts.length}/${brief.count} Konzepte — fahre mit weniger fort.`,
+    );
+  }
+  // Parallele Execution mit allSettled — wenn ein einzelner Call failt
+  // (Claude-Rate-Limit, Parse-Fehler), verlieren wir nicht den ganzen Batch.
+  const settled = await Promise.allSettled(
+    concepts.map((c) => generateOneCreative(brief, c)),
+  );
+  const variants: CreativeVariant[] = [];
+  settled.forEach((r, i) => {
+    if (r.status === "fulfilled") {
+      variants.push(r.value);
+    } else {
+      console.warn(
+        `[creative-gen] Execution für Konzept ${i + 1} (${concepts[i]?.mechanic}) failte:`,
+        r.reason instanceof Error ? r.reason.message : r.reason,
+      );
+    }
+  });
+  if (variants.length === 0) {
+    throw new Error("Keine einzige Variante konnte generiert werden.");
+  }
+  return variants;
 }
 
 // Parst Claude's strukturierten XML-Output. Robust gegen umliegendes
@@ -631,9 +653,9 @@ export async function generateCreatives(
 ): Promise<GeneratedCreative[]> {
   const variants = await generateCreativeVariants(brief);
 
-  // Parallel rendern + uploaden. Pro Variante: erst Unsplash-Platzhalter
-  // gegen echte Foto-URLs auflösen, dann Playwright rendern.
-  const results = await Promise.all(
+  // Parallel rendern + uploaden mit allSettled — ein Playwright- oder
+  // R2-Fehler in einer Variante soll nicht den ganzen Batch killen.
+  const settled = await Promise.allSettled(
     variants.map(async (v, i) => {
       const resolvedHtml = await resolveUnsplashPlaceholders(v.html);
       const buffer = await renderHtmlToImage(resolvedHtml, {
@@ -659,6 +681,17 @@ export async function generateCreatives(
       } satisfies GeneratedCreative;
     }),
   );
+  const results: GeneratedCreative[] = [];
+  settled.forEach((r, i) => {
+    if (r.status === "fulfilled") {
+      results.push(r.value);
+    } else {
+      console.warn(
+        `[creative-gen] Render/Upload für Variante ${i + 1} failte:`,
+        r.reason instanceof Error ? r.reason.message : r.reason,
+      );
+    }
+  });
 
   return results;
 }
@@ -741,6 +774,110 @@ Schreibe eine NEUE Facebook-Headline (max 40 Zeichen). Ergänzt die visuelle Hea
     maxTokens: 200,
   });
   return text.trim().replace(/^["„'`]+|["„'`]+$/g, "").slice(0, 60);
+}
+
+// ─── Replacement: eine neue Variante, die andere Mechanic/Hook nutzt ───
+// Wird vom Reject-Button getriggert. avoidHeadlines sind die Headlines
+// der bereits vorhandenen (oder gerade abgelehnten) Varianten — Claude
+// soll bewusst etwas anderes liefern.
+
+export async function generateReplacementCreative(
+  brief: CreativeBrief,
+  requestId: string,
+  avoidHeadlines: string[],
+): Promise<GeneratedCreative> {
+  const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
+  // Single-Konzept-Brainstorm mit expliziter Avoid-Liste.
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
+
+  const visualStyle: "photo" | "typography" =
+    Math.random() < 0.5 ? "photo" : "typography";
+
+  const avoidBlock = avoidHeadlines.length
+    ? `\nDie folgenden Hooks sind im selben Request schon vorhanden (oder abgelehnt). NEUE Variante MUSS einen klar anderen Angle und eine andere Mechanic haben:\n${avoidHeadlines.map((h) => `- "${h}"`).join("\n")}`
+    : "";
+
+  const conceptRes = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 800,
+      system: `Du bist Senior Direct-Response-Creative-Director für deutsche PKV-Lead-Gen-Ads. Du brainstormst EIN Ersatz-Konzept, das sich klar von bereits vorhandenen Varianten abhebt.`,
+      messages: [
+        {
+          role: "user",
+          content: `Brainstorm EIN Konzept für eine ${brief.campaignKey}-Meta-Ad.
+
+${campaignContext}
+
+${brief.audience ? `ZIELGRUPPE: ${brief.audience}` : ""}
+${brief.tone ? `TONE: ${brief.tone}` : ""}
+${avoidBlock}
+
+Vorgaben: visualStyle MUSS "${visualStyle}" sein.
+
+OUTPUT (genau EIN <concept>-Block, nichts sonst):
+
+<concept>
+<hookAngle>Pain|Curiosity|Promise|Story|Outrage|Insight</hookAngle>
+<mechanic>z.B. Photo-Big-Headline / STOPP-Interrupt / Brief-vom-Versicherer / SMS-Screenshot / …</mechanic>
+<visualStyle>${visualStyle}</visualStyle>
+<copyLength>short|medium|long</copyLength>
+<description>1-2 Sätze konkrete Konzept-Skizze, MUSS sich von den vorhandenen Varianten unterscheiden.</description>
+</concept>`,
+        },
+      ],
+    }),
+  });
+  if (!conceptRes.ok) {
+    throw new Error(`Replacement-Brainstorm ${conceptRes.status}: ${await conceptRes.text()}`);
+  }
+  const conceptData = (await conceptRes.json()) as {
+    content: { type: string; text: string }[];
+  };
+  const conceptText = conceptData.content.find((c) => c.type === "text")?.text ?? "";
+  const parsedConcepts = parseConceptBlocks(conceptText);
+  if (parsedConcepts.length === 0) {
+    throw new Error(`Replacement-Brainstorm lieferte keinen Concept: ${conceptText.slice(0, 200)}`);
+  }
+  const concept: Concept = { ...parsedConcepts[0], visualStyle };
+  console.log(
+    `[creative-gen] Replacement-Concept: ${concept.mechanic}/${concept.hookAngle}/${concept.visualStyle}/${concept.copyLength}`,
+  );
+
+  // Phase 2: das eine Konzept umsetzen.
+  const variant = await generateOneCreative(brief, concept);
+
+  // Render + Upload (gleicher Pipeline-Teil wie in generateCreatives).
+  const resolvedHtml = await resolveUnsplashPlaceholders(variant.html);
+  const buffer = await renderHtmlToImage(resolvedHtml, {
+    width: 1080,
+    height: 1080,
+    format: "jpeg",
+    quality: 92,
+  });
+  const key = `creatives/${requestId}/replacement-${Date.now()}.jpg`;
+  const imageUrl = await uploadImageToR2({
+    buffer,
+    key,
+    contentType: "image/jpeg",
+  });
+
+  return {
+    headline: variant.headline,
+    body: variant.body,
+    cta: variant.cta,
+    adText: variant.adText,
+    fbHeadline: variant.fbHeadline,
+    imagePrompt: variant.html,
+    imageUrl,
+  } satisfies GeneratedCreative;
 }
 
 // ─── Intent Parsing aus Telegram-Text ────────────────────────────────
