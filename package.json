@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "start": "prisma migrate resolve --applied 20260101000000_baseline 2>/dev/null || true; prisma migrate resolve --applied 20260517000000_add_creative_tables 2>/dev/null || true; prisma migrate deploy && next start -p ${PORT:-3000}",
+    "start": "prisma migrate deploy && next start -p ${PORT:-3000}",
     "lint": "eslint",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
