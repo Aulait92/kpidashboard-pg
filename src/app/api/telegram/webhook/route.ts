@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import {
   generateCreatives,
   parseIntent,
+  regenerateAdText,
+  regenerateFbHeadline,
   type ParsedIntent,
 } from "@/lib/creative-gen";
 import { publishVariantToCampaign } from "@/lib/meta-ads";
@@ -131,7 +133,7 @@ async function handleTextCommand(chatId: string, text: string) {
     return;
   }
 
-  const count = Math.max(1, Math.min(5, intent.count || 1));
+  const count = Math.max(1, Math.min(20, intent.count || 1));
 
   await sendTelegramText({
     chatId,
@@ -173,13 +175,6 @@ async function handleTextCommand(chatId: string, text: string) {
 
     for (let i = 0; i < creatives.length; i++) {
       const c = creatives[i];
-      // Telegram-Caption ist auf 1024 Zeichen begrenzt — adText ggf. kürzen.
-      const adTextPreview = c.adText
-        ? `\n\n<i>Facebook-Text:</i>\n${escapeHtml(c.adText)}`
-        : "";
-      const captionRaw = `<b>${escapeHtml(c.headline)}</b>\n\n${escapeHtml(c.body)}\n\nCTA: ${escapeHtml(c.cta)}${adTextPreview}`;
-      const caption =
-        captionRaw.length > 1024 ? captionRaw.slice(0, 1021) + "…" : captionRaw;
       const variant = await prisma.creativeVariant.create({
         data: {
           requestId: request.id,
@@ -188,6 +183,7 @@ async function handleTextCommand(chatId: string, text: string) {
           body: c.body,
           cta: c.cta,
           adText: c.adText,
+          fbHeadline: c.fbHeadline,
           imagePrompt: c.imagePrompt,
           imageUrl: c.imageUrl,
           status: "pending",
@@ -196,12 +192,12 @@ async function handleTextCommand(chatId: string, text: string) {
       const { messageId } = await sendTelegramPhotoWithButtons({
         chatId,
         imageUrl: c.imageUrl,
-        caption,
-        buttons: [
-          { id: `approve:${variant.id}`, title: "✅ Genehmigen" },
-          { id: `reject:${variant.id}`, title: "❌ Ablehnen" },
-          { id: `redo:${variant.id}`, title: "🔄 Neu" },
-        ],
+        caption: buildVariantCaption({
+          fbHeadline: c.fbHeadline,
+          adText: c.adText,
+          index: i + 1,
+        }),
+        buttons: variantButtons(variant.id),
       });
       await prisma.creativeVariant.update({
         where: { id: variant.id },
@@ -226,11 +222,47 @@ async function handleTextCommand(chatId: string, text: string) {
   }
 }
 
+// ─── Caption + Button-Helpers ────────────────────────────────────────
+
+function buildVariantCaption(opts: {
+  fbHeadline: string;
+  adText: string;
+  index?: number;
+}): string {
+  const prefix = opts.index ? `<b>Variante #${opts.index}</b>\n\n` : "";
+  const headlineBlock = opts.fbHeadline
+    ? `<b>Facebook-Headline:</b>\n${escapeHtml(opts.fbHeadline)}\n\n`
+    : "";
+  const adTextBlock = opts.adText
+    ? `<b>Facebook-Text:</b>\n${escapeHtml(opts.adText)}`
+    : "";
+  const raw = prefix + headlineBlock + adTextBlock;
+  return raw.length > 1024 ? raw.slice(0, 1021) + "…" : raw;
+}
+
+function variantButtons(variantId: string): { id: string; title: string }[][] {
+  // Telegram-callback_data max 64 Bytes — cuid ist 25 Zeichen, locker.
+  return [
+    [
+      { id: `approve:${variantId}`, title: "✅ Genehmigen" },
+      { id: `reject:${variantId}`, title: "❌ Ablehnen" },
+    ],
+    [
+      { id: `regen_text:${variantId}`, title: "📝 Text neu" },
+      { id: `regen_head:${variantId}`, title: "🏷 Headline neu" },
+    ],
+  ];
+}
+
 // ─── Button-Klicks ───────────────────────────────────────────────────
 
 async function handleButtonClick(chatId: string, data: string) {
-  // Format: "approve:<variantId>" / "reject:<variantId>" / "redo:<variantId>"
-  const [action, variantId] = data.split(":");
+  // Format: "<action>:<variantId>"
+  // Actions: approve / reject / regen_text / regen_head
+  const colonIdx = data.indexOf(":");
+  if (colonIdx <= 0) return;
+  const action = data.slice(0, colonIdx);
+  const variantId = data.slice(colonIdx + 1);
   if (!action || !variantId) return;
 
   const variant = await prisma.creativeVariant.findUnique({
@@ -257,14 +289,73 @@ async function handleButtonClick(chatId: string, data: string) {
     return;
   }
 
-  if (action === "redo") {
-    const campaignKey =
-      ((variant.request.parsedIntent ?? {}) as ParsedIntent).campaignKey ??
-      "Wechsel";
+  if (action === "regen_text" || action === "regen_head") {
+    const intent = (variant.request.parsedIntent ?? {}) as ParsedIntent;
+    const campaignKey = intent.campaignKey ?? "Wechsel";
     await sendTelegramText({
       chatId,
-      text: `🔄 Neu-Generation noch nicht implementiert — sende einfach „1 neues Creative für ${escapeHtml(campaignKey)}"`,
+      text:
+        action === "regen_text"
+          ? `📝 Generiere neuen Facebook-Text für #${variant.index}…`
+          : `🏷 Generiere neue Facebook-Headline für #${variant.index}…`,
     });
+    try {
+      if (action === "regen_text") {
+        const newAdText = await regenerateAdText({
+          campaignKey,
+          audience: intent.audience,
+          tone: intent.tone,
+          headline: variant.headline,
+          body: variant.body,
+          cta: variant.cta,
+          currentAdText: variant.adText,
+        });
+        await prisma.creativeVariant.update({
+          where: { id: variant.id },
+          data: { adText: newAdText },
+        });
+        await sendTelegramPhotoWithButtons({
+          chatId,
+          imageUrl: variant.imageUrl,
+          caption: buildVariantCaption({
+            fbHeadline: variant.fbHeadline,
+            adText: newAdText,
+            index: variant.index,
+          }),
+          buttons: variantButtons(variant.id),
+        });
+      } else {
+        const newFbHeadline = await regenerateFbHeadline({
+          campaignKey,
+          audience: intent.audience,
+          tone: intent.tone,
+          headline: variant.headline,
+          body: variant.body,
+          cta: variant.cta,
+          currentFbHeadline: variant.fbHeadline,
+        });
+        await prisma.creativeVariant.update({
+          where: { id: variant.id },
+          data: { fbHeadline: newFbHeadline },
+        });
+        await sendTelegramPhotoWithButtons({
+          chatId,
+          imageUrl: variant.imageUrl,
+          caption: buildVariantCaption({
+            fbHeadline: newFbHeadline,
+            adText: variant.adText,
+            index: variant.index,
+          }),
+          buttons: variantButtons(variant.id),
+        });
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "unbekannt";
+      await sendTelegramText({
+        chatId,
+        text: `❌ Regeneration fehlgeschlagen: ${escapeHtml(msg)}`,
+      });
+    }
     return;
   }
 
@@ -285,6 +376,7 @@ async function handleButtonClick(chatId: string, data: string) {
       const result = await publishVariantToCampaign({
         campaignKey: intent.campaignKey ?? "Wechsel",
         headline: variant.headline,
+        fbHeadline: variant.fbHeadline || variant.headline, // Fallback für alte Daten
         body: variant.body,
         adText: variant.adText || variant.body, // Fallback für alte Varianten ohne adText
         cta: variant.cta,
