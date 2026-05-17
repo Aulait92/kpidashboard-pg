@@ -326,8 +326,18 @@ Pattern wie Unsplash, gleiche Verwendung als img-src oder background-image:
 QUERY-REGELN:
 - 3-6 englische Beschreibungs-Wörter, KEINE Style-Modifier (die hängt der Server an)
 - Visuelles Konzept beschreiben: Subjekt + Situation/Emotion
-- ✅ GUT: "woman shocked looking at bill", "man celebrating new contract", "head with lightbulb"
-- ✅ GUT: "wallet with euros flying away", "two people comparing prices"
+- NIEMALS Elemente beschreiben, die TEXT enthalten würden — Flux rendert
+  Buchstaben unzuverlässig (oft Buchstabensalat). Also KEINE Schilder,
+  KEINE Sprechblasen mit Inhalt, KEINE Geldscheine mit Aufdrucken, KEINE
+  beschrifteten Briefe, KEINE Computer-Screens mit Text, KEINE Banner,
+  KEINE Logos. Sämtlicher Text gehört IN DAS HTML drumherum (Headline,
+  Sub-Headline, Caption-Box), NICHT in das AI-generierte Bild.
+- ✅ GUT: "woman shocked at desk", "man celebrating raised arms", "head with lightbulb"
+- ✅ GUT: "wallet with euros flying away" (Euros okay, kein Aufdruck nötig)
+- ✅ GUT: "two people comparing two papers" (Papiere okay solang nicht beschrieben)
+- ❌ SCHLECHT: "woman holding sign that says PKV" — Schilder mit Text
+- ❌ SCHLECHT: "calendar showing date" — Datum würde rendern
+- ❌ SCHLECHT: "letter from insurer with €850 amount" — Brief mit Text
 - ❌ SCHLECHT: "comic illustration in flat style of …" — Style wird automatisch angehängt
 - ❌ SCHLECHT: nur ein Wort wie "shock" — zu wenig Info für Bild-Generation
 
@@ -682,7 +692,11 @@ async function generateOneCreative(
 3. Bei UGC-Whiteboard ZUSÄTZLICH: handgeschriebenes PKV-Statement als CSS-Overlay über dem Foto, font-family: 'Caveat' oder 'Permanent Marker' (Google Fonts), color: #1a1a1a, font-size: 80-120pt, position passend zur Whiteboard-Fläche im Foto, leicht rotiert (transform: rotate(-1deg bis -3deg)).
 KEINE designed Gradients, KEINE Drop-Shadows auf Text, KEIN ANZEIGE-Label oben, KEIN CTA-Button (Facebook macht den selbst). Sieht aus wie iPhone-Screenshot, NICHT wie Designer-Ad.`
         : concept.visualStyle === "comic"
-          ? `COMIC-PFLICHT: Dieses Creative MUSS GENAU EIN {{COMIC:englische beschreibung}}-Element enthalten (img-src oder background-image). Comic-Illustration wird AI-generiert mit Comic-Buch-Stil. Beschreibung 3-6 Wörter, KEINE Style-Modifier (Server hängt sie an). Beispiel: {{COMIC:woman shocked looking at bill}}.`
+          ? `COMIC-PFLICHT: Dieses Creative MUSS GENAU EIN {{COMIC:englische beschreibung}}-Element enthalten (img-src oder background-image). Comic wird AI-generiert.
+- Beschreibung 3-6 Wörter, KEINE Style-Modifier (Server hängt sie an)
+- ABSOLUT KEINEN TEXT-INHALT im Comic: keine Schilder mit Text, keine Sprechblasen, keine beschrifteten Geldscheine/Briefe/Screens, keine Banner, keine Logos. Sämtlicher Text gehört in das HTML drumherum (Headline, Caption-Box).
+- ✅ {{COMIC:woman shocked at desk}}, {{COMIC:man with empty wallet}}, {{COMIC:doctor pointing at patient}}
+- ❌ {{COMIC:woman holding sign saying PKV}}, {{COMIC:letter with 850 euros}}, {{COMIC:phone screen showing app}}`
           : `Dieses Creative ist typografisch — KEIN Bild, kein {{UNSPLASH}}- oder {{COMIC}}-Platzhalter.`;
   const lengthRange =
     concept.copyLength === "long"

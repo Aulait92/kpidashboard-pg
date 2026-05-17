@@ -17,8 +17,10 @@ const PLACEHOLDER_RE = /\{\{COMIC:([^}]+)\}\}/g;
 const FALLBACK_DATA_URL =
   "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201%201%22%3E%3Crect%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%23eee%22%2F%3E%3C%2Fsvg%3E";
 
+// Bewusst KEIN Text im Bild — Flux rendert Buchstaben unzuverlässig.
+// Mehrfach betont, weil Flux einzelne Mentions oft ignoriert.
 const STYLE_SUFFIX =
-  ", modern comic book illustration, flat colors, bold black outlines, clean vector art, professional editorial illustration, white background, no text, no speech bubbles";
+  ", modern comic book illustration, flat colors, bold black outlines, clean vector art, professional editorial illustration, white background, completely without any text, no letters, no words, no speech bubbles, no signs, no labels, no writing, no captions, no logos, no numbers";
 
 async function generateComicImage(keywords: string): Promise<string> {
   const token = process.env.REPLICATE_API_TOKEN;
