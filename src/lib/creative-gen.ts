@@ -386,7 +386,7 @@ ZIELGRUPPE:
 - Genervt von: steigenden GKV-Beiträgen, vollen Wartezimmern, langen Terminen, Mehrbett-Zimmer im Krankenhaus, keinem Chefarzt
 
 PAIN-POINTS:
-- "Ich zahle 1.014€ GKV-Höchstbeitrag, bekomme aber die gleichen Leistungen wie ein 22-jähriger Azubi"
+- "Ich zahle 1.261€ GKV-Höchstbeitrag, bekomme aber die gleichen Leistungen wie ein 22-jähriger Azubi"
 - "Termin beim Facharzt: 3 Monate Wartezeit. Privatpatienten: nächste Woche."
 - "Ich verdiene gut, könnte längst raus aus der GKV — aber niemand erklärt mir die PKV-Optionen"
 - "Subventioniere ich gerade die GKV-Solidargemeinschaft auf meine Kosten?"
@@ -398,9 +398,9 @@ deutlich GÜNSTIGER als der GKV-Höchstbeitrag — bei DEUTLICH besseren
 Leistungen (Chefarzt, Einzelzimmer, kürzere Wartezeiten, freie Arztwahl).
 
 PROMISE (mit echten Zahlen arbeiten):
-- GKV-Höchstbeitrag 2026: ~1.014€/Monat (inkl. Pflegeversicherung)
+- GKV-Höchstbeitrag 2026: ~1.261€/Monat (inkl. Pflegeversicherung, exakt 1.261,31€)
 - PKV bei 35-jährigem Angestellten/Selbstständigem: oft 380-550€/Monat
-- Spar-Größenordnung: 400-600€/Monat = 4.800-7.200€/Jahr
+- Spar-Größenordnung: 700-880€/Monat = 8.400-10.560€/Jahr
 - Plus: deutlich bessere Leistungen
 - Steuerlich: PKV-Beiträge sind als Vorsorgeaufwendungen absetzbar
 
@@ -424,9 +424,9 @@ VERMEIDE bei Neugeschäft:
 - Ziel-Vermischung: nicht alle GKV-Versicherten ansprechen, nur die über JAEG / SE / Beamte
 
 PASSENDE HOOKS (Beispiele zum Inspirieren, NICHT 1:1 kopieren):
-- "GKV-Höchstbeitrag: 1.014€. PKV mit 35: 412€."
+- "GKV-Höchstbeitrag: 1.261€. PKV mit 35: 412€."
 - "Verdienst du über 73.800€? Du musst NICHT in der GKV bleiben."
-- "1.014€/Monat GKV — und du wartest 3 Monate auf den Termin?"
+- "1.261€/Monat GKV — und du wartest 3 Monate auf den Termin?"
 - "Selbstständig? Dann zahlst du GKV freiwillig. Nicht clever."
 - "Privatpatient sein kostet weniger als du denkst — wenn du richtig wählst."
 - "73.800€+ und immer noch gesetzlich? Du subventionierst 22-jährige Azubis."
