@@ -15,6 +15,7 @@ export type GeneratedCreative = {
   headline: string;
   body: string;
   cta: string;
+  adText: string; // Facebook Primary-Text (über dem Bild im Feed), kann long-form sein
   imagePrompt: string; // bei HTML-Pipeline: das volle HTML (Debug/Replay)
   imageUrl: string; // public URL nach R2-Upload
 };
@@ -25,6 +26,7 @@ type CreativeVariant = {
   headline: string;
   body: string;
   cta: string;
+  adText: string;
   html: string;
 };
 
@@ -37,11 +39,36 @@ ZIEL: PKV-Beratungs-Termin buchen.
 - Spezifische Zahlen statt Adjektive ("−38%", "73.800€", "824€")
 - Erste Person oder konkrete Persona
 - Pain-Point / Curiosity / Promise / Story als Hook-Angle
-- Headline max 6 Wörter
-- Body max 90 Zeichen
+- Headline max 6 Wörter (visuell IM Creative)
+- Body max 90 Zeichen (visuell IM Creative, Sub-Headline)
 - CTA max 18 Zeichen, handlungsorientiert
 - VERBOTEN: "Jetzt sparen", "Top-Tarif", "Kostenlos", "Spitzenmäßig"
 - Native-Feeling, kein Werbe-Sprech
+
+═══ ADTEXT (Facebook Primary-Text, NICHT im Creative) ═══
+Zusätzlich zum visuellen Creative braucht jede Variante einen Post-Text,
+der über dem Bild im Facebook-Feed steht. Das ist KEIN Bestandteil des
+HTML-Creatives — es ist die Caption, die User vor dem Klick lesen.
+
+LÄNGEN-MIX über die Varianten (wichtig: verschiedene Längen ausprobieren):
+- SHORT (60-120 Zeichen): Ein Satz, Hook + CTA. Zb: "Dein PKV-Beitrag
+  über 700€? Es gibt einen Weg, ihn ohne Anbieter-Wechsel zu halbieren."
+- MEDIUM (150-300 Zeichen): 2-3 Sätze, Problem → Lösung → Soft-CTA.
+- LONG (400-800 Zeichen, AIDA-Style): Echte Story-Form mit Hook,
+  Pain-Verstärkung, Aufdeckung des Mechanismus (z.B. §204 VVG),
+  Spezifische Zahlen, dann unverbindlicher CTA. KEINE Listen mit
+  Bulletpoints — fließender Prose-Text. Absätze mit Doppel-Newline.
+
+Bei N Varianten: Mische SHORT/MEDIUM/LONG bewusst. Bei N≥3 mindestens
+eine LONG-Variante.
+
+ADTEXT-STIL:
+- Du-Form, persönlich, kein "Sehr geehrte Damen und Herren"
+- KEINE Emoji-Walls (max 1 Emoji wenn überhaupt)
+- KEINE Marketing-Klischees ("Sichern Sie sich JETZT…")
+- Erste Zeile MUSS hooken — Facebook zeigt nur ~125 Zeichen vor "Mehr"
+- Kein expliziter Link/URL im Text — der CTA-Button macht das
+- Schlussformel: knapp, kein Hard-Sell ("Prüf in 2 Minuten ob…")
 
 ═══ TEXT-MINIMALISMUS (sehr wichtig) ═══
 Weniger Text = stärkeres Creative. Default-Modus: EIN Hero-Element dominiert
@@ -122,6 +149,10 @@ Creative. KEIN Markdown, KEIN JSON, KEIN Fließtext drumherum. Format exakt:
 <headline>Visuelle Hero-Zeile (max 6 Wörter)</headline>
 <body>Sub-Headline (max 90 Zeichen)</body>
 <cta>CTA-Button-Text (max 18 Zeichen)</cta>
+<ad_text>
+Facebook-Primary-Text (short / medium / long — variiere über die Varianten).
+Fließtext mit Absätzen via doppelter Newline. KEIN Markdown, KEINE Listen.
+</ad_text>
 <creative_html>
 <!DOCTYPE html>
 <html lang="de">
@@ -259,9 +290,10 @@ function parseVariantBlocks(text: string): CreativeVariant[] {
     const headline = extractTag(inner, "headline");
     const body = extractTag(inner, "body");
     const cta = extractTag(inner, "cta");
+    const adText = extractTag(inner, "ad_text") ?? "";
     const html = extractTag(inner, "creative_html");
     if (!headline || !body || !cta || !html) continue;
-    blocks.push({ headline, body, cta, html });
+    blocks.push({ headline, body, cta, adText, html });
   }
   return blocks;
 }
@@ -301,6 +333,7 @@ export async function generateCreatives(
         headline: v.headline,
         body: v.body,
         cta: v.cta,
+        adText: v.adText,
         imagePrompt: v.html,
         imageUrl,
       } satisfies GeneratedCreative;

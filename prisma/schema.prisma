@@ -175,6 +175,7 @@ model CreativeVariant {
   headline        String
   body            String
   cta             String   // z.B. "Termin in 30 Sek"
+  adText          String   @default("") // Facebook Primary-Text (über dem Bild), kann long-form sein
   imagePrompt     String   // bei HTML-Pipeline: das volle HTML (Debug/Replay)
   imageUrl        String   // public R2-URL
   // Meta-Side: gesetzt wenn approved + zur Kampagne gepusht.
