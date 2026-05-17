@@ -149,13 +149,13 @@ model MonthlyGoal {
   updatedAt   DateTime @updatedAt
 }
 
-// Eine Anfrage des Admins per WhatsApp, neue Meta-Ad-Creatives zu generieren.
+// Eine Anfrage des Admins per Telegram, neue Meta-Ad-Creatives zu generieren.
 // Bündelt mehrere Varianten (Headline + Body + Bild + CTA), die separat
 // genehmigt werden können.
 model CreativeRequest {
   id              String   @id @default(cuid())
-  whatsappFrom    String   // E.164 Telefonnummer des Anfragenden
-  rawPrompt       String   // Originaler WhatsApp-Text
+  telegramChatId  String   // Telegram-Chat-ID des Anfragenden (kann negativ sein bei Gruppen)
+  rawPrompt       String   // Originaler Telegram-Text
   parsedIntent    Json     // {count, campaign, tone, audience, …} von Claude
   status          String   @default("generating") // generating | partial | completed | failed
   createdAt       DateTime @default(now())
@@ -163,7 +163,7 @@ model CreativeRequest {
 
   variants CreativeVariant[]
 
-  @@index([whatsappFrom, createdAt])
+  @@index([telegramChatId, createdAt])
 }
 
 // Eine konkrete Creative-Variante. Hat eigenen Approval-Status, weil der
@@ -175,14 +175,14 @@ model CreativeVariant {
   headline        String
   body            String
   cta             String   // z.B. "Termin in 30 Sek"
-  imagePrompt     String   // englischer Flux-Prompt
+  imagePrompt     String   // bei HTML-Pipeline: das volle HTML (Debug/Replay)
   imageUrl        String   // public R2-URL
   // Meta-Side: gesetzt wenn approved + zur Kampagne gepusht.
   metaCampaignId  String?
   metaAdId        String?
   metaImageHash   String?
   status          String   @default("pending") // pending | approved | rejected | live | failed
-  whatsappMsgId   String?  // Message-ID der WhatsApp-Nachricht mit dieser Variante
+  telegramMsgId   String?  // Message-ID der Telegram-Nachricht mit dieser Variante
   errorMessage    String?
   createdAt       DateTime @default(now())
   approvedAt      DateTime?
@@ -190,5 +190,5 @@ model CreativeVariant {
   request CreativeRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
 
   @@index([requestId, status])
-  @@index([whatsappMsgId])
+  @@index([telegramMsgId])
 }

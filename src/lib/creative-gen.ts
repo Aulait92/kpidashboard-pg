@@ -175,7 +175,7 @@ export async function generateCreatives(
   return results;
 }
 
-// ─── Intent Parsing aus WhatsApp-Text ────────────────────────────────
+// ─── Intent Parsing aus Telegram-Text ────────────────────────────────
 
 export type ParsedIntent = {
   action: "generate" | "unknown";
