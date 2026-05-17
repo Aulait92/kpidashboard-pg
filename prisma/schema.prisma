@@ -177,6 +177,7 @@ model CreativeVariant {
   cta             String   // z.B. "Termin in 30 Sek"
   adText          String   @default("") // Facebook Primary-Text (über dem Bild), kann long-form sein
   fbHeadline      String   @default("") // Facebook Headline unter dem Bild (max ~40 Zeichen, unabhängig vom visuellen Hero)
+  mechanic        String   @default("") // Konzept-Mechanic (z.B. UGC-Whiteboard, Comic-Illustration, Big-Number)
   imagePrompt     String   // bei HTML-Pipeline: das volle HTML (Debug/Replay)
   imageUrl        String   // public R2-URL
   // Meta-Side: gesetzt wenn approved + zur Kampagne gepusht.

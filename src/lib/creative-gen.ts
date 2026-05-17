@@ -18,6 +18,7 @@ export type GeneratedCreative = {
   cta: string;
   adText: string; // Facebook Primary-Text (über dem Bild im Feed), kann long-form sein
   fbHeadline: string; // Facebook Headline unter dem Bild (max ~40 Zeichen, snappy)
+  mechanic: string; // Konzept-Mechanic (UGC-Whiteboard, Comic-Illustration, Big-Number, …)
   imagePrompt: string; // bei HTML-Pipeline: das volle HTML (Debug/Replay)
   imageUrl: string; // public URL nach R2-Upload
 };
@@ -31,6 +32,7 @@ type CreativeVariant = {
   adText: string;
   fbHeadline: string;
   html: string;
+  mechanic: string;
 };
 
 const CREATIVE_SYSTEM_PROMPT = `Du bist Senior Direct-Response-Creative-Director für Meta-Ads im deutschen PKV-Lead-Gen-Markt. Du designst Ad-Creatives als komplette HTML-Dokumente.
@@ -489,7 +491,7 @@ PASSENDE FOTO-MOTIVE (für photo-Mechaniken):
 type Concept = {
   hookAngle: string;       // Pain | Curiosity | Promise | Story | Outrage | Insight
   mechanic: string;        // Big-Number | STOPP | Highlighter | Konto-Mockup | Reddit-Native | ...
-  visualStyle: "photo" | "typography" | "comic";
+  visualStyle: "photo" | "ugc" | "typography" | "comic";
   copyLength: "short" | "medium" | "long"; // betrifft adText-Länge
   description: string;     // 1-2 Sätze konkrete Konzept-Skizze
 };
@@ -500,35 +502,44 @@ async function brainstormConcepts(brief: CreativeBrief): Promise<Concept[]> {
 
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
 
-  // Pro Slot expliziter visualStyle. Drei Buckets: photo (echtes Unsplash-
-  // Foto), comic (AI-generierte Illustration), typography (rein textbasiert).
-  // Verteilung für N>=3: ~40% photo, ~25% comic, ~35% typography. Bei N=1
-  // random 1:1:1. Bei N=2: photo + (50/50 comic|typography).
-  const slotStyles: ("photo" | "typography" | "comic")[] = (() => {
+  // Pro Slot expliziter visualStyle. VIER Buckets:
+  //   photo       = polished Stock-Foto (Brand-Photo-Hero etc, Unsplash)
+  //   ugc         = native-Look Foto + signature schwarze Caption-Box (UGC-*)
+  //   comic       = AI-generierte Illustration (Replicate Flux)
+  //   typography  = rein textbasiert, kein Bild
+  // Verteilung N>=4: ~20% photo, ~30% ugc, ~20% comic, ~30% typography
+  // (UGC stärker gewichtet — performt aktuell am besten auf Meta).
+  type Style = "photo" | "ugc" | "comic" | "typography";
+  const slotStyles: Style[] = (() => {
     if (brief.count === 1) {
       const r = Math.random();
-      if (r < 0.4) return ["photo"];
-      if (r < 0.65) return ["comic"];
+      if (r < 0.3) return ["ugc"];
+      if (r < 0.5) return ["photo"];
+      if (r < 0.7) return ["comic"];
       return ["typography"];
     }
     if (brief.count === 2) {
-      return ["photo", Math.random() < 0.5 ? "comic" : "typography"];
+      return ["ugc", Math.random() < 0.5 ? "comic" : "typography"];
+    }
+    if (brief.count === 3) {
+      return ["ugc", "comic", "typography"];
     }
     const n = brief.count;
-    const photoCount = Math.max(1, Math.round(n * 0.4));
-    const comicCount = Math.max(1, Math.round(n * 0.25));
-    const typoCount = n - photoCount - comicCount;
-    const styles: ("photo" | "typography" | "comic")[] = [
+    const ugcCount = Math.max(1, Math.round(n * 0.3));
+    const photoCount = Math.max(1, Math.round(n * 0.2));
+    const comicCount = Math.max(1, Math.round(n * 0.2));
+    const typoCount = Math.max(0, n - ugcCount - photoCount - comicCount);
+    const styles: Style[] = [
+      ...Array(ugcCount).fill("ugc"),
       ...Array(photoCount).fill("photo"),
       ...Array(comicCount).fill("comic"),
-      ...Array(Math.max(0, typoCount)).fill("typography"),
+      ...Array(typoCount).fill("typography"),
     ];
-    // Shuffle damit photo/comic/typo nicht in Blöcken am Anfang/Ende stehen.
     for (let i = styles.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [styles[i], styles[j]] = [styles[j], styles[i]];
     }
-    return styles.slice(0, n) as ("photo" | "typography" | "comic")[];
+    return styles.slice(0, n);
   })();
 
   const slotInstructions = slotStyles
@@ -550,7 +561,8 @@ WICHTIG: maximale Varianz zwischen den Konzepten. Jedes Konzept braucht:
 VISUAL-STYLE PRO SLOT (FEST VORGEGEBEN, NICHT ABWEICHEN):
 ${slotInstructions}
 
-Für "photo"-Slots: wähle eine foto-getragene Mechanic (Brand-Photo-Hero, Person-Quote, Lifestyle-Background, Newspaper-Mockup, Photo-Big-Headline). Das Konzept MUSS ein {{UNSPLASH:…}}-Foto nutzen.
+Für "photo"-Slots: wähle eine polierte foto-getragene Mechanic (Brand-Photo-Hero, Person-Quote, Lifestyle-Background, Newspaper-Mockup, Photo-Big-Headline). Das Konzept MUSS ein {{UNSPLASH:…}}-Foto nutzen.
+Für "ugc"-Slots: wähle EINE UGC-Mechanic (UGC-Whiteboard, UGC-Desk-Documents, UGC-Selfie-Note, UGC-Phone-Screenshot, UGC-Close-Up-Person). Das Konzept MUSS ein {{UNSPLASH:…}}-Foto nutzen UND die signature schwarze Caption-Box unten haben. Wirkt wie iPhone-Screenshot, nicht wie Designer-Ad.
 Für "comic"-Slots: wähle eine Comic-Mechanic (Comic-Illustration, Comic-Big-Headline, Comic-Strip-Single-Panel). Das Konzept MUSS ein {{COMIC:…}}-Element nutzen (AI-generierte Illustration).
 Für "typography"-Slots: wähle eine typografische Mechanic (Big-Number, STOPP-Interrupt, Highlighter-Hook, Konto-Mockup, 3-Fragen-Quiz, Google-Autocomplete, Reddit-Native, SMS/WhatsApp-Mockup, Rechnungs-Closeup, Brief-vom-Versicherer). KEIN Bild-Platzhalter.
 
@@ -563,7 +575,6 @@ VERFÜGBARE MECHANIKEN:
 - Comic-Mechaniken (AI-generiert via {{COMIC:…}}): Comic-Illustration / Comic-Big-Headline / Comic-Strip-Single-Panel
 - Typo-Mechaniken: Big-Number / STOPP-Interrupt / Highlighter-Hook / Konto-Vergleich-Mockup / Zeitungs-Meldung / 3-Fragen-Quiz / Google-Autocomplete / Reddit-Native / SMS-Screenshot / WhatsApp-Chat-Mockup / Rechnungs-Closeup / Brief-vom-Versicherer
 
-UGC-Mechaniken sind eine Untermenge der Photo-Slots — sie nutzen ebenfalls {{UNSPLASH:…}}-Fotos, aber mit der signature Caption-Box-Komposition. Bei "photo"-Slots im Brainstorm: ca. 40% sollten UGC-Mechaniken sein (sehr beliebt auf Meta), 60% klassische Photo-Mechaniken.
 
 OUTPUT (strict, NUR <concept>-Blöcke, kein Drumherum, EXAKT in der Reihenfolge oben):
 
@@ -631,9 +642,11 @@ function parseConceptBlocks(text: string): Concept[] {
       visualStyle:
         visualStyle === "photo"
           ? "photo"
-          : visualStyle === "comic"
-            ? "comic"
-            : "typography",
+          : visualStyle === "ugc"
+            ? "ugc"
+            : visualStyle === "comic"
+              ? "comic"
+              : "typography",
       copyLength:
         copyLength === "long" ? "long" : copyLength === "medium" ? "medium" : "short",
       description,
@@ -655,9 +668,22 @@ async function generateOneCreative(
   const photoLine =
     concept.visualStyle === "photo"
       ? `FOTO-PFLICHT: Dieses Creative MUSS GENAU EIN {{UNSPLASH:englische keywords}}-Element enthalten, entweder als <img src="{{UNSPLASH:…}}"> ODER als background-image: url({{UNSPLASH:…}}). Wenn du keinen Platzhalter im HTML hast, ist das Creative ungültig. Die Foto-Komposition soll der Mechanic entsprechen.`
-      : concept.visualStyle === "comic"
-        ? `COMIC-PFLICHT: Dieses Creative MUSS GENAU EIN {{COMIC:englische beschreibung}}-Element enthalten (img-src oder background-image). Comic-Illustration wird AI-generiert mit Comic-Buch-Stil. Beschreibung 3-6 Wörter, KEINE Style-Modifier (Server hängt sie an). Beispiel: {{COMIC:woman shocked looking at bill}}.`
-        : `Dieses Creative ist typografisch — KEIN Bild, kein {{UNSPLASH}}- oder {{COMIC}}-Platzhalter.`;
+      : concept.visualStyle === "ugc"
+        ? `UGC-PFLICHT (alle drei Punkte MÜSSEN umgesetzt sein):
+1. Full-bleed Foto-Background via {{UNSPLASH:englische keywords}} — Foto füllt das gesamte 1080×1080-Canvas, position:absolute oder background-image, kein weißer Rand außenrum.
+2. Signature schwarze CAPTION-BOX unten (das Wiedererkennungsmerkmal aller UGC-Creatives) — exakt diese CSS-Eigenschaften:
+   position: absolute; bottom: 30-60px; left: 30-50px; right: 30-50px;
+   background: #000; color: #fff;
+   font-family: 'Inter', -apple-system, sans-serif; font-weight: 900;
+   font-size: 44-60px; line-height: 1.15;
+   padding: 24-30px 32-38px; border-radius: 14-20px;
+   text-align: left;
+   Inhalt: 1-3 Zeilen, MUSS "PKV" oder "Krankenversicherung" enthalten.
+3. Bei UGC-Whiteboard ZUSÄTZLICH: handgeschriebenes PKV-Statement als CSS-Overlay über dem Foto, font-family: 'Caveat' oder 'Permanent Marker' (Google Fonts), color: #1a1a1a, font-size: 80-120pt, position passend zur Whiteboard-Fläche im Foto, leicht rotiert (transform: rotate(-1deg bis -3deg)).
+KEINE designed Gradients, KEINE Drop-Shadows auf Text, KEIN ANZEIGE-Label oben, KEIN CTA-Button (Facebook macht den selbst). Sieht aus wie iPhone-Screenshot, NICHT wie Designer-Ad.`
+        : concept.visualStyle === "comic"
+          ? `COMIC-PFLICHT: Dieses Creative MUSS GENAU EIN {{COMIC:englische beschreibung}}-Element enthalten (img-src oder background-image). Comic-Illustration wird AI-generiert mit Comic-Buch-Stil. Beschreibung 3-6 Wörter, KEINE Style-Modifier (Server hängt sie an). Beispiel: {{COMIC:woman shocked looking at bill}}.`
+          : `Dieses Creative ist typografisch — KEIN Bild, kein {{UNSPLASH}}- oder {{COMIC}}-Platzhalter.`;
   const lengthRange =
     concept.copyLength === "long"
       ? "400-800 Zeichen, AIDA-Story-Struktur, mehrere Absätze"
@@ -709,19 +735,37 @@ Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm,
     );
   }
   const result = variants[0];
-  // Sanity-Check pro visualStyle: photo→UNSPLASH, comic→COMIC,
-  // typography→keiner. Bei Verstoß: warnen, nicht crashen.
+  // Sanity-Check pro visualStyle. Bei Verstoß: warnen, nicht crashen.
   if (concept.visualStyle === "photo" && !result.html.includes("{{UNSPLASH:")) {
     console.warn(
       `[creative-gen] Photo-Konzept "${concept.mechanic}" lieferte HTML ohne {{UNSPLASH:}} — Claude hat die Foto-Pflicht ignoriert.`,
     );
+  }
+  if (concept.visualStyle === "ugc") {
+    if (!result.html.includes("{{UNSPLASH:")) {
+      console.warn(
+        `[creative-gen] UGC-Konzept "${concept.mechanic}" lieferte HTML ohne {{UNSPLASH:}} — Foto-Pflicht ignoriert.`,
+      );
+    }
+    // Caption-Box: schwarzer Background + weißer Text + border-radius
+    // Sehr toleranter Check (#000 / black / rgb(0,0,0)).
+    const hasBlackBg =
+      /background[^;]*(#000|black|rgb\(0\s*,\s*0\s*,\s*0\))/i.test(result.html);
+    const hasWhiteText = /color[^;]*(#fff|white|rgb\(255\s*,\s*255\s*,\s*255\))/i.test(
+      result.html,
+    );
+    if (!hasBlackBg || !hasWhiteText) {
+      console.warn(
+        `[creative-gen] UGC-Konzept "${concept.mechanic}" hat keine erkennbare schwarze Caption-Box (hasBlackBg=${hasBlackBg}, hasWhiteText=${hasWhiteText}).`,
+      );
+    }
   }
   if (concept.visualStyle === "comic" && !result.html.includes("{{COMIC:")) {
     console.warn(
       `[creative-gen] Comic-Konzept "${concept.mechanic}" lieferte HTML ohne {{COMIC:}} — Claude hat die Comic-Pflicht ignoriert.`,
     );
   }
-  return result;
+  return { ...result, mechanic: concept.mechanic };
 }
 
 // ─── Orchestrator: brainstorm → parallel execution ───────────────────
@@ -775,7 +819,7 @@ function parseVariantBlocks(text: string): CreativeVariant[] {
     const fbHeadline = extractTag(inner, "fb_headline") ?? "";
     const html = extractTag(inner, "creative_html");
     if (!headline || !body || !cta || !html) continue;
-    blocks.push({ headline, body, cta, adText, fbHeadline, html });
+    blocks.push({ headline, body, cta, adText, fbHeadline, html, mechanic: "" });
   }
   return blocks;
 }
@@ -818,6 +862,7 @@ export async function generateCreatives(
         cta: v.cta,
         adText: v.adText,
         fbHeadline: v.fbHeadline,
+        mechanic: v.mechanic,
         imagePrompt: v.html,
         imageUrl,
       } satisfies GeneratedCreative;

@@ -185,6 +185,7 @@ async function handleTextCommand(chatId: string, text: string) {
           cta: c.cta,
           adText: c.adText,
           fbHeadline: c.fbHeadline,
+          mechanic: c.mechanic,
           imagePrompt: c.imagePrompt,
           imageUrl: c.imageUrl,
           status: "pending",
@@ -197,6 +198,7 @@ async function handleTextCommand(chatId: string, text: string) {
           fbHeadline: c.fbHeadline,
           adText: c.adText,
           index: i + 1,
+          mechanic: c.mechanic,
         }),
         buttons: variantButtons(variant.id),
       });
@@ -229,8 +231,10 @@ function buildVariantCaption(opts: {
   fbHeadline: string;
   adText: string;
   index?: number;
+  mechanic?: string;
 }): string {
-  const prefix = opts.index ? `<b>Variante #${opts.index}</b>\n\n` : "";
+  const mechanicTag = opts.mechanic ? ` — <i>${escapeHtml(opts.mechanic)}</i>` : "";
+  const prefix = opts.index ? `<b>Variante #${opts.index}</b>${mechanicTag}\n\n` : "";
   const headlineBlock = opts.fbHeadline
     ? `<b>Facebook-Headline:</b>\n${escapeHtml(opts.fbHeadline)}\n\n`
     : "";
@@ -315,6 +319,7 @@ async function handleButtonClick(chatId: string, data: string) {
           fbHeadline: variant.fbHeadline,
           adText: variant.adText,
           index: variant.index,
+          mechanic: variant.mechanic,
         }),
         buttons: variantButtons(variant.id),
       });
@@ -360,6 +365,7 @@ async function handleButtonClick(chatId: string, data: string) {
             fbHeadline: variant.fbHeadline,
             adText: newAdText,
             index: variant.index,
+            mechanic: variant.mechanic,
           }),
           buttons: variantButtons(variant.id),
         });
@@ -384,6 +390,7 @@ async function handleButtonClick(chatId: string, data: string) {
             fbHeadline: newFbHeadline,
             adText: variant.adText,
             index: variant.index,
+            mechanic: variant.mechanic,
           }),
           buttons: variantButtons(variant.id),
         });
