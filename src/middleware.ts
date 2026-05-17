@@ -11,7 +11,7 @@ const PUBLIC_PREFIXES = [
   "/api/auth", // login/logout server actions tunneln über server actions, hier sind direkte API-Routen nur Logout
   "/api/sync", // cron-job.org braucht Zugriff (per Token gesichert)
   "/api/push", // service worker registriert Subscriptions
-  "/api/telegram", // Telegram Bot webhook (Whitelist intern via TELEGRAM_ADMIN_CHAT_ID + Secret-Token-Header)
+  "/api/telegram", // Telegram Bot webhook (Whitelist intern via TELEGRAM_ADMIN_USER_ID + Secret-Token-Header)
   "/manifest.webmanifest",
   "/icon",
   "/apple-icon",

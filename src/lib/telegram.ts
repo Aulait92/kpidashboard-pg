@@ -3,7 +3,8 @@
 //
 // Setup (einmalig):
 //   1. @BotFather in Telegram öffnen → /newbot → Token kopieren → TELEGRAM_BOT_TOKEN
-//   2. Eigene Chat-ID rausfinden: an @userinfobot schreiben → TELEGRAM_ADMIN_CHAT_ID
+//   2. Eigene User-ID rausfinden: an @userinfobot schreiben → TELEGRAM_ADMIN_USER_ID
+//      (bei 1:1-DM ist user.id == chat.id, deshalb funktioniert die Whitelist-Prüfung)
 //   3. Webhook registrieren:
 //      curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
 //        -d "url=https://<deine-domain>/api/telegram/webhook" \
