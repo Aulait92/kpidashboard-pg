@@ -1,7 +1,8 @@
-import Replicate from "replicate";
 import { uploadImageToR2 } from "@/lib/r2";
+import { renderHtmlToImage } from "@/lib/html-to-png";
 
-// Brief der Creative-Generation. Wird mit Claude und Flux gefüllt.
+// Brief der Creative-Generation. Claude designt komplette HTML-Creatives,
+// Playwright rendert zu PNG, Upload zu R2.
 export type CreativeBrief = {
   campaignKey: string; // "Wechsel" | "Neugeschäft" | ...
   audience?: string; // z.B. "Selbstständige 30-45"
@@ -13,44 +14,78 @@ export type GeneratedCreative = {
   headline: string;
   body: string;
   cta: string;
-  imagePrompt: string;
+  imagePrompt: string; // bei HTML-Pipeline: das volle HTML (Debug/Replay)
   imageUrl: string; // public URL nach R2-Upload
 };
 
-// ─── Claude Copy-Generation ──────────────────────────────────────────
+// ─── Claude Creative-Generation (HTML) ───────────────────────────────
 
-type CopyVariant = {
+type CreativeVariant = {
   headline: string;
   body: string;
   cta: string;
-  imagePrompt: string;
+  html: string;
 };
 
-const COPY_SYSTEM_PROMPT = `Du bist ein Direct-Response-Creative-Director für Meta-Ads im deutschen PKV-Lead-Gen-Markt.
+const CREATIVE_SYSTEM_PROMPT = `Du bist Senior Direct-Response-Creative-Director für Meta-Ads im deutschen PKV-Lead-Gen-Markt. Du designst Ad-Creatives als komplette HTML-Dokumente.
 
 ZIELGRUPPE: Privat versicherbare Personen (Selbstständige, Akademiker, Beamte, Angestellte > JAEG).
-ZIEL der Anzeigen: PKV-Beratungs-Termin buchen.
+ZIEL: PKV-Beratungs-Termin buchen.
 
-TONALITÄT:
-- Spezifische Zahlen statt Adjektive
+═══ COPY-REGELN ═══
+- Spezifische Zahlen statt Adjektive ("−38%", "73.800€", "824€")
 - Erste Person oder konkrete Persona
-- Pain-Point oder Curiosity-Hook
-- Max 6 Wörter Headline, max 90 Zeichen Body
-- CTA klar handlungsorientiert
-- KEIN "Jetzt sparen", "Top-Tarif", "Kostenlos"
-- KEIN Werbe-Sprech, native-feeling
+- Pain-Point / Curiosity / Promise / Story als Hook-Angle
+- Headline max 6 Wörter
+- Body max 90 Zeichen
+- CTA max 18 Zeichen, handlungsorientiert
+- VERBOTEN: "Jetzt sparen", "Top-Tarif", "Kostenlos", "Spitzenmäßig"
+- Native-Feeling, kein Werbe-Sprech
 
-VISUAL-BRIEF (englisch, ready für Flux):
-- Photorealistic, smartphone-snap aesthetic, NOT studio polish
-- Relatable Person 28-45 Jahre in Alltag (Küche / Schreibtisch / Café)
-- Emotionaler Moment: Frust, Aha, Erleichterung
-- NO stock-photo-look, NO suits, NO office settings
+═══ DIRECT-RESPONSE-MECHANIKEN ═══
+Wähle pro Variante eine Mechanic und führe sie konsequent aus:
 
-OUTPUT: Strict JSON, kein Markdown, kein Text drumherum.`;
+1. BIG-NUMBER — Riesige Zahl/Prozent als Hero ("−38%", "73.800€"), kurze Erklär-Zeile drunter
+2. STOPP-INTERRUPT — Pattern-Break ("STOPP."), rote Fläche, kurzer Warn-Text
+3. HIGHLIGHTER-HOOK — schwarze Headline mit gelben Highlighter-Streifen über Keywords ("Diese 3 Sätze kosten dich jedes Jahr 4.000€"), drunter Liste mit ✗-Items
+4. KONTO-MOCKUP — Tab/Browser-Chrome oben, „Dein Ergebnis"-Card mit GKV-vs-PKV-Vergleich (zwei Spalten, durchgestrichener Preis, grüner Preis), handschriftlicher Pfeil + Notiz
+5. ZEITUNGS-MELDUNG — Serif-Headline im Newspaper-Stil ("Der Finanzbote"), Subhead, Foto-Platzhalter-Block, Body-Text
+6. 3-FRAGEN-QUIZ — Top-Badge "3 FRAGEN CHECK", Headline, nummerierte Fragen mit Checkmark-Spalte rechts
+7. GOOGLE-AUTOCOMPLETE — Search-Input mit Dropdown-Suggestions die einen Pain-Point verraten
+8. REDDIT-NATIVE — r/Finanzen-Header, Post-Title als Frage, Body wie ein AMA-Antwort-Snippet
 
-async function generateCopyVariants(
+═══ HTML-CONSTRAINTS ═══
+- Exakt 1080×1080 Pixel
+- Eine einzige <html>-Datei, alle CSS inline im <style>
+- Google Fonts via <link rel="stylesheet"> erlaubt (Inter, Playfair Display, Crimson Pro, IBM Plex Sans, Caveat für Handschrift)
+- Keine externen Bilder, keine JS, kein <script>
+- Wenn du ein Personenfoto willst: stattdessen einen abstrakten Block mit linear-gradient + "ANZEIGE"-Badge nutzen (Stockfotos haben wir nicht)
+- SVG inline für Icons/Pfeile/Checkmarks ist explizit erwünscht
+- Border-radius, box-shadow, backdrop-filter erlaubt
+- Body: { margin:0; padding:0; width:1080px; height:1080px; overflow:hidden; font-family:... }
+- Saubere Hierarchie: Hero-Element nimmt 60-70% visuellen Raum, drumherum Whitespace
+- Top-Right: kleines "ANZEIGE"-Label in grau (10px, uppercase, letter-spacing)
+- Bottom: CTA-Button (volle Breite oder rechts), klar erkennbar mit Pfeil →
+
+═══ FARB-PALETTEN (eine pro Variante wählen) ═══
+- Cream/Black: Background #FAF6F0, Text #0E0E0E, Accent-Yellow #FFD84D
+- Dark/Cream: Background #0E0E0E, Text #FAF6F0, Accent-Yellow #FFD84D
+- Stopp-Red: Background #E53935, Text white, Body-Accent #FFD84D
+- Newspaper: Background #F7F4EE, Text #1C1C1C, Serif-Headlines
+- Konto-Mockup: Background #ECEEF1 (Browser-Grau), Card #FFFFFF, Akzent-Grün #06A77D
+
+═══ OUTPUT-FORMAT ═══
+Strict JSON-Array, kein Markdown, kein Fließtext drumherum. Jedes Element:
+{
+  "headline": string,  // entspricht der visuellen Hero-Zeile
+  "body": string,      // sub-headline aus dem Creative
+  "cta": string,       // Text des CTA-Buttons
+  "html": string       // komplettes <!DOCTYPE html>-Dokument
+}`;
+
+async function generateCreativeVariants(
   brief: CreativeBrief,
-): Promise<CopyVariant[]> {
+): Promise<CreativeVariant[]> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
@@ -61,15 +96,7 @@ async function generateCopyVariants(
 ${brief.audience ? `ZIELGRUPPE-FOKUS: ${brief.audience}` : ""}
 ${brief.tone ? `TONE: ${brief.tone}` : ""}
 
-Liefere als JSON-Array mit Objekten:
-{
-  "headline": string (max 6 Wörter),
-  "body": string (max 90 Zeichen),
-  "cta": string (max 18 Zeichen),
-  "imagePrompt": string (englischer Flux-Prompt, max 60 Wörter, mit Camera-Tags + Mood + Setting)
-}
-
-Jede Variante muss einen anderen Hook-Angle nutzen (Pain / Curiosity / Promise / Story).`;
+Jede Variante MUSS eine andere Direct-Response-Mechanic nutzen und einen anderen Hook-Angle (Pain / Curiosity / Promise / Story). Antworte mit strict JSON-Array.`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -80,8 +107,8 @@ Jede Variante muss einen anderen Hook-Angle nutzen (Pain / Curiosity / Promise /
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 2000,
-      system: COPY_SYSTEM_PROMPT,
+      max_tokens: 16000,
+      system: CREATIVE_SYSTEM_PROMPT,
       messages: [{ role: "user", content: userPrompt }],
     }),
   });
@@ -94,7 +121,6 @@ Jede Variante muss einen anderen Hook-Angle nutzen (Pain / Curiosity / Promise /
   };
   const text = data.content.find((c) => c.type === "text")?.text ?? "";
 
-  // Claude antwortet manchmal mit ```json-Fences trotz Anweisung — Cleanup.
   const cleaned = text
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/```\s*$/i, "")
@@ -102,7 +128,7 @@ Jede Variante muss einen anderen Hook-Angle nutzen (Pain / Curiosity / Promise /
   let parsed: unknown;
   try {
     parsed = JSON.parse(cleaned);
-  } catch (err) {
+  } catch {
     throw new Error(
       `Claude-Response nicht parsebar: ${text.slice(0, 200)}…`,
     );
@@ -110,45 +136,7 @@ Jede Variante muss einen anderen Hook-Angle nutzen (Pain / Curiosity / Promise /
   if (!Array.isArray(parsed)) {
     throw new Error("Claude-Response war kein Array");
   }
-  return parsed as CopyVariant[];
-}
-
-// ─── Flux Bild-Generation ────────────────────────────────────────────
-
-async function generateImage(prompt: string): Promise<Buffer> {
-  const apiToken = process.env.REPLICATE_API_TOKEN;
-  if (!apiToken) {
-    throw new Error("REPLICATE_API_TOKEN nicht gesetzt.");
-  }
-
-  const replicate = new Replicate({ auth: apiToken });
-  // Flux 1.1 Pro: photorealistic, hand+text-treu, ~10s pro Bild
-  const output = await replicate.run("black-forest-labs/flux-1.1-pro", {
-    input: {
-      prompt,
-      aspect_ratio: "1:1", // 1:1 für Feed-Ads (Meta empfohlen)
-      output_format: "jpg",
-      output_quality: 90,
-      safety_tolerance: 2,
-    },
-  });
-
-  // Replicate liefert je nach Version eine URL (string) oder ein File-Objekt.
-  // Wir lesen das zu Buffer für R2-Upload.
-  const url =
-    typeof output === "string"
-      ? output
-      : Array.isArray(output) && typeof output[0] === "string"
-        ? (output[0] as string)
-        : null;
-  if (!url) {
-    throw new Error(`Replicate-Output unerwartet: ${JSON.stringify(output).slice(0, 200)}`);
-  }
-  const imgRes = await fetch(url);
-  if (!imgRes.ok) {
-    throw new Error(`Bild-Download fehlgeschlagen: ${imgRes.status}`);
-  }
-  return Buffer.from(await imgRes.arrayBuffer());
+  return parsed as CreativeVariant[];
 }
 
 // ─── Orchestrator ────────────────────────────────────────────────────
@@ -157,36 +145,37 @@ export async function generateCreatives(
   brief: CreativeBrief,
   requestId: string,
 ): Promise<GeneratedCreative[]> {
-  const copyVariants = await generateCopyVariants(brief);
+  const variants = await generateCreativeVariants(brief);
 
-  const results: GeneratedCreative[] = [];
-  // Parallel-Generation: alle Bilder gleichzeitig.
-  const imageBuffers = await Promise.all(
-    copyVariants.map((v) => generateImage(v.imagePrompt)),
+  // Parallel rendern + uploaden.
+  const results = await Promise.all(
+    variants.map(async (v, i) => {
+      const buffer = await renderHtmlToImage(v.html, {
+        width: 1080,
+        height: 1080,
+        format: "jpeg",
+        quality: 92,
+      });
+      const key = `creatives/${requestId}/${i + 1}.jpg`;
+      const imageUrl = await uploadImageToR2({
+        buffer,
+        key,
+        contentType: "image/jpeg",
+      });
+      return {
+        headline: v.headline,
+        body: v.body,
+        cta: v.cta,
+        imagePrompt: v.html,
+        imageUrl,
+      } satisfies GeneratedCreative;
+    }),
   );
-
-  for (let i = 0; i < copyVariants.length; i++) {
-    const variant = copyVariants[i];
-    const key = `creatives/${requestId}/${i + 1}.jpg`;
-    const imageUrl = await uploadImageToR2({
-      buffer: imageBuffers[i],
-      key,
-      contentType: "image/jpeg",
-    });
-
-    results.push({
-      headline: variant.headline,
-      body: variant.body,
-      cta: variant.cta,
-      imagePrompt: variant.imagePrompt,
-      imageUrl,
-    });
-  }
 
   return results;
 }
 
-// ─── Intent Parsing aus WhatsApp-Text ────────────────────────────────
+// ─── Intent Parsing aus Telegram-Text ────────────────────────────────
 
 export type ParsedIntent = {
   action: "generate" | "unknown";
