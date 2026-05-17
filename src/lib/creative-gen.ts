@@ -215,34 +215,55 @@ PASSENDE FOTO-MOTIVE (für Brand-Photo / Person-Quote / Lifestyle-Mechaniken):
   Neugeschäft: ``, // Brief noch nicht definiert — Claude nutzt nur die generischen Direct-Response-Regeln
 };
 
-async function generateCreativeVariants(
-  brief: CreativeBrief,
-): Promise<CreativeVariant[]> {
+// ─── Phase 1: Konzept-Brainstorm ─────────────────────────────────────
+// Bevor wir HTML rendern, lässt Claude in einem Call N distinkte Konzepte
+// brainstormen. Das zwingt zur Diversität (alle Konzepte sind im selben
+// Output sichtbar) und verhindert die Konvergenz-Pattern, die bei einem
+// einzigen Multi-Variante-Call entstehen.
+
+type Concept = {
+  hookAngle: string;       // Pain | Curiosity | Promise | Story | Outrage | Insight
+  mechanic: string;        // Big-Number | STOPP | Highlighter | Konto-Mockup | Reddit-Native | ...
+  visualStyle: "photo" | "typography";
+  copyLength: "short" | "medium" | "long"; // betrifft adText-Länge
+  description: string;     // 1-2 Sätze konkrete Konzept-Skizze
+};
+
+async function brainstormConcepts(brief: CreativeBrief): Promise<Concept[]> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
-  }
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
 
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
+  const photoMin = brief.count === 1 ? 0 : Math.max(1, Math.ceil(brief.count / 2));
 
-  const userPrompt = `Generiere ${brief.count} Creative-Varianten für eine Meta-Ad zur ${brief.campaignKey}-Kampagne.
+  const userPrompt = `Du brainstormst ${brief.count} ${brief.count === 1 ? "Konzept" : "distinkte Konzepte"} für Meta-Ad-Creatives zur ${brief.campaignKey}-Kampagne.
 
 ${campaignContext}
 
-${brief.audience ? `ZIELGRUPPE-FOKUS (zusätzlich): ${brief.audience}` : ""}
+${brief.audience ? `ZIELGRUPPE-FOKUS: ${brief.audience}` : ""}
 ${brief.tone ? `TONE: ${brief.tone}` : ""}
 
-Jede Variante MUSS eine andere Direct-Response-Mechanic nutzen und einen anderen Hook-Angle (Pain / Curiosity / Promise / Story).
+WICHTIG: maximale Varianz zwischen den Konzepten. Jedes Konzept braucht:
+- ANDEREN hookAngle (Pain ≠ Curiosity ≠ Promise ≠ Story ≠ Outrage ≠ Insight)
+- ANDERE mechanic (keine zwei Big-Number-Konzepte, keine zwei STOPP-Konzepte)
+- ANDEREN copyLength wenn möglich (mische short/medium/long)
+${brief.count > 1 ? `- VERTEILUNG visualStyle: mindestens ${photoMin} "photo", Rest "typography"` : ""}
 
-PFLICHT-VERTEILUNG für ${brief.count} ${brief.count === 1 ? "Variante" : "Varianten"}:
-${
-  brief.count === 1
-    ? "- 50%-Chance: Foto-Creative ODER typografisch (wähle bewusst, was für den Hook besser passt)"
-    : `- Mindestens ${Math.max(1, Math.ceil(brief.count / 2))} Variante(n) MUSS Foto-driven sein (Brand-Photo / Person-Quote / Lifestyle-Background / Newspaper-Mockup) mit {{UNSPLASH:…}}-Platzhalter
-- Die übrigen typografisch (Big-Number / STOPP / Highlighter / Konto-Mockup / 3-Fragen-Quiz)`
-}
+VERFÜGBARE MECHANIKEN (wähle ${brief.count} verschiedene):
+- Big-Number / STOPP-Interrupt / Highlighter-Hook / Konto-Vergleich-Mockup
+- Zeitungs-Meldung / 3-Fragen-Quiz / Google-Autocomplete / Reddit-Native
+- Brand-Photo-Hero / Person-Quote / Lifestyle-Background / Newspaper-Mockup
+- SMS-Screenshot / WhatsApp-Chat-Mockup / Rechnungs-Closeup / Brief-vom-Versicherer
 
-Antworte mit <variant>-Blöcken im definierten Format.`;
+OUTPUT (strict, NUR <concept>-Blöcke, kein Drumherum):
+
+<concept>
+<hookAngle>Pain</hookAngle>
+<mechanic>Konto-Vergleich-Mockup</mechanic>
+<visualStyle>typography</visualStyle>
+<copyLength>medium</copyLength>
+<description>GKV-vs-PKV Konto-Vergleich-Screenshot mit Browser-Chrome. 824€ → 412€. Handschriftlicher Pfeil "−50%". AdText: 3-Satz-Story einer Wechslerin.</description>
+</concept>`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -253,27 +274,127 @@ Antworte mit <variant>-Blöcken im definierten Format.`;
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 16000,
+      max_tokens: 2000,
+      system: `Du bist Senior Direct-Response-Creative-Director für deutsche PKV-Lead-Gen-Ads. Du brainstormst maximal diverse Konzept-Sets — jedes Konzept eine andere Mechanic, ein anderer Hook, eine andere visuelle Sprache.`,
+      messages: [{ role: "user", content: userPrompt }],
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`Claude Brainstorm ${res.status}: ${await res.text()}`);
+  }
+  const data = (await res.json()) as { content: { type: string; text: string }[] };
+  const text = data.content.find((c) => c.type === "text")?.text ?? "";
+  const concepts = parseConceptBlocks(text);
+  if (concepts.length === 0) {
+    throw new Error(`Brainstorm enthielt keine <concept>-Blöcke: ${text.slice(0, 300)}…`);
+  }
+  console.log(
+    "[creative-gen] Brainstormed concepts:",
+    concepts.map((c) => `${c.mechanic}/${c.hookAngle}/${c.visualStyle}/${c.copyLength}`),
+  );
+  return concepts;
+}
+
+function parseConceptBlocks(text: string): Concept[] {
+  const re = /<concept>([\s\S]*?)<\/concept>/g;
+  const out: Concept[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    const inner = m[1];
+    const hookAngle = extractTag(inner, "hookAngle");
+    const mechanic = extractTag(inner, "mechanic");
+    const visualStyle = extractTag(inner, "visualStyle");
+    const copyLength = extractTag(inner, "copyLength");
+    const description = extractTag(inner, "description");
+    if (!hookAngle || !mechanic || !visualStyle || !copyLength || !description) continue;
+    out.push({
+      hookAngle,
+      mechanic,
+      visualStyle: visualStyle === "photo" ? "photo" : "typography",
+      copyLength:
+        copyLength === "long" ? "long" : copyLength === "medium" ? "medium" : "short",
+      description,
+    });
+  }
+  return out;
+}
+
+// ─── Phase 2: Execution pro Konzept ──────────────────────────────────
+
+async function generateOneCreative(
+  brief: CreativeBrief,
+  concept: Concept,
+): Promise<CreativeVariant> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
+
+  const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
+  const photoLine =
+    concept.visualStyle === "photo"
+      ? `Dieses Creative MUSS ein {{UNSPLASH:keywords}}-Platzhalter-Foto nutzen.`
+      : `Dieses Creative ist typografisch — KEIN Foto, kein {{UNSPLASH}}-Platzhalter.`;
+  const lengthRange =
+    concept.copyLength === "long"
+      ? "400-800 Zeichen, AIDA-Story-Struktur, mehrere Absätze"
+      : concept.copyLength === "medium"
+        ? "150-300 Zeichen, 2-3 Sätze, Problem → Lösung → Soft-CTA"
+        : "60-120 Zeichen, ein Satz, Hook + Soft-CTA";
+
+  const userPrompt = `Setze dieses ${brief.campaignKey}-Kampagnen-Konzept als einzelnes Meta-Ad-Creative um.
+
+${campaignContext}
+
+${brief.audience ? `ZIELGRUPPE-FOKUS: ${brief.audience}` : ""}
+${brief.tone ? `TONE: ${brief.tone}` : ""}
+
+KONZEPT:
+- Hook-Angle: ${concept.hookAngle}
+- Mechanic: ${concept.mechanic}
+- Visual-Style: ${concept.visualStyle}
+- Copy-Length für adText: ${concept.copyLength} (${lengthRange})
+- Konzept-Skizze: ${concept.description}
+
+${photoLine}
+
+Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm, keine Alternativen.`;
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 8000,
       system: CREATIVE_SYSTEM_PROMPT,
       messages: [{ role: "user", content: userPrompt }],
     }),
   });
-
   if (!res.ok) {
-    throw new Error(`Claude API ${res.status}: ${await res.text()}`);
+    throw new Error(`Claude Execution ${res.status}: ${await res.text()}`);
   }
-  const data = (await res.json()) as {
-    content: { type: string; text: string }[];
-  };
+  const data = (await res.json()) as { content: { type: string; text: string }[] };
   const text = data.content.find((c) => c.type === "text")?.text ?? "";
-
   const variants = parseVariantBlocks(text);
   if (variants.length === 0) {
     throw new Error(
-      `Claude-Response enthielt keine <variant>-Blöcke: ${text.slice(0, 300)}…`,
+      `Execution für Konzept "${concept.mechanic}" lieferte keinen <variant>: ${text.slice(0, 300)}…`,
     );
   }
-  return variants;
+  return variants[0];
+}
+
+// ─── Orchestrator: brainstorm → parallel execution ───────────────────
+
+async function generateCreativeVariants(
+  brief: CreativeBrief,
+): Promise<CreativeVariant[]> {
+  const concepts = await brainstormConcepts(brief);
+  // Parallele Execution — keiner sieht die anderen Outputs, max. Diversität
+  // im finalen HTML/Copy. Jeder Call ist auf sein Konzept eingelocht.
+  return Promise.all(concepts.map((c) => generateOneCreative(brief, c)));
 }
 
 // Parst Claude's strukturierten XML-Output. Robust gegen umliegendes
