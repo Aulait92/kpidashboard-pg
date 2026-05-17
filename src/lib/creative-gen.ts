@@ -152,6 +152,7 @@ Wähle pro Variante eine Mechanic und führe sie konsequent aus:
 6. 3-FRAGEN-QUIZ — Top-Badge "3 FRAGEN CHECK", Headline, nummerierte Fragen mit Checkmark-Spalte rechts
 7. GOOGLE-AUTOCOMPLETE — Search-Input mit Dropdown-Suggestions die einen Pain-Point verraten
 8. REDDIT-NATIVE — r/Finanzen-Header, Post-Title als Frage, Body wie ein AMA-Antwort-Snippet
+9. PHOTO-BIG-HEADLINE — Foto full-bleed (ganzflächig 1080×1080) mit dunklem Gradient-Overlay unten, eine FETTE Headline als Overlay (Inter-Black oder Playfair-Bold, 90-150pt), KEIN Body, KEIN Highlight-Element. Nur: ANZEIGE-Label, Foto, Headline, CTA-Button. Maximum-Impact-Minimalism. Beispiele: "Dein PKV-Beitrag halbieren." über Foto einer nachdenklichen Frau am Küchentisch — sonst nichts.
 
 ═══ HTML-CONSTRAINTS ═══
 - Exakt 1080×1080 Pixel
@@ -308,6 +309,7 @@ VERFÜGBARE MECHANIKEN (wähle ${brief.count} verschiedene):
 - Zeitungs-Meldung / 3-Fragen-Quiz / Google-Autocomplete / Reddit-Native
 - Brand-Photo-Hero / Person-Quote / Lifestyle-Background / Newspaper-Mockup
 - SMS-Screenshot / WhatsApp-Chat-Mockup / Rechnungs-Closeup / Brief-vom-Versicherer
+- Photo-Big-Headline (full-bleed Foto + EINE fette Headline, nichts sonst — sehr beliebt, bei N≥3 möglichst dabei haben)
 
 OUTPUT (strict, NUR <concept>-Blöcke, kein Drumherum):
 
