@@ -16,6 +16,7 @@ export type GeneratedCreative = {
   body: string;
   cta: string;
   adText: string; // Facebook Primary-Text (über dem Bild im Feed), kann long-form sein
+  fbHeadline: string; // Facebook Headline unter dem Bild (max ~40 Zeichen, snappy)
   imagePrompt: string; // bei HTML-Pipeline: das volle HTML (Debug/Replay)
   imageUrl: string; // public URL nach R2-Upload
 };
@@ -27,6 +28,7 @@ type CreativeVariant = {
   body: string;
   cta: string;
   adText: string;
+  fbHeadline: string;
   html: string;
 };
 
@@ -63,6 +65,19 @@ NIE NUR: "−38%" + "Jetzt prüfen" → könnte alles bedeuten. IMMER: "−38%" 
 
 Im AdText (Facebook-Primary-Text) muss "PKV" oder "private Krankenversicherung"
 ebenfalls in den ersten 80 Zeichen vorkommen — sonst scrollt der User weiter.
+
+═══ FB-HEADLINE (Facebook Headline unter dem Bild, NICHT im Creative) ═══
+Zusätzlich zum visuellen Hero im Creative-Bild und zum adText (Primary-Text
+darüber) braucht jede Variante eine Facebook-Headline für das Feld direkt
+unter dem Bild — sichtbar im Feed neben dem CTA-Button.
+
+- Max 40 Zeichen (Facebook truncated länger)
+- Snappy, konkret, ein Versprechen oder eine Frage
+- KEINE Wiederholung der visuellen Headline aus dem Bild — sie ergänzt
+- Beispiele:
+  - Bild-Headline: "STOPP." → fb_headline: "PKV-Beitrag halbieren — in 2 Min."
+  - Bild-Headline: "−38%" → fb_headline: "Dein PKV-Beitrag, neu gerechnet"
+  - Bild-Headline: "Anbieter bleibt. Tarif wechselt." → fb_headline: "Bis 50% PKV-Beitrag sparen"
 
 ═══ ADTEXT (Facebook Primary-Text, NICHT im Creative) ═══
 Zusätzlich zum visuellen Creative braucht jede Variante einen Post-Text,
@@ -229,11 +244,12 @@ Antworte mit einer Sequenz von <variant>…</variant>-Blöcken, EIN Block pro
 Creative. KEIN Markdown, KEIN JSON, KEIN Fließtext drumherum. Format exakt:
 
 <variant>
-<headline>Visuelle Hero-Zeile (max 6 Wörter)</headline>
-<body>Sub-Headline (max 90 Zeichen)</body>
-<cta>CTA-Button-Text (max 18 Zeichen)</cta>
+<headline>Visuelle Hero-Zeile im Creative-Bild (max 6 Wörter)</headline>
+<body>Sub-Headline im Creative-Bild (max 90 Zeichen)</body>
+<cta>CTA-Button-Text im Creative-Bild (max 18 Zeichen)</cta>
+<fb_headline>Facebook-Headline unter dem Bild (max 40 Zeichen, snappy)</fb_headline>
 <ad_text>
-Facebook-Primary-Text (short / medium / long — variiere über die Varianten).
+Facebook-Primary-Text über dem Bild (short / medium / long — variiere über die Varianten).
 Fließtext mit Absätzen via doppelter Newline. KEIN Markdown, KEINE Listen.
 </ad_text>
 <creative_html>
@@ -593,9 +609,10 @@ function parseVariantBlocks(text: string): CreativeVariant[] {
     const body = extractTag(inner, "body");
     const cta = extractTag(inner, "cta");
     const adText = extractTag(inner, "ad_text") ?? "";
+    const fbHeadline = extractTag(inner, "fb_headline") ?? "";
     const html = extractTag(inner, "creative_html");
     if (!headline || !body || !cta || !html) continue;
-    blocks.push({ headline, body, cta, adText, html });
+    blocks.push({ headline, body, cta, adText, fbHeadline, html });
   }
   return blocks;
 }
@@ -636,6 +653,7 @@ export async function generateCreatives(
         body: v.body,
         cta: v.cta,
         adText: v.adText,
+        fbHeadline: v.fbHeadline,
         imagePrompt: v.html,
         imageUrl,
       } satisfies GeneratedCreative;
@@ -643,6 +661,86 @@ export async function generateCreatives(
   );
 
   return results;
+}
+
+// ─── Einzelfeld-Regeneration (nur adText oder nur fbHeadline) ────────
+// Werden vom Telegram-Bot getriggert wenn der User das Creative behalten,
+// aber Text oder Headline anders haben will. Kein neuer Bild-Render nötig.
+
+type RegenContext = {
+  campaignKey: string;
+  audience?: string;
+  tone?: string;
+  headline: string;     // visuelle Headline aus dem Creative-Bild (Kontext)
+  body: string;         // visuelle Sub-Headline (Kontext)
+  cta: string;          // Button-Text (Kontext)
+  currentAdText?: string;
+  currentFbHeadline?: string;
+};
+
+async function callClaudeSingleText(opts: {
+  system: string;
+  user: string;
+  maxTokens: number;
+}): Promise<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: opts.maxTokens,
+      system: opts.system,
+      messages: [{ role: "user", content: opts.user }],
+    }),
+  });
+  if (!res.ok) throw new Error(`Claude ${res.status}: ${await res.text()}`);
+  const data = (await res.json()) as { content: { type: string; text: string }[] };
+  return data.content.find((c) => c.type === "text")?.text ?? "";
+}
+
+export async function regenerateAdText(ctx: RegenContext): Promise<string> {
+  const campaignContext = CAMPAIGN_CONTEXT[ctx.campaignKey] ?? "";
+  const text = await callClaudeSingleText({
+    system: `Du schreibst Facebook-Primary-Texte für deutsche PKV-Lead-Gen-Ads. Native-Feeling, Du-Form, keine Marketing-Klischees, erste 80 Zeichen müssen hooken und PKV-Bezug klarmachen. Antworte NUR mit dem reinen Text, KEINE Anführungszeichen, KEIN Drumherum.`,
+    user: `${campaignContext}
+
+${ctx.audience ? `ZIELGRUPPE: ${ctx.audience}` : ""}
+${ctx.tone ? `TONE: ${ctx.tone}` : ""}
+
+Das Creative-Bild zeigt:
+- Headline: "${ctx.headline}"
+- Sub-Headline: "${ctx.body}"
+- CTA: "${ctx.cta}"
+${ctx.currentAdText ? `\nAktueller Facebook-Text (mir gefällt's nicht, generiere etwas KOMPLETT anderes — anderer Hook-Angle, andere Länge):\n"""\n${ctx.currentAdText}\n"""` : ""}
+
+Schreibe einen NEUEN Facebook-Primary-Text. Wähle bewusst eine andere Länge/Stil als ${ctx.currentAdText ? "der aktuelle" : "default"}: zwischen 60 (Snappy-Hook) und 800 Zeichen (Long-Form-Story).`,
+    maxTokens: 1500,
+  });
+  return text.trim().replace(/^["„'`]+|["„'`]+$/g, "");
+}
+
+export async function regenerateFbHeadline(ctx: RegenContext): Promise<string> {
+  const campaignContext = CAMPAIGN_CONTEXT[ctx.campaignKey] ?? "";
+  const text = await callClaudeSingleText({
+    system: `Du schreibst Facebook-Ad-Headlines (das Feld unter dem Bild im Feed, neben dem CTA-Button). Max 40 Zeichen. Snappy, konkret, ergänzt die visuelle Hero-Headline im Bild (wiederholt sie NICHT). Antworte NUR mit der Headline, KEINE Anführungszeichen, KEIN Drumherum.`,
+    user: `${campaignContext}
+
+Das Creative-Bild zeigt:
+- Visuelle Hero-Headline: "${ctx.headline}"
+- Sub-Headline: "${ctx.body}"
+- CTA: "${ctx.cta}"
+${ctx.currentFbHeadline ? `\nAktuelle Facebook-Headline (mir gefällt's nicht, generiere etwas KOMPLETT anderes):\n"${ctx.currentFbHeadline}"` : ""}
+
+Schreibe eine NEUE Facebook-Headline (max 40 Zeichen). Ergänzt die visuelle Headline, wiederholt sie nicht.`,
+    maxTokens: 200,
+  });
+  return text.trim().replace(/^["„'`]+|["„'`]+$/g, "").slice(0, 60);
 }
 
 // ─── Intent Parsing aus Telegram-Text ────────────────────────────────

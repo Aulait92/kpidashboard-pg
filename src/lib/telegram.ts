@@ -60,20 +60,23 @@ export async function sendTelegramText(opts: {
   return { messageId: result.message_id };
 }
 
-// Sendet ein Bild + Caption + bis zu 3 Inline-Buttons.
-// callback_data ist auf 64 Bytes begrenzt — reicht locker für "approve:<cuid>".
+// Sendet ein Bild + Caption + Inline-Buttons. `buttons` ist ein Array von
+// Rows; jede Row ist ein Array von Buttons (1-3 Buttons pro Row sinnvoll
+// auf Telegram-Display). callback_data max 64 Bytes.
 export async function sendTelegramPhotoWithButtons(opts: {
   chatId: string | number;
   imageUrl: string;
   caption: string;
-  buttons: { id: string; title: string }[];
+  buttons: { id: string; title: string }[][];
 }): Promise<{ messageId: number }> {
-  if (opts.buttons.length === 0 || opts.buttons.length > 3) {
-    throw new Error("Telegram Inline-Buttons: 1-3 erlaubt.");
+  if (opts.buttons.length === 0) {
+    throw new Error("Telegram Inline-Buttons: mindestens eine Row.");
   }
-  for (const b of opts.buttons) {
-    if (new TextEncoder().encode(b.id).length > 64) {
-      throw new Error(`Button callback_data zu lang (>64 Bytes): ${b.id}`);
+  for (const row of opts.buttons) {
+    for (const b of row) {
+      if (new TextEncoder().encode(b.id).length > 64) {
+        throw new Error(`Button callback_data zu lang (>64 Bytes): ${b.id}`);
+      }
     }
   }
 
@@ -83,9 +86,9 @@ export async function sendTelegramPhotoWithButtons(opts: {
     caption: opts.caption.slice(0, 1024),
     parse_mode: "HTML",
     reply_markup: {
-      inline_keyboard: [
-        opts.buttons.map((b) => ({ text: b.title, callback_data: b.id })),
-      ],
+      inline_keyboard: opts.buttons.map((row) =>
+        row.map((b) => ({ text: b.title, callback_data: b.id })),
+      ),
     },
   })) as { message_id: number };
   return { messageId: result.message_id };

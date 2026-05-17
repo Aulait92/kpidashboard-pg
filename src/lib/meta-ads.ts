@@ -141,8 +141,9 @@ export async function uploadAdImageFromUrl(
 export async function createAdCreative(opts: {
   name: string;
   imageHash: string;
-  headline: string;
-  body: string; // visuelle Sub-Headline IM Creative (90 Zeichen)
+  headline: string; // visuelle Hero-Headline (Kontext für Logging — landet nicht in Meta-Feldern)
+  fbHeadline: string; // Facebook Headline unter dem Bild (name-Feld, max ~40 Zeichen)
+  body: string; // visuelle Sub-Headline IM Creative — bei Meta description-Feld
   adText: string; // Facebook Primary-Text ÜBER dem Bild im Feed (kann long-form)
   cta: string; // freier Text, wird in Meta nur als CTA-Button-Type übersetzt
   linkUrl?: string;
@@ -165,8 +166,9 @@ export async function createAdCreative(opts: {
       // message = Primary-Text über dem Bild im Facebook-Feed.
       // Fallback auf body, falls adText leer (alte Daten ohne adText).
       message: opts.adText || opts.body,
-      // name = Headline unter dem Bild.
-      name: opts.headline,
+      // name = Facebook Headline unter dem Bild. Fallback auf visuelle
+      // Hero-Headline falls fbHeadline leer (alte Daten ohne fbHeadline).
+      name: opts.fbHeadline || opts.headline,
       // description = optionaler kleiner Untertitel unter der Headline.
       description: opts.body,
       call_to_action: {
@@ -215,6 +217,7 @@ export async function createAd(opts: {
 export async function publishVariantToCampaign(opts: {
   campaignKey: string; // Keyword für Campaign-Match ("Wechsel", "Neugeschäft")
   headline: string;
+  fbHeadline: string;
   body: string;
   adText: string; // Facebook Primary-Text (long-form möglich)
   cta: string;
@@ -250,6 +253,7 @@ export async function publishVariantToCampaign(opts: {
     name: creativeName,
     imageHash: hash,
     headline: opts.headline,
+    fbHeadline: opts.fbHeadline,
     body: opts.body,
     adText: opts.adText,
     cta: opts.cta,
