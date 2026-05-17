@@ -1,5 +1,6 @@
 import { uploadImageToR2 } from "@/lib/r2";
 import { renderHtmlToImage } from "@/lib/html-to-png";
+import { resolveUnsplashPlaceholders } from "@/lib/unsplash";
 
 // Brief der Creative-Generation. Claude designt komplette HTML-Creatives,
 // Playwright rendert zu PNG, Upload zu R2.
@@ -75,14 +76,36 @@ Wähle pro Variante eine Mechanic und führe sie konsequent aus:
 - Exakt 1080×1080 Pixel
 - Eine einzige <html>-Datei, alle CSS inline im <style>
 - Google Fonts via <link rel="stylesheet"> erlaubt (Inter, Playfair Display, Crimson Pro, IBM Plex Sans, Caveat für Handschrift)
-- Keine externen Bilder, keine JS, kein <script>
-- Wenn du ein Personenfoto willst: stattdessen einen abstrakten Block mit linear-gradient + "ANZEIGE"-Badge nutzen (Stockfotos haben wir nicht)
+- Keine JS, kein <script>
 - SVG inline für Icons/Pfeile/Checkmarks ist explizit erwünscht
 - Border-radius, box-shadow, backdrop-filter erlaubt
 - Body: { margin:0; padding:0; width:1080px; height:1080px; overflow:hidden; font-family:... }
 - Saubere Hierarchie: Hero-Element nimmt 60-70% visuellen Raum, drumherum Whitespace
 - Top-Right: kleines "ANZEIGE"-Label in grau (10px, uppercase, letter-spacing)
 - Bottom: CTA-Button (volle Breite oder rechts), klar erkennbar mit Pfeil →
+
+═══ BILDMATERIAL (Unsplash) ═══
+Für Creatives mit Foto-Anteil (Brand-Photo, Person-Quote, Newspaper-Mockup,
+Lifestyle-Hero): nutze den Platzhalter
+
+  {{UNSPLASH:keywords}}
+
+als img-src oder background-image-URL. Server löst das vor dem Rendern gegen
+ein echtes Unsplash-Foto auf. Keywords präzise + englisch + 2-4 Begriffe:
+  background-image: url({{UNSPLASH:german business man 40s office smiling}});
+  <img src="{{UNSPLASH:blonde woman kitchen smartphone}}">
+
+EMPFOHLEN photo-getragene Mechaniken (mindestens 1 von 3-5 Varianten sollte
+Foto nutzen):
+- Brand-Photo Hero: Großes Foto links/rechts, Headline + Stat-Overlay daneben
+- Person-Quote: Foto einer Person + Quote im Vordergrund mit Anführungszeichen
+- Lifestyle-Background: Foto als ganzflächiger Background, dunkler Overlay
+  (rgba(0,0,0,0.4-0.7)), weiße Headline darüber
+- Newspaper-Mockup: Foto-Block neben Serif-Headline wie ein Zeitungsartikel
+
+VERBOTEN: generische "Business-Handshake-Stock-Photos", Smiling-Stockfoto-
+Models in Anzug. Stattdessen: konkrete Alltags-Situationen (Küche, Café,
+Schreibtisch, Spaziergang) mit normalen Menschen 30-55 Jahre.
 
 ═══ FARB-PALETTEN (eine pro Variante wählen) ═══
 - Cream/Black: Background #FAF6F0, Text #0E0E0E, Accent-Yellow #FFD84D
@@ -109,6 +132,58 @@ Creative. KEIN Markdown, KEIN JSON, KEIN Fließtext drumherum. Format exakt:
 
 Wichtig: NIEMALS </creative_html> innerhalb des HTML-Contents schreiben — der äußere Tag ist die einzige Closing-Marke.`;
 
+// Kampagnen-spezifische Briefings. Werden je nach campaignKey in den
+// User-Prompt eingehängt, damit Claude die Mechanik der jeweiligen Kampagne
+// kennt — nicht generisch "PKV" rät.
+const CAMPAIGN_CONTEXT: Record<string, string> = {
+  Wechsel: `═══ KAMPAGNEN-KONTEXT: WECHSEL ═══
+ZIELGRUPPE:
+- Bereits PKV-Versicherte mit monatlichem Beitrag ab ~700€
+- Beiträge steigen jährlich, oft seit Jahren, Leistungen werden nicht besser
+- Wissen meist NICHT, dass interner Tarifwechsel überhaupt möglich ist
+
+PAIN-POINTS:
+- "Mein PKV-Beitrag ist von 600€ auf 850€ gestiegen — und steigt weiter"
+- "Ich bekomme die gleichen Leistungen wie vor 5 Jahren, zahle aber 40% mehr"
+- "Eine Kündigung verliert meine Altersrückstellungen — also bleibe ich"
+
+KEY-INSIGHT (das ist der eigentliche Hook):
+Interner Tarifwechsel beim GLEICHEN Anbieter ist gesetzlich möglich (§204 VVG).
+KEINE neue Gesundheitsprüfung, Altersrückstellungen bleiben erhalten, alte
+Konditionen müssen vom Versicherer angeboten werden.
+
+PROMISE (mit echten Zahlen arbeiten):
+- Bis zu 50% Beitrags-Ersparnis
+- Beispiel-Größenordnungen: 824€ → 412€, 950€ → 520€, 720€ → 380€
+- Spar-Hochrechnung: 400€/Monat × 12 = 4.800€/Jahr × 20 Jahre = 96.000€
+
+USPs (das macht das Angebot stark):
+- Versicherung bleibt — kein neuer Vertrag, keine Gesundheitsprüfung
+- Altersrückstellungen bleiben vollständig erhalten
+- Funktioniert bei JEDEM PKV-Anbieter
+- Unverbindliche Prüfung, kein Telefonzwang
+
+VERMEIDE bei Wechsel:
+- "Privat versichern" / "PKV-Vergleich" → das ist Neugeschäft, nicht Wechsel
+- "Kündigung" / "wechseln Sie den Anbieter" → falsches Mental Model
+- Allgemeine Spar-Versprechen ohne konkrete Zahl
+
+PASSENDE HOOKS (Beispiele zum Inspirieren, NICHT 1:1 kopieren):
+- "Dein PKV-Beitrag: 824€/Monat. Geht auch 412€."
+- "PKV über 700€? Dann zahlst du wahrscheinlich zu viel."
+- "Anbieter bleibt. Tarif wechselt. −50%."
+- "§204 VVG. Das Wort, das deinen PKV-Beitrag halbiert."
+- "Kein Anbieter-Wechsel. Keine Gesundheitsprüfung. Bis −50%."
+
+PASSENDE FOTO-MOTIVE (für Brand-Photo / Person-Quote / Lifestyle-Mechaniken):
+- {{UNSPLASH:german woman 45 kitchen looking concerned}}
+- {{UNSPLASH:man 50 reading insurance letter at home}}
+- {{UNSPLASH:older couple looking at documents}}
+- {{UNSPLASH:professional woman 40 office laptop relieved}}`,
+
+  Neugeschäft: ``, // Brief noch nicht definiert — Claude nutzt nur die generischen Direct-Response-Regeln
+};
+
 async function generateCreativeVariants(
   brief: CreativeBrief,
 ): Promise<CreativeVariant[]> {
@@ -117,12 +192,16 @@ async function generateCreativeVariants(
     throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
   }
 
+  const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
+
   const userPrompt = `Generiere ${brief.count} Creative-Varianten für eine Meta-Ad zur ${brief.campaignKey}-Kampagne.
 
-${brief.audience ? `ZIELGRUPPE-FOKUS: ${brief.audience}` : ""}
+${campaignContext}
+
+${brief.audience ? `ZIELGRUPPE-FOKUS (zusätzlich): ${brief.audience}` : ""}
 ${brief.tone ? `TONE: ${brief.tone}` : ""}
 
-Jede Variante MUSS eine andere Direct-Response-Mechanic nutzen und einen anderen Hook-Angle (Pain / Curiosity / Promise / Story). Antworte mit <variant>-Blöcken im definierten Format.`;
+Jede Variante MUSS eine andere Direct-Response-Mechanic nutzen und einen anderen Hook-Angle (Pain / Curiosity / Promise / Story). Mindestens 1 von ${brief.count} Varianten sollte ein Foto via {{UNSPLASH:…}} nutzen (Brand-Photo / Person-Quote / Lifestyle-Background), der Rest typografisch. Antworte mit <variant>-Blöcken im definierten Format.`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -191,10 +270,12 @@ export async function generateCreatives(
 ): Promise<GeneratedCreative[]> {
   const variants = await generateCreativeVariants(brief);
 
-  // Parallel rendern + uploaden.
+  // Parallel rendern + uploaden. Pro Variante: erst Unsplash-Platzhalter
+  // gegen echte Foto-URLs auflösen, dann Playwright rendern.
   const results = await Promise.all(
     variants.map(async (v, i) => {
-      const buffer = await renderHtmlToImage(v.html, {
+      const resolvedHtml = await resolveUnsplashPlaceholders(v.html);
+      const buffer = await renderHtmlToImage(resolvedHtml, {
         width: 1080,
         height: 1080,
         format: "jpeg",
