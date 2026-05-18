@@ -59,7 +59,7 @@ GRÖßEN-PFLICHT für den PKV-Anchor:
 - Das Wort "PKV" (Großbuchstaben) oder "Krankenversicherung" MUSS in
   einem visuell prominenten Element stehen: entweder in der Headline
   (>=60pt) oder in einer eigenen Anchor-Zeile (>=40pt), gut lesbar.
-- KEIN PKV-Anchor im Body-Text <30pt — der ist auf dem Smartphone-Feed
+- KEIN PKV-Anchor im Body-Text <40pt — der ist auf dem Smartphone-Feed
   unleserlich.
 - "PKV" IMMER in Großbuchstaben schreiben (nicht "Pkv" oder "pkv").
 - Bei Big-Number-Creatives: direkt unter/über der Zahl die Anchor-Zeile,
@@ -140,6 +140,27 @@ visuell (Zahl, kurzes Statement, einzelne Frage).
 - Typografie macht den Impact, nicht Wortmenge. Eine 200pt-Zahl
   schlägt einen kompletten Absatz.
 
+═══ MIN-FONT-SIZES (KRITISCH — wir hatten zu oft unleserlich kleine Texte) ═══
+Creatives werden auf Smartphone-Feeds gescrollt. Text der dort nicht sofort
+lesbar ist, ist verschwendete Werbefläche. Halte dich strikt an diese
+ABSOLUTEN UNTERGRENZEN — egal wie viel Text du unterbringen willst:
+
+- Headline / Hero-Text:        MIN 70pt, Default 100-180pt
+- Sub-Headline / Body-Zeile:   MIN 40pt, Default 44-56pt
+- Bullet-/Listen-Items:        MIN 38pt, Default 42-50pt
+- Caption-Box (UGC):           MIN 56pt, Default 60-72pt
+- Quote / Zitat-Text:          MIN 44pt
+- Mockup-Inhalte (Konto-Card,
+  Newspaper-Body, Brief-Text): MIN 32pt — und nur wenn das Mockup
+                               das semantisch verlangt. Sonst ≥40pt.
+- CTA-Button-Text:             MIN 32pt
+- "ANZEIGE"-Label:             ~12-16px (das ist das EINZIGE Element
+                               das absichtlich klein sein darf)
+
+Wenn dein Text nicht in diese Größen passt, ist der Text ZU LANG —
+KÜRZEN, nicht verkleinern. Lieber 4 Wörter in 120pt als 12 Wörter in 40pt.
+NIE die Schrift schrumpfen, um mehr Text reinzuquetschen.
+
 ═══ NO-OVERFLOW (KRITISCH — sonst wird Text abgeschnitten) ═══
 Das Canvas ist HART auf 1080×1080 begrenzt. Body hat overflow:hidden,
 alles was rausläuft wird gnadenlos geclippt. Plane Schriftgrößen mit
@@ -148,26 +169,30 @@ diesem Reality-Check:
 GROBE FONT-SIZE-RICHTLINIEN für die Headline (bei ~80px Edge-Padding,
 nutzbare Breite ~920px):
 - 1-2 Wörter (z.B. "STOPP." / "−38%"): 240-360pt — fast volle Breite
-- 3-4 Wörter (z.B. "Dein PKV-Beitrag halbieren"): 90-130pt
-- 5-6 Wörter (z.B. "PKV über 700€? Wahrscheinlich zu viel."): 60-85pt
+- 3-4 Wörter (z.B. "Dein PKV-Beitrag halbieren"): 110-150pt
+- 5-6 Wörter (z.B. "PKV über 700€? Wahrscheinlich zu viel."): 75-95pt
+- 7+ Wörter: KÜRZEN. Nicht unter 70pt gehen.
 
-Bei Body-Text (Sub-Headline) max ~36pt, line-height 1.25, max 3 Zeilen.
+Bei Body-Text (Sub-Headline): 44-56pt, line-height 1.25, max 2-3 Zeilen.
+NIE unter 40pt — sonst auf dem Phone unleserlich.
 
 CHECKLISTE vor finalem HTML:
-1. Headline-Text mental durchzählen (Zeichen × ~0.5-0.6 × font-size = ungefähre Pixel-Breite). Passt das in 920px ohne Umbruch?
-2. Bei mehrzeiligen Headlines: line-height × Zeilen-Anzahl + Body-Höhe + CTA-Höhe ≤ 920px (vertikal)?
-3. Fonts mit dünnen Glyphen (Inter-Light) brauchen weniger Breite als bold/black. Eher konservativ rechnen.
-4. Bei Foto-Background mit Text-Overlay: Text-Container braucht explizite max-width (z.B. 80%) damit's bei breiten Headlines nicht über den Rand schießt.
+1. JEDE font-size im HTML einzeln durchgehen: Headline ≥70pt, Body ≥40pt, Bullets ≥38pt, UGC-Caption ≥56pt, CTA ≥32pt, Mockup-Inhalte ≥32pt. Nur "ANZEIGE"-Label darf 12-16px sein. Findest du IRGENDEINEN Text unter diesen Schwellen (außer Label) → KÜRZEN und vergrößern, NICHT submitten.
+2. Headline-Text mental durchzählen (Zeichen × ~0.5-0.6 × font-size = ungefähre Pixel-Breite). Passt das in 920px ohne Umbruch?
+3. Bei mehrzeiligen Headlines: line-height × Zeilen-Anzahl + Body-Höhe + CTA-Höhe ≤ 920px (vertikal)?
+4. Fonts mit dünnen Glyphen (Inter-Light) brauchen weniger Breite als bold/black. Eher konservativ rechnen.
+5. Bei Foto-Background mit Text-Overlay: Text-Container braucht explizite max-width (z.B. 80%) damit's bei breiten Headlines nicht über den Rand schießt.
 
 SAFE CSS-PATTERN für Headlines die du nicht 100% einschätzen kannst:
 \`\`\`css
 .hero {
-  font-size: clamp(60px, 12vw, 180px);
+  font-size: clamp(80px, 14vw, 200px);
   line-height: 1.05;
   word-wrap: break-word;
   hyphens: auto;
 }
 \`\`\`
+(MIN-Wert in clamp() darf NIE unter 70px für Headlines, NIE unter 40px für Body.)
 clamp() limitiert maximale Größe automatisch — sicherer als feste px-Werte.
 
 NIE word-spacing, letter-spacing >0.05em bei großen Headlines — frisst Breite.
@@ -187,7 +212,7 @@ nicht Default.
   oder mindestens 50% einer Achse. Kein kleines 400×400-Foto in der
   Mitte mit Whitespace drumherum.
 - Bei Bullet-Mechaniken: Items füllen die volle Liste-Spalte, große
-  Schriftgrößen (30-50pt), keine winzigen Items mit viel Luft dazwischen.
+  Schriftgrößen (42-56pt, min 38pt), keine winzigen Items mit viel Luft dazwischen.
 - "Anzeige"-Label und CTA-Button DARF in den Eckpolstern wohnen — alles
   dazwischen muss Inhalt sein.
 - Goldene Regel: wenn beim Anschauen eine Achtelfläche komplett leer
@@ -217,7 +242,7 @@ einziges grafisches Element ist die signature **CAPTION-BOX** unten.
 CAPTION-BOX (das visuelle Wiedererkennungsmerkmal aller UGC-Creatives):
 - Schwarzer rounded-rectangle, position: absolute, bottom: ~30-60px, links/rechts ~30-50px Abstand
 - Padding ~24-32px horizontal, ~20-26px vertikal, border-radius: 14-20px
-- Weißer Text in Inter / -apple-system, font-weight: 900, font-size: 48-64pt (variabel je Textlänge)
+- Weißer Text in Inter / -apple-system, font-weight: 900, font-size: 60-72pt (MIN 56pt, variabel je Textlänge — lieber kürzeren Text als kleinere Schrift)
 - line-height: 1.15, letter-spacing: -0.01em
 - Text MAX 2-3 Zeilen, anti-aliased white auf solid black
 - Beispiel-Texte aus echten UGC-Ads:
@@ -685,7 +710,7 @@ async function generateOneCreative(
    position: absolute; bottom: 30-60px; left: 30-50px; right: 30-50px;
    background: #000; color: #fff;
    font-family: 'Inter', -apple-system, sans-serif; font-weight: 900;
-   font-size: 44-60px; line-height: 1.15;
+   font-size: 60-72px (MIN 56px); line-height: 1.15;
    padding: 24-30px 32-38px; border-radius: 14-20px;
    text-align: left;
    Inhalt: 1-3 Zeilen, MUSS "PKV" oder "Krankenversicherung" enthalten.
