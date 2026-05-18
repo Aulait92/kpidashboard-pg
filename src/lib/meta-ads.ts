@@ -127,14 +127,37 @@ export async function getFirstAdSetForCampaign(
 export async function uploadAdImageFromUrl(
   imageUrl: string,
 ): Promise<{ hash: string }> {
-  // Meta /adimages akzeptiert ein public URL via "url"-Parameter.
-  const resp = (await metaPost(`${getAdAccount()}/adimages`, {
-    url: imageUrl,
-  })) as { images?: Record<string, { hash: string }> };
+  // Bytes-Upload statt URL-Param: wir ziehen das Bild selber von R2 und
+  // POSTen die Bytes als multipart/form-data an Meta. Der URL-Param-Pfad
+  // (POST /adimages mit url=...) braucht eine separate App-Capability, die
+  // die App nicht hat — Bytes-Upload kommt mit normalem ads_management aus.
+  const imgRes = await fetch(imageUrl);
+  if (!imgRes.ok) {
+    throw new Error(
+      `Bild von R2 konnte nicht geladen werden: ${imgRes.status} ${imageUrl}`,
+    );
+  }
+  const buf = await imgRes.arrayBuffer();
+  const contentType = imgRes.headers.get("content-type") ?? "image/jpeg";
+  const filename = imageUrl.split("/").pop() ?? "creative.jpg";
+
+  const form = new FormData();
+  form.set("access_token", getToken());
+  form.set("source", new Blob([buf], { type: contentType }), filename);
+
+  const url = `https://graph.facebook.com/${GRAPH_VERSION}/${getAdAccount()}/adimages`;
+  const res = await fetch(url, { method: "POST", body: form });
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`Meta POST /adimages ${res.status}: ${text}`);
+  }
+  const resp = JSON.parse(text) as {
+    images?: Record<string, { hash: string }>;
+  };
   const first = resp.images ? Object.values(resp.images)[0] : null;
   if (!first?.hash) {
     throw new Error(
-      `Meta /adimages keine Hash zurückgegeben: ${JSON.stringify(resp).slice(0, 200)}`,
+      `Meta /adimages keine Hash zurückgegeben: ${text.slice(0, 200)}`,
     );
   }
   return { hash: first.hash };
