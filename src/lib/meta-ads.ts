@@ -3,7 +3,8 @@
 //
 // Voraussetzungen (Env):
 //   META_ACCESS_TOKEN      — System-User-Token mit ads_management
-//   META_AD_ACCOUNT_ID     — Format "act_1234567890"
+//   META_AD_ACCOUNT_IDS    — Format "act_1234567890" (oder kommagetrennt mehrere,
+//                            erste wird genutzt). Alias: META_AD_ACCOUNT_ID.
 //   META_DEFAULT_PAGE_ID   — Facebook-Page der Werbeanzeigen
 //   META_DEFAULT_LINK_URL  — Landing-Page-URL (z.B. https://start.pkv-tarife.com/pkv-angebote)
 //
@@ -19,10 +20,15 @@ function getToken(): string {
 }
 
 function getAdAccount(): string {
-  const id = process.env.META_AD_ACCOUNT_ID;
-  if (!id) throw new Error("META_AD_ACCOUNT_ID nicht gesetzt.");
+  // Akzeptiert META_AD_ACCOUNT_IDS (Plural, kommagetrennt erlaubt) oder
+  // den Legacy-Namen META_AD_ACCOUNT_ID. Bei mehreren IDs wird die erste
+  // benutzt — Multi-Account-Support ist noch nicht implementiert.
+  const raw = process.env.META_AD_ACCOUNT_IDS ?? process.env.META_AD_ACCOUNT_ID;
+  if (!raw) throw new Error("META_AD_ACCOUNT_IDS nicht gesetzt.");
+  const id = raw.split(",")[0].trim();
+  if (!id) throw new Error("META_AD_ACCOUNT_IDS ist leer.");
   if (!id.startsWith("act_")) {
-    throw new Error(`META_AD_ACCOUNT_ID muss mit "act_" anfangen: ${id}`);
+    throw new Error(`META_AD_ACCOUNT_IDS muss mit "act_" anfangen: ${id}`);
   }
   return id;
 }
