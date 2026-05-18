@@ -25,12 +25,10 @@ function getAdAccount(): string {
   // benutzt — Multi-Account-Support ist noch nicht implementiert.
   const raw = process.env.META_AD_ACCOUNT_IDS ?? process.env.META_AD_ACCOUNT_ID;
   if (!raw) throw new Error("META_AD_ACCOUNT_IDS nicht gesetzt.");
-  const id = raw.split(",")[0].trim();
-  if (!id) throw new Error("META_AD_ACCOUNT_IDS ist leer.");
-  if (!id.startsWith("act_")) {
-    throw new Error(`META_AD_ACCOUNT_IDS muss mit "act_" anfangen: ${id}`);
-  }
-  return id;
+  const first = raw.split(",")[0].trim();
+  if (!first) throw new Error("META_AD_ACCOUNT_IDS ist leer.");
+  // "act_"-Prefix ist Meta-Pflicht — wenn vergessen, automatisch ergänzen.
+  return first.startsWith("act_") ? first : `act_${first}`;
 }
 
 async function metaGet(
