@@ -5,10 +5,11 @@
 //   META_ACCESS_TOKEN      — System-User-Token mit ads_management
 //   META_AD_ACCOUNT_IDS    — Format "act_1234567890" (oder kommagetrennt mehrere,
 //                            erste wird genutzt). Alias: META_AD_ACCOUNT_ID.
+//
+// Optional (Fallback wenn das AdSet noch keine Ad hat, von der wir Page+URL
+// erben können — sobald eine Ad existiert, wird die geerbt):
 //   META_DEFAULT_PAGE_ID   — Facebook-Page der Werbeanzeigen
 //   META_DEFAULT_LINK_URL  — Landing-Page-URL (z.B. https://start.pkv-tarife.com/pkv-angebote)
-//
-// Optional:
 //   META_DEFAULT_PIXEL_ID  — Conversion-Pixel für Tracking
 
 const GRAPH_VERSION = "v22.0";
@@ -120,6 +121,44 @@ export async function getFirstAdSetForCampaign(
       a.effective_status === "ACTIVE" || a.effective_status === "PAUSED",
   );
   return active ? { id: active.id, name: active.name } : null;
+}
+
+// Liest Page-ID + Link-URL aus einer bestehenden Ad im AdSet. So erbt jede
+// neu erzeugte Ad automatisch die korrekte Landing-Page der Kampagne
+// (Wechsel vs. Neugeschäft haben unterschiedliche URLs) ohne dass wir das
+// hier per Env-Var hart kodieren müssen.
+export async function getCreativeTemplateFromAdSet(
+  adSetId: string,
+): Promise<{ pageId: string; linkUrl: string } | null> {
+  const ads = (await metaGet(`${adSetId}/ads`, {
+    fields: "creative{object_story_spec,asset_feed_spec}",
+    limit: "10",
+  })) as {
+    data: Array<{
+      creative?: {
+        object_story_spec?: {
+          page_id?: string;
+          link_data?: { link?: string };
+          video_data?: { call_to_action?: { value?: { link?: string } } };
+        };
+        asset_feed_spec?: {
+          link_urls?: Array<{ website_url?: string }>;
+          // page_id steckt bei Dynamic Creative oft im Story-Spec, nicht im AFS
+        };
+      };
+    }>;
+  };
+
+  for (const ad of ads.data) {
+    const oss = ad.creative?.object_story_spec;
+    const pageId = oss?.page_id;
+    const link =
+      oss?.link_data?.link ??
+      oss?.video_data?.call_to_action?.value?.link ??
+      ad.creative?.asset_feed_spec?.link_urls?.[0]?.website_url;
+    if (pageId && link) return { pageId, linkUrl: link };
+  }
+  return null;
 }
 
 // ─── Image Upload zu Ad Account ──────────────────────────────────────
@@ -270,10 +309,15 @@ export async function publishVariantToCampaign(opts: {
     );
   }
 
-  // 3. Bild zu Meta hochladen (Hash bekommen)
+  // 3. Page + Landing-URL aus bestehender Ad im AdSet erben — Wechsel-
+  // und Neugeschäft-Kampagnen haben unterschiedliche URLs, also nicht
+  // hart per Env-Var setzen. Fallback: Env-Defaults in createAdCreative.
+  const template = await getCreativeTemplateFromAdSet(adSet.id);
+
+  // 4. Bild zu Meta hochladen (Hash bekommen)
   const { hash } = await uploadAdImageFromUrl(opts.imageUrl);
 
-  // 4. Creative anlegen
+  // 5. Creative anlegen
   const timestamp = new Date().toISOString().slice(0, 16).replace("T", " ");
   const creativeName = `Bot-${opts.campaignKey}-${timestamp}`;
   const { id: creativeId } = await createAdCreative({
@@ -284,9 +328,11 @@ export async function publishVariantToCampaign(opts: {
     body: opts.body,
     adText: opts.adText,
     cta: opts.cta,
+    pageId: template?.pageId,
+    linkUrl: template?.linkUrl,
   });
 
-  // 5. Ad anlegen
+  // 6. Ad anlegen
   const { id: adId } = await createAd({
     name: creativeName,
     adSetId: adSet.id,
