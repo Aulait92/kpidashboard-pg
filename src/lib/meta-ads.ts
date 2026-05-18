@@ -244,12 +244,14 @@ export async function createAdCreative(opts: {
     },
   };
 
+  // standard_enhancements ist seit ~2025 deprecated (Meta-Fehler 3858504).
+  // Wir lassen degrees_of_freedom_spec weg — Meta wendet dann die im
+  // AdSet/Account konfigurierten Defaults an. Falls einzelne Features
+  // explizit deaktiviert werden sollen, müssten sie via
+  // creative_enhancements einzeln gesetzt werden (Meta-Doku fburl/hyth50xo).
   const resp = (await metaPost(`${getAdAccount()}/adcreatives`, {
     name: opts.name,
     object_story_spec: objectStorySpec,
-    degrees_of_freedom_spec: JSON.stringify({
-      creative_features_spec: { standard_enhancements: { enroll_status: "OPT_OUT" } },
-    }),
   })) as { id: string };
   return resp;
 }
