@@ -17,10 +17,12 @@ const REACHED_STATUSES = new Set([
   "Termin vereinbart",
   "Angebot/Beratung läuft",
   "Abschluss",
+  "Storno",
   "Kein Interesse",
 ]);
 
 const CLOSED_STATUS = "Abschluss";
+const CANCELLED_STATUS = "Storno";
 
 const TABLES = [
   { name: process.env.AIRTABLE_TABLE_WECHSEL ?? "PKV-Wechsel-Leads", source: "Wechsel" },
@@ -323,8 +325,15 @@ export async function syncAirtable(): Promise<SyncResult> {
         const name = resolveLeadName(rec.fields);
 
         const reached = status ? REACHED_STATUSES.has(status) : false;
-        const isClosed = status === CLOSED_STATUS;
+        // Storno = vormaliger Abschluss, der storniert wurde. closedAt bleibt
+        // gesetzt (Brutto-Abschluss), cancelledAt markiert den Storno separat.
+        const isCancelled = status === CANCELLED_STATUS;
+        const isClosed = status === CLOSED_STATUS || isCancelled;
         const closedAt = isClosed ? createdAt : null;
+        const cancelledAt = isCancelled ? createdAt : null;
+        const cancellationReason = isCancelled
+          ? readString(rec.fields, "Stornogrund")
+          : null;
 
         const customerId = await getCustomerId(buyer);
 
@@ -347,6 +356,8 @@ export async function syncAirtable(): Promise<SyncResult> {
             createdAt,
             firstContactAt,
             closedAt,
+            cancelledAt,
+            cancellationReason,
             reached,
             contactAttempts,
             status,
@@ -358,6 +369,8 @@ export async function syncAirtable(): Promise<SyncResult> {
             createdAt,
             firstContactAt,
             closedAt,
+            cancelledAt,
+            cancellationReason,
             reached,
             contactAttempts,
             status,

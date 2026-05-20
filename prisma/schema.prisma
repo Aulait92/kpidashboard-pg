@@ -22,24 +22,30 @@ model Customer {
 }
 
 model Lead {
-  id              String    @id @default(cuid())
-  airtableId      String?   @unique
-  source          String?
-  customerId      String
-  name            String?
-  createdAt       DateTime  @default(now())
-  firstContactAt  DateTime?
-  closedAt        DateTime?
-  reached         Boolean   @default(false)
-  contactAttempts Int       @default(0)
-  status          String?
-  acquisitionCost Decimal   @default(0) @db.Decimal(12, 2)
+  id                 String    @id @default(cuid())
+  airtableId         String?   @unique
+  source             String?
+  customerId         String
+  name               String?
+  createdAt          DateTime  @default(now())
+  firstContactAt     DateTime?
+  closedAt           DateTime?
+  // Storno: gesetzt wenn ein vormals abgeschlossener Lead vom Kunden
+  // storniert wurde. closedAt bleibt ebenfalls gesetzt — closedLeads zählt
+  // damit Brutto-Abschlüsse (inkl. Storno), cancelledLeads ist die Teilmenge.
+  cancelledAt        DateTime?
+  cancellationReason String?
+  reached            Boolean   @default(false)
+  contactAttempts    Int       @default(0)
+  status             String?
+  acquisitionCost    Decimal   @default(0) @db.Decimal(12, 2)
 
   customer Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   revenues Revenue[]
 
   @@index([customerId, createdAt])
   @@index([createdAt])
+  @@index([cancelledAt])
 }
 
 model Revenue {

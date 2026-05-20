@@ -9,10 +9,17 @@ export type BuyerLeadRow = {
   status: string | null;
   reached: boolean;
   closedAt: Date | null;
+  cancelledAt: Date | null;
+  cancellationReason: string | null;
   revenue: number;
 };
 
-function statusStyle(status: string | null, closed: boolean) {
+function statusStyle(
+  status: string | null,
+  closed: boolean,
+  cancelled: boolean,
+) {
+  if (cancelled) return "bg-rose-100 text-rose-800";
   if (closed) return "bg-emerald-50 text-emerald-700";
   if (!status) return "bg-zinc-100 text-zinc-600";
   if (status === "Kein Interesse") return "bg-rose-50 text-rose-700";
@@ -56,7 +63,13 @@ export function BuyerLeadsTable({ leads }: { leads: BuyerLeadRow[] }) {
           </thead>
           <tbody>
             {leads.map((l) => {
+              const cancelled = l.cancelledAt != null;
               const closed = l.closedAt != null;
+              const label = cancelled
+                ? "Storno"
+                : closed
+                  ? "Abschluss"
+                  : (l.status ?? "Offen");
               return (
                 <tr
                   key={l.id}
@@ -77,13 +90,21 @@ export function BuyerLeadsTable({ leads }: { leads: BuyerLeadRow[] }) {
                     <span
                       className={cn(
                         "inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium",
-                        statusStyle(l.status, closed),
+                        statusStyle(l.status, closed, cancelled),
                       )}
+                      title={
+                        cancelled && l.cancellationReason
+                          ? `Stornogrund: ${l.cancellationReason}`
+                          : undefined
+                      }
                     >
-                      {closed
-                        ? "Abschluss"
-                        : (l.status ?? "Offen")}
+                      {label}
                     </span>
+                    {cancelled && l.cancellationReason ? (
+                      <div className="mt-0.5 text-[10px] text-[color:var(--muted)] truncate max-w-[180px]">
+                        {l.cancellationReason}
+                      </div>
+                    ) : null}
                   </td>
                   <td className="px-3 py-2.5 text-right tabular-nums">
                     {l.revenue > 0 ? formatEUR(l.revenue) : "–"}

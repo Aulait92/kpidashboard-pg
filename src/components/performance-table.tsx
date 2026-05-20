@@ -18,6 +18,8 @@ type Row = {
   totalLeads: number;
   reachedLeads: number;
   closedLeads: number;
+  cancelledLeads: number;
+  cancellationRate: number | null;
   reachabilityRate: number | null;
   closingRate: number | null;
   revenue: number;
@@ -34,6 +36,8 @@ function toRowsFromCustomers(rows: CustomerKpiRow[]): Row[] {
     totalLeads: r.totalLeads,
     reachedLeads: r.reachedLeads,
     closedLeads: r.closedLeads,
+    cancelledLeads: r.cancelledLeads,
+    cancellationRate: r.cancellationRate,
     reachabilityRate: r.reachabilityRate,
     closingRate: r.closingRate,
     revenue: r.revenue,
@@ -51,6 +55,8 @@ function toRowsFromProducts(rows: ProductKpiRow[]): Row[] {
     totalLeads: r.totalLeads,
     reachedLeads: r.reachedLeads,
     closedLeads: r.closedLeads,
+    cancelledLeads: r.cancelledLeads,
+    cancellationRate: r.cancellationRate,
     reachabilityRate: r.reachabilityRate,
     closingRate: r.closingRate,
     revenue: r.revenue,
@@ -66,6 +72,8 @@ type SortKey =
   | "totalLeads"
   | "reachedLeads"
   | "closedLeads"
+  | "cancelledLeads"
+  | "cancellationRate"
   | "closingRate"
   | "revenue"
   | "margin";
@@ -88,6 +96,18 @@ const COLUMNS: {
     defaultDir: "desc",
   },
   { key: "closingRate", label: "Closing", numeric: true, defaultDir: "desc" },
+  {
+    key: "cancelledLeads",
+    label: "Stornos",
+    numeric: true,
+    defaultDir: "desc",
+  },
+  {
+    key: "cancellationRate",
+    label: "Stornoquote",
+    numeric: true,
+    defaultDir: "desc",
+  },
   { key: "revenue", label: "Umsatz", numeric: true, defaultDir: "desc" },
   { key: "margin", label: "Marge", numeric: true, defaultDir: "desc" },
 ];
@@ -199,7 +219,7 @@ export function PerformanceTable({
         </div>
       ) : (
         <div className="mt-3 overflow-x-auto">
-          <table className="min-w-[720px] text-sm">
+          <table className="min-w-[860px] text-sm">
             <thead className="bg-[color:var(--brand-soft)]/30 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
               <tr>
                 {COLUMNS.map((col) => {
@@ -270,6 +290,24 @@ export function PerformanceTable({
                     </td>
                     <td className="px-3 py-2.5 text-right tabular-nums">
                       {formatPercent(r.closingRate)}
+                    </td>
+                    <td
+                      className={cn(
+                        "px-3 py-2.5 text-right tabular-nums",
+                        r.cancelledLeads > 0 && "text-rose-600",
+                      )}
+                    >
+                      {formatNumber(r.cancelledLeads)}
+                    </td>
+                    <td
+                      className={cn(
+                        "px-3 py-2.5 text-right tabular-nums",
+                        r.cancellationRate != null && r.cancellationRate > 0
+                          ? "text-rose-600"
+                          : "text-zinc-500",
+                      )}
+                    >
+                      {formatPercent(r.cancellationRate)}
                     </td>
                     <td className="px-3 py-2.5 text-right tabular-nums">
                       {formatEUR(r.revenue)}

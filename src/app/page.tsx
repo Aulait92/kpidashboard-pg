@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AutoRefresh } from "@/components/auto-refresh";
+import { CancellationReasons } from "@/components/cancellation-reasons";
 import { FilterBar } from "@/components/filter-bar";
 import { FunnelHero } from "@/components/funnel-hero";
 import { KpiCard, type Delta } from "@/components/kpi-card";
@@ -20,6 +21,7 @@ import { computeMonthlyGoalProgress } from "@/lib/goals";
 import { computeSpeedToLeadAnalysis } from "@/lib/speed-to-lead";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
 import {
+  computeCancellationBreakdown,
   computeCustomerLeaderboard,
   computeKpis,
   computePnL,
@@ -139,28 +141,43 @@ async function DashboardBody({
   product: string | null;
 }) {
   const prev = previousRange(range);
-  const [k, p, ts, customerRows, productRows, pnl, forecast, speed, goals] =
-    await Promise.all([
-      computeKpis({ range, customerId, product }),
-      computeKpis({ range: prev, customerId, product }) as Promise<Kpis>,
-      computeTimeSeries({ range, customerId, product }),
-      computeCustomerLeaderboard({ range, product }),
-      computeProductBreakdown({ range, customerId }),
-      computePnL({ range, customerId, product }),
-      computeMonthlyForecast({
-        customerId,
-        product,
-        revenueLabel: "Umsatz",
-      }),
-      computeSpeedToLeadAnalysis({ range, customerId, product }),
-      computeMonthlyGoalProgress(),
-    ]);
+  const [
+    k,
+    p,
+    ts,
+    customerRows,
+    productRows,
+    pnl,
+    forecast,
+    speed,
+    goals,
+    cancellations,
+  ] = await Promise.all([
+    computeKpis({ range, customerId, product }),
+    computeKpis({ range: prev, customerId, product }) as Promise<Kpis>,
+    computeTimeSeries({ range, customerId, product }),
+    computeCustomerLeaderboard({ range, product }),
+    computeProductBreakdown({ range, customerId }),
+    computePnL({ range, customerId, product }),
+    computeMonthlyForecast({
+      customerId,
+      product,
+      revenueLabel: "Umsatz",
+    }),
+    computeSpeedToLeadAnalysis({ range, customerId, product }),
+    computeMonthlyGoalProgress(),
+    computeCancellationBreakdown({ range, customerId, product }),
+  ]);
 
   return (
     <div className="mt-6 space-y-8">
       <FunnelHero kpis={k} />
       <MonthlyGoalsCard progress={goals} />
       <KpiGrid kpis={k} prev={p} points={ts.points} customerId={customerId} />
+      <CancellationReasons
+        breakdown={cancellations}
+        closedLeads={k.closedLeads}
+      />
       <PnLStatement pnl={pnl} />
       <MonthlyForecast forecast={forecast} />
       <SpeedToLeadCard data={speed} />
@@ -269,6 +286,52 @@ function KpiGrid({
           hint={`${k.closedLeads} von ${k.totalLeads} abgeschlossen`}
           delta={delta(k.closingRate, p.closingRate)}
           sparkline={{ points, dataKey: "closingRate" }}
+        />
+      </KpiSection>
+
+      <KpiSection
+        eyebrow="Sektion · Stornos"
+        title="Stornoquote im Blick"
+      >
+        <KpiCard
+          label="Stornos"
+          value={formatNumber(k.cancelledLeads)}
+          hint={`Von ${formatNumber(k.closedLeads)} Brutto-Abschlüssen`}
+          tone={k.cancelledLeads > 0 ? "negative" : "default"}
+          delta={delta(k.cancelledLeads, p.cancelledLeads, true)}
+          sparkline={{ points, dataKey: "cancelledLeads", tone: "negative" }}
+        />
+        <KpiCard
+          label="Stornoquote"
+          value={formatPercent(k.cancellationRate)}
+          hint="Anteil stornierter Abschlüsse"
+          tone={
+            k.cancellationRate != null && k.cancellationRate > 0
+              ? "negative"
+              : "default"
+          }
+          delta={delta(k.cancellationRate, p.cancellationRate, true)}
+          sparkline={{ points, dataKey: "cancellationRate", tone: "negative" }}
+        />
+        <KpiCard
+          label="Netto-Abschlüsse"
+          value={formatNumber(k.netClosedLeads)}
+          hint={`${formatNumber(k.closedLeads)} brutto − ${formatNumber(
+            k.cancelledLeads,
+          )} Stornos`}
+          tone="positive"
+          delta={delta(k.netClosedLeads, p.netClosedLeads)}
+        />
+        <KpiCard
+          label="Netto Closing Rate"
+          value={formatPercent(
+            k.totalLeads > 0 ? k.netClosedLeads / k.totalLeads : null,
+          )}
+          hint="Effektive Abschlüsse / Leads"
+          delta={delta(
+            k.totalLeads > 0 ? k.netClosedLeads / k.totalLeads : null,
+            p.totalLeads > 0 ? p.netClosedLeads / p.totalLeads : null,
+          )}
         />
       </KpiSection>
 

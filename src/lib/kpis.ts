@@ -27,6 +27,12 @@ export type Kpis = {
   reachedLeads: number;
   terminLeads: number;
   closedLeads: number;
+  // Brutto-Abschlüsse, die nachträglich vom Kunden storniert wurden.
+  // closedLeads enthält die Stornos bereits; netClosedLeads = closed - cancelled.
+  cancelledLeads: number;
+  netClosedLeads: number;
+  // cancelled / closed (Brutto). null wenn keine Abschlüsse.
+  cancellationRate: number | null;
   reachabilityRate: number | null; // 0..1
   terminRate: number | null; // termin / reached
   closingFromTerminRate: number | null; // closed / termin
@@ -186,6 +192,7 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
         createdAt: true,
         firstContactAt: true,
         closedAt: true,
+        cancelledAt: true,
         reached: true,
         contactAttempts: true,
         status: true,
@@ -222,6 +229,10 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
     (l) => l.status != null && TERMIN_STATUSES.has(l.status),
   ).length;
   const closedLeads = leads.filter((l) => l.closedAt != null).length;
+  const cancelledLeads = leads.filter((l) => l.cancelledAt != null).length;
+  const netClosedLeads = closedLeads - cancelledLeads;
+  const cancellationRate =
+    closedLeads > 0 ? cancelledLeads / closedLeads : null;
 
   const reachabilityRate =
     totalLeads > 0 ? reachedLeads / totalLeads : null;
@@ -260,6 +271,9 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
     reachedLeads,
     terminLeads,
     closedLeads,
+    cancelledLeads,
+    netClosedLeads,
+    cancellationRate,
     reachabilityRate,
     terminRate,
     closingFromTerminRate,
@@ -297,6 +311,8 @@ export type CustomerKpiRow = {
   reachedLeads: number;
   terminLeads: number;
   closedLeads: number;
+  cancelledLeads: number;
+  cancellationRate: number | null;
   reachabilityRate: number | null;
   closingRate: number | null;
   avgHoursToFirstContact: number | null;
@@ -333,6 +349,7 @@ export async function computeCustomerLeaderboard(params: {
           customerId: true,
           reached: true,
           closedAt: true,
+          cancelledAt: true,
           status: true,
           createdAt: true,
           firstContactAt: true,
@@ -432,19 +449,21 @@ export async function computeCustomerLeaderboard(params: {
       reached: number;
       termin: number;
       closed: number;
+      cancelled: number;
       hours: number[];
     }
   >();
   for (const l of leads) {
     let s = leadStatsByCustomer.get(l.customerId);
     if (!s) {
-      s = { total: 0, reached: 0, termin: 0, closed: 0, hours: [] };
+      s = { total: 0, reached: 0, termin: 0, closed: 0, cancelled: 0, hours: [] };
       leadStatsByCustomer.set(l.customerId, s);
     }
     s.total += 1;
     if (l.reached) s.reached += 1;
     if (l.status && TERMIN_STATUSES.has(l.status)) s.termin += 1;
     if (l.closedAt != null) s.closed += 1;
+    if (l.cancelledAt != null) s.cancelled += 1;
     if (l.firstContactAt) {
       s.hours.push(
         (l.firstContactAt.getTime() - l.createdAt.getTime()) / 1000 / 3600,
@@ -472,6 +491,7 @@ export async function computeCustomerLeaderboard(params: {
       reached: 0,
       termin: 0,
       closed: 0,
+      cancelled: 0,
       hours: [] as number[],
     };
     const revenue = revenueByCustomerId.get(c.id) ?? 0;
@@ -490,6 +510,8 @@ export async function computeCustomerLeaderboard(params: {
       reachedLeads: stat.reached,
       terminLeads: stat.termin,
       closedLeads: stat.closed,
+      cancelledLeads: stat.cancelled,
+      cancellationRate: stat.closed > 0 ? stat.cancelled / stat.closed : null,
       reachabilityRate: stat.total > 0 ? stat.reached / stat.total : null,
       closingRate: stat.total > 0 ? stat.closed / stat.total : null,
       avgHoursToFirstContact,
@@ -511,6 +533,8 @@ export type ProductKpiRow = {
   totalLeads: number;
   reachedLeads: number;
   closedLeads: number;
+  cancelledLeads: number;
+  cancellationRate: number | null;
   reachabilityRate: number | null;
   closingRate: number | null;
   revenue: number;
@@ -538,6 +562,7 @@ export async function computeProductBreakdown(params: {
         source: true,
         reached: true,
         closedAt: true,
+        cancelledAt: true,
       },
     }),
     prisma.revenue.findMany({
@@ -556,6 +581,7 @@ export async function computeProductBreakdown(params: {
       total: number;
       reached: number;
       closed: number;
+      cancelled: number;
       revenue: number;
       leadCosts: number;
     }
@@ -563,7 +589,7 @@ export async function computeProductBreakdown(params: {
   function s(p: string) {
     let x = stats.get(p);
     if (!x) {
-      x = { total: 0, reached: 0, closed: 0, revenue: 0, leadCosts: 0 };
+      x = { total: 0, reached: 0, closed: 0, cancelled: 0, revenue: 0, leadCosts: 0 };
       stats.set(p, x);
     }
     return x;
@@ -575,6 +601,7 @@ export async function computeProductBreakdown(params: {
     x.total += 1;
     if (l.reached) x.reached += 1;
     if (l.closedAt != null) x.closed += 1;
+    if (l.cancelledAt != null) x.cancelled += 1;
   }
   for (const r of revenues) {
     const src = r.lead?.source;
@@ -601,6 +628,8 @@ export async function computeProductBreakdown(params: {
         totalLeads: x.total,
         reachedLeads: x.reached,
         closedLeads: x.closed,
+        cancelledLeads: x.cancelled,
+        cancellationRate: x.closed > 0 ? x.cancelled / x.closed : null,
         reachabilityRate: x.total > 0 ? x.reached / x.total : null,
         closingRate: x.total > 0 ? x.closed / x.total : null,
         revenue: x.revenue,
@@ -622,6 +651,8 @@ export type TimeSeriesPoint = {
   reachedLeads: number;
   terminLeads: number;
   closedLeads: number;
+  cancelledLeads: number;
+  cancellationRate: number | null;
   reachabilityRate: number | null;
   closingRate: number | null;
   avgContactAttempts: number | null;
@@ -692,6 +723,7 @@ export async function computeTimeSeries(params: {
         createdAt: true,
         firstContactAt: true,
         closedAt: true,
+        cancelledAt: true,
         reached: true,
         contactAttempts: true,
         status: true,
@@ -751,6 +783,8 @@ export async function computeTimeSeries(params: {
         reachedLeads: 0,
         terminLeads: 0,
         closedLeads: 0,
+        cancelledLeads: 0,
+        cancellationRate: null,
         reachabilityRate: null,
         closingRate: null,
         avgContactAttempts: null,
@@ -783,6 +817,7 @@ export async function computeTimeSeries(params: {
     if (l.reached) b.point.reachedLeads += 1;
     if (l.status && TERMIN_STATUSES.has(l.status)) b.point.terminLeads += 1;
     if (l.closedAt != null) b.point.closedLeads += 1;
+    if (l.cancelledAt != null) b.point.cancelledLeads += 1;
     b.contactSum += l.contactAttempts;
     if (l.firstContactAt) {
       b.hoursList.push(
@@ -913,6 +948,8 @@ export async function computeTimeSeries(params: {
     const p = a.point;
     p.reachabilityRate = p.leads > 0 ? p.reachedLeads / p.leads : null;
     p.closingRate = p.leads > 0 ? p.closedLeads / p.leads : null;
+    p.cancellationRate =
+      p.closedLeads > 0 ? p.cancelledLeads / p.closedLeads : null;
     p.avgContactAttempts = p.leads > 0 ? a.contactSum / p.leads : null;
     p.avgHoursToFirstContact =
       a.hoursList.length > 0
@@ -1127,4 +1164,50 @@ export async function computePnL(params: {
       previous: revenuePrev > 0 ? netProfit.previous / revenuePrev : null,
     },
   };
+}
+
+// ─── Stornogründe ────────────────────────────────────────────────────────
+
+export type CancellationReasonRow = {
+  reason: string;
+  count: number;
+};
+
+export type CancellationBreakdown = {
+  total: number;
+  reasons: CancellationReasonRow[];
+};
+
+const UNKNOWN_REASON_LABEL = "Kein Grund angegeben";
+
+export async function computeCancellationBreakdown(params: {
+  range: DateRange;
+  customerId: string | null;
+  product: string | null;
+}): Promise<CancellationBreakdown> {
+  const { range, customerId, product } = params;
+  const customerClause = customerId ? { customerId } : {};
+  const productClause = product ? { source: product } : {};
+
+  const leads = await prisma.lead.findMany({
+    where: {
+      ...customerClause,
+      ...productClause,
+      cancelledAt: { gte: range.from, lte: range.to },
+    },
+    select: { cancellationReason: true },
+  });
+
+  const byReason = new Map<string, number>();
+  for (const l of leads) {
+    const raw = l.cancellationReason?.trim();
+    const key = raw && raw.length > 0 ? raw : UNKNOWN_REASON_LABEL;
+    byReason.set(key, (byReason.get(key) ?? 0) + 1);
+  }
+
+  const reasons = Array.from(byReason.entries())
+    .map(([reason, count]) => ({ reason, count }))
+    .sort((a, b) => b.count - a.count);
+
+  return { total: leads.length, reasons };
 }

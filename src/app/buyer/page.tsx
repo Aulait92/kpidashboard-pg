@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { BuyerComparison } from "@/components/buyer-comparison";
 import { BuyerFilterBar } from "@/components/buyer-filter-bar";
+import { CancellationReasons } from "@/components/cancellation-reasons";
 import {
   BuyerLeadsTable,
   type BuyerLeadRow,
@@ -19,6 +20,7 @@ import { getCurrentSession } from "@/lib/auth";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
 import { computeMonthlyForecast } from "@/lib/forecast";
 import {
+  computeCancellationBreakdown,
   computeCustomerLeaderboard,
   computeKpis,
   computeTimeSeries,
@@ -145,8 +147,16 @@ async function BuyerDashboardBody({
   range: { from: Date; to: Date };
 }) {
   const prev = previousRange(range);
-  const [k, p, ts, leadRows, leaderboardRows, speedAnalysis, forecast] =
-    await Promise.all([
+  const [
+    k,
+    p,
+    ts,
+    leadRows,
+    leaderboardRows,
+    speedAnalysis,
+    forecast,
+    cancellations,
+  ] = await Promise.all([
     computeKpis({ range, customerId, product: null }) as Promise<Kpis>,
     computeKpis({ range: prev, customerId, product: null }) as Promise<Kpis>,
     computeTimeSeries({ range, customerId, product: null }),
@@ -165,6 +175,8 @@ async function BuyerDashboardBody({
         status: true,
         reached: true,
         closedAt: true,
+        cancelledAt: true,
+        cancellationReason: true,
         revenues: {
           select: { amount: true },
           take: 1,
@@ -174,6 +186,7 @@ async function BuyerDashboardBody({
     computeCustomerLeaderboard({ range, product: null }),
     computeSpeedToLeadAnalysis({ range, customerId }),
     computeMonthlyForecast({ customerId }),
+    computeCancellationBreakdown({ range, customerId, product: null }),
   ]);
 
   const leads: BuyerLeadRow[] = leadRows.map((l) => ({
@@ -184,6 +197,8 @@ async function BuyerDashboardBody({
     status: l.status,
     reached: l.reached,
     closedAt: l.closedAt,
+    cancelledAt: l.cancelledAt,
+    cancellationReason: l.cancellationReason,
     revenue:
       l.revenues[0]?.amount != null ? Number(l.revenues[0].amount) : 0,
   }));
@@ -223,7 +238,7 @@ async function BuyerDashboardBody({
           <KpiCard
             label="Closing Rate"
             value={formatPercent(k.closingRate)}
-            hint={`${k.closedLeads} Abschlüsse`}
+            hint={`${formatNumber(k.closedLeads)} Brutto-Abschlüsse`}
             delta={delta(k.closingRate, p.closingRate)}
             sparkline={{ points: ts.points, dataKey: "closingRate" }}
           />
@@ -243,6 +258,70 @@ async function BuyerDashboardBody({
           />
         </div>
       </section>
+
+      <section>
+        <div className="mb-3">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--brand)]">
+            Stornos
+          </div>
+          <h2 className="mt-0.5 text-lg font-semibold tracking-tight">
+            Stornoquote
+          </h2>
+        </div>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <KpiCard
+            label="Stornos"
+            value={formatNumber(k.cancelledLeads)}
+            hint={`Von ${formatNumber(k.closedLeads)} Brutto-Abschlüssen`}
+            tone={k.cancelledLeads > 0 ? "negative" : "default"}
+            delta={delta(k.cancelledLeads, p.cancelledLeads, true)}
+            sparkline={{
+              points: ts.points,
+              dataKey: "cancelledLeads",
+              tone: "negative",
+            }}
+          />
+          <KpiCard
+            label="Stornoquote"
+            value={formatPercent(k.cancellationRate)}
+            hint="Anteil stornierter Abschlüsse"
+            tone={
+              k.cancellationRate != null && k.cancellationRate > 0
+                ? "negative"
+                : "default"
+            }
+            delta={delta(k.cancellationRate, p.cancellationRate, true)}
+            sparkline={{
+              points: ts.points,
+              dataKey: "cancellationRate",
+              tone: "negative",
+            }}
+          />
+          <KpiCard
+            label="Netto-Abschlüsse"
+            value={formatNumber(k.netClosedLeads)}
+            hint="Brutto minus Stornos"
+            tone="positive"
+            delta={delta(k.netClosedLeads, p.netClosedLeads)}
+          />
+          <KpiCard
+            label="Netto Closing Rate"
+            value={formatPercent(
+              k.totalLeads > 0 ? k.netClosedLeads / k.totalLeads : null,
+            )}
+            hint="Effektive Abschlüsse / Leads"
+            delta={delta(
+              k.totalLeads > 0 ? k.netClosedLeads / k.totalLeads : null,
+              p.totalLeads > 0 ? p.netClosedLeads / p.totalLeads : null,
+            )}
+          />
+        </div>
+      </section>
+
+      <CancellationReasons
+        breakdown={cancellations}
+        closedLeads={k.closedLeads}
+      />
 
       <section>
         <div className="mb-3">
