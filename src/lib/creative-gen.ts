@@ -1,10 +1,9 @@
 import { uploadImageToR2 } from "@/lib/r2";
-import { renderHtmlToImage } from "@/lib/html-to-png";
-import { resolveUnsplashPlaceholders } from "@/lib/unsplash";
-import { resolveComicPlaceholders } from "@/lib/replicate-image";
+import { generateOpenAIImage } from "@/lib/openai-image";
 
-// Brief der Creative-Generation. Claude designt komplette HTML-Creatives,
-// Playwright rendert zu PNG, Upload zu R2.
+// Brief der Creative-Generation. Claude brainstormt N diverse Konzepte und
+// schreibt für jedes einen Image-Prompt; gpt-image-1 (OpenAI Images 2.0)
+// rendert das fertige PNG inkl. aller Text-Overlays.
 export type CreativeBrief = {
   campaignKey: string; // "Wechsel" | "Neugeschäft" | ...
   audience?: string; // z.B. "Selbstständige 30-45"
@@ -18,12 +17,12 @@ export type GeneratedCreative = {
   cta: string;
   adText: string; // Facebook Primary-Text (über dem Bild im Feed), kann long-form sein
   fbHeadline: string; // Facebook Headline unter dem Bild (max ~40 Zeichen, snappy)
-  mechanic: string; // Konzept-Mechanic (UGC-Whiteboard, Comic-Illustration, Big-Number, …)
-  imagePrompt: string; // bei HTML-Pipeline: das volle HTML (Debug/Replay)
+  mechanic: string; // Konzept-Mechanic (UGC-Selfie, Big-Number, Comic, …)
+  imagePrompt: string; // der finale Text-Prompt an gpt-image-1 (Debug/Replay)
   imageUrl: string; // public URL nach R2-Upload
 };
 
-// ─── Claude Creative-Generation (HTML) ───────────────────────────────
+// ─── Claude Concept-Generation (Image-Prompts statt HTML) ────────────
 
 type CreativeVariant = {
   headline: string;
@@ -31,11 +30,11 @@ type CreativeVariant = {
   cta: string;
   adText: string;
   fbHeadline: string;
-  html: string;
+  imagePrompt: string;
   mechanic: string;
 };
 
-const CREATIVE_SYSTEM_PROMPT = `Du bist Senior Direct-Response-Creative-Director für Meta-Ads im deutschen PKV-Lead-Gen-Markt. Du designst Ad-Creatives als komplette HTML-Dokumente.
+const CREATIVE_SYSTEM_PROMPT = `Du bist Senior Direct-Response-Creative-Director für Meta-Ads im deutschen PKV-Lead-Gen-Markt. Du schreibst präzise Bild-Prompts für OpenAI gpt-image-1 — das Modell rendert die komplette visuelle Komposition UND sämtliche Text-Overlays in einem Schritt.
 
 ZIELGRUPPE: Privat versicherbare Personen (Selbstständige, Akademiker, Beamte, Angestellte > JAEG).
 ZIEL: PKV-Beratungs-Termin buchen.
@@ -44,318 +43,103 @@ ZIEL: PKV-Beratungs-Termin buchen.
 - Spezifische Zahlen statt Adjektive ("−38%", "73.800€", "824€")
 - Erste Person oder konkrete Persona
 - Pain-Point / Curiosity / Promise / Story als Hook-Angle
-- Headline max 6 Wörter (visuell IM Creative)
-- Body max 90 Zeichen (visuell IM Creative, Sub-Headline)
+- Headline max 6 Wörter (visuell IM Creative-Bild)
+- Body max 90 Zeichen (visuell IM Creative-Bild, Sub-Headline)
 - CTA max 18 Zeichen, handlungsorientiert
 - VERBOTEN: "Jetzt sparen", "Top-Tarif", "Kostenlos", "Spitzenmäßig"
 - Native-Feeling, kein Werbe-Sprech
 
-═══ PKV-ANCHOR (PFLICHT, PROMINENT — sonst wird's geclickt aber falsch verstanden) ═══
+═══ PKV-ANCHOR (PFLICHT, PROMINENT) ═══
 Jedes Creative MUSS in <1 Sekunde signalisieren, dass es um PKV (Private
-Krankenversicherung) geht. Das Wort "PKV" oder "Krankenversicherung"
-darf NIE nur in kleinem Body-Text versteckt sein.
+Krankenversicherung) geht. Das Wort "PKV" oder "Krankenversicherung" darf
+NIE nur in kleinem Body-Text versteckt sein.
 
-GRÖßEN-PFLICHT für den PKV-Anchor:
-- Das Wort "PKV" (Großbuchstaben) oder "Krankenversicherung" MUSS in
-  einem visuell prominenten Element stehen: entweder in der Headline
-  (>=60pt) oder in einer eigenen Anchor-Zeile (>=40pt), gut lesbar.
-- KEIN PKV-Anchor im Body-Text <30pt — der ist auf dem Smartphone-Feed
-  unleserlich.
-- "PKV" IMMER in Großbuchstaben schreiben (nicht "Pkv" oder "pkv").
-- Bei Big-Number-Creatives: direkt unter/über der Zahl die Anchor-Zeile,
-  z.B. "Dein PKV-BEITRAG" oder "PKV-Tarif heute" (>=50pt).
-- Bei Photo-Big-Headline: PKV im Headline-Text selbst (Hero-Größe), nicht
-  nur im CTA-Button.
-- Bei Mockup-Mechaniken: das Subject im Mockup ist sichtbar PKV-bezogen
-  (Browser-URL enthält "/pkv", Brief-Header "Ihre PKV-Versicherung", Konto-
-  Vergleich-Card-Title "PKV-Beitrag: heute vs. nach Wechsel" — alles in
-  groß lesbarer Schrift).
+- "PKV" oder "Krankenversicherung" steht in einer visuell prominenten
+  Textebene (Headline ODER eigene Anchor-Zeile, beides als groß renderbarer
+  Text spezifiziert im Image-Prompt).
+- "PKV" IMMER in Großbuchstaben.
+- Im AdText (Facebook-Primary-Text) muss "PKV" oder "private Krankenversicherung"
+  in den ersten 80 Zeichen vorkommen.
 
-PRÜF-CHECK vor finalem HTML:
-1. Steht "PKV" oder "Krankenversicherung" prominent (>=40pt) sichtbar?
-2. Wäre die Vertical für jemanden im Feed-Scroll in <1s klar?
-3. Wenn ich nur den ersten visuellen Eindruck habe (ohne Body zu lesen),
-   weiß ich dass es um PKV geht?
-Wenn 1 Nein → vergrößern. Wenn 2/3 Nein → PKV-Anchor an prominenter
-Stelle nachziehen.
-
-NIE NUR: "−38%" + "Jetzt prüfen" → könnte alles bedeuten.
-IMMER: große Zahl + große Anchor-Zeile "Dein PKV-BEITRAG" + CTA.
-
-Im AdText (Facebook-Primary-Text) muss "PKV" oder "private Krankenversicherung"
-ebenfalls in den ersten 80 Zeichen vorkommen — sonst scrollt der User weiter.
-
-═══ FB-HEADLINE (Facebook Headline unter dem Bild, NICHT im Creative) ═══
-Zusätzlich zum visuellen Hero im Creative-Bild und zum adText (Primary-Text
-darüber) braucht jede Variante eine Facebook-Headline für das Feld direkt
-unter dem Bild — sichtbar im Feed neben dem CTA-Button.
-
-- Max 40 Zeichen (Facebook truncated länger)
-- Snappy, konkret, ein Versprechen oder eine Frage
-- KEINE Wiederholung der visuellen Headline aus dem Bild — sie ergänzt
+═══ FB-HEADLINE (Facebook Headline unter dem Bild, NICHT im Bild) ═══
+- Max 40 Zeichen
+- Snappy, konkret, Versprechen oder Frage
+- Ergänzt die visuelle Headline, wiederholt sie NICHT
 - Beispiele:
   - Bild-Headline: "STOPP." → fb_headline: "PKV-Beitrag halbieren — in 2 Min."
   - Bild-Headline: "−38%" → fb_headline: "Dein PKV-Beitrag, neu gerechnet"
-  - Bild-Headline: "Anbieter bleibt. Tarif wechselt." → fb_headline: "Bis 50% PKV-Beitrag sparen"
 
-═══ ADTEXT (Facebook Primary-Text, NICHT im Creative) ═══
-Zusätzlich zum visuellen Creative braucht jede Variante einen Post-Text,
-der über dem Bild im Facebook-Feed steht. Das ist KEIN Bestandteil des
-HTML-Creatives — es ist die Caption, die User vor dem Klick lesen.
-
-LÄNGEN-MIX über die Varianten (wichtig: verschiedene Längen ausprobieren):
-- SHORT (60-120 Zeichen): Ein Satz, Hook + CTA. Zb: "Dein PKV-Beitrag
-  über 700€? Es gibt einen Weg, ihn ohne Anbieter-Wechsel zu halbieren."
+═══ ADTEXT (Facebook Primary-Text, NICHT im Bild) ═══
+LÄNGEN-MIX über die Varianten:
+- SHORT (60-120 Zeichen): Ein Satz, Hook + CTA.
 - MEDIUM (150-300 Zeichen): 2-3 Sätze, Problem → Lösung → Soft-CTA.
-- LONG (400-800 Zeichen, AIDA-Style): Echte Story-Form mit Hook,
-  Pain-Verstärkung, Aufdeckung des Mechanismus (z.B. §204 VVG),
-  Spezifische Zahlen, dann unverbindlicher CTA. KEINE Listen mit
-  Bulletpoints — fließender Prose-Text. Absätze mit Doppel-Newline.
-
-Bei N Varianten: Mische SHORT/MEDIUM/LONG bewusst. Bei N≥3 mindestens
-eine LONG-Variante.
+- LONG (400-800 Zeichen, AIDA-Style): Story-Form mit Hook, Pain, Mechanismus,
+  Zahlen, Soft-CTA. Fließtext mit Absätzen via doppelter Newline. KEINE Listen.
 
 ADTEXT-STIL:
-- Du-Form, persönlich, kein "Sehr geehrte Damen und Herren"
-- KEINE Emoji-Walls (max 1 Emoji wenn überhaupt)
-- KEINE Marketing-Klischees ("Sichern Sie sich JETZT…")
-- Erste Zeile MUSS hooken — Facebook zeigt nur ~125 Zeichen vor "Mehr"
-- Kein expliziter Link/URL im Text — der CTA-Button macht das
-- Schlussformel: knapp, kein Hard-Sell ("Prüf in 2 Minuten ob…")
+- Du-Form, persönlich
+- Max 1 Emoji
+- Keine Marketing-Klischees
+- Erste Zeile MUSS hooken (Facebook zeigt nur ~125 Zeichen vor "Mehr")
+- Kein expliziter Link im Text
 
-═══ TEXT-MINIMALISMUS (sehr wichtig) ═══
-Weniger Text = stärkeres Creative. Default-Modus: EIN Hero-Element dominiert
-visuell (Zahl, kurzes Statement, einzelne Frage).
+═══ IMAGE-PROMPT FÜR gpt-image-1 — SO SCHREIBST DU IHN ═══
 
-- IDEAL: Headline (3-5 Wörter) + CTA. Body ist OPTIONAL — wenn er nicht
-  zwingend mehr Information liefert, weglassen oder auf 1 kurzen Satz
-  reduzieren (max 60 Zeichen, nicht 90).
-- KEINE Bullet-Listen mit 3+ Items, außer die Mechanic verlangt es
-  explizit (Highlighter-Hook ✗-Liste, 3-Fragen-Quiz). Selbst dort: max
-  3 Items, jedes max 6 Wörter.
-- KEINE erklärenden Absätze, KEINE Fußnoten, KEINE Disclaimer-Zeilen
-  (außer dezentem "ANZEIGE"-Label oben rechts).
-- Faustregel: Wenn das Creative auf einem Smartphone-Feed in 1.5
-  Sekunden nicht lesbar UND verständlich ist → zu viel Text, kürzen.
-- Typografie macht den Impact, nicht Wortmenge. Eine 200pt-Zahl
-  schlägt einen kompletten Absatz.
+gpt-image-1 ist sehr gut darin, Text in Bildern zu rendern — aber nur wenn
+du es explizit anweist und den Text in Anführungszeichen setzt. Schreibe
+den Prompt auf ENGLISCH (besseres Verständnis), aber den ZU RENDERENDEN TEXT
+GENAU in deutscher Original-Schreibweise inkl. Umlaute und Sonderzeichen.
 
-═══ NO-OVERFLOW (KRITISCH — sonst wird Text abgeschnitten) ═══
-Das Canvas ist HART auf 1080×1080 begrenzt. Body hat overflow:hidden,
-alles was rausläuft wird gnadenlos geclippt. Plane Schriftgrößen mit
-diesem Reality-Check:
+PROMPT-STRUKTUR (in dieser Reihenfolge):
+1. Composition / Mechanic (1 Satz): was sieht man? (UGC-Selfie / Big-Number / Newspaper-Mockup / Comic-Illustration / Photo-Hero / Konto-Vergleich…)
+2. Style / Look (1 Satz): photorealistic, polished editorial, flat-comic, iPhone-screenshot-feel, newspaper-print, …
+3. Subject details (1-2 Sätze): wer ist im Bild, was macht die Person, Setting, Lichtstimmung
+4. Text overlays (PFLICHT, mit Anführungszeichen): "Render the German text 'STOPP.' in huge bold black sans-serif at top center, and 'Dein PKV-Beitrag halbieren' below in white on a black caption box at bottom."
+5. Color palette / typography hints (1 Satz): Inter sans-serif, cream background #FAF6F0 with accent yellow, oder Caveat handwriting font for whiteboard scenes, …
+6. Format: "Square 1:1 composition optimized for Meta feed, full-bleed, no white margins."
 
-GROBE FONT-SIZE-RICHTLINIEN für die Headline (bei ~80px Edge-Padding,
-nutzbare Breite ~920px):
-- 1-2 Wörter (z.B. "STOPP." / "−38%"): 240-360pt — fast volle Breite
-- 3-4 Wörter (z.B. "Dein PKV-Beitrag halbieren"): 90-130pt
-- 5-6 Wörter (z.B. "PKV über 700€? Wahrscheinlich zu viel."): 60-85pt
+WICHTIG bei Text im Bild:
+- Jeden zu rendernden Text in einfache Anführungszeichen setzen ('…')
+- Schreibweise EXAKT wie sie erscheinen soll (inkl. Umlaute, Sonderzeichen, Großbuchstaben für "PKV")
+- Position klar benennen (top center / bottom-left caption box / large hero overlay)
+- Schriftfamilie + Gewicht spezifizieren (bold sans-serif / Caveat handwritten marker / serif newspaper)
+- Größe relativ beschreiben ("huge", "very large", "small", "medium")
+- KEINE 3+ unterschiedlichen Text-Blöcke im selben Bild — gpt-image-1 verheddert sich, wenn zu viele Texte gleichzeitig gerendert werden müssen. Maximal: Headline + Body + CTA-Button-Label + ein winziges "ANZEIGE"-Tag.
 
-Bei Body-Text (Sub-Headline) max ~36pt, line-height 1.25, max 3 Zeilen.
-
-CHECKLISTE vor finalem HTML:
-1. Headline-Text mental durchzählen (Zeichen × ~0.5-0.6 × font-size = ungefähre Pixel-Breite). Passt das in 920px ohne Umbruch?
-2. Bei mehrzeiligen Headlines: line-height × Zeilen-Anzahl + Body-Höhe + CTA-Höhe ≤ 920px (vertikal)?
-3. Fonts mit dünnen Glyphen (Inter-Light) brauchen weniger Breite als bold/black. Eher konservativ rechnen.
-4. Bei Foto-Background mit Text-Overlay: Text-Container braucht explizite max-width (z.B. 80%) damit's bei breiten Headlines nicht über den Rand schießt.
-
-SAFE CSS-PATTERN für Headlines die du nicht 100% einschätzen kannst:
-\`\`\`css
-.hero {
-  font-size: clamp(60px, 12vw, 180px);
-  line-height: 1.05;
-  word-wrap: break-word;
-  hyphens: auto;
-}
-\`\`\`
-clamp() limitiert maximale Größe automatisch — sicherer als feste px-Werte.
-
-NIE word-spacing, letter-spacing >0.05em bei großen Headlines — frisst Breite.
-
-═══ CANVAS-FÜLLUNG (sehr wichtig) ═══
-Wenig Text heißt NICHT wenig Inhalt. Das 1080×1080-Canvas muss visuell
-dicht sein — kein leerer Raum aus Faulheit. Whitespace ist Komposition,
-nicht Default.
-
-- Hero-Element (Zahl, Headline, Foto, Mockup) füllt mindestens 70%
-  der Canvas-Höhe ODER -Breite. Bei nur Headline + CTA: Headline-
-  font-size meist 100-180pt, randvoll bis ~50px vom Rand.
-- Background reicht IMMER bis zum Rand (volle 1080×1080-Fläche). Keine
-  weißen Säume außenrum.
-- Edge-Padding: max ~60px außenrum. Bei textlastigen Konzepten weniger.
-- Foto-Creatives: Foto entweder full-bleed (ganzflächig mit Overlay)
-  oder mindestens 50% einer Achse. Kein kleines 400×400-Foto in der
-  Mitte mit Whitespace drumherum.
-- Bei Bullet-Mechaniken: Items füllen die volle Liste-Spalte, große
-  Schriftgrößen (30-50pt), keine winzigen Items mit viel Luft dazwischen.
-- "Anzeige"-Label und CTA-Button DARF in den Eckpolstern wohnen — alles
-  dazwischen muss Inhalt sein.
-- Goldene Regel: wenn beim Anschauen eine Achtelfläche komplett leer
-  wirkt, ist die Komposition unfertig. Headline vergrößern, Foto
-  ausdehnen, Sub-Headline oder Highlight-Element ergänzen.
+NIE in Image-Prompts:
+- Logos echter Marken
+- Erkennbare Persönlichkeiten / Promis / Schauspieler
+- "in the style of <famous artist>" (Modell darf nicht imitieren)
 
 ═══ DIRECT-RESPONSE-MECHANIKEN ═══
 Wähle pro Variante eine Mechanic und führe sie konsequent aus:
 
-1. BIG-NUMBER — Riesige Zahl/Prozent als Hero ("−38%", "73.800€"), kurze Erklär-Zeile drunter
-2. STOPP-INTERRUPT — Pattern-Break ("STOPP."), rote Fläche, kurzer Warn-Text
-3. HIGHLIGHTER-HOOK — schwarze Headline mit gelben Highlighter-Streifen über Keywords ("Diese 3 Sätze kosten dich jedes Jahr 4.000€"), drunter Liste mit ✗-Items
-4. KONTO-MOCKUP — Tab/Browser-Chrome oben, „Dein Ergebnis"-Card mit GKV-vs-PKV-Vergleich (zwei Spalten, durchgestrichener Preis, grüner Preis), handschriftlicher Pfeil + Notiz
-5. ZEITUNGS-MELDUNG — Serif-Headline im Newspaper-Stil ("Der Finanzbote"), Subhead, Foto-Platzhalter-Block, Body-Text
-6. 3-FRAGEN-QUIZ — Top-Badge "3 FRAGEN CHECK", Headline, nummerierte Fragen mit Checkmark-Spalte rechts
-7. GOOGLE-AUTOCOMPLETE — Search-Input mit Dropdown-Suggestions die einen Pain-Point verraten
-8. REDDIT-NATIVE — r/Finanzen-Header, Post-Title als Frage, Body wie ein AMA-Antwort-Snippet
-9. PHOTO-BIG-HEADLINE — Foto full-bleed (ganzflächig 1080×1080) mit dunklem Gradient-Overlay unten, eine FETTE Headline als Overlay (Inter-Black oder Playfair-Bold, 90-150pt), KEIN Body, KEIN Highlight-Element. Nur: ANZEIGE-Label, Foto, Headline, CTA-Button. Maximum-Impact-Minimalism. Beispiele: "Dein PKV-Beitrag halbieren." über Foto einer nachdenklichen Frau am Küchentisch — sonst nichts.
-10. COMIC-ILLUSTRATION — AI-generierte Comic-Bild via {{COMIC:keywords}} als zentrales visuelles Element (50-80% der Fläche), oben oder daneben eine kurze Headline, dezenter CTA unten. Playful, designed, abstrakt-konzeptuell. Beispiel: Comic einer überraschten Person mit Geldscheinen die wegfliegen, Headline „824€/Monat — und keiner spricht drüber?".
+1. BIG-NUMBER — Riesige Zahl/Prozent als Hero ("−38%", "73.800€"), kurze Erklär-Zeile drunter. Prompt-Bsp: "Editorial poster with a huge '-38%' rendered in 600pt black Inter Black, centered. Below in 60pt: 'Dein PKV-BEITRAG'. Cream background #FAF6F0. Minimalist, magazine-style, square 1:1."
 
-═══ NATIVE-UGC-FAMILIE (sehr wichtig — wirkt wie iPhone-Screenshot, NICHT wie Ad) ═══
-Diese Mechaniken sollen aussehen wie organischer User-Content auf TikTok/
-Instagram-Reels: kein Logo, kein "ANZEIGE"-Label sichtbar oben (nur subtil),
-keine Designer-Typo, keine Farb-Akzente. Foto sieht selbst-gemacht aus,
-einziges grafisches Element ist die signature **CAPTION-BOX** unten.
+2. STOPP-INTERRUPT — Pattern-Break, rote Fläche, kurze Warnung. Prompt-Bsp: "Bold poster, solid red background #E53935. Massive white text 'STOPP.' centered in bold sans-serif. Below: 'PKV-Beitrag über 700€?' in 80pt white. Bottom: small yellow CTA button text 'Jetzt prüfen →'. 1:1 square."
 
-CAPTION-BOX (das visuelle Wiedererkennungsmerkmal aller UGC-Creatives):
-- Schwarzer rounded-rectangle, position: absolute, bottom: ~30-60px, links/rechts ~30-50px Abstand
-- Padding ~24-32px horizontal, ~20-26px vertikal, border-radius: 14-20px
-- Weißer Text in Inter / -apple-system, font-weight: 900, font-size: 48-64pt (variabel je Textlänge)
-- line-height: 1.15, letter-spacing: -0.01em
-- Text MAX 2-3 Zeilen, anti-aliased white auf solid black
-- Beispiel-Texte aus echten UGC-Ads:
-  „Der größte Fehler beim Wechsel in die PKV."
-  „Gleiche Leistung, gleicher Anbieter. Aber 240€ weniger."
-  „Wenn dein Beitrag unter 700€ liegt, wisch weiter."
+3. NEWSPAPER-MOCKUP — Editorial print-look. Prompt-Bsp: "Photorealistic mockup of a German newspaper page titled 'Der Finanzbote', serif headline 'Wer mehr als 700 Euro PKV zahlt, sollte das wissen.' Black-and-white grainy photo of a 45-year-old man at a kitchen table. Newspaper-print texture, off-white #F7F4EE. 1:1 square."
 
-UGC-MECHANIKEN:
+4. KONTO-VERGLEICH-MOCKUP — Browser-/App-Screenshot mit Tarif-Vergleich. Prompt-Bsp: "Photorealistic screenshot of a German insurance comparison app. White card with two columns: left 'Heute: 824 €/Monat' in red strikethrough, right 'Nach Wechsel: 412 €' in green. Headline above: 'Dein PKV-Beitrag, neu gerechnet'. Light grey background. Handwritten arrow with text '-50%' in orange marker. 1:1 square."
 
-11. UGC-WHITEBOARD — Full-bleed-Foto eines Whiteboards (Unsplash: "whiteboard office empty" o. ä.). Optional: handgeschriebene PKV-Aussage als CSS-Overlay über der Whiteboard-Fläche mit Caveat- oder Permanent-Marker-Font (size ~80-110pt, color: #1a1a1a oder echtes Marker-Schwarz). Wenn die Whiteboard-Schrift nicht direkt zum Hook passt, einfach das leere Whiteboard zeigen — die Caption-Box trägt die Botschaft. Bei Bedarf ein angedeuteter Hand-mit-Marker als zweites Unsplash-Asset.
+5. UGC-SELFIE-CAPTION — wirkt wie iPhone-Screenshot. Prompt-Bsp: "Authentic phone selfie of a casual 38-year-old German woman in her home kitchen, natural light, slightly imperfect framing — looks like organic social content, not a professional shoot. At the bottom: a solid black rounded rectangle caption box with white bold Inter text 'Mein PKV-Beitrag war 824 €. Jetzt 412 €.'. Full-bleed, 1:1 square."
 
-12. UGC-DESK-DOCUMENTS — Full-bleed-Foto eines Schreibtischs mit Papieren / Briefen / Rechnungen (Unsplash: "desk documents paper" / "letters table"). Caption-Box unten. Optional: kleines farbiges Marker-Highlight (CSS-Streifen) über einem Wort/einer Zahl im Brief, simuliert Marker-Hervorhebung — Pink/Gelb/Grün, 60% opacity, leicht schief gedreht (rotate: -2deg).
+6. UGC-WHITEBOARD — Foto eines Whiteboards mit handgeschriebener PKV-Aussage. Prompt-Bsp: "Photo of an empty office whiteboard. Handwritten in black marker (Caveat-style font): 'PKV wechseln OHNE Anbieterwechsel = §204 VVG'. Slightly imperfect, natural marker strokes. Bottom: black caption box with white bold text 'Bis zu 50% weniger Beitrag. Gleicher Anbieter.'. 1:1 square."
 
-13. UGC-SELFIE-NOTE — Selfie-Foto eines normalen Menschen 30-50J (Unsplash: "selfie casual man home", "woman selfie phone"). Optional: über das Foto ein angedeutetes Notizpapier-Element mit handgeschriebener PKV-Frage. Caption-Box unten. Wirkt wie Creator-Reel.
+7. UGC-DESK-DOCUMENTS — Schreibtisch mit Briefen/Rechnungen. Prompt-Bsp: "Overhead photo of a wooden desk with several insurance letters and bills. One bill is highlighted with a pink marker streak over the amount '824 €'. Coffee mug at the corner, natural daylight. Bottom: black caption box with white bold text 'Dein PKV-Beitrag — und warum er sinken könnte.'. 1:1 square."
 
-14. UGC-PHONE-SCREENSHOT — Sieht aus wie iPhone-Screenshot, dunkler oder heller Background (background-color, kein Foto nötig), Status-Bar oben (Caveat-Text "21:47", Mini-Antennen-SVG, Battery-SVG), Notification oder Card-UI in der Mitte. Caption-Box unten. Funktioniert ähnlich wie WhatsApp-Chat-Mockup aber ohne Foto.
+8. PHOTO-BIG-HEADLINE — Foto full-bleed mit fetter Overlay-Headline. Prompt-Bsp: "Editorial portrait of a 45-year-old German man at his kitchen table, thoughtful expression, soft window light. Dark gradient overlay at the bottom. Massive white headline 'Anbieter bleibt. Tarif wechselt.' rendered in 130pt Inter Black, bottom-aligned. Small CTA tag 'Jetzt prüfen →'. 1:1 square."
 
-15. UGC-CLOSE-UP-PERSON — Halbportrait einer Person (Unsplash: "man portrait honest", "woman thinking close-up"), KEINE designed-Elemente, einziges Overlay ist die Caption-Box unten. Pain-Story-Geeignet.
+9. COMIC-ILLUSTRATION — flach-comicstil, abstrahiertes Konzept. Prompt-Bsp: "Flat comic illustration in modern editorial style, bold black outlines, limited color palette (#FFD84D, #E53935, off-white #FAF6F0). A surprised middle-aged man at a desk watches euro coins flying away from his wallet. Above in 100pt bold sans-serif: '824 € — jeden Monat?'. Below in 50pt: 'Dein PKV-BEITRAG'. 1:1 square."
 
-WANN UGC, WANN POLISHED PHOTO?
-- UGC bei Trust/Curiosity-Hooks ("Der größte Fehler...", "Wenn dein Beitrag...")
-- UGC bei Story-Mode (selber Mann, eigenes Erlebnis, Authentizität wichtig)
-- Polished Photo wenn Brand-Vertrauen wichtig (Newspaper-Mockup, Brand-Photo-Hero)
+10. HIGHLIGHTER-HOOK — schwarze Headline mit gelbem Marker-Highlight. Prompt-Bsp: "Minimalist editorial poster, cream background #FAF6F0. Black serif headline 'Diese 3 Sätze kosten dich jedes Jahr 4.000 € PKV-Beitrag.' centered, with yellow highlighter streak (rotated -2°) over '4.000 € PKV-Beitrag'. Small CTA at the bottom 'Jetzt prüfen →'. 1:1 square."
 
-VERBOTEN bei UGC:
-- KEIN designed Gradient, KEIN Backdrop-Blur, KEIN Drop-Shadow auf Texten
-- KEIN farbiges Brand-CTA-Button — der CTA ist Teil der Caption-Box oder gar nicht sichtbar (Facebook macht den CTA-Button selbst)
-- KEINE Custom-Typo außerhalb der Caption-Box
-- KEIN "ANZEIGE"-Label groß oben — nur sehr klein und unauffällig oder weglassen
-
-═══ HTML-CONSTRAINTS ═══
-- Exakt 1080×1080 Pixel
-- Eine einzige <html>-Datei, alle CSS inline im <style>
-- Google Fonts via <link rel="stylesheet"> erlaubt (Inter, Playfair Display, Crimson Pro, IBM Plex Sans, Caveat für Handschrift)
-- Keine JS, kein <script>
-- SVG inline für Icons/Pfeile/Checkmarks ist explizit erwünscht
-- Border-radius, box-shadow, backdrop-filter erlaubt
-- Body: { margin:0; padding:0; width:1080px; height:1080px; overflow:hidden; font-family:... }
-- Saubere Hierarchie: Hero-Element füllt mindestens 70% einer Achse (siehe CANVAS-FÜLLUNG)
-- Top-Right: kleines "ANZEIGE"-Label in grau (10px, uppercase, letter-spacing)
-- Bottom: CTA-Button (volle Breite oder rechts), klar erkennbar mit Pfeil →
-
-═══ BILDMATERIAL ZWEI WEGE — Unsplash (Foto) ODER Comic (AI) ═══
-
-Du hast zwei verschiedene Bild-Quellen je nach Stil-Ziel:
-
-(A) ECHTE FOTOS via {{UNSPLASH:keywords}} — für native, emotionale,
-    realistische Szenen (Küche, Café, Büro, Mensch).
-
-(B) COMIC-ILLUSTRATIONEN via {{COMIC:keywords}} — für playful, klar
-    abstrahierte, designed wirkende Konzepte (Charakter mit Schock-
-    Gesicht, abstrakte Metapher, Erklär-Illustration, Stilisierte Szene).
-    Wird AI-generiert mit Comic-Buch-Stil (flache Farben, bold outlines).
-
-WANN COMIC:
-- Wenn die Mechanic playful ist (z.B. „Aha-Moment"-Illustration)
-- Wenn ein abstraktes Konzept visualisiert werden soll (Geld fließt weg,
-  Erleuchtung, Verzweiflung)
-- Wenn ein Foto zu generisch/stock wirken würde
-- Für Comic-Strip-Style Single-Panel-Creatives
-
-WANN FOTO:
-- Pain-Point-Storys mit echten Menschen-Emotionen
-- Authentische Lifestyle-Szenen
-- Brand-Photo Hero
-- Newspaper-Mockup
-
-═══ UNSPLASH-FOTOS — {{UNSPLASH:keywords}} ═══
-Für Creatives mit Foto-Anteil (Brand-Photo, Person-Quote, Newspaper-Mockup,
-Lifestyle-Hero, Photo-Big-Headline): nutze den Platzhalter
-
-  {{UNSPLASH:keywords}}
-
-als img-src oder background-image-URL. Server löst das vor dem Rendern gegen
-ein echtes Unsplash-Foto auf.
-
-QUERY-REGELN (sehr wichtig, sonst kommt KEIN Foto zurück):
-- Maximal 2-3 Keywords, englisch, einfach. KEINE langen Adjektiv-Ketten.
-- ✅ GUT: "woman kitchen", "german man office", "older couple home", "businesswoman laptop"
-- ❌ SCHLECHT: "professional woman 40 office laptop relieved smiling" (zu spezifisch, Unsplash findet nichts)
-- ❌ SCHLECHT: "concerned man 55 reading insurance letter at home" (gleiche Falle)
-- Bei Personen: Geschlecht + 1 Setting reicht ("woman kitchen", "man office")
-- Bei Lifestyle: 1-2 Wörter Setting ("home office", "german cafe", "city dusk")
-
-  background-image: url({{UNSPLASH:german woman kitchen}});
-  <img src="{{UNSPLASH:older man office}}">
-
-EMPFOHLEN photo-getragene Mechaniken (mindestens 1 von 3-5 Varianten sollte
-Foto nutzen):
-- Brand-Photo Hero: Großes Foto links/rechts, Headline + Stat-Overlay daneben
-- Person-Quote: Foto einer Person + Quote im Vordergrund mit Anführungszeichen
-- Lifestyle-Background: Foto als ganzflächiger Background, dunkler Overlay
-  (rgba(0,0,0,0.4-0.7)), weiße Headline darüber
-- Newspaper-Mockup: Foto-Block neben Serif-Headline wie ein Zeitungsartikel
-
-VERBOTEN: generische "Business-Handshake-Stock-Photos", Smiling-Stockfoto-
-Models in Anzug. Stattdessen: konkrete Alltags-Situationen (Küche, Café,
-Schreibtisch, Spaziergang) mit normalen Menschen 30-55 Jahre.
-
-═══ COMIC-ILLUSTRATIONEN — {{COMIC:keywords}} ═══
-Pattern wie Unsplash, gleiche Verwendung als img-src oder background-image:
-
-  <img src="{{COMIC:woman shocked looking at bill, modern flat illustration}}">
-  background-image: url({{COMIC:man with money flying away}});
-
-QUERY-REGELN:
-- 3-6 englische Beschreibungs-Wörter, KEINE Style-Modifier (die hängt der Server an)
-- Visuelles Konzept beschreiben: Subjekt + Situation/Emotion
-- NIEMALS Elemente beschreiben, die TEXT enthalten würden — Flux rendert
-  Buchstaben unzuverlässig (oft Buchstabensalat). Also KEINE Schilder,
-  KEINE Sprechblasen mit Inhalt, KEINE Geldscheine mit Aufdrucken, KEINE
-  beschrifteten Briefe, KEINE Computer-Screens mit Text, KEINE Banner,
-  KEINE Logos. Sämtlicher Text gehört IN DAS HTML drumherum (Headline,
-  Sub-Headline, Caption-Box), NICHT in das AI-generierte Bild.
-- ✅ GUT: "woman shocked at desk", "man celebrating raised arms", "head with lightbulb"
-- ✅ GUT: "wallet with euros flying away" (Euros okay, kein Aufdruck nötig)
-- ✅ GUT: "two people comparing two papers" (Papiere okay solang nicht beschrieben)
-- ❌ SCHLECHT: "woman holding sign that says PKV" — Schilder mit Text
-- ❌ SCHLECHT: "calendar showing date" — Datum würde rendern
-- ❌ SCHLECHT: "letter from insurer with €850 amount" — Brief mit Text
-- ❌ SCHLECHT: "comic illustration in flat style of …" — Style wird automatisch angehängt
-- ❌ SCHLECHT: nur ein Wort wie "shock" — zu wenig Info für Bild-Generation
-
-ASPECT-RATIO: immer quadratisch (1:1), für 1080×1080 Canvas.
-
-KOMPOSITION im HTML:
-- Comic-Bilder funktionieren gut als HERO mit Headline drüber oder daneben
-- Background: helles, neutrales (Cream / Soft-Yellow) damit der Comic
-  pops, NICHT mit dunklem Foto-Overlay arbeiten (das ist für Fotos)
-- Padding um den Comic ist okay — Comic-Bilder haben oft selbst Whitespace
-- KEINE Text-Overlay-Boxes ÜBER dem Comic-Bild (verdeckt die Illustration)
-
-═══ FARB-PALETTEN (eine pro Variante wählen) ═══
-- Cream/Black: Background #FAF6F0, Text #0E0E0E, Accent-Yellow #FFD84D
-- Dark/Cream: Background #0E0E0E, Text #FAF6F0, Accent-Yellow #FFD84D
-- Stopp-Red: Background #E53935, Text white, Body-Accent #FFD84D
-- Newspaper: Background #F7F4EE, Text #1C1C1C, Serif-Headlines
-- Konto-Mockup: Background #ECEEF1 (Browser-Grau), Card #FFFFFF, Akzent-Grün #06A77D
+═══ CANVAS / FORMAT ═══
+- Alle Creatives 1:1 quadratisch, optimiert für 1024×1024 (Meta-Feed)
+- Full-bleed: kein weißer Rand außenrum
+- Hero-Element füllt mindestens 70% der Fläche
+- Lesbarkeit auf Smartphone-Feed muss in 1.5 Sekunden gegeben sein
+- Maximal 4 unterschiedliche Text-Blöcke im Bild (Hero-Headline, Sub-Headline, CTA-Label, kleines ANZEIGE-Tag)
 
 ═══ OUTPUT-FORMAT ═══
 Antworte mit einer Sequenz von <variant>…</variant>-Blöcken, EIN Block pro
@@ -370,19 +154,13 @@ Creative. KEIN Markdown, KEIN JSON, KEIN Fließtext drumherum. Format exakt:
 Facebook-Primary-Text über dem Bild (short / medium / long — variiere über die Varianten).
 Fließtext mit Absätzen via doppelter Newline. KEIN Markdown, KEINE Listen.
 </ad_text>
-<creative_html>
-<!DOCTYPE html>
-<html lang="de">
-…vollständiges HTML-Dokument hier, inkl. <html>…</html>-Tags, unescaped…
-</html>
-</creative_html>
-</variant>
+<image_prompt>
+Englischer gpt-image-1-Prompt mit deutschen Text-Overlays in Anführungszeichen.
+Folge der Struktur Composition → Style → Subject → Text overlays → Color/Typo → Format.
+</image_prompt>
+</variant>`;
 
-Wichtig: NIEMALS </creative_html> innerhalb des HTML-Contents schreiben — der äußere Tag ist die einzige Closing-Marke.`;
-
-// Kampagnen-spezifische Briefings. Werden je nach campaignKey in den
-// User-Prompt eingehängt, damit Claude die Mechanik der jeweiligen Kampagne
-// kennt — nicht generisch "PKV" rät.
+// Kampagnen-spezifische Briefings.
 const CAMPAIGN_CONTEXT: Record<string, string> = {
   Wechsel: `═══ KAMPAGNEN-KONTEXT: WECHSEL ═══
 ZIELGRUPPE:
@@ -395,17 +173,17 @@ PAIN-POINTS:
 - "Ich bekomme die gleichen Leistungen wie vor 5 Jahren, zahle aber 40% mehr"
 - "Eine Kündigung verliert meine Altersrückstellungen — also bleibe ich"
 
-KEY-INSIGHT (das ist der eigentliche Hook):
+KEY-INSIGHT (der eigentliche Hook):
 Interner Tarifwechsel beim GLEICHEN Anbieter ist gesetzlich möglich (§204 VVG).
 KEINE neue Gesundheitsprüfung, Altersrückstellungen bleiben erhalten, alte
 Konditionen müssen vom Versicherer angeboten werden.
 
-PROMISE (mit echten Zahlen arbeiten):
+PROMISE (mit echten Zahlen):
 - Bis zu 50% Beitrags-Ersparnis
 - Beispiel-Größenordnungen: 824€ → 412€, 950€ → 520€, 720€ → 380€
 - Spar-Hochrechnung: 400€/Monat × 12 = 4.800€/Jahr × 20 Jahre = 96.000€
 
-USPs (das macht das Angebot stark):
+USPs:
 - Versicherung bleibt — kein neuer Vertrag, keine Gesundheitsprüfung
 - Altersrückstellungen bleiben vollständig erhalten
 - Funktioniert bei JEDEM PKV-Anbieter
@@ -416,94 +194,61 @@ VERMEIDE bei Wechsel:
 - "Kündigung" / "wechseln Sie den Anbieter" → falsches Mental Model
 - Allgemeine Spar-Versprechen ohne konkrete Zahl
 
-PASSENDE HOOKS (Beispiele zum Inspirieren, NICHT 1:1 kopieren):
+PASSENDE HOOKS (Beispiele):
 - "Dein PKV-Beitrag: 824€/Monat. Geht auch 412€."
 - "PKV über 700€? Dann zahlst du wahrscheinlich zu viel."
 - "Anbieter bleibt. Tarif wechselt. −50%."
 - "§204 VVG. Das Wort, das deinen PKV-Beitrag halbiert."
-- "Kein Anbieter-Wechsel. Keine Gesundheitsprüfung. Bis −50%."
-
-PASSENDE FOTO-MOTIVE (für Brand-Photo / Person-Quote / Lifestyle-Mechaniken):
-- {{UNSPLASH:german woman kitchen}}
-- {{UNSPLASH:man reading letter}}
-- {{UNSPLASH:older couple documents}}
-- {{UNSPLASH:woman office laptop}}
-- {{UNSPLASH:man home thinking}}`,
+- "Kein Anbieter-Wechsel. Keine Gesundheitsprüfung. Bis −50%."`,
 
   Neugeschäft: `═══ KAMPAGNEN-KONTEXT: NEUGESCHÄFT ═══
 ZIELGRUPPE:
 - Aktuell GESETZLICH versichert (GKV), NICHT PKV
 - Einkommen ÜBER der Jahresarbeitsentgeltgrenze (JAEG, 2026: ~73.800€/Jahr) — ODER selbstständig, ODER Beamter
-- Zahlen oft den GKV-Höchstbeitrag (2026: ~1.000€/Monat inkl. Pflege)
-- Genervt von: steigenden GKV-Beiträgen, vollen Wartezimmern, langen Terminen, Mehrbett-Zimmer im Krankenhaus, keinem Chefarzt
+- Zahlen oft den GKV-Höchstbeitrag (2026: ~1.261€/Monat inkl. Pflege)
+- Genervt von: steigenden GKV-Beiträgen, vollen Wartezimmern, Mehrbett-Zimmer, keinem Chefarzt
 
 PAIN-POINTS:
 - "Ich zahle 1.261€ GKV-Höchstbeitrag, bekomme aber die gleichen Leistungen wie ein 22-jähriger Azubi"
-- "Termin beim Facharzt: 3 Monate Wartezeit. Privatpatienten: nächste Woche."
-- "Ich verdiene gut, könnte längst raus aus der GKV — aber niemand erklärt mir die PKV-Optionen"
-- "Subventioniere ich gerade die GKV-Solidargemeinschaft auf meine Kosten?"
+- "Termin beim Facharzt: 3 Monate. Privatpatienten: nächste Woche."
+- "Ich verdiene gut, könnte längst raus aus der GKV — aber niemand erklärt mir die Optionen"
 
-KEY-INSIGHT (das ist der eigentliche Hook):
-Wer ÜBER der JAEG verdient (oder selbstständig/Beamter ist), kann die GKV
-verlassen und in die PKV wechseln. Bei jungen, gesunden Verdienern oft
-deutlich GÜNSTIGER als der GKV-Höchstbeitrag — bei DEUTLICH besseren
-Leistungen (Chefarzt, Einzelzimmer, kürzere Wartezeiten, freie Arztwahl).
+KEY-INSIGHT:
+Wer ÜBER der JAEG verdient (oder SE/Beamter ist), kann die GKV verlassen
+und in die PKV wechseln. Bei jungen, gesunden Verdienern oft deutlich
+günstiger als der GKV-Höchstbeitrag — bei DEUTLICH besseren Leistungen.
 
-PROMISE (mit echten Zahlen arbeiten):
-- GKV-Höchstbeitrag 2026: ~1.261€/Monat (inkl. Pflegeversicherung, exakt 1.261,31€)
+PROMISE:
+- GKV-Höchstbeitrag 2026: ~1.261€/Monat (inkl. Pflege)
 - PKV bei 35-jährigem Angestellten/Selbstständigem: oft 380-550€/Monat
 - Spar-Größenordnung: 700-880€/Monat = 8.400-10.560€/Jahr
-- Plus: deutlich bessere Leistungen
-- Steuerlich: PKV-Beiträge sind als Vorsorgeaufwendungen absetzbar
 
-USPs (das macht das Angebot stark):
+USPs:
 - Chefarzt-Behandlung als Standard
 - Einzel- oder Zweibettzimmer im Krankenhaus
-- Termine in Tagen statt Wochen (Privatpatient-Privileg)
+- Termine in Tagen statt Wochen
 - Freie Arzt- und Klinikwahl
-- Heilpraktiker, Osteopathie, alternative Medizin meist mit drin
-- Beitrag richtet sich nach Gesundheit + Alter, NICHT nach Einkommen (bei jung+gesund = sehr günstig)
-
-VORAUSSETZUNGEN nennen:
-- Einkommen über JAEG (2026: 73.800€) ODER selbstständig ODER Beamter ODER Student
-- Gesundheitsprüfung erforderlich (kein Hindernis bei normaler Gesundheit)
 
 VERMEIDE bei Neugeschäft:
-- "Tarifwechsel" / "interner Wechsel" → das ist WECHSEL-Kampagne, nicht Neugeschäft
-- "Anbieter bleibt" → falsches Mental Model (User ist noch GAR NICHT in PKV)
-- "Bis zu 50% Ersparnis" → das ist Wechsel-Promise. Hier: konkrete €-Zahl statt Prozent
-- "Kostenlos prüfen" / "Spitzentarif"
-- Ziel-Vermischung: nicht alle GKV-Versicherten ansprechen, nur die über JAEG / SE / Beamte
+- "Tarifwechsel" / "interner Wechsel" → das ist Wechsel-Kampagne
+- "Anbieter bleibt" → User ist noch GAR NICHT in PKV
+- "Bis zu 50% Ersparnis" → das ist Wechsel-Promise. Hier konkrete €-Zahl
 
-PASSENDE HOOKS (Beispiele zum Inspirieren, NICHT 1:1 kopieren):
+PASSENDE HOOKS (Beispiele):
 - "GKV-Höchstbeitrag: 1.261€. PKV mit 35: 412€."
 - "Verdienst du über 73.800€? Du musst NICHT in der GKV bleiben."
 - "1.261€/Monat GKV — und du wartest 3 Monate auf den Termin?"
-- "Selbstständig? Dann zahlst du GKV freiwillig. Nicht clever."
-- "Privatpatient sein kostet weniger als du denkst — wenn du richtig wählst."
-- "73.800€+ und immer noch gesetzlich? Du subventionierst 22-jährige Azubis."
-
-PASSENDE FOTO-MOTIVE (für photo-Mechaniken):
-- {{UNSPLASH:young businessman laptop}}
-- {{UNSPLASH:woman office laptop}}
-- {{UNSPLASH:freelancer home office}}
-- {{UNSPLASH:doctor waiting room}}
-- {{UNSPLASH:hospital waiting}}
-- {{UNSPLASH:man home thinking}}`,
+- "Selbstständig? Dann zahlst du GKV freiwillig. Nicht clever."`,
 };
 
 // ─── Phase 1: Konzept-Brainstorm ─────────────────────────────────────
-// Bevor wir HTML rendern, lässt Claude in einem Call N distinkte Konzepte
-// brainstormen. Das zwingt zur Diversität (alle Konzepte sind im selben
-// Output sichtbar) und verhindert die Konvergenz-Pattern, die bei einem
-// einzigen Multi-Variante-Call entstehen.
 
 type Concept = {
-  hookAngle: string;       // Pain | Curiosity | Promise | Story | Outrage | Insight
-  mechanic: string;        // Big-Number | STOPP | Highlighter | Konto-Mockup | Reddit-Native | ...
+  hookAngle: string; // Pain | Curiosity | Promise | Story | Outrage | Insight
+  mechanic: string; // Big-Number | STOPP | Newspaper-Mockup | UGC-Selfie | …
   visualStyle: "photo" | "ugc" | "typography" | "comic";
-  copyLength: "short" | "medium" | "long"; // betrifft adText-Länge
-  description: string;     // 1-2 Sätze konkrete Konzept-Skizze
+  copyLength: "short" | "medium" | "long";
+  description: string;
 };
 
 async function brainstormConcepts(brief: CreativeBrief): Promise<Concept[]> {
@@ -512,13 +257,6 @@ async function brainstormConcepts(brief: CreativeBrief): Promise<Concept[]> {
 
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
 
-  // Pro Slot expliziter visualStyle. VIER Buckets:
-  //   photo       = polished Stock-Foto (Brand-Photo-Hero etc, Unsplash)
-  //   ugc         = native-Look Foto + signature schwarze Caption-Box (UGC-*)
-  //   comic       = AI-generierte Illustration (Replicate Flux)
-  //   typography  = rein textbasiert, kein Bild
-  // Verteilung N>=4: ~20% photo, ~30% ugc, ~20% comic, ~30% typography
-  // (UGC stärker gewichtet — performt aktuell am besten auf Meta).
   type Style = "photo" | "ugc" | "comic" | "typography";
   const slotStyles: Style[] = (() => {
     if (brief.count === 1) {
@@ -556,7 +294,7 @@ async function brainstormConcepts(brief: CreativeBrief): Promise<Concept[]> {
     .map((s, i) => `  Konzept ${i + 1}: visualStyle = "${s}"`)
     .join("\n");
 
-  const userPrompt = `Du brainstormst ${brief.count} ${brief.count === 1 ? "Konzept" : "distinkte Konzepte"} für Meta-Ad-Creatives zur ${brief.campaignKey}-Kampagne.
+  const userPrompt = `Du brainstormst ${brief.count} ${brief.count === 1 ? "Konzept" : "distinkte Konzepte"} für Meta-Ad-Creatives zur ${brief.campaignKey}-Kampagne. Jedes Creative wird mit gpt-image-1 (OpenAI Images 2.0) gerendert — du brainstormst nur die Konzepte, der Image-Prompt wird in der nächsten Stufe geschrieben.
 
 ${campaignContext}
 
@@ -565,26 +303,25 @@ ${brief.tone ? `TONE: ${brief.tone}` : ""}
 
 WICHTIG: maximale Varianz zwischen den Konzepten. Jedes Konzept braucht:
 - ANDEREN hookAngle (Pain ≠ Curiosity ≠ Promise ≠ Story ≠ Outrage ≠ Insight)
-- ANDERE mechanic (keine zwei Big-Number-Konzepte, keine zwei STOPP-Konzepte)
+- ANDERE mechanic
 - ANDEREN copyLength wenn möglich (mische short/medium/long)
 
 VISUAL-STYLE PRO SLOT (FEST VORGEGEBEN, NICHT ABWEICHEN):
 ${slotInstructions}
 
-Für "photo"-Slots: wähle eine polierte foto-getragene Mechanic (Brand-Photo-Hero, Person-Quote, Lifestyle-Background, Newspaper-Mockup, Photo-Big-Headline). Das Konzept MUSS ein {{UNSPLASH:…}}-Foto nutzen.
-Für "ugc"-Slots: wähle EINE UGC-Mechanic (UGC-Whiteboard, UGC-Desk-Documents, UGC-Selfie-Note, UGC-Phone-Screenshot, UGC-Close-Up-Person). Das Konzept MUSS ein {{UNSPLASH:…}}-Foto nutzen UND die signature schwarze Caption-Box unten haben. Wirkt wie iPhone-Screenshot, nicht wie Designer-Ad.
-Für "comic"-Slots: wähle eine Comic-Mechanic (Comic-Illustration, Comic-Big-Headline, Comic-Strip-Single-Panel). Das Konzept MUSS ein {{COMIC:…}}-Element nutzen (AI-generierte Illustration).
-Für "typography"-Slots: wähle eine typografische Mechanic (Big-Number, STOPP-Interrupt, Highlighter-Hook, Konto-Mockup, 3-Fragen-Quiz, Google-Autocomplete, Reddit-Native, SMS/WhatsApp-Mockup, Rechnungs-Closeup, Brief-vom-Versicherer). KEIN Bild-Platzhalter.
+Für "photo"-Slots: wähle eine foto-getragene Mechanic (Photo-Big-Headline, Newspaper-Mockup, Editorial-Portrait, Lifestyle-Hero).
+Für "ugc"-Slots: wähle eine UGC-Mechanic (UGC-Selfie-Caption, UGC-Whiteboard, UGC-Desk-Documents, UGC-Close-Up-Person). Wirkt wie iPhone-Screenshot.
+Für "comic"-Slots: wähle Comic-Illustration (flat-comic editorial style, bold outlines, limited palette).
+Für "typography"-Slots: typo-Mechanic (Big-Number, STOPP-Interrupt, Highlighter-Hook, Konto-Vergleich-Mockup, Search-Bar-Mockup).
 
 PKV-ANCHOR (PFLICHT):
-Jedes Konzept MUSS unmissverständlich PKV/Private-Krankenversicherung-Kontext setzen. Abstrakte Hooks wie nur "−38%" oder "STOPP." reichen NICHT — die Description muss klar machen wo "PKV", "PKV-Beitrag", "Krankenversicherung" oder "Tarif" sichtbar wird.
+Jedes Konzept MUSS unmissverständlich PKV/Private-Krankenversicherung-Kontext setzen. Die Description macht klar, wo "PKV", "PKV-Beitrag" oder "Krankenversicherung" als großer Text im Bild auftaucht.
 
 VERFÜGBARE MECHANIKEN:
-- Photo-Mechaniken (echte Fotos via {{UNSPLASH:…}}): Brand-Photo-Hero / Person-Quote / Lifestyle-Background / Newspaper-Mockup / Photo-Big-Headline
-- Native-UGC-Mechaniken (Foto + signature schwarze Caption-Box, wirkt wie iPhone-Screenshot): UGC-Whiteboard / UGC-Desk-Documents / UGC-Selfie-Note / UGC-Phone-Screenshot / UGC-Close-Up-Person
-- Comic-Mechaniken (AI-generiert via {{COMIC:…}}): Comic-Illustration / Comic-Big-Headline / Comic-Strip-Single-Panel
-- Typo-Mechaniken: Big-Number / STOPP-Interrupt / Highlighter-Hook / Konto-Vergleich-Mockup / Zeitungs-Meldung / 3-Fragen-Quiz / Google-Autocomplete / Reddit-Native / SMS-Screenshot / WhatsApp-Chat-Mockup / Rechnungs-Closeup / Brief-vom-Versicherer
-
+- Photo: Photo-Big-Headline / Newspaper-Mockup / Editorial-Portrait / Lifestyle-Hero
+- UGC: UGC-Selfie-Caption / UGC-Whiteboard / UGC-Desk-Documents / UGC-Close-Up-Person / UGC-Phone-Screenshot
+- Comic: Comic-Illustration / Comic-Big-Headline
+- Typo: Big-Number / STOPP-Interrupt / Highlighter-Hook / Konto-Vergleich-Mockup / Search-Bar-Mockup / 3-Fragen-Quiz / Brief-vom-Versicherer-Mockup
 
 OUTPUT (strict, NUR <concept>-Blöcke, kein Drumherum, EXAKT in der Reihenfolge oben):
 
@@ -593,7 +330,7 @@ OUTPUT (strict, NUR <concept>-Blöcke, kein Drumherum, EXAKT in der Reihenfolge 
 <mechanic>Konto-Vergleich-Mockup</mechanic>
 <visualStyle>typography</visualStyle>
 <copyLength>medium</copyLength>
-<description>GKV-vs-PKV Konto-Vergleich-Screenshot mit Browser-Chrome, Headline "Dein PKV-Beitrag heute vs. nach Wechsel". 824€ → 412€. Handschriftlicher Pfeil "−50%". AdText: 3-Satz-Story einer Wechslerin.</description>
+<description>App-Screenshot-Mockup mit GKV-vs-PKV-Vergleich, Headline "Dein PKV-Beitrag heute vs. nach Wechsel". 824€ → 412€. Handgemalter Pfeil "−50%". AdText: 3-Satz-Story einer Wechslerin.</description>
 </concept>`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -620,8 +357,6 @@ OUTPUT (strict, NUR <concept>-Blöcke, kein Drumherum, EXAKT in der Reihenfolge 
     throw new Error(`Brainstorm enthielt keine <concept>-Blöcke: ${text.slice(0, 300)}…`);
   }
 
-  // Hard-enforce: visualStyle MUSS dem Slot-Schema folgen. Falls Claude die
-  // Vorgabe ignoriert hat, override (Execution-Phase adaptiert dann das HTML).
   const enforced = concepts.slice(0, brief.count).map((c, i) => ({
     ...c,
     visualStyle: slotStyles[i] ?? c.visualStyle,
@@ -665,7 +400,7 @@ function parseConceptBlocks(text: string): Concept[] {
   return out;
 }
 
-// ─── Phase 2: Execution pro Konzept ──────────────────────────────────
+// ─── Phase 2: Execution pro Konzept (Texte + Image-Prompt) ──────────
 
 async function generateOneCreative(
   brief: CreativeBrief,
@@ -675,29 +410,18 @@ async function generateOneCreative(
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
 
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
-  const photoLine =
+  const styleHint =
     concept.visualStyle === "photo"
-      ? `FOTO-PFLICHT: Dieses Creative MUSS GENAU EIN {{UNSPLASH:englische keywords}}-Element enthalten, entweder als <img src="{{UNSPLASH:…}}"> ODER als background-image: url({{UNSPLASH:…}}). Wenn du keinen Platzhalter im HTML hast, ist das Creative ungültig. Die Foto-Komposition soll der Mechanic entsprechen.`
+      ? `PHOTO-PFLICHT: Der image_prompt MUSS eine fotografische Szene beschreiben (photorealistic, editorial portrait, lifestyle), KEIN Cartoon, KEINE Illustration. Personen MÜSSEN deutsch aussehen (alter, kleidung, setting authentisch europäisch).`
       : concept.visualStyle === "ugc"
-        ? `UGC-PFLICHT (alle drei Punkte MÜSSEN umgesetzt sein):
-1. Full-bleed Foto-Background via {{UNSPLASH:englische keywords}} — Foto füllt das gesamte 1080×1080-Canvas, position:absolute oder background-image, kein weißer Rand außenrum.
-2. Signature schwarze CAPTION-BOX unten (das Wiedererkennungsmerkmal aller UGC-Creatives) — exakt diese CSS-Eigenschaften:
-   position: absolute; bottom: 30-60px; left: 30-50px; right: 30-50px;
-   background: #000; color: #fff;
-   font-family: 'Inter', -apple-system, sans-serif; font-weight: 900;
-   font-size: 44-60px; line-height: 1.15;
-   padding: 24-30px 32-38px; border-radius: 14-20px;
-   text-align: left;
-   Inhalt: 1-3 Zeilen, MUSS "PKV" oder "Krankenversicherung" enthalten.
-3. Bei UGC-Whiteboard ZUSÄTZLICH: handgeschriebenes PKV-Statement als CSS-Overlay über dem Foto, font-family: 'Caveat' oder 'Permanent Marker' (Google Fonts), color: #1a1a1a, font-size: 80-120pt, position passend zur Whiteboard-Fläche im Foto, leicht rotiert (transform: rotate(-1deg bis -3deg)).
-KEINE designed Gradients, KEINE Drop-Shadows auf Text, KEIN ANZEIGE-Label oben, KEIN CTA-Button (Facebook macht den selbst). Sieht aus wie iPhone-Screenshot, NICHT wie Designer-Ad.`
+        ? `UGC-PFLICHT: Der image_prompt MUSS folgendes beschreiben:
+1. Ein authentisch wirkendes Foto (Selfie / Schreibtisch / Whiteboard / Halbportrait) — "natural light, slightly imperfect framing, looks like organic social content, not a professional shoot".
+2. Eine schwarze rounded-rectangle CAPTION BOX am unteren Bildrand mit weißem, fettem Inter-Text (1-3 Zeilen, MUSS "PKV" oder "Krankenversicherung" enthalten). Genau diese Caption-Box ist das visuelle Wiedererkennungsmerkmal — ohne Caption-Box kein UGC.
+3. KEIN designed Gradient, KEIN ANZEIGE-Label oben — Look wie iPhone-Screenshot.`
         : concept.visualStyle === "comic"
-          ? `COMIC-PFLICHT: Dieses Creative MUSS GENAU EIN {{COMIC:englische beschreibung}}-Element enthalten (img-src oder background-image). Comic wird AI-generiert.
-- Beschreibung 3-6 Wörter, KEINE Style-Modifier (Server hängt sie an)
-- ABSOLUT KEINEN TEXT-INHALT im Comic: keine Schilder mit Text, keine Sprechblasen, keine beschrifteten Geldscheine/Briefe/Screens, keine Banner, keine Logos. Sämtlicher Text gehört in das HTML drumherum (Headline, Caption-Box).
-- ✅ {{COMIC:woman shocked at desk}}, {{COMIC:man with empty wallet}}, {{COMIC:doctor pointing at patient}}
-- ❌ {{COMIC:woman holding sign saying PKV}}, {{COMIC:letter with 850 euros}}, {{COMIC:phone screen showing app}}`
-          : `Dieses Creative ist typografisch — KEIN Bild, kein {{UNSPLASH}}- oder {{COMIC}}-Platzhalter.`;
+          ? `COMIC-PFLICHT: Der image_prompt MUSS "flat comic illustration in modern editorial style, bold black outlines, limited color palette" o.ä. enthalten. KEIN Foto-Look. Text-Overlays in sans-serif sind ok, idealerweise als gerendertes Layout drumherum.`
+          : `TYPO-PFLICHT: Der image_prompt MUSS eine typografische Komposition beschreiben (Poster-Style, Big-Number, Mockup-Screenshot). KEIN echtes Foto einer Person. Falls eine fotorealistische Element-Anmutung (Brief, Browser-Window, App-Card) gefragt ist, dann nur als Mockup-UI.`;
+
   const lengthRange =
     concept.copyLength === "long"
       ? "400-800 Zeichen, AIDA-Story-Struktur, mehrere Absätze"
@@ -705,7 +429,7 @@ KEINE designed Gradients, KEINE Drop-Shadows auf Text, KEIN ANZEIGE-Label oben, 
         ? "150-300 Zeichen, 2-3 Sätze, Problem → Lösung → Soft-CTA"
         : "60-120 Zeichen, ein Satz, Hook + Soft-CTA";
 
-  const userPrompt = `Setze dieses ${brief.campaignKey}-Kampagnen-Konzept als einzelnes Meta-Ad-Creative um.
+  const userPrompt = `Setze dieses ${brief.campaignKey}-Kampagnen-Konzept als einzelnes Meta-Ad-Creative um. Du schreibst die Texte UND den Bild-Prompt für gpt-image-1.
 
 ${campaignContext}
 
@@ -719,9 +443,9 @@ KONZEPT:
 - Copy-Length für adText: ${concept.copyLength} (${lengthRange})
 - Konzept-Skizze: ${concept.description}
 
-${photoLine}
+${styleHint}
 
-Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm, keine Alternativen.`;
+Antworte mit GENAU EINEM <variant>-Block im definierten Format (inkl. <image_prompt>). Kein Brainstorm, keine Alternativen.`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -732,7 +456,7 @@ Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm,
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 8000,
+      max_tokens: 3000,
       system: CREATIVE_SYSTEM_PROMPT,
       messages: [{ role: "user", content: userPrompt }],
     }),
@@ -748,38 +472,7 @@ Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm,
       `Execution für Konzept "${concept.mechanic}" lieferte keinen <variant>: ${text.slice(0, 300)}…`,
     );
   }
-  const result = variants[0];
-  // Sanity-Check pro visualStyle. Bei Verstoß: warnen, nicht crashen.
-  if (concept.visualStyle === "photo" && !result.html.includes("{{UNSPLASH:")) {
-    console.warn(
-      `[creative-gen] Photo-Konzept "${concept.mechanic}" lieferte HTML ohne {{UNSPLASH:}} — Claude hat die Foto-Pflicht ignoriert.`,
-    );
-  }
-  if (concept.visualStyle === "ugc") {
-    if (!result.html.includes("{{UNSPLASH:")) {
-      console.warn(
-        `[creative-gen] UGC-Konzept "${concept.mechanic}" lieferte HTML ohne {{UNSPLASH:}} — Foto-Pflicht ignoriert.`,
-      );
-    }
-    // Caption-Box: schwarzer Background + weißer Text + border-radius
-    // Sehr toleranter Check (#000 / black / rgb(0,0,0)).
-    const hasBlackBg =
-      /background[^;]*(#000|black|rgb\(0\s*,\s*0\s*,\s*0\))/i.test(result.html);
-    const hasWhiteText = /color[^;]*(#fff|white|rgb\(255\s*,\s*255\s*,\s*255\))/i.test(
-      result.html,
-    );
-    if (!hasBlackBg || !hasWhiteText) {
-      console.warn(
-        `[creative-gen] UGC-Konzept "${concept.mechanic}" hat keine erkennbare schwarze Caption-Box (hasBlackBg=${hasBlackBg}, hasWhiteText=${hasWhiteText}).`,
-      );
-    }
-  }
-  if (concept.visualStyle === "comic" && !result.html.includes("{{COMIC:")) {
-    console.warn(
-      `[creative-gen] Comic-Konzept "${concept.mechanic}" lieferte HTML ohne {{COMIC:}} — Claude hat die Comic-Pflicht ignoriert.`,
-    );
-  }
-  return { ...result, mechanic: concept.mechanic };
+  return { ...variants[0], mechanic: concept.mechanic };
 }
 
 // ─── Orchestrator: brainstorm → parallel execution ───────────────────
@@ -793,8 +486,6 @@ async function generateCreativeVariants(
       `[creative-gen] Brainstorm lieferte nur ${concepts.length}/${brief.count} Konzepte — fahre mit weniger fort.`,
     );
   }
-  // Parallele Execution mit allSettled — wenn ein einzelner Call failt
-  // (Claude-Rate-Limit, Parse-Fehler), verlieren wir nicht den ganzen Batch.
   const settled = await Promise.allSettled(
     concepts.map((c) => generateOneCreative(brief, c)),
   );
@@ -815,11 +506,6 @@ async function generateCreativeVariants(
   return variants;
 }
 
-// Parst Claude's strukturierten XML-Output. Robust gegen umliegendes
-// Geschwafel ("Hier sind 3 Creatives:"), Markdown-Fences und Whitespace.
-// Greedy-Match auf <creative_html> ist absichtlich — die HTML-Bodies dürfen
-// alle anderen Tags enthalten (inkl. <html>…</html>), nur <creative_html>
-// selbst nicht.
 function parseVariantBlocks(text: string): CreativeVariant[] {
   const variantRe = /<variant>([\s\S]*?)<\/variant>/g;
   const blocks: CreativeVariant[] = [];
@@ -831,9 +517,17 @@ function parseVariantBlocks(text: string): CreativeVariant[] {
     const cta = extractTag(inner, "cta");
     const adText = extractTag(inner, "ad_text") ?? "";
     const fbHeadline = extractTag(inner, "fb_headline") ?? "";
-    const html = extractTag(inner, "creative_html");
-    if (!headline || !body || !cta || !html) continue;
-    blocks.push({ headline, body, cta, adText, fbHeadline, html, mechanic: "" });
+    const imagePrompt = extractTag(inner, "image_prompt");
+    if (!headline || !body || !cta || !imagePrompt) continue;
+    blocks.push({
+      headline,
+      body,
+      cta,
+      adText,
+      fbHeadline,
+      imagePrompt,
+      mechanic: "",
+    });
   }
   return blocks;
 }
@@ -852,23 +546,22 @@ export async function generateCreatives(
 ): Promise<GeneratedCreative[]> {
   const variants = await generateCreativeVariants(brief);
 
-  // Parallel rendern + uploaden mit allSettled — ein Playwright- oder
+  // Parallel Image-Generation + Upload mit allSettled — ein OpenAI- oder
   // R2-Fehler in einer Variante soll nicht den ganzen Batch killen.
   const settled = await Promise.allSettled(
     variants.map(async (v, i) => {
-      let resolvedHtml = await resolveUnsplashPlaceholders(v.html);
-      resolvedHtml = await resolveComicPlaceholders(resolvedHtml);
-      const buffer = await renderHtmlToImage(resolvedHtml, {
-        width: 1080,
-        height: 1080,
+      const { buffer, contentType } = await generateOpenAIImage({
+        prompt: v.imagePrompt,
+        size: "1024x1024",
+        quality: "high",
         format: "jpeg",
-        quality: 92,
       });
-      const key = `creatives/${requestId}/${i + 1}.jpg`;
+      const ext = contentType === "image/png" ? "png" : contentType === "image/webp" ? "webp" : "jpg";
+      const key = `creatives/${requestId}/${i + 1}.${ext}`;
       const imageUrl = await uploadImageToR2({
         buffer,
         key,
-        contentType: "image/jpeg",
+        contentType,
       });
       return {
         headline: v.headline,
@@ -877,7 +570,7 @@ export async function generateCreatives(
         adText: v.adText,
         fbHeadline: v.fbHeadline,
         mechanic: v.mechanic,
-        imagePrompt: v.html,
+        imagePrompt: v.imagePrompt,
         imageUrl,
       } satisfies GeneratedCreative;
     }),
@@ -888,7 +581,7 @@ export async function generateCreatives(
       results.push(r.value);
     } else {
       console.warn(
-        `[creative-gen] Render/Upload für Variante ${i + 1} failte:`,
+        `[creative-gen] Image-Generation/Upload für Variante ${i + 1} failte:`,
         r.reason instanceof Error ? r.reason.message : r.reason,
       );
     }
@@ -898,16 +591,14 @@ export async function generateCreatives(
 }
 
 // ─── Einzelfeld-Regeneration (nur adText oder nur fbHeadline) ────────
-// Werden vom Telegram-Bot getriggert wenn der User das Creative behalten,
-// aber Text oder Headline anders haben will. Kein neuer Bild-Render nötig.
 
 type RegenContext = {
   campaignKey: string;
   audience?: string;
   tone?: string;
-  headline: string;     // visuelle Headline aus dem Creative-Bild (Kontext)
-  body: string;         // visuelle Sub-Headline (Kontext)
-  cta: string;          // Button-Text (Kontext)
+  headline: string;
+  body: string;
+  cta: string;
   currentAdText?: string;
   currentFbHeadline?: string;
 };
@@ -977,15 +668,8 @@ Schreibe eine NEUE Facebook-Headline (max 40 Zeichen). Ergänzt die visuelle Hea
   return text.trim().replace(/^["„'`]+|["„'`]+$/g, "").slice(0, 60);
 }
 
-// ─── Replacement: eine neue Variante, die andere Mechanic/Hook nutzt ───
-// Wird vom Reject-Button getriggert. avoidHeadlines sind die Headlines
-// der bereits vorhandenen (oder gerade abgelehnten) Varianten — Claude
-// soll bewusst etwas anderes liefern.
+// ─── Image-Regeneration: gleiche Texte/Mechanic, neuer Image-Prompt ──
 
-// Behält Headline/Body/CTA/Texte UND die ursprüngliche Mechanic — designt
-// nur die konkrete Komposition (Foto/Layout/Farben) neu. Wenn der User
-// nochmal auf "Bild neu" klickt, kommt eine neue Variation der GLEICHEN
-// Mechanic, kein Format-Wechsel.
 export async function regenerateCreativeImage(
   brief: CreativeBrief,
   requestId: string,
@@ -1001,8 +685,6 @@ export async function regenerateCreativeImage(
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
 
-  // Visual-Style aus der Mechanic ableiten — Bild-Regen behält das Format,
-  // generiert nur eine andere Komposition innerhalb dieser Mechanic.
   const mechanic = fixed.mechanic ?? "";
   const visualStyle: "photo" | "ugc" | "comic" | "typography" = /^UGC-/i.test(
     mechanic,
@@ -1010,59 +692,55 @@ export async function regenerateCreativeImage(
     ? "ugc"
     : /^Comic-/i.test(mechanic)
       ? "comic"
-      : /^(Brand-Photo|Person-Quote|Lifestyle-Background|Newspaper-Mockup|Photo-Big-Headline)/i.test(
-            mechanic,
-          )
+      : /^(Photo-|Newspaper|Editorial-Portrait|Lifestyle-Hero)/i.test(mechanic)
         ? "photo"
         : mechanic
           ? "typography"
-          : // Fallback wenn alte Variante ohne mechanic: 50/50 photo|typo
-            Math.random() < 0.5
+          : Math.random() < 0.5
             ? "photo"
             : "typography";
 
   const styleHint =
     visualStyle === "ugc"
-      ? `Visual-Style: UGC (native iPhone-Screenshot-Look). MUSS enthalten: {{UNSPLASH:keywords}}-Foto full-bleed + signature schwarze Caption-Box unten (background:#000, color:#fff, font-weight:900, border-radius). Bei UGC-Whiteboard zusätzlich Caveat/Permanent-Marker-Handwriting-Overlay.`
+      ? `Visual-Style: UGC (native iPhone-Screenshot-Look). Image-Prompt beschreibt: authentisches Foto + schwarze CAPTION-BOX unten mit weißem fettem Inter-Text der "PKV" enthält.`
       : visualStyle === "comic"
-        ? `Visual-Style: Comic. MUSS enthalten: {{COMIC:englische beschreibung}}-Element als zentrale Illustration.`
+        ? `Visual-Style: Comic. Image-Prompt beschreibt: "flat comic illustration in modern editorial style, bold black outlines, limited color palette".`
         : visualStyle === "photo"
-          ? `Visual-Style: polished Photo. MUSS enthalten: {{UNSPLASH:keywords}}-Foto.`
-          : `Visual-Style: typografisch. KEIN Bild-Platzhalter.`;
+          ? `Visual-Style: polished Photo. Image-Prompt beschreibt: photorealistic editorial portrait/lifestyle scene.`
+          : `Visual-Style: typografisch. Image-Prompt beschreibt: Poster/Mockup mit großem Text als Hero, kein Foto einer Person.`;
 
-  const userPrompt = `Designe ein NEUES Creative-Bild für eine bestehende ${brief.campaignKey}-Meta-Ad. Die TEXTE bleiben unverändert UND das Format/die Mechanic bleibt dieselbe — du gestaltest nur die konkrete Komposition (Foto-Motiv, Layout, Farben) neu.
+  const userPrompt = `Schreibe einen NEUEN Image-Prompt für gpt-image-1 für eine bestehende ${brief.campaignKey}-Meta-Ad. Die TEXTE bleiben unverändert UND das Format/die Mechanic bleibt dieselbe — du variierst nur die konkrete visuelle Komposition (Motiv, Layout, Farben).
 
 ${campaignContext}
 
 ${brief.audience ? `ZIELGRUPPE: ${brief.audience}` : ""}
 ${brief.tone ? `TONE: ${brief.tone}` : ""}
 
-FIXIERTE TEXTE (musst du genau so verwenden):
+FIXIERTE TEXTE (musst du genau so im Image-Prompt nutzen, in Anführungszeichen):
 - Headline im Creative: "${fixed.headline}"
 - Body im Creative: "${fixed.body}"
 - CTA-Button: "${fixed.cta}"
 
 ${mechanic ? `MECHANIC (bleibt fix): ${mechanic}` : ""}
 ${styleHint}
+${fixed.currentImagePrompt ? `\nAKTUELLER PROMPT (mir gefällt's nicht, mache es deutlich anders):\n"""\n${fixed.currentImagePrompt}\n"""` : ""}
 
 WAS DU VARIIEREN SOLLST:
-- Bei photo/UGC: anderes Foto-Motiv (andere {{UNSPLASH:keywords}})
-- Bei comic: andere Comic-Beschreibung (anderes {{COMIC:...}})
-- Bei allen: anderes Farb-Schema, andere Komposition (z.B. Headline links statt rechts, anderer Hintergrund-Ton), aber GLEICHE Mechanic
+- Bei photo/UGC: andere Subject-Description (anderes Setting, andere Person, anderes Licht)
+- Bei comic: andere Szene/Metapher
+- Bei typo: andere Komposition (Layout, Farben, Schrift-Hierarchie)
+- Bei allen: andere Color Palette
 
 WAS NICHT ÄNDERN:
-- Texte (Headline/Body/CTA wörtlich gleich)
+- Texte (Headline/Body/CTA wörtlich in Anführungszeichen einbauen)
 - Mechanic / Format
-- PKV-Anchor MUSS prominent bleiben
+- PKV-Anchor prominent
 
-Antworte mit GENAU EINEM <creative_html>-Block, KEINE anderen Tags:
+Antworte mit GENAU EINEM <image_prompt>-Block, KEINE anderen Tags:
 
-<creative_html>
-<!DOCTYPE html>
-<html lang="de">
-…
-</html>
-</creative_html>`;
+<image_prompt>
+Englischer gpt-image-1-Prompt mit deutschen Text-Overlays in Anführungszeichen.
+</image_prompt>`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -1073,7 +751,7 @@ Antworte mit GENAU EINEM <creative_html>-Block, KEINE anderen Tags:
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 8000,
+      max_tokens: 1500,
       system: CREATIVE_SYSTEM_PROMPT,
       messages: [{ role: "user", content: userPrompt }],
     }),
@@ -1083,27 +761,25 @@ Antworte mit GENAU EINEM <creative_html>-Block, KEINE anderen Tags:
   }
   const data = (await res.json()) as { content: { type: string; text: string }[] };
   const text = data.content.find((c) => c.type === "text")?.text ?? "";
-  const html = extractTag(text, "creative_html");
-  if (!html) {
-    throw new Error(`Image-Regen lieferte kein <creative_html>: ${text.slice(0, 300)}`);
+  const imagePrompt = extractTag(text, "image_prompt");
+  if (!imagePrompt) {
+    throw new Error(`Image-Regen lieferte kein <image_prompt>: ${text.slice(0, 300)}`);
   }
 
-  // Render + Upload — gleicher Pipeline-Teil wie generateCreatives.
-  let resolvedHtml = await resolveUnsplashPlaceholders(html);
-  resolvedHtml = await resolveComicPlaceholders(resolvedHtml);
-  const buffer = await renderHtmlToImage(resolvedHtml, {
-    width: 1080,
-    height: 1080,
+  const { buffer, contentType } = await generateOpenAIImage({
+    prompt: imagePrompt,
+    size: "1024x1024",
+    quality: "high",
     format: "jpeg",
-    quality: 92,
   });
-  const key = `creatives/${requestId}/regen-${Date.now()}.jpg`;
+  const ext = contentType === "image/png" ? "png" : contentType === "image/webp" ? "webp" : "jpg";
+  const key = `creatives/${requestId}/regen-${Date.now()}.${ext}`;
   const imageUrl = await uploadImageToR2({
     buffer,
     key,
-    contentType: "image/jpeg",
+    contentType,
   });
-  return { imageUrl, imagePrompt: html };
+  return { imageUrl, imagePrompt };
 }
 
 // ─── Intent Parsing aus Telegram-Text ────────────────────────────────
@@ -1111,7 +787,7 @@ Antworte mit GENAU EINEM <creative_html>-Block, KEINE anderen Tags:
 export type ParsedIntent = {
   action: "generate" | "unknown";
   count: number;
-  campaignKey: string | null; // "Wechsel" | "Neugeschäft" | null = unklar
+  campaignKey: string | null;
   audience?: string;
   tone?: string;
 };
