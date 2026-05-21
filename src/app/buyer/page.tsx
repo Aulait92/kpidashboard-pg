@@ -262,17 +262,17 @@ async function BuyerDashboardBody({
       <section>
         <div className="mb-3">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--brand)]">
-            Stornos
+            Lead-Qualität
           </div>
           <h2 className="mt-0.5 text-lg font-semibold tracking-tight">
-            Stornoquote
+            Stornos & ungültige Leads
           </h2>
         </div>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <KpiCard
             label="Stornos"
             value={formatNumber(k.cancelledLeads)}
-            hint={`Von ${formatNumber(k.closedLeads)} Brutto-Abschlüssen`}
+            hint={`Von ${formatNumber(k.totalLeads)} Leads ungültig`}
             tone={k.cancelledLeads > 0 ? "negative" : "default"}
             delta={delta(k.cancelledLeads, p.cancelledLeads, true)}
             sparkline={{
@@ -284,7 +284,7 @@ async function BuyerDashboardBody({
           <KpiCard
             label="Stornoquote"
             value={formatPercent(k.cancellationRate)}
-            hint="Anteil stornierter Abschlüsse"
+            hint="Anteil ungültiger Leads"
             tone={
               k.cancellationRate != null && k.cancellationRate > 0
                 ? "negative"
@@ -298,21 +298,23 @@ async function BuyerDashboardBody({
             }}
           />
           <KpiCard
-            label="Netto-Abschlüsse"
-            value={formatNumber(k.netClosedLeads)}
-            hint="Brutto minus Stornos"
+            label="Effektive Leads"
+            value={formatNumber(k.validLeads)}
+            hint={`${formatNumber(k.totalLeads)} gesamt − ${formatNumber(
+              k.cancelledLeads,
+            )} Stornos`}
             tone="positive"
-            delta={delta(k.netClosedLeads, p.netClosedLeads)}
+            delta={delta(k.validLeads, p.validLeads)}
           />
           <KpiCard
-            label="Netto Closing Rate"
+            label="Effektive Erreichbarkeit"
             value={formatPercent(
-              k.totalLeads > 0 ? k.netClosedLeads / k.totalLeads : null,
+              k.validLeads > 0 ? k.reachedLeads / k.validLeads : null,
             )}
-            hint="Effektive Abschlüsse / Leads"
+            hint="Erreicht / gültige Leads"
             delta={delta(
-              k.totalLeads > 0 ? k.netClosedLeads / k.totalLeads : null,
-              p.totalLeads > 0 ? p.netClosedLeads / p.totalLeads : null,
+              k.validLeads > 0 ? k.reachedLeads / k.validLeads : null,
+              p.validLeads > 0 ? p.reachedLeads / p.validLeads : null,
             )}
           />
         </div>
@@ -320,7 +322,7 @@ async function BuyerDashboardBody({
 
       <CancellationReasons
         breakdown={cancellations}
-        closedLeads={k.closedLeads}
+        totalLeads={k.totalLeads}
       />
 
       <section>

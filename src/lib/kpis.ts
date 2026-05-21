@@ -27,11 +27,11 @@ export type Kpis = {
   reachedLeads: number;
   terminLeads: number;
   closedLeads: number;
-  // Brutto-Abschlüsse, die nachträglich vom Kunden storniert wurden.
-  // closedLeads enthält die Stornos bereits; netClosedLeads = closed - cancelled.
+  // Ungültige Leads (Spaß-/Fake-Anfrage o. ä.) mit Status „Storno".
+  // validLeads = totalLeads - cancelledLeads — die „brauchbaren" Leads.
   cancelledLeads: number;
-  netClosedLeads: number;
-  // cancelled / closed (Brutto). null wenn keine Abschlüsse.
+  validLeads: number;
+  // cancelledLeads / totalLeads. null wenn keine Leads.
   cancellationRate: number | null;
   reachabilityRate: number | null; // 0..1
   terminRate: number | null; // termin / reached
@@ -230,9 +230,9 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
   ).length;
   const closedLeads = leads.filter((l) => l.closedAt != null).length;
   const cancelledLeads = leads.filter((l) => l.cancelledAt != null).length;
-  const netClosedLeads = closedLeads - cancelledLeads;
+  const validLeads = totalLeads - cancelledLeads;
   const cancellationRate =
-    closedLeads > 0 ? cancelledLeads / closedLeads : null;
+    totalLeads > 0 ? cancelledLeads / totalLeads : null;
 
   const reachabilityRate =
     totalLeads > 0 ? reachedLeads / totalLeads : null;
@@ -272,7 +272,7 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
     terminLeads,
     closedLeads,
     cancelledLeads,
-    netClosedLeads,
+    validLeads,
     cancellationRate,
     reachabilityRate,
     terminRate,
@@ -511,7 +511,7 @@ export async function computeCustomerLeaderboard(params: {
       terminLeads: stat.termin,
       closedLeads: stat.closed,
       cancelledLeads: stat.cancelled,
-      cancellationRate: stat.closed > 0 ? stat.cancelled / stat.closed : null,
+      cancellationRate: stat.total > 0 ? stat.cancelled / stat.total : null,
       reachabilityRate: stat.total > 0 ? stat.reached / stat.total : null,
       closingRate: stat.total > 0 ? stat.closed / stat.total : null,
       avgHoursToFirstContact,
@@ -629,7 +629,7 @@ export async function computeProductBreakdown(params: {
         reachedLeads: x.reached,
         closedLeads: x.closed,
         cancelledLeads: x.cancelled,
-        cancellationRate: x.closed > 0 ? x.cancelled / x.closed : null,
+        cancellationRate: x.total > 0 ? x.cancelled / x.total : null,
         reachabilityRate: x.total > 0 ? x.reached / x.total : null,
         closingRate: x.total > 0 ? x.closed / x.total : null,
         revenue: x.revenue,
@@ -949,7 +949,7 @@ export async function computeTimeSeries(params: {
     p.reachabilityRate = p.leads > 0 ? p.reachedLeads / p.leads : null;
     p.closingRate = p.leads > 0 ? p.closedLeads / p.leads : null;
     p.cancellationRate =
-      p.closedLeads > 0 ? p.cancelledLeads / p.closedLeads : null;
+      p.leads > 0 ? p.cancelledLeads / p.leads : null;
     p.avgContactAttempts = p.leads > 0 ? a.contactSum / p.leads : null;
     p.avgHoursToFirstContact =
       a.hoursList.length > 0

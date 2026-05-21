@@ -17,7 +17,6 @@ const REACHED_STATUSES = new Set([
   "Termin vereinbart",
   "Angebot/Beratung läuft",
   "Abschluss",
-  "Storno",
   "Kein Interesse",
 ]);
 
@@ -325,10 +324,11 @@ export async function syncAirtable(): Promise<SyncResult> {
         const name = resolveLeadName(rec.fields);
 
         const reached = status ? REACHED_STATUSES.has(status) : false;
-        // Storno = vormaliger Abschluss, der storniert wurde. closedAt bleibt
-        // gesetzt (Brutto-Abschluss), cancelledAt markiert den Storno separat.
+        // Storno = der Lead selbst war ungültig (Spaß-/Fake-Anfrage o. ä.) —
+        // KEIN nachträglicher Storno eines Abschlusses. closedAt bleibt
+        // deshalb null; cancelledAt markiert den ungültigen Lead separat.
         const isCancelled = status === CANCELLED_STATUS;
-        const isClosed = status === CLOSED_STATUS || isCancelled;
+        const isClosed = status === CLOSED_STATUS;
         const closedAt = isClosed ? createdAt : null;
         const cancelledAt = isCancelled ? createdAt : null;
         const cancellationReason = isCancelled

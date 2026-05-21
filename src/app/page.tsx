@@ -176,7 +176,7 @@ async function DashboardBody({
       <KpiGrid kpis={k} prev={p} points={ts.points} customerId={customerId} />
       <CancellationReasons
         breakdown={cancellations}
-        closedLeads={k.closedLeads}
+        totalLeads={k.totalLeads}
       />
       <PnLStatement pnl={pnl} />
       <MonthlyForecast forecast={forecast} />
@@ -290,13 +290,13 @@ function KpiGrid({
       </KpiSection>
 
       <KpiSection
-        eyebrow="Sektion · Stornos"
-        title="Stornoquote im Blick"
+        eyebrow="Sektion · Lead-Qualität"
+        title="Stornos & ungültige Leads"
       >
         <KpiCard
           label="Stornos"
           value={formatNumber(k.cancelledLeads)}
-          hint={`Von ${formatNumber(k.closedLeads)} Brutto-Abschlüssen`}
+          hint={`Von ${formatNumber(k.totalLeads)} Leads ungültig`}
           tone={k.cancelledLeads > 0 ? "negative" : "default"}
           delta={delta(k.cancelledLeads, p.cancelledLeads, true)}
           sparkline={{ points, dataKey: "cancelledLeads", tone: "negative" }}
@@ -304,7 +304,7 @@ function KpiGrid({
         <KpiCard
           label="Stornoquote"
           value={formatPercent(k.cancellationRate)}
-          hint="Anteil stornierter Abschlüsse"
+          hint="Anteil ungültiger Leads"
           tone={
             k.cancellationRate != null && k.cancellationRate > 0
               ? "negative"
@@ -314,23 +314,24 @@ function KpiGrid({
           sparkline={{ points, dataKey: "cancellationRate", tone: "negative" }}
         />
         <KpiCard
-          label="Netto-Abschlüsse"
-          value={formatNumber(k.netClosedLeads)}
-          hint={`${formatNumber(k.closedLeads)} brutto − ${formatNumber(
+          label="Effektive Leads"
+          value={formatNumber(k.validLeads)}
+          hint={`${formatNumber(k.totalLeads)} gesamt − ${formatNumber(
             k.cancelledLeads,
           )} Stornos`}
           tone="positive"
-          delta={delta(k.netClosedLeads, p.netClosedLeads)}
+          delta={delta(k.validLeads, p.validLeads)}
         />
         <KpiCard
-          label="Netto Closing Rate"
-          value={formatPercent(
-            k.totalLeads > 0 ? k.netClosedLeads / k.totalLeads : null,
+          label="Kosten / Effektiver Lead"
+          value={formatEUR(
+            k.validLeads > 0 ? k.leadCosts / k.validLeads : null,
           )}
-          hint="Effektive Abschlüsse / Leads"
+          hint="Lead-Kosten ohne Stornos"
           delta={delta(
-            k.totalLeads > 0 ? k.netClosedLeads / k.totalLeads : null,
-            p.totalLeads > 0 ? p.netClosedLeads / p.totalLeads : null,
+            k.validLeads > 0 ? k.leadCosts / k.validLeads : null,
+            p.validLeads > 0 ? p.leadCosts / p.validLeads : null,
+            true,
           )}
         />
       </KpiSection>

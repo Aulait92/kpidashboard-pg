@@ -19,13 +19,13 @@ const COLORS = [
 
 export function CancellationReasons({
   breakdown,
-  closedLeads,
+  totalLeads,
 }: {
   breakdown: CancellationBreakdown;
-  closedLeads: number;
+  totalLeads: number;
 }) {
   const { total, reasons } = breakdown;
-  const rate = closedLeads > 0 ? total / closedLeads : null;
+  const rate = totalLeads > 0 ? total / totalLeads : null;
 
   return (
     <section className="rounded-2xl border border-[color:var(--border)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
@@ -35,7 +35,7 @@ export function CancellationReasons({
             Stornos · Gründe
           </div>
           <h2 className="mt-0.5 text-lg font-semibold tracking-tight">
-            Warum Kunden stornieren
+            Warum Leads ungültig waren
           </h2>
         </div>
         <div className="flex flex-wrap items-center gap-4 sm:gap-6 sm:text-right">
