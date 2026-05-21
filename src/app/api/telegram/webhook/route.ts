@@ -121,7 +121,7 @@ async function handleTextCommand(chatId: string, text: string) {
   if (intent.action !== "generate") {
     await sendTelegramText({
       chatId,
-      text: `🤔 Ich habe das nicht verstanden. Versuch z.B.:\n\n„3 Creatives für Wechsel"\n„2 Creatives für Neugeschäft mit Fokus auf Selbstständige"`,
+      text: `🤔 Ich habe das nicht verstanden. Versuch z.B.:\n\n„3 Creatives für Wechsel"\n„2 Creatives für Neugeschäft mit Fokus auf Selbstständige"\n„3 Creatives für Wechsler, nur mit Text: schließe keine Krankenversicherung ab, bevor du das hier gelesen hast"`,
     });
     return;
   }
@@ -169,6 +169,7 @@ async function handleTextCommand(chatId: string, text: string) {
         campaignKey: intent.campaignKey,
         audience: intent.audience,
         tone: intent.tone,
+        extraContext: intent.extraContext,
         count,
       },
       request.id,
@@ -295,6 +296,7 @@ async function handleButtonClick(chatId: string, data: string) {
           campaignKey,
           audience: intent.audience,
           tone: intent.tone,
+          extraContext: intent.extraContext,
           count: 1,
         },
         variant.requestId,
@@ -350,6 +352,7 @@ async function handleButtonClick(chatId: string, data: string) {
           campaignKey,
           audience: intent.audience,
           tone: intent.tone,
+          extraContext: intent.extraContext,
           headline: variant.headline,
           body: variant.body,
           cta: variant.cta,
@@ -375,6 +378,7 @@ async function handleButtonClick(chatId: string, data: string) {
           campaignKey,
           audience: intent.audience,
           tone: intent.tone,
+          extraContext: intent.extraContext,
           headline: variant.headline,
           body: variant.body,
           cta: variant.cta,

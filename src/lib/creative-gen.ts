@@ -8,6 +8,11 @@ export type CreativeBrief = {
   campaignKey: string; // "Wechsel" | "Neugeschäft" | ...
   audience?: string; // z.B. "Selbstständige 30-45"
   tone?: string; // z.B. "Pain-Point" | "Neugier" | "Humor"
+  // Freitext-Zusatzkontext aus dem Telegram-Befehl ("nur mit Text:
+  // schließe keine KV ab, bevor du das hier gelesen hast"). Wird sowohl
+  // beim Brainstorming als auch bei der Image-Prompt-Generation als
+  // verbindliche Anweisung weitergereicht.
+  extraContext?: string;
   count: number; // wie viele Varianten generieren
 };
 
@@ -294,10 +299,14 @@ async function brainstormConcepts(brief: CreativeBrief): Promise<Concept[]> {
     .map((s, i) => `  Konzept ${i + 1}: visualStyle = "${s}"`)
     .join("\n");
 
+  const extraContextBlock = brief.extraContext
+    ? `\n═══ ZUSÄTZLICHER USER-KONTEXT (PFLICHT BEACHTEN) ═══\n${brief.extraContext}\n\nDieser Kontext überschreibt im Zweifel die Default-Mechaniken. Wenn der User z.B. "nur mit Text" sagt → keine Foto-/UGC-/Comic-Slots, alle Konzepte typography. Wenn er einen konkreten Satz vorgibt → nutze diesen Satz wörtlich als Headline oder im Body. Wenn er einen Stil/Ton vorgibt → priorisiere das über die Default-Verteilung.\n`
+    : "";
+
   const userPrompt = `Du brainstormst ${brief.count} ${brief.count === 1 ? "Konzept" : "distinkte Konzepte"} für Meta-Ad-Creatives zur ${brief.campaignKey}-Kampagne. Jedes Creative wird mit gpt-image-1 (OpenAI Images 2.0) gerendert — du brainstormst nur die Konzepte, der Image-Prompt wird in der nächsten Stufe geschrieben.
 
 ${campaignContext}
-
+${extraContextBlock}
 ${brief.audience ? `ZIELGRUPPE-FOKUS: ${brief.audience}` : ""}
 ${brief.tone ? `TONE: ${brief.tone}` : ""}
 
@@ -306,7 +315,7 @@ WICHTIG: maximale Varianz zwischen den Konzepten. Jedes Konzept braucht:
 - ANDERE mechanic
 - ANDEREN copyLength wenn möglich (mische short/medium/long)
 
-VISUAL-STYLE PRO SLOT (FEST VORGEGEBEN, NICHT ABWEICHEN):
+VISUAL-STYLE PRO SLOT (Default — wenn der ZUSÄTZLICHE USER-KONTEXT oben einen anderen Stil verlangt, ÜBERSCHREIBE diese Verteilung entsprechend; sonst halte dich daran):
 ${slotInstructions}
 
 Für "photo"-Slots: wähle eine foto-getragene Mechanic (Photo-Big-Headline, Newspaper-Mockup, Editorial-Portrait, Lifestyle-Hero).
@@ -357,9 +366,13 @@ OUTPUT (strict, NUR <concept>-Blöcke, kein Drumherum, EXAKT in der Reihenfolge 
     throw new Error(`Brainstorm enthielt keine <concept>-Blöcke: ${text.slice(0, 300)}…`);
   }
 
+  // Slot-Enforcement: nur wenn KEIN extraContext gesetzt ist. Bei freiem
+  // User-Kontext ("nur mit Text", "nur Comic", "ein konkreter Stil")
+  // vertrauen wir Claudes Brainstorm-Entscheidung, sonst überschreiben wir
+  // die User-Wahl wieder zurück auf die Default-Verteilung.
   const enforced = concepts.slice(0, brief.count).map((c, i) => ({
     ...c,
-    visualStyle: slotStyles[i] ?? c.visualStyle,
+    visualStyle: brief.extraContext ? c.visualStyle : (slotStyles[i] ?? c.visualStyle),
   }));
 
   console.log(
@@ -429,10 +442,14 @@ async function generateOneCreative(
         ? "150-300 Zeichen, 2-3 Sätze, Problem → Lösung → Soft-CTA"
         : "60-120 Zeichen, ein Satz, Hook + Soft-CTA";
 
+  const extraContextBlock = brief.extraContext
+    ? `\n═══ ZUSÄTZLICHER USER-KONTEXT (PFLICHT BEACHTEN) ═══\n${brief.extraContext}\n\nDieser Kontext hat Vorrang vor Default-Mechaniken/Stilen. Wenn der User einen konkreten Satz/Headline vorgibt → nutze ihn wörtlich. Wenn er einen Stil/Ton vorschreibt → setze den um, auch wenn das Konzept oben anders klingt.\n`
+    : "";
+
   const userPrompt = `Setze dieses ${brief.campaignKey}-Kampagnen-Konzept als einzelnes Meta-Ad-Creative um. Du schreibst die Texte UND den Bild-Prompt für gpt-image-1.
 
 ${campaignContext}
-
+${extraContextBlock}
 ${brief.audience ? `ZIELGRUPPE-FOKUS: ${brief.audience}` : ""}
 ${brief.tone ? `TONE: ${brief.tone}` : ""}
 
@@ -596,6 +613,7 @@ type RegenContext = {
   campaignKey: string;
   audience?: string;
   tone?: string;
+  extraContext?: string;
   headline: string;
   body: string;
   cta: string;
@@ -637,7 +655,7 @@ export async function regenerateAdText(ctx: RegenContext): Promise<string> {
 
 ${ctx.audience ? `ZIELGRUPPE: ${ctx.audience}` : ""}
 ${ctx.tone ? `TONE: ${ctx.tone}` : ""}
-
+${ctx.extraContext ? `\nZUSÄTZLICHER USER-KONTEXT (PFLICHT BEACHTEN):\n${ctx.extraContext}\n` : ""}
 Das Creative-Bild zeigt:
 - Headline: "${ctx.headline}"
 - Sub-Headline: "${ctx.body}"
@@ -655,7 +673,7 @@ export async function regenerateFbHeadline(ctx: RegenContext): Promise<string> {
   const text = await callClaudeSingleText({
     system: `Du schreibst Facebook-Ad-Headlines (das Feld unter dem Bild im Feed, neben dem CTA-Button). Max 40 Zeichen. Snappy, konkret, ergänzt die visuelle Hero-Headline im Bild (wiederholt sie NICHT). Antworte NUR mit der Headline, KEINE Anführungszeichen, KEIN Drumherum.`,
     user: `${campaignContext}
-
+${ctx.extraContext ? `\nZUSÄTZLICHER USER-KONTEXT (PFLICHT BEACHTEN):\n${ctx.extraContext}\n` : ""}
 Das Creative-Bild zeigt:
 - Visuelle Hero-Headline: "${ctx.headline}"
 - Sub-Headline: "${ctx.body}"
@@ -709,10 +727,14 @@ export async function regenerateCreativeImage(
           ? `Visual-Style: polished Photo. Image-Prompt beschreibt: photorealistic editorial portrait/lifestyle scene.`
           : `Visual-Style: typografisch. Image-Prompt beschreibt: Poster/Mockup mit großem Text als Hero, kein Foto einer Person.`;
 
+  const extraContextBlock = brief.extraContext
+    ? `\nZUSÄTZLICHER USER-KONTEXT (PFLICHT BEACHTEN):\n${brief.extraContext}\n`
+    : "";
+
   const userPrompt = `Schreibe einen NEUEN Image-Prompt für gpt-image-1 für eine bestehende ${brief.campaignKey}-Meta-Ad. Die TEXTE bleiben unverändert UND das Format/die Mechanic bleibt dieselbe — du variierst nur die konkrete visuelle Komposition (Motiv, Layout, Farben).
 
 ${campaignContext}
-
+${extraContextBlock}
 ${brief.audience ? `ZIELGRUPPE: ${brief.audience}` : ""}
 ${brief.tone ? `TONE: ${brief.tone}` : ""}
 
@@ -790,6 +812,11 @@ export type ParsedIntent = {
   campaignKey: string | null;
   audience?: string;
   tone?: string;
+  // Alles, was der User nach dem eigentlichen Befehl noch reingeschrieben
+  // hat — Stilvorgaben ("nur mit Text"), konkrete Headlines, Pain-Points,
+  // Story-Snippets. Wird wörtlich an Brainstorm + Image-Prompt-Generation
+  // weitergereicht.
+  extraContext?: string;
 };
 
 export async function parseIntent(text: string): Promise<ParsedIntent> {
@@ -807,10 +834,19 @@ export async function parseIntent(text: string): Promise<ParsedIntent> {
     },
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 400,
+      max_tokens: 1000,
       system: `Du parsed deutsche Befehle für einen Creative-Generation-Bot.
 Erkennbare Kampagnen: "Wechsel", "Neugeschäft".
-Antworte mit strict JSON: {"action": "generate"|"unknown", "count": number, "campaignKey": "Wechsel"|"Neugeschäft"|null, "audience"?: string, "tone"?: string}`,
+
+Felder:
+- action: "generate" wenn der User Creatives generieren will, sonst "unknown".
+- count: Anzahl der gewünschten Varianten (1 wenn nicht genannt).
+- campaignKey: "Wechsel" (Bestand/PKV-Wechsler/Tarifwechsel) ODER "Neugeschäft" (GKV→PKV/Privatisieren/Neukunden) ODER null wenn unklar.
+- audience: kurze Zielgruppen-Bezeichnung, falls explizit genannt (z.B. "Selbstständige", "Beamte 40+").
+- tone: gewünschter Tonfall, falls explizit genannt (z.B. "Pain-Point", "Humor", "Outrage").
+- extraContext: ALLES, was der User über den reinen Befehl hinaus mitgegeben hat — Stilvorgaben ("nur mit Text", "ohne Foto", "Comic"), konkrete vorgegebene Headlines/Hooks ("schließe keine Krankenversicherung ab, bevor du das hier gelesen hast"), spezifische Pain-Points, Story-Snippets, Zahlen-Beispiele. WÖRTLICH übernehmen, nicht paraphrasieren. Wenn keine Zusatzinfo da ist: weglassen.
+
+Antworte mit strict JSON: {"action": "generate"|"unknown", "count": number, "campaignKey": "Wechsel"|"Neugeschäft"|null, "audience"?: string, "tone"?: string, "extraContext"?: string}`,
       messages: [{ role: "user", content: text }],
     }),
   });
