@@ -51,7 +51,7 @@ ZIEL: PKV-Beratungs-Termin buchen.
 - Headline max 6 Wörter (visuell IM Creative-Bild)
 - Body max 90 Zeichen (visuell IM Creative-Bild, Sub-Headline)
 - CTA max 18 Zeichen, handlungsorientiert
-- VERBOTEN: "Jetzt sparen", "Top-Tarif", "Kostenlos", "Spitzenmäßig"
+- VERBOTEN: "Jetzt sparen", "Top-Tarif", "Kostenlos", "Spitzenmäßig", "kein Telefonzwang", "ohne Telefonzwang", "kein Anruf nötig", jegliche Telefon-/Anruf-Disclaimer
 - Native-Feeling, kein Werbe-Sprech
 
 ═══ PKV-ANCHOR (PFLICHT, PROMINENT) ═══
@@ -192,7 +192,6 @@ USPs:
 - Versicherung bleibt — kein neuer Vertrag, keine Gesundheitsprüfung
 - Altersrückstellungen bleiben vollständig erhalten
 - Funktioniert bei JEDEM PKV-Anbieter
-- Unverbindliche Prüfung, kein Telefonzwang
 
 VERMEIDE bei Wechsel:
 - "Privat versichern" / "PKV-Vergleich" → das ist Neugeschäft, nicht Wechsel
