@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, MoreVertical, Users } from "lucide-react";
+import { Gauge, LogOut, MoreVertical, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { logoutAction } from "@/app/login/actions";
@@ -55,6 +55,14 @@ export function UserMenu() {
           >
             <Users className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
             Buyer verwalten
+          </Link>
+          <Link
+            href="/admin/media-buyer"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm text-[color:var(--foreground)] transition hover:bg-zinc-50"
+          >
+            <Gauge className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+            Media Buyer
           </Link>
           <form action={logoutAction}>
             <button

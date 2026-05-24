@@ -54,3 +54,32 @@ npm run dev
 | `Cost`     | Kosten, getrennt nach `LEAD` (Akquise) und `OTHER` (Betr.)  |
 
 Die KPI-Berechnung liegt vollständig in `src/lib/kpis.ts`.
+
+## Automatischer Media Buyer
+
+Steuert die Meta-Tagesbudgets pro Kunde so, dass zum Monatsende möglichst
+100 % der gewünschten Leads geliefert sind — ohne teure Überlieferung.
+
+- Pflege pro Kunde unter **Media Buyer** (Admin-Menü): Lead-Ziel/Monat,
+  Autopilot-Schalter, Kampagnen-Keyword und max. Tagesbudget.
+- Kunde ↔ Kampagne über Namens-Keyword (default = Kundenname).
+- Hebel: Tagesbudget rauf/runter (nach Cost-per-Lead und Pacing),
+  Pausieren bei erreichtem Ziel, Endspurt-Boost in den letzten Tagen.
+- Logik in `src/lib/media-buyer.ts` (`decideBudget` ist seiteneffektfrei),
+  Meta-Schreibzugriffe in `src/lib/meta-ads.ts`.
+
+Täglich per Cron triggern (Token wie bei `/api/sync`):
+
+```bash
+curl -X POST "https://.../api/media-buyer?token=$SYNC_TOKEN"
+# Trockenlauf ohne Meta-Schreibzugriff: zusätzlich &dryRun=1
+```
+
+Guardrails über Env (alle optional):
+
+| Variable                        | Default | Zweck                                  |
+| ------------------------------- | ------- | -------------------------------------- |
+| `MEDIA_BUYER_MIN_DAILY_BUDGET`  | `5`     | Untergrenze Tagesbudget (EUR)          |
+| `MEDIA_BUYER_MAX_DAILY_BUDGET`  | `200`   | Obergrenze, falls Kunde keine eigene   |
+| `MEDIA_BUYER_MAX_STEP`          | `0.5`   | Max. relative Budget-Änderung pro Lauf |
+| `MEDIA_BUYER_BOOST_DAYS`        | `5`     | Länge des Endspurt-Fensters (Tage)     |

@@ -75,11 +75,14 @@ export type MetaCampaign = {
   name: string;
   status: string;
   effective_status: string;
+  // daily_budget in Konto-Minor-Units (Cent). Nur gesetzt bei CBO-Kampagnen
+  // (Campaign Budget Optimization) — sonst liegt das Budget im AdSet.
+  daily_budget?: string;
 };
 
 export async function listCampaigns(): Promise<MetaCampaign[]> {
   const data = (await metaGet(`${getAdAccount()}/campaigns`, {
-    fields: "id,name,status,effective_status",
+    fields: "id,name,status,effective_status,daily_budget",
     limit: "100",
     // Nur Kampagnen die nicht gelöscht sind.
     effective_status: JSON.stringify([
@@ -90,6 +93,17 @@ export async function listCampaigns(): Promise<MetaCampaign[]> {
     ]),
   })) as { data: MetaCampaign[] };
   return data.data;
+}
+
+// Alle Kampagnen, deren Name das Keyword enthält (case-insensitive). Für die
+// Kunden-Zuordnung über Namens-Konvention.
+export function findCampaignsByKeyword(
+  campaigns: MetaCampaign[],
+  keyword: string,
+): MetaCampaign[] {
+  const k = keyword.toLowerCase().trim();
+  if (!k) return [];
+  return campaigns.filter((c) => c.name.toLowerCase().includes(k));
 }
 
 // Klassifiziert eine Kampagne grob nach Produkt-Keyword im Namen.
@@ -105,6 +119,125 @@ export function findCampaignByKeyword(
   if (exact) return exact;
   const fuzzy = campaigns.find((c) => c.name.toLowerCase().includes(k));
   return fuzzy ?? null;
+}
+
+// ─── Budget-Steuerung (Media Buyer) ──────────────────────────────────
+
+export type MetaAdSet = {
+  id: string;
+  name: string;
+  status: string;
+  effective_status: string;
+  daily_budget?: string; // Cent, nur bei ABO (Budget liegt im AdSet)
+};
+
+export async function listAdSets(campaignId: string): Promise<MetaAdSet[]> {
+  const data = (await metaGet(`${campaignId}/adsets`, {
+    fields: "id,name,status,effective_status,daily_budget",
+    limit: "50",
+  })) as { data: MetaAdSet[] };
+  return data.data ?? [];
+}
+
+// Wo das steuerbare Tagesbudget einer Kampagne sitzt:
+//   - "campaign": CBO, Budget am Campaign-Objekt
+//   - "adset":    ABO, Budget verteilt auf ein oder mehrere AdSets
+//   - "none":     kein Tagesbudget gefunden (z.B. Lifetime-Budget) → nicht steuerbar
+export type CampaignBudgetState = {
+  campaignId: string;
+  campaignName: string;
+  level: "campaign" | "adset" | "none";
+  status: string;
+  effective_status: string;
+  // Summe des Tagesbudgets in EUR über alle steuerbaren Einheiten.
+  dailyBudgetEur: number;
+  // Bei ABO: die AdSets, auf die sich das Budget verteilt (für Schreibzugriff).
+  adSetIds: string[];
+};
+
+function centToEur(cent: string | undefined): number {
+  if (!cent) return 0;
+  const n = Number.parseInt(cent, 10);
+  return Number.isFinite(n) ? n / 100 : 0;
+}
+
+function eurToCentString(eur: number): string {
+  return String(Math.round(eur * 100));
+}
+
+// Liest den Budget-Zustand einer Kampagne zusammen (CBO vs. ABO).
+export async function getCampaignBudgetState(
+  campaign: MetaCampaign,
+): Promise<CampaignBudgetState> {
+  // CBO: Budget direkt am Campaign-Objekt.
+  if (campaign.daily_budget) {
+    return {
+      campaignId: campaign.id,
+      campaignName: campaign.name,
+      level: "campaign",
+      status: campaign.status,
+      effective_status: campaign.effective_status,
+      dailyBudgetEur: centToEur(campaign.daily_budget),
+      adSetIds: [],
+    };
+  }
+
+  // ABO: Budget in den AdSets. Wir steuern die AdSets, die ein Tagesbudget
+  // haben (Lifetime-Budget-AdSets werden ignoriert).
+  const adSets = await listAdSets(campaign.id);
+  const budgeted = adSets.filter((a) => a.daily_budget);
+  if (budgeted.length === 0) {
+    return {
+      campaignId: campaign.id,
+      campaignName: campaign.name,
+      level: "none",
+      status: campaign.status,
+      effective_status: campaign.effective_status,
+      dailyBudgetEur: 0,
+      adSetIds: [],
+    };
+  }
+  const total = budgeted.reduce((s, a) => s + centToEur(a.daily_budget), 0);
+  return {
+    campaignId: campaign.id,
+    campaignName: campaign.name,
+    level: "adset",
+    status: campaign.status,
+    effective_status: campaign.effective_status,
+    dailyBudgetEur: total,
+    adSetIds: budgeted.map((a) => a.id),
+  };
+}
+
+// Setzt das Tagesbudget einer Kampagne auf den gewünschten EUR-Gesamtwert.
+// Bei ABO wird der Betrag gleichmäßig auf die budgetierten AdSets verteilt.
+export async function setCampaignDailyBudget(
+  state: CampaignBudgetState,
+  newTotalEur: number,
+): Promise<void> {
+  if (state.level === "campaign") {
+    await metaPost(state.campaignId, {
+      daily_budget: eurToCentString(newTotalEur),
+    });
+    return;
+  }
+  if (state.level === "adset") {
+    const per = newTotalEur / state.adSetIds.length;
+    for (const adSetId of state.adSetIds) {
+      await metaPost(adSetId, { daily_budget: eurToCentString(per) });
+    }
+    return;
+  }
+  throw new Error(
+    `Kampagne ${state.campaignName} hat kein steuerbares Tagesbudget.`,
+  );
+}
+
+export async function setCampaignStatus(
+  campaignId: string,
+  status: "ACTIVE" | "PAUSED",
+): Promise<void> {
+  await metaPost(campaignId, { status });
 }
 
 // Holt das erste aktive AdSet einer Kampagne (Ad muss in einem AdSet liegen).
