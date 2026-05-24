@@ -121,7 +121,7 @@ async function handleTextCommand(chatId: string, text: string) {
   if (intent.action !== "generate") {
     await sendTelegramText({
       chatId,
-      text: `🤔 Ich habe das nicht verstanden. Versuch z.B.:\n\n„3 Creatives für Wechsel"\n„2 Creatives für Neugeschäft mit Fokus auf Selbstständige"`,
+      text: `🤔 Ich habe das nicht verstanden. Versuch z.B.:\n\n„3 Creatives für Wechsel"\n„2 Creatives für Neugeschäft mit Fokus auf Selbstständige"\n„3 Creatives für Kinderwunsch Berlin"`,
     });
     return;
   }
@@ -129,7 +129,17 @@ async function handleTextCommand(chatId: string, text: string) {
   if (!intent.campaignKey) {
     await sendTelegramText({
       chatId,
-      text: `🤔 Welche Kampagne? Bitte „Wechsel" oder „Neugeschäft" erwähnen.`,
+      text: `🤔 Welche Kampagne? Bitte „Wechsel", „Neugeschäft" oder „Kinderwunsch <Region>" erwähnen.`,
+    });
+    return;
+  }
+
+  // Kinderwunsch läuft pro Region — ohne Region wüssten wir beim Push nicht,
+  // in welche Regions-Kampagne das Creative soll.
+  if (intent.campaignKey === "Kinderwunsch" && !intent.region) {
+    await sendTelegramText({
+      chatId,
+      text: `🤔 Für Kinderwunsch brauche ich die Region. Z.B.: „3 Creatives für Kinderwunsch Berlin".`,
     });
     return;
   }
@@ -420,8 +430,17 @@ async function handleButtonClick(chatId: string, data: string) {
     });
     try {
       const intent = (variant.request.parsedIntent ?? {}) as ParsedIntent;
+      const campaignKey = intent.campaignKey ?? "Wechsel";
+      // Kinderwunsch hat eine eigene Landingpage — sonst landen Klicks im
+      // PKV-Funnel (META_DEFAULT_LINK_URL).
+      const linkUrl =
+        campaignKey === "Kinderwunsch"
+          ? "https://info.kinderwunschhilfe.org/ivf/"
+          : undefined;
       const result = await publishVariantToCampaign({
-        campaignKey: intent.campaignKey ?? "Wechsel",
+        campaignKey,
+        region: intent.region ?? null,
+        linkUrl,
         headline: variant.headline,
         fbHeadline: variant.fbHeadline || variant.headline, // Fallback für alte Daten
         body: variant.body,

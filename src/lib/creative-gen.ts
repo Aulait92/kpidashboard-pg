@@ -490,6 +490,51 @@ PASSENDE FOTO-MOTIVE (für photo-Mechaniken):
 - {{UNSPLASH:doctor waiting room}}
 - {{UNSPLASH:hospital waiting}}
 - {{UNSPLASH:man home thinking}}`,
+
+  Kinderwunsch: `═══ KAMPAGNEN-KONTEXT: KINDERWUNSCH ═══
+WICHTIG: Das ist KEINE Versicherung und KEIN PKV/GKV-Thema. Ignoriere
+sämtliche PKV-, Beitrags-, Tarifwechsel- und Versicherungs-Frames vollständig.
+Es geht ausschließlich um die Förderung von Kinderwunsch-Behandlungen (z. B. IVF).
+
+ZIELGRUPPE:
+- Paare mit Kinderwunsch, ca. 28–42 Jahre
+- Emotional belastet vom unerfüllten Kinderwunsch, oft schon mit ersten
+  Recherchen/Behandlungs-Gedanken; Sorge vor den hohen Kosten einer Behandlung
+
+ANGEBOT / KERNBOTSCHAFT:
+- Kinderwunsch-Behandlungen müssen nicht immer komplett selbst bezahlt werden.
+- Je nach Wohnort, Krankenkasse und persönlicher Situation können hohe
+  Zuschüsse möglich sein – in manchen Fällen sogar bis zu 100 %.
+- CTA-Idee: unverbindlich prüfen, welche Fördermöglichkeiten infrage kommen
+  könnten.
+
+TONALITÄT:
+- Emotional, warm, ermutigend. Du-Ansprache.
+- Hoffnung geben, ohne Druck. Sensibel mit einem schmerzhaften Thema umgehen.
+
+PROMISE (IMMER im Konjunktiv / als Möglichkeit – NIE als Garantie):
+- "können", "könnten", "möglich", "je nach Situation" — niemals "Sie bekommen",
+  "garantiert", "100 % sicher".
+- "Bis zu 100 % Zuschuss möglich" ist ok; "100 % Zuschuss" (als Zusage) NICHT.
+
+VERMEIDE unbedingt:
+- Heils-/Erfolgsversprechen ("Sie werden schwanger", Erfolgsquoten, medizinische
+  Versprechen) — rechtlich tabu und ethisch unpassend.
+- Garantierte Förderzusagen oder konkrete Euro-Beträge als Zusage.
+- Jegliches PKV/GKV-Spar-/Versicherungs-Framing.
+- Reißerische, kalte oder zu "verkäuferische" Tonalität bei diesem sensiblen Thema.
+
+PASSENDE HOOKS (Beispiele zum Inspirieren, NICHT 1:1 kopieren):
+- "Kinderwunsch-Behandlung – muss nicht immer komplett selbst bezahlt werden."
+- "Bis zu 100 % Zuschuss zur Kinderwunsch-Behandlung könnten möglich sein."
+- "Bevor ihr die Behandlung selbst zahlt: prüft eure Fördermöglichkeiten."
+- "Euer Wohnort + eure Krankenkasse entscheiden mit, wie viel ihr selbst zahlt."
+
+PASSENDE FOTO-MOTIVE (warm, hoffnungsvoll, keine Klinik-Kälte):
+- {{UNSPLASH:happy couple home hug}}
+- {{UNSPLASH:couple holding hands hopeful}}
+- {{UNSPLASH:woman smiling window light}}
+- {{UNSPLASH:young couple kitchen morning}}`,
 };
 
 // ─── Phase 1: Konzept-Brainstorm ─────────────────────────────────────
@@ -1111,7 +1156,10 @@ Antworte mit GENAU EINEM <creative_html>-Block, KEINE anderen Tags:
 export type ParsedIntent = {
   action: "generate" | "unknown";
   count: number;
-  campaignKey: string | null; // "Wechsel" | "Neugeschäft" | null = unklar
+  campaignKey: string | null; // "Wechsel" | "Neugeschäft" | "Kinderwunsch" | null = unklar
+  // Region nur bei Kinderwunsch relevant (z. B. "Berlin") — bestimmt, in
+  // welche Regions-Kampagne ein freigegebenes Creative gepusht wird.
+  region?: string | null;
   audience?: string;
   tone?: string;
 };
@@ -1133,8 +1181,11 @@ export async function parseIntent(text: string): Promise<ParsedIntent> {
       model: "claude-haiku-4-5-20251001",
       max_tokens: 400,
       system: `Du parsed deutsche Befehle für einen Creative-Generation-Bot.
-Erkennbare Kampagnen: "Wechsel", "Neugeschäft".
-Antworte mit strict JSON: {"action": "generate"|"unknown", "count": number, "campaignKey": "Wechsel"|"Neugeschäft"|null, "audience"?: string, "tone"?: string}`,
+Erkennbare Kampagnen: "Wechsel", "Neugeschäft", "Kinderwunsch".
+Bei "Kinderwunsch" steht meist eine Region/Stadt dabei (z. B. "Kinderwunsch Berlin")
+— extrahiere sie nach "region" (nur der Ortsname, ohne das Wort "Kinderwunsch").
+Bei Wechsel/Neugeschäft ist region null.
+Antworte mit strict JSON: {"action": "generate"|"unknown", "count": number, "campaignKey": "Wechsel"|"Neugeschäft"|"Kinderwunsch"|null, "region": string|null, "audience"?: string, "tone"?: string}`,
       messages: [{ role: "user", content: text }],
     }),
   });

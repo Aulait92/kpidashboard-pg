@@ -395,7 +395,9 @@ export async function createAd(opts: {
 // ─── End-to-End: Variante komplett in Kampagne einbauen ─────────────
 
 export async function publishVariantToCampaign(opts: {
-  campaignKey: string; // Keyword für Campaign-Match ("Wechsel", "Neugeschäft")
+  campaignKey: string; // Keyword für Campaign-Match ("Wechsel", "Neugeschäft", "Kinderwunsch")
+  region?: string | null; // bei Kinderwunsch: Region für die Regions-Kampagne
+  linkUrl?: string; // Landingpage; default META_DEFAULT_LINK_URL
   headline: string;
   fbHeadline: string;
   body: string;
@@ -404,12 +406,27 @@ export async function publishVariantToCampaign(opts: {
   imageUrl: string; // public URL (R2)
   activate: boolean;
 }): Promise<{ campaignId: string; adId: string; imageHash: string }> {
-  // 1. Kampagne finden
+  // 1. Kampagne finden. Mit Region (z. B. Kinderwunsch) muss der Name BEIDE
+  // Begriffe enthalten — sonst würde "Kinderwunsch" irgendeine Regions-
+  // Kampagne treffen.
   const campaigns = await listCampaigns();
-  const campaign = findCampaignByKeyword(campaigns, opts.campaignKey);
+  const region = opts.region?.trim();
+  let campaign: MetaCampaign | null;
+  if (region) {
+    const k = opts.campaignKey.toLowerCase();
+    const r = region.toLowerCase();
+    campaign =
+      campaigns.find(
+        (c) =>
+          c.name.toLowerCase().includes(k) && c.name.toLowerCase().includes(r),
+      ) ?? null;
+  } else {
+    campaign = findCampaignByKeyword(campaigns, opts.campaignKey);
+  }
   if (!campaign) {
+    const gesucht = region ? `"${opts.campaignKey}" + "${region}"` : `"${opts.campaignKey}"`;
     throw new Error(
-      `Keine Kampagne mit Keyword "${opts.campaignKey}" gefunden. Verfügbar: ${campaigns
+      `Keine Kampagne mit Keyword ${gesucht} gefunden. Verfügbar: ${campaigns
         .map((c) => c.name)
         .join(", ")}`,
     );
@@ -428,7 +445,7 @@ export async function publishVariantToCampaign(opts: {
 
   // 4. Creative anlegen
   const timestamp = new Date().toISOString().slice(0, 16).replace("T", " ");
-  const creativeName = `Bot-${opts.campaignKey}-${timestamp}`;
+  const creativeName = `Bot-${opts.campaignKey}${region ? `-${region}` : ""}-${timestamp}`;
   const { id: creativeId } = await createAdCreative({
     name: creativeName,
     imageHash: hash,
@@ -437,6 +454,7 @@ export async function publishVariantToCampaign(opts: {
     body: opts.body,
     adText: opts.adText,
     cta: opts.cta,
+    linkUrl: opts.linkUrl,
   });
 
   // 5. Ad anlegen
