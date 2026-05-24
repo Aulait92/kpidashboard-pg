@@ -23,6 +23,11 @@ model Customer {
   leadGoalWechsel      Int?
   leadGoalNeugeschaeft Int?
   leadGoalKinderwunsch Int?
+  // Preis pro Lead je Produkt (EUR, aus Airtable). Für das automatische
+  // Umsatzziel: Umsatzziel = Σ (Lead-Ziel × Preis) je Kunde.
+  leadPriceWechsel      Decimal? @db.Decimal(12, 2)
+  leadPriceNeugeschaeft Decimal? @db.Decimal(12, 2)
+  leadPriceKinderwunsch Decimal? @db.Decimal(12, 2)
   // Region des Kunden (z.B. "Berlin"). Bestimmt, in welchen Kinderwunsch-
   // Regions-Pool die Kinderwunsch-Leads/-Ziele dieses Kunden fallen.
   region               String?

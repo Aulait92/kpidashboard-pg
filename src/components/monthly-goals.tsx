@@ -172,10 +172,11 @@ function GoalEditForm({
       <input type="hidden" name="product" value={initial.product ?? ""} />
 
       <p className="text-[11px] text-[color:var(--muted)]">
-        Lead-Ziele kommen aus Airtable (read-only).{" "}
+        Lead- und Umsatzziele kommen aus Airtable (read-only; Umsatz = Lead-Ziel
+        × Preis).{" "}
         {isTotal
-          ? "Gesamt: Abschlüsse & Umsatz sind die Summe der Produkte — hier nur die Gesamt-Marge setzen."
-          : "Hier Abschlüsse, Umsatz und Marge für dieses Produkt setzen."}
+          ? "Gesamt: Abschlüsse sind die Summe der Produkte — hier nur die Gesamt-Marge setzen."
+          : "Hier Abschlüsse und Marge für dieses Produkt setzen."}
       </p>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

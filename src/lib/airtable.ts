@@ -60,6 +60,21 @@ const BUYER_GOAL_KINDERWUNSCH_FIELDS = [
   "Kinderwunsch Leadziel/Monat",
   "KiWu Leadziel pro Monat",
 ];
+// Preis pro Lead je Produkt (für das automatische Umsatzziel).
+const BUYER_PRICE_WECHSEL_FIELDS = [
+  "Preis pro Lead (PKV-Wechsel)",
+  "Preis pro Lead (Wechsel)",
+];
+const BUYER_PRICE_NEUGESCHAEFT_FIELDS = [
+  "Preis pro Lead (PKV-Neugeschäft)",
+  "Preis pro Lead (PKV-Neugeschaeft)",
+  "Preis pro Lead (Neugeschäft)",
+];
+const BUYER_PRICE_KINDERWUNSCH_FIELDS = [
+  "Preis pro Lead (Kinderwunschl)",
+  "Preis pro Lead (Kinderwunsch)",
+  "Preis pro Lead (KiWu)",
+];
 // Region des Kunden (für die Kinderwunsch-Regions-Pools).
 const BUYER_REGION_FIELDS = ["Region", "Standort", "Stadt", "Markt"];
 const FINANZEN_TABLE = process.env.AIRTABLE_TABLE_FINANZEN ?? "Finanzen";
@@ -156,6 +171,9 @@ type BuyerInfo = {
   goalWechsel: number | null;
   goalNeugeschaeft: number | null;
   goalKinderwunsch: number | null;
+  priceWechsel: number | null;
+  priceNeugeschaeft: number | null;
+  priceKinderwunsch: number | null;
   region: string | null;
 };
 
@@ -208,6 +226,15 @@ async function fetchBuyersById(
           rec.fields,
           BUYER_GOAL_KINDERWUNSCH_FIELDS,
         ),
+        priceWechsel: readFloatFromFields(rec.fields, BUYER_PRICE_WECHSEL_FIELDS),
+        priceNeugeschaeft: readFloatFromFields(
+          rec.fields,
+          BUYER_PRICE_NEUGESCHAEFT_FIELDS,
+        ),
+        priceKinderwunsch: readFloatFromFields(
+          rec.fields,
+          BUYER_PRICE_KINDERWUNSCH_FIELDS,
+        ),
         region,
       });
     }
@@ -227,6 +254,22 @@ function readIntFromFields(
     if (typeof v === "number" && Number.isFinite(v)) return Math.round(v);
     if (typeof v === "string" && v.trim() !== "") {
       const n = Number.parseInt(v.trim(), 10);
+      if (Number.isFinite(n)) return n;
+    }
+  }
+  return null;
+}
+
+// Liest eine Dezimalzahl ≥ 0 aus dem erstbesten der angegebenen Felder.
+function readFloatFromFields(
+  fields: Record<string, unknown>,
+  keys: string[],
+): number | null {
+  for (const key of keys) {
+    const v = fields[key];
+    if (typeof v === "number" && Number.isFinite(v)) return v;
+    if (typeof v === "string" && v.trim() !== "") {
+      const n = Number.parseFloat(v.trim().replace(",", "."));
       if (Number.isFinite(n)) return n;
     }
   }
@@ -383,23 +426,24 @@ export async function syncAirtable(): Promise<SyncResult> {
       info.goalWechsel != null ||
       info.goalNeugeschaeft != null ||
       info.goalKinderwunsch != null ||
+      info.priceWechsel != null ||
+      info.priceNeugeschaeft != null ||
+      info.priceKinderwunsch != null ||
       info.region != null;
     if (!hasData) continue;
+    const data = {
+      leadGoalWechsel: info.goalWechsel,
+      leadGoalNeugeschaeft: info.goalNeugeschaeft,
+      leadGoalKinderwunsch: info.goalKinderwunsch,
+      leadPriceWechsel: info.priceWechsel,
+      leadPriceNeugeschaeft: info.priceNeugeschaeft,
+      leadPriceKinderwunsch: info.priceKinderwunsch,
+      region: info.region,
+    };
     const customer = await prisma.customer.upsert({
       where: { name: key },
-      create: {
-        name: key,
-        leadGoalWechsel: info.goalWechsel,
-        leadGoalNeugeschaeft: info.goalNeugeschaeft,
-        leadGoalKinderwunsch: info.goalKinderwunsch,
-        region: info.region,
-      },
-      update: {
-        leadGoalWechsel: info.goalWechsel,
-        leadGoalNeugeschaeft: info.goalNeugeschaeft,
-        leadGoalKinderwunsch: info.goalKinderwunsch,
-        region: info.region,
-      },
+      create: { name: key, ...data },
+      update: data,
       select: { id: true },
     });
     customerCache.set(key, customer.id);

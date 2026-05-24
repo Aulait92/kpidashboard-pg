@@ -35,11 +35,12 @@ export async function saveMonthlyGoals(
   const product = String(formData.get("product") ?? "");
   const isTotal = product === "";
 
+  // Umsatzziel kommt automatisch aus Airtable (Lead-Ziel × Preis) — hier nur
+  // Abschlüsse (pro Produkt) und Marge.
   const closed = parseOptionalNumber(String(formData.get("closed") ?? ""));
-  const revenue = parseOptionalNumber(String(formData.get("revenue") ?? ""));
   const marginPct = parseOptionalNumber(String(formData.get("margin") ?? ""));
 
-  if (closed === undefined || revenue === undefined || marginPct === undefined) {
+  if (closed === undefined || marginPct === undefined) {
     return { error: "Ungültiger Wert (Zahlen, ≥ 0)." };
   }
   if (marginPct != null && marginPct > 100) {
@@ -49,9 +50,9 @@ export async function saveMonthlyGoals(
   const margin = marginPct == null ? null : marginPct / 100;
 
   await upsertMonthlyGoal(monthKey, isTotal ? null : product, {
-    // Gesamt: Abschlüsse/Umsatz sind Summen der Produkte → hier nicht setzen.
+    // Gesamt: Abschlüsse sind Summe der Produkte → hier nicht setzen.
     closedGoal: isTotal ? null : closed == null ? null : Math.round(closed),
-    revenueGoal: isTotal ? null : revenue,
+    revenueGoal: null, // automatisch aus Airtable
     marginGoal: margin,
   });
 
