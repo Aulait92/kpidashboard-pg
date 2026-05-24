@@ -840,28 +840,18 @@ Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm,
   return { ...result, mechanic: concept.mechanic };
 }
 
-// ─── Freeform: Variante ohne vorgeplantes Konzept ────────────────────
-// Experiment-Pfad (CREATIVE_SKIP_CONCEPTS=1): kein Brainstorm. Claude erfindet
-// Hook-Angle, Mechanic und Bildidee pro Variante selbst — nur visualStyle und
-// copyLength werden vorgegeben, um die Bild-/Text-Vielfalt zu wahren.
+// ─── Freeform: Variante ohne vorgeplantes Konzept & ohne Style-Pflichten ──
+// Experiment-Pfad (CREATIVE_SKIP_CONCEPTS=1): kein Brainstorm, KEINE Style-
+// Vorgaben. Claude wählt Hook, Mechanik UND Visual-Form (Foto/Illustration/
+// Typo) komplett selbst. Nur die Platzhalter-Syntax wird erklärt, damit Bilder
+// gerendert werden können.
 async function generateOneCreativeFreeform(
   brief: CreativeBrief,
-  visualStyle: VisualStyle,
 ): Promise<CreativeVariant> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
 
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
-  const requirement = visualStyleRequirement(visualStyle);
-  const copyLength = (["short", "medium", "long"] as const)[
-    Math.floor(Math.random() * 3)
-  ];
-  const lengthRange =
-    copyLength === "long"
-      ? "400-800 Zeichen, AIDA-Story-Struktur, mehrere Absätze"
-      : copyLength === "medium"
-        ? "150-300 Zeichen, 2-3 Sätze, Problem → Lösung → Soft-CTA"
-        : "60-120 Zeichen, ein Satz, Hook + Soft-CTA";
 
   const userPrompt = `Erstelle EIN Meta-Ad-Creative für die ${brief.campaignKey}-Kampagne.
 
@@ -870,15 +860,15 @@ ${campaignContext}
 ${brief.audience ? `ZIELGRUPPE-FOKUS: ${brief.audience}` : ""}
 ${brief.tone ? `TONE: ${brief.tone}` : ""}
 
-Du erfindest Hook-Angle und Mechanic selbst — sei maximal eigenständig,
-überraschend und konkret. Vermeide ausgelutschte Standard-Muster und das
-Naheliegende. Wähle einen ungewöhnlichen Blickwinkel.
+Du hast völlig freie Hand: Hook-Angle, Mechanik, Bild-Idee, Visual-Form und
+Textlänge wählst du selbst. Sei maximal eigenständig, überraschend und konkret —
+vermeide ausgelutschte Standard-Muster und das Naheliegende.
 
-VORGABEN:
-- Visual-Style: ${visualStyle}
-- Copy-Length für adText: ${copyLength} (${lengthRange})
-
-${requirement}
+BILDER (optional, deine Wahl):
+- Foto: {{UNSPLASH:englische keywords}} als <img src> oder background-image.
+- Illustration: {{COMIC:englische beschreibung}} (3-6 Wörter, textfrei, wird KI-generiert).
+- Oder rein typografisch ganz ohne Bild.
+Jeglicher Text gehört ins HTML, NICHT ins Bild.
 
 Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm, keine Alternativen.`;
 
@@ -903,9 +893,9 @@ Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm,
   const text = data.content.find((c) => c.type === "text")?.text ?? "";
   const variants = parseVariantBlocks(text);
   if (variants.length === 0) {
-    throw new Error(`Freeform (${visualStyle}) lieferte keinen <variant>: ${text.slice(0, 300)}…`);
+    throw new Error(`Freeform lieferte keinen <variant>: ${text.slice(0, 300)}…`);
   }
-  return { ...variants[0], mechanic: variants[0].mechanic || `freeform-${visualStyle}` };
+  return { ...variants[0], mechanic: variants[0].mechanic || "freeform" };
 }
 
 // ─── Orchestrator: brainstorm → parallel execution ───────────────────
@@ -913,18 +903,19 @@ Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm,
 async function generateCreativeVariants(
   brief: CreativeBrief,
 ): Promise<CreativeVariant[]> {
-  // Experiment: Konzept-Phase überspringen und frei generieren.
+  // Experiment: ohne Konzept-Phase UND ohne Style-Pflichten frei generieren.
   if (process.env.CREATIVE_SKIP_CONCEPTS === "1") {
-    const styles = pickVisualStyles(brief.count);
     const settledFf = await Promise.allSettled(
-      styles.map((s) => generateOneCreativeFreeform(brief, s)),
+      Array.from({ length: brief.count }, () =>
+        generateOneCreativeFreeform(brief),
+      ),
     );
     const ffVariants: CreativeVariant[] = [];
     settledFf.forEach((r, i) => {
       if (r.status === "fulfilled") ffVariants.push(r.value);
       else
         console.warn(
-          `[creative-gen] Freeform-Variante ${i + 1} (${styles[i]}) failte:`,
+          `[creative-gen] Freeform-Variante ${i + 1} failte:`,
           r.reason instanceof Error ? r.reason.message : r.reason,
         );
     });
