@@ -44,7 +44,7 @@ function getEnv() {
   return { token, accounts };
 }
 
-function classifyProduct(campaignName: string): MetaProduct | null {
+export function classifyProduct(campaignName: string): MetaProduct | null {
   const n = campaignName.toLowerCase();
   // Reihenfolge wichtig: "Neugeschäft" zuerst, falls "wechsel" als Substring
   // in einem Neugeschäft-Namen vorkäme.

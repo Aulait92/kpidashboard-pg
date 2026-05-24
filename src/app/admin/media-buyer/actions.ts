@@ -19,13 +19,6 @@ export type SaveSettingsState = {
   savedName?: string;
 };
 
-function parseIntOrNull(raw: string): number | null {
-  const t = raw.trim();
-  if (t === "") return null;
-  const n = Number.parseInt(t, 10);
-  return Number.isFinite(n) && n >= 0 ? n : null;
-}
-
 function parseEurOrNull(raw: string): number | null {
   const t = raw.trim().replace(",", ".");
   if (t === "") return null;
@@ -48,9 +41,7 @@ export async function saveCustomerBuyerSettings(
   });
   if (!customer) return { error: "Kunde existiert nicht." };
 
-  const monthlyLeadGoal = parseIntOrNull(
-    String(formData.get("monthlyLeadGoal") ?? ""),
-  );
+  // Lead-Ziele kommen aus Airtable und werden hier nicht bearbeitet.
   const maxDailyBudget = parseEurOrNull(
     String(formData.get("maxDailyBudget") ?? ""),
   );
@@ -60,7 +51,7 @@ export async function saveCustomerBuyerSettings(
 
   await prisma.customer.update({
     where: { id: customerId },
-    data: { monthlyLeadGoal, maxDailyBudget, campaignKeyword, autopilot },
+    data: { maxDailyBudget, campaignKeyword, autopilot },
   });
 
   revalidatePath("/admin/media-buyer");

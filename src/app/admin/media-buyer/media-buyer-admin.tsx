@@ -13,7 +13,8 @@ import {
 export type CustomerSetting = {
   id: string;
   name: string;
-  monthlyLeadGoal: number | null;
+  leadGoalWechsel: number | null;
+  leadGoalNeugeschaeft: number | null;
   autopilot: boolean;
   campaignKeyword: string | null;
   maxDailyBudget: number | null;
@@ -22,6 +23,7 @@ export type CustomerSetting = {
 export type ActionLogRow = {
   id: string;
   customerName: string;
+  product: string;
   action: string;
   reason: string;
   leadsMtd: number;
@@ -80,24 +82,25 @@ function CustomerForm({ customer }: { customer: CustomerSetting }) {
           Autopilot
         </label>
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="mb-3 flex flex-wrap gap-2 text-[11px]">
+        <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 font-medium text-zinc-600">
+          Ziel Wechsel:{" "}
+          {customer.leadGoalWechsel != null
+            ? formatNumber(customer.leadGoalWechsel)
+            : "–"}
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 font-medium text-zinc-600">
+          Ziel Neugeschäft:{" "}
+          {customer.leadGoalNeugeschaeft != null
+            ? formatNumber(customer.leadGoalNeugeschaeft)
+            : "–"}
+        </span>
+        <span className="text-[color:var(--muted)]">(aus Airtable)</span>
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="block">
           <span className="text-[11px] font-medium uppercase tracking-wide text-[color:var(--muted)]">
-            Leads / Monat
-          </span>
-          <input
-            type="number"
-            name="monthlyLeadGoal"
-            min={0}
-            step={1}
-            defaultValue={customer.monthlyLeadGoal ?? ""}
-            placeholder="kein Ziel"
-            className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm tabular-nums focus:border-[color:var(--brand)] focus:outline-none"
-          />
-        </label>
-        <label className="block">
-          <span className="text-[11px] font-medium uppercase tracking-wide text-[color:var(--muted)]">
-            Max. Budget/Tag (€)
+            Max. Budget/Tag je Produkt (€)
           </span>
           <input
             type="number"
@@ -190,11 +193,12 @@ function DryRunPanel() {
           <div className="mt-3 space-y-2">
             {state.results.map((r) => (
               <div
-                key={r.customerId}
+                key={`${r.customerId}:${r.product}`}
                 className="rounded-lg bg-zinc-50 px-3 py-2 text-xs"
               >
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">{r.customerName}</span>
+                  <span className="text-[color:var(--muted)]">{r.product}</span>
                   <ActionBadge action={r.action} />
                   <span className="ml-auto tabular-nums text-[color:var(--muted)]">
                     {r.leadsMtd}/{r.goal} · Prog. {r.projected}
@@ -243,6 +247,7 @@ export function MediaBuyerAdmin({
                 <tr>
                   <th className="px-3 py-2 font-medium">Zeit</th>
                   <th className="px-3 py-2 font-medium">Kunde</th>
+                  <th className="px-3 py-2 font-medium">Produkt</th>
                   <th className="px-3 py-2 font-medium">Aktion</th>
                   <th className="px-3 py-2 font-medium">Leads</th>
                   <th className="px-3 py-2 font-medium">Budget</th>
@@ -260,6 +265,9 @@ export function MediaBuyerAdmin({
                       {row.dryRun ? " (sim)" : ""}
                     </td>
                     <td className="px-3 py-2 font-medium">{row.customerName}</td>
+                    <td className="px-3 py-2 text-[color:var(--muted)]">
+                      {row.product}
+                    </td>
                     <td className="px-3 py-2">
                       <ActionBadge action={row.action} />
                     </td>

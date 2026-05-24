@@ -16,17 +16,20 @@ model Customer {
   createdAt DateTime @default(now())
 
   // ─── Media-Buyer-Steuerung ──────────────────────────────────────────
-  // Gewünschte Leads pro Monat (fixer Wert, gilt für jeden Monat gleich).
-  // null = kein Ziel, der Media Buyer ignoriert den Kunden dann.
-  monthlyLeadGoal Int?
+  // Gewünschte Leads pro Monat, getrennt nach Produkt. Werden beim Sync aus
+  // der Airtable-Buyer-Tabelle übernommen. null = kein Ziel für das Produkt
+  // → der Media Buyer ignoriert dieses (Kunde × Produkt) dann.
+  leadGoalWechsel      Int?
+  leadGoalNeugeschaeft Int?
   // Wenn true, darf der Media Buyer die Meta-Budgets dieses Kunden
   // automatisch anpassen/pausieren. Default false = nur beobachten.
   autopilot       Boolean @default(false)
   // Keyword, über das Meta-Kampagnen diesem Kunden zugeordnet werden.
-  // null = Kundenname wird als Keyword benutzt.
+  // null = Kundenname wird als Keyword benutzt. Zusätzlich wird immer nach
+  // Produkt (Wechsel/Neugeschäft) im Kampagnennamen gefiltert.
   campaignKeyword String?
-  // Obergrenze für das automatisch gesetzte Tagesbudget (EUR, Summe über
-  // alle Kampagnen des Kunden). null = globaler Default aus Env.
+  // Obergrenze für das automatisch gesetzte Tagesbudget (EUR), gilt je
+  // Produkt-Kampagnengruppe. null = globaler Default aus Env.
   maxDailyBudget  Decimal? @db.Decimal(12, 2)
 
   leads        Lead[]
@@ -42,6 +45,8 @@ model Customer {
 model MediaBuyerAction {
   id           String   @id @default(cuid())
   customerId   String
+  // "Wechsel" | "Neugeschäft" — gesteuert wird je (Kunde × Produkt).
+  product      String
   // "increase" | "decrease" | "pause" | "activate" | "boost" | "none"
   action       String
   reason       String

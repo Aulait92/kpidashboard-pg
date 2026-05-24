@@ -32,6 +32,19 @@ const TABLES = [
 
 const BUYERS_TABLE = process.env.AIRTABLE_TABLE_BUYERS ?? "Buyer";
 const BUYER_NAME_FIELDS = ["Name", "Buyer", "Firma", "Company"];
+// Monatliche Lead-Ziele pro Produkt auf dem Buyer-Datensatz. Mehrere
+// Schreibweisen werden akzeptiert (Reihenfolge = Priorität).
+const BUYER_GOAL_WECHSEL_FIELDS = [
+  "PKV-Wechsel Leadziel pro Monat",
+  "PKV-Wechsel Leadziel/Monat",
+  "Wechsel Leadziel pro Monat",
+];
+const BUYER_GOAL_NEUGESCHAEFT_FIELDS = [
+  "PKV-Neugeschäft Leadziel pro Monat",
+  "PKV-Neugeschaeft Leadziel pro Monat",
+  "PKV-Neugeschäft Leadziel/Monat",
+  "Neugeschäft Leadziel pro Monat",
+];
 const FINANZEN_TABLE = process.env.AIRTABLE_TABLE_FINANZEN ?? "Finanzen";
 
 const GERMAN_MONTHS: Record<string, number> = {
@@ -121,10 +134,16 @@ function readLinkedIds(fields: Record<string, unknown>, key: string): string[] {
   );
 }
 
+type BuyerInfo = {
+  name: string;
+  goalWechsel: number | null;
+  goalNeugeschaeft: number | null;
+};
+
 async function fetchBuyersById(
   ids: string[],
-): Promise<Map<string, string>> {
-  const map = new Map<string, string>();
+): Promise<Map<string, BuyerInfo>> {
+  const map = new Map<string, BuyerInfo>();
   if (ids.length === 0) return map;
 
   let records: AirtableRecord[];
@@ -154,11 +173,35 @@ async function fetchBuyersById(
       }
     }
     if (name) {
-      map.set(rec.id, name);
+      map.set(rec.id, {
+        name,
+        goalWechsel: readIntFromFields(rec.fields, BUYER_GOAL_WECHSEL_FIELDS),
+        goalNeugeschaeft: readIntFromFields(
+          rec.fields,
+          BUYER_GOAL_NEUGESCHAEFT_FIELDS,
+        ),
+      });
     }
   }
 
   return map;
+}
+
+// Liest eine ganze Zahl ≥ 0 aus dem erstbesten der angegebenen Felder.
+// null wenn keines gesetzt/parsbar ist.
+function readIntFromFields(
+  fields: Record<string, unknown>,
+  keys: string[],
+): number | null {
+  for (const key of keys) {
+    const v = fields[key];
+    if (typeof v === "number" && Number.isFinite(v)) return Math.round(v);
+    if (typeof v === "string" && v.trim() !== "") {
+      const n = Number.parseInt(v.trim(), 10);
+      if (Number.isFinite(n)) return n;
+    }
+  }
+  return null;
 }
 
 function readNumber(fields: Record<string, unknown>, key: string): number {
@@ -280,7 +323,7 @@ export async function syncAirtable(): Promise<SyncResult> {
       }
     }
   }
-  let buyerMap = new Map<string, string>();
+  let buyerMap = new Map<string, BuyerInfo>();
   if (buyerIds.size > 0) {
     try {
       buyerMap = await fetchBuyersById([...buyerIds]);
@@ -293,11 +336,36 @@ export async function syncAirtable(): Promise<SyncResult> {
     // Fall 1: Buyer ist Linked Record → IDs zu Namen auflösen
     const ids = readLinkedIds(fields, "Buyer");
     if (ids.length > 0) {
-      const names = ids.map((id) => buyerMap.get(id)).filter((n): n is string => !!n);
+      const names = ids
+        .map((id) => buyerMap.get(id)?.name)
+        .filter((n): n is string => !!n);
       if (names.length > 0) return names.join(", ");
     }
     // Fall 2: Buyer ist Single-Line-Text
     return readString(fields, "Buyer");
+  }
+
+  // Lead-Ziele pro Produkt aus der Buyer-Tabelle auf den Customer übernehmen.
+  // Nur diese Felder werden gesetzt — autopilot/keyword/maxBudget bleiben
+  // admin-verwaltet. Customer wird hier per Name angelegt, falls noch nicht da.
+  for (const info of buyerMap.values()) {
+    const key = info.name.trim();
+    if (!key) continue;
+    if (info.goalWechsel == null && info.goalNeugeschaeft == null) continue;
+    const customer = await prisma.customer.upsert({
+      where: { name: key },
+      create: {
+        name: key,
+        leadGoalWechsel: info.goalWechsel,
+        leadGoalNeugeschaeft: info.goalNeugeschaeft,
+      },
+      update: {
+        leadGoalWechsel: info.goalWechsel,
+        leadGoalNeugeschaeft: info.goalNeugeschaeft,
+      },
+      select: { id: true },
+    });
+    customerCache.set(key, customer.id);
   }
 
   // 3. Records verarbeiten

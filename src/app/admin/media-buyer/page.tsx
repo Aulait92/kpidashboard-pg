@@ -41,7 +41,8 @@ export default async function MediaBuyerPage() {
       select: {
         id: true,
         name: true,
-        monthlyLeadGoal: true,
+        leadGoalWechsel: true,
+        leadGoalNeugeschaeft: true,
         autopilot: true,
         campaignKeyword: true,
         maxDailyBudget: true,
@@ -52,6 +53,7 @@ export default async function MediaBuyerPage() {
       take: 50,
       select: {
         id: true,
+        product: true,
         action: true,
         reason: true,
         leadsMtd: true,
@@ -69,7 +71,8 @@ export default async function MediaBuyerPage() {
   const customerSettings: CustomerSetting[] = customers.map((c) => ({
     id: c.id,
     name: c.name,
-    monthlyLeadGoal: c.monthlyLeadGoal,
+    leadGoalWechsel: c.leadGoalWechsel,
+    leadGoalNeugeschaeft: c.leadGoalNeugeschaeft,
     autopilot: c.autopilot,
     campaignKeyword: c.campaignKeyword,
     maxDailyBudget: decToNum(c.maxDailyBudget),
@@ -78,6 +81,7 @@ export default async function MediaBuyerPage() {
   const log: ActionLogRow[] = actions.map((a) => ({
     id: a.id,
     customerName: a.customer.name,
+    product: a.product,
     action: a.action,
     reason: a.reason,
     leadsMtd: a.leadsMtd,

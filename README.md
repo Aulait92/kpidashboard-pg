@@ -57,12 +57,18 @@ Die KPI-Berechnung liegt vollständig in `src/lib/kpis.ts`.
 
 ## Automatischer Media Buyer
 
-Steuert die Meta-Tagesbudgets pro Kunde so, dass zum Monatsende möglichst
-100 % der gewünschten Leads geliefert sind — ohne teure Überlieferung.
+Steuert die Meta-Tagesbudgets je (Kunde × Produkt) so, dass zum Monatsende
+möglichst 100 % der gewünschten Leads geliefert sind — ohne teure
+Überlieferung.
 
-- Pflege pro Kunde unter **Media Buyer** (Admin-Menü): Lead-Ziel/Monat,
-  Autopilot-Schalter, Kampagnen-Keyword und max. Tagesbudget.
-- Kunde ↔ Kampagne über Namens-Keyword (default = Kundenname).
+- **Lead-Ziele** kommen produkt-getrennt aus der Airtable-Buyer-Tabelle
+  (Spalten „PKV-Wechsel Leadziel pro Monat" / „PKV-Neugeschäft Leadziel pro
+  Monat") und werden beim Sync auf den Kunden übernommen.
+- Pflege pro Kunde unter **Media Buyer** (Admin-Menü): Autopilot-Schalter,
+  Kampagnen-Keyword und max. Tagesbudget je Produkt. Die Ziele werden dort
+  nur angezeigt (read-only, Quelle Airtable).
+- Kunde ↔ Kampagne über Namens-Keyword (default = Kundenname) **plus**
+  Produkt-Klassifizierung des Kampagnennamens (Wechsel/Neugeschäft).
 - Hebel: Tagesbudget rauf/runter (nach Cost-per-Lead und Pacing),
   Pausieren bei erreichtem Ziel, Endspurt-Boost in den letzten Tagen.
 - Logik in `src/lib/media-buyer.ts` (`decideBudget` ist seiteneffektfrei),

@@ -41,6 +41,7 @@ async function handle(req: Request) {
       ranAt: result.ranAt.toISOString(),
       customers: result.customers.map((c) => ({
         customer: c.customerName,
+        product: c.product,
         action: c.action,
         leadsMtd: c.leadsMtd,
         goal: c.goal,

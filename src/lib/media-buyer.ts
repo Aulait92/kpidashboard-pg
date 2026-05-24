@@ -1,9 +1,11 @@
 // Automatischer Facebook-Media-Buyer.
 //
-// Ziel: pro Kunde die gewünschte Lead-Menge im Monat liefern und zum
-// Monatsende eine Belieferungsquote von möglichst 100 % erreichen — ohne
-// teure Überlieferung. Der Lauf ist idempotent pro Tag gedacht (einmal
-// täglich per Cron) und arbeitet mit drei Hebeln:
+// Gesteuert wird je (Kunde × Produkt) — die Lead-Ziele kommen produkt-
+// getrennt (Wechsel/Neugeschäft) aus Airtable. Ziel: die gewünschte
+// Lead-Menge im Monat liefern und zum Monatsende eine Belieferungsquote von
+// möglichst 100 % erreichen — ohne teure Überlieferung. Der Lauf ist
+// idempotent pro Tag gedacht (einmal täglich per Cron) und arbeitet mit
+// drei Hebeln:
 //   1. Tagesbudget anpassen (primär)
 //   2. Kampagne pausieren (Ziel erreicht) / reaktivieren (hinterher)
 //   3. Endspurt-Boost in den letzten Tagen, wenn die Quote zu kippen droht
@@ -21,6 +23,7 @@ import {
   startOfMonth,
 } from "date-fns";
 import { computeKpis, type Kpis } from "@/lib/kpis";
+import { classifyProduct } from "@/lib/meta";
 import {
   findCampaignsByKeyword,
   getCampaignBudgetState,
@@ -30,6 +33,7 @@ import {
   type CampaignBudgetState,
   type MetaCampaign,
 } from "@/lib/meta-ads";
+import { PRODUCTS, type Product } from "@/lib/products";
 import { prisma } from "@/lib/prisma";
 import { sendToAdmins } from "@/lib/push";
 
@@ -41,9 +45,11 @@ export type BuyerAction =
   | "boost"
   | "none";
 
+// Ein Steuer-Ergebnis je (Kunde × Produkt).
 export type CustomerBuyerResult = {
   customerId: string;
   customerName: string;
+  product: Product;
   leadsMtd: number;
   goal: number;
   projected: number;
@@ -222,14 +228,15 @@ export function decideBudget(params: {
   };
 }
 
-async function processCustomer(
+async function processUnit(
   customer: {
     id: string;
     name: string;
-    monthlyLeadGoal: number | null;
     campaignKeyword: string | null;
     maxDailyBudget: unknown;
   },
+  product: Product,
+  goal: number,
   ctx: {
     campaigns: MetaCampaign[];
     monthStart: Date;
@@ -243,13 +250,13 @@ async function processCustomer(
     dryRun: boolean;
   },
 ): Promise<CustomerBuyerResult> {
-  const goal = customer.monthlyLeadGoal ?? 0;
   const keyword = (customer.campaignKeyword ?? customer.name).trim();
   const maxBudget = decToNumber(customer.maxDailyBudget) ?? ctx.defaultMaxBudget;
 
   const base: CustomerBuyerResult = {
     customerId: customer.id,
     customerName: customer.name,
+    product,
     leadsMtd: 0,
     goal,
     projected: 0,
@@ -266,7 +273,7 @@ async function processCustomer(
     const kpis = (await computeKpis({
       range: { from: ctx.monthStart, to: ctx.mtdEnd },
       customerId: customer.id,
-      product: null,
+      product,
     })) as Kpis;
     const leadsMtd = kpis.totalLeads;
     const costPerLead =
@@ -279,11 +286,14 @@ async function processCustomer(
     base.leadsMtd = leadsMtd;
     base.projected = projected;
 
-    const matched = findCampaignsByKeyword(ctx.campaigns, keyword);
+    // Kampagnen müssen das Kunden-Keyword UND zum Produkt passen.
+    const matched = findCampaignsByKeyword(ctx.campaigns, keyword).filter(
+      (c) => classifyProduct(c.name) === product,
+    );
     base.campaigns = matched.map((c) => c.name);
 
     if (matched.length === 0) {
-      base.reason = `Keine Meta-Kampagne mit Keyword "${keyword}" gefunden.`;
+      base.reason = `Keine ${product}-Kampagne mit Keyword "${keyword}" gefunden.`;
       base.error = base.reason;
       return base;
     }
@@ -363,35 +373,60 @@ export async function runMediaBuyer(params: {
   const daysTotal = differenceInCalendarDays(monthEnd, monthStart) + 1;
 
   const customers = await prisma.customer.findMany({
-    where: { autopilot: true, monthlyLeadGoal: { not: null } },
+    where: {
+      autopilot: true,
+      OR: [
+        { leadGoalWechsel: { not: null } },
+        { leadGoalNeugeschaeft: { not: null } },
+      ],
+    },
     select: {
       id: true,
       name: true,
-      monthlyLeadGoal: true,
+      leadGoalWechsel: true,
+      leadGoalNeugeschaeft: true,
       campaignKeyword: true,
       maxDailyBudget: true,
     },
     orderBy: { name: "asc" },
   });
 
+  // Jede zu steuernde Einheit (Kunde × Produkt) mit gesetztem Ziel > 0.
+  const units: {
+    customer: (typeof customers)[number];
+    product: Product;
+    goal: number;
+  }[] = [];
+  for (const customer of customers) {
+    const goals: Record<Product, number | null> = {
+      Wechsel: customer.leadGoalWechsel,
+      Neugeschäft: customer.leadGoalNeugeschaeft,
+    };
+    for (const product of PRODUCTS) {
+      const goal = goals[product];
+      if (goal != null && goal > 0) units.push({ customer, product, goal });
+    }
+  }
+
   const results: CustomerBuyerResult[] = [];
 
-  if (customers.length === 0) {
+  if (units.length === 0) {
     return { ranAt: now, dryRun, customers: results };
   }
 
-  // Kampagnen einmal laden und für alle Kunden wiederverwenden.
+  // Kampagnen einmal laden und für alle Einheiten wiederverwenden.
   let campaigns: MetaCampaign[];
   try {
     campaigns = await listCampaigns();
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    for (const c of customers) {
+    for (const u of units) {
       results.push({
-        customerId: c.id,
-        customerName: c.name,
+        customerId: u.customer.id,
+        customerName: u.customer.name,
+        product: u.product,
         leadsMtd: 0,
-        goal: c.monthlyLeadGoal ?? 0,
+        goal: u.goal,
         projected: 0,
         daysElapsed,
         daysTotal,
@@ -420,8 +455,8 @@ export async function runMediaBuyer(params: {
     dryRun,
   };
 
-  for (const customer of customers) {
-    results.push(await processCustomer(customer, ctx));
+  for (const u of units) {
+    results.push(await processUnit(u.customer, u.product, u.goal, ctx));
   }
 
   await persistAndNotify(results, dryRun);
@@ -436,6 +471,7 @@ async function persistAndNotify(
     await prisma.mediaBuyerAction.create({
       data: {
         customerId: r.customerId,
+        product: r.product,
         action: r.action,
         reason: r.reason,
         leadsMtd: r.leadsMtd,
@@ -469,9 +505,9 @@ async function persistAndNotify(
             ? "📈"
             : "📉";
     await sendToAdmins({
-      title: `${icon} Media Buyer: ${r.customerName}`,
+      title: `${icon} Media Buyer: ${r.customerName} · ${r.product}`,
       body: r.reason.slice(0, 160),
-      tag: `media-buyer:${r.customerId}`,
+      tag: `media-buyer:${r.customerId}:${r.product}`,
       url: "/admin/media-buyer",
     });
   }
