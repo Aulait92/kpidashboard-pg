@@ -105,12 +105,14 @@ Guardrails über Env (alle optional):
 | `MEDIA_BUYER_BOOST_DAYS`        | `5`     | Länge des Endspurt-Fensters (Tage)     |
 | `MEDIA_BUYER_PRECISION_DAYS`    | `3`     | Präzisions-Fenster am Monatsende: Step-Limit & Totzone aus, feines Tarieren, vorausschauendes Pausieren |
 | `MEDIA_BUYER_PRECISION_MIN_BUDGET` | `1`  | Budget-Untergrenze im Präzisions-Fenster (EUR) |
-| `MEDIA_BUYER_RUN_INTERVAL_HOURS` | `12`  | Stunden bis zum nächsten Lauf (fürs vorausschauende Pausieren) |
+| `MEDIA_BUYER_RUN_INTERVAL_HOURS` | _auto_ | Override für die Stunden bis zum nächsten Lauf (fürs vorausschauende Pausieren). Ohne Wert wird der Abstand **automatisch** aus den letzten echten Läufen abgeleitet. |
 
 In den letzten `MEDIA_BUYER_PRECISION_DAYS` Tagen schaltet der Buyer in den
 Präzisionsmodus: Step-Limit und ±5 %-Totzone entfallen, das Budget wird exakt
 auf `Restleads × CPL` heruntergefahren, und er pausiert **vorausschauend**,
 sobald das Ziel vor dem nächsten Lauf erreicht würde (`Leads + erwartete Leads
-bis zum nächsten Lauf ≥ Ziel`). Für eine möglichst exakte 100 %-Landung den
-Cron im Endspurt häufiger laufen lassen (z. B. stündlich) und
-`MEDIA_BUYER_RUN_INTERVAL_HOURS` entsprechend setzen.
+bis zum nächsten Lauf ≥ Ziel`). Das Lauf-Intervall dafür ermittelt der Buyer
+selbst aus den Zeitstempeln der letzten Läufe — stellst du den Cron im Endspurt
+auf stündlich, zieht das Pausieren automatisch nach (kein Env-Eingriff nötig).
+Für eine möglichst exakte 100 %-Landung den Cron im Endspurt häufiger laufen
+lassen (z. B. stündlich).

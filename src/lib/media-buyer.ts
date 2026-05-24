@@ -19,8 +19,11 @@
 //                                 Step-Limit & Totzone aus, niedrigere Budget-
 //                                 Untergrenze, vorausschauendes Pausieren.
 //   MEDIA_BUYER_PRECISION_MIN_BUDGET  Budget-Untergrenze im Präzisions-Fenster (default 1)
-//   MEDIA_BUYER_RUN_INTERVAL_HOURS    Stunden bis zum nächsten Lauf, für das
-//                                     vorausschauende Pausieren (default 12 = 2×/Tag)
+//   MEDIA_BUYER_RUN_INTERVAL_HOURS    Optionaler Override für die Stunden bis
+//                                     zum nächsten Lauf. Ohne Wert wird das
+//                                     Intervall automatisch aus den letzten
+//                                     echten Läufen abgeleitet (passt sich an
+//                                     Cron-Frequenz-Änderungen selbst an).
 
 import {
   differenceInCalendarDays,
@@ -554,6 +557,30 @@ async function processPool(
   }
 }
 
+// Stunden bis zum (vermutlich) nächsten Lauf — für das vorausschauende
+// Pausieren. Reihenfolge: explizite Env-Override > automatisch aus dem
+// Abstand der letzten echten (Nicht-Trockenlauf-)Läufe > Default 12.
+// So passt sich das Pausieren automatisch an, wenn du die Cron-Frequenz
+// änderst (z. B. im Endspurt auf stündlich), ohne Env anzufassen.
+async function deriveLookAheadHours(now: Date): Promise<number> {
+  const override = process.env.MEDIA_BUYER_RUN_INTERVAL_HOURS;
+  if (override) {
+    const n = Number(override);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  const last = await prisma.mediaBuyerAction.findFirst({
+    where: { dryRun: false },
+    orderBy: { createdAt: "desc" },
+    select: { createdAt: true },
+  });
+  if (last) {
+    const gapH = (now.getTime() - last.createdAt.getTime()) / 3_600_000;
+    // Clamp gegen Ausreißer (z. B. erster Lauf nach langer Pause).
+    return Math.min(36, Math.max(0.25, gapH));
+  }
+  return 12;
+}
+
 export async function runMediaBuyer(params: {
   now?: Date;
   dryRun?: boolean;
@@ -627,7 +654,7 @@ export async function runMediaBuyer(params: {
     boostDays: envNum("MEDIA_BUYER_BOOST_DAYS", 5),
     precisionDays: envNum("MEDIA_BUYER_PRECISION_DAYS", 3),
     precisionMinBudget: envNum("MEDIA_BUYER_PRECISION_MIN_BUDGET", 1),
-    lookAheadHours: envNum("MEDIA_BUYER_RUN_INTERVAL_HOURS", 12),
+    lookAheadHours: await deriveLookAheadHours(now),
     dryRun,
   };
 
