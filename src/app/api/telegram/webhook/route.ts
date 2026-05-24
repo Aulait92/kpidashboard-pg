@@ -201,6 +201,14 @@ async function handleTextCommand(chatId: string, text: string) {
           status: "pending",
         },
       });
+      // Das generierte Creative-Konzept als eigene Nachricht ausgeben
+      // (Caption-Limit von Fotos ist nur 1024 Zeichen — Konzept kann länger).
+      if (c.concept) {
+        await sendTelegramText({
+          chatId,
+          text: `<b>Konzept Variante #${i + 1}</b>\n\n${escapeHtml(c.concept)}`,
+        });
+      }
       const { messageId } = await sendTelegramPhotoWithButtons({
         chatId,
         imageUrl: c.imageUrl,

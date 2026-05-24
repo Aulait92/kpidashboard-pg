@@ -24,6 +24,7 @@ export type GeneratedCreative = {
   mechanic: string; // Konzept-Mechanic (UGC-Whiteboard, Comic-Illustration, Big-Number, …)
   imagePrompt: string; // bei HTML-Pipeline: das volle HTML (Debug/Replay)
   imageUrl: string; // public URL nach R2-Upload
+  concept?: string; // das generierte Creative-Konzept (Direct-Image-Modus)
 };
 
 // ─── Claude Creative-Generation (HTML) ───────────────────────────────
@@ -36,6 +37,7 @@ type CreativeVariant = {
   fbHeadline: string;
   html: string;
   mechanic: string;
+  concept?: string;
 };
 
 const CREATIVE_SYSTEM_PROMPT = `Du bist Senior Direct-Response-Creative-Director für Meta-Ads im deutschen PKV-Lead-Gen-Markt. Du designst Ad-Creatives als komplette HTML-Dokumente.
@@ -934,6 +936,7 @@ async function generateDirectImageCreatives(
         fbHeadline: "Förderung jetzt prüfen",
         html,
         mechanic: "direct-image",
+        concept,
       };
     }),
   );
@@ -1076,6 +1079,7 @@ export async function generateCreatives(
         mechanic: v.mechanic,
         imagePrompt: v.html,
         imageUrl,
+        concept: v.concept,
       } satisfies GeneratedCreative;
     }),
   );
