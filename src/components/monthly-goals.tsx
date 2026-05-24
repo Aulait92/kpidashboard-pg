@@ -149,15 +149,11 @@ function GoalEditForm({
   );
 
   const isTotal = initial.product == null;
-  const closedEditable =
-    initial.rows.find((r) => r.key === "closed")?.editable ?? false;
-  const revenueEditable =
-    initial.rows.find((r) => r.key === "revenue")?.editable ?? false;
 
-  // Aktuelle Werte vorbefüllen.
+  // Aktuelle Werte vorbefüllen. Abschlussquote & Marge sind Anteile (0..1) →
+  // als Prozent anzeigen.
   const values = {
     closed: initial.rows.find((r) => r.key === "closed")?.goal,
-    revenue: initial.rows.find((r) => r.key === "revenue")?.goal,
     margin: initial.rows.find((r) => r.key === "margin")?.goal,
   };
 
@@ -175,27 +171,19 @@ function GoalEditForm({
         Lead- und Umsatzziele kommen aus Airtable (read-only; Umsatz = Lead-Ziel
         × Preis).{" "}
         {isTotal
-          ? "Gesamt: Abschlüsse sind die Summe der Produkte — hier nur die Gesamt-Marge setzen."
-          : "Hier Abschlüsse und Marge für dieses Produkt setzen."}
+          ? "Gesamt: Abschlussquote und Marge eigenständig setzen (Leads & Umsatz = Summe)."
+          : "Hier Abschlussquote und Marge für dieses Produkt setzen."}
       </p>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {closedEditable ? (
-          <Field
-            label="Abschlüsse (Anzahl)"
-            name="closed"
-            defaultValue={values.closed}
-            step={1}
-          />
-        ) : null}
-        {revenueEditable ? (
-          <Field
-            label="Umsatz (€)"
-            name="revenue"
-            defaultValue={values.revenue}
-            step={50}
-          />
-        ) : null}
+        <Field
+          label="Abschlussquote (%)"
+          name="closed"
+          defaultValue={values.closed != null ? values.closed * 100 : undefined}
+          step={0.1}
+          max={100}
+          hint="0-100"
+        />
         <Field
           label="Marge vor weiteren Kosten (%)"
           name="margin"

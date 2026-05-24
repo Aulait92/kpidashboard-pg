@@ -84,8 +84,8 @@ export async function upsertMonthlyGoal(
   monthKey: string,
   product: string | null,
   goals: {
-    closedGoal: number | null;
-    revenueGoal: number | null;
+    // Abschlussquote-Ziel (0..1) und Marge-Ziel (0..1).
+    closedRateGoal: number | null;
     marginGoal: number | null;
   },
 ) {
@@ -95,13 +95,11 @@ export async function upsertMonthlyGoal(
     create: {
       monthKey,
       product: key,
-      closedGoal: goals.closedGoal,
-      revenueGoal: goals.revenueGoal,
+      closedRateGoal: goals.closedRateGoal,
       marginGoal: goals.marginGoal,
     },
     update: {
-      closedGoal: goals.closedGoal,
-      revenueGoal: goals.revenueGoal,
+      closedRateGoal: goals.closedRateGoal,
       marginGoal: goals.marginGoal,
     },
   });
@@ -182,23 +180,16 @@ export async function computeMonthlyGoalProgress(params: {
   // gesetzt: pro Produkt aus der jeweiligen Zeile; gesamt sind Abschlüsse die
   // Summe der Produkte, die Gesamt-Marge wird eigenständig gesetzt.
   const byProduct = new Map(allGoalRows.map((r) => [r.product, r]));
-  const productRows = allGoalRows.filter((r) => r.product !== "");
 
   const pk = isTotal ? "total" : (product as keyof ByProduct);
   const leadsGoal = atGoals.leads[pk];
   const revenueGoal = atGoals.revenue[pk] > 0 ? atGoals.revenue[pk] : null;
 
-  let closedGoal: number | null;
-  let marginGoal: number | null;
-  if (isTotal) {
-    const closedSum = productRows.reduce((s, r) => s + (r.closedGoal ?? 0), 0);
-    closedGoal = closedSum > 0 ? closedSum : null;
-    marginGoal = decToNumber(byProduct.get("")?.marginGoal);
-  } else {
-    const row = byProduct.get(product);
-    closedGoal = row?.closedGoal ?? null;
-    marginGoal = decToNumber(row?.marginGoal);
-  }
+  // Abschlussquote & Marge sind Qualitätskennzahlen — je Produkt bzw. gesamt
+  // eigenständig gesetzt (nicht summiert).
+  const settingsRow = byProduct.get(isTotal ? "" : (product as string));
+  const closedRateGoal = decToNumber(settingsRow?.closedRateGoal);
+  const marginGoal = decToNumber(settingsRow?.marginGoal);
 
   const daysElapsed = Math.max(
     1,
@@ -311,14 +302,15 @@ export async function computeMonthlyGoalProgress(params: {
       mtd.totalLeads,
       false,
     ),
-    // Abschlüsse/Umsatz: pro Produkt editierbar, gesamt = Summe (read-only).
-    buildVolumeRow(
+    // Abschlussquote (Abschlüsse / Leads): Qualitätskennzahl in %, je Produkt
+    // und gesamt eigenständig setzbar.
+    buildQualityRow(
       "closed",
-      "Abschlüsse",
-      "number",
-      closedGoal,
-      mtd.closedLeads,
-      !isTotal,
+      "Abschlussquote",
+      "percent",
+      closedRateGoal,
+      mtd.closingRate,
+      true,
     ),
     // Umsatz: automatisch aus Lead-Ziel × Preis (Airtable) → read-only.
     buildVolumeRow(

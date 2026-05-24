@@ -223,7 +223,9 @@ model MonthlyGoal {
   // sind die Summe der Produkte; nur die Gesamt-Marge wird eigenständig gesetzt.
   product     String   @default("")
   leadsGoal   Int?
-  closedGoal  Int?
+  // Abschlussquote-Ziel (Abschlüsse / Leads), 0..1. Qualitätskennzahl wie die
+  // Marge — wird je Produkt und gesamt eigenständig gesetzt (nicht summiert).
+  closedRateGoal Decimal? @db.Decimal(5, 4)
   revenueGoal Decimal? @db.Decimal(12, 2)
   marginGoal  Decimal? @db.Decimal(5, 4) // 0..1
   createdAt   DateTime @default(now())

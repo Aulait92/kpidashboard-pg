@@ -35,24 +35,22 @@ export async function saveMonthlyGoals(
   const product = String(formData.get("product") ?? "");
   const isTotal = product === "";
 
-  // Umsatzziel kommt automatisch aus Airtable (Lead-Ziel × Preis) — hier nur
-  // Abschlüsse (pro Produkt) und Marge.
-  const closed = parseOptionalNumber(String(formData.get("closed") ?? ""));
+  // Lead- & Umsatzziel kommen automatisch aus Airtable — hier nur
+  // Abschlussquote und Marge (beide in %, intern als 0..1).
+  const closedPct = parseOptionalNumber(String(formData.get("closed") ?? ""));
   const marginPct = parseOptionalNumber(String(formData.get("margin") ?? ""));
 
-  if (closed === undefined || marginPct === undefined) {
+  if (closedPct === undefined || marginPct === undefined) {
     return { error: "Ungültiger Wert (Zahlen, ≥ 0)." };
   }
-  if (marginPct != null && marginPct > 100) {
-    return { error: "Marge max. 100 %." };
+  if ((closedPct != null && closedPct > 100) || (marginPct != null && marginPct > 100)) {
+    return { error: "Quote/Marge max. 100 %." };
   }
-  // Marge wird als Prozent eingegeben, intern als 0..1 gespeichert.
+  const closedRate = closedPct == null ? null : closedPct / 100;
   const margin = marginPct == null ? null : marginPct / 100;
 
   await upsertMonthlyGoal(monthKey, isTotal ? null : product, {
-    // Gesamt: Abschlüsse sind Summe der Produkte → hier nicht setzen.
-    closedGoal: isTotal ? null : closed == null ? null : Math.round(closed),
-    revenueGoal: null, // automatisch aus Airtable
+    closedRateGoal: closedRate,
     marginGoal: margin,
   });
 
