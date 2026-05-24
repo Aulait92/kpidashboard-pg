@@ -625,8 +625,6 @@ KEINE designed Gradients, KEINE Drop-Shadows auf Text, KEIN ANZEIGE-Label oben, 
 }
 
 async function brainstormConcepts(brief: CreativeBrief): Promise<Concept[]> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
 
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
 
@@ -676,25 +674,11 @@ OUTPUT (strict, NUR <concept>-Blöcke, kein Drumherum, EXAKT in der Reihenfolge 
 <description>GKV-vs-PKV Konto-Vergleich-Screenshot mit Browser-Chrome, Headline "Dein PKV-Beitrag heute vs. nach Wechsel". 824€ → 412€. Handschriftlicher Pfeil "−50%". AdText: 3-Satz-Story einer Wechslerin.</description>
 </concept>`;
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 4000,
-      system: `Du bist Senior Direct-Response-Creative-Director für deutsche PKV-Lead-Gen-Ads. Du brainstormst maximal diverse Konzept-Sets — jedes Konzept eine andere Mechanic, ein anderer Hook, eine andere visuelle Sprache.`,
-      messages: [{ role: "user", content: userPrompt }],
-    }),
+  const text = await llmText({
+    system: `Du bist Senior Direct-Response-Creative-Director für deutsche PKV-Lead-Gen-Ads. Du brainstormst maximal diverse Konzept-Sets — jedes Konzept eine andere Mechanic, ein anderer Hook, eine andere visuelle Sprache.`,
+    user: userPrompt,
+    maxTokens: 4000,
   });
-  if (!res.ok) {
-    throw new Error(`Claude Brainstorm ${res.status}: ${await res.text()}`);
-  }
-  const data = (await res.json()) as { content: { type: string; text: string }[] };
-  const text = data.content.find((c) => c.type === "text")?.text ?? "";
   const concepts = parseConceptBlocks(text);
   if (concepts.length === 0) {
     throw new Error(`Brainstorm enthielt keine <concept>-Blöcke: ${text.slice(0, 300)}…`);
@@ -751,8 +735,6 @@ async function generateOneCreative(
   brief: CreativeBrief,
   concept: Concept,
 ): Promise<CreativeVariant> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
 
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
   const photoLine = visualStyleRequirement(concept.visualStyle);
@@ -781,25 +763,11 @@ ${photoLine}
 
 Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm, keine Alternativen.`;
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 8000,
-      system: CREATIVE_SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userPrompt }],
-    }),
+  const text = await llmText({
+    system: CREATIVE_SYSTEM_PROMPT,
+    user: userPrompt,
+    maxTokens: 8000,
   });
-  if (!res.ok) {
-    throw new Error(`Claude Execution ${res.status}: ${await res.text()}`);
-  }
-  const data = (await res.json()) as { content: { type: string; text: string }[] };
-  const text = data.content.find((c) => c.type === "text")?.text ?? "";
   const variants = parseVariantBlocks(text);
   if (variants.length === 0) {
     throw new Error(
@@ -848,8 +816,6 @@ Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm,
 async function generateOneCreativeFreeform(
   brief: CreativeBrief,
 ): Promise<CreativeVariant> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
 
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
 
@@ -872,25 +838,11 @@ Jeglicher Text gehört ins HTML, NICHT ins Bild.
 
 Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm, keine Alternativen.`;
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 8000,
-      system: CREATIVE_SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userPrompt }],
-    }),
+  const text = await llmText({
+    system: CREATIVE_SYSTEM_PROMPT,
+    user: userPrompt,
+    maxTokens: 8000,
   });
-  if (!res.ok) {
-    throw new Error(`Claude Freeform ${res.status}: ${await res.text()}`);
-  }
-  const data = (await res.json()) as { content: { type: string; text: string }[] };
-  const text = data.content.find((c) => c.type === "text")?.text ?? "";
   const variants = parseVariantBlocks(text);
   if (variants.length === 0) {
     throw new Error(`Freeform lieferte keinen <variant>: ${text.slice(0, 300)}…`);
@@ -1050,30 +1002,45 @@ type RegenContext = {
   currentFbHeadline?: string;
 };
 
+// Provider-neutraler Text-Helfer — läuft über OpenAI (Chat Completions).
+// Modell via OPENAI_TEXT_MODEL (default "gpt-4o").
+async function llmText(opts: {
+  system: string;
+  user: string;
+  maxTokens: number;
+}): Promise<string> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error("OPENAI_API_KEY nicht gesetzt.");
+  const model = process.env.OPENAI_TEXT_MODEL || "gpt-4o";
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: opts.maxTokens,
+      messages: [
+        { role: "system", content: opts.system },
+        { role: "user", content: opts.user },
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${await res.text()}`);
+  const data = (await res.json()) as {
+    choices?: { message?: { content?: string } }[];
+  };
+  return data.choices?.[0]?.message?.content ?? "";
+}
+
+// Alias für Bestandscode (regen-Funktionen).
 async function callClaudeSingleText(opts: {
   system: string;
   user: string;
   maxTokens: number;
 }): Promise<string> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: opts.maxTokens,
-      system: opts.system,
-      messages: [{ role: "user", content: opts.user }],
-    }),
-  });
-  if (!res.ok) throw new Error(`Claude ${res.status}: ${await res.text()}`);
-  const data = (await res.json()) as { content: { type: string; text: string }[] };
-  return data.content.find((c) => c.type === "text")?.text ?? "";
+  return llmText(opts);
 }
 
 export async function regenerateAdText(ctx: RegenContext): Promise<string> {
@@ -1136,8 +1103,6 @@ export async function regenerateCreativeImage(
   },
 ): Promise<{ imageUrl: string; imagePrompt: string }> {
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
 
   // Visual-Style aus der Mechanic ableiten — Bild-Regen behält das Format,
   // generiert nur eine andere Komposition innerhalb dieser Mechanic.
@@ -1202,25 +1167,11 @@ Antworte mit GENAU EINEM <creative_html>-Block, KEINE anderen Tags:
 </html>
 </creative_html>`;
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 8000,
-      system: CREATIVE_SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userPrompt }],
-    }),
+  const text = await llmText({
+    system: CREATIVE_SYSTEM_PROMPT,
+    user: userPrompt,
+    maxTokens: 8000,
   });
-  if (!res.ok) {
-    throw new Error(`Image-Regen ${res.status}: ${await res.text()}`);
-  }
-  const data = (await res.json()) as { content: { type: string; text: string }[] };
-  const text = data.content.find((c) => c.type === "text")?.text ?? "";
   const html = extractTag(text, "creative_html");
   if (!html) {
     throw new Error(`Image-Regen lieferte kein <creative_html>: ${text.slice(0, 300)}`);
@@ -1258,38 +1209,22 @@ export type ParsedIntent = {
 };
 
 export async function parseIntent(text: string): Promise<ParsedIntent> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
-  }
-
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 400,
+  let raw: string;
+  try {
+    raw = await llmText({
       system: `Du parsed deutsche Befehle für einen Creative-Generation-Bot.
 Erkennbare Kampagnen: "Wechsel", "Neugeschäft", "Kinderwunsch".
 Bei "Kinderwunsch" steht meist eine Region/Stadt dabei (z. B. "Kinderwunsch Berlin")
 — extrahiere sie nach "region" (nur der Ortsname, ohne das Wort "Kinderwunsch").
 Bei Wechsel/Neugeschäft ist region null.
 Antworte mit strict JSON: {"action": "generate"|"unknown", "count": number, "campaignKey": "Wechsel"|"Neugeschäft"|"Kinderwunsch"|null, "region": string|null, "audience"?: string, "tone"?: string}`,
-      messages: [{ role: "user", content: text }],
-    }),
-  });
-
-  if (!res.ok) {
+      user: text,
+      maxTokens: 400,
+    });
+  } catch {
     return { action: "unknown", count: 0, campaignKey: null };
   }
-  const data = (await res.json()) as {
-    content: { type: string; text: string }[];
-  };
-  const raw = data.content.find((c) => c.type === "text")?.text ?? "";
+
   const cleaned = raw
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/```\s*$/i, "")
