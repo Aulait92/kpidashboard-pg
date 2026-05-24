@@ -861,78 +861,84 @@ const DIRECT_IMAGE_BRIEF: Record<string, string> = {
   Kinderwunsch: `Thema: Förderung von Kinderwunsch-Behandlungen. Kernaussage: Behandlungen können bezuschusst werden – je nach Situation teils bis zu 100 %. Stimmung: emotional, warm, hoffnungsvoll. Kein medizinisches Heilversprechen, keine Garantien.`,
 };
 
-// Baut das Creative wie im ChatGPT-Web-Editor: Ein Art-Director (gpt-4o)
-// schreibt pro Variante einen detaillierten Bild-Prompt — SEQUENZIELL, mit
-// Kenntnis der bisherigen Creatives und der Anweisung „komplett anders".
-// Dann rendert gpt-image-1 daraus das fertige Creative.
+// Konzept-Brainstorm für Direct-Image: EIN OpenAI-Call entwirft N maximal
+// unterschiedliche Bild-Konzepte (je ein fertiger, detaillierter Bild-Prompt).
+// Ein einziger Call sieht alle Konzepte gleichzeitig → echte Diversität.
+async function brainstormImageConcepts(
+  brief: CreativeBrief,
+  briefText: string,
+): Promise<string[]> {
+  const raw = await llmText({
+    system: `Du bist Art Director für performante Meta-Werbe-Creatives (Format 1:1). Du entwirfst mehrere MAXIMAL UNTERSCHIEDLICHE Creative-Konzepte und gibst für jedes EINEN fertigen, detaillierten Bild-Prompt aus.
+Jedes Konzept MUSS sich klar unterscheiden — in Medium (Foto / Illustration / Typo-Poster / 3D / Collage / Makro / Flatlay …), Komposition, Farbwelt und Kern-Idee.
+Jeder Bild-Prompt: Thema sofort erkennbar, GANZ WENIG Text im Bild (max. eine kurze, fehlerfreie deutsche Aussage), scroll-stopping, hochwertig.
+Antworte AUSSCHLIESSLICH mit einem JSON-Array von Strings (ein Bild-Prompt pro Element), nichts sonst.`,
+    user: `${briefText}\n\nEntwirf ${brief.count} maximal unterschiedliche Bild-Prompts als JSON-Array.`,
+    maxTokens: 1800,
+  });
+  const cleaned = raw
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/```\s*$/i, "")
+    .trim();
+  let prompts: string[] = [];
+  try {
+    const parsed = JSON.parse(cleaned);
+    if (Array.isArray(parsed)) {
+      prompts = parsed.filter((p): p is string => typeof p === "string");
+    }
+  } catch {
+    // Fallback: nummerierte/zeilenweise Liste.
+    prompts = cleaned
+      .split(/\n+/)
+      .map((l) => l.replace(/^\s*\d+[.)]\s*/, "").trim())
+      .filter((l) => l.length > 0);
+  }
+  return prompts.slice(0, brief.count);
+}
+
+// Direct-Image: Konzept-Brainstorm (OpenAI) → jedes Konzept als volles
+// gpt-image-1-Creative rendern (parallel).
 async function generateDirectImageCreatives(
   brief: CreativeBrief,
 ): Promise<CreativeVariant[]> {
   const briefText =
     DIRECT_IMAGE_BRIEF[brief.campaignKey] ?? `Thema: ${brief.campaignKey}.`;
 
-  const artDirectorSystem = `Du bist Art Director für performante Meta-Werbe-Creatives (Format 1:1, quadratisch). Du schreibst EINEN konkreten, detaillierten Bild-Prompt für ein KI-Bildmodell.
-Regeln:
-- Man muss SOFORT verstehen, worum es geht (Thema klar erkennbar).
-- GANZ WENIG Text im Bild — höchstens eine kurze, fehlerfreie deutsche Aussage; lieber rein visuell.
-- Scroll-stopping, klarer Fokus, hochwertig.
-- Beschreibe Medium/Stil, Komposition, Farben, Stimmung und ggf. den kurzen Text konkret.
-Antworte AUSSCHLIESSLICH mit dem Bild-Prompt, ohne Vorrede, ohne Anführungszeichen.`;
-
-  const variants: CreativeVariant[] = [];
-  const previousPrompts: string[] = [];
-
-  for (let i = 0; i < brief.count; i++) {
-    let imagePrompt: string;
-    try {
-      const priorBlock =
-        previousPrompts.length > 0
-          ? `Bereits erstellte Creatives — mache es KOMPLETT ANDERS (anderes Medium, andere Komposition, andere Bildidee, andere Farbwelt):\n${previousPrompts
-              .map((p, idx) => `${idx + 1}. ${p}`)
-              .join("\n")}\n\n`
-          : "";
-      imagePrompt = (
-        await llmText({
-          system: artDirectorSystem,
-          user: `${briefText}\n\n${priorBlock}Schreibe jetzt den Bild-Prompt für ${
-            previousPrompts.length > 0
-              ? "ein weiteres, komplett anderes"
-              : "das erste"
-          } Creative.`,
-          maxTokens: 500,
-        })
-      ).trim();
-    } catch (err) {
-      console.warn(
-        `[creative-gen] Art-Director (Variante ${i + 1}) failte:`,
-        err instanceof Error ? err.message : err,
-      );
-      continue;
-    }
-    if (!imagePrompt) continue;
-
-    const dataUrl = await generateFullCreativeImage(
-      `${imagePrompt}\n\nFormat: quadratisch 1:1, Meta-Werbeanzeige. Sehr wenig Text, deutscher Text fehlerfrei.`,
-    );
-    if (!dataUrl) {
-      console.warn(`[creative-gen] Direct-Image (Variante ${i + 1}) lieferte kein Bild.`);
-      continue;
-    }
-    previousPrompts.push(imagePrompt.slice(0, 220));
-
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0}html,body{width:1080px;height:1080px}img{width:1080px;height:1080px;object-fit:cover;display:block}</style></head><body><img src="${dataUrl}"></body></html>`;
-    variants.push({
-      headline: "Kinderwunsch-Behandlung",
-      body: "",
-      cta: "Mehr erfahren",
-      adText:
-        "Kinderwunsch-Behandlungen müssen nicht immer komplett selbst bezahlt werden. 💛 Je nach Wohnort, Krankenkasse und Situation sind hohe Zuschüsse möglich – teils bis zu 100 %. Jetzt unverbindlich Fördermöglichkeiten prüfen.",
-      fbHeadline: "Förderung jetzt prüfen",
-      html,
-      mechanic: "direct-image",
-    });
+  let prompts = await brainstormImageConcepts(brief, briefText);
+  if (prompts.length === 0) {
+    // Notfalls wenigstens ein Konzept aus dem Briefing selbst.
+    prompts = [briefText];
   }
 
+  const settled = await Promise.allSettled(
+    prompts.map(async (p): Promise<CreativeVariant> => {
+      const dataUrl = await generateFullCreativeImage(
+        `${p}\n\nFormat: quadratisch 1:1, Meta-Werbeanzeige. Sehr wenig Text, deutscher Text fehlerfrei.`,
+      );
+      if (!dataUrl) throw new Error("Bildgenerierung lieferte kein Bild.");
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0}html,body{width:1080px;height:1080px}img{width:1080px;height:1080px;object-fit:cover;display:block}</style></head><body><img src="${dataUrl}"></body></html>`;
+      return {
+        headline: "Kinderwunsch-Behandlung",
+        body: "",
+        cta: "Mehr erfahren",
+        adText:
+          "Kinderwunsch-Behandlungen müssen nicht immer komplett selbst bezahlt werden. 💛 Je nach Wohnort, Krankenkasse und Situation sind hohe Zuschüsse möglich – teils bis zu 100 %. Jetzt unverbindlich Fördermöglichkeiten prüfen.",
+        fbHeadline: "Förderung jetzt prüfen",
+        html,
+        mechanic: "direct-image",
+      };
+    }),
+  );
+
+  const variants: CreativeVariant[] = [];
+  settled.forEach((r, i) => {
+    if (r.status === "fulfilled") variants.push(r.value);
+    else
+      console.warn(
+        `[creative-gen] Direct-Image-Variante ${i + 1} failte:`,
+        r.reason instanceof Error ? r.reason.message : r.reason,
+      );
+  });
   if (variants.length === 0) {
     throw new Error("Keine einzige Direct-Image-Variante konnte generiert werden.");
   }
