@@ -1,45 +1,52 @@
+import { fetchStockUrl } from "@/lib/unsplash";
+
 // Bild-Generation via OpenAI Images (gpt-image-1, "Images 2.0").
-// Pattern im HTML:
-//   src="{{COMIC:keywords}}"
-//   background-image: url({{COMIC:keywords}})
+// Zwei Platzhalter-Typen im HTML:
+//   {{COMIC:keywords}}    → KI-Illustration (Comic-Stil)
+//   {{UNSPLASH:keywords}} → fotorealistisches Bild (früher Stock-Foto)
+// als src="…" oder background-image: url(…)
 //
-// Server hängt einen Style-Modifier an die User-Keywords und generiert ein
-// quadratisches Bild. gpt-image-1 liefert Base64 zurück → wir geben eine
-// data-URL aus, die direkt im HTML/Playwright-Rendering funktioniert.
+// gpt-image-1 liefert Base64 → wir geben eine data-URL aus, die direkt im
+// HTML/Playwright-Rendering funktioniert.
 //
-// Ohne OPENAI_API_KEY gracefuller Fallback auf neutrales Grau — kein Crash,
-// das Creative wird nur ohne KI-Bild gerendert.
+// Fallbacks:
+//   - Comic ohne OPENAI_API_KEY / bei Fehler → neutrales Grau.
+//   - Foto bei Fehler → echtes Stock-Foto (Unsplash/Pexels), erst dann Grau.
 //
 // Env:
 //   OPENAI_API_KEY           — Pflicht für echte Generierung
-//   OPENAI_IMAGE_MODEL       — Modell-ID (default "gpt-image-1"). Auf neuere
-//                              Versionen umstellbar, ohne Code-Änderung.
+//   OPENAI_IMAGE_MODEL       — Modell-ID (default "gpt-image-1")
 //   OPENAI_IMAGE_QUALITY     — "low" | "medium" | "high" | "auto" (default "low")
-//   OPENAI_IMAGE_TIMEOUT_MS  — Abbruch pro Bild in ms (default 90000). Verhindert,
-//                              dass ein hängender Request die ganze Pipeline blockt.
+//   OPENAI_IMAGE_TIMEOUT_MS  — Abbruch pro Bild in ms (default 90000)
 
-const PLACEHOLDER_RE = /\{\{COMIC:([^}]+)\}\}/g;
+const COMIC_RE = /\{\{COMIC:([^}]+)\}\}/g;
+const PHOTO_RE = /\{\{UNSPLASH:([^}]+)\}\}/g;
 
 const FALLBACK_DATA_URL =
   "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201%201%22%3E%3Crect%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%23eee%22%2F%3E%3C%2Fsvg%3E";
 
-// Bewusst KEIN Text im Bild — Text liegt im HTML-Overlay, das Bild bleibt
-// textfrei (sonst doppelter/krummer Text).
-const STYLE_SUFFIX =
-  ", modern comic book illustration, flat colors, bold black outlines, clean vector art, professional editorial illustration, white background, completely without any text, no letters, no words, no speech bubbles, no signs, no labels, no writing, no captions, no logos, no numbers";
+// Kein Text im Bild — Text liegt im HTML-Overlay.
+const NO_TEXT =
+  "completely without any text, no letters, no words, no signs, no labels, no writing, no captions, no logos, no numbers, no watermark";
 
-async function generateComicImage(keywords: string): Promise<string> {
+const COMIC_SUFFIX = `, modern comic book illustration, flat colors, bold black outlines, clean vector art, professional editorial illustration, white background, ${NO_TEXT}, no speech bubbles`;
+
+const PHOTO_SUFFIX = `, realistic photograph, natural soft lighting, authentic candid moment, high quality, shallow depth of field, modern European setting, ${NO_TEXT}`;
+
+// Generiert ein Bild und gibt eine data-URL zurück (oder FALLBACK_DATA_URL).
+async function generateImage(
+  keywords: string,
+  styleSuffix: string,
+): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    console.warn(
-      "[openai-image] OPENAI_API_KEY nicht gesetzt — Bild-Fallback (grau).",
-    );
+    console.warn("[openai-image] OPENAI_API_KEY nicht gesetzt — Fallback.");
     return FALLBACK_DATA_URL;
   }
   const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
   const quality = process.env.OPENAI_IMAGE_QUALITY || "low";
   const timeoutMs = Number(process.env.OPENAI_IMAGE_TIMEOUT_MS) || 90000;
-  const prompt = `${keywords}${STYLE_SUFFIX}`;
+  const prompt = `${keywords}${styleSuffix}`;
   const startedAt = Date.now();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -66,20 +73,15 @@ async function generateComicImage(keywords: string): Promise<string> {
       );
       return FALLBACK_DATA_URL;
     }
-    console.log(
-      `[openai-image] "${keywords}" ok in ${Date.now() - startedAt}ms (q=${quality})`,
-    );
     const json = JSON.parse(text) as {
       data?: { b64_json?: string; url?: string }[];
     };
     const first = json.data?.[0];
-    // gpt-image-1 liefert standardmäßig b64_json (keine URL).
-    if (first?.b64_json) {
-      return `data:image/png;base64,${first.b64_json}`;
-    }
-    if (first?.url) {
-      return first.url;
-    }
+    console.log(
+      `[openai-image] "${keywords}" ok in ${Date.now() - startedAt}ms (q=${quality})`,
+    );
+    if (first?.b64_json) return `data:image/png;base64,${first.b64_json}`;
+    if (first?.url) return first.url;
     console.warn(
       `[openai-image] unerwartetes Output-Shape für "${keywords}":`,
       text.slice(0, 200),
@@ -97,23 +99,42 @@ async function generateComicImage(keywords: string): Promise<string> {
   }
 }
 
-export async function resolveComicPlaceholders(html: string): Promise<string> {
+// Ersetzt alle Platzhalter eines Typs parallel.
+async function resolve(
+  html: string,
+  re: RegExp,
+  produce: (keywords: string) => Promise<string>,
+): Promise<string> {
   const queries = new Set<string>();
   let m: RegExpExecArray | null;
-  PLACEHOLDER_RE.lastIndex = 0;
-  while ((m = PLACEHOLDER_RE.exec(html)) !== null) {
-    queries.add(m[1].trim());
-  }
+  re.lastIndex = 0;
+  while ((m = re.exec(html)) !== null) queries.add(m[1].trim());
   if (queries.size === 0) return html;
 
   const resolved = new Map<string, string>();
   await Promise.all(
     Array.from(queries).map(async (q) => {
-      resolved.set(q, await generateComicImage(q));
+      resolved.set(q, await produce(q));
     }),
   );
-
-  return html.replace(PLACEHOLDER_RE, (_full, q: string) => {
+  re.lastIndex = 0;
+  return html.replace(re, (_full, q: string) => {
     return resolved.get(q.trim()) ?? FALLBACK_DATA_URL;
+  });
+}
+
+// KI-Illustration ({{COMIC:…}}). Bei Fehler: Grau.
+export async function resolveComicPlaceholders(html: string): Promise<string> {
+  return resolve(html, COMIC_RE, (q) => generateImage(q, COMIC_SUFFIX));
+}
+
+// Fotorealistische Bilder ({{UNSPLASH:…}}) — via OpenAI, mit echtem Stock-Foto
+// als Fallback (statt Grau), falls OpenAI fehlschlägt oder nicht verfügbar ist.
+export async function resolvePhotoPlaceholders(html: string): Promise<string> {
+  return resolve(html, PHOTO_RE, async (q) => {
+    const ai = await generateImage(q, PHOTO_SUFFIX);
+    if (ai !== FALLBACK_DATA_URL) return ai;
+    // OpenAI nicht verfügbar/fehlgeschlagen → echtes Stock-Foto versuchen.
+    return fetchStockUrl(q);
   });
 }

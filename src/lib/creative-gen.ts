@@ -1,7 +1,9 @@
 import { uploadImageToR2 } from "@/lib/r2";
 import { renderHtmlToImage } from "@/lib/html-to-png";
-import { resolveUnsplashPlaceholders } from "@/lib/unsplash";
-import { resolveComicPlaceholders } from "@/lib/openai-image";
+import {
+  resolveComicPlaceholders,
+  resolvePhotoPlaceholders,
+} from "@/lib/openai-image";
 
 // Brief der Creative-Generation. Claude designt komplette HTML-Creatives,
 // Playwright rendert zu PNG, Upload zu R2.
@@ -901,7 +903,7 @@ export async function generateCreatives(
   // R2-Fehler in einer Variante soll nicht den ganzen Batch killen.
   const settled = await Promise.allSettled(
     variants.map(async (v, i) => {
-      let resolvedHtml = await resolveUnsplashPlaceholders(v.html);
+      let resolvedHtml = await resolvePhotoPlaceholders(v.html);
       resolvedHtml = await resolveComicPlaceholders(resolvedHtml);
       const buffer = await renderHtmlToImage(resolvedHtml, {
         width: 1080,
@@ -1134,7 +1136,7 @@ Antworte mit GENAU EINEM <creative_html>-Block, KEINE anderen Tags:
   }
 
   // Render + Upload — gleicher Pipeline-Teil wie generateCreatives.
-  let resolvedHtml = await resolveUnsplashPlaceholders(html);
+  let resolvedHtml = await resolvePhotoPlaceholders(html);
   resolvedHtml = await resolveComicPlaceholders(resolvedHtml);
   const buffer = await renderHtmlToImage(resolvedHtml, {
     width: 1080,
