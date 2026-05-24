@@ -28,6 +28,16 @@ const TABLES = [
     name: process.env.AIRTABLE_TABLE_NEUGESCHAEFT ?? "PKV-Neugeschäft-Leads",
     source: "Neugeschäft",
   },
+  // Kinderwunsch nur einlesen, wenn die Tabelle konfiguriert ist — sonst
+  // würde jeder Sync einen Fehler für eine nicht existierende Tabelle melden.
+  ...(process.env.AIRTABLE_TABLE_KINDERWUNSCH
+    ? [
+        {
+          name: process.env.AIRTABLE_TABLE_KINDERWUNSCH,
+          source: "Kinderwunsch",
+        },
+      ]
+    : []),
 ];
 
 const BUYERS_TABLE = process.env.AIRTABLE_TABLE_BUYERS ?? "Buyer";
@@ -45,6 +55,13 @@ const BUYER_GOAL_NEUGESCHAEFT_FIELDS = [
   "PKV-Neugeschäft Leadziel/Monat",
   "Neugeschäft Leadziel pro Monat",
 ];
+const BUYER_GOAL_KINDERWUNSCH_FIELDS = [
+  "Kinderwunsch Leadziel pro Monat",
+  "Kinderwunsch Leadziel/Monat",
+  "KiWu Leadziel pro Monat",
+];
+// Region des Kunden (für die Kinderwunsch-Regions-Pools).
+const BUYER_REGION_FIELDS = ["Region", "Standort", "Stadt", "Markt"];
 const FINANZEN_TABLE = process.env.AIRTABLE_TABLE_FINANZEN ?? "Finanzen";
 
 const GERMAN_MONTHS: Record<string, number> = {
@@ -138,6 +155,8 @@ type BuyerInfo = {
   name: string;
   goalWechsel: number | null;
   goalNeugeschaeft: number | null;
+  goalKinderwunsch: number | null;
+  region: string | null;
 };
 
 async function fetchBuyersById(
@@ -173,6 +192,11 @@ async function fetchBuyersById(
       }
     }
     if (name) {
+      let region: string | null = null;
+      for (const key of BUYER_REGION_FIELDS) {
+        region = readString(rec.fields, key);
+        if (region) break;
+      }
       map.set(rec.id, {
         name,
         goalWechsel: readIntFromFields(rec.fields, BUYER_GOAL_WECHSEL_FIELDS),
@@ -180,6 +204,11 @@ async function fetchBuyersById(
           rec.fields,
           BUYER_GOAL_NEUGESCHAEFT_FIELDS,
         ),
+        goalKinderwunsch: readIntFromFields(
+          rec.fields,
+          BUYER_GOAL_KINDERWUNSCH_FIELDS,
+        ),
+        region,
       });
     }
   }
@@ -345,23 +374,31 @@ export async function syncAirtable(): Promise<SyncResult> {
     return readString(fields, "Buyer");
   }
 
-  // Lead-Ziele pro Produkt aus der Buyer-Tabelle auf den Customer übernehmen.
-  // Nur diese Felder werden gesetzt — autopilot/keyword/maxBudget bleiben
-  // admin-verwaltet. Customer wird hier per Name angelegt, falls noch nicht da.
+  // Lead-Ziele und Region aus der Buyer-Tabelle auf den Customer übernehmen.
+  // Steuer-Einstellungen liegen am DeliveryPool, nicht am Kunden.
   for (const info of buyerMap.values()) {
     const key = info.name.trim();
     if (!key) continue;
-    if (info.goalWechsel == null && info.goalNeugeschaeft == null) continue;
+    const hasData =
+      info.goalWechsel != null ||
+      info.goalNeugeschaeft != null ||
+      info.goalKinderwunsch != null ||
+      info.region != null;
+    if (!hasData) continue;
     const customer = await prisma.customer.upsert({
       where: { name: key },
       create: {
         name: key,
         leadGoalWechsel: info.goalWechsel,
         leadGoalNeugeschaeft: info.goalNeugeschaeft,
+        leadGoalKinderwunsch: info.goalKinderwunsch,
+        region: info.region,
       },
       update: {
         leadGoalWechsel: info.goalWechsel,
         leadGoalNeugeschaeft: info.goalNeugeschaeft,
+        leadGoalKinderwunsch: info.goalKinderwunsch,
+        region: info.region,
       },
       select: { id: true },
     });

@@ -5,25 +5,25 @@ import { formatEUR, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
   runDryRun,
-  saveCustomerBuyerSettings,
+  savePoolSettings,
   type DryRunState,
   type SaveSettingsState,
 } from "./actions";
 
-export type CustomerSetting = {
-  id: string;
-  name: string;
-  leadGoalWechsel: number | null;
-  leadGoalNeugeschaeft: number | null;
+export type PoolRow = {
+  key: string;
+  label: string;
+  kind: "product" | "region";
+  goal: number;
+  leadsMtd: number;
   autopilot: boolean;
-  campaignKeyword: string | null;
   maxDailyBudget: number | null;
+  campaignKeyword: string | null;
 };
 
 export type ActionLogRow = {
   id: string;
-  customerName: string;
-  product: string;
+  poolLabel: string;
   action: string;
   reason: string;
   leadsMtd: number;
@@ -58,25 +58,30 @@ function ActionBadge({ action }: { action: string }) {
   );
 }
 
-function CustomerForm({ customer }: { customer: CustomerSetting }) {
+function PoolForm({ pool }: { pool: PoolRow }) {
   const [state, formAction, pending] = useActionState<
     SaveSettingsState,
     FormData
-  >(saveCustomerBuyerSettings, {});
+  >(savePoolSettings, {});
 
   return (
     <form
       action={formAction}
       className="rounded-xl border border-[color:var(--border)] p-4"
     >
-      <input type="hidden" name="customerId" value={customer.id} />
+      <input type="hidden" name="poolKey" value={pool.key} />
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold">{customer.name}</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold">{pool.label}</h3>
+          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600">
+            {pool.kind === "region" ? "Region" : "Produkt"}
+          </span>
+        </div>
         <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium">
           <input
             type="checkbox"
             name="autopilot"
-            defaultChecked={customer.autopilot}
+            defaultChecked={pool.autopilot}
             className="h-4 w-4 rounded border-[color:var(--border)]"
           />
           Autopilot
@@ -84,43 +89,37 @@ function CustomerForm({ customer }: { customer: CustomerSetting }) {
       </div>
       <div className="mb-3 flex flex-wrap gap-2 text-[11px]">
         <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 font-medium text-zinc-600">
-          Ziel Wechsel:{" "}
-          {customer.leadGoalWechsel != null
-            ? formatNumber(customer.leadGoalWechsel)
-            : "–"}
+          Ziel (Summe): {formatNumber(pool.goal)} Leads/Monat
         </span>
         <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 font-medium text-zinc-600">
-          Ziel Neugeschäft:{" "}
-          {customer.leadGoalNeugeschaeft != null
-            ? formatNumber(customer.leadGoalNeugeschaeft)
-            : "–"}
+          Ist (MTD): {formatNumber(pool.leadsMtd)}
         </span>
-        <span className="text-[color:var(--muted)]">(aus Airtable)</span>
+        <span className="text-[color:var(--muted)]">(Ziel aus Airtable)</span>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="block">
           <span className="text-[11px] font-medium uppercase tracking-wide text-[color:var(--muted)]">
-            Max. Budget/Tag je Produkt (€)
+            Max. Budget/Tag (€)
           </span>
           <input
             type="number"
             name="maxDailyBudget"
             min={0}
             step={5}
-            defaultValue={customer.maxDailyBudget ?? ""}
+            defaultValue={pool.maxDailyBudget ?? ""}
             placeholder="Env-Default"
             className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm tabular-nums focus:border-[color:var(--brand)] focus:outline-none"
           />
         </label>
         <label className="block">
           <span className="text-[11px] font-medium uppercase tracking-wide text-[color:var(--muted)]">
-            Kampagnen-Keyword
+            Kampagnen-Keyword (optional)
           </span>
           <input
             type="text"
             name="campaignKeyword"
-            defaultValue={customer.campaignKeyword ?? ""}
-            placeholder={customer.name}
+            defaultValue={pool.campaignKeyword ?? ""}
+            placeholder={pool.kind === "region" ? "Region (auto)" : "Produkt (auto)"}
             className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
           />
         </label>
@@ -164,8 +163,7 @@ function DryRunPanel() {
         <div>
           <h3 className="text-sm font-semibold">Trockenlauf</h3>
           <p className="text-xs text-[color:var(--muted)]">
-            Zeigt, was der Buyer jetzt entscheiden würde — ohne an Meta zu
-            schreiben.
+            Simuliert alle Pools — ohne an Meta zu schreiben.
           </p>
         </div>
         <button
@@ -187,18 +185,17 @@ function DryRunPanel() {
       {state.results ? (
         state.results.length === 0 ? (
           <p className="mt-3 text-xs text-[color:var(--muted)]">
-            Kein Kunde mit aktivem Autopilot und gesetztem Lead-Ziel.
+            Keine Pools mit gesetztem Ziel gefunden.
           </p>
         ) : (
           <div className="mt-3 space-y-2">
             {state.results.map((r) => (
               <div
-                key={`${r.customerId}:${r.product}`}
+                key={r.poolKey}
                 className="rounded-lg bg-zinc-50 px-3 py-2 text-xs"
               >
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold">{r.customerName}</span>
-                  <span className="text-[color:var(--muted)]">{r.product}</span>
+                  <span className="font-semibold">{r.poolLabel}</span>
                   <ActionBadge action={r.action} />
                   <span className="ml-auto tabular-nums text-[color:var(--muted)]">
                     {r.leadsMtd}/{r.goal} · Prog. {r.projected}
@@ -215,10 +212,10 @@ function DryRunPanel() {
 }
 
 export function MediaBuyerAdmin({
-  customers,
+  pools,
   log,
 }: {
-  customers: CustomerSetting[];
+  pools: PoolRow[];
   log: ActionLogRow[];
 }) {
   return (
@@ -226,12 +223,20 @@ export function MediaBuyerAdmin({
       <DryRunPanel />
 
       <section>
-        <h2 className="mb-3 text-base font-semibold">Kunden-Einstellungen</h2>
-        <div className="space-y-3">
-          {customers.map((c) => (
-            <CustomerForm key={c.id} customer={c} />
-          ))}
-        </div>
+        <h2 className="mb-3 text-base font-semibold">Liefer-Pools</h2>
+        {pools.length === 0 ? (
+          <p className="text-sm text-[color:var(--muted)]">
+            Noch keine Pools. Sobald in Airtable Lead-Ziele (und für
+            Kinderwunsch Regionen) gepflegt und synchronisiert sind, erscheinen
+            sie hier.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {pools.map((p) => (
+              <PoolForm key={p.key} pool={p} />
+            ))}
+          </div>
+        )}
       </section>
 
       <section>
@@ -246,8 +251,7 @@ export function MediaBuyerAdmin({
               <thead className="bg-zinc-50 text-[color:var(--muted)]">
                 <tr>
                   <th className="px-3 py-2 font-medium">Zeit</th>
-                  <th className="px-3 py-2 font-medium">Kunde</th>
-                  <th className="px-3 py-2 font-medium">Produkt</th>
+                  <th className="px-3 py-2 font-medium">Pool</th>
                   <th className="px-3 py-2 font-medium">Aktion</th>
                   <th className="px-3 py-2 font-medium">Leads</th>
                   <th className="px-3 py-2 font-medium">Budget</th>
@@ -264,10 +268,7 @@ export function MediaBuyerAdmin({
                       {row.createdAt}
                       {row.dryRun ? " (sim)" : ""}
                     </td>
-                    <td className="px-3 py-2 font-medium">{row.customerName}</td>
-                    <td className="px-3 py-2 text-[color:var(--muted)]">
-                      {row.product}
-                    </td>
+                    <td className="px-3 py-2 font-medium">{row.poolLabel}</td>
                     <td className="px-3 py-2">
                       <ActionBadge action={row.action} />
                     </td>

@@ -39,17 +39,16 @@ async function handle(req: Request) {
       ok: true,
       dryRun,
       ranAt: result.ranAt.toISOString(),
-      customers: result.customers.map((c) => ({
-        customer: c.customerName,
-        product: c.product,
-        action: c.action,
-        leadsMtd: c.leadsMtd,
-        goal: c.goal,
-        projected: c.projected,
-        prevBudget: c.prevBudget,
-        newBudget: c.newBudget,
-        reason: c.reason,
-        error: c.error,
+      pools: result.pools.map((p) => ({
+        pool: p.poolLabel,
+        action: p.action,
+        leadsMtd: p.leadsMtd,
+        goal: p.goal,
+        projected: p.projected,
+        prevBudget: p.prevBudget,
+        newBudget: p.newBudget,
+        reason: p.reason,
+        error: p.error,
       })),
     });
   } catch (err) {

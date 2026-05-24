@@ -240,6 +240,49 @@ export async function setCampaignStatus(
   await metaPost(campaignId, { status });
 }
 
+// Spend des laufenden Monats je Kampagne (EUR). Für die Cost-per-Lead-
+// Berechnung der Liefer-Pools. Liefert eine Map campaignId → EUR.
+export async function getMonthlySpendByCampaign(
+  now: Date = new Date(),
+): Promise<Map<string, number>> {
+  const since = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+  )
+    .toISOString()
+    .slice(0, 10);
+  const until = now.toISOString().slice(0, 10);
+
+  const map = new Map<string, number>();
+  const url = new URL(
+    `https://graph.facebook.com/${GRAPH_VERSION}/${getAdAccount()}/insights`,
+  );
+  url.searchParams.set("access_token", getToken());
+  url.searchParams.set("level", "campaign");
+  url.searchParams.set("fields", "campaign_id,spend");
+  url.searchParams.set("time_range", JSON.stringify({ since, until }));
+  url.searchParams.set("limit", "500");
+
+  let next: string | null = url.toString();
+  while (next) {
+    const res = await fetch(next, { cache: "no-store" });
+    const text = await res.text();
+    if (!res.ok) throw new Error(`Meta insights ${res.status}: ${text}`);
+    const json = JSON.parse(text) as {
+      data?: { campaign_id?: string; spend?: string }[];
+      paging?: { next?: string };
+    };
+    for (const row of json.data ?? []) {
+      if (!row.campaign_id) continue;
+      const spend = Number.parseFloat(row.spend ?? "0");
+      if (Number.isFinite(spend)) {
+        map.set(row.campaign_id, (map.get(row.campaign_id) ?? 0) + spend);
+      }
+    }
+    next = json.paging?.next ?? null;
+  }
+  return map;
+}
+
 // Holt das erste aktive AdSet einer Kampagne (Ad muss in einem AdSet liegen).
 export async function getFirstAdSetForCampaign(
   campaignId: string,

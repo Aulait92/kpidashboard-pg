@@ -57,22 +57,36 @@ Die KPI-Berechnung liegt vollständig in `src/lib/kpis.ts`.
 
 ## Automatischer Media Buyer
 
-Steuert die Meta-Tagesbudgets je (Kunde × Produkt) so, dass zum Monatsende
-möglichst 100 % der gewünschten Leads geliefert sind — ohne teure
-Überlieferung.
+Steuert die Meta-Budgets je **Liefer-Pool** so, dass zum Monatsende möglichst
+100 % der gewünschten Leads geliefert sind — ohne teure Überlieferung. Ein
+Pool = eine Kampagne, in die die Nachfrage mehrerer Kunden fließt:
 
-- **Lead-Ziele** kommen produkt-getrennt aus der Airtable-Buyer-Tabelle
-  (Spalten „PKV-Wechsel Leadziel pro Monat" / „PKV-Neugeschäft Leadziel pro
-  Monat") und werden beim Sync auf den Kunden übernommen.
-- Pflege pro Kunde unter **Media Buyer** (Admin-Menü): Autopilot-Schalter,
-  Kampagnen-Keyword und max. Tagesbudget je Produkt. Die Ziele werden dort
-  nur angezeigt (read-only, Quelle Airtable).
-- Kunde ↔ Kampagne über Namens-Keyword (default = Kundenname) **plus**
-  Produkt-Klassifizierung des Kampagnennamens (Wechsel/Neugeschäft).
-- Hebel: Tagesbudget rauf/runter (nach Cost-per-Lead und Pacing),
-  Pausieren bei erreichtem Ziel, Endspurt-Boost in den letzten Tagen.
+- **PKV**: ein Pool je Produkt (Wechsel/Neugeschäft) über *alle* Kunden.
+  Pool-Ziel = Summe der Kunden-Ziele, eine Kampagne pro Produkt.
+- **Kinderwunsch**: ein Pool je **Region**. Die Region kommt vom Kunden;
+  alle Kunden einer Region teilen sich die Regions-Kampagne. Pool-Ziel =
+  Summe der KiWu-Ziele der Kunden dieser Region.
+
+Daten & Steuerung:
+
+- **Lead-Ziele und Region** kommen aus der Airtable-Buyer-Tabelle und werden
+  beim Sync auf den Kunden übernommen. Erwartete Spalten (mehrere
+  Schreibweisen werden akzeptiert): „PKV-Wechsel Leadziel pro Monat",
+  „PKV-Neugeschäft Leadziel pro Monat", „Kinderwunsch Leadziel pro Monat",
+  „Region".
+- **Pflege je Pool** unter **Media Buyer** (Admin-Menü): Autopilot-Schalter,
+  max. Tagesbudget, optionales Kampagnen-Keyword. Ziele sind read-only.
+- Pool ↔ Kampagne: PKV über Produkt-Klassifizierung des Kampagnennamens,
+  Kinderwunsch über „Kinderwunsch"/„KiWu" + Regionsname im Kampagnennamen.
+  Per Pool-Keyword überschreibbar.
+- Cost-per-Lead = Meta-Spend (Monat) der Pool-Kampagnen ÷ gelieferte Leads.
+- Hebel: Tagesbudget rauf/runter, Pausieren bei erreichtem Ziel,
+  Endspurt-Boost in den letzten Tagen.
 - Logik in `src/lib/media-buyer.ts` (`decideBudget` ist seiteneffektfrei),
-  Meta-Schreibzugriffe in `src/lib/meta-ads.ts`.
+  Meta-Zugriffe in `src/lib/meta-ads.ts`.
+
+Kinderwunsch-Leads werden nur synchronisiert, wenn
+`AIRTABLE_TABLE_KINDERWUNSCH` (Tabellenname) gesetzt ist.
 
 Täglich per Cron triggern (Token wie bei `/api/sync`):
 

@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
+import { listPoolsForAdmin } from "@/lib/media-buyer";
 import { prisma } from "@/lib/prisma";
 import {
   MediaBuyerAdmin,
   type ActionLogRow,
-  type CustomerSetting,
+  type PoolRow,
 } from "./media-buyer-admin";
 
 export const dynamic = "force-dynamic";
@@ -35,25 +36,14 @@ export default async function MediaBuyerPage() {
     redirect("/login");
   }
 
-  const [customers, actions] = await Promise.all([
-    prisma.customer.findMany({
-      orderBy: { name: "asc" },
-      select: {
-        id: true,
-        name: true,
-        leadGoalWechsel: true,
-        leadGoalNeugeschaeft: true,
-        autopilot: true,
-        campaignKeyword: true,
-        maxDailyBudget: true,
-      },
-    }),
+  const [pools, actions] = await Promise.all([
+    listPoolsForAdmin(),
     prisma.mediaBuyerAction.findMany({
       orderBy: { createdAt: "desc" },
       take: 50,
       select: {
         id: true,
-        product: true,
+        poolLabel: true,
         action: true,
         reason: true,
         leadsMtd: true,
@@ -63,25 +53,24 @@ export default async function MediaBuyerPage() {
         newBudget: true,
         dryRun: true,
         createdAt: true,
-        customer: { select: { name: true } },
       },
     }),
   ]);
 
-  const customerSettings: CustomerSetting[] = customers.map((c) => ({
-    id: c.id,
-    name: c.name,
-    leadGoalWechsel: c.leadGoalWechsel,
-    leadGoalNeugeschaeft: c.leadGoalNeugeschaeft,
-    autopilot: c.autopilot,
-    campaignKeyword: c.campaignKeyword,
-    maxDailyBudget: decToNum(c.maxDailyBudget),
+  const poolRows: PoolRow[] = pools.map((p) => ({
+    key: p.key,
+    label: p.label,
+    kind: p.kind,
+    goal: p.goal,
+    leadsMtd: p.leadsMtd,
+    autopilot: p.autopilot,
+    maxDailyBudget: p.maxDailyBudget,
+    campaignKeyword: p.campaignKeyword,
   }));
 
   const log: ActionLogRow[] = actions.map((a) => ({
     id: a.id,
-    customerName: a.customer.name,
-    product: a.product,
+    poolLabel: a.poolLabel,
     action: a.action,
     reason: a.reason,
     leadsMtd: a.leadsMtd,
@@ -106,14 +95,15 @@ export default async function MediaBuyerPage() {
           Media Buyer
         </h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">
-          Automatische Budget-Steuerung pro Kunde: legt das gewünschte
-          Lead-Ziel fest und regelt die Meta-Kampagnen so, dass zum Monatsende
-          möglichst 100 % der Leads geliefert sind. Nur Kunden mit aktivem
-          <strong> Autopilot</strong> und gesetztem Lead-Ziel werden gesteuert.
+          Steuert die Meta-Budgets je <strong>Liefer-Pool</strong> so, dass zum
+          Monatsende möglichst 100 % der Leads geliefert sind. PKV: ein Pool je
+          Produkt über alle Kunden. Kinderwunsch: ein Pool je Region. Ziele
+          (Summe der Kunden-Ziele aus Airtable) sind read-only; nur Pools mit
+          aktivem <strong>Autopilot</strong> werden automatisch gesteuert.
         </p>
       </header>
 
-      <MediaBuyerAdmin customers={customerSettings} log={log} />
+      <MediaBuyerAdmin pools={poolRows} log={log} />
     </main>
   );
 }

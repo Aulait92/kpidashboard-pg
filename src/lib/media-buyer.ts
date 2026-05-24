@@ -22,11 +22,11 @@ import {
   endOfMonth,
   startOfMonth,
 } from "date-fns";
-import { computeKpis, type Kpis } from "@/lib/kpis";
 import { classifyProduct } from "@/lib/meta";
 import {
   findCampaignsByKeyword,
   getCampaignBudgetState,
+  getMonthlySpendByCampaign,
   listCampaigns,
   setCampaignDailyBudget,
   setCampaignStatus,
@@ -45,11 +45,11 @@ export type BuyerAction =
   | "boost"
   | "none";
 
-// Ein Steuer-Ergebnis je (Kunde × Produkt).
-export type CustomerBuyerResult = {
-  customerId: string;
-  customerName: string;
-  product: Product;
+// Ein Steuer-Ergebnis je Liefer-Pool.
+export type PoolResult = {
+  poolKey: string;
+  poolLabel: string;
+  kind: "product" | "region";
   leadsMtd: number;
   goal: number;
   projected: number;
@@ -66,7 +66,7 @@ export type CustomerBuyerResult = {
 export type MediaBuyerRunResult = {
   ranAt: Date;
   dryRun: boolean;
-  customers: CustomerBuyerResult[];
+  pools: PoolResult[];
 };
 
 function envNum(key: string, fallback: number): number {
@@ -228,37 +228,185 @@ export function decideBudget(params: {
   };
 }
 
-async function processUnit(
-  customer: {
-    id: string;
-    name: string;
-    campaignKeyword: string | null;
-    maxDailyBudget: unknown;
-  },
-  product: Product,
-  goal: number,
-  ctx: {
-    campaigns: MetaCampaign[];
-    monthStart: Date;
-    mtdEnd: Date;
-    daysElapsed: number;
-    daysTotal: number;
-    minBudget: number;
-    defaultMaxBudget: number;
-    maxStep: number;
-    boostDays: number;
-    dryRun: boolean;
-  },
-): Promise<CustomerBuyerResult> {
-  const keyword = (customer.campaignKeyword ?? customer.name).trim();
-  const maxBudget = decToNumber(customer.maxDailyBudget) ?? ctx.defaultMaxBudget;
+// ─── Pool-Ableitung ──────────────────────────────────────────────────
 
-  const base: CustomerBuyerResult = {
-    customerId: customer.id,
-    customerName: customer.name,
-    product,
+// Definition eines Liefer-Pools, abgeleitet aus den Kundendaten.
+type PoolDef = {
+  key: string;
+  label: string;
+  kind: "product" | "region";
+  product: string; // Lead.source: "Wechsel" | "Neugeschäft" | "Kinderwunsch"
+  region: string | null;
+  goal: number; // Summe der Kunden-Ziele dieses Pools
+  // Kunden, deren Leads in diesen Pool zählen. null = alle (PKV: nur nach
+  // Produkt gefiltert), sonst die Kunden der Region.
+  customerIds: string[] | null;
+};
+
+function isKinderwunschCampaign(name: string): boolean {
+  return /kinderwunsch|kiwu/i.test(name);
+}
+
+// Leitet alle Pools aus den aktuellen Kundendaten ab.
+export async function derivePoolDefs(): Promise<PoolDef[]> {
+  const customers = await prisma.customer.findMany({
+    select: {
+      id: true,
+      leadGoalWechsel: true,
+      leadGoalNeugeschaeft: true,
+      leadGoalKinderwunsch: true,
+      region: true,
+    },
+  });
+
+  const defs: PoolDef[] = [];
+
+  // PKV: ein Pool je Produkt über alle Kunden.
+  const pkvGoals: Record<Product, (typeof customers)[number]["leadGoalWechsel"]> =
+    {
+      Wechsel: 0,
+      Neugeschäft: 0,
+    };
+  for (const c of customers) {
+    pkvGoals.Wechsel = (pkvGoals.Wechsel ?? 0) + (c.leadGoalWechsel ?? 0);
+    pkvGoals.Neugeschäft =
+      (pkvGoals.Neugeschäft ?? 0) + (c.leadGoalNeugeschaeft ?? 0);
+  }
+  for (const product of PRODUCTS) {
+    const goal = pkvGoals[product] ?? 0;
+    if (goal > 0) {
+      defs.push({
+        key: `product:${product}`,
+        label: `PKV ${product}`,
+        kind: "product",
+        product,
+        region: null,
+        goal,
+        customerIds: null,
+      });
+    }
+  }
+
+  // Kinderwunsch: ein Pool je Region (Region kommt vom Kunden).
+  const byRegion = new Map<string, { ids: string[]; goal: number }>();
+  for (const c of customers) {
+    const goal = c.leadGoalKinderwunsch ?? 0;
+    const region = c.region?.trim();
+    if (goal > 0 && region) {
+      const e = byRegion.get(region) ?? { ids: [], goal: 0 };
+      e.ids.push(c.id);
+      e.goal += goal;
+      byRegion.set(region, e);
+    }
+  }
+  for (const [region, e] of byRegion) {
+    defs.push({
+      key: `region:${region}`,
+      label: `Kinderwunsch ${region}`,
+      kind: "region",
+      product: "Kinderwunsch",
+      region,
+      goal: e.goal,
+      customerIds: e.ids,
+    });
+  }
+
+  return defs;
+}
+
+type PoolSettings = {
+  autopilot: boolean;
+  maxDailyBudget: number | null;
+  campaignKeyword: string | null;
+};
+
+// Stellt sicher, dass für jeden abgeleiteten Pool eine DeliveryPool-Zeile
+// existiert (Label aktuell halten), und liefert die Steuer-Einstellungen.
+async function ensurePool(def: PoolDef): Promise<PoolSettings> {
+  const pool = await prisma.deliveryPool.upsert({
+    where: { key: def.key },
+    create: {
+      key: def.key,
+      label: def.label,
+      kind: def.kind,
+      product: def.product,
+      region: def.region,
+    },
+    update: { label: def.label, product: def.product, region: def.region },
+    select: { autopilot: true, maxDailyBudget: true, campaignKeyword: true },
+  });
+  return {
+    autopilot: pool.autopilot,
+    maxDailyBudget: decToNumber(pool.maxDailyBudget),
+    campaignKeyword: pool.campaignKeyword,
+  };
+}
+
+async function countPoolLeads(
+  def: PoolDef,
+  monthStart: Date,
+  mtdEnd: Date,
+): Promise<number> {
+  const where: {
+    source: string;
+    createdAt: { gte: Date; lte: Date };
+    customerId?: { in: string[] };
+  } = { source: def.product, createdAt: { gte: monthStart, lte: mtdEnd } };
+  if (def.customerIds) {
+    if (def.customerIds.length === 0) return 0;
+    where.customerId = { in: def.customerIds };
+  }
+  return prisma.lead.count({ where });
+}
+
+function matchPoolCampaigns(
+  def: PoolDef,
+  campaigns: MetaCampaign[],
+  keywordOverride: string | null,
+): MetaCampaign[] {
+  if (keywordOverride && keywordOverride.trim()) {
+    return findCampaignsByKeyword(campaigns, keywordOverride);
+  }
+  if (def.kind === "product") {
+    return campaigns.filter((c) => classifyProduct(c.name) === def.product);
+  }
+  // Region-Pool: Kinderwunsch-Kampagne, deren Name die Region enthält.
+  const region = def.region!.toLowerCase();
+  return campaigns.filter(
+    (c) =>
+      isKinderwunschCampaign(c.name) && c.name.toLowerCase().includes(region),
+  );
+}
+
+// ─── Pool-Steuerung ──────────────────────────────────────────────────
+
+type RunCtx = {
+  campaigns: MetaCampaign[];
+  spendByCampaign: Map<string, number>;
+  monthStart: Date;
+  mtdEnd: Date;
+  daysElapsed: number;
+  daysTotal: number;
+  minBudget: number;
+  defaultMaxBudget: number;
+  maxStep: number;
+  boostDays: number;
+  dryRun: boolean;
+};
+
+async function processPool(
+  def: PoolDef,
+  settings: PoolSettings,
+  ctx: RunCtx,
+): Promise<PoolResult> {
+  const maxBudget = settings.maxDailyBudget ?? ctx.defaultMaxBudget;
+
+  const base: PoolResult = {
+    poolKey: def.key,
+    poolLabel: def.label,
+    kind: def.kind,
     leadsMtd: 0,
-    goal,
+    goal: def.goal,
     projected: 0,
     daysElapsed: ctx.daysElapsed,
     daysTotal: ctx.daysTotal,
@@ -270,30 +418,23 @@ async function processUnit(
   };
 
   try {
-    const kpis = (await computeKpis({
-      range: { from: ctx.monthStart, to: ctx.mtdEnd },
-      customerId: customer.id,
-      product,
-    })) as Kpis;
-    const leadsMtd = kpis.totalLeads;
-    const costPerLead =
-      leadsMtd > 0 && kpis.leadCosts > 0 ? kpis.leadCosts / leadsMtd : null;
+    const leadsMtd = await countPoolLeads(def, ctx.monthStart, ctx.mtdEnd);
     const projected =
       ctx.daysElapsed > 0
         ? Math.round((leadsMtd / ctx.daysElapsed) * ctx.daysTotal)
         : 0;
-
     base.leadsMtd = leadsMtd;
     base.projected = projected;
 
-    // Kampagnen müssen das Kunden-Keyword UND zum Produkt passen.
-    const matched = findCampaignsByKeyword(ctx.campaigns, keyword).filter(
-      (c) => classifyProduct(c.name) === product,
+    const matched = matchPoolCampaigns(
+      def,
+      ctx.campaigns,
+      settings.campaignKeyword,
     );
     base.campaigns = matched.map((c) => c.name);
 
     if (matched.length === 0) {
-      base.reason = `Keine ${product}-Kampagne mit Keyword "${keyword}" gefunden.`;
+      base.reason = `Keine passende Meta-Kampagne für Pool "${def.label}" gefunden.`;
       base.error = base.reason;
       return base;
     }
@@ -303,7 +444,7 @@ async function processUnit(
     const controllable = states.filter((s) => s.level !== "none");
 
     if (controllable.length === 0) {
-      base.reason = `Kampagnen gefunden (${base.campaigns.join(", ")}), aber kein steuerbares Tagesbudget (vermutlich Lifetime-Budget) — keine Budget-Steuerung möglich.`;
+      base.reason = `Kampagnen gefunden (${base.campaigns.join(", ")}), aber kein steuerbares Tagesbudget (vermutlich Lifetime-Budget).`;
       base.error = base.reason;
       return base;
     }
@@ -312,6 +453,12 @@ async function processUnit(
       (s, c) => s + c.dailyBudgetEur,
       0,
     );
+    // Cost-per-Lead aus Meta-Spend (Monat) der gematchten Kampagnen ÷ Leads.
+    const spend = matched.reduce(
+      (s, c) => s + (ctx.spendByCampaign.get(c.id) ?? 0),
+      0,
+    );
+    const costPerLead = leadsMtd > 0 && spend > 0 ? spend / leadsMtd : null;
     const anyPaused = states.some(
       (s) => s.effective_status !== "ACTIVE" && s.status !== "ACTIVE",
     );
@@ -320,7 +467,7 @@ async function processUnit(
 
     const decision = decideBudget({
       leadsMtd,
-      goal,
+      goal: def.goal,
       daysElapsed: ctx.daysElapsed,
       daysTotal: ctx.daysTotal,
       currentBudget,
@@ -337,15 +484,12 @@ async function processUnit(
 
     if (ctx.dryRun) return base;
 
-    // Status-Änderung (pause/activate) auf alle gematchten Kampagnen.
     if (decision.setStatus) {
       for (const s of states) {
         await setCampaignStatus(s.campaignId, decision.setStatus);
       }
     }
-
-    // Budget-Änderung: Zielsumme gleichmäßig auf steuerbare Kampagnen verteilen.
-    if (decision.targetBudget != null && controllable.length > 0) {
+    if (decision.targetBudget != null) {
       const per = decision.targetBudget / controllable.length;
       for (const s of controllable) await setCampaignDailyBudget(s, per);
       base.newBudget = decision.targetBudget;
@@ -372,61 +516,38 @@ export async function runMediaBuyer(params: {
   const daysElapsed = Math.max(1, differenceInCalendarDays(now, monthStart) + 1);
   const daysTotal = differenceInCalendarDays(monthEnd, monthStart) + 1;
 
-  const customers = await prisma.customer.findMany({
-    where: {
-      autopilot: true,
-      OR: [
-        { leadGoalWechsel: { not: null } },
-        { leadGoalNeugeschaeft: { not: null } },
-      ],
-    },
-    select: {
-      id: true,
-      name: true,
-      leadGoalWechsel: true,
-      leadGoalNeugeschaeft: true,
-      campaignKeyword: true,
-      maxDailyBudget: true,
-    },
-    orderBy: { name: "asc" },
-  });
+  const defs = await derivePoolDefs();
 
-  // Jede zu steuernde Einheit (Kunde × Produkt) mit gesetztem Ziel > 0.
-  const units: {
-    customer: (typeof customers)[number];
-    product: Product;
-    goal: number;
-  }[] = [];
-  for (const customer of customers) {
-    const goals: Record<Product, number | null> = {
-      Wechsel: customer.leadGoalWechsel,
-      Neugeschäft: customer.leadGoalNeugeschaeft,
-    };
-    for (const product of PRODUCTS) {
-      const goal = goals[product];
-      if (goal != null && goal > 0) units.push({ customer, product, goal });
-    }
+  // Alle Pools anlegen/aktualisieren (auch ohne Autopilot, fürs Admin).
+  const settingsByKey = new Map<string, PoolSettings>();
+  for (const def of defs) settingsByKey.set(def.key, await ensurePool(def));
+
+  // Live: nur Autopilot-Pools steuern. Trockenlauf: alle simulieren.
+  const toProcess = defs.filter(
+    (d) => dryRun || settingsByKey.get(d.key)?.autopilot,
+  );
+
+  const pools: PoolResult[] = [];
+  if (toProcess.length === 0) {
+    return { ranAt: now, dryRun, pools };
   }
 
-  const results: CustomerBuyerResult[] = [];
-
-  if (units.length === 0) {
-    return { ranAt: now, dryRun, customers: results };
-  }
-
-  // Kampagnen einmal laden und für alle Einheiten wiederverwenden.
   let campaigns: MetaCampaign[];
+  let spendByCampaign: Map<string, number>;
   try {
-    campaigns = await listCampaigns();
+    [campaigns, spendByCampaign] = await Promise.all([
+      listCampaigns(),
+      getMonthlySpendByCampaign(now),
+    ]);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    for (const u of units) {
-      results.push({
-        customerId: u.customer.id,
-        customerName: u.customer.name,
-        product: u.product,
+    for (const def of toProcess) {
+      pools.push({
+        poolKey: def.key,
+        poolLabel: def.label,
+        kind: def.kind,
         leadsMtd: 0,
-        goal: u.goal,
+        goal: def.goal,
         projected: 0,
         daysElapsed,
         daysTotal,
@@ -438,12 +559,13 @@ export async function runMediaBuyer(params: {
         error: msg,
       });
     }
-    await persistAndNotify(results, dryRun);
-    return { ranAt: now, dryRun, customers: results };
+    await persistAndNotify(pools, dryRun);
+    return { ranAt: now, dryRun, pools };
   }
 
-  const ctx = {
+  const ctx: RunCtx = {
     campaigns,
+    spendByCampaign,
     monthStart,
     mtdEnd,
     daysElapsed,
@@ -455,23 +577,23 @@ export async function runMediaBuyer(params: {
     dryRun,
   };
 
-  for (const u of units) {
-    results.push(await processUnit(u.customer, u.product, u.goal, ctx));
+  for (const def of toProcess) {
+    pools.push(await processPool(def, settingsByKey.get(def.key)!, ctx));
   }
 
-  await persistAndNotify(results, dryRun);
-  return { ranAt: now, dryRun, customers: results };
+  await persistAndNotify(pools, dryRun);
+  return { ranAt: now, dryRun, pools };
 }
 
 async function persistAndNotify(
-  results: CustomerBuyerResult[],
+  pools: PoolResult[],
   dryRun: boolean,
 ): Promise<void> {
-  for (const r of results) {
+  for (const r of pools) {
     await prisma.mediaBuyerAction.create({
       data: {
-        customerId: r.customerId,
-        product: r.product,
+        poolKey: r.poolKey,
+        poolLabel: r.poolLabel,
         action: r.action,
         reason: r.reason,
         leadsMtd: r.leadsMtd,
@@ -490,10 +612,7 @@ async function persistAndNotify(
 
   if (dryRun) return;
 
-  // Admins über alles informieren, was nicht "keine Änderung" war.
-  const notable = results.filter(
-    (r) => r.action !== "none" || r.error,
-  );
+  const notable = pools.filter((r) => r.action !== "none" || r.error);
   for (const r of notable) {
     const icon = r.error
       ? "⚠️"
@@ -505,10 +624,48 @@ async function persistAndNotify(
             ? "📈"
             : "📉";
     await sendToAdmins({
-      title: `${icon} Media Buyer: ${r.customerName} · ${r.product}`,
+      title: `${icon} Media Buyer: ${r.poolLabel}`,
       body: r.reason.slice(0, 160),
-      tag: `media-buyer:${r.customerId}:${r.product}`,
+      tag: `media-buyer:${r.poolKey}`,
       url: "/admin/media-buyer",
     });
   }
+}
+
+// ─── Admin-Anzeige ───────────────────────────────────────────────────
+
+export type PoolAdminRow = {
+  key: string;
+  label: string;
+  kind: "product" | "region";
+  goal: number;
+  leadsMtd: number;
+  autopilot: boolean;
+  maxDailyBudget: number | null;
+  campaignKeyword: string | null;
+};
+
+// Pools + aktuelle Ist-Leads für die Admin-Seite (ohne Meta-Aufrufe).
+export async function listPoolsForAdmin(now: Date = new Date()): Promise<
+  PoolAdminRow[]
+> {
+  const monthStart = startOfMonth(now);
+  const mtdEnd = endOfDay(now);
+  const defs = await derivePoolDefs();
+  const rows: PoolAdminRow[] = [];
+  for (const def of defs) {
+    const settings = await ensurePool(def);
+    const leadsMtd = await countPoolLeads(def, monthStart, mtdEnd);
+    rows.push({
+      key: def.key,
+      label: def.label,
+      kind: def.kind,
+      goal: def.goal,
+      leadsMtd,
+      autopilot: settings.autopilot,
+      maxDailyBudget: settings.maxDailyBudget,
+      campaignKeyword: settings.campaignKeyword,
+    });
+  }
+  return rows;
 }
