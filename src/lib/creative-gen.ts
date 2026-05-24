@@ -863,6 +863,12 @@ const DIRECT_IMAGE_BRIEF: Record<string, string> = {
   Kinderwunsch: `Thema: Förderung von Kinderwunsch-Behandlungen. Kernaussage: Behandlungen können bezuschusst werden – je nach Situation teils bis zu 100 %. Stimmung: emotional, warm, hoffnungsvoll. Kein medizinisches Heilversprechen, keine Garantien.`,
 };
 
+// Die konkrete Konzept-Aufgabe je Kampagne — wörtlich der erprobte Prompt.
+const CONCEPT_REQUEST: Record<string, string> = {
+  Kinderwunsch:
+    "erstelle ein komplett anderes creative konzept für kinderwunschbehandlungen, die bis zu 100% gefördert werden können",
+};
+
 // Phase 1 (wie im Web „erstelle ein Creative-Konzept …"): EIN OpenAI-Call
 // entwickelt N maximal unterschiedliche, REICHE Creative-Konzepte (je ein
 // kurzer Absatz mit Kernbotschaft, Hook, visueller Idee, Stimmung und ggf.
@@ -871,6 +877,9 @@ async function brainstormCreativeConcepts(
   brief: CreativeBrief,
   briefText: string,
 ): Promise<string[]> {
+  const conceptRequest =
+    CONCEPT_REQUEST[brief.campaignKey] ??
+    `erstelle ein komplett anderes creative konzept für ${brief.campaignKey}`;
   const raw = await llmText({
     system: `Du bist Art Director für performante Meta-Werbe-Creatives (Format 1:1). Du entwickelst mehrere MAXIMAL UNTERSCHIEDLICHE, REICHE Creative-Konzepte — im Stil eines echten Art-Director-Briefings.
 
@@ -882,7 +891,7 @@ Jedes Konzept enthält:
 
 Anforderungen: Thema sofort erkennbar, scroll-stopping durch Ruhe statt Reizüberflutung, hochwertig, sehr wenig Text. Die Konzepte müssen sich DEUTLICH unterscheiden (anderes Medium/Idee/Stil/Stimmung).
 Antworte AUSSCHLIESSLICH mit einem JSON-Array von Strings — pro Element EIN vollständiges Konzept (Name, VISUAL, TEXT IM BILD, STIL), Zeilenumbrüche im String erlaubt. Nichts sonst.`,
-    user: `${briefText}\n\nEntwickle ${brief.count} maximal unterschiedliche Creative-Konzepte als JSON-Array.`,
+    user: `Aufgabe: „${conceptRequest}"\n\nKontext: ${briefText}\n\nLiefere ${brief.count} solcher Konzepte — jedes KOMPLETT ANDERS als die übrigen — als JSON-Array.`,
     maxTokens: 2600,
   });
   const cleaned = raw
