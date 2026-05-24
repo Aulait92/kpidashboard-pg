@@ -861,59 +861,61 @@ const DIRECT_IMAGE_BRIEF: Record<string, string> = {
   Kinderwunsch: `Thema: Förderung von Kinderwunsch-Behandlungen. Kernaussage: Behandlungen können bezuschusst werden – je nach Situation teils bis zu 100 %. Stimmung: emotional, warm, hoffnungsvoll. Kein medizinisches Heilversprechen, keine Garantien.`,
 };
 
-// Konzept-Brainstorm für Direct-Image: EIN OpenAI-Call entwirft N maximal
-// unterschiedliche Bild-Konzepte (je ein fertiger, detaillierter Bild-Prompt).
-// Ein einziger Call sieht alle Konzepte gleichzeitig → echte Diversität.
-async function brainstormImageConcepts(
+// Phase 1 (wie im Web „erstelle ein Creative-Konzept …"): EIN OpenAI-Call
+// entwickelt N maximal unterschiedliche, REICHE Creative-Konzepte (je ein
+// kurzer Absatz mit Kernbotschaft, Hook, visueller Idee, Stimmung und ggf.
+// dem kurzen Text im Bild). Alle gleichzeitig sichtbar → echte Diversität.
+async function brainstormCreativeConcepts(
   brief: CreativeBrief,
   briefText: string,
 ): Promise<string[]> {
   const raw = await llmText({
-    system: `Du bist Art Director für performante Meta-Werbe-Creatives (Format 1:1). Du entwirfst mehrere MAXIMAL UNTERSCHIEDLICHE Creative-Konzepte und gibst für jedes EINEN fertigen, detaillierten Bild-Prompt aus.
-Jedes Konzept MUSS sich klar unterscheiden — in Medium (Foto / Illustration / Typo-Poster / 3D / Collage / Makro / Flatlay …), Komposition, Farbwelt und Kern-Idee.
-Jeder Bild-Prompt: Thema sofort erkennbar, GANZ WENIG Text im Bild (max. eine kurze, fehlerfreie deutsche Aussage), scroll-stopping, hochwertig.
-Antworte AUSSCHLIESSLICH mit einem JSON-Array von Strings (ein Bild-Prompt pro Element), nichts sonst.`,
-    user: `${briefText}\n\nEntwirf ${brief.count} maximal unterschiedliche Bild-Prompts als JSON-Array.`,
-    maxTokens: 1800,
+    system: `Du bist Art Director für performante Meta-Werbe-Creatives (Format 1:1). Du entwickelst mehrere MAXIMAL UNTERSCHIEDLICHE Creative-KONZEPTE.
+Jedes Konzept ist ein kurzer, konkreter Absatz, der beschreibt: Kern-Idee/Hook, Medium & visueller Stil (Foto / Illustration / Typo-Poster / 3D / Collage / Makro / Flatlay …), Komposition, Farbwelt, Stimmung und — falls überhaupt — den GANZ KURZEN Text im Bild.
+Anforderungen: Thema sofort erkennbar, sehr wenig Text, scroll-stopping, hochwertig. Die Konzepte müssen sich deutlich voneinander unterscheiden (anderes Medium/Komposition/Idee).
+Antworte AUSSCHLIESSLICH mit einem JSON-Array von Strings (ein Konzept-Absatz pro Element), nichts sonst.`,
+    user: `${briefText}\n\nEntwickle ${brief.count} maximal unterschiedliche Creative-Konzepte als JSON-Array.`,
+    maxTokens: 2200,
   });
   const cleaned = raw
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/```\s*$/i, "")
     .trim();
-  let prompts: string[] = [];
+  let concepts: string[] = [];
   try {
     const parsed = JSON.parse(cleaned);
     if (Array.isArray(parsed)) {
-      prompts = parsed.filter((p): p is string => typeof p === "string");
+      concepts = parsed.filter((p): p is string => typeof p === "string");
     }
   } catch {
     // Fallback: nummerierte/zeilenweise Liste.
-    prompts = cleaned
-      .split(/\n+/)
+    concepts = cleaned
+      .split(/\n{2,}|\n(?=\s*\d+[.)])/)
       .map((l) => l.replace(/^\s*\d+[.)]\s*/, "").trim())
       .filter((l) => l.length > 0);
   }
-  return prompts.slice(0, brief.count);
+  return concepts.slice(0, brief.count);
 }
 
-// Direct-Image: Konzept-Brainstorm (OpenAI) → jedes Konzept als volles
-// gpt-image-1-Creative rendern (parallel).
+// Direct-Image: Phase 1 Konzept (OpenAI) → Phase 2 „erstelle dieses Creative"
+// (gpt-image-1 baut das Bild aus dem ganzen Konzept), parallel je Konzept.
 async function generateDirectImageCreatives(
   brief: CreativeBrief,
 ): Promise<CreativeVariant[]> {
   const briefText =
     DIRECT_IMAGE_BRIEF[brief.campaignKey] ?? `Thema: ${brief.campaignKey}.`;
 
-  let prompts = await brainstormImageConcepts(brief, briefText);
-  if (prompts.length === 0) {
+  let concepts = await brainstormCreativeConcepts(brief, briefText);
+  if (concepts.length === 0) {
     // Notfalls wenigstens ein Konzept aus dem Briefing selbst.
-    prompts = [briefText];
+    concepts = [briefText];
   }
 
   const settled = await Promise.allSettled(
-    prompts.map(async (p): Promise<CreativeVariant> => {
+    concepts.map(async (concept): Promise<CreativeVariant> => {
+      // Phase 2: „erstelle dieses Creative" — komplettes Konzept als Vorlage.
       const dataUrl = await generateFullCreativeImage(
-        `${p}\n\nFormat: quadratisch 1:1, Meta-Werbeanzeige. Sehr wenig Text, deutscher Text fehlerfrei.`,
+        `Erstelle dieses Creative als quadratisches 1:1 Werbe-Creative für Meta:\n\n${concept}\n\nGanz wenig Text im Bild, deutscher Text fehlerfrei.`,
       );
       if (!dataUrl) throw new Error("Bildgenerierung lieferte kein Bild.");
       const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0}html,body{width:1080px;height:1080px}img{width:1080px;height:1080px;object-fit:cover;display:block}</style></head><body><img src="${dataUrl}"></body></html>`;
