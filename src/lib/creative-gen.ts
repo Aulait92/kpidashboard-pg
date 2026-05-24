@@ -861,75 +861,78 @@ const DIRECT_IMAGE_BRIEF: Record<string, string> = {
   Kinderwunsch: `Thema: Förderung von Kinderwunsch-Behandlungen. Kernaussage: Behandlungen können bezuschusst werden – je nach Situation teils bis zu 100 %. Stimmung: emotional, warm, hoffnungsvoll. Kein medizinisches Heilversprechen, keine Garantien.`,
 };
 
-// Pro Variante ein RADIKAL anderer Ansatz — variiert vor allem Medium, Stil
-// und Layout (nicht nur das Motiv), damit die Creatives sich deutlich
-// unterscheiden statt immer „warmes Paar-Foto" zu sein.
-const DIRECT_IMAGE_APPROACHES: string[] = [
-  "STIL: Dokumentarisches, authentisches Foto (kein gestelltes Stockfoto-Gefühl). Ein hoffnungsvoller Moment, natürliches Licht, warme Töne.",
-  "STIL: Typografie-Poster, fast ohne Bild. Großer, freundlicher Schriftzug „bis zu 100 %“ auf ruhigem Pastell-Hintergrund, ein kleines zartes Symbol. Grafisch, modern, minimalistisch.",
-  "STIL: Weiche, flache Vektor-Illustration in warmen Pastellfarben (kein Foto). Hoffnungsvolle, ruhige Szene, viel Weißraum.",
-  "STIL: Extreme Makro-Detailaufnahme als Symbolbild (z. B. ineinandergelegte Hände, eine Pusteblume). Sehr nah, unscharfer Hintergrund, emotional.",
-  "STIL: Editorial-/Magazin-Layout. Klare Bildkante, kräftige Akzentfarbe, ein dominantes Bildelement, sehr aufgeräumte Komposition.",
-  "STIL: Collage/Scrapbook-Look — mehrere Elemente, Papier-/Klebeband-Optik, persönlich und handgemacht wirkend.",
-  "STIL: Ruhiges Stillleben/Flatlay von oben (z. B. Dokumente, Tasse, Pflanze) in sanftem Licht — seriös und einladend, ohne Personen.",
-  "STIL: Kräftiges, modernes 3D-Render-Motiv mit einem einzigen klaren Symbol, sanfte Verläufe, viel Negativraum.",
-];
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
+// Baut das Creative wie im ChatGPT-Web-Editor: Ein Art-Director (gpt-4o)
+// schreibt pro Variante einen detaillierten Bild-Prompt — SEQUENZIELL, mit
+// Kenntnis der bisherigen Creatives und der Anweisung „komplett anders".
+// Dann rendert gpt-image-1 daraus das fertige Creative.
 async function generateDirectImageCreatives(
   brief: CreativeBrief,
 ): Promise<CreativeVariant[]> {
   const briefText =
     DIRECT_IMAGE_BRIEF[brief.campaignKey] ?? `Thema: ${brief.campaignKey}.`;
-  // Pro Versuch einen anderen Ansatz wählen (zyklisch, falls count > Liste).
-  const pool = shuffle(DIRECT_IMAGE_APPROACHES);
-  const approaches = Array.from(
-    { length: brief.count },
-    (_v, i) => pool[i % pool.length],
-  );
 
-  const settled = await Promise.allSettled(
-    approaches.map(async (approach): Promise<CreativeVariant> => {
-      // Ansatz ZUERST und dominant — die Kernaussage ist nur Nebeninfo, damit
-      // nicht jedes Motiv zum Standard-Paar-Foto konvergiert.
-      const prompt = `Gestalte ein quadratisches 1:1 Werbe-Creative für Meta. Der visuelle Stil ist VERBINDLICH und muss strikt befolgt werden:
+  const artDirectorSystem = `Du bist Art Director für performante Meta-Werbe-Creatives (Format 1:1, quadratisch). Du schreibst EINEN konkreten, detaillierten Bild-Prompt für ein KI-Bildmodell.
+Regeln:
+- Man muss SOFORT verstehen, worum es geht (Thema klar erkennbar).
+- GANZ WENIG Text im Bild — höchstens eine kurze, fehlerfreie deutsche Aussage; lieber rein visuell.
+- Scroll-stopping, klarer Fokus, hochwertig.
+- Beschreibe Medium/Stil, Komposition, Farben, Stimmung und ggf. den kurzen Text konkret.
+Antworte AUSSCHLIESSLICH mit dem Bild-Prompt, ohne Vorrede, ohne Anführungszeichen.`;
 
-${approach}
-
-Inhalt (Nebeninfo, NICHT der Stil): ${briefText}
-Sehr wenig Text im Bild, deutscher Text, fehlerfrei. Der Stil dieses Motivs muss sich klar von einem gewöhnlichen Paar-Foto unterscheiden.`;
-      const dataUrl = await generateFullCreativeImage(prompt);
-      if (!dataUrl) throw new Error("Bildgenerierung lieferte kein Bild.");
-      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0}html,body{width:1080px;height:1080px}img{width:1080px;height:1080px;object-fit:cover;display:block}</style></head><body><img src="${dataUrl}"></body></html>`;
-      return {
-        headline: "Kinderwunsch-Behandlung",
-        body: "",
-        cta: "Mehr erfahren",
-        adText:
-          "Kinderwunsch-Behandlungen müssen nicht immer komplett selbst bezahlt werden. 💛 Je nach Wohnort, Krankenkasse und Situation sind hohe Zuschüsse möglich – teils bis zu 100 %. Jetzt unverbindlich Fördermöglichkeiten prüfen.",
-        fbHeadline: "Förderung jetzt prüfen",
-        html,
-        mechanic: "direct-image",
-      };
-    }),
-  );
   const variants: CreativeVariant[] = [];
-  settled.forEach((r, i) => {
-    if (r.status === "fulfilled") variants.push(r.value);
-    else
+  const previousPrompts: string[] = [];
+
+  for (let i = 0; i < brief.count; i++) {
+    let imagePrompt: string;
+    try {
+      const priorBlock =
+        previousPrompts.length > 0
+          ? `Bereits erstellte Creatives — mache es KOMPLETT ANDERS (anderes Medium, andere Komposition, andere Bildidee, andere Farbwelt):\n${previousPrompts
+              .map((p, idx) => `${idx + 1}. ${p}`)
+              .join("\n")}\n\n`
+          : "";
+      imagePrompt = (
+        await llmText({
+          system: artDirectorSystem,
+          user: `${briefText}\n\n${priorBlock}Schreibe jetzt den Bild-Prompt für ${
+            previousPrompts.length > 0
+              ? "ein weiteres, komplett anderes"
+              : "das erste"
+          } Creative.`,
+          maxTokens: 500,
+        })
+      ).trim();
+    } catch (err) {
       console.warn(
-        `[creative-gen] Direct-Image-Variante ${i + 1} failte:`,
-        r.reason instanceof Error ? r.reason.message : r.reason,
+        `[creative-gen] Art-Director (Variante ${i + 1}) failte:`,
+        err instanceof Error ? err.message : err,
       );
-  });
+      continue;
+    }
+    if (!imagePrompt) continue;
+
+    const dataUrl = await generateFullCreativeImage(
+      `${imagePrompt}\n\nFormat: quadratisch 1:1, Meta-Werbeanzeige. Sehr wenig Text, deutscher Text fehlerfrei.`,
+    );
+    if (!dataUrl) {
+      console.warn(`[creative-gen] Direct-Image (Variante ${i + 1}) lieferte kein Bild.`);
+      continue;
+    }
+    previousPrompts.push(imagePrompt.slice(0, 220));
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0}html,body{width:1080px;height:1080px}img{width:1080px;height:1080px;object-fit:cover;display:block}</style></head><body><img src="${dataUrl}"></body></html>`;
+    variants.push({
+      headline: "Kinderwunsch-Behandlung",
+      body: "",
+      cta: "Mehr erfahren",
+      adText:
+        "Kinderwunsch-Behandlungen müssen nicht immer komplett selbst bezahlt werden. 💛 Je nach Wohnort, Krankenkasse und Situation sind hohe Zuschüsse möglich – teils bis zu 100 %. Jetzt unverbindlich Fördermöglichkeiten prüfen.",
+      fbHeadline: "Förderung jetzt prüfen",
+      html,
+      mechanic: "direct-image",
+    });
+  }
+
   if (variants.length === 0) {
     throw new Error("Keine einzige Direct-Image-Variante konnte generiert werden.");
   }
