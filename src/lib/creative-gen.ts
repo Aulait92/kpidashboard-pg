@@ -920,11 +920,30 @@ Antworte AUSSCHLIESSLICH mit einem JSON-Array von Strings — pro Element EIN vo
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/```\s*$/i, "")
     .trim();
+  // Ein Konzept kann als String ODER als Objekt (Name/Visual/Text/Stil)
+  // kommen — Objekte in lesbaren Text umwandeln.
+  const toText = (p: unknown): string => {
+    if (typeof p === "string") return p.trim();
+    if (p && typeof p === "object") {
+      return Object.entries(p as Record<string, unknown>)
+        .map(([k, v]) => `${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`)
+        .join("\n")
+        .trim();
+    }
+    return "";
+  };
+
   let concepts: string[] = [];
   try {
     const parsed = JSON.parse(cleaned);
     if (Array.isArray(parsed)) {
-      concepts = parsed.filter((p): p is string => typeof p === "string");
+      concepts = parsed.map(toText).filter((s) => s.length > 0);
+    } else if (parsed && typeof parsed === "object") {
+      // Manchmal { konzepte: [...] } o.ä.
+      const arr = Object.values(parsed as Record<string, unknown>).find((v) =>
+        Array.isArray(v),
+      );
+      if (Array.isArray(arr)) concepts = arr.map(toText).filter((s) => s.length > 0);
     }
   } catch {
     // Fallback: nummerierte/zeilenweise Liste.
@@ -932,6 +951,11 @@ Antworte AUSSCHLIESSLICH mit einem JSON-Array von Strings — pro Element EIN vo
       .split(/\n{2,}|\n(?=\s*\d+[.)])/)
       .map((l) => l.replace(/^\s*\d+[.)]\s*/, "").trim())
       .filter((l) => l.length > 0);
+  }
+  if (concepts.length === 0) {
+    console.warn(
+      `[brainstorm] unbrauchbare Konzept-Antwort (model=${process.env.OPENAI_TEXT_MODEL || "gpt-4o"}): ${cleaned.slice(0, 500)}`,
+    );
   }
   return concepts.slice(0, brief.count);
 }
