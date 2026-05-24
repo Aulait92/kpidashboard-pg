@@ -858,19 +858,21 @@ Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm,
 
 // Kurzes Bild-Briefing je Kampagne (Kontext für den Bild-Prompt).
 const DIRECT_IMAGE_BRIEF: Record<string, string> = {
-  Kinderwunsch: `Thema: Kinderwunsch-Behandlungen. Kontext: Kinderwunsch-Behandlungen müssen nicht immer komplett selbst bezahlt werden. Je nach Wohnort, Krankenkasse und persönlicher Situation können hohe Zuschüsse möglich sein – in manchen Fällen sogar bis zu 100 %. Aufruf: unverbindlich prüfen, welche Fördermöglichkeiten infrage kommen könnten. Tonalität: emotional, warm, hoffnungsvoll. Kein medizinisches Heilversprechen.`,
+  Kinderwunsch: `Thema: Förderung von Kinderwunsch-Behandlungen. Kernaussage: Behandlungen können bezuschusst werden – je nach Situation teils bis zu 100 %. Stimmung: emotional, warm, hoffnungsvoll. Kein medizinisches Heilversprechen, keine Garantien.`,
 };
 
-// Pro Variante ein anderer visueller Ansatz.
+// Pro Variante ein RADIKAL anderer Ansatz — variiert vor allem Medium, Stil
+// und Layout (nicht nur das Motiv), damit die Creatives sich deutlich
+// unterscheiden statt immer „warmes Paar-Foto" zu sein.
 const DIRECT_IMAGE_APPROACHES: string[] = [
-  "Emotionales Nahaufnahme-Foto eines hoffnungsvollen Paares, weiches natürliches Licht.",
-  "Warmes Lifestyle-Foto: Paar zuhause, ruhiger intimer Moment.",
-  "Großes freundliches Zahlen-Highlight „bis zu 100 %“ als zentrales Gestaltungselement, minimalistisch.",
-  "Ruhiges, minimalistisches Motiv mit viel Weißraum und einem zarten Symbol (Herz / Pusteblume).",
-  "Emotionales Detail-/Symbolfoto, z. B. ineinandergelegte Hände.",
-  "Sanfte moderne Illustration in warmen Farben, hoffnungsvolle Stimmung.",
-  "Seriöses, hoffnungsvolles Motiv mit angedeutetem Förder-/Dokument-Bezug.",
-  "Split/Vorher-Nachher-Stimmung: von Sorge zu Hoffnung.",
+  "STIL: Dokumentarisches, authentisches Foto (kein gestelltes Stockfoto-Gefühl). Ein hoffnungsvoller Moment, natürliches Licht, warme Töne.",
+  "STIL: Typografie-Poster, fast ohne Bild. Großer, freundlicher Schriftzug „bis zu 100 %“ auf ruhigem Pastell-Hintergrund, ein kleines zartes Symbol. Grafisch, modern, minimalistisch.",
+  "STIL: Weiche, flache Vektor-Illustration in warmen Pastellfarben (kein Foto). Hoffnungsvolle, ruhige Szene, viel Weißraum.",
+  "STIL: Extreme Makro-Detailaufnahme als Symbolbild (z. B. ineinandergelegte Hände, eine Pusteblume). Sehr nah, unscharfer Hintergrund, emotional.",
+  "STIL: Editorial-/Magazin-Layout. Klare Bildkante, kräftige Akzentfarbe, ein dominantes Bildelement, sehr aufgeräumte Komposition.",
+  "STIL: Collage/Scrapbook-Look — mehrere Elemente, Papier-/Klebeband-Optik, persönlich und handgemacht wirkend.",
+  "STIL: Ruhiges Stillleben/Flatlay von oben (z. B. Dokumente, Tasse, Pflanze) in sanftem Licht — seriös und einladend, ohne Personen.",
+  "STIL: Kräftiges, modernes 3D-Render-Motiv mit einem einzigen klaren Symbol, sanfte Verläufe, viel Negativraum.",
 ];
 
 function shuffle<T>(arr: T[]): T[] {
@@ -896,9 +898,14 @@ async function generateDirectImageCreatives(
 
   const settled = await Promise.allSettled(
     approaches.map(async (approach): Promise<CreativeVariant> => {
-      const prompt = `Erstelle ein quadratisches 1:1 Werbe-Creative für Meta. ${briefText}
-Visueller Ansatz für dieses Motiv: ${approach}
-Bitte SEHR WENIG Text im Creative verwenden. Deutscher Text, fehlerfrei.`;
+      // Ansatz ZUERST und dominant — die Kernaussage ist nur Nebeninfo, damit
+      // nicht jedes Motiv zum Standard-Paar-Foto konvergiert.
+      const prompt = `Gestalte ein quadratisches 1:1 Werbe-Creative für Meta. Der visuelle Stil ist VERBINDLICH und muss strikt befolgt werden:
+
+${approach}
+
+Inhalt (Nebeninfo, NICHT der Stil): ${briefText}
+Sehr wenig Text im Bild, deutscher Text, fehlerfrei. Der Stil dieses Motivs muss sich klar von einem gewöhnlichen Paar-Foto unterscheiden.`;
       const dataUrl = await generateFullCreativeImage(prompt);
       if (!dataUrl) throw new Error("Bildgenerierung lieferte kein Bild.");
       const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0}html,body{width:1080px;height:1080px}img{width:1080px;height:1080px;object-fit:cover;display:block}</style></head><body><img src="${dataUrl}"></body></html>`;
