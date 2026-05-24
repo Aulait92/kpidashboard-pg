@@ -881,17 +881,23 @@ async function brainstormCreativeConcepts(
     CONCEPT_REQUEST[brief.campaignKey] ??
     `erstelle ein komplett anderes creative konzept für ${brief.campaignKey}`;
   const raw = await llmText({
-    system: `Du bist Art Director für performante Meta-Werbe-Creatives (Format 1:1). Du entwickelst mehrere MAXIMAL UNTERSCHIEDLICHE, REICHE Creative-Konzepte — im Stil eines echten Art-Director-Briefings.
+    system: `Du bist Art Director für performante Meta-Werbe-Creatives (Format 1:1). Du entwickelst mehrere REICHE Creative-Konzepte — im Stil eines echten Art-Director-Briefings.
+
+PFLICHT-KERNBOTSCHAFT (in JEDEM Konzept klar transportiert, sonst ungültig):
+Eine Kinderwunsch-Behandlung muss nicht (komplett) selbst bezahlt werden — es ist eine Förderung/ein Zuschuss möglich, je nach Situation BIS ZU 100 %.
+Diese Förder-Botschaft muss sowohl in der Bildidee als auch im kurzen In-Bild-Text erkennbar sein (z. B. „bis zu 100 % Förderung möglich"). Konzepte ohne diese Aussage sind ungültig.
+
+„KOMPLETT ANDERS" bezieht sich NUR auf Visual/Medium/Stil/Komposition — NICHT auf das Thema oder die Botschaft. Das Thema (Förderung der Kinderwunsch-Behandlung) bleibt in allen Konzepten gleich.
 
 Jedes Konzept enthält:
 - Einen Konzept-Namen (z. B. „Die stille Hoffnung").
 - VISUAL: konkrete, cinematische Bildbeschreibung — ein echter, emotionaler Moment statt Werbe-Optik (Szene, Licht, Komposition, Bildausschnitt).
-- TEXT IM BILD (ganz wenig!): EINE große, starke Headline + optional EINE kleine Subline. Wörtlich ausformuliert, fehlerfreies Deutsch.
+- TEXT IM BILD (ganz wenig!): EINE große, starke Headline + EINE kleine Subline, die die Förder-Botschaft trägt (z. B. „Bis zu 100 % Förderung möglich"). Wörtlich ausformuliert, fehlerfreies Deutsch.
 - STIL: Stilrichtung, Farbwelt, Stimmung (z. B. cinematic, warme Beige-/Goldtöne, viel negativer Raum, editorial/Netflix-Look).
 
-Anforderungen: Thema sofort erkennbar, scroll-stopping durch Ruhe statt Reizüberflutung, hochwertig, sehr wenig Text. Die Konzepte müssen sich DEUTLICH unterscheiden (anderes Medium/Idee/Stil/Stimmung).
+Anforderungen: Thema sofort erkennbar, scroll-stopping durch Ruhe statt Reizüberflutung, hochwertig, sehr wenig Text. Die Konzepte unterscheiden sich DEUTLICH in Medium/Idee/Stil/Stimmung.
 Antworte AUSSCHLIESSLICH mit einem JSON-Array von Strings — pro Element EIN vollständiges Konzept (Name, VISUAL, TEXT IM BILD, STIL), Zeilenumbrüche im String erlaubt. Nichts sonst.`,
-    user: `Aufgabe: „${conceptRequest}"\n\nKontext: ${briefText}\n\nLiefere ${brief.count} solcher Konzepte — jedes KOMPLETT ANDERS als die übrigen — als JSON-Array.`,
+    user: `Aufgabe: „${conceptRequest}"\n\nKontext: ${briefText}\n\nLiefere ${brief.count} Konzepte. JEDES transportiert klar die Förder-Botschaft (bis zu 100 %); nur Visual/Stil ist jeweils KOMPLETT ANDERS. Als JSON-Array.`,
     maxTokens: 2600,
   });
   const cleaned = raw
