@@ -94,6 +94,13 @@ const eur = new Intl.NumberFormat("de-DE", {
   maximumFractionDigits: 0,
 });
 
+// Cost-per-Lead mit Cent-Genauigkeit (Budgets runden wir, CPL nicht).
+const cplFmt = new Intl.NumberFormat("de-DE", {
+  style: "currency",
+  currency: "EUR",
+  maximumFractionDigits: 2,
+});
+
 type Decision = {
   action: BuyerAction;
   reason: string;
@@ -175,7 +182,7 @@ export function decideBudget(params: {
     const target = clamp(requiredBudgetRaw, minBudget, maxBudget);
     return {
       action: "boost",
-      reason: `Endspurt (${daysLeft} Tage übrig, Prognose ${projected}/${goal}). Budget auf ${eur.format(target)}/Tag, um ${remaining} fehlende Leads zu liefern.`,
+      reason: `Endspurt (${daysLeft} Tage übrig, Prognose ${projected}/${goal}). Budget auf ${eur.format(target)}/Tag für ${remaining} fehlende Leads (≈ ${requiredPerDay.toFixed(1)} Leads/Tag bei kalk. ${cplFmt.format(costPerLead)}/Lead).`,
       targetBudget: target,
       setStatus: anyPaused ? "ACTIVE" : null,
     };
@@ -195,7 +202,7 @@ export function decideBudget(params: {
   if (anyPaused) {
     return {
       action: "activate",
-      reason: `Kampagnen pausiert, aber ${remaining} Leads offen (Prognose ${projected}/${goal}). Reaktivieren mit ${eur.format(target)}/Tag.`,
+      reason: `Kampagnen pausiert, aber ${remaining} Leads offen (Prognose ${projected}/${goal}). Reaktivieren mit ${eur.format(target)}/Tag (≈ ${requiredPerDay.toFixed(1)} Leads/Tag bei kalk. ${cplFmt.format(costPerLead)}/Lead).`,
       targetBudget: target,
       setStatus: "ACTIVE",
     };
@@ -214,14 +221,14 @@ export function decideBudget(params: {
   if (target > currentBudget) {
     return {
       action: "increase",
-      reason: `Hinterher (Prognose ${projected}/${goal}). Budget ${eur.format(currentBudget)} → ${eur.format(target)}/Tag.`,
+      reason: `Hinterher (Prognose ${projected}/${goal}). Budget ${eur.format(currentBudget)} → ${eur.format(target)}/Tag (≈ ${requiredPerDay.toFixed(1)} Leads/Tag bei kalk. ${cplFmt.format(costPerLead)}/Lead).`,
       targetBudget: target,
       setStatus: null,
     };
   }
   return {
     action: "decrease",
-    reason: `Überlieferung droht (Prognose ${projected}/${goal}). Budget ${eur.format(currentBudget)} → ${eur.format(target)}/Tag.`,
+    reason: `Überlieferung droht (Prognose ${projected}/${goal}). Budget ${eur.format(currentBudget)} → ${eur.format(target)}/Tag (kalk. ${cplFmt.format(costPerLead)}/Lead).`,
     targetBudget: target,
     setStatus: null,
   };
