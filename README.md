@@ -105,7 +105,14 @@ Guardrails über Env (alle optional):
 | `MEDIA_BUYER_BOOST_DAYS`        | `5`     | Länge des Endspurt-Fensters (Tage)     |
 | `MEDIA_BUYER_PRECISION_DAYS`    | `3`     | Präzisions-Fenster am Monatsende: Step-Limit & Totzone aus, feines Tarieren, vorausschauendes Pausieren |
 | `MEDIA_BUYER_PRECISION_MIN_BUDGET` | `1`  | Budget-Untergrenze im Präzisions-Fenster (EUR) |
+| `MEDIA_BUYER_NORMAL_INTERVAL_HOURS` | `12` | Drosselung im Normalbetrieb: außerhalb des Präzisions-Fensters wird höchstens alle X h wirklich nachgesteuert (auch bei häufigerem Cron-Aufruf). |
 | `MEDIA_BUYER_RUN_INTERVAL_HOURS` | _auto_ | Override für die Stunden bis zum nächsten Lauf (fürs vorausschauende Pausieren). Ohne Wert wird der Abstand **automatisch** aus den letzten echten Läufen abgeleitet. |
+
+**Empfohlenes Setup:** den Cron **fest stündlich** laufen lassen und nie wieder
+anfassen. Im Normalbetrieb drosselt der Buyer selbst auf
+`MEDIA_BUYER_NORMAL_INTERVAL_HOURS` (≈ 2×/Tag), im Präzisions-Fenster der
+letzten `MEDIA_BUYER_PRECISION_DAYS` Tage nutzt er jeden stündlichen Aufruf für
+die exakte Landung — ohne manuelle Umstellung.
 
 In den letzten `MEDIA_BUYER_PRECISION_DAYS` Tagen schaltet der Buyer in den
 Präzisionsmodus: Step-Limit und ±5 %-Totzone entfallen, das Budget wird exakt

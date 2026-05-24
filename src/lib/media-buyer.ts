@@ -19,6 +19,10 @@
 //                                 Step-Limit & Totzone aus, niedrigere Budget-
 //                                 Untergrenze, vorausschauendes Pausieren.
 //   MEDIA_BUYER_PRECISION_MIN_BUDGET  Budget-Untergrenze im Präzisions-Fenster (default 1)
+//   MEDIA_BUYER_NORMAL_INTERVAL_HOURS Drosselung im Normalbetrieb (default 12):
+//                                     außerhalb des Präzisions-Fensters höchstens
+//                                     alle X h nachsteuern, auch bei stündlichem
+//                                     Cron. So reicht EIN fester stündlicher Cron.
 //   MEDIA_BUYER_RUN_INTERVAL_HOURS    Optionaler Override für die Stunden bis
 //                                     zum nächsten Lauf. Ohne Wert wird das
 //                                     Intervall automatisch aus den letzten
@@ -594,6 +598,30 @@ export async function runMediaBuyer(params: {
   const daysElapsed = Math.max(1, differenceInCalendarDays(now, monthStart) + 1);
   const daysTotal = differenceInCalendarDays(monthEnd, monthStart) + 1;
 
+  const precisionDays = envNum("MEDIA_BUYER_PRECISION_DAYS", 3);
+  const inPrecision = daysTotal - daysElapsed + 1 <= precisionDays;
+
+  // Selbst-Drosselung: Der Endpoint darf beliebig oft (z. B. stündlich)
+  // aufgerufen werden. Außerhalb des Präzisions-Fensters wird aber höchstens
+  // alle MEDIA_BUYER_NORMAL_INTERVAL_HOURS Stunden wirklich nachgesteuert —
+  // so bleibt der Normalbetrieb ruhig, der Endspurt aber engmaschig, ganz
+  // ohne den Cron umstellen zu müssen. Trockenläufe sind nie gedrosselt.
+  if (!dryRun && !inPrecision) {
+    const normalInterval = envNum("MEDIA_BUYER_NORMAL_INTERVAL_HOURS", 12);
+    const last = await prisma.mediaBuyerAction.findFirst({
+      where: { dryRun: false },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    });
+    if (last) {
+      const gapH = (now.getTime() - last.createdAt.getTime()) / 3_600_000;
+      if (gapH < normalInterval - 0.5) {
+        // Noch zu früh — dieser Aufruf ist ein No-Op (nichts an Meta, kein Log).
+        return { ranAt: now, dryRun, pools: [] };
+      }
+    }
+  }
+
   const defs = await derivePoolDefs();
 
   // Alle Pools anlegen/aktualisieren (auch ohne Autopilot, fürs Admin).
@@ -652,7 +680,7 @@ export async function runMediaBuyer(params: {
     defaultMaxBudget: envNum("MEDIA_BUYER_MAX_DAILY_BUDGET", 200),
     maxStep: envNum("MEDIA_BUYER_MAX_STEP", 0.5),
     boostDays: envNum("MEDIA_BUYER_BOOST_DAYS", 5),
-    precisionDays: envNum("MEDIA_BUYER_PRECISION_DAYS", 3),
+    precisionDays,
     precisionMinBudget: envNum("MEDIA_BUYER_PRECISION_MIN_BUDGET", 1),
     lookAheadHours: await deriveLookAheadHours(now),
     dryRun,
