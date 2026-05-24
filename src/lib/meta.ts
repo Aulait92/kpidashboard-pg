@@ -16,7 +16,7 @@ type MetaInsightsResponse = {
   error?: { message: string; type?: string; code?: number };
 };
 
-export type MetaProduct = "Wechsel" | "Neugeschäft";
+export type MetaProduct = "Wechsel" | "Neugeschäft" | "Kinderwunsch";
 
 export type MetaSyncResult = {
   accounts: { id: string; rows: number }[];
@@ -46,6 +46,8 @@ function getEnv() {
 
 export function classifyProduct(campaignName: string): MetaProduct | null {
   const n = campaignName.toLowerCase();
+  // Kinderwunsch zuerst — eigenes Vertical, klar über das Keyword erkennbar.
+  if (n.includes("kinderwunsch") || n.includes("kiwu")) return "Kinderwunsch";
   // Reihenfolge wichtig: "Neugeschäft" zuerst, falls "wechsel" als Substring
   // in einem Neugeschäft-Namen vorkäme.
   if (n.includes("neugeschäft") || n.includes("neugeschaeft") || n.includes("neuvertrag")) {

@@ -33,7 +33,6 @@ import {
   type CampaignBudgetState,
   type MetaCampaign,
 } from "@/lib/meta-ads";
-import { PRODUCTS, type Product } from "@/lib/products";
 import { prisma } from "@/lib/prisma";
 import { sendToAdmins } from "@/lib/push";
 
@@ -261,19 +260,15 @@ export async function derivePoolDefs(): Promise<PoolDef[]> {
 
   const defs: PoolDef[] = [];
 
-  // PKV: ein Pool je Produkt über alle Kunden.
-  const pkvGoals: Record<Product, (typeof customers)[number]["leadGoalWechsel"]> =
-    {
-      Wechsel: 0,
-      Neugeschäft: 0,
-    };
+  // PKV: ein Pool je Produkt über alle Kunden. Kinderwunsch ist hier
+  // bewusst ausgenommen — das läuft regionsbasiert (siehe unten).
+  const pkvGoals = { Wechsel: 0, Neugeschäft: 0 };
   for (const c of customers) {
-    pkvGoals.Wechsel = (pkvGoals.Wechsel ?? 0) + (c.leadGoalWechsel ?? 0);
-    pkvGoals.Neugeschäft =
-      (pkvGoals.Neugeschäft ?? 0) + (c.leadGoalNeugeschaeft ?? 0);
+    pkvGoals.Wechsel += c.leadGoalWechsel ?? 0;
+    pkvGoals.Neugeschäft += c.leadGoalNeugeschaeft ?? 0;
   }
-  for (const product of PRODUCTS) {
-    const goal = pkvGoals[product] ?? 0;
+  for (const product of ["Wechsel", "Neugeschäft"] as const) {
+    const goal = pkvGoals[product];
     if (goal > 0) {
       defs.push({
         key: `product:${product}`,
