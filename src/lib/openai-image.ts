@@ -11,10 +11,12 @@
 // das Creative wird nur ohne KI-Bild gerendert.
 //
 // Env:
-//   OPENAI_API_KEY        — Pflicht für echte Generierung
-//   OPENAI_IMAGE_MODEL    — Modell-ID (default "gpt-image-1"). Auf neuere
-//                           Versionen umstellbar, ohne Code-Änderung.
-//   OPENAI_IMAGE_QUALITY  — "low" | "medium" | "high" | "auto" (default "medium")
+//   OPENAI_API_KEY           — Pflicht für echte Generierung
+//   OPENAI_IMAGE_MODEL       — Modell-ID (default "gpt-image-1"). Auf neuere
+//                              Versionen umstellbar, ohne Code-Änderung.
+//   OPENAI_IMAGE_QUALITY     — "low" | "medium" | "high" | "auto" (default "low")
+//   OPENAI_IMAGE_TIMEOUT_MS  — Abbruch pro Bild in ms (default 90000). Verhindert,
+//                              dass ein hängender Request die ganze Pipeline blockt.
 
 const PLACEHOLDER_RE = /\{\{COMIC:([^}]+)\}\}/g;
 
@@ -35,8 +37,12 @@ async function generateComicImage(keywords: string): Promise<string> {
     return FALLBACK_DATA_URL;
   }
   const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
-  const quality = process.env.OPENAI_IMAGE_QUALITY || "medium";
+  const quality = process.env.OPENAI_IMAGE_QUALITY || "low";
+  const timeoutMs = Number(process.env.OPENAI_IMAGE_TIMEOUT_MS) || 90000;
   const prompt = `${keywords}${STYLE_SUFFIX}`;
+  const startedAt = Date.now();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const res = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
@@ -51,14 +57,18 @@ async function generateComicImage(keywords: string): Promise<string> {
         quality,
         n: 1,
       }),
+      signal: controller.signal,
     });
     const text = await res.text();
     if (!res.ok) {
       console.warn(
-        `[openai-image] Generation failte für "${keywords}": ${res.status} ${text.slice(0, 200)}`,
+        `[openai-image] Generation failte für "${keywords}": ${res.status} ${text.slice(0, 300)}`,
       );
       return FALLBACK_DATA_URL;
     }
+    console.log(
+      `[openai-image] "${keywords}" ok in ${Date.now() - startedAt}ms (q=${quality})`,
+    );
     const json = JSON.parse(text) as {
       data?: { b64_json?: string; url?: string }[];
     };
@@ -76,11 +86,14 @@ async function generateComicImage(keywords: string): Promise<string> {
     );
     return FALLBACK_DATA_URL;
   } catch (err) {
+    const aborted = err instanceof Error && err.name === "AbortError";
     console.warn(
-      `[openai-image] Generation failte für "${keywords}":`,
+      `[openai-image] Generation ${aborted ? `Timeout (${timeoutMs}ms)` : "failte"} für "${keywords}":`,
       err instanceof Error ? err.message : err,
     );
     return FALLBACK_DATA_URL;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
