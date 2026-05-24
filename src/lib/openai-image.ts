@@ -12,6 +12,8 @@
 //
 // Env:
 //   OPENAI_API_KEY        — Pflicht für echte Generierung
+//   OPENAI_IMAGE_MODEL    — Modell-ID (default "gpt-image-1"). Auf neuere
+//                           Versionen umstellbar, ohne Code-Änderung.
 //   OPENAI_IMAGE_QUALITY  — "low" | "medium" | "high" | "auto" (default "medium")
 
 const PLACEHOLDER_RE = /\{\{COMIC:([^}]+)\}\}/g;
@@ -32,6 +34,7 @@ async function generateComicImage(keywords: string): Promise<string> {
     );
     return FALLBACK_DATA_URL;
   }
+  const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
   const quality = process.env.OPENAI_IMAGE_QUALITY || "medium";
   const prompt = `${keywords}${STYLE_SUFFIX}`;
   try {
@@ -42,7 +45,7 @@ async function generateComicImage(keywords: string): Promise<string> {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-image-1",
+        model,
         prompt,
         size: "1024x1024",
         quality,
