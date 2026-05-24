@@ -1186,9 +1186,21 @@ async function llmText(opts: {
         throw new Error(`OpenAI ${res.status}: ${text.slice(0, 300)}`);
       }
       const data = JSON.parse(text) as {
-        choices?: { message?: { content?: string } }[];
+        choices?: { message?: { content?: string }; finish_reason?: string }[];
       };
-      return data.choices?.[0]?.message?.content ?? "";
+      const content = data.choices?.[0]?.message?.content ?? "";
+      if (!content.trim()) {
+        // Leerer Inhalt trotz 200 — z. B. Reasoning-Modell (Budget verbraucht)
+        // oder Moderations-Ablehnung. Roh loggen und (einmal) erneut versuchen.
+        console.warn(
+          `[llmText] Leerer Inhalt (Versuch ${attempt + 1}/3, model=${model}, finish_reason=${data.choices?.[0]?.finish_reason}): ${text.slice(0, 300)}`,
+        );
+        lastErr = new Error(
+          `OpenAI leere Antwort (finish_reason=${data.choices?.[0]?.finish_reason ?? "?"})`,
+        );
+        continue;
+      }
+      return content;
     } catch (err) {
       lastErr = err;
       console.warn(
