@@ -553,51 +553,84 @@ type Concept = {
   description: string;     // 1-2 Sätze konkrete Konzept-Skizze
 };
 
+type VisualStyle = "photo" | "ugc" | "comic" | "typography";
+
+// Verteilt die visualStyles über N Slots. VIER Buckets:
+//   photo       = polished Stock-/KI-Foto (Brand-Photo-Hero etc.)
+//   ugc         = native-Look Foto + signature schwarze Caption-Box (UGC-*)
+//   comic       = KI-generierte Illustration
+//   typography  = rein textbasiert, kein Bild
+// Verteilung N>=4: ~20% photo, ~30% ugc, ~20% comic, ~30% typography
+// (UGC stärker gewichtet — performt aktuell am besten auf Meta).
+function pickVisualStyles(count: number): VisualStyle[] {
+  if (count === 1) {
+    const r = Math.random();
+    if (r < 0.3) return ["ugc"];
+    if (r < 0.5) return ["photo"];
+    if (r < 0.7) return ["comic"];
+    return ["typography"];
+  }
+  if (count === 2) {
+    return ["ugc", Math.random() < 0.5 ? "comic" : "typography"];
+  }
+  if (count === 3) {
+    return ["ugc", "comic", "typography"];
+  }
+  const n = count;
+  const ugcCount = Math.max(1, Math.round(n * 0.3));
+  const photoCount = Math.max(1, Math.round(n * 0.2));
+  const comicCount = Math.max(1, Math.round(n * 0.2));
+  const typoCount = Math.max(0, n - ugcCount - photoCount - comicCount);
+  const styles: VisualStyle[] = [
+    ...Array(ugcCount).fill("ugc"),
+    ...Array(photoCount).fill("photo"),
+    ...Array(comicCount).fill("comic"),
+    ...Array(typoCount).fill("typography"),
+  ];
+  for (let i = styles.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [styles[i], styles[j]] = [styles[j], styles[i]];
+  }
+  return styles.slice(0, n);
+}
+
+// Die Pflicht-Anweisung pro visualStyle (Foto/UGC/Comic/Typo) — von beiden
+// Pfaden (Konzept-basiert und freeform) genutzt.
+function visualStyleRequirement(visualStyle: VisualStyle): string {
+  if (visualStyle === "photo") {
+    return `FOTO-PFLICHT: Dieses Creative MUSS GENAU EIN {{UNSPLASH:englische keywords}}-Element enthalten, entweder als <img src="{{UNSPLASH:…}}"> ODER als background-image: url({{UNSPLASH:…}}). Wenn du keinen Platzhalter im HTML hast, ist das Creative ungültig.`;
+  }
+  if (visualStyle === "ugc") {
+    return `UGC-PFLICHT (alle drei Punkte MÜSSEN umgesetzt sein):
+1. Full-bleed Foto-Background via {{UNSPLASH:englische keywords}} — Foto füllt das gesamte 1080×1080-Canvas, position:absolute oder background-image, kein weißer Rand außenrum.
+2. Signature schwarze CAPTION-BOX unten (das Wiedererkennungsmerkmal aller UGC-Creatives) — exakt diese CSS-Eigenschaften:
+   position: absolute; bottom: 30-60px; left: 30-50px; right: 30-50px;
+   background: #000; color: #fff;
+   font-family: 'Inter', -apple-system, sans-serif; font-weight: 900;
+   font-size: 44-60px; line-height: 1.15;
+   padding: 24-30px 32-38px; border-radius: 14-20px;
+   text-align: left;
+   Inhalt: 1-3 Zeilen.
+3. Bei UGC-Whiteboard ZUSÄTZLICH: handgeschriebenes Statement als CSS-Overlay über dem Foto, font-family: 'Caveat' oder 'Permanent Marker' (Google Fonts), color: #1a1a1a, font-size: 80-120pt, position passend zur Whiteboard-Fläche im Foto, leicht rotiert (transform: rotate(-1deg bis -3deg)).
+KEINE designed Gradients, KEINE Drop-Shadows auf Text, KEIN ANZEIGE-Label oben, KEIN CTA-Button (Facebook macht den selbst). Sieht aus wie iPhone-Screenshot, NICHT wie Designer-Ad.`;
+  }
+  if (visualStyle === "comic") {
+    return `COMIC-PFLICHT: Dieses Creative MUSS GENAU EIN {{COMIC:englische beschreibung}}-Element enthalten (img-src oder background-image). Comic wird AI-generiert.
+- Beschreibung 3-6 Wörter, KEINE Style-Modifier (Server hängt sie an)
+- ABSOLUT KEINEN TEXT-INHALT im Comic: keine Schilder mit Text, keine Sprechblasen, keine beschrifteten Geldscheine/Briefe/Screens, keine Banner, keine Logos. Sämtlicher Text gehört in das HTML drumherum (Headline, Caption-Box).
+- ✅ {{COMIC:woman shocked at desk}}, {{COMIC:man with empty wallet}}
+- ❌ {{COMIC:woman holding sign saying PKV}}, {{COMIC:letter with 850 euros}}`;
+  }
+  return `Dieses Creative ist typografisch — KEIN Bild, kein {{UNSPLASH}}- oder {{COMIC}}-Platzhalter.`;
+}
+
 async function brainstormConcepts(brief: CreativeBrief): Promise<Concept[]> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
 
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
 
-  // Pro Slot expliziter visualStyle. VIER Buckets:
-  //   photo       = polished Stock-Foto (Brand-Photo-Hero etc, Unsplash)
-  //   ugc         = native-Look Foto + signature schwarze Caption-Box (UGC-*)
-  //   comic       = AI-generierte Illustration (Replicate Flux)
-  //   typography  = rein textbasiert, kein Bild
-  // Verteilung N>=4: ~20% photo, ~30% ugc, ~20% comic, ~30% typography
-  // (UGC stärker gewichtet — performt aktuell am besten auf Meta).
-  type Style = "photo" | "ugc" | "comic" | "typography";
-  const slotStyles: Style[] = (() => {
-    if (brief.count === 1) {
-      const r = Math.random();
-      if (r < 0.3) return ["ugc"];
-      if (r < 0.5) return ["photo"];
-      if (r < 0.7) return ["comic"];
-      return ["typography"];
-    }
-    if (brief.count === 2) {
-      return ["ugc", Math.random() < 0.5 ? "comic" : "typography"];
-    }
-    if (brief.count === 3) {
-      return ["ugc", "comic", "typography"];
-    }
-    const n = brief.count;
-    const ugcCount = Math.max(1, Math.round(n * 0.3));
-    const photoCount = Math.max(1, Math.round(n * 0.2));
-    const comicCount = Math.max(1, Math.round(n * 0.2));
-    const typoCount = Math.max(0, n - ugcCount - photoCount - comicCount);
-    const styles: Style[] = [
-      ...Array(ugcCount).fill("ugc"),
-      ...Array(photoCount).fill("photo"),
-      ...Array(comicCount).fill("comic"),
-      ...Array(typoCount).fill("typography"),
-    ];
-    for (let i = styles.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [styles[i], styles[j]] = [styles[j], styles[i]];
-    }
-    return styles.slice(0, n);
-  })();
+  const slotStyles = pickVisualStyles(brief.count);
 
   const slotInstructions = slotStyles
     .map((s, i) => `  Konzept ${i + 1}: visualStyle = "${s}"`)
@@ -722,29 +755,7 @@ async function generateOneCreative(
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
 
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
-  const photoLine =
-    concept.visualStyle === "photo"
-      ? `FOTO-PFLICHT: Dieses Creative MUSS GENAU EIN {{UNSPLASH:englische keywords}}-Element enthalten, entweder als <img src="{{UNSPLASH:…}}"> ODER als background-image: url({{UNSPLASH:…}}). Wenn du keinen Platzhalter im HTML hast, ist das Creative ungültig. Die Foto-Komposition soll der Mechanic entsprechen.`
-      : concept.visualStyle === "ugc"
-        ? `UGC-PFLICHT (alle drei Punkte MÜSSEN umgesetzt sein):
-1. Full-bleed Foto-Background via {{UNSPLASH:englische keywords}} — Foto füllt das gesamte 1080×1080-Canvas, position:absolute oder background-image, kein weißer Rand außenrum.
-2. Signature schwarze CAPTION-BOX unten (das Wiedererkennungsmerkmal aller UGC-Creatives) — exakt diese CSS-Eigenschaften:
-   position: absolute; bottom: 30-60px; left: 30-50px; right: 30-50px;
-   background: #000; color: #fff;
-   font-family: 'Inter', -apple-system, sans-serif; font-weight: 900;
-   font-size: 44-60px; line-height: 1.15;
-   padding: 24-30px 32-38px; border-radius: 14-20px;
-   text-align: left;
-   Inhalt: 1-3 Zeilen, MUSS "PKV" oder "Krankenversicherung" enthalten.
-3. Bei UGC-Whiteboard ZUSÄTZLICH: handgeschriebenes PKV-Statement als CSS-Overlay über dem Foto, font-family: 'Caveat' oder 'Permanent Marker' (Google Fonts), color: #1a1a1a, font-size: 80-120pt, position passend zur Whiteboard-Fläche im Foto, leicht rotiert (transform: rotate(-1deg bis -3deg)).
-KEINE designed Gradients, KEINE Drop-Shadows auf Text, KEIN ANZEIGE-Label oben, KEIN CTA-Button (Facebook macht den selbst). Sieht aus wie iPhone-Screenshot, NICHT wie Designer-Ad.`
-        : concept.visualStyle === "comic"
-          ? `COMIC-PFLICHT: Dieses Creative MUSS GENAU EIN {{COMIC:englische beschreibung}}-Element enthalten (img-src oder background-image). Comic wird AI-generiert.
-- Beschreibung 3-6 Wörter, KEINE Style-Modifier (Server hängt sie an)
-- ABSOLUT KEINEN TEXT-INHALT im Comic: keine Schilder mit Text, keine Sprechblasen, keine beschrifteten Geldscheine/Briefe/Screens, keine Banner, keine Logos. Sämtlicher Text gehört in das HTML drumherum (Headline, Caption-Box).
-- ✅ {{COMIC:woman shocked at desk}}, {{COMIC:man with empty wallet}}, {{COMIC:doctor pointing at patient}}
-- ❌ {{COMIC:woman holding sign saying PKV}}, {{COMIC:letter with 850 euros}}, {{COMIC:phone screen showing app}}`
-          : `Dieses Creative ist typografisch — KEIN Bild, kein {{UNSPLASH}}- oder {{COMIC}}-Platzhalter.`;
+  const photoLine = visualStyleRequirement(concept.visualStyle);
   const lengthRange =
     concept.copyLength === "long"
       ? "400-800 Zeichen, AIDA-Story-Struktur, mehrere Absätze"
@@ -829,11 +840,100 @@ Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm,
   return { ...result, mechanic: concept.mechanic };
 }
 
+// ─── Freeform: Variante ohne vorgeplantes Konzept ────────────────────
+// Experiment-Pfad (CREATIVE_SKIP_CONCEPTS=1): kein Brainstorm. Claude erfindet
+// Hook-Angle, Mechanic und Bildidee pro Variante selbst — nur visualStyle und
+// copyLength werden vorgegeben, um die Bild-/Text-Vielfalt zu wahren.
+async function generateOneCreativeFreeform(
+  brief: CreativeBrief,
+  visualStyle: VisualStyle,
+): Promise<CreativeVariant> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
+
+  const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
+  const requirement = visualStyleRequirement(visualStyle);
+  const copyLength = (["short", "medium", "long"] as const)[
+    Math.floor(Math.random() * 3)
+  ];
+  const lengthRange =
+    copyLength === "long"
+      ? "400-800 Zeichen, AIDA-Story-Struktur, mehrere Absätze"
+      : copyLength === "medium"
+        ? "150-300 Zeichen, 2-3 Sätze, Problem → Lösung → Soft-CTA"
+        : "60-120 Zeichen, ein Satz, Hook + Soft-CTA";
+
+  const userPrompt = `Erstelle EIN Meta-Ad-Creative für die ${brief.campaignKey}-Kampagne.
+
+${campaignContext}
+
+${brief.audience ? `ZIELGRUPPE-FOKUS: ${brief.audience}` : ""}
+${brief.tone ? `TONE: ${brief.tone}` : ""}
+
+Du erfindest Hook-Angle und Mechanic selbst — sei maximal eigenständig,
+überraschend und konkret. Vermeide ausgelutschte Standard-Muster und das
+Naheliegende. Wähle einen ungewöhnlichen Blickwinkel.
+
+VORGABEN:
+- Visual-Style: ${visualStyle}
+- Copy-Length für adText: ${copyLength} (${lengthRange})
+
+${requirement}
+
+Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm, keine Alternativen.`;
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 8000,
+      system: CREATIVE_SYSTEM_PROMPT,
+      messages: [{ role: "user", content: userPrompt }],
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`Claude Freeform ${res.status}: ${await res.text()}`);
+  }
+  const data = (await res.json()) as { content: { type: string; text: string }[] };
+  const text = data.content.find((c) => c.type === "text")?.text ?? "";
+  const variants = parseVariantBlocks(text);
+  if (variants.length === 0) {
+    throw new Error(`Freeform (${visualStyle}) lieferte keinen <variant>: ${text.slice(0, 300)}…`);
+  }
+  return { ...variants[0], mechanic: variants[0].mechanic || `freeform-${visualStyle}` };
+}
+
 // ─── Orchestrator: brainstorm → parallel execution ───────────────────
 
 async function generateCreativeVariants(
   brief: CreativeBrief,
 ): Promise<CreativeVariant[]> {
+  // Experiment: Konzept-Phase überspringen und frei generieren.
+  if (process.env.CREATIVE_SKIP_CONCEPTS === "1") {
+    const styles = pickVisualStyles(brief.count);
+    const settledFf = await Promise.allSettled(
+      styles.map((s) => generateOneCreativeFreeform(brief, s)),
+    );
+    const ffVariants: CreativeVariant[] = [];
+    settledFf.forEach((r, i) => {
+      if (r.status === "fulfilled") ffVariants.push(r.value);
+      else
+        console.warn(
+          `[creative-gen] Freeform-Variante ${i + 1} (${styles[i]}) failte:`,
+          r.reason instanceof Error ? r.reason.message : r.reason,
+        );
+    });
+    if (ffVariants.length === 0) {
+      throw new Error("Keine einzige Freeform-Variante konnte generiert werden.");
+    }
+    return ffVariants;
+  }
+
   const concepts = await brainstormConcepts(brief);
   if (concepts.length < brief.count) {
     console.warn(
