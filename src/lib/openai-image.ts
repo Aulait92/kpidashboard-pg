@@ -128,6 +128,17 @@ export async function resolveComicPlaceholders(html: string): Promise<string> {
   return resolve(html, COMIC_RE, (q) => generateImage(q, COMIC_SUFFIX));
 }
 
+// Generiert ein KOMPLETTES Creative-Bild direkt aus einem freien Prompt —
+// Text im Bild ist hier ausdrücklich erlaubt (kein no-text-Suffix). Für den
+// Direct-Image-Modus, in dem gpt-image-1 das ganze Creative selbst rendert.
+// Gibt eine data-URL zurück oder null bei Fehler.
+export async function generateFullCreativeImage(
+  prompt: string,
+): Promise<string | null> {
+  const url = await generateImage(prompt, "");
+  return url === FALLBACK_DATA_URL ? null : url;
+}
+
 // Fotorealistische Bilder ({{UNSPLASH:…}}) — via OpenAI, mit echtem Stock-Foto
 // als Fallback (statt Grau), falls OpenAI fehlschlägt oder nicht verfügbar ist.
 export async function resolvePhotoPlaceholders(html: string): Promise<string> {

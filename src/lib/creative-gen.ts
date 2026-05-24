@@ -1,6 +1,7 @@
 import { uploadImageToR2 } from "@/lib/r2";
 import { renderHtmlToImage } from "@/lib/html-to-png";
 import {
+  generateFullCreativeImage,
   resolveComicPlaceholders,
   resolvePhotoPlaceholders,
 } from "@/lib/openai-image";
@@ -850,11 +851,93 @@ Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm,
   return { ...variants[0], mechanic: variants[0].mechanic || "freeform" };
 }
 
+// ─── Direct-Image-Modus ──────────────────────────────────────────────
+// CREATIVE_DIRECT_IMAGE=1: kein Konzept, kein HTML/Overlay. gpt-image-1
+// rendert das KOMPLETTE Creative (inkl. Text) direkt aus einem simplen
+// Prompt. Pro Versuch ein komplett anderer visueller Ansatz.
+
+// Kurzes Bild-Briefing je Kampagne (Kontext für den Bild-Prompt).
+const DIRECT_IMAGE_BRIEF: Record<string, string> = {
+  Kinderwunsch: `Thema: Kinderwunsch-Behandlungen. Kontext: Kinderwunsch-Behandlungen müssen nicht immer komplett selbst bezahlt werden. Je nach Wohnort, Krankenkasse und persönlicher Situation können hohe Zuschüsse möglich sein – in manchen Fällen sogar bis zu 100 %. Aufruf: unverbindlich prüfen, welche Fördermöglichkeiten infrage kommen könnten. Tonalität: emotional, warm, hoffnungsvoll. Kein medizinisches Heilversprechen.`,
+};
+
+// Pro Variante ein anderer visueller Ansatz.
+const DIRECT_IMAGE_APPROACHES: string[] = [
+  "Emotionales Nahaufnahme-Foto eines hoffnungsvollen Paares, weiches natürliches Licht.",
+  "Warmes Lifestyle-Foto: Paar zuhause, ruhiger intimer Moment.",
+  "Großes freundliches Zahlen-Highlight „bis zu 100 %“ als zentrales Gestaltungselement, minimalistisch.",
+  "Ruhiges, minimalistisches Motiv mit viel Weißraum und einem zarten Symbol (Herz / Pusteblume).",
+  "Emotionales Detail-/Symbolfoto, z. B. ineinandergelegte Hände.",
+  "Sanfte moderne Illustration in warmen Farben, hoffnungsvolle Stimmung.",
+  "Seriöses, hoffnungsvolles Motiv mit angedeutetem Förder-/Dokument-Bezug.",
+  "Split/Vorher-Nachher-Stimmung: von Sorge zu Hoffnung.",
+];
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+async function generateDirectImageCreatives(
+  brief: CreativeBrief,
+): Promise<CreativeVariant[]> {
+  const briefText =
+    DIRECT_IMAGE_BRIEF[brief.campaignKey] ?? `Thema: ${brief.campaignKey}.`;
+  // Pro Versuch einen anderen Ansatz wählen (zyklisch, falls count > Liste).
+  const pool = shuffle(DIRECT_IMAGE_APPROACHES);
+  const approaches = Array.from(
+    { length: brief.count },
+    (_v, i) => pool[i % pool.length],
+  );
+
+  const settled = await Promise.allSettled(
+    approaches.map(async (approach): Promise<CreativeVariant> => {
+      const prompt = `Erstelle ein quadratisches 1:1 Werbe-Creative für Meta. ${briefText}
+Visueller Ansatz für dieses Motiv: ${approach}
+Bitte SEHR WENIG Text im Creative verwenden. Deutscher Text, fehlerfrei.`;
+      const dataUrl = await generateFullCreativeImage(prompt);
+      if (!dataUrl) throw new Error("Bildgenerierung lieferte kein Bild.");
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0}html,body{width:1080px;height:1080px}img{width:1080px;height:1080px;object-fit:cover;display:block}</style></head><body><img src="${dataUrl}"></body></html>`;
+      return {
+        headline: "Kinderwunsch-Behandlung",
+        body: "",
+        cta: "Mehr erfahren",
+        adText:
+          "Kinderwunsch-Behandlungen müssen nicht immer komplett selbst bezahlt werden. 💛 Je nach Wohnort, Krankenkasse und Situation sind hohe Zuschüsse möglich – teils bis zu 100 %. Jetzt unverbindlich Fördermöglichkeiten prüfen.",
+        fbHeadline: "Förderung jetzt prüfen",
+        html,
+        mechanic: "direct-image",
+      };
+    }),
+  );
+  const variants: CreativeVariant[] = [];
+  settled.forEach((r, i) => {
+    if (r.status === "fulfilled") variants.push(r.value);
+    else
+      console.warn(
+        `[creative-gen] Direct-Image-Variante ${i + 1} failte:`,
+        r.reason instanceof Error ? r.reason.message : r.reason,
+      );
+  });
+  if (variants.length === 0) {
+    throw new Error("Keine einzige Direct-Image-Variante konnte generiert werden.");
+  }
+  return variants;
+}
+
 // ─── Orchestrator: brainstorm → parallel execution ───────────────────
 
 async function generateCreativeVariants(
   brief: CreativeBrief,
 ): Promise<CreativeVariant[]> {
+  // Experiment: gpt-image-1 rendert das ganze Creative direkt.
+  if (process.env.CREATIVE_DIRECT_IMAGE === "1") {
+    return generateDirectImageCreatives(brief);
+  }
   // Experiment: ohne Konzept-Phase UND ohne Style-Pflichten frei generieren.
   if (process.env.CREATIVE_SKIP_CONCEPTS === "1") {
     const settledFf = await Promise.allSettled(
