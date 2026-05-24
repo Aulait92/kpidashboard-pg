@@ -870,12 +870,18 @@ async function brainstormCreativeConcepts(
   briefText: string,
 ): Promise<string[]> {
   const raw = await llmText({
-    system: `Du bist Art Director für performante Meta-Werbe-Creatives (Format 1:1). Du entwickelst mehrere MAXIMAL UNTERSCHIEDLICHE Creative-KONZEPTE.
-Jedes Konzept ist ein kurzer, konkreter Absatz, der beschreibt: Kern-Idee/Hook, Medium & visueller Stil (Foto / Illustration / Typo-Poster / 3D / Collage / Makro / Flatlay …), Komposition, Farbwelt, Stimmung und — falls überhaupt — den GANZ KURZEN Text im Bild.
-Anforderungen: Thema sofort erkennbar, sehr wenig Text, scroll-stopping, hochwertig. Die Konzepte müssen sich deutlich voneinander unterscheiden (anderes Medium/Komposition/Idee).
-Antworte AUSSCHLIESSLICH mit einem JSON-Array von Strings (ein Konzept-Absatz pro Element), nichts sonst.`,
+    system: `Du bist Art Director für performante Meta-Werbe-Creatives (Format 1:1). Du entwickelst mehrere MAXIMAL UNTERSCHIEDLICHE, REICHE Creative-Konzepte — im Stil eines echten Art-Director-Briefings.
+
+Jedes Konzept enthält:
+- Einen Konzept-Namen (z. B. „Die stille Hoffnung").
+- VISUAL: konkrete, cinematische Bildbeschreibung — ein echter, emotionaler Moment statt Werbe-Optik (Szene, Licht, Komposition, Bildausschnitt).
+- TEXT IM BILD (ganz wenig!): EINE große, starke Headline + optional EINE kleine Subline. Wörtlich ausformuliert, fehlerfreies Deutsch.
+- STIL: Stilrichtung, Farbwelt, Stimmung (z. B. cinematic, warme Beige-/Goldtöne, viel negativer Raum, editorial/Netflix-Look).
+
+Anforderungen: Thema sofort erkennbar, scroll-stopping durch Ruhe statt Reizüberflutung, hochwertig, sehr wenig Text. Die Konzepte müssen sich DEUTLICH unterscheiden (anderes Medium/Idee/Stil/Stimmung).
+Antworte AUSSCHLIESSLICH mit einem JSON-Array von Strings — pro Element EIN vollständiges Konzept (Name, VISUAL, TEXT IM BILD, STIL), Zeilenumbrüche im String erlaubt. Nichts sonst.`,
     user: `${briefText}\n\nEntwickle ${brief.count} maximal unterschiedliche Creative-Konzepte als JSON-Array.`,
-    maxTokens: 2200,
+    maxTokens: 2600,
   });
   const cleaned = raw
     .replace(/^```(?:json)?\s*/i, "")
@@ -915,7 +921,7 @@ async function generateDirectImageCreatives(
     concepts.map(async (concept): Promise<CreativeVariant> => {
       // Phase 2: „erstelle dieses Creative" — komplettes Konzept als Vorlage.
       const dataUrl = await generateFullCreativeImage(
-        `Erstelle dieses Creative als quadratisches 1:1 Werbe-Creative für Meta:\n\n${concept}\n\nGanz wenig Text im Bild, deutscher Text fehlerfrei.`,
+        `Erstelle dieses Creative als quadratisches 1:1 Werbe-Creative für Meta. Setze das beschriebene VISUAL um und integriere NUR den explizit genannten kurzen Text (Headline/Subline) sauber ins Bild — exakt wie angegeben, fehlerfreies Deutsch. Ignoriere Begründungen, Alternativen und CTA-Hinweise (kein Button im Bild).\n\n${concept}`,
       );
       if (!dataUrl) throw new Error("Bildgenerierung lieferte kein Bild.");
       const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0}html,body{width:1080px;height:1080px}img{width:1080px;height:1080px;object-fit:cover;display:block}</style></head><body><img src="${dataUrl}"></body></html>`;
