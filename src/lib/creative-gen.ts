@@ -940,10 +940,11 @@ async function generateDirectImageCreatives(
   const briefText =
     DIRECT_IMAGE_BRIEF[brief.campaignKey] ?? `Thema: ${brief.campaignKey}.`;
 
-  let concepts = await brainstormCreativeConcepts(brief, briefText);
+  const concepts = await brainstormCreativeConcepts(brief, briefText);
   if (concepts.length === 0) {
-    // Notfalls wenigstens ein Konzept aus dem Briefing selbst.
-    concepts = [briefText];
+    throw new Error(
+      "Konzept-Generierung lieferte keine verwertbaren Konzepte (OpenAI-Antwort leer/unparsebar).",
+    );
   }
 
   const settled = await Promise.allSettled(
@@ -1141,7 +1142,8 @@ type RegenContext = {
 };
 
 // Provider-neutraler Text-Helfer — läuft über OpenAI (Chat Completions).
-// Modell via OPENAI_TEXT_MODEL (default "gpt-4o").
+// Modell via OPENAI_TEXT_MODEL (default "gpt-4o"). Mit Timeout + Retries
+// gegen transiente Netzwerkfehler ("fetch failed") und 429/5xx.
 async function llmText(opts: {
   system: string;
   user: string;
@@ -1150,26 +1152,54 @@ async function llmText(opts: {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY nicht gesetzt.");
   const model = process.env.OPENAI_TEXT_MODEL || "gpt-4o";
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: opts.maxTokens,
-      messages: [
-        { role: "system", content: opts.system },
-        { role: "user", content: opts.user },
-      ],
-    }),
-  });
-  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${await res.text()}`);
-  const data = (await res.json()) as {
-    choices?: { message?: { content?: string } }[];
-  };
-  return data.choices?.[0]?.message?.content ?? "";
+  const timeoutMs = Number(process.env.OPENAI_TEXT_TIMEOUT_MS) || 60000;
+
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, attempt * 1500));
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: opts.maxTokens,
+          messages: [
+            { role: "system", content: opts.system },
+            { role: "user", content: opts.user },
+          ],
+        }),
+        signal: controller.signal,
+      });
+      const text = await res.text();
+      if (!res.ok) {
+        // 429/5xx sind transient → erneut versuchen; 4xx sind hart.
+        if (res.status === 429 || res.status >= 500) {
+          lastErr = new Error(`OpenAI ${res.status}: ${text.slice(0, 200)}`);
+          continue;
+        }
+        throw new Error(`OpenAI ${res.status}: ${text.slice(0, 300)}`);
+      }
+      const data = JSON.parse(text) as {
+        choices?: { message?: { content?: string } }[];
+      };
+      return data.choices?.[0]?.message?.content ?? "";
+    } catch (err) {
+      lastErr = err;
+      console.warn(
+        `[llmText] Versuch ${attempt + 1}/3 failte:`,
+        err instanceof Error ? err.message : err,
+      );
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
 }
 
 // Alias für Bestandscode (regen-Funktionen).

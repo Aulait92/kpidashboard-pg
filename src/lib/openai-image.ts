@@ -34,6 +34,8 @@ const COMIC_SUFFIX = `, modern comic book illustration, flat colors, bold black 
 const PHOTO_SUFFIX = `, realistic photograph, natural soft lighting, authentic candid moment, high quality, shallow depth of field, modern European setting, ${NO_TEXT}`;
 
 // Generiert ein Bild und gibt eine data-URL zurück (oder FALLBACK_DATA_URL).
+// Mit Timeout + Retries gegen transiente Netzwerkfehler ("fetch failed"),
+// Timeouts und 429/5xx.
 async function generateImage(
   keywords: string,
   styleSuffix: string,
@@ -47,56 +49,61 @@ async function generateImage(
   const quality = process.env.OPENAI_IMAGE_QUALITY || "low";
   const timeoutMs = Number(process.env.OPENAI_IMAGE_TIMEOUT_MS) || 90000;
   const prompt = `${keywords}${styleSuffix}`;
-  const startedAt = Date.now();
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        prompt,
-        size: "1024x1024",
-        quality,
-        n: 1,
-      }),
-      signal: controller.signal,
-    });
-    const text = await res.text();
-    if (!res.ok) {
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, attempt * 2000));
+    const startedAt = Date.now();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch("https://api.openai.com/v1/images/generations", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ model, prompt, size: "1024x1024", quality, n: 1 }),
+        signal: controller.signal,
+      });
+      const text = await res.text();
+      if (!res.ok) {
+        // 429/5xx transient → erneut versuchen; 4xx hart → Fallback.
+        if (res.status === 429 || res.status >= 500) {
+          console.warn(
+            `[openai-image] Versuch ${attempt + 1}/3 für "${keywords}": ${res.status} ${text.slice(0, 200)}`,
+          );
+          continue;
+        }
+        console.warn(
+          `[openai-image] Generation failte für "${keywords}": ${res.status} ${text.slice(0, 300)}`,
+        );
+        return FALLBACK_DATA_URL;
+      }
+      const json = JSON.parse(text) as {
+        data?: { b64_json?: string; url?: string }[];
+      };
+      const first = json.data?.[0];
+      console.log(
+        `[openai-image] "${keywords}" ok in ${Date.now() - startedAt}ms (q=${quality})`,
+      );
+      if (first?.b64_json) return `data:image/png;base64,${first.b64_json}`;
+      if (first?.url) return first.url;
       console.warn(
-        `[openai-image] Generation failte für "${keywords}": ${res.status} ${text.slice(0, 300)}`,
+        `[openai-image] unerwartetes Output-Shape für "${keywords}":`,
+        text.slice(0, 200),
       );
       return FALLBACK_DATA_URL;
+    } catch (err) {
+      const aborted = err instanceof Error && err.name === "AbortError";
+      console.warn(
+        `[openai-image] Versuch ${attempt + 1}/3 ${aborted ? `Timeout (${timeoutMs}ms)` : "failte"} für "${keywords}":`,
+        err instanceof Error ? err.message : err,
+      );
+    } finally {
+      clearTimeout(timer);
     }
-    const json = JSON.parse(text) as {
-      data?: { b64_json?: string; url?: string }[];
-    };
-    const first = json.data?.[0];
-    console.log(
-      `[openai-image] "${keywords}" ok in ${Date.now() - startedAt}ms (q=${quality})`,
-    );
-    if (first?.b64_json) return `data:image/png;base64,${first.b64_json}`;
-    if (first?.url) return first.url;
-    console.warn(
-      `[openai-image] unerwartetes Output-Shape für "${keywords}":`,
-      text.slice(0, 200),
-    );
-    return FALLBACK_DATA_URL;
-  } catch (err) {
-    const aborted = err instanceof Error && err.name === "AbortError";
-    console.warn(
-      `[openai-image] Generation ${aborted ? `Timeout (${timeoutMs}ms)` : "failte"} für "${keywords}":`,
-      err instanceof Error ? err.message : err,
-    );
-    return FALLBACK_DATA_URL;
-  } finally {
-    clearTimeout(timer);
   }
+  return FALLBACK_DATA_URL;
 }
 
 // Ersetzt alle Platzhalter eines Typs parallel.
