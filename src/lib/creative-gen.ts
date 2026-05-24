@@ -1,7 +1,7 @@
 import { uploadImageToR2 } from "@/lib/r2";
 import { renderHtmlToImage } from "@/lib/html-to-png";
 import { resolveUnsplashPlaceholders } from "@/lib/unsplash";
-import { resolveComicPlaceholders } from "@/lib/replicate-image";
+import { resolveComicPlaceholders } from "@/lib/openai-image";
 
 // Brief der Creative-Generation. Claude designt komplette HTML-Creatives,
 // Playwright rendert zu PNG, Upload zu R2.
