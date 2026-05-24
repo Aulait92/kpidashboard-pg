@@ -4,6 +4,7 @@ import { useActionState, useState, useTransition } from "react";
 import { formatEUR, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
+  runApplyNow,
   runDryRun,
   savePoolSettings,
   type DryRunState,
@@ -150,10 +151,26 @@ function PoolForm({ pool }: { pool: PoolRow }) {
 function DryRunPanel() {
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<DryRunState>({});
+  const [applied, setApplied] = useState(false);
 
   function run() {
+    setApplied(false);
     startTransition(async () => {
       setState(await runDryRun());
+    });
+  }
+
+  function applyNow() {
+    if (
+      !window.confirm(
+        "Jetzt wirklich anwenden? Das ändert sofort die Budgets/Status der Autopilot-Pools bei Meta.",
+      )
+    ) {
+      return;
+    }
+    setApplied(true);
+    startTransition(async () => {
+      setState(await runApplyNow());
     });
   }
 
@@ -161,19 +178,31 @@ function DryRunPanel() {
     <div className="rounded-xl border border-[color:var(--border)] p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold">Trockenlauf</h3>
+          <h3 className="text-sm font-semibold">Trockenlauf & Jetzt anwenden</h3>
           <p className="text-xs text-[color:var(--muted)]">
-            Simuliert alle Pools — ohne an Meta zu schreiben.
+            Simulieren zeigt nur die Entscheidungen. „Jetzt anwenden“ steuert
+            sofort (umgeht die Drosselung) — schreibt an Meta für
+            Autopilot-Pools.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={run}
-          disabled={pending}
-          className="rounded-lg border border-[color:var(--brand)] px-4 py-2 text-sm font-semibold text-[color:var(--brand)] transition hover:bg-[color:var(--brand-soft)] disabled:opacity-60"
-        >
-          {pending ? "Simuliere…" : "Jetzt simulieren"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={run}
+            disabled={pending}
+            className="rounded-lg border border-[color:var(--brand)] px-4 py-2 text-sm font-semibold text-[color:var(--brand)] transition hover:bg-[color:var(--brand-soft)] disabled:opacity-60"
+          >
+            {pending && !applied ? "Simuliere…" : "Jetzt simulieren"}
+          </button>
+          <button
+            type="button"
+            onClick={applyNow}
+            disabled={pending}
+            className="rounded-lg bg-[color:var(--brand)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60"
+          >
+            {pending && applied ? "Wende an…" : "Jetzt anwenden"}
+          </button>
+        </div>
       </div>
 
       {state.error ? (
@@ -183,7 +212,13 @@ function DryRunPanel() {
       ) : null}
 
       {state.results ? (
-        state.results.length === 0 ? (
+        <>
+          {state.ok && applied ? (
+            <div className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+              Angewendet — Autopilot-Pools wurden bei Meta aktualisiert.
+            </div>
+          ) : null}
+          {state.results.length === 0 ? (
           <p className="mt-3 text-xs text-[color:var(--muted)]">
             Keine Pools mit gesetztem Ziel gefunden.
           </p>
@@ -205,7 +240,8 @@ function DryRunPanel() {
               </div>
             ))}
           </div>
-        )
+          )}
+        </>
       ) : null}
     </div>
   );

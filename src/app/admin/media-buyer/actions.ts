@@ -77,3 +77,17 @@ export async function runDryRun(): Promise<DryRunState> {
     return { error: err instanceof Error ? err.message : String(err) };
   }
 }
+
+// Jetzt anwenden: echter Lauf, der die Normalbetrieb-Drosselung überspringt.
+// Schreibt an Meta (nur Autopilot-Pools) — z. B. direkt nach dem Aktivieren
+// des Autopiloten, um nicht aufs Drossel-Fenster zu warten.
+export async function runApplyNow(): Promise<DryRunState> {
+  await requireAdmin();
+  try {
+    const result = await runMediaBuyer({ force: true });
+    revalidatePath("/admin/media-buyer");
+    return { ok: true, results: result.pools };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : String(err) };
+  }
+}

@@ -588,9 +588,13 @@ async function deriveLookAheadHours(now: Date): Promise<number> {
 export async function runMediaBuyer(params: {
   now?: Date;
   dryRun?: boolean;
+  // force = Drosselung im Normalbetrieb überspringen (für „Jetzt anwenden",
+  // z. B. direkt nach dem Aktivieren des Autopiloten).
+  force?: boolean;
 } = {}): Promise<MediaBuyerRunResult> {
   const now = params.now ?? new Date();
   const dryRun = params.dryRun ?? false;
+  const force = params.force ?? false;
 
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
@@ -606,7 +610,7 @@ export async function runMediaBuyer(params: {
   // alle MEDIA_BUYER_NORMAL_INTERVAL_HOURS Stunden wirklich nachgesteuert —
   // so bleibt der Normalbetrieb ruhig, der Endspurt aber engmaschig, ganz
   // ohne den Cron umstellen zu müssen. Trockenläufe sind nie gedrosselt.
-  if (!dryRun && !inPrecision) {
+  if (!dryRun && !inPrecision && !force) {
     const normalInterval = envNum("MEDIA_BUYER_NORMAL_INTERVAL_HOURS", 12);
     const last = await prisma.mediaBuyerAction.findFirst({
       where: { dryRun: false },
