@@ -881,13 +881,15 @@ async function brainstormCreativeConcepts(
     CONCEPT_REQUEST[brief.campaignKey] ??
     `erstelle ein komplett anderes creative konzept für ${brief.campaignKey}`;
   const raw = await llmText({
-    system: `Du bist Art Director für performante, NATIVE Meta-Werbe-Creatives (Format 1:1). Du entwickelst mehrere REICHE Creative-Konzepte im Stil echter Art-Director-Briefings.
+    system: `Du bist Art Director für performante Meta-Werbe-Creatives (Format 1:1). Du entwickelst mehrere REICHE Creative-Konzepte im Stil echter Art-Director-Briefings.
+
+LEGITIMER KONTEXT: In Deutschland gibt es echte staatliche Zuschüsse und Kassenleistungen für Kinderwunschbehandlungen (Bund/Länder + Krankenkassen). Die Werbung informiert seriös darüber. Formuliere IMMER konditional („möglich", „je nach Situation"), niemals als Garantie, kein medizinisches Erfolgsversprechen. Es ist klar als Werbeanzeige erkennbar (mit CTA).
 
 PFLICHT-KERNBOTSCHAFT (in JEDEM Konzept, sonst ungültig):
-Eine Kinderwunsch-Behandlung muss nicht komplett selbst bezahlt werden — es ist eine Förderung möglich, je nach Krankenkasse & Wohnort BIS ZU 100 %.
+Eine Kinderwunsch-Behandlung muss nicht komplett selbst bezahlt werden — eine Förderung ist möglich, je nach Krankenkasse & Wohnort bis zu 100 %.
 Verankere sie als wiederkehrendes Element: ✅ „Bis zu 100 % Förderung möglich" + kleine Subline „Je nach Krankenkasse & Wohnort". Plus ein CTA wie „Förderung jetzt prüfen".
 
-SETZE AUF NATIVE, RELATABLE FORMATE (Daumenstopper, wirken wie echter Feed-Content, nicht wie Werbung). Wähle für jedes Konzept ein ANDERES Format, z. B.:
+SETZE AUF MODERNE, NAHBARE SOCIAL-MEDIA-LOOKS (Daumenstopper). Wähle für jedes Konzept ein ANDERES Format, z. B.:
 - WhatsApp-/Chat-Verlauf (Partner schreiben über die Kostenübernahme)
 - Google-Suche-Screenshot („Kinderwunsch Behandlung Kosten" + hohe Beträge, dann Förder-Popup)
 - Vorher/Nachher-Split (Sorge/Kostenplan ↔ Erleichterung)
@@ -903,7 +905,9 @@ Jedes Konzept enthält:
 
 Die Konzepte unterscheiden sich DEUTLICH im Format/Stil — die Botschaft bleibt gleich.
 
-Beispiele für Stil & Tiefe (nicht kopieren, nur Niveau):
+WICHTIG: Die folgenden Beispiele zeigen NUR das Muster, den Stil und das Niveau. Übernimm sie NIEMALS wörtlich — erfinde bei jedem Lauf KOMPLETT NEUE, eigene Konzepte und Formate (gern auch andere als die Beispiel-Formate), nur nach demselben Schema (Name, VISUAL, TEXT IM BILD inkl. Förder-Badge + CTA, STIL).
+
+Muster-Beispiele (nur als Vorlage fürs Niveau, nicht wiederverwenden):
 1) „Die Nachricht" — WhatsApp-Chat: „Die Klinik hat angerufen…" / „Und?" / „Ein großer Teil wird übernommen ❤️". Eingeblendet: ✅ Bis zu 100 % Förderung möglich. Subline: Je nach Krankenkasse & Wohnort. CTA: Förderung jetzt prüfen.
 2) „Die Google-Suche" — Smartphone-Nahaufnahme, Suche „Kinderwunsch Behandlung Kosten", hohe Beträge (IVF 4.500–7.000 €), dann Popup ✅ Bis zu 100 % Förderung möglich. CTA: Jetzt kostenlos prüfen.
 3) „Vorher / Nachher" — Split: links grau, Frau mit Klinik-Rechnung „Wie sollen wir das bezahlen…?"; rechts warm, erleichtertes Paar. Groß: ✅ Bis zu 100 % Förderung möglich. CTA: Jetzt Fördermöglichkeiten prüfen.
@@ -951,7 +955,7 @@ async function generateDirectImageCreatives(
     concepts.map(async (concept): Promise<CreativeVariant> => {
       // Phase 2: „erstelle dieses Creative" — komplettes Konzept als Vorlage.
       const dataUrl = await generateFullCreativeImage(
-        `Erstelle dieses Creative als quadratisches 1:1 Werbe-Creative für Meta. Setze das beschriebene VISUAL und die genannten Texte exakt um — inkl. Förder-Badge „Bis zu 100 % Förderung möglich", Subline und CTA-Button, wie im Konzept beschrieben. Deutscher Text fehlerfrei und gut lesbar. Wirke wie nativer Feed-Content, nicht wie eine klassische Werbeanzeige.\n\n${concept}`,
+        `Erstelle dieses Creative als quadratisches 1:1 Werbe-Creative für Meta. Setze das beschriebene VISUAL und die genannten Texte exakt um — inkl. Förder-Badge „Bis zu 100 % Förderung möglich", Subline und CTA-Button, wie im Konzept beschrieben. Deutscher Text fehlerfrei und gut lesbar, moderner Social-Media-Look.\n\n${concept}`,
       );
       if (!dataUrl) throw new Error("Bildgenerierung lieferte kein Bild.");
       const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0}html,body{width:1080px;height:1080px}img{width:1080px;height:1080px;object-fit:cover;display:block}</style></head><body><img src="${dataUrl}"></body></html>`;
@@ -1186,17 +1190,24 @@ async function llmText(opts: {
         throw new Error(`OpenAI ${res.status}: ${text.slice(0, 300)}`);
       }
       const data = JSON.parse(text) as {
-        choices?: { message?: { content?: string }; finish_reason?: string }[];
+        choices?: {
+          message?: { content?: string; refusal?: string | null };
+          finish_reason?: string;
+        }[];
       };
-      const content = data.choices?.[0]?.message?.content ?? "";
+      const choice = data.choices?.[0];
+      const content = choice?.message?.content ?? "";
+      const refusal = choice?.message?.refusal;
+      if (refusal) {
+        // Harte Moderations-Ablehnung — Retry zwecklos, klar melden.
+        throw new Error(`OpenAI-Ablehnung (Moderation): ${refusal.slice(0, 300)}`);
+      }
       if (!content.trim()) {
-        // Leerer Inhalt trotz 200 — z. B. Reasoning-Modell (Budget verbraucht)
-        // oder Moderations-Ablehnung. Roh loggen und (einmal) erneut versuchen.
         console.warn(
-          `[llmText] Leerer Inhalt (Versuch ${attempt + 1}/3, model=${model}, finish_reason=${data.choices?.[0]?.finish_reason}): ${text.slice(0, 300)}`,
+          `[llmText] Leerer Inhalt (Versuch ${attempt + 1}/3, model=${model}, finish_reason=${choice?.finish_reason}): ${text.slice(0, 300)}`,
         );
         lastErr = new Error(
-          `OpenAI leere Antwort (finish_reason=${data.choices?.[0]?.finish_reason ?? "?"})`,
+          `OpenAI leere Antwort (finish_reason=${choice?.finish_reason ?? "?"})`,
         );
         continue;
       }
