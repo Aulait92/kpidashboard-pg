@@ -153,7 +153,7 @@ async function DashboardBody({
         revenueLabel: "Umsatz",
       }),
       computeSpeedToLeadAnalysis({ range, customerId, product }),
-      computeMonthlyGoalProgress(),
+      computeMonthlyGoalProgress({ product }),
     ]);
 
   return (

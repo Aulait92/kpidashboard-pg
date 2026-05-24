@@ -25,11 +25,16 @@ export type GoalRow = {
   // 0..1 (Vergleich Current vs. Goal). Kann > 1 sein bei Übererfüllung.
   progress: number | null;
   status: "ahead" | "ontrack" | "behind" | "no-goal";
+  // Im Cockpit editierbar? Leads kommen aus Airtable (read-only); in der
+  // Gesamt-Ansicht sind Leads/Abschlüsse/Umsatz Summen (read-only).
+  editable: boolean;
 };
 
 export type MonthlyGoalProgress = {
   monthKey: string;
   monthLabel: string;
+  // null = Gesamt, sonst der Produktname.
+  product: string | null;
   daysElapsed: number;
   daysTotal: number;
   rows: GoalRow[];
@@ -64,30 +69,37 @@ function decToNumber(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export async function getMonthlyGoal(monthKey: string) {
-  return prisma.monthlyGoal.findUnique({ where: { monthKey } });
+// "" = Gesamt; sonst der Produktname.
+function productKeyOf(product: string | null): string {
+  return product ?? "";
+}
+
+export async function getMonthlyGoal(monthKey: string, product: string | null) {
+  return prisma.monthlyGoal.findUnique({
+    where: { monthKey_product: { monthKey, product: productKeyOf(product) } },
+  });
 }
 
 export async function upsertMonthlyGoal(
   monthKey: string,
+  product: string | null,
   goals: {
-    leadsGoal: number | null;
     closedGoal: number | null;
     revenueGoal: number | null;
     marginGoal: number | null;
   },
 ) {
+  const key = productKeyOf(product);
   return prisma.monthlyGoal.upsert({
-    where: { monthKey },
+    where: { monthKey_product: { monthKey, product: key } },
     create: {
       monthKey,
-      leadsGoal: goals.leadsGoal,
+      product: key,
       closedGoal: goals.closedGoal,
       revenueGoal: goals.revenueGoal,
       marginGoal: goals.marginGoal,
     },
     update: {
-      leadsGoal: goals.leadsGoal,
       closedGoal: goals.closedGoal,
       revenueGoal: goals.revenueGoal,
       marginGoal: goals.marginGoal,
@@ -95,10 +107,39 @@ export async function upsertMonthlyGoal(
   });
 }
 
+// Lead-Ziele je Produkt = Summe der Airtable-Werte über alle Kunden.
+async function airtableLeadGoals(): Promise<{
+  Wechsel: number;
+  "Neugeschäft": number;
+  Kinderwunsch: number;
+  total: number;
+}> {
+  const customers = await prisma.customer.findMany({
+    select: {
+      leadGoalWechsel: true,
+      leadGoalNeugeschaeft: true,
+      leadGoalKinderwunsch: true,
+    },
+  });
+  let w = 0;
+  let n = 0;
+  let k = 0;
+  for (const c of customers) {
+    w += c.leadGoalWechsel ?? 0;
+    n += c.leadGoalNeugeschaeft ?? 0;
+    k += c.leadGoalKinderwunsch ?? 0;
+  }
+  return { Wechsel: w, "Neugeschäft": n, Kinderwunsch: k, total: w + n + k };
+}
+
 export async function computeMonthlyGoalProgress(params: {
   now?: Date;
+  // null = Gesamt, sonst Produktname (Wechsel/Neugeschäft/Kinderwunsch).
+  product?: string | null;
 } = {}): Promise<MonthlyGoalProgress> {
   const now = params.now ?? new Date();
+  const product = params.product ?? null;
+  const isTotal = product == null;
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
   const mtdEnd = endOfDay(now);
@@ -106,14 +147,44 @@ export async function computeMonthlyGoalProgress(params: {
   const monthKey = monthKeyFor(monthStart);
   const monthLabel = monthLabelFmt.format(monthStart);
 
-  const [goal, mtd] = await Promise.all([
-    getMonthlyGoal(monthKey),
+  const [allGoalRows, mtd, leadGoals] = await Promise.all([
+    prisma.monthlyGoal.findMany({ where: { monthKey } }),
     computeKpis({
       range: { from: monthStart, to: mtdEnd },
       customerId: null,
-      product: null,
+      product,
     }) as Promise<Kpis>,
+    airtableLeadGoals(),
   ]);
+
+  // Ziele zusammensetzen. Lead-Ziele kommen immer aus Airtable. Abschlüsse/
+  // Umsatz/Marge: pro Produkt aus der jeweiligen Zeile; gesamt sind Abschlüsse/
+  // Umsatz die Summe der Produkte, die Gesamt-Marge wird eigenständig gesetzt.
+  const byProduct = new Map(allGoalRows.map((r) => [r.product, r]));
+  const productRows = allGoalRows.filter((r) => r.product !== "");
+
+  const leadsGoal = isTotal
+    ? leadGoals.total
+    : leadGoals[product as keyof typeof leadGoals] ?? 0;
+
+  let closedGoal: number | null;
+  let revenueGoal: number | null;
+  let marginGoal: number | null;
+  if (isTotal) {
+    const closedSum = productRows.reduce((s, r) => s + (r.closedGoal ?? 0), 0);
+    const revenueSum = productRows.reduce(
+      (s, r) => s + (decToNumber(r.revenueGoal) ?? 0),
+      0,
+    );
+    closedGoal = closedSum > 0 ? closedSum : null;
+    revenueGoal = revenueSum > 0 ? revenueSum : null;
+    marginGoal = decToNumber(byProduct.get("")?.marginGoal);
+  } else {
+    const row = byProduct.get(product);
+    closedGoal = row?.closedGoal ?? null;
+    revenueGoal = decToNumber(row?.revenueGoal);
+    marginGoal = decToNumber(row?.marginGoal);
+  }
 
   const daysElapsed = Math.max(
     1,
@@ -133,6 +204,7 @@ export async function computeMonthlyGoalProgress(params: {
     format: GoalRow["format"],
     goalValue: number | null,
     current: number,
+    editable: boolean,
   ): GoalRow {
     if (goalValue == null || goalValue <= 0) {
       return {
@@ -145,6 +217,7 @@ export async function computeMonthlyGoalProgress(params: {
         pace: null,
         progress: null,
         status: "no-goal",
+        editable,
       };
     }
     const pace = goalValue * paceFraction;
@@ -160,6 +233,7 @@ export async function computeMonthlyGoalProgress(params: {
       pace,
       progress,
       status,
+      editable,
     };
   }
 
@@ -169,6 +243,7 @@ export async function computeMonthlyGoalProgress(params: {
     format: GoalRow["format"],
     goalValue: number | null,
     current: number | null,
+    editable: boolean,
   ): GoalRow {
     if (goalValue == null) {
       return {
@@ -181,6 +256,7 @@ export async function computeMonthlyGoalProgress(params: {
         pace: null,
         progress: null,
         status: "no-goal",
+        editable,
       };
     }
     if (current == null) {
@@ -194,6 +270,7 @@ export async function computeMonthlyGoalProgress(params: {
         pace: null,
         progress: 0,
         status: "behind",
+        editable,
       };
     }
     return {
@@ -206,43 +283,52 @@ export async function computeMonthlyGoalProgress(params: {
       pace: null,
       progress: goalValue > 0 ? current / goalValue : null,
       status: current >= goalValue ? "ahead" : "behind",
+      editable,
     };
   }
 
   const rows: GoalRow[] = [
+    // Leads: immer aus Airtable → read-only.
     buildVolumeRow(
       "leads",
       "Leads",
       "number",
-      goal?.leadsGoal ?? null,
+      leadsGoal > 0 ? leadsGoal : null,
       mtd.totalLeads,
+      false,
     ),
+    // Abschlüsse/Umsatz: pro Produkt editierbar, gesamt = Summe (read-only).
     buildVolumeRow(
       "closed",
       "Abschlüsse",
       "number",
-      goal?.closedGoal ?? null,
+      closedGoal,
       mtd.closedLeads,
+      !isTotal,
     ),
     buildVolumeRow(
       "revenue",
       "Umsatz",
       "currency",
-      decToNumber(goal?.revenueGoal),
+      revenueGoal,
       mtd.revenue,
+      !isTotal,
     ),
+    // Marge: pro Produkt und gesamt jeweils eigenständig setzbar.
     buildQualityRow(
       "margin",
       "Marge vor weiteren Kosten",
       "percent",
-      decToNumber(goal?.marginGoal),
+      marginGoal,
       mtd.marginBeforeOther,
+      true,
     ),
   ];
 
   return {
     monthKey,
     monthLabel,
+    product,
     daysElapsed,
     daysTotal,
     rows,

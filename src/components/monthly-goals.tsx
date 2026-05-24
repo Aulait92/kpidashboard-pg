@@ -148,9 +148,14 @@ function GoalEditForm({
     {},
   );
 
+  const isTotal = initial.product == null;
+  const closedEditable =
+    initial.rows.find((r) => r.key === "closed")?.editable ?? false;
+  const revenueEditable =
+    initial.rows.find((r) => r.key === "revenue")?.editable ?? false;
+
   // Aktuelle Werte vorbefüllen.
   const values = {
-    leads: initial.rows.find((r) => r.key === "leads")?.goal,
     closed: initial.rows.find((r) => r.key === "closed")?.goal,
     revenue: initial.rows.find((r) => r.key === "revenue")?.goal,
     margin: initial.rows.find((r) => r.key === "margin")?.goal,
@@ -164,20 +169,32 @@ function GoalEditForm({
   return (
     <form action={formAction} className="space-y-3">
       <input type="hidden" name="monthKey" value={initial.monthKey} />
+      <input type="hidden" name="product" value={initial.product ?? ""} />
+
+      <p className="text-[11px] text-[color:var(--muted)]">
+        Lead-Ziele kommen aus Airtable (read-only).{" "}
+        {isTotal
+          ? "Gesamt: Abschlüsse & Umsatz sind die Summe der Produkte — hier nur die Gesamt-Marge setzen."
+          : "Hier Abschlüsse, Umsatz und Marge für dieses Produkt setzen."}
+      </p>
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field label="Leads (Anzahl)" name="leads" defaultValue={values.leads} step={1} />
-        <Field
-          label="Abschlüsse (Anzahl)"
-          name="closed"
-          defaultValue={values.closed}
-          step={1}
-        />
-        <Field
-          label="Umsatz (€)"
-          name="revenue"
-          defaultValue={values.revenue}
-          step={50}
-        />
+        {closedEditable ? (
+          <Field
+            label="Abschlüsse (Anzahl)"
+            name="closed"
+            defaultValue={values.closed}
+            step={1}
+          />
+        ) : null}
+        {revenueEditable ? (
+          <Field
+            label="Umsatz (€)"
+            name="revenue"
+            defaultValue={values.revenue}
+            step={50}
+          />
+        ) : null}
         <Field
           label="Marge vor weiteren Kosten (%)"
           name="margin"
@@ -270,6 +287,9 @@ export function MonthlyGoalsCard({
           </div>
           <h2 className="mt-0.5 text-lg font-semibold tracking-tight">
             Monatsziele {progress.monthLabel}
+            <span className="ml-2 text-sm font-medium text-[color:var(--muted)]">
+              · {progress.product ?? "Gesamt"}
+            </span>
           </h2>
         </div>
         <div className="flex items-center gap-2">
@@ -298,7 +318,7 @@ export function MonthlyGoalsCard({
       ) : !anyGoalSet ? (
         <div className="rounded-lg border border-dashed border-[color:var(--border)] p-6 text-center text-sm text-[color:var(--muted)]">
           Noch keine Ziele für {progress.monthLabel} gesetzt. Klick auf
-          „Ziele setzen", um loszulegen.
+          „Ziele setzen“, um loszulegen.
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
