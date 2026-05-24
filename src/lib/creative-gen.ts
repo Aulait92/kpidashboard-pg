@@ -881,24 +881,36 @@ async function brainstormCreativeConcepts(
     CONCEPT_REQUEST[brief.campaignKey] ??
     `erstelle ein komplett anderes creative konzept für ${brief.campaignKey}`;
   const raw = await llmText({
-    system: `Du bist Art Director für performante Meta-Werbe-Creatives (Format 1:1). Du entwickelst mehrere REICHE Creative-Konzepte — im Stil eines echten Art-Director-Briefings.
+    system: `Du bist Art Director für performante, NATIVE Meta-Werbe-Creatives (Format 1:1). Du entwickelst mehrere REICHE Creative-Konzepte im Stil echter Art-Director-Briefings.
 
-PFLICHT-KERNBOTSCHAFT (in JEDEM Konzept klar transportiert, sonst ungültig):
-Eine Kinderwunsch-Behandlung muss nicht (komplett) selbst bezahlt werden — es ist eine Förderung/ein Zuschuss möglich, je nach Situation BIS ZU 100 %.
-Diese Förder-Botschaft muss sowohl in der Bildidee als auch im kurzen In-Bild-Text erkennbar sein (z. B. „bis zu 100 % Förderung möglich"). Konzepte ohne diese Aussage sind ungültig.
+PFLICHT-KERNBOTSCHAFT (in JEDEM Konzept, sonst ungültig):
+Eine Kinderwunsch-Behandlung muss nicht komplett selbst bezahlt werden — es ist eine Förderung möglich, je nach Krankenkasse & Wohnort BIS ZU 100 %.
+Verankere sie als wiederkehrendes Element: ✅ „Bis zu 100 % Förderung möglich" + kleine Subline „Je nach Krankenkasse & Wohnort". Plus ein CTA wie „Förderung jetzt prüfen".
 
-„KOMPLETT ANDERS" bezieht sich NUR auf Visual/Medium/Stil/Komposition — NICHT auf das Thema oder die Botschaft. Das Thema (Förderung der Kinderwunsch-Behandlung) bleibt in allen Konzepten gleich.
+SETZE AUF NATIVE, RELATABLE FORMATE (Daumenstopper, wirken wie echter Feed-Content, nicht wie Werbung). Wähle für jedes Konzept ein ANDERES Format, z. B.:
+- WhatsApp-/Chat-Verlauf (Partner schreiben über die Kostenübernahme)
+- Google-Suche-Screenshot („Kinderwunsch Behandlung Kosten" + hohe Beträge, dann Förder-Popup)
+- Vorher/Nachher-Split (Sorge/Kostenplan ↔ Erleichterung)
+- Notiz/Brief/Förderzusage-Umschlag, Kostenplan mit Stempel
+- cinematischer, emotionaler Moment (Filmstill-Look)
+…oder eigene, ebenso native Ideen.
 
 Jedes Konzept enthält:
-- Einen Konzept-Namen (z. B. „Die stille Hoffnung").
-- VISUAL: konkrete, cinematische Bildbeschreibung — ein echter, emotionaler Moment statt Werbe-Optik (Szene, Licht, Komposition, Bildausschnitt).
-- TEXT IM BILD (ganz wenig!): EINE große, starke Headline + EINE kleine Subline, die die Förder-Botschaft trägt (z. B. „Bis zu 100 % Förderung möglich"). Wörtlich ausformuliert, fehlerfreies Deutsch.
-- STIL: Stilrichtung, Farbwelt, Stimmung (z. B. cinematic, warme Beige-/Goldtöne, viel negativer Raum, editorial/Netflix-Look).
+- Konzept-Name + kurze Stil-Einordnung.
+- VISUAL: konkrete Bildbeschreibung (Szene, Format, Komposition, Stimmung).
+- TEXT IM BILD: die genauen Texte (Chat-Nachrichten / Suchbegriffe / Headline etc.) PLUS das Förder-Badge ✅ „Bis zu 100 % Förderung möglich", Subline „Je nach Krankenkasse & Wohnort" und CTA. Wörtlich, fehlerfreies Deutsch. So wenig Text wie das Format braucht.
+- STIL: Stilrichtung, Farbwelt, Stimmung.
 
-Anforderungen: Thema sofort erkennbar, scroll-stopping durch Ruhe statt Reizüberflutung, hochwertig, sehr wenig Text. Die Konzepte unterscheiden sich DEUTLICH in Medium/Idee/Stil/Stimmung.
+Die Konzepte unterscheiden sich DEUTLICH im Format/Stil — die Botschaft bleibt gleich.
+
+Beispiele für Stil & Tiefe (nicht kopieren, nur Niveau):
+1) „Die Nachricht" — WhatsApp-Chat: „Die Klinik hat angerufen…" / „Und?" / „Ein großer Teil wird übernommen ❤️". Eingeblendet: ✅ Bis zu 100 % Förderung möglich. Subline: Je nach Krankenkasse & Wohnort. CTA: Förderung jetzt prüfen.
+2) „Die Google-Suche" — Smartphone-Nahaufnahme, Suche „Kinderwunsch Behandlung Kosten", hohe Beträge (IVF 4.500–7.000 €), dann Popup ✅ Bis zu 100 % Förderung möglich. CTA: Jetzt kostenlos prüfen.
+3) „Vorher / Nachher" — Split: links grau, Frau mit Klinik-Rechnung „Wie sollen wir das bezahlen…?"; rechts warm, erleichtertes Paar. Groß: ✅ Bis zu 100 % Förderung möglich. CTA: Jetzt Fördermöglichkeiten prüfen.
+
 Antworte AUSSCHLIESSLICH mit einem JSON-Array von Strings — pro Element EIN vollständiges Konzept (Name, VISUAL, TEXT IM BILD, STIL), Zeilenumbrüche im String erlaubt. Nichts sonst.`,
-    user: `Aufgabe: „${conceptRequest}"\n\nKontext: ${briefText}\n\nLiefere ${brief.count} Konzepte. JEDES transportiert klar die Förder-Botschaft (bis zu 100 %); nur Visual/Stil ist jeweils KOMPLETT ANDERS. Als JSON-Array.`,
-    maxTokens: 2600,
+    user: `Aufgabe: „${conceptRequest}"\n\nKontext: ${briefText}\n\nLiefere ${brief.count} Konzepte mit JE ANDEREM nativen Format (Chat, Google-Suche, Vorher/Nachher, …). JEDES transportiert die Förder-Botschaft (bis zu 100 %). Als JSON-Array.`,
+    maxTokens: 3000,
   });
   const cleaned = raw
     .replace(/^```(?:json)?\s*/i, "")
@@ -938,7 +950,7 @@ async function generateDirectImageCreatives(
     concepts.map(async (concept): Promise<CreativeVariant> => {
       // Phase 2: „erstelle dieses Creative" — komplettes Konzept als Vorlage.
       const dataUrl = await generateFullCreativeImage(
-        `Erstelle dieses Creative als quadratisches 1:1 Werbe-Creative für Meta. Setze das beschriebene VISUAL um und integriere NUR den explizit genannten kurzen Text (Headline/Subline) sauber ins Bild — exakt wie angegeben, fehlerfreies Deutsch. Ignoriere Begründungen, Alternativen und CTA-Hinweise (kein Button im Bild).\n\n${concept}`,
+        `Erstelle dieses Creative als quadratisches 1:1 Werbe-Creative für Meta. Setze das beschriebene VISUAL und die genannten Texte exakt um — inkl. Förder-Badge „Bis zu 100 % Förderung möglich", Subline und CTA-Button, wie im Konzept beschrieben. Deutscher Text fehlerfrei und gut lesbar. Wirke wie nativer Feed-Content, nicht wie eine klassische Werbeanzeige.\n\n${concept}`,
       );
       if (!dataUrl) throw new Error("Bildgenerierung lieferte kein Bild.");
       const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0}html,body{width:1080px;height:1080px}img{width:1080px;height:1080px;object-fit:cover;display:block}</style></head><body><img src="${dataUrl}"></body></html>`;
