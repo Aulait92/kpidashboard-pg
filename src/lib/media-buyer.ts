@@ -15,6 +15,12 @@
 //   MEDIA_BUYER_MAX_DAILY_BUDGET  Obergrenze, falls Kunde keine eigene hat (EUR, default 200)
 //   MEDIA_BUYER_MAX_STEP          Max. relative Budget-Änderung pro Lauf (default 0.5 = ±50 %)
 //   MEDIA_BUYER_BOOST_DAYS        Länge des Endspurt-Fensters in Tagen (default 5)
+//   MEDIA_BUYER_PRECISION_DAYS    Präzisions-Fenster am Monatsende (default 3):
+//                                 Step-Limit & Totzone aus, niedrigere Budget-
+//                                 Untergrenze, vorausschauendes Pausieren.
+//   MEDIA_BUYER_PRECISION_MIN_BUDGET  Budget-Untergrenze im Präzisions-Fenster (default 1)
+//   MEDIA_BUYER_RUN_INTERVAL_HOURS    Stunden bis zum nächsten Lauf, für das
+//                                     vorausschauende Pausieren (default 12 = 2×/Tag)
 
 import {
   differenceInCalendarDays,
@@ -123,6 +129,12 @@ export function decideBudget(params: {
   maxStep: number;
   boostDays: number;
   anyPaused: boolean;
+  // Präzisions-Endspurt: in den letzten Tagen fein landen.
+  precisionDays: number;
+  // Niedrigere Budget-Untergrenze im Präzisions-Fenster (Meta-Minimum).
+  precisionMinBudget: number;
+  // Stunden bis zum nächsten Lauf — für vorausschauendes Pausieren.
+  lookAheadHours: number;
 }): Decision {
   const {
     leadsMtd,
@@ -136,12 +148,19 @@ export function decideBudget(params: {
     maxStep,
     boostDays,
     anyPaused,
+    precisionDays,
+    precisionMinBudget,
+    lookAheadHours,
   } = params;
 
   const projected =
     daysElapsed > 0 ? Math.round((leadsMtd / daysElapsed) * daysTotal) : 0;
   const daysLeft = Math.max(1, daysTotal - daysElapsed + 1);
   const inBoostWindow = daysTotal - daysElapsed + 1 <= boostDays;
+  const precisionMode = daysTotal - daysElapsed + 1 <= precisionDays;
+  // Im Präzisions-Fenster gilt eine niedrigere Budget-Untergrenze, damit das
+  // Budget für die letzten Leads exakt heruntergefahren werden kann.
+  const effMinBudget = precisionMode ? precisionMinBudget : minBudget;
 
   // Ziel erreicht → Geld sparen, Kampagnen pausieren.
   if (leadsMtd >= goal) {
@@ -151,6 +170,26 @@ export function decideBudget(params: {
       targetBudget: null,
       setStatus: "PAUSED",
     };
+  }
+
+  // Präzisions-Endspurt: vorausschauend pausieren, wenn das Ziel schon VOR dem
+  // nächsten Lauf erreicht würde (sonst überschießt die letzte Tagesportion).
+  if (
+    precisionMode &&
+    costPerLead != null &&
+    costPerLead > 0 &&
+    currentBudget > 0
+  ) {
+    const leadsBeforeNextRun =
+      (currentBudget / costPerLead) * (lookAheadHours / 24);
+    if (leadsMtd + leadsBeforeNextRun >= goal) {
+      return {
+        action: "pause",
+        reason: `Endspurt: Ziel wird vor dem nächsten Lauf erreicht (${leadsMtd} + ~${leadsBeforeNextRun.toFixed(1)} erwartet ≥ ${goal}). Pausieren, um exakt zu landen.`,
+        targetBudget: null,
+        setStatus: "PAUSED",
+      };
+    }
   }
 
   const remaining = goal - leadsMtd;
@@ -163,7 +202,7 @@ export function decideBudget(params: {
       return {
         action: "activate",
         reason: `Noch keine Lead-Kosten messbar, aber Kampagnen pausiert und ${remaining} Leads offen — reaktivieren.`,
-        targetBudget: currentBudget > 0 ? currentBudget : minBudget,
+        targetBudget: currentBudget > 0 ? currentBudget : effMinBudget,
         setStatus: "ACTIVE",
       };
     }
@@ -179,7 +218,7 @@ export function decideBudget(params: {
 
   // Endspurt: Quote droht zu kippen → ohne Step-Limit bis Max hochziehen.
   if (inBoostWindow && projected < goal) {
-    const target = clamp(requiredBudgetRaw, minBudget, maxBudget);
+    const target = clamp(requiredBudgetRaw, effMinBudget, maxBudget);
     return {
       action: "boost",
       reason: `Endspurt (${daysLeft} Tage übrig, Prognose ${projected}/${goal}). Budget auf ${eur.format(target)}/Tag für ${remaining} fehlende Leads (≈ ${requiredPerDay.toFixed(1)} Leads/Tag bei kalk. ${cplFmt.format(costPerLead)}/Lead).`,
@@ -188,15 +227,14 @@ export function decideBudget(params: {
     };
   }
 
-  // Normaler Betrieb: Zielbudget mit Step-Limit annähern.
-  const stepLow = currentBudget > 0 ? currentBudget * (1 - maxStep) : minBudget;
+  // Zielbudget bestimmen. Im Präzisions-Fenster ohne Step-Limit (exaktes
+  // Heran-Tarieren), sonst mit Step-Limit gegen ruckartige Sprünge.
+  const stepLow = currentBudget > 0 ? currentBudget * (1 - maxStep) : effMinBudget;
   const stepHigh =
     currentBudget > 0 ? currentBudget * (1 + maxStep) : maxBudget;
-  const target = clamp(
-    clamp(requiredBudgetRaw, stepLow, stepHigh),
-    minBudget,
-    maxBudget,
-  );
+  const target = precisionMode
+    ? clamp(requiredBudgetRaw, effMinBudget, maxBudget)
+    : clamp(clamp(requiredBudgetRaw, stepLow, stepHigh), effMinBudget, maxBudget);
 
   // Reaktivieren falls pausiert und noch Leads offen.
   if (anyPaused) {
@@ -208,8 +246,13 @@ export function decideBudget(params: {
     };
   }
 
-  // Innerhalb ±5 % keine Änderung — vermeidet Mikro-Anpassungen.
-  if (currentBudget > 0 && Math.abs(target - currentBudget) / currentBudget < 0.05) {
+  // Außerhalb des Präzisions-Fensters: innerhalb ±5 % keine Änderung
+  // (vermeidet Mikro-Anpassungen). Im Endspurt tarieren wir dagegen fein.
+  if (
+    !precisionMode &&
+    currentBudget > 0 &&
+    Math.abs(target - currentBudget) / currentBudget < 0.05
+  ) {
     return {
       action: "none",
       reason: `Auf Kurs (Prognose ${projected}/${goal}, Budget ${eur.format(currentBudget)}/Tag).`,
@@ -393,6 +436,9 @@ type RunCtx = {
   defaultMaxBudget: number;
   maxStep: number;
   boostDays: number;
+  precisionDays: number;
+  precisionMinBudget: number;
+  lookAheadHours: number;
   dryRun: boolean;
 };
 
@@ -479,6 +525,9 @@ async function processPool(
       maxStep: ctx.maxStep,
       boostDays: ctx.boostDays,
       anyPaused,
+      precisionDays: ctx.precisionDays,
+      precisionMinBudget: ctx.precisionMinBudget,
+      lookAheadHours: ctx.lookAheadHours,
     });
 
     base.action = decision.action;
@@ -576,6 +625,9 @@ export async function runMediaBuyer(params: {
     defaultMaxBudget: envNum("MEDIA_BUYER_MAX_DAILY_BUDGET", 200),
     maxStep: envNum("MEDIA_BUYER_MAX_STEP", 0.5),
     boostDays: envNum("MEDIA_BUYER_BOOST_DAYS", 5),
+    precisionDays: envNum("MEDIA_BUYER_PRECISION_DAYS", 3),
+    precisionMinBudget: envNum("MEDIA_BUYER_PRECISION_MIN_BUDGET", 1),
+    lookAheadHours: envNum("MEDIA_BUYER_RUN_INTERVAL_HOURS", 12),
     dryRun,
   };
 
