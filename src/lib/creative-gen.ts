@@ -864,6 +864,13 @@ const CONCEPT_REQUEST: Record<string, string> = {
     "erstelle ein konkretes, aber warmes creative static konzept per text für Meta für kinderwunschbehandlungen, die bis zu 100% gefördert werden können",
 };
 
+// Motiv-/Format-Auswahl je Kampagne — sorgt für maximale Varianz zwischen den
+// Konzepten (Schritt 1). Wird an den Konzept-Prompt gehängt.
+const CONCEPT_VARIETY: Record<string, string> = {
+  Kinderwunsch:
+    "Erzeuge möglichst UNTERSCHIEDLICHE Konzepte — variiere Motiv UND Format stark. Mögliche Richtungen (mische bunt, gern auch eigene Ideen): Fokus auf die Förderung / „bis zu 100 %“; ein Paar im Vordergrund; ein Reagenzglas / Labor-Motiv; ein Schwangerschaftstest; ein WhatsApp-Chat; eine Google-Suche; Apple-Notizen; Ultraschallbild; Kostenplan / Brief / Förderzusage; Babysocken/-schuhe; Kalender/Termin. Jedes Konzept nutzt einen ANDEREN Ansatz.",
+};
+
 // Phase 1: NUR der nackte Auftrag — ohne System-Prompt, ohne Briefing-Text
 // (wie im ChatGPT-Web). Mehrere Konzepte werden als getrennte Blöcke erbeten.
 async function brainstormCreativeConcepts(
@@ -872,12 +879,14 @@ async function brainstormCreativeConcepts(
   const conceptRequest =
     CONCEPT_REQUEST[brief.campaignKey] ??
     `erstelle ein komplett anderes creative konzept für ${brief.campaignKey}`;
+  const variety = CONCEPT_VARIETY[brief.campaignKey] ?? "";
+  const varietyLine = variety ? `\n\n${variety}` : "";
   const raw = await llmText({
     system: "",
     user:
       brief.count > 1
-        ? `${conceptRequest}\n\nBitte ${brief.count} verschiedene Konzepte. Beschreibe jedes Konzept ausführlich: Konzept-Name, Visual (konkrete Bildbeschreibung), Text im Bild (wörtlich) und Stil. Trenne die einzelnen Konzepte mit einer eigenen Zeile, die NUR ===KONZEPT=== enthält.`
-        : `${conceptRequest}\n\nBeschreibe das Konzept ausführlich: Konzept-Name, Visual (konkrete Bildbeschreibung), Text im Bild (wörtlich) und Stil.`,
+        ? `${conceptRequest}${varietyLine}\n\nBitte ${brief.count} verschiedene Konzepte. Beschreibe jedes Konzept ausführlich: Konzept-Name, Visual (konkrete Bildbeschreibung), Text im Bild (wörtlich) und Stil. Trenne die einzelnen Konzepte mit einer eigenen Zeile, die NUR ===KONZEPT=== enthält.`
+        : `${conceptRequest}${varietyLine}\n\nBeschreibe das Konzept ausführlich: Konzept-Name, Visual (konkrete Bildbeschreibung), Text im Bild (wörtlich) und Stil.`,
     maxTokens: 3000,
   });
   const cleaned = raw
