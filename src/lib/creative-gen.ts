@@ -864,6 +864,12 @@ const CONCEPT_REQUEST: Record<string, string> = {
     "erstelle ein komplett anderes creative konzept für kinderwunschbehandlungen, die bis zu 100% gefördert werden können",
 };
 
+// Optionaler Tonalitäts-Zusatz je Kampagne (wird an den Konzept-Prompt gehängt).
+const CONCEPT_TONE: Record<string, string> = {
+  Kinderwunsch:
+    "Mach die Konzepte sehr emotional und einfühlsam: Ein unerfüllter Kinderwunsch ist ein zutiefst gefühlvolles, sensibles Thema. Erzähle echte menschliche Momente — Sehnsucht, Hoffnung, Verletzlichkeit, Nähe und Erleichterung zwischen den Partnern. Warm, berührend, ehrlich; niemals kühl, werblich oder reißerisch.",
+};
+
 // Phase 1: NUR der nackte Auftrag — ohne System-Prompt, ohne Briefing-Text
 // (wie im ChatGPT-Web). Mehrere Konzepte werden als getrennte Blöcke erbeten.
 async function brainstormCreativeConcepts(
@@ -872,12 +878,14 @@ async function brainstormCreativeConcepts(
   const conceptRequest =
     CONCEPT_REQUEST[brief.campaignKey] ??
     `erstelle ein komplett anderes creative konzept für ${brief.campaignKey}`;
+  const conceptTone = CONCEPT_TONE[brief.campaignKey] ?? "";
+  const toneLine = conceptTone ? `\n\n${conceptTone}` : "";
   const raw = await llmText({
     system: "",
     user:
       brief.count > 1
-        ? `${conceptRequest}\n\nBitte ${brief.count} verschiedene Konzepte. Beschreibe jedes Konzept ausführlich: Konzept-Name, Visual (konkrete Bildbeschreibung), Text im Bild (wörtlich) und Stil. Trenne die einzelnen Konzepte mit einer eigenen Zeile, die NUR ===KONZEPT=== enthält.`
-        : `${conceptRequest}\n\nBeschreibe das Konzept ausführlich: Konzept-Name, Visual (konkrete Bildbeschreibung), Text im Bild (wörtlich) und Stil.`,
+        ? `${conceptRequest}${toneLine}\n\nBitte ${brief.count} verschiedene Konzepte. Beschreibe jedes Konzept ausführlich: Konzept-Name, Visual (konkrete Bildbeschreibung), Text im Bild (wörtlich) und Stil. Trenne die einzelnen Konzepte mit einer eigenen Zeile, die NUR ===KONZEPT=== enthält.`
+        : `${conceptRequest}${toneLine}\n\nBeschreibe das Konzept ausführlich: Konzept-Name, Visual (konkrete Bildbeschreibung), Text im Bild (wörtlich) und Stil.`,
     maxTokens: 3000,
   });
   const cleaned = raw
@@ -958,7 +966,7 @@ async function adCopyForConcept(
   try {
     const raw = await llmText({
       model: process.env.OPENAI_INTENT_MODEL || "gpt-4o",
-      system: `Du schreibst deutsche Facebook-Ad-Copy für die Bewerbung von Förderungen für Kinderwunsch-Behandlungen. Konditional formulieren („möglich", „je nach"), keine Garantie, kein Heilversprechen. Antworte NUR mit JSON: {"adText": "...", "fbHeadline": "..."}. adText = Facebook-Primärtext (1-3 Sätze, Du-Form, endet mit Soft-CTA). fbHeadline = kurze Headline unter dem Bild, max 40 Zeichen.`,
+      system: `Du schreibst deutsche Facebook-Ad-Copy für die Bewerbung von Förderungen für Kinderwunsch-Behandlungen. Ton: warm, einfühlsam, emotional und berührend (Du-Form) — der unerfüllte Kinderwunsch ist ein sensibles Thema; sprich Sehnsucht, Hoffnung und Erleichterung an, nie kühl oder werblich. Konditional formulieren („möglich", „je nach"), keine Garantie, kein Heilversprechen. Antworte NUR mit JSON: {"adText": "...", "fbHeadline": "..."}. adText = Facebook-Primärtext (1-3 Sätze, emotionaler Hook am Anfang, endet mit sanftem CTA). fbHeadline = kurze, warme Headline unter dem Bild, max 40 Zeichen.`,
       user: `Passend zu diesem Creative-Konzept:\n${concept}\n\nSchreibe die Ad-Copy.`,
       maxTokens: 500,
     });
