@@ -1180,7 +1180,16 @@ async function llmText(opts: {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY nicht gesetzt.");
   const model = process.env.OPENAI_TEXT_MODEL || "gpt-4o";
-  const timeoutMs = Number(process.env.OPENAI_TEXT_TIMEOUT_MS) || 60000;
+  const timeoutMs = Number(process.env.OPENAI_TEXT_TIMEOUT_MS) || 90000;
+  // GPT-5*/o-Serie sind Reasoning-Modelle: sie verlangen max_completion_tokens
+  // (nicht max_tokens) und brauchen Token-Headroom fürs Reasoning, sonst bleibt
+  // content leer.
+  const isReasoning = /^(gpt-5|o\d)/i.test(model);
+
+  // Token-Parameter modellabhängig zusammenbauen.
+  const tokenParams: Record<string, number> = isReasoning
+    ? { max_completion_tokens: Math.max(opts.maxTokens, 6000) }
+    : { max_tokens: opts.maxTokens };
 
   let lastErr: unknown;
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -1196,7 +1205,7 @@ async function llmText(opts: {
         },
         body: JSON.stringify({
           model,
-          max_tokens: opts.maxTokens,
+          ...tokenParams,
           messages: [
             { role: "system", content: opts.system },
             { role: "user", content: opts.user },

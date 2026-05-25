@@ -43,21 +43,25 @@ export async function GET() {
   const imageModel = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
   const imageQuality = process.env.OPENAI_IMAGE_QUALITY || "low";
 
-  // 1. Text-Call (winzig).
+  // 1. Text-Call (winzig). Reasoning-Modelle (gpt-5*/o-Serie) brauchen
+  // max_completion_tokens + Headroom.
+  const isReasoning = /^(gpt-5|o\d)/i.test(textModel);
   const text = await timed(async (signal) => {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
       body: JSON.stringify({
         model: textModel,
-        max_tokens: 5,
+        ...(isReasoning
+          ? { max_completion_tokens: 2000 }
+          : { max_tokens: 5 }),
         messages: [{ role: "user", content: "Sag nur: ok" }],
       }),
       signal,
     });
     const body = await res.text();
-    return { status: res.status, body: body.slice(0, 300) };
-  }, 30000);
+    return { status: res.status, body: body.slice(0, 400) };
+  }, 60000);
 
   // 2. Bild-Call (winzig, low).
   const image = await timed(async (signal) => {
