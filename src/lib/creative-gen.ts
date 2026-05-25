@@ -861,7 +861,7 @@ Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm,
 // Die konkrete Konzept-Aufgabe je Kampagne — wörtlich der erprobte Prompt.
 const CONCEPT_REQUEST: Record<string, string> = {
   Kinderwunsch:
-    "erstelle ein komplett anderes creative konzept für kinderwunschbehandlungen, die bis zu 100% gefördert werden können",
+    "erstelle ein komplett anderes emotionales creative konzept für kinderwunschbehandlungen, die bis zu 100% gefördert werden können",
 };
 
 // Phase 1: NUR der nackte Auftrag — ohne System-Prompt, ohne Briefing-Text
