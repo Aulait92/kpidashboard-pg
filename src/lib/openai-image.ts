@@ -67,6 +67,13 @@ async function generateImage(
       });
       const text = await res.text();
       if (!res.ok) {
+        // Quota/Billing → sofort Fallback, kein Retry.
+        if (res.status === 429 && /quota|billing|insufficient_quota/i.test(text)) {
+          console.warn(
+            `[openai-image] Kontingent aufgebraucht (Billing prüfen): ${text.slice(0, 160)}`,
+          );
+          return FALLBACK_DATA_URL;
+        }
         // 429/5xx transient → erneut versuchen; 4xx hart → Fallback.
         if (res.status === 429 || res.status >= 500) {
           console.warn(

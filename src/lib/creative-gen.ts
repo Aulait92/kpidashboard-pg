@@ -1190,7 +1190,14 @@ async function llmText(opts: {
       });
       const text = await res.text();
       if (!res.ok) {
-        // 429/5xx sind transient → erneut versuchen; 4xx sind hart.
+        // Quota/Billing (429 insufficient_quota) ist NICHT transient → sofort
+        // klar melden, nicht retrien.
+        if (res.status === 429 && /quota|billing|insufficient_quota/i.test(text)) {
+          throw new Error(
+            "OpenAI-Kontingent aufgebraucht (Billing prüfen: platform.openai.com/billing).",
+          );
+        }
+        // Echte Rate-Limits (429) und 5xx sind transient → erneut versuchen.
         if (res.status === 429 || res.status >= 500) {
           lastErr = new Error(`OpenAI ${res.status}: ${text.slice(0, 200)}`);
           continue;
