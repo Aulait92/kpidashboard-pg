@@ -39,7 +39,7 @@ export async function GET() {
   if (!apiKey) {
     return NextResponse.json({ error: "OPENAI_API_KEY nicht gesetzt." }, { status: 500 });
   }
-  const textModel = process.env.OPENAI_TEXT_MODEL || "gpt-4o";
+  const textModel = process.env.OPENAI_TEXT_MODEL || "gpt-5.5";
   const imageModel = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
   const imageQuality = process.env.OPENAI_IMAGE_QUALITY || "low";
 

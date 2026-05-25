@@ -1170,8 +1170,8 @@ type RegenContext = {
 };
 
 // Provider-neutraler Text-Helfer — läuft über OpenAI (Chat Completions).
-// Modell via OPENAI_TEXT_MODEL (default "gpt-4o"). Mit Timeout + Retries
-// gegen transiente Netzwerkfehler ("fetch failed") und 429/5xx.
+// Modell via OPENAI_TEXT_MODEL (default "gpt-5.5"; Reasoning → max_completion_tokens).
+// Mit Timeout + Retries gegen transiente Netzwerkfehler ("fetch failed") und 429/5xx.
 async function llmText(opts: {
   system: string;
   user: string;
@@ -1179,7 +1179,7 @@ async function llmText(opts: {
 }): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY nicht gesetzt.");
-  const model = process.env.OPENAI_TEXT_MODEL || "gpt-4o";
+  const model = process.env.OPENAI_TEXT_MODEL || "gpt-5.5";
   const timeoutMs = Number(process.env.OPENAI_TEXT_TIMEOUT_MS) || 90000;
   // GPT-5*/o-Serie sind Reasoning-Modelle: sie verlangen max_completion_tokens
   // (nicht max_tokens) und brauchen Token-Headroom fürs Reasoning, sonst bleibt
