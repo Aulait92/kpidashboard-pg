@@ -910,11 +910,18 @@ async function brainstormCreativeConcepts(
       if (Array.isArray(arr)) concepts = arr.map(toText).filter((s) => s.length > 0);
     }
   } catch {
-    // Fallback: nummerierte/zeilenweise Liste.
+    // Prosa-Fallback: an Konzept-ÜBERSCHRIFTEN trennen (nicht an jeder
+    // Leerzeile — ein ausführliches Konzept hat Leerzeilen in sich).
+    // Trenner: Markdown-Heading (## …), "**Konzept …", "Konzept 1:", "1) …".
+    const boundary = /\n(?=\s*(?:#{1,6}\s|\*{0,2}\s*(?:Creative-?)?Konzept\b|\d+[.)]\s))/i;
     concepts = cleaned
-      .split(/\n{2,}|\n(?=\s*\d+[.)])/)
-      .map((l) => l.replace(/^\s*\d+[.)]\s*/, "").trim())
-      .filter((l) => l.length > 0);
+      .split(boundary)
+      .map((l) => l.trim())
+      .filter((l) => l.replace(/\s+/g, " ").length > 25);
+    // Falls keine Überschriften erkennbar sind, das Ganze als EIN Konzept nehmen.
+    if (concepts.length === 0 && cleaned.trim().length > 0) {
+      concepts = [cleaned.trim()];
+    }
   }
   if (concepts.length === 0) {
     console.warn(
@@ -1149,7 +1156,7 @@ async function llmText(opts: {
 
   // Token-Parameter modellabhängig zusammenbauen.
   const tokenParams: Record<string, number> = isReasoning
-    ? { max_completion_tokens: Math.max(opts.maxTokens, 6000) }
+    ? { max_completion_tokens: Math.max(opts.maxTokens, 12000) }
     : { max_tokens: opts.maxTokens };
 
   let lastErr: unknown;
