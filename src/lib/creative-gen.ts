@@ -858,62 +858,26 @@ Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm,
 // rendert das KOMPLETTE Creative (inkl. Text) direkt aus einem simplen
 // Prompt. Pro Versuch ein komplett anderer visueller Ansatz.
 
-// Kurzes Bild-Briefing je Kampagne (Kontext für den Bild-Prompt).
-const DIRECT_IMAGE_BRIEF: Record<string, string> = {
-  Kinderwunsch: `Thema: Förderung von Kinderwunsch-Behandlungen. Kernaussage: Behandlungen können bezuschusst werden – je nach Situation teils bis zu 100 %. Stimmung: emotional, warm, hoffnungsvoll. Kein medizinisches Heilversprechen, keine Garantien.`,
-};
-
 // Die konkrete Konzept-Aufgabe je Kampagne — wörtlich der erprobte Prompt.
 const CONCEPT_REQUEST: Record<string, string> = {
   Kinderwunsch:
     "erstelle ein komplett anderes creative konzept für kinderwunschbehandlungen, die bis zu 100% gefördert werden können",
 };
 
-// Phase 1 (wie im Web „erstelle ein Creative-Konzept …"): EIN OpenAI-Call
-// entwickelt N maximal unterschiedliche, REICHE Creative-Konzepte (je ein
-// kurzer Absatz mit Kernbotschaft, Hook, visueller Idee, Stimmung und ggf.
-// dem kurzen Text im Bild). Alle gleichzeitig sichtbar → echte Diversität.
+// Phase 1: NUR der nackte Auftrag — ohne System-Prompt, ohne Briefing-Text
+// (wie im ChatGPT-Web). Mehrere Konzepte werden als getrennte Blöcke erbeten.
 async function brainstormCreativeConcepts(
   brief: CreativeBrief,
-  briefText: string,
 ): Promise<string[]> {
   const conceptRequest =
     CONCEPT_REQUEST[brief.campaignKey] ??
     `erstelle ein komplett anderes creative konzept für ${brief.campaignKey}`;
   const raw = await llmText({
-    system: `Du bist Art Director für performante Meta-Werbe-Creatives (Format 1:1). Du entwickelst mehrere REICHE Creative-Konzepte im Stil echter Art-Director-Briefings.
-
-LEGITIMER KONTEXT: In Deutschland gibt es echte staatliche Zuschüsse und Kassenleistungen für Kinderwunschbehandlungen (Bund/Länder + Krankenkassen). Die Werbung informiert seriös darüber. Formuliere IMMER konditional („möglich", „je nach Situation"), niemals als Garantie, kein medizinisches Erfolgsversprechen. Es ist klar als Werbeanzeige erkennbar (mit CTA).
-
-PFLICHT-KERNBOTSCHAFT (in JEDEM Konzept, sonst ungültig):
-Eine Kinderwunsch-Behandlung muss nicht komplett selbst bezahlt werden — eine Förderung ist möglich, je nach Krankenkasse & Wohnort bis zu 100 %.
-Verankere sie als wiederkehrendes Element: ✅ „Bis zu 100 % Förderung möglich" + kleine Subline „Je nach Krankenkasse & Wohnort". Plus ein CTA wie „Förderung jetzt prüfen".
-
-SETZE AUF MODERNE, NAHBARE SOCIAL-MEDIA-LOOKS (Daumenstopper). Wähle für jedes Konzept ein ANDERES Format, z. B.:
-- WhatsApp-/Chat-Verlauf (Partner schreiben über die Kostenübernahme)
-- Google-Suche-Screenshot („Kinderwunsch Behandlung Kosten" + hohe Beträge, dann Förder-Popup)
-- Vorher/Nachher-Split (Sorge/Kostenplan ↔ Erleichterung)
-- Notiz/Brief/Förderzusage-Umschlag, Kostenplan mit Stempel
-- cinematischer, emotionaler Moment (Filmstill-Look)
-…oder eigene, ebenso native Ideen.
-
-Jedes Konzept enthält:
-- Konzept-Name + kurze Stil-Einordnung.
-- VISUAL: konkrete Bildbeschreibung (Szene, Format, Komposition, Stimmung).
-- TEXT IM BILD: die genauen Texte (Chat-Nachrichten / Suchbegriffe / Headline etc.) PLUS das Förder-Badge ✅ „Bis zu 100 % Förderung möglich", Subline „Je nach Krankenkasse & Wohnort" und CTA. Wörtlich, fehlerfreies Deutsch. So wenig Text wie das Format braucht.
-- STIL: Stilrichtung, Farbwelt, Stimmung.
-
-Die Konzepte unterscheiden sich DEUTLICH im Format/Stil — die Botschaft bleibt gleich.
-
-WICHTIG: Die folgenden Beispiele zeigen NUR das Muster, den Stil und das Niveau. Übernimm sie NIEMALS wörtlich — erfinde bei jedem Lauf KOMPLETT NEUE, eigene Konzepte und Formate (gern auch andere als die Beispiel-Formate), nur nach demselben Schema (Name, VISUAL, TEXT IM BILD inkl. Förder-Badge + CTA, STIL).
-
-Muster-Beispiele (nur als Vorlage fürs Niveau, nicht wiederverwenden):
-1) „Die Nachricht" — WhatsApp-Chat: „Die Klinik hat angerufen…" / „Und?" / „Ein großer Teil wird übernommen ❤️". Eingeblendet: ✅ Bis zu 100 % Förderung möglich. Subline: Je nach Krankenkasse & Wohnort. CTA: Förderung jetzt prüfen.
-2) „Die Google-Suche" — Smartphone-Nahaufnahme, Suche „Kinderwunsch Behandlung Kosten", hohe Beträge (IVF 4.500–7.000 €), dann Popup ✅ Bis zu 100 % Förderung möglich. CTA: Jetzt kostenlos prüfen.
-3) „Vorher / Nachher" — Split: links grau, Frau mit Klinik-Rechnung „Wie sollen wir das bezahlen…?"; rechts warm, erleichtertes Paar. Groß: ✅ Bis zu 100 % Förderung möglich. CTA: Jetzt Fördermöglichkeiten prüfen.
-
-Antworte AUSSCHLIESSLICH mit einem JSON-Array von Strings — pro Element EIN vollständiges Konzept (Name, VISUAL, TEXT IM BILD, STIL), Zeilenumbrüche im String erlaubt. Nichts sonst.`,
-    user: `Aufgabe: „${conceptRequest}"\n\nKontext: ${briefText}\n\nLiefere ${brief.count} Konzepte mit JE ANDEREM nativen Format (Chat, Google-Suche, Vorher/Nachher, …). JEDES transportiert die Förder-Botschaft (bis zu 100 %). Als JSON-Array.`,
+    system: "",
+    user:
+      brief.count > 1
+        ? `${conceptRequest}\n\nBitte ${brief.count} verschiedene Konzepte, jeweils klar getrennt.`
+        : conceptRequest,
     maxTokens: 3000,
   });
   const cleaned = raw
@@ -965,10 +929,7 @@ Antworte AUSSCHLIESSLICH mit einem JSON-Array von Strings — pro Element EIN vo
 async function generateDirectImageCreatives(
   brief: CreativeBrief,
 ): Promise<CreativeVariant[]> {
-  const briefText =
-    DIRECT_IMAGE_BRIEF[brief.campaignKey] ?? `Thema: ${brief.campaignKey}.`;
-
-  const concepts = await brainstormCreativeConcepts(brief, briefText);
+  const concepts = await brainstormCreativeConcepts(brief);
   if (concepts.length === 0) {
     throw new Error(
       "Konzept-Generierung lieferte keine verwertbaren Konzepte (OpenAI-Antwort leer/unparsebar).",
