@@ -1150,10 +1150,11 @@ async function llmText(opts: {
   system: string;
   user: string;
   maxTokens: number;
+  model?: string; // Override; sonst OPENAI_TEXT_MODEL
 }): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY nicht gesetzt.");
-  const model = process.env.OPENAI_TEXT_MODEL || "gpt-5.5";
+  const model = opts.model || process.env.OPENAI_TEXT_MODEL || "gpt-5.5";
   const timeoutMs = Number(process.env.OPENAI_TEXT_TIMEOUT_MS) || 90000;
   // GPT-5*/o-Serie sind Reasoning-Modelle: sie verlangen max_completion_tokens
   // (nicht max_tokens) und brauchen Token-Headroom fürs Reasoning, sonst bleibt
@@ -1410,6 +1411,9 @@ export async function parseIntent(text: string): Promise<ParsedIntent> {
   let raw: string;
   try {
     raw = await llmText({
+      // Eigenes, schnelles Modell fürs Befehl-Parsen (nicht das schwere
+      // Konzept-Modell): zuverlässiges JSON, kein Reasoning-Overhead.
+      model: process.env.OPENAI_INTENT_MODEL || "gpt-4o",
       system: `Du parsed deutsche Befehle für einen Creative-Generation-Bot.
 Erkennbare Kampagnen: "Wechsel", "Neugeschäft", "Kinderwunsch".
 Bei "Kinderwunsch" steht meist eine Region/Stadt dabei (z. B. "Kinderwunsch Berlin")
@@ -1419,17 +1423,24 @@ Antworte mit strict JSON: {"action": "generate"|"unknown", "count": number, "cam
       user: text,
       maxTokens: 400,
     });
-  } catch {
+  } catch (err) {
+    console.warn("[parseIntent] llmText failte:", err instanceof Error ? err.message : err);
     return { action: "unknown", count: 0, campaignKey: null };
   }
 
-  const cleaned = raw
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/```\s*$/i, "")
-    .trim();
-  try {
-    return JSON.parse(cleaned) as ParsedIntent;
-  } catch {
+  // Robust: erst direkt, dann das erste {…}-Objekt aus dem Text fischen.
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+  const tryParse = (s: string): ParsedIntent | null => {
+    try {
+      return JSON.parse(s) as ParsedIntent;
+    } catch {
+      return null;
+    }
+  };
+  const parsed = tryParse(cleaned) ?? tryParse(cleaned.match(/\{[\s\S]*\}/)?.[0] ?? "");
+  if (!parsed) {
+    console.warn(`[parseIntent] unparsebar: ${raw.slice(0, 200)}`);
     return { action: "unknown", count: 0, campaignKey: null };
   }
+  return parsed;
 }
