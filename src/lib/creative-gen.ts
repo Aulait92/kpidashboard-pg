@@ -876,8 +876,8 @@ async function brainstormCreativeConcepts(
     system: "",
     user:
       brief.count > 1
-        ? `${conceptRequest}\n\nBitte ${brief.count} verschiedene Konzepte, jeweils klar getrennt.`
-        : conceptRequest,
+        ? `${conceptRequest}\n\nBitte ${brief.count} verschiedene Konzepte, jeweils klar getrennt. Beschreibe jedes Konzept ausführlich: Konzept-Name, Visual (konkrete Bildbeschreibung), Text im Bild (wörtlich) und Stil.`
+        : `${conceptRequest}\n\nBeschreibe das Konzept ausführlich: Konzept-Name, Visual (konkrete Bildbeschreibung), Text im Bild (wörtlich) und Stil.`,
     maxTokens: 3000,
   });
   const cleaned = raw
