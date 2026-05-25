@@ -876,7 +876,7 @@ async function brainstormCreativeConcepts(
     system: "",
     user:
       brief.count > 1
-        ? `${conceptRequest}\n\nBitte ${brief.count} verschiedene Konzepte, jeweils klar getrennt. Beschreibe jedes Konzept ausführlich: Konzept-Name, Visual (konkrete Bildbeschreibung), Text im Bild (wörtlich) und Stil.`
+        ? `${conceptRequest}\n\nBitte ${brief.count} verschiedene Konzepte. Beschreibe jedes Konzept ausführlich: Konzept-Name, Visual (konkrete Bildbeschreibung), Text im Bild (wörtlich) und Stil. Trenne die einzelnen Konzepte mit einer eigenen Zeile, die NUR ===KONZEPT=== enthält.`
         : `${conceptRequest}\n\nBeschreibe das Konzept ausführlich: Konzept-Name, Visual (konkrete Bildbeschreibung), Text im Bild (wörtlich) und Stil.`,
     maxTokens: 3000,
   });
@@ -898,22 +898,32 @@ async function brainstormCreativeConcepts(
   };
 
   let concepts: string[] = [];
+  // 1. JSON-Array/-Objekt?
   try {
     const parsed = JSON.parse(cleaned);
     if (Array.isArray(parsed)) {
       concepts = parsed.map(toText).filter((s) => s.length > 0);
     } else if (parsed && typeof parsed === "object") {
-      // Manchmal { konzepte: [...] } o.ä.
       const arr = Object.values(parsed as Record<string, unknown>).find((v) =>
         Array.isArray(v),
       );
       if (Array.isArray(arr)) concepts = arr.map(toText).filter((s) => s.length > 0);
     }
   } catch {
-    // Prosa-Fallback: nur an ECHTEN Konzept-Überschriften trennen — entweder
-    // Markdown-Heading mit „Konzept" (## Konzept …) ODER „Konzept" + Nummer
-    // (Konzept 2). NICHT an inline-„Konzept" (z. B. „Konzept-Name:") und nicht
-    // an Unterüberschriften (## Visual) — sonst zerfällt ein Konzept.
+    /* keine JSON-Antwort — weiter mit Trennzeichen/Heading */
+  }
+
+  // 2. Deterministisches Trennzeichen (===KONZEPT===) — robusteste Methode.
+  if (concepts.length === 0 && /===\s*KONZEPT\s*===/i.test(cleaned)) {
+    concepts = cleaned
+      .split(/===\s*KONZEPT\s*===/i)
+      .map((l) => l.trim())
+      .filter((l) => l.replace(/\s+/g, " ").length > 25);
+  }
+
+  // 3. Fallback: an echten Konzept-Überschriften trennen (Heading mit
+  // „Konzept" ODER „Konzept" + Nummer) — nicht an inline-„Konzept".
+  if (concepts.length === 0) {
     const headingRe =
       /^(?:#{1,6}\s*\*{0,2}\s*(?:Creative-?)?Konzept|\*{0,2}\s*(?:Creative-?)?Konzept\s*\d)/i;
     const boundary =
@@ -923,17 +933,14 @@ async function brainstormCreativeConcepts(
       .map((l) => l.trim())
       .filter((l) => l.replace(/\s+/g, " ").length > 25);
     const headed = parts.filter((p) => headingRe.test(p));
-    concepts =
-      headed.length > 0
-        ? headed
-        : cleaned.trim().length > 0
-          ? [cleaned.trim()]
-          : [];
+    concepts = headed.length > 0 ? headed : cleaned ? [cleaned] : [];
   }
+
+  console.log(
+    `[brainstorm] ${concepts.length} Konzepte (model=${process.env.OPENAI_TEXT_MODEL || "gpt-5.5"}), Längen=[${concepts.map((c) => c.length).join(",")}]`,
+  );
   if (concepts.length === 0) {
-    console.warn(
-      `[brainstorm] unbrauchbare Konzept-Antwort (model=${process.env.OPENAI_TEXT_MODEL || "gpt-4o"}): ${cleaned.slice(0, 500)}`,
-    );
+    console.warn(`[brainstorm] unbrauchbare Antwort: ${cleaned.slice(0, 500)}`);
   }
   return concepts.slice(0, brief.count);
 }
