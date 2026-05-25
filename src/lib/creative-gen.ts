@@ -913,15 +913,21 @@ async function brainstormCreativeConcepts(
     // Prosa-Fallback: an Konzept-ÜBERSCHRIFTEN trennen (nicht an jeder
     // Leerzeile — ein ausführliches Konzept hat Leerzeilen in sich).
     // Trenner: Markdown-Heading (## …), "**Konzept …", "Konzept 1:", "1) …".
+    const headingRe = /^(?:#{1,6}\s|\*{0,2}\s*(?:Creative-?)?Konzept\b|\d+[.)]\s)/i;
     const boundary = /\n(?=\s*(?:#{1,6}\s|\*{0,2}\s*(?:Creative-?)?Konzept\b|\d+[.)]\s))/i;
-    concepts = cleaned
+    const parts = cleaned
       .split(boundary)
       .map((l) => l.trim())
       .filter((l) => l.replace(/\s+/g, " ").length > 25);
-    // Falls keine Überschriften erkennbar sind, das Ganze als EIN Konzept nehmen.
-    if (concepts.length === 0 && cleaned.trim().length > 0) {
-      concepts = [cleaned.trim()];
-    }
+    // Nur Blöcke behalten, die WIRKLICH mit einer Konzept-Überschrift starten
+    // — so fliegt Vorspann/Hinweis-Text raus.
+    const headed = parts.filter((p) => headingRe.test(p));
+    concepts =
+      headed.length > 0
+        ? headed
+        : cleaned.trim().length > 0
+          ? [cleaned.trim()]
+          : [];
   }
   if (concepts.length === 0) {
     console.warn(
