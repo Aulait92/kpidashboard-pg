@@ -938,6 +938,37 @@ async function brainstormCreativeConcepts(
   return concepts.slice(0, brief.count);
 }
 
+// Passende Facebook-Ad-Copy je Konzept (variiert pro Creative). Schnelles
+// Modell, robustes JSON, Fallback auf Standard-Wording.
+async function adCopyForConcept(
+  concept: string,
+): Promise<{ adText: string; fbHeadline: string }> {
+  const fallback = {
+    adText:
+      "Kinderwunsch-Behandlungen müssen nicht immer komplett selbst bezahlt werden. 💛 Je nach Wohnort, Krankenkasse und Situation sind hohe Zuschüsse möglich – teils bis zu 100 %. Jetzt unverbindlich Fördermöglichkeiten prüfen.",
+    fbHeadline: "Förderung jetzt prüfen",
+  };
+  try {
+    const raw = await llmText({
+      model: process.env.OPENAI_INTENT_MODEL || "gpt-4o",
+      system: `Du schreibst deutsche Facebook-Ad-Copy für die Bewerbung von Förderungen für Kinderwunsch-Behandlungen. Konditional formulieren („möglich", „je nach"), keine Garantie, kein Heilversprechen. Antworte NUR mit JSON: {"adText": "...", "fbHeadline": "..."}. adText = Facebook-Primärtext (1-3 Sätze, Du-Form, endet mit Soft-CTA). fbHeadline = kurze Headline unter dem Bild, max 40 Zeichen.`,
+      user: `Passend zu diesem Creative-Konzept:\n${concept}\n\nSchreibe die Ad-Copy.`,
+      maxTokens: 500,
+    });
+    const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+    const obj = JSON.parse(cleaned.match(/\{[\s\S]*\}/)?.[0] ?? cleaned) as {
+      adText?: string;
+      fbHeadline?: string;
+    };
+    return {
+      adText: obj.adText?.trim() || fallback.adText,
+      fbHeadline: obj.fbHeadline?.trim() || fallback.fbHeadline,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
 // Direct-Image: Phase 1 Konzept (OpenAI) → Phase 2 „erstelle dieses Creative"
 // (gpt-image-1 baut das Bild aus dem ganzen Konzept), parallel je Konzept.
 async function generateDirectImageCreatives(
@@ -952,19 +983,21 @@ async function generateDirectImageCreatives(
 
   const settled = await Promise.allSettled(
     concepts.map(async (concept): Promise<CreativeVariant> => {
-      // Phase 2: „erstelle dieses Creative" — komplettes Konzept als Vorlage.
-      const dataUrl = await generateFullCreativeImage(
-        `Erstelle dieses Creative als quadratisches 1:1 Werbe-Creative für Meta. Setze das beschriebene VISUAL und die genannten Texte exakt um — inkl. Förder-Badge „Bis zu 100 % Förderung möglich", Subline und CTA-Button, wie im Konzept beschrieben. Deutscher Text fehlerfrei und gut lesbar, moderner Social-Media-Look.\n\n${concept}`,
-      );
+      // Phase 2: Bild + passende Ad-Copy parallel.
+      const [dataUrl, copy] = await Promise.all([
+        generateFullCreativeImage(
+          `Erstelle dieses Creative als quadratisches 1:1 Werbe-Creative für Meta. Setze das beschriebene VISUAL und die genannten Texte exakt um — inkl. Förder-Badge „Bis zu 100 % Förderung möglich", Subline und CTA-Button, wie im Konzept beschrieben. Deutscher Text fehlerfrei und gut lesbar, moderner Social-Media-Look.\n\n${concept}`,
+        ),
+        adCopyForConcept(concept),
+      ]);
       if (!dataUrl) throw new Error("Bildgenerierung lieferte kein Bild.");
       const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0}html,body{width:1080px;height:1080px}img{width:1080px;height:1080px;object-fit:cover;display:block}</style></head><body><img src="${dataUrl}"></body></html>`;
       return {
-        headline: "Kinderwunsch-Behandlung",
+        headline: copy.fbHeadline || "Kinderwunsch-Behandlung",
         body: "",
         cta: "Mehr erfahren",
-        adText:
-          "Kinderwunsch-Behandlungen müssen nicht immer komplett selbst bezahlt werden. 💛 Je nach Wohnort, Krankenkasse und Situation sind hohe Zuschüsse möglich – teils bis zu 100 %. Jetzt unverbindlich Fördermöglichkeiten prüfen.",
-        fbHeadline: "Förderung jetzt prüfen",
+        adText: copy.adText,
+        fbHeadline: copy.fbHeadline,
         html,
         mechanic: "direct-image",
         concept,
