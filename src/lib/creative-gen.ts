@@ -984,6 +984,65 @@ async function adCopyForConcept(
   }
 }
 
+// Klarheits-Check (gpt-4o Vision): Versteht man SOFORT, dass es um eine
+// Kinderwunschbehandlung geht — im Bild UND im Text? Korrigiert Text bei
+// Bedarf und meldet, ob das Bild unklar ist. Fail-open bei Fehler.
+async function verifyClarity(
+  imageDataUrl: string,
+  headline: string,
+  adText: string,
+): Promise<{ imageClear: boolean; headline: string; adText: string }> {
+  const fallback = { imageClear: true, headline, adText };
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return fallback;
+  const model = process.env.OPENAI_VISION_MODEL || "gpt-4o";
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 60000);
+  try {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        model,
+        max_tokens: 700,
+        messages: [
+          {
+            role: "system",
+            content: `Du prüfst ein Meta-Werbe-Creative für die Förderung von Kinderwunschbehandlungen. Frage: Versteht ein Nutzer beim ERSTEN Blick sofort, dass es um eine Kinderwunschbehandlung / Familienplanung / den Wunsch nach einem Baby geht — sowohl im BILD als auch im TEXT? Antworte NUR mit JSON: {"imageClear": boolean, "headline": "...", "adText": "..."}. Wenn der TEXT das Thema nicht sofort klarmacht, gib eine klarere, aber gleich emotionale headline und adText zurück (sonst unverändert übernehmen). imageClear=false nur, wenn das BILD das Thema nicht sofort erkennen lässt.`,
+          },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: `Headline: ${headline}\n\nText: ${adText}` },
+              { type: "image_url", image_url: { url: imageDataUrl } },
+            ],
+          },
+        ],
+      }),
+      signal: controller.signal,
+    });
+    if (!res.ok) return fallback;
+    const data = (await res.json()) as {
+      choices?: { message?: { content?: string } }[];
+    };
+    const content = data.choices?.[0]?.message?.content ?? "";
+    const obj = JSON.parse(content.match(/\{[\s\S]*\}/)?.[0] ?? content) as {
+      imageClear?: boolean;
+      headline?: string;
+      adText?: string;
+    };
+    return {
+      imageClear: obj.imageClear !== false,
+      headline: obj.headline?.trim() || headline,
+      adText: obj.adText?.trim() || adText,
+    };
+  } catch {
+    return fallback;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // Direct-Image: Phase 1 Konzept (OpenAI) → Phase 2 „erstelle dieses Creative"
 // (gpt-image-1 baut das Bild aus dem ganzen Konzept), parallel je Konzept.
 async function generateDirectImageCreatives(
@@ -998,21 +1057,39 @@ async function generateDirectImageCreatives(
 
   const settled = await Promise.allSettled(
     concepts.map(async (concept): Promise<CreativeVariant> => {
+      const imagePrompt = `Erstelle dieses Creative als quadratisches 1:1 Werbe-Creative für Meta. WICHTIG: Es muss auf den ERSTEN Blick erkennbar sein, dass es um eine Kinderwunschbehandlung / Familienplanung / den Wunsch nach einem Baby geht. Setze das beschriebene VISUAL und die genannten Texte exakt um — inkl. Förder-Badge „Bis zu 100 % Förderung möglich", Subline und CTA-Button, wie im Konzept beschrieben. Deutscher Text fehlerfrei und gut lesbar, moderner Social-Media-Look.\n\n${concept}`;
       // Phase 2: Bild + passende Ad-Copy parallel.
-      const [dataUrl, copy] = await Promise.all([
-        generateFullCreativeImage(
-          `Erstelle dieses Creative als quadratisches 1:1 Werbe-Creative für Meta. Setze das beschriebene VISUAL und die genannten Texte exakt um — inkl. Förder-Badge „Bis zu 100 % Förderung möglich", Subline und CTA-Button, wie im Konzept beschrieben. Deutscher Text fehlerfrei und gut lesbar, moderner Social-Media-Look.\n\n${concept}`,
-        ),
+      const [imgInitial, copy] = await Promise.all([
+        generateFullCreativeImage(imagePrompt),
         adCopyForConcept(concept),
       ]);
-      if (!dataUrl) throw new Error("Bildgenerierung lieferte kein Bild.");
+      if (!imgInitial) throw new Error("Bildgenerierung lieferte kein Bild.");
+
+      let dataUrl = imgInitial;
+      let adText = copy.adText;
+      let fbHeadline = copy.fbHeadline;
+
+      // Klarheits-Check: Bild + Text sofort als Kinderwunsch erkennbar?
+      if (process.env.CREATIVE_CLARITY_CHECK !== "0") {
+        const v = await verifyClarity(dataUrl, fbHeadline, adText);
+        adText = v.adText;
+        fbHeadline = v.headline;
+        if (!v.imageClear) {
+          console.warn("[creative-gen] Bild unklar — generiere neu mit Klarheits-Fokus.");
+          const retry = await generateFullCreativeImage(
+            `${imagePrompt}\n\nDas Thema Kinderwunsch MUSS sofort sichtbar sein — nutze eindeutige Motive (z. B. Schwangerschaftstest, Babysocken/-schuhe, Ultraschallbild, Babybauch, Paar mit Babywunsch).`,
+          );
+          if (retry) dataUrl = retry;
+        }
+      }
+
       const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0}html,body{width:1080px;height:1080px}img{width:1080px;height:1080px;object-fit:cover;display:block}</style></head><body><img src="${dataUrl}"></body></html>`;
       return {
-        headline: copy.fbHeadline || "Kinderwunsch-Behandlung",
+        headline: fbHeadline || "Kinderwunsch-Behandlung",
         body: "",
         cta: "Mehr erfahren",
-        adText: copy.adText,
-        fbHeadline: copy.fbHeadline,
+        adText,
+        fbHeadline,
         html,
         mechanic: "direct-image",
         concept,
