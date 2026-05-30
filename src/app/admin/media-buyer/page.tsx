@@ -74,6 +74,7 @@ export default async function MediaBuyerPage() {
     autopilot: p.autopilot,
     maxDailyBudget: p.maxDailyBudget,
     campaignKeyword: p.campaignKeyword,
+    cpl: p.cpl,
     latestAction: p.latestAction,
     latestReason: p.latestReason,
   }));

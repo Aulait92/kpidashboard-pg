@@ -762,6 +762,8 @@ export type PoolAdminRow = {
   autopilot: boolean;
   maxDailyBudget: number | null;
   campaignKeyword: string | null;
+  // Cost-per-Lead MTD (nur für Produkt-Pools; aus Cost-Tabelle, kein Meta-Call).
+  cpl: number | null;
   // Letzte Entscheidung des Buyers für diesen Pool (für die Empfehlungs-Karte).
   latestAction: string | null;
   latestReason: string | null;
@@ -800,6 +802,20 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
       ).length;
     return 0;
   };
+  // Cost-per-Lead MTD pro Produkt: aus Cost (kind=LEAD, product=X, dieser Monat)
+  // / leadsMtd. Für Region-Pools (Kinderwunsch) gibt's keine regions-spezifischen
+  // Costs → null.
+  const monthCosts = await prisma.cost.groupBy({
+    by: ["product"],
+    where: { kind: "LEAD", occurredAt: { gte: monthStart, lte: mtdEnd } },
+    _sum: { amount: true },
+  });
+  const costByProduct = new Map<string, number>();
+  for (const c of monthCosts) {
+    if (!c.product) continue;
+    const n = decToNumber(c._sum.amount) ?? 0;
+    costByProduct.set(c.product, n);
+  }
   // Letzte Entscheidung pro Pool in einem Rutsch holen (vermeidet N+1).
   const latest = await prisma.mediaBuyerAction.findMany({
     where: { dryRun: false, poolKey: { in: defs.map((d) => d.key) } },
@@ -830,6 +846,10 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
       autopilot: settings.autopilot,
       maxDailyBudget: settings.maxDailyBudget,
       campaignKeyword: settings.campaignKeyword,
+      cpl:
+        def.kind === "product" && leadsMtd > 0
+          ? (costByProduct.get(def.product) ?? 0) / leadsMtd
+          : null,
       latestAction: last?.action ?? null,
       latestReason: last?.reason ?? null,
     });
