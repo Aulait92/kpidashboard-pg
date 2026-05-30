@@ -177,11 +177,8 @@ type BuyerInfo = {
   region: string | null;
 };
 
-async function fetchBuyersById(
-  ids: string[],
-): Promise<Map<string, BuyerInfo>> {
+async function fetchBuyers(): Promise<Map<string, BuyerInfo>> {
   const map = new Map<string, BuyerInfo>();
-  if (ids.length === 0) return map;
 
   let records: AirtableRecord[];
   try {
@@ -388,22 +385,15 @@ export async function syncAirtable(): Promise<SyncResult> {
     }
   }
 
-  // 2. Alle referenzierten Buyer-IDs sammeln und gegen Buyer-Tabelle auflösen
-  const buyerIds = new Set<string>();
-  for (const records of tableRecords.values()) {
-    for (const rec of records) {
-      for (const id of readLinkedIds(rec.fields, "Buyer")) {
-        buyerIds.add(id);
-      }
-    }
-  }
+  // 2. Buyer/Kunden-Tabelle IMMER fetchen — die enthält Lead-Ziele, Preise und
+  // Region, die unabhängig von Lead-Records auf den Customer übertragen
+  // werden müssen (sonst weiß der Media Buyer nichts von Zielen, wenn keine
+  // Leads vorhanden sind).
   let buyerMap = new Map<string, BuyerInfo>();
-  if (buyerIds.size > 0) {
-    try {
-      buyerMap = await fetchBuyersById([...buyerIds]);
-    } catch (err) {
-      result.errors.push(err instanceof Error ? err.message : String(err));
-    }
+  try {
+    buyerMap = await fetchBuyers();
+  } catch (err) {
+    result.errors.push(err instanceof Error ? err.message : String(err));
   }
 
   function resolveBuyer(fields: Record<string, unknown>): string | null {
