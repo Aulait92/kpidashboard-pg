@@ -862,6 +862,8 @@ Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm,
 const CONCEPT_REQUEST: Record<string, string> = {
   Kinderwunsch:
     "erstelle ein konkretes, aber warmes creative static konzept per text für Meta für kinderwunschbehandlungen, die bis zu 100% gefördert werden können",
+  Wechsel:
+    "erstelle ein Facebook ad Creative Konzept für das Thema pkv wechsler. Man kann intern wechseln wenn man lange bei seiner pkv versichert ist und bis zu 50% Beiträge sparen",
 };
 
 // Motiv-/Format-Auswahl je Kampagne — sorgt für maximale Varianz zwischen den
@@ -882,6 +884,8 @@ async function brainstormCreativeConcepts(
   const variety = CONCEPT_VARIETY[brief.campaignKey] ?? "";
   const varietyLine = variety ? `\n\n${variety}` : "";
   const raw = await llmText({
+    // Konzept-Phase läuft auf Claude Opus 4.8 (per Env überschreibbar).
+    model: process.env.CONCEPT_MODEL || "claude-opus-4-8",
     system: "",
     user:
       brief.count > 1
@@ -946,7 +950,7 @@ async function brainstormCreativeConcepts(
   }
 
   console.log(
-    `[brainstorm] ${concepts.length} Konzepte (model=${process.env.OPENAI_TEXT_MODEL || "gpt-5.5"}), Längen=[${concepts.map((c) => c.length).join(",")}]`,
+    `[brainstorm] ${concepts.length} Konzepte (model=${process.env.CONCEPT_MODEL || "claude-opus-4-8"}), Längen=[${concepts.map((c) => c.length).join(",")}]`,
   );
   if (concepts.length === 0) {
     console.warn(`[brainstorm] unbrauchbare Antwort: ${cleaned.slice(0, 500)}`);
@@ -1273,16 +1277,101 @@ type RegenContext = {
 // Provider-neutraler Text-Helfer — läuft über OpenAI (Chat Completions).
 // Modell via OPENAI_TEXT_MODEL (default "gpt-5.5"; Reasoning → max_completion_tokens).
 // Mit Timeout + Retries gegen transiente Netzwerkfehler ("fetch failed") und 429/5xx.
+// Anthropic-Variante des Text-Helfers — für Claude-Modelle (z. B. Opus 4.8).
+// Gleiche Schnittstelle wie llmText (system/user/maxTokens) mit Retries +
+// Timeout + Quota-/Empty-Handling.
+async function callAnthropic(opts: {
+  system: string;
+  user: string;
+  maxTokens: number;
+  model: string;
+  timeoutMs: number;
+}): Promise<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, attempt * 1500));
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), opts.timeoutMs);
+    try {
+      const body: Record<string, unknown> = {
+        model: opts.model,
+        max_tokens: opts.maxTokens,
+        messages: [{ role: "user", content: opts.user }],
+      };
+      if (opts.system) body.system = opts.system;
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      const text = await res.text();
+      if (!res.ok) {
+        if (res.status === 429 && /credit|billing|quota/i.test(text)) {
+          throw new Error(
+            "Anthropic-Kontingent/Credits aufgebraucht (Billing prüfen: console.anthropic.com).",
+          );
+        }
+        if (res.status === 429 || res.status >= 500) {
+          lastErr = new Error(`Anthropic ${res.status}: ${text.slice(0, 200)}`);
+          continue;
+        }
+        throw new Error(`Anthropic ${res.status}: ${text.slice(0, 300)}`);
+      }
+      const data = JSON.parse(text) as {
+        content?: { type: string; text?: string }[];
+        stop_reason?: string;
+      };
+      const content =
+        data.content?.find((c) => c.type === "text")?.text?.trim() ?? "";
+      if (!content) {
+        console.warn(
+          `[llmText/claude] Leerer Inhalt (Versuch ${attempt + 1}/3, model=${opts.model}, stop_reason=${data.stop_reason}): ${text.slice(0, 300)}`,
+        );
+        lastErr = new Error(
+          `Claude leere Antwort (stop_reason=${data.stop_reason ?? "?"})`,
+        );
+        continue;
+      }
+      return content;
+    } catch (err) {
+      lastErr = err;
+      console.warn(
+        `[llmText/claude] Versuch ${attempt + 1}/3 failte:`,
+        err instanceof Error ? err.message : err,
+      );
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+}
+
+// Provider-neutraler Text-Helfer — OpenAI Chat Completions ODER (bei einem
+// claude-* Modell) Anthropic Messages API. Mit Timeout + Retries gegen
+// transiente Netzwerkfehler ("fetch failed") und 429/5xx.
 async function llmText(opts: {
   system: string;
   user: string;
   maxTokens: number;
   model?: string; // Override; sonst OPENAI_TEXT_MODEL
 }): Promise<string> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error("OPENAI_API_KEY nicht gesetzt.");
   const model = opts.model || process.env.OPENAI_TEXT_MODEL || "gpt-5.5";
   const timeoutMs = Number(process.env.OPENAI_TEXT_TIMEOUT_MS) || 90000;
+
+  // Claude-Modelle → Anthropic-Pfad.
+  if (/^claude/i.test(model)) {
+    return callAnthropic({ ...opts, model, timeoutMs });
+  }
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error("OPENAI_API_KEY nicht gesetzt.");
   // GPT-5*/o-Serie sind Reasoning-Modelle: sie verlangen max_completion_tokens
   // (nicht max_tokens) und brauchen Token-Headroom fürs Reasoning, sonst bleibt
   // content leer.
