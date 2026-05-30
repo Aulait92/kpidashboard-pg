@@ -335,6 +335,7 @@ export type SyncResult = {
   leads: number;
   revenues: number;
   costs: number;
+  deletedLeads: number;
   newSales: NewSale[];
   newLeads: NewLead[];
   errors: string[];
@@ -347,6 +348,7 @@ export async function syncAirtable(): Promise<SyncResult> {
     leads: 0,
     revenues: 0,
     costs: 0,
+    deletedLeads: 0,
     newSales: [],
     newLeads: [],
     errors: [],
@@ -571,6 +573,7 @@ export async function syncAirtable(): Promise<SyncResult> {
     // Sweep: Leads, die in Airtable gelöscht wurden, auch lokal entfernen.
     // Sicherheitsnetz: nur wenn die Tabelle nicht leer zurückkam — schützt
     // gegen versehentliches Mass-Delete bei einem leeren Fetch.
+    let staleCount = 0;
     if (records.length > 0) {
       const seenIds = records.map((r) => r.id);
       const stale = await prisma.lead.findMany({
@@ -586,11 +589,13 @@ export async function syncAirtable(): Promise<SyncResult> {
         // Revenue-Zeilen mit leadId=null und verfälschen die Umsatzsumme.
         await prisma.revenue.deleteMany({ where: { leadId: { in: staleIds } } });
         await prisma.lead.deleteMany({ where: { id: { in: staleIds } } });
-        console.log(
-          `[airtable] ${table.source}: ${stale.length} in Airtable gelöschte Leads entfernt.`,
-        );
+        staleCount = stale.length;
+        result.deletedLeads += stale.length;
       }
     }
+    console.log(
+      `[airtable] ${table.source}: seen=${records.length}, deleted=${staleCount}`,
+    );
   }
 
   // 4. Finanzen-Tabelle (weitere Kosten / Overhead) einlesen.
