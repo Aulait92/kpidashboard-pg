@@ -567,6 +567,30 @@ export async function syncAirtable(): Promise<SyncResult> {
         );
       }
     }
+
+    // Sweep: Leads, die in Airtable gelöscht wurden, auch lokal entfernen.
+    // Sicherheitsnetz: nur wenn die Tabelle nicht leer zurückkam — schützt
+    // gegen versehentliches Mass-Delete bei einem leeren Fetch.
+    if (records.length > 0) {
+      const seenIds = records.map((r) => r.id);
+      const stale = await prisma.lead.findMany({
+        where: {
+          source: table.source,
+          airtableId: { not: null, notIn: seenIds },
+        },
+        select: { id: true },
+      });
+      if (stale.length > 0) {
+        const staleIds = stale.map((s) => s.id);
+        // Zugehörige Umsätze zuerst löschen — sonst bleiben sie als verwaiste
+        // Revenue-Zeilen mit leadId=null und verfälschen die Umsatzsumme.
+        await prisma.revenue.deleteMany({ where: { leadId: { in: staleIds } } });
+        await prisma.lead.deleteMany({ where: { id: { in: staleIds } } });
+        console.log(
+          `[airtable] ${table.source}: ${stale.length} in Airtable gelöschte Leads entfernt.`,
+        );
+      }
+    }
   }
 
   // 4. Finanzen-Tabelle (weitere Kosten / Overhead) einlesen.
