@@ -303,14 +303,38 @@ function isKinderwunschCampaign(name: string): boolean {
   return /kinderwunsch|kiwu/i.test(name);
 }
 
+// Effektives Monatsziel bei Mid-Month-Onboarding (Spiegel des Airtable-Feldes
+// „Effektives Leadziel"): startet ein Kunde mitten im Monat, wird das
+// Monatsziel proportional zu den verbleibenden Tagen heruntergerechnet —
+// sonst würde die d'Hondt-Verteilung & der Media Buyer das volle Monatsziel
+// in den Restmonat pressen und Bestandskunden unterversorgen.
+export function effectiveGoal(
+  goal: number,
+  startDate: Date | null | undefined,
+  now: Date,
+): number {
+  if (!goal || goal <= 0) return 0;
+  if (!startDate) return goal;
+  const monthStart = startOfMonth(now);
+  const monthEnd = endOfMonth(now);
+  if (startDate <= monthStart) return goal;
+  if (startDate > monthEnd) return 0;
+  const daysInMonth = differenceInCalendarDays(monthEnd, monthStart) + 1;
+  const daysActive = differenceInCalendarDays(monthEnd, startDate) + 1;
+  return Math.max(0, Math.round((goal * daysActive) / daysInMonth));
+}
+
 // Leitet alle Pools aus den aktuellen Kundendaten ab.
-export async function derivePoolDefs(): Promise<PoolDef[]> {
+export async function derivePoolDefs(now: Date = new Date()): Promise<PoolDef[]> {
   const customers = await prisma.customer.findMany({
     select: {
       id: true,
       leadGoalWechsel: true,
       leadGoalNeugeschaeft: true,
       leadGoalKinderwunsch: true,
+      startWechsel: true,
+      startNeugeschaeft: true,
+      startKinderwunsch: true,
       region: true,
     },
   });
@@ -319,10 +343,15 @@ export async function derivePoolDefs(): Promise<PoolDef[]> {
 
   // PKV: ein Pool je Produkt über alle Kunden. Kinderwunsch ist hier
   // bewusst ausgenommen — das läuft regionsbasiert (siehe unten).
+  // Pool-Ziel = Σ Effektive Ziele (anteilig bei Mid-Month-Onboarding).
   const pkvGoals = { Wechsel: 0, Neugeschäft: 0 };
   for (const c of customers) {
-    pkvGoals.Wechsel += c.leadGoalWechsel ?? 0;
-    pkvGoals.Neugeschäft += c.leadGoalNeugeschaeft ?? 0;
+    pkvGoals.Wechsel += effectiveGoal(c.leadGoalWechsel ?? 0, c.startWechsel, now);
+    pkvGoals.Neugeschäft += effectiveGoal(
+      c.leadGoalNeugeschaeft ?? 0,
+      c.startNeugeschaeft,
+      now,
+    );
   }
   for (const product of ["Wechsel", "Neugeschäft"] as const) {
     const goal = pkvGoals[product];
@@ -342,7 +371,11 @@ export async function derivePoolDefs(): Promise<PoolDef[]> {
   // Kinderwunsch: ein Pool je Region (Region kommt vom Kunden).
   const byRegion = new Map<string, { ids: string[]; goal: number }>();
   for (const c of customers) {
-    const goal = c.leadGoalKinderwunsch ?? 0;
+    const goal = effectiveGoal(
+      c.leadGoalKinderwunsch ?? 0,
+      c.startKinderwunsch,
+      now,
+    );
     const region = c.region?.trim();
     if (goal > 0 && region) {
       const e = byRegion.get(region) ?? { ids: [], goal: 0 };
@@ -626,7 +659,7 @@ export async function runMediaBuyer(params: {
     }
   }
 
-  const defs = await derivePoolDefs();
+  const defs = await derivePoolDefs(now);
 
   // Alle Pools anlegen/aktualisieren (auch ohne Autopilot, fürs Admin).
   const settingsByKey = new Map<string, PoolSettings>();
@@ -780,14 +813,19 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
   const daysElapsed = Math.max(1, differenceInCalendarDays(now, monthStart) + 1);
   const daysTotal = differenceInCalendarDays(monthEnd, monthStart) + 1;
 
-  const defs = await derivePoolDefs();
-  // Kundenzahl pro Pool — für Produkt-Pools alle Kunden mit Ziel > 0, für
-  // Region-Pools die Kunden der Region (aus def.customerIds).
+  const defs = await derivePoolDefs(now);
+  // Kundenzahl pro Pool — für Produkt-Pools alle Kunden mit effektivem Ziel > 0
+  // (Kunden, die diesen Monat tatsächlich beliefert werden); für Region-Pools
+  // die Kunden der Region (aus def.customerIds). Mid-Month-Onboarder mit
+  // Startdatum > Monatsende werden so nicht mitgezählt.
   const allCustomers = await prisma.customer.findMany({
     select: {
       leadGoalWechsel: true,
       leadGoalNeugeschaeft: true,
       leadGoalKinderwunsch: true,
+      startWechsel: true,
+      startNeugeschaeft: true,
+      startKinderwunsch: true,
       region: true,
     },
   });
@@ -795,10 +833,14 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
     if (def.kind === "region")
       return def.customerIds?.length ?? 0;
     if (def.product === "Wechsel")
-      return allCustomers.filter((c) => (c.leadGoalWechsel ?? 0) > 0).length;
+      return allCustomers.filter(
+        (c) => effectiveGoal(c.leadGoalWechsel ?? 0, c.startWechsel, now) > 0,
+      ).length;
     if (def.product === "Neugeschäft")
       return allCustomers.filter(
-        (c) => (c.leadGoalNeugeschaeft ?? 0) > 0,
+        (c) =>
+          effectiveGoal(c.leadGoalNeugeschaeft ?? 0, c.startNeugeschaeft, now) >
+          0,
       ).length;
     return 0;
   };

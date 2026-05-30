@@ -77,6 +77,24 @@ const BUYER_PRICE_KINDERWUNSCH_FIELDS = [
 ];
 // Region des Kunden (für die Kinderwunsch-Regions-Pools).
 const BUYER_REGION_FIELDS = ["Region", "Standort", "Stadt", "Markt"];
+// Startdatum je Sparte. Für anteilige Berechnung des Monatsziels bei
+// Mid-Month-Onboarding (analog zum Airtable-Feld „Effektives Leadziel").
+const BUYER_START_WECHSEL_FIELDS = [
+  "Startdatum PKV-Wechsel",
+  "Startdatum Wechsel",
+  "Start PKV-Wechsel",
+];
+const BUYER_START_NEUGESCHAEFT_FIELDS = [
+  "Startdatum PKV-Neugeschäft",
+  "Startdatum PKV-Neugeschaeft",
+  "Startdatum Neugeschäft",
+  "Start PKV-Neugeschäft",
+];
+const BUYER_START_KINDERWUNSCH_FIELDS = [
+  "Startdatum Kinderwunsch",
+  "Start Kinderwunsch",
+  "Startdatum KiWu",
+];
 const FINANZEN_TABLE = process.env.AIRTABLE_TABLE_FINANZEN ?? "Finanzen";
 
 const GERMAN_MONTHS: Record<string, number> = {
@@ -175,7 +193,25 @@ type BuyerInfo = {
   priceNeugeschaeft: number | null;
   priceKinderwunsch: number | null;
   region: string | null;
+  startWechsel: Date | null;
+  startNeugeschaeft: Date | null;
+  startKinderwunsch: Date | null;
 };
+
+// Liest ein Datum aus dem erstbesten der angegebenen Felder. Airtable liefert
+// Datum als ISO-String ("YYYY-MM-DD") oder ISO-Datetime.
+function readDateFromFields(
+  fields: Record<string, unknown>,
+  keys: string[],
+): Date | null {
+  for (const key of keys) {
+    const v = fields[key];
+    if (typeof v !== "string" || v.trim() === "") continue;
+    const d = new Date(v);
+    if (!Number.isNaN(d.getTime())) return d;
+  }
+  return null;
+}
 
 async function fetchBuyers(): Promise<Map<string, BuyerInfo>> {
   const map = new Map<string, BuyerInfo>();
@@ -233,6 +269,15 @@ async function fetchBuyers(): Promise<Map<string, BuyerInfo>> {
           BUYER_PRICE_KINDERWUNSCH_FIELDS,
         ),
         region,
+        startWechsel: readDateFromFields(rec.fields, BUYER_START_WECHSEL_FIELDS),
+        startNeugeschaeft: readDateFromFields(
+          rec.fields,
+          BUYER_START_NEUGESCHAEFT_FIELDS,
+        ),
+        startKinderwunsch: readDateFromFields(
+          rec.fields,
+          BUYER_START_KINDERWUNSCH_FIELDS,
+        ),
       });
     }
   }
@@ -426,7 +471,10 @@ export async function syncAirtable(): Promise<SyncResult> {
       info.priceWechsel != null ||
       info.priceNeugeschaeft != null ||
       info.priceKinderwunsch != null ||
-      info.region != null;
+      info.region != null ||
+      info.startWechsel != null ||
+      info.startNeugeschaeft != null ||
+      info.startKinderwunsch != null;
     if (!hasData) continue;
     const data = {
       leadGoalWechsel: info.goalWechsel,
@@ -436,6 +484,9 @@ export async function syncAirtable(): Promise<SyncResult> {
       leadPriceNeugeschaeft: info.priceNeugeschaeft,
       leadPriceKinderwunsch: info.priceKinderwunsch,
       region: info.region,
+      startWechsel: info.startWechsel,
+      startNeugeschaeft: info.startNeugeschaeft,
+      startKinderwunsch: info.startKinderwunsch,
     };
     const customer = await prisma.customer.upsert({
       where: { name: key },
@@ -652,6 +703,9 @@ export async function syncAirtable(): Promise<SyncResult> {
       leadPriceNeugeschaeft: null,
       leadPriceKinderwunsch: null,
       region: null,
+      startWechsel: null,
+      startNeugeschaeft: null,
+      startKinderwunsch: null,
     },
   });
 

@@ -31,6 +31,14 @@ model Customer {
   // Region des Kunden (z.B. "Berlin"). Bestimmt, in welchen Kinderwunsch-
   // Regions-Pool die Kinderwunsch-Leads/-Ziele dieses Kunden fallen.
   region               String?
+  // Startdatum je Sparte. null = "lief schon vorher" (volles Monatsziel).
+  // Bei Mid-Month-Onboarding wird das effektive Monatsziel anteilig herunter-
+  // gerechnet (analog zum „Effektives Leadziel" in Airtable), damit die
+  // d'Hondt-Verteilung & der Media Buyer das verbleibende Monatsende
+  // realistisch ansteuern statt das volle Monatsziel nachzujagen.
+  startWechsel         DateTime?
+  startNeugeschaeft    DateTime?
+  startKinderwunsch    DateTime?
 
   leads    Lead[]
   revenues Revenue[]
