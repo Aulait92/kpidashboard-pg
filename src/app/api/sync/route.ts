@@ -39,8 +39,10 @@ async function handle(req: Request) {
         leads: result.airtable.leads,
         revenues: result.airtable.revenues,
         deletedLeads: result.airtable.deletedLeads,
+        customers: result.airtable.customers,
         newSales: result.airtable.newSales.length,
         tables: result.airtable.tables,
+        errors: result.airtable.errors,
       },
       meta: result.meta.ok
         ? { ok: true, costs: result.meta.result.costs }

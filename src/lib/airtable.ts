@@ -392,8 +392,13 @@ export async function syncAirtable(): Promise<SyncResult> {
   let buyerMap = new Map<string, BuyerInfo>();
   try {
     buyerMap = await fetchBuyers();
+    console.log(
+      `[airtable] Kunden-Tabelle "${BUYERS_TABLE}": ${buyerMap.size} Datensätze gelesen.`,
+    );
   } catch (err) {
-    result.errors.push(err instanceof Error ? err.message : String(err));
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[airtable] Kunden-Tabelle nicht lesbar: ${msg}`);
+    result.errors.push(msg);
   }
 
   function resolveBuyer(fields: Record<string, unknown>): string | null {
