@@ -635,12 +635,23 @@ export async function syncAirtable(): Promise<SyncResult> {
   }
 
   // 5. Verwaiste Kunden aus früheren (fehlerhaften) Syncs aufräumen.
-  // Ein Customer ohne Leads, Umsätze und Kosten ist sicher entfernbar.
+  // Ein Customer ohne Leads, Umsätze, Kosten UND ohne Buyer-Daten
+  // (Lead-Ziele, Preise, Region) ist sicher entfernbar. Kunden mit
+  // Lead-Zielen oder anderen Buyer-Daten dürfen NICHT gelöscht werden, auch
+  // wenn (noch) keine Leads existieren — sonst wischt der Sync legitime
+  // Buyer-Datensätze direkt nach dem Upsert wieder weg.
   await prisma.customer.deleteMany({
     where: {
       leads: { none: {} },
       revenues: { none: {} },
       costs: { none: {} },
+      leadGoalWechsel: null,
+      leadGoalNeugeschaeft: null,
+      leadGoalKinderwunsch: null,
+      leadPriceWechsel: null,
+      leadPriceNeugeschaeft: null,
+      leadPriceKinderwunsch: null,
+      region: null,
     },
   });
 
