@@ -109,89 +109,31 @@ export default async function MediaBuyerPage() {
     autopilotTotal: poolRows.length,
     daysElapsed,
     daysTotal,
+    monthLabel: new Intl.DateTimeFormat("de-DE", {
+      month: "long",
+      year: "numeric",
+    }).format(new Date()),
   };
 
   return (
-    <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <Link
-            href="/"
-            className="text-xs text-[color:var(--brand)] hover:underline"
-          >
-            ← zum Dashboard
-          </Link>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">
-            Media Buyer
-          </h1>
-        </div>
-        <TopStatsBar stats={top} />
+    <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 pb-24 pt-6 sm:px-6 lg:px-8 lg:pb-8">
+      <header className="mb-4">
+        <Link
+          href="/"
+          className="text-xs text-[color:var(--brand)] hover:underline"
+        >
+          ← zum Dashboard
+        </Link>
+        <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">
+          Media Buyer
+        </h1>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">
+          {top.monthLabel} · Tag {top.daysElapsed}/{top.daysTotal} ·{" "}
+          {Math.max(0, top.daysTotal - top.daysElapsed)} Tage übrig
+        </p>
       </header>
 
-      <MediaBuyerLayout pools={poolRows} log={log} />
+      <MediaBuyerLayout pools={poolRows} log={log} top={top} />
     </main>
-  );
-}
-
-function TopStatsBar({ stats }: { stats: TopStats }) {
-  const ratio = stats.goal > 0 ? stats.leadsMtd / stats.goal : 0;
-  const projectedRatio = stats.goal > 0 ? stats.projected / stats.goal : 0;
-  const daysLeft = Math.max(0, stats.daysTotal - stats.daysElapsed);
-  const pct = (v: number) => `${Math.round(v * 100)}%`;
-  return (
-    <div className="flex flex-wrap items-end gap-x-6 gap-y-2 text-sm">
-      <Stat label="Ziel" value={String(stats.goal)} />
-      <Stat
-        label="Ist"
-        value={String(stats.leadsMtd)}
-        sub={stats.goal > 0 ? pct(ratio) : ""}
-      />
-      <Stat
-        label="Prognose"
-        value={pct(projectedRatio)}
-        valueClass={
-          projectedRatio >= 0.98
-            ? "text-emerald-600"
-            : projectedRatio >= 0.85
-              ? "text-amber-600"
-              : "text-rose-600"
-        }
-      />
-      <Stat
-        label="Autopilot"
-        value={`${stats.autopilotOn}/${stats.autopilotTotal}`}
-      />
-      <div className="border-l border-[color:var(--border)] pl-6 text-xs text-[color:var(--muted)]">
-        Tag {stats.daysElapsed}/{stats.daysTotal} · {daysLeft} übrig
-      </div>
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  sub,
-  valueClass,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  valueClass?: string;
-}) {
-  return (
-    <div className="flex flex-col">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">
-        {label}
-      </span>
-      <span className={`text-xl font-bold tabular-nums ${valueClass ?? ""}`}>
-        {value}
-        {sub ? (
-          <span className="ml-1 text-xs font-medium text-[color:var(--muted)]">
-            {sub}
-          </span>
-        ) : null}
-      </span>
-    </div>
   );
 }

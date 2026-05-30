@@ -55,6 +55,7 @@ export type TopStats = {
   autopilotTotal: number;
   daysElapsed: number;
   daysTotal: number;
+  monthLabel: string;
 };
 
 // ─── Status-Mapping ──────────────────────────────────────────────────
@@ -104,14 +105,20 @@ function keywordOf(p: PoolDetailRow): string {
 export function MediaBuyerLayout({
   pools,
   log,
+  top,
 }: {
   pools: PoolDetailRow[];
   log: ActionLogRow[];
+  top: TopStats;
 }) {
-  const [selectedKey, setSelectedKey] = useState<string>(
-    pools[0]?.key ?? "",
-  );
-  const selected = pools.find((p) => p.key === selectedKey) ?? pools[0];
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"alle" | "pkv" | "kw">("alle");
+  const filtered = useMemo(() => {
+    if (filter === "pkv") return pools.filter((p) => p.kind === "product");
+    if (filter === "kw") return pools.filter((p) => p.kind === "region");
+    return pools;
+  }, [pools, filter]);
+  const selected = pools.find((p) => p.key === selectedKey) ?? null;
 
   if (pools.length === 0) {
     return (
@@ -122,72 +129,248 @@ export function MediaBuyerLayout({
     );
   }
 
+  // Auf Desktop ist immer ein Pool selektiert; auf Mobil entscheidet der User.
+  const desktopSelected = selected ?? filtered[0] ?? pools[0];
+
   return (
-    <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-      <Sidebar
-        pools={pools}
-        selectedKey={selectedKey}
-        onSelect={setSelectedKey}
-      />
-      {selected ? <PoolDetail pool={selected} log={log} /> : null}
+    <>
+      <HeroCard top={top} />
+
+      <div className="mt-4 lg:hidden">
+        {/* Mobile: entweder Liste oder Detail-Ansicht (mit Back-Button). */}
+        {selected ? (
+          <div>
+            <button
+              type="button"
+              onClick={() => setSelectedKey(null)}
+              className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-[color:var(--brand)]"
+            >
+              ← Pools
+            </button>
+            <PoolDetail pool={selected} log={log} />
+          </div>
+        ) : (
+          <>
+            <Filters filter={filter} onChange={setFilter} />
+            <PoolList
+              pools={filtered}
+              totalCount={pools.length}
+              selectedKey={null}
+              onSelect={setSelectedKey}
+            />
+          </>
+        )}
+      </div>
+
+      <div className="mt-4 hidden gap-4 lg:grid lg:grid-cols-[340px_1fr]">
+        {/* Desktop: zweispaltig. */}
+        <aside className="flex flex-col gap-4 rounded-2xl border border-[color:var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <Filters filter={filter} onChange={setFilter} />
+          <PoolList
+            pools={filtered}
+            totalCount={pools.length}
+            selectedKey={desktopSelected?.key ?? null}
+            onSelect={setSelectedKey}
+            compactCard
+          />
+          <div className="mt-1 flex gap-2 border-t border-[color:var(--border)] pt-3">
+            <DryRunButton />
+            <ApplyNowButton />
+          </div>
+        </aside>
+        {desktopSelected ? <PoolDetail pool={desktopSelected} log={log} /> : null}
+      </div>
+
+      {/* Sticky Bottom-Action-Bar nur mobil und nur wenn Liste sichtbar. */}
+      {!selected ? (
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[color:var(--border)] bg-white/90 px-4 py-3 backdrop-blur lg:hidden">
+          <div className="mx-auto flex max-w-[1400px] gap-3">
+            <DryRunButton />
+            <ApplyNowButton />
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+// ─── Hero-Karte (Aggregat) ───────────────────────────────────────────
+
+function HeroCard({ top }: { top: TopStats }) {
+  const ratio = top.goal > 0 ? top.leadsMtd / top.goal : 0;
+  const projectedRatio = top.goal > 0 ? top.projected / top.goal : 0;
+  const paceFraction = top.daysTotal > 0 ? top.daysElapsed / top.daysTotal : 0;
+  const projectedColor =
+    projectedRatio >= 0.98
+      ? "text-emerald-600"
+      : projectedRatio >= 0.85
+        ? "text-amber-600"
+        : "text-rose-600";
+  return (
+    <div className="rounded-2xl border border-[color:var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-5">
+      <div className="grid grid-cols-[auto_1fr] items-center gap-4 sm:gap-6">
+        <BigGauge percent={ratio * 100} label="Ist/Ziel" />
+        <div>
+          <div className="grid grid-cols-3 gap-3 sm:gap-6">
+            <HeroStat
+              label="Ist (MTD)"
+              value={String(top.leadsMtd)}
+              sub={`/ ${top.goal}`}
+            />
+            <HeroStat
+              label="Prognose"
+              value={`${Math.round(projectedRatio * 100)}%`}
+              valueClass={projectedColor}
+            />
+            <HeroStat
+              label="Autopilot"
+              value={`${top.autopilotOn}/${top.autopilotTotal}`}
+            />
+          </div>
+          {/* Progress mit Pace-Markierung */}
+          <div className="relative mt-3 h-2 overflow-hidden rounded-full bg-zinc-100">
+            <div
+              className="h-full bg-[color:var(--brand)] transition-all"
+              style={{ width: `${Math.max(2, Math.min(100, ratio * 100))}%` }}
+            />
+            {/* Pace-Marker (heutiger Soll-Stand) */}
+            <div
+              className="absolute top-0 h-full w-px bg-zinc-900/60"
+              style={{ left: `${Math.min(100, paceFraction * 100)}%` }}
+              aria-hidden
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-// ─── Sidebar (Pool-Liste) ────────────────────────────────────────────
+function BigGauge({ percent, label }: { percent: number; label: string }) {
+  const clamped = Math.max(0, Math.min(100, percent));
+  const color = "#2563eb"; // brand
+  return (
+    <div className="relative grid h-24 w-24 place-items-center sm:h-28 sm:w-28">
+      <div
+        className="absolute inset-0 rounded-full"
+        style={{
+          background: `conic-gradient(${color} ${clamped}%, #e4e4e7 ${clamped}% 100%)`,
+        }}
+        aria-hidden
+      />
+      <div className="absolute inset-2 rounded-full bg-white" aria-hidden />
+      <div className="relative z-10 text-center leading-tight">
+        <div className="text-xl font-bold tabular-nums sm:text-2xl">
+          {Math.round(clamped)}%
+        </div>
+        <div className="text-[9px] font-medium text-[color:var(--muted)] sm:text-[10px]">
+          {label}
+        </div>
+      </div>
+    </div>
+  );
+}
 
-function Sidebar({
+function HeroStat({
+  label,
+  value,
+  sub,
+  valueClass,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  valueClass?: string;
+}) {
+  return (
+    <div className="min-w-0">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">
+        {label}
+      </div>
+      <div className={cn("mt-0.5 truncate text-xl font-bold tabular-nums sm:text-2xl", valueClass)}>
+        {value}
+        {sub ? (
+          <span className="ml-1 text-xs font-medium text-[color:var(--muted)]">
+            {sub}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+// ─── Filter-Pills ────────────────────────────────────────────────────
+
+function Filters({
+  filter,
+  onChange,
+}: {
+  filter: "alle" | "pkv" | "kw";
+  onChange: (f: "alle" | "pkv" | "kw") => void;
+}) {
+  const tabs = [
+    { id: "alle" as const, label: "Alle" },
+    { id: "pkv" as const, label: "PKV" },
+    { id: "kw" as const, label: "Kinderwunsch" },
+  ];
+  return (
+    <div className="flex flex-wrap gap-2">
+      {tabs.map((t) => (
+        <button
+          key={t.id}
+          type="button"
+          onClick={() => onChange(t.id)}
+          className={cn(
+            "rounded-full border px-4 py-1.5 text-sm font-semibold transition",
+            filter === t.id
+              ? "border-zinc-900 bg-zinc-900 text-white"
+              : "border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:border-zinc-400",
+          )}
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─── Pool-Liste ──────────────────────────────────────────────────────
+
+function PoolList({
   pools,
+  totalCount,
   selectedKey,
   onSelect,
+  compactCard = false,
 }: {
   pools: PoolDetailRow[];
-  selectedKey: string;
+  totalCount: number;
+  selectedKey: string | null;
   onSelect: (key: string) => void;
+  compactCard?: boolean;
 }) {
-  const [filter, setFilter] = useState<"alle" | "pkv" | "kw">("alle");
-  const filtered = useMemo(() => {
-    if (filter === "pkv") return pools.filter((p) => p.kind === "product");
-    if (filter === "kw") return pools.filter((p) => p.kind === "region");
-    return pools;
-  }, [pools, filter]);
-
   return (
-    <aside className="flex flex-col gap-4 rounded-2xl border border-[color:var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold">Liefer-Pools</h2>
-        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
-          {pools.length}
-        </span>
+    <div className={cn(compactCard ? "" : "mt-4")}>
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">
+          Liefer-Pools
+        </h2>
+        <span className="text-xs font-semibold text-zinc-400">{totalCount}</span>
       </div>
-
-      <div className="inline-flex rounded-lg border border-[color:var(--border)] p-0.5 text-xs font-medium">
-        {[
-          { id: "alle", label: "Alle" },
-          { id: "pkv", label: "PKV" },
-          { id: "kw", label: "KW" },
-        ].map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setFilter(t.id as typeof filter)}
-            className={cn(
-              "flex-1 rounded-md px-3 py-1.5 transition",
-              filter === t.id
-                ? "bg-[color:var(--brand-soft)] text-[color:var(--brand-dark)]"
-                : "text-[color:var(--muted)] hover:text-[color:var(--foreground)]",
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      <ul className="flex flex-col gap-2">
-        {filtered.map((p) => {
+      <ul
+        className={cn(
+          "flex flex-col",
+          compactCard
+            ? "gap-2"
+            : "divide-y divide-[color:var(--border)] overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
+        )}
+      >
+        {pools.map((p) => {
           const status = statusFor(p);
           const pct =
-            p.goal > 0 ? Math.min(120, Math.round((p.leadsMtd / p.goal) * 100)) : 0;
+            p.goal > 0
+              ? Math.min(120, Math.round((p.leadsMtd / p.goal) * 100))
+              : 0;
           const isSelected = p.key === selectedKey;
           return (
             <li key={p.key}>
@@ -195,48 +378,48 @@ function Sidebar({
                 type="button"
                 onClick={() => onSelect(p.key)}
                 className={cn(
-                  "w-full rounded-xl border px-3 py-3 text-left transition",
-                  isSelected
-                    ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)]/40 shadow-sm"
-                    : "border-[color:var(--border)] hover:border-[color:var(--brand)]/40",
+                  "flex w-full items-center gap-3 px-4 py-3 text-left transition",
+                  compactCard
+                    ? cn(
+                        "rounded-xl border",
+                        isSelected
+                          ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)]/40 shadow-sm"
+                          : "border-[color:var(--border)] hover:border-[color:var(--brand)]/40",
+                      )
+                    : "hover:bg-zinc-50/60",
                 )}
               >
-                <div className="flex items-center gap-2">
-                  <span className={cn("h-2 w-2 shrink-0 rounded-full", poolColor(p))} />
-                  <span className="truncate text-sm font-semibold">{p.label}</span>
-                  {p.autopilot ? (
-                    <span title="Autopilot aktiv" className="ml-auto text-[color:var(--brand)]">⚡</span>
-                  ) : (
-                    <span className="ml-auto text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-                      manuell
+                <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", poolColor(p))} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-sm font-semibold">{p.label}</span>
+                    {p.autopilot ? (
+                      <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-[color:var(--brand)]">
+                        ⚡ Auto
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                        manuell
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 flex items-baseline gap-3 text-xs">
+                    <span className="font-semibold tabular-nums text-[color:var(--muted)]">
+                      {p.leadsMtd}/{p.goal}
                     </span>
-                  )}
+                    <span className="text-zinc-300">|</span>
+                    <span className={cn("font-bold tabular-nums", status.cls)}>
+                      {pct}%
+                    </span>
+                  </div>
                 </div>
-                <div className="mt-1.5 flex items-baseline gap-2 text-xs">
-                  <span className="font-semibold tabular-nums text-[color:var(--foreground)]">
-                    {p.leadsMtd}/{p.goal}
-                  </span>
-                  <span className={cn("ml-auto font-semibold tabular-nums", status.cls)}>
-                    {pct}%
-                  </span>
-                </div>
-                <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-zinc-100">
-                  <div
-                    className={cn("h-full", status.dot)}
-                    style={{ width: `${Math.max(2, Math.min(100, pct))}%` }}
-                  />
-                </div>
+                <span className="text-zinc-400">›</span>
               </button>
             </li>
           );
         })}
       </ul>
-
-      <div className="mt-1 flex gap-2 border-t border-[color:var(--border)] pt-3">
-        <DryRunButton />
-        <ApplyNowButton />
-      </div>
-    </aside>
+    </div>
   );
 }
 
