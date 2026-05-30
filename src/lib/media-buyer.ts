@@ -751,33 +751,87 @@ export type PoolAdminRow = {
   key: string;
   label: string;
   kind: "product" | "region";
+  product: string;
+  region: string | null;
   goal: number;
   leadsMtd: number;
+  projected: number;
+  daysElapsed: number;
+  daysTotal: number;
+  customerCount: number;
   autopilot: boolean;
   maxDailyBudget: number | null;
   campaignKeyword: string | null;
+  // Letzte Entscheidung des Buyers für diesen Pool (für die Empfehlungs-Karte).
+  latestAction: string | null;
+  latestReason: string | null;
 };
 
-// Pools + aktuelle Ist-Leads für die Admin-Seite (ohne Meta-Aufrufe).
+// Pools + aktuelle Ist-Leads + Pacing + letzte Entscheidung für die Admin-
+// Seite. KEINE Meta-Aufrufe — alle Werte aus DB.
 export async function listPoolsForAdmin(now: Date = new Date()): Promise<
   PoolAdminRow[]
 > {
   const monthStart = startOfMonth(now);
+  const monthEnd = endOfMonth(now);
   const mtdEnd = endOfDay(now);
+  const daysElapsed = Math.max(1, differenceInCalendarDays(now, monthStart) + 1);
+  const daysTotal = differenceInCalendarDays(monthEnd, monthStart) + 1;
+
   const defs = await derivePoolDefs();
+  // Kundenzahl pro Pool — für Produkt-Pools alle Kunden mit Ziel > 0, für
+  // Region-Pools die Kunden der Region (aus def.customerIds).
+  const allCustomers = await prisma.customer.findMany({
+    select: {
+      leadGoalWechsel: true,
+      leadGoalNeugeschaeft: true,
+      leadGoalKinderwunsch: true,
+      region: true,
+    },
+  });
+  const customerCountFor = (def: PoolDef): number => {
+    if (def.kind === "region")
+      return def.customerIds?.length ?? 0;
+    if (def.product === "Wechsel")
+      return allCustomers.filter((c) => (c.leadGoalWechsel ?? 0) > 0).length;
+    if (def.product === "Neugeschäft")
+      return allCustomers.filter(
+        (c) => (c.leadGoalNeugeschaeft ?? 0) > 0,
+      ).length;
+    return 0;
+  };
+  // Letzte Entscheidung pro Pool in einem Rutsch holen (vermeidet N+1).
+  const latest = await prisma.mediaBuyerAction.findMany({
+    where: { dryRun: false, poolKey: { in: defs.map((d) => d.key) } },
+    orderBy: { createdAt: "desc" },
+    distinct: ["poolKey"],
+    select: { poolKey: true, action: true, reason: true },
+  });
+  const latestByKey = new Map(latest.map((l) => [l.poolKey, l]));
+
   const rows: PoolAdminRow[] = [];
   for (const def of defs) {
     const settings = await ensurePool(def);
     const leadsMtd = await countPoolLeads(def, monthStart, mtdEnd);
+    const projected = Math.round((leadsMtd / daysElapsed) * daysTotal);
+    const last = latestByKey.get(def.key);
     rows.push({
       key: def.key,
       label: def.label,
       kind: def.kind,
+      product: def.product,
+      region: def.region,
       goal: def.goal,
       leadsMtd,
+      projected,
+      daysElapsed,
+      daysTotal,
+      customerCount: customerCountFor(def),
       autopilot: settings.autopilot,
       maxDailyBudget: settings.maxDailyBudget,
       campaignKeyword: settings.campaignKeyword,
+      latestAction: last?.action ?? null,
+      latestReason: last?.reason ?? null,
     });
   }
   return rows;
