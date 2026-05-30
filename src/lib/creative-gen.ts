@@ -873,6 +873,63 @@ const CONCEPT_VARIETY: Record<string, string> = {
     "Erzeuge möglichst UNTERSCHIEDLICHE Konzepte — variiere Motiv UND Format stark. Mögliche Richtungen (mische bunt, gern auch eigene Ideen): Fokus auf die Förderung / „bis zu 100 %“; ein Paar im Vordergrund; ein Reagenzglas / Labor-Motiv; ein Schwangerschaftstest; ein WhatsApp-Chat; eine Google-Suche; Apple-Notizen; Ultraschallbild; Kostenplan / Brief / Förderzusage; Babysocken/-schuhe; Kalender/Termin; erstes Ultraschallbild am Kühlschrank; noch leeres Kinderzimmer; Kalender mit markiertem Termin/Countdown; Sparschwein / Münzstapel; Taschenrechner mit Behandlungskosten; Banking-App-Screenshot („Förderung gutgeschrieben“); E-Mail-Posteingang mit „Förderzusage“; amtlicher Bescheid/Behördenbrief; Wartezimmer der Kinderwunschklinik; Hände halten Babyschuhe; zwei Kaffeetassen + Test am Morgen; To-do-Liste „Förderung prüfen ✅“; Instagram-DM-Look; SMS-Verlauf; Post-it/Sticky-Note am Spiegel; Splitscreen Sorge ↔ Hoffnung; großes Zahlen-Highlight „0 €?“; Tagebuch-/Journal-Eintrag; positiver Test im Gegenlicht; Paar umarmt sich erleichtert nach dem Arztgespräch; Strampler auf der Wäscheleine; IVF-Labor-Nahaufnahme in warmem Licht; Handy-Sperrbildschirm mit Termin-Erinnerung; Sprechblasen-Collage echter Gedanken; Voicemail-/Sprachnachricht-Screenshot. Jedes Konzept nutzt einen ANDEREN Ansatz.",
 };
 
+// Kampagnen-spezifische Konfiguration für den Direct-Image-Modus. Definiert
+// das Thema, das Pflicht-Badge im Bild, den CTA, Klarheits-Schlüsselwörter
+// und die Fallback-Ad-Copy. Ohne Eintrag fällt alles auf einen generischen
+// Default zurück — KEIN Kinderwunsch-Leakage mehr für andere Kampagnen.
+type DirectImageConfig = {
+  topic: string;
+  topicShort: string;
+  badge: string;
+  subline?: string;
+  cta: string;
+  retryMotifs: string;
+  fallbackAdText: string;
+  fallbackFbHeadline: string;
+};
+
+const DIRECT_IMAGE_CONFIG: Record<string, DirectImageConfig> = {
+  Kinderwunsch: {
+    topic: "eine Kinderwunschbehandlung / Familienplanung / den Wunsch nach einem Baby",
+    topicShort: "Kinderwunschbehandlung",
+    badge: "Bis zu 100 % Förderung möglich",
+    subline: "Je nach Krankenkasse & Wohnort",
+    cta: "Förderung jetzt prüfen",
+    retryMotifs:
+      "Schwangerschaftstest, Babysocken/-schuhe, Ultraschallbild, Babybauch, Paar mit Babywunsch",
+    fallbackAdText:
+      "Kinderwunsch-Behandlungen müssen nicht immer komplett selbst bezahlt werden. 💛 Je nach Wohnort, Krankenkasse und Situation sind hohe Zuschüsse möglich – teils bis zu 100 %. Jetzt unverbindlich Fördermöglichkeiten prüfen.",
+    fallbackFbHeadline: "Förderung jetzt prüfen",
+  },
+  Wechsel: {
+    topic:
+      "einen internen PKV-Tarifwechsel (beim gleichen Versicherer) zur Beitragsersparnis",
+    topicShort: "PKV-Tarifwechsel",
+    badge: "Bis zu 50 % Beitragsersparnis möglich",
+    subline: "Ohne Anbieter-Wechsel, ohne neue Gesundheitsprüfung",
+    cta: "Jetzt Tarif prüfen",
+    retryMotifs:
+      "PKV-Beitrags-Bescheid mit hohen Beträgen, Tarif-Übersicht/Rechner, Person mit Brief am Schreibtisch, Vorher/Nachher-Vergleich mit konkreten Beträgen",
+    fallbackAdText:
+      "Dein PKV-Beitrag steigt Jahr für Jahr? Ein interner Tarifwechsel beim gleichen Versicherer kann bis zu 50 % Ersparnis bringen — ohne Anbieter-Wechsel, ohne neue Gesundheitsprüfung. Jetzt unverbindlich prüfen.",
+    fallbackFbHeadline: "PKV-Beitrag senken",
+  },
+};
+
+function getDirectImageConfig(campaign: string): DirectImageConfig {
+  return (
+    DIRECT_IMAGE_CONFIG[campaign] ?? {
+      topic: campaign,
+      topicShort: campaign,
+      badge: "",
+      cta: "Jetzt mehr erfahren",
+      retryMotifs: "",
+      fallbackAdText: "",
+      fallbackFbHeadline: campaign,
+    }
+  );
+}
+
 // Phase 1: NUR der nackte Auftrag — ohne System-Prompt, ohne Briefing-Text
 // (wie im ChatGPT-Web). Mehrere Konzepte werden als getrennte Blöcke erbeten.
 async function brainstormCreativeConcepts(
@@ -959,19 +1016,19 @@ async function brainstormCreativeConcepts(
 }
 
 // Passende Facebook-Ad-Copy je Konzept (variiert pro Creative). Schnelles
-// Modell, robustes JSON, Fallback auf Standard-Wording.
+// Modell, robustes JSON, Fallback auf kampagnen-spezifisches Standard-Wording.
 async function adCopyForConcept(
   concept: string,
+  cfg: DirectImageConfig,
 ): Promise<{ adText: string; fbHeadline: string }> {
   const fallback = {
-    adText:
-      "Kinderwunsch-Behandlungen müssen nicht immer komplett selbst bezahlt werden. 💛 Je nach Wohnort, Krankenkasse und Situation sind hohe Zuschüsse möglich – teils bis zu 100 %. Jetzt unverbindlich Fördermöglichkeiten prüfen.",
-    fbHeadline: "Förderung jetzt prüfen",
+    adText: cfg.fallbackAdText,
+    fbHeadline: cfg.fallbackFbHeadline,
   };
   try {
     const raw = await llmText({
       model: process.env.OPENAI_INTENT_MODEL || "gpt-4o",
-      system: `Du schreibst deutsche Facebook-Ad-Copy für die Bewerbung von Förderungen für Kinderwunsch-Behandlungen. Konditional formulieren („möglich", „je nach"), keine Garantie, kein Heilversprechen. Antworte NUR mit JSON: {"adText": "...", "fbHeadline": "..."}. adText = Facebook-Primärtext (1-3 Sätze, Du-Form, endet mit Soft-CTA). fbHeadline = kurze Headline unter dem Bild, max 40 Zeichen.`,
+      system: `Du schreibst deutsche Facebook-Ad-Copy für die Bewerbung von ${cfg.topicShort}. Thema: ${cfg.topic}. Konditional formulieren („möglich", „je nach"), keine Garantie, kein Heilversprechen. Antworte NUR mit JSON: {"adText": "...", "fbHeadline": "..."}. adText = Facebook-Primärtext (1-3 Sätze, Du-Form, endet mit Soft-CTA). fbHeadline = kurze Headline unter dem Bild, max 40 Zeichen.`,
       user: `Passend zu diesem Creative-Konzept:\n${concept}\n\nSchreibe die Ad-Copy.`,
       maxTokens: 500,
     });
@@ -996,6 +1053,7 @@ async function verifyClarity(
   imageDataUrl: string,
   headline: string,
   adText: string,
+  cfg: DirectImageConfig,
 ): Promise<{ imageClear: boolean; headline: string; adText: string }> {
   const fallback = { imageClear: true, headline, adText };
   const apiKey = process.env.OPENAI_API_KEY;
@@ -1013,7 +1071,7 @@ async function verifyClarity(
         messages: [
           {
             role: "system",
-            content: `Du prüfst ein Meta-Werbe-Creative für die Förderung von Kinderwunschbehandlungen. Frage: Versteht ein Nutzer beim ERSTEN Blick sofort, dass es um eine Kinderwunschbehandlung / Familienplanung / den Wunsch nach einem Baby geht — sowohl im BILD als auch im TEXT? Antworte NUR mit JSON: {"imageClear": boolean, "headline": "...", "adText": "..."}. Wenn der TEXT das Thema nicht sofort klarmacht, gib eine klarere, aber gleich emotionale headline und adText zurück (sonst unverändert übernehmen). imageClear=false nur, wenn das BILD das Thema nicht sofort erkennen lässt.`,
+            content: `Du prüfst ein Meta-Werbe-Creative zum Thema ${cfg.topicShort}. Frage: Versteht ein Nutzer beim ERSTEN Blick sofort, dass es um ${cfg.topic} geht — sowohl im BILD als auch im TEXT? Antworte NUR mit JSON: {"imageClear": boolean, "headline": "...", "adText": "..."}. Wenn der TEXT das Thema nicht sofort klarmacht, gib eine klarere headline und adText zurück (sonst unverändert übernehmen). imageClear=false nur, wenn das BILD das Thema nicht sofort erkennen lässt.`,
           },
           {
             role: "user",
@@ -1060,13 +1118,18 @@ async function generateDirectImageCreatives(
     );
   }
 
+  const cfg = getDirectImageConfig(brief.campaignKey);
+  const badgePart = cfg.badge
+    ? ` inkl. Pflicht-Badge „${cfg.badge}"${cfg.subline ? `, kleiner Subline „${cfg.subline}"` : ""} und CTA-Button „${cfg.cta}"`
+    : "";
+
   const settled = await Promise.allSettled(
     concepts.map(async (concept): Promise<CreativeVariant> => {
-      const imagePrompt = `Erstelle dieses Creative als quadratisches 1:1 Werbe-Creative für Meta. WICHTIG: Es muss auf den ERSTEN Blick erkennbar sein, dass es um eine Kinderwunschbehandlung / Familienplanung / den Wunsch nach einem Baby geht. Setze das beschriebene VISUAL und die genannten Texte exakt um — inkl. Förder-Badge „Bis zu 100 % Förderung möglich", Subline und CTA-Button, wie im Konzept beschrieben. Deutscher Text fehlerfrei und gut lesbar, moderner Social-Media-Look.\n\n${concept}`;
+      const imagePrompt = `Erstelle dieses Creative als quadratisches 1:1 Werbe-Creative für Meta. WICHTIG: Es muss auf den ERSTEN Blick erkennbar sein, dass es um ${cfg.topic} geht. Setze das beschriebene VISUAL und die genannten Texte exakt um —${badgePart}, wie im Konzept beschrieben. Deutscher Text fehlerfrei und gut lesbar, moderner Social-Media-Look.\n\n${concept}`;
       // Phase 2: Bild + passende Ad-Copy parallel.
       const [imgInitial, copy] = await Promise.all([
         generateFullCreativeImage(imagePrompt),
-        adCopyForConcept(concept),
+        adCopyForConcept(concept, cfg),
       ]);
       if (!imgInitial) throw new Error("Bildgenerierung lieferte kein Bild.");
 
@@ -1074,15 +1137,17 @@ async function generateDirectImageCreatives(
       let adText = copy.adText;
       let fbHeadline = copy.fbHeadline;
 
-      // Klarheits-Check: Bild + Text sofort als Kinderwunsch erkennbar?
+      // Klarheits-Check: Bild + Text sofort als Kampagnen-Thema erkennbar?
       if (process.env.CREATIVE_CLARITY_CHECK !== "0") {
-        const v = await verifyClarity(dataUrl, fbHeadline, adText);
+        const v = await verifyClarity(dataUrl, fbHeadline, adText, cfg);
         adText = v.adText;
         fbHeadline = v.headline;
         if (!v.imageClear) {
-          console.warn("[creative-gen] Bild unklar — generiere neu mit Klarheits-Fokus.");
+          console.warn(
+            `[creative-gen] Bild unklar (${cfg.topicShort}) — generiere neu mit Klarheits-Fokus.`,
+          );
           const retry = await generateFullCreativeImage(
-            `${imagePrompt}\n\nDas Thema Kinderwunsch MUSS sofort sichtbar sein — nutze eindeutige Motive (z. B. Schwangerschaftstest, Babysocken/-schuhe, Ultraschallbild, Babybauch, Paar mit Babywunsch).`,
+            `${imagePrompt}\n\nDas Thema ${cfg.topicShort} MUSS sofort sichtbar sein${cfg.retryMotifs ? ` — nutze eindeutige Motive (z. B. ${cfg.retryMotifs})` : ""}.`,
           );
           if (retry) dataUrl = retry;
         }
@@ -1090,9 +1155,9 @@ async function generateDirectImageCreatives(
 
       const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0}html,body{width:1080px;height:1080px}img{width:1080px;height:1080px;object-fit:cover;display:block}</style></head><body><img src="${dataUrl}"></body></html>`;
       return {
-        headline: fbHeadline || "Kinderwunsch-Behandlung",
+        headline: fbHeadline || cfg.fallbackFbHeadline || brief.campaignKey,
         body: "",
-        cta: "Mehr erfahren",
+        cta: cfg.cta || "Mehr erfahren",
         adText,
         fbHeadline,
         html,
