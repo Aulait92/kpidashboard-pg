@@ -187,8 +187,11 @@ function buildDrawtextChain(
 // Brennt deutsche Untertitel ins MP4 ein und liefert den neuen Buffer zurück.
 // Bei jedem Fehler (Whisper down, ffmpeg fails, Audio fehlt) wird der Original-
 // Buffer zurückgegeben — Untertitel sind ein Nice-to-have, kein Hard-Block.
+// durationSec wird, wenn angegeben, als harter Output-Cap gesetzt, damit das
+// Video nicht durch Stream-Mismatch (Audio kürzer als Video o.ä.) gekürzt wird.
 export async function burnGermanSubtitles(
   videoBuffer: Buffer,
+  durationSec?: number,
 ): Promise<{ buffer: Buffer; burned: boolean; note?: string }> {
   const dir = await mkdtemp(join(tmpdir(), "sora-subs-"));
   const inputPath = join(dir, "in.mp4");
@@ -234,33 +237,35 @@ export async function burnGermanSubtitles(
       };
     }
 
-    // 4. Encoding bewusst leichtgewichtig: ultrafast-Preset, single-thread
-    // Cap, moderate CRF — damit der Container nicht OOM bekommt.
-    await runFfmpeg(
-      [
-        "-i",
-        inputPath,
-        "-vf",
-        chain,
-        "-c:v",
-        "libx264",
-        "-preset",
-        "ultrafast",
-        "-crf",
-        "24",
-        "-pix_fmt",
-        "yuv420p",
-        "-threads",
-        "2",
-        "-c:a",
-        "copy",
-        "-movflags",
-        "+faststart",
-        "-y",
-        outputPath,
-      ],
-      "burn subtitles",
-    );
+    // 4. Encoding. Audio neu codieren (statt -c:a copy), damit Container-
+    // Quirks aus Sora-Output nicht zu Stream-Mismatch und vorzeitigem Ende
+    // führen. Wenn die Sora-Länge bekannt ist, hart als -t setzen — damit
+    // ist garantiert, dass das Output mind. die volle Sora-Länge hat.
+    const args: string[] = [
+      "-i",
+      inputPath,
+      "-vf",
+      chain,
+      "-c:v",
+      "libx264",
+      "-preset",
+      "veryfast",
+      "-crf",
+      "23",
+      "-pix_fmt",
+      "yuv420p",
+      "-c:a",
+      "aac",
+      "-b:a",
+      "128k",
+      "-movflags",
+      "+faststart",
+    ];
+    if (durationSec && durationSec > 0) {
+      args.push("-t", String(durationSec));
+    }
+    args.push("-y", outputPath);
+    await runFfmpeg(args, "burn subtitles");
 
     const out = await readFile(outputPath);
     return { buffer: out, burned: true };
