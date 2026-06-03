@@ -1769,7 +1769,7 @@ async function generateOneVideoCreative(
   // lassen ihn deshalb komplett text-frei rendern (s. Prompt) und brennen
   // saubere deutsche Untertitel per Whisper + ffmpeg nachträglich rein.
   await onProgress?.("Brenne deutsche Untertitel ein…");
-  const subResult = await burnGermanSubtitles(rawBuffer, durationSec);
+  const subResult = await burnGermanSubtitles(rawBuffer);
   if (!subResult.burned && subResult.note) {
     await onProgress?.(`Untertitel übersprungen: ${subResult.note.slice(0, 180)}`);
   }

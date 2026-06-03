@@ -108,24 +108,6 @@ async function transcribeAudio(audioPath: string): Promise<WhisperSegment[]> {
   return json.segments;
 }
 
-// drawtext erwartet, dass im Text-Argument bestimmte Zeichen escaped sind:
-//   \  →  \\
-//   '  →  \'   (innerhalb '…')
-//   :  →  \:   (Filter-Trennzeichen)
-//   ,  →  \,   (Filter-Argument-Trennzeichen)
-//   %  →  \%
-//   newline → entfernen, sonst killt es den Filter.
-function escapeDrawtext(s: string): string {
-  return s
-    .replace(/\\/g, "\\\\")
-    .replace(/'/g, "\\'")
-    .replace(/:/g, "\\:")
-    .replace(/,/g, "\\,")
-    .replace(/%/g, "\\%")
-    .replace(/[\r\n]+/g, " ")
-    .trim();
-}
-
 // Lange Zeilen in 2–4 Zeilen wrappen. maxCharsPerLine ist defensiv klein
 // (≈22 Zeichen) damit lange deutsche Komposita wie „Krankenversicherung"
 // am Frame-Rand nicht abgeschnitten werden.
@@ -156,20 +138,27 @@ function wrapText(text: string, maxCharsPerLine = 22, maxLines = 4): string {
 function buildDrawtextChain(
   segments: WhisperSegment[],
   fontFile: string,
-): string {
+  textFilesDir: string,
+): { chain: string; textFiles: { path: string; content: string }[] } {
   const safeFont = fontFile.replace(/\\/g, "/").replace(/:/g, "\\:");
   const stages: string[] = [];
+  const textFiles: { path: string; content: string }[] = [];
+  let idx = 0;
   for (const seg of segments) {
-    const text = wrapText(seg.text);
-    if (!text) continue;
-    // Filter-Argumente sind selbst durch `:` getrennt — Wert mit `'…'`
-    // quoten und Innen-Werte escapen.
+    const wrapped = wrapText(seg.text);
+    if (!wrapped.trim()) continue;
+    // textfile= statt text= verwenden: drawtext liest die Datei roh ein und
+    // rendert echte Newlines als Zeilenumbruch — kein Escaping-Streit mit dem
+    // ffmpeg-Filter-Parser, der `\n` sonst je nach Build anders interpretiert.
+    const filePath = join(textFilesDir, `seg-${idx++}.txt`);
+    textFiles.push({ path: filePath, content: wrapped });
+    const safePath = filePath.replace(/\\/g, "/").replace(/:/g, "\\:");
     const drawtext = [
       `fontfile=${safeFont}`,
-      `text='${escapeDrawtext(text)}'`,
+      `textfile=${safePath}`,
       `enable='between(t,${seg.start.toFixed(2)},${seg.end.toFixed(2)})'`,
-      // Horizontal zentriert mit Fallback gegen Cutoff: falls der Text
-      // doch mal breiter wird als das Frame minus 80px Margin, wird er auf
+      // Horizontal zentriert mit Fallback gegen Cutoff: falls eine Zeile
+      // doch mal breiter wird als (Frame minus 80px Margin), wird sie auf
       // 40px-Margin links geklemmt statt rechts abzuschneiden.
       `x=if(gt(text_w\\,w-80)\\,40\\,(w-text_w)/2)`,
       // Vertikal näher zur Mitte (zentriert, leicht nach unten versetzt).
@@ -180,22 +169,18 @@ function buildDrawtextChain(
       `bordercolor=black`,
       `line_spacing=8`,
       `box=0`,
-      // Hält die Glyphen-Box im sichtbaren Bereich (drawtext-Built-in).
       `fix_bounds=1`,
     ].join(":");
     stages.push(`drawtext=${drawtext}`);
   }
-  return stages.join(",");
+  return { chain: stages.join(","), textFiles };
 }
 
 // Brennt deutsche Untertitel ins MP4 ein und liefert den neuen Buffer zurück.
 // Bei jedem Fehler (Whisper down, ffmpeg fails, Audio fehlt) wird der Original-
 // Buffer zurückgegeben — Untertitel sind ein Nice-to-have, kein Hard-Block.
-// durationSec wird, wenn angegeben, als harter Output-Cap gesetzt, damit das
-// Video nicht durch Stream-Mismatch (Audio kürzer als Video o.ä.) gekürzt wird.
 export async function burnGermanSubtitles(
   videoBuffer: Buffer,
-  durationSec?: number,
 ): Promise<{ buffer: Buffer; burned: boolean; note?: string }> {
   const dir = await mkdtemp(join(tmpdir(), "sora-subs-"));
   const inputPath = join(dir, "in.mp4");
@@ -231,8 +216,14 @@ export async function burnGermanSubtitles(
       };
     }
 
-    // 3. drawtext-Filterkette bauen.
-    const chain = buildDrawtextChain(segments, getFontPath());
+    // 3. drawtext-Filterkette bauen. Pro Segment wird die Text-Datei in
+    // tempdir geschrieben und referenziert — vermeidet Escaping-Probleme
+    // bei Sonderzeichen und macht echte Zeilenumbrüche zuverlässig.
+    const { chain, textFiles } = buildDrawtextChain(
+      segments,
+      getFontPath(),
+      dir,
+    );
     if (!chain) {
       return {
         buffer: videoBuffer,
@@ -240,36 +231,40 @@ export async function burnGermanSubtitles(
         note: "Keine renderbaren Segmente — Untertitel übersprungen.",
       };
     }
+    for (const f of textFiles) {
+      await writeFile(f.path, f.content, "utf8");
+    }
 
     // 4. Encoding. Audio neu codieren (statt -c:a copy), damit Container-
     // Quirks aus Sora-Output nicht zu Stream-Mismatch und vorzeitigem Ende
-    // führen. Wenn die Sora-Länge bekannt ist, hart als -t setzen — damit
-    // ist garantiert, dass das Output mind. die volle Sora-Länge hat.
-    const args: string[] = [
-      "-i",
-      inputPath,
-      "-vf",
-      chain,
-      "-c:v",
-      "libx264",
-      "-preset",
-      "veryfast",
-      "-crf",
-      "23",
-      "-pix_fmt",
-      "yuv420p",
-      "-c:a",
-      "aac",
-      "-b:a",
-      "128k",
-      "-movflags",
-      "+faststart",
-    ];
-    if (durationSec && durationSec > 0) {
-      args.push("-t", String(durationSec));
-    }
-    args.push("-y", outputPath);
-    await runFfmpeg(args, "burn subtitles");
+    // führen. KEIN hartes -t mehr — wir vertrauen der echten Input-Länge,
+    // sonst beschneiden wir den Sora-Output, falls er länger ist als die
+    // Env-Annahme.
+    await runFfmpeg(
+      [
+        "-i",
+        inputPath,
+        "-vf",
+        chain,
+        "-c:v",
+        "libx264",
+        "-preset",
+        "veryfast",
+        "-crf",
+        "23",
+        "-pix_fmt",
+        "yuv420p",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "128k",
+        "-movflags",
+        "+faststart",
+        "-y",
+        outputPath,
+      ],
+      "burn subtitles",
+    );
 
     const out = await readFile(outputPath);
     return { buffer: out, burned: true };
