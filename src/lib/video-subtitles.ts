@@ -181,6 +181,7 @@ function buildDrawtextChain(
 // Buffer zurückgegeben — Untertitel sind ein Nice-to-have, kein Hard-Block.
 export async function burnGermanSubtitles(
   videoBuffer: Buffer,
+  onProgress?: (msg: string) => void | Promise<void>,
 ): Promise<{ buffer: Buffer; burned: boolean; note?: string }> {
   const dir = await mkdtemp(join(tmpdir(), "sora-subs-"));
   const inputPath = join(dir, "in.mp4");
@@ -189,6 +190,7 @@ export async function burnGermanSubtitles(
 
   try {
     await writeFile(inputPath, videoBuffer);
+    await onProgress?.("Audio extrahieren…");
 
     // 1. Audio extrahieren.
     await runFfmpeg(
@@ -207,7 +209,11 @@ export async function burnGermanSubtitles(
     );
 
     // 2. Whisper-Transkription.
+    await onProgress?.("Whisper transkribiert…");
     const segments = await transcribeAudio(audioPath);
+    await onProgress?.(
+      `Whisper: ${segments.length} ${segments.length === 1 ? "Segment" : "Segmente"}.`,
+    );
     if (segments.length === 0) {
       return {
         buffer: videoBuffer,
@@ -234,6 +240,7 @@ export async function burnGermanSubtitles(
     for (const f of textFiles) {
       await writeFile(f.path, f.content, "utf8");
     }
+    await onProgress?.("ffmpeg encodiert mit Untertiteln…");
 
     // 4. Encoding. Audio neu codieren (statt -c:a copy), damit Container-
     // Quirks aus Sora-Output nicht zu Stream-Mismatch und vorzeitigem Ende
