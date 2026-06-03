@@ -15,9 +15,21 @@ import { spawn } from "node:child_process";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
 
-const ffmpegPath: string = ffmpegInstaller.path;
+// @ffmpeg-installer/ffmpeg löst seinen Binary-Pfad per dynamic require auf —
+// Turbopack kann das nicht statisch bundeln. Wir laden das Modul deshalb
+// erst beim ersten Aufruf zur Laufzeit (eval-Require, gegen Bundler-Magic),
+// kombiniert mit `serverExternalPackages` in next.config.
+let cachedFfmpegPath: string | null = null;
+function getFfmpegPath(): string {
+  if (cachedFfmpegPath) return cachedFfmpegPath;
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const installer = eval("require")("@ffmpeg-installer/ffmpeg") as {
+    path: string;
+  };
+  cachedFfmpegPath = installer.path;
+  return cachedFfmpegPath;
+}
 
 type WhisperSegment = {
   start: number;
@@ -27,7 +39,9 @@ type WhisperSegment = {
 
 async function runFfmpeg(args: string[], step: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const proc = spawn(ffmpegPath, args, { stdio: ["ignore", "pipe", "pipe"] });
+    const proc = spawn(getFfmpegPath(), args, {
+      stdio: ["ignore", "pipe", "pipe"],
+    });
     let stderr = "";
     proc.stderr.on("data", (chunk) => {
       stderr += chunk.toString();
