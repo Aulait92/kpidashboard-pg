@@ -54,6 +54,7 @@ async function handle(req: Request) {
             marketers: result.outbrain.result.marketers,
             errors: result.outbrain.result.errors,
             unmatched: result.outbrain.result.unmatched,
+            debug: result.outbrain.result.debug,
           }
         : { ok: false, error: result.outbrain.error },
       push: result.push,

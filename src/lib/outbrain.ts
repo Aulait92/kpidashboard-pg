@@ -33,6 +33,10 @@ export type OutbrainSyncResult = {
   matched: { campaign: string; product: MetaProduct; spend: number }[];
   unmatched: { campaign: string; spend: number }[];
   errors: string[];
+  // Diagnose: erste Antwort-Häppchen pro Marketer, damit man bei rows=0
+  // sieht, was die API tatsächlich zurückgibt (Feldname, Pagination,
+  // Endpoint-Mismatch, leerer Account, …). Nur die ersten ~800 Zeichen.
+  debug?: { marketerId: string; sample: string }[];
 };
 
 function getEnv() {
@@ -66,6 +70,7 @@ async function fetchCampaignsWindow(
   token: string,
   from: string,
   to: string,
+  debugSink?: (sample: string) => void,
 ): Promise<CampaignResult[]> {
   const url = new URL(
     `${OUTBRAIN_API}/reports/marketers/${marketerId}/campaigns`,
@@ -78,6 +83,7 @@ async function fetchCampaignsWindow(
 
   const all: CampaignResult[] = [];
   let offset = 0;
+  let firstBody = "";
   // Outbrain paginiert per offset/limit. Wir bleiben bis totalResults erreicht.
   // Hard cap als Schutz gegen Endlosschleifen.
   for (let safety = 0; safety < 50; safety++) {
@@ -86,7 +92,16 @@ async function fetchCampaignsWindow(
       headers: { "OB-TOKEN-V1": token },
       cache: "no-store",
     });
-    const json = (await res.json()) as CampaignsResponse;
+    const text = await res.text();
+    if (!firstBody) firstBody = text;
+    let json: CampaignsResponse;
+    try {
+      json = JSON.parse(text) as CampaignsResponse;
+    } catch {
+      throw new Error(
+        `Outbrain-API für marketer ${marketerId} (${from}…${to}) gab kein JSON zurück: ${text.slice(0, 400)}`,
+      );
+    }
     if (!res.ok || json.error) {
       const msg = json.error?.message ?? `HTTP ${res.status}`;
       throw new Error(
@@ -99,6 +114,12 @@ async function fetchCampaignsWindow(
     offset += batch.length;
     if (batch.length === 0 || offset >= total) break;
   }
+  // Wenn die API nichts zurückgegeben hat, geben wir den ersten Body weiter
+  // — bei rows=0 hilft das beim Debuggen (falscher Endpoint, leerer Account,
+  // anderes Response-Schema).
+  if (all.length === 0 && debugSink && firstBody) {
+    debugSink(firstBody.slice(0, 800));
+  }
   return all;
 }
 
@@ -109,11 +130,16 @@ async function fetchCampaigns(
   token: string,
   since: string,
   until: string,
+  debugSink?: (sample: string) => void,
 ): Promise<CampaignResult[]> {
   const WINDOW_DAYS = 90;
   const out: CampaignResult[] = [];
   let chunkStart = new Date(`${since}T00:00:00Z`);
   const end = new Date(`${until}T00:00:00Z`);
+  let firstDebug: string | null = null;
+  const collect = (s: string) => {
+    if (!firstDebug) firstDebug = s;
+  };
   while (chunkStart.getTime() <= end.getTime()) {
     const chunkEndCandidate = addDays(chunkStart, WINDOW_DAYS - 1);
     const chunkEnd =
@@ -123,9 +149,13 @@ async function fetchCampaigns(
       token,
       format(chunkStart, "yyyy-MM-dd"),
       format(chunkEnd, "yyyy-MM-dd"),
+      collect,
     );
     out.push(...chunk);
     chunkStart = addDays(chunkEnd, 1);
+  }
+  if (out.length === 0 && debugSink && firstDebug) {
+    debugSink(firstDebug);
   }
   return out;
 }
@@ -171,8 +201,19 @@ export async function syncOutbrain(): Promise<OutbrainSyncResult> {
 
   for (const marketerId of marketers) {
     try {
-      const campaigns = await fetchCampaigns(marketerId, token, since, until);
+      const debugForThis: string[] = [];
+      const campaigns = await fetchCampaigns(
+        marketerId,
+        token,
+        since,
+        until,
+        (sample) => debugForThis.push(sample),
+      );
       result.marketers.push({ id: marketerId, rows: campaigns.length });
+      if (campaigns.length === 0 && debugForThis.length > 0) {
+        result.debug = result.debug ?? [];
+        result.debug.push({ marketerId, sample: debugForThis[0] });
+      }
 
       for (const c of campaigns) {
         const name = c.campaign?.name?.trim();
