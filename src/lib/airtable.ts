@@ -20,11 +20,17 @@ const REACHED_STATUSES = new Set([
   "Kein Interesse",
   // Ein Storno setzt voraus, dass der Kunde vorher erreicht & abgeschlossen
   // wurde — also bleibt der Lead „erreicht".
+  "Storno",
   "Storniert",
 ]);
 
 const CLOSED_STATUS = "Abschluss";
-const CANCELLED_STATUS = "Storniert";
+// Mehrere Schreibweisen akzeptieren — Airtable-Single-Select-Werte variieren
+// von Base zu Base („Storno", „Storniert", „storniert", …).
+const CANCELLED_STATUSES = new Set(["storno", "storniert"]);
+function isCancelledStatus(status: string | null): boolean {
+  return status != null && CANCELLED_STATUSES.has(status.trim().toLowerCase());
+}
 
 const TABLES = [
   { name: process.env.AIRTABLE_TABLE_WECHSEL ?? "PKV-Wechsel-Leads", source: "Wechsel" },
@@ -524,8 +530,9 @@ export async function syncAirtable(): Promise<SyncResult> {
         const name = resolveLeadName(rec.fields);
 
         const reached = status ? REACHED_STATUSES.has(status) : false;
-        const isClosed = status === CLOSED_STATUS;
-        const isCancelled = status === CANCELLED_STATUS;
+        const isCancelled = isCancelledStatus(status);
+        // Storno → nicht (mehr) als Abschluss zählen.
+        const isClosed = status === CLOSED_STATUS && !isCancelled;
         const closedAt = isClosed ? createdAt : null;
 
         const customerId = await getCustomerId(buyer);
