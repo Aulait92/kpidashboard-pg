@@ -54,7 +54,9 @@ export function classifyProduct(campaignName: string): MetaProduct | null {
   if (n.includes("neugeschäft") || n.includes("neugeschaeft") || n.includes("neuvertrag")) {
     return "Neugeschäft";
   }
-  if (n.includes("wechsel")) return "Wechsel";
+  // „Wechsel" (Vorgang) ODER „Wechsler" (Person) — letzteres enthält
+  // „wechsel" NICHT als Substring (w-e-c-h-s-l-e-r vs. w-e-c-h-s-e-l).
+  if (n.includes("wechsel") || n.includes("wechsler")) return "Wechsel";
   return null;
 }
 
