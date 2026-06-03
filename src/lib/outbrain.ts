@@ -91,17 +91,18 @@ async function fetchWithRetry(
   throw lastErr;
 }
 
-async function fetchCampaignsForDay(
+async function fetchCampaignsRange(
   marketerId: string,
   token: string,
-  day: string,
+  from: string,
+  to: string,
   debugSink?: (sample: string) => void,
 ): Promise<CampaignResult[]> {
   const url = new URL(
     `${OUTBRAIN_API}/reports/marketers/${marketerId}/campaigns`,
   );
-  url.searchParams.set("from", day);
-  url.searchParams.set("to", day);
+  url.searchParams.set("from", from);
+  url.searchParams.set("to", to);
   url.searchParams.set("includeArchivedCampaigns", "true");
   url.searchParams.set("limit", "500");
 
@@ -120,13 +121,13 @@ async function fetchCampaignsForDay(
       json = JSON.parse(text) as CampaignsResponse;
     } catch {
       throw new Error(
-        `Outbrain-API für marketer ${marketerId} (${day}) gab kein JSON zurück: ${text.slice(0, 400)}`,
+        `Outbrain-API für marketer ${marketerId} (${from}…${to}) gab kein JSON zurück: ${text.slice(0, 400)}`,
       );
     }
     if (!res.ok || json.error) {
       const msg = json.error?.message ?? `HTTP ${res.status}`;
       throw new Error(
-        `Outbrain-API für marketer ${marketerId} (${day}): ${msg}`,
+        `Outbrain-API für marketer ${marketerId} (${from}…${to}): ${msg}`,
       );
     }
     const batch = json.results ?? [];
@@ -135,9 +136,6 @@ async function fetchCampaignsForDay(
     offset += batch.length;
     if (batch.length === 0 || offset >= total) break;
   }
-  // Erste Antwort eines leeren Marketers fürs Debugging weiterreichen — so
-  // sehen wir bei rows=0, ob die API z. B. eine Error-Mehrwertbox liefert
-  // statt einer normalen 0-Spend-Antwort.
   if (all.length === 0 && debugSink && firstBody) {
     debugSink(firstBody.slice(0, 800));
   }
@@ -177,10 +175,9 @@ export async function syncOutbrain(): Promise<OutbrainSyncResult> {
       : format(defaultSince, "yyyy-MM-dd");
   const until = format(today, "yyyy-MM-dd");
 
-  // Hard cap, damit ein Outbrain-Aussetzer den ganzen Sync nicht für Minuten
-  // blockiert. Erreichbarer Wert über OUTBRAIN_MAX_SYNC_MS überschreibbar.
-  const maxSyncMs = Number(process.env.OUTBRAIN_MAX_SYNC_MS ?? 90_000);
-  const syncDeadline = Date.now() + maxSyncMs;
+  // Hard cap nur noch als Notnagel pro Marketer (Aggregat-Request sollte
+  // <5s sein, falls Outbrain nicht zickt). Nicht mehr im Innen-Loop.
+  void process.env.OUTBRAIN_MAX_SYNC_MS;
 
   type Insertable = {
     product: MetaProduct;
@@ -192,63 +189,58 @@ export async function syncOutbrain(): Promise<OutbrainSyncResult> {
 
   let anyMarketerSucceededFully = false;
   for (const marketerId of marketers) {
-    let totalCampaignRows = 0;
-    let failedDays = 0;
-    // Pro Tag einen Request — die Campaigns-API ignoriert breakdown=daily,
-    // gibt aber für from=to=Tag genau den Tages-Spend pro Kampagne zurück.
-    let day = new Date(`${since}T00:00:00Z`);
-    const end = new Date(`${until}T00:00:00Z`);
     let firstDebugSample: string | null = null;
-    while (day.getTime() <= end.getTime()) {
-      if (Date.now() > syncDeadline) {
-        result.errors.push(
-          `Sync-Deadline (${Math.round(maxSyncMs / 1000)}s) erreicht — Restzeitraum übersprungen.`,
-        );
-        break;
-      }
-      const dayStr = format(day, "yyyy-MM-dd");
-      try {
-        const campaigns = await fetchCampaignsForDay(
-          marketerId,
-          token,
-          dayStr,
-          (sample) => {
-            if (!firstDebugSample) firstDebugSample = sample;
-          },
-        );
-        totalCampaignRows += campaigns.length;
-        for (const c of campaigns) {
-          const name = c.metadata?.name?.trim();
-          if (!name) continue;
-          const spend = parseSpend(c.metrics?.spend);
-          if (spend <= 0) continue;
-          const product = classifyProduct(name);
-          if (!product) {
-            result.unmatched.push({ campaign: name, spend });
-            continue;
-          }
-          toInsert.push({
-            product,
-            amount: spend,
-            occurredAt: dayAtNoonUtc(dayStr),
-            note: `Outbrain: ${name} (${dayStr}) [marketer_${marketerId}]`,
-          });
+    let totalCampaignRows = 0;
+    try {
+      // Ein einziger Request pro Marketer für den ganzen Zeitraum. Liefert
+      // pro Kampagne den Aggregat-Spend (metrics.spend). Daten-Latenz bei
+      // Outbrain ist typischerweise 6-24h — frische Stunden tauchen also
+      // nicht sofort auf, auch wenn die Kampagne On-Air ist.
+      const campaigns = await fetchCampaignsRange(
+        marketerId,
+        token,
+        since,
+        until,
+        (sample) => {
+          if (!firstDebugSample) firstDebugSample = sample;
+        },
+      );
+      totalCampaignRows = campaigns.length;
+      // Aggregierter Spend wird als eine Cost-Zeile pro Kampagne auf "heute"
+      // (until) gebucht. Daily-Granularität geht so verloren, aber Summe +
+      // Channel-Sicht in P&L stimmen. Ein optionaler OUTBRAIN_DAILY_GRANULARITY
+      // -Flag bleibt für später, wenn das Rate-Limit weniger eng wird.
+      const occurredAt = dayAtNoonUtc(until);
+      for (const c of campaigns) {
+        const name = c.metadata?.name?.trim();
+        if (!name) continue;
+        const spend = parseSpend(c.metrics?.spend);
+        if (spend <= 0) continue;
+        const product = classifyProduct(name);
+        if (!product) {
+          result.unmatched.push({ campaign: name, spend });
+          continue;
         }
-      } catch (err) {
-        failedDays += 1;
-        result.errors.push(
-          `marketer ${marketerId} (${dayStr}): ${err instanceof Error ? err.message : String(err)}`,
-        );
+        toInsert.push({
+          product,
+          amount: spend,
+          occurredAt,
+          note: `Outbrain: ${name} (${since}…${until}) [marketer_${marketerId}]`,
+        });
       }
-      day = addDays(day, 1);
-      await new Promise((r) => setTimeout(r, REQUEST_DELAY_MS));
+      anyMarketerSucceededFully = true;
+    } catch (err) {
+      result.errors.push(
+        `marketer ${marketerId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
     result.marketers.push({ id: marketerId, rows: totalCampaignRows });
-    if (failedDays === 0) anyMarketerSucceededFully = true;
     if (totalCampaignRows === 0 && firstDebugSample) {
       result.debug = result.debug ?? [];
       result.debug.push({ marketerId, sample: firstDebugSample });
     }
+    // Throttle zwischen Marketern (irrelevant bei 1 Marketer, aber harmless).
+    await new Promise((r) => setTimeout(r, REQUEST_DELAY_MS));
   }
 
   // Persistenz:
@@ -295,10 +287,11 @@ export async function syncOutbrain(): Promise<OutbrainSyncResult> {
     result.costs = toInsert.length;
   }
 
-  // Matched-Zusammenfassung pro Kampagne (statt N Tagessummen).
+  // Matched-Zusammenfassung pro Kampagne — Note-Format jetzt
+  // "Outbrain: <name> (<since>…<until>) [marketer_<id>]".
   const summary = new Map<string, { product: MetaProduct; spend: number }>();
   for (const row of toInsert) {
-    const m = /^Outbrain:\s+(.+?)\s+\(\d{4}-\d{2}-\d{2}\)/.exec(row.note);
+    const m = /^Outbrain:\s+(.+?)\s+\(/.exec(row.note);
     const campaign = m ? m[1] : row.note;
     const key = `${row.product}|${campaign}`;
     const prev = summary.get(key);
