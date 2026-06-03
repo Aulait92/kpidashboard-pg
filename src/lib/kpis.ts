@@ -34,6 +34,10 @@ export type Kpis = {
   avgHoursToFirstContact: number | null;
   closingRate: number | null; // 0..1
   revenue: number;
+  // Storno-Kennzahlen: Summe & Anzahl der stornierten Verkäufe im Zeitraum.
+  // Der Storno ist im Netto-Umsatz oben bereits abgezogen (cancelled=false-Filter).
+  cancelledRevenue: number;
+  cancelledLeads: number;
   leadCosts: number;
   otherCosts: number;
   costPerLead: number | null;
@@ -172,6 +176,7 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
   const [
     leads,
     revenueAgg,
+    cancelledAgg,
     leadCosts,
     otherCostsAgg,
   ] = await Promise.all([
@@ -196,6 +201,17 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
       where: {
         ...customerClause,
         ...productRevenueClause,
+        cancelled: false,
+        occurredAt: { gte: range.from, lte: range.to },
+      },
+    }),
+    prisma.revenue.aggregate({
+      _sum: { amount: true },
+      _count: { _all: true },
+      where: {
+        ...customerClause,
+        ...productRevenueClause,
+        cancelled: true,
         occurredAt: { gte: range.from, lte: range.to },
       },
     }),
@@ -247,6 +263,8 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
       : null;
 
   const revenue = decToNumber(revenueAgg._sum.amount);
+  const cancelledRevenue = decToNumber(cancelledAgg._sum.amount);
+  const cancelledLeads = cancelledAgg._count._all;
   const otherCosts = decToNumber(otherCostsAgg._sum.amount);
 
   const costPerLead = totalLeads > 0 ? leadCosts / totalLeads : null;
@@ -267,6 +285,8 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
     avgHoursToFirstContact,
     closingRate,
     revenue,
+    cancelledRevenue,
+    cancelledLeads,
     leadCosts,
     otherCosts,
     costPerLead,
@@ -343,6 +363,7 @@ export async function computeCustomerLeaderboard(params: {
         _sum: { amount: true },
         where: {
           ...productRevenueClause,
+          cancelled: false,
           occurredAt: { gte: range.from, lte: range.to },
         },
       }),
@@ -543,6 +564,7 @@ export async function computeProductBreakdown(params: {
     prisma.revenue.findMany({
       where: {
         ...customerClause,
+        cancelled: false,
         occurredAt: { gte: range.from, lte: range.to },
         lead: { is: { source: { not: null } } },
       },
@@ -701,6 +723,7 @@ export async function computeTimeSeries(params: {
       where: {
         ...customerClause,
         ...productRevenueClause,
+        cancelled: false,
         occurredAt: { gte: range.from, lte: range.to },
       },
       select: { amount: true, occurredAt: true },

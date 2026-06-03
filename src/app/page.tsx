@@ -279,10 +279,23 @@ function KpiGrid({
         <KpiCard
           label="Umsatz"
           value={formatEUR(k.revenue)}
-          hint="Brutto im Zeitraum"
+          hint={
+            k.cancelledLeads > 0
+              ? `Netto im Zeitraum · Stornos abgezogen`
+              : "Brutto im Zeitraum"
+          }
           tone="positive"
           delta={delta(k.revenue, p.revenue)}
           sparkline={{ points, dataKey: "revenue" }}
+        />
+        <KpiCard
+          label="Stornos"
+          value={formatEUR(k.cancelledRevenue)}
+          hint={`${formatNumber(k.cancelledLeads)} stornierte ${
+            k.cancelledLeads === 1 ? "Abschluss" : "Abschlüsse"
+          } im Zeitraum (vom Umsatz abgezogen)`}
+          tone={k.cancelledRevenue > 0 ? "negative" : undefined}
+          delta={delta(k.cancelledRevenue, p.cancelledRevenue, true)}
         />
         <KpiCard
           label="Kosten / Lead"

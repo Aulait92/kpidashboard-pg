@@ -18,9 +18,13 @@ const REACHED_STATUSES = new Set([
   "Angebot/Beratung läuft",
   "Abschluss",
   "Kein Interesse",
+  // Ein Storno setzt voraus, dass der Kunde vorher erreicht & abgeschlossen
+  // wurde — also bleibt der Lead „erreicht".
+  "Storniert",
 ]);
 
 const CLOSED_STATUS = "Abschluss";
+const CANCELLED_STATUS = "Storniert";
 
 const TABLES = [
   { name: process.env.AIRTABLE_TABLE_WECHSEL ?? "PKV-Wechsel-Leads", source: "Wechsel" },
@@ -521,6 +525,7 @@ export async function syncAirtable(): Promise<SyncResult> {
 
         const reached = status ? REACHED_STATUSES.has(status) : false;
         const isClosed = status === CLOSED_STATUS;
+        const isCancelled = status === CANCELLED_STATUS;
         const closedAt = isClosed ? createdAt : null;
 
         const customerId = await getCustomerId(buyer);
@@ -563,6 +568,9 @@ export async function syncAirtable(): Promise<SyncResult> {
 
         if (price > 0) {
           // Lead-Umsatz: pro Lead höchstens eine Revenue-Zeile (idempotent).
+          // Storno-Leads: Eintrag wird angelegt/aktualisiert, aber mit
+          // cancelled=true — Betrag fließt nicht in den Netto-Umsatz, lässt
+          // sich aber für die Storno-Kachel auswerten.
           const existing = await prisma.revenue.findFirst({
             where: { leadId: lead.id },
             select: { id: true },
@@ -574,6 +582,7 @@ export async function syncAirtable(): Promise<SyncResult> {
                 amount: price,
                 occurredAt: createdAt,
                 customerId,
+                cancelled: isCancelled,
               },
             });
           } else {
@@ -583,17 +592,28 @@ export async function syncAirtable(): Promise<SyncResult> {
                 occurredAt: createdAt,
                 customerId,
                 leadId: lead.id,
+                cancelled: isCancelled,
               },
             });
-            // Erst-Insert eines Verkaufs → Push-Trigger merken.
-            result.newSales.push({
-              buyer,
-              product: table.source,
-              amount: price,
-              airtableId: rec.id,
-            });
+            if (!isCancelled) {
+              // Erst-Insert eines Verkaufs → Push-Trigger merken.
+              result.newSales.push({
+                buyer,
+                product: table.source,
+                amount: price,
+                airtableId: rec.id,
+              });
+            }
           }
-          result.revenues += 1;
+          if (!isCancelled) result.revenues += 1;
+        } else if (isCancelled) {
+          // Storno ohne Preis in Airtable: existierende Revenue (aus früherer
+          // Abschluss-Phase) auf cancelled flippen, damit der Storno trotzdem
+          // gemessen wird.
+          await prisma.revenue.updateMany({
+            where: { leadId: lead.id, cancelled: false },
+            data: { cancelled: true },
+          });
         }
 
         result.leads += 1;

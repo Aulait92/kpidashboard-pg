@@ -132,6 +132,10 @@ model Revenue {
   leadId     String?
   amount     Decimal  @db.Decimal(12, 2)
   occurredAt DateTime @default(now())
+  // Storno-Flag: true wenn der Lead in Airtable den Status „Storniert" hat.
+  // Stornierte Revenues bleiben mit Betrag erhalten (für die Storno-Kachel),
+  // werden aber aus allen Umsatz-/Marge-Aggregationen ausgefiltert.
+  cancelled  Boolean  @default(false)
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   lead     Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
