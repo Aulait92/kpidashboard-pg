@@ -1695,9 +1695,9 @@ Antworte mit GENAU EINEM <creative_html>-Block, KEINE anderen Tags:
 // Storyboard-Konzept → Sora-Prompt → MP4 → R2 → Telegram.
 
 const VIDEO_CONCEPT_REQUEST: Record<string, string> = {
-  Kinderwunsch: `Entwirf ein konkretes, warmes UGC-Reel-Storyboard für Meta-Video-Ads (~20 Sekunden) für Kinderwunschbehandlungen, die bis zu 100% gefördert werden können. Vertikales 9:16-Format. Beschreibe das Video Sekunde für Sekunde, inkl. Kamerawinkel, Person/Setting, gesprochene Worte (deutsch, authentisch, nicht werblich) und Stimmung. Hook in den ersten 3 Sekunden, Wertversprechen in der Mitte, sanfter CTA am Ende.`,
-  Wechsel: `Entwirf ein UGC-Reel-Storyboard (~20 Sekunden, vertikal 9:16) für Meta-Video-Ads zum Thema PKV-Tarifwechsel intern beim gleichen Versicherer — bis zu 50% Beitragsersparnis ohne Anbieterwechsel und ohne neue Gesundheitsprüfung. Beschreibe Sekunde für Sekunde: Kamerawinkel, Person/Setting, gesprochene Worte (deutsch, ehrlich, „Selbst-Aufnahme"-Look), Stimmung. Hook in 3s, Pain → Lösung → CTA.`,
-  Neugeschäft: `Entwirf ein UGC-Reel-Storyboard (~20 Sekunden, vertikal 9:16) für Meta-Video-Ads zum Thema private Krankenversicherung im Neuvertrag für Angestellte/Selbstständige. Beschreibe Sekunde für Sekunde: Kamerawinkel, Setting, gesprochene Worte (deutsch, vertrauensvoll), Stimmung. Hook in 3s, Vorteile, CTA.`,
+  Kinderwunsch: `Entwirf ein konkretes, warmes UGC-Storyboard für Meta-Video-Ads (~20 Sekunden) für Kinderwunschbehandlungen, die bis zu 100% gefördert werden können. Quadratisches 1:1-Format (Feed). Beschreibe das Video Sekunde für Sekunde, inkl. Kamerawinkel, Person/Setting, gesprochene Worte (deutsch, authentisch, nicht werblich) und Stimmung. Hook in den ersten 3 Sekunden, Wertversprechen in der Mitte, sanfter CTA am Ende. Komposition zentriert, damit nichts im 1:1-Crop verloren geht.`,
+  Wechsel: `Entwirf ein UGC-Storyboard (~20 Sekunden, quadratisch 1:1) für Meta-Video-Ads zum Thema PKV-Tarifwechsel intern beim gleichen Versicherer — bis zu 50% Beitragsersparnis ohne Anbieterwechsel und ohne neue Gesundheitsprüfung. Beschreibe Sekunde für Sekunde: Kamerawinkel, Person/Setting, gesprochene Worte (deutsch, ehrlich, „Selbst-Aufnahme"-Look), Stimmung. Hook in 3s, Pain → Lösung → CTA. Komposition zentriert (1:1-Crop).`,
+  Neugeschäft: `Entwirf ein UGC-Storyboard (~20 Sekunden, quadratisch 1:1) für Meta-Video-Ads zum Thema private Krankenversicherung im Neuvertrag für Angestellte/Selbstständige. Beschreibe Sekunde für Sekunde: Kamerawinkel, Setting, gesprochene Worte (deutsch, vertrauensvoll), Stimmung. Hook in 3s, Vorteile, CTA. Komposition zentriert (1:1-Crop).`,
 };
 
 async function brainstormVideoStoryboards(
@@ -1705,7 +1705,7 @@ async function brainstormVideoStoryboards(
 ): Promise<string[]> {
   const conceptRequest =
     VIDEO_CONCEPT_REQUEST[brief.campaignKey] ??
-    `Entwirf ein UGC-Reel-Storyboard (~20s, vertikal 9:16) für eine ${brief.campaignKey}-Kampagne. Beschreibe Sekunde für Sekunde Kamerawinkel, Person/Setting, gesprochene Worte (deutsch) und Stimmung.`;
+    `Entwirf ein UGC-Storyboard (~20s, quadratisch 1:1) für eine ${brief.campaignKey}-Kampagne. Beschreibe Sekunde für Sekunde Kamerawinkel, Person/Setting, gesprochene Worte (deutsch) und Stimmung. Komposition zentriert (1:1-Crop).`;
   const raw = await llmText({
     model: process.env.CONCEPT_MODEL || "claude-opus-4-8",
     system: "",
@@ -1747,7 +1747,7 @@ function buildSoraPrompt(storyboard: string, cfg: DirectImageConfig): string {
     .filter(Boolean)
     .join("\n");
   return [
-    `Vertikales 9:16 UGC-Reel (Smartphone-Style), 20 Sekunden, deutscher Markt.`,
+    `Quadratisches 1:1 UGC-Video (Feed-Style), 20 Sekunden, deutscher Markt. Komposition zentriert, alles Wichtige in der Bildmitte.`,
     `Thema: ${cfg.topic}.`,
     `Storyboard:\n${storyboard}`,
     onScreen ? `\nOn-Screen-Text:\n${onScreen}` : "",
@@ -1779,7 +1779,7 @@ async function generateOneVideoCreative(
     cta: cfg.cta,
     adText: copy.adText,
     fbHeadline: copy.fbHeadline,
-    mechanic: "Sora 2 UGC-Reel",
+    mechanic: "Sora 2 UGC-Video (1:1)",
     imagePrompt: soraPrompt,
     imageUrl: "",
     concept: storyboard,

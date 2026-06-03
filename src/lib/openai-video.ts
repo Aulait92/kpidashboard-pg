@@ -7,7 +7,7 @@
 // vs. Sora 2 Pro) sind unterschiedliche max. Längen erlaubt:
 //   SORA_MODEL          default "sora-2-pro" (für 20s-Clips)
 //   SORA_DURATION_SEC   default 20
-//   SORA_SIZE           default "720x1280" (vertikal 9:16, Reels-Format)
+//   SORA_SIZE           default "720x720" (quadratisch 1:1, Feed-Format)
 
 const OPENAI_BASE = "https://api.openai.com/v1";
 
@@ -26,7 +26,7 @@ type VideoJob = {
 async function createVideoJob(prompt: string): Promise<VideoJob> {
   const model = process.env.SORA_MODEL ?? "sora-2-pro";
   const seconds = process.env.SORA_DURATION_SEC ?? "20";
-  const size = process.env.SORA_SIZE ?? "720x1280";
+  const size = process.env.SORA_SIZE ?? "720x720";
 
   const res = await fetch(`${OPENAI_BASE}/videos`, {
     method: "POST",
