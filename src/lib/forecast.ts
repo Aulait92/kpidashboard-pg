@@ -108,6 +108,13 @@ export async function computeMonthlyForecast(params: {
       previousFull: prevFull.revenue,
       format: "currency",
     },
+    {
+      label: "Bruttogewinn",
+      mtd: mtd.profitBeforeOther,
+      projected: (mtd.profitBeforeOther / daysElapsed) * daysTotal,
+      previousFull: prevFull.profitBeforeOther,
+      format: "currency",
+    },
   ];
 
   return {
