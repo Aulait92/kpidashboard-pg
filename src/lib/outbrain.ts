@@ -163,18 +163,24 @@ export async function syncOutbrain(): Promise<OutbrainSyncResult> {
     errors: [],
   };
 
-  // Default-Lookback: 90 Tage. Tagesgenauer Spend = 1 Request pro Tag,
-  // bei 90 Tagen × ~5 req/s knapp 20 Sek. Über OUTBRAIN_SYNC_FROM und
-  // OUTBRAIN_LOOKBACK_DAYS konfigurierbar.
+  // Default-Lookback: 14 Tage. Per Tag = 1 Request — Outbrains Rate-Limit
+  // ist strikt, ein 90-Tage-Lauf inkl. 429-Backoffs läuft schnell in 5+ Min.
+  // 14 Tage × ~500-700 ms ≈ 10-20 Sek. Über OUTBRAIN_LOOKBACK_DAYS
+  // (oder OUTBRAIN_SYNC_FROM für ein hartes Startdatum) anpassbar.
   const today = new Date();
   const sinceEnv = process.env.OUTBRAIN_SYNC_FROM;
-  const lookbackDays = Number(process.env.OUTBRAIN_LOOKBACK_DAYS ?? 90);
+  const lookbackDays = Number(process.env.OUTBRAIN_LOOKBACK_DAYS ?? 14);
   const defaultSince = addDays(today, -lookbackDays);
   const since =
     sinceEnv && /^\d{4}-\d{2}-\d{2}$/.test(sinceEnv)
       ? sinceEnv
       : format(defaultSince, "yyyy-MM-dd");
   const until = format(today, "yyyy-MM-dd");
+
+  // Hard cap, damit ein Outbrain-Aussetzer den ganzen Sync nicht für Minuten
+  // blockiert. Erreichbarer Wert über OUTBRAIN_MAX_SYNC_MS überschreibbar.
+  const maxSyncMs = Number(process.env.OUTBRAIN_MAX_SYNC_MS ?? 90_000);
+  const syncDeadline = Date.now() + maxSyncMs;
 
   type Insertable = {
     product: MetaProduct;
@@ -194,6 +200,12 @@ export async function syncOutbrain(): Promise<OutbrainSyncResult> {
     const end = new Date(`${until}T00:00:00Z`);
     let firstDebugSample: string | null = null;
     while (day.getTime() <= end.getTime()) {
+      if (Date.now() > syncDeadline) {
+        result.errors.push(
+          `Sync-Deadline (${Math.round(maxSyncMs / 1000)}s) erreicht — Restzeitraum übersprungen.`,
+        );
+        break;
+      }
       const dayStr = format(day, "yyyy-MM-dd");
       try {
         const campaigns = await fetchCampaignsForDay(
