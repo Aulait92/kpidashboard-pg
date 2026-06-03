@@ -674,6 +674,45 @@ export async function computeProductBreakdown(params: {
     .sort((a, b) => b.totalLeads - a.totalLeads);
 }
 
+// ─── Werbespend pro Kanal ─────────────────────────────────────────────
+// Brutto-Spend pro Werbekanal im Zeitraum. Wird über das note-Prefix
+// erkannt (Meta:/Outbrain:) — Kanal-Splits laufen kunden-agnostisch (also
+// keine Lead-Anteil-Proration), weil die Channel-Sicht ein Marketingblick
+// auf den gesamten Topf ist, nicht eine Zerlegung der Kunden-Lead-Kosten.
+export type ChannelSpend = {
+  meta: number;
+  outbrain: number;
+  other: number;
+  total: number;
+};
+
+export async function computeLeadSpendByChannel(params: {
+  range: DateRange;
+  product: string | null;
+}): Promise<ChannelSpend> {
+  const { range, product } = params;
+  const productClause = product ? { product } : {};
+  const costs = await prisma.cost.findMany({
+    where: {
+      ...productClause,
+      kind: "LEAD",
+      occurredAt: { gte: range.from, lte: range.to },
+    },
+    select: { note: true, amount: true },
+  });
+  let meta = 0;
+  let outbrain = 0;
+  let other = 0;
+  for (const c of costs) {
+    const amount = decToNumber(c.amount);
+    const note = c.note ?? "";
+    if (note.startsWith("Meta:")) meta += amount;
+    else if (note.startsWith("Outbrain:")) outbrain += amount;
+    else other += amount;
+  }
+  return { meta, outbrain, other, total: meta + outbrain + other };
+}
+
 export type Granularity = "day" | "week" | "month";
 
 export type TimeSeriesPoint = {
