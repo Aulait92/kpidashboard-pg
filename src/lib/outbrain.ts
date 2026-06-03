@@ -14,9 +14,10 @@ import { prisma } from "@/lib/prisma";
 // "Outbrain:" trennt die Datenherkunft sauber vom Meta-Sync.
 
 const OUTBRAIN_API = "https://api.outbrain.com/amplify/v0.1";
-// Outbrain-Rate-Limit liegt typischerweise bei ~5 req/s. Wir gönnen uns
-// einen kleinen Puffer.
-const REQUEST_DELAY_MS = 220;
+// Outbrain dokumentiert kein hartes Limit, ist in der Praxis aber bei ~5 req/s
+// schnell mit HTTP 429 unterwegs. 500 ms hat in Tests stabil funktioniert.
+const REQUEST_DELAY_MS = Number(process.env.OUTBRAIN_REQUEST_DELAY_MS ?? 500);
+const MAX_429_RETRIES = 4;
 
 type CampaignResult = {
   metadata?: { id?: string; name?: string };
@@ -67,6 +68,29 @@ function dayAtNoonUtc(dateStart: string): Date {
   return new Date(Date.UTC(y, m - 1, d, 12));
 }
 
+// 429-aware Fetch: bei Rate-Limit-Fehlern wird mit exponentiellem Backoff
+// (1s, 2s, 4s, 8s) erneut versucht. Andere HTTP-Fehler werfen sofort.
+async function fetchWithRetry(
+  url: string,
+  init: RequestInit,
+): Promise<{ res: Response; text: string }> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= MAX_429_RETRIES; attempt++) {
+    const res = await fetch(url, init);
+    const text = await res.text();
+    if (res.status !== 429) return { res, text };
+    if (attempt === MAX_429_RETRIES) {
+      lastErr = new Error(
+        `HTTP 429 nach ${MAX_429_RETRIES + 1} Versuchen — Outbrain rate-limited.`,
+      );
+      break;
+    }
+    const backoffMs = 1000 * Math.pow(2, attempt);
+    await new Promise((r) => setTimeout(r, backoffMs));
+  }
+  throw lastErr;
+}
+
 async function fetchCampaignsForDay(
   marketerId: string,
   token: string,
@@ -86,11 +110,10 @@ async function fetchCampaignsForDay(
   let firstBody = "";
   for (let safety = 0; safety < 50; safety++) {
     url.searchParams.set("offset", String(offset));
-    const res = await fetch(url.toString(), {
+    const { res, text } = await fetchWithRetry(url.toString(), {
       headers: { "OB-TOKEN-V1": token },
       cache: "no-store",
     });
-    const text = await res.text();
     if (!firstBody) firstBody = text;
     let json: CampaignsResponse;
     try {
@@ -161,17 +184,18 @@ export async function syncOutbrain(): Promise<OutbrainSyncResult> {
   };
   const toInsert: Insertable[] = [];
 
+  let anyMarketerSucceededFully = false;
   for (const marketerId of marketers) {
-    try {
-      const debugForThis: string[] = [];
-      let totalCampaignRows = 0;
-      // Pro Tag einen Request — die Campaigns-API ignoriert breakdown=daily,
-      // gibt aber für from=to=Tag genau den Tages-Spend pro Kampagne zurück.
-      let day = new Date(`${since}T00:00:00Z`);
-      const end = new Date(`${until}T00:00:00Z`);
-      let firstDebugSample: string | null = null;
-      while (day.getTime() <= end.getTime()) {
-        const dayStr = format(day, "yyyy-MM-dd");
+    let totalCampaignRows = 0;
+    let failedDays = 0;
+    // Pro Tag einen Request — die Campaigns-API ignoriert breakdown=daily,
+    // gibt aber für from=to=Tag genau den Tages-Spend pro Kampagne zurück.
+    let day = new Date(`${since}T00:00:00Z`);
+    const end = new Date(`${until}T00:00:00Z`);
+    let firstDebugSample: string | null = null;
+    while (day.getTime() <= end.getTime()) {
+      const dayStr = format(day, "yyyy-MM-dd");
+      try {
         const campaigns = await fetchCampaignsForDay(
           marketerId,
           token,
@@ -181,7 +205,6 @@ export async function syncOutbrain(): Promise<OutbrainSyncResult> {
           },
         );
         totalCampaignRows += campaigns.length;
-
         for (const c of campaigns) {
           const name = c.metadata?.name?.trim();
           if (!name) continue;
@@ -199,43 +222,65 @@ export async function syncOutbrain(): Promise<OutbrainSyncResult> {
             note: `Outbrain: ${name} (${dayStr}) [marketer_${marketerId}]`,
           });
         }
-
-        day = addDays(day, 1);
-        // Sanftes Throttle, damit wir nicht ins Outbrain-Rate-Limit laufen.
-        await new Promise((r) => setTimeout(r, REQUEST_DELAY_MS));
+      } catch (err) {
+        failedDays += 1;
+        result.errors.push(
+          `marketer ${marketerId} (${dayStr}): ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
-      result.marketers.push({ id: marketerId, rows: totalCampaignRows });
-      if (totalCampaignRows === 0 && firstDebugSample) {
-        result.debug = result.debug ?? [];
-        result.debug.push({ marketerId, sample: firstDebugSample });
-      }
-    } catch (err) {
-      result.errors.push(err instanceof Error ? err.message : String(err));
+      day = addDays(day, 1);
+      await new Promise((r) => setTimeout(r, REQUEST_DELAY_MS));
+    }
+    result.marketers.push({ id: marketerId, rows: totalCampaignRows });
+    if (failedDays === 0) anyMarketerSucceededFully = true;
+    if (totalCampaignRows === 0 && firstDebugSample) {
+      result.debug = result.debug ?? [];
+      result.debug.push({ marketerId, sample: firstDebugSample });
     }
   }
 
-  // Defensiv: nur löschen, wenn der Fetch fehlerfrei durchlief. Bei Errors
-  // bleiben die bestehenden Outbrain-Cost-Zeilen stehen, damit ein API-
-  // Aussetzer nicht den Spend im Dashboard wegradiert (siehe Meta-Sync).
-  const canReplace = result.errors.length === 0 && toInsert.length > 0;
-  if (canReplace) {
+  // Persistenz:
+  //   • Wenn mindestens ein Marketer komplett fehlerfrei durchlief: alle
+  //     bestehenden Outbrain-Cost-Zeilen löschen und mit toInsert ersetzen
+  //     (idempotent, spiegelt Korrekturen aus Outbrain).
+  //   • Wenn alle Marketer mind. einen Fehler hatten: nicht löschen (sonst
+  //     wäre ein API-Aussetzer = leeres Dashboard). Stattdessen toInsert per
+  //     upsert pro (Tag × Kampagne × Marketer) einspielen — die erfolgreich
+  //     geholten Tage werden so trotzdem aktualisiert.
+  if (anyMarketerSucceededFully) {
     await prisma.cost.deleteMany({
       where: { kind: "LEAD", note: { startsWith: "Outbrain:" } },
     });
-    await prisma.cost.createMany({
-      data: toInsert.map((row) => ({
-        kind: "LEAD" as const,
-        product: row.product,
-        amount: row.amount,
-        occurredAt: row.occurredAt,
-        note: row.note,
-      })),
-    });
+    if (toInsert.length > 0) {
+      await prisma.cost.createMany({
+        data: toInsert.map((row) => ({
+          kind: "LEAD" as const,
+          product: row.product,
+          amount: row.amount,
+          occurredAt: row.occurredAt,
+          note: row.note,
+        })),
+      });
+    }
     result.costs = toInsert.length;
-  } else if (result.errors.length === 0 && toInsert.length === 0) {
-    await prisma.cost.deleteMany({
-      where: { kind: "LEAD", note: { startsWith: "Outbrain:" } },
-    });
+  } else if (toInsert.length > 0) {
+    // Partial — die erfolgreichen Tage nachziehen, alte Daten der gleichen
+    // Tage löschen (per note-Match — Tag steht in der Note), Rest bleibt.
+    for (const row of toInsert) {
+      await prisma.cost.deleteMany({
+        where: { kind: "LEAD", note: row.note },
+      });
+      await prisma.cost.create({
+        data: {
+          kind: "LEAD" as const,
+          product: row.product,
+          amount: row.amount,
+          occurredAt: row.occurredAt,
+          note: row.note,
+        },
+      });
+    }
+    result.costs = toInsert.length;
   }
 
   // Matched-Zusammenfassung pro Kampagne (statt N Tagessummen).
