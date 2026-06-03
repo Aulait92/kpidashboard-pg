@@ -298,7 +298,7 @@ function KpiGrid({
           delta={delta(k.cancelledRevenue, p.cancelledRevenue, true)}
         />
         <KpiCard
-          label="Kosten / Lead"
+          label="Kosten / Netto-Lead"
           value={formatEUR(k.costPerLead)}
           hint={`Lead-Kosten gesamt: ${formatEUR(k.leadCosts)}${
             customerId ? " (anteilig)" : ""

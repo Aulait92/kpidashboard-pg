@@ -62,7 +62,7 @@ function Connector({ rate }: { rate: number | null }) {
 }
 
 export function FunnelHero({ kpis }: { kpis: Kpis }) {
-  const max = kpis.totalLeads;
+  const max = kpis.nettoLeads;
   const ratio = (n: number) => (max > 0 ? n / max : 0);
 
   return (
@@ -90,7 +90,7 @@ export function FunnelHero({ kpis }: { kpis: Kpis }) {
               Throughput
             </div>
             <div className="text-lg font-bold tabular-nums sm:text-xl">
-              {formatNumber(kpis.closedLeads)} / {formatNumber(kpis.totalLeads)}
+              {formatNumber(kpis.closedLeads)} / {formatNumber(kpis.nettoLeads)}
             </div>
           </div>
         </div>
@@ -99,11 +99,11 @@ export function FunnelHero({ kpis }: { kpis: Kpis }) {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-0">
         <Stage
           label="Leads"
-          count={kpis.totalLeads}
+          count={kpis.nettoLeads}
           hint={
             kpis.cancelledLeads > 0
-              ? `Gesamt · ${formatNumber(kpis.nettoLeads)} netto + ${formatNumber(kpis.cancelledLeads)} Storno`
-              : "Gesamt eingegangen"
+              ? `Netto · ${formatNumber(kpis.totalLeads)} gesamt − ${formatNumber(kpis.cancelledLeads)} Storno`
+              : "Eingegangen im Zeitraum"
           }
           filledRatio={1}
         />

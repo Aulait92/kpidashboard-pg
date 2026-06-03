@@ -293,13 +293,14 @@ export async function computeMonthlyGoalProgress(params: {
   }
 
   const rows: GoalRow[] = [
-    // Leads: immer aus Airtable → read-only.
+    // Leads: immer aus Airtable → read-only. Ist-Wert = Netto-Leads (Stornos
+    // raus), damit das Monatsziel nicht durch stornierte Leads erfüllt wird.
     buildVolumeRow(
       "leads",
       "Leads",
       "number",
       leadsGoal > 0 ? leadsGoal : null,
-      mtd.totalLeads,
+      mtd.nettoLeads,
       false,
     ),
     // Abschlussquote (Abschlüsse / Leads): Qualitätskennzahl in %, je Produkt

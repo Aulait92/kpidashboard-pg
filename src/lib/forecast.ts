@@ -82,9 +82,9 @@ export async function computeMonthlyForecast(params: {
   const rows: ForecastRow[] = [
     {
       label: "Leads",
-      mtd: mtd.totalLeads,
-      projected: project(mtd.totalLeads),
-      previousFull: prevFull.totalLeads,
+      mtd: mtd.nettoLeads,
+      projected: project(mtd.nettoLeads),
+      previousFull: prevFull.nettoLeads,
       format: "number",
     },
     {
