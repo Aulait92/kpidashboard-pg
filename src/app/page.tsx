@@ -245,7 +245,7 @@ function KpiGrid({
         <KpiCard
           label="Erreichbarkeitsquote"
           value={formatPercent(k.reachabilityRate)}
-          hint={`${k.reachedLeads} von ${k.totalLeads} Leads erreicht`}
+          hint={`${k.reachedLeads} von ${k.nettoLeads} Leads erreicht${k.cancelledLeads > 0 ? ` (${k.cancelledLeads} Stornos exkl.)` : ""}`}
           delta={delta(k.reachabilityRate, p.reachabilityRate)}
           sparkline={{ points, dataKey: "reachabilityRate" }}
         />
@@ -266,7 +266,7 @@ function KpiGrid({
         <KpiCard
           label="Closing Rate"
           value={formatPercent(k.closingRate)}
-          hint={`${k.closedLeads} von ${k.totalLeads} abgeschlossen`}
+          hint={`${k.closedLeads} von ${k.nettoLeads} abgeschlossen${k.cancelledLeads > 0 ? ` (${k.cancelledLeads} Stornos exkl.)` : ""}`}
           delta={delta(k.closingRate, p.closingRate)}
           sparkline={{ points, dataKey: "closingRate" }}
         />
@@ -292,7 +292,7 @@ function KpiGrid({
           label="Stornos"
           value={formatEUR(k.cancelledRevenue)}
           hint={`${formatNumber(k.cancelledLeads)} stornierte ${
-            k.cancelledLeads === 1 ? "Abschluss" : "Abschlüsse"
+            k.cancelledLeads === 1 ? "Lead" : "Leads"
           } im Zeitraum (vom Umsatz abgezogen)`}
           tone={k.cancelledRevenue > 0 ? "negative" : undefined}
           delta={delta(k.cancelledRevenue, p.cancelledRevenue, true)}

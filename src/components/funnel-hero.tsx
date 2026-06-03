@@ -100,7 +100,11 @@ export function FunnelHero({ kpis }: { kpis: Kpis }) {
         <Stage
           label="Leads"
           count={kpis.totalLeads}
-          hint="Gesamt eingegangen"
+          hint={
+            kpis.cancelledLeads > 0
+              ? `Gesamt · ${formatNumber(kpis.nettoLeads)} netto + ${formatNumber(kpis.cancelledLeads)} Storno`
+              : "Gesamt eingegangen"
+          }
           filledRatio={1}
         />
         <Connector rate={kpis.reachabilityRate} />

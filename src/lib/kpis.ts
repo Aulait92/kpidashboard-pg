@@ -24,28 +24,40 @@ export type KpiFilters = {
 
 export type Kpis = {
   totalLeads: number;
+  // Netto-Leads = Gesamt minus stornierte. Stornos werden vorm Anruf
+  // ausgefiltert, daher sind alle Funnel-Raten gegen nettoLeads gerechnet.
+  nettoLeads: number;
+  // Anzahl der Stornos im Zeitraum (aus Lead-Status, nicht aus Revenue —
+  // damit auch Stornos ohne Revenue-Zeile gezählt werden).
+  cancelledLeads: number;
   reachedLeads: number;
   terminLeads: number;
   closedLeads: number;
-  reachabilityRate: number | null; // 0..1
+  reachabilityRate: number | null; // 0..1, Basis = nettoLeads
   terminRate: number | null; // termin / reached
   closingFromTerminRate: number | null; // closed / termin
   avgContactAttempts: number | null;
   avgHoursToFirstContact: number | null;
-  closingRate: number | null; // 0..1
+  closingRate: number | null; // 0..1, Basis = nettoLeads
   revenue: number;
-  // Storno-Kennzahlen: Summe & Anzahl der stornierten Verkäufe im Zeitraum.
-  // Der Storno ist im Netto-Umsatz oben bereits abgezogen (cancelled=false-Filter).
+  // Summe der stornierten Verkäufe im Zeitraum (vom Netto-Umsatz oben
+  // bereits abgezogen — cancelled=false-Filter).
   cancelledRevenue: number;
-  cancelledLeads: number;
   leadCosts: number;
   otherCosts: number;
+  // Basis = nettoLeads (Stornos waren keine echten Leads).
   costPerLead: number | null;
   profitBeforeOther: number;
   profitAfterOther: number;
   marginBeforeOther: number | null; // 0..1
   marginAfterOther: number | null; // 0..1
 };
+
+// Status-Werte, die Airtable-Stornos kennzeichnen — case-insensitive.
+const CANCELLED_LEAD_STATUSES = new Set(["storno", "storniert"]);
+function isLeadCancelled(status: string | null): boolean {
+  return status != null && CANCELLED_LEAD_STATUSES.has(status.trim().toLowerCase());
+}
 
 function decToNumber(v: unknown): number {
   if (v == null) return 0;
@@ -207,7 +219,6 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
     }),
     prisma.revenue.aggregate({
       _sum: { amount: true },
-      _count: { _all: true },
       where: {
         ...customerClause,
         ...productRevenueClause,
@@ -233,22 +244,27 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
   ]);
 
   const totalLeads = leads.length;
-  const reachedLeads = leads.filter((l) => l.reached).length;
-  const terminLeads = leads.filter(
+  const cancelledLeads = leads.filter((l) => isLeadCancelled(l.status)).length;
+  const nettoLeads = totalLeads - cancelledLeads;
+  // Funnel-Zähler ohne Stornos — sie können weder erreicht, terminiert noch
+  // abgeschlossen sein (Filter vor dem Anruf).
+  const nonCancelled = leads.filter((l) => !isLeadCancelled(l.status));
+  const reachedLeads = nonCancelled.filter((l) => l.reached).length;
+  const terminLeads = nonCancelled.filter(
     (l) => l.status != null && TERMIN_STATUSES.has(l.status),
   ).length;
-  const closedLeads = leads.filter((l) => l.closedAt != null).length;
+  const closedLeads = nonCancelled.filter((l) => l.closedAt != null).length;
 
   const reachabilityRate =
-    totalLeads > 0 ? reachedLeads / totalLeads : null;
+    nettoLeads > 0 ? reachedLeads / nettoLeads : null;
   const terminRate = reachedLeads > 0 ? terminLeads / reachedLeads : null;
   const closingFromTerminRate =
     terminLeads > 0 ? closedLeads / terminLeads : null;
-  const closingRate = totalLeads > 0 ? closedLeads / totalLeads : null;
+  const closingRate = nettoLeads > 0 ? closedLeads / nettoLeads : null;
 
   const avgContactAttempts =
-    totalLeads > 0
-      ? leads.reduce((acc, l) => acc + l.contactAttempts, 0) / totalLeads
+    nettoLeads > 0
+      ? nonCancelled.reduce((acc, l) => acc + l.contactAttempts, 0) / nettoLeads
       : null;
 
   const hoursList = leads
@@ -264,10 +280,9 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
 
   const revenue = decToNumber(revenueAgg._sum.amount);
   const cancelledRevenue = decToNumber(cancelledAgg._sum.amount);
-  const cancelledLeads = cancelledAgg._count._all;
   const otherCosts = decToNumber(otherCostsAgg._sum.amount);
 
-  const costPerLead = totalLeads > 0 ? leadCosts / totalLeads : null;
+  const costPerLead = nettoLeads > 0 ? leadCosts / nettoLeads : null;
   const profitBeforeOther = revenue - leadCosts;
   const profitAfterOther = revenue - leadCosts - otherCosts;
   const marginBeforeOther = revenue > 0 ? profitBeforeOther / revenue : null;
@@ -275,6 +290,8 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
 
   return {
     totalLeads,
+    nettoLeads,
+    cancelledLeads,
     reachedLeads,
     terminLeads,
     closedLeads,
@@ -286,7 +303,6 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
     closingRate,
     revenue,
     cancelledRevenue,
-    cancelledLeads,
     leadCosts,
     otherCosts,
     costPerLead,
@@ -313,16 +329,19 @@ export async function listCustomers() {
 export type CustomerKpiRow = {
   customerId: string;
   customerName: string;
+  // Gesamt = brutto inkl. Stornos; netto = gesamt - cancelled.
   totalLeads: number;
+  nettoLeads: number;
+  cancelledLeads: number;
   reachedLeads: number;
   terminLeads: number;
   closedLeads: number;
-  reachabilityRate: number | null;
-  closingRate: number | null;
+  reachabilityRate: number | null; // Basis = nettoLeads
+  closingRate: number | null; // Basis = nettoLeads
   avgHoursToFirstContact: number | null;
   revenue: number;
   leadCosts: number;
-  costPerLead: number | null;
+  costPerLead: number | null; // Basis = nettoLeads
   profit: number;
   margin: number | null;
 };
@@ -450,6 +469,7 @@ export async function computeCustomerLeaderboard(params: {
     string,
     {
       total: number;
+      cancelled: number;
       reached: number;
       termin: number;
       closed: number;
@@ -459,10 +479,14 @@ export async function computeCustomerLeaderboard(params: {
   for (const l of leads) {
     let s = leadStatsByCustomer.get(l.customerId);
     if (!s) {
-      s = { total: 0, reached: 0, termin: 0, closed: 0, hours: [] };
+      s = { total: 0, cancelled: 0, reached: 0, termin: 0, closed: 0, hours: [] };
       leadStatsByCustomer.set(l.customerId, s);
     }
     s.total += 1;
+    if (isLeadCancelled(l.status)) {
+      s.cancelled += 1;
+      continue; // Stornos zählen nicht in Funnel-Kennzahlen.
+    }
     if (l.reached) s.reached += 1;
     if (l.status && TERMIN_STATUSES.has(l.status)) s.termin += 1;
     if (l.closedAt != null) s.closed += 1;
@@ -490,11 +514,13 @@ export async function computeCustomerLeaderboard(params: {
   const rows: CustomerKpiRow[] = customers.map((c) => {
     const stat = leadStatsByCustomer.get(c.id) ?? {
       total: 0,
+      cancelled: 0,
       reached: 0,
       termin: 0,
       closed: 0,
       hours: [] as number[],
     };
+    const netto = stat.total - stat.cancelled;
     const revenue = revenueByCustomerId.get(c.id) ?? 0;
     const direct = directCostByCustomerId.get(c.id) ?? 0;
     const prorated = proratedByCustomer.get(c.id) ?? 0;
@@ -508,15 +534,17 @@ export async function computeCustomerLeaderboard(params: {
       customerId: c.id,
       customerName: c.name,
       totalLeads: stat.total,
+      nettoLeads: netto,
+      cancelledLeads: stat.cancelled,
       reachedLeads: stat.reached,
       terminLeads: stat.termin,
       closedLeads: stat.closed,
-      reachabilityRate: stat.total > 0 ? stat.reached / stat.total : null,
-      closingRate: stat.total > 0 ? stat.closed / stat.total : null,
+      reachabilityRate: netto > 0 ? stat.reached / netto : null,
+      closingRate: netto > 0 ? stat.closed / netto : null,
       avgHoursToFirstContact,
       revenue,
       leadCosts,
-      costPerLead: stat.total > 0 ? leadCosts / stat.total : null,
+      costPerLead: netto > 0 ? leadCosts / netto : null,
       profit,
       margin: revenue > 0 ? profit / revenue : null,
     };
@@ -530,13 +558,15 @@ export async function computeCustomerLeaderboard(params: {
 export type ProductKpiRow = {
   product: string;
   totalLeads: number;
+  nettoLeads: number;
+  cancelledLeads: number;
   reachedLeads: number;
   closedLeads: number;
-  reachabilityRate: number | null;
-  closingRate: number | null;
+  reachabilityRate: number | null; // Basis = nettoLeads
+  closingRate: number | null; // Basis = nettoLeads
   revenue: number;
   leadCosts: number;
-  costPerLead: number | null;
+  costPerLead: number | null; // Basis = nettoLeads
   profit: number;
   margin: number | null;
 };
@@ -559,6 +589,7 @@ export async function computeProductBreakdown(params: {
         source: true,
         reached: true,
         closedAt: true,
+        status: true,
       },
     }),
     prisma.revenue.findMany({
@@ -576,6 +607,7 @@ export async function computeProductBreakdown(params: {
     string,
     {
       total: number;
+      cancelled: number;
       reached: number;
       closed: number;
       revenue: number;
@@ -585,7 +617,7 @@ export async function computeProductBreakdown(params: {
   function s(p: string) {
     let x = stats.get(p);
     if (!x) {
-      x = { total: 0, reached: 0, closed: 0, revenue: 0, leadCosts: 0 };
+      x = { total: 0, cancelled: 0, reached: 0, closed: 0, revenue: 0, leadCosts: 0 };
       stats.set(p, x);
     }
     return x;
@@ -595,6 +627,10 @@ export async function computeProductBreakdown(params: {
     if (!l.source) continue;
     const x = s(l.source);
     x.total += 1;
+    if (isLeadCancelled(l.status)) {
+      x.cancelled += 1;
+      continue;
+    }
     if (l.reached) x.reached += 1;
     if (l.closedAt != null) x.closed += 1;
   }
@@ -617,17 +653,20 @@ export async function computeProductBreakdown(params: {
 
   return Array.from(stats.entries())
     .map(([product, x]) => {
+      const netto = x.total - x.cancelled;
       const profit = x.revenue - x.leadCosts;
       return {
         product,
         totalLeads: x.total,
+        nettoLeads: netto,
+        cancelledLeads: x.cancelled,
         reachedLeads: x.reached,
         closedLeads: x.closed,
-        reachabilityRate: x.total > 0 ? x.reached / x.total : null,
-        closingRate: x.total > 0 ? x.closed / x.total : null,
+        reachabilityRate: netto > 0 ? x.reached / netto : null,
+        closingRate: netto > 0 ? x.closed / netto : null,
         revenue: x.revenue,
         leadCosts: x.leadCosts,
-        costPerLead: x.total > 0 ? x.leadCosts / x.total : null,
+        costPerLead: netto > 0 ? x.leadCosts / netto : null,
         profit,
         margin: x.revenue > 0 ? profit / x.revenue : null,
       };

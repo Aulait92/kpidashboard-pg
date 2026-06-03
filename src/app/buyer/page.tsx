@@ -216,7 +216,7 @@ async function BuyerDashboardBody({
           <KpiCard
             label="Erreichbarkeit"
             value={formatPercent(k.reachabilityRate)}
-            hint={`${k.reachedLeads} von ${k.totalLeads} erreicht`}
+            hint={`${k.reachedLeads} von ${k.nettoLeads} erreicht${k.cancelledLeads > 0 ? ` (${k.cancelledLeads} Stornos exkl.)` : ""}`}
             delta={delta(k.reachabilityRate, p.reachabilityRate)}
             sparkline={{ points: ts.points, dataKey: "reachabilityRate" }}
           />

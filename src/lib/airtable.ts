@@ -18,15 +18,13 @@ const REACHED_STATUSES = new Set([
   "Angebot/Beratung läuft",
   "Abschluss",
   "Kein Interesse",
-  // Ein Storno setzt voraus, dass der Kunde vorher erreicht & abgeschlossen
-  // wurde — also bleibt der Lead „erreicht".
-  "Storno",
-  "Storniert",
 ]);
 
 const CLOSED_STATUS = "Abschluss";
-// Mehrere Schreibweisen akzeptieren — Airtable-Single-Select-Werte variieren
-// von Base zu Base („Storno", „Storniert", „storniert", …).
+// Storno-Status werden vor dem Anruf ausgefiltert — sie zählen also NICHT
+// als „erreicht" und NICHT in die Funnel-Raten. Mehrere Schreibweisen
+// akzeptieren — Airtable-Single-Select-Werte variieren von Base zu Base
+// („Storno", „Storniert", „storniert", …).
 const CANCELLED_STATUSES = new Set(["storno", "storniert"]);
 function isCancelledStatus(status: string | null): boolean {
   return status != null && CANCELLED_STATUSES.has(status.trim().toLowerCase());
@@ -529,9 +527,11 @@ export async function syncAirtable(): Promise<SyncResult> {
         const billed = readChecked(rec.fields, "Abgerechnet");
         const name = resolveLeadName(rec.fields);
 
-        const reached = status ? REACHED_STATUSES.has(status) : false;
         const isCancelled = isCancelledStatus(status);
-        // Storno → nicht (mehr) als Abschluss zählen.
+        // Storno-Leads werden vor dem Anruf ausgefiltert → nicht erreicht,
+        // kein Termin, kein Abschluss, auch wenn der alte Status etwas anderes
+        // sagte.
+        const reached = !isCancelled && status ? REACHED_STATUSES.has(status) : false;
         const isClosed = status === CLOSED_STATUS && !isCancelled;
         const closedAt = isClosed ? createdAt : null;
 
