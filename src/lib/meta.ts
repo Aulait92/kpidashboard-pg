@@ -1,3 +1,4 @@
+import { addDays, format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 
 const META_API_VERSION = "v23.0";
@@ -68,7 +69,7 @@ function dayAtNoonUtc(dateStart: string): Date {
   return new Date(Date.UTC(y, m - 1, d, 12));
 }
 
-async function fetchInsights(
+async function fetchInsightsWindow(
   accountId: string,
   token: string,
   since: string,
@@ -82,10 +83,7 @@ async function fetchInsights(
   // Eine Zeile pro Tag pro Kampagne — damit Tagesfilter im Dashboard den
   // realen Tagesspend zeigen statt eines aufgeteilten Monatsdurchschnitts.
   url.searchParams.set("time_increment", "1");
-  url.searchParams.set(
-    "time_range",
-    JSON.stringify({ since, until }),
-  );
+  url.searchParams.set("time_range", JSON.stringify({ since, until }));
   url.searchParams.set("limit", "500");
 
   let nextUrl: string | null = url.toString();
@@ -94,10 +92,44 @@ async function fetchInsights(
     const json = (await res.json()) as MetaInsightsResponse;
     if (!res.ok || json.error) {
       const msg = json.error?.message ?? `HTTP ${res.status}`;
-      throw new Error(`Meta-API für act_${accountId}: ${msg}`);
+      throw new Error(
+        `Meta-API für act_${accountId} (${since}…${until}): ${msg}`,
+      );
     }
     if (json.data) rows.push(...json.data);
     nextUrl = json.paging?.next ?? null;
+  }
+  return rows;
+}
+
+// Meta-Insights mit time_increment=1 sind faktisch auf max. ~90 Tage pro
+// Request limitiert (über längere Zeiträume bricht die API still ab oder
+// liefert leere Antworten). Größere Zeiträume zerlegen wir in 90-Tage-
+// Fenster und fügen die Resultate zusammen.
+async function fetchInsights(
+  accountId: string,
+  token: string,
+  since: string,
+  until: string,
+): Promise<MetaInsightsRow[]> {
+  const WINDOW_DAYS = 90;
+  const rows: MetaInsightsRow[] = [];
+  let chunkStart = new Date(`${since}T00:00:00Z`);
+  const end = new Date(`${until}T00:00:00Z`);
+  while (chunkStart.getTime() <= end.getTime()) {
+    const chunkEndCandidate = addDays(chunkStart, WINDOW_DAYS - 1);
+    const chunkEnd =
+      chunkEndCandidate.getTime() < end.getTime() ? chunkEndCandidate : end;
+    const chunkSinceStr = format(chunkStart, "yyyy-MM-dd");
+    const chunkUntilStr = format(chunkEnd, "yyyy-MM-dd");
+    const chunkRows = await fetchInsightsWindow(
+      accountId,
+      token,
+      chunkSinceStr,
+      chunkUntilStr,
+    );
+    rows.push(...chunkRows);
+    chunkStart = addDays(chunkEnd, 1);
   }
   return rows;
 }
@@ -171,17 +203,14 @@ export async function syncMeta(): Promise<MetaSyncResult> {
     }
   }
 
-  // Idempotent: alle bestehenden Meta-LEAD-Kosten löschen, dann frisch einfügen.
-  // So spiegeln wir Änderungen in Meta (z. B. nachträgliche Spend-Korrekturen)
-  // und entsorgen ggf. alte Monats-Aggregate aus früheren Sync-Versionen.
-  await prisma.cost.deleteMany({
-    where: {
-      kind: "LEAD",
-      note: { startsWith: "Meta:" },
-    },
-  });
-
-  if (toInsert.length > 0) {
+  // Defensiv: nur löschen, wenn der Fetch komplett durchlief UND Daten
+  // vorliegen. Sonst hätte ein API-Fehler das alte Datenbild wegradiert und
+  // wir hätten weder neue noch alte Werte (das ist genau einmal passiert).
+  const canReplace = result.errors.length === 0 && toInsert.length > 0;
+  if (canReplace) {
+    await prisma.cost.deleteMany({
+      where: { kind: "LEAD", note: { startsWith: "Meta:" } },
+    });
     await prisma.cost.createMany({
       data: toInsert.map((row) => ({
         kind: "LEAD" as const,
@@ -192,7 +221,14 @@ export async function syncMeta(): Promise<MetaSyncResult> {
       })),
     });
     result.costs = toInsert.length;
+  } else if (result.errors.length === 0 && toInsert.length === 0) {
+    // Sauberer Lauf, aber Meta hat 0 Zeilen geliefert → vermutlich kein Spend.
+    // Trotzdem alte Meta-Daten weg, damit veraltete Zahlen nicht stehenbleiben.
+    await prisma.cost.deleteMany({
+      where: { kind: "LEAD", note: { startsWith: "Meta:" } },
+    });
   }
+  // Bei Errors lassen wir die bestehenden Cost-Zeilen unangetastet.
 
   // Matched-Summe je Kampagne (statt N Tagessummen, die das SyncResult sonst
   // vollmüllen würden). Kampagnenname kommt aus der note: "Meta: <name> (...)".
