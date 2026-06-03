@@ -1,5 +1,6 @@
 import { generateVideo, type VideoProgress } from "@/lib/openai-video";
 import { uploadImageToR2 } from "@/lib/r2";
+import { burnGermanSubtitles } from "@/lib/video-subtitles";
 import { renderHtmlToImage } from "@/lib/html-to-png";
 import {
   generateFullCreativeImage,
@@ -1737,24 +1738,17 @@ async function brainstormVideoStoryboards(
 
 // Baut den Sora-Prompt aus Storyboard + Kampagnen-Konfiguration. Sora-Modelle
 // reagieren stark auf konkrete visuelle Anweisungen, Sekunden-Marker und
-// kurze On-Screen-Text-Hinweise.
+// kurze On-Screen-Text-Hinweise. WICHTIG: keinen On-Screen-Text vom Modell
+// generieren lassen — Sora schreibt unleserliches Kauderwelsch. Der Sprecher-
+// Text läuft per Audio + nachträglich eingebrannten Whisper-Untertiteln.
 function buildSoraPrompt(storyboard: string, cfg: DirectImageConfig): string {
-  const onScreen = [
-    cfg.badge ? `Kurzer On-Screen-Text gegen Ende: „${cfg.badge}"` : "",
-    cfg.subline ? `Kleingedrucktes Disclaimer-Wording: „${cfg.subline}"` : "",
-    `End-Frame mit CTA-Text: „${cfg.cta}"`,
-  ]
-    .filter(Boolean)
-    .join("\n");
   return [
     `Quadratisches 1:1 UGC-Video (Feed-Style), 20 Sekunden, deutscher Markt. Komposition zentriert, alles Wichtige in der Bildmitte.`,
     `Thema: ${cfg.topic}.`,
     `Storyboard:\n${storyboard}`,
-    onScreen ? `\nOn-Screen-Text:\n${onScreen}` : "",
-    `\nVisuelle Sprache: authentisch, natürlich beleuchtet, kein Stock-Photo-Look. Keine medizinischen Garantien oder Heilversprechen einblenden.`,
-  ]
-    .filter(Boolean)
-    .join("\n\n");
+    `\nWICHTIG: KEINEN Text, KEINE Beschriftungen, KEINE Logos und KEINE Schriftzeichen im Bild einblenden. Auch keine Captions, Lower-Thirds oder CTA-Banner — nur reine Bewegtbild- und Audiodarstellung. Die Untertitel werden im Anschluss separat eingebrannt.`,
+    `\nVisuelle Sprache: authentisch, natürlich beleuchtet, kein Stock-Photo-Look. Keine medizinischen Garantien oder Heilversprechen aussprechen.`,
+  ].join("\n\n");
 }
 
 async function generateOneVideoCreative(
@@ -1766,7 +1760,21 @@ async function generateOneVideoCreative(
 ): Promise<GeneratedCreative> {
   const cfg = getDirectImageConfig(brief.campaignKey);
   const soraPrompt = buildSoraPrompt(storyboard, cfg);
-  const { buffer, durationSec } = await generateVideo(soraPrompt, onProgress);
+  const { buffer: rawBuffer, durationSec } = await generateVideo(
+    soraPrompt,
+    onProgress,
+  );
+
+  // Sora schreibt selbst gerne Buchstaben-Soup als „Text" ins Video. Wir
+  // lassen ihn deshalb komplett text-frei rendern (s. Prompt) und brennen
+  // saubere deutsche Untertitel per Whisper + ffmpeg nachträglich rein.
+  await onProgress?.("Brenne deutsche Untertitel ein…");
+  const subResult = await burnGermanSubtitles(rawBuffer);
+  if (!subResult.burned && subResult.note) {
+    await onProgress?.(`Untertitel übersprungen: ${subResult.note.slice(0, 180)}`);
+  }
+  const buffer = subResult.buffer;
+
   const key = `creatives/${requestId}/${index}.mp4`;
   const videoUrl = await uploadImageToR2({
     buffer,
