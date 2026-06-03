@@ -857,9 +857,9 @@ export async function computeTimeSeries(params: {
     if (b) b.point.revenue += decToNumber(r.amount);
   }
 
-  // Direkte LEAD-Kosten (customerId gesetzt) buchen wir am occurredAt;
-  // globale Meta-Kosten verteilen wir gleichmäßig über die Tage des Monats,
-  // damit Wochen-/Tages-Charts nicht nur am Monatsersten Spitzen zeigen.
+  // LEAD-Kosten landen direkt am occurredAt (Meta-Sync schreibt tägliche
+  // Zeilen). Globale Meta-Kosten ohne Kundenbezug werden bei aktivem Kunden-
+  // Filter per Lead-Anteil im jeweiligen Monat anteilig zugerechnet.
   const directCosts = customerId
     ? allLeadCosts.filter((c) => c.customerId === customerId)
     : allLeadCosts.filter((c) => c.customerId != null);
@@ -921,28 +921,8 @@ export async function computeTimeSeries(params: {
         amount *= share;
       }
       if (amount === 0) continue;
-
-      const monthStart = startOfMonth(c.occurredAt);
-      const monthEnd = endOfMonth(c.occurredAt);
-      const daysInMonth =
-        Math.round(
-          (monthEnd.getTime() - monthStart.getTime()) / (24 * 3600 * 1000),
-        ) + 1;
-      const perDay = amount / daysInMonth;
-
-      const effectiveStart =
-        monthStart.getTime() > range.from.getTime() ? monthStart : range.from;
-      const effectiveEnd =
-        monthEnd.getTime() < range.to.getTime() ? monthEnd : range.to;
-
-      for (
-        let day = startOfDay(effectiveStart);
-        day.getTime() <= effectiveEnd.getTime();
-        day = addDays(day, 1)
-      ) {
-        const b = bucketFor(day);
-        if (b) b.point.leadCosts += perDay;
-      }
+      const b = bucketFor(c.occurredAt);
+      if (b) b.point.leadCosts += amount;
     }
   }
 

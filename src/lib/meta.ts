@@ -57,14 +57,15 @@ export function classifyProduct(campaignName: string): MetaProduct | null {
   return null;
 }
 
-function monthStart(dateStart: string): Date {
-  // Meta liefert Datum als "YYYY-MM-DD". Bei time_increment=monthly ist
-  // date_start der erste Tag des Monats.
-  const [y, m] = dateStart.split("-").map((n) => Number.parseInt(n, 10));
-  if (!Number.isFinite(y) || !Number.isFinite(m)) {
+function dayAtNoonUtc(dateStart: string): Date {
+  // Meta liefert Datum als "YYYY-MM-DD". Bei time_increment=1 ist
+  // date_start = der konkrete Tag. Noon-UTC vermeidet Tag-Drift durch
+  // Zeitzonen-Offsets bei der Anzeige.
+  const [y, m, d] = dateStart.split("-").map((n) => Number.parseInt(n, 10));
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) {
     throw new Error(`Ungültiges Datum von Meta: ${dateStart}`);
   }
-  return new Date(Date.UTC(y, m - 1, 1, 12));
+  return new Date(Date.UTC(y, m - 1, d, 12));
 }
 
 async function fetchInsights(
@@ -78,7 +79,9 @@ async function fetchInsights(
   url.searchParams.set("access_token", token);
   url.searchParams.set("level", "campaign");
   url.searchParams.set("fields", "campaign_name,spend,date_start,date_stop");
-  url.searchParams.set("time_increment", "monthly");
+  // Eine Zeile pro Tag pro Kampagne — damit Tagesfilter im Dashboard den
+  // realen Tagesspend zeigen statt eines aufgeteilten Monatsdurchschnitts.
+  url.searchParams.set("time_increment", "1");
   url.searchParams.set(
     "time_range",
     JSON.stringify({ since, until }),
@@ -143,7 +146,7 @@ export async function syncMeta(): Promise<MetaSyncResult> {
         if (!Number.isFinite(amount) || amount <= 0) continue;
 
         const product = classifyProduct(name);
-        const occurredAt = monthStart(startStr);
+        const occurredAt = dayAtNoonUtc(startStr);
 
         if (!product) {
           // Unmatched-Kampagnen werden nur für Transparenz im SyncResult
@@ -154,13 +157,11 @@ export async function syncMeta(): Promise<MetaSyncResult> {
           continue;
         }
 
-        result.matched.push({ campaign: name, product, spend: amount });
-
         toInsert.push({
           product,
           amount,
           occurredAt,
-          note: `Meta: ${name} (${startStr.slice(0, 7)}) [act_${accountId}]`,
+          note: `Meta: ${name} (${startStr}) [act_${accountId}]`,
         });
       }
     } catch (err) {
@@ -170,8 +171,9 @@ export async function syncMeta(): Promise<MetaSyncResult> {
     }
   }
 
-  // Idempotent: alle bestehenden Meta-LEAD-Kosten im Zeitraum löschen, dann frisch einfügen.
-  // So spiegeln wir Änderungen in Meta (z. B. nachträgliche Spend-Korrekturen).
+  // Idempotent: alle bestehenden Meta-LEAD-Kosten löschen, dann frisch einfügen.
+  // So spiegeln wir Änderungen in Meta (z. B. nachträgliche Spend-Korrekturen)
+  // und entsorgen ggf. alte Monats-Aggregate aus früheren Sync-Versionen.
   await prisma.cost.deleteMany({
     where: {
       kind: "LEAD",
@@ -179,17 +181,33 @@ export async function syncMeta(): Promise<MetaSyncResult> {
     },
   });
 
-  for (const row of toInsert) {
-    await prisma.cost.create({
-      data: {
-        kind: "LEAD",
+  if (toInsert.length > 0) {
+    await prisma.cost.createMany({
+      data: toInsert.map((row) => ({
+        kind: "LEAD" as const,
         product: row.product,
         amount: row.amount,
         occurredAt: row.occurredAt,
         note: row.note,
-      },
+      })),
     });
-    result.costs += 1;
+    result.costs = toInsert.length;
+  }
+
+  // Matched-Summe je Kampagne (statt N Tagessummen, die das SyncResult sonst
+  // vollmüllen würden). Kampagnenname kommt aus der note: "Meta: <name> (...)".
+  const summary = new Map<string, { product: MetaProduct; spend: number }>();
+  for (const row of toInsert) {
+    const m = /^Meta:\s+(.+?)\s+\(\d{4}-\d{2}-\d{2}\)/.exec(row.note);
+    const campaign = m ? m[1] : row.note;
+    const key = `${row.product}|${campaign}`;
+    const prev = summary.get(key);
+    if (prev) prev.spend += row.amount;
+    else summary.set(key, { product: row.product, spend: row.amount });
+  }
+  for (const [key, val] of summary) {
+    const campaign = key.split("|").slice(1).join("|");
+    result.matched.push({ campaign, product: val.product, spend: val.spend });
   }
 
   return result;
