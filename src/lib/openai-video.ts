@@ -128,11 +128,13 @@ export async function generateVideo(
   );
 
   const startedAt = Date.now();
-  const timeoutMs = Number(process.env.SORA_TIMEOUT_MS ?? 10 * 60 * 1000);
+  const timeoutMs = Number(process.env.SORA_TIMEOUT_MS ?? 20 * 60 * 1000);
   const pollMs = Number(process.env.SORA_POLL_MS ?? 5000);
+  const heartbeatMs = Number(process.env.SORA_HEARTBEAT_MS ?? 60_000);
 
   let current: VideoJob = job;
   let lastStatus = current.status;
+  let lastHeartbeatAt = Date.now();
   while (current.status !== "completed" && current.status !== "failed") {
     if (Date.now() - startedAt > timeoutMs) {
       throw new Error(
@@ -153,6 +155,15 @@ export async function generateVideo(
       console.log(`[sora] job ${job.id} status: ${lastStatus} → ${current.status}`);
       await onProgress?.(`Sora-Status: ${current.status}.`);
       lastStatus = current.status;
+      lastHeartbeatAt = Date.now();
+    } else if (Date.now() - lastHeartbeatAt > heartbeatMs) {
+      // Heartbeat — Sora bleibt oft minutenlang in „in_progress"; ohne
+      // Lebenszeichen wirkt der Bot eingefroren. Maximal 1× pro Minute.
+      const elapsedMin = Math.floor((Date.now() - startedAt) / 60_000);
+      await onProgress?.(
+        `Sora rendert weiter (Status: ${current.status}, ~${elapsedMin} Min vergangen).`,
+      );
+      lastHeartbeatAt = Date.now();
     }
   }
   if (current.status === "failed") {
