@@ -1,10 +1,14 @@
 import { syncAirtable, type SyncResult } from "@/lib/airtable";
 import { syncMeta, type MetaSyncResult } from "@/lib/meta";
+import { syncOutbrain, type OutbrainSyncResult } from "@/lib/outbrain";
 import { sendToAdmins, sendToBuyersOfCustomer } from "@/lib/push";
 
 export type FullSyncResult = {
   airtable: SyncResult;
   meta: { ok: true; result: MetaSyncResult } | { ok: false; error: string };
+  outbrain:
+    | { ok: true; result: OutbrainSyncResult }
+    | { ok: false; error: string };
   push: { sent: number; removed: number };
 };
 
@@ -23,6 +27,17 @@ export async function runFullSync(): Promise<FullSyncResult> {
     meta = { ok: true, result: metaResult };
   } catch (err) {
     meta = {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+
+  let outbrain: FullSyncResult["outbrain"];
+  try {
+    const outbrainResult = await syncOutbrain();
+    outbrain = { ok: true, result: outbrainResult };
+  } catch (err) {
+    outbrain = {
       ok: false,
       error: err instanceof Error ? err.message : String(err),
     };
@@ -58,5 +73,10 @@ export async function runFullSync(): Promise<FullSyncResult> {
     pushRemoved += buyerRes.removed;
   }
 
-  return { airtable, meta, push: { sent: pushSent, removed: pushRemoved } };
+  return {
+    airtable,
+    meta,
+    outbrain,
+    push: { sent: pushSent, removed: pushRemoved },
+  };
 }

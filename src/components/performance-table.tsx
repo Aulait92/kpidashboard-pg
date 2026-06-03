@@ -333,8 +333,8 @@ export function PerformanceTable({
         </div>
       )}
       <div className="px-5 pb-4 pt-2 text-[11px] text-[color:var(--muted)]">
-        Lead-Kosten enthalten den anteiligen Meta-Spend (nach Lead-Anteil pro
-        Monat × Produkt).
+        Lead-Kosten enthalten den anteiligen Werbespend aus Meta & Outbrain
+        (nach Lead-Anteil pro Monat × Produkt).
       </div>
     </div>
   );

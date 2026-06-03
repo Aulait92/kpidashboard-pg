@@ -47,6 +47,15 @@ async function handle(req: Request) {
       meta: result.meta.ok
         ? { ok: true, costs: result.meta.result.costs }
         : { ok: false, error: result.meta.error },
+      outbrain: result.outbrain.ok
+        ? {
+            ok: true,
+            costs: result.outbrain.result.costs,
+            marketers: result.outbrain.result.marketers,
+            errors: result.outbrain.result.errors,
+            unmatched: result.outbrain.result.unmatched,
+          }
+        : { ok: false, error: result.outbrain.error },
       push: result.push,
     });
   } catch (err) {
