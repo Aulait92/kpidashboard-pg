@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
   generateCreatives,
+  generateVideoCreatives,
   parseIntent,
   regenerateAdText,
   regenerateCreativeImage,
@@ -14,6 +15,7 @@ import {
   escapeHtml,
   sendTelegramPhotoWithButtons,
   sendTelegramText,
+  sendTelegramVideoWithButtons,
 } from "@/lib/telegram";
 
 // Webhook-Receive (POST). Telegram schickt mit jedem Update einen
@@ -144,13 +146,21 @@ async function handleTextCommand(chatId: string, text: string) {
     return;
   }
 
-  const count = Math.max(1, Math.min(20, intent.count || 1));
+  const isVideo = intent.medium === "video";
+  // Video-Generation ist deutlich langsamer (Sora-Polling) und teurer — auf
+  // 5 Stück pro Anfrage cappen, damit ein Tippfehler kein Budget verbrennt.
+  const maxCount = isVideo ? 5 : 20;
+  const count = Math.max(1, Math.min(maxCount, intent.count || 1));
 
   await sendTelegramText({
     chatId,
-    text: `🎨 Generiere ${count} ${count === 1 ? "Creative" : "Creatives"} für ${escapeHtml(
-      intent.campaignKey,
-    )}-Kampagne… (ca. 60 Sek)`,
+    text: isVideo
+      ? `🎬 Generiere ${count} ${count === 1 ? "Video" : "Videos"} für ${escapeHtml(
+          intent.campaignKey,
+        )}-Kampagne via Sora 2… (das dauert mehrere Minuten)`
+      : `🎨 Generiere ${count} ${count === 1 ? "Creative" : "Creatives"} für ${escapeHtml(
+          intent.campaignKey,
+        )}-Kampagne… (ca. 60 Sek)`,
   });
 
   let request;
@@ -174,15 +184,16 @@ async function handleTextCommand(chatId: string, text: string) {
   }
 
   try {
-    const creatives = await generateCreatives(
-      {
-        campaignKey: intent.campaignKey,
-        audience: intent.audience,
-        tone: intent.tone,
-        count,
-      },
-      request.id,
-    );
+    const briefArgs = {
+      campaignKey: intent.campaignKey,
+      audience: intent.audience,
+      tone: intent.tone,
+      count,
+      medium: isVideo ? ("video" as const) : ("image" as const),
+    };
+    const creatives = isVideo
+      ? await generateVideoCreatives(briefArgs, request.id)
+      : await generateCreatives(briefArgs, request.id);
 
     for (let i = 0; i < creatives.length; i++) {
       const c = creatives[i];
@@ -198,28 +209,42 @@ async function handleTextCommand(chatId: string, text: string) {
           mechanic: c.mechanic,
           imagePrompt: c.imagePrompt,
           imageUrl: c.imageUrl,
+          kind: c.kind ?? "image",
+          videoUrl: c.videoUrl ?? null,
+          durationSec: c.durationSec ?? null,
           status: "pending",
         },
       });
       // Das generierte Creative-Konzept als eigene Nachricht ausgeben
-      // (Caption-Limit von Fotos ist nur 1024 Zeichen — Konzept kann länger).
+      // (Caption-Limit von Fotos/Videos ist nur 1024 Zeichen — Konzept/
+      // Storyboard kann deutlich länger sein).
       if (c.concept) {
         await sendTelegramText({
           chatId,
-          text: `<b>Konzept Variante #${i + 1}</b>\n\n${escapeHtml(c.concept)}`,
+          text: `<b>${c.kind === "video" ? "Storyboard" : "Konzept"} Variante #${i + 1}</b>\n\n${escapeHtml(c.concept)}`,
         });
       }
-      const { messageId } = await sendTelegramPhotoWithButtons({
-        chatId,
-        imageUrl: c.imageUrl,
-        caption: buildVariantCaption({
-          fbHeadline: c.fbHeadline,
-          adText: c.adText,
-          index: i + 1,
-          mechanic: c.mechanic,
-        }),
-        buttons: variantButtons(variant.id),
+      const caption = buildVariantCaption({
+        fbHeadline: c.fbHeadline,
+        adText: c.adText,
+        index: i + 1,
+        mechanic: c.mechanic,
       });
+      const { messageId } =
+        c.kind === "video" && c.videoUrl
+          ? await sendTelegramVideoWithButtons({
+              chatId,
+              videoUrl: c.videoUrl,
+              caption,
+              durationSec: c.durationSec,
+              buttons: variantButtons(variant.id),
+            })
+          : await sendTelegramPhotoWithButtons({
+              chatId,
+              imageUrl: c.imageUrl,
+              caption,
+              buttons: variantButtons(variant.id),
+            });
       await prisma.creativeVariant.update({
         where: { id: variant.id },
         data: { telegramMsgId: String(messageId) },

@@ -277,6 +277,11 @@ model CreativeVariant {
   mechanic        String   @default("") // Konzept-Mechanic (z.B. UGC-Whiteboard, Comic-Illustration, Big-Number)
   imagePrompt     String   // bei HTML-Pipeline: das volle HTML (Debug/Replay)
   imageUrl        String   // public R2-URL
+  // Video-Felder: gesetzt wenn kind="video". imageUrl kann dann ein
+  // Standbild/Thumbnail enthalten (z. B. ersten Frame), videoUrl ist die R2-MP4.
+  kind            String   @default("image") // "image" | "video"
+  videoUrl        String?
+  durationSec     Int?
   // Meta-Side: gesetzt wenn approved + zur Kampagne gepusht.
   metaCampaignId  String?
   metaAdId        String?

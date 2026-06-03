@@ -1,3 +1,4 @@
+import { generateVideo } from "@/lib/openai-video";
 import { uploadImageToR2 } from "@/lib/r2";
 import { renderHtmlToImage } from "@/lib/html-to-png";
 import {
@@ -13,6 +14,7 @@ export type CreativeBrief = {
   audience?: string; // z.B. "Selbstständige 30-45"
   tone?: string; // z.B. "Pain-Point" | "Neugier" | "Humor"
   count: number; // wie viele Varianten generieren
+  medium?: "image" | "video"; // default "image"
 };
 
 export type GeneratedCreative = {
@@ -25,6 +27,10 @@ export type GeneratedCreative = {
   imagePrompt: string; // bei HTML-Pipeline: das volle HTML (Debug/Replay)
   imageUrl: string; // public URL nach R2-Upload
   concept?: string; // das generierte Creative-Konzept (Direct-Image-Modus)
+  // Video-Felder: nur gesetzt wenn medium="video".
+  kind?: "image" | "video";
+  videoUrl?: string;
+  durationSec?: number;
 };
 
 // ─── Claude Creative-Generation (HTML) ───────────────────────────────
@@ -1684,6 +1690,137 @@ Antworte mit GENAU EINEM <creative_html>-Block, KEINE anderen Tags:
 
 // ─── Intent Parsing aus Telegram-Text ────────────────────────────────
 
+// ─── Video-Generation (Sora 2) ───────────────────────────────────────
+// Eigene Pipeline für Bewegtbild — UGC-ähnliche 20-30s Reels mit
+// Storyboard-Konzept → Sora-Prompt → MP4 → R2 → Telegram.
+
+const VIDEO_CONCEPT_REQUEST: Record<string, string> = {
+  Kinderwunsch: `Entwirf ein konkretes, warmes UGC-Reel-Storyboard für Meta-Video-Ads (~20 Sekunden) für Kinderwunschbehandlungen, die bis zu 100% gefördert werden können. Vertikales 9:16-Format. Beschreibe das Video Sekunde für Sekunde, inkl. Kamerawinkel, Person/Setting, gesprochene Worte (deutsch, authentisch, nicht werblich) und Stimmung. Hook in den ersten 3 Sekunden, Wertversprechen in der Mitte, sanfter CTA am Ende.`,
+  Wechsel: `Entwirf ein UGC-Reel-Storyboard (~20 Sekunden, vertikal 9:16) für Meta-Video-Ads zum Thema PKV-Tarifwechsel intern beim gleichen Versicherer — bis zu 50% Beitragsersparnis ohne Anbieterwechsel und ohne neue Gesundheitsprüfung. Beschreibe Sekunde für Sekunde: Kamerawinkel, Person/Setting, gesprochene Worte (deutsch, ehrlich, „Selbst-Aufnahme"-Look), Stimmung. Hook in 3s, Pain → Lösung → CTA.`,
+  Neugeschäft: `Entwirf ein UGC-Reel-Storyboard (~20 Sekunden, vertikal 9:16) für Meta-Video-Ads zum Thema private Krankenversicherung im Neuvertrag für Angestellte/Selbstständige. Beschreibe Sekunde für Sekunde: Kamerawinkel, Setting, gesprochene Worte (deutsch, vertrauensvoll), Stimmung. Hook in 3s, Vorteile, CTA.`,
+};
+
+async function brainstormVideoStoryboards(
+  brief: CreativeBrief,
+): Promise<string[]> {
+  const conceptRequest =
+    VIDEO_CONCEPT_REQUEST[brief.campaignKey] ??
+    `Entwirf ein UGC-Reel-Storyboard (~20s, vertikal 9:16) für eine ${brief.campaignKey}-Kampagne. Beschreibe Sekunde für Sekunde Kamerawinkel, Person/Setting, gesprochene Worte (deutsch) und Stimmung.`;
+  const raw = await llmText({
+    model: process.env.CONCEPT_MODEL || "claude-opus-4-8",
+    system: "",
+    user:
+      brief.count > 1
+        ? `${conceptRequest}\n\nBitte ${brief.count} unterschiedliche Storyboards (z. B. verschiedene Hooks, Personen, Settings). Trenne die einzelnen Storyboards mit einer eigenen Zeile, die NUR ===STORYBOARD=== enthält.`
+        : `${conceptRequest}`,
+    maxTokens: 4000,
+  });
+  const cleaned = raw
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/```\s*$/i, "")
+    .trim();
+
+  let boards: string[] = [];
+  if (/===\s*STORYBOARD\s*===/i.test(cleaned)) {
+    boards = cleaned
+      .split(/===\s*STORYBOARD\s*===/i)
+      .map((s) => s.trim())
+      .filter((s) => s.replace(/\s+/g, " ").length > 40);
+  } else if (cleaned.length > 40) {
+    boards = [cleaned];
+  }
+  // Aufstocken, falls das Modell weniger geliefert hat als angefordert —
+  // dieselbe Vorlage mehrfach ist besser als ein Fehler.
+  while (boards.length > 0 && boards.length < brief.count) boards.push(boards[0]);
+  return boards.slice(0, brief.count);
+}
+
+// Baut den Sora-Prompt aus Storyboard + Kampagnen-Konfiguration. Sora-Modelle
+// reagieren stark auf konkrete visuelle Anweisungen, Sekunden-Marker und
+// kurze On-Screen-Text-Hinweise.
+function buildSoraPrompt(storyboard: string, cfg: DirectImageConfig): string {
+  const onScreen = [
+    cfg.badge ? `Kurzer On-Screen-Text gegen Ende: „${cfg.badge}"` : "",
+    cfg.subline ? `Kleingedrucktes Disclaimer-Wording: „${cfg.subline}"` : "",
+    `End-Frame mit CTA-Text: „${cfg.cta}"`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+  return [
+    `Vertikales 9:16 UGC-Reel (Smartphone-Style), 20 Sekunden, deutscher Markt.`,
+    `Thema: ${cfg.topic}.`,
+    `Storyboard:\n${storyboard}`,
+    onScreen ? `\nOn-Screen-Text:\n${onScreen}` : "",
+    `\nVisuelle Sprache: authentisch, natürlich beleuchtet, kein Stock-Photo-Look. Keine medizinischen Garantien oder Heilversprechen einblenden.`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+async function generateOneVideoCreative(
+  storyboard: string,
+  brief: CreativeBrief,
+  index: number,
+  requestId: string,
+): Promise<GeneratedCreative> {
+  const cfg = getDirectImageConfig(brief.campaignKey);
+  const soraPrompt = buildSoraPrompt(storyboard, cfg);
+  const { buffer, durationSec } = await generateVideo(soraPrompt);
+  const key = `creatives/${requestId}/${index}.mp4`;
+  const videoUrl = await uploadImageToR2({
+    buffer,
+    key,
+    contentType: "video/mp4",
+  });
+  const copy = await adCopyForConcept(storyboard, cfg);
+  return {
+    headline: cfg.topicShort,
+    body: cfg.subline ?? "",
+    cta: cfg.cta,
+    adText: copy.adText,
+    fbHeadline: copy.fbHeadline,
+    mechanic: "Sora 2 UGC-Reel",
+    imagePrompt: soraPrompt,
+    imageUrl: "",
+    concept: storyboard,
+    kind: "video",
+    videoUrl,
+    durationSec,
+  } satisfies GeneratedCreative;
+}
+
+export async function generateVideoCreatives(
+  brief: CreativeBrief,
+  requestId: string,
+): Promise<GeneratedCreative[]> {
+  const boards = await brainstormVideoStoryboards(brief);
+  if (boards.length === 0) {
+    throw new Error(
+      "Keine verwertbaren Storyboards für die Video-Generation erzeugt.",
+    );
+  }
+  // Sora-Generationen sequenziell — parallele Calls würden das Quota-Limit
+  // und die Polling-Last hochtreiben.
+  const results: GeneratedCreative[] = [];
+  for (let i = 0; i < boards.length; i++) {
+    try {
+      const c = await generateOneVideoCreative(
+        boards[i],
+        brief,
+        i + 1,
+        requestId,
+      );
+      results.push(c);
+    } catch (err) {
+      console.warn(
+        `[creative-gen] Video-Variante ${i + 1} failte:`,
+        err instanceof Error ? err.message : err,
+      );
+    }
+  }
+  return results;
+}
+
 export type ParsedIntent = {
   action: "generate" | "unknown";
   count: number;
@@ -1693,6 +1830,8 @@ export type ParsedIntent = {
   region?: string | null;
   audience?: string;
   tone?: string;
+  // "image" (Standbild, Default) oder "video" (Sora 2, UGC-Reel).
+  medium?: "image" | "video";
 };
 
 export async function parseIntent(text: string): Promise<ParsedIntent> {
@@ -1707,7 +1846,9 @@ Erkennbare Kampagnen: "Wechsel", "Neugeschäft", "Kinderwunsch".
 Bei "Kinderwunsch" steht meist eine Region/Stadt dabei (z. B. "Kinderwunsch Berlin")
 — extrahiere sie nach "region" (nur der Ortsname, ohne das Wort "Kinderwunsch").
 Bei Wechsel/Neugeschäft ist region null.
-Antworte mit strict JSON: {"action": "generate"|"unknown", "count": number, "campaignKey": "Wechsel"|"Neugeschäft"|"Kinderwunsch"|null, "region": string|null, "audience"?: string, "tone"?: string}`,
+"medium": "video" wenn der User Worte wie "Video", "Reel", "Clip", "Bewegtbild",
+"als Video" verwendet — sonst "image" (Default).
+Antworte mit strict JSON: {"action": "generate"|"unknown", "count": number, "campaignKey": "Wechsel"|"Neugeschäft"|"Kinderwunsch"|null, "region": string|null, "audience"?: string, "tone"?: string, "medium"?: "image"|"video"}`,
       user: text,
       maxTokens: 400,
     });

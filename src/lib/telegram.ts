@@ -94,6 +94,42 @@ export async function sendTelegramPhotoWithButtons(opts: {
   return { messageId: result.message_id };
 }
 
+// Sendet ein Video + Caption + Inline-Buttons. Telegram lädt das Video selbst
+// von der angegebenen URL — keine direkte Upload-Größenbegrenzung von 50MB
+// (URL-Pfad), nur die generellen Telegram-Limits (~50MB sicher).
+export async function sendTelegramVideoWithButtons(opts: {
+  chatId: string | number;
+  videoUrl: string;
+  caption: string;
+  durationSec?: number;
+  buttons: { id: string; title: string }[][];
+}): Promise<{ messageId: number }> {
+  if (opts.buttons.length === 0) {
+    throw new Error("Telegram Inline-Buttons: mindestens eine Row.");
+  }
+  for (const row of opts.buttons) {
+    for (const b of row) {
+      if (new TextEncoder().encode(b.id).length > 64) {
+        throw new Error(`Button callback_data zu lang (>64 Bytes): ${b.id}`);
+      }
+    }
+  }
+  const result = (await callTelegram("sendVideo", {
+    chat_id: opts.chatId,
+    video: opts.videoUrl,
+    caption: opts.caption.slice(0, 1024),
+    parse_mode: "HTML",
+    supports_streaming: true,
+    ...(opts.durationSec ? { duration: opts.durationSec } : {}),
+    reply_markup: {
+      inline_keyboard: opts.buttons.map((row) =>
+        row.map((b) => ({ text: b.title, callback_data: b.id })),
+      ),
+    },
+  })) as { message_id: number };
+  return { messageId: result.message_id };
+}
+
 // Bestätigt einen Button-Klick — dismissed das Spinner-Icon im Client.
 // Muss innerhalb von ~30s nach Empfang aufgerufen werden.
 export async function answerCallbackQuery(opts: {
