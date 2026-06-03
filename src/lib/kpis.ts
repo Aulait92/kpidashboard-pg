@@ -85,22 +85,48 @@ function parseMonthEnd(key: string): Date {
   return new Date(Date.UTC(y, m, 0, 23, 59, 59, 999));
 }
 
+// Werbespend-Kanäle, abgeleitet vom Cost.note-Prefix.
+//   meta:     "Meta: …"        (Facebook Ads, syncMeta)
+//   outbrain: "Outbrain: …"    (Amplify, syncOutbrain)
+//   other:    keiner der beiden Präfixe (manuelle/direkte LEAD-Kosten)
+// Wird in der P&L genutzt, um Lead-Kosten je Produkt nach Kanal aufzuschlüsseln.
+export type LeadChannel = "meta" | "outbrain" | "other";
+
+function channelWhereClause(
+  channel: LeadChannel | undefined,
+): Record<string, unknown> {
+  if (!channel) return {};
+  if (channel === "meta") return { note: { startsWith: "Meta:" } };
+  if (channel === "outbrain") return { note: { startsWith: "Outbrain:" } };
+  // "other": weder Meta- noch Outbrain-Prefix.
+  return {
+    NOT: [
+      { note: { startsWith: "Meta:" } },
+      { note: { startsWith: "Outbrain:" } },
+    ],
+  };
+}
+
 // Meta-Kosten sind global (customerId=null). Mit Kunden-Filter müssen sie
 // anteilig nach Lead-Anteil pro (Monat × Produkt) auf den Kunden umgelegt
 // werden, sonst fallen sie komplett aus der Kunden-Sicht raus.
+// channel-Filter splittet zusätzlich nach Werbekanal (Meta/Outbrain/Sonstige).
 async function computeLeadCosts(params: {
   range: DateRange;
   customerId: string | null;
   product: string | null;
+  channel?: LeadChannel;
 }): Promise<number> {
-  const { range, customerId, product } = params;
+  const { range, customerId, product, channel } = params;
   const productClause = product ? { product } : {};
+  const channelClause = channelWhereClause(channel);
 
   if (!customerId) {
     const agg = await prisma.cost.aggregate({
       _sum: { amount: true },
       where: {
         ...productClause,
+        ...channelClause,
         kind: "LEAD",
         occurredAt: { gte: range.from, lte: range.to },
       },
@@ -113,6 +139,7 @@ async function computeLeadCosts(params: {
       _sum: { amount: true },
       where: {
         ...productClause,
+        ...channelClause,
         customerId,
         kind: "LEAD",
         occurredAt: { gte: range.from, lte: range.to },
@@ -121,6 +148,7 @@ async function computeLeadCosts(params: {
     prisma.cost.findMany({
       where: {
         ...productClause,
+        ...channelClause,
         customerId: null,
         kind: "LEAD",
         product: { not: null },
@@ -1120,15 +1148,48 @@ export async function computePnL(params: {
     };
   });
 
-  const leadCostRows: PnLRow[] = allProducts.map((p) => {
-    const cur = curRows.find((r) => r.product === p);
-    const prv = prevByProduct.get(p);
-    return {
-      label: p,
-      current: cur?.leadCosts ?? 0,
-      previous: prv?.leadCosts ?? 0,
-    };
-  });
+  // Lead-Kosten je (Kanal × Produkt) — zusätzliche Achse, damit man z. B.
+  // „Meta Wechsel" und „Outbrain Wechsel" getrennt sieht. Kanäle ohne Spend
+  // in beiden Perioden werden ausgeblendet (keine Geisterzeilen).
+  const channels: { key: LeadChannel; label: string }[] = [
+    { key: "meta", label: "Meta" },
+    { key: "outbrain", label: "Outbrain" },
+    { key: "other", label: "Direkt" },
+  ];
+  const leadCostMatrix = await Promise.all(
+    allProducts.flatMap((p) =>
+      channels.map(async (ch) => {
+        const [cur, prv] = await Promise.all([
+          computeLeadCosts({
+            range,
+            customerId,
+            product: p,
+            channel: ch.key,
+          }),
+          computeLeadCosts({
+            range: prev,
+            customerId,
+            product: p,
+            channel: ch.key,
+          }),
+        ]);
+        return { product: p, channel: ch, current: cur, previous: prv };
+      }),
+    ),
+  );
+
+  // Nur Kanäle behalten, die irgendwo (Produkt × Periode) Spend hatten.
+  const channelHasSpend = new Set<LeadChannel>();
+  for (const row of leadCostMatrix) {
+    if (row.current > 0 || row.previous > 0) channelHasSpend.add(row.channel.key);
+  }
+  const leadCostRows: PnLRow[] = leadCostMatrix
+    .filter((row) => channelHasSpend.has(row.channel.key))
+    .map((row) => ({
+      label: `${row.channel.label} ${row.product}`,
+      current: row.current,
+      previous: row.previous,
+    }));
 
   const sumCurrent = (rows: PnLRow[]) =>
     rows.reduce((acc, r) => acc + r.current, 0);
