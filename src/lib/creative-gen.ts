@@ -1,4 +1,4 @@
-import { generateVideo } from "@/lib/openai-video";
+import { generateVideo, type VideoProgress } from "@/lib/openai-video";
 import { uploadImageToR2 } from "@/lib/r2";
 import { renderHtmlToImage } from "@/lib/html-to-png";
 import {
@@ -1762,10 +1762,11 @@ async function generateOneVideoCreative(
   brief: CreativeBrief,
   index: number,
   requestId: string,
+  onProgress?: VideoProgress,
 ): Promise<GeneratedCreative> {
   const cfg = getDirectImageConfig(brief.campaignKey);
   const soraPrompt = buildSoraPrompt(storyboard, cfg);
-  const { buffer, durationSec } = await generateVideo(soraPrompt);
+  const { buffer, durationSec } = await generateVideo(soraPrompt, onProgress);
   const key = `creatives/${requestId}/${index}.mp4`;
   const videoUrl = await uploadImageToR2({
     buffer,
@@ -1792,6 +1793,7 @@ async function generateOneVideoCreative(
 export async function generateVideoCreatives(
   brief: CreativeBrief,
   requestId: string,
+  onProgress?: VideoProgress,
 ): Promise<GeneratedCreative[]> {
   const boards = await brainstormVideoStoryboards(brief);
   if (boards.length === 0) {
@@ -1809,13 +1811,15 @@ export async function generateVideoCreatives(
         brief,
         i + 1,
         requestId,
+        onProgress
+          ? (m) => onProgress(`Variante ${i + 1}/${boards.length}: ${m}`)
+          : undefined,
       );
       results.push(c);
     } catch (err) {
-      console.warn(
-        `[creative-gen] Video-Variante ${i + 1} failte:`,
-        err instanceof Error ? err.message : err,
-      );
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(`[creative-gen] Video-Variante ${i + 1} failte:`, msg);
+      await onProgress?.(`⚠️ Variante ${i + 1} fehlgeschlagen: ${msg.slice(0, 200)}`);
     }
   }
   return results;

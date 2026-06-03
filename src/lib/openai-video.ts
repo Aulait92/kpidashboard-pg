@@ -7,9 +7,13 @@
 // vs. Sora 2 Pro) sind unterschiedliche max. Längen erlaubt:
 //   SORA_MODEL          default "sora-2-pro" (für 20s-Clips)
 //   SORA_DURATION_SEC   default 20
-//   SORA_SIZE           default "720x720" (quadratisch 1:1, Feed-Format)
+//   SORA_SIZE           default "720x1280" (vertikal 9:16 — auf sora-2 +
+//                       sora-2-pro garantiert unterstützt; 720x720 / 1:1
+//                       lehnt die API ab.)
 
 const OPENAI_BASE = "https://api.openai.com/v1";
+const CREATE_TIMEOUT_MS = 60_000;
+const POLL_FETCH_TIMEOUT_MS = 30_000;
 
 function getApiKey(): string {
   const key = process.env.OPENAI_API_KEY;
@@ -17,36 +21,67 @@ function getApiKey(): string {
   return key;
 }
 
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 type VideoJob = {
   id: string;
-  status: "queued" | "in_progress" | "completed" | "failed";
+  status: "queued" | "in_progress" | "completed" | "failed" | string;
   error?: { message?: string } | null;
 };
 
 async function createVideoJob(prompt: string): Promise<VideoJob> {
   const model = process.env.SORA_MODEL ?? "sora-2-pro";
   const seconds = process.env.SORA_DURATION_SEC ?? "20";
-  const size = process.env.SORA_SIZE ?? "720x720";
+  const size = process.env.SORA_SIZE ?? "720x1280";
 
-  const res = await fetch(`${OPENAI_BASE}/videos`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${getApiKey()}`,
-      "Content-Type": "application/json",
+  console.log(
+    `[sora] createVideoJob model=${model} seconds=${seconds} size=${size} promptLen=${prompt.length}`,
+  );
+
+  const res = await fetchWithTimeout(
+    `${OPENAI_BASE}/videos`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${getApiKey()}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ model, prompt, seconds, size }),
     },
-    body: JSON.stringify({ model, prompt, seconds, size }),
-  });
+    CREATE_TIMEOUT_MS,
+  );
   const text = await res.text();
   if (!res.ok) {
-    throw new Error(`OpenAI /videos ${res.status}: ${text.slice(0, 400)}`);
+    throw new Error(`OpenAI /videos ${res.status}: ${text.slice(0, 600)}`);
   }
-  return JSON.parse(text) as VideoJob;
+  const job = JSON.parse(text) as VideoJob;
+  if (!job.id) {
+    throw new Error(
+      `OpenAI /videos lieferte kein id-Feld zurück: ${text.slice(0, 400)}`,
+    );
+  }
+  console.log(`[sora] job created id=${job.id} status=${job.status}`);
+  return job;
 }
 
 async function getVideoJob(id: string): Promise<VideoJob> {
-  const res = await fetch(`${OPENAI_BASE}/videos/${id}`, {
-    headers: { Authorization: `Bearer ${getApiKey()}` },
-  });
+  const res = await fetchWithTimeout(
+    `${OPENAI_BASE}/videos/${id}`,
+    { headers: { Authorization: `Bearer ${getApiKey()}` } },
+    POLL_FETCH_TIMEOUT_MS,
+  );
   const text = await res.text();
   if (!res.ok) {
     throw new Error(`OpenAI /videos/${id} ${res.status}: ${text.slice(0, 400)}`);
@@ -55,9 +90,11 @@ async function getVideoJob(id: string): Promise<VideoJob> {
 }
 
 async function downloadVideoContent(id: string): Promise<Buffer> {
-  const res = await fetch(`${OPENAI_BASE}/videos/${id}/content`, {
-    headers: { Authorization: `Bearer ${getApiKey()}` },
-  });
+  const res = await fetchWithTimeout(
+    `${OPENAI_BASE}/videos/${id}/content`,
+    { headers: { Authorization: `Bearer ${getApiKey()}` } },
+    120_000,
+  );
   if (!res.ok) {
     const text = await res.text();
     throw new Error(
@@ -73,23 +110,50 @@ export type GeneratedVideo = {
   durationSec: number;
 };
 
+export type VideoProgress = (msg: string) => void | Promise<void>;
+
 // Generiert ein Video aus einem Prompt. Pollt das Job bis "completed" oder
-// timeout (default 10 Min). Wirft bei "failed" oder Quoten-Fehlern.
-export async function generateVideo(prompt: string): Promise<GeneratedVideo> {
+// timeout. Wirft bei "failed" oder Quoten-Fehlern. onProgress wird nach
+// Job-Erstellung und bei jedem Status-Wechsel aufgerufen — damit das
+// aufrufende UI (Telegram-Bot) Lebenszeichen senden kann.
+export async function generateVideo(
+  prompt: string,
+  onProgress?: VideoProgress,
+): Promise<GeneratedVideo> {
   if (!prompt.trim()) throw new Error("Video-Prompt ist leer.");
 
   const job = await createVideoJob(prompt);
+  await onProgress?.(
+    `Sora-Job angelegt (ID ${job.id.slice(0, 8)}…, Status: ${job.status}).`,
+  );
+
   const startedAt = Date.now();
   const timeoutMs = Number(process.env.SORA_TIMEOUT_MS ?? 10 * 60 * 1000);
   const pollMs = Number(process.env.SORA_POLL_MS ?? 5000);
 
   let current: VideoJob = job;
+  let lastStatus = current.status;
   while (current.status !== "completed" && current.status !== "failed") {
     if (Date.now() - startedAt > timeoutMs) {
-      throw new Error(`Sora-Generation Timeout nach ${timeoutMs}ms (Job ${job.id}).`);
+      throw new Error(
+        `Sora-Generation Timeout nach ${Math.round(timeoutMs / 1000)}s (Job ${job.id}, letzter Status: ${current.status}).`,
+      );
     }
     await new Promise((r) => setTimeout(r, pollMs));
-    current = await getVideoJob(job.id);
+    try {
+      current = await getVideoJob(job.id);
+    } catch (err) {
+      console.warn(
+        `[sora] poll failte (wird wiederholt):`,
+        err instanceof Error ? err.message : err,
+      );
+      continue;
+    }
+    if (current.status !== lastStatus) {
+      console.log(`[sora] job ${job.id} status: ${lastStatus} → ${current.status}`);
+      await onProgress?.(`Sora-Status: ${current.status}.`);
+      lastStatus = current.status;
+    }
   }
   if (current.status === "failed") {
     throw new Error(
@@ -97,7 +161,9 @@ export async function generateVideo(prompt: string): Promise<GeneratedVideo> {
     );
   }
 
+  console.log(`[sora] job ${job.id} completed, lade Content…`);
   const buffer = await downloadVideoContent(job.id);
+  console.log(`[sora] job ${job.id} content geladen, ${buffer.length} bytes`);
   return {
     buffer,
     durationSec: Number(process.env.SORA_DURATION_SEC ?? 20),

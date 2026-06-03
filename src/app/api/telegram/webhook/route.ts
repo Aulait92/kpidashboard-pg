@@ -192,7 +192,15 @@ async function handleTextCommand(chatId: string, text: string) {
       medium: isVideo ? ("video" as const) : ("image" as const),
     };
     const creatives = isVideo
-      ? await generateVideoCreatives(briefArgs, request.id)
+      ? await generateVideoCreatives(briefArgs, request.id, async (msg) => {
+          // Lebenszeichen ins Telegram — Sora kann viele Minuten brauchen,
+          // ohne Status-Updates wirkt der Bot eingefroren.
+          try {
+            await sendTelegramText({ chatId, text: `⏳ ${escapeHtml(msg)}` });
+          } catch (err) {
+            console.warn("[telegram] progress update failed:", err);
+          }
+        })
       : await generateCreatives(briefArgs, request.id);
 
     for (let i = 0; i < creatives.length; i++) {
