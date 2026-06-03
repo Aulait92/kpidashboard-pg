@@ -126,11 +126,10 @@ function escapeDrawtext(s: string): string {
     .trim();
 }
 
-// Lange Zeilen in 2–3 Zeilen wrappen, damit der Text in einem 720px-Frame
-// nicht über die Bildkante rauswächst. drawtext rendert „\n" als Linebreak,
-// wenn man im filter-Argument `text='Zeile1' und expansion=none setzt — wir
-// schreiben den literalen Backslash-n in den Filter-Wert.
-function wrapText(text: string, maxCharsPerLine = 32, maxLines = 3): string {
+// Lange Zeilen in 2–4 Zeilen wrappen. maxCharsPerLine ist defensiv klein
+// (≈22 Zeichen) damit lange deutsche Komposita wie „Krankenversicherung"
+// am Frame-Rand nicht abgeschnitten werden.
+function wrapText(text: string, maxCharsPerLine = 22, maxLines = 4): string {
   const words = text.split(/\s+/).filter((w) => w.length > 0);
   const lines: string[] = [];
   let buf = "";
@@ -169,15 +168,20 @@ function buildDrawtextChain(
       `fontfile=${safeFont}`,
       `text='${escapeDrawtext(text)}'`,
       `enable='between(t,${seg.start.toFixed(2)},${seg.end.toFixed(2)})'`,
-      // Zentriert horizontal, unteres Drittel.
-      `x=(w-text_w)/2`,
-      `y=h-(text_h+50)`,
-      `fontsize=28`,
+      // Horizontal zentriert mit Fallback gegen Cutoff: falls der Text
+      // doch mal breiter wird als das Frame minus 80px Margin, wird er auf
+      // 40px-Margin links geklemmt statt rechts abzuschneiden.
+      `x=if(gt(text_w\\,w-80)\\,40\\,(w-text_w)/2)`,
+      // Vertikal näher zur Mitte (zentriert, leicht nach unten versetzt).
+      `y=(h-text_h)/2+h/10`,
+      `fontsize=42`,
       `fontcolor=white`,
-      `borderw=4`,
+      `borderw=5`,
       `bordercolor=black`,
-      `line_spacing=6`,
+      `line_spacing=8`,
       `box=0`,
+      // Hält die Glyphen-Box im sichtbaren Bereich (drawtext-Built-in).
+      `fix_bounds=1`,
     ].join(":");
     stages.push(`drawtext=${drawtext}`);
   }
