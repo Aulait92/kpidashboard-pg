@@ -16,7 +16,8 @@
 
 import { addDays, endOfMonth, format, startOfMonth } from "date-fns";
 
-const ADS_API = "https://googleads.googleapis.com/v18";
+const ADS_API_VERSION = process.env.GOOGLE_ADS_API_VERSION ?? "v20";
+const ADS_API = `https://googleads.googleapis.com/${ADS_API_VERSION}`;
 const OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token";
 
 function getEnv() {
