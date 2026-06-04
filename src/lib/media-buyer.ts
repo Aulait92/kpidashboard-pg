@@ -254,16 +254,22 @@ export function decideBudget(params: {
   const stepLow = currentBudget > 0 ? currentBudget * (1 - maxStep) : effMinBudget;
   const stepHigh =
     currentBudget > 0 ? currentBudget * (1 + maxStep) : maxBudget;
+  // targetRaw = reines Math-Ziel innerhalb Min/Max — wird bei Reaktivierungen
+  // und im Präzisions-Fenster genutzt (Step-Bremse hier nicht sinnvoll).
+  const targetRaw = clamp(requiredBudgetRaw, effMinBudget, maxBudget);
   const target = precisionMode
-    ? clamp(requiredBudgetRaw, effMinBudget, maxBudget)
+    ? targetRaw
     : clamp(clamp(requiredBudgetRaw, stepLow, stepHigh), effMinBudget, maxBudget);
 
-  // Reaktivieren falls pausiert und noch Leads offen.
+  // Reaktivieren falls pausiert und noch Leads offen. Step-Limit überspringen:
+  // pausierte Kampagnen geben aktuell 0 € aus, das angezeigte „currentBudget"
+  // ist nur der hinterlegte Wert — wir können direkt auf das Math-Ziel gehen,
+  // statt erst künstlich auf 50 % des hinterlegten Werts zu klemmen.
   if (anyPaused) {
     return {
       action: "activate",
-      reason: `Meta-Kampagnen pausiert, aber ${remaining} Leads offen (Prognose ${projected}/${goal}). Meta reaktivieren mit ${eur.format(target)}/Tag (≈ ${requiredPerDay.toFixed(1)} Leads/Tag bei kalk. ${cplFmt.format(costPerLead)}/Meta-Lead).`,
-      targetBudget: target,
+      reason: `Meta-Kampagnen pausiert, aber ${remaining} Leads offen (Prognose ${projected}/${goal}). Meta reaktivieren mit ${eur.format(targetRaw)}/Tag (≈ ${requiredPerDay.toFixed(1)} Leads/Tag bei kalk. ${cplFmt.format(costPerLead)}/Meta-Lead).`,
+      targetBudget: targetRaw,
       setStatus: "ACTIVE",
     };
   }
