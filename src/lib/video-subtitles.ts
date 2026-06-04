@@ -71,29 +71,6 @@ async function runFfmpeg(args: string[], step: string): Promise<void> {
   });
 }
 
-// ffmpeg-Probe-Modus: ohne Output-Datei → exit 1, aber stderr enthält
-// die Duration des Inputs. Wir parsen sie und ignorieren den exit code.
-async function probeDuration(path: string): Promise<number | null> {
-  return new Promise((resolve) => {
-    const proc = spawn(getFfmpegPath(), ["-hide_banner", "-i", path], {
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-    let stderr = "";
-    proc.stderr.on("data", (chunk) => {
-      stderr += chunk.toString();
-    });
-    proc.on("error", () => resolve(null));
-    proc.on("close", () => {
-      const m = /Duration:\s+(\d+):(\d+):(\d+(?:\.\d+)?)/.exec(stderr);
-      if (!m) return resolve(null);
-      const h = Number.parseInt(m[1], 10);
-      const min = Number.parseInt(m[2], 10);
-      const s = Number.parseFloat(m[3]);
-      resolve(h * 3600 + min * 60 + s);
-    });
-  });
-}
-
 async function transcribeAudio(audioPath: string): Promise<WhisperSegment[]> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY nicht gesetzt.");
@@ -249,12 +226,6 @@ export async function burnGermanSubtitles(
 
   try {
     await writeFile(inputPath, videoBuffer);
-
-    // 0. Input-Länge messen, damit wir das Output am Ende exakt darauf
-    // cappen können. ffmpeg-Audio-Reencodes haben sonst eine Tendenz zur
-    // Drift (paar Frames zu wenig am Ende).
-    const inputDuration = await probeDuration(inputPath);
-
     await onProgress?.("Audio extrahieren…");
 
     // 1. Audio extrahieren.
@@ -309,40 +280,47 @@ export async function burnGermanSubtitles(
     for (const f of textFiles) {
       await writeFile(f.path, f.content, "utf8");
     }
-    await onProgress?.(
-      inputDuration
-        ? `ffmpeg encodiert mit Untertiteln (${inputDuration.toFixed(2)}s)…`
-        : "ffmpeg encodiert mit Untertiteln…",
-    );
+    await onProgress?.("ffmpeg encodiert mit Untertiteln…");
 
-    // 4. Encoding. Audio neu codieren, damit Container-Quirks aus dem Sora-
-    // Output nicht zu Stream-Mismatch führen. -t setzt die Output-Dauer
-    // exakt auf die gemessene Input-Dauer (kein Drift durch AAC-Reencode).
-    const args: string[] = [
-      "-i",
-      inputPath,
-      "-vf",
-      chain,
-      "-c:v",
-      "libx264",
-      "-preset",
-      "veryfast",
-      "-crf",
-      "23",
-      "-pix_fmt",
-      "yuv420p",
-      "-c:a",
-      "aac",
-      "-b:a",
-      "128k",
-      "-movflags",
-      "+faststart",
-    ];
-    if (inputDuration && inputDuration > 0) {
-      args.push("-t", inputDuration.toFixed(3));
-    }
-    args.push("-y", outputPath);
-    await runFfmpeg(args, "burn subtitles");
+    // 4. Encoding.
+    //   -c:a copy   : Audio unverändert übernehmen — vermeidet Priming-
+    //                 Delay am Anfang und Drift am Ende durch AAC-Reencode.
+    //   -fflags +genpts + -avoid_negative_ts make_zero
+    //                 : robuste Timestamps, falls Sora-MP4 negative oder
+    //                   weglaufende PTS hat (Sora-Output hat das gelegentlich).
+    //   -vsync passthrough
+    //                 : Frame-Timing aus dem Input übernehmen, statt zu
+    //                   re-samplen.
+    //   KEIN -t  : Wir vertrauen der echten Input-Länge.
+    await runFfmpeg(
+      [
+        "-fflags",
+        "+genpts",
+        "-i",
+        inputPath,
+        "-vf",
+        chain,
+        "-vsync",
+        "passthrough",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "veryfast",
+        "-crf",
+        "23",
+        "-pix_fmt",
+        "yuv420p",
+        "-c:a",
+        "copy",
+        "-avoid_negative_ts",
+        "make_zero",
+        "-movflags",
+        "+faststart",
+        "-y",
+        outputPath,
+      ],
+      "burn subtitles",
+    );
 
     const out = await readFile(outputPath);
     return { buffer: out, burned: true };
