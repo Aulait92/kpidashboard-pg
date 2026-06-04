@@ -148,11 +148,12 @@ function GoalEditForm({
     {},
   );
 
-  // Aktuelle Werte vorbefüllen.
+  const isTotal = initial.product == null;
+
+  // Aktuelle Werte vorbefüllen. Abschlussquote & Marge sind Anteile (0..1) →
+  // als Prozent anzeigen.
   const values = {
-    leads: initial.rows.find((r) => r.key === "leads")?.goal,
     closed: initial.rows.find((r) => r.key === "closed")?.goal,
-    revenue: initial.rows.find((r) => r.key === "revenue")?.goal,
     margin: initial.rows.find((r) => r.key === "margin")?.goal,
   };
 
@@ -164,19 +165,24 @@ function GoalEditForm({
   return (
     <form action={formAction} className="space-y-3">
       <input type="hidden" name="monthKey" value={initial.monthKey} />
+      <input type="hidden" name="product" value={initial.product ?? ""} />
+
+      <p className="text-[11px] text-[color:var(--muted)]">
+        Lead- und Umsatzziele kommen aus Airtable (read-only; Umsatz = Lead-Ziel
+        × Preis).{" "}
+        {isTotal
+          ? "Gesamt: Abschlussquote und Marge eigenständig setzen (Leads & Umsatz = Summe)."
+          : "Hier Abschlussquote und Marge für dieses Produkt setzen."}
+      </p>
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field label="Leads (Anzahl)" name="leads" defaultValue={values.leads} step={1} />
         <Field
-          label="Abschlüsse (Anzahl)"
+          label="Abschlussquote (%)"
           name="closed"
-          defaultValue={values.closed}
-          step={1}
-        />
-        <Field
-          label="Umsatz (€)"
-          name="revenue"
-          defaultValue={values.revenue}
-          step={50}
+          defaultValue={values.closed != null ? values.closed * 100 : undefined}
+          step={0.1}
+          max={100}
+          hint="0-100"
         />
         <Field
           label="Marge vor weiteren Kosten (%)"
@@ -270,6 +276,9 @@ export function MonthlyGoalsCard({
           </div>
           <h2 className="mt-0.5 text-lg font-semibold tracking-tight">
             Monatsziele {progress.monthLabel}
+            <span className="ml-2 text-sm font-medium text-[color:var(--muted)]">
+              · {progress.product ?? "Gesamt"}
+            </span>
           </h2>
         </div>
         <div className="flex items-center gap-2">
@@ -298,7 +307,7 @@ export function MonthlyGoalsCard({
       ) : !anyGoalSet ? (
         <div className="rounded-lg border border-dashed border-[color:var(--border)] p-6 text-center text-sm text-[color:var(--muted)]">
           Noch keine Ziele für {progress.monthLabel} gesetzt. Klick auf
-          „Ziele setzen", um loszulegen.
+          „Ziele setzen“, um loszulegen.
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentSession } from "@/lib/auth";
-import { runMediaBuyer, type CustomerBuyerResult } from "@/lib/media-buyer";
+import { runMediaBuyer, type PoolResult } from "@/lib/media-buyer";
 import { prisma } from "@/lib/prisma";
 
 async function requireAdmin() {
@@ -16,15 +16,8 @@ async function requireAdmin() {
 export type SaveSettingsState = {
   ok?: boolean;
   error?: string;
-  savedName?: string;
+  savedLabel?: string;
 };
-
-function parseIntOrNull(raw: string): number | null {
-  const t = raw.trim();
-  if (t === "") return null;
-  const n = Number.parseInt(t, 10);
-  return Number.isFinite(n) && n >= 0 ? n : null;
-}
 
 function parseEurOrNull(raw: string): number | null {
   const t = raw.trim().replace(",", ".");
@@ -33,24 +26,23 @@ function parseEurOrNull(raw: string): number | null {
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
-export async function saveCustomerBuyerSettings(
+// Speichert die Steuer-Einstellungen eines Liefer-Pools (Autopilot,
+// Max-Budget, optionales Kampagnen-Keyword). Ziele sind read-only (Airtable).
+export async function savePoolSettings(
   _prev: SaveSettingsState,
   formData: FormData,
 ): Promise<SaveSettingsState> {
   await requireAdmin();
 
-  const customerId = String(formData.get("customerId") ?? "");
-  if (!customerId) return { error: "Kunde fehlt." };
+  const key = String(formData.get("poolKey") ?? "");
+  if (!key) return { error: "Pool fehlt." };
 
-  const customer = await prisma.customer.findUnique({
-    where: { id: customerId },
-    select: { id: true, name: true },
+  const pool = await prisma.deliveryPool.findUnique({
+    where: { key },
+    select: { label: true },
   });
-  if (!customer) return { error: "Kunde existiert nicht." };
+  if (!pool) return { error: "Pool existiert nicht (erst Sync/Lauf abwarten)." };
 
-  const monthlyLeadGoal = parseIntOrNull(
-    String(formData.get("monthlyLeadGoal") ?? ""),
-  );
   const maxDailyBudget = parseEurOrNull(
     String(formData.get("maxDailyBudget") ?? ""),
   );
@@ -58,29 +50,43 @@ export async function saveCustomerBuyerSettings(
   const campaignKeyword = keywordRaw === "" ? null : keywordRaw;
   const autopilot = formData.get("autopilot") === "on";
 
-  await prisma.customer.update({
-    where: { id: customerId },
-    data: { monthlyLeadGoal, maxDailyBudget, campaignKeyword, autopilot },
+  await prisma.deliveryPool.update({
+    where: { key },
+    data: { maxDailyBudget, campaignKeyword, autopilot },
   });
 
   revalidatePath("/admin/media-buyer");
-  return { ok: true, savedName: customer.name };
+  return { ok: true, savedLabel: pool.label };
 }
 
 export type DryRunState = {
   ok?: boolean;
   error?: string;
-  results?: CustomerBuyerResult[];
+  results?: PoolResult[];
 };
 
-// Trockenlauf: zeigt sofort, was der Buyer entscheiden würde — ohne an Meta
-// zu schreiben oder zu benachrichtigen.
+// Trockenlauf: simuliert alle Pools (auch ohne Autopilot) — ohne an Meta zu
+// schreiben oder zu benachrichtigen.
 export async function runDryRun(): Promise<DryRunState> {
   await requireAdmin();
   try {
     const result = await runMediaBuyer({ dryRun: true });
     revalidatePath("/admin/media-buyer");
-    return { ok: true, results: result.customers };
+    return { ok: true, results: result.pools };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+// Jetzt anwenden: echter Lauf, der die Normalbetrieb-Drosselung überspringt.
+// Schreibt an Meta (nur Autopilot-Pools) — z. B. direkt nach dem Aktivieren
+// des Autopiloten, um nicht aufs Drossel-Fenster zu warten.
+export async function runApplyNow(): Promise<DryRunState> {
+  await requireAdmin();
+  try {
+    const result = await runMediaBuyer({ force: true });
+    revalidatePath("/admin/media-buyer");
+    return { ok: true, results: result.pools };
   } catch (err) {
     return { error: err instanceof Error ? err.message : String(err) };
   }

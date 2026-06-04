@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
+import { listPoolsForAdmin } from "@/lib/media-buyer";
 import { prisma } from "@/lib/prisma";
 import {
-  MediaBuyerAdmin,
+  MediaBuyerLayout,
   type ActionLogRow,
-  type CustomerSetting,
+  type PoolDetailRow,
+  type TopStats,
 } from "./media-buyer-admin";
 
 export const dynamic = "force-dynamic";
@@ -35,23 +37,15 @@ export default async function MediaBuyerPage() {
     redirect("/login");
   }
 
-  const [customers, actions] = await Promise.all([
-    prisma.customer.findMany({
-      orderBy: { name: "asc" },
-      select: {
-        id: true,
-        name: true,
-        monthlyLeadGoal: true,
-        autopilot: true,
-        campaignKeyword: true,
-        maxDailyBudget: true,
-      },
-    }),
+  const [pools, actions] = await Promise.all([
+    listPoolsForAdmin(),
     prisma.mediaBuyerAction.findMany({
       orderBy: { createdAt: "desc" },
-      take: 50,
+      take: 200,
       select: {
         id: true,
+        poolKey: true,
+        poolLabel: true,
         action: true,
         reason: true,
         leadsMtd: true,
@@ -61,23 +55,34 @@ export default async function MediaBuyerPage() {
         newBudget: true,
         dryRun: true,
         createdAt: true,
-        customer: { select: { name: true } },
       },
     }),
   ]);
 
-  const customerSettings: CustomerSetting[] = customers.map((c) => ({
-    id: c.id,
-    name: c.name,
-    monthlyLeadGoal: c.monthlyLeadGoal,
-    autopilot: c.autopilot,
-    campaignKeyword: c.campaignKeyword,
-    maxDailyBudget: decToNum(c.maxDailyBudget),
+  const poolRows: PoolDetailRow[] = pools.map((p) => ({
+    key: p.key,
+    label: p.label,
+    kind: p.kind,
+    product: p.product,
+    region: p.region,
+    goal: p.goal,
+    leadsMtd: p.leadsMtd,
+    projected: p.projected,
+    daysElapsed: p.daysElapsed,
+    daysTotal: p.daysTotal,
+    customerCount: p.customerCount,
+    autopilot: p.autopilot,
+    maxDailyBudget: p.maxDailyBudget,
+    campaignKeyword: p.campaignKeyword,
+    cpl: p.cpl,
+    latestAction: p.latestAction,
+    latestReason: p.latestReason,
   }));
 
   const log: ActionLogRow[] = actions.map((a) => ({
     id: a.id,
-    customerName: a.customer.name,
+    poolKey: a.poolKey,
+    poolLabel: a.poolLabel,
     action: a.action,
     reason: a.reason,
     leadsMtd: a.leadsMtd,
@@ -89,27 +94,47 @@ export default async function MediaBuyerPage() {
     createdAt: timeFmt.format(a.createdAt),
   }));
 
+  // Aggregate Top-Stats über alle Pools.
+  const sumGoal = poolRows.reduce((s, p) => s + p.goal, 0);
+  const sumLeads = poolRows.reduce((s, p) => s + p.leadsMtd, 0);
+  const sumProjected = poolRows.reduce((s, p) => s + p.projected, 0);
+  const autopilotOn = poolRows.filter((p) => p.autopilot).length;
+  const daysElapsed = poolRows[0]?.daysElapsed ?? 1;
+  const daysTotal = poolRows[0]?.daysTotal ?? 30;
+
+  const top: TopStats = {
+    goal: sumGoal,
+    leadsMtd: sumLeads,
+    projected: sumProjected,
+    autopilotOn,
+    autopilotTotal: poolRows.length,
+    daysElapsed,
+    daysTotal,
+    monthLabel: new Intl.DateTimeFormat("de-DE", {
+      month: "long",
+      year: "numeric",
+    }).format(new Date()),
+  };
+
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <header className="mb-6">
+    <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 pb-24 pt-6 sm:px-6 lg:px-8 lg:pb-8">
+      <header className="mb-4">
         <Link
           href="/"
           className="text-xs text-[color:var(--brand)] hover:underline"
         >
           ← zum Dashboard
         </Link>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
+        <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">
           Media Buyer
         </h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">
-          Automatische Budget-Steuerung pro Kunde: legt das gewünschte
-          Lead-Ziel fest und regelt die Meta-Kampagnen so, dass zum Monatsende
-          möglichst 100 % der Leads geliefert sind. Nur Kunden mit aktivem
-          <strong> Autopilot</strong> und gesetztem Lead-Ziel werden gesteuert.
+          {top.monthLabel} · Tag {top.daysElapsed}/{top.daysTotal} ·{" "}
+          {Math.max(0, top.daysTotal - top.daysElapsed)} Tage übrig
         </p>
       </header>
 
-      <MediaBuyerAdmin customers={customerSettings} log={log} />
+      <MediaBuyerLayout pools={poolRows} log={log} top={top} />
     </main>
   );
 }

@@ -38,11 +38,25 @@ async function handle(req: Request) {
       airtable: {
         leads: result.airtable.leads,
         revenues: result.airtable.revenues,
+        deletedLeads: result.airtable.deletedLeads,
+        customers: result.airtable.customers,
         newSales: result.airtable.newSales.length,
+        tables: result.airtable.tables,
+        errors: result.airtable.errors,
       },
       meta: result.meta.ok
         ? { ok: true, costs: result.meta.result.costs }
         : { ok: false, error: result.meta.error },
+      outbrain: result.outbrain.ok
+        ? {
+            ok: true,
+            costs: result.outbrain.result.costs,
+            marketers: result.outbrain.result.marketers,
+            errors: result.outbrain.result.errors,
+            unmatched: result.outbrain.result.unmatched,
+            debug: result.outbrain.result.debug,
+          }
+        : { ok: false, error: result.outbrain.error },
       push: result.push,
     });
   } catch (err) {

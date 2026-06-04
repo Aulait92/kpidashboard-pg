@@ -1,7 +1,12 @@
+import { generateVideo, type VideoProgress } from "@/lib/openai-video";
 import { uploadImageToR2 } from "@/lib/r2";
+import { burnGermanSubtitles } from "@/lib/video-subtitles";
 import { renderHtmlToImage } from "@/lib/html-to-png";
-import { resolveUnsplashPlaceholders } from "@/lib/unsplash";
-import { resolveComicPlaceholders } from "@/lib/replicate-image";
+import {
+  generateFullCreativeImage,
+  resolveComicPlaceholders,
+  resolvePhotoPlaceholders,
+} from "@/lib/openai-image";
 
 // Brief der Creative-Generation. Claude designt komplette HTML-Creatives,
 // Playwright rendert zu PNG, Upload zu R2.
@@ -10,6 +15,7 @@ export type CreativeBrief = {
   audience?: string; // z.B. "Selbstständige 30-45"
   tone?: string; // z.B. "Pain-Point" | "Neugier" | "Humor"
   count: number; // wie viele Varianten generieren
+  medium?: "image" | "video"; // default "image"
 };
 
 export type GeneratedCreative = {
@@ -21,6 +27,11 @@ export type GeneratedCreative = {
   mechanic: string; // Konzept-Mechanic (UGC-Whiteboard, Comic-Illustration, Big-Number, …)
   imagePrompt: string; // bei HTML-Pipeline: das volle HTML (Debug/Replay)
   imageUrl: string; // public URL nach R2-Upload
+  concept?: string; // das generierte Creative-Konzept (Direct-Image-Modus)
+  // Video-Felder: nur gesetzt wenn medium="video".
+  kind?: "image" | "video";
+  videoUrl?: string;
+  durationSec?: number;
 };
 
 // ─── Claude Creative-Generation (HTML) ───────────────────────────────
@@ -33,6 +44,7 @@ type CreativeVariant = {
   fbHeadline: string;
   html: string;
   mechanic: string;
+  concept?: string;
 };
 
 const CREATIVE_SYSTEM_PROMPT = `Du bist Senior Direct-Response-Creative-Director für Meta-Ads im deutschen PKV-Lead-Gen-Markt. Du designst Ad-Creatives als komplette HTML-Dokumente.
@@ -490,6 +502,51 @@ PASSENDE FOTO-MOTIVE (für photo-Mechaniken):
 - {{UNSPLASH:doctor waiting room}}
 - {{UNSPLASH:hospital waiting}}
 - {{UNSPLASH:man home thinking}}`,
+
+  Kinderwunsch: `═══ KAMPAGNEN-KONTEXT: KINDERWUNSCH ═══
+WICHTIG: Das ist KEINE Versicherung und KEIN PKV/GKV-Thema. Ignoriere
+sämtliche PKV-, Beitrags-, Tarifwechsel- und Versicherungs-Frames vollständig.
+Es geht ausschließlich um die Förderung von Kinderwunsch-Behandlungen (z. B. IVF).
+
+ZIELGRUPPE:
+- Paare mit Kinderwunsch, ca. 28–42 Jahre
+- Emotional belastet vom unerfüllten Kinderwunsch, oft schon mit ersten
+  Recherchen/Behandlungs-Gedanken; Sorge vor den hohen Kosten einer Behandlung
+
+ANGEBOT / KERNBOTSCHAFT:
+- Kinderwunsch-Behandlungen müssen nicht immer komplett selbst bezahlt werden.
+- Je nach Wohnort, Krankenkasse und persönlicher Situation können hohe
+  Zuschüsse möglich sein – in manchen Fällen sogar bis zu 100 %.
+- CTA-Idee: unverbindlich prüfen, welche Fördermöglichkeiten infrage kommen
+  könnten.
+
+TONALITÄT:
+- Emotional, warm, ermutigend. Du-Ansprache.
+- Hoffnung geben, ohne Druck. Sensibel mit einem schmerzhaften Thema umgehen.
+
+PROMISE (IMMER im Konjunktiv / als Möglichkeit – NIE als Garantie):
+- "können", "könnten", "möglich", "je nach Situation" — niemals "Sie bekommen",
+  "garantiert", "100 % sicher".
+- "Bis zu 100 % Zuschuss möglich" ist ok; "100 % Zuschuss" (als Zusage) NICHT.
+
+VERMEIDE unbedingt:
+- Heils-/Erfolgsversprechen ("Sie werden schwanger", Erfolgsquoten, medizinische
+  Versprechen) — rechtlich tabu und ethisch unpassend.
+- Garantierte Förderzusagen oder konkrete Euro-Beträge als Zusage.
+- Jegliches PKV/GKV-Spar-/Versicherungs-Framing.
+- Reißerische, kalte oder zu "verkäuferische" Tonalität bei diesem sensiblen Thema.
+
+PASSENDE HOOKS (Beispiele zum Inspirieren, NICHT 1:1 kopieren):
+- "Kinderwunsch-Behandlung – muss nicht immer komplett selbst bezahlt werden."
+- "Bis zu 100 % Zuschuss zur Kinderwunsch-Behandlung könnten möglich sein."
+- "Bevor ihr die Behandlung selbst zahlt: prüft eure Fördermöglichkeiten."
+- "Euer Wohnort + eure Krankenkasse entscheiden mit, wie viel ihr selbst zahlt."
+
+PASSENDE FOTO-MOTIVE (warm, hoffnungsvoll, keine Klinik-Kälte):
+- {{UNSPLASH:happy couple home hug}}
+- {{UNSPLASH:couple holding hands hopeful}}
+- {{UNSPLASH:woman smiling window light}}
+- {{UNSPLASH:young couple kitchen morning}}`,
 };
 
 // ─── Phase 1: Konzept-Brainstorm ─────────────────────────────────────
@@ -506,51 +563,82 @@ type Concept = {
   description: string;     // 1-2 Sätze konkrete Konzept-Skizze
 };
 
+type VisualStyle = "photo" | "ugc" | "comic" | "typography";
+
+// Verteilt die visualStyles über N Slots. VIER Buckets:
+//   photo       = polished Stock-/KI-Foto (Brand-Photo-Hero etc.)
+//   ugc         = native-Look Foto + signature schwarze Caption-Box (UGC-*)
+//   comic       = KI-generierte Illustration
+//   typography  = rein textbasiert, kein Bild
+// Verteilung N>=4: ~20% photo, ~30% ugc, ~20% comic, ~30% typography
+// (UGC stärker gewichtet — performt aktuell am besten auf Meta).
+function pickVisualStyles(count: number): VisualStyle[] {
+  if (count === 1) {
+    const r = Math.random();
+    if (r < 0.3) return ["ugc"];
+    if (r < 0.5) return ["photo"];
+    if (r < 0.7) return ["comic"];
+    return ["typography"];
+  }
+  if (count === 2) {
+    return ["ugc", Math.random() < 0.5 ? "comic" : "typography"];
+  }
+  if (count === 3) {
+    return ["ugc", "comic", "typography"];
+  }
+  const n = count;
+  const ugcCount = Math.max(1, Math.round(n * 0.3));
+  const photoCount = Math.max(1, Math.round(n * 0.2));
+  const comicCount = Math.max(1, Math.round(n * 0.2));
+  const typoCount = Math.max(0, n - ugcCount - photoCount - comicCount);
+  const styles: VisualStyle[] = [
+    ...Array(ugcCount).fill("ugc"),
+    ...Array(photoCount).fill("photo"),
+    ...Array(comicCount).fill("comic"),
+    ...Array(typoCount).fill("typography"),
+  ];
+  for (let i = styles.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [styles[i], styles[j]] = [styles[j], styles[i]];
+  }
+  return styles.slice(0, n);
+}
+
+// Die Pflicht-Anweisung pro visualStyle (Foto/UGC/Comic/Typo) — von beiden
+// Pfaden (Konzept-basiert und freeform) genutzt.
+function visualStyleRequirement(visualStyle: VisualStyle): string {
+  if (visualStyle === "photo") {
+    return `FOTO-PFLICHT: Dieses Creative MUSS GENAU EIN {{UNSPLASH:englische keywords}}-Element enthalten, entweder als <img src="{{UNSPLASH:…}}"> ODER als background-image: url({{UNSPLASH:…}}). Wenn du keinen Platzhalter im HTML hast, ist das Creative ungültig.`;
+  }
+  if (visualStyle === "ugc") {
+    return `UGC-PFLICHT (alle drei Punkte MÜSSEN umgesetzt sein):
+1. Full-bleed Foto-Background via {{UNSPLASH:englische keywords}} — Foto füllt das gesamte 1080×1080-Canvas, position:absolute oder background-image, kein weißer Rand außenrum.
+2. Signature schwarze CAPTION-BOX unten (das Wiedererkennungsmerkmal aller UGC-Creatives) — exakt diese CSS-Eigenschaften:
+   position: absolute; bottom: 30-60px; left: 30-50px; right: 30-50px;
+   background: #000; color: #fff;
+   font-family: 'Inter', -apple-system, sans-serif; font-weight: 900;
+   font-size: 44-60px; line-height: 1.15;
+   padding: 24-30px 32-38px; border-radius: 14-20px;
+   text-align: left;
+   Inhalt: 1-3 Zeilen.
+3. Bei UGC-Whiteboard ZUSÄTZLICH: handgeschriebenes Statement als CSS-Overlay über dem Foto, font-family: 'Caveat' oder 'Permanent Marker' (Google Fonts), color: #1a1a1a, font-size: 80-120pt, position passend zur Whiteboard-Fläche im Foto, leicht rotiert (transform: rotate(-1deg bis -3deg)).
+KEINE designed Gradients, KEINE Drop-Shadows auf Text, KEIN ANZEIGE-Label oben, KEIN CTA-Button (Facebook macht den selbst). Sieht aus wie iPhone-Screenshot, NICHT wie Designer-Ad.`;
+  }
+  if (visualStyle === "comic") {
+    return `COMIC-PFLICHT: Dieses Creative MUSS GENAU EIN {{COMIC:englische beschreibung}}-Element enthalten (img-src oder background-image). Comic wird AI-generiert.
+- Beschreibung 3-6 Wörter, KEINE Style-Modifier (Server hängt sie an)
+- ABSOLUT KEINEN TEXT-INHALT im Comic: keine Schilder mit Text, keine Sprechblasen, keine beschrifteten Geldscheine/Briefe/Screens, keine Banner, keine Logos. Sämtlicher Text gehört in das HTML drumherum (Headline, Caption-Box).
+- ✅ {{COMIC:woman shocked at desk}}, {{COMIC:man with empty wallet}}
+- ❌ {{COMIC:woman holding sign saying PKV}}, {{COMIC:letter with 850 euros}}`;
+  }
+  return `Dieses Creative ist typografisch — KEIN Bild, kein {{UNSPLASH}}- oder {{COMIC}}-Platzhalter.`;
+}
+
 async function brainstormConcepts(brief: CreativeBrief): Promise<Concept[]> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
 
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
 
-  // Pro Slot expliziter visualStyle. VIER Buckets:
-  //   photo       = polished Stock-Foto (Brand-Photo-Hero etc, Unsplash)
-  //   ugc         = native-Look Foto + signature schwarze Caption-Box (UGC-*)
-  //   comic       = AI-generierte Illustration (Replicate Flux)
-  //   typography  = rein textbasiert, kein Bild
-  // Verteilung N>=4: ~20% photo, ~30% ugc, ~20% comic, ~30% typography
-  // (UGC stärker gewichtet — performt aktuell am besten auf Meta).
-  type Style = "photo" | "ugc" | "comic" | "typography";
-  const slotStyles: Style[] = (() => {
-    if (brief.count === 1) {
-      const r = Math.random();
-      if (r < 0.3) return ["ugc"];
-      if (r < 0.5) return ["photo"];
-      if (r < 0.7) return ["comic"];
-      return ["typography"];
-    }
-    if (brief.count === 2) {
-      return ["ugc", Math.random() < 0.5 ? "comic" : "typography"];
-    }
-    if (brief.count === 3) {
-      return ["ugc", "comic", "typography"];
-    }
-    const n = brief.count;
-    const ugcCount = Math.max(1, Math.round(n * 0.3));
-    const photoCount = Math.max(1, Math.round(n * 0.2));
-    const comicCount = Math.max(1, Math.round(n * 0.2));
-    const typoCount = Math.max(0, n - ugcCount - photoCount - comicCount);
-    const styles: Style[] = [
-      ...Array(ugcCount).fill("ugc"),
-      ...Array(photoCount).fill("photo"),
-      ...Array(comicCount).fill("comic"),
-      ...Array(typoCount).fill("typography"),
-    ];
-    for (let i = styles.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [styles[i], styles[j]] = [styles[j], styles[i]];
-    }
-    return styles.slice(0, n);
-  })();
+  const slotStyles = pickVisualStyles(brief.count);
 
   const slotInstructions = slotStyles
     .map((s, i) => `  Konzept ${i + 1}: visualStyle = "${s}"`)
@@ -596,25 +684,11 @@ OUTPUT (strict, NUR <concept>-Blöcke, kein Drumherum, EXAKT in der Reihenfolge 
 <description>GKV-vs-PKV Konto-Vergleich-Screenshot mit Browser-Chrome, Headline "Dein PKV-Beitrag heute vs. nach Wechsel". 824€ → 412€. Handschriftlicher Pfeil "−50%". AdText: 3-Satz-Story einer Wechslerin.</description>
 </concept>`;
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 4000,
-      system: `Du bist Senior Direct-Response-Creative-Director für deutsche PKV-Lead-Gen-Ads. Du brainstormst maximal diverse Konzept-Sets — jedes Konzept eine andere Mechanic, ein anderer Hook, eine andere visuelle Sprache.`,
-      messages: [{ role: "user", content: userPrompt }],
-    }),
+  const text = await llmText({
+    system: `Du bist Senior Direct-Response-Creative-Director für deutsche PKV-Lead-Gen-Ads. Du brainstormst maximal diverse Konzept-Sets — jedes Konzept eine andere Mechanic, ein anderer Hook, eine andere visuelle Sprache.`,
+    user: userPrompt,
+    maxTokens: 4000,
   });
-  if (!res.ok) {
-    throw new Error(`Claude Brainstorm ${res.status}: ${await res.text()}`);
-  }
-  const data = (await res.json()) as { content: { type: string; text: string }[] };
-  const text = data.content.find((c) => c.type === "text")?.text ?? "";
   const concepts = parseConceptBlocks(text);
   if (concepts.length === 0) {
     throw new Error(`Brainstorm enthielt keine <concept>-Blöcke: ${text.slice(0, 300)}…`);
@@ -671,33 +745,9 @@ async function generateOneCreative(
   brief: CreativeBrief,
   concept: Concept,
 ): Promise<CreativeVariant> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
 
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
-  const photoLine =
-    concept.visualStyle === "photo"
-      ? `FOTO-PFLICHT: Dieses Creative MUSS GENAU EIN {{UNSPLASH:englische keywords}}-Element enthalten, entweder als <img src="{{UNSPLASH:…}}"> ODER als background-image: url({{UNSPLASH:…}}). Wenn du keinen Platzhalter im HTML hast, ist das Creative ungültig. Die Foto-Komposition soll der Mechanic entsprechen.`
-      : concept.visualStyle === "ugc"
-        ? `UGC-PFLICHT (alle drei Punkte MÜSSEN umgesetzt sein):
-1. Full-bleed Foto-Background via {{UNSPLASH:englische keywords}} — Foto füllt das gesamte 1080×1080-Canvas, position:absolute oder background-image, kein weißer Rand außenrum.
-2. Signature schwarze CAPTION-BOX unten (das Wiedererkennungsmerkmal aller UGC-Creatives) — exakt diese CSS-Eigenschaften:
-   position: absolute; bottom: 30-60px; left: 30-50px; right: 30-50px;
-   background: #000; color: #fff;
-   font-family: 'Inter', -apple-system, sans-serif; font-weight: 900;
-   font-size: 44-60px; line-height: 1.15;
-   padding: 24-30px 32-38px; border-radius: 14-20px;
-   text-align: left;
-   Inhalt: 1-3 Zeilen, MUSS "PKV" oder "Krankenversicherung" enthalten.
-3. Bei UGC-Whiteboard ZUSÄTZLICH: handgeschriebenes PKV-Statement als CSS-Overlay über dem Foto, font-family: 'Caveat' oder 'Permanent Marker' (Google Fonts), color: #1a1a1a, font-size: 80-120pt, position passend zur Whiteboard-Fläche im Foto, leicht rotiert (transform: rotate(-1deg bis -3deg)).
-KEINE designed Gradients, KEINE Drop-Shadows auf Text, KEIN ANZEIGE-Label oben, KEIN CTA-Button (Facebook macht den selbst). Sieht aus wie iPhone-Screenshot, NICHT wie Designer-Ad.`
-        : concept.visualStyle === "comic"
-          ? `COMIC-PFLICHT: Dieses Creative MUSS GENAU EIN {{COMIC:englische beschreibung}}-Element enthalten (img-src oder background-image). Comic wird AI-generiert.
-- Beschreibung 3-6 Wörter, KEINE Style-Modifier (Server hängt sie an)
-- ABSOLUT KEINEN TEXT-INHALT im Comic: keine Schilder mit Text, keine Sprechblasen, keine beschrifteten Geldscheine/Briefe/Screens, keine Banner, keine Logos. Sämtlicher Text gehört in das HTML drumherum (Headline, Caption-Box).
-- ✅ {{COMIC:woman shocked at desk}}, {{COMIC:man with empty wallet}}, {{COMIC:doctor pointing at patient}}
-- ❌ {{COMIC:woman holding sign saying PKV}}, {{COMIC:letter with 850 euros}}, {{COMIC:phone screen showing app}}`
-          : `Dieses Creative ist typografisch — KEIN Bild, kein {{UNSPLASH}}- oder {{COMIC}}-Platzhalter.`;
+  const photoLine = visualStyleRequirement(concept.visualStyle);
   const lengthRange =
     concept.copyLength === "long"
       ? "400-800 Zeichen, AIDA-Story-Struktur, mehrere Absätze"
@@ -723,25 +773,11 @@ ${photoLine}
 
 Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm, keine Alternativen.`;
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 8000,
-      system: CREATIVE_SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userPrompt }],
-    }),
+  const text = await llmText({
+    system: CREATIVE_SYSTEM_PROMPT,
+    user: userPrompt,
+    maxTokens: 8000,
   });
-  if (!res.ok) {
-    throw new Error(`Claude Execution ${res.status}: ${await res.text()}`);
-  }
-  const data = (await res.json()) as { content: { type: string; text: string }[] };
-  const text = data.content.find((c) => c.type === "text")?.text ?? "";
   const variants = parseVariantBlocks(text);
   if (variants.length === 0) {
     throw new Error(
@@ -782,11 +818,408 @@ Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm,
   return { ...result, mechanic: concept.mechanic };
 }
 
+// ─── Freeform: Variante ohne vorgeplantes Konzept & ohne Style-Pflichten ──
+// Experiment-Pfad (CREATIVE_SKIP_CONCEPTS=1): kein Brainstorm, KEINE Style-
+// Vorgaben. Claude wählt Hook, Mechanik UND Visual-Form (Foto/Illustration/
+// Typo) komplett selbst. Nur die Platzhalter-Syntax wird erklärt, damit Bilder
+// gerendert werden können.
+async function generateOneCreativeFreeform(
+  brief: CreativeBrief,
+): Promise<CreativeVariant> {
+
+  const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
+
+  const userPrompt = `Erstelle EIN Meta-Ad-Creative für die ${brief.campaignKey}-Kampagne.
+
+${campaignContext}
+
+${brief.audience ? `ZIELGRUPPE-FOKUS: ${brief.audience}` : ""}
+${brief.tone ? `TONE: ${brief.tone}` : ""}
+
+Du hast völlig freie Hand: Hook-Angle, Mechanik, Bild-Idee, Visual-Form und
+Textlänge wählst du selbst. Sei maximal eigenständig, überraschend und konkret —
+vermeide ausgelutschte Standard-Muster und das Naheliegende.
+
+BILDER (optional, deine Wahl):
+- Foto: {{UNSPLASH:englische keywords}} als <img src> oder background-image.
+- Illustration: {{COMIC:englische beschreibung}} (3-6 Wörter, textfrei, wird KI-generiert).
+- Oder rein typografisch ganz ohne Bild.
+Jeglicher Text gehört ins HTML, NICHT ins Bild.
+
+Antworte mit GENAU EINEM <variant>-Block im definierten Format. Kein Brainstorm, keine Alternativen.`;
+
+  const text = await llmText({
+    system: CREATIVE_SYSTEM_PROMPT,
+    user: userPrompt,
+    maxTokens: 8000,
+  });
+  const variants = parseVariantBlocks(text);
+  if (variants.length === 0) {
+    throw new Error(`Freeform lieferte keinen <variant>: ${text.slice(0, 300)}…`);
+  }
+  return { ...variants[0], mechanic: variants[0].mechanic || "freeform" };
+}
+
+// ─── Direct-Image-Modus ──────────────────────────────────────────────
+// CREATIVE_DIRECT_IMAGE=1: kein Konzept, kein HTML/Overlay. gpt-image-1
+// rendert das KOMPLETTE Creative (inkl. Text) direkt aus einem simplen
+// Prompt. Pro Versuch ein komplett anderer visueller Ansatz.
+
+// Die konkrete Konzept-Aufgabe je Kampagne — wörtlich der erprobte Prompt.
+const CONCEPT_REQUEST: Record<string, string> = {
+  Kinderwunsch:
+    "erstelle ein konkretes, aber warmes creative static konzept per text für Meta für kinderwunschbehandlungen, die bis zu 100% gefördert werden können",
+  Wechsel:
+    "erstelle ein Facebook ad Creative Konzept für das Thema pkv wechsler. Man kann intern wechseln wenn man lange bei seiner pkv versichert ist und bis zu 50% Beiträge sparen",
+};
+
+// Motiv-/Format-Auswahl je Kampagne — sorgt für maximale Varianz zwischen den
+// Konzepten (Schritt 1). Wird an den Konzept-Prompt gehängt.
+const CONCEPT_VARIETY: Record<string, string> = {
+  Kinderwunsch:
+    "Erzeuge möglichst UNTERSCHIEDLICHE Konzepte — variiere Motiv UND Format stark. Mögliche Richtungen (mische bunt, gern auch eigene Ideen): Fokus auf die Förderung / „bis zu 100 %“; ein Paar im Vordergrund; ein Reagenzglas / Labor-Motiv; ein Schwangerschaftstest; ein WhatsApp-Chat; eine Google-Suche; Apple-Notizen; Ultraschallbild; Kostenplan / Brief / Förderzusage; Babysocken/-schuhe; Kalender/Termin; erstes Ultraschallbild am Kühlschrank; noch leeres Kinderzimmer; Kalender mit markiertem Termin/Countdown; Sparschwein / Münzstapel; Taschenrechner mit Behandlungskosten; Banking-App-Screenshot („Förderung gutgeschrieben“); E-Mail-Posteingang mit „Förderzusage“; amtlicher Bescheid/Behördenbrief; Wartezimmer der Kinderwunschklinik; Hände halten Babyschuhe; zwei Kaffeetassen + Test am Morgen; To-do-Liste „Förderung prüfen ✅“; Instagram-DM-Look; SMS-Verlauf; Post-it/Sticky-Note am Spiegel; Splitscreen Sorge ↔ Hoffnung; großes Zahlen-Highlight „0 €?“; Tagebuch-/Journal-Eintrag; positiver Test im Gegenlicht; Paar umarmt sich erleichtert nach dem Arztgespräch; Strampler auf der Wäscheleine; IVF-Labor-Nahaufnahme in warmem Licht; Handy-Sperrbildschirm mit Termin-Erinnerung; Sprechblasen-Collage echter Gedanken; Voicemail-/Sprachnachricht-Screenshot. Jedes Konzept nutzt einen ANDEREN Ansatz.",
+};
+
+// Kampagnen-spezifische Konfiguration für den Direct-Image-Modus. Definiert
+// das Thema, das Pflicht-Badge im Bild, den CTA, Klarheits-Schlüsselwörter
+// und die Fallback-Ad-Copy. Ohne Eintrag fällt alles auf einen generischen
+// Default zurück — KEIN Kinderwunsch-Leakage mehr für andere Kampagnen.
+type DirectImageConfig = {
+  topic: string;
+  topicShort: string;
+  badge: string;
+  subline?: string;
+  cta: string;
+  retryMotifs: string;
+  fallbackAdText: string;
+  fallbackFbHeadline: string;
+};
+
+const DIRECT_IMAGE_CONFIG: Record<string, DirectImageConfig> = {
+  Kinderwunsch: {
+    topic: "eine Kinderwunschbehandlung / Familienplanung / den Wunsch nach einem Baby",
+    topicShort: "Kinderwunschbehandlung",
+    badge: "Bis zu 100 % Förderung möglich",
+    subline: "Je nach Krankenkasse & Wohnort",
+    cta: "Förderung jetzt prüfen",
+    retryMotifs:
+      "Schwangerschaftstest, Babysocken/-schuhe, Ultraschallbild, Babybauch, Paar mit Babywunsch",
+    fallbackAdText:
+      "Kinderwunsch-Behandlungen müssen nicht immer komplett selbst bezahlt werden. 💛 Je nach Wohnort, Krankenkasse und Situation sind hohe Zuschüsse möglich – teils bis zu 100 %. Jetzt unverbindlich Fördermöglichkeiten prüfen.",
+    fallbackFbHeadline: "Förderung jetzt prüfen",
+  },
+  Wechsel: {
+    topic:
+      "einen internen PKV-Tarifwechsel (beim gleichen Versicherer) zur Beitragsersparnis",
+    topicShort: "PKV-Tarifwechsel",
+    badge: "Bis zu 50 % Beitragsersparnis möglich",
+    subline: "Ohne Anbieter-Wechsel, ohne neue Gesundheitsprüfung",
+    cta: "Jetzt Tarif prüfen",
+    retryMotifs:
+      "PKV-Beitrags-Bescheid mit hohen Beträgen, Tarif-Übersicht/Rechner, Person mit Brief am Schreibtisch, Vorher/Nachher-Vergleich mit konkreten Beträgen",
+    fallbackAdText:
+      "Dein PKV-Beitrag steigt Jahr für Jahr? Ein interner Tarifwechsel beim gleichen Versicherer kann bis zu 50 % Ersparnis bringen — ohne Anbieter-Wechsel, ohne neue Gesundheitsprüfung. Jetzt unverbindlich prüfen.",
+    fallbackFbHeadline: "PKV-Beitrag senken",
+  },
+};
+
+function getDirectImageConfig(campaign: string): DirectImageConfig {
+  return (
+    DIRECT_IMAGE_CONFIG[campaign] ?? {
+      topic: campaign,
+      topicShort: campaign,
+      badge: "",
+      cta: "Jetzt mehr erfahren",
+      retryMotifs: "",
+      fallbackAdText: "",
+      fallbackFbHeadline: campaign,
+    }
+  );
+}
+
+// Phase 1: NUR der nackte Auftrag — ohne System-Prompt, ohne Briefing-Text
+// (wie im ChatGPT-Web). Mehrere Konzepte werden als getrennte Blöcke erbeten.
+async function brainstormCreativeConcepts(
+  brief: CreativeBrief,
+): Promise<string[]> {
+  const conceptRequest =
+    CONCEPT_REQUEST[brief.campaignKey] ??
+    `erstelle ein komplett anderes creative konzept für ${brief.campaignKey}`;
+  const variety = CONCEPT_VARIETY[brief.campaignKey] ?? "";
+  const varietyLine = variety ? `\n\n${variety}` : "";
+  const raw = await llmText({
+    // Konzept-Phase läuft auf Claude Opus 4.8 (per Env überschreibbar).
+    model: process.env.CONCEPT_MODEL || "claude-opus-4-8",
+    system: "",
+    user:
+      brief.count > 1
+        ? `${conceptRequest}${varietyLine}\n\nBitte ${brief.count} verschiedene Konzepte. Beschreibe jedes Konzept ausführlich: Konzept-Name, Visual (konkrete Bildbeschreibung), Text im Bild (wörtlich) und Stil. Trenne die einzelnen Konzepte mit einer eigenen Zeile, die NUR ===KONZEPT=== enthält.`
+        : `${conceptRequest}${varietyLine}\n\nBeschreibe das Konzept ausführlich: Konzept-Name, Visual (konkrete Bildbeschreibung), Text im Bild (wörtlich) und Stil.`,
+    maxTokens: 3000,
+  });
+  const cleaned = raw
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/```\s*$/i, "")
+    .trim();
+  // Ein Konzept kann als String ODER als Objekt (Name/Visual/Text/Stil)
+  // kommen — Objekte in lesbaren Text umwandeln.
+  const toText = (p: unknown): string => {
+    if (typeof p === "string") return p.trim();
+    if (p && typeof p === "object") {
+      return Object.entries(p as Record<string, unknown>)
+        .map(([k, v]) => `${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`)
+        .join("\n")
+        .trim();
+    }
+    return "";
+  };
+
+  let concepts: string[] = [];
+  // 1. JSON-Array/-Objekt?
+  try {
+    const parsed = JSON.parse(cleaned);
+    if (Array.isArray(parsed)) {
+      concepts = parsed.map(toText).filter((s) => s.length > 0);
+    } else if (parsed && typeof parsed === "object") {
+      const arr = Object.values(parsed as Record<string, unknown>).find((v) =>
+        Array.isArray(v),
+      );
+      if (Array.isArray(arr)) concepts = arr.map(toText).filter((s) => s.length > 0);
+    }
+  } catch {
+    /* keine JSON-Antwort — weiter mit Trennzeichen/Heading */
+  }
+
+  // 2. Deterministisches Trennzeichen (===KONZEPT===) — robusteste Methode.
+  if (concepts.length === 0 && /===\s*KONZEPT\s*===/i.test(cleaned)) {
+    concepts = cleaned
+      .split(/===\s*KONZEPT\s*===/i)
+      .map((l) => l.trim())
+      .filter((l) => l.replace(/\s+/g, " ").length > 25);
+  }
+
+  // 3. Fallback: an echten Konzept-Überschriften trennen (Heading mit
+  // „Konzept" ODER „Konzept" + Nummer) — nicht an inline-„Konzept".
+  if (concepts.length === 0) {
+    const headingRe =
+      /^(?:#{1,6}\s*\*{0,2}\s*(?:Creative-?)?Konzept|\*{0,2}\s*(?:Creative-?)?Konzept\s*\d)/i;
+    const boundary =
+      /\n(?=\s*(?:#{1,6}\s*\*{0,2}\s*(?:Creative-?)?Konzept|\*{0,2}\s*(?:Creative-?)?Konzept\s*\d))/i;
+    const parts = cleaned
+      .split(boundary)
+      .map((l) => l.trim())
+      .filter((l) => l.replace(/\s+/g, " ").length > 25);
+    const headed = parts.filter((p) => headingRe.test(p));
+    concepts = headed.length > 0 ? headed : cleaned ? [cleaned] : [];
+  }
+
+  console.log(
+    `[brainstorm] ${concepts.length} Konzepte (model=${process.env.CONCEPT_MODEL || "claude-opus-4-8"}), Längen=[${concepts.map((c) => c.length).join(",")}]`,
+  );
+  if (concepts.length === 0) {
+    console.warn(`[brainstorm] unbrauchbare Antwort: ${cleaned.slice(0, 500)}`);
+  }
+  return concepts.slice(0, brief.count);
+}
+
+// Passende Facebook-Ad-Copy je Konzept (variiert pro Creative). Schnelles
+// Modell, robustes JSON, Fallback auf kampagnen-spezifisches Standard-Wording.
+async function adCopyForConcept(
+  concept: string,
+  cfg: DirectImageConfig,
+): Promise<{ adText: string; fbHeadline: string }> {
+  const fallback = {
+    adText: cfg.fallbackAdText,
+    fbHeadline: cfg.fallbackFbHeadline,
+  };
+  try {
+    const raw = await llmText({
+      model: process.env.OPENAI_INTENT_MODEL || "gpt-4o",
+      system: `Du schreibst deutsche Facebook-Ad-Copy für die Bewerbung von ${cfg.topicShort}. Thema: ${cfg.topic}. Konditional formulieren („möglich", „je nach"), keine Garantie, kein Heilversprechen. Antworte NUR mit JSON: {"adText": "...", "fbHeadline": "..."}. adText = Facebook-Primärtext (1-3 Sätze, Du-Form, endet mit Soft-CTA). fbHeadline = kurze Headline unter dem Bild, max 40 Zeichen.`,
+      user: `Passend zu diesem Creative-Konzept:\n${concept}\n\nSchreibe die Ad-Copy.`,
+      maxTokens: 500,
+    });
+    const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+    const obj = JSON.parse(cleaned.match(/\{[\s\S]*\}/)?.[0] ?? cleaned) as {
+      adText?: string;
+      fbHeadline?: string;
+    };
+    return {
+      adText: obj.adText?.trim() || fallback.adText,
+      fbHeadline: obj.fbHeadline?.trim() || fallback.fbHeadline,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+// Klarheits-Check (gpt-4o Vision): Versteht man SOFORT, dass es um eine
+// Kinderwunschbehandlung geht — im Bild UND im Text? Korrigiert Text bei
+// Bedarf und meldet, ob das Bild unklar ist. Fail-open bei Fehler.
+async function verifyClarity(
+  imageDataUrl: string,
+  headline: string,
+  adText: string,
+  cfg: DirectImageConfig,
+): Promise<{ imageClear: boolean; headline: string; adText: string }> {
+  const fallback = { imageClear: true, headline, adText };
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return fallback;
+  const model = process.env.OPENAI_VISION_MODEL || "gpt-4o";
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 60000);
+  try {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        model,
+        max_tokens: 700,
+        messages: [
+          {
+            role: "system",
+            content: `Du prüfst ein Meta-Werbe-Creative zum Thema ${cfg.topicShort}. Frage: Versteht ein Nutzer beim ERSTEN Blick sofort, dass es um ${cfg.topic} geht — sowohl im BILD als auch im TEXT? Antworte NUR mit JSON: {"imageClear": boolean, "headline": "...", "adText": "..."}. Wenn der TEXT das Thema nicht sofort klarmacht, gib eine klarere headline und adText zurück (sonst unverändert übernehmen). imageClear=false nur, wenn das BILD das Thema nicht sofort erkennen lässt.`,
+          },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: `Headline: ${headline}\n\nText: ${adText}` },
+              { type: "image_url", image_url: { url: imageDataUrl } },
+            ],
+          },
+        ],
+      }),
+      signal: controller.signal,
+    });
+    if (!res.ok) return fallback;
+    const data = (await res.json()) as {
+      choices?: { message?: { content?: string } }[];
+    };
+    const content = data.choices?.[0]?.message?.content ?? "";
+    const obj = JSON.parse(content.match(/\{[\s\S]*\}/)?.[0] ?? content) as {
+      imageClear?: boolean;
+      headline?: string;
+      adText?: string;
+    };
+    return {
+      imageClear: obj.imageClear !== false,
+      headline: obj.headline?.trim() || headline,
+      adText: obj.adText?.trim() || adText,
+    };
+  } catch {
+    return fallback;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Direct-Image: Phase 1 Konzept (OpenAI) → Phase 2 „erstelle dieses Creative"
+// (gpt-image-1 baut das Bild aus dem ganzen Konzept), parallel je Konzept.
+async function generateDirectImageCreatives(
+  brief: CreativeBrief,
+): Promise<CreativeVariant[]> {
+  const concepts = await brainstormCreativeConcepts(brief);
+  if (concepts.length === 0) {
+    throw new Error(
+      "Konzept-Generierung lieferte keine verwertbaren Konzepte (OpenAI-Antwort leer/unparsebar).",
+    );
+  }
+
+  const cfg = getDirectImageConfig(brief.campaignKey);
+  const badgePart = cfg.badge
+    ? ` inkl. Pflicht-Badge „${cfg.badge}"${cfg.subline ? `, kleiner Subline „${cfg.subline}"` : ""} und CTA-Button „${cfg.cta}"`
+    : "";
+
+  const settled = await Promise.allSettled(
+    concepts.map(async (concept): Promise<CreativeVariant> => {
+      const imagePrompt = `Erstelle dieses Creative als quadratisches 1:1 Werbe-Creative für Meta. WICHTIG: Es muss auf den ERSTEN Blick erkennbar sein, dass es um ${cfg.topic} geht. Setze das beschriebene VISUAL und die genannten Texte exakt um —${badgePart}, wie im Konzept beschrieben. Deutscher Text fehlerfrei und gut lesbar, moderner Social-Media-Look.\n\n${concept}`;
+      // Phase 2: Bild + passende Ad-Copy parallel.
+      const [imgInitial, copy] = await Promise.all([
+        generateFullCreativeImage(imagePrompt),
+        adCopyForConcept(concept, cfg),
+      ]);
+      if (!imgInitial) throw new Error("Bildgenerierung lieferte kein Bild.");
+
+      let dataUrl = imgInitial;
+      let adText = copy.adText;
+      let fbHeadline = copy.fbHeadline;
+
+      // Klarheits-Check: Bild + Text sofort als Kampagnen-Thema erkennbar?
+      if (process.env.CREATIVE_CLARITY_CHECK !== "0") {
+        const v = await verifyClarity(dataUrl, fbHeadline, adText, cfg);
+        adText = v.adText;
+        fbHeadline = v.headline;
+        if (!v.imageClear) {
+          console.warn(
+            `[creative-gen] Bild unklar (${cfg.topicShort}) — generiere neu mit Klarheits-Fokus.`,
+          );
+          const retry = await generateFullCreativeImage(
+            `${imagePrompt}\n\nDas Thema ${cfg.topicShort} MUSS sofort sichtbar sein${cfg.retryMotifs ? ` — nutze eindeutige Motive (z. B. ${cfg.retryMotifs})` : ""}.`,
+          );
+          if (retry) dataUrl = retry;
+        }
+      }
+
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0}html,body{width:1080px;height:1080px}img{width:1080px;height:1080px;object-fit:cover;display:block}</style></head><body><img src="${dataUrl}"></body></html>`;
+      return {
+        headline: fbHeadline || cfg.fallbackFbHeadline || brief.campaignKey,
+        body: "",
+        cta: cfg.cta || "Mehr erfahren",
+        adText,
+        fbHeadline,
+        html,
+        mechanic: "direct-image",
+        concept,
+      };
+    }),
+  );
+
+  const variants: CreativeVariant[] = [];
+  settled.forEach((r, i) => {
+    if (r.status === "fulfilled") variants.push(r.value);
+    else
+      console.warn(
+        `[creative-gen] Direct-Image-Variante ${i + 1} failte:`,
+        r.reason instanceof Error ? r.reason.message : r.reason,
+      );
+  });
+  if (variants.length === 0) {
+    throw new Error("Keine einzige Direct-Image-Variante konnte generiert werden.");
+  }
+  return variants;
+}
+
 // ─── Orchestrator: brainstorm → parallel execution ───────────────────
 
 async function generateCreativeVariants(
   brief: CreativeBrief,
 ): Promise<CreativeVariant[]> {
+  // Experiment: gpt-image-1 rendert das ganze Creative direkt.
+  if (process.env.CREATIVE_DIRECT_IMAGE === "1") {
+    return generateDirectImageCreatives(brief);
+  }
+  // Experiment: ohne Konzept-Phase UND ohne Style-Pflichten frei generieren.
+  if (process.env.CREATIVE_SKIP_CONCEPTS === "1") {
+    const settledFf = await Promise.allSettled(
+      Array.from({ length: brief.count }, () =>
+        generateOneCreativeFreeform(brief),
+      ),
+    );
+    const ffVariants: CreativeVariant[] = [];
+    settledFf.forEach((r, i) => {
+      if (r.status === "fulfilled") ffVariants.push(r.value);
+      else
+        console.warn(
+          `[creative-gen] Freeform-Variante ${i + 1} failte:`,
+          r.reason instanceof Error ? r.reason.message : r.reason,
+        );
+    });
+    if (ffVariants.length === 0) {
+      throw new Error("Keine einzige Freeform-Variante konnte generiert werden.");
+    }
+    return ffVariants;
+  }
+
   const concepts = await brainstormConcepts(brief);
   if (concepts.length < brief.count) {
     console.warn(
@@ -856,7 +1289,7 @@ export async function generateCreatives(
   // R2-Fehler in einer Variante soll nicht den ganzen Batch killen.
   const settled = await Promise.allSettled(
     variants.map(async (v, i) => {
-      let resolvedHtml = await resolveUnsplashPlaceholders(v.html);
+      let resolvedHtml = await resolvePhotoPlaceholders(v.html);
       resolvedHtml = await resolveComicPlaceholders(resolvedHtml);
       const buffer = await renderHtmlToImage(resolvedHtml, {
         width: 1080,
@@ -879,6 +1312,7 @@ export async function generateCreatives(
         mechanic: v.mechanic,
         imagePrompt: v.html,
         imageUrl,
+        concept: v.concept,
       } satisfies GeneratedCreative;
     }),
   );
@@ -912,30 +1346,195 @@ type RegenContext = {
   currentFbHeadline?: string;
 };
 
+// Provider-neutraler Text-Helfer — läuft über OpenAI (Chat Completions).
+// Modell via OPENAI_TEXT_MODEL (default "gpt-5.5"; Reasoning → max_completion_tokens).
+// Mit Timeout + Retries gegen transiente Netzwerkfehler ("fetch failed") und 429/5xx.
+// Anthropic-Variante des Text-Helfers — für Claude-Modelle (z. B. Opus 4.8).
+// Gleiche Schnittstelle wie llmText (system/user/maxTokens) mit Retries +
+// Timeout + Quota-/Empty-Handling.
+async function callAnthropic(opts: {
+  system: string;
+  user: string;
+  maxTokens: number;
+  model: string;
+  timeoutMs: number;
+}): Promise<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, attempt * 1500));
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), opts.timeoutMs);
+    try {
+      const body: Record<string, unknown> = {
+        model: opts.model,
+        max_tokens: opts.maxTokens,
+        messages: [{ role: "user", content: opts.user }],
+      };
+      if (opts.system) body.system = opts.system;
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      const text = await res.text();
+      if (!res.ok) {
+        if (res.status === 429 && /credit|billing|quota/i.test(text)) {
+          throw new Error(
+            "Anthropic-Kontingent/Credits aufgebraucht (Billing prüfen: console.anthropic.com).",
+          );
+        }
+        if (res.status === 429 || res.status >= 500) {
+          lastErr = new Error(`Anthropic ${res.status}: ${text.slice(0, 200)}`);
+          continue;
+        }
+        throw new Error(`Anthropic ${res.status}: ${text.slice(0, 300)}`);
+      }
+      const data = JSON.parse(text) as {
+        content?: { type: string; text?: string }[];
+        stop_reason?: string;
+      };
+      const content =
+        data.content?.find((c) => c.type === "text")?.text?.trim() ?? "";
+      if (!content) {
+        console.warn(
+          `[llmText/claude] Leerer Inhalt (Versuch ${attempt + 1}/3, model=${opts.model}, stop_reason=${data.stop_reason}): ${text.slice(0, 300)}`,
+        );
+        lastErr = new Error(
+          `Claude leere Antwort (stop_reason=${data.stop_reason ?? "?"})`,
+        );
+        continue;
+      }
+      return content;
+    } catch (err) {
+      lastErr = err;
+      console.warn(
+        `[llmText/claude] Versuch ${attempt + 1}/3 failte:`,
+        err instanceof Error ? err.message : err,
+      );
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+}
+
+// Provider-neutraler Text-Helfer — OpenAI Chat Completions ODER (bei einem
+// claude-* Modell) Anthropic Messages API. Mit Timeout + Retries gegen
+// transiente Netzwerkfehler ("fetch failed") und 429/5xx.
+async function llmText(opts: {
+  system: string;
+  user: string;
+  maxTokens: number;
+  model?: string; // Override; sonst OPENAI_TEXT_MODEL
+}): Promise<string> {
+  const model = opts.model || process.env.OPENAI_TEXT_MODEL || "gpt-5.5";
+  const timeoutMs = Number(process.env.OPENAI_TEXT_TIMEOUT_MS) || 90000;
+
+  // Claude-Modelle → Anthropic-Pfad.
+  if (/^claude/i.test(model)) {
+    return callAnthropic({ ...opts, model, timeoutMs });
+  }
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error("OPENAI_API_KEY nicht gesetzt.");
+  // GPT-5*/o-Serie sind Reasoning-Modelle: sie verlangen max_completion_tokens
+  // (nicht max_tokens) und brauchen Token-Headroom fürs Reasoning, sonst bleibt
+  // content leer.
+  const isReasoning = /^(gpt-5|o\d)/i.test(model);
+
+  // Token-Parameter modellabhängig zusammenbauen.
+  const tokenParams: Record<string, number> = isReasoning
+    ? { max_completion_tokens: Math.max(opts.maxTokens, 12000) }
+    : { max_tokens: opts.maxTokens };
+
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, attempt * 1500));
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          ...tokenParams,
+          messages: [
+            { role: "system", content: opts.system },
+            { role: "user", content: opts.user },
+          ],
+        }),
+        signal: controller.signal,
+      });
+      const text = await res.text();
+      if (!res.ok) {
+        // Quota/Billing (429 insufficient_quota) ist NICHT transient → sofort
+        // klar melden, nicht retrien.
+        if (res.status === 429 && /quota|billing|insufficient_quota/i.test(text)) {
+          throw new Error(
+            "OpenAI-Kontingent aufgebraucht (Billing prüfen: platform.openai.com/billing).",
+          );
+        }
+        // Echte Rate-Limits (429) und 5xx sind transient → erneut versuchen.
+        if (res.status === 429 || res.status >= 500) {
+          lastErr = new Error(`OpenAI ${res.status}: ${text.slice(0, 200)}`);
+          continue;
+        }
+        throw new Error(`OpenAI ${res.status}: ${text.slice(0, 300)}`);
+      }
+      const data = JSON.parse(text) as {
+        choices?: {
+          message?: { content?: string; refusal?: string | null };
+          finish_reason?: string;
+        }[];
+      };
+      const choice = data.choices?.[0];
+      const content = choice?.message?.content ?? "";
+      const refusal = choice?.message?.refusal;
+      if (refusal) {
+        // Harte Moderations-Ablehnung — Retry zwecklos, klar melden.
+        throw new Error(`OpenAI-Ablehnung (Moderation): ${refusal.slice(0, 300)}`);
+      }
+      if (!content.trim()) {
+        console.warn(
+          `[llmText] Leerer Inhalt (Versuch ${attempt + 1}/3, model=${model}, finish_reason=${choice?.finish_reason}): ${text.slice(0, 300)}`,
+        );
+        lastErr = new Error(
+          `OpenAI leere Antwort (finish_reason=${choice?.finish_reason ?? "?"})`,
+        );
+        continue;
+      }
+      return content;
+    } catch (err) {
+      lastErr = err;
+      console.warn(
+        `[llmText] Versuch ${attempt + 1}/3 failte:`,
+        err instanceof Error ? err.message : err,
+      );
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+}
+
+// Alias für Bestandscode (regen-Funktionen).
 async function callClaudeSingleText(opts: {
   system: string;
   user: string;
   maxTokens: number;
 }): Promise<string> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: opts.maxTokens,
-      system: opts.system,
-      messages: [{ role: "user", content: opts.user }],
-    }),
-  });
-  if (!res.ok) throw new Error(`Claude ${res.status}: ${await res.text()}`);
-  const data = (await res.json()) as { content: { type: string; text: string }[] };
-  return data.content.find((c) => c.type === "text")?.text ?? "";
+  return llmText(opts);
 }
 
 export async function regenerateAdText(ctx: RegenContext): Promise<string> {
@@ -998,8 +1597,6 @@ export async function regenerateCreativeImage(
   },
 ): Promise<{ imageUrl: string; imagePrompt: string }> {
   const campaignContext = CAMPAIGN_CONTEXT[brief.campaignKey] ?? "";
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
 
   // Visual-Style aus der Mechanic ableiten — Bild-Regen behält das Format,
   // generiert nur eine andere Komposition innerhalb dieser Mechanic.
@@ -1064,32 +1661,18 @@ Antworte mit GENAU EINEM <creative_html>-Block, KEINE anderen Tags:
 </html>
 </creative_html>`;
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 8000,
-      system: CREATIVE_SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userPrompt }],
-    }),
+  const text = await llmText({
+    system: CREATIVE_SYSTEM_PROMPT,
+    user: userPrompt,
+    maxTokens: 8000,
   });
-  if (!res.ok) {
-    throw new Error(`Image-Regen ${res.status}: ${await res.text()}`);
-  }
-  const data = (await res.json()) as { content: { type: string; text: string }[] };
-  const text = data.content.find((c) => c.type === "text")?.text ?? "";
   const html = extractTag(text, "creative_html");
   if (!html) {
     throw new Error(`Image-Regen lieferte kein <creative_html>: ${text.slice(0, 300)}`);
   }
 
   // Render + Upload — gleicher Pipeline-Teil wie generateCreatives.
-  let resolvedHtml = await resolveUnsplashPlaceholders(html);
+  let resolvedHtml = await resolvePhotoPlaceholders(html);
   resolvedHtml = await resolveComicPlaceholders(resolvedHtml);
   const buffer = await renderHtmlToImage(resolvedHtml, {
     width: 1080,
@@ -1108,51 +1691,197 @@ Antworte mit GENAU EINEM <creative_html>-Block, KEINE anderen Tags:
 
 // ─── Intent Parsing aus Telegram-Text ────────────────────────────────
 
-export type ParsedIntent = {
-  action: "generate" | "unknown";
-  count: number;
-  campaignKey: string | null; // "Wechsel" | "Neugeschäft" | null = unklar
-  audience?: string;
-  tone?: string;
+// ─── Video-Generation (Sora 2) ───────────────────────────────────────
+// Eigene Pipeline für Bewegtbild — UGC-ähnliche 20-30s Reels mit
+// Storyboard-Konzept → Sora-Prompt → MP4 → R2 → Telegram.
+
+const VIDEO_CONCEPT_REQUEST: Record<string, string> = {
+  Kinderwunsch: `Entwirf ein konkretes, warmes UGC-Storyboard für Meta-Video-Ads (~20 Sekunden) für Kinderwunschbehandlungen, die bis zu 100% gefördert werden können. Quadratisches 1:1-Format (Feed). Beschreibe das Video Sekunde für Sekunde, inkl. Kamerawinkel, Person/Setting, gesprochene Worte (deutsch, authentisch, nicht werblich) und Stimmung. Hook in den ersten 3 Sekunden, Wertversprechen in der Mitte, sanfter CTA am Ende. Komposition zentriert, damit nichts im 1:1-Crop verloren geht.`,
+  Wechsel: `Entwirf ein UGC-Storyboard (~20 Sekunden, quadratisch 1:1) für Meta-Video-Ads zum Thema PKV-Tarifwechsel intern beim gleichen Versicherer — bis zu 50% Beitragsersparnis ohne Anbieterwechsel und ohne neue Gesundheitsprüfung. Beschreibe Sekunde für Sekunde: Kamerawinkel, Person/Setting, gesprochene Worte (deutsch, ehrlich, „Selbst-Aufnahme"-Look), Stimmung. Hook in 3s, Pain → Lösung → CTA. Komposition zentriert (1:1-Crop).`,
+  Neugeschäft: `Entwirf ein UGC-Storyboard (~20 Sekunden, quadratisch 1:1) für Meta-Video-Ads zum Thema private Krankenversicherung im Neuvertrag für Angestellte/Selbstständige. Beschreibe Sekunde für Sekunde: Kamerawinkel, Setting, gesprochene Worte (deutsch, vertrauensvoll), Stimmung. Hook in 3s, Vorteile, CTA. Komposition zentriert (1:1-Crop).`,
 };
 
-export async function parseIntent(text: string): Promise<ParsedIntent> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error("ANTHROPIC_API_KEY nicht gesetzt.");
-  }
-
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 400,
-      system: `Du parsed deutsche Befehle für einen Creative-Generation-Bot.
-Erkennbare Kampagnen: "Wechsel", "Neugeschäft".
-Antworte mit strict JSON: {"action": "generate"|"unknown", "count": number, "campaignKey": "Wechsel"|"Neugeschäft"|null, "audience"?: string, "tone"?: string}`,
-      messages: [{ role: "user", content: text }],
-    }),
+async function brainstormVideoStoryboards(
+  brief: CreativeBrief,
+): Promise<string[]> {
+  const conceptRequest =
+    VIDEO_CONCEPT_REQUEST[brief.campaignKey] ??
+    `Entwirf ein UGC-Storyboard (~20s, quadratisch 1:1) für eine ${brief.campaignKey}-Kampagne. Beschreibe Sekunde für Sekunde Kamerawinkel, Person/Setting, gesprochene Worte (deutsch) und Stimmung. Komposition zentriert (1:1-Crop).`;
+  const raw = await llmText({
+    model: process.env.CONCEPT_MODEL || "claude-opus-4-8",
+    system: "",
+    user:
+      brief.count > 1
+        ? `${conceptRequest}\n\nBitte ${brief.count} unterschiedliche Storyboards (z. B. verschiedene Hooks, Personen, Settings). Trenne die einzelnen Storyboards mit einer eigenen Zeile, die NUR ===STORYBOARD=== enthält.`
+        : `${conceptRequest}`,
+    maxTokens: 4000,
   });
-
-  if (!res.ok) {
-    return { action: "unknown", count: 0, campaignKey: null };
-  }
-  const data = (await res.json()) as {
-    content: { type: string; text: string }[];
-  };
-  const raw = data.content.find((c) => c.type === "text")?.text ?? "";
   const cleaned = raw
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/```\s*$/i, "")
     .trim();
+
+  let boards: string[] = [];
+  if (/===\s*STORYBOARD\s*===/i.test(cleaned)) {
+    boards = cleaned
+      .split(/===\s*STORYBOARD\s*===/i)
+      .map((s) => s.trim())
+      .filter((s) => s.replace(/\s+/g, " ").length > 40);
+  } else if (cleaned.length > 40) {
+    boards = [cleaned];
+  }
+  // Aufstocken, falls das Modell weniger geliefert hat als angefordert —
+  // dieselbe Vorlage mehrfach ist besser als ein Fehler.
+  while (boards.length > 0 && boards.length < brief.count) boards.push(boards[0]);
+  return boards.slice(0, brief.count);
+}
+
+// Baut den Sora-Prompt aus Storyboard + Kampagnen-Konfiguration. Sora-Modelle
+// reagieren stark auf konkrete visuelle Anweisungen, Sekunden-Marker und
+// kurze On-Screen-Text-Hinweise. WICHTIG: keinen On-Screen-Text vom Modell
+// generieren lassen — Sora schreibt unleserliches Kauderwelsch. Der Sprecher-
+// Text läuft per Audio + nachträglich eingebrannten Whisper-Untertiteln.
+function buildSoraPrompt(storyboard: string, cfg: DirectImageConfig): string {
+  return [
+    `Quadratisches 1:1 UGC-Video (Feed-Style), 20 Sekunden, deutscher Markt. Komposition zentriert, alles Wichtige in der Bildmitte.`,
+    `Thema: ${cfg.topic}.`,
+    `Storyboard:\n${storyboard}`,
+    `\nWICHTIG: KEINEN Text, KEINE Beschriftungen, KEINE Logos und KEINE Schriftzeichen im Bild einblenden. Auch keine Captions, Lower-Thirds oder CTA-Banner — nur reine Bewegtbild- und Audiodarstellung. Die Untertitel werden im Anschluss separat eingebrannt.`,
+    `\nVisuelle Sprache: authentisch, natürlich beleuchtet, kein Stock-Photo-Look. Keine medizinischen Garantien oder Heilversprechen aussprechen.`,
+  ].join("\n\n");
+}
+
+async function generateOneVideoCreative(
+  storyboard: string,
+  brief: CreativeBrief,
+  index: number,
+  requestId: string,
+  onProgress?: VideoProgress,
+): Promise<GeneratedCreative> {
+  const cfg = getDirectImageConfig(brief.campaignKey);
+  const soraPrompt = buildSoraPrompt(storyboard, cfg);
+  const { buffer: rawBuffer, durationSec } = await generateVideo(
+    soraPrompt,
+    onProgress,
+  );
+
+  // Sora schreibt selbst gerne Buchstaben-Soup als „Text" ins Video. Wir
+  // lassen ihn deshalb komplett text-frei rendern (s. Prompt) und brennen
+  // saubere deutsche Untertitel per Whisper + ffmpeg nachträglich rein.
+  await onProgress?.("Brenne deutsche Untertitel ein…");
+  const subResult = await burnGermanSubtitles(rawBuffer, { onProgress });
+  if (!subResult.burned && subResult.note) {
+    await onProgress?.(`Untertitel übersprungen: ${subResult.note.slice(0, 180)}`);
+  }
+  const buffer = subResult.buffer;
+
+  const key = `creatives/${requestId}/${index}.mp4`;
+  const videoUrl = await uploadImageToR2({
+    buffer,
+    key,
+    contentType: "video/mp4",
+  });
+  const copy = await adCopyForConcept(storyboard, cfg);
+  return {
+    headline: cfg.topicShort,
+    body: cfg.subline ?? "",
+    cta: cfg.cta,
+    adText: copy.adText,
+    fbHeadline: copy.fbHeadline,
+    mechanic: "Sora 2 UGC-Video (1:1)",
+    imagePrompt: soraPrompt,
+    imageUrl: "",
+    concept: storyboard,
+    kind: "video",
+    videoUrl,
+    durationSec,
+  } satisfies GeneratedCreative;
+}
+
+export async function generateVideoCreatives(
+  brief: CreativeBrief,
+  requestId: string,
+  onProgress?: VideoProgress,
+): Promise<GeneratedCreative[]> {
+  const boards = await brainstormVideoStoryboards(brief);
+  if (boards.length === 0) {
+    throw new Error(
+      "Keine verwertbaren Storyboards für die Video-Generation erzeugt.",
+    );
+  }
+  // Sora-Generationen sequenziell — parallele Calls würden das Quota-Limit
+  // und die Polling-Last hochtreiben.
+  const results: GeneratedCreative[] = [];
+  for (let i = 0; i < boards.length; i++) {
+    try {
+      const c = await generateOneVideoCreative(
+        boards[i],
+        brief,
+        i + 1,
+        requestId,
+        onProgress
+          ? (m) => onProgress(`Variante ${i + 1}/${boards.length}: ${m}`)
+          : undefined,
+      );
+      results.push(c);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(`[creative-gen] Video-Variante ${i + 1} failte:`, msg);
+      await onProgress?.(`⚠️ Variante ${i + 1} fehlgeschlagen: ${msg.slice(0, 200)}`);
+    }
+  }
+  return results;
+}
+
+export type ParsedIntent = {
+  action: "generate" | "unknown";
+  count: number;
+  campaignKey: string | null; // "Wechsel" | "Neugeschäft" | "Kinderwunsch" | null = unklar
+  // Region nur bei Kinderwunsch relevant (z. B. "Berlin") — bestimmt, in
+  // welche Regions-Kampagne ein freigegebenes Creative gepusht wird.
+  region?: string | null;
+  audience?: string;
+  tone?: string;
+  // "image" (Standbild, Default) oder "video" (Sora 2, UGC-Reel).
+  medium?: "image" | "video";
+};
+
+export async function parseIntent(text: string): Promise<ParsedIntent> {
+  let raw: string;
   try {
-    return JSON.parse(cleaned) as ParsedIntent;
-  } catch {
+    raw = await llmText({
+      // Eigenes, schnelles Modell fürs Befehl-Parsen (nicht das schwere
+      // Konzept-Modell): zuverlässiges JSON, kein Reasoning-Overhead.
+      model: process.env.OPENAI_INTENT_MODEL || "gpt-4o",
+      system: `Du parsed deutsche Befehle für einen Creative-Generation-Bot.
+Erkennbare Kampagnen: "Wechsel", "Neugeschäft", "Kinderwunsch".
+Bei "Kinderwunsch" steht meist eine Region/Stadt dabei (z. B. "Kinderwunsch Berlin")
+— extrahiere sie nach "region" (nur der Ortsname, ohne das Wort "Kinderwunsch").
+Bei Wechsel/Neugeschäft ist region null.
+"medium": "video" wenn der User Worte wie "Video", "Reel", "Clip", "Bewegtbild",
+"als Video" verwendet — sonst "image" (Default).
+Antworte mit strict JSON: {"action": "generate"|"unknown", "count": number, "campaignKey": "Wechsel"|"Neugeschäft"|"Kinderwunsch"|null, "region": string|null, "audience"?: string, "tone"?: string, "medium"?: "image"|"video"}`,
+      user: text,
+      maxTokens: 400,
+    });
+  } catch (err) {
+    console.warn("[parseIntent] llmText failte:", err instanceof Error ? err.message : err);
     return { action: "unknown", count: 0, campaignKey: null };
   }
+
+  // Robust: erst direkt, dann das erste {…}-Objekt aus dem Text fischen.
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+  const tryParse = (s: string): ParsedIntent | null => {
+    try {
+      return JSON.parse(s) as ParsedIntent;
+    } catch {
+      return null;
+    }
+  };
+  const parsed = tryParse(cleaned) ?? tryParse(cleaned.match(/\{[\s\S]*\}/)?.[0] ?? "");
+  if (!parsed) {
+    console.warn(`[parseIntent] unparsebar: ${raw.slice(0, 200)}`);
+    return { action: "unknown", count: 0, campaignKey: null };
+  }
+  return parsed;
 }

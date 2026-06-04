@@ -240,6 +240,49 @@ export async function setCampaignStatus(
   await metaPost(campaignId, { status });
 }
 
+// Spend des laufenden Monats je Kampagne (EUR). Für die Cost-per-Lead-
+// Berechnung der Liefer-Pools. Liefert eine Map campaignId → EUR.
+export async function getMonthlySpendByCampaign(
+  now: Date = new Date(),
+): Promise<Map<string, number>> {
+  const since = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+  )
+    .toISOString()
+    .slice(0, 10);
+  const until = now.toISOString().slice(0, 10);
+
+  const map = new Map<string, number>();
+  const url = new URL(
+    `https://graph.facebook.com/${GRAPH_VERSION}/${getAdAccount()}/insights`,
+  );
+  url.searchParams.set("access_token", getToken());
+  url.searchParams.set("level", "campaign");
+  url.searchParams.set("fields", "campaign_id,spend");
+  url.searchParams.set("time_range", JSON.stringify({ since, until }));
+  url.searchParams.set("limit", "500");
+
+  let next: string | null = url.toString();
+  while (next) {
+    const res = await fetch(next, { cache: "no-store" });
+    const text = await res.text();
+    if (!res.ok) throw new Error(`Meta insights ${res.status}: ${text}`);
+    const json = JSON.parse(text) as {
+      data?: { campaign_id?: string; spend?: string }[];
+      paging?: { next?: string };
+    };
+    for (const row of json.data ?? []) {
+      if (!row.campaign_id) continue;
+      const spend = Number.parseFloat(row.spend ?? "0");
+      if (Number.isFinite(spend)) {
+        map.set(row.campaign_id, (map.get(row.campaign_id) ?? 0) + spend);
+      }
+    }
+    next = json.paging?.next ?? null;
+  }
+  return map;
+}
+
 // Holt das erste aktive AdSet einer Kampagne (Ad muss in einem AdSet liegen).
 export async function getFirstAdSetForCampaign(
   campaignId: string,
@@ -352,7 +395,9 @@ export async function createAd(opts: {
 // ─── End-to-End: Variante komplett in Kampagne einbauen ─────────────
 
 export async function publishVariantToCampaign(opts: {
-  campaignKey: string; // Keyword für Campaign-Match ("Wechsel", "Neugeschäft")
+  campaignKey: string; // Keyword für Campaign-Match ("Wechsel", "Neugeschäft", "Kinderwunsch")
+  region?: string | null; // bei Kinderwunsch: Region für die Regions-Kampagne
+  linkUrl?: string; // Landingpage; default META_DEFAULT_LINK_URL
   headline: string;
   fbHeadline: string;
   body: string;
@@ -361,12 +406,27 @@ export async function publishVariantToCampaign(opts: {
   imageUrl: string; // public URL (R2)
   activate: boolean;
 }): Promise<{ campaignId: string; adId: string; imageHash: string }> {
-  // 1. Kampagne finden
+  // 1. Kampagne finden. Mit Region (z. B. Kinderwunsch) muss der Name BEIDE
+  // Begriffe enthalten — sonst würde "Kinderwunsch" irgendeine Regions-
+  // Kampagne treffen.
   const campaigns = await listCampaigns();
-  const campaign = findCampaignByKeyword(campaigns, opts.campaignKey);
+  const region = opts.region?.trim();
+  let campaign: MetaCampaign | null;
+  if (region) {
+    const k = opts.campaignKey.toLowerCase();
+    const r = region.toLowerCase();
+    campaign =
+      campaigns.find(
+        (c) =>
+          c.name.toLowerCase().includes(k) && c.name.toLowerCase().includes(r),
+      ) ?? null;
+  } else {
+    campaign = findCampaignByKeyword(campaigns, opts.campaignKey);
+  }
   if (!campaign) {
+    const gesucht = region ? `"${opts.campaignKey}" + "${region}"` : `"${opts.campaignKey}"`;
     throw new Error(
-      `Keine Kampagne mit Keyword "${opts.campaignKey}" gefunden. Verfügbar: ${campaigns
+      `Keine Kampagne mit Keyword ${gesucht} gefunden. Verfügbar: ${campaigns
         .map((c) => c.name)
         .join(", ")}`,
     );
@@ -385,7 +445,7 @@ export async function publishVariantToCampaign(opts: {
 
   // 4. Creative anlegen
   const timestamp = new Date().toISOString().slice(0, 16).replace("T", " ");
-  const creativeName = `Bot-${opts.campaignKey}-${timestamp}`;
+  const creativeName = `Bot-${opts.campaignKey}${region ? `-${region}` : ""}-${timestamp}`;
   const { id: creativeId } = await createAdCreative({
     name: creativeName,
     imageHash: hash,
@@ -394,6 +454,7 @@ export async function publishVariantToCampaign(opts: {
     body: opts.body,
     adText: opts.adText,
     cta: opts.cta,
+    linkUrl: opts.linkUrl,
   });
 
   // 5. Ad anlegen

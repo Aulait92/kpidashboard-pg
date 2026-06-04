@@ -22,11 +22,13 @@ import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
 import {
   computeCustomerLeaderboard,
   computeKpis,
+  computeLeadSpendByChannel,
   computePnL,
   computeProductBreakdown,
   computeTimeSeries,
   listCustomers,
   PRODUCTS,
+  type ChannelSpend,
   type Kpis,
   type TimeSeriesPoint,
 } from "@/lib/kpis";
@@ -139,28 +141,42 @@ async function DashboardBody({
   product: string | null;
 }) {
   const prev = previousRange(range);
-  const [k, p, ts, customerRows, productRows, pnl, forecast, speed, goals] =
-    await Promise.all([
-      computeKpis({ range, customerId, product }),
-      computeKpis({ range: prev, customerId, product }) as Promise<Kpis>,
-      computeTimeSeries({ range, customerId, product }),
-      computeCustomerLeaderboard({ range, product }),
-      computeProductBreakdown({ range, customerId }),
-      computePnL({ range, customerId, product }),
-      computeMonthlyForecast({
-        customerId,
-        product,
-        revenueLabel: "Umsatz",
-      }),
-      computeSpeedToLeadAnalysis({ range, customerId, product }),
-      computeMonthlyGoalProgress(),
-    ]);
+  const [
+    k,
+    p,
+    ts,
+    customerRows,
+    productRows,
+    pnl,
+    forecast,
+    speed,
+    goals,
+    channelSpend,
+    channelSpendPrev,
+  ] = await Promise.all([
+    computeKpis({ range, customerId, product }),
+    computeKpis({ range: prev, customerId, product }) as Promise<Kpis>,
+    computeTimeSeries({ range, customerId, product }),
+    computeCustomerLeaderboard({ range, product }),
+    computeProductBreakdown({ range, customerId }),
+    computePnL({ range, customerId, product }),
+    computeMonthlyForecast({
+      customerId,
+      product,
+      revenueLabel: "Umsatz",
+    }),
+    computeSpeedToLeadAnalysis({ range, customerId, product }),
+    computeMonthlyGoalProgress({ product }),
+    computeLeadSpendByChannel({ range, product }),
+    computeLeadSpendByChannel({ range: prev, product }),
+  ]);
 
   return (
     <div className="mt-6 space-y-8">
       <FunnelHero kpis={k} />
       <MonthlyGoalsCard progress={goals} />
       <KpiGrid kpis={k} prev={p} points={ts.points} customerId={customerId} />
+      <ChannelSpendGrid current={channelSpend} previous={channelSpendPrev} />
       <PnLStatement pnl={pnl} />
       <MonthlyForecast forecast={forecast} />
       <SpeedToLeadCard data={speed} />
@@ -245,7 +261,7 @@ function KpiGrid({
         <KpiCard
           label="Erreichbarkeitsquote"
           value={formatPercent(k.reachabilityRate)}
-          hint={`${k.reachedLeads} von ${k.totalLeads} Leads erreicht`}
+          hint={`${k.reachedLeads} von ${k.nettoLeads} Leads erreicht${k.cancelledLeads > 0 ? ` (${k.cancelledLeads} Stornos exkl.)` : ""}`}
           delta={delta(k.reachabilityRate, p.reachabilityRate)}
           sparkline={{ points, dataKey: "reachabilityRate" }}
         />
@@ -266,7 +282,7 @@ function KpiGrid({
         <KpiCard
           label="Closing Rate"
           value={formatPercent(k.closingRate)}
-          hint={`${k.closedLeads} von ${k.totalLeads} abgeschlossen`}
+          hint={`${k.closedLeads} von ${k.nettoLeads} abgeschlossen${k.cancelledLeads > 0 ? ` (${k.cancelledLeads} Stornos exkl.)` : ""}`}
           delta={delta(k.closingRate, p.closingRate)}
           sparkline={{ points, dataKey: "closingRate" }}
         />
@@ -279,13 +295,26 @@ function KpiGrid({
         <KpiCard
           label="Umsatz"
           value={formatEUR(k.revenue)}
-          hint="Brutto im Zeitraum"
+          hint={
+            k.cancelledLeads > 0
+              ? `Netto im Zeitraum · Stornos abgezogen`
+              : "Brutto im Zeitraum"
+          }
           tone="positive"
           delta={delta(k.revenue, p.revenue)}
           sparkline={{ points, dataKey: "revenue" }}
         />
         <KpiCard
-          label="Kosten / Lead"
+          label="Stornos"
+          value={formatEUR(k.cancelledRevenue)}
+          hint={`${formatNumber(k.cancelledLeads)} stornierte ${
+            k.cancelledLeads === 1 ? "Lead" : "Leads"
+          } im Zeitraum (vom Umsatz abgezogen)`}
+          tone={k.cancelledRevenue > 0 ? "negative" : undefined}
+          delta={delta(k.cancelledRevenue, p.cancelledRevenue, true)}
+        />
+        <KpiCard
+          label="Kosten / Netto-Lead"
           value={formatEUR(k.costPerLead)}
           hint={`Lead-Kosten gesamt: ${formatEUR(k.leadCosts)}${
             customerId ? " (anteilig)" : ""
@@ -367,6 +396,52 @@ function KpiGrid({
         />
       </KpiSection>
     </div>
+  );
+}
+
+function ChannelSpendGrid({
+  current,
+  previous,
+}: {
+  current: ChannelSpend;
+  previous: ChannelSpend;
+}) {
+  const hasAny = current.total > 0 || previous.total > 0;
+  // Section trotzdem rendern, wenn Outbrain noch keine Daten liefert — so
+  // bleibt der Platz im Dashboard reserviert.
+  return (
+    <KpiSection
+      eyebrow="Sektion · Werbekanäle"
+      title="Spend pro Kanal"
+    >
+      <KpiCard
+        label="Meta"
+        value={formatEUR(current.meta)}
+        hint="Facebook & Instagram Ads"
+        delta={delta(current.meta, previous.meta, true)}
+      />
+      <KpiCard
+        label="Outbrain"
+        value={formatEUR(current.outbrain)}
+        hint={
+          current.outbrain === 0 && previous.outbrain === 0
+            ? "noch keine Daten — API-Freischaltung ausstehend"
+            : "Amplify Native Ads"
+        }
+        delta={delta(current.outbrain, previous.outbrain, true)}
+      />
+      <KpiCard
+        label="Werbespend gesamt"
+        value={formatEUR(current.total)}
+        hint={
+          hasAny
+            ? `Meta + Outbrain${current.other > 0 ? " + Sonstige" : ""}`
+            : "Brutto im Zeitraum"
+        }
+        tone="neutral"
+        delta={delta(current.total, previous.total, true)}
+      />
+    </KpiSection>
   );
 }
 

@@ -100,7 +100,7 @@ function querySimplificationChain(query: string): string[] {
   return Array.from(new Set(chain));
 }
 
-async function fetchStockUrl(query: string): Promise<string> {
+export async function fetchStockUrl(query: string): Promise<string> {
   const sources = getAvailableSources();
   if (sources.length === 0) {
     console.warn(

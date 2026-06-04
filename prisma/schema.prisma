@@ -15,33 +15,72 @@ model Customer {
   name      String   @unique
   createdAt DateTime @default(now())
 
-  // ─── Media-Buyer-Steuerung ──────────────────────────────────────────
-  // Gewünschte Leads pro Monat (fixer Wert, gilt für jeden Monat gleich).
-  // null = kein Ziel, der Media Buyer ignoriert den Kunden dann.
-  monthlyLeadGoal Int?
-  // Wenn true, darf der Media Buyer die Meta-Budgets dieses Kunden
-  // automatisch anpassen/pausieren. Default false = nur beobachten.
-  autopilot       Boolean @default(false)
-  // Keyword, über das Meta-Kampagnen diesem Kunden zugeordnet werden.
-  // null = Kundenname wird als Keyword benutzt.
-  campaignKeyword String?
-  // Obergrenze für das automatisch gesetzte Tagesbudget (EUR, Summe über
-  // alle Kampagnen des Kunden). null = globaler Default aus Env.
-  maxDailyBudget  Decimal? @db.Decimal(12, 2)
+  // ─── Media-Buyer-Daten (aus Airtable-Buyer-Tabelle) ─────────────────
+  // Gewünschte Leads pro Monat, getrennt nach Produkt. null = kein Ziel.
+  // Die eigentliche Steuerung läuft NICHT pro Kunde, sondern pro Liefer-Pool
+  // (DeliveryPool): PKV je Produkt über alle Kunden, Kinderwunsch je Region.
+  // Diese Werte werden zum Pool-Ziel aufsummiert.
+  leadGoalWechsel      Int?
+  leadGoalNeugeschaeft Int?
+  leadGoalKinderwunsch Int?
+  // Preis pro Lead je Produkt (EUR, aus Airtable). Für das automatische
+  // Umsatzziel: Umsatzziel = Σ (Lead-Ziel × Preis) je Kunde.
+  leadPriceWechsel      Decimal? @db.Decimal(12, 2)
+  leadPriceNeugeschaeft Decimal? @db.Decimal(12, 2)
+  leadPriceKinderwunsch Decimal? @db.Decimal(12, 2)
+  // Region des Kunden (z.B. "Berlin"). Bestimmt, in welchen Kinderwunsch-
+  // Regions-Pool die Kinderwunsch-Leads/-Ziele dieses Kunden fallen.
+  region               String?
+  // Startdatum je Sparte. null = "lief schon vorher" (volles Monatsziel).
+  // Bei Mid-Month-Onboarding wird das effektive Monatsziel anteilig herunter-
+  // gerechnet (analog zum „Effektives Leadziel" in Airtable), damit die
+  // d'Hondt-Verteilung & der Media Buyer das verbleibende Monatsende
+  // realistisch ansteuern statt das volle Monatsziel nachzujagen.
+  startWechsel         DateTime?
+  startNeugeschaeft    DateTime?
+  startKinderwunsch    DateTime?
 
-  leads        Lead[]
-  revenues     Revenue[]
-  costs        Cost[]
-  users        User[]
-  buyerActions MediaBuyerAction[]
+  leads    Lead[]
+  revenues Revenue[]
+  costs    Cost[]
+  users    User[]
 }
 
-// Audit-Log des automatischen Media Buyers. Ein Eintrag pro Kunde und Lauf,
+// Ein Liefer-Pool = eine Meta-Kampagne, in die die Nachfrage mehrerer Kunden
+// fließt. Zwei Arten:
+//   kind = "product" → PKV, eine Kampagne pro Produkt (Wechsel/Neugeschäft),
+//                       Pool-Ziel = Summe der Kunden-Ziele dieses Produkts.
+//   kind = "region"  → Kinderwunsch, eine Kampagne pro Region,
+//                       Pool-Ziel = Summe der KiWu-Ziele der Kunden der Region.
+// Pools werden beim Lauf/Anzeigen automatisch aus den Kundendaten abgeleitet
+// und hier per key upserted; gepflegt werden nur die Steuer-Einstellungen.
+model DeliveryPool {
+  id    String @id @default(cuid())
+  key   String @unique // "product:Wechsel" | "product:Neugeschäft" | "region:Berlin"
+  label String
+  kind  String // "product" | "region"
+  // Produkt-Quelle (Lead.source) dieses Pools: "Wechsel" | "Neugeschäft" | "Kinderwunsch".
+  product String
+  // Nur bei kind=region gesetzt.
+  region  String?
+
+  // Steuer-Einstellungen (admin-gepflegt):
+  autopilot       Boolean  @default(false)
+  maxDailyBudget  Decimal? @db.Decimal(12, 2)
+  // Override für das Kampagnen-Matching. null = abgeleitet (Produkt bzw. Region).
+  campaignKeyword String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Audit-Log des automatischen Media Buyers. Ein Eintrag pro Pool und Lauf,
 // auch wenn keine Änderung nötig war (action = "none") — so ist transparent,
 // was der Bot wann gesehen und entschieden hat.
 model MediaBuyerAction {
-  id           String   @id @default(cuid())
-  customerId   String
+  id        String @id @default(cuid())
+  poolKey   String
+  poolLabel String
   // "increase" | "decrease" | "pause" | "activate" | "boost" | "none"
   action       String
   reason       String
@@ -62,9 +101,7 @@ model MediaBuyerAction {
   errorMessage String?
   createdAt    DateTime @default(now())
 
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-
-  @@index([customerId, createdAt])
+  @@index([poolKey, createdAt])
   @@index([createdAt])
 }
 
@@ -95,6 +132,10 @@ model Revenue {
   leadId     String?
   amount     Decimal  @db.Decimal(12, 2)
   occurredAt DateTime @default(now())
+  // Storno-Flag: true wenn der Lead in Airtable den Status „Storniert" hat.
+  // Stornierte Revenues bleiben mit Betrag erhalten (für die Storno-Kachel),
+  // werden aber aus allen Umsatz-/Marge-Aggregationen ausgefiltert.
+  cancelled  Boolean  @default(false)
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   lead     Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
@@ -187,13 +228,22 @@ model PasswordResetToken {
 // wird das Ziel im UI als "nicht gesetzt" angezeigt.
 model MonthlyGoal {
   id          String   @id @default(cuid())
-  monthKey    String   @unique // "YYYY-MM"
+  monthKey    String   // "YYYY-MM"
+  // Produkt-Dimension: "" = Gesamt, sonst "Wechsel" | "Neugeschäft" | "Kinderwunsch".
+  // Lead-Ziele kommen je Produkt aus Airtable (nicht hier); gespeichert werden
+  // hier Abschluss-/Umsatz-/Marge-Ziele. Gesamt-Werte (Leads/Abschlüsse/Umsatz)
+  // sind die Summe der Produkte; nur die Gesamt-Marge wird eigenständig gesetzt.
+  product     String   @default("")
   leadsGoal   Int?
-  closedGoal  Int?
+  // Abschlussquote-Ziel (Abschlüsse / Leads), 0..1. Qualitätskennzahl wie die
+  // Marge — wird je Produkt und gesamt eigenständig gesetzt (nicht summiert).
+  closedRateGoal Decimal? @db.Decimal(5, 4)
   revenueGoal Decimal? @db.Decimal(12, 2)
   marginGoal  Decimal? @db.Decimal(5, 4) // 0..1
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@unique([monthKey, product])
 }
 
 // Eine Anfrage des Admins per Telegram, neue Meta-Ad-Creatives zu generieren.
@@ -227,6 +277,11 @@ model CreativeVariant {
   mechanic        String   @default("") // Konzept-Mechanic (z.B. UGC-Whiteboard, Comic-Illustration, Big-Number)
   imagePrompt     String   // bei HTML-Pipeline: das volle HTML (Debug/Replay)
   imageUrl        String   // public R2-URL
+  // Video-Felder: gesetzt wenn kind="video". imageUrl kann dann ein
+  // Standbild/Thumbnail enthalten (z. B. ersten Frame), videoUrl ist die R2-MP4.
+  kind            String   @default("image") // "image" | "video"
+  videoUrl        String?
+  durationSec     Int?
   // Meta-Side: gesetzt wenn approved + zur Kampagne gepusht.
   metaCampaignId  String?
   metaAdId        String?

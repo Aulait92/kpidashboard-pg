@@ -4,6 +4,13 @@ import { getCurrentSession } from "@/lib/auth";
 const TABLES = [
   process.env.AIRTABLE_TABLE_WECHSEL ?? "PKV-Wechsel-Leads",
   process.env.AIRTABLE_TABLE_NEUGESCHAEFT ?? "PKV-Neugeschäft-Leads",
+  // Buyer-Tabelle: hier liegen Region und die Leadziele pro Produkt
+  // (inkl. Kinderwunsch) — wichtig fürs Media-Buyer-Pool-Mapping.
+  process.env.AIRTABLE_TABLE_BUYERS ?? "Buyer",
+  // Kinderwunsch-Lead-Tabelle nur wenn konfiguriert.
+  ...(process.env.AIRTABLE_TABLE_KINDERWUNSCH
+    ? [process.env.AIRTABLE_TABLE_KINDERWUNSCH]
+    : []),
 ];
 
 // Diagnose-Endpoint: zeigt für jede Lead-Tabelle die Spaltennamen des

@@ -1,3 +1,4 @@
+import { addDays, format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 
 const META_API_VERSION = "v23.0";
@@ -16,7 +17,7 @@ type MetaInsightsResponse = {
   error?: { message: string; type?: string; code?: number };
 };
 
-export type MetaProduct = "Wechsel" | "Neugeschäft";
+export type MetaProduct = "Wechsel" | "Neugeschäft" | "Kinderwunsch";
 
 export type MetaSyncResult = {
   accounts: { id: string; rows: number }[];
@@ -44,28 +45,33 @@ function getEnv() {
   return { token, accounts };
 }
 
-function classifyProduct(campaignName: string): MetaProduct | null {
+export function classifyProduct(campaignName: string): MetaProduct | null {
   const n = campaignName.toLowerCase();
+  // Kinderwunsch zuerst — eigenes Vertical, klar über das Keyword erkennbar.
+  if (n.includes("kinderwunsch") || n.includes("kiwu")) return "Kinderwunsch";
   // Reihenfolge wichtig: "Neugeschäft" zuerst, falls "wechsel" als Substring
   // in einem Neugeschäft-Namen vorkäme.
   if (n.includes("neugeschäft") || n.includes("neugeschaeft") || n.includes("neuvertrag")) {
     return "Neugeschäft";
   }
-  if (n.includes("wechsel")) return "Wechsel";
+  // „Wechsel" (Vorgang) ODER „Wechsler" (Person) — letzteres enthält
+  // „wechsel" NICHT als Substring (w-e-c-h-s-l-e-r vs. w-e-c-h-s-e-l).
+  if (n.includes("wechsel") || n.includes("wechsler")) return "Wechsel";
   return null;
 }
 
-function monthStart(dateStart: string): Date {
-  // Meta liefert Datum als "YYYY-MM-DD". Bei time_increment=monthly ist
-  // date_start der erste Tag des Monats.
-  const [y, m] = dateStart.split("-").map((n) => Number.parseInt(n, 10));
-  if (!Number.isFinite(y) || !Number.isFinite(m)) {
+function dayAtNoonUtc(dateStart: string): Date {
+  // Meta liefert Datum als "YYYY-MM-DD". Bei time_increment=1 ist
+  // date_start = der konkrete Tag. Noon-UTC vermeidet Tag-Drift durch
+  // Zeitzonen-Offsets bei der Anzeige.
+  const [y, m, d] = dateStart.split("-").map((n) => Number.parseInt(n, 10));
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) {
     throw new Error(`Ungültiges Datum von Meta: ${dateStart}`);
   }
-  return new Date(Date.UTC(y, m - 1, 1, 12));
+  return new Date(Date.UTC(y, m - 1, d, 12));
 }
 
-async function fetchInsights(
+async function fetchInsightsWindow(
   accountId: string,
   token: string,
   since: string,
@@ -76,11 +82,10 @@ async function fetchInsights(
   url.searchParams.set("access_token", token);
   url.searchParams.set("level", "campaign");
   url.searchParams.set("fields", "campaign_name,spend,date_start,date_stop");
-  url.searchParams.set("time_increment", "monthly");
-  url.searchParams.set(
-    "time_range",
-    JSON.stringify({ since, until }),
-  );
+  // Eine Zeile pro Tag pro Kampagne — damit Tagesfilter im Dashboard den
+  // realen Tagesspend zeigen statt eines aufgeteilten Monatsdurchschnitts.
+  url.searchParams.set("time_increment", "1");
+  url.searchParams.set("time_range", JSON.stringify({ since, until }));
   url.searchParams.set("limit", "500");
 
   let nextUrl: string | null = url.toString();
@@ -89,10 +94,44 @@ async function fetchInsights(
     const json = (await res.json()) as MetaInsightsResponse;
     if (!res.ok || json.error) {
       const msg = json.error?.message ?? `HTTP ${res.status}`;
-      throw new Error(`Meta-API für act_${accountId}: ${msg}`);
+      throw new Error(
+        `Meta-API für act_${accountId} (${since}…${until}): ${msg}`,
+      );
     }
     if (json.data) rows.push(...json.data);
     nextUrl = json.paging?.next ?? null;
+  }
+  return rows;
+}
+
+// Meta-Insights mit time_increment=1 sind faktisch auf max. ~90 Tage pro
+// Request limitiert (über längere Zeiträume bricht die API still ab oder
+// liefert leere Antworten). Größere Zeiträume zerlegen wir in 90-Tage-
+// Fenster und fügen die Resultate zusammen.
+async function fetchInsights(
+  accountId: string,
+  token: string,
+  since: string,
+  until: string,
+): Promise<MetaInsightsRow[]> {
+  const WINDOW_DAYS = 90;
+  const rows: MetaInsightsRow[] = [];
+  let chunkStart = new Date(`${since}T00:00:00Z`);
+  const end = new Date(`${until}T00:00:00Z`);
+  while (chunkStart.getTime() <= end.getTime()) {
+    const chunkEndCandidate = addDays(chunkStart, WINDOW_DAYS - 1);
+    const chunkEnd =
+      chunkEndCandidate.getTime() < end.getTime() ? chunkEndCandidate : end;
+    const chunkSinceStr = format(chunkStart, "yyyy-MM-dd");
+    const chunkUntilStr = format(chunkEnd, "yyyy-MM-dd");
+    const chunkRows = await fetchInsightsWindow(
+      accountId,
+      token,
+      chunkSinceStr,
+      chunkUntilStr,
+    );
+    rows.push(...chunkRows);
+    chunkStart = addDays(chunkEnd, 1);
   }
   return rows;
 }
@@ -141,7 +180,7 @@ export async function syncMeta(): Promise<MetaSyncResult> {
         if (!Number.isFinite(amount) || amount <= 0) continue;
 
         const product = classifyProduct(name);
-        const occurredAt = monthStart(startStr);
+        const occurredAt = dayAtNoonUtc(startStr);
 
         if (!product) {
           // Unmatched-Kampagnen werden nur für Transparenz im SyncResult
@@ -152,13 +191,11 @@ export async function syncMeta(): Promise<MetaSyncResult> {
           continue;
         }
 
-        result.matched.push({ campaign: name, product, spend: amount });
-
         toInsert.push({
           product,
           amount,
           occurredAt,
-          note: `Meta: ${name} (${startStr.slice(0, 7)}) [act_${accountId}]`,
+          note: `Meta: ${name} (${startStr}) [act_${accountId}]`,
         });
       }
     } catch (err) {
@@ -168,26 +205,47 @@ export async function syncMeta(): Promise<MetaSyncResult> {
     }
   }
 
-  // Idempotent: alle bestehenden Meta-LEAD-Kosten im Zeitraum löschen, dann frisch einfügen.
-  // So spiegeln wir Änderungen in Meta (z. B. nachträgliche Spend-Korrekturen).
-  await prisma.cost.deleteMany({
-    where: {
-      kind: "LEAD",
-      note: { startsWith: "Meta:" },
-    },
-  });
-
-  for (const row of toInsert) {
-    await prisma.cost.create({
-      data: {
-        kind: "LEAD",
+  // Defensiv: nur löschen, wenn der Fetch komplett durchlief UND Daten
+  // vorliegen. Sonst hätte ein API-Fehler das alte Datenbild wegradiert und
+  // wir hätten weder neue noch alte Werte (das ist genau einmal passiert).
+  const canReplace = result.errors.length === 0 && toInsert.length > 0;
+  if (canReplace) {
+    await prisma.cost.deleteMany({
+      where: { kind: "LEAD", note: { startsWith: "Meta:" } },
+    });
+    await prisma.cost.createMany({
+      data: toInsert.map((row) => ({
+        kind: "LEAD" as const,
         product: row.product,
         amount: row.amount,
         occurredAt: row.occurredAt,
         note: row.note,
-      },
+      })),
     });
-    result.costs += 1;
+    result.costs = toInsert.length;
+  } else if (result.errors.length === 0 && toInsert.length === 0) {
+    // Sauberer Lauf, aber Meta hat 0 Zeilen geliefert → vermutlich kein Spend.
+    // Trotzdem alte Meta-Daten weg, damit veraltete Zahlen nicht stehenbleiben.
+    await prisma.cost.deleteMany({
+      where: { kind: "LEAD", note: { startsWith: "Meta:" } },
+    });
+  }
+  // Bei Errors lassen wir die bestehenden Cost-Zeilen unangetastet.
+
+  // Matched-Summe je Kampagne (statt N Tagessummen, die das SyncResult sonst
+  // vollmüllen würden). Kampagnenname kommt aus der note: "Meta: <name> (...)".
+  const summary = new Map<string, { product: MetaProduct; spend: number }>();
+  for (const row of toInsert) {
+    const m = /^Meta:\s+(.+?)\s+\(\d{4}-\d{2}-\d{2}\)/.exec(row.note);
+    const campaign = m ? m[1] : row.note;
+    const key = `${row.product}|${campaign}`;
+    const prev = summary.get(key);
+    if (prev) prev.spend += row.amount;
+    else summary.set(key, { product: row.product, spend: row.amount });
+  }
+  for (const [key, val] of summary) {
+    const campaign = key.split("|").slice(1).join("|");
+    result.matched.push({ campaign, product: val.product, spend: val.spend });
   }
 
   return result;

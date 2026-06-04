@@ -82,9 +82,9 @@ export async function computeMonthlyForecast(params: {
   const rows: ForecastRow[] = [
     {
       label: "Leads",
-      mtd: mtd.totalLeads,
-      projected: project(mtd.totalLeads),
-      previousFull: prevFull.totalLeads,
+      mtd: mtd.nettoLeads,
+      projected: project(mtd.nettoLeads),
+      previousFull: prevFull.nettoLeads,
       format: "number",
     },
     {
@@ -106,6 +106,13 @@ export async function computeMonthlyForecast(params: {
       mtd: mtd.revenue,
       projected: (mtd.revenue / daysElapsed) * daysTotal,
       previousFull: prevFull.revenue,
+      format: "currency",
+    },
+    {
+      label: "Bruttogewinn",
+      mtd: mtd.profitBeforeOther,
+      projected: (mtd.profitBeforeOther / daysElapsed) * daysTotal,
+      previousFull: prevFull.profitBeforeOther,
       format: "currency",
     },
   ];

@@ -29,26 +29,29 @@ async function handle(req: Request) {
 
   // ?dryRun=1 simuliert nur (loggt + zeigt Entscheidungen, schreibt aber
   // nichts an Meta und schickt keine Push-Benachrichtigungen).
+  // ?force=1 überspringt die Normalbetrieb-Drosselung (sofort nachsteuern).
   const url = new URL(req.url);
   const dryRun = url.searchParams.get("dryRun") === "1";
+  const force = url.searchParams.get("force") === "1";
 
   try {
-    const result = await runMediaBuyer({ dryRun });
+    const result = await runMediaBuyer({ dryRun, force });
     revalidatePath("/admin/media-buyer");
     return NextResponse.json({
       ok: true,
       dryRun,
+      force,
       ranAt: result.ranAt.toISOString(),
-      customers: result.customers.map((c) => ({
-        customer: c.customerName,
-        action: c.action,
-        leadsMtd: c.leadsMtd,
-        goal: c.goal,
-        projected: c.projected,
-        prevBudget: c.prevBudget,
-        newBudget: c.newBudget,
-        reason: c.reason,
-        error: c.error,
+      pools: result.pools.map((p) => ({
+        pool: p.poolLabel,
+        action: p.action,
+        leadsMtd: p.leadsMtd,
+        goal: p.goal,
+        projected: p.projected,
+        prevBudget: p.prevBudget,
+        newBudget: p.newBudget,
+        reason: p.reason,
+        error: p.error,
       })),
     });
   } catch (err) {

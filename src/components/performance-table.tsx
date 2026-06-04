@@ -16,6 +16,8 @@ type Row = {
   id: string;
   name: string;
   totalLeads: number;
+  nettoLeads: number;
+  cancelledLeads: number;
   reachedLeads: number;
   closedLeads: number;
   reachabilityRate: number | null;
@@ -32,6 +34,8 @@ function toRowsFromCustomers(rows: CustomerKpiRow[]): Row[] {
     id: r.customerId,
     name: r.customerName,
     totalLeads: r.totalLeads,
+    nettoLeads: r.nettoLeads,
+    cancelledLeads: r.cancelledLeads,
     reachedLeads: r.reachedLeads,
     closedLeads: r.closedLeads,
     reachabilityRate: r.reachabilityRate,
@@ -49,6 +53,8 @@ function toRowsFromProducts(rows: ProductKpiRow[]): Row[] {
     id: r.product,
     name: r.product,
     totalLeads: r.totalLeads,
+    nettoLeads: r.nettoLeads,
+    cancelledLeads: r.cancelledLeads,
     reachedLeads: r.reachedLeads,
     closedLeads: r.closedLeads,
     reachabilityRate: r.reachabilityRate,
@@ -64,6 +70,8 @@ function toRowsFromProducts(rows: ProductKpiRow[]): Row[] {
 type SortKey =
   | "name"
   | "totalLeads"
+  | "nettoLeads"
+  | "cancelledLeads"
   | "reachedLeads"
   | "closedLeads"
   | "closingRate"
@@ -79,7 +87,14 @@ const COLUMNS: {
   defaultDir: SortDir;
 }[] = [
   { key: "name", label: "Name", numeric: false, defaultDir: "asc" },
-  { key: "totalLeads", label: "Leads", numeric: true, defaultDir: "desc" },
+  { key: "totalLeads", label: "Gesamt", numeric: true, defaultDir: "desc" },
+  { key: "nettoLeads", label: "Netto", numeric: true, defaultDir: "desc" },
+  {
+    key: "cancelledLeads",
+    label: "Stornos",
+    numeric: true,
+    defaultDir: "desc",
+  },
   { key: "reachedLeads", label: "Erreicht", numeric: true, defaultDir: "desc" },
   {
     key: "closedLeads",
@@ -199,7 +214,7 @@ export function PerformanceTable({
         </div>
       ) : (
         <div className="mt-3 overflow-x-auto">
-          <table className="min-w-[720px] text-sm">
+          <table className="min-w-[880px] text-sm">
             <thead className="bg-[color:var(--brand-soft)]/30 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
               <tr>
                 {COLUMNS.map((col) => {
@@ -263,6 +278,17 @@ export function PerformanceTable({
                       {formatNumber(r.totalLeads)}
                     </td>
                     <td className="px-3 py-2.5 text-right tabular-nums">
+                      {formatNumber(r.nettoLeads)}
+                    </td>
+                    <td
+                      className={cn(
+                        "px-3 py-2.5 text-right tabular-nums",
+                        r.cancelledLeads > 0 && "text-rose-600",
+                      )}
+                    >
+                      {formatNumber(r.cancelledLeads)}
+                    </td>
+                    <td className="px-3 py-2.5 text-right tabular-nums">
                       {formatNumber(r.reachedLeads)}
                     </td>
                     <td className="px-3 py-2.5 text-right tabular-nums">
@@ -307,8 +333,8 @@ export function PerformanceTable({
         </div>
       )}
       <div className="px-5 pb-4 pt-2 text-[11px] text-[color:var(--muted)]">
-        Lead-Kosten enthalten den anteiligen Meta-Spend (nach Lead-Anteil pro
-        Monat × Produkt).
+        Lead-Kosten enthalten den anteiligen Werbespend aus Meta & Outbrain
+        (nach Lead-Anteil pro Monat × Produkt).
       </div>
     </div>
   );

@@ -25,11 +25,16 @@ export type GoalRow = {
   // 0..1 (Vergleich Current vs. Goal). Kann > 1 sein bei Übererfüllung.
   progress: number | null;
   status: "ahead" | "ontrack" | "behind" | "no-goal";
+  // Im Cockpit editierbar? Leads kommen aus Airtable (read-only); in der
+  // Gesamt-Ansicht sind Leads/Abschlüsse/Umsatz Summen (read-only).
+  editable: boolean;
 };
 
 export type MonthlyGoalProgress = {
   monthKey: string;
   monthLabel: string;
+  // null = Gesamt, sonst der Produktname.
+  product: string | null;
   daysElapsed: number;
   daysTotal: number;
   rows: GoalRow[];
@@ -64,41 +69,95 @@ function decToNumber(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export async function getMonthlyGoal(monthKey: string) {
-  return prisma.monthlyGoal.findUnique({ where: { monthKey } });
+// "" = Gesamt; sonst der Produktname.
+function productKeyOf(product: string | null): string {
+  return product ?? "";
+}
+
+export async function getMonthlyGoal(monthKey: string, product: string | null) {
+  return prisma.monthlyGoal.findUnique({
+    where: { monthKey_product: { monthKey, product: productKeyOf(product) } },
+  });
 }
 
 export async function upsertMonthlyGoal(
   monthKey: string,
+  product: string | null,
   goals: {
-    leadsGoal: number | null;
-    closedGoal: number | null;
-    revenueGoal: number | null;
+    // Abschlussquote-Ziel (0..1) und Marge-Ziel (0..1).
+    closedRateGoal: number | null;
     marginGoal: number | null;
   },
 ) {
+  const key = productKeyOf(product);
   return prisma.monthlyGoal.upsert({
-    where: { monthKey },
+    where: { monthKey_product: { monthKey, product: key } },
     create: {
       monthKey,
-      leadsGoal: goals.leadsGoal,
-      closedGoal: goals.closedGoal,
-      revenueGoal: goals.revenueGoal,
+      product: key,
+      closedRateGoal: goals.closedRateGoal,
       marginGoal: goals.marginGoal,
     },
     update: {
-      leadsGoal: goals.leadsGoal,
-      closedGoal: goals.closedGoal,
-      revenueGoal: goals.revenueGoal,
+      closedRateGoal: goals.closedRateGoal,
       marginGoal: goals.marginGoal,
     },
   });
 }
 
+type ByProduct = {
+  Wechsel: number;
+  "Neugeschäft": number;
+  Kinderwunsch: number;
+  total: number;
+};
+
+// Lead- und Umsatzziele je Produkt aus Airtable.
+//   Lead-Ziel   = Σ Lead-Ziel über alle Kunden
+//   Umsatzziel  = Σ (Lead-Ziel × Preis pro Lead) über alle Kunden
+// Das Umsatzziel wird pro Kunde gerechnet, damit unterschiedliche
+// Kundenpreise korrekt einfließen.
+async function airtableGoals(): Promise<{
+  leads: ByProduct;
+  revenue: ByProduct;
+}> {
+  const customers = await prisma.customer.findMany({
+    select: {
+      leadGoalWechsel: true,
+      leadGoalNeugeschaeft: true,
+      leadGoalKinderwunsch: true,
+      leadPriceWechsel: true,
+      leadPriceNeugeschaeft: true,
+      leadPriceKinderwunsch: true,
+    },
+  });
+  const leads = { Wechsel: 0, "Neugeschäft": 0, Kinderwunsch: 0, total: 0 };
+  const revenue = { Wechsel: 0, "Neugeschäft": 0, Kinderwunsch: 0, total: 0 };
+  for (const c of customers) {
+    const gw = c.leadGoalWechsel ?? 0;
+    const gn = c.leadGoalNeugeschaeft ?? 0;
+    const gk = c.leadGoalKinderwunsch ?? 0;
+    leads.Wechsel += gw;
+    leads["Neugeschäft"] += gn;
+    leads.Kinderwunsch += gk;
+    revenue.Wechsel += gw * (decToNumber(c.leadPriceWechsel) ?? 0);
+    revenue["Neugeschäft"] += gn * (decToNumber(c.leadPriceNeugeschaeft) ?? 0);
+    revenue.Kinderwunsch += gk * (decToNumber(c.leadPriceKinderwunsch) ?? 0);
+  }
+  leads.total = leads.Wechsel + leads["Neugeschäft"] + leads.Kinderwunsch;
+  revenue.total =
+    revenue.Wechsel + revenue["Neugeschäft"] + revenue.Kinderwunsch;
+  return { leads, revenue };
+}
+
 export async function computeMonthlyGoalProgress(params: {
   now?: Date;
+  // null = Gesamt, sonst Produktname (Wechsel/Neugeschäft/Kinderwunsch).
+  product?: string | null;
 } = {}): Promise<MonthlyGoalProgress> {
   const now = params.now ?? new Date();
+  const product = params.product ?? null;
+  const isTotal = product == null;
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
   const mtdEnd = endOfDay(now);
@@ -106,14 +165,31 @@ export async function computeMonthlyGoalProgress(params: {
   const monthKey = monthKeyFor(monthStart);
   const monthLabel = monthLabelFmt.format(monthStart);
 
-  const [goal, mtd] = await Promise.all([
-    getMonthlyGoal(monthKey),
+  const [allGoalRows, mtd, atGoals] = await Promise.all([
+    prisma.monthlyGoal.findMany({ where: { monthKey } }),
     computeKpis({
       range: { from: monthStart, to: mtdEnd },
       customerId: null,
-      product: null,
+      product,
     }) as Promise<Kpis>,
+    airtableGoals(),
   ]);
+
+  // Ziele zusammensetzen. Lead- UND Umsatzziele kommen aus Airtable
+  // (Lead-Ziel bzw. Lead-Ziel × Preis). Abschlüsse/Marge werden manuell
+  // gesetzt: pro Produkt aus der jeweiligen Zeile; gesamt sind Abschlüsse die
+  // Summe der Produkte, die Gesamt-Marge wird eigenständig gesetzt.
+  const byProduct = new Map(allGoalRows.map((r) => [r.product, r]));
+
+  const pk = isTotal ? "total" : (product as keyof ByProduct);
+  const leadsGoal = atGoals.leads[pk];
+  const revenueGoal = atGoals.revenue[pk] > 0 ? atGoals.revenue[pk] : null;
+
+  // Abschlussquote & Marge sind Qualitätskennzahlen — je Produkt bzw. gesamt
+  // eigenständig gesetzt (nicht summiert).
+  const settingsRow = byProduct.get(isTotal ? "" : (product as string));
+  const closedRateGoal = decToNumber(settingsRow?.closedRateGoal);
+  const marginGoal = decToNumber(settingsRow?.marginGoal);
 
   const daysElapsed = Math.max(
     1,
@@ -133,6 +209,7 @@ export async function computeMonthlyGoalProgress(params: {
     format: GoalRow["format"],
     goalValue: number | null,
     current: number,
+    editable: boolean,
   ): GoalRow {
     if (goalValue == null || goalValue <= 0) {
       return {
@@ -145,6 +222,7 @@ export async function computeMonthlyGoalProgress(params: {
         pace: null,
         progress: null,
         status: "no-goal",
+        editable,
       };
     }
     const pace = goalValue * paceFraction;
@@ -160,6 +238,7 @@ export async function computeMonthlyGoalProgress(params: {
       pace,
       progress,
       status,
+      editable,
     };
   }
 
@@ -169,6 +248,7 @@ export async function computeMonthlyGoalProgress(params: {
     format: GoalRow["format"],
     goalValue: number | null,
     current: number | null,
+    editable: boolean,
   ): GoalRow {
     if (goalValue == null) {
       return {
@@ -181,6 +261,7 @@ export async function computeMonthlyGoalProgress(params: {
         pace: null,
         progress: null,
         status: "no-goal",
+        editable,
       };
     }
     if (current == null) {
@@ -194,6 +275,7 @@ export async function computeMonthlyGoalProgress(params: {
         pace: null,
         progress: 0,
         status: "behind",
+        editable,
       };
     }
     return {
@@ -206,43 +288,55 @@ export async function computeMonthlyGoalProgress(params: {
       pace: null,
       progress: goalValue > 0 ? current / goalValue : null,
       status: current >= goalValue ? "ahead" : "behind",
+      editable,
     };
   }
 
   const rows: GoalRow[] = [
+    // Leads: immer aus Airtable → read-only. Ist-Wert = Netto-Leads (Stornos
+    // raus), damit das Monatsziel nicht durch stornierte Leads erfüllt wird.
     buildVolumeRow(
       "leads",
       "Leads",
       "number",
-      goal?.leadsGoal ?? null,
-      mtd.totalLeads,
+      leadsGoal > 0 ? leadsGoal : null,
+      mtd.nettoLeads,
+      false,
     ),
-    buildVolumeRow(
+    // Abschlussquote (Abschlüsse / Leads): Qualitätskennzahl in %, je Produkt
+    // und gesamt eigenständig setzbar.
+    buildQualityRow(
       "closed",
-      "Abschlüsse",
-      "number",
-      goal?.closedGoal ?? null,
-      mtd.closedLeads,
+      "Abschlussquote",
+      "percent",
+      closedRateGoal,
+      mtd.closingRate,
+      true,
     ),
+    // Umsatz: automatisch aus Lead-Ziel × Preis (Airtable) → read-only.
     buildVolumeRow(
       "revenue",
       "Umsatz",
       "currency",
-      decToNumber(goal?.revenueGoal),
+      revenueGoal,
       mtd.revenue,
+      false,
     ),
+    // Marge: pro Produkt und gesamt jeweils eigenständig setzbar.
     buildQualityRow(
       "margin",
       "Marge vor weiteren Kosten",
       "percent",
-      decToNumber(goal?.marginGoal),
+      marginGoal,
       mtd.marginBeforeOther,
+      true,
     ),
   ];
 
   return {
     monthKey,
     monthLabel,
+    product,
     daysElapsed,
     daysTotal,
     rows,
