@@ -65,10 +65,15 @@ async function runFfmpeg(
     proc.on("close", (code, signal) => {
       const stderr = stderrChunks.join("");
       if (code === 0) return resolve({ stderr });
-      const tail = stderr.split("\n").slice(-10).join("\n");
+      const lines = stderr.split("\n");
+      // Erste 5 Init-Zeilen + letzte 25 Zeilen — der eigentliche ffmpeg-Fehler
+      // steht oft mittendrin (zwischen Input-Parsing und Encoding-Start),
+      // nicht erst am Ende.
+      const head = lines.slice(0, 5).join("\n");
+      const tail = lines.slice(-25).join("\n");
       reject(
         new Error(
-          `ffmpeg (${step}) exit code=${code} signal=${signal ?? "none"}:\n${tail}`,
+          `ffmpeg (${step}) exit code=${code} signal=${signal ?? "none"}:\n${head}\n…\n${tail}`,
         ),
       );
     });
@@ -362,14 +367,19 @@ export async function burnGermanSubtitles(
       : chain;
 
     const args: string[] = [
+      "-hide_banner",
+      "-nostats",
       "-fflags",
       "+genpts",
       "-i",
       inputPath,
       "-vf",
       vfChain,
+      // tpad erzeugt neue Frames mit generierten Timestamps — passthrough
+      // würde die ablehnen. CFR sorgt für saubere Frame-Sequenz; ohne
+      // Padding bleibt passthrough (preserves Original-Timing).
       "-vsync",
-      "passthrough",
+      needsPadding ? "cfr" : "passthrough",
       "-c:v",
       "libx264",
       "-preset",
@@ -390,6 +400,10 @@ export async function burnGermanSubtitles(
         "aac",
         "-b:a",
         "128k",
+        // async hält Audio-Timestamps eng am Video — vermeidet Sync-Drift
+        // mit der gepaddet Stille.
+        "-async",
+        "1",
       );
     } else {
       args.push("-c:a", "copy");
