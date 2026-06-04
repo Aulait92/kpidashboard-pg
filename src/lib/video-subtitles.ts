@@ -246,8 +246,15 @@ function buildDrawtextChain(
 // Buffer zurückgegeben — Untertitel sind ein Nice-to-have, kein Hard-Block.
 export async function burnGermanSubtitles(
   videoBuffer: Buffer,
-  onProgress?: (msg: string) => void | Promise<void>,
+  options: {
+    onProgress?: (msg: string) => void | Promise<void>;
+    // Ziel-Länge in Sekunden. Wenn Sora kürzer liefert, wird das Output mit
+    // eingefrorenem letztem Frame + Stille auf diese Länge gepaddet.
+    targetDurationSec?: number;
+  } = {},
 ): Promise<{ buffer: Buffer; burned: boolean; note?: string }> {
+  const onProgress = options.onProgress;
+  const targetDurationSec = options.targetDurationSec;
   const dir = await mkdtemp(join(tmpdir(), "sora-subs-"));
   const inputPath = join(dir, "in.mp4");
   const audioPath = join(dir, "audio.mp3");
@@ -317,9 +324,24 @@ export async function burnGermanSubtitles(
     for (const f of textFiles) {
       await writeFile(f.path, f.content, "utf8");
     }
-    await onProgress?.("ffmpeg encodiert mit Untertiteln…");
+    // 4. Padding-Bedarf berechnen. Wenn Sora kürzer liefert als
+    // targetDurationSec, friert tpad den letzten Frame ein und apad füllt
+    // den Audio-Track mit Stille bis zur Ziel-Länge.
+    const soraDuration = sora.inputDuration ?? 0;
+    const padSec =
+      targetDurationSec && targetDurationSec > 0 && soraDuration > 0
+        ? Math.max(0, targetDurationSec - soraDuration)
+        : 0;
+    const needsPadding = padSec >= 0.5;
+    if (needsPadding) {
+      await onProgress?.(
+        `Padde Output um ${padSec.toFixed(2)}s (Sora ${soraDuration.toFixed(2)}s → Ziel ${targetDurationSec!.toFixed(2)}s)…`,
+      );
+    } else {
+      await onProgress?.("ffmpeg encodiert mit Untertiteln…");
+    }
 
-    // 4. Encoding. stderr behalten wir uns, um die echte Output-Dauer dem
+    // 5. Encoding. stderr behalten wir uns, um die echte Output-Dauer dem
     // Aufrufer mitzugeben.
     //   -c:a copy   : Audio unverändert übernehmen — vermeidet Priming-
     //                 Delay am Anfang und Drift am Ende durch AAC-Reencode.
@@ -330,35 +352,59 @@ export async function burnGermanSubtitles(
     //                 : Frame-Timing aus dem Input übernehmen, statt zu
     //                   re-samplen.
     //   KEIN -t  : Wir vertrauen der echten Input-Länge.
-    const { stderr } = await runFfmpeg(
-      [
-        "-fflags",
-        "+genpts",
-        "-i",
-        inputPath,
-        "-vf",
-        chain,
-        "-vsync",
-        "passthrough",
-        "-c:v",
-        "libx264",
-        "-preset",
-        "veryfast",
-        "-crf",
-        "23",
-        "-pix_fmt",
-        "yuv420p",
+    // Filter-Chain:
+    //   • drawtext-Stages (Untertitel)
+    //   • tpad freezed den letzten Frame `padSec` Sekunden lang (nur wenn
+    //     Padding gebraucht wird — drawtext zeichnet nicht auf den
+    //     gepaddeten Frames, weil deren Timestamps außerhalb aller
+    //     `enable=between(t,…)`-Ranges liegen).
+    const vfChain = needsPadding
+      ? `${chain},tpad=stop_mode=clone:stop_duration=${padSec.toFixed(3)}`
+      : chain;
+
+    const args: string[] = [
+      "-fflags",
+      "+genpts",
+      "-i",
+      inputPath,
+      "-vf",
+      vfChain,
+      "-vsync",
+      "passthrough",
+      "-c:v",
+      "libx264",
+      "-preset",
+      "veryfast",
+      "-crf",
+      "23",
+      "-pix_fmt",
+      "yuv420p",
+    ];
+    if (needsPadding) {
+      // apad braucht Audio-Reencode (geht nicht mit -c:a copy). AAC-Priming-
+      // Delay ist hier akzeptabel — sonst hätten wir keinen Padding-Mechanismus.
+      args.push(
+        "-af",
+        `apad=pad_dur=${padSec.toFixed(3)}`,
         "-c:a",
-        "copy",
-        "-avoid_negative_ts",
-        "make_zero",
-        "-movflags",
-        "+faststart",
-        "-y",
-        outputPath,
-      ],
-      "burn subtitles",
+        "aac",
+        "-b:a",
+        "128k",
+        "-t",
+        targetDurationSec!.toFixed(3),
+      );
+    } else {
+      args.push("-c:a", "copy");
+    }
+    args.push(
+      "-avoid_negative_ts",
+      "make_zero",
+      "-movflags",
+      "+faststart",
+      "-y",
+      outputPath,
     );
+    const { stderr } = await runFfmpeg(args, "burn subtitles");
 
     const durations = parseFfmpegDurations(stderr);
     if (durations.inputDuration && durations.outputTime) {

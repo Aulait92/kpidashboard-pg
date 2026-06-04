@@ -1769,7 +1769,13 @@ async function generateOneVideoCreative(
   // lassen ihn deshalb komplett text-frei rendern (s. Prompt) und brennen
   // saubere deutsche Untertitel per Whisper + ffmpeg nachträglich rein.
   await onProgress?.("Brenne deutsche Untertitel ein…");
-  const subResult = await burnGermanSubtitles(rawBuffer, onProgress);
+  // Ziel-Länge aus Sora-Env — wenn Sora kürzer liefert, paddet die
+  // Subtitle-Pipeline auf die gewünschte Länge.
+  const targetDurationSec = Number(process.env.SORA_DURATION_SEC ?? 20);
+  const subResult = await burnGermanSubtitles(rawBuffer, {
+    onProgress,
+    targetDurationSec,
+  });
   if (!subResult.burned && subResult.note) {
     await onProgress?.(`Untertitel übersprungen: ${subResult.note.slice(0, 180)}`);
   }
