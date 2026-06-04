@@ -167,16 +167,16 @@ export function findCampaignsByKeyword(
   return campaigns.filter((c) => c.name.toLowerCase().includes(k));
 }
 
-// Spend pro Kampagne für den laufenden Monat (Aggregat, kein breakdown).
-// Liefert eine Map campaignId → Spend in der Konto-Währung. Spend, der
-// noch nicht aus der API geflossen ist (Outbrain-Reporting-Latenz 6–24h),
-// taucht erst beim nächsten Sync auf.
-export async function getMonthlySpendByCampaign(
-  now: Date = new Date(),
-): Promise<Map<string, number>> {
+// Aggregat-Spend pro Kampagne über ein beliebiges Zeitfenster.
+// Spend, der noch nicht aus der API geflossen ist (Outbrain-Reporting-
+// Latenz 6–24h), taucht erst beim nächsten Sync auf.
+export async function getSpendByCampaign(params: {
+  since: Date;
+  until: Date;
+}): Promise<Map<string, number>> {
   const { marketers } = getEnv();
-  const from = format(startOfMonth(now), "yyyy-MM-dd");
-  const to = format(endOfMonth(now), "yyyy-MM-dd");
+  const from = format(params.since, "yyyy-MM-dd");
+  const to = format(params.until, "yyyy-MM-dd");
   const result = new Map<string, number>();
   for (const marketerId of marketers) {
     const url = new URL(
@@ -199,6 +199,16 @@ export async function getMonthlySpendByCampaign(
     }
   }
   return result;
+}
+
+// MTD-Variante — bleibt fürs Admin-UI erhalten.
+export async function getMonthlySpendByCampaign(
+  now: Date = new Date(),
+): Promise<Map<string, number>> {
+  return getSpendByCampaign({
+    since: startOfMonth(now),
+    until: endOfMonth(now),
+  });
 }
 
 // ─── Schreib-Operationen (Phase 2) ───────────────────────────────────

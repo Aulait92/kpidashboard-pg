@@ -240,18 +240,18 @@ export async function setCampaignStatus(
   await metaPost(campaignId, { status });
 }
 
-// Spend des laufenden Monats je Kampagne (EUR). Für die Cost-per-Lead-
-// Berechnung der Liefer-Pools. Liefert eine Map campaignId → EUR.
-export async function getMonthlySpendByCampaign(
-  now: Date = new Date(),
-): Promise<Map<string, number>> {
-  const since = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
-  )
-    .toISOString()
-    .slice(0, 10);
-  const until = now.toISOString().slice(0, 10);
-
+// Spend in einem beliebigen Zeitfenster je Kampagne (EUR). Wird vom Buyer
+// in zwei Varianten genutzt:
+//   • MTD (since=Monatsanfang) — fürs Display im Pool-Detail.
+//   • Lookback (since=heute−N Tage) — für die CPL-Decision, damit der Buyer
+//     auf jüngste Performance reagiert und nicht durch alte Monats-Daten
+//     verzerrt wird.
+export async function getSpendByCampaign(params: {
+  since: Date;
+  until: Date;
+}): Promise<Map<string, number>> {
+  const since = params.since.toISOString().slice(0, 10);
+  const until = params.until.toISOString().slice(0, 10);
   const map = new Map<string, number>();
   const url = new URL(
     `https://graph.facebook.com/${GRAPH_VERSION}/${getAdAccount()}/insights`,
@@ -281,6 +281,16 @@ export async function getMonthlySpendByCampaign(
     next = json.paging?.next ?? null;
   }
   return map;
+}
+
+// Bestehender Helper für MTD-Spend — behält Backwards-Kompat fürs Admin-UI.
+export async function getMonthlySpendByCampaign(
+  now: Date = new Date(),
+): Promise<Map<string, number>> {
+  return getSpendByCampaign({
+    since: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)),
+    until: now,
+  });
 }
 
 // Holt das erste aktive AdSet einer Kampagne (Ad muss in einem AdSet liegen).

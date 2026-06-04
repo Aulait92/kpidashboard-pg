@@ -40,6 +40,7 @@ import {
   findCampaignsByKeyword,
   getCampaignBudgetState,
   getMonthlySpendByCampaign,
+  getSpendByCampaign,
   listCampaigns,
   setCampaignDailyBudget,
   setCampaignStatus,
@@ -49,6 +50,7 @@ import {
 import {
   findCampaignsByKeyword as findOutbrainCampaignsByKeyword,
   getMonthlySpendByCampaign as getOutbrainMonthlySpendByCampaign,
+  getSpendByCampaign as getOutbrainSpendByCampaign,
   listCampaigns as listOutbrainCampaigns,
   setCampaignDailyBudget as setOutbrainCampaignDailyBudget,
   setCampaignStatus as setOutbrainCampaignStatus,
@@ -243,7 +245,7 @@ export function decideBudget(params: {
     const target = clamp(requiredBudgetRaw, effMinBudget, maxBudget);
     return {
       action: "boost",
-      reason: `Endspurt (${daysLeft} Tage übrig, Prognose ${projected}/${goal}). Meta-Budget auf ${eur.format(target)}/Tag für ${remaining} fehlende Leads (≈ ${requiredPerDay.toFixed(1)} Leads/Tag bei kalk. ${cplFmt.format(costPerLead)}/Meta-Lead).`,
+      reason: `Endspurt (${daysLeft} Tage übrig, Prognose ${projected}/${goal}). Meta-Budget auf ${eur.format(target)}/Tag für ${remaining} fehlende Leads (≈ ${requiredPerDay.toFixed(1)} Leads/Tag bei kalk. ${cplFmt.format(costPerLead)}/Lead (7-Tage-Schnitt)).`,
       targetBudget: target,
       setStatus: anyPaused ? "ACTIVE" : null,
     };
@@ -268,7 +270,7 @@ export function decideBudget(params: {
   if (anyPaused) {
     return {
       action: "activate",
-      reason: `Meta-Kampagnen pausiert, aber ${remaining} Leads offen (Prognose ${projected}/${goal}). Meta reaktivieren mit ${eur.format(targetRaw)}/Tag (≈ ${requiredPerDay.toFixed(1)} Leads/Tag bei kalk. ${cplFmt.format(costPerLead)}/Meta-Lead).`,
+      reason: `Meta-Kampagnen pausiert, aber ${remaining} Leads offen (Prognose ${projected}/${goal}). Meta reaktivieren mit ${eur.format(targetRaw)}/Tag (≈ ${requiredPerDay.toFixed(1)} Leads/Tag bei kalk. ${cplFmt.format(costPerLead)}/Lead (7-Tage-Schnitt)).`,
       targetBudget: targetRaw,
       setStatus: "ACTIVE",
     };
@@ -292,14 +294,14 @@ export function decideBudget(params: {
   if (target > currentBudget) {
     return {
       action: "increase",
-      reason: `Hinterher (Prognose ${projected}/${goal}). Meta-Budget ${eur.format(currentBudget)} → ${eur.format(target)}/Tag (≈ ${requiredPerDay.toFixed(1)} Leads/Tag bei kalk. ${cplFmt.format(costPerLead)}/Meta-Lead).`,
+      reason: `Hinterher (Prognose ${projected}/${goal}). Meta-Budget ${eur.format(currentBudget)} → ${eur.format(target)}/Tag (≈ ${requiredPerDay.toFixed(1)} Leads/Tag bei kalk. ${cplFmt.format(costPerLead)}/Lead (7-Tage-Schnitt)).`,
       targetBudget: target,
       setStatus: null,
     };
   }
   return {
     action: "decrease",
-    reason: `Überlieferung droht (Prognose ${projected}/${goal}). Meta-Budget ${eur.format(currentBudget)} → ${eur.format(target)}/Tag (kalk. ${cplFmt.format(costPerLead)}/Meta-Lead).`,
+    reason: `Überlieferung droht (Prognose ${projected}/${goal}). Meta-Budget ${eur.format(currentBudget)} → ${eur.format(target)}/Tag (kalk. ${cplFmt.format(costPerLead)}/Lead (7-Tage-Schnitt)).`,
     targetBudget: target,
     setStatus: null,
   };
@@ -505,13 +507,18 @@ type RunCtx = {
   spendByCampaign: Map<string, number>;
   outbrainCampaigns: OutbrainCampaign[];
   outbrainSpendByCampaign: Map<string, number>;
+  // Rolling-Lookback-Spend für die CPL-Decision. Separater Topf vom MTD-Spend
+  // damit das Admin-UI weiter MTD anzeigen kann, der Buyer aber auf
+  // jüngere Performance reagiert.
+  recentSpendByCampaign: Map<string, number>;
+  recentOutbrainSpendByCampaign: Map<string, number>;
+  recentSince: Date;
   monthStart: Date;
   mtdEnd: Date;
   daysElapsed: number;
   daysTotal: number;
   minBudget: number;
   defaultMaxBudget: number;
-  // Outbrain-Defaults (Min ist bei Outbrain typischerweise höher als Meta).
   outbrainMinBudget: number;
   outbrainDefaultMaxBudget: number;
   maxStep: number;
@@ -733,21 +740,51 @@ async function processPool(
       .reduce((s, c) => s + c.dailyBudgetEur, 0);
     const currentBudget = metaCurrent + outbrainCurrent;
 
-    // Meta-Spend.
+    // Meta-Spend MTD (fürs Display) + Lookback (für CPL-Entscheidung).
     const metaSpend = matched.reduce(
       (s, c) => s + (ctx.spendByCampaign.get(c.id) ?? 0),
       0,
     );
     base.metaSpendMtd = metaSpend;
+    const metaSpendRecent = matched.reduce(
+      (s, c) => s + (ctx.recentSpendByCampaign.get(c.id) ?? 0),
+      0,
+    );
+    // Channel-Lead-Counts im Lookback-Fenster.
+    const [metaLeadsRecent, outbrainLeadsRecent] = await Promise.all([
+      countPoolLeads(def, ctx.recentSince, ctx.mtdEnd, "Meta"),
+      countPoolLeads(def, ctx.recentSince, ctx.mtdEnd, "Outbrain"),
+    ]);
+    const recentLeadsTotal = metaLeadsRecent + outbrainLeadsRecent;
+    const outbrainSpendRecent = matchedOutbrain.reduce(
+      (s, c) => s + (ctx.recentOutbrainSpendByCampaign.get(c.id) ?? 0),
+      0,
+    );
+
+    // Display-CPLs (MTD) — Pool-Detail-Karte zeigt die historische Marke.
     base.metaCpl =
       metaLeadsMtd > 0 && metaSpend > 0 ? metaSpend / metaLeadsMtd : null;
+    // Decision-CPLs (Lookback) — was der Buyer nutzt, um Budget zu skalieren.
+    const metaCplRecent =
+      metaLeadsRecent > 0 && metaSpendRecent > 0
+        ? metaSpendRecent / metaLeadsRecent
+        : null;
+    const outbrainCplRecent =
+      outbrainLeadsRecent > 0 && outbrainSpendRecent > 0
+        ? outbrainSpendRecent / outbrainLeadsRecent
+        : null;
 
-    // Blended CPL für die Pool-Decision: gewichteter Schnitt aus Meta- und
-    // Outbrain-CPL, gewichtet nach Leads/Channel. Fallback: Pool-Gesamtwerte.
+    // Blended CPL für die Pool-Decision: aus dem Lookback-Fenster, gewichtet
+    // über beide Channels. Fallback auf Meta-Lookback bzw. MTD, wenn das
+    // jüngste Fenster noch leer ist.
     let costPerLead: number | null = null;
-    const totalSpend = metaSpend + outbrainSpend;
-    if (leadsMtd > 0 && totalSpend > 0) {
-      costPerLead = totalSpend / leadsMtd;
+    const recentTotalSpend = metaSpendRecent + outbrainSpendRecent;
+    if (recentLeadsTotal > 0 && recentTotalSpend > 0) {
+      costPerLead = recentTotalSpend / recentLeadsTotal;
+    } else if (metaLeadsRecent > 0 && metaSpendRecent > 0) {
+      costPerLead = metaSpendRecent / metaLeadsRecent;
+    } else if (leadsMtd > 0 && metaSpend + outbrainSpend > 0) {
+      costPerLead = (metaSpend + outbrainSpend) / leadsMtd;
     } else if (metaLeadsMtd > 0 && metaSpend > 0) {
       costPerLead = metaSpend / metaLeadsMtd;
     }
@@ -791,8 +828,9 @@ async function processPool(
         target: decision.targetBudget,
         metaCurrent,
         outbrainCurrent,
-        metaCpl: base.metaCpl,
-        outbrainCpl: base.outbrainCpl,
+        // Allokation folgt dem Lookback-CPL — jüngste Tage entscheiden.
+        metaCpl: metaCplRecent ?? base.metaCpl,
+        outbrainCpl: outbrainCplRecent ?? base.outbrainCpl,
         metaMin: metaSteerable ? ctx.minBudget : 0,
         metaMax: metaSteerable ? maxBudget : 0,
         outbrainMin: outbrainSteerable ? ctx.outbrainMinBudget : 0,
@@ -960,12 +998,21 @@ export async function runMediaBuyer(params: {
     return { ranAt: now, dryRun, pools };
   }
 
+  // Rolling-Lookback für die CPL-Decision (Default 7 Tage). MTD bleibt
+  // separat fürs Admin-Display.
+  const cplLookbackDays = envNum("MEDIA_BUYER_CPL_LOOKBACK_DAYS", 7);
+  const recentSince = new Date(
+    now.getTime() - cplLookbackDays * 24 * 3600 * 1000,
+  );
+
   let campaigns: MetaCampaign[];
   let spendByCampaign: Map<string, number>;
+  let recentSpendByCampaign: Map<string, number>;
   try {
-    [campaigns, spendByCampaign] = await Promise.all([
+    [campaigns, spendByCampaign, recentSpendByCampaign] = await Promise.all([
       listCampaigns(),
       getMonthlySpendByCampaign(now),
+      getSpendByCampaign({ since: recentSince, until: now }),
     ]);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -1002,10 +1049,16 @@ export async function runMediaBuyer(params: {
   // sind dann 0, Meta-Steuerung bleibt unbeeinträchtigt).
   let outbrainCampaigns: OutbrainCampaign[] = [];
   let outbrainSpendByCampaign = new Map<string, number>();
+  let recentOutbrainSpendByCampaign = new Map<string, number>();
   try {
-    [outbrainCampaigns, outbrainSpendByCampaign] = await Promise.all([
+    [
+      outbrainCampaigns,
+      outbrainSpendByCampaign,
+      recentOutbrainSpendByCampaign,
+    ] = await Promise.all([
       listOutbrainCampaigns(),
       getOutbrainMonthlySpendByCampaign(now),
+      getOutbrainSpendByCampaign({ since: recentSince, until: now }),
     ]);
   } catch (err) {
     console.warn(
@@ -1019,6 +1072,9 @@ export async function runMediaBuyer(params: {
     spendByCampaign,
     outbrainCampaigns,
     outbrainSpendByCampaign,
+    recentSpendByCampaign,
+    recentOutbrainSpendByCampaign,
+    recentSince,
     monthStart,
     mtdEnd,
     daysElapsed,
