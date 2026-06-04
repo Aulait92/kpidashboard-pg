@@ -186,7 +186,7 @@ export function decideBudget(params: {
   if (leadsMtd >= goal) {
     return {
       action: "pause",
-      reason: `Ziel erreicht (${leadsMtd}/${goal}). Kampagnen werden pausiert, um Überlieferung zu vermeiden.`,
+      reason: `Ziel erreicht (${leadsMtd}/${goal}). Meta-Kampagnen werden pausiert, um Überlieferung zu vermeiden.`,
       targetBudget: null,
       setStatus: "PAUSED",
     };
@@ -205,7 +205,7 @@ export function decideBudget(params: {
     if (leadsMtd + leadsBeforeNextRun >= goal) {
       return {
         action: "pause",
-        reason: `Endspurt: Ziel wird vor dem nächsten Lauf erreicht (${leadsMtd} + ~${leadsBeforeNextRun.toFixed(1)} erwartet ≥ ${goal}). Pausieren, um exakt zu landen.`,
+        reason: `Endspurt: Ziel wird vor dem nächsten Lauf erreicht (${leadsMtd} + ~${leadsBeforeNextRun.toFixed(1)} erwartet ≥ ${goal}). Meta-Kampagnen pausieren, um exakt zu landen.`,
         targetBudget: null,
         setStatus: "PAUSED",
       };
@@ -221,14 +221,14 @@ export function decideBudget(params: {
     if (anyPaused) {
       return {
         action: "activate",
-        reason: `Noch keine Lead-Kosten messbar, aber Kampagnen pausiert und ${remaining} Leads offen — reaktivieren.`,
+        reason: `Noch keine Meta-Lead-Kosten messbar, aber Meta-Kampagnen pausiert und ${remaining} Leads offen — reaktivieren.`,
         targetBudget: currentBudget > 0 ? currentBudget : effMinBudget,
         setStatus: "ACTIVE",
       };
     }
     return {
       action: "none",
-      reason: `Noch keine Cost-per-Lead messbar — Budget unverändert (${remaining} Leads offen).`,
+      reason: `Noch keine Meta-Cost-per-Lead messbar — Meta-Budget unverändert (${remaining} Leads offen).`,
       targetBudget: null,
       setStatus: null,
     };
@@ -241,7 +241,7 @@ export function decideBudget(params: {
     const target = clamp(requiredBudgetRaw, effMinBudget, maxBudget);
     return {
       action: "boost",
-      reason: `Endspurt (${daysLeft} Tage übrig, Prognose ${projected}/${goal}). Budget auf ${eur.format(target)}/Tag für ${remaining} fehlende Leads (≈ ${requiredPerDay.toFixed(1)} Leads/Tag bei kalk. ${cplFmt.format(costPerLead)}/Lead).`,
+      reason: `Endspurt (${daysLeft} Tage übrig, Prognose ${projected}/${goal}). Meta-Budget auf ${eur.format(target)}/Tag für ${remaining} fehlende Leads (≈ ${requiredPerDay.toFixed(1)} Leads/Tag bei kalk. ${cplFmt.format(costPerLead)}/Meta-Lead).`,
       targetBudget: target,
       setStatus: anyPaused ? "ACTIVE" : null,
     };
@@ -260,7 +260,7 @@ export function decideBudget(params: {
   if (anyPaused) {
     return {
       action: "activate",
-      reason: `Kampagnen pausiert, aber ${remaining} Leads offen (Prognose ${projected}/${goal}). Reaktivieren mit ${eur.format(target)}/Tag (≈ ${requiredPerDay.toFixed(1)} Leads/Tag bei kalk. ${cplFmt.format(costPerLead)}/Lead).`,
+      reason: `Meta-Kampagnen pausiert, aber ${remaining} Leads offen (Prognose ${projected}/${goal}). Meta reaktivieren mit ${eur.format(target)}/Tag (≈ ${requiredPerDay.toFixed(1)} Leads/Tag bei kalk. ${cplFmt.format(costPerLead)}/Meta-Lead).`,
       targetBudget: target,
       setStatus: "ACTIVE",
     };
@@ -275,7 +275,7 @@ export function decideBudget(params: {
   ) {
     return {
       action: "none",
-      reason: `Auf Kurs (Prognose ${projected}/${goal}, Budget ${eur.format(currentBudget)}/Tag).`,
+      reason: `Auf Kurs (Prognose ${projected}/${goal}, Meta-Budget ${eur.format(currentBudget)}/Tag).`,
       targetBudget: null,
       setStatus: null,
     };
@@ -284,14 +284,14 @@ export function decideBudget(params: {
   if (target > currentBudget) {
     return {
       action: "increase",
-      reason: `Hinterher (Prognose ${projected}/${goal}). Budget ${eur.format(currentBudget)} → ${eur.format(target)}/Tag (≈ ${requiredPerDay.toFixed(1)} Leads/Tag bei kalk. ${cplFmt.format(costPerLead)}/Lead).`,
+      reason: `Hinterher (Prognose ${projected}/${goal}). Meta-Budget ${eur.format(currentBudget)} → ${eur.format(target)}/Tag (≈ ${requiredPerDay.toFixed(1)} Leads/Tag bei kalk. ${cplFmt.format(costPerLead)}/Meta-Lead).`,
       targetBudget: target,
       setStatus: null,
     };
   }
   return {
     action: "decrease",
-    reason: `Überlieferung droht (Prognose ${projected}/${goal}). Budget ${eur.format(currentBudget)} → ${eur.format(target)}/Tag (kalk. ${cplFmt.format(costPerLead)}/Lead).`,
+    reason: `Überlieferung droht (Prognose ${projected}/${goal}). Meta-Budget ${eur.format(currentBudget)} → ${eur.format(target)}/Tag (kalk. ${cplFmt.format(costPerLead)}/Meta-Lead).`,
     targetBudget: target,
     setStatus: null,
   };
