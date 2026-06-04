@@ -152,6 +152,48 @@ function wrapText(text: string, maxCharsPerLine = 22): string {
   return lines.join("\n");
 }
 
+const MAX_CHARS_PER_LINE = 22;
+const MAX_LINES_PER_SUBTITLE = 2;
+
+// Lange Whisper-Segmente in Untertitel-Häppchen à max 2 Zeilen × 22 Zeichen
+// splitten. Jeder Chunk bekommt einen Zeit-Anteil proportional zur Zeichen-
+// länge (Approximation, weil ohne Word-Timestamps Whisper keine genaueren
+// Zeitstempel mitliefert).
+function splitSegment(seg: WhisperSegment): WhisperSegment[] {
+  const maxChars = MAX_CHARS_PER_LINE * MAX_LINES_PER_SUBTITLE;
+  const text = seg.text.trim();
+  if (!text) return [];
+  const words = text.split(/\s+/);
+  const chunks: string[] = [];
+  let buf = "";
+  for (const w of words) {
+    if (buf.length === 0) {
+      buf = w;
+    } else if ((buf + " " + w).length > maxChars) {
+      chunks.push(buf);
+      buf = w;
+    } else {
+      buf += " " + w;
+    }
+  }
+  if (buf) chunks.push(buf);
+  if (chunks.length === 1) return [{ ...seg, text: chunks[0] }];
+
+  const totalChars = chunks.reduce((s, c) => s + c.length, 0);
+  const segDuration = Math.max(0, seg.end - seg.start);
+  const out: WhisperSegment[] = [];
+  let cursor = seg.start;
+  for (let i = 0; i < chunks.length; i++) {
+    const isLast = i === chunks.length - 1;
+    const slice =
+      totalChars > 0 ? (chunks[i].length / totalChars) * segDuration : 0;
+    const end = isLast ? seg.end : cursor + slice;
+    out.push({ start: cursor, end, text: chunks[i] });
+    cursor = end;
+  }
+  return out;
+}
+
 function buildDrawtextChain(
   segments: WhisperSegment[],
   fontFile: string,
@@ -233,17 +275,21 @@ export async function burnGermanSubtitles(
 
     // 2. Whisper-Transkription.
     await onProgress?.("Whisper transkribiert…");
-    const segments = await transcribeAudio(audioPath);
-    await onProgress?.(
-      `Whisper: ${segments.length} ${segments.length === 1 ? "Segment" : "Segmente"}.`,
-    );
-    if (segments.length === 0) {
+    const rawSegments = await transcribeAudio(audioPath);
+    if (rawSegments.length === 0) {
       return {
         buffer: videoBuffer,
         burned: false,
         note: "Whisper lieferte kein Transkript — Untertitel übersprungen.",
       };
     }
+    // Lange Segmente in 2-Zeilen-Häppchen splitten, damit kein einzelner
+    // Untertitel länger als 2×22 Zeichen wird. Schneller hintereinander
+    // → besser lesbar.
+    const segments = rawSegments.flatMap(splitSegment);
+    await onProgress?.(
+      `Whisper: ${rawSegments.length} → ${segments.length} Untertitel-Häppchen.`,
+    );
 
     // 3. drawtext-Filterkette bauen. Pro Segment wird die Text-Datei in
     // tempdir geschrieben und referenziert — vermeidet Escaping-Probleme
