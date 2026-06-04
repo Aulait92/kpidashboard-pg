@@ -253,9 +253,9 @@ export async function burnGermanSubtitles(
   const onProgress = options.onProgress;
   // Tail-Padding: konstante N Sekunden eingefrorener letzter Frame +
   // Stille, damit der CTA am Ende Zeit zum „Landen" bekommt statt
-  // abrupt zu schneiden. SUBTITLE_TAIL_PAD_SEC override (default 2.5s,
-  // 0 = aus).
-  const tailPadSec = Number(process.env.SUBTITLE_TAIL_PAD_SEC ?? 2.5);
+  // abrupt zu schneiden. SUBTITLE_TAIL_PAD_SEC override (default 5s,
+  // 0 = aus). Sora-Default 20s + 5s Tail = 25s Output.
+  const tailPadSec = Number(process.env.SUBTITLE_TAIL_PAD_SEC ?? 5);
   const dir = await mkdtemp(join(tmpdir(), "sora-subs-"));
   const inputPath = join(dir, "in.mp4");
   const audioPath = join(dir, "audio.mp3");
@@ -335,7 +335,9 @@ export async function burnGermanSubtitles(
         `Hänge ${padSec.toFixed(1)}s Standbild + Stille als Tail an…`,
       );
     } else {
-      await onProgress?.("ffmpeg encodiert mit Untertiteln…");
+      await onProgress?.(
+        `Kein Tail-Padding (SUBTITLE_TAIL_PAD_SEC=${padSec.toFixed(1)}). ffmpeg encodiert mit Untertiteln…`,
+      );
     }
 
     // 5. Encoding. stderr behalten wir uns, um die echte Output-Dauer dem
