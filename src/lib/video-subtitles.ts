@@ -257,8 +257,10 @@ export async function burnGermanSubtitles(
     await writeFile(inputPath, videoBuffer);
     await onProgress?.("Audio extrahieren…");
 
-    // 1. Audio extrahieren.
-    await runFfmpeg(
+    // 1. Audio extrahieren. stderr enthält die echte Sora-Input-Dauer, die
+    // wir an den Aufrufer melden — so sehen wir, ob Sora kürzer geliefert
+    // hat als angefordert.
+    const { stderr: audioStderr } = await runFfmpeg(
       [
         "-i",
         inputPath,
@@ -272,6 +274,12 @@ export async function burnGermanSubtitles(
       ],
       "extract audio",
     );
+    const sora = parseFfmpegDurations(audioStderr);
+    if (sora.inputDuration) {
+      await onProgress?.(
+        `Sora-Original-Länge: ${sora.inputDuration.toFixed(2)}s.`,
+      );
+    }
 
     // 2. Whisper-Transkription.
     await onProgress?.("Whisper transkribiert…");
