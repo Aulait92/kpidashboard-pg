@@ -65,6 +65,15 @@ import {
   setCampaignStatus as setTikTokCampaignStatus,
   type TikTokCampaign,
 } from "@/lib/tiktok-ads";
+import {
+  findCampaignsByKeyword as findGoogleCampaignsByKeyword,
+  getMonthlySpendByCampaign as getGoogleMonthlySpendByCampaign,
+  getSpendByCampaign as getGoogleSpendByCampaign,
+  listCampaigns as listGoogleCampaigns,
+  setCampaignDailyBudget as setGoogleCampaignDailyBudget,
+  setCampaignStatus as setGoogleCampaignStatus,
+  type GoogleCampaign,
+} from "@/lib/google-ads";
 import { prisma } from "@/lib/prisma";
 import { sendToAdmins } from "@/lib/push";
 
@@ -101,6 +110,9 @@ export type PoolResult = {
   tiktokLeadsMtd: number;
   tiktokSpendMtd: number;
   tiktokCpl: number | null;
+  googleLeadsMtd: number;
+  googleSpendMtd: number;
+  googleCpl: number | null;
   error?: string;
 };
 
@@ -436,13 +448,15 @@ export async function derivePoolDefs(now: Date = new Date()): Promise<PoolDef[]>
 
 type PoolSettings = {
   autopilot: boolean;
-  // maxDailyBudget = Meta-Cap (Historie); outbrain-/tiktokMaxDailyBudget separat.
+  // maxDailyBudget = Meta-Cap (Historie); je Channel separat.
   maxDailyBudget: number | null;
   outbrainMaxDailyBudget: number | null;
   tiktokMaxDailyBudget: number | null;
+  googleMaxDailyBudget: number | null;
   campaignKeyword: string | null;
   outbrainCampaignKeyword: string | null;
   tiktokCampaignKeyword: string | null;
+  googleCampaignKeyword: string | null;
 };
 
 // Stellt sicher, dass für jeden abgeleiteten Pool eine DeliveryPool-Zeile
@@ -463,9 +477,11 @@ async function ensurePool(def: PoolDef): Promise<PoolSettings> {
       maxDailyBudget: true,
       outbrainMaxDailyBudget: true,
       tiktokMaxDailyBudget: true,
+      googleMaxDailyBudget: true,
       campaignKeyword: true,
       outbrainCampaignKeyword: true,
       tiktokCampaignKeyword: true,
+      googleCampaignKeyword: true,
     },
   });
   return {
@@ -473,9 +489,11 @@ async function ensurePool(def: PoolDef): Promise<PoolSettings> {
     maxDailyBudget: decToNumber(pool.maxDailyBudget),
     outbrainMaxDailyBudget: decToNumber(pool.outbrainMaxDailyBudget),
     tiktokMaxDailyBudget: decToNumber(pool.tiktokMaxDailyBudget),
+    googleMaxDailyBudget: decToNumber(pool.googleMaxDailyBudget),
     campaignKeyword: pool.campaignKeyword,
     outbrainCampaignKeyword: pool.outbrainCampaignKeyword,
     tiktokCampaignKeyword: pool.tiktokCampaignKeyword,
+    googleCampaignKeyword: pool.googleCampaignKeyword,
   };
 }
 
@@ -527,10 +545,13 @@ type RunCtx = {
   outbrainSpendByCampaign: Map<string, number>;
   tiktokCampaigns: TikTokCampaign[];
   tiktokSpendByCampaign: Map<string, number>;
+  googleCampaigns: GoogleCampaign[];
+  googleSpendByCampaign: Map<string, number>;
   // Rolling-Lookback-Spend für die CPL-Decision.
   recentSpendByCampaign: Map<string, number>;
   recentOutbrainSpendByCampaign: Map<string, number>;
   recentTiktokSpendByCampaign: Map<string, number>;
+  recentGoogleSpendByCampaign: Map<string, number>;
   recentSince: Date;
   monthStart: Date;
   mtdEnd: Date;
@@ -542,6 +563,8 @@ type RunCtx = {
   outbrainDefaultMaxBudget: number;
   tiktokMinBudget: number;
   tiktokDefaultMaxBudget: number;
+  googleMinBudget: number;
+  googleDefaultMaxBudget: number;
   maxStep: number;
   boostDays: number;
   precisionDays: number;
@@ -561,6 +584,7 @@ export type ChannelAllocation = {
   metaBudget: number;
   outbrainBudget: number;
   tiktokBudget: number;
+  googleBudget: number;
 };
 
 export function allocateBudgetAcrossChannels(params: {
@@ -568,21 +592,26 @@ export function allocateBudgetAcrossChannels(params: {
   metaCurrent: number;
   outbrainCurrent: number;
   tiktokCurrent: number;
+  googleCurrent: number;
   metaCpl: number | null;
   outbrainCpl: number | null;
   tiktokCpl: number | null;
+  googleCpl: number | null;
   metaMin: number;
   metaMax: number;
   outbrainMin: number;
   outbrainMax: number;
   tiktokMin: number;
   tiktokMax: number;
+  googleMin: number;
+  googleMax: number;
   metaAvailable: boolean;
   outbrainAvailable: boolean;
   tiktokAvailable: boolean;
+  googleAvailable: boolean;
 }): ChannelAllocation {
   const ch: {
-    key: "meta" | "outbrain" | "tiktok";
+    key: "meta" | "outbrain" | "tiktok" | "google";
     available: boolean;
     current: number;
     cpl: number | null;
@@ -613,12 +642,21 @@ export function allocateBudgetAcrossChannels(params: {
       min: params.tiktokMin,
       max: params.tiktokMax,
     },
+    {
+      key: "google",
+      available: params.googleAvailable,
+      current: params.googleCurrent,
+      cpl: params.googleCpl,
+      min: params.googleMin,
+      max: params.googleMax,
+    },
   ];
   const active = ch.filter((c) => c.available);
   const result: ChannelAllocation = {
     metaBudget: 0,
     outbrainBudget: 0,
     tiktokBudget: 0,
+    googleBudget: 0,
   };
   if (active.length === 0) return result;
 
@@ -687,6 +725,7 @@ export function allocateBudgetAcrossChannels(params: {
   result.metaBudget = round(budgets.get("meta") ?? 0);
   result.outbrainBudget = round(budgets.get("outbrain") ?? 0);
   result.tiktokBudget = round(budgets.get("tiktok") ?? 0);
+  result.googleBudget = round(budgets.get("google") ?? 0);
   return result;
 }
 
@@ -713,6 +752,22 @@ function matchTikTokPoolCampaigns(
 ): TikTokCampaign[] {
   if (keywordOverride && keywordOverride.trim()) {
     return findTikTokCampaignsByKeyword(campaigns, keywordOverride);
+  }
+  if (def.kind === "product") {
+    const p = def.product.toLowerCase();
+    return campaigns.filter((c) => c.name.toLowerCase().includes(p));
+  }
+  const region = def.region!.toLowerCase();
+  return campaigns.filter((c) => c.name.toLowerCase().includes(region));
+}
+
+function matchGooglePoolCampaigns(
+  def: PoolDef,
+  campaigns: GoogleCampaign[],
+  keywordOverride: string | null,
+): GoogleCampaign[] {
+  if (keywordOverride && keywordOverride.trim()) {
+    return findGoogleCampaignsByKeyword(campaigns, keywordOverride);
   }
   if (def.kind === "product") {
     const p = def.product.toLowerCase();
@@ -752,6 +807,9 @@ async function processPool(
     tiktokLeadsMtd: 0,
     tiktokSpendMtd: 0,
     tiktokCpl: null,
+    googleLeadsMtd: 0,
+    googleSpendMtd: 0,
+    googleCpl: null,
   };
 
   try {
@@ -768,14 +826,17 @@ async function processPool(
     // Channel-Breakdown: getrennte Lead-Zähler und Spend aus den Cost-Tabellen
     // bzw. den Ad-APIs. Wird auch dann ausgewertet, wenn nur einer der drei
     // Channels aktiv ist (die anderen sind dann 0).
-    const [metaLeadsMtd, outbrainLeadsMtd, tiktokLeadsMtd] = await Promise.all([
-      countPoolLeads(def, ctx.monthStart, ctx.mtdEnd, "Meta"),
-      countPoolLeads(def, ctx.monthStart, ctx.mtdEnd, "Outbrain"),
-      countPoolLeads(def, ctx.monthStart, ctx.mtdEnd, "TikTok"),
-    ]);
+    const [metaLeadsMtd, outbrainLeadsMtd, tiktokLeadsMtd, googleLeadsMtd] =
+      await Promise.all([
+        countPoolLeads(def, ctx.monthStart, ctx.mtdEnd, "Meta"),
+        countPoolLeads(def, ctx.monthStart, ctx.mtdEnd, "Outbrain"),
+        countPoolLeads(def, ctx.monthStart, ctx.mtdEnd, "TikTok"),
+        countPoolLeads(def, ctx.monthStart, ctx.mtdEnd, "Google"),
+      ]);
     base.metaLeadsMtd = metaLeadsMtd;
     base.outbrainLeadsMtd = outbrainLeadsMtd;
     base.tiktokLeadsMtd = tiktokLeadsMtd;
+    base.googleLeadsMtd = googleLeadsMtd;
 
     // Outbrain- und TikTok-Spend ausrechnen.
     const matchedOutbrain = matchOutbrainPoolCampaigns(
@@ -808,6 +869,21 @@ async function processPool(
         ? tiktokSpend / tiktokLeadsMtd
         : null;
 
+    const matchedGoogle = matchGooglePoolCampaigns(
+      def,
+      ctx.googleCampaigns,
+      settings.googleCampaignKeyword,
+    );
+    const googleSpend = matchedGoogle.reduce(
+      (s, c) => s + (ctx.googleSpendByCampaign.get(c.id) ?? 0),
+      0,
+    );
+    base.googleSpendMtd = googleSpend;
+    base.googleCpl =
+      googleLeadsMtd > 0 && googleSpend > 0
+        ? googleSpend / googleLeadsMtd
+        : null;
+
     const matched = matchPoolCampaigns(
       def,
       ctx.campaigns,
@@ -828,15 +904,25 @@ async function processPool(
     const outbrainSteerable = matchedOutbrain.filter((c) => c.budgetId).length > 0;
     // TikTok-Steuerstatus: nur BUDGET_MODE_DAY ist sinnvoll steuerbar.
     const tiktokSteerable = matchedTikTok.filter((c) => c.hasDailyBudget).length > 0;
+    // Google-Steuerstatus: nur Kampagnen mit eigenem DAILY-Budget.
+    const googleSteerable =
+      matchedGoogle.filter((c) => c.hasDailyBudget && c.budgetResourceName)
+        .length > 0;
 
     base.campaigns = [
       ...matched.map((c) => c.name),
       ...matchedOutbrain.map((c) => `Outbrain: ${c.name}`),
       ...matchedTikTok.map((c) => `TikTok: ${c.name}`),
+      ...matchedGoogle.map((c) => `Google: ${c.name}`),
     ];
 
-    if (!metaSteerable && !outbrainSteerable && !tiktokSteerable) {
-      base.reason = `Keine steuerbaren Kampagnen für Pool "${def.label}" — weder Meta noch Outbrain noch TikTok matched/steuerbar.`;
+    if (
+      !metaSteerable &&
+      !outbrainSteerable &&
+      !tiktokSteerable &&
+      !googleSteerable
+    ) {
+      base.reason = `Keine steuerbaren Kampagnen für Pool "${def.label}" — weder Meta, Outbrain, TikTok noch Google matched/steuerbar.`;
       base.error = base.reason;
       return base;
     }
@@ -852,7 +938,11 @@ async function processPool(
     const tiktokCurrent = matchedTikTok
       .filter((c) => c.hasDailyBudget)
       .reduce((s, c) => s + c.dailyBudgetEur, 0);
-    const currentBudget = metaCurrent + outbrainCurrent + tiktokCurrent;
+    const googleCurrent = matchedGoogle
+      .filter((c) => c.hasDailyBudget)
+      .reduce((s, c) => s + c.dailyBudgetEur, 0);
+    const currentBudget =
+      metaCurrent + outbrainCurrent + tiktokCurrent + googleCurrent;
 
     // Meta-Spend MTD (fürs Display) + Lookback (für CPL-Entscheidung).
     const metaSpend = matched.reduce(
@@ -864,20 +954,32 @@ async function processPool(
       (s, c) => s + (ctx.recentSpendByCampaign.get(c.id) ?? 0),
       0,
     );
-    const [metaLeadsRecent, outbrainLeadsRecent, tiktokLeadsRecent] =
-      await Promise.all([
-        countPoolLeads(def, ctx.recentSince, ctx.mtdEnd, "Meta"),
-        countPoolLeads(def, ctx.recentSince, ctx.mtdEnd, "Outbrain"),
-        countPoolLeads(def, ctx.recentSince, ctx.mtdEnd, "TikTok"),
-      ]);
+    const [
+      metaLeadsRecent,
+      outbrainLeadsRecent,
+      tiktokLeadsRecent,
+      googleLeadsRecent,
+    ] = await Promise.all([
+      countPoolLeads(def, ctx.recentSince, ctx.mtdEnd, "Meta"),
+      countPoolLeads(def, ctx.recentSince, ctx.mtdEnd, "Outbrain"),
+      countPoolLeads(def, ctx.recentSince, ctx.mtdEnd, "TikTok"),
+      countPoolLeads(def, ctx.recentSince, ctx.mtdEnd, "Google"),
+    ]);
     const recentLeadsTotal =
-      metaLeadsRecent + outbrainLeadsRecent + tiktokLeadsRecent;
+      metaLeadsRecent +
+      outbrainLeadsRecent +
+      tiktokLeadsRecent +
+      googleLeadsRecent;
     const outbrainSpendRecent = matchedOutbrain.reduce(
       (s, c) => s + (ctx.recentOutbrainSpendByCampaign.get(c.id) ?? 0),
       0,
     );
     const tiktokSpendRecent = matchedTikTok.reduce(
       (s, c) => s + (ctx.recentTiktokSpendByCampaign.get(c.id) ?? 0),
+      0,
+    );
+    const googleSpendRecent = matchedGoogle.reduce(
+      (s, c) => s + (ctx.recentGoogleSpendByCampaign.get(c.id) ?? 0),
       0,
     );
 
@@ -897,17 +999,28 @@ async function processPool(
       tiktokLeadsRecent > 0 && tiktokSpendRecent > 0
         ? tiktokSpendRecent / tiktokLeadsRecent
         : null;
+    const googleCplRecent =
+      googleLeadsRecent > 0 && googleSpendRecent > 0
+        ? googleSpendRecent / googleLeadsRecent
+        : null;
 
     // Blended CPL — Lookback über alle Channels. Fallback-Kaskade auf MTD.
     let costPerLead: number | null = null;
     const recentTotalSpend =
-      metaSpendRecent + outbrainSpendRecent + tiktokSpendRecent;
+      metaSpendRecent +
+      outbrainSpendRecent +
+      tiktokSpendRecent +
+      googleSpendRecent;
     if (recentLeadsTotal > 0 && recentTotalSpend > 0) {
       costPerLead = recentTotalSpend / recentLeadsTotal;
     } else if (metaLeadsRecent > 0 && metaSpendRecent > 0) {
       costPerLead = metaSpendRecent / metaLeadsRecent;
-    } else if (leadsMtd > 0 && metaSpend + outbrainSpend + tiktokSpend > 0) {
-      costPerLead = (metaSpend + outbrainSpend + tiktokSpend) / leadsMtd;
+    } else if (
+      leadsMtd > 0 &&
+      metaSpend + outbrainSpend + tiktokSpend + googleSpend > 0
+    ) {
+      costPerLead =
+        (metaSpend + outbrainSpend + tiktokSpend + googleSpend) / leadsMtd;
     } else if (metaLeadsMtd > 0 && metaSpend > 0) {
       costPerLead = metaSpend / metaLeadsMtd;
     }
@@ -917,7 +1030,8 @@ async function processPool(
         (s) => s.effective_status !== "ACTIVE" && s.status !== "ACTIVE",
       ) ||
       matchedOutbrain.filter((c) => c.budgetId).some((c) => !c.enabled) ||
-      matchedTikTok.filter((c) => c.hasDailyBudget).some((c) => !c.enabled);
+      matchedTikTok.filter((c) => c.hasDailyBudget).some((c) => !c.enabled) ||
+      matchedGoogle.filter((c) => c.hasDailyBudget).some((c) => !c.enabled);
 
     base.prevBudget = currentBudget;
 
@@ -926,7 +1040,9 @@ async function processPool(
       settings.outbrainMaxDailyBudget ?? ctx.outbrainDefaultMaxBudget;
     const tiktokMax =
       settings.tiktokMaxDailyBudget ?? ctx.tiktokDefaultMaxBudget;
-    const poolMax = maxBudget + outbrainMax + tiktokMax;
+    const googleMax =
+      settings.googleMaxDailyBudget ?? ctx.googleDefaultMaxBudget;
+    const poolMax = maxBudget + outbrainMax + tiktokMax + googleMax;
     const decision = decideBudget({
       leadsMtd,
       goal: def.goal,
@@ -951,36 +1067,51 @@ async function processPool(
     let metaTarget: number | null = null;
     let outbrainTarget: number | null = null;
     let tiktokTarget: number | null = null;
+    let googleTarget: number | null = null;
     if (decision.targetBudget != null) {
       const alloc = allocateBudgetAcrossChannels({
         target: decision.targetBudget,
         metaCurrent,
         outbrainCurrent,
         tiktokCurrent,
+        googleCurrent,
         // Allokation folgt dem Lookback-CPL — jüngste Tage entscheiden.
         metaCpl: metaCplRecent ?? base.metaCpl,
         outbrainCpl: outbrainCplRecent ?? base.outbrainCpl,
         tiktokCpl: tiktokCplRecent ?? base.tiktokCpl,
+        googleCpl: googleCplRecent ?? base.googleCpl,
         metaMin: metaSteerable ? ctx.minBudget : 0,
         metaMax: metaSteerable ? maxBudget : 0,
         outbrainMin: outbrainSteerable ? ctx.outbrainMinBudget : 0,
         outbrainMax: outbrainSteerable ? outbrainMax : 0,
         tiktokMin: tiktokSteerable ? ctx.tiktokMinBudget : 0,
         tiktokMax: tiktokSteerable ? tiktokMax : 0,
+        googleMin: googleSteerable ? ctx.googleMinBudget : 0,
+        googleMax: googleSteerable ? googleMax : 0,
         metaAvailable: metaSteerable,
         outbrainAvailable: outbrainSteerable,
         tiktokAvailable: tiktokSteerable,
+        googleAvailable: googleSteerable,
       });
       metaTarget = metaSteerable ? alloc.metaBudget : null;
       outbrainTarget = outbrainSteerable ? alloc.outbrainBudget : null;
       tiktokTarget = tiktokSteerable ? alloc.tiktokBudget : null;
+      googleTarget = googleSteerable ? alloc.googleBudget : null;
       base.newBudget =
-        (metaTarget ?? 0) + (outbrainTarget ?? 0) + (tiktokTarget ?? 0);
+        (metaTarget ?? 0) +
+        (outbrainTarget ?? 0) +
+        (tiktokTarget ?? 0) +
+        (googleTarget ?? 0);
     }
 
     // Reason-Text mit Channel-Breakdown ergänzen.
     base.reason = decision.reason;
-    if (metaTarget != null || outbrainTarget != null || tiktokTarget != null) {
+    if (
+      metaTarget != null ||
+      outbrainTarget != null ||
+      tiktokTarget != null ||
+      googleTarget != null
+    ) {
       const bits: string[] = [];
       if (metaTarget != null) {
         bits.push(`Meta ${eur.format(metaCurrent)} → ${eur.format(metaTarget)}/Tag`);
@@ -1000,6 +1131,13 @@ async function processPool(
         );
       } else if (tiktokSteerable) {
         bits.push(`TikTok ${eur.format(tiktokCurrent)}/Tag (unverändert)`);
+      }
+      if (googleTarget != null) {
+        bits.push(
+          `Google ${eur.format(googleCurrent)} → ${eur.format(googleTarget)}/Tag`,
+        );
+      } else if (googleSteerable) {
+        bits.push(`Google ${eur.format(googleCurrent)}/Tag (unverändert)`);
       }
       if (bits.length > 0) {
         base.reason = `${decision.reason} · ${bits.join(", ")}`;
@@ -1076,6 +1214,40 @@ async function processPool(
           } catch (err) {
             console.warn(
               `[media-buyer] TikTok-Budget für ${c.name} failte:`,
+              err instanceof Error ? err.message : err,
+            );
+          }
+        }
+      }
+    }
+
+    // ── Schreiben: Google Ads ──
+    if (decision.setStatus && googleSteerable) {
+      const enabled = decision.setStatus === "ACTIVE";
+      for (const c of matchedGoogle) {
+        if (!c.hasDailyBudget) continue;
+        try {
+          await setGoogleCampaignStatus(c, enabled);
+        } catch (err) {
+          console.warn(
+            `[media-buyer] Google-Status für ${c.name} failte:`,
+            err instanceof Error ? err.message : err,
+          );
+        }
+      }
+    }
+    if (googleTarget != null) {
+      const steerable = matchedGoogle.filter(
+        (c) => c.hasDailyBudget && c.budgetResourceName,
+      );
+      if (steerable.length > 0) {
+        const per = googleTarget / steerable.length;
+        for (const c of steerable) {
+          try {
+            await setGoogleCampaignDailyBudget(c, per);
+          } catch (err) {
+            console.warn(
+              `[media-buyer] Google-Budget für ${c.name} failte:`,
               err instanceof Error ? err.message : err,
             );
           }
@@ -1214,6 +1386,9 @@ export async function runMediaBuyer(params: {
         tiktokLeadsMtd: 0,
         tiktokSpendMtd: 0,
         tiktokCpl: null,
+        googleLeadsMtd: 0,
+        googleSpendMtd: 0,
+        googleCpl: null,
         error: msg,
       });
     }
@@ -1264,6 +1439,26 @@ export async function runMediaBuyer(params: {
     );
   }
 
+  let googleCampaigns: GoogleCampaign[] = [];
+  let googleSpendByCampaign = new Map<string, number>();
+  let recentGoogleSpendByCampaign = new Map<string, number>();
+  try {
+    [
+      googleCampaigns,
+      googleSpendByCampaign,
+      recentGoogleSpendByCampaign,
+    ] = await Promise.all([
+      listGoogleCampaigns(),
+      getGoogleMonthlySpendByCampaign(now),
+      getGoogleSpendByCampaign({ since: recentSince, until: now }),
+    ]);
+  } catch (err) {
+    console.warn(
+      "[media-buyer] Google Ads nicht erreichbar — Channel-Sicht fällt aus:",
+      err instanceof Error ? err.message : err,
+    );
+  }
+
   const ctx: RunCtx = {
     campaigns,
     spendByCampaign,
@@ -1271,9 +1466,12 @@ export async function runMediaBuyer(params: {
     outbrainSpendByCampaign,
     tiktokCampaigns,
     tiktokSpendByCampaign,
+    googleCampaigns,
+    googleSpendByCampaign,
     recentSpendByCampaign,
     recentOutbrainSpendByCampaign,
     recentTiktokSpendByCampaign,
+    recentGoogleSpendByCampaign,
     recentSince,
     monthStart,
     mtdEnd,
@@ -1284,6 +1482,8 @@ export async function runMediaBuyer(params: {
     outbrainDefaultMaxBudget: envNum("MEDIA_BUYER_OUTBRAIN_MAX_DAILY_BUDGET", 200),
     tiktokMinBudget: envNum("MEDIA_BUYER_TIKTOK_MIN_DAILY_BUDGET", 20),
     tiktokDefaultMaxBudget: envNum("MEDIA_BUYER_TIKTOK_MAX_DAILY_BUDGET", 200),
+    googleMinBudget: envNum("MEDIA_BUYER_GOOGLE_MIN_DAILY_BUDGET", 10),
+    googleDefaultMaxBudget: envNum("MEDIA_BUYER_GOOGLE_MAX_DAILY_BUDGET", 200),
     defaultMaxBudget: envNum("MEDIA_BUYER_MAX_DAILY_BUDGET", 200),
     maxStep: envNum("MEDIA_BUYER_MAX_STEP", 0.5),
     boostDays: envNum("MEDIA_BUYER_BOOST_DAYS", 5),
@@ -1366,9 +1566,11 @@ export type PoolAdminRow = {
   maxDailyBudget: number | null;
   outbrainMaxDailyBudget: number | null;
   tiktokMaxDailyBudget: number | null;
+  googleMaxDailyBudget: number | null;
   campaignKeyword: string | null;
   outbrainCampaignKeyword: string | null;
   tiktokCampaignKeyword: string | null;
+  googleCampaignKeyword: string | null;
   // Cost-per-Lead MTD (Pool-Aggregat; aus Cost-Tabelle, kein Meta-Call).
   cpl: number | null;
   // Channel-Split aus Lead.adChannel + Cost-Note-Prefix.
@@ -1381,6 +1583,9 @@ export type PoolAdminRow = {
   tiktokLeadsMtd: number;
   tiktokSpendMtd: number;
   tiktokCpl: number | null;
+  googleLeadsMtd: number;
+  googleSpendMtd: number;
+  googleCpl: number | null;
   // Letzte Entscheidung des Buyers für diesen Pool (für die Empfehlungs-Karte).
   latestAction: string | null;
   latestReason: string | null;
@@ -1438,6 +1643,7 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
   const metaCostByProduct = new Map<string, number>();
   const outbrainCostByProduct = new Map<string, number>();
   const tiktokCostByProduct = new Map<string, number>();
+  const googleCostByProduct = new Map<string, number>();
   for (const c of monthCostRows) {
     if (!c.product) continue;
     const amount = decToNumber(c.amount) ?? 0;
@@ -1458,6 +1664,11 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
         c.product,
         (tiktokCostByProduct.get(c.product) ?? 0) + amount,
       );
+    } else if (note.startsWith("Google:")) {
+      googleCostByProduct.set(
+        c.product,
+        (googleCostByProduct.get(c.product) ?? 0) + amount,
+      );
     }
   }
   // Letzte Entscheidung pro Pool in einem Rutsch holen (vermeidet N+1).
@@ -1472,18 +1683,25 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
   const rows: PoolAdminRow[] = [];
   for (const def of defs) {
     const settings = await ensurePool(def);
-    const [leadsMtd, metaLeadsMtd, outbrainLeadsMtd, tiktokLeadsMtd] =
-      await Promise.all([
-        countPoolLeads(def, monthStart, mtdEnd),
-        countPoolLeads(def, monthStart, mtdEnd, "Meta"),
-        countPoolLeads(def, monthStart, mtdEnd, "Outbrain"),
-        countPoolLeads(def, monthStart, mtdEnd, "TikTok"),
-      ]);
+    const [
+      leadsMtd,
+      metaLeadsMtd,
+      outbrainLeadsMtd,
+      tiktokLeadsMtd,
+      googleLeadsMtd,
+    ] = await Promise.all([
+      countPoolLeads(def, monthStart, mtdEnd),
+      countPoolLeads(def, monthStart, mtdEnd, "Meta"),
+      countPoolLeads(def, monthStart, mtdEnd, "Outbrain"),
+      countPoolLeads(def, monthStart, mtdEnd, "TikTok"),
+      countPoolLeads(def, monthStart, mtdEnd, "Google"),
+    ]);
     const projected = Math.round((leadsMtd / daysElapsed) * daysTotal);
     const last = latestByKey.get(def.key);
     const metaSpend = metaCostByProduct.get(def.product) ?? 0;
     const outbrainSpend = outbrainCostByProduct.get(def.product) ?? 0;
     const tiktokSpend = tiktokCostByProduct.get(def.product) ?? 0;
+    const googleSpend = googleCostByProduct.get(def.product) ?? 0;
     rows.push({
       key: def.key,
       label: def.label,
@@ -1500,9 +1718,11 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
       maxDailyBudget: settings.maxDailyBudget,
       outbrainMaxDailyBudget: settings.outbrainMaxDailyBudget,
       tiktokMaxDailyBudget: settings.tiktokMaxDailyBudget,
+      googleMaxDailyBudget: settings.googleMaxDailyBudget,
       campaignKeyword: settings.campaignKeyword,
       outbrainCampaignKeyword: settings.outbrainCampaignKeyword,
       tiktokCampaignKeyword: settings.tiktokCampaignKeyword,
+      googleCampaignKeyword: settings.googleCampaignKeyword,
       cpl:
         def.kind === "product" && leadsMtd > 0
           ? (costByProduct.get(def.product) ?? 0) / leadsMtd
@@ -1517,6 +1737,9 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
       tiktokLeadsMtd,
       tiktokSpendMtd: tiktokSpend,
       tiktokCpl: tiktokLeadsMtd > 0 ? tiktokSpend / tiktokLeadsMtd : null,
+      googleLeadsMtd,
+      googleSpendMtd: googleSpend,
+      googleCpl: googleLeadsMtd > 0 ? googleSpend / googleLeadsMtd : null,
       latestAction: last?.action ?? null,
       latestReason: last?.reason ?? null,
     });

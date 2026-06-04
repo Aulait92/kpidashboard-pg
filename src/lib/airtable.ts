@@ -33,6 +33,16 @@ function classifyChannel(raw: string | null): string | null {
   if (n.includes("meta") || n.includes("facebook") || n.includes("instagram") || n.includes("fb") || n.includes("ig"))
     return "Meta";
   if (n.includes("outbrain") || n.includes("amplify")) return "Outbrain";
+  // „Google" zuletzt, damit „google" nicht „Google-Tag-Manager"/„GA"-Bezüge
+  // versehentlich als Channel klassifiziert (Heuristik: explizites Wort).
+  if (
+    n.includes("google ads") ||
+    n.includes("google-ads") ||
+    n.includes("googleads") ||
+    n.includes("g-ads") ||
+    /\b(google|adwords|ggl)\b/.test(n)
+  )
+    return "Google";
   return null;
 }
 // Storno-Status werden vor dem Anruf ausgefiltert — sie zählen also NICHT

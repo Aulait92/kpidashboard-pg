@@ -74,10 +74,13 @@ model DeliveryPool {
   outbrainCampaignKeyword String?
   // TikTok-Kampagnen-Match.
   tiktokCampaignKeyword   String?
+  // Google-Ads-Kampagnen-Match.
+  googleCampaignKeyword   String?
   // Per-Channel-Max-Budgets in EUR. maxDailyBudget gilt für Meta; ohne
-  // outbrainMaxDailyBudget/tiktokMaxDailyBudget greift der Env-Default.
+  // outbrain-/tiktok-/googleMaxDailyBudget greift der Env-Default.
   outbrainMaxDailyBudget  Decimal? @db.Decimal(12, 2)
   tiktokMaxDailyBudget    Decimal? @db.Decimal(12, 2)
+  googleMaxDailyBudget    Decimal? @db.Decimal(12, 2)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

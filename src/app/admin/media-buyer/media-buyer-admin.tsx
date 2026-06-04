@@ -29,11 +29,13 @@ export type PoolDetailRow = {
   maxDailyBudget: number | null;
   outbrainMaxDailyBudget: number | null;
   tiktokMaxDailyBudget: number | null;
+  googleMaxDailyBudget: number | null;
   campaignKeyword: string | null;
   outbrainCampaignKeyword: string | null;
   tiktokCampaignKeyword: string | null;
+  googleCampaignKeyword: string | null;
   cpl: number | null;
-  // Channel-Split (Meta / Outbrain / TikTok).
+  // Channel-Split (Meta / Outbrain / TikTok / Google).
   metaLeadsMtd: number;
   metaSpendMtd: number;
   metaCpl: number | null;
@@ -43,6 +45,9 @@ export type PoolDetailRow = {
   tiktokLeadsMtd: number;
   tiktokSpendMtd: number;
   tiktokCpl: number | null;
+  googleLeadsMtd: number;
+  googleSpendMtd: number;
+  googleCpl: number | null;
   latestAction: string | null;
   latestReason: string | null;
 };
@@ -749,12 +754,16 @@ function ArcGauge({
 
 function ChannelSplitCard({ pool }: { pool: PoolDetailRow }) {
   const totalChannelLeads =
-    pool.metaLeadsMtd + pool.outbrainLeadsMtd + pool.tiktokLeadsMtd;
+    pool.metaLeadsMtd +
+    pool.outbrainLeadsMtd +
+    pool.tiktokLeadsMtd +
+    pool.googleLeadsMtd;
   if (
     totalChannelLeads === 0 &&
     pool.metaSpendMtd === 0 &&
     pool.outbrainSpendMtd === 0 &&
-    pool.tiktokSpendMtd === 0
+    pool.tiktokSpendMtd === 0 &&
+    pool.googleSpendMtd === 0
   ) {
     return null;
   }
@@ -792,6 +801,15 @@ function ChannelSplitCard({ pool }: { pool: PoolDetailRow }) {
       share:
         totalChannelLeads > 0 ? pool.tiktokLeadsMtd / totalChannelLeads : 0,
       color: "bg-rose-500",
+    },
+    {
+      label: "Google",
+      leads: pool.googleLeadsMtd,
+      spend: pool.googleSpendMtd,
+      cpl: pool.googleCpl,
+      share:
+        totalChannelLeads > 0 ? pool.googleLeadsMtd / totalChannelLeads : 0,
+      color: "bg-emerald-500",
     },
   ];
 
@@ -889,11 +907,15 @@ function PoolSettingsList({ pool }: { pool: PoolDetailRow }) {
       fd.set("outbrainMaxDailyBudget", String(pool.outbrainMaxDailyBudget));
     if (pool.tiktokMaxDailyBudget != null)
       fd.set("tiktokMaxDailyBudget", String(pool.tiktokMaxDailyBudget));
+    if (pool.googleMaxDailyBudget != null)
+      fd.set("googleMaxDailyBudget", String(pool.googleMaxDailyBudget));
     if (pool.campaignKeyword) fd.set("campaignKeyword", pool.campaignKeyword);
     if (pool.outbrainCampaignKeyword)
       fd.set("outbrainCampaignKeyword", pool.outbrainCampaignKeyword);
     if (pool.tiktokCampaignKeyword)
       fd.set("tiktokCampaignKeyword", pool.tiktokCampaignKeyword);
+    if (pool.googleCampaignKeyword)
+      fd.set("googleCampaignKeyword", pool.googleCampaignKeyword);
     startAutopilotTransition(async () => {
       const res = await savePoolSettings({}, fd);
       if (res.error) setAutopilotOn(pool.autopilot);
@@ -1019,6 +1041,20 @@ function PoolSettingsList({ pool }: { pool: PoolDetailRow }) {
           </label>
           <label className="block">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">
+              Google-Max-Budget / Tag (€)
+            </span>
+            <input
+              type="number"
+              name="googleMaxDailyBudget"
+              min={0}
+              step={5}
+              defaultValue={pool.googleMaxDailyBudget ?? ""}
+              placeholder="Env-Default"
+              className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm tabular-nums focus:border-[color:var(--brand)] focus:outline-none"
+            />
+          </label>
+          <label className="block">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">
               Meta-Kampagnen-Keyword
             </span>
             <input
@@ -1050,6 +1086,18 @@ function PoolSettingsList({ pool }: { pool: PoolDetailRow }) {
               name="tiktokCampaignKeyword"
               defaultValue={pool.tiktokCampaignKeyword ?? ""}
               placeholder={"z. B. PKV-Wechsler (leer = aus)"}
+              className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
+            />
+          </label>
+          <label className="block">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">
+              Google-Kampagnen-Keyword
+            </span>
+            <input
+              type="text"
+              name="googleCampaignKeyword"
+              defaultValue={pool.googleCampaignKeyword ?? ""}
+              placeholder={"z. B. PKV Wechsel (leer = aus)"}
               className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
             />
           </label>

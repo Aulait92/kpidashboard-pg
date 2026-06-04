@@ -52,6 +52,9 @@ export async function savePoolSettings(
   const tiktokMaxDailyBudget = parseEurOrNull(
     String(formData.get("tiktokMaxDailyBudget") ?? ""),
   );
+  const googleMaxDailyBudget = parseEurOrNull(
+    String(formData.get("googleMaxDailyBudget") ?? ""),
+  );
   const keywordRaw = String(formData.get("campaignKeyword") ?? "").trim();
   const campaignKeyword = keywordRaw === "" ? null : keywordRaw;
   const obKeywordRaw = String(
@@ -62,6 +65,10 @@ export async function savePoolSettings(
     formData.get("tiktokCampaignKeyword") ?? "",
   ).trim();
   const tiktokCampaignKeyword = ttKeywordRaw === "" ? null : ttKeywordRaw;
+  const ggKeywordRaw = String(
+    formData.get("googleCampaignKeyword") ?? "",
+  ).trim();
+  const googleCampaignKeyword = ggKeywordRaw === "" ? null : ggKeywordRaw;
   const autopilot = formData.get("autopilot") === "on";
 
   await prisma.deliveryPool.update({
@@ -70,9 +77,11 @@ export async function savePoolSettings(
       maxDailyBudget,
       outbrainMaxDailyBudget,
       tiktokMaxDailyBudget,
+      googleMaxDailyBudget,
       campaignKeyword,
       outbrainCampaignKeyword,
       tiktokCampaignKeyword,
+      googleCampaignKeyword,
       autopilot,
     },
   });

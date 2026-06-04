@@ -482,6 +482,17 @@ function ChannelPerformanceGrid({
           "Noch keine TikTok-Leads — Source-Spalte in Airtable prüfen",
         )}
       </KpiSection>
+      <KpiSection
+        eyebrow="Sektion · Werbekanäle · Google"
+        title="Google Ads"
+      >
+        {channelCards(
+          "Google",
+          current.google,
+          previous.google,
+          "Noch keine Google-Leads — Source-Spalte in Airtable prüfen",
+        )}
+      </KpiSection>
     </div>
   );
 }

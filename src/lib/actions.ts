@@ -5,6 +5,7 @@ import type { SyncResult } from "@/lib/airtable";
 import type { MetaSyncResult } from "@/lib/meta";
 import type { OutbrainSyncResult } from "@/lib/outbrain";
 import type { TikTokSyncResult } from "@/lib/tiktok";
+import type { GoogleSyncResult } from "@/lib/google";
 import { runFullSync } from "@/lib/sync";
 
 export type SyncActionResult =
@@ -20,15 +21,27 @@ export type SyncActionResult =
       tiktok:
         | { ok: true; result: TikTokSyncResult }
         | { ok: false; error: string };
+      google:
+        | { ok: true; result: GoogleSyncResult }
+        | { ok: false; error: string };
       push?: { sent: number; removed: number };
     }
   | { ok: false; error: string };
 
 export async function runAirtableSync(): Promise<SyncActionResult> {
   try {
-    const { airtable, meta, outbrain, tiktok, push } = await runFullSync();
+    const { airtable, meta, outbrain, tiktok, google, push } =
+      await runFullSync();
     revalidatePath("/");
-    return { ok: true, result: airtable, meta, outbrain, tiktok, push };
+    return {
+      ok: true,
+      result: airtable,
+      meta,
+      outbrain,
+      tiktok,
+      google,
+      push,
+    };
   } catch (err) {
     return {
       ok: false,

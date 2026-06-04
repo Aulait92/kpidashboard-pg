@@ -2,6 +2,7 @@ import { syncAirtable, type SyncResult } from "@/lib/airtable";
 import { syncMeta, type MetaSyncResult } from "@/lib/meta";
 import { syncOutbrain, type OutbrainSyncResult } from "@/lib/outbrain";
 import { syncTikTok, type TikTokSyncResult } from "@/lib/tiktok";
+import { syncGoogleAds, type GoogleSyncResult } from "@/lib/google";
 import { sendToAdmins, sendToBuyersOfCustomer } from "@/lib/push";
 
 export type FullSyncResult = {
@@ -12,6 +13,9 @@ export type FullSyncResult = {
     | { ok: false; error: string };
   tiktok:
     | { ok: true; result: TikTokSyncResult }
+    | { ok: false; error: string };
+  google:
+    | { ok: true; result: GoogleSyncResult }
     | { ok: false; error: string };
   push: { sent: number; removed: number };
 };
@@ -58,6 +62,17 @@ export async function runFullSync(): Promise<FullSyncResult> {
     };
   }
 
+  let google: FullSyncResult["google"];
+  try {
+    const googleResult = await syncGoogleAds();
+    google = { ok: true, result: googleResult };
+  } catch (err) {
+    google = {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+
   let pushSent = 0;
   let pushRemoved = 0;
 
@@ -93,6 +108,7 @@ export async function runFullSync(): Promise<FullSyncResult> {
     meta,
     outbrain,
     tiktok,
+    google,
     push: { sent: pushSent, removed: pushRemoved },
   };
 }

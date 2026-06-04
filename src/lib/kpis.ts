@@ -89,9 +89,10 @@ function parseMonthEnd(key: string): Date {
 //   meta:     "Meta: …"        (Facebook Ads, syncMeta)
 //   outbrain: "Outbrain: …"    (Amplify, syncOutbrain)
 //   tiktok:   "TikTok: …"      (TikTok Ads, syncTikTok)
-//   other:    keiner der drei Präfixe (manuelle/direkte LEAD-Kosten)
+//   google:   "Google: …"      (Google Ads, syncGoogleAds)
+//   other:    keiner der vier Präfixe (manuelle/direkte LEAD-Kosten)
 // Wird in der P&L genutzt, um Lead-Kosten je Produkt nach Kanal aufzuschlüsseln.
-export type LeadChannel = "meta" | "outbrain" | "tiktok" | "other";
+export type LeadChannel = "meta" | "outbrain" | "tiktok" | "google" | "other";
 
 function channelWhereClause(
   channel: LeadChannel | undefined,
@@ -100,11 +101,13 @@ function channelWhereClause(
   if (channel === "meta") return { note: { startsWith: "Meta:" } };
   if (channel === "outbrain") return { note: { startsWith: "Outbrain:" } };
   if (channel === "tiktok") return { note: { startsWith: "TikTok:" } };
+  if (channel === "google") return { note: { startsWith: "Google:" } };
   return {
     NOT: [
       { note: { startsWith: "Meta:" } },
       { note: { startsWith: "Outbrain:" } },
       { note: { startsWith: "TikTok:" } },
+      { note: { startsWith: "Google:" } },
     ],
   };
 }
@@ -713,6 +716,7 @@ export type ChannelPerformance = {
   meta: ChannelStats;
   outbrain: ChannelStats;
   tiktok: ChannelStats;
+  google: ChannelStats;
   other: ChannelStats; // Leads ohne Channel-Match oder ohne Source-Wert.
 };
 
@@ -759,8 +763,10 @@ export async function computeChannelPerformance(params: {
   const metaLeads = statsFor((c) => c === "Meta");
   const outbrainLeads = statsFor((c) => c === "Outbrain");
   const tiktokLeads = statsFor((c) => c === "TikTok");
+  const googleLeads = statsFor((c) => c === "Google");
   const otherLeads = statsFor(
-    (c) => c !== "Meta" && c !== "Outbrain" && c !== "TikTok",
+    (c) =>
+      c !== "Meta" && c !== "Outbrain" && c !== "TikTok" && c !== "Google",
   );
 
   // Spend pro Kanal — globale Brutto-Sicht (siehe computeLeadSpendByChannel).
@@ -777,6 +783,7 @@ export async function computeChannelPerformance(params: {
   let metaSpend = 0;
   let outbrainSpend = 0;
   let tiktokSpend = 0;
+  let googleSpend = 0;
   let otherSpend = 0;
   for (const c of channelCosts) {
     const amount = decToNumber(c.amount);
@@ -784,6 +791,7 @@ export async function computeChannelPerformance(params: {
     if (note.startsWith("Meta:")) metaSpend += amount;
     else if (note.startsWith("Outbrain:")) outbrainSpend += amount;
     else if (note.startsWith("TikTok:")) tiktokSpend += amount;
+    else if (note.startsWith("Google:")) googleSpend += amount;
     else otherSpend += amount;
   }
 
@@ -804,6 +812,7 @@ export async function computeChannelPerformance(params: {
     meta: pack(metaLeads, metaSpend),
     outbrain: pack(outbrainLeads, outbrainSpend),
     tiktok: pack(tiktokLeads, tiktokSpend),
+    google: pack(googleLeads, googleSpend),
     other: pack(otherLeads, otherSpend),
   };
 }
@@ -817,6 +826,7 @@ export type ChannelSpend = {
   meta: number;
   outbrain: number;
   tiktok: number;
+  google: number;
   other: number;
   total: number;
 };
@@ -838,6 +848,7 @@ export async function computeLeadSpendByChannel(params: {
   let meta = 0;
   let outbrain = 0;
   let tiktok = 0;
+  let google = 0;
   let other = 0;
   for (const c of costs) {
     const amount = decToNumber(c.amount);
@@ -845,9 +856,17 @@ export async function computeLeadSpendByChannel(params: {
     if (note.startsWith("Meta:")) meta += amount;
     else if (note.startsWith("Outbrain:")) outbrain += amount;
     else if (note.startsWith("TikTok:")) tiktok += amount;
+    else if (note.startsWith("Google:")) google += amount;
     else other += amount;
   }
-  return { meta, outbrain, tiktok, other, total: meta + outbrain + tiktok + other };
+  return {
+    meta,
+    outbrain,
+    tiktok,
+    google,
+    other,
+    total: meta + outbrain + tiktok + google + other,
+  };
 }
 
 export type Granularity = "day" | "week" | "month";
@@ -1264,6 +1283,7 @@ export async function computePnL(params: {
     { key: "meta", label: "Meta" },
     { key: "outbrain", label: "Outbrain" },
     { key: "tiktok", label: "TikTok" },
+    { key: "google", label: "Google" },
     { key: "other", label: "Direkt" },
   ];
   const leadCostMatrix = await Promise.all(

@@ -67,6 +67,15 @@ async function handle(req: Request) {
             debug: result.tiktok.result.debug,
           }
         : { ok: false, error: result.tiktok.error },
+      google: result.google.ok
+        ? {
+            ok: true,
+            costs: result.google.result.costs,
+            rows: result.google.result.customers.rows,
+            errors: result.google.result.errors,
+            unmatched: result.google.result.unmatched,
+          }
+        : { ok: false, error: result.google.error },
       push: result.push,
     });
   } catch (err) {
