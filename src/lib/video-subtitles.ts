@@ -46,7 +46,10 @@ type WhisperSegment = {
   text: string;
 };
 
-async function runFfmpeg(args: string[], step: string): Promise<void> {
+async function runFfmpeg(
+  args: string[],
+  step: string,
+): Promise<{ stderr: string }> {
   return new Promise((resolve, reject) => {
     const proc = spawn(getFfmpegPath(), args, {
       stdio: ["ignore", "pipe", "pipe"],
@@ -54,14 +57,15 @@ async function runFfmpeg(args: string[], step: string): Promise<void> {
     const stderrChunks: string[] = [];
     proc.stderr.on("data", (chunk) => {
       stderrChunks.push(chunk.toString());
-      // Stderr-Ring auf die letzten ~16KB begrenzen.
+      // Stderr-Ring auf die letzten ~32KB begrenzen.
       const total = stderrChunks.join("").length;
-      if (total > 16_384) stderrChunks.splice(0, 1);
+      if (total > 32_768) stderrChunks.splice(0, 1);
     });
     proc.on("error", (err) => reject(err));
     proc.on("close", (code, signal) => {
-      if (code === 0) return resolve();
-      const tail = stderrChunks.join("").split("\n").slice(-10).join("\n");
+      const stderr = stderrChunks.join("");
+      if (code === 0) return resolve({ stderr });
+      const tail = stderr.split("\n").slice(-10).join("\n");
       reject(
         new Error(
           `ffmpeg (${step}) exit code=${code} signal=${signal ?? "none"}:\n${tail}`,
@@ -69,6 +73,31 @@ async function runFfmpeg(args: string[], step: string): Promise<void> {
       );
     });
   });
+}
+
+// Parst aus ffmpeg-stderr Duration des Inputs und tatsächliche Output-Dauer
+// (steht in der finalen Progress-Zeile als `time=HH:MM:SS.ms`).
+function parseFfmpegDurations(stderr: string): {
+  inputDuration?: number;
+  outputTime?: number;
+} {
+  const hms = (h: string, m: string, s: string) =>
+    Number.parseInt(h, 10) * 3600 +
+    Number.parseInt(m, 10) * 60 +
+    Number.parseFloat(s);
+  const inputMatch = /Duration:\s+(\d+):(\d+):(\d+(?:\.\d+)?)/.exec(stderr);
+  const timeMatches = [
+    ...stderr.matchAll(/time=(\d+):(\d+):(\d+(?:\.\d+)?)/g),
+  ];
+  const lastTime = timeMatches[timeMatches.length - 1];
+  return {
+    inputDuration: inputMatch
+      ? hms(inputMatch[1], inputMatch[2], inputMatch[3])
+      : undefined,
+    outputTime: lastTime
+      ? hms(lastTime[1], lastTime[2], lastTime[3])
+      : undefined,
+  };
 }
 
 async function transcribeAudio(audioPath: string): Promise<WhisperSegment[]> {
@@ -282,7 +311,8 @@ export async function burnGermanSubtitles(
     }
     await onProgress?.("ffmpeg encodiert mit Untertiteln…");
 
-    // 4. Encoding.
+    // 4. Encoding. stderr behalten wir uns, um die echte Output-Dauer dem
+    // Aufrufer mitzugeben.
     //   -c:a copy   : Audio unverändert übernehmen — vermeidet Priming-
     //                 Delay am Anfang und Drift am Ende durch AAC-Reencode.
     //   -fflags +genpts + -avoid_negative_ts make_zero
@@ -292,7 +322,7 @@ export async function burnGermanSubtitles(
     //                 : Frame-Timing aus dem Input übernehmen, statt zu
     //                   re-samplen.
     //   KEIN -t  : Wir vertrauen der echten Input-Länge.
-    await runFfmpeg(
+    const { stderr } = await runFfmpeg(
       [
         "-fflags",
         "+genpts",
@@ -321,6 +351,14 @@ export async function burnGermanSubtitles(
       ],
       "burn subtitles",
     );
+
+    const durations = parseFfmpegDurations(stderr);
+    if (durations.inputDuration && durations.outputTime) {
+      const delta = durations.outputTime - durations.inputDuration;
+      await onProgress?.(
+        `Encoding fertig: Input ${durations.inputDuration.toFixed(2)}s, Output ${durations.outputTime.toFixed(2)}s (Δ ${delta.toFixed(2)}s).`,
+      );
+    }
 
     const out = await readFile(outputPath);
     return { buffer: out, burned: true };
