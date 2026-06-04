@@ -248,13 +248,14 @@ export async function burnGermanSubtitles(
   videoBuffer: Buffer,
   options: {
     onProgress?: (msg: string) => void | Promise<void>;
-    // Ziel-Länge in Sekunden. Wenn Sora kürzer liefert, wird das Output mit
-    // eingefrorenem letztem Frame + Stille auf diese Länge gepaddet.
-    targetDurationSec?: number;
   } = {},
 ): Promise<{ buffer: Buffer; burned: boolean; note?: string }> {
   const onProgress = options.onProgress;
-  const targetDurationSec = options.targetDurationSec;
+  // Tail-Padding: konstante N Sekunden eingefrorener letzter Frame +
+  // Stille, damit der CTA am Ende Zeit zum „Landen" bekommt statt
+  // abrupt zu schneiden. SUBTITLE_TAIL_PAD_SEC override (default 2.5s,
+  // 0 = aus).
+  const tailPadSec = Number(process.env.SUBTITLE_TAIL_PAD_SEC ?? 2.5);
   const dir = await mkdtemp(join(tmpdir(), "sora-subs-"));
   const inputPath = join(dir, "in.mp4");
   const audioPath = join(dir, "audio.mp3");
@@ -324,18 +325,14 @@ export async function burnGermanSubtitles(
     for (const f of textFiles) {
       await writeFile(f.path, f.content, "utf8");
     }
-    // 4. Padding-Bedarf berechnen. Wenn Sora kürzer liefert als
-    // targetDurationSec, friert tpad den letzten Frame ein und apad füllt
-    // den Audio-Track mit Stille bis zur Ziel-Länge.
-    const soraDuration = sora.inputDuration ?? 0;
-    const padSec =
-      targetDurationSec && targetDurationSec > 0 && soraDuration > 0
-        ? Math.max(0, targetDurationSec - soraDuration)
-        : 0;
+    // 4. Tail-Padding: konstante Hänge-Sekunden mit eingefrorenem letztem
+    // Frame, damit der CTA Zeit zum Landen bekommt. Sora's echte Länge
+    // ist egal — wir hängen einfach N Sekunden hinten dran.
+    const padSec = Math.max(0, tailPadSec);
     const needsPadding = padSec >= 0.5;
     if (needsPadding) {
       await onProgress?.(
-        `Padde Output um ${padSec.toFixed(2)}s (Sora ${soraDuration.toFixed(2)}s → Ziel ${targetDurationSec!.toFixed(2)}s)…`,
+        `Hänge ${padSec.toFixed(1)}s Standbild + Stille als Tail an…`,
       );
     } else {
       await onProgress?.("ffmpeg encodiert mit Untertiteln…");
@@ -381,8 +378,9 @@ export async function burnGermanSubtitles(
       "yuv420p",
     ];
     if (needsPadding) {
-      // apad braucht Audio-Reencode (geht nicht mit -c:a copy). AAC-Priming-
-      // Delay ist hier akzeptabel — sonst hätten wir keinen Padding-Mechanismus.
+      // apad braucht Audio-Reencode (geht nicht mit -c:a copy). tpad und apad
+      // verlängern Video- und Audio-Stream beide um padSec — Output endet
+      // bei sora_duration + padSec.
       args.push(
         "-af",
         `apad=pad_dur=${padSec.toFixed(3)}`,
@@ -390,8 +388,6 @@ export async function burnGermanSubtitles(
         "aac",
         "-b:a",
         "128k",
-        "-t",
-        targetDurationSec!.toFixed(3),
       );
     } else {
       args.push("-c:a", "copy");

@@ -6,7 +6,8 @@
 // Modell + Standardlänge via ENV überschreibbar — je nach API-Tier (Sora 2
 // vs. Sora 2 Pro) sind unterschiedliche max. Längen erlaubt:
 //   SORA_MODEL          default "sora-2-pro" (für 20s-Clips)
-//   SORA_DURATION_SEC   default 20
+//   SORA_DURATION_SEC   default 20 (Fallback-Liste 16→12→8→4, falls Sora
+//                       die Wunsch-Länge ablehnt — Tier-abhängig)
 //   SORA_SIZE           default "720x1280" (vertikal 9:16 — auf sora-2 +
 //                       sora-2-pro garantiert unterstützt; 720x720 / 1:1
 //                       lehnt die API ab.)
@@ -41,9 +42,11 @@ type VideoJob = {
   error?: { message?: string } | null;
 };
 
-async function createVideoJob(prompt: string): Promise<VideoJob> {
+async function createVideoJob(
+  prompt: string,
+  seconds: string,
+): Promise<VideoJob> {
   const model = process.env.SORA_MODEL ?? "sora-2-pro";
-  const seconds = process.env.SORA_DURATION_SEC ?? "20";
   const size = process.env.SORA_SIZE ?? "720x1280";
 
   console.log(
@@ -64,7 +67,13 @@ async function createVideoJob(prompt: string): Promise<VideoJob> {
   );
   const text = await res.text();
   if (!res.ok) {
-    throw new Error(`OpenAI /videos ${res.status}: ${text.slice(0, 600)}`);
+    const err = new Error(
+      `OpenAI /videos ${res.status}: ${text.slice(0, 600)}`,
+    );
+    // Status 400 deutet i.d.R. auf nicht-unterstützte Param-Kombi (z. B.
+    // seconds zu lang für das Tier). Markieren, damit der Fallback greift.
+    if (res.status === 400) (err as Error & { badParam?: boolean }).badParam = true;
+    throw err;
   }
   const job = JSON.parse(text) as VideoJob;
   if (!job.id) {
@@ -74,6 +83,37 @@ async function createVideoJob(prompt: string): Promise<VideoJob> {
   }
   console.log(`[sora] job created id=${job.id} status=${job.status}`);
   return job;
+}
+
+// Probiert die Wunsch-Sekunden zuerst und fällt bei 400-Errors (typisch:
+// "seconds not supported for this model/tier") schrittweise auf kürzere
+// Werte zurück, bis Sora die Kombi akzeptiert.
+async function createVideoJobWithFallback(
+  prompt: string,
+  onProgress?: VideoProgress,
+): Promise<VideoJob> {
+  const wanted = process.env.SORA_DURATION_SEC ?? "20";
+  // Reihenfolge: Wunschwert zuerst, dann standardmäßig akzeptierte Werte.
+  const candidates = Array.from(
+    new Set([wanted, "16", "12", "8", "4"]),
+  );
+  let lastErr: unknown;
+  for (const seconds of candidates) {
+    try {
+      return await createVideoJob(prompt, seconds);
+    } catch (err) {
+      const isBadParam = (err as { badParam?: boolean }).badParam === true;
+      if (!isBadParam) throw err;
+      lastErr = err;
+      console.warn(
+        `[sora] seconds=${seconds} abgelehnt, versuche nächste Stufe…`,
+      );
+      await onProgress?.(`Sora lehnte ${seconds}s ab, versuche kürzer…`);
+    }
+  }
+  throw lastErr instanceof Error
+    ? lastErr
+    : new Error("Sora hat alle Längen-Fallbacks abgelehnt.");
 }
 
 async function getVideoJob(id: string): Promise<VideoJob> {
@@ -122,7 +162,7 @@ export async function generateVideo(
 ): Promise<GeneratedVideo> {
   if (!prompt.trim()) throw new Error("Video-Prompt ist leer.");
 
-  const job = await createVideoJob(prompt);
+  const job = await createVideoJobWithFallback(prompt, onProgress);
   await onProgress?.(
     `Sora-Job angelegt (ID ${job.id.slice(0, 8)}…, Status: ${job.status}).`,
   );
