@@ -246,6 +246,70 @@ function buildDrawtextChain(
   return { chain: stages.join(","), textFiles };
 }
 
+// Concatenates mehrere MP4-Buffer zu einem zusammenhängenden Video. Wir
+// nutzen ffmpegs filter_complex (statt concat-demuxer), weil die Inputs
+// von Veo zwar gleich codiert sind, aber kleine Unterschiede in Timebase
+// oder Codec-Parameter den schnellen demuxer-Pfad sprengen können.
+export async function concatVideos(
+  buffers: Buffer[],
+  onProgress?: (msg: string) => void | Promise<void>,
+): Promise<Buffer> {
+  if (buffers.length === 0) throw new Error("concatVideos: keine Inputs.");
+  if (buffers.length === 1) return buffers[0];
+
+  const dir = await mkdtemp(join(tmpdir(), "veo-concat-"));
+  const inputPaths: string[] = [];
+  try {
+    for (let i = 0; i < buffers.length; i++) {
+      const p = join(dir, `seg-${i}.mp4`);
+      await writeFile(p, buffers[i]);
+      inputPaths.push(p);
+    }
+    const outputPath = join(dir, "concat.mp4");
+    await onProgress?.(`Fasse ${buffers.length} Clips zusammen…`);
+
+    // filter_complex concat: [0:v][0:a][1:v][1:a]...concat=n=N:v=1:a=1[outv][outa]
+    const filter =
+      inputPaths.map((_, i) => `[${i}:v][${i}:a]`).join("") +
+      `concat=n=${inputPaths.length}:v=1:a=1[outv][outa]`;
+    const args: string[] = [
+      "-hide_banner",
+      "-nostats",
+    ];
+    for (const p of inputPaths) {
+      args.push("-i", p);
+    }
+    args.push(
+      "-filter_complex",
+      filter,
+      "-map",
+      "[outv]",
+      "-map",
+      "[outa]",
+      "-c:v",
+      "libx264",
+      "-preset",
+      "veryfast",
+      "-crf",
+      "23",
+      "-pix_fmt",
+      "yuv420p",
+      "-c:a",
+      "aac",
+      "-b:a",
+      "128k",
+      "-movflags",
+      "+faststart",
+      "-y",
+      outputPath,
+    );
+    await runFfmpeg(args, "concat segments");
+    return await readFile(outputPath);
+  } finally {
+    await rm(dir, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
 // Brennt deutsche Untertitel ins MP4 ein und liefert den neuen Buffer zurück.
 // Bei jedem Fehler (Whisper down, ffmpeg fails, Audio fehlt) wird der Original-
 // Buffer zurückgegeben — Untertitel sind ein Nice-to-have, kein Hard-Block.

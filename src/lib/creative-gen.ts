@@ -1,6 +1,6 @@
 import { generateVideo, type VideoProgress } from "@/lib/google-veo";
 import { uploadImageToR2 } from "@/lib/r2";
-import { burnGermanSubtitles } from "@/lib/video-subtitles";
+import { burnGermanSubtitles, concatVideos } from "@/lib/video-subtitles";
 import { renderHtmlToImage } from "@/lib/html-to-png";
 import {
   generateFullCreativeImage,
@@ -1698,9 +1698,9 @@ Antworte mit GENAU EINEM <creative_html>-Block, KEINE anderen Tags:
 // Untertitel-Stufe.
 
 const VIDEO_CONCEPT_REQUEST: Record<string, string> = {
-  Kinderwunsch: `Entwirf ein konkretes, warmes UGC-Storyboard für Meta-Video-Ads (~20 Sekunden) für Kinderwunschbehandlungen, die bis zu 100% gefördert werden können. Quadratisches 1:1-Format (Feed). Beschreibe das Video Sekunde für Sekunde, inkl. Kamerawinkel, Person/Setting, gesprochene Worte (deutsch, authentisch, nicht werblich) und Stimmung. Hook in den ersten 3 Sekunden, Wertversprechen in der Mitte, sanfter CTA am Ende. Komposition zentriert, damit nichts im 1:1-Crop verloren geht.`,
-  Wechsel: `Entwirf ein UGC-Storyboard (~20 Sekunden, quadratisch 1:1) für Meta-Video-Ads zum Thema PKV-Tarifwechsel intern beim gleichen Versicherer — bis zu 50% Beitragsersparnis ohne Anbieterwechsel und ohne neue Gesundheitsprüfung. Beschreibe Sekunde für Sekunde: Kamerawinkel, Person/Setting, gesprochene Worte (deutsch, ehrlich, „Selbst-Aufnahme"-Look), Stimmung. Hook in 3s, Pain → Lösung → CTA. Komposition zentriert (1:1-Crop).`,
-  Neugeschäft: `Entwirf ein UGC-Storyboard (~20 Sekunden, quadratisch 1:1) für Meta-Video-Ads zum Thema private Krankenversicherung im Neuvertrag für Angestellte/Selbstständige. Beschreibe Sekunde für Sekunde: Kamerawinkel, Setting, gesprochene Worte (deutsch, vertrauensvoll), Stimmung. Hook in 3s, Vorteile, CTA. Komposition zentriert (1:1-Crop).`,
+  Kinderwunsch: `Entwirf ein konkretes, warmes UGC-Storyboard für Meta-Video-Ads (~24 Sekunden (3×8s als Hook → Body → CTA)) für Kinderwunschbehandlungen, die bis zu 100% gefördert werden können. Quadratisches 1:1-Format (Feed). Beschreibe das Video Sekunde für Sekunde, inkl. Kamerawinkel, Person/Setting, gesprochene Worte (deutsch, authentisch, nicht werblich) und Stimmung. Hook in den ersten 3 Sekunden, Wertversprechen in der Mitte, sanfter CTA am Ende. Komposition zentriert, damit nichts im 1:1-Crop verloren geht.`,
+  Wechsel: `Entwirf ein UGC-Storyboard (~24 Sekunden (3×8s als Hook → Body → CTA), quadratisch 1:1) für Meta-Video-Ads zum Thema PKV-Tarifwechsel intern beim gleichen Versicherer — bis zu 50% Beitragsersparnis ohne Anbieterwechsel und ohne neue Gesundheitsprüfung. Beschreibe Sekunde für Sekunde: Kamerawinkel, Person/Setting, gesprochene Worte (deutsch, ehrlich, „Selbst-Aufnahme"-Look), Stimmung. Hook in 3s, Pain → Lösung → CTA. Komposition zentriert (1:1-Crop).`,
+  Neugeschäft: `Entwirf ein UGC-Storyboard (~24 Sekunden (3×8s als Hook → Body → CTA), quadratisch 1:1) für Meta-Video-Ads zum Thema private Krankenversicherung im Neuvertrag für Angestellte/Selbstständige. Beschreibe Sekunde für Sekunde: Kamerawinkel, Setting, gesprochene Worte (deutsch, vertrauensvoll), Stimmung. Hook in 3s, Vorteile, CTA. Komposition zentriert (1:1-Crop).`,
 };
 
 async function brainstormVideoStoryboards(
@@ -1708,7 +1708,7 @@ async function brainstormVideoStoryboards(
 ): Promise<string[]> {
   const conceptRequest =
     VIDEO_CONCEPT_REQUEST[brief.campaignKey] ??
-    `Entwirf ein UGC-Storyboard (~20s, quadratisch 1:1) für eine ${brief.campaignKey}-Kampagne. Beschreibe Sekunde für Sekunde Kamerawinkel, Person/Setting, gesprochene Worte (deutsch) und Stimmung. Komposition zentriert (1:1-Crop).`;
+    `Entwirf ein UGC-Storyboard (~24s, quadratisch 1:1) für eine ${brief.campaignKey}-Kampagne. Beschreibe Sekunde für Sekunde Kamerawinkel, Person/Setting, gesprochene Worte (deutsch) und Stimmung. Komposition zentriert (1:1-Crop).`;
   const raw = await llmText({
     model: process.env.CONCEPT_MODEL || "claude-opus-4-8",
     system: "",
@@ -1743,15 +1743,90 @@ async function brainstormVideoStoryboards(
 // WICHTIG: keinen On-Screen-Text vom Modell generieren lassen — Diffusion-
 // Modelle schreiben unleserliches Kauderwelsch. Der Sprecher-Text läuft per
 // Audio + nachträglich eingebrannten Whisper-Untertiteln.
-function buildVeoPrompt(storyboard: string, cfg: DirectImageConfig): string {
+// Baut einen Single-Segment-Veo-Prompt aus einer 8s-Szenenbeschreibung +
+// dem Kampagnen-Kontext. WICHTIG: keinen On-Screen-Text generieren lassen
+// — Untertitel kommen separat per Whisper + ffmpeg.
+function buildVeoSegmentPrompt(
+  segmentDescription: string,
+  cfg: DirectImageConfig,
+  continuityHint: string,
+): string {
   return [
-    `UGC-Style Werbe-Video, 25 Sekunden, deutscher Markt. Native 16:9-Aufnahme — die Komposition aber zentriert halten, da später ein 1:1-Center-Crop angewendet wird (alles Wichtige in der Bildmitte).`,
+    `UGC-Style Werbe-Video, ca. 8 Sekunden, deutscher Markt. Native 16:9-Aufnahme — die Komposition aber zentriert halten, da später ein 1:1-Center-Crop angewendet wird (alles Wichtige in der Bildmitte).`,
     `Thema: ${cfg.topic}.`,
-    `Storyboard:\n${storyboard}`,
+    `Szene: ${segmentDescription}`,
+    continuityHint
+      ? `\nVisuelle Kontinuität: ${continuityHint}`
+      : "",
     `\nWICHTIG: KEINEN Text, KEINE Beschriftungen, KEINE Logos und KEINE Schriftzeichen im Bild einblenden. Auch keine Captions, Lower-Thirds oder CTA-Banner — nur reine Bewegtbild- und Audiodarstellung. Die Untertitel werden im Anschluss separat eingebrannt.`,
     `\nAudio: deutsche Sprecher:in, authentisch, nicht werblich. Keine medizinischen Garantien oder Heilversprechen aussprechen.`,
     `\nVisuelle Sprache: authentisch, natürlich beleuchtet, kein Stock-Photo-Look.`,
-  ].join("\n\n");
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+// Splittet ein 20-25s-Storyboard via LLM in drei 8s-Segmente (Hook / Body /
+// CTA) plus einen Continuity-Hint (gleiche Person/Outfit/Setting), den jedes
+// Segment-Prompt mitbekommt. Fallback: wenn der LLM-Split scheitert, wird
+// das ganze Storyboard dreimal verwendet — schlechter, aber funktioniert.
+async function splitStoryboardIntoSegments(
+  storyboard: string,
+  cfg: DirectImageConfig,
+): Promise<{
+  hook: string;
+  body: string;
+  cta: string;
+  continuity: string;
+}> {
+  const fallback = {
+    hook: storyboard,
+    body: storyboard,
+    cta: storyboard,
+    continuity: "Gleiche Person, gleiches Outfit, gleicher Ort wie in der vorigen Szene.",
+  };
+  try {
+    const raw = await llmText({
+      model: process.env.CONCEPT_MODEL || "claude-opus-4-8",
+      system: `Du bist Video-Producer. Schneide ein deutsches UGC-Storyboard in drei 8-Sekunden-Szenen, die zu einem 24s-Video kombiniert werden:
+- "hook": 8s — Aufmerksamkeit fangen (Pattern-Interrupt, Frage, Pain-Point)
+- "body": 8s — Wertversprechen / Mechanik / Erklärung
+- "cta": 8s — klare Aufforderung mit gehaltenem Blick zur Kamera
+
+Pro Szene konkret: Kamerawinkel, Aktion der Person, gesprochene Worte (deutsch). KEIN Bildschirm-Text.
+
+"continuity": ein Satz, der die visuelle Konsistenz festlegt (gleiche Person, gleiches Outfit, gleicher Ort, gleiche Lichtstimmung).
+
+Antworte mit strict JSON: {"hook": "...", "body": "...", "cta": "...", "continuity": "..."}.
+Thema: ${cfg.topic}.`,
+      user: `Hier ist das Storyboard:\n\n${storyboard}`,
+      maxTokens: 1500,
+    });
+    const cleaned = raw
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/```\s*$/i, "")
+      .trim();
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (!match) return fallback;
+    const parsed = JSON.parse(match[0]) as {
+      hook?: string;
+      body?: string;
+      cta?: string;
+      continuity?: string;
+    };
+    return {
+      hook: parsed.hook?.trim() || fallback.hook,
+      body: parsed.body?.trim() || fallback.body,
+      cta: parsed.cta?.trim() || fallback.cta,
+      continuity: parsed.continuity?.trim() || fallback.continuity,
+    };
+  } catch (err) {
+    console.warn(
+      "[veo-stitch] storyboard split failte, nutze Fallback:",
+      err instanceof Error ? err.message : err,
+    );
+    return fallback;
+  }
 }
 
 async function generateOneVideoCreative(
@@ -1762,17 +1837,54 @@ async function generateOneVideoCreative(
   onProgress?: VideoProgress,
 ): Promise<GeneratedCreative> {
   const cfg = getDirectImageConfig(brief.campaignKey);
-  const veoPrompt = buildVeoPrompt(storyboard, cfg);
-  const { buffer: rawBuffer, durationSec } = await generateVideo(
-    veoPrompt,
-    onProgress,
-  );
 
-  // Sora schreibt selbst gerne Buchstaben-Soup als „Text" ins Video. Wir
-  // lassen ihn deshalb komplett text-frei rendern (s. Prompt) und brennen
-  // saubere deutsche Untertitel per Whisper + ffmpeg nachträglich rein.
+  // Veo 3 standard liefert nur 4-8s pro Call. Für ~24s-Output splitten wir
+  // das Storyboard in Hook / Body / CTA und generieren drei parallele
+  // 8s-Clips, die wir per ffmpeg zusammenschneiden.
+  await onProgress?.("Splitte Storyboard in 3 Szenen (Hook / Body / CTA)…");
+  const segments = await splitStoryboardIntoSegments(storyboard, cfg);
+
+  const veoPrompts = [
+    buildVeoSegmentPrompt(segments.hook, cfg, segments.continuity),
+    buildVeoSegmentPrompt(segments.body, cfg, segments.continuity),
+    buildVeoSegmentPrompt(segments.cta, cfg, segments.continuity),
+  ];
+
+  await onProgress?.("Starte 3 Veo-Jobs parallel (Hook / Body / CTA)…");
+  const results = await Promise.allSettled(
+    veoPrompts.map((p, i) =>
+      generateVideo(p, async (msg) => {
+        const label = i === 0 ? "Hook" : i === 1 ? "Body" : "CTA";
+        await onProgress?.(`[${label}] ${msg}`);
+      }),
+    ),
+  );
+  const buffers: Buffer[] = [];
+  let segmentDurationSum = 0;
+  for (let i = 0; i < results.length; i++) {
+    const r = results[i];
+    const label = i === 0 ? "Hook" : i === 1 ? "Body" : "CTA";
+    if (r.status === "fulfilled") {
+      buffers.push(r.value.buffer);
+      segmentDurationSum += r.value.durationSec;
+    } else {
+      const msg = r.reason instanceof Error ? r.reason.message : String(r.reason);
+      await onProgress?.(`⚠️ ${label}-Clip failte: ${msg.slice(0, 180)}`);
+    }
+  }
+  if (buffers.length === 0) {
+    throw new Error("Alle drei Veo-Clips fehlgeschlagen — kein Video möglich.");
+  }
+  if (buffers.length < 3) {
+    await onProgress?.(
+      `⚠️ Nur ${buffers.length}/3 Clips erfolgreich — fahre mit den vorhandenen fort.`,
+    );
+  }
+
+  const concated = await concatVideos(buffers, onProgress);
+
   await onProgress?.("Brenne deutsche Untertitel ein…");
-  const subResult = await burnGermanSubtitles(rawBuffer, { onProgress });
+  const subResult = await burnGermanSubtitles(concated, { onProgress });
   if (!subResult.burned && subResult.note) {
     await onProgress?.(`Untertitel übersprungen: ${subResult.note.slice(0, 180)}`);
   }
@@ -1791,13 +1903,13 @@ async function generateOneVideoCreative(
     cta: cfg.cta,
     adText: copy.adText,
     fbHeadline: copy.fbHeadline,
-    mechanic: "Veo 3 UGC-Video (1:1 Crop)",
-    imagePrompt: veoPrompt,
+    mechanic: `Veo 3 ${buffers.length}-Clip-Stitch (1:1 Crop)`,
+    imagePrompt: veoPrompts.join("\n\n— —\n\n"),
     imageUrl: "",
     concept: storyboard,
     kind: "video",
     videoUrl,
-    durationSec,
+    durationSec: segmentDurationSum,
   } satisfies GeneratedCreative;
 }
 
