@@ -71,6 +71,29 @@ async function runFfmpeg(args: string[], step: string): Promise<void> {
   });
 }
 
+// ffmpeg-Probe-Modus: ohne Output-Datei → exit 1, aber stderr enthält
+// die Duration des Inputs. Wir parsen sie und ignorieren den exit code.
+async function probeDuration(path: string): Promise<number | null> {
+  return new Promise((resolve) => {
+    const proc = spawn(getFfmpegPath(), ["-hide_banner", "-i", path], {
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let stderr = "";
+    proc.stderr.on("data", (chunk) => {
+      stderr += chunk.toString();
+    });
+    proc.on("error", () => resolve(null));
+    proc.on("close", () => {
+      const m = /Duration:\s+(\d+):(\d+):(\d+(?:\.\d+)?)/.exec(stderr);
+      if (!m) return resolve(null);
+      const h = Number.parseInt(m[1], 10);
+      const min = Number.parseInt(m[2], 10);
+      const s = Number.parseFloat(m[3]);
+      resolve(h * 3600 + min * 60 + s);
+    });
+  });
+}
+
 async function transcribeAudio(audioPath: string): Promise<WhisperSegment[]> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY nicht gesetzt.");
@@ -108,10 +131,10 @@ async function transcribeAudio(audioPath: string): Promise<WhisperSegment[]> {
   return json.segments;
 }
 
-// Lange Zeilen in 2–4 Zeilen wrappen. maxCharsPerLine ist defensiv klein
-// (≈22 Zeichen) damit lange deutsche Komposita wie „Krankenversicherung"
-// am Frame-Rand nicht abgeschnitten werden.
-function wrapText(text: string, maxCharsPerLine = 22, maxLines = 4): string {
+// Strict Wrap: pro Zeile max. maxCharsPerLine Zeichen, beliebig viele
+// Zeilen — kein „Rest in die letzte Zeile dumpen"-Fallback mehr (das war
+// der Grund für rechts abgeschnittene Untertitel bei langen Segmenten).
+function wrapText(text: string, maxCharsPerLine = 22): string {
   const words = text.split(/\s+/).filter((w) => w.length > 0);
   const lines: string[] = [];
   let buf = "";
@@ -121,12 +144,6 @@ function wrapText(text: string, maxCharsPerLine = 22, maxLines = 4): string {
     } else if ((buf + " " + w).length > maxCharsPerLine) {
       lines.push(buf);
       buf = w;
-      if (lines.length >= maxLines - 1) {
-        // Restliche Wörter in die letzte Zeile packen, lieber zu lang als
-        // abgeschnitten.
-        buf = [w, ...words.slice(words.indexOf(w) + 1)].join(" ");
-        break;
-      }
     } else {
       buf += " " + w;
     }
@@ -190,6 +207,12 @@ export async function burnGermanSubtitles(
 
   try {
     await writeFile(inputPath, videoBuffer);
+
+    // 0. Input-Länge messen, damit wir das Output am Ende exakt darauf
+    // cappen können. ffmpeg-Audio-Reencodes haben sonst eine Tendenz zur
+    // Drift (paar Frames zu wenig am Ende).
+    const inputDuration = await probeDuration(inputPath);
+
     await onProgress?.("Audio extrahieren…");
 
     // 1. Audio extrahieren.
@@ -240,38 +263,40 @@ export async function burnGermanSubtitles(
     for (const f of textFiles) {
       await writeFile(f.path, f.content, "utf8");
     }
-    await onProgress?.("ffmpeg encodiert mit Untertiteln…");
-
-    // 4. Encoding. Audio neu codieren (statt -c:a copy), damit Container-
-    // Quirks aus Sora-Output nicht zu Stream-Mismatch und vorzeitigem Ende
-    // führen. KEIN hartes -t mehr — wir vertrauen der echten Input-Länge,
-    // sonst beschneiden wir den Sora-Output, falls er länger ist als die
-    // Env-Annahme.
-    await runFfmpeg(
-      [
-        "-i",
-        inputPath,
-        "-vf",
-        chain,
-        "-c:v",
-        "libx264",
-        "-preset",
-        "veryfast",
-        "-crf",
-        "23",
-        "-pix_fmt",
-        "yuv420p",
-        "-c:a",
-        "aac",
-        "-b:a",
-        "128k",
-        "-movflags",
-        "+faststart",
-        "-y",
-        outputPath,
-      ],
-      "burn subtitles",
+    await onProgress?.(
+      inputDuration
+        ? `ffmpeg encodiert mit Untertiteln (${inputDuration.toFixed(2)}s)…`
+        : "ffmpeg encodiert mit Untertiteln…",
     );
+
+    // 4. Encoding. Audio neu codieren, damit Container-Quirks aus dem Sora-
+    // Output nicht zu Stream-Mismatch führen. -t setzt die Output-Dauer
+    // exakt auf die gemessene Input-Dauer (kein Drift durch AAC-Reencode).
+    const args: string[] = [
+      "-i",
+      inputPath,
+      "-vf",
+      chain,
+      "-c:v",
+      "libx264",
+      "-preset",
+      "veryfast",
+      "-crf",
+      "23",
+      "-pix_fmt",
+      "yuv420p",
+      "-c:a",
+      "aac",
+      "-b:a",
+      "128k",
+      "-movflags",
+      "+faststart",
+    ];
+    if (inputDuration && inputDuration > 0) {
+      args.push("-t", inputDuration.toFixed(3));
+    }
+    args.push("-y", outputPath);
+    await runFfmpeg(args, "burn subtitles");
 
     const out = await readFile(outputPath);
     return { buffer: out, burned: true };
