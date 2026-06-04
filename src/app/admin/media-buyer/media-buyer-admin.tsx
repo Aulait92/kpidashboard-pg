@@ -625,6 +625,9 @@ function PoolDetail({
         </div>
       </div>
 
+      {/* Channel-Split */}
+      <ChannelSplitCard pool={pool} />
+
       {/* Empfehlung */}
       {empfehlung ? (
         <div className="rounded-2xl border border-[color:var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
@@ -731,6 +734,119 @@ function ArcGauge({
         <div className="text-[10px] font-medium text-[color:var(--muted)]">
           {label}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Channel-Split (Meta vs. Outbrain) ──────────────────────────────
+
+function ChannelSplitCard({ pool }: { pool: PoolDetailRow }) {
+  const totalChannelLeads = pool.metaLeadsMtd + pool.outbrainLeadsMtd;
+  // Wenn beide Channels 0 Leads UND 0 Spend haben, blenden wir die Karte aus —
+  // dann ist die Channel-Sicht für diesen Pool noch leer (kein adChannel auf
+  // Leads, kein Werbespend matched).
+  if (
+    totalChannelLeads === 0 &&
+    pool.metaSpendMtd === 0 &&
+    pool.outbrainSpendMtd === 0
+  ) {
+    return null;
+  }
+  const rows: {
+    label: string;
+    leads: number;
+    spend: number;
+    cpl: number | null;
+    share: number;
+    color: string;
+  }[] = [
+    {
+      label: "Meta",
+      leads: pool.metaLeadsMtd,
+      spend: pool.metaSpendMtd,
+      cpl: pool.metaCpl,
+      share:
+        totalChannelLeads > 0 ? pool.metaLeadsMtd / totalChannelLeads : 0,
+      color: "bg-blue-500",
+    },
+    {
+      label: "Outbrain",
+      leads: pool.outbrainLeadsMtd,
+      spend: pool.outbrainSpendMtd,
+      cpl: pool.outbrainCpl,
+      share:
+        totalChannelLeads > 0 ? pool.outbrainLeadsMtd / totalChannelLeads : 0,
+      color: "bg-amber-500",
+    },
+  ];
+
+  function fmtEur(v: number | null): string {
+    if (v == null) return "—";
+    return `${v.toFixed(2).replace(".", ",")} €`;
+  }
+  function fmtSpend(v: number): string {
+    if (v === 0) return "—";
+    return `${Math.round(v).toLocaleString("de-DE")} €`;
+  }
+
+  return (
+    <div className="rounded-2xl border border-[color:var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-lg font-bold">Performance pro Kanal</span>
+        <span className="text-[11px] uppercase tracking-wider text-[color:var(--muted)]">
+          MTD
+        </span>
+      </div>
+      <div className="mt-3 divide-y divide-[color:var(--border)]">
+        {rows.map((r) => (
+          <div key={r.label} className="py-2.5 first:pt-0 last:pb-0">
+            <div className="flex items-baseline justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn("h-2 w-2 rounded-full", r.color)}
+                  aria-hidden
+                />
+                <span className="text-sm font-semibold">{r.label}</span>
+                <span className="text-[11px] text-[color:var(--muted)]">
+                  ({Math.round(r.share * 100)} %)
+                </span>
+              </div>
+              <span className="text-sm font-semibold tabular-nums">
+                CPL{" "}
+                <span
+                  className={cn(
+                    r.cpl == null
+                      ? "text-[color:var(--muted)]"
+                      : "text-[color:var(--foreground)]",
+                  )}
+                >
+                  {fmtEur(r.cpl)}
+                </span>
+              </span>
+            </div>
+            <div className="mt-1 flex items-center justify-between gap-3 text-[11px] text-[color:var(--muted)]">
+              <span>
+                <span className="tabular-nums text-[color:var(--foreground)]">
+                  {r.leads}
+                </span>{" "}
+                Leads
+              </span>
+              <span>
+                Spend{" "}
+                <span className="tabular-nums text-[color:var(--foreground)]">
+                  {fmtSpend(r.spend)}
+                </span>
+              </span>
+            </div>
+            <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-zinc-100">
+              <div
+                className={cn("h-full", r.color)}
+                style={{ width: `${r.share * 100}%` }}
+              />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

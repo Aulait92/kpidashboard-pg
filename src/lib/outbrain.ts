@@ -191,56 +191,58 @@ export async function syncOutbrain(): Promise<OutbrainSyncResult> {
   for (const marketerId of marketers) {
     let firstDebugSample: string | null = null;
     let totalCampaignRows = 0;
-    try {
-      // Ein einziger Request pro Marketer für den ganzen Zeitraum. Liefert
-      // pro Kampagne den Aggregat-Spend (metrics.spend). Daten-Latenz bei
-      // Outbrain ist typischerweise 6-24h — frische Stunden tauchen also
-      // nicht sofort auf, auch wenn die Kampagne On-Air ist.
-      const campaigns = await fetchCampaignsRange(
-        marketerId,
-        token,
-        since,
-        until,
-        (sample) => {
-          if (!firstDebugSample) firstDebugSample = sample;
-        },
-      );
-      totalCampaignRows = campaigns.length;
-      // Aggregierter Spend wird als eine Cost-Zeile pro Kampagne auf "heute"
-      // (until) gebucht. Daily-Granularität geht so verloren, aber Summe +
-      // Channel-Sicht in P&L stimmen. Ein optionaler OUTBRAIN_DAILY_GRANULARITY
-      // -Flag bleibt für später, wenn das Rate-Limit weniger eng wird.
-      const occurredAt = dayAtNoonUtc(until);
-      for (const c of campaigns) {
-        const name = c.metadata?.name?.trim();
-        if (!name) continue;
-        const spend = parseSpend(c.metrics?.spend);
-        if (spend <= 0) continue;
-        const product = classifyProduct(name);
-        if (!product) {
-          result.unmatched.push({ campaign: name, spend });
-          continue;
+    let failedDays = 0;
+    // Pro Tag genau ein Request: Outbrains breakdown=daily wird vom Campaigns-
+    // Report ignoriert, also setzen wir from=to=Tag und holen damit den Tages-
+    // Aggregat-Spend pro Kampagne. Bei 14 Tagen × ~500ms ≈ 7-30s, je nach
+    // Rate-Limit. 429-Retries hängen im fetchWithRetry mit drin.
+    let day = new Date(`${since}T00:00:00Z`);
+    const end = new Date(`${until}T00:00:00Z`);
+    while (day.getTime() <= end.getTime()) {
+      const dayStr = format(day, "yyyy-MM-dd");
+      try {
+        const campaigns = await fetchCampaignsRange(
+          marketerId,
+          token,
+          dayStr,
+          dayStr,
+          (sample) => {
+            if (!firstDebugSample) firstDebugSample = sample;
+          },
+        );
+        totalCampaignRows += campaigns.length;
+        for (const c of campaigns) {
+          const name = c.metadata?.name?.trim();
+          if (!name) continue;
+          const spend = parseSpend(c.metrics?.spend);
+          if (spend <= 0) continue;
+          const product = classifyProduct(name);
+          if (!product) {
+            result.unmatched.push({ campaign: name, spend });
+            continue;
+          }
+          toInsert.push({
+            product,
+            amount: spend,
+            occurredAt: dayAtNoonUtc(dayStr),
+            note: `Outbrain: ${name} (${dayStr}) [marketer_${marketerId}]`,
+          });
         }
-        toInsert.push({
-          product,
-          amount: spend,
-          occurredAt,
-          note: `Outbrain: ${name} (${since}…${until}) [marketer_${marketerId}]`,
-        });
+      } catch (err) {
+        failedDays += 1;
+        result.errors.push(
+          `marketer ${marketerId} (${dayStr}): ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
-      anyMarketerSucceededFully = true;
-    } catch (err) {
-      result.errors.push(
-        `marketer ${marketerId}: ${err instanceof Error ? err.message : String(err)}`,
-      );
+      day = addDays(day, 1);
+      await new Promise((r) => setTimeout(r, REQUEST_DELAY_MS));
     }
+    if (failedDays === 0) anyMarketerSucceededFully = true;
     result.marketers.push({ id: marketerId, rows: totalCampaignRows });
     if (totalCampaignRows === 0 && firstDebugSample) {
       result.debug = result.debug ?? [];
       result.debug.push({ marketerId, sample: firstDebugSample });
     }
-    // Throttle zwischen Marketern (irrelevant bei 1 Marketer, aber harmless).
-    await new Promise((r) => setTimeout(r, REQUEST_DELAY_MS));
   }
 
   // Persistenz:
