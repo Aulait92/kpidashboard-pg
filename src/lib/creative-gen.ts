@@ -1845,7 +1845,7 @@ export type ParsedIntent = {
   region?: string | null;
   audience?: string;
   tone?: string;
-  // "image" (Standbild, Default) oder "video" (Sora 2, UGC-Reel).
+  // "image" (Standbild, Default) oder "video" (Veo 3, UGC-Reel).
   medium?: "image" | "video";
 };
 

@@ -157,7 +157,7 @@ async function handleTextCommand(chatId: string, text: string) {
     text: isVideo
       ? `🎬 Generiere ${count} ${count === 1 ? "Video" : "Videos"} für ${escapeHtml(
           intent.campaignKey,
-        )}-Kampagne via Sora 2… (das dauert mehrere Minuten)`
+        )}-Kampagne via Veo 3… (das dauert mehrere Minuten)`
       : `🎨 Generiere ${count} ${count === 1 ? "Creative" : "Creatives"} für ${escapeHtml(
           intent.campaignKey,
         )}-Kampagne… (ca. 60 Sek)`,

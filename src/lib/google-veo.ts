@@ -9,7 +9,8 @@
 //
 // Modell + Dauer + Aspect via ENV:
 //   VEO_MODEL              default "veo-3.0-generate-001"
-//   VEO_DURATION_SEC       default 25 (Veo unterstützt 4–60s, je Tier)
+//   VEO_DURATION_SEC       default 8 (veo-3.0-generate-001 unterstützt 4–8s;
+//                          Pro-Modelle können mehr — über VEO_MODEL switchen)
 //   VEO_ASPECT_RATIO       default "16:9" (Native Veo-Output; Center-Crop
 //                          auf 1:1 passiert in der Untertitel-Stufe)
 //   VEO_NEGATIVE_PROMPT    default leer
@@ -68,7 +69,7 @@ type VeoOperation = {
 
 async function startVideoOperation(prompt: string): Promise<string> {
   const model = process.env.VEO_MODEL ?? "veo-3.0-generate-001";
-  const durationSeconds = Number(process.env.VEO_DURATION_SEC ?? 25);
+  const durationSeconds = Number(process.env.VEO_DURATION_SEC ?? 8);
   const aspectRatio = process.env.VEO_ASPECT_RATIO ?? "16:9";
   const negativePrompt = process.env.VEO_NEGATIVE_PROMPT ?? "";
 
@@ -235,6 +236,6 @@ export async function generateVideo(
   console.log(`[veo] downloaded ${buffer.length} bytes`);
   return {
     buffer,
-    durationSec: Number(process.env.VEO_DURATION_SEC ?? 25),
+    durationSec: Number(process.env.VEO_DURATION_SEC ?? 8),
   };
 }
