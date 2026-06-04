@@ -46,6 +46,12 @@ import {
   type CampaignBudgetState,
   type MetaCampaign,
 } from "@/lib/meta-ads";
+import {
+  findCampaignsByKeyword as findOutbrainCampaignsByKeyword,
+  getMonthlySpendByCampaign as getOutbrainMonthlySpendByCampaign,
+  listCampaigns as listOutbrainCampaigns,
+  type OutbrainCampaign,
+} from "@/lib/outbrain-ads";
 import { prisma } from "@/lib/prisma";
 import { sendToAdmins } from "@/lib/push";
 
@@ -72,6 +78,13 @@ export type PoolResult = {
   prevBudget: number | null;
   newBudget: number | null;
   campaigns: string[];
+  // Channel-Breakdown (Phase 1: nur Beobachtung, keine Outbrain-Steuerung).
+  metaLeadsMtd: number;
+  metaSpendMtd: number;
+  metaCpl: number | null;
+  outbrainLeadsMtd: number;
+  outbrainSpendMtd: number;
+  outbrainCpl: number | null;
   error?: string;
 };
 
@@ -403,6 +416,7 @@ type PoolSettings = {
   autopilot: boolean;
   maxDailyBudget: number | null;
   campaignKeyword: string | null;
+  outbrainCampaignKeyword: string | null;
 };
 
 // Stellt sicher, dass für jeden abgeleiteten Pool eine DeliveryPool-Zeile
@@ -418,12 +432,18 @@ async function ensurePool(def: PoolDef): Promise<PoolSettings> {
       region: def.region,
     },
     update: { label: def.label, product: def.product, region: def.region },
-    select: { autopilot: true, maxDailyBudget: true, campaignKeyword: true },
+    select: {
+      autopilot: true,
+      maxDailyBudget: true,
+      campaignKeyword: true,
+      outbrainCampaignKeyword: true,
+    },
   });
   return {
     autopilot: pool.autopilot,
     maxDailyBudget: decToNumber(pool.maxDailyBudget),
     campaignKeyword: pool.campaignKeyword,
+    outbrainCampaignKeyword: pool.outbrainCampaignKeyword,
   };
 }
 
@@ -431,16 +451,19 @@ async function countPoolLeads(
   def: PoolDef,
   monthStart: Date,
   mtdEnd: Date,
+  channel?: string,
 ): Promise<number> {
   const where: {
     source: string;
     createdAt: { gte: Date; lte: Date };
     customerId?: { in: string[] };
+    adChannel?: string;
   } = { source: def.product, createdAt: { gte: monthStart, lte: mtdEnd } };
   if (def.customerIds) {
     if (def.customerIds.length === 0) return 0;
     where.customerId = { in: def.customerIds };
   }
+  if (channel) where.adChannel = channel;
   return prisma.lead.count({ where });
 }
 
@@ -468,6 +491,9 @@ function matchPoolCampaigns(
 type RunCtx = {
   campaigns: MetaCampaign[];
   spendByCampaign: Map<string, number>;
+  // Outbrain-Pendant — Phase 1: nur lesen, kein Steuern.
+  outbrainCampaigns: OutbrainCampaign[];
+  outbrainSpendByCampaign: Map<string, number>;
   monthStart: Date;
   mtdEnd: Date;
   daysElapsed: number;
@@ -481,6 +507,25 @@ type RunCtx = {
   lookAheadHours: number;
   dryRun: boolean;
 };
+
+function matchOutbrainPoolCampaigns(
+  def: PoolDef,
+  campaigns: OutbrainCampaign[],
+  keywordOverride: string | null,
+): OutbrainCampaign[] {
+  if (keywordOverride && keywordOverride.trim()) {
+    return findOutbrainCampaignsByKeyword(campaigns, keywordOverride);
+  }
+  // Ohne explizites Keyword versuchen wir den Produktnamen — bei Region-
+  // Pools zusätzlich den Region-Namen. Outbrain-Naming ist oft anders als
+  // Meta, deshalb ist das Override-Feld in der Praxis wichtiger.
+  if (def.kind === "product") {
+    const p = def.product.toLowerCase();
+    return campaigns.filter((c) => c.name.toLowerCase().includes(p));
+  }
+  const region = def.region!.toLowerCase();
+  return campaigns.filter((c) => c.name.toLowerCase().includes(region));
+}
 
 async function processPool(
   def: PoolDef,
@@ -503,9 +548,17 @@ async function processPool(
     prevBudget: null,
     newBudget: null,
     campaigns: [],
+    metaLeadsMtd: 0,
+    metaSpendMtd: 0,
+    metaCpl: null,
+    outbrainLeadsMtd: 0,
+    outbrainSpendMtd: 0,
+    outbrainCpl: null,
   };
 
   try {
+    // Pool-Leads = Brutto inkl. beider Channels — d'Hondt-Verteilung & Pool-
+    // Pacing arbeiten kanal-agnostisch.
     const leadsMtd = await countPoolLeads(def, ctx.monthStart, ctx.mtdEnd);
     const projected =
       ctx.daysElapsed > 0
@@ -513,6 +566,32 @@ async function processPool(
         : 0;
     base.leadsMtd = leadsMtd;
     base.projected = projected;
+
+    // Channel-Breakdown: getrennte Lead-Zähler und Spend aus den Cost-Tabellen
+    // bzw. den Ad-APIs. Wird auch dann ausgewertet, wenn nur einer der beiden
+    // Channels aktiv ist (der andere ist dann 0).
+    const [metaLeadsMtd, outbrainLeadsMtd] = await Promise.all([
+      countPoolLeads(def, ctx.monthStart, ctx.mtdEnd, "Meta"),
+      countPoolLeads(def, ctx.monthStart, ctx.mtdEnd, "Outbrain"),
+    ]);
+    base.metaLeadsMtd = metaLeadsMtd;
+    base.outbrainLeadsMtd = outbrainLeadsMtd;
+
+    // Outbrain-Spend zuerst ausrechnen, ist immer rein lesend.
+    const matchedOutbrain = matchOutbrainPoolCampaigns(
+      def,
+      ctx.outbrainCampaigns,
+      settings.outbrainCampaignKeyword,
+    );
+    const outbrainSpend = matchedOutbrain.reduce(
+      (s, c) => s + (ctx.outbrainSpendByCampaign.get(c.id) ?? 0),
+      0,
+    );
+    base.outbrainSpendMtd = outbrainSpend;
+    base.outbrainCpl =
+      outbrainLeadsMtd > 0 && outbrainSpend > 0
+        ? outbrainSpend / outbrainLeadsMtd
+        : null;
 
     const matched = matchPoolCampaigns(
       def,
@@ -541,12 +620,21 @@ async function processPool(
       (s, c) => s + c.dailyBudgetEur,
       0,
     );
-    // Cost-per-Lead aus Meta-Spend (Monat) der gematchten Kampagnen ÷ Leads.
-    const spend = matched.reduce(
+    // Cost-per-Lead pro Channel: Meta CPL aus Meta-Spend / Meta-Leads,
+    // Outbrain analog. Für die Decision-Logik nutzen wir den **Meta-CPL**,
+    // weil wir in Phase 1 nur Meta steuern.
+    const metaSpend = matched.reduce(
       (s, c) => s + (ctx.spendByCampaign.get(c.id) ?? 0),
       0,
     );
-    const costPerLead = leadsMtd > 0 && spend > 0 ? spend / leadsMtd : null;
+    base.metaSpendMtd = metaSpend;
+    base.metaCpl =
+      metaLeadsMtd > 0 && metaSpend > 0 ? metaSpend / metaLeadsMtd : null;
+    // Fallback: wenn noch keine Channel-Attribution da ist (alte Leads ohne
+    // adChannel), nutze Pool-Gesamtwerte als CPL-Quelle. Nur für die
+    // Steuerlogik — Channel-Breakdown bleibt korrekt.
+    const costPerLead =
+      base.metaCpl ?? (leadsMtd > 0 && metaSpend > 0 ? metaSpend / leadsMtd : null);
     const anyPaused = states.some(
       (s) => s.effective_status !== "ACTIVE" && s.status !== "ACTIVE",
     );
@@ -699,6 +787,12 @@ export async function runMediaBuyer(params: {
         prevBudget: null,
         newBudget: null,
         campaigns: [],
+        metaLeadsMtd: 0,
+        metaSpendMtd: 0,
+        metaCpl: null,
+        outbrainLeadsMtd: 0,
+        outbrainSpendMtd: 0,
+        outbrainCpl: null,
         error: msg,
       });
     }
@@ -706,9 +800,28 @@ export async function runMediaBuyer(params: {
     return { ranAt: now, dryRun, pools };
   }
 
+  // Outbrain ist read-only und optional: wenn nicht konfiguriert oder API
+  // gerade zickt, läuft der Buyer mit leeren Listen weiter (Channel-Splits
+  // sind dann 0, Meta-Steuerung bleibt unbeeinträchtigt).
+  let outbrainCampaigns: OutbrainCampaign[] = [];
+  let outbrainSpendByCampaign = new Map<string, number>();
+  try {
+    [outbrainCampaigns, outbrainSpendByCampaign] = await Promise.all([
+      listOutbrainCampaigns(),
+      getOutbrainMonthlySpendByCampaign(now),
+    ]);
+  } catch (err) {
+    console.warn(
+      "[media-buyer] Outbrain nicht erreichbar — Channel-Sicht fällt aus:",
+      err instanceof Error ? err.message : err,
+    );
+  }
+
   const ctx: RunCtx = {
     campaigns,
     spendByCampaign,
+    outbrainCampaigns,
+    outbrainSpendByCampaign,
     monthStart,
     mtdEnd,
     daysElapsed,
@@ -795,8 +908,16 @@ export type PoolAdminRow = {
   autopilot: boolean;
   maxDailyBudget: number | null;
   campaignKeyword: string | null;
-  // Cost-per-Lead MTD (nur für Produkt-Pools; aus Cost-Tabelle, kein Meta-Call).
+  outbrainCampaignKeyword: string | null;
+  // Cost-per-Lead MTD (Pool-Aggregat; aus Cost-Tabelle, kein Meta-Call).
   cpl: number | null;
+  // Channel-Split aus Lead.adChannel + Cost-Note-Prefix (Phase 1).
+  metaLeadsMtd: number;
+  metaSpendMtd: number;
+  metaCpl: number | null;
+  outbrainLeadsMtd: number;
+  outbrainSpendMtd: number;
+  outbrainCpl: number | null;
   // Letzte Entscheidung des Buyers für diesen Pool (für die Empfehlungs-Karte).
   latestAction: string | null;
   latestReason: string | null;
@@ -845,18 +966,30 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
     return 0;
   };
   // Cost-per-Lead MTD pro Produkt: aus Cost (kind=LEAD, product=X, dieser Monat)
-  // / leadsMtd. Für Region-Pools (Kinderwunsch) gibt's keine regions-spezifischen
-  // Costs → null.
-  const monthCosts = await prisma.cost.groupBy({
-    by: ["product"],
+  // / leadsMtd. Channel-Split aus dem note-Prefix (Meta:/Outbrain:).
+  const monthCostRows = await prisma.cost.findMany({
     where: { kind: "LEAD", occurredAt: { gte: monthStart, lte: mtdEnd } },
-    _sum: { amount: true },
+    select: { product: true, note: true, amount: true },
   });
   const costByProduct = new Map<string, number>();
-  for (const c of monthCosts) {
+  const metaCostByProduct = new Map<string, number>();
+  const outbrainCostByProduct = new Map<string, number>();
+  for (const c of monthCostRows) {
     if (!c.product) continue;
-    const n = decToNumber(c._sum.amount) ?? 0;
-    costByProduct.set(c.product, n);
+    const amount = decToNumber(c.amount) ?? 0;
+    costByProduct.set(c.product, (costByProduct.get(c.product) ?? 0) + amount);
+    const note = c.note ?? "";
+    if (note.startsWith("Meta:")) {
+      metaCostByProduct.set(
+        c.product,
+        (metaCostByProduct.get(c.product) ?? 0) + amount,
+      );
+    } else if (note.startsWith("Outbrain:")) {
+      outbrainCostByProduct.set(
+        c.product,
+        (outbrainCostByProduct.get(c.product) ?? 0) + amount,
+      );
+    }
   }
   // Letzte Entscheidung pro Pool in einem Rutsch holen (vermeidet N+1).
   const latest = await prisma.mediaBuyerAction.findMany({
@@ -870,9 +1003,15 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
   const rows: PoolAdminRow[] = [];
   for (const def of defs) {
     const settings = await ensurePool(def);
-    const leadsMtd = await countPoolLeads(def, monthStart, mtdEnd);
+    const [leadsMtd, metaLeadsMtd, outbrainLeadsMtd] = await Promise.all([
+      countPoolLeads(def, monthStart, mtdEnd),
+      countPoolLeads(def, monthStart, mtdEnd, "Meta"),
+      countPoolLeads(def, monthStart, mtdEnd, "Outbrain"),
+    ]);
     const projected = Math.round((leadsMtd / daysElapsed) * daysTotal);
     const last = latestByKey.get(def.key);
+    const metaSpend = metaCostByProduct.get(def.product) ?? 0;
+    const outbrainSpend = outbrainCostByProduct.get(def.product) ?? 0;
     rows.push({
       key: def.key,
       label: def.label,
@@ -888,10 +1027,18 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
       autopilot: settings.autopilot,
       maxDailyBudget: settings.maxDailyBudget,
       campaignKeyword: settings.campaignKeyword,
+      outbrainCampaignKeyword: settings.outbrainCampaignKeyword,
       cpl:
         def.kind === "product" && leadsMtd > 0
           ? (costByProduct.get(def.product) ?? 0) / leadsMtd
           : null,
+      metaLeadsMtd,
+      metaSpendMtd: metaSpend,
+      metaCpl: metaLeadsMtd > 0 ? metaSpend / metaLeadsMtd : null,
+      outbrainLeadsMtd,
+      outbrainSpendMtd: outbrainSpend,
+      outbrainCpl:
+        outbrainLeadsMtd > 0 ? outbrainSpend / outbrainLeadsMtd : null,
       latestAction: last?.action ?? null,
       latestReason: last?.reason ?? null,
     });

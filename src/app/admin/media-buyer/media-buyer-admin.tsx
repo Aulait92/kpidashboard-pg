@@ -28,7 +28,15 @@ export type PoolDetailRow = {
   autopilot: boolean;
   maxDailyBudget: number | null;
   campaignKeyword: string | null;
+  outbrainCampaignKeyword: string | null;
   cpl: number | null;
+  // Channel-Split (Phase 1 — read-only, Outbrain wird nicht autonom gesteuert).
+  metaLeadsMtd: number;
+  metaSpendMtd: number;
+  metaCpl: number | null;
+  outbrainLeadsMtd: number;
+  outbrainSpendMtd: number;
+  outbrainCpl: number | null;
   latestAction: string | null;
   latestReason: string | null;
 };
@@ -845,13 +853,25 @@ function PoolSettingsList({ pool }: { pool: PoolDetailRow }) {
           </label>
           <label className="block">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">
-              Kampagnen-Keyword
+              Meta-Kampagnen-Keyword
             </span>
             <input
               type="text"
               name="campaignKeyword"
               defaultValue={pool.campaignKeyword ?? ""}
               placeholder={keywordOf(pool)}
+              className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
+            />
+          </label>
+          <label className="block">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">
+              Outbrain-Kampagnen-Keyword
+            </span>
+            <input
+              type="text"
+              name="outbrainCampaignKeyword"
+              defaultValue={pool.outbrainCampaignKeyword ?? ""}
+              placeholder={"z. B. PKV Wechsler (leer = aus)"}
               className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
             />
           </label>

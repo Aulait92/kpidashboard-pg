@@ -48,11 +48,20 @@ export async function savePoolSettings(
   );
   const keywordRaw = String(formData.get("campaignKeyword") ?? "").trim();
   const campaignKeyword = keywordRaw === "" ? null : keywordRaw;
+  const obKeywordRaw = String(
+    formData.get("outbrainCampaignKeyword") ?? "",
+  ).trim();
+  const outbrainCampaignKeyword = obKeywordRaw === "" ? null : obKeywordRaw;
   const autopilot = formData.get("autopilot") === "on";
 
   await prisma.deliveryPool.update({
     where: { key },
-    data: { maxDailyBudget, campaignKeyword, autopilot },
+    data: {
+      maxDailyBudget,
+      campaignKeyword,
+      outbrainCampaignKeyword,
+      autopilot,
+    },
   });
 
   revalidatePath("/admin/media-buyer");
