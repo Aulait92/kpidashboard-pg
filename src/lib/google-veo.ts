@@ -82,7 +82,9 @@ async function startVideoOperation(prompt: string): Promise<string> {
     parameters: {
       durationSeconds,
       aspectRatio,
-      personGeneration: "allow_adult",
+      // personGeneration absichtlich nicht gesetzt — die akzeptierten Werte
+      // variieren je Region und Modell-Tier, und ein abgelehnter Wert
+      // killt den ganzen Job mit 400. Veo nutzt seinen Default.
       ...(negativePrompt ? { negativePrompt } : {}),
     },
   };
