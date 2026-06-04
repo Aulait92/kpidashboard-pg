@@ -1758,7 +1758,11 @@ function buildVeoSegmentPrompt(
     continuityHint
       ? `\nVisuelle Kontinuität: ${continuityHint}`
       : "",
-    `\nWICHTIG: KEINEN Text, KEINE Beschriftungen, KEINE Logos und KEINE Schriftzeichen im Bild einblenden. Auch keine Captions, Lower-Thirds oder CTA-Banner — nur reine Bewegtbild- und Audiodarstellung. Die Untertitel werden im Anschluss separat eingebrannt.`,
+    `\nABSOLUT KRITISCH — ZU NULL GESPROCHENER TEXT IM BILD:
+- KEIN geschriebenes Wort, KEIN Buchstabe, KEINE Zahl, KEINE Beschriftung, KEIN Logo, KEIN Schild, KEIN Plakat, KEIN T-Shirt-Aufdruck, KEIN Display, KEIN Smartphone-Screen mit lesbarem Inhalt.
+- KEINE Captions, KEINE Untertitel, KEIN Lower-Third, KEIN CTA-Banner.
+- KEINE handgeschriebenen Notizen, KEINE Whiteboards mit Text, KEINE Bücher mit lesbarem Titel.
+Wenn etwas wie Schrift im Bild aussieht, ist es ein FEHLER. Untertitel kommen im Post-Processing separat — du brauchst NICHTS davon zu zeichnen.`,
     `\nAudio: deutsche Sprecher:in, authentisch, nicht werblich. Keine medizinischen Garantien oder Heilversprechen aussprechen.`,
     `\nVisuelle Sprache: authentisch, natürlich beleuchtet, kein Stock-Photo-Look.`,
   ]
@@ -1877,7 +1881,7 @@ async function generateOneVideoCreative(
       segmentDurationSum += r.value.durationSec;
     } else {
       const msg = r.reason instanceof Error ? r.reason.message : String(r.reason);
-      await onProgress?.(`⚠️ ${label}-Clip failte: ${msg.slice(0, 180)}`);
+      await onProgress?.(`⚠️ ${label}-Clip failte: ${msg.slice(0, 800)}`);
     }
   }
   if (buffers.length === 0) {

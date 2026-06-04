@@ -472,21 +472,16 @@ export async function burnGermanSubtitles(
       "yuv420p",
     ];
     if (needsPadding) {
-      // apad braucht Audio-Reencode (geht nicht mit -c:a copy). tpad und apad
-      // verlängern Video- und Audio-Stream beide um padSec — Output endet
-      // bei sora_duration + padSec.
-      args.push(
-        "-af",
-        `apad=pad_dur=${padSec.toFixed(3)}`,
-        "-c:a",
-        "aac",
-        "-b:a",
-        "128k",
-        // async hält Audio-Timestamps eng am Video — vermeidet Sync-Drift
-        // mit der gepaddet Stille.
-        "-async",
-        "1",
-      );
+      // apad braucht Audio-Reencode (geht nicht mit -c:a copy). Wir nutzen
+      // apad OHNE pad_dur-Param (in älteren ffmpeg-Builds nicht verfügbar)
+      // — apad pads unbegrenzt mit Stille, der gewünschte Endpunkt wird per
+      // -t (Input-Dauer + padSec) durchgesetzt. tpad bringt das Video-Stream
+      // synchron auf dieselbe Endlänge.
+      args.push("-af", "apad", "-c:a", "aac", "-b:a", "128k", "-async", "1");
+      if (sora.inputDuration) {
+        const targetDur = sora.inputDuration + padSec;
+        args.push("-t", targetDur.toFixed(3));
+      }
     } else {
       args.push("-c:a", "copy");
     }

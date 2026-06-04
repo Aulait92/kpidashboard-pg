@@ -71,7 +71,12 @@ async function startVideoOperation(prompt: string): Promise<string> {
   const model = process.env.VEO_MODEL ?? "veo-3.0-generate-001";
   const durationSeconds = Number(process.env.VEO_DURATION_SEC ?? 8);
   const aspectRatio = process.env.VEO_ASPECT_RATIO ?? "16:9";
-  const negativePrompt = process.env.VEO_NEGATIVE_PROMPT ?? "";
+  // Standard-Negative-Prompt unterbindet die Buchstaben-Soup, die Veo (wie
+  // alle Diffusion-Video-Modelle) sonst gerne als On-Screen-Text ins Bild
+  // packt. Override per VEO_NEGATIVE_PROMPT möglich.
+  const negativePrompt =
+    process.env.VEO_NEGATIVE_PROMPT ??
+    "text, captions, subtitles, on-screen text, written words, letters, logos, watermarks, signs, graphics overlays, lower thirds, CTA banners, typography, gibberish text, kauderwelsch";
 
   console.log(
     `[veo] startVideoOperation model=${model} seconds=${durationSeconds} aspect=${aspectRatio} promptLen=${prompt.length}`,
