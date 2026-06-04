@@ -28,16 +28,21 @@ export type PoolDetailRow = {
   autopilot: boolean;
   maxDailyBudget: number | null;
   outbrainMaxDailyBudget: number | null;
+  tiktokMaxDailyBudget: number | null;
   campaignKeyword: string | null;
   outbrainCampaignKeyword: string | null;
+  tiktokCampaignKeyword: string | null;
   cpl: number | null;
-  // Channel-Split (Phase 1 — read-only, Outbrain wird nicht autonom gesteuert).
+  // Channel-Split (Meta / Outbrain / TikTok).
   metaLeadsMtd: number;
   metaSpendMtd: number;
   metaCpl: number | null;
   outbrainLeadsMtd: number;
   outbrainSpendMtd: number;
   outbrainCpl: number | null;
+  tiktokLeadsMtd: number;
+  tiktokSpendMtd: number;
+  tiktokCpl: number | null;
   latestAction: string | null;
   latestReason: string | null;
 };
@@ -743,14 +748,13 @@ function ArcGauge({
 // ─── Channel-Split (Meta vs. Outbrain) ──────────────────────────────
 
 function ChannelSplitCard({ pool }: { pool: PoolDetailRow }) {
-  const totalChannelLeads = pool.metaLeadsMtd + pool.outbrainLeadsMtd;
-  // Wenn beide Channels 0 Leads UND 0 Spend haben, blenden wir die Karte aus —
-  // dann ist die Channel-Sicht für diesen Pool noch leer (kein adChannel auf
-  // Leads, kein Werbespend matched).
+  const totalChannelLeads =
+    pool.metaLeadsMtd + pool.outbrainLeadsMtd + pool.tiktokLeadsMtd;
   if (
     totalChannelLeads === 0 &&
     pool.metaSpendMtd === 0 &&
-    pool.outbrainSpendMtd === 0
+    pool.outbrainSpendMtd === 0 &&
+    pool.tiktokSpendMtd === 0
   ) {
     return null;
   }
@@ -779,6 +783,15 @@ function ChannelSplitCard({ pool }: { pool: PoolDetailRow }) {
       share:
         totalChannelLeads > 0 ? pool.outbrainLeadsMtd / totalChannelLeads : 0,
       color: "bg-amber-500",
+    },
+    {
+      label: "TikTok",
+      leads: pool.tiktokLeadsMtd,
+      spend: pool.tiktokSpendMtd,
+      cpl: pool.tiktokCpl,
+      share:
+        totalChannelLeads > 0 ? pool.tiktokLeadsMtd / totalChannelLeads : 0,
+      color: "bg-rose-500",
     },
   ];
 
@@ -874,9 +887,13 @@ function PoolSettingsList({ pool }: { pool: PoolDetailRow }) {
       fd.set("maxDailyBudget", String(pool.maxDailyBudget));
     if (pool.outbrainMaxDailyBudget != null)
       fd.set("outbrainMaxDailyBudget", String(pool.outbrainMaxDailyBudget));
+    if (pool.tiktokMaxDailyBudget != null)
+      fd.set("tiktokMaxDailyBudget", String(pool.tiktokMaxDailyBudget));
     if (pool.campaignKeyword) fd.set("campaignKeyword", pool.campaignKeyword);
     if (pool.outbrainCampaignKeyword)
       fd.set("outbrainCampaignKeyword", pool.outbrainCampaignKeyword);
+    if (pool.tiktokCampaignKeyword)
+      fd.set("tiktokCampaignKeyword", pool.tiktokCampaignKeyword);
     startAutopilotTransition(async () => {
       const res = await savePoolSettings({}, fd);
       if (res.error) setAutopilotOn(pool.autopilot);
@@ -988,6 +1005,20 @@ function PoolSettingsList({ pool }: { pool: PoolDetailRow }) {
           </label>
           <label className="block">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">
+              TikTok-Max-Budget / Tag (€)
+            </span>
+            <input
+              type="number"
+              name="tiktokMaxDailyBudget"
+              min={0}
+              step={5}
+              defaultValue={pool.tiktokMaxDailyBudget ?? ""}
+              placeholder="Env-Default"
+              className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm tabular-nums focus:border-[color:var(--brand)] focus:outline-none"
+            />
+          </label>
+          <label className="block">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">
               Meta-Kampagnen-Keyword
             </span>
             <input
@@ -1007,6 +1038,18 @@ function PoolSettingsList({ pool }: { pool: PoolDetailRow }) {
               name="outbrainCampaignKeyword"
               defaultValue={pool.outbrainCampaignKeyword ?? ""}
               placeholder={"z. B. PKV Wechsler (leer = aus)"}
+              className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
+            />
+          </label>
+          <label className="block">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">
+              TikTok-Kampagnen-Keyword
+            </span>
+            <input
+              type="text"
+              name="tiktokCampaignKeyword"
+              defaultValue={pool.tiktokCampaignKeyword ?? ""}
+              placeholder={"z. B. PKV-Wechsler (leer = aus)"}
               className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
             />
           </label>

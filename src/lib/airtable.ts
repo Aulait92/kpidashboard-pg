@@ -28,6 +28,8 @@ const CLOSED_STATUS = "Abschluss";
 function classifyChannel(raw: string | null): string | null {
   if (!raw) return null;
   const n = raw.toLowerCase();
+  if (n.includes("tiktok") || n.includes("tik tok") || n.includes("tt"))
+    return "TikTok";
   if (n.includes("meta") || n.includes("facebook") || n.includes("instagram") || n.includes("fb") || n.includes("ig"))
     return "Meta";
   if (n.includes("outbrain") || n.includes("amplify")) return "Outbrain";

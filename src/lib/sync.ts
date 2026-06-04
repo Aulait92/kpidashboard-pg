@@ -1,6 +1,7 @@
 import { syncAirtable, type SyncResult } from "@/lib/airtable";
 import { syncMeta, type MetaSyncResult } from "@/lib/meta";
 import { syncOutbrain, type OutbrainSyncResult } from "@/lib/outbrain";
+import { syncTikTok, type TikTokSyncResult } from "@/lib/tiktok";
 import { sendToAdmins, sendToBuyersOfCustomer } from "@/lib/push";
 
 export type FullSyncResult = {
@@ -8,6 +9,9 @@ export type FullSyncResult = {
   meta: { ok: true; result: MetaSyncResult } | { ok: false; error: string };
   outbrain:
     | { ok: true; result: OutbrainSyncResult }
+    | { ok: false; error: string };
+  tiktok:
+    | { ok: true; result: TikTokSyncResult }
     | { ok: false; error: string };
   push: { sent: number; removed: number };
 };
@@ -38,6 +42,17 @@ export async function runFullSync(): Promise<FullSyncResult> {
     outbrain = { ok: true, result: outbrainResult };
   } catch (err) {
     outbrain = {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+
+  let tiktok: FullSyncResult["tiktok"];
+  try {
+    const tiktokResult = await syncTikTok();
+    tiktok = { ok: true, result: tiktokResult };
+  } catch (err) {
+    tiktok = {
       ok: false,
       error: err instanceof Error ? err.message : String(err),
     };
@@ -77,6 +92,7 @@ export async function runFullSync(): Promise<FullSyncResult> {
     airtable,
     meta,
     outbrain,
+    tiktok,
     push: { sent: pushSent, removed: pushRemoved },
   };
 }

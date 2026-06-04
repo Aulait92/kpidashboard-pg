@@ -88,9 +88,10 @@ function parseMonthEnd(key: string): Date {
 // Werbespend-Kanäle, abgeleitet vom Cost.note-Prefix.
 //   meta:     "Meta: …"        (Facebook Ads, syncMeta)
 //   outbrain: "Outbrain: …"    (Amplify, syncOutbrain)
-//   other:    keiner der beiden Präfixe (manuelle/direkte LEAD-Kosten)
+//   tiktok:   "TikTok: …"      (TikTok Ads, syncTikTok)
+//   other:    keiner der drei Präfixe (manuelle/direkte LEAD-Kosten)
 // Wird in der P&L genutzt, um Lead-Kosten je Produkt nach Kanal aufzuschlüsseln.
-export type LeadChannel = "meta" | "outbrain" | "other";
+export type LeadChannel = "meta" | "outbrain" | "tiktok" | "other";
 
 function channelWhereClause(
   channel: LeadChannel | undefined,
@@ -98,11 +99,12 @@ function channelWhereClause(
   if (!channel) return {};
   if (channel === "meta") return { note: { startsWith: "Meta:" } };
   if (channel === "outbrain") return { note: { startsWith: "Outbrain:" } };
-  // "other": weder Meta- noch Outbrain-Prefix.
+  if (channel === "tiktok") return { note: { startsWith: "TikTok:" } };
   return {
     NOT: [
       { note: { startsWith: "Meta:" } },
       { note: { startsWith: "Outbrain:" } },
+      { note: { startsWith: "TikTok:" } },
     ],
   };
 }
@@ -710,6 +712,7 @@ export async function computeProductBreakdown(params: {
 export type ChannelPerformance = {
   meta: ChannelStats;
   outbrain: ChannelStats;
+  tiktok: ChannelStats;
   other: ChannelStats; // Leads ohne Channel-Match oder ohne Source-Wert.
 };
 
@@ -755,7 +758,10 @@ export async function computeChannelPerformance(params: {
   }
   const metaLeads = statsFor((c) => c === "Meta");
   const outbrainLeads = statsFor((c) => c === "Outbrain");
-  const otherLeads = statsFor((c) => c !== "Meta" && c !== "Outbrain");
+  const tiktokLeads = statsFor((c) => c === "TikTok");
+  const otherLeads = statsFor(
+    (c) => c !== "Meta" && c !== "Outbrain" && c !== "TikTok",
+  );
 
   // Spend pro Kanal — globale Brutto-Sicht (siehe computeLeadSpendByChannel).
   // Kunden-Filter wird hier bewusst ignoriert, weil Werbespend nicht 1:1
@@ -770,12 +776,14 @@ export async function computeChannelPerformance(params: {
   });
   let metaSpend = 0;
   let outbrainSpend = 0;
+  let tiktokSpend = 0;
   let otherSpend = 0;
   for (const c of channelCosts) {
     const amount = decToNumber(c.amount);
     const note = c.note ?? "";
     if (note.startsWith("Meta:")) metaSpend += amount;
     else if (note.startsWith("Outbrain:")) outbrainSpend += amount;
+    else if (note.startsWith("TikTok:")) tiktokSpend += amount;
     else otherSpend += amount;
   }
 
@@ -795,6 +803,7 @@ export async function computeChannelPerformance(params: {
   return {
     meta: pack(metaLeads, metaSpend),
     outbrain: pack(outbrainLeads, outbrainSpend),
+    tiktok: pack(tiktokLeads, tiktokSpend),
     other: pack(otherLeads, otherSpend),
   };
 }
@@ -807,6 +816,7 @@ export async function computeChannelPerformance(params: {
 export type ChannelSpend = {
   meta: number;
   outbrain: number;
+  tiktok: number;
   other: number;
   total: number;
 };
@@ -827,15 +837,17 @@ export async function computeLeadSpendByChannel(params: {
   });
   let meta = 0;
   let outbrain = 0;
+  let tiktok = 0;
   let other = 0;
   for (const c of costs) {
     const amount = decToNumber(c.amount);
     const note = c.note ?? "";
     if (note.startsWith("Meta:")) meta += amount;
     else if (note.startsWith("Outbrain:")) outbrain += amount;
+    else if (note.startsWith("TikTok:")) tiktok += amount;
     else other += amount;
   }
-  return { meta, outbrain, other, total: meta + outbrain + other };
+  return { meta, outbrain, tiktok, other, total: meta + outbrain + tiktok + other };
 }
 
 export type Granularity = "day" | "week" | "month";
@@ -1251,6 +1263,7 @@ export async function computePnL(params: {
   const channels: { key: LeadChannel; label: string }[] = [
     { key: "meta", label: "Meta" },
     { key: "outbrain", label: "Outbrain" },
+    { key: "tiktok", label: "TikTok" },
     { key: "other", label: "Direkt" },
   ];
   const leadCostMatrix = await Promise.all(

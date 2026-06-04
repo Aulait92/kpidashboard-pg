@@ -57,6 +57,16 @@ async function handle(req: Request) {
             debug: result.outbrain.result.debug,
           }
         : { ok: false, error: result.outbrain.error },
+      tiktok: result.tiktok.ok
+        ? {
+            ok: true,
+            costs: result.tiktok.result.costs,
+            advertisers: result.tiktok.result.advertisers,
+            errors: result.tiktok.result.errors,
+            unmatched: result.tiktok.result.unmatched,
+            debug: result.tiktok.result.debug,
+          }
+        : { ok: false, error: result.tiktok.error },
       push: result.push,
     });
   } catch (err) {

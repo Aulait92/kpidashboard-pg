@@ -56,6 +56,15 @@ import {
   setCampaignStatus as setOutbrainCampaignStatus,
   type OutbrainCampaign,
 } from "@/lib/outbrain-ads";
+import {
+  findCampaignsByKeyword as findTikTokCampaignsByKeyword,
+  getMonthlySpendByCampaign as getTikTokMonthlySpendByCampaign,
+  getSpendByCampaign as getTikTokSpendByCampaign,
+  listCampaigns as listTikTokCampaigns,
+  setCampaignDailyBudget as setTikTokCampaignDailyBudget,
+  setCampaignStatus as setTikTokCampaignStatus,
+  type TikTokCampaign,
+} from "@/lib/tiktok-ads";
 import { prisma } from "@/lib/prisma";
 import { sendToAdmins } from "@/lib/push";
 
@@ -89,6 +98,9 @@ export type PoolResult = {
   outbrainLeadsMtd: number;
   outbrainSpendMtd: number;
   outbrainCpl: number | null;
+  tiktokLeadsMtd: number;
+  tiktokSpendMtd: number;
+  tiktokCpl: number | null;
   error?: string;
 };
 
@@ -424,11 +436,13 @@ export async function derivePoolDefs(now: Date = new Date()): Promise<PoolDef[]>
 
 type PoolSettings = {
   autopilot: boolean;
-  // maxDailyBudget = Meta-Cap (Historie); outbrainMaxDailyBudget separat.
+  // maxDailyBudget = Meta-Cap (Historie); outbrain-/tiktokMaxDailyBudget separat.
   maxDailyBudget: number | null;
   outbrainMaxDailyBudget: number | null;
+  tiktokMaxDailyBudget: number | null;
   campaignKeyword: string | null;
   outbrainCampaignKeyword: string | null;
+  tiktokCampaignKeyword: string | null;
 };
 
 // Stellt sicher, dass für jeden abgeleiteten Pool eine DeliveryPool-Zeile
@@ -448,16 +462,20 @@ async function ensurePool(def: PoolDef): Promise<PoolSettings> {
       autopilot: true,
       maxDailyBudget: true,
       outbrainMaxDailyBudget: true,
+      tiktokMaxDailyBudget: true,
       campaignKeyword: true,
       outbrainCampaignKeyword: true,
+      tiktokCampaignKeyword: true,
     },
   });
   return {
     autopilot: pool.autopilot,
     maxDailyBudget: decToNumber(pool.maxDailyBudget),
     outbrainMaxDailyBudget: decToNumber(pool.outbrainMaxDailyBudget),
+    tiktokMaxDailyBudget: decToNumber(pool.tiktokMaxDailyBudget),
     campaignKeyword: pool.campaignKeyword,
     outbrainCampaignKeyword: pool.outbrainCampaignKeyword,
+    tiktokCampaignKeyword: pool.tiktokCampaignKeyword,
   };
 }
 
@@ -507,11 +525,12 @@ type RunCtx = {
   spendByCampaign: Map<string, number>;
   outbrainCampaigns: OutbrainCampaign[];
   outbrainSpendByCampaign: Map<string, number>;
-  // Rolling-Lookback-Spend für die CPL-Decision. Separater Topf vom MTD-Spend
-  // damit das Admin-UI weiter MTD anzeigen kann, der Buyer aber auf
-  // jüngere Performance reagiert.
+  tiktokCampaigns: TikTokCampaign[];
+  tiktokSpendByCampaign: Map<string, number>;
+  // Rolling-Lookback-Spend für die CPL-Decision.
   recentSpendByCampaign: Map<string, number>;
   recentOutbrainSpendByCampaign: Map<string, number>;
+  recentTiktokSpendByCampaign: Map<string, number>;
   recentSince: Date;
   monthStart: Date;
   mtdEnd: Date;
@@ -521,6 +540,8 @@ type RunCtx = {
   defaultMaxBudget: number;
   outbrainMinBudget: number;
   outbrainDefaultMaxBudget: number;
+  tiktokMinBudget: number;
+  tiktokDefaultMaxBudget: number;
   maxStep: number;
   boostDays: number;
   precisionDays: number;
@@ -529,90 +550,144 @@ type RunCtx = {
   dryRun: boolean;
 };
 
-// Verteilt das Gesamt-Tagesbudget des Pools auf Meta und Outbrain. Strategie:
-// inverse-CPL-Gewichtung — der günstigere Channel bekommt den größeren Anteil.
-// Wenn ein Channel keine CPL-Historie hat, fällt's auf die aktuelle Budget-
-// Verteilung zurück (oder 50/50, wenn auch das nicht da ist). Per-Channel
-// Min/Max-Caps werden hart respektiert; Über-/Unterhang wird auf den anderen
-// Channel umgewälzt, soweit dessen Cap das zulässt.
+// Verteilt das Gesamt-Tagesbudget des Pools auf N Channels (Meta, Outbrain,
+// TikTok). Strategie: inverse-CPL-Gewichtung — der günstigere Channel bekommt
+// den größeren Anteil. Wenn ein Channel keine CPL-Historie hat, fällt's auf
+// die aktuelle Budget-Verteilung zurück (oder gleichgewichtet, wenn auch das
+// nicht da ist). Per-Channel Min/Max-Caps werden hart respektiert; Über-/
+// Unterhang wandert auf die anderen verfügbaren Channels, soweit deren Caps
+// das hergeben.
+export type ChannelAllocation = {
+  metaBudget: number;
+  outbrainBudget: number;
+  tiktokBudget: number;
+};
+
 export function allocateBudgetAcrossChannels(params: {
   target: number;
-  // Aktuelle Budgets (für den Fallback und um „nichts ändern" zu erkennen).
   metaCurrent: number;
   outbrainCurrent: number;
-  // CPLs (null wenn nicht messbar).
+  tiktokCurrent: number;
   metaCpl: number | null;
   outbrainCpl: number | null;
-  // Per-Channel Caps.
+  tiktokCpl: number | null;
   metaMin: number;
   metaMax: number;
   outbrainMin: number;
   outbrainMax: number;
-  // Wenn ein Channel deaktiviert ist (kein Keyword/keine matched Kampagne),
-  // bekommt er 0 — der ganze Topf geht an den anderen.
+  tiktokMin: number;
+  tiktokMax: number;
   metaAvailable: boolean;
   outbrainAvailable: boolean;
-}): { metaBudget: number; outbrainBudget: number } {
-  const {
-    target,
-    metaCurrent,
-    outbrainCurrent,
-    metaCpl,
-    outbrainCpl,
-    metaMin,
-    metaMax,
-    outbrainMin,
-    outbrainMax,
-    metaAvailable,
-    outbrainAvailable,
-  } = params;
-
-  if (!metaAvailable && !outbrainAvailable) return { metaBudget: 0, outbrainBudget: 0 };
-  if (metaAvailable && !outbrainAvailable) {
-    return { metaBudget: clamp(target, metaMin, metaMax), outbrainBudget: 0 };
-  }
-  if (!metaAvailable && outbrainAvailable) {
-    return {
-      metaBudget: 0,
-      outbrainBudget: clamp(target, outbrainMin, outbrainMax),
-    };
-  }
-
-  // Beide Channels verfügbar — Gewicht je Channel berechnen.
-  let metaShare = 0.5;
-  if (metaCpl != null && metaCpl > 0 && outbrainCpl != null && outbrainCpl > 0) {
-    const wMeta = 1 / metaCpl;
-    const wOb = 1 / outbrainCpl;
-    metaShare = wMeta / (wMeta + wOb);
-  } else if (metaCpl != null && metaCpl > 0 && outbrainCpl == null) {
-    // Meta hat Historie, Outbrain noch nicht → bisschen Probe-Budget auf
-    // Outbrain (Min), Rest an Meta.
-    metaShare = 1.0;
-  } else if (outbrainCpl != null && outbrainCpl > 0 && metaCpl == null) {
-    metaShare = 0.0;
-  } else if (metaCurrent + outbrainCurrent > 0) {
-    metaShare = metaCurrent / (metaCurrent + outbrainCurrent);
-  }
-
-  let metaBudget = target * metaShare;
-  let outbrainBudget = target - metaBudget;
-
-  // Min/Max-Clamps pro Channel. Wenn das Clamping einen Über-/Unterhang
-  // erzeugt, geht er auf den anderen Channel — soweit dessen Cap das hergibt.
-  const metaClamped = clamp(metaBudget, metaMin, metaMax);
-  let overflow = metaBudget - metaClamped;
-  metaBudget = metaClamped;
-  outbrainBudget = outbrainBudget + overflow;
-  const obClamped = clamp(outbrainBudget, outbrainMin, outbrainMax);
-  overflow = outbrainBudget - obClamped;
-  outbrainBudget = obClamped;
-  // Zweiter Pass für Meta, falls Outbrain übergelaufen ist.
-  metaBudget = clamp(metaBudget + overflow, metaMin, metaMax);
-
-  return {
-    metaBudget: Math.round(metaBudget * 100) / 100,
-    outbrainBudget: Math.round(outbrainBudget * 100) / 100,
+  tiktokAvailable: boolean;
+}): ChannelAllocation {
+  const ch: {
+    key: "meta" | "outbrain" | "tiktok";
+    available: boolean;
+    current: number;
+    cpl: number | null;
+    min: number;
+    max: number;
+  }[] = [
+    {
+      key: "meta",
+      available: params.metaAvailable,
+      current: params.metaCurrent,
+      cpl: params.metaCpl,
+      min: params.metaMin,
+      max: params.metaMax,
+    },
+    {
+      key: "outbrain",
+      available: params.outbrainAvailable,
+      current: params.outbrainCurrent,
+      cpl: params.outbrainCpl,
+      min: params.outbrainMin,
+      max: params.outbrainMax,
+    },
+    {
+      key: "tiktok",
+      available: params.tiktokAvailable,
+      current: params.tiktokCurrent,
+      cpl: params.tiktokCpl,
+      min: params.tiktokMin,
+      max: params.tiktokMax,
+    },
+  ];
+  const active = ch.filter((c) => c.available);
+  const result: ChannelAllocation = {
+    metaBudget: 0,
+    outbrainBudget: 0,
+    tiktokBudget: 0,
   };
+  if (active.length === 0) return result;
+
+  // Gewichte: wenn alle aktiven Channels einen CPL haben, inverse-CPL.
+  // Wenn manche null sind: gleicher Anteil (Probe), wenn alle null:
+  // proportional zum aktuellen Budget oder gleichgewichtet.
+  const withCpl = active.filter((c) => c.cpl != null && c.cpl > 0);
+  let shares = new Map<string, number>();
+  if (withCpl.length === active.length) {
+    const totalW = active.reduce((s, c) => s + 1 / (c.cpl as number), 0);
+    for (const c of active) {
+      shares.set(c.key, 1 / (c.cpl as number) / totalW);
+    }
+  } else if (withCpl.length > 0) {
+    // Aktive mit CPL kriegen inverse-CPL-Anteil aus 80% des Topfes; die
+    // ohne CPL teilen sich 20% (Probe-Budget zum Lernen).
+    const probeShare = 0.2;
+    const knownPart = 1 - probeShare;
+    const totalW = withCpl.reduce((s, c) => s + 1 / (c.cpl as number), 0);
+    for (const c of withCpl) {
+      shares.set(c.key, (knownPart * 1) / (c.cpl as number) / totalW);
+    }
+    const unknown = active.filter((c) => !shares.has(c.key));
+    for (const c of unknown) {
+      shares.set(c.key, probeShare / unknown.length);
+    }
+  } else {
+    // Niemand hat CPL → proportional zum aktuellen Budget, sonst gleich.
+    const totalCurrent = active.reduce((s, c) => s + c.current, 0);
+    if (totalCurrent > 0) {
+      for (const c of active) shares.set(c.key, c.current / totalCurrent);
+    } else {
+      for (const c of active) shares.set(c.key, 1 / active.length);
+    }
+  }
+
+  // Initial-Allokation und Min/Max-Clamp-Iteration. Mehrere Pässe, weil ein
+  // Clamp auf einem Channel Überhang auf andere wirft und die neu clampen.
+  const budgets = new Map<string, number>();
+  for (const c of active) {
+    budgets.set(c.key, params.target * (shares.get(c.key) ?? 0));
+  }
+  for (let pass = 0; pass < 4; pass++) {
+    let overflow = 0;
+    for (const c of active) {
+      const raw = budgets.get(c.key) ?? 0;
+      const clamped = clamp(raw, c.min, c.max);
+      overflow += raw - clamped;
+      budgets.set(c.key, clamped);
+    }
+    if (Math.abs(overflow) < 0.5) break;
+    // Verteile overflow auf Channels mit Kapazität (raw < max bei pos
+    // overflow, raw > min bei neg overflow).
+    const eligible = active.filter((c) => {
+      const v = budgets.get(c.key) ?? 0;
+      return overflow > 0 ? v < c.max : v > c.min;
+    });
+    if (eligible.length === 0) break;
+    const perChannel = overflow / eligible.length;
+    for (const c of eligible) {
+      budgets.set(c.key, (budgets.get(c.key) ?? 0) + perChannel);
+    }
+  }
+
+  const round = (v: number) => Math.round(v * 100) / 100;
+  result.metaBudget = round(budgets.get("meta") ?? 0);
+  result.outbrainBudget = round(budgets.get("outbrain") ?? 0);
+  result.tiktokBudget = round(budgets.get("tiktok") ?? 0);
+  return result;
 }
 
 function matchOutbrainPoolCampaigns(
@@ -623,9 +698,22 @@ function matchOutbrainPoolCampaigns(
   if (keywordOverride && keywordOverride.trim()) {
     return findOutbrainCampaignsByKeyword(campaigns, keywordOverride);
   }
-  // Ohne explizites Keyword versuchen wir den Produktnamen — bei Region-
-  // Pools zusätzlich den Region-Namen. Outbrain-Naming ist oft anders als
-  // Meta, deshalb ist das Override-Feld in der Praxis wichtiger.
+  if (def.kind === "product") {
+    const p = def.product.toLowerCase();
+    return campaigns.filter((c) => c.name.toLowerCase().includes(p));
+  }
+  const region = def.region!.toLowerCase();
+  return campaigns.filter((c) => c.name.toLowerCase().includes(region));
+}
+
+function matchTikTokPoolCampaigns(
+  def: PoolDef,
+  campaigns: TikTokCampaign[],
+  keywordOverride: string | null,
+): TikTokCampaign[] {
+  if (keywordOverride && keywordOverride.trim()) {
+    return findTikTokCampaignsByKeyword(campaigns, keywordOverride);
+  }
   if (def.kind === "product") {
     const p = def.product.toLowerCase();
     return campaigns.filter((c) => c.name.toLowerCase().includes(p));
@@ -661,6 +749,9 @@ async function processPool(
     outbrainLeadsMtd: 0,
     outbrainSpendMtd: 0,
     outbrainCpl: null,
+    tiktokLeadsMtd: 0,
+    tiktokSpendMtd: 0,
+    tiktokCpl: null,
   };
 
   try {
@@ -675,16 +766,18 @@ async function processPool(
     base.projected = projected;
 
     // Channel-Breakdown: getrennte Lead-Zähler und Spend aus den Cost-Tabellen
-    // bzw. den Ad-APIs. Wird auch dann ausgewertet, wenn nur einer der beiden
-    // Channels aktiv ist (der andere ist dann 0).
-    const [metaLeadsMtd, outbrainLeadsMtd] = await Promise.all([
+    // bzw. den Ad-APIs. Wird auch dann ausgewertet, wenn nur einer der drei
+    // Channels aktiv ist (die anderen sind dann 0).
+    const [metaLeadsMtd, outbrainLeadsMtd, tiktokLeadsMtd] = await Promise.all([
       countPoolLeads(def, ctx.monthStart, ctx.mtdEnd, "Meta"),
       countPoolLeads(def, ctx.monthStart, ctx.mtdEnd, "Outbrain"),
+      countPoolLeads(def, ctx.monthStart, ctx.mtdEnd, "TikTok"),
     ]);
     base.metaLeadsMtd = metaLeadsMtd;
     base.outbrainLeadsMtd = outbrainLeadsMtd;
+    base.tiktokLeadsMtd = tiktokLeadsMtd;
 
-    // Outbrain-Spend zuerst ausrechnen, ist immer rein lesend.
+    // Outbrain- und TikTok-Spend ausrechnen.
     const matchedOutbrain = matchOutbrainPoolCampaigns(
       def,
       ctx.outbrainCampaigns,
@@ -698,6 +791,21 @@ async function processPool(
     base.outbrainCpl =
       outbrainLeadsMtd > 0 && outbrainSpend > 0
         ? outbrainSpend / outbrainLeadsMtd
+        : null;
+
+    const matchedTikTok = matchTikTokPoolCampaigns(
+      def,
+      ctx.tiktokCampaigns,
+      settings.tiktokCampaignKeyword,
+    );
+    const tiktokSpend = matchedTikTok.reduce(
+      (s, c) => s + (ctx.tiktokSpendByCampaign.get(c.id) ?? 0),
+      0,
+    );
+    base.tiktokSpendMtd = tiktokSpend;
+    base.tiktokCpl =
+      tiktokLeadsMtd > 0 && tiktokSpend > 0
+        ? tiktokSpend / tiktokLeadsMtd
         : null;
 
     const matched = matchPoolCampaigns(
@@ -718,14 +826,17 @@ async function processPool(
     // Outbrain-Steuerstatus: nur Kampagnen mit budgetId sind via PUT änderbar
     // (Shared-/Lifetime-Budget-Kampagnen sind read-only).
     const outbrainSteerable = matchedOutbrain.filter((c) => c.budgetId).length > 0;
+    // TikTok-Steuerstatus: nur BUDGET_MODE_DAY ist sinnvoll steuerbar.
+    const tiktokSteerable = matchedTikTok.filter((c) => c.hasDailyBudget).length > 0;
 
     base.campaigns = [
       ...matched.map((c) => c.name),
       ...matchedOutbrain.map((c) => `Outbrain: ${c.name}`),
+      ...matchedTikTok.map((c) => `TikTok: ${c.name}`),
     ];
 
-    if (!metaSteerable && !outbrainSteerable) {
-      base.reason = `Keine steuerbaren Kampagnen für Pool "${def.label}" — weder Meta noch Outbrain matched/steuerbar.`;
+    if (!metaSteerable && !outbrainSteerable && !tiktokSteerable) {
+      base.reason = `Keine steuerbaren Kampagnen für Pool "${def.label}" — weder Meta noch Outbrain noch TikTok matched/steuerbar.`;
       base.error = base.reason;
       return base;
     }
@@ -738,7 +849,10 @@ async function processPool(
     const outbrainCurrent = matchedOutbrain
       .filter((c) => c.budgetId)
       .reduce((s, c) => s + c.dailyBudgetEur, 0);
-    const currentBudget = metaCurrent + outbrainCurrent;
+    const tiktokCurrent = matchedTikTok
+      .filter((c) => c.hasDailyBudget)
+      .reduce((s, c) => s + c.dailyBudgetEur, 0);
+    const currentBudget = metaCurrent + outbrainCurrent + tiktokCurrent;
 
     // Meta-Spend MTD (fürs Display) + Lookback (für CPL-Entscheidung).
     const metaSpend = matched.reduce(
@@ -750,21 +864,27 @@ async function processPool(
       (s, c) => s + (ctx.recentSpendByCampaign.get(c.id) ?? 0),
       0,
     );
-    // Channel-Lead-Counts im Lookback-Fenster.
-    const [metaLeadsRecent, outbrainLeadsRecent] = await Promise.all([
-      countPoolLeads(def, ctx.recentSince, ctx.mtdEnd, "Meta"),
-      countPoolLeads(def, ctx.recentSince, ctx.mtdEnd, "Outbrain"),
-    ]);
-    const recentLeadsTotal = metaLeadsRecent + outbrainLeadsRecent;
+    const [metaLeadsRecent, outbrainLeadsRecent, tiktokLeadsRecent] =
+      await Promise.all([
+        countPoolLeads(def, ctx.recentSince, ctx.mtdEnd, "Meta"),
+        countPoolLeads(def, ctx.recentSince, ctx.mtdEnd, "Outbrain"),
+        countPoolLeads(def, ctx.recentSince, ctx.mtdEnd, "TikTok"),
+      ]);
+    const recentLeadsTotal =
+      metaLeadsRecent + outbrainLeadsRecent + tiktokLeadsRecent;
     const outbrainSpendRecent = matchedOutbrain.reduce(
       (s, c) => s + (ctx.recentOutbrainSpendByCampaign.get(c.id) ?? 0),
       0,
     );
+    const tiktokSpendRecent = matchedTikTok.reduce(
+      (s, c) => s + (ctx.recentTiktokSpendByCampaign.get(c.id) ?? 0),
+      0,
+    );
 
-    // Display-CPLs (MTD) — Pool-Detail-Karte zeigt die historische Marke.
+    // Display-CPLs (MTD).
     base.metaCpl =
       metaLeadsMtd > 0 && metaSpend > 0 ? metaSpend / metaLeadsMtd : null;
-    // Decision-CPLs (Lookback) — was der Buyer nutzt, um Budget zu skalieren.
+    // Decision-CPLs (Lookback).
     const metaCplRecent =
       metaLeadsRecent > 0 && metaSpendRecent > 0
         ? metaSpendRecent / metaLeadsRecent
@@ -773,18 +893,21 @@ async function processPool(
       outbrainLeadsRecent > 0 && outbrainSpendRecent > 0
         ? outbrainSpendRecent / outbrainLeadsRecent
         : null;
+    const tiktokCplRecent =
+      tiktokLeadsRecent > 0 && tiktokSpendRecent > 0
+        ? tiktokSpendRecent / tiktokLeadsRecent
+        : null;
 
-    // Blended CPL für die Pool-Decision: aus dem Lookback-Fenster, gewichtet
-    // über beide Channels. Fallback auf Meta-Lookback bzw. MTD, wenn das
-    // jüngste Fenster noch leer ist.
+    // Blended CPL — Lookback über alle Channels. Fallback-Kaskade auf MTD.
     let costPerLead: number | null = null;
-    const recentTotalSpend = metaSpendRecent + outbrainSpendRecent;
+    const recentTotalSpend =
+      metaSpendRecent + outbrainSpendRecent + tiktokSpendRecent;
     if (recentLeadsTotal > 0 && recentTotalSpend > 0) {
       costPerLead = recentTotalSpend / recentLeadsTotal;
     } else if (metaLeadsRecent > 0 && metaSpendRecent > 0) {
       costPerLead = metaSpendRecent / metaLeadsRecent;
-    } else if (leadsMtd > 0 && metaSpend + outbrainSpend > 0) {
-      costPerLead = (metaSpend + outbrainSpend) / leadsMtd;
+    } else if (leadsMtd > 0 && metaSpend + outbrainSpend + tiktokSpend > 0) {
+      costPerLead = (metaSpend + outbrainSpend + tiktokSpend) / leadsMtd;
     } else if (metaLeadsMtd > 0 && metaSpend > 0) {
       costPerLead = metaSpend / metaLeadsMtd;
     }
@@ -792,14 +915,18 @@ async function processPool(
     const anyPaused =
       states.some(
         (s) => s.effective_status !== "ACTIVE" && s.status !== "ACTIVE",
-      ) || matchedOutbrain.filter((c) => c.budgetId).some((c) => !c.enabled);
+      ) ||
+      matchedOutbrain.filter((c) => c.budgetId).some((c) => !c.enabled) ||
+      matchedTikTok.filter((c) => c.hasDailyBudget).some((c) => !c.enabled);
 
     base.prevBudget = currentBudget;
 
     // Decision auf Pool-Ebene — Max-Budget ist Summe der Channel-Caps.
     const outbrainMax =
       settings.outbrainMaxDailyBudget ?? ctx.outbrainDefaultMaxBudget;
-    const poolMax = maxBudget + outbrainMax;
+    const tiktokMax =
+      settings.tiktokMaxDailyBudget ?? ctx.tiktokDefaultMaxBudget;
+    const poolMax = maxBudget + outbrainMax + tiktokMax;
     const decision = decideBudget({
       leadsMtd,
       goal: def.goal,
@@ -823,29 +950,37 @@ async function processPool(
     // bleiben die Budgets unverändert.
     let metaTarget: number | null = null;
     let outbrainTarget: number | null = null;
+    let tiktokTarget: number | null = null;
     if (decision.targetBudget != null) {
       const alloc = allocateBudgetAcrossChannels({
         target: decision.targetBudget,
         metaCurrent,
         outbrainCurrent,
+        tiktokCurrent,
         // Allokation folgt dem Lookback-CPL — jüngste Tage entscheiden.
         metaCpl: metaCplRecent ?? base.metaCpl,
         outbrainCpl: outbrainCplRecent ?? base.outbrainCpl,
+        tiktokCpl: tiktokCplRecent ?? base.tiktokCpl,
         metaMin: metaSteerable ? ctx.minBudget : 0,
         metaMax: metaSteerable ? maxBudget : 0,
         outbrainMin: outbrainSteerable ? ctx.outbrainMinBudget : 0,
         outbrainMax: outbrainSteerable ? outbrainMax : 0,
+        tiktokMin: tiktokSteerable ? ctx.tiktokMinBudget : 0,
+        tiktokMax: tiktokSteerable ? tiktokMax : 0,
         metaAvailable: metaSteerable,
         outbrainAvailable: outbrainSteerable,
+        tiktokAvailable: tiktokSteerable,
       });
       metaTarget = metaSteerable ? alloc.metaBudget : null;
       outbrainTarget = outbrainSteerable ? alloc.outbrainBudget : null;
-      base.newBudget = (metaTarget ?? 0) + (outbrainTarget ?? 0);
+      tiktokTarget = tiktokSteerable ? alloc.tiktokBudget : null;
+      base.newBudget =
+        (metaTarget ?? 0) + (outbrainTarget ?? 0) + (tiktokTarget ?? 0);
     }
 
     // Reason-Text mit Channel-Breakdown ergänzen.
     base.reason = decision.reason;
-    if (metaTarget != null || outbrainTarget != null) {
+    if (metaTarget != null || outbrainTarget != null || tiktokTarget != null) {
       const bits: string[] = [];
       if (metaTarget != null) {
         bits.push(`Meta ${eur.format(metaCurrent)} → ${eur.format(metaTarget)}/Tag`);
@@ -858,6 +993,13 @@ async function processPool(
         );
       } else if (outbrainSteerable) {
         bits.push(`Outbrain ${eur.format(outbrainCurrent)}/Tag (unverändert)`);
+      }
+      if (tiktokTarget != null) {
+        bits.push(
+          `TikTok ${eur.format(tiktokCurrent)} → ${eur.format(tiktokTarget)}/Tag`,
+        );
+      } else if (tiktokSteerable) {
+        bits.push(`TikTok ${eur.format(tiktokCurrent)}/Tag (unverändert)`);
       }
       if (bits.length > 0) {
         base.reason = `${decision.reason} · ${bits.join(", ")}`;
@@ -902,6 +1044,38 @@ async function processPool(
           } catch (err) {
             console.warn(
               `[media-buyer] Outbrain-Budget für ${c.name} failte:`,
+              err instanceof Error ? err.message : err,
+            );
+          }
+        }
+      }
+    }
+
+    // ── Schreiben: TikTok ──
+    if (decision.setStatus && tiktokSteerable) {
+      const enabled = decision.setStatus === "ACTIVE";
+      for (const c of matchedTikTok) {
+        if (!c.hasDailyBudget) continue;
+        try {
+          await setTikTokCampaignStatus(c, enabled);
+        } catch (err) {
+          console.warn(
+            `[media-buyer] TikTok-Status für ${c.name} failte:`,
+            err instanceof Error ? err.message : err,
+          );
+        }
+      }
+    }
+    if (tiktokTarget != null) {
+      const steerable = matchedTikTok.filter((c) => c.hasDailyBudget);
+      if (steerable.length > 0) {
+        const per = tiktokTarget / steerable.length;
+        for (const c of steerable) {
+          try {
+            await setTikTokCampaignDailyBudget(c, per);
+          } catch (err) {
+            console.warn(
+              `[media-buyer] TikTok-Budget für ${c.name} failte:`,
               err instanceof Error ? err.message : err,
             );
           }
@@ -1037,6 +1211,9 @@ export async function runMediaBuyer(params: {
         outbrainLeadsMtd: 0,
         outbrainSpendMtd: 0,
         outbrainCpl: null,
+        tiktokLeadsMtd: 0,
+        tiktokSpendMtd: 0,
+        tiktokCpl: null,
         error: msg,
       });
     }
@@ -1044,9 +1221,9 @@ export async function runMediaBuyer(params: {
     return { ranAt: now, dryRun, pools };
   }
 
-  // Outbrain ist read-only und optional: wenn nicht konfiguriert oder API
-  // gerade zickt, läuft der Buyer mit leeren Listen weiter (Channel-Splits
-  // sind dann 0, Meta-Steuerung bleibt unbeeinträchtigt).
+  // Outbrain + TikTok sind optional: wenn nicht konfiguriert oder API gerade
+  // zickt, läuft der Buyer mit leeren Listen weiter (Channel-Splits sind
+  // dann 0, Meta-Steuerung bleibt unbeeinträchtigt).
   let outbrainCampaigns: OutbrainCampaign[] = [];
   let outbrainSpendByCampaign = new Map<string, number>();
   let recentOutbrainSpendByCampaign = new Map<string, number>();
@@ -1067,13 +1244,36 @@ export async function runMediaBuyer(params: {
     );
   }
 
+  let tiktokCampaigns: TikTokCampaign[] = [];
+  let tiktokSpendByCampaign = new Map<string, number>();
+  let recentTiktokSpendByCampaign = new Map<string, number>();
+  try {
+    [
+      tiktokCampaigns,
+      tiktokSpendByCampaign,
+      recentTiktokSpendByCampaign,
+    ] = await Promise.all([
+      listTikTokCampaigns(),
+      getTikTokMonthlySpendByCampaign(now),
+      getTikTokSpendByCampaign({ since: recentSince, until: now }),
+    ]);
+  } catch (err) {
+    console.warn(
+      "[media-buyer] TikTok nicht erreichbar — Channel-Sicht fällt aus:",
+      err instanceof Error ? err.message : err,
+    );
+  }
+
   const ctx: RunCtx = {
     campaigns,
     spendByCampaign,
     outbrainCampaigns,
     outbrainSpendByCampaign,
+    tiktokCampaigns,
+    tiktokSpendByCampaign,
     recentSpendByCampaign,
     recentOutbrainSpendByCampaign,
+    recentTiktokSpendByCampaign,
     recentSince,
     monthStart,
     mtdEnd,
@@ -1082,6 +1282,8 @@ export async function runMediaBuyer(params: {
     minBudget: envNum("MEDIA_BUYER_MIN_DAILY_BUDGET", 5),
     outbrainMinBudget: envNum("MEDIA_BUYER_OUTBRAIN_MIN_DAILY_BUDGET", 20),
     outbrainDefaultMaxBudget: envNum("MEDIA_BUYER_OUTBRAIN_MAX_DAILY_BUDGET", 200),
+    tiktokMinBudget: envNum("MEDIA_BUYER_TIKTOK_MIN_DAILY_BUDGET", 20),
+    tiktokDefaultMaxBudget: envNum("MEDIA_BUYER_TIKTOK_MAX_DAILY_BUDGET", 200),
     defaultMaxBudget: envNum("MEDIA_BUYER_MAX_DAILY_BUDGET", 200),
     maxStep: envNum("MEDIA_BUYER_MAX_STEP", 0.5),
     boostDays: envNum("MEDIA_BUYER_BOOST_DAYS", 5),
@@ -1163,17 +1365,22 @@ export type PoolAdminRow = {
   autopilot: boolean;
   maxDailyBudget: number | null;
   outbrainMaxDailyBudget: number | null;
+  tiktokMaxDailyBudget: number | null;
   campaignKeyword: string | null;
   outbrainCampaignKeyword: string | null;
+  tiktokCampaignKeyword: string | null;
   // Cost-per-Lead MTD (Pool-Aggregat; aus Cost-Tabelle, kein Meta-Call).
   cpl: number | null;
-  // Channel-Split aus Lead.adChannel + Cost-Note-Prefix (Phase 1).
+  // Channel-Split aus Lead.adChannel + Cost-Note-Prefix.
   metaLeadsMtd: number;
   metaSpendMtd: number;
   metaCpl: number | null;
   outbrainLeadsMtd: number;
   outbrainSpendMtd: number;
   outbrainCpl: number | null;
+  tiktokLeadsMtd: number;
+  tiktokSpendMtd: number;
+  tiktokCpl: number | null;
   // Letzte Entscheidung des Buyers für diesen Pool (für die Empfehlungs-Karte).
   latestAction: string | null;
   latestReason: string | null;
@@ -1230,6 +1437,7 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
   const costByProduct = new Map<string, number>();
   const metaCostByProduct = new Map<string, number>();
   const outbrainCostByProduct = new Map<string, number>();
+  const tiktokCostByProduct = new Map<string, number>();
   for (const c of monthCostRows) {
     if (!c.product) continue;
     const amount = decToNumber(c.amount) ?? 0;
@@ -1245,6 +1453,11 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
         c.product,
         (outbrainCostByProduct.get(c.product) ?? 0) + amount,
       );
+    } else if (note.startsWith("TikTok:")) {
+      tiktokCostByProduct.set(
+        c.product,
+        (tiktokCostByProduct.get(c.product) ?? 0) + amount,
+      );
     }
   }
   // Letzte Entscheidung pro Pool in einem Rutsch holen (vermeidet N+1).
@@ -1259,15 +1472,18 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
   const rows: PoolAdminRow[] = [];
   for (const def of defs) {
     const settings = await ensurePool(def);
-    const [leadsMtd, metaLeadsMtd, outbrainLeadsMtd] = await Promise.all([
-      countPoolLeads(def, monthStart, mtdEnd),
-      countPoolLeads(def, monthStart, mtdEnd, "Meta"),
-      countPoolLeads(def, monthStart, mtdEnd, "Outbrain"),
-    ]);
+    const [leadsMtd, metaLeadsMtd, outbrainLeadsMtd, tiktokLeadsMtd] =
+      await Promise.all([
+        countPoolLeads(def, monthStart, mtdEnd),
+        countPoolLeads(def, monthStart, mtdEnd, "Meta"),
+        countPoolLeads(def, monthStart, mtdEnd, "Outbrain"),
+        countPoolLeads(def, monthStart, mtdEnd, "TikTok"),
+      ]);
     const projected = Math.round((leadsMtd / daysElapsed) * daysTotal);
     const last = latestByKey.get(def.key);
     const metaSpend = metaCostByProduct.get(def.product) ?? 0;
     const outbrainSpend = outbrainCostByProduct.get(def.product) ?? 0;
+    const tiktokSpend = tiktokCostByProduct.get(def.product) ?? 0;
     rows.push({
       key: def.key,
       label: def.label,
@@ -1283,8 +1499,10 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
       autopilot: settings.autopilot,
       maxDailyBudget: settings.maxDailyBudget,
       outbrainMaxDailyBudget: settings.outbrainMaxDailyBudget,
+      tiktokMaxDailyBudget: settings.tiktokMaxDailyBudget,
       campaignKeyword: settings.campaignKeyword,
       outbrainCampaignKeyword: settings.outbrainCampaignKeyword,
+      tiktokCampaignKeyword: settings.tiktokCampaignKeyword,
       cpl:
         def.kind === "product" && leadsMtd > 0
           ? (costByProduct.get(def.product) ?? 0) / leadsMtd
@@ -1296,6 +1514,9 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
       outbrainSpendMtd: outbrainSpend,
       outbrainCpl:
         outbrainLeadsMtd > 0 ? outbrainSpend / outbrainLeadsMtd : null,
+      tiktokLeadsMtd,
+      tiktokSpendMtd: tiktokSpend,
+      tiktokCpl: tiktokLeadsMtd > 0 ? tiktokSpend / tiktokLeadsMtd : null,
       latestAction: last?.action ?? null,
       latestReason: last?.reason ?? null,
     });

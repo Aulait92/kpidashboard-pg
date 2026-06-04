@@ -471,6 +471,17 @@ function ChannelPerformanceGrid({
           "Noch keine Outbrain-Leads — Source-Spalte in Airtable prüfen",
         )}
       </KpiSection>
+      <KpiSection
+        eyebrow="Sektion · Werbekanäle · TikTok"
+        title="TikTok Ads"
+      >
+        {channelCards(
+          "TikTok",
+          current.tiktok,
+          previous.tiktok,
+          "Noch keine TikTok-Leads — Source-Spalte in Airtable prüfen",
+        )}
+      </KpiSection>
     </div>
   );
 }
