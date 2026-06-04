@@ -1,4 +1,4 @@
-import { generateVideo, type VideoProgress } from "@/lib/openai-video";
+import { generateVideo, type VideoProgress } from "@/lib/google-veo";
 import { uploadImageToR2 } from "@/lib/r2";
 import { burnGermanSubtitles } from "@/lib/video-subtitles";
 import { renderHtmlToImage } from "@/lib/html-to-png";
@@ -1691,9 +1691,11 @@ Antworte mit GENAU EINEM <creative_html>-Block, KEINE anderen Tags:
 
 // ─── Intent Parsing aus Telegram-Text ────────────────────────────────
 
-// ─── Video-Generation (Sora 2) ───────────────────────────────────────
+// ─── Video-Generation (Google Veo 3) ─────────────────────────────────
 // Eigene Pipeline für Bewegtbild — UGC-ähnliche 20-30s Reels mit
-// Storyboard-Konzept → Sora-Prompt → MP4 → R2 → Telegram.
+// Storyboard-Konzept → Veo-Prompt → MP4 → ffmpeg-Crop auf 1:1 + Untertitel
+// → R2 → Telegram. Veo native Output ist 16:9; der 1:1-Crop liegt in der
+// Untertitel-Stufe.
 
 const VIDEO_CONCEPT_REQUEST: Record<string, string> = {
   Kinderwunsch: `Entwirf ein konkretes, warmes UGC-Storyboard für Meta-Video-Ads (~20 Sekunden) für Kinderwunschbehandlungen, die bis zu 100% gefördert werden können. Quadratisches 1:1-Format (Feed). Beschreibe das Video Sekunde für Sekunde, inkl. Kamerawinkel, Person/Setting, gesprochene Worte (deutsch, authentisch, nicht werblich) und Stimmung. Hook in den ersten 3 Sekunden, Wertversprechen in der Mitte, sanfter CTA am Ende. Komposition zentriert, damit nichts im 1:1-Crop verloren geht.`,
@@ -1736,18 +1738,19 @@ async function brainstormVideoStoryboards(
   return boards.slice(0, brief.count);
 }
 
-// Baut den Sora-Prompt aus Storyboard + Kampagnen-Konfiguration. Sora-Modelle
-// reagieren stark auf konkrete visuelle Anweisungen, Sekunden-Marker und
-// kurze On-Screen-Text-Hinweise. WICHTIG: keinen On-Screen-Text vom Modell
-// generieren lassen — Sora schreibt unleserliches Kauderwelsch. Der Sprecher-
-// Text läuft per Audio + nachträglich eingebrannten Whisper-Untertiteln.
-function buildSoraPrompt(storyboard: string, cfg: DirectImageConfig): string {
+// Baut den Veo-Prompt aus Storyboard + Kampagnen-Konfiguration. Veo 3
+// arbeitet gut mit narrativen Beschreibungen + Kamera-/Stimmungs-Hinweisen.
+// WICHTIG: keinen On-Screen-Text vom Modell generieren lassen — Diffusion-
+// Modelle schreiben unleserliches Kauderwelsch. Der Sprecher-Text läuft per
+// Audio + nachträglich eingebrannten Whisper-Untertiteln.
+function buildVeoPrompt(storyboard: string, cfg: DirectImageConfig): string {
   return [
-    `Quadratisches 1:1 UGC-Video (Feed-Style), 20 Sekunden, deutscher Markt. Komposition zentriert, alles Wichtige in der Bildmitte.`,
+    `UGC-Style Werbe-Video, 25 Sekunden, deutscher Markt. Native 16:9-Aufnahme — die Komposition aber zentriert halten, da später ein 1:1-Center-Crop angewendet wird (alles Wichtige in der Bildmitte).`,
     `Thema: ${cfg.topic}.`,
     `Storyboard:\n${storyboard}`,
     `\nWICHTIG: KEINEN Text, KEINE Beschriftungen, KEINE Logos und KEINE Schriftzeichen im Bild einblenden. Auch keine Captions, Lower-Thirds oder CTA-Banner — nur reine Bewegtbild- und Audiodarstellung. Die Untertitel werden im Anschluss separat eingebrannt.`,
-    `\nVisuelle Sprache: authentisch, natürlich beleuchtet, kein Stock-Photo-Look. Keine medizinischen Garantien oder Heilversprechen aussprechen.`,
+    `\nAudio: deutsche Sprecher:in, authentisch, nicht werblich. Keine medizinischen Garantien oder Heilversprechen aussprechen.`,
+    `\nVisuelle Sprache: authentisch, natürlich beleuchtet, kein Stock-Photo-Look.`,
   ].join("\n\n");
 }
 
@@ -1759,9 +1762,9 @@ async function generateOneVideoCreative(
   onProgress?: VideoProgress,
 ): Promise<GeneratedCreative> {
   const cfg = getDirectImageConfig(brief.campaignKey);
-  const soraPrompt = buildSoraPrompt(storyboard, cfg);
+  const veoPrompt = buildVeoPrompt(storyboard, cfg);
   const { buffer: rawBuffer, durationSec } = await generateVideo(
-    soraPrompt,
+    veoPrompt,
     onProgress,
   );
 
@@ -1788,8 +1791,8 @@ async function generateOneVideoCreative(
     cta: cfg.cta,
     adText: copy.adText,
     fbHeadline: copy.fbHeadline,
-    mechanic: "Sora 2 UGC-Video (1:1)",
-    imagePrompt: soraPrompt,
+    mechanic: "Veo 3 UGC-Video (1:1 Crop)",
+    imagePrompt: veoPrompt,
     imageUrl: "",
     concept: storyboard,
     kind: "video",

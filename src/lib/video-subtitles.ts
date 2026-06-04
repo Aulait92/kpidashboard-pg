@@ -357,14 +357,20 @@ export async function burnGermanSubtitles(
     //                   re-samplen.
     //   KEIN -t  : Wir vertrauen der echten Input-Länge.
     // Filter-Chain:
+    //   • crop:    Center-Crop auf 1:1 (Veo native = 16:9; wir wollen Feed-1:1).
+    //              min(iw,ih) als Kantenlänge — wenn Input schon quadratisch
+    //              ist, ist's ein No-Op.
     //   • drawtext-Stages (Untertitel)
     //   • tpad freezed den letzten Frame `padSec` Sekunden lang (nur wenn
     //     Padding gebraucht wird — drawtext zeichnet nicht auf den
     //     gepaddeten Frames, weil deren Timestamps außerhalb aller
     //     `enable=between(t,…)`-Ranges liegen).
+    const cropFilter =
+      "crop='min(iw\\,ih)':'min(iw\\,ih)':'(iw-min(iw\\,ih))/2':'(ih-min(iw\\,ih))/2'";
+    const baseChain = `${cropFilter},${chain}`;
     const vfChain = needsPadding
-      ? `${chain},tpad=stop_mode=clone:stop_duration=${padSec.toFixed(3)}`
-      : chain;
+      ? `${baseChain},tpad=stop_mode=clone:stop_duration=${padSec.toFixed(3)}`
+      : baseChain;
 
     const args: string[] = [
       "-hide_banner",
