@@ -231,8 +231,8 @@ function buildDrawtextChain(
       // doch mal breiter wird als (Frame minus 80px Margin), wird sie auf
       // 40px-Margin links geklemmt statt rechts abzuschneiden.
       `x=if(gt(text_w\\,w-80)\\,40\\,(w-text_w)/2)`,
-      // Vertikal näher zur Mitte (zentriert, leicht nach unten versetzt).
-      `y=(h-text_h)/2+h/10`,
+      // Vertikal im unteren Bilddrittel, ~50 px Abstand zum unteren Rand.
+      `y=h-text_h-50`,
       `fontsize=42`,
       `fontcolor=white`,
       `borderw=5`,
@@ -337,11 +337,11 @@ export async function burnGermanSubtitles(
   } = {},
 ): Promise<{ buffer: Buffer; burned: boolean; note?: string }> {
   const onProgress = options.onProgress;
-  // Tail-Padding: konstante N Sekunden eingefrorener letzter Frame +
-  // Stille, damit der CTA am Ende Zeit zum „Landen" bekommt statt
-  // abrupt zu schneiden. SUBTITLE_TAIL_PAD_SEC override (default 5s,
-  // 0 = aus). Sora-Default 20s + 5s Tail = 25s Output.
-  const tailPadSec = Number(process.env.SUBTITLE_TAIL_PAD_SEC ?? 5);
+  // Tail-Padding: optional N Sekunden eingefrorener letzter Frame + Stille.
+  // Default 0 = aus (User-Wunsch: Veo-Multi-Clip-Output ist schon ~24s und
+  // endet mit dem CTA-Clip — kein extra Standbild nötig).
+  // SUBTITLE_TAIL_PAD_SEC=5 reaktiviert die Freeze-Tail.
+  const tailPadSec = Number(process.env.SUBTITLE_TAIL_PAD_SEC ?? 0);
   const dir = await mkdtemp(join(tmpdir(), "sora-subs-"));
   const inputPath = join(dir, "in.mp4");
   const audioPath = join(dir, "audio.mp3");

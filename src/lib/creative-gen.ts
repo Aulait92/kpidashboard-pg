@@ -1797,14 +1797,13 @@ async function splitStoryboardIntoSegments(
 - "body": 8s — Wertversprechen / Mechanik / Erklärung
 - "cta": 8s — klare Aufforderung mit gehaltenem Blick zur Kamera
 
-WICHTIG fürs Tempo: pro Szene maximal ~15 gesprochene Worte (deutsche
-Sprechrate ~2 Wörter pro Sekunde, 8s × 2 = 16; etwas Puffer für
-natürliche Pausen). Lieber kurze, prägnante Sätze als gepresst hetzen.
-Wenn das Storyboard zu textreich ist, kürzen — nur das stärkste Stück
-bleibt.
+WICHTIG fürs Tempo: pro Szene ca. 18-22 gesprochene Worte (deutsche
+Sprechrate ~2.5 Wörter pro Sekunde, 8s × 2.5 = 20; bisschen Spielraum
+nach oben/unten je nach Satz). Soll sich natürlich sprechen, nicht
+gehetzt — aber auch nicht ungewöhnlich langsam.
 
 Pro Szene konkret: Kamerawinkel, Aktion der Person, gesprochene Worte
-(deutsch, ≤15 Wörter). KEIN Bildschirm-Text.
+(deutsch, ~18-22 Wörter). KEIN Bildschirm-Text.
 
 "continuity": ein Satz, der die visuelle Konsistenz festlegt (gleiche
 Person, gleiches Outfit, gleicher Ort, gleiche Lichtstimmung).
