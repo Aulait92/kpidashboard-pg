@@ -50,6 +50,8 @@ import {
   findCampaignsByKeyword as findOutbrainCampaignsByKeyword,
   getMonthlySpendByCampaign as getOutbrainMonthlySpendByCampaign,
   listCampaigns as listOutbrainCampaigns,
+  setCampaignDailyBudget as setOutbrainCampaignDailyBudget,
+  setCampaignStatus as setOutbrainCampaignStatus,
   type OutbrainCampaign,
 } from "@/lib/outbrain-ads";
 import { prisma } from "@/lib/prisma";
@@ -414,7 +416,9 @@ export async function derivePoolDefs(now: Date = new Date()): Promise<PoolDef[]>
 
 type PoolSettings = {
   autopilot: boolean;
+  // maxDailyBudget = Meta-Cap (Historie); outbrainMaxDailyBudget separat.
   maxDailyBudget: number | null;
+  outbrainMaxDailyBudget: number | null;
   campaignKeyword: string | null;
   outbrainCampaignKeyword: string | null;
 };
@@ -435,6 +439,7 @@ async function ensurePool(def: PoolDef): Promise<PoolSettings> {
     select: {
       autopilot: true,
       maxDailyBudget: true,
+      outbrainMaxDailyBudget: true,
       campaignKeyword: true,
       outbrainCampaignKeyword: true,
     },
@@ -442,6 +447,7 @@ async function ensurePool(def: PoolDef): Promise<PoolSettings> {
   return {
     autopilot: pool.autopilot,
     maxDailyBudget: decToNumber(pool.maxDailyBudget),
+    outbrainMaxDailyBudget: decToNumber(pool.outbrainMaxDailyBudget),
     campaignKeyword: pool.campaignKeyword,
     outbrainCampaignKeyword: pool.outbrainCampaignKeyword,
   };
@@ -491,7 +497,6 @@ function matchPoolCampaigns(
 type RunCtx = {
   campaigns: MetaCampaign[];
   spendByCampaign: Map<string, number>;
-  // Outbrain-Pendant — Phase 1: nur lesen, kein Steuern.
   outbrainCampaigns: OutbrainCampaign[];
   outbrainSpendByCampaign: Map<string, number>;
   monthStart: Date;
@@ -500,6 +505,9 @@ type RunCtx = {
   daysTotal: number;
   minBudget: number;
   defaultMaxBudget: number;
+  // Outbrain-Defaults (Min ist bei Outbrain typischerweise höher als Meta).
+  outbrainMinBudget: number;
+  outbrainDefaultMaxBudget: number;
   maxStep: number;
   boostDays: number;
   precisionDays: number;
@@ -507,6 +515,92 @@ type RunCtx = {
   lookAheadHours: number;
   dryRun: boolean;
 };
+
+// Verteilt das Gesamt-Tagesbudget des Pools auf Meta und Outbrain. Strategie:
+// inverse-CPL-Gewichtung — der günstigere Channel bekommt den größeren Anteil.
+// Wenn ein Channel keine CPL-Historie hat, fällt's auf die aktuelle Budget-
+// Verteilung zurück (oder 50/50, wenn auch das nicht da ist). Per-Channel
+// Min/Max-Caps werden hart respektiert; Über-/Unterhang wird auf den anderen
+// Channel umgewälzt, soweit dessen Cap das zulässt.
+export function allocateBudgetAcrossChannels(params: {
+  target: number;
+  // Aktuelle Budgets (für den Fallback und um „nichts ändern" zu erkennen).
+  metaCurrent: number;
+  outbrainCurrent: number;
+  // CPLs (null wenn nicht messbar).
+  metaCpl: number | null;
+  outbrainCpl: number | null;
+  // Per-Channel Caps.
+  metaMin: number;
+  metaMax: number;
+  outbrainMin: number;
+  outbrainMax: number;
+  // Wenn ein Channel deaktiviert ist (kein Keyword/keine matched Kampagne),
+  // bekommt er 0 — der ganze Topf geht an den anderen.
+  metaAvailable: boolean;
+  outbrainAvailable: boolean;
+}): { metaBudget: number; outbrainBudget: number } {
+  const {
+    target,
+    metaCurrent,
+    outbrainCurrent,
+    metaCpl,
+    outbrainCpl,
+    metaMin,
+    metaMax,
+    outbrainMin,
+    outbrainMax,
+    metaAvailable,
+    outbrainAvailable,
+  } = params;
+
+  if (!metaAvailable && !outbrainAvailable) return { metaBudget: 0, outbrainBudget: 0 };
+  if (metaAvailable && !outbrainAvailable) {
+    return { metaBudget: clamp(target, metaMin, metaMax), outbrainBudget: 0 };
+  }
+  if (!metaAvailable && outbrainAvailable) {
+    return {
+      metaBudget: 0,
+      outbrainBudget: clamp(target, outbrainMin, outbrainMax),
+    };
+  }
+
+  // Beide Channels verfügbar — Gewicht je Channel berechnen.
+  let metaShare = 0.5;
+  if (metaCpl != null && metaCpl > 0 && outbrainCpl != null && outbrainCpl > 0) {
+    const wMeta = 1 / metaCpl;
+    const wOb = 1 / outbrainCpl;
+    metaShare = wMeta / (wMeta + wOb);
+  } else if (metaCpl != null && metaCpl > 0 && outbrainCpl == null) {
+    // Meta hat Historie, Outbrain noch nicht → bisschen Probe-Budget auf
+    // Outbrain (Min), Rest an Meta.
+    metaShare = 1.0;
+  } else if (outbrainCpl != null && outbrainCpl > 0 && metaCpl == null) {
+    metaShare = 0.0;
+  } else if (metaCurrent + outbrainCurrent > 0) {
+    metaShare = metaCurrent / (metaCurrent + outbrainCurrent);
+  }
+
+  let metaBudget = target * metaShare;
+  let outbrainBudget = target - metaBudget;
+
+  // Min/Max-Clamps pro Channel. Wenn das Clamping einen Über-/Unterhang
+  // erzeugt, geht er auf den anderen Channel — soweit dessen Cap das hergibt.
+  const metaClamped = clamp(metaBudget, metaMin, metaMax);
+  let overflow = metaBudget - metaClamped;
+  metaBudget = metaClamped;
+  outbrainBudget = outbrainBudget + overflow;
+  const obClamped = clamp(outbrainBudget, outbrainMin, outbrainMax);
+  overflow = outbrainBudget - obClamped;
+  outbrainBudget = obClamped;
+  // Zweiter Pass für Meta, falls Outbrain übergelaufen ist.
+  metaBudget = clamp(metaBudget + overflow, metaMin, metaMax);
+
+  return {
+    metaBudget: Math.round(metaBudget * 100) / 100,
+    outbrainBudget: Math.round(outbrainBudget * 100) / 100,
+  };
+}
 
 function matchOutbrainPoolCampaigns(
   def: PoolDef,
@@ -598,31 +692,42 @@ async function processPool(
       ctx.campaigns,
       settings.campaignKeyword,
     );
-    base.campaigns = matched.map((c) => c.name);
+    const metaAvailable = matched.length > 0;
 
-    if (matched.length === 0) {
-      base.reason = `Keine passende Meta-Kampagne für Pool "${def.label}" gefunden.`;
-      base.error = base.reason;
-      return base;
-    }
-
+    // Meta-Steuerstatus (sofern überhaupt Meta-Kampagnen matched).
     const states: CampaignBudgetState[] = [];
-    for (const c of matched) states.push(await getCampaignBudgetState(c));
+    if (metaAvailable) {
+      for (const c of matched) states.push(await getCampaignBudgetState(c));
+    }
     const controllable = states.filter((s) => s.level !== "none");
+    const metaSteerable = controllable.length > 0;
 
-    if (controllable.length === 0) {
-      base.reason = `Kampagnen gefunden (${base.campaigns.join(", ")}), aber kein steuerbares Tagesbudget (vermutlich Lifetime-Budget).`;
+    // Outbrain-Steuerstatus: nur Kampagnen mit budgetId sind via PUT änderbar
+    // (Shared-/Lifetime-Budget-Kampagnen sind read-only).
+    const outbrainSteerable = matchedOutbrain.filter((c) => c.budgetId).length > 0;
+
+    base.campaigns = [
+      ...matched.map((c) => c.name),
+      ...matchedOutbrain.map((c) => `Outbrain: ${c.name}`),
+    ];
+
+    if (!metaSteerable && !outbrainSteerable) {
+      base.reason = `Keine steuerbaren Kampagnen für Pool "${def.label}" — weder Meta noch Outbrain matched/steuerbar.`;
       base.error = base.reason;
       return base;
     }
 
-    const currentBudget = controllable.reduce(
+    // Aktuelle Budgets pro Channel.
+    const metaCurrent = controllable.reduce(
       (s, c) => s + c.dailyBudgetEur,
       0,
     );
-    // Cost-per-Lead pro Channel: Meta CPL aus Meta-Spend / Meta-Leads,
-    // Outbrain analog. Für die Decision-Logik nutzen wir den **Meta-CPL**,
-    // weil wir in Phase 1 nur Meta steuern.
+    const outbrainCurrent = matchedOutbrain
+      .filter((c) => c.budgetId)
+      .reduce((s, c) => s + c.dailyBudgetEur, 0);
+    const currentBudget = metaCurrent + outbrainCurrent;
+
+    // Meta-Spend.
     const metaSpend = matched.reduce(
       (s, c) => s + (ctx.spendByCampaign.get(c.id) ?? 0),
       0,
@@ -630,17 +735,28 @@ async function processPool(
     base.metaSpendMtd = metaSpend;
     base.metaCpl =
       metaLeadsMtd > 0 && metaSpend > 0 ? metaSpend / metaLeadsMtd : null;
-    // Fallback: wenn noch keine Channel-Attribution da ist (alte Leads ohne
-    // adChannel), nutze Pool-Gesamtwerte als CPL-Quelle. Nur für die
-    // Steuerlogik — Channel-Breakdown bleibt korrekt.
-    const costPerLead =
-      base.metaCpl ?? (leadsMtd > 0 && metaSpend > 0 ? metaSpend / leadsMtd : null);
-    const anyPaused = states.some(
-      (s) => s.effective_status !== "ACTIVE" && s.status !== "ACTIVE",
-    );
+
+    // Blended CPL für die Pool-Decision: gewichteter Schnitt aus Meta- und
+    // Outbrain-CPL, gewichtet nach Leads/Channel. Fallback: Pool-Gesamtwerte.
+    let costPerLead: number | null = null;
+    const totalSpend = metaSpend + outbrainSpend;
+    if (leadsMtd > 0 && totalSpend > 0) {
+      costPerLead = totalSpend / leadsMtd;
+    } else if (metaLeadsMtd > 0 && metaSpend > 0) {
+      costPerLead = metaSpend / metaLeadsMtd;
+    }
+
+    const anyPaused =
+      states.some(
+        (s) => s.effective_status !== "ACTIVE" && s.status !== "ACTIVE",
+      ) || matchedOutbrain.filter((c) => c.budgetId).some((c) => !c.enabled);
 
     base.prevBudget = currentBudget;
 
+    // Decision auf Pool-Ebene — Max-Budget ist Summe der Channel-Caps.
+    const outbrainMax =
+      settings.outbrainMaxDailyBudget ?? ctx.outbrainDefaultMaxBudget;
+    const poolMax = maxBudget + outbrainMax;
     const decision = decideBudget({
       leadsMtd,
       goal: def.goal,
@@ -649,7 +765,7 @@ async function processPool(
       currentBudget,
       costPerLead,
       minBudget: ctx.minBudget,
-      maxBudget,
+      maxBudget: poolMax,
       maxStep: ctx.maxStep,
       boostDays: ctx.boostDays,
       anyPaused,
@@ -659,19 +775,94 @@ async function processPool(
     });
 
     base.action = decision.action;
+
+    // Channel-Allokation nur, wenn ein neues Ziel gesetzt wurde. Sonst
+    // bleiben die Budgets unverändert.
+    let metaTarget: number | null = null;
+    let outbrainTarget: number | null = null;
+    if (decision.targetBudget != null) {
+      const alloc = allocateBudgetAcrossChannels({
+        target: decision.targetBudget,
+        metaCurrent,
+        outbrainCurrent,
+        metaCpl: base.metaCpl,
+        outbrainCpl: base.outbrainCpl,
+        metaMin: metaSteerable ? ctx.minBudget : 0,
+        metaMax: metaSteerable ? maxBudget : 0,
+        outbrainMin: outbrainSteerable ? ctx.outbrainMinBudget : 0,
+        outbrainMax: outbrainSteerable ? outbrainMax : 0,
+        metaAvailable: metaSteerable,
+        outbrainAvailable: outbrainSteerable,
+      });
+      metaTarget = metaSteerable ? alloc.metaBudget : null;
+      outbrainTarget = outbrainSteerable ? alloc.outbrainBudget : null;
+      base.newBudget = (metaTarget ?? 0) + (outbrainTarget ?? 0);
+    }
+
+    // Reason-Text mit Channel-Breakdown ergänzen.
     base.reason = decision.reason;
+    if (metaTarget != null || outbrainTarget != null) {
+      const bits: string[] = [];
+      if (metaTarget != null) {
+        bits.push(`Meta ${eur.format(metaCurrent)} → ${eur.format(metaTarget)}/Tag`);
+      } else if (metaSteerable) {
+        bits.push(`Meta ${eur.format(metaCurrent)}/Tag (unverändert)`);
+      }
+      if (outbrainTarget != null) {
+        bits.push(
+          `Outbrain ${eur.format(outbrainCurrent)} → ${eur.format(outbrainTarget)}/Tag`,
+        );
+      } else if (outbrainSteerable) {
+        bits.push(`Outbrain ${eur.format(outbrainCurrent)}/Tag (unverändert)`);
+      }
+      if (bits.length > 0) {
+        base.reason = `${decision.reason} · ${bits.join(", ")}`;
+      }
+    }
 
     if (ctx.dryRun) return base;
 
-    if (decision.setStatus) {
+    // ── Schreiben: Meta ──
+    if (decision.setStatus && metaSteerable) {
       for (const s of states) {
         await setCampaignStatus(s.campaignId, decision.setStatus);
       }
     }
-    if (decision.targetBudget != null) {
-      const per = decision.targetBudget / controllable.length;
+    if (metaTarget != null && controllable.length > 0) {
+      const per = metaTarget / controllable.length;
       for (const s of controllable) await setCampaignDailyBudget(s, per);
-      base.newBudget = decision.targetBudget;
+    }
+
+    // ── Schreiben: Outbrain ──
+    if (decision.setStatus && outbrainSteerable) {
+      const enabled = decision.setStatus === "ACTIVE";
+      for (const c of matchedOutbrain) {
+        if (!c.budgetId) continue;
+        try {
+          await setOutbrainCampaignStatus(c, enabled);
+        } catch (err) {
+          console.warn(
+            `[media-buyer] Outbrain-Status für ${c.name} failte:`,
+            err instanceof Error ? err.message : err,
+          );
+        }
+      }
+    }
+    if (outbrainTarget != null) {
+      const steerable = matchedOutbrain.filter((c) => c.budgetId);
+      if (steerable.length > 0) {
+        const per = outbrainTarget / steerable.length;
+        for (const c of steerable) {
+          try {
+            await setOutbrainCampaignDailyBudget(c, per);
+          } catch (err) {
+            console.warn(
+              `[media-buyer] Outbrain-Budget für ${c.name} failte:`,
+              err instanceof Error ? err.message : err,
+            );
+          }
+        }
+      }
     }
 
     return base;
@@ -827,6 +1018,8 @@ export async function runMediaBuyer(params: {
     daysElapsed,
     daysTotal,
     minBudget: envNum("MEDIA_BUYER_MIN_DAILY_BUDGET", 5),
+    outbrainMinBudget: envNum("MEDIA_BUYER_OUTBRAIN_MIN_DAILY_BUDGET", 20),
+    outbrainDefaultMaxBudget: envNum("MEDIA_BUYER_OUTBRAIN_MAX_DAILY_BUDGET", 200),
     defaultMaxBudget: envNum("MEDIA_BUYER_MAX_DAILY_BUDGET", 200),
     maxStep: envNum("MEDIA_BUYER_MAX_STEP", 0.5),
     boostDays: envNum("MEDIA_BUYER_BOOST_DAYS", 5),
@@ -907,6 +1100,7 @@ export type PoolAdminRow = {
   customerCount: number;
   autopilot: boolean;
   maxDailyBudget: number | null;
+  outbrainMaxDailyBudget: number | null;
   campaignKeyword: string | null;
   outbrainCampaignKeyword: string | null;
   // Cost-per-Lead MTD (Pool-Aggregat; aus Cost-Tabelle, kein Meta-Call).
@@ -1026,6 +1220,7 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
       customerCount: customerCountFor(def),
       autopilot: settings.autopilot,
       maxDailyBudget: settings.maxDailyBudget,
+      outbrainMaxDailyBudget: settings.outbrainMaxDailyBudget,
       campaignKeyword: settings.campaignKeyword,
       outbrainCampaignKeyword: settings.outbrainCampaignKeyword,
       cpl:

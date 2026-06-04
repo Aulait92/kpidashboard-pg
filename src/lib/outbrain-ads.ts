@@ -1,8 +1,7 @@
-// Outbrain Amplify Marketing API — Read-only Wrapper für den Media Buyer.
+// Outbrain Amplify Marketing API — Wrapper für den Media Buyer.
 //
-// Phase 1: nur lesen (Campaigns + Tagesbudget + Periodenspend), damit der
-// Buyer Outbrain-Pacing & CPL in seine Entscheidungen einbeziehen kann.
-// Schreib-Operationen (Budget-Update, Pause) kommen in Phase 2.
+// Phase 2: liest Campaigns + Tagesbudget + Periodenspend UND schreibt
+// Budget/Status (Phase 1 war read-only).
 //
 // Env-Variablen (gleiche wie outbrain.ts):
 //   OUTBRAIN_TOKEN          — long-lived Token, Header OB-TOKEN-V1
@@ -65,6 +64,9 @@ export type OutbrainCampaign = {
   enabled: boolean;
   onAir: boolean;
   dailyBudgetEur: number;
+  // Budget ist bei Outbrain ein eigenständiges Objekt — die ID brauchen wir
+  // fürs Schreiben (PUT /budgets/{id}).
+  budgetId: string | null;
 };
 
 function parseSpend(v: unknown): number {
@@ -76,56 +78,80 @@ function parseSpend(v: unknown): number {
   return 0;
 }
 
-async function obFetch(url: string): Promise<unknown> {
+async function obRequest(
+  method: "GET" | "PUT" | "POST",
+  url: string,
+  body?: unknown,
+): Promise<unknown> {
   const { token } = getEnv();
   const res = await fetch(url, {
-    headers: { "OB-TOKEN-V1": token },
+    method,
+    headers: {
+      "OB-TOKEN-V1": token,
+      ...(body != null ? { "Content-Type": "application/json" } : {}),
+    },
+    body: body != null ? JSON.stringify(body) : undefined,
     cache: "no-store",
   });
   const text = await res.text();
   if (!res.ok) {
-    throw new Error(`Outbrain ${url} ${res.status}: ${text.slice(0, 400)}`);
+    throw new Error(
+      `Outbrain ${method} ${url} ${res.status}: ${text.slice(0, 400)}`,
+    );
   }
-  return JSON.parse(text) as unknown;
+  return text.length > 0 ? (JSON.parse(text) as unknown) : null;
 }
 
-// Listet alle Kampagnen über alle Marketer hinweg. Tagesbudget kommt aus dem
-// budget-Block (nur Kampagnen mit budget.type === "DAILY" sind steuerbar).
+function obGet(url: string): Promise<unknown> {
+  return obRequest("GET", url);
+}
+
+function metadataToCampaign(
+  marketerId: string,
+  m: OutbrainCampaignMetadata,
+): OutbrainCampaign | null {
+  if (!m.id || !m.name) return null;
+  const budgetAmount =
+    m.budget?.type === "DAILY"
+      ? typeof m.budget.amount === "number"
+        ? m.budget.amount
+        : Number.parseFloat(String(m.budget.amount ?? 0))
+      : 0;
+  return {
+    marketerId,
+    id: m.id,
+    name: m.name,
+    enabled: m.enabled ?? false,
+    onAir: m.campaignOnAir ?? false,
+    dailyBudgetEur: Number.isFinite(budgetAmount) ? budgetAmount : 0,
+    budgetId: m.budget?.id ?? null,
+  };
+}
+
+// Listet alle Kampagnen über alle Marketer hinweg. Wir nehmen den Reports-
+// Endpoint mit from=to=heute — Antwort enthält metadata.budget (inkl. ID,
+// type, amount), und wir wissen aus dem Sync, dass das Schema stabil ist.
 export async function listCampaigns(): Promise<OutbrainCampaign[]> {
   const { marketers } = getEnv();
+  const today = format(new Date(), "yyyy-MM-dd");
   const out: OutbrainCampaign[] = [];
   for (const marketerId of marketers) {
     const url = new URL(
-      `${OUTBRAIN_API}/marketers/${marketerId}/campaigns`,
+      `${OUTBRAIN_API}/reports/marketers/${marketerId}/campaigns`,
     );
+    url.searchParams.set("from", today);
+    url.searchParams.set("to", today);
+    url.searchParams.set("includeArchivedCampaigns", "false");
     url.searchParams.set("limit", "500");
-    url.searchParams.set("includeArchived", "false");
-    const json = (await obFetch(url.toString())) as {
-      campaigns?: OutbrainCampaignMetadata[];
-      error?: { message?: string };
-    };
+    const json = (await obGet(url.toString())) as OutbrainListResponse;
     if (json.error) {
       throw new Error(
         `Outbrain marketer ${marketerId}: ${json.error.message ?? "unbekannt"}`,
       );
     }
-    const items = json.campaigns ?? [];
-    for (const c of items) {
-      if (!c.id || !c.name) continue;
-      const budgetAmount =
-        c.budget?.type === "DAILY"
-          ? typeof c.budget.amount === "number"
-            ? c.budget.amount
-            : Number.parseFloat(String(c.budget.amount ?? 0))
-          : 0;
-      out.push({
-        marketerId,
-        id: c.id,
-        name: c.name,
-        enabled: c.enabled ?? false,
-        onAir: c.campaignOnAir ?? false,
-        dailyBudgetEur: Number.isFinite(budgetAmount) ? budgetAmount : 0,
-      });
+    for (const r of json.results ?? []) {
+      const c = metadataToCampaign(marketerId, r.metadata ?? {});
+      if (c) out.push(c);
     }
   }
   return out;
@@ -160,7 +186,7 @@ export async function getMonthlySpendByCampaign(
     url.searchParams.set("to", to);
     url.searchParams.set("includeArchivedCampaigns", "true");
     url.searchParams.set("limit", "500");
-    const json = (await obFetch(url.toString())) as OutbrainListResponse;
+    const json = (await obGet(url.toString())) as OutbrainListResponse;
     if (json.error) {
       throw new Error(
         `Outbrain spend marketer ${marketerId}: ${json.error.message ?? "unbekannt"}`,
@@ -173,6 +199,43 @@ export async function getMonthlySpendByCampaign(
     }
   }
   return result;
+}
+
+// ─── Schreib-Operationen (Phase 2) ───────────────────────────────────
+
+// Setzt das Tagesbudget einer Outbrain-Kampagne. Budget ist bei Outbrain ein
+// eigenständiges Objekt (PUT /budgets/{id} statt am Campaign).
+export async function setCampaignDailyBudget(
+  campaign: OutbrainCampaign,
+  newAmountEur: number,
+): Promise<void> {
+  if (!campaign.budgetId) {
+    throw new Error(
+      `Outbrain-Kampagne ${campaign.name} hat keine budget.id — vermutlich Shared/Lifetime-Budget. Steuerung übersprungen.`,
+    );
+  }
+  const rounded = Math.max(0, Math.round(newAmountEur * 100) / 100);
+  await obRequest(
+    "PUT",
+    `${OUTBRAIN_API}/budgets/${campaign.budgetId}`,
+    { amount: rounded },
+  );
+  campaign.dailyBudgetEur = rounded;
+}
+
+// Setzt enabled-Flag auf der Kampagne. Outbrains On-Air-Status ist die
+// Kombination aus enabled + Schedule — wir kontrollieren nur enabled, das
+// reicht für Pause/Resume.
+export async function setCampaignStatus(
+  campaign: OutbrainCampaign,
+  enabled: boolean,
+): Promise<void> {
+  await obRequest(
+    "PUT",
+    `${OUTBRAIN_API}/marketers/${campaign.marketerId}/campaigns/${campaign.id}`,
+    { enabled },
+  );
+  campaign.enabled = enabled;
 }
 
 // Mini-Helper, der die für den Buyer relevanten Lebenszeichen einer Kampagne
@@ -206,22 +269,8 @@ export async function refreshCampaign(
   campaignId: string,
 ): Promise<OutbrainCampaign | null> {
   const url = `${OUTBRAIN_API}/marketers/${marketerId}/campaigns/${campaignId}`;
-  const json = (await obFetch(url)) as OutbrainCampaignMetadata;
-  if (!json.id || !json.name) return null;
-  const budgetAmount =
-    json.budget?.type === "DAILY"
-      ? typeof json.budget.amount === "number"
-        ? json.budget.amount
-        : Number.parseFloat(String(json.budget.amount ?? 0))
-      : 0;
-  return {
-    marketerId,
-    id: json.id,
-    name: json.name,
-    enabled: json.enabled ?? false,
-    onAir: json.campaignOnAir ?? false,
-    dailyBudgetEur: Number.isFinite(budgetAmount) ? budgetAmount : 0,
-  };
+  const json = (await obGet(url)) as OutbrainCampaignMetadata;
+  return metadataToCampaign(marketerId, json);
 }
 
 // Helper, damit der Aufrufer „lookback for forecasting" sauber bauen kann.

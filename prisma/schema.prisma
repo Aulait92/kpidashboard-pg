@@ -70,9 +70,11 @@ model DeliveryPool {
   // Override für das Meta-Kampagnen-Matching. null = abgeleitet (Produkt bzw. Region).
   campaignKeyword String?
   // Outbrain-Kampagnen-Match (analog zu campaignKeyword für Meta). null = kein
-  // Outbrain-Channel in diesem Pool. Phase 1: Outbrain-Spend/Leads fließen
-  // in Pool-Pacing/CPL, Budget wird aber noch nicht autonom gesteuert.
+  // Outbrain-Channel in diesem Pool.
   outbrainCampaignKeyword String?
+  // Per-Channel-Max-Budgets in EUR. maxDailyBudget gilt für Meta; ohne
+  // outbrainMaxDailyBudget zieht der Buyer für Outbrain den Env-Default.
+  outbrainMaxDailyBudget  Decimal? @db.Decimal(12, 2)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

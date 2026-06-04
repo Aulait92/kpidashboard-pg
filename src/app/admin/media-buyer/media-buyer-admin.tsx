@@ -27,6 +27,7 @@ export type PoolDetailRow = {
   customerCount: number;
   autopilot: boolean;
   maxDailyBudget: number | null;
+  outbrainMaxDailyBudget: number | null;
   campaignKeyword: string | null;
   outbrainCampaignKeyword: string | null;
   cpl: number | null;
@@ -871,7 +872,11 @@ function PoolSettingsList({ pool }: { pool: PoolDetailRow }) {
     if (next) fd.set("autopilot", "on");
     if (pool.maxDailyBudget != null)
       fd.set("maxDailyBudget", String(pool.maxDailyBudget));
+    if (pool.outbrainMaxDailyBudget != null)
+      fd.set("outbrainMaxDailyBudget", String(pool.outbrainMaxDailyBudget));
     if (pool.campaignKeyword) fd.set("campaignKeyword", pool.campaignKeyword);
+    if (pool.outbrainCampaignKeyword)
+      fd.set("outbrainCampaignKeyword", pool.outbrainCampaignKeyword);
     startAutopilotTransition(async () => {
       const res = await savePoolSettings({}, fd);
       if (res.error) setAutopilotOn(pool.autopilot);
@@ -945,7 +950,7 @@ function PoolSettingsList({ pool }: { pool: PoolDetailRow }) {
       {editing ? (
         <form
           action={formAction}
-          className="grid gap-3 border-t border-[color:var(--border)] bg-zinc-50/50 px-4 py-3 sm:grid-cols-[1fr_1fr_auto]"
+          className="grid gap-3 border-t border-[color:var(--border)] bg-zinc-50/50 px-4 py-3 sm:grid-cols-2"
         >
           <input type="hidden" name="poolKey" value={pool.key} />
           <input
@@ -955,7 +960,7 @@ function PoolSettingsList({ pool }: { pool: PoolDetailRow }) {
           />
           <label className="block">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">
-              Max. Budget / Tag (€)
+              Meta-Max-Budget / Tag (€)
             </span>
             <input
               type="number"
@@ -963,6 +968,20 @@ function PoolSettingsList({ pool }: { pool: PoolDetailRow }) {
               min={0}
               step={5}
               defaultValue={pool.maxDailyBudget ?? ""}
+              placeholder="Env-Default"
+              className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm tabular-nums focus:border-[color:var(--brand)] focus:outline-none"
+            />
+          </label>
+          <label className="block">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">
+              Outbrain-Max-Budget / Tag (€)
+            </span>
+            <input
+              type="number"
+              name="outbrainMaxDailyBudget"
+              min={0}
+              step={5}
+              defaultValue={pool.outbrainMaxDailyBudget ?? ""}
               placeholder="Env-Default"
               className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm tabular-nums focus:border-[color:var(--brand)] focus:outline-none"
             />

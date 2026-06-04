@@ -46,6 +46,9 @@ export async function savePoolSettings(
   const maxDailyBudget = parseEurOrNull(
     String(formData.get("maxDailyBudget") ?? ""),
   );
+  const outbrainMaxDailyBudget = parseEurOrNull(
+    String(formData.get("outbrainMaxDailyBudget") ?? ""),
+  );
   const keywordRaw = String(formData.get("campaignKeyword") ?? "").trim();
   const campaignKeyword = keywordRaw === "" ? null : keywordRaw;
   const obKeywordRaw = String(
@@ -58,6 +61,7 @@ export async function savePoolSettings(
     where: { key },
     data: {
       maxDailyBudget,
+      outbrainMaxDailyBudget,
       campaignKeyword,
       outbrainCampaignKeyword,
       autopilot,

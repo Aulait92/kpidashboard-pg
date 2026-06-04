@@ -73,6 +73,7 @@ export default async function MediaBuyerPage() {
     customerCount: p.customerCount,
     autopilot: p.autopilot,
     maxDailyBudget: p.maxDailyBudget,
+    outbrainMaxDailyBudget: p.outbrainMaxDailyBudget,
     campaignKeyword: p.campaignKeyword,
     outbrainCampaignKeyword: p.outbrainCampaignKeyword,
     cpl: p.cpl,
