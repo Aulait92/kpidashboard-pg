@@ -21,6 +21,18 @@ const REACHED_STATUSES = new Set([
 ]);
 
 const CLOSED_STATUS = "Abschluss";
+
+// Werbekanal-Klassifizierung. Airtable-Spalte „Source" enthält freien
+// Single-Select-Text — wir normalisieren auf zwei Buckets, die mit den
+// Cost-Note-Präfixen aus meta.ts / outbrain.ts übereinstimmen.
+function classifyChannel(raw: string | null): string | null {
+  if (!raw) return null;
+  const n = raw.toLowerCase();
+  if (n.includes("meta") || n.includes("facebook") || n.includes("instagram") || n.includes("fb") || n.includes("ig"))
+    return "Meta";
+  if (n.includes("outbrain") || n.includes("amplify")) return "Outbrain";
+  return null;
+}
 // Storno-Status werden vor dem Anruf ausgefiltert — sie zählen also NICHT
 // als „erreicht" und NICHT in die Funnel-Raten. Mehrere Schreibweisen
 // akzeptieren — Airtable-Single-Select-Werte variieren von Base zu Base
@@ -519,6 +531,7 @@ export async function syncAirtable(): Promise<SyncResult> {
           readDate(rec.fields, "Datum") ?? new Date(rec.createdTime);
         const firstContactAt = readDate(rec.fields, "Erster Kontaktversuch");
         const status = readString(rec.fields, "Bearbeitungsstatus");
+        const adChannel = classifyChannel(readString(rec.fields, "Source"));
         const contactAttempts = Math.max(
           0,
           Math.round(readNumber(rec.fields, "Kontaktversuche")),
@@ -559,6 +572,7 @@ export async function syncAirtable(): Promise<SyncResult> {
             reached,
             contactAttempts,
             status,
+            adChannel,
           },
           update: {
             source: table.source,
@@ -570,6 +584,7 @@ export async function syncAirtable(): Promise<SyncResult> {
             reached,
             contactAttempts,
             status,
+            adChannel,
           },
         });
 

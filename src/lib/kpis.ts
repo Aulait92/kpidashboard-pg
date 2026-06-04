@@ -702,6 +702,103 @@ export async function computeProductBreakdown(params: {
     .sort((a, b) => b.totalLeads - a.totalLeads);
 }
 
+// ─── Kanal-Performance (Leads + Spend + CPL pro Kanal) ───────────────
+// Channel-Sicht: für jeden Werbekanal (Meta, Outbrain) Brutto- und Netto-
+// Leads aus der Lead-Tabelle (Lead.adChannel, gesetzt vom Airtable-Sync
+// aus der „Source"-Spalte) plus den Spend aus den Cost-Zeilen (note-Prefix).
+// Daraus ergibt sich der CPL pro Kanal.
+export type ChannelPerformance = {
+  meta: ChannelStats;
+  outbrain: ChannelStats;
+  other: ChannelStats; // Leads ohne Channel-Match oder ohne Source-Wert.
+};
+
+export type ChannelStats = {
+  totalLeads: number;
+  cancelledLeads: number;
+  nettoLeads: number;
+  spend: number;
+  costPerLead: number | null; // spend / nettoLeads
+};
+
+export async function computeChannelPerformance(params: {
+  range: DateRange;
+  customerId: string | null;
+  product: string | null;
+}): Promise<ChannelPerformance> {
+  const { range, customerId, product } = params;
+  const customerClause = customerId ? { customerId } : {};
+  const productLeadClause = product ? { source: product } : {};
+  const productCostClause = product ? { product } : {};
+
+  // Leads-Aggregate pro Kanal (Brutto + Stornos via Lead-Status).
+  const leads = await prisma.lead.findMany({
+    where: {
+      ...customerClause,
+      ...productLeadClause,
+      createdAt: { gte: range.from, lte: range.to },
+    },
+    select: { adChannel: true, status: true },
+  });
+  function statsFor(channelMatch: (c: string | null) => boolean): {
+    total: number;
+    cancelled: number;
+  } {
+    let total = 0;
+    let cancelled = 0;
+    for (const l of leads) {
+      if (!channelMatch(l.adChannel)) continue;
+      total += 1;
+      if (isLeadCancelled(l.status)) cancelled += 1;
+    }
+    return { total, cancelled };
+  }
+  const metaLeads = statsFor((c) => c === "Meta");
+  const outbrainLeads = statsFor((c) => c === "Outbrain");
+  const otherLeads = statsFor((c) => c !== "Meta" && c !== "Outbrain");
+
+  // Spend pro Kanal — globale Brutto-Sicht (siehe computeLeadSpendByChannel).
+  // Kunden-Filter wird hier bewusst ignoriert, weil Werbespend nicht 1:1
+  // kunden-zugeordnet ist; das entspricht der Channel-Karten-Logik.
+  const channelCosts = await prisma.cost.findMany({
+    where: {
+      ...productCostClause,
+      kind: "LEAD",
+      occurredAt: { gte: range.from, lte: range.to },
+    },
+    select: { note: true, amount: true },
+  });
+  let metaSpend = 0;
+  let outbrainSpend = 0;
+  let otherSpend = 0;
+  for (const c of channelCosts) {
+    const amount = decToNumber(c.amount);
+    const note = c.note ?? "";
+    if (note.startsWith("Meta:")) metaSpend += amount;
+    else if (note.startsWith("Outbrain:")) outbrainSpend += amount;
+    else otherSpend += amount;
+  }
+
+  function pack(
+    leadsStat: { total: number; cancelled: number },
+    spend: number,
+  ): ChannelStats {
+    const netto = leadsStat.total - leadsStat.cancelled;
+    return {
+      totalLeads: leadsStat.total,
+      cancelledLeads: leadsStat.cancelled,
+      nettoLeads: netto,
+      spend,
+      costPerLead: netto > 0 ? spend / netto : null,
+    };
+  }
+  return {
+    meta: pack(metaLeads, metaSpend),
+    outbrain: pack(outbrainLeads, outbrainSpend),
+    other: pack(otherLeads, otherSpend),
+  };
+}
+
 // ─── Werbespend pro Kanal ─────────────────────────────────────────────
 // Brutto-Spend pro Werbekanal im Zeitraum. Wird über das note-Prefix
 // erkannt (Meta:/Outbrain:) — Kanal-Splits laufen kunden-agnostisch (also

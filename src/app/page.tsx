@@ -20,15 +20,15 @@ import { computeMonthlyGoalProgress } from "@/lib/goals";
 import { computeSpeedToLeadAnalysis } from "@/lib/speed-to-lead";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
 import {
+  computeChannelPerformance,
   computeCustomerLeaderboard,
   computeKpis,
-  computeLeadSpendByChannel,
   computePnL,
   computeProductBreakdown,
   computeTimeSeries,
   listCustomers,
   PRODUCTS,
-  type ChannelSpend,
+  type ChannelPerformance,
   type Kpis,
   type TimeSeriesPoint,
 } from "@/lib/kpis";
@@ -151,8 +151,8 @@ async function DashboardBody({
     forecast,
     speed,
     goals,
-    channelSpend,
-    channelSpendPrev,
+    channels,
+    channelsPrev,
   ] = await Promise.all([
     computeKpis({ range, customerId, product }),
     computeKpis({ range: prev, customerId, product }) as Promise<Kpis>,
@@ -167,8 +167,8 @@ async function DashboardBody({
     }),
     computeSpeedToLeadAnalysis({ range, customerId, product }),
     computeMonthlyGoalProgress({ product }),
-    computeLeadSpendByChannel({ range, product }),
-    computeLeadSpendByChannel({ range: prev, product }),
+    computeChannelPerformance({ range, customerId, product }),
+    computeChannelPerformance({ range: prev, customerId, product }),
   ]);
 
   return (
@@ -176,7 +176,7 @@ async function DashboardBody({
       <FunnelHero kpis={k} />
       <MonthlyGoalsCard progress={goals} />
       <KpiGrid kpis={k} prev={p} points={ts.points} customerId={customerId} />
-      <ChannelSpendGrid current={channelSpend} previous={channelSpendPrev} />
+      <ChannelPerformanceGrid current={channels} previous={channelsPrev} />
       <PnLStatement pnl={pnl} />
       <MonthlyForecast forecast={forecast} />
       <SpeedToLeadCard data={speed} />
@@ -399,49 +399,79 @@ function KpiGrid({
   );
 }
 
-function ChannelSpendGrid({
+function ChannelPerformanceGrid({
   current,
   previous,
 }: {
-  current: ChannelSpend;
-  previous: ChannelSpend;
+  current: ChannelPerformance;
+  previous: ChannelPerformance;
 }) {
-  const hasAny = current.total > 0 || previous.total > 0;
-  // Section trotzdem rendern, wenn Outbrain noch keine Daten liefert — so
-  // bleibt der Platz im Dashboard reserviert.
+  function channelCards(
+    label: string,
+    cur: ChannelPerformance[keyof ChannelPerformance],
+    prv: ChannelPerformance[keyof ChannelPerformance],
+    emptyHint?: string,
+  ) {
+    const hasAny =
+      cur.spend > 0 || cur.totalLeads > 0 || prv.spend > 0 || prv.totalLeads > 0;
+    const cplHint = hasAny
+      ? `${formatEUR(cur.spend)} Spend / ${formatNumber(cur.nettoLeads)} Netto-Leads`
+      : (emptyHint ?? "Noch keine Daten im Zeitraum");
+    return (
+      <>
+        <KpiCard
+          label={`${label} · Brutto Leads`}
+          value={formatNumber(cur.totalLeads)}
+          hint={
+            cur.cancelledLeads > 0
+              ? `${formatNumber(cur.cancelledLeads)} Stornos`
+              : "Inkl. Stornos"
+          }
+          delta={delta(cur.totalLeads, prv.totalLeads)}
+        />
+        <KpiCard
+          label={`${label} · Netto Leads`}
+          value={formatNumber(cur.nettoLeads)}
+          hint="Brutto minus Stornos"
+          delta={delta(cur.nettoLeads, prv.nettoLeads)}
+        />
+        <KpiCard
+          label={`${label} · Spend`}
+          value={formatEUR(cur.spend)}
+          hint="Werbeausgaben im Zeitraum"
+          tone="neutral"
+          delta={delta(cur.spend, prv.spend, true)}
+        />
+        <KpiCard
+          label={`${label} · CPL`}
+          value={formatEUR(cur.costPerLead)}
+          hint={cplHint}
+          delta={delta(cur.costPerLead, prv.costPerLead, true)}
+        />
+      </>
+    );
+  }
+
   return (
-    <KpiSection
-      eyebrow="Sektion · Werbekanäle"
-      title="Spend pro Kanal"
-    >
-      <KpiCard
-        label="Meta"
-        value={formatEUR(current.meta)}
-        hint="Facebook & Instagram Ads"
-        delta={delta(current.meta, previous.meta, true)}
-      />
-      <KpiCard
-        label="Outbrain"
-        value={formatEUR(current.outbrain)}
-        hint={
-          current.outbrain === 0 && previous.outbrain === 0
-            ? "noch keine Daten — API-Freischaltung ausstehend"
-            : "Amplify Native Ads"
-        }
-        delta={delta(current.outbrain, previous.outbrain, true)}
-      />
-      <KpiCard
-        label="Werbespend gesamt"
-        value={formatEUR(current.total)}
-        hint={
-          hasAny
-            ? `Meta + Outbrain${current.other > 0 ? " + Sonstige" : ""}`
-            : "Brutto im Zeitraum"
-        }
-        tone="neutral"
-        delta={delta(current.total, previous.total, true)}
-      />
-    </KpiSection>
+    <div className="space-y-6">
+      <KpiSection
+        eyebrow="Sektion · Werbekanäle · Meta"
+        title="Meta (Facebook & Instagram)"
+      >
+        {channelCards("Meta", current.meta, previous.meta)}
+      </KpiSection>
+      <KpiSection
+        eyebrow="Sektion · Werbekanäle · Outbrain"
+        title="Outbrain Amplify"
+      >
+        {channelCards(
+          "Outbrain",
+          current.outbrain,
+          previous.outbrain,
+          "Noch keine Outbrain-Leads — Source-Spalte in Airtable prüfen",
+        )}
+      </KpiSection>
+    </div>
   );
 }
 

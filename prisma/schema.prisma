@@ -117,6 +117,10 @@ model Lead {
   reached         Boolean   @default(false)
   contactAttempts Int       @default(0)
   status          String?
+  // Werbekanal, der den Lead generiert hat (aus Airtable-Spalte „Source").
+  // Werte: "Meta" | "Outbrain" | null (= unbekannt). Wird in Channel-KPIs
+  // und im Media-Buyer-Steuerlauf verwendet, um CPL pro Kanal zu berechnen.
+  adChannel       String?
   acquisitionCost Decimal   @default(0) @db.Decimal(12, 2)
 
   customer Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
