@@ -250,12 +250,15 @@ function buildDrawtextChain(
 // nutzen ffmpegs filter_complex (statt concat-demuxer), weil die Inputs
 // von Veo zwar gleich codiert sind, aber kleine Unterschiede in Timebase
 // oder Codec-Parameter den schnellen demuxer-Pfad sprengen können.
+//
+// Center-Crop auf 1:1 ist hier mit drin — Veo native 16:9 → Feed-1:1,
+// und das passiert vor jeglicher weiteren Filterstufe, damit auch ein
+// späterer Untertitel-Fail nicht 16:9 als Output hinterlässt.
 export async function concatVideos(
   buffers: Buffer[],
   onProgress?: (msg: string) => void | Promise<void>,
 ): Promise<Buffer> {
   if (buffers.length === 0) throw new Error("concatVideos: keine Inputs.");
-  if (buffers.length === 1) return buffers[0];
 
   const dir = await mkdtemp(join(tmpdir(), "veo-concat-"));
   const inputPaths: string[] = [];
@@ -266,16 +269,30 @@ export async function concatVideos(
       inputPaths.push(p);
     }
     const outputPath = join(dir, "concat.mp4");
-    await onProgress?.(`Fasse ${buffers.length} Clips zusammen…`);
+    await onProgress?.(
+      `Fasse ${buffers.length} Clip${buffers.length === 1 ? "" : "s"} zusammen + Crop auf 1:1…`,
+    );
 
-    // filter_complex concat: [0:v][0:a][1:v][1:a]...concat=n=N:v=1:a=1[outv][outa]
-    const filter =
-      inputPaths.map((_, i) => `[${i}:v][${i}:a]`).join("") +
-      `concat=n=${inputPaths.length}:v=1:a=1[outv][outa]`;
-    const args: string[] = [
-      "-hide_banner",
-      "-nostats",
-    ];
+    // Pro Input erst Center-Crop auf 1:1 (Quadrat = min(iw,ih)) + Skalierung
+    // auf einheitliche 720x720 + 25fps + sar=1, damit der concat-Filter
+    // alle Inputs als identisches Format akzeptiert.
+    const TARGET = 720;
+    const cropExpr = `crop='min(iw\\,ih)':'min(iw\\,ih)':'(iw-min(iw\\,ih))/2':'(ih-min(iw\\,ih))/2'`;
+    const filterParts: string[] = [];
+    for (let i = 0; i < inputPaths.length; i++) {
+      filterParts.push(
+        `[${i}:v]${cropExpr},scale=${TARGET}:${TARGET},setsar=1,fps=25[v${i}]`,
+      );
+    }
+    const concatInputs = inputPaths
+      .map((_, i) => `[v${i}][${i}:a]`)
+      .join("");
+    filterParts.push(
+      `${concatInputs}concat=n=${inputPaths.length}:v=1:a=1[outv][outa]`,
+    );
+    const filter = filterParts.join(";");
+
+    const args: string[] = ["-hide_banner", "-nostats"];
     for (const p of inputPaths) {
       args.push("-i", p);
     }
@@ -421,20 +438,15 @@ export async function burnGermanSubtitles(
     //                   re-samplen.
     //   KEIN -t  : Wir vertrauen der echten Input-Länge.
     // Filter-Chain:
-    //   • crop:    Center-Crop auf 1:1 (Veo native = 16:9; wir wollen Feed-1:1).
-    //              min(iw,ih) als Kantenlänge — wenn Input schon quadratisch
-    //              ist, ist's ein No-Op.
-    //   • drawtext-Stages (Untertitel)
+    //   • drawtext-Stages (Untertitel) — Input ist bereits 1:1 (Crop läuft
+    //     im concat-Schritt davor).
     //   • tpad freezed den letzten Frame `padSec` Sekunden lang (nur wenn
     //     Padding gebraucht wird — drawtext zeichnet nicht auf den
     //     gepaddeten Frames, weil deren Timestamps außerhalb aller
     //     `enable=between(t,…)`-Ranges liegen).
-    const cropFilter =
-      "crop='min(iw\\,ih)':'min(iw\\,ih)':'(iw-min(iw\\,ih))/2':'(ih-min(iw\\,ih))/2'";
-    const baseChain = `${cropFilter},${chain}`;
     const vfChain = needsPadding
-      ? `${baseChain},tpad=stop_mode=clone:stop_duration=${padSec.toFixed(3)}`
-      : baseChain;
+      ? `${chain},tpad=stop_mode=clone:stop_duration=${padSec.toFixed(3)}`
+      : chain;
 
     const args: string[] = [
       "-hide_banner",
