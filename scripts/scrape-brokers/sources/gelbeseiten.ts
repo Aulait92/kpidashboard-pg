@@ -159,12 +159,16 @@ async function scrapeCity(
   city: string,
   query: string,
   maxLoadMoreClicks: number,
+  debug: boolean,
 ): Promise<RawListing[]> {
   const context = await browser.newContext({
     userAgent:
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
     locale: "de-DE",
     viewport: { width: 1280, height: 900 },
+    extraHTTPHeaders: {
+      "Accept-Language": "de-DE,de;q=0.9,en;q=0.8",
+    },
   });
   const page = await context.newPage();
 
@@ -179,11 +183,17 @@ async function scrapeCity(
   }
 
   await dismissCookieBanner(page);
+  // Settle network + JS
+  await page.waitForTimeout(1500);
+  // Scroll to trigger any lazy-loading
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2));
+  await page.waitForTimeout(800);
 
   try {
     await page.waitForSelector('a[href^="/gsbiz/"]', { timeout: 10_000 });
   } catch {
     console.warn(`  ! no listing cards found on first load`);
+    if (debug) await dumpDebug(page, city);
     await context.close();
     return [];
   }
@@ -196,6 +206,12 @@ async function scrapeCity(
   }
 
   const cards = await extractCards(page);
+  if (debug) {
+    console.log(`  · debug: extracted ${cards.length} raw card objects`);
+    if (cards.length > 0) {
+      console.log(`  · debug: first card text (first 300 chars):\n${cards[0].text.slice(0, 300)}`);
+    }
+  }
   const listings: RawListing[] = [];
   for (const card of cards) {
     const l = parseCard(card, city, url);
@@ -206,16 +222,46 @@ async function scrapeCity(
   return listings;
 }
 
+async function dumpDebug(page: Page, city: string): Promise<void> {
+  const { mkdir, writeFile } = await import("node:fs/promises");
+  await mkdir("data/debug", { recursive: true });
+  const slug = city.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const pngPath = `data/debug/gelbeseiten-${slug}.png`;
+  const htmlPath = `data/debug/gelbeseiten-${slug}.html`;
+  try {
+    await page.screenshot({ path: pngPath, fullPage: true });
+  } catch (err) {
+    console.warn(`  · debug screenshot failed: ${(err as Error).message}`);
+  }
+  try {
+    await writeFile(htmlPath, await page.content(), "utf8");
+  } catch (err) {
+    console.warn(`  · debug HTML dump failed: ${(err as Error).message}`);
+  }
+  const title = await page.title().catch(() => "");
+  const anchorCount = await page.locator("a").count().catch(() => -1);
+  const hrefs = await page
+    .$$eval("a", (as) =>
+      (as as HTMLAnchorElement[]).slice(0, 30).map((a) => a.getAttribute("href") ?? ""),
+    )
+    .catch(() => []);
+  console.warn(`  · debug: title="${title}" · total anchors=${anchorCount}`);
+  console.warn(`  · debug: first 30 hrefs:`);
+  for (const h of hrefs) console.warn(`      ${h}`);
+  console.warn(`  · debug: screenshot=${pngPath}, html=${htmlPath}`);
+}
+
 export async function scrapeGelbeseiten(
   browser: Browser,
   cities: string[],
   query: string = "Versicherungsmakler",
   maxLoadMoreClicks: number = 3,
+  debug: boolean = false,
 ): Promise<RawListing[]> {
   const out: RawListing[] = [];
   for (const city of cities) {
     console.log(`  · gelbeseiten: ${query} in ${city}`);
-    const listings = await scrapeCity(browser, city, query, maxLoadMoreClicks);
+    const listings = await scrapeCity(browser, city, query, maxLoadMoreClicks, debug);
     console.log(`    → ${listings.length} listings`);
     out.push(...listings);
   }

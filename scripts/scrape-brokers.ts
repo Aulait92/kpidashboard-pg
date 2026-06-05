@@ -48,6 +48,8 @@ type Args = {
   query: string;
   maxPagesPerCity: number;
   concurrency: number;
+  debug: boolean;
+  headful: boolean;
 };
 
 function parseArgs(argv: string[]): Args {
@@ -58,6 +60,8 @@ function parseArgs(argv: string[]): Args {
     query: "Versicherungsmakler",
     maxPagesPerCity: 3,
     concurrency: 4,
+    debug: false,
+    headful: false,
   };
   for (const raw of argv.slice(2)) {
     const [k, v] = raw.includes("=") ? raw.split("=", 2) : [raw, "true"];
@@ -79,6 +83,12 @@ function parseArgs(argv: string[]): Args {
         break;
       case "--concurrency":
         args.concurrency = parseInt(v, 10);
+        break;
+      case "--debug":
+        args.debug = v !== "false";
+        break;
+      case "--headful":
+        args.headful = v !== "false";
         break;
       default:
         console.warn(`Unknown arg: ${k}`);
@@ -110,12 +120,18 @@ async function main() {
   console.log(`Scraping ${args.query} in ${args.cities.length} cities (max ${args.max} total)`);
   console.log(`Filter: ≥${MIN_EMPLOYEES} employees${args.keepUnknown ? " (keeping unknowns)" : ""}`);
 
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless: !args.headful });
 
   try {
     // 1) Collect
     console.log("\n[1/4] Collecting listings from Gelbe Seiten...");
-    const raw = await scrapeGelbeseiten(browser, args.cities, args.query, args.maxPagesPerCity);
+    const raw = await scrapeGelbeseiten(
+      browser,
+      args.cities,
+      args.query,
+      args.maxPagesPerCity,
+      args.debug,
+    );
     console.log(`  Total raw: ${raw.length}`);
 
     // 2) Dedupe + cap
