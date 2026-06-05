@@ -215,11 +215,103 @@ async function scrapeCity(
   const listings: RawListing[] = [];
   for (const card of cards) {
     const l = parseCard(card, city, url);
-    if (l) listings.push(l);
+    if (l) listings.push({ ...l, sourceUrl: card.detailUrl });
   }
+
+  // Hydrate website + email from detail pages — gelbeseiten hides these
+  // behind JS reveal on the listing page, but exposes them on /gsbiz/UUID.
+  await hydrateFromDetailPages(context, listings, debug);
 
   await context.close();
   return listings;
+}
+
+const REDIRECT_HOSTS = ["r.gelbeseiten.de", "g.gelbeseiten.de"];
+
+function unwrapRedirect(href: string): string | null {
+  try {
+    const u = new URL(href);
+    if (!REDIRECT_HOSTS.some((h) => u.hostname.endsWith(h))) return href;
+    // Try common query params used by tracking redirects
+    for (const key of ["url", "u", "target", "to", "r"]) {
+      const v = u.searchParams.get(key);
+      if (v && /^https?:\/\//i.test(v)) return v;
+    }
+    // Sometimes the target sits in the path (base64 etc.) — skip
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function hydrateFromDetailPages(
+  context: import("playwright").BrowserContext,
+  listings: RawListing[],
+  debug: boolean,
+): Promise<void> {
+  const concurrency = 4;
+  let idx = 0;
+  const workers = Array.from({ length: concurrency }, async () => {
+    const p = await context.newPage();
+    try {
+      while (true) {
+        const i = idx++;
+        if (i >= listings.length) return;
+        const l = listings[i];
+        const url = l.sourceUrl;
+        if (!url || !url.includes("/gsbiz/")) continue;
+        try {
+          await p.goto(url, { waitUntil: "domcontentloaded", timeout: 20_000 });
+          await p.waitForTimeout(500);
+          const extracted = await p.evaluate(() => {
+            const anchors = Array.from(document.querySelectorAll("a[href]")) as HTMLAnchorElement[];
+            const candidates: { href: string; text: string }[] = anchors.map((a) => ({
+              href: a.href,
+              text: (a.textContent ?? "").trim().toLowerCase(),
+            }));
+            const websites = candidates
+              .filter((c) => {
+                if (!/^https?:\/\//i.test(c.href)) return false;
+                if (/gelbeseiten\.de/.test(c.href) && !/^https?:\/\/[rg]\.gelbeseiten\.de/.test(c.href)) return false;
+                if (/google|facebook|twitter|linkedin|instagram|youtube|whatsapp|maps|apple/.test(c.href)) return false;
+                return /webseite|website|homepage|zur\s+website|zur\s+webseite/.test(c.text) || !/gelbeseiten\.de/.test(c.href);
+              })
+              .map((c) => c.href);
+            const mailtos = anchors
+              .filter((a) => a.href.startsWith("mailto:"))
+              .map((a) => a.href.replace(/^mailto:/, "").split("?")[0]);
+            return { websites: Array.from(new Set(websites)), emails: Array.from(new Set(mailtos)) };
+          });
+
+          // Prefer a redirect link (those carry the real target as query param)
+          let chosenSite: string | undefined;
+          for (const candidate of extracted.websites) {
+            const unwrapped = unwrapRedirect(candidate);
+            if (unwrapped && !unwrapped.includes("gelbeseiten.de")) {
+              chosenSite = unwrapped;
+              break;
+            }
+          }
+          // Fallback: any direct external link
+          if (!chosenSite) {
+            chosenSite = extracted.websites.find((u) => !u.includes("gelbeseiten.de"));
+          }
+
+          if (chosenSite) l.website = chosenSite;
+          // If email shown directly on detail page, surface it via phone field is wrong — keep on the listing for later writer.
+          // (RawListing has no email field; emails come from website-enrichment step. So we just log if found.)
+          if (debug && extracted.emails.length > 0) {
+            console.log(`  · debug: detail-email ${l.name.slice(0, 30)} → ${extracted.emails[0]}`);
+          }
+        } catch (err) {
+          if (debug) console.warn(`  · debug: detail fetch failed for ${l.name}: ${(err as Error).message}`);
+        }
+      }
+    } finally {
+      await p.close();
+    }
+  });
+  await Promise.all(workers);
 }
 
 async function dumpDebug(page: Page, city: string): Promise<void> {
