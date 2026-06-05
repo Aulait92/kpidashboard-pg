@@ -47,13 +47,13 @@ async function clickLoadMore(page: Page): Promise<boolean> {
       const btn = page.locator(sel).first();
       if ((await btn.count()) === 0) continue;
       if (!(await btn.isVisible())) continue;
-      const before = await page.locator('a[href^="/gsbiz/"]').count();
+      const before = await page.locator('a[href*="/gsbiz/"]').count();
       await btn.scrollIntoViewIfNeeded();
       await btn.click({ timeout: 5_000 });
       // Wait until card count grows or 5s elapsed
       const grew = await page
         .waitForFunction(
-          (n) => document.querySelectorAll('a[href^="/gsbiz/"]').length > n,
+          (n) => document.querySelectorAll('a[href*="/gsbiz/"]').length > n,
           before,
           { timeout: 5_000 },
         )
@@ -74,25 +74,25 @@ type CardData = {
 };
 
 async function extractCards(page: Page): Promise<CardData[]> {
-  return page.$$eval('a[href^="/gsbiz/"]', (anchors) => {
-    // Each anchor wraps a listing. Walk up to find the card root if the anchor
-    // itself is just the title; gelbeseiten currently uses the anchor as the
-    // card wrapper, so we use it directly.
+  return page.$$eval('a[href*="/gsbiz/"]', (anchors) => {
     const seen = new Set<string>();
     const out: { detailUrl: string; text: string; externalLinks: string[] }[] = [];
     for (const a of anchors as HTMLAnchorElement[]) {
-      const href = a.getAttribute("href") ?? "";
-      if (!href.startsWith("/gsbiz/")) continue;
-      if (seen.has(href)) continue;
-      seen.add(href);
+      const m = ((a.getAttribute("href") ?? "") + "").match(/\/gsbiz\/([a-f0-9-]+)/i);
+      if (!m) continue;
+      const uuid = m[1];
+      if (seen.has(uuid)) continue;
+      seen.add(uuid);
 
-      // Pick the "card root" — climb up until parent has multiple children
-      // (i.e. siblings beyond just this anchor), but never beyond <body>.
+      // Pick the "card root" — climb up until parent has at least 2 children
+      // (more than the bare anchor itself), so we collect siblings with
+      // address, phone, website. Stop at body.
       let root: HTMLElement = a;
-      for (let i = 0; i < 4; i++) {
-        if (root.parentElement && root.parentElement.tagName !== "BODY") {
-          root = root.parentElement;
-        } else break;
+      for (let i = 0; i < 6; i++) {
+        const parent = root.parentElement;
+        if (!parent || parent.tagName === "BODY") break;
+        root = parent;
+        if (root.children.length >= 3 && root.innerText && root.innerText.length > 40) break;
       }
 
       const text = (root.innerText ?? "").trim();
@@ -100,7 +100,7 @@ async function extractCards(page: Page): Promise<CardData[]> {
         .map((el) => (el as HTMLAnchorElement).href)
         .filter((u) => !u.includes("gelbeseiten.de"));
 
-      out.push({ detailUrl: `https://www.gelbeseiten.de${href}`, text, externalLinks });
+      out.push({ detailUrl: `https://www.gelbeseiten.de/gsbiz/${uuid}`, text, externalLinks });
     }
     return out;
   });
@@ -190,7 +190,7 @@ async function scrapeCity(
   await page.waitForTimeout(800);
 
   try {
-    await page.waitForSelector('a[href^="/gsbiz/"]', { timeout: 10_000 });
+    await page.waitForSelector('a[href*="/gsbiz/"]', { timeout: 10_000 });
   } catch {
     console.warn(`  ! no listing cards found on first load`);
     if (debug) await dumpDebug(page, city);
