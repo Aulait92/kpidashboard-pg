@@ -13,7 +13,7 @@ export type EnrichedBroker = RawListing & {
   emails: string[];
   phonesExtra: string[];
   employeesEstimate: number | null;
-  employeesMethod: "team-page" | "northdata" | "impressum-text" | null;
+  employeesMethod: "team-page" | "impressum-text" | "email-diversity" | "kununu" | null;
   employeesSourceUrl?: string;
   crawlError?: string;
 };

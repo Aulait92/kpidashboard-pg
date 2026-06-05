@@ -19,6 +19,7 @@ import { chromium } from "playwright";
 import { scrapeGelbeseiten } from "./scrape-brokers/sources/gelbeseiten.ts";
 import { dedupeListings } from "./scrape-brokers/util/dedupe.ts";
 import { enrichFromWebsite } from "./scrape-brokers/enrich/website.ts";
+import { enrichFromKununu } from "./scrape-brokers/enrich/kununu.ts";
 import { writeCsv } from "./scrape-brokers/util/csv.ts";
 import type { CsvRow, EnrichedBroker } from "./scrape-brokers/types.ts";
 
@@ -183,6 +184,30 @@ async function main() {
       };
     });
 
+    // 3b) Kununu fallback for entries still without an MA estimate
+    const needsKununu = enriched.filter((e) => e.employeesEstimate === null);
+    if (needsKununu.length > 0) {
+      console.log(
+        `\n[2b] Kununu fallback for ${needsKununu.length} entries without MA estimate (concurrency=2)...`,
+      );
+      let kdone = 0;
+      let khit = 0;
+      await enrichInBatches(needsKununu, 2, async (e) => {
+        const k = await enrichFromKununu(browser, e.name);
+        kdone++;
+        if (k.employeesEstimate !== null) {
+          e.employeesEstimate = k.employeesEstimate;
+          e.employeesMethod = "kununu";
+          e.employeesSourceUrl = k.sourceUrl;
+          khit++;
+        }
+        if (kdone % 10 === 0 || kdone === needsKununu.length) {
+          console.log(`  · ${kdone}/${needsKununu.length} (${khit} hits so far)`);
+        }
+        return null;
+      });
+    }
+
     // 4) Filter
     console.log(`\n[3/4] Filtering ${args.minEmployees}–${args.maxEmployees} employees...`);
     const filtered = enriched.filter((e) => {
@@ -213,7 +238,15 @@ async function main() {
     const withEmail = rows.filter((r) => r.email).length;
     const withPhone = rows.filter((r) => r.phone).length;
     const withWebsite = rows.filter((r) => r.website).length;
+    const byMethod = new Map<string, number>();
+    for (const r of rows) {
+      const m = r.employeesMethod || "unknown";
+      byMethod.set(m, (byMethod.get(m) ?? 0) + 1);
+    }
     console.log(`\nSummary: ${withEmail} with email · ${withPhone} with phone · ${withWebsite} with website`);
+    console.log(
+      `MA-Quellen: ${[...byMethod.entries()].map(([k, n]) => `${k}=${n}`).join(" · ")}`,
+    );
   } finally {
     await browser.close();
   }

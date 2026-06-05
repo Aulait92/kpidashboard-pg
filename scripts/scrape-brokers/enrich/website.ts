@@ -86,28 +86,65 @@ async function safeGoto(page: Page, url: string): Promise<string | null> {
   }
 }
 
-const TEAM_TEXT_REGEX = /\b(?:ein\s+team\s+von\s+(?:über\s+|mehr\s+als\s+)?|wir\s+sind\s+(?:über\s+|mehr\s+als\s+)?|mit\s+(?:über\s+|mehr\s+als\s+)?|rund\s+|ca\.?\s+|circa\s+|etwa\s+)(\d{2,4})\s+(?:mitarbeiter|kolleg|berater|expert|spezialist|mitarbeiterinnen|mitarbeitern|personen)/gi;
+// Patterns matching German team-size statements. Two shapes:
+//   "ein Team von 30 Mitarbeitern", "wir sind über 50 Berater"
+//   "30 Mitarbeiter betreuen Sie", "über 50 Beschäftigte"
+const TEAM_PHRASES = [
+  /\b(?:ein\s+team\s+von\s+(?:über\s+|mehr\s+als\s+)?|wir\s+sind\s+(?:über\s+|mehr\s+als\s+)?|mit\s+(?:über\s+|mehr\s+als\s+)?|rund\s+|ca\.?\s+|circa\s+|etwa\s+)(\d{2,4})\s+(?:mitarbeiter|mitarbeitende|mitarbeiterinnen|mitarbeitern|kolleg|berater|expert|spezialist|beschäftigt|köpfe|personen)/gi,
+  /\b(?:über|mehr\s+als|rund|ca\.?|etwa|circa)\s+(\d{2,4})\s+(?:mitarbeiter|mitarbeitende|berater|kolleg|beschäftigt|köpfe|spezialist|expert)/gi,
+  /\b(\d{2,4})\s*\+\s*(?:mitarbeiter|mitarbeitende|berater|kolleg|spezialist)/gi,
+  /\b(\d{2,4})\s+(?:mitarbeiter|mitarbeitende|berater|kolleg|beschäftigt|spezialist|expert)\s+(?:an|in|bei|für|betreuen|kümmern|stehen|arbeiten)/gi,
+];
 
 function estimateFromText(text: string): number | null {
   let max = 0;
-  for (const m of text.matchAll(TEAM_TEXT_REGEX)) {
-    const n = parseInt(m[1], 10);
-    if (n > max && n < 10000) max = n;
+  for (const re of TEAM_PHRASES) {
+    for (const m of text.matchAll(re)) {
+      const n = parseInt(m[1], 10);
+      if (n > max && n < 10000) max = n;
+    }
   }
   return max > 0 ? max : null;
 }
 
+// Proxy: count distinct local-parts of emails sharing the same domain.
+// e.g. info@, kontakt@, vorname.nachname@ → if 6 distinct local parts on the
+// same domain, the org likely has at least that many people.
+function estimateFromEmailDiversity(emails: string[]): number | null {
+  const byDomain = new Map<string, Set<string>>();
+  for (const e of emails) {
+    const parts = e.split("@");
+    if (parts.length !== 2) continue;
+    const [local, domain] = parts;
+    // Skip role accounts that don't imply a person
+    if (/^(info|kontakt|hello|service|office|hallo|mail|post|empfang|sekretariat|reception|noreply|no-reply|admin|webmaster|datenschutz|impressum|presse|karriere|jobs)$/i.test(local)) continue;
+    if (!byDomain.has(domain)) byDomain.set(domain, new Set());
+    byDomain.get(domain)!.add(local.toLowerCase());
+  }
+  let max = 0;
+  for (const set of byDomain.values()) if (set.size > max) max = set.size;
+  return max >= 3 ? max : null;
+}
+
 async function estimateFromTeamPage(page: Page): Promise<number | null> {
-  // Strategy: count distinct repeated person-card structures
   const counts = await page.evaluate(() => {
     const SELECTORS = [
+      // Explicit team containers
       '[class*="team" i] [class*="member" i]',
       '[class*="team" i] [class*="card" i]',
       '[class*="team" i] figure',
+      '[class*="team" i] article',
       '[class*="mitarbeiter" i] > *',
       '[class*="staff" i] > *',
       '[class*="person" i]',
       '.team img[alt]',
+      // Generic person-card patterns (used by site builders)
+      '[class*="employee" i]',
+      '[class*="kollege" i]',
+      '[class*="berater" i] [class*="card" i]',
+      'section[class*="team" i] li',
+      // Tile/grid systems
+      'figure figcaption',
     ];
     const out: number[] = [];
     for (const sel of SELECTORS) {
@@ -117,6 +154,20 @@ async function estimateFromTeamPage(page: Page): Promise<number | null> {
         out.push(0);
       }
     }
+
+    // Heuristic 2: name + role pattern. Count h2/h3/h4 in the same section
+    // that look like person names (Vorname Nachname capitalized).
+    try {
+      const headers = Array.from(document.querySelectorAll("h2, h3, h4, h5"));
+      const personHeaders = headers.filter((h) => {
+        const t = (h.textContent ?? "").trim();
+        return /^[A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+){1,3}$/.test(t);
+      });
+      out.push(personHeaders.length);
+    } catch {
+      out.push(0);
+    }
+
     return out;
   });
   const max = Math.max(0, ...counts);
@@ -128,7 +179,7 @@ export type WebsiteEnrichment = {
   emails: string[];
   phones: string[];
   employeesEstimate: number | null;
-  employeesMethod: "team-page" | "impressum-text" | null;
+  employeesMethod: "team-page" | "impressum-text" | "email-diversity" | null;
   employeesSourceUrl?: string;
   error?: string;
 };
@@ -201,6 +252,16 @@ export async function enrichFromWebsite(
     }
   } catch (err) {
     error = (err as Error).message;
+  }
+
+  // Email-diversity proxy: only use as fallback if nothing else found a number
+  if (employeesEstimate === null) {
+    const emailEstimate = estimateFromEmailDiversity([...emails]);
+    if (emailEstimate !== null) {
+      employeesEstimate = emailEstimate;
+      employeesMethod = "email-diversity";
+      employeesSourceUrl = homeUrl;
+    }
   }
 
   await context.close();
