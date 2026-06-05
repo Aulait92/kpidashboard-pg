@@ -1,12 +1,12 @@
 /**
- * Scraper: Versicherungsmakler (§34d) in Deutschland mit ≥ MIN_EMPLOYEES Mitarbeitern.
+ * Scraper: Versicherungsmakler (§34d) in Deutschland mit min..max Mitarbeitern.
  *
  * Pipeline:
  *   1. Sammle Listings via Gelbe Seiten je Stadt (Name, Adresse, Tel, Webseite)
  *   2. Dedupliziere (per Domain bzw. Name+Stadt)
  *   3. Für jede Firma mit Webseite: Crawle Home + Impressum + Kontakt + Team-Seite
  *      → E-Mails, zusätzliche Telefonnummern, Mitarbeiter-Schätzung (Heuristik)
- *   4. Filter ≥ MIN_EMPLOYEES (Treffer ohne valide Schätzung können via --keep-unknown
+ *   4. Filter in [--min-employees, --max-employees] (Treffer ohne Schätzung via --keep-unknown
  *      durchgelassen werden)
  *   5. CSV nach data/brokers.csv
  *
@@ -38,7 +38,8 @@ const DEFAULT_CITIES = [
   "Hannover",
 ];
 
-const MIN_EMPLOYEES = 30;
+const DEFAULT_MIN_EMPLOYEES = 30;
+const DEFAULT_MAX_EMPLOYEES = 100;
 const OUTPUT_PATH = "data/brokers.csv";
 
 type Args = {
@@ -50,6 +51,8 @@ type Args = {
   concurrency: number;
   debug: boolean;
   headful: boolean;
+  minEmployees: number;
+  maxEmployees: number;
 };
 
 function parseArgs(argv: string[]): Args {
@@ -62,6 +65,8 @@ function parseArgs(argv: string[]): Args {
     concurrency: 4,
     debug: false,
     headful: false,
+    minEmployees: DEFAULT_MIN_EMPLOYEES,
+    maxEmployees: DEFAULT_MAX_EMPLOYEES,
   };
   for (const raw of argv.slice(2)) {
     const [k, v] = raw.includes("=") ? raw.split("=", 2) : [raw, "true"];
@@ -89,6 +94,12 @@ function parseArgs(argv: string[]): Args {
         break;
       case "--headful":
         args.headful = v !== "false";
+        break;
+      case "--min-employees":
+        args.minEmployees = parseInt(v, 10);
+        break;
+      case "--max-employees":
+        args.maxEmployees = parseInt(v, 10);
         break;
       default:
         console.warn(`Unknown arg: ${k}`);
@@ -118,7 +129,9 @@ async function enrichInBatches<T, R>(
 async function main() {
   const args = parseArgs(process.argv);
   console.log(`Scraping ${args.query} in ${args.cities.length} cities (max ${args.max} total)`);
-  console.log(`Filter: ≥${MIN_EMPLOYEES} employees${args.keepUnknown ? " (keeping unknowns)" : ""}`);
+  console.log(
+    `Filter: ${args.minEmployees}–${args.maxEmployees} employees${args.keepUnknown ? " (keeping unknowns)" : ""}`,
+  );
 
   const browser = await chromium.launch({ headless: !args.headful });
 
@@ -171,10 +184,10 @@ async function main() {
     });
 
     // 4) Filter
-    console.log(`\n[3/4] Filtering ≥${MIN_EMPLOYEES} employees...`);
+    console.log(`\n[3/4] Filtering ${args.minEmployees}–${args.maxEmployees} employees...`);
     const filtered = enriched.filter((e) => {
       if (e.employeesEstimate === null) return args.keepUnknown;
-      return e.employeesEstimate >= MIN_EMPLOYEES;
+      return e.employeesEstimate >= args.minEmployees && e.employeesEstimate <= args.maxEmployees;
     });
     console.log(`  Passed filter: ${filtered.length} / ${enriched.length}`);
 
