@@ -42,5 +42,6 @@ next-env.d.ts
 
 /src/generated/prisma
 
-# scraper output
+# scraper output (CSV + debug dumps, aber seed-Liste behalten)
 /data/*.csv
+/data/debug/

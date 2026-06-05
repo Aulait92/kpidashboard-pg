@@ -22,6 +22,12 @@ Output: `data/brokers.csv`
 | `--pages=N`       | `3`                                              | Ergebnisseiten je Stadt                                     |
 | `--concurrency=N` | `4`                                              | Parallele Browser-Contexts beim Enrichment                  |
 | `--keep-unknown`  | aus                                              | Auch Firmen ohne MA-Schätzung in den Output schreiben       |
+| `--source=…`      | `gelbeseiten`                                    | `gelbeseiten` / `seed` (aus `data/seed-brokers.json`) / `both` |
+| `--seed-path=…`   | `data/seed-brokers.json`                         | Alternative Seed-Liste                                      |
+| `--min-employees` | `30`                                             | MA-Filter Untergrenze                                       |
+| `--max-employees` | `100`                                            | MA-Filter Obergrenze                                        |
+| `--debug`         | aus                                              | Bei 0 Treffern Screenshot+HTML nach `data/debug/`           |
+| `--headful`       | aus                                              | Chromium sichtbar starten (umgeht Bot-Detection)            |
 
 ## Pipeline
 

@@ -13,10 +13,13 @@
  * Run:
  *   npm run scrape:brokers
  *   npm run scrape:brokers -- --cities=Berlin,München --max=50 --keep-unknown
+ *   npm run scrape:brokers -- --source=seed --keep-unknown
+ *   npm run scrape:brokers -- --source=both --max=300 --keep-unknown
  */
 
 import { chromium } from "playwright";
 import { scrapeGelbeseiten } from "./scrape-brokers/sources/gelbeseiten.ts";
+import { loadSeedList } from "./scrape-brokers/sources/seed-list.ts";
 import { dedupeListings } from "./scrape-brokers/util/dedupe.ts";
 import { enrichFromWebsite } from "./scrape-brokers/enrich/website.ts";
 import { enrichFromKununu } from "./scrape-brokers/enrich/kununu.ts";
@@ -54,6 +57,8 @@ type Args = {
   headful: boolean;
   minEmployees: number;
   maxEmployees: number;
+  source: "gelbeseiten" | "seed" | "both";
+  seedPath: string;
 };
 
 function parseArgs(argv: string[]): Args {
@@ -68,6 +73,8 @@ function parseArgs(argv: string[]): Args {
     headful: false,
     minEmployees: DEFAULT_MIN_EMPLOYEES,
     maxEmployees: DEFAULT_MAX_EMPLOYEES,
+    source: "gelbeseiten",
+    seedPath: "data/seed-brokers.json",
   };
   for (const raw of argv.slice(2)) {
     const [k, v] = raw.includes("=") ? raw.split("=", 2) : [raw, "true"];
@@ -101,6 +108,16 @@ function parseArgs(argv: string[]): Args {
         break;
       case "--max-employees":
         args.maxEmployees = parseInt(v, 10);
+        break;
+      case "--source":
+        if (v === "gelbeseiten" || v === "seed" || v === "both") {
+          args.source = v;
+        } else {
+          console.warn(`Unknown --source=${v}, falling back to gelbeseiten`);
+        }
+        break;
+      case "--seed-path":
+        args.seedPath = v;
         break;
       default:
         console.warn(`Unknown arg: ${k}`);
@@ -138,18 +155,28 @@ async function main() {
 
   try {
     // 1) Collect
-    console.log("\n[1/4] Collecting listings from Gelbe Seiten...");
-    const raw = await scrapeGelbeseiten(
-      browser,
-      args.cities,
-      args.query,
-      args.maxPagesPerCity,
-      args.debug,
-    );
-    console.log(`  Total raw: ${raw.length}`);
+    console.log(`\n[1/4] Collecting listings (source=${args.source})...`);
+    const collected: import("./scrape-brokers/types.ts").RawListing[] = [];
+    if (args.source === "gelbeseiten" || args.source === "both") {
+      const gs = await scrapeGelbeseiten(
+        browser,
+        args.cities,
+        args.query,
+        args.maxPagesPerCity,
+        args.debug,
+      );
+      console.log(`  Gelbeseiten: ${gs.length}`);
+      collected.push(...gs);
+    }
+    if (args.source === "seed" || args.source === "both") {
+      const seed = await loadSeedList(args.seedPath);
+      console.log(`  Seed-Liste (${args.seedPath}): ${seed.length}`);
+      collected.push(...seed);
+    }
+    console.log(`  Total raw: ${collected.length}`);
 
     // 2) Dedupe + cap
-    const unique = dedupeListings(raw).slice(0, args.max);
+    const unique = dedupeListings(collected).slice(0, args.max);
     console.log(`  After dedupe & cap(${args.max}): ${unique.length}`);
 
     // 3) Enrich

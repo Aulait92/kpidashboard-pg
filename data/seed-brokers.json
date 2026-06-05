@@ -1,0 +1,20 @@
+{
+  "_comment": "Seed-Liste für mid-size DE-Versicherungsmakler. EDITIEREN! Die Namen sind Schätzungen — Mitarbeiterzahlen wurden nicht verifiziert. Felder: name (Pflicht), city, website (optional — wird sonst über Google-Suche o.ä. gefunden, ist hier aber Pflicht damit der Crawl funktioniert). Wenn website fehlt, wird der Eintrag übersprungen.",
+  "brokers": [
+    { "name": "artus AG", "city": "Düsseldorf", "website": "https://www.artus.de" },
+    { "name": "Pantaenius Versicherungsmakler GmbH", "city": "Hamburg", "website": "https://www.pantaenius.com" },
+    { "name": "VRT Versicherungsmakler AG", "city": "Frankfurt am Main", "website": "https://www.vrt-gruppe.de" },
+    { "name": "Schmidt-Reuter Integral Assekuranzmakler GmbH", "city": "Mannheim", "website": "https://www.schmidt-reuter.de" },
+    { "name": "Pöcking & Partner Versicherungsmakler", "city": "München", "website": "https://www.poecking.de" },
+    { "name": "Premium Circle Deutschland GmbH", "city": "Hannover", "website": "https://www.premium-circle.de" },
+    { "name": "DEUKONA Versicherungs-Vermittlungs-GmbH", "city": "Düsseldorf", "website": "https://www.deukona.de" },
+    { "name": "Cosmedia Versicherungsmakler GmbH", "city": "Köln", "website": "https://www.cosmedia.de" },
+    { "name": "Goldenes Lamm Versicherungsdienst", "city": "Stuttgart", "website": "https://www.goldenes-lamm.de" },
+    { "name": "Sürkemer + Heuer", "city": "Dortmund", "website": "https://www.suerkemer-heuer.de" },
+    { "name": "Schreiber & Cie. Versicherungsmakler", "city": "Hamburg", "website": "https://www.schreiber-cie.de" },
+    { "name": "VEMA Versicherungs-Makler-Genossenschaft eG", "city": "Bayreuth", "website": "https://www.vema-ag.de" },
+    { "name": "Eichholtz Versicherungsmakler GmbH", "city": "Berlin", "website": "https://www.eichholtz.de" },
+    { "name": "M+M Versicherungsmakler GmbH", "city": "Frankfurt am Main" },
+    { "name": "Concept Vermögensmanagement GmbH & Co. KG", "city": "Bielefeld", "website": "https://www.concept-vm.de" }
+  ]
+}
