@@ -268,6 +268,26 @@ async function loadPage(page: Page, url: string, timeout = 20000): Promise<strin
   }
 }
 
+// Extract `tel:` links from HTML. Returns up to 2 distinct numbers classified
+// as phone (Festnetz) and mobile (015x/016x/017x prefixes).
+function extractTelLinks(html: string): { phone: string; mobile: string } {
+  let phone = "";
+  let mobile = "";
+  const seen = new Set<string>();
+  for (const m of html.matchAll(/href=["']tel:([^"'?\s]+)/gi)) {
+    const num = m[1].replace(/[^\d+]/g, "");
+    if (!num || seen.has(num)) continue;
+    seen.add(num);
+    if (classifyPhone(num) === "mobile") {
+      if (!mobile) mobile = num;
+    } else if (!phone) {
+      phone = num;
+    }
+    if (phone && mobile) break;
+  }
+  return { phone, mobile };
+}
+
 async function fetchProfile(page: Page, url: string, fetchContact: boolean): Promise<Advisor | null> {
   const html = await loadPage(page, url);
   if (!html) return null;
@@ -281,39 +301,41 @@ async function fetchProfile(page: Page, url: string, fetchContact: boolean): Pro
 
   const text = stripHtml(html);
   let role = extractRole(html, text, name);
-  let phoneMatch = text.match(PHONE_REGEX);
-  let mobileMatch = text.match(MOBILE_REGEX);
+  // 1) Erst tel:-Links (verlässlichste Quelle bei swisslife)
+  let { phone, mobile } = extractTelLinks(html);
+  // 2) Fallback: Label-Regex
+  if (!phone) {
+    const m = text.match(PHONE_REGEX);
+    if (m) phone = m[1].replace(/\s+/g, " ").trim();
+  }
+  if (!mobile) {
+    const m = text.match(MOBILE_REGEX);
+    if (m) mobile = m[1].replace(/\s+/g, " ").trim();
+  }
   let address = extractAddress(text);
   let city = address.city || extractCity(html, "");
 
-  // Kontaktübersicht hat oft saubere Adresse + Telefon
   if (fetchContact) {
     const contactUrl = url.replace(/\.html$/, "/kontaktuebersicht.html");
     const contactHtml = await loadPage(page, contactUrl);
     if (contactHtml) {
       const ctext = stripHtml(contactHtml);
-      if (!phoneMatch) phoneMatch = ctext.match(PHONE_REGEX);
-      if (!mobileMatch) mobileMatch = ctext.match(MOBILE_REGEX);
+      const ctel = extractTelLinks(contactHtml);
+      if (!phone) phone = ctel.phone;
+      if (!mobile) mobile = ctel.mobile;
+      if (!phone) {
+        const mm = ctext.match(PHONE_REGEX);
+        if (mm) phone = mm[1].replace(/\s+/g, " ").trim();
+      }
+      if (!mobile) {
+        const mm = ctext.match(MOBILE_REGEX);
+        if (mm) mobile = mm[1].replace(/\s+/g, " ").trim();
+      }
       if (!address.zip) {
         address = extractAddress(ctext);
         if (address.city) city = address.city;
       }
       if (!role) role = extractRole(contactHtml, ctext, name);
-    }
-  }
-
-  let phone = phoneMatch ? phoneMatch[1].replace(/\s+/g, " ").trim() : "";
-  let mobile = mobileMatch ? mobileMatch[1].replace(/\s+/g, " ").trim() : "";
-
-  if (!phone && !mobile) {
-    const seen = new Set<string>();
-    for (const mm of text.matchAll(ANY_PHONE_REGEX)) {
-      const num = mm[0].trim();
-      if (seen.has(num)) continue;
-      seen.add(num);
-      if (classifyPhone(num) === "mobile") { if (!mobile) mobile = num; }
-      else if (!phone) phone = num;
-      if (phone && mobile) break;
     }
   }
 
