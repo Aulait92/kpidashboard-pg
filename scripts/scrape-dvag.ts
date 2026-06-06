@@ -172,9 +172,15 @@ function parseTeamSize(html: string): number | null {
 
 const PHONE_REGEX = /(?:Telefon|Tel\.?|Festnetz|Geschäftlich)[^0-9+]{0,30}((?:\+49|0)[\d\s\-/()]{6,25})/i;
 const MOBILE_REGEX = /(?:Mobil|Handy)[^0-9+]{0,30}((?:\+49|0)[\d\s\-/()]{6,25})/i;
-// Address: typical pattern "Straßenname 12, 12345 Stadt" or with HTML between
-const ADDRESS_REGEX =
-  /([A-ZÄÖÜ][\wäöüÄÖÜß.\-\s]{2,50}\s+\d+[a-zA-Z]?)[\s,<>·\/]{1,40}?(\d{5})\s+([A-ZÄÖÜ][\wäöüÄÖÜß.\-\s]{2,40})/;
+
+// Street: a token that ends with "str." / "straße" / "weg" / "platz" / "allee" / "ring" + Hausnummer.
+// City: terminated by a sensible delimiter, NOT just any whitespace (otherwise we swallow trailing
+// page chrome like "Telefon Mobil E-Mail").
+const STREET_REGEX =
+  /([A-ZÄÖÜ][\wäöüÄÖÜß.\- ]{1,60}?(?:str\.?|straße|strasse|weg|platz|allee|ring|gasse|damm|chaussee|ufer|markt|hof)\s+\d+[a-zA-Z]?)\s*[,·\/]?\s*(\d{5})\s+([A-ZÄÖÜ][a-zäöüÄÖÜß.\- ]{1,40}?)(?=\s+(?:Telefon|Tel\.|Mobil|Handy|E-Mail|Email|Fax|Routenplaner|Anfahrt|Öffnungszeiten|·|$|<))/i;
+// Fallback: simpler pattern, less strict
+const STREET_FALLBACK =
+  /([A-ZÄÖÜ][\wäöüÄÖÜß.\- ]{2,60}?\s+\d+[a-zA-Z]?)\s*[,·\/]\s*(\d{5})\s+([A-ZÄÖÜ][a-zäöüÄÖÜß.\- ]{2,30})/;
 
 function stripHtml(html: string): string {
   return html
@@ -212,6 +218,55 @@ function deriveEmailFromSlug(slug: string): { firstName: string; lastName: strin
   };
 }
 
+// Extract the displayed advisor name from the HTML. Tries <title>, then <h1>,
+// then meta og:title. Strips "Deutsche Vermögensberatung" / DVAG suffixes.
+function extractDisplayName(html: string, derivedName: string): string {
+  const candidates: string[] = [];
+  const title = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+  if (title) candidates.push(title[1]);
+  const h1 = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+  if (h1) candidates.push(stripHtml(h1[1]));
+  const og = html.match(/<meta\s+property=["']og:title["']\s+content=["']([^"']+)["']/i);
+  if (og) candidates.push(og[1]);
+
+  for (const raw of candidates) {
+    let s = raw
+      .replace(/&[a-z]+;/gi, " ")
+      .replace(/[|–—-]+\s*(Deutsche\s+Vermögensberatung|DVAG)[^|–—-]*$/i, "")
+      .replace(/^(Deutsche\s+Vermögensberatung|DVAG)\s*[|–—-]\s*/i, "")
+      .replace(/\s*\|\s*Ihr Finanzcoach.*$/i, "")
+      .replace(/\s*\|\s*Vermögensberater.*$/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    // Want pattern "Vorname Nachname" (1-3 capitalized words)
+    if (/^[A-ZÄÖÜ][\wäöüß.\-]+(?:\s+[A-ZÄÖÜ][\wäöüß.\-]+){0,3}$/.test(s)) {
+      return s;
+    }
+    // Maybe wrapped like "Andrea Brunke - Ihre Finanzcoach"
+    const m = s.match(/^([A-ZÄÖÜ][\wäöüß.\-]+(?:\s+[A-ZÄÖÜ][\wäöüß.\-]+){0,3})\b/);
+    if (m) return m[1];
+  }
+  return derivedName;
+}
+
+function extractAddress(text: string): { street: string | null; zip: string | null; city: string | null } {
+  // Drop the "Deutsche Vermögensberatung" prefix that DVAG places before the street
+  const cleaned = text.replace(/Deutsche\s+Vermögensberatung\s+/gi, " ");
+
+  let m = cleaned.match(STREET_REGEX);
+  if (!m) m = cleaned.match(STREET_FALLBACK);
+  if (!m) return { street: null, zip: null, city: null };
+
+  let street = m[1].trim();
+  const zip = m[2];
+  let city = m[3].trim();
+
+  // Belt-and-suspenders: chop city at the first occurrence of any chrome word
+  city = city.split(/\s+(?:Telefon|Tel\.|Mobil|Handy|E-Mail|Email|Fax|Routenplaner|Anfahrt|Öffnungszeiten)/i)[0].trim();
+
+  return { street, zip, city };
+}
+
 async function fetchProfile(url: string): Promise<AdvisorProfile | null> {
   const html = await fetchText(url);
   if (!html) return null;
@@ -219,27 +274,28 @@ async function fetchProfile(url: string): Promise<AdvisorProfile | null> {
   if (!m) return null;
   const slug = m[1].toLowerCase();
   const derived = deriveEmailFromSlug(slug);
+  const displayName = extractDisplayName(html, derived.name);
 
   const teamSize = parseTeamSize(html);
 
   const text = stripHtml(html);
   const phoneMatch = text.match(PHONE_REGEX);
   const mobileMatch = text.match(MOBILE_REGEX);
-  const addressMatch = text.match(ADDRESS_REGEX);
+  const address = extractAddress(text);
 
   return {
     url,
     slug,
     firstName: derived.firstName,
     lastName: derived.lastName,
-    name: derived.name,
+    name: displayName,
     email: derived.email,
     teamSize,
     phone: phoneMatch ? phoneMatch[1].replace(/\s+/g, " ").trim() : null,
     mobile: mobileMatch ? mobileMatch[1].replace(/\s+/g, " ").trim() : null,
-    street: addressMatch ? addressMatch[1].trim() : null,
-    zip: addressMatch ? addressMatch[2] : null,
-    city: addressMatch ? addressMatch[3].trim() : null,
+    street: address.street,
+    zip: address.zip,
+    city: address.city,
   };
 }
 
