@@ -27,6 +27,7 @@ type Args = {
   concurrency: number;
   sample: number; // 0 = no sampling, >0 = only crawl every Nth profile (e.g. 10 = 10%)
   letters: string | null; // e.g. "a,b,c" — only process these letter-sitemaps
+  fetchUeberUns: boolean;
 };
 
 function parseArgs(argv: string[]): Args {
@@ -36,6 +37,7 @@ function parseArgs(argv: string[]): Args {
     concurrency: 8,
     sample: 0,
     letters: null,
+    fetchUeberUns: true,
   };
   for (const raw of argv.slice(2)) {
     const [k, v] = raw.includes("=") ? raw.split("=", 2) : [raw, "true"];
@@ -54,6 +56,9 @@ function parseArgs(argv: string[]): Args {
         break;
       case "--letters":
         args.letters = v.toLowerCase();
+        break;
+      case "--no-ueber-uns":
+        args.fetchUeberUns = false;
         break;
       default:
         console.warn(`Unknown arg: ${k}`);
@@ -144,6 +149,7 @@ type AdvisorProfile = {
   email: string;
   name: string;
   teamSize: number | null;
+  teamMethod: "text" | "vignettes" | null;
   phone: string | null;
   mobile: string | null;
   street: string | null;
@@ -159,15 +165,25 @@ const TEAM_SIZE_PATTERNS = [
   /(\d{1,3})\s+(?:Mitarbeiter|Mitarbeitende|Berater|Kolleg)\s+(?:stark|im\s+Team|an\s+Bord)/i,
 ];
 
-function parseTeamSize(html: string): number | null {
+function parseTeamSize(text: string): number | null {
   for (const re of TEAM_SIZE_PATTERNS) {
-    const m = html.match(re);
+    const m = text.match(re);
     if (m) {
       const n = parseInt(m[1], 10);
       if (n >= 2 && n < 500) return n;
     }
   }
   return null;
+}
+
+// Counts DVAG team-vignette tiles on über-uns.html. Stable selector — the
+// CMS component class is "dvag-m-c<NN>-team-vignette". Each tile maps to a
+// team-related entry (member, role caption, regional unit).
+function parseTeamVignetteCount(html: string): number | null {
+  const re = /class="[^"]*team-vignette__title[^"]*"/gi;
+  const matches = html.match(re);
+  if (!matches) return null;
+  return matches.length >= 2 ? matches.length : null;
 }
 
 const PHONE_REGEX = /(?:Telefon|Tel\.?|Festnetz|Geschäftlich)[^0-9+]{0,30}((?:\+49|0)[\d\s\-/()]{6,25})/i;
@@ -267,7 +283,10 @@ function extractAddress(text: string): { street: string | null; zip: string | nu
   return { street, zip, city };
 }
 
-async function fetchProfile(url: string): Promise<AdvisorProfile | null> {
+async function fetchProfile(
+  url: string,
+  options: { fetchUeberUns: boolean },
+): Promise<AdvisorProfile | null> {
   const html = await fetchText(url);
   if (!html) return null;
   const m = url.match(/\/([a-zäöüß0-9-]+\.[a-zäöüß0-9-]+)\/index\.html?$/i);
@@ -277,11 +296,26 @@ async function fetchProfile(url: string): Promise<AdvisorProfile | null> {
   const displayName = extractDisplayName(html, derived.name);
 
   const text = stripHtml(html);
-  // Parse on stripped text so HTML wrappers between digit and dash don't break the regex.
-  const teamSize = parseTeamSize(text);
+  let teamSize = parseTeamSize(text);
+  let teamMethod: "text" | "vignettes" | null = teamSize !== null ? "text" : null;
   const phoneMatch = text.match(PHONE_REGEX);
   const mobileMatch = text.match(MOBILE_REGEX);
   const address = extractAddress(text);
+
+  // Fallback: scan über-uns.html for team-vignette tiles (CMS-managed team
+  // section, stable across DVAG sites). Skip on the cheapest tier
+  // (--no-ueber-uns) or when we already found an explicit team size.
+  if (options.fetchUeberUns && teamSize === null) {
+    const ueberUnsUrl = url.replace(/index\.html?$/, "ueber-uns.html");
+    const ueberHtml = await fetchText(ueberUnsUrl);
+    if (ueberHtml) {
+      const count = parseTeamVignetteCount(ueberHtml);
+      if (count !== null) {
+        teamSize = count;
+        teamMethod = "vignettes";
+      }
+    }
+  }
 
   return {
     url,
@@ -291,6 +325,7 @@ async function fetchProfile(url: string): Promise<AdvisorProfile | null> {
     name: displayName,
     email: derived.email,
     teamSize,
+    teamMethod,
     phone: phoneMatch ? phoneMatch[1].replace(/\s+/g, " ").trim() : null,
     mobile: mobileMatch ? mobileMatch[1].replace(/\s+/g, " ").trim() : null,
     street: address.street,
@@ -340,6 +375,7 @@ async function writeCsv(path: string, profiles: AdvisorProfile[]): Promise<void>
     "zip",
     "city",
     "teamSize",
+    "teamMethod",
     "url",
   ];
   const lines = [headers.join(",")];
@@ -363,7 +399,8 @@ async function main() {
     `DVAG-Scraper · min-team-size=${args.minTeamSize} · concurrency=${args.concurrency}` +
       (args.max ? ` · max=${args.max}` : "") +
       (args.sample ? ` · sample=1/${args.sample}` : "") +
-      (args.letters ? ` · letters=${args.letters}` : ""),
+      (args.letters ? ` · letters=${args.letters}` : "") +
+      (args.fetchUeberUns ? "" : " · no-ueber-uns"),
   );
 
   let urls = await collectAdvisorUrls(args.letters);
@@ -383,7 +420,7 @@ async function main() {
   const profiles = await inBatches(
     urls,
     args.concurrency,
-    async (url) => fetchProfile(url),
+    async (url) => fetchProfile(url, { fetchUeberUns: args.fetchUeberUns }),
     (done, total) => {
       if (done % 50 === 0 || done === total) {
         const elapsed = (Date.now() - startedAt) / 1000;
@@ -421,8 +458,14 @@ async function main() {
     const bucket = s <= 5 ? "5" : s <= 10 ? "6-10" : s <= 20 ? "11-20" : s <= 50 ? "21-50" : "51+";
     sizeBuckets.set(bucket, (sizeBuckets.get(bucket) ?? 0) + 1);
   }
+  const byMethod = new Map<string, number>();
+  for (const p of filtered) {
+    const k = p.teamMethod ?? "unknown";
+    byMethod.set(k, (byMethod.get(k) ?? 0) + 1);
+  }
   console.log(`\nSummary: ${filtered.length} Berater · ${withPhone} mit Telefon · ${withAddress} mit Adresse`);
   console.log(`Team-Größen: ${[...sizeBuckets.entries()].map(([k, n]) => `${k}=${n}`).join(" · ")}`);
+  console.log(`Methode: ${[...byMethod.entries()].map(([k, n]) => `${k}=${n}`).join(" · ")}`);
 }
 
 main().catch((err) => {
