@@ -230,15 +230,18 @@ function toAdvisor(a: ApiAgent): Advisor {
 }
 
 // Team extraction from <subdomain>/de/Agentur.
-// Looks for additional mailto:<...@ergo.de> links + photos.
+// Ergo encodiert Team-Daten als JSON mit \x22-Escapes im HTML, nicht als
+// mailto-Links. Wir suchen jede @ergo.de-Adresse mit Wortgrenze (vermeidet
+// die \x22-Präfixe) und matchen daneben firstName/lastName/occupation aus
+// dem JSON-Block.
 function extractTeam(html: string, leadEmail: string): { size: number; members: string[] } {
-  const memberEmails = new Set<string>();
-  for (const m of html.matchAll(/mailto:([a-zäöüß0-9.\-_]+@ergo\.de)/gi)) {
-    memberEmails.add(m[1].toLowerCase());
+  const emails = new Set<string>();
+  for (const m of html.matchAll(/\b([a-zäöüß0-9][a-zäöüß0-9.\-_]*@ergo\.de)/gi)) {
+    emails.add(m[1].toLowerCase());
   }
-  // Add lead if not in (so size >= 1)
-  if (leadEmail) memberEmails.add(leadEmail.toLowerCase());
-  return { size: memberEmails.size, members: [...memberEmails] };
+  // ergänze Lead, damit Singletons nicht size=0 haben
+  if (leadEmail) emails.add(leadEmail.toLowerCase());
+  return { size: emails.size, members: [...emails] };
 }
 
 async function inBatches<T>(
