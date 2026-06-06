@@ -180,11 +180,36 @@ function classifyPhone(num: string): "mobile" | "phone" {
   return "phone";
 }
 
-// Address: tecis lists addresses like "Musterstr. 12, 12345 Musterstadt"
+// Address: "Musterstr. 12, 12345 Musterstadt" or "Ostring 6 76131 Karlsruhe"
+// Street must end on a street-type suffix + Hausnummer.
 const STREET_REGEX =
-  /([A-ZÄÖÜ][\wäöüÄÖÜß.\- ]{1,60}?(?:str\.?|straße|strasse|weg|platz|allee|ring|gasse|damm|chaussee|ufer|markt|hof|park)\s+\d+[a-zA-Z]?)\s*[,·\/]?\s*(\d{5})\s+([A-ZÄÖÜ][a-zäöüÄÖÜß.\- ]{1,40}?)(?=\s+(?:Telefon|Tel\.|Mobil|Handy|E-Mail|Email|Fax|Routenplaner|Anfahrt|Öffnungszeiten|vCard|·|$|<))/i;
+  /([A-ZÄÖÜ][\wäöüÄÖÜß.\- ]{1,60}?(?:str\.?|straße|strasse|weg|platz|allee|ring|gasse|damm|chaussee|ufer|markt|hof|park|berg|tal|feld|brücke|stiege)\s+\d+[a-zA-Z]?)\s*[,·\/]?\s*(\d{5})\s+([A-ZÄÖÜ][a-zäöüÄÖÜß.\- ]{1,40}?)(?=\s+(?:Telefon|Tel\.|Mobil|Handy|E-Mail|Email|Fax|Routenplaner|Anfahrt|Öffnungszeiten|vCard|Geschäftszeiten|·|$|<)|\s*$)/i;
+// Looser fallback — any token + number, then "," or " ", then ZIP + city.
 const STREET_FALLBACK =
-  /([A-ZÄÖÜ][\wäöüÄÖÜß.\- ]{2,60}?\s+\d+[a-zA-Z]?)\s*[,·\/]\s*(\d{5})\s+([A-ZÄÖÜ][a-zäöüÄÖÜß.\- ]{2,30})/;
+  /([A-ZÄÖÜ][\wäöüÄÖÜß.\- ]{2,60}?\s+\d+[a-zA-Z]?)\s*[,·\/]?\s+(\d{5})\s+([A-ZÄÖÜ][a-zäöüÄÖÜß.\-]{2,40})/;
+
+// Page-template strings that must NOT be treated as advisor name or role.
+const PAGE_LABEL_BLACKLIST = [
+  "kontaktübersicht",
+  "kontakt",
+  "impressum",
+  "wissenswertes",
+  "interview",
+  "über mich",
+  "über tecis",
+  "datenschutz",
+  "agb",
+  "karriere",
+  "ratgeber",
+  "podcast",
+  "startseite",
+  "finanzberatung",
+];
+
+function isPageLabel(s: string): boolean {
+  const lower = s.toLowerCase().trim();
+  return PAGE_LABEL_BLACKLIST.some((b) => lower === b || lower.startsWith(b + " "));
+}
 
 function extractAddress(text: string): { street: string; zip: string; city: string } {
   let m = text.match(STREET_REGEX);
@@ -215,6 +240,7 @@ function extractMailto(html: string, expectDomain: string): string {
 // Manager", "Spezialist für betriebliche Altersversorgung".
 function extractRole(html: string, text: string, name: string): string {
   const firstName = name.split(/\s+/)[0]?.toLowerCase() ?? "";
+  const lastName = name.split(/\s+/).slice(-1)[0]?.toLowerCase() ?? "";
 
   // 1) <title> pipe-segments
   const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
@@ -223,9 +249,11 @@ function extractRole(html: string, text: string, name: string): string {
     for (const p of parts) {
       const cleaned = p.trim();
       if (!cleaned) continue;
+      if (isPageLabel(cleaned)) continue;
       const lower = cleaned.toLowerCase();
       if (lower.includes("tecis")) continue;
       if (firstName && lower.includes(firstName)) continue;
+      if (lastName && lower.includes(lastName)) continue;
       // Plausible role: capitalized start, reasonable length
       if (/^[A-ZÄÖÜ]/.test(cleaned) && cleaned.length >= 4 && cleaned.length <= 80) {
         return cleaned;
@@ -251,18 +279,26 @@ function extractRole(html: string, text: string, name: string): string {
 }
 
 function extractName(html: string, slug: string): { name: string; firstName: string; lastName: string } {
-  // <title> usually has "Vorname Nachname | Role | tecis"
+  // <title> usually has "Vorname Nachname | Role | tecis", but on subpages
+  // it may be "Kontaktübersicht | Vorname Nachname | tecis". Walk all
+  // pipe-segments and pick the first one that looks like a person name AND
+  // isn't a page-template label.
   const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
   if (titleMatch) {
-    const first = titleMatch[1].split(/\s*\|\s*/)[0].trim();
-    // Should be "Vorname Nachname"
-    if (/^[A-ZÄÖÜ][\wäöüß-]+(?:\s+[A-ZÄÖÜ][\wäöüß-]+){0,3}$/.test(first)) {
-      const parts = first.split(/\s+/);
-      return {
-        name: first,
-        firstName: parts.slice(0, parts.length - 1).join(" "),
-        lastName: parts[parts.length - 1],
-      };
+    const parts = titleMatch[1].split(/\s*\|\s*/).map((s) => s.trim());
+    for (const p of parts) {
+      if (!p) continue;
+      if (isPageLabel(p)) continue;
+      if (p.toLowerCase().includes("tecis")) continue;
+      // Should be 2-4 capitalized name tokens
+      if (/^[A-ZÄÖÜ][\wäöüß-]+(?:\s+[A-ZÄÖÜ][\wäöüß-]+){1,3}$/.test(p)) {
+        const tokens = p.split(/\s+/);
+        return {
+          name: p,
+          firstName: tokens.slice(0, tokens.length - 1).join(" "),
+          lastName: tokens[tokens.length - 1],
+        };
+      }
     }
   }
   // Fallback: derive from slug
