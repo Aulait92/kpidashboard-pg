@@ -151,12 +151,12 @@ type AdvisorProfile = {
   city: string | null;
 };
 
-// Examples to match: "5-köpfiges Team", "12-köpfiges Team", "8 köpfiges Team",
-// "Team von 5 Personen", "5-köpfigen Team", "fünf-köpfiges" (we ignore word numbers)
+// Examples to match: "5-köpfiges Team", "12 köpfiges Team", "5- köpfiges Team",
+// "Team von 5 Personen", "5-köpfigen Team", various dash codepoints.
 const TEAM_SIZE_PATTERNS = [
-  /(\d{1,3})\s*[-‑–]\s*köpfige[ns]?\s+Team/i,
-  /Team\s+von\s+(\d{1,3})\s+(?:Personen|Mitarbeiter|Köpfen)/i,
-  /(\d{1,3})\s+(?:Mitarbeiter|Mitarbeitende|Berater|Kolleg)/i,
+  /(\d{1,3})\s*[-‑–—]?\s*köpfige[mnrs]?\s+Team/i,
+  /Team\s+(?:aus|von|mit)\s+(\d{1,3})\s+(?:Personen|Mitarbeiter|Mitarbeitenden|Köpfen|Köpfe|Berater)/i,
+  /(\d{1,3})\s+(?:Mitarbeiter|Mitarbeitende|Berater|Kolleg)\s+(?:stark|im\s+Team|an\s+Bord)/i,
 ];
 
 function parseTeamSize(html: string): number | null {
@@ -276,9 +276,9 @@ async function fetchProfile(url: string): Promise<AdvisorProfile | null> {
   const derived = deriveEmailFromSlug(slug);
   const displayName = extractDisplayName(html, derived.name);
 
-  const teamSize = parseTeamSize(html);
-
   const text = stripHtml(html);
+  // Parse on stripped text so HTML wrappers between digit and dash don't break the regex.
+  const teamSize = parseTeamSize(text);
   const phoneMatch = text.match(PHONE_REGEX);
   const mobileMatch = text.match(MOBILE_REGEX);
   const address = extractAddress(text);
