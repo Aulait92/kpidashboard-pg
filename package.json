@@ -15,6 +15,7 @@
     "scrape:brokers": "node --experimental-strip-types scripts/scrape-brokers.ts",
     "scrape:dvag": "node --experimental-strip-types scripts/scrape-dvag.ts",
     "scrape:tecis": "node --experimental-strip-types scripts/scrape-tecis.ts",
+    "scrape:axa": "node --experimental-strip-types scripts/scrape-axa.ts",
     "db:studio": "prisma studio",
     "vapid:generate": "web-push generate-vapid-keys"
   },
