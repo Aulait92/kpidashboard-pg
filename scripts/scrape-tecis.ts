@@ -245,10 +245,10 @@ function extractRole(html: string, text: string, name: string): string {
   const firstName = name.split(/\s+/)[0]?.toLowerCase() ?? "";
   const lastName = name.split(/\s+/).slice(-1)[0]?.toLowerCase() ?? "";
 
-  // 1) <title> pipe-segments
+  // 1) <title> pipe/dash-segments
   const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
   if (titleMatch) {
-    const parts = titleMatch[1].split(/\s*\|\s*/);
+    const parts = titleMatch[1].split(TITLE_SEPARATOR_RE);
     for (const p of parts) {
       const cleaned = p.trim();
       if (!cleaned) continue;
@@ -257,8 +257,11 @@ function extractRole(html: string, text: string, name: string): string {
       if (lower.includes("tecis")) continue;
       if (firstName && lower.includes(firstName)) continue;
       if (lastName && lower.includes(lastName)) continue;
-      // Plausible role: capitalized start, reasonable length
-      if (/^[A-ZÄÖÜ]/.test(cleaned) && cleaned.length >= 4 && cleaned.length <= 80) {
+      // Reject location-style strings like "Finanzberatung in Hamburg"
+      if (/\b(?:in|für|aus)\s+[A-ZÄÖÜ]/.test(cleaned)) continue;
+      if (/\bFinanzberatung\b/i.test(cleaned)) continue;
+      // Plausible role: capitalized start, reasonable length (cap tighter)
+      if (/^[A-ZÄÖÜ]/.test(cleaned) && cleaned.length >= 4 && cleaned.length <= 50) {
         return cleaned;
       }
     }
@@ -281,6 +284,8 @@ function extractRole(html: string, text: string, name: string): string {
   return "";
 }
 
+// Split title/heading on any pipe, slash, or dash-like character (Unicode Pd class).
+const TITLE_SEPARATOR_RE = /\s*(?:[|\/]|\p{Pd})\s*/u;
 const NAME_PATTERN = /^[A-ZÄÖÜ][\wäöüÄÖÜß\-]+(?:\s+[A-ZÄÖÜ][\wäöüÄÖÜß\-]+){1,3}$/;
 
 function pickNameFromCandidates(candidates: string[]): {
@@ -309,7 +314,7 @@ function extractName(html: string, slug: string): { name: string; firstName: str
   // Source 1: <title> — split on any separator (pipe, hyphen, en-dash, em-dash, slash)
   const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
   if (titleMatch) {
-    const parts = titleMatch[1].split(/\s*[|–—\-\/]\s*/);
+    const parts = titleMatch[1].split(TITLE_SEPARATOR_RE);
     const picked = pickNameFromCandidates(parts);
     if (picked) return picked;
   }
@@ -317,7 +322,7 @@ function extractName(html: string, slug: string): { name: string; firstName: str
   // Source 2: og:title meta tag
   const og = html.match(/<meta\s+property=["']og:title["']\s+content=["']([^"']+)["']/i);
   if (og) {
-    const parts = og[1].split(/\s*[|–—\-\/]\s*/);
+    const parts = og[1].split(TITLE_SEPARATOR_RE);
     const picked = pickNameFromCandidates(parts);
     if (picked) return picked;
   }
@@ -326,7 +331,7 @@ function extractName(html: string, slug: string): { name: string; firstName: str
   const h1 = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
   if (h1) {
     const text = stripHtml(h1[1]);
-    const picked = pickNameFromCandidates([text, ...text.split(/\s*[|–—\-\/]\s*/)]);
+    const picked = pickNameFromCandidates([text, ...text.split(TITLE_SEPARATOR_RE)]);
     if (picked) return picked;
   }
 
