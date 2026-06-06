@@ -17,6 +17,7 @@
     "scrape:tecis": "node --experimental-strip-types scripts/scrape-tecis.ts",
     "scrape:axa": "node --experimental-strip-types scripts/scrape-axa.ts",
     "scrape:ergo": "node --experimental-strip-types scripts/scrape-ergo.ts",
+    "scrape:swisslife": "node --experimental-strip-types scripts/scrape-swisslife.ts",
     "db:studio": "prisma studio",
     "vapid:generate": "web-push generate-vapid-keys"
   },
