@@ -20,6 +20,7 @@
     "scrape:swisslife": "node --experimental-strip-types scripts/scrape-swisslife.ts",
     "scrape:ovb": "node --experimental-strip-types scripts/scrape-ovb.ts",
     "scrape:mlp": "node --experimental-strip-types scripts/scrape-mlp.ts",
+    "scrape:huk": "node --experimental-strip-types scripts/scrape-huk.ts",
     "db:studio": "prisma studio",
     "vapid:generate": "web-push generate-vapid-keys"
   },
