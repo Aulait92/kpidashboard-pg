@@ -283,6 +283,14 @@ function extractAddress(text: string): { street: string | null; zip: string | nu
   return { street, zip, city };
 }
 
+// Diagnostic counters for the über-uns fallback path
+const ueberUnsStats = {
+  attempted: 0,
+  fetched: 0,
+  withVignettes2plus: 0,
+  withVignettes1: 0,
+};
+
 async function fetchProfile(
   url: string,
   options: { fetchUeberUns: boolean },
@@ -302,17 +310,21 @@ async function fetchProfile(
   const mobileMatch = text.match(MOBILE_REGEX);
   const address = extractAddress(text);
 
-  // Fallback: scan über-uns.html for team-vignette tiles (CMS-managed team
-  // section, stable across DVAG sites). Skip on the cheapest tier
-  // (--no-ueber-uns) or when we already found an explicit team size.
   if (options.fetchUeberUns && teamSize === null) {
+    ueberUnsStats.attempted++;
     const ueberUnsUrl = url.replace(/index\.html?$/, "ueber-uns.html");
     const ueberHtml = await fetchText(ueberUnsUrl);
     if (ueberHtml) {
-      const count = parseTeamVignetteCount(ueberHtml);
-      if (count !== null) {
-        teamSize = count;
+      ueberUnsStats.fetched++;
+      const re = /class="[^"]*team-vignette__title[^"]*"/gi;
+      const matches = ueberHtml.match(re);
+      const matchCount = matches ? matches.length : 0;
+      if (matchCount >= 2) {
+        ueberUnsStats.withVignettes2plus++;
+        teamSize = matchCount;
         teamMethod = "vignettes";
+      } else if (matchCount === 1) {
+        ueberUnsStats.withVignettes1++;
       }
     }
   }
@@ -466,6 +478,9 @@ async function main() {
   console.log(`\nSummary: ${filtered.length} Berater · ${withPhone} mit Telefon · ${withAddress} mit Adresse`);
   console.log(`Team-Größen: ${[...sizeBuckets.entries()].map(([k, n]) => `${k}=${n}`).join(" · ")}`);
   console.log(`Methode: ${[...byMethod.entries()].map(([k, n]) => `${k}=${n}`).join(" · ")}`);
+  console.log(
+    `über-uns Diagnose: attempted=${ueberUnsStats.attempted} · fetched=${ueberUnsStats.fetched} · vignettes≥2=${ueberUnsStats.withVignettes2plus} · vignettes=1=${ueberUnsStats.withVignettes1}`,
+  );
 }
 
 main().catch((err) => {
