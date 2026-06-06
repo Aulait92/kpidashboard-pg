@@ -170,6 +170,16 @@ function deriveEmailFromSlug(slug: string): { firstName: string; lastName: strin
 const PHONE_REGEX = /(?:Telefon|Tel\.?|Festnetz)[^0-9+]{0,30}((?:\+49|0)[\d\s\-/()]{6,25})/i;
 const MOBILE_REGEX = /(?:Mobil|Handy)[^0-9+]{0,30}((?:\+49|0)[\d\s\-/()]{6,25})/i;
 
+// Catch any DE phone in the text. Used as fallback when neither label appears.
+const ANY_PHONE_REGEX = /(?:\+49|0)[\s\-/()]*\d[\d\s\-/()]{6,22}\d/g;
+
+function classifyPhone(num: string): "mobile" | "phone" {
+  const digits = num.replace(/[^0-9]/g, "").replace(/^49/, "0");
+  // German mobile prefixes
+  if (/^01[5-7]\d/.test(digits)) return "mobile";
+  return "phone";
+}
+
 // Address: tecis lists addresses like "Musterstr. 12, 12345 Musterstadt"
 const STREET_REGEX =
   /([A-ZÄÖÜ][\wäöüÄÖÜß.\- ]{1,60}?(?:str\.?|straße|strasse|weg|platz|allee|ring|gasse|damm|chaussee|ufer|markt|hof|park)\s+\d+[a-zA-Z]?)\s*[,·\/]?\s*(\d{5})\s+([A-ZÄÖÜ][a-zäöüÄÖÜß.\- ]{1,40}?)(?=\s+(?:Telefon|Tel\.|Mobil|Handy|E-Mail|Email|Fax|Routenplaner|Anfahrt|Öffnungszeiten|vCard|·|$|<))/i;
@@ -200,26 +210,42 @@ function extractMailto(html: string, expectDomain: string): string {
 }
 
 // Title/role extraction. tecis uses the pattern "<name> | <role>" in <title>
-// and prominent heading. Also detect known role keywords as fallback.
+// and prominent heading. Any non-name, non-"tecis" pipe-segment is the role.
+// Examples seen: "Repräsentanzleiter", "Senior Sales Consultant", "Sales
+// Manager", "Spezialist für betriebliche Altersversorgung".
 function extractRole(html: string, text: string, name: string): string {
-  // 1) <title> pattern: "Vorname Nachname | Role | tecis"
+  const firstName = name.split(/\s+/)[0]?.toLowerCase() ?? "";
+
+  // 1) <title> pipe-segments
   const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
   if (titleMatch) {
     const parts = titleMatch[1].split(/\s*\|\s*/);
     for (const p of parts) {
       const cleaned = p.trim();
       if (!cleaned) continue;
-      if (cleaned.toLowerCase().includes("tecis")) continue;
-      if (name && cleaned.toLowerCase().includes(name.toLowerCase().split(" ")[0])) continue;
-      if (ROLE_HIERARCHY.some((r) => cleaned.toLowerCase().includes(r.toLowerCase()))) {
+      const lower = cleaned.toLowerCase();
+      if (lower.includes("tecis")) continue;
+      if (firstName && lower.includes(firstName)) continue;
+      // Plausible role: capitalized start, reasonable length
+      if (/^[A-ZÄÖÜ]/.test(cleaned) && cleaned.length >= 4 && cleaned.length <= 80) {
         return cleaned;
       }
     }
   }
-  // 2) Keyword scan over visible text
+  // 2) og:description / meta description sometimes contains the role
+  const desc = html.match(/<meta[^>]+(?:name|property)=["'](?:description|og:description)["'][^>]+content=["']([^"']+)["']/i);
+  if (desc) {
+    for (const role of ROLE_HIERARCHY) {
+      const re = new RegExp(`\\b${role.replace(/\s+/g, "\\s+")}\\b`, "i");
+      const m = desc[1].match(re);
+      if (m) return m[0];
+    }
+  }
+  // 3) Keyword scan over visible text — known hierarchy first
   for (const role of ROLE_HIERARCHY) {
     const re = new RegExp(`\\b${role.replace(/\s+/g, "\\s+")}\\b`, "i");
-    if (re.test(text)) return role;
+    const m = text.match(re);
+    if (m) return m[0];
   }
   return "";
 }
@@ -264,28 +290,73 @@ async function fetchProfile(url: string): Promise<Advisor | null> {
   const derived = deriveEmailFromSlug(slug);
 
   const { name, firstName, lastName } = extractName(html, slug);
-  const emailFromHtml = extractMailto(html, "tecis.de");
-  const email = emailFromHtml || derived.email;
+  const emailMain = extractMailto(html, "tecis.de");
 
   const text = stripHtml(html);
-  const role = extractRole(html, text, name);
-  const phoneMatch = text.match(PHONE_REGEX);
-  const mobileMatch = text.match(MOBILE_REGEX);
-  const address = extractAddress(text);
-  const city = address.city || extractCity(html, "");
+  let role = extractRole(html, text, name);
+  let phoneMatch = text.match(PHONE_REGEX);
+  let mobileMatch = text.match(MOBILE_REGEX);
+  let address = extractAddress(text);
+  let city = address.city || extractCity(html, "");
+
+  // Kontaktübersicht has the real address + phone + sometimes a Fachgebiet role
+  const contactUrl = url.replace(/\.html$/, "/kontaktuebersicht.html");
+  const contactHtml = await fetchText(contactUrl);
+  let emailFromContact = "";
+  let contactName: { name: string; firstName: string; lastName: string } | null = null;
+  if (contactHtml) {
+    emailFromContact = extractMailto(contactHtml, "tecis.de");
+    const ctext = stripHtml(contactHtml);
+    if (!phoneMatch) phoneMatch = ctext.match(PHONE_REGEX);
+    if (!mobileMatch) mobileMatch = ctext.match(MOBILE_REGEX);
+    if (!address.zip) {
+      address = extractAddress(ctext);
+      if (address.city) city = address.city;
+    }
+    if (!role) role = extractRole(contactHtml, ctext, name);
+    // Use contact-page name if it has umlauts that slug couldn't preserve
+    contactName = extractName(contactHtml, slug);
+  }
+
+  const email = emailMain || emailFromContact || derived.email;
+  // Prefer name from contact page if it contains umlauts and main name didn't
+  const finalName =
+    contactName && /[äöüÄÖÜß]/.test(contactName.name) && !/[äöüÄÖÜß]/.test(name)
+      ? contactName
+      : { name, firstName, lastName };
+
+  let phone = phoneMatch ? phoneMatch[1].replace(/\s+/g, " ").trim() : "";
+  let mobile = mobileMatch ? mobileMatch[1].replace(/\s+/g, " ").trim() : "";
+
+  // Last-resort fallback: any DE number in the contact page text. Classify by prefix.
+  if ((!phone && !mobile) && contactHtml) {
+    const ctext = stripHtml(contactHtml);
+    const seen = new Set<string>();
+    for (const m of ctext.matchAll(ANY_PHONE_REGEX)) {
+      const num = m[0].trim();
+      if (seen.has(num)) continue;
+      seen.add(num);
+      if (classifyPhone(num) === "mobile") {
+        if (!mobile) mobile = num;
+      } else if (!phone) {
+        phone = num;
+      }
+      if (phone && mobile) break;
+    }
+  }
 
   return {
     url,
     slug,
-    name,
-    firstName,
-    lastName,
+    name: finalName.name,
+    firstName: finalName.firstName,
+    lastName: finalName.lastName,
     email,
     emailDerived: derived.email,
     role,
     city,
-    phone: phoneMatch ? phoneMatch[1].replace(/\s+/g, " ").trim() : "",
-    mobile: mobileMatch ? mobileMatch[1].replace(/\s+/g, " ").trim() : "",
+    phone,
+    mobile,
     street: address.street,
     zip: address.zip,
   };
