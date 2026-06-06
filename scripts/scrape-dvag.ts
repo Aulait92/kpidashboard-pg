@@ -34,7 +34,7 @@ function parseArgs(argv: string[]): Args {
   const args: Args = {
     minTeamSize: 5,
     max: 0,
-    concurrency: 8,
+    concurrency: 3,
     sample: 0,
     letters: null,
     fetchUeberUns: true,
@@ -67,7 +67,7 @@ function parseArgs(argv: string[]): Args {
   return args;
 }
 
-async function fetchText(url: string, retries = 2): Promise<string | null> {
+async function fetchText(url: string, retries = 3): Promise<string | null> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const res = await fetch(url, {
@@ -76,17 +76,36 @@ async function fetchText(url: string, retries = 2): Promise<string | null> {
       });
       if (!res.ok) {
         if (res.status === 404) return null; // permanent
+        if (res.status === 429 || res.status >= 500) {
+          // Rate-limit / transient — back off harder
+          if (attempt < retries) {
+            await new Promise((r) => setTimeout(r, 1500 * (attempt + 1) + Math.random() * 500));
+            continue;
+          }
+        }
         throw new Error(`HTTP ${res.status}`);
       }
       return await res.text();
-    } catch (err) {
-      if (attempt === retries) {
-        return null;
-      }
-      await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+    } catch {
+      if (attempt === retries) return null;
+      await new Promise((r) => setTimeout(r, 700 * (attempt + 1) + Math.random() * 300));
     }
   }
   return null;
+}
+
+// Fetch + reject responses that look like bot walls (suspiciously small).
+// Retries up to 2 more times with exponential delay before giving up.
+async function fetchTextWithRetry(url: string): Promise<string | null> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const html = await fetchText(url);
+    if (html && html.length >= MIN_DVAG_PAGE_SIZE) return html;
+    if (!html) return null; // hard fail (404 etc)
+    // Got something small — back off and retry
+    await new Promise((r) => setTimeout(r, 1000 + attempt * 1500 + Math.random() * 500));
+  }
+  // Last attempt's content (small but maybe partially useful)
+  return await fetchText(url);
 }
 
 function extractUrlsFromXml(xml: string): string[] {
@@ -287,15 +306,20 @@ function extractAddress(text: string): { street: string | null; zip: string | nu
 const ueberUnsStats = {
   attempted: 0,
   fetched: 0,
+  fetchedSuspiciouslySmall: 0,
   withVignettes2plus: 0,
   withVignettes1: 0,
 };
+
+// Heuristic: a real DVAG profile page is >50KB. Anything smaller is likely
+// a bot wall / CDN error shell.
+const MIN_DVAG_PAGE_SIZE = 50_000;
 
 async function fetchProfile(
   url: string,
   options: { fetchUeberUns: boolean },
 ): Promise<AdvisorProfile | null> {
-  const html = await fetchText(url);
+  const html = await fetchTextWithRetry(url);
   if (!html) return null;
   const m = url.match(/\/([a-zäöüß0-9-]+\.[a-zäöüß0-9-]+)\/index\.html?$/i);
   if (!m) return null;
@@ -313,9 +337,12 @@ async function fetchProfile(
   if (options.fetchUeberUns && teamSize === null) {
     ueberUnsStats.attempted++;
     const ueberUnsUrl = url.replace(/index\.html?$/, "ueber-uns.html");
-    const ueberHtml = await fetchText(ueberUnsUrl);
+    const ueberHtml = await fetchTextWithRetry(ueberUnsUrl);
     if (ueberHtml) {
       ueberUnsStats.fetched++;
+      if (ueberHtml.length < MIN_DVAG_PAGE_SIZE) {
+        ueberUnsStats.fetchedSuspiciouslySmall++;
+      }
       const re = /class="[^"]*team-vignette__title[^"]*"/gi;
       const matches = ueberHtml.match(re);
       const matchCount = matches ? matches.length : 0;
@@ -479,7 +506,7 @@ async function main() {
   console.log(`Team-Größen: ${[...sizeBuckets.entries()].map(([k, n]) => `${k}=${n}`).join(" · ")}`);
   console.log(`Methode: ${[...byMethod.entries()].map(([k, n]) => `${k}=${n}`).join(" · ")}`);
   console.log(
-    `über-uns Diagnose: attempted=${ueberUnsStats.attempted} · fetched=${ueberUnsStats.fetched} · vignettes≥2=${ueberUnsStats.withVignettes2plus} · vignettes=1=${ueberUnsStats.withVignettes1}`,
+    `über-uns Diagnose: attempted=${ueberUnsStats.attempted} · fetched=${ueberUnsStats.fetched} · suspicious-small=${ueberUnsStats.fetchedSuspiciouslySmall} · vignettes≥2=${ueberUnsStats.withVignettes2plus} · vignettes=1=${ueberUnsStats.withVignettes1}`,
   );
 }
 
