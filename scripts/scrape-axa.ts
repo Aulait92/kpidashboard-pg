@@ -21,37 +21,16 @@ const OUTPUT_PATH = "data/axa-advisors.csv";
 const USER_AGENT =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-// DE cities for URL discovery. AXA city-pages list local advisors.
-// Umlauts normalized: ü→ue, ö→oe, ä→ae. ~120 cities covering top 200+.
+// DE city endpoints für URL Discovery. AXA hat nur für die Top-30
+// größten Städte eine /<city>-Sammelseite — alles andere gibt 410 Gone.
+// Bestätigt funktionierende Endpoints (Stand 2026):
 const DEFAULT_CITIES = [
-  // Top 40 (covered initially)
   "berlin", "hamburg", "muenchen", "koeln", "frankfurt", "stuttgart",
   "duesseldorf", "leipzig", "dortmund", "essen", "bremen", "hannover",
   "dresden", "nuernberg", "duisburg", "bochum", "wuppertal", "bielefeld",
   "bonn", "muenster", "karlsruhe", "mannheim", "augsburg", "wiesbaden",
   "gelsenkirchen", "moenchengladbach", "braunschweig", "chemnitz", "kiel",
-  "aachen", "halle", "magdeburg", "freiburg", "krefeld", "luebeck",
-  "oberhausen", "erfurt", "mainz", "rostock", "kassel",
-  // Top 40-100
-  "hagen", "saarbruecken", "hamm", "muelheim", "potsdam", "ludwigshafen",
-  "oldenburg", "leverkusen", "osnabrueck", "solingen", "heidelberg",
-  "herne", "neuss", "darmstadt", "paderborn", "regensburg", "ingolstadt",
-  "wuerzburg", "fuerth", "wolfsburg", "offenbach", "ulm", "heilbronn",
-  "pforzheim", "goettingen", "bottrop", "trier", "recklinghausen",
-  "reutlingen", "bremerhaven", "koblenz", "bergisch-gladbach", "jena",
-  "erlangen", "moers", "siegen", "hildesheim", "salzgitter", "cottbus",
-  "kaiserslautern", "guetersloh", "schwerin", "witten", "iserlohn",
-  // Top 100-200
-  "esslingen", "ratingen", "dueren", "ludwigsburg", "marl", "luenen",
-  "velbert", "wilhelmshaven", "minden", "worms", "konstanz", "tuebingen",
-  "flensburg", "villingen-schwenningen", "gera", "dessau-rosslau",
-  "neumuenster", "norderstedt", "delmenhorst", "viersen", "castrop-rauxel",
-  "marburg", "bayreuth", "rheine", "lueneburg", "dorsten", "gladbeck",
-  "arnsberg", "bocholt", "detmold", "lippstadt", "troisdorf", "aalen",
-  "bamberg", "aschaffenburg", "kempten", "plauen", "friedrichshafen",
-  "brandenburg-an-der-havel", "frankfurt-oder", "stralsund", "goerlitz",
-  "schwaebisch-gmuend", "landshut", "weimar", "rosenheim", "neubrandenburg",
-  "hanau", "fulda", "speyer", "kleve", "coburg",
+  "aachen", "kassel",
 ];
 
 type Args = {
@@ -98,7 +77,7 @@ async function fetchText(url: string, retries = 3): Promise<string | null> {
         signal: AbortSignal.timeout(20_000),
       });
       if (!res.ok) {
-        if (res.status === 404) return null;
+        if (res.status === 404 || res.status === 410) return null; // permanent
         if (res.status === 429 || res.status >= 500) {
           if (attempt < retries) {
             await new Promise((r) => setTimeout(r, 1500 * (attempt + 1) + Math.random() * 500));
