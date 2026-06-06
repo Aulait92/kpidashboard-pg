@@ -241,6 +241,12 @@ function extractMailto(html: string, expectDomain: string): string {
 // and prominent heading. Any non-name, non-"tecis" pipe-segment is the role.
 // Examples seen: "Repräsentanzleiter", "Senior Sales Consultant", "Sales
 // Manager", "Spezialist für betriebliche Altersversorgung".
+// Allow feminine "-in" suffix on roles ending in -er / -ater / -ant / -ist
+function buildRoleRegex(role: string): RegExp {
+  const pattern = role.replace(/\s+/g, "\\s+") + "(?:in)?";
+  return new RegExp(`\\b${pattern}\\b`, "i");
+}
+
 function extractRole(html: string, text: string, name: string): string {
   const firstName = name.split(/\s+/)[0]?.toLowerCase() ?? "";
   const lastName = name.split(/\s+/).slice(-1)[0]?.toLowerCase() ?? "";
@@ -257,28 +263,41 @@ function extractRole(html: string, text: string, name: string): string {
       if (lower.includes("tecis")) continue;
       if (firstName && lower.includes(firstName)) continue;
       if (lastName && lower.includes(lastName)) continue;
-      // Reject location-style strings like "Finanzberatung in Hamburg"
       if (/\b(?:in|für|aus)\s+[A-ZÄÖÜ]/.test(cleaned)) continue;
       if (/\bFinanzberatung\b/i.test(cleaned)) continue;
-      // Plausible role: capitalized start, reasonable length (cap tighter)
       if (/^[A-ZÄÖÜ]/.test(cleaned) && cleaned.length >= 4 && cleaned.length <= 50) {
         return cleaned;
       }
     }
   }
-  // 2) og:description / meta description sometimes contains the role
+  // 2) <h1> — tecis puts the role here as "<Name> | <Role>"
+  const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+  if (h1Match) {
+    const h1Text = stripHtml(h1Match[1]);
+    const parts = h1Text.split(TITLE_SEPARATOR_RE);
+    for (const p of parts) {
+      const cleaned = p.trim();
+      if (!cleaned || isPageLabel(cleaned)) continue;
+      const lower = cleaned.toLowerCase();
+      if (lower.includes("tecis")) continue;
+      if (firstName && lower.includes(firstName)) continue;
+      if (lastName && lower.includes(lastName)) continue;
+      if (/^[A-ZÄÖÜ]/.test(cleaned) && cleaned.length >= 4 && cleaned.length <= 50) {
+        return cleaned;
+      }
+    }
+  }
+  // 3) meta description
   const desc = html.match(/<meta[^>]+(?:name|property)=["'](?:description|og:description)["'][^>]+content=["']([^"']+)["']/i);
   if (desc) {
     for (const role of ROLE_HIERARCHY) {
-      const re = new RegExp(`\\b${role.replace(/\s+/g, "\\s+")}\\b`, "i");
-      const m = desc[1].match(re);
+      const m = desc[1].match(buildRoleRegex(role));
       if (m) return m[0];
     }
   }
-  // 3) Keyword scan over visible text — known hierarchy first
+  // 4) Keyword scan over visible text
   for (const role of ROLE_HIERARCHY) {
-    const re = new RegExp(`\\b${role.replace(/\s+/g, "\\s+")}\\b`, "i");
-    const m = text.match(re);
+    const m = text.match(buildRoleRegex(role));
     if (m) return m[0];
   }
   return "";
