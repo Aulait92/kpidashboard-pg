@@ -21,8 +21,10 @@ const OUTPUT_PATH = "data/axa-advisors.csv";
 const USER_AGENT =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-// Top DE cities for URL discovery. AXA city-pages list local advisors.
+// DE cities for URL discovery. AXA city-pages list local advisors.
+// Umlauts normalized: ü→ue, ö→oe, ä→ae. ~120 cities covering top 200+.
 const DEFAULT_CITIES = [
+  // Top 40 (covered initially)
   "berlin", "hamburg", "muenchen", "koeln", "frankfurt", "stuttgart",
   "duesseldorf", "leipzig", "dortmund", "essen", "bremen", "hannover",
   "dresden", "nuernberg", "duisburg", "bochum", "wuppertal", "bielefeld",
@@ -30,6 +32,26 @@ const DEFAULT_CITIES = [
   "gelsenkirchen", "moenchengladbach", "braunschweig", "chemnitz", "kiel",
   "aachen", "halle", "magdeburg", "freiburg", "krefeld", "luebeck",
   "oberhausen", "erfurt", "mainz", "rostock", "kassel",
+  // Top 40-100
+  "hagen", "saarbruecken", "hamm", "muelheim", "potsdam", "ludwigshafen",
+  "oldenburg", "leverkusen", "osnabrueck", "solingen", "heidelberg",
+  "herne", "neuss", "darmstadt", "paderborn", "regensburg", "ingolstadt",
+  "wuerzburg", "fuerth", "wolfsburg", "offenbach", "ulm", "heilbronn",
+  "pforzheim", "goettingen", "bottrop", "trier", "recklinghausen",
+  "reutlingen", "bremerhaven", "koblenz", "bergisch-gladbach", "jena",
+  "erlangen", "moers", "siegen", "hildesheim", "salzgitter", "cottbus",
+  "kaiserslautern", "guetersloh", "schwerin", "witten", "iserlohn",
+  // Top 100-200
+  "esslingen", "ratingen", "dueren", "ludwigsburg", "marl", "luenen",
+  "velbert", "wilhelmshaven", "minden", "worms", "konstanz", "tuebingen",
+  "flensburg", "villingen-schwenningen", "gera", "dessau-rosslau",
+  "neumuenster", "norderstedt", "delmenhorst", "viersen", "castrop-rauxel",
+  "marburg", "bayreuth", "rheine", "lueneburg", "dorsten", "gladbeck",
+  "arnsberg", "bocholt", "detmold", "lippstadt", "troisdorf", "aalen",
+  "bamberg", "aschaffenburg", "kempten", "plauen", "friedrichshafen",
+  "brandenburg-an-der-havel", "frankfurt-oder", "stralsund", "goerlitz",
+  "schwaebisch-gmuend", "landshut", "weimar", "rosenheim", "neubrandenburg",
+  "hanau", "fulda", "speyer", "kleve", "coburg",
 ];
 
 type Args = {
@@ -119,24 +141,49 @@ function isValidSlug(slug: string): boolean {
 async function discoverSlugs(cities: string[]): Promise<string[]> {
   console.log(`[1/3] URL-Discovery aus ${cities.length} Stadt-Seiten...`);
   const slugs = new Set<string>();
+  const failed: string[] = [];
   let done = 0;
   for (const city of cities) {
     const html = await fetchText(`${BASE}/${city}`);
     done++;
     if (!html) {
+      failed.push(city);
       console.warn(`  ! ${city}: unreachable`);
-      continue;
-    }
-    let cityHits = 0;
-    for (const m of html.matchAll(SLUG_LINK_RE)) {
-      const slug = m[1].toLowerCase();
-      if (isValidSlug(slug) && !slugs.has(slug)) {
-        slugs.add(slug);
-        cityHits++;
+    } else {
+      let cityHits = 0;
+      for (const m of html.matchAll(SLUG_LINK_RE)) {
+        const slug = m[1].toLowerCase();
+        if (isValidSlug(slug) && !slugs.has(slug)) {
+          slugs.add(slug);
+          cityHits++;
+        }
+      }
+      if (done % 10 === 0 || done === cities.length) {
+        console.log(`  · ${done}/${cities.length} (${city}: +${cityHits}, gesamt ${slugs.size})`);
       }
     }
-    if (done % 5 === 0 || done === cities.length) {
-      console.log(`  · ${done}/${cities.length} (${city}: +${cityHits}, gesamt ${slugs.size})`);
+    // Politeness jitter — verhindert das Rate-Limit-Cliff am Ende der Liste
+    await new Promise((r) => setTimeout(r, 200 + Math.random() * 300));
+  }
+  // Retry failed cities once with longer backoff
+  if (failed.length > 0) {
+    console.log(`  · Retry ${failed.length} fehlgeschlagene Städte...`);
+    for (const city of failed) {
+      await new Promise((r) => setTimeout(r, 2000 + Math.random() * 1000));
+      const html = await fetchText(`${BASE}/${city}`);
+      if (!html) {
+        console.warn(`  ! ${city}: weiterhin unreachable`);
+        continue;
+      }
+      let cityHits = 0;
+      for (const m of html.matchAll(SLUG_LINK_RE)) {
+        const slug = m[1].toLowerCase();
+        if (isValidSlug(slug) && !slugs.has(slug)) {
+          slugs.add(slug);
+          cityHits++;
+        }
+      }
+      console.log(`  · retry ${city}: +${cityHits} (gesamt ${slugs.size})`);
     }
   }
   return [...slugs];
