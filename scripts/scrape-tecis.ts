@@ -27,12 +27,14 @@ const PROFILE_URL_REGEX = /^https:\/\/www\.tecis\.de\/[a-zäöüß0-9][a-zäöü
 
 // Known role hierarchy (most senior first). Used for sort order; unknowns sink.
 const ROLE_HIERARCHY = [
+  "Divisional Manager",
+  "Branch Manager",
   "Direktor",
   "Repräsentanzleiter",
-  "Senior Sales Consultant",
-  "Sales Consultant",
   "Senior Sales Manager",
+  "Senior Sales Consultant",
   "Sales Manager",
+  "Sales Consultant",
   "Junior Sales Consultant",
   "Berater",
 ];
