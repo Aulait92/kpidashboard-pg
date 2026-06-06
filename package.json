@@ -13,6 +13,7 @@
     "db:push": "prisma db push",
     "db:seed": "node --experimental-strip-types prisma/seed.ts",
     "scrape:brokers": "node --experimental-strip-types scripts/scrape-brokers.ts",
+    "scrape:dvag": "node --experimental-strip-types scripts/scrape-dvag.ts",
     "db:studio": "prisma studio",
     "vapid:generate": "web-push generate-vapid-keys"
   },
