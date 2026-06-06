@@ -38,6 +38,8 @@ type Args = {
   concurrency: number;
   include: string | null;
   max: number;
+  source: "cities" | "ddg" | "both";
+  ddgQueries: string[] | null;
 };
 
 function parseArgs(argv: string[]): Args {
@@ -46,6 +48,8 @@ function parseArgs(argv: string[]): Args {
     concurrency: 3,
     include: null,
     max: 0,
+    source: "both",
+    ddgQueries: null,
   };
   for (const raw of argv.slice(2)) {
     const [k, v] = raw.includes("=") ? raw.split("=", 2) : [raw, "true"];
@@ -61,6 +65,13 @@ function parseArgs(argv: string[]): Args {
         break;
       case "--max":
         args.max = parseInt(v, 10);
+        break;
+      case "--source":
+        if (v === "cities" || v === "ddg" || v === "both") args.source = v;
+        else console.warn(`Unknown --source=${v}, using both`);
+        break;
+      case "--ddg-queries":
+        args.ddgQueries = v.split(";").map((s) => s.trim()).filter(Boolean);
         break;
       default:
         console.warn(`Unknown arg: ${k}`);
@@ -95,12 +106,13 @@ async function fetchText(url: string, retries = 3): Promise<string | null> {
   return null;
 }
 
-// Slug links can be relative ("/Stefan_Bille") or absolute
-// ("https://www.axa-betreuer.de/Stefan_Bille"), with or without trailing slash.
-// AXA uses CamelCase on city pages (e.g. "Stefan_Bille") but the URL endpoint
-// is case-insensitive, so we lowercase for dedupe + fetch.
+// Slug pattern accepts both separators:
+//   underscore: "Stefan_Bille" (camel-case on city pages)
+//   hyphen: "oliver-haifl", "franziska-lena-gruendmayer"
+// At least one separator between name parts. URL can be relative or absolute,
+// with/without trailing slash. Lowercased for dedupe + fetch.
 const SLUG_LINK_RE =
-  /href="(?:https?:\/\/www\.axa-betreuer\.de)?\/([A-Za-z][A-Za-z0-9äöüÄÖÜ_-]{1,40}_[A-Za-z][A-Za-z0-9äöüÄÖÜ_-]{1,40})(?:[\/"]|$)/g;
+  /(?:https?:\/\/www\.axa-betreuer\.de|href=")\/?([A-Za-z][A-Za-z0-9äöüÄÖÜ]{0,40}[_-][A-Za-z][A-Za-z0-9äöüÄÖÜ_-]{1,60})(?=[\/"?#\s]|$)/g;
 
 // Slugs to ignore (static pages, not advisor profiles)
 const SLUG_BLACKLIST = new Set([
@@ -115,6 +127,47 @@ function isValidSlug(slug: string): boolean {
   // Require at least one letter followed by underscore + letter
   if (!/[a-z]_[a-z]/.test(slug)) return false;
   return true;
+}
+
+// Default DDG queries — cover Rolle × Buchstabe-Modifier to maximize coverage.
+// Each query returns up to 10 results; with multiple queries we get hundreds.
+const DEFAULT_DDG_QUERIES = [
+  "site:axa-betreuer.de Hauptvertretung",
+  "site:axa-betreuer.de Generalvertretung",
+  "site:axa-betreuer.de Geschäftsstelle",
+  "site:axa-betreuer.de Versicherungsbüro",
+  ...Array.from("abcdefghijklmnopqrstuvwxyz").map(
+    (l) => `site:axa-betreuer.de inurl:${l}`,
+  ),
+];
+
+async function discoverViaDuckDuckGo(queries: string[]): Promise<string[]> {
+  console.log(`[1b] DDG-Discovery mit ${queries.length} Queries...`);
+  const slugs = new Set<string>();
+  let done = 0;
+  for (const q of queries) {
+    const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(q)}`;
+    const html = await fetchText(url);
+    done++;
+    if (!html) {
+      console.warn(`  ! query "${q}": unreachable`);
+    } else {
+      let hits = 0;
+      for (const m of html.matchAll(SLUG_LINK_RE)) {
+        const slug = m[1].toLowerCase();
+        if (isValidSlug(slug) && !slugs.has(slug)) {
+          slugs.add(slug);
+          hits++;
+        }
+      }
+      if (done % 5 === 0 || done === queries.length) {
+        console.log(`  · ${done}/${queries.length} (+${hits}, gesamt ${slugs.size})`);
+      }
+    }
+    // Politeness — DDG is tolerant but not unlimited
+    await new Promise((r) => setTimeout(r, 800 + Math.random() * 600));
+  }
+  return [...slugs];
 }
 
 async function discoverSlugs(cities: string[]): Promise<string[]> {
@@ -392,11 +445,22 @@ async function main() {
 
   let slugs: string[];
   if (args.include) {
-    // Bypass discovery, fetch only matching slug(s) directly
     slugs = [args.include];
     console.log(`  Skip discovery — direkt: ${slugs.join(", ")}`);
   } else {
-    slugs = await discoverSlugs(args.cities);
+    const all = new Set<string>();
+    if (args.source === "cities" || args.source === "both") {
+      const fromCities = await discoverSlugs(args.cities);
+      fromCities.forEach((s) => all.add(s));
+      console.log(`  · Aus Städten: ${fromCities.length} (Total ${all.size})`);
+    }
+    if (args.source === "ddg" || args.source === "both") {
+      const fromDdg = await discoverViaDuckDuckGo(args.ddgQueries ?? DEFAULT_DDG_QUERIES);
+      const beforeMerge = all.size;
+      fromDdg.forEach((s) => all.add(s));
+      console.log(`  · Aus DDG: ${fromDdg.length} (davon neu: ${all.size - beforeMerge}, Total ${all.size})`);
+    }
+    slugs = [...all];
     console.log(`  ✓ ${slugs.length} eindeutige Berater-Slugs`);
   }
 
