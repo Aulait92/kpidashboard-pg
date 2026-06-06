@@ -180,13 +180,15 @@ function classifyPhone(num: string): "mobile" | "phone" {
   return "phone";
 }
 
-// Address: "Musterstr. 12, 12345 Musterstadt" or "Ostring 6 76131 Karlsruhe"
-// Street must end on a street-type suffix + Hausnummer.
-const STREET_REGEX =
-  /([A-ZÄÖÜ][\wäöüÄÖÜß.\- ]{1,60}?(?:str\.?|straße|strasse|weg|platz|allee|ring|gasse|damm|chaussee|ufer|markt|hof|park|berg|tal|feld|brücke|stiege)\s+\d+[a-zA-Z]?)\s*[,·\/]?\s*(\d{5})\s+([A-ZÄÖÜ][a-zäöüÄÖÜß.\- ]{1,40}?)(?=\s+(?:Telefon|Tel\.|Mobil|Handy|E-Mail|Email|Fax|Routenplaner|Anfahrt|Öffnungszeiten|vCard|Geschäftszeiten|·|$|<)|\s*$)/i;
-// Looser fallback — any token + number, then "," or " ", then ZIP + city.
-const STREET_FALLBACK =
-  /([A-ZÄÖÜ][\wäöüÄÖÜß.\- ]{2,60}?\s+\d+[a-zA-Z]?)\s*[,·\/]?\s+(\d{5})\s+([A-ZÄÖÜ][a-zäöüÄÖÜß.\-]{2,40})/;
+// Address: street is a SINGLE token (no spaces) ending in a street-type
+// suffix, followed by Hausnummer, then ZIP + city.
+// Matches "Ostring 6", "Marie-Curie-Str. 5", "Hauptstraße 12" — but NOT
+// "Aaron Händel Ostring 6" (space inside disallowed).
+const STREET_SUFFIX = "(?:str\\.?|straße|strasse|weg|platz|allee|ring|gasse|damm|chaussee|ufer|markt|hof|park|berg|tal|feld|brücke|stiege|stieg|zeile|reihe)";
+const STREET_REGEX = new RegExp(
+  `([A-ZÄÖÜ][\\wäöüÄÖÜß.\\-]*${STREET_SUFFIX}\\s+\\d+[a-zA-Z]?)\\s*[,·\\/]?\\s+(\\d{5})\\s+([A-ZÄÖÜ][a-zäöüÄÖÜß.\\-]{1,40})(?=\\s|$|<)`,
+  "i",
+);
 
 // Page-template strings that must NOT be treated as advisor name or role.
 const PAGE_LABEL_BLACKLIST = [
@@ -212,14 +214,9 @@ function isPageLabel(s: string): boolean {
 }
 
 function extractAddress(text: string): { street: string; zip: string; city: string } {
-  let m = text.match(STREET_REGEX);
-  if (!m) m = text.match(STREET_FALLBACK);
+  const m = text.match(STREET_REGEX);
   if (!m) return { street: "", zip: "", city: "" };
-  let street = m[1].trim();
-  const zip = m[2];
-  let city = m[3].trim();
-  city = city.split(/\s+(?:Telefon|Tel\.|Mobil|Handy|E-Mail|Email|Fax|Routenplaner|Anfahrt|Öffnungszeiten|vCard)/i)[0].trim();
-  return { street, zip, city };
+  return { street: m[1].trim(), zip: m[2], city: m[3].trim() };
 }
 
 function extractMailto(html: string, expectDomain: string): string {
@@ -278,29 +275,55 @@ function extractRole(html: string, text: string, name: string): string {
   return "";
 }
 
-function extractName(html: string, slug: string): { name: string; firstName: string; lastName: string } {
-  // <title> usually has "Vorname Nachname | Role | tecis", but on subpages
-  // it may be "Kontaktübersicht | Vorname Nachname | tecis". Walk all
-  // pipe-segments and pick the first one that looks like a person name AND
-  // isn't a page-template label.
-  const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-  if (titleMatch) {
-    const parts = titleMatch[1].split(/\s*\|\s*/).map((s) => s.trim());
-    for (const p of parts) {
-      if (!p) continue;
-      if (isPageLabel(p)) continue;
-      if (p.toLowerCase().includes("tecis")) continue;
-      // Should be 2-4 capitalized name tokens
-      if (/^[A-ZÄÖÜ][\wäöüß-]+(?:\s+[A-ZÄÖÜ][\wäöüß-]+){1,3}$/.test(p)) {
-        const tokens = p.split(/\s+/);
-        return {
-          name: p,
-          firstName: tokens.slice(0, tokens.length - 1).join(" "),
-          lastName: tokens[tokens.length - 1],
-        };
-      }
+const NAME_PATTERN = /^[A-ZÄÖÜ][\wäöüÄÖÜß\-]+(?:\s+[A-ZÄÖÜ][\wäöüÄÖÜß\-]+){1,3}$/;
+
+function pickNameFromCandidates(candidates: string[]): {
+  name: string;
+  firstName: string;
+  lastName: string;
+} | null {
+  for (const raw of candidates) {
+    const s = raw.trim();
+    if (!s) continue;
+    if (isPageLabel(s)) continue;
+    if (s.toLowerCase().includes("tecis")) continue;
+    if (NAME_PATTERN.test(s)) {
+      const tokens = s.split(/\s+/);
+      return {
+        name: s,
+        firstName: tokens.slice(0, tokens.length - 1).join(" "),
+        lastName: tokens[tokens.length - 1],
+      };
     }
   }
+  return null;
+}
+
+function extractName(html: string, slug: string): { name: string; firstName: string; lastName: string } {
+  // Source 1: <title> — split on any separator (pipe, hyphen, en-dash, em-dash, slash)
+  const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+  if (titleMatch) {
+    const parts = titleMatch[1].split(/\s*[|–—\-\/]\s*/);
+    const picked = pickNameFromCandidates(parts);
+    if (picked) return picked;
+  }
+
+  // Source 2: og:title meta tag
+  const og = html.match(/<meta\s+property=["']og:title["']\s+content=["']([^"']+)["']/i);
+  if (og) {
+    const parts = og[1].split(/\s*[|–—\-\/]\s*/);
+    const picked = pickNameFromCandidates(parts);
+    if (picked) return picked;
+  }
+
+  // Source 3: first <h1>
+  const h1 = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+  if (h1) {
+    const text = stripHtml(h1[1]);
+    const picked = pickNameFromCandidates([text, ...text.split(/\s*[|–—\-\/]\s*/)]);
+    if (picked) return picked;
+  }
+
   // Fallback: derive from slug
   const d = deriveEmailFromSlug(slug);
   return {
