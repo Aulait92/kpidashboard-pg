@@ -94,10 +94,12 @@ async function fetchText(url: string, retries = 3): Promise<string | null> {
   return null;
 }
 
-// Slug pattern: at least one underscore between name parts, lowercase
-// "stefan_bille", "hans-peter_mueller-schmidt", "von_buelow_lenz_gmbh"
+// Slug links can be relative ("/Stefan_Bille") or absolute
+// ("https://www.axa-betreuer.de/Stefan_Bille"), with or without trailing slash.
+// AXA uses CamelCase on city pages (e.g. "Stefan_Bille") but the URL endpoint
+// is case-insensitive, so we lowercase for dedupe + fetch.
 const SLUG_LINK_RE =
-  /href="\/([a-z][a-z0-9äöü_-]{1,40}_[a-z][a-z0-9äöü_-]{1,40})(?:\/|")/gi;
+  /href="(?:https?:\/\/www\.axa-betreuer\.de)?\/([A-Za-z][A-Za-z0-9äöüÄÖÜ_-]{1,40}_[A-Za-z][A-Za-z0-9äöüÄÖÜ_-]{1,40})(?:[\/"]|$)/g;
 
 // Slugs to ignore (static pages, not advisor profiles)
 const SLUG_BLACKLIST = new Set([
