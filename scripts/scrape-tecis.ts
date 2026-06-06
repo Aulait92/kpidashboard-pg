@@ -249,47 +249,48 @@ function buildRoleRegex(role: string): RegExp {
   return new RegExp(`\\b${pattern}\\b`, "i");
 }
 
+// A segment is only accepted as a role if it contains at least one of these
+// job-title keywords. Catches Senior/Sales/General etc. via substrings on the
+// stems, and rejects single first/last names.
+const ROLE_KEYWORD_RE = /(?:Manager|Consultant|Direktor|Berater|Spezialist|Spezialistin|Fachmann|Fachfrau|Experte|Expertin|Leiter|Leiterin|Coach|Analyst|Repräsentant)/i;
+
 function extractRole(html: string, text: string, name: string): string {
   const firstName = name.split(/\s+/)[0]?.toLowerCase() ?? "";
   const lastName = name.split(/\s+/).slice(-1)[0]?.toLowerCase() ?? "";
 
+  const tryPart = (cleaned: string): string | null => {
+    if (!cleaned) return null;
+    if (isPageLabel(cleaned)) return null;
+    const lower = cleaned.toLowerCase();
+    if (lower.includes("tecis")) return null;
+    if (firstName && lower.includes(firstName)) return null;
+    if (lastName && lower.includes(lastName)) return null;
+    if (/\b(?:in|für|aus)\s+[A-ZÄÖÜ]/.test(cleaned)) return null;
+    if (/\bFinanzberatung\b/i.test(cleaned)) return null;
+    if (cleaned.length < 4 || cleaned.length > 60) return null;
+    if (!/^[A-ZÄÖÜ]/.test(cleaned)) return null;
+    if (!ROLE_KEYWORD_RE.test(cleaned)) return null;
+    return cleaned;
+  };
+
   // 1) <title> pipe/dash-segments
   const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
   if (titleMatch) {
-    const parts = titleMatch[1].split(TITLE_SEPARATOR_RE);
-    for (const p of parts) {
-      const cleaned = p.trim();
-      if (!cleaned) continue;
-      if (isPageLabel(cleaned)) continue;
-      const lower = cleaned.toLowerCase();
-      if (lower.includes("tecis")) continue;
-      if (firstName && lower.includes(firstName)) continue;
-      if (lastName && lower.includes(lastName)) continue;
-      if (/\b(?:in|für|aus)\s+[A-ZÄÖÜ]/.test(cleaned)) continue;
-      if (/\bFinanzberatung\b/i.test(cleaned)) continue;
-      if (/^[A-ZÄÖÜ]/.test(cleaned) && cleaned.length >= 4 && cleaned.length <= 50) {
-        return cleaned;
-      }
+    for (const p of titleMatch[1].split(TITLE_SEPARATOR_RE)) {
+      const r = tryPart(p.trim());
+      if (r) return r;
     }
   }
-  // 2) <h1> — tecis puts the role here as "<Name> | <Role>"
+  // 2) <h1>
   const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
   if (h1Match) {
     const h1Text = stripHtml(h1Match[1]);
-    const parts = h1Text.split(TITLE_SEPARATOR_RE);
-    for (const p of parts) {
-      const cleaned = p.trim();
-      if (!cleaned || isPageLabel(cleaned)) continue;
-      const lower = cleaned.toLowerCase();
-      if (lower.includes("tecis")) continue;
-      if (firstName && lower.includes(firstName)) continue;
-      if (lastName && lower.includes(lastName)) continue;
-      if (/^[A-ZÄÖÜ]/.test(cleaned) && cleaned.length >= 4 && cleaned.length <= 50) {
-        return cleaned;
-      }
+    for (const p of h1Text.split(TITLE_SEPARATOR_RE)) {
+      const r = tryPart(p.trim());
+      if (r) return r;
     }
   }
-  // 3) meta description
+  // 3) meta description / og:description
   const desc = html.match(/<meta[^>]+(?:name|property)=["'](?:description|og:description)["'][^>]+content=["']([^"']+)["']/i);
   if (desc) {
     for (const role of ROLE_HIERARCHY) {
