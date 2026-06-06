@@ -28,6 +28,7 @@ type Args = {
   sample: number; // 0 = no sampling, >0 = only crawl every Nth profile (e.g. 10 = 10%)
   letters: string | null; // e.g. "a,b,c" — only process these letter-sitemaps
   fetchUeberUns: boolean;
+  include: string | null; // substring URL filter (debug: --include=andrea.brunke)
 };
 
 function parseArgs(argv: string[]): Args {
@@ -38,6 +39,7 @@ function parseArgs(argv: string[]): Args {
     sample: 0,
     letters: null,
     fetchUeberUns: true,
+    include: null,
   };
   for (const raw of argv.slice(2)) {
     const [k, v] = raw.includes("=") ? raw.split("=", 2) : [raw, "true"];
@@ -59,6 +61,9 @@ function parseArgs(argv: string[]): Args {
         break;
       case "--no-ueber-uns":
         args.fetchUeberUns = false;
+        break;
+      case "--include":
+        args.include = v.toLowerCase();
         break;
       default:
         console.warn(`Unknown arg: ${k}`);
@@ -445,6 +450,11 @@ async function main() {
   let urls = await collectAdvisorUrls(args.letters);
   console.log(`  Total advisor URLs: ${urls.length}`);
 
+  if (args.include) {
+    const needle = args.include;
+    urls = urls.filter((u) => u.toLowerCase().includes(needle));
+    console.log(`  Nach --include="${needle}": ${urls.length}`);
+  }
   if (args.sample > 1) {
     urls = urls.filter((_, i) => i % args.sample === 0);
     console.log(`  Nach Sampling (jeder ${args.sample}.): ${urls.length}`);
