@@ -189,6 +189,11 @@ const STREET_REGEX = new RegExp(
   `([A-ZÄÖÜ][\\wäöüÄÖÜß.\\-]*${STREET_SUFFIX}\\s+\\d+[a-zA-Z]?)\\s*[,·\\/]?\\s+(\\d{5})\\s+([A-ZÄÖÜ][a-zäöüÄÖÜß.\\-]{1,40})(?=\\s|$|<)`,
   "i",
 );
+// Fallback for short street names without a recognized suffix (e.g. "Anger 61",
+// "Markt 12"). Single capitalized word + house number, followed by ZIP + city.
+// \b ensures we anchor on word boundary, so longer prefixes like
+// "Aaron Händel Anger 61" still extract only "Anger 61".
+const STREET_FALLBACK = /\b([A-ZÄÖÜ][\wäöüÄÖÜß.\-]+\s+\d+[a-zA-Z]?)\s*[,·\/]?\s+(\d{5})\s+([A-ZÄÖÜ][a-zäöüÄÖÜß.\-]{1,40})\b/;
 
 // Page-template strings that must NOT be treated as advisor name or role.
 const PAGE_LABEL_BLACKLIST = [
@@ -214,7 +219,8 @@ function isPageLabel(s: string): boolean {
 }
 
 function extractAddress(text: string): { street: string; zip: string; city: string } {
-  const m = text.match(STREET_REGEX);
+  let m = text.match(STREET_REGEX);
+  if (!m) m = text.match(STREET_FALLBACK);
   if (!m) return { street: "", zip: "", city: "" };
   return { street: m[1].trim(), zip: m[2], city: m[3].trim() };
 }
