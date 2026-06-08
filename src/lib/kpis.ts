@@ -1224,17 +1224,20 @@ async function fetchOtherByVendor(params: {
     select: { amount: true, note: true },
   });
 
-  const byVendor = new Map<string, number>();
+  // Vendor-Aggregat case-insensitive + getrimmt — sonst werden „Zapier"
+  // und „Zapier " (Leerzeichen) bzw. „zapier" als getrennte Zeilen
+  // gezählt, statt zur Summe pro Anbieter zusammenzulaufen.
+  const byVendor = new Map<string, { display: string; amount: number }>();
   for (const c of costs) {
-    const vendor = parseVendorFromNote(c.note);
-    byVendor.set(
-      vendor,
-      (byVendor.get(vendor) ?? 0) + decToNumber(c.amount),
-    );
+    const raw = parseVendorFromNote(c.note);
+    const key = raw.toLowerCase().trim();
+    const entry = byVendor.get(key) ?? { display: raw.trim(), amount: 0 };
+    entry.amount += decToNumber(c.amount);
+    byVendor.set(key, entry);
   }
 
-  return Array.from(byVendor.entries())
-    .map(([vendor, amount]) => ({ vendor, amount }))
+  return Array.from(byVendor.values())
+    .map(({ display, amount }) => ({ vendor: display, amount }))
     .sort((a, b) => b.amount - a.amount);
 }
 
