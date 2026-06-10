@@ -128,6 +128,12 @@ const BUYER_START_KINDERWUNSCH_FIELDS = [
   "Startdatum KiWu",
 ];
 const FINANZEN_TABLE = process.env.AIRTABLE_TABLE_FINANZEN ?? "Finanzen";
+// Join-Tabelle, die Lead-Ziele/Preise/Startdaten pro (Kunde × Produkt) hält.
+// Eine Zeile pro Bezug; Spalten: „Kunde" (Linked), „Produkt" (Single-Select:
+// PKV-Wechsel / PKV-Neugeschäft / Kinderwunsch), „Leadziel" (Number),
+// „Preis netto" (Currency), „Startdatum" (Date).
+const BEZUG_TABLE =
+  process.env.AIRTABLE_TABLE_KUNDEN_PRODUKT_BEZUG ?? "Kunden-Produkt-Bezug";
 
 const GERMAN_MONTHS: Record<string, number> = {
   januar: 1,
@@ -243,6 +249,76 @@ function readDateFromFields(
     if (!Number.isNaN(d.getTime())) return d;
   }
   return null;
+}
+
+type ProductGoals = {
+  goalWechsel: number | null;
+  goalNeugeschaeft: number | null;
+  goalKinderwunsch: number | null;
+  priceWechsel: number | null;
+  priceNeugeschaeft: number | null;
+  priceKinderwunsch: number | null;
+  startWechsel: Date | null;
+  startNeugeschaeft: Date | null;
+  startKinderwunsch: Date | null;
+};
+
+function emptyGoals(): ProductGoals {
+  return {
+    goalWechsel: null,
+    goalNeugeschaeft: null,
+    goalKinderwunsch: null,
+    priceWechsel: null,
+    priceNeugeschaeft: null,
+    priceKinderwunsch: null,
+    startWechsel: null,
+    startNeugeschaeft: null,
+    startKinderwunsch: null,
+  };
+}
+
+// Liest die Join-Tabelle „Kunden-Produkt-Bezug" und liefert pro Kunden-Record
+// (Buyer-AirtableId) die Lead-Ziele, Preise und Startdaten je Produkt.
+// Falls die Tabelle leer ist oder nicht existiert, fallen wir im Sync still auf
+// die alten per-Produkt-Spalten der Buyer-Tabelle zurück.
+async function fetchKundenProduktBezug(): Promise<Map<string, ProductGoals>> {
+  const map = new Map<string, ProductGoals>();
+  const records = await fetchAllRecords(BEZUG_TABLE);
+  for (const rec of records) {
+    const ids = readLinkedIds(rec.fields, "Kunde");
+    if (ids.length === 0) continue;
+    const produkt = readString(rec.fields, "Produkt");
+    if (!produkt) continue;
+    const p = produkt.toLowerCase();
+    let productKey: "Wechsel" | "Neugeschaeft" | "Kinderwunsch" | null = null;
+    if (p.includes("wechsel")) productKey = "Wechsel";
+    else if (p.includes("neugesch")) productKey = "Neugeschaeft";
+    else if (p.includes("kinderwunsch")) productKey = "Kinderwunsch";
+    if (!productKey) continue;
+
+    const leadziel = readIntFromFields(rec.fields, ["Leadziel"]);
+    const preis = readFloatFromFields(rec.fields, ["Preis netto"]);
+    const startdatum = readDateFromFields(rec.fields, ["Startdatum"]);
+
+    for (const id of ids) {
+      const entry = map.get(id) ?? emptyGoals();
+      if (productKey === "Wechsel") {
+        if (leadziel != null) entry.goalWechsel = leadziel;
+        if (preis != null) entry.priceWechsel = preis;
+        if (startdatum != null) entry.startWechsel = startdatum;
+      } else if (productKey === "Neugeschaeft") {
+        if (leadziel != null) entry.goalNeugeschaeft = leadziel;
+        if (preis != null) entry.priceNeugeschaeft = preis;
+        if (startdatum != null) entry.startNeugeschaeft = startdatum;
+      } else {
+        if (leadziel != null) entry.goalKinderwunsch = leadziel;
+        if (preis != null) entry.priceKinderwunsch = preis;
+        if (startdatum != null) entry.startKinderwunsch = startdatum;
+      }
+      map.set(id, entry);
+    }
+  }
+  return map;
 }
 
 async function fetchBuyers(): Promise<Map<string, BuyerInfo>> {
@@ -478,6 +554,21 @@ export async function syncAirtable(): Promise<SyncResult> {
     result.errors.push(msg);
   }
 
+  // Join-Tabelle „Kunden-Produkt-Bezug" lesen — sie löst die früheren
+  // per-Produkt-Spalten auf der Kunden-Tabelle ab. Bei Fehler (Tabelle fehlt
+  // o.ä.) fallen wir still auf die Buyer-Felder zurück.
+  let bezugMap = new Map<string, ProductGoals>();
+  try {
+    bezugMap = await fetchKundenProduktBezug();
+    console.log(
+      `[airtable] Kunden-Produkt-Bezug "${BEZUG_TABLE}": ${bezugMap.size} Kunden mit Produkt-Daten.`,
+    );
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[airtable] Kunden-Produkt-Bezug nicht lesbar: ${msg}`);
+    result.errors.push(`Tabelle "${BEZUG_TABLE}": ${msg}`);
+  }
+
   function resolveBuyer(fields: Record<string, unknown>): string | null {
     // Fall 1: Buyer ist Linked Record → IDs zu Namen auflösen
     const ids = readLinkedIds(fields, "Buyer");
@@ -491,34 +582,53 @@ export async function syncAirtable(): Promise<SyncResult> {
     return readString(fields, "Buyer");
   }
 
-  // Lead-Ziele und Region aus der Buyer-Tabelle auf den Customer übernehmen.
-  // Steuer-Einstellungen liegen am DeliveryPool, nicht am Kunden.
-  for (const info of buyerMap.values()) {
+  // Lead-Ziele und Region aus der Buyer-Tabelle (Region) + Join-Tabelle
+  // „Kunden-Produkt-Bezug" (Ziele/Preise/Startdaten je Produkt) auf den
+  // Customer übernehmen. Steuer-Einstellungen liegen am DeliveryPool, nicht
+  // am Kunden.
+  for (const [buyerRecId, info] of buyerMap.entries()) {
     const key = info.name.trim();
     if (!key) continue;
+    const bezug = bezugMap.get(buyerRecId);
+    // Join-Tabelle hat Vorrang; wenn dort kein Eintrag, fallen wir auf die
+    // (alten) per-Produkt-Spalten am Buyer-Record zurück.
+    const goalWechsel = bezug?.goalWechsel ?? info.goalWechsel;
+    const goalNeugeschaeft = bezug?.goalNeugeschaeft ?? info.goalNeugeschaeft;
+    const goalKinderwunsch = bezug?.goalKinderwunsch ?? info.goalKinderwunsch;
+    const priceWechsel = bezug?.priceWechsel ?? info.priceWechsel;
+    const priceNeugeschaeft =
+      bezug?.priceNeugeschaeft ?? info.priceNeugeschaeft;
+    const priceKinderwunsch =
+      bezug?.priceKinderwunsch ?? info.priceKinderwunsch;
+    const startWechsel = bezug?.startWechsel ?? info.startWechsel;
+    const startNeugeschaeft =
+      bezug?.startNeugeschaeft ?? info.startNeugeschaeft;
+    const startKinderwunsch =
+      bezug?.startKinderwunsch ?? info.startKinderwunsch;
+
     const hasData =
-      info.goalWechsel != null ||
-      info.goalNeugeschaeft != null ||
-      info.goalKinderwunsch != null ||
-      info.priceWechsel != null ||
-      info.priceNeugeschaeft != null ||
-      info.priceKinderwunsch != null ||
+      goalWechsel != null ||
+      goalNeugeschaeft != null ||
+      goalKinderwunsch != null ||
+      priceWechsel != null ||
+      priceNeugeschaeft != null ||
+      priceKinderwunsch != null ||
       info.region != null ||
-      info.startWechsel != null ||
-      info.startNeugeschaeft != null ||
-      info.startKinderwunsch != null;
+      startWechsel != null ||
+      startNeugeschaeft != null ||
+      startKinderwunsch != null;
     if (!hasData) continue;
     const data = {
-      leadGoalWechsel: info.goalWechsel,
-      leadGoalNeugeschaeft: info.goalNeugeschaeft,
-      leadGoalKinderwunsch: info.goalKinderwunsch,
-      leadPriceWechsel: info.priceWechsel,
-      leadPriceNeugeschaeft: info.priceNeugeschaeft,
-      leadPriceKinderwunsch: info.priceKinderwunsch,
+      leadGoalWechsel: goalWechsel,
+      leadGoalNeugeschaeft: goalNeugeschaeft,
+      leadGoalKinderwunsch: goalKinderwunsch,
+      leadPriceWechsel: priceWechsel,
+      leadPriceNeugeschaeft: priceNeugeschaeft,
+      leadPriceKinderwunsch: priceKinderwunsch,
       region: info.region,
-      startWechsel: info.startWechsel,
-      startNeugeschaeft: info.startNeugeschaeft,
-      startKinderwunsch: info.startKinderwunsch,
+      startWechsel,
+      startNeugeschaeft,
+      startKinderwunsch,
     };
     const customer = await prisma.customer.upsert({
       where: { name: key },
