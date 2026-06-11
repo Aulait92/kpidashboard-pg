@@ -447,6 +447,57 @@ function readChecked(fields: Record<string, unknown>, key: string): boolean {
   return fields[key] === true;
 }
 
+// E.164-Normalisierung deutscher Telefonnummern.
+// - "+49 151 …"  → "+4915123…"
+// - "0151 …"     → "+4915123…"  (führende 0 → DE-Vorwahl)
+// - "49 151 …"   → "+4915123…"
+// Andere Länder: nur akzeptiert wenn bereits mit + beginnt.
+function normalizeE164(raw: string | null): string | null {
+  if (!raw) return null;
+  const cleaned = raw.replace(/[\s\-()./]/g, "").trim();
+  if (cleaned === "") return null;
+  if (cleaned.startsWith("+")) {
+    const digits = cleaned.slice(1).replace(/\D/g, "");
+    if (digits.length < 8 || digits.length > 15) return null;
+    return `+${digits}`;
+  }
+  const digitsOnly = cleaned.replace(/\D/g, "");
+  if (digitsOnly === "") return null;
+  if (digitsOnly.startsWith("00")) {
+    const rest = digitsOnly.slice(2);
+    return rest.length >= 8 ? `+${rest}` : null;
+  }
+  if (digitsOnly.startsWith("49")) return `+${digitsOnly}`;
+  if (digitsOnly.startsWith("0"))
+    return `+49${digitsOnly.replace(/^0+/, "")}`;
+  // Bare Ziffernfolge ohne 0/49-Prefix → als DE annehmen.
+  return digitsOnly.length >= 8 ? `+49${digitsOnly}` : null;
+}
+
+// Liest die Telefonnummer eines Leads aus dem erstbesten passenden Feld
+// und normalisiert auf E.164. null wenn keine valide Nummer da ist.
+const LEAD_PHONE_FIELDS = [
+  "Telefon",
+  "Telefonnummer",
+  "Handy",
+  "Handynummer",
+  "Mobil",
+  "Mobilnummer",
+  "Phone",
+  "Tel",
+];
+
+function resolveLeadPhone(fields: Record<string, unknown>): string | null {
+  for (const key of LEAD_PHONE_FIELDS) {
+    const v = readString(fields, key);
+    if (v) {
+      const e164 = normalizeE164(v);
+      if (e164) return e164;
+    }
+  }
+  return null;
+}
+
 // Versucht den Lead-Namen aus mehreren möglichen Airtable-Spalten zu lesen,
 // in der Reihenfolge wahrscheinlichster Treffer. Wenn "Vorname" + "Nachname"
 // getrennt vorhanden sind, werden sie zusammengesetzt.
@@ -476,6 +527,7 @@ export type NewLead = {
   customerId: string;
   product: string;
   name: string | null;
+  phone: string | null;
   airtableId: string;
 };
 
@@ -661,6 +713,7 @@ export async function syncAirtable(): Promise<SyncResult> {
         const price = readNumber(rec.fields, "Preis");
         const billed = readChecked(rec.fields, "Abgerechnet");
         const name = resolveLeadName(rec.fields);
+        const phone = resolveLeadPhone(rec.fields);
 
         const isCancelled = isCancelledStatus(status);
         // Storno-Leads werden vor dem Anruf ausgefiltert → nicht erreicht,
@@ -688,6 +741,7 @@ export async function syncAirtable(): Promise<SyncResult> {
             source: table.source,
             customerId,
             name,
+            phone,
             createdAt,
             firstContactAt,
             closedAt,
@@ -700,6 +754,7 @@ export async function syncAirtable(): Promise<SyncResult> {
             source: table.source,
             customerId,
             name,
+            phone,
             createdAt,
             firstContactAt,
             closedAt,
@@ -767,6 +822,7 @@ export async function syncAirtable(): Promise<SyncResult> {
             customerId,
             product: table.source,
             name,
+            phone,
             airtableId: rec.id,
           });
         }

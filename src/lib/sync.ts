@@ -4,6 +4,10 @@ import { syncOutbrain, type OutbrainSyncResult } from "@/lib/outbrain";
 import { syncTikTok, type TikTokSyncResult } from "@/lib/tiktok";
 import { syncGoogleAds, type GoogleSyncResult } from "@/lib/google";
 import { sendToAdmins, sendToBuyersOfCustomer } from "@/lib/push";
+import {
+  triggerOutboundForNewLeads,
+  type OutboundResult,
+} from "@/lib/whatsapp-outbound";
 
 export type FullSyncResult = {
   airtable: SyncResult;
@@ -18,6 +22,7 @@ export type FullSyncResult = {
     | { ok: true; result: GoogleSyncResult }
     | { ok: false; error: string };
   push: { sent: number; removed: number };
+  whatsapp: OutboundResult;
 };
 
 const eur = new Intl.NumberFormat("de-DE", {
@@ -103,6 +108,20 @@ export async function runFullSync(): Promise<FullSyncResult> {
     pushRemoved += buyerRes.removed;
   }
 
+  // WhatsApp-Outbound: pro neuem Lead mit Telefonnummer Template anstoßen.
+  // Silenced wenn ENVs nicht gesetzt sind (Modul gibt leeres Ergebnis zurück).
+  let whatsapp: OutboundResult;
+  try {
+    whatsapp = await triggerOutboundForNewLeads(airtable.newLeads);
+  } catch (err) {
+    whatsapp = {
+      attempted: 0,
+      sent: 0,
+      skipped: 0,
+      errors: [err instanceof Error ? err.message : String(err)],
+    };
+  }
+
   return {
     airtable,
     meta,
@@ -110,5 +129,6 @@ export async function runFullSync(): Promise<FullSyncResult> {
     tiktok,
     google,
     push: { sent: pushSent, removed: pushRemoved },
+    whatsapp,
   };
 }
