@@ -123,10 +123,6 @@ model Lead {
   source          String?
   customerId      String
   name            String?
-  // E.164-Telefonnummer (z. B. „+4915123456789") aus Airtable. Wird vom
-  // WhatsApp-Bot zum Versand des Outbound-Templates verwendet. null = keine
-  // Nummer in Airtable hinterlegt → kein Bot-Versand.
-  phone           String?
   createdAt       DateTime  @default(now())
   firstContactAt  DateTime?
   closedAt        DateTime?
@@ -139,13 +135,11 @@ model Lead {
   adChannel       String?
   acquisitionCost Decimal   @default(0) @db.Decimal(12, 2)
 
-  customer     Customer              @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  revenues     Revenue[]
-  whatsappConv WhatsappConversation?
+  customer Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  revenues Revenue[]
 
   @@index([customerId, createdAt])
   @@index([createdAt])
-  @@index([phone])
 }
 
 model Revenue {
@@ -318,59 +312,4 @@ model CreativeVariant {
 
   @@index([requestId, status])
   @@index([telegramMsgId])
-}
-
-// WhatsApp-Vorqualifizierung. Eine Conversation pro Lead-Telefonnummer.
-// Wird angelegt, sobald der Sync ein neues Lead-Record mit phone findet und
-// das Outbound-Template versendet. Bedient anschließend den Webhook und
-// extrahiert per Claude strukturierte Qualifizierungs-Antworten.
-model WhatsappConversation {
-  id     String  @id @default(cuid())
-  // E.164-Nummer des Leads (Single Source of Truth). Unique → max. eine
-  // aktive Conversation pro Nummer.
-  phone  String  @unique
-  leadId String? @unique
-  // "pending_template" → Template gesendet, warten auf 1. Antwort
-  // "qualifying"       → Lead hat geantwortet, Bot stellt Fragen
-  // "done"             → Vorqualifizierung abgeschlossen, Antworten in
-  //                       qualification gespeichert + ggf. an Airtable
-  // "opted_out"        → Lead hat „STOP" / „nein" o. Ä. geschickt
-  // "failed"           → Fehler beim Versand (z. B. Template abgelehnt)
-  state             String
-  // Produkt der Lead-Sparte (Wechsel/Neugeschäft/Kinderwunsch). Bestimmt
-  // den Fragebogen-System-Prompt.
-  product           String?
-  // WhatsApp-Message-ID der Outbound-Template-Nachricht (für Debug).
-  templateMessageId String?
-  // Strukturierte Qualifizierungs-Antworten, von Claude per Tool-Call
-  // befüllt. Schlüssel je Produkt unterschiedlich (akt_kv, beitrag,
-  // beruf, …).
-  qualification     Json?
-  // Letzte Bot-Antwort, die noch nicht über Webhook bestätigt wurde — für
-  // Debugging-Zwecke.
-  lastError         String?
-  startedAt         DateTime  @default(now())
-  lastInboundAt     DateTime?
-  completedAt       DateTime?
-
-  lead     Lead?              @relation(fields: [leadId], references: [id], onDelete: SetNull)
-  messages WhatsappMessage[]
-
-  @@index([state, startedAt])
-}
-
-model WhatsappMessage {
-  id             String   @id @default(cuid())
-  conversationId String
-  // "in" = vom Lead an uns, "out" = vom Bot an Lead
-  direction      String
-  // WhatsApp-eigene Message-ID (wamid). Bei Outbound erst nach API-Response
-  // bekannt; bei Inbound aus dem Webhook-Payload.
-  wamid          String?  @unique
-  body           String
-  createdAt      DateTime @default(now())
-
-  conversation WhatsappConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-  @@index([conversationId, createdAt])
 }
