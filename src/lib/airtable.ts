@@ -54,23 +54,58 @@ function isCancelledStatus(status: string | null): boolean {
   return status != null && CANCELLED_STATUSES.has(status.trim().toLowerCase());
 }
 
-const TABLES = [
-  { name: process.env.AIRTABLE_TABLE_WECHSEL ?? "PKV-Wechsel-Leads", source: "Wechsel" },
-  {
-    name: process.env.AIRTABLE_TABLE_NEUGESCHAEFT ?? "PKV-Neugeschäft-Leads",
-    source: "Neugeschäft",
-  },
-  // Kinderwunsch nur einlesen, wenn die Tabelle konfiguriert ist — sonst
-  // würde jeder Sync einen Fehler für eine nicht existierende Tabelle melden.
-  ...(process.env.AIRTABLE_TABLE_KINDERWUNSCH
-    ? [
-        {
-          name: process.env.AIRTABLE_TABLE_KINDERWUNSCH,
-          source: "Kinderwunsch",
-        },
-      ]
-    : []),
+// Konsolidierte Leads-Tabelle (löst die früheren per-Produkt-Tabellen
+// PKV-Wechsel-Leads / PKV-Neugeschäft-Leads / Kinderwunsch ab). Pro Record
+// liegt das Produkt als Lookup-Spalte aus der Kunden-Produkt-Bezug-
+// Join-Tabelle vor — siehe classifyLeadProduct() unten.
+const LEADS_TABLE = process.env.AIRTABLE_TABLE_LEADS ?? "Leads";
+
+// Spalten-Kandidaten für das Produkt am Lead-Record. Erste Wahl ist die
+// Lookup-Spalte aus dem Bezug ("Produkt (from Kunden-Produkt-Bezug)"),
+// gefolgt von einem direkten "Produkt"-Feld als Fallback.
+const LEAD_PRODUCT_FIELDS = [
+  "Produkt (from Kunden-Produkt-Bezug)",
+  "Produkt",
 ];
+
+// Spalten-Kandidaten für den Kunden am Lead. Linked-Record-Varianten („Buyer"
+// oder „Kunde") werden über buyerMap zu Namen aufgelöst; Lookup-Varianten
+// liefern den Namen direkt als String.
+const LEAD_BUYER_LINKED_FIELDS = ["Buyer", "Kunde"];
+const LEAD_BUYER_LOOKUP_FIELDS = [
+  "Kunde (from Kunden-Produkt-Bezug)",
+  "Buyer (from Kunden-Produkt-Bezug)",
+];
+
+type LeadProduct = "Wechsel" | "Neugeschäft" | "Kinderwunsch";
+
+// Klassifiziert das Produkt eines Lead-Records anhand der Lookup- bzw.
+// Single-Select-Spalte. Akzeptiert sowohl rohe Strings ("PKV-Wechsel") als
+// auch Lookup-Arrays (["PKV-Wechsel"]). null = unklassifizierbar → der Lead
+// wird übersprungen, weil ohne Produkt-Dimension keine Pool-Zuordnung
+// möglich ist.
+function classifyLeadProduct(
+  fields: Record<string, unknown>,
+): LeadProduct | null {
+  for (const key of LEAD_PRODUCT_FIELDS) {
+    const v = fields[key];
+    const raw = Array.isArray(v)
+      ? typeof v[0] === "string"
+        ? v[0]
+        : null
+      : typeof v === "string"
+        ? v
+        : null;
+    if (!raw) continue;
+    const n = raw.toLowerCase();
+    // Reihenfolge: Kinderwunsch + Neugeschäft vor Wechsel, weil "wechsel"
+    // als Substring in einem Neugeschäft-Namen vorkommen könnte.
+    if (n.includes("kinderwunsch") || n.includes("kiwu")) return "Kinderwunsch";
+    if (n.includes("neugesch") || n.includes("neuvertrag")) return "Neugeschäft";
+    if (n.includes("wechsel") || n.includes("wechsler")) return "Wechsel";
+  }
+  return null;
+}
 
 const BUYERS_TABLE = process.env.AIRTABLE_TABLE_BUYERS ?? "Buyer";
 const BUYER_NAME_FIELDS = ["Name", "Buyer", "Firma", "Company"];
@@ -520,22 +555,23 @@ export async function syncAirtable(): Promise<SyncResult> {
     return customer.id;
   }
 
-  // 1. Alle Lead-Tabellen einlesen
-  const tableRecords = new Map<string, AirtableRecord[]>();
-  for (const table of TABLES) {
-    try {
-      const records = await fetchAllRecords(table.name);
-      tableRecords.set(table.name, records);
-      result.tables.push({
-        name: table.name,
-        source: table.source,
-        records: records.length,
-      });
-    } catch (err) {
-      result.errors.push(
-        `Tabelle "${table.name}": ${err instanceof Error ? err.message : String(err)}`,
-      );
-    }
+  // 1. Konsolidierte Leads-Tabelle einlesen. Pro Record ergibt sich das
+  //    Produkt (Wechsel / Neugeschäft / Kinderwunsch) aus dem Lookup auf die
+  //    Kunden-Produkt-Bezug-Zeile — siehe classifyLeadProduct().
+  let leadRecords: AirtableRecord[] = [];
+  let leadsFetched = false;
+  try {
+    leadRecords = await fetchAllRecords(LEADS_TABLE);
+    leadsFetched = true;
+    result.tables.push({
+      name: LEADS_TABLE,
+      source: "Leads",
+      records: leadRecords.length,
+    });
+  } catch (err) {
+    result.errors.push(
+      `Tabelle "${LEADS_TABLE}": ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 
   // 2. Buyer/Kunden-Tabelle IMMER fetchen — die enthält Lead-Ziele, Preise und
@@ -570,16 +606,26 @@ export async function syncAirtable(): Promise<SyncResult> {
   }
 
   function resolveBuyer(fields: Record<string, unknown>): string | null {
-    // Fall 1: Buyer ist Linked Record → IDs zu Namen auflösen
-    const ids = readLinkedIds(fields, "Buyer");
-    if (ids.length > 0) {
+    // 1) Linked-Record auf die Kunden-Tabelle ("Buyer" oder "Kunde") →
+    //    rec-IDs über buyerMap zu Namen auflösen.
+    for (const key of LEAD_BUYER_LINKED_FIELDS) {
+      const ids = readLinkedIds(fields, key);
+      if (ids.length === 0) continue;
       const names = ids
         .map((id) => buyerMap.get(id)?.name)
         .filter((n): n is string => !!n);
       if (names.length > 0) return names.join(", ");
     }
-    // Fall 2: Buyer ist Single-Line-Text
-    return readString(fields, "Buyer");
+    // 2) Lookup-String aus der Bezug-Verknüpfung — Airtable dereferenziert
+    //    Linked-Record-Lookups zum Primärfeld-Wert (Kunden-Name).
+    for (const key of LEAD_BUYER_LOOKUP_FIELDS) {
+      const v = fields[key];
+      if (Array.isArray(v) && typeof v[0] === "string" && v[0].trim() !== "") {
+        return v[0].trim();
+      }
+    }
+    // 3) Fallback: direkter Single-Line-Text.
+    return readString(fields, "Buyer") ?? readString(fields, "Kunde");
   }
 
   // Lead-Ziele und Region aus der Buyer-Tabelle (Region) + Join-Tabelle
@@ -639,13 +685,19 @@ export async function syncAirtable(): Promise<SyncResult> {
     customerCache.set(key, customer.id);
   }
 
-  // 3. Records verarbeiten
-  for (const table of TABLES) {
-    const records = tableRecords.get(table.name);
-    if (!records) continue;
-
-    for (const rec of records) {
+  // 3. Lead-Records verarbeiten — eine konsolidierte Tabelle, Produkt pro
+  //    Record per Lookup auf die Bezug-Zeile.
+  if (leadsFetched) {
+    for (const rec of leadRecords) {
       try {
+        const product = classifyLeadProduct(rec.fields);
+        if (!product) {
+          // Ohne Produkt-Lookup keine Pool-Zuordnung möglich → skip.
+          result.errors.push(
+            `Record ${rec.id}: Produkt nicht klassifizierbar (Lookup-Feld leer oder unbekannter Wert).`,
+          );
+          continue;
+        }
         const buyer = resolveBuyer(rec.fields);
         if (!buyer) continue; // ohne Buyer kein Customer
 
@@ -685,7 +737,7 @@ export async function syncAirtable(): Promise<SyncResult> {
           where: { airtableId: rec.id },
           create: {
             airtableId: rec.id,
-            source: table.source,
+            source: product,
             customerId,
             name,
             createdAt,
@@ -697,7 +749,7 @@ export async function syncAirtable(): Promise<SyncResult> {
             adChannel,
           },
           update: {
-            source: table.source,
+            source: product,
             customerId,
             name,
             createdAt,
@@ -743,7 +795,7 @@ export async function syncAirtable(): Promise<SyncResult> {
               // Erst-Insert eines Verkaufs → Push-Trigger merken.
               result.newSales.push({
                 buyer,
-                product: table.source,
+                product,
                 amount: price,
                 airtableId: rec.id,
               });
@@ -765,7 +817,7 @@ export async function syncAirtable(): Promise<SyncResult> {
           result.newLeads.push({
             buyer,
             customerId,
-            product: table.source,
+            product,
             name,
             airtableId: rec.id,
           });
@@ -775,20 +827,18 @@ export async function syncAirtable(): Promise<SyncResult> {
         void billed;
       } catch (err) {
         result.errors.push(
-          `Record ${rec.id} (${table.name}): ${err instanceof Error ? err.message : String(err)}`,
+          `Record ${rec.id} (${LEADS_TABLE}): ${err instanceof Error ? err.message : String(err)}`,
         );
       }
     }
 
     // Sweep: Leads, die in Airtable gelöscht wurden, auch lokal entfernen.
-    // Sicher: ein gescheiterter Fetch hat records=undefined → schon oben per
-    // `continue` ausgeschlossen. Hier ist records also garantiert das echte
-    // Ergebnis (auch leeres Array = legitime leere Tabelle, dann löschen wir
-    // alle alten Leads dieser source).
-    const seenIds = records.map((r) => r.id);
+    // Nur ausführen, wenn der Fetch der Leads-Tabelle erfolgreich war —
+    // sonst würden bei einem temporären 403/Netzwerk-Fehler ALLE Leads
+    // (über alle Produkte) gelöscht.
+    const seenIds = leadRecords.map((r) => r.id);
     const stale = await prisma.lead.findMany({
       where: {
-        source: table.source,
         airtableId: { not: null, notIn: seenIds },
       },
       select: { id: true },
@@ -804,7 +854,7 @@ export async function syncAirtable(): Promise<SyncResult> {
       result.deletedLeads += stale.length;
     }
     console.log(
-      `[airtable] ${table.source}: seen=${records.length}, deleted=${staleCount}`,
+      `[airtable] Leads: seen=${leadRecords.length}, deleted=${staleCount}`,
     );
   }
 
