@@ -62,9 +62,12 @@ const LEADS_TABLE = process.env.AIRTABLE_TABLE_LEADS ?? "Leads";
 
 // Spalten-Kandidaten für das Produkt am Lead-Record. Erste Wahl ist die
 // Lookup-Spalte aus dem Bezug ("Produkt (from Kunden-Produkt-Bezug)"),
-// gefolgt von einem direkten "Produkt"-Feld als Fallback.
+// danach das direkte Eingangs-Feld ("Produkt (Eingang)", für Leads ohne
+// Bezug — z. B. frische Form-Submissions, denen der Berater noch keinen
+// Bezug zugewiesen hat), zuletzt ein generisches "Produkt".
 const LEAD_PRODUCT_FIELDS = [
   "Produkt (from Kunden-Produkt-Bezug)",
+  "Produkt (Eingang)",
   "Produkt",
 ];
 
@@ -100,9 +103,18 @@ function classifyLeadProduct(
     const n = raw.toLowerCase();
     // Reihenfolge: Kinderwunsch + Neugeschäft vor Wechsel, weil "wechsel"
     // als Substring in einem Neugeschäft-Namen vorkommen könnte.
+    // Tarifoptimierung wird als Alias auf Wechsel gebucht (gleicher Pool,
+    // gleiche Ziele) — fachlich verwandte Sparte aus Sicht von Lead-Kosten
+    // und Conversion.
     if (n.includes("kinderwunsch") || n.includes("kiwu")) return "Kinderwunsch";
     if (n.includes("neugesch") || n.includes("neuvertrag")) return "Neugeschäft";
-    if (n.includes("wechsel") || n.includes("wechsler")) return "Wechsel";
+    if (
+      n.includes("wechsel") ||
+      n.includes("wechsler") ||
+      n.includes("tarifoptim") ||
+      n.includes("tarif-optim")
+    )
+      return "Wechsel";
   }
   return null;
 }
@@ -326,7 +338,10 @@ async function fetchKundenProduktBezug(): Promise<Map<string, ProductGoals>> {
     if (!produkt) continue;
     const p = produkt.toLowerCase();
     let productKey: "Wechsel" | "Neugeschaeft" | "Kinderwunsch" | null = null;
-    if (p.includes("wechsel")) productKey = "Wechsel";
+    // Tarifoptimierungs-Bezüge laufen in den Wechsel-Pool (Alias) — siehe
+    // classifyLeadProduct(), beide Listen müssen synchron bleiben.
+    if (p.includes("wechsel") || p.includes("tarifoptim") || p.includes("tarif-optim"))
+      productKey = "Wechsel";
     else if (p.includes("neugesch")) productKey = "Neugeschaeft";
     else if (p.includes("kinderwunsch")) productKey = "Kinderwunsch";
     if (!productKey) continue;

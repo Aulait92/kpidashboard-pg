@@ -56,7 +56,15 @@ export function classifyProduct(campaignName: string): MetaProduct | null {
   }
   // „Wechsel" (Vorgang) ODER „Wechsler" (Person) — letzteres enthält
   // „wechsel" NICHT als Substring (w-e-c-h-s-l-e-r vs. w-e-c-h-s-e-l).
-  if (n.includes("wechsel") || n.includes("wechsler")) return "Wechsel";
+  // „Tarifoptimierung" zählt als Wechsel-Alias (gleicher Pool, identische
+  // Lead-Kosten-Logik) — siehe classifyLeadProduct in airtable.ts.
+  if (
+    n.includes("wechsel") ||
+    n.includes("wechsler") ||
+    n.includes("tarifoptim") ||
+    n.includes("tarif-optim")
+  )
+    return "Wechsel";
   return null;
 }
 
