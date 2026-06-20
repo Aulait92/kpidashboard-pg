@@ -6,7 +6,7 @@ import {
   updateLeadDetailsAction,
   type UpdateLeadState,
 } from "@/app/buyer/actions";
-import { LEAD_STATUS_OPTIONS } from "@/lib/products";
+import { PIPELINE_PHASES, findPhaseForStatus } from "@/lib/products";
 
 // Editier-Block direkt unter der Read-Only-Karte. Vier Felder, die der
 // Buyer im Tagesgeschäft pflegt:
@@ -36,16 +36,39 @@ export function LeadEditForm({
     FormData
   >(updateLeadDetailsAction, {});
 
-  // Status, der nicht in der erlaubten Auswahl steht (z. B. "Storno" oder
-  // ein älterer/anderer Wert), bekommt im Dropdown eine eigene Disabled-
-  // Option, damit der Buyer ihn sieht und nicht versehentlich überschreibt.
+  // Dropdown bietet die 6 Pipeline-Phasen (Neuer Lead, Nicht erreicht,
+  // Im Gespräch, In Beratung, Abschluss, Kein Interesse) — gleiches
+  // Vokabular wie die Spalten im Pipeline-Board. Granularen Sub-Status
+  // (z. B. "Qualifiziert" innerhalb "Im Gespräch") bewahren wir, solange
+  // der Buyer in derselben Phase bleibt; wechselt er die Phase, wird
+  // auf den Einstiegs-Status der neuen Phase gesetzt.
+  const initialPhase = findPhaseForStatus(initialBearbeitungsstatus);
   const statusIsExternal =
-    initialBearbeitungsstatus !== "" &&
-    !(LEAD_STATUS_OPTIONS as readonly string[]).includes(initialBearbeitungsstatus);
+    initialBearbeitungsstatus !== "" && initialPhase == null;
 
-  const [bearbeitungsstatus, setBearbeitungsstatus] = useState(
-    initialBearbeitungsstatus,
+  const [selectedPhaseKey, setSelectedPhaseKey] = useState(
+    initialPhase?.key ?? "",
   );
+  // Resolved-Status für den Submit: bleibt der Buyer in der Ausgangs-Phase,
+  // schicken wir den unveränderten Sub-Status (z. B. "Qualifiziert"). Bei
+  // Phasen-Wechsel den Default der neuen Phase. Leere Auswahl = "" → Server
+  // ignoriert das Feld (kein Status-Update).
+  const resolvedStatus = (() => {
+    if (selectedPhaseKey === "") return "";
+    const phase = PIPELINE_PHASES.find((p) => p.key === selectedPhaseKey);
+    if (!phase) return "";
+    if (initialPhase && phase.key === initialPhase.key) {
+      return initialBearbeitungsstatus;
+    }
+    return phase.defaultStatus;
+  })();
+  const subStatusInPhase =
+    initialPhase &&
+    selectedPhaseKey === initialPhase.key &&
+    initialBearbeitungsstatus !== initialPhase.defaultStatus
+      ? initialBearbeitungsstatus
+      : null;
+
   const [kontaktversuche, setKontaktversuche] = useState(initialKontaktversuche);
   const [ersterKontaktversuch, setErsterKontaktversuch] = useState(
     initialErsterKontaktversuch,
@@ -68,27 +91,34 @@ export function LeadEditForm({
       className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]"
     >
       <input type="hidden" name="leadId" value={leadId} />
+      <input type="hidden" name="bearbeitungsstatus" value={resolvedStatus} />
 
       <dl className="divide-y divide-[color:var(--border)]">
         <EditRow label="Bearbeitungsstatus">
-          <select
-            name="bearbeitungsstatus"
-            value={bearbeitungsstatus}
-            onChange={(e) => setBearbeitungsstatus(e.target.value)}
-            className="w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
-          >
-            <option value="">– nicht gesetzt –</option>
-            {statusIsExternal ? (
-              <option value={initialBearbeitungsstatus} disabled>
-                {initialBearbeitungsstatus} (nicht änderbar)
-              </option>
+          <div className="space-y-1.5">
+            <select
+              value={selectedPhaseKey}
+              onChange={(e) => setSelectedPhaseKey(e.target.value)}
+              className="w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
+            >
+              <option value="">– nicht gesetzt –</option>
+              {statusIsExternal ? (
+                <option value="" disabled>
+                  {initialBearbeitungsstatus} (nicht in Pipeline)
+                </option>
+              ) : null}
+              {PIPELINE_PHASES.map((p) => (
+                <option key={p.key} value={p.key}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+            {subStatusInPhase ? (
+              <p className="text-[11px] text-[color:var(--muted)]">
+                Aktueller Sub-Status: <span className="font-medium">{subStatusInPhase}</span>
+              </p>
             ) : null}
-            {LEAD_STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
+          </div>
         </EditRow>
 
         <EditRow label="Kontaktversuche">

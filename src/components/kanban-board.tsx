@@ -6,8 +6,10 @@ import { X } from "lucide-react";
 import { setLeadStatusAction } from "@/app/buyer/actions";
 import {
   CLOSED_STATUS,
+  PIPELINE_PHASES,
   displayProduct,
   type LeadStatus,
+  type PipelinePhase,
 } from "@/lib/products";
 import { formatDate, formatEUR } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -22,61 +24,26 @@ export type KanbanLead = {
 };
 
 // Spalten-Design: nicht 1:1 pro Status, sondern in funktionalen Phasen
-// gruppiert. Innerhalb einer Gruppe behält jede Karte ihren konkreten
-// Sub-Status (siehe statusBadge), beim Drop von außerhalb wird auf den
-// Einstiegs-Status der Gruppe gesetzt.
-type ColumnDef = {
-  key: string;
-  label: string;
-  statuses: LeadStatus[];      // alle Status, die in diese Spalte gehören
-  defaultStatus: LeadStatus;   // Status beim Drop AUS EINER ANDEREN Spalte
-  accent: string;              // top-border Akzentfarbe
+// gruppiert (PIPELINE_PHASES in lib/products.ts ist die Single-Source-
+// Of-Truth, damit das Bearbeitungsstatus-Dropdown im Lead-Detail dasselbe
+// Vokabular zeigt). Innerhalb einer Gruppe behält jede Karte ihren
+// konkreten Sub-Status (siehe subStatusLabel), beim Drop von außerhalb
+// wird auf den Einstiegs-Status der Gruppe gesetzt.
+type ColumnDef = PipelinePhase & { accent: string };
+
+const COLUMN_ACCENTS: Record<string, string> = {
+  neu: "border-t-zinc-400",
+  "nicht-erreicht": "border-t-orange-400",
+  gespraech: "border-t-amber-500",
+  beratung: "border-t-blue-500",
+  abschluss: "border-t-emerald-500",
+  "kein-interesse": "border-t-rose-400",
 };
 
-const COLUMNS: ColumnDef[] = [
-  {
-    key: "neu",
-    label: "Neuer Lead",
-    statuses: ["Neuer Lead"],
-    defaultStatus: "Neuer Lead",
-    accent: "border-t-zinc-400",
-  },
-  {
-    key: "nicht-erreicht",
-    label: "Nicht erreicht",
-    statuses: ["Nicht erreicht"],
-    defaultStatus: "Nicht erreicht",
-    accent: "border-t-orange-400",
-  },
-  {
-    key: "gespraech",
-    label: "Im Gespräch",
-    statuses: ["Erreicht", "Qualifiziert"],
-    defaultStatus: "Erreicht",
-    accent: "border-t-amber-500",
-  },
-  {
-    key: "beratung",
-    label: "In Beratung",
-    statuses: ["Termin vereinbart", "Angebot/Beratung läuft"],
-    defaultStatus: "Termin vereinbart",
-    accent: "border-t-blue-500",
-  },
-  {
-    key: "abschluss",
-    label: "Abschluss",
-    statuses: ["Abschluss"],
-    defaultStatus: "Abschluss",
-    accent: "border-t-emerald-500",
-  },
-  {
-    key: "kein-interesse",
-    label: "Kein Interesse",
-    statuses: ["Kein Interesse"],
-    defaultStatus: "Kein Interesse",
-    accent: "border-t-rose-400",
-  },
-];
+const COLUMNS: ColumnDef[] = PIPELINE_PHASES.map((p) => ({
+  ...p,
+  accent: COLUMN_ACCENTS[p.key] ?? "border-t-zinc-300",
+}));
 
 const SONSTIGE_KEY = "__sonstige__";
 

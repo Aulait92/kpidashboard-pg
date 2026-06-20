@@ -57,3 +57,69 @@ export function isReachedStatus(status: LeadStatus): boolean {
 }
 
 export const CLOSED_STATUS: LeadStatus = "Abschluss";
+
+// Pipeline-Phasen — gruppieren mehrere LEAD_STATUS_OPTIONS unter einem
+// Sammel-Label. Sowohl das Pipeline-Board (Kanban-Spalten) als auch das
+// Bearbeitungsstatus-Dropdown im Lead-Detail bauen darauf auf, damit beide
+// dieselbe Sprache sprechen.
+//
+// defaultStatus = der Status, der beim Phasen-Wechsel gesetzt wird, wenn
+// der Lead noch nicht in dieser Phase war. Bleibt der Lead in derselben
+// Phase, behält er seinen konkreten Sub-Status (z. B. „Qualifiziert"
+// innerhalb von „Im Gespräch").
+export type PipelinePhase = {
+  key: string;
+  label: string;
+  statuses: readonly LeadStatus[];
+  defaultStatus: LeadStatus;
+};
+
+export const PIPELINE_PHASES: readonly PipelinePhase[] = [
+  {
+    key: "neu",
+    label: "Neuer Lead",
+    statuses: ["Neuer Lead"],
+    defaultStatus: "Neuer Lead",
+  },
+  {
+    key: "nicht-erreicht",
+    label: "Nicht erreicht",
+    statuses: ["Nicht erreicht"],
+    defaultStatus: "Nicht erreicht",
+  },
+  {
+    key: "gespraech",
+    label: "Im Gespräch",
+    statuses: ["Erreicht", "Qualifiziert"],
+    defaultStatus: "Erreicht",
+  },
+  {
+    key: "beratung",
+    label: "In Beratung",
+    statuses: ["Termin vereinbart", "Angebot/Beratung läuft"],
+    defaultStatus: "Termin vereinbart",
+  },
+  {
+    key: "abschluss",
+    label: "Abschluss",
+    statuses: ["Abschluss"],
+    defaultStatus: "Abschluss",
+  },
+  {
+    key: "kein-interesse",
+    label: "Kein Interesse",
+    statuses: ["Kein Interesse"],
+    defaultStatus: "Kein Interesse",
+  },
+] as const;
+
+export function findPhaseForStatus(
+  status: string | null | undefined,
+): PipelinePhase | null {
+  if (!status) return null;
+  return (
+    PIPELINE_PHASES.find((p) =>
+      (p.statuses as readonly string[]).includes(status),
+    ) ?? null
+  );
+}
