@@ -151,7 +151,7 @@ async function BuyerDashboardBody({
       computeKpis({ range: prev, customerId, product: null }) as Promise<Kpis>,
       computeTimeSeries({ range, customerId, product: null }),
       computeSpeedToLeadAnalysis({ range, customerId }),
-      computeMonthlyForecast({ customerId }),
+      computeMonthlyForecast({ customerId, includeCloseValue: true }),
       // Abschlusswerte aus dem Lead-Modell direkt aggregieren — eine eigene
       // Spalte am Lead, getrennt vom Lead-Einkaufspreis (Revenue.amount).
       // Stornierte Leads ausschließen, damit Umsatz konsistent zu nettoLeads
