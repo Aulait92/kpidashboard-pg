@@ -331,17 +331,6 @@ async function BuyerDashboardBody({
             delta={delta(gewinn, gewinnPrev)}
           />
           <KpiCard
-            label="Umsatz / Lead"
-            value={formatEUR(
-              k.totalLeads > 0 ? umsatz / k.totalLeads : null,
-            )}
-            hint="Pro eingehendem Lead"
-            delta={delta(
-              k.totalLeads > 0 ? umsatz / k.totalLeads : null,
-              p.totalLeads > 0 ? umsatzPrev / p.totalLeads : null,
-            )}
-          />
-          <KpiCard
             label="Gewinn / Lead"
             value={formatEUR(
               k.totalLeads > 0 ? gewinn / k.totalLeads : null,
@@ -350,6 +339,17 @@ async function BuyerDashboardBody({
             delta={delta(
               k.totalLeads > 0 ? gewinn / k.totalLeads : null,
               p.totalLeads > 0 ? gewinnPrev / p.totalLeads : null,
+            )}
+          />
+          <KpiCard
+            label="Gewinn / Abschluss"
+            value={formatEUR(
+              k.closedLeads > 0 ? gewinn / k.closedLeads : null,
+            )}
+            hint={`Aus ${formatNumber(k.closedLeads)} Abschlüssen`}
+            delta={delta(
+              k.closedLeads > 0 ? gewinn / k.closedLeads : null,
+              p.closedLeads > 0 ? gewinnPrev / p.closedLeads : null,
             )}
           />
         </div>
