@@ -5,6 +5,7 @@ import {
   fetchAllStornogruende,
   fetchBezugStornogruendeMap,
   markLeadAsCancelled,
+  updateLeadEditableFields,
 } from "@/lib/airtable-write";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -108,6 +109,101 @@ export async function cancelLeadAction(
 
   revalidatePath("/buyer");
   return { ok: true, leadId };
+}
+
+export type UpdateLeadState = {
+  ok?: boolean;
+  error?: string;
+};
+
+// Speichert die in der Lead-Detail-Ansicht editierbaren Felder zurück
+// nach Airtable + spiegelt die DB-Spiegel-Felder (Kontaktversuche,
+// firstContactAt). Notizen / Storno-Bemerkung / Stornogrund leben
+// ausschließlich in Airtable.
+//
+// Bewusst keine automatische Status-Änderung: das Setzen eines
+// Stornogrunds hier flippt den Bearbeitungsstatus NICHT auf "Storno"
+// — dafür gibt es den Storno-Modal-Flow in der Lead-Tabelle.
+export async function updateLeadDetailsAction(
+  _prev: UpdateLeadState,
+  formData: FormData,
+): Promise<UpdateLeadState> {
+  const session = await getCurrentSession();
+  if (!session || session.role !== "BUYER" || !session.customerId) {
+    return { error: "Nicht eingeloggt." };
+  }
+
+  const leadId = String(formData.get("leadId") ?? "");
+  if (!leadId) return { error: "Lead fehlt." };
+
+  const lead = await prisma.lead.findFirst({
+    where: { id: leadId, customerId: session.customerId },
+    select: { id: true, airtableId: true, bezugAirtableId: true },
+  });
+  if (!lead) return { error: "Lead nicht gefunden." };
+  if (!lead.airtableId) {
+    return { error: "Lead ohne Airtable-Referenz." };
+  }
+
+  // Inputs parsen — leere Strings bedeuten "leer setzen".
+  const kvRaw = String(formData.get("kontaktversuche") ?? "").trim();
+  const kontaktversuche = kvRaw === "" ? 0 : Math.max(0, Math.round(Number(kvRaw)));
+  if (!Number.isFinite(kontaktversuche)) {
+    return { error: "Kontaktversuche muss eine Zahl sein." };
+  }
+
+  const ersterRaw = String(formData.get("ersterKontaktversuch") ?? "").trim();
+  const ersterKontaktversuch = ersterRaw === "" ? null : ersterRaw;
+  if (ersterKontaktversuch && !/^\d{4}-\d{2}-\d{2}$/.test(ersterKontaktversuch)) {
+    return { error: "Erster Kontaktversuch: ungültiges Datum." };
+  }
+
+  const notizen = String(formData.get("notizen") ?? "");
+  const stornoBemerkung = String(formData.get("stornoBemerkung") ?? "");
+  const stornogrundIdRaw = String(formData.get("stornogrundId") ?? "").trim();
+  const stornogrundRecordId = stornogrundIdRaw === "" ? null : stornogrundIdRaw;
+
+  // Bei gesetztem Stornogrund: serverseitig validieren, dass der Grund
+  // für den Bezug zugelassen ist.
+  if (stornogrundRecordId && lead.bezugAirtableId) {
+    const allowedMap = await fetchBezugStornogruendeMap();
+    const allowed = allowedMap.get(lead.bezugAirtableId) ?? [];
+    if (allowed.length > 0 && !allowed.includes(stornogrundRecordId)) {
+      return {
+        error: "Dieser Stornogrund ist für diesen Bezug nicht zugelassen.",
+      };
+    }
+  }
+
+  try {
+    await updateLeadEditableFields({
+      airtableId: lead.airtableId,
+      kontaktversuche,
+      ersterKontaktversuch,
+      notizen,
+      stornoBemerkung,
+      stornogrundRecordId,
+    });
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : "Speichern fehlgeschlagen.",
+    };
+  }
+
+  // DB-Spiegel für die zwei Felder, die wir lokal halten.
+  await prisma.lead.update({
+    where: { id: lead.id },
+    data: {
+      contactAttempts: kontaktversuche,
+      firstContactAt: ersterKontaktversuch
+        ? new Date(`${ersterKontaktversuch}T12:00:00Z`)
+        : null,
+    },
+  });
+
+  revalidatePath(`/buyer/leads/${lead.id}`);
+  revalidatePath("/buyer");
+  return { ok: true };
 }
 
 // Wird vom Dashboard pro Render aufgerufen — liefert die für jeden Lead

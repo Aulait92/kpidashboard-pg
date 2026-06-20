@@ -154,6 +154,56 @@ export async function fetchLeadRecord(opts: {
   return json.fields ?? null;
 }
 
+// Aktualisiert die editierbaren Felder eines Lead-Records aus der
+// Detail-Ansicht: Kontaktversuche, Erster Kontaktversuch, Notizen,
+// Storno-Bemerkung, Stornogrund. Nur explizit gesetzte Felder werden
+// gepatcht (undefined heißt "nicht ändern", null heißt "leeren").
+export async function updateLeadEditableFields(opts: {
+  airtableId: string;
+  kontaktversuche?: number | null;
+  ersterKontaktversuch?: string | null; // ISO YYYY-MM-DD
+  notizen?: string;
+  stornoBemerkung?: string;
+  stornogrundRecordId?: string | null;
+}): Promise<void> {
+  const { token, baseId } = getEnv();
+  const fields: Record<string, unknown> = {};
+  if (opts.kontaktversuche !== undefined) {
+    fields["Kontaktversuche"] = opts.kontaktversuche;
+  }
+  if (opts.ersterKontaktversuch !== undefined) {
+    fields["Erster Kontaktversuch"] = opts.ersterKontaktversuch;
+  }
+  if (opts.notizen !== undefined) {
+    fields["Notizen"] = opts.notizen;
+  }
+  if (opts.stornoBemerkung !== undefined) {
+    fields[STORNO_BEMERKUNG_FIELD] = opts.stornoBemerkung;
+  }
+  if (opts.stornogrundRecordId !== undefined) {
+    // Linked-Record-Array; leeres Array löscht die Verknüpfung.
+    fields[STORNO_GRUND_FIELD] = opts.stornogrundRecordId
+      ? [opts.stornogrundRecordId]
+      : [];
+  }
+  if (Object.keys(fields).length === 0) return;
+
+  const url = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(LEADS_TABLE)}/${opts.airtableId}`;
+  const res = await fetch(url, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ fields, typecast: true }),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Airtable PATCH ${res.status}: ${body}`);
+  }
+}
+
 // Setzt den Lead-Record auf Storno. Schreibt:
 //   - Bearbeitungsstatus = "Storno"
 //   - Stornogrund        = [stornogrundRecordId] (Linked-Record-Array)
