@@ -9,6 +9,7 @@ import {
 } from "@/lib/airtable-write";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isValidLeadStatus } from "@/lib/products";
 
 export type CancelLeadState = {
   ok?: boolean;
@@ -39,9 +40,6 @@ export async function cancelLeadAction(
   if (!leadId) return { error: "Lead fehlt.", leadId };
   if (!stornogrundRecordId) {
     return { error: "Bitte einen Stornogrund auswählen.", leadId };
-  }
-  if (bemerkung.length < 3) {
-    return { error: "Bitte eine Bemerkung angeben (min. 3 Zeichen).", leadId };
   }
 
   // Zugriffsschutz: Buyer darf nur eigene Leads stornieren.
@@ -157,12 +155,23 @@ export async function updateLeadDetailsAction(
 
   const notizen = String(formData.get("notizen") ?? "");
 
+  const statusRaw = String(formData.get("bearbeitungsstatus") ?? "").trim();
+  // Leer = keine Änderung. Sonst gegen Whitelist validieren — verhindert
+  // dass ein manipuliertes Formular freie Strings nach Airtable schreibt.
+  // "Storno" wird hier bewusst ausgeschlossen, das geht nur über den
+  // dedizierten Storno-Flow (mit Pflicht-Grund).
+  const bearbeitungsstatus = statusRaw !== "" ? statusRaw : undefined;
+  if (bearbeitungsstatus && !isValidLeadStatus(bearbeitungsstatus)) {
+    return { error: `Ungültiger Bearbeitungsstatus: ${bearbeitungsstatus}` };
+  }
+
   try {
     await updateLeadEditableFields({
       airtableId: lead.airtableId,
       kontaktversuche,
       ersterKontaktversuch,
       notizen,
+      bearbeitungsstatus,
     });
   } catch (err) {
     return {
@@ -170,7 +179,7 @@ export async function updateLeadDetailsAction(
     };
   }
 
-  // DB-Spiegel für die zwei Felder, die wir lokal halten.
+  // DB-Spiegel für die Felder, die wir lokal halten.
   await prisma.lead.update({
     where: { id: lead.id },
     data: {
@@ -178,6 +187,7 @@ export async function updateLeadDetailsAction(
       firstContactAt: ersterKontaktversuch
         ? new Date(`${ersterKontaktversuch}T12:00:00Z`)
         : null,
+      ...(bearbeitungsstatus ? { status: bearbeitungsstatus } : {}),
     },
   });
 

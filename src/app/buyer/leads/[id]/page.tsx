@@ -178,6 +178,9 @@ export default async function LeadDetailPage({
           <div className="mt-6">
             <LeadEditForm
               leadId={lead.id}
+              initialBearbeitungsstatus={
+                firstString(fields["Bearbeitungsstatus"]) ?? ""
+              }
               initialKontaktversuche={
                 Number.parseInt(firstString(fields["Kontaktversuche"]) ?? "0", 10) ||
                 0

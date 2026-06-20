@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { LogOut } from "lucide-react";
 import { AutoRefresh } from "@/components/auto-refresh";
-import { BuyerComparison } from "@/components/buyer-comparison";
 import { BuyerFilterBar } from "@/components/buyer-filter-bar";
 import { BuyerTabs } from "@/components/buyer-tabs";
 import { FunnelHero } from "@/components/funnel-hero";
@@ -16,7 +15,6 @@ import { getCurrentSession } from "@/lib/auth";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
 import { computeMonthlyForecast } from "@/lib/forecast";
 import {
-  computeCustomerLeaderboard,
   computeKpis,
   computeTimeSeries,
   type Kpis,
@@ -144,15 +142,16 @@ async function BuyerDashboardBody({
   range: { from: Date; to: Date };
 }) {
   const prev = previousRange(range);
-  const [k, p, ts, leaderboardRows, speedAnalysis, forecast] =
-    await Promise.all([
-      computeKpis({ range, customerId, product: null }) as Promise<Kpis>,
-      computeKpis({ range: prev, customerId, product: null }) as Promise<Kpis>,
-      computeTimeSeries({ range, customerId, product: null }),
-      computeCustomerLeaderboard({ range, product: null }),
-      computeSpeedToLeadAnalysis({ range, customerId }),
-      computeMonthlyForecast({ customerId }),
-    ]);
+  // BuyerComparison/Leaderboard ist aktuell ausgeblendet — die Berechnung
+  // (computeCustomerLeaderboard) sparen wir uns hier, bis der Vergleich
+  // wieder eingeblendet wird.
+  const [k, p, ts, speedAnalysis, forecast] = await Promise.all([
+    computeKpis({ range, customerId, product: null }) as Promise<Kpis>,
+    computeKpis({ range: prev, customerId, product: null }) as Promise<Kpis>,
+    computeTimeSeries({ range, customerId, product: null }),
+    computeSpeedToLeadAnalysis({ range, customerId }),
+    computeMonthlyForecast({ customerId }),
+  ]);
 
   return (
     <div className="mt-6 space-y-6">
@@ -175,7 +174,7 @@ async function BuyerDashboardBody({
           <KpiCard
             label="Leads gesamt"
             value={formatNumber(k.totalLeads)}
-            hint="Eingehende Leads"
+            hint={`${k.nettoLeads} netto${k.cancelledLeads > 0 ? ` (${k.cancelledLeads} Storno${k.cancelledLeads === 1 ? "" : "s"} exkl.)` : ""}`}
             delta={delta(k.totalLeads, p.totalLeads)}
             sparkline={{ points: ts.points as TimeSeriesPoint[], dataKey: "leads", tone: "neutral" }}
           />
@@ -267,10 +266,8 @@ async function BuyerDashboardBody({
         </div>
       </section>
 
-      <BuyerComparison
-        rows={leaderboardRows}
-        selfCustomerId={customerId}
-      />
+      {/* BuyerComparison/Leaderboard temporär ausgeblendet —
+          wird wieder eingebaut, sobald der Vergleich freigegeben ist. */}
     </div>
   );
 }

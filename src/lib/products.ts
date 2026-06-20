@@ -17,3 +17,23 @@ export function displayProduct(source: string | null | undefined): string {
   if (!source) return "–";
   return DISPLAY_LABELS[source] ?? source;
 }
+
+// Bearbeitungsstatus-Werte aus Airtable, die der Buyer im Lead-Detail
+// selber setzen darf. Bewusst OHNE "Storno" — der Storno-Flow läuft
+// separat über den StornoDialog (mit Pflicht-Grund + optionaler
+// Bemerkung) und das Status-Flip übernimmt eine Airtable-Automation.
+export const LEAD_STATUS_OPTIONS = [
+  "Neuer Lead",
+  "Erreicht",
+  "Qualifiziert",
+  "Termin vereinbart",
+  "Angebot/Beratung läuft",
+  "Abschluss",
+  "Kein Interesse",
+] as const;
+
+export type LeadStatus = (typeof LEAD_STATUS_OPTIONS)[number];
+
+export function isValidLeadStatus(value: string): value is LeadStatus {
+  return (LEAD_STATUS_OPTIONS as readonly string[]).includes(value);
+}

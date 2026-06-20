@@ -154,13 +154,15 @@ export async function fetchLeadRecord(opts: {
 
 // Aktualisiert die editierbaren Felder eines Lead-Records aus der
 // Detail-Ansicht: Kontaktversuche, Erster Kontaktversuch, Notizen,
-// Storno-Bemerkung, Stornogrund. Nur explizit gesetzte Felder werden
-// gepatcht (undefined heißt "nicht ändern", null heißt "leeren").
+// Bearbeitungsstatus, Storno-Bemerkung, Stornogrund. Nur explizit
+// gesetzte Felder werden gepatcht (undefined heißt "nicht ändern",
+// null heißt "leeren").
 export async function updateLeadEditableFields(opts: {
   airtableId: string;
   kontaktversuche?: number | null;
   ersterKontaktversuch?: string | null; // ISO YYYY-MM-DD
   notizen?: string;
+  bearbeitungsstatus?: string;
   stornoBemerkung?: string;
   stornogrundRecordId?: string | null;
 }): Promise<void> {
@@ -174,6 +176,9 @@ export async function updateLeadEditableFields(opts: {
   }
   if (opts.notizen !== undefined) {
     fields["Notizen"] = opts.notizen;
+  }
+  if (opts.bearbeitungsstatus !== undefined) {
+    fields["Bearbeitungsstatus"] = opts.bearbeitungsstatus;
   }
   if (opts.stornoBemerkung !== undefined) {
     fields[STORNO_BEMERKUNG_FIELD] = opts.stornoBemerkung;

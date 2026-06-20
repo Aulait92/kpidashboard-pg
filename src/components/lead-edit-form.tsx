@@ -6,22 +6,27 @@ import {
   updateLeadDetailsAction,
   type UpdateLeadState,
 } from "@/app/buyer/actions";
+import { LEAD_STATUS_OPTIONS } from "@/lib/products";
 
-// Editier-Block direkt unter der Read-Only-Karte. Drei Felder, die der
+// Editier-Block direkt unter der Read-Only-Karte. Vier Felder, die der
 // Buyer im Tagesgeschäft pflegt:
+//   - Bearbeitungsstatus (Single-Select, ohne "Storno" — das läuft
+//     separat über den StornoDialog)
 //   - Kontaktversuche (Number)
 //   - Erster Kontaktversuch (Date)
 //   - Notizen (Long Text)
 //
-// Storno (Grund + Bemerkung + Status-Flip) läuft separat über den
+// Storno (Grund + optionale Bemerkung) läuft separat über den
 // StornoDialog — der Button dafür sitzt im Header der Detail-Page.
 export function LeadEditForm({
   leadId,
+  initialBearbeitungsstatus,
   initialKontaktversuche,
   initialErsterKontaktversuch,
   initialNotizen,
 }: {
   leadId: string;
+  initialBearbeitungsstatus: string;
   initialKontaktversuche: number;
   initialErsterKontaktversuch: string; // YYYY-MM-DD oder ""
   initialNotizen: string;
@@ -31,6 +36,16 @@ export function LeadEditForm({
     FormData
   >(updateLeadDetailsAction, {});
 
+  // Status, der nicht in der erlaubten Auswahl steht (z. B. "Storno" oder
+  // ein älterer/anderer Wert), bekommt im Dropdown eine eigene Disabled-
+  // Option, damit der Buyer ihn sieht und nicht versehentlich überschreibt.
+  const statusIsExternal =
+    initialBearbeitungsstatus !== "" &&
+    !(LEAD_STATUS_OPTIONS as readonly string[]).includes(initialBearbeitungsstatus);
+
+  const [bearbeitungsstatus, setBearbeitungsstatus] = useState(
+    initialBearbeitungsstatus,
+  );
   const [kontaktversuche, setKontaktversuche] = useState(initialKontaktversuche);
   const [ersterKontaktversuch, setErsterKontaktversuch] = useState(
     initialErsterKontaktversuch,
@@ -55,6 +70,27 @@ export function LeadEditForm({
       <input type="hidden" name="leadId" value={leadId} />
 
       <dl className="divide-y divide-[color:var(--border)]">
+        <EditRow label="Bearbeitungsstatus">
+          <select
+            name="bearbeitungsstatus"
+            value={bearbeitungsstatus}
+            onChange={(e) => setBearbeitungsstatus(e.target.value)}
+            className="w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
+          >
+            <option value="">– nicht gesetzt –</option>
+            {statusIsExternal ? (
+              <option value={initialBearbeitungsstatus} disabled>
+                {initialBearbeitungsstatus} (nicht änderbar)
+              </option>
+            ) : null}
+            {LEAD_STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </EditRow>
+
         <EditRow label="Kontaktversuche">
           <input
             type="number"

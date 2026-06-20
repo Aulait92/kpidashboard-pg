@@ -122,14 +122,12 @@ export function StornoDialog({
 
           <label className="block">
             <span className="text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
-              Bemerkung (Pflicht)
+              Bemerkung (optional)
             </span>
             <textarea
               name="bemerkung"
               value={bemerkung}
               onChange={(e) => setBemerkung(e.target.value)}
-              required
-              minLength={3}
               rows={3}
               placeholder="z. B. Lead war nicht erreichbar nach 3 Versuchen, Telefonnummer ungültig"
               className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
@@ -153,12 +151,7 @@ export function StornoDialog({
           </button>
           <button
             type="submit"
-            disabled={
-              pending ||
-              noOptions ||
-              !selectedReason ||
-              bemerkung.trim().length < 3
-            }
+            disabled={pending || noOptions || !selectedReason}
             className="inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:opacity-60"
           >
             {pending ? (
