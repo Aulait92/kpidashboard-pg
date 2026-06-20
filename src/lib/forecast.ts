@@ -147,16 +147,19 @@ export async function computeMonthlyForecast(params: {
       previousFull: prevFull.closedLeads,
       format: "number",
     },
-    {
-      label: params.revenueLabel ?? "Lead-Kosten",
-      mtd: mtd.revenue,
-      projected: projectCurrency(mtd.revenue),
-      previousFull: prevFull.revenue,
-      format: "currency",
-    },
   ];
 
+  const leadKostenRow: ForecastRow = {
+    label: params.revenueLabel ?? "Lead-Kosten",
+    mtd: mtd.revenue,
+    projected: projectCurrency(mtd.revenue),
+    previousFull: prevFull.revenue,
+    format: "currency",
+  };
+
   if (params.includeCloseValue) {
+    // Reihenfolge im Buyer-Block: Umsatz → Lead-Kosten → Gewinn, damit
+    // sich der Gewinn visuell aus den beiden Zeilen darüber ergibt.
     const gewinnMtd = umsatzMtd - mtd.revenue;
     const gewinnPrev = umsatzPrev - prevFull.revenue;
     rows.push(
@@ -167,6 +170,7 @@ export async function computeMonthlyForecast(params: {
         previousFull: umsatzPrev,
         format: "currency",
       },
+      leadKostenRow,
       {
         label: "Gewinn",
         mtd: gewinnMtd,
@@ -176,7 +180,7 @@ export async function computeMonthlyForecast(params: {
       },
     );
   } else {
-    rows.push({
+    rows.push(leadKostenRow, {
       label: "Bruttogewinn",
       mtd: mtd.profitBeforeOther,
       projected: projectCurrency(mtd.profitBeforeOther),
