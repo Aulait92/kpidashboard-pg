@@ -266,12 +266,12 @@ async function BuyerDashboardBody({
           <KpiCard
             label="Ø Lead-Kosten / Lead"
             value={formatEUR(
-              k.totalLeads > 0 ? k.revenue / k.totalLeads : null,
+              k.nettoLeads > 0 ? k.revenue / k.nettoLeads : null,
             )}
-            hint="Durchschnittlicher Lead-Preis"
+            hint={`Pro Netto-Lead (${formatNumber(k.nettoLeads)})`}
             delta={delta(
-              k.totalLeads > 0 ? k.revenue / k.totalLeads : null,
-              p.totalLeads > 0 ? p.revenue / p.totalLeads : null,
+              k.nettoLeads > 0 ? k.revenue / k.nettoLeads : null,
+              p.nettoLeads > 0 ? p.revenue / p.nettoLeads : null,
               true,
             )}
           />
