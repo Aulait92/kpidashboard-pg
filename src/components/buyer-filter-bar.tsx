@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import {
   Dropdown,
@@ -32,6 +32,7 @@ export function BuyerFilterBar({
   customTo?: string;
 }) {
   const router = useRouter();
+  const pathname = usePathname() ?? "/buyer";
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
@@ -45,8 +46,11 @@ export function BuyerFilterBar({
       params.delete("from");
       params.delete("to");
     }
+    // Aktuellen Buyer-Tab beibehalten (KPIs / Leads / Pipeline). Vorher
+    // hartcoded auf /buyer → Filter-Klick im Pipeline-Tab katapultierte
+    // den User zurück auf die KPI-Übersicht.
     startTransition(() => {
-      router.replace(`/buyer?${params.toString()}`, { scroll: false });
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     });
   }
 
