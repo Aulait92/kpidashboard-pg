@@ -24,6 +24,7 @@ export function displayProduct(source: string | null | undefined): string {
 // Bemerkung) und das Status-Flip übernimmt eine Airtable-Automation.
 export const LEAD_STATUS_OPTIONS = [
   "Neuer Lead",
+  "Nicht erreicht",
   "Erreicht",
   "Qualifiziert",
   "Termin vereinbart",

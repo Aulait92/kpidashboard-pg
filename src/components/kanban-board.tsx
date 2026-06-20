@@ -3,11 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { setLeadStatusAction } from "@/app/buyer/actions";
-import {
-  LEAD_STATUS_OPTIONS,
-  displayProduct,
-  type LeadStatus,
-} from "@/lib/products";
+import { displayProduct, type LeadStatus } from "@/lib/products";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -19,54 +15,94 @@ export type KanbanLead = {
   createdAt: Date;
 };
 
-// Spalten-Reihenfolge = LEAD_STATUS_OPTIONS (Neuer Lead → … → Kein Interesse).
-// Storno ist bewusst raus (Lead wird im Server-Fetch schon ausgefiltert).
-// Leads mit unbekanntem/altem Status landen unten in einer optionalen
-// "Sonstige"-Spalte — nur sichtbar, wenn dort wirklich was steht.
-const SONSTIGE_KEY = "__sonstige__";
-
+// Spalten-Design: nicht 1:1 pro Status, sondern in funktionalen Phasen
+// gruppiert. Innerhalb einer Gruppe behält jede Karte ihren konkreten
+// Sub-Status (siehe statusBadge), beim Drop von außerhalb wird auf den
+// Einstiegs-Status der Gruppe gesetzt.
 type ColumnDef = {
   key: string;
   label: string;
-  // Status-Wert, der bei Drop in diese Spalte gesetzt wird. null = nicht
-  // drop-fähig (Sonstige-Bucket).
-  setStatus: LeadStatus | null;
-  // Visuelle Akzentfarbe links als Top-Border.
-  accent: string;
+  statuses: LeadStatus[];      // alle Status, die in diese Spalte gehören
+  defaultStatus: LeadStatus;   // Status beim Drop AUS EINER ANDEREN Spalte
+  accent: string;              // top-border Akzentfarbe
 };
 
-const COLUMN_ACCENTS: Record<LeadStatus, string> = {
-  "Neuer Lead": "border-t-zinc-400",
-  Erreicht: "border-t-amber-400",
-  Qualifiziert: "border-t-amber-500",
-  "Termin vereinbart": "border-t-blue-500",
-  "Angebot/Beratung läuft": "border-t-blue-600",
-  Abschluss: "border-t-emerald-500",
-  "Kein Interesse": "border-t-rose-400",
-};
+const COLUMNS: ColumnDef[] = [
+  {
+    key: "neu",
+    label: "Neuer Lead",
+    statuses: ["Neuer Lead"],
+    defaultStatus: "Neuer Lead",
+    accent: "border-t-zinc-400",
+  },
+  {
+    key: "nicht-erreicht",
+    label: "Nicht erreicht",
+    statuses: ["Nicht erreicht"],
+    defaultStatus: "Nicht erreicht",
+    accent: "border-t-orange-400",
+  },
+  {
+    key: "gespraech",
+    label: "Im Gespräch",
+    statuses: ["Erreicht", "Qualifiziert"],
+    defaultStatus: "Erreicht",
+    accent: "border-t-amber-500",
+  },
+  {
+    key: "beratung",
+    label: "In Beratung",
+    statuses: ["Termin vereinbart", "Angebot/Beratung läuft"],
+    defaultStatus: "Termin vereinbart",
+    accent: "border-t-blue-500",
+  },
+  {
+    key: "abschluss",
+    label: "Abschluss",
+    statuses: ["Abschluss"],
+    defaultStatus: "Abschluss",
+    accent: "border-t-emerald-500",
+  },
+  {
+    key: "kein-interesse",
+    label: "Kein Interesse",
+    statuses: ["Kein Interesse"],
+    defaultStatus: "Kein Interesse",
+    accent: "border-t-rose-400",
+  },
+];
 
-function buildColumns(): ColumnDef[] {
-  return LEAD_STATUS_OPTIONS.map((s) => ({
-    key: s,
-    label: s,
-    setStatus: s,
-    accent: COLUMN_ACCENTS[s],
-  }));
+const SONSTIGE_KEY = "__sonstige__";
+
+function findColumnFor(status: string | null): ColumnDef | null {
+  const s = (status ?? "Neuer Lead").trim();
+  return (
+    COLUMNS.find((c) =>
+      (c.statuses as readonly string[]).includes(s),
+    ) ?? null
+  );
 }
 
 function bucketize(leads: KanbanLead[]): Map<string, KanbanLead[]> {
   const map = new Map<string, KanbanLead[]>();
-  for (const s of LEAD_STATUS_OPTIONS) map.set(s, []);
+  for (const col of COLUMNS) map.set(col.key, []);
   map.set(SONSTIGE_KEY, []);
   for (const lead of leads) {
-    const s = (lead.status ?? "Neuer Lead").trim();
-    if ((LEAD_STATUS_OPTIONS as readonly string[]).includes(s)) {
-      map.get(s)!.push(lead);
-    } else {
-      map.get(SONSTIGE_KEY)!.push(lead);
-    }
+    const col = findColumnFor(lead.status);
+    if (col) map.get(col.key)!.push(lead);
+    else map.get(SONSTIGE_KEY)!.push(lead);
   }
   return map;
+}
+
+// Sub-Status-Badge: nur sichtbar wenn die Spalte mehrere Status bündelt UND
+// der konkrete Status nicht der Default ist (sonst Rauschen). Macht
+// sichtbar, dass z. B. eine Karte in "Im Gespräch" schon "Qualifiziert" ist.
+function subStatusLabel(lead: KanbanLead, col: ColumnDef): string | null {
+  if (col.statuses.length <= 1) return null;
+  const s = (lead.status ?? "").trim();
+  if (s === "" || s === col.defaultStatus) return null;
+  return s;
 }
 
 export function KanbanBoard({ leads: initialLeads }: { leads: KanbanLead[] }) {
@@ -74,44 +110,43 @@ export function KanbanBoard({ leads: initialLeads }: { leads: KanbanLead[] }) {
   const [leads, setLeads] = useState<KanbanLead[]>(initialLeads);
   const [dragLeadId, setDragLeadId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
-  const [_, startTransition] = useTransition();
-  // Unterscheidung Click vs. Drag: Drag setzt didDrag.current = true;
-  // anschließender Click wird unterdrückt. setTimeout im dragEnd verzögert
-  // das Zurücksetzen, damit der „synthetische" Click-Event nach dragend
-  // noch geblockt wird.
+  const [, startTransition] = useTransition();
+  // Unterscheidung Click vs. Drag: didDrag wird beim DragStart gesetzt und
+  // 100ms nach DragEnd zurückgesetzt — der trailing Click-Event nach einem
+  // Drag wird so unterdrückt, ohne die normale Click-Navigation zu blocken.
   const didDrag = useRef(false);
 
   const buckets = bucketize(leads);
-  const columns = buildColumns();
   const sonstige = buckets.get(SONSTIGE_KEY) ?? [];
 
-  function handleDrop(toStatus: LeadStatus) {
+  function handleDrop(targetCol: ColumnDef) {
     const leadId = dragLeadId;
     setDragLeadId(null);
     setDragOverCol(null);
     if (!leadId) return;
     const lead = leads.find((l) => l.id === leadId);
     if (!lead) return;
-    if (lead.status === toStatus) return;
 
-    // Optimistisches Update — Card sofort in die Ziel-Spalte.
+    const currentStatus = (lead.status ?? "Neuer Lead").trim();
+    // Drop innerhalb der gleichen Spalte: Sub-Status behalten, no-op.
+    if ((targetCol.statuses as readonly string[]).includes(currentStatus)) {
+      return;
+    }
+    const nextStatus = targetCol.defaultStatus;
+
     const before = leads;
     setLeads((prev) =>
-      prev.map((l) => (l.id === leadId ? { ...l, status: toStatus } : l)),
+      prev.map((l) => (l.id === leadId ? { ...l, status: nextStatus } : l)),
     );
 
     startTransition(async () => {
-      const res = await setLeadStatusAction(leadId, toStatus);
+      const res = await setLeadStatusAction(leadId, nextStatus);
       if (!res.ok) {
-        // Revert + minimal sichtbares Feedback via alert (kein Toast-System
-        // im Projekt). Server-Action revalidiert die Page eh nicht bei
-        // Fehler, daher manuelles Rollback.
         setLeads(before);
         alert(`Status konnte nicht gesetzt werden: ${res.error}`);
       } else {
-        // Refresh, damit der DB-Stand (z. B. revenue.cancelled etc.) sicher
-        // synchron ist und ein evtl. paralleler Sync nicht nachträglich
-        // wieder überschreibt.
+        // Refresh, damit ein paralleler Sync den optimistischen State
+        // nicht später wieder überschreibt.
         router.refresh();
       }
     });
@@ -128,7 +163,7 @@ export function KanbanBoard({ leads: initialLeads }: { leads: KanbanLead[] }) {
   return (
     <div className="-mx-4 overflow-x-auto pb-3 sm:-mx-6 lg:-mx-8">
       <div className="flex min-w-max gap-3 px-4 sm:px-6 lg:px-8">
-        {columns.map((col) => {
+        {COLUMNS.map((col) => {
           const items = buckets.get(col.key) ?? [];
           const isOver = dragOverCol === col.key;
           return (
@@ -139,7 +174,6 @@ export function KanbanBoard({ leads: initialLeads }: { leads: KanbanLead[] }) {
               accent={col.accent}
               isOver={isOver}
               onDragOver={(e) => {
-                if (!col.setStatus) return;
                 e.preventDefault();
                 e.dataTransfer.dropEffect = "move";
                 setDragOverCol(col.key);
@@ -148,15 +182,15 @@ export function KanbanBoard({ leads: initialLeads }: { leads: KanbanLead[] }) {
                 if (dragOverCol === col.key) setDragOverCol(null);
               }}
               onDrop={(e) => {
-                if (!col.setStatus) return;
                 e.preventDefault();
-                handleDrop(col.setStatus);
+                handleDrop(col);
               }}
             >
               {items.map((lead) => (
                 <KanbanCard
                   key={lead.id}
                   lead={lead}
+                  subStatus={subStatusLabel(lead, col)}
                   dragging={dragLeadId === lead.id}
                   onDragStart={(e) => {
                     didDrag.current = true;
@@ -167,8 +201,6 @@ export function KanbanBoard({ leads: initialLeads }: { leads: KanbanLead[] }) {
                   onDragEnd={() => {
                     setDragLeadId(null);
                     setDragOverCol(null);
-                    // 100ms Verzögerung, damit der trailing Click nach
-                    // dragend noch unterdrückt wird.
                     setTimeout(() => {
                       didDrag.current = false;
                     }, 100);
@@ -193,6 +225,7 @@ export function KanbanBoard({ leads: initialLeads }: { leads: KanbanLead[] }) {
               <KanbanCard
                 key={lead.id}
                 lead={lead}
+                subStatus={lead.status}
                 dragging={false}
                 onDragStart={() => {}}
                 onDragEnd={() => {}}
@@ -253,6 +286,7 @@ function KanbanColumn({
 
 function KanbanCard({
   lead,
+  subStatus,
   dragging,
   draggable = true,
   onDragStart,
@@ -260,6 +294,7 @@ function KanbanCard({
   onClick,
 }: {
   lead: KanbanLead;
+  subStatus: string | null;
   dragging: boolean;
   draggable?: boolean;
   onDragStart: (e: React.DragEvent) => void;
@@ -277,10 +312,17 @@ function KanbanCard({
         dragging && "opacity-50",
       )}
     >
-      <div className="font-medium text-[color:var(--foreground)]">
-        {lead.name ?? (
-          <span className="text-[color:var(--muted)]">unbenannt</span>
-        )}
+      <div className="flex items-start justify-between gap-2">
+        <div className="font-medium text-[color:var(--foreground)]">
+          {lead.name ?? (
+            <span className="text-[color:var(--muted)]">unbenannt</span>
+          )}
+        </div>
+        {subStatus ? (
+          <span className="shrink-0 rounded-full bg-[color:var(--brand-soft)]/60 px-2 py-0.5 text-[10px] font-semibold text-[color:var(--brand-dark)]">
+            {subStatus}
+          </span>
+        ) : null}
       </div>
       <div className="mt-1 flex items-center justify-between text-[11px] text-[color:var(--muted)]">
         <span>{displayProduct(lead.source)}</span>
