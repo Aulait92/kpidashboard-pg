@@ -4,11 +4,7 @@ import { LogOut } from "lucide-react";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { BuyerComparison } from "@/components/buyer-comparison";
 import { BuyerFilterBar } from "@/components/buyer-filter-bar";
-import {
-  BuyerLeadsTable,
-  type BuyerLeadRow,
-} from "@/components/buyer-leads-table";
-import { getStornogruendePerLead } from "@/app/buyer/actions";
+import { BuyerTabs } from "@/components/buyer-tabs";
 import { FunnelHero } from "@/components/funnel-hero";
 import { KpiCard, type Delta } from "@/components/kpi-card";
 import { LiveUpdated } from "@/components/live-updated";
@@ -108,6 +104,8 @@ export default async function BuyerPage({
           </div>
         </header>
 
+        <BuyerTabs />
+
         <Suspense
           fallback={
             <div className="text-sm text-[color:var(--muted)]">
@@ -146,54 +144,15 @@ async function BuyerDashboardBody({
   range: { from: Date; to: Date };
 }) {
   const prev = previousRange(range);
-  const [k, p, ts, leadRows, leaderboardRows, speedAnalysis, forecast] =
+  const [k, p, ts, leaderboardRows, speedAnalysis, forecast] =
     await Promise.all([
-    computeKpis({ range, customerId, product: null }) as Promise<Kpis>,
-    computeKpis({ range: prev, customerId, product: null }) as Promise<Kpis>,
-    computeTimeSeries({ range, customerId, product: null }),
-    prisma.lead.findMany({
-      where: {
-        customerId,
-        createdAt: { gte: range.from, lte: range.to },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 100,
-      select: {
-        id: true,
-        createdAt: true,
-        name: true,
-        source: true,
-        status: true,
-        reached: true,
-        closedAt: true,
-        revenues: {
-          select: { amount: true },
-          take: 1,
-        },
-      },
-    }),
-    computeCustomerLeaderboard({ range, product: null }),
-    computeSpeedToLeadAnalysis({ range, customerId }),
-    computeMonthlyForecast({ customerId }),
-  ]);
-
-  // Storno-Optionen vorab live aus Airtable laden (Bezug → erlaubte
-  // Stornogründe). So kann der Storno-Dialog beim Klick ohne Latenz das
-  // Dropdown füllen.
-  const stornoOptions = await getStornogruendePerLead(leadRows.map((l) => l.id));
-
-  const leads: BuyerLeadRow[] = leadRows.map((l) => ({
-    id: l.id,
-    createdAt: l.createdAt,
-    name: l.name,
-    source: l.source,
-    status: l.status,
-    reached: l.reached,
-    closedAt: l.closedAt,
-    revenue:
-      l.revenues[0]?.amount != null ? Number(l.revenues[0].amount) : 0,
-    stornoOptions: stornoOptions.get(l.id) ?? [],
-  }));
+      computeKpis({ range, customerId, product: null }) as Promise<Kpis>,
+      computeKpis({ range: prev, customerId, product: null }) as Promise<Kpis>,
+      computeTimeSeries({ range, customerId, product: null }),
+      computeCustomerLeaderboard({ range, product: null }),
+      computeSpeedToLeadAnalysis({ range, customerId }),
+      computeMonthlyForecast({ customerId }),
+    ]);
 
   return (
     <div className="mt-6 space-y-6">
@@ -312,8 +271,6 @@ async function BuyerDashboardBody({
         rows={leaderboardRows}
         selfCustomerId={customerId}
       />
-
-      <BuyerLeadsTable leads={leads} />
     </div>
   );
 }

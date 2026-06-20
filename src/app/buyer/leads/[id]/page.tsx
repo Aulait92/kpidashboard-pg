@@ -134,11 +134,11 @@ export default async function LeadDetailPage({
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
       <Link
-        href="/buyer"
+        href="/buyer/leads"
         className="inline-flex items-center gap-1 text-xs font-medium text-[color:var(--brand)] hover:underline"
       >
         <ArrowLeft className="h-3 w-3" />
-        Zurück zum Dashboard
+        Zurück zu den Leads
       </Link>
       <header className="mt-4 mb-6">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
