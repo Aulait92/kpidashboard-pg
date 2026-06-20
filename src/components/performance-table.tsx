@@ -8,6 +8,7 @@ import {
   formatNumber,
   formatPercent,
 } from "@/lib/format";
+import { displayProduct } from "@/lib/products";
 import { cn } from "@/lib/utils";
 
 type Mode = "customer" | "product";
@@ -51,7 +52,7 @@ function toRowsFromCustomers(rows: CustomerKpiRow[]): Row[] {
 function toRowsFromProducts(rows: ProductKpiRow[]): Row[] {
   return rows.map((r) => ({
     id: r.product,
-    name: r.product,
+    name: displayProduct(r.product),
     totalLeads: r.totalLeads,
     nettoLeads: r.nettoLeads,
     cancelledLeads: r.cancelledLeads,

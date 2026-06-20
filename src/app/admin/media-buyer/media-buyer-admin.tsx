@@ -1097,7 +1097,7 @@ function PoolSettingsList({ pool }: { pool: PoolDetailRow }) {
               type="text"
               name="googleCampaignKeyword"
               defaultValue={pool.googleCampaignKeyword ?? ""}
-              placeholder={"z. B. PKV Wechsel (leer = aus)"}
+              placeholder={"z. B. PKV Tarifoptimierung (leer = aus)"}
               className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
             />
           </label>

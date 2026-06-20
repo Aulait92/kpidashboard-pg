@@ -11,6 +11,7 @@ import {
 import { useActionState, useState } from "react";
 import type { GoalRow, MonthlyGoalProgress } from "@/lib/goals";
 import { formatEUR, formatNumber, formatPercent } from "@/lib/format";
+import { displayProduct } from "@/lib/products";
 import { cn } from "@/lib/utils";
 import {
   saveMonthlyGoals,
@@ -277,7 +278,7 @@ export function MonthlyGoalsCard({
           <h2 className="mt-0.5 text-lg font-semibold tracking-tight">
             Monatsziele {progress.monthLabel}
             <span className="ml-2 text-sm font-medium text-[color:var(--muted)]">
-              · {progress.product ?? "Gesamt"}
+              · {progress.product ? displayProduct(progress.product) : "Gesamt"}
             </span>
           </h2>
         </div>

@@ -75,6 +75,7 @@ import {
   type GoogleCampaign,
 } from "@/lib/google-ads";
 import { prisma } from "@/lib/prisma";
+import { displayProduct } from "@/lib/products";
 import { sendToAdmins } from "@/lib/push";
 
 export type BuyerAction =
@@ -405,7 +406,10 @@ export async function derivePoolDefs(now: Date = new Date()): Promise<PoolDef[]>
     if (goal > 0) {
       defs.push({
         key: `product:${product}`,
-        label: `PKV ${product}`,
+        // Pool-Key bleibt intern "product:Wechsel" für Stabilität bestehender
+        // DeliveryPool-Records; das Display-Label wird über displayProduct()
+        // auf "PKV Tarifoptimierung" gemappt.
+        label: `PKV ${displayProduct(product)}`,
         kind: "product",
         product,
         region: null,

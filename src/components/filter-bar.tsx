@@ -8,7 +8,7 @@ import {
   DropdownItem,
 } from "@/components/dropdown";
 import { RANGE_LABELS, type RangeKey } from "@/lib/date-ranges";
-import { PRODUCTS } from "@/lib/products";
+import { PRODUCTS, displayProduct } from "@/lib/products";
 
 const RANGE_ORDER: Exclude<RangeKey, "custom">[] = [
   "today",
@@ -138,7 +138,7 @@ export function FilterBar({
                   close();
                 }}
               >
-                {p}
+                {displayProduct(p)}
               </DropdownItem>
             ))}
           </>

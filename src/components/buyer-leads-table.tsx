@@ -8,6 +8,7 @@ import {
   type StornogrundOption,
 } from "@/components/storno-dialog";
 import { formatDate, formatEUR } from "@/lib/format";
+import { displayProduct } from "@/lib/products";
 import { cn } from "@/lib/utils";
 
 export type { StornogrundOption };
@@ -106,7 +107,7 @@ export function BuyerLeadsTable({ leads }: { leads: BuyerLeadRow[] }) {
                       )}
                     </td>
                     <td className="px-3 py-2.5 text-[color:var(--foreground)]">
-                      {l.source ?? "–"}
+                      {displayProduct(l.source)}
                     </td>
                     <td className="px-3 py-2.5">
                       <span

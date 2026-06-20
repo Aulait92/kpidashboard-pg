@@ -10,6 +10,7 @@ import { LeadStornoTrigger } from "@/components/lead-storno-trigger";
 import { fetchLeadRecord } from "@/lib/airtable-write";
 import { getCurrentSession } from "@/lib/auth";
 import { formatDate, formatEUR } from "@/lib/format";
+import { displayProduct } from "@/lib/products";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -147,8 +148,8 @@ export default async function LeadDetailPage({
             {lead.name ?? "Lead-Detail"}
           </h1>
           <p className="mt-1 text-sm text-[color:var(--muted)]">
-            {lead.source ?? "Produkt unbekannt"} · Eingegangen{" "}
-            {formatDate(lead.createdAt)}
+            {lead.source ? displayProduct(lead.source) : "Produkt unbekannt"} ·
+            Eingegangen {formatDate(lead.createdAt)}
           </p>
         </div>
         {lead.status && lead.status.toLowerCase().startsWith("storno") ? (
