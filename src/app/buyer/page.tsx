@@ -208,10 +208,10 @@ async function BuyerDashboardBody({
         </div>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <KpiCard
-            label="Leads gesamt"
-            value={formatNumber(k.totalLeads)}
-            hint={`${k.nettoLeads} netto${k.cancelledLeads > 0 ? ` (${k.cancelledLeads} Storno${k.cancelledLeads === 1 ? "" : "s"} exkl.)` : ""}`}
-            delta={delta(k.totalLeads, p.totalLeads)}
+            label="Leads"
+            value={formatNumber(k.nettoLeads)}
+            hint={`${k.totalLeads} brutto${k.cancelledLeads > 0 ? ` (${k.cancelledLeads} Storno${k.cancelledLeads === 1 ? "" : "s"} exkl.)` : ""}`}
+            delta={delta(k.nettoLeads, p.nettoLeads)}
             sparkline={{ points: ts.points as TimeSeriesPoint[], dataKey: "leads", tone: "neutral" }}
           />
           <KpiCard
