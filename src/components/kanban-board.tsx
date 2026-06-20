@@ -160,9 +160,18 @@ export function KanbanBoard({ leads: initialLeads }: { leads: KanbanLead[] }) {
     );
   }
 
+  // Spalten füllen den verfügbaren Platz gleichmäßig. Unter ~1100 px
+  // (≈ 6 × 180 px) kippt das Layout auf horizontalen Scroll mit fixen
+  // Min-Breiten — Mobile-Fallback, damit Karten lesbar bleiben.
+  const totalColumns = COLUMNS.length + (sonstige.length > 0 ? 1 : 0);
   return (
-    <div className="-mx-4 overflow-x-auto pb-3 sm:-mx-6 lg:-mx-8">
-      <div className="flex min-w-max gap-3 px-4 sm:px-6 lg:px-8">
+    <div className="overflow-x-auto pb-3">
+      <div
+        className="grid gap-2 min-w-[1100px]"
+        style={{
+          gridTemplateColumns: `repeat(${totalColumns}, minmax(0, 1fr))`,
+        }}
+      >
         {COLUMNS.map((col) => {
           const items = buckets.get(col.key) ?? [];
           const isOver = dragOverCol === col.key;
@@ -207,7 +216,7 @@ export function KanbanBoard({ leads: initialLeads }: { leads: KanbanLead[] }) {
                   }}
                   onClick={() => {
                     if (didDrag.current) return;
-                    router.push(`/buyer/leads/${lead.id}`);
+                    router.push(`/buyer/leads/${lead.id}?from=kanban`);
                   }}
                 />
               ))}
@@ -229,7 +238,9 @@ export function KanbanBoard({ leads: initialLeads }: { leads: KanbanLead[] }) {
                 dragging={false}
                 onDragStart={() => {}}
                 onDragEnd={() => {}}
-                onClick={() => router.push(`/buyer/leads/${lead.id}`)}
+                onClick={() =>
+                  router.push(`/buyer/leads/${lead.id}?from=kanban`)
+                }
                 draggable={false}
               />
             ))}
@@ -262,7 +273,7 @@ function KanbanColumn({
   return (
     <div
       className={cn(
-        "flex w-72 shrink-0 flex-col rounded-2xl border border-t-4 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]",
+        "flex min-w-0 flex-col rounded-2xl border border-t-4 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]",
         accent,
         "border-[color:var(--border)]",
         isOver && "ring-2 ring-[color:var(--brand)] ring-offset-2",
@@ -313,20 +324,20 @@ function KanbanCard({
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="font-medium text-[color:var(--foreground)]">
+        <div className="min-w-0 font-medium text-[color:var(--foreground)] break-words">
           {lead.name ?? (
             <span className="text-[color:var(--muted)]">unbenannt</span>
           )}
         </div>
         {subStatus ? (
-          <span className="shrink-0 rounded-full bg-[color:var(--brand-soft)]/60 px-2 py-0.5 text-[10px] font-semibold text-[color:var(--brand-dark)]">
+          <span className="shrink-0 rounded-full bg-[color:var(--brand-soft)]/60 px-1.5 py-0.5 text-[10px] font-semibold text-[color:var(--brand-dark)]">
             {subStatus}
           </span>
         ) : null}
       </div>
-      <div className="mt-1 flex items-center justify-between text-[11px] text-[color:var(--muted)]">
-        <span>{displayProduct(lead.source)}</span>
-        <span className="tabular-nums">{formatDate(lead.createdAt)}</span>
+      <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-[color:var(--muted)]">
+        <span className="truncate">{displayProduct(lead.source)}</span>
+        <span className="shrink-0 tabular-nums">{formatDate(lead.createdAt)}</span>
       </div>
     </div>
   );

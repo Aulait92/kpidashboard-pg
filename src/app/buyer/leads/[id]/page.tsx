@@ -91,8 +91,10 @@ function formatValue(
 
 export default async function LeadDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
   const session = await getCurrentSession();
   if (!session || session.role !== "BUYER" || !session.customerId) {
@@ -100,6 +102,12 @@ export default async function LeadDetailPage({
   }
 
   const { id } = await params;
+  // Back-Link folgt dem Tab, aus dem die Detail-Ansicht geöffnet wurde.
+  // Default = Leads-Tab (für direkte URL-Aufrufe).
+  const { from } = await searchParams;
+  const backHref = from === "kanban" ? "/buyer/kanban" : "/buyer/leads";
+  const backLabel =
+    from === "kanban" ? "Zurück zum Kanban" : "Zurück zu den Leads";
   const lead = await prisma.lead.findFirst({
     where: { id, customerId: session.customerId },
     select: {
@@ -136,11 +144,11 @@ export default async function LeadDetailPage({
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
       <Link
-        href="/buyer/leads"
+        href={backHref}
         className="inline-flex items-center gap-1 text-xs font-medium text-[color:var(--brand)] hover:underline"
       >
         <ArrowLeft className="h-3 w-3" />
-        Zurück zu den Leads
+        {backLabel}
       </Link>
       <header className="mt-4 mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>

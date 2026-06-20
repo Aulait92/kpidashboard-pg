@@ -87,7 +87,7 @@ export function BuyerLeadsTable({ leads }: { leads: BuyerLeadRow[] }) {
               {leads.map((l) => {
                 const closed = l.closedAt != null;
                 const cancelled = isCancelled(l.status);
-                const href = `/buyer/leads/${l.id}`;
+                const href = `/buyer/leads/${l.id}?from=leads`;
                 return (
                   <tr
                     key={l.id}
