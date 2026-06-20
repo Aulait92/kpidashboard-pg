@@ -8,6 +8,7 @@ import {
   BuyerLeadsTable,
   type BuyerLeadRow,
 } from "@/components/buyer-leads-table";
+import { getStornogruendePerLead } from "@/app/buyer/actions";
 import { FunnelHero } from "@/components/funnel-hero";
 import { KpiCard, type Delta } from "@/components/kpi-card";
 import { LiveUpdated } from "@/components/live-updated";
@@ -176,6 +177,11 @@ async function BuyerDashboardBody({
     computeMonthlyForecast({ customerId }),
   ]);
 
+  // Storno-Optionen vorab live aus Airtable laden (Bezug → erlaubte
+  // Stornogründe). So kann der Storno-Dialog beim Klick ohne Latenz das
+  // Dropdown füllen.
+  const stornoOptions = await getStornogruendePerLead(leadRows.map((l) => l.id));
+
   const leads: BuyerLeadRow[] = leadRows.map((l) => ({
     id: l.id,
     createdAt: l.createdAt,
@@ -186,6 +192,7 @@ async function BuyerDashboardBody({
     closedAt: l.closedAt,
     revenue:
       l.revenues[0]?.amount != null ? Number(l.revenues[0].amount) : 0,
+    stornoOptions: stornoOptions.get(l.id) ?? [],
   }));
 
   return (

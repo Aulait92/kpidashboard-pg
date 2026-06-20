@@ -123,6 +123,10 @@ model Lead {
   source          String?
   customerId      String
   name            String?
+  // rec-ID des Kunden-Produkt-Bezug-Records, an dem dieser Lead in Airtable
+  // hängt. Wird beim Storno gebraucht, um die zugelassenen Stornogründe
+  // (Linked-Records vom Bezug zur Stornogründe-Tabelle) nachzuschlagen.
+  bezugAirtableId String?
   createdAt       DateTime  @default(now())
   firstContactAt  DateTime?
   closedAt        DateTime?

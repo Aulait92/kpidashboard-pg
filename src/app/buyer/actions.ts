@@ -1,7 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { markLeadAsCancelled } from "@/lib/airtable-write";
+import {
+  fetchAllStornogruende,
+  fetchBezugStornogruendeMap,
+  markLeadAsCancelled,
+} from "@/lib/airtable-write";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -11,9 +15,14 @@ export type CancelLeadState = {
   leadId?: string;
 };
 
-// Storno aus dem Buyer-Dashboard. Schreibt zuerst nach Airtable (Source of
-// Truth) und spiegelt das Ergebnis lokal in der DB, damit das UI sofort den
-// neuen Status zeigt und nicht erst beim nächsten Sync nachzieht.
+// Storno aus dem Buyer-Dashboard. Schreibt:
+//   - Bearbeitungsstatus = "Storno"
+//   - Stornogrund        = Linked-Record auf die Stornogründe-Tabelle
+//                          (vom Buyer aus den für seinen Bezug erlaubten
+//                          Gründen ausgewählt)
+//   - Storno-Bemerkung   = Freitext-Begründung
+// Spiegelt das Ergebnis lokal in der DB, damit das UI sofort den neuen
+// Status zeigt und nicht erst beim nächsten Sync nachzieht.
 export async function cancelLeadAction(
   _prev: CancelLeadState,
   formData: FormData,
@@ -24,16 +33,25 @@ export async function cancelLeadAction(
   }
 
   const leadId = String(formData.get("leadId") ?? "");
-  const reason = String(formData.get("reason") ?? "").trim();
+  const stornogrundRecordId = String(formData.get("stornogrundId") ?? "").trim();
+  const bemerkung = String(formData.get("bemerkung") ?? "").trim();
   if (!leadId) return { error: "Lead fehlt.", leadId };
-  if (reason.length < 3) {
-    return { error: "Bitte einen Stornogrund angeben (min. 3 Zeichen).", leadId };
+  if (!stornogrundRecordId) {
+    return { error: "Bitte einen Stornogrund auswählen.", leadId };
+  }
+  if (bemerkung.length < 3) {
+    return { error: "Bitte eine Bemerkung angeben (min. 3 Zeichen).", leadId };
   }
 
   // Zugriffsschutz: Buyer darf nur eigene Leads stornieren.
   const lead = await prisma.lead.findFirst({
     where: { id: leadId, customerId: session.customerId },
-    select: { id: true, airtableId: true, status: true },
+    select: {
+      id: true,
+      airtableId: true,
+      bezugAirtableId: true,
+      status: true,
+    },
   });
   if (!lead) {
     return { error: "Lead nicht gefunden.", leadId };
@@ -49,10 +67,25 @@ export async function cancelLeadAction(
     return { ok: true, leadId };
   }
 
+  // Validieren: der ausgewählte Grund muss in den für den Bezug
+  // zugelassenen Stornogründen enthalten sein. Verhindert, dass ein
+  // manipuliertes Formular einen fremden Grund einreicht.
+  if (lead.bezugAirtableId) {
+    const allowedMap = await fetchBezugStornogruendeMap();
+    const allowed = allowedMap.get(lead.bezugAirtableId) ?? [];
+    if (allowed.length > 0 && !allowed.includes(stornogrundRecordId)) {
+      return {
+        error: "Dieser Stornogrund ist für diesen Bezug nicht zugelassen.",
+        leadId,
+      };
+    }
+  }
+
   try {
     await markLeadAsCancelled({
       airtableId: lead.airtableId,
-      reason,
+      stornogrundRecordId,
+      bemerkung,
     });
   } catch (err) {
     return {
@@ -75,4 +108,45 @@ export async function cancelLeadAction(
 
   revalidatePath("/buyer");
   return { ok: true, leadId };
+}
+
+// Wird vom Dashboard pro Render aufgerufen — liefert die für jeden Lead
+// zugelassenen Stornogründe als Map<leadId, StornogrundOption[]>.
+// Lädt Bezug + Stornogründe einmal komplett aus Airtable und joined
+// gegen die DB-Lead-IDs. Bei API-Problemen still mit leerer Map zurück
+// → Dropdown ist dann leer, Storno-Button trotzdem sichtbar.
+export type LeadStornogrundOptions = Map<
+  string,
+  { recordId: string; grund: string; beschreibung: string | null }[]
+>;
+
+export async function getStornogruendePerLead(
+  leadIds: string[],
+): Promise<LeadStornogrundOptions> {
+  const out: LeadStornogrundOptions = new Map();
+  if (leadIds.length === 0) return out;
+  const [allGruende, bezugMap] = await Promise.all([
+    fetchAllStornogruende(),
+    fetchBezugStornogruendeMap(),
+  ]);
+  if (allGruende.size === 0 || bezugMap.size === 0) return out;
+
+  const leads = await prisma.lead.findMany({
+    where: { id: { in: leadIds } },
+    select: { id: true, bezugAirtableId: true },
+  });
+  for (const lead of leads) {
+    if (!lead.bezugAirtableId) continue;
+    const allowed = bezugMap.get(lead.bezugAirtableId) ?? [];
+    const options = allowed
+      .map((rid) => allGruende.get(rid))
+      .filter((o): o is NonNullable<typeof o> => !!o)
+      .map((o) => ({
+        recordId: o.recordId,
+        grund: o.grund,
+        beschreibung: o.beschreibung,
+      }));
+    if (options.length > 0) out.set(lead.id, options);
+  }
+  return out;
 }

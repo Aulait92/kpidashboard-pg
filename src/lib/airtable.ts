@@ -821,6 +821,11 @@ export async function syncAirtable(): Promise<SyncResult> {
         const buyer = resolveBuyer(rec.fields);
         if (!buyer) continue; // ohne Buyer kein Customer
 
+        // rec-ID des verknüpften Kunden-Produkt-Bezug-Records (für Storno-
+        // Optionen). Erst-Eintrag genügt — pro Lead gibt es genau einen Bezug.
+        const bezugIds = readLinkedIds(rec.fields, "Kunden-Produkt-Bezug");
+        const bezugAirtableId = bezugIds[0] ?? null;
+
         const createdAt =
           readDate(rec.fields, "Datum") ?? new Date(rec.createdTime);
         const firstContactAt = readDate(rec.fields, "Erster Kontaktversuch");
@@ -860,6 +865,7 @@ export async function syncAirtable(): Promise<SyncResult> {
             source: product,
             customerId,
             name,
+            bezugAirtableId,
             createdAt,
             firstContactAt,
             closedAt,
@@ -872,6 +878,7 @@ export async function syncAirtable(): Promise<SyncResult> {
             source: product,
             customerId,
             name,
+            bezugAirtableId,
             createdAt,
             firstContactAt,
             closedAt,
