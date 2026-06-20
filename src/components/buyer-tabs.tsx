@@ -17,7 +17,7 @@ const TABS = [
   },
   {
     href: "/buyer/kanban",
-    label: "Kanban",
+    label: "Pipeline",
     match: (p: string) => p.startsWith("/buyer/kanban"),
   },
 ];

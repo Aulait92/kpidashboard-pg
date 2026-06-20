@@ -18,6 +18,8 @@ const STORNO_BEMERKUNG_FIELD =
   process.env.AIRTABLE_FIELD_STORNO_BEMERKUNG ?? "Storno-Bemerkung";
 const BEZUG_ERLAUBTE_GRUENDE_FIELD =
   process.env.AIRTABLE_FIELD_ERLAUBTE_STORNOGRUENDE ?? "Erlaubte Stornogründe";
+const CLOSE_VALUE_FIELD =
+  process.env.AIRTABLE_FIELD_ABSCHLUSSWERT ?? "Abschlusswert";
 
 export type StornogrundOption = {
   recordId: string;
@@ -165,6 +167,7 @@ export async function updateLeadEditableFields(opts: {
   bearbeitungsstatus?: string;
   stornoBemerkung?: string;
   stornogrundRecordId?: string | null;
+  closeValue?: number | null;
 }): Promise<void> {
   const { token, baseId } = getEnv();
   const fields: Record<string, unknown> = {};
@@ -188,6 +191,9 @@ export async function updateLeadEditableFields(opts: {
     fields[STORNO_GRUND_FIELD] = opts.stornogrundRecordId
       ? [opts.stornogrundRecordId]
       : [];
+  }
+  if (opts.closeValue !== undefined) {
+    fields[CLOSE_VALUE_FIELD] = opts.closeValue;
   }
   if (Object.keys(fields).length === 0) return;
 

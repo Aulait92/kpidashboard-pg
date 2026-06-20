@@ -107,7 +107,7 @@ export default async function LeadDetailPage({
   const { from } = await searchParams;
   const backHref = from === "kanban" ? "/buyer/kanban" : "/buyer/leads";
   const backLabel =
-    from === "kanban" ? "Zurück zum Kanban" : "Zurück zu den Leads";
+    from === "kanban" ? "Zurück zur Pipeline" : "Zurück zu den Leads";
   const lead = await prisma.lead.findFirst({
     where: { id, customerId: session.customerId },
     select: {

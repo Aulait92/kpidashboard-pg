@@ -1,10 +1,15 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { X } from "lucide-react";
 import { setLeadStatusAction } from "@/app/buyer/actions";
-import { displayProduct, type LeadStatus } from "@/lib/products";
-import { formatDate } from "@/lib/format";
+import {
+  CLOSED_STATUS,
+  displayProduct,
+  type LeadStatus,
+} from "@/lib/products";
+import { formatDate, formatEUR } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export type KanbanLead = {
@@ -13,6 +18,7 @@ export type KanbanLead = {
   source: string | null;
   status: string | null;
   createdAt: Date;
+  closeValue: number | null;
 };
 
 // Spalten-Design: nicht 1:1 pro Status, sondern in funktionalen Phasen
@@ -110,6 +116,11 @@ export function KanbanBoard({ leads: initialLeads }: { leads: KanbanLead[] }) {
   const [leads, setLeads] = useState<KanbanLead[]>(initialLeads);
   const [dragLeadId, setDragLeadId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+  const [closeDialog, setCloseDialog] = useState<{
+    leadId: string;
+    leadName: string | null;
+    currentValue: number | null;
+  } | null>(null);
   const [, startTransition] = useTransition();
   // Unterscheidung Click vs. Drag: didDrag wird beim DragStart gesetzt und
   // 100ms nach DragEnd zurückgesetzt — der trailing Click-Event nach einem
@@ -118,6 +129,40 @@ export function KanbanBoard({ leads: initialLeads }: { leads: KanbanLead[] }) {
 
   const buckets = bucketize(leads);
   const sonstige = buckets.get(SONSTIGE_KEY) ?? [];
+
+  function commitStatus(
+    leadId: string,
+    nextStatus: LeadStatus,
+    closeValue?: number,
+  ) {
+    const lead = leads.find((l) => l.id === leadId);
+    if (!lead) return;
+    const before = leads;
+    setLeads((prev) =>
+      prev.map((l) =>
+        l.id === leadId
+          ? {
+              ...l,
+              status: nextStatus,
+              ...(closeValue !== undefined ? { closeValue } : {}),
+            }
+          : l,
+      ),
+    );
+    startTransition(async () => {
+      const res = await setLeadStatusAction(
+        leadId,
+        nextStatus,
+        closeValue !== undefined ? { closeValue } : undefined,
+      );
+      if (!res.ok) {
+        setLeads(before);
+        alert(`Status konnte nicht gesetzt werden: ${res.error}`);
+      } else {
+        router.refresh();
+      }
+    });
+  }
 
   function handleDrop(targetCol: ColumnDef) {
     const leadId = dragLeadId;
@@ -134,22 +179,18 @@ export function KanbanBoard({ leads: initialLeads }: { leads: KanbanLead[] }) {
     }
     const nextStatus = targetCol.defaultStatus;
 
-    const before = leads;
-    setLeads((prev) =>
-      prev.map((l) => (l.id === leadId ? { ...l, status: nextStatus } : l)),
-    );
+    // Spezial-Flow für Abschluss: erst Dialog mit Eingabe des
+    // Abschlusswerts in €, dann erst die Status-Action feuern.
+    if (nextStatus === CLOSED_STATUS) {
+      setCloseDialog({
+        leadId,
+        leadName: lead.name,
+        currentValue: lead.closeValue,
+      });
+      return;
+    }
 
-    startTransition(async () => {
-      const res = await setLeadStatusAction(leadId, nextStatus);
-      if (!res.ok) {
-        setLeads(before);
-        alert(`Status konnte nicht gesetzt werden: ${res.error}`);
-      } else {
-        // Refresh, damit ein paralleler Sync den optimistischen State
-        // nicht später wieder überschreibt.
-        router.refresh();
-      }
-    });
+    commitStatus(leadId, nextStatus);
   }
 
   if (leads.length === 0) {
@@ -247,7 +288,116 @@ export function KanbanBoard({ leads: initialLeads }: { leads: KanbanLead[] }) {
           </KanbanColumn>
         ) : null}
       </div>
+      {closeDialog ? (
+        <CloseValueDialog
+          leadName={closeDialog.leadName}
+          currentValue={closeDialog.currentValue}
+          onCancel={() => setCloseDialog(null)}
+          onConfirm={(value) => {
+            const d = closeDialog;
+            setCloseDialog(null);
+            commitStatus(d.leadId, CLOSED_STATUS, value);
+          }}
+        />
+      ) : null}
     </div>
+  );
+}
+
+function CloseValueDialog({
+  leadName,
+  currentValue,
+  onCancel,
+  onConfirm,
+}: {
+  leadName: string | null;
+  currentValue: number | null;
+  onCancel: () => void;
+  onConfirm: (value: number) => void;
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [value, setValue] = useState<string>(
+    currentValue != null ? String(currentValue) : "",
+  );
+  useEffect(() => {
+    const d = dialogRef.current;
+    if (d && !d.open) d.showModal();
+  }, []);
+
+  const parsed = Number.parseFloat(value.replace(",", "."));
+  const valid = Number.isFinite(parsed) && parsed >= 0;
+
+  return (
+    <dialog
+      ref={dialogRef}
+      onClose={onCancel}
+      onClick={(e) => {
+        if (e.target === dialogRef.current) onCancel();
+      }}
+      className="m-auto w-full max-w-sm rounded-2xl border border-[color:var(--border)] bg-white p-0 shadow-[0_20px_50px_-20px_rgba(15,23,42,0.4)] backdrop:bg-slate-900/40"
+    >
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!valid) return;
+          onConfirm(parsed);
+        }}
+        className="flex flex-col"
+      >
+        <header className="flex items-start justify-between border-b border-[color:var(--border)] px-5 py-4">
+          <div>
+            <h3 className="text-base font-semibold">Abschluss buchen</h3>
+            <p className="mt-0.5 text-xs text-[color:var(--muted)]">
+              {leadName ?? "Unbekannter Lead"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onCancel}
+            aria-label="Schließen"
+            className="rounded-md p-1 text-[color:var(--muted)] transition hover:bg-zinc-100"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </header>
+        <div className="space-y-4 px-5 py-4">
+          <label className="block">
+            <span className="text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
+              Abschlusswert (€)
+            </span>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              autoFocus
+              placeholder="z. B. 1500"
+              className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
+            />
+            <p className="mt-1 text-[11px] text-[color:var(--muted)]">
+              Wird in Airtable als „Abschlusswert" hinterlegt und fließt in
+              Umsatz, Umsatz/Lead und Gewinn/Lead.
+            </p>
+          </label>
+        </div>
+        <footer className="flex items-center justify-end gap-2 border-t border-[color:var(--border)] bg-zinc-50 px-5 py-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-md px-3 py-1.5 text-sm font-medium text-[color:var(--muted)] transition hover:bg-zinc-100"
+          >
+            Abbrechen
+          </button>
+          <button
+            type="submit"
+            disabled={!valid}
+            className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-60"
+          >
+            Abschluss buchen
+          </button>
+        </footer>
+      </form>
+    </dialog>
   );
 }
 
@@ -339,6 +489,11 @@ function KanbanCard({
         <span className="truncate">{displayProduct(lead.source)}</span>
         <span className="shrink-0 tabular-nums">{formatDate(lead.createdAt)}</span>
       </div>
+      {lead.closeValue != null && lead.closeValue > 0 ? (
+        <div className="mt-1.5 inline-flex rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-emerald-800">
+          {formatEUR(lead.closeValue)}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -138,6 +138,11 @@ model Lead {
   // und im Media-Buyer-Steuerlauf verwendet, um CPL pro Kanal zu berechnen.
   adChannel       String?
   acquisitionCost Decimal   @default(0) @db.Decimal(12, 2)
+  // Abschlusswert in EUR — vom Buyer beim Drop auf "Abschluss" in der
+  // Pipeline-Ansicht eingegeben (oder im Lead-Detail editierbar). Wird
+  // optional nach Airtable in eine Abschlusswert-Spalte gespiegelt; getrennt
+  // von Revenue.amount (das ist der Lead-Einkaufspreis).
+  closeValue      Decimal?  @db.Decimal(12, 2)
 
   customer Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   revenues Revenue[]

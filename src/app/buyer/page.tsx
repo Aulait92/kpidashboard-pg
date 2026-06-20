@@ -145,13 +145,49 @@ async function BuyerDashboardBody({
   // BuyerComparison/Leaderboard ist aktuell ausgeblendet — die Berechnung
   // (computeCustomerLeaderboard) sparen wir uns hier, bis der Vergleich
   // wieder eingeblendet wird.
-  const [k, p, ts, speedAnalysis, forecast] = await Promise.all([
-    computeKpis({ range, customerId, product: null }) as Promise<Kpis>,
-    computeKpis({ range: prev, customerId, product: null }) as Promise<Kpis>,
-    computeTimeSeries({ range, customerId, product: null }),
-    computeSpeedToLeadAnalysis({ range, customerId }),
-    computeMonthlyForecast({ customerId }),
-  ]);
+  const [k, p, ts, speedAnalysis, forecast, closeValueRows, closeValueRowsPrev] =
+    await Promise.all([
+      computeKpis({ range, customerId, product: null }) as Promise<Kpis>,
+      computeKpis({ range: prev, customerId, product: null }) as Promise<Kpis>,
+      computeTimeSeries({ range, customerId, product: null }),
+      computeSpeedToLeadAnalysis({ range, customerId }),
+      computeMonthlyForecast({ customerId }),
+      // Abschlusswerte aus dem Lead-Modell direkt aggregieren — eine eigene
+      // Spalte am Lead, getrennt vom Lead-Einkaufspreis (Revenue.amount).
+      // Stornierte Leads ausschließen, damit Umsatz konsistent zu nettoLeads
+      // gerechnet wird.
+      prisma.lead.findMany({
+        where: {
+          customerId,
+          createdAt: { gte: range.from, lte: range.to },
+        },
+        select: { closeValue: true, status: true },
+      }),
+      prisma.lead.findMany({
+        where: {
+          customerId,
+          createdAt: { gte: prev.from, lte: prev.to },
+        },
+        select: { closeValue: true, status: true },
+      }),
+    ]);
+
+  function sumCloseValue(
+    rows: { closeValue: unknown; status: string | null }[],
+  ): number {
+    let sum = 0;
+    for (const r of rows) {
+      if (r.closeValue == null) continue;
+      if (r.status && r.status.toLowerCase().startsWith("storno")) continue;
+      const n = Number(r.closeValue);
+      if (Number.isFinite(n)) sum += n;
+    }
+    return sum;
+  }
+  const umsatz = sumCloseValue(closeValueRows);
+  const umsatzPrev = sumCloseValue(closeValueRowsPrev);
+  const gewinn = umsatz - Number(k.revenue);
+  const gewinnPrev = umsatzPrev - Number(p.revenue);
 
   return (
     <div className="mt-6 space-y-6">
@@ -261,6 +297,59 @@ async function BuyerDashboardBody({
               k.closedLeads > 0 ? k.revenue / k.closedLeads : null,
               p.closedLeads > 0 ? p.revenue / p.closedLeads : null,
               true,
+            )}
+          />
+        </div>
+      </section>
+
+      <section>
+        <div className="mb-3">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--brand)]">
+            Ertrag
+          </div>
+          <h2 className="mt-0.5 text-lg font-semibold tracking-tight">
+            Was du verdient hast
+          </h2>
+          <p className="mt-1 text-xs text-[color:var(--muted)]">
+            Aus den Abschlusswerten, die du in der Pipeline-Ansicht beim
+            Drop auf „Abschluss" eingibst.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <KpiCard
+            label="Umsatz"
+            value={formatEUR(umsatz)}
+            tone="positive"
+            hint={`Σ Abschlusswerte aus ${formatNumber(k.closedLeads)} Abschlüssen`}
+            delta={delta(umsatz, umsatzPrev)}
+          />
+          <KpiCard
+            label="Gewinn"
+            value={formatEUR(gewinn)}
+            tone={gewinn >= 0 ? "positive" : "negative"}
+            hint="Umsatz minus Lead-Kosten"
+            delta={delta(gewinn, gewinnPrev)}
+          />
+          <KpiCard
+            label="Umsatz / Lead"
+            value={formatEUR(
+              k.totalLeads > 0 ? umsatz / k.totalLeads : null,
+            )}
+            hint="Pro eingehendem Lead"
+            delta={delta(
+              k.totalLeads > 0 ? umsatz / k.totalLeads : null,
+              p.totalLeads > 0 ? umsatzPrev / p.totalLeads : null,
+            )}
+          />
+          <KpiCard
+            label="Gewinn / Lead"
+            value={formatEUR(
+              k.totalLeads > 0 ? gewinn / k.totalLeads : null,
+            )}
+            hint="Pro eingehendem Lead"
+            delta={delta(
+              k.totalLeads > 0 ? gewinn / k.totalLeads : null,
+              p.totalLeads > 0 ? gewinnPrev / p.totalLeads : null,
             )}
           />
         </div>

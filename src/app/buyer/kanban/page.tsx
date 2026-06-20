@@ -127,13 +127,14 @@ async function KanbanBody({
       name: true,
       source: true,
       status: true,
+      closeValue: true,
     },
   });
 
-  // Storno-Leads werden im Kanban nicht angezeigt — der Storno läuft über
-  // den dedizierten StornoDialog im Leads-Tab oder im Lead-Detail. Filter
-  // case-insensitive in JS, weil Prismas `not: { startsWith }` keinen
-  // `mode`-Parameter akzeptiert.
+  // Storno-Leads werden im Pipeline-Board nicht angezeigt — der Storno
+  // läuft über den dedizierten StornoDialog im Leads-Tab oder Lead-Detail.
+  // Filter case-insensitive in JS, weil Prismas `not: { startsWith }`
+  // keinen `mode`-Parameter akzeptiert.
   const leads: KanbanLead[] = leadRows
     .filter((l) => !l.status || !l.status.toLowerCase().startsWith("storno"))
     .map((l) => ({
@@ -142,6 +143,7 @@ async function KanbanBody({
       source: l.source,
       status: l.status,
       createdAt: l.createdAt,
+      closeValue: l.closeValue != null ? Number(l.closeValue) : null,
     }));
 
   return (

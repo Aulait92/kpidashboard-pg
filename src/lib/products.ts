@@ -38,3 +38,22 @@ export type LeadStatus = (typeof LEAD_STATUS_OPTIONS)[number];
 export function isValidLeadStatus(value: string): value is LeadStatus {
   return (LEAD_STATUS_OPTIONS as readonly string[]).includes(value);
 }
+
+// Status, die als "Lead wurde erreicht" gewertet werden — synchron zum
+// REACHED_STATUSES-Set im Airtable-Sync (siehe airtable.ts). Wird beim
+// Pipeline-Drag genutzt, um Lead.reached konsistent mit dem neuen Status
+// zu spiegeln, damit die Erreichbarkeits-Kachel sofort stimmt.
+const REACHED: ReadonlySet<LeadStatus> = new Set<LeadStatus>([
+  "Erreicht",
+  "Qualifiziert",
+  "Termin vereinbart",
+  "Angebot/Beratung läuft",
+  "Abschluss",
+  "Kein Interesse",
+]);
+
+export function isReachedStatus(status: LeadStatus): boolean {
+  return REACHED.has(status);
+}
+
+export const CLOSED_STATUS: LeadStatus = "Abschluss";

@@ -9,7 +9,12 @@ import {
 } from "@/lib/airtable-write";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isValidLeadStatus, type LeadStatus } from "@/lib/products";
+import {
+  CLOSED_STATUS,
+  isReachedStatus,
+  isValidLeadStatus,
+  type LeadStatus,
+} from "@/lib/products";
 
 export type CancelLeadState = {
   ok?: boolean;
@@ -114,13 +119,22 @@ export type UpdateLeadState = {
   error?: string;
 };
 
-// Focused-Action für den Kanban-Drag: setzt nur den Bearbeitungsstatus,
-// keine weiteren Felder. Wird vom Kanban-Board direkt programmatisch
-// aufgerufen (kein <form>), darum ohne useActionState-Signatur.
-// Storno ist explizit nicht erlaubt — dafür gibt es den StornoDialog.
+// Focused-Action für den Pipeline-Drag: setzt den Bearbeitungsstatus und
+// (optional, beim Drop auf "Abschluss") den Abschlusswert in EUR. Wird vom
+// Pipeline-Board direkt programmatisch aufgerufen (kein <form>), darum
+// ohne useActionState-Signatur. Storno ist explizit nicht erlaubt — dafür
+// gibt es den StornoDialog.
+//
+// Spiegelt zusätzlich die abgeleiteten DB-Felder, damit die KPI-Kacheln
+// auf /buyer (Erreichbarkeit / Termin / Abschluss) sofort stimmen und
+// nicht erst beim nächsten Airtable-Sync nachziehen:
+//   - reached    aus dem REACHED-Set
+//   - closedAt   gesetzt wenn status = "Abschluss", sonst null
+//   - closeValue nur wenn opts.closeValue gesetzt (sonst unverändert)
 export async function setLeadStatusAction(
   leadId: string,
   status: LeadStatus,
+  opts?: { closeValue?: number | null },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const session = await getCurrentSession();
   if (!session || session.role !== "BUYER" || !session.customerId) {
@@ -137,10 +151,12 @@ export async function setLeadStatusAction(
   if (!lead) return { ok: false, error: "Lead nicht gefunden." };
   if (!lead.airtableId) return { ok: false, error: "Lead ohne Airtable-ID." };
 
+  const closeValue = opts?.closeValue;
   try {
     await updateLeadEditableFields({
       airtableId: lead.airtableId,
       bearbeitungsstatus: status,
+      ...(closeValue !== undefined ? { closeValue } : {}),
     });
   } catch (err) {
     return {
@@ -149,11 +165,20 @@ export async function setLeadStatusAction(
     };
   }
 
+  const isClosed = status === CLOSED_STATUS;
   await prisma.lead.update({
     where: { id: lead.id },
-    data: { status },
+    data: {
+      status,
+      reached: isReachedStatus(status),
+      closedAt: isClosed ? new Date() : null,
+      ...(closeValue !== undefined
+        ? { closeValue: closeValue == null ? null : closeValue }
+        : {}),
+    },
   });
 
+  revalidatePath("/buyer");
   revalidatePath("/buyer/kanban");
   revalidatePath("/buyer/leads");
   revalidatePath(`/buyer/leads/${lead.id}`);
