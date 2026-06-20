@@ -88,6 +88,20 @@ export async function runFullSync(): Promise<FullSyncResult> {
     pushRemoved += r.removed;
   }
 
+  // Stornos aus externen Airtable-Änderungen → Admin-Push. Dashboard-
+  // getriebene Stornos triggern direkt aus cancelLeadAction und tauchen
+  // hier nicht auf.
+  for (const storno of airtable.newStornos) {
+    const r = await sendToAdmins({
+      title: `🚫 Storno: ${storno.name ?? "Lead"}`,
+      body: `${storno.buyer} · ${storno.product}`,
+      tag: `storno:${storno.airtableId}`,
+      url: "/",
+    });
+    pushSent += r.sent;
+    pushRemoved += r.removed;
+  }
+
   // Neue Leads: nur an den jeweiligen Kunden. Der Admin bekommt schon
   // den Sale-Push und braucht für jeden eingehenden Lead keine Extra-
   // Notification.

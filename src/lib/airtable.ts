@@ -610,6 +610,20 @@ export type NewLead = {
   airtableId: string;
 };
 
+// Storno-Transition: ein Lead, der NICHT storniert war und jetzt
+// storniert ist. Wird vom Sync detektiert (für Stornos aus externen
+// Airtable-Änderungen). Dashboard-getriebene Stornos kommen NICHT hier
+// rein, weil dort der DB-Status bereits beim Storno-Click auf Storno
+// gesetzt wird und der Vergleich beim nächsten Sync deshalb keinen
+// Übergang mehr sieht. Die Push-Notification für jene Stornos läuft
+// direkt aus cancelLeadAction (siehe app/buyer/actions.ts).
+export type NewStorno = {
+  buyer: string;
+  product: string;
+  name: string | null;
+  airtableId: string;
+};
+
 export type SyncResult = {
   tables: { name: string; source: string; records: number }[];
   customers: number;
@@ -619,6 +633,7 @@ export type SyncResult = {
   deletedLeads: number;
   newSales: NewSale[];
   newLeads: NewLead[];
+  newStornos: NewStorno[];
   errors: string[];
 };
 
@@ -632,6 +647,7 @@ export async function syncAirtable(): Promise<SyncResult> {
     deletedLeads: 0,
     newSales: [],
     newLeads: [],
+    newStornos: [],
     errors: [],
   };
 
@@ -854,9 +870,12 @@ export async function syncAirtable(): Promise<SyncResult> {
         // auslösen muss.
         const existingLead = await prisma.lead.findUnique({
           where: { airtableId: rec.id },
-          select: { id: true },
+          select: { id: true, status: true },
         });
         const isNewLead = !existingLead;
+        const wasAlreadyCancelled =
+          existingLead?.status != null &&
+          existingLead.status.toLowerCase().startsWith("storno");
 
         const lead = await prisma.lead.upsert({
           where: { airtableId: rec.id },
@@ -944,6 +963,18 @@ export async function syncAirtable(): Promise<SyncResult> {
           result.newLeads.push({
             buyer,
             customerId,
+            product,
+            name,
+            airtableId: rec.id,
+          });
+        }
+        // Storno-Transition aus externer Airtable-Quelle. Dashboard-
+        // Stornos triggern hier nicht, weil dort cancelLeadAction den
+        // DB-Status schon auf "Storno" gesetzt hat (wasAlreadyCancelled
+        // wäre true).
+        if (isCancelled && !wasAlreadyCancelled) {
+          result.newStornos.push({
+            buyer,
             product,
             name,
             airtableId: rec.id,

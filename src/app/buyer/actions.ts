@@ -15,6 +15,7 @@ import {
   isValidLeadStatus,
   type LeadStatus,
 } from "@/lib/products";
+import { sendToAdmins } from "@/lib/push";
 
 export type CancelLeadState = {
   ok?: boolean;
@@ -55,6 +56,9 @@ export async function cancelLeadAction(
       airtableId: true,
       bezugAirtableId: true,
       status: true,
+      name: true,
+      source: true,
+      customer: { select: { name: true } },
     },
   });
   if (!lead) {
@@ -109,6 +113,25 @@ export async function cancelLeadAction(
       data: { cancelled: true },
     }),
   ]);
+
+  // Push-Notification an Admins. Fehler hier dürfen den Storno nicht
+  // scheitern lassen — nur warnen. Stornogrund-Label aus der vorab
+  // gefetchten Map lesen, damit Admin gleich den Grund mitsieht.
+  try {
+    const allGruende = await fetchAllStornogruende();
+    const grundLabel = allGruende.get(stornogrundRecordId)?.grund ?? "—";
+    const bodyParts = [lead.customer.name, lead.source, grundLabel].filter(
+      (s): s is string => !!s,
+    );
+    await sendToAdmins({
+      title: `🚫 Storno: ${lead.name ?? "Lead"}`,
+      body: bemerkung ? `${bodyParts.join(" · ")} — ${bemerkung}` : bodyParts.join(" · "),
+      tag: `storno:${lead.airtableId}`,
+      url: "/",
+    });
+  } catch (err) {
+    console.warn("[storno] admin notification failed:", err);
+  }
 
   revalidatePath("/buyer");
   return { ok: true, leadId };
