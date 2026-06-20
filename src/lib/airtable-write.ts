@@ -23,6 +23,27 @@ function getEnv() {
   return { token, baseId };
 }
 
+// Holt einen einzelnen Lead-Record direkt aus Airtable (live). Wird vom
+// Lead-Detail-Page im Buyer-Dashboard genutzt — schlanker als die volle
+// Lead-Tabelle nochmal zu syncen.
+export async function fetchLeadRecord(opts: {
+  airtableId: string;
+}): Promise<Record<string, unknown> | null> {
+  const { token, baseId } = getEnv();
+  const url = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(LEADS_TABLE)}/${opts.airtableId}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Airtable GET ${res.status}: ${body}`);
+  }
+  const json = (await res.json()) as { fields?: Record<string, unknown> };
+  return json.fields ?? null;
+}
+
 // Setzt den Lead-Record auf Storno. Schreibt zusätzlich den (Pflicht-)Grund
 // in eine konfigurierbare Spalte. Wirft bei API-Fehler — der Caller (Server
 // Action) wandelt die Message in eine UI-Meldung.

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Ban, Loader2 } from "lucide-react";
 import { cancelLeadAction, type CancelLeadState } from "@/app/buyer/actions";
 import { formatDate, formatEUR } from "@/lib/format";
@@ -35,6 +36,7 @@ function isCancelled(status: string | null): boolean {
 }
 
 export function BuyerLeadsTable({ leads }: { leads: BuyerLeadRow[] }) {
+  const router = useRouter();
   if (leads.length === 0) {
     return (
       <div className="rounded-2xl border border-[color:var(--border)] bg-white p-6 text-sm text-[color:var(--muted)] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
@@ -74,10 +76,19 @@ export function BuyerLeadsTable({ leads }: { leads: BuyerLeadRow[] }) {
             {leads.map((l) => {
               const closed = l.closedAt != null;
               const cancelled = isCancelled(l.status);
+              const href = `/buyer/leads/${l.id}`;
               return (
                 <tr
                   key={l.id}
-                  className="border-b border-[color:var(--border)] last:border-b-0"
+                  onClick={(e) => {
+                    // Klicks auf interaktive Inhalte (Storno-Button, Form-
+                    // Submits) sollen NICHT navigieren — sonst verliert der
+                    // Buyer mit einem Klick die Storno-Aktion.
+                    const target = e.target as HTMLElement;
+                    if (target.closest("button, form, a, input")) return;
+                    router.push(href);
+                  }}
+                  className="cursor-pointer border-b border-[color:var(--border)] transition hover:bg-[color:var(--brand-soft)]/40 last:border-b-0"
                 >
                   <td className="px-3 py-2.5 tabular-nums text-[color:var(--foreground)]">
                     {formatDate(l.createdAt)}
