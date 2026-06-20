@@ -1,6 +1,7 @@
-// Schreibender Airtable-Helper. Aktuell nur für Lead-Stornos: PATCH auf
-// einen einzelnen Record, setzt Bearbeitungsstatus + Stornogrund (Linked
-// Record auf die Stornogründe-Tabelle) + Storno-Bemerkung (Freitext).
+// Schreibender Airtable-Helper. Aktuell für Lead-Stornos (Stornogrund +
+// Storno-Bemerkung; Bearbeitungsstatus setzt eine Airtable-Automation
+// nach) und für die editierbaren Felder der Lead-Detail-Ansicht
+// (Kontaktversuche, Erster Kontaktversuch, Notizen).
 //
 // Voraussetzung: das im AIRTABLE_TOKEN hinterlegte PAT muss `data.records:write`
 // auf die Leads-Tabelle haben. Bei reinem Read-Only-PAT bekommen wir 403 zurück
@@ -11,15 +12,12 @@ const BEZUG_TABLE =
   process.env.AIRTABLE_TABLE_KUNDEN_PRODUKT_BEZUG ?? "Kunden-Produkt-Bezug";
 const STORNOGRUENDE_TABLE =
   process.env.AIRTABLE_TABLE_STORNOGRUENDE ?? "Stornogründe";
-const STORNO_STATUS = process.env.AIRTABLE_VALUE_STORNO ?? "Storno";
 const STORNO_GRUND_FIELD =
   process.env.AIRTABLE_FIELD_STORNO_GRUND ?? "Stornogrund";
 const STORNO_BEMERKUNG_FIELD =
   process.env.AIRTABLE_FIELD_STORNO_BEMERKUNG ?? "Storno-Bemerkung";
 const BEZUG_ERLAUBTE_GRUENDE_FIELD =
   process.env.AIRTABLE_FIELD_ERLAUBTE_STORNOGRUENDE ?? "Erlaubte Stornogründe";
-const STATUS_FIELD =
-  process.env.AIRTABLE_FIELD_BEARBEITUNGSSTATUS ?? "Bearbeitungsstatus";
 
 export type StornogrundOption = {
   recordId: string;
@@ -204,10 +202,11 @@ export async function updateLeadEditableFields(opts: {
   }
 }
 
-// Setzt den Lead-Record auf Storno. Schreibt:
-//   - Bearbeitungsstatus = "Storno"
-//   - Stornogrund        = [stornogrundRecordId] (Linked-Record-Array)
-//   - Storno-Bemerkung   = bemerkung (Freitext)
+// Storno-Felder am Lead-Record setzen. Schreibt:
+//   - Stornogrund      = [stornogrundRecordId] (Linked-Record-Array)
+//   - Storno-Bemerkung = bemerkung (Freitext)
+// Bearbeitungsstatus wird absichtlich NICHT gesetzt — in Airtable läuft
+// eine Automation, die den Status flippt, sobald ein Stornogrund da ist.
 // Wirft bei API-Fehler — der Caller (Server Action) wandelt die Message
 // in eine UI-Meldung.
 export async function markLeadAsCancelled(opts: {
@@ -218,7 +217,6 @@ export async function markLeadAsCancelled(opts: {
   const { token, baseId } = getEnv();
   const url = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(LEADS_TABLE)}/${opts.airtableId}`;
   const fields: Record<string, unknown> = {
-    [STATUS_FIELD]: STORNO_STATUS,
     [STORNO_GRUND_FIELD]: [opts.stornogrundRecordId],
     [STORNO_BEMERKUNG_FIELD]: opts.bemerkung,
   };
