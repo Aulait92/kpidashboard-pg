@@ -15,6 +15,11 @@ const TABS = [
     label: "Leads",
     match: (p: string) => p.startsWith("/buyer/leads"),
   },
+  {
+    href: "/buyer/kanban",
+    label: "Kanban",
+    match: (p: string) => p.startsWith("/buyer/kanban"),
+  },
 ];
 
 export function BuyerTabs() {

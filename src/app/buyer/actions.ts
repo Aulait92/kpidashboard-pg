@@ -9,7 +9,7 @@ import {
 } from "@/lib/airtable-write";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isValidLeadStatus } from "@/lib/products";
+import { isValidLeadStatus, type LeadStatus } from "@/lib/products";
 
 export type CancelLeadState = {
   ok?: boolean;
@@ -113,6 +113,52 @@ export type UpdateLeadState = {
   ok?: boolean;
   error?: string;
 };
+
+// Focused-Action für den Kanban-Drag: setzt nur den Bearbeitungsstatus,
+// keine weiteren Felder. Wird vom Kanban-Board direkt programmatisch
+// aufgerufen (kein <form>), darum ohne useActionState-Signatur.
+// Storno ist explizit nicht erlaubt — dafür gibt es den StornoDialog.
+export async function setLeadStatusAction(
+  leadId: string,
+  status: LeadStatus,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const session = await getCurrentSession();
+  if (!session || session.role !== "BUYER" || !session.customerId) {
+    return { ok: false, error: "Nicht eingeloggt." };
+  }
+  if (!isValidLeadStatus(status)) {
+    return { ok: false, error: `Ungültiger Status: ${status}` };
+  }
+
+  const lead = await prisma.lead.findFirst({
+    where: { id: leadId, customerId: session.customerId },
+    select: { id: true, airtableId: true },
+  });
+  if (!lead) return { ok: false, error: "Lead nicht gefunden." };
+  if (!lead.airtableId) return { ok: false, error: "Lead ohne Airtable-ID." };
+
+  try {
+    await updateLeadEditableFields({
+      airtableId: lead.airtableId,
+      bearbeitungsstatus: status,
+    });
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Status-Update fehlgeschlagen.",
+    };
+  }
+
+  await prisma.lead.update({
+    where: { id: lead.id },
+    data: { status },
+  });
+
+  revalidatePath("/buyer/kanban");
+  revalidatePath("/buyer/leads");
+  revalidatePath(`/buyer/leads/${lead.id}`);
+  return { ok: true };
+}
 
 // Speichert die in der Lead-Detail-Ansicht editierbaren Felder zurück
 // nach Airtable + spiegelt die DB-Spiegel-Felder (Kontaktversuche,
