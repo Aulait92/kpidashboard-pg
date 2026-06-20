@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import {
   createBuyerAccount,
   deleteBuyerAccount,
+  resetBuyerPassword,
   type CreateBuyerState,
 } from "./actions";
 
@@ -113,6 +114,58 @@ export function DeleteBuyerButton({
       >
         Löschen
       </button>
+    </form>
+  );
+}
+
+// Inline-Passwort-Reset für Buyer aus der Admin-Übersicht. Umgeht den
+// Forgot-Password-Email-Flow, wenn er nicht zustande kommt (E-Mail-Versand
+// kaputt, Link verloren). Admin tippt das neue Passwort, Server-Action
+// hash't es und überschreibt den passwordHash direkt.
+export function ResetPasswordButton({
+  userId,
+  email,
+}: {
+  userId: string;
+  email: string;
+}) {
+  const [state, formAction, pending] = useActionState<
+    CreateBuyerState,
+    FormData
+  >(resetBuyerPassword, {});
+
+  return (
+    <form
+      action={formAction}
+      className="inline-flex items-center gap-2"
+      onSubmit={(e) => {
+        const form = e.currentTarget;
+        const input = form.elements.namedItem("password") as HTMLInputElement;
+        const pw = prompt(
+          `Neues Passwort für "${email}" (min. 8 Zeichen):`,
+          "",
+        );
+        if (!pw || pw.length < 8) {
+          e.preventDefault();
+          return;
+        }
+        input.value = pw;
+      }}
+    >
+      <input type="hidden" name="userId" value={userId} />
+      <input type="hidden" name="password" defaultValue="" />
+      <button
+        type="submit"
+        disabled={pending}
+        className="text-xs font-medium text-[color:var(--brand)] hover:underline disabled:opacity-60"
+      >
+        {pending ? "Setze…" : "Passwort"}
+      </button>
+      {state.ok ? (
+        <span className="text-[10px] font-medium text-emerald-700">gesetzt</span>
+      ) : state.error ? (
+        <span className="text-[10px] font-medium text-rose-700">{state.error}</span>
+      ) : null}
     </form>
   );
 }

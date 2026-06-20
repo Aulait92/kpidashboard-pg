@@ -3,7 +3,11 @@ import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/format";
-import { CreateBuyerForm, DeleteBuyerButton } from "./buyer-management";
+import {
+  CreateBuyerForm,
+  DeleteBuyerButton,
+  ResetPasswordButton,
+} from "./buyer-management";
 
 export const dynamic = "force-dynamic";
 
@@ -109,7 +113,10 @@ export default async function AdminBuyersPage() {
                       {b.lastLoginAt ? formatDate(b.lastLoginAt) : "noch nie"}
                     </td>
                     <td className="py-2 text-right">
-                      <DeleteBuyerButton userId={b.id} email={b.email} />
+                      <div className="flex items-center justify-end gap-4">
+                        <ResetPasswordButton userId={b.id} email={b.email} />
+                        <DeleteBuyerButton userId={b.id} email={b.email} />
+                      </div>
                     </td>
                   </tr>
                 ))}
