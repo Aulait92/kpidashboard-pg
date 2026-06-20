@@ -118,12 +118,9 @@ export type UpdateLeadState = {
 
 // Speichert die in der Lead-Detail-Ansicht editierbaren Felder zurück
 // nach Airtable + spiegelt die DB-Spiegel-Felder (Kontaktversuche,
-// firstContactAt). Notizen / Storno-Bemerkung / Stornogrund leben
-// ausschließlich in Airtable.
-//
-// Bewusst keine automatische Status-Änderung: das Setzen eines
-// Stornogrunds hier flippt den Bearbeitungsstatus NICHT auf "Storno"
-// — dafür gibt es den Storno-Modal-Flow in der Lead-Tabelle.
+// firstContactAt). Notizen lebt ausschließlich in Airtable. Storno-
+// Bemerkung und Stornogrund werden NICHT hier gepflegt — dafür gibt es
+// den dedizierten StornoDialog.
 export async function updateLeadDetailsAction(
   _prev: UpdateLeadState,
   formData: FormData,
@@ -138,7 +135,7 @@ export async function updateLeadDetailsAction(
 
   const lead = await prisma.lead.findFirst({
     where: { id: leadId, customerId: session.customerId },
-    select: { id: true, airtableId: true, bezugAirtableId: true },
+    select: { id: true, airtableId: true },
   });
   if (!lead) return { error: "Lead nicht gefunden." };
   if (!lead.airtableId) {
@@ -159,21 +156,6 @@ export async function updateLeadDetailsAction(
   }
 
   const notizen = String(formData.get("notizen") ?? "");
-  const stornoBemerkung = String(formData.get("stornoBemerkung") ?? "");
-  const stornogrundIdRaw = String(formData.get("stornogrundId") ?? "").trim();
-  const stornogrundRecordId = stornogrundIdRaw === "" ? null : stornogrundIdRaw;
-
-  // Bei gesetztem Stornogrund: serverseitig validieren, dass der Grund
-  // für den Bezug zugelassen ist.
-  if (stornogrundRecordId && lead.bezugAirtableId) {
-    const allowedMap = await fetchBezugStornogruendeMap();
-    const allowed = allowedMap.get(lead.bezugAirtableId) ?? [];
-    if (allowed.length > 0 && !allowed.includes(stornogrundRecordId)) {
-      return {
-        error: "Dieser Stornogrund ist für diesen Bezug nicht zugelassen.",
-      };
-    }
-  }
 
   try {
     await updateLeadEditableFields({
@@ -181,8 +163,6 @@ export async function updateLeadDetailsAction(
       kontaktversuche,
       ersterKontaktversuch,
       notizen,
-      stornoBemerkung,
-      stornogrundRecordId,
     });
   } catch (err) {
     return {
@@ -202,7 +182,7 @@ export async function updateLeadDetailsAction(
   });
 
   revalidatePath(`/buyer/leads/${lead.id}`);
-  revalidatePath("/buyer");
+  revalidatePath("/buyer/leads");
   return { ok: true };
 }
 

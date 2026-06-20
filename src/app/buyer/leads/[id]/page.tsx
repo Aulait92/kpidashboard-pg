@@ -6,6 +6,7 @@ import {
   type LeadStornogrundOptions,
 } from "@/app/buyer/actions";
 import { LeadEditForm } from "@/components/lead-edit-form";
+import { LeadStornoTrigger } from "@/components/lead-storno-trigger";
 import { fetchLeadRecord } from "@/lib/airtable-write";
 import { getCurrentSession } from "@/lib/auth";
 import { formatDate, formatEUR } from "@/lib/format";
@@ -140,14 +141,28 @@ export default async function LeadDetailPage({
         <ArrowLeft className="h-3 w-3" />
         Zurück zu den Leads
       </Link>
-      <header className="mt-4 mb-6">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          {lead.name ?? "Lead-Detail"}
-        </h1>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">
-          {lead.source ?? "Produkt unbekannt"} · Eingegangen{" "}
-          {formatDate(lead.createdAt)}
-        </p>
+      <header className="mt-4 mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            {lead.name ?? "Lead-Detail"}
+          </h1>
+          <p className="mt-1 text-sm text-[color:var(--muted)]">
+            {lead.source ?? "Produkt unbekannt"} · Eingegangen{" "}
+            {formatDate(lead.createdAt)}
+          </p>
+        </div>
+        {lead.status && lead.status.toLowerCase().startsWith("storno") ? (
+          <span className="inline-flex items-center self-start rounded-md bg-rose-100 px-3 py-1.5 text-xs font-semibold text-rose-800">
+            Storniert
+          </span>
+        ) : (
+          <LeadStornoTrigger
+            leadId={lead.id}
+            leadName={lead.name}
+            leadCreatedAt={lead.createdAt}
+            stornoOptions={stornoOptions}
+          />
+        )}
       </header>
 
       {fetchError ? (
@@ -170,9 +185,6 @@ export default async function LeadDetailPage({
                 firstString(fields["Erster Kontaktversuch"]),
               )}
               initialNotizen={firstString(fields["Notizen"]) ?? ""}
-              initialStornoBemerkung={firstString(fields["Storno-Bemerkung"]) ?? ""}
-              initialStornogrundId={firstRecId(fields["Stornogrund"])}
-              stornoOptions={stornoOptions}
             />
           </div>
         </>
@@ -192,15 +204,6 @@ function isoDateOnly(raw: string | null): string {
   const d = new Date(raw);
   if (Number.isNaN(d.getTime())) return "";
   return d.toISOString().slice(0, 10);
-}
-
-function firstRecId(v: unknown): string | null {
-  if (Array.isArray(v)) {
-    for (const x of v) {
-      if (typeof x === "string" && x.startsWith("rec")) return x;
-    }
-  }
-  return null;
 }
 
 function ReadOnlyCard({ fields }: { fields: Record<string, unknown> }) {
