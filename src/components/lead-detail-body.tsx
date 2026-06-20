@@ -42,11 +42,18 @@ const READ_ONLY_FIELDS: ReadOnlyField[] = [
 
 function firstString(v: unknown): string | null {
   if (typeof v === "string" && v.trim()) return v.trim();
+  // Airtable liefert Number-Felder (z. B. "Monatlicher Beitrag",
+  // "Kontaktversuche") als JS-Zahl, nicht als String. Boolean ebenfalls
+  // direkt — beide stringifizieren, damit die Read-Only-Anzeige nicht
+  // leer bleibt.
+  if (typeof v === "number" && Number.isFinite(v)) return String(v);
+  if (typeof v === "boolean") return v ? "Ja" : "Nein";
   if (Array.isArray(v)) {
     for (const x of v) {
       if (typeof x === "string" && x.trim() && !x.startsWith("rec")) {
         return x.trim();
       }
+      if (typeof x === "number" && Number.isFinite(x)) return String(x);
     }
   }
   return null;
