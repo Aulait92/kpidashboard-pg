@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 // Tab-Umbau auf eigenen Routen — die Tabs hier sind reine Links, kein
 // clientseitiges Show/Hide. usePathname dient nur dem Active-State.
 const TABS = [
-  { href: "/buyer", label: "Übersicht", match: (p: string) => p === "/buyer" },
+  { href: "/buyer", label: "KPIs", match: (p: string) => p === "/buyer" },
   {
     href: "/buyer/leads",
     label: "Leads",
