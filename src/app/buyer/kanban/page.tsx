@@ -100,6 +100,7 @@ export default async function BuyerKanbanPage({
           <KanbanBody
             customerId={session.customerId}
             range={range}
+            rangeKey={`${range.from.toISOString()}-${range.to.toISOString()}`}
           />
         </Suspense>
       </main>
@@ -110,9 +111,16 @@ export default async function BuyerKanbanPage({
 async function KanbanBody({
   customerId,
   range,
+  rangeKey,
 }: {
   customerId: string;
   range: { from: Date; to: Date };
+  // ISO-Range als React-Key-Stabilizer für die KanbanBoard. Wechselt der
+  // Buyer den Zeitraum, ändert sich der Key → KanbanBoard remountet,
+  // der interne useState(leads) wird mit der neuen Prop initialisiert.
+  // Sonst hält Next.js die Component beim Search-Param-Wechsel
+  // gemountet und der lokale State zeigt veraltete Leads.
+  rangeKey: string;
 }) {
   const leadRows = await prisma.lead.findMany({
     where: {
@@ -148,7 +156,7 @@ async function KanbanBody({
 
   return (
     <div className="mt-6">
-      <KanbanBoard leads={leads} />
+      <KanbanBoard key={rangeKey} leads={leads} />
     </div>
   );
 }
