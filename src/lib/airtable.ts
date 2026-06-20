@@ -60,12 +60,17 @@ function isCancelledStatus(status: string | null): boolean {
 // Join-Tabelle vor — siehe classifyLeadProduct() unten.
 const LEADS_TABLE = process.env.AIRTABLE_TABLE_LEADS ?? "Leads";
 
-// Spalten-Kandidaten für das Produkt am Lead-Record. Erste Wahl ist die
-// Lookup-Spalte aus dem Bezug ("Produkt (from Kunden-Produkt-Bezug)"),
-// danach das direkte Eingangs-Feld ("Produkt (Eingang)", für Leads ohne
-// Bezug — z. B. frische Form-Submissions, denen der Berater noch keinen
-// Bezug zugewiesen hat), zuletzt ein generisches "Produkt".
+// Spalten-Kandidaten für das Produkt am Lead-Record, sortiert nach
+// Bequemlichkeit:
+//   1) Lookup-Felder, die DIREKT den Produkt-Klarnamen liefern (User-
+//      seitig schon als "Zielgruppe Bezeichnung"-Lookup angelegt).
+//   2) Lookup-/Linked-Record-Felder, die rec-IDs liefern — die wir
+//      über die Produkte-Map zu Klarnamen auflösen müssen.
+//   3) Direkte String-Felder als letzte Rückfalllinie.
 const LEAD_PRODUCT_FIELDS = [
+  "Zielgruppe Bezeichnung (from Produkt (Eingang))",
+  "Zielgruppe Bezeichnung (from Produkt (from Kunden-Produkt-Bezug))",
+  "slug (from Produkt (Eingang))",
   "Produkt (from Kunden-Produkt-Bezug)",
   "Produkt (Eingang)",
   "Produkt",
@@ -78,6 +83,10 @@ const LEAD_BUYER_LINKED_FIELDS = ["Buyer", "Kunde"];
 const LEAD_BUYER_LOOKUP_FIELDS = [
   "Kunde (from Kunden-Produkt-Bezug)",
   "Buyer (from Kunden-Produkt-Bezug)",
+  // Primary-Feld der Bezug-Tabelle ist formatiert als "Kunde – Produkt"
+  // (z. B. "Sascha Hopp – PKV-Tarifoptimierung"). Wir extrahieren den
+  // Kunden-Teil als Fallback, wenn keine rec-ID-Auflösung gelingt.
+  "Bezug (from Kunden-Produkt-Bezug)",
 ];
 
 type LeadProduct = "Wechsel" | "Neugeschäft" | "Kinderwunsch";
@@ -89,32 +98,42 @@ type LeadProduct = "Wechsel" | "Neugeschäft" | "Kinderwunsch";
 // möglich ist.
 function classifyLeadProduct(
   fields: Record<string, unknown>,
+  produkteMap: Map<string, string>,
 ): LeadProduct | null {
   for (const key of LEAD_PRODUCT_FIELDS) {
     const v = fields[key];
-    const raw = Array.isArray(v)
-      ? typeof v[0] === "string"
-        ? v[0]
-        : null
+    if (v == null) continue;
+    // Wert kann String, Array<string>, oder Array<rec-id> sein.
+    const items = Array.isArray(v)
+      ? v
       : typeof v === "string"
-        ? v
-        : null;
-    if (!raw) continue;
-    const n = raw.toLowerCase();
-    // Reihenfolge: Kinderwunsch + Neugeschäft vor Wechsel, weil "wechsel"
-    // als Substring in einem Neugeschäft-Namen vorkommen könnte.
-    // Tarifoptimierung wird als Alias auf Wechsel gebucht (gleicher Pool,
-    // gleiche Ziele) — fachlich verwandte Sparte aus Sicht von Lead-Kosten
-    // und Conversion.
-    if (n.includes("kinderwunsch") || n.includes("kiwu")) return "Kinderwunsch";
-    if (n.includes("neugesch") || n.includes("neuvertrag")) return "Neugeschäft";
-    if (
-      n.includes("wechsel") ||
-      n.includes("wechsler") ||
-      n.includes("tarifoptim") ||
-      n.includes("tarif-optim")
-    )
-      return "Wechsel";
+        ? [v]
+        : [];
+    for (const item of items) {
+      if (typeof item !== "string") continue;
+      const raw =
+        item.startsWith("rec") && produkteMap.has(item)
+          ? produkteMap.get(item)!
+          : item.startsWith("rec")
+            ? null // unaufgelöste rec-ID → keine Klarheit
+            : item;
+      if (!raw || !raw.trim()) continue;
+      const n = raw.toLowerCase();
+      // Reihenfolge: Kinderwunsch + Neugeschäft vor Wechsel, weil "wechsel"
+      // als Substring in einem Neugeschäft-Namen vorkommen könnte.
+      // Tarifoptimierung wird als Alias auf Wechsel gebucht (gleicher Pool,
+      // gleiche Ziele) — fachlich verwandte Sparte aus Sicht von
+      // Lead-Kosten und Conversion.
+      if (n.includes("kinderwunsch") || n.includes("kiwu")) return "Kinderwunsch";
+      if (n.includes("neugesch") || n.includes("neuvertrag")) return "Neugeschäft";
+      if (
+        n.includes("wechsel") ||
+        n.includes("wechsler") ||
+        n.includes("tarifoptim") ||
+        n.includes("tarif-optim")
+      )
+        return "Wechsel";
+    }
   }
   return null;
 }
@@ -181,6 +200,37 @@ const FINANZEN_TABLE = process.env.AIRTABLE_TABLE_FINANZEN ?? "Finanzen";
 // „Preis netto" (Currency), „Startdatum" (Date).
 const BEZUG_TABLE =
   process.env.AIRTABLE_TABLE_KUNDEN_PRODUKT_BEZUG ?? "Kunden-Produkt-Bezug";
+
+// Produkte-Stammtabelle. Wird benötigt, um die rec-IDs zu Klarnamen
+// aufzulösen, die im Lookup-/Linked-Record-Verkehr auftauchen
+// (Lead.Produkt, Bezug.Produkt → ["recXYZ"] statt ["PKV-Tarifoptimierung"]).
+const PRODUKTE_TABLE = process.env.AIRTABLE_TABLE_PRODUKTE ?? "Produkte";
+
+// Lädt die Produkte-Tabelle und gibt eine Map rec-ID → Klarname zurück.
+// Bei nicht vorhandener Tabelle / fehlenden Permissions still mit leerer
+// Map zurück — der Lead-Sync hat dann zusätzliche Lookup-Fallbacks
+// (z. B. "Zielgruppe Bezeichnung (from Produkt …)").
+async function fetchProdukte(): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  try {
+    const records = await fetchAllRecords(PRODUKTE_TABLE);
+    for (const rec of records) {
+      const name =
+        readString(rec.fields, "Zielgruppe Bezeichnung") ??
+        readString(rec.fields, "Name") ??
+        readString(rec.fields, "Bezeichnung") ??
+        readString(rec.fields, "Produkt") ??
+        readString(rec.fields, "Slug");
+      if (name) map.set(rec.id, name);
+    }
+  } catch (err) {
+    console.warn(
+      `[airtable] Produkte-Tabelle "${PRODUKTE_TABLE}" nicht lesbar:`,
+      err instanceof Error ? err.message : String(err),
+    );
+  }
+  return map;
+}
 
 const GERMAN_MONTHS: Record<string, number> = {
   januar: 1,
@@ -328,13 +378,44 @@ function emptyGoals(): ProductGoals {
 // (Buyer-AirtableId) die Lead-Ziele, Preise und Startdaten je Produkt.
 // Falls die Tabelle leer ist oder nicht existiert, fallen wir im Sync still auf
 // die alten per-Produkt-Spalten der Buyer-Tabelle zurück.
-async function fetchKundenProduktBezug(): Promise<Map<string, ProductGoals>> {
+async function fetchKundenProduktBezug(
+  produkteMap: Map<string, string>,
+): Promise<Map<string, ProductGoals>> {
   const map = new Map<string, ProductGoals>();
   const records = await fetchAllRecords(BEZUG_TABLE);
   for (const rec of records) {
     const ids = readLinkedIds(rec.fields, "Kunde");
     if (ids.length === 0) continue;
-    const produkt = readString(rec.fields, "Produkt");
+    // Produkt-Feld ist als Linked-Record konfiguriert → liefert rec-IDs.
+    // Erst rec-ID via Produkte-Map auflösen, dann String-Fallback. Wenn die
+    // Map leer oder die rec-ID unbekannt ist, parsen wir aus dem
+    // formatierten Primary-Feld "Bezug" ("Kunde – Produkt") den Produkt-Teil.
+    let produkt: string | null = null;
+    const produktRaw = rec.fields["Produkt"];
+    if (Array.isArray(produktRaw)) {
+      for (const item of produktRaw) {
+        if (typeof item !== "string") continue;
+        if (item.startsWith("rec")) {
+          const resolved = produkteMap.get(item);
+          if (resolved) {
+            produkt = resolved;
+            break;
+          }
+        } else if (item.trim()) {
+          produkt = item.trim();
+          break;
+        }
+      }
+    } else if (typeof produktRaw === "string" && produktRaw.trim()) {
+      produkt = produktRaw.trim();
+    }
+    if (!produkt) {
+      const bezugStr = readString(rec.fields, "Bezug");
+      if (bezugStr) {
+        const parts = bezugStr.split(" – ");
+        if (parts.length >= 2) produkt = parts.slice(1).join(" – ").trim();
+      }
+    }
     if (!produkt) continue;
     const p = produkt.toLowerCase();
     let productKey: "Wechsel" | "Neugeschaeft" | "Kinderwunsch" | null = null;
@@ -605,12 +686,22 @@ export async function syncAirtable(): Promise<SyncResult> {
     result.errors.push(msg);
   }
 
+  // Produkte-Stammtabelle vorab laden — daraus bauen wir rec-ID → Name,
+  // damit Linked-Record-Verweise auf "Produkt" in Lead- und Bezug-Records
+  // zu Klartext aufgelöst werden können.
+  const produkteMap = await fetchProdukte();
+  if (produkteMap.size > 0) {
+    console.log(
+      `[airtable] Produkte-Tabelle "${PRODUKTE_TABLE}": ${produkteMap.size} Produkte geladen.`,
+    );
+  }
+
   // Join-Tabelle „Kunden-Produkt-Bezug" lesen — sie löst die früheren
   // per-Produkt-Spalten auf der Kunden-Tabelle ab. Bei Fehler (Tabelle fehlt
   // o.ä.) fallen wir still auf die Buyer-Felder zurück.
   let bezugMap = new Map<string, ProductGoals>();
   try {
-    bezugMap = await fetchKundenProduktBezug();
+    bezugMap = await fetchKundenProduktBezug(produkteMap);
     console.log(
       `[airtable] Kunden-Produkt-Bezug "${BEZUG_TABLE}": ${bezugMap.size} Kunden mit Produkt-Daten.`,
     );
@@ -631,12 +722,26 @@ export async function syncAirtable(): Promise<SyncResult> {
         .filter((n): n is string => !!n);
       if (names.length > 0) return names.join(", ");
     }
-    // 2) Lookup-String aus der Bezug-Verknüpfung — Airtable dereferenziert
-    //    Linked-Record-Lookups zum Primärfeld-Wert (Kunden-Name).
+    // 2) Lookup-Felder: können je nach Airtable-Schema rec-IDs (wenn der
+    //    Lookup auf ein Linked-Record-Feld zeigt, z. B. "Kunde (from Bezug)")
+    //    ODER Klarnamen liefern (wenn der Lookup auf ein Single-Line-/
+    //    Primary-Text-Feld zeigt). Beide Fälle abdecken.
     for (const key of LEAD_BUYER_LOOKUP_FIELDS) {
       const v = fields[key];
-      if (Array.isArray(v) && typeof v[0] === "string" && v[0].trim() !== "") {
-        return v[0].trim();
+      if (!Array.isArray(v)) continue;
+      for (const item of v) {
+        if (typeof item !== "string" || item.trim() === "") continue;
+        // 2a) rec-ID → Kunden-Tabelle nachschlagen.
+        if (item.startsWith("rec")) {
+          const name = buyerMap.get(item)?.name;
+          if (name) return name;
+          continue; // unaufgelöste rec-ID → nächster Kandidat
+        }
+        // 2b) Klarname. Bei "Kunde – Produkt"-Format (Bezug-Primary-Feld)
+        //     nur den Kunden-Teil zurückgeben.
+        const trimmed = item.trim();
+        const dashIdx = trimmed.indexOf(" – ");
+        return dashIdx > 0 ? trimmed.slice(0, dashIdx).trim() : trimmed;
       }
     }
     // 3) Fallback: direkter Single-Line-Text.
@@ -705,7 +810,7 @@ export async function syncAirtable(): Promise<SyncResult> {
   if (leadsFetched) {
     for (const rec of leadRecords) {
       try {
-        const product = classifyLeadProduct(rec.fields);
+        const product = classifyLeadProduct(rec.fields, produkteMap);
         if (!product) {
           // Ohne Produkt-Lookup keine Pool-Zuordnung möglich → skip.
           result.errors.push(
