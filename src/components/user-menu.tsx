@@ -67,7 +67,6 @@ export function UserMenu() {
           <form action={logoutAction}>
             <button
               type="submit"
-              onClick={() => setOpen(false)}
               className="flex w-full items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-left text-sm text-[color:var(--foreground)] transition hover:bg-zinc-50"
             >
               <LogOut className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
