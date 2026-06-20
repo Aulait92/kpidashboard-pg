@@ -219,9 +219,23 @@ export async function updateLeadDetailsAction(
   }
 
   const ersterRaw = String(formData.get("ersterKontaktversuch") ?? "").trim();
-  const ersterKontaktversuch = ersterRaw === "" ? null : ersterRaw;
-  if (ersterKontaktversuch && !/^\d{4}-\d{2}-\d{2}$/.test(ersterKontaktversuch)) {
-    return { error: "Erster Kontaktversuch: ungültiges Datum." };
+  // datetime-local-Input liefert "YYYY-MM-DDTHH:mm" (oder mit Sekunden).
+  // Wir interpretieren den Wert als UTC (analog zum Airtable-„GMT"-Display),
+  // damit Dashboard und Airtable dieselben Ziffern zeigen — unabhängig
+  // vom Viewer-Browser. Datum-only („YYYY-MM-DD") wird als 00:00 Uhr UTC
+  // akzeptiert, damit alte Records nicht hängenbleiben.
+  let ersterKontaktversuchIso: string | null = null;
+  if (ersterRaw !== "") {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(ersterRaw)) {
+      ersterKontaktversuchIso = `${ersterRaw}T00:00:00.000Z`;
+    } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(ersterRaw)) {
+      const withSeconds = /T\d{2}:\d{2}$/.test(ersterRaw)
+        ? `${ersterRaw}:00`
+        : ersterRaw;
+      ersterKontaktversuchIso = `${withSeconds.replace(/\.\d+$/, "")}.000Z`;
+    } else {
+      return { error: "Erster Kontaktversuch: ungültiges Datum/Zeit." };
+    }
   }
 
   const notizen = String(formData.get("notizen") ?? "");
@@ -240,7 +254,7 @@ export async function updateLeadDetailsAction(
     await updateLeadEditableFields({
       airtableId: lead.airtableId,
       kontaktversuche,
-      ersterKontaktversuch,
+      ersterKontaktversuch: ersterKontaktversuchIso,
       notizen,
       bearbeitungsstatus,
     });
@@ -255,8 +269,8 @@ export async function updateLeadDetailsAction(
     where: { id: lead.id },
     data: {
       contactAttempts: kontaktversuche,
-      firstContactAt: ersterKontaktversuch
-        ? new Date(`${ersterKontaktversuch}T12:00:00Z`)
+      firstContactAt: ersterKontaktversuchIso
+        ? new Date(ersterKontaktversuchIso)
         : null,
       ...(bearbeitungsstatus ? { status: bearbeitungsstatus } : {}),
     },

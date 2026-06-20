@@ -28,7 +28,7 @@ export function LeadEditForm({
   leadId: string;
   initialBearbeitungsstatus: string;
   initialKontaktversuche: number;
-  initialErsterKontaktversuch: string; // YYYY-MM-DD oder ""
+  initialErsterKontaktversuch: string; // YYYY-MM-DDTHH:mm (UTC) oder ""
   initialNotizen: string;
 }) {
   const [state, formAction, pending] = useActionState<
@@ -105,11 +105,10 @@ export function LeadEditForm({
 
         <EditRow label="Erster Kontaktversuch">
           <input
-            type="date"
+            type="datetime-local"
             name="ersterKontaktversuch"
             value={ersterKontaktversuch}
             onChange={(e) => setErsterKontaktversuch(e.target.value)}
-            placeholder="dd.mm.yyyy"
             className="w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
           />
         </EditRow>

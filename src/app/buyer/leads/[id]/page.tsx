@@ -193,7 +193,7 @@ export default async function LeadDetailPage({
                 Number.parseInt(firstString(fields["Kontaktversuche"]) ?? "0", 10) ||
                 0
               }
-              initialErsterKontaktversuch={isoDateOnly(
+              initialErsterKontaktversuch={isoDateTimeLocal(
                 firstString(fields["Erster Kontaktversuch"]),
               )}
               initialNotizen={firstString(fields["Notizen"]) ?? ""}
@@ -216,6 +216,22 @@ function isoDateOnly(raw: string | null): string {
   const d = new Date(raw);
   if (Number.isNaN(d.getTime())) return "";
   return d.toISOString().slice(0, 10);
+}
+
+// Liefert "YYYY-MM-DDTHH:mm" in UTC für <input type="datetime-local">.
+// Wir wählen UTC bewusst, damit der Wert im Dashboard und der GMT-
+// Anzeige in Airtable identisch ist (sonst würden DST-Wechsel oder
+// abweichende Buyer-Zeitzonen die Ziffern verschieben).
+function isoDateTimeLocal(raw: string | null): string {
+  if (!raw) return "";
+  // Reines Datum ohne Zeit → 00:00 ergänzen.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return `${raw}T00:00`;
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(
+    d.getUTCDate(),
+  )}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
 }
 
 function ReadOnlyCard({ fields }: { fields: Record<string, unknown> }) {
