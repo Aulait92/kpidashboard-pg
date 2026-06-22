@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AdminTabs } from "@/components/admin-tabs";
 import { getCurrentSession } from "@/lib/auth";
 import { listPoolsForAdmin } from "@/lib/media-buyer";
 import { prisma } from "@/lib/prisma";
@@ -152,7 +153,11 @@ export default async function MediaBuyerPage() {
         </p>
       </header>
 
-      <MediaBuyerLayout pools={poolRows} log={log} top={top} />
+      <AdminTabs />
+
+      <div className="mt-6">
+        <MediaBuyerLayout pools={poolRows} log={log} top={top} />
+      </div>
     </main>
   );
 }

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { AdminTabs } from "@/components/admin-tabs";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { FilterBar } from "@/components/filter-bar";
 import { FunnelHero } from "@/components/funnel-hero";
@@ -114,6 +115,8 @@ export default async function DashboardPage({
             </div>
           </div>
         </header>
+
+        <AdminTabs />
 
         <Suspense
           fallback={
