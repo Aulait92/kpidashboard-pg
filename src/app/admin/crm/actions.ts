@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { findSalesPhaseForStatus } from "@/lib/sales";
+import { findSalesPhaseForStatus } from "@/lib/sales-phases";
 
 async function requireAdmin() {
   const session = await getCurrentSession();

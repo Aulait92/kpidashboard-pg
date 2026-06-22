@@ -1,112 +1,28 @@
-// Sales-Pipeline (Performance-Growth eigener B2B-Verkaufsprozess).
-//
-// Liest Deals aus einer eigenen Airtable-Base (Env: AIRTABLE_SALES_BASE_ID
-// und AIRTABLE_TOKEN — same PAT wie Leads-Sync, braucht Read-Scope auf
-// die "Deal-Pipeline"-Tabelle), spiegelt sie in der DB (siehe Deal-Model
-// in prisma/schema.prisma) und ist die Datenquelle für /admin/crm und
-// /admin/kpis.
+// Sales-Pipeline (Performance-Growth eigener B2B-Verkaufsprozess) —
+// Server-only: liest Deals aus einer eigenen Airtable-Base (Env:
+// AIRTABLE_SALES_BASE_ID und AIRTABLE_TOKEN — same PAT wie Leads-Sync,
+// braucht Read-Scope auf die "Deal-Pipeline"-Tabelle), spiegelt sie
+// in der DB (siehe Deal-Model in prisma/schema.prisma).
 //
 // Sync-Verhalten ist defensiv: ist die ENV nicht gesetzt, no-op. Das
 // erlaubt das schrittweise Hochfahren ohne den restlichen Sync zu brechen.
+//
+// Client-safe Phasen-Konstanten + Helpers liegen separat in
+// lib/sales-phases.ts — Client-Komponenten importieren von dort, damit
+// Prisma nicht ins Browser-Bundle leakt.
 
 import { prisma } from "@/lib/prisma";
+import { findSalesPhaseForStatus } from "@/lib/sales-phases";
+
+export {
+  SALES_PIPELINE_PHASES,
+  findSalesPhaseForStatus,
+  winProbabilityFor,
+  type SalesPhase,
+} from "@/lib/sales-phases";
 
 const SALES_TABLE =
   process.env.AIRTABLE_TABLE_DEAL_PIPELINE ?? "Deal-Pipeline";
-
-// Pipeline-Phasen. Spalten im Kanban + Phase-Default-Status beim
-// Verschieben — analog zu PIPELINE_PHASES auf der Buyer-Seite.
-// Status-Strings müssen MIT den Single-Select-Werten in Airtable
-// übereinstimmen — vor dem ersten Live-Test prüfen + ggf. anpassen.
-export type SalesPhase = {
-  key: string;
-  label: string;
-  statuses: readonly string[];
-  defaultStatus: string;
-  // Win-Wahrscheinlichkeit für die gewichtete Pipeline (0..1).
-  winProbability: number;
-  // UI-Akzent.
-  accent: string;
-  // Spezial-Flag für Sieg/Niederlage — beeinflusst KPI-Buckets (Win-Rate,
-  // Loss-Reasons). Ohne den Flag ist die Phase "in-progress".
-  terminal?: "won" | "lost";
-};
-
-export const SALES_PIPELINE_PHASES: readonly SalesPhase[] = [
-  {
-    key: "neu",
-    label: "Neu",
-    statuses: ["Neu", "New"],
-    defaultStatus: "Neu",
-    winProbability: 0.1,
-    accent: "border-t-zinc-400",
-  },
-  {
-    key: "qualifiziert",
-    label: "Qualifiziert",
-    statuses: ["Qualifiziert", "Qualified"],
-    defaultStatus: "Qualifiziert",
-    winProbability: 0.25,
-    accent: "border-t-amber-400",
-  },
-  {
-    key: "termin",
-    label: "Termin",
-    statuses: ["Termin vereinbart", "Demo", "Meeting"],
-    defaultStatus: "Termin vereinbart",
-    winProbability: 0.4,
-    accent: "border-t-amber-500",
-  },
-  {
-    key: "angebot",
-    label: "Angebot",
-    statuses: ["Angebot", "Proposal"],
-    defaultStatus: "Angebot",
-    winProbability: 0.6,
-    accent: "border-t-blue-500",
-  },
-  {
-    key: "verhandlung",
-    label: "Verhandlung",
-    statuses: ["Verhandlung", "Negotiation"],
-    defaultStatus: "Verhandlung",
-    winProbability: 0.8,
-    accent: "border-t-blue-600",
-  },
-  {
-    key: "gewonnen",
-    label: "Gewonnen",
-    statuses: ["Gewonnen", "Won", "Closed Won"],
-    defaultStatus: "Gewonnen",
-    winProbability: 1,
-    accent: "border-t-emerald-500",
-    terminal: "won",
-  },
-  {
-    key: "verloren",
-    label: "Verloren",
-    statuses: ["Verloren", "Lost", "Closed Lost"],
-    defaultStatus: "Verloren",
-    winProbability: 0,
-    accent: "border-t-rose-400",
-    terminal: "lost",
-  },
-] as const;
-
-export function findSalesPhaseForStatus(
-  status: string | null | undefined,
-): SalesPhase | null {
-  if (!status) return null;
-  return (
-    SALES_PIPELINE_PHASES.find((p) =>
-      (p.statuses as readonly string[]).includes(status),
-    ) ?? null
-  );
-}
-
-export function winProbabilityFor(status: string | null | undefined): number {
-  return findSalesPhaseForStatus(status)?.winProbability ?? 0.1;
-}
 
 // ─── Sync ──────────────────────────────────────────────────────────────
 

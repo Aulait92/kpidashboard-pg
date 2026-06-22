@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { setDealStatusAction } from "@/app/admin/crm/actions";
-import { SALES_PIPELINE_PHASES, type SalesPhase } from "@/lib/sales";
+import { SALES_PIPELINE_PHASES, type SalesPhase } from "@/lib/sales-phases";
 import { formatDate, formatEUR } from "@/lib/format";
 import { cn } from "@/lib/utils";
 

@@ -10,7 +10,7 @@ import {
   SALES_PIPELINE_PHASES,
   findSalesPhaseForStatus,
   winProbabilityFor,
-} from "@/lib/sales";
+} from "@/lib/sales-phases";
 
 // Aggregierte Sales-KPIs für /admin/kpis. Liest komplett aus der DB
 // (Sync füllt sie), keine Airtable-Round-Trips.
