@@ -5,6 +5,7 @@ import {
   DealActivityTimeline,
   type ActivityItem,
 } from "@/components/deal-activity-timeline";
+import { DealEditForm } from "@/components/deal-edit-form";
 import { getCurrentSession } from "@/lib/auth";
 import { formatDate, formatEUR } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -147,7 +148,20 @@ export default async function AdminDealDetailPage({
       </header>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.4fr]">
-        <DealFactsCard deal={deal} extraRows={extraRawRows} />
+        <div className="space-y-6">
+          <DealEditForm
+            dealId={deal.id}
+            initialName={deal.name ?? ""}
+            initialCompany={deal.company ?? ""}
+            initialOwner={deal.owner ?? ""}
+            initialValue={deal.value != null ? String(Number(deal.value)) : ""}
+            initialCloseDate={
+              deal.closeDate ? deal.closeDate.toISOString().slice(0, 10) : ""
+            }
+            initialNotes={deal.notes ?? ""}
+          />
+          <DealFactsCard deal={deal} extraRows={extraRawRows} />
+        </div>
         <DealActivityTimeline dealId={deal.id} activities={activities} />
       </div>
     </main>

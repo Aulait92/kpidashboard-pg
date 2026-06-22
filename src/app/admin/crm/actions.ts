@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { updateSalesDeal } from "@/lib/airtable-sales-write";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { findSalesPhaseForStatus } from "@/lib/sales-phases";
@@ -116,6 +117,116 @@ export async function createDealActivityAction(
 
   revalidatePath(`/admin/crm/${dealId}`);
   return { ok: true };
+}
+
+// Edit-Form fürs CRM-Detail: erlaubt die Kern-Pflegefelder (Name,
+// Firma, Wert, Owner, Close-Datum, Notizen). Schreibt nach Airtable
+// UND ins DB-Mirror — wäre der Sync schneller, würde der Wert sonst
+// verlorengehen. Wenn Airtable-Write scheitert, kommt der Fehler ins
+// UI; der DB-Schreib wird in dem Fall NICHT durchgeführt, damit DB
+// und Airtable konsistent bleiben.
+export type UpdateDealState = {
+  ok?: boolean;
+  error?: string;
+};
+
+export async function updateDealAction(
+  _prev: UpdateDealState,
+  formData: FormData,
+): Promise<UpdateDealState> {
+  await requireAdmin();
+  const dealId = String(formData.get("dealId") ?? "");
+  if (!dealId) return { error: "Deal fehlt." };
+
+  const deal = await prisma.deal.findUnique({
+    where: { id: dealId },
+    select: { id: true, airtableId: true },
+  });
+  if (!deal) return { error: "Deal nicht gefunden." };
+
+  const name = optionalString(formData, "name");
+  const company = optionalString(formData, "company");
+  const owner = optionalString(formData, "owner");
+  const notes = optionalString(formData, "notes");
+
+  const valueRaw = String(formData.get("value") ?? "").trim();
+  let value: number | null | undefined = undefined;
+  if (formData.has("value")) {
+    if (valueRaw === "") {
+      value = null;
+    } else {
+      const n = Number.parseFloat(valueRaw.replace(",", "."));
+      if (!Number.isFinite(n) || n < 0) {
+        return { error: "Wert muss eine positive Zahl sein." };
+      }
+      value = n;
+    }
+  }
+
+  const closeRaw = String(formData.get("closeDate") ?? "").trim();
+  let closeDate: string | null | undefined = undefined;
+  if (formData.has("closeDate")) {
+    if (closeRaw === "") {
+      closeDate = null;
+    } else if (/^\d{4}-\d{2}-\d{2}$/.test(closeRaw)) {
+      closeDate = closeRaw;
+    } else {
+      return { error: "Close-Datum: ungültiges Format (YYYY-MM-DD)." };
+    }
+  }
+
+  // 1) Airtable schreiben (Source-of-Truth). Wenn das scheitert, sofort
+  //    raus — DB nicht ändern, sonst Drift.
+  if (deal.airtableId) {
+    try {
+      await updateSalesDeal({
+        airtableId: deal.airtableId,
+        name,
+        company,
+        owner,
+        notes,
+        value,
+        closeDate,
+      });
+    } catch (err) {
+      return {
+        error:
+          err instanceof Error
+            ? `Airtable-Update: ${err.message}`
+            : "Airtable-Update fehlgeschlagen.",
+      };
+    }
+  }
+
+  // 2) DB-Spiegel aktualisieren.
+  await prisma.deal.update({
+    where: { id: deal.id },
+    data: {
+      ...(name !== undefined ? { name } : {}),
+      ...(company !== undefined ? { company } : {}),
+      ...(owner !== undefined ? { owner } : {}),
+      ...(notes !== undefined ? { notes } : {}),
+      ...(value !== undefined ? { value } : {}),
+      ...(closeDate !== undefined
+        ? {
+            closeDate: closeDate ? new Date(`${closeDate}T12:00:00Z`) : null,
+          }
+        : {}),
+    },
+  });
+
+  revalidatePath(`/admin/crm/${dealId}`);
+  revalidatePath("/admin/crm");
+  revalidatePath("/admin/kpis");
+  return { ok: true };
+}
+
+// Liest einen FormData-String; "" wird als "leeren" interpretiert (=null).
+// Wenn das Feld komplett fehlt, returnt undefined → "nicht ändern".
+function optionalString(formData: FormData, key: string): string | null | undefined {
+  if (!formData.has(key)) return undefined;
+  const v = String(formData.get(key) ?? "").trim();
+  return v === "" ? null : v;
 }
 
 export async function deleteDealActivityAction(formData: FormData) {

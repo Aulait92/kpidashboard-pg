@@ -146,17 +146,44 @@ export function SalesKanbanBoard({ deals: initialDeals }: { deals: KanbanDeal[] 
             count={sonstige.length}
             valueSum={sonstige.reduce((s, d) => s + (d.value ?? 0), 0)}
             accent="border-t-zinc-300"
-            isOver={false}
+            isOver={dragOverCol === SONSTIGE_KEY}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+              setDragOverCol(SONSTIGE_KEY);
+            }}
+            onDragLeave={() => {
+              if (dragOverCol === SONSTIGE_KEY) setDragOverCol(null);
+            }}
+            onDrop={(e) => {
+              // Drop ZURÜCK in Sonstige ist no-op (kein Default-Status).
+              e.preventDefault();
+              setDragId(null);
+              setDragOverCol(null);
+            }}
           >
             {sonstige.map((deal) => (
               <DealCard
                 key={deal.id}
                 deal={deal}
-                dragging={false}
-                onDragStart={() => {}}
-                onDragEnd={() => {}}
-                onClick={() => router.push(`/admin/crm/${deal.id}`)}
-                draggable={false}
+                dragging={dragId === deal.id}
+                onDragStart={(e) => {
+                  didDrag.current = true;
+                  setDragId(deal.id);
+                  e.dataTransfer.effectAllowed = "move";
+                  e.dataTransfer.setData("text/plain", deal.id);
+                }}
+                onDragEnd={() => {
+                  setDragId(null);
+                  setDragOverCol(null);
+                  setTimeout(() => {
+                    didDrag.current = false;
+                  }, 100);
+                }}
+                onClick={() => {
+                  if (didDrag.current) return;
+                  router.push(`/admin/crm/${deal.id}`);
+                }}
                 badge={deal.status ?? "—"}
               />
             ))}
