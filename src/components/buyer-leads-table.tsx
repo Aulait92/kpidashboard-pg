@@ -67,8 +67,7 @@ export function BuyerLeadsTable({ leads }: { leads: BuyerLeadRow[] }) {
           </h2>
           <p className="mt-1 text-xs text-[color:var(--muted)]">
             Klick auf eine Zeile öffnet die Detail-Ansicht. Storno-Button
-            öffnet ein Fenster zur Auswahl des Grunds plus Bemerkung — die
-            Änderung läuft sofort nach Airtable.
+            öffnet ein Fenster zur Auswahl des Grunds plus Bemerkung.
           </p>
         </div>
         <div className="overflow-x-auto">
