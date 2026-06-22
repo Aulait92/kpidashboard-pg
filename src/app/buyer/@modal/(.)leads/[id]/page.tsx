@@ -3,12 +3,15 @@ import { LeadDetailBody } from "@/components/lead-detail-body";
 import { LeadDetailModalShell } from "@/components/lead-detail-modal-shell";
 import { getCurrentSession } from "@/lib/auth";
 
-// Intercepting Route für die Lead-Tabelle. (.) matched /buyer/leads/[id]
-// als Sibling-Segment: clientseitige Navigation aus /buyer/leads → Modal,
-// Refresh / direkter URL-Aufruf → Vollseite aus /buyer/leads/[id]/page.tsx.
+// Intercepting Route für ALLE Buyer-Tabs (KPIs / Leads / Pipeline). (.)
+// matched /buyer/leads/[id] auf der /buyer-Ebene. Solange die Navigation
+// clientseitig (Link / router.push) aus irgendeinem Buyer-Tab kommt,
+// wird das Modal über dem aktuell sichtbaren Tab gerendert. Refresh
+// oder direkter URL-Aufruf rendern /buyer/leads/[id]/page.tsx als
+// Vollseite.
 export const dynamic = "force-dynamic";
 
-export default async function LeadsListLeadModal({
+export default async function BuyerLeadModal({
   params,
 }: {
   params: Promise<{ id: string }>;
