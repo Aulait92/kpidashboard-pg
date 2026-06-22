@@ -10,6 +10,68 @@ datasource db {
   provider = "postgresql"
 }
 
+// Eigener Sales-Prozess von Performance Growth — separater Airtable-Base
+// "Deal-Pipeline". Spiegel der Airtable-Records in der DB, damit Kanban /
+// KPI / Activity-Timeline ohne Airtable-Round-Trip funktionieren.
+model Deal {
+  id              String          @id @default(cuid())
+  airtableId      String?         @unique
+  name            String?
+  company         String?
+  email           String?
+  phone           String?
+  // Deal-Wert in EUR. Nullable, weil frische Leads den Wert oft noch
+  // nicht hinterlegt haben.
+  value           Decimal?        @db.Decimal(12, 2)
+  // Aktueller Bearbeitungsstatus aus Airtable (Single-Select-Text). Wird
+  // im Kanban als Spalten-Zuordnung verwendet (siehe SALES_PIPELINE_PHASES
+  // in src/lib/sales.ts).
+  status          String?
+  // Sales-Rep / Owner (Text oder Email — flexibel, wie's aus Airtable kommt).
+  owner           String?
+  source          String?
+  // Erwartetes oder tatsächliches Abschluss-Datum.
+  closeDate       DateTime?
+  // Gesetzt sobald der Deal auf "Gewonnen" steht — für Win-Rate-Berechnung.
+  wonAt           DateTime?
+  // Gesetzt sobald der Deal auf "Verloren" steht.
+  lostAt          DateTime?
+  lostReason      String?
+  notes           String?
+  // Voller Airtable-Record-Snapshot für die Detail-Ansicht. Erspart einen
+  // zweiten Airtable-Call beim Öffnen des Modals.
+  rawFields       Json?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  activities      DealActivity[]
+
+  @@index([status])
+  @@index([owner])
+  @@index([wonAt])
+  @@index([createdAt])
+}
+
+// Activity-Timeline: Notizen, Anrufe, Mails, Termine, automatische
+// Status-Change-Einträge. Wohnt nur in der DB — Airtable kennt das
+// Konzept (noch) nicht.
+model DealActivity {
+  id          String   @id @default(cuid())
+  dealId      String
+  deal        Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  // "note" | "call" | "email" | "meeting" | "status_change"
+  kind        String
+  title       String
+  body        String?
+  // Zusatzdaten je Kind (z. B. {fromStatus, toStatus} bei status_change).
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([dealId, createdAt])
+}
+
 model Customer {
   id        String   @id @default(cuid())
   name      String   @unique
@@ -226,8 +288,9 @@ model User {
   createdAt    DateTime @default(now())
   lastLoginAt  DateTime?
 
-  customer      Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  resetTokens   PasswordResetToken[]
+  customer       Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  resetTokens    PasswordResetToken[]
+  dealActivities DealActivity[]
 
   @@index([customerId])
 }
