@@ -14,11 +14,11 @@ const SALES_TABLE =
 
 const FIELD_NAME = process.env.AIRTABLE_SALES_FIELD_NAME ?? "Name";
 const FIELD_COMPANY = process.env.AIRTABLE_SALES_FIELD_COMPANY ?? "Unternehmen";
-const FIELD_VALUE = process.env.AIRTABLE_SALES_FIELD_VALUE ?? "Wert";
+const FIELD_VALUE =
+  process.env.AIRTABLE_SALES_FIELD_VALUE ?? "Abschluss-Volumen";
 const FIELD_STATUS = process.env.AIRTABLE_SALES_FIELD_STATUS ?? "Status";
-const FIELD_OWNER = process.env.AIRTABLE_SALES_FIELD_OWNER ?? "Owner";
 const FIELD_CLOSE_DATE =
-  process.env.AIRTABLE_SALES_FIELD_CLOSE_DATE ?? "Close Date";
+  process.env.AIRTABLE_SALES_FIELD_CLOSE_DATE ?? "Abschluss-Datum";
 const FIELD_NOTES = process.env.AIRTABLE_SALES_FIELD_NOTES ?? "Notizen";
 
 function getEnv(): { token: string; baseId: string } | null {
@@ -38,7 +38,6 @@ export async function updateSalesDeal(opts: {
   company?: string | null;
   value?: number | null;
   status?: string | null;
-  owner?: string | null;
   closeDate?: string | null; // ISO YYYY-MM-DD
   notes?: string | null;
 }): Promise<void> {
@@ -54,7 +53,6 @@ export async function updateSalesDeal(opts: {
   if (opts.company !== undefined) fields[FIELD_COMPANY] = opts.company;
   if (opts.value !== undefined) fields[FIELD_VALUE] = opts.value;
   if (opts.status !== undefined) fields[FIELD_STATUS] = opts.status;
-  if (opts.owner !== undefined) fields[FIELD_OWNER] = opts.owner;
   if (opts.closeDate !== undefined) fields[FIELD_CLOSE_DATE] = opts.closeDate;
   if (opts.notes !== undefined) fields[FIELD_NOTES] = opts.notes;
   if (Object.keys(fields).length === 0) return;

@@ -15,7 +15,6 @@ export function DealEditForm({
   dealId,
   initialName,
   initialCompany,
-  initialOwner,
   initialValue,
   initialCloseDate,
   initialNotes,
@@ -23,7 +22,6 @@ export function DealEditForm({
   dealId: string;
   initialName: string;
   initialCompany: string;
-  initialOwner: string;
   initialValue: string; // String, damit "" leerer Input möglich ist
   initialCloseDate: string; // YYYY-MM-DD oder ""
   initialNotes: string;
@@ -35,7 +33,6 @@ export function DealEditForm({
 
   const [name, setName] = useState(initialName);
   const [company, setCompany] = useState(initialCompany);
-  const [owner, setOwner] = useState(initialOwner);
   const [value, setValue] = useState(initialValue);
   const [closeDate, setCloseDate] = useState(initialCloseDate);
   const [notes, setNotes] = useState(initialNotes);
@@ -81,7 +78,7 @@ export function DealEditForm({
             className={INPUT_CLS}
           />
         </Row>
-        <Row label="Wert (€)">
+        <Row label="Abschluss-Volumen (€)">
           <input
             type="text"
             inputMode="decimal"
@@ -92,17 +89,7 @@ export function DealEditForm({
             className={INPUT_CLS}
           />
         </Row>
-        <Row label="Owner">
-          <input
-            type="text"
-            name="owner"
-            value={owner}
-            onChange={(e) => setOwner(e.target.value)}
-            placeholder="Sales-Rep"
-            className={INPUT_CLS}
-          />
-        </Row>
-        <Row label="Close-Datum">
+        <Row label="Abschluss-Datum">
           <input
             type="date"
             name="closeDate"

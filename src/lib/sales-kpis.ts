@@ -36,16 +36,6 @@ export type SalesPhaseStats = {
   avgDaysInPhase: number | null;
 };
 
-export type SalesOwnerStats = {
-  owner: string;
-  pipelineCount: number;
-  pipelineValue: number;
-  weightedValue: number;
-  wonCount: number;
-  wonValue: number;
-  winRate: number | null;
-};
-
 export type LostReasonStat = {
   reason: string;
   count: number;
@@ -72,7 +62,6 @@ export type SalesKpis = {
   avgCycleTimeDays: number | null;
   salesVelocityPerDay: number | null;
   phaseStats: SalesPhaseStats[];
-  ownerStats: SalesOwnerStats[];
   lostReasons: LostReasonStat[];
   forecast: {
     monthLabel: string;
@@ -95,7 +84,6 @@ export async function computeSalesKpis(now: Date = new Date()): Promise<SalesKpi
       id: true,
       value: true,
       status: true,
-      owner: true,
       wonAt: true,
       lostAt: true,
       lostReason: true,
@@ -113,30 +101,13 @@ export async function computeSalesKpis(now: Date = new Date()): Promise<SalesKpi
   let totalDealValueCount = 0;
   const cycleTimes: number[] = [];
 
-  // Phase + Owner aggregieren.
+  // Phase aggregieren.
   const phaseAgg = new Map<
     string,
     { count: number; value: number; weighted: number; ages: number[] }
   >();
   for (const p of SALES_PIPELINE_PHASES) {
     phaseAgg.set(p.key, { count: 0, value: 0, weighted: 0, ages: [] });
-  }
-  const ownerAgg = new Map<string, SalesOwnerStats>();
-  function ownerBucket(name: string): SalesOwnerStats {
-    let b = ownerAgg.get(name);
-    if (!b) {
-      b = {
-        owner: name,
-        pipelineCount: 0,
-        pipelineValue: 0,
-        weightedValue: 0,
-        wonCount: 0,
-        wonValue: 0,
-        winRate: null,
-      };
-      ownerAgg.set(name, b);
-    }
-    return b;
   }
   const lostReasonMap = new Map<string, number>();
 
@@ -149,13 +120,10 @@ export async function computeSalesKpis(now: Date = new Date()): Promise<SalesKpi
     const phase = findSalesPhaseForStatus(d.status);
     const isWon = phase?.terminal === "won" || d.wonAt != null;
     const isLost = phase?.terminal === "lost" || d.lostAt != null;
-    const owner = ownerBucket(d.owner?.trim() || "Ohne Owner");
 
     if (isWon) {
       wonCount += 1;
       wonValue += value;
-      owner.wonCount += 1;
-      owner.wonValue += value;
       if (d.wonAt) {
         const days = differenceInCalendarDays(d.wonAt, d.createdAt);
         if (days >= 0) cycleTimes.push(days);
@@ -169,9 +137,6 @@ export async function computeSalesKpis(now: Date = new Date()): Promise<SalesKpi
       pipelineValue += value;
       const w = winProbabilityFor(d.status);
       weightedValue += value * w;
-      owner.pipelineCount += 1;
-      owner.pipelineValue += value;
-      owner.weightedValue += value * w;
     }
 
     if (phase) {
@@ -217,15 +182,6 @@ export async function computeSalesKpis(now: Date = new Date()): Promise<SalesKpi
           : null,
     };
   });
-
-  // Owner-Stats: WinRate setzen + sortieren nach Pipeline-Wert desc.
-  const ownerStats: SalesOwnerStats[] = Array.from(ownerAgg.values())
-    .map((o) => {
-      const decidedOwner = o.wonCount + 0; // verloren wird beim Owner nicht separat geführt
-      void decidedOwner;
-      return { ...o, winRate: null };
-    })
-    .sort((a, b) => b.pipelineValue - a.pipelineValue);
 
   const lostReasons: LostReasonStat[] = Array.from(lostReasonMap.entries())
     .map(([reason, count]) => ({ reason, count }))
@@ -282,7 +238,6 @@ export async function computeSalesKpis(now: Date = new Date()): Promise<SalesKpi
     avgCycleTimeDays: avgCycleTime,
     salesVelocityPerDay: salesVelocity,
     phaseStats,
-    ownerStats,
     lostReasons,
     forecast: {
       monthLabel: monthFmt.format(now),

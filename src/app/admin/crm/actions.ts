@@ -146,7 +146,6 @@ export async function updateDealAction(
 
   const name = optionalString(formData, "name");
   const company = optionalString(formData, "company");
-  const owner = optionalString(formData, "owner");
   const notes = optionalString(formData, "notes");
 
   const valueRaw = String(formData.get("value") ?? "").trim();
@@ -183,7 +182,6 @@ export async function updateDealAction(
         airtableId: deal.airtableId,
         name,
         company,
-        owner,
         notes,
         value,
         closeDate,
@@ -204,7 +202,6 @@ export async function updateDealAction(
     data: {
       ...(name !== undefined ? { name } : {}),
       ...(company !== undefined ? { company } : {}),
-      ...(owner !== undefined ? { owner } : {}),
       ...(notes !== undefined ? { notes } : {}),
       ...(value !== undefined ? { value } : {}),
       ...(closeDate !== undefined

@@ -133,9 +133,7 @@ export default async function AdminDealDetailPage({
             {deal.name ?? "Deal"}
           </h1>
           <p className="mt-1 text-sm text-[color:var(--muted)]">
-            {[deal.company, deal.owner, deal.status]
-              .filter(Boolean)
-              .join(" · ") || "—"}
+            {[deal.company, deal.status].filter(Boolean).join(" · ") || "—"}
             {" · "}
             Erstellt {formatDate(deal.createdAt)}
           </p>
@@ -153,7 +151,6 @@ export default async function AdminDealDetailPage({
             dealId={deal.id}
             initialName={deal.name ?? ""}
             initialCompany={deal.company ?? ""}
-            initialOwner={deal.owner ?? ""}
             initialValue={deal.value != null ? String(Number(deal.value)) : ""}
             initialCloseDate={
               deal.closeDate ? deal.closeDate.toISOString().slice(0, 10) : ""
@@ -177,7 +174,6 @@ function DealFactsCard({
     company: string | null;
     email: string | null;
     phone: string | null;
-    owner: string | null;
     source: string | null;
     status: string | null;
     closeDate: Date | null;
@@ -190,13 +186,12 @@ function DealFactsCard({
 }) {
   const baseRowsRaw: { label: string; value: string | null }[] = [
     { label: "Firma", value: deal.company },
-    { label: "Owner", value: deal.owner },
     { label: "Status", value: deal.status },
     { label: "E-Mail", value: deal.email },
     { label: "Telefon", value: deal.phone },
     { label: "Quelle", value: deal.source },
     {
-      label: "Close-Datum",
+      label: "Abschluss-Datum",
       value: deal.closeDate ? formatDate(deal.closeDate) : null,
     },
     { label: "Gewonnen", value: deal.wonAt ? formatDate(deal.wonAt) : null },

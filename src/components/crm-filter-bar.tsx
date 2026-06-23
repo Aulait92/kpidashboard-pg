@@ -3,22 +3,14 @@
 import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
-import { Dropdown, DropdownItem } from "@/components/dropdown";
 
 // CRM-Filter-Bar oberhalb des Kanban-Boards. Filter werden in den URL-
-// Query-Params persistiert (?owner=…&q=…&closed=1) — so kann der Admin
-// einen Filter-Stand teilen oder als Bookmark speichern.
-//
-// Daten-Quelle für den Owner-Dropdown ist eine vorab-gefetchte Liste
-// aller distinct Owner aus der DB (Prop "owners").
+// Query-Params persistiert (?q=…&closed=1) — so kann der Admin einen
+// Filter-Stand teilen oder als Bookmark speichern.
 export function CrmFilterBar({
-  owners,
-  currentOwner,
   currentQuery,
   showClosed,
 }: {
-  owners: string[];
-  currentOwner: string | null;
   currentQuery: string;
   showClosed: boolean;
 }) {
@@ -56,8 +48,6 @@ export function CrmFilterBar({
     });
   }
 
-  const ownerLabel = currentOwner ?? "Alle Owner";
-
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div className="relative">
@@ -80,40 +70,6 @@ export function CrmFilterBar({
           </button>
         ) : null}
       </div>
-
-      <Dropdown label="Owner" value={ownerLabel}>
-        {(close) => (
-          <>
-            <DropdownItem
-              active={currentOwner == null}
-              onClick={() => {
-                update({ owner: null });
-                close();
-              }}
-            >
-              Alle
-            </DropdownItem>
-            {owners.length === 0 ? (
-              <div className="px-3 py-2 text-xs text-[color:var(--muted)]">
-                Noch keine Owner in der DB.
-              </div>
-            ) : (
-              owners.map((o) => (
-                <DropdownItem
-                  key={o}
-                  active={currentOwner === o}
-                  onClick={() => {
-                    update({ owner: o });
-                    close();
-                  }}
-                >
-                  {o}
-                </DropdownItem>
-              ))
-            )}
-          </>
-        )}
-      </Dropdown>
 
       <button
         type="button"

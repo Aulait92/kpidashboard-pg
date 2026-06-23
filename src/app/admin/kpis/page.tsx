@@ -151,50 +151,6 @@ export default async function AdminKpisPage() {
             </div>
           </Section>
 
-          {k.ownerStats.length > 0 ? (
-            <Section title="Sales-Reps">
-              <div className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
-                <table className="min-w-full text-sm">
-                  <thead className="bg-[color:var(--brand-soft)]/30 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
-                    <tr>
-                      <th className="px-5 py-2.5 text-left">Owner</th>
-                      <th className="px-5 py-2.5 text-right">Pipeline</th>
-                      <th className="px-5 py-2.5 text-right">Pipeline-Wert</th>
-                      <th className="px-5 py-2.5 text-right">Gewichtet</th>
-                      <th className="px-5 py-2.5 text-right">Won</th>
-                      <th className="px-5 py-2.5 text-right">Won-Wert</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {k.ownerStats.map((o) => (
-                      <tr
-                        key={o.owner}
-                        className="border-t border-[color:var(--border)]"
-                      >
-                        <td className="px-5 py-2.5 font-medium">{o.owner}</td>
-                        <td className="px-5 py-2.5 text-right tabular-nums">
-                          {o.pipelineCount}
-                        </td>
-                        <td className="px-5 py-2.5 text-right tabular-nums">
-                          {formatEUR(o.pipelineValue)}
-                        </td>
-                        <td className="px-5 py-2.5 text-right tabular-nums text-[color:var(--muted)]">
-                          {formatEUR(o.weightedValue)}
-                        </td>
-                        <td className="px-5 py-2.5 text-right tabular-nums">
-                          {o.wonCount}
-                        </td>
-                        <td className="px-5 py-2.5 text-right tabular-nums">
-                          {formatEUR(o.wonValue)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Section>
-          ) : null}
-
           {k.lostReasons.length > 0 ? (
             <Section title="Verlust-Gründe">
               <div className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">

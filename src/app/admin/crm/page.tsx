@@ -31,14 +31,12 @@ export default async function AdminCrmPage({
   }
 
   const sp = await searchParams;
-  const ownerFilter = sp.owner?.trim() || null;
   const queryRaw = sp.q?.trim() ?? "";
   const includeClosed = sp.closed === "1";
 
   // Where-Clause aus den Filter-Params. Such-Match nutzt Postgres'
   // case-insensitive contains auf Name ODER Firma ODER Mail.
   const where = {
-    ...(ownerFilter ? { owner: ownerFilter } : {}),
     ...(queryRaw
       ? {
           OR: [
@@ -48,51 +46,32 @@ export default async function AdminCrmPage({
           ],
         }
       : {}),
-    ...(includeClosed
-      ? {}
-      : { AND: [{ wonAt: null }, { lostAt: null }] }),
+    ...(includeClosed ? {} : { AND: [{ wonAt: null }, { lostAt: null }] }),
   };
 
-  const [rows, ownerRows] = await Promise.all([
-    prisma.deal.findMany({
-      where,
-      orderBy: { updatedAt: "desc" },
-      take: 500,
-      select: {
-        id: true,
-        name: true,
-        company: true,
-        owner: true,
-        value: true,
-        status: true,
-        createdAt: true,
-        activities: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-          select: { createdAt: true },
-        },
+  const rows = await prisma.deal.findMany({
+    where,
+    orderBy: { updatedAt: "desc" },
+    take: 500,
+    select: {
+      id: true,
+      name: true,
+      company: true,
+      value: true,
+      status: true,
+      createdAt: true,
+      activities: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { createdAt: true },
       },
-    }),
-    // Distinct-Owner-Liste für den Filter-Dropdown — bewusst über alle
-    // Deals, nicht über die gefilterten, sonst verschwindet der eigene
-    // Filter-Wert aus der Auswahl sobald der Filter aktiv ist.
-    prisma.deal.findMany({
-      where: { owner: { not: null } },
-      select: { owner: true },
-      distinct: ["owner"],
-      orderBy: { owner: "asc" },
-    }),
-  ]);
-
-  const owners = ownerRows
-    .map((r) => r.owner?.trim())
-    .filter((o): o is string => !!o);
+    },
+  });
 
   const deals: KanbanDeal[] = rows.map((d) => ({
     id: d.id,
     name: d.name,
     company: d.company,
-    owner: d.owner,
     value: d.value != null ? Number(d.value) : null,
     status: d.status,
     createdAt: d.createdAt,
@@ -101,7 +80,7 @@ export default async function AdminCrmPage({
 
   // React-Key fürs Kanban-Board: bei Filter-Wechsel remounten, damit der
   // lokale Drag-State + optimistische Updates sauber zurückgesetzt werden.
-  const boardKey = `${ownerFilter ?? ""}|${queryRaw}|${includeClosed ? "1" : "0"}`;
+  const boardKey = `${queryRaw}|${includeClosed ? "1" : "0"}`;
 
   return (
     <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-8 sm:px-6 lg:px-8">
@@ -114,12 +93,7 @@ export default async function AdminCrmPage({
             Klick auf eine Karte öffnet die Detail-Ansicht mit Timeline.
           </p>
         </div>
-        <CrmFilterBar
-          owners={owners}
-          currentOwner={ownerFilter}
-          currentQuery={queryRaw}
-          showClosed={includeClosed}
-        />
+        <CrmFilterBar currentQuery={queryRaw} showClosed={includeClosed} />
       </header>
 
       <AdminTabs />

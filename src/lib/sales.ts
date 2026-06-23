@@ -80,13 +80,25 @@ const NAME_FIELDS = ["Name", "Deal", "Kontakt", "Lead", "Kunde"];
 const COMPANY_FIELDS = ["Unternehmen", "Firma", "Company", "Account"];
 const EMAIL_FIELDS = ["E-Mail", "Email", "Mail"];
 const PHONE_FIELDS = ["Telefon", "Telefonnummer", "Phone", "Tel"];
-const VALUE_FIELDS = ["Wert", "Deal-Wert", "Value", "Volumen", "MRR", "ARR"];
+const VALUE_FIELDS = [
+  "Abschluss-Volumen",
+  "Abschlussvolumen",
+  "Wert",
+  "Deal-Wert",
+  "Value",
+  "Volumen",
+];
 const STATUS_FIELDS = ["Status", "Phase", "Stage", "Bearbeitungsstatus"];
-const OWNER_FIELDS = ["Owner", "Sales", "Inhaber", "Verantwortlich", "Zuständig"];
+// Owner brauchen wir nicht — pro PG-Setup gibt's keinen dedizierten
+// Sales-Owner pro Deal. Wir lesen das Feld nicht (und schreiben nichts
+// rein). DB-Spalte Deal.owner bleibt als Legacy bestehen, wird einfach
+// nicht befüllt.
+const OWNER_FIELDS: readonly string[] = [];
 const SOURCE_FIELDS = ["Source", "Quelle", "Kanal"];
 const CLOSE_DATE_FIELDS = [
-  "Close Date",
+  "Abschluss-Datum",
   "Abschlussdatum",
+  "Close Date",
   "Erwarteter Abschluss",
   "Wunschdatum",
 ];

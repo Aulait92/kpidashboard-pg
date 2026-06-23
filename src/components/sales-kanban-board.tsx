@@ -11,7 +11,6 @@ export type KanbanDeal = {
   id: string;
   name: string | null;
   company: string | null;
-  owner: string | null;
   value: number | null;
   status: string | null;
   lastActivityAt: Date | null;
@@ -293,7 +292,9 @@ function DealCard({
         ) : null}
       </div>
       <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] text-[color:var(--muted)]">
-        <span className="truncate">{deal.owner ?? "ohne Owner"}</span>
+        <span className="truncate">
+          {deal.lastActivityAt ? "Aktiv" : "Eingegangen"}
+        </span>
         <span className="shrink-0 tabular-nums">
           {deal.lastActivityAt
             ? formatDate(deal.lastActivityAt)
