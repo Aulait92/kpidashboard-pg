@@ -268,6 +268,19 @@ export async function updateDealAction(
     }
   }
 
+  // Status-Change-Handling: Terminal-Felder + Activity-Log analog zu
+  // setDealStatusAction (Drag im Pipeline-Board). Auto-Set Abschluss-
+  // Datum, wenn Status auf Serienbetrieb wechselt UND weder Form-Wert
+  // noch DB-Wert vorhanden. Form-Eingabe hat Vorrang.
+  const statusChanged = status !== undefined && status !== deal.status;
+  const phase = status ? findSalesPhaseForStatus(status) : null;
+  const isWon = phase?.terminal === "won";
+  const isLost = phase?.terminal === "lost";
+  const autoCloseDateIso =
+    statusChanged && isWon && closeDate === undefined && !deal.closeDate
+      ? new Date().toISOString().slice(0, 10)
+      : null;
+
   // 1) Airtable schreiben (Source-of-Truth). Wenn das scheitert, sofort
   //    raus — DB nicht ändern, sonst Drift.
   if (deal.airtableId) {
@@ -290,19 +303,6 @@ export async function updateDealAction(
       };
     }
   }
-
-  // Status-Change-Handling: Terminal-Felder + Activity-Log analog zu
-  // setDealStatusAction (Drag im Pipeline-Board).
-  const statusChanged = status !== undefined && status !== deal.status;
-  const phase = status ? findSalesPhaseForStatus(status) : null;
-  const isWon = phase?.terminal === "won";
-  const isLost = phase?.terminal === "lost";
-  // Auto-Set Abschluss-Datum, wenn Status auf Serienbetrieb wechselt UND
-  // weder Form-Wert noch DB-Wert vorhanden. Form-Eingabe hat Vorrang.
-  const autoCloseDateIso =
-    statusChanged && isWon && closeDate === undefined && !deal.closeDate
-      ? new Date().toISOString().slice(0, 10)
-      : null;
 
   // 2) DB-Spiegel + ggf. Activity-Log in einer Transaktion.
   await prisma.$transaction([
