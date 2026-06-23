@@ -223,6 +223,7 @@ export async function updateDealAction(
 
   const name = optionalString(formData, "name");
   const company = optionalString(formData, "company");
+  const product = optionalString(formData, "product");
   const notes = optionalString(formData, "notes");
   // Status mitlesen — leer = "nicht gesetzt"; sonst nur akzeptieren wenn
   // der String einer Phase oder einem ihrer Aliasse entspricht (= externes
@@ -289,6 +290,7 @@ export async function updateDealAction(
         airtableId: deal.airtableId,
         name,
         company,
+        product,
         notes,
         value,
         closeDate: autoCloseDateIso ?? closeDate,
@@ -311,6 +313,7 @@ export async function updateDealAction(
       data: {
         ...(name !== undefined ? { name } : {}),
         ...(company !== undefined ? { company } : {}),
+        ...(product !== undefined ? { product } : {}),
         ...(notes !== undefined ? { notes } : {}),
         ...(value !== undefined ? { value } : {}),
         ...(autoCloseDateIso

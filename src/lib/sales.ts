@@ -95,6 +95,7 @@ const STATUS_FIELDS = ["Status", "Phase", "Stage", "Bearbeitungsstatus"];
 // nicht befüllt.
 const OWNER_FIELDS: readonly string[] = [];
 const SOURCE_FIELDS = ["Source", "Quelle", "Kanal"];
+const PRODUCT_FIELDS = ["Produkt", "Product", "Paket", "Angebot"];
 const CLOSE_DATE_FIELDS = [
   "Abschluss-Datum",
   "Abschlussdatum",
@@ -193,6 +194,7 @@ export async function syncSales(): Promise<SalesSyncResult> {
       const status = readString(rec.fields, STATUS_FIELDS);
       const owner = readString(rec.fields, OWNER_FIELDS);
       const source = readString(rec.fields, SOURCE_FIELDS);
+      const product = readString(rec.fields, PRODUCT_FIELDS);
       const closeDate = readDate(rec.fields, CLOSE_DATE_FIELDS);
       const notes = readString(rec.fields, NOTES_FIELDS);
       const lostReason = readString(rec.fields, LOST_REASON_FIELDS);
@@ -220,6 +222,7 @@ export async function syncSales(): Promise<SalesSyncResult> {
           status,
           owner,
           source,
+          product,
           closeDate,
           notes,
           lostReason,
@@ -237,6 +240,7 @@ export async function syncSales(): Promise<SalesSyncResult> {
           status,
           owner,
           source,
+          product,
           closeDate,
           notes,
           lostReason,

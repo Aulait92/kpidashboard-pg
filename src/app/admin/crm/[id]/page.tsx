@@ -59,6 +59,10 @@ const RAW_FIELDS_HIDDEN = new Set<string>([
   "Source",
   "Quelle",
   "Kanal",
+  "Produkt",
+  "Product",
+  "Paket",
+  "Angebot",
   "Close Date",
   "Abschlussdatum",
   "Erwarteter Abschluss",
@@ -157,6 +161,7 @@ export default async function AdminDealDetailPage({
             initialStatus={deal.status ?? ""}
             initialName={deal.name ?? ""}
             initialCompany={deal.company ?? ""}
+            initialProduct={deal.product ?? ""}
             initialValue={deal.value != null ? String(Number(deal.value)) : ""}
             initialCloseDate={
               deal.closeDate ? deal.closeDate.toISOString().slice(0, 10) : ""
@@ -178,6 +183,7 @@ function DealFactsCard({
   deal: {
     name: string | null;
     company: string | null;
+    product: string | null;
     email: string | null;
     phone: string | null;
     source: string | null;
@@ -192,6 +198,7 @@ function DealFactsCard({
 }) {
   const baseRowsRaw: { label: string; value: string | null }[] = [
     { label: "Firma", value: deal.company },
+    { label: "Produkt", value: deal.product },
     { label: "Status", value: deal.status },
     { label: "E-Mail", value: deal.email },
     { label: "Telefon", value: deal.phone },

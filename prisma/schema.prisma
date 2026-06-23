@@ -30,6 +30,9 @@ model Deal {
   // Sales-Rep / Owner (Text oder Email — flexibel, wie's aus Airtable kommt).
   owner           String?
   source          String?
+  // Verkauftes Produkt / Paket. String aus Airtable-Spalte
+  // (typischerweise Single-Select oder freier Text).
+  product         String?
   // Erwartetes oder tatsächliches Abschluss-Datum.
   closeDate       DateTime?
   // Gesetzt sobald der Deal auf "Gewonnen" steht — für Win-Rate-Berechnung.

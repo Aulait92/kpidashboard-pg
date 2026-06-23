@@ -20,6 +20,8 @@ const FIELD_STATUS = process.env.AIRTABLE_SALES_FIELD_STATUS ?? "Status";
 const FIELD_CLOSE_DATE =
   process.env.AIRTABLE_SALES_FIELD_CLOSE_DATE ?? "Abschluss-Datum";
 const FIELD_NOTES = process.env.AIRTABLE_SALES_FIELD_NOTES ?? "Notizen";
+const FIELD_PRODUCT =
+  process.env.AIRTABLE_SALES_FIELD_PRODUCT ?? "Produkt";
 const FIELD_LOST_REASON =
   process.env.AIRTABLE_SALES_FIELD_LOST_REASON ?? "Verlustgrund";
 
@@ -43,6 +45,7 @@ export async function updateSalesDeal(opts: {
   closeDate?: string | null; // ISO YYYY-MM-DD
   notes?: string | null;
   lostReason?: string | null;
+  product?: string | null;
 }): Promise<void> {
   const env = getEnv();
   if (!env) {
@@ -59,6 +62,7 @@ export async function updateSalesDeal(opts: {
   if (opts.closeDate !== undefined) fields[FIELD_CLOSE_DATE] = opts.closeDate;
   if (opts.notes !== undefined) fields[FIELD_NOTES] = opts.notes;
   if (opts.lostReason !== undefined) fields[FIELD_LOST_REASON] = opts.lostReason;
+  if (opts.product !== undefined) fields[FIELD_PRODUCT] = opts.product;
   if (Object.keys(fields).length === 0) return;
 
   const url = `https://api.airtable.com/v0/${env.baseId}/${encodeURIComponent(SALES_TABLE)}/${opts.airtableId}`;

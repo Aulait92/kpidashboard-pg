@@ -20,6 +20,7 @@ export function DealEditForm({
   initialStatus,
   initialName,
   initialCompany,
+  initialProduct,
   initialValue,
   initialCloseDate,
   initialNotes,
@@ -28,6 +29,7 @@ export function DealEditForm({
   initialStatus: string;
   initialName: string;
   initialCompany: string;
+  initialProduct: string;
   initialValue: string; // String, damit "" leerer Input möglich ist
   initialCloseDate: string; // YYYY-MM-DD oder ""
   initialNotes: string;
@@ -57,6 +59,7 @@ export function DealEditForm({
 
   const [name, setName] = useState(initialName);
   const [company, setCompany] = useState(initialCompany);
+  const [product, setProduct] = useState(initialProduct);
   const [value, setValue] = useState(initialValue);
   const [closeDate, setCloseDate] = useState(initialCloseDate);
   const [notes, setNotes] = useState(initialNotes);
@@ -119,6 +122,16 @@ export function DealEditForm({
             name="company"
             value={company}
             onChange={(e) => setCompany(e.target.value)}
+            className={INPUT_CLS}
+          />
+        </Row>
+        <Row label="Produkt">
+          <input
+            type="text"
+            name="product"
+            value={product}
+            onChange={(e) => setProduct(e.target.value)}
+            placeholder="z. B. Lead-Generation, Pipeline-Setup …"
             className={INPUT_CLS}
           />
         </Row>
