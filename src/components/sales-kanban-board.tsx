@@ -17,6 +17,12 @@ export type KanbanDeal = {
   // Datum der nächsten geplanten Activity (scheduledFor > jetzt).
   // null = keine Folge-Aktivität geplant.
   nextActivityAt: Date | null;
+  // Priority-Score (siehe priorityScore() in lib/sales-phases.ts).
+  // 0 = nicht bewertbar (kein Wert oder Win-Probability), sortiert ans
+  // Ende. Höchster Wert kommt nach oben in der Spalte.
+  priorityScore: number;
+  // Stale = "kein Termin + seit >7 Tagen tot". Rote Karte als Warnung.
+  isStale: boolean;
   createdAt: Date;
 };
 
@@ -33,7 +39,35 @@ function bucketize(deals: KanbanDeal[]): Map<string, KanbanDeal[]> {
     if (phase) map.get(phase.key)!.push(deal);
     else map.get(SONSTIGE_KEY)!.push(deal);
   }
+  // Innerhalb jeder Spalte nach Score sortieren (höchster zuerst).
+  // Ties: kürzeste Zeit bis zur nächsten Activity gewinnt. Letzter
+  // Fallback: neueste Karten zuerst.
+  for (const items of map.values()) {
+    items.sort((a, b) => {
+      if (b.priorityScore !== a.priorityScore) {
+        return b.priorityScore - a.priorityScore;
+      }
+      const aNext = a.nextActivityAt?.getTime() ?? Infinity;
+      const bNext = b.nextActivityAt?.getTime() ?? Infinity;
+      if (aNext !== bNext) return aNext - bNext;
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    });
+  }
   return map;
+}
+
+// Score-Tier für die Farbgebung der Score-Pill auf der Karte. Schwellen
+// sind grobe Faustregeln (Euro × Win-Wahrscheinlichkeit × Urgency-Boost).
+function scoreTone(score: number): string | null {
+  if (score >= 50_000) return "bg-orange-100 text-orange-900";
+  if (score >= 10_000) return "bg-amber-100 text-amber-900";
+  if (score > 0) return "bg-zinc-100 text-zinc-700";
+  return null;
+}
+
+function formatScore(score: number): string {
+  if (score >= 1000) return `${Math.round(score / 1000)}k`;
+  return String(score);
 }
 
 export function SalesKanbanBoard({ deals: initialDeals }: { deals: KanbanDeal[] }) {
@@ -405,12 +439,31 @@ function DealCard({
       onDragEnd={onDragEnd}
       onClick={onClick}
       className={cn(
-        "cursor-pointer rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm shadow-sm transition hover:border-[color:var(--brand)] hover:shadow-md",
+        "cursor-pointer rounded-lg border bg-white px-3 py-2 text-sm shadow-sm transition hover:border-[color:var(--brand)] hover:shadow-md",
+        deal.isStale
+          ? "border-rose-300 ring-1 ring-rose-200"
+          : "border-[color:var(--border)]",
         dragging && "opacity-50",
       )}
     >
-      <div className="font-medium text-[color:var(--foreground)] break-words">
-        {deal.name ?? <span className="text-[color:var(--muted)]">unbenannt</span>}
+      <div className="flex items-start justify-between gap-1.5">
+        <div className="min-w-0 flex-1 font-medium text-[color:var(--foreground)] break-words">
+          {deal.name ?? (
+            <span className="text-[color:var(--muted)]">unbenannt</span>
+          )}
+        </div>
+        {scoreTone(deal.priorityScore) ? (
+          <span
+            className={cn(
+              "shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+              scoreTone(deal.priorityScore),
+            )}
+            title={`Priorität-Score ${deal.priorityScore.toLocaleString("de-DE")} — Wert × Win-Wahrscheinlichkeit × Urgency`}
+          >
+            {deal.priorityScore >= 50_000 ? "🔥 " : ""}
+            {formatScore(deal.priorityScore)}
+          </span>
+        ) : null}
       </div>
       {badge ? (
         <span className="mt-1 inline-flex max-w-full rounded-full bg-[color:var(--brand-soft)]/60 px-1.5 py-0.5 text-[10px] font-semibold text-[color:var(--brand-dark)] break-words">

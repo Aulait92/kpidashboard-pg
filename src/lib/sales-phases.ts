@@ -141,3 +141,56 @@ export function findSalesPhaseForStatus(
 export function winProbabilityFor(status: string | null | undefined): number {
   return findSalesPhaseForStatus(status)?.winProbability ?? 0.1;
 }
+
+// Priorität-Score: gewichteter Deal-Wert × Urgency-Boost. Boost
+// kommt aus dem zeitlichen Abstand zur nächsten geplanten Aktivität —
+// Deals, die heute / diese Woche dran sind, springen nach oben.
+//
+// Score = 0 wenn weder Wert noch Win-Probability vorhanden — sortiert
+// solche Deals ans Ende, ohne sie zu verstecken.
+const URGENCY_BOOST_TODAY = 2;
+const URGENCY_BOOST_THIS_WEEK = 1.5;
+const URGENCY_BOOST_THIS_MONTH = 1.2;
+
+export function priorityScore(opts: {
+  value: number | null;
+  status: string | null | undefined;
+  nextActivityAt: Date | null;
+  now: Date;
+}): number {
+  const base = (opts.value ?? 0) * winProbabilityFor(opts.status);
+  if (base <= 0) return 0;
+  let boost = 1;
+  if (opts.nextActivityAt) {
+    const days =
+      (opts.nextActivityAt.getTime() - opts.now.getTime()) /
+      (1000 * 60 * 60 * 24);
+    if (days <= 1) boost = URGENCY_BOOST_TODAY;
+    else if (days <= 7) boost = URGENCY_BOOST_THIS_WEEK;
+    else if (days <= 30) boost = URGENCY_BOOST_THIS_MONTH;
+  }
+  return Math.round(base * boost);
+}
+
+// Stale = "hier liegt was brach": kein zukünftiger Termin geplant UND
+// seit > 7 Tagen keine Activity (oder: Deal seit > 7 Tagen erstellt
+// ohne je eine Activity bekommen zu haben). Terminale Phasen
+// (Serienbetrieb, Verloren) sind nie stale — die brauchen keine
+// Folge-Aktion.
+const STALE_DAYS = 7;
+
+export function isStaleDeal(opts: {
+  status: string | null | undefined;
+  nextActivityAt: Date | null;
+  lastActivityAt: Date | null;
+  createdAt: Date;
+  now: Date;
+}): boolean {
+  const phase = findSalesPhaseForStatus(opts.status);
+  if (phase?.terminal) return false;
+  if (opts.nextActivityAt && opts.nextActivityAt > opts.now) return false;
+  const reference = opts.lastActivityAt ?? opts.createdAt;
+  const daysSince =
+    (opts.now.getTime() - reference.getTime()) / (1000 * 60 * 60 * 24);
+  return daysSince > STALE_DAYS;
+}

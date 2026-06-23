@@ -7,6 +7,7 @@ import {
 } from "@/components/sales-kanban-board";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isStaleDeal, priorityScore } from "@/lib/sales-phases";
 
 export const dynamic = "force-dynamic";
 
@@ -49,8 +50,11 @@ export default async function AdminCrmPage({
     ...(includeClosed ? {} : { AND: [{ wonAt: null }, { lostAt: null }] }),
   };
 
-  // Nächste anstehende Activity je Deal: scheduledFor > jetzt, das
-  // früheste in der Zukunft. Wird auf der Card als "📅 Datum" gezeigt.
+  // Nächste anstehende Activity je Deal (scheduledFor > jetzt) für die
+  // "📅"-Anzeige + Urgency-Boost im Priority-Score. Letzte Activity
+  // (egal welcher Art) für die Stale-Detektion. Beides per groupBy in
+  // zwei zusätzlichen Queries — günstiger als activities pro Deal mit
+  // include zu laden.
   const now = new Date();
   const rows = await prisma.deal.findMany({
     where,
@@ -63,24 +67,59 @@ export default async function AdminCrmPage({
       value: true,
       status: true,
       createdAt: true,
-      activities: {
-        where: { scheduledFor: { gt: now } },
-        orderBy: { scheduledFor: "asc" },
-        take: 1,
-        select: { scheduledFor: true },
-      },
     },
   });
+  const dealIds = rows.map((d) => d.id);
+  const [nextAgg, lastAgg] = await Promise.all([
+    dealIds.length === 0
+      ? Promise.resolve([])
+      : prisma.dealActivity.groupBy({
+          by: ["dealId"],
+          where: { dealId: { in: dealIds }, scheduledFor: { gt: now } },
+          _min: { scheduledFor: true },
+        }),
+    dealIds.length === 0
+      ? Promise.resolve([])
+      : prisma.dealActivity.groupBy({
+          by: ["dealId"],
+          where: { dealId: { in: dealIds } },
+          _max: { createdAt: true },
+        }),
+  ]);
+  const nextByDeal = new Map<string, Date | null>(
+    nextAgg.map((row) => [row.dealId, row._min.scheduledFor ?? null]),
+  );
+  const lastByDeal = new Map<string, Date | null>(
+    lastAgg.map((row) => [row.dealId, row._max.createdAt ?? null]),
+  );
 
-  const deals: KanbanDeal[] = rows.map((d) => ({
-    id: d.id,
-    name: d.name,
-    company: d.company,
-    value: d.value != null ? Number(d.value) : null,
-    status: d.status,
-    createdAt: d.createdAt,
-    nextActivityAt: d.activities[0]?.scheduledFor ?? null,
-  }));
+  const deals: KanbanDeal[] = rows.map((d) => {
+    const nextActivityAt = nextByDeal.get(d.id) ?? null;
+    const lastActivityAt = lastByDeal.get(d.id) ?? null;
+    const value = d.value != null ? Number(d.value) : null;
+    return {
+      id: d.id,
+      name: d.name,
+      company: d.company,
+      value,
+      status: d.status,
+      createdAt: d.createdAt,
+      nextActivityAt,
+      priorityScore: priorityScore({
+        value,
+        status: d.status,
+        nextActivityAt,
+        now,
+      }),
+      isStale: isStaleDeal({
+        status: d.status,
+        nextActivityAt,
+        lastActivityAt,
+        createdAt: d.createdAt,
+        now,
+      }),
+    };
+  });
 
   // React-Key fürs Kanban-Board: bei Filter-Wechsel remounten, damit der
   // lokale Drag-State + optimistische Updates sauber zurückgesetzt werden.
