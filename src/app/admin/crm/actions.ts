@@ -36,6 +36,7 @@ export async function setDealStatusAction(
       status: true,
       wonAt: true,
       lostAt: true,
+      closeDate: true,
     },
   });
   if (!deal) return { ok: false, error: "Deal nicht gefunden." };
@@ -53,6 +54,12 @@ export async function setDealStatusAction(
         : null
       : undefined;
 
+  // Abschluss-Datum auto-setzen, wenn der Deal frisch in Serienbetrieb
+  // landet UND noch kein Abschluss-Datum gepflegt ist. Kein Auto-Clear
+  // beim Zurückziehen — falls jemand das Datum manuell festhält.
+  const autoCloseDateIso =
+    isWon && !deal.closeDate ? new Date().toISOString().slice(0, 10) : null;
+
   // 1) Airtable-PATCH zuerst. Ohne airtableId (= Deal nur lokal angelegt)
   //    überspringen.
   if (deal.airtableId) {
@@ -60,6 +67,7 @@ export async function setDealStatusAction(
       await updateSalesDeal({
         airtableId: deal.airtableId,
         status,
+        ...(autoCloseDateIso ? { closeDate: autoCloseDateIso } : {}),
         ...(lostReasonNorm !== undefined
           ? { lostReason: lostReasonNorm }
           : {}),
@@ -88,6 +96,9 @@ export async function setDealStatusAction(
         status,
         wonAt: isWon ? (deal.wonAt ?? new Date()) : null,
         lostAt: isLost ? (deal.lostAt ?? new Date()) : null,
+        ...(autoCloseDateIso
+          ? { closeDate: new Date(`${autoCloseDateIso}T12:00:00Z`) }
+          : {}),
         ...(lostReasonNorm !== undefined ? { lostReason: lostReasonNorm } : {}),
       },
     }),
@@ -205,6 +216,7 @@ export async function updateDealAction(
       status: true,
       wonAt: true,
       lostAt: true,
+      closeDate: true,
     },
   });
   if (!deal) return { error: "Deal nicht gefunden." };
@@ -266,7 +278,7 @@ export async function updateDealAction(
         company,
         notes,
         value,
-        closeDate,
+        closeDate: autoCloseDateIso ?? closeDate,
         ...(status !== undefined ? { status } : {}),
       });
     } catch (err) {
@@ -285,6 +297,12 @@ export async function updateDealAction(
   const phase = status ? findSalesPhaseForStatus(status) : null;
   const isWon = phase?.terminal === "won";
   const isLost = phase?.terminal === "lost";
+  // Auto-Set Abschluss-Datum, wenn Status auf Serienbetrieb wechselt UND
+  // weder Form-Wert noch DB-Wert vorhanden. Form-Eingabe hat Vorrang.
+  const autoCloseDateIso =
+    statusChanged && isWon && closeDate === undefined && !deal.closeDate
+      ? new Date().toISOString().slice(0, 10)
+      : null;
 
   // 2) DB-Spiegel + ggf. Activity-Log in einer Transaktion.
   await prisma.$transaction([
@@ -295,11 +313,15 @@ export async function updateDealAction(
         ...(company !== undefined ? { company } : {}),
         ...(notes !== undefined ? { notes } : {}),
         ...(value !== undefined ? { value } : {}),
-        ...(closeDate !== undefined
-          ? {
-              closeDate: closeDate ? new Date(`${closeDate}T12:00:00Z`) : null,
-            }
-          : {}),
+        ...(autoCloseDateIso
+          ? { closeDate: new Date(`${autoCloseDateIso}T12:00:00Z`) }
+          : closeDate !== undefined
+            ? {
+                closeDate: closeDate
+                  ? new Date(`${closeDate}T12:00:00Z`)
+                  : null,
+              }
+            : {}),
         ...(status !== undefined
           ? {
               status,
