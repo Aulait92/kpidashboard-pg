@@ -6,6 +6,10 @@ import {
   updateDealAction,
   type UpdateDealState,
 } from "@/app/admin/crm/actions";
+import {
+  SALES_PIPELINE_PHASES,
+  findSalesPhaseForStatus,
+} from "@/lib/sales-phases";
 
 // Inline-Edit-Form für die wichtigsten Pflege-Felder eines Deals.
 // Bewusst keine Status-Auswahl hier — dafür gibt's das Pipeline-Drag.
@@ -13,6 +17,7 @@ import {
 // setDealStatusAction (Drag-Endpoint).
 export function DealEditForm({
   dealId,
+  initialStatus,
   initialName,
   initialCompany,
   initialValue,
@@ -20,6 +25,7 @@ export function DealEditForm({
   initialNotes,
 }: {
   dealId: string;
+  initialStatus: string;
   initialName: string;
   initialCompany: string;
   initialValue: string; // String, damit "" leerer Input möglich ist
@@ -30,6 +36,24 @@ export function DealEditForm({
     updateDealAction,
     {},
   );
+
+  // Status-Auswahl: jede Phase ist 1:1 zu einem Default-Status, ein
+  // Lead mit Alias-Status (z. B. "Follow-up" in Phase "Wiedervorlage")
+  // sehen wir korrekt → die Phase ist markiert. Beim Submit ohne
+  // Änderung schicken wir den ORIGINAL-Status mit, sonst würden Aliase
+  // unbeabsichtigt auf den Default normalisiert werden.
+  const initialPhase = findSalesPhaseForStatus(initialStatus);
+  const statusIsExternal = initialStatus !== "" && initialPhase == null;
+  const [selectedStatus, setSelectedStatus] = useState(
+    initialPhase?.defaultStatus ?? initialStatus,
+  );
+  // Hidden-Input-Wert: wenn die Auswahl noch der initial-Phase entspricht,
+  // den OriginalSstatus (inkl. Alias) zurücksenden. Bei Phasenwechsel
+  // den Default-Status der neuen Phase.
+  const resolvedStatus =
+    initialPhase && selectedStatus === initialPhase.defaultStatus
+      ? initialStatus
+      : selectedStatus;
 
   const [name, setName] = useState(initialName);
   const [company, setCompany] = useState(initialCompany);
@@ -51,15 +75,35 @@ export function DealEditForm({
       className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]"
     >
       <input type="hidden" name="dealId" value={dealId} />
+      <input type="hidden" name="status" value={resolvedStatus} />
       <header className="border-b border-[color:var(--border)] px-5 py-3">
         <h2 className="text-base font-semibold">Deal bearbeiten</h2>
         <p className="mt-0.5 text-xs text-[color:var(--muted)]">
-          Schreibt zurück nach Airtable und ins Dashboard. Status verschiebst
-          du per Drag im Pipeline-Board.
+          Schreibt zurück nach Airtable und ins Dashboard. Status kannst du
+          hier oder per Drag im Pipeline-Board ändern.
         </p>
       </header>
 
       <dl className="divide-y divide-[color:var(--border)]">
+        <Row label="Status">
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            className={INPUT_CLS}
+          >
+            {statusIsExternal ? (
+              <option value={initialStatus} disabled>
+                {initialStatus} (nicht in Pipeline)
+              </option>
+            ) : null}
+            <option value="">– nicht gesetzt –</option>
+            {SALES_PIPELINE_PHASES.map((p) => (
+              <option key={p.key} value={p.defaultStatus}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </Row>
         <Row label="Name">
           <input
             type="text"

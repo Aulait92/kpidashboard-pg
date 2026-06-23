@@ -150,6 +150,7 @@ export default async function AdminDealDetailPage({
         <div className="space-y-6">
           <DealEditForm
             dealId={deal.id}
+            initialStatus={deal.status ?? ""}
             initialName={deal.name ?? ""}
             initialCompany={deal.company ?? ""}
             initialValue={deal.value != null ? String(Number(deal.value)) : ""}

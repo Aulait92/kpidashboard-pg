@@ -192,19 +192,42 @@ export async function updateDealAction(
   _prev: UpdateDealState,
   formData: FormData,
 ): Promise<UpdateDealState> {
-  await requireAdmin();
+  const session = await requireAdmin();
   const dealId = String(formData.get("dealId") ?? "");
   if (!dealId) return { error: "Deal fehlt." };
 
   const deal = await prisma.deal.findUnique({
     where: { id: dealId },
-    select: { id: true, airtableId: true },
+    select: {
+      id: true,
+      airtableId: true,
+      status: true,
+      wonAt: true,
+      lostAt: true,
+    },
   });
   if (!deal) return { error: "Deal nicht gefunden." };
 
   const name = optionalString(formData, "name");
   const company = optionalString(formData, "company");
   const notes = optionalString(formData, "notes");
+  // Status mitlesen — leer = "nicht gesetzt"; sonst nur akzeptieren wenn
+  // der String einer Phase oder einem ihrer Aliasse entspricht (= externes
+  // / unbekanntes "Sonstige"-Status bleibt durchgereicht, wenn der Buyer
+  // ihn explizit so geschickt hat).
+  const status = optionalString(formData, "status");
+  if (
+    status !== undefined &&
+    status !== null &&
+    status !== "" &&
+    !findSalesPhaseForStatus(status)
+  ) {
+    // Status ist nicht in der Pipeline — wir lassen ihn trotzdem durch
+    // (z. B. externer Wert), aber loggen warn.
+    console.warn(
+      `[crm] updateDealAction: Status "${status}" matched keine Pipeline-Phase.`,
+    );
+  }
 
   const valueRaw = String(formData.get("value") ?? "").trim();
   let value: number | null | undefined = undefined;
@@ -243,6 +266,7 @@ export async function updateDealAction(
         notes,
         value,
         closeDate,
+        ...(status !== undefined ? { status } : {}),
       });
     } catch (err) {
       return {
@@ -254,21 +278,50 @@ export async function updateDealAction(
     }
   }
 
-  // 2) DB-Spiegel aktualisieren.
-  await prisma.deal.update({
-    where: { id: deal.id },
-    data: {
-      ...(name !== undefined ? { name } : {}),
-      ...(company !== undefined ? { company } : {}),
-      ...(notes !== undefined ? { notes } : {}),
-      ...(value !== undefined ? { value } : {}),
-      ...(closeDate !== undefined
-        ? {
-            closeDate: closeDate ? new Date(`${closeDate}T12:00:00Z`) : null,
-          }
-        : {}),
-    },
-  });
+  // Status-Change-Handling: Terminal-Felder + Activity-Log analog zu
+  // setDealStatusAction (Drag im Pipeline-Board).
+  const statusChanged = status !== undefined && status !== deal.status;
+  const phase = status ? findSalesPhaseForStatus(status) : null;
+  const isWon = phase?.terminal === "won";
+  const isLost = phase?.terminal === "lost";
+
+  // 2) DB-Spiegel + ggf. Activity-Log in einer Transaktion.
+  await prisma.$transaction([
+    prisma.deal.update({
+      where: { id: deal.id },
+      data: {
+        ...(name !== undefined ? { name } : {}),
+        ...(company !== undefined ? { company } : {}),
+        ...(notes !== undefined ? { notes } : {}),
+        ...(value !== undefined ? { value } : {}),
+        ...(closeDate !== undefined
+          ? {
+              closeDate: closeDate ? new Date(`${closeDate}T12:00:00Z`) : null,
+            }
+          : {}),
+        ...(status !== undefined
+          ? {
+              status,
+              wonAt: isWon ? (deal.wonAt ?? new Date()) : null,
+              lostAt: isLost ? (deal.lostAt ?? new Date()) : null,
+            }
+          : {}),
+      },
+    }),
+    ...(statusChanged
+      ? [
+          prisma.dealActivity.create({
+            data: {
+              dealId: deal.id,
+              kind: "status_change",
+              title: `Status: ${deal.status ?? "—"} → ${status ?? "—"}`,
+              metadata: { fromStatus: deal.status, toStatus: status },
+              createdById: session.userId,
+            },
+          }),
+        ]
+      : []),
+  ]);
 
   revalidatePath(`/admin/crm/${dealId}`);
   revalidatePath("/admin/crm");
