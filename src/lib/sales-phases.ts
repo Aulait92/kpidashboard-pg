@@ -33,21 +33,16 @@ export const SALES_PIPELINE_PHASES: readonly SalesPhase[] = [
   {
     key: "setter-call-vereinbart",
     label: "Setter-Call vereinbart",
-    statuses: ["Setter-Call vereinbart", "Setter Call vereinbart"],
-    defaultStatus: "Setter-Call vereinbart",
-    winProbability: 0.15,
-    accent: "border-t-amber-400",
-  },
-  {
-    key: "setter-call-erfolgreich",
-    label: "Setter-Call erfolgreich",
     statuses: [
+      "Setter-Call vereinbart",
+      "Setter Call vereinbart",
+      // Alte "Setter-Call erfolgreich"-Datensätze landen hier, bis der
+      // Berater sie via Drag auf Video-Sales-Call schiebt.
       "Setter-Call erfolgreich",
       "Setter Call erfolgreich",
-      "Qualifiziert",
     ],
-    defaultStatus: "Setter-Call erfolgreich",
-    winProbability: 0.3,
+    defaultStatus: "Setter-Call vereinbart",
+    winProbability: 0.2,
     accent: "border-t-amber-500",
   },
   {
@@ -58,9 +53,10 @@ export const SALES_PIPELINE_PHASES: readonly SalesPhase[] = [
       "Video Sales Call",
       "VSC",
       "Termin vereinbart",
+      "Qualifiziert",
     ],
     defaultStatus: "Video-Sales-Call",
-    winProbability: 0.5,
+    winProbability: 0.45,
     accent: "border-t-blue-500",
   },
   {
