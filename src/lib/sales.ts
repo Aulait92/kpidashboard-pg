@@ -240,12 +240,14 @@ export async function syncSales(): Promise<SalesSyncResult> {
           closeDate,
           notes,
           lostReason,
-          // wonAt/lostAt nur setzen wenn neu in den jeweiligen Terminal-
-          // Status; nicht zurücksetzen wenn der Deal von "gewonnen" zurück
-          // gezogen wird (dann steht's halt nicht mehr in der DB exakt
-          // konsistent — ist der seltenere Fall, später ggf. fixen).
-          ...(isWon && !existing?.wonAt ? { wonAt: new Date() } : {}),
-          ...(isLost && !existing?.lostAt ? { lostAt: new Date() } : {}),
+          // Status ist Source-of-Truth: wonAt/lostAt reflektieren NUR
+          // den aktuellen Terminal-Zustand. Bewegt sich ein Deal aus
+          // Serienbetrieb/Verloren wieder zurück, werden die Felder
+          // geleert — sonst zählen die KPIs den Deal weiter als gewonnen
+          // bzw. der Filter "Nur aktiv" versteckt ihn fälschlich.
+          // Erste Entry-Zeit bleibt erhalten (existing ?? new Date()).
+          wonAt: isWon ? (existing?.wonAt ?? new Date()) : null,
+          lostAt: isLost ? (existing?.lostAt ?? new Date()) : null,
           rawFields: rec.fields as object,
         },
         select: { id: true, status: true },

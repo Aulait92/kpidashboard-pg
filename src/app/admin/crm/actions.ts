@@ -75,13 +75,18 @@ export async function setDealStatusAction(
   }
 
   // 2) DB-Spiegel + Activity-Log.
+  // Status ist Source-of-Truth: wonAt/lostAt reflektieren NUR den
+  // aktuellen Terminal-Zustand. Bewegt sich ein Deal aus Serienbetrieb
+  // wieder zurück (z. B. Testlauf), wird wonAt geleert. Erste Entry-
+  // Zeit in den Terminal-Status bleibt erhalten (deal.wonAt ?? now),
+  // damit Cycle-Time-Kennzahlen stabil bleiben.
   await prisma.$transaction([
     prisma.deal.update({
       where: { id: deal.id },
       data: {
         status,
-        ...(isWon && !deal.wonAt ? { wonAt: new Date() } : {}),
-        ...(isLost && !deal.lostAt ? { lostAt: new Date() } : {}),
+        wonAt: isWon ? (deal.wonAt ?? new Date()) : null,
+        lostAt: isLost ? (deal.lostAt ?? new Date()) : null,
         ...(lostReasonNorm !== undefined ? { lostReason: lostReasonNorm } : {}),
       },
     }),
