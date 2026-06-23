@@ -14,15 +14,13 @@ async function requireAdmin() {
   return session;
 }
 
-// Pipeline-Drag: setzt den Status eines Deals + spiegelt wonAt/lostAt für
-// die KPI-Berechnungen + loggt einen status_change-Activity-Eintrag.
+// Pipeline-Drag: setzt den Status eines Deals + schreibt zurück nach
+// Airtable (Source-of-Truth) + spiegelt wonAt/lostAt für die KPI-
+// Berechnungen + loggt einen status_change-Activity-Eintrag.
 //
-// Hinweis: schreibt vorerst NICHT zurück nach Airtable — der Sales-
-// Workflow läuft umgekehrt (Airtable ist Source-of-Truth, wir spiegeln).
-// Wenn der Sync läuft, wird der Status vom nächsten Lauf konsolidiert
-// (Konflikt-Auflösung: Airtable gewinnt). Für Schreib-Back müssten wir
-// den Sales-Base-PAT um write-Scope erweitern und einen Sales-Airtable-
-// Write-Helper bauen — kann im nächsten Schritt folgen.
+// Reihenfolge: erst Airtable, dann DB. Schlägt der Airtable-PATCH fehl,
+// passieren KEINE DB-Änderungen — Drift zwischen Dashboard und Airtable
+// ist die schlimmere Variante als ein nicht-verschobener Lead.
 export async function setDealStatusAction(
   dealId: string,
   status: string,
@@ -30,7 +28,13 @@ export async function setDealStatusAction(
   const session = await requireAdmin();
   const deal = await prisma.deal.findUnique({
     where: { id: dealId },
-    select: { id: true, status: true, wonAt: true, lostAt: true },
+    select: {
+      id: true,
+      airtableId: true,
+      status: true,
+      wonAt: true,
+      lostAt: true,
+    },
   });
   if (!deal) return { ok: false, error: "Deal nicht gefunden." };
 
@@ -38,6 +42,26 @@ export async function setDealStatusAction(
   const isWon = phase?.terminal === "won";
   const isLost = phase?.terminal === "lost";
 
+  // 1) Airtable-PATCH zuerst. Ohne airtableId (= Deal nur lokal angelegt)
+  //    überspringen.
+  if (deal.airtableId) {
+    try {
+      await updateSalesDeal({
+        airtableId: deal.airtableId,
+        status,
+      });
+    } catch (err) {
+      return {
+        ok: false,
+        error:
+          err instanceof Error
+            ? `Airtable-Update: ${err.message}`
+            : "Airtable-Update fehlgeschlagen.",
+      };
+    }
+  }
+
+  // 2) DB-Spiegel + Activity-Log.
   await prisma.$transaction([
     prisma.deal.update({
       where: { id: deal.id },
