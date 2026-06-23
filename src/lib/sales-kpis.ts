@@ -74,7 +74,10 @@ export type SalesKpis = {
   };
 };
 
-export async function computeSalesKpis(now: Date = new Date()): Promise<SalesKpis> {
+export async function computeSalesKpis(
+  now: Date = new Date(),
+  opts?: { range?: { from: Date; to: Date } },
+): Promise<SalesKpis> {
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
   const mtdEnd = endOfDay(now);
@@ -82,7 +85,15 @@ export async function computeSalesKpis(now: Date = new Date()): Promise<SalesKpi
   const prevStart = startOfMonth(prevDate);
   const prevEnd = endOfMonth(prevDate);
 
+  // Range-Filter wirkt auf alle Pipeline-/Performance-Kennzahlen:
+  // wir betrachten nur Deals, die im gewählten Zeitraum erstellt
+  // wurden. Forecast (Hochrechnung) bleibt monatlich-frei davon, weil
+  // er MTD vs Vormonat vergleicht.
+  const dealsWhere = opts?.range
+    ? { createdAt: { gte: opts.range.from, lte: opts.range.to } }
+    : {};
   const deals = await prisma.deal.findMany({
+    where: dealsWhere,
     select: {
       id: true,
       value: true,
@@ -193,13 +204,27 @@ export async function computeSalesKpis(now: Date = new Date()): Promise<SalesKpi
     .sort((a, b) => b.count - a.count);
 
   // ─── Forecast (monatlich) ──────────────────────────────────────────
-  const newMtd = deals.filter(
+  // Forecast soll IMMER auf voller Datenmenge laufen (MTD vs. Vormonat),
+  // unabhängig vom Range-Filter oben. Separater Query für nur die zwei
+  // relevanten Monate.
+  const forecastDeals = opts?.range
+    ? await prisma.deal.findMany({
+        where: {
+          OR: [
+            { createdAt: { gte: prevStart, lte: mtdEnd } },
+            { wonAt: { gte: prevStart, lte: mtdEnd } },
+          ],
+        },
+        select: { value: true, createdAt: true, wonAt: true },
+      })
+    : deals;
+  const newMtd = forecastDeals.filter(
     (d) => d.createdAt >= monthStart && d.createdAt <= mtdEnd,
   ).length;
-  const newPrev = deals.filter(
+  const newPrev = forecastDeals.filter(
     (d) => d.createdAt >= prevStart && d.createdAt <= prevEnd,
   ).length;
-  const wonMtd = deals.filter(
+  const wonMtd = forecastDeals.filter(
     (d) => d.wonAt != null && d.wonAt >= monthStart && d.wonAt <= mtdEnd,
   );
   const wonMtdCount = wonMtd.length;
@@ -207,7 +232,7 @@ export async function computeSalesKpis(now: Date = new Date()): Promise<SalesKpi
     (s, d) => s + (d.value != null ? Number(d.value) : 0),
     0,
   );
-  const wonPrev = deals.filter(
+  const wonPrev = forecastDeals.filter(
     (d) => d.wonAt != null && d.wonAt >= prevStart && d.wonAt <= prevEnd,
   );
   const wonPrevCount = wonPrev.length;

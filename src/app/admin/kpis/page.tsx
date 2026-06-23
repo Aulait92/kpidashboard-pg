@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import { AdminTabs } from "@/components/admin-tabs";
+import { BuyerFilterBar } from "@/components/buyer-filter-bar";
 import { KpiCard } from "@/components/kpi-card";
 import { getCurrentSession } from "@/lib/auth";
-import { formatEUR, formatNumber, formatPercent } from "@/lib/format";
+import { parseRangeFromSearchParams } from "@/lib/date-ranges";
+import { formatDate, formatEUR, formatNumber, formatPercent } from "@/lib/format";
 import { computeSalesKpis } from "@/lib/sales-kpis";
 
 export const dynamic = "force-dynamic";
@@ -11,23 +13,45 @@ export const metadata = {
   title: "Sales-KPIs | KPI-Dashboard",
 };
 
-export default async function AdminKpisPage() {
+type SearchParams = Promise<{
+  range?: string;
+  from?: string;
+  to?: string;
+}>;
+
+export default async function AdminKpisPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   const session = await getCurrentSession();
   if (!session || session.role !== "ADMIN") {
     redirect("/login");
   }
 
-  const k = await computeSalesKpis();
+  const sp = await searchParams;
+  const { key: rangeKey, range } = parseRangeFromSearchParams(sp);
+  const k = await computeSalesKpis(new Date(), { range });
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <header>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Sales-KPIs
-        </h1>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">
-          Performance unserer eigenen Pipeline (CRM → Deal-Pipeline).
-        </p>
+      <header className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Sales-KPIs
+          </h1>
+          <p className="mt-1 text-sm text-[color:var(--muted)]">
+            Performance unserer eigenen Pipeline (CRM → Deal-Pipeline) —
+            Pipeline + Performance gefiltert auf Deals, die im Zeitraum
+            erstellt wurden ({formatDate(range.from)} – {formatDate(range.to)}).
+            Hochrechnung bleibt unabhängig vom Filter monatlich.
+          </p>
+        </div>
+        <BuyerFilterBar
+          currentRange={rangeKey}
+          customFrom={sp.from}
+          customTo={sp.to}
+        />
       </header>
 
       <AdminTabs />
