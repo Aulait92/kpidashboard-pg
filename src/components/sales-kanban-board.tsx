@@ -422,18 +422,13 @@ function DealCard({
           {deal.company}
         </div>
       ) : null}
-      <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] text-[color:var(--muted)]">
-        <span className="truncate">
-          {deal.nextActivityAt ? "Nächste" : "Eingegangen"}
-        </span>
+      <div className="mt-1.5 flex justify-end text-[11px] text-[color:var(--muted)]">
         {deal.nextActivityAt ? (
-          <span className="shrink-0 rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-blue-800">
+          <span className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-blue-800">
             {formatDate(deal.nextActivityAt)}
           </span>
         ) : (
-          <span className="shrink-0 tabular-nums">
-            {formatDate(deal.createdAt)}
-          </span>
+          <span className="tabular-nums">{formatDate(deal.createdAt)}</span>
         )}
       </div>
       {deal.value != null && deal.value > 0 ? (
