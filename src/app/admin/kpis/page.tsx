@@ -65,7 +65,7 @@ export default async function AdminKpisPage() {
           </Section>
 
           <Section title="Performance">
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
               <KpiCard
                 label="Serienbetrieb"
                 value={formatNumber(k.wonCount)}
@@ -82,6 +82,11 @@ export default async function AdminKpisPage() {
                 label="Win-Rate"
                 value={formatPercent(k.winRate)}
                 hint={`${k.wonCount} von ${k.wonCount + k.lostCount} entschieden`}
+              />
+              <KpiCard
+                label="Erreichbarkeitsquote"
+                value={formatPercent(k.reachabilityRate)}
+                hint={`${k.reachedCount} von ${k.totalDeals} erreicht`}
               />
               <KpiCard
                 label="Ø Cycle Time"

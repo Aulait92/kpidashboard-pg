@@ -76,3 +76,29 @@ export async function updateSalesDeal(opts: {
     throw new Error(`Airtable Sales PATCH ${res.status}: ${body}`);
   }
 }
+
+// Löscht den Deal-Record in Airtable. Wirft bei Fehler — der Caller
+// (Server Action) entscheidet, ob er trotzdem die DB-Zeile entfernt.
+// 404 ist OK (Record gibt's in Airtable schon nicht mehr).
+export async function deleteSalesDeal(opts: {
+  airtableId: string;
+}): Promise<void> {
+  const env = getEnv();
+  if (!env) {
+    console.warn(
+      "[sales-write] AIRTABLE_SALES_BASE_ID nicht gesetzt — Skip Airtable-Delete, nur DB.",
+    );
+    return;
+  }
+  const url = `https://api.airtable.com/v0/${env.baseId}/${encodeURIComponent(SALES_TABLE)}/${opts.airtableId}`;
+  const res = await fetch(url, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${env.token}` },
+    cache: "no-store",
+  });
+  if (res.status === 404) return; // schon weg, alles gut
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Airtable Sales DELETE ${res.status}: ${body}`);
+  }
+}

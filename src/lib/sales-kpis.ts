@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import {
   SALES_PIPELINE_PHASES,
   findSalesPhaseForStatus,
+  isReachedStatus,
   winProbabilityFor,
 } from "@/lib/sales-phases";
 
@@ -59,6 +60,8 @@ export type SalesKpis = {
   wonValue: number;
   avgDealValue: number | null;
   winRate: number | null;
+  reachedCount: number;
+  reachabilityRate: number | null;
   avgCycleTimeDays: number | null;
   salesVelocityPerDay: number | null;
   phaseStats: SalesPhaseStats[];
@@ -99,6 +102,7 @@ export async function computeSalesKpis(now: Date = new Date()): Promise<SalesKpi
   let pipelineDeals = 0;
   let totalDealValue = 0;
   let totalDealValueCount = 0;
+  let reachedCount = 0;
   const cycleTimes: number[] = [];
 
   // Phase aggregieren.
@@ -120,6 +124,7 @@ export async function computeSalesKpis(now: Date = new Date()): Promise<SalesKpi
     const phase = findSalesPhaseForStatus(d.status);
     const isWon = phase?.terminal === "won" || d.wonAt != null;
     const isLost = phase?.terminal === "lost" || d.lostAt != null;
+    if (isReachedStatus(d.status)) reachedCount += 1;
 
     if (isWon) {
       wonCount += 1;
@@ -235,6 +240,8 @@ export async function computeSalesKpis(now: Date = new Date()): Promise<SalesKpi
     wonValue,
     avgDealValue,
     winRate,
+    reachedCount,
+    reachabilityRate: deals.length > 0 ? reachedCount / deals.length : null,
     avgCycleTimeDays: avgCycleTime,
     salesVelocityPerDay: salesVelocity,
     phaseStats,

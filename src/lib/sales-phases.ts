@@ -142,6 +142,23 @@ export function winProbabilityFor(status: string | null | undefined): number {
   return findSalesPhaseForStatus(status)?.winProbability ?? 0.1;
 }
 
+// Phasen, in denen ein Lead noch NICHT als erreicht zählt. Alles ab
+// "Setter-Call vereinbart" gilt als erreicht — wir hatten Kontakt, auch
+// wenn der Deal dann später verloren geht.
+const NOT_REACHED_PHASE_KEYS: ReadonlySet<string> = new Set([
+  "neuer-lead",
+  "nicht-erreicht",
+  "wiedervorlage",
+]);
+
+export function isReachedStatus(
+  status: string | null | undefined,
+): boolean {
+  const phase = findSalesPhaseForStatus(status);
+  if (!phase) return false;
+  return !NOT_REACHED_PHASE_KEYS.has(phase.key);
+}
+
 // Priorität-Score: gewichteter Deal-Wert × Urgency-Boost. Boost
 // kommt aus dem zeitlichen Abstand zur nächsten geplanten Aktivität —
 // Deals, die heute / diese Woche dran sind, springen nach oben.

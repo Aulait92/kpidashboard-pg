@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { updateSalesDeal } from "@/lib/airtable-sales-write";
+import { redirect } from "next/navigation";
+import { deleteSalesDeal, updateSalesDeal } from "@/lib/airtable-sales-write";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { findSalesPhaseForStatus } from "@/lib/sales-phases";
@@ -335,6 +336,36 @@ function optionalString(formData: FormData, key: string): string | null | undefi
   if (!formData.has(key)) return undefined;
   const v = String(formData.get(key) ?? "").trim();
   return v === "" ? null : v;
+}
+
+// Löscht einen Deal aus Airtable + DB. Reihenfolge: erst Airtable
+// (Source-of-Truth), dann DB. Wenn Airtable-DELETE fehlschlägt, wird
+// die DB nicht angefasst, damit kein "leeres" Loch im Dashboard
+// entsteht. Cascading-Delete in Prisma räumt die Activities mit weg.
+export async function deleteDealAction(formData: FormData) {
+  await requireAdmin();
+  const dealId = String(formData.get("dealId") ?? "");
+  if (!dealId) return;
+  const deal = await prisma.deal.findUnique({
+    where: { id: dealId },
+    select: { id: true, airtableId: true },
+  });
+  if (!deal) return;
+
+  if (deal.airtableId) {
+    try {
+      await deleteSalesDeal({ airtableId: deal.airtableId });
+    } catch (err) {
+      // Fehler an die Logs — server actions können keine struktuierten
+      // Fehler an einen redirect-Aufrufer zurückgeben.
+      console.error("[crm] deleteDealAction Airtable-DELETE:", err);
+      throw err;
+    }
+  }
+  await prisma.deal.delete({ where: { id: deal.id } });
+  revalidatePath("/admin/crm");
+  revalidatePath("/admin/kpis");
+  redirect("/admin/crm");
 }
 
 export async function deleteDealActivityAction(formData: FormData) {

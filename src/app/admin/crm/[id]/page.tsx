@@ -6,6 +6,7 @@ import {
   type ActivityItem,
 } from "@/components/deal-activity-timeline";
 import { DealEditForm } from "@/components/deal-edit-form";
+import { DeleteDealButton } from "@/components/delete-deal-button";
 import { getCurrentSession } from "@/lib/auth";
 import { formatDate, formatEUR } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -139,11 +140,14 @@ export default async function AdminDealDetailPage({
             Erstellt {formatDate(deal.createdAt)}
           </p>
         </div>
-        {deal.value != null ? (
-          <span className="inline-flex items-center self-start rounded-md bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-800">
-            {formatEUR(Number(deal.value))}
-          </span>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2 self-start">
+          {deal.value != null ? (
+            <span className="inline-flex items-center rounded-md bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-800">
+              {formatEUR(Number(deal.value))}
+            </span>
+          ) : null}
+          <DeleteDealButton dealId={deal.id} dealName={deal.name} />
+        </div>
       </header>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.4fr]">
