@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { X } from "lucide-react";
 import { setDealStatusAction } from "@/app/admin/crm/actions";
 import { SALES_PIPELINE_PHASES, type SalesPhase } from "@/lib/sales-phases";
 import { formatDate, formatEUR } from "@/lib/format";
@@ -38,11 +39,40 @@ export function SalesKanbanBoard({ deals: initialDeals }: { deals: KanbanDeal[] 
   const [deals, setDeals] = useState<KanbanDeal[]>(initialDeals);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+  const [lostDialog, setLostDialog] = useState<{
+    dealId: string;
+    dealName: string | null;
+    nextStatus: string;
+  } | null>(null);
   const [, startTransition] = useTransition();
   const didDrag = useRef(false);
 
   const buckets = bucketize(deals);
   const sonstige = buckets.get(SONSTIGE_KEY) ?? [];
+
+  function commitStatus(
+    dealId: string,
+    nextStatus: string,
+    lostReason?: string,
+  ) {
+    const before = deals;
+    setDeals((prev) =>
+      prev.map((d) => (d.id === dealId ? { ...d, status: nextStatus } : d)),
+    );
+    startTransition(async () => {
+      const res = await setDealStatusAction(
+        dealId,
+        nextStatus,
+        lostReason !== undefined ? { lostReason } : undefined,
+      );
+      if (!res.ok) {
+        setDeals(before);
+        alert(`Status konnte nicht gesetzt werden: ${res.error}`);
+      } else {
+        router.refresh();
+      }
+    });
+  }
 
   function handleDrop(targetPhase: SalesPhase) {
     const id = dragId;
@@ -56,19 +86,19 @@ export function SalesKanbanBoard({ deals: initialDeals }: { deals: KanbanDeal[] 
       return;
     }
     const nextStatus = targetPhase.defaultStatus;
-    const before = deals;
-    setDeals((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, status: nextStatus } : d)),
-    );
-    startTransition(async () => {
-      const res = await setDealStatusAction(id, nextStatus);
-      if (!res.ok) {
-        setDeals(before);
-        alert(`Status konnte nicht gesetzt werden: ${res.error}`);
-      } else {
-        router.refresh();
-      }
-    });
+
+    // Spezial-Flow für Verloren: erst Dialog mit dem Verlustgrund, dann
+    // die Status-Action feuern. Cancel = kein Status-Change.
+    if (targetPhase.terminal === "lost") {
+      setLostDialog({
+        dealId: id,
+        dealName: deal.name,
+        nextStatus,
+      });
+      return;
+    }
+
+    commitStatus(id, nextStatus);
   }
 
   if (deals.length === 0) {
@@ -189,7 +219,110 @@ export function SalesKanbanBoard({ deals: initialDeals }: { deals: KanbanDeal[] 
           </KanbanColumn>
         ) : null}
       </div>
+      {lostDialog ? (
+        <LostReasonDialog
+          dealName={lostDialog.dealName}
+          onCancel={() => setLostDialog(null)}
+          onConfirm={(reason) => {
+            const d = lostDialog;
+            setLostDialog(null);
+            commitStatus(d.dealId, d.nextStatus, reason);
+          }}
+        />
+      ) : null}
     </div>
+  );
+}
+
+function LostReasonDialog({
+  dealName,
+  onCancel,
+  onConfirm,
+}: {
+  dealName: string | null;
+  onCancel: () => void;
+  onConfirm: (reason: string) => void;
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [reason, setReason] = useState("");
+  useEffect(() => {
+    const d = dialogRef.current;
+    if (d && !d.open) d.showModal();
+  }, []);
+
+  const valid = reason.trim().length >= 3;
+
+  return (
+    <dialog
+      ref={dialogRef}
+      onClose={onCancel}
+      onClick={(e) => {
+        if (e.target === dialogRef.current) onCancel();
+      }}
+      className="m-auto w-full max-w-md rounded-2xl border border-[color:var(--border)] bg-white p-0 shadow-[0_20px_50px_-20px_rgba(15,23,42,0.4)] backdrop:bg-slate-900/40"
+    >
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!valid) return;
+          onConfirm(reason.trim());
+        }}
+        className="flex flex-col"
+      >
+        <header className="flex items-start justify-between border-b border-[color:var(--border)] px-5 py-4">
+          <div>
+            <h3 className="text-base font-semibold">Deal verloren</h3>
+            <p className="mt-0.5 text-xs text-[color:var(--muted)]">
+              {dealName ?? "Unbekannter Deal"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onCancel}
+            aria-label="Schließen"
+            className="rounded-md p-1 text-[color:var(--muted)] transition hover:bg-zinc-100"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </header>
+        <div className="space-y-4 px-5 py-4">
+          <label className="block">
+            <span className="text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
+              Verlustgrund (Pflicht)
+            </span>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              required
+              rows={4}
+              autoFocus
+              placeholder="z. B. Preis zu hoch, kein Budget, anderer Anbieter, kein Bedarf …"
+              className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
+            />
+            <p className="mt-1 text-[11px] text-[color:var(--muted)]">
+              Wird als „Verlustgrund" nach Airtable geschrieben und im
+              Lost-Reasons-Block der KPI-Page aggregiert.
+            </p>
+          </label>
+        </div>
+        <footer className="flex items-center justify-end gap-2 border-t border-[color:var(--border)] bg-zinc-50 px-5 py-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-md px-3 py-1.5 text-sm font-medium text-[color:var(--muted)] transition hover:bg-zinc-100"
+          >
+            Abbrechen
+          </button>
+          <button
+            type="submit"
+            disabled={!valid}
+            className="inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:opacity-60"
+          >
+            Verloren markieren
+          </button>
+        </footer>
+      </form>
+    </dialog>
   );
 }
 

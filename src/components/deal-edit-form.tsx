@@ -136,9 +136,9 @@ const INPUT_CLS =
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-1 gap-1 px-5 py-3 sm:grid-cols-[140px_1fr] sm:items-start sm:gap-4">
+    <div className="grid grid-cols-1 gap-1 px-5 py-3 sm:grid-cols-[140px_minmax(0,1fr)] sm:items-start sm:gap-4">
       <dt className="pt-2 text-sm text-[color:var(--muted)]">{label}</dt>
-      <dd>{children}</dd>
+      <dd className="min-w-0">{children}</dd>
     </div>
   );
 }

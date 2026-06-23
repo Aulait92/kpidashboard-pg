@@ -218,7 +218,7 @@ function DealFactsCard({
         {deal.notes ? (
           <div className="px-5 py-3">
             <div className="text-xs text-[color:var(--muted)]">Notizen</div>
-            <p className="mt-1 whitespace-pre-wrap text-sm">{deal.notes}</p>
+            <p className="mt-1 whitespace-pre-wrap break-words text-sm">{deal.notes}</p>
           </div>
         ) : null}
         {extraRows.length > 0 ? (
@@ -238,9 +238,9 @@ function DealFactsCard({
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="grid grid-cols-1 gap-1 px-5 py-3 sm:grid-cols-[140px_1fr] sm:gap-4">
+    <div className="grid grid-cols-1 gap-1 px-5 py-3 sm:grid-cols-[140px_minmax(0,1fr)] sm:gap-4">
       <dt className="text-sm text-[color:var(--muted)]">{label}</dt>
-      <dd className="text-sm font-medium text-[color:var(--foreground)] break-words">
+      <dd className="min-w-0 whitespace-pre-wrap break-words text-sm font-medium text-[color:var(--foreground)]">
         {value}
       </dd>
     </div>

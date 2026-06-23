@@ -24,6 +24,7 @@ async function requireAdmin() {
 export async function setDealStatusAction(
   dealId: string,
   status: string,
+  opts?: { lostReason?: string | null },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const session = await requireAdmin();
   const deal = await prisma.deal.findUnique({
@@ -42,6 +43,15 @@ export async function setDealStatusAction(
   const isWon = phase?.terminal === "won";
   const isLost = phase?.terminal === "lost";
 
+  // Lost-Reason wird nur bei terminal-lost-Phasen geschrieben (sonst hat
+  // er keine Bedeutung); leerer String → null = Feld leeren.
+  const lostReasonNorm =
+    isLost && opts?.lostReason !== undefined
+      ? opts.lostReason && opts.lostReason.trim() !== ""
+        ? opts.lostReason.trim()
+        : null
+      : undefined;
+
   // 1) Airtable-PATCH zuerst. Ohne airtableId (= Deal nur lokal angelegt)
   //    überspringen.
   if (deal.airtableId) {
@@ -49,6 +59,9 @@ export async function setDealStatusAction(
       await updateSalesDeal({
         airtableId: deal.airtableId,
         status,
+        ...(lostReasonNorm !== undefined
+          ? { lostReason: lostReasonNorm }
+          : {}),
       });
     } catch (err) {
       return {
@@ -69,6 +82,7 @@ export async function setDealStatusAction(
         status,
         ...(isWon && !deal.wonAt ? { wonAt: new Date() } : {}),
         ...(isLost && !deal.lostAt ? { lostAt: new Date() } : {}),
+        ...(lostReasonNorm !== undefined ? { lostReason: lostReasonNorm } : {}),
       },
     }),
     ...(deal.status !== status
