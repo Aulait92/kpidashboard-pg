@@ -76,6 +76,14 @@ export const SALES_PIPELINE_PHASES: readonly SalesPhase[] = [
     accent: "border-t-blue-600",
   },
   {
+    key: "testlauf",
+    label: "Testlauf",
+    statuses: ["Testlauf", "Pilot", "Trial"],
+    defaultStatus: "Testlauf",
+    winProbability: 0.9,
+    accent: "border-t-violet-500",
+  },
+  {
     key: "gewonnen",
     label: "Gewonnen",
     statuses: ["Gewonnen", "Won", "Closed Won"],
