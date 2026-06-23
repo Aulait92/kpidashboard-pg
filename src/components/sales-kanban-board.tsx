@@ -274,23 +274,19 @@ function DealCard({
         dragging && "opacity-50",
       )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="font-medium text-[color:var(--foreground)] break-words">
-            {deal.name ?? <span className="text-[color:var(--muted)]">unbenannt</span>}
-          </div>
-          {deal.company ? (
-            <div className="text-[11px] text-[color:var(--muted)] truncate">
-              {deal.company}
-            </div>
-          ) : null}
-        </div>
-        {badge ? (
-          <span className="shrink-0 rounded-full bg-[color:var(--brand-soft)]/60 px-1.5 py-0.5 text-[10px] font-semibold text-[color:var(--brand-dark)]">
-            {badge}
-          </span>
-        ) : null}
+      <div className="font-medium text-[color:var(--foreground)] break-words">
+        {deal.name ?? <span className="text-[color:var(--muted)]">unbenannt</span>}
       </div>
+      {badge ? (
+        <span className="mt-1 inline-flex max-w-full rounded-full bg-[color:var(--brand-soft)]/60 px-1.5 py-0.5 text-[10px] font-semibold text-[color:var(--brand-dark)] break-words">
+          {badge}
+        </span>
+      ) : null}
+      {deal.company ? (
+        <div className="mt-0.5 text-[11px] text-[color:var(--muted)] truncate">
+          {deal.company}
+        </div>
+      ) : null}
       <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] text-[color:var(--muted)]">
         <span className="truncate">
           {deal.lastActivityAt ? "Aktiv" : "Eingegangen"}
