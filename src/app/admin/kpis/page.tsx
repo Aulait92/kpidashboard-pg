@@ -67,7 +67,7 @@ export default async function AdminKpisPage() {
           <Section title="Performance">
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
               <KpiCard
-                label="Gewonnen"
+                label="Serienbetrieb"
                 value={formatNumber(k.wonCount)}
                 tone="positive"
                 hint={formatEUR(k.wonValue)}
@@ -90,7 +90,7 @@ export default async function AdminKpisPage() {
                     ? `${Math.round(k.avgCycleTimeDays)} Tage`
                     : "—"
                 }
-                hint="Erstellung → Gewonnen"
+                hint="Erstellung → Serienbetrieb"
               />
             </div>
             <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -104,9 +104,9 @@ export default async function AdminKpisPage() {
                 hint="(Qualified-Deals × Ø-Wert × Win-Rate) / Cycle-Time"
               />
               <KpiCard
-                label="Umsatz aus Won (gesamt)"
+                label="Umsatz aus Serienbetrieb (gesamt)"
                 value={formatEUR(k.wonValue)}
-                hint={`${formatNumber(k.wonCount)} Abschlüsse`}
+                hint={`${formatNumber(k.wonCount)} im Serienbetrieb`}
               />
             </div>
           </Section>

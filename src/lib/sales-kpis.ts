@@ -252,14 +252,14 @@ export async function computeSalesKpis(now: Date = new Date()): Promise<SalesKpi
           format: "number",
         },
         {
-          label: "Abschlüsse",
+          label: "Serienbetrieb",
           mtd: wonMtdCount,
           projected: project(wonMtdCount),
           previousFull: wonPrevCount,
           format: "number",
         },
         {
-          label: "Umsatz (Won)",
+          label: "Umsatz (Serienbetrieb)",
           mtd: wonMtdValue,
           projected: project(wonMtdValue, false),
           previousFull: wonPrevValue,

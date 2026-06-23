@@ -194,7 +194,7 @@ function DealFactsCard({
       label: "Abschluss-Datum",
       value: deal.closeDate ? formatDate(deal.closeDate) : null,
     },
-    { label: "Gewonnen", value: deal.wonAt ? formatDate(deal.wonAt) : null },
+    { label: "Serienbetrieb seit", value: deal.wonAt ? formatDate(deal.wonAt) : null },
     { label: "Verloren", value: deal.lostAt ? formatDate(deal.lostAt) : null },
     { label: "Verlustgrund", value: deal.lostReason },
   ];
