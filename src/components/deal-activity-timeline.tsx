@@ -22,6 +22,7 @@ export type ActivityItem = {
   kind: string;
   title: string;
   body: string | null;
+  scheduledFor: Date | null;
   createdAt: Date;
   createdBy: { email: string } | null;
 };
@@ -121,6 +122,17 @@ function CreateActivityForm({ dealId }: { dealId: string }) {
         placeholder="Optionale Details, Zusammenfassung, Next Steps …"
         className="w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
       />
+      <label className="block">
+        <span className="text-[11px] font-medium uppercase tracking-wide text-[color:var(--muted)]">
+          Geplant für (optional) — zeigt die Karte im Pipeline-Board als
+          nächste Aktivität
+        </span>
+        <input
+          type="datetime-local"
+          name="scheduledFor"
+          className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
+        />
+      </label>
       <div className="flex items-center justify-between gap-3">
         {state.error ? (
           <span className="text-xs font-medium text-rose-700">{state.error}</span>
@@ -166,8 +178,14 @@ function ActivityRow({
           </div>
         </div>
         {activity.body ? (
-          <p className="mt-0.5 whitespace-pre-wrap text-sm text-[color:var(--muted)]">
+          <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-[color:var(--muted)]">
             {activity.body}
+          </p>
+        ) : null}
+        {activity.scheduledFor ? (
+          <p className="mt-1 inline-flex items-center gap-1 rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-medium text-blue-800">
+            <CalendarPlus className="h-3 w-3" />
+            geplant für {formatDate(activity.scheduledFor)}
           </p>
         ) : null}
         <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-[color:var(--muted)]">

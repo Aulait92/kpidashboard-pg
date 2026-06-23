@@ -130,12 +130,25 @@ export async function createDealActivityAction(
   const kindRaw = String(formData.get("kind") ?? "note").trim();
   const title = String(formData.get("title") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
+  const scheduledRaw = String(formData.get("scheduledFor") ?? "").trim();
 
   if (!dealId) return { error: "Deal fehlt." };
   if (!isValidActivityKind(kindRaw))
     return { error: `Ungültiger Aktivitätstyp: ${kindRaw}` };
   if (title.length < 2)
     return { error: "Titel zu kurz (min. 2 Zeichen)." };
+
+  // scheduledFor: datetime-local-Input liefert "YYYY-MM-DDTHH:mm". Wir
+  // parsen als lokale Browser-Zeit (= das was der Admin meint). Leer →
+  // null = keine Planung.
+  let scheduledFor: Date | null = null;
+  if (scheduledRaw !== "") {
+    const d = new Date(scheduledRaw);
+    if (Number.isNaN(d.getTime())) {
+      return { error: "Geplant für: ungültiges Datum/Zeit." };
+    }
+    scheduledFor = d;
+  }
 
   const deal = await prisma.deal.findUnique({
     where: { id: dealId },
@@ -149,10 +162,12 @@ export async function createDealActivityAction(
       kind: kindRaw,
       title,
       body: body || null,
+      scheduledFor,
       createdById: session.userId,
     },
   });
 
+  revalidatePath("/admin/crm");
   revalidatePath(`/admin/crm/${dealId}`);
   return { ok: true };
 }

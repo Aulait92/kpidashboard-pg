@@ -49,6 +49,9 @@ export default async function AdminCrmPage({
     ...(includeClosed ? {} : { AND: [{ wonAt: null }, { lostAt: null }] }),
   };
 
+  // Nächste anstehende Activity je Deal: scheduledFor > jetzt, das
+  // früheste in der Zukunft. Wird auf der Card als "📅 Datum" gezeigt.
+  const now = new Date();
   const rows = await prisma.deal.findMany({
     where,
     orderBy: { updatedAt: "desc" },
@@ -61,9 +64,10 @@ export default async function AdminCrmPage({
       status: true,
       createdAt: true,
       activities: {
-        orderBy: { createdAt: "desc" },
+        where: { scheduledFor: { gt: now } },
+        orderBy: { scheduledFor: "asc" },
         take: 1,
-        select: { createdAt: true },
+        select: { scheduledFor: true },
       },
     },
   });
@@ -75,7 +79,7 @@ export default async function AdminCrmPage({
     value: d.value != null ? Number(d.value) : null,
     status: d.status,
     createdAt: d.createdAt,
-    lastActivityAt: d.activities[0]?.createdAt ?? null,
+    nextActivityAt: d.activities[0]?.scheduledFor ?? null,
   }));
 
   // React-Key fürs Kanban-Board: bei Filter-Wechsel remounten, damit der

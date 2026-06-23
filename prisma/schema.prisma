@@ -63,6 +63,11 @@ model DealActivity {
   kind        String
   title       String
   body        String?
+  // Optionaler Planungs-Zeitpunkt für zukünftige Aktivitäten
+  // (Wiedervorlage, Termin, Folge-Anruf …). Wenn gesetzt, zeigt die
+  // CRM-Kanban-Card die nächste anstehende Aktivität statt des letzten
+  // Updates. createdAt bleibt der reine Anlage-Zeitpunkt.
+  scheduledFor DateTime?
   // Zusatzdaten je Kind (z. B. {fromStatus, toStatus} bei status_change).
   metadata    Json?
   createdAt   DateTime @default(now())
@@ -70,6 +75,7 @@ model DealActivity {
   createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([dealId, createdAt])
+  @@index([dealId, scheduledFor])
 }
 
 model Customer {

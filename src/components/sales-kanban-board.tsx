@@ -14,7 +14,9 @@ export type KanbanDeal = {
   company: string | null;
   value: number | null;
   status: string | null;
-  lastActivityAt: Date | null;
+  // Datum der nächsten geplanten Activity (scheduledFor > jetzt).
+  // null = keine Folge-Aktivität geplant.
+  nextActivityAt: Date | null;
   createdAt: Date;
 };
 
@@ -422,11 +424,11 @@ function DealCard({
       ) : null}
       <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] text-[color:var(--muted)]">
         <span className="truncate">
-          {deal.lastActivityAt ? "Aktiv" : "Eingegangen"}
+          {deal.nextActivityAt ? "Nächste" : "Eingegangen"}
         </span>
         <span className="shrink-0 tabular-nums">
-          {deal.lastActivityAt
-            ? formatDate(deal.lastActivityAt)
+          {deal.nextActivityAt
+            ? formatDate(deal.nextActivityAt)
             : formatDate(deal.createdAt)}
         </span>
       </div>
