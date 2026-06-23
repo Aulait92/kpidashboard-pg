@@ -59,7 +59,7 @@ export default async function AdminCrmPage({
   const rows = await prisma.deal.findMany({
     where,
     orderBy: { updatedAt: "desc" },
-    take: 500,
+    take: 2000,
     select: {
       id: true,
       name: true,
