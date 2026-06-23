@@ -142,13 +142,12 @@ export function winProbabilityFor(status: string | null | undefined): number {
   return findSalesPhaseForStatus(status)?.winProbability ?? 0.1;
 }
 
-// Phasen, in denen ein Lead noch NICHT als erreicht zählt. Alles ab
-// "Setter-Call vereinbart" gilt als erreicht — wir hatten Kontakt, auch
-// wenn der Deal dann später verloren geht.
+// Phasen, in denen ein Lead noch NICHT als erreicht zählt. Wiedervorlage
+// zählt als erreicht — Voraussetzung für eine Wiedervorlage ist, dass
+// wir den Lead vorher mal an der Strippe hatten.
 const NOT_REACHED_PHASE_KEYS: ReadonlySet<string> = new Set([
   "neuer-lead",
   "nicht-erreicht",
-  "wiedervorlage",
 ]);
 
 export function isReachedStatus(
