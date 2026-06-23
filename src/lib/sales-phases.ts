@@ -31,6 +31,14 @@ export const SALES_PIPELINE_PHASES: readonly SalesPhase[] = [
     accent: "border-t-zinc-400",
   },
   {
+    key: "nicht-erreicht",
+    label: "Nicht erreicht",
+    statuses: ["Nicht erreicht", "Not reached"],
+    defaultStatus: "Nicht erreicht",
+    winProbability: 0.1,
+    accent: "border-t-orange-400",
+  },
+  {
     key: "setter-call-vereinbart",
     label: "Setter-Call vereinbart",
     statuses: [
