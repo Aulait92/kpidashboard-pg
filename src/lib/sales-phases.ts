@@ -39,6 +39,14 @@ export const SALES_PIPELINE_PHASES: readonly SalesPhase[] = [
     accent: "border-t-orange-400",
   },
   {
+    key: "wiedervorlage",
+    label: "Wiedervorlage",
+    statuses: ["Wiedervorlage", "Follow-up"],
+    defaultStatus: "Wiedervorlage",
+    winProbability: 0.15,
+    accent: "border-t-orange-500",
+  },
+  {
     key: "setter-call-vereinbart",
     label: "Setter-Call vereinbart",
     statuses: [
