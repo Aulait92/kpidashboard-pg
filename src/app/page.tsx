@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AdminTabs } from "@/components/admin-tabs";
 import { AutoRefresh } from "@/components/auto-refresh";
+import { CplTrendChart } from "@/components/cpl-trend-chart";
 import { FilterBar } from "@/components/filter-bar";
 import { FunnelHero } from "@/components/funnel-hero";
 import { KpiCard, type Delta } from "@/components/kpi-card";
@@ -184,6 +185,7 @@ async function DashboardBody({
       <MonthlyForecast forecast={forecast} />
       <SpeedToLeadCard data={speed} />
       <PerformanceTable customerRows={customerRows} productRows={productRows} />
+      <CplTrendChart points={ts.points} granularity={ts.granularity} />
       <TrendCharts points={ts.points} granularity={ts.granularity} />
     </div>
   );

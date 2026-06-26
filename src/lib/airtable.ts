@@ -842,8 +842,14 @@ export async function syncAirtable(): Promise<SyncResult> {
         const bezugIds = readLinkedIds(rec.fields, "Kunden-Produkt-Bezug");
         const bezugAirtableId = bezugIds[0] ?? null;
 
+        // Eingangsdatum eines Leads: bevorzugt "Zuweisungsdatum" (Zeitpunkt
+        // der Lead-Zuweisung an den Kunden, das ist die fachlich relevante
+        // Größe für CPL/Pacing/Pipeline-Filter), fällt zurück auf "Datum",
+        // dann auf den Airtable-internen Record-CreateTime.
         const createdAt =
-          readDate(rec.fields, "Datum") ?? new Date(rec.createdTime);
+          readDate(rec.fields, "Zuweisungsdatum") ??
+          readDate(rec.fields, "Datum") ??
+          new Date(rec.createdTime);
         const firstContactAt = readDate(rec.fields, "Erster Kontaktversuch");
         const status = readString(rec.fields, "Bearbeitungsstatus");
         const adChannel = classifyChannel(readString(rec.fields, "Source"));
