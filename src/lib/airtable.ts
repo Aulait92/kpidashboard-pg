@@ -98,7 +98,7 @@ type LeadProduct = "Wechsel" | "Neugeschäft" | "Kinderwunsch";
 // möglich ist.
 function classifyLeadProduct(
   fields: Record<string, unknown>,
-  produkteMap: Map<string, string>,
+  produkteMap: Map<string, ProductRef>,
 ): LeadProduct | null {
   for (const key of LEAD_PRODUCT_FIELDS) {
     const v = fields[key];
@@ -113,7 +113,7 @@ function classifyLeadProduct(
       if (typeof item !== "string") continue;
       const raw =
         item.startsWith("rec") && produkteMap.has(item)
-          ? produkteMap.get(item)!
+          ? produkteMap.get(item)!.name
           : item.startsWith("rec")
             ? null // unaufgelöste rec-ID → keine Klarheit
             : item;
@@ -206,28 +206,76 @@ const BEZUG_TABLE =
 // (Lead.Produkt, Bezug.Produkt → ["recXYZ"] statt ["PKV-Tarifoptimierung"]).
 const PRODUKTE_TABLE = process.env.AIRTABLE_TABLE_PRODUKTE ?? "Produkte";
 
-// Lädt die Produkte-Tabelle und gibt eine Map rec-ID → Klarname zurück.
+// Lädt die Produkte-Tabelle und gibt eine Map rec-ID → Produkt-Ref zurück.
+// Spiegelt zusätzlich JEDES Produkt in die neue Product-Tabelle, sodass
+// auf Phase-B-Pfade (CustomerProduct-basiertes Pool-Routing) zugegriffen
+// werden kann ohne Code-Änderung pro neues Produkt.
+//
 // Bei nicht vorhandener Tabelle / fehlenden Permissions still mit leerer
 // Map zurück — der Lead-Sync hat dann zusätzliche Lookup-Fallbacks
 // (z. B. "Zielgruppe Bezeichnung (from Produkt …)").
-async function fetchProdukte(): Promise<Map<string, string>> {
-  const map = new Map<string, string>();
+type ProductRef = { name: string; dbId: string; poolKind: "product" | "region" };
+
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/ß/g, "ss")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+async function fetchProdukte(): Promise<Map<string, ProductRef>> {
+  const map = new Map<string, ProductRef>();
+  let records: AirtableRecord[] = [];
   try {
-    const records = await fetchAllRecords(PRODUKTE_TABLE);
-    for (const rec of records) {
-      const name =
-        readString(rec.fields, "Zielgruppe Bezeichnung") ??
-        readString(rec.fields, "Name") ??
-        readString(rec.fields, "Bezeichnung") ??
-        readString(rec.fields, "Produkt") ??
-        readString(rec.fields, "Slug");
-      if (name) map.set(rec.id, name);
-    }
+    records = await fetchAllRecords(PRODUKTE_TABLE);
   } catch (err) {
     console.warn(
       `[airtable] Produkte-Tabelle "${PRODUKTE_TABLE}" nicht lesbar:`,
       err instanceof Error ? err.message : String(err),
     );
+    return map;
+  }
+  for (const rec of records) {
+    const name =
+      readString(rec.fields, "Zielgruppe Bezeichnung") ??
+      readString(rec.fields, "Name") ??
+      readString(rec.fields, "Bezeichnung") ??
+      readString(rec.fields, "Produkt") ??
+      readString(rec.fields, "Slug");
+    if (!name) continue;
+    // Kinderwunsch ist regional gesteuert (Pool pro Region/Stadt), alle
+    // anderen Produkte landen jeweils in einem Pool pro Produkt.
+    const poolKind: "product" | "region" = name
+      .toLowerCase()
+      .includes("kinderwunsch")
+      ? "region"
+      : "product";
+    const slug =
+      readString(rec.fields, "Slug")?.toLowerCase().replace(/\s+/g, "-") ??
+      slugify(name);
+    try {
+      const dbProduct = await prisma.product.upsert({
+        where: { airtableId: rec.id },
+        create: {
+          airtableId: rec.id,
+          name,
+          slug,
+          poolKind,
+          active: true,
+        },
+        update: { name, slug, poolKind, active: true },
+        select: { id: true },
+      });
+      map.set(rec.id, { name, dbId: dbProduct.id, poolKind });
+    } catch (err) {
+      console.warn(
+        `[airtable] Product-Upsert für "${name}" (${rec.id}) fehlgeschlagen:`,
+        err instanceof Error ? err.message : String(err),
+      );
+    }
   }
   return map;
 }
@@ -374,14 +422,32 @@ function emptyGoals(): ProductGoals {
   };
 }
 
+// Rohzeile aus der Bezug-Tabelle für Phase-B-Tabelle CustomerProduct.
+// Wird nach dem Customer-Upsert in syncAirtable verwendet, um pro (Kunde ×
+// Produkt) eine Zeile in CustomerProduct zu schreiben — produkt-agnostisch.
+type BezugRow = {
+  buyerAirtableId: string;
+  productDbId: string;
+  leadGoal: number | null;
+  leadPrice: number | null;
+  startDate: Date | null;
+  region: string | null;
+};
+
+type BezugResult = {
+  goals: Map<string, ProductGoals>;
+  rows: BezugRow[];
+};
+
 // Liest die Join-Tabelle „Kunden-Produkt-Bezug" und liefert pro Kunden-Record
 // (Buyer-AirtableId) die Lead-Ziele, Preise und Startdaten je Produkt.
 // Falls die Tabelle leer ist oder nicht existiert, fallen wir im Sync still auf
 // die alten per-Produkt-Spalten der Buyer-Tabelle zurück.
 async function fetchKundenProduktBezug(
-  produkteMap: Map<string, string>,
-): Promise<Map<string, ProductGoals>> {
+  produkteMap: Map<string, ProductRef>,
+): Promise<BezugResult> {
   const map = new Map<string, ProductGoals>();
+  const rows: BezugRow[] = [];
   const records = await fetchAllRecords(BEZUG_TABLE);
   for (const rec of records) {
     const ids = readLinkedIds(rec.fields, "Kunde");
@@ -391,6 +457,7 @@ async function fetchKundenProduktBezug(
     // Map leer oder die rec-ID unbekannt ist, parsen wir aus dem
     // formatierten Primary-Feld "Bezug" ("Kunde – Produkt") den Produkt-Teil.
     let produkt: string | null = null;
+    let produktDbId: string | null = null;
     const produktRaw = rec.fields["Produkt"];
     if (Array.isArray(produktRaw)) {
       for (const item of produktRaw) {
@@ -398,7 +465,8 @@ async function fetchKundenProduktBezug(
         if (item.startsWith("rec")) {
           const resolved = produkteMap.get(item);
           if (resolved) {
-            produkt = resolved;
+            produkt = resolved.name;
+            produktDbId = resolved.dbId;
             break;
           }
         } else if (item.trim()) {
@@ -417,6 +485,34 @@ async function fetchKundenProduktBezug(
       }
     }
     if (!produkt) continue;
+
+    const leadziel = readIntFromFields(rec.fields, ["Leadziel"]);
+    const preis = readFloatFromFields(rec.fields, ["Preis netto"]);
+    const startdatum = readDateFromFields(rec.fields, ["Startdatum"]);
+    const region = readString(rec.fields, "Region");
+
+    // Phase-B-Write: produkt-agnostische CustomerProduct-Zeile. Setzt voraus,
+    // dass der Bezug eine rec-ID auf ein Produkt aus der Produkte-Tabelle hat
+    // (sonst kein dbId und damit keine FK). Tarifoptimierungs-/etc.-Bezüge,
+    // bei denen das Produkt nur als Freitext im Primary-Feld auftaucht,
+    // landen NICHT in CustomerProduct — sie bleiben im Legacy-Pfad.
+    if (produktDbId) {
+      for (const id of ids) {
+        rows.push({
+          buyerAirtableId: id,
+          productDbId: produktDbId,
+          leadGoal: leadziel,
+          leadPrice: preis,
+          startDate: startdatum,
+          region,
+        });
+      }
+    }
+
+    // Legacy-Pfad: Bezüge auf eine der drei bekannten Sparten in die
+    // ProductGoals-Buckets schreiben, damit die alten Customer-Spalten
+    // (leadGoalWechsel etc.) weiter befüllt werden und Display/Pool-Derivation
+    // unverändert funktionieren.
     const p = produkt.toLowerCase();
     let productKey: "Wechsel" | "Neugeschaeft" | "Kinderwunsch" | null = null;
     // Tarifoptimierungs-Bezüge laufen in den Wechsel-Pool (Alias) — siehe
@@ -426,10 +522,6 @@ async function fetchKundenProduktBezug(
     else if (p.includes("neugesch")) productKey = "Neugeschaeft";
     else if (p.includes("kinderwunsch")) productKey = "Kinderwunsch";
     if (!productKey) continue;
-
-    const leadziel = readIntFromFields(rec.fields, ["Leadziel"]);
-    const preis = readFloatFromFields(rec.fields, ["Preis netto"]);
-    const startdatum = readDateFromFields(rec.fields, ["Startdatum"]);
 
     for (const id of ids) {
       const entry = map.get(id) ?? emptyGoals();
@@ -449,7 +541,7 @@ async function fetchKundenProduktBezug(
       map.set(id, entry);
     }
   }
-  return map;
+  return { goals: map, rows };
 }
 
 async function fetchBuyers(): Promise<Map<string, BuyerInfo>> {
@@ -716,10 +808,13 @@ export async function syncAirtable(): Promise<SyncResult> {
   // per-Produkt-Spalten auf der Kunden-Tabelle ab. Bei Fehler (Tabelle fehlt
   // o.ä.) fallen wir still auf die Buyer-Felder zurück.
   let bezugMap = new Map<string, ProductGoals>();
+  let bezugRows: BezugRow[] = [];
   try {
-    bezugMap = await fetchKundenProduktBezug(produkteMap);
+    const bezug = await fetchKundenProduktBezug(produkteMap);
+    bezugMap = bezug.goals;
+    bezugRows = bezug.rows;
     console.log(
-      `[airtable] Kunden-Produkt-Bezug "${BEZUG_TABLE}": ${bezugMap.size} Kunden mit Produkt-Daten.`,
+      `[airtable] Kunden-Produkt-Bezug "${BEZUG_TABLE}": ${bezugMap.size} Kunden mit Produkt-Daten, ${bezugRows.length} CustomerProduct-Zeilen.`,
     );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -819,6 +914,45 @@ export async function syncAirtable(): Promise<SyncResult> {
       select: { id: true },
     });
     customerCache.set(key, customer.id);
+  }
+
+  // Phase-B-Write: CustomerProduct-Zeilen aus dem Bezug-Sweep persistieren.
+  // Setzt den oben gefüllten customerCache voraus (Buyer-Name → Customer-Id).
+  // Falls ein Bezug auf eine Buyer-rec-ID zeigt, die wir nicht auflösen
+  // können, wird die Zeile übersprungen (Legacy-Pfad fängt das auf).
+  for (const row of bezugRows) {
+    const buyerInfo = buyerMap.get(row.buyerAirtableId);
+    if (!buyerInfo) continue;
+    const customerId = customerCache.get(buyerInfo.name.trim());
+    if (!customerId) continue;
+    try {
+      await prisma.customerProduct.upsert({
+        where: {
+          customerId_productId: {
+            customerId,
+            productId: row.productDbId,
+          },
+        },
+        create: {
+          customerId,
+          productId: row.productDbId,
+          leadGoal: row.leadGoal,
+          leadPrice: row.leadPrice,
+          startDate: row.startDate,
+          region: row.region,
+        },
+        update: {
+          leadGoal: row.leadGoal,
+          leadPrice: row.leadPrice,
+          startDate: row.startDate,
+          region: row.region,
+        },
+      });
+    } catch (err) {
+      result.errors.push(
+        `CustomerProduct ${customerId} × ${row.productDbId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   }
 
   // 3. Lead-Records verarbeiten — eine konsolidierte Tabelle, Produkt pro
