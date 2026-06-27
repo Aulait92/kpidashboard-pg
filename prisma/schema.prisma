@@ -307,6 +307,22 @@ model Cost {
   @@index([kind, product, occurredAt])
 }
 
+// Kampagnen, deren Spend KEINEM Produkt zugeordnet werden konnte (kein
+// passendes Keyword/Slug/Alias). Wird beim Channel-Sync pro Channel komplett
+// neu geschrieben (Aggregat über den Sync-Zeitraum, eine Zeile je Kampagne).
+// Dient der Transparenz im Admin: zeigt, welcher Ad-Spend NICHT in die
+// Berechnung einfließt — und damit, wo ein Keyword fehlt.
+model UnmatchedCampaign {
+  id       String   @id @default(cuid())
+  // "Meta" | "Outbrain" | "TikTok" | "Google"
+  channel  String
+  campaign String
+  spend    Decimal  @db.Decimal(12, 2)
+  syncedAt DateTime @default(now())
+
+  @@index([channel])
+}
+
 // Web-Push-Subscriptions für PWA-Benachrichtigungen. userId = null nur für
 // Legacy-Subscriptions vor der Auth (werden behandelt als Admin).
 model PushSubscription {

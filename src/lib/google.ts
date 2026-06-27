@@ -13,6 +13,7 @@ import { addDays } from "date-fns";
 import { getDailySpendByCampaign } from "@/lib/google-ads";
 import { prisma } from "@/lib/prisma";
 import { loadProductMatcher } from "@/lib/product-catalog";
+import { persistUnmatched } from "@/lib/ad-spend";
 
 export type GoogleSyncResult = {
   customers: { rows: number };
@@ -136,6 +137,10 @@ export async function syncGoogleAds(): Promise<GoogleSyncResult> {
   for (const [key, val] of summary) {
     const campaign = key.split("|").slice(1).join("|");
     result.matched.push({ campaign, product: val.product, spend: val.spend });
+  }
+
+  if (result.errors.length === 0) {
+    await persistUnmatched("Google", result.unmatched);
   }
 
   return result;

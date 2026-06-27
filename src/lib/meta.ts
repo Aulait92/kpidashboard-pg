@@ -2,6 +2,7 @@ import { addDays, format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { classifyCampaignProduct } from "@/lib/products";
 import { loadProductMatcher } from "@/lib/product-catalog";
+import { persistUnmatched } from "@/lib/ad-spend";
 
 const META_API_VERSION = "v23.0";
 const META_GRAPH = `https://graph.facebook.com/${META_API_VERSION}`;
@@ -246,6 +247,12 @@ export async function syncMeta(): Promise<MetaSyncResult> {
   for (const [key, val] of summary) {
     const campaign = key.split("|").slice(1).join("|");
     result.matched.push({ campaign, product: val.product, spend: val.spend });
+  }
+
+  // Nicht zugeordnete Kampagnen für die Admin-Transparenz persistieren —
+  // nur bei sauberem Lauf, sonst bliebe die Liste durch einen Teil-Fehler leer.
+  if (result.errors.length === 0) {
+    await persistUnmatched("Meta", result.unmatched);
   }
 
   return result;

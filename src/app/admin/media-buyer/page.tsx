@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AdminTabs } from "@/components/admin-tabs";
 import { getCurrentSession } from "@/lib/auth";
 import { listPoolsForAdmin } from "@/lib/media-buyer";
+import { listAdspendAttribution } from "@/lib/ad-spend";
 import { prisma } from "@/lib/prisma";
 import {
   MediaBuyerLayout,
@@ -38,7 +39,7 @@ export default async function MediaBuyerPage() {
     redirect("/login");
   }
 
-  const [pools, actions] = await Promise.all([
+  const [pools, actions, attribution] = await Promise.all([
     listPoolsForAdmin(),
     prisma.mediaBuyerAction.findMany({
       orderBy: { createdAt: "desc" },
@@ -58,6 +59,7 @@ export default async function MediaBuyerPage() {
         createdAt: true,
       },
     }),
+    listAdspendAttribution(),
   ]);
 
   const poolRows: PoolDetailRow[] = pools.map((p) => ({
@@ -156,7 +158,12 @@ export default async function MediaBuyerPage() {
       <AdminTabs />
 
       <div className="mt-6">
-        <MediaBuyerLayout pools={poolRows} log={log} top={top} />
+        <MediaBuyerLayout
+          pools={poolRows}
+          log={log}
+          top={top}
+          attribution={attribution}
+        />
       </div>
     </main>
   );

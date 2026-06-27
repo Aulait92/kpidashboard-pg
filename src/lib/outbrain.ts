@@ -1,6 +1,7 @@
 import { addDays, format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { loadProductMatcher } from "@/lib/product-catalog";
+import { persistUnmatched } from "@/lib/ad-spend";
 
 // Outbrain Amplify Reporting API:
 //   Auth:   OB-TOKEN-V1: <long-lived token>
@@ -305,6 +306,10 @@ export async function syncOutbrain(): Promise<OutbrainSyncResult> {
   for (const [key, val] of summary) {
     const campaign = key.split("|").slice(1).join("|");
     result.matched.push({ campaign, product: val.product, spend: val.spend });
+  }
+
+  if (result.errors.length === 0) {
+    await persistUnmatched("Outbrain", result.unmatched);
   }
 
   return result;

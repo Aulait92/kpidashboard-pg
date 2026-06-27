@@ -13,6 +13,7 @@
 import { addDays, format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { loadProductMatcher } from "@/lib/product-catalog";
+import { persistUnmatched } from "@/lib/ad-spend";
 
 const TIKTOK_API = "https://business-api.tiktok.com/open_api/v1.3";
 const REQUEST_DELAY_MS = Number(process.env.TIKTOK_REQUEST_DELAY_MS ?? 300);
@@ -329,6 +330,10 @@ export async function syncTikTok(): Promise<TikTokSyncResult> {
   for (const [key, val] of summary) {
     const campaign = key.split("|").slice(1).join("|");
     result.matched.push({ campaign, product: val.product, spend: val.spend });
+  }
+
+  if (result.errors.length === 0) {
+    await persistUnmatched("TikTok", result.unmatched);
   }
 
   return result;

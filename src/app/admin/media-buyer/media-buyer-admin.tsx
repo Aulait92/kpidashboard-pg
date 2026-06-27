@@ -1,8 +1,9 @@
 "use client";
 
 import { useActionState, useMemo, useState, useTransition } from "react";
-import { formatNumber } from "@/lib/format";
+import { formatEUR, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import type { AdspendAttribution } from "@/lib/ad-spend";
 import {
   runApplyNow,
   runDryRun,
@@ -163,10 +164,12 @@ export function MediaBuyerLayout({
   pools,
   log,
   top,
+  attribution,
 }: {
   pools: PoolDetailRow[];
   log: ActionLogRow[];
   top: TopStats;
+  attribution: AdspendAttribution;
 }) {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [filter, setFilter] = useState<"alle" | "pkv" | "kw">("alle");
@@ -179,9 +182,12 @@ export function MediaBuyerLayout({
 
   if (pools.length === 0) {
     return (
-      <div className="rounded-2xl border border-[color:var(--border)] bg-white p-8 text-center text-sm text-[color:var(--muted)]">
-        Noch keine Pools. Sobald in Airtable Lead-Ziele (und für Kinderwunsch
-        Regionen) gepflegt und synchronisiert sind, erscheinen sie hier.
+      <div className="flex flex-col gap-4">
+        <div className="rounded-2xl border border-[color:var(--border)] bg-white p-8 text-center text-sm text-[color:var(--muted)]">
+          Noch keine Pools. Sobald in Airtable Lead-Ziele (und für Kinderwunsch
+          Regionen) gepflegt und synchronisiert sind, erscheinen sie hier.
+        </div>
+        <AttributionCard attribution={attribution} />
       </div>
     );
   }
@@ -244,6 +250,11 @@ export function MediaBuyerLayout({
         {desktopSelected ? <PoolDetail pool={desktopSelected} log={log} /> : null}
       </div>
 
+      {/* Adspend-Zuordnung: welche Kampagnen fließen in die Cost-Berechnung. */}
+      <div className={cn(selected ? "hidden" : "block", "lg:block", "mt-4")}>
+        <AttributionCard attribution={attribution} />
+      </div>
+
       {/* Sticky Bottom-Action-Bar nur mobil und nur wenn Liste sichtbar. */}
       {!selected ? (
         <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[color:var(--border)] bg-white/90 px-4 py-3 backdrop-blur lg:hidden">
@@ -254,6 +265,155 @@ export function MediaBuyerLayout({
         </div>
       ) : null}
     </>
+  );
+}
+
+// ─── Adspend-Zuordnung ───────────────────────────────────────────────
+// Transparenz: welche Kampagnen je Produkt in den angerechneten Spend (MTD)
+// fließen — und welche Kampagnen ignoriert werden (kein Keyword-Match).
+function AttributionCard({
+  attribution,
+}: {
+  attribution: AdspendAttribution;
+}) {
+  const [open, setOpen] = useState(false);
+  const { matched, matchedTotal, unmatched, unmatchedTotal, monthLabel } =
+    attribution;
+
+  const channelTone: Record<string, string> = {
+    Meta: "bg-blue-50 text-blue-700",
+    Outbrain: "bg-amber-50 text-amber-700",
+    TikTok: "bg-rose-50 text-rose-700",
+    Google: "bg-emerald-50 text-emerald-700",
+  };
+  const badge = (channel: string) => (
+    <span
+      className={cn(
+        "inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold",
+        channelTone[channel] ?? "bg-slate-100 text-slate-600",
+      )}
+    >
+      {channel}
+    </span>
+  );
+
+  return (
+    <section className="rounded-2xl border border-[color:var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-5">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 text-left"
+      >
+        <div>
+          <h2 className="text-base font-bold">Adspend-Zuordnung</h2>
+          <p className="mt-0.5 text-xs text-[color:var(--muted)]">
+            Welche Kampagnen in die Cost-Berechnung einfließen · {monthLabel}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <div className="text-sm font-semibold">
+              {formatEUR(matchedTotal)}
+            </div>
+            <div className="text-[10px] text-[color:var(--muted)]">
+              zugeordnet
+            </div>
+          </div>
+          {unmatchedTotal > 0 ? (
+            <div className="text-right">
+              <div className="text-sm font-semibold text-amber-600">
+                {formatEUR(unmatchedTotal)}
+              </div>
+              <div className="text-[10px] text-[color:var(--muted)]">
+                ignoriert
+              </div>
+            </div>
+          ) : null}
+          <span className="text-[color:var(--muted)]">
+            {open ? "▲" : "▼"}
+          </span>
+        </div>
+      </button>
+
+      {open ? (
+        <div className="mt-4 flex flex-col gap-5">
+          {/* Zugeordnete Kampagnen je Produkt */}
+          {matched.length === 0 ? (
+            <p className="text-sm text-[color:var(--muted)]">
+              Diesen Monat noch kein zugeordneter Ad-Spend.
+            </p>
+          ) : (
+            matched.map((g) => (
+              <div key={g.product}>
+                <div className="mb-1.5 flex items-center justify-between border-b border-[color:var(--border)] pb-1">
+                  <span className="text-sm font-semibold">{g.label}</span>
+                  <span className="text-sm font-semibold">
+                    {formatEUR(g.total)}
+                  </span>
+                </div>
+                <ul className="flex flex-col gap-1">
+                  {g.campaigns.map((c) => (
+                    <li
+                      key={`${c.channel}|${c.campaign}`}
+                      className="flex items-center justify-between gap-2 text-xs"
+                    >
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        {badge(c.channel)}
+                        <span className="truncate">{c.campaign}</span>
+                      </span>
+                      <span className="shrink-0 tabular-nums text-[color:var(--muted)]">
+                        {formatEUR(c.spend)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))
+          )}
+
+          {/* Ignorierte Kampagnen (kein Keyword-Match) */}
+          <div>
+            <div className="mb-1.5 flex items-center justify-between border-b border-amber-200 pb-1">
+              <span className="text-sm font-semibold text-amber-700">
+                Nicht zugeordnet · fließt NICHT in die Berechnung
+              </span>
+              <span className="text-sm font-semibold text-amber-700">
+                {formatEUR(unmatchedTotal)}
+              </span>
+            </div>
+            {unmatched.length === 0 ? (
+              <p className="text-xs text-[color:var(--muted)]">
+                Aktuell wird aller Spend einem Produkt zugeordnet. 🎯
+              </p>
+            ) : (
+              <>
+                <p className="mb-1.5 text-[11px] text-[color:var(--muted)]">
+                  Spend aus dem letzten Sync-Zeitraum. Fehlt hier ein Produkt,
+                  ein Keyword/Slug/Alias in der Airtable-Produkte-Tabelle
+                  ergänzen, dann matcht der nächste Sync.
+                </p>
+                <ul className="flex flex-col gap-1">
+                  {unmatched.map((c) => (
+                    <li
+                      key={`${c.channel}|${c.campaign}`}
+                      className="flex items-center justify-between gap-2 text-xs"
+                    >
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        {badge(c.channel)}
+                        <span className="truncate">{c.campaign}</span>
+                      </span>
+                      <span className="shrink-0 tabular-nums text-amber-600">
+                        {formatEUR(c.spend)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </section>
   );
 }
 
