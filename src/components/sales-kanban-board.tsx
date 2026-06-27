@@ -12,6 +12,7 @@ export type KanbanDeal = {
   id: string;
   name: string | null;
   company: string | null;
+  product: string | null;
   value: number | null;
   status: string | null;
   // Datum der nächsten geplanten Activity (scheduledFor > jetzt).
@@ -446,16 +447,13 @@ function DealCard({
         dragging && "opacity-50",
       )}
     >
-      <div className="flex items-start justify-between gap-1.5">
-        <div className="min-w-0 flex-1 font-medium text-[color:var(--foreground)] break-words">
-          {deal.name ?? (
-            <span className="text-[color:var(--muted)]">unbenannt</span>
-          )}
-        </div>
+      {/* Score-Badge absolut oben rechts, damit der Name die volle Breite
+          behält und auf Wortgrenzen umbricht (statt zeichenweise). */}
+      <div className="relative">
         {scoreTone(deal.priorityScore) ? (
           <span
             className={cn(
-              "shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+              "absolute right-0 top-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
               scoreTone(deal.priorityScore),
             )}
             title={`Priorität-Score ${deal.priorityScore.toLocaleString("de-DE")} — Wert × Win-Wahrscheinlichkeit × Urgency`}
@@ -464,7 +462,17 @@ function DealCard({
             {formatScore(deal.priorityScore)}
           </span>
         ) : null}
+        <div className="break-words pr-14 font-medium text-[color:var(--foreground)]">
+          {deal.name ?? (
+            <span className="text-[color:var(--muted)]">unbenannt</span>
+          )}
+        </div>
       </div>
+      {deal.product ? (
+        <div className="mt-1 inline-flex max-w-full rounded-full bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-800">
+          <span className="truncate">{deal.product}</span>
+        </div>
+      ) : null}
       {badge ? (
         <span className="mt-1 inline-flex max-w-full rounded-full bg-[color:var(--brand-soft)]/60 px-1.5 py-0.5 text-[10px] font-semibold text-[color:var(--brand-dark)] break-words">
           {badge}
