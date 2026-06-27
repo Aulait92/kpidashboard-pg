@@ -95,7 +95,18 @@ const STATUS_FIELDS = ["Status", "Phase", "Stage", "Bearbeitungsstatus"];
 // nicht befüllt.
 const OWNER_FIELDS: readonly string[] = [];
 const SOURCE_FIELDS = ["Source", "Quelle", "Kanal"];
-const PRODUCT_FIELDS = ["Produkt", "Product", "Paket", "Angebot"];
+// „Name (from Produkt)" ist das Lookup-Feld, das den Klarnamen des verlinkten
+// Produkts liefert — zuerst, weil das nackte „Produkt"-Linked-Feld nur rec-IDs
+// enthält. Weitere Lookup-Schreibweisen + Direktfelder als Fallback.
+const PRODUCT_FIELDS = [
+  "Name (from Produkt)",
+  "Produkt Name",
+  "Produktname",
+  "Produkt",
+  "Product",
+  "Paket",
+  "Angebot",
+];
 const CLOSE_DATE_FIELDS = [
   "Abschluss-Datum",
   "Abschlussdatum",
