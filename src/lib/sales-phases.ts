@@ -16,9 +16,11 @@ export type SalesPhase = {
   winProbability: number;
   // UI-Akzent (Tailwind border-t-Color).
   accent: string;
-  // Spezial-Flag für Sieg/Niederlage — beeinflusst KPI-Buckets (Win-Rate,
-  // Loss-Reasons). Ohne den Flag ist die Phase "in-progress".
-  terminal?: "won" | "lost";
+  // Spezial-Flag für Sieg/Niederlage/Disqualifikation — beeinflusst KPI-Buckets
+  // (Win-Rate, Loss-Reasons). Ohne den Flag ist die Phase "in-progress".
+  // "disqualified" zählt WEDER als gewonnen NOCH als verloren (raus aus der
+  // Win-Rate), ist aber wie alle Terminal-Phasen nie "stale".
+  terminal?: "won" | "lost" | "disqualified";
 };
 
 export const SALES_PIPELINE_PHASES: readonly SalesPhase[] = [
@@ -124,6 +126,20 @@ export const SALES_PIPELINE_PHASES: readonly SalesPhase[] = [
     winProbability: 0,
     accent: "border-t-rose-400",
     terminal: "lost",
+  },
+  {
+    key: "disqualifiziert",
+    label: "Disqualifiziert",
+    statuses: [
+      "Disqualifiziert",
+      "Disqualified",
+      "Nicht qualifiziert",
+      "Unqualifiziert",
+    ],
+    defaultStatus: "Disqualifiziert",
+    winProbability: 0,
+    accent: "border-t-zinc-500",
+    terminal: "disqualified",
   },
 ] as const;
 

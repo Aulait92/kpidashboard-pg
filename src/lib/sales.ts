@@ -115,9 +115,16 @@ function readString(
     if (typeof v === "string" && v.trim()) return v.trim();
     if (typeof v === "number" && Number.isFinite(v)) return String(v);
     if (Array.isArray(v) && v.length > 0) {
-      const first = v[0];
-      if (typeof first === "string" && first.trim() && !first.startsWith("rec")) {
-        return first.trim();
+      // ALLE Array-Elemente durchsuchen (nicht nur das erste): Lookup-/Linked-
+      // Felder liefern oft [recXYZ, "Klarname"] o. ä. — der Klarname steht
+      // dann nicht zwingend an Position 0.
+      for (const item of v) {
+        if (typeof item === "string" && item.trim() && !item.startsWith("rec")) {
+          return item.trim();
+        }
+        if (typeof item === "number" && Number.isFinite(item)) {
+          return String(item);
+        }
       }
     }
   }
