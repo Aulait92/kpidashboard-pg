@@ -53,7 +53,10 @@ async function handle(req: Request) {
             // errors) und wurden übersprungen.
             accounts: result.meta.result.accounts,
             errors: result.meta.result.errors,
-            unmatched: result.meta.result.unmatched.length,
+            // Volle Liste der nicht zugeordneten Kampagnen (Name + Spend) —
+            // hier muss z. B. eine neue „Katzenversicherung" auftauchen, solange
+            // sie Spend hat und der Account gefetcht wurde.
+            unmatched: result.meta.result.unmatched,
           }
         : { ok: false, error: result.meta.error },
       outbrain: result.outbrain.ok
