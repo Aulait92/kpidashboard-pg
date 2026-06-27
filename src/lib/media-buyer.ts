@@ -497,6 +497,18 @@ export async function derivePoolDefs(now: Date = new Date()): Promise<PoolDef[]>
       },
     },
   });
+  // Pool-Label je Produkt. Ein explizit gepflegter Product.displayName (gespeist
+  // aus der Bezug-„Name"-Spalte in Airtable) hat IMMER Vorrang — auch vor dem
+  // Legacy-Label „PKV …". Ohne expliziten Namen greift das Default-Label.
+  const labelByKey = new Map<string, string>();
+  for (const p of products) {
+    const canonicalKey = canonicalProductKey(p.name);
+    const explicit = p.displayName?.trim();
+    if (explicit) labelByKey.set(canonicalKey, explicit);
+    else if (!labelByKey.has(canonicalKey))
+      labelByKey.set(canonicalKey, productPoolLabel(canonicalKey, p.name));
+  }
+
   for (const p of products) {
     const canonicalKey = canonicalProductKey(p.name);
     const displayName = p.displayName ?? p.name;
@@ -533,7 +545,9 @@ export async function derivePoolDefs(now: Date = new Date()): Promise<PoolDef[]>
   for (const acc of productAccs.values()) {
     defs.push({
       key: `product:${acc.canonicalKey}`,
-      label: productPoolLabel(acc.canonicalKey, acc.displayName),
+      label:
+        labelByKey.get(acc.canonicalKey) ??
+        productPoolLabel(acc.canonicalKey, acc.displayName),
       kind: "product",
       product: acc.canonicalKey,
       region: null,
@@ -546,7 +560,7 @@ export async function derivePoolDefs(now: Date = new Date()): Promise<PoolDef[]>
   for (const acc of regionAccs.values()) {
     defs.push({
       key: regionPoolKey(acc.canonicalKey, acc.region),
-      label: `${displayProduct(acc.canonicalKey)} ${acc.region}`,
+      label: `${labelByKey.get(acc.canonicalKey) ?? displayProduct(acc.canonicalKey)} ${acc.region}`,
       kind: "region",
       product: acc.canonicalKey,
       region: acc.region,

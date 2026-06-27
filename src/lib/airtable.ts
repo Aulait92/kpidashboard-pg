@@ -438,6 +438,9 @@ type BezugRow = {
   buyerAirtableId: string;
   productDbId: string | null;
   productName: string;
+  // Anzeige-Label aus der Bezug-„Name"-Spalte (Produktbezeichnung, wie sie im
+  // Media Buyer erscheinen soll). null = nicht gesetzt → Default-Label.
+  productLabel: string | null;
   leadGoal: number | null;
   leadPrice: number | null;
   startDate: Date | null;
@@ -493,12 +496,16 @@ async function fetchKundenProduktBezug(
     const preis = readFloatFromFields(rec.fields, ["Preis netto"]);
     const startdatum = readDateFromFields(rec.fields, ["Startdatum"]);
     const region = readString(rec.fields, "Region");
+    // Produktbezeichnung fürs Media-Buyer-Label aus der „Name"-Spalte der
+    // Bezug-Tabelle.
+    const productLabel = readString(rec.fields, "Name");
 
     for (const id of ids) {
       rows.push({
         buyerAirtableId: id,
         productDbId: produktDbId,
         productName: produkt,
+        productLabel,
         leadGoal: leadziel,
         leadPrice: preis,
         startDate: startdatum,
@@ -929,6 +936,10 @@ export async function syncAirtable(): Promise<SyncResult> {
     }
   }
 
+  // Produktbezeichnung fürs Media-Buyer-Label aus der Bezug-„Name"-Spalte →
+  // Product.displayName. Pro Produkt last-write-wins (Annahme: je Produkt
+  // konsistent).
+  const displayNameByProductId = new Map<string, string>();
   for (const row of bezugRows) {
     const buyerInfo = buyerMap.get(row.buyerAirtableId);
     if (!buyerInfo) continue;
@@ -938,12 +949,23 @@ export async function syncAirtable(): Promise<SyncResult> {
     const productId =
       row.productDbId ?? legacyProductDbIds.get(canonicalKey) ?? null;
     if (!productId) continue; // unauflösbares Produkt → übersprungen
+    if (row.productLabel) displayNameByProductId.set(productId, row.productLabel);
     await upsertCustomerProduct(customerId, productId, canonicalKey, {
       leadGoal: row.leadGoal,
       leadPrice: row.leadPrice,
       startDate: row.startDate,
       region: row.region,
     });
+  }
+  for (const [productId, label] of displayNameByProductId) {
+    try {
+      await prisma.product.update({
+        where: { id: productId },
+        data: { displayName: label },
+      });
+    } catch {
+      // Produkt evtl. zwischenzeitlich entfernt — Label ist unkritisch.
+    }
   }
 
   // Fallback: per-Produkt-Felder am Buyer-Record (Altschema) in CustomerProduct
