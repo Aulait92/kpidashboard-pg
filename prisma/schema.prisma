@@ -119,6 +119,11 @@ model Product {
   name        String   @unique // canonical name, matched gegen Lead.source
   slug        String?  @unique // optional kürze form für URLs/IDs
   displayName String? // optional UI-Override (sonst = name)
+  // Zusätzliche Keyword-Aliase für das Cost-Matching (kommagetrennt). Ein
+  // Kampagnen-Name wird diesem Produkt zugeordnet, wenn er Name, Slug ODER
+  // eines dieser Aliase als Teilstring enthält (case-insensitive, ≥3 Zeichen).
+  // Gepflegt in Airtable (Produkte-Tabelle, Feld „Keywords"/„Aliase").
+  keywords    String?
   poolKind    String   @default("product") // "product" | "region"
   // Sortierreihenfolge im Dashboard (asc); null = ans Ende.
   sortOrder   Int?

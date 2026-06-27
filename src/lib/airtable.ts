@@ -204,6 +204,30 @@ const PRODUKTE_TABLE = process.env.AIRTABLE_TABLE_PRODUKTE ?? "Produkte";
 // (z. B. "Zielgruppe Bezeichnung (from Produkt …)").
 type ProductRef = { name: string; dbId: string; poolKind: "product" | "region" };
 
+// Liest Keyword-Aliase aus dem erstbesten der angegebenen Felder und liefert
+// sie als kommagetrennten, normalisierten String (oder null). Akzeptiert
+// kommagetrennten Freitext ("STB, Sterbe-Geld") ebenso wie ein Airtable-
+// Multi-Select-Array (["STB","Sterbe-Geld"]).
+function readKeywordList(
+  fields: Record<string, unknown>,
+  keys: string[],
+): string | null {
+  for (const key of keys) {
+    const v = fields[key];
+    let parts: string[] = [];
+    if (typeof v === "string") {
+      parts = v.split(",");
+    } else if (Array.isArray(v)) {
+      parts = v.filter((x): x is string => typeof x === "string");
+    } else {
+      continue;
+    }
+    const cleaned = parts.map((s) => s.trim()).filter((s) => s.length > 0);
+    if (cleaned.length > 0) return cleaned.join(",");
+  }
+  return null;
+}
+
 function slugify(input: string): string {
   return input
     .toLowerCase()
@@ -244,6 +268,16 @@ async function fetchProdukte(): Promise<Map<string, ProductRef>> {
     const slug =
       readString(rec.fields, "Slug")?.toLowerCase().replace(/\s+/g, "-") ??
       slugify(name);
+    // Optionale Keyword-Aliase fürs Cost-Matching. Akzeptiert kommagetrennten
+    // Text ODER ein Multi-Select-Array; mehrere Feld-Schreibweisen erlaubt.
+    const keywords = readKeywordList(rec.fields, [
+      "Keywords",
+      "Keyword",
+      "Aliase",
+      "Alias",
+      "Cost-Keywords",
+      "Kampagnen-Keywords",
+    ]);
     try {
       const dbProduct = await prisma.product.upsert({
         where: { airtableId: rec.id },
@@ -251,10 +285,11 @@ async function fetchProdukte(): Promise<Map<string, ProductRef>> {
           airtableId: rec.id,
           name,
           slug,
+          keywords,
           poolKind,
           active: true,
         },
-        update: { name, slug, poolKind, active: true },
+        update: { name, slug, keywords, poolKind, active: true },
         select: { id: true },
       });
       map.set(rec.id, { name, dbId: dbProduct.id, poolKind });

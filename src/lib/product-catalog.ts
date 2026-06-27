@@ -34,12 +34,17 @@ export async function loadProductMatcher(): Promise<ProductMatcher> {
   try {
     const products = await prisma.product.findMany({
       where: { active: true },
-      select: { name: true, slug: true },
+      select: { name: true, slug: true, keywords: true },
     });
     extra = products
       .map((p) => {
         const key = canonicalProductKey(p.name);
-        const needles = [p.name, p.slug]
+        // Needles = Name + Slug + kommagetrennte Keyword-Aliase.
+        const aliasList = (p.keywords ?? "")
+          .split(",")
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0);
+        const needles = [p.name, p.slug, ...aliasList]
           .filter(
             (s): s is string => !!s && s.trim().length >= MIN_NEEDLE_LEN,
           )
