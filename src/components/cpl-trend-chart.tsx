@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Area,
   Bar,
   CartesianGrid,
   ComposedChart,
@@ -40,8 +41,8 @@ export function CplTrendChart({
           Lead-Menge und Cost-per-Lead im Verlauf
         </h2>
         <p className="mt-1 text-xs text-[color:var(--muted)]">
-          Balken = Netto-Leads, Linie = Ø Lead-Kosten pro Lead. Steigende
-          Linie bei sinkenden Balken = Effizienz fällt.
+          Balken = Netto-Leads, Linie = Ø Lead-Kosten pro Lead, Fläche =
+          Gesamt-Spend. Steigende Linie bei sinkenden Balken = Effizienz fällt.
         </p>
       </div>
       <div className="h-64">
@@ -85,6 +86,15 @@ export function CplTrendChart({
                   : ""
               }
             />
+            {/* Eigene, ausgeblendete Achse für den Gesamt-Spend — er ist
+                betragsmäßig viel größer als der CPL und würde dessen Achse
+                sonst zusammenstauchen. Werte stehen im Tooltip. */}
+            <YAxis
+              yAxisId="spend"
+              orientation="right"
+              hide
+              domain={[0, "dataMax"]}
+            />
             <Tooltip
               cursor={{ fill: "rgba(37, 99, 235, 0.06)" }}
               contentStyle={{
@@ -95,7 +105,8 @@ export function CplTrendChart({
               labelStyle={{ color: "#64748b", fontSize: 11 }}
               formatter={(value, name) => {
                 if (typeof value !== "number") return ["–", name];
-                if (name === "Ø CPL") return [formatEUR(value), name];
+                if (name === "Ø CPL" || name === "Gesamt-Spend")
+                  return [formatEUR(value), name];
                 return [formatNumber(value), name];
               }}
             />
@@ -106,6 +117,18 @@ export function CplTrendChart({
               iconType="circle"
               iconSize={8}
               wrapperStyle={{ fontSize: 11 }}
+            />
+            <Area
+              yAxisId="spend"
+              type="monotone"
+              dataKey="leadCosts"
+              name="Gesamt-Spend"
+              stroke="#10b981"
+              strokeWidth={1.5}
+              fill="#10b981"
+              fillOpacity={0.12}
+              dot={false}
+              activeDot={{ r: 3 }}
             />
             <Bar
               yAxisId="leads"
