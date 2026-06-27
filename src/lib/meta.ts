@@ -1,6 +1,6 @@
 import { addDays, format } from "date-fns";
 import { prisma } from "@/lib/prisma";
-import { classifyCampaignProduct } from "@/lib/products";
+import { classifyCampaignProduct, isExcludedCampaign } from "@/lib/products";
 import { loadProductMatcher } from "@/lib/product-catalog";
 import { persistUnmatched } from "@/lib/ad-spend";
 
@@ -227,6 +227,8 @@ export async function syncMeta(): Promise<MetaSyncResult> {
         const spendStr = row.spend;
         const startStr = row.date_start;
         if (!name || !spendStr || !startStr) continue;
+        // Test-/Punkt-Kampagnen komplett ignorieren.
+        if (isExcludedCampaign(name)) continue;
 
         const amount = Number.parseFloat(spendStr);
         if (!Number.isFinite(amount) || amount <= 0) continue;

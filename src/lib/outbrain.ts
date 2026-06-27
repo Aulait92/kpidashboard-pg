@@ -2,6 +2,7 @@ import { addDays, format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { loadProductMatcher } from "@/lib/product-catalog";
 import { persistUnmatched } from "@/lib/ad-spend";
+import { isExcludedCampaign } from "@/lib/products";
 
 // Outbrain Amplify Reporting API:
 //   Auth:   OB-TOKEN-V1: <long-lived token>
@@ -217,6 +218,7 @@ export async function syncOutbrain(): Promise<OutbrainSyncResult> {
         for (const c of campaigns) {
           const name = c.metadata?.name?.trim();
           if (!name) continue;
+          if (isExcludedCampaign(name)) continue;
           const spend = parseSpend(c.metrics?.spend);
           if (spend <= 0) continue;
           const product = classify(name);

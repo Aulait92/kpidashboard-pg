@@ -14,6 +14,7 @@ import { addDays, format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { loadProductMatcher } from "@/lib/product-catalog";
 import { persistUnmatched } from "@/lib/ad-spend";
+import { isExcludedCampaign } from "@/lib/products";
 
 const TIKTOK_API = "https://business-api.tiktok.com/open_api/v1.3";
 const REQUEST_DELAY_MS = Number(process.env.TIKTOK_REQUEST_DELAY_MS ?? 300);
@@ -254,6 +255,7 @@ export async function syncTikTok(): Promise<TikTokSyncResult> {
         const spend = parseSpend(r.metrics?.spend);
         if (!campaignId || !day || spend <= 0) continue;
         const name = nameMap.get(campaignId) ?? `Kampagne ${campaignId}`;
+        if (isExcludedCampaign(name)) continue;
         const product = classify(name);
         if (!product) {
           result.unmatched.push({ campaign: name, spend });

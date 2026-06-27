@@ -14,6 +14,7 @@ import { getDailySpendByCampaign } from "@/lib/google-ads";
 import { prisma } from "@/lib/prisma";
 import { loadProductMatcher } from "@/lib/product-catalog";
 import { persistUnmatched } from "@/lib/ad-spend";
+import { isExcludedCampaign } from "@/lib/products";
 
 export type GoogleSyncResult = {
   customers: { rows: number };
@@ -64,6 +65,7 @@ export async function syncGoogleAds(): Promise<GoogleSyncResult> {
     let totalRows = 0;
     for (const [campaignId, entry] of perCampaign) {
       const name = entry.campaignName || `Kampagne ${campaignId}`;
+      if (isExcludedCampaign(name)) continue;
       const product = classify(name);
       for (const [day, spend] of entry.days) {
         totalRows += 1;

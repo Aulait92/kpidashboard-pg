@@ -49,13 +49,22 @@ export function isLegacyProduct(key: string): boolean {
 }
 
 // Normalisiert einen Namen fürs Keyword-Matching: lowercase + Entfernen von
-// Obfuskations-Zeichen, die Media-Buyer mitten ins Wort streuen, um Metas
-// Policy-Filter zu umgehen (z. B. "N.eugeschäft", "PKVW.echsel",
-// "K.inderwunsch", "Kinder·wunsch"). Solche Punkte/Mittelpunkte brechen sonst
-// das Substring-Matching. Buchstaben/Ziffern/Leerzeichen/Bindestriche bleiben
-// erhalten (Bindestrich z. B. für den Alias "tarif-optim").
+// Mittelpunkt-Obfuskation (z. B. "Kinder·wunsch"). Der normale Punkt "." wird
+// NICHT gestrippt — er ist ein bewusster Ausschluss-Marker (siehe
+// isExcludedCampaign); Kampagnen mit Punkt werden vorher komplett übersprungen.
 export function normalizeForMatch(s: string): string {
-  return s.toLowerCase().replace(/[.·•․]/g, "");
+  return s.toLowerCase().replace(/[·•․]/g, "");
+}
+
+// Kampagnen, die NICHT in die Cost-/Spend-Berechnung einfließen sollen und im
+// Sync komplett übersprungen werden (weder zugeordnet noch als „nicht
+// zugeordnet" gelistet):
+//   • Name enthält einen Punkt "." — bewusster „ignorieren"-Marker des Buyers.
+//   • Name enthält "TEST" als eigenständiges Wort (Test-Kampagnen) — als
+//     Wortgrenze, damit z. B. "Attest" nicht fälschlich ausgeschlossen wird.
+const TEST_WORD_RE = /\btest\b/i;
+export function isExcludedCampaign(campaignName: string): boolean {
+  return campaignName.includes(".") || TEST_WORD_RE.test(campaignName);
 }
 
 // Reine Keyword-Klassifizierung eines KAMPAGNEN-Namens auf eine der drei
