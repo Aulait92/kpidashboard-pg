@@ -332,7 +332,9 @@ export async function syncTikTok(): Promise<TikTokSyncResult> {
     result.matched.push({ campaign, product: val.product, spend: val.spend });
   }
 
-  if (result.errors.length === 0) {
+  // Unmatched-Transparenz aktualisieren, sobald mindestens ein Advertiser
+  // sauber lief — nicht erst bei fehlerfreiem Gesamtlauf.
+  if (anyAdvertiserSucceededFully) {
     await persistUnmatched("TikTok", result.unmatched);
   }
 

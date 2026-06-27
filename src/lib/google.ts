@@ -139,7 +139,9 @@ export async function syncGoogleAds(): Promise<GoogleSyncResult> {
     result.matched.push({ campaign, product: val.product, spend: val.spend });
   }
 
-  if (result.errors.length === 0) {
+  // Unmatched-Transparenz aktualisieren, sobald der Fetch grundsätzlich lief
+  // (succeeded) — nicht erst bei fehlerfreiem Gesamtlauf.
+  if (succeeded) {
     await persistUnmatched("Google", result.unmatched);
   }
 

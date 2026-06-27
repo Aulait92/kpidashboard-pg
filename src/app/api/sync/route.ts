@@ -45,7 +45,16 @@ async function handle(req: Request) {
         errors: result.airtable.errors,
       },
       meta: result.meta.ok
-        ? { ok: true, costs: result.meta.result.costs }
+        ? {
+            ok: true,
+            costs: result.meta.result.costs,
+            // Pro Account: wie viele Insights-Zeilen kamen zurück. Accounts,
+            // die NICHT hier auftauchen, sind beim Fetch gescheitert (siehe
+            // errors) und wurden übersprungen.
+            accounts: result.meta.result.accounts,
+            errors: result.meta.result.errors,
+            unmatched: result.meta.result.unmatched.length,
+          }
         : { ok: false, error: result.meta.error },
       outbrain: result.outbrain.ok
         ? {

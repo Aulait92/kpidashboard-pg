@@ -206,32 +206,38 @@ export async function syncMeta(): Promise<MetaSyncResult> {
     }
   }
 
-  // Defensiv: nur löschen, wenn der Fetch komplett durchlief UND Daten
-  // vorliegen. Sonst hätte ein API-Fehler das alte Datenbild wegradiert und
-  // wir hätten weder neue noch alte Werte (das ist genau einmal passiert).
-  const canReplace = result.errors.length === 0 && toInsert.length > 0;
-  if (canReplace) {
-    await prisma.cost.deleteMany({
-      where: { kind: "LEAD", note: { startsWith: "Meta:" } },
-    });
-    await prisma.cost.createMany({
-      data: toInsert.map((row) => ({
-        kind: "LEAD" as const,
-        product: row.product,
-        amount: row.amount,
-        occurredAt: row.occurredAt,
-        note: row.note,
-      })),
-    });
-    result.costs = toInsert.length;
-  } else if (result.errors.length === 0 && toInsert.length === 0) {
-    // Sauberer Lauf, aber Meta hat 0 Zeilen geliefert → vermutlich kein Spend.
-    // Trotzdem alte Meta-Daten weg, damit veraltete Zahlen nicht stehenbleiben.
-    await prisma.cost.deleteMany({
-      where: { kind: "LEAD", note: { startsWith: "Meta:" } },
-    });
+  // Per-Account-Replace (resilient): nur die Konten ersetzen, die sauber
+  // gefetcht wurden. Ein einzelnes fehlerhaftes Konto (Token-Scope, Rate-Limit,
+  // fehlende Permission) blockiert damit NICHT mehr den gesamten Meta-Channel —
+  // die übrigen Konten werden trotzdem aktualisiert. Fehlerhafte Konten behalten
+  // ihr altes Datenbild. Frühere Logik war all-or-nothing: ein Fehler ließ ALLE
+  // Konten ungeschrieben (Kampagnen verschwanden komplett).
+  const okAccountIds = result.accounts.map((a) => a.id);
+  if (okAccountIds.length > 0) {
+    const inserts = toInsert.map((row) => ({
+      kind: "LEAD" as const,
+      product: row.product,
+      amount: row.amount,
+      occurredAt: row.occurredAt,
+      note: row.note,
+    }));
+    // Pro erfolgreichem Konto die alten Zeilen löschen (Note enthält
+    // "[act_<id>]"), danach die frischen Zeilen in einem Rutsch einfügen.
+    await prisma.$transaction([
+      ...okAccountIds.map((id) =>
+        prisma.cost.deleteMany({
+          where: { kind: "LEAD", note: { contains: `[act_${id}]` } },
+        }),
+      ),
+      ...(inserts.length > 0
+        ? [prisma.cost.createMany({ data: inserts })]
+        : []),
+    ]);
+    result.costs = inserts.length;
+    // Unmatched-Transparenz aktualisieren, sobald mindestens ein Konto lief.
+    await persistUnmatched("Meta", result.unmatched);
   }
-  // Bei Errors lassen wir die bestehenden Cost-Zeilen unangetastet.
+  // Wenn KEIN Konto sauber lief: altes Datenbild komplett unangetastet lassen.
 
   // Matched-Summe je Kampagne (statt N Tagessummen, die das SyncResult sonst
   // vollmüllen würden). Kampagnenname kommt aus der note: "Meta: <name> (...)".
@@ -247,12 +253,6 @@ export async function syncMeta(): Promise<MetaSyncResult> {
   for (const [key, val] of summary) {
     const campaign = key.split("|").slice(1).join("|");
     result.matched.push({ campaign, product: val.product, spend: val.spend });
-  }
-
-  // Nicht zugeordnete Kampagnen für die Admin-Transparenz persistieren —
-  // nur bei sauberem Lauf, sonst bliebe die Liste durch einen Teil-Fehler leer.
-  if (result.errors.length === 0) {
-    await persistUnmatched("Meta", result.unmatched);
   }
 
   return result;

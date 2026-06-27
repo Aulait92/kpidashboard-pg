@@ -308,7 +308,10 @@ export async function syncOutbrain(): Promise<OutbrainSyncResult> {
     result.matched.push({ campaign, product: val.product, spend: val.spend });
   }
 
-  if (result.errors.length === 0) {
+  // Unmatched-Transparenz aktualisieren, sobald mindestens ein Marketer sauber
+  // lief (nicht erst bei fehlerfreiem Gesamtlauf) — sonst bleibt die Liste bei
+  // einem einzelnen Marketer-Fehler veraltet/leer.
+  if (anyMarketerSucceededFully) {
     await persistUnmatched("Outbrain", result.unmatched);
   }
 
