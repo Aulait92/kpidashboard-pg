@@ -1,6 +1,6 @@
 import { addDays, format } from "date-fns";
-import { classifyProduct, type MetaProduct } from "@/lib/meta";
 import { prisma } from "@/lib/prisma";
+import { loadProductMatcher } from "@/lib/product-catalog";
 
 // Outbrain Amplify Reporting API:
 //   Auth:   OB-TOKEN-V1: <long-lived token>
@@ -33,7 +33,7 @@ type CampaignsResponse = {
 export type OutbrainSyncResult = {
   marketers: { id: string; rows: number }[];
   costs: number;
-  matched: { campaign: string; product: MetaProduct; spend: number }[];
+  matched: { campaign: string; product: string; spend: number }[];
   unmatched: { campaign: string; spend: number }[];
   errors: string[];
   // Diagnose: erste Antwort-Häppchen pro Marketer, damit man bei rows=0
@@ -180,12 +180,14 @@ export async function syncOutbrain(): Promise<OutbrainSyncResult> {
   void process.env.OUTBRAIN_MAX_SYNC_MS;
 
   type Insertable = {
-    product: MetaProduct;
+    product: string;
     amount: number;
     occurredAt: Date;
     note: string;
   };
   const toInsert: Insertable[] = [];
+
+  const classify = await loadProductMatcher();
 
   let anyMarketerSucceededFully = false;
   for (const marketerId of marketers) {
@@ -216,7 +218,7 @@ export async function syncOutbrain(): Promise<OutbrainSyncResult> {
           if (!name) continue;
           const spend = parseSpend(c.metrics?.spend);
           if (spend <= 0) continue;
-          const product = classifyProduct(name);
+          const product = classify(name);
           if (!product) {
             result.unmatched.push({ campaign: name, spend });
             continue;
@@ -291,7 +293,7 @@ export async function syncOutbrain(): Promise<OutbrainSyncResult> {
 
   // Matched-Zusammenfassung pro Kampagne — Note-Format jetzt
   // "Outbrain: <name> (<since>…<until>) [marketer_<id>]".
-  const summary = new Map<string, { product: MetaProduct; spend: number }>();
+  const summary = new Map<string, { product: string; spend: number }>();
   for (const row of toInsert) {
     const m = /^Outbrain:\s+(.+?)\s+\(/.exec(row.note);
     const campaign = m ? m[1] : row.note;

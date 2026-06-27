@@ -24,9 +24,11 @@ const RANGE_ORDER: Exclude<RangeKey, "custom">[] = [
 ];
 
 export type Customer = { id: string; name: string };
+export type ProductOption = { key: string; label: string };
 
 export function FilterBar({
   customers,
+  products,
   currentRange,
   currentCustomerId,
   currentProduct,
@@ -34,12 +36,19 @@ export function FilterBar({
   customTo,
 }: {
   customers: Customer[];
+  // Aktive Produkte (Legacy + neue). Fällt auf die drei Legacy-Produkte
+  // zurück, wenn nichts übergeben wird.
+  products?: ProductOption[];
   currentRange: RangeKey;
   currentCustomerId: string | null;
   currentProduct: string | null;
   customFrom?: string;
   customTo?: string;
 }) {
+  const productOptions: ProductOption[] =
+    products && products.length > 0
+      ? products
+      : PRODUCTS.map((p) => ({ key: p, label: displayProduct(p) }));
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -117,7 +126,15 @@ export function FilterBar({
         )}
       </Dropdown>
 
-      <Dropdown label="Produkt" value={currentProduct ?? "Alle"}>
+      <Dropdown
+        label="Produkt"
+        value={
+          currentProduct
+            ? productOptions.find((p) => p.key === currentProduct)?.label ??
+              displayProduct(currentProduct)
+            : "Alle"
+        }
+      >
         {(close) => (
           <>
             <DropdownItem
@@ -129,16 +146,16 @@ export function FilterBar({
             >
               Alle
             </DropdownItem>
-            {PRODUCTS.map((p) => (
+            {productOptions.map((p) => (
               <DropdownItem
-                key={p}
-                active={currentProduct === p}
+                key={p.key}
+                active={currentProduct === p.key}
                 onClick={() => {
-                  update({ product: p });
+                  update({ product: p.key });
                   close();
                 }}
               >
-                {displayProduct(p)}
+                {p.label}
               </DropdownItem>
             ))}
           </>

@@ -50,6 +50,36 @@ export function isLegacyProduct(key: string): boolean {
   return key === "Wechsel" || key === "Neugeschäft" || key === "Kinderwunsch";
 }
 
+// Reine Keyword-Klassifizierung eines KAMPAGNEN-Namens auf eine der drei
+// Legacy-Sparten (Cost-Attribution je Channel). Bewusst ohne DB-Zugriff,
+// damit products.ts client-bundle-tauglich bleibt. Neue Produkte werden
+// NICHT hier, sondern über den DB-gestützten loadProductMatcher() in
+// product-catalog.ts erkannt (Name-/Slug-Match gegen die Produkte-Tabelle).
+export function classifyCampaignProduct(campaignName: string): string | null {
+  const n = campaignName.toLowerCase();
+  // Kinderwunsch zuerst — eigenes Vertical, klar über das Keyword erkennbar.
+  if (n.includes("kinderwunsch") || n.includes("kiwu")) return "Kinderwunsch";
+  // Reihenfolge wichtig: "Neugeschäft" zuerst, falls "wechsel" als Substring
+  // in einem Neugeschäft-Namen vorkäme.
+  if (
+    n.includes("neugeschäft") ||
+    n.includes("neugeschaeft") ||
+    n.includes("neuvertrag")
+  ) {
+    return "Neugeschäft";
+  }
+  // „Wechsel" (Vorgang) ODER „Wechsler" (Person) — letzteres enthält
+  // „wechsel" NICHT als Substring. „Tarifoptimierung" zählt als Wechsel-Alias.
+  if (
+    n.includes("wechsel") ||
+    n.includes("wechsler") ||
+    n.includes("tarifoptim") ||
+    n.includes("tarif-optim")
+  )
+    return "Wechsel";
+  return null;
+}
+
 // Bearbeitungsstatus-Werte aus Airtable, die der Buyer im Lead-Detail
 // selber setzen darf. Bewusst OHNE "Storno" — der Storno-Flow läuft
 // separat über den StornoDialog (mit Pflicht-Grund + optionaler

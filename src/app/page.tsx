@@ -29,7 +29,6 @@ import {
   computeProductBreakdown,
   computeTimeSeries,
   listCustomers,
-  PRODUCTS,
   type ChannelPerformance,
   type Kpis,
   type TimeSeriesPoint,
@@ -41,6 +40,7 @@ import {
   formatNumber,
   formatPercent,
 } from "@/lib/format";
+import { listActiveProducts } from "@/lib/product-catalog";
 
 type SearchParams = Promise<{
   range?: string;
@@ -73,10 +73,10 @@ export default async function DashboardPage({
   const { key: rangeKey, range } = parseRangeFromSearchParams(sp);
   const customerId =
     sp.customerId && sp.customerId.length > 0 ? sp.customerId : null;
-  const product =
-    sp.product && (PRODUCTS as readonly string[]).includes(sp.product)
-      ? sp.product
-      : null;
+  // Produkt-Filter ist ein freier Produkt-Key (Legacy-Sparte ODER neuer
+  // Produktname aus der Produkte-Tabelle). Ein unbekannter Wert liefert
+  // schlicht leere Resultate, deshalb genügt die Nicht-Leer-Prüfung.
+  const product = sp.product && sp.product.length > 0 ? sp.product : null;
   const renderedAt = Date.now();
 
   return (
@@ -220,10 +220,14 @@ async function FiltersSection({
   customFrom?: string;
   customTo?: string;
 }) {
-  const customers = await listCustomers();
+  const [customers, products] = await Promise.all([
+    listCustomers(),
+    listActiveProducts(),
+  ]);
   return (
     <FilterBar
       customers={customers}
+      products={products}
       currentRange={currentRange}
       currentCustomerId={currentCustomerId}
       currentProduct={currentProduct}

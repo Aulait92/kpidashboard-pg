@@ -9,15 +9,15 @@
 //                              Spend ist meist ≤ 1h nach Schaltung sichtbar)
 //   GOOGLE_ADS_SYNC_FROM       optional hartes Startdatum YYYY-MM-DD
 
-import { addDays, format } from "date-fns";
+import { addDays } from "date-fns";
 import { getDailySpendByCampaign } from "@/lib/google-ads";
-import { classifyProduct, type MetaProduct } from "@/lib/meta";
 import { prisma } from "@/lib/prisma";
+import { loadProductMatcher } from "@/lib/product-catalog";
 
 export type GoogleSyncResult = {
   customers: { rows: number };
   costs: number;
-  matched: { campaign: string; product: MetaProduct; spend: number }[];
+  matched: { campaign: string; product: string; spend: number }[];
   unmatched: { campaign: string; spend: number }[];
   errors: string[];
 };
@@ -48,12 +48,14 @@ export async function syncGoogleAds(): Promise<GoogleSyncResult> {
       : addDays(today, -lookbackDays);
 
   type Insertable = {
-    product: MetaProduct;
+    product: string;
     amount: number;
     occurredAt: Date;
     note: string;
   };
   const toInsert: Insertable[] = [];
+
+  const classify = await loadProductMatcher();
 
   let succeeded = false;
   try {
@@ -61,7 +63,7 @@ export async function syncGoogleAds(): Promise<GoogleSyncResult> {
     let totalRows = 0;
     for (const [campaignId, entry] of perCampaign) {
       const name = entry.campaignName || `Kampagne ${campaignId}`;
-      const product = classifyProduct(name);
+      const product = classify(name);
       for (const [day, spend] of entry.days) {
         totalRows += 1;
         if (spend <= 0) continue;
@@ -122,7 +124,7 @@ export async function syncGoogleAds(): Promise<GoogleSyncResult> {
   }
 
   // Matched-Summary pro Kampagne (statt N Tages-Einträgen).
-  const summary = new Map<string, { product: MetaProduct; spend: number }>();
+  const summary = new Map<string, { product: string; spend: number }>();
   for (const row of toInsert) {
     const m = /^Google:\s+(.+?)\s+\(/.exec(row.note);
     const campaign = m ? m[1] : row.note;

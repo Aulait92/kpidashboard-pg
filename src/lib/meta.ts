@@ -1,5 +1,7 @@
 import { addDays, format } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import { classifyCampaignProduct } from "@/lib/products";
+import { loadProductMatcher } from "@/lib/product-catalog";
 
 const META_API_VERSION = "v23.0";
 const META_GRAPH = `https://graph.facebook.com/${META_API_VERSION}`;
@@ -22,7 +24,8 @@ export type MetaProduct = "Wechsel" | "Neugeschäft" | "Kinderwunsch";
 export type MetaSyncResult = {
   accounts: { id: string; rows: number }[];
   costs: number;
-  matched: { campaign: string; product: MetaProduct; spend: number }[];
+  // product = kanonischer Produkt-Key (Legacy-Sparte oder neuer Produktname).
+  matched: { campaign: string; product: string; spend: number }[];
   unmatched: { campaign: string; spend: number }[];
   errors: string[];
 };
@@ -45,27 +48,12 @@ function getEnv() {
   return { token, accounts };
 }
 
+// Legacy-Keyword-Klassifizierung auf die drei Altsparten. Die Logik liegt
+// jetzt zentral (und client-bundle-tauglich) in products.ts; hier nur noch
+// der typisierte Re-Export für bestehende Aufrufer. Neue Produkte erkennt der
+// DB-gestützte loadProductMatcher() (siehe syncMeta).
 export function classifyProduct(campaignName: string): MetaProduct | null {
-  const n = campaignName.toLowerCase();
-  // Kinderwunsch zuerst — eigenes Vertical, klar über das Keyword erkennbar.
-  if (n.includes("kinderwunsch") || n.includes("kiwu")) return "Kinderwunsch";
-  // Reihenfolge wichtig: "Neugeschäft" zuerst, falls "wechsel" als Substring
-  // in einem Neugeschäft-Namen vorkäme.
-  if (n.includes("neugeschäft") || n.includes("neugeschaeft") || n.includes("neuvertrag")) {
-    return "Neugeschäft";
-  }
-  // „Wechsel" (Vorgang) ODER „Wechsler" (Person) — letzteres enthält
-  // „wechsel" NICHT als Substring (w-e-c-h-s-l-e-r vs. w-e-c-h-s-e-l).
-  // „Tarifoptimierung" zählt als Wechsel-Alias (gleicher Pool, identische
-  // Lead-Kosten-Logik) — siehe classifyLeadProduct in airtable.ts.
-  if (
-    n.includes("wechsel") ||
-    n.includes("wechsler") ||
-    n.includes("tarifoptim") ||
-    n.includes("tarif-optim")
-  )
-    return "Wechsel";
-  return null;
+  return classifyCampaignProduct(campaignName) as MetaProduct | null;
 }
 
 function dayAtNoonUtc(dateStart: string): Date {
@@ -166,12 +154,16 @@ export async function syncMeta(): Promise<MetaSyncResult> {
   const until = today.toISOString().slice(0, 10);
 
   type Insertable = {
-    product: MetaProduct;
+    product: string;
     amount: number;
     occurredAt: Date;
     note: string;
   };
   const toInsert: Insertable[] = [];
+
+  // DB-gestützter Klassifizierer: Legacy-Sparten per Keyword, neue Produkte
+  // per Name/Slug-Match gegen die Produkte-Tabelle.
+  const classify = await loadProductMatcher();
 
   for (const accountId of accounts) {
     try {
@@ -187,7 +179,7 @@ export async function syncMeta(): Promise<MetaSyncResult> {
         const amount = Number.parseFloat(spendStr);
         if (!Number.isFinite(amount) || amount <= 0) continue;
 
-        const product = classifyProduct(name);
+        const product = classify(name);
         const occurredAt = dayAtNoonUtc(startStr);
 
         if (!product) {
@@ -242,7 +234,7 @@ export async function syncMeta(): Promise<MetaSyncResult> {
 
   // Matched-Summe je Kampagne (statt N Tagessummen, die das SyncResult sonst
   // vollmüllen würden). Kampagnenname kommt aus der note: "Meta: <name> (...)".
-  const summary = new Map<string, { product: MetaProduct; spend: number }>();
+  const summary = new Map<string, { product: string; spend: number }>();
   for (const row of toInsert) {
     const m = /^Meta:\s+(.+?)\s+\(\d{4}-\d{2}-\d{2}\)/.exec(row.note);
     const campaign = m ? m[1] : row.note;

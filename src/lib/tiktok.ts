@@ -11,8 +11,8 @@
 // Stat-Delay liegt bei TikTok bei ~1-3h.
 
 import { addDays, format } from "date-fns";
-import { classifyProduct, type MetaProduct } from "@/lib/meta";
 import { prisma } from "@/lib/prisma";
+import { loadProductMatcher } from "@/lib/product-catalog";
 
 const TIKTOK_API = "https://business-api.tiktok.com/open_api/v1.3";
 const REQUEST_DELAY_MS = Number(process.env.TIKTOK_REQUEST_DELAY_MS ?? 300);
@@ -45,7 +45,7 @@ type TikTokCampaignListResponse = {
 export type TikTokSyncResult = {
   advertisers: { id: string; rows: number }[];
   costs: number;
-  matched: { campaign: string; product: MetaProduct; spend: number }[];
+  matched: { campaign: string; product: string; spend: number }[];
   unmatched: { campaign: string; spend: number }[];
   errors: string[];
   debug?: { advertiserId: string; sample: string }[];
@@ -222,12 +222,14 @@ export async function syncTikTok(): Promise<TikTokSyncResult> {
   const until = format(today, "yyyy-MM-dd");
 
   type Insertable = {
-    product: MetaProduct;
+    product: string;
     amount: number;
     occurredAt: Date;
     note: string;
   };
   const toInsert: Insertable[] = [];
+
+  const classify = await loadProductMatcher();
 
   let anyAdvertiserSucceededFully = false;
   for (const advertiserId of advertisers) {
@@ -251,7 +253,7 @@ export async function syncTikTok(): Promise<TikTokSyncResult> {
         const spend = parseSpend(r.metrics?.spend);
         if (!campaignId || !day || spend <= 0) continue;
         const name = nameMap.get(campaignId) ?? `Kampagne ${campaignId}`;
-        const product = classifyProduct(name);
+        const product = classify(name);
         if (!product) {
           result.unmatched.push({ campaign: name, spend });
           continue;
@@ -315,7 +317,7 @@ export async function syncTikTok(): Promise<TikTokSyncResult> {
   }
 
   // Matched-Summary pro Kampagne (statt N Tagessummen).
-  const summary = new Map<string, { product: MetaProduct; spend: number }>();
+  const summary = new Map<string, { product: string; spend: number }>();
   for (const row of toInsert) {
     const m = /^TikTok:\s+(.+?)\s+\(/.exec(row.note);
     const campaign = m ? m[1] : row.note;
