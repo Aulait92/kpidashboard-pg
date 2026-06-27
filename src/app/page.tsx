@@ -70,7 +70,12 @@ export default async function DashboardPage({
   }
 
   const sp = await searchParams;
-  const { key: rangeKey, range } = parseRangeFromSearchParams(sp);
+  // Standard-Zeitraum = „Heute" (statt der globalen Default „Letzte 30 Tage"),
+  // sobald kein Range explizit in der URL steht.
+  const { key: rangeKey, range } = parseRangeFromSearchParams({
+    ...sp,
+    range: sp.range ?? "today",
+  });
   const customerId =
     sp.customerId && sp.customerId.length > 0 ? sp.customerId : null;
   // Produkt-Filter ist ein freier Produkt-Key (Legacy-Sparte ODER neuer
