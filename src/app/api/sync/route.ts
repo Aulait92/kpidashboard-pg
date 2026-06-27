@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { runFullSync } from "@/lib/sync";
+import { listProductMatchers } from "@/lib/product-catalog";
 
 // Token-Auth: vergleicht in konstanter Zeit, damit der Endpoint nicht
 // per Timing-Angriff probiert werden kann.
@@ -32,9 +33,14 @@ async function handle(req: Request) {
 
   try {
     const result = await runFullSync();
+    // Diagnose: welche Produkte + Match-Needles kennt der Matcher nach dem Sync?
+    // Fehlt hier ein frisch angelegtes Produkt, ist es nicht in die DB gekommen
+    // (Name-Feld leer/anders benannt, falsche Tabelle, o. ä.).
+    const productMatchers = await listProductMatchers();
     revalidatePath("/");
     return NextResponse.json({
       ok: true,
+      productMatchers,
       airtable: {
         leads: result.airtable.leads,
         revenues: result.airtable.revenues,

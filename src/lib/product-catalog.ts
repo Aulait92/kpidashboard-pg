@@ -30,6 +30,44 @@ export type ProductMatcher = (campaignName: string) => string | null;
 // als Substring in fast jedem Kampagnen-Namen matcht (z. B. zu kurze Slugs).
 const MIN_NEEDLE_LEN = 3;
 
+// Baut die Match-Needles eines Produkts (Name + Slug + Keyword-Aliase),
+// normalisiert und auf Mindestlänge gefiltert.
+function buildNeedles(p: {
+  name: string;
+  slug: string | null;
+  keywords: string | null;
+}): string[] {
+  const aliasList = (p.keywords ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+  return [p.name, p.slug, ...aliasList]
+    .filter((s): s is string => !!s && s.trim().length >= MIN_NEEDLE_LEN)
+    .map((s) => normalizeForMatch(s));
+}
+
+// Diagnose: welche Produkte + Needles kennt der Matcher aktuell (aus der DB)?
+// Genau das, was loadProductMatcher() für neue Produkte nutzt. Hilft zu sehen,
+// ob ein frisch in Airtable angelegtes Produkt überhaupt synchronisiert wurde.
+export async function listProductMatchers(): Promise<
+  { name: string; key: string; legacy: boolean; needles: string[] }[]
+> {
+  const products = await prisma.product.findMany({
+    where: { active: true },
+    select: { name: true, slug: true, keywords: true },
+    orderBy: [{ name: "asc" }],
+  });
+  return products.map((p) => {
+    const key = canonicalProductKey(p.name);
+    return {
+      name: p.name,
+      key,
+      legacy: isLegacyProduct(key),
+      needles: buildNeedles(p),
+    };
+  });
+}
+
 export async function loadProductMatcher(): Promise<ProductMatcher> {
   let extra: { key: string; needles: string[] }[] = [];
   try {
@@ -38,20 +76,7 @@ export async function loadProductMatcher(): Promise<ProductMatcher> {
       select: { name: true, slug: true, keywords: true },
     });
     extra = products
-      .map((p) => {
-        const key = canonicalProductKey(p.name);
-        // Needles = Name + Slug + kommagetrennte Keyword-Aliase.
-        const aliasList = (p.keywords ?? "")
-          .split(",")
-          .map((s) => s.trim())
-          .filter((s) => s.length > 0);
-        const needles = [p.name, p.slug, ...aliasList]
-          .filter(
-            (s): s is string => !!s && s.trim().length >= MIN_NEEDLE_LEN,
-          )
-          .map((s) => normalizeForMatch(s));
-        return { key, needles };
-      })
+      .map((p) => ({ key: canonicalProductKey(p.name), needles: buildNeedles(p) }))
       // Legacy-Sparten laufen über die Keyword-Logik (oben), nicht über den
       // generischen Name-Match — sonst doppelte / widersprüchliche Treffer.
       .filter((p) => !isLegacyProduct(p.key) && p.needles.length > 0);
