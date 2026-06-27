@@ -120,6 +120,7 @@ function CreateActivityForm({ dealId }: { dealId: string }) {
           defaultValue="settercall"
           className="rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
         >
+          <option value="call">Anruf</option>
           <option value="settercall">Settercall ausmachen</option>
           <option value="videosalescall">Videosalescall ausmachen</option>
           <option value="whatsapp">WhatsApp</option>
