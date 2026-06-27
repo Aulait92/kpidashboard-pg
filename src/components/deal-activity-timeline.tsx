@@ -117,10 +117,9 @@ function CreateActivityForm({ dealId }: { dealId: string }) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-[140px_1fr]">
         <select
           name="kind"
-          defaultValue="note"
+          defaultValue="settercall"
           className="rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
         >
-          <option value="note">Notiz</option>
           <option value="settercall">Settercall ausmachen</option>
           <option value="videosalescall">Videosalescall ausmachen</option>
           <option value="whatsapp">WhatsApp</option>
