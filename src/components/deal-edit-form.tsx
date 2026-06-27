@@ -24,6 +24,7 @@ export function DealEditForm({
   initialValue,
   initialCloseDate,
   initialNotes,
+  initialTestCharge,
 }: {
   dealId: string;
   initialStatus: string;
@@ -33,6 +34,7 @@ export function DealEditForm({
   initialValue: string; // String, damit "" leerer Input möglich ist
   initialCloseDate: string; // YYYY-MM-DD oder ""
   initialNotes: string;
+  initialTestCharge: string;
 }) {
   const [state, formAction, pending] = useActionState<UpdateDealState, FormData>(
     updateDealAction,
@@ -63,6 +65,7 @@ export function DealEditForm({
   const [value, setValue] = useState(initialValue);
   const [closeDate, setCloseDate] = useState(initialCloseDate);
   const [notes, setNotes] = useState(initialNotes);
+  const [testCharge, setTestCharge] = useState(initialTestCharge);
 
   const [showSaved, setShowSaved] = useState(false);
   useEffect(() => {
@@ -152,6 +155,16 @@ export function DealEditForm({
             name="closeDate"
             value={closeDate}
             onChange={(e) => setCloseDate(e.target.value)}
+            className={INPUT_CLS}
+          />
+        </Row>
+        <Row label="Testcharge">
+          <input
+            type="text"
+            name="testCharge"
+            value={testCharge}
+            onChange={(e) => setTestCharge(e.target.value)}
+            placeholder="z. B. Charge 1, Testlauf KW 24 …"
             className={INPUT_CLS}
           />
         </Row>

@@ -225,6 +225,7 @@ export async function updateDealAction(
   const company = optionalString(formData, "company");
   const product = optionalString(formData, "product");
   const notes = optionalString(formData, "notes");
+  const testCharge = optionalString(formData, "testCharge");
   // Status mitlesen — leer = "nicht gesetzt"; sonst nur akzeptieren wenn
   // der String einer Phase oder einem ihrer Aliasse entspricht (= externes
   // / unbekanntes "Sonstige"-Status bleibt durchgereicht, wenn der Buyer
@@ -292,6 +293,7 @@ export async function updateDealAction(
         company,
         product,
         notes,
+        testCharge,
         value,
         closeDate: autoCloseDateIso ?? closeDate,
         ...(status !== undefined ? { status } : {}),
@@ -315,6 +317,7 @@ export async function updateDealAction(
         ...(company !== undefined ? { company } : {}),
         ...(product !== undefined ? { product } : {}),
         ...(notes !== undefined ? { notes } : {}),
+        ...(testCharge !== undefined ? { testCharge } : {}),
         ...(value !== undefined ? { value } : {}),
         ...(autoCloseDateIso
           ? { closeDate: new Date(`${autoCloseDateIso}T12:00:00Z`) }

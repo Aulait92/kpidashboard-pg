@@ -7,9 +7,12 @@ import { Dropdown, DropdownItem } from "@/components/dropdown";
 
 const KIND_OPTIONS: { value: string; label: string }[] = [
   { value: "note", label: "Notiz" },
-  { value: "call", label: "Anruf" },
+  { value: "settercall", label: "Settercall ausmachen" },
+  { value: "videosalescall", label: "Videosalescall ausmachen" },
+  { value: "whatsapp", label: "WhatsApp" },
   { value: "email", label: "Mail" },
   { value: "meeting", label: "Termin" },
+  { value: "call", label: "Anruf (alt)" },
   { value: "status_change", label: "Status" },
 ];
 

@@ -116,6 +116,7 @@ const CLOSE_DATE_FIELDS = [
 ];
 const NOTES_FIELDS = ["Notizen", "Notes", "Beschreibung", "Description"];
 const LOST_REASON_FIELDS = ["Lost Reason", "Verlustgrund", "Absagegrund"];
+const TESTCHARGE_FIELDS = ["Testcharge", "Test-Charge", "Test Charge"];
 
 function readString(
   fields: Record<string, unknown>,
@@ -233,6 +234,7 @@ export async function syncSales(): Promise<SalesSyncResult> {
       const closeDate = readDate(rec.fields, CLOSE_DATE_FIELDS);
       const notes = readString(rec.fields, NOTES_FIELDS);
       const lostReason = readString(rec.fields, LOST_REASON_FIELDS);
+      const testCharge = readString(rec.fields, TESTCHARGE_FIELDS);
 
       const phase = findSalesPhaseForStatus(status);
       const isWon = phase?.terminal === "won";
@@ -261,6 +263,7 @@ export async function syncSales(): Promise<SalesSyncResult> {
           closeDate,
           notes,
           lostReason,
+          testCharge,
           wonAt: isWon ? new Date() : null,
           lostAt: isLost ? new Date() : null,
           rawFields: rec.fields as object,
@@ -279,6 +282,7 @@ export async function syncSales(): Promise<SalesSyncResult> {
           closeDate,
           notes,
           lostReason,
+          testCharge,
           // Status ist Source-of-Truth: wonAt/lostAt reflektieren NUR
           // den aktuellen Terminal-Zustand. Bewegt sich ein Deal aus
           // Serienbetrieb/Verloren wieder zurück, werden die Felder

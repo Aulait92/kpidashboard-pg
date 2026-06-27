@@ -167,6 +167,7 @@ export default async function AdminDealDetailPage({
               deal.closeDate ? deal.closeDate.toISOString().slice(0, 10) : ""
             }
             initialNotes={deal.notes ?? ""}
+            initialTestCharge={deal.testCharge ?? ""}
           />
           <DealFactsCard deal={deal} extraRows={extraRawRows} />
         </div>
@@ -228,12 +229,8 @@ function DealFactsCard({
         {baseRows.map((row) => (
           <Row key={row.label} label={row.label} value={row.value} />
         ))}
-        {deal.notes ? (
-          <div className="px-5 py-3">
-            <div className="text-xs text-[color:var(--muted)]">Notizen</div>
-            <p className="mt-1 whitespace-pre-wrap break-words text-sm">{deal.notes}</p>
-          </div>
-        ) : null}
+        {/* Notizen werden bereits im „Deal bearbeiten"-Formular angezeigt &
+            editiert — hier nicht doppelt rendern. */}
         {extraRows.length > 0 ? (
           <>
             <div className="bg-[color:var(--brand-soft)]/30 px-5 py-2 text-[11px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">

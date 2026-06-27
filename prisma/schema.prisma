@@ -41,6 +41,9 @@ model Deal {
   lostAt          DateTime?
   lostReason      String?
   notes           String?
+  // Frei editierbares Feld „Testcharge" (Detailansicht). Spiegelt das
+  // gleichnamige Airtable-Feld; freier Text.
+  testCharge      String?
   // Voller Airtable-Record-Snapshot für die Detail-Ansicht. Erspart einen
   // zweiten Airtable-Call beim Öffnen des Modals.
   rawFields       Json?

@@ -1,17 +1,23 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { endOfDay, startOfDay } from "date-fns";
+import { tz } from "@date-fns/tz";
 import {
   CalendarPlus,
   CheckCircle2,
   Mail,
+  MessageCircle,
   MessageSquare,
   Phone,
+  Video,
 } from "lucide-react";
 import { AdminTabs } from "@/components/admin-tabs";
 import { ActivitiesFilterBar } from "@/components/activities-filter-bar";
 import { getCurrentSession } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+
+const BERLIN = tz("Europe/Berlin");
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +33,9 @@ type SearchParams = Promise<{
 const KIND_LABEL: Record<string, string> = {
   note: "Notiz",
   call: "Anruf",
+  settercall: "Settercall ausmachen",
+  videosalescall: "Videosalescall ausmachen",
+  whatsapp: "WhatsApp",
   email: "Mail",
   meeting: "Termin",
   status_change: "Status",
@@ -34,6 +43,9 @@ const KIND_LABEL: Record<string, string> = {
 const KIND_TONE: Record<string, string> = {
   note: "bg-zinc-100 text-zinc-700",
   call: "bg-blue-100 text-blue-800",
+  settercall: "bg-blue-100 text-blue-800",
+  videosalescall: "bg-indigo-100 text-indigo-800",
+  whatsapp: "bg-green-100 text-green-800",
   email: "bg-violet-100 text-violet-800",
   meeting: "bg-amber-100 text-amber-800",
   status_change: "bg-emerald-100 text-emerald-800",
@@ -42,7 +54,12 @@ const KIND_TONE: Record<string, string> = {
 function kindIcon(kind: string) {
   switch (kind) {
     case "call":
+    case "settercall":
       return Phone;
+    case "videosalescall":
+      return Video;
+    case "whatsapp":
+      return MessageCircle;
     case "email":
       return Mail;
     case "meeting":
@@ -87,27 +104,37 @@ export default async function AdminActivitiesPage({
   };
 
   const now = new Date();
-  const [upcoming, history] = await Promise.all([
+  const todayStart = startOfDay(now, { in: BERLIN });
+  const todayEnd = endOfDay(now, { in: BERLIN });
+  const include = {
+    deal: { select: { id: true, name: true, company: true, status: true } },
+    createdBy: { select: { email: true } },
+  } as const;
+  const [heute, kommende, history] = await Promise.all([
+    // Heute: alle für heute (Berlin-Zeit) geplanten Aktivitäten — auch wenn die
+    // Uhrzeit heute schon vorbei ist.
     prisma.dealActivity.findMany({
-      where: { ...baseWhere, scheduledFor: { gt: now } },
+      where: { ...baseWhere, scheduledFor: { gte: todayStart, lte: todayEnd } },
       orderBy: { scheduledFor: "asc" },
       take: 200,
-      include: {
-        deal: { select: { id: true, name: true, company: true, status: true } },
-        createdBy: { select: { email: true } },
-      },
+      include,
     }),
+    // Kommende: ab morgen geplant.
+    prisma.dealActivity.findMany({
+      where: { ...baseWhere, scheduledFor: { gt: todayEnd } },
+      orderBy: { scheduledFor: "asc" },
+      take: 200,
+      include,
+    }),
+    // Historie: ohne Termin ODER vor heute.
     prisma.dealActivity.findMany({
       where: {
         ...baseWhere,
-        OR: [{ scheduledFor: null }, { scheduledFor: { lte: now } }],
+        OR: [{ scheduledFor: null }, { scheduledFor: { lt: todayStart } }],
       },
       orderBy: { createdAt: "desc" },
       take: 200,
-      include: {
-        deal: { select: { id: true, name: true, company: true, status: true } },
-        createdBy: { select: { email: true } },
-      },
+      include,
     }),
   ]);
 
@@ -119,8 +146,8 @@ export default async function AdminActivitiesPage({
             Aktivitäten
           </h1>
           <p className="mt-1 text-sm text-[color:var(--muted)]">
-            Alle CRM-Aktivitäten über die Deal-Pipeline hinweg — anstehend
-            zuerst, danach Historie (neueste oben).
+            Alle CRM-Aktivitäten über die Deal-Pipeline hinweg — heute fällige
+            zuerst, dann kommende, dann Historie.
           </p>
         </div>
         <ActivitiesFilterBar currentKind={kindFilter} currentQuery={queryRaw} />
@@ -128,12 +155,24 @@ export default async function AdminActivitiesPage({
 
       <AdminTabs />
 
-      <Section title={`Anstehend (${upcoming.length})`}>
-        {upcoming.length === 0 ? (
-          <Empty>Keine anstehenden Aktivitäten.</Empty>
+      <Section title={`Heute (${heute.length})`}>
+        {heute.length === 0 ? (
+          <Empty>Heute keine geplanten Aktivitäten.</Empty>
         ) : (
           <List>
-            {upcoming.map((a) => (
+            {heute.map((a) => (
+              <Row key={a.id} activity={a} isUpcoming />
+            ))}
+          </List>
+        )}
+      </Section>
+
+      <Section title={`Kommende (${kommende.length})`}>
+        {kommende.length === 0 ? (
+          <Empty>Keine kommenden Aktivitäten.</Empty>
+        ) : (
+          <List>
+            {kommende.map((a) => (
               <Row key={a.id} activity={a} isUpcoming />
             ))}
           </List>

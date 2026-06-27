@@ -24,6 +24,8 @@ const FIELD_PRODUCT =
   process.env.AIRTABLE_SALES_FIELD_PRODUCT ?? "Produkt";
 const FIELD_LOST_REASON =
   process.env.AIRTABLE_SALES_FIELD_LOST_REASON ?? "Verlustgrund";
+const FIELD_TESTCHARGE =
+  process.env.AIRTABLE_SALES_FIELD_TESTCHARGE ?? "Testcharge";
 
 function getEnv(): { token: string; baseId: string } | null {
   const token = process.env.AIRTABLE_TOKEN;
@@ -46,6 +48,7 @@ export async function updateSalesDeal(opts: {
   notes?: string | null;
   lostReason?: string | null;
   product?: string | null;
+  testCharge?: string | null;
 }): Promise<void> {
   const env = getEnv();
   if (!env) {
@@ -63,6 +66,7 @@ export async function updateSalesDeal(opts: {
   if (opts.notes !== undefined) fields[FIELD_NOTES] = opts.notes;
   if (opts.lostReason !== undefined) fields[FIELD_LOST_REASON] = opts.lostReason;
   if (opts.product !== undefined) fields[FIELD_PRODUCT] = opts.product;
+  if (opts.testCharge !== undefined) fields[FIELD_TESTCHARGE] = opts.testCharge;
   if (Object.keys(fields).length === 0) return;
 
   const url = `https://api.airtable.com/v0/${env.baseId}/${encodeURIComponent(SALES_TABLE)}/${opts.airtableId}`;
