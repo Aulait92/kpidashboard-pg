@@ -206,6 +206,18 @@ export function decideBudget(params: {
     lookAheadHours,
   } = params;
 
+  // Kein Lead-Ziel → der Pool ist nur zur Sichtbarkeit (Monitoring) da und wird
+  // NICHT gesteuert. Ohne diese Schranke würde leadsMtd >= goal (0) immer
+  // greifen und die Kampagnen fälschlich pausieren.
+  if (!goal || goal <= 0) {
+    return {
+      action: "none",
+      reason: "Kein Lead-Ziel gesetzt — keine Budget-Steuerung (nur Monitoring).",
+      targetBudget: null,
+      setStatus: null,
+    };
+  }
+
   const projected =
     daysElapsed > 0 ? Math.round((leadsMtd / daysElapsed) * daysTotal) : 0;
   const daysLeft = Math.max(1, daysTotal - daysElapsed + 1);
@@ -497,6 +509,23 @@ export async function derivePoolDefs(now: Date = new Date()): Promise<PoolDef[]>
       } else {
         addProduct(canonicalKey, displayName, cp.customerId, goal);
       }
+    }
+  }
+
+  // Jedes aktive Produkt im Media Buyer sichtbar machen — auch ohne Lead-Ziel.
+  // Ziellose Pools dienen dem Monitoring (Leads/Spend/CPL) und werden NICHT
+  // gesteuert (decideBudget: goal<=0 → "none"). Region-Produkte (Kinderwunsch)
+  // brauchen eine Region und entstehen ausschließlich über CustomerProduct.
+  for (const p of products) {
+    if (p.poolKind === "region") continue;
+    const canonicalKey = canonicalProductKey(p.name);
+    if (!productAccs.has(canonicalKey)) {
+      productAccs.set(canonicalKey, {
+        canonicalKey,
+        displayName: p.displayName ?? p.name,
+        goal: 0,
+        customerIds: new Set<string>(),
+      });
     }
   }
 
