@@ -14,11 +14,69 @@ type MetaInsightsRow = {
   date_stop?: string;
 };
 
+type MetaError = {
+  message: string;
+  type?: string;
+  code?: number;
+  error_subcode?: number;
+  is_transient?: boolean;
+};
+
 type MetaInsightsResponse = {
   data?: MetaInsightsRow[];
   paging?: { next?: string };
-  error?: { message: string; type?: string; code?: number };
+  error?: MetaError;
 };
+
+// Meta-Fehlercodes, die Rate-Limits / transiente Störungen anzeigen und einen
+// Retry rechtfertigen (App-/User-/Account-Level-Limits + Insights-Limits).
+const META_RETRYABLE_CODES = new Set([
+  1, 2, 4, 17, 32, 341, 613, 80000, 80001, 80002, 80003, 80004,
+]);
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryableMeta(status: number, err?: MetaError): boolean {
+  if (status === 429 || status === 500 || status === 502 || status === 503)
+    return true;
+  if (err?.is_transient) return true;
+  if (err?.code != null && META_RETRYABLE_CODES.has(err.code)) return true;
+  return false;
+}
+
+// Holt eine Insights-Seite mit Retry+Backoff bei Rate-Limit/transienten
+// Fehlern. Bei 8 Ad-Accounts × vielen 90-Tage-Fenstern läuft der Sync sonst
+// schnell in Metas Request-Limits (#17/#80000…) — ein einzelner gedrosselter
+// Request würde den ganzen Account fallen lassen. Nicht-retrybare Fehler
+// (z. B. fehlende Permission) brechen sofort ab.
+async function fetchMetaPage(
+  pageUrl: string,
+  accountId: string,
+  since: string,
+  until: string,
+): Promise<MetaInsightsResponse> {
+  const MAX_RETRIES = 5;
+  let lastErr = "";
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      // Exponentielles Backoff: 2s, 4s, 8s, 16s, 32s.
+      await sleep(Math.min(32_000, 2_000 * 2 ** (attempt - 1)));
+    }
+    const res = await fetch(pageUrl, { cache: "no-store" });
+    let json: MetaInsightsResponse;
+    try {
+      json = (await res.json()) as MetaInsightsResponse;
+    } catch {
+      json = {};
+    }
+    if (res.ok && !json.error) return json;
+    lastErr = json.error?.message ?? `HTTP ${res.status}`;
+    if (!isRetryableMeta(res.status, json.error)) break;
+  }
+  throw new Error(`Meta-API für act_${accountId} (${since}…${until}): ${lastErr}`);
+}
 
 export type MetaProduct = "Wechsel" | "Neugeschäft" | "Kinderwunsch";
 
@@ -87,14 +145,7 @@ async function fetchInsightsWindow(
 
   let nextUrl: string | null = url.toString();
   while (nextUrl) {
-    const res = await fetch(nextUrl, { cache: "no-store" });
-    const json = (await res.json()) as MetaInsightsResponse;
-    if (!res.ok || json.error) {
-      const msg = json.error?.message ?? `HTTP ${res.status}`;
-      throw new Error(
-        `Meta-API für act_${accountId} (${since}…${until}): ${msg}`,
-      );
-    }
+    const json = await fetchMetaPage(nextUrl, accountId, since, until);
     if (json.data) rows.push(...json.data);
     nextUrl = json.paging?.next ?? null;
   }
