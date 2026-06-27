@@ -42,7 +42,7 @@ export const SALES_PIPELINE_PHASES: readonly SalesPhase[] = [
   },
   {
     key: "wiedervorlage",
-    label: "Wiedervorlage",
+    label: "Wiedervorlage (Erreicht, nochmal anrufen)",
     statuses: ["Wiedervorlage", "Follow-up"],
     defaultStatus: "Wiedervorlage",
     winProbability: 0.15,

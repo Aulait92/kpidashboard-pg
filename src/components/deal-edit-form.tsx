@@ -135,7 +135,7 @@ export function DealEditForm({
             className={INPUT_CLS}
           />
         </Row>
-        <Row label="Abschluss-Volumen (€)">
+        <Row label="Potentielles Volumen (€)">
           <input
             type="text"
             inputMode="decimal"

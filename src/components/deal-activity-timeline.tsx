@@ -6,9 +6,11 @@ import {
   CheckCircle2,
   Loader2,
   Mail,
+  MessageCircle,
   MessageSquare,
   Phone,
   Trash2,
+  Video,
 } from "lucide-react";
 import {
   createDealActivityAction,
@@ -32,7 +34,23 @@ const KIND_META: Record<
   { label: string; icon: typeof Phone; tone: string }
 > = {
   note: { label: "Notiz", icon: MessageSquare, tone: "bg-zinc-100 text-zinc-700" },
+  // "call" bleibt für Alt-Datensätze erhalten, ist aber nicht mehr im Dropdown.
   call: { label: "Anruf", icon: Phone, tone: "bg-blue-100 text-blue-800" },
+  settercall: {
+    label: "Settercall ausmachen",
+    icon: Phone,
+    tone: "bg-blue-100 text-blue-800",
+  },
+  videosalescall: {
+    label: "Videosalescall ausmachen",
+    icon: Video,
+    tone: "bg-indigo-100 text-indigo-800",
+  },
+  whatsapp: {
+    label: "WhatsApp",
+    icon: MessageCircle,
+    tone: "bg-green-100 text-green-800",
+  },
   email: { label: "Mail", icon: Mail, tone: "bg-violet-100 text-violet-800" },
   meeting: {
     label: "Termin",
@@ -103,7 +121,9 @@ function CreateActivityForm({ dealId }: { dealId: string }) {
           className="rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
         >
           <option value="note">Notiz</option>
-          <option value="call">Anruf</option>
+          <option value="settercall">Settercall ausmachen</option>
+          <option value="videosalescall">Videosalescall ausmachen</option>
+          <option value="whatsapp">WhatsApp</option>
           <option value="email">Mail</option>
           <option value="meeting">Termin</option>
         </select>
@@ -130,6 +150,28 @@ function CreateActivityForm({ dealId }: { dealId: string }) {
         <input
           type="datetime-local"
           name="scheduledFor"
+          // Beim Klick (und Fokus) direkt den nativen Picker öffnen, statt erst
+          // auf das kleine Kalender-Icon zielen zu müssen.
+          onClick={(e) => {
+            const el = e.currentTarget as HTMLInputElement & {
+              showPicker?: () => void;
+            };
+            try {
+              el.showPicker?.();
+            } catch {
+              /* showPicker nicht verfügbar → normales Verhalten */
+            }
+          }}
+          onFocus={(e) => {
+            const el = e.currentTarget as HTMLInputElement & {
+              showPicker?: () => void;
+            };
+            try {
+              el.showPicker?.();
+            } catch {
+              /* ignore */
+            }
+          }}
           className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
         />
       </label>

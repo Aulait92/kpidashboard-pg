@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { setDealStatusAction } from "@/app/admin/crm/actions";
 import { SALES_PIPELINE_PHASES, type SalesPhase } from "@/lib/sales-phases";
-import { formatDate, formatEUR } from "@/lib/format";
+import { formatDate, formatDateTime, formatEUR } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export type KanbanDeal = {
@@ -486,15 +486,17 @@ function DealCard({
           {deal.company}
         </div>
       ) : null}
-      <div className="mt-1.5 flex justify-end text-[11px] text-[color:var(--muted)]">
-        {deal.nextActivityAt ? (
+      {/* Eingetragen-Zeitpunkt (Datum + Uhrzeit) — wann der Lead reinkam. */}
+      <div className="mt-1 text-[11px] text-[color:var(--muted)] tabular-nums">
+        Eingetragen {formatDateTime(deal.createdAt)}
+      </div>
+      {deal.nextActivityAt ? (
+        <div className="mt-1 flex justify-end">
           <span className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-blue-800">
             {formatDate(deal.nextActivityAt)}
           </span>
-        ) : (
-          <span className="tabular-nums">{formatDate(deal.createdAt)}</span>
-        )}
-      </div>
+        </div>
+      ) : null}
       {deal.value != null && deal.value > 0 ? (
         <div className="mt-1.5 inline-flex rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-emerald-800">
           {formatEUR(deal.value)}
