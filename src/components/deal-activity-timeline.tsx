@@ -230,10 +230,7 @@ function ActivityRow({
           </p>
         ) : null}
         <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-[color:var(--muted)]">
-          <span>
-            {meta.label}
-            {activity.createdBy ? ` · ${activity.createdBy.email}` : ""}
-          </span>
+          <span>{meta.label}</span>
           {/* status_change-Einträge nicht manuell löschbar — wären
               inkonsistent zur Pipeline-History. */}
           {activity.kind !== "status_change" ? (

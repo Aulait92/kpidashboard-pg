@@ -289,9 +289,6 @@ function Row({
         <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-[color:var(--muted)]">
           <span>{kindLabel}</span>
           {activity.deal.status ? <span>· {activity.deal.status}</span> : null}
-          {activity.createdBy ? (
-            <span>· angelegt {activity.createdBy.email}</span>
-          ) : null}
           {!isUpcoming && activity.scheduledFor ? (
             <span>· war geplant {formatDate(activity.scheduledFor)}</span>
           ) : null}
