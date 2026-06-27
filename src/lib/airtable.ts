@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { canonicalProductKey } from "@/lib/products";
 
 type AirtableRecord = {
   id: string;
@@ -89,17 +90,18 @@ const LEAD_BUYER_LOOKUP_FIELDS = [
   "Bezug (from Kunden-Produkt-Bezug)",
 ];
 
-type LeadProduct = "Wechsel" | "Neugeschäft" | "Kinderwunsch";
-
 // Klassifiziert das Produkt eines Lead-Records anhand der Lookup- bzw.
 // Single-Select-Spalte. Akzeptiert sowohl rohe Strings ("PKV-Wechsel") als
-// auch Lookup-Arrays (["PKV-Wechsel"]). null = unklassifizierbar → der Lead
-// wird übersprungen, weil ohne Produkt-Dimension keine Pool-Zuordnung
-// möglich ist.
+// auch Lookup-Arrays (["PKV-Wechsel"]). Liefert den kanonischen Produkt-Key
+// (canonicalProductKey): die drei Legacy-Sparten behalten ihre Keys, jedes
+// andere Produkt (Sterbegeld, …) behält seinen echten Namen → so wird der
+// Lead auch ohne Code-Änderung dem richtigen Pool zugeordnet. null = es ließ
+// sich GAR kein Produkt-String auflösen (Lookup leer / nur unaufgelöste
+// rec-IDs) → der Lead wird übersprungen.
 function classifyLeadProduct(
   fields: Record<string, unknown>,
   produkteMap: Map<string, ProductRef>,
-): LeadProduct | null {
+): string | null {
   for (const key of LEAD_PRODUCT_FIELDS) {
     const v = fields[key];
     if (v == null) continue;
@@ -118,21 +120,7 @@ function classifyLeadProduct(
             ? null // unaufgelöste rec-ID → keine Klarheit
             : item;
       if (!raw || !raw.trim()) continue;
-      const n = raw.toLowerCase();
-      // Reihenfolge: Kinderwunsch + Neugeschäft vor Wechsel, weil "wechsel"
-      // als Substring in einem Neugeschäft-Namen vorkommen könnte.
-      // Tarifoptimierung wird als Alias auf Wechsel gebucht (gleicher Pool,
-      // gleiche Ziele) — fachlich verwandte Sparte aus Sicht von
-      // Lead-Kosten und Conversion.
-      if (n.includes("kinderwunsch") || n.includes("kiwu")) return "Kinderwunsch";
-      if (n.includes("neugesch") || n.includes("neuvertrag")) return "Neugeschäft";
-      if (
-        n.includes("wechsel") ||
-        n.includes("wechsler") ||
-        n.includes("tarifoptim") ||
-        n.includes("tarif-optim")
-      )
-        return "Wechsel";
+      return canonicalProductKey(raw);
     }
   }
   return null;

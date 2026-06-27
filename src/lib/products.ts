@@ -18,6 +18,38 @@ export function displayProduct(source: string | null | undefined): string {
   return DISPLAY_LABELS[source] ?? source;
 }
 
+// Normalisiert eine beliebige Produkt-Bezeichnung (Airtable-Klarname, Slug,
+// Lead-Lookup) auf einen stabilen Produkt-Schlüssel. Die drei historischen
+// Sparten behalten ihre Legacy-Keys ("Wechsel"/"Neugeschäft"/"Kinderwunsch"),
+// damit Lead.source, DeliveryPool-Keys und die Customer-Goal-Spalten weiter
+// matchen. JEDES andere Produkt (Sterbegeld, Kindersparpläne, …) behält seinen
+// echten Namen als Key — so skalieren neue Produkte ohne Code-Änderung durch
+// Lead-Klassifizierung, Pool-Ableitung und Budget-Steuerung.
+//
+// Reihenfolge: Kinderwunsch + Neugeschäft vor Wechsel, weil "wechsel" als
+// Substring in einem Neugeschäft-Namen vorkommen könnte. Tarifoptimierung ist
+// ein Alias auf Wechsel (gleicher Pool, gleiche Ziele).
+export function canonicalProductKey(raw: string): string {
+  const n = raw.toLowerCase();
+  if (n.includes("kinderwunsch") || n.includes("kiwu")) return "Kinderwunsch";
+  if (n.includes("neugesch") || n.includes("neuvertrag")) return "Neugeschäft";
+  if (
+    n.includes("wechsel") ||
+    n.includes("wechsler") ||
+    n.includes("tarifoptim") ||
+    n.includes("tarif-optim")
+  )
+    return "Wechsel";
+  return raw.trim();
+}
+
+// Die drei historischen Sparten, für die Legacy-Customer-Spalten und das
+// bestehende Campaign-Matching (classifyProduct) gelten. Neue Produkte laufen
+// über den generischen Pfad (Name-Match statt classifyProduct).
+export function isLegacyProduct(key: string): boolean {
+  return key === "Wechsel" || key === "Neugeschäft" || key === "Kinderwunsch";
+}
+
 // Bearbeitungsstatus-Werte aus Airtable, die der Buyer im Lead-Detail
 // selber setzen darf. Bewusst OHNE "Storno" — der Storno-Flow läuft
 // separat über den StornoDialog (mit Pflicht-Grund + optionaler

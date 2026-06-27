@@ -75,7 +75,11 @@ import {
   type GoogleCampaign,
 } from "@/lib/google-ads";
 import { prisma } from "@/lib/prisma";
-import { displayProduct } from "@/lib/products";
+import {
+  canonicalProductKey,
+  displayProduct,
+  isLegacyProduct,
+} from "@/lib/products";
 import { sendToAdmins } from "@/lib/push";
 
 export type BuyerAction =
@@ -339,12 +343,14 @@ type PoolDef = {
   key: string;
   label: string;
   kind: "product" | "region";
-  product: string; // Lead.source: "Wechsel" | "Neugeschäft" | "Kinderwunsch"
+  product: string; // Lead.source: kanonischer Produkt-Key (Legacy oder echt)
   region: string | null;
   goal: number; // Summe der Kunden-Ziele dieses Pools
   // Kunden, deren Leads in diesen Pool zählen. null = alle (PKV: nur nach
   // Produkt gefiltert), sonst die Kunden der Region.
   customerIds: string[] | null;
+  // Anzahl Kunden mit effektivem Ziel > 0 in diesem Pool (fürs Admin-Display).
+  customerCount: number;
 };
 
 function isKinderwunschCampaign(name: string): boolean {
@@ -372,8 +378,131 @@ export function effectiveGoal(
   return Math.max(0, Math.round((goal * daysActive) / daysInMonth));
 }
 
+// Label für einen Produkt-Pool. Die drei Legacy-Sparten behalten ihr
+// historisches Label ("PKV Tarifoptimierung" etc.); neue Produkte zeigen
+// ihren (Display-)Namen direkt.
+function productPoolLabel(canonicalKey: string, displayName: string): string {
+  if (canonicalKey === "Wechsel" || canonicalKey === "Neugeschäft") {
+    return `PKV ${displayProduct(canonicalKey)}`;
+  }
+  return displayName;
+}
+
+// Pool-Key für einen Region-Pool. Kinderwunsch behält aus Gründen der
+// Rückwärtskompatibilität den nackten "region:<Region>"-Key (bestehende
+// DeliveryPool-Records); jedes andere regionsbasierte Produkt bekommt den
+// Produkt-Key mit hinein, damit zwei Region-Produkte derselben Stadt nicht
+// auf denselben Pool kollidieren.
+function regionPoolKey(canonicalKey: string, region: string): string {
+  return canonicalKey === "Kinderwunsch"
+    ? `region:${region}`
+    : `region:${canonicalKey}:${region}`;
+}
+
+// Aggregator für die Pool-Ableitung. Sammelt Ziele/Kunden je Pool-Key aus
+// beliebigen Quellen (CustomerProduct-Pfad + Legacy-Fallback).
+type ProductAcc = {
+  canonicalKey: string;
+  displayName: string;
+  goal: number;
+  customerIds: Set<string>;
+};
+type RegionAcc = {
+  canonicalKey: string;
+  region: string;
+  goal: number;
+  customerIds: Set<string>;
+};
+
 // Leitet alle Pools aus den aktuellen Kundendaten ab.
+//
+// Primärquelle ist die produkt-agnostische CustomerProduct-Join-Tabelle
+// (Phase B): ein Pool je Produkt (poolKind="product") bzw. je Region
+// (poolKind="region"). So entstehen neue Produkte automatisch, ohne
+// Code-Änderung.
+//
+// Als Sicherheitsnetz fließen die alten Customer-Goal-Spalten weiter ein:
+// liefert der CustomerProduct-Pfad für eine der drei Legacy-Sparten (noch)
+// kein Ziel — etwa weil die Produkte-/Bezug-Tabelle in Airtable kurzzeitig
+// nicht lesbar war —, greift der Legacy-Wert. Dadurch kann der Umstieg das
+// Dashboard nicht leerräumen.
 export async function derivePoolDefs(now: Date = new Date()): Promise<PoolDef[]> {
+  const productAccs = new Map<string, ProductAcc>(); // key = canonicalKey
+  const regionAccs = new Map<string, RegionAcc>(); // key = regionPoolKey()
+
+  function addProduct(
+    canonicalKey: string,
+    displayName: string,
+    customerId: string,
+    goal: number,
+  ): void {
+    if (goal <= 0) return;
+    const acc = productAccs.get(canonicalKey) ?? {
+      canonicalKey,
+      displayName,
+      goal: 0,
+      customerIds: new Set<string>(),
+    };
+    acc.goal += goal;
+    acc.customerIds.add(customerId);
+    productAccs.set(canonicalKey, acc);
+  }
+
+  function addRegion(
+    canonicalKey: string,
+    region: string,
+    customerId: string,
+    goal: number,
+  ): void {
+    if (goal <= 0 || !region) return;
+    const key = regionPoolKey(canonicalKey, region);
+    const acc = regionAccs.get(key) ?? {
+      canonicalKey,
+      region,
+      goal: 0,
+      customerIds: new Set<string>(),
+    };
+    acc.goal += goal;
+    acc.customerIds.add(customerId);
+    regionAccs.set(key, acc);
+  }
+
+  // ── Primärpfad: Product × CustomerProduct ──
+  const products = await prisma.product.findMany({
+    where: { active: true },
+    select: {
+      name: true,
+      displayName: true,
+      poolKind: true,
+      customerProducts: {
+        select: {
+          customerId: true,
+          leadGoal: true,
+          startDate: true,
+          region: true,
+          customer: { select: { region: true } },
+        },
+      },
+    },
+  });
+  for (const p of products) {
+    const canonicalKey = canonicalProductKey(p.name);
+    const displayName = p.displayName ?? p.name;
+    for (const cp of p.customerProducts) {
+      const goal = effectiveGoal(cp.leadGoal ?? 0, cp.startDate, now);
+      if (goal <= 0) continue;
+      if (p.poolKind === "region") {
+        const region = (cp.region ?? cp.customer.region)?.trim() ?? "";
+        addRegion(canonicalKey, region, cp.customerId, goal);
+      } else {
+        addProduct(canonicalKey, displayName, cp.customerId, goal);
+      }
+    }
+  }
+
+  // ── Legacy-Fallback: nur einsetzen, wo der Primärpfad (noch) NICHTS
+  //    geliefert hat. Pro Legacy-Sparte separat, damit ein bereits
+  //    migriertes Produkt nicht doppelt zählt. ──
   const customers = await prisma.customer.findMany({
     select: {
       id: true,
@@ -386,64 +515,67 @@ export async function derivePoolDefs(now: Date = new Date()): Promise<PoolDef[]>
       region: true,
     },
   });
+  if (!productAccs.has("Wechsel")) {
+    for (const c of customers) {
+      addProduct(
+        "Wechsel",
+        "Wechsel",
+        c.id,
+        effectiveGoal(c.leadGoalWechsel ?? 0, c.startWechsel, now),
+      );
+    }
+  }
+  if (!productAccs.has("Neugeschäft")) {
+    for (const c of customers) {
+      addProduct(
+        "Neugeschäft",
+        "Neugeschäft",
+        c.id,
+        effectiveGoal(c.leadGoalNeugeschaeft ?? 0, c.startNeugeschaeft, now),
+      );
+    }
+  }
+  // Kinderwunsch-Regionen: greift, wenn der Primärpfad keinen einzigen
+  // Kinderwunsch-Region-Pool erzeugt hat.
+  const hasKinderwunschRegion = [...regionAccs.values()].some(
+    (r) => r.canonicalKey === "Kinderwunsch",
+  );
+  if (!hasKinderwunschRegion) {
+    for (const c of customers) {
+      const region = c.region?.trim() ?? "";
+      addRegion(
+        "Kinderwunsch",
+        region,
+        c.id,
+        effectiveGoal(c.leadGoalKinderwunsch ?? 0, c.startKinderwunsch, now),
+      );
+    }
+  }
 
   const defs: PoolDef[] = [];
-
-  // PKV: ein Pool je Produkt über alle Kunden. Kinderwunsch ist hier
-  // bewusst ausgenommen — das läuft regionsbasiert (siehe unten).
-  // Pool-Ziel = Σ Effektive Ziele (anteilig bei Mid-Month-Onboarding).
-  const pkvGoals = { Wechsel: 0, Neugeschäft: 0 };
-  for (const c of customers) {
-    pkvGoals.Wechsel += effectiveGoal(c.leadGoalWechsel ?? 0, c.startWechsel, now);
-    pkvGoals.Neugeschäft += effectiveGoal(
-      c.leadGoalNeugeschaeft ?? 0,
-      c.startNeugeschaeft,
-      now,
-    );
-  }
-  for (const product of ["Wechsel", "Neugeschäft"] as const) {
-    const goal = pkvGoals[product];
-    if (goal > 0) {
-      defs.push({
-        key: `product:${product}`,
-        // Pool-Key bleibt intern "product:Wechsel" für Stabilität bestehender
-        // DeliveryPool-Records; das Display-Label wird über displayProduct()
-        // auf "PKV Tarifoptimierung" gemappt.
-        label: `PKV ${displayProduct(product)}`,
-        kind: "product",
-        product,
-        region: null,
-        goal,
-        customerIds: null,
-      });
-    }
-  }
-
-  // Kinderwunsch: ein Pool je Region (Region kommt vom Kunden).
-  const byRegion = new Map<string, { ids: string[]; goal: number }>();
-  for (const c of customers) {
-    const goal = effectiveGoal(
-      c.leadGoalKinderwunsch ?? 0,
-      c.startKinderwunsch,
-      now,
-    );
-    const region = c.region?.trim();
-    if (goal > 0 && region) {
-      const e = byRegion.get(region) ?? { ids: [], goal: 0 };
-      e.ids.push(c.id);
-      e.goal += goal;
-      byRegion.set(region, e);
-    }
-  }
-  for (const [region, e] of byRegion) {
+  for (const acc of productAccs.values()) {
     defs.push({
-      key: `region:${region}`,
-      label: `Kinderwunsch ${region}`,
+      key: `product:${acc.canonicalKey}`,
+      label: productPoolLabel(acc.canonicalKey, acc.displayName),
+      kind: "product",
+      product: acc.canonicalKey,
+      region: null,
+      goal: acc.goal,
+      // Produkt-Pools zählen ALLE Leads dieser source (kanal-/kundenagnostisch).
+      customerIds: null,
+      customerCount: acc.customerIds.size,
+    });
+  }
+  for (const acc of regionAccs.values()) {
+    defs.push({
+      key: regionPoolKey(acc.canonicalKey, acc.region),
+      label: `${displayProduct(acc.canonicalKey)} ${acc.region}`,
       kind: "region",
-      product: "Kinderwunsch",
-      region,
-      goal: e.goal,
-      customerIds: e.ids,
+      product: acc.canonicalKey,
+      region: acc.region,
+      goal: acc.goal,
+      customerIds: [...acc.customerIds],
+      customerCount: acc.customerIds.size,
     });
   }
 
@@ -530,13 +662,28 @@ function matchPoolCampaigns(
     return findCampaignsByKeyword(campaigns, keywordOverride);
   }
   if (def.kind === "product") {
-    return campaigns.filter((c) => classifyProduct(c.name) === def.product);
+    // Legacy-Sparten über den bestehenden Meta-Klassifizierer; neue Produkte
+    // matchen generisch über den Produktnamen im Kampagnen-Namen.
+    if (isLegacyProduct(def.product)) {
+      return campaigns.filter((c) => classifyProduct(c.name) === def.product);
+    }
+    const p = def.product.toLowerCase();
+    return campaigns.filter((c) => c.name.toLowerCase().includes(p));
   }
-  // Region-Pool: Kinderwunsch-Kampagne, deren Name die Region enthält.
+  // Region-Pool: Kampagne, deren Name die Region enthält. Für Kinderwunsch
+  // zusätzlich der historische Kinderwunsch-Namensfilter; neue Region-Produkte
+  // matchen über Produktname + Region.
   const region = def.region!.toLowerCase();
+  if (def.product === "Kinderwunsch") {
+    return campaigns.filter(
+      (c) =>
+        isKinderwunschCampaign(c.name) && c.name.toLowerCase().includes(region),
+    );
+  }
+  const p = def.product.toLowerCase();
   return campaigns.filter(
     (c) =>
-      isKinderwunschCampaign(c.name) && c.name.toLowerCase().includes(region),
+      c.name.toLowerCase().includes(p) && c.name.toLowerCase().includes(region),
   );
 }
 
@@ -668,7 +815,7 @@ export function allocateBudgetAcrossChannels(params: {
   // Wenn manche null sind: gleicher Anteil (Probe), wenn alle null:
   // proportional zum aktuellen Budget oder gleichgewichtet.
   const withCpl = active.filter((c) => c.cpl != null && c.cpl > 0);
-  let shares = new Map<string, number>();
+  const shares = new Map<string, number>();
   if (withCpl.length === active.length) {
     const totalW = active.reduce((s, c) => s + 1 / (c.cpl as number), 0);
     for (const c of active) {
@@ -1624,7 +1771,10 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
   });
   const customerCountFor = (def: PoolDef): number => {
     if (def.kind === "region")
-      return def.customerIds?.length ?? 0;
+      return def.customerIds?.length ?? def.customerCount;
+    // Legacy-Sparten: exakt wie bisher aus den Customer-Goal-Spalten zählen,
+    // damit die angezeigten Zahlen unverändert bleiben. Neue Produkte nutzen
+    // die im PoolDef bereits aggregierte Kundenzahl (aus CustomerProduct).
     if (def.product === "Wechsel")
       return allCustomers.filter(
         (c) => effectiveGoal(c.leadGoalWechsel ?? 0, c.startWechsel, now) > 0,
@@ -1635,7 +1785,7 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
           effectiveGoal(c.leadGoalNeugeschaeft ?? 0, c.startNeugeschaeft, now) >
           0,
       ).length;
-    return 0;
+    return def.customerCount;
   };
   // Cost-per-Lead MTD pro Produkt: aus Cost (kind=LEAD, product=X, dieser Monat)
   // / leadsMtd. Channel-Split aus dem note-Prefix (Meta:/Outbrain:).
