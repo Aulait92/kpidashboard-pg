@@ -48,13 +48,23 @@ export function isLegacyProduct(key: string): boolean {
   return key === "Wechsel" || key === "Neugeschäft" || key === "Kinderwunsch";
 }
 
+// Normalisiert einen Namen fürs Keyword-Matching: lowercase + Entfernen von
+// Obfuskations-Zeichen, die Media-Buyer mitten ins Wort streuen, um Metas
+// Policy-Filter zu umgehen (z. B. "N.eugeschäft", "PKVW.echsel",
+// "K.inderwunsch", "Kinder·wunsch"). Solche Punkte/Mittelpunkte brechen sonst
+// das Substring-Matching. Buchstaben/Ziffern/Leerzeichen/Bindestriche bleiben
+// erhalten (Bindestrich z. B. für den Alias "tarif-optim").
+export function normalizeForMatch(s: string): string {
+  return s.toLowerCase().replace(/[.·•․]/g, "");
+}
+
 // Reine Keyword-Klassifizierung eines KAMPAGNEN-Namens auf eine der drei
 // Legacy-Sparten (Cost-Attribution je Channel). Bewusst ohne DB-Zugriff,
 // damit products.ts client-bundle-tauglich bleibt. Neue Produkte werden
 // NICHT hier, sondern über den DB-gestützten loadProductMatcher() in
 // product-catalog.ts erkannt (Name-/Slug-Match gegen die Produkte-Tabelle).
 export function classifyCampaignProduct(campaignName: string): string | null {
-  const n = campaignName.toLowerCase();
+  const n = normalizeForMatch(campaignName);
   // Kinderwunsch zuerst — eigenes Vertical, klar über das Keyword erkennbar.
   if (n.includes("kinderwunsch") || n.includes("kiwu")) return "Kinderwunsch";
   // Reihenfolge wichtig: "Neugeschäft" zuerst, falls "wechsel" als Substring

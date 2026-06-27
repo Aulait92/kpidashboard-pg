@@ -20,6 +20,7 @@ import {
   classifyCampaignProduct,
   displayProduct,
   isLegacyProduct,
+  normalizeForMatch,
   PRODUCTS,
 } from "@/lib/products";
 
@@ -48,7 +49,7 @@ export async function loadProductMatcher(): Promise<ProductMatcher> {
           .filter(
             (s): s is string => !!s && s.trim().length >= MIN_NEEDLE_LEN,
           )
-          .map((s) => s.toLowerCase());
+          .map((s) => normalizeForMatch(s));
         return { key, needles };
       })
       // Legacy-Sparten laufen über die Keyword-Logik (oben), nicht über den
@@ -62,7 +63,7 @@ export async function loadProductMatcher(): Promise<ProductMatcher> {
   return (campaignName: string): string | null => {
     const legacy = classifyCampaignProduct(campaignName);
     if (legacy) return legacy;
-    const n = campaignName.toLowerCase();
+    const n = normalizeForMatch(campaignName);
     for (const p of extra) {
       if (p.needles.some((needle) => n.includes(needle))) return p.key;
     }
