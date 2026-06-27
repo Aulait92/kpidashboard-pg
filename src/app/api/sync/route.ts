@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { runFullSync } from "@/lib/sync";
 import { listProductMatchers } from "@/lib/product-catalog";
+import { listProductGoalBreakdown } from "@/lib/media-buyer";
 
 // Token-Auth: vergleicht in konstanter Zeit, damit der Endpoint nicht
 // per Timing-Angriff probiert werden kann.
@@ -37,10 +38,13 @@ async function handle(req: Request) {
     // Fehlt hier ein frisch angelegtes Produkt, ist es nicht in die DB gekommen
     // (Name-Feld leer/anders benannt, falsche Tabelle, o. ä.).
     const productMatchers = await listProductMatchers();
+    // Diagnose: rohes vs. effektives Lead-Ziel je Produkt (+ pro Kunde).
+    const productGoals = await listProductGoalBreakdown();
     revalidatePath("/");
     return NextResponse.json({
       ok: true,
       productMatchers,
+      productGoals,
       airtable: {
         leads: result.airtable.leads,
         revenues: result.airtable.revenues,

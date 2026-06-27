@@ -559,6 +559,61 @@ export async function derivePoolDefs(now: Date = new Date()): Promise<PoolDef[]>
   return defs;
 }
 
+// Diagnose: pro Produkt das rohe (Airtable-) vs. effektive (anteilige) Lead-Ziel
+// + Aufschlüsselung pro Kunde. Zeigt, ob ein zu niedriges Pool-Ziel an der
+// Mid-Month-Kürzung (rawGoal >> effectiveGoal) oder an fehlenden
+// CustomerProduct-Zeilen (rawGoal schon zu niedrig) liegt.
+export type ProductGoalBreakdown = {
+  key: string;
+  label: string;
+  rawGoal: number;
+  effectiveGoal: number;
+  customers: {
+    customer: string;
+    leadGoal: number;
+    startDate: string | null;
+    effective: number;
+  }[];
+};
+
+export async function listProductGoalBreakdown(
+  now: Date = new Date(),
+): Promise<ProductGoalBreakdown[]> {
+  const rows = await prisma.customerProduct.findMany({
+    select: {
+      leadGoal: true,
+      startDate: true,
+      product: { select: { name: true } },
+      customer: { select: { name: true } },
+    },
+  });
+  const byKey = new Map<string, ProductGoalBreakdown>();
+  for (const r of rows) {
+    const key = canonicalProductKey(r.product.name);
+    const entry =
+      byKey.get(key) ??
+      ({
+        key,
+        label: displayProduct(key),
+        rawGoal: 0,
+        effectiveGoal: 0,
+        customers: [],
+      } satisfies ProductGoalBreakdown);
+    const raw = r.leadGoal ?? 0;
+    const eff = effectiveGoal(raw, r.startDate, now);
+    entry.rawGoal += raw;
+    entry.effectiveGoal += eff;
+    entry.customers.push({
+      customer: r.customer.name,
+      leadGoal: raw,
+      startDate: r.startDate ? r.startDate.toISOString().slice(0, 10) : null,
+      effective: eff,
+    });
+    byKey.set(key, entry);
+  }
+  return [...byKey.values()].sort((a, b) => b.rawGoal - a.rawGoal);
+}
+
 type PoolSettings = {
   autopilot: boolean;
   // maxDailyBudget = Meta-Cap (Historie); je Channel separat.
@@ -1132,7 +1187,11 @@ async function processPool(
         ? googleSpendRecent / googleLeadsRecent
         : null;
 
-    // Blended CPL — Lookback über alle Channels. Fallback-Kaskade auf MTD.
+    // Blended CPL — IMMER aus dem 7-Tage-Lookback (kein MTD-Fallback). So
+    // spiegelt die Steuerung stets die aktuellen Lead-Kosten der letzten Tage,
+    // nicht den verwässerten Monatsdurchschnitt. Ohne Spend/Leads in den 7
+    // Tagen bleibt costPerLead null → der Buyer hält das Budget und sorgt nur
+    // dafür, dass die Kampagnen laufen (siehe decideBudget).
     let costPerLead: number | null = null;
     const recentTotalSpend =
       metaSpendRecent +
@@ -1143,14 +1202,6 @@ async function processPool(
       costPerLead = recentTotalSpend / recentLeadsTotal;
     } else if (metaLeadsRecent > 0 && metaSpendRecent > 0) {
       costPerLead = metaSpendRecent / metaLeadsRecent;
-    } else if (
-      leadsMtd > 0 &&
-      metaSpend + outbrainSpend + tiktokSpend + googleSpend > 0
-    ) {
-      costPerLead =
-        (metaSpend + outbrainSpend + tiktokSpend + googleSpend) / leadsMtd;
-    } else if (metaLeadsMtd > 0 && metaSpend > 0) {
-      costPerLead = metaSpend / metaLeadsMtd;
     }
 
     const anyPaused =
