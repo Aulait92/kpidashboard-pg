@@ -128,7 +128,15 @@ export type CreateActivityState = {
   error?: string;
 };
 
-const ACTIVITY_KINDS = ["note", "call", "email", "meeting"] as const;
+const ACTIVITY_KINDS = [
+  "note",
+  "call",
+  "settercall",
+  "videosalescall",
+  "whatsapp",
+  "email",
+  "meeting",
+] as const;
 type ActivityKind = (typeof ACTIVITY_KINDS)[number];
 
 function isValidActivityKind(v: string): v is ActivityKind {
