@@ -19,6 +19,7 @@ type SearchParams = Promise<{
   owner?: string;
   q?: string;
   closed?: string;
+  deleteWarning?: string;
 }>;
 
 export default async function AdminCrmPage({
@@ -142,6 +143,14 @@ export default async function AdminCrmPage({
       </header>
 
       <AdminTabs />
+
+      {sp.deleteWarning === "airtable" ? (
+        <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Deal im Dashboard gelöscht, aber in Airtable konnte er <b>nicht</b>{" "}
+          entfernt werden (PAT-Delete-Scope auf der Sales-Base prüfen). Sonst legt
+          ihn der nächste Sales-Sync wieder an.
+        </div>
+      ) : null}
 
       <div className="mt-6">
         <SalesKanbanBoard key={boardKey} deals={deals} />

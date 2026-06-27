@@ -377,20 +377,26 @@ export async function deleteDealAction(formData: FormData) {
   });
   if (!deal) return;
 
+  // Airtable-DELETE versuchen, aber NICHT die DB-Löschung blockieren, wenn es
+  // fehlschlägt (z. B. PAT ohne Delete-Scope auf der Sales-Base). Sonst crasht
+  // die ganze Action und der Deal bleibt überall stehen — analog zum Deal-
+  // Update, das Airtable-Fehler ebenfalls schluckt und die DB trotzdem schreibt.
+  let airtableDeleted = true;
   if (deal.airtableId) {
     try {
       await deleteSalesDeal({ airtableId: deal.airtableId });
     } catch (err) {
-      // Fehler an die Logs — server actions können keine struktuierten
-      // Fehler an einen redirect-Aufrufer zurückgeben.
+      airtableDeleted = false;
       console.error("[crm] deleteDealAction Airtable-DELETE:", err);
-      throw err;
     }
   }
   await prisma.deal.delete({ where: { id: deal.id } });
   revalidatePath("/admin/crm");
   revalidatePath("/admin/kpis");
-  redirect("/admin/crm");
+  // Konnte der Record in Airtable NICHT gelöscht werden, würde der nächste
+  // Sales-Sync ihn wieder anlegen — das melden wir per Query-Param, damit der
+  // Admin den PAT-Scope prüfen kann.
+  redirect(airtableDeleted ? "/admin/crm" : "/admin/crm?deleteWarning=airtable");
 }
 
 export async function deleteDealActivityAction(formData: FormData) {
