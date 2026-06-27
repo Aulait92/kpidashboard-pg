@@ -167,6 +167,10 @@ export type SalesSyncResult = {
   deletes: number;
   skipped: boolean; // true wenn ENV nicht konfiguriert ist
   errors: string[];
+  // Diagnose: Rohwert der „Produkt"-Spalte + was daraus gelesen wurde (erste
+  // paar Deals mit gesetztem Produkt-Feld). Zeigt, ob die Spalte ein
+  // Linked-Record (rec-IDs), Single-Select-String o. ä. ist.
+  productSample: { deal: string | null; raw: unknown; resolved: string | null }[];
 };
 
 export async function syncSales(): Promise<SalesSyncResult> {
@@ -176,6 +180,7 @@ export async function syncSales(): Promise<SalesSyncResult> {
     deletes: 0,
     skipped: false,
     errors: [],
+    productSample: [],
   };
   if (!getSalesEnv()) {
     result.skipped = true;
@@ -202,6 +207,18 @@ export async function syncSales(): Promise<SalesSyncResult> {
       const owner = readString(rec.fields, OWNER_FIELDS);
       const source = readString(rec.fields, SOURCE_FIELDS);
       const product = readString(rec.fields, PRODUCT_FIELDS);
+      // Diagnose-Sample: Rohwert der ersten Produkt-Spalte, die im Record
+      // existiert (auch wenn readString sie nicht auflösen konnte).
+      if (result.productSample.length < 12) {
+        const rawKey = PRODUCT_FIELDS.find((k) => rec.fields[k] != null);
+        if (rawKey) {
+          result.productSample.push({
+            deal: name,
+            raw: rec.fields[rawKey],
+            resolved: product,
+          });
+        }
+      }
       const closeDate = readDate(rec.fields, CLOSE_DATE_FIELDS);
       const notes = readString(rec.fields, NOTES_FIELDS);
       const lostReason = readString(rec.fields, LOST_REASON_FIELDS);

@@ -106,6 +106,7 @@ async function handle(req: Request) {
             deletes: result.sales.result.deletes,
             skipped: result.sales.result.skipped,
             errors: result.sales.result.errors,
+            productSample: result.sales.result.productSample,
           }
         : { ok: false, error: result.sales.error },
       push: result.push,
