@@ -34,7 +34,6 @@ export default async function AdminCrmPage({
 
   const sp = await searchParams;
   const queryRaw = sp.q?.trim() ?? "";
-  const includeClosed = sp.closed === "1";
 
   // Where-Clause aus den Filter-Params. Such-Match nutzt Postgres'
   // case-insensitive contains auf Name ODER Firma ODER Mail.
@@ -48,7 +47,6 @@ export default async function AdminCrmPage({
           ],
         }
       : {}),
-    ...(includeClosed ? {} : { AND: [{ wonAt: null }, { lostAt: null }] }),
   };
 
   // Nächste anstehende Activity je Deal (scheduledFor > jetzt) für die
@@ -126,7 +124,7 @@ export default async function AdminCrmPage({
 
   // React-Key fürs Kanban-Board: bei Filter-Wechsel remounten, damit der
   // lokale Drag-State + optimistische Updates sauber zurückgesetzt werden.
-  const boardKey = `${queryRaw}|${includeClosed ? "1" : "0"}`;
+  const boardKey = queryRaw;
 
   return (
     <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-8 sm:px-6 lg:px-8">
@@ -139,7 +137,7 @@ export default async function AdminCrmPage({
             Klick auf eine Karte öffnet die Detail-Ansicht mit Timeline.
           </p>
         </div>
-        <CrmFilterBar currentQuery={queryRaw} showClosed={includeClosed} />
+        <CrmFilterBar currentQuery={queryRaw} />
       </header>
 
       <AdminTabs />

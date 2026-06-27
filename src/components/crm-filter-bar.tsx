@@ -9,10 +9,8 @@ import { Search, X } from "lucide-react";
 // Filter-Stand teilen oder als Bookmark speichern.
 export function CrmFilterBar({
   currentQuery,
-  showClosed,
 }: {
   currentQuery: string;
-  showClosed: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname() ?? "/admin/crm";
@@ -70,18 +68,6 @@ export function CrmFilterBar({
           </button>
         ) : null}
       </div>
-
-      <button
-        type="button"
-        onClick={() => update({ closed: showClosed ? null : "1" })}
-        className={
-          showClosed
-            ? "rounded-md border border-[color:var(--brand)] bg-[color:var(--brand-soft)] px-3 py-1.5 text-xs font-semibold text-[color:var(--brand-dark)]"
-            : "rounded-md border border-[color:var(--border)] bg-white px-3 py-1.5 text-xs font-medium text-[color:var(--muted)] hover:border-[color:var(--brand)]"
-        }
-      >
-        {showClosed ? "Gewonnen / Verloren sichtbar" : "Nur aktiv"}
-      </button>
     </div>
   );
 }
