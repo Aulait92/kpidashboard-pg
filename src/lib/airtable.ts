@@ -268,9 +268,14 @@ async function fetchProdukte(): Promise<Map<string, ProductRef>> {
     const slug =
       readString(rec.fields, "Slug")?.toLowerCase().replace(/\s+/g, "-") ??
       slugify(name);
-    // Optionale Keyword-Aliase fürs Cost-Matching. Akzeptiert kommagetrennten
-    // Text ODER ein Multi-Select-Array; mehrere Feld-Schreibweisen erlaubt.
-    const keywords = readKeywordList(rec.fields, [
+    // Match-Aliase fürs Cost-Matching: die „Name"-Spalte (separater
+    // Kampagnen-/Marketing-Name, der oft im Kampagnen-Namen steckt) PLUS eine
+    // optionale Keyword-Spalte. So lässt sich eine Kampagne über den Wert in
+    // „Name" zuordnen, ohne eine eigene Keyword-Spalte pflegen zu müssen. Der
+    // kanonische Produktname (oben) bleibt „Zielgruppe Bezeichnung" — Pools,
+    // Lead-Zuordnung und Anzeige ändern sich dadurch nicht.
+    const nameAlias = readString(rec.fields, "Name");
+    const explicitKeywords = readKeywordList(rec.fields, [
       "Keywords",
       "Keyword",
       "Aliase",
@@ -278,6 +283,11 @@ async function fetchProdukte(): Promise<Map<string, ProductRef>> {
       "Cost-Keywords",
       "Kampagnen-Keywords",
     ]);
+    const aliasParts = [
+      explicitKeywords,
+      nameAlias && nameAlias !== name ? nameAlias : null,
+    ].filter((s): s is string => !!s);
+    const keywords = aliasParts.length > 0 ? aliasParts.join(",") : null;
     try {
       const dbProduct = await prisma.product.upsert({
         where: { airtableId: rec.id },
