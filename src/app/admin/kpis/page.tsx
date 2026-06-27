@@ -30,11 +30,11 @@ export default async function AdminKpisPage({
   }
 
   const sp = await searchParams;
-  // Default-Range auf der Sales-KPI-Page ist "today" (statt last30 wie
-  // im Rest der App). Sales-Teams wollen morgens den heutigen Stand.
+  // Default-Range auf der Sales-KPI-Page ist "max" (gesamter Zeitraum), wenn
+  // kein Range explizit in der URL steht.
   const { key: rangeKey, range } = parseRangeFromSearchParams({
     ...sp,
-    range: sp.range ?? "today",
+    range: sp.range ?? "max",
   });
   const k = await computeSalesKpis(new Date(), { range });
 
