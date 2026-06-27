@@ -384,57 +384,27 @@ function readDateFromFields(
   return null;
 }
 
-type ProductGoals = {
-  goalWechsel: number | null;
-  goalNeugeschaeft: number | null;
-  goalKinderwunsch: number | null;
-  priceWechsel: number | null;
-  priceNeugeschaeft: number | null;
-  priceKinderwunsch: number | null;
-  startWechsel: Date | null;
-  startNeugeschaeft: Date | null;
-  startKinderwunsch: Date | null;
-};
-
-function emptyGoals(): ProductGoals {
-  return {
-    goalWechsel: null,
-    goalNeugeschaeft: null,
-    goalKinderwunsch: null,
-    priceWechsel: null,
-    priceNeugeschaeft: null,
-    priceKinderwunsch: null,
-    startWechsel: null,
-    startNeugeschaeft: null,
-    startKinderwunsch: null,
-  };
-}
-
-// Rohzeile aus der Bezug-Tabelle für Phase-B-Tabelle CustomerProduct.
-// Wird nach dem Customer-Upsert in syncAirtable verwendet, um pro (Kunde ×
-// Produkt) eine Zeile in CustomerProduct zu schreiben — produkt-agnostisch.
+// Rohzeile aus der Bezug-Tabelle. Eine pro (Kunde × Produkt). Wird nach dem
+// Customer-Upsert in syncAirtable zu einer CustomerProduct-Zeile persistiert.
+// productDbId = direkt aufgelöste Produkt-rec-ID (sofern der Bezug auf ein
+// Produkt der Produkte-Tabelle verweist); ansonsten null → der Sync löst über
+// den Produktnamen + die Legacy-Product-IDs nach.
 type BezugRow = {
   buyerAirtableId: string;
-  productDbId: string;
+  productDbId: string | null;
+  productName: string;
   leadGoal: number | null;
   leadPrice: number | null;
   startDate: Date | null;
   region: string | null;
 };
 
-type BezugResult = {
-  goals: Map<string, ProductGoals>;
-  rows: BezugRow[];
-};
-
-// Liest die Join-Tabelle „Kunden-Produkt-Bezug" und liefert pro Kunden-Record
-// (Buyer-AirtableId) die Lead-Ziele, Preise und Startdaten je Produkt.
-// Falls die Tabelle leer ist oder nicht existiert, fallen wir im Sync still auf
-// die alten per-Produkt-Spalten der Buyer-Tabelle zurück.
+// Liest die Join-Tabelle „Kunden-Produkt-Bezug" und liefert pro Zeile die
+// Lead-Ziele, Preise und Startdaten je (Kunde × Produkt). Produkt-agnostisch —
+// neue Produkte erfordern keine Code-Änderung.
 async function fetchKundenProduktBezug(
   produkteMap: Map<string, ProductRef>,
-): Promise<BezugResult> {
-  const map = new Map<string, ProductGoals>();
+): Promise<BezugRow[]> {
   const rows: BezugRow[] = [];
   const records = await fetchAllRecords(BEZUG_TABLE);
   for (const rec of records) {
@@ -479,57 +449,67 @@ async function fetchKundenProduktBezug(
     const startdatum = readDateFromFields(rec.fields, ["Startdatum"]);
     const region = readString(rec.fields, "Region");
 
-    // Phase-B-Write: produkt-agnostische CustomerProduct-Zeile. Setzt voraus,
-    // dass der Bezug eine rec-ID auf ein Produkt aus der Produkte-Tabelle hat
-    // (sonst kein dbId und damit keine FK). Tarifoptimierungs-/etc.-Bezüge,
-    // bei denen das Produkt nur als Freitext im Primary-Feld auftaucht,
-    // landen NICHT in CustomerProduct — sie bleiben im Legacy-Pfad.
-    if (produktDbId) {
-      for (const id of ids) {
-        rows.push({
-          buyerAirtableId: id,
-          productDbId: produktDbId,
-          leadGoal: leadziel,
-          leadPrice: preis,
-          startDate: startdatum,
-          region,
-        });
-      }
-    }
-
-    // Legacy-Pfad: Bezüge auf eine der drei bekannten Sparten in die
-    // ProductGoals-Buckets schreiben, damit die alten Customer-Spalten
-    // (leadGoalWechsel etc.) weiter befüllt werden und Display/Pool-Derivation
-    // unverändert funktionieren.
-    const p = produkt.toLowerCase();
-    let productKey: "Wechsel" | "Neugeschaeft" | "Kinderwunsch" | null = null;
-    // Tarifoptimierungs-Bezüge laufen in den Wechsel-Pool (Alias) — siehe
-    // classifyLeadProduct(), beide Listen müssen synchron bleiben.
-    if (p.includes("wechsel") || p.includes("tarifoptim") || p.includes("tarif-optim"))
-      productKey = "Wechsel";
-    else if (p.includes("neugesch")) productKey = "Neugeschaeft";
-    else if (p.includes("kinderwunsch")) productKey = "Kinderwunsch";
-    if (!productKey) continue;
-
     for (const id of ids) {
-      const entry = map.get(id) ?? emptyGoals();
-      if (productKey === "Wechsel") {
-        if (leadziel != null) entry.goalWechsel = leadziel;
-        if (preis != null) entry.priceWechsel = preis;
-        if (startdatum != null) entry.startWechsel = startdatum;
-      } else if (productKey === "Neugeschaeft") {
-        if (leadziel != null) entry.goalNeugeschaeft = leadziel;
-        if (preis != null) entry.priceNeugeschaeft = preis;
-        if (startdatum != null) entry.startNeugeschaeft = startdatum;
-      } else {
-        if (leadziel != null) entry.goalKinderwunsch = leadziel;
-        if (preis != null) entry.priceKinderwunsch = preis;
-        if (startdatum != null) entry.startKinderwunsch = startdatum;
-      }
-      map.set(id, entry);
+      rows.push({
+        buyerAirtableId: id,
+        productDbId: produktDbId,
+        productName: produkt,
+        leadGoal: leadziel,
+        leadPrice: preis,
+        startDate: startdatum,
+        region,
+      });
     }
   }
-  return { goals: map, rows };
+  return rows;
+}
+
+// Stellt sicher, dass die drei Legacy-Sparten als Product-Zeilen existieren
+// (auch wenn die Airtable-Produkte-Tabelle sie nicht explizit listet) und
+// liefert canonicalKey → Product-DB-Id. Dadurch können Bezüge/Buyer-Felder,
+// die nur per Freitext auf eine Altsparte zeigen, trotzdem zu CustomerProduct
+// aufgelöst werden.
+async function ensureLegacyProductDbIds(
+  produkteMap: Map<string, ProductRef>,
+): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  for (const ref of produkteMap.values()) {
+    const key = canonicalProductKey(ref.name);
+    if (
+      (key === "Wechsel" || key === "Neugeschäft" || key === "Kinderwunsch") &&
+      !out.has(key)
+    ) {
+      out.set(key, ref.dbId);
+    }
+  }
+  const defs: { key: string; poolKind: "product" | "region" }[] = [
+    { key: "Wechsel", poolKind: "product" },
+    { key: "Neugeschäft", poolKind: "product" },
+    { key: "Kinderwunsch", poolKind: "region" },
+  ];
+  for (const d of defs) {
+    if (out.has(d.key)) continue;
+    try {
+      const p = await prisma.product.upsert({
+        where: { name: d.key },
+        create: {
+          name: d.key,
+          slug: slugify(d.key),
+          poolKind: d.poolKind,
+          active: true,
+        },
+        update: {},
+        select: { id: true },
+      });
+      out.set(d.key, p.id);
+    } catch (err) {
+      console.warn(
+        `[airtable] Legacy-Product "${d.key}" konnte nicht angelegt werden:`,
+        err instanceof Error ? err.message : err,
+      );
+    }
+  }
+  return out;
 }
 
 async function fetchBuyers(): Promise<Map<string, BuyerInfo>> {
@@ -792,17 +772,21 @@ export async function syncAirtable(): Promise<SyncResult> {
     );
   }
 
-  // Join-Tabelle „Kunden-Produkt-Bezug" lesen — sie löst die früheren
-  // per-Produkt-Spalten auf der Kunden-Tabelle ab. Bei Fehler (Tabelle fehlt
-  // o.ä.) fallen wir still auf die Buyer-Felder zurück.
-  let bezugMap = new Map<string, ProductGoals>();
+  // Legacy-Sparten als Product-Zeilen sicherstellen → canonicalKey → DB-Id.
+  // Nötig, damit Bezüge/Buyer-Felder, die nur per Freitext auf eine Altsparte
+  // zeigen, dennoch zu CustomerProduct aufgelöst werden können.
+  const legacyProductDbIds = await ensureLegacyProductDbIds(produkteMap);
+
+  // Join-Tabelle „Kunden-Produkt-Bezug" lesen — Quelle der Ziele/Preise/
+  // Startdaten je (Kunde × Produkt). Bei Fehler (Tabelle fehlt o.ä.) fallen
+  // wir still auf die per-Produkt-Felder am Buyer-Record zurück.
   let bezugRows: BezugRow[] = [];
+  let bezugFetched = false;
   try {
-    const bezug = await fetchKundenProduktBezug(produkteMap);
-    bezugMap = bezug.goals;
-    bezugRows = bezug.rows;
+    bezugRows = await fetchKundenProduktBezug(produkteMap);
+    bezugFetched = true;
     console.log(
-      `[airtable] Kunden-Produkt-Bezug "${BEZUG_TABLE}": ${bezugMap.size} Kunden mit Produkt-Daten, ${bezugRows.length} CustomerProduct-Zeilen.`,
+      `[airtable] Kunden-Produkt-Bezug "${BEZUG_TABLE}": ${bezugRows.length} Bezug-Zeilen.`,
     );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -847,98 +831,139 @@ export async function syncAirtable(): Promise<SyncResult> {
     return readString(fields, "Buyer") ?? readString(fields, "Kunde");
   }
 
-  // Lead-Ziele und Region aus der Buyer-Tabelle (Region) + Join-Tabelle
-  // „Kunden-Produkt-Bezug" (Ziele/Preise/Startdaten je Produkt) auf den
-  // Customer übernehmen. Steuer-Einstellungen liegen am DeliveryPool, nicht
-  // am Kunden.
-  for (const [buyerRecId, info] of buyerMap.entries()) {
+  // Region auf den Customer übernehmen (Ziele/Preise/Startdaten liegen seit
+  // Option B in CustomerProduct, nicht mehr am Kunden). Customer-Zeile sicher
+  // anlegen, damit der customerCache für die CustomerProduct-Auflösung gefüllt
+  // ist; verwaiste Leer-Kunden räumt der Sweep am Ende wieder ab.
+  for (const info of buyerMap.values()) {
     const key = info.name.trim();
     if (!key) continue;
-    const bezug = bezugMap.get(buyerRecId);
-    // Join-Tabelle hat Vorrang; wenn dort kein Eintrag, fallen wir auf die
-    // (alten) per-Produkt-Spalten am Buyer-Record zurück.
-    const goalWechsel = bezug?.goalWechsel ?? info.goalWechsel;
-    const goalNeugeschaeft = bezug?.goalNeugeschaeft ?? info.goalNeugeschaeft;
-    const goalKinderwunsch = bezug?.goalKinderwunsch ?? info.goalKinderwunsch;
-    const priceWechsel = bezug?.priceWechsel ?? info.priceWechsel;
-    const priceNeugeschaeft =
-      bezug?.priceNeugeschaeft ?? info.priceNeugeschaeft;
-    const priceKinderwunsch =
-      bezug?.priceKinderwunsch ?? info.priceKinderwunsch;
-    const startWechsel = bezug?.startWechsel ?? info.startWechsel;
-    const startNeugeschaeft =
-      bezug?.startNeugeschaeft ?? info.startNeugeschaeft;
-    const startKinderwunsch =
-      bezug?.startKinderwunsch ?? info.startKinderwunsch;
-
-    const hasData =
-      goalWechsel != null ||
-      goalNeugeschaeft != null ||
-      goalKinderwunsch != null ||
-      priceWechsel != null ||
-      priceNeugeschaeft != null ||
-      priceKinderwunsch != null ||
-      info.region != null ||
-      startWechsel != null ||
-      startNeugeschaeft != null ||
-      startKinderwunsch != null;
-    if (!hasData) continue;
-    const data = {
-      leadGoalWechsel: goalWechsel,
-      leadGoalNeugeschaeft: goalNeugeschaeft,
-      leadGoalKinderwunsch: goalKinderwunsch,
-      leadPriceWechsel: priceWechsel,
-      leadPriceNeugeschaeft: priceNeugeschaeft,
-      leadPriceKinderwunsch: priceKinderwunsch,
-      region: info.region,
-      startWechsel,
-      startNeugeschaeft,
-      startKinderwunsch,
-    };
     const customer = await prisma.customer.upsert({
       where: { name: key },
-      create: { name: key, ...data },
-      update: data,
+      create: { name: key, region: info.region },
+      update: { region: info.region },
       select: { id: true },
     });
     customerCache.set(key, customer.id);
   }
 
-  // Phase-B-Write: CustomerProduct-Zeilen aus dem Bezug-Sweep persistieren.
-  // Setzt den oben gefüllten customerCache voraus (Buyer-Name → Customer-Id).
-  // Falls ein Bezug auf eine Buyer-rec-ID zeigt, die wir nicht auflösen
-  // können, wird die Zeile übersprungen (Legacy-Pfad fängt das auf).
+  // CustomerProduct schreiben — produkt-agnostisch. Primärquelle ist die
+  // Bezug-Tabelle; pro (Kunde × Produkt) genau eine Zeile (idempotent).
+  // productDbId kommt direkt aus dem Bezug oder — bei reinen Freitext-Bezügen
+  // auf eine Altsparte — aus den Legacy-Product-IDs.
+  const coveredCp = new Set<string>(); // "customerId|productId" (für Stale-Sweep)
+  // "customerId|canonicalKey" — verhindert doppelte Ziele, wenn zwei Airtable-
+  // Produkte auf denselben kanonischen Key zeigen (z. B. PKV-Wechsel +
+  // PKV-Tarifoptimierung → beide "Wechsel").
+  const coveredCanonical = new Set<string>();
+  async function upsertCustomerProduct(
+    customerId: string,
+    productId: string,
+    canonicalKey: string,
+    data: {
+      leadGoal: number | null;
+      leadPrice: number | null;
+      startDate: Date | null;
+      region: string | null;
+    },
+  ): Promise<void> {
+    const canonKey = `${customerId}|${canonicalKey}`;
+    if (coveredCanonical.has(canonKey)) return; // erste Quelle gewinnt (Bezug vor Buyer-Feld)
+    coveredCanonical.add(canonKey);
+    coveredCp.add(`${customerId}|${productId}`);
+    try {
+      await prisma.customerProduct.upsert({
+        where: { customerId_productId: { customerId, productId } },
+        create: { customerId, productId, ...data },
+        update: data,
+      });
+    } catch (err) {
+      result.errors.push(
+        `CustomerProduct ${customerId} × ${productId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+
   for (const row of bezugRows) {
     const buyerInfo = buyerMap.get(row.buyerAirtableId);
     if (!buyerInfo) continue;
     const customerId = customerCache.get(buyerInfo.name.trim());
     if (!customerId) continue;
-    try {
-      await prisma.customerProduct.upsert({
-        where: {
-          customerId_productId: {
-            customerId,
-            productId: row.productDbId,
-          },
-        },
-        create: {
-          customerId,
-          productId: row.productDbId,
-          leadGoal: row.leadGoal,
-          leadPrice: row.leadPrice,
-          startDate: row.startDate,
-          region: row.region,
-        },
-        update: {
-          leadGoal: row.leadGoal,
-          leadPrice: row.leadPrice,
-          startDate: row.startDate,
-          region: row.region,
-        },
+    const canonicalKey = canonicalProductKey(row.productName);
+    const productId =
+      row.productDbId ?? legacyProductDbIds.get(canonicalKey) ?? null;
+    if (!productId) continue; // unauflösbares Produkt → übersprungen
+    await upsertCustomerProduct(customerId, productId, canonicalKey, {
+      leadGoal: row.leadGoal,
+      leadPrice: row.leadPrice,
+      startDate: row.startDate,
+      region: row.region,
+    });
+  }
+
+  // Fallback: per-Produkt-Felder am Buyer-Record (Altschema) in CustomerProduct
+  // routen, soweit der Bezug-Sweep diese (Kunde × Sparte) nicht schon abgedeckt
+  // hat. So geht beim Wegfall der alten Customer-Spalten kein Ziel verloren.
+  for (const info of buyerMap.values()) {
+    const customerId = customerCache.get(info.name.trim());
+    if (!customerId) continue;
+    const legacy: {
+      key: string;
+      goal: number | null;
+      price: number | null;
+      start: Date | null;
+      region: string | null;
+    }[] = [
+      {
+        key: "Wechsel",
+        goal: info.goalWechsel,
+        price: info.priceWechsel,
+        start: info.startWechsel,
+        region: null,
+      },
+      {
+        key: "Neugeschäft",
+        goal: info.goalNeugeschaeft,
+        price: info.priceNeugeschaeft,
+        start: info.startNeugeschaeft,
+        region: null,
+      },
+      {
+        key: "Kinderwunsch",
+        goal: info.goalKinderwunsch,
+        price: info.priceKinderwunsch,
+        start: info.startKinderwunsch,
+        region: info.region,
+      },
+    ];
+    for (const l of legacy) {
+      if (l.goal == null && l.price == null && l.start == null) continue;
+      const productId = legacyProductDbIds.get(l.key);
+      if (!productId) continue;
+      await upsertCustomerProduct(customerId, productId, l.key, {
+        leadGoal: l.goal,
+        leadPrice: l.price,
+        startDate: l.start,
+        region: l.region,
       });
-    } catch (err) {
-      result.errors.push(
-        `CustomerProduct ${customerId} × ${row.productDbId}: ${err instanceof Error ? err.message : String(err)}`,
+    }
+  }
+
+  // Stale-Sweep: in Airtable gelöschte Bezüge auch in CustomerProduct
+  // entfernen. NUR wenn die Bezug-Tabelle erfolgreich gelesen wurde UND
+  // mindestens eine Zeile abgedeckt ist — sonst würde ein temporärer
+  // API-Fehler legitime Ziel-Zeilen wegräumen.
+  if (bezugFetched && coveredCp.size > 0) {
+    const existing = await prisma.customerProduct.findMany({
+      select: { id: true, customerId: true, productId: true },
+    });
+    const staleIds = existing
+      .filter((cp) => !coveredCp.has(`${cp.customerId}|${cp.productId}`))
+      .map((cp) => cp.id);
+    if (staleIds.length > 0) {
+      await prisma.customerProduct.deleteMany({ where: { id: { in: staleIds } } });
+      console.log(
+        `[airtable] CustomerProduct stale-sweep: ${staleIds.length} verwaiste Bezüge entfernt.`,
       );
     }
   }
@@ -1186,26 +1211,18 @@ export async function syncAirtable(): Promise<SyncResult> {
   }
 
   // 5. Verwaiste Kunden aus früheren (fehlerhaften) Syncs aufräumen.
-  // Ein Customer ohne Leads, Umsätze, Kosten UND ohne Buyer-Daten
-  // (Lead-Ziele, Preise, Region) ist sicher entfernbar. Kunden mit
-  // Lead-Zielen oder anderen Buyer-Daten dürfen NICHT gelöscht werden, auch
-  // wenn (noch) keine Leads existieren — sonst wischt der Sync legitime
-  // Buyer-Datensätze direkt nach dem Upsert wieder weg.
+  // Ein Customer ohne Leads, Umsätze, Kosten, ohne CustomerProduct-Zeilen UND
+  // ohne Region ist sicher entfernbar. Kunden mit Produkt-Bezügen (Zielen)
+  // dürfen NICHT gelöscht werden, auch wenn (noch) keine Leads existieren —
+  // sonst wischt der Sync legitime Buyer-Datensätze direkt nach dem Upsert
+  // wieder weg.
   await prisma.customer.deleteMany({
     where: {
       leads: { none: {} },
       revenues: { none: {} },
       costs: { none: {} },
-      leadGoalWechsel: null,
-      leadGoalNeugeschaeft: null,
-      leadGoalKinderwunsch: null,
-      leadPriceWechsel: null,
-      leadPriceNeugeschaeft: null,
-      leadPriceKinderwunsch: null,
+      customerProducts: { none: {} },
       region: null,
-      startWechsel: null,
-      startNeugeschaeft: null,
-      startKinderwunsch: null,
     },
   });
 

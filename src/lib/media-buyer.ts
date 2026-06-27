@@ -500,58 +500,6 @@ export async function derivePoolDefs(now: Date = new Date()): Promise<PoolDef[]>
     }
   }
 
-  // ── Legacy-Fallback: nur einsetzen, wo der Primärpfad (noch) NICHTS
-  //    geliefert hat. Pro Legacy-Sparte separat, damit ein bereits
-  //    migriertes Produkt nicht doppelt zählt. ──
-  const customers = await prisma.customer.findMany({
-    select: {
-      id: true,
-      leadGoalWechsel: true,
-      leadGoalNeugeschaeft: true,
-      leadGoalKinderwunsch: true,
-      startWechsel: true,
-      startNeugeschaeft: true,
-      startKinderwunsch: true,
-      region: true,
-    },
-  });
-  if (!productAccs.has("Wechsel")) {
-    for (const c of customers) {
-      addProduct(
-        "Wechsel",
-        "Wechsel",
-        c.id,
-        effectiveGoal(c.leadGoalWechsel ?? 0, c.startWechsel, now),
-      );
-    }
-  }
-  if (!productAccs.has("Neugeschäft")) {
-    for (const c of customers) {
-      addProduct(
-        "Neugeschäft",
-        "Neugeschäft",
-        c.id,
-        effectiveGoal(c.leadGoalNeugeschaeft ?? 0, c.startNeugeschaeft, now),
-      );
-    }
-  }
-  // Kinderwunsch-Regionen: greift, wenn der Primärpfad keinen einzigen
-  // Kinderwunsch-Region-Pool erzeugt hat.
-  const hasKinderwunschRegion = [...regionAccs.values()].some(
-    (r) => r.canonicalKey === "Kinderwunsch",
-  );
-  if (!hasKinderwunschRegion) {
-    for (const c of customers) {
-      const region = c.region?.trim() ?? "";
-      addRegion(
-        "Kinderwunsch",
-        region,
-        c.id,
-        effectiveGoal(c.leadGoalKinderwunsch ?? 0, c.startKinderwunsch, now),
-      );
-    }
-  }
-
   const defs: PoolDef[] = [];
   for (const acc of productAccs.values()) {
     defs.push({
@@ -1754,39 +1702,10 @@ export async function listPoolsForAdmin(now: Date = new Date()): Promise<
   const daysTotal = differenceInCalendarDays(monthEnd, monthStart) + 1;
 
   const defs = await derivePoolDefs(now);
-  // Kundenzahl pro Pool — für Produkt-Pools alle Kunden mit effektivem Ziel > 0
-  // (Kunden, die diesen Monat tatsächlich beliefert werden); für Region-Pools
-  // die Kunden der Region (aus def.customerIds). Mid-Month-Onboarder mit
-  // Startdatum > Monatsende werden so nicht mitgezählt.
-  const allCustomers = await prisma.customer.findMany({
-    select: {
-      leadGoalWechsel: true,
-      leadGoalNeugeschaeft: true,
-      leadGoalKinderwunsch: true,
-      startWechsel: true,
-      startNeugeschaeft: true,
-      startKinderwunsch: true,
-      region: true,
-    },
-  });
-  const customerCountFor = (def: PoolDef): number => {
-    if (def.kind === "region")
-      return def.customerIds?.length ?? def.customerCount;
-    // Legacy-Sparten: exakt wie bisher aus den Customer-Goal-Spalten zählen,
-    // damit die angezeigten Zahlen unverändert bleiben. Neue Produkte nutzen
-    // die im PoolDef bereits aggregierte Kundenzahl (aus CustomerProduct).
-    if (def.product === "Wechsel")
-      return allCustomers.filter(
-        (c) => effectiveGoal(c.leadGoalWechsel ?? 0, c.startWechsel, now) > 0,
-      ).length;
-    if (def.product === "Neugeschäft")
-      return allCustomers.filter(
-        (c) =>
-          effectiveGoal(c.leadGoalNeugeschaeft ?? 0, c.startNeugeschaeft, now) >
-          0,
-      ).length;
-    return def.customerCount;
-  };
+  // Kundenzahl pro Pool — bereits in derivePoolDefs aus CustomerProduct
+  // aggregiert (nur Kunden mit effektivem Ziel > 0; Mid-Month-Onboarder mit
+  // Startdatum > Monatsende fallen via effectiveGoal=0 raus).
+  const customerCountFor = (def: PoolDef): number => def.customerCount;
   // Cost-per-Lead MTD pro Produkt: aus Cost (kind=LEAD, product=X, dieser Monat)
   // / leadsMtd. Channel-Split aus dem note-Prefix (Meta:/Outbrain:).
   const monthCostRows = await prisma.cost.findMany({

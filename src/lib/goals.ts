@@ -6,6 +6,7 @@ import {
 } from "date-fns";
 import { computeKpis, type Kpis } from "@/lib/kpis";
 import { prisma } from "@/lib/prisma";
+import { canonicalProductKey } from "@/lib/products";
 
 export type GoalKey = "leads" | "closed" | "revenue" | "margin";
 
@@ -105,49 +106,44 @@ export async function upsertMonthlyGoal(
   });
 }
 
-type ByProduct = {
-  Wechsel: number;
-  "Neugeschäft": number;
-  Kinderwunsch: number;
-  total: number;
+type AirtableGoals = {
+  // Lead- bzw. Umsatzziel je kanonischem Produkt-Key (Legacy oder neu).
+  leads: Map<string, number>;
+  revenue: Map<string, number>;
+  leadsTotal: number;
+  revenueTotal: number;
 };
 
-// Lead- und Umsatzziele je Produkt aus Airtable.
-//   Lead-Ziel   = Σ Lead-Ziel über alle Kunden
-//   Umsatzziel  = Σ (Lead-Ziel × Preis pro Lead) über alle Kunden
-// Das Umsatzziel wird pro Kunde gerechnet, damit unterschiedliche
-// Kundenpreise korrekt einfließen.
-async function airtableGoals(): Promise<{
-  leads: ByProduct;
-  revenue: ByProduct;
-}> {
-  const customers = await prisma.customer.findMany({
+// Lead- und Umsatzziele je Produkt aus der CustomerProduct-Join-Tabelle.
+//   Lead-Ziel   = Σ Lead-Ziel über alle Kunden-Produkt-Bezüge
+//   Umsatzziel  = Σ (Lead-Ziel × Preis pro Lead) über alle Bezüge
+// Pro Bezug gerechnet, damit unterschiedliche Kundenpreise korrekt einfließen.
+// Aggregiert über den kanonischen Produkt-Key, sodass mehrere Airtable-
+// Produkte mit gleichem Key (z. B. "PKV-Wechsel" + "PKV-Tarifoptimierung")
+// in denselben Topf laufen — synchron zu Lead.source / den Pool-Keys.
+async function airtableGoals(): Promise<AirtableGoals> {
+  const rows = await prisma.customerProduct.findMany({
     select: {
-      leadGoalWechsel: true,
-      leadGoalNeugeschaeft: true,
-      leadGoalKinderwunsch: true,
-      leadPriceWechsel: true,
-      leadPriceNeugeschaeft: true,
-      leadPriceKinderwunsch: true,
+      leadGoal: true,
+      leadPrice: true,
+      product: { select: { name: true } },
     },
   });
-  const leads = { Wechsel: 0, "Neugeschäft": 0, Kinderwunsch: 0, total: 0 };
-  const revenue = { Wechsel: 0, "Neugeschäft": 0, Kinderwunsch: 0, total: 0 };
-  for (const c of customers) {
-    const gw = c.leadGoalWechsel ?? 0;
-    const gn = c.leadGoalNeugeschaeft ?? 0;
-    const gk = c.leadGoalKinderwunsch ?? 0;
-    leads.Wechsel += gw;
-    leads["Neugeschäft"] += gn;
-    leads.Kinderwunsch += gk;
-    revenue.Wechsel += gw * (decToNumber(c.leadPriceWechsel) ?? 0);
-    revenue["Neugeschäft"] += gn * (decToNumber(c.leadPriceNeugeschaeft) ?? 0);
-    revenue.Kinderwunsch += gk * (decToNumber(c.leadPriceKinderwunsch) ?? 0);
+  const leads = new Map<string, number>();
+  const revenue = new Map<string, number>();
+  let leadsTotal = 0;
+  let revenueTotal = 0;
+  for (const r of rows) {
+    const goal = r.leadGoal ?? 0;
+    if (goal <= 0) continue;
+    const key = canonicalProductKey(r.product.name);
+    const rev = goal * (decToNumber(r.leadPrice) ?? 0);
+    leads.set(key, (leads.get(key) ?? 0) + goal);
+    revenue.set(key, (revenue.get(key) ?? 0) + rev);
+    leadsTotal += goal;
+    revenueTotal += rev;
   }
-  leads.total = leads.Wechsel + leads["Neugeschäft"] + leads.Kinderwunsch;
-  revenue.total =
-    revenue.Wechsel + revenue["Neugeschäft"] + revenue.Kinderwunsch;
-  return { leads, revenue };
+  return { leads, revenue, leadsTotal, revenueTotal };
 }
 
 export async function computeMonthlyGoalProgress(params: {
@@ -181,9 +177,13 @@ export async function computeMonthlyGoalProgress(params: {
   // Summe der Produkte, die Gesamt-Marge wird eigenständig gesetzt.
   const byProduct = new Map(allGoalRows.map((r) => [r.product, r]));
 
-  const pk = isTotal ? "total" : (product as keyof ByProduct);
-  const leadsGoal = atGoals.leads[pk];
-  const revenueGoal = atGoals.revenue[pk] > 0 ? atGoals.revenue[pk] : null;
+  const leadsGoal = isTotal
+    ? atGoals.leadsTotal
+    : (atGoals.leads.get(product as string) ?? 0);
+  const revenueRaw = isTotal
+    ? atGoals.revenueTotal
+    : (atGoals.revenue.get(product as string) ?? 0);
+  const revenueGoal = revenueRaw > 0 ? revenueRaw : null;
 
   // Abschlussquote & Marge sind Qualitätskennzahlen — je Produkt bzw. gesamt
   // eigenständig gesetzt (nicht summiert).

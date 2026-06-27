@@ -87,29 +87,15 @@ model Customer {
   createdAt DateTime @default(now())
 
   // ─── Media-Buyer-Daten (aus Airtable-Buyer-Tabelle) ─────────────────
-  // Gewünschte Leads pro Monat, getrennt nach Produkt. null = kein Ziel.
-  // Die eigentliche Steuerung läuft NICHT pro Kunde, sondern pro Liefer-Pool
-  // (DeliveryPool): PKV je Produkt über alle Kunden, Kinderwunsch je Region.
-  // Diese Werte werden zum Pool-Ziel aufsummiert.
-  leadGoalWechsel      Int?
-  leadGoalNeugeschaeft Int?
-  leadGoalKinderwunsch Int?
-  // Preis pro Lead je Produkt (EUR, aus Airtable). Für das automatische
-  // Umsatzziel: Umsatzziel = Σ (Lead-Ziel × Preis) je Kunde.
-  leadPriceWechsel      Decimal? @db.Decimal(12, 2)
-  leadPriceNeugeschaeft Decimal? @db.Decimal(12, 2)
-  leadPriceKinderwunsch Decimal? @db.Decimal(12, 2)
-  // Region des Kunden (z.B. "Berlin"). Bestimmt, in welchen Kinderwunsch-
-  // Regions-Pool die Kinderwunsch-Leads/-Ziele dieses Kunden fallen.
-  region               String?
-  // Startdatum je Sparte. null = "lief schon vorher" (volles Monatsziel).
-  // Bei Mid-Month-Onboarding wird das effektive Monatsziel anteilig herunter-
-  // gerechnet (analog zum „Effektives Leadziel" in Airtable), damit die
-  // d'Hondt-Verteilung & der Media Buyer das verbleibende Monatsende
-  // realistisch ansteuern statt das volle Monatsziel nachzujagen.
-  startWechsel         DateTime?
-  startNeugeschaeft    DateTime?
-  startKinderwunsch    DateTime?
+  // Lead-Ziele, Preise und Startdaten je Produkt liegen seit dem Product-/
+  // CustomerProduct-Refactor (Option B) NICHT mehr als hardcoded Spalten hier,
+  // sondern produkt-agnostisch in CustomerProduct (eine Zeile pro Kunde ×
+  // Produkt). So skalieren neue Produkte ohne Schema-Migration.
+  //
+  // Region des Kunden (z.B. "Berlin"). Bestimmt, in welchen regionsbasierten
+  // Pool (z. B. Kinderwunsch) die Leads/Ziele dieses Kunden fallen, wenn die
+  // CustomerProduct-Zeile selbst keine eigene Region trägt.
+  region           String?
 
   leads            Lead[]
   revenues         Revenue[]

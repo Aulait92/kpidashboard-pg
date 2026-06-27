@@ -2,11 +2,9 @@ export const PRODUCTS = ["Wechsel", "Neugeschäft", "Kinderwunsch"] as const;
 export type Product = (typeof PRODUCTS)[number];
 
 // Display-Label für die UI. Intern heißt das Produkt weiterhin "Wechsel"
-// (Lead.source, Pool-Key, Schema-Spalten leadGoalWechsel etc.), nach außen
-// zeigen wir aber "Tarifoptimierung" — das ist die Produktbezeichnung,
-// unter der der Kunde es in Airtable und im Vertrieb kennt. Diese
-// Indirektion vermeidet die Schema-Migration und das Risiko von Datenverlust
-// auf den Customer-Goal-Spalten.
+// (Lead.source, Pool-Key, canonicalProductKey), nach außen zeigen wir aber
+// "Tarifoptimierung" — die Produktbezeichnung, unter der der Kunde es in
+// Airtable und im Vertrieb kennt.
 const DISPLAY_LABELS: Record<string, string> = {
   Wechsel: "Tarifoptimierung",
   "PKV Wechsel": "PKV Tarifoptimierung",
