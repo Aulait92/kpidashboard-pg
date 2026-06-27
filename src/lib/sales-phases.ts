@@ -21,6 +21,9 @@ export type SalesPhase = {
   // "disqualified" zählt WEDER als gewonnen NOCH als verloren (raus aus der
   // Win-Rate), ist aber wie alle Terminal-Phasen nie "stale".
   terminal?: "won" | "lost" | "disqualified";
+  // Phase ist nie "stale" (keine rote Umrandung), obwohl sie nicht terminal
+  // ist — z. B. Testlauf, der bewusst eine Weile ohne Aktivität läuft.
+  neverStale?: boolean;
 };
 
 export const SALES_PIPELINE_PHASES: readonly SalesPhase[] = [
@@ -108,6 +111,7 @@ export const SALES_PIPELINE_PHASES: readonly SalesPhase[] = [
     defaultStatus: "Testlauf",
     winProbability: 0.9,
     accent: "border-t-violet-500",
+    neverStale: true,
   },
   {
     key: "gewonnen",
@@ -219,7 +223,7 @@ export function isStaleDeal(opts: {
   now: Date;
 }): boolean {
   const phase = findSalesPhaseForStatus(opts.status);
-  if (phase?.terminal) return false;
+  if (phase?.terminal || phase?.neverStale) return false;
   if (opts.nextActivityAt && opts.nextActivityAt > opts.now) return false;
   const reference = opts.lastActivityAt ?? opts.createdAt;
   const daysSince =
