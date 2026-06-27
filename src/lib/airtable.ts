@@ -444,6 +444,10 @@ type BezugRow = {
   leadGoal: number | null;
   leadPrice: number | null;
   startDate: Date | null;
+  // Test-Bezug + Test-Dauer (Tage). Test ⇒ volles Ziel (keine Mid-Month-
+  // Kürzung); Live ⇒ anteilig.
+  testMode: boolean;
+  testDurationDays: number | null;
   region: string | null;
 };
 
@@ -499,6 +503,22 @@ async function fetchKundenProduktBezug(
     // Produktbezeichnung fürs Media-Buyer-Label aus der „Name"-Spalte der
     // Bezug-Tabelle.
     const productLabel = readString(rec.fields, "Name");
+    // Test-Bezug: Test-Dauer in Tagen (mehrere Schreibweisen) + optionales
+    // Test-Flag (Checkbox). Gesetzte Test-Dauer gilt selbst als Testmodus.
+    const testDurationDays = readIntFromFields(rec.fields, [
+      "test_dauer_tage",
+      "Test-Dauer (Tage)",
+      "Testdauer (Tage)",
+      "Testdauer",
+      "Test-Tage",
+      "Testlaufzeit (Tage)",
+      "Testlaufzeit",
+    ]);
+    const testMode =
+      readChecked(rec.fields, "Test") ||
+      readChecked(rec.fields, "Testmodus") ||
+      readChecked(rec.fields, "Testlauf") ||
+      (testDurationDays ?? 0) > 0;
 
     for (const id of ids) {
       rows.push({
@@ -509,6 +529,8 @@ async function fetchKundenProduktBezug(
         leadGoal: leadziel,
         leadPrice: preis,
         startDate: startdatum,
+        testMode,
+        testDurationDays,
         region,
       });
     }
@@ -916,6 +938,8 @@ export async function syncAirtable(): Promise<SyncResult> {
       leadGoal: number | null;
       leadPrice: number | null;
       startDate: Date | null;
+      testMode: boolean;
+      testDurationDays: number | null;
       region: string | null;
     },
   ): Promise<void> {
@@ -954,6 +978,8 @@ export async function syncAirtable(): Promise<SyncResult> {
       leadGoal: row.leadGoal,
       leadPrice: row.leadPrice,
       startDate: row.startDate,
+      testMode: row.testMode,
+      testDurationDays: row.testDurationDays,
       region: row.region,
     });
   }
@@ -1011,6 +1037,8 @@ export async function syncAirtable(): Promise<SyncResult> {
         leadGoal: l.goal,
         leadPrice: l.price,
         startDate: l.start,
+        testMode: false,
+        testDurationDays: null,
         region: l.region,
       });
     }

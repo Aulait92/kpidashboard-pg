@@ -149,6 +149,11 @@ model CustomerProduct {
   leadPrice  Decimal?  @db.Decimal(12, 2)
   // Startdatum (Mid-Month-Onboarding-Pro-Rate).
   startDate  DateTime?
+  // Test-Bezug: das volle Lead-Ziel wird über testDurationDays ausgeliefert und
+  // NICHT anteilig auf den Restmonat gekürzt (Live-Bezüge schon). testMode true
+  // ODER testDurationDays>0 ⇒ Testmodus.
+  testMode         Boolean @default(false)
+  testDurationDays Int?
   // Region (nur für poolKind="region" relevant, z. B. Kinderwunsch-Stadt).
   region     String?
   createdAt  DateTime  @default(now())

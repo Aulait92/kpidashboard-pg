@@ -390,6 +390,23 @@ export function effectiveGoal(
   return Math.max(0, Math.round((goal * daysActive) / daysInMonth));
 }
 
+// Ziel eines einzelnen Kunden-Produkt-Bezugs. Test-Bezüge liefern ihr VOLLES
+// Ziel (über die Test-Dauer, keine Mid-Month-Kürzung); Live-Bezüge werden
+// anteilig auf den Restmonat gerechnet (effectiveGoal).
+function goalForCustomerProduct(
+  cp: {
+    leadGoal: number | null;
+    startDate: Date | null;
+    testMode: boolean;
+    testDurationDays: number | null;
+  },
+  now: Date,
+): number {
+  const raw = cp.leadGoal ?? 0;
+  const isTest = cp.testMode || (cp.testDurationDays ?? 0) > 0;
+  return isTest ? raw : effectiveGoal(raw, cp.startDate, now);
+}
+
 // Label für einen Produkt-Pool. Die drei Legacy-Sparten behalten ihr
 // historisches Label ("PKV Tarifoptimierung" etc.); neue Produkte zeigen
 // ihren (Display-)Namen direkt.
@@ -491,6 +508,8 @@ export async function derivePoolDefs(now: Date = new Date()): Promise<PoolDef[]>
           customerId: true,
           leadGoal: true,
           startDate: true,
+          testMode: true,
+          testDurationDays: true,
           region: true,
           customer: { select: { region: true } },
         },
@@ -513,7 +532,7 @@ export async function derivePoolDefs(now: Date = new Date()): Promise<PoolDef[]>
     const canonicalKey = canonicalProductKey(p.name);
     const displayName = p.displayName ?? p.name;
     for (const cp of p.customerProducts) {
-      const goal = effectiveGoal(cp.leadGoal ?? 0, cp.startDate, now);
+      const goal = goalForCustomerProduct(cp, now);
       if (goal <= 0) continue;
       if (p.poolKind === "region") {
         const region = (cp.region ?? cp.customer.region)?.trim() ?? "";
@@ -597,6 +616,8 @@ export async function listProductGoalBreakdown(
     select: {
       leadGoal: true,
       startDate: true,
+      testMode: true,
+      testDurationDays: true,
       product: { select: { name: true } },
       customer: { select: { name: true } },
     },
@@ -614,7 +635,9 @@ export async function listProductGoalBreakdown(
         customers: [],
       } satisfies ProductGoalBreakdown);
     const raw = r.leadGoal ?? 0;
-    const eff = effectiveGoal(raw, r.startDate, now);
+    // „effective" spiegelt die tatsächlich verwendete Logik: Test → voll,
+    // Live → anteilig.
+    const eff = goalForCustomerProduct(r, now);
     entry.rawGoal += raw;
     entry.effectiveGoal += eff;
     entry.customers.push({
