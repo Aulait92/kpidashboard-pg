@@ -70,17 +70,50 @@ export async function updateSalesDeal(opts: {
   if (Object.keys(fields).length === 0) return;
 
   const url = `https://api.airtable.com/v0/${env.baseId}/${encodeURIComponent(SALES_TABLE)}/${opts.airtableId}`;
-  const res = await fetch(url, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${env.token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ fields, typecast: true }),
-    cache: "no-store",
-  });
-  if (!res.ok) {
+
+  // Robust gegen fehlende Airtable-Spalten: existiert ein Feld (z. B.
+  // "Testcharge") in der Tabelle nicht, antwortet Airtable mit 422
+  // UNKNOWN_FIELD_NAME. Statt den gesamten Update abzubrechen, lassen wir das
+  // unbekannte Feld weg und schreiben den Rest. So bricht ein nicht angelegtes
+  // Optional-Feld nicht das Speichern; sobald die Spalte existiert, wird sie
+  // automatisch mitgeschrieben.
+  const attempt: Record<string, unknown> = { ...fields };
+  for (let i = 0; i < 5; i++) {
+    if (Object.keys(attempt).length === 0) return;
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${env.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ fields: attempt, typecast: true }),
+      cache: "no-store",
+    });
+    if (res.ok) return;
     const body = await res.text();
+    let unknownField: string | null = null;
+    if (res.status === 422) {
+      try {
+        const parsed = JSON.parse(body) as {
+          error?: { type?: string; message?: string };
+        };
+        if (parsed.error?.type === "UNKNOWN_FIELD_NAME") {
+          const m = /Unknown field name:\s*"?([^"]+?)"?\s*$/.exec(
+            parsed.error.message ?? "",
+          );
+          if (m && m[1] in attempt) unknownField = m[1];
+        }
+      } catch {
+        /* nicht parsebar → unten werfen */
+      }
+    }
+    if (unknownField) {
+      console.warn(
+        `[sales-write] Airtable-Feld "${unknownField}" existiert nicht — übersprungen.`,
+      );
+      delete attempt[unknownField];
+      continue;
+    }
     throw new Error(`Airtable Sales PATCH ${res.status}: ${body}`);
   }
 }
