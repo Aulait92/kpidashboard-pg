@@ -15,9 +15,16 @@ import {
 import {
   createDealActivityAction,
   deleteDealActivityAction,
+  updateDealActivityScheduleAction,
   type CreateActivityState,
 } from "@/app/admin/crm/actions";
 import { formatDate } from "@/lib/format";
+
+// Date → "YYYY-MM-DDTHH:mm" in Browser-Lokalzeit für datetime-local-Inputs.
+function toDatetimeLocal(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 export type ActivityItem = {
   id: string;
@@ -224,12 +231,37 @@ function ActivityRow({
             {activity.body}
           </p>
         ) : null}
-        {activity.scheduledFor ? (
-          <p className="mt-1 inline-flex items-center gap-1 rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-medium text-blue-800">
-            <CalendarPlus className="h-3 w-3" />
-            geplant für {formatDate(activity.scheduledFor)}
-          </p>
-        ) : null}
+        {/* Geplant-für inline editierbar: Datum/Zeit ändern (oder leeren) —
+            speichert automatisch bei Änderung. */}
+        <form
+          action={updateDealActivityScheduleAction}
+          className="mt-1 flex flex-wrap items-center gap-1.5 rounded-md bg-blue-50 px-1.5 py-1 text-[11px] text-blue-800"
+        >
+          <input type="hidden" name="activityId" value={activity.id} />
+          <input type="hidden" name="dealId" value={dealId} />
+          <span className="inline-flex items-center gap-1 font-medium">
+            <CalendarPlus className="h-3 w-3" /> geplant für
+          </span>
+          <input
+            type="datetime-local"
+            name="scheduledFor"
+            defaultValue={
+              activity.scheduledFor ? toDatetimeLocal(activity.scheduledFor) : ""
+            }
+            onClick={(e) => {
+              const el = e.currentTarget as HTMLInputElement & {
+                showPicker?: () => void;
+              };
+              try {
+                el.showPicker?.();
+              } catch {
+                /* ignore */
+              }
+            }}
+            onChange={(e) => e.currentTarget.form?.requestSubmit()}
+            className="rounded border border-blue-200 bg-white px-1 py-0.5 text-[11px] text-[color:var(--foreground)] focus:border-[color:var(--brand)] focus:outline-none"
+          />
+        </form>
         <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-[color:var(--muted)]">
           <span>{meta.label}</span>
           {/* status_change-Einträge nicht manuell löschbar — wären

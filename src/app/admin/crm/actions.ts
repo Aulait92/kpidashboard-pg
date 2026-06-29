@@ -418,3 +418,25 @@ export async function deleteDealActivityAction(formData: FormData) {
   await prisma.dealActivity.delete({ where: { id: activityId } });
   if (dealId) revalidatePath(`/admin/crm/${dealId}`);
 }
+
+// Ändert den „Geplant für"-Zeitpunkt einer Aktivität (leer = Planung entfernen).
+// datetime-local-Input liefert "YYYY-MM-DDTHH:mm" in Browser-Lokalzeit.
+export async function updateDealActivityScheduleAction(formData: FormData) {
+  await requireAdmin();
+  const activityId = String(formData.get("activityId") ?? "");
+  const dealId = String(formData.get("dealId") ?? "");
+  if (!activityId) return;
+  const scheduledRaw = String(formData.get("scheduledFor") ?? "").trim();
+  let scheduledFor: Date | null = null;
+  if (scheduledRaw !== "") {
+    const d = new Date(scheduledRaw);
+    if (Number.isNaN(d.getTime())) return; // ungültig → ignorieren
+    scheduledFor = d;
+  }
+  await prisma.dealActivity.update({
+    where: { id: activityId },
+    data: { scheduledFor },
+  });
+  revalidatePath("/admin/crm");
+  if (dealId) revalidatePath(`/admin/crm/${dealId}`);
+}
