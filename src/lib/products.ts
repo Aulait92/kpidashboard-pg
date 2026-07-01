@@ -104,12 +104,17 @@ export function classifyCampaignProduct(campaignName: string): string | null {
 export const LEAD_STATUS_OPTIONS = [
   "Neuer Lead",
   "Nicht erreicht",
+  "In Beratung",
+  "Angebot gesendet",
+  "Abschluss",
+  "Kein Interesse",
+  "Disqualifiziert",
+  // Alt-Status, die weiterhin gemappt werden (nicht mehr im Dropdown-Default,
+  // aber gültig, damit bestehende Airtable-Werte nicht als „ungültig" gelten).
   "Erreicht",
   "Qualifiziert",
   "Termin vereinbart",
   "Angebot/Beratung läuft",
-  "Abschluss",
-  "Kein Interesse",
 ] as const;
 
 export type LeadStatus = (typeof LEAD_STATUS_OPTIONS)[number];
@@ -123,6 +128,8 @@ export function isValidLeadStatus(value: string): value is LeadStatus {
 // Pipeline-Drag genutzt, um Lead.reached konsistent mit dem neuen Status
 // zu spiegeln, damit die Erreichbarkeits-Kachel sofort stimmt.
 const REACHED: ReadonlySet<LeadStatus> = new Set<LeadStatus>([
+  "In Beratung",
+  "Angebot gesendet",
   "Erreicht",
   "Qualifiziert",
   "Termin vereinbart",
@@ -149,7 +156,9 @@ export const CLOSED_STATUS: LeadStatus = "Abschluss";
 export type PipelinePhase = {
   key: string;
   label: string;
-  statuses: readonly LeadStatus[];
+  // Airtable-Status-Werte, die in diese Spalte fallen (inkl. Alt-Werte).
+  statuses: readonly string[];
+  // Beim Drag geschriebener Status — muss ein gültiger LeadStatus sein.
   defaultStatus: LeadStatus;
 };
 
@@ -167,16 +176,23 @@ export const PIPELINE_PHASES: readonly PipelinePhase[] = [
     defaultStatus: "Nicht erreicht",
   },
   {
-    key: "gespraech",
-    label: "Im Gespräch",
-    statuses: ["Erreicht", "Qualifiziert"],
-    defaultStatus: "Erreicht",
-  },
-  {
     key: "beratung",
     label: "In Beratung",
-    statuses: ["Termin vereinbart", "Angebot/Beratung läuft"],
-    defaultStatus: "Termin vereinbart",
+    // Fasst die früheren „Im Gespräch"-/„In Beratung"-Sub-Status zusammen.
+    statuses: [
+      "In Beratung",
+      "Erreicht",
+      "Qualifiziert",
+      "Termin vereinbart",
+      "Angebot/Beratung läuft",
+    ],
+    defaultStatus: "In Beratung",
+  },
+  {
+    key: "angebot-gesendet",
+    label: "Angebot gesendet",
+    statuses: ["Angebot gesendet", "Angebot verschickt", "Angebot raus"],
+    defaultStatus: "Angebot gesendet",
   },
   {
     key: "abschluss",
@@ -189,6 +205,12 @@ export const PIPELINE_PHASES: readonly PipelinePhase[] = [
     label: "Kein Interesse",
     statuses: ["Kein Interesse"],
     defaultStatus: "Kein Interesse",
+  },
+  {
+    key: "disqualifiziert",
+    label: "Disqualifiziert",
+    statuses: ["Disqualifiziert", "Disqualified", "Nicht qualifiziert"],
+    defaultStatus: "Disqualifiziert",
   },
 ] as const;
 

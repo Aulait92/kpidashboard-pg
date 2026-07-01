@@ -34,10 +34,11 @@ type ColumnDef = PipelinePhase & { accent: string };
 const COLUMN_ACCENTS: Record<string, string> = {
   neu: "border-t-zinc-400",
   "nicht-erreicht": "border-t-orange-400",
-  gespraech: "border-t-amber-500",
   beratung: "border-t-blue-500",
+  "angebot-gesendet": "border-t-violet-500",
   abschluss: "border-t-emerald-500",
   "kein-interesse": "border-t-rose-400",
+  disqualifiziert: "border-t-zinc-500",
 };
 
 const COLUMNS: ColumnDef[] = PIPELINE_PHASES.map((p) => ({
