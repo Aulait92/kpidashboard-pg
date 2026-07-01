@@ -324,7 +324,14 @@ function ReadOnlyCard({
       group = group.filter((f) => f.key !== "Haltung (Tier)");
     }
   }
-  const curated = [...COMMON_FIELDS, ...group, ...TAIL_FIELDS];
+  // Bei Tieren sind PLZ/Ort/Bundesland irrelevant (der Funnel erfasst sie
+  // nicht) — nur die reinen Kontaktdaten zeigen.
+  let common = COMMON_FIELDS;
+  if (kind === "tier") {
+    const hide = new Set(["Postleitzahl", "Ort", "Bundesland"]);
+    common = common.filter((f) => !hide.has(f.key));
+  }
+  const curated = [...common, ...group, ...TAIL_FIELDS];
 
   const rows = curated.map((def) => {
     if (def.key === "_produktEingang") {
@@ -340,6 +347,7 @@ function ReadOnlyCard({
   // sind — interne/technische Felder und bereits gezeigte bleiben außen vor.
   const shownKeys = new Set<string>([
     ...curated.map((f) => f.key),
+    ...COMMON_FIELDS.map((f) => f.key),
     "Produkt (Eingang)",
     "Zielgruppe Bezeichnung (from Produkt (Eingang))",
     // group-Felder, die bei diesem kind evtl. nicht in curated sind, trotzdem
