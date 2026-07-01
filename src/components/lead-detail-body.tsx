@@ -202,6 +202,38 @@ export async function LeadDetailBody({
   );
 }
 
+// Kuratierte Felder + interne/technische Felder, die NICHT in der generischen
+// „Weitere Angaben"-Sektion auftauchen sollen.
+const KNOWN_OR_INTERNAL_KEYS = new Set<string>([
+  ...READ_ONLY_FIELDS.map((f) => f.key),
+  "Produkt (Eingang)",
+  "Zuweisungsdatum",
+  "Datum",
+  "Source",
+  "Preis",
+  "Abgerechnet",
+  "Kontaktversuche",
+  "Notizen",
+  "Erster Kontaktversuch",
+  "Name",
+  "Lead",
+  "Buyer",
+  "Kunde",
+  "Bezug",
+]);
+
+// Rausfiltern: kuratierte/interne Felder, Lookups „… (from …)", technische
+// Schlüssel (rec/slug/produkt/zielgruppe/storno). Übrig bleiben die fachlichen
+// Produkt-Zusatzfelder (z. B. beim Hund: Rasse, Name, Alter …).
+function isNoiseKey(key: string): boolean {
+  if (KNOWN_OR_INTERNAL_KEYS.has(key)) return true;
+  if (key.startsWith("_")) return true;
+  if (key.includes("(from ")) return true;
+  if (/rec|airtable|slug|zielgruppe|produkt|kunden-produkt|storno/i.test(key))
+    return true;
+  return false;
+}
+
 function ReadOnlyCard({ fields }: { fields: Record<string, unknown> }) {
   const rows = READ_ONLY_FIELDS.map((def) => {
     if (def.key === "_produktEingang") {
@@ -212,6 +244,13 @@ function ReadOnlyCard({ fields }: { fields: Record<string, unknown> }) {
     }
     return { def, value: formatValue(fields[def.key], def.format) };
   });
+
+  // Generische Produkt-Zusatzfelder aus Airtable (z. B. Hunde-Angaben bei
+  // Hundeversicherung). Zeigt jedes nicht-leere, nicht-interne Feld.
+  const extra = Object.entries(fields)
+    .filter(([k]) => !isNoiseKey(k))
+    .map(([k, v]) => ({ key: k, value: firstString(v) }))
+    .filter((r): r is { key: string; value: string } => r.value != null);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
@@ -230,6 +269,20 @@ function ReadOnlyCard({ fields }: { fields: Record<string, unknown> }) {
           </DetailRow>
         ))}
       </dl>
+      {extra.length > 0 ? (
+        <>
+          <div className="bg-[color:var(--brand-soft)]/30 px-5 py-2 text-[11px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">
+            Weitere Angaben
+          </div>
+          <dl className="divide-y divide-[color:var(--border)]">
+            {extra.map(({ key, value }) => (
+              <DetailRow key={key} label={key}>
+                {value}
+              </DetailRow>
+            ))}
+          </dl>
+        </>
+      ) : null}
     </div>
   );
 }
