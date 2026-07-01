@@ -23,22 +23,127 @@ type ReadOnlyField = {
   format?: "date" | "datetime" | "eur" | "chip-product" | "chip-status";
 };
 
-const READ_ONLY_FIELDS: ReadOnlyField[] = [
+// Immer relevante Kontaktfelder.
+const COMMON_FIELDS: ReadOnlyField[] = [
   { key: "Vorname", label: "Vorname" },
   { key: "Nachname", label: "Nachname" },
   { key: "Telefonnummer", label: "Telefonnummer" },
   { key: "E-Mail", label: "E-Mail" },
-  { key: "Geburtsdatum", label: "Geburtsdatum", format: "date" },
   { key: "Postleitzahl", label: "Postleitzahl" },
   { key: "Ort", label: "Ort" },
+  { key: "Bundesland", label: "Bundesland" },
+];
+
+// PKV-spezifisch (Wechsel/Tarifoptimierung/Neugeschäft).
+const PKV_FIELDS: ReadOnlyField[] = [
+  { key: "Geburtsdatum", label: "Geburtsdatum", format: "date" },
   { key: "Aktuelle Versicherung", label: "Aktuelle Versicherung" },
+  { key: "Gesetzlich oder privat?", label: "Gesetzlich oder privat?" },
   { key: "Situation", label: "Situation" },
   { key: "Wie lange in PKV?", label: "Wie lange in PKV?" },
   { key: "Monatlicher Beitrag", label: "Monatlicher Beitrag", format: "eur" },
+];
+
+// Tierversicherung (Hund/Katze/Pferd) — die Felder sind in Airtable generisch
+// „… (Tier)" benannt und für alle Tierarten dieselben.
+const TIER_FIELDS: ReadOnlyField[] = [
+  { key: "Tierart", label: "Tierart" },
+  { key: "Rasse (Tier)", label: "Rasse" },
+  { key: "Tiername", label: "Name des Tieres" },
+  { key: "Geschlecht (Tier)", label: "Geschlecht" },
+  { key: "Geburtsjahr (Tier)", label: "Geburtsjahr" },
+  { key: "Geburtsmonat (Tier)", label: "Geburtsmonat" },
+  { key: "Kastriert (Tier)", label: "Kastriert/Sterilisiert" },
+  { key: "Haltung (Tier)", label: "Haltung" },
+  { key: "Anzahl Tiere", label: "Anzahl Tiere" },
+];
+
+// Kinderwunsch.
+const KIWU_FIELDS: ReadOnlyField[] = [
+  { key: "Geburtsdatum", label: "Geburtsdatum", format: "date" },
+  { key: "Alter der Frau", label: "Alter der Frau" },
+  { key: "Verheiratet?", label: "Verheiratet?" },
+  { key: "Offen für Behandlung?", label: "Offen für Behandlung?" },
+  { key: "Wie lange versucht?", label: "Wie lange versucht?" },
+  { key: "Vorbehandlung", label: "Vorbehandlung" },
+];
+
+// Immer am Ende: Produkt, Status, Auslieferung.
+const TAIL_FIELDS: ReadOnlyField[] = [
   { key: "_produktEingang", label: "Produkt (Eingang)", format: "chip-product" },
   { key: "Bearbeitungsstatus", label: "Bearbeitungsstatus", format: "chip-status" },
   { key: "ausgeliefert_am", label: "ausgeliefert_am", format: "datetime" },
 ];
+
+type LeadKind = "pkv" | "tier" | "kinderwunsch" | "other";
+
+// Produkt-Kategorie des Leads bestimmen — steuert, welche Feldgruppe angezeigt
+// wird. „Tierart" gesetzt ⇒ Tier; sonst über Produktname/Slug/source.
+function detectLeadKind(
+  source: string | null | undefined,
+  fields: Record<string, unknown>,
+): LeadKind {
+  if (firstString(fields["Tierart"])) return "tier";
+  const hay = [
+    source ?? "",
+    firstString(fields["slug (from Produkt (Eingang))"]) ?? "",
+    firstString(fields["Zielgruppe Bezeichnung (from Produkt (Eingang))"]) ?? "",
+  ]
+    .join(" ")
+    .toLowerCase();
+  if (/tier|hund|katze|pferd/.test(hay)) return "tier";
+  if (/kinderwunsch|kiwu/.test(hay)) return "kinderwunsch";
+  if (/pkv|wechsel|tarifopt|neugesch|beihilfe|krankenvoll/.test(hay))
+    return "pkv";
+  return "other";
+}
+
+function fieldGroupFor(kind: LeadKind): ReadOnlyField[] {
+  switch (kind) {
+    case "tier":
+      return TIER_FIELDS;
+    case "kinderwunsch":
+      return KIWU_FIELDS;
+    case "pkv":
+      return PKV_FIELDS;
+    default:
+      return [];
+  }
+}
+
+// Interne/technische Felder, die in „Weitere Angaben" NIE auftauchen dürfen.
+const INTERNAL_KEYS = new Set<string>([
+  "Lead-ID",
+  "Datum",
+  "Produkt (Eingang)",
+  "Source",
+  "SMS-Verifizierung",
+  "score",
+  "ist_beamter",
+  "schwach",
+  "Preis",
+  "Zuweisungsdatum",
+  "Perspective-ID",
+  "delivery_id",
+  "ausgeliefert_am",
+  "liefer_status",
+  "Bearbeitungsstatus",
+  "Kontaktversuche",
+  "Erster Kontaktversuch",
+  "Notizen",
+  "Abschlusswert",
+  "Im Storno-Fenster",
+  "Stornogrund",
+  "storniert_am",
+  "Storno-Bemerkung",
+  "Zählt zum Kontingent",
+  "Im aktuellen Monat",
+  "Abrechenbar",
+  "Abgerechnet",
+  "Gutschrift fällig",
+  "Gutgeschrieben",
+  "Telefon-Prüfung",
+]);
 
 function firstString(v: unknown): string | null {
   if (typeof v === "string" && v.trim()) return v.trim();
@@ -175,7 +280,7 @@ export async function LeadDetailBody({
 
       {fields ? (
         <>
-          <ReadOnlyCard fields={fields} />
+          <ReadOnlyCard fields={fields} source={lead.source} />
           <div className="mt-6">
             <LeadEditForm
               leadId={lead.id}
@@ -202,40 +307,26 @@ export async function LeadDetailBody({
   );
 }
 
-// Kuratierte Felder + interne/technische Felder, die NICHT in der generischen
-// „Weitere Angaben"-Sektion auftauchen sollen.
-const KNOWN_OR_INTERNAL_KEYS = new Set<string>([
-  ...READ_ONLY_FIELDS.map((f) => f.key),
-  "Produkt (Eingang)",
-  "Zuweisungsdatum",
-  "Datum",
-  "Source",
-  "Preis",
-  "Abgerechnet",
-  "Kontaktversuche",
-  "Notizen",
-  "Erster Kontaktversuch",
-  "Name",
-  "Lead",
-  "Buyer",
-  "Kunde",
-  "Bezug",
-]);
+function ReadOnlyCard({
+  fields,
+  source,
+}: {
+  fields: Record<string, unknown>;
+  source: string | null;
+}) {
+  const kind = detectLeadKind(source, fields);
+  let group = fieldGroupFor(kind);
+  // „Haltung" fragt der Funnel nur bei der Katze ab (Freigänger/Wohnung) —
+  // bei Hund/Pferd ist das Feld leer und irrelevant, also ausblenden.
+  if (kind === "tier") {
+    const tierart = (firstString(fields["Tierart"]) ?? "").toLowerCase();
+    if (!tierart.includes("katze")) {
+      group = group.filter((f) => f.key !== "Haltung (Tier)");
+    }
+  }
+  const curated = [...COMMON_FIELDS, ...group, ...TAIL_FIELDS];
 
-// Rausfiltern: kuratierte/interne Felder, Lookups „… (from …)", technische
-// Schlüssel (rec/slug/produkt/zielgruppe/storno). Übrig bleiben die fachlichen
-// Produkt-Zusatzfelder (z. B. beim Hund: Rasse, Name, Alter …).
-function isNoiseKey(key: string): boolean {
-  if (KNOWN_OR_INTERNAL_KEYS.has(key)) return true;
-  if (key.startsWith("_")) return true;
-  if (key.includes("(from ")) return true;
-  if (/rec|airtable|slug|zielgruppe|produkt|kunden-produkt|storno/i.test(key))
-    return true;
-  return false;
-}
-
-function ReadOnlyCard({ fields }: { fields: Record<string, unknown> }) {
-  const rows = READ_ONLY_FIELDS.map((def) => {
+  const rows = curated.map((def) => {
     if (def.key === "_produktEingang") {
       const name =
         firstString(fields["Zielgruppe Bezeichnung (from Produkt (Eingang))"]) ??
@@ -245,10 +336,26 @@ function ReadOnlyCard({ fields }: { fields: Record<string, unknown> }) {
     return { def, value: formatValue(fields[def.key], def.format) };
   });
 
-  // Generische Produkt-Zusatzfelder aus Airtable (z. B. Hunde-Angaben bei
-  // Hundeversicherung). Zeigt jedes nicht-leere, nicht-interne Feld.
+  // Catch-all für fachliche Zusatzfelder, die (noch) keiner Gruppe zugeordnet
+  // sind — interne/technische Felder und bereits gezeigte bleiben außen vor.
+  const shownKeys = new Set<string>([
+    ...curated.map((f) => f.key),
+    "Produkt (Eingang)",
+    "Zielgruppe Bezeichnung (from Produkt (Eingang))",
+    // group-Felder, die bei diesem kind evtl. nicht in curated sind, trotzdem
+    // nicht doppelt als „weitere Angabe" zeigen:
+    ...TIER_FIELDS.map((f) => f.key),
+    ...PKV_FIELDS.map((f) => f.key),
+    ...KIWU_FIELDS.map((f) => f.key),
+  ]);
   const extra = Object.entries(fields)
-    .filter(([k]) => !isNoiseKey(k))
+    .filter(
+      ([k]) =>
+        !shownKeys.has(k) &&
+        !INTERNAL_KEYS.has(k) &&
+        !k.startsWith("_") &&
+        !k.includes("(from "),
+    )
     .map(([k, v]) => ({ key: k, value: firstString(v) }))
     .filter((r): r is { key: string; value: string } => r.value != null);
 
