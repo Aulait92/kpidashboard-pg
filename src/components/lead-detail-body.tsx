@@ -83,6 +83,8 @@ function detectLeadKind(
   source: string | null | undefined,
   fields: Record<string, unknown>,
 ): LeadKind {
+  // Verlässlichstes Signal: das Airtable-Feld „Tierart" wird nur bei echten
+  // Tier(kranken)versicherungs-Funnels gesetzt.
   if (firstString(fields["Tierart"])) return "tier";
   const hay = [
     source ?? "",
@@ -91,7 +93,11 @@ function detectLeadKind(
   ]
     .join(" ")
     .toLowerCase();
-  if (/tier|hund|katze|pferd/.test(hay)) return "tier";
+  // NUR echte Tierversicherung — „Hundefutter"/„Hundehalter" (enthalten „hund",
+  // aber kein „versicherung") dürfen NICHT als Tier gelten.
+  const hasAnimal = /(hund|katze|pferd|tier)/.test(hay);
+  if ((hasAnimal && hay.includes("versicherung")) || /\btier\b/.test(hay))
+    return "tier";
   if (/kinderwunsch|kiwu/.test(hay)) return "kinderwunsch";
   if (/pkv|wechsel|tarifopt|neugesch|beihilfe|krankenvoll/.test(hay))
     return "pkv";
