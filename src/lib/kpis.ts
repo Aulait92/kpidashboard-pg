@@ -14,6 +14,8 @@ import { prisma } from "@/lib/prisma";
 import type { DateRange } from "@/lib/date-ranges";
 import { previousRange } from "@/lib/date-ranges";
 
+import { PIPELINE_PHASES } from "@/lib/products";
+
 export { PRODUCTS, type Product } from "@/lib/products";
 
 export type KpiFilters = {
@@ -346,11 +348,16 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
   };
 }
 
-const TERMIN_STATUSES = new Set([
-  "Termin vereinbart",
-  "Angebot/Beratung läuft",
-  "Abschluss",
-]);
+// „Termin" = Lead ist in der Kanban-Spalte „In Beratung" (oder weiter:
+// Angebot gesendet, Abschluss). Direkt aus den Pipeline-Phasen abgeleitet, damit
+// KPI und Board dieselbe Sprache sprechen — inkl. der Alt-Status, die in „In
+// Beratung" gefaltet sind (Erreicht/Qualifiziert/Termin vereinbart/…).
+const TERMIN_PHASE_KEYS = new Set(["beratung", "angebot-gesendet", "abschluss"]);
+const TERMIN_STATUSES = new Set<string>(
+  PIPELINE_PHASES.filter((p) => TERMIN_PHASE_KEYS.has(p.key)).flatMap((p) => [
+    ...p.statuses,
+  ]),
+);
 
 export async function listCustomers() {
   return prisma.customer.findMany({
