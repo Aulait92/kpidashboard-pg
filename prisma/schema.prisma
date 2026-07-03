@@ -77,6 +77,9 @@ model DealActivity {
   // CRM-Kanban-Card die nächste anstehende Aktivität statt des letzten
   // Updates. createdAt bleibt der reine Anlage-Zeitpunkt.
   scheduledFor DateTime?
+  // Abgehakt/erledigt am. Gesetzt = die Aktivität fällt aus „Heute"/„Kommende"
+  // (nur noch in der Historie sichtbar).
+  completedAt DateTime?
   // Zusatzdaten je Kind (z. B. {fromStatus, toStatus} bei status_change).
   metadata    Json?
   createdAt   DateTime @default(now())

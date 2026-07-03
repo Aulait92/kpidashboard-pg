@@ -419,6 +419,23 @@ export async function deleteDealActivityAction(formData: FormData) {
   if (dealId) revalidatePath(`/admin/crm/${dealId}`);
 }
 
+// Aktivität abhaken / wieder öffnen. Abgehakte Aktivitäten fallen aus
+// „Heute"/„Kommende" und erscheinen nur noch in der Historie.
+export async function toggleDealActivityDoneAction(
+  activityId: string,
+  done: boolean,
+) {
+  await requireAdmin();
+  if (!activityId) return;
+  const a = await prisma.dealActivity.update({
+    where: { id: activityId },
+    data: { completedAt: done ? new Date() : null },
+    select: { dealId: true },
+  });
+  revalidatePath("/admin/activities");
+  revalidatePath(`/admin/crm/${a.dealId}`);
+}
+
 // „Geschlossen"-Toggle: markiert einen Deal als geschlossen. Er verschwindet aus
 // dem aktiven CRM-Kanban, bleibt aber in allen Sales-Statistiken enthalten.
 // Reine DB-Kennzeichnung (kein Airtable-Write).

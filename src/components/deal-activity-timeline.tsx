@@ -19,6 +19,7 @@ import {
   type CreateActivityState,
 } from "@/app/admin/crm/actions";
 import { formatDate } from "@/lib/format";
+import { ActivityDoneToggle } from "@/components/activity-done-toggle";
 
 // Date → "YYYY-MM-DDTHH:mm" in Browser-Lokalzeit für datetime-local-Inputs.
 function toDatetimeLocal(d: Date): string {
@@ -32,6 +33,7 @@ export type ActivityItem = {
   title: string;
   body: string | null;
   scheduledFor: Date | null;
+  completedAt: Date | null;
   createdAt: Date;
   createdBy: { email: string } | null;
 };
@@ -263,7 +265,15 @@ function ActivityRow({
           />
         </form>
         <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-[color:var(--muted)]">
-          <span>{meta.label}</span>
+          <span className="inline-flex items-center gap-2">
+            {meta.label}
+            {activity.kind !== "status_change" ? (
+              <ActivityDoneToggle
+                activityId={activity.id}
+                done={activity.completedAt != null}
+              />
+            ) : null}
+          </span>
           {/* status_change-Einträge nicht manuell löschbar — wären
               inkonsistent zur Pipeline-History. */}
           {activity.kind !== "status_change" ? (

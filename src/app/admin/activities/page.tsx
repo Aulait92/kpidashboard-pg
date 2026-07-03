@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { AdminTabs } from "@/components/admin-tabs";
 import { ActivitiesFilterBar } from "@/components/activities-filter-bar";
+import { ActivityDoneToggle } from "@/components/activity-done-toggle";
 import { getCurrentSession } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -111,26 +112,37 @@ export default async function AdminActivitiesPage({
     createdBy: { select: { email: true } },
   } as const;
   const [heute, kommende, history] = await Promise.all([
-    // Heute: alle für heute (Berlin-Zeit) geplanten Aktivitäten — auch wenn die
-    // Uhrzeit heute schon vorbei ist.
-    prisma.dealActivity.findMany({
-      where: { ...baseWhere, scheduledFor: { gte: todayStart, lte: todayEnd } },
-      orderBy: { scheduledFor: "asc" },
-      take: 200,
-      include,
-    }),
-    // Kommende: ab morgen geplant.
-    prisma.dealActivity.findMany({
-      where: { ...baseWhere, scheduledFor: { gt: todayEnd } },
-      orderBy: { scheduledFor: "asc" },
-      take: 200,
-      include,
-    }),
-    // Historie: ohne Termin ODER vor heute.
+    // Heute: für heute (Berlin-Zeit) geplant UND noch nicht abgehakt.
     prisma.dealActivity.findMany({
       where: {
         ...baseWhere,
-        OR: [{ scheduledFor: null }, { scheduledFor: { lt: todayStart } }],
+        completedAt: null,
+        scheduledFor: { gte: todayStart, lte: todayEnd },
+      },
+      orderBy: { scheduledFor: "asc" },
+      take: 200,
+      include,
+    }),
+    // Kommende: ab morgen geplant UND noch nicht abgehakt.
+    prisma.dealActivity.findMany({
+      where: {
+        ...baseWhere,
+        completedAt: null,
+        scheduledFor: { gt: todayEnd },
+      },
+      orderBy: { scheduledFor: "asc" },
+      take: 200,
+      include,
+    }),
+    // Historie: abgehakt ODER ohne Termin ODER vor heute.
+    prisma.dealActivity.findMany({
+      where: {
+        ...baseWhere,
+        OR: [
+          { completedAt: { not: null } },
+          { scheduledFor: null },
+          { scheduledFor: { lt: todayStart } },
+        ],
       },
       orderBy: { createdAt: "desc" },
       take: 200,
@@ -231,6 +243,7 @@ type ActivityRow = {
   title: string;
   body: string | null;
   scheduledFor: Date | null;
+  completedAt: Date | null;
   createdAt: Date;
   deal: { id: string; name: string | null; company: string | null; status: string | null };
   createdBy: { email: string } | null;
@@ -287,6 +300,12 @@ function Row({
           </p>
         ) : null}
         <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-[color:var(--muted)]">
+          {activity.kind !== "status_change" ? (
+            <ActivityDoneToggle
+              activityId={activity.id}
+              done={activity.completedAt != null}
+            />
+          ) : null}
           <span>{kindLabel}</span>
           {activity.deal.status ? <span>· {activity.deal.status}</span> : null}
           {!isUpcoming && activity.scheduledFor ? (

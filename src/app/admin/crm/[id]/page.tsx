@@ -114,6 +114,7 @@ export default async function AdminDealDetailPage({
     title: a.title,
     body: a.body,
     scheduledFor: a.scheduledFor,
+    completedAt: a.completedAt,
     createdAt: a.createdAt,
     createdBy: a.createdBy,
   }));
