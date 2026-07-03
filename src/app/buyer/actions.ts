@@ -208,31 +208,6 @@ export async function setLeadStatusAction(
   return { ok: true };
 }
 
-// „Geschlossen"-Toggle: markiert einen Lead als erledigt/geschlossen. Er
-// verschwindet damit aus dem aktiven Kanban, bleibt aber in allen Statistiken
-// (Erreichbarkeitsquote etc.) enthalten. Reine DB-Kennzeichnung — kein
-// Airtable-Write, damit ein Re-Sync sie nicht überschreibt.
-export async function setLeadArchivedAction(
-  leadId: string,
-  archived: boolean,
-): Promise<{ ok: true } | { ok: false; error: string }> {
-  const session = await getCurrentSession();
-  if (!session || session.role !== "BUYER" || !session.customerId) {
-    return { ok: false, error: "Nicht eingeloggt." };
-  }
-  const lead = await prisma.lead.findFirst({
-    where: { id: leadId, customerId: session.customerId },
-    select: { id: true },
-  });
-  if (!lead) return { ok: false, error: "Lead nicht gefunden." };
-  await prisma.lead.update({ where: { id: lead.id }, data: { archived } });
-  revalidatePath("/buyer");
-  revalidatePath("/buyer/kanban");
-  revalidatePath("/buyer/leads");
-  revalidatePath(`/buyer/leads/${lead.id}`);
-  return { ok: true };
-}
-
 // Speichert die in der Lead-Detail-Ansicht editierbaren Felder zurück
 // nach Airtable + spiegelt die DB-Spiegel-Felder (Kontaktversuche,
 // firstContactAt). Notizen lebt ausschließlich in Airtable. Storno-

@@ -5,7 +5,6 @@ import {
 } from "@/app/buyer/actions";
 import { LeadEditForm } from "@/components/lead-edit-form";
 import { LeadStornoTrigger } from "@/components/lead-storno-trigger";
-import { LeadCloseButton } from "@/components/lead-close-button";
 import { fetchLeadRecord } from "@/lib/airtable-write";
 import { formatDate, formatEUR } from "@/lib/format";
 import { displayProduct } from "@/lib/products";
@@ -232,7 +231,6 @@ export async function LeadDetailBody({
       source: true,
       status: true,
       createdAt: true,
-      archived: true,
     },
   });
   if (!lead) notFound();
@@ -267,21 +265,18 @@ export async function LeadDetailBody({
             Eingegangen {formatDate(lead.createdAt)}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 self-start">
-          <LeadCloseButton leadId={lead.id} archived={lead.archived} />
-          {lead.status && lead.status.toLowerCase().startsWith("storno") ? (
-            <span className="inline-flex items-center rounded-md bg-rose-100 px-3 py-1.5 text-xs font-semibold text-rose-800">
-              Storniert
-            </span>
-          ) : (
-            <LeadStornoTrigger
-              leadId={lead.id}
-              leadName={lead.name}
-              leadCreatedAt={lead.createdAt}
-              stornoOptions={stornoOptions}
-            />
-          )}
-        </div>
+        {lead.status && lead.status.toLowerCase().startsWith("storno") ? (
+          <span className="inline-flex items-center self-start rounded-md bg-rose-100 px-3 py-1.5 text-xs font-semibold text-rose-800">
+            Storniert
+          </span>
+        ) : (
+          <LeadStornoTrigger
+            leadId={lead.id}
+            leadName={lead.name}
+            leadCreatedAt={lead.createdAt}
+            stornoOptions={stornoOptions}
+          />
+        )}
       </header>
 
       {fetchError ? (
