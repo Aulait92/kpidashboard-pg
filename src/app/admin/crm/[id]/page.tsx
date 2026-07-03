@@ -7,6 +7,7 @@ import {
 } from "@/components/deal-activity-timeline";
 import { DealEditForm } from "@/components/deal-edit-form";
 import { DeleteDealButton } from "@/components/delete-deal-button";
+import { DealCloseButton } from "@/components/deal-close-button";
 import { getCurrentSession } from "@/lib/auth";
 import { formatDate, formatEUR } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -150,6 +151,7 @@ export default async function AdminDealDetailPage({
               {formatEUR(Number(deal.value))}
             </span>
           ) : null}
+          <DealCloseButton dealId={deal.id} archived={deal.archived} />
           <DeleteDealButton dealId={deal.id} dealName={deal.name} />
         </div>
       </header>

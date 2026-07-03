@@ -419,6 +419,18 @@ export async function deleteDealActivityAction(formData: FormData) {
   if (dealId) revalidatePath(`/admin/crm/${dealId}`);
 }
 
+// „Geschlossen"-Toggle: markiert einen Deal als geschlossen. Er verschwindet aus
+// dem aktiven CRM-Kanban, bleibt aber in allen Sales-Statistiken enthalten.
+// Reine DB-Kennzeichnung (kein Airtable-Write).
+export async function setDealArchivedAction(dealId: string, archived: boolean) {
+  await requireAdmin();
+  if (!dealId) return;
+  await prisma.deal.update({ where: { id: dealId }, data: { archived } });
+  revalidatePath("/admin/crm");
+  revalidatePath(`/admin/crm/${dealId}`);
+  revalidatePath("/admin/kpis");
+}
+
 // Ändert den „Geplant für"-Zeitpunkt einer Aktivität (leer = Planung entfernen).
 // datetime-local-Input liefert "YYYY-MM-DDTHH:mm" in Browser-Lokalzeit.
 export async function updateDealActivityScheduleAction(formData: FormData) {

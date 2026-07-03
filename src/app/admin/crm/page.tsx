@@ -38,6 +38,9 @@ export default async function AdminCrmPage({
   // Where-Clause aus den Filter-Params. Such-Match nutzt Postgres'
   // case-insensitive contains auf Name ODER Firma ODER Mail.
   const where = {
+    // Geschlossene Deals sind aus dem aktiven Board raus (zählen aber weiter in
+    // die Sales-Statistiken).
+    archived: false,
     ...(queryRaw
       ? {
           OR: [

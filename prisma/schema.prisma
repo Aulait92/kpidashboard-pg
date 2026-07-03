@@ -44,6 +44,9 @@ model Deal {
   // Frei editierbares Feld „Testcharge" (Detailansicht). Spiegelt das
   // gleichnamige Airtable-Feld; freier Text.
   testCharge      String?
+  // Vom Admin manuell „geschlossen" — verschwindet aus dem aktiven CRM-Kanban,
+  // zählt aber weiter in die Sales-Statistiken (Win-Rate, Erreichbarkeit …).
+  archived        Boolean         @default(false)
   // Voller Airtable-Record-Snapshot für die Detail-Ansicht. Erspart einen
   // zweiten Airtable-Call beim Öffnen des Modals.
   rawFields       Json?
