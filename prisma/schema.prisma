@@ -263,6 +263,10 @@ model Lead {
   // optional nach Airtable in eine Abschlusswert-Spalte gespiegelt; getrennt
   // von Revenue.amount (das ist der Lead-Einkaufspreis).
   closeValue      Decimal?  @db.Decimal(12, 2)
+  // Vom Buyer manuell „geschlossen" — verschwindet aus dem aktiven Kanban,
+  // zählt aber weiter in die Statistiken (Erreichbarkeit etc.). NICHT dasselbe
+  // wie closedAt (= Abschluss-Status) oder Storno.
+  archived        Boolean   @default(false)
 
   customer Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   revenues Revenue[]

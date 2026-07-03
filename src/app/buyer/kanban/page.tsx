@@ -126,6 +126,9 @@ async function KanbanBody({
     where: {
       customerId,
       createdAt: { gte: range.from, lte: range.to },
+      // Geschlossene Leads sind aus dem aktiven Board raus (zählen aber weiter
+      // in die KPIs).
+      archived: false,
     },
     orderBy: { createdAt: "desc" },
     take: 500,
