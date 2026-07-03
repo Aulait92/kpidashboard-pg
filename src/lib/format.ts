@@ -13,8 +13,12 @@ const num = new Intl.NumberFormat("de-DE", {
   maximumFractionDigits: 2,
 });
 
+// Der Server läuft in UTC (Railway) — ohne expliziten timeZone würden Datum &
+// Uhrzeit in UTC angezeigt (z. B. 15:XX statt 17:XX Berliner Zeit). Alle
+// Anzeige-Formatter rechnen deshalb fest in Europe/Berlin.
 const dateFmt = new Intl.DateTimeFormat("de-DE", {
   dateStyle: "medium",
+  timeZone: "Europe/Berlin",
 });
 
 const dateTimeFmt = new Intl.DateTimeFormat("de-DE", {
@@ -23,6 +27,7 @@ const dateTimeFmt = new Intl.DateTimeFormat("de-DE", {
   year: "numeric",
   hour: "2-digit",
   minute: "2-digit",
+  timeZone: "Europe/Berlin",
 });
 
 export function formatEUR(value: number | null | undefined): string {
