@@ -15,6 +15,7 @@ import {
 import {
   createDealActivityAction,
   deleteDealActivityAction,
+  updateDealActivityDateAction,
   updateDealActivityScheduleAction,
   type CreateActivityState,
 } from "@/app/admin/crm/actions";
@@ -224,9 +225,38 @@ function ActivityRow({
           <div className="text-sm font-medium text-[color:var(--foreground)] break-words">
             {activity.title}
           </div>
-          <div className="shrink-0 text-[11px] text-[color:var(--muted)]">
-            {formatDate(activity.createdAt)}
-          </div>
+          {activity.kind === "status_change" ? (
+            <div className="shrink-0 text-[11px] text-[color:var(--muted)]">
+              {formatDate(activity.createdAt)}
+            </div>
+          ) : (
+            // Aktivitäts-Datum inline editierbar (wann sie stattfand).
+            <form
+              action={updateDealActivityDateAction}
+              className="shrink-0"
+              title="Datum der Aktivität ändern"
+            >
+              <input type="hidden" name="activityId" value={activity.id} />
+              <input type="hidden" name="dealId" value={dealId} />
+              <input
+                type="datetime-local"
+                name="createdAt"
+                defaultValue={toDatetimeLocal(activity.createdAt)}
+                onClick={(e) => {
+                  const el = e.currentTarget as HTMLInputElement & {
+                    showPicker?: () => void;
+                  };
+                  try {
+                    el.showPicker?.();
+                  } catch {
+                    /* ignore */
+                  }
+                }}
+                onChange={(e) => e.currentTarget.form?.requestSubmit()}
+                className="rounded border border-[color:var(--border)] bg-white px-1 py-0.5 text-[11px] text-[color:var(--muted)] focus:border-[color:var(--brand)] focus:outline-none"
+              />
+            </form>
+          )}
         </div>
         {activity.body ? (
           <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-[color:var(--muted)]">

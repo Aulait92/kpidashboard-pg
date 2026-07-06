@@ -448,6 +448,25 @@ export async function setDealArchivedAction(dealId: string, archived: boolean) {
   revalidatePath("/admin/kpis");
 }
 
+// Ändert das Datum (createdAt) einer Aktivität — also wann sie stattfand/erfasst
+// wurde. datetime-local liefert "YYYY-MM-DDTHH:mm" in Browser-Lokalzeit. Leerer
+// Wert wird ignoriert (createdAt ist Pflicht).
+export async function updateDealActivityDateAction(formData: FormData) {
+  await requireAdmin();
+  const activityId = String(formData.get("activityId") ?? "");
+  const dealId = String(formData.get("dealId") ?? "");
+  const raw = String(formData.get("createdAt") ?? "").trim();
+  if (!activityId || raw === "") return;
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return;
+  await prisma.dealActivity.update({
+    where: { id: activityId },
+    data: { createdAt: d },
+  });
+  revalidatePath("/admin/activities");
+  if (dealId) revalidatePath(`/admin/crm/${dealId}`);
+}
+
 // Ändert den „Geplant für"-Zeitpunkt einer Aktivität (leer = Planung entfernen).
 // datetime-local-Input liefert "YYYY-MM-DDTHH:mm" in Browser-Lokalzeit.
 export async function updateDealActivityScheduleAction(formData: FormData) {
