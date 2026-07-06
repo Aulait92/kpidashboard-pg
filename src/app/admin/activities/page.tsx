@@ -282,18 +282,9 @@ function Row({
               </span>
             ) : null}
           </div>
-          {activity.kind === "status_change" ? (
-            <div className="shrink-0 text-[11px] text-[color:var(--muted)]">
-              {formatDate(activity.createdAt)}
-            </div>
-          ) : (
-            <ActivityDateEdit
-              activityId={activity.id}
-              dealId={activity.deal.id}
-              kind="date"
-              value={activity.createdAt}
-            />
-          )}
+          <div className="shrink-0 text-[11px] text-[color:var(--muted)]">
+            {formatDate(activity.createdAt)}
+          </div>
         </div>
         <div className="mt-0.5 text-sm font-medium text-[color:var(--foreground)] break-words">
           {activity.title}
