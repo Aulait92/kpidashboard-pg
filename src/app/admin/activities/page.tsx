@@ -14,6 +14,7 @@ import {
 import { AdminTabs } from "@/components/admin-tabs";
 import { ActivitiesFilterBar } from "@/components/activities-filter-bar";
 import { ActivityDoneToggle } from "@/components/activity-done-toggle";
+import { ActivityDateEdit } from "@/components/activity-date-edit";
 import { getCurrentSession } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -281,15 +282,18 @@ function Row({
               </span>
             ) : null}
           </div>
-          <div className="shrink-0 text-[11px] text-[color:var(--muted)]">
-            {isUpcoming && activity.scheduledFor ? (
-              <span className="rounded-md bg-blue-50 px-1.5 py-0.5 font-semibold text-blue-800">
-                {formatDate(activity.scheduledFor)}
-              </span>
-            ) : (
-              formatDate(activity.createdAt)
-            )}
-          </div>
+          {activity.kind === "status_change" ? (
+            <div className="shrink-0 text-[11px] text-[color:var(--muted)]">
+              {formatDate(activity.createdAt)}
+            </div>
+          ) : (
+            <ActivityDateEdit
+              activityId={activity.id}
+              dealId={activity.deal.id}
+              kind="date"
+              value={activity.createdAt}
+            />
+          )}
         </div>
         <div className="mt-0.5 text-sm font-medium text-[color:var(--foreground)] break-words">
           {activity.title}
@@ -308,8 +312,13 @@ function Row({
           ) : null}
           <span>{kindLabel}</span>
           {activity.deal.status ? <span>· {activity.deal.status}</span> : null}
-          {!isUpcoming && activity.scheduledFor ? (
-            <span>· war geplant {formatDate(activity.scheduledFor)}</span>
+          {activity.kind !== "status_change" ? (
+            <ActivityDateEdit
+              activityId={activity.id}
+              dealId={activity.deal.id}
+              kind="schedule"
+              value={activity.scheduledFor}
+            />
           ) : null}
         </div>
       </div>
