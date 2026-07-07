@@ -457,7 +457,11 @@ function KanbanCard({
         <span className="truncate">{displayProduct(lead.source)}</span>
         <span className="shrink-0 tabular-nums">{formatDate(lead.createdAt)}</span>
       </div>
-      {lead.closeValue != null && lead.closeValue > 0 ? (
+      {/* Abschlusswert nur zeigen, wenn der Lead wirklich im Abschluss ist —
+          ein aus „Abschluss" zurückgezogener Lead soll keinen „Umsatz" tragen. */}
+      {lead.status === CLOSED_STATUS &&
+      lead.closeValue != null &&
+      lead.closeValue > 0 ? (
         <div className="mt-1.5 inline-flex rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-emerald-800">
           {formatEUR(lead.closeValue)}
         </div>

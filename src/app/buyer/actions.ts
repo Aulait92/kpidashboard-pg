@@ -174,7 +174,11 @@ export async function setLeadStatusAction(
   if (!lead) return { ok: false, error: "Lead nicht gefunden." };
   if (!lead.airtableId) return { ok: false, error: "Lead ohne Airtable-ID." };
 
-  const closeValue = opts?.closeValue;
+  const isClosed = status === CLOSED_STATUS;
+  // Beim Abschluss: den (optional) übergebenen Abschlusswert setzen. Verlässt
+  // der Lead die Abschluss-Phase (z. B. zurück auf „Neuer Lead"), den
+  // Abschlusswert IMMER löschen — sonst zeigt die Karte weiter einen „Umsatz".
+  const closeValue: number | null | undefined = isClosed ? opts?.closeValue : null;
   try {
     await updateLeadEditableFields({
       airtableId: lead.airtableId,
@@ -188,7 +192,6 @@ export async function setLeadStatusAction(
     };
   }
 
-  const isClosed = status === CLOSED_STATUS;
   await prisma.lead.update({
     where: { id: lead.id },
     data: {
