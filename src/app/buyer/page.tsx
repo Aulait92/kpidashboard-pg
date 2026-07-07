@@ -178,7 +178,10 @@ async function BuyerDashboardBody({
     let sum = 0;
     for (const r of rows) {
       if (r.closeValue == null) continue;
-      if (r.status && r.status.toLowerCase().startsWith("storno")) continue;
+      // Umsatz nur aus tatsächlich abgeschlossenen Leads — ein aus „Abschluss"
+      // zurückgezogener Lead (z. B. wieder „Neuer Lead") darf keinen Umsatz
+      // tragen, auch wenn der alte Abschlusswert noch am Datensatz hängt.
+      if (!r.status || r.status.toLowerCase() !== "abschluss") continue;
       const n = Number(r.closeValue);
       if (Number.isFinite(n)) sum += n;
     }
