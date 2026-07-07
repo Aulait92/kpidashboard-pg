@@ -2,10 +2,30 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { TZDate } from "@date-fns/tz";
 import { deleteSalesDeal, updateSalesDeal } from "@/lib/airtable-sales-write";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { findSalesPhaseForStatus } from "@/lib/sales-phases";
+
+// Parst einen datetime-local-Wert ("YYYY-MM-DDTHH:mm") als WALL-CLOCK in
+// Europe/Berlin. Ohne das würde new Date(str) den Wert als Server-Lokalzeit
+// (UTC auf Railway) interpretieren → 2h-Versatz (14:00 eingegeben → 16:00).
+function parseBerlinLocal(raw: string): Date | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(raw.trim());
+  if (!m) return null;
+  const d = new TZDate(
+    Number(m[1]),
+    Number(m[2]) - 1,
+    Number(m[3]),
+    Number(m[4]),
+    Number(m[5]),
+    0,
+    "Europe/Berlin",
+  );
+  const ms = d.getTime();
+  return Number.isNaN(ms) ? null : new Date(ms);
+}
 
 async function requireAdmin() {
   const session = await getCurrentSession();
@@ -168,11 +188,10 @@ export async function createDealActivityAction(
   // null = keine Planung.
   let scheduledFor: Date | null = null;
   if (scheduledRaw !== "") {
-    const d = new Date(scheduledRaw);
-    if (Number.isNaN(d.getTime())) {
+    scheduledFor = parseBerlinLocal(scheduledRaw);
+    if (!scheduledFor) {
       return { error: "Geplant für: ungültiges Datum/Zeit." };
     }
-    scheduledFor = d;
   }
 
   const deal = await prisma.deal.findUnique({
@@ -477,9 +496,8 @@ export async function updateDealActivityScheduleAction(formData: FormData) {
   const scheduledRaw = String(formData.get("scheduledFor") ?? "").trim();
   let scheduledFor: Date | null = null;
   if (scheduledRaw !== "") {
-    const d = new Date(scheduledRaw);
-    if (Number.isNaN(d.getTime())) return; // ungültig → ignorieren
-    scheduledFor = d;
+    scheduledFor = parseBerlinLocal(scheduledRaw);
+    if (!scheduledFor) return; // ungültig → ignorieren
   }
   await prisma.dealActivity.update({
     where: { id: activityId },

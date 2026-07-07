@@ -6,10 +6,20 @@ import {
   updateDealActivityScheduleAction,
 } from "@/app/admin/crm/actions";
 
-// Date → "YYYY-MM-DDTHH:mm" in Browser-Lokalzeit für datetime-local-Inputs.
+// Date → "YYYY-MM-DDTHH:mm" der WALL-CLOCK in Europe/Berlin (unabhängig davon,
+// ob es beim SSR auf dem UTC-Server oder im Browser formatiert wird).
 function toDatetimeLocal(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Berlin",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
 }
 
 // Inline editierbares Datum einer Aktivität — wiederverwendbar in der
