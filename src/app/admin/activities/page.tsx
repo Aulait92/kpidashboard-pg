@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { endOfDay, startOfDay } from "date-fns";
 import { tz } from "@date-fns/tz";
 import {
+  AlertTriangle,
   CalendarPlus,
   CheckCircle2,
   Mail,
@@ -112,7 +113,18 @@ export default async function AdminActivitiesPage({
     deal: { select: { id: true, name: true, company: true, status: true } },
     createdBy: { select: { email: true } },
   } as const;
-  const [heute, kommende, history] = await Promise.all([
+  const [ueberfaellig, heute, kommende, history] = await Promise.all([
+    // Überfällig: vor heute geplant UND noch NICHT abgehakt — bleibt ganz oben.
+    prisma.dealActivity.findMany({
+      where: {
+        ...baseWhere,
+        completedAt: null,
+        scheduledFor: { lt: todayStart },
+      },
+      orderBy: { scheduledFor: "asc" },
+      take: 200,
+      include,
+    }),
     // Heute: für heute (Berlin-Zeit) geplant UND noch nicht abgehakt.
     prisma.dealActivity.findMany({
       where: {
@@ -135,15 +147,12 @@ export default async function AdminActivitiesPage({
       take: 200,
       include,
     }),
-    // Historie: abgehakt ODER ohne Termin ODER vor heute.
+    // Historie: abgehakt ODER ohne Termin. (Überfällige unbearbeitete stehen
+    // separat oben, nicht hier.)
     prisma.dealActivity.findMany({
       where: {
         ...baseWhere,
-        OR: [
-          { completedAt: { not: null } },
-          { scheduledFor: null },
-          { scheduledFor: { lt: todayStart } },
-        ],
+        OR: [{ completedAt: { not: null } }, { scheduledFor: null }],
       },
       orderBy: { createdAt: "desc" },
       take: 200,
@@ -159,14 +168,30 @@ export default async function AdminActivitiesPage({
             Aktivitäten
           </h1>
           <p className="mt-1 text-sm text-[color:var(--muted)]">
-            Alle CRM-Aktivitäten über die Deal-Pipeline hinweg — heute fällige
-            zuerst, dann kommende, dann Historie.
+            Alle CRM-Aktivitäten über die Deal-Pipeline hinweg — überfällige
+            zuerst, dann heute, kommende, Historie.
           </p>
         </div>
         <ActivitiesFilterBar currentKind={kindFilter} currentQuery={queryRaw} />
       </header>
 
       <AdminTabs />
+
+      {ueberfaellig.length > 0 ? (
+        <section className="mt-6">
+          <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold tracking-tight text-rose-700">
+            <AlertTriangle className="h-4 w-4" />
+            Überfällig ({ueberfaellig.length})
+          </h2>
+          <ol className="overflow-hidden rounded-2xl border border-rose-300 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(244,63,94,0.15)]">
+            <div className="divide-y divide-[color:var(--border)]">
+              {ueberfaellig.map((a) => (
+                <Row key={a.id} activity={a} isUpcoming />
+              ))}
+            </div>
+          </ol>
+        </section>
+      ) : null}
 
       <Section title={`Heute (${heute.length})`}>
         {heute.length === 0 ? (
