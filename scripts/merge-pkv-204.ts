@@ -247,8 +247,19 @@ for (const { path, tag } of INPUTS) {
   }
 }
 
+const isValidEmail = (e: string) => {
+  if (!e) return false
+  const t = e.trim().toLowerCase()
+  if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/.test(t)) return false
+  // Junk / placeholder / asset-URL Adressen
+  if (/^(flags@|globe@|contact@mysite\.com|yourname@|info@website\.com|email@stiftung|ihre@mail\.de|alex@muster\.de|firstclass@|businessclass@|student@|expats@|economy@|exklusiv|zahn\d|support@sichtbarerwerden|frage@alsterspree)/i.test(t)) return false
+  if (/\.(webp|png|jpg|svg|gif)$/i.test(t)) return false
+  return true
+}
+
 const removed = [...byDomain.values()].filter(r => ALREADY_CONTACTED.has(r.domain))
-const all = [...byDomain.values()].filter(r => !ALREADY_CONTACTED.has(r.domain))
+const withoutEmail = [...byDomain.values()].filter(r => !ALREADY_CONTACTED.has(r.domain) && !isValidEmail(r.email))
+const all = [...byDomain.values()].filter(r => !ALREADY_CONTACTED.has(r.domain) && isValidEmail(r.email))
 all.sort((a, b) => {
   if (a.isSeed !== b.isSeed) return a.isSeed ? -1 : 1
   if (a.queryHits !== b.queryHits) return b.queryHits - a.queryHits
@@ -282,6 +293,8 @@ const multiSrc = all.filter(r => r.sources.size > 1).length
 console.log(`Merged: ${all.length} unique domains (nach Filter)`)
 console.log(`  - Rausgefiltert (bereits kontaktiert): ${removed.length}`)
 if (removed.length) console.log(`    → ${removed.map(r => r.domain).join(', ')}`)
+console.log(`  - Rausgefiltert (keine gültige E-Mail): ${withoutEmail.length}`)
+if (withoutEmail.length) console.log(`    → ${withoutEmail.map(r => r.domain).join(', ')}`)
 console.log(`  - Seeds: ${seedCount}`)
 console.log(`  - Mit E-Mail: ${withEmail}`)
 console.log(`  - Mit Telefon: ${withPhone}`)
