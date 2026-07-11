@@ -21,6 +21,7 @@
     "scrape:ovb": "node --experimental-strip-types scripts/scrape-ovb.ts",
     "scrape:mlp": "node --experimental-strip-types scripts/scrape-mlp.ts",
     "scrape:huk": "node --experimental-strip-types scripts/scrape-huk.ts",
+    "scrape:treppenlift": "node --experimental-strip-types scripts/scrape-treppenlift.ts",
     "db:studio": "prisma studio",
     "vapid:generate": "web-push generate-vapid-keys"
   },

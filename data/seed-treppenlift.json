@@ -1,0 +1,30 @@
+{
+  "_comment": "Seed-Liste bekannter Treppenlift-Anbieter mit Lead-Käufer-Profil (Marktführer, Filialketten, Franchise-Systeme). Diese Firmen schalten aktiv Google Ads und kaufen typischerweise externe Leads dazu. Ergänze/editiere gern. Felder: name (Pflicht), city (Firmensitz), website (empfohlen — sonst wird der Eintrag übersprungen).",
+  "brokers": [
+    { "name": "Lifta GmbH", "city": "Köln", "website": "https://www.lifta.de" },
+    { "name": "TK Encasa (ehemals ThyssenKrupp Encasa)", "city": "Neuss", "website": "https://www.tk-encasa.de" },
+    { "name": "Otolift Deutschland GmbH", "city": "Bocholt", "website": "https://www.otolift.de" },
+    { "name": "Sanimed GmbH", "city": "Ibbenbüren", "website": "https://www.sanimed.de" },
+    { "name": "Weigl Liftsysteme GmbH", "city": "Straßkirchen", "website": "https://www.weigl-liftsysteme.de" },
+    { "name": "Kalot Treppenlift", "city": "Dortmund", "website": "https://www.kalot.de" },
+    { "name": "Terporten Treppenlift GmbH", "city": "Kempen", "website": "https://www.terporten-treppenlift.de" },
+    { "name": "Ganschow Treppenlifte", "city": "Berlin", "website": "https://www.ganschow-treppenlift.de" },
+    { "name": "Meier & Sohn Treppenlifte", "city": "Nürnberg", "website": "https://www.meier-treppenlifte.de" },
+    { "name": "Handicare Deutschland GmbH", "city": "Detmold", "website": "https://www.handicare.de" },
+    { "name": "Vimec Deutschland GmbH", "city": "Rösrath", "website": "https://www.vimec.de" },
+    { "name": "Acorn Deutschland GmbH", "city": "Ratingen", "website": "https://www.acorn-treppenlifte.de" },
+    { "name": "Sanilift Treppenlifte", "city": "Hamburg", "website": "https://www.sanilift.de" },
+    { "name": "Aufzughof GmbH", "city": "Berlin", "website": "https://www.aufzughof.de" },
+    { "name": "Garaventa Lift GmbH", "city": "Kürten", "website": "https://www.garaventalift.de" },
+    { "name": "HIRO LIFT GmbH", "city": "Bielefeld", "website": "https://www.hiro.de" },
+    { "name": "Treppenlift Experten GmbH", "city": "Berlin", "website": "https://www.treppenlift-experten.de" },
+    { "name": "Ligtec Treppenlifte GmbH", "city": "Bönnigheim", "website": "https://www.ligtec.de" },
+    { "name": "Alber GmbH", "city": "Albstadt", "website": "https://www.alber.de" },
+    { "name": "Hawle Treppenlifte", "city": "Grafenau", "website": "https://www.hawle-treppenlift.de" },
+    { "name": "Meditec Treppenlifte", "city": "Kirchheim", "website": "https://www.meditec-treppenlifte.de" },
+    { "name": "Schmid Treppenlifte", "city": "Nördlingen", "website": "https://www.schmid-treppenlifte.de" },
+    { "name": "Solvo GmbH Treppenlifte", "city": "Mönchengladbach", "website": "https://www.solvo-treppenlifte.de" },
+    { "name": "Access BDD Deutschland", "city": "Dresden", "website": "https://www.access-bdd.com" },
+    { "name": "Suno Treppenlifte", "city": "Duisburg", "website": "https://www.suno-treppenlifte.de" }
+  ]
+}
