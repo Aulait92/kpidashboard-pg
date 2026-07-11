@@ -25,6 +25,56 @@ const INPUTS = [
 
 const OUT = '/home/user/kpidashboard-pg/data/pkv-204-merged.csv'
 
+// Firmen, die schon Cold-Mail bekommen haben — rausfiltern
+const ALREADY_CONTACTED = new Set([
+  'kvoptimal.de',
+  'verticus-versicherungsvergleich.de',
+  'verticus.ag',
+  'schlemann.com',
+  'pkvservice.com',
+  'pkv-hilfe.de',
+  'hcconsultingag.de',
+  'checkfox.de',
+  'lead-production.de',
+  'ccm-versicherungsmakler.de',
+  'cp-finanz.de',
+  'finanzschneiderei-versicherungsmakler.de',
+  'pkv-tarifwechsel-50plus.de',
+  'online-pkv.de',
+  'pkv-lounge.de',
+  'hoesch-partner.de',
+  'drklein.de',
+  'formaxx.de',
+  'formaxx.ag',
+  'mayflower-capital.de',
+  'plansecur.de',
+  'tecis.de',
+  'finum.de',
+  'leadsale.de',
+  'topscout.de',
+  'deutsche-honorarberatung.de',
+  'versicherungsberater.jetzt',
+  'binversichert.de',
+  'meine-pkv-berater.de',
+  'derfairsicherungsladen.de',
+  'versicherungenmitkopf.de',
+  'teamkrankenversicherung.de',
+  'derpkvmakler.de',
+  'risk007.de',
+  'financedoor.de',
+  'allianz.de',
+  'axa.de',
+  'pkv.wiki',
+  'verivox.de',
+  'vumak.de',
+  'hansemerkur.de',
+  'huk.de',
+  'nuernberger.de',
+  'minerva.de',
+  'minerva-kundenrechte.de',
+  'premiumcircle.de',
+])
+
 function parseCsv(text: string): string[][] {
   const rows: string[][] = []
   let field = ''
@@ -197,7 +247,8 @@ for (const { path, tag } of INPUTS) {
   }
 }
 
-const all = [...byDomain.values()]
+const removed = [...byDomain.values()].filter(r => ALREADY_CONTACTED.has(r.domain))
+const all = [...byDomain.values()].filter(r => !ALREADY_CONTACTED.has(r.domain))
 all.sort((a, b) => {
   if (a.isSeed !== b.isSeed) return a.isSeed ? -1 : 1
   if (a.queryHits !== b.queryHits) return b.queryHits - a.queryHits
@@ -228,7 +279,9 @@ const withEmail = all.filter(r => r.email).length
 const withPhone = all.filter(r => r.phone).length
 const multiSrc = all.filter(r => r.sources.size > 1).length
 
-console.log(`Merged: ${all.length} unique domains`)
+console.log(`Merged: ${all.length} unique domains (nach Filter)`)
+console.log(`  - Rausgefiltert (bereits kontaktiert): ${removed.length}`)
+if (removed.length) console.log(`    → ${removed.map(r => r.domain).join(', ')}`)
 console.log(`  - Seeds: ${seedCount}`)
 console.log(`  - Mit E-Mail: ${withEmail}`)
 console.log(`  - Mit Telefon: ${withPhone}`)
