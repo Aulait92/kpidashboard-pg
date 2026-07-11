@@ -1,0 +1,13 @@
+{
+  "_comment": "Seed-Liste PKV-§204-Anbieter — verifizierte Kern-Basis (nur Domains die live antworten). Bewusst schlank gehalten. Der Multi-SERP-Scraper ergänzt automatisch weitere Firmen. Du kannst Firmen jederzeit ergänzen — website ist Pflicht.",
+  "brokers": [
+    { "name": "KVoptimal.de GmbH", "city": "Nürnberg", "website": "https://www.kvoptimal.de" },
+    { "name": "Minerva Finanzplanung GmbH", "city": "Hamburg", "website": "https://www.minerva.de" },
+    { "name": "HonorarKonzept AG", "city": "München", "website": "https://www.honorarkonzept.de" },
+    { "name": "PKV-Gutachter (Reisch Consulting)", "city": "München", "website": "https://www.pkv-gutachter.de" },
+    { "name": "PKV Coach GmbH", "city": "Hamburg", "website": "https://www.pkv-coach.de" },
+    { "name": "Progress Finanzplaner GmbH", "city": "München", "website": "https://www.progress-finanzplaner.de" },
+    { "name": "FinanzPartner Beratung", "city": "Stuttgart", "website": "https://www.finanzpartner.de" },
+    { "name": "Deutsche Honorarberater DHB", "city": "München", "website": "https://www.dhb.de" }
+  ]
+}
