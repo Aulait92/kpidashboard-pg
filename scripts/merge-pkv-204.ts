@@ -21,6 +21,7 @@ const INPUTS = [
   { path: '/root/.claude/uploads/9fc4aee2-fbf2-5bdd-9953-a78fd84db27c/154ce20f-pkv204anbieter.csv', tag: 'v1' },
   { path: '/root/.claude/uploads/9fc4aee2-fbf2-5bdd-9953-a78fd84db27c/b06494d1-pkv204v4.csv',       tag: 'v4' },
   { path: '/root/.claude/uploads/9fc4aee2-fbf2-5bdd-9953-a78fd84db27c/7d34c827-pkv204v5.csv',       tag: 'v5' },
+  { path: '/home/user/kpidashboard-pg/data/pkv-204-v6.csv',                                        tag: 'v6' },
 ]
 
 const OUT = '/home/user/kpidashboard-pg/data/pkv-204-merged.csv'
