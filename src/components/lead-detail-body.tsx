@@ -67,13 +67,18 @@ const TIER_FIELDS: ReadOnlyField[] = [
 // wo sich der Name zwischen alter/neuer Funnel-Version unterscheidet, deckt
 // fallbackKeys die Alternative ab.
 const HUNDEFUTTER_FIELDS: ReadOnlyField[] = [
-  { key: "Aktuelles Futter (Futter)", label: "Aktuelles Futter" },
+  // 1) Wer ist der Hund?
+  { key: "Tiername", label: "Tiername" },
+  { key: "Rasse (Tier)", label: "Rasse" },
+  { key: "Geschlecht (Tier)", label: "Geschlecht" },
   {
     key: "Alter (Futter)",
     label: "Alter Hund",
     fallbackKeys: ["Altersklasse Hund (Futter)"],
   },
   { key: "Gewicht (Futter)", label: "Gewicht" },
+  { key: "Kastriert (Tier)", label: "Kastriert" },
+  // 2) Aktivität & Gesundheit
   { key: "Aktivitätslevel (Futter)", label: "Aktivitätslevel" },
   {
     key: "Gesundheitl. Probleme (Futter)",
@@ -86,11 +91,16 @@ const HUNDEFUTTER_FIELDS: ReadOnlyField[] = [
   },
   { key: "Allergien (Futter)", label: "Allergien" },
   { key: "Allergie-Detail (Futter)", label: "Allergien Details" },
+  // 3) Futter
+  {
+    key: "Aktuelles Futter (Futter)",
+    label: "Aktuelles Futter",
+    // Manche Funnel-Versionen liefern das Feld ohne „(Futter)"-Suffix; als
+    // Fallback aufnehmen, damit es nicht zusätzlich in „Weitere Angaben"
+    // doppelt auftaucht.
+    fallbackKeys: ["Aktuelles Futter"],
+  },
   { key: "Futterbezeichnung (Futter)", label: "Futterbezeichnung" },
-  { key: "Rasse (Tier)", label: "Rasse" },
-  { key: "Geschlecht (Tier)", label: "Geschlecht" },
-  { key: "Tiername", label: "Tiername" },
-  { key: "Kastriert (Tier)", label: "Kastriert" },
 ];
 
 // Kinderwunsch.
