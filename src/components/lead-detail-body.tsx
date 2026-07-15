@@ -100,7 +100,6 @@ const HUNDEFUTTER_FIELDS: ReadOnlyField[] = [
     // doppelt auftaucht.
     fallbackKeys: ["Aktuelles Futter"],
   },
-  { key: "Futterbezeichnung (Futter)", label: "Futterbezeichnung" },
 ];
 
 // Kinderwunsch.
