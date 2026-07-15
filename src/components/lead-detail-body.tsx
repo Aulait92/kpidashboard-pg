@@ -21,6 +21,10 @@ type ReadOnlyField = {
   key: string;
   label: string;
   format?: "date" | "datetime" | "eur" | "chip-product" | "chip-status";
+  // Alternative Airtable-Feldnamen — der erste nicht-leere gewinnt. Nötig,
+  // weil derselbe Wert je nach Funnel-Version unter verschiedenen Feldnamen
+  // liegt (z. B. „Alter (Futter)" vs. „Altersklasse Hund (Futter)").
+  fallbackKeys?: string[];
 };
 
 // Immer relevante Kontaktfelder.
@@ -58,6 +62,37 @@ const TIER_FIELDS: ReadOnlyField[] = [
   { key: "Anzahl Tiere", label: "Anzahl Tiere" },
 ];
 
+// Hundefutter-Funnel — physiologische Angaben zum Hund plus Futter-Details.
+// Feldnamen tragen je nach Funnel-Version „(Futter)"- oder „(Tier)"-Suffix;
+// wo sich der Name zwischen alter/neuer Funnel-Version unterscheidet, deckt
+// fallbackKeys die Alternative ab.
+const HUNDEFUTTER_FIELDS: ReadOnlyField[] = [
+  { key: "Aktuelles Futter (Futter)", label: "Aktuelles Futter" },
+  {
+    key: "Alter (Futter)",
+    label: "Alter Hund",
+    fallbackKeys: ["Altersklasse Hund (Futter)"],
+  },
+  { key: "Gewicht (Futter)", label: "Gewicht" },
+  { key: "Aktivitätslevel (Futter)", label: "Aktivitätslevel" },
+  {
+    key: "Gesundheitl. Probleme (Futter)",
+    label: "Gesundheitliche Probleme",
+    fallbackKeys: ["Gesundheitliche Probleme (Futter)"],
+  },
+  {
+    key: "Gesundheit-Detail (Futter)",
+    label: "Gesundheitliche Probleme Details",
+  },
+  { key: "Allergien (Futter)", label: "Allergien" },
+  { key: "Allergie-Detail (Futter)", label: "Allergien Details" },
+  { key: "Futterbezeichnung (Futter)", label: "Futterbezeichnung" },
+  { key: "Rasse (Tier)", label: "Rasse" },
+  { key: "Geschlecht (Tier)", label: "Geschlecht" },
+  { key: "Tiername", label: "Tiername" },
+  { key: "Kastriert (Tier)", label: "Kastriert" },
+];
+
 // Kinderwunsch.
 const KIWU_FIELDS: ReadOnlyField[] = [
   { key: "Geburtsdatum", label: "Geburtsdatum", format: "date" },
@@ -75,7 +110,7 @@ const TAIL_FIELDS: ReadOnlyField[] = [
   { key: "ausgeliefert_am", label: "ausgeliefert_am", format: "datetime" },
 ];
 
-type LeadKind = "pkv" | "tier" | "kinderwunsch" | "other";
+type LeadKind = "pkv" | "tier" | "kinderwunsch" | "hundefutter" | "other";
 
 // Produkt-Kategorie des Leads bestimmen — steuert, welche Feldgruppe angezeigt
 // wird. „Tierart" gesetzt ⇒ Tier; sonst über Produktname/Slug/source.
@@ -83,9 +118,6 @@ function detectLeadKind(
   source: string | null | undefined,
   fields: Record<string, unknown>,
 ): LeadKind {
-  // Verlässlichstes Signal: das Airtable-Feld „Tierart" wird nur bei echten
-  // Tier(kranken)versicherungs-Funnels gesetzt.
-  if (firstString(fields["Tierart"])) return "tier";
   const hay = [
     source ?? "",
     firstString(fields["slug (from Produkt (Eingang))"]) ?? "",
@@ -93,6 +125,17 @@ function detectLeadKind(
   ]
     .join(" ")
     .toLowerCase();
+  // Hundefutter zuerst prüfen: Diese Leads tragen zwar „(Tier)"-Felder (Rasse,
+  // Geschlecht …) und teils „Tierart", sind aber KEINE Versicherung. Erkennung
+  // über den Produktnamen („futter") oder Futter-spezifische Funnel-Felder.
+  const hasFutterField =
+    firstString(fields["Aktuelles Futter (Futter)"]) != null ||
+    firstString(fields["Futterbezeichnung (Futter)"]) != null ||
+    firstString(fields["Aktivitätslevel (Futter)"]) != null;
+  if (hay.includes("futter") || hasFutterField) return "hundefutter";
+  // Verlässlichstes Signal: das Airtable-Feld „Tierart" wird nur bei echten
+  // Tier(kranken)versicherungs-Funnels gesetzt.
+  if (firstString(fields["Tierart"])) return "tier";
   // NUR echte Tierversicherung — „Hundefutter"/„Hundehalter" (enthalten „hund",
   // aber kein „versicherung") dürfen NICHT als Tier gelten.
   const hasAnimal = /(hund|katze|pferd|tier)/.test(hay);
@@ -108,6 +151,8 @@ function fieldGroupFor(kind: LeadKind): ReadOnlyField[] {
   switch (kind) {
     case "tier":
       return TIER_FIELDS;
+    case "hundefutter":
+      return HUNDEFUTTER_FIELDS;
     case "kinderwunsch":
       return KIWU_FIELDS;
     case "pkv":
@@ -331,10 +376,10 @@ function ReadOnlyCard({
       group = group.filter((f) => f.key !== "Haltung (Tier)");
     }
   }
-  // Bei Tieren sind PLZ/Ort/Bundesland irrelevant (der Funnel erfasst sie
-  // nicht) — nur die reinen Kontaktdaten zeigen.
+  // Bei Tier- und Hundefutter-Funnels sind PLZ/Ort/Bundesland irrelevant (der
+  // Funnel erfasst sie nicht) — nur die reinen Kontaktdaten zeigen.
   let common = COMMON_FIELDS;
-  if (kind === "tier") {
+  if (kind === "tier" || kind === "hundefutter") {
     const hide = new Set(["Postleitzahl", "Ort", "Bundesland"]);
     common = common.filter((f) => !hide.has(f.key));
   }
@@ -347,7 +392,17 @@ function ReadOnlyCard({
         firstString(fields["Produkt (Eingang)"]);
       return { def, value: name };
     }
-    return { def, value: formatValue(fields[def.key], def.format) };
+    // Ersten belegten Feldnamen (key oder fallbackKeys) verwenden.
+    let raw = fields[def.key];
+    if (firstString(raw) == null && def.fallbackKeys) {
+      for (const alt of def.fallbackKeys) {
+        if (firstString(fields[alt]) != null) {
+          raw = fields[alt];
+          break;
+        }
+      }
+    }
+    return { def, value: formatValue(raw, def.format) };
   });
 
   // Catch-all für fachliche Zusatzfelder, die (noch) keiner Gruppe zugeordnet
@@ -362,6 +417,8 @@ function ReadOnlyCard({
     ...TIER_FIELDS.map((f) => f.key),
     ...PKV_FIELDS.map((f) => f.key),
     ...KIWU_FIELDS.map((f) => f.key),
+    ...HUNDEFUTTER_FIELDS.map((f) => f.key),
+    ...HUNDEFUTTER_FIELDS.flatMap((f) => f.fallbackKeys ?? []),
   ]);
   const extra = Object.entries(fields)
     .filter(
@@ -369,7 +426,11 @@ function ReadOnlyCard({
         !shownKeys.has(k) &&
         !INTERNAL_KEYS.has(k) &&
         !k.startsWith("_") &&
-        !k.includes("(from "),
+        !k.includes("(from ") &&
+        // Roh-Funnelfelder (…(Futter)/…(Tier)) gehören zur kuratierten Gruppe,
+        // nicht in den „Weitere Angaben"-Catch-all.
+        !k.includes("(Futter)") &&
+        !k.includes("(Tier)"),
     )
     .map(([k, v]) => ({ key: k, value: firstString(v) }))
     .filter((r): r is { key: string; value: string } => r.value != null);
