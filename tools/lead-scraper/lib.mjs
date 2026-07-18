@@ -7,14 +7,16 @@ const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // fetch mit Timeout + realistischem User-Agent. Gibt {ok, status, text} zurück, wirft nie.
-export async function fetchText(url, { timeout = 15000 } = {}) {
+export async function fetchText(url, { timeout = 15000, method = "GET", body, headers = {} } = {}) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeout);
   try {
     const res = await fetch(url, {
+      method,
+      body,
       redirect: "follow",
       signal: ctrl.signal,
-      headers: { "User-Agent": UA, "Accept-Language": "de-DE,de;q=0.9", Accept: "text/html,*/*" },
+      headers: { "User-Agent": UA, "Accept-Language": "de-DE,de;q=0.9", Accept: "text/html,*/*", ...headers },
     });
     const text = await res.text();
     return { ok: res.ok, status: res.status, text, finalUrl: res.url };
@@ -67,39 +69,105 @@ export function parsePflegehilfe(html, ort, quelle) {
 // ---- Website-Auflösung via DuckDuckGo (HTML- und Lite-Endpoint) ----
 // Nur die echten Treffer-URLs (uddg=<encoded>) auswerten — die rohen href-Links sind
 // DDG-Navigation und würden fälschlich duckduckgo.com liefern.
-let _ddgNext = 0; // globale Zeitsperre: DDG-Aufrufe über ALLE Worker hinweg entzerren
-async function ddgGate(minGapMs = 1300) {
+let _gateNext = 0; // globale Zeitsperre über ALLE Worker hinweg entzerren
+async function gate(minGapMs) {
   const now = Date.now();
-  const wait = Math.max(0, _ddgNext - now);
-  _ddgNext = Math.max(now, _ddgNext) + minGapMs + Math.floor(Math.random() * 400);
+  const wait = Math.max(0, _gateNext - now);
+  _gateNext = Math.max(now, _gateNext) + minGapMs + Math.floor(Math.random() * 400);
   if (wait) await sleep(wait);
 }
 
-export async function resolveWebsite(firma, ort, blockDomains) {
-  const skip = [...blockDomains, "duckduckgo.com", "duck.com"];
-  const q = encodeURIComponent(`${firma} ${ort} impressum`);
-  const endpoints = [`https://html.duckduckgo.com/html/?q=${q}`, `https://lite.duckduckgo.com/lite/?q=${q}`];
-  for (const url of endpoints) {
-    for (let attempt = 0; attempt < 3; attempt++) {
-      await ddgGate();
-      if (attempt) await sleep(attempt * 1500); // Backoff nach Challenge
-      const { ok, text } = await fetchText(url);
-      if (!ok || !text) continue;
-      const encoded = [...text.matchAll(/uddg=([^&"']+)/g)].map((m) => safeDecode(m[1]));
-      if (!encoded.length) continue; // Challenge-Seite -> Retry / nächster Endpoint
-      for (const u of encoded) {
-        try {
-          const host = new URL(u).hostname.replace(/^www\./, "");
-          if (!host.includes(".")) continue;
-          if (skip.some((d) => host === d || host.endsWith("." + d))) continue;
-          if (/\.(pdf|jpg|png|gif)(\?|$)/i.test(u)) continue;
-          return `https://${host}`;
-        } catch {}
-      }
-      break; // Treffer da, aber alle geblockt -> nächster Endpoint
-    }
+function pickHost(urls, skip) {
+  for (const u of urls) {
+    try {
+      const host = new URL(u).hostname.replace(/^www\./, "");
+      if (!host.includes(".")) continue;
+      if (skip.some((d) => host === d || host.endsWith("." + d))) continue;
+      if (/\.(pdf|jpg|png|gif)(\?|$)/i.test(u)) continue;
+      return `https://${host}`;
+    } catch {}
   }
   return "";
+}
+
+// Brave Search API (zuverlässig; kostenloser Key: https://brave.com/search/api/).
+// Aktiv, sobald BRAVE_API_KEY gesetzt ist.
+async function braveResolve(firma, ort, skip) {
+  await gate(1100); // free tier: ~1 req/s
+  const q = encodeURIComponent(`${firma} ${ort} impressum`);
+  const { ok, text } = await fetchText(`https://api.search.brave.com/res/v1/web/search?q=${q}&country=DE&count=8`, {
+    headers: { Accept: "application/json", "X-Subscription-Token": process.env.BRAVE_API_KEY },
+  });
+  if (!ok || !text) return "";
+  try {
+    const urls = (JSON.parse(text)?.web?.results || []).map((r) => r.url).filter(Boolean);
+    return pickHost(urls, skip);
+  } catch { return ""; }
+}
+
+// DuckDuckGo per POST (browsernah, robuster als GET). Mit Circuit-Breaker:
+// nach mehreren Fehlschlägen (IP geflaggt) wird DDG für den Rest des Laufs abgeschaltet,
+// damit nicht jede Firma ~30s in sinnlose Retries läuft.
+let _ddgConsecFails = 0, _ddgDisabled = false;
+async function ddgResolve(firma, ort, skip) {
+  if (_ddgDisabled) return "";
+  const body = `q=${encodeURIComponent(`${firma} ${ort} impressum`)}&kl=de-de`;
+  const endpoints = ["https://html.duckduckgo.com/html/", "https://lite.duckduckgo.com/lite/"];
+  for (const url of endpoints) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      await gate(2500);
+      if (attempt) await sleep(3000);
+      const { ok, text } = await fetchText(url, {
+        method: "POST",
+        body,
+        headers: { "Content-Type": "application/x-www-form-urlencoded", Origin: "https://duckduckgo.com", Referer: "https://duckduckgo.com/" },
+      });
+      if (!ok || !text) continue;
+      const urls = [...text.matchAll(/uddg=([^&"']+)/g)].map((m) => safeDecode(m[1]));
+      if (!urls.length) continue; // Challenge -> Retry / nächster Endpoint
+      _ddgConsecFails = 0;
+      const host = pickHost(urls, skip);
+      if (host) return host;
+      break;
+    }
+  }
+  if (++_ddgConsecFails >= 5 && !_ddgDisabled) {
+    _ddgDisabled = true;
+    console.warn("  ⚠  DuckDuckGo blockt (IP geflaggt) — Suchmaschinen-Fallback für diesen Lauf deaktiviert. Für hohe Trefferquote BRAVE_API_KEY setzen.");
+  }
+  return "";
+}
+
+// OpenStreetMap / Nominatim (keyless, wird nicht geflaggt). Liefert für gemappte
+// Betriebe oft Website UND Telefon/E-Mail direkt aus den OSM-Tags.
+export async function osmLookup(firma, ort, skip = []) {
+  await gate(1200); // Nominatim-Policy: max 1 req/s
+  const q = encodeURIComponent(`${firma}, ${ort}, Deutschland`);
+  const { ok, text } = await fetchText(
+    `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&extratags=1&addressdetails=1&q=${q}`,
+    { headers: { "User-Agent": "lead-scraper/1.0 (Kontaktrecherche; +https://github.com)" } }
+  );
+  if (!ok || !text) return {};
+  let arr;
+  try { arr = JSON.parse(text); } catch { return {}; }
+  const e = arr?.[0]?.extratags || {};
+  let website = e.website || e["contact:website"] || e.url || "";
+  try { if (website) { const h = new URL(website.startsWith("http") ? website : "https://" + website).hostname.replace(/^www\./, ""); website = skip.some((d) => h === d || h.endsWith("." + d)) ? "" : "https://" + h; } } catch { website = ""; }
+  return {
+    website,
+    telefon: (e.phone || e["contact:phone"] || "").split(";")[0].trim(),
+    email: (e.email || e["contact:email"] || "").split(";")[0].trim().toLowerCase(),
+  };
+}
+
+// Website-Auflösung: Brave (falls Key) -> DuckDuckGo (Notnagel).
+export async function resolveWebsite(firma, ort, blockDomains) {
+  const skip = [...blockDomains, "duckduckgo.com", "duck.com"];
+  if (process.env.BRAVE_API_KEY) {
+    const r = await braveResolve(firma, ort, skip);
+    if (r) return r;
+  }
+  return ddgResolve(firma, ort, skip);
 }
 
 function safeDecode(s) { try { return decodeURIComponent(s); } catch { return s; } }

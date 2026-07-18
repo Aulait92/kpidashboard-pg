@@ -6,7 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { NISCHEN, BLOCK_DOMAINS } from "./config.mjs";
-import { resolveWebsite, enrichFromWebsite, CSV_HEADER, toCsvRow, normKey, pool } from "./lib.mjs";
+import { resolveWebsite, osmLookup, enrichFromWebsite, CSV_HEADER, toCsvRow, normKey, pool } from "./lib.mjs";
 
 const __dir = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.join(__dir, "output");
@@ -14,7 +14,7 @@ const OUT = path.join(__dir, "output");
 const nische = process.argv[2] || "badumbau";
 const cfg = NISCHEN[nische] || {};
 const limit = num("--limit", Infinity);
-const conc = num("--conc", 4);
+const conc = num("--conc", 3);
 
 const rawFile = path.join(OUT, `${nische}_raw.csv`);
 if (!fs.existsSync(rawFile)) { console.error(`Fehlt: ${rawFile}. Erst  node scrape.mjs ${nische}  laufen lassen.`); process.exit(1); }
@@ -34,18 +34,24 @@ console.log(`Reichere ${todo.length} Firmen an (Nebenläufigkeit ${conc}) …\n`
 
 let n = 0;
 await pool(todo, conc, async (r) => {
-  let website = r.Website?.trim() || "";
+  // 1) OSM/Nominatim (keyless): oft Website + Telefon/E-Mail direkt
+  const osm = await osmLookup(r.Firma, r.Ort, BLOCK_DOMAINS);
+  // 2) Website bestimmen: aus Rohdaten -> OSM -> Suchmaschine (Brave/DDG)
+  let website = r.Website?.trim() || osm.website || "";
   if (!website) website = await resolveWebsite(r.Firma, r.Ort, BLOCK_DOMAINS);
+  // 3) Kontakt aus Website-Impressum, ergänzt um OSM-Direktdaten
   const info = await enrichFromWebsite(website);
+  const telefon = osm.telefon || info.telefon;
+  const email = osm.email || info.email;
   const row = {
     Firma: r.Firma, Nische: nische,
     Reichweite: r.Reichweite?.trim() || info.reichweite,
-    Ort: r.Ort, Website: website, Telefon: info.telefon, "E-Mail": info.email,
+    Ort: r.Ort, Website: website, Telefon: telefon, "E-Mail": email,
     "Lead-Kauf-Signal": r["Lead-Kauf-Signal"] || cfg.leadSignal || "", Quelle: r.Quelle,
   };
   fs.appendFileSync(outFile, toCsvRow(row) + "\n", "utf8"); // atomarer Zeilen-Append = resume-safe
   n++;
-  const flag = website ? (row["E-Mail"] || row.Telefon ? "✔" : "○") : "×";
+  const flag = email || telefon ? "✔" : website ? "○" : "×";
   console.log(`  ${flag} [${n}/${todo.length}] ${r.Firma} — ${website || "keine Website"}`);
 });
 
