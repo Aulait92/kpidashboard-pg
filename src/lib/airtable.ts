@@ -467,23 +467,17 @@ export async function syncAirtable(): Promise<SyncResult> {
     return readString(fields, "Buyer");
   }
 
-  // Lead-Ziele und Region aus der Buyer-Tabelle auf den Customer übernehmen.
+  // Jeden Datensatz der Kunden-Tabelle als auswählbaren Customer anlegen —
+  // unabhängig davon, ob schon Lead-Ziele/Preise/Region gepflegt sind oder ob
+  // bereits Leads existieren. So erscheint ein frisch angelegter Kunde sofort im
+  // Buyer-Dropdown (/admin/buyers). Die Namen werden gesammelt, damit die
+  // Aufräum-Logik (Schritt 5) genau diese Kunden NICHT wieder löscht.
   // Steuer-Einstellungen liegen am DeliveryPool, nicht am Kunden.
+  const syncedCustomerNames = new Set<string>();
   for (const info of buyerMap.values()) {
     const key = info.name.trim();
     if (!key) continue;
-    const hasData =
-      info.goalWechsel != null ||
-      info.goalNeugeschaeft != null ||
-      info.goalKinderwunsch != null ||
-      info.priceWechsel != null ||
-      info.priceNeugeschaeft != null ||
-      info.priceKinderwunsch != null ||
-      info.region != null ||
-      info.startWechsel != null ||
-      info.startNeugeschaeft != null ||
-      info.startKinderwunsch != null;
-    if (!hasData) continue;
+    syncedCustomerNames.add(key);
     const data = {
       leadGoalWechsel: info.goalWechsel,
       leadGoalNeugeschaeft: info.goalNeugeschaeft,
@@ -713,13 +707,17 @@ export async function syncAirtable(): Promise<SyncResult> {
   }
 
   // 5. Verwaiste Kunden aus früheren (fehlerhaften) Syncs aufräumen.
-  // Ein Customer ohne Leads, Umsätze, Kosten UND ohne Buyer-Daten
-  // (Lead-Ziele, Preise, Region) ist sicher entfernbar. Kunden mit
-  // Lead-Zielen oder anderen Buyer-Daten dürfen NICHT gelöscht werden, auch
-  // wenn (noch) keine Leads existieren — sonst wischt der Sync legitime
-  // Buyer-Datensätze direkt nach dem Upsert wieder weg.
+  // Grundsätzlich ist ein Customer ohne Leads, Umsätze, Kosten UND ohne
+  // Buyer-Daten entfernbar — ABER alle Kunden, die AKTUELL in der Kunden-Tabelle
+  // stehen, werden per Namen ausgenommen. Sie sollen dauerhaft als auswählbare
+  // Customer bestehen bleiben (auch ganz ohne Leads/Ziele), damit neu angelegte
+  // Kunden sofort im Buyer-Dropdown erscheinen. Gelöscht werden dadurch nur echte
+  // Altlasten (in Airtable umbenannt/entfernt), nie ein aktiver Kunde.
   await prisma.customer.deleteMany({
     where: {
+      ...(syncedCustomerNames.size > 0
+        ? { name: { notIn: Array.from(syncedCustomerNames) } }
+        : {}),
       leads: { none: {} },
       revenues: { none: {} },
       costs: { none: {} },
