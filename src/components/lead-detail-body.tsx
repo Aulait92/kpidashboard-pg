@@ -112,6 +112,16 @@ const KIWU_FIELDS: ReadOnlyField[] = [
   { key: "Vorbehandlung", label: "Vorbehandlung" },
 ];
 
+// Kindersparpläne (KSP-Funnel). Feldnamen tragen in Airtable das Suffix
+// „(KSP)".
+const KSP_FIELDS: ReadOnlyField[] = [
+  { key: "Anzahl Kinder (KSP)", label: "Anzahl Kinder" },
+  { key: "Alter der Kinder (KSP)", label: "Alter der Kinder" },
+  { key: "Monatliche Sparrate (KSP)", label: "Monatliche Sparrate" },
+  { key: "Zielbetrag (KSP)", label: "Zielbetrag (zum 18. Geburtstag)" },
+  { key: "Zeithorizont (KSP)", label: "Zeithorizont" },
+];
+
 // Immer am Ende: Produkt, Status, Auslieferung.
 const TAIL_FIELDS: ReadOnlyField[] = [
   { key: "_produktEingang", label: "Produkt (Eingang)", format: "chip-product" },
@@ -119,7 +129,13 @@ const TAIL_FIELDS: ReadOnlyField[] = [
   { key: "ausgeliefert_am", label: "ausgeliefert_am", format: "datetime" },
 ];
 
-type LeadKind = "pkv" | "tier" | "kinderwunsch" | "hundefutter" | "other";
+type LeadKind =
+  | "pkv"
+  | "tier"
+  | "kinderwunsch"
+  | "hundefutter"
+  | "kindersparplan"
+  | "other";
 
 // Produkt-Kategorie des Leads bestimmen — steuert, welche Feldgruppe angezeigt
 // wird. „Tierart" gesetzt ⇒ Tier; sonst über Produktname/Slug/source.
@@ -142,6 +158,12 @@ function detectLeadKind(
     firstString(fields["Futterbezeichnung (Futter)"]) != null ||
     firstString(fields["Aktivitätslevel (Futter)"]) != null;
   if (hay.includes("futter") || hasFutterField) return "hundefutter";
+  // Kindersparpläne: Produktname („sparplan") oder ein gesetztes KSP-Funnelfeld.
+  const hasKspField =
+    firstString(fields["Anzahl Kinder (KSP)"]) != null ||
+    firstString(fields["Zielbetrag (KSP)"]) != null ||
+    firstString(fields["Monatliche Sparrate (KSP)"]) != null;
+  if (hay.includes("sparplan") || hasKspField) return "kindersparplan";
   // Verlässlichstes Signal: das Airtable-Feld „Tierart" wird nur bei echten
   // Tier(kranken)versicherungs-Funnels gesetzt.
   if (firstString(fields["Tierart"])) return "tier";
@@ -162,6 +184,8 @@ function fieldGroupFor(kind: LeadKind): ReadOnlyField[] {
       return TIER_FIELDS;
     case "hundefutter":
       return HUNDEFUTTER_FIELDS;
+    case "kindersparplan":
+      return KSP_FIELDS;
     case "kinderwunsch":
       return KIWU_FIELDS;
     case "pkv":
@@ -428,6 +452,7 @@ function ReadOnlyCard({
     ...KIWU_FIELDS.map((f) => f.key),
     ...HUNDEFUTTER_FIELDS.map((f) => f.key),
     ...HUNDEFUTTER_FIELDS.flatMap((f) => f.fallbackKeys ?? []),
+    ...KSP_FIELDS.map((f) => f.key),
   ]);
   const extra = Object.entries(fields)
     .filter(
@@ -439,7 +464,8 @@ function ReadOnlyCard({
         // Roh-Funnelfelder (…(Futter)/…(Tier)) gehören zur kuratierten Gruppe,
         // nicht in den „Weitere Angaben"-Catch-all.
         !k.includes("(Futter)") &&
-        !k.includes("(Tier)"),
+        !k.includes("(Tier)") &&
+        !k.includes("(KSP)"),
     )
     .map(([k, v]) => ({ key: k, value: firstString(v) }))
     .filter((r): r is { key: string; value: string } => r.value != null);
