@@ -908,12 +908,17 @@ export async function syncAirtable(): Promise<SyncResult> {
   }
 
   // Region auf den Customer übernehmen (Ziele/Preise/Startdaten liegen seit
-  // Option B in CustomerProduct, nicht mehr am Kunden). Customer-Zeile sicher
-  // anlegen, damit der customerCache für die CustomerProduct-Auflösung gefüllt
-  // ist; verwaiste Leer-Kunden räumt der Sweep am Ende wieder ab.
+  // Option B in CustomerProduct, nicht mehr am Kunden). Für JEDEN Datensatz der
+  // Kunden-Tabelle wird eine Customer-Zeile angelegt, damit ein frisch in
+  // Airtable angelegter Kunde sofort im Buyer-Dropdown (/admin/buyers) auswählbar
+  // ist. Die Namen werden gesammelt und in der Aufräum-Logik (Schritt 5) per
+  // `name notIn` ausgenommen — so wird ein aktiver Kunde NIE gelöscht, auch ohne
+  // Leads/Produkte/Region; entfernt werden nur echte Altlasten.
+  const syncedCustomerNames = new Set<string>();
   for (const info of buyerMap.values()) {
     const key = info.name.trim();
     if (!key) continue;
+    syncedCustomerNames.add(key);
     const customer = await prisma.customer.upsert({
       where: { name: key },
       create: { name: key, region: info.region },
@@ -1308,13 +1313,18 @@ export async function syncAirtable(): Promise<SyncResult> {
   }
 
   // 5. Verwaiste Kunden aus früheren (fehlerhaften) Syncs aufräumen.
-  // Ein Customer ohne Leads, Umsätze, Kosten, ohne CustomerProduct-Zeilen UND
-  // ohne Region ist sicher entfernbar. Kunden mit Produkt-Bezügen (Zielen)
-  // dürfen NICHT gelöscht werden, auch wenn (noch) keine Leads existieren —
-  // sonst wischt der Sync legitime Buyer-Datensätze direkt nach dem Upsert
-  // wieder weg.
+  // Grundsätzlich ist ein Customer ohne Leads, Umsätze, Kosten, ohne
+  // CustomerProduct-Zeilen UND ohne Region entfernbar — ABER alle Kunden, die
+  // AKTUELL in der Kunden-Tabelle stehen, werden per Namen ausgenommen. Sie
+  // sollen dauerhaft als auswählbare Customer bestehen bleiben (auch ganz ohne
+  // Leads/Produkte/Region), damit neu angelegte Kunden sofort im Buyer-Dropdown
+  // erscheinen. Gelöscht werden dadurch nur echte Altlasten (in Airtable
+  // umbenannt/entfernt), nie ein aktiver Kunde.
   await prisma.customer.deleteMany({
     where: {
+      ...(syncedCustomerNames.size > 0
+        ? { name: { notIn: Array.from(syncedCustomerNames) } }
+        : {}),
       leads: { none: {} },
       revenues: { none: {} },
       costs: { none: {} },
