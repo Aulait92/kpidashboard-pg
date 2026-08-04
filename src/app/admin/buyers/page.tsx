@@ -7,6 +7,7 @@ import { formatDate } from "@/lib/format";
 import {
   CreateBuyerForm,
   DeleteBuyerButton,
+  ReassignCustomerForm,
   ResetPasswordButton,
 } from "./buyer-management";
 
@@ -103,11 +104,11 @@ export default async function AdminBuyersPage() {
                   >
                     <td className="py-2 pr-3 font-medium">{b.email}</td>
                     <td className="py-2 pr-3">
-                      {b.customer?.name ?? (
-                        <span className="text-[color:var(--muted)]">
-                          – nicht zugeordnet –
-                        </span>
-                      )}
+                      <ReassignCustomerForm
+                        userId={b.id}
+                        currentCustomerId={b.customer?.id ?? null}
+                        customers={customers}
+                      />
                     </td>
                     <td className="py-2 pr-3 text-[color:var(--muted)]">
                       {formatDate(b.createdAt)}

@@ -90,6 +90,43 @@ export async function resetBuyerPassword(
   return { ok: true, createdEmail: user.email };
 }
 
+// Verknüpft einen bestehenden Buyer-Login mit einem (anderen) Kunden, ohne
+// den Account neu anzulegen — Passwort & Login-Historie bleiben erhalten.
+// Nützlich, wenn ein Login versehentlich am falschen/gelöschten Kunden hing.
+export async function reassignBuyerCustomer(
+  _prev: CreateBuyerState,
+  formData: FormData,
+): Promise<CreateBuyerState> {
+  await requireAdmin();
+
+  const userId = String(formData.get("userId") ?? "");
+  const customerId = String(formData.get("customerId") ?? "");
+  if (!userId || !customerId) {
+    return { error: "Buyer und Kunde sind Pflicht." };
+  }
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true },
+  });
+  if (!user || user.role !== "BUYER") {
+    return { error: "Buyer-Account nicht gefunden." };
+  }
+  const customer = await prisma.customer.findUnique({
+    where: { id: customerId },
+    select: { id: true, name: true },
+  });
+  if (!customer) {
+    return { error: "Kunde existiert nicht." };
+  }
+  await prisma.user.update({
+    where: { id: userId },
+    data: { customerId },
+  });
+  revalidatePath("/admin/buyers");
+  // createdEmail trägt hier den Kundennamen für die Bestätigung im UI.
+  return { ok: true, createdEmail: customer.name };
+}
+
 export async function deleteBuyerAccount(formData: FormData) {
   await requireAdmin();
   const userId = String(formData.get("userId") ?? "");

@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import {
   createBuyerAccount,
   deleteBuyerAccount,
+  reassignBuyerCustomer,
   resetBuyerPassword,
   type CreateBuyerState,
 } from "./actions";
@@ -87,6 +88,56 @@ export function CreateBuyerForm({
       >
         {pending ? "Lege an…" : "Account anlegen"}
       </button>
+    </form>
+  );
+}
+
+// Kunden-Zuordnung eines bestehenden Buyer-Logins direkt in der Tabelle ändern.
+// Auswahl speichert sofort (Auto-Submit onChange) — Passwort bleibt erhalten.
+export function ReassignCustomerForm({
+  userId,
+  currentCustomerId,
+  customers,
+}: {
+  userId: string;
+  currentCustomerId: string | null;
+  customers: { id: string; name: string }[];
+}) {
+  const [state, formAction, pending] = useActionState<
+    CreateBuyerState,
+    FormData
+  >(reassignBuyerCustomer, {});
+
+  return (
+    <form action={formAction} className="flex items-center gap-2">
+      <input type="hidden" name="userId" value={userId} />
+      <select
+        name="customerId"
+        defaultValue={currentCustomerId ?? ""}
+        disabled={pending}
+        onChange={(e) => e.currentTarget.form?.requestSubmit()}
+        className="max-w-[220px] rounded-lg border border-[color:var(--border)] bg-white px-2 py-1 text-sm focus:border-[color:var(--brand)] focus:outline-none disabled:opacity-60"
+      >
+        <option value="" disabled>
+          – nicht zugeordnet –
+        </option>
+        {customers.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.name}
+          </option>
+        ))}
+      </select>
+      {pending ? (
+        <span className="text-[10px] text-[color:var(--muted)]">…</span>
+      ) : state.ok ? (
+        <span className="text-[10px] font-medium text-emerald-700">
+          ✓ {state.createdEmail}
+        </span>
+      ) : state.error ? (
+        <span className="text-[10px] font-medium text-rose-700">
+          {state.error}
+        </span>
+      ) : null}
     </form>
   );
 }
