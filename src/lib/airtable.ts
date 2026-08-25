@@ -1100,7 +1100,22 @@ export async function syncAirtable(): Promise<SyncResult> {
           readDate(rec.fields, "Datum") ??
           new Date(rec.createdTime);
         const firstContactAt = readDate(rec.fields, "Erster Kontaktversuch");
-        const status = readString(rec.fields, "Bearbeitungsstatus");
+        let status = readString(rec.fields, "Bearbeitungsstatus");
+        // Storno robust aus den Storno-Feldern ableiten: Die App schreibt beim
+        // Buyer-Storno SYNCHRON den Stornogrund (+ storniert_am), aber den
+        // "Bearbeitungsstatus" = "Storno" flippt erst eine asynchrone Airtable-
+        // Automation. Bei Massen-Stornos hängt die Automation hinterher — der
+        // Sync läse dann noch den alten Status und würde den frisch stornierten
+        // Lead wieder auf "Neuer Lead" o.ä. ZURÜCKSETZEN (alle betroffenen auf
+        // einmal). Sobald ein Stornogrund gesetzt oder storniert_am belegt ist,
+        // gilt der Lead als storniert — unabhängig vom (evtl. verzögerten)
+        // Bearbeitungsstatus.
+        const hasStornoMarker =
+          readLinkedIds(rec.fields, "Stornogrund").length > 0 ||
+          readDate(rec.fields, "storniert_am") != null;
+        if (hasStornoMarker && !isCancelledStatus(status)) {
+          status = "Storno";
+        }
         const adChannel = classifyChannel(readString(rec.fields, "Source"));
         const contactAttempts = Math.max(
           0,
