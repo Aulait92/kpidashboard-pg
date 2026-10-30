@@ -45,3 +45,4 @@ next-env.d.ts
 # scraper output (CSV + debug dumps, aber seed-Liste behalten)
 /data/*.csv
 /data/debug/
+/data/*-diagnostics.txt
