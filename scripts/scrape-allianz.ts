@@ -19,6 +19,8 @@ const USER_AGENT =
 type Agent = {
   url: string;
   name: string;
+  leaderNames: string;
+  leaderRoles: string;
   email: string;
   phone: string;
   fax: string;
@@ -29,6 +31,7 @@ type Agent = {
   ratingValue: string;
   ratingCount: string;
   description: string;
+  teamNames: string;
 };
 
 async function fetchText(url: string, timeoutMs = 30000): Promise<string | null> {
@@ -65,26 +68,76 @@ function parseSitemap(xml: string): string[] {
   return [...new Set(urls)];
 }
 
+const LEADER_ROLE_RE = /(Generalvertreter|Hauptvertreter|Agenturleiter|Agenturinhaber|Firmeninhaber|Agentur-?Nachfolger|Gesch(ä|ae)ftsf(ü|ue)hr|^Inhaber|\sInhaber)/i;
+
+function normalizeForMatch(s: string): string {
+  return s.toLowerCase()
+    .replace(/[äÄ]/g, "a").replace(/[öÖ]/g, "o").replace(/[üÜ]/g, "u").replace(/[ß]/g, "ss")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
 function extractAgency(html: string, url: string): Agent | null {
-  // Find all application/ld+json scripts
   const scriptRe = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
   for (const m of html.matchAll(scriptRe)) {
     const raw = m[1].trim();
     if (!raw.includes("InsuranceAgency")) continue;
     let obj: any;
-    try {
-      obj = JSON.parse(raw);
-    } catch {
-      continue;
-    }
+    try { obj = JSON.parse(raw); } catch { continue; }
     const nodes = Array.isArray(obj) ? obj : [obj];
     for (const node of nodes) {
       if (node?.["@type"] !== "InsuranceAgency") continue;
       const addr = node.address ?? {};
       const rating = node.aggregateRating ?? {};
+      const agencyName = String(node.name ?? "").trim();
+
+      const employees: any[] = Array.isArray(node.employees) ? node.employees :
+                               Array.isArray(node.employee) ? node.employee :
+                               node.employees ? [node.employees] :
+                               node.employee ? [node.employee] : [];
+      const parsed = employees
+        .filter(e => e && typeof e === "object")
+        .map(e => {
+          const given = String(e.givenName ?? "").trim();
+          const family = String(e.familyName ?? "").trim();
+          const fullName = [given, family].filter(Boolean).join(" ");
+          const title = (typeof e.jobTitle === "object"
+            ? String(e.jobTitle?.name ?? "")
+            : String(e.jobTitle ?? "")).trim();
+          return { given, family, fullName, title };
+        })
+        .filter(p => p.fullName);
+
+      const leaders: { name: string; role: string }[] = [];
+      const otherTeam: string[] = [];
+      for (const p of parsed) {
+        if (LEADER_ROLE_RE.test(p.title)) {
+          leaders.push({ name: p.fullName, role: p.title });
+        } else {
+          otherTeam.push(`${p.fullName} (${p.title})`);
+        }
+      }
+
+      // Fallback: no leader detected? Match employee whose name appears in agency.name
+      if (leaders.length === 0 && parsed.length > 0 && agencyName) {
+        const normAgency = normalizeForMatch(agencyName);
+        for (const p of parsed) {
+          const normFam = normalizeForMatch(p.family);
+          if (normFam && normAgency.includes(normFam)) {
+            leaders.push({ name: p.fullName, role: p.title || "(Agenturinhaber lt. Agenturname)" });
+            // remove from team
+            const idx = otherTeam.findIndex(t => t.startsWith(p.fullName + " ("));
+            if (idx >= 0) otherTeam.splice(idx, 1);
+            break;
+          }
+        }
+      }
+
       return {
         url,
-        name: String(node.name ?? "").trim(),
+        name: agencyName,
+        leaderNames: leaders.map(l => l.name).join("; "),
+        leaderRoles: leaders.map(l => l.role).join("; "),
         email: String(node.email ?? "").trim(),
         phone: String(node.telePhone ?? node.telephone ?? "").trim(),
         fax: String(node.faxNumber ?? "").trim(),
@@ -95,6 +148,7 @@ function extractAgency(html: string, url: string): Agent | null {
         ratingValue: String(rating.ratingValue ?? "").trim(),
         ratingCount: String(rating.ratingCount ?? "").trim(),
         description: String(node.description ?? "").trim().slice(0, 300),
+        teamNames: otherTeam.join("; "),
       };
     }
   }
@@ -158,7 +212,7 @@ async function main() {
 
   unique.sort((a, b) => a.zip.localeCompare(b.zip) || a.name.localeCompare(b.name));
 
-  const headers = ["name", "email", "phone", "fax", "street", "zip", "city", "ratingValue", "ratingCount", "openingHours", "url", "description"];
+  const headers = ["leaderNames", "leaderRoles", "name", "email", "phone", "fax", "street", "zip", "city", "ratingValue", "ratingCount", "openingHours", "teamNames", "url", "description"];
   const lines = [headers.join(",")];
   for (const a of unique) {
     lines.push(headers.map(h => esc((a as any)[h] ?? "")).join(","));
@@ -168,7 +222,9 @@ async function main() {
 
   const withEmail = unique.filter(a => a.email).length;
   const withPhone = unique.filter(a => a.phone).length;
+  const withLeader = unique.filter(a => a.leaderNames).length;
   console.log(`\n✓ ${unique.length} eindeutige Agenturen`);
+  console.log(`  mit Agenturleiter-Namen: ${withLeader}`);
   console.log(`  mit E-Mail: ${withEmail}`);
   console.log(`  mit Telefon: ${withPhone}`);
   console.log(`  fehlgeschlagen: ${failed}`);
