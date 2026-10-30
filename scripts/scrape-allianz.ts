@@ -19,11 +19,20 @@ const USER_AGENT =
 type Agent = {
   url: string;
   name: string;
+  agencyType: string;        // GENERAL / HAUPT / UNDEFINED
   salutation: string;
   firstName: string;
   lastName: string;
   leaderNames: string;
   leaderRoles: string;
+  teamSize: string;
+  leaderCount: string;
+  facebookUrl: string;
+  instagramUrl: string;
+  xingUrl: string;
+  linkedinUrl: string;
+  socialCount: string;
+  potentialScore: string;
   email: string;
   phone: string;
   fax: string;
@@ -171,14 +180,64 @@ function extractAgency(html: string, url: string): Agent | null {
       const primaryFamily = primary ? parsed.find(p => p.fullName === primary.name)?.family ?? "" : "";
       const salutation = primary ? detectSalutation(primaryGiven, primary.role) : "";
 
+      // --- Social media (from node.sameAs) ---
+      const sameAs: string[] = Array.isArray(node.sameAs) ? node.sameAs : (node.sameAs ? [node.sameAs] : []);
+      let facebookUrl = "", instagramUrl = "", xingUrl = "", linkedinUrl = "";
+      for (const s of sameAs) {
+        const u = String(s);
+        if (!facebookUrl && /facebook\.com\//i.test(u)) facebookUrl = u;
+        else if (!instagramUrl && /instagram\.com\//i.test(u)) instagramUrl = u;
+        else if (!xingUrl && /xing\.com\//i.test(u)) xingUrl = u;
+        else if (!linkedinUrl && /linkedin\.com\//i.test(u)) linkedinUrl = u;
+      }
+      const socialCount = [facebookUrl, instagramUrl, xingUrl, linkedinUrl].filter(Boolean).length;
+
+      // --- Agency type ---
+      let agencyType = "";
+      if (/GENERALVERTRETUNG/i.test(agencyName)) agencyType = "GENERAL";
+      else if (/HAUPTVERTRETUNG/i.test(agencyName)) agencyType = "HAUPT";
+
+      // --- Potential score ---
+      const ratingCountN = Number(String(rating.ratingCount ?? "0")) || 0;
+      const ratingValueN = Number(String(rating.ratingValue ?? "0")) || 0;
+      let score = 0;
+      // Social signals (= Meta Ads affinity)
+      if (facebookUrl) score += 3;
+      if (instagramUrl) score += 2;
+      if (xingUrl) score += 1;
+      if (linkedinUrl) score += 1;
+      // Social presence combined bonus
+      if (facebookUrl && instagramUrl) score += 2;
+      // Team size — bigger agency = more budget
+      if (parsed.length >= 5) score += 2;
+      if (parsed.length >= 10) score += 2;
+      // Multi-leader agencies tend to be bigger
+      if (leaders.length >= 2) score += 2;
+      // Reviews — proof of marketing willingness
+      if (ratingCountN >= 25) score += 1;
+      if (ratingCountN >= 100) score += 2;
+      if (ratingCountN >= 300) score += 2;
+      if (ratingValueN >= 4.5 && ratingCountN >= 25) score += 1;
+      // Agency type
+      if (agencyType === "GENERAL") score += 1;
+
       return {
         url,
         name: agencyName,
+        agencyType,
         salutation,
         firstName: primaryGiven,
         lastName: primaryFamily,
         leaderNames: leaders.map(l => l.name).join("; "),
         leaderRoles: leaders.map(l => l.role).join("; "),
+        teamSize: String(parsed.length),
+        leaderCount: String(leaders.length),
+        facebookUrl,
+        instagramUrl,
+        xingUrl,
+        linkedinUrl,
+        socialCount: String(socialCount),
+        potentialScore: String(score),
         email: String(node.email ?? "").trim(),
         phone: String(node.telePhone ?? node.telephone ?? "").trim(),
         fax: String(node.faxNumber ?? "").trim(),
@@ -251,9 +310,12 @@ async function main() {
     unique.push(a);
   }
 
-  unique.sort((a, b) => a.zip.localeCompare(b.zip) || a.name.localeCompare(b.name));
+  unique.sort((a, b) => (Number(b.potentialScore) - Number(a.potentialScore)) || a.zip.localeCompare(b.zip) || a.name.localeCompare(b.name));
 
-  const headers = ["salutation", "firstName", "lastName", "leaderNames", "leaderRoles", "name", "email", "phone", "fax", "street", "zip", "city", "ratingValue", "ratingCount", "openingHours", "teamNames", "url", "description"];
+  const headers = ["potentialScore", "salutation", "firstName", "lastName", "leaderNames", "leaderRoles",
+                   "name", "agencyType", "email", "phone", "fax", "street", "zip", "city",
+                   "teamSize", "leaderCount", "facebookUrl", "instagramUrl", "xingUrl", "linkedinUrl", "socialCount",
+                   "ratingValue", "ratingCount", "openingHours", "teamNames", "url", "description"];
   const lines = [headers.join(",")];
   for (const a of unique) {
     lines.push(headers.map(h => esc((a as any)[h] ?? "")).join(","));
@@ -267,11 +329,21 @@ async function main() {
   const withSalutation = unique.filter(a => a.salutation).length;
   const herr = unique.filter(a => a.salutation === "Herr").length;
   const frau = unique.filter(a => a.salutation === "Frau").length;
+  const withFb = unique.filter(a => a.facebookUrl).length;
+  const withIg = unique.filter(a => a.instagramUrl).length;
+  const withXing = unique.filter(a => a.xingUrl).length;
+  const topScore = Math.max(...unique.map(a => Number(a.potentialScore)));
+  const topTen = unique.slice(0, 10);
   console.log(`\n✓ ${unique.length} eindeutige Agenturen`);
   console.log(`  mit Agenturleiter-Namen: ${withLeader}`);
   console.log(`  mit Anrede: ${withSalutation} (Herr ${herr}, Frau ${frau})`);
   console.log(`  mit E-Mail: ${withEmail}`);
   console.log(`  mit Telefon: ${withPhone}`);
+  console.log(`  mit Facebook: ${withFb} · Instagram: ${withIg} · Xing: ${withXing}`);
+  console.log(`\nTop-10 Potential-Score (max=${topScore}):`);
+  for (const a of topTen) {
+    console.log(`  ${a.potentialScore.padStart(2)} · ${a.firstName} ${a.lastName} · ${a.city} · FB=${a.facebookUrl?'Y':'-'} IG=${a.instagramUrl?'Y':'-'} team=${a.teamSize} ratings=${a.ratingCount}`);
+  }
   console.log(`  fehlgeschlagen: ${failed}`);
   console.log(`  Output: ${OUTPUT_PATH}`);
 }
