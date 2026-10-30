@@ -19,6 +19,9 @@ const USER_AGENT =
 type Agent = {
   url: string;
   name: string;
+  salutation: string;
+  firstName: string;
+  lastName: string;
   leaderNames: string;
   leaderRoles: string;
   email: string;
@@ -69,6 +72,36 @@ function parseSitemap(xml: string): string[] {
 }
 
 const LEADER_ROLE_RE = /(Generalvertreter|Hauptvertreter|Agenturleiter|Agenturinhaber|Firmeninhaber|Agentur-?Nachfolger|Gesch(ä|ae)ftsf(ü|ue)hr|^Inhaber|\sInhaber)/i;
+
+// Rolle endet auf "in" ⇒ weiblich (Generalvertreter*in*, Agenturinhaber*in*, Inhaber*in*, Geschäftsführer*in*).
+// Match am Wortende innerhalb der Rolle: ...rin, ...erin, ...nde Inhaberin, usw.
+const FEMALE_ROLE_RE = /(?:vertreter|inhaber|leiter|f(ü|ue)hrer|nachfolger|experte|spezialist|beraterin|betreuerin|managerin|chefin)in\b/i;
+
+// Vornamen, die bei fehlender Rolle das Geschlecht liefern (nur eindeutige Beispiele).
+const FEMALE_FIRST_NAMES = new Set([
+  "sabine","petra","karin","angelika","andrea","susanne","barbara","christine","sandra","nicole","claudia","stefanie","julia","anja","silke","birgit","heike","kerstin","martina","gabriele","gabi","ulrike","katja","daniela","christina","christiane","maria","monika","annette","iris","tanja","sabrina","jana","yvonne","sonja","alexandra","franziska","katharina","vanessa","melanie","simone","nadine","verena","annika","annett","beate","elisabeth","elke","esther","eva","gudrun","gisela","hanna","hannah","helga","ines","ingrid","isabel","isabelle","jasmin","jessica","jennifer","johanna","juliane","karina","karoline","lena","lisa","mandy","manuela","marion","mareike","meike","michaela","miriam","nina","regina","renate","rita","sabrina","saskia","sarah","sylvia","sigrid","sophia","sophie","stefani","tina","ulla","ute","viviane","wiebke","angela","astrid","britta","carina","carolin","caroline","cornelia","dagmar","denise","diana","dorothea","edith","ellen","evelyn","gabi","gaby","hannelore","heidi","helene","henriette","hilde","inge","inken","jacqueline","janine","jutta","katrin","kirsten","laura","leonie","liane","luisa","madeleine","maike","marina","marita","martha","melissa","natalie","nathalie","nelli","olga","pamela","patricia","peggy","philippa","rebecca","roswitha","ruth","selina","sibylle","sieglinde","silvia","stefania","theresa","ursula","vera","viktoria","waltraud","wiebke","finja","amelie","charlotte","emma","mia","lea","emilia","mila","clara","paula","hannah","ida","frieda","greta","mathilda","lotte","nina","ronja","juna"
+]);
+
+const MALE_FIRST_NAMES = new Set([
+  "michael","thomas","andreas","peter","klaus","wolfgang","jürgen","juergen","frank","stefan","stephan","markus","matthias","christian","oliver","dirk","jörg","joerg","ralf","uwe","martin","holger","rainer","hans","gerd","heinz","dieter","achim","volker","hartmut","rüdiger","ruediger","roland","udo","bernd","detlef","manfred","norbert","alexander","sascha","daniel","christoph","sebastian","benjamin","marcel","tobias","florian","nils","nico","timo","philipp","jens","sven","tim","lars","kai","björn","bjoern","dominik","patrick","andre","andré","mike","mirko","maik","maximilian","max","moritz","julian","jan","jonas","leon","luca","lukas","finn","noah","paul","felix","david","elias","samuel","alexander","konstantin","constantin","alf","alfred","albert","axel","benno","bernhard","bruno","carsten","karsten","claus","detlev","eberhard","edgar","edmund","egon","eric","erich","ernst","erwin","eugen","fabian","fritz","georg","gerald","gerhard","gernot","gottfried","gunnar","günter","guenter","günther","guenther","gustav","harald","harry","heiko","heinrich","helmut","henning","henry","herbert","hermann","hubert","hugo","ingo","jakob","joachim","johann","johannes","josef","jost","julius","justus","kevin","konrad","kurt","leopold","leon","leonard","leonhard","lothar","ludwig","manfred","mario","martin","mathias","maurice","moritz","nicolas","nick","niels","nikolaus","otto","patrick","paul","philip","phillip","phillipp","rainer","reiner","reinhard","reinhold","richard","robin","rudolf","rudi","rüdiger","sepp","siegfried","simon","stefan","sven","theo","theodor","tilo","tilmann","tim","timo","toni","torben","torsten","ulf","ulrich","valentin","victor","viktor","vincent","walter","werner","wilfried","wilhelm","willi","wolfgang","yannick"
+]);
+
+function detectSalutation(firstName: string, role: string): string {
+  const r = role.trim();
+  if (r) {
+    // Weibliche Role-Suffixe
+    // Weibliche Form: Rolle enthält Wort auf "...erin" (vertreterin, inhaberin,
+    // leiterin, führerin, nachfolgerin, managerin, beraterin) oder explizit
+    // "Spezialistin", "Expertin", "Kauffrau".
+    if (/erin\b|istin\b|expertin\b|kauffrau\b/i.test(r)) return "Frau";
+    // Rolle vorhanden ⇒ männliche Default-Form (deutscher Branchenstandard)
+    return "Herr";
+  }
+  const first = firstName.toLowerCase().split(/[\s\-]/)[0];
+  if (FEMALE_FIRST_NAMES.has(first)) return "Frau";
+  if (MALE_FIRST_NAMES.has(first)) return "Herr";
+  return "";
+}
 
 function normalizeForMatch(s: string): string {
   return s.toLowerCase()
@@ -133,9 +166,17 @@ function extractAgency(html: string, url: string): Agent | null {
         }
       }
 
+      const primary = leaders[0];
+      const primaryGiven = primary ? parsed.find(p => p.fullName === primary.name)?.given ?? "" : "";
+      const primaryFamily = primary ? parsed.find(p => p.fullName === primary.name)?.family ?? "" : "";
+      const salutation = primary ? detectSalutation(primaryGiven, primary.role) : "";
+
       return {
         url,
         name: agencyName,
+        salutation,
+        firstName: primaryGiven,
+        lastName: primaryFamily,
         leaderNames: leaders.map(l => l.name).join("; "),
         leaderRoles: leaders.map(l => l.role).join("; "),
         email: String(node.email ?? "").trim(),
@@ -212,7 +253,7 @@ async function main() {
 
   unique.sort((a, b) => a.zip.localeCompare(b.zip) || a.name.localeCompare(b.name));
 
-  const headers = ["leaderNames", "leaderRoles", "name", "email", "phone", "fax", "street", "zip", "city", "ratingValue", "ratingCount", "openingHours", "teamNames", "url", "description"];
+  const headers = ["salutation", "firstName", "lastName", "leaderNames", "leaderRoles", "name", "email", "phone", "fax", "street", "zip", "city", "ratingValue", "ratingCount", "openingHours", "teamNames", "url", "description"];
   const lines = [headers.join(",")];
   for (const a of unique) {
     lines.push(headers.map(h => esc((a as any)[h] ?? "")).join(","));
@@ -223,8 +264,12 @@ async function main() {
   const withEmail = unique.filter(a => a.email).length;
   const withPhone = unique.filter(a => a.phone).length;
   const withLeader = unique.filter(a => a.leaderNames).length;
+  const withSalutation = unique.filter(a => a.salutation).length;
+  const herr = unique.filter(a => a.salutation === "Herr").length;
+  const frau = unique.filter(a => a.salutation === "Frau").length;
   console.log(`\n✓ ${unique.length} eindeutige Agenturen`);
   console.log(`  mit Agenturleiter-Namen: ${withLeader}`);
+  console.log(`  mit Anrede: ${withSalutation} (Herr ${herr}, Frau ${frau})`);
   console.log(`  mit E-Mail: ${withEmail}`);
   console.log(`  mit Telefon: ${withPhone}`);
   console.log(`  fehlgeschlagen: ${failed}`);
