@@ -27,6 +27,11 @@ EXCLUDE_LEADERS = {
     ('henrik', 'lohmann'),
 }
 
+# E-Mail-basierte Ausschlüsse (falls Namenstreffer scheitert, z.B. Schreibvarianten).
+EXCLUDE_EMAILS = {
+    'agentur.lohmann@allianz.de',   # Henrik Lohmann, Buchholz
+}
+
 # Regex-Patterns, die eine Mailing-Ausschluss-Entscheidung triggern.
 EXCLUDE_PATTERNS = [
     # Klare Ablehnung
@@ -214,7 +219,7 @@ for row in all_rows:
     # strip title etc; keep umlauts for match
     last = row.get('lastName', '').strip().lower()
     key = (first.split()[0] if first else '', last)
-    if key in EXCLUDE_LEADERS:
+    if key in EXCLUDE_LEADERS or email in EXCLUDE_EMAILS:
         removed_named += 1
         removed_named_detail.append(f"{row.get('firstName')} {row.get('lastName')}  <{email}>")
         continue
