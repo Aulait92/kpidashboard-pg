@@ -128,18 +128,48 @@ function extractAgency(html: string, url: string): Agent | null {
     try { obj = JSON.parse(raw); } catch { continue; }
     const nodes = Array.isArray(obj) ? obj : [obj];
     for (const node of nodes) {
-      if (node?.["@type"] !== "InsuranceAgency") continue;
-      const addr = node.address ?? {};
-      const rating = node.aggregateRating ?? {};
-      const agencyName = String(node.name ?? "").trim();
+      if (!node || typeof node !== "object") continue;
 
-      const employees: any[] = Array.isArray(node.employees) ? node.employees :
-                               Array.isArray(node.employee) ? node.employee :
-                               node.employees ? [node.employees] :
-                               node.employee ? [node.employee] : [];
-      const parsed = employees
-        .filter(e => e && typeof e === "object")
-        .map(e => {
+      // Case A: node IS an InsuranceAgency
+      // Case B: node is an Organization that embeds InsuranceAgency(s) in .location
+      let primaryLoc: any = null;
+      let orgLevelName = "";
+      let orgLevelEmail = "";
+      let orgLevelEmployees: any[] = [];
+      let orgLevelSameAs: string[] = [];
+
+      if (node["@type"] === "InsuranceAgency") {
+        primaryLoc = node;
+      } else if (node["@type"] === "Organization" && node.location) {
+        const locs = Array.isArray(node.location) ? node.location : [node.location];
+        primaryLoc = locs.find((l: any) => l?.["@type"] === "InsuranceAgency") ?? null;
+        if (!primaryLoc) continue;
+        orgLevelName = String(node.name ?? "").trim();
+        orgLevelEmail = String(node.email ?? "").trim();
+        orgLevelEmployees = Array.isArray(node.employees) ? node.employees :
+                            Array.isArray(node.employee) ? node.employee :
+                            node.employees ? [node.employees] :
+                            node.employee ? [node.employee] : [];
+        orgLevelSameAs = Array.isArray(node.sameAs) ? node.sameAs : (node.sameAs ? [node.sameAs] : []);
+      } else {
+        continue;
+      }
+
+      const addr = primaryLoc.address ?? {};
+      const rating = primaryLoc.aggregateRating ?? primaryLoc.AggregateRating ?? {};
+      const agencyName = orgLevelName || String(primaryLoc.name ?? "").trim();
+
+      // Employees: prefer org-level if we're in Case B, else primaryLoc.employees
+      const rawEmps = orgLevelEmployees.length
+        ? orgLevelEmployees
+        : (Array.isArray(primaryLoc.employees) ? primaryLoc.employees :
+           Array.isArray(primaryLoc.employee) ? primaryLoc.employee :
+           primaryLoc.employees ? [primaryLoc.employees] :
+           primaryLoc.employee ? [primaryLoc.employee] : []);
+
+      const parsed = rawEmps
+        .filter((e: any) => e && typeof e === "object")
+        .map((e: any) => {
           const given = String(e.givenName ?? "").trim();
           const family = String(e.familyName ?? "").trim();
           const fullName = [given, family].filter(Boolean).join(" ");
@@ -148,7 +178,7 @@ function extractAgency(html: string, url: string): Agent | null {
             : String(e.jobTitle ?? "")).trim();
           return { given, family, fullName, title };
         })
-        .filter(p => p.fullName);
+        .filter((p: any) => p.fullName);
 
       const leaders: { name: string; role: string }[] = [];
       const otherTeam: string[] = [];
@@ -160,14 +190,12 @@ function extractAgency(html: string, url: string): Agent | null {
         }
       }
 
-      // Fallback: no leader detected? Match employee whose name appears in agency.name
       if (leaders.length === 0 && parsed.length > 0 && agencyName) {
         const normAgency = normalizeForMatch(agencyName);
         for (const p of parsed) {
           const normFam = normalizeForMatch(p.family);
           if (normFam && normAgency.includes(normFam)) {
             leaders.push({ name: p.fullName, role: p.title || "(Agenturinhaber lt. Agenturname)" });
-            // remove from team
             const idx = otherTeam.findIndex(t => t.startsWith(p.fullName + " ("));
             if (idx >= 0) otherTeam.splice(idx, 1);
             break;
@@ -176,14 +204,16 @@ function extractAgency(html: string, url: string): Agent | null {
       }
 
       const primary = leaders[0];
-      const primaryGiven = primary ? parsed.find(p => p.fullName === primary.name)?.given ?? "" : "";
-      const primaryFamily = primary ? parsed.find(p => p.fullName === primary.name)?.family ?? "" : "";
+      const primaryGiven = primary ? parsed.find((p: any) => p.fullName === primary.name)?.given ?? "" : "";
+      const primaryFamily = primary ? parsed.find((p: any) => p.fullName === primary.name)?.family ?? "" : "";
       const salutation = primary ? detectSalutation(primaryGiven, primary.role) : "";
 
-      // --- Social media (from node.sameAs) ---
-      const sameAs: string[] = Array.isArray(node.sameAs) ? node.sameAs : (node.sameAs ? [node.sameAs] : []);
+      // sameAs: prefer org-level, else primaryLoc
+      const sameAsPool: string[] = orgLevelSameAs.length
+        ? orgLevelSameAs
+        : (Array.isArray(primaryLoc.sameAs) ? primaryLoc.sameAs : (primaryLoc.sameAs ? [primaryLoc.sameAs] : []));
       let facebookUrl = "", instagramUrl = "", xingUrl = "", linkedinUrl = "";
-      for (const s of sameAs) {
+      for (const s of sameAsPool) {
         const u = String(s);
         if (!facebookUrl && /facebook\.com\//i.test(u)) facebookUrl = u;
         else if (!instagramUrl && /instagram\.com\//i.test(u)) instagramUrl = u;
@@ -192,33 +222,25 @@ function extractAgency(html: string, url: string): Agent | null {
       }
       const socialCount = [facebookUrl, instagramUrl, xingUrl, linkedinUrl].filter(Boolean).length;
 
-      // --- Agency type ---
       let agencyType = "";
       if (/GENERALVERTRETUNG/i.test(agencyName)) agencyType = "GENERAL";
       else if (/HAUPTVERTRETUNG/i.test(agencyName)) agencyType = "HAUPT";
 
-      // --- Potential score ---
       const ratingCountN = Number(String(rating.ratingCount ?? "0")) || 0;
       const ratingValueN = Number(String(rating.ratingValue ?? "0")) || 0;
       let score = 0;
-      // Social signals (= Meta Ads affinity)
       if (facebookUrl) score += 3;
       if (instagramUrl) score += 2;
       if (xingUrl) score += 1;
       if (linkedinUrl) score += 1;
-      // Social presence combined bonus
       if (facebookUrl && instagramUrl) score += 2;
-      // Team size — bigger agency = more budget
       if (parsed.length >= 5) score += 2;
       if (parsed.length >= 10) score += 2;
-      // Multi-leader agencies tend to be bigger
       if (leaders.length >= 2) score += 2;
-      // Reviews — proof of marketing willingness
       if (ratingCountN >= 25) score += 1;
       if (ratingCountN >= 100) score += 2;
       if (ratingCountN >= 300) score += 2;
       if (ratingValueN >= 4.5 && ratingCountN >= 25) score += 1;
-      // Agency type
       if (agencyType === "GENERAL") score += 1;
 
       return {
@@ -238,16 +260,16 @@ function extractAgency(html: string, url: string): Agent | null {
         linkedinUrl,
         socialCount: String(socialCount),
         potentialScore: String(score),
-        email: String(node.email ?? "").trim(),
-        phone: String(node.telePhone ?? node.telephone ?? "").trim(),
-        fax: String(node.faxNumber ?? "").trim(),
+        email: orgLevelEmail || String(primaryLoc.email ?? "").trim(),
+        phone: String(primaryLoc.telePhone ?? primaryLoc.telephone ?? "").trim(),
+        fax: String(primaryLoc.faxNumber ?? "").trim(),
         street: String(addr.streetAddress ?? "").trim(),
         zip: String(addr.postalCode ?? "").trim(),
         city: String(addr.addressLocality ?? "").trim(),
-        openingHours: String(node.openingHours ?? "").trim(),
+        openingHours: String(primaryLoc.openingHours ?? "").trim(),
         ratingValue: String(rating.ratingValue ?? "").trim(),
         ratingCount: String(rating.ratingCount ?? "").trim(),
-        description: String(node.description ?? "").trim().slice(0, 300),
+        description: String(primaryLoc.description ?? node.description ?? "").trim().slice(0, 300),
         teamNames: otherTeam.join("; "),
       };
     }
@@ -272,6 +294,7 @@ async function main() {
 
   console.log(`\n[2/3] JSON-LD extrahieren...`);
   const agents: (Agent | null)[] = new Array(urls.length);
+  const noAgency: string[] = [];
   let done = 0;
   let ok = 0;
   let failed = 0;
@@ -283,10 +306,11 @@ async function main() {
       const url = urls[i];
       const html = await fetchText(url);
       done++;
-      if (!html) { failed++; continue; }
+      if (!html) { failed++; noAgency.push(url + ' [FETCH]'); continue; }
       const a = extractAgency(html, url);
       agents[i] = a;
       if (a) ok++;
+      else noAgency.push(url + ' [NO_LD]');
       if (done % 100 === 0) {
         const elapsed = (Date.now() - t0) / 1000;
         const rate = done / elapsed;
@@ -300,15 +324,35 @@ async function main() {
   console.log(`\n[3/3] CSV schreiben...`);
   const found = agents.filter((a): a is Agent => a !== null);
 
-  // Dedupe (should already be unique, but just in case same email + address)
+  // Dedup diagnostic
   const seen = new Set<string>();
   const unique: Agent[] = [];
+  const dedupLosers: { kept: string; dropped: string; key: string }[] = [];
+  const keyToUrl = new Map<string, string>();
   for (const a of found) {
     const key = `${a.email}|${a.name}|${a.zip}|${a.street}`.toLowerCase();
-    if (seen.has(key)) continue;
+    if (seen.has(key)) {
+      dedupLosers.push({ kept: keyToUrl.get(key)!, dropped: a.url, key });
+      continue;
+    }
     seen.add(key);
+    keyToUrl.set(key, a.url);
     unique.push(a);
   }
+
+  // Write a diagnostic file alongside
+  writeFileSync("/home/user/kpidashboard-pg/data/allianz-scrape-diagnostics.txt",
+    `Sitemap URLs: ${urls.length}\n` +
+    `Fetched OK: ${urls.length - failed}\n` +
+    `No InsuranceAgency JSON-LD: ${noAgency.length - failed}\n` +
+    `Dedup losers (same email+name+zip+street): ${dedupLosers.length}\n` +
+    `Final unique agencies: ${unique.length}\n\n` +
+    `=== URLs ohne InsuranceAgency JSON-LD / Fetch-Fehler (${noAgency.length}) ===\n` +
+    noAgency.join("\n") + "\n\n" +
+    `=== Dedup-Verlierer (${dedupLosers.length}) ===\n` +
+    dedupLosers.map(d => `  ${d.kept}  <- gewinnt gegen ->  ${d.dropped}`).join("\n") + "\n",
+    "utf8");
+  console.log(`  diagnostics: /home/user/kpidashboard-pg/data/allianz-scrape-diagnostics.txt`);
 
   unique.sort((a, b) => (Number(b.potentialScore) - Number(a.potentialScore)) || a.zip.localeCompare(b.zip) || a.name.localeCompare(b.name));
 
