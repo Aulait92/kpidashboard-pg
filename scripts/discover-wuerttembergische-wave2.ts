@@ -51,31 +51,39 @@ async function main() {
   const found = new Set<string>(existsSync(SLUG_CACHE) ? JSON.parse(readFileSync(SLUG_CACHE, "utf8")) : []);
   console.log(`Start: ${found.size} URLs (cached)`);
 
+  const save = () => writeFileSync(SLUG_CACHE, JSON.stringify([...found], null, 2), "utf8");
+  let callCount = 0;
+
   // Nur Nachname (google)
   for (const surname of SURNAMES) {
     const q = `Württembergische Versicherung ${surname}`;
     const urls = await serperSearch(q, apiKey);
+    callCount++;
     let added = 0;
     for (const u of urls) { if (!found.has(u)) { found.add(u); added++; } }
-    if (added > 0) console.log(`  +${added} (now ${found.size}) · ${surname}`);
-    await new Promise(r => setTimeout(r, 150));
+    if (added > 0) console.log(`  +${added} (now ${found.size}) · ${surname} [${callCount}]`);
+    // save every 20 calls
+    if (callCount % 20 === 0) save();
+    await new Promise(r => setTimeout(r, 100));
   }
+  save();
   console.log(`\nAfter surname wave: ${found.size}`);
 
-  // Nachname × Stadt (nur häufigste Nachnamen)
-  const HEAVY = SURNAMES.slice(0, 50);
-  for (const surname of HEAVY) {
-    for (const city of CITIES_COMMON) {
-      const q = `Württembergische ${surname} ${city}`;
-      const urls = await serperSearch(q, apiKey);
-      let added = 0;
-      for (const u of urls) { if (!found.has(u)) { found.add(u); added++; } }
-      if (added > 0) console.log(`  +${added} (now ${found.size}) · ${surname} ${city}`);
-      await new Promise(r => setTimeout(r, 100));
-    }
+  // Vornamen (häufige)
+  const FIRST_NAMES = ["Alexander","Andreas","Christian","Daniel","Dirk","Frank","Jens","Jochen","Jörg","Jürgen","Kai","Klaus","Lars","Manfred","Mario","Markus","Martin","Matthias","Michael","Oliver","Patrick","Peter","Rainer","Ralf","René","Robert","Roland","Sebastian","Stefan","Steffen","Sven","Thomas","Tim","Tobias","Torsten","Udo","Uwe","Volker","Wolfgang","Yves","Alexandra","Andrea","Anja","Anke","Bettina","Bianca","Birgit","Christina","Claudia","Corinna","Daniela","Diana","Elisabeth","Elke","Eva","Franziska","Gabi","Gabriele","Heike","Ilona","Ines","Iris","Jennifer","Jessica","Julia","Karin","Katharina","Kathleen","Katja","Katrin","Kerstin","Kirsten","Laura","Lena","Maria","Marion","Martina","Melanie","Michaela","Monika","Nicole","Nina","Petra","Sabine","Sandra","Sarah","Silke","Simone","Sonja","Stefanie","Steffi","Susanne","Tanja","Tina","Ulrike","Ursula","Verena","Vera","Yvonne"];
+  for (const first of FIRST_NAMES) {
+    const q = `Württembergische Versicherung ${first}`;
+    const urls = await serperSearch(q, apiKey);
+    callCount++;
+    let added = 0;
+    for (const u of urls) { if (!found.has(u)) { found.add(u); added++; } }
+    if (added > 0) console.log(`  +${added} (now ${found.size}) · ${first} [${callCount}]`);
+    if (callCount % 20 === 0) save();
+    await new Promise(r => setTimeout(r, 100));
   }
-  console.log(`\nFinal: ${found.size} URLs`);
-  writeFileSync(SLUG_CACHE, JSON.stringify([...found], null, 2), "utf8");
+  save();
+  console.log(`\nAfter firstname wave: ${found.size}`);
+  console.log(`Total Serper calls: ${callCount}`);
 }
 
 main().catch(e => { console.error(e); process.exit(1); });
