@@ -112,6 +112,17 @@ function fetchText(url: string, timeoutMs = 15000): Promise<string | null> {
   });
 }
 
+async function fetchWithRetry(url: string, attempts = 5): Promise<string | null> {
+  for (let i = 0; i < attempts; i++) {
+    const html = await fetchText(url);
+    // W&W's "technischer Fehler"-page is exactly 3790 bytes; treat as transient
+    if (html && html.length > 5000 && html.includes("InsuranceAgency")) return html;
+    if (html && html.length > 10000 && !html.includes("W&W AG")) return html;
+    await new Promise(r => setTimeout(r, 1000 + Math.random() * 1000 * (i + 1)));
+  }
+  return null;
+}
+
 type Agent = {
   salutation: string;
   firstName: string;
@@ -240,7 +251,7 @@ async function main() {
   const workers = Array.from({ length: CONCURRENCY }, async () => {
     while (cursor < urls.length) {
       const i = cursor++;
-      const html = await fetchText(urls[i]);
+      const html = await fetchWithRetry(urls[i]);
       done++;
       if (!html || html.length < 5000) { fail++; continue; }
       const a = extractAgent(html, urls[i]);
