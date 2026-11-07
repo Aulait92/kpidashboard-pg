@@ -553,6 +553,9 @@ model Conversation {
   contactName       String?
   botActive         Boolean   @default(true)
   assignedUserId    String?
+  // Vom KI-Bot gepflegte Qualifizierung (strukturiert, nicht nur als Notiz).
+  qualified            Boolean  @default(false)
+  qualificationSummary String?
   status            String    @default("open") // open | snoozed | done
   windowExpiresAt   DateTime? // Ende des 24h-Service-Fensters
   lastMessageAt     DateTime?

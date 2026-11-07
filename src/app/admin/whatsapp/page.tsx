@@ -85,6 +85,8 @@ export default async function AdminWhatsAppPage({
           botActive: true,
           status: true,
           windowExpiresAt: true,
+          qualified: true,
+          qualificationSummary: true,
           customer: { select: { name: true } },
           lead: { select: { source: true, status: true } },
           messages: {
@@ -103,13 +105,9 @@ export default async function AdminWhatsAppPage({
       })
     : null;
 
-  const qualification = active?.messages
-    .filter((m) => m.direction === "internal" && m.kind === "qualification")
-    .at(-1);
   const appointment = active?.messages
     .filter((m) => m.direction === "internal" && m.kind === "appointment_proposal")
     .at(-1);
-  const qualData = parseJson(qualification?.body ?? null);
   const apptData = parseJson(appointment?.body ?? null);
   const windowOpen =
     !!active?.windowExpiresAt && active.windowExpiresAt.getTime() > Date.now();
@@ -349,11 +347,17 @@ export default async function AdminWhatsAppPage({
               <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[color:var(--muted)]">
                 Qualifizierung
               </div>
-              {qualData ? (
-                <p className="text-xs leading-relaxed text-[color:var(--foreground)]">
-                  {String(qualData.zusammenfassung ?? "—")}
-                  {qualData.qualifiziert ? " ✓ qualifiziert" : ""}
-                </p>
+              {active.qualificationSummary ? (
+                <>
+                  {active.qualified ? (
+                    <span className="mb-1.5 inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+                      ✓ qualifiziert
+                    </span>
+                  ) : null}
+                  <p className="text-xs leading-relaxed text-[color:var(--foreground)]">
+                    {active.qualificationSummary}
+                  </p>
+                </>
               ) : (
                 <p className="text-xs text-[color:var(--muted)]">
                   Noch keine Angaben erfasst.

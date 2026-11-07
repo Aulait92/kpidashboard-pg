@@ -186,8 +186,30 @@ export async function runBotTurn(conversationId: string): Promise<void> {
     const toolResults: Anthropic.ToolResultBlockParam[] = [];
     for (const tu of toolUses) {
       if (tu.name === "record_qualification") {
-        await persistInternal(conversation.id, "qualification", tu.input);
-        // TODO: qualifizierte Felder in Lead/CustomerProduct mappen.
+        const input = tu.input as {
+          zusammenfassung?: unknown;
+          qualifiziert?: unknown;
+        };
+        await persistInternal(conversation.id, "qualification", tu.input); // Audit-Log
+        await prisma.conversation.update({
+          where: { id: conversation.id },
+          data: {
+            qualificationSummary:
+              typeof input.zusammenfassung === "string"
+                ? input.zusammenfassung
+                : undefined,
+            qualified: input.qualifiziert === true ? true : undefined,
+          },
+        });
+        // Verknüpften Lead mitführen: qualifiziert ⇒ in Beratung / erreicht.
+        if (input.qualifiziert === true && conversation.leadId) {
+          await prisma.lead
+            .update({
+              where: { id: conversation.leadId },
+              data: { status: "In Beratung", reached: true },
+            })
+            .catch(() => {});
+        }
       } else if (tu.name === "propose_appointment") {
         await persistInternal(conversation.id, "appointment_proposal", tu.input);
         // TODO: echten Google-Kalender-Slot buchen (nächster Baustein).
