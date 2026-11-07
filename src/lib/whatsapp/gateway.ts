@@ -45,9 +45,25 @@ export async function handleInboundPayload(
       if (!value) continue;
 
       const phoneNumberId = value.metadata?.phone_number_id;
-      const account = phoneNumberId
+      let account = phoneNumberId
         ? await prisma.whatsAppAccount.findFirst({ where: { phoneNumberId } })
         : null;
+      if (!account) {
+        // Sandbox-/Single-Tenant-Komfort: Gibt es genau EIN Konto, wird es
+        // genutzt (und die phone_number_id nachgetragen). In Produktion mit
+        // mehreren Konten greift das nicht — dort ist die phone_number_id
+        // maßgeblich.
+        const accounts = await prisma.whatsAppAccount.findMany({ take: 2 });
+        if (accounts.length === 1) {
+          account = accounts[0];
+          if (phoneNumberId && !account.phoneNumberId) {
+            await prisma.whatsAppAccount.update({
+              where: { id: account.id },
+              data: { phoneNumberId },
+            });
+          }
+        }
+      }
 
       // Eingehende Nachrichten
       const contactName = value.contacts?.[0]?.profile?.name ?? null;
