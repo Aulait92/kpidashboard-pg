@@ -4,6 +4,7 @@ import { getCurrentSession } from "@/lib/auth";
 import { formatDateTime } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { sendReplyAction, toggleBotAction } from "../actions";
+import { SubmitButton } from "./form-buttons";
 
 export const dynamic = "force-dynamic";
 
@@ -76,12 +77,12 @@ export default async function AdminWhatsAppThreadPage({
           </span>
           <form action={toggleBotAction}>
             <input type="hidden" name="conversationId" value={conv.id} />
-            <button
-              type="submit"
+            <SubmitButton
+              pendingLabel="…"
               className="rounded-lg border border-[color:var(--border)] bg-white px-3 py-1.5 text-xs font-semibold hover:border-[color:var(--brand)]"
             >
               {conv.botActive ? "Bot pausieren" : "Bot aktivieren"}
-            </button>
+            </SubmitButton>
           </form>
         </div>
       </div>
@@ -154,12 +155,12 @@ export default async function AdminWhatsAppThreadPage({
               ? `24h-Fenster offen bis ${formatDateTime(conv.windowExpiresAt!)}`
               : "24h-Fenster geschlossen"}
           </span>
-          <button
-            type="submit"
-            className="rounded-lg bg-[color:var(--brand)] px-5 py-2 text-sm font-semibold text-white"
+          <SubmitButton
+            pendingLabel="Sendet …"
+            className="rounded-lg bg-[color:var(--brand)] px-5 py-2 text-sm font-semibold text-white hover:bg-[color:var(--brand-dark)]"
           >
             Senden
-          </button>
+          </SubmitButton>
         </div>
       </form>
     </main>
