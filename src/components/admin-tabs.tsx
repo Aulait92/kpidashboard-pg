@@ -30,6 +30,11 @@ const TABS = [
     label: "Buyer-Accounts",
     match: (p: string) => p.startsWith("/admin/buyers"),
   },
+  {
+    href: "/admin/whatsapp",
+    label: "WhatsApp",
+    match: (p: string) => p.startsWith("/admin/whatsapp"),
+  },
 ];
 
 export function AdminTabs() {
