@@ -134,8 +134,16 @@ async function persistInbound(
     },
   });
 
-  // TODO (Phase 0): Wenn conversation.botActive, hier die KI-Bot-Verarbeitung
-  // anstoßen (Qualifizierung → Lead-Felder → Terminvorschlag).
+  // KI-Bot anstoßen, wenn aktiv. Dynamischer Import bricht den Zyklus
+  // gateway <-> bot; Fehler dürfen die Ingestion nicht scheitern lassen.
+  if (conversation.botActive) {
+    try {
+      const { runBotTurn } = await import("@/lib/whatsapp/bot");
+      await runBotTurn(conversation.id);
+    } catch (e) {
+      console.error("[whatsapp bot]", e);
+    }
+  }
 }
 
 async function applyStatus(s: StatusUpdate): Promise<void> {
