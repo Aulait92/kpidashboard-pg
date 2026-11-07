@@ -602,6 +602,7 @@ model Appointment {
   calendarEventId String?
   meetUrl         String?
   status          String    @default("booked") // booked | cancelled | completed | no_show
+  reminderSentAt  DateTime? // gesetzt, sobald die WhatsApp-Erinnerung raus ist
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

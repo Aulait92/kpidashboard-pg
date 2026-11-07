@@ -17,7 +17,24 @@ const STATUS_TABS = [
   { key: "done", label: "Erledigt" },
 ] as const;
 
-type SearchParams = Promise<{ c?: string; tab?: string; q?: string }>;
+type SearchParams = Promise<{
+  c?: string;
+  tab?: string;
+  q?: string;
+  gcal?: string;
+}>;
+
+const BERLIN_TZ = "Europe/Berlin";
+function formatApptDE(d: Date): string {
+  return new Intl.DateTimeFormat("de-DE", {
+    weekday: "short",
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: BERLIN_TZ,
+  }).format(d);
+}
 
 function initials(s: string): string {
   return s.replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase() || "··";
@@ -80,6 +97,7 @@ export default async function AdminWhatsAppPage({
         where: { id: activeId },
         select: {
           id: true,
+          customerId: true,
           contactPhone: true,
           contactName: true,
           botActive: true,
@@ -109,6 +127,30 @@ export default async function AdminWhatsAppPage({
     .filter((m) => m.direction === "internal" && m.kind === "appointment_proposal")
     .at(-1);
   const apptData = parseJson(appointment?.body ?? null);
+
+  // Echte gebuchte Termine + Kalender-Verbindungsstatus für die aktive Konversation.
+  const [appointments, googleConn] = active
+    ? await Promise.all([
+        prisma.appointment.findMany({
+          where: { conversationId: active.id },
+          orderBy: { startsAt: "desc" },
+          take: 5,
+          select: {
+            id: true,
+            mode: true,
+            startsAt: true,
+            meetUrl: true,
+            status: true,
+          },
+        }),
+        prisma.googleCalendarConnection.findUnique({
+          where: { customerId: active.customerId },
+          select: { status: true },
+        }),
+      ])
+    : [[], null];
+  const calConnected = googleConn?.status === "connected";
+
   const windowOpen =
     !!active?.windowExpiresAt && active.windowExpiresAt.getTime() > Date.now();
 
@@ -120,6 +162,22 @@ export default async function AdminWhatsAppPage({
         WhatsApp-Inbox
       </h1>
       <AdminTabs />
+
+      {sp.gcal ? (
+        <div
+          className={`mt-4 rounded-lg px-4 py-2 text-sm ${
+            sp.gcal === "connected"
+              ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200"
+              : "bg-red-50 text-red-800 ring-1 ring-red-200"
+          }`}
+        >
+          {sp.gcal === "connected"
+            ? "✓ Google-Kalender erfolgreich verbunden."
+            : sp.gcal === "denied"
+              ? "Google-Verbindung abgebrochen."
+              : "Google-Verbindung fehlgeschlagen — bitte erneut versuchen."}
+        </div>
+      ) : null}
 
       <div className="mt-6 flex h-[calc(100vh-200px)] min-h-[540px] overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
         {/* Spalte 1: Konversationsliste */}
@@ -256,7 +314,9 @@ export default async function AdminWhatsAppPage({
                             ? "Qualifizierung"
                             : m.kind === "appointment_proposal"
                               ? "Terminvorschlag"
-                              : m.kind}
+                              : m.kind === "appointment_booked"
+                                ? "📅 Termin gebucht"
+                                : m.kind}
                         </span>
                       </div>
                     );
@@ -367,25 +427,70 @@ export default async function AdminWhatsAppPage({
 
             <div className="py-4">
               <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[color:var(--muted)]">
-                Termin
+                Termine
               </div>
-              {apptData ? (
-                <p className="mb-2 text-xs text-[color:var(--foreground)]">
-                  Vorschlag: {String(apptData.modus ?? "")}
+
+              {appointments.length > 0 ? (
+                <ul className="mb-3 space-y-2">
+                  {appointments.map((a) => (
+                    <li
+                      key={a.id}
+                      className="rounded-lg border border-[color:var(--border)] bg-[color:var(--background)] p-2.5"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold">
+                          {formatApptDE(a.startsAt)} Uhr
+                        </span>
+                        <span
+                          className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${
+                            a.status === "booked"
+                              ? "bg-emerald-100 text-emerald-800"
+                              : "bg-zinc-100 text-zinc-600"
+                          }`}
+                        >
+                          {a.mode === "video" ? "Video" : "Telefon"}
+                        </span>
+                      </div>
+                      {a.meetUrl ? (
+                        <a
+                          href={a.meetUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-1 block truncate text-[11px] font-medium text-[color:var(--brand)] hover:underline"
+                        >
+                          Meet-Link öffnen
+                        </a>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              ) : apptData ? (
+                <p className="mb-3 rounded-lg bg-amber-50 p-2.5 text-xs text-amber-800 ring-1 ring-amber-200">
+                  Terminwunsch: {String(apptData.modus ?? "")}
                   {apptData.wunschzeit ? ` · ${apptData.wunschzeit}` : ""}
+                  <br />
+                  <span className="text-[10px]">
+                    (noch nicht gebucht — Kalender verbinden)
+                  </span>
                 </p>
-              ) : null}
-              <div className="flex gap-2 opacity-60">
-                <span className="flex-1 rounded-lg border border-[color:var(--border)] py-1.5 text-center text-xs font-semibold">
-                  Telefon
-                </span>
-                <span className="flex-1 rounded-lg border border-[color:var(--border)] py-1.5 text-center text-xs font-semibold">
-                  Videocall
-                </span>
-              </div>
-              <p className="mt-1 text-[10px] text-[color:var(--muted)]">
-                Buchung folgt (Google-Kalender).
-              </p>
+              ) : (
+                <p className="mb-3 text-xs text-[color:var(--muted)]">
+                  Noch kein Termin.
+                </p>
+              )}
+
+              {calConnected ? (
+                <p className="text-[10px] text-emerald-700">
+                  ✓ Google-Kalender verbunden — der Bot bucht automatisch.
+                </p>
+              ) : (
+                <a
+                  href={`/api/google/connect?customerId=${active.customerId}`}
+                  className="block rounded-lg border border-[color:var(--brand)] py-1.5 text-center text-xs font-semibold text-[color:var(--brand)] hover:bg-[color:var(--brand-soft)]/40"
+                >
+                  Google-Kalender verbinden
+                </a>
+              )}
             </div>
           </aside>
         ) : null}
