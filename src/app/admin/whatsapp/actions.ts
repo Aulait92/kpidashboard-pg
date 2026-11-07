@@ -25,7 +25,6 @@ export async function toggleBotAction(formData: FormData): Promise<void> {
     where: { id: conversationId },
     data: { botActive: !conv.botActive },
   });
-  revalidatePath(`/admin/whatsapp/${conversationId}`);
   revalidatePath("/admin/whatsapp");
 }
 
@@ -57,5 +56,5 @@ export async function sendReplyAction(formData: FormData): Promise<void> {
   } catch (err) {
     console.error("[whatsapp reply]", err);
   }
-  revalidatePath(`/admin/whatsapp/${conversationId}`);
+  revalidatePath("/admin/whatsapp");
 }
