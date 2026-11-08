@@ -362,14 +362,16 @@ export async function LeadDetailBody({
           <span className="inline-flex items-center self-start rounded-md bg-rose-100 px-3 py-1.5 text-xs font-semibold text-rose-800">
             Storniert
           </span>
-        ) : (
+        ) : stornoOptions.length > 0 ? (
+          // Storno nur bei vertraglich hinterlegten Stornogründen (Bezug);
+          // z. B. Retainer-Kunden haben keine → kein Storno-Button.
           <LeadStornoTrigger
             leadId={lead.id}
             leadName={lead.name}
             leadCreatedAt={lead.createdAt}
             stornoOptions={stornoOptions}
           />
-        )}
+        ) : null}
       </header>
 
       {fetchError ? (
