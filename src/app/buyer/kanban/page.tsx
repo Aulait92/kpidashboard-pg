@@ -108,6 +108,7 @@ async function KanbanBody({
       source: true,
       status: true,
       closeValue: true,
+      followUpAt: true,
       appointments: {
         where: { status: "booked", startsAt: { gt: new Date() } },
         orderBy: { startsAt: "asc" },
@@ -130,6 +131,7 @@ async function KanbanBody({
       status: l.status,
       createdAt: l.createdAt,
       closeValue: l.closeValue != null ? Number(l.closeValue) : null,
+      followUpAt: l.followUpAt ? l.followUpAt.toISOString() : null,
       appointment: l.appointments[0]
         ? { startsAt: l.appointments[0].startsAt.toISOString(), mode: l.appointments[0].mode }
         : null,

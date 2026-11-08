@@ -24,6 +24,8 @@ export type KanbanLead = {
   closeValue: number | null;
   /** Nächster gebuchter Termin (WhatsApp-Kunden). */
   appointment?: { startsAt: string; mode: string } | null;
+  /** Wiedervorlage (ISO). */
+  followUpAt?: string | null;
 };
 
 // Spalten-Design: nicht 1:1 pro Status, sondern in funktionalen Phasen
@@ -584,6 +586,15 @@ function KanbanCard({
             minute: "2-digit",
           }).format(new Date(lead.appointment.startsAt))}{" "}
           · {lead.appointment.mode === "video" ? "Video" : "Telefon"}
+        </div>
+      ) : null}
+      {lead.followUpAt && !lead.appointment ? (
+        <div className="mt-1.5 inline-flex items-center rounded-md bg-violet-50 px-1.5 py-0.5 text-[11px] font-medium text-violet-700">
+          Wiedervorlage{" "}
+          {new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit" }).format(
+            new Date(lead.followUpAt),
+          )}
+          .
         </div>
       ) : null}
       {/* Abschlusswert nur zeigen, wenn der Lead wirklich im Abschluss ist —

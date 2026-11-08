@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache";
 import { updateLeadEditableFields } from "@/lib/airtable-write";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { writableCustomerId } from "@/lib/buyer-write";
+import { syncFollowUpWithStatus, workdaysFromNow } from "@/lib/lead-followup";
 import { prisma } from "@/lib/prisma";
 
 type LeadPrev = {
@@ -18,6 +19,8 @@ type LeadPrev = {
   reached: boolean;
   closedAt: string | null;
   closeValue: number | null;
+  followUpAt?: string | null;
+  followUpNote?: string | null;
 };
 
 export type UndoSnapshot =
@@ -45,6 +48,8 @@ const leadSelect = {
   closedAt: true,
   closeValue: true,
   firstContactAt: true,
+  followUpAt: true,
+  followUpNote: true,
 } as const;
 
 function snapshot(l: {
@@ -54,8 +59,12 @@ function snapshot(l: {
   reached: boolean;
   closedAt: Date | null;
   closeValue: unknown;
+  followUpAt?: Date | null;
+  followUpNote?: string | null;
 }): LeadPrev {
   return {
+    followUpAt: l.followUpAt?.toISOString() ?? null,
+    followUpNote: l.followUpNote ?? null,
     status: l.status,
     contactAttempts: l.contactAttempts,
     callbackSnoozedUntil: l.callbackSnoozedUntil?.toISOString() ?? null,
@@ -116,6 +125,7 @@ export async function callbackOutcomeResult(
       where: { id: lead.id },
       data: { status: "Kein Interesse", reached: true },
     });
+    await syncFollowUpWithStatus(lead.id, "Kein Interesse");
   }
   refresh();
   return { ok: true, undo: { kind: "lead", leadId, prev } };
@@ -170,6 +180,7 @@ export async function appointmentOutcomeResult(
       ...(outcome === "no_show" ? { callbackSnoozedUntil: null } : {}),
     },
   });
+  await syncFollowUpWithStatus(lead.id, nextStatus);
   refresh();
   return {
     ok: true,
@@ -258,8 +269,58 @@ export async function undoInboxAction(undo: UndoSnapshot): Promise<InboxResult> 
       reached: p.reached,
       closedAt: p.closedAt ? new Date(p.closedAt) : null,
       closeValue: p.closeValue,
+      ...(p.followUpAt !== undefined
+        ? { followUpAt: p.followUpAt ? new Date(p.followUpAt) : null, followUpNote: p.followUpNote ?? null }
+        : {}),
     },
   });
   refresh();
   return { ok: true };
+}
+
+/**
+ * Wiedervorlage setzen („Ruf mich in 1 Woche an"). days = Werktage ab heute
+ * oder ein festes Datum (YYYY-MM-DD). Rückruf-Leads verschwinden bis dahin
+ * aus der Rückrufliste und erscheinen am Fälligkeitstag unter „Heute".
+ */
+export async function setFollowUpResult(
+  leadId: string,
+  when: { days: number } | { date: string },
+  note?: string | null,
+): Promise<InboxResult> {
+  const customerId = await writableCustomerId(leadId);
+  if (!customerId) return { ok: false, error: "In der Vorschau nur mit Demo-Leads möglich." };
+  const lead = await prisma.lead.findFirst({ where: { id: leadId, customerId }, select: leadSelect });
+  if (!lead) return { ok: false, error: "Lead nicht gefunden." };
+  const prev = snapshot(lead);
+  let at: Date;
+  if ("days" in when) {
+    at = workdaysFromNow(Math.max(1, Math.min(60, Math.round(when.days))));
+  } else {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(when.date)) return { ok: false, error: "Ungültiges Datum." };
+    at = new Date(`${when.date}T08:00:00.000Z`);
+    if (at.getTime() < Date.now() - 24 * 60 * 60 * 1000) return { ok: false, error: "Datum liegt in der Vergangenheit." };
+  }
+  await prisma.lead.update({
+    where: { id: lead.id },
+    data: {
+      followUpAt: at,
+      followUpNote: (note ?? "").trim().slice(0, 200) || lead.followUpNote || null,
+      callbackSnoozedUntil: at,
+    },
+  });
+  refresh();
+  return { ok: true, undo: { kind: "lead", leadId, prev } };
+}
+
+/** Wiedervorlage erledigt (entfernt). */
+export async function clearFollowUpResult(leadId: string): Promise<InboxResult> {
+  const customerId = await writableCustomerId(leadId);
+  if (!customerId) return { ok: false, error: "In der Vorschau nur mit Demo-Leads möglich." };
+  const lead = await prisma.lead.findFirst({ where: { id: leadId, customerId }, select: leadSelect });
+  if (!lead) return { ok: false, error: "Lead nicht gefunden." };
+  const prev = snapshot(lead);
+  await prisma.lead.update({ where: { id: lead.id }, data: { followUpAt: null, followUpNote: null } });
+  refresh();
+  return { ok: true, undo: { kind: "lead", leadId, prev } };
 }

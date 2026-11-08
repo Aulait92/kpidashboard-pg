@@ -227,6 +227,13 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
             : null,
         closeValue,
         bezugAirtableId: DEMO_ACCOUNT,
+        // Wiedervorlagen: Angebote nachfassen (teils überfällig), ein Lead
+        // „ruf mich nächste Woche an".
+        ...(scenario === "offer"
+          ? { followUpAt: new Date(now - (i % 3) * DAY), followUpNote: "Angebot nachfassen" }
+          : scenario === "not_reached" && i % 2 === 0
+            ? { followUpAt: new Date(now - 2 * HOUR), followUpNote: "Hat um Rückruf diese Woche gebeten" }
+            : {}),
         // Gleiches Format wie aus dem Meta-Leadformular (extractFormAnswers).
         formData: [
           { label: "Lebenssituation", value: situation },

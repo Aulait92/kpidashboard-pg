@@ -94,15 +94,19 @@ export function Card({
   className,
   children,
   tone = "default",
+  menus = false,
 }: {
   className?: string;
   children: React.ReactNode;
   tone?: "default" | "attention";
+  /** true, wenn die Karte Aufklapp-Menüs enthält (sonst würden sie abgeschnitten). */
+  menus?: boolean;
 }) {
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-[var(--radius-lg)] border bg-[color:var(--surface)] shadow-[var(--shadow-md)]",
+        menus ? "" : "overflow-hidden",
+        "rounded-[var(--radius-lg)] border bg-[color:var(--surface)] shadow-[var(--shadow-md)]",
         tone === "attention" ? "border-amber-200" : "border-[color:var(--border)]",
         className,
       )}

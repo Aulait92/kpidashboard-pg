@@ -9,6 +9,7 @@ import {
 } from "@/lib/airtable-write";
 import { getCurrentSession } from "@/lib/auth";
 import { writableCustomerId } from "@/lib/buyer-write";
+import { syncFollowUpWithStatus } from "@/lib/lead-followup";
 import { prisma } from "@/lib/prisma";
 import {
   CLOSED_STATUS,
@@ -239,6 +240,7 @@ export async function setLeadStatusAction(
     },
   });
 
+  await syncFollowUpWithStatus(lead.id, status);
   revalidatePath("/buyer");
   revalidatePath("/buyer/kanban");
   revalidatePath("/buyer/leads");
@@ -338,6 +340,7 @@ export async function updateLeadDetailsAction(
     },
   });
 
+  if (bearbeitungsstatus) await syncFollowUpWithStatus(lead.id, bearbeitungsstatus);
   revalidatePath(`/buyer/leads/${lead.id}`);
   revalidatePath("/buyer/leads");
   return { ok: true };

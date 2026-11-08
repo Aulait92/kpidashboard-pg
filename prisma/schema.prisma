@@ -297,6 +297,10 @@ model Lead {
   outreachStatus  String?
   // Rückrufliste: „Nicht erreicht" geklickt → bis dahin ausgeblendet.
   callbackSnoozedUntil DateTime?
+  // Wiedervorlage: „Ruf mich in 1 Woche an", Angebot nachfassen … erscheint
+  // am Fälligkeitstag auf „Heute".
+  followUpAt           DateTime?
+  followUpNote         String?
   // rec-ID des Kunden-Produkt-Bezug-Records, an dem dieser Lead in Airtable
   // hängt. Wird beim Storno gebraucht, um die zugelassenen Stornogründe
   // (Linked-Records vom Bezug zur Stornogründe-Tabelle) nachzuschlagen.

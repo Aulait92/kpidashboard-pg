@@ -121,6 +121,7 @@ async function LeadsBody({
       name: true,
       source: true,
       status: true,
+      followUpAt: true,
       reached: true,
       closedAt: true,
       revenues: { select: { amount: true }, take: 1 },
@@ -171,10 +172,11 @@ async function LeadsBody({
     stornoOptions: stornoOptions.get(l.id) ?? [],
     appointment: apptByLead.get(l.id) ?? null,
     callback: callbackIds.has(l.id),
+    followUpAt: l.followUpAt ? l.followUpAt.toISOString() : null,
   }));
 
   return (
-    <div className="mt-6 space-y-6">
+    <div className="space-y-6">
       <form action="/buyer/leads" className="flex gap-2">
         {Object.entries(rangeParams).map(([k, v]) =>
           v ? <input key={k} type="hidden" name={k} value={v} /> : null,

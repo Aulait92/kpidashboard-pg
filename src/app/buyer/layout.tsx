@@ -68,11 +68,15 @@ export default async function BuyerLayout({
       {ctx ? (
         <BuyerShell displayName={displayName} showChats={showChats} chatBadge={chatBadge}>
           {children}
+          {/* Lead-Detail-Modal innerhalb der Shell → Toasts funktionieren dort auch */}
+          {modal}
         </BuyerShell>
       ) : (
-        children
+        <>
+          {children}
+          {modal}
+        </>
       )}
-      {modal}
     </>
   );
 }

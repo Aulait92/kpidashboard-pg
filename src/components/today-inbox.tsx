@@ -6,8 +6,10 @@ import { useState, useTransition } from "react";
 import {
   CalendarCheck,
   CalendarClock,
+  BellRing,
   CalendarPlus,
   Check,
+  Clock,
   MessageCircle,
   Phone,
   PhoneMissed,
@@ -21,12 +23,16 @@ import {
   appointmentOutcomeResult,
   callbackOutcomeResult,
   chatDoneResult,
+  clearFollowUpResult,
+  setFollowUpResult,
   undoInboxAction,
   type InboxResult,
 } from "@/app/buyer/inbox-actions";
 import { Badge, Button, ButtonLink, Card, CardHeader, EmptyState } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
+import { ActionMenu, type MenuItem } from "@/components/ui/menu";
 import { formatPhone } from "@/lib/format";
+import { statusLabel, statusToneClass } from "@/lib/products";
 import type { InboxData } from "@/lib/inbox";
 
 // Startseite „Heute": eine Aufgabenliste, die man leer arbeitet. Jede Aktion
@@ -87,19 +93,39 @@ export function TodayInbox({ data }: { data: InboxData }) {
   }
 
   const appointments = data.appointments.filter((a) => !hidden.has(`a:${a.id}`));
+  const followUps = data.followUps.filter((f) => !hidden.has(`f:${f.leadId}`));
   const outcomes = data.outcomes.filter((o) => !hidden.has(`o:${o.id}`));
   const chats = data.chats.filter((c) => !hidden.has(`c:${c.conversationId}`));
   const callbacks = data.callbacks.filter((c) => !hidden.has(`r:${c.leadId}`));
   const [showAllCallbacks, setShowAllCallbacks] = useState(false);
   const visibleCallbacks = showAllCallbacks ? callbacks : callbacks.slice(0, 5);
-  const openTasks = outcomes.length + chats.length + callbacks.length;
+  const openTasks = outcomes.length + chats.length + callbacks.length + followUps.length;
+
+  // Wiedervorlage-Optionen (Werktage ab heute) – gleiche Auswahl überall.
+  const laterItems = (key: string, leadId: string, name: string): MenuItem[] => [
+    { type: "label", label: "Wiedervorlage" },
+    ...[
+      { label: "Morgen", days: 1 },
+      { label: "In 3 Tagen", days: 3 },
+      { label: "In 1 Woche", days: 5 },
+      { label: "In 2 Wochen", days: 10 },
+    ].map((o) => ({
+      label: o.label,
+      icon: Clock,
+      onSelect: () =>
+        run(key, `${name}: Wiedervorlage ${o.label === "Morgen" ? "morgen" : o.label}`, () =>
+          setFollowUpResult(leadId, { days: o.days }),
+        ),
+    })),
+  ];
 
   return (
     <div className="space-y-6">
       {/* Kurzüberblick */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         <Stat icon={CalendarClock} label="Termine heute & morgen" value={appointments.length} />
         <Stat icon={CalendarCheck} label="Ergebnis eintragen" value={outcomes.length} tone={outcomes.length ? "violet" : undefined} />
+        <Stat icon={BellRing} label="Wiedervorlagen" value={followUps.length} tone={followUps.length ? "violet" : undefined} />
         <Stat icon={MessageCircle} label="Chats brauchen dich" value={chats.length} tone={chats.length ? "rose" : undefined} />
         <Stat icon={Phone} label="Rückrufe" value={callbacks.length} tone={callbacks.length ? "amber" : undefined} />
       </div>
@@ -218,8 +244,52 @@ export function TodayInbox({ data }: { data: InboxData }) {
         </Card>
       ) : null}
 
+      {followUps.length > 0 ? (
+        <Card menus>
+          <CardHeader icon={BellRing} title="Wiedervorlagen" count={followUps.length} hint="Heute fällig" />
+          <ul className="divide-y divide-[color:var(--border)]">
+            {followUps.map((f) => (
+              <li key={f.leadId} className="ui-fade-in flex flex-col gap-3 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Link href={`/buyer/leads/${f.leadId}`} className="font-medium hover:text-[color:var(--brand)]">
+                      {f.name}
+                    </Link>
+                    {f.status ? (
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${statusToneClass(f.status)}`}>
+                        {statusLabel(f.status, true)}
+                      </span>
+                    ) : null}
+                    {f.overdue ? <Badge tone="danger">überfällig</Badge> : null}
+                  </div>
+                  <p className="mt-0.5 text-xs text-[color:var(--muted)]">
+                    {f.note ?? "Wiedervorlage"}
+                    {f.overdue ? ` · fällig seit ${day(f.dueAt)}` : ""}
+                  </p>
+                </div>
+                <div className="grid shrink-0 grid-cols-2 gap-2 sm:flex sm:flex-wrap [&>*]:w-full sm:[&>*]:w-auto">
+                  {f.phone ? (
+                    <ButtonLink href={`tel:+${f.phone}`} variant="primary" icon={Phone}>
+                      <span className="sm:hidden">Anrufen</span>
+                      <span className="hidden sm:inline">{formatPhone(f.phone)}</span>
+                    </ButtonLink>
+                  ) : null}
+                  <Button
+                    icon={Check}
+                    onClick={() => run(`f:${f.leadId}`, `${f.name}: Wiedervorlage erledigt`, () => clearFollowUpResult(f.leadId))}
+                  >
+                    Erledigt
+                  </Button>
+                  <ActionMenu label="Später" icon={Clock} items={laterItems(`f:${f.leadId}`, f.leadId, f.name)} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : null}
+
       {callbacks.length > 0 ? (
-        <Card tone="attention">
+        <Card tone="attention" menus>
           <CardHeader icon={Phone} title="Rückrufe" count={callbacks.length} hint="Nach dem Anruf Ergebnis wählen" />
           <ul className="divide-y divide-[color:var(--border)]">
             {visibleCallbacks.map((c) => (
@@ -252,25 +322,32 @@ export function TodayInbox({ data }: { data: InboxData }) {
                       Termin
                     </ButtonLink>
                   ) : null}
-                  <Button
-                    icon={PhoneMissed}
-                    onClick={() =>
-                      run(`r:${c.leadId}`, `${c.name}: nicht erreicht – morgen wieder`, () =>
-                        callbackOutcomeResult(c.leadId, "not_reached"),
-                      )
-                    }
-                  >
-                    Nicht erreicht
-                  </Button>
-                  <Button
-                    variant="danger"
-                    icon={PhoneOff}
-                    onClick={() =>
-                      run(`r:${c.leadId}`, `${c.name}: als verloren markiert`, () => callbackOutcomeResult(c.leadId, "lost"))
-                    }
-                  >
-                    Verloren
-                  </Button>
+                  <ActionMenu
+                    label="Ergebnis"
+                    items={[
+                      {
+                        label: "Nicht erreicht",
+                        hint: "Morgen wieder in der Liste",
+                        icon: PhoneMissed,
+                        onSelect: () =>
+                          run(`r:${c.leadId}`, `${c.name}: nicht erreicht – morgen wieder`, () =>
+                            callbackOutcomeResult(c.leadId, "not_reached"),
+                          ),
+                      },
+                      ...laterItems(`r:${c.leadId}`, c.leadId, c.name),
+                      { type: "label", label: "Abschließen" },
+                      {
+                        label: "Verloren",
+                        hint: "Kein Interesse",
+                        icon: PhoneOff,
+                        tone: "danger",
+                        onSelect: () =>
+                          run(`r:${c.leadId}`, `${c.name}: als verloren markiert`, () =>
+                            callbackOutcomeResult(c.leadId, "lost"),
+                          ),
+                      },
+                    ]}
+                  />
                 </div>
               </li>
             ))}

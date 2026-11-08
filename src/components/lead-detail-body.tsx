@@ -1,5 +1,6 @@
 import { CalendarClock, ClipboardList, Mail, MessageCircle, Phone } from "lucide-react";
 import { ButtonLink, Card, CardHeader } from "@/components/ui";
+import { FollowUpEditor } from "@/components/follow-up-editor";
 import { formatPhone } from "@/lib/format";
 import { pipelinePhasesFor, statusToneClass, WHATSAPP_STATUS_LABELS } from "@/lib/products";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
@@ -134,6 +135,8 @@ export async function LeadDetailBody({
       formData: true,
       contactAttempts: true,
       firstContactAt: true,
+      followUpAt: true,
+      followUpNote: true,
     },
   });
   if (!lead) notFound();
@@ -216,6 +219,12 @@ export async function LeadDetailBody({
       ) : null}
 
       {whatsapp ? <WhatsAppBlock leadId={lead.id} /> : null}
+
+      <FollowUpEditor
+        leadId={lead.id}
+        followUpAt={lead.followUpAt?.toISOString() ?? null}
+        note={lead.followUpNote}
+      />
 
       {fields ? (
         <>

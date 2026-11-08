@@ -42,7 +42,18 @@ export type InboxCallback = {
   createdAt: string;
   conversationId: string | null;
 };
+export type InboxFollowUp = {
+  leadId: string;
+  name: string;
+  phone: string | null;
+  status: string | null;
+  note: string | null;
+  dueAt: string;
+  overdue: boolean;
+  conversationId: string | null;
+};
 export type InboxData = {
+  followUps: InboxFollowUp[];
   appointments: InboxAppointment[];
   outcomes: InboxOutcome[];
   chats: InboxChat[];
@@ -55,7 +66,7 @@ export async function loadInbox(customerId: string): Promise<InboxData> {
   const todayStart = berlinDayStart(now);
   const tomorrowEnd = new Date(todayStart.getTime() + 2 * DAY);
 
-  const [upcoming, past, chats, callbacks, cal] = await Promise.all([
+  const [upcoming, past, chats, callbacks, cal, followUps] = await Promise.all([
     prisma.appointment.findMany({
       where: {
         customerId,
@@ -92,7 +103,26 @@ export async function loadInbox(customerId: string): Promise<InboxData> {
     }),
     getCallbackLeads(customerId),
     prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true } }),
+    prisma.lead.findMany({
+      where: {
+        customerId,
+        followUpAt: { lt: new Date(todayStart.getTime() + DAY) },
+        NOT: { status: { in: POST_STATUSES.filter((x) => x !== "Angebot gesendet") } },
+      },
+      orderBy: { followUpAt: "asc" },
+      take: 50,
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        status: true,
+        followUpAt: true,
+        followUpNote: true,
+        conversations: { select: { id: true }, take: 1 },
+      },
+    }),
   ]);
+  const followUpIds = new Set(followUps.map((f) => f.id));
 
   const convIds = upcoming.map((a) => a.conversationId).filter((x): x is string => !!x);
   const convs = convIds.length
@@ -104,6 +134,16 @@ export async function loadInbox(customerId: string): Promise<InboxData> {
   const convById = new Map(convs.map((c) => [c.id, c]));
 
   return {
+    followUps: followUps.map((f) => ({
+      leadId: f.id,
+      name: f.name ?? "Lead",
+      phone: f.phone,
+      status: f.status,
+      note: f.followUpNote,
+      dueAt: f.followUpAt!.toISOString(),
+      overdue: f.followUpAt!.getTime() < todayStart.getTime(),
+      conversationId: f.conversations[0]?.id ?? null,
+    })),
     appointments: upcoming.map((a) => {
       const conv = a.conversationId ? convById.get(a.conversationId) : undefined;
       return {
@@ -135,7 +175,7 @@ export async function loadInbox(customerId: string): Promise<InboxData> {
       reason: c.attentionReason,
       at: c.attentionAt?.toISOString() ?? null,
     })),
-    callbacks: callbacks.map((c) => ({
+    callbacks: callbacks.filter((c) => !followUpIds.has(c.id)).map((c) => ({
       leadId: c.id,
       name: c.name ?? "Unbekannt",
       phone: c.phone,

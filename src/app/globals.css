@@ -69,7 +69,9 @@ body {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: none; }
 }
-.ui-fade-in { animation: ui-fade-in 180ms ease-out both; }
+/* backwards statt both: nach der Animation keine eigene Ebene mehr (sonst
+   würden Aufklapp-Menüs von der nächsten Zeile überdeckt). */
+.ui-fade-in { animation: ui-fade-in 180ms ease-out backwards; }
 @keyframes ui-shimmer {
   from { background-position: -200% 0; }
   to { background-position: 200% 0; }

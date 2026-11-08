@@ -27,6 +27,8 @@ export type BuyerLeadRow = {
   appointment?: { startsAt: Date; mode: string } | null;
   /** Nur bei Kunden mit WhatsApp-Assistent: Lead sollte angerufen werden. */
   callback?: boolean;
+  /** Wiedervorlage (ISO), falls gesetzt. */
+  followUpAt?: string | null;
 };
 
 function formatAppt(d: Date): string {
@@ -38,6 +40,10 @@ function formatAppt(d: Date): string {
     minute: "2-digit",
     timeZone: "Europe/Berlin",
   }).format(d);
+}
+
+function followUpText(iso: string): string {
+  return `Wiedervorlage ${new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit" }).format(new Date(iso))}.`;
 }
 
 function statusText(
@@ -112,6 +118,8 @@ export function BuyerLeadsTable({
                         {formatAppt(new Date(l.appointment.startsAt))} Uhr ·{" "}
                         {l.appointment.mode === "video" ? "Video" : "Telefon"}
                       </div>
+                    ) : l.followUpAt ? (
+                      <div className="mt-1 text-xs font-medium text-violet-700">{followUpText(l.followUpAt)}</div>
                     ) : l.callback ? (
                       <div className="mt-1 text-xs font-medium text-amber-700">Rückruf nötig</div>
                     ) : null}
@@ -182,6 +190,8 @@ export function BuyerLeadsTable({
                             {formatAppt(new Date(l.appointment.startsAt))} Uhr ·{" "}
                             {l.appointment.mode === "video" ? "Video" : "Telefon"}
                           </span>
+                        ) : l.followUpAt ? (
+                          <span className="text-xs font-medium text-violet-700">{followUpText(l.followUpAt)}</span>
                         ) : l.callback ? (
                           <span className="text-xs font-medium text-amber-700">Rückruf nötig</span>
                         ) : null}
