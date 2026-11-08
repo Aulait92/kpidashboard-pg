@@ -216,8 +216,12 @@ export async function syncMeta(): Promise<MetaSyncResult> {
   // DB-gestützter Klassifizierer: Legacy-Sparten per Keyword, neue Produkte
   // per Name/Slug-Match gegen die Produkte-Tabelle.
   const classify = await loadProductMatcher();
+  // Konten, die einem Kunden gehören (Retainer), sind KEINE Agentur-Kosten —
+  // die laufen über syncCustomerAdSpend() in CustomerAdSpend.
+  const customerOwned = await customerOwnedAdAccounts();
 
   for (const accountId of accounts) {
+    if (customerOwned.has(accountId)) continue;
     try {
       const rows = await fetchInsights(accountId, token, since, until);
       result.accounts.push({ id: accountId, rows: rows.length });
@@ -309,4 +313,91 @@ export async function syncMeta(): Promise<MetaSyncResult> {
   }
 
   return result;
+}
+
+// ─── Eigene Werbekonten von Kunden (Retainer-Modell) ─────────────────────
+// Spend aus dem Konto des Kunden landet in CustomerAdSpend (pro Tag), NICHT in
+// Cost — es ist Geld des Kunden, keine Agentur-Kosten. Konten, die einem
+// Kunden gehören, überspringt syncMeta() deshalb auch.
+
+export async function customerOwnedAdAccounts(): Promise<Set<string>> {
+  const rows = await prisma.customer.findMany({
+    where: { metaAdAccountId: { not: null } },
+    select: { metaAdAccountId: true },
+  });
+  return new Set(rows.map((r) => r.metaAdAccountId!).filter(Boolean));
+}
+
+export type CustomerAdSpendSyncResult = {
+  customers: number;
+  days: number;
+  errors: string[];
+};
+
+export async function syncCustomerAdSpend(): Promise<CustomerAdSpendSyncResult> {
+  const result: CustomerAdSpendSyncResult = { customers: 0, days: 0, errors: [] };
+  const token = process.env.META_ACCESS_TOKEN;
+  if (!token) return result;
+  const customers = await prisma.customer.findMany({
+    where: { metaAdAccountId: { not: null } },
+    select: { id: true, name: true, metaAdAccountId: true, retainerStart: true },
+  });
+  const until = format(new Date(), "yyyy-MM-dd");
+  for (const c of customers) {
+    const accountId = c.metaAdAccountId!;
+    // Ab Retainer-Start (max. 365 Tage zurück), sonst die letzten 90 Tage.
+    const floor = addDays(new Date(), -365);
+    const start =
+      c.retainerStart && c.retainerStart > floor ? c.retainerStart : addDays(new Date(), -90);
+    try {
+      const rows = await fetchAccountDailySpend(accountId, token, format(start, "yyyy-MM-dd"), until);
+      for (const r of rows) {
+        const amount = Number.parseFloat(r.spend ?? "0");
+        if (!r.date_start || !Number.isFinite(amount)) continue;
+        const date = dayAtNoonUtc(r.date_start);
+        await prisma.customerAdSpend.upsert({
+          where: { customerId_accountId_date: { customerId: c.id, accountId, date } },
+          create: { customerId: c.id, accountId, date, amount },
+          update: { amount },
+        });
+        result.days++;
+      }
+      result.customers++;
+    } catch (err) {
+      result.errors.push(`${c.name}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+  return result;
+}
+
+async function fetchAccountDailySpend(
+  accountId: string,
+  token: string,
+  since: string,
+  until: string,
+): Promise<{ spend?: string; date_start?: string }[]> {
+  const rows: { spend?: string; date_start?: string }[] = [];
+  let chunkStart = new Date(`${since}T00:00:00Z`);
+  const end = new Date(`${until}T00:00:00Z`);
+  while (chunkStart.getTime() <= end.getTime()) {
+    const chunkEndCandidate = addDays(chunkStart, 89);
+    const chunkEnd = chunkEndCandidate < end ? chunkEndCandidate : end;
+    const s = format(chunkStart, "yyyy-MM-dd");
+    const u = format(chunkEnd, "yyyy-MM-dd");
+    const url = new URL(`${META_GRAPH}/act_${accountId}/insights`);
+    url.searchParams.set("access_token", token);
+    url.searchParams.set("level", "account");
+    url.searchParams.set("fields", "spend,date_start");
+    url.searchParams.set("time_increment", "1");
+    url.searchParams.set("time_range", JSON.stringify({ since: s, until: u }));
+    url.searchParams.set("limit", "500");
+    let nextUrl: string | null = url.toString();
+    while (nextUrl) {
+      const json = await fetchMetaPage(nextUrl, accountId, s, u);
+      if (json.data) rows.push(...(json.data as { spend?: string; date_start?: string }[]));
+      nextUrl = json.paging?.next ?? null;
+    }
+    chunkStart = addDays(chunkEnd, 1);
+  }
+  return rows;
 }

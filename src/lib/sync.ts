@@ -1,5 +1,10 @@
 import { syncAirtable, type SyncResult } from "@/lib/airtable";
-import { syncMeta, type MetaSyncResult } from "@/lib/meta";
+import {
+  syncCustomerAdSpend,
+  syncMeta,
+  type CustomerAdSpendSyncResult,
+  type MetaSyncResult,
+} from "@/lib/meta";
 import { syncOutbrain, type OutbrainSyncResult } from "@/lib/outbrain";
 import { syncTikTok, type TikTokSyncResult } from "@/lib/tiktok";
 import { syncGoogleAds, type GoogleSyncResult } from "@/lib/google";
@@ -9,6 +14,9 @@ import { sendToAdmins, sendToBuyersOfCustomer } from "@/lib/push";
 export type FullSyncResult = {
   airtable: SyncResult;
   meta: { ok: true; result: MetaSyncResult } | { ok: false; error: string };
+  customerAdSpend:
+    | { ok: true; result: CustomerAdSpendSyncResult }
+    | { ok: false; error: string };
   outbrain:
     | { ok: true; result: OutbrainSyncResult }
     | { ok: false; error: string };
@@ -37,6 +45,17 @@ export async function runFullSync(): Promise<FullSyncResult> {
     meta = { ok: true, result: metaResult };
   } catch (err) {
     meta = {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+
+  // Eigene Werbekonten der Retainer-Kunden (Spend nur für deren Dashboard).
+  let customerAdSpend: FullSyncResult["customerAdSpend"];
+  try {
+    customerAdSpend = { ok: true, result: await syncCustomerAdSpend() };
+  } catch (err) {
+    customerAdSpend = {
       ok: false,
       error: err instanceof Error ? err.message : String(err),
     };
@@ -133,6 +152,7 @@ export async function runFullSync(): Promise<FullSyncResult> {
   return {
     airtable,
     meta,
+    customerAdSpend,
     outbrain,
     tiktok,
     google,

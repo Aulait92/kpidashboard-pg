@@ -182,10 +182,17 @@ export async function setLeadStatusAction(
 
   const lead = await prisma.lead.findFirst({
     where: { id: leadId, customerId: session.customerId },
-    select: { id: true, airtableId: true },
+    select: { id: true, airtableId: true, firstContactAt: true, contactAttempts: true },
   });
   if (!lead) return { ok: false, error: "Lead nicht gefunden." };
   if (!lead.airtableId) return { ok: false, error: "Lead ohne Airtable-ID." };
+
+  // Verlässt der Lead „Neuer Lead" zum ersten Mal, hat ein Kontaktversuch
+  // stattgefunden → „Erster Kontaktversuch" automatisch setzen (sonst bleiben
+  // „Zeit bis Erstkontakt" und Speed-to-Lead leer, wenn der Kunde das Feld
+  // nicht manuell pflegt). Bereits gesetzte Werte bleiben unangetastet.
+  const autoFirstContact =
+    !lead.firstContactAt && status !== "Neuer Lead" ? new Date() : null;
 
   const isClosed = status === CLOSED_STATUS;
   // Beim Abschluss: den (optional) übergebenen Abschlusswert setzen. Verlässt
@@ -197,6 +204,12 @@ export async function setLeadStatusAction(
       airtableId: lead.airtableId,
       bearbeitungsstatus: status,
       ...(closeValue !== undefined ? { closeValue } : {}),
+      ...(autoFirstContact
+        ? {
+            ersterKontaktversuch: autoFirstContact.toISOString(),
+            kontaktversuche: Math.max(1, lead.contactAttempts),
+          }
+        : {}),
     });
   } catch (err) {
     return {
@@ -211,6 +224,12 @@ export async function setLeadStatusAction(
       status,
       reached: isReachedStatus(status),
       closedAt: isClosed ? new Date() : null,
+      ...(autoFirstContact
+        ? {
+            firstContactAt: autoFirstContact,
+            contactAttempts: Math.max(1, lead.contactAttempts),
+          }
+        : {}),
       ...(closeValue !== undefined
         ? { closeValue: closeValue == null ? null : closeValue }
         : {}),

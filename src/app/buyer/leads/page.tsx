@@ -15,6 +15,7 @@ import { getStornogruendePerLead } from "@/app/buyer/actions";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { parseRangeFromSearchParams } from "@/lib/date-ranges";
 import { formatDate } from "@/lib/format";
+import { loadRetainerConfig } from "@/lib/customer-spend";
 import { prisma } from "@/lib/prisma";
 
 type SearchParams = Promise<{
@@ -154,7 +155,10 @@ async function LeadsBody({
 
   return (
     <div className="mt-6">
-      <BuyerLeadsTable leads={leads} />
+      <BuyerLeadsTable
+        leads={leads}
+        showLeadCost={!(await loadRetainerConfig(customerId))}
+      />
     </div>
   );
 }
