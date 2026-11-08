@@ -10,6 +10,7 @@
 //   3. Rückrufliste: offene Leads ohne Termin, bei denen das Anschreiben nicht
 //      möglich war oder 24 h danach noch kein Termin steht.
 
+import { recordLeadProgress } from "@/lib/lead-progress";
 import { prisma } from "@/lib/prisma";
 import {
   firstNameOf,
@@ -145,6 +146,8 @@ export async function runOutreach(): Promise<OutreachResult> {
           where: { id: lead.id },
           data: { outreachAt: new Date(), outreachStatus: "sent" },
         });
+        // WhatsApp-Erstanschreiben = Kontaktversuch (Zeit bis Erstkontakt).
+        await recordLeadProgress(lead.id, "contact_attempt");
         result.sent++;
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);

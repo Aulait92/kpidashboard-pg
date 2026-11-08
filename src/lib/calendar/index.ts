@@ -25,6 +25,7 @@ import {
   eventSummary,
 } from "@/lib/whatsapp/event-text";
 import { sendLeadEmail } from "@/lib/calendar/lead-email";
+import { recordLeadProgress } from "@/lib/lead-progress";
 import { loadConnection, type Busy, type CreatedEvent, type NewEvent } from "@/lib/calendar/tokens";
 
 export type { CalendarProvider } from "@/lib/calendar/tokens";
@@ -234,6 +235,10 @@ export async function bookAppointment(opts: {
       manageToken,
     },
   });
+  // CRM mitführen: Termin ⇒ In Beratung, Erstkontakt setzen (DB + Airtable).
+  if (opts.notifyLead !== "rescheduled") {
+    await recordLeadProgress(opts.leadId, "booked");
+  }
   // Lead-Mail (Bestätigung/Verschiebung) — darf die Buchung nie scheitern lassen.
   const notify = opts.notifyLead === undefined ? "booked" : opts.notifyLead;
   if (notify) {
