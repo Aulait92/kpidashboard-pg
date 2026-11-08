@@ -195,6 +195,8 @@ export async function LeadDetailBody({
         </div>
       ) : null}
 
+      {whatsapp ? <WhatsAppBlock leadId={lead.id} /> : null}
+
       {fields ? (
         <>
           <ReadOnlyCard
@@ -388,4 +390,103 @@ function statusTone(status: string): "emerald" | "amber" | "rose" | "blue" | "zi
   if (s === "termin vereinbart" || s.startsWith("angebot")) return "blue";
   if (s === "erreicht" || s === "qualifiziert") return "amber";
   return "zinc";
+}
+
+const APPT_STATUS: Record<string, { label: string; cls: string }> = {
+  booked: { label: "gebucht", cls: "bg-blue-100 text-blue-800" },
+  completed: { label: "stattgefunden", cls: "bg-emerald-100 text-emerald-800" },
+  cancelled: { label: "abgesagt", cls: "bg-rose-100 text-rose-800" },
+  no_show: { label: "nicht erschienen", cls: "bg-amber-100 text-amber-800" },
+};
+
+/** Termine + WhatsApp-Verlauf zum Lead (nur WhatsApp-Kunden). */
+async function WhatsAppBlock({ leadId }: { leadId: string }) {
+  const [conv, appts] = await Promise.all([
+    prisma.conversation.findFirst({
+      where: { leadId },
+      orderBy: { lastMessageAt: "desc" },
+      select: {
+        id: true,
+        qualificationSummary: true,
+        needsAttention: true,
+        attentionReason: true,
+        lastMessageAt: true,
+        _count: { select: { messages: { where: { direction: "inbound" } } } },
+      },
+    }),
+    prisma.appointment.findMany({
+      where: { leadId },
+      orderBy: { startsAt: "desc" },
+      take: 5,
+      select: { id: true, startsAt: true, mode: true, status: true, meetUrl: true, manageToken: true },
+    }),
+  ]);
+  if (!conv && appts.length === 0) return null;
+  const fmt = (d: Date) =>
+    new Intl.DateTimeFormat("de-DE", {
+      timeZone: "Europe/Berlin",
+      weekday: "short",
+      day: "numeric",
+      month: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(d);
+  return (
+    <div className="mb-6 overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--border)] bg-[color:var(--brand-soft)]/30 px-5 py-3">
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">
+          Termin &amp; WhatsApp
+        </div>
+        {conv ? (
+          <a href={`/buyer/chats?c=${conv.id}`} className="text-sm font-semibold text-[color:var(--brand)] hover:underline">
+            💬 Chat öffnen{conv._count.messages > 0 ? ` (${conv._count.messages} Antworten)` : ""} →
+          </a>
+        ) : null}
+      </div>
+      <div className="space-y-3 px-5 py-4 text-sm">
+        {conv?.needsAttention ? (
+          <div className="rounded-lg bg-rose-50 px-3 py-2 text-rose-900 ring-1 ring-rose-200">
+            <b>Braucht dich:</b> {conv.attentionReason ?? "Bitte beim Lead melden."}
+          </div>
+        ) : null}
+        {appts.length === 0 ? (
+          <p className="text-[color:var(--muted)]">Noch kein Termin.</p>
+        ) : (
+          <ul className="space-y-1.5">
+            {appts.map((a) => {
+              const st = APPT_STATUS[a.status] ?? { label: a.status, cls: "bg-zinc-100 text-zinc-700" };
+              return (
+                <li key={a.id} className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold">📅 {fmt(a.startsAt)} Uhr</span>
+                  <span className="text-[color:var(--muted)]">{a.mode === "video" ? "Videocall" : "Telefonat"}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${st.cls}`}>{st.label}</span>
+                  {a.status === "booked" && a.meetUrl ? (
+                    <a href={a.meetUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-[color:var(--brand)] underline">
+                      Video-Link
+                    </a>
+                  ) : null}
+                  {a.status === "booked" && a.manageToken ? (
+                    <a
+                      href={`/book/manage/${a.manageToken}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs font-semibold text-[color:var(--brand)] underline"
+                    >
+                      Verschieben / absagen
+                    </a>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        {conv?.qualificationSummary ? (
+          <p className="text-[color:var(--foreground)]">
+            <span className="font-semibold">Zusammenfassung des Assistenten: </span>
+            {conv.qualificationSummary}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
 }

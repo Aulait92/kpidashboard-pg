@@ -33,6 +33,7 @@ type SearchParams = Promise<{
   range?: string;
   from?: string;
   to?: string;
+  q?: string;
 }>;
 
 export const dynamic = "force-dynamic";
@@ -116,6 +117,8 @@ export default async function BuyerLeadsPage({
           <LeadsBody
             customerId={session.customerId}
             range={range}
+            q={(sp.q ?? "").trim()}
+            rangeParams={{ range: sp.range, from: sp.from, to: sp.to }}
           />
         </Suspense>
       </main>
@@ -126,14 +129,28 @@ export default async function BuyerLeadsPage({
 async function LeadsBody({
   customerId,
   range,
+  q,
+  rangeParams,
 }: {
   customerId: string;
   range: { from: Date; to: Date };
+  q: string;
+  rangeParams: { range?: string; from?: string; to?: string };
 }) {
+  const qDigits = q.replace(/\D/g, "");
   const leadRows = await prisma.lead.findMany({
     where: {
       customerId,
-      createdAt: { gte: range.from, lte: range.to },
+      // Bei einer Suche über alle Zeiträume (Rückrufer sind oft älter).
+      ...(q
+        ? {
+            OR: [
+              { name: { contains: q, mode: "insensitive" as const } },
+              { email: { contains: q, mode: "insensitive" as const } },
+              ...(qDigits.length >= 3 ? [{ phone: { contains: qDigits } }] : []),
+            ],
+          }
+        : { createdAt: { gte: range.from, lte: range.to } }),
     },
     orderBy: { createdAt: "desc" },
     take: 200,
@@ -209,8 +226,24 @@ async function LeadsBody({
 
   return (
     <div className="mt-6 space-y-6">
-      {whatsapp ? <TodayPanel customerId={customerId} /> : null}
-      {whatsapp ? <CallbackCard callbacks={callbacks} bookingSlug={bookingSlug} /> : null}
+      <form action="/buyer/leads" className="flex gap-2">
+        {Object.entries(rangeParams).map(([k, v]) =>
+          v ? <input key={k} type="hidden" name={k} value={v} /> : null,
+        )}
+        <input
+          name="q"
+          defaultValue={q}
+          placeholder="Lead suchen: Name, Telefonnummer oder E-Mail"
+          className="min-w-0 flex-1 rounded-xl border border-[color:var(--border)] bg-white px-4 py-2.5 text-sm focus:border-[color:var(--brand)] focus:outline-none"
+        />
+        {q ? (
+          <a href="/buyer/leads" className="rounded-xl border border-[color:var(--border)] bg-white px-4 py-2.5 text-sm">
+            ✕
+          </a>
+        ) : null}
+      </form>
+      {whatsapp && !q ? <TodayPanel customerId={customerId} /> : null}
+      {whatsapp && !q ? <CallbackCard callbacks={callbacks} bookingSlug={bookingSlug} /> : null}
       <BuyerLeadsTable
         leads={leads}
         statusLabels={whatsapp ? WHATSAPP_STATUS_LABELS : {}}

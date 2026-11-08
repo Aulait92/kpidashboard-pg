@@ -148,6 +148,11 @@ export function KanbanBoard({
     setDragLeadId(null);
     setDragOverCol(null);
     if (!leadId) return;
+    moveLead(leadId, targetCol);
+  }
+
+  // Gemeinsam für Drag & Drop und das Status-Menü auf der Karte (Handy).
+  function moveLead(leadId: string, targetCol: ColumnDef) {
     const lead = leads.find((l) => l.id === leadId);
     if (!lead) return;
 
@@ -238,6 +243,9 @@ export function KanbanBoard({
                     if (didDrag.current) return;
                     router.push(`/buyer/leads/${lead.id}?from=kanban`);
                   }}
+                  columns={COLUMNS}
+                  currentKey={col.key}
+                  onMove={(target) => moveLead(lead.id, target)}
                 />
               ))}
             </KanbanColumn>
@@ -432,6 +440,9 @@ function KanbanCard({
   onDragStart,
   onDragEnd,
   onClick,
+  columns,
+  currentKey,
+  onMove,
 }: {
   lead: KanbanLead;
   subStatus: string | null;
@@ -440,6 +451,10 @@ function KanbanCard({
   onDragStart: (e: React.DragEvent) => void;
   onDragEnd: () => void;
   onClick: () => void;
+  /** Status-Menü (vor allem fürs Handy, wo Drag & Drop hakelig ist). */
+  columns?: ColumnDef[];
+  currentKey?: string;
+  onMove?: (target: ColumnDef) => void;
 }) {
   return (
     <div
@@ -476,6 +491,24 @@ function KanbanCard({
         <div className="mt-1.5 inline-flex rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-emerald-800">
           {formatEUR(lead.closeValue)}
         </div>
+      ) : null}
+      {columns && onMove ? (
+        <select
+          aria-label="Status ändern"
+          value={currentKey}
+          onClick={(e) => e.stopPropagation()}
+          onChange={(e) => {
+            const target = columns.find((c) => c.key === e.target.value);
+            if (target && target.key !== currentKey) onMove(target);
+          }}
+          className="mt-2 w-full rounded-md border border-[color:var(--border)] bg-[color:var(--background)] px-2 py-1.5 text-xs lg:hidden"
+        >
+          {columns.map((c) => (
+            <option key={c.key} value={c.key}>
+              → {c.label}
+            </option>
+          ))}
+        </select>
       ) : null}
     </div>
   );
