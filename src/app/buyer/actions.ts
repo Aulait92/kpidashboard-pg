@@ -17,6 +17,13 @@ import {
 } from "@/lib/products";
 import { sendToAdmins } from "@/lib/push";
 
+// Admin-Vorschau („Als Kunde ansehen") ist bewusst schreibgeschützt.
+function previewError(session: { role: string } | null): string {
+  return session?.role === "ADMIN"
+    ? "In der Vorschau sind Änderungen deaktiviert."
+    : "Nicht eingeloggt.";
+}
+
 export type CancelLeadState = {
   ok?: boolean;
   error?: string;
@@ -37,7 +44,7 @@ export async function cancelLeadAction(
 ): Promise<CancelLeadState> {
   const session = await getCurrentSession();
   if (!session || session.role !== "BUYER" || !session.customerId) {
-    return { error: "Nicht eingeloggt." };
+    return { error: previewError(session) };
   }
 
   const leadId = String(formData.get("leadId") ?? "");
@@ -161,7 +168,7 @@ export async function setLeadStatusAction(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const session = await getCurrentSession();
   if (!session || session.role !== "BUYER" || !session.customerId) {
-    return { ok: false, error: "Nicht eingeloggt." };
+    return { ok: false, error: previewError(session) };
   }
   if (!isValidLeadStatus(status)) {
     return { ok: false, error: `Ungültiger Status: ${status}` };
@@ -222,7 +229,7 @@ export async function updateLeadDetailsAction(
 ): Promise<UpdateLeadState> {
   const session = await getCurrentSession();
   if (!session || session.role !== "BUYER" || !session.customerId) {
-    return { error: "Nicht eingeloggt." };
+    return { error: previewError(session) };
   }
 
   const leadId = String(formData.get("leadId") ?? "");

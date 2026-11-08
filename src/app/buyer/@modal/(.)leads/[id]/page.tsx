@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { LeadDetailBody } from "@/components/lead-detail-body";
 import { LeadDetailModalShell } from "@/components/lead-detail-modal-shell";
-import { getCurrentSession } from "@/lib/auth";
+import { getBuyerContext } from "@/lib/buyer-context";
 
 // Intercepting Route für ALLE Buyer-Tabs (KPIs / Leads / Pipeline). (.)
 // matched /buyer/leads/[id] auf der /buyer-Ebene. Solange die Navigation
@@ -16,8 +16,8 @@ export default async function BuyerLeadModal({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await getCurrentSession();
-  if (!session || session.role !== "BUYER" || !session.customerId) {
+  const session = await getBuyerContext();
+  if (!session) {
     redirect("/login");
   }
   const { id } = await params;

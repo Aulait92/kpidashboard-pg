@@ -11,7 +11,7 @@ import {
 import { LiveUpdated } from "@/components/live-updated";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { logoutAction } from "@/app/login/actions";
-import { getCurrentSession } from "@/lib/auth";
+import { getBuyerContext } from "@/lib/buyer-context";
 import { parseRangeFromSearchParams } from "@/lib/date-ranges";
 import { formatDate } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -33,8 +33,8 @@ export default async function BuyerKanbanPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const session = await getCurrentSession();
-  if (!session || session.role !== "BUYER" || !session.customerId) {
+  const session = await getBuyerContext();
+  if (!session) {
     redirect("/login");
   }
 

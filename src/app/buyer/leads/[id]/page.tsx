@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { LeadDetailBody } from "@/components/lead-detail-body";
-import { getCurrentSession } from "@/lib/auth";
+import { getBuyerContext } from "@/lib/buyer-context";
 
 export const dynamic = "force-dynamic";
 
@@ -17,8 +17,8 @@ export default async function LeadDetailPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ from?: string }>;
 }) {
-  const session = await getCurrentSession();
-  if (!session || session.role !== "BUYER" || !session.customerId) {
+  const session = await getBuyerContext();
+  if (!session) {
     redirect("/login");
   }
 
