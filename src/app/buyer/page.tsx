@@ -11,7 +11,7 @@ import { MonthlyForecast } from "@/components/monthly-forecast";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { SpeedToLeadCard } from "@/components/speed-to-lead-card";
 import { logoutAction } from "@/app/login/actions";
-import { getCurrentSession } from "@/lib/auth";
+import { getBuyerContext } from "@/lib/buyer-context";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
 import { computeMonthlyForecast } from "@/lib/forecast";
 import {
@@ -47,8 +47,8 @@ export default async function BuyerPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const session = await getCurrentSession();
-  if (!session || session.role !== "BUYER" || !session.customerId) {
+  const session = await getBuyerContext();
+  if (!session) {
     redirect("/login");
   }
 

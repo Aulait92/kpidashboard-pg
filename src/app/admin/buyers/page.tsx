@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { startPreviewAction } from "@/app/buyer/preview-actions";
 import { redirect } from "next/navigation";
 import { AdminTabs } from "@/components/admin-tabs";
 import { getCurrentSession } from "@/lib/auth";
@@ -63,6 +64,37 @@ export default async function AdminBuyersPage() {
 
       <AdminTabs />
 
+      <section className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/40 p-5">
+        <h2 className="text-base font-semibold">👁 Als Kunde ansehen</h2>
+        <p className="mt-1 text-xs text-[color:var(--muted)]">
+          Zeigt das Kunden-CRM genau so, wie der Kunde es sieht – nur lesend,
+          Änderungen sind in der Vorschau deaktiviert.
+        </p>
+        <form action={startPreviewAction} className="mt-3 flex flex-wrap gap-2">
+          <select
+            name="customerId"
+            required
+            defaultValue=""
+            className="min-w-[240px] flex-1 rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm"
+          >
+            <option value="" disabled>
+              Kunde wählen …
+            </option>
+            {customers.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          <button
+            type="submit"
+            className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-amber-950 transition hover:bg-amber-400 active:scale-[0.97]"
+          >
+            Vorschau öffnen
+          </button>
+        </form>
+      </section>
+
       <section className="mt-6 rounded-2xl border border-[color:var(--border)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
         <h2 className="text-base font-semibold">Neuen Account anlegen</h2>
         <CreateBuyerForm customers={customers} />
@@ -118,6 +150,17 @@ export default async function AdminBuyersPage() {
                     </td>
                     <td className="py-2 text-right">
                       <div className="flex items-center justify-end gap-4">
+                        {b.customer ? (
+                          <form action={startPreviewAction}>
+                            <input type="hidden" name="customerId" value={b.customer.id} />
+                            <button
+                              type="submit"
+                              className="text-xs font-medium text-amber-700 hover:underline"
+                            >
+                              Ansehen
+                            </button>
+                          </form>
+                        ) : null}
                         <ResetPasswordButton userId={b.id} email={b.email} />
                         <DeleteBuyerButton userId={b.id} email={b.email} />
                       </div>
