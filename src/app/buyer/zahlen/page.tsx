@@ -205,7 +205,6 @@ async function BuyerDashboardBody({
     <div className="mt-6 space-y-6">
       <FunnelHero kpis={k} />
 
-      <MonthlyForecast forecast={forecast} />
 
       <section>
         <div className="mb-3">
@@ -341,6 +340,8 @@ async function BuyerDashboardBody({
           />
         </div>
       </section>
+
+      <MonthlyForecast forecast={forecast} />
 
       {/* BuyerComparison/Leaderboard temporär ausgeblendet —
           wird wieder eingebaut, sobald der Vergleich freigegeben ist. */}

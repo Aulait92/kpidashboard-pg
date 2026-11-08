@@ -3,6 +3,8 @@ import { CalendarClock, MessageCircle } from "lucide-react";
 import { redirect } from "next/navigation";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { PageHeader } from "@/components/buyer-shell";
+import { buttonClass } from "@/components/ui";
+import { chooseFollowup } from "@/lib/whatsapp/followup";
 import { SubmitButton } from "@/components/submit-button";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { formatDateTime, formatPhone } from "@/lib/format";
@@ -30,7 +32,8 @@ const ERRORS: Record<string, string> = {
   send: "Nachricht konnte nicht gesendet werden. Bitte später erneut versuchen.",
   preview: "In der Vorschau sind Änderungen deaktiviert.",
   template:
-    "Für „Nachfassen\" ist noch keine freigegebene WhatsApp-Vorlage hinterlegt (Einstellungen → Vorlagen).",
+    "Für diese Nachfass-Situation ist noch keine freigegebene WhatsApp-Vorlage hinterlegt.",
+  followup_blocked: "Nachfassen ist in dieser Situation nicht sinnvoll – siehe Hinweis unten.",
 };
 
 const TZ = "Europe/Berlin";
@@ -176,6 +179,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
   const formAnswers = parseFormAnswers(active?.lead?.formData);
   const windowOpen =
     !!active?.windowExpiresAt && active.windowExpiresAt.getTime() > Date.now();
+  const followup = active && !windowOpen ? await chooseFollowup(active.id) : null;
 
   const leadInfo = active ? (
     <div className="space-y-5 text-sm">
@@ -503,22 +507,39 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                   </div>
                 </form>
               ) : (
-                <form
-                  action={followupBuyerAction}
-                  className="flex flex-wrap items-center justify-between gap-2 border-t border-[color:var(--border)] bg-white px-4 py-3"
-                >
-                  <input type="hidden" name="conversationId" value={active.id} />
+                <div className="border-t border-[color:var(--border)] bg-white px-4 py-3">
                   <p className="text-xs text-[color:var(--muted)]">
-                    Letzte Nachricht des Leads ist über 24 h her – WhatsApp erlaubt nur eine
+                    Letzte Nachricht des Leads ist über 24 h her – WhatsApp erlaubt jetzt nur eine
                     freigegebene Vorlage. Anrufen oder nachfassen:
                   </p>
-                  <SubmitButton
-                    pendingLabel="Sendet …"
-                    className="rounded-lg bg-[color:var(--brand)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--brand-dark)]"
-                  >
-                    Nachfassen senden
-                  </SubmitButton>
-                </form>
+                  {followup?.kind === "blocked" ? (
+                    <p className="mt-2 rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2 text-sm">
+                      {followup.reason}
+                    </p>
+                  ) : followup?.kind === "ok" ? (
+                    <form action={followupBuyerAction} className="mt-2 space-y-2">
+                      <input type="hidden" name="conversationId" value={active.id} />
+                      <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken)] px-3 py-2">
+                        <div className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
+                          Vorschau · {followup.label}
+                        </div>
+                        <p className="mt-1 whitespace-pre-wrap text-sm">{followup.preview}</p>
+                      </div>
+                      {followup.approved ? (
+                        <div className="flex justify-end">
+                          <SubmitButton pendingLabel="Sendet …" className={buttonClass("primary", "md")}>
+                            Nachfassen senden
+                          </SubmitButton>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-amber-700">
+                          Diese Vorlage ist noch nicht bei WhatsApp freigegeben – bitte dein Team
+                          kontaktieren. Bis dahin: anrufen.
+                        </p>
+                      )}
+                    </form>
+                  ) : null}
+                </div>
               )}
             </>
           )}

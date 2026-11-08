@@ -14,13 +14,21 @@ import { decryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
 import { sendTemplate, sendText } from "@/lib/whatsapp/dialog360";
 
-export type NoticePurpose = "outreach" | "booking_confirmation" | "reminder" | "followup";
+export type NoticePurpose =
+  | "outreach"
+  | "booking_confirmation"
+  | "reminder"
+  | "followup"
+  | "followup_offer"
+  | "followup_noshow";
 
 export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   outreach: "Erstanschreiben",
   booking_confirmation: "Buchungsbestätigung",
   reminder: "Termin-Erinnerung",
-  followup: "Nachfassen (Chat > 24 h still)",
+  followup: "Nachfassen allgemein (Chat > 24 h still)",
+  followup_offer: "Nachfassen nach Angebot",
+  followup_noshow: "Nachfassen nach verpasstem Termin",
 };
 
 export const PURPOSE_PARAMS: Record<NoticePurpose, string[]> = {
@@ -28,6 +36,22 @@ export const PURPOSE_PARAMS: Record<NoticePurpose, string[]> = {
   booking_confirmation: ["Vorname", "Datum/Uhrzeit", "Art", "Link/Hinweis"],
   reminder: ["Vorname", "Datum/Uhrzeit", "Art", "Link/Hinweis"],
   followup: ["Vorname"],
+  followup_offer: ["Vorname", "Thema (z. B. Hausrat, Haftpflicht)"],
+  followup_noshow: ["Vorname"],
+};
+
+/** Vorschläge für die bei Meta einzureichenden Texte ([Berater] = Name). */
+export const SUGGESTED_TEMPLATE_TEXT: Record<NoticePurpose, string> = {
+  outreach:
+    "Hallo {{1}}, danke für deine Anfrage! Hier ist der digitale Assistent von [Berater]. Hast du kurz Zeit für zwei Fragen, damit wir dir ein passendes Angebot machen können?",
+  booking_confirmation: "Hallo {{1}}, dein Termin ist bestätigt: {{2}} ({{3}}). {{4}} Bis dann!",
+  reminder: "Hallo {{1}}, kurze Erinnerung an deinen Termin: {{2}} ({{3}}). {{4}} Bis dann!",
+  followup:
+    "Hallo {{1}}, hier ist nochmal der digitale Assistent von [Berater]. Passt es dir diese Woche noch für ein kurzes Gespräch? Antworte einfach hier, dann schlage ich dir Zeiten vor.",
+  followup_offer:
+    "Hallo {{1}}, hier ist der digitale Assistent von [Berater]. Konntest du dir das Angebot zu {{2}} schon anschauen? Wenn du Fragen hast oder etwas anpassen möchtest, antworte einfach hier.",
+  followup_noshow:
+    "Hallo {{1}}, schade, dass es mit unserem Termin nicht geklappt hat. Hier ist der digitale Assistent von [Berater] – sollen wir einen neuen Termin finden? Antworte einfach hier.",
 };
 
 export class NoTemplateError extends Error {

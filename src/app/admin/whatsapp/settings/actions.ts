@@ -13,7 +13,14 @@ async function requireAdmin() {
   if (!session || session.role !== "ADMIN") throw new Error("Nicht erlaubt.");
 }
 
-const PURPOSES = new Set(["outreach", "booking_confirmation", "reminder", "followup"]);
+const PURPOSES = new Set([
+  "outreach",
+  "booking_confirmation",
+  "reminder",
+  "followup",
+  "followup_offer",
+  "followup_noshow",
+]);
 
 /** Erstanschreiben je Kunde an/aus + Wartezeit. */
 export async function saveOutreachSettingsAction(formData: FormData): Promise<void> {

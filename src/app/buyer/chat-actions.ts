@@ -124,22 +124,28 @@ export async function followupBuyerAction(formData: FormData): Promise<void> {
     select: { id: true, contactPhone: true, contactName: true, leadId: true },
   });
   if (!conv) redirect("/buyer/chats");
-  const { firstNameOf, NoTemplateError, sendWhatsAppNotice } = await import("@/lib/whatsapp/templates");
-  const params = [firstNameOf(conv.contactName)];
+  const { NoTemplateError, sendWhatsAppNotice } = await import("@/lib/whatsapp/templates");
+  const { chooseFollowup } = await import("@/lib/whatsapp/followup");
+  // Zweck/Vorlage serverseitig aus der Situation ableiten (nicht vom Client).
+  const choice = await chooseFollowup(conv.id);
   let err: string | undefined;
-  try {
-    await sendWhatsAppNotice({
-      customerId: session.customerId,
-      to: conv.contactPhone,
-      purpose: "followup",
-      params,
-      text: `Hallo ${params[0]}, passt es dir diese Woche noch für ein kurzes Gespräch? Antworte einfach hier.`,
-      leadId: conv.leadId,
-      contactName: conv.contactName,
-    });
-  } catch (e) {
-    console.error("[buyer followup]", e);
-    err = e instanceof NoTemplateError ? "template" : "send";
+  if (choice.kind === "blocked") {
+    err = "followup_blocked";
+  } else {
+    try {
+      await sendWhatsAppNotice({
+        customerId: session.customerId,
+        to: conv.contactPhone,
+        purpose: choice.purpose,
+        params: choice.params,
+        text: choice.preview,
+        leadId: conv.leadId,
+        contactName: conv.contactName,
+      });
+    } catch (e) {
+      console.error("[buyer followup]", e);
+      err = e instanceof NoTemplateError ? "template" : "send";
+    }
   }
   revalidatePath("/buyer/chats");
   redirect(chatUrl(conv.id, err));

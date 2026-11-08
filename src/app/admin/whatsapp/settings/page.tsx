@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import {
   PURPOSE_LABELS,
   PURPOSE_PARAMS,
+  SUGGESTED_TEMPLATE_TEXT,
   type NoticePurpose,
 } from "@/lib/whatsapp/templates";
 import {
@@ -27,16 +28,7 @@ export const metadata = { title: "WhatsApp-Einstellungen | KPI-Dashboard" };
 const PURPOSES = Object.keys(PURPOSE_LABELS) as NoticePurpose[];
 
 // Vorschläge für die bei 360dialog/Meta einzureichenden Vorlagentexte.
-const SUGGESTED: Record<NoticePurpose, string> = {
-  outreach:
-    "Hallo {{1}}, danke für deine Anfrage! Hier ist der digitale Assistent von [Berater]. Hast du kurz Zeit für zwei Fragen, damit wir dir ein passendes Angebot machen können?",
-  booking_confirmation:
-    "Hallo {{1}}, dein Termin ist bestätigt: {{2}} ({{3}}). {{4}} Bis dann!",
-  reminder:
-    "Hallo {{1}}, kurze Erinnerung an deinen Termin: {{2}} ({{3}}). {{4}} Bis dann!",
-  followup:
-    "Hallo {{1}}, hier ist nochmal der digitale Assistent von [Berater]. Passt es dir diese Woche noch für ein kurzes Gespräch? Antworte einfach hier, dann schlage ich dir Zeiten vor.",
-};
+const SUGGESTED = SUGGESTED_TEMPLATE_TEXT;
 
 const input =
   "w-full rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-sm focus:border-[color:var(--brand)] focus:outline-none";
