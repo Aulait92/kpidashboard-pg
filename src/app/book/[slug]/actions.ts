@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { buildEventDescription, eventSummary } from "@/lib/whatsapp/event-text";
 import { bookAppointment, SlotBusyError } from "@/lib/whatsapp/google-calendar";
 import { linkLeadToConversation } from "@/lib/whatsapp/lead-link";
+import { sendBookingConfirmation } from "@/lib/whatsapp/reminders";
 import { EMAIL_RE, normalizePhone } from "@/lib/whatsapp/phone";
 
 // Öffentliche Buchung (Buchungsseite / Meta-Leadformular). Kein Login — daher
@@ -73,9 +74,10 @@ export async function bookPublicAction(
   );
   const linked = await prisma.conversation.findUnique({
     where: { id: conversation.id },
-    select: { lead: { select: { source: true } } },
+    select: { leadId: true, lead: { select: { source: true } } },
   });
   const product = linked?.lead?.source ?? null;
+  const leadId = linked?.leadId ?? null;
 
   // Pro Lead nur ein offener Termin.
   const existing = await prisma.appointment.findFirst({
@@ -92,6 +94,7 @@ export async function bookPublicAction(
   try {
     const res = await bookAppointment({
       customerId,
+      leadId,
       conversationId: conversation.id,
       start,
       mode,
@@ -118,6 +121,18 @@ export async function bookPublicAction(
         sentBy: "lead",
       },
     });
+    // WhatsApp-Bestätigung (Freitext im 24h-Fenster, sonst freigegebene
+    // Vorlage). Fehler dürfen die Buchung nicht scheitern lassen — die
+    // Google-Einladung per E-Mail ist ohnehin raus.
+    await sendBookingConfirmation({
+      customerId,
+      to: phone!,
+      name,
+      leadId,
+      startsAt: new Date(res.start),
+      mode,
+      meetUrl: res.meetUrl,
+    }).catch((e) => console.error("[booking page confirmation]", e));
   } catch (err) {
     if (err instanceof SlotBusyError) fail("taken");
     console.error("[booking page]", err);

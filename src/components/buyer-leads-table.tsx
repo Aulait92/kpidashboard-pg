@@ -23,7 +23,22 @@ export type BuyerLeadRow = {
   closedAt: Date | null;
   revenue: number;
   stornoOptions: StornogrundOption[];
+  /** Nur bei Kunden mit WhatsApp-Assistent: nächster gebuchter Termin. */
+  appointment?: { startsAt: Date; mode: string } | null;
+  /** Nur bei Kunden mit WhatsApp-Assistent: Lead sollte angerufen werden. */
+  callback?: boolean;
 };
+
+function formatAppt(d: Date): string {
+  return new Intl.DateTimeFormat("de-DE", {
+    weekday: "short",
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Berlin",
+  }).format(d);
+}
 
 function statusStyle(status: string | null, closed: boolean) {
   if (closed) return "bg-emerald-50 text-emerald-700";
@@ -121,6 +136,16 @@ export function BuyerLeadsTable({ leads }: { leads: BuyerLeadRow[] }) {
                             ? "Abschluss"
                             : (l.status ?? "Offen")}
                       </span>
+                      {l.appointment ? (
+                        <div className="mt-1 text-[11px] font-medium text-blue-700">
+                          📅 {formatAppt(new Date(l.appointment.startsAt))} Uhr ·{" "}
+                          {l.appointment.mode === "video" ? "Video" : "Telefon"}
+                        </div>
+                      ) : l.callback ? (
+                        <div className="mt-1 text-[11px] font-semibold text-amber-700">
+                          📞 Rückruf nötig
+                        </div>
+                      ) : null}
                     </td>
                     <td className="px-3 py-2.5 text-right tabular-nums">
                       {l.revenue > 0 ? formatEUR(l.revenue) : "–"}

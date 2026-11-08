@@ -1,0 +1,67 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { getCurrentSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+async function requireAdmin() {
+  const session = await getCurrentSession();
+  if (!session || session.role !== "ADMIN") throw new Error("Nicht erlaubt.");
+}
+
+const PURPOSES = new Set(["outreach", "booking_confirmation", "reminder"]);
+
+/** Erstanschreiben je Kunde an/aus + Wartezeit. */
+export async function saveOutreachSettingsAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const customerId = String(formData.get("customerId") ?? "");
+  if (!customerId) return;
+  const enabled = formData.get("outreachEnabled") === "on";
+  const delay = Math.min(
+    24 * 60,
+    Math.max(0, Number.parseInt(String(formData.get("outreachDelayMin") ?? "10"), 10) || 10),
+  );
+  await prisma.agentConfig.upsert({
+    where: { customerId },
+    create: { customerId, outreachEnabled: enabled, outreachDelayMin: delay },
+    update: { outreachEnabled: enabled, outreachDelayMin: delay },
+  });
+  revalidatePath("/admin/whatsapp/settings");
+}
+
+/**
+ * Vorlage hinterlegen. Die Vorlage muss bei 360dialog/Meta mit exakt diesem
+ * Namen, dieser Sprache und diesem Text angelegt und freigegeben sein.
+ */
+export async function saveTemplateAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const customerId = String(formData.get("customerId") ?? "");
+  const purpose = String(formData.get("purpose") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const language = String(formData.get("language") ?? "de").trim() || "de";
+  const body = String(formData.get("body") ?? "").trim();
+  const status = formData.get("approved") === "on" ? "approved" : "pending";
+  if (!customerId || !PURPOSES.has(purpose) || !name || !body) return;
+  await prisma.messageTemplate.upsert({
+    where: { customerId_name_language: { customerId, name, language } },
+    create: {
+      customerId,
+      name,
+      language,
+      purpose,
+      category: purpose === "outreach" ? "marketing" : "utility",
+      status,
+      body,
+    },
+    update: { purpose, status, body },
+  });
+  revalidatePath("/admin/whatsapp/settings");
+}
+
+export async function deleteTemplateAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+  await prisma.messageTemplate.delete({ where: { id } }).catch(() => {});
+  revalidatePath("/admin/whatsapp/settings");
+}

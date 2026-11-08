@@ -171,9 +171,17 @@ export default async function AdminWhatsAppPage({
 
   return (
     <main className="mx-auto w-full max-w-[1500px] flex-1 px-4 py-6 sm:px-6">
-      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-        WhatsApp-Inbox
-      </h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          WhatsApp-Inbox
+        </h1>
+        <Link
+          href="/admin/whatsapp/settings"
+          className="text-sm font-medium text-[color:var(--brand)] hover:underline"
+        >
+          Einstellungen & Vorlagen →
+        </Link>
+      </div>
       <AdminTabs />
 
       {sp.gcal ? (

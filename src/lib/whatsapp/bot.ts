@@ -215,8 +215,17 @@ function toApiMessages(history: HistoryMessage[]): Anthropic.MessageParam[] {
     // interne Einträge (Qualifizierung/Status) überspringen
   }
   // Die Messages-API verlangt, dass die erste Nachricht von "user" stammt.
-  const firstUser = msgs.findIndex((m) => m.role === "user");
-  return firstUser <= 0 ? msgs : msgs.slice(firstUser);
+  // Beginnt der Verlauf mit unserer Erstnachricht (Outreach/Bestätigung),
+  // setzen wir einen kurzen Kontext-Turn davor, statt sie zu verwerfen —
+  // sonst wüsste das Modell nicht, worauf der Lead antwortet.
+  if (msgs[0]?.role === "assistant") {
+    msgs.unshift({
+      role: "user",
+      content:
+        "[Kontext: Der Interessent hat über das Leadformular angefragt. Der folgende Verlauf beginnt mit unserer WhatsApp-Nachricht an ihn.]",
+    });
+  }
+  return msgs;
 }
 
 async function persistInternal(

@@ -1,0 +1,126 @@
+// Termin-Nachrichten per WhatsApp: Erinnerung ~24 h vorher und Bestätigung
+// direkt nach einer Buchung über die Buchungsseite. Beide laufen über
+// sendWhatsAppNotice (Freitext im 24h-Fenster, sonst freigegebene Vorlage).
+
+import { prisma } from "@/lib/prisma";
+import { firstNameOf, sendWhatsAppNotice } from "@/lib/whatsapp/templates";
+
+const LEAD_MS = 24 * 60 * 60 * 1000;
+const TZ = "Europe/Berlin";
+
+export function formatWhenDE(d: Date): string {
+  return `${new Intl.DateTimeFormat("de-DE", {
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: TZ,
+  }).format(d)} Uhr`;
+}
+
+function modeLabel(mode: string): string {
+  return mode === "video" ? "Videocall" : "Telefonat";
+}
+
+function linkOrHint(mode: string, meetUrl: string | null): string {
+  return mode === "video" && meetUrl ? meetUrl : "Wir rufen dich an.";
+}
+
+/** Bestätigung nach Buchung (z. B. über die Buchungsseite). */
+export async function sendBookingConfirmation(opts: {
+  customerId: string;
+  to: string;
+  name: string | null;
+  leadId?: string | null;
+  startsAt: Date;
+  mode: string;
+  meetUrl: string | null;
+}): Promise<void> {
+  const params = [
+    firstNameOf(opts.name),
+    formatWhenDE(opts.startsAt),
+    modeLabel(opts.mode),
+    linkOrHint(opts.mode, opts.meetUrl),
+  ];
+  const text =
+    `Hallo ${params[0]}, dein Termin ist bestätigt: ${params[1]} (${params[2]}). ` +
+    (opts.mode === "video" && opts.meetUrl
+      ? `Hier der Link zum Videocall: ${opts.meetUrl}`
+      : "Wir rufen dich zur vereinbarten Zeit an.") +
+    " Bis dann! 🙂";
+  await sendWhatsAppNotice({
+    customerId: opts.customerId,
+    to: opts.to,
+    purpose: "booking_confirmation",
+    params,
+    text,
+    leadId: opts.leadId ?? null,
+    contactName: opts.name,
+  });
+}
+
+export type ReminderResult = { candidates: number; sent: number; errors: string[] };
+
+/** Erinnerung für gebuchte Termine, die in den nächsten 24 h starten. */
+export async function runReminders(): Promise<ReminderResult> {
+  const now = new Date();
+  const due = await prisma.appointment.findMany({
+    where: {
+      status: "booked",
+      reminderSentAt: null,
+      startsAt: { gt: now, lte: new Date(now.getTime() + LEAD_MS) },
+    },
+    select: {
+      id: true,
+      customerId: true,
+      conversationId: true,
+      leadId: true,
+      mode: true,
+      startsAt: true,
+      meetUrl: true,
+    },
+    take: 100,
+  });
+
+  const result: ReminderResult = { candidates: due.length, sent: 0, errors: [] };
+  for (const appt of due) {
+    if (!appt.conversationId) continue;
+    const conv = await prisma.conversation.findUnique({
+      where: { id: appt.conversationId },
+      select: { contactPhone: true, contactName: true },
+    });
+    if (!conv?.contactPhone) continue;
+
+    const params = [
+      firstNameOf(conv.contactName),
+      formatWhenDE(appt.startsAt),
+      modeLabel(appt.mode),
+      linkOrHint(appt.mode, appt.meetUrl),
+    ];
+    const text =
+      `Kurze Erinnerung an unseren ${params[2]} am ${params[1]}.` +
+      (appt.mode === "video" && appt.meetUrl
+        ? ` Hier der Link: ${appt.meetUrl}`
+        : " Wir rufen dich an.") +
+      " Bis dann! 🙂";
+    try {
+      await sendWhatsAppNotice({
+        customerId: appt.customerId,
+        to: conv.contactPhone,
+        purpose: "reminder",
+        params,
+        text,
+        leadId: appt.leadId,
+      });
+      await prisma.appointment.update({
+        where: { id: appt.id },
+        data: { reminderSentAt: new Date() },
+      });
+      result.sent++;
+    } catch (err) {
+      result.errors.push(`${appt.id}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+  return result;
+}

@@ -265,6 +265,10 @@ model Lead {
   // Snapshot der produktspezifischen Formularangaben (Label/Wert-Liste aus
   // lib/lead-fields) — Kontext für den WhatsApp-Bot.
   formData        Json?
+  // WhatsApp-Erstanschreiben (Outreach-Job): Zeitpunkt + Ergebnis
+  // (sent | skipped_booked | skipped_contact | no_template | failed: …).
+  outreachAt      DateTime?
+  outreachStatus  String?
   // rec-ID des Kunden-Produkt-Bezug-Records, an dem dieser Lead in Airtable
   // hängt. Wird beim Storno gebraucht, um die zugelassenen Stornogründe
   // (Linked-Records vom Bezug zur Stornogründe-Tabelle) nachzuschlagen.
@@ -547,6 +551,10 @@ model AgentConfig {
   knowledge    String   @default("")
   personality  String   @default("")
   active       Boolean  @default(false)
+  // Automatisches WhatsApp-Erstanschreiben neuer Leads ohne Termin. Erst
+  // aktivieren, wenn Einwilligung im Leadformular + freigegebene Vorlage da sind.
+  outreachEnabled  Boolean @default(false)
+  outreachDelayMin Int     @default(10)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -630,6 +638,9 @@ model MessageTemplate {
   customerId String
   name       String
   language   String   @default("de")
+  // Wofür die Vorlage genutzt wird: outreach | booking_confirmation | reminder.
+  // Parameter-Reihenfolge je Zweck siehe lib/whatsapp/templates.ts.
+  purpose    String   @default("")
   category   String   // utility | marketing | authentication
   status     String   @default("pending") // pending | approved | rejected
   body       String

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { LogOut } from "lucide-react";
@@ -16,6 +17,12 @@ import { getCurrentSession } from "@/lib/auth";
 import { parseRangeFromSearchParams } from "@/lib/date-ranges";
 import { formatDate } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { displayProduct } from "@/lib/products";
+import {
+  getCallbackLeads,
+  hasWhatsAppOutreach,
+  type CallbackLead,
+} from "@/lib/whatsapp/outreach";
 
 type SearchParams = Promise<{
   range?: string;
@@ -139,6 +146,30 @@ async function LeadsBody({
   // Dropdown füllt.
   const stornoOptions = await getStornogruendePerLead(leadRows.map((l) => l.id));
 
+  // WhatsApp-Assistent (nur Kunden, bei denen er aktiv ist): gebuchte Termine
+  // und Rückrufliste. Andere Kunden sehen die Tabelle unverändert.
+  const whatsapp = await hasWhatsAppOutreach(customerId);
+  const callbacks = whatsapp ? await getCallbackLeads(customerId) : [];
+  const callbackIds = new Set(callbacks.map((c) => c.id));
+  const appointments = whatsapp
+    ? await prisma.appointment.findMany({
+        where: {
+          customerId,
+          status: "booked",
+          startsAt: { gt: new Date(Date.now() - 2 * 60 * 60 * 1000) },
+          leadId: { in: leadRows.map((l) => l.id) },
+        },
+        orderBy: { startsAt: "asc" },
+        select: { leadId: true, startsAt: true, mode: true },
+      })
+    : [];
+  const apptByLead = new Map<string, { startsAt: Date; mode: string }>();
+  for (const a of appointments) {
+    if (a.leadId && !apptByLead.has(a.leadId)) {
+      apptByLead.set(a.leadId, { startsAt: a.startsAt, mode: a.mode });
+    }
+  }
+
   const leads: BuyerLeadRow[] = leadRows.map((l) => ({
     id: l.id,
     createdAt: l.createdAt,
@@ -150,11 +181,66 @@ async function LeadsBody({
     revenue:
       l.revenues[0]?.amount != null ? Number(l.revenues[0].amount) : 0,
     stornoOptions: stornoOptions.get(l.id) ?? [],
+    appointment: apptByLead.get(l.id) ?? null,
+    callback: callbackIds.has(l.id),
   }));
 
   return (
-    <div className="mt-6">
+    <div className="mt-6 space-y-6">
+      {whatsapp ? <CallbackCard callbacks={callbacks} /> : null}
       <BuyerLeadsTable leads={leads} />
     </div>
+  );
+}
+
+function CallbackCard({ callbacks }: { callbacks: CallbackLead[] }) {
+  return (
+    <section className="overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(217,119,6,0.18)]">
+      <div className="border-b border-amber-100 bg-amber-50/60 px-5 py-4">
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
+          Rückruf nötig
+        </div>
+        <h2 className="mt-0.5 text-lg font-semibold tracking-tight">
+          {callbacks.length === 0
+            ? "Alles erledigt – kein Lead wartet auf deinen Anruf"
+            : `${callbacks.length} ${callbacks.length === 1 ? "Lead wartet" : "Leads warten"} auf deinen Anruf`}
+        </h2>
+        <p className="mt-1 text-xs text-[color:var(--muted)]">
+          Diese Leads haben weder über die Buchungsseite noch im WhatsApp-Chat
+          einen Termin gebucht. Am besten heute noch anrufen.
+        </p>
+      </div>
+      {callbacks.length > 0 ? (
+        <ul className="divide-y divide-[color:var(--border)]">
+          {callbacks.map((c) => (
+            <li
+              key={c.id}
+              className="flex flex-col gap-2 px-5 py-3 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div className="min-w-0">
+                <Link
+                  href={`/buyer/leads/${c.id}?from=leads`}
+                  className="font-semibold hover:text-[color:var(--brand)]"
+                >
+                  {c.name ?? "Unbekannt"}
+                </Link>
+                <div className="text-xs text-[color:var(--muted)]">
+                  {displayProduct(c.source)} · eingegangen {formatDate(c.createdAt)} ·{" "}
+                  <span className="text-amber-700">{c.reason}</span>
+                </div>
+              </div>
+              {c.phone ? (
+                <a
+                  href={`tel:+${c.phone}`}
+                  className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-[color:var(--brand)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-dark)]"
+                >
+                  📞 +{c.phone}
+                </a>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
   );
 }
