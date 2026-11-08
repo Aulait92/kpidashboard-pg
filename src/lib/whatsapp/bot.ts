@@ -6,7 +6,6 @@
 // Default-Modell: claude-opus-5-5 (per ANTHROPIC_MODEL überschreibbar — bei
 // hohem Volumen ist claude-sonnet-5-5 / claude-haiku-5-5 die günstigere Wahl).
 
-import { recordLeadProgress } from "@/lib/lead-progress";
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/prisma";
 import {
@@ -390,10 +389,9 @@ export async function runBotTurn(conversationId: string): Promise<void> {
             qualified: input.qualifiziert === true ? true : undefined,
           },
         });
-        // Verknüpften Lead mitführen: qualifiziert ⇒ in Beratung / erreicht.
-        if (input.qualifiziert === true) {
-          await recordLeadProgress(conversation.leadId, "qualified");
-        }
+        // Kein Statuswechsel bei bloßer Qualifizierung: „In Beratung" zählt
+        // als Termin. Erreicht ergibt sich im KPI aus der Chat-Antwort, der
+        // Termin aus der Buchung (book_appointment → recordLeadProgress).
       } else if (tu.name === "get_available_slots") {
         try {
           const slots: Slot[] = await suggestSlots(conversation.customerId);

@@ -17,7 +17,7 @@ const BOOKED_STATUS = "In Beratung";
 
 export async function recordLeadProgress(
   leadId: string | null | undefined,
-  event: "contact_attempt" | "qualified" | "booked",
+  event: "contact_attempt" | "booked",
 ): Promise<void> {
   if (!leadId) return;
   try {
@@ -39,7 +39,7 @@ export async function recordLeadProgress(
       event === "contact_attempt"
         ? lead.contactAttempts + 1
         : Math.max(1, lead.contactAttempts);
-    // Qualifiziert (Bot) oder Termin gebucht ⇒ In Beratung (= erreicht).
+    // Termin gebucht ⇒ In Beratung (= erreicht + Termin).
     const upgrade =
       event !== "contact_attempt" && UPGRADABLE.has((lead.status ?? "").trim().toLowerCase());
     const reached = upgrade ? true : lead.reached;
