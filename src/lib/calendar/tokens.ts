@@ -91,7 +91,8 @@ export type NewEvent = {
   end: Date;
   summary: string;
   description: string;
-  attendeeEmail: string | null;
+  /** Teilnehmer (Lead, Berater) — der Kalender verschickt Einladungen. */
+  attendeeEmails: string[];
   /** true = Meet/Teams-Link vom Kalender erzeugen lassen. */
   video: boolean;
   /** Ort des Termins, z. B. fester Webex-Link. */

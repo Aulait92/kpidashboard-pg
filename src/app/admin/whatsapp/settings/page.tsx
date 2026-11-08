@@ -53,6 +53,8 @@ export default async function WhatsAppSettingsPage() {
           outreachEnabled: true,
           outreachDelayMin: true,
           videoRoomUrl: true,
+          advisorEmail: true,
+          availabilityIcsUrlEnc: true,
         },
       },
       messageTemplates: {
@@ -142,6 +144,38 @@ export default async function WhatsAppSettingsPage() {
                     defaultValue={c.agentConfig?.videoRoomUrl ?? ""}
                     className={`${input} mt-1`}
                   />
+                </label>
+                <label className="min-w-[260px] flex-1 text-xs text-[color:var(--muted)]">
+                  Berater-E-Mail (bekommt jeden Termin als Einladung, z. B. Allianz-Adresse)
+                  <input
+                    name="advisorEmail"
+                    type="email"
+                    placeholder="vorname.nachname@allianz.de"
+                    defaultValue={c.agentConfig?.advisorEmail ?? ""}
+                    className={`${input} mt-1`}
+                  />
+                </label>
+                <label className="min-w-[260px] flex-1 text-xs text-[color:var(--muted)]">
+                  Veröffentlichter Kalender (ICS-Link, nur Frei/Gebucht){" "}
+                  {c.agentConfig?.availabilityIcsUrlEnc ? (
+                    <span className="font-semibold text-emerald-700">· hinterlegt ✓</span>
+                  ) : null}
+                  <input
+                    name="availabilityIcsUrl"
+                    type="password"
+                    autoComplete="off"
+                    placeholder={
+                      c.agentConfig?.availabilityIcsUrlEnc
+                        ? "leer lassen = unverändert"
+                        : "https://outlook.office365.com/owa/calendar/…/calendar.ics"
+                    }
+                    className={`${input} mt-1`}
+                  />
+                  {c.agentConfig?.availabilityIcsUrlEnc ? (
+                    <span className="mt-1 flex items-center gap-1.5">
+                      <input type="checkbox" name="removeIcs" /> Link entfernen
+                    </span>
+                  ) : null}
                 </label>
                 <SubmitButton
                   pendingLabel="Speichert …"

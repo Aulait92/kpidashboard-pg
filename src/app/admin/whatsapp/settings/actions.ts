@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentSession } from "@/lib/auth";
+import { encryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
 
 async function requireAdmin() {
@@ -24,10 +25,28 @@ export async function saveOutreachSettingsAction(formData: FormData): Promise<vo
   const rawRoom = String(formData.get("videoRoomUrl") ?? "").trim();
   // Nur https-Links zulassen (landen in Einladungen + WhatsApp).
   const videoRoomUrl = /^https:\/\/\S+$/i.test(rawRoom) ? rawRoom : null;
+  const rawAdvisor = String(formData.get("advisorEmail") ?? "").trim().toLowerCase();
+  const advisorEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawAdvisor) ? rawAdvisor : null;
+  // ICS-Link: leer = unverändert lassen, „entfernen" = löschen, sonst neu
+  // verschlüsselt speichern (wird nie wieder im Klartext angezeigt).
+  const rawIcs = String(formData.get("availabilityIcsUrl") ?? "").trim();
+  const removeIcs = formData.get("removeIcs") === "on";
+  const icsUpdate = removeIcs
+    ? { availabilityIcsUrlEnc: null }
+    : /^(https|webcal):\/\/\S+$/i.test(rawIcs)
+      ? { availabilityIcsUrlEnc: encryptSecret(rawIcs) }
+      : {};
+  const data = {
+    outreachEnabled: enabled,
+    outreachDelayMin: delay,
+    videoRoomUrl,
+    advisorEmail,
+    ...icsUpdate,
+  };
   await prisma.agentConfig.upsert({
     where: { customerId },
-    create: { customerId, outreachEnabled: enabled, outreachDelayMin: delay, videoRoomUrl },
-    update: { outreachEnabled: enabled, outreachDelayMin: delay, videoRoomUrl },
+    create: { customerId, ...data },
+    update: data,
   });
   revalidatePath("/admin/whatsapp/settings");
 }

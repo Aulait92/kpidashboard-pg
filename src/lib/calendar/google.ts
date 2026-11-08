@@ -138,7 +138,7 @@ export async function googleCreateEvent(customerId: string, ev: NewEvent): Promi
     start: { dateTime: ev.start.toISOString() },
     end: { dateTime: ev.end.toISOString() },
   };
-  if (ev.attendeeEmail) body.attendees = [{ email: ev.attendeeEmail }];
+  if (ev.attendeeEmails.length) body.attendees = ev.attendeeEmails.map((email) => ({ email }));
   if (ev.location) body.location = ev.location;
   if (ev.video) {
     body.conferenceData = {
@@ -148,8 +148,9 @@ export async function googleCreateEvent(customerId: string, ev: NewEvent): Promi
       },
     };
   }
-  // sendUpdates=all: Google mailt dem Teilnehmer die Einladung (inkl. Meet-Link).
-  const qs = `conferenceDataVersion=1${ev.attendeeEmail ? "&sendUpdates=all" : ""}`;
+  // sendUpdates=all: Google mailt den Teilnehmern die Einladung (inkl. Video-Link)
+  // — als echte Kalendereinladung, die auch Outlook/Exchange direkt einträgt.
+  const qs = `conferenceDataVersion=1${ev.attendeeEmails.length ? "&sendUpdates=all" : ""}`;
   const res = await fetch(`${CAL_BASE}/calendars/primary/events?${qs}`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },

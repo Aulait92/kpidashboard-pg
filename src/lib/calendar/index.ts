@@ -9,7 +9,9 @@ import {
   googleGetBusy,
   googleHasRequiredScopes,
 } from "@/lib/calendar/google";
+import { fetchIcsBusy } from "@/lib/calendar/ics";
 import { microsoftCreateEvent, microsoftGetBusy } from "@/lib/calendar/microsoft";
+import { decryptSecret } from "@/lib/encryption";
 import { loadConnection, type Busy, type CreatedEvent, type NewEvent } from "@/lib/calendar/tokens";
 
 export type { CalendarProvider } from "@/lib/calendar/tokens";
@@ -32,15 +34,34 @@ export function hasRequiredScopes(conn: { provider: string; scope: string | null
 
 async function adapterFor(customerId: string) {
   const conn = await loadConnection(customerId);
-  if (conn.provider === "microsoft") {
-    return {
-      getBusy: (min: Date, max: Date): Promise<Busy[]> => microsoftGetBusy(customerId, min, max),
-      createEvent: (ev: NewEvent): Promise<CreatedEvent> => microsoftCreateEvent(customerId, ev),
-    };
-  }
+  const agent = await prisma.agentConfig.findUnique({
+    where: { customerId },
+    select: { availabilityIcsUrlEnc: true },
+  });
+  const icsUrl = agent?.availabilityIcsUrlEnc ? decryptSecret(agent.availabilityIcsUrlEnc) : null;
+
+  const native =
+    conn.provider === "microsoft"
+      ? {
+          getBusy: (min: Date, max: Date) => microsoftGetBusy(customerId, min, max),
+          createEvent: (ev: NewEvent) => microsoftCreateEvent(customerId, ev),
+        }
+      : {
+          getBusy: (min: Date, max: Date) => googleGetBusy(customerId, min, max),
+          createEvent: (ev: NewEvent) => googleCreateEvent(customerId, ev),
+        };
+
   return {
-    getBusy: (min: Date, max: Date): Promise<Busy[]> => googleGetBusy(customerId, min, max),
-    createEvent: (ev: NewEvent): Promise<CreatedEvent> => googleCreateEvent(customerId, ev),
+    // Belegt = Buchungskalender UND (falls hinterlegt) veröffentlichter
+    // Firmenkalender. Fällt eine Quelle aus, wird geworfen — nie still „frei".
+    getBusy: async (min: Date, max: Date): Promise<Busy[]> => {
+      const [own, external] = await Promise.all([
+        native.getBusy(min, max),
+        icsUrl ? fetchIcsBusy(icsUrl, min, max) : Promise.resolve([] as Busy[]),
+      ]);
+      return [...own, ...external];
+    },
+    createEvent: (ev: NewEvent): Promise<CreatedEvent> => native.createEvent(ev),
   };
 }
 
@@ -146,7 +167,7 @@ export async function bookAppointment(opts: {
   // Meet/Teams — viele Firmen (Allianz: Webex) nutzen eigene Tools.
   const agent = await prisma.agentConfig.findUnique({
     where: { customerId: opts.customerId },
-    select: { videoRoomUrl: true },
+    select: { videoRoomUrl: true, advisorEmail: true },
   });
   const room = opts.mode === "video" ? agent?.videoRoomUrl?.trim() || null : null;
 
@@ -157,7 +178,14 @@ export async function bookAppointment(opts: {
     description: room
       ? `${opts.description ?? ""}\n\nVideocall: ${room}`.trim()
       : (opts.description ?? ""),
-    attendeeEmail: opts.attendeeEmail ?? null,
+    // Lead + Berater (z. B. Allianz-Adresse → Termin landet in seinem Outlook).
+    attendeeEmails: [
+      ...new Set(
+        [opts.attendeeEmail, agent?.advisorEmail]
+          .map((e) => e?.trim().toLowerCase())
+          .filter((e): e is string => !!e),
+      ),
+    ],
     video: opts.mode === "video" && !room,
     location: room,
   });

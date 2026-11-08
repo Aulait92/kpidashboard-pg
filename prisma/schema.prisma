@@ -564,6 +564,12 @@ model AgentConfig {
   // Fester Video-Link für alle Video-Termine (z. B. persönlicher Webex-Raum).
   // Leer = Google Meet bzw. Microsoft Teams wird pro Termin erzeugt.
   videoRoomUrl     String?
+  // Berater-Adresse (z. B. Allianz-Mail): bekommt jeden gebuchten Termin als
+  // Kalendereinladung → landet direkt in seinem Firmenkalender (Outlook).
+  advisorEmail     String?
+  // Veröffentlichter Frei/Gebucht-Kalender (ICS-Link, verschlüsselt): belegte
+  // Zeiten des Firmenkalenders fließen in die Terminvorschläge ein.
+  availabilityIcsUrlEnc String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

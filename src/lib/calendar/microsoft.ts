@@ -193,8 +193,13 @@ export async function microsoftCreateEvent(
     end: toGraph(ev.end),
     ...(ev.location ? { location: { displayName: ev.location } } : {}),
     // Mit Teilnehmer verschickt Outlook die Einladung automatisch per Mail.
-    ...(ev.attendeeEmail
-      ? { attendees: [{ emailAddress: { address: ev.attendeeEmail }, type: "required" }] }
+    ...(ev.attendeeEmails.length
+      ? {
+          attendees: ev.attendeeEmails.map((address) => ({
+            emailAddress: { address },
+            type: "required",
+          })),
+        }
       : {}),
   };
   const create = (body: Record<string, unknown>) =>
