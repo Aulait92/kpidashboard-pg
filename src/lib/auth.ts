@@ -160,6 +160,7 @@ function hashToken(rawToken: string): string {
 // die UI muss trotzdem generisch antworten (Existenz nicht verraten).
 export async function issuePasswordResetToken(
   emailRaw: string,
+  ttlMs: number = RESET_TOKEN_TTL_MS,
 ): Promise<{ rawToken: string; userId: string } | null> {
   const email = emailRaw.trim().toLowerCase();
   if (!email) return null;
@@ -181,7 +182,7 @@ export async function issuePasswordResetToken(
     data: {
       userId: user.id,
       tokenHash: hashToken(rawToken),
-      expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+      expiresAt: new Date(Date.now() + ttlMs),
     },
   });
   return { rawToken, userId: user.id };

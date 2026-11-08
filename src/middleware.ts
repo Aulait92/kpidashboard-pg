@@ -12,6 +12,7 @@ const PUBLIC_PREFIXES = [
   "/api/sync", // cron-job.org braucht Zugriff (per Token gesichert)
   "/api/push", // service worker registriert Subscriptions
   "/api/telegram", // Telegram Bot webhook (Whitelist intern via TELEGRAM_ADMIN_USER_ID + Secret-Token-Header)
+  "/api/ops", // Betriebs-API (Buyer-Accounts anlegen), per ADMIN_API_TOKEN (Bearer) gesichert
   "/manifest.webmanifest",
   "/icon",
   "/apple-icon",
