@@ -83,9 +83,25 @@ function rng(seed: number) {
   };
 }
 
+/** Uhrzeit h:m in Berliner Zeit (Sommer-/Winterzeit korrekt). */
 function atHour(d: Date, h: number, m = 0): Date {
   const x = new Date(d);
-  x.setUTCHours(h - 1, m, 0, 0); // ≈ Berliner Winterzeit
+  x.setUTCHours(h, m, 0, 0);
+  const berlinH = Number(
+    new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", hour: "2-digit", hourCycle: "h23" }).format(x),
+  );
+  x.setUTCHours(h - (berlinH - h), m, 0, 0);
+  return x;
+}
+
+/** Samstag/Sonntag → nächster Montag (bzw. vorheriger Freitag bei back). */
+function businessDay(d: Date, back = false): Date {
+  const x = new Date(d);
+  for (let i = 0; i < 3; i++) {
+    const wd = x.getUTCDay();
+    if (wd !== 0 && wd !== 6) break;
+    x.setTime(x.getTime() + (back ? -DAY : DAY));
+  }
   return x;
 }
 
@@ -171,7 +187,10 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
     const scenario = ordered[i];
     const isRecent = recentFirst.includes(scenario);
     const ageDays = isRecent ? 0.3 + (total - 1 - i) * 0.35 : 58 - i * (54 / older.length);
-    const createdAt = new Date(now - ageDays * DAY - rand() * 6 * HOUR);
+    const createdAt = (() => {
+      const d = atHour(new Date(now - ageDays * DAY), 8 + Math.floor(rand() * 12), Math.floor(rand() * 60));
+      return d.getTime() > now - 30 * 60 * 1000 ? new Date(now - (40 + rand() * 120) * 60 * 1000) : d;
+    })();
     const name = NAMES[i % NAMES.length];
     const first = name.split(" ")[0];
     const phone = `${DEMO_PREFIX}${String(i + 10).padStart(2, "0")}`;
@@ -182,6 +201,9 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
     const status = STATUS[scenario];
     const reached = !["new_silent", "new_replied", "not_reached", "cancelled"].includes(scenario);
     const closeValue = scenario === "closed" ? Math.round(400 + rand() * 2000) : null;
+    const situation = LEBENSSITUATION[Math.floor(rand() * LEBENSSITUATION.length)];
+    const interest = INTERESSE[Math.floor(rand() * INTERESSE.length)];
+    const mode: "phone" | "video" = rand() < 0.6 ? "phone" : "video";
 
     const lead = await prisma.lead.create({
       data: {
@@ -205,15 +227,54 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
         bezugAirtableId: DEMO_ACCOUNT,
         // Gleiches Format wie aus dem Meta-Leadformular (extractFormAnswers).
         formData: [
-          { label: "Lebenssituation", value: LEBENSSITUATION[Math.floor(rand() * LEBENSSITUATION.length)] },
-          { label: "Versicherungsinteresse", value: INTERESSE[Math.floor(rand() * INTERESSE.length)] },
+          { label: "Lebenssituation", value: situation },
+          { label: "Versicherungsinteresse", value: interest },
         ],
       },
       select: { id: true },
     });
 
-    // ─── WhatsApp-Verlauf ──────────────────────────────────────────────
-    type Msg = { dir: "inbound" | "outbound"; by: string | null; body: string; kind?: string };
+    // ─── WhatsApp-Verlauf (passend zu Formular + gebuchtem Termin) ─────
+    type Msg = {
+      dir: "inbound" | "outbound";
+      by: string | null;
+      body: string;
+      kind?: string;
+      /** fester Zeitpunkt (z. B. Nachricht nach dem Beratungstermin) */
+      at?: Date;
+    };
+    const hasHaft = interest.includes("Haftpflicht");
+    const hasHausrat = interest.includes("Hausrat");
+    const [contractAnswer, contractNote] = hasHaft
+      ? rand() < 0.5
+        ? ["Haftpflicht hab ich, aber die ist schon über 10 Jahre alt", "Haftpflicht vorhanden, aber über 10 Jahre alt"]
+        : ["Nein, bisher hab ich gar nichts", "noch keine Verträge"]
+      : rand() < 0.5
+        ? ["Nein, noch nichts davon", "noch keine Verträge"]
+        : ["Rechtsschutz hatte ich mal, ist aber ausgelaufen", "Rechtsschutz ausgelaufen"];
+    const situationQA: Record<string, [string, string]> = {
+      Single: hasHausrat
+        ? ["Wohnst du zur Miete oder im Eigentum? Das ist für die Hausrat wichtig.", "Zur Miete, 2-Zimmer-Wohnung"]
+        : ["Gibt es einen konkreten Anlass, z. B. ein Umzug oder ein Schaden?", "Bin gerade umgezogen und will das mal sauber haben"],
+      "Paar ohne Kinder": ["Soll der Schutz auch für deinen Partner bzw. deine Partnerin gelten?", "Ja, für uns beide"],
+      "Familie mit Kindern": ["Soll der Schutz für die ganze Familie gelten? Wie alt sind die Kinder ungefähr?", "Ja, für alle – die Kinder sind 4 und 7"],
+      Alleinerziehend: ["Sollen deine Kinder mitversichert sein?", "Ja, mein Sohn ist 9"],
+      "Paar, Kinder aus dem Haus": ["Soll der Schutz für euch beide gelten?", "Ja, für uns beide"],
+    };
+    const [sitQ, sitA] = situationQA[situation] ?? ["Für wen soll der Schutz gelten?", "Für mich"];
+
+    // Termin vorab festlegen, damit Chat und Termin übereinstimmen.
+    const slotHour = [10, 11, 14, 15, 16][Math.floor(rand() * 5)];
+    const startsAt = hasAppt
+      ? scenario === "booked_future"
+        ? atHour(businessDay(new Date(now + (1 + Math.floor(rand() * 7)) * DAY)), slotHour)
+        : atHour(businessDay(new Date(outreachAt.getTime() + (2 + Math.floor(rand() * 2)) * DAY)), slotHour)
+      : null;
+    const dayFmt = (d: Date) =>
+      new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "numeric", month: "numeric" }).format(d);
+    const timeFmt = (d: Date) =>
+      new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", minute: "2-digit" }).format(d);
+
     const msgs: Msg[] = [
       {
         dir: "outbound",
@@ -230,48 +291,80 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
         body: `Hallo ${first}, kurze Erinnerung: Wenn du magst, schauen wir gemeinsam in 15 Minuten, welcher Schutz für dich sinnvoll ist. Antworte einfach hier.`,
       });
     }
-    let mode: "phone" | "video" = rand() < 0.6 ? "phone" : "video";
     if (replied) {
       msgs.push(
-        { dir: "inbound", by: null, body: rand() < 0.5 ? "Hallo, ja gerne 🙂" : "Hi, ja klar, worum geht's genau?" },
-        { dir: "outbound", by: "bot", body: "Super, danke dir! Für wen soll der Schutz gelten – nur für dich oder auch für Partner/Familie?" },
-        { dir: "inbound", by: null, body: rand() < 0.5 ? "Für mich und meine Frau, wir haben auch zwei Kinder" : "Nur für mich" },
-        { dir: "outbound", by: "bot", body: "Verstanden. Hast du aktuell schon eine Haftpflicht- oder Hausratversicherung?" },
-        { dir: "inbound", by: null, body: rand() < 0.5 ? "Haftpflicht ja, aber schon ewig alt" : "Nein, bisher gar nichts" },
+        { dir: "inbound", by: null, body: rand() < 0.5 ? "Hallo, ja gerne 🙂" : "Hi, ja klar" },
+        {
+          dir: "outbound",
+          by: "bot",
+          body: `Super, danke dir! Du hattest angegeben, dass du dich für ${interest} interessierst. Hast du dafür aktuell schon einen Vertrag?`,
+        },
+        { dir: "inbound", by: null, body: contractAnswer },
+        { dir: "outbound", by: "bot", body: `Danke, das hilft schon mal. ${sitQ}` },
+        { dir: "inbound", by: null, body: sitA },
       );
+      const askMode = `Alles klar! Am besten schaut ${advisorFirst} das kurz persönlich mit dir an, dauert etwa 15 Minuten. Passt dir eher ein Telefonat oder ein kurzer Videocall?`;
       if (scenario === "new_replied") {
-        msgs.push({ dir: "outbound", by: "bot", body: `Danke! Am besten klärt ${advisorFirst} das kurz persönlich mit dir. Passt dir eher ein Telefonat oder ein kurzer Videocall?` });
+        msgs.push({ dir: "outbound", by: "bot", body: askMode });
       } else if (scenario === "no_interest") {
         msgs.push(
-          { dir: "outbound", by: "bot", body: `Danke! Magst du kurz mit ${advisorFirst} sprechen? Telefon oder Video, 15 Minuten.` },
-          { dir: "inbound", by: null, body: "Nein danke, ich hab mich schon woanders entschieden." },
+          { dir: "outbound", by: "bot", body: askMode },
+          { dir: "inbound", by: null, body: "Nein danke, ich hab mich inzwischen schon woanders entschieden." },
           { dir: "outbound", by: "bot", body: "Alles klar, danke für deine Rückmeldung und alles Gute! 🙂" },
         );
-      } else {
+      } else if (startsAt) {
+        const alt1 = atHour(businessDay(new Date(startsAt.getTime() - DAY), true), slotHour === 10 ? 15 : 10);
+        const alt2 = atHour(businessDay(new Date(startsAt.getTime() + DAY)), slotHour === 16 ? 11 : 16);
+        const f = (d: Date) => `${dayFmt(d)} um ${timeFmt(d)}`;
+        const offer = `${f(alt1)}, ${f(startsAt)} oder ${f(alt2)}`;
         msgs.push(
-          { dir: "outbound", by: "bot", body: `Danke! Am besten klärt ${advisorFirst} das kurz persönlich mit dir. Passt dir eher ein Telefonat oder ein kurzer Videocall?` },
+          { dir: "outbound", by: "bot", body: askMode },
           { dir: "inbound", by: null, body: mode === "phone" ? "Telefon ist gut" : "Video passt" },
-          { dir: "outbound", by: "bot", body: "Ich hätte Dienstag 10:00, Mittwoch 14:00 oder Donnerstag 16:00 frei. Was passt dir?" },
-          { dir: "inbound", by: null, body: "Mittwoch 14 Uhr" },
-          { dir: "outbound", by: "bot", body: `Perfekt, dein Termin mit ${advisorFirst} ist gebucht ✅ Du bekommst gleich eine Bestätigung per WhatsApp und E-Mail.` },
+          { dir: "outbound", by: "bot", body: `Ich hätte ${offer} frei. Was passt dir am besten?` },
+          { dir: "inbound", by: null, body: `${dayFmt(startsAt).split(",")[0]} um ${timeFmt(startsAt).replace(":00", "")} Uhr passt` },
+          {
+            dir: "outbound",
+            by: "bot",
+            body:
+              `Perfekt, dein ${mode === "phone" ? "Telefontermin" : "Videocall"} mit ${advisorFirst} am ${dayFmt(startsAt)} um ${timeFmt(startsAt)} Uhr ist gebucht ✅ ` +
+              (mode === "phone"
+                ? `${advisorFirst} ruft dich unter dieser Nummer an.`
+                : "Den Video-Link bekommst du mit der Bestätigung per WhatsApp und E-Mail."),
+          },
         );
         if (scenario === "cancelled") {
           msgs.push(
-            { dir: "inbound", by: null, body: "Sorry, mir ist was dazwischengekommen, ich muss leider absagen" },
+            { dir: "inbound", by: null, body: "Sorry, mir ist was dazwischengekommen, ich muss den Termin leider absagen" },
             { dir: "outbound", by: "bot", body: "Kein Problem, ich habe den Termin abgesagt. Melde dich gern, wenn du einen neuen möchtest!" },
           );
         }
         if (scenario === "offer" || scenario === "closed") {
-          msgs.push({ dir: "outbound", by: "agent", body: `Hallo ${first}, wie besprochen habe ich dir das Angebot per E-Mail geschickt. Bei Fragen melde dich gern direkt hier! Viele Grüße, ${advisorFirst}` });
-          if (scenario === "closed") msgs.push({ dir: "inbound", by: null, body: "Danke, passt alles – ich hab unterschrieben 👍" });
+          const after = new Date(startsAt.getTime() + 3 * HOUR);
+          msgs.push({
+            dir: "outbound",
+            by: "agent",
+            at: after,
+            body: `Hallo ${first}, danke für das nette Gespräch! Wie besprochen habe ich dir das Angebot für ${interest} per E-Mail geschickt. Bei Fragen melde dich gern direkt hier. Viele Grüße, ${advisorFirst}`,
+          });
+          if (scenario === "closed") {
+            msgs.push({
+              dir: "inbound",
+              by: null,
+              at: new Date(after.getTime() + DAY),
+              body: "Danke, passt alles – ich hab unterschrieben 👍",
+            });
+          }
         }
       }
     }
 
     let t = outreachAt.getTime();
     const stamped = msgs.map((m) => {
-      t += (m.dir === "inbound" ? 5 + rand() * 90 : 0.2 + rand() * 1.5) * 60 * 1000;
-      if (m.kind === "template" && m !== msgs[0]) t += 2 * DAY;
+      if (m.at) t = m.at.getTime();
+      else {
+        t += (m.dir === "inbound" ? 5 + rand() * 90 : 0.2 + rand() * 1.5) * 60 * 1000;
+        if (m.kind === "template" && m !== msgs[0]) t += 2 * DAY;
+      }
       return { ...m, at: new Date(Math.min(t, now - 60 * 1000)) };
     });
     const lastInbound = [...stamped].reverse().find((m) => m.dir === "inbound");
@@ -287,8 +380,9 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
         contactEmail: replied ? email : null,
         botActive: !(scenario === "offer" || scenario === "closed"),
         qualified: hasAppt,
-        qualificationSummary: hasAppt
-          ? `${first} interessiert sich für Privatschutz; bevorzugt ${mode === "phone" ? "Telefon" : "Video"}. Bestehende Absicherung lückenhaft, offen für ein Gesamtangebot.`
+        qualificationSummary: replied && scenario !== "no_interest"
+          ? `${situation}, Interesse an ${interest}; ${contractNote}. Rückfrage: „${sitA}".` +
+            (hasAppt ? ` Bevorzugt ${mode === "phone" ? "Telefon" : "Videocall"}.` : "")
           : null,
         status: scenario === "no_interest" ? "done" : "open",
         windowExpiresAt: lastInbound ? new Date(lastInbound.at.getTime() + DAY) : null,
@@ -310,12 +404,9 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
     });
 
     // ─── Termin ────────────────────────────────────────────────────────
-    if (hasAppt) {
-      const bookedAt = last.at;
-      const startsAt =
-        scenario === "booked_future"
-          ? atHour(new Date(now + (1 + Math.floor(rand() * 8)) * DAY), [10, 11, 14, 15, 16][Math.floor(rand() * 5)])
-          : atHour(new Date(bookedAt.getTime() + 2 * DAY), [10, 14, 16][Math.floor(rand() * 3)]);
+    if (hasAppt && startsAt) {
+      const confirm = stamped.find((m) => m.by === "bot" && m.body.includes("ist gebucht"));
+      const bookedAt = confirm?.at ?? last.at;
       await prisma.appointment.create({
         data: {
           customerId,
@@ -334,7 +425,6 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
           createdAt: bookedAt,
         },
       });
-      mode = "phone";
     }
   }
   return { leads: total };
