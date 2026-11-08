@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Check, X } from "lucide-react";
+import { sendUsage } from "@/lib/usage-client";
 
 // Kurze Rückmeldung nach einer Aktion, optional mit „Rückgängig".
 // Sitzt unten mittig (am Handy über der Tab-Leiste) und verschwindet von selbst.
@@ -24,6 +25,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const show = useCallback((t: Omit<Toast, "id"> & { durationMs?: number }) => {
     if (timer.current) clearTimeout(timer.current);
+    // Fehlermeldungen mitzählen (wo hängen Nutzer?).
+    if (t.tone === "error") void sendUsage({ type: "error", name: `toast: ${t.message.slice(0, 80)}` });
     const id = Date.now();
     setToast({ ...t, id });
     timer.current = setTimeout(() => setToast((cur) => (cur?.id === id ? null : cur)), t.durationMs ?? 6000);

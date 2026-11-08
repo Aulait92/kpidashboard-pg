@@ -1,5 +1,6 @@
 "use server";
 
+import { recordUsage } from "@/lib/usage";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { buildEventDescription, eventSummary } from "@/lib/whatsapp/event-text";
@@ -155,5 +156,8 @@ export async function bookPublicAction(
     fail("error");
   }
 
+  // Bucht ein eingeloggter Berater für einen Lead (Rückrufliste) → mitzählen.
+  // Für Leads ohne Sitzung schreibt recordUsage nichts.
+  await recordUsage("action", "appointment.book_by_advisor");
   redirect(`/book/${slug}?ok=1&a=${appointmentId!}`);
 }

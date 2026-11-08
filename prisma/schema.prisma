@@ -727,3 +727,22 @@ model ConsentOptIn {
 
   @@unique([customerId, contactPhone])
 }
+
+// Nutzungsmessung im Kunden-CRM (pseudonym, ohne Lead-Inhalte): Seitenaufrufe,
+// Aktionen, Fehler, Feedback. Grundlage für UX-Verbesserungen. Löschung nach
+// 180 Tagen (Cron).
+model UsageEvent {
+  id         String   @id @default(cuid())
+  at         DateTime @default(now())
+  customerId String
+  userId     String?
+  /// true = Admin in „Als Kunde ansehen" (nicht mitzählen)
+  preview    Boolean  @default(false)
+  type       String   // page | action | error | feedback
+  name       String   // z. B. „/buyer/leads", „callback.not_reached", „toast.error"
+  path       String?
+  meta       Json?
+
+  @@index([customerId, at])
+  @@index([type, at])
+}

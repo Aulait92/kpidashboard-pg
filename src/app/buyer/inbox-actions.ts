@@ -11,6 +11,7 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { writableCustomerId } from "@/lib/buyer-write";
 import { syncFollowUpWithStatus, workdaysFromNow } from "@/lib/lead-followup";
 import { prisma } from "@/lib/prisma";
+import { recordUsage } from "@/lib/usage";
 
 type LeadPrev = {
   status: string | null;
@@ -84,7 +85,8 @@ function refresh() {
 /** Rückruf-Ergebnis: „Nicht erreicht" (morgen wieder) oder „Verloren". */
 export async function callbackOutcomeResult(
   leadId: string,
-  outcome: "not_reached" | "lost",
+  outcome: "not_reached" | "lost" | "offer" | "won",
+  closeValue?: number | null,
 ): Promise<InboxResult> {
   const customerId = await writableCustomerId(leadId);
   if (!customerId) return { ok: false, error: "In der Vorschau nur mit Demo-Leads möglich." };
@@ -114,6 +116,28 @@ export async function callbackOutcomeResult(
         ...(!lead.firstContactAt ? { firstContactAt: now } : {}),
       },
     });
+  } else if (outcome === "offer" || outcome === "won") {
+    // Am Telefon direkt Angebot geschickt bzw. abgeschlossen.
+    const status = outcome === "won" ? "Abschluss" : "Angebot gesendet";
+    const value = outcome === "won" && closeValue != null && Number.isFinite(closeValue) ? closeValue : null;
+    if (lead.airtableId) {
+      await updateLeadEditableFields({
+        airtableId: lead.airtableId,
+        bearbeitungsstatus: status,
+        ...(outcome === "won" ? { closeValue: value } : {}),
+      }).catch((e) => console.error("[inbox callback]", e));
+    }
+    await prisma.lead.update({
+      where: { id: lead.id },
+      data: {
+        status,
+        reached: true,
+        callbackSnoozedUntil: null,
+        ...(outcome === "won" ? { closedAt: now, closeValue: value } : {}),
+        ...(!lead.firstContactAt ? { firstContactAt: now } : {}),
+      },
+    });
+    await syncFollowUpWithStatus(lead.id, status);
   } else {
     if (lead.airtableId) {
       await updateLeadEditableFields({
@@ -127,6 +151,7 @@ export async function callbackOutcomeResult(
     });
     await syncFollowUpWithStatus(lead.id, "Kein Interesse");
   }
+  await recordUsage("action", `callback.${outcome}`);
   refresh();
   return { ok: true, undo: { kind: "lead", leadId, prev } };
 }
@@ -181,6 +206,7 @@ export async function appointmentOutcomeResult(
     },
   });
   await syncFollowUpWithStatus(lead.id, nextStatus);
+  await recordUsage("action", `outcome.${outcome}`);
   refresh();
   return {
     ok: true,
@@ -205,6 +231,7 @@ export async function chatDoneResult(conversationId: string): Promise<InboxResul
     where: { id: conv.id },
     data: { needsAttention: false, attentionReason: null, attentionAt: null },
   });
+  await recordUsage("action", "chat.done");
   refresh();
   revalidatePath("/buyer/chats");
   return {
@@ -234,6 +261,7 @@ export async function undoInboxAction(undo: UndoSnapshot): Promise<InboxResult> 
         attentionAt: undo.prev.attentionAt ? new Date(undo.prev.attentionAt) : null,
       },
     });
+    await recordUsage("action", `undo.${undo.kind}`);
     refresh();
     revalidatePath("/buyer/chats");
     return { ok: true };
@@ -274,6 +302,7 @@ export async function undoInboxAction(undo: UndoSnapshot): Promise<InboxResult> 
         : {}),
     },
   });
+  await recordUsage("action", `undo.${undo.kind}`);
   refresh();
   return { ok: true };
 }
@@ -309,6 +338,7 @@ export async function setFollowUpResult(
       callbackSnoozedUntil: at,
     },
   });
+  await recordUsage("action", "followup.set", { meta: "days" in when ? { days: when.days } : { date: true } });
   refresh();
   return { ok: true, undo: { kind: "lead", leadId, prev } };
 }
@@ -321,6 +351,7 @@ export async function clearFollowUpResult(leadId: string): Promise<InboxResult> 
   if (!lead) return { ok: false, error: "Lead nicht gefunden." };
   const prev = snapshot(lead);
   await prisma.lead.update({ where: { id: lead.id }, data: { followUpAt: null, followUpNote: null } });
+  await recordUsage("action", "followup.done");
   refresh();
   return { ok: true, undo: { kind: "lead", leadId, prev } };
 }

@@ -10,6 +10,7 @@ import {
 import { getCurrentSession } from "@/lib/auth";
 import { writableCustomerId } from "@/lib/buyer-write";
 import { syncFollowUpWithStatus } from "@/lib/lead-followup";
+import { recordUsage } from "@/lib/usage";
 import { prisma } from "@/lib/prisma";
 import {
   CLOSED_STATUS,
@@ -241,6 +242,7 @@ export async function setLeadStatusAction(
   });
 
   await syncFollowUpWithStatus(lead.id, status);
+  await recordUsage("action", "pipeline.move", { meta: { to: status } });
   revalidatePath("/buyer");
   revalidatePath("/buyer/kanban");
   revalidatePath("/buyer/leads");
@@ -341,6 +343,7 @@ export async function updateLeadDetailsAction(
   });
 
   if (bearbeitungsstatus) await syncFollowUpWithStatus(lead.id, bearbeitungsstatus);
+  await recordUsage("action", "lead.save", { meta: { status: bearbeitungsstatus ?? null, notes: notizen.length > 0 } });
   revalidatePath(`/buyer/leads/${lead.id}`);
   revalidatePath("/buyer/leads");
   return { ok: true };

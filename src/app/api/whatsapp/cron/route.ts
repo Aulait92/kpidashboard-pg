@@ -1,6 +1,7 @@
 import { checkAppointmentResponses } from "@/lib/calendar";
 import { runOutreach } from "@/lib/whatsapp/outreach";
 import { runReminders } from "@/lib/whatsapp/reminders";
+import { pruneUsage } from "@/lib/usage";
 
 // Zentraler WhatsApp-Cron (z. B. cron-job.org alle 5 Minuten):
 //   1. Erstanschreiben neuer Leads ohne Termin
@@ -32,7 +33,11 @@ async function handle(req: Request): Promise<Response> {
   const reminders = await runReminders().catch((e: unknown) => ({
     error: e instanceof Error ? e.message : String(e),
   }));
-  return Response.json({ ok: true, outreach, responses, reminders });
+  // Einmal täglich (03:00–03:05 UTC): Nutzungsdaten > 180 Tage löschen.
+  const now = new Date();
+  const pruned =
+    now.getUTCHours() === 3 && now.getUTCMinutes() < 5 ? await pruneUsage().catch(() => null) : undefined;
+  return Response.json({ ok: true, outreach, responses, reminders, pruned });
 }
 
 export const GET = handle;

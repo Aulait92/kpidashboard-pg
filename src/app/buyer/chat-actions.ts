@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { cancelAppointment } from "@/lib/calendar";
 import { prisma } from "@/lib/prisma";
+import { recordUsage } from "@/lib/usage";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
 
 // Chat-Aktionen im Kunden-CRM. Strikte Mandantentrennung: Jede Aktion lädt
@@ -37,6 +38,7 @@ export async function toggleBotBuyerAction(formData: FormData): Promise<void> {
     where: { id: conv.id },
     data: { botActive: !conv.botActive },
   });
+  await recordUsage("action", conv.botActive ? "chat.takeover" : "chat.bot_on");
   revalidatePath("/buyer/chats");
   redirect(chatUrl(conv.id));
 }
@@ -73,6 +75,7 @@ export async function sendReplyBuyerAction(formData: FormData): Promise<void> {
       where: { id: conv.id },
       data: { botActive: false, needsAttention: false, attentionReason: null, attentionAt: null },
     });
+    await recordUsage("action", "chat.reply");
   } catch (err) {
     console.error("[buyer chat reply]", err);
     failed = true;
@@ -90,6 +93,7 @@ export async function cancelAppointmentBuyerAction(formData: FormData): Promise<
   try {
     // cancelAppointment prüft customerId → fremde Termine sind nicht absagbar.
     await cancelAppointment(appointmentId, session.customerId);
+    await recordUsage("action", "appointment.cancel");
   } catch (err) {
     console.error("[buyer cancel appointment]", err);
   }
@@ -106,6 +110,7 @@ export async function markChatDoneBuyerAction(formData: FormData): Promise<void>
     where: { id: conversationId, customerId: session.customerId },
     data: { needsAttention: false, attentionReason: null, attentionAt: null },
   });
+  await recordUsage("action", "chat.done");
   revalidatePath("/buyer/chats");
   revalidatePath("/buyer");
   redirect(chatUrl(conversationId));
@@ -147,6 +152,7 @@ export async function followupBuyerAction(formData: FormData): Promise<void> {
       err = e instanceof NoTemplateError ? "template" : "send";
     }
   }
+  await recordUsage(err ? "error" : "action", err ? `chat.followup.${err}` : "chat.followup");
   revalidatePath("/buyer/chats");
   redirect(chatUrl(conv.id, err));
 }

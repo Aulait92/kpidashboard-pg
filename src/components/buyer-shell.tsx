@@ -10,12 +10,14 @@ import {
   LayoutDashboard,
   LogOut,
   MessageCircle,
+  MessageSquareText,
   Sun,
   TrendingUp,
   Users,
 } from "lucide-react";
 import { logoutAction } from "@/app/login/actions";
-import { ToastProvider } from "@/components/ui/toast";
+import { ToastProvider, useToast } from "@/components/ui/toast";
+import { normalizePath, sendUsage } from "@/lib/usage-client";
 import { cn } from "@/lib/utils";
 
 // App-Shell des Kundenbereichs: eine Kopfzeile mit Navigation und Profil-
@@ -42,6 +44,10 @@ export function BuyerShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname() ?? "/buyer";
+  // Seitenaufrufe zählen (Nutzungsmessung, pseudonym).
+  useEffect(() => {
+    void sendUsage({ type: "page", name: normalizePath(pathname) });
+  }, [pathname]);
   // WhatsApp-Kunden: „Heute" ist die Startseite (Aufgabenliste), die Zahlen
   // haben einen eigenen Reiter. Alle anderen: Übersicht = Zahlen.
   const items: NavItem[] = showChats
@@ -152,6 +158,7 @@ function Badge({ n }: { n: number }) {
 
 function ProfileMenu({ name }: { name: string }) {
   const [open, setOpen] = useState(false);
+  const [feedback, setFeedback] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -193,6 +200,16 @@ function ProfileMenu({ name }: { name: string }) {
             <div className="font-semibold">{name}</div>
             <div className="text-xs text-[color:var(--muted)]">Dein CRM</div>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              setFeedback(true);
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
+          >
+            <MessageSquareText className="h-4 w-4" /> Etwas unklar? Feedback
+          </button>
           <a
             href="https://performancegrowth.de/impressum"
             target="_blank"
@@ -219,6 +236,54 @@ function ProfileMenu({ name }: { name: string }) {
           </form>
         </div>
       ) : null}
+      {feedback ? <FeedbackDialog onClose={() => setFeedback(false)} /> : null}
+    </div>
+  );
+}
+
+/** „Etwas unklar?" – ein Satz genügt, die aktuelle Seite wird mitgeschickt. */
+function FeedbackDialog({ onClose }: { onClose: () => void }) {
+  const toast = useToast();
+  const [text, setText] = useState("");
+  const [sending, setSending] = useState(false);
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 p-4 sm:items-center" onClick={onClose}>
+      <div
+        className="ui-fade-in w-full max-w-md rounded-[var(--radius-lg)] bg-white p-5 shadow-[var(--shadow-lg)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-base font-semibold">Etwas unklar oder umständlich?</h2>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">
+          Schreib uns kurz, was du gesucht oder erwartet hast. Wir verbessern das CRM laufend.
+        </p>
+        <textarea
+          autoFocus
+          rows={4}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="z. B. „Ich finde nicht, wo ich einen Termin verschiebe.“"
+          className="mt-3 w-full resize-none rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]/15"
+        />
+        <div className="mt-3 flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="h-10 rounded-[var(--radius-sm)] px-4 text-sm text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)]">
+            Abbrechen
+          </button>
+          <button
+            type="button"
+            disabled={!text.trim() || sending}
+            onClick={async () => {
+              setSending(true);
+              const ok = await sendUsage({ type: "feedback", text });
+              setSending(false);
+              onClose();
+              toast.show(ok ? { message: "Danke! Wir schauen uns das an." } : { message: "Senden hat nicht geklappt.", tone: "error" });
+            }}
+            className="h-10 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-4 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            Senden
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

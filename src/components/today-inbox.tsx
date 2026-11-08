@@ -14,6 +14,7 @@ import {
   Phone,
   PhoneMissed,
   PhoneOff,
+  Send,
   ThumbsDown,
   Trophy,
   UserX,
@@ -98,8 +99,70 @@ export function TodayInbox({ data }: { data: InboxData }) {
   const chats = data.chats.filter((c) => !hidden.has(`c:${c.conversationId}`));
   const callbacks = data.callbacks.filter((c) => !hidden.has(`r:${c.leadId}`));
   const [showAllCallbacks, setShowAllCallbacks] = useState(false);
+  // Inline-Eingabe des Abschlusswerts nach „Gewonnen" (Schlüssel = Zeile).
+  const [winning, setWinning] = useState<{ key: string; leadId: string; name: string } | null>(null);
+  const [winValue, setWinValue] = useState("");
   const visibleCallbacks = showAllCallbacks ? callbacks : callbacks.slice(0, 5);
   const openTasks = outcomes.length + chats.length + callbacks.length + followUps.length;
+
+  // Ergebnis „Angebot gesendet" / „Gewonnen" / „Verloren" – überall gleich.
+  const closeItems = (key: string, leadId: string, name: string): MenuItem[] => [
+    { type: "label", label: "Ergebnis" },
+    {
+      label: "Angebot gesendet",
+      hint: "Wiedervorlage in 3 Tagen",
+      icon: Send,
+      onSelect: () => run(key, `${name}: Angebot gesendet`, () => callbackOutcomeResult(leadId, "offer")),
+    },
+    {
+      label: "Gewonnen",
+      hint: "Abschluss mit Wert eintragen",
+      icon: Trophy,
+      onSelect: () => {
+        setWinValue("");
+        setWinning({ key, leadId, name });
+      },
+    },
+    {
+      label: "Verloren",
+      hint: "Kein Interesse",
+      icon: PhoneOff,
+      tone: "danger",
+      onSelect: () => run(key, `${name}: als verloren markiert`, () => callbackOutcomeResult(leadId, "lost")),
+    },
+  ];
+
+  /** Zeile durch Wert-Eingabe ersetzen, solange „Gewonnen" offen ist. */
+  const winForm = (key: string) =>
+    winning?.key === key ? (
+      <form
+        className="flex shrink-0 items-center gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const n = Number.parseFloat(winValue.replace(/\./g, "").replace(",", "."));
+          const w = winning;
+          setWinning(null);
+          run(w.key, `${w.name}: gewonnen`, () =>
+            callbackOutcomeResult(w.leadId, "won", Number.isFinite(n) ? n : null),
+          );
+        }}
+      >
+        <input
+          autoFocus
+          inputMode="decimal"
+          placeholder="Wert in €"
+          value={winValue}
+          onChange={(e) => setWinValue(e.target.value)}
+          className="h-8 w-28 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-2.5 text-sm focus:border-[color:var(--brand)] focus:outline-none"
+        />
+        <Button variant="primary" type="submit" icon={Trophy}>
+          Speichern
+        </Button>
+        <Button variant="ghost" type="button" onClick={() => setWinning(null)}>
+          Abbrechen
+        </Button>
+      </form>
+    ) : null;
 
   // Wiedervorlage-Optionen (Werktage ab heute) – gleiche Auswahl überall.
   const laterItems = (key: string, leadId: string, name: string): MenuItem[] => [
@@ -267,6 +330,7 @@ export function TodayInbox({ data }: { data: InboxData }) {
                     {f.overdue ? ` · fällig seit ${day(f.dueAt)}` : ""}
                   </p>
                 </div>
+                {winForm(`f:${f.leadId}`) ?? (
                 <div className="grid shrink-0 grid-cols-2 gap-2 sm:flex sm:flex-wrap [&>*]:w-full sm:[&>*]:w-auto">
                   {f.phone ? (
                     <ButtonLink href={`tel:+${f.phone}`} variant="primary" icon={Phone}>
@@ -280,8 +344,12 @@ export function TodayInbox({ data }: { data: InboxData }) {
                   >
                     Erledigt
                   </Button>
-                  <ActionMenu label="Später" icon={Clock} items={laterItems(`f:${f.leadId}`, f.leadId, f.name)} />
+                  <ActionMenu
+                    label="Ergebnis"
+                    items={[...laterItems(`f:${f.leadId}`, f.leadId, f.name), ...closeItems(`f:${f.leadId}`, f.leadId, f.name)]}
+                  />
                 </div>
+                )}
               </li>
             ))}
           </ul>
@@ -310,6 +378,7 @@ export function TodayInbox({ data }: { data: InboxData }) {
                     ) : null}
                   </p>
                 </div>
+                {winForm(`r:${c.leadId}`) ?? (
                 <div className="grid shrink-0 grid-cols-2 gap-2 sm:flex sm:flex-wrap [&>*]:w-full sm:[&>*]:w-auto">
                   {c.phone ? (
                     <ButtonLink href={`tel:+${c.phone}`} variant="primary" icon={Phone}>
@@ -335,20 +404,11 @@ export function TodayInbox({ data }: { data: InboxData }) {
                           ),
                       },
                       ...laterItems(`r:${c.leadId}`, c.leadId, c.name),
-                      { type: "label", label: "Abschließen" },
-                      {
-                        label: "Verloren",
-                        hint: "Kein Interesse",
-                        icon: PhoneOff,
-                        tone: "danger",
-                        onSelect: () =>
-                          run(`r:${c.leadId}`, `${c.name}: als verloren markiert`, () =>
-                            callbackOutcomeResult(c.leadId, "lost"),
-                          ),
-                      },
+                      ...closeItems(`r:${c.leadId}`, c.leadId, c.name),
                     ]}
                   />
                 </div>
+                )}
               </li>
             ))}
           </ul>

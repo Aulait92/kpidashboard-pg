@@ -35,6 +35,11 @@ const TABS = [
     label: "WhatsApp",
     match: (p: string) => p.startsWith("/admin/whatsapp"),
   },
+  {
+    href: "/admin/nutzung",
+    label: "Nutzung",
+    match: (p: string) => p.startsWith("/admin/nutzung"),
+  },
 ];
 
 /** Admin-Navigation in der Kopfzeile (gleicher Stil wie der Kundenbereich). */
