@@ -17,8 +17,20 @@ export async function GET(req: Request): Promise<Response> {
   const customerId = url.searchParams.get("state"); // state = customerId
   const oauthError = url.searchParams.get("error");
 
+  // Hinter dem Railway-Proxy liefert req.url teils die interne Adresse
+  // (localhost:8080). Für die Rückleitung die bekannte öffentliche Origin aus
+  // GOOGLE_REDIRECT_URI nutzen, mit Fallback auf die Request-Origin.
+  let origin = url.origin;
+  try {
+    if (process.env.GOOGLE_REDIRECT_URI) {
+      origin = new URL(process.env.GOOGLE_REDIRECT_URI).origin;
+    }
+  } catch {
+    /* Fallback: url.origin */
+  }
+
   const back = (status: string) => {
-    const dest = new URL("/admin/whatsapp", url.origin);
+    const dest = new URL("/admin/whatsapp", origin);
     dest.searchParams.set("gcal", status);
     return Response.redirect(dest.toString(), 302);
   };
