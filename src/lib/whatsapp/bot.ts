@@ -10,6 +10,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/prisma";
 import {
   bookAppointment,
+  SlotBusyError,
   suggestSlots,
   type Slot,
 } from "@/lib/whatsapp/google-calendar";
@@ -99,11 +100,28 @@ const TOOLS: Anthropic.Tool[] = [
 function buildSystemPrompt(
   agent: { systemPrompt: string; knowledge: string; personality: string },
   product: string | null,
-  state: { qualified: boolean; summary: string | null },
+  state: {
+    qualified: boolean;
+    summary: string | null;
+    /** Bereits bekannte Kontaktdaten (später auch aus dem Meta-Leadformular). */
+    contact: { name: string | null; phone: string; email: string | null };
+  },
 ): string {
-  const known = state.summary?.trim()
-    ? `Bisher erfasst (NICHT erneut erfragen):\n${state.summary.trim()}\nQualifiziert: ${state.qualified ? "ja — jetzt Termin vereinbaren" : "noch nicht"}`
-    : "";
+  const contactLines = [
+    state.contact.name ? `Name: ${state.contact.name}` : "",
+    `Telefon/WhatsApp: ${state.contact.phone}`,
+    state.contact.email
+      ? `E-Mail: ${state.contact.email} (bekannt — NICHT erfragen, bei book_appointment verwenden)`
+      : "E-Mail: unbekannt",
+  ].filter(Boolean);
+  const known = [
+    `Bekannte Lead-Daten (NICHT erneut erfragen):\n${contactLines.join("\n")}`,
+    state.summary?.trim()
+      ? `Bisher erfasst (NICHT erneut erfragen):\n${state.summary.trim()}\nQualifiziert: ${state.qualified ? "ja — jetzt Termin vereinbaren" : "noch nicht"}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
   const base = [
     agent.systemPrompt?.trim() ||
       "Du bist eine freundliche, empathische KI-Vertriebsassistentin.",
@@ -123,7 +141,7 @@ function buildSystemPrompt(
       "- Erst nach geklärter Qualifizierung terminieren: hole mit get_available_slots echte freie Zeiten, biete dem Lead 2-3 davon in natürlicher Sprache an und buche die gewählte Zeit mit book_appointment.",
       "- Erfinde niemals Termine oder Uhrzeiten — nutze ausschließlich die von get_available_slots gelieferten Zeiten. Nur wenn der Kalender nicht verbunden ist, nutze propose_appointment als Fallback.",
       "- Frage vor der Buchung immer, ob der Lead lieber telefonieren oder einen Videocall machen möchte. Wähle den Modus nie selbst.",
-      "- Nachdem der Lead eine Uhrzeit gewählt hat, frage (als eigene Frage) nach seiner E-Mail-Adresse, damit er die Kalender-Einladung bekommt. Möchte er keine angeben, buche ohne.",
+      "- Nachdem der Lead eine Uhrzeit gewählt hat und seine E-Mail noch NICHT bekannt ist, frage (als eigene Frage) nach seiner E-Mail-Adresse, damit er die Kalender-Einladung bekommt. Möchte er keine angeben, buche ohne.",
       "- Bei Video-Terminen bekommt der Lead automatisch einen Google-Meet-Link; gib ihn nach der Buchung weiter.",
       "- Bestätige jede Buchung dem Lead mit Datum und Uhrzeit.",
       "- Erfinde keine Fakten; bei Unklarheit biete eine Klärung durch das Team an.",
@@ -226,6 +244,7 @@ export async function runBotTurn(conversationId: string): Promise<void> {
       customerId: true,
       contactPhone: true,
       contactName: true,
+      contactEmail: true,
       botActive: true,
       leadId: true,
       qualified: true,
@@ -260,6 +279,11 @@ export async function runBotTurn(conversationId: string): Promise<void> {
   const system = buildSystemPrompt(agent, lead?.source ?? null, {
     qualified: conversation.qualified,
     summary: conversation.qualificationSummary,
+    contact: {
+      name: conversation.contactName,
+      phone: conversation.contactPhone,
+      email: conversation.contactEmail,
+    },
   });
   const messages = toApiMessages(history);
   if (messages.length === 0) return;
@@ -335,7 +359,8 @@ export async function runBotTurn(conversationId: string): Promise<void> {
                 .map((s) => `- ${formatSlotDE(s.start)} (start=${s.start})`)
                 .join("\n");
           }
-        } catch {
+        } catch (err) {
+          console.error("[whatsapp bot] Slots", err);
           content =
             "Kalender ist für diesen Kunden nicht verbunden. Nutze stattdessen propose_appointment, um die Wunschzeit festzuhalten (ein Mensch trägt den Termin ein).";
         }
@@ -349,8 +374,10 @@ export async function runBotTurn(conversationId: string): Promise<void> {
         const start = typeof input.start === "string" ? input.start : "";
         const rawEmail =
           typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
-        const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail) ? rawEmail : null;
-        if (email) {
+        const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)
+          ? rawEmail
+          : conversation.contactEmail; // bereits bekannt (z. B. aus Leadformular)
+        if (email && email !== conversation.contactEmail) {
           await prisma.conversation.update({
             where: { id: conversation.id },
             data: { contactEmail: email },
@@ -400,9 +427,15 @@ export async function runBotTurn(conversationId: string): Promise<void> {
               (email ? `. Kalender-Einladung per E-Mail an ${email} verschickt` : "") +
               ". Bestätige dem Lead Datum/Uhrzeit" +
               (mode === "video" ? " und sende den Meet-Link." : ".");
-          } catch {
-            content =
-              "Buchung fehlgeschlagen (Kalender evtl. nicht verbunden). Nutze propose_appointment als Fallback.";
+          } catch (err) {
+            if (err instanceof SlotBusyError) {
+              content =
+                "Diese Zeit ist im Kalender bereits belegt — NICHT buchen. Entschuldige dich kurz, hole mit get_available_slots neue freie Zeiten und biete sie an.";
+            } else {
+              console.error("[whatsapp bot] Buchung", err);
+              content =
+                "Buchung fehlgeschlagen (Kalender evtl. nicht verbunden). Nutze propose_appointment als Fallback.";
+            }
           }
         }
       } else if (tu.name === "propose_appointment") {

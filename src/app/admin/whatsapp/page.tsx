@@ -4,6 +4,7 @@ import { AdminTabs } from "@/components/admin-tabs";
 import { getCurrentSession } from "@/lib/auth";
 import { formatDateTime } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { hasRequiredScopes } from "@/lib/whatsapp/google-calendar";
 import { sendReplyAction, toggleBotAction } from "./actions";
 import { SubmitButton } from "./form-buttons";
 
@@ -146,11 +147,13 @@ export default async function AdminWhatsAppPage({
         }),
         prisma.googleCalendarConnection.findUnique({
           where: { customerId: active.customerId },
-          select: { status: true },
+          select: { status: true, scope: true },
         }),
       ])
     : [[], null];
   const calConnected = googleConn?.status === "connected";
+  // Verbunden, aber mit alter Berechtigung (ohne Verfügbarkeitsabfrage).
+  const calNeedsReconnect = calConnected && !hasRequiredScopes(googleConn?.scope);
 
   const windowOpen =
     !!active?.windowExpiresAt && active.windowExpiresAt.getTime() > Date.now();
@@ -481,7 +484,15 @@ export default async function AdminWhatsAppPage({
                 </p>
               )}
 
-              {calConnected ? (
+              {calNeedsReconnect ? (
+                <a
+                  href={`/api/google/connect?customerId=${active.customerId}`}
+                  className="block rounded-lg bg-amber-50 px-2.5 py-2 text-[11px] font-semibold text-amber-800 ring-1 ring-amber-200 hover:bg-amber-100"
+                >
+                  ⚠ Kalender neu verbinden — Verfügbarkeitsprüfung fehlt
+                  (sonst keine Terminvorschläge).
+                </a>
+              ) : calConnected ? (
                 <p className="text-[10px] text-emerald-700">
                   ✓ Google-Kalender verbunden — der Bot bucht automatisch.
                 </p>

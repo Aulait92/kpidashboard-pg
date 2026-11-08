@@ -8,7 +8,19 @@ import { prisma } from "@/lib/prisma";
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const CAL_BASE = "https://www.googleapis.com/calendar/v3";
-export const GOOGLE_SCOPE = "https://www.googleapis.com/auth/calendar.events";
+// calendar.events: Termine anlegen; calendar.freebusy: belegte Zeiten lesen
+// (ohne Termininhalte — datensparsam). freeBusy funktioniert NICHT mit
+// calendar.events allein.
+export const GOOGLE_SCOPE = [
+  "https://www.googleapis.com/auth/calendar.events",
+  "https://www.googleapis.com/auth/calendar.freebusy",
+].join(" ");
+
+/** Hat die gespeicherte Verbindung alle aktuell nötigen Berechtigungen? */
+export function hasRequiredScopes(scope: string | null | undefined): boolean {
+  const have = new Set((scope ?? "").split(/\s+/));
+  return GOOGLE_SCOPE.split(" ").every((s) => have.has(s));
+}
 
 function clientConfig(): {
   clientId: string;
@@ -85,6 +97,7 @@ export async function exchangeCode(
         ? { refreshTokenEnc: encryptSecret(json.refresh_token) }
         : {}),
       tokenExpiresAt: expiresAt,
+      scope: GOOGLE_SCOPE,
       status: "connected",
     },
   });
@@ -136,16 +149,53 @@ async function getAccessToken(customerId: string): Promise<string> {
 
 export type Slot = { start: string; end: string };
 
-/** Freie Slots der nächsten 7 Werktage (10/14/16 Uhr), die nicht belegt sind. */
-export async function suggestSlots(
-  customerId: string,
-  durationMin = 30,
-  count = 3,
-): Promise<Slot[]> {
-  const token = await getAccessToken(customerId);
-  const now = new Date();
-  const timeMin = new Date(now.getTime() + 60 * 60 * 1000);
-  const timeMax = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+type Busy = { start: string; end: string };
+
+/** Termine sind deutsche Ortszeit — unabhängig von der Server-Zeitzone (UTC). */
+const TZ = "Europe/Berlin";
+
+/** Berlin-Kalenderdatum (Y/M/D + Wochentag) zu einem Zeitpunkt. */
+function berlinParts(d: Date): { y: number; m: number; day: number; dow: number } {
+  const p = new Intl.DateTimeFormat("en-US", {
+    timeZone: TZ,
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    weekday: "short",
+  }).formatToParts(d);
+  const get = (t: string) => p.find((x) => x.type === t)?.value ?? "";
+  const dows = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  return {
+    y: Number(get("year")),
+    m: Number(get("month")),
+    day: Number(get("day")),
+    dow: dows.indexOf(get("weekday")),
+  };
+}
+
+/** UTC-Zeitpunkt für eine Berliner Wanduhrzeit (berücksichtigt Sommer-/Winterzeit). */
+function berlinTime(y: number, m: number, day: number, hour: number): Date {
+  const guess = Date.UTC(y, m - 1, day, hour);
+  const wall = new Intl.DateTimeFormat("en-US", {
+    timeZone: TZ,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+  }).formatToParts(new Date(guess));
+  const g = (t: string) => Number(wall.find((x) => x.type === t)?.value);
+  const asUtc = Date.UTC(g("year"), g("month") - 1, g("day"), g("hour"), g("minute"));
+  return new Date(guess - (asUtc - guess));
+}
+
+/**
+ * Belegte Zeiten im Hauptkalender. Wirft bei jedem Fehler (fehlende
+ * Berechtigung, API-Fehler) — niemals still "alles frei" annehmen, sonst
+ * drohen Doppelbuchungen.
+ */
+async function getBusy(token: string, timeMin: Date, timeMax: Date): Promise<Busy[]> {
   const res = await fetch(`${CAL_BASE}/freeBusy`, {
     method: "POST",
     headers: {
@@ -155,33 +205,62 @@ export async function suggestSlots(
     body: JSON.stringify({
       timeMin: timeMin.toISOString(),
       timeMax: timeMax.toISOString(),
+      timeZone: TZ,
       items: [{ id: "primary" }],
     }),
   });
-  const json = (await res.json()) as {
-    calendars?: { primary?: { busy?: { start: string; end: string }[] } };
+  const json = (await res.json().catch(() => ({}))) as {
+    calendars?: { primary?: { busy?: Busy[]; errors?: unknown[] } };
   };
-  const busy = json.calendars?.primary?.busy ?? [];
+  const cal = json.calendars?.primary;
+  if (!res.ok || !cal || (cal.errors && cal.errors.length > 0)) {
+    throw new Error(
+      `Google-Verfügbarkeit nicht abrufbar (${res.status}) — Kalender ggf. neu verbinden.`,
+    );
+  }
+  return cal.busy ?? [];
+}
+
+const overlaps = (busy: Busy[], start: Date, end: Date) =>
+  busy.some((b) => new Date(b.start) < end && new Date(b.end) > start);
+
+/** Freie Slots der nächsten Werktage (10/14/16 Uhr Berliner Zeit), die nicht belegt sind. */
+export async function suggestSlots(
+  customerId: string,
+  durationMin = 30,
+  count = 3,
+): Promise<Slot[]> {
+  const token = await getAccessToken(customerId);
+  const now = new Date();
+  const timeMin = new Date(now.getTime() + 60 * 60 * 1000);
+  const timeMax = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000);
+  const busy = await getBusy(token, timeMin, timeMax);
+
   const slots: Slot[] = [];
   const hours = [10, 14, 16];
-  for (let d = 0; d < 7 && slots.length < count; d++) {
-    const day = new Date(now);
-    day.setDate(now.getDate() + d);
-    const dow = day.getDay();
+  for (let d = 0; d < 10 && slots.length < count; d++) {
+    const { y, m, day, dow } = berlinParts(
+      new Date(now.getTime() + d * 24 * 60 * 60 * 1000),
+    );
     if (dow === 0 || dow === 6) continue;
     for (const h of hours) {
       if (slots.length >= count) break;
-      const start = new Date(day);
-      start.setHours(h, 0, 0, 0);
+      const start = berlinTime(y, m, day, h);
       if (start.getTime() < timeMin.getTime()) continue;
       const end = new Date(start.getTime() + durationMin * 60000);
-      const overlaps = busy.some(
-        (b) => new Date(b.start) < end && new Date(b.end) > start,
-      );
-      if (!overlaps) slots.push({ start: start.toISOString(), end: end.toISOString() });
+      if (!overlaps(busy, start, end)) {
+        slots.push({ start: start.toISOString(), end: end.toISOString() });
+      }
     }
   }
   return slots;
+}
+
+/** Fehler, wenn der gewünschte Slot inzwischen belegt ist. */
+export class SlotBusyError extends Error {
+  constructor() {
+    super("SLOT_BUSY");
+  }
 }
 
 /** Termin anlegen: Kalender-Event (Meet bei Video) + Appointment-Zeile. */
@@ -200,6 +279,11 @@ export async function bookAppointment(opts: {
   const token = await getAccessToken(opts.customerId);
   const start = new Date(opts.start);
   const end = new Date(start.getTime() + (opts.durationMin ?? 30) * 60000);
+  if (start.getTime() < Date.now()) throw new Error("Startzeit liegt in der Vergangenheit.");
+  // Unmittelbar vor dem Anlegen erneut prüfen — der Slot kann seit dem
+  // Vorschlag belegt worden sein (oder der Bot nennt eine eigene Zeit).
+  const busy = await getBusy(token, start, end);
+  if (overlaps(busy, start, end)) throw new SlotBusyError();
   const body: Record<string, unknown> = {
     summary: opts.summary,
     description: opts.description ?? "",
