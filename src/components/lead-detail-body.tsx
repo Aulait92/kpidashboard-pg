@@ -1,3 +1,5 @@
+import { pipelinePhasesFor } from "@/lib/products";
+import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { notFound } from "next/navigation";
 import {
   getStornogruendePerLead,
@@ -184,6 +186,7 @@ export async function LeadDetailBody({
           <ReadOnlyCard fields={fields} source={lead.source} />
           <div className="mt-6">
             <LeadEditForm
+              phases={pipelinePhasesFor(await hasWhatsAppInbox(customerId))}
               leadId={lead.id}
               initialBearbeitungsstatus={
                 firstString(fields["Bearbeitungsstatus"]) ?? ""

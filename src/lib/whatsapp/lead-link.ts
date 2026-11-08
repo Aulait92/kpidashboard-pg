@@ -86,5 +86,12 @@ export async function attachLeadToContact(leadId: string): Promise<void> {
     data: { leadId },
   });
   const booked = await prisma.appointment.count({ where: { leadId, status: "booked" } });
-  if (booked > 0) await recordLeadProgress(leadId, "booked");
+  if (booked > 0) {
+    await recordLeadProgress(leadId, "booked");
+  } else {
+    const replied = await prisma.message.count({
+      where: { conversationId: conv.id, direction: "inbound" },
+    });
+    if (replied > 0) await recordLeadProgress(leadId, "replied");
+  }
 }

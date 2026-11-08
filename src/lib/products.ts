@@ -104,6 +104,8 @@ export function classifyCampaignProduct(campaignName: string): string | null {
 export const LEAD_STATUS_OPTIONS = [
   "Neuer Lead",
   "Nicht erreicht",
+  // Nur WhatsApp-Kunden: Lead hat im Chat geantwortet, noch kein Termin.
+  "Im Gespräch",
   "In Beratung",
   "Angebot gesendet",
   "Abschluss",
@@ -128,6 +130,7 @@ export function isValidLeadStatus(value: string): value is LeadStatus {
 // Pipeline-Drag genutzt, um Lead.reached konsistent mit dem neuen Status
 // zu spiegeln, damit die Erreichbarkeits-Kachel sofort stimmt.
 const REACHED: ReadonlySet<LeadStatus> = new Set<LeadStatus>([
+  "Im Gespräch",
   "In Beratung",
   "Angebot gesendet",
   "Erreicht",
@@ -223,4 +226,35 @@ export function findPhaseForStatus(
       (p.statuses as readonly string[]).includes(status),
     ) ?? null
   );
+}
+
+// WhatsApp-Kunden (neues Modell mit Assistent): zusätzliche Spalte
+// „Im Gespräch" (Lead hat im Chat geantwortet, noch kein Termin) und
+// „In Beratung" heißt dort „Termin vereinbart" — der Status-Wert bleibt
+// „In Beratung" (KPIs/Airtable unverändert). Bestandskunden sehen die
+// bisherigen Spalten.
+const GESPRAECH_PHASE: PipelinePhase = {
+  key: "gespraech",
+  label: "Im Gespräch",
+  statuses: ["Im Gespräch"],
+  defaultStatus: "Im Gespräch",
+};
+
+export function pipelinePhasesFor(whatsapp: boolean): readonly PipelinePhase[] {
+  if (!whatsapp) return PIPELINE_PHASES;
+  const out: PipelinePhase[] = [];
+  for (const p of PIPELINE_PHASES) {
+    if (p.key === "beratung") {
+      out.push(GESPRAECH_PHASE, { ...p, label: "Termin vereinbart" });
+    } else out.push(p);
+  }
+  return out;
+}
+
+export function findPhaseIn(
+  phases: readonly PipelinePhase[],
+  status: string | null | undefined,
+): PipelinePhase | null {
+  if (!status) return null;
+  return phases.find((p) => (p.statuses as readonly string[]).includes(status)) ?? null;
 }

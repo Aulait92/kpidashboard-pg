@@ -16,6 +16,7 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { parseRangeFromSearchParams } from "@/lib/date-ranges";
 import { formatDate } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { pipelinePhasesFor } from "@/lib/products";
 
 type SearchParams = Promise<{
   range?: string;
@@ -157,7 +158,11 @@ async function KanbanBody({
 
   return (
     <div className="mt-6">
-      <KanbanBoard key={rangeKey} leads={leads} />
+      <KanbanBoard
+        key={rangeKey}
+        leads={leads}
+        phases={pipelinePhasesFor(await hasWhatsAppInbox(customerId))}
+      />
     </div>
   );
 }

@@ -4,7 +4,8 @@
 // (Erreichbarkeit, Termine, Zeit bis Erstkontakt) blieben leer.
 //
 // Regeln:
-// - Absage: „In Beratung" → „Neuer Lead", wenn kein Termin mehr gebucht ist.
+// - Antwort im Chat: Neu/Nicht erreicht → „Im Gespräch".
+// - Absage: „In Beratung" → „Im Gespräch", wenn kein Termin mehr gebucht ist.
 // - Status wird nur „hochgestuft" (Neuer Lead / Nicht erreicht / leer →
 //   In Beratung), nie zurückgesetzt — Angebot/Abschluss bleiben unangetastet.
 // - „Erster Kontaktversuch" wird nur gesetzt, wenn er noch leer ist.
@@ -15,11 +16,13 @@ import { prisma } from "@/lib/prisma";
 
 const UPGRADABLE = new Set(["", "neuer lead", "nicht erreicht"]);
 const BOOKED_STATUS = "In Beratung";
-const RESET_STATUS = "Neuer Lead";
+// Nach Absage: Lead war schon im Kontakt → „Im Gespräch" (WhatsApp-Pipeline).
+const RESET_STATUS = "Im Gespräch";
+const REPLIED_STATUS = "Im Gespräch";
 
 export async function recordLeadProgress(
   leadId: string | null | undefined,
-  event: "contact_attempt" | "booked" | "cancelled",
+  event: "contact_attempt" | "replied" | "booked" | "cancelled",
 ): Promise<void> {
   if (!leadId) return;
   try {
@@ -54,7 +57,7 @@ export async function recordLeadProgress(
       }
       await prisma.lead.update({
         where: { id: leadId },
-        data: { status: RESET_STATUS, reached: false },
+        data: { status: RESET_STATUS, reached: true },
       });
       return;
     }
@@ -65,9 +68,19 @@ export async function recordLeadProgress(
       event === "contact_attempt"
         ? lead.contactAttempts + 1
         : Math.max(1, lead.contactAttempts);
-    // Termin gebucht ⇒ In Beratung (= erreicht + Termin).
-    const upgrade =
-      event !== "contact_attempt" && UPGRADABLE.has((lead.status ?? "").trim().toLowerCase());
+    // Termin gebucht ⇒ In Beratung (= erreicht + Termin);
+    // im Chat geantwortet ⇒ Im Gespräch (= erreicht, noch kein Termin).
+    const current = (lead.status ?? "").trim().toLowerCase();
+    const upgradeTo =
+      event === "booked" && (UPGRADABLE.has(current) || current === REPLIED_STATUS.toLowerCase())
+        ? BOOKED_STATUS
+        : event === "replied" && UPGRADABLE.has(current)
+          ? REPLIED_STATUS
+          : null;
+    const upgrade = upgradeTo != null;
+    // Jede eingehende Nachricht meldet „replied" — nur schreiben, wenn sich
+    // wirklich etwas ändert (spart Airtable-Calls).
+    if (event === "replied" && !upgrade && !setFirstContact) return;
     const reached = upgrade ? true : lead.reached;
 
     if (lead.airtableId) {
@@ -75,7 +88,7 @@ export async function recordLeadProgress(
         airtableId: lead.airtableId,
         kontaktversuche: attempts,
         ...(setFirstContact ? { ersterKontaktversuch: now.toISOString() } : {}),
-        ...(upgrade ? { bearbeitungsstatus: BOOKED_STATUS } : {}),
+        ...(upgradeTo ? { bearbeitungsstatus: upgradeTo } : {}),
       });
     }
     await prisma.lead.update({
@@ -84,7 +97,7 @@ export async function recordLeadProgress(
         contactAttempts: attempts,
         reached,
         ...(setFirstContact ? { firstContactAt: now } : {}),
-        ...(upgrade ? { status: BOOKED_STATUS } : {}),
+        ...(upgradeTo ? { status: upgradeTo } : {}),
       },
     });
   } catch (err) {

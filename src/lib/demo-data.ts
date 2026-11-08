@@ -64,14 +64,14 @@ const PLAN: Scenario[] = [
 
 const STATUS: Record<Scenario, string> = {
   new_silent: "Neuer Lead",
-  new_replied: "Neuer Lead",
+  new_replied: "Im Gespräch",
   not_reached: "Nicht erreicht",
   booked_future: "In Beratung",
   consult_done: "In Beratung",
   offer: "Angebot gesendet",
   closed: "Abschluss",
   no_interest: "Kein Interesse",
-  cancelled: "Neuer Lead",
+  cancelled: "Im Gespräch",
 };
 
 // Deterministischer Zufall → gleiche Demo bei jedem Anlegen.
@@ -199,7 +199,7 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
     const replied = !["new_silent", "not_reached"].includes(scenario);
     const hasAppt = ["booked_future", "consult_done", "offer", "closed", "cancelled"].includes(scenario);
     const status = STATUS[scenario];
-    const reached = !["new_silent", "new_replied", "not_reached", "cancelled"].includes(scenario);
+    const reached = !["new_silent", "not_reached"].includes(scenario);
     const closeValue = scenario === "closed" ? Math.round(400 + rand() * 2000) : null;
     const situation = LEBENSSITUATION[Math.floor(rand() * LEBENSSITUATION.length)];
     const interest = INTERESSE[Math.floor(rand() * INTERESSE.length)];

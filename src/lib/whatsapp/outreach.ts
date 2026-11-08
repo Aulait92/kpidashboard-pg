@@ -25,7 +25,7 @@ const OUTREACH_MAX_AGE_MS = 48 * 60 * 60 * 1000;
 /** Ab hier gilt ein Lead ohne Termin als Rückruf-Fall. */
 export const CALLBACK_AFTER_MS = 24 * 60 * 60 * 1000;
 const CALLBACK_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
-const CALLBACK_STATUSES = ["Neuer Lead", "Nicht erreicht"];
+const CALLBACK_STATUSES = ["Neuer Lead", "Nicht erreicht", "Im Gespräch"];
 
 const DEFAULT_OUTREACH_TEXT =
   "Hallo {{1}}, danke für deine Anfrage! Hast du kurz Zeit für zwei Fragen, damit wir dir ein passendes Angebot machen können?";

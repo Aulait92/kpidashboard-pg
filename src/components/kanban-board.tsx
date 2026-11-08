@@ -34,6 +34,7 @@ type ColumnDef = PipelinePhase & { accent: string };
 const COLUMN_ACCENTS: Record<string, string> = {
   neu: "border-t-zinc-400",
   "nicht-erreicht": "border-t-orange-400",
+  gespraech: "border-t-sky-400",
   beratung: "border-t-blue-500",
   "angebot-gesendet": "border-t-violet-500",
   abschluss: "border-t-emerald-500",
@@ -41,14 +42,16 @@ const COLUMN_ACCENTS: Record<string, string> = {
   disqualifiziert: "border-t-zinc-500",
 };
 
-const COLUMNS: ColumnDef[] = PIPELINE_PHASES.map((p) => ({
-  ...p,
-  accent: COLUMN_ACCENTS[p.key] ?? "border-t-zinc-300",
-}));
+function toColumns(phases: readonly PipelinePhase[]): ColumnDef[] {
+  return phases.map((p) => ({
+    ...p,
+    accent: COLUMN_ACCENTS[p.key] ?? "border-t-zinc-300",
+  }));
+}
 
 const SONSTIGE_KEY = "__sonstige__";
 
-function findColumnFor(status: string | null): ColumnDef | null {
+function findColumnFor(COLUMNS: ColumnDef[], status: string | null): ColumnDef | null {
   const s = (status ?? "Neuer Lead").trim();
   return (
     COLUMNS.find((c) =>
@@ -57,12 +60,12 @@ function findColumnFor(status: string | null): ColumnDef | null {
   );
 }
 
-function bucketize(leads: KanbanLead[]): Map<string, KanbanLead[]> {
+function bucketize(COLUMNS: ColumnDef[], leads: KanbanLead[]): Map<string, KanbanLead[]> {
   const map = new Map<string, KanbanLead[]>();
   for (const col of COLUMNS) map.set(col.key, []);
   map.set(SONSTIGE_KEY, []);
   for (const lead of leads) {
-    const col = findColumnFor(lead.status);
+    const col = findColumnFor(COLUMNS, lead.status);
     if (col) map.get(col.key)!.push(lead);
     else map.get(SONSTIGE_KEY)!.push(lead);
   }
@@ -79,7 +82,15 @@ function subStatusLabel(lead: KanbanLead, col: ColumnDef): string | null {
   return s;
 }
 
-export function KanbanBoard({ leads: initialLeads }: { leads: KanbanLead[] }) {
+export function KanbanBoard({
+  leads: initialLeads,
+  phases = PIPELINE_PHASES,
+}: {
+  leads: KanbanLead[];
+  /** Spalten — WhatsApp-Kunden bekommen „Im Gespräch" (pipelinePhasesFor). */
+  phases?: readonly PipelinePhase[];
+}) {
+  const COLUMNS = toColumns(phases);
   const router = useRouter();
   const [leads, setLeads] = useState<KanbanLead[]>(initialLeads);
   const [dragLeadId, setDragLeadId] = useState<string | null>(null);
@@ -95,7 +106,7 @@ export function KanbanBoard({ leads: initialLeads }: { leads: KanbanLead[] }) {
   // Drag wird so unterdrückt, ohne die normale Click-Navigation zu blocken.
   const didDrag = useRef(false);
 
-  const buckets = bucketize(leads);
+  const buckets = bucketize(COLUMNS, leads);
   const sonstige = buckets.get(SONSTIGE_KEY) ?? [];
 
   function commitStatus(

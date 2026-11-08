@@ -6,7 +6,7 @@ import {
   updateLeadDetailsAction,
   type UpdateLeadState,
 } from "@/app/buyer/actions";
-import { PIPELINE_PHASES, findPhaseForStatus } from "@/lib/products";
+import { PIPELINE_PHASES, findPhaseIn, type PipelinePhase } from "@/lib/products";
 
 // Editier-Block direkt unter der Read-Only-Karte. Vier Felder, die der
 // Buyer im Tagesgeschäft pflegt:
@@ -24,7 +24,10 @@ export function LeadEditForm({
   initialKontaktversuche,
   initialErsterKontaktversuch,
   initialNotizen,
+  phases = PIPELINE_PHASES,
 }: {
+  /** WhatsApp-Kunden: mit „Im Gespräch" (pipelinePhasesFor). */
+  phases?: readonly PipelinePhase[];
   leadId: string;
   initialBearbeitungsstatus: string;
   initialKontaktversuche: number;
@@ -42,7 +45,7 @@ export function LeadEditForm({
   // (z. B. "Qualifiziert" innerhalb "Im Gespräch") bewahren wir, solange
   // der Buyer in derselben Phase bleibt; wechselt er die Phase, wird
   // auf den Einstiegs-Status der neuen Phase gesetzt.
-  const initialPhase = findPhaseForStatus(initialBearbeitungsstatus);
+  const initialPhase = findPhaseIn(phases, initialBearbeitungsstatus);
   const statusIsExternal =
     initialBearbeitungsstatus !== "" && initialPhase == null;
 
@@ -55,7 +58,7 @@ export function LeadEditForm({
   // ignoriert das Feld (kein Status-Update).
   const resolvedStatus = (() => {
     if (selectedPhaseKey === "") return "";
-    const phase = PIPELINE_PHASES.find((p) => p.key === selectedPhaseKey);
+    const phase = phases.find((p) => p.key === selectedPhaseKey);
     if (!phase) return "";
     if (initialPhase && phase.key === initialPhase.key) {
       return initialBearbeitungsstatus;
@@ -107,7 +110,7 @@ export function LeadEditForm({
                   {initialBearbeitungsstatus} (nicht in Pipeline)
                 </option>
               ) : null}
-              {PIPELINE_PHASES.map((p) => (
+              {phases.map((p) => (
                 <option key={p.key} value={p.key}>
                   {p.label}
                 </option>

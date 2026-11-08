@@ -17,6 +17,7 @@ type AirtableListResponse = {
 };
 
 const REACHED_STATUSES = new Set([
+  "Im Gespräch",
   "In Beratung",
   "Angebot gesendet",
   "Erreicht",

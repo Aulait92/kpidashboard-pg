@@ -197,6 +197,16 @@ async function persistInbound(
     },
   });
 
+  // CRM: Lead hat geantwortet ⇒ „Im Gespräch" (nur aus Neu/Nicht erreicht).
+  const linkedLead = await prisma.conversation.findUnique({
+    where: { id: conversation.id },
+    select: { leadId: true },
+  });
+  if (linkedLead?.leadId) {
+    const { recordLeadProgress } = await import("@/lib/lead-progress");
+    await recordLeadProgress(linkedLead.leadId, "replied");
+  }
+
   // KI-Bot anstoßen, wenn aktiv. Dynamischer Import bricht den Zyklus
   // gateway <-> bot; Fehler dürfen die Ingestion nicht scheitern lassen.
   if (conversation.botActive) {
