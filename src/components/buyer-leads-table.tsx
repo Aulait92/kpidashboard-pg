@@ -81,8 +81,10 @@ export function BuyerLeadsTable({ leads }: { leads: BuyerLeadRow[] }) {
             Deine Leads im Zeitraum
           </h2>
           <p className="mt-1 text-xs text-[color:var(--muted)]">
-            Klick auf eine Zeile öffnet die Detail-Ansicht. Storno-Button
-            öffnet ein Fenster zur Auswahl des Grunds plus Bemerkung.
+            Klick auf eine Zeile öffnet die Detail-Ansicht.
+            {leads.some((l) => l.stornoOptions.length > 0)
+              ? " Storno-Button öffnet ein Fenster zur Auswahl des Grunds plus Bemerkung."
+              : ""}
           </p>
         </div>
         <div className="overflow-x-auto">
@@ -155,7 +157,7 @@ export function BuyerLeadsTable({ leads }: { leads: BuyerLeadRow[] }) {
                         <span className="text-[11px] text-[color:var(--muted)]">
                           storniert
                         </span>
-                      ) : (
+                      ) : l.stornoOptions.length === 0 ? null : (
                         <button
                           type="button"
                           onClick={() => setOpenStorno(l)}

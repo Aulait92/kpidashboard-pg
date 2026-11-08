@@ -82,18 +82,24 @@ export async function cancelLeadAction(
     return { ok: true, leadId };
   }
 
-  // Validieren: der ausgewählte Grund muss in den für den Bezug
-  // zugelassenen Stornogründen enthalten sein. Verhindert, dass ein
+  // Storno nur, wenn für den Bezug „Erlaubte Stornogründe" vertraglich
+  // hinterlegt sind (z. B. Retainer-Kunden: keine → kein Storno). Der
+  // gewählte Grund muss in dieser Liste stehen — verhindert auch, dass ein
   // manipuliertes Formular einen fremden Grund einreicht.
-  if (lead.bezugAirtableId) {
-    const allowedMap = await fetchBezugStornogruendeMap();
-    const allowed = allowedMap.get(lead.bezugAirtableId) ?? [];
-    if (allowed.length > 0 && !allowed.includes(stornogrundRecordId)) {
-      return {
-        error: "Dieser Stornogrund ist für diesen Bezug nicht zugelassen.",
-        leadId,
-      };
-    }
+  const allowed = lead.bezugAirtableId
+    ? ((await fetchBezugStornogruendeMap()).get(lead.bezugAirtableId) ?? [])
+    : [];
+  if (allowed.length === 0) {
+    return {
+      error: "Für diesen Vertrag sind keine Stornos vorgesehen.",
+      leadId,
+    };
+  }
+  if (!allowed.includes(stornogrundRecordId)) {
+    return {
+      error: "Dieser Stornogrund ist für diesen Bezug nicht zugelassen.",
+      leadId,
+    };
   }
 
   try {
