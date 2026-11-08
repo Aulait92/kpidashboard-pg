@@ -258,14 +258,44 @@ export async function suggestSlots(
   return slots;
 }
 
-/** Buchungs-Slug des Kunden holen bzw. einmalig erzeugen (nicht erratbar). */
+/** "Allianz Anid Schwarzkopf" → "allianz-anid-schwarzkopf" (URL-tauglich). */
+export function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/ä/g, "ae")
+    .replace(/ö/g, "oe")
+    .replace(/ü/g, "ue")
+    .replace(/ß/g, "ss")
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
+
+/**
+ * Buchungs-Slug des Kunden holen bzw. einmalig erzeugen. Bewusst lesbar und
+ * aus dem Kundennamen abgeleitet: Der Link steht fest in Meta-Leadformularen
+ * (dort nach Veröffentlichung nicht mehr änderbar) und muss deshalb über
+ * Umgebungen/Datenbanken hinweg gleich bleiben. Die Seite ist öffentlich wie
+ * ein Calendly-Link; Missbrauch bremsen Rate-Limit, Honeypot und Slot-Recheck.
+ */
 export async function getOrCreateBookingSlug(customerId: string): Promise<string> {
   const conn = await prisma.googleCalendarConnection.findUnique({
     where: { customerId },
-    select: { bookingSlug: true },
+    select: { bookingSlug: true, customer: { select: { name: true } } },
   });
   if (conn?.bookingSlug) return conn.bookingSlug;
-  const slug = randomBytes(9).toString("base64url"); // 12 Zeichen, 72 Bit
+  const base = slugify(conn?.customer.name ?? "") || randomBytes(6).toString("base64url");
+  let slug = base;
+  for (let i = 2; ; i++) {
+    const taken = await prisma.googleCalendarConnection.findUnique({
+      where: { bookingSlug: slug },
+      select: { id: true },
+    });
+    if (!taken) break;
+    slug = `${base}-${i}`;
+  }
   await prisma.googleCalendarConnection.update({
     where: { customerId },
     data: { bookingSlug: slug },
