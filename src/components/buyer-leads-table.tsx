@@ -57,7 +57,14 @@ function isCancelled(status: string | null): boolean {
   return !!status && status.toLowerCase().startsWith("storno");
 }
 
-export function BuyerLeadsTable({ leads }: { leads: BuyerLeadRow[] }) {
+export function BuyerLeadsTable({
+  leads,
+  showLeadCost = true,
+}: {
+  leads: BuyerLeadRow[];
+  /** Retainer-Kunden haben keinen Preis pro Lead → Spalte ausblenden. */
+  showLeadCost?: boolean;
+}) {
   const router = useRouter();
   const [openStorno, setOpenStorno] = useState<BuyerLeadRow | null>(null);
 
@@ -95,7 +102,9 @@ export function BuyerLeadsTable({ leads }: { leads: BuyerLeadRow[] }) {
                 <th className="px-3 py-2.5 text-left">Name</th>
                 <th className="px-3 py-2.5 text-left">Produkt</th>
                 <th className="px-3 py-2.5 text-left">Status</th>
-                <th className="px-3 py-2.5 text-right">Lead-Kosten</th>
+                {showLeadCost ? (
+                  <th className="px-3 py-2.5 text-right">Lead-Kosten</th>
+                ) : null}
                 <th className="px-3 py-2.5 text-right"></th>
               </tr>
             </thead>
@@ -149,9 +158,11 @@ export function BuyerLeadsTable({ leads }: { leads: BuyerLeadRow[] }) {
                         </div>
                       ) : null}
                     </td>
-                    <td className="px-3 py-2.5 text-right tabular-nums">
-                      {l.revenue > 0 ? formatEUR(l.revenue) : "–"}
-                    </td>
+                    {showLeadCost ? (
+                      <td className="px-3 py-2.5 text-right tabular-nums">
+                        {l.revenue > 0 ? formatEUR(l.revenue) : "–"}
+                      </td>
+                    ) : null}
                     <td className="px-3 py-2.5 text-right">
                       {cancelled ? (
                         <span className="text-[11px] text-[color:var(--muted)]">

@@ -10,10 +10,14 @@ import { KpiCard, type Delta } from "@/components/kpi-card";
 import { LiveUpdated } from "@/components/live-updated";
 import { MonthlyForecast } from "@/components/monthly-forecast";
 import { PullToRefresh } from "@/components/pull-to-refresh";
-import { SpeedToLeadCard } from "@/components/speed-to-lead-card";
 import { logoutAction } from "@/app/login/actions";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
+import {
+  computeCustomerSpend,
+  customerSpendForBuckets,
+  loadRetainerConfig,
+} from "@/lib/customer-spend";
 import { computeMonthlyForecast } from "@/lib/forecast";
 import {
   computeKpis,
@@ -21,10 +25,8 @@ import {
   type Kpis,
   type TimeSeriesPoint,
 } from "@/lib/kpis";
-import { computeSpeedToLeadAnalysis } from "@/lib/speed-to-lead";
 import {
   formatDate,
-  formatDuration,
   formatEUR,
   formatNumber,
   formatPercent,
@@ -146,12 +148,20 @@ async function BuyerDashboardBody({
   // BuyerComparison/Leaderboard ist aktuell ausgeblendet — die Berechnung
   // (computeCustomerLeaderboard) sparen wir uns hier, bis der Vergleich
   // wieder eingeblendet wird.
-  const [k, p, ts, speedAnalysis, forecast, closeValueRows, closeValueRowsPrev] =
-    await Promise.all([
+  const retainerCfg = await loadRetainerConfig(customerId);
+  const [
+    k,
+    p,
+    ts,
+    forecast,
+    closeValueRows,
+    closeValueRowsPrev,
+    spend,
+    spendPrev,
+  ] = await Promise.all([
       computeKpis({ range, customerId, product: null }) as Promise<Kpis>,
       computeKpis({ range: prev, customerId, product: null }) as Promise<Kpis>,
       computeTimeSeries({ range, customerId, product: null }),
-      computeSpeedToLeadAnalysis({ range, customerId }),
       computeMonthlyForecast({ customerId, includeCloseValue: true }),
       // Abschlusswerte aus dem Lead-Modell direkt aggregieren — eine eigene
       // Spalte am Lead, getrennt vom Lead-Einkaufspreis (Revenue.amount).
@@ -171,7 +181,28 @@ async function BuyerDashboardBody({
         },
         select: { closeValue: true, status: true },
       }),
+      retainerCfg ? computeCustomerSpend(customerId, range, retainerCfg) : null,
+      retainerCfg ? computeCustomerSpend(customerId, prev, retainerCfg) : null,
     ]);
+
+  // Lead-Kosten aus Kundensicht: Pro-Lead-Kunden = Lead-Preis (Revenue),
+  // Retainer-Kunden = eigenes Werbebudget + Retainer.
+  const cost = spend ? spend.total : Number(k.revenue);
+  const costPrev = spendPrev ? spendPrev.total : Number(p.revenue);
+  if (retainerCfg) {
+    const series = await customerSpendForBuckets(
+      customerId,
+      ts.points.map((pt) => pt.bucket),
+      range.to,
+      retainerCfg,
+    );
+    ts.points.forEach((pt, i) => {
+      pt.revenue = series[i] ?? 0;
+    });
+  }
+  const costHint = spend
+    ? `Werbebudget ${formatEUR(spend.adSpend)} + Retainer ${formatEUR(spend.retainer)}`
+    : "Brutto im Zeitraum";
 
   function sumCloseValue(
     rows: { closeValue: unknown; status: string | null }[],
@@ -190,16 +221,14 @@ async function BuyerDashboardBody({
   }
   const umsatz = sumCloseValue(closeValueRows);
   const umsatzPrev = sumCloseValue(closeValueRowsPrev);
-  const gewinn = umsatz - Number(k.revenue);
-  const gewinnPrev = umsatzPrev - Number(p.revenue);
+  const gewinn = umsatz - cost;
+  const gewinnPrev = umsatzPrev - costPrev;
 
   return (
     <div className="mt-6 space-y-6">
       <FunnelHero kpis={k} />
 
       <MonthlyForecast forecast={forecast} />
-
-      <SpeedToLeadCard data={speedAnalysis} />
 
       <section>
         <div className="mb-3">
@@ -210,7 +239,7 @@ async function BuyerDashboardBody({
             Deine Zahlen
           </h2>
         </div>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <KpiCard
             label="Leads"
             value={formatNumber(k.nettoLeads)}
@@ -232,20 +261,6 @@ async function BuyerDashboardBody({
             delta={delta(k.closingRate, p.closingRate)}
             sparkline={{ points: ts.points, dataKey: "closingRate" }}
           />
-          <KpiCard
-            label="Zeit bis Erstkontakt"
-            value={formatDuration(k.avgHoursToFirstContact)}
-            hint="Durchschnitt"
-            delta={delta(
-              k.avgHoursToFirstContact,
-              p.avgHoursToFirstContact,
-              true,
-            )}
-            sparkline={{
-              points: ts.points,
-              dataKey: "avgHoursToFirstContact",
-            }}
-          />
         </div>
       </section>
 
@@ -261,45 +276,45 @@ async function BuyerDashboardBody({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KpiCard
             label="Lead-Kosten"
-            value={formatEUR(k.revenue)}
+            value={formatEUR(cost)}
             tone="neutral"
-            hint="Brutto im Zeitraum"
-            delta={delta(k.revenue, p.revenue, true)}
+            hint={costHint}
+            delta={delta(cost, costPrev, true)}
             sparkline={{ points: ts.points, dataKey: "revenue" }}
           />
           <KpiCard
             label="Ø Lead-Kosten / Lead"
             value={formatEUR(
-              k.nettoLeads > 0 ? k.revenue / k.nettoLeads : null,
+              k.nettoLeads > 0 ? cost / k.nettoLeads : null,
             )}
             hint={`Pro Netto-Lead (${formatNumber(k.nettoLeads)})`}
             delta={delta(
-              k.nettoLeads > 0 ? k.revenue / k.nettoLeads : null,
-              p.nettoLeads > 0 ? p.revenue / p.nettoLeads : null,
+              k.nettoLeads > 0 ? cost / k.nettoLeads : null,
+              p.nettoLeads > 0 ? costPrev / p.nettoLeads : null,
               true,
             )}
           />
           <KpiCard
             label="Kosten / Termin"
             value={formatEUR(
-              k.terminLeads > 0 ? k.revenue / k.terminLeads : null,
+              k.terminLeads > 0 ? cost / k.terminLeads : null,
             )}
             hint={`Aus ${formatNumber(k.terminLeads)} Terminen`}
             delta={delta(
-              k.terminLeads > 0 ? k.revenue / k.terminLeads : null,
-              p.terminLeads > 0 ? p.revenue / p.terminLeads : null,
+              k.terminLeads > 0 ? cost / k.terminLeads : null,
+              p.terminLeads > 0 ? costPrev / p.terminLeads : null,
               true,
             )}
           />
           <KpiCard
             label="Kosten / Abschluss"
             value={formatEUR(
-              k.closedLeads > 0 ? k.revenue / k.closedLeads : null,
+              k.closedLeads > 0 ? cost / k.closedLeads : null,
             )}
             hint={`Aus ${formatNumber(k.closedLeads)} Abschlüssen`}
             delta={delta(
-              k.closedLeads > 0 ? k.revenue / k.closedLeads : null,
-              p.closedLeads > 0 ? p.revenue / p.closedLeads : null,
+              k.closedLeads > 0 ? cost / k.closedLeads : null,
+              p.closedLeads > 0 ? costPrev / p.closedLeads : null,
               true,
             )}
           />

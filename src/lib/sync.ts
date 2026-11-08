@@ -1,5 +1,10 @@
 import { syncAirtable, type SyncResult } from "@/lib/airtable";
-import { syncMeta, type MetaSyncResult } from "@/lib/meta";
+import {
+  syncCustomerAdSpend,
+  syncMeta,
+  type CustomerAdSpendSyncResult,
+  type MetaSyncResult,
+} from "@/lib/meta";
 import { syncOutbrain, type OutbrainSyncResult } from "@/lib/outbrain";
 import { syncTikTok, type TikTokSyncResult } from "@/lib/tiktok";
 import { syncGoogleAds, type GoogleSyncResult } from "@/lib/google";
@@ -9,6 +14,9 @@ import { sendToAdmins, sendToBuyersOfCustomer } from "@/lib/push";
 export type FullSyncResult = {
   airtable: SyncResult;
   meta: { ok: true; result: MetaSyncResult } | { ok: false; error: string };
+  customerAdSpend:
+    | { ok: true; result: CustomerAdSpendSyncResult }
+    | { ok: false; error: string };
   outbrain:
     | { ok: true; result: OutbrainSyncResult }
     | { ok: false; error: string };
@@ -30,6 +38,23 @@ const eur = new Intl.NumberFormat("de-DE", {
 
 export async function runFullSync(): Promise<FullSyncResult> {
   const airtable = await syncAirtable();
+
+  // Eigene Werbekonten der Retainer-Kunden (Spend nur für deren Dashboard).
+  // Vor dem (langen) Agentur-Meta-Sync, damit er nicht davon blockiert wird.
+  let customerAdSpend: FullSyncResult["customerAdSpend"];
+  try {
+    const r = await syncCustomerAdSpend();
+    console.log(
+      `[sync] Kunden-Werbekonten: ${r.customers} Kunden, ${r.days} Tage` +
+        (r.errors.length ? ` · Fehler: ${r.errors.join(" | ")}` : ""),
+    );
+    customerAdSpend = { ok: true, result: r };
+  } catch (err) {
+    customerAdSpend = {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
 
   let meta: FullSyncResult["meta"];
   try {
@@ -133,6 +158,7 @@ export async function runFullSync(): Promise<FullSyncResult> {
   return {
     airtable,
     meta,
+    customerAdSpend,
     outbrain,
     tiktok,
     google,

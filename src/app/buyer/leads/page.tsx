@@ -17,6 +17,7 @@ import { getStornogruendePerLead } from "@/app/buyer/actions";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { parseRangeFromSearchParams } from "@/lib/date-ranges";
 import { formatDate } from "@/lib/format";
+import { loadRetainerConfig } from "@/lib/customer-spend";
 import { prisma } from "@/lib/prisma";
 import { displayProduct } from "@/lib/products";
 import {
@@ -189,7 +190,10 @@ async function LeadsBody({
   return (
     <div className="mt-6 space-y-6">
       {whatsapp ? <CallbackCard callbacks={callbacks} /> : null}
-      <BuyerLeadsTable leads={leads} />
+      <BuyerLeadsTable
+        leads={leads}
+        showLeadCost={!(await loadRetainerConfig(customerId))}
+      />
     </div>
   );
 }

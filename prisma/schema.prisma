@@ -106,6 +106,15 @@ model Customer {
   // CustomerProduct-Zeile selbst keine eigene Region trägt.
   region           String?
 
+  // ─── Retainer-Modell (aus Airtable „Kunden") ─────────────────────────
+  // Gesetzt = Kunde zahlt Retainer + eigenes Werbebudget statt Lead-Preis.
+  // Im Kunden-Dashboard: Lead-Kosten = Werbespend (eigenes Konto) + Retainer
+  // (tagesanteilig ab retainerStart). Taucht NICHT als Agentur-Kosten auf.
+  retainerMonthly  Decimal?  @db.Decimal(12, 2)
+  retainerStart    DateTime?
+  // Eigenes Meta-Werbekonto des Kunden (nur Ziffern, ohne „act_").
+  metaAdAccountId  String?
+
   leads            Lead[]
   revenues         Revenue[]
   costs            Cost[]
@@ -120,6 +129,23 @@ model Customer {
   appointments       Appointment[]
   messageTemplates   MessageTemplate[]
   consentOptIns      ConsentOptIn[]
+  adSpend            CustomerAdSpend[]
+}
+
+// Tagesspend aus dem EIGENEN Werbekonto eines Kunden (Retainer-Modell).
+// Bewusst getrennt von Cost: das ist Geld des Kunden, keine Agentur-Kosten.
+model CustomerAdSpend {
+  id         String   @id @default(cuid())
+  customerId String
+  accountId  String
+  date       DateTime // Tag, 12:00 UTC
+  amount     Decimal  @db.Decimal(12, 2)
+  updatedAt  DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, accountId, date])
+  @@index([customerId, date])
 }
 
 // Produkt-Katalog. Gespiegelt aus der Airtable-"Produkte"-Tabelle —

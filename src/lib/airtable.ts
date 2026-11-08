@@ -418,6 +418,10 @@ type BuyerInfo = {
   startWechsel: Date | null;
   startNeugeschaeft: Date | null;
   startKinderwunsch: Date | null;
+  // Retainer-Modell (optional).
+  retainerMonthly: number | null;
+  retainerStart: Date | null;
+  metaAdAccountId: string | null;
 };
 
 // Liest ein Datum aus dem erstbesten der angegebenen Felder. Airtable liefert
@@ -657,11 +661,23 @@ async function fetchBuyers(): Promise<Map<string, BuyerInfo>> {
           rec.fields,
           BUYER_START_KINDERWUNSCH_FIELDS,
         ),
+        retainerMonthly: readFloatFromFields(rec.fields, ["Retainer netto / Monat"]),
+        retainerStart: readDateFromFields(rec.fields, ["Retainer seit"]),
+        metaAdAccountId: normalizeAdAccountId(
+          readString(rec.fields, "Meta-Werbekonto (Kunde)"),
+        ),
       });
     }
   }
 
   return map;
+}
+
+// „act_123", „123" oder eine Ads-Manager-URL mit act=123 → „123".
+function normalizeAdAccountId(raw: string | null): string | null {
+  if (!raw) return null;
+  const m = raw.match(/act[_=](\d+)/i) ?? raw.trim().match(/^(\d{6,})$/);
+  return m ? m[1] : null;
 }
 
 // Liest eine ganze Zahl ≥ 0 aus dem erstbesten der angegebenen Felder.
@@ -923,10 +939,15 @@ export async function syncAirtable(): Promise<SyncResult> {
     const key = info.name.trim();
     if (!key) continue;
     syncedCustomerNames.add(key);
+    const retainer = {
+      retainerMonthly: info.retainerMonthly && info.retainerMonthly > 0 ? info.retainerMonthly : null,
+      retainerStart: info.retainerStart,
+      metaAdAccountId: info.metaAdAccountId,
+    };
     const customer = await prisma.customer.upsert({
       where: { name: key },
-      create: { name: key, region: info.region },
-      update: { region: info.region },
+      create: { name: key, region: info.region, ...retainer },
+      update: { region: info.region, ...retainer },
       select: { id: true },
     });
     customerCache.set(key, customer.id);

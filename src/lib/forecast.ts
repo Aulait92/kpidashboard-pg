@@ -5,6 +5,7 @@ import {
   startOfMonth,
   subMonths,
 } from "date-fns";
+import { computeCustomerSpend, loadRetainerConfig } from "@/lib/customer-spend";
 import { computeKpis, type Kpis } from "@/lib/kpis";
 import { prisma } from "@/lib/prisma";
 
@@ -151,19 +152,35 @@ export async function computeMonthlyForecast(params: {
     },
   ];
 
+  // Kunden-Sicht bei Retainer-Kunden: Lead-Kosten = Werbebudget + Retainer
+  // statt Lead-Preis (der ist bei Retainer 0).
+  let costMtd = mtd.revenue;
+  let costPrev = prevFull.revenue;
+  if (params.includeCloseValue && params.customerId) {
+    const cfg = await loadRetainerConfig(params.customerId);
+    if (cfg) {
+      const [a, b] = await Promise.all([
+        computeCustomerSpend(params.customerId, { from: monthStart, to: mtdEnd }, cfg),
+        computeCustomerSpend(params.customerId, { from: prevStart, to: prevEnd }, cfg),
+      ]);
+      costMtd = a?.total ?? 0;
+      costPrev = b?.total ?? 0;
+    }
+  }
+
   const leadKostenRow: ForecastRow = {
     label: params.revenueLabel ?? "Lead-Kosten",
-    mtd: mtd.revenue,
-    projected: projectCurrency(mtd.revenue),
-    previousFull: prevFull.revenue,
+    mtd: costMtd,
+    projected: projectCurrency(costMtd),
+    previousFull: costPrev,
     format: "currency",
   };
 
   if (params.includeCloseValue) {
     // Reihenfolge im Buyer-Block: Umsatz → Lead-Kosten → Gewinn, damit
     // sich der Gewinn visuell aus den beiden Zeilen darüber ergibt.
-    const gewinnMtd = umsatzMtd - mtd.revenue;
-    const gewinnPrev = umsatzPrev - prevFull.revenue;
+    const gewinnMtd = umsatzMtd - costMtd;
+    const gewinnPrev = umsatzPrev - costPrev;
     rows.push(
       {
         label: "Umsatz",
