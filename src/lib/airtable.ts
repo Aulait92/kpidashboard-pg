@@ -1,4 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
+import { extractFormAnswers } from "@/lib/lead-fields";
+import { normalizePhone } from "@/lib/whatsapp/phone";
 import { canonicalProductKey } from "@/lib/products";
 
 type AirtableRecord = {
@@ -1124,6 +1127,11 @@ export async function syncAirtable(): Promise<SyncResult> {
         const price = readNumber(rec.fields, "Preis");
         const billed = readChecked(rec.fields, "Abgerechnet");
         const name = resolveLeadName(rec.fields);
+        // Kontakt + Formularangaben für WhatsApp-Zuordnung und Bot-Kontext.
+        const phone = normalizePhone(readString(rec.fields, "Telefonnummer") ?? "");
+        const email = readString(rec.fields, "E-Mail")?.toLowerCase() ?? null;
+        const formAnswers = extractFormAnswers(product, rec.fields);
+        const formData = formAnswers.length > 0 ? formAnswers : Prisma.DbNull;
 
         const isCancelled = isCancelledStatus(status);
         // Storno-Leads werden vor dem Anruf ausgefiltert → nicht erreicht,
@@ -1162,6 +1170,9 @@ export async function syncAirtable(): Promise<SyncResult> {
             contactAttempts,
             status,
             adChannel,
+            phone,
+            email,
+            formData,
           },
           update: {
             source: product,
@@ -1175,6 +1186,9 @@ export async function syncAirtable(): Promise<SyncResult> {
             contactAttempts,
             status,
             adChannel,
+            phone,
+            email,
+            formData,
           },
         });
 

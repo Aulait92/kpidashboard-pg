@@ -6,6 +6,7 @@
 import { decryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
 import { sendText, type SendResult } from "@/lib/whatsapp/dialog360";
+import { linkLeadToConversation } from "@/lib/whatsapp/lead-link";
 
 const WINDOW_MS = 24 * 60 * 60 * 1000; // 24-Stunden-Service-Fenster
 
@@ -136,6 +137,13 @@ async function persistInbound(
       ...(contactName ? { contactName } : {}),
     },
   });
+
+  // Mit dem Lead aus Airtable verknüpfen (Formularangaben für den Bot).
+  if (!conversation.leadId) {
+    await linkLeadToConversation(conversation.id).catch((e) =>
+      console.error("[whatsapp lead-link]", e),
+    );
+  }
 
   const type = m.type ?? "text";
   const body = type === "text" ? (m.text?.body ?? null) : `[${type}]`;

@@ -14,6 +14,7 @@ import {
   suggestSlots,
   type Slot,
 } from "@/lib/whatsapp/google-calendar";
+import type { FormAnswer } from "@/lib/lead-fields";
 import { buildEventDescription, eventSummary } from "@/lib/whatsapp/event-text";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
 import { EMAIL_RE } from "@/lib/whatsapp/phone";
@@ -109,6 +110,8 @@ function buildSystemPrompt(
     contact: { name: string | null; phone: string; email: string | null };
     /** Bereits gebuchter, kommender Termin (z. B. über die Buchungsseite). */
     upcoming: { startsAt: Date; mode: string; meetUrl: string | null } | null;
+    /** Angaben aus dem Leadformular (Meta/Funnel, via Airtable-Sync). */
+    formAnswers: FormAnswer[];
   },
 ): string {
   const booked = state.upcoming
@@ -128,6 +131,13 @@ function buildSystemPrompt(
   ].filter(Boolean);
   const known = [
     booked,
+    state.formAnswers.length > 0
+      ? [
+          "Angaben aus dem Leadformular (bereits bekannt — NICHT erneut erfragen):",
+          ...state.formAnswers.map((a) => `- ${a.label}: ${a.value}`),
+          "Knüpfe gezielt daran an (z. B. „Du hast angegeben, dass …“) und frage nur, was für die Beratung noch fehlt.",
+        ].join("\n")
+      : "",
     `Bekannte Lead-Daten (NICHT erneut erfragen):\n${contactLines.join("\n")}`,
     state.summary?.trim()
       ? `Bisher erfasst (NICHT erneut erfragen):\n${state.summary.trim()}\nQualifiziert: ${state.qualified ? "ja — jetzt Termin vereinbaren" : "noch nicht"}`
@@ -177,6 +187,19 @@ function formatSlotDE(iso: string): string {
     minute: "2-digit",
     timeZone: BERLIN_TZ,
   }).format(new Date(iso));
+}
+
+/** formData-JSON vom Lead defensiv in Label/Wert-Paare wandeln. */
+function parseFormAnswers(raw: unknown): FormAnswer[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((x) =>
+    x &&
+    typeof x === "object" &&
+    typeof (x as FormAnswer).label === "string" &&
+    typeof (x as FormAnswer).value === "string"
+      ? [{ label: (x as FormAnswer).label, value: (x as FormAnswer).value }]
+      : [],
+  );
 }
 
 type HistoryMessage = { direction: string; body: string | null };
@@ -238,7 +261,7 @@ export async function runBotTurn(conversationId: string): Promise<void> {
   const lead = conversation.leadId
     ? await prisma.lead.findUnique({
         where: { id: conversation.leadId },
-        select: { source: true },
+        select: { source: true, formData: true },
       })
     : null;
 
@@ -265,6 +288,7 @@ export async function runBotTurn(conversationId: string): Promise<void> {
 
   const system = buildSystemPrompt(agent, lead?.source ?? null, {
     upcoming,
+    formAnswers: parseFormAnswers(lead?.formData),
     qualified: conversation.qualified,
     summary: conversation.qualificationSummary,
     contact: {

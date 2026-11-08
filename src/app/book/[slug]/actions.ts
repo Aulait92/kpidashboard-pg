@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { buildEventDescription, eventSummary } from "@/lib/whatsapp/event-text";
 import { bookAppointment, SlotBusyError } from "@/lib/whatsapp/google-calendar";
+import { linkLeadToConversation } from "@/lib/whatsapp/lead-link";
 import { EMAIL_RE, normalizePhone } from "@/lib/whatsapp/phone";
 
 // Öffentliche Buchung (Buchungsseite / Meta-Leadformular). Kein Login — daher
@@ -67,6 +68,14 @@ export async function bookPublicAction(
     update: { contactName: name, contactEmail: emailRaw },
     select: { id: true, qualificationSummary: true },
   });
+  await linkLeadToConversation(conversation.id).catch((e) =>
+    console.error("[booking page lead-link]", e),
+  );
+  const linked = await prisma.conversation.findUnique({
+    where: { id: conversation.id },
+    select: { lead: { select: { source: true } } },
+  });
+  const product = linked?.lead?.source ?? null;
 
   // Pro Lead nur ein offener Termin.
   const existing = await prisma.appointment.findFirst({
@@ -86,12 +95,12 @@ export async function bookPublicAction(
       conversationId: conversation.id,
       start,
       mode,
-      summary: eventSummary(mode, name, null),
+      summary: eventSummary(mode, name, product),
       description: buildEventDescription({
         name,
         phone: phone!,
         email: emailRaw,
-        product: null,
+        product,
         mode,
         summary: conversation.qualificationSummary,
         conversationId: conversation.id,

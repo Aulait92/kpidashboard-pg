@@ -258,6 +258,13 @@ model Lead {
   source          String?
   customerId      String
   name            String?
+  // Kontakt aus Airtable (Telefon normalisiert wie WhatsApp `from`, z. B.
+  // 4915112345678) — für die Zuordnung WhatsApp-Konversation/Buchung ↔ Lead.
+  phone           String?
+  email           String?
+  // Snapshot der produktspezifischen Formularangaben (Label/Wert-Liste aus
+  // lib/lead-fields) — Kontext für den WhatsApp-Bot.
+  formData        Json?
   // rec-ID des Kunden-Produkt-Bezug-Records, an dem dieser Lead in Airtable
   // hängt. Wird beim Storno gebraucht, um die zugelassenen Stornogründe
   // (Linked-Records vom Bezug zur Stornogründe-Tabelle) nachzuschlagen.
@@ -288,6 +295,7 @@ model Lead {
 
   @@index([customerId, createdAt])
   @@index([createdAt])
+  @@index([customerId, phone])
 }
 
 model Revenue {

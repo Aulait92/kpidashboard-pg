@@ -112,7 +112,7 @@ export default async function AdminWhatsAppPage({
           qualified: true,
           qualificationSummary: true,
           customer: { select: { name: true } },
-          lead: { select: { source: true, status: true } },
+          lead: { select: { source: true, status: true, formData: true } },
           messages: {
             orderBy: { createdAt: "asc" },
             select: {
@@ -414,6 +414,20 @@ export default async function AdminWhatsAppPage({
               <Row label="Kunde" value={active.customer?.name ?? "—"} />
               <Row label="Produkt" value={active.lead?.source ?? "—"} />
               <Row label="E-Mail" value={active.contactEmail ?? "—"} />
+              {Array.isArray(active.lead?.formData) &&
+              active.lead.formData.length > 0 ? (
+                <div className="mt-2 rounded-lg bg-[color:var(--background)] p-2">
+                  <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">
+                    Leadformular
+                  </div>
+                  {(active.lead.formData as { label?: unknown; value?: unknown }[]).map(
+                    (a, i) =>
+                      typeof a?.label === "string" && typeof a?.value === "string" ? (
+                        <Row key={i} label={a.label} value={a.value} />
+                      ) : null,
+                  )}
+                </div>
+              ) : null}
               <Row label="Status" value={active.lead?.status ?? active.status} />
             </div>
 
