@@ -81,6 +81,18 @@ export async function sendLeadEmail(
   appointmentId: string,
   kind: LeadEmailKind,
 ): Promise<{ sent: boolean; reason?: string }> {
+  const res = await sendLeadEmailInner(appointmentId, kind);
+  // Nur Termin-ID + Ergebnis loggen — keine E-Mail-Adresse (DSGVO).
+  console.log(
+    `[lead email] ${kind} ${appointmentId}: ${res.sent ? "gesendet" : `nicht gesendet (${res.reason})`}`,
+  );
+  return res;
+}
+
+async function sendLeadEmailInner(
+  appointmentId: string,
+  kind: LeadEmailKind,
+): Promise<{ sent: boolean; reason?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   const fromAddress = process.env.BOOKING_EMAIL_FROM?.trim();
   if (!apiKey || !fromAddress) return { sent: false, reason: "not_configured" };
