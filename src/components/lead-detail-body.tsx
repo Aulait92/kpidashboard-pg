@@ -303,8 +303,12 @@ function ReadOnlyCard({
     }
     return { def, value };
   })
-    // Leere Felder ausblenden – nur zeigen, was es auch gibt.
-    .filter((r) => r.value != null && r.value !== "" && r.value !== "–");
+    // Leere Felder ausblenden – nur zeigen, was es auch gibt. Status steht
+    // schon im Kopf und im Bearbeiten-Block.
+    .filter(
+      (r) =>
+        r.value != null && r.value !== "" && r.value !== "–" && r.def.key !== "Bearbeitungsstatus",
+    );
 
   // Catch-all für fachliche Zusatzfelder, die (noch) keiner Gruppe zugeordnet
   // sind — interne/technische Felder und bereits gezeigte bleiben außen vor.

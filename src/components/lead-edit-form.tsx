@@ -1,12 +1,15 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, Minus, PencilLine, Plus } from "lucide-react";
+import { buttonClass, Card, CardHeader } from "@/components/ui";
+import { useToast } from "@/components/ui/toast";
+import { cn } from "@/lib/utils";
 import {
   updateLeadDetailsAction,
   type UpdateLeadState,
 } from "@/app/buyer/actions";
-import { PIPELINE_PHASES, findPhaseIn, type PipelinePhase } from "@/lib/products";
+import { PHASE_DOT, PIPELINE_PHASES, findPhaseIn, type PipelinePhase } from "@/lib/products";
 
 // Editier-Block direkt unter der Read-Only-Karte. Vier Felder, die der
 // Buyer im Tagesgeschäft pflegt:
@@ -78,118 +81,128 @@ export function LeadEditForm({
   );
   const [notizen, setNotizen] = useState(initialNotizen);
 
-  // "Gespeichert"-Bestätigung nach 2.5s wieder ausblenden, damit man bei
-  // mehrfachem Save jeweils die frische Bestätigung sieht.
-  const [showSaved, setShowSaved] = useState(false);
+  // Rückmeldung per Toast (Designsystem) statt Inline-Text.
+  const toast = useToast();
   useEffect(() => {
-    if (!state.ok) return;
-    setShowSaved(true);
-    const t = setTimeout(() => setShowSaved(false), 2500);
-    return () => clearTimeout(t);
-  }, [state.ok]);
+    if (state.ok) toast.show({ message: "Änderungen gespeichert" });
+    else if (state.error) toast.show({ message: state.error, tone: "error" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
+
+  const inputCls =
+    "w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 py-2 text-sm transition focus:border-[color:var(--brand)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]/15";
 
   return (
-    <form
-      action={formAction}
-      className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]"
-    >
-      <input type="hidden" name="leadId" value={leadId} />
-      <input type="hidden" name="bearbeitungsstatus" value={resolvedStatus} />
+    <form action={formAction}>
+      <Card>
+        <CardHeader icon={PencilLine} title="Bearbeiten" />
+        <input type="hidden" name="leadId" value={leadId} />
+        <input type="hidden" name="bearbeitungsstatus" value={resolvedStatus} />
 
-      <dl className="divide-y divide-[color:var(--border)]">
-        <EditRow label="Bearbeitungsstatus">
-          <div className="space-y-1.5">
-            <select
-              value={selectedPhaseKey}
-              onChange={(e) => setSelectedPhaseKey(e.target.value)}
-              className="w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
-            >
-              <option value="">– nicht gesetzt –</option>
-              {statusIsExternal ? (
-                <option value="" disabled>
-                  {initialBearbeitungsstatus} (nicht in Pipeline)
-                </option>
-              ) : null}
-              {phases.map((p) => (
-                <option key={p.key} value={p.key}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
-            {subStatusInPhase ? (
-              <p className="text-[11px] text-[color:var(--muted)]">
-                Aktueller Sub-Status: <span className="font-medium">{subStatusInPhase}</span>
+        <div className="space-y-5 px-5 py-5">
+          <Field label="Phase">
+            <div className="flex flex-wrap gap-1.5">
+              {phases.map((p) => {
+                const active = p.key === selectedPhaseKey;
+                return (
+                  <button
+                    key={p.key}
+                    type="button"
+                    onClick={() => setSelectedPhaseKey(p.key)}
+                    aria-pressed={active}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                      active
+                        ? "border-[color:var(--foreground)] bg-[color:var(--foreground)] text-white"
+                        : "border-[color:var(--border)] bg-white hover:border-[color:var(--border-strong)]",
+                    )}
+                  >
+                    <span className={cn("h-2 w-2 rounded-full", PHASE_DOT[p.key] ?? "bg-zinc-400")} />
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+            {statusIsExternal ? (
+              <p className="mt-1.5 text-[11px] text-[color:var(--muted)]">
+                Aktuell: {initialBearbeitungsstatus} (keine Pipeline-Phase)
+              </p>
+            ) : subStatusInPhase ? (
+              <p className="mt-1.5 text-[11px] text-[color:var(--muted)]">
+                Genauer Status: <span className="font-medium">{subStatusInPhase}</span>
               </p>
             ) : null}
+          </Field>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Kontaktversuche">
+              <div className="inline-flex items-center rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white">
+                <button
+                  type="button"
+                  aria-label="Weniger"
+                  onClick={() => setKontaktversuche((n) => Math.max(0, n - 1))}
+                  className="flex h-9 w-9 items-center justify-center text-[color:var(--muted)] hover:text-[color:var(--foreground)]"
+                >
+                  <Minus className="h-4 w-4" />
+                </button>
+                <input
+                  type="number"
+                  name="kontaktversuche"
+                  min={0}
+                  step={1}
+                  value={kontaktversuche}
+                  onChange={(e) => setKontaktversuche(Number(e.target.value) || 0)}
+                  className="h-9 w-12 border-x border-[color:var(--border)] text-center text-sm tabular-nums focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <button
+                  type="button"
+                  aria-label="Mehr"
+                  onClick={() => setKontaktversuche((n) => n + 1)}
+                  className="flex h-9 w-9 items-center justify-center text-[color:var(--muted)] hover:text-[color:var(--foreground)]"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
+            </Field>
+            <Field label="Erster Kontakt">
+              <input
+                type="datetime-local"
+                name="ersterKontaktversuch"
+                value={ersterKontaktversuch}
+                onChange={(e) => setErsterKontaktversuch(e.target.value)}
+                className={inputCls}
+              />
+            </Field>
           </div>
-        </EditRow>
 
-        <EditRow label="Kontaktversuche">
-          <input
-            type="number"
-            name="kontaktversuche"
-            min={0}
-            step={1}
-            value={kontaktversuche}
-            onChange={(e) => setKontaktversuche(Number(e.target.value) || 0)}
-            className="w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
-          />
-        </EditRow>
+          <Field label="Notizen">
+            <textarea
+              name="notizen"
+              rows={4}
+              value={notizen}
+              placeholder="Was wurde besprochen? Nächster Schritt?"
+              onChange={(e) => setNotizen(e.target.value)}
+              className={cn(inputCls, "resize-y")}
+            />
+          </Field>
+        </div>
 
-        <EditRow label="Erster Kontaktversuch">
-          <input
-            type="datetime-local"
-            name="ersterKontaktversuch"
-            value={ersterKontaktversuch}
-            onChange={(e) => setErsterKontaktversuch(e.target.value)}
-            className="w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
-          />
-        </EditRow>
-
-        <EditRow label="Notizen">
-          <textarea
-            name="notizen"
-            rows={3}
-            value={notizen}
-            onChange={(e) => setNotizen(e.target.value)}
-            className="w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
-          />
-        </EditRow>
-      </dl>
-
-      <footer className="flex items-center justify-end gap-3 border-t border-[color:var(--border)] bg-zinc-50 px-5 py-3">
-        {state.error ? (
-          <span className="text-xs font-medium text-rose-700">{state.error}</span>
-        ) : null}
-        {showSaved ? (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
-            <Check className="h-3 w-3" /> Gespeichert
-          </span>
-        ) : null}
-        <button
-          type="submit"
-          disabled={pending}
-          className="inline-flex items-center gap-1.5 rounded-md bg-[color:var(--brand)] px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60"
-        >
-          {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-          Speichern
-        </button>
-      </footer>
+        <footer className="flex items-center justify-end border-t border-[color:var(--border)] px-5 py-3">
+          <button type="submit" disabled={pending} className={buttonClass("primary", "md")}>
+            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+            Speichern
+          </button>
+        </footer>
+      </Card>
     </form>
   );
 }
 
-function EditRow({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-1 gap-1 px-5 py-3 sm:grid-cols-[200px_1fr] sm:items-start sm:gap-4">
-      <dt className="pt-2 text-sm text-[color:var(--muted)]">{label}</dt>
-      <dd>{children}</dd>
+    <div>
+      <div className="mb-1.5 text-xs font-medium text-[color:var(--muted)]">{label}</div>
+      {children}
     </div>
   );
 }
