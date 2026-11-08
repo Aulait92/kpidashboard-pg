@@ -22,10 +22,9 @@ import { decryptSecret } from "@/lib/encryption";
 import {
   appUrl,
   buildEventDescription,
-  customerEventDescription,
-  customerEventSummary,
   eventSummary,
 } from "@/lib/whatsapp/event-text";
+import { sendLeadEmail } from "@/lib/calendar/lead-email";
 import { loadConnection, type Busy, type CreatedEvent, type NewEvent } from "@/lib/calendar/tokens";
 
 export type { CalendarProvider } from "@/lib/calendar/tokens";
@@ -174,6 +173,8 @@ export async function bookAppointment(opts: {
   /** Für die kundenfreundliche Einladung (Anrede, Rückrufnummer). */
   leadName?: string | null;
   leadPhone?: string | null;
+  /** E-Mail an den Lead: Bestätigung (Standard), „verschoben" oder keine. */
+  notifyLead?: "booked" | "rescheduled" | false;
 }): Promise<{
   appointmentId: string;
   meetUrl: string | null;
@@ -197,60 +198,27 @@ export async function bookAppointment(opts: {
     where: { customerId: opts.customerId },
     select: { videoRoomUrl: true, advisorEmail: true },
   });
-  const customer = await prisma.customer.findUnique({
-    where: { id: opts.customerId },
-    select: { name: true },
-  });
-  const advisorName = customer?.name ?? "deinem Berater";
   const room = opts.mode === "video" ? agent?.videoRoomUrl?.trim() || null : null;
-  const leadEmail = opts.attendeeEmail?.trim().toLowerCase() || null;
   const advisorEmail = agent?.advisorEmail?.trim().toLowerCase() || null;
 
-  // 1) Einladung für den LEAD — kundenfreundlich, KEINE internen Daten.
-  //    Erzeugt (falls kein fester Raum) auch den Meet/Teams-Link.
-  const firstName = (opts.leadName ?? "").trim().split(/\s+/)[0] || "";
-  const leadEvent = await adapter.createEvent({
+  // EINE Einladung: nur an den Berater (interne Infos: Qualifizierung,
+  // CRM-Link). Der Lead bekommt bewusst KEINE E-Mail-Einladung von unserem
+  // Postfach — er soll nur den Berater sehen. Er erhält die Bestätigung per
+  // WhatsApp (Berater-Nummer) + „Zum Kalender hinzufügen" (ICS/Google-Link
+  // über den Verwaltungs-Link). Das Event hält zugleich den Slot frei.
+  const event = await adapter.createEvent({
     start,
     end,
-    summary: customerEventSummary(opts.mode, advisorName),
-    description: customerEventDescription({
-      firstName: firstName || "und herzlich willkommen",
-      mode: opts.mode,
-      phone: opts.leadPhone ?? null,
-      videoUrl: room,
-      manageUrl,
-      advisorName,
-    }),
-    attendeeEmails: leadEmail ? [leadEmail] : [],
+    summary: opts.summary,
+    description: [opts.description ?? "", room ? `Videocall: ${room}` : ""]
+      .filter(Boolean)
+      .join("\n\n"),
+    attendeeEmails: advisorEmail ? [advisorEmail] : [],
     video: opts.mode === "video" && !room,
-    location: room ?? (opts.mode === "phone" ? "Telefon – wir rufen dich an" : null),
+    location:
+      room ?? (opts.mode === "phone" && opts.leadPhone ? `Telefon: Lead anrufen unter +${opts.leadPhone}` : null),
   });
-  const videoUrl = room ?? leadEvent.videoUrl;
-
-  // 2) Eigene Einladung für den BERATER — interne Infos (Qualifizierung,
-  //    CRM-Link), gleicher Video-Link. Scheitert sie, wird der Lead-Termin
-  //    zurückgenommen, damit der Berater nie einen Termin verpasst.
-  let advisorEventId: string | null = null;
-  if (advisorEmail && advisorEmail !== leadEmail) {
-    try {
-      const adv = await adapter.createEvent({
-        start,
-        end,
-        summary: opts.summary,
-        description: [opts.description ?? "", videoUrl ? `Videocall: ${videoUrl}` : ""]
-          .filter(Boolean)
-          .join("\n\n"),
-        attendeeEmails: [advisorEmail],
-        video: false,
-        location:
-          videoUrl ?? (opts.leadPhone ? `Telefon: Lead anrufen unter +${opts.leadPhone}` : null),
-      });
-      advisorEventId = adv.eventId;
-    } catch (err) {
-      await adapter.deleteEvent(leadEvent.eventId).catch(() => {});
-      throw err;
-    }
-  }
+  const videoUrl = room ?? event.videoUrl;
 
   const appt = await prisma.appointment.create({
     data: {
@@ -260,13 +228,17 @@ export async function bookAppointment(opts: {
       mode: opts.mode,
       startsAt: start,
       endsAt: end,
-      calendarEventId: leadEvent.eventId,
-      advisorEventId,
+      calendarEventId: event.eventId,
       meetUrl: videoUrl,
       status: "booked",
       manageToken,
     },
   });
+  // Lead-Mail (Bestätigung/Verschiebung) — darf die Buchung nie scheitern lassen.
+  const notify = opts.notifyLead === undefined ? "booked" : opts.notifyLead;
+  if (notify) {
+    await sendLeadEmail(appt.id, notify).catch((e) => console.error("[lead email]", e));
+  }
   return {
     appointmentId: appt.id,
     meetUrl: videoUrl,
@@ -329,6 +301,7 @@ export async function cancelAppointment(
   appointmentId: string,
   customerId: string,
   by: "lead" | "advisor" | "team" | "system" = "team",
+  notifyLead = true,
 ): Promise<{ calendarDeleted: boolean; note?: string }> {
   const appt = await prisma.appointment.findFirst({
     where: { id: appointmentId, customerId },
@@ -357,6 +330,9 @@ export async function cancelAppointment(
     where: { id: appt.id },
     data: { status: "cancelled", cancelledAt: new Date(), cancelledBy: by },
   });
+  if (notifyLead) {
+    await sendLeadEmail(appt.id, "cancelled").catch((e) => console.error("[lead email]", e));
+  }
   return { calendarDeleted, note };
 }
 
@@ -408,8 +384,10 @@ export async function rescheduleAppointment(opts: {
     attendeeEmail: conv?.contactEmail ?? null,
     leadName: conv?.contactName ?? null,
     leadPhone: conv?.contactPhone ?? null,
+    notifyLead: "rescheduled",
   });
-  await cancelAppointment(old.id, opts.customerId, opts.by);
+  // Alte Zeit still absagen — der Lead bekommt nur die „verschoben"-Mail.
+  await cancelAppointment(old.id, opts.customerId, opts.by, false);
   return booked;
 }
 

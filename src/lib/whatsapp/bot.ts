@@ -73,7 +73,7 @@ const TOOLS: Anthropic.Tool[] = [
         email: {
           type: "string",
           description:
-            "E-Mail-Adresse des Leads für die Kalender-Einladung (vorher im Chat erfragt). Weglassen, wenn der Lead keine angeben möchte.",
+            "E-Mail-Adresse des Leads für die Terminbestätigung per E-Mail (vorher im Chat erfragt). Weglassen, wenn der Lead keine angeben möchte.",
         },
       },
       required: ["modus", "start"],
@@ -195,7 +195,7 @@ function buildSystemPrompt(
       "- Erst nach geklärter Qualifizierung terminieren: hole mit get_available_slots echte freie Zeiten, biete dem Lead 2-3 davon in natürlicher Sprache an und buche die gewählte Zeit mit book_appointment.",
       "- Erfinde niemals Termine oder Uhrzeiten — nutze ausschließlich die von get_available_slots gelieferten Zeiten. Nur wenn der Kalender nicht verbunden ist, nutze propose_appointment als Fallback.",
       "- Frage vor der Buchung immer, ob der Lead lieber telefonieren oder einen Videocall machen möchte. Wähle den Modus nie selbst.",
-      "- Nachdem der Lead eine Uhrzeit gewählt hat und seine E-Mail noch NICHT bekannt ist, frage (als eigene Frage) nach seiner E-Mail-Adresse, damit er die Kalender-Einladung bekommt. Möchte er keine angeben, buche ohne.",
+      "- Nachdem der Lead eine Uhrzeit gewählt hat und seine E-Mail noch NICHT bekannt ist, frage (als eigene Frage) nach seiner E-Mail-Adresse, damit er die Terminbestätigung mit Kalendereintrag per E-Mail bekommt. Möchte er keine angeben, buche ohne.",
       "- Bei Video-Terminen bekommt der Lead automatisch einen Video-Link (Google Meet bzw. Teams); gib ihn nach der Buchung weiter.",
       "- Bestätige jede Buchung dem Lead mit Datum und Uhrzeit.",
       "- Erfinde keine Fakten; bei Unklarheit biete eine Klärung durch das Team an.",
@@ -482,7 +482,7 @@ export async function runBotTurn(conversationId: string): Promise<void> {
               (mode === "video" && res.meetUrl
                 ? `. Video-Link: ${res.meetUrl}`
                 : "") +
-              (email ? `. Kalender-Einladung per E-Mail an ${email} verschickt` : "") +
+              (email ? `. Bestätigung mit Kalenderdatei geht per E-Mail an ${email}` : "") +
               ". Bestätige dem Lead Datum/Uhrzeit" +
               (mode === "video" ? " und sende den Video-Link." : ".");
           } catch (err) {

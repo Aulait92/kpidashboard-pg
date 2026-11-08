@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AddToCalendar } from "@/components/add-to-calendar";
 import { SubmitButton } from "@/components/submit-button";
 import { suggestSlots, type Slot } from "@/lib/calendar";
 import { prisma } from "@/lib/prisma";
@@ -116,7 +117,7 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
     <Shell>
       {sp.done === "rescheduled" ? (
         <div className="mb-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-emerald-200">
-          ✓ Dein Termin wurde verschoben. Eine neue Einladung ist per E-Mail unterwegs.
+          ✓ Dein Termin wurde verschoben. Trag die neue Zeit am besten gleich in deinen Kalender ein.
         </div>
       ) : null}
       <h1 className="text-xl font-bold leading-tight">Dein Termin mit {advisor}</h1>
@@ -129,6 +130,7 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
           </a>
         ) : null}
       </div>
+      <AddToCalendar token={token} />
 
       {error ? (
         <div className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800 ring-1 ring-red-200">

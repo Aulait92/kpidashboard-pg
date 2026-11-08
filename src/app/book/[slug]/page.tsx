@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { AddToCalendar } from "@/components/add-to-calendar";
 import { PhoneField } from "@/components/phone-field";
 import { SubmitButton } from "@/components/submit-button";
 import { suggestSlots, type Slot } from "@/lib/calendar";
@@ -111,8 +112,8 @@ export default async function BookingPage({ params, searchParams }: Props) {
           </div>
           <p className="mt-4 text-sm leading-relaxed text-[color:var(--muted)]">
             {appt.mode === "video"
-              ? "Die Einladung mit dem Link zum Videocall haben wir dir per E-Mail geschickt."
-              : "Die Termineinladung haben wir dir per E-Mail geschickt. Wir rufen dich zur vereinbarten Zeit an."}
+              ? "Die Bestätigung mit dem Link zum Videocall bekommst du per WhatsApp und E-Mail."
+              : "Wir rufen dich zur vereinbarten Zeit an. Die Bestätigung bekommst du per WhatsApp und E-Mail."}
           </p>
           {appt.mode === "video" && appt.meetUrl ? (
             <a
@@ -122,6 +123,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
               Link zum Videocall
             </a>
           ) : null}
+          {appt.manageToken ? <AddToCalendar token={appt.manageToken} /> : null}
           {appt.manageToken ? (
             <Link
               href={`/book/manage/${appt.manageToken}`}
@@ -233,7 +235,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
           <section className="space-y-3">
             <h2 className="text-sm font-semibold">3. Deine Kontaktdaten</h2>
             <Field name="name" label="Vor- und Nachname" autoComplete="name" />
-            <Field name="email" label="E-Mail (für die Einladung)" type="email" autoComplete="email" />
+            <Field name="email" label="E-Mail-Adresse" type="email" autoComplete="email" />
             <PhoneField name="phone" label="Handynummer (für WhatsApp/Anruf)" />
             {/* Bot-Falle: für Menschen unsichtbar. Bewusst ein Name, den
                 Autofill/Passwortmanager nicht zuordnen (früher „website" →

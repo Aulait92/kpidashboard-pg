@@ -2,6 +2,7 @@
 // direkt nach einer Buchung über die Buchungsseite. Beide laufen über
 // sendWhatsAppNotice (Freitext im 24h-Fenster, sonst freigegebene Vorlage).
 
+import { sendLeadEmail } from "@/lib/calendar/lead-email";
 import { prisma } from "@/lib/prisma";
 import { appUrl } from "@/lib/whatsapp/event-text";
 import { firstNameOf, sendWhatsAppNotice } from "@/lib/whatsapp/templates";
@@ -112,6 +113,9 @@ export async function runReminders(): Promise<ReminderResult> {
         : " Wir rufen dich an.") +
       (manageUrl ? `\n\nPasst es doch nicht? ${manageUrl}` : "") +
       " Bis dann! 🙂";
+    // WhatsApp + E-Mail; als erledigt gilt die Erinnerung, sobald EIN Kanal
+    // zugestellt hat (sonst nächster Cron-Lauf erneut — ohne Doppel-Mails).
+    let delivered = false;
     try {
       await sendWhatsAppNotice({
         customerId: appt.customerId,
@@ -121,13 +125,18 @@ export async function runReminders(): Promise<ReminderResult> {
         text,
         leadId: appt.leadId,
       });
+      delivered = true;
+    } catch (err) {
+      result.errors.push(`${appt.id} (WhatsApp): ${err instanceof Error ? err.message : String(err)}`);
+    }
+    const mail = await sendLeadEmail(appt.id, "reminder").catch(() => ({ sent: false }));
+    if (mail.sent) delivered = true;
+    if (delivered) {
       await prisma.appointment.update({
         where: { id: appt.id },
         data: { reminderSentAt: new Date() },
       });
       result.sent++;
-    } catch (err) {
-      result.errors.push(`${appt.id}: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
   return result;
