@@ -8,7 +8,7 @@ import {
   BuyerLeadsTable,
   type BuyerLeadRow,
 } from "@/components/buyer-leads-table";
-import { BuyerTabs } from "@/components/buyer-tabs";
+import { PageHeader } from "@/components/buyer-shell";
 import { TodayPanel } from "@/components/today-panel";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { attentionCount } from "@/lib/whatsapp/attention";
@@ -64,47 +64,21 @@ export default async function BuyerLeadsPage({
   return (
     <PullToRefresh>
       <AutoRefresh />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-        <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-3 py-1 text-xs font-medium text-[color:var(--brand-dark)]">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[color:var(--brand)]" />
-              Live · aktualisiert <LiveUpdated since={renderedAt} />
-            </span>
-            <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-              Hallo,{" "}
-              <span className="text-[color:var(--brand)]">
-                {customer?.name ?? session.email}
-              </span>
-              .
-            </h1>
-            <p className="mt-2 text-sm text-[color:var(--muted)]">
-              Zeitraum: {formatDate(range.from)} – {formatDate(range.to)}
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-2">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <PageHeader
+          title="Leads"
+          subtitle={
+            <>
+              Anfragen, Rückrufe und Termine an einem Ort · aktualisiert <LiveUpdated since={renderedAt} />
+            </>
+          }
+          actions={
             <BuyerFilterBar
               currentRange={rangeKey}
               customFrom={sp.from}
               customTo={sp.to}
             />
-            <form action={logoutAction}>
-              <button
-                type="submit"
-                aria-label="Abmelden"
-                title="Abmelden"
-                className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm transition hover:border-[color:var(--brand)] sm:min-h-0 sm:py-1.5"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Abmelden</span>
-              </button>
-            </form>
-          </div>
-        </header>
-
-        <BuyerTabs
-          showChats={await hasWhatsAppInbox(session.customerId)}
-          chatBadge={await attentionCount(session.customerId)}
+          }
         />
 
         <Suspense

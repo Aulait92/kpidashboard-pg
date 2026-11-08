@@ -97,6 +97,14 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Kundenbereich hat eine eigene App-Shell (BuyerShell) — globalen
+  // Header/Footer dort ausblenden.
+  if (pathname === "/buyer" || pathname.startsWith("/buyer/")) {
+    const headers = new Headers(req.headers);
+    headers.set("x-app-area", "buyer");
+    return NextResponse.next({ request: { headers } });
+  }
+
   return NextResponse.next();
 }
 

@@ -6,7 +6,10 @@ import { NavToggle } from "@/components/nav-toggle";
 
 export async function SiteHeader() {
   // Öffentliche Lead-Seiten (Buchung) ohne Dashboard-Header.
-  if ((await headers()).get("x-bare-layout")) return null;
+  const h = await headers();
+  if (h.get("x-bare-layout")) return null;
+  // Kundenbereich: eigene App-Shell (src/components/buyer-shell.tsx).
+  if (h.get("x-app-area") === "buyer") return null;
   const session = await getCurrentSession();
   const isAdmin = session?.role === "ADMIN";
 

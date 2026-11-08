@@ -1,5 +1,8 @@
+import { BuyerShell } from "@/components/buyer-shell";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
+import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
+import { attentionCount } from "@/lib/whatsapp/attention";
 import { endPreviewAction } from "./preview-actions";
 
 // Gemeinsames Layout für den Buyer-Bereich. Hält den @modal-Parallel-Slot,
@@ -29,7 +32,7 @@ export default async function BuyerLayout({
   modal: React.ReactNode;
 }) {
   const ctx = await getBuyerContext();
-  const previewName = ctx?.preview
+  const customerName = ctx
     ? ((
         await prisma.customer.findUnique({
           where: { id: ctx.customerId },
@@ -37,14 +40,20 @@ export default async function BuyerLayout({
         })
       )?.name ?? "Kunde")
     : null;
+  const previewName = ctx?.preview ? customerName : null;
+  const [showChats, chatBadge] = ctx
+    ? await Promise.all([hasWhatsAppInbox(ctx.customerId), attentionCount(ctx.customerId)])
+    : [false, 0];
+  // Anzeigename ohne Gesellschafts-Präfix („Allianz Anid Schwarzkopf").
+  const displayName = (customerName ?? "").replace(/^Allianz\s+/i, "");
 
   return (
     <>
       {previewName ? (
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 bg-amber-400 px-4 py-2 text-sm font-medium text-amber-950">
           <span>
-            👁 Vorschau: Du siehst das Kunden-CRM von <b>{previewName}</b> –
-            nur lesend, Änderungen sind deaktiviert.
+            👁 Vorschau: Du siehst das CRM von <b>{previewName}</b> – nur lesend
+            (Demo-Leads lassen sich bearbeiten).
           </span>
           <form action={endPreviewAction}>
             <button
@@ -56,7 +65,13 @@ export default async function BuyerLayout({
           </form>
         </div>
       ) : null}
-      {children}
+      {ctx ? (
+        <BuyerShell displayName={displayName} showChats={showChats} chatBadge={chatBadge}>
+          {children}
+        </BuyerShell>
+      ) : (
+        children
+      )}
       {modal}
     </>
   );

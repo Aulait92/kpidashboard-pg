@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AutoRefresh } from "@/components/auto-refresh";
-import { BuyerTabs } from "@/components/buyer-tabs";
+import { PageHeader } from "@/components/buyer-shell";
 import { SubmitButton } from "@/components/submit-button";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { formatDateTime } from "@/lib/format";
@@ -255,14 +255,14 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
   ) : null;
 
   return (
-    <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+    <main className="mx-auto w-full max-w-7xl flex-1 px-0 py-0 sm:px-6 sm:py-6 lg:px-8">
       <AutoRefresh intervalMs={15_000} />
-      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Chats</h1>
-      <p className="mt-2 text-sm text-[color:var(--muted)]">
-        WhatsApp-Gespräche deines Assistenten mit deinen Leads. Du kannst
-        jederzeit übernehmen und selbst antworten.
-      </p>
-      <BuyerTabs showChats chatBadge={attentionTotal} />
+      <div className="hidden sm:block">
+        <PageHeader
+          title="Chats"
+          subtitle="WhatsApp-Gespräche deines Assistenten – du kannst jederzeit übernehmen."
+        />
+      </div>
 
       {error ? (
         <div className="mt-4 rounded-lg bg-amber-50 px-4 py-2 text-sm text-amber-900 ring-1 ring-amber-200">
@@ -270,7 +270,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
         </div>
       ) : null}
 
-      <div className="mt-6 flex h-[calc(100vh-260px)] min-h-[520px] overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
+      <div className="flex h-[calc(100dvh-56px-64px)] overflow-hidden border-[color:var(--border)] bg-white sm:h-[calc(100dvh-56px-140px)] sm:min-h-[520px] sm:rounded-2xl sm:border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
         {/* Liste — auf dem Handy ausgeblendet, sobald ein Chat offen ist */}
         <aside
           className={`${active ? "hidden md:flex" : "flex"} w-full flex-none flex-col border-r border-[color:var(--border)] md:w-[300px]`}
