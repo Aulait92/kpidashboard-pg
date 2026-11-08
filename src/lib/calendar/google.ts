@@ -168,3 +168,15 @@ export async function googleCreateEvent(customerId: string, ev: NewEvent): Promi
     null;
   return { eventId: json.id, videoUrl };
 }
+
+/** Termin löschen; Google schickt den Teilnehmern eine Absage. 404/410 = schon weg. */
+export async function googleDeleteEvent(customerId: string, eventId: string): Promise<void> {
+  const token = await accessToken(customerId);
+  const res = await fetch(
+    `${CAL_BASE}/calendars/primary/events/${encodeURIComponent(eventId)}?sendUpdates=all`,
+    { method: "DELETE", headers: { Authorization: `Bearer ${token}` } },
+  );
+  if (!res.ok && res.status !== 404 && res.status !== 410) {
+    throw new Error(`Google-Termin konnte nicht gelöscht werden (${res.status}).`);
+  }
+}

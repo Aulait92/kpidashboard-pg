@@ -10,7 +10,7 @@ import {
   hasRequiredScopes,
   PROVIDER_LABELS,
 } from "@/lib/calendar";
-import { sendReplyAction, toggleBotAction } from "./actions";
+import { cancelAppointmentAction, sendReplyAction, toggleBotAction } from "./actions";
 import { SubmitButton } from "@/components/submit-button";
 
 export const dynamic = "force-dynamic";
@@ -502,6 +502,19 @@ export default async function AdminWhatsAppPage({
                           Video-Link öffnen
                         </a>
                       ) : null}
+                      {a.status === "booked" ? (
+                        <form action={cancelAppointmentAction} className="mt-1">
+                          <input type="hidden" name="appointmentId" value={a.id} />
+                          <SubmitButton
+                            pendingLabel="Sagt ab …"
+                            className="text-[11px] font-medium text-rose-700 hover:underline"
+                          >
+                            Termin absagen
+                          </SubmitButton>
+                        </form>
+                      ) : (
+                        <div className="mt-1 text-[11px] text-[color:var(--muted)]">abgesagt</div>
+                      )}
                     </li>
                   ))}
                 </ul>

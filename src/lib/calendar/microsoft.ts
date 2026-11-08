@@ -274,3 +274,18 @@ export async function microsoftCreateEvent(
   if (!res.ok || !json.id) throw new Error(`Outlook-Termin fehlgeschlagen (${res.status}).`);
   return { eventId: json.id, videoUrl: json.onlineMeeting?.joinUrl ?? null };
 }
+
+/**
+ * Termin löschen. Beim Organisator-Termin schickt Outlook den Teilnehmern
+ * automatisch eine Absage. 404 = schon weg.
+ */
+export async function microsoftDeleteEvent(customerId: string, eventId: string): Promise<void> {
+  const token = await accessToken(customerId);
+  const res = await fetch(`${GRAPH}/me/events/${encodeURIComponent(eventId)}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok && res.status !== 404) {
+    throw new Error(`Outlook-Termin konnte nicht gelöscht werden (${res.status}).`);
+  }
+}

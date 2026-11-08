@@ -71,7 +71,9 @@ export async function bookPublicAction(
       contactName: name,
       contactEmail: emailRaw,
     },
-    update: { contactName: name, contactEmail: emailRaw },
+    // Bestehenden Kontakt hier NICHT überschreiben — erst nach der
+    // Doppelbuchungs-Prüfung (sonst ändert ein abgewiesener Versuch Name/E-Mail).
+    update: {},
     select: { id: true, qualificationSummary: true },
   });
   await linkLeadToConversation(conversation.id).catch((e) =>
@@ -93,7 +95,13 @@ export async function bookPublicAction(
     },
     select: { id: true },
   });
+  // Pro Telefonnummer (= Kontakt/WhatsApp-Chat) ein offener Termin — nicht
+  // pro Name: Gleichnamige Personen mit anderer Nummer buchen problemlos.
   if (existing) redirect(`/book/${slug}?ok=1&a=${existing.id}&dup=1`);
+  await prisma.conversation.update({
+    where: { id: conversation.id },
+    data: { contactName: name, contactEmail: emailRaw },
+  });
 
   let appointmentId: string;
   try {

@@ -6,11 +6,16 @@ import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import {
   googleCreateEvent,
+  googleDeleteEvent,
   googleGetBusy,
   googleHasRequiredScopes,
 } from "@/lib/calendar/google";
 import { fetchIcsBusy } from "@/lib/calendar/ics";
-import { microsoftCreateEvent, microsoftGetBusy } from "@/lib/calendar/microsoft";
+import {
+  microsoftCreateEvent,
+  microsoftDeleteEvent,
+  microsoftGetBusy,
+} from "@/lib/calendar/microsoft";
 import { decryptSecret } from "@/lib/encryption";
 import { loadConnection, type Busy, type CreatedEvent, type NewEvent } from "@/lib/calendar/tokens";
 
@@ -249,4 +254,41 @@ export async function getOrCreateBookingSlug(customerId: string): Promise<string
     data: { bookingSlug: slug },
   });
   return slug;
+}
+
+/**
+ * Termin absagen: im verbundenen Kalender löschen (Teilnehmer erhalten eine
+ * Absage) und als „cancelled" markieren. Lässt sich das Kalender-Event nicht
+ * löschen (z. B. Termin stammt noch von einem früher verbundenen Anbieter),
+ * wird trotzdem abgesagt und der Hinweis zurückgegeben.
+ */
+export async function cancelAppointment(
+  appointmentId: string,
+  customerId: string,
+): Promise<{ calendarDeleted: boolean; note?: string }> {
+  const appt = await prisma.appointment.findFirst({
+    where: { id: appointmentId, customerId },
+    select: { id: true, calendarEventId: true, status: true },
+  });
+  if (!appt) throw new Error("Termin nicht gefunden.");
+  let calendarDeleted = false;
+  let note: string | undefined;
+  if (appt.calendarEventId) {
+    try {
+      const conn = await loadConnection(customerId);
+      if (conn.provider === "microsoft") {
+        await microsoftDeleteEvent(customerId, appt.calendarEventId);
+      } else {
+        await googleDeleteEvent(customerId, appt.calendarEventId);
+      }
+      calendarDeleted = true;
+    } catch (err) {
+      note = err instanceof Error ? err.message : String(err);
+    }
+  }
+  await prisma.appointment.update({
+    where: { id: appt.id },
+    data: { status: "cancelled" },
+  });
+  return { calendarDeleted, note };
 }

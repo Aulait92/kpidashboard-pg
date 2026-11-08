@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
+import { cancelAppointment } from "@/lib/calendar";
 import { prisma } from "@/lib/prisma";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
 
@@ -78,4 +79,20 @@ export async function sendReplyBuyerAction(formData: FormData): Promise<void> {
   }
   revalidatePath("/buyer/chats");
   redirect(chatUrl(conv.id, failed ? "send" : undefined));
+}
+
+/** Termin absagen (nur eigene Termine; Teilnehmer erhalten eine Absage). */
+export async function cancelAppointmentBuyerAction(formData: FormData): Promise<void> {
+  const appointmentId = String(formData.get("appointmentId") ?? "");
+  const conversationId = String(formData.get("conversationId") ?? "");
+  const session = await requireBuyer();
+  if (!session) redirect(chatUrl(conversationId, "preview"));
+  try {
+    // cancelAppointment prüft customerId → fremde Termine sind nicht absagbar.
+    await cancelAppointment(appointmentId, session.customerId);
+  } catch (err) {
+    console.error("[buyer cancel appointment]", err);
+  }
+  revalidatePath("/buyer/chats");
+  redirect(chatUrl(conversationId));
 }

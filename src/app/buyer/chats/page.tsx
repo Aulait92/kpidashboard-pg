@@ -8,7 +8,11 @@ import { formatDateTime } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { displayProduct } from "@/lib/products";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
-import { sendReplyBuyerAction, toggleBotBuyerAction } from "../chat-actions";
+import {
+  cancelAppointmentBuyerAction,
+  sendReplyBuyerAction,
+  toggleBotBuyerAction,
+} from "../chat-actions";
 
 // WhatsApp-Chats im Kunden-CRM. Nur für Kunden mit WhatsApp-Assistent.
 // Strikte Mandantentrennung: alle Abfragen mit customerId des Buyers.
@@ -257,6 +261,17 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                             </a>
                           </>
                         ) : null}
+                        <form action={cancelAppointmentBuyerAction} className="inline">
+                          <input type="hidden" name="appointmentId" value={a.id} />
+                          <input type="hidden" name="conversationId" value={active.id} />
+                          {" · "}
+                          <SubmitButton
+                            pendingLabel="sagt ab …"
+                            className="font-medium text-rose-700 hover:underline"
+                          >
+                            absagen
+                          </SubmitButton>
+                        </form>
                       </div>
                     ))}
                   </div>

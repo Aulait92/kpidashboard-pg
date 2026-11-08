@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { cancelAppointment } from "@/lib/calendar";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
 
 async function requireAdmin() {
@@ -55,6 +56,25 @@ export async function sendReplyAction(formData: FormData): Promise<void> {
     });
   } catch (err) {
     console.error("[whatsapp reply]", err);
+  }
+  revalidatePath("/admin/whatsapp");
+}
+
+/** Termin absagen (Kalender-Event löschen → Teilnehmer erhalten Absage). */
+export async function cancelAppointmentAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const appointmentId = String(formData.get("appointmentId") ?? "");
+  if (!appointmentId) return;
+  const appt = await prisma.appointment.findUnique({
+    where: { id: appointmentId },
+    select: { customerId: true },
+  });
+  if (!appt) return;
+  try {
+    const res = await cancelAppointment(appointmentId, appt.customerId);
+    if (res.note) console.warn("[cancel appointment]", res.note);
+  } catch (err) {
+    console.error("[cancel appointment]", err);
   }
   revalidatePath("/admin/whatsapp");
 }
