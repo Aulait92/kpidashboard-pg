@@ -9,7 +9,6 @@ import { KpiCard, type Delta } from "@/components/kpi-card";
 import { LiveUpdated } from "@/components/live-updated";
 import { MonthlyForecast } from "@/components/monthly-forecast";
 import { PullToRefresh } from "@/components/pull-to-refresh";
-import { SpeedToLeadCard } from "@/components/speed-to-lead-card";
 import { logoutAction } from "@/app/login/actions";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
@@ -25,10 +24,8 @@ import {
   type Kpis,
   type TimeSeriesPoint,
 } from "@/lib/kpis";
-import { computeSpeedToLeadAnalysis } from "@/lib/speed-to-lead";
 import {
   formatDate,
-  formatDuration,
   formatEUR,
   formatNumber,
   formatPercent,
@@ -155,7 +152,6 @@ async function BuyerDashboardBody({
     k,
     p,
     ts,
-    speedAnalysis,
     forecast,
     closeValueRows,
     closeValueRowsPrev,
@@ -165,7 +161,6 @@ async function BuyerDashboardBody({
       computeKpis({ range, customerId, product: null }) as Promise<Kpis>,
       computeKpis({ range: prev, customerId, product: null }) as Promise<Kpis>,
       computeTimeSeries({ range, customerId, product: null }),
-      computeSpeedToLeadAnalysis({ range, customerId }),
       computeMonthlyForecast({ customerId, includeCloseValue: true }),
       // Abschlusswerte aus dem Lead-Modell direkt aggregieren — eine eigene
       // Spalte am Lead, getrennt vom Lead-Einkaufspreis (Revenue.amount).
@@ -234,8 +229,6 @@ async function BuyerDashboardBody({
 
       <MonthlyForecast forecast={forecast} />
 
-      <SpeedToLeadCard data={speedAnalysis} />
-
       <section>
         <div className="mb-3">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--brand)]">
@@ -245,7 +238,7 @@ async function BuyerDashboardBody({
             Deine Zahlen
           </h2>
         </div>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <KpiCard
             label="Leads"
             value={formatNumber(k.nettoLeads)}
@@ -266,20 +259,6 @@ async function BuyerDashboardBody({
             hint={`${k.closedLeads} Abschlüsse`}
             delta={delta(k.closingRate, p.closingRate)}
             sparkline={{ points: ts.points, dataKey: "closingRate" }}
-          />
-          <KpiCard
-            label="Zeit bis Erstkontakt"
-            value={formatDuration(k.avgHoursToFirstContact)}
-            hint="Durchschnitt"
-            delta={delta(
-              k.avgHoursToFirstContact,
-              p.avgHoursToFirstContact,
-              true,
-            )}
-            sparkline={{
-              points: ts.points,
-              dataKey: "avgHoursToFirstContact",
-            }}
           />
         </div>
       </section>

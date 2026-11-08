@@ -345,10 +345,16 @@ export async function syncCustomerAdSpend(): Promise<CustomerAdSpendSyncResult> 
   const until = format(new Date(), "yyyy-MM-dd");
   for (const c of customers) {
     const accountId = c.metaAdAccountId!;
-    // Ab Retainer-Start (max. 365 Tage zurück), sonst die letzten 90 Tage.
+    // Immer mind. die letzten 90 Tage (Budget kann schon vor Retainer-Start
+    // laufen), bei älterem Retainer-Start ab dort — max. 365 Tage zurück.
+    const d90 = addDays(new Date(), -90);
     const floor = addDays(new Date(), -365);
     const start =
-      c.retainerStart && c.retainerStart > floor ? c.retainerStart : addDays(new Date(), -90);
+      c.retainerStart && c.retainerStart < d90
+        ? c.retainerStart > floor
+          ? c.retainerStart
+          : floor
+        : d90;
     try {
       const rows = await fetchAccountDailySpend(accountId, token, format(start, "yyyy-MM-dd"), until);
       for (const r of rows) {

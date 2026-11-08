@@ -53,7 +53,12 @@ export async function runFullSync(): Promise<FullSyncResult> {
   // Eigene Werbekonten der Retainer-Kunden (Spend nur für deren Dashboard).
   let customerAdSpend: FullSyncResult["customerAdSpend"];
   try {
-    customerAdSpend = { ok: true, result: await syncCustomerAdSpend() };
+    const r = await syncCustomerAdSpend();
+    console.log(
+      `[sync] Kunden-Werbekonten: ${r.customers} Kunden, ${r.days} Tage` +
+        (r.errors.length ? ` · Fehler: ${r.errors.join(" | ")}` : ""),
+    );
+    customerAdSpend = { ok: true, result: r };
   } catch (err) {
     customerAdSpend = {
       ok: false,

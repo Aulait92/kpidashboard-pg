@@ -109,3 +109,84 @@ export async function customerSpendForBuckets(
   }
   return out;
 }
+
+// ─── Retainer als Agentur-Umsatz (Admin-Sicht) ───────────────────────────
+// Der Retainer ist für uns Umsatz — tagesanteilig ab „Retainer seit", genau
+// wie im Kunden-Dashboard. Produkt-Zuordnung: das häufigste Lead-Produkt des
+// Kunden (für Produktfilter / Produkt-Aufschlüsselung).
+
+export type RetainerRevenueEntry = {
+  customerId: string;
+  product: string | null;
+  amount: number;
+};
+
+type RetainerCustomer = { id: string; cfg: RetainerConfig; product: string | null };
+
+async function loadRetainerCustomers(): Promise<RetainerCustomer[]> {
+  const rows = await prisma.customer.findMany({
+    where: { retainerMonthly: { not: null } },
+    select: { id: true, retainerMonthly: true, retainerStart: true, metaAdAccountId: true },
+  });
+  const out: RetainerCustomer[] = [];
+  for (const r of rows) {
+    const monthly = toNumber(r.retainerMonthly);
+    if (!monthly) continue;
+    const top = await prisma.lead.groupBy({
+      by: ["source"],
+      where: { customerId: r.id, source: { not: null } },
+      _count: { _all: true },
+      orderBy: { _count: { source: "desc" } },
+      take: 1,
+    });
+    out.push({
+      id: r.id,
+      cfg: { retainerMonthly: monthly, retainerStart: r.retainerStart, metaAdAccountId: r.metaAdAccountId },
+      product: top[0]?.source ?? null,
+    });
+  }
+  return out;
+}
+
+/** Retainer-Umsatz je Kunde im Zeitraum (nur Kunden mit Betrag > 0). */
+export async function retainerRevenueEntries(range: { from: Date; to: Date }): Promise<RetainerRevenueEntry[]> {
+  const customers = await loadRetainerCustomers();
+  return customers
+    .map((c) => ({
+      customerId: c.id,
+      product: c.product,
+      amount: retainerForRange(c.cfg, range.from, range.to),
+    }))
+    .filter((e) => e.amount > 0);
+}
+
+/** Summe passend zu den KPI-Filtern (Kunde/Produkt optional). */
+export function sumRetainer(
+  entries: RetainerRevenueEntry[],
+  customerId?: string | null,
+  product?: string | null,
+): number {
+  return entries
+    .filter((e) => (!customerId || e.customerId === customerId) && (!product || e.product === product))
+    .reduce((a, e) => a + e.amount, 0);
+}
+
+/** Retainer-Umsatz je Zeitreihen-Bucket (Bucket-Start „YYYY-MM-DD"). */
+export async function retainerRevenueForBuckets(
+  bucketStarts: string[],
+  rangeEnd: Date,
+  customerId: string | null,
+  product: string | null,
+): Promise<number[]> {
+  const customers = (await loadRetainerCustomers()).filter(
+    (c) => (!customerId || c.id === customerId) && (!product || c.product === product),
+  );
+  return bucketStarts.map((b, i) => {
+    const from = new Date(`${b}T00:00:00.000Z`);
+    const to =
+      i + 1 < bucketStarts.length
+        ? new Date(new Date(`${bucketStarts[i + 1]}T00:00:00.000Z`).getTime() - 1)
+        : rangeEnd;
+    return customers.reduce((a, c) => a + retainerForRange(c.cfg, from, to), 0);
+  });
+}

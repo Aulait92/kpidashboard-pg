@@ -11,6 +11,11 @@ import {
 } from "date-fns";
 import { de } from "date-fns/locale";
 import { prisma } from "@/lib/prisma";
+import {
+  retainerRevenueEntries,
+  retainerRevenueForBuckets,
+  sumRetainer,
+} from "@/lib/customer-spend";
 import type { DateRange } from "@/lib/date-ranges";
 import { previousRange } from "@/lib/date-ranges";
 
@@ -313,7 +318,11 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
       ? hoursList.reduce((a, b) => a + b, 0) / hoursList.length
       : null;
 
-  const revenue = decToNumber(revenueAgg._sum.amount);
+  // Umsatz = Lead-Verkäufe + Retainer (tagesanteilig, Retainer-Kunden).
+  const retainerEntries = await retainerRevenueEntries(range);
+  const revenue =
+    decToNumber(revenueAgg._sum.amount) +
+    sumRetainer(retainerEntries, customerId ?? null, product ?? null);
   const cancelledRevenue = decToNumber(cancelledAgg._sum.amount);
   const otherCosts = decToNumber(otherCostsAgg._sum.amount);
 
@@ -543,6 +552,11 @@ export async function computeCustomerLeaderboard(params: {
       revenueByCustomerId.set(r.customerId, decToNumber(r._sum.amount));
     }
   }
+  // Retainer als Umsatz des jeweiligen Kunden.
+  for (const e of await retainerRevenueEntries(range)) {
+    if (product && e.product !== product) continue;
+    revenueByCustomerId.set(e.customerId, (revenueByCustomerId.get(e.customerId) ?? 0) + e.amount);
+  }
 
   const directCostByCustomerId = new Map<string, number>();
   for (const c of directCostByCustomer) {
@@ -678,6 +692,10 @@ export async function computeProductBreakdown(params: {
     const src = r.lead?.source;
     if (!src) continue;
     s(src).revenue += decToNumber(r.amount);
+  }
+  for (const e of await retainerRevenueEntries(range)) {
+    if (!e.product || (customerId && e.customerId !== customerId)) continue;
+    s(e.product).revenue += e.amount;
   }
 
   // Lead-Kosten pro Produkt — wenn Kunden-Filter aktiv, anteilig; sonst
@@ -1057,6 +1075,14 @@ export async function computeTimeSeries(params: {
   for (const r of revenues) {
     const b = bucketFor(r.occurredAt);
     if (b) b.point.revenue += decToNumber(r.amount);
+  }
+  {
+    const keys = Array.from(acc.keys()).sort();
+    const retainer = await retainerRevenueForBuckets(keys, range.to, customerId, product);
+    keys.forEach((k, i) => {
+      const b = acc.get(k);
+      if (b) b.point.revenue += retainer[i] ?? 0;
+    });
   }
 
   // LEAD-Kosten landen direkt am occurredAt (Meta-Sync schreibt tägliche
