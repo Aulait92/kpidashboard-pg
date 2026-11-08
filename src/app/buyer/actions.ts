@@ -8,7 +8,7 @@ import {
   updateLeadEditableFields,
 } from "@/lib/airtable-write";
 import { getCurrentSession } from "@/lib/auth";
-import { getBuyerContext } from "@/lib/buyer-context";
+import { writableCustomerId } from "@/lib/buyer-write";
 import { prisma } from "@/lib/prisma";
 import {
   CLOSED_STATUS,
@@ -40,22 +40,6 @@ export type CancelLeadState = {
 // Spiegelt das Ergebnis lokal in der DB, damit das UI sofort den neuen
 // Status zeigt und nicht erst beim nächsten Sync nachzieht.
 
-// Schreibrecht: der eingeloggte Kunde selbst — oder ein Admin in „Als Kunde
-// ansehen", aber NUR für Demo-Leads (bezugAirtableId = "demo"), damit sich
-// die Vorschau mit Testdaten durchklicken lässt, echte Leads aber tabu sind.
-async function writableCustomerId(leadId: string): Promise<string | null> {
-  const session = await getCurrentSession();
-  if (session?.role === "BUYER" && session.customerId) return session.customerId;
-  const ctx = await getBuyerContext();
-  if (ctx?.preview && leadId) {
-    const demo = await prisma.lead.findFirst({
-      where: { id: leadId, customerId: ctx.customerId, bezugAirtableId: "demo" },
-      select: { id: true },
-    });
-    if (demo) return ctx.customerId;
-  }
-  return null;
-}
 
 export async function cancelLeadAction(
   _prev: CancelLeadState,

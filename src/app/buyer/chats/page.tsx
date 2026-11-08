@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CalendarClock, MessageCircle } from "lucide-react";
 import { redirect } from "next/navigation";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { PageHeader } from "@/components/buyer-shell";
@@ -71,10 +72,10 @@ function parseFormAnswers(raw: unknown): { label: string; value: string }[] {
 const INTERNAL_LABELS: Record<string, string> = {
   qualification: "Qualifizierung aktualisiert",
   appointment_proposal: "Terminwunsch notiert",
-  appointment_booked: "📅 Termin gebucht",
-  appointment_cancelled: "❌ Termin abgesagt",
-  appointment_rescheduled: "🔁 Termin verschoben",
-  appointment_declined: "❌ Einladung abgelehnt",
+  appointment_booked: "Termin gebucht",
+  appointment_cancelled: "Termin abgesagt",
+  appointment_rescheduled: "Termin verschoben",
+  appointment_declined: "Einladung abgelehnt",
 };
 
 export default async function BuyerChatsPage({ searchParams }: { searchParams: SearchParams }) {
@@ -215,7 +216,9 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
         ) : (
           appointments.map((a) => (
             <div key={a.id} className="rounded-xl border border-blue-200 bg-blue-50 p-3">
-              <div className="font-semibold text-blue-900">📅 {formatAppt(a.startsAt)} Uhr</div>
+              <div className="flex items-center gap-1.5 font-semibold text-blue-900">
+                <CalendarClock className="h-4 w-4" /> {formatAppt(a.startsAt)} Uhr
+              </div>
               <div className="mt-0.5 text-xs text-blue-800">
                 {a.mode === "video" ? "Videocall" : "Telefonat – du rufst an"}
               </div>
@@ -259,7 +262,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
       ) : null}
 
       {active.qualificationSummary ? (
-        <InfoSection title={active.qualified ? "Qualifizierung ✓" : "Bisher erfasst"}>
+        <InfoSection title={active.qualified ? "Qualifizierung" : "Bisher erfasst"}>
           <p className="text-sm leading-relaxed">{active.qualificationSummary}</p>
         </InfoSection>
       ) : null}
@@ -380,7 +383,9 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
           {!active ? (
             <div className="flex flex-1 items-center justify-center p-6 text-sm text-[color:var(--muted)]">
               <span className="flex flex-col items-center gap-2 text-center">
-                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-xl">💬</span>
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-[color:var(--brand)]">
+                  <MessageCircle className="h-5 w-5" />
+                </span>
                 <span className="font-medium text-[color:var(--foreground)]">Wähle einen Chat aus</span>
                 <span className="max-w-xs text-xs">Hier siehst du, was dein Assistent mit deinen Leads schreibt, und kannst jederzeit selbst übernehmen.</span>
               </span>

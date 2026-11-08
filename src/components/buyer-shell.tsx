@@ -4,15 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
+  BarChart3,
   ChevronDown,
   Columns3,
   LayoutDashboard,
   LogOut,
   MessageCircle,
+  Sun,
   TrendingUp,
   Users,
 } from "lucide-react";
 import { logoutAction } from "@/app/login/actions";
+import { ToastProvider } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 
 // App-Shell des Kundenbereichs: eine Kopfzeile mit Navigation und Profil-
@@ -39,24 +42,30 @@ export function BuyerShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname() ?? "/buyer";
-  const items: NavItem[] = [
-    { href: "/buyer", label: "Übersicht", icon: LayoutDashboard, match: (p) => p === "/buyer" },
-    { href: "/buyer/leads", label: "Leads", icon: Users, match: (p) => p.startsWith("/buyer/leads") },
-    { href: "/buyer/kanban", label: "Pipeline", icon: Columns3, match: (p) => p.startsWith("/buyer/kanban") },
-    ...(showChats
-      ? [
-          {
-            href: "/buyer/chats",
-            label: "Chats",
-            icon: MessageCircle,
-            match: (p: string) => p.startsWith("/buyer/chats"),
-            badge: chatBadge,
-          },
-        ]
-      : []),
-  ];
+  // WhatsApp-Kunden: „Heute" ist die Startseite (Aufgabenliste), die Zahlen
+  // haben einen eigenen Reiter. Alle anderen: Übersicht = Zahlen.
+  const items: NavItem[] = showChats
+    ? [
+        { href: "/buyer", label: "Heute", icon: Sun, match: (p) => p === "/buyer" },
+        { href: "/buyer/leads", label: "Leads", icon: Users, match: (p) => p.startsWith("/buyer/leads") },
+        { href: "/buyer/kanban", label: "Pipeline", icon: Columns3, match: (p) => p.startsWith("/buyer/kanban") },
+        {
+          href: "/buyer/chats",
+          label: "Chats",
+          icon: MessageCircle,
+          match: (p) => p.startsWith("/buyer/chats"),
+          badge: chatBadge,
+        },
+        { href: "/buyer/zahlen", label: "Zahlen", icon: BarChart3, match: (p) => p.startsWith("/buyer/zahlen") },
+      ]
+    : [
+        { href: "/buyer", label: "Übersicht", icon: LayoutDashboard, match: (p) => p === "/buyer" },
+        { href: "/buyer/leads", label: "Leads", icon: Users, match: (p) => p.startsWith("/buyer/leads") },
+        { href: "/buyer/kanban", label: "Pipeline", icon: Columns3, match: (p) => p.startsWith("/buyer/kanban") },
+      ];
 
   return (
+    <ToastProvider>
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-30 border-b border-[color:var(--border)] bg-white/90 backdrop-blur">
         <div className="mx-auto flex h-14 w-full max-w-7xl items-center gap-6 px-4 sm:px-6 lg:px-8">
@@ -129,6 +138,7 @@ export function BuyerShell({
         </ul>
       </nav>
     </div>
+    </ToastProvider>
   );
 }
 

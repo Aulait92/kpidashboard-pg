@@ -1,4 +1,7 @@
-import { pipelinePhasesFor, WHATSAPP_STATUS_LABELS } from "@/lib/products";
+import { CalendarClock, ClipboardList, Mail, MessageCircle, Phone } from "lucide-react";
+import { ButtonLink, Card, CardHeader } from "@/components/ui";
+import { formatPhone } from "@/lib/format";
+import { pipelinePhasesFor, statusToneClass, WHATSAPP_STATUS_LABELS } from "@/lib/products";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { notFound } from "next/navigation";
 import {
@@ -163,15 +166,32 @@ export async function LeadDetailBody({
 
   return (
     <>
-      <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            {lead.name ?? "Lead-Detail"}
-          </h1>
-          <p className="mt-1 text-sm text-[color:var(--muted)]">
-            {lead.source ? displayProduct(lead.source) : "Produkt unbekannt"} ·
-            Eingegangen {formatDate(lead.createdAt)}
-          </p>
+      <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight">{lead.name ?? "Lead"}</h1>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[color:var(--muted)]">
+            <span
+              className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${statusToneClass(lead.status)}`}
+            >
+              {(whatsapp ? WHATSAPP_STATUS_LABELS[lead.status ?? ""] : null) ?? lead.status ?? "Neuer Lead"}
+            </span>
+            <span>
+              {lead.source ? displayProduct(lead.source) : "Produkt unbekannt"} · eingegangen{" "}
+              {formatDate(lead.createdAt)}
+            </span>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {lead.phone ? (
+              <ButtonLink href={`tel:+${lead.phone}`} variant="primary" icon={Phone}>
+                {formatPhone(lead.phone)}
+              </ButtonLink>
+            ) : null}
+            {lead.email ? (
+              <ButtonLink href={`mailto:${lead.email}`} icon={Mail}>
+                E-Mail
+              </ButtonLink>
+            ) : null}
+          </div>
         </div>
         {lead.status && lead.status.toLowerCase().startsWith("storno") ? (
           <span className="inline-flex items-center self-start rounded-md bg-rose-100 px-3 py-1.5 text-xs font-semibold text-rose-800">
@@ -276,8 +296,15 @@ function ReadOnlyCard({
         }
       }
     }
-    return { def, value: formatValue(raw, def.format) };
-  });
+    const value = formatValue(raw, def.format);
+    // Telefonnummer lesbar (+49 171 …).
+    if (def.key === "Telefonnummer" && value) {
+      return { def, value: formatPhone(value.replace(/^\+/, "")) };
+    }
+    return { def, value };
+  })
+    // Leere Felder ausblenden – nur zeigen, was es auch gibt.
+    .filter((r) => r.value != null && r.value !== "" && r.value !== "–");
 
   // Catch-all für fachliche Zusatzfelder, die (noch) keiner Gruppe zugeordnet
   // sind — interne/technische Felder und bereits gezeigte bleiben außen vor.
@@ -309,7 +336,8 @@ function ReadOnlyCard({
     .filter((r): r is { key: string; value: string } => r.value != null);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
+    <Card>
+      <CardHeader icon={ClipboardList} title="Angaben zum Lead" />
       <dl className="divide-y divide-[color:var(--border)]">
         {rows.map(({ def, value }) => (
           <DetailRow key={def.label} label={def.label}>
@@ -339,7 +367,7 @@ function ReadOnlyCard({
           </dl>
         </>
       ) : null}
-    </div>
+    </Card>
   );
 }
 
@@ -432,14 +460,18 @@ async function WhatsAppBlock({ leadId }: { leadId: string }) {
       minute: "2-digit",
     }).format(d);
   return (
-    <div className="mb-6 overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--border)] bg-[color:var(--brand-soft)]/30 px-5 py-3">
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">
-          Termin &amp; WhatsApp
-        </div>
+    <Card className="mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--border)] px-5 py-3.5">
+        <h2 className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
+          <CalendarClock className="h-4 w-4 text-[color:var(--muted)]" /> Termin &amp; WhatsApp
+        </h2>
         {conv ? (
-          <a href={`/buyer/chats?c=${conv.id}`} className="text-sm font-semibold text-[color:var(--brand)] hover:underline">
-            💬 Chat öffnen{conv._count.messages > 0 ? ` (${conv._count.messages} Antworten)` : ""} →
+          <a
+            href={`/buyer/chats?c=${conv.id}`}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--brand)] hover:underline"
+          >
+            <MessageCircle className="h-4 w-4" /> Chat öffnen
+            {conv._count.messages > 0 ? ` (${conv._count.messages} Antworten)` : ""}
           </a>
         ) : null}
       </div>
@@ -457,7 +489,9 @@ async function WhatsAppBlock({ leadId }: { leadId: string }) {
               const st = APPT_STATUS[a.status] ?? { label: a.status, cls: "bg-zinc-100 text-zinc-700" };
               return (
                 <li key={a.id} className="flex flex-wrap items-center gap-2">
-                  <span className="font-semibold">📅 {fmt(a.startsAt)} Uhr</span>
+                  <span className="inline-flex items-center gap-1.5 font-semibold">
+                    <CalendarClock className="h-4 w-4 text-[color:var(--muted)]" /> {fmt(a.startsAt)} Uhr
+                  </span>
                   <span className="text-[color:var(--muted)]">{a.mode === "video" ? "Videocall" : "Telefonat"}</span>
                   <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${st.cls}`}>{st.label}</span>
                   {a.status === "booked" && a.meetUrl ? (
@@ -487,6 +521,6 @@ async function WhatsAppBlock({ leadId }: { leadId: string }) {
           </p>
         ) : null}
       </div>
-    </div>
+    </Card>
   );
 }

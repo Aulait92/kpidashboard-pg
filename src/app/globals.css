@@ -9,6 +9,20 @@
   --card: #ffffff;
   --border: #e6ecf5;
   --muted: #6b7a96;
+
+  /* ─── Designsystem (siehe docs/design-system.md) ─────────────────── */
+  --surface: #ffffff;
+  --surface-sunken: #f7f9fc;
+  --border-strong: #d6dee9;
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #e11d48;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -12px rgba(15, 23, 42, 0.12);
+  --shadow-lg: 0 12px 32px -8px rgba(15, 23, 42, 0.18);
 }
 
 @theme inline {
@@ -20,6 +34,9 @@
   --color-card: var(--card);
   --color-border: var(--border);
   --color-muted: var(--muted);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-border-strong: var(--border-strong);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -45,4 +62,20 @@ body {
   body {
     overscroll-behavior-y: none;
   }
+}
+
+/* Sanftes Ein-/Ausblenden für Listen-Einträge und Toasts. */
+@keyframes ui-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+.ui-fade-in { animation: ui-fade-in 180ms ease-out both; }
+@keyframes ui-shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+.ui-skeleton {
+  background: linear-gradient(90deg, #eef2f8 25%, #f6f8fc 50%, #eef2f8 75%);
+  background-size: 200% 100%;
+  animation: ui-shimmer 1.4s linear infinite;
 }

@@ -231,8 +231,8 @@ export default async function BookingPage({ params, searchParams }: Props) {
             <h2 className="mb-2 text-sm font-semibold">2. Wie möchtest du sprechen?</h2>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { v: "phone", label: "📞 Telefon" },
-                { v: "video", label: "🎥 Videocall" },
+                { v: "phone", label: "Telefon" },
+                { v: "video", label: "Videocall" },
               ].map((o, i) => (
                 <label
                   key={o.v}
