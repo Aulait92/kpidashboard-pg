@@ -289,10 +289,9 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
   // Funnel-Zähler ohne Stornos — sie können weder erreicht, terminiert noch
   // abgeschlossen sein (Filter vor dem Anruf).
   const nonCancelled = leads.filter((l) => !isLeadCancelled(l.status));
-  const reachedLeads = nonCancelled.filter((l) => l.reached).length;
-  const terminLeads = nonCancelled.filter(
-    (l) => l.status != null && TERMIN_STATUSES.has(l.status),
-  ).length;
+  const engagement = await loadEngagement(nonCancelled.map((l) => l.id));
+  const reachedLeads = nonCancelled.filter((l) => isReachedLead(l, engagement)).length;
+  const terminLeads = nonCancelled.filter((l) => isTerminLead(l, engagement)).length;
   const closedLeads = nonCancelled.filter((l) => l.closedAt != null).length;
 
   const reachabilityRate =
@@ -368,6 +367,46 @@ const TERMIN_STATUSES = new Set<string>(
   ]),
 );
 
+// ─── WhatsApp-/Buchungs-Signale ─────────────────────────────────────────
+// Erreicht = Status sagt „erreicht" ODER der Lead hat im WhatsApp-Chat
+// geantwortet ODER einen Termin gebucht. Termin = Status in der Beratungs-
+// Phase (oder weiter) ODER ein gebuchter/stattgefundener Termin existiert.
+// So füllen sich Erreichbarkeit und Termine automatisch, ohne dass der Status
+// eines nur antwortenden Leads schon als „Termin" zählt.
+type Engagement = { replied: Set<string>; booked: Set<string> };
+
+async function loadEngagement(leadIds: string[]): Promise<Engagement> {
+  if (leadIds.length === 0) return { replied: new Set(), booked: new Set() };
+  const [convs, appts] = await Promise.all([
+    prisma.conversation.findMany({
+      where: { leadId: { in: leadIds }, messages: { some: { direction: "inbound" } } },
+      select: { leadId: true },
+    }),
+    prisma.appointment.findMany({
+      where: { leadId: { in: leadIds }, status: { in: ["booked", "completed"] } },
+      select: { leadId: true },
+    }),
+  ]);
+  return {
+    replied: new Set(convs.map((c) => c.leadId).filter((x): x is string => !!x)),
+    booked: new Set(appts.map((a) => a.leadId).filter((x): x is string => !!x)),
+  };
+}
+
+function isReachedLead(
+  l: { id: string; reached: boolean },
+  e: Engagement,
+): boolean {
+  return l.reached || e.replied.has(l.id) || e.booked.has(l.id);
+}
+
+function isTerminLead(
+  l: { id: string; status: string | null },
+  e: Engagement,
+): boolean {
+  return (l.status != null && TERMIN_STATUSES.has(l.status)) || e.booked.has(l.id);
+}
+
 export async function listCustomers() {
   return prisma.customer.findMany({
     select: { id: true, name: true },
@@ -418,6 +457,7 @@ export async function computeCustomerLeaderboard(params: {
           createdAt: { gte: range.from, lte: range.to },
         },
         select: {
+          id: true,
           customerId: true,
           reached: true,
           closedAt: true,
@@ -525,6 +565,7 @@ export async function computeCustomerLeaderboard(params: {
       hours: number[];
     }
   >();
+  const leaderboardEngagement = await loadEngagement(leads.map((l) => l.id));
   for (const l of leads) {
     let s = leadStatsByCustomer.get(l.customerId);
     if (!s) {
@@ -536,8 +577,8 @@ export async function computeCustomerLeaderboard(params: {
       s.cancelled += 1;
       continue; // Stornos zählen nicht in Funnel-Kennzahlen.
     }
-    if (l.reached) s.reached += 1;
-    if (l.status && TERMIN_STATUSES.has(l.status)) s.termin += 1;
+    if (isReachedLead(l, leaderboardEngagement)) s.reached += 1;
+    if (isTerminLead(l, leaderboardEngagement)) s.termin += 1;
     if (l.closedAt != null) s.closed += 1;
     if (l.firstContactAt) {
       s.hours.push(
@@ -640,6 +681,7 @@ export async function computeProductBreakdown(params: {
         createdAt: { gte: range.from, lte: range.to },
       },
       select: {
+        id: true,
         source: true,
         reached: true,
         closedAt: true,
@@ -677,6 +719,7 @@ export async function computeProductBreakdown(params: {
     return x;
   }
 
+  const productEngagement = await loadEngagement(leads.map((l) => l.id));
   for (const l of leads) {
     if (!l.source) continue;
     const x = s(l.source);
@@ -685,7 +728,7 @@ export async function computeProductBreakdown(params: {
       x.cancelled += 1;
       continue;
     }
-    if (l.reached) x.reached += 1;
+    if (isReachedLead(l, productEngagement)) x.reached += 1;
     if (l.closedAt != null) x.closed += 1;
   }
   for (const r of revenues) {
@@ -970,6 +1013,7 @@ export async function computeTimeSeries(params: {
         createdAt: { gte: range.from, lte: range.to },
       },
       select: {
+        id: true,
         createdAt: true,
         firstContactAt: true,
         closedAt: true,
@@ -1058,12 +1102,13 @@ export async function computeTimeSeries(params: {
     return acc.get(format(start, "yyyy-MM-dd"));
   }
 
+  const tsEngagement = await loadEngagement(leads.map((l) => l.id));
   for (const l of leads) {
     const b = bucketFor(l.createdAt);
     if (!b) continue;
     b.point.leads += 1;
-    if (l.reached) b.point.reachedLeads += 1;
-    if (l.status && TERMIN_STATUSES.has(l.status)) b.point.terminLeads += 1;
+    if (isReachedLead(l, tsEngagement)) b.point.reachedLeads += 1;
+    if (isTerminLead(l, tsEngagement)) b.point.terminLeads += 1;
     if (l.closedAt != null) b.point.closedLeads += 1;
     b.contactSum += l.contactAttempts;
     if (l.firstContactAt) {
