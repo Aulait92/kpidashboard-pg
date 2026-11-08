@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { extractFormAnswers } from "@/lib/lead-fields";
 import { normalizePhone } from "@/lib/whatsapp/phone";
+import { attachLeadToContact } from "@/lib/whatsapp/lead-link";
 import { canonicalProductKey } from "@/lib/products";
 
 type AirtableRecord = {
@@ -1244,6 +1245,11 @@ export async function syncAirtable(): Promise<SyncResult> {
 
         result.leads += 1;
         if (isNewLead) {
+          // Schon vorher gebucht/geschrieben (Buchung direkt nach dem Formular)?
+          // → Konversation + Termin nachträglich mit dem Lead verknüpfen.
+          await attachLeadToContact(lead.id).catch((e) =>
+            console.error("[airtable] lead attach", e instanceof Error ? e.message : e),
+          );
           result.newLeads.push({
             buyer,
             customerId,
