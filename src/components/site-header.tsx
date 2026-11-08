@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { TrendingUp } from "lucide-react";
+import { headers } from "next/headers";
 import { getCurrentSession } from "@/lib/auth";
 import { NavToggle } from "@/components/nav-toggle";
 
 export async function SiteHeader() {
+  // Öffentliche Lead-Seiten (Buchung) ohne Dashboard-Header.
+  if ((await headers()).get("x-bare-layout")) return null;
   const session = await getCurrentSession();
   const isAdmin = session?.role === "ADMIN";
 

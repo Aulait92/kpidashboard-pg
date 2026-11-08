@@ -4,9 +4,13 @@ import { AdminTabs } from "@/components/admin-tabs";
 import { getCurrentSession } from "@/lib/auth";
 import { formatDateTime } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
-import { hasRequiredScopes } from "@/lib/whatsapp/google-calendar";
+import { appUrl } from "@/lib/whatsapp/event-text";
+import {
+  getOrCreateBookingSlug,
+  hasRequiredScopes,
+} from "@/lib/whatsapp/google-calendar";
 import { sendReplyAction, toggleBotAction } from "./actions";
-import { SubmitButton } from "./form-buttons";
+import { SubmitButton } from "@/components/submit-button";
 
 export const dynamic = "force-dynamic";
 
@@ -154,6 +158,11 @@ export default async function AdminWhatsAppPage({
   const calConnected = googleConn?.status === "connected";
   // Verbunden, aber mit alter Berechtigung (ohne Verfügbarkeitsabfrage).
   const calNeedsReconnect = calConnected && !hasRequiredScopes(googleConn?.scope);
+  // Öffentlicher Buchungslink (z. B. Custom-Scheduling-Link im Meta-Leadformular).
+  const bookingUrl =
+    active && calConnected
+      ? `${appUrl() ?? ""}/book/${await getOrCreateBookingSlug(active.customerId)}`
+      : null;
 
   const windowOpen =
     !!active?.windowExpiresAt && active.windowExpiresAt.getTime() > Date.now();
@@ -504,6 +513,27 @@ export default async function AdminWhatsAppPage({
                   Google-Kalender verbinden
                 </a>
               )}
+
+              {bookingUrl ? (
+                <div className="mt-3">
+                  <div className="mb-1 text-[10px] font-semibold text-[color:var(--muted)]">
+                    Buchungslink (Meta-Leadformular → „Custom")
+                  </div>
+                  <input
+                    readOnly
+                    value={bookingUrl}
+                    className="w-full rounded-md border border-[color:var(--border)] bg-[color:var(--background)] px-2 py-1 font-mono text-[10px]"
+                  />
+                  <a
+                    href={bookingUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 inline-block text-[10px] font-medium text-[color:var(--brand)] hover:underline"
+                  >
+                    Seite öffnen ↗
+                  </a>
+                </div>
+              ) : null}
             </div>
           </aside>
         ) : null}

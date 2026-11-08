@@ -521,6 +521,9 @@ model GoogleCalendarConnection {
   tokenExpiresAt  DateTime?
   scope           String?
   status          String    @default("pending") // pending | connected | error
+  // Öffentlicher, nicht erratbarer Slug für die Buchungsseite /book/<slug>
+  // (z. B. als Custom-Scheduling-Link im Meta-Leadformular).
+  bookingSlug     String?   @unique
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

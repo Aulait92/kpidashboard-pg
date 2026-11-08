@@ -3,6 +3,7 @@
 // Access-Token wird bei Bedarf über den Refresh-Token erneuert. Raw fetch
 // (kein SDK) — passend zum Rest der Codebase.
 
+import { randomBytes } from "node:crypto";
 import { decryptSecret, encryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
 
@@ -224,21 +225,22 @@ async function getBusy(token: string, timeMin: Date, timeMax: Date): Promise<Bus
 const overlaps = (busy: Busy[], start: Date, end: Date) =>
   busy.some((b) => new Date(b.start) < end && new Date(b.end) > start);
 
-/** Freie Slots der nächsten Werktage (10/14/16 Uhr Berliner Zeit), die nicht belegt sind. */
+/** Freie Slots der nächsten Werktage (Standard 10/14/16 Uhr Berliner Zeit), die nicht belegt sind. */
 export async function suggestSlots(
   customerId: string,
   durationMin = 30,
   count = 3,
+  hours: number[] = [10, 14, 16],
+  days = 10,
 ): Promise<Slot[]> {
   const token = await getAccessToken(customerId);
   const now = new Date();
   const timeMin = new Date(now.getTime() + 60 * 60 * 1000);
-  const timeMax = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000);
+  const timeMax = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
   const busy = await getBusy(token, timeMin, timeMax);
 
   const slots: Slot[] = [];
-  const hours = [10, 14, 16];
-  for (let d = 0; d < 10 && slots.length < count; d++) {
+  for (let d = 0; d < days && slots.length < count; d++) {
     const { y, m, day, dow } = berlinParts(
       new Date(now.getTime() + d * 24 * 60 * 60 * 1000),
     );
@@ -254,6 +256,21 @@ export async function suggestSlots(
     }
   }
   return slots;
+}
+
+/** Buchungs-Slug des Kunden holen bzw. einmalig erzeugen (nicht erratbar). */
+export async function getOrCreateBookingSlug(customerId: string): Promise<string> {
+  const conn = await prisma.googleCalendarConnection.findUnique({
+    where: { customerId },
+    select: { bookingSlug: true },
+  });
+  if (conn?.bookingSlug) return conn.bookingSlug;
+  const slug = randomBytes(9).toString("base64url"); // 12 Zeichen, 72 Bit
+  await prisma.googleCalendarConnection.update({
+    where: { customerId },
+    data: { bookingSlug: slug },
+  });
+  return slug;
 }
 
 /** Fehler, wenn der gewünschte Slot inzwischen belegt ist. */

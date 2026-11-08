@@ -13,6 +13,7 @@ const PUBLIC_PREFIXES = [
   "/api/push", // service worker registriert Subscriptions
   "/api/telegram", // Telegram Bot webhook (Whitelist intern via TELEGRAM_ADMIN_USER_ID + Secret-Token-Header)
   "/api/whatsapp", // 360dialog-Webhook + Dev-Seed (per WHATSAPP_WEBHOOK_SECRET-Token gesichert)
+  "/book", // öffentliche Terminbuchung für Leads (nicht erratbarer Slug je Kunde)
   "/manifest.webmanifest",
   "/icon",
   "/apple-icon",
@@ -34,6 +35,12 @@ function getSecret(): Uint8Array | null {
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  // Lead-Seiten ohne Dashboard-Header rendern (SiteHeader liest das Flag).
+  if (pathname === "/book" || pathname.startsWith("/book/")) {
+    const headers = new Headers(req.headers);
+    headers.set("x-bare-layout", "1");
+    return NextResponse.next({ request: { headers } });
+  }
   if (isPublic(pathname)) return NextResponse.next();
 
   const secret = getSecret();

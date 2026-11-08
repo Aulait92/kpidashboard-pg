@@ -14,7 +14,9 @@ import {
   suggestSlots,
   type Slot,
 } from "@/lib/whatsapp/google-calendar";
+import { buildEventDescription, eventSummary } from "@/lib/whatsapp/event-text";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
+import { EMAIL_RE } from "@/lib/whatsapp/phone";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
 const HISTORY_LIMIT = 20;
@@ -105,8 +107,18 @@ function buildSystemPrompt(
     summary: string | null;
     /** Bereits bekannte Kontaktdaten (später auch aus dem Meta-Leadformular). */
     contact: { name: string | null; phone: string; email: string | null };
+    /** Bereits gebuchter, kommender Termin (z. B. über die Buchungsseite). */
+    upcoming: { startsAt: Date; mode: string; meetUrl: string | null } | null;
   },
 ): string {
+  const booked = state.upcoming
+    ? [
+        `BEREITS GEBUCHTER TERMIN: ${formatSlotDE(state.upcoming.startsAt.toISOString())} Uhr (${state.upcoming.mode === "video" ? "Videocall" : "Telefonat"})${state.upcoming.meetUrl ? `, Meet-Link: ${state.upcoming.meetUrl}` : ""}.`,
+        "Dieser Lead hat schon einen Termin. Qualifiziere NICHT und biete KEINE neuen Termine an (kein get_available_slots/book_appointment).",
+        "Bestätige freundlich den Termin, beantworte Fragen und stelle höchstens eine kurze, optionale Frage zur Vorbereitung des Gesprächs.",
+        "Möchte der Lead verschieben oder absagen, sage ihm, dass sich das Team dazu kurz bei ihm meldet.",
+      ].join("\n")
+    : "";
   const contactLines = [
     state.contact.name ? `Name: ${state.contact.name}` : "",
     `Telefon/WhatsApp: ${state.contact.phone}`,
@@ -115,6 +127,7 @@ function buildSystemPrompt(
       : "E-Mail: unbekannt",
   ].filter(Boolean);
   const known = [
+    booked,
     `Bekannte Lead-Daten (NICHT erneut erfragen):\n${contactLines.join("\n")}`,
     state.summary?.trim()
       ? `Bisher erfasst (NICHT erneut erfragen):\n${state.summary.trim()}\nQualifiziert: ${state.qualified ? "ja — jetzt Termin vereinbaren" : "noch nicht"}`
@@ -164,42 +177,6 @@ function formatSlotDE(iso: string): string {
     minute: "2-digit",
     timeZone: BERLIN_TZ,
   }).format(new Date(iso));
-}
-
-/** Öffentliche App-URL (für Links im Kalendereintrag). */
-function appUrl(): string | null {
-  if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, "");
-  if (process.env.RAILWAY_PUBLIC_DOMAIN)
-    return `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
-  return null;
-}
-
-/** Beschreibung des Kalendereintrags: alles, was der Berater vorab braucht. */
-function buildEventDescription(d: {
-  name: string;
-  phone: string;
-  email: string | null;
-  product: string | null;
-  mode: "phone" | "video";
-  summary: string | null;
-  conversationId: string;
-}): string {
-  const base = appUrl();
-  return [
-    `Lead: ${d.name}`,
-    `Telefon/WhatsApp: ${d.phone}`,
-    d.email ? `E-Mail: ${d.email}` : "",
-    d.product ? `Produkt: ${d.product}` : "",
-    `Art: ${d.mode === "video" ? "Videocall (Meet-Link im Termin)" : "Telefonat — bitte den Lead anrufen"}`,
-    "",
-    "Qualifizierung:",
-    d.summary?.trim() || "—",
-    "",
-    base ? `Chatverlauf: ${base}/admin/whatsapp?c=${d.conversationId}` : "",
-    "Gebucht durch den KI-Assistenten via WhatsApp.",
-  ]
-    .filter((l, i, arr) => l !== "" || arr[i - 1] !== "")
-    .join("\n");
 }
 
 type HistoryMessage = { direction: string; body: string | null };
@@ -276,7 +253,18 @@ export async function runBotTurn(conversationId: string): Promise<void> {
     })
   ).reverse();
 
+  const upcoming = await prisma.appointment.findFirst({
+    where: {
+      conversationId: conversation.id,
+      status: "booked",
+      startsAt: { gt: new Date() },
+    },
+    orderBy: { startsAt: "asc" },
+    select: { startsAt: true, mode: true, meetUrl: true },
+  });
+
   const system = buildSystemPrompt(agent, lead?.source ?? null, {
+    upcoming,
     qualified: conversation.qualified,
     summary: conversation.qualificationSummary,
     contact: {
@@ -364,6 +352,9 @@ export async function runBotTurn(conversationId: string): Promise<void> {
           content =
             "Kalender ist für diesen Kunden nicht verbunden. Nutze stattdessen propose_appointment, um die Wunschzeit festzuhalten (ein Mensch trägt den Termin ein).";
         }
+      } else if (tu.name === "book_appointment" && upcoming) {
+        content =
+          "NICHT gebucht: Der Lead hat bereits einen Termin (siehe System-Prompt). Bestätige diesen stattdessen.";
       } else if (tu.name === "book_appointment") {
         const input = tu.input as {
           modus?: unknown;
@@ -374,7 +365,7 @@ export async function runBotTurn(conversationId: string): Promise<void> {
         const start = typeof input.start === "string" ? input.start : "";
         const rawEmail =
           typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
-        const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)
+        const email = EMAIL_RE.test(rawEmail)
           ? rawEmail
           : conversation.contactEmail; // bereits bekannt (z. B. aus Leadformular)
         if (email && email !== conversation.contactEmail) {
@@ -402,8 +393,9 @@ export async function runBotTurn(conversationId: string): Promise<void> {
               conversationId: conversation.id,
               start,
               mode,
-              summary: `${mode === "video" ? "Video" : "Telefon"}-Beratung: ${name}${product ? ` (${product})` : ""}`,
+              summary: eventSummary(mode, name, product),
               description: buildEventDescription({
+                bookedVia: "bot",
                 name,
                 phone: conversation.contactPhone,
                 email,
