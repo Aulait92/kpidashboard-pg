@@ -16,20 +16,28 @@ export const dynamic = "force-dynamic";
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-function authorized(req: Request): boolean {
-  const expected = process.env.ADMIN_API_TOKEN ?? "";
-  if (expected.length < 32) return false;
+/**
+ * null = ok, sonst ein Grund für die Fehlersuche. Die Gründe verraten nichts
+ * über den Token selbst (keine Länge, kein Präfix).
+ */
+function authError(req: Request): string | null {
+  const expected = (process.env.ADMIN_API_TOKEN ?? "").trim();
+  if (expected.length < 32) return "disabled"; // Variable fehlt/zu kurz
   const header = req.headers.get("authorization") ?? "";
-  const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+  if (!header) return "missing_header";
+  const token = header.replace(/^Bearer\s+/i, "").trim();
   const a = Buffer.from(token);
   const b = Buffer.from(expected);
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return "mismatch";
+  return null;
 }
 
-const unauthorized = () => Response.json({ error: "Unauthorized" }, { status: 401 });
+const unauthorized = (reason: string) =>
+  Response.json({ error: "Unauthorized", reason }, { status: 401 });
 
 export async function GET(req: Request): Promise<Response> {
-  if (!authorized(req)) return unauthorized();
+  const authErr = authError(req);
+  if (authErr) return unauthorized(authErr);
   const q = (new URL(req.url).searchParams.get("q") ?? "").trim();
   const customers = await prisma.customer.findMany({
     where: q ? { name: { contains: q, mode: "insensitive" } } : {},
@@ -45,7 +53,8 @@ export async function GET(req: Request): Promise<Response> {
 }
 
 export async function POST(req: Request): Promise<Response> {
-  if (!authorized(req)) return unauthorized();
+  const authErr = authError(req);
+  if (authErr) return unauthorized(authErr);
   const body = (await req.json().catch(() => ({}))) as {
     email?: unknown;
     customerId?: unknown;
