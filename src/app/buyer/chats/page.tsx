@@ -104,7 +104,9 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
           qualified: true,
           qualificationSummary: true,
           windowExpiresAt: true,
-          lead: { select: { id: true, source: true, status: true, formData: true } },
+          lead: {
+            select: { id: true, source: true, status: true, formData: true, createdAt: true },
+          },
           messages: {
             orderBy: { createdAt: "asc" },
             select: { id: true, direction: true, kind: true, body: true, sentBy: true, createdAt: true },
@@ -131,8 +133,86 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
   const windowOpen =
     !!active?.windowExpiresAt && active.windowExpiresAt.getTime() > Date.now();
 
+  const leadInfo = active ? (
+    <div className="space-y-5 text-sm">
+      <InfoSection title="Kontakt">
+        <InfoRow label="Telefon">
+          <a href={`tel:+${active.contactPhone}`} className="text-[color:var(--brand)] hover:underline">
+            +{active.contactPhone}
+          </a>
+        </InfoRow>
+        {active.contactEmail ? (
+          <InfoRow label="E-Mail">
+            <a href={`mailto:${active.contactEmail}`} className="break-all text-[color:var(--brand)] hover:underline">
+              {active.contactEmail}
+            </a>
+          </InfoRow>
+        ) : null}
+      </InfoSection>
+
+      {active.lead ? (
+        <InfoSection title="Lead">
+          {active.lead.source ? <InfoRow label="Produkt">{displayProduct(active.lead.source)}</InfoRow> : null}
+          {active.lead.status ? <InfoRow label="Status">{active.lead.status}</InfoRow> : null}
+          <InfoRow label="Eingang">{formatDateTime(active.lead.createdAt)}</InfoRow>
+          <Link
+            href={`/buyer/leads/${active.lead.id}`}
+            className="mt-1 inline-block text-xs font-semibold text-[color:var(--brand)] hover:underline"
+          >
+            Lead öffnen →
+          </Link>
+        </InfoSection>
+      ) : null}
+
+      <InfoSection title="Termin">
+        {appointments.length === 0 ? (
+          <p className="text-xs text-[color:var(--muted)]">Kein Termin gebucht.</p>
+        ) : (
+          appointments.map((a) => (
+            <div key={a.id} className="rounded-xl border border-blue-200 bg-blue-50 p-3">
+              <div className="font-semibold text-blue-900">📅 {formatAppt(a.startsAt)} Uhr</div>
+              <div className="mt-0.5 text-xs text-blue-800">
+                {a.mode === "video" ? "Videocall" : "Telefonat – du rufst an"}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-3 text-xs">
+                {a.meetUrl ? (
+                  <a href={a.meetUrl} target="_blank" rel="noreferrer" className="font-semibold text-blue-700 underline">
+                    Video-Link
+                  </a>
+                ) : null}
+                <form action={cancelAppointmentBuyerAction}>
+                  <input type="hidden" name="appointmentId" value={a.id} />
+                  <input type="hidden" name="conversationId" value={active.id} />
+                  <SubmitButton pendingLabel="sagt ab …" className="font-medium text-rose-700 hover:underline">
+                    Termin absagen
+                  </SubmitButton>
+                </form>
+              </div>
+            </div>
+          ))
+        )}
+      </InfoSection>
+
+      {formAnswers.length > 0 ? (
+        <InfoSection title="Leadformular">
+          {formAnswers.map((a) => (
+            <InfoRow key={a.label} label={a.label}>
+              {a.value}
+            </InfoRow>
+          ))}
+        </InfoSection>
+      ) : null}
+
+      {active.qualificationSummary ? (
+        <InfoSection title={active.qualified ? "Qualifizierung ✓" : "Bisher erfasst"}>
+          <p className="text-sm leading-relaxed">{active.qualificationSummary}</p>
+        </InfoSection>
+      ) : null}
+    </div>
+  ) : null;
+
   return (
-    <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+    <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
       <AutoRefresh intervalMs={15_000} />
       <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Chats</h1>
       <p className="mt-2 text-sm text-[color:var(--muted)]">
@@ -244,56 +324,13 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                 </form>
               </div>
 
-              {/* Kontext: Termin, Formular, Qualifizierung */}
-              <div className="space-y-2 border-b border-[color:var(--border)] bg-white px-4 py-3 text-xs">
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[color:var(--muted)]">
-                  {active.lead?.source ? <span>Produkt: {displayProduct(active.lead.source)}</span> : null}
-                  {active.lead?.status ? <span>Status: {active.lead.status}</span> : null}
-                  {active.contactEmail ? <span>E-Mail: {active.contactEmail}</span> : null}
-                </div>
-                {appointments.length > 0 ? (
-                  <div className="font-semibold text-blue-700">
-                    {appointments.map((a) => (
-                      <div key={a.id}>
-                        📅 {formatAppt(a.startsAt)} Uhr · {a.mode === "video" ? "Videocall" : "Telefonat"}
-                        {a.meetUrl ? (
-                          <>
-                            {" · "}
-                            <a href={a.meetUrl} target="_blank" rel="noreferrer" className="underline">
-                              Video-Link
-                            </a>
-                          </>
-                        ) : null}
-                        <form action={cancelAppointmentBuyerAction} className="inline">
-                          <input type="hidden" name="appointmentId" value={a.id} />
-                          <input type="hidden" name="conversationId" value={active.id} />
-                          {" · "}
-                          <SubmitButton
-                            pendingLabel="sagt ab …"
-                            className="font-medium text-rose-700 hover:underline"
-                          >
-                            absagen
-                          </SubmitButton>
-                        </form>
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-                {formAnswers.length > 0 ? (
-                  <div className="text-[color:var(--foreground)]">
-                    <span className="font-semibold">Leadformular: </span>
-                    {formAnswers.map((a) => `${a.label}: ${a.value}`).join(" · ")}
-                  </div>
-                ) : null}
-                {active.qualificationSummary ? (
-                  <div className="text-[color:var(--foreground)]">
-                    <span className="font-semibold">
-                      {active.qualified ? "✓ Qualifiziert: " : "Bisher erfasst: "}
-                    </span>
-                    {active.qualificationSummary}
-                  </div>
-                ) : null}
-              </div>
+              {/* Lead-Infos: unter xl als aufklappbarer Block, ab xl rechts */}
+              <details className="border-b border-[color:var(--border)] bg-white xl:hidden">
+                <summary className="cursor-pointer px-4 py-2 text-xs font-semibold text-[color:var(--brand)]">
+                  Lead-Infos{appointments.length > 0 ? " · Termin" : ""}
+                </summary>
+                <div className="px-4 pb-4">{leadInfo}</div>
+              </details>
 
               <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
                 {active.messages.map((m) => {
@@ -363,7 +400,33 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
             </>
           )}
         </section>
+
+        {active ? (
+          <aside className="hidden w-[300px] flex-none overflow-y-auto border-l border-[color:var(--border)] bg-white p-4 xl:block">
+            {leadInfo}
+          </aside>
+        ) : null}
       </div>
     </main>
+  );
+}
+
+function InfoSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section>
+      <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">
+        {title}
+      </h3>
+      <div className="space-y-1.5">{children}</div>
+    </section>
+  );
+}
+
+function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="text-[11px] text-[color:var(--muted)]">{label}</div>
+      <div className="text-sm">{children}</div>
+    </div>
   );
 }
