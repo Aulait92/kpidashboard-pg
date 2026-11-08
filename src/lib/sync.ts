@@ -39,18 +39,8 @@ const eur = new Intl.NumberFormat("de-DE", {
 export async function runFullSync(): Promise<FullSyncResult> {
   const airtable = await syncAirtable();
 
-  let meta: FullSyncResult["meta"];
-  try {
-    const metaResult = await syncMeta();
-    meta = { ok: true, result: metaResult };
-  } catch (err) {
-    meta = {
-      ok: false,
-      error: err instanceof Error ? err.message : String(err),
-    };
-  }
-
   // Eigene Werbekonten der Retainer-Kunden (Spend nur für deren Dashboard).
+  // Vor dem (langen) Agentur-Meta-Sync, damit er nicht davon blockiert wird.
   let customerAdSpend: FullSyncResult["customerAdSpend"];
   try {
     const r = await syncCustomerAdSpend();
@@ -61,6 +51,17 @@ export async function runFullSync(): Promise<FullSyncResult> {
     customerAdSpend = { ok: true, result: r };
   } catch (err) {
     customerAdSpend = {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+
+  let meta: FullSyncResult["meta"];
+  try {
+    const metaResult = await syncMeta();
+    meta = { ok: true, result: metaResult };
+  } catch (err) {
+    meta = {
       ok: false,
       error: err instanceof Error ? err.message : String(err),
     };
