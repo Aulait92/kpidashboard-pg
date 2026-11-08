@@ -451,3 +451,62 @@ export async function callbackOutcomeAction(formData: FormData): Promise<void> {
   revalidatePath("/buyer/kanban");
   revalidatePath("/buyer");
 }
+
+// ─── „Wie lief's?" — Ergebnis eines vergangenen Termins ───────────────────
+// Setzt Termin-Status (completed/no_show) und den Lead-Status in DB + Airtable,
+// damit Abschlussquote und Kosten pro Abschluss stimmen.
+const OUTCOME_STATUS: Record<string, string> = {
+  offer: "Angebot gesendet",
+  closed: "Abschluss",
+  lost: "Kein Interesse",
+  no_show: "Im Gespräch",
+};
+
+export async function appointmentOutcomeAction(formData: FormData): Promise<void> {
+  const appointmentId = String(formData.get("appointmentId") ?? "");
+  const outcome = String(formData.get("outcome") ?? "");
+  const nextStatus = OUTCOME_STATUS[outcome];
+  if (!appointmentId || !nextStatus) return;
+  const appt = await prisma.appointment.findUnique({
+    where: { id: appointmentId },
+    select: { id: true, leadId: true, customerId: true },
+  });
+  if (!appt?.leadId) return;
+  const writeCustomerId = await writableCustomerId(appt.leadId);
+  if (!writeCustomerId || writeCustomerId !== appt.customerId) return;
+
+  const rawValue = String(formData.get("closeValue") ?? "").replace(/\./g, "").replace(",", ".").trim();
+  const closeValue = outcome === "closed" && rawValue ? Number.parseFloat(rawValue) : null;
+
+  await prisma.appointment.update({
+    where: { id: appt.id },
+    data: { status: outcome === "no_show" ? "no_show" : "completed" },
+  });
+  const lead = await prisma.lead.findUnique({
+    where: { id: appt.leadId },
+    select: { airtableId: true },
+  });
+  if (lead?.airtableId) {
+    await updateLeadEditableFields({
+      airtableId: lead.airtableId,
+      bearbeitungsstatus: nextStatus,
+      ...(outcome === "closed" ? { closeValue: Number.isFinite(closeValue ?? NaN) ? closeValue : null } : {}),
+    }).catch((e) => console.error("[appointment outcome]", e));
+  }
+  await prisma.lead.update({
+    where: { id: appt.leadId },
+    data: {
+      status: nextStatus,
+      reached: true,
+      closedAt: outcome === "closed" ? new Date() : null,
+      ...(outcome === "closed"
+        ? { closeValue: closeValue != null && Number.isFinite(closeValue) ? closeValue : null }
+        : {}),
+      // Nicht erschienen → sofort in die Rückrufliste (kein Snooze).
+      ...(outcome === "no_show" ? { callbackSnoozedUntil: null } : {}),
+    },
+  });
+  revalidatePath("/buyer");
+  revalidatePath("/buyer/leads");
+  revalidatePath("/buyer/kanban");
+}

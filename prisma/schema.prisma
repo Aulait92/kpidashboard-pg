@@ -620,6 +620,12 @@ model Conversation {
   qualified            Boolean  @default(false)
   qualificationSummary String?
   status            String    @default("open") // open | snoozed | done
+  // „Braucht dich": Assistent hat übergeben (Frage, die er nicht klären kann,
+  // Lead will den Berater sprechen) oder Lead schreibt in einem übernommenen
+  // Chat. Wird beim Antworten des Beraters bzw. „Erledigt" zurückgesetzt.
+  needsAttention    Boolean   @default(false)
+  attentionReason   String?
+  attentionAt       DateTime?
   windowExpiresAt   DateTime? // Ende des 24h-Service-Fensters
   lastMessageAt     DateTime?
   createdAt         DateTime  @default(now())

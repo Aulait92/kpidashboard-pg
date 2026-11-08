@@ -9,6 +9,7 @@ import {
   type BuyerLeadRow,
 } from "@/components/buyer-leads-table";
 import { BuyerTabs } from "@/components/buyer-tabs";
+import { TodayPanel } from "@/components/today-panel";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { LiveUpdated } from "@/components/live-updated";
 import { PullToRefresh } from "@/components/pull-to-refresh";
@@ -204,6 +205,7 @@ async function LeadsBody({
 
   return (
     <div className="mt-6 space-y-6">
+      {whatsapp ? <TodayPanel customerId={customerId} /> : null}
       {whatsapp ? <CallbackCard callbacks={callbacks} bookingSlug={bookingSlug} /> : null}
       <BuyerLeadsTable
         leads={leads}

@@ -73,7 +73,11 @@ export default async function BookingPage({ params, searchParams }: Props) {
   let prefill: { name: string; email: string; phone: string } | null = null;
   if (sp.lead && conn) {
     const session = await getCurrentSession();
-    if (session?.role === "BUYER" && session.customerId === conn.customerId) {
+    // Kunde selbst oder Admin (z. B. in „Als Kunde ansehen").
+    if (
+      session &&
+      (session.role === "ADMIN" || (session.role === "BUYER" && session.customerId === conn.customerId))
+    ) {
       const l = await prisma.lead.findFirst({
         where: { id: sp.lead, customerId: conn.customerId },
         select: { name: true, email: true, phone: true },

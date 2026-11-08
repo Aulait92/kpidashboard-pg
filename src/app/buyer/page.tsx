@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { BuyerFilterBar } from "@/components/buyer-filter-bar";
 import { BuyerTabs } from "@/components/buyer-tabs";
+import { TodayPanel } from "@/components/today-panel";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { FunnelHero } from "@/components/funnel-hero";
 import { KpiCard, type Delta } from "@/components/kpi-card";
@@ -226,6 +227,8 @@ async function BuyerDashboardBody({
 
   return (
     <div className="mt-6 space-y-6">
+      {(await hasWhatsAppInbox(customerId)) ? <TodayPanel customerId={customerId} /> : null}
+
       <FunnelHero kpis={k} />
 
       <MonthlyForecast forecast={forecast} />

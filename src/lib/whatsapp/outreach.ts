@@ -222,10 +222,15 @@ export async function getCallbackLeads(customerId: string): Promise<CallbackLead
       outreachStatus: true,
       // Letzte Absage (Lead/Berater) → sofort zurückrufen statt 24 h warten.
       appointments: {
-        where: { status: "cancelled", cancelledBy: { in: ["lead", "advisor"] } },
-        orderBy: { cancelledAt: "desc" },
+        where: {
+          OR: [
+            { status: "cancelled", cancelledBy: { in: ["lead", "advisor"] } },
+            { status: "no_show" },
+          ],
+        },
+        orderBy: { updatedAt: "desc" },
         take: 1,
-        select: { cancelledBy: true },
+        select: { cancelledBy: true, status: true },
       },
       conversations: {
         select: {
@@ -251,7 +256,9 @@ export async function getCallbackLeads(customerId: string): Promise<CallbackLead
 
     let reason: string | null = null;
     const lastCancel = l.appointments[0]?.cancelledBy;
-    if (lastCancel === "advisor") {
+    if (l.appointments[0]?.status === "no_show") {
+      reason = "Nicht zum Termin erschienen – neuen Termin vereinbaren";
+    } else if (lastCancel === "advisor") {
       reason = "Du hast den Termin abgelehnt – bitte neuen Termin vereinbaren";
     } else if (lastCancel === "lead") {
       reason = "Lead hat den Termin abgesagt – kurz nachfassen";
