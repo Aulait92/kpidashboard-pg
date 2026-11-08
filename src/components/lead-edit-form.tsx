@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { Check, Loader2, Minus, PencilLine, Plus } from "lucide-react";
+import { Check, Loader2, PencilLine } from "lucide-react";
 import { buttonClass, Card, CardHeader } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
@@ -24,8 +24,6 @@ import { PHASE_DOT, PIPELINE_PHASES, findPhaseIn, type PipelinePhase } from "@/l
 export function LeadEditForm({
   leadId,
   initialBearbeitungsstatus,
-  initialKontaktversuche,
-  initialErsterKontaktversuch,
   initialNotizen,
   phases = PIPELINE_PHASES,
 }: {
@@ -33,8 +31,6 @@ export function LeadEditForm({
   phases?: readonly PipelinePhase[];
   leadId: string;
   initialBearbeitungsstatus: string;
-  initialKontaktversuche: number;
-  initialErsterKontaktversuch: string; // YYYY-MM-DDTHH:mm (UTC) oder ""
   initialNotizen: string;
 }) {
   const [state, formAction, pending] = useActionState<
@@ -75,10 +71,6 @@ export function LeadEditForm({
       ? initialBearbeitungsstatus
       : null;
 
-  const [kontaktversuche, setKontaktversuche] = useState(initialKontaktversuche);
-  const [ersterKontaktversuch, setErsterKontaktversuch] = useState(
-    initialErsterKontaktversuch,
-  );
   const [notizen, setNotizen] = useState(initialNotizen);
 
   // Rückmeldung per Toast (Designsystem) statt Inline-Text.
@@ -133,47 +125,6 @@ export function LeadEditForm({
               </p>
             ) : null}
           </Field>
-
-          <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="Kontaktversuche">
-              <div className="inline-flex items-center rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white">
-                <button
-                  type="button"
-                  aria-label="Weniger"
-                  onClick={() => setKontaktversuche((n) => Math.max(0, n - 1))}
-                  className="flex h-9 w-9 items-center justify-center text-[color:var(--muted)] hover:text-[color:var(--foreground)]"
-                >
-                  <Minus className="h-4 w-4" />
-                </button>
-                <input
-                  type="number"
-                  name="kontaktversuche"
-                  min={0}
-                  step={1}
-                  value={kontaktversuche}
-                  onChange={(e) => setKontaktversuche(Number(e.target.value) || 0)}
-                  className="h-9 w-12 border-x border-[color:var(--border)] text-center text-sm tabular-nums focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
-                />
-                <button
-                  type="button"
-                  aria-label="Mehr"
-                  onClick={() => setKontaktversuche((n) => n + 1)}
-                  className="flex h-9 w-9 items-center justify-center text-[color:var(--muted)] hover:text-[color:var(--foreground)]"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
-            </Field>
-            <Field label="Erster Kontakt">
-              <input
-                type="datetime-local"
-                name="ersterKontaktversuch"
-                value={ersterKontaktversuch}
-                onChange={(e) => setErsterKontaktversuch(e.target.value)}
-                className={inputCls}
-              />
-            </Field>
-          </div>
 
           <Field label="Notizen">
             <textarea

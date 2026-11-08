@@ -183,7 +183,7 @@ export function KanbanBoard({
 
   if (leads.length === 0) {
     return (
-      <div className="rounded-2xl border border-[color:var(--border)] bg-white p-6 text-sm text-[color:var(--muted)] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
+      <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-6 text-sm text-[color:var(--muted)] shadow-[var(--shadow-md)]">
         Im gewählten Zeitraum sind keine aktiven Leads vorhanden.
       </div>
     );
@@ -382,7 +382,7 @@ function CloseValueDialog({
       onClick={(e) => {
         if (e.target === dialogRef.current) onCancel();
       }}
-      className="m-auto w-full max-w-sm rounded-2xl border border-[color:var(--border)] bg-white p-0 shadow-[0_20px_50px_-20px_rgba(15,23,42,0.4)] backdrop:bg-slate-900/40"
+      className="m-auto w-full max-w-sm rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-0 shadow-[0_20px_50px_-20px_rgba(15,23,42,0.4)] backdrop:bg-slate-900/40"
     >
       <form
         onSubmit={(e) => {

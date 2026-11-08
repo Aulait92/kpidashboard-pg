@@ -137,7 +137,7 @@ export default async function AdminDealDetailPage({
       </Link>
       <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          <h1 className="text-2xl font-semibold tracking-tight">
             {deal.name ?? "Deal"}
           </h1>
           <p className="mt-1 text-sm text-[color:var(--muted)]">
@@ -220,7 +220,7 @@ function DealFactsCard({
   );
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
+    <section className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
       <header className="border-b border-[color:var(--border)] px-5 py-3">
         <h2 className="text-base font-semibold">Deal-Daten</h2>
         <p className="mt-0.5 text-xs text-[color:var(--muted)]">

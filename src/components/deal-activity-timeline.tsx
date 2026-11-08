@@ -91,7 +91,7 @@ export function DealActivityTimeline({
   activities: ActivityItem[];
 }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
+    <section className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
       <header className="border-b border-[color:var(--border)] px-5 py-3">
         <h2 className="text-base font-semibold">Aktivität</h2>
         <p className="mt-0.5 text-xs text-[color:var(--muted)]">

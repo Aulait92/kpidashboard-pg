@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { AdminTabs } from "@/components/admin-tabs";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { CplTrendChart } from "@/components/cpl-trend-chart";
 import { FilterBar } from "@/components/filter-bar";
@@ -15,7 +14,6 @@ import { PnLStatement } from "@/components/pnl-statement";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { SpeedToLeadCard } from "@/components/speed-to-lead-card";
 import { TrendCharts } from "@/components/trend-charts";
-import { UserMenu } from "@/components/user-menu";
 import { getCurrentSession } from "@/lib/auth";
 import { computeMonthlyForecast } from "@/lib/forecast";
 import { computeMonthlyGoalProgress } from "@/lib/goals";
@@ -87,18 +85,13 @@ export default async function DashboardPage({
   return (
     <PullToRefresh>
       <AutoRefresh />
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-        <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-3 py-1 text-xs font-medium text-[color:var(--brand-dark)]">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[color:var(--brand)]" />
-              Live · aktualisiert <LiveUpdated since={renderedAt} />
-            </span>
-            <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-              KPI-<span className="text-[color:var(--brand)]">Dashboard</span>.
-            </h1>
-            <p className="mt-2 text-sm text-[color:var(--muted)]">
-              Zeitraum: {formatDate(range.from)} – {formatDate(range.to)}
+            <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+            <p className="mt-1 text-sm text-[color:var(--muted)]">
+              {formatDate(range.from)} – {formatDate(range.to)} · aktualisiert{" "}
+              <LiveUpdated since={renderedAt} />
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -117,12 +110,9 @@ export default async function DashboardPage({
             </Suspense>
             <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
               <NotificationsButton />
-              <UserMenu />
             </div>
           </div>
         </header>
-
-        <AdminTabs />
 
         <Suspense
           fallback={

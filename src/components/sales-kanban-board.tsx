@@ -140,7 +140,7 @@ export function SalesKanbanBoard({ deals: initialDeals }: { deals: KanbanDeal[] 
 
   if (deals.length === 0) {
     return (
-      <div className="rounded-2xl border border-[color:var(--border)] bg-white p-6 text-sm text-[color:var(--muted)] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
+      <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-6 text-sm text-[color:var(--muted)] shadow-[var(--shadow-md)]">
         Keine Deals im gewählten Zeitraum. Sobald der Sales-Sync läuft, tauchen
         Datensätze aus der Airtable-„Deal-Pipeline" hier auf.
       </div>
@@ -296,7 +296,7 @@ function LostReasonDialog({
       onClick={(e) => {
         if (e.target === dialogRef.current) onCancel();
       }}
-      className="m-auto w-full max-w-md rounded-2xl border border-[color:var(--border)] bg-white p-0 shadow-[0_20px_50px_-20px_rgba(15,23,42,0.4)] backdrop:bg-slate-900/40"
+      className="m-auto w-full max-w-md rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-0 shadow-[0_20px_50px_-20px_rgba(15,23,42,0.4)] backdrop:bg-slate-900/40"
     >
       <form
         onSubmit={(e) => {
@@ -387,7 +387,7 @@ function KanbanColumn({
   return (
     <div
       className={cn(
-        "flex min-w-0 flex-col rounded-2xl border border-t-4 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]",
+        "flex min-w-0 flex-col rounded-2xl border border-t-4 bg-white shadow-[var(--shadow-md)]",
         accent,
         "border-[color:var(--border)]",
         isOver && "ring-2 ring-[color:var(--brand)] ring-offset-2",

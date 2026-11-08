@@ -24,18 +24,22 @@ export function Sparkline({
 }: {
   points: TimeSeriesPoint[];
   dataKey: keyof TimeSeriesPoint;
-  tone?: "positive" | "negative" | "neutral";
+  tone?: "positive" | "negative" | "neutral" | "brand";
   height?: number;
 }) {
   const data = seriesFor(points, dataKey);
   const stroke =
-    tone === "negative"
+    tone === "brand"
+      ? "#2563eb"
+      : tone === "negative"
       ? "#dc2626"
       : tone === "neutral"
         ? "#64748b"
         : "#10b981";
   const fill =
-    tone === "negative"
+    tone === "brand"
+      ? "rgba(37, 99, 235, 0.08)"
+      : tone === "negative"
       ? "rgba(220, 38, 38, 0.10)"
       : tone === "neutral"
         ? "rgba(100, 116, 139, 0.10)"

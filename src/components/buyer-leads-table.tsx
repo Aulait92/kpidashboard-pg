@@ -72,7 +72,7 @@ export function BuyerLeadsTable({
 
   if (leads.length === 0) {
     return (
-      <div className="rounded-2xl border border-[color:var(--border)] bg-white p-6 text-sm text-[color:var(--muted)] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
+      <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-6 text-sm text-[color:var(--muted)] shadow-[var(--shadow-md)]">
         Im gewählten Zeitraum sind keine Leads für deinen Account
         eingegangen.
       </div>
@@ -81,7 +81,7 @@ export function BuyerLeadsTable({
 
   return (
     <>
-      <div className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
+      <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
         <div className="flex items-baseline justify-between gap-3 border-b border-[color:var(--border)] px-5 py-3.5">
           <h2 className="text-base font-semibold tracking-tight">
             Alle Leads <span className="font-normal text-[color:var(--muted)]">· {leads.length}</span>

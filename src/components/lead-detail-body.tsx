@@ -231,19 +231,12 @@ export async function LeadDetailBody({
               initialBearbeitungsstatus={
                 firstString(fields["Bearbeitungsstatus"]) ?? ""
               }
-              initialKontaktversuche={
-                Number.parseInt(firstString(fields["Kontaktversuche"]) ?? "0", 10) ||
-                0
-              }
-              initialErsterKontaktversuch={isoDateTimeLocal(
-                firstString(fields["Erster Kontaktversuch"]),
-              )}
               initialNotizen={firstString(fields["Notizen"]) ?? ""}
             />
           </div>
         </>
       ) : !fetchError ? (
-        <div className="rounded-2xl border border-[color:var(--border)] bg-white p-6 text-sm text-[color:var(--muted)]">
+        <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-6 text-sm text-[color:var(--muted)]">
           Für diesen Lead liegt keine Airtable-Referenz vor.
         </div>
       ) : null}

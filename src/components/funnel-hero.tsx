@@ -66,13 +66,10 @@ export function FunnelHero({ kpis }: { kpis: Kpis }) {
   const ratio = (n: number) => (max > 0 ? n / max : 0);
 
   return (
-    <section className="rounded-2xl border border-[color:var(--border)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
+    <section className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-md)]">
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-4">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--brand)]">
-            Vom Lead zum Abschluss
-          </div>
-          <h2 className="mt-0.5 text-lg font-semibold tracking-tight">
+          <h2 className="text-[15px] font-semibold tracking-tight">
             Dein Vertriebstrichter
           </h2>
         </div>

@@ -78,7 +78,7 @@ export function DealEditForm({
   return (
     <form
       action={formAction}
-      className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]"
+      className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]"
     >
       <input type="hidden" name="dealId" value={dealId} />
       <input type="hidden" name="status" value={resolvedStatus} />

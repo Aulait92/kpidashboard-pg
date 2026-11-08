@@ -209,10 +209,7 @@ async function BuyerDashboardBody({
 
       <section>
         <div className="mb-3">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--brand)]">
-            Lead-Performance
-          </div>
-          <h2 className="mt-0.5 text-lg font-semibold tracking-tight">
+          <h2 className="text-[15px] font-semibold tracking-tight">
             Deine Zahlen
           </h2>
         </div>
@@ -243,10 +240,7 @@ async function BuyerDashboardBody({
 
       <section>
         <div className="mb-3">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--brand)]">
-            Investment
-          </div>
-          <h2 className="mt-0.5 text-lg font-semibold tracking-tight">
+          <h2 className="text-[15px] font-semibold tracking-tight">
             Was du für Leads bezahlt hast
           </h2>
         </div>
@@ -300,10 +294,7 @@ async function BuyerDashboardBody({
 
       <section>
         <div className="mb-3">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--brand)]">
-            Ertrag
-          </div>
-          <h2 className="mt-0.5 text-lg font-semibold tracking-tight">
+          <h2 className="text-[15px] font-semibold tracking-tight">
             Was du verdient hast
           </h2>
           <p className="mt-1 text-xs text-[color:var(--muted)]">

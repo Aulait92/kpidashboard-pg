@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AdminTabs } from "@/components/admin-tabs";
 import { SubmitButton } from "@/components/submit-button";
 import { getCurrentSession } from "@/lib/auth";
 import { getOrCreateBookingSlug, PROVIDER_LABELS } from "@/lib/calendar";
@@ -112,7 +111,7 @@ export default async function WhatsAppSettingsPage({
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+        <h1 className="text-2xl font-semibold tracking-tight">
           WhatsApp-Einstellungen
         </h1>
         <Link
@@ -122,7 +121,6 @@ export default async function WhatsAppSettingsPage({
           ← zur Inbox
         </Link>
       </div>
-      <AdminTabs />
 
       <div className="mt-4 rounded-xl bg-[color:var(--brand-soft)]/50 p-4 text-xs leading-relaxed text-[color:var(--foreground)]">
         <b>So funktioniert&apos;s:</b> Außerhalb des 24-h-Fensters darf WhatsApp nur
@@ -175,7 +173,7 @@ export default async function WhatsAppSettingsPage({
             <section
               key={c.id}
               id={`kunde-${c.id}`}
-              className="rounded-2xl border border-[color:var(--border)] bg-white p-5"
+              className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5"
             >
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="text-lg font-semibold">{c.name}</h2>

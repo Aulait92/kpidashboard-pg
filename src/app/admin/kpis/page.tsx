@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { AdminTabs } from "@/components/admin-tabs";
 import { BuyerFilterBar } from "@/components/buyer-filter-bar";
 import { KpiCard } from "@/components/kpi-card";
 import { getCurrentSession } from "@/lib/auth";
@@ -42,7 +41,7 @@ export default async function AdminKpisPage({
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          <h1 className="text-2xl font-semibold tracking-tight">
             Sales-KPIs
           </h1>
           <p className="mt-1 text-sm text-[color:var(--muted)]">
@@ -59,10 +58,8 @@ export default async function AdminKpisPage({
         />
       </header>
 
-      <AdminTabs />
-
       {k.totalDeals === 0 ? (
-        <div className="mt-6 rounded-2xl border border-[color:var(--border)] bg-white p-6 text-sm text-[color:var(--muted)]">
+        <div className="mt-6 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-6 text-sm text-[color:var(--muted)]">
           Noch keine Deals in der DB. Setze `AIRTABLE_SALES_BASE_ID` in
           Railway, stoße einen Sync an, und die KPIs füllen sich.
         </div>
@@ -146,7 +143,7 @@ export default async function AdminKpisPage({
           </Section>
 
           <Section title="Phasen-Aufschlüsselung">
-            <div className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
+            <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
               <table className="min-w-full text-sm">
                 <thead className="bg-[color:var(--brand-soft)]/30 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
                   <tr>
@@ -187,7 +184,7 @@ export default async function AdminKpisPage({
 
           {k.lostReasons.length > 0 ? (
             <Section title="Verlust-Gründe">
-              <div className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
+              <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
                 <table className="min-w-full text-sm">
                   <thead className="bg-[color:var(--brand-soft)]/30 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
                     <tr>
@@ -214,7 +211,7 @@ export default async function AdminKpisPage({
           ) : null}
 
           <Section title={`Hochrechnung ${k.forecast.monthLabel}`}>
-            <div className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
+            <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
               <table className="min-w-full text-sm">
                 <thead className="bg-[color:var(--brand-soft)]/30 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
                   <tr>

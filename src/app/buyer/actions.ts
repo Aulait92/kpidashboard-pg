@@ -269,6 +269,7 @@ export async function updateLeadDetailsAction(
   if (!lead) return { error: "Lead nicht gefunden." };
 
   // Inputs parsen — leere Strings bedeuten "leer setzen".
+  const hasContactFields = formData.has("kontaktversuche");
   const kvRaw = String(formData.get("kontaktversuche") ?? "").trim();
   const kontaktversuche = kvRaw === "" ? 0 : Math.max(0, Math.round(Number(kvRaw)));
   if (!Number.isFinite(kontaktversuche)) {
@@ -309,10 +310,11 @@ export async function updateLeadDetailsAction(
 
   try {
     // Ohne Airtable-Referenz nur DB-Felder (Notizen leben nur in Airtable).
+    // Kontaktversuche / Erster Kontakt nur schreiben, wenn das Formular sie
+    // mitschickt (im Kunden-CRM ausgeblendet → Werte bleiben unverändert).
     if (lead.airtableId) await updateLeadEditableFields({
       airtableId: lead.airtableId,
-      kontaktversuche,
-      ersterKontaktversuch: ersterKontaktversuchIso,
+      ...(hasContactFields ? { kontaktversuche, ersterKontaktversuch: ersterKontaktversuchIso } : {}),
       notizen,
       bearbeitungsstatus,
     });
@@ -326,10 +328,12 @@ export async function updateLeadDetailsAction(
   await prisma.lead.update({
     where: { id: lead.id },
     data: {
-      contactAttempts: kontaktversuche,
-      firstContactAt: ersterKontaktversuchIso
-        ? new Date(ersterKontaktversuchIso)
-        : null,
+      ...(hasContactFields
+        ? {
+            contactAttempts: kontaktversuche,
+            firstContactAt: ersterKontaktversuchIso ? new Date(ersterKontaktversuchIso) : null,
+          }
+        : {}),
       ...(bearbeitungsstatus ? { status: bearbeitungsstatus } : {}),
     },
   });

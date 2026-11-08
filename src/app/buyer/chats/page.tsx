@@ -285,7 +285,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
         </div>
       ) : null}
 
-      <div className="flex h-[calc(100dvh-56px-64px)] overflow-hidden border-[color:var(--border)] bg-white sm:h-[calc(100dvh-56px-140px)] sm:min-h-[520px] sm:rounded-2xl sm:border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
+      <div className="flex h-[calc(100dvh-56px-64px)] overflow-hidden border-[color:var(--border)] bg-white sm:h-[calc(100dvh-56px-140px)] sm:min-h-[520px] sm:rounded-2xl sm:border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
         {/* Liste — auf dem Handy ausgeblendet, sobald ein Chat offen ist */}
         <aside
           className={`${active ? "hidden md:flex" : "flex"} w-full flex-none flex-col border-r border-[color:var(--border)] md:w-[300px]`}

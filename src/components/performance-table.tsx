@@ -171,7 +171,7 @@ export function PerformanceTable({
   }
 
   return (
-    <div className="rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
+    <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
       <div className="flex flex-wrap items-baseline justify-between gap-2 px-5 pt-5">
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--brand)]">

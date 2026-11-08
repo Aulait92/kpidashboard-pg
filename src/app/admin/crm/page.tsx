@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { AdminTabs } from "@/components/admin-tabs";
 import { CrmFilterBar } from "@/components/crm-filter-bar";
 import {
   SalesKanbanBoard,
@@ -133,7 +132,7 @@ export default async function AdminCrmPage({
     <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-8 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">CRM</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">CRM</h1>
           <p className="mt-1 text-sm text-[color:var(--muted)]">
             Unsere eigene Sales-Pipeline aus der Airtable-„Deal-Pipeline".
             Karten ziehen → Status flippt + status_change-Activity wird gelogt.
@@ -142,8 +141,6 @@ export default async function AdminCrmPage({
         </div>
         <CrmFilterBar currentQuery={queryRaw} />
       </header>
-
-      <AdminTabs />
 
       {sp.deleteWarning === "airtable" ? (
         <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">

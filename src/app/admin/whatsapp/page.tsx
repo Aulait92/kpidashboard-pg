@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AdminTabs } from "@/components/admin-tabs";
 import { getCurrentSession } from "@/lib/auth";
 import { formatDateTime } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -175,7 +174,7 @@ export default async function AdminWhatsAppPage({
   return (
     <main className="mx-auto w-full max-w-[1500px] flex-1 px-4 py-6 sm:px-6">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+        <h1 className="text-2xl font-semibold tracking-tight">
           WhatsApp-Inbox
         </h1>
         <Link
@@ -185,7 +184,6 @@ export default async function AdminWhatsAppPage({
           Einstellungen & Vorlagen →
         </Link>
       </div>
-      <AdminTabs />
 
       {sp.gcal ? (
         <div
@@ -205,7 +203,7 @@ export default async function AdminWhatsAppPage({
         </div>
       ) : null}
 
-      <div className="mt-6 flex h-[calc(100vh-200px)] min-h-[540px] overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
+      <div className="mt-6 flex h-[calc(100vh-200px)] min-h-[540px] overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
         {/* Spalte 1: Konversationsliste */}
         <aside className="flex w-[320px] flex-none flex-col border-r border-[color:var(--border)]">
           <div className="flex gap-1 p-3">

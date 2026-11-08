@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AdminTabs } from "@/components/admin-tabs";
 import { getCurrentSession } from "@/lib/auth";
 import { listPoolsForAdmin } from "@/lib/media-buyer";
 import { listAdspendAttribution } from "@/lib/ad-spend";
@@ -146,7 +145,7 @@ export default async function MediaBuyerPage() {
         >
           ← zum Dashboard
         </Link>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
           Media Buyer
         </h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">
@@ -154,8 +153,6 @@ export default async function MediaBuyerPage() {
           {Math.max(0, top.daysTotal - top.daysElapsed)} Tage übrig
         </p>
       </header>
-
-      <AdminTabs />
 
       <div className="mt-6">
         <MediaBuyerLayout

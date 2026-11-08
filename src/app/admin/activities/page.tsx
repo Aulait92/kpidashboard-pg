@@ -12,7 +12,6 @@ import {
   Phone,
   Video,
 } from "lucide-react";
-import { AdminTabs } from "@/components/admin-tabs";
 import { ActivitiesFilterBar } from "@/components/activities-filter-bar";
 import { ActivityDoneToggle } from "@/components/activity-done-toggle";
 import { ActivityDateEdit } from "@/components/activity-date-edit";
@@ -164,7 +163,7 @@ export default async function AdminActivitiesPage({
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          <h1 className="text-2xl font-semibold tracking-tight">
             Aktivitäten
           </h1>
           <p className="mt-1 text-sm text-[color:var(--muted)]">
@@ -174,8 +173,6 @@ export default async function AdminActivitiesPage({
         </div>
         <ActivitiesFilterBar currentKind={kindFilter} currentQuery={queryRaw} />
       </header>
-
-      <AdminTabs />
 
       {ueberfaellig.length > 0 ? (
         <section className="mt-6">
@@ -249,7 +246,7 @@ function Section({
 
 function Empty({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-[color:var(--border)] bg-white p-6 text-sm text-[color:var(--muted)] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
+    <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-6 text-sm text-[color:var(--muted)] shadow-[var(--shadow-md)]">
       {children}
     </div>
   );
@@ -257,7 +254,7 @@ function Empty({ children }: { children: React.ReactNode }) {
 
 function List({ children }: { children: React.ReactNode }) {
   return (
-    <ol className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
+    <ol className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
       <div className="divide-y divide-[color:var(--border)]">{children}</div>
     </ol>
   );

@@ -269,7 +269,7 @@ export function MonthlyGoalsCard({
   const anyGoalSet = progress.rows.some((r) => r.goal != null);
 
   return (
-    <section className="rounded-2xl border border-[color:var(--border)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
+    <section className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-md)]">
       <header className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--brand)]">

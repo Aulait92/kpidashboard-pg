@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { CheckCircle2, Clock, Phone, Video } from "lucide-react";
+import { buttonClass } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AddToCalendar } from "@/components/add-to-calendar";
@@ -108,10 +110,10 @@ export default async function BookingPage({ params, searchParams }: Props) {
     if (appt) {
       return (
         <Shell>
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-2xl">
-            ✓
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200">
+            <CheckCircle2 className="h-6 w-6" />
           </div>
-          <h1 className="mt-4 text-xl font-bold">
+          <h1 className="mt-4 text-xl font-semibold tracking-tight">
             {sp.dup ? "Du hast bereits einen Termin" : "Dein Termin ist gebucht!"}
           </h1>
           <div className="mt-4 rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] p-4">
@@ -135,11 +137,8 @@ export default async function BookingPage({ params, searchParams }: Props) {
               : "Wir rufen dich zur vereinbarten Zeit an. Die Bestätigung bekommst du per WhatsApp und E-Mail."}
           </p>
           {appt.mode === "video" && appt.meetUrl ? (
-            <a
-              href={appt.meetUrl}
-              className="mt-4 block rounded-xl bg-[color:var(--brand)] py-3 text-center text-sm font-semibold text-white"
-            >
-              Link zum Videocall
+            <a href={appt.meetUrl} className={buttonClass("primary", "md", "mt-4 w-full")}>
+              <Video className="h-4 w-4" /> Link zum Videocall
             </a>
           ) : null}
           {appt.manageToken ? <AddToCalendar token={appt.manageToken} /> : null}
@@ -177,12 +176,31 @@ export default async function BookingPage({ params, searchParams }: Props) {
 
   return (
     <Shell>
-      <h1 className="text-xl font-bold leading-tight">
-        Kostenloses Beratungsgespräch mit {advisor}
-      </h1>
-      <p className="mt-1 text-sm text-[color:var(--muted)]">
-        30 Minuten · telefonisch oder per Videocall
-      </p>
+      <div className="flex items-center gap-3">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-sm font-bold text-[color:var(--brand-dark)]">
+          {advisor
+            .replace(/^Allianz\s+/i, "")
+            .split(/\s+/)
+            .map((w) => w[0])
+            .slice(0, 2)
+            .join("")
+            .toUpperCase()}
+        </span>
+        <div className="min-w-0">
+          <div className="text-xs text-[color:var(--muted)]">Kostenloses Beratungsgespräch</div>
+          <h1 className="text-lg font-semibold leading-tight tracking-tight">
+            {advisor.replace(/^Allianz\s+/i, "")}
+          </h1>
+        </div>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2 text-xs text-[color:var(--muted)]">
+        <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--surface-sunken)] px-2.5 py-1">
+          <Clock className="h-3.5 w-3.5" /> 30 Minuten
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--surface-sunken)] px-2.5 py-1">
+          <Phone className="h-3.5 w-3.5" /> Telefon oder <Video className="h-3.5 w-3.5" /> Video
+        </span>
+      </div>
 
       {error ? (
         <div className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800 ring-1 ring-red-200">
@@ -198,7 +216,9 @@ export default async function BookingPage({ params, searchParams }: Props) {
       ) : (
         <form action={action} className="mt-6 space-y-6">
           <section>
-            <h2 className="mb-2 text-sm font-semibold">1. Wähle eine Uhrzeit</h2>
+            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+              <StepNo n={1} /> Wähle eine Uhrzeit
+            </h2>
             <div className="space-y-4">
               {days.map((day) => (
                 <div key={day.label}>
@@ -209,7 +229,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
                     {day.slots.map((s) => (
                       <label
                         key={s.start}
-                        className="cursor-pointer rounded-lg border border-[color:var(--border)] bg-white py-2.5 text-center text-sm font-semibold transition has-checked:border-[color:var(--brand)] has-checked:bg-[color:var(--brand)] has-checked:text-white"
+                        className="cursor-pointer rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white py-2.5 text-center text-sm font-semibold tabular-nums transition hover:border-[color:var(--brand)] has-checked:border-[color:var(--brand)] has-checked:bg-[color:var(--brand)] has-checked:text-white"
                       >
                         <input
                           type="radio"
@@ -228,16 +248,19 @@ export default async function BookingPage({ params, searchParams }: Props) {
           </section>
 
           <section>
-            <h2 className="mb-2 text-sm font-semibold">2. Wie möchtest du sprechen?</h2>
+            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+              <StepNo n={2} /> Wie möchtest du sprechen?
+            </h2>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { v: "phone", label: "Telefon" },
-                { v: "video", label: "Videocall" },
+                { v: "phone", label: "Telefon", Icon: Phone },
+                { v: "video", label: "Videocall", Icon: Video },
               ].map((o, i) => (
                 <label
                   key={o.v}
-                  className="cursor-pointer rounded-lg border border-[color:var(--border)] bg-white py-3 text-center text-sm font-semibold transition has-checked:border-[color:var(--brand)] has-checked:bg-[color:var(--brand-soft)]"
+                  className="flex cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white py-3 text-sm font-semibold transition hover:border-[color:var(--brand)] has-checked:border-[color:var(--brand)] has-checked:bg-[color:var(--brand-soft)] has-checked:text-[color:var(--brand-dark)]"
                 >
+                  <o.Icon className="h-4 w-4" />
                   <input
                     type="radio"
                     name="mode"
@@ -252,7 +275,9 @@ export default async function BookingPage({ params, searchParams }: Props) {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold">3. Deine Kontaktdaten</h2>
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <StepNo n={3} /> Deine Kontaktdaten
+            </h2>
             <Field name="name" label="Vor- und Nachname" autoComplete="name" defaultValue={prefill?.name} />
             <Field
               name="email"
@@ -301,7 +326,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
 
           <SubmitButton
             pendingLabel="Wird gebucht …"
-            className="w-full rounded-xl bg-[color:var(--brand)] py-3.5 text-base font-semibold text-white hover:bg-[color:var(--brand-dark)]"
+            className={buttonClass("primary", "md", "h-12 w-full text-base")}
           >
             Termin verbindlich buchen
           </SubmitButton>
@@ -314,7 +339,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6 sm:py-10">
-      <div className="rounded-2xl border border-[color:var(--border)] bg-white p-5 shadow-[0_8px_24px_-12px_rgba(37,99,235,0.18)] sm:p-7">
+      <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-md)] sm:p-7">
         {children}
       </div>
     </main>
@@ -345,8 +370,16 @@ function Field({
         required
         autoComplete={autoComplete}
         defaultValue={defaultValue}
-        className="w-full rounded-lg border border-[color:var(--border)] px-3 py-2.5 text-base focus:border-[color:var(--brand)] focus:outline-none"
+        className="w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2.5 text-base transition focus:border-[color:var(--brand)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]/15"
       />
     </label>
+  );
+}
+
+function StepNo({ n }: { n: number }) {
+  return (
+    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--foreground)] text-[11px] font-bold text-white">
+      {n}
+    </span>
   );
 }

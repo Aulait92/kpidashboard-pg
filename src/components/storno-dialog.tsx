@@ -60,7 +60,7 @@ export function StornoDialog({
         // Klick auf den Backdrop (außerhalb der Inhalts-Box) schließt.
         if (e.target === dialogRef.current) onClose();
       }}
-      className="m-auto w-full max-w-md rounded-2xl border border-[color:var(--border)] bg-white p-0 shadow-[0_20px_50px_-20px_rgba(15,23,42,0.4)] backdrop:bg-slate-900/40"
+      className="m-auto w-full max-w-md rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-0 shadow-[0_20px_50px_-20px_rgba(15,23,42,0.4)] backdrop:bg-slate-900/40"
     >
       <form action={formAction} className="flex flex-col">
         <input type="hidden" name="leadId" value={leadId} />

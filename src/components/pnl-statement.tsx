@@ -221,7 +221,7 @@ function MarginRow({
 
 export function PnLStatement({ pnl }: { pnl: PnL }) {
   return (
-    <div className="rounded-2xl border border-[color:var(--border)] bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)] sm:p-5">
+    <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-3 shadow-[var(--shadow-md)] sm:p-5">
       <header className="mb-2 flex flex-wrap items-baseline justify-between gap-3 px-1 sm:px-0">
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--brand)]">

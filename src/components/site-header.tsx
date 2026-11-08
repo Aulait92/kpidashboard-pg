@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { TrendingUp } from "lucide-react";
+import { LogOut, TrendingUp } from "lucide-react";
 import { headers } from "next/headers";
 import { getCurrentSession } from "@/lib/auth";
-import { NavToggle } from "@/components/nav-toggle";
+import { AdminNav } from "@/components/admin-tabs";
+import { logoutAction } from "@/app/login/actions";
 
 export async function SiteHeader() {
   // Öffentliche Lead-Seiten (Buchung) ohne Dashboard-Header.
@@ -14,24 +15,33 @@ export async function SiteHeader() {
   const isAdmin = session?.role === "ADMIN";
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[color:var(--border)] bg-white/80 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[color:var(--brand)] text-white shadow-sm">
-            <TrendingUp className="h-4 w-4" strokeWidth={2.5} />
+    <header className="sticky top-0 z-30 border-b border-[color:var(--border)] bg-white/90 backdrop-blur">
+      <div className="mx-auto flex h-14 w-full max-w-7xl items-center gap-6 px-4 sm:px-6 lg:px-8">
+        <Link href="/" className="flex shrink-0 items-center gap-2">
+          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[color:var(--brand)] text-white">
+            <TrendingUp className="h-3.5 w-3.5" strokeWidth={2.75} />
           </span>
-          <span className="hidden text-base font-semibold tracking-tight sm:inline">
-            <span className="text-[color:var(--foreground)]">performance</span>
-            <span className="text-[color:var(--brand)]">growth</span>
+          <span className="hidden text-[15px] font-semibold tracking-tight sm:inline">
+            performance<span className="text-[color:var(--brand)]">growth</span>
           </span>
         </Link>
         {isAdmin ? (
-          <NavToggle />
-        ) : (
-          <span className="text-sm font-medium text-[color:var(--muted)]">
-            KPI-Dashboard
-          </span>
-        )}
+          <>
+            <div className="h-full min-w-0 flex-1">
+              <AdminNav />
+            </div>
+            <form action={logoutAction} className="shrink-0">
+              <button
+                type="submit"
+                title="Abmelden"
+                className="inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-sm)] px-2 text-sm text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)] hover:text-[color:var(--foreground)]"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden lg:inline">Abmelden</span>
+              </button>
+            </form>
+          </>
+        ) : null}
       </div>
     </header>
   );

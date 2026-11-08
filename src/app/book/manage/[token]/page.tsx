@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { CheckCircle2, Video } from "lucide-react";
+import { buttonClass } from "@/components/ui";
 import { AddToCalendar } from "@/components/add-to-calendar";
 import { SubmitButton } from "@/components/submit-button";
 import { suggestSlots, type Slot } from "@/lib/calendar";
@@ -80,7 +82,7 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
         {slug ? (
           <Link
             href={`/book/${slug}`}
-            className="mt-5 block rounded-xl bg-[color:var(--brand)] py-3 text-center text-sm font-semibold text-white"
+            className={buttonClass("primary", "md", "mt-5 w-full")}
           >
             Neuen Termin wählen
           </Link>
@@ -116,17 +118,17 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
   return (
     <Shell>
       {sp.done === "rescheduled" ? (
-        <div className="mb-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-emerald-200">
-          ✓ Dein Termin wurde verschoben. Trag die neue Zeit am besten gleich in deinen Kalender ein.
+        <div className="mb-4 flex items-start gap-2 rounded-[var(--radius-sm)] bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-emerald-200">
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> Dein Termin wurde verschoben. Trag die neue Zeit am besten gleich in deinen Kalender ein.
         </div>
       ) : null}
-      <h1 className="text-xl font-bold leading-tight">Dein Termin mit {advisor}</h1>
+      <h1 className="text-xl font-semibold leading-tight tracking-tight">Dein Termin mit {advisor}</h1>
       <div className="mt-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] p-4">
         <div className="text-sm text-[color:var(--muted)]">{kind}</div>
         <div className="mt-1 text-lg font-semibold">{when}</div>
         {appt.mode === "video" && appt.meetUrl ? (
-          <a href={appt.meetUrl} className="mt-1 block text-sm text-[color:var(--brand)] underline">
-            Link zum Videocall
+          <a href={appt.meetUrl} className={buttonClass("primary", "sm", "mt-3")}>
+            <Video className="h-3.5 w-3.5" /> Zum Videocall
           </a>
         ) : null}
       </div>
@@ -153,7 +155,7 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
                   {daySlots.map((s) => (
                     <label
                       key={s.start}
-                      className="cursor-pointer rounded-lg border border-[color:var(--border)] bg-white py-2.5 text-center text-sm font-semibold transition has-checked:border-[color:var(--brand)] has-checked:bg-[color:var(--brand)] has-checked:text-white"
+                      className="cursor-pointer rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white py-2.5 text-center text-sm font-semibold tabular-nums transition hover:border-[color:var(--brand)] has-checked:border-[color:var(--brand)] has-checked:bg-[color:var(--brand)] has-checked:text-white"
                     >
                       <input type="radio" name="start" value={s.start} required className="sr-only" />
                       {fmt(new Date(s.start), { hour: "2-digit", minute: "2-digit" })}
@@ -164,7 +166,7 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
             ))}
             <SubmitButton
               pendingLabel="Wird verschoben …"
-              className="w-full rounded-xl bg-[color:var(--brand)] py-3.5 text-base font-semibold text-white hover:bg-[color:var(--brand-dark)]"
+              className={buttonClass("primary", "md", "h-12 w-full text-base")}
             >
               Auf diese Zeit verschieben
             </SubmitButton>
@@ -181,7 +183,7 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
           </label>
           <SubmitButton
             pendingLabel="Wird abgesagt …"
-            className="w-full rounded-xl border border-rose-300 py-3 text-sm font-semibold text-rose-700 hover:bg-rose-50"
+            className={buttonClass("danger", "md", "w-full")}
           >
             Termin absagen
           </SubmitButton>
@@ -194,7 +196,7 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6 sm:py-10">
-      <div className="rounded-2xl border border-[color:var(--border)] bg-white p-5 shadow-[0_8px_24px_-12px_rgba(37,99,235,0.18)] sm:p-7">
+      <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-md)] sm:p-7">
         {children}
       </div>
     </main>

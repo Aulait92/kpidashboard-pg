@@ -183,7 +183,7 @@ export function MediaBuyerLayout({
   if (pools.length === 0) {
     return (
       <div className="flex flex-col gap-4">
-        <div className="rounded-2xl border border-[color:var(--border)] bg-white p-8 text-center text-sm text-[color:var(--muted)]">
+        <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-8 text-center text-sm text-[color:var(--muted)]">
           Noch keine Pools. Sobald in Airtable Lead-Ziele (und für Kinderwunsch
           Regionen) gepflegt und synchronisiert sind, erscheinen sie hier.
         </div>
@@ -233,7 +233,7 @@ export function MediaBuyerLayout({
 
       <div className="mt-4 hidden gap-4 lg:grid lg:grid-cols-[340px_1fr]">
         {/* Desktop: zweispaltig. */}
-        <aside className="flex flex-col gap-4 rounded-2xl border border-[color:var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <aside className="flex flex-col gap-4 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
           <Filters filter={filter} onChange={setFilter} />
           <PoolList
             pools={filtered}
@@ -298,7 +298,7 @@ function AttributionCard({
   );
 
   return (
-    <section className="rounded-2xl border border-[color:var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-5">
+    <section className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-5">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -430,7 +430,7 @@ function HeroCard({ top }: { top: TopStats }) {
         ? "text-amber-600"
         : "text-rose-600";
   return (
-    <div className="rounded-2xl border border-[color:var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-5">
+    <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-5">
       <div className="grid grid-cols-[auto_1fr] items-center gap-4 sm:gap-6">
         <BigGauge percent={ratio * 100} label="Ist/Ziel" />
         <div>
@@ -585,7 +585,7 @@ function PoolList({
           "flex flex-col",
           compactCard
             ? "gap-2"
-            : "divide-y divide-[color:var(--border)] overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
+            : "divide-y divide-[color:var(--border)] overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
         )}
       >
         {pools.map((p) => {
@@ -708,7 +708,7 @@ function PoolDetail({
       </div>
 
       {/* Stats-Karte */}
-      <div className="rounded-2xl border border-[color:var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-5">
+      <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-5">
         <div className="grid grid-cols-[auto_1fr] items-center gap-4 sm:gap-6">
           <ArcGauge percent={pct} hex={status.hex} label="erreicht" />
           <div className="grid grid-cols-[auto_1fr_auto] items-baseline gap-x-3 gap-y-2 text-sm">
@@ -801,7 +801,7 @@ function PoolDetail({
 
       {/* Empfehlung */}
       {empfehlung ? (
-        <div className="rounded-2xl border border-[color:var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <span className="grid h-8 w-8 place-items-center rounded-full border border-[color:var(--border)] text-zinc-500">
@@ -838,7 +838,7 @@ function PoolDetail({
           Verlauf dieses Pools
         </h3>
         {poolHistory.length === 0 ? (
-          <p className="rounded-2xl border border-[color:var(--border)] bg-white p-4 text-xs text-[color:var(--muted)]">
+          <p className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 text-xs text-[color:var(--muted)]">
             Noch keine Entscheidungen für diesen Pool protokolliert.
           </p>
         ) : (
@@ -846,7 +846,7 @@ function PoolDetail({
             {poolHistory.map((h) => (
               <li
                 key={h.id}
-                className="rounded-2xl border border-[color:var(--border)] bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+                className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-mono text-xs text-[color:var(--muted)]">
@@ -983,7 +983,7 @@ function ChannelSplitCard({ pool }: { pool: PoolDetailRow }) {
   }
 
   return (
-    <div className="rounded-2xl border border-[color:var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
       <div className="flex items-center justify-between gap-2">
         <span className="text-lg font-bold">Performance pro Kanal</span>
         <span className="text-[11px] uppercase tracking-wider text-[color:var(--muted)]">
@@ -1087,7 +1087,7 @@ function PoolSettingsList({ pool }: { pool: PoolDetailRow }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
       {/* Autopilot-Zeile */}
       <div className="flex items-center gap-3 px-4 py-3">
         <span className="grid h-10 w-10 place-items-center rounded-xl bg-zinc-100 text-zinc-500">

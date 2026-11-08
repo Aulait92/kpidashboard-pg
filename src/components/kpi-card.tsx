@@ -99,27 +99,20 @@ export function KpiCard({
     neutral: "text-[color:var(--muted)]",
   }[tone];
 
-  const sparkTone =
-    sparkline?.tone ??
-    (delta?.pct == null
-      ? "neutral"
-      : (delta.lowerIsBetter ? delta.pct < 0 : delta.pct > 0)
-        ? "positive"
-        : delta.pct === 0
-          ? "neutral"
-          : "negative");
+  // Verlauf ruhig in Markenfarbe – die Bewertung steckt im Delta-Badge.
+  const sparkTone: "positive" | "negative" | "neutral" | "brand" = sparkline?.tone ?? "brand";
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.10)] transition hover:shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_30px_-12px_rgba(37,99,235,0.18)]">
+    <div className="group relative flex flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)]">
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 text-[11px] font-medium uppercase tracking-wide text-[color:var(--muted)]">
+        <div className="min-w-0 text-xs font-medium text-[color:var(--muted)]">
           {label}
         </div>
         {delta ? <DeltaBadge delta={delta} /> : null}
       </div>
       <div
         className={cn(
-          "mt-2 text-2xl font-bold tabular-nums tracking-tight sm:text-3xl",
+          "mt-2 text-2xl font-semibold tabular-nums tracking-tight sm:text-[28px]",
           valueColor,
         )}
       >
