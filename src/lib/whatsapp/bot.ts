@@ -17,7 +17,7 @@ import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
 const HISTORY_LIMIT = 20;
-const MAX_TOOL_ITERATIONS = 4;
+const MAX_TOOL_ITERATIONS = 6;
 
 const TOOLS: Anthropic.Tool[] = [
   {
@@ -45,20 +45,13 @@ const TOOLS: Anthropic.Tool[] = [
       "Liefert freie Termin-Vorschläge aus dem echten Kundenkalender (nächste Werktage). Erst nach erfolgter Qualifizierung nutzen, um dem Lead konkrete Zeiten anzubieten. Gib dem Lead die zurückgegebenen Zeiten in natürlicher Sprache (Datum + Uhrzeit) zur Auswahl.",
     input_schema: {
       type: "object",
-      properties: {
-        modus: {
-          type: "string",
-          enum: ["phone", "video"],
-          description: "Telefon oder Videocall.",
-        },
-      },
-      required: ["modus"],
+      properties: {},
     },
   },
   {
     name: "book_appointment",
     description:
-      "Bucht einen konkreten Termin im Kundenkalender. Nutze exakt einen 'start'-Wert (ISO-8601), den du zuvor von get_available_slots erhalten oder mit dem Lead eindeutig vereinbart hast. Bei Video wird automatisch ein Google-Meet-Link erstellt. Bestätige dem Lead danach Datum/Uhrzeit (und bei Video den Link).",
+      "Bucht einen konkreten Termin im Kundenkalender. Nur aufrufen, wenn der Lead die Uhrzeit gewählt UND ausdrücklich gesagt hat, ob er Telefon oder Video möchte — sonst vorher fragen, niemals raten. Nutze exakt einen 'start'-Wert (ISO-8601), den du zuvor von get_available_slots erhalten oder mit dem Lead eindeutig vereinbart hast. Bei Video wird automatisch ein Google-Meet-Link erstellt. Bestätige dem Lead danach Datum/Uhrzeit (und bei Video den Link).",
     input_schema: {
       type: "object",
       properties: {
@@ -124,7 +117,9 @@ function buildSystemPrompt(
       "- Qualifiziere anhand des Produkt-Funnels und halte Infos mit record_qualification fest.",
       "- Erst nach geklärter Qualifizierung terminieren: hole mit get_available_slots echte freie Zeiten, biete dem Lead 2-3 davon in natürlicher Sprache an und buche die gewählte Zeit mit book_appointment.",
       "- Erfinde niemals Termine oder Uhrzeiten — nutze ausschließlich die von get_available_slots gelieferten Zeiten. Nur wenn der Kalender nicht verbunden ist, nutze propose_appointment als Fallback.",
+      "- Frage vor der Buchung immer, ob der Lead lieber telefonieren oder einen Videocall machen möchte. Wähle den Modus nie selbst.",
       "- Bei Video-Terminen bekommt der Lead automatisch einen Google-Meet-Link; gib ihn nach der Buchung weiter.",
+      "- Bestätige jede Buchung dem Lead mit Datum und Uhrzeit.",
       "- Erfinde keine Fakten; bei Unklarheit biete eine Klärung durch das Team an.",
     ].join("\n"),
   ]
@@ -145,6 +140,40 @@ function formatSlotDE(iso: string): string {
     minute: "2-digit",
     timeZone: BERLIN_TZ,
   }).format(new Date(iso));
+}
+
+/** Öffentliche App-URL (für Links im Kalendereintrag). */
+function appUrl(): string | null {
+  if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, "");
+  if (process.env.RAILWAY_PUBLIC_DOMAIN)
+    return `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
+  return null;
+}
+
+/** Beschreibung des Kalendereintrags: alles, was der Berater vorab braucht. */
+function buildEventDescription(d: {
+  name: string;
+  phone: string;
+  product: string | null;
+  mode: "phone" | "video";
+  summary: string | null;
+  conversationId: string;
+}): string {
+  const base = appUrl();
+  return [
+    `Lead: ${d.name}`,
+    `Telefon/WhatsApp: ${d.phone}`,
+    d.product ? `Produkt: ${d.product}` : "",
+    `Art: ${d.mode === "video" ? "Videocall (Meet-Link im Termin)" : "Telefonat — bitte den Lead anrufen"}`,
+    "",
+    "Qualifizierung:",
+    d.summary?.trim() || "—",
+    "",
+    base ? `Chatverlauf: ${base}/admin/whatsapp?c=${d.conversationId}` : "",
+    "Gebucht durch den KI-Assistenten via WhatsApp.",
+  ]
+    .filter((l, i, arr) => l !== "" || arr[i - 1] !== "")
+    .join("\n");
 }
 
 type HistoryMessage = { direction: string; body: string | null };
@@ -188,6 +217,7 @@ export async function runBotTurn(conversationId: string): Promise<void> {
       id: true,
       customerId: true,
       contactPhone: true,
+      contactName: true,
       botActive: true,
       leadId: true,
       qualified: true,
@@ -311,14 +341,28 @@ export async function runBotTurn(conversationId: string): Promise<void> {
         } else {
           try {
             const product = lead?.source ?? null;
+            // Aktuellen Stand frisch laden — record_qualification kann im
+            // selben Turn gerade erst geschrieben haben.
+            const fresh = await prisma.conversation.findUnique({
+              where: { id: conversation.id },
+              select: { qualificationSummary: true },
+            });
+            const name = conversation.contactName ?? conversation.contactPhone;
             const res = await bookAppointment({
               customerId: conversation.customerId,
               leadId: conversation.leadId,
               conversationId: conversation.id,
               start,
               mode,
-              summary: `Beratungstermin${product ? ` – ${product}` : ""}`,
-              description: `WhatsApp-Lead ${conversation.contactPhone}`,
+              summary: `${mode === "video" ? "Video" : "Telefon"}-Beratung: ${name}${product ? ` (${product})` : ""}`,
+              description: buildEventDescription({
+                name,
+                phone: conversation.contactPhone,
+                product,
+                mode,
+                summary: fresh?.qualificationSummary ?? null,
+                conversationId: conversation.id,
+              }),
             });
             await persistInternal(conversation.id, "appointment_booked", {
               ...(tu.input as Record<string, unknown>),
@@ -347,6 +391,25 @@ export async function runBotTurn(conversationId: string): Promise<void> {
       });
     }
     messages.push({ role: "user", content: toolResults });
+  }
+
+  // Iterationslimit erreicht, aber noch keine Antwort (z. B. nach mehreren
+  // Tool-Aufrufen): einmal ohne Tool-Nutzung nachfragen, damit der Lead
+  // garantiert eine Antwort/Bestätigung bekommt.
+  if (!finalText) {
+    const resp = await client.messages.create({
+      model: MODEL,
+      max_tokens: 1024,
+      system,
+      tools: TOOLS,
+      tool_choice: { type: "none" },
+      messages,
+    });
+    finalText = resp.content
+      .filter((b): b is Anthropic.TextBlock => b.type === "text")
+      .map((b) => b.text)
+      .join("\n")
+      .trim();
   }
 
   if (finalText) {
