@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { PhoneField } from "@/components/phone-field";
 import { SubmitButton } from "@/components/submit-button";
 import { suggestSlots, type Slot } from "@/lib/calendar";
 import { bookPublicAction } from "./actions";
@@ -223,13 +224,8 @@ export default async function BookingPage({ params, searchParams }: Props) {
           <section className="space-y-3">
             <h2 className="text-sm font-semibold">3. Deine Kontaktdaten</h2>
             <Field name="name" label="Vor- und Nachname" autoComplete="name" />
-            <Field
-              name="phone"
-              label="Handynummer (für WhatsApp/Anruf)"
-              type="tel"
-              autoComplete="tel"
-            />
             <Field name="email" label="E-Mail (für die Einladung)" type="email" autoComplete="email" />
+            <PhoneField name="phone" label="Handynummer (für WhatsApp/Anruf)" />
             {/* Bot-Falle: für Menschen unsichtbar. Bewusst ein Name, den
                 Autofill/Passwortmanager nicht zuordnen (früher „website" →
                 wurde von Passwortmanagern befüllt und blockierte echte Leads). */}
