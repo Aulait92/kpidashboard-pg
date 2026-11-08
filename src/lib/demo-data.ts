@@ -2,7 +2,7 @@
 // ~45 Beispiel-Leads mit WhatsApp-Verläufen, Terminen, Abschlüssen, Retainer
 // und Werbebudget — damit Dashboard, Pipeline und Chats „wie im Betrieb"
 // aussehen. Alles ist markiert und lässt sich vollständig wieder entfernen:
-//   Lead.formData.demo = true · Konversation contactPhone beginnt mit DEMO_PREFIX
+//   Lead.bezugAirtableId = "demo" · Konversation contactPhone beginnt mit DEMO_PREFIX
 //   · CustomerAdSpend.accountId = "demo" · Customer.metaAdAccountId = "demo".
 // Keine Airtable-ID (der Sync fasst die Leads nicht an), outreachAt gesetzt
 // (kein Erstanschreiben), reminderSentAt gesetzt (keine Erinnerungen),
@@ -13,6 +13,15 @@ import { prisma } from "@/lib/prisma";
 
 const DEMO_PREFIX = "4915100000";
 const DEMO_ACCOUNT = "demo";
+// Marker am Lead (bezugAirtableId wird nur für Storno-Gründe genutzt).
+// Ältere Demo-Stände trugen formData.demo = true — beim Entfernen mit erfasst.
+const demoLeadWhere = (customerId: string) => ({
+  customerId,
+  OR: [
+    { bezugAirtableId: DEMO_ACCOUNT },
+    { formData: { path: ["demo"], equals: true } },
+  ],
+});
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 
@@ -81,15 +90,13 @@ function atHour(d: Date, h: number, m = 0): Date {
 }
 
 export async function hasDemoData(customerId: string): Promise<boolean> {
-  const n = await prisma.lead.count({
-    where: { customerId, formData: { path: ["demo"], equals: true } },
-  });
+  const n = await prisma.lead.count({ where: demoLeadWhere(customerId) });
   return n > 0;
 }
 
 export async function removeDemoData(customerId: string): Promise<void> {
   const leads = await prisma.lead.findMany({
-    where: { customerId, formData: { path: ["demo"], equals: true } },
+    where: demoLeadWhere(customerId),
     select: { id: true },
   });
   const leadIds = leads.map((l) => l.id);
@@ -195,11 +202,12 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
             ? new Date(Math.min(createdAt.getTime() + 10 * DAY, now - 2 * HOUR))
             : null,
         closeValue,
-        formData: {
-          demo: true,
-          "Lebenssituation (Privatschutz)": LEBENSSITUATION[Math.floor(rand() * LEBENSSITUATION.length)],
-          "Versicherungsinteresse (Privatschutz)": INTERESSE[Math.floor(rand() * INTERESSE.length)],
-        },
+        bezugAirtableId: DEMO_ACCOUNT,
+        // Gleiches Format wie aus dem Meta-Leadformular (extractFormAnswers).
+        formData: [
+          { label: "Lebenssituation", value: LEBENSSITUATION[Math.floor(rand() * LEBENSSITUATION.length)] },
+          { label: "Versicherungsinteresse", value: INTERESSE[Math.floor(rand() * INTERESSE.length)] },
+        ],
       },
       select: { id: true },
     });
