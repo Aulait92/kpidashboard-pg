@@ -253,7 +253,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                           <>
                             {" · "}
                             <a href={a.meetUrl} target="_blank" rel="noreferrer" className="underline">
-                              Meet-Link
+                              Video-Link
                             </a>
                           </>
                         ) : null}
@@ -291,7 +291,13 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                   }
                   const outbound = m.direction === "outbound";
                   const who =
-                    m.sentBy === "agent" ? "Du" : m.sentBy === "bot" || m.sentBy === "system" ? "Assistent" : "";
+                    m.sentBy === "agent"
+                      ? "Du"
+                      : m.sentBy === "app"
+                        ? "Du (WhatsApp-App)"
+                        : m.sentBy === "bot" || m.sentBy === "system"
+                          ? "Assistent"
+                          : "";
                   return (
                     <div key={m.id} className={`flex ${outbound ? "justify-end" : "justify-start"}`}>
                       <div className="max-w-[80%]">

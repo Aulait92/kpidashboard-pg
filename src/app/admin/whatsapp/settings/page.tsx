@@ -48,7 +48,12 @@ export default async function WhatsAppSettingsPage() {
       name: true,
       whatsAppAccount: { select: { status: true } },
       agentConfig: {
-        select: { active: true, outreachEnabled: true, outreachDelayMin: true },
+        select: {
+          active: true,
+          outreachEnabled: true,
+          outreachDelayMin: true,
+          videoRoomUrl: true,
+        },
       },
       messageTemplates: {
         orderBy: [{ purpose: "asc" }, { updatedAt: "desc" }],
@@ -126,6 +131,16 @@ export default async function WhatsAppSettingsPage() {
                     max={1440}
                     defaultValue={c.agentConfig?.outreachDelayMin ?? 10}
                     className={`${input} mt-1 w-24`}
+                  />
+                </label>
+                <label className="min-w-[260px] flex-1 text-xs text-[color:var(--muted)]">
+                  Fester Video-Link (z. B. Webex-Raum) – leer = Google Meet / Teams
+                  <input
+                    name="videoRoomUrl"
+                    type="url"
+                    placeholder="https://allianz.webex.com/meet/…"
+                    defaultValue={c.agentConfig?.videoRoomUrl ?? ""}
+                    className={`${input} mt-1`}
                   />
                 </label>
                 <SubmitButton

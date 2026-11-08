@@ -21,10 +21,13 @@ export async function saveOutreachSettingsAction(formData: FormData): Promise<vo
     24 * 60,
     Math.max(0, Number.parseInt(String(formData.get("outreachDelayMin") ?? "10"), 10) || 10),
   );
+  const rawRoom = String(formData.get("videoRoomUrl") ?? "").trim();
+  // Nur https-Links zulassen (landen in Einladungen + WhatsApp).
+  const videoRoomUrl = /^https:\/\/\S+$/i.test(rawRoom) ? rawRoom : null;
   await prisma.agentConfig.upsert({
     where: { customerId },
-    create: { customerId, outreachEnabled: enabled, outreachDelayMin: delay },
-    update: { outreachEnabled: enabled, outreachDelayMin: delay },
+    create: { customerId, outreachEnabled: enabled, outreachDelayMin: delay, videoRoomUrl },
+    update: { outreachEnabled: enabled, outreachDelayMin: delay, videoRoomUrl },
   });
   revalidatePath("/admin/whatsapp/settings");
 }

@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { buildEventDescription, eventSummary } from "@/lib/whatsapp/event-text";
-import { bookAppointment, SlotBusyError } from "@/lib/whatsapp/google-calendar";
+import { bookAppointment, SlotBusyError } from "@/lib/calendar";
 import { linkLeadToConversation } from "@/lib/whatsapp/lead-link";
 import { sendBookingConfirmation } from "@/lib/whatsapp/reminders";
 import { EMAIL_RE, normalizePhone } from "@/lib/whatsapp/phone";
@@ -23,7 +23,7 @@ export async function bookPublicAction(
   // Honeypot: für Menschen unsichtbares Feld — Bots füllen es aus.
   if (String(formData.get("website") ?? "").trim()) fail("invalid");
 
-  const conn = await prisma.googleCalendarConnection.findUnique({
+  const conn = await prisma.calendarConnection.findUnique({
     where: { bookingSlug: slug },
     select: { customerId: true, status: true },
   });

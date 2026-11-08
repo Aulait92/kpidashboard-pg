@@ -33,7 +33,7 @@ export function buildEventDescription(d: {
     `Telefon/WhatsApp: ${d.phone}`,
     d.email ? `E-Mail: ${d.email}` : "",
     d.product ? `Produkt: ${d.product}` : "",
-    `Art: ${d.mode === "video" ? "Videocall (Meet-Link im Termin)" : "Telefonat — bitte den Lead anrufen"}`,
+    `Art: ${d.mode === "video" ? "Videocall (Video-Link im Termin)" : "Telefonat — bitte den Lead anrufen"}`,
     "",
     "Qualifizierung:",
     d.summary?.trim() || "—",

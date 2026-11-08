@@ -8,7 +8,8 @@ import { appUrl } from "@/lib/whatsapp/event-text";
 import {
   getOrCreateBookingSlug,
   hasRequiredScopes,
-} from "@/lib/whatsapp/google-calendar";
+  PROVIDER_LABELS,
+} from "@/lib/calendar";
 import { sendReplyAction, toggleBotAction } from "./actions";
 import { SubmitButton } from "@/components/submit-button";
 
@@ -149,15 +150,17 @@ export default async function AdminWhatsAppPage({
             status: true,
           },
         }),
-        prisma.googleCalendarConnection.findUnique({
+        prisma.calendarConnection.findUnique({
           where: { customerId: active.customerId },
-          select: { status: true, scope: true },
+          select: { status: true, scope: true, provider: true, accountEmail: true },
         }),
       ])
     : [[], null];
   const calConnected = googleConn?.status === "connected";
   // Verbunden, aber mit alter Berechtigung (ohne Verfügbarkeitsabfrage).
-  const calNeedsReconnect = calConnected && !hasRequiredScopes(googleConn?.scope);
+  const calNeedsReconnect = calConnected && !!googleConn && !hasRequiredScopes(googleConn);
+  const calLabel = PROVIDER_LABELS[googleConn?.provider ?? "google"] ?? "Kalender";
+  const connectPath = googleConn?.provider === "microsoft" ? "/api/microsoft/connect" : "/api/google/connect";
   // Öffentlicher Buchungslink (z. B. Custom-Scheduling-Link im Meta-Leadformular).
   const bookingUrl =
     active && calConnected
@@ -193,10 +196,12 @@ export default async function AdminWhatsAppPage({
           }`}
         >
           {sp.gcal === "connected"
-            ? "✓ Google-Kalender erfolgreich verbunden."
+            ? "✓ Kalender erfolgreich verbunden."
             : sp.gcal === "denied"
-              ? "Google-Verbindung abgebrochen."
-              : "Google-Verbindung fehlgeschlagen — bitte erneut versuchen."}
+              ? "Kalender-Verbindung abgebrochen."
+              : sp.gcal === "consent"
+                ? "Microsoft verlangt eine Administrator-Freigabe: Die IT des Kunden muss die App im Firmen-Tenant einmalig genehmigen."
+                : "Kalender-Verbindung fehlgeschlagen — bitte erneut versuchen."}
         </div>
       ) : null}
 
@@ -494,7 +499,7 @@ export default async function AdminWhatsAppPage({
                           rel="noreferrer"
                           className="mt-1 block truncate text-[11px] font-medium text-[color:var(--brand)] hover:underline"
                         >
-                          Meet-Link öffnen
+                          Video-Link öffnen
                         </a>
                       ) : null}
                     </li>
@@ -517,7 +522,7 @@ export default async function AdminWhatsAppPage({
 
               {calNeedsReconnect ? (
                 <a
-                  href={`/api/google/connect?customerId=${active.customerId}`}
+                  href={`${connectPath}?customerId=${active.customerId}`}
                   className="block rounded-lg bg-amber-50 px-2.5 py-2 text-[11px] font-semibold text-amber-800 ring-1 ring-amber-200 hover:bg-amber-100"
                 >
                   ⚠ Kalender neu verbinden — Verfügbarkeitsprüfung fehlt
@@ -525,15 +530,25 @@ export default async function AdminWhatsAppPage({
                 </a>
               ) : calConnected ? (
                 <p className="text-[10px] text-emerald-700">
-                  ✓ Google-Kalender verbunden — der Bot bucht automatisch.
+                  ✓ {calLabel} verbunden
+                  {googleConn?.accountEmail ? ` (${googleConn.accountEmail})` : ""} — der
+                  Bot bucht automatisch.
                 </p>
               ) : (
-                <a
-                  href={`/api/google/connect?customerId=${active.customerId}`}
-                  className="block rounded-lg border border-[color:var(--brand)] py-1.5 text-center text-xs font-semibold text-[color:var(--brand)] hover:bg-[color:var(--brand-soft)]/40"
-                >
-                  Google-Kalender verbinden
-                </a>
+                <div className="grid gap-1.5">
+                  <a
+                    href={`/api/google/connect?customerId=${active.customerId}`}
+                    className="block rounded-lg border border-[color:var(--brand)] py-1.5 text-center text-xs font-semibold text-[color:var(--brand)] hover:bg-[color:var(--brand-soft)]/40"
+                  >
+                    Google-Kalender verbinden
+                  </a>
+                  <a
+                    href={`/api/microsoft/connect?customerId=${active.customerId}`}
+                    className="block rounded-lg border border-[color:var(--brand)] py-1.5 text-center text-xs font-semibold text-[color:var(--brand)] hover:bg-[color:var(--brand-soft)]/40"
+                  >
+                    Outlook / Microsoft 365 verbinden
+                  </a>
+                </div>
               )}
 
               {bookingUrl ? (

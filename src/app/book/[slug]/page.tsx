@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { SubmitButton } from "@/components/submit-button";
-import { suggestSlots, type Slot } from "@/lib/whatsapp/google-calendar";
+import { suggestSlots, type Slot } from "@/lib/calendar";
 import { bookPublicAction } from "./actions";
 
 // Öffentliche Buchungsseite je Kunde — z. B. als „Custom"-Scheduling-Link im
@@ -55,7 +55,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const sp = await searchParams;
 
-  const conn = await prisma.googleCalendarConnection.findUnique({
+  const conn = await prisma.calendarConnection.findUnique({
     where: { bookingSlug: slug },
     select: {
       customerId: true,

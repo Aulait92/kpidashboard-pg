@@ -114,7 +114,7 @@ model Customer {
 
   // ─── WhatsApp-CRM (Phase 0) ─────────────────────────────────────────
   whatsAppAccount    WhatsAppAccount?
-  calendarConnection GoogleCalendarConnection?
+  calendarConnection CalendarConnection?
   agentConfig        AgentConfig?
   conversations      Conversation[]
   appointments       Appointment[]
@@ -524,9 +524,13 @@ model WhatsAppAccount {
 }
 
 // Google-Kalender-Anbindung je Kunde für die Terminbuchung (Telefon/Video).
-model GoogleCalendarConnection {
+// Kalender-Anbindung je Kunde: Google oder Microsoft (Outlook/Exchange).
+// Tabellenname bleibt aus Kompatibilität „GoogleCalendarConnection".
+model CalendarConnection {
   id              String    @id @default(cuid())
   customerId      String    @unique
+  provider        String    @default("google") // google | microsoft
+  accountEmail    String?   // verbundenes Kalender-Konto (Anzeige)
   calendarId      String    @default("primary")
   accessTokenEnc  String?  // app-seitig verschlüsselt
   refreshTokenEnc String?  // app-seitig verschlüsselt
@@ -540,6 +544,8 @@ model GoogleCalendarConnection {
   updatedAt       DateTime  @updatedAt
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("GoogleCalendarConnection")
 }
 
 // Konfigurierbarer KI-Agent je Kunde (Aufgabe/Regeln, Wissen, Persönlichkeit).
@@ -555,6 +561,9 @@ model AgentConfig {
   // aktivieren, wenn Einwilligung im Leadformular + freigegebene Vorlage da sind.
   outreachEnabled  Boolean @default(false)
   outreachDelayMin Int     @default(10)
+  // Fester Video-Link für alle Video-Termine (z. B. persönlicher Webex-Raum).
+  // Leer = Google Meet bzw. Microsoft Teams wird pro Termin erzeugt.
+  videoRoomUrl     String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

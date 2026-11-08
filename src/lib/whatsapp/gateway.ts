@@ -18,11 +18,22 @@ type InboundMessage = {
   text?: { body?: string };
 };
 type StatusUpdate = { id?: string; status?: string };
+// Coexistence: Nachrichten, die der Kunde selbst in seiner WhatsApp-Business-
+// App (Handy) an einen Kontakt schickt, kommen als „Echo" (Webhook-Feld
+// smb_message_echoes) — from = Geschäftsnummer, to = Kontakt.
+type MessageEcho = {
+  from?: string;
+  to?: string;
+  id?: string;
+  type?: string;
+  text?: { body?: string };
+};
 type ChangeValue = {
   metadata?: { phone_number_id?: string };
   contacts?: Array<{ profile?: { name?: string } }>;
   messages?: InboundMessage[];
   statuses?: StatusUpdate[];
+  message_echoes?: MessageEcho[];
 };
 type WebhookPayload = {
   entry?: Array<{ changes?: Array<{ value?: ChangeValue }> }>;
@@ -77,6 +88,17 @@ export async function handleInboundPayload(
             continue;
           }
           await persistInbound(account.customerId, account.id, m, contactName);
+          processed++;
+        } catch (e) {
+          errors.push(e instanceof Error ? e.message : String(e));
+        }
+      }
+
+      // Coexistence-Echos: vom Kunden selbst in der Business-App gesendet.
+      for (const echo of value.message_echoes ?? []) {
+        try {
+          if (!account) continue;
+          await persistEcho(account.customerId, account.id, echo);
           processed++;
         } catch (e) {
           errors.push(e instanceof Error ? e.message : String(e));
@@ -167,6 +189,57 @@ async function persistInbound(
     } catch (e) {
       console.error("[whatsapp bot]", e);
     }
+  }
+}
+
+/**
+ * Echo einer Nachricht, die der Kunde selbst in seiner WhatsApp-Business-App
+ * geschrieben hat: als ausgehende Nachricht („Du (App)") speichern und den
+ * Assistenten für diesen Chat pausieren — der Mensch hat übernommen.
+ */
+async function persistEcho(
+  customerId: string,
+  whatsAppAccountId: string,
+  e: MessageEcho,
+): Promise<void> {
+  const to = e.to;
+  if (!to) return;
+  // Idempotenz — und von uns per API gesendete Nachrichten (schon mit
+  // waMessageId gespeichert) nicht doppelt anlegen/als Übernahme werten.
+  if (e.id) {
+    const existing = await prisma.message.findUnique({
+      where: { waMessageId: e.id },
+      select: { id: true },
+    });
+    if (existing) return;
+  }
+  const now = new Date();
+  const conversation = await prisma.conversation.upsert({
+    where: { customerId_contactPhone: { customerId, contactPhone: to } },
+    create: {
+      customerId,
+      whatsAppAccountId,
+      contactPhone: to,
+      botActive: false,
+      status: "open",
+      lastMessageAt: now,
+    },
+    update: { botActive: false, lastMessageAt: now },
+  });
+  const type = e.type ?? "text";
+  await prisma.message.create({
+    data: {
+      conversationId: conversation.id,
+      direction: "outbound",
+      kind: type,
+      body: type === "text" ? (e.text?.body ?? null) : `[${type}]`,
+      waMessageId: e.id ?? null,
+      status: "sent",
+      sentBy: "app",
+    },
+  });
+  if (!conversation.leadId) {
+    await linkLeadToConversation(conversation.id).catch(() => {});
   }
 }
 

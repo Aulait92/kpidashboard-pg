@@ -13,7 +13,7 @@ import {
   SlotBusyError,
   suggestSlots,
   type Slot,
-} from "@/lib/whatsapp/google-calendar";
+} from "@/lib/calendar";
 import type { FormAnswer } from "@/lib/lead-fields";
 import { buildEventDescription, eventSummary } from "@/lib/whatsapp/event-text";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
@@ -55,7 +55,7 @@ const TOOLS: Anthropic.Tool[] = [
   {
     name: "book_appointment",
     description:
-      "Bucht einen konkreten Termin im Kundenkalender. Nur aufrufen, wenn der Lead die Uhrzeit gewählt UND ausdrücklich gesagt hat, ob er Telefon oder Video möchte — sonst vorher fragen, niemals raten. Nutze exakt einen 'start'-Wert (ISO-8601), den du zuvor von get_available_slots erhalten oder mit dem Lead eindeutig vereinbart hast. Bei Video wird automatisch ein Google-Meet-Link erstellt. Bestätige dem Lead danach Datum/Uhrzeit (und bei Video den Link).",
+      "Bucht einen konkreten Termin im Kundenkalender. Nur aufrufen, wenn der Lead die Uhrzeit gewählt UND ausdrücklich gesagt hat, ob er Telefon oder Video möchte — sonst vorher fragen, niemals raten. Nutze exakt einen 'start'-Wert (ISO-8601), den du zuvor von get_available_slots erhalten oder mit dem Lead eindeutig vereinbart hast. Bei Video wird automatisch ein Video-Link (Google Meet bzw. Microsoft Teams) erstellt. Bestätige dem Lead danach Datum/Uhrzeit (und bei Video den Link).",
     input_schema: {
       type: "object",
       properties: {
@@ -116,7 +116,7 @@ function buildSystemPrompt(
 ): string {
   const booked = state.upcoming
     ? [
-        `BEREITS GEBUCHTER TERMIN: ${formatSlotDE(state.upcoming.startsAt.toISOString())} Uhr (${state.upcoming.mode === "video" ? "Videocall" : "Telefonat"})${state.upcoming.meetUrl ? `, Meet-Link: ${state.upcoming.meetUrl}` : ""}.`,
+        `BEREITS GEBUCHTER TERMIN: ${formatSlotDE(state.upcoming.startsAt.toISOString())} Uhr (${state.upcoming.mode === "video" ? "Videocall" : "Telefonat"})${state.upcoming.meetUrl ? `, Video-Link: ${state.upcoming.meetUrl}` : ""}.`,
         "Dieser Lead hat schon einen Termin. Qualifiziere NICHT und biete KEINE neuen Termine an (kein get_available_slots/book_appointment).",
         "Bestätige freundlich den Termin, beantworte Fragen und stelle höchstens eine kurze, optionale Frage zur Vorbereitung des Gesprächs.",
         "Möchte der Lead verschieben oder absagen, sage ihm, dass sich das Team dazu kurz bei ihm meldet.",
@@ -165,7 +165,7 @@ function buildSystemPrompt(
       "- Erfinde niemals Termine oder Uhrzeiten — nutze ausschließlich die von get_available_slots gelieferten Zeiten. Nur wenn der Kalender nicht verbunden ist, nutze propose_appointment als Fallback.",
       "- Frage vor der Buchung immer, ob der Lead lieber telefonieren oder einen Videocall machen möchte. Wähle den Modus nie selbst.",
       "- Nachdem der Lead eine Uhrzeit gewählt hat und seine E-Mail noch NICHT bekannt ist, frage (als eigene Frage) nach seiner E-Mail-Adresse, damit er die Kalender-Einladung bekommt. Möchte er keine angeben, buche ohne.",
-      "- Bei Video-Terminen bekommt der Lead automatisch einen Google-Meet-Link; gib ihn nach der Buchung weiter.",
+      "- Bei Video-Terminen bekommt der Lead automatisch einen Video-Link (Google Meet bzw. Teams); gib ihn nach der Buchung weiter.",
       "- Bestätige jede Buchung dem Lead mit Datum und Uhrzeit.",
       "- Erfinde keine Fakten; bei Unklarheit biete eine Klärung durch das Team an.",
     ].join("\n"),
@@ -447,11 +447,11 @@ export async function runBotTurn(conversationId: string): Promise<void> {
             content =
               `Termin gebucht für ${formatSlotDE(res.start)}` +
               (mode === "video" && res.meetUrl
-                ? `. Meet-Link: ${res.meetUrl}`
+                ? `. Video-Link: ${res.meetUrl}`
                 : "") +
               (email ? `. Kalender-Einladung per E-Mail an ${email} verschickt` : "") +
               ". Bestätige dem Lead Datum/Uhrzeit" +
-              (mode === "video" ? " und sende den Meet-Link." : ".");
+              (mode === "video" ? " und sende den Video-Link." : ".");
           } catch (err) {
             if (err instanceof SlotBusyError) {
               content =
