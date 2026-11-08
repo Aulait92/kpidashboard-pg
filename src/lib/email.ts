@@ -76,3 +76,61 @@ export async function sendPasswordResetEmail(opts: {
     };
   }
 }
+
+/** Einladung für einen neu angelegten Kunden-Login (Passwort selbst festlegen). */
+export async function sendBuyerInviteEmail(opts: {
+  to: string;
+  customerName: string;
+  setPasswordUrl: string;
+}): Promise<SendResult> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from =
+    process.env.RESEND_FROM ?? "KPI Dashboard <onboarding@resend.dev>";
+  if (!apiKey) {
+    console.warn(
+      `[email] RESEND_API_KEY fehlt — Einladungs-URL für ${opts.to}: ${opts.setPasswordUrl}`,
+    );
+    return { ok: false, error: "Email-Service nicht konfiguriert." };
+  }
+  const loginUrl = `${getAppUrl()}/login`;
+  const resend = new Resend(apiKey);
+  try {
+    const { error } = await resend.emails.send({
+      from,
+      to: opts.to,
+      subject: "Dein Zugang zum Kunden-CRM · performancegrowth",
+      text: [
+        "Hallo,",
+        "",
+        `für dich (${opts.customerName}) wurde ein Zugang zum Kunden-CRM von performancegrowth angelegt.`,
+        "Lege über diesen Link dein Passwort fest:",
+        opts.setPasswordUrl,
+        "",
+        "Der Link ist 7 Tage gültig. Danach kannst du dich jederzeit hier anmelden:",
+        loginUrl,
+        "",
+        `Deine Login-E-Mail: ${opts.to}`,
+      ].join("\n"),
+      html: `
+        <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#0b1220">
+          <h1 style="margin:0 0 16px;font-size:18px;font-weight:700">Willkommen im Kunden-CRM</h1>
+          <p style="margin:0 0 16px;font-size:14px;line-height:1.5">Für dich (<strong>${opts.customerName}</strong>) wurde ein Zugang angelegt. Hier siehst du deine Leads, Termine und wen du zurückrufen solltest.</p>
+          <p style="margin:24px 0">
+            <a href="${opts.setPasswordUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">Passwort festlegen</a>
+          </p>
+          <p style="margin:0 0 8px;font-size:12px;color:#6b7a96">Login-E-Mail: ${opts.to}</p>
+          <p style="margin:0;font-size:12px;color:#6b7a96">Der Link ist <strong>7 Tage</strong> gültig. Danach: <a href="${loginUrl}" style="color:#2563eb">${loginUrl}</a> → „Passwort vergessen".</p>
+        </div>
+      `,
+    });
+    if (error) {
+      return { ok: false, error: error.message ?? "Resend hat abgelehnt." };
+    }
+    return { ok: true };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Send failed",
+    };
+  }
+}
