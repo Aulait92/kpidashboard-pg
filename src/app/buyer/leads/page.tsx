@@ -22,7 +22,6 @@ import { prisma } from "@/lib/prisma";
 import { displayProduct } from "@/lib/products";
 import {
   getCallbackLeads,
-  hasWhatsAppOutreach,
   type CallbackLead,
 } from "@/lib/whatsapp/outreach";
 
@@ -150,7 +149,9 @@ async function LeadsBody({
 
   // WhatsApp-Assistent (nur Kunden, bei denen er aktiv ist): gebuchte Termine
   // und Rückrufliste. Andere Kunden sehen die Tabelle unverändert.
-  const whatsapp = await hasWhatsAppOutreach(customerId);
+  // Rückrufliste für alle WhatsApp-Kunden (auch ohne automatisches
+  // Erstanschreiben: Antworten ohne Termin, Absagen).
+  const whatsapp = await hasWhatsAppInbox(customerId);
   const callbacks = whatsapp ? await getCallbackLeads(customerId) : [];
   const callbackIds = new Set(callbacks.map((c) => c.id));
   const appointments = whatsapp
