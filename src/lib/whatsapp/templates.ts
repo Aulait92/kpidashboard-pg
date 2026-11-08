@@ -14,18 +14,20 @@ import { decryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
 import { sendTemplate, sendText } from "@/lib/whatsapp/dialog360";
 
-export type NoticePurpose = "outreach" | "booking_confirmation" | "reminder";
+export type NoticePurpose = "outreach" | "booking_confirmation" | "reminder" | "followup";
 
 export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   outreach: "Erstanschreiben",
   booking_confirmation: "Buchungsbestätigung",
   reminder: "Termin-Erinnerung",
+  followup: "Nachfassen (Chat > 24 h still)",
 };
 
 export const PURPOSE_PARAMS: Record<NoticePurpose, string[]> = {
   outreach: ["Vorname"],
   booking_confirmation: ["Vorname", "Datum/Uhrzeit", "Art", "Link/Hinweis"],
   reminder: ["Vorname", "Datum/Uhrzeit", "Art", "Link/Hinweis"],
+  followup: ["Vorname"],
 };
 
 export class NoTemplateError extends Error {

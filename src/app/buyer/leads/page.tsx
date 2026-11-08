@@ -11,6 +11,7 @@ import {
 import { BuyerTabs } from "@/components/buyer-tabs";
 import { TodayPanel } from "@/components/today-panel";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
+import { attentionCount } from "@/lib/whatsapp/attention";
 import { LiveUpdated } from "@/components/live-updated";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { logoutAction } from "@/app/login/actions";
@@ -100,7 +101,10 @@ export default async function BuyerLeadsPage({
           </div>
         </header>
 
-        <BuyerTabs showChats={await hasWhatsAppInbox(session.customerId)} />
+        <BuyerTabs
+          showChats={await hasWhatsAppInbox(session.customerId)}
+          chatBadge={await attentionCount(session.customerId)}
+        />
 
         <Suspense
           fallback={

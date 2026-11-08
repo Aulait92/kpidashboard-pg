@@ -29,7 +29,10 @@ const CHATS_TAB = {
 };
 
 /** showChats: nur für Kunden mit WhatsApp-Assistent (sonst unverändert). */
-export function BuyerTabs({ showChats = false }: { showChats?: boolean } = {}) {
+export function BuyerTabs({
+  showChats = false,
+  chatBadge = 0,
+}: { showChats?: boolean; /** Anzahl Chats „Braucht dich". */ chatBadge?: number } = {}) {
   const pathname = usePathname() ?? "/buyer";
   const tabs = showChats ? [...TABS, CHATS_TAB] : TABS;
   return (
@@ -49,6 +52,11 @@ export function BuyerTabs({ showChats = false }: { showChats?: boolean } = {}) {
                 )}
               >
                 {tab.label}
+                {tab.href === CHATS_TAB.href && chatBadge > 0 ? (
+                  <span className="ml-1.5 rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    {chatBadge}
+                  </span>
+                ) : null}
               </Link>
             </li>
           );

@@ -35,6 +35,8 @@ const SUGGESTED: Record<NoticePurpose, string> = {
     "Hallo {{1}}, dein Termin ist bestätigt: {{2}} ({{3}}). {{4}} Bis dann!",
   reminder:
     "Hallo {{1}}, kurze Erinnerung an deinen Termin: {{2}} ({{3}}). {{4}} Bis dann!",
+  followup:
+    "Hallo {{1}}, hier ist nochmal der digitale Assistent von [Berater]. Passt es dir diese Woche noch für ein kurzes Gespräch? Antworte einfach hier, dann schlage ich dir Zeiten vor.",
 };
 
 const input =

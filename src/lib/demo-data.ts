@@ -183,8 +183,10 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
   const ordered = [...older, ...PLAN.filter((s) => recentFirst.includes(s))];
   const total = ordered.length;
 
+  let handoverDone = false;
   for (let i = 0; i < total; i++) {
     const scenario = ordered[i];
+    let attention: string | null = null;
     const isRecent = recentFirst.includes(scenario);
     const ageDays = isRecent ? 0.3 + (total - 1 - i) * 0.35 : 58 - i * (54 / older.length);
     const createdAt = (() => {
@@ -304,7 +306,20 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
         { dir: "inbound", by: null, body: sitA },
       );
       const askMode = `Alles klar! Am besten schaut ${advisorFirst} das kurz persönlich mit dir an, dauert etwa 15 Minuten. Passt dir eher ein Telefonat oder ein kurzer Videocall?`;
-      if (scenario === "new_replied") {
+      if (scenario === "new_replied" && !handoverDone) {
+        // Ein Chat mit Übergabe an den Berater („Braucht dich").
+        handoverDone = true;
+        attention = `Fragt nach dem Monatsbeitrag für ${interest}`;
+        msgs.push(
+          { dir: "outbound", by: "bot", body: askMode },
+          { dir: "inbound", by: null, body: "Was kostet das denn ungefähr im Monat? Will erst wissen, ob sich das lohnt" },
+          {
+            dir: "outbound",
+            by: "bot",
+            body: `Gute Frage! Der Beitrag hängt von ein paar Details ab – das rechnet ${advisorFirst} dir am besten genau aus. Ich gebe ihm Bescheid, er meldet sich persönlich bei dir.`,
+          },
+        );
+      } else if (scenario === "new_replied") {
         msgs.push({ dir: "outbound", by: "bot", body: askMode });
       } else if (scenario === "no_interest") {
         msgs.push(
@@ -385,6 +400,9 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
             (hasAppt ? ` Bevorzugt ${mode === "phone" ? "Telefon" : "Videocall"}.` : "")
           : null,
         status: scenario === "no_interest" ? "done" : "open",
+        needsAttention: attention != null,
+        attentionReason: attention,
+        attentionAt: attention ? new Date(now - 30 * 60 * 1000) : null,
         windowExpiresAt: lastInbound ? new Date(lastInbound.at.getTime() + DAY) : null,
         lastMessageAt: last.at,
         createdAt: outreachAt,

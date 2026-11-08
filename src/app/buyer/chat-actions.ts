@@ -71,7 +71,7 @@ export async function sendReplyBuyerAction(formData: FormData): Promise<void> {
     });
     await prisma.conversation.update({
       where: { id: conv.id },
-      data: { botActive: false },
+      data: { botActive: false, needsAttention: false, attentionReason: null, attentionAt: null },
     });
   } catch (err) {
     console.error("[buyer chat reply]", err);
@@ -95,4 +95,52 @@ export async function cancelAppointmentBuyerAction(formData: FormData): Promise<
   }
   revalidatePath("/buyer/chats");
   redirect(chatUrl(conversationId));
+}
+
+/** „Braucht dich" als erledigt markieren (z. B. nach einem Anruf). */
+export async function markChatDoneBuyerAction(formData: FormData): Promise<void> {
+  const conversationId = String(formData.get("conversationId") ?? "");
+  const session = await requireBuyer();
+  if (!session) redirect(chatUrl(conversationId, "preview"));
+  await prisma.conversation.updateMany({
+    where: { id: conversationId, customerId: session.customerId },
+    data: { needsAttention: false, attentionReason: null, attentionAt: null },
+  });
+  revalidatePath("/buyer/chats");
+  revalidatePath("/buyer");
+  redirect(chatUrl(conversationId));
+}
+
+/**
+ * Nachfassen, wenn das 24-h-Fenster zu ist: freigegebene Vorlage „followup"
+ * senden. Antwortet der Lead, ist der Chat wieder offen.
+ */
+export async function followupBuyerAction(formData: FormData): Promise<void> {
+  const conversationId = String(formData.get("conversationId") ?? "");
+  const session = await requireBuyer();
+  if (!session) redirect(chatUrl(conversationId, "preview"));
+  const conv = await prisma.conversation.findFirst({
+    where: { id: conversationId, customerId: session.customerId },
+    select: { id: true, contactPhone: true, contactName: true, leadId: true },
+  });
+  if (!conv) redirect("/buyer/chats");
+  const { firstNameOf, NoTemplateError, sendWhatsAppNotice } = await import("@/lib/whatsapp/templates");
+  const params = [firstNameOf(conv.contactName)];
+  let err: string | undefined;
+  try {
+    await sendWhatsAppNotice({
+      customerId: session.customerId,
+      to: conv.contactPhone,
+      purpose: "followup",
+      params,
+      text: `Hallo ${params[0]}, passt es dir diese Woche noch für ein kurzes Gespräch? Antworte einfach hier.`,
+      leadId: conv.leadId,
+      contactName: conv.contactName,
+    });
+  } catch (e) {
+    console.error("[buyer followup]", e);
+    err = e instanceof NoTemplateError ? "template" : "send";
+  }
+  revalidatePath("/buyer/chats");
+  redirect(chatUrl(conv.id, err));
 }

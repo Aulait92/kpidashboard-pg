@@ -6,6 +6,7 @@ import { BuyerFilterBar } from "@/components/buyer-filter-bar";
 import { BuyerTabs } from "@/components/buyer-tabs";
 import { TodayPanel } from "@/components/today-panel";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
+import { attentionCount } from "@/lib/whatsapp/attention";
 import { FunnelHero } from "@/components/funnel-hero";
 import { KpiCard, type Delta } from "@/components/kpi-card";
 import { LiveUpdated } from "@/components/live-updated";
@@ -106,7 +107,10 @@ export default async function BuyerPage({
           </div>
         </header>
 
-        <BuyerTabs showChats={await hasWhatsAppInbox(session.customerId)} />
+        <BuyerTabs
+          showChats={await hasWhatsAppInbox(session.customerId)}
+          chatBadge={await attentionCount(session.customerId)}
+        />
 
         <Suspense
           fallback={

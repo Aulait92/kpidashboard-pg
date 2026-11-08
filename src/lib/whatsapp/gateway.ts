@@ -207,6 +207,12 @@ async function persistInbound(
     await recordLeadProgress(linkedLead.leadId, "replied");
   }
 
+  // Übernommener Chat (Assistent pausiert): Berater muss antworten.
+  if (!conversation.botActive) {
+    const { flagAttention } = await import("@/lib/whatsapp/attention");
+    await flagAttention(conversation.id, body ? `Neue Nachricht: „${body.slice(0, 100)}"` : "Neue Nachricht");
+  }
+
   // KI-Bot anstoßen, wenn aktiv. Dynamischer Import bricht den Zyklus
   // gateway <-> bot; Fehler dürfen die Ingestion nicht scheitern lassen.
   if (conversation.botActive) {

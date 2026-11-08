@@ -26,6 +26,7 @@ import {
 } from "@/lib/whatsapp/event-text";
 import { sendLeadEmail } from "@/lib/calendar/lead-email";
 import { recordLeadProgress } from "@/lib/lead-progress";
+import { sendToBuyersOfCustomer } from "@/lib/push";
 import { loadConnection, type Busy, type CreatedEvent, type NewEvent } from "@/lib/calendar/tokens";
 
 export type { CalendarProvider } from "@/lib/calendar/tokens";
@@ -235,6 +236,15 @@ export async function bookAppointment(opts: {
       manageToken,
     },
   });
+  // Push an den Kunden: neuer Termin (nicht bei Verschiebung).
+  if (opts.notifyLead !== "rescheduled") {
+    await sendToBuyersOfCustomer(opts.customerId, {
+      title: `📅 Neuer Termin: ${opts.leadName ?? "Lead"}`,
+      body: `${new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }).format(start)} Uhr · ${opts.mode === "video" ? "Videocall" : "Telefonat"}`,
+      tag: `appt:${appt.id}`,
+      url: "/buyer",
+    }).catch((e) => console.error("[appt push]", e));
+  }
   // CRM mitführen: Termin ⇒ In Beratung, Erstkontakt setzen (DB + Airtable).
   if (opts.notifyLead !== "rescheduled") {
     await recordLeadProgress(opts.leadId, "booked");
@@ -337,6 +347,14 @@ export async function cancelAppointment(
   });
   // CRM: Lead zählt nicht mehr als Termin (außer es ist noch einer gebucht).
   await recordLeadProgress(appt.leadId, "cancelled");
+  if (by === "lead") {
+    await sendToBuyersOfCustomer(customerId, {
+      title: "❌ Termin abgesagt",
+      body: "Ein Lead hat seinen Termin abgesagt – er steht jetzt in deiner Rückrufliste.",
+      tag: `appt-cancel:${appt.id}`,
+      url: "/buyer/leads",
+    }).catch((e) => console.error("[appt push]", e));
+  }
   if (notifyLead) {
     await sendLeadEmail(appt.id, "cancelled").catch((e) => console.error("[lead email]", e));
   }

@@ -6,6 +6,7 @@
 // Default-Modell: claude-opus-5-5 (per ANTHROPIC_MODEL überschreibbar — bei
 // hohem Volumen ist claude-sonnet-5-5 / claude-haiku-5-5 die günstigere Wahl).
 
+import { flagAttention } from "@/lib/whatsapp/attention";
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/prisma";
 import {
@@ -105,6 +106,21 @@ const TOOLS: Anthropic.Tool[] = [
         },
       },
       required: ["start"],
+    },
+  },
+  {
+    name: "handover_to_advisor",
+    description:
+      "An den Berater übergeben: nutzen, wenn der Lead ausdrücklich den Berater bzw. einen Menschen sprechen will, konkrete Preis-/Tarif-/Vertragsfragen stellt, die du nicht sicher beantworten kannst, sich beschwert oder etwas Ungewöhnliches anfragt. Der Berater wird benachrichtigt.",
+    input_schema: {
+      type: "object",
+      properties: {
+        grund: {
+          type: "string",
+          description: "Kurz, worum es geht (für den Berater), z. B. „Fragt nach Beitrag für Familien-Haftpflicht\".",
+        },
+      },
+      required: ["grund"],
     },
   },
   {
@@ -210,7 +226,7 @@ function buildSystemPrompt(
       "- Nachdem der Lead eine Uhrzeit gewählt hat und seine E-Mail noch NICHT bekannt ist, frage (als eigene Frage) nach seiner E-Mail-Adresse, damit er die Terminbestätigung mit Kalendereintrag per E-Mail bekommt. Möchte er keine angeben, buche ohne.",
       "- Bei Video-Terminen bekommt der Lead automatisch einen Video-Link (Google Meet bzw. Teams); gib ihn nach der Buchung weiter.",
       "- Bestätige jede Buchung dem Lead mit Datum und Uhrzeit.",
-      "- Erfinde keine Fakten; bei Unklarheit biete eine Klärung durch das Team an.",
+      "- Erfinde keine Fakten. Will der Lead den Berater sprechen, hat er konkrete Preis-/Tarif-/Vertragsfragen oder etwas, das du nicht sicher beantworten kannst: nutze handover_to_advisor (wenn sinnvoll, biete zusätzlich einen Termin an).",
     ].join("\n"),
   ]
     .filter(Boolean)
@@ -569,6 +585,15 @@ export async function runBotTurn(conversationId: string): Promise<void> {
             }
           }
         }
+      } else if (tu.name === "handover_to_advisor") {
+        const grund =
+          typeof (tu.input as { grund?: unknown }).grund === "string"
+            ? ((tu.input as { grund: string }).grund)
+            : "Lead möchte mit dir sprechen";
+        await persistInternal(conversation.id, "handover", tu.input);
+        await flagAttention(conversation.id, grund);
+        content =
+          "Übergabe erfolgt, der Berater ist benachrichtigt. Sag dem Lead kurz und freundlich, dass sich der Berater persönlich bei ihm meldet. Mach keine Zusagen zu Preisen oder Tarifen.";
       } else if (tu.name === "propose_appointment") {
         await persistInternal(conversation.id, "appointment_proposal", tu.input);
       }

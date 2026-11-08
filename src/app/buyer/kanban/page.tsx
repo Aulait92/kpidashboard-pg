@@ -5,6 +5,7 @@ import { AutoRefresh } from "@/components/auto-refresh";
 import { BuyerFilterBar } from "@/components/buyer-filter-bar";
 import { BuyerTabs } from "@/components/buyer-tabs";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
+import { attentionCount } from "@/lib/whatsapp/attention";
 import {
   KanbanBoard,
   type KanbanLead,
@@ -90,7 +91,10 @@ export default async function BuyerKanbanPage({
           </div>
         </header>
 
-        <BuyerTabs showChats={await hasWhatsAppInbox(session.customerId)} />
+        <BuyerTabs
+          showChats={await hasWhatsAppInbox(session.customerId)}
+          chatBadge={await attentionCount(session.customerId)}
+        />
 
         <Suspense
           fallback={

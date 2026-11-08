@@ -10,6 +10,8 @@ import { displayProduct, statusLabel } from "@/lib/products";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import {
   cancelAppointmentBuyerAction,
+  followupBuyerAction,
+  markChatDoneBuyerAction,
   sendReplyBuyerAction,
   toggleBotBuyerAction,
 } from "../chat-actions";
@@ -19,13 +21,15 @@ import {
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Chats | performancegrowth" };
 
-type SearchParams = Promise<{ c?: string; err?: string }>;
+type SearchParams = Promise<{ c?: string; err?: string; f?: string; q?: string }>;
 
 const ERRORS: Record<string, string> = {
   window:
     "Der Lead hat seit über 24 Stunden nicht geschrieben – WhatsApp erlaubt dann keine freie Nachricht. Bitte anrufen.",
   send: "Nachricht konnte nicht gesendet werden. Bitte später erneut versuchen.",
   preview: "In der Vorschau sind Änderungen deaktiviert.",
+  template:
+    "Für „Nachfassen\" ist noch keine freigegebene WhatsApp-Vorlage hinterlegt (Einstellungen → Vorlagen).",
 };
 
 const TZ = "Europe/Berlin";
@@ -71,8 +75,32 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
   const activeId = sp.c ?? null;
   const error = sp.err ? (ERRORS[sp.err] ?? null) : null;
 
+  const filter = sp.f === "attention" ? "attention" : "all";
+  const q = (sp.q ?? "").trim();
+  const qDigits = q.replace(/\D/g, "");
+  // Links in der Liste behalten Filter + Suche.
+  const listQs = new URLSearchParams({
+    ...(filter === "attention" ? { f: "attention" } : {}),
+    ...(q ? { q } : {}),
+  }).toString();
+  const attentionTotal = await prisma.conversation.count({
+    where: { customerId: ctx.customerId, needsAttention: true },
+  });
+
   const conversations = await prisma.conversation.findMany({
-    where: { customerId: ctx.customerId },
+    where: {
+      customerId: ctx.customerId,
+      ...(filter === "attention" ? { needsAttention: true } : {}),
+      ...(q
+        ? {
+            OR: [
+              { contactName: { contains: q, mode: "insensitive" as const } },
+              { contactEmail: { contains: q, mode: "insensitive" as const } },
+              ...(qDigits.length >= 3 ? [{ contactPhone: { contains: qDigits } }] : []),
+            ],
+          }
+        : {}),
+    },
     orderBy: { lastMessageAt: "desc" },
     take: 150,
     select: {
@@ -81,6 +109,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
       contactPhone: true,
       botActive: true,
       qualified: true,
+      needsAttention: true,
       lastMessageAt: true,
       messages: {
         where: { direction: { in: ["inbound", "outbound"] } },
@@ -102,6 +131,8 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
           contactEmail: true,
           botActive: true,
           qualified: true,
+          needsAttention: true,
+          attentionReason: true,
           qualificationSummary: true,
           windowExpiresAt: true,
           lead: {
@@ -126,7 +157,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
           ],
         },
         orderBy: { startsAt: "asc" },
-        select: { id: true, startsAt: true, mode: true, meetUrl: true },
+        select: { id: true, startsAt: true, mode: true, meetUrl: true, manageToken: true },
       })
     : [];
   const formAnswers = parseFormAnswers(active?.lead?.formData);
@@ -182,6 +213,16 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                     Video-Link
                   </a>
                 ) : null}
+                {a.manageToken ? (
+                  <a
+                    href={`/book/manage/${a.manageToken}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-blue-700 underline"
+                  >
+                    Verschieben
+                  </a>
+                ) : null}
                 <form action={cancelAppointmentBuyerAction}>
                   <input type="hidden" name="appointmentId" value={a.id} />
                   <input type="hidden" name="conversationId" value={active.id} />
@@ -221,7 +262,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
         WhatsApp-Gespräche deines Assistenten mit deinen Leads. Du kannst
         jederzeit übernehmen und selbst antworten.
       </p>
-      <BuyerTabs showChats />
+      <BuyerTabs showChats chatBadge={attentionTotal} />
 
       {error ? (
         <div className="mt-4 rounded-lg bg-amber-50 px-4 py-2 text-sm text-amber-900 ring-1 ring-amber-200">
@@ -234,6 +275,31 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
         <aside
           className={`${active ? "hidden md:flex" : "flex"} w-full flex-none flex-col border-r border-[color:var(--border)] md:w-[300px]`}
         >
+          <div className="space-y-2 border-b border-[color:var(--border)] p-2">
+            <div className="flex gap-1 text-xs font-semibold">
+              <Link
+                href={`/buyer/chats${q ? `?q=${encodeURIComponent(q)}` : ""}`}
+                className={`flex-1 rounded-lg px-2 py-1.5 text-center ${filter === "all" ? "bg-[color:var(--brand-soft)] text-[color:var(--brand-dark)]" : "text-[color:var(--muted)]"}`}
+              >
+                Alle
+              </Link>
+              <Link
+                href={`/buyer/chats?f=attention${q ? `&q=${encodeURIComponent(q)}` : ""}`}
+                className={`flex-1 rounded-lg px-2 py-1.5 text-center ${filter === "attention" ? "bg-rose-100 text-rose-800" : "text-[color:var(--muted)]"}`}
+              >
+                Braucht dich{attentionTotal > 0 ? ` (${attentionTotal})` : ""}
+              </Link>
+            </div>
+            <form action="/buyer/chats" className="flex gap-1">
+              {filter === "attention" ? <input type="hidden" name="f" value="attention" /> : null}
+              <input
+                name="q"
+                defaultValue={q}
+                placeholder="Name, Nummer oder E-Mail suchen"
+                className="min-w-0 flex-1 rounded-lg border border-[color:var(--border)] px-2.5 py-1.5 text-xs focus:border-[color:var(--brand)] focus:outline-none"
+              />
+            </form>
+          </div>
           <div className="flex-1 overflow-y-auto p-2">
             {conversations.length === 0 ? (
               <p className="p-4 text-sm text-[color:var(--muted)]">
@@ -247,7 +313,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                 return (
                   <Link
                     key={c.id}
-                    href={`/buyer/chats?c=${c.id}`}
+                    href={`/buyer/chats?c=${c.id}${listQs ? `&${listQs}` : ""}`}
                     className={`mb-1 flex gap-3 rounded-xl p-3 ${
                       isActive
                         ? "bg-[color:var(--brand-soft)] ring-1 ring-[color:var(--brand)]/30"
@@ -274,6 +340,11 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                         >
                           {c.botActive ? "Assistent" : "Du"}
                         </span>
+                        {c.needsAttention ? (
+                          <span className="rounded-full bg-rose-600 px-1.5 py-0.5 text-[9px] font-semibold text-white">
+                            Braucht dich
+                          </span>
+                        ) : null}
                         {c.qualified ? (
                           <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[9px] font-semibold text-blue-700">
                             qualifiziert
@@ -326,6 +397,20 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                 </form>
               </div>
 
+              {active.needsAttention ? (
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-900">
+                  <span>
+                    <b>Braucht dich:</b> {active.attentionReason ?? "Bitte melde dich beim Lead."}
+                  </span>
+                  <form action={markChatDoneBuyerAction}>
+                    <input type="hidden" name="conversationId" value={active.id} />
+                    <SubmitButton pendingLabel="…" className="rounded-lg border border-rose-300 bg-white px-3 py-1 text-xs font-semibold text-rose-800">
+                      Erledigt
+                    </SubmitButton>
+                  </form>
+                </div>
+              ) : null}
+
               {/* Lead-Infos: unter xl als aufklappbarer Block, ab xl rechts */}
               <details className="border-b border-[color:var(--border)] bg-white xl:hidden">
                 <summary className="cursor-pointer px-4 py-2 text-xs font-semibold text-[color:var(--brand)]">
@@ -377,28 +462,42 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                 })}
               </div>
 
-              <form action={sendReplyBuyerAction} className="border-t border-[color:var(--border)] bg-white px-4 py-3">
-                <input type="hidden" name="conversationId" value={active.id} />
-                <textarea
-                  name="body"
-                  rows={2}
-                  disabled={!windowOpen}
-                  placeholder={
-                    windowOpen
-                      ? "Selbst antworten … (pausiert den Assistenten für diesen Chat)"
-                      : "Freie Antwort nicht möglich – letzte Nachricht des Leads ist über 24 h her. Bitte anrufen."
-                  }
-                  className="w-full resize-none rounded-lg border border-[color:var(--border)] px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none disabled:bg-zinc-50"
-                />
-                <div className="mt-2 flex justify-end">
+              {windowOpen ? (
+                <form action={sendReplyBuyerAction} className="border-t border-[color:var(--border)] bg-white px-4 py-3">
+                  <input type="hidden" name="conversationId" value={active.id} />
+                  <textarea
+                    name="body"
+                    rows={2}
+                    placeholder="Selbst antworten … (pausiert den Assistenten für diesen Chat)"
+                    className="w-full resize-none rounded-lg border border-[color:var(--border)] px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
+                  />
+                  <div className="mt-2 flex justify-end">
+                    <SubmitButton
+                      pendingLabel="Sendet …"
+                      className="rounded-lg bg-[color:var(--brand)] px-5 py-2 text-sm font-semibold text-white hover:bg-[color:var(--brand-dark)] disabled:opacity-50"
+                    >
+                      Senden
+                    </SubmitButton>
+                  </div>
+                </form>
+              ) : (
+                <form
+                  action={followupBuyerAction}
+                  className="flex flex-wrap items-center justify-between gap-2 border-t border-[color:var(--border)] bg-white px-4 py-3"
+                >
+                  <input type="hidden" name="conversationId" value={active.id} />
+                  <p className="text-xs text-[color:var(--muted)]">
+                    Letzte Nachricht des Leads ist über 24 h her – WhatsApp erlaubt nur eine
+                    freigegebene Vorlage. Anrufen oder nachfassen:
+                  </p>
                   <SubmitButton
                     pendingLabel="Sendet …"
-                    className="rounded-lg bg-[color:var(--brand)] px-5 py-2 text-sm font-semibold text-white hover:bg-[color:var(--brand-dark)] disabled:opacity-50"
+                    className="rounded-lg bg-[color:var(--brand)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--brand-dark)]"
                   >
-                    Senden
+                    Nachfassen senden
                   </SubmitButton>
-                </div>
-              </form>
+                </form>
+              )}
             </>
           )}
         </section>
