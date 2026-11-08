@@ -258,3 +258,13 @@ export function findPhaseIn(
   if (!status) return null;
   return phases.find((p) => (p.statuses as readonly string[]).includes(status)) ?? null;
 }
+
+/** Anzeige-Namen für WhatsApp-Kunden (Status-Wert bleibt unverändert). */
+export const WHATSAPP_STATUS_LABELS: Record<string, string> = {
+  "In Beratung": "Termin vereinbart",
+};
+
+export function statusLabel(status: string | null | undefined, whatsapp: boolean): string | null {
+  if (!status) return null;
+  return whatsapp ? (WHATSAPP_STATUS_LABELS[status] ?? status) : status;
+}

@@ -42,13 +42,26 @@ export function PhoneField({
   name,
   label,
   required = true,
+  defaultInternational,
 }: {
   name: string;
   label: string;
   required?: boolean;
+  /** Vorbelegung als internationale Ziffern, z. B. „491711234567". */
+  defaultInternational?: string;
 }) {
-  const [country, setCountry] = useState<Country>(COUNTRIES[0]);
-  const [value, setValue] = useState("");
+  const initial = (() => {
+    const digits = (defaultInternational ?? "").replace(/\D/g, "");
+    if (!digits) return { country: COUNTRIES[0], rest: "" };
+    const match = [...COUNTRIES]
+      .sort((a, b) => b.dial.length - a.dial.length)
+      .find((c) => digits.startsWith(c.dial));
+    return match
+      ? { country: match, rest: digits.slice(match.dial.length) }
+      : { country: COUNTRIES[0], rest: digits };
+  })();
+  const [country, setCountry] = useState<Country>(initial.country);
+  const [value, setValue] = useState(initial.rest);
   const international = useMemo(() => toInternational(value, country.dial), [value, country]);
 
   return (

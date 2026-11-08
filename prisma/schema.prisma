@@ -295,6 +295,8 @@ model Lead {
   // (sent | skipped_booked | skipped_contact | no_template | failed: …).
   outreachAt      DateTime?
   outreachStatus  String?
+  // Rückrufliste: „Nicht erreicht" geklickt → bis dahin ausgeblendet.
+  callbackSnoozedUntil DateTime?
   // rec-ID des Kunden-Produkt-Bezug-Records, an dem dieser Lead in Airtable
   // hängt. Wird beim Storno gebraucht, um die zugelassenen Stornogründe
   // (Linked-Records vom Bezug zur Stornogründe-Tabelle) nachzuschlagen.

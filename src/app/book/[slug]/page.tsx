@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AddToCalendar } from "@/components/add-to-calendar";
 import { PhoneField } from "@/components/phone-field";
@@ -51,7 +52,7 @@ function groupByDay(slots: Slot[]): { label: string; slots: Slot[] }[] {
 
 type Props = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ ok?: string; a?: string; dup?: string; err?: string }>;
+  searchParams: Promise<{ ok?: string; a?: string; dup?: string; err?: string; lead?: string }>;
 };
 
 export default async function BookingPage({ params, searchParams }: Props) {
@@ -66,6 +67,20 @@ export default async function BookingPage({ params, searchParams }: Props) {
       customer: { select: { name: true } },
     },
   });
+
+  // Berater bucht für einen Lead (Rückrufliste): Kontaktdaten vorbelegen —
+  // nur für den eingeloggten Kunden selbst, keine Daten in der URL.
+  let prefill: { name: string; email: string; phone: string } | null = null;
+  if (sp.lead && conn) {
+    const session = await getCurrentSession();
+    if (session?.role === "BUYER" && session.customerId === conn.customerId) {
+      const l = await prisma.lead.findFirst({
+        where: { id: sp.lead, customerId: conn.customerId },
+        select: { name: true, email: true, phone: true },
+      });
+      if (l) prefill = { name: l.name ?? "", email: l.email ?? "", phone: l.phone ?? "" };
+    }
+  }
 
   if (!conn || conn.status !== "connected") {
     return (
@@ -234,9 +249,19 @@ export default async function BookingPage({ params, searchParams }: Props) {
 
           <section className="space-y-3">
             <h2 className="text-sm font-semibold">3. Deine Kontaktdaten</h2>
-            <Field name="name" label="Vor- und Nachname" autoComplete="name" />
-            <Field name="email" label="E-Mail-Adresse" type="email" autoComplete="email" />
-            <PhoneField name="phone" label="Handynummer (für WhatsApp/Anruf)" />
+            <Field name="name" label="Vor- und Nachname" autoComplete="name" defaultValue={prefill?.name} />
+            <Field
+              name="email"
+              label="E-Mail-Adresse"
+              type="email"
+              autoComplete="email"
+              defaultValue={prefill?.email}
+            />
+            <PhoneField
+              name="phone"
+              label="Handynummer (für WhatsApp/Anruf)"
+              defaultInternational={prefill?.phone}
+            />
             {/* Bot-Falle: für Menschen unsichtbar. Bewusst ein Name, den
                 Autofill/Passwortmanager nicht zuordnen (früher „website" →
                 wurde von Passwortmanagern befüllt und blockierte echte Leads). */}
@@ -297,11 +322,13 @@ function Field({
   label,
   type = "text",
   autoComplete,
+  defaultValue,
 }: {
   name: string;
   label: string;
   type?: string;
   autoComplete?: string;
+  defaultValue?: string;
 }) {
   return (
     <label className="block">
@@ -313,6 +340,7 @@ function Field({
         type={type}
         required
         autoComplete={autoComplete}
+        defaultValue={defaultValue}
         className="w-full rounded-lg border border-[color:var(--border)] px-3 py-2.5 text-base focus:border-[color:var(--brand)] focus:outline-none"
       />
     </label>

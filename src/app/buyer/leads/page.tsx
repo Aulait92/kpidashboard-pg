@@ -13,13 +13,15 @@ import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { LiveUpdated } from "@/components/live-updated";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { logoutAction } from "@/app/login/actions";
-import { getStornogruendePerLead } from "@/app/buyer/actions";
+import { callbackOutcomeAction, getStornogruendePerLead } from "@/app/buyer/actions";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { parseRangeFromSearchParams } from "@/lib/date-ranges";
 import { formatDate } from "@/lib/format";
 import { loadRetainerConfig } from "@/lib/customer-spend";
+import { SubmitButton } from "@/components/submit-button";
+import { getOrCreateBookingSlug } from "@/lib/calendar";
 import { prisma } from "@/lib/prisma";
-import { displayProduct } from "@/lib/products";
+import { displayProduct, WHATSAPP_STATUS_LABELS } from "@/lib/products";
 import {
   getCallbackLeads,
   type CallbackLead,
@@ -153,6 +155,18 @@ async function LeadsBody({
   // Erstanschreiben: Antworten ohne Termin, Absagen).
   const whatsapp = await hasWhatsAppInbox(customerId);
   const callbacks = whatsapp ? await getCallbackLeads(customerId) : [];
+  // Buchungsseite für „Termin buchen" aus der Rückrufliste (relativer Link →
+  // gleiche Domain wie das Dashboard, damit die Vorbelegung greift).
+  const bookingSlug = whatsapp
+    ? (
+        await prisma.calendarConnection.findUnique({
+          where: { customerId },
+          select: { bookingSlug: true, status: true },
+        })
+      )?.status === "connected"
+      ? await getOrCreateBookingSlug(customerId)
+      : null
+    : null;
   const callbackIds = new Set(callbacks.map((c) => c.id));
   const appointments = whatsapp
     ? await prisma.appointment.findMany({
@@ -190,16 +204,23 @@ async function LeadsBody({
 
   return (
     <div className="mt-6 space-y-6">
-      {whatsapp ? <CallbackCard callbacks={callbacks} /> : null}
+      {whatsapp ? <CallbackCard callbacks={callbacks} bookingSlug={bookingSlug} /> : null}
       <BuyerLeadsTable
         leads={leads}
+        statusLabels={whatsapp ? WHATSAPP_STATUS_LABELS : {}}
         showLeadCost={!(await loadRetainerConfig(customerId))}
       />
     </div>
   );
 }
 
-function CallbackCard({ callbacks }: { callbacks: CallbackLead[] }) {
+function CallbackCard({
+  callbacks,
+  bookingSlug,
+}: {
+  callbacks: CallbackLead[];
+  bookingSlug: string | null;
+}) {
   return (
     <section className="overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(217,119,6,0.18)]">
       <div className="border-b border-amber-100 bg-amber-50/60 px-5 py-4">
@@ -213,7 +234,9 @@ function CallbackCard({ callbacks }: { callbacks: CallbackLead[] }) {
         </h2>
         <p className="mt-1 text-xs text-[color:var(--muted)]">
           Diese Leads haben weder über die Buchungsseite noch im WhatsApp-Chat
-          einen Termin gebucht. Am besten heute noch anrufen.
+          einen Termin gebucht. Am besten heute noch anrufen – und danach das
+          Ergebnis eintragen: Termin buchen, „Nicht erreicht" (morgen wieder
+          in der Liste) oder „Verloren".
         </p>
       </div>
       {callbacks.length > 0 ? (
@@ -246,14 +269,47 @@ function CallbackCard({ callbacks }: { callbacks: CallbackLead[] }) {
                   ) : null}
                 </div>
               </div>
-              {c.phone ? (
-                <a
-                  href={`tel:+${c.phone}`}
-                  className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-[color:var(--brand)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-dark)]"
-                >
-                  📞 +{c.phone}
-                </a>
-              ) : null}
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
+                {c.phone ? (
+                  <a
+                    href={`tel:+${c.phone}`}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[color:var(--brand)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-dark)]"
+                  >
+                    📞 +{c.phone}
+                  </a>
+                ) : null}
+                {/* Ergebnis des Anrufs → Lead verlässt die Liste */}
+                {bookingSlug ? (
+                  <a
+                    href={`/book/${bookingSlug}?lead=${c.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
+                  >
+                    📅 Termin buchen
+                  </a>
+                ) : null}
+                <form action={callbackOutcomeAction}>
+                  <input type="hidden" name="leadId" value={c.id} />
+                  <input type="hidden" name="outcome" value="not_reached" />
+                  <SubmitButton
+                    pendingLabel="…"
+                    className="rounded-lg border border-[color:var(--border)] px-3 py-2 text-xs font-semibold hover:border-amber-400"
+                  >
+                    Nicht erreicht
+                  </SubmitButton>
+                </form>
+                <form action={callbackOutcomeAction}>
+                  <input type="hidden" name="leadId" value={c.id} />
+                  <input type="hidden" name="outcome" value="lost" />
+                  <SubmitButton
+                    pendingLabel="…"
+                    className="rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50"
+                  >
+                    Verloren
+                  </SubmitButton>
+                </form>
+              </div>
             </li>
           ))}
         </ul>

@@ -6,7 +6,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { formatDateTime } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
-import { displayProduct } from "@/lib/products";
+import { displayProduct, statusLabel } from "@/lib/products";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import {
   cancelAppointmentBuyerAction,
@@ -153,7 +153,9 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
       {active.lead ? (
         <InfoSection title="Lead">
           {active.lead.source ? <InfoRow label="Produkt">{displayProduct(active.lead.source)}</InfoRow> : null}
-          {active.lead.status ? <InfoRow label="Status">{active.lead.status}</InfoRow> : null}
+          {active.lead.status ? (
+            <InfoRow label="Status">{statusLabel(active.lead.status, true)}</InfoRow>
+          ) : null}
           <InfoRow label="Eingang">{formatDateTime(active.lead.createdAt)}</InfoRow>
           <Link
             href={`/buyer/leads/${active.lead.id}`}

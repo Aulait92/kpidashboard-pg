@@ -8,6 +8,7 @@ import {
   updateLeadEditableFields,
 } from "@/lib/airtable-write";
 import { getCurrentSession } from "@/lib/auth";
+import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import {
   CLOSED_STATUS,
@@ -38,6 +39,24 @@ export type CancelLeadState = {
 //   - Storno-Bemerkung   = Freitext-Begründung
 // Spiegelt das Ergebnis lokal in der DB, damit das UI sofort den neuen
 // Status zeigt und nicht erst beim nächsten Sync nachzieht.
+
+// Schreibrecht: der eingeloggte Kunde selbst — oder ein Admin in „Als Kunde
+// ansehen", aber NUR für Demo-Leads (bezugAirtableId = "demo"), damit sich
+// die Vorschau mit Testdaten durchklicken lässt, echte Leads aber tabu sind.
+async function writableCustomerId(leadId: string): Promise<string | null> {
+  const session = await getCurrentSession();
+  if (session?.role === "BUYER" && session.customerId) return session.customerId;
+  const ctx = await getBuyerContext();
+  if (ctx?.preview && leadId) {
+    const demo = await prisma.lead.findFirst({
+      where: { id: leadId, customerId: ctx.customerId, bezugAirtableId: "demo" },
+      select: { id: true },
+    });
+    if (demo) return ctx.customerId;
+  }
+  return null;
+}
+
 export async function cancelLeadAction(
   _prev: CancelLeadState,
   formData: FormData,
@@ -172,20 +191,19 @@ export async function setLeadStatusAction(
   status: LeadStatus,
   opts?: { closeValue?: number | null },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const session = await getCurrentSession();
-  if (!session || session.role !== "BUYER" || !session.customerId) {
-    return { ok: false, error: previewError(session) };
+  const writeCustomerId = await writableCustomerId(leadId);
+  if (!writeCustomerId) {
+    return { ok: false, error: previewError(await getCurrentSession()) };
   }
   if (!isValidLeadStatus(status)) {
     return { ok: false, error: `Ungültiger Status: ${status}` };
   }
 
   const lead = await prisma.lead.findFirst({
-    where: { id: leadId, customerId: session.customerId },
+    where: { id: leadId, customerId: writeCustomerId },
     select: { id: true, airtableId: true, firstContactAt: true, contactAttempts: true },
   });
   if (!lead) return { ok: false, error: "Lead nicht gefunden." };
-  if (!lead.airtableId) return { ok: false, error: "Lead ohne Airtable-ID." };
 
   // Verlässt der Lead „Neuer Lead" zum ersten Mal, hat ein Kontaktversuch
   // stattgefunden → „Erster Kontaktversuch" automatisch setzen (sonst bleiben
@@ -200,7 +218,8 @@ export async function setLeadStatusAction(
   // Abschlusswert IMMER löschen — sonst zeigt die Karte weiter einen „Umsatz".
   const closeValue: number | null | undefined = isClosed ? opts?.closeValue : null;
   try {
-    await updateLeadEditableFields({
+    // Leads ohne Airtable-Referenz (z. B. Demo) nur in der DB pflegen.
+    if (lead.airtableId) await updateLeadEditableFields({
       airtableId: lead.airtableId,
       bearbeitungsstatus: status,
       ...(closeValue !== undefined ? { closeValue } : {}),
@@ -252,22 +271,18 @@ export async function updateLeadDetailsAction(
   _prev: UpdateLeadState,
   formData: FormData,
 ): Promise<UpdateLeadState> {
-  const session = await getCurrentSession();
-  if (!session || session.role !== "BUYER" || !session.customerId) {
-    return { error: previewError(session) };
-  }
-
   const leadId = String(formData.get("leadId") ?? "");
   if (!leadId) return { error: "Lead fehlt." };
+  const writeCustomerId = await writableCustomerId(leadId);
+  if (!writeCustomerId) {
+    return { error: previewError(await getCurrentSession()) };
+  }
 
   const lead = await prisma.lead.findFirst({
-    where: { id: leadId, customerId: session.customerId },
+    where: { id: leadId, customerId: writeCustomerId },
     select: { id: true, airtableId: true },
   });
   if (!lead) return { error: "Lead nicht gefunden." };
-  if (!lead.airtableId) {
-    return { error: "Lead ohne Airtable-Referenz." };
-  }
 
   // Inputs parsen — leere Strings bedeuten "leer setzen".
   const kvRaw = String(formData.get("kontaktversuche") ?? "").trim();
@@ -309,7 +324,8 @@ export async function updateLeadDetailsAction(
   }
 
   try {
-    await updateLeadEditableFields({
+    // Ohne Airtable-Referenz nur DB-Felder (Notizen leben nur in Airtable).
+    if (lead.airtableId) await updateLeadEditableFields({
       airtableId: lead.airtableId,
       kontaktversuche,
       ersterKontaktversuch: ersterKontaktversuchIso,
@@ -378,4 +394,60 @@ export async function getStornogruendePerLead(
     if (options.length > 0) out.set(lead.id, options);
   }
   return out;
+}
+
+// ─── Rückrufliste: Ergebnis des Anrufs ─────────────────────────────────────
+// „Nicht erreicht": Kontaktversuch +1, 20 h aus der Liste (morgen wieder).
+// „Verloren": Status „Kein Interesse" → fällt dauerhaft raus.
+// (Neuer Termin läuft über die Buchungsseite → Lead springt automatisch auf
+// „Termin vereinbart" und verschwindet aus der Liste.)
+export async function callbackOutcomeAction(formData: FormData): Promise<void> {
+  const leadId = String(formData.get("leadId") ?? "");
+  const outcome = String(formData.get("outcome") ?? "");
+  const writeCustomerId = await writableCustomerId(leadId);
+  if (!writeCustomerId) return;
+  const lead = await prisma.lead.findFirst({
+    where: { id: leadId, customerId: writeCustomerId },
+    select: { id: true, airtableId: true, status: true, contactAttempts: true, firstContactAt: true },
+  });
+  if (!lead) return;
+  const now = new Date();
+
+  if (outcome === "not_reached") {
+    const attempts = lead.contactAttempts + 1;
+    // Wer schon im Gespräch war, bleibt dort; neue Leads → „Nicht erreicht".
+    const s = (lead.status ?? "").trim().toLowerCase();
+    const nextStatus = s === "" || s === "neuer lead" ? "Nicht erreicht" : null;
+    if (lead.airtableId) {
+      await updateLeadEditableFields({
+        airtableId: lead.airtableId,
+        kontaktversuche: attempts,
+        ...(nextStatus ? { bearbeitungsstatus: nextStatus } : {}),
+        ...(!lead.firstContactAt ? { ersterKontaktversuch: now.toISOString() } : {}),
+      }).catch((e) => console.error("[callback outcome]", e));
+    }
+    await prisma.lead.update({
+      where: { id: lead.id },
+      data: {
+        contactAttempts: attempts,
+        callbackSnoozedUntil: new Date(now.getTime() + 20 * 60 * 60 * 1000),
+        ...(nextStatus ? { status: nextStatus, reached: false } : {}),
+        ...(!lead.firstContactAt ? { firstContactAt: now } : {}),
+      },
+    });
+  } else if (outcome === "lost") {
+    if (lead.airtableId) {
+      await updateLeadEditableFields({
+        airtableId: lead.airtableId,
+        bearbeitungsstatus: "Kein Interesse",
+      }).catch((e) => console.error("[callback outcome]", e));
+    }
+    await prisma.lead.update({
+      where: { id: lead.id },
+      data: { status: "Kein Interesse", reached: true },
+    });
+  }
+  revalidatePath("/buyer/leads");
+  revalidatePath("/buyer/kanban");
+  revalidatePath("/buyer");
 }

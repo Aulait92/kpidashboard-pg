@@ -203,7 +203,11 @@ export async function getCallbackLeads(customerId: string): Promise<CallbackLead
     where: {
       customerId,
       createdAt: { gte: new Date(now - CALLBACK_WINDOW_MS) },
-      OR: [{ status: null }, { status: { in: CALLBACK_STATUSES } }],
+      AND: [
+        { OR: [{ status: null }, { status: { in: CALLBACK_STATUSES } }] },
+        // „Nicht erreicht" geklickt → bis zum nächsten Tag ausgeblendet.
+        { OR: [{ callbackSnoozedUntil: null }, { callbackSnoozedUntil: { lt: new Date(now) } }] },
+      ],
       appointments: { none: { status: "booked" } },
     },
     orderBy: { createdAt: "asc" },

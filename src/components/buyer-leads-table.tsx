@@ -60,8 +60,11 @@ function isCancelled(status: string | null): boolean {
 export function BuyerLeadsTable({
   leads,
   showLeadCost = true,
+  statusLabels = {},
 }: {
   leads: BuyerLeadRow[];
+  /** Anzeige-Namen je Status (WhatsApp-Kunden: „In Beratung" → „Termin vereinbart"). */
+  statusLabels?: Record<string, string>;
   /** Retainer-Kunden haben keinen Preis pro Lead → Spalte ausblenden. */
   showLeadCost?: boolean;
 }) {
@@ -145,7 +148,9 @@ export function BuyerLeadsTable({
                           ? "Storno"
                           : closed
                             ? "Abschluss"
-                            : (l.status ?? "Offen")}
+                            : l.status
+                              ? (statusLabels[l.status] ?? l.status)
+                              : "Offen"}
                       </span>
                       {l.appointment ? (
                         <div className="mt-1 text-[11px] font-medium text-blue-700">

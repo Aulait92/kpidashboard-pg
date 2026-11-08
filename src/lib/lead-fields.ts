@@ -266,3 +266,35 @@ export function extractFormAnswers(
   }
   return out;
 }
+
+/**
+ * Airtable-ähnliche Feld-Map aus den DB-Daten eines Leads — für Leads ohne
+ * Airtable-Referenz (z. B. Demo-Daten), damit die Detailansicht trotzdem
+ * Kontakt, Formularangaben und Status zeigt.
+ */
+export function fieldsFromLead(lead: {
+  name: string | null;
+  phone: string | null;
+  email: string | null;
+  status: string | null;
+  source: string | null;
+  formData: unknown;
+}): Record<string, unknown> {
+  const [vorname, ...rest] = (lead.name ?? "").trim().split(/\s+/);
+  const fields: Record<string, unknown> = {
+    Vorname: vorname || undefined,
+    Nachname: rest.join(" ") || undefined,
+    Telefonnummer: lead.phone ? `+${lead.phone}` : undefined,
+    "E-Mail": lead.email ?? undefined,
+    Bearbeitungsstatus: lead.status ?? undefined,
+  };
+  const group = fieldGroupFor(detectLeadKind(lead.source, {}));
+  if (Array.isArray(lead.formData)) {
+    for (const a of lead.formData as { label?: unknown; value?: unknown }[]) {
+      if (typeof a?.label !== "string" || typeof a?.value !== "string") continue;
+      const def = group.find((f) => f.label === a.label);
+      fields[def?.key ?? a.label] = a.value;
+    }
+  }
+  return fields;
+}

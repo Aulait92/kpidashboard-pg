@@ -1,4 +1,4 @@
-import { pipelinePhasesFor } from "@/lib/products";
+import { pipelinePhasesFor, WHATSAPP_STATUS_LABELS } from "@/lib/products";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { notFound } from "next/navigation";
 import {
@@ -16,6 +16,7 @@ import {
   COMMON_FIELDS,
   detectLeadKind,
   fieldGroupFor,
+  fieldsFromLead,
   firstString,
   TAIL_FIELDS,
   type ReadOnlyField,
@@ -125,6 +126,11 @@ export async function LeadDetailBody({
       source: true,
       status: true,
       createdAt: true,
+      phone: true,
+      email: true,
+      formData: true,
+      contactAttempts: true,
+      firstContactAt: true,
     },
   });
   if (!lead) notFound();
@@ -137,8 +143,16 @@ export async function LeadDetailBody({
     } catch (err) {
       fetchError = err instanceof Error ? err.message : String(err);
     }
+  } else {
+    // Ohne Airtable-Referenz (z. B. Demo-Leads): aus der DB anzeigen.
+    fields = {
+      ...fieldsFromLead(lead),
+      Kontaktversuche: lead.contactAttempts,
+      "Erster Kontaktversuch": lead.firstContactAt?.toISOString(),
+    };
   }
 
+  const whatsapp = await hasWhatsAppInbox(customerId);
   let stornoOptionsMap: LeadStornogrundOptions = new Map();
   try {
     stornoOptionsMap = await getStornogruendePerLead([lead.id]);
@@ -183,10 +197,14 @@ export async function LeadDetailBody({
 
       {fields ? (
         <>
-          <ReadOnlyCard fields={fields} source={lead.source} />
+          <ReadOnlyCard
+            fields={fields}
+            source={lead.source}
+            statusLabels={whatsapp ? WHATSAPP_STATUS_LABELS : {}}
+          />
           <div className="mt-6">
             <LeadEditForm
-              phases={pipelinePhasesFor(await hasWhatsAppInbox(customerId))}
+              phases={pipelinePhasesFor(whatsapp)}
               leadId={lead.id}
               initialBearbeitungsstatus={
                 firstString(fields["Bearbeitungsstatus"]) ?? ""
@@ -214,9 +232,11 @@ export async function LeadDetailBody({
 function ReadOnlyCard({
   fields,
   source,
+  statusLabels = {},
 }: {
   fields: Record<string, unknown>;
   source: string | null;
+  statusLabels?: Record<string, string>;
 }) {
   const kind = detectLeadKind(source, fields);
   let group = fieldGroupFor(kind);
@@ -296,7 +316,7 @@ function ReadOnlyCard({
             ) : def.format === "chip-product" ? (
               <Chip tone="lilac">{value}</Chip>
             ) : def.format === "chip-status" ? (
-              <Chip tone={statusTone(value)}>{value}</Chip>
+              <Chip tone={statusTone(value)}>{statusLabels[value] ?? value}</Chip>
             ) : (
               value
             )}
