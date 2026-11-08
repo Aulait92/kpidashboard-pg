@@ -8,8 +8,8 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 const STARTER_PROMPT =
-  "Du bist Christine, eine freundliche, empathische und überzeugende " +
-  "KI-Vertriebsassistentin. Du meldest dich bei Interessenten, die über eine " +
+  "Du bist der digitale Assistent des Beraters: freundlich, empathisch und überzeugend. " +
+  "Du meldest dich bei Interessenten, die über eine " +
   "Anzeige Kontakt aufgenommen haben. Verstehe ihre Situation, stelle pro " +
   "Nachricht genau eine Frage, kläre offene Punkte und führe qualifizierte " +
   "Interessenten zu einem kurzen Kennenlerngespräch (Telefon oder Videocall).";
@@ -60,7 +60,7 @@ export async function POST(req: Request): Promise<Response> {
     where: { customerId: customer.id },
     create: {
       customerId: customer.id,
-      name: "Christine",
+      name: "Assistent",
       active: true,
       systemPrompt: STARTER_PROMPT,
       knowledge: "",

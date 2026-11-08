@@ -6,7 +6,7 @@
 //   2. Termin vorhanden        → kein Anschreiben (skipped_booked)
 //      Lead hat selbst geschrieben → kein Anschreiben (skipped_contact)
 //      sonst                   → Vorlage „outreach" senden, Konversation mit
-//                                Lead verknüpfen, Christine übernimmt bei Antwort.
+//                                Lead verknüpfen, der Assistent übernimmt bei Antwort.
 //   3. Rückrufliste: offene Leads ohne Termin, bei denen das Anschreiben nicht
 //      möglich war oder 24 h danach noch kein Termin steht.
 
@@ -28,7 +28,7 @@ const CALLBACK_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 const CALLBACK_STATUSES = ["Neuer Lead", "Nicht erreicht", "Im Gespräch"];
 
 const DEFAULT_OUTREACH_TEXT =
-  "Hallo {{1}}, danke für deine Anfrage! Hast du kurz Zeit für zwei Fragen, damit wir dir ein passendes Angebot machen können?";
+  "Hallo {{1}}, danke für deine Anfrage! Hier ist der digitale Assistent deines Beraters. Hast du kurz Zeit für zwei Fragen, damit wir dir ein passendes Angebot machen können?";
 
 async function hasAppointment(leadId: string, conversationId?: string | null) {
   const n = await prisma.appointment.count({
@@ -116,7 +116,7 @@ export async function runOutreach(): Promise<OutreachResult> {
         continue;
       }
       if (conv && conv._count.messages > 0) {
-        // Lead hat schon selbst geschrieben → Christine ist bereits im Gespräch.
+        // Lead hat schon selbst geschrieben → der Assistent ist bereits im Gespräch.
         await prisma.lead.update({
           where: { id: lead.id },
           data: { outreachAt: new Date(), outreachStatus: "skipped_contact" },

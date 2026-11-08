@@ -280,7 +280,7 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
         dir: "outbound",
         by: "system",
         kind: "template",
-        body: `Hallo ${first}, danke für deine Anfrage zum Privatschutz! Ich bin Christine aus dem Team von ${advisorFirst}. Hast du kurz Zeit für zwei Fragen, damit wir dir ein passendes Angebot machen können?`,
+        body: `Hallo ${first}, danke für deine Anfrage zum Privatschutz! Hier ist der digitale Assistent von ${advisorFirst}. Hast du kurz Zeit für zwei Fragen, damit wir dir ein passendes Angebot machen können?`,
       },
     ];
     if (scenario === "not_reached") {

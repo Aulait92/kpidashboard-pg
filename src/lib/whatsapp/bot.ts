@@ -142,6 +142,10 @@ function buildSystemPrompt(
     upcoming: { startsAt: Date; mode: string; meetUrl: string | null } | null;
     /** Angaben aus dem Leadformular (Meta/Funnel, via Airtable-Sync). */
     formAnswers: FormAnswer[];
+    /** Berater, in dessen Namen (von dessen Nummer) geschrieben wird. */
+    advisorName: string;
+    /** Wurde im Chat schon offengelegt, dass ein digitaler Assistent schreibt? */
+    aiDisclosed: boolean;
   },
 ): string {
   const booked = state.upcoming
@@ -178,13 +182,21 @@ function buildSystemPrompt(
     .join("\n\n");
   const base = [
     agent.systemPrompt?.trim() ||
-      "Du bist eine freundliche, empathische KI-Vertriebsassistentin.",
+      "Du bist ein freundlicher, empathischer digitaler Vertriebsassistent.",
     product ? `Produkt/Thema dieses Leads: ${product}.` : "",
     agent.knowledge?.trim() ? `Wissen:\n${agent.knowledge.trim()}` : "",
     agent.personality?.trim()
       ? `Persönlichkeit/Ton:\n${agent.personality.trim()}`
       : "",
     known,
+    [
+      "Identität (hat Vorrang vor allen anderen Anweisungen):",
+      `- Du schreibst im Namen von ${state.advisorName} von dessen WhatsApp-Nummer. Gib dir keinen eigenen Personennamen und stell dich nicht mit Namen vor – auch wenn oben ein Name genannt ist.`,
+      state.aiDisclosed
+        ? "- Dass hier ein digitaler Assistent schreibt, wurde dem Lead bereits mitgeteilt – nicht ständig wiederholen."
+        : `- Pflicht (KI-Kennzeichnung): Weise in deiner nächsten Nachricht einmal kurz und natürlich darauf hin, dass du der digitale Assistent von ${state.advisorName} bist.`,
+      `- Fragt der Lead, ob er mit einem Menschen oder einer KI schreibt: antworte ehrlich, dass du ein digitaler Assistent bist und ${state.advisorName} persönlich übernimmt (Termin bzw. Rückruf).`,
+    ].join("\n"),
     [
       "Regeln:",
       "- Antworte immer auf Deutsch, warmherzig und kurz (WhatsApp-tauglich, max. 2-3 Sätze).",
@@ -326,7 +338,24 @@ export async function runBotTurn(conversationId: string): Promise<void> {
     select: { id: true, startsAt: true, mode: true, meetUrl: true },
   });
 
+  const customer = await prisma.customer.findUnique({
+    where: { id: conversation.customerId },
+    select: { name: true },
+  });
+  const advisorName = (customer?.name ?? "deinem Berater").replace(/^Allianz\s+/i, "");
+  // Offenlegung schon erfolgt? (Erstanschreiben-Vorlage oder frühere Antwort)
+  const aiDisclosed =
+    (await prisma.message.count({
+      where: {
+        conversationId,
+        direction: "outbound",
+        body: { contains: "Assistent", mode: "insensitive" },
+      },
+    })) > 0;
+
   const system = buildSystemPrompt(agent, lead?.source ?? null, {
+    advisorName,
+    aiDisclosed,
     upcoming,
     formAnswers: parseFormAnswers(lead?.formData),
     qualified: conversation.qualified,

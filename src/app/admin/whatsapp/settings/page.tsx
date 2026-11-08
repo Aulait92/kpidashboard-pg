@@ -30,7 +30,7 @@ const PURPOSES = Object.keys(PURPOSE_LABELS) as NoticePurpose[];
 // Vorschläge für die bei 360dialog/Meta einzureichenden Vorlagentexte.
 const SUGGESTED: Record<NoticePurpose, string> = {
   outreach:
-    "Hallo {{1}}, danke für deine Anfrage! Ich bin Christine aus dem Beratungsteam. Hast du kurz Zeit für zwei Fragen, damit wir dir ein passendes Angebot machen können?",
+    "Hallo {{1}}, danke für deine Anfrage! Hier ist der digitale Assistent von [Berater]. Hast du kurz Zeit für zwei Fragen, damit wir dir ein passendes Angebot machen können?",
   booking_confirmation:
     "Hallo {{1}}, dein Termin ist bestätigt: {{2}} ({{3}}). {{4}} Bis dann!",
   reminder:
@@ -458,7 +458,10 @@ export default async function WhatsAppSettingsPage({
                         name="body"
                         required
                         rows={5}
-                        defaultValue={SUGGESTED[p]}
+                        defaultValue={SUGGESTED[p].replace(
+                          "[Berater]",
+                          c.name.replace(/^Allianz\s+/i, ""),
+                        )}
                         className={input}
                       />
                       <label className="flex items-center gap-2 text-xs">
