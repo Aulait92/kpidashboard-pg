@@ -20,8 +20,13 @@ export async function bookPublicAction(
 ): Promise<void> {
   const fail = (code: string): never => redirect(`/book/${slug}?err=${code}`);
 
-  // Honeypot: für Menschen unsichtbares Feld — Bots füllen es aus.
-  if (String(formData.get("website") ?? "").trim()) fail("invalid");
+  // Bot-Falle: unsichtbares Feld ausgefüllt UND blitzschnell abgeschickt.
+  // Nur beides zusammen gilt als Bot — Autofill allein darf echte Leads
+  // nicht blockieren (Menschen brauchen für das Formular weit über 3 s).
+  const honeypot = String(formData.get("zq_hp_field") ?? "").trim();
+  const renderedAt = Number(formData.get("rendered_at") ?? 0);
+  const tooFast = !renderedAt || Date.now() - renderedAt < 3000;
+  if (honeypot && tooFast) fail("invalid");
 
   const conn = await prisma.calendarConnection.findUnique({
     where: { bookingSlug: slug },

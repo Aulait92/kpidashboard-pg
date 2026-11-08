@@ -140,6 +140,8 @@ export default async function BookingPage({ params, searchParams }: Props) {
   }
   const days = groupByDay(slots);
   const action = bookPublicAction.bind(null, slug);
+  // Zeitstempel für die Bot-Falle (echte Menschen brauchen > 3 s).
+  const renderedAt = Date.now();
   const error = sp.err ? (ERRORS[sp.err] ?? ERRORS.error) : null;
 
   return (
@@ -228,15 +230,21 @@ export default async function BookingPage({ params, searchParams }: Props) {
               autoComplete="tel"
             />
             <Field name="email" label="E-Mail (für die Einladung)" type="email" autoComplete="email" />
-            {/* Honeypot gegen Bots — für Menschen unsichtbar */}
+            {/* Bot-Falle: für Menschen unsichtbar. Bewusst ein Name, den
+                Autofill/Passwortmanager nicht zuordnen (früher „website" →
+                wurde von Passwortmanagern befüllt und blockierte echte Leads). */}
             <input
               type="text"
-              name="website"
+              name="zq_hp_field"
               tabIndex={-1}
               autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
+              data-form-type="other"
               aria-hidden="true"
               className="absolute -left-[9999px] h-0 w-0 opacity-0"
             />
+            <input type="hidden" name="rendered_at" value={String(renderedAt)} />
             <label className="flex items-start gap-2 text-xs leading-relaxed text-[color:var(--muted)]">
               <input type="checkbox" name="consent" required className="mt-0.5" />
               <span>
