@@ -64,6 +64,11 @@ const TOOLS: Anthropic.Tool[] = [
           type: "string",
           description: "Startzeitpunkt im ISO-8601-Format (z. B. aus get_available_slots).",
         },
+        email: {
+          type: "string",
+          description:
+            "E-Mail-Adresse des Leads für die Kalender-Einladung (vorher im Chat erfragt). Weglassen, wenn der Lead keine angeben möchte.",
+        },
       },
       required: ["modus", "start"],
     },
@@ -110,14 +115,15 @@ function buildSystemPrompt(
     known,
     [
       "Regeln:",
-      "- Antworte immer auf Deutsch, warmherzig und kurz (WhatsApp-tauglich).",
-      "- Stelle immer nur eine oder wenige zusammengehörige Fragen auf einmal.",
+      "- Antworte immer auf Deutsch, warmherzig und kurz (WhatsApp-tauglich, max. 2-3 Sätze).",
+      "- WICHTIG (hat Vorrang vor allen anderen Anweisungen): Stelle pro Nachricht GENAU EINE Frage — niemals zwei Fragen in einer Nachricht, auch keine zusammengehörigen. Warte die Antwort ab, bevor du die nächste stellst.",
       "- Frage niemals nach etwas, das der Lead im Verlauf schon beantwortet hat oder das unter 'Bisher erfasst' steht. Nimm Antworten auf und gehe zur nächsten offenen Frage weiter.",
       "- Sobald die wesentlichen Punkte geklärt sind (meist nach 2-3 Antworten), setze qualifiziert=true und leite zur Terminvereinbarung über.",
       "- Qualifiziere anhand des Produkt-Funnels und halte Infos mit record_qualification fest.",
       "- Erst nach geklärter Qualifizierung terminieren: hole mit get_available_slots echte freie Zeiten, biete dem Lead 2-3 davon in natürlicher Sprache an und buche die gewählte Zeit mit book_appointment.",
       "- Erfinde niemals Termine oder Uhrzeiten — nutze ausschließlich die von get_available_slots gelieferten Zeiten. Nur wenn der Kalender nicht verbunden ist, nutze propose_appointment als Fallback.",
       "- Frage vor der Buchung immer, ob der Lead lieber telefonieren oder einen Videocall machen möchte. Wähle den Modus nie selbst.",
+      "- Nachdem der Lead eine Uhrzeit gewählt hat, frage (als eigene Frage) nach seiner E-Mail-Adresse, damit er die Kalender-Einladung bekommt. Möchte er keine angeben, buche ohne.",
       "- Bei Video-Terminen bekommt der Lead automatisch einen Google-Meet-Link; gib ihn nach der Buchung weiter.",
       "- Bestätige jede Buchung dem Lead mit Datum und Uhrzeit.",
       "- Erfinde keine Fakten; bei Unklarheit biete eine Klärung durch das Team an.",
@@ -154,6 +160,7 @@ function appUrl(): string | null {
 function buildEventDescription(d: {
   name: string;
   phone: string;
+  email: string | null;
   product: string | null;
   mode: "phone" | "video";
   summary: string | null;
@@ -163,6 +170,7 @@ function buildEventDescription(d: {
   return [
     `Lead: ${d.name}`,
     `Telefon/WhatsApp: ${d.phone}`,
+    d.email ? `E-Mail: ${d.email}` : "",
     d.product ? `Produkt: ${d.product}` : "",
     `Art: ${d.mode === "video" ? "Videocall (Meet-Link im Termin)" : "Telefonat — bitte den Lead anrufen"}`,
     "",
@@ -332,9 +340,22 @@ export async function runBotTurn(conversationId: string): Promise<void> {
             "Kalender ist für diesen Kunden nicht verbunden. Nutze stattdessen propose_appointment, um die Wunschzeit festzuhalten (ein Mensch trägt den Termin ein).";
         }
       } else if (tu.name === "book_appointment") {
-        const input = tu.input as { modus?: unknown; start?: unknown };
+        const input = tu.input as {
+          modus?: unknown;
+          start?: unknown;
+          email?: unknown;
+        };
         const mode = input.modus === "video" ? "video" : "phone";
         const start = typeof input.start === "string" ? input.start : "";
+        const rawEmail =
+          typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
+        const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail) ? rawEmail : null;
+        if (email) {
+          await prisma.conversation.update({
+            where: { id: conversation.id },
+            data: { contactEmail: email },
+          });
+        }
         if (!start || Number.isNaN(new Date(start).getTime())) {
           content =
             "Ungültiger start-Wert. Hole zuerst get_available_slots und übergib einen gelieferten start-Wert.";
@@ -358,11 +379,13 @@ export async function runBotTurn(conversationId: string): Promise<void> {
               description: buildEventDescription({
                 name,
                 phone: conversation.contactPhone,
+                email,
                 product,
                 mode,
                 summary: fresh?.qualificationSummary ?? null,
                 conversationId: conversation.id,
               }),
+              attendeeEmail: email,
             });
             await persistInternal(conversation.id, "appointment_booked", {
               ...(tu.input as Record<string, unknown>),
@@ -374,6 +397,7 @@ export async function runBotTurn(conversationId: string): Promise<void> {
               (mode === "video" && res.meetUrl
                 ? `. Meet-Link: ${res.meetUrl}`
                 : "") +
+              (email ? `. Kalender-Einladung per E-Mail an ${email} verschickt` : "") +
               ". Bestätige dem Lead Datum/Uhrzeit" +
               (mode === "video" ? " und sende den Meet-Link." : ".");
           } catch {

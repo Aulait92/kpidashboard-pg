@@ -100,6 +100,7 @@ export default async function AdminWhatsAppPage({
           customerId: true,
           contactPhone: true,
           contactName: true,
+          contactEmail: true,
           botActive: true,
           status: true,
           windowExpiresAt: true,
@@ -400,6 +401,7 @@ export default async function AdminWhatsAppPage({
               </div>
               <Row label="Kunde" value={active.customer?.name ?? "—"} />
               <Row label="Produkt" value={active.lead?.source ?? "—"} />
+              <Row label="E-Mail" value={active.contactEmail ?? "—"} />
               <Row label="Status" value={active.lead?.status ?? active.status} />
             </div>
 

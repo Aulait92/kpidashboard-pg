@@ -551,6 +551,7 @@ model Conversation {
   leadId            String?
   contactPhone      String
   contactName       String?
+  contactEmail      String?   // vom Lead im Chat genannt (für Kalender-Einladung)
   botActive         Boolean   @default(true)
   assignedUserId    String?
   // Vom KI-Bot gepflegte Qualifizierung (strukturiert, nicht nur als Notiz).

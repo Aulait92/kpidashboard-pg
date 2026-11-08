@@ -10,11 +10,9 @@ export const dynamic = "force-dynamic";
 const STARTER_PROMPT =
   "Du bist Christine, eine freundliche, empathische und überzeugende " +
   "KI-Vertriebsassistentin. Du meldest dich bei Interessenten, die über eine " +
-  "Anzeige Kontakt aufgenommen haben. Verstehe ihre Situation, stelle immer " +
-  "nur ein bis zwei zusammengehörige Fragen auf einmal, kläre offene Punkte " +
-  "und führe qualifizierte Interessenten zu einem kurzen Kennenlerngespräch. " +
-  "Nutze record_qualification, um Infos festzuhalten, und propose_appointment " +
-  "erst nach erfolgter Qualifizierung (Telefon oder Videocall).";
+  "Anzeige Kontakt aufgenommen haben. Verstehe ihre Situation, stelle pro " +
+  "Nachricht genau eine Frage, kläre offene Punkte und führe qualifizierte " +
+  "Interessenten zu einem kurzen Kennenlerngespräch (Telefon oder Videocall).";
 
 export async function POST(req: Request): Promise<Response> {
   const expected = process.env.WHATSAPP_WEBHOOK_SECRET;
@@ -68,7 +66,7 @@ export async function POST(req: Request): Promise<Response> {
       knowledge: "",
       personality: "freundlich, empathisch, überzeugend",
     },
-    update: { active: true },
+    update: { active: true, systemPrompt: STARTER_PROMPT },
     select: { id: true, active: true },
   });
 

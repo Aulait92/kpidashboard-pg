@@ -194,6 +194,8 @@ export async function bookAppointment(opts: {
   mode: "phone" | "video";
   summary: string;
   description?: string;
+  /** Lead als Teilnehmer eintragen → Google verschickt die Einladung per Mail. */
+  attendeeEmail?: string | null;
 }): Promise<{ appointmentId: string; meetUrl: string | null; start: string }> {
   const token = await getAccessToken(opts.customerId);
   const start = new Date(opts.start);
@@ -204,6 +206,9 @@ export async function bookAppointment(opts: {
     start: { dateTime: start.toISOString() },
     end: { dateTime: end.toISOString() },
   };
+  if (opts.attendeeEmail) {
+    body.attendees = [{ email: opts.attendeeEmail }];
+  }
   if (opts.mode === "video") {
     body.conferenceData = {
       createRequest: {
@@ -212,8 +217,10 @@ export async function bookAppointment(opts: {
       },
     };
   }
+  // sendUpdates=all: Google mailt dem Teilnehmer die Einladung (inkl. Meet-Link).
+  const qs = `conferenceDataVersion=1${opts.attendeeEmail ? "&sendUpdates=all" : ""}`;
   const res = await fetch(
-    `${CAL_BASE}/calendars/primary/events?conferenceDataVersion=1`,
+    `${CAL_BASE}/calendars/primary/events?${qs}`,
     {
       method: "POST",
       headers: {
