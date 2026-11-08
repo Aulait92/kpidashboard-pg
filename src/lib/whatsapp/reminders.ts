@@ -68,6 +68,24 @@ export async function sendBookingConfirmation(opts: {
 
 export type ReminderResult = { candidates: number; sent: number; errors: string[] };
 
+/** Kurzfristig gebuchte Termine: Erinnerung erst so kurz vorher. */
+const SHORT_LEAD_MS = 2 * 60 * 60 * 1000;
+
+/**
+ * Wann ist die Erinnerung fällig? Die Bestätigung kam ja gerade erst —
+ * direkt danach noch eine Erinnerung wirkt wie Spam.
+ * - Mehr als 26 h im Voraus gebucht → 24 h vorher.
+ * - Mehr als 3 h im Voraus gebucht  → 2 h vorher.
+ * - Noch kurzfristiger              → keine Erinnerung.
+ */
+function reminderDue(appt: { startsAt: Date; createdAt: Date }, now: Date): boolean {
+  const leadTime = appt.startsAt.getTime() - appt.createdAt.getTime();
+  const untilStart = appt.startsAt.getTime() - now.getTime();
+  if (leadTime > LEAD_MS + 2 * 60 * 60 * 1000) return untilStart <= LEAD_MS;
+  if (leadTime > 3 * 60 * 60 * 1000) return untilStart <= SHORT_LEAD_MS;
+  return false;
+}
+
 /** Erinnerung für gebuchte Termine, die in den nächsten 24 h starten. */
 export async function runReminders(): Promise<ReminderResult> {
   const now = new Date();
@@ -84,11 +102,13 @@ export async function runReminders(): Promise<ReminderResult> {
       leadId: true,
       mode: true,
       startsAt: true,
+      createdAt: true,
       meetUrl: true,
       manageToken: true,
     },
-    take: 100,
-  });
+    orderBy: { startsAt: "asc" },
+    take: 200,
+  }).then((rows) => rows.filter((a) => reminderDue(a, now)));
 
   const result: ReminderResult = { candidates: due.length, sent: 0, errors: [] };
   for (const appt of due) {
