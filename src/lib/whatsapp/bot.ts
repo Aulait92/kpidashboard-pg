@@ -469,6 +469,8 @@ export async function runBotTurn(conversationId: string): Promise<void> {
                 conversationId: conversation.id,
               }),
               attendeeEmail: email,
+              leadName: conversation.contactName,
+              leadPhone: conversation.contactPhone,
             });
             await persistInternal(conversation.id, "appointment_booked", {
               ...(tu.input as Record<string, unknown>),

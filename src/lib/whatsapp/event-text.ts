@@ -46,3 +46,34 @@ export function buildEventDescription(d: {
     .filter((l, i, arr) => l !== "" || arr[i - 1] !== "")
     .join("\n");
 }
+
+/** Titel der Einladung für den Lead (ohne Interna). */
+export function customerEventSummary(mode: "phone" | "video", advisorName: string): string {
+  return `${mode === "video" ? "Videoberatung" : "Telefonische Beratung"} mit ${advisorName}`;
+}
+
+/** Beschreibung der Einladung für den Lead — freundlich, ohne interne Daten. */
+export function customerEventDescription(d: {
+  firstName: string;
+  mode: "phone" | "video";
+  phone: string | null;
+  videoUrl: string | null;
+  manageUrl: string;
+  advisorName: string;
+}): string {
+  const how =
+    d.mode === "video"
+      ? d.videoUrl
+        ? `Hier der Link zum Videocall:\n${d.videoUrl}`
+        : "Den Link zum Videocall bekommst du rechtzeitig vor dem Termin."
+      : d.phone
+        ? `Wir rufen dich zur vereinbarten Zeit unter +${d.phone} an.`
+        : "Wir rufen dich zur vereinbarten Zeit an.";
+  return [
+    `Hallo ${d.firstName},`,
+    "vielen Dank für deine Terminbuchung!",
+    how,
+    `Falls etwas dazwischenkommt, kannst du den Termin hier verschieben oder absagen:\n${d.manageUrl}`,
+    `Bis bald!\n${d.advisorName}`,
+  ].join("\n\n");
+}

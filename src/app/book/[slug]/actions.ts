@@ -123,6 +123,8 @@ export async function bookPublicAction(
         bookedVia: "booking_page",
       }),
       attendeeEmail: emailRaw,
+      leadName: name,
+      leadPhone: phone,
     });
     appointmentId = res.appointmentId;
     await prisma.message.create({

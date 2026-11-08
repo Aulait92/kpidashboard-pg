@@ -19,7 +19,13 @@ import {
   microsoftGetBusy,
 } from "@/lib/calendar/microsoft";
 import { decryptSecret } from "@/lib/encryption";
-import { appUrl, buildEventDescription, eventSummary } from "@/lib/whatsapp/event-text";
+import {
+  appUrl,
+  buildEventDescription,
+  customerEventDescription,
+  customerEventSummary,
+  eventSummary,
+} from "@/lib/whatsapp/event-text";
 import { loadConnection, type Busy, type CreatedEvent, type NewEvent } from "@/lib/calendar/tokens";
 
 export type { CalendarProvider } from "@/lib/calendar/tokens";
@@ -53,10 +59,12 @@ async function adapterFor(customerId: string) {
       ? {
           getBusy: (min: Date, max: Date) => microsoftGetBusy(customerId, min, max),
           createEvent: (ev: NewEvent) => microsoftCreateEvent(customerId, ev),
+          deleteEvent: (id: string) => microsoftDeleteEvent(customerId, id),
         }
       : {
           getBusy: (min: Date, max: Date) => googleGetBusy(customerId, min, max),
           createEvent: (ev: NewEvent) => googleCreateEvent(customerId, ev),
+          deleteEvent: (id: string) => googleDeleteEvent(customerId, id),
         };
 
   return {
@@ -70,6 +78,7 @@ async function adapterFor(customerId: string) {
       return [...own, ...external];
     },
     createEvent: (ev: NewEvent): Promise<CreatedEvent> => native.createEvent(ev),
+    deleteEvent: (id: string): Promise<void> => native.deleteEvent(id),
   };
 }
 
@@ -162,6 +171,9 @@ export async function bookAppointment(opts: {
   description?: string;
   /** Lead als Teilnehmer → der Kalender verschickt die Einladung per Mail. */
   attendeeEmail?: string | null;
+  /** Für die kundenfreundliche Einladung (Anrede, Rückrufnummer). */
+  leadName?: string | null;
+  leadPhone?: string | null;
 }): Promise<{
   appointmentId: string;
   meetUrl: string | null;
@@ -185,31 +197,60 @@ export async function bookAppointment(opts: {
     where: { customerId: opts.customerId },
     select: { videoRoomUrl: true, advisorEmail: true },
   });
+  const customer = await prisma.customer.findUnique({
+    where: { id: opts.customerId },
+    select: { name: true },
+  });
+  const advisorName = customer?.name ?? "deinem Berater";
   const room = opts.mode === "video" ? agent?.videoRoomUrl?.trim() || null : null;
+  const leadEmail = opts.attendeeEmail?.trim().toLowerCase() || null;
+  const advisorEmail = agent?.advisorEmail?.trim().toLowerCase() || null;
 
-  const created = await adapter.createEvent({
+  // 1) Einladung für den LEAD — kundenfreundlich, KEINE internen Daten.
+  //    Erzeugt (falls kein fester Raum) auch den Meet/Teams-Link.
+  const firstName = (opts.leadName ?? "").trim().split(/\s+/)[0] || "";
+  const leadEvent = await adapter.createEvent({
     start,
     end,
-    summary: opts.summary,
-    description: [
-      opts.description ?? "",
-      room ? `Videocall: ${room}` : "",
-      `Termin absagen oder verschieben: ${manageUrl}`,
-    ]
-      .filter(Boolean)
-      .join("\n\n"),
-    // Lead + Berater (z. B. Allianz-Adresse → Termin landet in seinem Outlook).
-    attendeeEmails: [
-      ...new Set(
-        [opts.attendeeEmail, agent?.advisorEmail]
-          .map((e) => e?.trim().toLowerCase())
-          .filter((e): e is string => !!e),
-      ),
-    ],
+    summary: customerEventSummary(opts.mode, advisorName),
+    description: customerEventDescription({
+      firstName: firstName || "und herzlich willkommen",
+      mode: opts.mode,
+      phone: opts.leadPhone ?? null,
+      videoUrl: room,
+      manageUrl,
+      advisorName,
+    }),
+    attendeeEmails: leadEmail ? [leadEmail] : [],
     video: opts.mode === "video" && !room,
-    location: room,
+    location: room ?? (opts.mode === "phone" ? "Telefon – wir rufen dich an" : null),
   });
-  if (room) created.videoUrl = room;
+  const videoUrl = room ?? leadEvent.videoUrl;
+
+  // 2) Eigene Einladung für den BERATER — interne Infos (Qualifizierung,
+  //    CRM-Link), gleicher Video-Link. Scheitert sie, wird der Lead-Termin
+  //    zurückgenommen, damit der Berater nie einen Termin verpasst.
+  let advisorEventId: string | null = null;
+  if (advisorEmail && advisorEmail !== leadEmail) {
+    try {
+      const adv = await adapter.createEvent({
+        start,
+        end,
+        summary: opts.summary,
+        description: [opts.description ?? "", videoUrl ? `Videocall: ${videoUrl}` : ""]
+          .filter(Boolean)
+          .join("\n\n"),
+        attendeeEmails: [advisorEmail],
+        video: false,
+        location:
+          videoUrl ?? (opts.leadPhone ? `Telefon: Lead anrufen unter +${opts.leadPhone}` : null),
+      });
+      advisorEventId = adv.eventId;
+    } catch (err) {
+      await adapter.deleteEvent(leadEvent.eventId).catch(() => {});
+      throw err;
+    }
+  }
 
   const appt = await prisma.appointment.create({
     data: {
@@ -219,15 +260,16 @@ export async function bookAppointment(opts: {
       mode: opts.mode,
       startsAt: start,
       endsAt: end,
-      calendarEventId: created.eventId,
-      meetUrl: created.videoUrl,
+      calendarEventId: leadEvent.eventId,
+      advisorEventId,
+      meetUrl: videoUrl,
       status: "booked",
       manageToken,
     },
   });
   return {
     appointmentId: appt.id,
-    meetUrl: created.videoUrl,
+    meetUrl: videoUrl,
     start: start.toISOString(),
     manageUrl,
   };
@@ -290,18 +332,21 @@ export async function cancelAppointment(
 ): Promise<{ calendarDeleted: boolean; note?: string }> {
   const appt = await prisma.appointment.findFirst({
     where: { id: appointmentId, customerId },
-    select: { id: true, calendarEventId: true, status: true },
+    select: { id: true, calendarEventId: true, advisorEventId: true, status: true },
   });
   if (!appt) throw new Error("Termin nicht gefunden.");
   let calendarDeleted = false;
   let note: string | undefined;
-  if (appt.calendarEventId) {
+  // Beide Einladungen löschen (Lead + Berater) → beide erhalten eine Absage.
+  const eventIds = [appt.calendarEventId, appt.advisorEventId].filter(
+    (id): id is string => !!id,
+  );
+  if (eventIds.length) {
     try {
       const conn = await loadConnection(customerId);
-      if (conn.provider === "microsoft") {
-        await microsoftDeleteEvent(customerId, appt.calendarEventId);
-      } else {
-        await googleDeleteEvent(customerId, appt.calendarEventId);
+      for (const id of eventIds) {
+        if (conn.provider === "microsoft") await microsoftDeleteEvent(customerId, id);
+        else await googleDeleteEvent(customerId, id);
       }
       calendarDeleted = true;
     } catch (err) {
@@ -361,6 +406,8 @@ export async function rescheduleAppointment(opts: {
       bookedVia: opts.by === "lead" ? "booking_page" : "bot",
     }),
     attendeeEmail: conv?.contactEmail ?? null,
+    leadName: conv?.contactName ?? null,
+    leadPhone: conv?.contactPhone ?? null,
   });
   await cancelAppointment(old.id, opts.customerId, opts.by);
   return booked;
@@ -395,7 +442,13 @@ export async function checkAppointmentResponses(): Promise<ResponseCheckResult> 
       calendarEventId: { not: null },
       startsAt: { gt: new Date(now), lt: new Date(now + 60 * 24 * 60 * 60 * 1000) },
     },
-    select: { id: true, customerId: true, conversationId: true, calendarEventId: true },
+    select: {
+      id: true,
+      customerId: true,
+      conversationId: true,
+      calendarEventId: true,
+      advisorEventId: true,
+    },
     orderBy: { startsAt: "asc" },
     take: 150,
   });
@@ -407,10 +460,14 @@ export async function checkAppointmentResponses(): Promise<ResponseCheckResult> 
         select: { provider: true, status: true },
       });
       if (conn?.status !== "connected") continue;
-      const r =
+      const fetchResponses = (eventId: string) =>
         conn.provider === "microsoft"
-          ? await microsoftGetResponses(a.customerId, a.calendarEventId!)
-          : await googleGetResponses(a.customerId, a.calendarEventId!);
+          ? microsoftGetResponses(a.customerId, eventId)
+          : googleGetResponses(a.customerId, eventId);
+      // Lead-Einladung; Berater-Antwort aus seiner eigenen Einladung (Altfälle:
+      // gemeinsame Einladung).
+      const r = await fetchResponses(a.calendarEventId!);
+      const adv = a.advisorEventId ? await fetchResponses(a.advisorEventId) : r;
       result.checked++;
 
       const log = async (payload: unknown) => {
@@ -454,7 +511,10 @@ export async function checkAppointmentResponses(): Promise<ResponseCheckResult> 
         await cancelAppointment(a.id, a.customerId, "lead");
         await log({ by: "lead", info: "Lead hat die Einladung abgelehnt" });
         result.cancelledByLead++;
-      } else if (advisorEmail && r.responses.get(advisorEmail) === "declined") {
+      } else if (
+        advisorEmail &&
+        (adv.responses.get(advisorEmail) === "declined" || (a.advisorEventId && adv.gone))
+      ) {
         await cancelAppointment(a.id, a.customerId, "advisor");
         await log({ by: "advisor", info: "Berater hat die Einladung abgelehnt" });
         result.cancelledByAdvisor++;

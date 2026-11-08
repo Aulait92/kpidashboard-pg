@@ -638,6 +638,9 @@ model Appointment {
   meetUrl         String?
   status          String    @default("booked") // booked | cancelled | completed | no_show
   reminderSentAt  DateTime? // gesetzt, sobald die WhatsApp-Erinnerung raus ist
+  // Getrennte Einladung für den Berater (interne Infos), gleicher Termin.
+  // calendarEventId = Einladung des Leads (kundenfreundlich, ohne Interna).
+  advisorEventId  String?
   // Geheimer Link für den Lead: /book/manage/<token> (absagen/verschieben).
   manageToken     String?   @unique
   cancelledAt     DateTime?
