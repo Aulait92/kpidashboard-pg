@@ -7,6 +7,7 @@
 // Verbinden „Administratorgenehmigung erforderlich" — die IT des Kunden muss
 // die App einmalig freigeben (oder die Verbindung bleibt nicht möglich).
 
+import { prisma } from "@/lib/prisma";
 import {
   cachedAccessToken,
   loadConnection,
@@ -113,6 +114,54 @@ export async function microsoftExchangeCode(code: string, customerId: string): P
     scope: json.scope ?? MICROSOFT_SCOPE,
     accountEmail,
   });
+
+  // Ein zentrales Agentur-Postfach kann alle Kunden bedienen: je Kunde ein
+  // eigener Unterkalender „Termine – {Kunde}" (wird angelegt bzw. wieder-
+  // verwendet). So bleiben Kunden sauber getrennt, ohne Konto pro Kunde.
+  const customer = await prisma.customer.findUnique({
+    where: { id: customerId },
+    select: { name: true },
+  });
+  const calendarId = await ensureSubCalendar(
+    json.access_token,
+    `Termine – ${customer?.name ?? customerId}`,
+  );
+  await prisma.calendarConnection.update({
+    where: { customerId },
+    data: { calendarId },
+  });
+}
+
+/** Unterkalender mit diesem Namen finden oder anlegen; liefert dessen ID. */
+async function ensureSubCalendar(token: string, name: string): Promise<string> {
+  const list = await fetch(`${GRAPH}/me/calendars?$select=id,name&$top=200`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (list.ok) {
+    const json = (await list.json()) as { value?: { id: string; name: string }[] };
+    const hit = json.value?.find((c) => c.name === name);
+    if (hit) return hit.id;
+  }
+  const res = await fetch(`${GRAPH}/me/calendars`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  const created = (await res.json().catch(() => ({}))) as { id?: string };
+  if (!res.ok || !created.id) {
+    throw new Error(`Outlook-Unterkalender konnte nicht angelegt werden (${res.status}).`);
+  }
+  return created.id;
+}
+
+/** Graph-Pfad des Kunden-Kalenders („primary" = Standardkalender). */
+async function calendarPath(customerId: string): Promise<string> {
+  const conn = await prisma.calendarConnection.findUnique({
+    where: { customerId },
+    select: { calendarId: true },
+  });
+  const id = conn?.calendarId;
+  return !id || id === "primary" ? "/me/calendar" : `/me/calendars/${encodeURIComponent(id)}`;
 }
 
 async function accessToken(customerId: string): Promise<string> {
@@ -150,7 +199,7 @@ export async function microsoftGetBusy(customerId: string, min: Date, max: Date)
   const token = await accessToken(customerId);
   const busy: Busy[] = [];
   let url: string | null =
-    `${GRAPH}/me/calendarView?startDateTime=${encodeURIComponent(min.toISOString())}` +
+    `${GRAPH}${await calendarPath(customerId)}/calendarView?startDateTime=${encodeURIComponent(min.toISOString())}` +
     `&endDateTime=${encodeURIComponent(max.toISOString())}` +
     `&$select=start,end,showAs,isCancelled&$top=250`;
   for (let page = 0; url && page < 20; page++) {
@@ -202,8 +251,9 @@ export async function microsoftCreateEvent(
         }
       : {}),
   };
+  const path = await calendarPath(customerId);
   const create = (body: Record<string, unknown>) =>
-    fetch(`${GRAPH}/me/events`, {
+    fetch(`${GRAPH}${path}/events`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify(body),
