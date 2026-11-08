@@ -383,13 +383,17 @@ async function loadEngagement(leadIds: string[]): Promise<Engagement> {
       select: { leadId: true },
     }),
     prisma.appointment.findMany({
-      where: { leadId: { in: leadIds }, status: { in: ["booked", "completed"] } },
-      select: { leadId: true },
+      where: { leadId: { in: leadIds } },
+      select: { leadId: true, status: true },
     }),
   ]);
+  const ids = (rows: { leadId: string | null }[]) =>
+    new Set(rows.map((r) => r.leadId).filter((x): x is string => !!x));
+  // Jeder Termin (auch abgesagt) heißt: Kontakt hat stattgefunden → erreicht.
+  // Als Termin zählen nur gebuchte/stattgefundene.
   return {
-    replied: new Set(convs.map((c) => c.leadId).filter((x): x is string => !!x)),
-    booked: new Set(appts.map((a) => a.leadId).filter((x): x is string => !!x)),
+    replied: new Set([...ids(convs), ...ids(appts)]),
+    booked: ids(appts.filter((a) => a.status === "booked" || a.status === "completed")),
   };
 }
 

@@ -310,7 +310,7 @@ export async function cancelAppointment(
 ): Promise<{ calendarDeleted: boolean; note?: string }> {
   const appt = await prisma.appointment.findFirst({
     where: { id: appointmentId, customerId },
-    select: { id: true, calendarEventId: true, advisorEventId: true, status: true },
+    select: { id: true, calendarEventId: true, advisorEventId: true, status: true, leadId: true },
   });
   if (!appt) throw new Error("Termin nicht gefunden.");
   let calendarDeleted = false;
@@ -335,6 +335,8 @@ export async function cancelAppointment(
     where: { id: appt.id },
     data: { status: "cancelled", cancelledAt: new Date(), cancelledBy: by },
   });
+  // CRM: Lead zählt nicht mehr als Termin (außer es ist noch einer gebucht).
+  await recordLeadProgress(appt.leadId, "cancelled");
   if (notifyLead) {
     await sendLeadEmail(appt.id, "cancelled").catch((e) => console.error("[lead email]", e));
   }

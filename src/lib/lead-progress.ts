@@ -4,6 +4,7 @@
 // (Erreichbarkeit, Termine, Zeit bis Erstkontakt) blieben leer.
 //
 // Regeln:
+// - Absage: „In Beratung" → „Neuer Lead", wenn kein Termin mehr gebucht ist.
 // - Status wird nur „hochgestuft" (Neuer Lead / Nicht erreicht / leer →
 //   In Beratung), nie zurückgesetzt — Angebot/Abschluss bleiben unangetastet.
 // - „Erster Kontaktversuch" wird nur gesetzt, wenn er noch leer ist.
@@ -14,10 +15,11 @@ import { prisma } from "@/lib/prisma";
 
 const UPGRADABLE = new Set(["", "neuer lead", "nicht erreicht"]);
 const BOOKED_STATUS = "In Beratung";
+const RESET_STATUS = "Neuer Lead";
 
 export async function recordLeadProgress(
   leadId: string | null | undefined,
-  event: "contact_attempt" | "booked",
+  event: "contact_attempt" | "booked" | "cancelled",
 ): Promise<void> {
   if (!leadId) return;
   try {
@@ -32,6 +34,30 @@ export async function recordLeadProgress(
       },
     });
     if (!lead) return;
+
+    if (event === "cancelled") {
+      // Termin abgesagt: nur den von uns gesetzten Status „In Beratung"
+      // zurücknehmen, und nur wenn kein anderer Termin mehr gebucht ist
+      // (Verschieben bucht erst neu und sagt dann ab). Danach zählt der Lead
+      // nicht mehr als Termin, bleibt aber „erreicht" und steht in der
+      // Rückrufliste („Lead hat den Termin abgesagt").
+      if ((lead.status ?? "").trim().toLowerCase() !== BOOKED_STATUS.toLowerCase()) return;
+      const stillBooked = await prisma.appointment.count({
+        where: { leadId, status: "booked" },
+      });
+      if (stillBooked > 0) return;
+      if (lead.airtableId) {
+        await updateLeadEditableFields({
+          airtableId: lead.airtableId,
+          bearbeitungsstatus: RESET_STATUS,
+        });
+      }
+      await prisma.lead.update({
+        where: { id: leadId },
+        data: { status: RESET_STATUS, reached: false },
+      });
+      return;
+    }
 
     const now = new Date();
     const setFirstContact = !lead.firstContactAt;

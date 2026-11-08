@@ -163,3 +163,26 @@ export async function connectWhatsAppAction(formData: FormData): Promise<void> {
   revalidatePath("/admin/whatsapp/settings");
   redirect(back(ok ? "ok" : "webhook"));
 }
+
+// ─── Demo-Daten (nur Sandbox: DEMO_TOOLS=1) ──────────────────────────────
+export async function seedDemoAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  if (process.env.DEMO_TOOLS !== "1") throw new Error("Demo-Werkzeuge sind deaktiviert.");
+  const customerId = String(formData.get("customerId") ?? "");
+  if (!customerId) return;
+  const { seedDemoData } = await import("@/lib/demo-data");
+  await seedDemoData(customerId);
+  revalidatePath("/admin/whatsapp/settings");
+  revalidatePath("/buyer");
+}
+
+export async function removeDemoAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  if (process.env.DEMO_TOOLS !== "1") throw new Error("Demo-Werkzeuge sind deaktiviert.");
+  const customerId = String(formData.get("customerId") ?? "");
+  if (!customerId) return;
+  const { removeDemoData } = await import("@/lib/demo-data");
+  await removeDemoData(customerId);
+  revalidatePath("/admin/whatsapp/settings");
+  revalidatePath("/buyer");
+}

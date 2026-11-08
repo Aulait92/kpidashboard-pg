@@ -342,8 +342,10 @@ export async function syncCustomerAdSpend(): Promise<CustomerAdSpendSyncResult> 
     where: { metaAdAccountId: { not: null } },
     select: { id: true, name: true, metaAdAccountId: true, retainerStart: true },
   });
+  // Nur echte Konto-IDs (Ziffern) — „demo" o. Ä. nicht abfragen.
+  const real = customers.filter((c) => /^\d+$/.test(c.metaAdAccountId ?? ""));
   const until = format(new Date(), "yyyy-MM-dd");
-  for (const c of customers) {
+  for (const c of real) {
     const accountId = c.metaAdAccountId!;
     // Immer mind. die letzten 90 Tage (Budget kann schon vor Retainer-Start
     // laufen), bei älterem Retainer-Start ab dort — max. 365 Tage zurück.
