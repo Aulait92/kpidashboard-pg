@@ -1,3 +1,4 @@
+import { checkAppointmentResponses } from "@/lib/calendar";
 import { runOutreach } from "@/lib/whatsapp/outreach";
 import { runReminders } from "@/lib/whatsapp/reminders";
 
@@ -23,10 +24,15 @@ async function handle(req: Request): Promise<Response> {
   const outreach = await runOutreach().catch((e: unknown) => ({
     error: e instanceof Error ? e.message : String(e),
   }));
+  // Absagen über die Kalendereinladung (Lead oder Berater) erkennen — vor den
+  // Erinnerungen, damit abgesagte Termine keine Erinnerung mehr bekommen.
+  const responses = await checkAppointmentResponses().catch((e: unknown) => ({
+    error: e instanceof Error ? e.message : String(e),
+  }));
   const reminders = await runReminders().catch((e: unknown) => ({
     error: e instanceof Error ? e.message : String(e),
   }));
-  return Response.json({ ok: true, outreach, reminders });
+  return Response.json({ ok: true, outreach, responses, reminders });
 }
 
 export const GET = handle;

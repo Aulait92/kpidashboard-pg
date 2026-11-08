@@ -3,6 +3,7 @@
 // sendWhatsAppNotice (Freitext im 24h-Fenster, sonst freigegebene Vorlage).
 
 import { prisma } from "@/lib/prisma";
+import { appUrl } from "@/lib/whatsapp/event-text";
 import { firstNameOf, sendWhatsAppNotice } from "@/lib/whatsapp/templates";
 
 const LEAD_MS = 24 * 60 * 60 * 1000;
@@ -36,18 +37,22 @@ export async function sendBookingConfirmation(opts: {
   startsAt: Date;
   mode: string;
   meetUrl: string | null;
+  /** Link zum Absagen/Verschieben (Self-Service). */
+  manageUrl?: string | null;
 }): Promise<void> {
+  const manage = opts.manageUrl ? ` Absagen oder verschieben: ${opts.manageUrl}` : "";
   const params = [
     firstNameOf(opts.name),
     formatWhenDE(opts.startsAt),
     modeLabel(opts.mode),
-    linkOrHint(opts.mode, opts.meetUrl),
+    `${linkOrHint(opts.mode, opts.meetUrl)}${manage}`,
   ];
   const text =
     `Hallo ${params[0]}, dein Termin ist bestätigt: ${params[1]} (${params[2]}). ` +
     (opts.mode === "video" && opts.meetUrl
       ? `Hier der Link zum Videocall: ${opts.meetUrl}`
       : "Wir rufen dich zur vereinbarten Zeit an.") +
+    (opts.manageUrl ? `\n\nFalls etwas dazwischenkommt: ${opts.manageUrl}` : "") +
     " Bis dann! 🙂";
   await sendWhatsAppNotice({
     customerId: opts.customerId,
@@ -79,6 +84,7 @@ export async function runReminders(): Promise<ReminderResult> {
       mode: true,
       startsAt: true,
       meetUrl: true,
+      manageToken: true,
     },
     take: 100,
   });
@@ -92,17 +98,19 @@ export async function runReminders(): Promise<ReminderResult> {
     });
     if (!conv?.contactPhone) continue;
 
+    const manageUrl = appt.manageToken ? `${appUrl() ?? ""}/book/manage/${appt.manageToken}` : null;
     const params = [
       firstNameOf(conv.contactName),
       formatWhenDE(appt.startsAt),
       modeLabel(appt.mode),
-      linkOrHint(appt.mode, appt.meetUrl),
+      `${linkOrHint(appt.mode, appt.meetUrl)}${manageUrl ? ` Absagen oder verschieben: ${manageUrl}` : ""}`,
     ];
     const text =
       `Kurze Erinnerung an unseren ${params[2]} am ${params[1]}.` +
       (appt.mode === "video" && appt.meetUrl
         ? ` Hier der Link: ${appt.meetUrl}`
         : " Wir rufen dich an.") +
+      (manageUrl ? `\n\nPasst es doch nicht? ${manageUrl}` : "") +
       " Bis dann! 🙂";
     try {
       await sendWhatsAppNotice({

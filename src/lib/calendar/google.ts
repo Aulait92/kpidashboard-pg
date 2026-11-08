@@ -180,3 +180,31 @@ export async function googleDeleteEvent(customerId: string, eventId: string): Pr
     throw new Error(`Google-Termin konnte nicht gelöscht werden (${res.status}).`);
   }
 }
+
+/** Antworten der Teilnehmer (Einladung angenommen/abgelehnt). */
+export async function googleGetResponses(
+  customerId: string,
+  eventId: string,
+): Promise<import("@/lib/calendar/tokens").AttendeeResponses> {
+  const token = await accessToken(customerId);
+  const res = await fetch(`${CAL_BASE}/calendars/primary/events/${encodeURIComponent(eventId)}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.status === 404 || res.status === 410) return { gone: true, responses: new Map() };
+  if (!res.ok) throw new Error(`Google-Termin nicht abrufbar (${res.status}).`);
+  const json = (await res.json()) as {
+    status?: string;
+    attendees?: { email?: string; responseStatus?: string }[];
+  };
+  if (json.status === "cancelled") return { gone: true, responses: new Map() };
+  const map = new Map<string, "accepted" | "declined" | "tentative" | "none">();
+  for (const a of json.attendees ?? []) {
+    if (!a.email) continue;
+    const r = a.responseStatus;
+    map.set(
+      a.email.toLowerCase(),
+      r === "accepted" ? "accepted" : r === "declined" ? "declined" : r === "tentative" ? "tentative" : "none",
+    );
+  }
+  return { gone: false, responses: map };
+}

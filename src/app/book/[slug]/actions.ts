@@ -145,6 +145,7 @@ export async function bookPublicAction(
       startsAt: new Date(res.start),
       mode,
       meetUrl: res.meetUrl,
+      manageUrl: res.manageUrl,
     }).catch((e) => console.error("[booking page confirmation]", e));
   } catch (err) {
     if (err instanceof SlotBusyError) fail("taken");

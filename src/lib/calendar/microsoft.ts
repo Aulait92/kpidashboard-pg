@@ -289,3 +289,33 @@ export async function microsoftDeleteEvent(customerId: string, eventId: string):
     throw new Error(`Outlook-Termin konnte nicht gelöscht werden (${res.status}).`);
   }
 }
+
+/** Antworten der Teilnehmer (Einladung angenommen/abgelehnt). */
+export async function microsoftGetResponses(
+  customerId: string,
+  eventId: string,
+): Promise<import("@/lib/calendar/tokens").AttendeeResponses> {
+  const token = await accessToken(customerId);
+  const res = await fetch(
+    `${GRAPH}/me/events/${encodeURIComponent(eventId)}?$select=attendees,isCancelled`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  if (res.status === 404) return { gone: true, responses: new Map() };
+  if (!res.ok) throw new Error(`Outlook-Termin nicht abrufbar (${res.status}).`);
+  const json = (await res.json()) as {
+    isCancelled?: boolean;
+    attendees?: { emailAddress?: { address?: string }; status?: { response?: string } }[];
+  };
+  if (json.isCancelled) return { gone: true, responses: new Map() };
+  const map = new Map<string, "accepted" | "declined" | "tentative" | "none">();
+  for (const a of json.attendees ?? []) {
+    const email = a.emailAddress?.address;
+    if (!email) continue;
+    const r = a.status?.response;
+    map.set(
+      email.toLowerCase(),
+      r === "accepted" ? "accepted" : r === "declined" ? "declined" : r === "tentativelyAccepted" ? "tentative" : "none",
+    );
+  }
+  return { gone: false, responses: map };
+}

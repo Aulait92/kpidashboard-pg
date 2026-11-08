@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import {
   googleCreateEvent,
   googleDeleteEvent,
+  googleGetResponses,
   googleGetBusy,
   googleHasRequiredScopes,
 } from "@/lib/calendar/google";
@@ -14,9 +15,11 @@ import { fetchIcsBusy } from "@/lib/calendar/ics";
 import {
   microsoftCreateEvent,
   microsoftDeleteEvent,
+  microsoftGetResponses,
   microsoftGetBusy,
 } from "@/lib/calendar/microsoft";
 import { decryptSecret } from "@/lib/encryption";
+import { appUrl, buildEventDescription, eventSummary } from "@/lib/whatsapp/event-text";
 import { loadConnection, type Busy, type CreatedEvent, type NewEvent } from "@/lib/calendar/tokens";
 
 export type { CalendarProvider } from "@/lib/calendar/tokens";
@@ -159,8 +162,16 @@ export async function bookAppointment(opts: {
   description?: string;
   /** Lead als Teilnehmer → der Kalender verschickt die Einladung per Mail. */
   attendeeEmail?: string | null;
-}): Promise<{ appointmentId: string; meetUrl: string | null; start: string }> {
+}): Promise<{
+  appointmentId: string;
+  meetUrl: string | null;
+  start: string;
+  manageUrl: string;
+}> {
   const adapter = await adapterFor(opts.customerId);
+  // Geheimer Verwaltungs-Link für den Lead (absagen/verschieben), 144 Bit.
+  const manageToken = randomBytes(18).toString("base64url");
+  const manageUrl = `${appUrl() ?? ""}/book/manage/${manageToken}`;
   const start = new Date(opts.start);
   const end = new Date(start.getTime() + (opts.durationMin ?? 30) * 60000);
   if (start.getTime() < Date.now()) throw new Error("Startzeit liegt in der Vergangenheit.");
@@ -180,9 +191,13 @@ export async function bookAppointment(opts: {
     start,
     end,
     summary: opts.summary,
-    description: room
-      ? `${opts.description ?? ""}\n\nVideocall: ${room}`.trim()
-      : (opts.description ?? ""),
+    description: [
+      opts.description ?? "",
+      room ? `Videocall: ${room}` : "",
+      `Termin absagen oder verschieben: ${manageUrl}`,
+    ]
+      .filter(Boolean)
+      .join("\n\n"),
     // Lead + Berater (z. B. Allianz-Adresse → Termin landet in seinem Outlook).
     attendeeEmails: [
       ...new Set(
@@ -207,9 +222,15 @@ export async function bookAppointment(opts: {
       calendarEventId: created.eventId,
       meetUrl: created.videoUrl,
       status: "booked",
+      manageToken,
     },
   });
-  return { appointmentId: appt.id, meetUrl: created.videoUrl, start: start.toISOString() };
+  return {
+    appointmentId: appt.id,
+    meetUrl: created.videoUrl,
+    start: start.toISOString(),
+    manageUrl,
+  };
 }
 
 /** "Allianz Anid Schwarzkopf" → "allianz-anid-schwarzkopf" (URL-tauglich). */
@@ -265,6 +286,7 @@ export async function getOrCreateBookingSlug(customerId: string): Promise<string
 export async function cancelAppointment(
   appointmentId: string,
   customerId: string,
+  by: "lead" | "advisor" | "team" | "system" = "team",
 ): Promise<{ calendarDeleted: boolean; note?: string }> {
   const appt = await prisma.appointment.findFirst({
     where: { id: appointmentId, customerId },
@@ -288,7 +310,158 @@ export async function cancelAppointment(
   }
   await prisma.appointment.update({
     where: { id: appt.id },
-    data: { status: "cancelled" },
+    data: { status: "cancelled", cancelledAt: new Date(), cancelledBy: by },
   });
   return { calendarDeleted, note };
+}
+
+/**
+ * Termin verschieben: zuerst den neuen Termin buchen (Slot-Recheck), erst
+ * danach den alten absagen — so entsteht nie eine Lücke ohne Termin.
+ * Übernimmt Lead, Konversation, Art und Teilnehmer des alten Termins.
+ */
+export async function rescheduleAppointment(opts: {
+  appointmentId: string;
+  customerId: string;
+  start: string;
+  mode?: "phone" | "video";
+  by: "lead" | "team";
+}): Promise<{ appointmentId: string; meetUrl: string | null; start: string; manageUrl: string }> {
+  const old = await prisma.appointment.findFirst({
+    where: { id: opts.appointmentId, customerId: opts.customerId, status: "booked" },
+    select: { id: true, leadId: true, conversationId: true, mode: true },
+  });
+  if (!old) throw new Error("Termin nicht gefunden oder bereits abgesagt.");
+  const conv = old.conversationId
+    ? await prisma.conversation.findUnique({
+        where: { id: old.conversationId },
+        select: { contactName: true, contactPhone: true, contactEmail: true, qualificationSummary: true },
+      })
+    : null;
+  const lead = old.leadId
+    ? await prisma.lead.findUnique({ where: { id: old.leadId }, select: { source: true } })
+    : null;
+  const mode = opts.mode ?? (old.mode === "video" ? "video" : "phone");
+  const name = conv?.contactName ?? conv?.contactPhone ?? "Lead";
+  const booked = await bookAppointment({
+    customerId: opts.customerId,
+    leadId: old.leadId,
+    conversationId: old.conversationId,
+    start: opts.start,
+    mode,
+    summary: eventSummary(mode, name, lead?.source ?? null),
+    description: buildEventDescription({
+      name,
+      phone: conv?.contactPhone ?? "",
+      email: conv?.contactEmail ?? null,
+      product: lead?.source ?? null,
+      mode,
+      summary: conv?.qualificationSummary ?? null,
+      conversationId: old.conversationId ?? "",
+      bookedVia: opts.by === "lead" ? "booking_page" : "bot",
+    }),
+    attendeeEmail: conv?.contactEmail ?? null,
+  });
+  await cancelAppointment(old.id, opts.customerId, opts.by);
+  return booked;
+}
+
+export type ResponseCheckResult = {
+  checked: number;
+  cancelledByLead: number;
+  cancelledByAdvisor: number;
+  gone: number;
+  errors: string[];
+};
+
+/**
+ * Antworten auf Kalendereinladungen auswerten (Cron): Lehnt der Lead oder
+ * der Berater ab bzw. wurde der Termin im Kalender gelöscht, wird er im CRM
+ * abgesagt (Rest-Teilnehmer erhalten eine Absage) und der Lead landet in der
+ * Rückrufliste.
+ */
+export async function checkAppointmentResponses(): Promise<ResponseCheckResult> {
+  const result: ResponseCheckResult = {
+    checked: 0,
+    cancelledByLead: 0,
+    cancelledByAdvisor: 0,
+    gone: 0,
+    errors: [],
+  };
+  const now = Date.now();
+  const appts = await prisma.appointment.findMany({
+    where: {
+      status: "booked",
+      calendarEventId: { not: null },
+      startsAt: { gt: new Date(now), lt: new Date(now + 60 * 24 * 60 * 60 * 1000) },
+    },
+    select: { id: true, customerId: true, conversationId: true, calendarEventId: true },
+    orderBy: { startsAt: "asc" },
+    take: 150,
+  });
+
+  for (const a of appts) {
+    try {
+      const conn = await prisma.calendarConnection.findUnique({
+        where: { customerId: a.customerId },
+        select: { provider: true, status: true },
+      });
+      if (conn?.status !== "connected") continue;
+      const r =
+        conn.provider === "microsoft"
+          ? await microsoftGetResponses(a.customerId, a.calendarEventId!)
+          : await googleGetResponses(a.customerId, a.calendarEventId!);
+      result.checked++;
+
+      const log = async (payload: unknown) => {
+        if (!a.conversationId) return;
+        await prisma.message.create({
+          data: {
+            conversationId: a.conversationId,
+            direction: "internal",
+            kind: "appointment_declined",
+            body: JSON.stringify(payload),
+            sentBy: "system",
+          },
+        });
+      };
+
+      if (r.gone) {
+        // Im Kalender gelöscht (z. B. von Hand) → im CRM nachziehen.
+        await prisma.appointment.update({
+          where: { id: a.id },
+          data: { status: "cancelled", cancelledAt: new Date(), cancelledBy: "team" },
+        });
+        await log({ by: "calendar", info: "Termin im Kalender gelöscht" });
+        result.gone++;
+        continue;
+      }
+
+      const conv = a.conversationId
+        ? await prisma.conversation.findUnique({
+            where: { id: a.conversationId },
+            select: { contactEmail: true },
+          })
+        : null;
+      const agent = await prisma.agentConfig.findUnique({
+        where: { customerId: a.customerId },
+        select: { advisorEmail: true },
+      });
+      const leadEmail = conv?.contactEmail?.toLowerCase();
+      const advisorEmail = agent?.advisorEmail?.toLowerCase();
+
+      if (leadEmail && r.responses.get(leadEmail) === "declined") {
+        await cancelAppointment(a.id, a.customerId, "lead");
+        await log({ by: "lead", info: "Lead hat die Einladung abgelehnt" });
+        result.cancelledByLead++;
+      } else if (advisorEmail && r.responses.get(advisorEmail) === "declined") {
+        await cancelAppointment(a.id, a.customerId, "advisor");
+        await log({ by: "advisor", info: "Berater hat die Einladung abgelehnt" });
+        result.cancelledByAdvisor++;
+      }
+    } catch (err) {
+      result.errors.push(`${a.id}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+  return result;
 }

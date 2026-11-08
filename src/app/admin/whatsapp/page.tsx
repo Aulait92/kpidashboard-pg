@@ -342,7 +342,13 @@ export default async function AdminWhatsAppPage({
                               ? "Terminvorschlag"
                               : m.kind === "appointment_booked"
                                 ? "📅 Termin gebucht"
-                                : m.kind}
+                                : m.kind === "appointment_cancelled"
+                                  ? "❌ Termin abgesagt"
+                                  : m.kind === "appointment_rescheduled"
+                                    ? "🔁 Termin verschoben"
+                                    : m.kind === "appointment_declined"
+                                      ? "❌ Einladung abgelehnt"
+                                      : m.kind}
                         </span>
                       </div>
                     );

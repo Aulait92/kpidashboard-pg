@@ -57,6 +57,9 @@ const INTERNAL_LABELS: Record<string, string> = {
   qualification: "Qualifizierung aktualisiert",
   appointment_proposal: "Terminwunsch notiert",
   appointment_booked: "📅 Termin gebucht",
+  appointment_cancelled: "❌ Termin abgesagt",
+  appointment_rescheduled: "🔁 Termin verschoben",
+  appointment_declined: "❌ Einladung abgelehnt",
 };
 
 export default async function BuyerChatsPage({ searchParams }: { searchParams: SearchParams }) {

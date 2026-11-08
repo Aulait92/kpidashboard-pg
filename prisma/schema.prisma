@@ -638,6 +638,11 @@ model Appointment {
   meetUrl         String?
   status          String    @default("booked") // booked | cancelled | completed | no_show
   reminderSentAt  DateTime? // gesetzt, sobald die WhatsApp-Erinnerung raus ist
+  // Geheimer Link für den Lead: /book/manage/<token> (absagen/verschieben).
+  manageToken     String?   @unique
+  cancelledAt     DateTime?
+  // lead | advisor | team (Admin/Kunde im CRM) | system
+  cancelledBy     String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

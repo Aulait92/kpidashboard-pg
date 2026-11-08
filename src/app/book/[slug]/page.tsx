@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { PhoneField } from "@/components/phone-field";
 import { SubmitButton } from "@/components/submit-button";
@@ -82,7 +83,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
   if (sp.ok && sp.a) {
     const appt = await prisma.appointment.findFirst({
       where: { id: sp.a, customerId: conn.customerId },
-      select: { startsAt: true, mode: true, meetUrl: true },
+      select: { startsAt: true, mode: true, meetUrl: true, manageToken: true },
     });
     if (appt) {
       return (
@@ -120,6 +121,14 @@ export default async function BookingPage({ params, searchParams }: Props) {
             >
               Link zum Videocall
             </a>
+          ) : null}
+          {appt.manageToken ? (
+            <Link
+              href={`/book/manage/${appt.manageToken}`}
+              className="mt-3 block text-center text-sm text-[color:var(--muted)] underline"
+            >
+              Termin verschieben oder absagen
+            </Link>
           ) : null}
         </Shell>
       );

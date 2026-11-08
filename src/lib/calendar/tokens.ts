@@ -100,3 +100,10 @@ export type NewEvent = {
 };
 
 export type CreatedEvent = { eventId: string; videoUrl: string | null };
+
+/** Antwortstatus der Teilnehmer eines Termins (E-Mail klein geschrieben). */
+export type AttendeeResponses = {
+  /** Event existiert nicht mehr (im Kalender gelöscht). */
+  gone: boolean;
+  responses: Map<string, "accepted" | "declined" | "tentative" | "none">;
+};

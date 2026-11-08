@@ -213,6 +213,13 @@ export async function getCallbackLeads(customerId: string): Promise<CallbackLead
       createdAt: true,
       outreachAt: true,
       outreachStatus: true,
+      // Letzte Absage (Lead/Berater) → sofort zurückrufen statt 24 h warten.
+      appointments: {
+        where: { status: "cancelled", cancelledBy: { in: ["lead", "advisor"] } },
+        orderBy: { cancelledAt: "desc" },
+        take: 1,
+        select: { cancelledBy: true },
+      },
       conversations: {
         select: {
           id: true,
@@ -236,7 +243,12 @@ export async function getCallbackLeads(customerId: string): Promise<CallbackLead
     const status = l.outreachStatus ?? "";
 
     let reason: string | null = null;
-    if (!l.phone) {
+    const lastCancel = l.appointments[0]?.cancelledBy;
+    if (lastCancel === "advisor") {
+      reason = "Du hast den Termin abgelehnt – bitte neuen Termin vereinbaren";
+    } else if (lastCancel === "lead") {
+      reason = "Lead hat den Termin abgesagt – kurz nachfassen";
+    } else if (!l.phone) {
       reason = "Keine Handynummer – bitte per E-Mail/Telefon nachfassen";
     } else if (status.startsWith("failed")) {
       reason = "WhatsApp nicht zustellbar";

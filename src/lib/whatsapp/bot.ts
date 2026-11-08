@@ -10,6 +10,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/prisma";
 import {
   bookAppointment,
+  cancelAppointment,
+  rescheduleAppointment,
   SlotBusyError,
   suggestSlots,
   type Slot,
@@ -78,6 +80,34 @@ const TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: "cancel_appointment",
+    description:
+      "Sagt den bereits gebuchten Termin des Leads ab (Kalendereintrag wird gelöscht, alle Teilnehmer erhalten eine Absage). Nur nutzen, wenn der Lead ausdrücklich absagen möchte — wenn er nur einen anderen Zeitpunkt will, stattdessen reschedule_appointment.",
+    input_schema: {
+      type: "object",
+      properties: {
+        grund: { type: "string", description: "Vom Lead genannter Grund (optional)." },
+      },
+    },
+  },
+  {
+    name: "reschedule_appointment",
+    description:
+      "Verschiebt den bereits gebuchten Termin auf einen neuen Zeitpunkt: bucht den neuen Termin und sagt den alten danach ab. Vorher mit get_available_slots freie Zeiten holen und den Lead wählen lassen; exakt einen gelieferten 'start'-Wert übergeben.",
+    input_schema: {
+      type: "object",
+      properties: {
+        start: { type: "string", description: "Neuer Startzeitpunkt (ISO-8601) aus get_available_slots." },
+        modus: {
+          type: "string",
+          enum: ["phone", "video"],
+          description: "Nur angeben, wenn der Lead die Art ändern möchte.",
+        },
+      },
+      required: ["start"],
+    },
+  },
+  {
     name: "propose_appointment",
     description:
       "FALLBACK, nur wenn der Kalender nicht verbunden ist (get_available_slots meldet das): Terminpräferenz/Wunschzeit festhalten, damit ein Mensch den Termin manuell einträgt. Wenn der Kalender verbunden ist, stattdessen get_available_slots + book_appointment nutzen.",
@@ -117,9 +147,10 @@ function buildSystemPrompt(
   const booked = state.upcoming
     ? [
         `BEREITS GEBUCHTER TERMIN: ${formatSlotDE(state.upcoming.startsAt.toISOString())} Uhr (${state.upcoming.mode === "video" ? "Videocall" : "Telefonat"})${state.upcoming.meetUrl ? `, Video-Link: ${state.upcoming.meetUrl}` : ""}.`,
-        "Dieser Lead hat schon einen Termin. Qualifiziere NICHT und biete KEINE neuen Termine an (kein get_available_slots/book_appointment).",
+        "Dieser Lead hat schon einen Termin. Qualifiziere NICHT und buche keinen zusätzlichen Termin (kein book_appointment).",
         "Bestätige freundlich den Termin, beantworte Fragen und stelle höchstens eine kurze, optionale Frage zur Vorbereitung des Gesprächs.",
-        "Möchte der Lead verschieben oder absagen, sage ihm, dass sich das Team dazu kurz bei ihm meldet.",
+        "Möchte der Lead VERSCHIEBEN: hole mit get_available_slots freie Zeiten, biete 2-3 an und nutze nach seiner Wahl reschedule_appointment. Bestätige danach die neue Zeit.",
+        "Möchte der Lead ABSAGEN: frag einmal kurz, ob ein anderer Termin besser passt; besteht er auf Absage, nutze cancel_appointment und bestätige freundlich.",
       ].join("\n")
     : "";
   const contactLines = [
@@ -292,7 +323,7 @@ export async function runBotTurn(conversationId: string): Promise<void> {
       startsAt: { gt: new Date() },
     },
     orderBy: { startsAt: "asc" },
-    select: { startsAt: true, mode: true, meetUrl: true },
+    select: { id: true, startsAt: true, mode: true, meetUrl: true },
   });
 
   const system = buildSystemPrompt(agent, lead?.source ?? null, {
@@ -460,6 +491,56 @@ export async function runBotTurn(conversationId: string): Promise<void> {
               console.error("[whatsapp bot] Buchung", err);
               content =
                 "Buchung fehlgeschlagen (Kalender evtl. nicht verbunden). Nutze propose_appointment als Fallback.";
+            }
+          }
+        }
+      } else if (tu.name === "cancel_appointment") {
+        if (!upcoming) {
+          content = "Es gibt keinen offenen Termin, der abgesagt werden könnte.";
+        } else {
+          try {
+            await cancelAppointment(upcoming.id, conversation.customerId, "lead");
+            await persistInternal(conversation.id, "appointment_cancelled", {
+              via: "whatsapp",
+              grund: (tu.input as { grund?: unknown }).grund ?? null,
+            });
+            content = `Termin am ${formatSlotDE(upcoming.startsAt.toISOString())} wurde abgesagt; alle Teilnehmer erhalten eine Absage. Bestätige das dem Lead kurz und freundlich und biete an, jederzeit einen neuen Termin zu finden.`;
+          } catch (err) {
+            console.error("[whatsapp bot] Absage", err);
+            content = "Absage fehlgeschlagen. Sag dem Lead, dass sich das Team kurz meldet.";
+          }
+        }
+      } else if (tu.name === "reschedule_appointment") {
+        const input = tu.input as { start?: unknown; modus?: unknown };
+        const start = typeof input.start === "string" ? input.start : "";
+        if (!upcoming) {
+          content = "Es gibt keinen offenen Termin. Nutze stattdessen book_appointment.";
+        } else if (!start || Number.isNaN(new Date(start).getTime())) {
+          content = "Ungültiger start-Wert. Hole zuerst get_available_slots.";
+        } else {
+          try {
+            const res = await rescheduleAppointment({
+              appointmentId: upcoming.id,
+              customerId: conversation.customerId,
+              start,
+              mode: input.modus === "video" ? "video" : input.modus === "phone" ? "phone" : undefined,
+              by: "lead",
+            });
+            await persistInternal(conversation.id, "appointment_rescheduled", {
+              von: upcoming.startsAt.toISOString(),
+              auf: res.start,
+            });
+            content =
+              `Termin verschoben auf ${formatSlotDE(res.start)}` +
+              (res.meetUrl ? `. Video-Link: ${res.meetUrl}` : "") +
+              ". Eine neue Kalendereinladung ist unterwegs. Bestätige dem Lead die neue Zeit.";
+          } catch (err) {
+            if (err instanceof SlotBusyError) {
+              content =
+                "Diese Zeit ist inzwischen belegt — NICHT verschoben. Hole mit get_available_slots neue Zeiten.";
+            } else {
+              console.error("[whatsapp bot] Verschieben", err);
+              content = "Verschieben fehlgeschlagen. Sag dem Lead, dass sich das Team kurz meldet.";
             }
           }
         }
