@@ -13,6 +13,7 @@ import {
 } from "@/lib/whatsapp/templates";
 import {
   addCustomerAction,
+  connectWhatsAppAction,
   deleteTemplateAction,
   saveOutreachSettingsAction,
   saveTemplateAction,
@@ -36,7 +37,19 @@ const SUGGESTED: Record<NoticePurpose, string> = {
 const input =
   "w-full rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-sm focus:border-[color:var(--brand)] focus:outline-none";
 
-export default async function WhatsAppSettingsPage() {
+const WA_MESSAGES: Record<string, { ok: boolean; text: string }> = {
+  ok: { ok: true, text: "Nummer verbunden ✓ Webhook ist gesetzt. Schreib der Nummer kurz eine Testnachricht." },
+  nokey: { ok: false, text: "Bitte den API-Key aus 360dialog eintragen." },
+  noconfig: { ok: false, text: "APP_URL oder WHATSAPP_WEBHOOK_SECRET fehlt in Railway." },
+  webhook: { ok: false, text: "360dialog hat den API-Key abgelehnt bzw. der Webhook ließ sich nicht setzen. Key prüfen und erneut speichern." },
+};
+
+export default async function WhatsAppSettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ wa?: string; c?: string }>;
+}) {
+  const sp = await searchParams;
   const session = await getCurrentSession();
   if (!session || session.role !== "ADMIN") redirect("/login");
 
@@ -49,7 +62,9 @@ export default async function WhatsAppSettingsPage() {
     select: {
       id: true,
       name: true,
-      whatsAppAccount: { select: { status: true } },
+      whatsAppAccount: {
+        select: { status: true, phoneNumber: true, phoneNumberId: true, apiKeyEnc: true },
+      },
       calendarConnection: {
         select: { status: true, provider: true, accountEmail: true, calendarId: true },
       },
@@ -149,6 +164,7 @@ export default async function WhatsAppSettingsPage() {
           return (
             <section
               key={c.id}
+              id={`kunde-${c.id}`}
               className="rounded-2xl border border-[color:var(--border)] bg-white p-5"
             >
               <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -158,6 +174,65 @@ export default async function WhatsAppSettingsPage() {
                   {c.agentConfig?.active ? "aktiv" : "inaktiv"}
                 </span>
               </div>
+
+              {sp.c === c.id && sp.wa && WA_MESSAGES[sp.wa] ? (
+                <div
+                  className={`mt-3 rounded-lg px-3 py-2 text-sm ring-1 ${
+                    WA_MESSAGES[sp.wa].ok
+                      ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
+                      : "bg-red-50 text-red-800 ring-red-200"
+                  }`}
+                >
+                  {WA_MESSAGES[sp.wa].text}
+                </div>
+              ) : null}
+
+              <form
+                action={connectWhatsAppAction}
+                className="mt-4 flex flex-wrap items-end gap-4 rounded-xl border border-[color:var(--border)] p-3"
+              >
+                <input type="hidden" name="customerId" value={c.id} />
+                <div className="w-full text-sm font-semibold">
+                  WhatsApp-Nummer (360dialog){" "}
+                  {c.whatsAppAccount?.status === "connected" ? (
+                    <span className="font-normal text-emerald-700">
+                      · verbunden ✓{c.whatsAppAccount.phoneNumber ? ` +${c.whatsAppAccount.phoneNumber}` : ""}
+                      {c.whatsAppAccount.phoneNumberId ? "" : " · wartet auf erste Nachricht"}
+                    </span>
+                  ) : (
+                    <span className="font-normal text-[color:var(--muted)]">· nicht verbunden</span>
+                  )}
+                </div>
+                <label className="min-w-[200px] flex-1 text-xs text-[color:var(--muted)]">
+                  Nummer (international)
+                  <input
+                    name="phoneNumber"
+                    inputMode="tel"
+                    placeholder="49 171 1234567"
+                    defaultValue={c.whatsAppAccount?.phoneNumber ?? ""}
+                    className={`${input} mt-1`}
+                  />
+                </label>
+                <label className="min-w-[260px] flex-[2] text-xs text-[color:var(--muted)]">
+                  API-Key aus 360dialog{" "}
+                  {c.whatsAppAccount?.apiKeyEnc ? (
+                    <span className="font-semibold text-emerald-700">· hinterlegt ✓</span>
+                  ) : null}
+                  <input
+                    name="apiKey"
+                    type="password"
+                    autoComplete="off"
+                    placeholder={c.whatsAppAccount?.apiKeyEnc ? "leer lassen = unverändert" : "API-Key einfügen"}
+                    className={`${input} mt-1`}
+                  />
+                </label>
+                <SubmitButton
+                  pendingLabel="Verbindet …"
+                  className="rounded-lg bg-[color:var(--brand)] px-4 py-1.5 text-sm font-semibold text-white"
+                >
+                  {c.whatsAppAccount?.status === "connected" ? "Neu verbinden" : "Verbinden"}
+                </SubmitButton>
+              </form>
 
               <form
                 action={saveOutreachSettingsAction}

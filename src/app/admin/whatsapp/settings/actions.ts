@@ -1,9 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
-import { encryptSecret } from "@/lib/encryption";
+import { decryptSecret, encryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
+import { setWebhook } from "@/lib/whatsapp/dialog360";
+import { appUrl } from "@/lib/whatsapp/event-text";
 
 async function requireAdmin() {
   const session = await getCurrentSession();
@@ -101,4 +104,62 @@ export async function deleteTemplateAction(formData: FormData): Promise<void> {
   if (!id) return;
   await prisma.messageTemplate.delete({ where: { id } }).catch(() => {});
   revalidatePath("/admin/whatsapp/settings");
+}
+
+/**
+ * WhatsApp-Nummer eines Kunden verbinden: 360dialog-API-Key (verschlüsselt)
+ * speichern und die Webhook-URL bei 360dialog setzen. Die URL trägt die
+ * Konto-ID, damit eingehende Nachrichten auch bei mehreren Kunden sicher dem
+ * richtigen Kunden zugeordnet werden.
+ */
+export async function connectWhatsAppAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const customerId = String(formData.get("customerId") ?? "");
+  if (!customerId) return;
+  const back = (state: string) =>
+    `/admin/whatsapp/settings?wa=${state}&c=${encodeURIComponent(customerId)}#kunde-${customerId}`;
+
+  const apiKeyRaw = String(formData.get("apiKey") ?? "").trim();
+  const phone = String(formData.get("phoneNumber") ?? "").replace(/\D/g, "").replace(/^00/, "");
+  const existing = await prisma.whatsAppAccount.findUnique({
+    where: { customerId },
+    select: { id: true, apiKeyEnc: true },
+  });
+  const apiKey = apiKeyRaw || (existing?.apiKeyEnc ? decryptSecret(existing.apiKeyEnc) : "");
+  if (!apiKey) redirect(back("nokey"));
+  const base = appUrl();
+  const secret = process.env.WHATSAPP_WEBHOOK_SECRET;
+  if (!base || !secret) redirect(back("noconfig"));
+
+  const account = await prisma.whatsAppAccount.upsert({
+    where: { customerId },
+    create: {
+      customerId,
+      provider: "360dialog",
+      apiKeyEnc: encryptSecret(apiKey),
+      phoneNumber: phone || null,
+      status: "pending",
+    },
+    update: {
+      // Neuer Key = evtl. neue Nummer → phone_number_id neu lernen.
+      ...(apiKeyRaw ? { apiKeyEnc: encryptSecret(apiKey), phoneNumberId: null } : {}),
+      ...(phone ? { phoneNumber: phone } : {}),
+    },
+    select: { id: true },
+  });
+
+  const url = `${base}/api/whatsapp/webhook?token=${encodeURIComponent(secret)}&acc=${account.id}`;
+  let ok = true;
+  try {
+    await setWebhook(apiKey, url);
+  } catch (err) {
+    ok = false;
+    console.error("[whatsapp connect]", err instanceof Error ? err.message : err);
+  }
+  await prisma.whatsAppAccount.update({
+    where: { id: account.id },
+    data: { status: ok ? "connected" : "pending" },
+  });
+  revalidatePath("/admin/whatsapp/settings");
+  redirect(back(ok ? "ok" : "webhook"));
 }

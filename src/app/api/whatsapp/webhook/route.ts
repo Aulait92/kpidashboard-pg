@@ -44,7 +44,9 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   try {
-    const result = await handleInboundPayload(payload);
+    const result = await handleInboundPayload(payload, {
+      accountId: new URL(req.url).searchParams.get("acc"),
+    });
     // Immer 200 quittieren, damit 360dialog/Meta nicht endlos erneut zustellen;
     // fachliche Fehler werden im Ergebnis gemeldet und geloggt.
     if (result.errors.length > 0) {

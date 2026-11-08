@@ -35,6 +35,21 @@ async function postMessage(apiKey: string, body: unknown): Promise<SendResult> {
   return { messageId: messages[0]?.id ?? null, raw: json ?? text };
 }
 
+/**
+ * Webhook-URL für die Nummer hinter diesem API-Key setzen (360dialog Cloud API).
+ * Eingehende Nachrichten, Status und Coexistence-Echos gehen dann an `url`.
+ */
+export async function setWebhook(apiKey: string, url: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/v1/configs/webhook`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "D360-API-KEY": apiKey },
+    body: JSON.stringify({ url }),
+  });
+  if (!res.ok) {
+    throw new Error(`360dialog ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  }
+}
+
 /** Freitext-Nachricht senden (nur innerhalb des 24-Stunden-Fensters erlaubt). */
 export function sendText(
   apiKey: string,

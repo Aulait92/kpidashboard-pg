@@ -44,6 +44,7 @@ export type InboundResult = { processed: number; errors: string[] };
 /** Verarbeitet einen kompletten Webhook-Payload (Nachrichten + Status). */
 export async function handleInboundPayload(
   payload: unknown,
+  opts: { accountId?: string | null } = {},
 ): Promise<InboundResult> {
   const errors: string[] = [];
   let processed = 0;
@@ -60,6 +61,22 @@ export async function handleInboundPayload(
       let account = phoneNumberId
         ? await prisma.whatsAppAccount.findFirst({ where: { phoneNumberId } })
         : null;
+      if (!account && opts.accountId) {
+        // Webhook-URL trägt die Konto-ID (beim Verbinden gesetzt). Beim ersten
+        // Event wird die phone_number_id gelernt; danach ist sie maßgeblich.
+        const hinted = await prisma.whatsAppAccount.findUnique({
+          where: { id: opts.accountId },
+        });
+        if (hinted && (!hinted.phoneNumberId || hinted.phoneNumberId === phoneNumberId)) {
+          account = hinted;
+          if (phoneNumberId && !hinted.phoneNumberId) {
+            await prisma.whatsAppAccount.update({
+              where: { id: hinted.id },
+              data: { phoneNumberId },
+            });
+          }
+        }
+      }
       if (!account) {
         // Sandbox-/Single-Tenant-Komfort: Gibt es genau EIN Konto, wird es
         // genutzt (und die phone_number_id nachgetragen). In Produktion mit
