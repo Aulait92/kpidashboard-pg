@@ -237,9 +237,9 @@ async function LeadsBody({
           className="min-w-0 flex-1 rounded-xl border border-[color:var(--border)] bg-white px-4 py-2.5 text-sm focus:border-[color:var(--brand)] focus:outline-none"
         />
         {q ? (
-          <a href="/buyer/leads" className="rounded-xl border border-[color:var(--border)] bg-white px-4 py-2.5 text-sm">
+          <Link href="/buyer/leads" className="rounded-xl border border-[color:var(--border)] bg-white px-4 py-2.5 text-sm">
             ✕
-          </a>
+          </Link>
         ) : null}
       </form>
       {whatsapp && !q ? <TodayPanel customerId={customerId} /> : null}
@@ -274,8 +274,8 @@ function CallbackCard({
         <p className="mt-1 text-xs text-[color:var(--muted)]">
           Diese Leads haben weder über die Buchungsseite noch im WhatsApp-Chat
           einen Termin gebucht. Am besten heute noch anrufen – und danach das
-          Ergebnis eintragen: Termin buchen, „Nicht erreicht" (morgen wieder
-          in der Liste) oder „Verloren".
+          Ergebnis eintragen: Termin buchen, „Nicht erreicht“ (morgen wieder
+          in der Liste) oder „Verloren“.
         </p>
       </div>
       {callbacks.length > 0 ? (
