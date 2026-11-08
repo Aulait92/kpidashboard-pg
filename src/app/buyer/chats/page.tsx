@@ -4,9 +4,9 @@ import { AutoRefresh } from "@/components/auto-refresh";
 import { PageHeader } from "@/components/buyer-shell";
 import { SubmitButton } from "@/components/submit-button";
 import { getBuyerContext } from "@/lib/buyer-context";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, formatPhone } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
-import { displayProduct, statusLabel } from "@/lib/products";
+import { displayProduct, statusLabel, statusToneClass } from "@/lib/products";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import {
   cancelAppointmentBuyerAction,
@@ -33,6 +33,17 @@ const ERRORS: Record<string, string> = {
 };
 
 const TZ = "Europe/Berlin";
+
+/** Heute → „14:05", gestern → „Gestern", sonst „07.11.". */
+function shortTime(d: Date): string {
+  const day = (x: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(x);
+  const now = new Date();
+  if (day(d) === day(now)) {
+    return new Intl.DateTimeFormat("de-DE", { timeZone: TZ, hour: "2-digit", minute: "2-digit" }).format(d);
+  }
+  if (day(d) === day(new Date(now.getTime() - 86400000))) return "Gestern";
+  return new Intl.DateTimeFormat("de-DE", { timeZone: TZ, day: "2-digit", month: "2-digit" }).format(d) + ".";
+}
 function formatAppt(d: Date): string {
   return new Intl.DateTimeFormat("de-DE", {
     weekday: "short",
@@ -111,6 +122,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
       qualified: true,
       needsAttention: true,
       lastMessageAt: true,
+      lead: { select: { status: true } },
       messages: {
         where: { direction: { in: ["inbound", "outbound"] } },
         orderBy: { createdAt: "desc" },
@@ -169,7 +181,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
       <InfoSection title="Kontakt">
         <InfoRow label="Telefon">
           <a href={`tel:+${active.contactPhone}`} className="text-[color:var(--brand)] hover:underline">
-            +{active.contactPhone}
+            {formatPhone(active.contactPhone)}
           </a>
         </InfoRow>
         {active.contactEmail ? (
@@ -314,46 +326,47 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                   <Link
                     key={c.id}
                     href={`/buyer/chats?c=${c.id}${listQs ? `&${listQs}` : ""}`}
-                    className={`mb-1 flex gap-3 rounded-xl p-3 ${
+                    className={`mb-0.5 flex gap-3 rounded-xl px-3 py-2.5 ${
                       isActive
                         ? "bg-[color:var(--brand-soft)] ring-1 ring-[color:var(--brand)]/30"
                         : "hover:bg-[color:var(--background)]"
                     }`}
                   >
-                    <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-xs font-bold text-[color:var(--brand-dark)]">
+                    <span className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-[11px] font-bold text-[color:var(--brand-dark)]">
                       {initials(c.contactName ?? c.contactPhone)}
+                      {c.needsAttention ? (
+                        <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-rose-600" />
+                      ) : null}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline justify-between gap-2">
-                        <span className="truncate text-sm font-semibold">
-                          {c.contactName ?? `+${c.contactPhone}`}
+                        <span className={`truncate text-sm ${c.needsAttention ? "font-bold" : "font-semibold"}`}>
+                          {c.contactName ?? formatPhone(c.contactPhone)}
                         </span>
-                        <span className="shrink-0 text-[10px] text-[color:var(--muted)]">
-                          {c.lastMessageAt ? formatDateTime(c.lastMessageAt) : ""}
+                        <span className="shrink-0 text-[11px] text-[color:var(--muted)]">
+                          {c.lastMessageAt ? shortTime(c.lastMessageAt) : ""}
                         </span>
                       </div>
-                      <div className="flex gap-1.5 py-0.5">
-                        <span
-                          className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${
-                            c.botActive ? "bg-emerald-100 text-emerald-800" : "bg-zinc-100 text-zinc-600"
-                          }`}
-                        >
-                          {c.botActive ? "Assistent" : "Du"}
-                        </span>
+                      <p className="truncate text-xs text-[color:var(--muted)]">
+                        {last ? `${last.direction === "outbound" ? (c.botActive ? "Assistent: " : "Du: ") : ""}${last.body ?? ""}` : ""}
+                      </p>
+                      <div className="mt-1 flex gap-1.5">
                         {c.needsAttention ? (
-                          <span className="rounded-full bg-rose-600 px-1.5 py-0.5 text-[9px] font-semibold text-white">
+                          <span className="rounded-full bg-rose-50 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 ring-1 ring-inset ring-rose-200">
                             Braucht dich
                           </span>
                         ) : null}
-                        {c.qualified ? (
-                          <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[9px] font-semibold text-blue-700">
-                            qualifiziert
+                        {c.lead?.status ? (
+                          <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset ${statusToneClass(c.lead.status)}`}>
+                            {statusLabel(c.lead.status, true)}
+                          </span>
+                        ) : null}
+                        {!c.botActive ? (
+                          <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 ring-1 ring-inset ring-zinc-200">
+                            Du hast übernommen
                           </span>
                         ) : null}
                       </div>
-                      <p className="truncate text-xs text-[color:var(--muted)]">
-                        {last ? `${last.direction === "outbound" ? "↳ " : ""}${last.body ?? ""}` : ""}
-                      </p>
                     </div>
                   </Link>
                 );
@@ -366,7 +379,11 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
         <section className={`${active ? "flex" : "hidden md:flex"} min-w-0 flex-1 flex-col bg-[color:var(--background)]`}>
           {!active ? (
             <div className="flex flex-1 items-center justify-center p-6 text-sm text-[color:var(--muted)]">
-              Wähle links einen Chat.
+              <span className="flex flex-col items-center gap-2 text-center">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-xl">💬</span>
+                <span className="font-medium text-[color:var(--foreground)]">Wähle einen Chat aus</span>
+                <span className="max-w-xs text-xs">Hier siehst du, was dein Assistent mit deinen Leads schreibt, und kannst jederzeit selbst übernehmen.</span>
+              </span>
             </div>
           ) : (
             <>
@@ -378,7 +395,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                   <div className="min-w-0">
                     <div className="truncate font-bold">{active.contactName ?? `+${active.contactPhone}`}</div>
                     <a href={`tel:+${active.contactPhone}`} className="text-xs text-[color:var(--brand)] hover:underline">
-                      📞 +{active.contactPhone}
+                      {formatPhone(active.contactPhone)}
                     </a>
                   </div>
                 </div>

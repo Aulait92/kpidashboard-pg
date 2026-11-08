@@ -8,7 +8,7 @@ import {
   type StornogrundOption,
 } from "@/components/storno-dialog";
 import { formatDate, formatEUR } from "@/lib/format";
-import { displayProduct } from "@/lib/products";
+import { displayProduct, statusToneClass } from "@/lib/products";
 import { cn } from "@/lib/utils";
 
 export type { StornogrundOption };
@@ -40,17 +40,15 @@ function formatAppt(d: Date): string {
   }).format(d);
 }
 
-function statusStyle(status: string | null, closed: boolean) {
-  if (closed) return "bg-emerald-50 text-emerald-700";
-  if (!status) return "bg-zinc-100 text-zinc-600";
-  const lower = status.toLowerCase();
-  if (lower.startsWith("storno")) return "bg-rose-100 text-rose-800";
-  if (status === "Kein Interesse") return "bg-rose-50 text-rose-700";
-  if (status === "Termin vereinbart" || status === "Angebot/Beratung läuft")
-    return "bg-blue-50 text-blue-700";
-  if (status === "Erreicht" || status === "Qualifiziert")
-    return "bg-amber-50 text-amber-700";
-  return "bg-zinc-100 text-zinc-600";
+function statusText(
+  l: BuyerLeadRow,
+  labels: Record<string, string>,
+  cancelled: boolean,
+): string {
+  if (cancelled) return "Storno";
+  if (l.closedAt != null) return "Abschluss";
+  if (!l.status) return "Neuer Lead";
+  return labels[l.status] ?? l.status;
 }
 
 function isCancelled(status: string | null): boolean {
@@ -70,6 +68,7 @@ export function BuyerLeadsTable({
 }) {
   const router = useRouter();
   const [openStorno, setOpenStorno] = useState<BuyerLeadRow | null>(null);
+  const singleProduct = new Set(leads.map((l) => l.source ?? "")).size <= 1;
 
   if (leads.length === 0) {
     return (
@@ -83,27 +82,56 @@ export function BuyerLeadsTable({
   return (
     <>
       <div className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]">
-        <div className="border-b border-[color:var(--border)] px-5 py-4">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--brand)]">
-            Leads
-          </div>
-          <h2 className="mt-0.5 text-lg font-semibold tracking-tight">
-            Deine Leads im Zeitraum
+        <div className="flex items-baseline justify-between gap-3 border-b border-[color:var(--border)] px-5 py-3.5">
+          <h2 className="text-base font-semibold tracking-tight">
+            Alle Leads <span className="font-normal text-[color:var(--muted)]">· {leads.length}</span>
           </h2>
-          <p className="mt-1 text-xs text-[color:var(--muted)]">
-            Klick auf eine Zeile öffnet die Detail-Ansicht.
-            {leads.some((l) => l.stornoOptions.length > 0)
-              ? " Storno-Button öffnet ein Fenster zur Auswahl des Grunds plus Bemerkung."
-              : ""}
-          </p>
+          <span className="hidden text-xs text-[color:var(--muted)] sm:inline">Zeile anklicken für Details</span>
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-[640px] w-full text-sm">
+
+        {/* Handy: Karten statt Tabelle */}
+        <ul className="divide-y divide-[color:var(--border)] md:hidden">
+          {leads.map((l) => {
+            const cancelled = isCancelled(l.status);
+            const label = statusText(l, statusLabels, cancelled);
+            return (
+              <li key={l.id}>
+                <button
+                  type="button"
+                  onClick={() => router.push(`/buyer/leads/${l.id}?from=leads`)}
+                  className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left active:bg-[color:var(--background)]"
+                >
+                  <div className="min-w-0">
+                    <div className="truncate font-medium">{l.name ?? "–"}</div>
+                    <div className="mt-0.5 text-xs text-[color:var(--muted)]">
+                      {formatDate(l.createdAt)}
+                      {singleProduct ? "" : ` · ${displayProduct(l.source)}`}
+                    </div>
+                    {l.appointment ? (
+                      <div className="mt-1 text-xs font-medium text-blue-700">
+                        {formatAppt(new Date(l.appointment.startsAt))} Uhr ·{" "}
+                        {l.appointment.mode === "video" ? "Video" : "Telefon"}
+                      </div>
+                    ) : l.callback ? (
+                      <div className="mt-1 text-xs font-medium text-amber-700">Rückruf nötig</div>
+                    ) : null}
+                  </div>
+                  <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset", statusToneClass(cancelled ? "Storno" : l.status))}>
+                    {label}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+
+        <div className="hidden overflow-x-auto md:block">
+          <table className="w-full text-sm">
             <thead className="bg-[color:var(--brand-soft)]/30 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
               <tr>
                 <th className="px-3 py-2.5 text-left">Datum</th>
                 <th className="px-3 py-2.5 text-left">Name</th>
-                <th className="px-3 py-2.5 text-left">Produkt</th>
+                {singleProduct ? null : <th className="px-3 py-2.5 text-left">Produkt</th>}
                 <th className="px-3 py-2.5 text-left">Status</th>
                 {showLeadCost ? (
                   <th className="px-3 py-2.5 text-right">Lead-Kosten</th>
@@ -134,34 +162,30 @@ export function BuyerLeadsTable({
                         <span className="text-[color:var(--muted)]">–</span>
                       )}
                     </td>
-                    <td className="px-3 py-2.5 text-[color:var(--foreground)]">
-                      {displayProduct(l.source)}
-                    </td>
+                    {singleProduct ? null : (
+                      <td className="px-3 py-2.5 text-[color:var(--foreground)]">
+                        {displayProduct(l.source)}
+                      </td>
+                    )}
                     <td className="px-3 py-2.5">
-                      <span
-                        className={cn(
-                          "inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium",
-                          statusStyle(l.status, closed),
-                        )}
-                      >
-                        {cancelled
-                          ? "Storno"
-                          : closed
-                            ? "Abschluss"
-                            : l.status
-                              ? (statusLabels[l.status] ?? l.status)
-                              : "Offen"}
-                      </span>
-                      {l.appointment ? (
-                        <div className="mt-1 text-[11px] font-medium text-blue-700">
-                          📅 {formatAppt(new Date(l.appointment.startsAt))} Uhr ·{" "}
-                          {l.appointment.mode === "video" ? "Video" : "Telefon"}
-                        </div>
-                      ) : l.callback ? (
-                        <div className="mt-1 text-[11px] font-semibold text-amber-700">
-                          📞 Rückruf nötig
-                        </div>
-                      ) : null}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={cn(
+                            "inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset",
+                            statusToneClass(cancelled ? "Storno" : closed ? "Abschluss" : l.status),
+                          )}
+                        >
+                          {statusText(l, statusLabels, cancelled)}
+                        </span>
+                        {l.appointment ? (
+                          <span className="text-xs text-blue-700">
+                            {formatAppt(new Date(l.appointment.startsAt))} Uhr ·{" "}
+                            {l.appointment.mode === "video" ? "Video" : "Telefon"}
+                          </span>
+                        ) : l.callback ? (
+                          <span className="text-xs font-medium text-amber-700">Rückruf nötig</span>
+                        ) : null}
+                      </div>
                     </td>
                     {showLeadCost ? (
                       <td className="px-3 py-2.5 text-right tabular-nums">

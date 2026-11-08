@@ -1,21 +1,17 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { LogOut } from "lucide-react";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { BuyerFilterBar } from "@/components/buyer-filter-bar";
 import { PageHeader } from "@/components/buyer-shell";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
-import { attentionCount } from "@/lib/whatsapp/attention";
 import {
   KanbanBoard,
   type KanbanLead,
 } from "@/components/kanban-board";
 import { LiveUpdated } from "@/components/live-updated";
 import { PullToRefresh } from "@/components/pull-to-refresh";
-import { logoutAction } from "@/app/login/actions";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { parseRangeFromSearchParams } from "@/lib/date-ranges";
-import { formatDate } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { pipelinePhasesFor } from "@/lib/products";
 
@@ -45,10 +41,6 @@ export default async function BuyerKanbanPage({
   const { key: rangeKey, range } = parseRangeFromSearchParams(sp);
   const renderedAt = Date.now();
 
-  const customer = await prisma.customer.findUnique({
-    where: { id: session.customerId },
-    select: { name: true },
-  });
 
   return (
     <PullToRefresh>
@@ -116,6 +108,12 @@ async function KanbanBody({
       source: true,
       status: true,
       closeValue: true,
+      appointments: {
+        where: { status: "booked", startsAt: { gt: new Date() } },
+        orderBy: { startsAt: "asc" },
+        take: 1,
+        select: { startsAt: true, mode: true },
+      },
     },
   });
 
@@ -132,10 +130,13 @@ async function KanbanBody({
       status: l.status,
       createdAt: l.createdAt,
       closeValue: l.closeValue != null ? Number(l.closeValue) : null,
+      appointment: l.appointments[0]
+        ? { startsAt: l.appointments[0].startsAt.toISOString(), mode: l.appointments[0].mode }
+        : null,
     }));
 
   return (
-    <div className="mt-6">
+    <div>
       <KanbanBoard
         key={rangeKey}
         leads={leads}

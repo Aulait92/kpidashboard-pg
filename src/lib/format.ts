@@ -61,3 +61,13 @@ export function formatDuration(hours: number | null | undefined): string {
   if (hours < 48) return `${num.format(hours)} h`;
   return `${num.format(hours / 24)} d`;
 }
+
+/** „491711234567" → „+49 171 1234567" (lesbar, für Anzeige und tel:-Links). */
+export function formatPhone(digits: string | null | undefined): string {
+  const d = (digits ?? "").replace(/\D/g, "");
+  if (!d) return "";
+  const cc = ["49", "43", "41"].find((c) => d.startsWith(c));
+  if (!cc) return `+${d}`;
+  const rest = d.slice(cc.length);
+  return `+${cc} ${rest.slice(0, 3)} ${rest.slice(3)}`.trim();
+}

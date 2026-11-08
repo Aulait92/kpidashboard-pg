@@ -268,3 +268,36 @@ export function statusLabel(status: string | null | undefined, whatsapp: boolean
   if (!status) return null;
   return whatsapp ? (WHATSAPP_STATUS_LABELS[status] ?? status) : status;
 }
+
+// ─── Einheitliche Status-Farben (Liste, Pipeline, Detail, Chats) ──────────
+const PHASE_TONES: Record<string, string> = {
+  neu: "bg-zinc-100 text-zinc-700 ring-zinc-200",
+  "nicht-erreicht": "bg-orange-50 text-orange-700 ring-orange-200",
+  gespraech: "bg-sky-50 text-sky-700 ring-sky-200",
+  beratung: "bg-blue-50 text-blue-700 ring-blue-200",
+  "angebot-gesendet": "bg-violet-50 text-violet-700 ring-violet-200",
+  abschluss: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  "kein-interesse": "bg-rose-50 text-rose-700 ring-rose-200",
+  disqualifiziert: "bg-zinc-100 text-zinc-500 ring-zinc-200",
+};
+
+/** Tailwind-Klassen für einen Status-Chip (inkl. „Im Gespräch"). */
+export function statusToneClass(status: string | null | undefined): string {
+  const s = (status ?? "Neuer Lead").trim();
+  if (s.toLowerCase().startsWith("storno")) return "bg-rose-100 text-rose-800 ring-rose-200";
+  if (s === "Im Gespräch") return PHASE_TONES.gespraech;
+  const phase = findPhaseForStatus(s);
+  return PHASE_TONES[phase?.key ?? "neu"] ?? PHASE_TONES.neu;
+}
+
+/** Punkt-Farbe je Pipeline-Spalte. */
+export const PHASE_DOT: Record<string, string> = {
+  neu: "bg-zinc-400",
+  "nicht-erreicht": "bg-orange-400",
+  gespraech: "bg-sky-400",
+  beratung: "bg-blue-500",
+  "angebot-gesendet": "bg-violet-500",
+  abschluss: "bg-emerald-500",
+  "kein-interesse": "bg-rose-400",
+  disqualifiziert: "bg-zinc-400",
+};

@@ -70,16 +70,16 @@ export function FunnelHero({ kpis }: { kpis: Kpis }) {
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-4">
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--brand)]">
-            Funnel · Lead → Abschluss
+            Vom Lead zum Abschluss
           </div>
           <h2 className="mt-0.5 text-lg font-semibold tracking-tight">
-            Wie performt dein Funnel
+            Dein Vertriebstrichter
           </h2>
         </div>
         <div className="flex flex-wrap items-center gap-4 sm:gap-6 sm:text-right">
           <div>
             <div className="text-[11px] uppercase tracking-wide text-[color:var(--muted)]">
-              Closing Rate
+              Abschlussquote
             </div>
             <div className="text-lg font-bold tabular-nums sm:text-xl">
               {formatPercent(kpis.closingRate)}
@@ -87,7 +87,7 @@ export function FunnelHero({ kpis }: { kpis: Kpis }) {
           </div>
           <div>
             <div className="text-[11px] uppercase tracking-wide text-[color:var(--muted)]">
-              Throughput
+              Abschlüsse
             </div>
             <div className="text-lg font-bold tabular-nums sm:text-xl">
               {formatNumber(kpis.closedLeads)} / {formatNumber(kpis.nettoLeads)}
@@ -125,7 +125,7 @@ export function FunnelHero({ kpis }: { kpis: Kpis }) {
         <Stage
           label="Abschluss"
           count={kpis.closedLeads}
-          hint={`${formatPercent(kpis.closingRate)} Closing`}
+          hint={`${formatPercent(kpis.closingRate)} Abschlussquote`}
           filledRatio={ratio(kpis.closedLeads)}
           emphasis
         />

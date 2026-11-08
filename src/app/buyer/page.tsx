@@ -1,18 +1,15 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { LogOut } from "lucide-react";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { BuyerFilterBar } from "@/components/buyer-filter-bar";
 import { PageHeader } from "@/components/buyer-shell";
 import { TodayPanel } from "@/components/today-panel";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
-import { attentionCount } from "@/lib/whatsapp/attention";
 import { FunnelHero } from "@/components/funnel-hero";
 import { KpiCard, type Delta } from "@/components/kpi-card";
 import { LiveUpdated } from "@/components/live-updated";
 import { MonthlyForecast } from "@/components/monthly-forecast";
 import { PullToRefresh } from "@/components/pull-to-refresh";
-import { logoutAction } from "@/app/login/actions";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
 import {
@@ -238,7 +235,7 @@ async function BuyerDashboardBody({
             sparkline={{ points: ts.points, dataKey: "reachabilityRate" }}
           />
           <KpiCard
-            label="Closing Rate"
+            label="Abschlussquote"
             value={formatPercent(k.closingRate)}
             hint={`${k.closedLeads} Abschlüsse`}
             delta={delta(k.closingRate, p.closingRate)}
@@ -313,8 +310,8 @@ async function BuyerDashboardBody({
             Was du verdient hast
           </h2>
           <p className="mt-1 text-xs text-[color:var(--muted)]">
-            Aus den Abschlusswerten, die du in der Pipeline-Ansicht beim
-            Drop auf „Abschluss" eingibst.
+            Aus den Abschlusswerten, die du einträgst, wenn du einen Lead auf
+            „Abschluss“ setzt.
           </p>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

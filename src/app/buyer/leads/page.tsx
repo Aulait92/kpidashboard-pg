@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { LogOut } from "lucide-react";
+import { CalendarPlus, ChevronDown, Phone } from "lucide-react";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { BuyerFilterBar } from "@/components/buyer-filter-bar";
 import {
@@ -9,21 +9,18 @@ import {
   type BuyerLeadRow,
 } from "@/components/buyer-leads-table";
 import { PageHeader } from "@/components/buyer-shell";
-import { TodayPanel } from "@/components/today-panel";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
-import { attentionCount } from "@/lib/whatsapp/attention";
 import { LiveUpdated } from "@/components/live-updated";
 import { PullToRefresh } from "@/components/pull-to-refresh";
-import { logoutAction } from "@/app/login/actions";
 import { callbackOutcomeAction, getStornogruendePerLead } from "@/app/buyer/actions";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { parseRangeFromSearchParams } from "@/lib/date-ranges";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatPhone } from "@/lib/format";
 import { loadRetainerConfig } from "@/lib/customer-spend";
 import { SubmitButton } from "@/components/submit-button";
 import { getOrCreateBookingSlug } from "@/lib/calendar";
 import { prisma } from "@/lib/prisma";
-import { displayProduct, WHATSAPP_STATUS_LABELS } from "@/lib/products";
+import { WHATSAPP_STATUS_LABELS } from "@/lib/products";
 import {
   getCallbackLeads,
   type CallbackLead,
@@ -56,10 +53,6 @@ export default async function BuyerLeadsPage({
   const { key: rangeKey, range } = parseRangeFromSearchParams(sp);
   const renderedAt = Date.now();
 
-  const customer = await prisma.customer.findUnique({
-    where: { id: session.customerId },
-    select: { name: true },
-  });
 
   return (
     <PullToRefresh>
@@ -216,7 +209,6 @@ async function LeadsBody({
           </Link>
         ) : null}
       </form>
-      {whatsapp && !q ? <TodayPanel customerId={customerId} /> : null}
       {whatsapp && !q ? <CallbackCard callbacks={callbacks} bookingSlug={bookingSlug} /> : null}
       <BuyerLeadsTable
         leads={leads}
@@ -234,98 +226,105 @@ function CallbackCard({
   callbacks: CallbackLead[];
   bookingSlug: string | null;
 }) {
-  return (
-    <section className="overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(217,119,6,0.18)]">
-      <div className="border-b border-amber-100 bg-amber-50/60 px-5 py-4">
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
-          Rückruf nötig
-        </div>
-        <h2 className="mt-0.5 text-lg font-semibold tracking-tight">
-          {callbacks.length === 0
-            ? "Alles erledigt – kein Lead wartet auf deinen Anruf"
-            : `${callbacks.length} ${callbacks.length === 1 ? "Lead wartet" : "Leads warten"} auf deinen Anruf`}
-        </h2>
-        <p className="mt-1 text-xs text-[color:var(--muted)]">
-          Diese Leads haben weder über die Buchungsseite noch im WhatsApp-Chat
-          einen Termin gebucht. Am besten heute noch anrufen – und danach das
-          Ergebnis eintragen: Termin buchen, „Nicht erreicht“ (morgen wieder
-          in der Liste) oder „Verloren“.
-        </p>
-      </div>
-      {callbacks.length > 0 ? (
-        <ul className="divide-y divide-[color:var(--border)]">
-          {callbacks.map((c) => (
-            <li
-              key={c.id}
-              className="flex flex-col gap-2 px-5 py-3 sm:flex-row sm:items-center sm:justify-between"
+  if (callbacks.length === 0) {
+    return (
+      <section className="flex items-center gap-3 rounded-2xl border border-[color:var(--border)] bg-white px-5 py-4 text-sm">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">✓</span>
+        <span>
+          <b>Keine offenen Rückrufe.</b>{" "}
+          <span className="text-[color:var(--muted)]">Alle Leads haben einen Termin oder ein Ergebnis.</span>
+        </span>
+      </section>
+    );
+  }
+  const first = callbacks.slice(0, 5);
+  const rest = callbacks.slice(5);
+  const row = (c: CallbackLead) => (
+    <li key={c.id} className="flex flex-col gap-3 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <Link href={`/buyer/leads/${c.id}?from=leads`} className="truncate font-medium hover:text-[color:var(--brand)]">
+            {c.name ?? "Unbekannt"}
+          </Link>
+          {c.conversationId ? (
+            <Link
+              href={`/buyer/chats?c=${c.conversationId}`}
+              className="shrink-0 text-xs text-[color:var(--muted)] hover:text-[color:var(--brand)]"
             >
-              <div className="min-w-0">
-                <Link
-                  href={`/buyer/leads/${c.id}?from=leads`}
-                  className="font-semibold hover:text-[color:var(--brand)]"
-                >
-                  {c.name ?? "Unbekannt"}
-                </Link>
-                <div className="text-xs text-[color:var(--muted)]">
-                  {displayProduct(c.source)} · eingegangen {formatDate(c.createdAt)} ·{" "}
-                  <span className="text-amber-700">{c.reason}</span>
-                  {c.conversationId ? (
-                    <>
-                      {" · "}
-                      <Link
-                        href={`/buyer/chats?c=${c.conversationId}`}
-                        className="font-medium text-[color:var(--brand)] hover:underline"
-                      >
-                        Chat lesen
-                      </Link>
-                    </>
-                  ) : null}
-                </div>
-              </div>
-              <div className="flex shrink-0 flex-wrap items-center gap-2">
-                {c.phone ? (
-                  <a
-                    href={`tel:+${c.phone}`}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[color:var(--brand)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-dark)]"
-                  >
-                    📞 +{c.phone}
-                  </a>
-                ) : null}
-                {/* Ergebnis des Anrufs → Lead verlässt die Liste */}
-                {bookingSlug ? (
-                  <a
-                    href={`/book/${bookingSlug}?lead=${c.id}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
-                  >
-                    📅 Termin buchen
-                  </a>
-                ) : null}
-                <form action={callbackOutcomeAction}>
-                  <input type="hidden" name="leadId" value={c.id} />
-                  <input type="hidden" name="outcome" value="not_reached" />
-                  <SubmitButton
-                    pendingLabel="…"
-                    className="rounded-lg border border-[color:var(--border)] px-3 py-2 text-xs font-semibold hover:border-amber-400"
-                  >
-                    Nicht erreicht
-                  </SubmitButton>
-                </form>
-                <form action={callbackOutcomeAction}>
-                  <input type="hidden" name="leadId" value={c.id} />
-                  <input type="hidden" name="outcome" value="lost" />
-                  <SubmitButton
-                    pendingLabel="…"
-                    className="rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50"
-                  >
-                    Verloren
-                  </SubmitButton>
-                </form>
-              </div>
-            </li>
-          ))}
-        </ul>
+              Chat
+            </Link>
+          ) : null}
+        </div>
+        <div className="mt-0.5 text-xs text-[color:var(--muted)]">
+          <span className="text-amber-700">{c.reason}</span> · seit {formatDate(c.createdAt)}
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center gap-1.5">
+        {c.phone ? (
+          <a
+            href={`tel:+${c.phone}`}
+            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-[color:var(--brand)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[color:var(--brand-dark)]"
+          >
+            <Phone className="h-3.5 w-3.5" />
+            <span className="sm:hidden">Anrufen</span>
+            <span className="hidden sm:inline">{formatPhone(c.phone)}</span>
+          </a>
+        ) : null}
+        {bookingSlug ? (
+          <a
+            href={`/book/${bookingSlug}?lead=${c.id}`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[color:var(--border)] bg-white px-3 py-1.5 text-xs font-semibold hover:border-[color:var(--brand)]"
+          >
+            <CalendarPlus className="h-3.5 w-3.5" /> Termin
+          </a>
+        ) : null}
+        <details className="group relative">
+          <summary className="flex h-[30px] cursor-pointer list-none items-center rounded-lg border border-[color:var(--border)] bg-white px-2 text-xs font-semibold hover:border-[color:var(--brand)] [&::-webkit-details-marker]:hidden">
+            Ergebnis <ChevronDown className="ml-1 h-3.5 w-3.5" />
+          </summary>
+          <div className="absolute right-0 z-20 mt-1 w-48 overflow-hidden rounded-xl border border-[color:var(--border)] bg-white py-1 text-sm shadow-lg">
+            <form action={callbackOutcomeAction}>
+              <input type="hidden" name="leadId" value={c.id} />
+              <input type="hidden" name="outcome" value="not_reached" />
+              <SubmitButton pendingLabel="…" className="block w-full px-3 py-2 text-left hover:bg-[color:var(--background)]">
+                Nicht erreicht
+                <span className="block text-[11px] text-[color:var(--muted)]">Morgen wieder in der Liste</span>
+              </SubmitButton>
+            </form>
+            <form action={callbackOutcomeAction}>
+              <input type="hidden" name="leadId" value={c.id} />
+              <input type="hidden" name="outcome" value="lost" />
+              <SubmitButton pendingLabel="…" className="block w-full px-3 py-2 text-left text-rose-700 hover:bg-rose-50">
+                Verloren
+                <span className="block text-[11px] text-rose-400">Kein Interesse</span>
+              </SubmitButton>
+            </form>
+          </div>
+        </details>
+      </div>
+    </li>
+  );
+  return (
+    <section className="overflow-hidden rounded-2xl border border-amber-200 bg-white">
+      <div className="flex items-baseline justify-between gap-3 border-b border-amber-100 bg-amber-50/50 px-5 py-3.5">
+        <h2 className="text-base font-semibold tracking-tight">
+          Rückrufe <span className="font-normal text-[color:var(--muted)]">· {callbacks.length}</span>
+        </h2>
+        <span className="hidden text-xs text-[color:var(--muted)] sm:inline">
+          Nach dem Anruf Ergebnis eintragen – dann verschwindet der Lead aus der Liste
+        </span>
+      </div>
+      <ul className="divide-y divide-[color:var(--border)]">{first.map(row)}</ul>
+      {rest.length > 0 ? (
+        <details className="group border-t border-[color:var(--border)]">
+          <summary className="cursor-pointer list-none px-5 py-2.5 text-center text-xs font-semibold text-[color:var(--brand)] [&::-webkit-details-marker]:hidden">
+            <span className="group-open:hidden">Alle {callbacks.length} anzeigen</span>
+            <span className="hidden group-open:inline">Weniger anzeigen</span>
+          </summary>
+          <ul className="divide-y divide-[color:var(--border)] border-t border-[color:var(--border)]">{rest.map(row)}</ul>
+        </details>
       ) : null}
     </section>
   );

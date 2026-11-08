@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { setLeadStatusAction } from "@/app/buyer/actions";
 import {
   CLOSED_STATUS,
+  PHASE_DOT,
   PIPELINE_PHASES,
   displayProduct,
   type LeadStatus,
@@ -21,6 +22,8 @@ export type KanbanLead = {
   status: string | null;
   createdAt: Date;
   closeValue: number | null;
+  /** Nächster gebuchter Termin (WhatsApp-Kunden). */
+  appointment?: { startsAt: string; mode: string } | null;
 };
 
 // Spalten-Design: nicht 1:1 pro Status, sondern in funktionalen Phasen
@@ -95,6 +98,7 @@ export function KanbanBoard({
   const [leads, setLeads] = useState<KanbanLead[]>(initialLeads);
   const [dragLeadId, setDragLeadId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+  const [mobilePhase, setMobilePhase] = useState<string | null>(null);
   const [closeDialog, setCloseDialog] = useState<{
     leadId: string;
     leadName: string | null;
@@ -189,8 +193,65 @@ export function KanbanBoard({
   // (≈ 6 × 180 px) kippt das Layout auf horizontalen Scroll mit fixen
   // Min-Breiten — Mobile-Fallback, damit Karten lesbar bleiben.
   const totalColumns = COLUMNS.length + (sonstige.length > 0 ? 1 : 0);
+  const singleProduct = new Set(leads.map((l) => l.source ?? "")).size <= 1;
+  const mobileCol =
+    COLUMNS.find((c) => c.key === mobilePhase) ??
+    COLUMNS.find((c) => (buckets.get(c.key) ?? []).length > 0) ??
+    COLUMNS[0];
+  const mobileItems = buckets.get(mobileCol.key) ?? [];
   return (
-    <div className="overflow-x-auto pb-3">
+    <>
+      {/* Handy/Tablet: Phasen-Umschalter + eine Liste statt Spalten */}
+      <div className="lg:hidden">
+        <div className="-mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1">
+          {COLUMNS.map((c) => {
+            const n = (buckets.get(c.key) ?? []).length;
+            const active = c.key === mobileCol.key;
+            return (
+              <button
+                key={c.key}
+                type="button"
+                onClick={() => setMobilePhase(c.key)}
+                className={cn(
+                  "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition",
+                  active
+                    ? "border-[color:var(--foreground)] bg-[color:var(--foreground)] text-white"
+                    : "border-[color:var(--border)] bg-white text-[color:var(--foreground)]",
+                )}
+              >
+                <span className={cn("h-2 w-2 rounded-full", PHASE_DOT[c.key] ?? "bg-zinc-400")} />
+                {c.label}
+                <span className={active ? "text-white/70" : "text-[color:var(--muted)]"}>{n}</span>
+              </button>
+            );
+          })}
+        </div>
+        {mobileItems.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-[color:var(--border)] bg-white px-4 py-10 text-center text-sm text-[color:var(--muted)]">
+            Keine Leads in „{mobileCol.label}“.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {mobileItems.map((lead) => (
+              <KanbanCard
+                key={lead.id}
+                lead={lead}
+                subStatus={subStatusLabel(lead, mobileCol)}
+                dragging={false}
+                draggable={false}
+                onDragStart={() => {}}
+                onDragEnd={() => {}}
+                onClick={() => router.push(`/buyer/leads/${lead.id}?from=kanban`)}
+                columns={COLUMNS}
+                currentKey={mobileCol.key}
+                onMove={(target) => moveLead(lead.id, target)}
+                hideProduct={singleProduct}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    <div className="hidden overflow-x-auto pb-3 lg:block">
       <div
         className="grid gap-2 min-w-[1100px]"
         style={{
@@ -203,6 +264,7 @@ export function KanbanBoard({
           return (
             <KanbanColumn
               key={col.key}
+              dot={PHASE_DOT[col.key]}
               label={col.label}
               count={items.length}
               accent={col.accent}
@@ -243,9 +305,7 @@ export function KanbanBoard({
                     if (didDrag.current) return;
                     router.push(`/buyer/leads/${lead.id}?from=kanban`);
                   }}
-                  columns={COLUMNS}
-                  currentKey={col.key}
-                  onMove={(target) => moveLead(lead.id, target)}
+                  hideProduct={singleProduct}
                 />
               ))}
             </KanbanColumn>
@@ -275,6 +335,7 @@ export function KanbanBoard({
           </KanbanColumn>
         ) : null}
       </div>
+    </div>
       {closeDialog ? (
         <CloseValueDialog
           leadName={closeDialog.leadName}
@@ -287,7 +348,7 @@ export function KanbanBoard({
           }}
         />
       ) : null}
-    </div>
+    </>
   );
 }
 
@@ -362,7 +423,7 @@ function CloseValueDialog({
               className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
             />
             <p className="mt-1 text-[11px] text-[color:var(--muted)]">
-              Wird in Airtable als „Abschlusswert" hinterlegt und fließt in
+              Wird als „Abschlusswert“ hinterlegt und fließt in
               Umsatz, Umsatz/Lead und Gewinn/Lead.
             </p>
           </label>
@@ -389,6 +450,7 @@ function CloseValueDialog({
 }
 
 function KanbanColumn({
+  dot,
   label,
   count,
   accent,
@@ -398,6 +460,7 @@ function KanbanColumn({
   onDrop,
   children,
 }: {
+  dot?: string;
   label: string;
   count: number;
   accent: string;
@@ -410,8 +473,7 @@ function KanbanColumn({
   return (
     <div
       className={cn(
-        "flex min-w-0 flex-col rounded-2xl border border-t-4 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(37,99,235,0.12)]",
-        accent,
+        "flex min-w-0 flex-col rounded-xl border bg-white/60",
         "border-[color:var(--border)]",
         isOver && "ring-2 ring-[color:var(--brand)] ring-offset-2",
       )}
@@ -419,11 +481,12 @@ function KanbanColumn({
       onDragLeave={onDragLeave}
       onDrop={onDrop}
     >
-      <header className="flex items-baseline justify-between px-3 py-2.5">
-        <span className="text-sm font-semibold tracking-tight">{label}</span>
-        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-zinc-600">
-          {count}
+      <header className="flex items-center justify-between gap-2 px-3 py-2.5">
+        <span className="flex min-w-0 items-center gap-2 text-[13px] font-semibold tracking-tight">
+          <span className={cn("h-2 w-2 shrink-0 rounded-full", dot ?? "bg-zinc-400")} />
+          <span className="leading-tight">{label}</span>
         </span>
+        <span className="text-xs font-medium tabular-nums text-[color:var(--muted)]">{count}</span>
       </header>
       <div className="flex-1 space-y-2 px-2 pb-3 pt-1 min-h-[120px]">
         {children}
@@ -443,7 +506,9 @@ function KanbanCard({
   columns,
   currentKey,
   onMove,
+  hideProduct = false,
 }: {
+  hideProduct?: boolean;
   lead: KanbanLead;
   subStatus: string | null;
   dragging: boolean;
@@ -463,7 +528,7 @@ function KanbanCard({
       onDragEnd={onDragEnd}
       onClick={onClick}
       className={cn(
-        "cursor-pointer rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm shadow-sm transition hover:border-[color:var(--brand)] hover:shadow-md",
+        "cursor-pointer rounded-lg border border-[color:var(--border)] bg-white px-3 py-2.5 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition hover:border-[color:var(--brand)]/60 hover:shadow-md",
         dragging && "opacity-50",
       )}
     >
@@ -480,9 +545,47 @@ function KanbanCard({
         ) : null}
       </div>
       <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-[color:var(--muted)]">
-        <span className="truncate">{displayProduct(lead.source)}</span>
-        <span className="shrink-0 tabular-nums">{formatDate(lead.createdAt)}</span>
+        {hideProduct ? (
+          <span>Eingang {formatDate(lead.createdAt)}</span>
+        ) : (
+          <>
+            <span className="truncate">{displayProduct(lead.source)}</span>
+            <span className="shrink-0 tabular-nums">{formatDate(lead.createdAt)}</span>
+          </>
+        )}
+        {columns && onMove ? (
+          // Handy: Phase per Menü statt Drag & Drop
+          <select
+            aria-label="Phase ändern"
+            value={currentKey}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => {
+              const target = columns.find((c) => c.key === e.target.value);
+              if (target && target.key !== currentKey) onMove(target);
+            }}
+            className="ml-auto shrink-0 rounded-md border border-[color:var(--border)] bg-white py-1 pl-2 pr-6 text-[11px] font-medium text-[color:var(--foreground)]"
+          >
+            {columns.map((c) => (
+              <option key={c.key} value={c.key}>
+                {c.key === currentKey ? "Phase ändern" : `→ ${c.label}`}
+              </option>
+            ))}
+          </select>
+        ) : null}
       </div>
+      {lead.appointment ? (
+        <div className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-medium text-blue-700">
+          {new Intl.DateTimeFormat("de-DE", {
+            timeZone: "Europe/Berlin",
+            weekday: "short",
+            day: "numeric",
+            month: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }).format(new Date(lead.appointment.startsAt))}{" "}
+          · {lead.appointment.mode === "video" ? "Video" : "Telefon"}
+        </div>
+      ) : null}
       {/* Abschlusswert nur zeigen, wenn der Lead wirklich im Abschluss ist —
           ein aus „Abschluss" zurückgezogener Lead soll keinen „Umsatz" tragen. */}
       {lead.status === CLOSED_STATUS &&
@@ -492,24 +595,7 @@ function KanbanCard({
           {formatEUR(lead.closeValue)}
         </div>
       ) : null}
-      {columns && onMove ? (
-        <select
-          aria-label="Status ändern"
-          value={currentKey}
-          onClick={(e) => e.stopPropagation()}
-          onChange={(e) => {
-            const target = columns.find((c) => c.key === e.target.value);
-            if (target && target.key !== currentKey) onMove(target);
-          }}
-          className="mt-2 w-full rounded-md border border-[color:var(--border)] bg-[color:var(--background)] px-2 py-1.5 text-xs lg:hidden"
-        >
-          {columns.map((c) => (
-            <option key={c.key} value={c.key}>
-              → {c.label}
-            </option>
-          ))}
-        </select>
-      ) : null}
+
     </div>
   );
 }

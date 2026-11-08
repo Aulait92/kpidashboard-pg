@@ -46,7 +46,7 @@ export function MonthlyForecast({ forecast }: { forecast: Forecast }) {
       <header className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--brand)]">
-            Forecast
+            Prognose
           </div>
           <h2 className="mt-0.5 text-lg font-semibold tracking-tight">
             Hochrechnung {monthName}
