@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { AdminTabs } from "@/components/admin-tabs";
 import { SubmitButton } from "@/components/submit-button";
 import { getCurrentSession } from "@/lib/auth";
+import { getOrCreateBookingSlug, PROVIDER_LABELS } from "@/lib/calendar";
+import { appUrl } from "@/lib/whatsapp/event-text";
 import { prisma } from "@/lib/prisma";
 import {
   PURPOSE_LABELS,
@@ -10,6 +12,7 @@ import {
   type NoticePurpose,
 } from "@/lib/whatsapp/templates";
 import {
+  addCustomerAction,
   deleteTemplateAction,
   saveOutreachSettingsAction,
   saveTemplateAction,
@@ -47,6 +50,9 @@ export default async function WhatsAppSettingsPage() {
       id: true,
       name: true,
       whatsAppAccount: { select: { status: true } },
+      calendarConnection: {
+        select: { status: true, provider: true, accountEmail: true, calendarId: true },
+      },
       agentConfig: {
         select: {
           active: true,
@@ -63,6 +69,20 @@ export default async function WhatsAppSettingsPage() {
       },
     },
   });
+
+  const otherCustomers = await prisma.customer.findMany({
+    where: { id: { notIn: customers.map((c) => c.id) } },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
+  // Buchungslinks für Kunden mit verbundenem Kalender.
+  const base = appUrl() ?? "";
+  const bookingUrls = new Map<string, string>();
+  for (const c of customers) {
+    if (c.calendarConnection?.status === "connected") {
+      bookingUrls.set(c.id, `${base}/book/${await getOrCreateBookingSlug(c.id)}`);
+    }
+  }
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6">
@@ -86,6 +106,34 @@ export default async function WhatsAppSettingsPage() {
         trage sie hier ein. Erstanschreiben erst aktivieren, wenn das
         Leadformular eine WhatsApp-Einwilligung enthält.
       </div>
+
+      <form
+        action={addCustomerAction}
+        className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-[color:var(--border)] bg-white p-3"
+      >
+        <span className="text-sm font-semibold">Kunde hinzufügen:</span>
+        <select
+          name="customerId"
+          required
+          defaultValue=""
+          className="min-w-[220px] flex-1 rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-sm"
+        >
+          <option value="" disabled>
+            Kunde wählen …
+          </option>
+          {otherCustomers.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        <SubmitButton
+          pendingLabel="…"
+          className="rounded-lg border border-[color:var(--brand)] px-4 py-1.5 text-sm font-semibold text-[color:var(--brand)]"
+        >
+          Hinzufügen
+        </SubmitButton>
+      </form>
 
       {customers.length === 0 ? (
         <p className="mt-6 text-sm text-[color:var(--muted)]">
@@ -189,6 +237,46 @@ export default async function WhatsAppSettingsPage() {
                   </span>
                 ) : null}
               </form>
+
+              <div className="mt-4 rounded-xl border border-[color:var(--border)] p-3 text-sm">
+                <div className="font-semibold">Buchungskalender</div>
+                {c.calendarConnection?.status === "connected" ? (
+                  <p className="mt-1 text-xs text-emerald-700">
+                    ✓ {PROVIDER_LABELS[c.calendarConnection.provider] ?? "Kalender"} verbunden
+                    {c.calendarConnection.accountEmail ? ` (${c.calendarConnection.accountEmail})` : ""}
+                    {c.calendarConnection.calendarId !== "primary" ? " · eigener Unterkalender" : ""}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs text-[color:var(--muted)]">Noch nicht verbunden.</p>
+                )}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <a
+                    href={`/api/microsoft/connect?customerId=${c.id}`}
+                    className="rounded-lg border border-[color:var(--brand)] px-3 py-1.5 text-xs font-semibold text-[color:var(--brand)] hover:bg-[color:var(--brand-soft)]/40"
+                  >
+                    {c.calendarConnection?.provider === "microsoft" ? "Outlook neu verbinden" : "Outlook / Microsoft 365 verbinden"}
+                  </a>
+                  <a
+                    href={`/api/google/connect?customerId=${c.id}`}
+                    className="rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-xs font-semibold hover:border-[color:var(--brand)]"
+                  >
+                    {c.calendarConnection?.provider === "google" ? "Google neu verbinden" : "Google-Kalender verbinden"}
+                  </a>
+                </div>
+                {bookingUrls.get(c.id) ? (
+                  <div className="mt-2 text-xs">
+                    <span className="text-[color:var(--muted)]">Buchungslink: </span>
+                    <a
+                      href={bookingUrls.get(c.id)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-mono text-[color:var(--brand)] hover:underline"
+                    >
+                      {bookingUrls.get(c.id)}
+                    </a>
+                  </div>
+                ) : null}
+              </div>
 
               <h3 className="mt-5 text-sm font-semibold">Vorlagen</h3>
               {c.messageTemplates.length === 0 ? (

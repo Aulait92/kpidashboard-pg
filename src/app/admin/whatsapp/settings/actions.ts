@@ -80,6 +80,21 @@ export async function saveTemplateAction(formData: FormData): Promise<void> {
   revalidatePath("/admin/whatsapp/settings");
 }
 
+/** Kunden für den WhatsApp-Assistenten vorbereiten (Agent noch inaktiv). */
+export async function addCustomerAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const customerId = String(formData.get("customerId") ?? "");
+  if (!customerId) return;
+  const exists = await prisma.customer.findUnique({ where: { id: customerId }, select: { id: true } });
+  if (!exists) return;
+  await prisma.agentConfig.upsert({
+    where: { customerId },
+    create: { customerId, active: false },
+    update: {},
+  });
+  revalidatePath("/admin/whatsapp/settings");
+}
+
 export async function deleteTemplateAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const id = String(formData.get("id") ?? "");
