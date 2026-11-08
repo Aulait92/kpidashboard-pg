@@ -22,12 +22,20 @@ const TABS = [
   },
 ];
 
-export function BuyerTabs() {
+const CHATS_TAB = {
+  href: "/buyer/chats",
+  label: "Chats",
+  match: (p: string) => p.startsWith("/buyer/chats"),
+};
+
+/** showChats: nur für Kunden mit WhatsApp-Assistent (sonst unverändert). */
+export function BuyerTabs({ showChats = false }: { showChats?: boolean } = {}) {
   const pathname = usePathname() ?? "/buyer";
+  const tabs = showChats ? [...TABS, CHATS_TAB] : TABS;
   return (
     <nav className="mt-6 border-b border-[color:var(--border)]">
       <ul className="-mb-px flex gap-1">
-        {TABS.map((tab) => {
+        {tabs.map((tab) => {
           const active = tab.match(pathname);
           return (
             <li key={tab.href}>

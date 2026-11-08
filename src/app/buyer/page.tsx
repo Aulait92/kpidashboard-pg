@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { BuyerFilterBar } from "@/components/buyer-filter-bar";
 import { BuyerTabs } from "@/components/buyer-tabs";
+import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { FunnelHero } from "@/components/funnel-hero";
 import { KpiCard, type Delta } from "@/components/kpi-card";
 import { LiveUpdated } from "@/components/live-updated";
@@ -102,7 +103,7 @@ export default async function BuyerPage({
           </div>
         </header>
 
-        <BuyerTabs />
+        <BuyerTabs showChats={await hasWhatsAppInbox(session.customerId)} />
 
         <Suspense
           fallback={

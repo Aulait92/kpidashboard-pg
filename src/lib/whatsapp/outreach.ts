@@ -176,6 +176,8 @@ export type CallbackLead = {
   createdAt: Date;
   reason: string;
   replied: boolean;
+  /** Konversation zum Nachlesen vor dem Anruf (falls vorhanden). */
+  conversationId: string | null;
 };
 
 /** Hat dieser Kunde den WhatsApp-Agenten mit Erstanschreiben aktiv? */
@@ -254,6 +256,7 @@ export async function getCallbackLeads(customerId: string): Promise<CallbackLead
         createdAt: l.createdAt,
         reason,
         replied,
+        conversationId: l.conversations[0]?.id ?? null,
       });
     }
   }

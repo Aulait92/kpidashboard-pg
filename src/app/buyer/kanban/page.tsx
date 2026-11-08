@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { BuyerFilterBar } from "@/components/buyer-filter-bar";
 import { BuyerTabs } from "@/components/buyer-tabs";
+import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import {
   KanbanBoard,
   type KanbanLead,
@@ -88,7 +89,7 @@ export default async function BuyerKanbanPage({
           </div>
         </header>
 
-        <BuyerTabs />
+        <BuyerTabs showChats={await hasWhatsAppInbox(session.customerId)} />
 
         <Suspense
           fallback={

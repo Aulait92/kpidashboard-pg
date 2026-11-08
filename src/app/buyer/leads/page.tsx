@@ -9,6 +9,7 @@ import {
   type BuyerLeadRow,
 } from "@/components/buyer-leads-table";
 import { BuyerTabs } from "@/components/buyer-tabs";
+import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { LiveUpdated } from "@/components/live-updated";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { logoutAction } from "@/app/login/actions";
@@ -96,7 +97,7 @@ export default async function BuyerLeadsPage({
           </div>
         </header>
 
-        <BuyerTabs />
+        <BuyerTabs showChats={await hasWhatsAppInbox(session.customerId)} />
 
         <Suspense
           fallback={
@@ -227,6 +228,17 @@ function CallbackCard({ callbacks }: { callbacks: CallbackLead[] }) {
                 <div className="text-xs text-[color:var(--muted)]">
                   {displayProduct(c.source)} · eingegangen {formatDate(c.createdAt)} ·{" "}
                   <span className="text-amber-700">{c.reason}</span>
+                  {c.conversationId ? (
+                    <>
+                      {" · "}
+                      <Link
+                        href={`/buyer/chats?c=${c.conversationId}`}
+                        className="font-medium text-[color:var(--brand)] hover:underline"
+                      >
+                        Chat lesen
+                      </Link>
+                    </>
+                  ) : null}
                 </div>
               </div>
               {c.phone ? (

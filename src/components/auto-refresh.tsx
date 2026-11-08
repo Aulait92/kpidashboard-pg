@@ -9,7 +9,7 @@ const REFRESH_MS = 60_000; // 1 Minute
 // neu und die Karten/Tabellen ziehen frische Daten aus der DB (die der
 // Cron-Job parallel im Hintergrund befüllt). Pausiert wenn der Tab im
 // Hintergrund ist, holt nach Tab-Rückkehr verpasste Refreshes nach.
-export function AutoRefresh() {
+export function AutoRefresh({ intervalMs = REFRESH_MS }: { intervalMs?: number } = {}) {
   const router = useRouter();
   const lastRef = useRef(Date.now());
 
@@ -20,12 +20,12 @@ export function AutoRefresh() {
       lastRef.current = Date.now();
     }
 
-    const id = setInterval(tick, REFRESH_MS);
+    const id = setInterval(tick, intervalMs);
 
     function onVisibility() {
       if (document.hidden) return;
       // Tab war länger im Hintergrund als das Intervall — sofort nachholen.
-      if (Date.now() - lastRef.current >= REFRESH_MS) {
+      if (Date.now() - lastRef.current >= intervalMs) {
         tick();
       }
     }
@@ -35,7 +35,7 @@ export function AutoRefresh() {
       clearInterval(id);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [router]);
+  }, [router, intervalMs]);
 
   return null;
 }
