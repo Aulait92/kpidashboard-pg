@@ -101,7 +101,11 @@ const TOOLS: Anthropic.Tool[] = [
 function buildSystemPrompt(
   agent: { systemPrompt: string; knowledge: string; personality: string },
   product: string | null,
+  state: { qualified: boolean; summary: string | null },
 ): string {
+  const known = state.summary?.trim()
+    ? `Bisher erfasst (NICHT erneut erfragen):\n${state.summary.trim()}\nQualifiziert: ${state.qualified ? "ja — jetzt Termin vereinbaren" : "noch nicht"}`
+    : "";
   const base = [
     agent.systemPrompt?.trim() ||
       "Du bist eine freundliche, empathische KI-Vertriebsassistentin.",
@@ -110,10 +114,13 @@ function buildSystemPrompt(
     agent.personality?.trim()
       ? `Persönlichkeit/Ton:\n${agent.personality.trim()}`
       : "",
+    known,
     [
       "Regeln:",
       "- Antworte immer auf Deutsch, warmherzig und kurz (WhatsApp-tauglich).",
       "- Stelle immer nur eine oder wenige zusammengehörige Fragen auf einmal.",
+      "- Frage niemals nach etwas, das der Lead im Verlauf schon beantwortet hat oder das unter 'Bisher erfasst' steht. Nimm Antworten auf und gehe zur nächsten offenen Frage weiter.",
+      "- Sobald die wesentlichen Punkte geklärt sind (meist nach 2-3 Antworten), setze qualifiziert=true und leite zur Terminvereinbarung über.",
       "- Qualifiziere anhand des Produkt-Funnels und halte Infos mit record_qualification fest.",
       "- Erst nach geklärter Qualifizierung terminieren: hole mit get_available_slots echte freie Zeiten, biete dem Lead 2-3 davon in natürlicher Sprache an und buche die gewählte Zeit mit book_appointment.",
       "- Erfinde niemals Termine oder Uhrzeiten — nutze ausschließlich die von get_available_slots gelieferten Zeiten. Nur wenn der Kalender nicht verbunden ist, nutze propose_appointment als Fallback.",
@@ -183,6 +190,8 @@ export async function runBotTurn(conversationId: string): Promise<void> {
       contactPhone: true,
       botActive: true,
       leadId: true,
+      qualified: true,
+      qualificationSummary: true,
     },
   });
   if (!conversation || !conversation.botActive) return;
@@ -199,14 +208,21 @@ export async function runBotTurn(conversationId: string): Promise<void> {
       })
     : null;
 
-  const history = await prisma.message.findMany({
-    where: { conversationId },
-    orderBy: { createdAt: "asc" },
-    take: HISTORY_LIMIT,
-    select: { direction: true, body: true },
-  });
+  // Die NEUESTEN Chat-Nachrichten laden (desc + reverse) — interne Einträge
+  // ausgenommen, damit sie das Fenster nicht verstopfen.
+  const history = (
+    await prisma.message.findMany({
+      where: { conversationId, direction: { in: ["inbound", "outbound"] } },
+      orderBy: { createdAt: "desc" },
+      take: HISTORY_LIMIT,
+      select: { direction: true, body: true },
+    })
+  ).reverse();
 
-  const system = buildSystemPrompt(agent, lead?.source ?? null);
+  const system = buildSystemPrompt(agent, lead?.source ?? null, {
+    qualified: conversation.qualified,
+    summary: conversation.qualificationSummary,
+  });
   const messages = toApiMessages(history);
   if (messages.length === 0) return;
 
