@@ -21,10 +21,12 @@ export async function connectRoute(
   authUrl: (customerId: string) => string,
 ): Promise<Response> {
   const session = await getCurrentSession();
-  if (!session || session.role !== "ADMIN") {
+  if (!session || (session.role !== "ADMIN" && !(session.role === "BUYER" && session.customerId))) {
     return Response.json({ error: "Nicht erlaubt." }, { status: 403 });
   }
-  const customerId = new URL(req.url).searchParams.get("customerId") ?? "";
+  // Kunden verbinden nur ihren eigenen Kalender (Einrichtung im Kundenbereich).
+  const customerId =
+    session.role === "BUYER" ? session.customerId! : (new URL(req.url).searchParams.get("customerId") ?? "");
   if (!customerId) return Response.json({ error: "customerId fehlt." }, { status: 400 });
   try {
     return Response.redirect(authUrl(customerId), 302);
@@ -42,15 +44,20 @@ export async function callbackRoute(
   label: string,
 ): Promise<Response> {
   const session = await getCurrentSession();
-  if (!session || session.role !== "ADMIN") {
+  const isBuyer = session?.role === "BUYER" && !!session.customerId;
+  if (!session || (session.role !== "ADMIN" && !isBuyer)) {
     return Response.json({ error: "Nicht erlaubt." }, { status: 403 });
   }
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
   const customerId = url.searchParams.get("state"); // state = customerId
   const oauthError = url.searchParams.get("error");
+  // Kunden dürfen nur ihr eigenes Konto verbinden.
+  if (isBuyer && customerId !== session.customerId) {
+    return Response.json({ error: "Nicht erlaubt." }, { status: 403 });
+  }
   const back = (status: string) => {
-    const dest = new URL("/admin/whatsapp", publicOrigin(req));
+    const dest = new URL(isBuyer ? "/buyer/einrichtung" : "/admin/whatsapp", publicOrigin(req));
     dest.searchParams.set("gcal", status);
     return Response.redirect(dest.toString(), 302);
   };

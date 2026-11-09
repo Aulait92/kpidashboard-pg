@@ -16,6 +16,8 @@ import { guessSource } from "@/lib/vertrieb/source";
 import { DealOffersCard } from "@/components/deal-offers-card";
 import { toOfferRow } from "@/lib/offer-links";
 import { getAppUrl } from "@/lib/email";
+import { loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
+import { OnboardingCard, StartOnboardingCard } from "@/components/vertrieb/onboarding-card";
 
 export default async function ContactPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -34,6 +36,13 @@ export default async function ContactPage({ params }: { params: Promise<{ id: st
   const open = c.tasks.filter((t) => !t.doneAt);
   const suggested = c.customerSource ? null : await guessSource(c.id);
   const done = c.tasks.filter((t) => t.doneAt).slice(0, 10);
+  const onboarding = c.customerId ? await loadOnboarding({ customerId: c.customerId }) : null;
+  const obOffer = onboarding?.offerId ? c.offers.find((o) => o.id === onboarding.offerId) ?? null : null;
+  const acceptedOffer = c.offers.find((o) => o.status === "accepted") ?? null;
+  const freeCustomers =
+    !onboarding && acceptedOffer
+      ? await prisma.customer.findMany({ where: { onboarding: null }, select: { id: true, name: true }, orderBy: { name: "asc" } })
+      : [];
   let appUrl = "";
   try {
     appUrl = getAppUrl();
@@ -190,6 +199,17 @@ export default async function ContactPage({ params }: { params: Promise<{ id: st
         </div>
 
         <div className="space-y-5">
+          {onboarding ? (
+            <OnboardingCard
+              onboarding={onboarding}
+              items={onboardingChecklist(onboarding, obOffer)}
+              customerName={onboarding.customer.name}
+              loginEmail={onboarding.customer.users[0]?.email ?? null}
+            />
+          ) : acceptedOffer ? (
+            <StartOnboardingCard offerId={acceptedOffer.id} offerNumber={acceptedOffer.number} customers={freeCustomers} />
+          ) : null}
+
           <div id="angebot">
             <DealOffersCard
               newOfferHref={`/admin/vertrieb/kontakte/${c.id}/angebot`}

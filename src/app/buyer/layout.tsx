@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { attentionCount } from "@/lib/whatsapp/attention";
 import { endPreviewAction } from "./preview-actions";
+import { customerSetupOpenCount } from "@/lib/onboarding";
 
 // Gemeinsames Layout für den Buyer-Bereich. Hält den @modal-Parallel-Slot,
 // in den der Lead-Detail-Modal von ALLEN Buyer-Tabs (KPIs, Leads, Pipeline)
@@ -41,9 +42,9 @@ export default async function BuyerLayout({
       )?.name ?? "Kunde")
     : null;
   const previewName = ctx?.preview ? customerName : null;
-  const [showChats, chatBadge] = ctx
-    ? await Promise.all([hasWhatsAppInbox(ctx.customerId), attentionCount(ctx.customerId)])
-    : [false, 0];
+  const [showChats, chatBadge, setupOpen] = ctx
+    ? await Promise.all([hasWhatsAppInbox(ctx.customerId), attentionCount(ctx.customerId), customerSetupOpenCount(ctx.customerId)])
+    : [false, 0, 0];
   // Anzeigename ohne Gesellschafts-Präfix („Allianz Anid Schwarzkopf").
   const displayName = (customerName ?? "").replace(/^Allianz\s+/i, "");
 
@@ -66,7 +67,7 @@ export default async function BuyerLayout({
         </div>
       ) : null}
       {ctx ? (
-        <BuyerShell displayName={displayName} showChats={showChats} chatBadge={chatBadge}>
+        <BuyerShell displayName={displayName} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen}>
           {children}
           {/* Lead-Detail-Modal innerhalb der Shell → Toasts funktionieren dort auch */}
           {modal}

@@ -1,0 +1,125 @@
+import { CheckCircle2, Circle } from "lucide-react";
+import type { ChecklistItem } from "@/lib/onboarding";
+import { checklistProgress } from "@/lib/onboarding";
+import { goLiveAction, resendWelcomeAction, startOnboardingAction, toggleOnboardingStepAction } from "@/app/admin/vertrieb/onboarding-actions";
+
+const OWNER: Record<ChecklistItem["owner"], { label: string; cls: string }> = {
+  kunde: { label: "Kunde", cls: "bg-sky-50 text-sky-700" },
+  du: { label: "Du", cls: "bg-amber-50 text-amber-800" },
+  auto: { label: "automatisch", cls: "bg-slate-100 text-slate-600" },
+};
+
+const fmt = (d: Date) =>
+  new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(d);
+
+export function OnboardingCard({
+  onboarding,
+  items,
+  customerName,
+  loginEmail,
+}: {
+  onboarding: { id: string; package: string; startDate: Date | null; liveAt: Date | null };
+  items: ChecklistItem[];
+  customerName: string;
+  loginEmail: string | null;
+}) {
+  const p = checklistProgress(items);
+  const open = items.filter((i) => !i.done);
+  const waitingCustomer = open.filter((i) => i.owner === "kunde").length;
+  const waitingYou = open.filter((i) => i.owner === "du").length;
+  return (
+    <section className="card">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
+        <div>
+          <h2 className="font-medium">Onboarding</h2>
+          <p className="text-xs text-slate-500">
+            {customerName} · {onboarding.package === "service" ? "Nur Betreuung" : "Betreuung + Software"}
+            {onboarding.startDate ? ` · Start ${onboarding.startDate.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}` : ""}
+          </p>
+        </div>
+        <span className={`badge ${onboarding.liveAt ? "bg-emerald-100 text-emerald-800" : "bg-sky-50 text-sky-700"}`}>
+          {onboarding.liveAt ? "Live" : `${p.percent} %`}
+        </span>
+      </div>
+      <div className="px-4 pt-3">
+        <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+          <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${p.percent}%` }} />
+        </div>
+        {!onboarding.liveAt && (
+          <p className="mt-2 text-xs text-slate-500">
+            Offen: {waitingCustomer} beim Kunden, {waitingYou} bei dir
+          </p>
+        )}
+      </div>
+      <ul className="divide-y divide-slate-100 px-4 py-2 text-sm">
+        {items
+          .filter((i) => i.key !== "live")
+          .map((i) => (
+            <li key={i.key} className="flex items-center gap-2 py-2">
+              {i.manual ? (
+                <form action={toggleOnboardingStepAction}>
+                  <input type="hidden" name="id" value={onboarding.id} />
+                  <input type="hidden" name="step" value={i.manual} />
+                  <button title={i.done ? "Zurücksetzen" : "Als erledigt markieren"} className="flex">
+                    {i.done ? <CheckCircle2 className="h-5 w-5 text-emerald-600" /> : <Circle className="h-5 w-5 text-slate-300 hover:text-emerald-600" />}
+                  </button>
+                </form>
+              ) : i.done ? (
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
+              ) : (
+                <Circle className="h-5 w-5 shrink-0 text-slate-300" />
+              )}
+              <span className={i.done ? "text-slate-500" : "text-slate-900"}>{i.label}</span>
+              <span className="ml-auto flex items-center gap-2">
+                {i.at && <span className="text-xs text-slate-400">{fmt(i.at)}</span>}
+                {!i.done && <span className={`badge ${OWNER[i.owner].cls}`}>{OWNER[i.owner].label}</span>}
+              </span>
+            </li>
+          ))}
+      </ul>
+      <div className="flex flex-wrap gap-2 border-t border-slate-100 px-4 py-3">
+        <form action={goLiveAction}>
+          <input type="hidden" name="id" value={onboarding.id} />
+          <button className={onboarding.liveAt ? "btn-ghost" : "btn-primary"}>{onboarding.liveAt ? "Live zurücknehmen" : "Live schalten"}</button>
+        </form>
+        <form action={resendWelcomeAction}>
+          <input type="hidden" name="id" value={onboarding.id} />
+          <button className="btn-ghost">Willkommens-Mail erneut senden</button>
+        </form>
+      </div>
+      {loginEmail && <p className="px-4 pb-3 text-xs text-slate-500">Kunden-Login: {loginEmail}</p>}
+    </section>
+  );
+}
+
+export function StartOnboardingCard({
+  offerId,
+  offerNumber,
+  customers,
+}: {
+  offerId: string;
+  offerNumber: string;
+  customers: { id: string; name: string }[];
+}) {
+  return (
+    <section className="card p-4">
+      <h2 className="font-medium">Onboarding</h2>
+      <p className="mt-1 text-sm text-slate-600">
+        Angebot {offerNumber} ist angenommen. Das Onboarding startet automatisch, sobald die Zahlung eingerichtet ist –
+        oder hier von Hand (z. B. für Bestandskunden).
+      </p>
+      <form action={startOnboardingAction} className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
+        <input type="hidden" name="offerId" value={offerId} />
+        <select name="customerId" className="input" defaultValue="">
+          <option value="">Neues Kundenkonto anlegen</option>
+          {customers.map((c) => (
+            <option key={c.id} value={c.id}>
+              Bestehendes Konto: {c.name}
+            </option>
+          ))}
+        </select>
+        <button className="btn-primary">Onboarding starten</button>
+      </form>
+    </section>
+  );
+}

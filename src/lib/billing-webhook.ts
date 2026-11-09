@@ -8,6 +8,7 @@ import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 import { logOfferActivity, offerAdminHref, setContactCustomerStage } from "@/lib/offer-links";
 import { cancelScheduleForOffer, createScheduleForOffer } from "@/lib/billing";
+import { startOnboarding } from "@/lib/onboarding";
 
 export const HANDLED_EVENTS = [
   "checkout.session.completed",
@@ -100,8 +101,17 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
         }
       }
       if (failed) await cancelScheduleForOffer(offer.id).catch((err) => reportError(err, "billing-schedule-cancel"));
-      // Zahlung eingerichtet (SEPA-Mandat genügt) → Onboarding kann starten.
-      if (!failed) await setContactCustomerStage(offer, "ONBOARDING");
+      // Zahlung eingerichtet (SEPA-Mandat genügt) → Onboarding startet.
+      if (!failed) {
+        await setContactCustomerStage(offer, "ONBOARDING");
+        const ob = await startOnboarding(offer.id).catch((err) => {
+          reportError(err, "onboarding-start", { offer: offer.number });
+          return null;
+        });
+        if (!ob || !ob.ok) {
+          await notify(`⚠️ Onboarding nicht gestartet: ${offer.company ?? offer.contactName}`, ob && !ob.ok ? ob.error : offer.number, offerAdminHref(offer));
+        }
+      }
       if (failed) {
         await logActivity(offer, `Zahlung für ${offer.number} fehlgeschlagen`);
         await notify(`⚠️ Zahlung fehlgeschlagen: ${offer.company ?? offer.contactName}`, offer.number, offerAdminHref(offer));

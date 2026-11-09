@@ -9,6 +9,8 @@ import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 import { computeOfferPrice, type OfferPackage, type OfferProduct, type OfferTerm } from "@/lib/offer-pricing";
 import { logOfferActivity, offerAdminHref, setContactCustomerStage, type OfferTarget } from "@/lib/offer-links";
+import { billingEnabled } from "@/lib/billing";
+import { startOnboarding } from "@/lib/onboarding";
 
 export const WON_STATUS = "Serienbetrieb";
 export const OFFER_SENT_STATUS = "Angebot verschickt";
@@ -225,6 +227,12 @@ export async function acceptOffer(
       // Die Annahme selbst ist gespeichert; Deal-Status notfalls von Hand nachziehen.
       reportError(err, "offer-accept-deal-update", { offer: offer.number });
     }
+  }
+
+  // Ohne Online-Zahlung startet das Onboarding direkt mit der Annahme
+  // (sonst, sobald die Zahlung eingerichtet ist – siehe Stripe-Webhook).
+  if (!billingEnabled()) {
+    await startOnboarding(offer.id).catch((err) => reportError(err, "onboarding-start", { offer: offer.number }));
   }
 
   await sendToAdmins({

@@ -7,6 +7,7 @@ import {
   BarChart3,
   ChevronDown,
   Columns3,
+  ListChecks,
   LayoutDashboard,
   LogOut,
   MessageCircle,
@@ -36,11 +37,14 @@ export function BuyerShell({
   displayName,
   showChats,
   chatBadge,
+  setupOpen = 0,
   children,
 }: {
   displayName: string;
   showChats: boolean;
   chatBadge: number;
+  /** Offene Einrichtungsschritte (Onboarding) – 0 = Reiter ausblenden. */
+  setupOpen?: number;
   children: React.ReactNode;
 }) {
   const pathname = usePathname() ?? "/buyer";
@@ -69,6 +73,15 @@ export function BuyerShell({
         { href: "/buyer/leads", label: "Leads", icon: Users, match: (p) => p.startsWith("/buyer/leads") },
         { href: "/buyer/kanban", label: "Pipeline", icon: Columns3, match: (p) => p.startsWith("/buyer/kanban") },
       ];
+  if (setupOpen > 0) {
+    items.unshift({
+      href: "/buyer/einrichtung",
+      label: "Einrichtung",
+      icon: ListChecks,
+      match: (p) => p.startsWith("/buyer/einrichtung"),
+      badge: setupOpen,
+    });
+  }
 
   return (
     <ToastProvider>

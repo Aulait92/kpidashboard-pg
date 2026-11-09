@@ -97,6 +97,9 @@ model Customer {
   createdAt        DateTime @default(now())
   // Stripe-Kunde für Abrechnung (Rechnungen, Zahlungsart, Abo)
   stripeCustomerId String?  @unique
+  // Paket: "software" = Betreuung + Software, "service" = nur Betreuung
+  // (Leads per E-Mail, Kundenbereich nur mit Leads und Zahlen)
+  plan             String   @default("software")
 
   // ─── Media-Buyer-Daten (aus Airtable-Buyer-Tabelle) ─────────────────
   // Lead-Ziele, Preise und Startdaten je Produkt liegen seit dem Product-/
@@ -125,6 +128,8 @@ model Customer {
   customerProducts CustomerProduct[]
 
   // ─── WhatsApp-CRM (Phase 0) ─────────────────────────────────────────
+  onboarding         Onboarding?
+  salesContact       SalesContact?
   whatsAppAccount    WhatsAppAccount?
   calendarConnection CalendarConnection?
   agentConfig        AgentConfig?
@@ -931,6 +936,9 @@ model SalesContact {
   customerSince      DateTime?
   customerSource     String? // Akquise-Kanal: COLD_CALL, COLD_MAIL, LINKEDIN, META_ADS, EMPFEHLUNG, INBOUND, NETZWERK, SONSTIGES
   customerSourceNote String? // z.B. "Kampagne Allianz Okt" oder "Empfehlung von Hr. Müller"
+  // Kundenkonto in der Plattform (ab Onboarding)
+  customerId         String?             @unique
+  customer           Customer?           @relation(fields: [customerId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1095,4 +1103,39 @@ model SalesInboundLead {
 
   @@index([createdAt])
   @@index([contactId])
+}
+
+// ─── Onboarding (ab Vertragsannahme) ───────────────────────────────────
+// Ein Datensatz je Kunde. Die Checkliste ergibt sich aus diesen Zeitstempeln
+// plus Kalender-/WhatsApp-Verbindung und erstem Login des Kunden.
+model Onboarding {
+  id               String    @id @default(cuid())
+  customerId       String    @unique
+  customer         Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  offerId          String?   @unique
+  salesContactId   String?
+  // "software" | "service"
+  package          String    @default("software")
+  // running | live | cancelled
+  status           String    @default("running")
+  startDate        DateTime?
+  welcomeSentAt    DateTime?
+  // Kickoff-Termin (über das eigene Buchungstool)
+  kickoffAt        DateTime?
+  // Fragebogen im Kundenbereich
+  questionnaire    Json?
+  questionnaireAt  DateTime?
+  // Partnerzugriff auf Meta-Werbekonto und Seite erteilt
+  metaAccessAt     DateTime?
+  // Pflichtangaben (Impressum) von der Agentur-Website
+  websiteInfo      Json?
+  websiteCheckedAt DateTime?
+  campaignReadyAt  DateTime?
+  testLeadAt       DateTime?
+  liveAt           DateTime?
+  lastReminderAt   DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([status])
 }

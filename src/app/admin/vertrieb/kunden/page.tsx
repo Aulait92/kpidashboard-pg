@@ -8,6 +8,7 @@ import { dayKey, fmtDate, relDay, todayKey } from "@/lib/vertrieb/dates";
 import { dragCustomer, moveCustomer } from "@/app/admin/vertrieb/actions";
 import { Kanban, type KanbanCard, type KanbanColumn } from "@/components/vertrieb/kanban";
 import { Stat } from "@/components/vertrieb/ui";
+import { onboardingProgressFor } from "@/lib/onboarding";
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 
@@ -23,16 +24,18 @@ export default async function KundenPage() {
     where: { customerStage: { not: null } },
     orderBy: { updatedAt: "desc" },
     select: {
-      id: true, name: true, city: true, phone: true, customerStage: true, customerSource: true, products: true, monthlyValue: true, contractStart: true, customerSince: true,
+      id: true, name: true, city: true, phone: true, customerStage: true, customerId: true, customerSource: true, products: true, monthlyValue: true, contractStart: true, customerSince: true,
       tasks: { where: { doneAt: null }, orderBy: { dueAt: "asc" }, take: 1, select: { title: true, dueAt: true } },
     },
   });
+  const progress = await onboardingProgressFor(customers.map((c) => c.customerId).filter(Boolean) as string[]);
   const sum = (ids: string[]) => customers.filter((c) => ids.includes(c.customerStage!)).reduce((a, c) => a + (c.monthlyValue ?? 0), 0);
   const count = (ids: string[]) => customers.filter((c) => ids.includes(c.customerStage!)).length;
 
   const columns: KanbanColumn[] = CUSTOMER_STAGES.map((s) => ({ ...s, count: customers.filter((c) => c.customerStage === s.id).length }));
   const cards: KanbanCard[] = customers.map((c) => {
     const task = c.tasks[0];
+    const ob = c.customerId ? progress.get(c.customerId) : undefined;
     const idx = CUSTOMER_STAGES.findIndex((x) => x.id === c.customerStage);
     return {
       id: c.id,
@@ -53,6 +56,16 @@ export default async function KundenPage() {
             <div className="mt-1 text-xs text-slate-500">
               {c.contractStart && `Start ${fmtDate(c.contractStart)}`}
               {c.customerSince && ` · aktiv seit ${fmtDate(c.customerSince)}`}
+            </div>
+          )}
+          {ob && !ob.live && (
+            <div className="mt-2">
+              <div className="h-1 overflow-hidden rounded-full bg-slate-100">
+                <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${ob.percent}%` }} />
+              </div>
+              <div className="mt-1 text-xs text-slate-500">
+                Onboarding {ob.percent} % · offen: {ob.waitingCustomer} Kunde, {ob.waitingYou} du
+              </div>
             </div>
           )}
           {task && (

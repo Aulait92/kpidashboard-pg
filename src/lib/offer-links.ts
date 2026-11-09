@@ -45,7 +45,7 @@ export async function setContactCustomerStage(o: OfferRef, stage: SalesCustomerS
       select: { customerStage: true, customerSince: true },
     });
     if (!c) return;
-    const forwardOnly = stage === "VERTRAG" || stage === "ONBOARDING";
+    const forwardOnly = stage === "VERTRAG" || stage === "ONBOARDING" || stage === "TEST";
     if (forwardOnly && c.customerStage && order.indexOf(c.customerStage) >= order.indexOf(stage)) return;
     await prisma.salesContact.update({
       where: { id: o.salesContactId },
