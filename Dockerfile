@@ -21,6 +21,12 @@ COPY . .
 # echte Env-Variable von Railway.
 ARG DATABASE_URL="postgresql://build:build@localhost:5432/build"
 ENV DATABASE_URL=$DATABASE_URL
+
+# Sentry: NEXT_PUBLIC_SENTRY_DSN wird beim Build in den Browser-Code
+# eingebettet. Railway reicht Service-Variablen automatisch als Build-Args
+# durch, wenn sie hier als ARG deklariert sind.
+ARG NEXT_PUBLIC_SENTRY_DSN
+ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
 RUN npm run build
 
 ENV NODE_ENV=production
