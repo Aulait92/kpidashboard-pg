@@ -41,15 +41,14 @@ export default async function HeutePage() {
         <Link href="/admin/vertrieb/kontakte/neu" className="btn-primary">+ Neuer Lead</Link>
       </div>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat label="Aufgaben fällig heute" value={tasks.length - overdue} href="/admin/vertrieb/aufgaben" tone="amber" />
+        <Stat label="Heute fällig" value={tasks.length - overdue} href="/admin/vertrieb/aufgaben" tone="amber" />
         <Stat label="Überfällig" value={overdue} href="/admin/vertrieb/aufgaben" tone={overdue ? "red" : undefined} />
-        <Stat label="Kontakte gesamt" value={total} href="/admin/vertrieb/kontakte" />
-        <Stat label="Cold Mail erhalten" value={sent} href="/admin/vertrieb/kontakte?mail=sent" />
-        <Stat label="Antworten auf Cold Mail" value={replies} href="/admin/vertrieb/kontakte?mail=replied" tone="green" />
-        <Stat label="Mail erhalten, noch nie angerufen" value={mailNoCall} href="/admin/vertrieb/kontakte?mail=sent&stage=NEU" />
-        <Stat label="LinkedIn vernetzt" value={liConnected} href="/admin/vertrieb/kontakte?li=VERNETZT" />
-        <Stat label="LinkedIn-Antworten" value={liReplies} href="/admin/vertrieb/kontakte?li=GEANTWORTET" tone="green" />
+        <Stat label="Antworten" value={replies + liReplies} href="/admin/vertrieb/kontakte?mail=replied" tone={replies + liReplies ? "green" : undefined} />
+        <Stat label="Mail bekommen, nie angerufen" value={mailNoCall} href="/admin/vertrieb/kontakte?mail=sent&stage=NEU" />
       </div>
+      <p className="-mt-3 text-xs text-slate-500">
+        {total.toLocaleString("de-DE")} Kontakte · {sent.toLocaleString("de-DE")} Cold Mails · {liConnected.toLocaleString("de-DE")} auf LinkedIn vernetzt
+      </p>
 
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <section className="card">
@@ -60,7 +59,7 @@ export default async function HeutePage() {
           {tasks.length ? (
             <ul className="divide-y divide-slate-100">{tasks.slice(0, 30).map((t) => <TaskRow key={t.id} t={t} />)}</ul>
           ) : (
-            <p className="px-4 py-8 text-center text-sm text-slate-500">Nichts fällig. 🎉</p>
+            <p className="px-4 py-8 text-center text-sm text-slate-500">Nichts fällig.</p>
           )}
         </section>
         <div className="space-y-6">

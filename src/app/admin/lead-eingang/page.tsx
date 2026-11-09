@@ -56,15 +56,17 @@ export default async function LeadIntakePage({
     <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Lead-Eingang</h1>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">
-          Leads direkt von Meta in die App, ohne Airtable. Jedes Leadformular wird einem Kunden und Produkt zugeordnet.
-        </p>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">Leadformular einem Kunden zuordnen, dann kommen Leads direkt in die App.</p>
       </div>
       {sp.ok ? <p className="rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{sp.ok}</p> : null}
       {sp.err ? <p className="rounded-md bg-rose-50 px-4 py-2 text-sm text-rose-800">{sp.err}</p> : null}
 
-      <Card>
-        <CardHeader title="Meta-Verbindung" icon={PlugZap} actions={metaReady ? <Badge tone="success">bereit</Badge> : <Badge tone="warning">unvollständig</Badge>} />
+      <details open={!metaReady} className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)] [&>summary::-webkit-details-marker]:hidden">
+        <summary className="flex cursor-pointer items-center gap-2.5 px-5 py-3.5 group-open:border-b group-open:border-[color:var(--border)]">
+          <PlugZap className="h-4 w-4 text-[color:var(--muted)]" />
+          <span className="flex-1 text-[15px] font-semibold">Meta-Verbindung</span>
+          {metaReady ? <Badge tone="success">bereit</Badge> : <Badge tone="warning">unvollständig</Badge>}
+        </summary>
         <div className="grid gap-4 p-5 text-sm md:grid-cols-2">
           <ul className="space-y-1.5">
             <Check ok={diag.tokenSet} label="System-User-Token (META_ACCESS_TOKEN)" />
@@ -90,7 +92,7 @@ export default async function LeadIntakePage({
             </div>
           </div>
         </div>
-      </Card>
+      </details>
 
       {unassigned.length ? (
         <Card tone="attention">
@@ -218,22 +220,20 @@ export default async function LeadIntakePage({
               <span className="text-xs font-medium text-[color:var(--muted)]">Lead-Preis netto (nur Pay-per-Lead)</span>
               <input name="leadPrice" inputMode="decimal" placeholder="leer = kein Lead-Preis" className={input} />
             </label>
-            <label className="block space-y-1 md:col-span-2">
-              <span className="text-xs font-medium text-[color:var(--muted)]">Airtable-Bezug für Stornogründe (optional, rec…)</span>
-              <input name="bezugAirtableId" placeholder="leer lassen bei Retainer-Kunden" className={input} />
-            </label>
+            <details className="md:col-span-2">
+              <summary className="cursor-pointer text-xs font-medium text-[color:var(--muted)]">Erweitert: Airtable-Bezug für Stornogründe</summary>
+              <input name="bezugAirtableId" placeholder="rec… (leer lassen bei Retainer-Kunden)" className={`${input} mt-2`} />
+            </details>
             <div className="md:col-span-2">
               <button className="h-10 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 font-semibold text-white">Zuordnen</button>
-              <span className="ml-3 text-xs text-[color:var(--muted)]">
-                Mit gewählter Seite wird sie für den Meta-Webhook abonniert. Wartende Leads des Formulars werden übernommen.
-              </span>
+              <span className="ml-3 text-xs text-[color:var(--muted)]">Wartende Leads des Formulars werden übernommen.</span>
             </div>
           </form>
         </div>
       </Card>
 
-      <Card>
-        <CardHeader title="Übergang: Webhook für Zapier" />
+      <details className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)] [&>summary::-webkit-details-marker]:hidden">
+        <summary className="cursor-pointer px-5 py-3.5 text-[15px] font-semibold group-open:border-b group-open:border-[color:var(--border)]">Übergang: Webhook für Zapier</summary>
         <div className="space-y-2 p-5 text-sm text-[color:var(--muted)]">
           <p>
             Solange ein Formular noch über Zapier läuft: im Zap den Airtable-Schritt durch „Webhooks by Zapier → POST“ ersetzen
@@ -243,7 +243,7 @@ export default async function LeadIntakePage({
             {base}/api/leads/eingang?token={process.env.LEAD_WEBHOOK_TOKEN ? process.env.LEAD_WEBHOOK_TOKEN : "(LEAD_WEBHOOK_TOKEN setzen)"}
           </code>
         </div>
-      </Card>
+      </details>
     </main>
   );
 }

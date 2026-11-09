@@ -1,3 +1,4 @@
+import { ChevronDown } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AutoRefresh } from "@/components/auto-refresh";
@@ -176,12 +177,22 @@ async function DashboardBody({
       <MonthlyGoalsCard progress={goals} />
       <KpiGrid kpis={k} prev={p} points={ts.points} customerId={customerId} />
       <ChannelPerformanceGrid current={channels} previous={channelsPrev} />
-      <PnLStatement pnl={pnl} />
-      <MonthlyForecast forecast={forecast} />
-      <SpeedToLeadCard data={speed} />
       <PerformanceTable customerRows={customerRows} productRows={productRows} />
-      <CplTrendChart points={ts.points} granularity={ts.granularity} />
-      <TrendCharts points={ts.points} granularity={ts.granularity} />
+      <Details title="Gewinn- und Verlustrechnung">
+        <PnLStatement pnl={pnl} />
+      </Details>
+      <Details title="Hochrechnung für diesen Monat">
+        <MonthlyForecast forecast={forecast} />
+      </Details>
+      <Details title="Reaktionszeit (Speed to Lead)">
+        <SpeedToLeadCard data={speed} />
+      </Details>
+      <Details title="Verlauf im Zeitraum">
+        <div className="space-y-6">
+          <CplTrendChart points={ts.points} granularity={ts.granularity} />
+          <TrendCharts points={ts.points} granularity={ts.granularity} />
+        </div>
+      </Details>
     </div>
   );
 }
@@ -261,7 +272,7 @@ function KpiGrid({
 }) {
   return (
     <div className="space-y-6">
-      <KpiSection eyebrow="Sektion · Funnel" title="Wie performt dein Funnel">
+      <KpiSection eyebrow="Funnel" title="Wie performt dein Funnel">
         <KpiCard
           label="Erreichbarkeitsquote"
           value={formatPercent(k.reachabilityRate)}
@@ -293,7 +304,7 @@ function KpiGrid({
       </KpiSection>
 
       <KpiSection
-        eyebrow="Sektion · Wirtschaftlichkeit"
+        eyebrow="Wirtschaftlichkeit"
         title="Umsatz & Profit"
       >
         <KpiCard
@@ -355,7 +366,7 @@ function KpiGrid({
       </KpiSection>
 
       <KpiSection
-        eyebrow="Sektion · Margen & Volumen"
+        eyebrow="Margen"
         title="Effizienz im Überblick"
       >
         <KpiCard
@@ -456,47 +467,25 @@ function ChannelPerformanceGrid({
     );
   }
 
+  // Nur Kanäle mit Daten zeigen (Spend oder Leads, jetzt oder im Vorzeitraum).
+  const used = (k: keyof ChannelPerformance) =>
+    current[k].spend > 0 || current[k].totalLeads > 0 || previous[k].spend > 0 || previous[k].totalLeads > 0;
+  const list = (
+    [
+      ["meta", "Meta (Facebook & Instagram)", "Meta"],
+      ["outbrain", "Outbrain", "Outbrain"],
+      ["tiktok", "TikTok", "TikTok"],
+      ["google", "Google Ads", "Google"],
+    ] as const
+  ).filter(([k]) => used(k));
+  if (list.length === 0) return null;
   return (
     <div className="space-y-6">
-      <KpiSection
-        eyebrow="Sektion · Werbekanäle · Meta"
-        title="Meta (Facebook & Instagram)"
-      >
-        {channelCards("Meta", current.meta, previous.meta)}
-      </KpiSection>
-      <KpiSection
-        eyebrow="Sektion · Werbekanäle · Outbrain"
-        title="Outbrain Amplify"
-      >
-        {channelCards(
-          "Outbrain",
-          current.outbrain,
-          previous.outbrain,
-          "Noch keine Outbrain-Leads — Source-Spalte in Airtable prüfen",
-        )}
-      </KpiSection>
-      <KpiSection
-        eyebrow="Sektion · Werbekanäle · TikTok"
-        title="TikTok Ads"
-      >
-        {channelCards(
-          "TikTok",
-          current.tiktok,
-          previous.tiktok,
-          "Noch keine TikTok-Leads — Source-Spalte in Airtable prüfen",
-        )}
-      </KpiSection>
-      <KpiSection
-        eyebrow="Sektion · Werbekanäle · Google"
-        title="Google Ads"
-      >
-        {channelCards(
-          "Google",
-          current.google,
-          previous.google,
-          "Noch keine Google-Leads — Source-Spalte in Airtable prüfen",
-        )}
-      </KpiSection>
+      {list.map(([k, title, label]) => (
+        <KpiSection key={k} eyebrow="Werbekanal" title={title}>
+          {channelCards(label, current[k], previous[k])}
+        </KpiSection>
+      ))}
     </div>
   );
 }
@@ -522,5 +511,18 @@ function KpiSection({
         {children}
       </div>
     </section>
+  );
+}
+
+/** Zugeklappter Detailbereich (selten gebraucht, hält die Seite kurz). */
+function Details({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <details className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)] [&>summary::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer items-center justify-between px-5 py-3.5 text-[15px] font-semibold">
+        {title}
+        <ChevronDown className="h-4 w-4 text-[color:var(--muted)] transition group-open:rotate-180" />
+      </summary>
+      <div className="border-t border-[color:var(--border)] p-3 sm:p-4">{children}</div>
+    </details>
   );
 }

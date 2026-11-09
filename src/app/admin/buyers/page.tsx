@@ -53,21 +53,14 @@ export default async function AdminBuyersPage() {
             ← zum Dashboard
           </Link>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight">
-            Buyer-Accounts
+            Kunden-Logins
           </h1>
-          <p className="mt-1 text-sm text-[color:var(--muted)]">
-            Hier legst du Logins für Buyer an. Sie sehen nur ihre eigenen
-            Leads und Statistiken.
-          </p>
         </div>
       </header>
 
       <section className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/40 p-5">
-        <h2 className="text-base font-semibold">👁 Als Kunde ansehen</h2>
-        <p className="mt-1 text-xs text-[color:var(--muted)]">
-          Zeigt das Kunden-CRM genau so, wie der Kunde es sieht – nur lesend,
-          Änderungen sind in der Vorschau deaktiviert.
-        </p>
+        <h2 className="text-base font-semibold">Als Kunde ansehen</h2>
+        <p className="mt-1 text-xs text-[color:var(--muted)]">Nur lesend.</p>
         <form action={startPreviewAction} className="mt-3 flex flex-wrap gap-2">
           <select
             name="customerId"
@@ -93,13 +86,13 @@ export default async function AdminBuyersPage() {
         </form>
       </section>
 
-      <section className="mt-6 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-md)]">
-        <h2 className="text-base font-semibold">Neuen Account anlegen</h2>
+      <details className="group mt-6 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-md)] [&>summary::-webkit-details-marker]:hidden">
+        <summary className="cursor-pointer text-base font-semibold text-[color:var(--brand)]">+ Neuen Login anlegen</summary>
         <CreateBuyerForm customers={customers} />
-      </section>
+      </details>
 
       <section className="mt-6 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-md)]">
-        <h2 className="text-base font-semibold">Bestehende Buyer-Accounts</h2>
+        <h2 className="text-base font-semibold">Logins</h2>
         {buyers.length === 0 ? (
           <p className="mt-2 text-sm text-[color:var(--muted)]">
             Noch keine Buyer-Accounts angelegt.
