@@ -10,7 +10,16 @@ function createPrisma(): PrismaClient {
   if (!connectionString) {
     throw new Error("DATABASE_URL is not set");
   }
-  const adapter = new PrismaPg({ connectionString });
+  // Bricht die Datenbank-Verbindung ab (Neustart, Umzug, Netzwerk), meldet
+  // der Pool einen Fehler. Ohne Handler beendet Node den ganzen Prozess –
+  // so loggen wir nur und der Pool baut beim nächsten Query neu auf.
+  const adapter = new PrismaPg(
+    { connectionString },
+    {
+      onPoolError: (err) => console.error("[db] Pool-Fehler:", err.message),
+      onConnectionError: (err) => console.error("[db] Verbindungsfehler:", err.message),
+    },
+  );
   return new PrismaClient({ adapter });
 }
 

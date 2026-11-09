@@ -24,9 +24,27 @@ const prisma = (args, capture = false) =>
     encoding: "utf8",
   });
 
+// Wartet bis zu 5 Minuten auf die Datenbank (z. B. während eines Neustarts
+// oder Umzugs), statt sofort abzustürzen.
+async function connectWithRetry() {
+  const deadline = Date.now() + 5 * 60 * 1000;
+  for (let attempt = 1; ; attempt++) {
+    const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+    client.on("error", () => {});
+    try {
+      await client.connect();
+      return client;
+    } catch (err) {
+      await client.end().catch(() => {});
+      if (Date.now() > deadline) throw err;
+      console.log(`[migrate] Datenbank noch nicht erreichbar (${err.code ?? err.message}) – neuer Versuch in 5 s (${attempt}).`);
+      await new Promise((r) => setTimeout(r, 5000));
+    }
+  }
+}
+
 async function hasMigrationTable() {
-  const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
-  await client.connect();
+  const client = await connectWithRetry();
   try {
     const r = await client.query(
       "select 1 from information_schema.tables where table_schema = 'public' and table_name = '_prisma_migrations'",
