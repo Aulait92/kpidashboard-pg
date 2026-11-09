@@ -14,7 +14,7 @@ export function LoginForm({ next }: { next: string }) {
       <input type="hidden" name="next" value={next} />
       <label className="block">
         <span className="text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
-          Email
+          E-Mail
         </span>
         <input
           name="email"

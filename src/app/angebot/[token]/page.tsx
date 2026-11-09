@@ -74,9 +74,9 @@ export default async function OfferPage({
             enabled={billingEnabled()}
           />
         ) : null}
-        <OfferDocument offer={doc} />
+        <OfferDocument offer={doc} collapseAgb />
         {offer.status === "accepted" ? null : (
-          <div className="mx-auto mt-6 max-w-[880px] rounded-[20px] border border-[#e5e7eb] bg-white px-6 py-8 sm:px-12">
+          <div id="annehmen" className="mx-auto mt-6 max-w-[880px] scroll-mt-4 rounded-[20px] border border-[#e5e7eb] bg-white px-6 py-8 sm:px-12">
             <section>
               <h2 className="text-lg font-bold">Angebot annehmen</h2>
               {offer.status === "superseded" ? (
@@ -100,6 +100,23 @@ export default async function OfferPage({
             </section>
           </div>
         )}
+        {canAccept && offer.status !== "accepted" ? (
+          // Immer sichtbar: direkt zur Annahme springen (die Seite ist lang).
+          <>
+            <div className="h-20" />
+            <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[#e5e7eb] bg-white/95 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-3 backdrop-blur">
+              <div className="mx-auto flex max-w-[880px] items-center justify-between gap-3">
+                <span className="hidden text-sm text-[#374151] sm:block">Alles klar? Dann hier annehmen.</span>
+                <a
+                  href="#annehmen"
+                  className="inline-flex h-12 w-full items-center justify-center rounded-[var(--radius-md)] bg-[color:var(--brand)] px-6 text-[15px] font-semibold text-white hover:bg-[color:var(--brand-dark)] sm:w-auto"
+                >
+                  Angebot annehmen
+                </a>
+              </div>
+            </div>
+          </>
+        ) : null}
       </div>
     </main>
   );

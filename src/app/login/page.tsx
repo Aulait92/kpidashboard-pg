@@ -26,9 +26,6 @@ export default async function LoginPage({
           <h1 className="mt-3 text-2xl font-bold tracking-tight">
             Anmelden
           </h1>
-          <p className="mt-1 text-sm text-[color:var(--muted)]">
-            Mit deinem Kunden- oder Admin-Account.
-          </p>
         </div>
         <LoginForm next={next} />
         <div className="mt-4 text-center text-xs text-[color:var(--muted)]">

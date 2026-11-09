@@ -77,7 +77,16 @@ const eur2 = (n: number) =>
 const SHORT_NAME = PROVIDER.name.replace(" (haftungsbeschränkt)", "");
 export const PROVIDER_FOOTER = `${SHORT_NAME} · ${PROVIDER.street} · ${PROVIDER.city}`;
 
-export function OfferDocument({ offer, part = "all" }: { offer: OfferDoc; part?: "all" | "cover" | "body" }) {
+export function OfferDocument({
+  offer,
+  part = "all",
+  collapseAgb = false,
+}: {
+  offer: OfferDoc;
+  part?: "all" | "cover" | "body";
+  /** Web-Ansicht: AGB zugeklappt (PDF: immer ausgeschrieben). */
+  collapseAgb?: boolean;
+}) {
   const products = offerProducts(offer.products);
   const term = (offer.term === "12m" ? "12m" : "none") as OfferTerm;
   const serviceOnly = offer.package === "service";
@@ -283,6 +292,37 @@ export function OfferDocument({ offer, part = "all" }: { offer: OfferDoc; part?:
           </>
         ) : null}
 
+        {collapseAgb ? (
+          // Web-Ansicht: AGB zum Aufklappen (im PDF immer vollständig).
+          <details className="offer-agb group mt-14 rounded-xl border border-[#e5e7eb] [&>summary::-webkit-details-marker]:hidden">
+            <summary className="flex cursor-pointer items-center justify-between gap-3 px-5 py-4">
+              <span>
+                <span className="block text-lg font-bold">Allgemeine Geschäftsbedingungen (AGB)</span>
+                <span className="text-sm text-[#6b7280]">Bestandteil dieses Angebots. Zum Lesen antippen.</span>
+              </span>
+              <span className="text-xl text-[#6b7280] transition group-open:rotate-45">+</span>
+            </summary>
+            <div className="border-t border-[#e5e7eb] px-5 pb-5">
+            <div className="mt-4">
+          <h2 className="text-xl font-bold">Allgemeine Geschäftsbedingungen (AGB)</h2>
+          <p className="mb-6 mt-1 text-sm text-[#6b7280]">
+            Die nachfolgenden Bedingungen sind Bestandteil dieses Angebots.
+            {offer.dpaUrl ? (
+              <>
+                {" "}Ergänzend gilt der{" "}
+                <a href={offer.dpaUrl} target="_blank" rel="noreferrer" className="underline">
+                  Auftragsverarbeitungsvertrag
+                </a>
+                .
+              </>
+            ) : null}
+          </p>
+          <LegalSections sections={AGB} compact />
+        </div>
+
+            </div>
+          </details>
+        ) : (
         <div className="offer-agb mt-14">
           <h2 className="text-xl font-bold">Allgemeine Geschäftsbedingungen (AGB)</h2>
           <p className="mb-6 mt-1 text-sm text-[#6b7280]">
@@ -299,6 +339,8 @@ export function OfferDocument({ offer, part = "all" }: { offer: OfferDoc; part?:
           </p>
           <LegalSections sections={AGB} compact />
         </div>
+
+        )}
 
         <section className="mt-10 break-inside-avoid">
           <H2>Annahme des Angebots</H2>
