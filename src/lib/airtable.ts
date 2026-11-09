@@ -1377,18 +1377,32 @@ export async function syncAirtable(): Promise<SyncResult> {
   // Leads/Produkte/Region), damit neu angelegte Kunden sofort im Buyer-Dropdown
   // erscheinen. Gelöscht werden dadurch nur echte Altlasten (in Airtable
   // umbenannt/entfernt), nie ein aktiver Kunde.
-  await prisma.customer.deleteMany({
-    where: {
-      ...(syncedCustomerNames.size > 0
-        ? { name: { notIn: Array.from(syncedCustomerNames) } }
-        : {}),
-      leads: { none: {} },
-      revenues: { none: {} },
-      costs: { none: {} },
-      customerProducts: { none: {} },
-      region: null,
-    },
-  });
+  //
+  // Schutz: Ist die Kunden-Tabelle leer bzw. nicht lesbar, wird gar nichts
+  // gelöscht. Außerdem bleiben alle Kunden, die in der App selbst angelegt
+  // oder genutzt werden (Onboarding, Login, Stripe, Kalender, WhatsApp,
+  // Pause, internes Team-Konto) – die stehen nicht in Airtable.
+  if (syncedCustomerNames.size > 0) {
+    await prisma.customer.deleteMany({
+      where: {
+        name: { notIn: Array.from(syncedCustomerNames) },
+        leads: { none: {} },
+        revenues: { none: {} },
+        costs: { none: {} },
+        customerProducts: { none: {} },
+        region: null,
+        plan: { not: "internal" },
+        stripeCustomerId: null,
+        onboarding: null,
+        users: { none: {} },
+        calendarConnection: null,
+        whatsAppAccount: null,
+        agentConfig: null,
+        pauses: { none: {} },
+        salesContact: null,
+      },
+    });
+  }
 
   result.customers = customerCache.size;
   return result;
