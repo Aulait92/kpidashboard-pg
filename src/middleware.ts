@@ -15,6 +15,7 @@ const PUBLIC_PREFIXES = [
   "/api/whatsapp", // 360dialog-Webhook + Dev-Seed (per WHATSAPP_WEBHOOK_SECRET-Token gesichert)
   "/book", // öffentliche Terminbuchung für Leads (lesbarer Slug je Kunde)
   "/api/ops", // Betriebs-API (Buyer-Accounts anlegen), per ADMIN_API_TOKEN (Bearer) gesichert
+  "/api/health", // Healthcheck für Railway/Uptime (gibt nur ok true/false zurück)
   "/manifest.webmanifest",
   "/icon",
   "/apple-icon",
