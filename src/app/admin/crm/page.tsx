@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { Plus } from "lucide-react";
+import { ButtonLink } from "@/components/ui";
 import { CrmFilterBar } from "@/components/crm-filter-bar";
 import {
   SalesKanbanBoard,
@@ -139,7 +141,12 @@ export default async function AdminCrmPage({
             Klick auf eine Karte öffnet die Detail-Ansicht mit Timeline.
           </p>
         </div>
-        <CrmFilterBar currentQuery={queryRaw} />
+        <div className="flex items-center gap-2">
+          <CrmFilterBar currentQuery={queryRaw} />
+          <ButtonLink href="/admin/crm/neu" variant="primary" icon={Plus}>
+            Deal anlegen
+          </ButtonLink>
+        </div>
       </header>
 
       {sp.deleteWarning === "airtable" ? (
