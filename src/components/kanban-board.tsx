@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import { ArrowRightLeft, X } from "lucide-react";
+import { ActionSheet } from "@/components/ui/sheet";
 import { setLeadStatusAction } from "@/app/buyer/actions";
 import {
   CLOSED_STATUS,
@@ -556,23 +557,8 @@ function KanbanCard({
           </>
         )}
         {columns && onMove ? (
-          // Handy: Phase per Menü statt Drag & Drop
-          <select
-            aria-label="Phase ändern"
-            value={currentKey}
-            onClick={(e) => e.stopPropagation()}
-            onChange={(e) => {
-              const target = columns.find((c) => c.key === e.target.value);
-              if (target && target.key !== currentKey) onMove(target);
-            }}
-            className="ml-auto shrink-0 rounded-md border border-[color:var(--border)] bg-white py-1 pl-2 pr-6 text-[11px] font-medium text-[color:var(--foreground)]"
-          >
-            {columns.map((c) => (
-              <option key={c.key} value={c.key}>
-                {c.key === currentKey ? "Phase ändern" : `→ ${c.label}`}
-              </option>
-            ))}
-          </select>
+          // Handy: Phase per Auswahlfenster statt Drag & Drop
+          <MoveButton columns={columns} currentKey={currentKey} onMove={onMove} name={lead.name} />
         ) : null}
       </div>
       {lead.appointment ? (
@@ -608,5 +594,47 @@ function KanbanCard({
       ) : null}
 
     </div>
+  );
+}
+
+function MoveButton({
+  columns,
+  currentKey,
+  onMove,
+  name,
+}: {
+  columns: ColumnDef[];
+  currentKey?: string;
+  onMove: (target: ColumnDef) => void;
+  name: string | null;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen(true);
+        }}
+        className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-[color:var(--border)] bg-white px-2.5 py-1 text-[11px] font-semibold text-[color:var(--foreground)]"
+      >
+        Verschieben <ArrowRightLeft className="h-3 w-3" />
+      </button>
+      <span onClick={(e) => e.stopPropagation()}>
+        <ActionSheet
+          open={open}
+          onClose={() => setOpen(false)}
+          title={`${name ?? "Lead"} verschieben nach`}
+          actions={columns.map((c) => ({
+            label: c.label,
+            tone: c.key === currentKey ? "primary" : undefined,
+            onSelect: () => {
+              if (c.key !== currentKey) onMove(c);
+            },
+          }))}
+        />
+      </span>
+    </>
   );
 }

@@ -57,7 +57,7 @@ export default async function BuyerLeadsPage({
           title="Leads"
           subtitle={
             <>
-              Anfragen, Rückrufe und Termine an einem Ort · aktualisiert <LiveUpdated since={renderedAt} />
+              Aktualisiert <LiveUpdated since={renderedAt} />
             </>
           }
           actions={

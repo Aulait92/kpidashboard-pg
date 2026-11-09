@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { ChevronDown } from "lucide-react";
 import { Suspense } from "react";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { BuyerFilterBar } from "@/components/buyer-filter-bar";
@@ -21,13 +22,11 @@ import {
   computeKpis,
   computeTimeSeries,
   type Kpis,
-  type TimeSeriesPoint,
 } from "@/lib/kpis";
 import {
   formatDate,
   formatEUR,
   formatNumber,
-  formatPercent,
 } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { TeamStats } from "@/components/team-stats";
@@ -211,106 +210,20 @@ async function BuyerDashboardBody({
 
 
       <section>
-        <div className="mb-3">
-          <h2 className="text-[15px] font-semibold tracking-tight">
-            Deine Zahlen
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <KpiCard
-            label="Leads"
-            value={formatNumber(k.nettoLeads)}
-            hint={`${k.totalLeads} brutto${k.cancelledLeads > 0 ? ` (${k.cancelledLeads} Storno${k.cancelledLeads === 1 ? "" : "s"} exkl.)` : ""}`}
-            delta={delta(k.nettoLeads, p.nettoLeads)}
-            sparkline={{ points: ts.points as TimeSeriesPoint[], dataKey: "leads", tone: "neutral" }}
-          />
-          <KpiCard
-            label="Erreichbarkeit"
-            value={formatPercent(k.reachabilityRate)}
-            hint={`${k.reachedLeads} von ${k.nettoLeads} erreicht${k.cancelledLeads > 0 ? ` (${k.cancelledLeads} Stornos exkl.)` : ""}`}
-            delta={delta(k.reachabilityRate, p.reachabilityRate)}
-            sparkline={{ points: ts.points, dataKey: "reachabilityRate" }}
-          />
-          <KpiCard
-            label="Abschlussquote"
-            value={formatPercent(k.closingRate)}
-            hint={`${k.closedLeads} Abschlüsse`}
-            delta={delta(k.closingRate, p.closingRate)}
-            sparkline={{ points: ts.points, dataKey: "closingRate" }}
-          />
-        </div>
-      </section>
-
-      <section>
-        <div className="mb-3">
-          <h2 className="text-[15px] font-semibold tracking-tight">
-            Was du für Leads bezahlt hast
-          </h2>
-        </div>
+        <h2 className="mb-3 text-[15px] font-semibold tracking-tight">Kosten &amp; Ertrag</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KpiCard
             label="Lead-Kosten"
             value={formatEUR(cost)}
             tone="neutral"
-            hint={costHint}
+            hint={k.nettoLeads > 0 ? `${formatEUR(cost / k.nettoLeads)} pro Lead` : costHint}
             delta={delta(cost, costPrev, true)}
-            sparkline={{ points: ts.points, dataKey: "revenue" }}
           />
-          <KpiCard
-            label="Ø Lead-Kosten / Lead"
-            value={formatEUR(
-              k.nettoLeads > 0 ? cost / k.nettoLeads : null,
-            )}
-            hint={`Pro Netto-Lead (${formatNumber(k.nettoLeads)})`}
-            delta={delta(
-              k.nettoLeads > 0 ? cost / k.nettoLeads : null,
-              p.nettoLeads > 0 ? costPrev / p.nettoLeads : null,
-              true,
-            )}
-          />
-          <KpiCard
-            label="Kosten / Termin"
-            value={formatEUR(
-              k.terminLeads > 0 ? cost / k.terminLeads : null,
-            )}
-            hint={`Aus ${formatNumber(k.terminLeads)} Terminen`}
-            delta={delta(
-              k.terminLeads > 0 ? cost / k.terminLeads : null,
-              p.terminLeads > 0 ? costPrev / p.terminLeads : null,
-              true,
-            )}
-          />
-          <KpiCard
-            label="Kosten / Abschluss"
-            value={formatEUR(
-              k.closedLeads > 0 ? cost / k.closedLeads : null,
-            )}
-            hint={`Aus ${formatNumber(k.closedLeads)} Abschlüssen`}
-            delta={delta(
-              k.closedLeads > 0 ? cost / k.closedLeads : null,
-              p.closedLeads > 0 ? costPrev / p.closedLeads : null,
-              true,
-            )}
-          />
-        </div>
-      </section>
-
-      <section>
-        <div className="mb-3">
-          <h2 className="text-[15px] font-semibold tracking-tight">
-            Was du verdient hast
-          </h2>
-          <p className="mt-1 text-xs text-[color:var(--muted)]">
-            Aus den Abschlusswerten, die du einträgst, wenn du einen Lead auf
-            „Abschluss“ setzt.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KpiCard
             label="Umsatz"
             value={formatEUR(umsatz)}
             tone="positive"
-            hint={`Σ Abschlusswerte aus ${formatNumber(k.closedLeads)} Abschlüssen`}
+            hint={`aus ${formatNumber(k.closedLeads)} ${k.closedLeads === 1 ? "Abschluss" : "Abschlüssen"}`}
             delta={delta(umsatz, umsatzPrev)}
           />
           <KpiCard
@@ -321,31 +234,27 @@ async function BuyerDashboardBody({
             delta={delta(gewinn, gewinnPrev)}
           />
           <KpiCard
-            label="Gewinn / Lead"
-            value={formatEUR(
-              k.totalLeads > 0 ? gewinn / k.totalLeads : null,
-            )}
-            hint="Pro eingehendem Lead"
+            label="Kosten pro Abschluss"
+            value={formatEUR(k.closedLeads > 0 ? cost / k.closedLeads : null)}
+            hint={k.terminLeads > 0 ? `${formatEUR(cost / k.terminLeads)} pro Termin` : undefined}
             delta={delta(
-              k.totalLeads > 0 ? gewinn / k.totalLeads : null,
-              p.totalLeads > 0 ? gewinnPrev / p.totalLeads : null,
-            )}
-          />
-          <KpiCard
-            label="Gewinn / Abschluss"
-            value={formatEUR(
-              k.closedLeads > 0 ? gewinn / k.closedLeads : null,
-            )}
-            hint={`Aus ${formatNumber(k.closedLeads)} Abschlüssen`}
-            delta={delta(
-              k.closedLeads > 0 ? gewinn / k.closedLeads : null,
-              p.closedLeads > 0 ? gewinnPrev / p.closedLeads : null,
+              k.closedLeads > 0 ? cost / k.closedLeads : null,
+              p.closedLeads > 0 ? costPrev / p.closedLeads : null,
+              true,
             )}
           />
         </div>
       </section>
 
-      <MonthlyForecast forecast={forecast} />
+      <details className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)] [&>summary::-webkit-details-marker]:hidden">
+        <summary className="flex cursor-pointer items-center justify-between px-5 py-3.5 text-[15px] font-semibold">
+          Hochrechnung für diesen Monat
+          <ChevronDown className="h-4 w-4 text-[color:var(--muted)] transition group-open:rotate-180" />
+        </summary>
+        <div className="border-t border-[color:var(--border)] p-2 sm:p-3">
+          <MonthlyForecast forecast={forecast} />
+        </div>
+      </details>
 
       {/* BuyerComparison/Leaderboard temporär ausgeblendet —
           wird wieder eingebaut, sobald der Vergleich freigegeben ist. */}

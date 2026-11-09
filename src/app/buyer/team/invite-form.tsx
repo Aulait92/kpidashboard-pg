@@ -18,9 +18,7 @@ export function InviteForm({ readOnly }: { readOnly: boolean }) {
           <input name="name" required placeholder="Vor- und Nachname" className={input} />
           <input name="email" type="email" required placeholder="E-Mail-Adresse" className={input} />
         </div>
-        <p className="text-sm text-[color:var(--muted)]">
-          Die Person bekommt eine E-Mail mit einem Link, um ihr Passwort festzulegen. Ab dann bekommt sie neue Leads.
-        </p>
+        <p className="text-sm text-[color:var(--muted)]">Die Person bekommt per E-Mail einen Link zum Passwort-Festlegen.</p>
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="submit"

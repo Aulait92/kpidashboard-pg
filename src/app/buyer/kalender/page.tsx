@@ -32,13 +32,7 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
       <Card>
         <CardHeader title="Eigener Kalender" icon={CalendarDays} />
         <div className="space-y-4 p-5 text-[15px]">
-          <p className="text-[color:var(--muted)]">
-            Verbinden Sie Ihren Kalender, dann bucht der digitale Assistent Termine für Ihre Leads nur in Ihre freien Zeiten
-            und trägt sie direkt bei Ihnen ein.
-            {owner
-              ? " Ohne eigenen Kalender nutzt die App für Ihre Leads den Agentur-Kalender aus der Einrichtung."
-              : " Ohne eigenen Kalender landen Ihre Termine im Kalender der Agentur."}
-          </p>
+          <p className="text-[color:var(--muted)]">Termine für Ihre Leads landen dann nur in freien Zeiten direkt in Ihrem Kalender.</p>
           {gcal === "connected" ? <p className="font-medium text-emerald-700">Kalender verbunden.</p> : null}
           {gcal && gcal !== "connected" ? (
             <p className="font-medium text-rose-700">

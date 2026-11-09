@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
-import { CalendarDays, CheckCircle2, ClipboardList, KeyRound, Rocket } from "lucide-react";
+import { CalendarDays, CheckCircle2,
+  ChevronDown, ClipboardList, KeyRound, Rocket } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
-import { buttonClass, Card, CardHeader } from "@/components/ui";
+import { buttonClass, Card } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { checklistProgress, loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
@@ -30,6 +31,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const progress = checklistProgress(items);
   const businessId = process.env.PG_META_BUSINESS_ID?.trim() || "3089330734489612";
   const readOnly = ctx.preview;
+  const order = ["questionnaire", "metaAccess", ...(software ? ["calendar"] : [])];
+  const current = order.find((k) => !done(k)) ?? "start";
   const helpUpcoming = ob.helpCallAt && ob.helpCallAt > new Date();
   const slots = !helpUpcoming && !ob.liveAt ? await helpCallSlots().catch(() => []) : [];
   const timeFmt = (d: Date) =>
@@ -57,28 +60,20 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-[color:var(--surface-sunken,#f1f5f9)]">
             <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${ob.liveAt ? 100 : progress.percent}%` }} />
           </div>
-          <p className="mt-3 text-sm text-[color:var(--muted)]">
-            Ihre Aufgaben dauern zusammen etwa 5 Minuten. Alles andere erledigen wir: Kampagne, Werbemittel, Leadformular
-            {software ? ", WhatsApp-Assistent" : ""}.
-          </p>
+          <p className="mt-3 text-sm text-[color:var(--muted)]">Ca. 5 Minuten für Sie. Den Rest erledigen wir.</p>
         </div>
       </Card>
 
       <div className="space-y-5">
-        <Step n={1} title="Kurzer Fragebogen" icon={ClipboardList} done={done("questionnaire")}>
-          <p className="mb-4 text-sm text-[color:var(--muted)]">
-            Gebiet und Produkte kennen wir schon aus dem Gespräch. Hier nur noch, wie Sie arbeiten möchten:
-          </p>
+        <Step n={1} title="Kurzer Fragebogen" icon={ClipboardList} done={done("questionnaire")} open={current === "questionnaire"}>
+          <p className="mb-4 text-sm text-[color:var(--muted)]">Nur noch, wie Sie arbeiten möchten:</p>
           <QuestionnaireForm software={software} initial={(ob.questionnaire ?? {}) as Record<string, never>} readOnly={readOnly} />
         </Step>
 
-        <Step n={2} title="Zugriff auf Ihr Meta-Werbekonto" icon={KeyRound} done={done("metaAccess")}>
-          <p className="text-sm text-[color:var(--muted)]">
-            Damit wir die Anzeigen in Ihrem Werbekonto schalten können, geben Sie uns als Partner Zugriff. Ihr Werbebudget
-            bleibt dabei vollständig in Ihrer Hand.
-          </p>
+        <Step n={2} title="Zugriff auf Ihr Meta-Werbekonto" icon={KeyRound} done={done("metaAccess")} open={current === "metaAccess"}>
+          <p className="text-sm text-[color:var(--muted)]">So schalten wir die Anzeigen in Ihrem Werbekonto. Das Budget bleibt bei Ihnen.</p>
           <details className="my-4 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3 text-[15px]">
-            <summary className="cursor-pointer font-medium">Sie haben noch keinen Business Manager (Business-Portfolio)? So legen Sie ihn an</summary>
+            <summary className="cursor-pointer font-medium">Noch kein Business Manager? So legen Sie ihn an</summary>
             <ol className="mt-3 list-decimal space-y-1.5 pl-5">
               <li>
                 <a href="https://business.facebook.com/overview" target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
@@ -139,9 +134,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               </p>
             ) : slots.length ? (
               <>
-                <p className="mb-3 mt-1 text-sm text-[color:var(--muted)]">
-                  Buchen Sie einen 15-Minuten-Termin per Video. Wir richten es per Bildschirmfreigabe gemeinsam ein.
-                </p>
+                <p className="mb-3 mt-1 text-sm text-[color:var(--muted)]">15 Minuten per Video, wir machen es gemeinsam.</p>
                 <HelpCallPicker slots={slots} readOnly={readOnly} />
               </>
             ) : null}
@@ -153,9 +146,9 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         </Step>
 
         {software ? (
-          <Step n={3} title="Kalender verbinden" icon={CalendarDays} done={done("calendar")}>
+          <Step n={3} title="Kalender verbinden" icon={CalendarDays} done={done("calendar")} open={current === "calendar"}>
             <p className="text-sm text-[color:var(--muted)]">
-              Der digitale Assistent bucht Termine nur in freie Zeiten und trägt sie direkt in Ihren Kalender ein.
+              Termine landen dann nur in freien Zeiten direkt in Ihrem Kalender.
             </p>
             {gcal === "connected" ? <p className="mt-3 text-sm font-medium text-emerald-700">Kalender verbunden.</p> : null}
             {gcal && gcal !== "connected" ? (
@@ -182,7 +175,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           </Step>
         ) : null}
 
-        <Step n={software ? 4 : 3} title="Start" icon={Rocket} done={!!ob.liveAt}>
+        <Step n={software ? 4 : 3} title="Start" icon={Rocket} done={!!ob.liveAt} open={current === "start"}>
           <p className="text-sm text-[color:var(--muted)]">
             {ob.startDate ? `Am ${dateFmt(ob.startDate)} ` : "Zum Start "}
             gehen die Anzeigen live.{" "}
@@ -201,28 +194,29 @@ function Step({
   title,
   icon: Icon,
   done,
+  open,
   children,
 }: {
   n: number;
   title: string;
   icon: typeof Rocket;
   done: boolean;
+  /** Nur der nächste offene Schritt ist aufgeklappt. */
+  open: boolean;
   children: React.ReactNode;
 }) {
+  // Erledigte Schritte sind zugeklappt (antippen zum Ansehen), offene aufgeklappt.
   return (
-    <Card>
-      <CardHeader
-        title={`${n}. ${title}`}
-        icon={Icon}
-        actions={
-          done ? (
-            <span className="flex items-center gap-1 text-xs font-semibold text-emerald-700">
-              <CheckCircle2 className="h-4 w-4" /> erledigt
-            </span>
-          ) : null
-        }
-      />
+    <details open={open} className="group overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)] [&>summary::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer items-center gap-2.5 px-5 py-3.5 group-open:border-b group-open:border-[color:var(--border)]">
+        {done ? <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" /> : <Icon className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />}
+        <span className={`flex-1 text-[15px] font-semibold tracking-tight ${done ? "text-[color:var(--muted)]" : ""}`}>
+          {n}. {title}
+        </span>
+        {done ? <span className="text-xs font-semibold text-emerald-700">erledigt</span> : null}
+        <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+      </summary>
       <div className="p-5">{children}</div>
-    </Card>
+    </details>
   );
 }

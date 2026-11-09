@@ -52,7 +52,7 @@ export default async function BuyerKanbanPage({
           title="Pipeline"
           subtitle={
             <>
-              Verschiebe Leads in die nächste Phase · aktualisiert <LiveUpdated since={renderedAt} />
+              Aktualisiert <LiveUpdated since={renderedAt} />
             </>
           }
           actions={

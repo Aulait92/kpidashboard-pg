@@ -92,10 +92,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 <dt className="text-[color:var(--muted)]">Laufzeit</dt>
                 <dd>{offer.term === "12m" ? "12 Monate, danach monatlich kündbar" : "Monatlich kündbar"}</dd>
                 <dt className="text-[color:var(--muted)]">Pause / Urlaub</dt>
-                <dd>
-                  Jederzeit selbst einstellbar (unten).{" "}
-                  {Number(offer.softwareFee) > 0 ? `In der Pause fallen nur ${eur(Number(offer.softwareFee))} netto im Monat an.` : "In der Pause fällt keine Vergütung an."}
-                </dd>
+                <dd>Jederzeit selbst einstellbar (siehe unten)</dd>
                 <dt className="text-[color:var(--muted)]">Vertrag</dt>
                 <dd>
                   <a href={`/angebot/${offer.token}`} target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
@@ -111,7 +108,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           pause={pause ? { status: pause.status, startsAt: pause.startsAt.toISOString(), endsAt: pause.endsAt?.toISOString() ?? null, kind: pause.kind } : null}
           today={today}
           minDate={startYmd > today ? startYmd : today}
-          softwareFeeText={softwareFee > 0 ? `In der Pause berechnen wir nur die Software-Gebühr von ${eur(softwareFee)} netto im Monat, tagesgenau.` : "In der Pause fällt keine Vergütung an."}
+          softwareFeeText={softwareFee > 0 ? `In der Pause zahlen Sie nur ${eur(softwareFee)} netto im Monat.` : "In der Pause zahlen Sie nichts."}
           readOnly={ctx.preview}
         />
 
@@ -131,10 +128,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         <Card>
           <CardHeader title="Zahlung und Rechnungsdaten" icon={CreditCard} />
           <div className="p-5">
-            <p className="text-sm text-[color:var(--muted)]">
-              Zahlungsart (SEPA-Lastschrift oder Karte), Rechnungsadresse und USt-IdNr. ändern Sie sicher über unseren
-              Zahlungsdienstleister Stripe.
-            </p>
+            <p className="text-sm text-[color:var(--muted)]">Lastschrift oder Karte, Rechnungsadresse, USt-IdNr.</p>
             {portal && PORTAL_MSG[portal] ? <p className="mt-3 text-sm font-medium text-rose-700">{PORTAL_MSG[portal]}</p> : null}
             <form action={openPortalAction} className="mt-4">
               <button

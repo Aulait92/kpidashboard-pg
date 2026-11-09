@@ -62,8 +62,7 @@ export function PauseCard({
         ) : (
           <>
             <p className="text-sm text-[color:var(--muted)]">
-              Urlaub oder volle Auslastung? Pausieren Sie die Anzeigen. {softwareFeeText} Zum Neustart-Termin laufen die
-              Anzeigen automatisch wieder an.
+              Anzeigen pausieren, z. B. im Urlaub. Am Neustart-Tag laufen sie von selbst wieder an. {softwareFeeText}
             </p>
             {planState.ok ? <p className="text-sm font-medium text-emerald-700">Pause eingetragen.</p> : null}
             <form action={plan} className="grid gap-3 sm:grid-cols-2">
@@ -101,7 +100,7 @@ export function LeadEmailToggle({ enabled, email, readOnly }: { enabled: boolean
       <div className="text-[15px]">
         <div className="font-medium">Neue Leads per E-Mail</div>
         <div className="text-sm text-[color:var(--muted)]">
-          {enabled ? `An: ${email}` : "Ausgeschaltet. Sie bekommen nur die Push-Nachricht in der App."}
+          {enabled ? `An ${email}` : "Aus. Nur Push-Nachricht in der App."}
         </div>
         {state.error ? <div className="text-sm text-rose-700">{state.error}</div> : null}
       </div>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarClock, MessageCircle } from "lucide-react";
+import { ArrowLeft, Bot, CalendarClock, MessageCircle, Phone, SendHorizontal, UserRound } from "lucide-react";
 import { redirect } from "next/navigation";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { PageHeader } from "@/components/buyer-shell";
@@ -280,7 +280,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
       <div className="hidden sm:block">
         <PageHeader
           title="Chats"
-          subtitle="WhatsApp-Gespräche deines Assistenten. Du kannst jederzeit übernehmen."
+          subtitle="WhatsApp-Gespräche mit deinen Leads"
         />
       </div>
 
@@ -322,10 +322,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
           </div>
           <div className="flex-1 overflow-y-auto p-2">
             {conversations.length === 0 ? (
-              <p className="p-4 text-sm text-[color:var(--muted)]">
-                Noch keine Chats. Sobald dein Assistent Leads anschreibt oder
-                Leads dir schreiben, erscheinen sie hier.
-              </p>
+              <p className="p-4 text-sm text-[color:var(--muted)]">Noch keine Chats.</p>
             ) : (
               conversations.map((c) => {
                 const last = c.messages[0];
@@ -371,7 +368,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                         ) : null}
                         {!c.botActive ? (
                           <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 ring-1 ring-inset ring-zinc-200">
-                            Du hast übernommen
+                            Du schreibst
                           </span>
                         ) : null}
                       </div>
@@ -392,34 +389,52 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                   <MessageCircle className="h-5 w-5" />
                 </span>
                 <span className="font-medium text-[color:var(--foreground)]">Wähle einen Chat aus</span>
-                <span className="max-w-xs text-xs">Hier siehst du, was dein Assistent mit deinen Leads schreibt, und kannst jederzeit selbst übernehmen.</span>
+
               </span>
             </div>
           ) : (
             <>
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[color:var(--border)] bg-white px-4 py-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <Link href="/buyer/chats" className="text-sm text-[color:var(--brand)] md:hidden">
-                    ←
-                  </Link>
-                  <div className="min-w-0">
-                    <div className="truncate font-bold">{active.contactName ?? `+${active.contactPhone}`}</div>
-                    <a href={`tel:+${active.contactPhone}`} className="text-xs text-[color:var(--brand)] hover:underline">
-                      {formatPhone(active.contactPhone)}
-                    </a>
+              <div className="flex items-center gap-2 border-b border-[color:var(--border)] bg-white px-3 py-2.5 sm:px-4">
+                <Link href="/buyer/chats" aria-label="Zurück" className="-ml-1 rounded-full p-1.5 text-[color:var(--brand)] md:hidden">
+                  <ArrowLeft className="h-5 w-5" />
+                </Link>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-bold">{active.contactName ?? formatPhone(active.contactPhone)}</div>
+                  <div className={`flex items-center gap-1 text-xs ${active.botActive ? "text-emerald-700" : "text-[color:var(--muted)]"}`}>
+                    <Bot className="h-3.5 w-3.5" />
+                    {active.botActive ? "Assistent antwortet" : "Du schreibst selbst"}
                   </div>
                 </div>
-                <form action={toggleBotBuyerAction}>
+                <a
+                  href={`tel:+${active.contactPhone}`}
+                  aria-label="Anrufen"
+                  title={formatPhone(active.contactPhone)}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[color:var(--brand)] text-white hover:bg-[color:var(--brand-dark)]"
+                >
+                  <Phone className="h-4 w-4" />
+                </a>
+                {active.lead ? (
+                  <Link
+                    href={`/buyer/leads/${active.lead.id}`}
+                    aria-label="Lead öffnen"
+                    title="Lead öffnen"
+                    className="hidden sm:inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:border-[color:var(--border-strong)]"
+                  >
+                    <UserRound className="h-4 w-4" />
+                  </Link>
+                ) : null}
+                {/* Handy: Schreiben übernimmt automatisch; Knopf nur zum Zurückgeben an den Assistenten */}
+                <form action={toggleBotBuyerAction} className={active.botActive ? "hidden sm:block" : ""}>
                   <input type="hidden" name="conversationId" value={active.id} />
                   <SubmitButton
                     pendingLabel="…"
-                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
+                    className={`h-9 rounded-full px-3 text-xs font-semibold ${
                       active.botActive
                         ? "border border-[color:var(--border)] bg-white hover:border-[color:var(--brand)]"
                         : "bg-emerald-600 text-white hover:bg-emerald-700"
                     }`}
                   >
-                    {active.botActive ? "Übernehmen" : "Assistent wieder aktivieren"}
+                    {active.botActive ? "Selbst schreiben" : "Assistent an"}
                   </SubmitButton>
                 </form>
               </div>
@@ -441,7 +456,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
               {/* Lead-Infos: unter xl als aufklappbarer Block, ab xl rechts */}
               <details className="border-b border-[color:var(--border)] bg-white xl:hidden">
                 <summary className="cursor-pointer px-4 py-2 text-xs font-semibold text-[color:var(--brand)]">
-                  Lead-Infos{appointments.length > 0 ? " · Termin" : ""}
+                  {appointments.length > 0 ? `Termin ${formatAppt(appointments[0].startsAt)} Uhr · Infos` : "Infos zum Lead"}
                 </summary>
                 <div className="px-4 pb-4">{leadInfo}</div>
               </details>
@@ -490,28 +505,31 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
               </div>
 
               {windowOpen ? (
-                <form action={sendReplyBuyerAction} className="border-t border-[color:var(--border)] bg-white px-4 py-3">
+                <form action={sendReplyBuyerAction} className="border-t border-[color:var(--border)] bg-white px-3 py-2.5">
                   <input type="hidden" name="conversationId" value={active.id} />
-                  <textarea
-                    name="body"
-                    rows={2}
-                    placeholder="Selbst antworten … (pausiert den Assistenten für diesen Chat)"
-                    className="w-full resize-none rounded-lg border border-[color:var(--border)] px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
-                  />
-                  <div className="mt-2 flex justify-end">
+                  <div className="flex items-end gap-2">
+                    <textarea
+                      name="body"
+                      rows={1}
+                      required
+                      placeholder="Nachricht schreiben"
+                      className="max-h-40 min-h-[40px] flex-1 resize-none rounded-[20px] border border-[color:var(--border)] px-4 py-2.5 text-sm focus:border-[color:var(--brand)] focus:outline-none [field-sizing:content]"
+                    />
                     <SubmitButton
-                      pendingLabel="Sendet …"
-                      className="rounded-lg bg-[color:var(--brand)] px-5 py-2 text-sm font-semibold text-white hover:bg-[color:var(--brand-dark)] disabled:opacity-50"
+                      pendingLabel="…"
+                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand)] text-white hover:bg-[color:var(--brand-dark)] disabled:opacity-50"
                     >
-                      Senden
+                      <SendHorizontal className="h-4 w-4" />
                     </SubmitButton>
                   </div>
+                  {active.botActive ? (
+                    <p className="mt-1 px-2 text-[11px] text-[color:var(--muted)]">Wenn du schreibst, pausiert der Assistent in diesem Chat.</p>
+                  ) : null}
                 </form>
               ) : (
                 <div className="border-t border-[color:var(--border)] bg-white px-4 py-3">
                   <p className="text-xs text-[color:var(--muted)]">
-                    Letzte Nachricht des Leads ist über 24 h her. WhatsApp erlaubt jetzt nur eine
-                    freigegebene Vorlage. Anrufen oder nachfassen:
+                    Freies Schreiben geht erst wieder, wenn der Lead antwortet. Jetzt: anrufen oder nachfassen.
                   </p>
                   {followup?.kind === "blocked" ? (
                     <p className="mt-2 rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2 text-sm">
@@ -533,10 +551,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                           </SubmitButton>
                         </div>
                       ) : (
-                        <p className="text-xs text-amber-700">
-                          Diese Vorlage ist noch nicht bei WhatsApp freigegeben. Bitte dein Team
-                          kontaktieren. Bis dahin: anrufen.
-                        </p>
+                        <p className="text-xs text-amber-700">Nachfassen ist noch nicht freigeschaltet. Bis dahin: anrufen.</p>
                       )}
                     </form>
                   ) : null}
