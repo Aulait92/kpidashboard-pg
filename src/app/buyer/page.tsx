@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { PageHeader } from "@/components/buyer-shell";
+import { LargeTitle } from "@/components/ui/ios";
 import { TodayInbox } from "@/components/today-inbox";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { getBuyerContext } from "@/lib/buyer-context";
@@ -40,9 +40,9 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
   }).format(new Date());
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-4 sm:px-6">
       <AutoRefresh intervalMs={60_000} />
-      <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={`Heute ist ${today}. Das steht an:`} />
+      <LargeTitle eyebrow={today} title={`${greet}${first ? `, ${first}` : ""}`} />
       <TodayInbox data={data} />
     </main>
   );

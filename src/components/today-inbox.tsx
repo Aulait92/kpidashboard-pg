@@ -1,22 +1,20 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
-  CalendarCheck,
   CalendarClock,
-  BellRing,
   CalendarPlus,
   Check,
+  CheckCircle2,
   Clock,
   MessageCircle,
   Phone,
   PhoneMissed,
-  PhoneOff,
   Send,
   ThumbsDown,
   Trophy,
+  UserRound,
   UserX,
   Video,
 } from "lucide-react";
@@ -29,34 +27,48 @@ import {
   undoInboxAction,
   type InboxResult,
 } from "@/app/buyer/inbox-actions";
-import { Badge, Button, ButtonLink, Card, CardHeader, EmptyState } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
-import { ActionMenu, type MenuItem } from "@/components/ui/menu";
-import { formatPhone } from "@/lib/format";
-import { statusLabel, statusToneClass } from "@/lib/products";
+import { ActionSheet, Avatar, IconTile, Row, RoundAction, Section, Sheet, type SheetAction } from "@/components/ui/ios";
 import type { InboxData } from "@/lib/inbox";
 
-// Startseite „Heute": eine Aufgabenliste, die man leer arbeitet. Jede Aktion
-// wirkt sofort (Eintrag verschwindet), bestätigt per Toast mit „Rückgängig".
+// Startseite „Heute": vier Listen, die man leer arbeitet. Jede Zeile hat eine
+// sichtbare Aktion (Anrufen/Antworten); alles Weitere per Antippen im
+// Aktionsblatt. Jede Aktion wirkt sofort, Toast mit „Rückgängig".
 
 const TZ = "Europe/Berlin";
 const time = (iso: string) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: TZ, hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 const day = (iso: string) =>
-  new Intl.DateTimeFormat("de-DE", { timeZone: TZ, weekday: "short", day: "numeric", month: "numeric" }).format(
-    new Date(iso),
-  );
-const since = (iso: string) => {
-  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-  return days <= 0 ? "seit heute" : days === 1 ? "seit gestern" : `seit ${days} Tagen`;
+  new Intl.DateTimeFormat("de-DE", { timeZone: TZ, weekday: "short", day: "numeric", month: "numeric" }).format(new Date(iso));
+const ago = (iso: string) => {
+  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  return d <= 0 ? "heute" : d === 1 ? "gestern" : `vor ${d} Tagen`;
 };
+
+type CallItem = {
+  key: string;
+  kind: "callback" | "followup";
+  leadId: string;
+  name: string;
+  phone: string | null;
+  reason: string;
+  overdue: boolean;
+  conversationId: string | null;
+};
+
+type SheetState =
+  | { kind: "actions"; title: string; message?: string; actions: SheetAction[] }
+  | { kind: "win"; name: string; save: (value: number | null) => void }
+  | null;
 
 export function TodayInbox({ data }: { data: InboxData }) {
   const router = useRouter();
   const toast = useToast();
   const [, startTransition] = useTransition();
-  // Lokal ausgeblendete Einträge (sofortige Reaktion vor dem Server-Refresh).
   const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const [sheet, setSheet] = useState<SheetState>(null);
+  const [winValue, setWinValue] = useState("");
+  const [showAll, setShowAll] = useState(false);
   const hide = (key: string) => setHidden((h) => new Set(h).add(key));
   const unhide = (key: string) =>
     setHidden((h) => {
@@ -93,429 +105,282 @@ export function TodayInbox({ data }: { data: InboxData }) {
     });
   }
 
+  const askWin = (name: string, save: (value: number | null) => void) => {
+    setWinValue("");
+    setSheet({ kind: "win", name, save });
+  };
+
   const appointments = data.appointments.filter((a) => !hidden.has(`a:${a.id}`));
-  const followUps = data.followUps.filter((f) => !hidden.has(`f:${f.leadId}`));
   const outcomes = data.outcomes.filter((o) => !hidden.has(`o:${o.id}`));
   const chats = data.chats.filter((c) => !hidden.has(`c:${c.conversationId}`));
-  const callbacks = data.callbacks.filter((c) => !hidden.has(`r:${c.leadId}`));
-  const [showAllCallbacks, setShowAllCallbacks] = useState(false);
-  // Inline-Eingabe des Abschlusswerts nach „Gewonnen" (Schlüssel = Zeile).
-  const [winning, setWinning] = useState<{ key: string; leadId: string; name: string } | null>(null);
-  const [winValue, setWinValue] = useState("");
-  const visibleCallbacks = showAllCallbacks ? callbacks : callbacks.slice(0, 5);
-  const openTasks = outcomes.length + chats.length + callbacks.length + followUps.length;
-
-  // Ergebnis „Angebot gesendet" / „Gewonnen" / „Verloren" – überall gleich.
-  const closeItems = (key: string, leadId: string, name: string): MenuItem[] => [
-    { type: "label", label: "Ergebnis" },
-    {
-      label: "Angebot gesendet",
-      hint: "Wiedervorlage in 3 Tagen",
-      icon: Send,
-      onSelect: () => run(key, `${name}: Angebot gesendet`, () => callbackOutcomeResult(leadId, "offer")),
-    },
-    {
-      label: "Gewonnen",
-      hint: "Abschluss mit Wert eintragen",
-      icon: Trophy,
-      onSelect: () => {
-        setWinValue("");
-        setWinning({ key, leadId, name });
-      },
-    },
-    {
-      label: "Verloren",
-      hint: "Kein Interesse",
-      icon: PhoneOff,
-      tone: "danger",
-      onSelect: () => run(key, `${name}: als verloren markiert`, () => callbackOutcomeResult(leadId, "lost")),
-    },
-  ];
-
-  /** Zeile durch Wert-Eingabe ersetzen, solange „Gewonnen" offen ist. */
-  const winForm = (key: string) =>
-    winning?.key === key ? (
-      <form
-        className="flex shrink-0 items-center gap-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const n = Number.parseFloat(winValue.replace(/\./g, "").replace(",", "."));
-          const w = winning;
-          setWinning(null);
-          run(w.key, `${w.name}: gewonnen`, () =>
-            callbackOutcomeResult(w.leadId, "won", Number.isFinite(n) ? n : null),
-          );
-        }}
-      >
-        <input
-          autoFocus
-          inputMode="decimal"
-          placeholder="Wert in €"
-          value={winValue}
-          onChange={(e) => setWinValue(e.target.value)}
-          className="h-8 w-28 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-2.5 text-sm focus:border-[color:var(--brand)] focus:outline-none"
-        />
-        <Button variant="primary" type="submit" icon={Trophy}>
-          Speichern
-        </Button>
-        <Button variant="ghost" type="button" onClick={() => setWinning(null)}>
-          Abbrechen
-        </Button>
-      </form>
-    ) : null;
-
-  // Wiedervorlage-Optionen (Werktage ab heute) – gleiche Auswahl überall.
-  const laterItems = (key: string, leadId: string, name: string): MenuItem[] => [
-    { type: "label", label: "Wiedervorlage" },
-    ...[
-      { label: "Morgen", days: 1 },
-      { label: "In 3 Tagen", days: 3 },
-      { label: "In 1 Woche", days: 5 },
-      { label: "In 2 Wochen", days: 10 },
-    ].map((o) => ({
-      label: o.label,
-      icon: Clock,
-      onSelect: () =>
-        run(key, `${name}: Wiedervorlage ${o.label === "Morgen" ? "morgen" : o.label}`, () =>
-          setFollowUpResult(leadId, { days: o.days }),
-        ),
+  // Rückrufe und Wiedervorlagen sind für den Nutzer dasselbe: anrufen.
+  const calls: CallItem[] = [
+    ...data.followUps.map((f) => ({
+      key: `f:${f.leadId}`,
+      kind: "followup" as const,
+      leadId: f.leadId,
+      name: f.name,
+      phone: f.phone,
+      reason: f.note ?? "Nachfassen",
+      overdue: f.overdue,
+      conversationId: f.conversationId,
     })),
-  ];
+    ...data.callbacks.map((c) => ({
+      key: `r:${c.leadId}`,
+      kind: "callback" as const,
+      leadId: c.leadId,
+      name: c.name,
+      phone: c.phone,
+      reason: `${c.reason} · ${ago(c.createdAt)}`,
+      overdue: false,
+      conversationId: c.conversationId,
+    })),
+  ].filter((c) => !hidden.has(c.key));
+  const visibleCalls = showAll ? calls : calls.slice(0, 6);
+  const nothing = appointments.length + outcomes.length + chats.length + calls.length === 0;
+
+  const laterSheet = (c: CallItem) =>
+    setSheet({
+      kind: "actions",
+      title: `${c.name} später anrufen`,
+      actions: [
+        { label: "Morgen", days: 1 },
+        { label: "In 3 Tagen", days: 3 },
+        { label: "In 1 Woche", days: 5 },
+        { label: "In 2 Wochen", days: 10 },
+      ].map((o) => ({
+        label: o.label,
+        onSelect: () => run(c.key, `${c.name}: ${o.label === "Morgen" ? "morgen" : o.label.toLowerCase()} wieder`, () => setFollowUpResult(c.leadId, { days: o.days })),
+      })),
+    });
+
+  const callSheet = (c: CallItem) => {
+    const actions: SheetAction[] = [];
+    if (c.phone) actions.push({ label: "Anrufen", icon: Phone, href: `tel:+${c.phone}`, tone: "primary" });
+    if (c.kind === "callback") {
+      actions.push({
+        label: "Nicht erreicht",
+        icon: PhoneMissed,
+        onSelect: () => run(c.key, `${c.name}: morgen wieder in der Liste`, () => callbackOutcomeResult(c.leadId, "not_reached")),
+      });
+    } else {
+      actions.push({ label: "Erledigt", icon: Check, onSelect: () => run(c.key, `${c.name}: erledigt`, () => clearFollowUpResult(c.leadId)) });
+    }
+    actions.push({ label: "Später", icon: Clock, onSelect: () => setTimeout(() => laterSheet(c), 0) });
+    if (data.bookingSlug) actions.push({ label: "Termin buchen", icon: CalendarPlus, href: `/book/${data.bookingSlug}?lead=${c.leadId}` });
+    actions.push(
+      { label: "Angebot gesendet", icon: Send, onSelect: () => run(c.key, `${c.name}: Angebot gesendet`, () => callbackOutcomeResult(c.leadId, "offer")) },
+      {
+        label: "Abschluss",
+        icon: Trophy,
+        onSelect: () =>
+          setTimeout(() => askWin(c.name, (v) => run(c.key, `${c.name}: Abschluss`, () => callbackOutcomeResult(c.leadId, "won", v))), 0),
+      },
+      { label: "Lead öffnen", icon: UserRound, href: `/buyer/leads/${c.leadId}` },
+      { label: "Kein Interesse", icon: ThumbsDown, tone: "danger", onSelect: () => run(c.key, `${c.name}: kein Interesse`, () => callbackOutcomeResult(c.leadId, "lost")) },
+    );
+    setSheet({ kind: "actions", title: c.name, message: c.reason, actions });
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Kurzüberblick */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        <Stat icon={CalendarClock} label="Termine heute & morgen" value={appointments.length} />
-        <Stat icon={CalendarCheck} label="Ergebnis eintragen" value={outcomes.length} tone={outcomes.length ? "violet" : undefined} />
-        <Stat icon={BellRing} label="Wiedervorlagen" value={followUps.length} tone={followUps.length ? "violet" : undefined} />
-        <Stat icon={MessageCircle} label="Chats brauchen dich" value={chats.length} tone={chats.length ? "rose" : undefined} />
-        <Stat icon={Phone} label="Rückrufe" value={callbacks.length} tone={callbacks.length ? "amber" : undefined} />
-      </div>
+    <div>
+      {nothing ? (
+        <div className="flex flex-col items-center px-6 py-20 text-center">
+          <CheckCircle2 className="h-16 w-16 text-[color:var(--green)]" strokeWidth={1.5} />
+          <div className="mt-4 text-[22px] font-bold">Alles erledigt</div>
+          <div className="mt-1 text-[15px] text-[color:var(--muted)]">Neue Aufgaben erscheinen hier von selbst.</div>
+        </div>
+      ) : (
+        <div className="mb-7 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Tile icon={MessageCircle} color="#ff9500" label="Chats" value={chats.length} target="chats" />
+          <Tile icon={CalendarClock} color="#007aff" label="Termine" value={appointments.length} target="termine" />
+          <Tile icon={Trophy} color="#5856d6" label="Wie lief's?" value={outcomes.length} target="ergebnis" />
+          <Tile icon={Phone} color="#34c759" label="Anrufen" value={calls.length} target="anrufen" />
+        </div>
+      )}
 
-      {openTasks === 0 && appointments.length === 0 ? (
-        <Card>
-          <EmptyState
-            icon={Check}
-            title="Alles erledigt"
-            text="Keine Termine, Rückrufe oder Chats, die auf dich warten. Neue Aufgaben erscheinen hier automatisch."
-          />
-        </Card>
-      ) : null}
-
-      {appointments.length > 0 ? (
-        <Card>
-          <CardHeader icon={CalendarClock} title="Termine" count={appointments.length} hint="Heute und morgen" />
-          <ul className="divide-y divide-[color:var(--border)]">
-            {appointments.map((a) => (
-              <li key={a.id} className="ui-fade-in flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center">
-                <div className="flex min-w-0 flex-1 gap-4">
-                  <div className="w-14 shrink-0">
-                    <div className="text-lg font-semibold leading-none tabular-nums">{time(a.startsAt)}</div>
-                    <div className="mt-1 text-[11px] text-[color:var(--muted)]">{a.isToday ? "heute" : day(a.startsAt)}</div>
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {a.leadId ? (
-                        <Link href={`/buyer/leads/${a.leadId}`} className="font-medium hover:text-[color:var(--brand)]">
-                          {a.name}
-                        </Link>
-                      ) : (
-                        <span className="font-medium">{a.name}</span>
-                      )}
-                      <Badge tone="brand" icon={a.mode === "video" ? Video : Phone}>
-                        {a.mode === "video" ? "Videocall" : "Telefonat"}
-                      </Badge>
-                    </div>
-                    {a.summary ? (
-                      <p className="mt-1 line-clamp-2 text-xs text-[color:var(--muted)]">{a.summary}</p>
-                    ) : null}
-                  </div>
-                </div>
-                <div className="flex shrink-0 flex-wrap gap-2">
-                  {a.mode === "video" && a.meetUrl ? (
-                    <ButtonLink href={a.meetUrl} variant="primary" icon={Video}>
-                      Videocall starten
-                    </ButtonLink>
-                  ) : a.phone ? (
-                    <ButtonLink href={`tel:+${a.phone}`} variant="primary" icon={Phone}>
-                      {formatPhone(a.phone)}
-                    </ButtonLink>
-                  ) : null}
-                  {a.conversationId ? (
-                    <ButtonLink href={`/buyer/chats?c=${a.conversationId}`} icon={MessageCircle}>
-                      Chat
-                    </ButtonLink>
-                  ) : null}
-                  {a.manageToken ? (
-                    <ButtonLink href={`/book/manage/${a.manageToken}`} external variant="ghost">
-                      Verschieben
-                    </ButtonLink>
-                  ) : null}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      ) : null}
-
-      {outcomes.length > 0 ? (
-        <Card>
-          <CardHeader icon={CalendarCheck} title="Wie lief's?" count={outcomes.length} hint="Ergebnis eintragen, zählt in deine Abschlussquote" />
-          <ul className="divide-y divide-[color:var(--border)]">
-            {outcomes.map((o) => (
-              <OutcomeRow
-                key={o.id}
-                o={o}
-                onDone={(outcome, value, label) =>
-                  run(`o:${o.id}`, `${o.name}: ${label}`, () => appointmentOutcomeResult(o.id, outcome, value))
+      {chats.length > 0 ? (
+        <div id="chats">
+          <Section title="Braucht dich" count={chats.length}>
+            {chats.map((c) => (
+              <Row
+                key={c.conversationId}
+                leading={<Avatar name={c.name} />}
+                title={c.name}
+                subtitle={c.reason ?? "Bitte melden"}
+                href={`/buyer/chats?c=${c.conversationId}`}
+                trailing={
+                  <RoundAction
+                    icon={Check}
+                    label="Erledigt"
+                    onClick={() => run(`c:${c.conversationId}`, `${c.name}: erledigt`, () => chatDoneResult(c.conversationId))}
+                  />
                 }
               />
             ))}
-          </ul>
-        </Card>
+          </Section>
+        </div>
       ) : null}
 
-      {chats.length > 0 ? (
-        <Card>
-          <CardHeader icon={MessageCircle} title="Chats brauchen dich" count={chats.length} />
-          <ul className="divide-y divide-[color:var(--border)]">
-            {chats.map((c) => (
-              <li key={c.conversationId} className="ui-fade-in flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 font-medium">
-                    <span className="h-2 w-2 shrink-0 rounded-full bg-rose-500" />
-                    {c.name}
-                  </div>
-                  <p className="mt-0.5 text-xs text-[color:var(--muted)]">{c.reason ?? "Bitte beim Lead melden."}</p>
-                </div>
-                <div className="flex shrink-0 gap-2">
-                  <ButtonLink href={`/buyer/chats?c=${c.conversationId}`} variant="primary" icon={MessageCircle}>
-                    Antworten
-                  </ButtonLink>
-                  <Button
-                    variant="ghost"
-                    icon={Check}
-                    onClick={() => run(`c:${c.conversationId}`, `${c.name}: erledigt`, () => chatDoneResult(c.conversationId))}
-                  >
-                    Erledigt
-                  </Button>
-                </div>
-              </li>
+      {appointments.length > 0 ? (
+        <div id="termine">
+          <Section title="Termine" count={appointments.length}>
+            {appointments.map((a) => {
+              const video = a.mode === "video";
+              const actions: SheetAction[] = [];
+              if (video && a.meetUrl) actions.push({ label: "Videocall starten", icon: Video, href: a.meetUrl, tone: "primary" });
+              if (a.phone) actions.push({ label: "Anrufen", icon: Phone, href: `tel:+${a.phone}`, tone: video ? undefined : "primary" });
+              if (a.conversationId) actions.push({ label: "Chat öffnen", icon: MessageCircle, href: `/buyer/chats?c=${a.conversationId}` });
+              if (a.leadId) actions.push({ label: "Lead öffnen", icon: UserRound, href: `/buyer/leads/${a.leadId}` });
+              if (a.manageToken) actions.push({ label: "Verschieben oder absagen", icon: CalendarClock, href: `/book/manage/${a.manageToken}` });
+              return (
+                <Row
+                  key={a.id}
+                  leading={
+                    <div className="w-12 shrink-0 text-center">
+                      <div className="text-[17px] font-semibold tabular-nums leading-tight">{time(a.startsAt)}</div>
+                      <div className="text-[12px] text-[color:var(--muted)]">{a.isToday ? "heute" : day(a.startsAt)}</div>
+                    </div>
+                  }
+                  title={a.name}
+                  subtitle={a.summary ?? (video ? "Videocall" : "Telefonat")}
+                  onClick={() => setSheet({ kind: "actions", title: a.name, message: `${a.isToday ? "Heute" : day(a.startsAt)}, ${time(a.startsAt)} Uhr`, actions })}
+                  trailing={
+                    video && a.meetUrl ? (
+                      <RoundAction icon={Video} label="Videocall starten" href={a.meetUrl} color="#34c759" filled />
+                    ) : a.phone ? (
+                      <RoundAction icon={Phone} label="Anrufen" href={`tel:+${a.phone}`} color="#34c759" filled />
+                    ) : null
+                  }
+                />
+              );
+            })}
+          </Section>
+        </div>
+      ) : null}
+
+      {outcomes.length > 0 ? (
+        <div id="ergebnis">
+          <Section title="Wie lief's?" count={outcomes.length}>
+            {outcomes.map((o) => {
+              const key = `o:${o.id}`;
+              const open = () =>
+                setSheet({
+                  kind: "actions",
+                  title: `Wie lief der Termin mit ${o.name}?`,
+                  actions: [
+                    { label: "Angebot gesendet", icon: Send, onSelect: () => run(key, `${o.name}: Angebot gesendet`, () => appointmentOutcomeResult(o.id, "offer", null)) },
+                    {
+                      label: "Abschluss",
+                      icon: Trophy,
+                      onSelect: () =>
+                        setTimeout(() => askWin(o.name, (v) => run(key, `${o.name}: Abschluss`, () => appointmentOutcomeResult(o.id, "closed", v))), 0),
+                    },
+                    { label: "Nicht erschienen", icon: UserX, onSelect: () => run(key, `${o.name}: steht jetzt bei Anrufen`, () => appointmentOutcomeResult(o.id, "no_show", null)) },
+                    { label: "Kein Interesse", icon: ThumbsDown, tone: "danger", onSelect: () => run(key, `${o.name}: kein Interesse`, () => appointmentOutcomeResult(o.id, "lost", null)) },
+                  ],
+                });
+              return (
+                <Row
+                  key={o.id}
+                  leading={<Avatar name={o.name} />}
+                  title={o.name}
+                  subtitle={`${day(o.startsAt)}, ${time(o.startsAt)} · ${o.mode === "video" ? "Video" : "Telefon"}`}
+                  onClick={open}
+                  trailing={
+                    <span className="rounded-full bg-[color:var(--fill)] px-3 py-1.5 text-[15px] font-semibold text-[color:var(--brand)]">Eintragen</span>
+                  }
+                />
+              );
+            })}
+          </Section>
+        </div>
+      ) : null}
+
+      {calls.length > 0 ? (
+        <div id="anrufen">
+          <Section title="Anrufen" count={calls.length}>
+            {visibleCalls.map((c) => (
+              <Row
+                key={c.key}
+                leading={<Avatar name={c.name} />}
+                title={c.name}
+                subtitle={
+                  c.overdue ? (
+                    <>
+                      <span className="text-[color:var(--red)]">Überfällig</span> · {c.reason}
+                    </>
+                  ) : (
+                    c.reason
+                  )
+                }
+                onClick={() => callSheet(c)}
+                trailing={c.phone ? <RoundAction icon={Phone} label="Anrufen" href={`tel:+${c.phone}`} color="#34c759" filled /> : null}
+              />
             ))}
-          </ul>
-        </Card>
+            {calls.length > 6 ? (
+              <button
+                type="button"
+                onClick={() => setShowAll((v) => !v)}
+                className="ui-press h-12 w-full border-t border-[color:var(--border)] text-[17px] text-[color:var(--brand)]"
+              >
+                {showAll ? "Weniger" : `Alle ${calls.length} anzeigen`}
+              </button>
+            ) : null}
+          </Section>
+        </div>
       ) : null}
 
-      {followUps.length > 0 ? (
-        <Card menus>
-          <CardHeader icon={BellRing} title="Wiedervorlagen" count={followUps.length} hint="Heute fällig" />
-          <ul className="divide-y divide-[color:var(--border)]">
-            {followUps.map((f) => (
-              <li key={f.leadId} className="ui-fade-in flex flex-col gap-3 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Link href={`/buyer/leads/${f.leadId}`} className="font-medium hover:text-[color:var(--brand)]">
-                      {f.name}
-                    </Link>
-                    {f.status ? (
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${statusToneClass(f.status)}`}>
-                        {statusLabel(f.status, true)}
-                      </span>
-                    ) : null}
-                    {f.overdue ? <Badge tone="danger">überfällig</Badge> : null}
-                  </div>
-                  <p className="mt-0.5 text-xs text-[color:var(--muted)]">
-                    {f.note ?? "Wiedervorlage"}
-                    {f.overdue ? ` · fällig seit ${day(f.dueAt)}` : ""}
-                  </p>
-                </div>
-                {winForm(`f:${f.leadId}`) ?? (
-                <div className="grid shrink-0 grid-cols-2 gap-2 sm:flex sm:flex-wrap [&>*]:w-full sm:[&>*]:w-auto">
-                  {f.phone ? (
-                    <ButtonLink href={`tel:+${f.phone}`} variant="primary" icon={Phone}>
-                      <span className="sm:hidden">Anrufen</span>
-                      <span className="hidden sm:inline">{formatPhone(f.phone)}</span>
-                    </ButtonLink>
-                  ) : null}
-                  <Button
-                    icon={Check}
-                    onClick={() => run(`f:${f.leadId}`, `${f.name}: Wiedervorlage erledigt`, () => clearFollowUpResult(f.leadId))}
-                  >
-                    Erledigt
-                  </Button>
-                  <ActionMenu
-                    label="Ergebnis"
-                    items={[...laterItems(`f:${f.leadId}`, f.leadId, f.name), ...closeItems(`f:${f.leadId}`, f.leadId, f.name)]}
-                  />
-                </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        </Card>
-      ) : null}
-
-      {callbacks.length > 0 ? (
-        <Card tone="attention" menus>
-          <CardHeader icon={Phone} title="Rückrufe" count={callbacks.length} hint="Nach dem Anruf Ergebnis wählen" />
-          <ul className="divide-y divide-[color:var(--border)]">
-            {visibleCallbacks.map((c) => (
-              <li key={c.leadId} className="ui-fade-in flex flex-col gap-3 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="min-w-0">
-                  <Link href={`/buyer/leads/${c.leadId}`} className="font-medium hover:text-[color:var(--brand)]">
-                    {c.name}
-                  </Link>
-                  <p className="mt-0.5 text-xs text-[color:var(--muted)]">
-                    <span className="text-amber-700">{c.reason}</span> · {since(c.createdAt)}
-                    {c.conversationId ? (
-                      <>
-                        {" · "}
-                        <Link href={`/buyer/chats?c=${c.conversationId}`} className="hover:text-[color:var(--brand)]">
-                          Chat lesen
-                        </Link>
-                      </>
-                    ) : null}
-                  </p>
-                </div>
-                {winForm(`r:${c.leadId}`) ?? (
-                <div className="grid shrink-0 grid-cols-2 gap-2 sm:flex sm:flex-wrap [&>*]:w-full sm:[&>*]:w-auto">
-                  {c.phone ? (
-                    <ButtonLink href={`tel:+${c.phone}`} variant="primary" icon={Phone}>
-                      <span className="sm:hidden">Anrufen</span>
-                      <span className="hidden sm:inline">{formatPhone(c.phone)}</span>
-                    </ButtonLink>
-                  ) : null}
-                  {data.bookingSlug ? (
-                    <ButtonLink href={`/book/${data.bookingSlug}?lead=${c.leadId}`} external icon={CalendarPlus}>
-                      Termin
-                    </ButtonLink>
-                  ) : null}
-                  <ActionMenu
-                    label="Ergebnis"
-                    items={[
-                      {
-                        label: "Nicht erreicht",
-                        hint: "Morgen wieder in der Liste",
-                        icon: PhoneMissed,
-                        onSelect: () =>
-                          run(`r:${c.leadId}`, `${c.name}: nicht erreicht, morgen wieder`, () =>
-                            callbackOutcomeResult(c.leadId, "not_reached"),
-                          ),
-                      },
-                      ...laterItems(`r:${c.leadId}`, c.leadId, c.name),
-                      ...closeItems(`r:${c.leadId}`, c.leadId, c.name),
-                    ]}
-                  />
-                </div>
-                )}
-              </li>
-            ))}
-          </ul>
-          {callbacks.length > 5 ? (
-            <button
-              type="button"
-              onClick={() => setShowAllCallbacks((v) => !v)}
-              className="w-full border-t border-[color:var(--border)] py-2.5 text-xs font-semibold text-[color:var(--brand)] hover:bg-[color:var(--surface-sunken)]"
-            >
-              {showAllCallbacks ? "Weniger anzeigen" : `Alle ${callbacks.length} anzeigen`}
-            </button>
-          ) : null}
-        </Card>
-      ) : null}
-    </div>
-  );
-}
-
-function OutcomeRow({
-  o,
-  onDone,
-}: {
-  o: InboxData["outcomes"][number];
-  onDone: (outcome: "offer" | "closed" | "lost" | "no_show", value: number | null, label: string) => void;
-}) {
-  const [closing, setClosing] = useState(false);
-  const [value, setValue] = useState("");
-  return (
-    <li className="ui-fade-in flex flex-col gap-3 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
-      <div className="min-w-0">
-        <Link href={`/buyer/leads/${o.leadId}`} className="font-medium hover:text-[color:var(--brand)]">
-          {o.name}
-        </Link>
-        <p className="mt-0.5 text-xs text-[color:var(--muted)]">
-          {day(o.startsAt)}, {time(o.startsAt)} Uhr · {o.mode === "video" ? "Videocall" : "Telefonat"}
-        </p>
-      </div>
-      {closing ? (
+      <ActionSheet
+        open={sheet?.kind === "actions"}
+        onClose={() => setSheet(null)}
+        title={sheet?.kind === "actions" ? sheet.title : undefined}
+        message={sheet?.kind === "actions" ? sheet.message : undefined}
+        actions={sheet?.kind === "actions" ? sheet.actions : []}
+      />
+      <Sheet open={sheet?.kind === "win"} onClose={() => setSheet(null)} title={sheet?.kind === "win" ? `Abschluss mit ${sheet.name}` : undefined} message="Wert des Abschlusses (optional)">
         <form
-          className="flex shrink-0 items-center gap-2"
+          className="rounded-b-[14px] border-t border-[color:var(--border)] bg-white p-4"
           onSubmit={(e) => {
             e.preventDefault();
-            const n = Number.parseFloat(value.replace(/\./g, "").replace(",", "."));
-            onDone("closed", Number.isFinite(n) ? n : null, "Abschluss eingetragen");
+            if (sheet?.kind !== "win") return;
+            const n = Number.parseFloat(winValue.replace(/\./g, "").replace(",", "."));
+            const save = sheet.save;
+            setSheet(null);
+            save(Number.isFinite(n) ? n : null);
           }}
         >
-          <input
-            autoFocus
-            inputMode="decimal"
-            placeholder="Wert in €"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            className="h-8 w-28 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-2.5 text-sm focus:border-[color:var(--brand)] focus:outline-none"
-          />
-          <Button variant="primary" type="submit" icon={Trophy}>
+          <div className="flex items-center gap-2 rounded-[10px] bg-[color:var(--fill)] px-3">
+            <input
+              autoFocus
+              inputMode="decimal"
+              placeholder="0"
+              value={winValue}
+              onChange={(e) => setWinValue(e.target.value)}
+              className="h-12 min-w-0 flex-1 bg-transparent text-[22px] font-semibold outline-none"
+            />
+            <span className="text-[17px] text-[color:var(--muted)]">€</span>
+          </div>
+          <button type="submit" className="mt-3 h-12 w-full rounded-[12px] bg-[color:var(--brand)] text-[17px] font-semibold text-white active:opacity-80">
             Speichern
-          </Button>
-          <Button variant="ghost" type="button" onClick={() => setClosing(false)}>
-            Abbrechen
-          </Button>
+          </button>
         </form>
-      ) : (
-        <div className="grid shrink-0 grid-cols-2 gap-2 sm:flex sm:flex-wrap [&>*]:w-full sm:[&>*]:w-auto">
-          <Button icon={CalendarCheck} onClick={() => onDone("offer", null, "Angebot gesendet")}>
-            Angebot gesendet
-          </Button>
-          <Button icon={Trophy} onClick={() => setClosing(true)} className="text-emerald-700">
-            Abschluss
-          </Button>
-          <Button icon={ThumbsDown} onClick={() => onDone("lost", null, "kein Interesse")}>
-            Kein Interesse
-          </Button>
-          <Button variant="ghost" icon={UserX} onClick={() => onDone("no_show", null, "nicht erschienen, steht in den Rückrufen")}>
-            Nicht erschienen
-          </Button>
-        </div>
-      )}
-    </li>
-  );
-}
-
-function Stat({
-  icon: Icon,
-  label,
-  value,
-  tone,
-}: {
-  icon: typeof Phone;
-  label: string;
-  value: number;
-  tone?: "rose" | "amber" | "violet";
-}) {
-  const toneCls =
-    tone === "rose"
-      ? "text-rose-600"
-      : tone === "amber"
-        ? "text-amber-600"
-        : tone === "violet"
-          ? "text-violet-600"
-          : "text-[color:var(--foreground)]";
-  return (
-    <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-4 py-3 shadow-[var(--shadow-sm)]">
-      <div className="flex items-center gap-1.5 text-[11px] text-[color:var(--muted)]">
-        <Icon className="h-3.5 w-3.5" /> {label}
-      </div>
-      <div className={`mt-1 text-2xl font-semibold tabular-nums ${toneCls}`}>{value}</div>
+      </Sheet>
     </div>
   );
 }
 
+function Tile({ icon, color, label, value, target }: { icon: typeof Phone; color: string; label: string; value: number; target: string }) {
+  return (
+    <a
+      href={value ? `#${target}` : undefined}
+      className={`ui-press flex flex-col gap-2 rounded-[var(--radius-lg)] bg-white p-3 ${value ? "" : "pointer-events-none"}`}
+    >
+      <div className="flex items-start justify-between">
+        <IconTile icon={icon} color={value ? color : "#c7c7cc"} size={32} />
+        <span className={`text-[28px] font-bold leading-none tabular-nums ${value ? "" : "text-[color:var(--border-strong)]"}`}>{value}</span>
+      </div>
+      <span className="text-[15px] font-semibold text-[color:var(--muted)]">{label}</span>
+    </a>
+  );
+}
