@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { CalendlyForms, ContactsImport, InstantlyCsvImport, InstantlySync, WaalaxyCsvImport } from "@/components/vertrieb/import-forms";
+import { CalendlyForms, ColdCrmImport, ContactsImport, InstantlyCsvImport, InstantlySync } from "@/components/vertrieb/import-forms";
+import { coldCrmSourceConfigured } from "@/lib/vertrieb/cold-crm-import";
 import { fmtDateTime } from "@/lib/vertrieb/dates";
 import { convertInboundLead } from "@/app/admin/vertrieb/actions";
 import { LI_LABEL } from "@/lib/vertrieb/linkedin";
@@ -23,6 +24,17 @@ export default async function ImportPage() {
   return (
     <div className="max-w-3xl space-y-5">
       <h1 className="text-xl font-semibold">Import & Instantly</h1>
+
+      {coldCrmSourceConfigured() && (
+        <section className="card space-y-3 border-sky-200 p-5">
+          <h2 className="font-medium">Übernahme aus dem alten Cold CRM</h2>
+          <p className="text-sm text-slate-600">
+            Kopiert Kontakte, Verlauf, Aufgaben, Kampagnen, Cold-Mail-Antworten, LinkedIn, Termine und Leads aus der
+            alten Datenbank. Bereits vorhandene Datensätze werden übersprungen – mehrfaches Ausführen ist sicher.
+          </p>
+          <ColdCrmImport configured />
+        </section>
+      )}
 
       <section className="card space-y-3 p-5">
         <h2 className="font-medium">1. Agenturliste importieren</h2>
@@ -65,31 +77,15 @@ export default async function ImportPage() {
       </section>
 
       <section className="card space-y-3 p-5 text-sm">
-        <h2 className="font-medium">4. LinkedIn (Waalaxy)</h2>
+        <h2 className="font-medium">4. LinkedIn</h2>
         <p className="text-slate-600">
-          Waalaxy hat keine API, liefert aber Daten per Webhook und CSV. Zuordnung zu den Kontakten über LinkedIn-Profil-URL,
-          E-Mail oder Vor- und Nachname (bei gleichen Namen zusätzlich über den Ort). Der LinkedIn-Status geht nur vorwärts:
-          Anfrage gesendet → Vernetzt → Nachricht gesendet → Geantwortet. Antworten erzeugen eine Aufgabe.
+          LinkedIn-Status und -Profil pflegst du direkt am Kontakt. Der Status geht nur vorwärts:
+          Anfrage gesendet → Vernetzt → Nachricht gesendet → Geantwortet.
           Aktuell {liCount.toLocaleString("de-DE")} Kontakte mit LinkedIn-Status.
         </p>
-        <div>
-          <h3 className="mb-1 font-medium text-slate-700">a) Webhook (automatisch)</h3>
-          <p className="text-slate-600">
-            In Waalaxy in der Kampagne einen Schritt <b>„CRM Sync“</b> hinzufügen (bzw. die Synchronisation bei Antwort aktivieren)
-            und als Ziel „Webhook / Zapier“ mit dieser URL eintragen:
-          </p>
-          <code className="mt-1 block overflow-x-auto rounded-lg bg-slate-100 p-2 text-xs">
-            {proto}://{host}/api/waalaxy/webhook?token={process.env.VERTRIEB_WEBHOOK_TOKEN ? "<WEBHOOK_TOKEN>" : "(WEBHOOK_TOKEN setzen)"}
-          </code>
-        </div>
-        <div>
-          <h3 className="mb-1 font-medium text-slate-700">b) CSV-Export (manuell, alle Waalaxy-Pläne)</h3>
-          <p className="mb-2 text-slate-600">In Waalaxy die Prospect-Liste oder Kampagne als CSV exportieren und hier hochladen.</p>
-          <WaalaxyCsvImport />
-        </div>
         {liEvents.length > 0 && (
           <div>
-            <h3 className="mb-1 font-medium text-slate-700">Letzte Webhook-Ereignisse</h3>
+            <h3 className="mb-1 font-medium text-slate-700">Letzte LinkedIn-Ereignisse</h3>
             <ul className="divide-y divide-slate-100">
               {liEvents.map((e) => (
                 <li key={e.id} className="flex flex-wrap items-center gap-2 py-1.5">
@@ -118,7 +114,7 @@ export default async function ImportPage() {
         </p>
         <ol className="list-decimal space-y-1 pl-5 text-slate-600">
           <li>In Calendly unter <b>Integrationen → API &amp; Webhooks</b> einen <b>Personal Access Token</b> erzeugen.</li>
-          <li>In Railway beim Service <code>cold-crm</code> die Variable <code>CALENDLY_TOKEN</code> mit diesem Token anlegen.</li>
+          <li>In Railway beim App-Service die Variable <code>CALENDLY_TOKEN</code> mit diesem Token anlegen.</li>
           <li>Hier „Calendly verbinden“ klicken (legt den Webhook automatisch an, benötigt Calendly Standard oder höher), danach einmal „Bestehende Termine abgleichen“.</li>
         </ol>
         <CalendlyForms hasToken={!!process.env.CALENDLY_TOKEN} />

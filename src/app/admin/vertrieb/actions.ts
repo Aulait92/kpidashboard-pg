@@ -12,6 +12,7 @@ import { importContactsCsv } from "@/lib/vertrieb/import-contacts";
 import { ensureSource } from "@/lib/vertrieb/source";
 import { connectCalendly, syncCalendly } from "@/lib/vertrieb/calendly";
 import { handleInboundLead } from "@/lib/vertrieb/inbound";
+import { importFromColdCrm } from "@/lib/vertrieb/cold-crm-import";
 import { LI_LABEL, importWaalaxyCsv } from "@/lib/vertrieb/linkedin";
 import { ensureReplyTask, importInstantlyCsv, recordReply, removeReplyTaskIfNoPositive, syncInstantly } from "@/lib/vertrieb/instantly";
 
@@ -479,4 +480,19 @@ export async function convertInboundLead(fd: FormData) {
     redirect(`/admin/vertrieb/kontakte/${r.contactId}`);
   }
   refresh();
+}
+
+// ─── Übernahme aus dem alten Cold CRM ────────────────────────────────────
+export async function importColdCrmAction(_prev: ImportState, _fd: FormData): Promise<ImportState> {
+  await requireAuth();
+  try {
+    const r = await importFromColdCrm();
+    refresh();
+    return {
+      ok: true,
+      message: r.map((x) => `${x.table.replace(/^Sales/, "")}: ${x.inserted} übernommen${x.skipped ? `, ${x.skipped} übersprungen (schon vorhanden)` : ""}`).join(" · "),
+    };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : String(e) };
+  }
 }

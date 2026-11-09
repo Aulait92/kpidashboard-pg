@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { connectCalendlyAction, importContactsAction, importInstantlyAction, importWaalaxyAction, syncCalendlyAction, syncInstantlyAction, type ImportState } from "@/app/admin/vertrieb/actions";
+import { connectCalendlyAction, importColdCrmAction, importContactsAction, importInstantlyAction, syncCalendlyAction, syncInstantlyAction, type ImportState } from "@/app/admin/vertrieb/actions";
 
 function Result({ state }: { state: ImportState }) {
   if (!state) return null;
@@ -14,6 +14,17 @@ export function ContactsImport() {
     <form action={action} className="space-y-3">
       <input type="file" name="file" accept=".csv,text/csv" className="input" required />
       <button className="btn-primary" disabled={pending}>{pending ? "Importiere … (kann 1 Min. dauern)" : "Agenturliste importieren"}</button>
+      <Result state={state} />
+    </form>
+  );
+}
+
+export function ColdCrmImport({ configured }: { configured: boolean }) {
+  const [state, action, pending] = useActionState(importColdCrmAction, null);
+  return (
+    <form action={action} className="space-y-3">
+      <button className="btn-primary" disabled={pending || !configured}>{pending ? "Übernehme …" : "Daten aus Cold CRM übernehmen"}</button>
+      {!configured && <p className="text-sm text-amber-700">COLD_CRM_DATABASE_URL ist nicht gesetzt.</p>}
       <Result state={state} />
     </form>
   );
@@ -37,17 +48,6 @@ export function InstantlyCsvImport() {
       <input name="campaign" placeholder="Kampagnenname (falls nicht in der CSV)" className="input" />
       <input type="file" name="file" accept=".csv,text/csv" className="input" required />
       <button className="btn-ghost" disabled={pending}>{pending ? "Importiere …" : "Instantly-CSV importieren"}</button>
-      <Result state={state} />
-    </form>
-  );
-}
-
-export function WaalaxyCsvImport() {
-  const [state, action, pending] = useActionState(importWaalaxyAction, null);
-  return (
-    <form action={action} className="space-y-3">
-      <input type="file" name="file" accept=".csv,text/csv" className="input" required />
-      <button className="btn-primary" disabled={pending}>{pending ? "Importiere …" : "Waalaxy-CSV importieren"}</button>
       <Result state={state} />
     </form>
   );
