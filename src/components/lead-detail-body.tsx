@@ -1,22 +1,19 @@
-import { CalendarClock, ClipboardList, Mail, MessageCircle, Phone } from "lucide-react";
+import { CalendarClock, ClipboardList, MessageCircle } from "lucide-react";
 import { ButtonLink, Card, CardHeader } from "@/components/ui";
-import { FollowUpEditor } from "@/components/follow-up-editor";
 import { formatPhone } from "@/lib/format";
-import { pipelinePhasesFor, statusToneClass, WHATSAPP_STATUS_LABELS } from "@/lib/products";
+import { pipelinePhasesFor, WHATSAPP_STATUS_LABELS } from "@/lib/products";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { notFound } from "next/navigation";
 import {
   getStornogruendePerLead,
   type LeadStornogrundOptions,
 } from "@/app/buyer/actions";
-import { LeadEditForm } from "@/components/lead-edit-form";
-import { LeadStornoTrigger } from "@/components/lead-storno-trigger";
 import { fetchLeadRecord } from "@/lib/airtable-write";
 import { formatDate, formatEUR } from "@/lib/format";
-import { displayProduct } from "@/lib/products";
 import { prisma } from "@/lib/prisma";
 import { isAdvisor, leadScope, teamMembers, type TeamCtx } from "@/lib/team";
 import { LeadAssignee } from "@/components/lead-assignee";
+import { LeadHeaderActions, LeadNotes } from "@/components/lead-actions";
 import {
   ALL_GROUP_KEYS,
   COMMON_FIELDS,
@@ -103,18 +100,6 @@ function formatValue(
   }
 }
 
-// "YYYY-MM-DDTHH:mm" in UTC für <input type="datetime-local">. Bewusst UTC,
-// damit Dashboard und Airtable-GMT-Anzeige dieselben Ziffern zeigen.
-function isoDateTimeLocal(raw: string | null): string {
-  if (!raw) return "";
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return `${raw}T00:00`;
-  const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(
-    d.getUTCDate(),
-  )}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
-}
 
 export async function LeadDetailBody({
   leadId,
@@ -141,6 +126,7 @@ export async function LeadDetailBody({
       firstContactAt: true,
       followUpAt: true,
       followUpNote: true,
+      notes: true,
     },
   });
   if (!lead) notFound();
@@ -173,55 +159,54 @@ export async function LeadDetailBody({
   // Team: Inhaber sieht und ändert, wer zuständig ist.
   const members = isAdvisor(team) ? [] : await teamMembers(customerId);
 
+  const [conv, nextAppt, cal] = await Promise.all([
+    prisma.conversation.findFirst({
+      where: { leadId: lead.id },
+      orderBy: { lastMessageAt: "desc" },
+      select: { id: true, qualificationSummary: true, needsAttention: true, attentionReason: true },
+    }),
+    prisma.appointment.findFirst({
+      where: { leadId: lead.id, status: "booked", startsAt: { gt: twoHoursAgo() } },
+      orderBy: { startsAt: "asc" },
+      select: { startsAt: true, mode: true, meetUrl: true, manageToken: true },
+    }),
+    prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true, bookingSlug: true } }),
+  ]);
+  const storniert = !!lead.status?.toLowerCase().startsWith("storno");
+  const label = (whatsapp ? WHATSAPP_STATUS_LABELS[lead.status ?? ""] : null) ?? lead.status ?? "Neuer Lead";
+  const apptFmt = (d: Date) =>
+    new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }).format(d);
+
   return (
     <>
-      <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight">{lead.name ?? "Lead"}</h1>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[color:var(--muted)]">
-            <span
-              className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${statusToneClass(lead.status)}`}
-            >
-              {(whatsapp ? WHATSAPP_STATUS_LABELS[lead.status ?? ""] : null) ?? lead.status ?? "Neuer Lead"}
-            </span>
-            <span>
-              {lead.source ? displayProduct(lead.source) : "Produkt unbekannt"} · eingegangen{" "}
-              {formatDate(lead.createdAt)}
-            </span>
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {lead.phone ? (
-              <ButtonLink href={`tel:+${lead.phone}`} variant="primary" icon={Phone}>
-                {formatPhone(lead.phone)}
-              </ButtonLink>
-            ) : null}
-            {lead.email ? (
-              <ButtonLink href={`mailto:${lead.email}`} icon={Mail}>
-                E-Mail
-              </ButtonLink>
-            ) : null}
-          </div>
-        </div>
-        {lead.status && lead.status.toLowerCase().startsWith("storno") ? (
-          <span className="inline-flex items-center self-start rounded-md bg-rose-100 px-3 py-1.5 text-xs font-semibold text-rose-800">
-            Storniert
-          </span>
-        ) : stornoOptions.length > 0 ? (
-          // Storno nur bei vertraglich hinterlegten Stornogründen (Bezug);
-          // z. B. Retainer-Kunden haben keine → kein Storno-Button.
-          <LeadStornoTrigger
-            leadId={lead.id}
-            leadName={lead.name}
-            leadCreatedAt={lead.createdAt}
-            stornoOptions={stornoOptions}
-          />
-        ) : null}
-      </header>
+      <LeadHeaderActions
+        leadId={lead.id}
+        name={lead.name}
+        createdAt={lead.createdAt.toISOString()}
+        phone={lead.phone}
+        email={lead.email}
+        status={lead.status}
+        statusLabel={label}
+        phases={pipelinePhasesFor(whatsapp)}
+        conversationId={conv?.id ?? null}
+        bookingSlug={cal?.status === "connected" ? (cal.bookingSlug ?? null) : null}
+        followUpAt={lead.followUpAt?.toISOString() ?? null}
+        followUpNote={lead.followUpNote}
+        stornoOptions={stornoOptions}
+        storniert={storniert}
+      />
 
-      {fetchError ? (
-        <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-          Airtable-Detail konnte nicht geladen werden: {fetchError}
-        </div>
+      {conv?.needsAttention ? (
+        <a
+          href={`/buyer/chats?c=${conv.id}`}
+          className="mb-5 flex items-center gap-3 rounded-[var(--radius-md)] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900"
+        >
+          <MessageCircle className="h-4 w-4 shrink-0" />
+          <span className="min-w-0 flex-1">
+            <b>Braucht dich:</b> {conv.attentionReason ?? "Bitte beim Lead melden."}
+          </span>
+          <span className="font-semibold">Antworten</span>
+        </a>
       ) : null}
 
       {members.length > 1 ? (
@@ -233,37 +218,47 @@ export async function LeadDetailBody({
         />
       ) : null}
 
-      {whatsapp ? <WhatsAppBlock leadId={lead.id} /> : null}
+      {nextAppt || conv?.qualificationSummary ? (
+        <Card className="mb-6">
+          {nextAppt ? (
+            <div className="flex flex-wrap items-center gap-3 px-5 py-3.5">
+              <CalendarClock className="h-5 w-5 shrink-0 text-[color:var(--brand)]" />
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold">{apptFmt(nextAppt.startsAt)} Uhr</div>
+                <div className="text-xs text-[color:var(--muted)]">{nextAppt.mode === "video" ? "Videocall" : "Telefonat"}</div>
+              </div>
+              {nextAppt.mode === "video" && nextAppt.meetUrl ? (
+                <ButtonLink href={nextAppt.meetUrl} variant="primary" external>
+                  Videocall
+                </ButtonLink>
+              ) : null}
+              {nextAppt.manageToken ? (
+                <ButtonLink href={`/book/manage/${nextAppt.manageToken}`} external>
+                  Verschieben
+                </ButtonLink>
+              ) : null}
+            </div>
+          ) : null}
+          {conv?.qualificationSummary ? (
+            <p className={`px-5 py-3.5 text-sm ${nextAppt ? "border-t border-[color:var(--border)]" : ""}`}>
+              <span className="text-[color:var(--muted)]">Assistent: </span>
+              {conv.qualificationSummary}
+            </p>
+          ) : null}
+        </Card>
+      ) : null}
 
-      <FollowUpEditor
-        leadId={lead.id}
-        followUpAt={lead.followUpAt?.toISOString() ?? null}
-        note={lead.followUpNote}
-      />
-
-      {fields ? (
-        <>
-          <ReadOnlyCard
-            fields={fields}
-            source={lead.source}
-            statusLabels={whatsapp ? WHATSAPP_STATUS_LABELS : {}}
-          />
-          <div className="mt-6">
-            <LeadEditForm
-              phases={pipelinePhasesFor(whatsapp)}
-              leadId={lead.id}
-              initialBearbeitungsstatus={
-                firstString(fields["Bearbeitungsstatus"]) ?? ""
-              }
-              initialNotizen={firstString(fields["Notizen"]) ?? ""}
-            />
-          </div>
-        </>
-      ) : !fetchError ? (
-        <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-6 text-sm text-[color:var(--muted)]">
-          Für diesen Lead liegt keine Airtable-Referenz vor.
+      {fetchError ? (
+        <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+          Angaben konnten gerade nicht geladen werden. Bitte später noch einmal öffnen.
         </div>
       ) : null}
+
+      {fields ? (
+        <ReadOnlyCard fields={fields} source={lead.source} statusLabels={whatsapp ? WHATSAPP_STATUS_LABELS : {}} />
+      ) : null}
+
+      <LeadNotes leadId={lead.id} initial={lead.notes ?? (fields ? (firstString(fields["Notizen"]) ?? "") : "")} />
     </>
   );
 }
@@ -441,107 +436,8 @@ function statusTone(status: string): "emerald" | "amber" | "rose" | "blue" | "zi
   return "zinc";
 }
 
-const APPT_STATUS: Record<string, { label: string; cls: string }> = {
-  booked: { label: "gebucht", cls: "bg-blue-100 text-blue-800" },
-  completed: { label: "stattgefunden", cls: "bg-emerald-100 text-emerald-800" },
-  cancelled: { label: "abgesagt", cls: "bg-rose-100 text-rose-800" },
-  no_show: { label: "nicht erschienen", cls: "bg-amber-100 text-amber-800" },
-};
 
-/** Termine + WhatsApp-Verlauf zum Lead (nur WhatsApp-Kunden). */
-async function WhatsAppBlock({ leadId }: { leadId: string }) {
-  const [conv, appts] = await Promise.all([
-    prisma.conversation.findFirst({
-      where: { leadId },
-      orderBy: { lastMessageAt: "desc" },
-      select: {
-        id: true,
-        qualificationSummary: true,
-        needsAttention: true,
-        attentionReason: true,
-        lastMessageAt: true,
-        _count: { select: { messages: { where: { direction: "inbound" } } } },
-      },
-    }),
-    prisma.appointment.findMany({
-      where: { leadId },
-      orderBy: { startsAt: "desc" },
-      take: 5,
-      select: { id: true, startsAt: true, mode: true, status: true, meetUrl: true, manageToken: true },
-    }),
-  ]);
-  if (!conv && appts.length === 0) return null;
-  const fmt = (d: Date) =>
-    new Intl.DateTimeFormat("de-DE", {
-      timeZone: "Europe/Berlin",
-      weekday: "short",
-      day: "numeric",
-      month: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(d);
-  return (
-    <Card className="mb-6">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--border)] px-5 py-3.5">
-        <h2 className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
-          <CalendarClock className="h-4 w-4 text-[color:var(--muted)]" /> Termin &amp; WhatsApp
-        </h2>
-        {conv ? (
-          <a
-            href={`/buyer/chats?c=${conv.id}`}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--brand)] hover:underline"
-          >
-            <MessageCircle className="h-4 w-4" /> Chat öffnen
-            {conv._count.messages > 0 ? ` (${conv._count.messages} Antworten)` : ""}
-          </a>
-        ) : null}
-      </div>
-      <div className="space-y-3 px-5 py-4 text-sm">
-        {conv?.needsAttention ? (
-          <div className="rounded-lg bg-rose-50 px-3 py-2 text-rose-900 ring-1 ring-rose-200">
-            <b>Braucht dich:</b> {conv.attentionReason ?? "Bitte beim Lead melden."}
-          </div>
-        ) : null}
-        {appts.length === 0 ? (
-          <p className="text-[color:var(--muted)]">Noch kein Termin.</p>
-        ) : (
-          <ul className="space-y-1.5">
-            {appts.map((a) => {
-              const st = APPT_STATUS[a.status] ?? { label: a.status, cls: "bg-zinc-100 text-zinc-700" };
-              return (
-                <li key={a.id} className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 font-semibold">
-                    <CalendarClock className="h-4 w-4 text-[color:var(--muted)]" /> {fmt(a.startsAt)} Uhr
-                  </span>
-                  <span className="text-[color:var(--muted)]">{a.mode === "video" ? "Videocall" : "Telefonat"}</span>
-                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${st.cls}`}>{st.label}</span>
-                  {a.status === "booked" && a.meetUrl ? (
-                    <a href={a.meetUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-[color:var(--brand)] underline">
-                      Video-Link
-                    </a>
-                  ) : null}
-                  {a.status === "booked" && a.manageToken ? (
-                    <a
-                      href={`/book/manage/${a.manageToken}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs font-semibold text-[color:var(--brand)] underline"
-                    >
-                      Verschieben / absagen
-                    </a>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-        {conv?.qualificationSummary ? (
-          <p className="text-[color:var(--foreground)]">
-            <span className="font-semibold">Zusammenfassung des Assistenten: </span>
-            {conv.qualificationSummary}
-          </p>
-        ) : null}
-      </div>
-    </Card>
-  );
+/** Termine ab 2 Stunden vor jetzt (laufende Termine bleiben sichtbar). */
+function twoHoursAgo(): Date {
+  return new Date(Date.now() - 2 * 60 * 60 * 1000);
 }

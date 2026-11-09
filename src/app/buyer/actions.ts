@@ -300,6 +300,7 @@ export async function updateLeadDetailsAction(
     }
   }
 
+  const hasNotes = formData.has("notizen");
   const notizen = String(formData.get("notizen") ?? "");
 
   const statusRaw = String(formData.get("bearbeitungsstatus") ?? "").trim();
@@ -319,7 +320,7 @@ export async function updateLeadDetailsAction(
     if (lead.airtableId) await updateLeadEditableFields({
       airtableId: lead.airtableId,
       ...(hasContactFields ? { kontaktversuche, ersterKontaktversuch: ersterKontaktversuchIso } : {}),
-      notizen,
+      ...(hasNotes ? { notizen } : {}),
       bearbeitungsstatus,
     });
   } catch (err) {
@@ -339,6 +340,7 @@ export async function updateLeadDetailsAction(
           }
         : {}),
       ...(bearbeitungsstatus ? { status: bearbeitungsstatus } : {}),
+      ...(hasNotes ? { notes: notizen.trim() || null } : {}),
     },
   });
 

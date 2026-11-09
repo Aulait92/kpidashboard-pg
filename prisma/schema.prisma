@@ -326,6 +326,8 @@ model Lead {
   // am Fälligkeitstag auf „Heute".
   followUpAt           DateTime?
   followUpNote         String?
+  // Notizen des Beraters (bei Airtable-Leads zusätzlich dort gespiegelt)
+  notes                String?
   // rec-ID des Kunden-Produkt-Bezug-Records, an dem dieser Lead in Airtable
   // hängt. Wird beim Storno gebraucht, um die zugelassenen Stornogründe
   // (Linked-Records vom Bezug zur Stornogründe-Tabelle) nachzuschlagen.
