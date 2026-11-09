@@ -40,7 +40,7 @@ export async function GET(req: Request): Promise<Response> {
   if (authErr) return unauthorized(authErr);
   const q = (new URL(req.url).searchParams.get("q") ?? "").trim();
   const customers = await prisma.customer.findMany({
-    where: { plan: { not: "internal" }, ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}) },
+    where: { plan: { not: "internal" }, archived: false, ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}) },
     orderBy: { name: "asc" },
     take: 50,
     select: {

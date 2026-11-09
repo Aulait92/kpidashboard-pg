@@ -100,6 +100,8 @@ model Customer {
   // Paket: "software" = Betreuung + Software, "service" = nur Betreuung
   // (Leads per E-Mail, Kundenbereich nur mit Leads und Zahlen)
   plan             String   @default("software")
+  // Kein aktueller Bezug mehr (aus Airtable) → in Listen ausgeblendet, Historie bleibt
+  archived         Boolean  @default(false)
 
   // ─── Media-Buyer-Daten (aus Airtable-Buyer-Tabelle) ─────────────────
   // Lead-Ziele, Preise und Startdaten je Produkt liegen seit dem Product-/

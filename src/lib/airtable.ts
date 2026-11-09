@@ -188,7 +188,6 @@ const BUYER_START_KINDERWUNSCH_FIELDS = [
   "Start Kinderwunsch",
   "Startdatum KiWu",
 ];
-const FINANZEN_TABLE = process.env.AIRTABLE_TABLE_FINANZEN ?? "Finanzen";
 // Join-Tabelle, die Lead-Ziele/Preise/Startdaten pro (Kunde × Produkt) hält.
 // Eine Zeile pro Bezug; Spalten: „Kunde" (Linked), „Produkt" (Single-Select:
 // PKV-Wechsel / PKV-Neugeschäft / Kinderwunsch), „Leadziel" (Number),
@@ -936,9 +935,14 @@ export async function syncAirtable(): Promise<SyncResult> {
   // `name notIn` ausgenommen — so wird ein aktiver Kunde NIE gelöscht, auch ohne
   // Leads/Produkte/Region; entfernt werden nur echte Altlasten.
   const syncedCustomerNames = new Set<string>();
-  for (const info of buyerMap.values()) {
+  // Nur Kunden mit mindestens einem Kunden-Produkt-Bezug gelten als aktuell;
+  // alle anderen (inaktiv, Bezug gelöscht) werden archiviert statt angezeigt.
+  // Ist die Bezug-Tabelle nicht lesbar, bleibt alles wie bisher.
+  const buyersWithBezug = new Set(bezugRows.map((r) => r.buyerAirtableId));
+  for (const [buyerId, info] of buyerMap.entries()) {
     const key = info.name.trim();
     if (!key) continue;
+    if (bezugFetched && !buyersWithBezug.has(buyerId)) continue;
     syncedCustomerNames.add(key);
     const retainer = {
       retainerMonthly: info.retainerMonthly && info.retainerMonthly > 0 ? info.retainerMonthly : null,
@@ -1328,45 +1332,27 @@ export async function syncAirtable(): Promise<SyncResult> {
     );
   }
 
-  // 4. Finanzen-Tabelle (weitere Kosten / Overhead) einlesen.
-  try {
-    const finanzenRecords = await fetchAllRecords(FINANZEN_TABLE);
-    result.tables.push({
-      name: FINANZEN_TABLE,
-      source: "Finanzen",
-      records: finanzenRecords.length,
+  // 4. Finanzen-Tabelle: wird nicht mehr gebraucht und nicht mehr gelesen
+  //    (frühere Einträge bleiben als historische Kosten erhalten).
+
+  // Archiv: Kunden ohne aktuellen Bezug aus den Listen nehmen (Historie wie
+  // Leads und Umsätze bleibt erhalten). In der App angelegte Kunden nie.
+  if (bezugFetched && syncedCustomerNames.size > 0) {
+    const synced = Array.from(syncedCustomerNames);
+    await prisma.customer.updateMany({ where: { name: { in: synced } }, data: { archived: false } });
+    await prisma.customer.updateMany({
+      where: {
+        name: { notIn: synced },
+        archived: false,
+        plan: { not: "internal" },
+        onboarding: null,
+        stripeCustomerId: null,
+        salesContact: null,
+        whatsAppAccount: null,
+        leadSources: { none: {} },
+      },
+      data: { archived: true },
     });
-
-    // Komplette Neuauffüllung: alte OTHER-Kosten löschen, dann frisch einfügen.
-    await prisma.cost.deleteMany({ where: { kind: "OTHER" } });
-
-    for (const rec of finanzenRecords) {
-      const vendor = readString(rec.fields, "Name") ?? "Unbekannt";
-      for (const [field, raw] of Object.entries(rec.fields)) {
-        const parsed = parseKostenColumn(field);
-        if (!parsed) continue;
-        const amount =
-          typeof raw === "number" ? raw : Number.parseFloat(String(raw));
-        if (!Number.isFinite(amount) || amount <= 0) continue;
-
-        const occurredAt = new Date(
-          Date.UTC(parsed.year, parsed.month - 1, 1, 12),
-        );
-        await prisma.cost.create({
-          data: {
-            kind: "OTHER",
-            amount,
-            occurredAt,
-            note: `${vendor} (${field})`,
-          },
-        });
-        result.costs += 1;
-      }
-    }
-  } catch (err) {
-    result.errors.push(
-      `Tabelle "${FINANZEN_TABLE}": ${err instanceof Error ? err.message : String(err)}`,
-    );
   }
 
   // 5. Verwaiste Kunden aus früheren (fehlerhaften) Syncs aufräumen.

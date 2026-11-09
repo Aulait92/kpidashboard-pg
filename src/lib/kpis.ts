@@ -413,7 +413,7 @@ function isTerminLead(
 
 export async function listCustomers() {
   return prisma.customer.findMany({
-    where: { plan: { not: "internal" } },
+    where: { plan: { not: "internal" }, archived: false },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });

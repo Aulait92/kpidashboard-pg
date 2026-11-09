@@ -27,7 +27,7 @@ export default async function LeadIntakePage({
   const [diag, sources, customers, products, leadSources, unassigned] = await Promise.all([
     metaDiagnostics(),
     prisma.leadSource.findMany({ include: { customer: { select: { name: true } } }, orderBy: { createdAt: "desc" } }),
-    prisma.customer.findMany({ where: { plan: { not: "internal" } }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    prisma.customer.findMany({ where: { plan: { not: "internal" }, archived: false }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     prisma.product.findMany({ where: { active: true }, select: { name: true }, orderBy: { name: "asc" } }),
     prisma.lead.findMany({ where: { source: { not: null } }, distinct: ["source"], select: { source: true }, take: 50 }),
     prisma.unassignedLead.groupBy({ by: ["formId"], where: { resolvedAt: null }, _count: { _all: true }, _max: { createdAt: true } }),

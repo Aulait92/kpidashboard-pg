@@ -44,7 +44,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
   const acceptedOffer = c.offers.find((o) => o.status === "accepted") ?? null;
   const freeCustomers =
     !onboarding && acceptedOffer
-      ? await prisma.customer.findMany({ where: { onboarding: null, plan: { not: "internal" } }, select: { id: true, name: true }, orderBy: { name: "asc" } })
+      ? await prisma.customer.findMany({ where: { onboarding: null, plan: { not: "internal" }, archived: false }, select: { id: true, name: true }, orderBy: { name: "asc" } })
       : [];
   let appUrl = "";
   try {
