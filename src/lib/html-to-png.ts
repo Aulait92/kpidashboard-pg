@@ -16,6 +16,9 @@ function getBrowser(): Promise<Browser> {
   if (!browserPromise) {
     browserPromise = chromium.launch({
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      // Optional: eigener Chromium-Pfad (z. B. lokal, wenn die gebündelte
+      // Browser-Version nicht installiert ist).
+      ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}),
     });
   }
   return browserPromise;
@@ -57,6 +60,28 @@ export async function renderHtmlToImage(
       omitBackground: false,
     });
     return Buffer.from(screenshot);
+  } finally {
+    await context.close();
+  }
+}
+
+/**
+ * Rendert eine (interne) URL als A4-PDF – z. B. die Druckansicht eines
+ * Angebots. Die URL muss vom Server selbst erreichbar sein.
+ */
+export async function renderUrlToPdf(url: string): Promise<Buffer> {
+  const browser = await getBrowser();
+  const context = await browser.newContext({ viewport: { width: 1000, height: 1400 } });
+  const page = await context.newPage();
+  try {
+    await page.goto(url, { waitUntil: "networkidle", timeout: 20_000 });
+    await page.evaluate(() => document.fonts?.ready);
+    const pdf = await page.pdf({
+      format: "A4",
+      printBackground: true,
+      margin: { top: "14mm", bottom: "14mm", left: "12mm", right: "12mm" },
+    });
+    return Buffer.from(pdf);
   } finally {
     await context.close();
   }

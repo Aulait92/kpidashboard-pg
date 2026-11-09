@@ -2,7 +2,7 @@ import { Resend } from "resend";
 
 export type SendResult = { ok: true } | { ok: false; error: string };
 
-function getAppUrl(): string {
+export function getAppUrl(): string {
   const explicit = process.env.APP_URL;
   if (explicit) return explicit.replace(/\/$/, "");
   // Fallback: Railway-Default-Variable. Wenn auch die fehlt, bricht das
@@ -132,5 +132,55 @@ export async function sendBuyerInviteEmail(opts: {
       ok: false,
       error: err instanceof Error ? err.message : "Send failed",
     };
+  }
+}
+
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/** Schickt einem Interessenten den Link zu seinem Angebot. */
+export async function sendOfferEmail(opts: {
+  to: string;
+  contactName: string;
+  number: string;
+  offerUrl: string;
+  validUntil: Date;
+  replyTo?: string | null;
+}): Promise<SendResult> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>";
+  if (!apiKey) return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
+  const until = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(opts.validUntil);
+  const name = escapeHtml(opts.contactName);
+  try {
+    const { error } = await new Resend(apiKey).emails.send({
+      from,
+      to: opts.to,
+      ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
+      subject: `Ihr Angebot von performancegrowth (${opts.number})`,
+      text: [
+        `Hallo ${opts.contactName},`,
+        "",
+        "vielen Dank für das Gespräch. Wie besprochen finden Sie Ihr Angebot hier:",
+        opts.offerUrl,
+        "",
+        `Sie können es dort direkt online annehmen oder als PDF herunterladen. Das Angebot gilt bis ${until}.`,
+        "",
+        "Viele Grüße",
+        "performancegrowth",
+      ].join("\n"),
+      html: `
+        <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0b1220">
+          <p style="margin:0 0 16px;font-size:15px;line-height:1.6">Hallo ${name},</p>
+          <p style="margin:0 0 16px;font-size:15px;line-height:1.6">vielen Dank für das Gespräch. Wie besprochen finden Sie Ihr Angebot unter folgendem Link – Sie können es dort direkt online annehmen oder als PDF herunterladen.</p>
+          <p style="margin:24px 0"><a href="${opts.offerUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">Angebot ansehen</a></p>
+          <p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Angebot ${escapeHtml(opts.number)} · gültig bis ${until}</p>
+          <p style="margin:24px 0 0;font-size:15px;line-height:1.6">Viele Grüße<br>performancegrowth</p>
+        </div>`,
+    });
+    if (error) return { ok: false, error: error.message ?? "Resend hat abgelehnt." };
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Versand fehlgeschlagen" };
   }
 }

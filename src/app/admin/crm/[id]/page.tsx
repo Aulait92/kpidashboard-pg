@@ -8,6 +8,8 @@ import {
 import { DealEditForm } from "@/components/deal-edit-form";
 import { DeleteDealButton } from "@/components/delete-deal-button";
 import { DealCloseButton } from "@/components/deal-close-button";
+import { DealOffersCard } from "@/components/deal-offers-card";
+import { getAppUrl } from "@/lib/email";
 import { getCurrentSession } from "@/lib/auth";
 import { formatDate, formatEUR } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -104,6 +106,7 @@ export default async function AdminDealDetailPage({
         orderBy: { createdAt: "desc" },
         include: { createdBy: { select: { email: true } } },
       },
+      offers: { orderBy: { createdAt: "desc" } },
     },
   });
   if (!deal) notFound();
@@ -118,6 +121,13 @@ export default async function AdminDealDetailPage({
     createdAt: a.createdAt,
     createdBy: a.createdBy,
   }));
+
+  let appUrl = "";
+  try {
+    appUrl = getAppUrl();
+  } catch {
+    appUrl = "";
+  }
 
   const rawFields =
     (deal.rawFields ?? {}) as Record<string, unknown>;
@@ -171,6 +181,26 @@ export default async function AdminDealDetailPage({
             }
             initialNotes={deal.notes ?? ""}
             initialTestCharge={deal.testCharge ?? ""}
+          />
+          <DealOffersCard
+            dealId={deal.id}
+            appUrl={appUrl}
+            offers={deal.offers.map((o) => ({
+              id: o.id,
+              number: o.number,
+              version: o.version,
+              status: o.status,
+              token: o.token,
+              email: o.email,
+              setupFee: Number(o.setupFee),
+              monthlyFee: Number(o.monthlyFee),
+              createdAt: o.createdAt.toISOString(),
+              sentAt: o.sentAt?.toISOString() ?? null,
+              viewedAt: o.viewedAt?.toISOString() ?? null,
+              acceptedAt: o.acceptedAt?.toISOString() ?? null,
+              acceptedName: o.acceptedName,
+              validUntil: o.validUntil.toISOString(),
+            }))}
           />
           <DealFactsCard deal={deal} extraRows={extraRawRows} />
         </div>

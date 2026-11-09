@@ -14,46 +14,47 @@ datasource db {
 // "Deal-Pipeline". Spiegel der Airtable-Records in der DB, damit Kanban /
 // KPI / Activity-Timeline ohne Airtable-Round-Trip funktionieren.
 model Deal {
-  id              String          @id @default(cuid())
-  airtableId      String?         @unique
-  name            String?
-  company         String?
-  email           String?
-  phone           String?
+  id         String    @id @default(cuid())
+  airtableId String?   @unique
+  name       String?
+  company    String?
+  email      String?
+  phone      String?
   // Deal-Wert in EUR. Nullable, weil frische Leads den Wert oft noch
   // nicht hinterlegt haben.
-  value           Decimal?        @db.Decimal(12, 2)
+  value      Decimal?  @db.Decimal(12, 2)
   // Aktueller Bearbeitungsstatus aus Airtable (Single-Select-Text). Wird
   // im Kanban als Spalten-Zuordnung verwendet (siehe SALES_PIPELINE_PHASES
   // in src/lib/sales.ts).
-  status          String?
+  status     String?
   // Sales-Rep / Owner (Text oder Email — flexibel, wie's aus Airtable kommt).
-  owner           String?
-  source          String?
+  owner      String?
+  source     String?
   // Verkauftes Produkt / Paket. String aus Airtable-Spalte
   // (typischerweise Single-Select oder freier Text).
-  product         String?
+  product    String?
   // Erwartetes oder tatsächliches Abschluss-Datum.
-  closeDate       DateTime?
+  closeDate  DateTime?
   // Gesetzt sobald der Deal auf "Gewonnen" steht — für Win-Rate-Berechnung.
-  wonAt           DateTime?
+  wonAt      DateTime?
   // Gesetzt sobald der Deal auf "Verloren" steht.
-  lostAt          DateTime?
-  lostReason      String?
-  notes           String?
+  lostAt     DateTime?
+  lostReason String?
+  notes      String?
   // Frei editierbares Feld „Testcharge" (Detailansicht). Spiegelt das
   // gleichnamige Airtable-Feld; freier Text.
-  testCharge      String?
+  testCharge String?
   // Vom Admin manuell „geschlossen" — verschwindet aus dem aktiven CRM-Kanban,
   // zählt aber weiter in die Sales-Statistiken (Win-Rate, Erreichbarkeit …).
-  archived        Boolean         @default(false)
+  archived   Boolean   @default(false)
   // Voller Airtable-Record-Snapshot für die Detail-Ansicht. Erspart einen
   // zweiten Airtable-Call beim Öffnen des Modals.
-  rawFields       Json?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  rawFields  Json?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
-  activities      DealActivity[]
+  activities DealActivity[]
+  offers     Offer[]
 
   @@index([status])
   @@index([owner])
@@ -65,13 +66,13 @@ model Deal {
 // Status-Change-Einträge. Wohnt nur in der DB — Airtable kennt das
 // Konzept (noch) nicht.
 model DealActivity {
-  id          String   @id @default(cuid())
-  dealId      String
-  deal        Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  id           String    @id @default(cuid())
+  dealId       String
+  deal         Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
   // "note" | "call" | "email" | "meeting" | "status_change"
-  kind        String
-  title       String
-  body        String?
+  kind         String
+  title        String
+  body         String?
   // Optionaler Planungs-Zeitpunkt für zukünftige Aktivitäten
   // (Wiedervorlage, Termin, Folge-Anruf …). Wenn gesetzt, zeigt die
   // CRM-Kanban-Card die nächste anstehende Aktivität statt des letzten
@@ -79,12 +80,12 @@ model DealActivity {
   scheduledFor DateTime?
   // Abgehakt/erledigt am. Gesetzt = die Aktivität fällt aus „Heute"/„Kommende"
   // (nur noch in der Historie sichtbar).
-  completedAt DateTime?
+  completedAt  DateTime?
   // Zusatzdaten je Kind (z. B. {fromStatus, toStatus} bei status_change).
-  metadata    Json?
-  createdAt   DateTime @default(now())
-  createdById String?
-  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  metadata     Json?
+  createdAt    DateTime  @default(now())
+  createdById  String?
+  createdBy    User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([dealId, createdAt])
   @@index([dealId, scheduledFor])
@@ -104,16 +105,16 @@ model Customer {
   // Region des Kunden (z.B. "Berlin"). Bestimmt, in welchen regionsbasierten
   // Pool (z. B. Kinderwunsch) die Leads/Ziele dieses Kunden fallen, wenn die
   // CustomerProduct-Zeile selbst keine eigene Region trägt.
-  region           String?
+  region String?
 
   // ─── Retainer-Modell (aus Airtable „Kunden") ─────────────────────────
   // Gesetzt = Kunde zahlt Retainer + eigenes Werbebudget statt Lead-Preis.
   // Im Kunden-Dashboard: Lead-Kosten = Werbespend (eigenes Konto) + Retainer
   // (tagesanteilig ab retainerStart). Taucht NICHT als Agentur-Kosten auf.
-  retainerMonthly  Decimal?  @db.Decimal(12, 2)
-  retainerStart    DateTime?
+  retainerMonthly Decimal?  @db.Decimal(12, 2)
+  retainerStart   DateTime?
   // Eigenes Meta-Werbekonto des Kunden (nur Ziffern, ohne „act_").
-  metaAdAccountId  String?
+  metaAdAccountId String?
 
   leads            Lead[]
   revenues         Revenue[]
@@ -182,26 +183,26 @@ model Product {
 // Ziel/Preis/Start. Löst die hardcoded leadGoalWechsel/etc.-Spalten
 // auf Customer ab.
 model CustomerProduct {
-  id         String    @id @default(cuid())
-  customerId String
-  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  productId  String
-  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id               String    @id @default(cuid())
+  customerId       String
+  customer         Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId        String
+  product          Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
   // Lead-Ziel pro Monat. null = kein Ziel definiert.
-  leadGoal   Int?
+  leadGoal         Int?
   // Preis pro Lead in EUR (Netto).
-  leadPrice  Decimal?  @db.Decimal(12, 2)
+  leadPrice        Decimal?  @db.Decimal(12, 2)
   // Startdatum (Mid-Month-Onboarding-Pro-Rate).
-  startDate  DateTime?
+  startDate        DateTime?
   // Test-Bezug: das volle Lead-Ziel wird über testDurationDays ausgeliefert und
   // NICHT anteilig auf den Restmonat gekürzt (Live-Bezüge schon). testMode true
   // ODER testDurationDays>0 ⇒ Testmodus.
-  testMode         Boolean @default(false)
+  testMode         Boolean   @default(false)
   testDurationDays Int?
   // Region (nur für poolKind="region" relevant, z. B. Kinderwunsch-Stadt).
-  region     String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  region           String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   @@unique([customerId, productId])
   @@index([productId])
@@ -216,20 +217,20 @@ model CustomerProduct {
 // Pools werden beim Lauf/Anzeigen automatisch aus den Kundendaten abgeleitet
 // und hier per key upserted; gepflegt werden nur die Steuer-Einstellungen.
 model DeliveryPool {
-  id    String @id @default(cuid())
-  key   String @unique // "product:Wechsel" | "product:Neugeschäft" | "region:Berlin"
-  label String
-  kind  String // "product" | "region"
+  id      String  @id @default(cuid())
+  key     String  @unique // "product:Wechsel" | "product:Neugeschäft" | "region:Berlin"
+  label   String
+  kind    String // "product" | "region"
   // Produkt-Quelle (Lead.source) dieses Pools: "Wechsel" | "Neugeschäft" | "Kinderwunsch".
   product String
   // Nur bei kind=region gesetzt.
   region  String?
 
   // Steuer-Einstellungen (admin-gepflegt):
-  autopilot       Boolean  @default(false)
-  maxDailyBudget  Decimal? @db.Decimal(12, 2)
+  autopilot               Boolean  @default(false)
+  maxDailyBudget          Decimal? @db.Decimal(12, 2)
   // Override für das Meta-Kampagnen-Matching. null = abgeleitet (Produkt bzw. Region).
-  campaignKeyword String?
+  campaignKeyword         String?
   // Outbrain-Kampagnen-Match (analog zu campaignKeyword für Meta). null = kein
   // Outbrain-Channel in diesem Pool.
   outbrainCampaignKeyword String?
@@ -251,9 +252,9 @@ model DeliveryPool {
 // auch wenn keine Änderung nötig war (action = "none") — so ist transparent,
 // was der Bot wann gesehen und entschieden hat.
 model MediaBuyerAction {
-  id        String @id @default(cuid())
-  poolKey   String
-  poolLabel String
+  id           String   @id @default(cuid())
+  poolKey      String
+  poolLabel    String
   // "increase" | "decrease" | "pause" | "activate" | "boost" | "none"
   action       String
   reason       String
@@ -279,22 +280,22 @@ model MediaBuyerAction {
 }
 
 model Lead {
-  id              String    @id @default(cuid())
-  airtableId      String?   @unique
-  source          String?
-  customerId      String
-  name            String?
+  id                   String    @id @default(cuid())
+  airtableId           String?   @unique
+  source               String?
+  customerId           String
+  name                 String?
   // Kontakt aus Airtable (Telefon normalisiert wie WhatsApp `from`, z. B.
   // 4915112345678) — für die Zuordnung WhatsApp-Konversation/Buchung ↔ Lead.
-  phone           String?
-  email           String?
+  phone                String?
+  email                String?
   // Snapshot der produktspezifischen Formularangaben (Label/Wert-Liste aus
   // lib/lead-fields) — Kontext für den WhatsApp-Bot.
-  formData        Json?
+  formData             Json?
   // WhatsApp-Erstanschreiben (Outreach-Job): Zeitpunkt + Ergebnis
   // (sent | skipped_booked | skipped_contact | no_template | failed: …).
-  outreachAt      DateTime?
-  outreachStatus  String?
+  outreachAt           DateTime?
+  outreachStatus       String?
   // Rückrufliste: „Nicht erreicht" geklickt → bis dahin ausgeblendet.
   callbackSnoozedUntil DateTime?
   // Wiedervorlage: „Ruf mich in 1 Woche an", Angebot nachfassen … erscheint
@@ -304,23 +305,23 @@ model Lead {
   // rec-ID des Kunden-Produkt-Bezug-Records, an dem dieser Lead in Airtable
   // hängt. Wird beim Storno gebraucht, um die zugelassenen Stornogründe
   // (Linked-Records vom Bezug zur Stornogründe-Tabelle) nachzuschlagen.
-  bezugAirtableId String?
-  createdAt       DateTime  @default(now())
-  firstContactAt  DateTime?
-  closedAt        DateTime?
-  reached         Boolean   @default(false)
-  contactAttempts Int       @default(0)
-  status          String?
+  bezugAirtableId      String?
+  createdAt            DateTime  @default(now())
+  firstContactAt       DateTime?
+  closedAt             DateTime?
+  reached              Boolean   @default(false)
+  contactAttempts      Int       @default(0)
+  status               String?
   // Werbekanal, der den Lead generiert hat (aus Airtable-Spalte „Source").
   // Werte: "Meta" | "Outbrain" | null (= unbekannt). Wird in Channel-KPIs
   // und im Media-Buyer-Steuerlauf verwendet, um CPL pro Kanal zu berechnen.
-  adChannel       String?
-  acquisitionCost Decimal   @default(0) @db.Decimal(12, 2)
+  adChannel            String?
+  acquisitionCost      Decimal   @default(0) @db.Decimal(12, 2)
   // Abschlusswert in EUR — vom Buyer beim Drop auf "Abschluss" in der
   // Pipeline-Ansicht eingegeben (oder im Lead-Detail editierbar). Wird
   // optional nach Airtable in eine Abschlusswert-Spalte gespiegelt; getrennt
   // von Revenue.amount (das ist der Lead-Einkaufspreis).
-  closeValue      Decimal?  @db.Decimal(12, 2)
+  closeValue           Decimal?  @db.Decimal(12, 2)
 
   customer Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   revenues Revenue[]
@@ -361,14 +362,14 @@ enum CostKind {
 }
 
 model Cost {
-  id         String    @id @default(cuid())
+  id         String   @id @default(cuid())
   customerId String?
   kind       CostKind
   // Produkt-Zuordnung (z. B. "Wechsel", "Neugeschäft") für LEAD-Kosten aus Meta.
   // null für OTHER-Kosten oder LEAD-Kosten ohne erkennbares Produkt.
   product    String?
-  amount     Decimal   @db.Decimal(12, 2)
-  occurredAt DateTime  @default(now())
+  amount     Decimal  @db.Decimal(12, 2)
+  occurredAt DateTime @default(now())
   note       String?
 
   customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
@@ -417,12 +418,12 @@ enum UserRole {
 // Auth-Accounts. Admins sehen das ganze Dashboard, Buyer nur die eigene
 // Customer-Sicht (customerId verknüpft, NULL für Admins).
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String    @id @default(cuid())
+  email        String    @unique
   passwordHash String
   role         UserRole
   customerId   String?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
   lastLoginAt  DateTime?
 
   customer       Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull)
@@ -455,21 +456,21 @@ model PasswordResetToken {
 // (monthKey = "YYYY-MM"). Alle Goal-Felder sind optional — wenn null,
 // wird das Ziel im UI als "nicht gesetzt" angezeigt.
 model MonthlyGoal {
-  id          String   @id @default(cuid())
-  monthKey    String   // "YYYY-MM"
+  id             String   @id @default(cuid())
+  monthKey       String // "YYYY-MM"
   // Produkt-Dimension: "" = Gesamt, sonst "Wechsel" | "Neugeschäft" | "Kinderwunsch".
   // Lead-Ziele kommen je Produkt aus Airtable (nicht hier); gespeichert werden
   // hier Abschluss-/Umsatz-/Marge-Ziele. Gesamt-Werte (Leads/Abschlüsse/Umsatz)
   // sind die Summe der Produkte; nur die Gesamt-Marge wird eigenständig gesetzt.
-  product     String   @default("")
-  leadsGoal   Int?
+  product        String   @default("")
+  leadsGoal      Int?
   // Abschlussquote-Ziel (Abschlüsse / Leads), 0..1. Qualitätskennzahl wie die
   // Marge — wird je Produkt und gesamt eigenständig gesetzt (nicht summiert).
   closedRateGoal Decimal? @db.Decimal(5, 4)
-  revenueGoal Decimal? @db.Decimal(12, 2)
-  marginGoal  Decimal? @db.Decimal(5, 4) // 0..1
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  revenueGoal    Decimal? @db.Decimal(12, 2)
+  marginGoal     Decimal? @db.Decimal(5, 4) // 0..1
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@unique([monthKey, product])
 }
@@ -478,13 +479,13 @@ model MonthlyGoal {
 // Bündelt mehrere Varianten (Headline + Body + Bild + CTA), die separat
 // genehmigt werden können.
 model CreativeRequest {
-  id              String   @id @default(cuid())
-  telegramChatId  String   // Telegram-Chat-ID des Anfragenden (kann negativ sein bei Gruppen)
-  rawPrompt       String   // Originaler Telegram-Text
-  parsedIntent    Json     // {count, campaign, tone, audience, …} von Claude
-  status          String   @default("generating") // generating | partial | completed | failed
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String   @id @default(cuid())
+  telegramChatId String // Telegram-Chat-ID des Anfragenden (kann negativ sein bei Gruppen)
+  rawPrompt      String // Originaler Telegram-Text
+  parsedIntent   Json // {count, campaign, tone, audience, …} von Claude
+  status         String   @default("generating") // generating | partial | completed | failed
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   variants CreativeVariant[]
 
@@ -494,31 +495,31 @@ model CreativeRequest {
 // Eine konkrete Creative-Variante. Hat eigenen Approval-Status, weil der
 // Admin pro Variante "Genehmigen" / "Ablehnen" / "Neu generieren" entscheidet.
 model CreativeVariant {
-  id              String   @id @default(cuid())
-  requestId       String
-  index           Int      // 1..N innerhalb der Anfrage
-  headline        String
-  body            String
-  cta             String   // z.B. "Termin in 30 Sek"
-  adText          String   @default("") // Facebook Primary-Text (über dem Bild), kann long-form sein
-  fbHeadline      String   @default("") // Facebook Headline unter dem Bild (max ~40 Zeichen, unabhängig vom visuellen Hero)
-  mechanic        String   @default("") // Konzept-Mechanic (z.B. UGC-Whiteboard, Comic-Illustration, Big-Number)
-  imagePrompt     String   // bei HTML-Pipeline: das volle HTML (Debug/Replay)
-  imageUrl        String   // public R2-URL
+  id             String    @id @default(cuid())
+  requestId      String
+  index          Int // 1..N innerhalb der Anfrage
+  headline       String
+  body           String
+  cta            String // z.B. "Termin in 30 Sek"
+  adText         String    @default("") // Facebook Primary-Text (über dem Bild), kann long-form sein
+  fbHeadline     String    @default("") // Facebook Headline unter dem Bild (max ~40 Zeichen, unabhängig vom visuellen Hero)
+  mechanic       String    @default("") // Konzept-Mechanic (z.B. UGC-Whiteboard, Comic-Illustration, Big-Number)
+  imagePrompt    String // bei HTML-Pipeline: das volle HTML (Debug/Replay)
+  imageUrl       String // public R2-URL
   // Video-Felder: gesetzt wenn kind="video". imageUrl kann dann ein
   // Standbild/Thumbnail enthalten (z. B. ersten Frame), videoUrl ist die R2-MP4.
-  kind            String   @default("image") // "image" | "video"
-  videoUrl        String?
-  durationSec     Int?
+  kind           String    @default("image") // "image" | "video"
+  videoUrl       String?
+  durationSec    Int?
   // Meta-Side: gesetzt wenn approved + zur Kampagne gepusht.
-  metaCampaignId  String?
-  metaAdId        String?
-  metaImageHash   String?
-  status          String   @default("pending") // pending | approved | rejected | live | failed
-  telegramMsgId   String?  // Message-ID der Telegram-Nachricht mit dieser Variante
-  errorMessage    String?
-  createdAt       DateTime @default(now())
-  approvedAt      DateTime?
+  metaCampaignId String?
+  metaAdId       String?
+  metaImageHash  String?
+  status         String    @default("pending") // pending | approved | rejected | live | failed
+  telegramMsgId  String? // Message-ID der Telegram-Nachricht mit dieser Variante
+  errorMessage   String?
+  createdAt      DateTime  @default(now())
+  approvedAt     DateTime?
 
   request CreativeRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
 
@@ -544,7 +545,7 @@ model WhatsAppAccount {
   phoneNumberId String?
   phoneNumber   String?
   displayName   String?
-  apiKeyEnc     String?  // app-seitig verschlüsselter 360dialog-API-Key
+  apiKeyEnc     String? // app-seitig verschlüsselter 360dialog-API-Key
   status        String   @default("pending") // pending | connected | disabled
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -562,10 +563,10 @@ model CalendarConnection {
   id              String    @id @default(cuid())
   customerId      String    @unique
   provider        String    @default("google") // google | microsoft
-  accountEmail    String?   // verbundenes Kalender-Konto (Anzeige)
+  accountEmail    String? // verbundenes Kalender-Konto (Anzeige)
   calendarId      String    @default("primary")
-  accessTokenEnc  String?  // app-seitig verschlüsselt
-  refreshTokenEnc String?  // app-seitig verschlüsselt
+  accessTokenEnc  String? // app-seitig verschlüsselt
+  refreshTokenEnc String? // app-seitig verschlüsselt
   tokenExpiresAt  DateTime?
   scope           String?
   status          String    @default("pending") // pending | connected | error
@@ -582,28 +583,28 @@ model CalendarConnection {
 
 // Konfigurierbarer KI-Agent je Kunde (Aufgabe/Regeln, Wissen, Persönlichkeit).
 model AgentConfig {
-  id           String   @id @default(cuid())
-  customerId   String   @unique
-  name         String   @default("Assistent")
-  systemPrompt String   @default("")
-  knowledge    String   @default("")
-  personality  String   @default("")
-  active       Boolean  @default(false)
+  id                    String   @id @default(cuid())
+  customerId            String   @unique
+  name                  String   @default("Assistent")
+  systemPrompt          String   @default("")
+  knowledge             String   @default("")
+  personality           String   @default("")
+  active                Boolean  @default(false)
   // Automatisches WhatsApp-Erstanschreiben neuer Leads ohne Termin. Erst
   // aktivieren, wenn Einwilligung im Leadformular + freigegebene Vorlage da sind.
-  outreachEnabled  Boolean @default(false)
-  outreachDelayMin Int     @default(10)
+  outreachEnabled       Boolean  @default(false)
+  outreachDelayMin      Int      @default(10)
   // Fester Video-Link für alle Video-Termine (z. B. persönlicher Webex-Raum).
   // Leer = Google Meet bzw. Microsoft Teams wird pro Termin erzeugt.
-  videoRoomUrl     String?
+  videoRoomUrl          String?
   // Berater-Adresse (z. B. Allianz-Mail): bekommt jeden gebuchten Termin als
   // Kalendereinladung → landet direkt in seinem Firmenkalender (Outlook).
-  advisorEmail     String?
+  advisorEmail          String?
   // Veröffentlichter Frei/Gebucht-Kalender (ICS-Link, verschlüsselt): belegte
   // Zeiten des Firmenkalenders fließen in die Terminvorschläge ein.
   availabilityIcsUrlEnc String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 }
@@ -611,29 +612,29 @@ model AgentConfig {
 // Ein Chat-Faden pro (Kunde × Kontakt-Telefonnummer). Hält den 24h-Fenster-
 // Status und ob der KI-Bot aktiv ist oder ein Mensch übernommen hat.
 model Conversation {
-  id                String    @id @default(cuid())
-  customerId        String
-  whatsAppAccountId String?
-  leadId            String?
-  contactPhone      String
-  contactName       String?
-  contactEmail      String?   // vom Lead im Chat genannt (für Kalender-Einladung)
-  botActive         Boolean   @default(true)
-  assignedUserId    String?
+  id                   String    @id @default(cuid())
+  customerId           String
+  whatsAppAccountId    String?
+  leadId               String?
+  contactPhone         String
+  contactName          String?
+  contactEmail         String? // vom Lead im Chat genannt (für Kalender-Einladung)
+  botActive            Boolean   @default(true)
+  assignedUserId       String?
   // Vom KI-Bot gepflegte Qualifizierung (strukturiert, nicht nur als Notiz).
-  qualified            Boolean  @default(false)
+  qualified            Boolean   @default(false)
   qualificationSummary String?
-  status            String    @default("open") // open | snoozed | done
+  status               String    @default("open") // open | snoozed | done
   // „Braucht dich": Assistent hat übergeben (Frage, die er nicht klären kann,
   // Lead will den Berater sprechen) oder Lead schreibt in einem übernommenen
   // Chat. Wird beim Antworten des Beraters bzw. „Erledigt" zurückgesetzt.
-  needsAttention    Boolean   @default(false)
-  attentionReason   String?
-  attentionAt       DateTime?
-  windowExpiresAt   DateTime? // Ende des 24h-Service-Fensters
-  lastMessageAt     DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  needsAttention       Boolean   @default(false)
+  attentionReason      String?
+  attentionAt          DateTime?
+  windowExpiresAt      DateTime? // Ende des 24h-Service-Fensters
+  lastMessageAt        DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   customer        Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
   whatsAppAccount WhatsAppAccount? @relation(fields: [whatsAppAccountId], references: [id], onDelete: SetNull)
@@ -649,12 +650,12 @@ model Conversation {
 model Message {
   id             String   @id @default(cuid())
   conversationId String
-  direction      String   // inbound | outbound
+  direction      String // inbound | outbound
   kind           String   @default("text") // text | template | image | audio | document
   body           String?
   waMessageId    String?  @unique // WhatsApp-Message-ID (Idempotenz)
-  status         String?  // sent | delivered | read | failed (nur outbound)
-  sentBy         String?  // bot | agent | system (null = inbound)
+  status         String? // sent | delivered | read | failed (nur outbound)
+  sentBy         String? // bot | agent | system (null = inbound)
   sentByUserId   String?
   createdAt      DateTime @default(now())
 
@@ -669,7 +670,7 @@ model Appointment {
   customerId      String
   leadId          String?
   conversationId  String?
-  mode            String    // phone | video
+  mode            String // phone | video
   startsAt        DateTime
   endsAt          DateTime?
   calendarEventId String?
@@ -702,7 +703,7 @@ model MessageTemplate {
   // Wofür die Vorlage genutzt wird: outreach | booking_confirmation | reminder.
   // Parameter-Reihenfolge je Zweck siehe lib/whatsapp/templates.ts.
   purpose    String   @default("")
-  category   String   // utility | marketing | authentication
+  category   String // utility | marketing | authentication
   status     String   @default("pending") // pending | approved | rejected
   body       String
   createdAt  DateTime @default(now())
@@ -719,7 +720,7 @@ model ConsentOptIn {
   customerId   String
   contactPhone String
   grantedAt    DateTime
-  source       String?   // funnel | import | manual
+  source       String? // funnel | import | manual
   revokedAt    DateTime?
   createdAt    DateTime  @default(now())
 
@@ -738,11 +739,60 @@ model UsageEvent {
   userId     String?
   /// true = Admin in „Als Kunde ansehen" (nicht mitzählen)
   preview    Boolean  @default(false)
-  type       String   // page | action | error | feedback
-  name       String   // z. B. „/buyer/leads", „callback.not_reached", „toast.error"
+  type       String // page | action | error | feedback
+  name       String // z. B. „/buyer/leads", „callback.not_reached", „toast.error"
   path       String?
   meta       Json?
 
   @@index([customerId, at])
   @@index([type, at])
+}
+
+// Angebot / Auftragsbestätigung aus dem Cold-CRM. Konditionen werden beim
+// Erstellen eingefroren (Snapshot), damit ein angenommenes Angebot sich nie
+// nachträglich ändert. Änderungen = neue Version (altes wird „superseded").
+model Offer {
+  id              String    @id @default(cuid())
+  dealId          String
+  deal            Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  // Fortlaufende Nummer, z. B. PG-2026-0007
+  number          String    @unique
+  version         Int       @default(1)
+  // draft | sent | accepted | declined | superseded
+  status          String    @default("draft")
+  // Geheimer Link für die öffentliche Angebotsseite
+  token           String    @unique
+  // Empfänger
+  contactName     String
+  company         String?
+  email           String?
+  street          String?
+  zip             String?
+  city            String?
+  // Konditionen (netto, EUR)
+  term            String // "none" | "12m"
+  products        Json // [{ name, dailyBudget }]
+  setupFee        Decimal   @db.Decimal(10, 2)
+  monthlyFee      Decimal   @db.Decimal(10, 2)
+  softwareFee     Decimal   @db.Decimal(10, 2)
+  introMonthlyFee Decimal?  @db.Decimal(10, 2)
+  introMonths     Int?
+  specialTerms    String?
+  startDate       DateTime?
+  validUntil      DateTime
+  // Annahme (Protokoll)
+  sentAt          DateTime?
+  viewedAt        DateTime?
+  acceptedAt      DateTime?
+  acceptedName    String?
+  acceptedIp      String?
+  acceptedAgent   String?
+  termsUrl        String?
+  dpaUrl          String?
+  createdById     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([dealId])
+  @@index([status])
 }
