@@ -166,11 +166,17 @@ export function OfferForm({
               <Field l={`Monatlich abweichend (Liste: ${price.listMonthly == null ? "individuell" : eur(price.listMonthly)})`}>
                 <input className={input} inputMode="decimal" placeholder={price.listMonthly == null ? "bitte eintragen" : "leer = Listenpreis"} value={monthlyOverride} onChange={(e) => setMonthlyOverride(e.target.value)} />
               </Field>
-              <Field l="Startpreis monatlich (optional)">
-                <input className={input} inputMode="decimal" placeholder="z. B. 700" value={introFee} onChange={(e) => setIntroFee(e.target.value)} />
+              <Field l="Startpreis pro Monat (optional, Rabatt zum Einstieg)">
+                <input className={input} inputMode="decimal" placeholder="leer = kein Startpreis" value={introFee} onChange={(e) => setIntroFee(e.target.value)} />
               </Field>
-              <Field l="… für die ersten Monate">
-                <input className={input} inputMode="numeric" value={introMonths} onChange={(e) => setIntroMonths(e.target.value)} />
+              <Field l="Startpreis gilt für … Monate">
+                <input
+                  className={`${input} disabled:bg-[color:var(--surface-sunken)] disabled:text-[color:var(--muted)]`}
+                  inputMode="numeric"
+                  disabled={num(introFee) == null}
+                  value={introMonths}
+                  onChange={(e) => setIntroMonths(e.target.value)}
+                />
               </Field>
               <Field l="Start (optional)">
                 <input className={input} type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
