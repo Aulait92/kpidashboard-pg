@@ -57,3 +57,15 @@ export async function endPauseAction(_prev: PauseFormState, _fd: FormData): Prom
     return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
   }
 }
+
+export async function toggleLeadEmailAction(_prev: PauseFormState, _fd: FormData): Promise<PauseFormState> {
+  try {
+    const ctx = await customerOnly();
+    const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { leadEmail: true } });
+    await prisma.customer.update({ where: { id: ctx.customerId }, data: { leadEmail: !c?.leadEmail } });
+    revalidatePath("/buyer/konto");
+    return { ok: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
+  }
+}

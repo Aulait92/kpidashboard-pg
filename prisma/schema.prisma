@@ -92,16 +92,21 @@ model DealActivity {
 }
 
 model Customer {
-  id               String   @id @default(cuid())
-  name             String   @unique
-  createdAt        DateTime @default(now())
+  id                  String    @id @default(cuid())
+  name                String    @unique
+  createdAt           DateTime  @default(now())
   // Stripe-Kunde für Abrechnung (Rechnungen, Zahlungsart, Abo)
-  stripeCustomerId String?  @unique
+  stripeCustomerId    String?   @unique
   // Paket: "software" = Betreuung + Software, "service" = nur Betreuung
   // (Leads per E-Mail, Kundenbereich nur mit Leads und Zahlen)
-  plan             String   @default("software")
+  plan                String    @default("software")
   // Kein aktueller Bezug mehr (aus Airtable) → in Listen ausgeblendet, Historie bleibt
-  archived         Boolean  @default(false)
+  archived            Boolean   @default(false)
+  // Jeder neue Lead zusätzlich per E-Mail an den Kunden (Kundenbereich → Konto)
+  leadEmail           Boolean   @default(true)
+  // Zahlungsverzug: seit wann eine Rechnung offen/fehlgeschlagen ist, Warnung verschickt
+  paymentOverdueSince DateTime?
+  paymentWarnedAt     DateTime?
 
   // ─── Media-Buyer-Daten (aus Airtable-Buyer-Tabelle) ─────────────────
   // Lead-Ziele, Preise und Startdaten je Produkt liegen seit dem Product-/
@@ -1190,6 +1195,8 @@ model CustomerPause {
   reason            String?
   // customer | admin
   createdBy         String    @default("customer")
+  // customer = Pause/Urlaub (mit Abrechnung), dunning = Zahlungsverzug (nur Anzeigen)
+  kind              String    @default("customer")
   // Von uns pausierte Meta-Kampagnen (werden beim Fortsetzen reaktiviert)
   pausedCampaignIds Json?
   adsNote           String?

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { CreditCard, FileText, Package } from "lucide-react";
+import { Bell, CreditCard, FileText, Package } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { Badge, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
@@ -7,7 +7,7 @@ import { billingEnabled, listCustomerInvoices, type CustomerInvoice } from "@/li
 import { reportError } from "@/lib/monitoring";
 import { prisma } from "@/lib/prisma";
 import { openPortalAction } from "./actions";
-import { PauseCard } from "./pause-card";
+import { LeadEmailToggle, PauseCard } from "./pause-card";
 import { currentPause, todayBerlin } from "@/lib/pause";
 
 export const dynamic = "force-dynamic";
@@ -36,7 +36,15 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const { portal } = await searchParams;
   const customer = await prisma.customer.findUnique({
     where: { id: ctx.customerId },
-    select: { name: true, plan: true, retainerMonthly: true, retainerStart: true, stripeCustomerId: true, onboarding: { select: { offerId: true } } },
+    select: {
+      name: true,
+      plan: true,
+      retainerMonthly: true,
+      retainerStart: true,
+      stripeCustomerId: true,
+      leadEmail: true,
+      onboarding: { select: { offerId: true, questionnaire: true } },
+    },
   });
   if (!customer) redirect("/buyer");
   const offer = customer.onboarding?.offerId
@@ -99,12 +107,25 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         </Card>
 
         <PauseCard
-          pause={pause ? { status: pause.status, startsAt: pause.startsAt.toISOString(), endsAt: pause.endsAt?.toISOString() ?? null } : null}
+          pause={pause ? { status: pause.status, startsAt: pause.startsAt.toISOString(), endsAt: pause.endsAt?.toISOString() ?? null, kind: pause.kind } : null}
           today={today}
           minDate={startYmd > today ? startYmd : today}
           softwareFeeText={softwareFee > 0 ? `In der Pause berechnen wir nur die Software-Gebühr von ${eur(softwareFee)} netto im Monat, tagesgenau.` : "In der Pause fällt keine Vergütung an."}
           readOnly={ctx.preview}
         />
+
+        {customer.onboarding ? (
+          <Card>
+            <CardHeader title="Benachrichtigungen" icon={Bell} />
+            <div className="p-5">
+              <LeadEmailToggle
+                enabled={customer.leadEmail}
+                email={((customer.onboarding.questionnaire ?? {}) as { leadEmails?: string[] }).leadEmails?.join(", ") || ctx.email}
+                readOnly={ctx.preview}
+              />
+            </div>
+          </Card>
+        ) : null}
 
         <Card>
           <CardHeader title="Zahlung und Rechnungsdaten" icon={CreditCard} />

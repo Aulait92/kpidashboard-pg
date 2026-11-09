@@ -79,6 +79,6 @@ export async function adminEndPauseAction(fd: FormData) {
   await requireAuth();
   const customerId = String(fd.get("customerId") ?? "");
   const contactId = String(fd.get("contactId") ?? "") || null;
-  await endPauseNow(customerId);
+  await endPauseNow(customerId, { admin: true });
   refresh(contactId);
 }

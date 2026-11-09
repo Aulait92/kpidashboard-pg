@@ -9,6 +9,7 @@ import { reportError } from "@/lib/monitoring";
 import { logOfferActivity, offerAdminHref, setContactCustomerStage } from "@/lib/offer-links";
 import { cancelScheduleForOffer, createScheduleForOffer } from "@/lib/billing";
 import { startOnboarding } from "@/lib/onboarding";
+import { markPaymentOverdue, markPaymentReceived } from "@/lib/pause";
 
 export const HANDLED_EVENTS = [
   "checkout.session.completed",
@@ -161,6 +162,16 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
     case "invoice.payment_failed":
     case "invoice.overdue": {
       const invoice = event.data.object as Stripe.Invoice;
+      // Zahlungsverzug je Kunde führen (unabhängig vom Angebot).
+      const stripeCustomerId = idOf(invoice.customer as string | { id: string } | null);
+      if (stripeCustomerId) {
+        try {
+          if (event.type === "invoice.paid") await markPaymentReceived(stripeCustomerId);
+          else await markPaymentOverdue(stripeCustomerId, new Date());
+        } catch (err) {
+          reportError(err, "billing-dunning", { invoice: invoice.id });
+        }
+      }
       const offer = await offerForSubscription(invoiceSubscriptionId(invoice));
       if (!offer) return;
       const label = invoice.number ?? invoice.id;

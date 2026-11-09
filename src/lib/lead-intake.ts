@@ -188,7 +188,7 @@ export async function processNewLead(leadId: string) {
     tag: `lead-buyer:${lead.id}`,
     url: "/buyer",
   }).catch(() => {});
-  if (lead.customer.plan === "service") {
+  {
     await emailLeads(new Date(), lead.customerId).catch((err) => reportError(err, "lead-intake-email"));
   }
   // WhatsApp-Erstanschreiben: sofort, wenn keine Wartezeit eingestellt ist

@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { Loader2, PauseCircle } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui";
-import { endPauseAction, planPauseAction, type PauseFormState } from "./actions";
+import { endPauseAction, planPauseAction, toggleLeadEmailAction, type PauseFormState } from "./actions";
 
 const input =
   "h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-[15px] outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20";
@@ -17,7 +17,7 @@ export function PauseCard({
   softwareFeeText,
   readOnly,
 }: {
-  pause: { status: string; startsAt: string; endsAt: string | null } | null;
+  pause: { status: string; startsAt: string; endsAt: string | null; kind: string } | null;
   today: string;
   minDate: string;
   softwareFeeText: string;
@@ -31,7 +31,12 @@ export function PauseCard({
     <Card>
       <CardHeader title="Pause / Urlaub" icon={PauseCircle} />
       <div className="space-y-4 p-5">
-        {pause ? (
+        {pause?.kind === "dunning" ? (
+          <div className="rounded-[var(--radius-md)] bg-rose-50 px-4 py-3 text-[15px] text-rose-900">
+            <b>Anzeigen pausiert</b> wegen einer offenen Rechnung. Sobald sie bezahlt ist, laufen die Anzeigen automatisch
+            wieder an. Den Bezahl-Link finden Sie unten bei den Rechnungen.
+          </div>
+        ) : pause ? (
           <>
             <div className={`rounded-[var(--radius-md)] px-4 py-3 text-[15px] ${pause.status === "active" ? "bg-amber-50 text-amber-900" : "bg-sky-50 text-sky-900"}`}>
               {pause.status === "active" ? (
@@ -86,5 +91,29 @@ export function PauseCard({
         )}
       </div>
     </Card>
+  );
+}
+
+export function LeadEmailToggle({ enabled, email, readOnly }: { enabled: boolean; email: string; readOnly: boolean }) {
+  const [state, action, pending] = useActionState<PauseFormState, FormData>(toggleLeadEmailAction, {});
+  return (
+    <form action={action} className="flex flex-wrap items-center justify-between gap-3">
+      <div className="text-[15px]">
+        <div className="font-medium">Neue Leads per E-Mail</div>
+        <div className="text-sm text-[color:var(--muted)]">
+          {enabled ? `An: ${email}` : "Ausgeschaltet. Sie bekommen nur die Push-Nachricht in der App."}
+        </div>
+        {state.error ? <div className="text-sm text-rose-700">{state.error}</div> : null}
+      </div>
+      <button
+        type="submit"
+        disabled={pending || readOnly}
+        role="switch"
+        aria-checked={enabled}
+        className={`relative h-7 w-12 shrink-0 rounded-full transition ${enabled ? "bg-[color:var(--brand)]" : "bg-slate-300"} disabled:opacity-60`}
+      >
+        <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition ${enabled ? "left-[22px]" : "left-0.5"}`} />
+      </button>
+    </form>
   );
 }

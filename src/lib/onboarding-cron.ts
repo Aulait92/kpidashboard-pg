@@ -5,7 +5,7 @@
 //  1. Erinnerung an den Kunden, wenn Einrichtungsschritte liegen bleiben
 //     (alle 2 Tage, höchstens 3×, nur werktags 9–18 Uhr)
 //  2. Push an den Admin, wenn nach 5 Tagen noch Schritte beim Kunden offen sind
-//  3. „Nur Betreuung“: neue Leads per E-Mail an den Kunden
+//  3. Neue Leads per E-Mail an den Kunden (abschaltbar, Standard: an)
 //  4. Feedback Tag 7 (Start) und Tag 30 (Monatsbericht) nach Go-live
 //  5. Tag 90: Aufgabe „Jahresvertrag anbieten“ (nur ohne Laufzeit)
 //  6. Pflichtangaben aus dem Impressum der Agentur-Website lesen
@@ -20,7 +20,7 @@ import type { FormAnswer } from "@/lib/lead-fields";
 import { loadOnboarding, onboardingChecklist, sendWelcome } from "@/lib/onboarding";
 import { readImpressum } from "@/lib/impressum";
 import { customerGreeting } from "@/lib/offer-links";
-import { runPauseCron } from "@/lib/pause";
+import { runDunningCron, runPauseCron } from "@/lib/pause";
 
 const DAY = 24 * 60 * 60 * 1000;
 const TZ = "Europe/Berlin";
@@ -102,11 +102,15 @@ async function remindCustomers(now: Date) {
   return { reminded, stale };
 }
 
-// ─── 3: Leads per E-Mail („Nur Betreuung“) ──────────────────────────────
+// ─── 3: Leads per E-Mail (alle Onboarding-Kunden, abschaltbar) ───────────
 
 export async function emailLeads(now: Date, onlyCustomerId?: string) {
   const onboardings = await prisma.onboarding.findMany({
-    where: { package: "service", status: { not: "cancelled" }, ...(onlyCustomerId ? { customerId: onlyCustomerId } : {}) },
+    where: {
+      status: { not: "cancelled" },
+      customer: { leadEmail: true },
+      ...(onlyCustomerId ? { customerId: onlyCustomerId } : {}),
+    },
     select: { customerId: true, createdAt: true, questionnaire: true, customer: { select: { name: true } } },
   });
   let sent = 0;
@@ -287,6 +291,7 @@ export async function runOnboardingCron(now = new Date()) {
   if (isBusinessHours(now)) {
     await step("reminders", () => remindCustomers(now));
     await step("feedback", () => sendFeedback(now));
+    await step("dunning", () => runDunningCron(now)); // Mails nur zu Geschäftszeiten
   }
   return result;
 }
