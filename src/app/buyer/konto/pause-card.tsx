@@ -67,8 +67,8 @@ export function PauseCard({
                 <input type="date" name="from" required min={minDate} defaultValue={minDate > today ? minDate : today} className={input} />
               </label>
               <label className="block space-y-1">
-                <span className="text-sm font-medium">Neustart am (optional)</span>
-                <input type="date" name="until" min={minDate} className={input} />
+                <span className="text-sm font-medium">Neustart am</span>
+                <input type="date" name="until" required min={minDate} className={input} />
               </label>
               <label className="block space-y-1 sm:col-span-2">
                 <span className="text-sm font-medium">Grund (optional)</span>

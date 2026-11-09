@@ -238,8 +238,8 @@ export function AdminPauseCard({
             <input type="date" name="from" required min={today} defaultValue={today} className="input" />
           </div>
           <div>
-            <label className="label">Neustart am (optional)</label>
-            <input type="date" name="until" min={today} className="input" />
+            <label className="label">Neustart am</label>
+            <input type="date" name="until" required min={today} className="input" />
           </div>
           <input name="reason" placeholder="Grund (optional)" className="input sm:col-span-2" />
           <button className="btn-ghost sm:col-span-2">Pause eintragen</button>

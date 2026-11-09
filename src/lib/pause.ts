@@ -63,15 +63,17 @@ export async function planPause(
   by: "customer" | "admin",
 ): Promise<PauseResult> {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.from)) return { ok: false, error: "Bitte ein Startdatum wählen." };
-  if (input.until && !/^\d{4}-\d{2}-\d{2}$/.test(input.until)) return { ok: false, error: "Das Enddatum ist ungültig." };
+  if (!input.until || !/^\d{4}-\d{2}-\d{2}$/.test(input.until)) return { ok: false, error: "Bitte ein Neustart-Datum wählen." };
   if (input.from < todayBerlin()) return { ok: false, error: "Die Pause kann frühestens heute beginnen." };
   if (input.until && input.until <= input.from) return { ok: false, error: "Das Ende muss nach dem Start liegen." };
   const open = await prisma.customerPause.findFirst({ where: { customerId, status: { in: ["planned", "active"] } } });
   if (open) return { ok: false, error: "Es ist bereits eine Pause geplant oder aktiv." };
   const { customer } = await context(customerId);
   const startsAt = berlinDayStart(input.from);
-  if (customer.retainerStart && startsAt < customer.retainerStart) {
-    return { ok: false, error: `Eine Pause ist erst ab Vertragsstart (${fmt(customer.retainerStart)}) möglich.` };
+  // Nach Kalendertag vergleichen: Start „heute“ ist erlaubt, auch wenn das Abo erst heute Mittag begann.
+  const startYmd = customer.retainerStart ? new Intl.DateTimeFormat("sv-SE", { timeZone: TZ }).format(customer.retainerStart) : null;
+  if (startYmd && input.from < startYmd) {
+    return { ok: false, error: `Eine Pause ist erst ab Vertragsstart (${fmt(customer.retainerStart!)}) möglich.` };
   }
   const pause = await prisma.customerPause.create({
     data: {
