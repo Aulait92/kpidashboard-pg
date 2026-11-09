@@ -47,6 +47,10 @@ export default async function TeamPage() {
               Berater sehen nur ihre eigenen Leads, Chats und Termine. Sie als Inhaber sehen alles und können Leads im Lead-Detail
               einer anderen Person zuteilen.
             </p>
+            <p>
+              Jeder verbindet unter „Mein Kalender“ (Profilmenü oben rechts) seinen eigenen Kalender. Termine für einen Lead
+              landen dann beim Zuständigen. Über die Buchungsseite bekommt den Termin, wer zu der Zeit frei ist.
+            </p>
             {members.length > 1 && receivers === 0 ? (
               <p className="font-medium text-amber-800">Gerade bekommt niemand neue Leads. Neue Leads sehen dann nur Sie.</p>
             ) : null}
@@ -66,6 +70,11 @@ export default async function TeamPage() {
                     {isMe ? <Badge tone="neutral">Sie</Badge> : null}
                     <Badge tone={owner ? "success" : "neutral"}>{owner ? "Inhaber" : "Berater"}</Badge>
                     {m.receivesLeads ? <Badge tone="success">bekommt Leads</Badge> : <Badge tone="warning">keine neuen Leads</Badge>}
+                    {m.advisorCalendar?.status === "connected" ? (
+                      <Badge tone="success">eigener Kalender</Badge>
+                    ) : (
+                      <Badge tone="neutral">{owner ? "Agentur-Kalender" : "kein eigener Kalender"}</Badge>
+                    )}
                   </div>
                   <div className="text-sm text-[color:var(--muted)]">
                     {m.email} · {leads30.get(m.id) ?? 0} {(leads30.get(m.id) ?? 0) === 1 ? "Lead" : "Leads"} in 30 Tagen ·{" "}

@@ -26,9 +26,9 @@ import {
 } from "@/lib/whatsapp/event-text";
 import { sendLeadEmail } from "@/lib/calendar/lead-email";
 import { recordLeadProgress } from "@/lib/lead-progress";
-import { sendToBuyersOfCustomer } from "@/lib/push";
+import { sendToBuyersOfCustomer, sendToUser } from "@/lib/push";
 import { notifyLeadPush } from "@/lib/team";
-import { loadConnection, type Busy, type CreatedEvent, type NewEvent } from "@/lib/calendar/tokens";
+import { loadConnection, userCalendarKey, userIdOfKey, type Busy, type CreatedEvent, type NewEvent } from "@/lib/calendar/tokens";
 
 export type { CalendarProvider } from "@/lib/calendar/tokens";
 
@@ -48,12 +48,16 @@ export function hasRequiredScopes(conn: { provider: string; scope: string | null
   return googleHasRequiredScopes(conn.scope);
 }
 
+/** Adapter für einen Kalender-Schlüssel (customerId oder user:<id>). */
 export async function adapterFor(customerId: string) {
   const conn = await loadConnection(customerId);
-  const agent = await prisma.agentConfig.findUnique({
-    where: { customerId },
-    select: { availabilityIcsUrlEnc: true },
-  });
+  // Veröffentlichter Firmenkalender (ICS) gilt nur für den Agentur-Kalender.
+  const agent = userIdOfKey(customerId)
+    ? null
+    : await prisma.agentConfig.findUnique({
+        where: { customerId },
+        select: { availabilityIcsUrlEnc: true },
+      });
   const icsUrl = agent?.availabilityIcsUrlEnc ? decryptSecret(agent.availabilityIcsUrlEnc) : null;
 
   const native =
@@ -130,12 +134,22 @@ export async function suggestSlots(
   count = 3,
   hours: number[] = [10, 14, 16],
   days = 10,
+  /** Lead, für den gebucht wird (Team: Kalender des zuständigen Beraters). */
+  leadId?: string | null,
 ): Promise<Slot[]> {
-  const adapter = await adapterFor(customerId);
+  const keys = await bookingKeys(customerId, leadId);
   const now = new Date();
   const timeMin = new Date(now.getTime() + 60 * 60 * 1000);
   const timeMax = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
-  const busy = await adapter.getBusy(timeMin, timeMax);
+  // Team: frei, sobald EIN infrage kommender Kalender frei ist. Ein einzelner
+  // ausgefallener Berater-Kalender blockiert nicht alle; fällt alles aus → Fehler.
+  const results = await Promise.allSettled(keys.map(async (k) => (await adapterFor(k)).getBusy(timeMin, timeMax)));
+  const busyLists = results.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
+  if (busyLists.length === 0) {
+    const first = results[0];
+    throw first?.status === "rejected" ? first.reason : new Error("Kein Kalender verfügbar.");
+  }
+  const isFree = (start: Date, end: Date) => busyLists.some((busy) => !overlaps(busy, start, end));
 
   const slots: Slot[] = [];
   for (let d = 0; d < days && slots.length < count; d++) {
@@ -146,12 +160,41 @@ export async function suggestSlots(
       const start = berlinTime(y, m, day, h);
       if (start.getTime() < timeMin.getTime()) continue;
       const end = new Date(start.getTime() + durationMin * 60000);
-      if (!overlaps(busy, start, end)) {
+      if (isFree(start, end)) {
         slots.push({ start: start.toISOString(), end: end.toISOString() });
       }
     }
   }
   return slots;
+}
+
+/**
+ * Infrage kommende Kalender für eine Buchung, in Reihenfolge der Bevorzugung.
+ * - Lead hat einen Zuständigen mit eigenem Kalender → nur dieser.
+ * - Lead hat einen Zuständigen ohne eigenen Kalender → Agentur-Kalender.
+ * - sonst (Buchungsseite, neuer Kontakt): alle Team-Mitglieder, die Leads
+ *   bekommen und ihren Kalender verbunden haben, wer am längsten keinen Lead
+ *   bekam zuerst; dazu der Agentur-Kalender. Ohne Team: nur Agentur-Kalender.
+ */
+export async function bookingKeys(customerId: string, leadId?: string | null): Promise<string[]> {
+  if (leadId) {
+    const lead = await prisma.lead.findUnique({
+      where: { id: leadId },
+      select: { assignedUser: { select: { id: true, advisorCalendar: { select: { status: true } } } } },
+    });
+    if (lead?.assignedUser) {
+      return lead.assignedUser.advisorCalendar?.status === "connected" ? [userCalendarKey(lead.assignedUser.id)] : [customerId];
+    }
+  }
+  const advisors = await prisma.user.findMany({
+    where: { customerId, role: "BUYER", receivesLeads: true, advisorCalendar: { status: "connected" } },
+    select: { id: true, lastLeadAssignedAt: true },
+    orderBy: [{ lastLeadAssignedAt: { sort: "asc", nulls: "first" } }, { createdAt: "asc" }],
+  });
+  const main = await prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true } });
+  const keys = advisors.map((a) => userCalendarKey(a.id));
+  if (main?.status === "connected" || keys.length === 0) keys.push(customerId);
+  return keys;
 }
 
 /** Fehler, wenn der gewünschte Slot inzwischen belegt ist. */
@@ -184,7 +227,8 @@ export async function bookAppointment(opts: {
   start: string;
   manageUrl: string;
 }> {
-  const adapter = await adapterFor(opts.customerId);
+  // Team: Kalender des zuständigen Beraters bzw. der erste freie im Team.
+  const keys = await bookingKeys(opts.customerId, opts.leadId);
   // Geheimer Verwaltungs-Link für den Lead (absagen/verschieben), 144 Bit.
   const manageToken = randomBytes(18).toString("base64url");
   const manageUrl = `${appUrl() ?? ""}/book/manage/${manageToken}`;
@@ -193,7 +237,26 @@ export async function bookAppointment(opts: {
   if (start.getTime() < Date.now()) throw new Error("Startzeit liegt in der Vergangenheit.");
   // Unmittelbar vor dem Anlegen erneut prüfen — der Slot kann seit dem
   // Vorschlag belegt worden sein (oder der Bot nennt eine eigene Zeit).
-  if (overlaps(await adapter.getBusy(start, end), start, end)) throw new SlotBusyError();
+  let calendarKey: string | null = null;
+  let adapter: Awaited<ReturnType<typeof adapterFor>> | null = null;
+  let lastErr: unknown = null;
+  for (const key of keys) {
+    try {
+      const a = await adapterFor(key);
+      if (!overlaps(await a.getBusy(start, end), start, end)) {
+        calendarKey = key;
+        adapter = a;
+        break;
+      }
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  if (!adapter || !calendarKey) {
+    if (lastErr && keys.length === 1) throw lastErr;
+    throw new SlotBusyError();
+  }
+  const advisorUserId = userIdOfKey(calendarKey);
 
   // Fester Video-Link des Kunden (z. B. Webex-Raum) hat Vorrang vor
   // Meet/Teams — viele Firmen (Allianz: Webex) nutzen eigene Tools.
@@ -202,7 +265,8 @@ export async function bookAppointment(opts: {
     select: { videoRoomUrl: true, advisorEmail: true },
   });
   const room = opts.mode === "video" ? agent?.videoRoomUrl?.trim() || null : null;
-  const advisorEmail = agent?.advisorEmail?.trim().toLowerCase() || null;
+  // Im eigenen Kalender des Beraters braucht es keine zusätzliche Einladung.
+  const advisorEmail = advisorUserId ? null : agent?.advisorEmail?.trim().toLowerCase() || null;
 
   // EINE Einladung: nur an den Berater (interne Infos: Qualifizierung,
   // CRM-Link). Der Lead bekommt bewusst KEINE E-Mail-Einladung von unserem
@@ -232,11 +296,17 @@ export async function bookAppointment(opts: {
       startsAt: start,
       endsAt: end,
       calendarEventId: event.eventId,
+      calendarKey: advisorUserId ? calendarKey : null,
       meetUrl: videoUrl,
       status: "booked",
       manageToken,
     },
   });
+  // Team: Lead ohne Zuständigen gehört jetzt dem Berater, bei dem gebucht wurde.
+  if (advisorUserId && opts.leadId) {
+    const n = await prisma.lead.updateMany({ where: { id: opts.leadId, assignedUserId: null }, data: { assignedUserId: advisorUserId } });
+    if (n.count) await prisma.user.update({ where: { id: advisorUserId }, data: { lastLeadAssignedAt: new Date() } });
+  }
   // Push an den Kunden: neuer Termin (nicht bei Verschiebung).
   if (opts.notifyLead !== "rescheduled") {
     const payload = {
@@ -247,6 +317,7 @@ export async function bookAppointment(opts: {
     };
     // Team: nur an den zuständigen Berater.
     if (opts.leadId) await notifyLeadPush(opts.leadId, payload);
+    else if (advisorUserId) await sendToUser(advisorUserId, payload).catch((e) => console.error("[appt push]", e));
     else await sendToBuyersOfCustomer(opts.customerId, payload).catch((e) => console.error("[appt push]", e));
   }
   // CRM mitführen: Termin ⇒ In Beratung, Erstkontakt setzen (DB + Airtable).
@@ -324,9 +395,10 @@ export async function cancelAppointment(
 ): Promise<{ calendarDeleted: boolean; note?: string }> {
   const appt = await prisma.appointment.findFirst({
     where: { id: appointmentId, customerId },
-    select: { id: true, calendarEventId: true, advisorEventId: true, status: true, leadId: true },
+    select: { id: true, calendarEventId: true, advisorEventId: true, status: true, leadId: true, calendarKey: true },
   });
   if (!appt) throw new Error("Termin nicht gefunden.");
+  const key = appt.calendarKey ?? customerId;
   let calendarDeleted = false;
   let note: string | undefined;
   // Beide Einladungen löschen (Lead + Berater) → beide erhalten eine Absage.
@@ -335,10 +407,10 @@ export async function cancelAppointment(
   );
   if (eventIds.length) {
     try {
-      const conn = await loadConnection(customerId);
+      const conn = await loadConnection(key);
       for (const id of eventIds) {
-        if (conn.provider === "microsoft") await microsoftDeleteEvent(customerId, id);
-        else await googleDeleteEvent(customerId, id);
+        if (conn.provider === "microsoft") await microsoftDeleteEvent(key, id);
+        else await googleDeleteEvent(key, id);
       }
       calendarDeleted = true;
     } catch (err) {
@@ -457,6 +529,7 @@ export async function checkAppointmentResponses(): Promise<ResponseCheckResult> 
       conversationId: true,
       calendarEventId: true,
       advisorEventId: true,
+      calendarKey: true,
     },
     orderBy: { startsAt: "asc" },
     take: 150,
@@ -464,15 +537,13 @@ export async function checkAppointmentResponses(): Promise<ResponseCheckResult> 
 
   for (const a of appts) {
     try {
-      const conn = await prisma.calendarConnection.findUnique({
-        where: { customerId: a.customerId },
-        select: { provider: true, status: true },
-      });
-      if (conn?.status !== "connected") continue;
+      const key = a.calendarKey ?? a.customerId;
+      const conn = await loadConnection(key).catch(() => null);
+      if (!conn) continue;
       const fetchResponses = (eventId: string) =>
         conn.provider === "microsoft"
-          ? microsoftGetResponses(a.customerId, eventId)
-          : googleGetResponses(a.customerId, eventId);
+          ? microsoftGetResponses(key, eventId)
+          : googleGetResponses(key, eventId);
       // Lead-Einladung; Berater-Antwort aus seiner eigenen Einladung (Altfälle:
       // gemeinsame Einladung).
       const r = await fetchResponses(a.calendarEventId!);
@@ -514,7 +585,8 @@ export async function checkAppointmentResponses(): Promise<ResponseCheckResult> 
         select: { advisorEmail: true },
       });
       const leadEmail = conv?.contactEmail?.toLowerCase();
-      const advisorEmail = agent?.advisorEmail?.toLowerCase();
+      // Termin im eigenen Kalender eines Beraters: keine Berater-Einladung.
+      const advisorEmail = a.calendarKey ? undefined : agent?.advisorEmail?.toLowerCase();
 
       if (leadEmail && r.responses.get(leadEmail) === "declined") {
         await cancelAppointment(a.id, a.customerId, "lead");

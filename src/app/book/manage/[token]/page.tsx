@@ -48,6 +48,8 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
       startsAt: true,
       mode: true,
       meetUrl: true,
+      leadId: true,
+      calendarKey: true,
       customer: {
         select: { name: true, calendarConnection: { select: { bookingSlug: true } } },
       },
@@ -65,7 +67,12 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
     );
   }
 
-  const advisor = appt.customer.name;
+  // Team: Termin im Kalender eines Beraters → dessen Name.
+  const advisorUserId = appt.calendarKey?.startsWith("user:") ? appt.calendarKey.slice(5) : null;
+  const advisorUser = advisorUserId
+    ? await prisma.user.findUnique({ where: { id: advisorUserId }, select: { displayName: true } })
+    : null;
+  const advisor = advisorUser?.displayName?.trim() || appt.customer.name;
   const slug = appt.customer.calendarConnection?.bookingSlug;
   const when = `${fmt(appt.startsAt, LONG)} Uhr`;
   const kind = appt.mode === "video" ? "Videocall" : "Telefonat";
@@ -104,7 +111,7 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
 
   let slots: Slot[] = [];
   try {
-    slots = await suggestSlots(appt.customerId, 30, 24, [9, 10, 11, 13, 14, 15, 16, 17], 14);
+    slots = await suggestSlots(appt.customerId, 30, 24, [9, 10, 11, 13, 14, 15, 16, 17], 14, appt.leadId);
   } catch (err) {
     console.error("[manage page] slots", err);
   }

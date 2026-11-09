@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   BarChart3,
+  CalendarDays,
   ChevronDown,
   Columns3,
   CreditCard,
@@ -41,8 +42,11 @@ export function BuyerShell({
   chatBadge,
   setupOpen = 0,
   teamRole = "owner",
+  hasTeam = false,
   children,
 }: {
+  /** Mehrere Logins → „Mein Kalender" im Profilmenü. */
+  hasTeam?: boolean;
   displayName: string;
   /** owner = Inhaber (Konto, Team), advisor = Berater (nur eigene Leads). */
   teamRole?: "owner" | "advisor";
@@ -128,7 +132,7 @@ export function BuyerShell({
           </nav>
 
           <div className="ml-auto">
-            <ProfileMenu name={displayName} owner={teamRole === "owner"} />
+            <ProfileMenu name={displayName} owner={teamRole === "owner"} hasTeam={hasTeam} />
           </div>
         </div>
       </header>
@@ -178,7 +182,7 @@ function Badge({ n }: { n: number }) {
   );
 }
 
-function ProfileMenu({ name, owner }: { name: string; owner: boolean }) {
+function ProfileMenu({ name, owner, hasTeam }: { name: string; owner: boolean; hasTeam: boolean }) {
   const [open, setOpen] = useState(false);
   const [feedback, setFeedback] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -232,6 +236,15 @@ function ProfileMenu({ name, owner }: { name: string; owner: boolean }) {
           >
             <MessageSquareText className="h-4 w-4" /> Etwas unklar? Feedback
           </button>
+          {hasTeam ? (
+            <Link
+              href="/buyer/kalender"
+              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
+            >
+              <CalendarDays className="h-4 w-4" /> Mein Kalender
+            </Link>
+          ) : null}
           {owner ? (
             <>
               <Link

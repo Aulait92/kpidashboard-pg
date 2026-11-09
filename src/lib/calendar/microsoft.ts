@@ -10,6 +10,9 @@
 import { prisma } from "@/lib/prisma";
 import {
   cachedAccessToken,
+  calendarIdOf,
+  setCalendarId,
+  userIdOfKey,
   loadConnection,
   refreshTokenOf,
   saveConnection,
@@ -118,6 +121,8 @@ export async function microsoftExchangeCode(code: string, customerId: string): P
   // Ein zentrales Agentur-Postfach kann alle Kunden bedienen: je Kunde ein
   // eigener Unterkalender „Termine – {Kunde}" (wird angelegt bzw. wieder-
   // verwendet). So bleiben Kunden sauber getrennt, ohne Konto pro Kunde.
+  // Eigener Kalender eines Beraters: dessen Standardkalender.
+  if (userIdOfKey(customerId)) return;
   const customer = await prisma.customer.findUnique({
     where: { id: customerId },
     select: { name: true },
@@ -126,10 +131,7 @@ export async function microsoftExchangeCode(code: string, customerId: string): P
     json.access_token,
     `Termine (${customer?.name ?? customerId})`,
   );
-  await prisma.calendarConnection.update({
-    where: { customerId },
-    data: { calendarId },
-  });
+  await setCalendarId(customerId, calendarId);
 }
 
 /** Unterkalender mit diesem Namen finden oder anlegen; liefert dessen ID. */
@@ -156,11 +158,7 @@ async function ensureSubCalendar(token: string, name: string): Promise<string> {
 
 /** Graph-Pfad des Kunden-Kalenders („primary" = Standardkalender). */
 async function calendarPath(customerId: string): Promise<string> {
-  const conn = await prisma.calendarConnection.findUnique({
-    where: { customerId },
-    select: { calendarId: true },
-  });
-  const id = conn?.calendarId;
+  const id = await calendarIdOf(customerId);
   return !id || id === "primary" ? "/me/calendar" : `/me/calendars/${encodeURIComponent(id)}`;
 }
 

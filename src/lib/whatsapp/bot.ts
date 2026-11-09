@@ -440,7 +440,7 @@ export async function runBotTurn(conversationId: string): Promise<void> {
         // Termin aus der Buchung (book_appointment → recordLeadProgress).
       } else if (tu.name === "get_available_slots") {
         try {
-          const slots: Slot[] = await suggestSlots(conversation.customerId);
+          const slots: Slot[] = await suggestSlots(conversation.customerId, 30, 3, [10, 14, 16], 10, conversation.leadId);
           if (slots.length === 0) {
             content =
               "Aktuell keine freien Slots in den nächsten Werktagen gefunden. Frage den Lead nach seiner Wunschzeit und nutze propose_appointment.";

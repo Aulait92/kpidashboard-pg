@@ -6,12 +6,37 @@ import { prisma } from "@/lib/prisma";
 
 export type CalendarProvider = "google" | "microsoft";
 
-export async function loadConnection(customerId: string) {
-  const conn = await prisma.calendarConnection.findUnique({ where: { customerId } });
+// Kalender-Schlüssel: die customerId (Kalender der Agentur, CalendarConnection)
+// oder „user:<userId>" (eigener Kalender eines Team-Mitglieds, AdvisorCalendar).
+// Die Adapter (Google/Microsoft) reichen den Schlüssel nur durch.
+const USER_PREFIX = "user:";
+export const userCalendarKey = (userId: string) => `${USER_PREFIX}${userId}`;
+export const userIdOfKey = (key: string): string | null => (key.startsWith(USER_PREFIX) ? key.slice(USER_PREFIX.length) : null);
+
+export async function loadConnection(key: string) {
+  const userId = userIdOfKey(key);
+  const conn = userId
+    ? await prisma.advisorCalendar.findUnique({ where: { userId } })
+    : await prisma.calendarConnection.findUnique({ where: { customerId: key } });
   if (!conn || conn.status !== "connected") {
-    throw new Error("Kalender für diesen Kunden nicht verbunden.");
+    throw new Error(userId ? "Kalender des Beraters nicht verbunden." : "Kalender für diesen Kunden nicht verbunden.");
   }
   return conn;
+}
+
+/** Gewählter Unterkalender (Outlook) bzw. „primary". */
+export async function calendarIdOf(key: string): Promise<string | null> {
+  const userId = userIdOfKey(key);
+  const conn = userId
+    ? await prisma.advisorCalendar.findUnique({ where: { userId }, select: { calendarId: true } })
+    : await prisma.calendarConnection.findUnique({ where: { customerId: key }, select: { calendarId: true } });
+  return conn?.calendarId ?? null;
+}
+
+export async function setCalendarId(key: string, calendarId: string): Promise<void> {
+  const userId = userIdOfKey(key);
+  if (userId) await prisma.advisorCalendar.update({ where: { userId }, data: { calendarId } });
+  else await prisma.calendarConnection.update({ where: { customerId: key }, data: { calendarId } });
 }
 
 /** Noch mindestens 60 s gültiger Access-Token, sonst null. */
@@ -36,6 +61,7 @@ export function refreshTokenOf(conn: { refreshTokenEnc: string | null }): string
 
 /** Tokens nach Code-Tausch speichern (Verbindung anlegen/ersetzen). */
 export async function saveConnection(opts: {
+  /** Kalender-Schlüssel (customerId oder user:<id>). */
   customerId: string;
   provider: CalendarProvider;
   accessToken: string;
@@ -52,6 +78,18 @@ export async function saveConnection(opts: {
     accountEmail: opts.accountEmail ?? null,
     status: "connected",
   };
+  const userId = userIdOfKey(opts.customerId);
+  if (userId) {
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { customerId: true } });
+    if (!user?.customerId) throw new Error("Login gehört zu keinem Kunden.");
+    const refreshTokenEnc = opts.refreshToken ? encryptSecret(opts.refreshToken) : null;
+    await prisma.advisorCalendar.upsert({
+      where: { userId },
+      create: { userId, customerId: user.customerId, ...data, refreshTokenEnc },
+      update: { ...data, calendarId: "primary", refreshTokenEnc },
+    });
+    return;
+  }
   await prisma.calendarConnection.upsert({
     where: { customerId: opts.customerId },
     create: {
@@ -69,19 +107,19 @@ export async function saveConnection(opts: {
 
 /** Nach Refresh: neuen Access- (und ggf. rotierten Refresh-)Token speichern. */
 export async function updateTokens(
-  customerId: string,
+  key: string,
   accessToken: string,
   expiresInSec?: number | null,
   refreshToken?: string | null,
 ): Promise<void> {
-  await prisma.calendarConnection.update({
-    where: { customerId },
-    data: {
-      accessTokenEnc: encryptSecret(accessToken),
-      tokenExpiresAt: new Date(Date.now() + (expiresInSec ?? 3600) * 1000),
-      ...(refreshToken ? { refreshTokenEnc: encryptSecret(refreshToken) } : {}),
-    },
-  });
+  const data = {
+    accessTokenEnc: encryptSecret(accessToken),
+    tokenExpiresAt: new Date(Date.now() + (expiresInSec ?? 3600) * 1000),
+    ...(refreshToken ? { refreshTokenEnc: encryptSecret(refreshToken) } : {}),
+  };
+  const userId = userIdOfKey(key);
+  if (userId) await prisma.advisorCalendar.update({ where: { userId }, data });
+  else await prisma.calendarConnection.update({ where: { customerId: key }, data });
 }
 
 export type Busy = { start: Date; end: Date };
