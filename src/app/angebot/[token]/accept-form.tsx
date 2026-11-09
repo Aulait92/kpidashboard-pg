@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { acceptOfferAction, type AcceptState } from "./actions";
 
@@ -19,6 +19,22 @@ export function AcceptForm({
     acceptOfferAction.bind(null, token),
     {},
   );
+
+  useEffect(() => {
+    if (state.checkoutUrl) window.location.href = state.checkoutUrl;
+  }, [state.checkoutUrl]);
+
+  if (state.ok && state.checkoutUrl) {
+    return (
+      <div className="flex items-center gap-3 rounded-xl bg-[#EFF6FF] px-5 py-4 text-[#1e3a8a]">
+        <Loader2 className="h-5 w-5 shrink-0 animate-spin" />
+        <div>
+          <div className="font-semibold">Vielen Dank – Ihr Auftrag ist bestätigt.</div>
+          <p className="mt-1 text-sm">Sie werden zur sicheren Zahlungseinrichtung (Stripe) weitergeleitet …</p>
+        </div>
+      </div>
+    );
+  }
 
   if (state.ok) {
     return (

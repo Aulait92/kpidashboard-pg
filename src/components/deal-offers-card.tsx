@@ -22,6 +22,23 @@ export type DealOfferRow = {
   acceptedAt: string | null;
   acceptedName: string | null;
   validUntil: string;
+  paymentStatus: string;
+  subscriptionStatus: string | null;
+};
+
+const PAYMENT: Record<string, { label: string; tone: "neutral" | "info" | "success" | "warning" | "danger" }> = {
+  pending: { label: "Zahlung offen", tone: "warning" },
+  processing: { label: "Zahlung in Bestätigung", tone: "info" },
+  paid: { label: "Bezahlt", tone: "success" },
+  failed: { label: "Zahlung fehlgeschlagen", tone: "danger" },
+};
+const SUB: Record<string, string> = {
+  active: "Abo aktiv",
+  past_due: "Abo: Zahlung überfällig",
+  unpaid: "Abo: unbezahlt",
+  canceled: "Abo beendet",
+  incomplete: "Abo: Zahlung ausstehend",
+  paused: "Abo pausiert",
 };
 
 const STATUS: Record<string, { label: string; tone: "neutral" | "info" | "success" | "warning" | "danger" }> = {
@@ -78,6 +95,10 @@ export function DealOffersCard({ dealId, offers, appUrl }: { dealId: string; off
               <span className="font-semibold">{current.number}</span>
               {current.version > 1 ? <span className="text-xs text-[color:var(--muted)]">Version {current.version}</span> : null}
               <Badge tone={STATUS[current.status]?.tone ?? "neutral"}>{STATUS[current.status]?.label ?? current.status}</Badge>
+              {PAYMENT[current.paymentStatus] ? (
+                <Badge tone={PAYMENT[current.paymentStatus].tone}>{PAYMENT[current.paymentStatus].label}</Badge>
+              ) : null}
+              {current.subscriptionStatus ? <Badge tone={current.subscriptionStatus === "active" ? "success" : "warning"}>{SUB[current.subscriptionStatus] ?? `Abo: ${current.subscriptionStatus}`}</Badge> : null}
             </div>
             <div className="text-sm text-[color:var(--muted)]">
               {eur(current.setupFee)} Setup · {eur(current.monthlyFee)} / Monat (netto) · gültig bis {fmt(current.validUntil).split(",")[0]}

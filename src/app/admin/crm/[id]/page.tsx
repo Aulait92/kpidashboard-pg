@@ -200,6 +200,8 @@ export default async function AdminDealDetailPage({
               acceptedAt: o.acceptedAt?.toISOString() ?? null,
               acceptedName: o.acceptedName,
               validUntil: o.validUntil.toISOString(),
+              paymentStatus: o.paymentStatus,
+              subscriptionStatus: o.subscriptionStatus,
             }))}
           />
           <DealFactsCard deal={deal} extraRows={extraRawRows} />

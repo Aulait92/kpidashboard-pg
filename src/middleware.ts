@@ -18,6 +18,7 @@ const PUBLIC_PREFIXES = [
   "/rechtliches", // AGB und Auftragsverarbeitungsvertrag (öffentlich)
   "/api/ops", // Betriebs-API (Buyer-Accounts anlegen), per ADMIN_API_TOKEN (Bearer) gesichert
   "/api/health", // Healthcheck für Railway/Uptime (gibt nur ok true/false zurück)
+  "/api/stripe/webhook", // Stripe-Webhooks (per Signatur geprüft)
   "/manifest.webmanifest",
   "/icon",
   "/apple-icon",

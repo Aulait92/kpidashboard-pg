@@ -39,6 +39,7 @@
     "recharts": "^3.8.1",
     "replicate": "^1.4.0",
     "resend": "^6.12.3",
+    "stripe": "^23.1.0",
     "tailwind-merge": "^3.6.0",
     "web-push": "^3.6.7"
   },

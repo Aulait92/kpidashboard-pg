@@ -4,6 +4,9 @@ import { OfferDocument, toOfferDoc } from "@/components/offer-document";
 import { getCurrentSession } from "@/lib/auth";
 import { getOfferByToken, markOfferViewed } from "@/lib/offers";
 import { AcceptForm } from "./accept-form";
+import { PayButton } from "./pay-button";
+import { billingEnabled } from "@/lib/billing";
+import { CheckCircle2, Clock } from "lucide-react";
 
 // Öffentliches Angebot per geheimem Link. ?print=1 liefert die reine
 // Druckansicht (für das PDF).
@@ -20,10 +23,10 @@ export default async function OfferPage({
   searchParams,
 }: {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ print?: string }>;
+  searchParams: Promise<{ print?: string; zahlung?: string }>;
 }) {
   const { token } = await params;
-  const { print } = await searchParams;
+  const { print, zahlung } = await searchParams;
   const offer = await getOfferByToken(token);
   if (!offer) notFound();
   const doc = toOfferDoc(offer);
@@ -63,6 +66,14 @@ export default async function OfferPage({
             <Download className="h-4 w-4" /> Als PDF herunterladen
           </a>
         </div>
+        {offer.status === "accepted" ? (
+          <PaymentBox
+            token={token}
+            status={offer.paymentStatus}
+            returned={zahlung ?? null}
+            enabled={billingEnabled()}
+          />
+        ) : null}
         <OfferDocument offer={doc} />
         {offer.status === "accepted" ? null : (
           <div className="mx-auto mt-6 max-w-[880px] rounded-[20px] border border-[#e5e7eb] bg-white px-6 py-8 sm:px-12">
@@ -91,5 +102,56 @@ export default async function OfferPage({
         )}
       </div>
     </main>
+  );
+}
+
+function PaymentBox({
+  token,
+  status,
+  returned,
+  enabled,
+}: {
+  token: string;
+  status: string;
+  returned: string | null;
+  enabled: boolean;
+}) {
+  const box = "mx-auto mb-6 max-w-[880px] rounded-[20px] border px-6 py-5 sm:px-10";
+  if (status === "paid") {
+    return (
+      <div className={`${box} flex items-start gap-3 border-emerald-200 bg-emerald-50 text-emerald-900`}>
+        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+        <div>
+          <div className="font-semibold">Zahlung erhalten – vielen Dank!</div>
+          <p className="mt-1 text-sm">Wir melden uns in Kürze für den Onboarding-Termin. Ihre Rechnung kommt per E-Mail.</p>
+        </div>
+      </div>
+    );
+  }
+  if (status === "processing" || returned === "ok") {
+    return (
+      <div className={`${box} flex items-start gap-3 border-sky-200 bg-sky-50 text-sky-900`}>
+        <Clock className="mt-0.5 h-5 w-5 shrink-0" />
+        <div>
+          <div className="font-semibold">Zahlung eingerichtet – vielen Dank!</div>
+          <p className="mt-1 text-sm">
+            Bei SEPA-Lastschrift oder Überweisung dauert die Bestätigung ein paar Tage. Wir melden uns in Kürze für den
+            Onboarding-Termin.
+          </p>
+        </div>
+      </div>
+    );
+  }
+  if (!enabled) return null;
+  return (
+    <div className={`${box} border-[#e5e7eb] bg-white`}>
+      <div className="font-semibold">
+        {returned === "abgebrochen" ? "Die Zahlung wurde nicht abgeschlossen." : "Angebot angenommen – fehlt nur noch die Zahlung."}
+      </div>
+      <p className="mb-4 mt-1 text-sm text-[color:var(--muted)]">
+        Richten Sie jetzt SEPA-Lastschrift, Karte oder Überweisung ein. Die Zahlung läuft sicher über Stripe.
+      </p>
+      <PayButton token={token} />
+    </div>
   );
 }

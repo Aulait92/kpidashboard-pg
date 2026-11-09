@@ -92,9 +92,11 @@ model DealActivity {
 }
 
 model Customer {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  createdAt DateTime @default(now())
+  id               String   @id @default(cuid())
+  name             String   @unique
+  createdAt        DateTime @default(now())
+  // Stripe-Kunde für Abrechnung (Rechnungen, Zahlungsart, Abo)
+  stripeCustomerId String?  @unique
 
   // ─── Media-Buyer-Daten (aus Airtable-Buyer-Tabelle) ─────────────────
   // Lead-Ziele, Preise und Startdaten je Produkt liegen seit dem Product-/
@@ -752,47 +754,63 @@ model UsageEvent {
 // Erstellen eingefroren (Snapshot), damit ein angenommenes Angebot sich nie
 // nachträglich ändert. Änderungen = neue Version (altes wird „superseded").
 model Offer {
-  id              String    @id @default(cuid())
-  dealId          String
-  deal            Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  id                      String    @id @default(cuid())
+  dealId                  String
+  deal                    Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
   // Fortlaufende Nummer, z. B. PG-2026-0007
-  number          String    @unique
-  version         Int       @default(1)
+  number                  String    @unique
+  version                 Int       @default(1)
   // draft | sent | accepted | declined | superseded
-  status          String    @default("draft")
+  status                  String    @default("draft")
   // Geheimer Link für die öffentliche Angebotsseite
-  token           String    @unique
+  token                   String    @unique
   // Empfänger
-  contactName     String
-  company         String?
-  email           String?
-  street          String?
-  zip             String?
-  city            String?
+  contactName             String
+  company                 String?
+  email                   String?
+  street                  String?
+  zip                     String?
+  city                    String?
   // Konditionen (netto, EUR)
-  term            String // "none" | "12m"
-  products        Json // [{ name, dailyBudget }]
-  setupFee        Decimal   @db.Decimal(10, 2)
-  monthlyFee      Decimal   @db.Decimal(10, 2)
-  softwareFee     Decimal   @db.Decimal(10, 2)
-  introMonthlyFee Decimal?  @db.Decimal(10, 2)
-  introMonths     Int?
-  specialTerms    String?
-  startDate       DateTime?
-  validUntil      DateTime
+  term                    String // "none" | "12m"
+  products                Json // [{ name, dailyBudget }]
+  setupFee                Decimal   @db.Decimal(10, 2)
+  monthlyFee              Decimal   @db.Decimal(10, 2)
+  softwareFee             Decimal   @db.Decimal(10, 2)
+  introMonthlyFee         Decimal?  @db.Decimal(10, 2)
+  introMonths             Int?
+  specialTerms            String?
+  startDate               DateTime?
+  validUntil              DateTime
   // Annahme (Protokoll)
-  sentAt          DateTime?
-  viewedAt        DateTime?
-  acceptedAt      DateTime?
-  acceptedName    String?
-  acceptedIp      String?
-  acceptedAgent   String?
-  termsUrl        String?
-  dpaUrl          String?
-  createdById     String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  sentAt                  DateTime?
+  viewedAt                DateTime?
+  acceptedAt              DateTime?
+  acceptedName            String?
+  acceptedIp              String?
+  acceptedAgent           String?
+  termsUrl                String?
+  dpaUrl                  String?
+  // Zahlung (Stripe)
+  stripeCustomerId        String?
+  stripeCheckoutSessionId String?
+  stripeSubscriptionId    String?   @unique
+  // none | pending | processing | paid | failed
+  paymentStatus           String    @default("none")
+  // Status des Stripe-Abos (active, past_due, canceled …)
+  subscriptionStatus      String?
+  paidAt                  DateTime?
+  createdById             String?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
   @@index([dealId])
   @@index([status])
+}
+
+// Verarbeitete Stripe-Webhook-Ereignisse (Idempotenz: jedes Ereignis nur einmal).
+model StripeEvent {
+  id         String   @id // evt_…
+  type       String
+  receivedAt DateTime @default(now())
 }
