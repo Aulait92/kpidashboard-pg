@@ -11,6 +11,7 @@ const TABS = [
   { href: "/", label: "Dashboard", match: (p: string) => p === "/" },
   { href: "/admin/vertrieb", label: "Vertrieb", match: (p: string) => p.startsWith("/admin/vertrieb") },
   { href: "/admin/crm", label: "CRM (alt)", match: (p: string) => p.startsWith("/admin/crm") },
+  { href: "/admin/lead-eingang", label: "Lead-Eingang", match: (p: string) => p.startsWith("/admin/lead-eingang") },
   {
     href: "/admin/activities",
     label: "Aktivitäten",

@@ -76,12 +76,6 @@ export async function cancelLeadAction(
   if (!lead) {
     return { error: "Lead nicht gefunden.", leadId };
   }
-  if (!lead.airtableId) {
-    return {
-      error: "Lead ohne Airtable-Referenz. Bitte den Admin informieren.",
-      leadId,
-    };
-  }
   if (lead.status && lead.status.toLowerCase().startsWith("storno")) {
     // Idempotent: schon storniert → erfolgreich quittieren.
     return { ok: true, leadId };
@@ -108,11 +102,15 @@ export async function cancelLeadAction(
   }
 
   try {
-    await markLeadAsCancelled({
-      airtableId: lead.airtableId,
-      stornogrundRecordId,
-      bemerkung,
-    });
+    // Direkt eingegangene Leads (ohne Airtable-Datensatz) werden nur in der
+    // App storniert; Airtable-Leads zusätzlich dort.
+    if (lead.airtableId) {
+      await markLeadAsCancelled({
+        airtableId: lead.airtableId,
+        stornogrundRecordId,
+        bemerkung,
+      });
+    }
   } catch (err) {
     return {
       error: err instanceof Error ? err.message : "Storno fehlgeschlagen.",
@@ -143,8 +141,8 @@ export async function cancelLeadAction(
     );
     await sendToAdmins({
       title: `🚫 Storno: ${lead.name ?? "Lead"}`,
-      body: bemerkung ? `${bodyParts.join(" · ")} : ${bemerkung}` : bodyParts.join(" · "),
-      tag: `storno:${lead.airtableId}`,
+      body: bemerkung ? `${bodyParts.join(" · ")}: ${bemerkung}` : bodyParts.join(" · "),
+      tag: `storno:${lead.airtableId ?? lead.id}`,
       url: "/",
     });
   } catch (err) {

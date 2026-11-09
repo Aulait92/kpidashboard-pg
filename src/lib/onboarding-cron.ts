@@ -104,9 +104,9 @@ async function remindCustomers(now: Date) {
 
 // ─── 3: Leads per E-Mail („Nur Betreuung“) ──────────────────────────────
 
-async function emailLeads(now: Date) {
+export async function emailLeads(now: Date, onlyCustomerId?: string) {
   const onboardings = await prisma.onboarding.findMany({
-    where: { package: "service", status: { not: "cancelled" } },
+    where: { package: "service", status: { not: "cancelled" }, ...(onlyCustomerId ? { customerId: onlyCustomerId } : {}) },
     select: { customerId: true, createdAt: true, questionnaire: true, customer: { select: { name: true } } },
   });
   let sent = 0;

@@ -131,6 +131,7 @@ model Customer {
   onboarding         Onboarding?
   feedback           CustomerFeedback[]
   pauses             CustomerPause[]
+  leadSources        LeadSource[]
   salesContact       SalesContact?
   whatsAppAccount    WhatsAppAccount?
   calendarConnection CalendarConnection?
@@ -307,6 +308,8 @@ model Lead {
   outreachStatus       String?
   // „Nur Betreuung“: Lead per E-Mail an den Kunden zugestellt
   emailedAt            DateTime?
+  // Meta-Lead-ID (leadgen_id) bei direkt eingegangenen Leads – gegen Dubletten
+  externalId           String?   @unique
   // Rückrufliste: „Nicht erreicht" geklickt → bis dahin ausgeblendet.
   callbackSnoozedUntil DateTime?
   // Wiedervorlage: „Ruf mich in 1 Woche an", Angebot nachfassen … erscheint
@@ -1196,4 +1199,44 @@ model CustomerPause {
 
   @@index([customerId, status])
   @@index([status, startsAt])
+}
+
+// Direkter Lead-Eingang (Meta-Webhook oder Zapier-Webhook): welches
+// Meta-Leadformular gehört zu welchem Kunden und Produkt.
+model LeadSource {
+  id              String    @id @default(cuid())
+  formId          String    @unique
+  pageId          String?
+  formName        String?
+  customerId      String
+  customer        Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  // Produkt-Key wie Lead.source (z. B. „Privatschutz“, „Wechsel“)
+  productKey      String
+  // Pay-per-Lead: Preis je Lead (netto) → Umsatz in der App; sonst leer
+  leadPrice       Decimal?  @db.Decimal(12, 2)
+  // Optional: Airtable-Bezug für die erlaubten Stornogründe
+  bezugAirtableId String?
+  // Fragen des Formulars (key → Beschriftung) für lesbare Formularangaben
+  questionLabels  Json?
+  active          Boolean   @default(true)
+  lastLeadAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([customerId])
+}
+
+// Leads aus Formularen ohne Zuordnung: warten hier, bis das Formular einem
+// Kunden zugeordnet wird – nichts geht verloren.
+model UnassignedLead {
+  id         String    @id @default(cuid())
+  externalId String?   @unique
+  formId     String?
+  pageId     String?
+  via        String // meta | zapier
+  payload    Json
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+
+  @@index([formId, resolvedAt])
 }

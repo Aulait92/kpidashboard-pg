@@ -52,7 +52,8 @@ export type OutreachResult = {
   errors: string[];
 };
 
-export async function runOutreach(): Promise<OutreachResult> {
+/** Optional nur für einen Kunden (z. B. direkt nach einem neuen Lead). */
+export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResult> {
   const result: OutreachResult = {
     customers: 0,
     candidates: 0,
@@ -62,7 +63,7 @@ export async function runOutreach(): Promise<OutreachResult> {
     errors: [],
   };
   const agents = await prisma.agentConfig.findMany({
-    where: { active: true, outreachEnabled: true },
+    where: { active: true, outreachEnabled: true, ...(onlyCustomerId ? { customerId: onlyCustomerId } : {}) },
     select: { customerId: true, outreachDelayMin: true },
   });
 
