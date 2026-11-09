@@ -1,6 +1,7 @@
+import * as Sentry from "@sentry/nextjs";
 import { revalidatePath } from "next/cache";
-import { NextResponse } from "next/server";
-import { runFullSync } from "@/lib/sync";
+import { after, NextResponse } from "next/server";
+import { startFullSync, type FullSyncResult } from "@/lib/sync";
 import { listProductMatchers } from "@/lib/product-catalog";
 import { listProductGoalBreakdown } from "@/lib/media-buyer";
 
@@ -32,8 +33,38 @@ async function handle(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { started, promise } = startFullSync();
+
+  // Standard (Cron): sofort antworten, Sync läuft im Hintergrund weiter.
+  // Sonst bricht cron-job.org nach 30 s ab (499) und stößt jede Minute einen
+  // weiteren Lauf an. ?wait=1 wartet wie früher und liefert die Diagnose.
+  const wait = new URL(req.url).searchParams.get("wait") === "1";
+  if (!wait) {
+    if (started) {
+      after(async () => {
+        try {
+          await promise;
+          revalidatePath("/");
+        } catch (err) {
+          console.error("[sync] Hintergrund-Sync fehlgeschlagen:", err);
+          Sentry.captureException(err);
+        }
+      });
+    }
+    return NextResponse.json(
+      {
+        ok: true,
+        started,
+        message: started
+          ? "Sync gestartet, läuft im Hintergrund."
+          : "Es läuft bereits ein Sync, kein zweiter gestartet.",
+      },
+      { status: 202 },
+    );
+  }
+
   try {
-    const result = await runFullSync();
+    const result: FullSyncResult = await promise;
     // Diagnose: welche Produkte + Match-Needles kennt der Matcher nach dem Sync?
     // Fehlt hier ein frisch angelegtes Produkt, ist es nicht in die DB gekommen
     // (Name-Feld leer/anders benannt, falsche Tabelle, o. ä.).
