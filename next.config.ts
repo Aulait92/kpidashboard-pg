@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs/config";
 
 const nextConfig: NextConfig = {
   // Pakete, die zur Laufzeit per Node-require ihre nativen Binaries
@@ -7,4 +8,13 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@ffmpeg-installer/ffmpeg"],
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: "ole-kannapinn-ug",
+  project: process.env.SENTRY_PROJECT ?? "kpidashboard-pg",
+  // Source-Map-Upload nur, wenn SENTRY_AUTH_TOKEN beim Build gesetzt ist.
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  // Leitet Sentry-Requests über die eigene Domain, damit Adblocker sie nicht blockieren.
+  tunnelRoute: "/monitoring",
+});
