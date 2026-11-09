@@ -19,6 +19,7 @@ import { reportError } from "@/lib/monitoring";
 import type { FormAnswer } from "@/lib/lead-fields";
 import { loadOnboarding, onboardingChecklist, sendWelcome } from "@/lib/onboarding";
 import { readImpressum } from "@/lib/impressum";
+import { customerGreeting } from "@/lib/offer-links";
 
 const DAY = 24 * 60 * 60 * 1000;
 const TZ = "Europe/Berlin";
@@ -31,11 +32,11 @@ export function isBusinessHours(now = new Date()): boolean {
   return !["Sat", "Sun"].includes(wd) && h >= 9 && h < 18;
 }
 
-const greetingFor = (name: string | null | undefined) => (name ? `Hallo ${name},` : "Hallo,");
-
-async function contactNameOf(offerId: string | null): Promise<string | null> {
-  if (!offerId) return null;
-  return (await prisma.offer.findUnique({ where: { id: offerId }, select: { contactName: true } }))?.contactName ?? null;
+async function greetingOf(ob: { salesContactId: string | null; offerId: string | null }): Promise<string> {
+  const contactName = ob.offerId
+    ? ((await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { contactName: true } }))?.contactName ?? null)
+    : null;
+  return customerGreeting({ salesContactId: ob.salesContactId, contactName });
 }
 
 async function customerEmails(customerId: string): Promise<string[]> {
@@ -84,7 +85,7 @@ async function remindCustomers(now: Date) {
       const res = await sendCustomerMail({
         to,
         subject: "Kurze Erinnerung: Ihre Einrichtung bei performancegrowth",
-        greeting: greetingFor(await contactNameOf(ob.offerId)),
+        greeting: await greetingOf(ob),
         paragraphs: [
           "damit Ihre Kampagne pünktlich starten kann, fehlen noch ein paar Minuten Einrichtung von Ihrer Seite:",
         ],
@@ -176,7 +177,7 @@ const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", c
 async function sendFeedback(now: Date) {
   const live = await prisma.onboarding.findMany({
     where: { liveAt: { not: null, lte: new Date(now.getTime() - 7 * DAY), gt: new Date(now.getTime() - 60 * DAY) } },
-    select: { customerId: true, liveAt: true, package: true, offerId: true, customer: { select: { plan: true, feedback: { select: { kind: true } } } } },
+    select: { customerId: true, liveAt: true, package: true, offerId: true, salesContactId: true, customer: { select: { plan: true, feedback: { select: { kind: true } } } } },
   });
   let sent = 0;
   for (const ob of live) {
@@ -188,7 +189,7 @@ async function sendFeedback(now: Date) {
     if (to.length === 0) continue;
     const token = crypto.randomBytes(18).toString("base64url");
     const url = (s: number) => `${getAppUrl()}/feedback/${token}?s=${s}`;
-    const greeting = greetingFor(await contactNameOf(ob.offerId));
+    const greeting = await greetingOf(ob);
     let res;
     if (kind === "day7") {
       res = await sendCustomerMail({

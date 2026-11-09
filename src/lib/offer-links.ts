@@ -80,3 +80,17 @@ export function toOfferRow(o: Offer): DealOfferRow {
     subscriptionStatus: o.subscriptionStatus,
   };
 }
+
+/** Anrede für Kundenmails: „Hallo Herr Weber,“ – sonst mit vollem Namen bzw. neutral. */
+export async function customerGreeting(o: { salesContactId: string | null; contactName?: string | null }): Promise<string> {
+  if (o.salesContactId) {
+    const c = await prisma.salesContact
+      .findUnique({ where: { id: o.salesContactId }, select: { salutation: true, lastName: true } })
+      .catch(() => null);
+    const sal = c?.salutation?.trim();
+    if (sal && /^(herr|frau)$/i.test(sal) && c?.lastName?.trim()) {
+      return `Hallo ${sal[0].toUpperCase()}${sal.slice(1).toLowerCase()} ${c.lastName.trim()},`;
+    }
+  }
+  return o.contactName?.trim() ? `Hallo ${o.contactName.trim()},` : "Hallo,";
+}

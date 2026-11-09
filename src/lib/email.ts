@@ -141,7 +141,8 @@ const escapeHtml = (s: string) =>
 /** Schickt einem Interessenten den Link zu seinem Angebot. */
 export async function sendOfferEmail(opts: {
   to: string;
-  contactName: string;
+  /** z. B. „Hallo Herr Weber,“ */
+  greeting: string;
   number: string;
   offerUrl: string;
   validUntil: Date;
@@ -151,7 +152,7 @@ export async function sendOfferEmail(opts: {
   const from = process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>";
   if (!apiKey) return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
   const until = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(opts.validUntil);
-  const name = escapeHtml(opts.contactName);
+  const greeting = escapeHtml(opts.greeting);
   try {
     const { error } = await new Resend(apiKey).emails.send({
       from,
@@ -159,7 +160,7 @@ export async function sendOfferEmail(opts: {
       ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
       subject: `Ihr Angebot von performancegrowth (${opts.number})`,
       text: [
-        `Hallo ${opts.contactName},`,
+        opts.greeting,
         "",
         "vielen Dank für das Gespräch. Wie besprochen finden Sie Ihr Angebot hier:",
         opts.offerUrl,
@@ -171,7 +172,7 @@ export async function sendOfferEmail(opts: {
       ].join("\n"),
       html: `
         <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0b1220">
-          <p style="margin:0 0 16px;font-size:15px;line-height:1.6">Hallo ${name},</p>
+          <p style="margin:0 0 16px;font-size:15px;line-height:1.6">${greeting}</p>
           <p style="margin:0 0 16px;font-size:15px;line-height:1.6">vielen Dank für das Gespräch. Wie besprochen finden Sie Ihr Angebot unter folgendem Link – Sie können es dort direkt online annehmen oder als PDF herunterladen.</p>
           <p style="margin:24px 0"><a href="${opts.offerUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">Angebot ansehen</a></p>
           <p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Angebot ${escapeHtml(opts.number)} · gültig bis ${until}</p>
@@ -188,7 +189,8 @@ export async function sendOfferEmail(opts: {
 /** Willkommens-Mail nach Vertragsannahme: Zugang, Einrichtung, Ablauf bis zum Start. */
 export async function sendOnboardingWelcomeEmail(opts: {
   to: string;
-  contactName: string;
+  /** z. B. „Hallo Herr Weber,“ */
+  greeting: string;
   packageType: "software" | "service";
   startDate: Date | null;
   products: string[];
@@ -219,7 +221,7 @@ export async function sendOnboardingWelcomeEmail(opts: {
       ? `Start am ${start}: Die Kampagne geht live${software ? ", der digitale Assistent schreibt neue Leads an und bucht Termine in Ihren Kalender" : ", jeder neue Lead kommt sofort per E-Mail"}.`
       : `Start: Die Kampagne geht live${software ? ", der digitale Assistent schreibt neue Leads an und bucht Termine in Ihren Kalender" : ", jeder neue Lead kommt sofort per E-Mail"}.`,
   ];
-  const name = escapeHtml(opts.contactName);
+  const greeting = escapeHtml(opts.greeting);
   try {
     const { error } = await new Resend(apiKey).emails.send({
       from,
@@ -227,7 +229,7 @@ export async function sendOnboardingWelcomeEmail(opts: {
       ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
       subject: "Willkommen bei performancegrowth – Ihre nächsten Schritte",
       text: [
-        `Hallo ${opts.contactName},`,
+        opts.greeting,
         "",
         `vielen Dank für Ihr Vertrauen – wir freuen uns auf die Zusammenarbeit${products ? ` (${products})` : ""}.`,
         "So geht es weiter:",
@@ -245,7 +247,7 @@ export async function sendOnboardingWelcomeEmail(opts: {
       ].join("\n"),
       html: `
         <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0b1220">
-          <p style="margin:0 0 16px;font-size:15px;line-height:1.6">Hallo ${name},</p>
+          <p style="margin:0 0 16px;font-size:15px;line-height:1.6">${greeting}</p>
           <p style="margin:0 0 16px;font-size:15px;line-height:1.6">vielen Dank für Ihr Vertrauen – wir freuen uns auf die Zusammenarbeit${products ? ` (${escapeHtml(products)})` : ""}. So geht es weiter:</p>
           <ol style="margin:0 0 20px;padding-left:20px;font-size:15px;line-height:1.6">
             ${steps.map((s) => `<li style="margin:0 0 8px">${escapeHtml(s)}</li>`).join("")}

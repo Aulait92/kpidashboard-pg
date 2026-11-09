@@ -9,7 +9,7 @@ import {
   type OfferFormInput,
 } from "@/lib/offers";
 import { prisma } from "@/lib/prisma";
-import { logOfferActivity, offerAdminHref, type OfferTarget } from "@/lib/offer-links";
+import { customerGreeting, logOfferActivity, offerAdminHref, type OfferTarget } from "@/lib/offer-links";
 import {
   findSalesPhaseForStatus,
   SALES_PIPELINE_PHASES,
@@ -107,7 +107,7 @@ export async function sendOfferEmailAction(
   }
   const res = await sendOfferEmail({
     to: offer.email,
-    contactName: offer.contactName,
+    greeting: await customerGreeting(offer),
     number: offer.number,
     offerUrl: `${getAppUrl()}/angebot/${offer.token}`,
     validUntil: offer.validUntil,

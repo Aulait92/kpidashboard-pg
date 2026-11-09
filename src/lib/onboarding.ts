@@ -10,7 +10,7 @@ import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, issuePasswordResetToken } from "@/lib/auth";
 import { buildResetUrl, getAppUrl, sendCustomerMail, sendOnboardingWelcomeEmail } from "@/lib/email";
-import { logOfferActivity, offerAdminHref, setContactCustomerStage } from "@/lib/offer-links";
+import { customerGreeting, logOfferActivity, offerAdminHref, setContactCustomerStage } from "@/lib/offer-links";
 import { billingEnabled } from "@/lib/billing";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
@@ -180,7 +180,7 @@ export async function sendWelcome(onboardingId: string, opts: { setPasswordUrl?:
   }
   const res = await sendOnboardingWelcomeEmail({
     to,
-    contactName: offer?.contactName ?? ob.customer.name,
+    greeting: await customerGreeting({ salesContactId: ob.salesContactId, contactName: offer?.contactName ?? null }),
     packageType: ob.package === "service" ? "service" : "software",
     startDate: ob.startDate,
     products: offer ? offerProducts(offer.products).map((p) => p.name) : [],
@@ -332,7 +332,7 @@ export async function sendGoLiveMail(onboardingId: string) {
   const res = await sendCustomerMail({
     to,
     subject: "Ihre Kampagne ist live 🚀",
-    greeting: offer?.contactName ? `Hallo ${offer.contactName},` : "Hallo,",
+    greeting: await customerGreeting({ salesContactId: ob.salesContactId, contactName: offer?.contactName ?? null }),
     paragraphs: [
       "alles ist eingerichtet – Ihre Anzeigen laufen ab sofort. Die ersten Leads kommen in der Regel innerhalb von 1–3 Tagen.",
       software
