@@ -41,7 +41,7 @@ export const AGB: LegalSection[] = [
   {
     title: "Leistungen: Software",
     items: [
-      "Der Anbieter stellt dem Kunden seine Software als Online-Dienst bereit, insbesondere Lead-Verwaltung, Pipeline, Wiedervorlagen, Terminbuchung mit Erinnerungen, Auswertungen und einen digitalen Assistenten auf WhatsApp.",
+      "Ist im Angebot das Paket mit Software vereinbart, stellt der Anbieter dem Kunden seine Software als Online-Dienst bereit, insbesondere Lead-Verwaltung, Pipeline, Wiedervorlagen, Terminbuchung mit Erinnerungen, Auswertungen und einen digitalen Assistenten auf WhatsApp.",
       "Der digitale Assistent arbeitet KI-gestützt, gibt sich gegenüber Interessenten als digitaler Assistent zu erkennen und führt keine Versicherungsberatung durch. Er stellt Fragen zur Bedarfsklärung und vereinbart Termine. Beratung und Vermittlung bleiben vollständig beim Kunden, der Gespräche jederzeit selbst übernehmen kann.",
       "Der Anbieter strebt eine Verfügbarkeit von 99 % im Monatsmittel an, ausgenommen angekündigte Wartungen. Für Dienste Dritter (insbesondere Meta/WhatsApp, Kalender- und KI-Anbieter) übernimmt der Anbieter keine Gewähr.",
       "Der Anbieter darf die Software weiterentwickeln, solange die vereinbarten wesentlichen Funktionen erhalten bleiben.",
@@ -59,7 +59,7 @@ export const AGB: LegalSection[] = [
   {
     title: "Vergütung und Zahlung",
     items: [
-      "Die Setupgebühr wird mit Vertragsschluss fällig. Die monatliche Vergütung ist monatlich im Voraus fällig. Alle Preise verstehen sich netto zuzüglich der gesetzlichen Umsatzsteuer.",
+      "Die Setupgebühr wird mit Vertragsschluss fällig. Die monatliche Vergütung ist ab dem im Angebot genannten Startdatum monatlich im Voraus fällig. Alle Preise verstehen sich netto zuzüglich der gesetzlichen Umsatzsteuer.",
       "Die Höhe der monatlichen Vergütung richtet sich nach dem vereinbarten monatlichen Werbebudget (Preisstaffel laut Angebot). Ändert der Kunde das Budget dauerhaft, gilt die neue Stufe ab dem folgenden Abrechnungsmonat.",
       "WhatsApp-Gebühren von Meta werden nach tatsächlichem Verbrauch weiterberechnet.",
       "Rechnungen sind innerhalb von 7 Tagen per Überweisung oder SEPA-Lastschrift zu zahlen. Gerät der Kunde mehr als 30 Tage in Zahlungsverzug, darf der Anbieter die Kampagnen nach vorheriger Ankündigung pausieren. Nach Zahlungseingang werden sie wieder gestartet.",
@@ -68,7 +68,7 @@ export const AGB: LegalSection[] = [
   {
     title: "Pause und Urlaub",
     items: [
-      "Der Kunde kann die Kampagnen jederzeit pausieren, etwa für Urlaub. Während der Pause wird statt der monatlichen Vergütung nur die im Angebot genannte Software-Gebühr berechnet, tagesgenau anteilig.",
+      "Der Kunde kann die Kampagnen jederzeit pausieren, etwa für Urlaub. Während der Pause wird statt der monatlichen Vergütung nur die im Angebot genannte Software-Gebühr berechnet, tagesgenau anteilig; ist keine Software vereinbart, fällt während der Pause keine Vergütung an.",
       "Eine Pause verlängert eine vereinbarte Mindestlaufzeit nicht.",
     ],
   },

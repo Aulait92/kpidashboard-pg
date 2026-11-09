@@ -7,7 +7,7 @@ import { getAppUrl } from "@/lib/email";
 import { updateSalesDeal } from "@/lib/airtable-sales-write";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
-import { computeOfferPrice, type OfferProduct, type OfferTerm } from "@/lib/offer-pricing";
+import { computeOfferPrice, type OfferPackage, type OfferProduct, type OfferTerm } from "@/lib/offer-pricing";
 import { logOfferActivity, offerAdminHref, setContactCustomerStage, type OfferTarget } from "@/lib/offer-links";
 
 export const WON_STATUS = "Serienbetrieb";
@@ -20,6 +20,7 @@ export type OfferFormInput = {
   street?: string | null;
   zip?: string | null;
   city?: string | null;
+  package?: OfferPackage;
   term: OfferTerm;
   products: OfferProduct[];
   setupOverride?: number | null;
@@ -67,7 +68,12 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
   if (!input.contactName.trim()) throw new Error("Bitte einen Ansprechpartner angeben.");
   if (products.length === 0) throw new Error("Bitte mindestens ein Produkt angeben.");
 
+  const pkg: OfferPackage = input.package === "service" ? "service" : "software";
+  if (!input.startDate || !/^\d{4}-\d{2}-\d{2}$/.test(input.startDate)) {
+    throw new Error("Bitte ein Startdatum angeben – ab dann läuft die Monatsgebühr.");
+  }
   const price = computeOfferPrice({
+    package: pkg,
     term: input.term,
     products,
     setupOverride: input.setupOverride,
@@ -108,6 +114,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             street: input.street?.trim() || null,
             zip: input.zip?.trim() || null,
             city: input.city?.trim() || null,
+            package: pkg,
             term: input.term,
             products,
             setupFee: price.setupFee,

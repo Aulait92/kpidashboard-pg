@@ -6,7 +6,7 @@ import { Loader2, Plus, Trash2 } from "lucide-react";
 import { Button, Card, CardHeader } from "@/components/ui";
 import { createOfferAction } from "@/app/admin/crm/offer-actions";
 import type { OfferTarget } from "@/lib/offer-links";
-import { computeOfferPrice, eur, PRICE_LIST, withVat, type OfferTerm } from "@/lib/offer-pricing";
+import { computeOfferPrice, defaultStartDate, eur, PRICE_LIST, withVat, type OfferPackage, type OfferTerm } from "@/lib/offer-pricing";
 
 const PRODUCT_SUGGESTIONS = [
   "Privatschutz",
@@ -48,18 +48,20 @@ export function OfferForm({
   const [zip, setZip] = useState(initial.zip ?? "");
   const [city, setCity] = useState(initial.city ?? "");
   const [products, setProducts] = useState([{ name: initial.product || "Privatschutz", daily: "30" }]);
+  const [pkg, setPkg] = useState<OfferPackage>("software");
   const [term, setTerm] = useState<OfferTerm>("12m");
   const [setupOverride, setSetupOverride] = useState("");
   const [monthlyOverride, setMonthlyOverride] = useState("");
   const [introFee, setIntroFee] = useState("");
   const [introMonths, setIntroMonths] = useState("3");
   const [specialTerms, setSpecialTerms] = useState("");
-  const [startDate, setStartDate] = useState("");
+  const [startDate, setStartDate] = useState(defaultStartDate());
   const [validDays, setValidDays] = useState("14");
 
   const parsedProducts = products.map((p) => ({ name: p.name, dailyBudget: num(p.daily) ?? 0 }));
   // Berechnung ist billig – direkt pro Render statt useMemo.
   const price = computeOfferPrice({
+    package: pkg,
     term,
     products: parsedProducts,
     setupOverride: num(setupOverride),
@@ -76,6 +78,7 @@ export function OfferForm({
         street,
         zip,
         city,
+        package: pkg,
         term,
         products: parsedProducts,
         setupOverride: num(setupOverride),
@@ -107,6 +110,28 @@ export function OfferForm({
             <Field l="Straße und Hausnummer"><input className={input} value={street} onChange={(e) => setStreet(e.target.value)} /></Field>
             <Field l="PLZ"><input className={input} value={zip} onChange={(e) => setZip(e.target.value)} /></Field>
             <Field l="Ort"><input className={input} value={city} onChange={(e) => setCity(e.target.value)} /></Field>
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader title="Paket" />
+          <div className="grid gap-2 p-5 sm:grid-cols-2">
+            {(
+              [
+                ["software", "Betreuung + Software", "Leads, WhatsApp-Assistent, Terminbuchung, Pipeline"],
+                ["service", "Nur Betreuung", `Leads per E-Mail + Kundenbereich · ${eur(PRICE_LIST.serviceOnlyMonthly)} / Monat · Pause 0 €`],
+              ] as const
+            ).map(([k, t, s]) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setPkg(k)}
+                className={`rounded-[var(--radius-md)] border px-4 py-3 text-left text-sm transition ${pkg === k ? "border-[color:var(--brand)] bg-[color:var(--brand-soft,#EFF6FF)] ring-2 ring-[color:var(--brand)]/20" : "border-[color:var(--border)] bg-white hover:border-[color:var(--border-strong)]"}`}
+              >
+                <div className="font-semibold">{t}</div>
+                <div className="text-xs text-[color:var(--muted)]">{s}</div>
+              </button>
+            ))}
           </div>
         </Card>
 
@@ -181,8 +206,8 @@ export function OfferForm({
                   onChange={(e) => setIntroMonths(e.target.value)}
                 />
               </Field>
-              <Field l="Start (optional)">
-                <input className={input} type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              <Field l="Start * (ab dann läuft die Monatsgebühr)">
+                <input className={input} type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} />
               </Field>
               <Field l="Angebot gültig (Tage)">
                 <input className={input} inputMode="numeric" value={validDays} onChange={(e) => setValidDays(e.target.value)} />
@@ -200,14 +225,14 @@ export function OfferForm({
           <CardHeader title="Zusammenfassung" />
           <div className="space-y-3 p-5 text-sm">
             <Sum k="Werbebudget / Monat" v={`≈ ${eur(price.monthlyBudget)}`} sub={price.tierLabel} />
-            <Sum k="Setup einmalig" v={eur(price.setupFee)} sub={`${eur(withVat(price.setupFee))} brutto`} />
+            <Sum k="Setup einmalig" v={eur(price.setupFee)} sub={`${eur(withVat(price.setupFee))} brutto · bei Annahme`} />
             {num(introFee) != null ? (
               <Sum k={`Monat 1–${num(introMonths) ?? "?"}`} v={eur(num(introFee)!)} sub={`${eur(withVat(num(introFee)!))} brutto`} />
             ) : null}
             <Sum
-              k="Monatlich"
+              k={startDate ? `Monatlich ab ${startDate.split("-").reverse().join(".")}` : "Monatlich"}
               v={price.monthlyFee == null ? "individuell" : eur(price.monthlyFee)}
-              sub={price.monthlyFee == null ? "bitte oben eintragen" : `${eur(withVat(price.monthlyFee))} brutto · Pause: ${eur(PRICE_LIST.softwareFee)}`}
+              sub={price.monthlyFee == null ? "bitte oben eintragen" : `${eur(withVat(price.monthlyFee))} brutto · Pause: ${eur(price.softwareFee)}`}
             />
             {error ? <p className="rounded-md bg-rose-50 px-3 py-2 text-rose-700">{error}</p> : null}
             <Button type="button" variant="primary" size="md" className="w-full" disabled={pending} onClick={submit}>

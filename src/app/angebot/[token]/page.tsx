@@ -135,7 +135,7 @@ function PaymentBox({
         <div>
           <div className="font-semibold">Zahlung eingerichtet – vielen Dank!</div>
           <p className="mt-1 text-sm">
-            Bei SEPA-Lastschrift oder Überweisung dauert die Bestätigung ein paar Tage. Wir melden uns in Kürze für den
+            Bei SEPA-Lastschrift dauert die Bestätigung ein paar Tage. Wir melden uns in Kürze für den
             Onboarding-Termin.
           </p>
         </div>
@@ -149,7 +149,7 @@ function PaymentBox({
         {returned === "abgebrochen" ? "Die Zahlung wurde nicht abgeschlossen." : "Angebot angenommen – fehlt nur noch die Zahlung."}
       </div>
       <p className="mb-4 mt-1 text-sm text-[color:var(--muted)]">
-        Richten Sie jetzt SEPA-Lastschrift, Karte oder Überweisung ein. Die Zahlung läuft sicher über Stripe.
+        Richten Sie jetzt SEPA-Lastschrift oder Karte ein. Fällig ist jetzt nur das Setup; die Monatsgebühr wird ab dem Startdatum automatisch eingezogen. Die Zahlung läuft sicher über Stripe.
       </p>
       <PayButton token={token} />
     </div>

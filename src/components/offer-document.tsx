@@ -24,6 +24,7 @@ export type OfferDoc = {
   street: string | null;
   zip: string | null;
   city: string | null;
+  package: string;
   term: string;
   products: unknown;
   setupFee: number;
@@ -79,13 +80,13 @@ export const PROVIDER_FOOTER = `${SHORT_NAME} · ${PROVIDER.street} · ${PROVIDE
 export function OfferDocument({ offer, part = "all" }: { offer: OfferDoc; part?: "all" | "cover" | "body" }) {
   const products = offerProducts(offer.products);
   const term = (offer.term === "12m" ? "12m" : "none") as OfferTerm;
-  const list = computeOfferPrice({ term, products });
+  const serviceOnly = offer.package === "service";
+  const list = computeOfferPrice({ package: serviceOnly ? "service" : "software", term, products });
   const extra = Math.max(0, products.length - 1);
   const setupIsList = Math.abs(list.setupFee - offer.setupFee) < 0.01;
   const monthlyIsList = list.monthlyFee != null && Math.abs(list.monthlyFee - offer.monthlyFee) < 0.01;
   const hasIntro = offer.introMonthlyFee != null && !!offer.introMonths;
   const firstMonth = hasIntro ? offer.introMonthlyFee! : offer.monthlyFee;
-  const startTotal = offer.setupFee + firstMonth;
   const productNames = products.map((p) => p.name).join(" & ");
 
   return (
@@ -108,7 +109,7 @@ export function OfferDocument({ offer, part = "all" }: { offer: OfferDoc; part?:
               Angebot · {date(offer.createdAt)}
             </p>
             <h1 className="mt-5 text-[32px] font-bold leading-[1.15] tracking-tight sm:text-[38px]">
-              Leadgenerierung + Software
+              {serviceOnly ? "Leadgenerierung" : "Leadgenerierung + Software"}
               {productNames ? (
                 <>
                   <br />
@@ -117,8 +118,9 @@ export function OfferDocument({ offer, part = "all" }: { offer: OfferDoc; part?:
               ) : null}
             </h1>
             <p className="mt-5 max-w-[520px] text-[15px] leading-relaxed text-[#c9d2e3]">
-              Exklusive Versicherungs-Leads über Facebook &amp; Instagram – mit digitalem Assistenten, der die Leads per
-              WhatsApp anschreibt und direkt Termine in Ihrem Kalender bucht.
+              {serviceOnly
+                ? "Exklusive Versicherungs-Leads über Facebook & Instagram – in Echtzeit per E-Mail und im Kundenbereich."
+                : "Exklusive Versicherungs-Leads über Facebook & Instagram – mit digitalem Assistenten, der die Leads per WhatsApp anschreibt und direkt Termine in Ihrem Kalender bucht."}
             </p>
           </div>
 
@@ -127,7 +129,11 @@ export function OfferDocument({ offer, part = "all" }: { offer: OfferDoc; part?:
             <Stat
               k="Monatlich"
               v={eur(firstMonth)}
-              sub={hasIntro ? `Startpreis Monat 1–${offer.introMonths}, danach ${eur(offer.monthlyFee)}` : "Betreuung + Software, netto"}
+              sub={
+                hasIntro
+                  ? `Startpreis Monat 1–${offer.introMonths}, danach ${eur(offer.monthlyFee)}`
+                  : `${serviceOnly ? "Betreuung" : "Betreuung + Software"}, netto${offer.startDate ? ` · ab ${date(offer.startDate)}` : ""}`
+              }
               accent
             />
             <Stat k="Laufzeit" v={term === "12m" ? "12 Monate" : "Monatlich kündbar"} sub="Pause jederzeit möglich" />
@@ -170,18 +176,25 @@ export function OfferDocument({ offer, part = "all" }: { offer: OfferDoc; part?:
         <H2>1. Angebotsgegenstand und Umfang</H2>
         <p className="mt-3 text-[#374151]">
           Gegenstand dieses Angebots ist die Generierung exklusiver Interessenten-Datensätze („Leads“) für die unten
-          genannten Versicherungsprodukte sowie die Bereitstellung der Software zur Bearbeitung der Leads.
+          genannten Versicherungsprodukte{serviceOnly ? "." : " sowie die Bereitstellung der Software zur Bearbeitung der Leads."}
         </p>
         <Table>
           <Tr k="Leadgenerierung">
             Konzeption, Erstellung und laufende Optimierung von Kampagnen auf Facebook &amp; Instagram im Werbekonto des
             Kunden, inklusive Werbemitteln und Lead-Formular. Die Leads gehen exklusiv an den Kunden.
           </Tr>
-          <Tr k="Software">
-            Digitaler Assistent auf WhatsApp (Erstkontakt, Bedarfsfragen, Terminbuchung), Terminbuchung im eigenen
-            Kalender mit Erinnerungen, „Heute“-Liste, Pipeline, Wiedervorlagen und Auswertungen bis zu den Kosten pro
-            Abschluss.
-          </Tr>
+          {serviceOnly ? (
+            <Tr k="Lead-Zustellung">
+              Jeder Lead sofort per E-Mail; dazu ein Kundenbereich mit allen Leads und Auswertungen (Leads, Kosten pro
+              Lead). Die Software mit WhatsApp-Assistent und Terminbuchung kann jederzeit dazugebucht werden.
+            </Tr>
+          ) : (
+            <Tr k="Software">
+              Digitaler Assistent auf WhatsApp (Erstkontakt, Bedarfsfragen, Terminbuchung), Terminbuchung im eigenen
+              Kalender mit Erinnerungen, „Heute“-Liste, Pipeline, Wiedervorlagen und Auswertungen bis zu den Kosten pro
+              Abschluss.
+            </Tr>
+          )}
           <Tr k="Produkte">
             <ul className="space-y-0.5">
               {products.map((p, i) => (
@@ -196,7 +209,7 @@ export function OfferDocument({ offer, part = "all" }: { offer: OfferDoc; part?:
             ≈ {eur(list.monthlyBudget)} im Monat. Das Werbebudget zahlt der Kunde direkt an Meta; es ist in den Preisen
             nicht enthalten.
           </Tr>
-          {offer.startDate ? <Tr k="Start">{date(offer.startDate)}</Tr> : null}
+          {offer.startDate ? <Tr k="Start">{date(offer.startDate)} – ab diesem Tag läuft die monatliche Vergütung.</Tr> : null}
         </Table>
 
         <H2 className="mt-12">2. Preise und Zahlungsbedingungen</H2>
@@ -215,11 +228,11 @@ export function OfferDocument({ offer, part = "all" }: { offer: OfferDoc; part?:
             </Tr>
           ) : null}
           <Tr k={hasIntro ? `Ab Monat ${offer.introMonths! + 1}` : "Monatliche Vergütung"}>
-            <b className="text-[#111827]">{eur2(offer.monthlyFee)}</b> netto pro Monat zzgl. 19 % USt. – Betreuung +
-            Software
+            <b className="text-[#111827]">{eur2(offer.monthlyFee)}</b> netto pro Monat zzgl. 19 % USt. –{" "}
+            {serviceOnly ? "Betreuung" : "Betreuung + Software"}
             <Note>
               {monthlyIsList
-                ? `Preisstufe Werbebudget ${list.tierLabel}${extra ? `, inklusive ${extra} × ${eur(PRICE_LIST.extraProductMonthly)} für weitere Produkte` : ""}`
+                ? `${serviceOnly ? "Paket Nur Betreuung" : `Preisstufe Werbebudget ${list.tierLabel}`}${extra ? `, inklusive ${extra} × ${eur(PRICE_LIST.extraProductMonthly)} für weitere Produkte` : ""}`
                 : "Sonderkondition"}
             </Note>
           </Tr>
@@ -229,23 +242,33 @@ export function OfferDocument({ offer, part = "all" }: { offer: OfferDoc; part?:
               : "Keine Mindestlaufzeit – kündbar zum Ende des jeweiligen Abrechnungsmonats."}
           </Tr>
           <Tr k="Pause / Urlaub">
-            Jederzeit möglich. Die Anzeigen werden gestoppt; in dieser Zeit fällt nur die Software-Gebühr von{" "}
-            {eur(offer.softwareFee)} netto im Monat an.
+            {offer.softwareFee > 0 ? (
+              <>
+                Jederzeit möglich. Die Anzeigen werden gestoppt; in dieser Zeit fällt nur die Software-Gebühr von{" "}
+                {eur(offer.softwareFee)} netto im Monat an.
+              </>
+            ) : (
+              "Jederzeit möglich. Die Anzeigen werden gestoppt; in dieser Zeit fällt keine Vergütung an."
+            )}
           </Tr>
-          <Tr k="WhatsApp-Gebühren">Gebühren von Meta nach Verbrauch, in der Regel 10–40 € im Monat.</Tr>
-          <Tr k="Zum Start fällig">
-            <b className="text-[#111827]">{eur2(startTotal)}</b> netto (Setup + erster Monat)
-            <br />
-            zzgl. 19 % USt. {eur2(vatOf(startTotal))}
-            <br />
-            <b className="text-[#111827]">{eur2(withVat(startTotal))} brutto</b>
+          {serviceOnly ? null : (
+            <Tr k="WhatsApp-Gebühren">Gebühren von Meta nach Verbrauch, in der Regel 10–40 € im Monat.</Tr>
+          )}
+          <Tr k="Bei Annahme fällig">
+            <b className="text-[#111827]">{eur2(offer.setupFee)}</b> netto (Setup) zzgl. 19 % USt. {eur2(vatOf(offer.setupFee))}
+            {" = "}
+            <b className="text-[#111827]">{eur2(withVat(offer.setupFee))} brutto</b>
+            <Note>
+              Erste Monatsgebühr ({eur2(firstMonth)} netto, {eur2(withVat(firstMonth))} brutto)
+              {offer.startDate ? ` am ${date(offer.startDate)}` : " zum Start"}.
+            </Note>
           </Tr>
         </Table>
 
         <H3>2.1 Zahlung</H3>
         <p className="text-[#374151]">
-          Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung monatlich im Voraus – per
-          SEPA-Lastschrift oder Überweisung innerhalb von 7 Tagen.
+          Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im
+          Voraus – per SEPA-Lastschrift oder Karte, automatisch eingezogen.
         </p>
         <H3>2.2 Garantie</H3>
         <p className="text-[#374151]">

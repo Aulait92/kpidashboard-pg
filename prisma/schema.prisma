@@ -775,6 +775,8 @@ model Offer {
   zip                     String?
   city                    String?
   // Konditionen (netto, EUR)
+  // "software" = Betreuung + Software, "service" = nur Betreuung (ohne Software)
+  package                 String        @default("software")
   term                    String // "none" | "12m"
   products                Json // [{ name, dailyBudget }]
   setupFee                Decimal       @db.Decimal(10, 2)
@@ -798,6 +800,8 @@ model Offer {
   stripeCustomerId        String?
   stripeCheckoutSessionId String?
   stripeSubscriptionId    String?       @unique
+  // Abo-Zeitplan: Monatsgebühr startet erst am Startdatum (Setup sofort)
+  stripeScheduleId        String?       @unique
   // none | pending | processing | paid | failed
   paymentStatus           String        @default("none")
   // Status des Stripe-Abos (active, past_due, canceled …)

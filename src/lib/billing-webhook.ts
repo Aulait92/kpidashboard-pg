@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 import { logOfferActivity, offerAdminHref, setContactCustomerStage } from "@/lib/offer-links";
+import { cancelScheduleForOffer, createScheduleForOffer } from "@/lib/billing";
 
 export const HANDLED_EVENTS = [
   "checkout.session.completed",
@@ -88,6 +89,17 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
           ...(paid ? { paidAt: offer.paidAt ?? new Date() } : {}),
         },
       });
+      // Abo-Zeitplan (Monatsgebühr ab Startdatum) – nur für den neuen Ablauf
+      // (Checkout im Modus „payment“/„setup“; alte Abo-Checkouts haben schon ein Abo).
+      if (!failed && session.mode !== "subscription") {
+        try {
+          await createScheduleForOffer(offer.id, session);
+        } catch (err) {
+          reportError(err, "billing-schedule", { offer: offer.number });
+          await notify(`⚠️ Abo konnte nicht angelegt werden: ${offer.company ?? offer.contactName}`, `${offer.number} – bitte im Stripe-Dashboard prüfen.`, offerAdminHref(offer));
+        }
+      }
+      if (failed) await cancelScheduleForOffer(offer.id).catch((err) => reportError(err, "billing-schedule-cancel"));
       // Zahlung eingerichtet (SEPA-Mandat genügt) → Onboarding kann starten.
       if (!failed) await setContactCustomerStage(offer, "ONBOARDING");
       if (failed) {
@@ -97,7 +109,7 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
         await logActivity(
           offer,
           paid ? `Zahlung für ${offer.number} eingegangen` : `Zahlung für ${offer.number} eingerichtet (SEPA wird bestätigt)`,
-          `Betrag: ${eur(session.amount_total)} brutto`,
+          `Setup: ${eur(session.amount_total)} brutto${offer.startDate ? ` · Monatsgebühr ab ${offer.startDate.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}` : ""}`,
         );
         await notify(
           `💶 ${paid ? "Bezahlt" : "Zahlung eingerichtet"}: ${offer.company ?? offer.contactName}`,

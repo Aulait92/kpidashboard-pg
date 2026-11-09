@@ -8,6 +8,8 @@ export const PRICE_LIST = {
   extraProductSetup: 990,
   extraProductMonthly: 350,
   softwareFee: 349,
+  /** Paket „Nur Betreuung“ (ohne Software): fester Monatspreis, Pause 0 €. */
+  serviceOnlyMonthly: 700,
   vatRate: 0.19,
   /** Monatliche Betreuung + Software nach Gesamt-Werbebudget pro Monat. */
   tiers: [
@@ -21,9 +23,12 @@ export const PRICE_LIST = {
 } as const;
 
 export type OfferTerm = "none" | "12m";
+export type OfferPackage = "software" | "service";
 export type OfferProduct = { name: string; dailyBudget: number };
 
 export type OfferInput = {
+  /** Standard: Betreuung + Software. */
+  package?: OfferPackage;
   term: OfferTerm;
   products: OfferProduct[];
   /** Überschreibt den berechneten Setup-Preis (Sonderkondition). */
@@ -59,9 +64,11 @@ export function computeOfferPrice(input: OfferInput): OfferPrice {
   const baseSetup = input.term === "12m" ? PRICE_LIST.setup12m : PRICE_LIST.setupNoTerm;
   const listSetup = baseSetup + extraProducts * PRICE_LIST.extraProductSetup;
 
-  const tier = PRICE_LIST.tiers.find((t) => monthlyBudget <= t.maxBudget);
-  const individual = !tier;
-  const listMonthly = tier ? tier.monthly + extraProducts * PRICE_LIST.extraProductMonthly : null;
+  const serviceOnly = input.package === "service";
+  const tier = serviceOnly ? null : PRICE_LIST.tiers.find((t) => monthlyBudget <= t.maxBudget);
+  const individual = !serviceOnly && !tier;
+  const base = serviceOnly ? PRICE_LIST.serviceOnlyMonthly : (tier?.monthly ?? null);
+  const listMonthly = base == null ? null : base + extraProducts * PRICE_LIST.extraProductMonthly;
 
   const setupFee = input.setupOverride != null && input.setupOverride >= 0 ? input.setupOverride : listSetup;
   const monthlyFee =
@@ -69,7 +76,11 @@ export function computeOfferPrice(input: OfferInput): OfferPrice {
 
   return {
     monthlyBudget,
-    tierLabel: tier ? tier.label : `ab ${PRICE_LIST.individualFrom.toLocaleString("de-DE")} € (individuell)`,
+    tierLabel: serviceOnly
+      ? "Nur Betreuung (ohne Software)"
+      : tier
+        ? tier.label
+        : `ab ${PRICE_LIST.individualFrom.toLocaleString("de-DE")} € (individuell)`,
     individual,
     baseSetup,
     extraProducts,
@@ -77,7 +88,7 @@ export function computeOfferPrice(input: OfferInput): OfferPrice {
     listMonthly,
     setupFee: round2(setupFee),
     monthlyFee: monthlyFee == null ? null : round2(monthlyFee),
-    softwareFee: PRICE_LIST.softwareFee,
+    softwareFee: serviceOnly ? 0 : PRICE_LIST.softwareFee,
   };
 }
 
@@ -91,3 +102,14 @@ export const TERM_LABEL: Record<OfferTerm, string> = {
   none: "Ohne Vertragslaufzeit (monatlich kündbar)",
   "12m": "12 Monate Laufzeit",
 };
+
+export const PACKAGE_LABEL: Record<OfferPackage, string> = {
+  software: "Betreuung + Software",
+  service: "Nur Betreuung",
+};
+
+/** Startdatum-Vorschlag: der 1. des Folgemonats (YYYY-MM-DD). */
+export function defaultStartDate(now = new Date()): string {
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+  return d.toISOString().slice(0, 10);
+}
