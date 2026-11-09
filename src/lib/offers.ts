@@ -1,4 +1,4 @@
-// Angebote / Auftragsbestätigungen aus dem Cold-CRM: anlegen (Konditionen
+// Angebote / Auftragsbestätigungen (zu einem Vertriebskontakt oder alten Deal): anlegen (Konditionen
 // werden eingefroren), per geheimem Link anzeigen, online annehmen.
 
 import crypto from "node:crypto";
@@ -8,6 +8,7 @@ import { updateSalesDeal } from "@/lib/airtable-sales-write";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 import { computeOfferPrice, type OfferProduct, type OfferTerm } from "@/lib/offer-pricing";
+import { logOfferActivity, offerAdminHref, setContactCustomerStage, type OfferTarget } from "@/lib/offer-links";
 
 export const WON_STATUS = "Serienbetrieb";
 export const OFFER_SENT_STATUS = "Angebot verschickt";
@@ -58,7 +59,8 @@ async function nextOfferNumber(): Promise<string> {
   return `${prefix}${String(n).padStart(4, "0")}`;
 }
 
-export async function createOffer(dealId: string, input: OfferFormInput, createdById: string | null) {
+export async function createOffer(target: OfferTarget, input: OfferFormInput, createdById: string | null) {
+  const owner = "dealId" in target ? { dealId: target.dealId } : { salesContactId: target.salesContactId };
   const products = input.products
     .map((p) => ({ name: p.name.trim(), dailyBudget: Math.max(0, Number(p.dailyBudget) || 0) }))
     .filter((p) => p.name);
@@ -84,10 +86,10 @@ export async function createOffer(dealId: string, input: OfferFormInput, created
     try {
       return await prisma.$transaction(async (tx) => {
         const previous = await tx.offer.findMany({
-          where: { dealId, status: { in: ["draft", "sent"] } },
+          where: { ...owner, status: { in: ["draft", "sent"] } },
           select: { id: true, version: true },
         });
-        const maxVersion = await tx.offer.aggregate({ where: { dealId }, _max: { version: true } });
+        const maxVersion = await tx.offer.aggregate({ where: owner, _max: { version: true } });
         if (previous.length) {
           await tx.offer.updateMany({
             where: { id: { in: previous.map((p) => p.id) } },
@@ -96,7 +98,7 @@ export async function createOffer(dealId: string, input: OfferFormInput, created
         }
         return tx.offer.create({
           data: {
-            dealId,
+            ...owner,
             number,
             version: (maxVersion._max.version ?? 0) + 1,
             token: crypto.randomBytes(24).toString("base64url"),
@@ -164,46 +166,64 @@ export async function acceptOffer(
   });
   if (updated.count === 0) return { ok: false, error: "Dieses Angebot kann nicht mehr angenommen werden." };
 
-  // Deal auf „gewonnen“ setzen (Airtable + DB) und in der Historie vermerken.
-  try {
-    const deal = await prisma.deal.findUnique({
-      where: { id: offer.dealId },
-      select: { id: true, airtableId: true, status: true, wonAt: true, closeDate: true },
-    });
-    if (deal) {
-      const closeDate = deal.closeDate ?? now;
-      if (deal.airtableId) {
-        await updateSalesDeal({
-          airtableId: deal.airtableId,
-          status: WON_STATUS,
-          closeDate: closeDate.toISOString().slice(0, 10),
-        });
+  // Deal bzw. Kontakt auf „gewonnen“ setzen und in der Historie vermerken.
+  if (offer.salesContactId) {
+    await setContactCustomerStage(offer, "VERTRAG");
+    const products = Array.isArray(offer.products)
+      ? (offer.products as { name?: string }[]).map((p) => p?.name).filter(Boolean).join(", ")
+      : "";
+    await prisma.salesContact
+      .update({
+        where: { id: offer.salesContactId },
+        data: {
+          monthlyValue: Math.round(Number(offer.monthlyFee)),
+          ...(products ? { products } : {}),
+          contractStart: offer.startDate ?? now,
+        },
+      })
+      .catch((err) => reportError(err, "offer-accept-contact-update", { offer: offer.number }));
+    await logOfferActivity(offer, `Angebot ${offer.number} online angenommen von ${name}`, "Kunden-Pipeline: Vertrag");
+  } else if (offer.dealId) {
+    try {
+      const deal = await prisma.deal.findUnique({
+        where: { id: offer.dealId },
+        select: { id: true, airtableId: true, status: true, wonAt: true, closeDate: true },
+      });
+      if (deal) {
+        const closeDate = deal.closeDate ?? now;
+        if (deal.airtableId) {
+          await updateSalesDeal({
+            airtableId: deal.airtableId,
+            status: WON_STATUS,
+            closeDate: closeDate.toISOString().slice(0, 10),
+          });
+        }
+        await prisma.$transaction([
+          prisma.deal.update({
+            where: { id: deal.id },
+            data: { status: WON_STATUS, wonAt: deal.wonAt ?? now, lostAt: null, closeDate },
+          }),
+          prisma.dealActivity.create({
+            data: {
+              dealId: deal.id,
+              kind: "status_change",
+              title: `Angebot ${offer.number} online angenommen von ${name}`,
+              body: `Status: ${deal.status ?? "—"} → ${WON_STATUS}`,
+              metadata: { fromStatus: deal.status, toStatus: WON_STATUS, offerId: offer.id },
+            },
+          }),
+        ]);
       }
-      await prisma.$transaction([
-        prisma.deal.update({
-          where: { id: deal.id },
-          data: { status: WON_STATUS, wonAt: deal.wonAt ?? now, lostAt: null, closeDate },
-        }),
-        prisma.dealActivity.create({
-          data: {
-            dealId: deal.id,
-            kind: "status_change",
-            title: `Angebot ${offer.number} online angenommen von ${name}`,
-            body: `Status: ${deal.status ?? "—"} → ${WON_STATUS}`,
-            metadata: { fromStatus: deal.status, toStatus: WON_STATUS, offerId: offer.id },
-          },
-        }),
-      ]);
+    } catch (err) {
+      // Die Annahme selbst ist gespeichert; Deal-Status notfalls von Hand nachziehen.
+      reportError(err, "offer-accept-deal-update", { offer: offer.number });
     }
-  } catch (err) {
-    // Die Annahme selbst ist gespeichert; Deal-Status notfalls von Hand nachziehen.
-    reportError(err, "offer-accept-deal-update", { offer: offer.number });
   }
 
   await sendToAdmins({
     title: `✅ Angebot angenommen: ${offer.company ?? offer.contactName}`,
     body: `${offer.number} · ${name}`,
-    url: `/admin/crm/${offer.dealId}`,
+    url: offerAdminHref(offer),
     tag: `offer:${offer.id}`,
   }).catch((err) => reportError(err, "offer-accept-push"));
 

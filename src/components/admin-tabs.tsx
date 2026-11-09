@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils";
 // usePathname dient nur dem Active-State.
 const TABS = [
   { href: "/", label: "Dashboard", match: (p: string) => p === "/" },
-  { href: "/admin/crm", label: "CRM", match: (p: string) => p.startsWith("/admin/crm") },
+  { href: "/admin/vertrieb", label: "Vertrieb", match: (p: string) => p.startsWith("/admin/vertrieb") },
+  { href: "/admin/crm", label: "CRM (alt)", match: (p: string) => p.startsWith("/admin/crm") },
   {
     href: "/admin/activities",
     label: "Aktivitäten",

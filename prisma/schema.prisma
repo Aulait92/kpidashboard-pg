@@ -754,16 +754,19 @@ model UsageEvent {
 // Erstellen eingefroren (Snapshot), damit ein angenommenes Angebot sich nie
 // nachträglich ändert. Änderungen = neue Version (altes wird „superseded").
 model Offer {
-  id                      String    @id @default(cuid())
-  dealId                  String
-  deal                    Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  id                      String        @id @default(cuid())
+  // Altes Airtable-Deal-Board (wird abgelöst) oder Vertriebskontakt.
+  dealId                  String?
+  deal                    Deal?         @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  salesContactId          String?
+  salesContact            SalesContact? @relation(fields: [salesContactId], references: [id], onDelete: Cascade)
   // Fortlaufende Nummer, z. B. PG-2026-0007
-  number                  String    @unique
-  version                 Int       @default(1)
+  number                  String        @unique
+  version                 Int           @default(1)
   // draft | sent | accepted | declined | superseded
-  status                  String    @default("draft")
+  status                  String        @default("draft")
   // Geheimer Link für die öffentliche Angebotsseite
-  token                   String    @unique
+  token                   String        @unique
   // Empfänger
   contactName             String
   company                 String?
@@ -774,10 +777,10 @@ model Offer {
   // Konditionen (netto, EUR)
   term                    String // "none" | "12m"
   products                Json // [{ name, dailyBudget }]
-  setupFee                Decimal   @db.Decimal(10, 2)
-  monthlyFee              Decimal   @db.Decimal(10, 2)
-  softwareFee             Decimal   @db.Decimal(10, 2)
-  introMonthlyFee         Decimal?  @db.Decimal(10, 2)
+  setupFee                Decimal       @db.Decimal(10, 2)
+  monthlyFee              Decimal       @db.Decimal(10, 2)
+  softwareFee             Decimal       @db.Decimal(10, 2)
+  introMonthlyFee         Decimal?      @db.Decimal(10, 2)
   introMonths             Int?
   specialTerms            String?
   startDate               DateTime?
@@ -794,16 +797,17 @@ model Offer {
   // Zahlung (Stripe)
   stripeCustomerId        String?
   stripeCheckoutSessionId String?
-  stripeSubscriptionId    String?   @unique
+  stripeSubscriptionId    String?       @unique
   // none | pending | processing | paid | failed
-  paymentStatus           String    @default("none")
+  paymentStatus           String        @default("none")
   // Status des Stripe-Abos (active, past_due, canceled …)
   subscriptionStatus      String?
   paidAt                  DateTime?
   createdById             String?
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
 
+  @@index([salesContactId])
   @@index([dealId])
   @@index([status])
 }
@@ -813,4 +817,278 @@ model StripeEvent {
   id         String   @id // evt_…
   type       String
   receivedAt DateTime @default(now())
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Vertrieb (ehemals „Cold CRM“): Akquise von Versicherungsagenturen –
+// Kontakte, Aufgaben, Aktivitäten, Cold-Mail (Instantly), Termine (Calendly),
+// Inbound-Leads. Übernommen aus dem separaten Cold-CRM (Nov. 2026).
+// ════════════════════════════════════════════════════════════════════════
+
+enum SalesStage {
+  NEU
+  NICHT_ERREICHT
+  WIEDERVORLAGE
+  INTERESSE
+  TERMIN
+  GEWONNEN
+  SPAETER
+  VERLOREN
+  UNGUELTIG
+}
+
+// Kunden-Pipeline: alles nach der Zusage
+enum SalesCustomerStage {
+  VERTRAG // Zusage, Vertrag versendet
+  ONBOARDING // unterschrieben, Setup (Produkte, Gebiet, Kampagnen)
+  TEST // Testpaket / erste Leads
+  AKTIV // laufender Kunde
+  PAUSIERT
+  GEKUENDIGT
+}
+
+enum SalesLossReason {
+  KEIN_BEDARF // ausgelastet, braucht keine Kunden
+  HAT_ANBIETER // kauft schon Leads / arbeitet mit Agentur
+  UEBER_ALLIANZ // macht das über die Allianz
+  ZU_TEUER // Budget / Preis
+  KEIN_INTERESSE
+  SONSTIGES
+}
+
+enum SalesActivityType {
+  ANRUF
+  EMAIL
+  NOTIZ
+  STATUS
+  COLD_MAIL
+  LINKEDIN
+  TERMIN
+  IMPORT
+}
+
+enum SalesTaskType {
+  ANRUF
+  NACHFASSEN
+  UNTERLAGEN
+  TERMIN
+  SONSTIGES
+}
+
+model SalesContact {
+  id           String  @id @default(cuid())
+  name         String
+  email        String  @unique
+  phone        String?
+  fax          String?
+  street       String?
+  zip          String?
+  city         String?
+  ratingValue  Float?
+  ratingCount  Int?
+  openingHours String?
+  url          String?
+  description  String?
+
+  // Ansprechpartner & Zusatzinfos (aus der Instantly-Mailingliste)
+  salutation     String?
+  firstName      String?
+  lastName       String?
+  leaderNames    String? // alle Inhaber/Geschäftsführer, kommagetrennt
+  agencyType     String? // GENERAL / HAUPT
+  teamSize       Int?
+  potentialScore Int?
+  facebookUrl    String?
+  instagramUrl   String?
+  xingUrl        String?
+  linkedinUrl    String?
+
+  // LinkedIn-Outreach (Waalaxy)
+  linkedinStatus      String? // ANFRAGE_GESENDET, VERNETZT, NACHRICHT_GESENDET, GEANTWORTET
+  linkedinRequestAt   DateTime?
+  linkedinConnectedAt DateTime?
+  linkedinMessageAt   DateTime?
+  linkedinReplyAt     DateTime?
+  linkedinList        String? // Waalaxy-Liste / Kampagne
+  linkedinTags        String?
+
+  stage         SalesStage       @default(NEU)
+  lossReason    SalesLossReason?
+  competitor    String? // z.B. LEAD.NOW, Terminadler, Alkaio
+  callAttempts  Int              @default(0)
+  lastContactAt DateTime?
+  legacyStatus  String? // Original-Status aus der Cold-Calling-Liste
+
+  // Kunde (gesetzt ab Stufe Gewonnen)
+  customerStage      SalesCustomerStage?
+  products           String? // z.B. "PKV, TKV, Leben"
+  monthlyValue       Int? // € pro Monat
+  contractStart      DateTime?
+  customerSince      DateTime?
+  customerSource     String? // Akquise-Kanal: COLD_CALL, COLD_MAIL, LINKEDIN, META_ADS, EMPFEHLUNG, INBOUND, NETZWERK, SONSTIGES
+  customerSourceNote String? // z.B. "Kampagne Allianz Okt" oder "Empfehlung von Hr. Müller"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  offers         Offer[]
+  activities     SalesActivity[]
+  tasks          SalesTask[]
+  campaigns      SalesCampaignLead[]
+  emails         SalesEmail[]
+  linkedinEvents SalesLinkedInEvent[]
+  meetings       SalesMeeting[]
+  inboundLeads   SalesInboundLead[]
+
+  @@index([stage])
+  @@index([customerStage])
+  @@index([linkedinStatus])
+  @@index([zip])
+  @@index([city])
+}
+
+model SalesActivity {
+  id         String            @id @default(cuid())
+  contactId  String
+  contact    SalesContact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  type       SalesActivityType
+  outcome    String?
+  note       String?
+  occurredAt DateTime          @default(now())
+
+  @@index([contactId, occurredAt])
+}
+
+model SalesTask {
+  id        String        @id @default(cuid())
+  contactId String?
+  contact   SalesContact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  title     String
+  type      SalesTaskType @default(SONSTIGES)
+  note      String?
+  dueAt     DateTime
+  doneAt    DateTime?
+  createdAt DateTime      @default(now())
+
+  @@index([doneAt, dueAt])
+  @@index([contactId])
+}
+
+model SalesCampaign {
+  id          String              @id @default(cuid())
+  instantlyId String?             @unique
+  name        String              @unique
+  createdAt   DateTime            @default(now())
+  leads       SalesCampaignLead[]
+}
+
+// Ein Kontakt in einer Instantly-Kampagne.
+model SalesCampaignLead {
+  id           String        @id @default(cuid())
+  contactId    String
+  contact      SalesContact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  campaignId   String
+  campaign     SalesCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  status       String? // Aktiv, Pausiert, Abgeschlossen, Bounced, Abgemeldet, Übersprungen, Noch nicht kontaktiert
+  sentAt       DateTime? // erste/letzte bekannte Mail
+  openCount    Int           @default(0)
+  replyCount   Int           @default(0)
+  clickCount   Int           @default(0)
+  lastOpenAt   DateTime?
+  lastReplyAt  DateTime?
+  bounced      Boolean       @default(false)
+  unsubscribed Boolean       @default(false)
+  interest     String? // Instantly-Interessenstatus
+  updatedAt    DateTime      @updatedAt
+
+  @@unique([contactId, campaignId])
+  @@index([campaignId])
+}
+
+// E-Mails aus Instantly (v.a. Antworten auf Cold Mails)
+model SalesEmail {
+  id          String       @id @default(cuid())
+  instantlyId String?      @unique
+  contactId   String
+  contact     SalesContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  campaign    String?
+  direction   String       @default("IN") // IN = Antwort vom Kontakt, OUT = von uns
+  subject     String?
+  text        String?
+  html        String?
+  fromEmail   String?
+  threadId    String?
+  isAutoReply Boolean      @default(false)
+  sentiment   String? // POSITIV, NEGATIV, NEUTRAL
+  sentAt      DateTime
+  createdAt   DateTime     @default(now())
+
+  @@index([contactId, sentAt])
+}
+
+// Rohdaten aus Waalaxy (Webhook), auch nicht zugeordnete – zum Nachvollziehen
+model SalesLinkedInEvent {
+  id        String        @id @default(cuid())
+  contactId String?
+  contact   SalesContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  source    String // webhook | csv
+  name      String?
+  company   String?
+  url       String?
+  status    String?
+  payload   Json
+  createdAt DateTime      @default(now())
+
+  @@index([contactId])
+  @@index([createdAt])
+}
+
+// Termine aus Calendly (gebucht über Calendly → Google Calendar)
+model SalesMeeting {
+  id            String       @id @default(cuid())
+  contactId     String
+  contact       SalesContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  calendlyUri   String?      @unique // Invitee-URI
+  eventUri      String?
+  title         String
+  startAt       DateTime
+  endAt         DateTime?
+  location      String?
+  joinUrl       String?
+  status        String       @default("GEPLANT") // GEPLANT, ABGESAGT, VERSCHOBEN
+  cancelReason  String?
+  canceledBy    String?
+  rescheduleUrl String?
+  cancelUrl     String?
+  answers       String? // Fragen & Antworten aus dem Buchungsformular
+  utmSource     String?
+  inviteeName   String?
+  inviteeEmail  String?
+  taskId        String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([contactId])
+  @@index([startAt])
+}
+
+// Eingehende Leads (Meta Lead Ads über Zapier/Make, Landingpage-Formulare …)
+model SalesInboundLead {
+  id        String        @id @default(cuid())
+  contactId String?
+  contact   SalesContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  source    String // META_ADS, INBOUND, …
+  name      String?
+  email     String?
+  phone     String?
+  campaign  String?
+  ad        String?
+  form      String?
+  answers   String?
+  created   Boolean       @default(false) // neuer Kontakt angelegt?
+  payload   Json
+  createdAt DateTime      @default(now())
+
+  @@index([createdAt])
+  @@index([contactId])
 }

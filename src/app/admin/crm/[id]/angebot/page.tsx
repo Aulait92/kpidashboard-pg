@@ -37,7 +37,8 @@ export default async function NewOfferPage({ params }: { params: Promise<{ id: s
       ) : null}
       <div className="mt-6">
         <OfferForm
-          dealId={deal.id}
+          target={{ dealId: deal.id }}
+          backHref={`/admin/crm/${deal.id}`}
           initial={{ contactName: deal.name ?? "", company: deal.company ?? "", email: deal.email ?? "", product: deal.product ?? "" }}
         />
       </div>

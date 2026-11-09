@@ -121,7 +121,7 @@ export async function createCheckoutForOffer(offerId: string): Promise<{ url: st
           ...(offer.street && offer.zip && offer.city
             ? { address: { line1: offer.street, postal_code: offer.zip, city: offer.city, country: "DE" } }
             : {}),
-          metadata: { offer_id: offer.id, deal_id: offer.dealId, contact_name: offer.contactName },
+          metadata: { offer_id: offer.id, deal_id: offer.dealId ?? "", sales_contact_id: offer.salesContactId ?? "", contact_name: offer.contactName },
         },
         { idempotencyKey: `offer-customer-${offer.id}` },
       );
@@ -191,10 +191,10 @@ export async function createCheckoutForOffer(offerId: string): Promise<{ url: st
       locale: "de",
       client_reference_id: offer.id,
       integration_identifier: "pg-angebot-qkzvmtrb",
-      metadata: { offer_id: offer.id, deal_id: offer.dealId },
+      metadata: { offer_id: offer.id, deal_id: offer.dealId ?? "", sales_contact_id: offer.salesContactId ?? "" },
       subscription_data: {
         description: `Leadgenerierung + Software (${products}) – Angebot ${offer.number}`,
-        metadata: { offer_id: offer.id, deal_id: offer.dealId, offer_number: offer.number },
+        metadata: { offer_id: offer.id, deal_id: offer.dealId ?? "", sales_contact_id: offer.salesContactId ?? "", offer_number: offer.number },
         billing_mode: { type: "flexible" },
       },
       success_url: `${base}/angebot/${offer.token}?zahlung=ok`,

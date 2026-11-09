@@ -53,7 +53,7 @@ const fmt = (iso: string) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 
-export function DealOffersCard({ dealId, offers, appUrl }: { dealId: string; offers: DealOfferRow[]; appUrl: string }) {
+export function DealOffersCard({ newOfferHref, offers, appUrl }: { newOfferHref: string; offers: DealOfferRow[]; appUrl: string }) {
   const [msg, setMsg] = useState<string | null>(null);
   const flash = (m: string) => {
     setMsg(m);
@@ -85,7 +85,7 @@ export function DealOffersCard({ dealId, offers, appUrl }: { dealId: string; off
         <CardHeader
           title="Angebot"
           icon={FileText}
-          actions={<ButtonLink href={`/admin/crm/${dealId}/angebot`} variant={current ? "secondary" : "primary"} icon={Plus}>{current ? "Neue Version" : "Angebot erstellen"}</ButtonLink>}
+          actions={<ButtonLink href={newOfferHref} variant={current ? "secondary" : "primary"} icon={Plus}>{current ? "Neue Version" : "Angebot erstellen"}</ButtonLink>}
         />
         {!current ? (
           <p className="px-5 py-4 text-sm text-[color:var(--muted)]">Noch kein Angebot. Erstelle es direkt im Gespräch – der Interessent kann es online annehmen.</p>

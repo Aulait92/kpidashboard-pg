@@ -81,3 +81,13 @@ body {
   background-size: 200% 100%;
   animation: ui-shimmer 1.4s linear infinite;
 }
+
+/* ─── Vertrieb (aus dem Cold CRM übernommen) ─────────────────────────────
+   Hilfsklassen der übernommenen Vertriebsseiten, auf unsere Tokens gemappt. */
+@utility card { @apply rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]; }
+@utility btn { @apply inline-flex items-center justify-center gap-1 rounded-[var(--radius-sm)] px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50; }
+@utility btn-primary { @apply btn bg-[color:var(--brand)] text-white hover:bg-[color:var(--brand-dark)]; }
+@utility btn-ghost { @apply btn border border-[color:var(--border)] bg-white text-slate-700 hover:bg-[color:var(--surface-sunken)]; }
+@utility input { @apply w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 py-1.5 text-sm outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20; }
+@utility label { @apply mb-1 block text-xs font-medium text-[color:var(--muted)]; }
+@utility badge { @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap; }

@@ -9,6 +9,7 @@ import { DealEditForm } from "@/components/deal-edit-form";
 import { DeleteDealButton } from "@/components/delete-deal-button";
 import { DealCloseButton } from "@/components/deal-close-button";
 import { DealOffersCard } from "@/components/deal-offers-card";
+import { toOfferRow } from "@/lib/offer-links";
 import { getAppUrl } from "@/lib/email";
 import { getCurrentSession } from "@/lib/auth";
 import { formatDate, formatEUR } from "@/lib/format";
@@ -183,26 +184,9 @@ export default async function AdminDealDetailPage({
             initialTestCharge={deal.testCharge ?? ""}
           />
           <DealOffersCard
-            dealId={deal.id}
+            newOfferHref={`/admin/crm/${deal.id}/angebot`}
             appUrl={appUrl}
-            offers={deal.offers.map((o) => ({
-              id: o.id,
-              number: o.number,
-              version: o.version,
-              status: o.status,
-              token: o.token,
-              email: o.email,
-              setupFee: Number(o.setupFee),
-              monthlyFee: Number(o.monthlyFee),
-              createdAt: o.createdAt.toISOString(),
-              sentAt: o.sentAt?.toISOString() ?? null,
-              viewedAt: o.viewedAt?.toISOString() ?? null,
-              acceptedAt: o.acceptedAt?.toISOString() ?? null,
-              acceptedName: o.acceptedName,
-              validUntil: o.validUntil.toISOString(),
-              paymentStatus: o.paymentStatus,
-              subscriptionStatus: o.subscriptionStatus,
-            }))}
+            offers={deal.offers.map(toOfferRow)}
           />
           <DealFactsCard deal={deal} extraRows={extraRawRows} />
         </div>

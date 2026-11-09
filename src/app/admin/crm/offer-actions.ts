@@ -9,7 +9,7 @@ import {
   type OfferFormInput,
 } from "@/lib/offers";
 import { prisma } from "@/lib/prisma";
-import { reportError } from "@/lib/monitoring";
+import { logOfferActivity, offerAdminHref, type OfferTarget } from "@/lib/offer-links";
 import {
   findSalesPhaseForStatus,
   SALES_PIPELINE_PHASES,
@@ -28,25 +28,19 @@ export type OfferActionResult =
   | { ok: false; error: string };
 
 export async function createOfferAction(
-  dealId: string,
+  target: OfferTarget,
   input: OfferFormInput,
 ): Promise<OfferActionResult> {
   const session = await requireAdmin();
   try {
-    const offer = await createOffer(dealId, input, session.userId);
-    await prisma.dealActivity
-      .create({
-        data: {
-          dealId,
-          kind: "note",
-          title: `Angebot ${offer.number} erstellt`,
-          body: `${Number(offer.setupFee).toLocaleString("de-DE")} € Setup · ${Number(offer.monthlyFee).toLocaleString("de-DE")} € / Monat (netto)`,
-          metadata: { offerId: offer.id },
-          createdById: session.userId,
-        },
-      })
-      .catch((err) => reportError(err, "offer-activity"));
-    revalidatePath(`/admin/crm/${dealId}`);
+    const offer = await createOffer(target, input, session.userId);
+    await logOfferActivity(
+      offer,
+      `Angebot ${offer.number} erstellt`,
+      `${Number(offer.setupFee).toLocaleString("de-DE")} € Setup · ${Number(offer.monthlyFee).toLocaleString("de-DE")} € / Monat (netto)`,
+      session.userId,
+    );
+    revalidatePath(offerAdminHref(offer));
     return { ok: true, offerId: offer.id };
   } catch (err) {
     return {
@@ -60,7 +54,8 @@ export async function createOfferAction(
 }
 
 /** Deal auf „Angebot verschickt“, solange er noch davor steht. */
-async function advanceDeal(dealId: string) {
+async function advanceDeal(dealId: string | null) {
+  if (!dealId) return;
   const deal = await prisma.deal.findUnique({
     where: { id: dealId },
     select: { status: true },
@@ -81,7 +76,7 @@ export async function markOfferSentAction(
   await requireAdmin();
   const offer = await prisma.offer.findUnique({
     where: { id: offerId },
-    select: { id: true, dealId: true, status: true },
+    select: { id: true, dealId: true, salesContactId: true, number: true, status: true },
   });
   if (!offer) return { ok: false, error: "Angebot nicht gefunden." };
   if (offer.status === "draft") {
@@ -90,8 +85,9 @@ export async function markOfferSentAction(
       data: { status: "sent", sentAt: new Date() },
     });
   }
+  if (offer.salesContactId) await logOfferActivity(offer, `Angebot ${offer.number} als verschickt markiert`);
   await advanceDeal(offer.dealId);
-  revalidatePath(`/admin/crm/${offer.dealId}`);
+  revalidatePath(offerAdminHref(offer));
   return { ok: true };
 }
 
@@ -118,22 +114,17 @@ export async function sendOfferEmailAction(
     replyTo: process.env.OFFER_REPLY_TO ?? session.email ?? null,
   });
   if (!res.ok) return { ok: false, error: res.error };
-  await prisma.$transaction([
-    prisma.offer.update({
-      where: { id: offer.id },
-      data: { status: "sent", sentAt: offer.sentAt ?? new Date() },
-    }),
-    prisma.dealActivity.create({
-      data: {
-        dealId: offer.dealId,
-        kind: "email",
-        title: `Angebot ${offer.number} per E-Mail an ${offer.email} gesendet`,
-        metadata: { offerId: offer.id },
-        createdById: session.userId,
-      },
-    }),
-  ]);
+  await prisma.offer.update({
+    where: { id: offer.id },
+    data: { status: "sent", sentAt: offer.sentAt ?? new Date() },
+  });
+  await logOfferActivity(
+    offer,
+    `Angebot ${offer.number} per E-Mail an ${offer.email} gesendet`,
+    null,
+    session.userId,
+  );
   await advanceDeal(offer.dealId);
-  revalidatePath(`/admin/crm/${offer.dealId}`);
+  revalidatePath(offerAdminHref(offer));
   return { ok: true };
 }

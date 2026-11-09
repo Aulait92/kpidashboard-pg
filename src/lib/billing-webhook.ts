@@ -6,6 +6,7 @@ import type Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
+import { logOfferActivity, offerAdminHref, setContactCustomerStage } from "@/lib/offer-links";
 
 export const HANDLED_EVENTS = [
   "checkout.session.completed",
@@ -53,10 +54,10 @@ async function notify(title: string, body: string, url?: string, tag?: string) {
   await sendToAdmins({ title, body, url, tag }).catch((err) => reportError(err, "billing-push"));
 }
 
-async function logActivity(dealId: string, title: string, body?: string) {
-  await prisma.dealActivity
-    .create({ data: { dealId, kind: "note", title, body: body ?? null } })
-    .catch((err) => reportError(err, "billing-activity"));
+type OfferLike = { dealId: string | null; salesContactId: string | null };
+
+async function logActivity(offer: OfferLike, title: string, body?: string) {
+  await logOfferActivity(offer, title, body ?? null);
 }
 
 export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
@@ -87,23 +88,25 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
           ...(paid ? { paidAt: offer.paidAt ?? new Date() } : {}),
         },
       });
+      // Zahlung eingerichtet (SEPA-Mandat genügt) → Onboarding kann starten.
+      if (!failed) await setContactCustomerStage(offer, "ONBOARDING");
       if (failed) {
-        await logActivity(offer.dealId, `Zahlung für ${offer.number} fehlgeschlagen`);
-        await notify(`⚠️ Zahlung fehlgeschlagen: ${offer.company ?? offer.contactName}`, offer.number, `/admin/crm/${offer.dealId}`);
+        await logActivity(offer, `Zahlung für ${offer.number} fehlgeschlagen`);
+        await notify(`⚠️ Zahlung fehlgeschlagen: ${offer.company ?? offer.contactName}`, offer.number, offerAdminHref(offer));
       } else if (event.type === "checkout.session.completed") {
         await logActivity(
-          offer.dealId,
+          offer,
           paid ? `Zahlung für ${offer.number} eingegangen` : `Zahlung für ${offer.number} eingerichtet (SEPA wird bestätigt)`,
           `Betrag: ${eur(session.amount_total)} brutto`,
         );
         await notify(
           `💶 ${paid ? "Bezahlt" : "Zahlung eingerichtet"}: ${offer.company ?? offer.contactName}`,
           `${offer.number} · ${eur(session.amount_total)}`,
-          `/admin/crm/${offer.dealId}`,
+          offerAdminHref(offer),
           `pay:${offer.id}`,
         );
       } else {
-        await logActivity(offer.dealId, `Zahlung für ${offer.number} bestätigt`);
+        await logActivity(offer, `Zahlung für ${offer.number} bestätigt`);
       }
       return;
     }
@@ -126,8 +129,9 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
         data: { stripeSubscriptionId: sub.id, subscriptionStatus: sub.status },
       });
       if (event.type === "customer.subscription.deleted") {
-        await logActivity(offer.dealId, `Abo zu ${offer.number} beendet`);
-        await notify(`Abo beendet: ${offer.company ?? offer.contactName}`, offer.number, `/admin/crm/${offer.dealId}`);
+        await setContactCustomerStage(offer, "GEKUENDIGT");
+        await logActivity(offer, `Abo zu ${offer.number} beendet`);
+        await notify(`Abo beendet: ${offer.company ?? offer.contactName}`, offer.number, offerAdminHref(offer));
       }
       return;
     }
@@ -139,11 +143,11 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       if (!offer) return;
       const label = invoice.number ?? invoice.id;
       if (event.type === "invoice.paid") {
-        await logActivity(offer.dealId, `Rechnung ${label} bezahlt`, eur(invoice.amount_paid));
+        await logActivity(offer, `Rechnung ${label} bezahlt`, eur(invoice.amount_paid));
       } else {
         const what = event.type === "invoice.overdue" ? "überfällig" : "Zahlung fehlgeschlagen";
-        await logActivity(offer.dealId, `Rechnung ${label}: ${what}`, eur(invoice.amount_due));
-        await notify(`⚠️ Rechnung ${what}: ${offer.company ?? offer.contactName}`, `${label} · ${eur(invoice.amount_due)}`, `/admin/crm/${offer.dealId}`);
+        await logActivity(offer, `Rechnung ${label}: ${what}`, eur(invoice.amount_due));
+        await notify(`⚠️ Rechnung ${what}: ${offer.company ?? offer.contactName}`, `${label} · ${eur(invoice.amount_due)}`, offerAdminHref(offer));
       }
       return;
     }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { Button, Card, CardHeader } from "@/components/ui";
 import { createOfferAction } from "@/app/admin/crm/offer-actions";
+import type { OfferTarget } from "@/lib/offer-links";
 import { computeOfferPrice, eur, PRICE_LIST, withVat, type OfferTerm } from "@/lib/offer-pricing";
 
 const PRODUCT_SUGGESTIONS = [
@@ -28,11 +29,13 @@ const num = (v: string): number | null => {
 };
 
 export function OfferForm({
-  dealId,
+  target,
+  backHref,
   initial,
 }: {
-  dealId: string;
-  initial: { contactName: string; company: string; email: string; product: string };
+  target: OfferTarget;
+  backHref: string;
+  initial: { contactName: string; company: string; email: string; product: string; street?: string; zip?: string; city?: string };
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -41,9 +44,9 @@ export function OfferForm({
   const [contactName, setContactName] = useState(initial.contactName);
   const [company, setCompany] = useState(initial.company);
   const [email, setEmail] = useState(initial.email);
-  const [street, setStreet] = useState("");
-  const [zip, setZip] = useState("");
-  const [city, setCity] = useState("");
+  const [street, setStreet] = useState(initial.street ?? "");
+  const [zip, setZip] = useState(initial.zip ?? "");
+  const [city, setCity] = useState(initial.city ?? "");
   const [products, setProducts] = useState([{ name: initial.product || "Privatschutz", daily: "30" }]);
   const [term, setTerm] = useState<OfferTerm>("12m");
   const [setupOverride, setSetupOverride] = useState("");
@@ -66,7 +69,7 @@ export function OfferForm({
   function submit() {
     setError(null);
     start(async () => {
-      const res = await createOfferAction(dealId, {
+      const res = await createOfferAction(target, {
         contactName,
         company,
         email,
@@ -87,7 +90,7 @@ export function OfferForm({
         setError(res.error);
         return;
       }
-      router.push(`/admin/crm/${dealId}#angebot`);
+      router.push(`${backHref}#angebot`);
       router.refresh();
     });
   }
@@ -212,7 +215,7 @@ export function OfferForm({
               Angebot erstellen
             </Button>
             <p className="text-xs text-[color:var(--muted)]">
-              Die Konditionen werden beim Erstellen eingefroren. Ein früheres offenes Angebot zu diesem Deal wird automatisch ersetzt.
+              Die Konditionen werden beim Erstellen eingefroren. Ein früheres offenes Angebot an diesen Kontakt wird automatisch ersetzt.
             </p>
           </div>
         </Card>
