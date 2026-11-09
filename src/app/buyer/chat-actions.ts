@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getCurrentSession } from "@/lib/auth";
+import { getBuyerContext } from "@/lib/buyer-context";
+import { appointmentScope, conversationScope } from "@/lib/team";
 import { cancelAppointment } from "@/lib/calendar";
 import { prisma } from "@/lib/prisma";
 import { recordUsage } from "@/lib/usage";
@@ -13,9 +14,10 @@ import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
 // Admin-Vorschau ist schreibgeschützt (verlangt role=BUYER).
 
 async function requireBuyer() {
-  const session = await getCurrentSession();
-  if (!session || session.role !== "BUYER" || !session.customerId) return null;
-  return session as typeof session & { customerId: string };
+  const ctx = await getBuyerContext();
+  if (!ctx || ctx.preview || !ctx.userId) return null;
+  // Team: Berater sehen/bearbeiten nur Chats ihrer eigenen Leads.
+  return { ...ctx, userId: ctx.userId, conv: conversationScope(ctx), appt: appointmentScope(ctx) };
 }
 
 function chatUrl(conversationId: string, err?: string) {
@@ -30,7 +32,7 @@ export async function toggleBotBuyerAction(formData: FormData): Promise<void> {
   const session = await requireBuyer();
   if (!session) redirect(chatUrl(conversationId, "preview"));
   const conv = await prisma.conversation.findFirst({
-    where: { id: conversationId, customerId: session.customerId },
+    where: { id: conversationId, ...session.conv },
     select: { id: true, botActive: true },
   });
   if (!conv) redirect("/buyer/chats");
@@ -53,7 +55,7 @@ export async function sendReplyBuyerAction(formData: FormData): Promise<void> {
   const session = await requireBuyer();
   if (!session) redirect(chatUrl(conversationId, "preview"));
   const conv = await prisma.conversation.findFirst({
-    where: { id: conversationId, customerId: session.customerId },
+    where: { id: conversationId, ...session.conv },
     select: { id: true, contactPhone: true, windowExpiresAt: true },
   });
   if (!conv) redirect("/buyer/chats");
@@ -91,7 +93,10 @@ export async function cancelAppointmentBuyerAction(formData: FormData): Promise<
   const session = await requireBuyer();
   if (!session) redirect(chatUrl(conversationId, "preview"));
   try {
-    // cancelAppointment prüft customerId → fremde Termine sind nicht absagbar.
+    // cancelAppointment prüft customerId → fremde Termine sind nicht absagbar;
+    // Berater nur eigene Termine.
+    const own = await prisma.appointment.count({ where: { id: appointmentId, ...session.appt } });
+    if (!own) redirect(chatUrl(conversationId));
     await cancelAppointment(appointmentId, session.customerId);
     await recordUsage("action", "appointment.cancel");
   } catch (err) {
@@ -107,7 +112,7 @@ export async function markChatDoneBuyerAction(formData: FormData): Promise<void>
   const session = await requireBuyer();
   if (!session) redirect(chatUrl(conversationId, "preview"));
   await prisma.conversation.updateMany({
-    where: { id: conversationId, customerId: session.customerId },
+    where: { id: conversationId, ...session.conv },
     data: { needsAttention: false, attentionReason: null, attentionAt: null },
   });
   await recordUsage("action", "chat.done");
@@ -125,7 +130,7 @@ export async function followupBuyerAction(formData: FormData): Promise<void> {
   const session = await requireBuyer();
   if (!session) redirect(chatUrl(conversationId, "preview"));
   const conv = await prisma.conversation.findFirst({
-    where: { id: conversationId, customerId: session.customerId },
+    where: { id: conversationId, ...session.conv },
     select: { id: true, contactPhone: true, contactName: true, leadId: true },
   });
   if (!conv) redirect("/buyer/chats");

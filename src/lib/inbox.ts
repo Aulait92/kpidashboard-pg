@@ -5,6 +5,7 @@
 import { prisma } from "@/lib/prisma";
 import { getCallbackLeads } from "@/lib/whatsapp/outreach";
 import { getOrCreateBookingSlug } from "@/lib/calendar";
+import { appointmentScope, conversationScope, isAdvisor, leadScope, type TeamCtx } from "@/lib/team";
 
 const TZ = "Europe/Berlin";
 const DAY = 24 * 60 * 60 * 1000;
@@ -61,7 +62,9 @@ export type InboxData = {
   bookingSlug: string | null;
 };
 
-export async function loadInbox(customerId: string): Promise<InboxData> {
+export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
+  const customerId = ctx.customerId;
+  const apptScope = appointmentScope(ctx);
   const now = new Date();
   const todayStart = berlinDayStart(now);
   const tomorrowEnd = new Date(todayStart.getTime() + 2 * DAY);
@@ -69,7 +72,7 @@ export async function loadInbox(customerId: string): Promise<InboxData> {
   const [upcoming, past, chats, callbacks, cal, followUps] = await Promise.all([
     prisma.appointment.findMany({
       where: {
-        customerId,
+        ...apptScope,
         status: "booked",
         startsAt: { gte: new Date(now.getTime() - 60 * 60 * 1000), lt: tomorrowEnd },
       },
@@ -87,7 +90,7 @@ export async function loadInbox(customerId: string): Promise<InboxData> {
     }),
     prisma.appointment.findMany({
       where: {
-        customerId,
+        ...apptScope,
         status: "booked",
         leadId: { not: null },
         startsAt: { lt: new Date(now.getTime() - 30 * 60 * 1000), gt: new Date(now.getTime() - 30 * DAY) },
@@ -97,15 +100,15 @@ export async function loadInbox(customerId: string): Promise<InboxData> {
       select: { id: true, startsAt: true, mode: true, leadId: true, lead: { select: { name: true, status: true } } },
     }),
     prisma.conversation.findMany({
-      where: { customerId, needsAttention: true },
+      where: { ...conversationScope(ctx), needsAttention: true },
       orderBy: { attentionAt: "desc" },
       select: { id: true, contactName: true, contactPhone: true, attentionReason: true, attentionAt: true },
     }),
-    getCallbackLeads(customerId),
+    getCallbackLeads(customerId, isAdvisor(ctx) ? leadScope(ctx) : undefined),
     prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true } }),
     prisma.lead.findMany({
       where: {
-        customerId,
+        ...leadScope(ctx),
         followUpAt: { lt: new Date(todayStart.getTime() + DAY) },
         NOT: { status: { in: POST_STATUSES.filter((x) => x !== "Angebot gesendet") } },
       },

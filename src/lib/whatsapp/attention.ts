@@ -4,12 +4,13 @@
 // an den Kunden; zurückgesetzt wird beim Antworten oder per „Erledigt".
 
 import { prisma } from "@/lib/prisma";
-import { sendToBuyersOfCustomer } from "@/lib/push";
+import { sendToBuyersOfCustomer, sendToUser } from "@/lib/push";
+import { conversationScope, type TeamCtx } from "@/lib/team";
 
 export async function flagAttention(conversationId: string, reason: string): Promise<void> {
   const conv = await prisma.conversation.findUnique({
     where: { id: conversationId },
-    select: { id: true, customerId: true, contactName: true, contactPhone: true, needsAttention: true },
+    select: { id: true, customerId: true, contactName: true, contactPhone: true, needsAttention: true, assignedUserId: true, lead: { select: { assignedUserId: true } } },
   });
   if (!conv) return;
   await prisma.conversation.update({
@@ -17,12 +18,17 @@ export async function flagAttention(conversationId: string, reason: string): Pro
     data: { needsAttention: true, attentionReason: reason.slice(0, 200), attentionAt: new Date() },
   });
   if (conv.needsAttention) return; // schon markiert → kein zweiter Push
-  await sendToBuyersOfCustomer(conv.customerId, {
+  const payload = {
     title: `💬 ${conv.contactName ?? `+${conv.contactPhone}`} braucht dich`,
     body: reason.slice(0, 140),
     tag: `chat-attention:${conv.id}`,
     url: `/buyer/chats?c=${conv.id}`,
-  }).catch((e) => console.error("[attention push]", e));
+  };
+  // Team: nur der zuständige Berater bekommt den Push.
+  const assignee = conv.lead?.assignedUserId ?? conv.assignedUserId;
+  await (assignee ? sendToUser(assignee, payload) : sendToBuyersOfCustomer(conv.customerId, payload)).catch((e) =>
+    console.error("[attention push]", e),
+  );
 }
 
 export async function clearAttention(conversationId: string): Promise<void> {
@@ -32,6 +38,6 @@ export async function clearAttention(conversationId: string): Promise<void> {
   });
 }
 
-export async function attentionCount(customerId: string): Promise<number> {
-  return prisma.conversation.count({ where: { customerId, needsAttention: true } });
+export async function attentionCount(ctx: TeamCtx): Promise<number> {
+  return prisma.conversation.count({ where: { ...conversationScope(ctx), needsAttention: true } });
 }

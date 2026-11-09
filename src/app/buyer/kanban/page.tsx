@@ -11,6 +11,8 @@ import {
 import { LiveUpdated } from "@/components/live-updated";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { getBuyerContext } from "@/lib/buyer-context";
+import type { Prisma } from "@/generated/prisma/client";
+import { leadScope } from "@/lib/team";
 import { parseRangeFromSearchParams } from "@/lib/date-ranges";
 import { prisma } from "@/lib/prisma";
 import { pipelinePhasesFor } from "@/lib/products";
@@ -71,6 +73,7 @@ export default async function BuyerKanbanPage({
         >
           <KanbanBody
             customerId={session.customerId}
+            scope={leadScope(session)}
             range={range}
             rangeKey={`${range.from.toISOString()}-${range.to.toISOString()}`}
           />
@@ -82,10 +85,12 @@ export default async function BuyerKanbanPage({
 
 async function KanbanBody({
   customerId,
+  scope,
   range,
   rangeKey,
 }: {
   customerId: string;
+  scope: Prisma.LeadWhereInput;
   range: { from: Date; to: Date };
   // ISO-Range als React-Key-Stabilizer für die KanbanBoard. Wechselt der
   // Buyer den Zeitraum, ändert sich der Key → KanbanBoard remountet,
@@ -96,7 +101,7 @@ async function KanbanBody({
 }) {
   const leadRows = await prisma.lead.findMany({
     where: {
-      customerId,
+      ...scope,
       createdAt: { gte: range.from, lte: range.to },
     },
     orderBy: { createdAt: "desc" },

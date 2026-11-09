@@ -17,6 +17,7 @@ const dateFmt = (d: Date) =>
 export default async function SetupPage({ searchParams }: { searchParams: Promise<{ gcal?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
+  if (ctx.teamRole === "advisor") redirect("/buyer");
   const ob = await loadOnboarding({ customerId: ctx.customerId });
   if (!ob) redirect("/buyer");
   const { gcal } = await searchParams;

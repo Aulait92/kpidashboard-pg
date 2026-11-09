@@ -17,13 +17,26 @@ export type BuyerContext = {
   email: string;
   /** true = Admin-Vorschau („Als Kunde ansehen"), schreibgeschützt. */
   preview: boolean;
+  /** Login-ID (null in der Admin-Vorschau). */
+  userId: string | null;
+  /** Team: owner = Inhaber (sieht alles), advisor = Berater (nur eigene Leads). */
+  teamRole: "owner" | "advisor";
 };
 
 export async function getBuyerContext(): Promise<BuyerContext | null> {
   const session = await getCurrentSession();
   if (!session) return null;
   if (session.role === "BUYER" && session.customerId) {
-    return { customerId: session.customerId, email: session.email, preview: false };
+    const u = await prisma.user.findUnique({ where: { id: session.userId }, select: { teamRole: true, customerId: true } });
+    // Login gelöscht oder Kunde gewechselt → keine Sicht mehr.
+    if (!u || u.customerId !== session.customerId) return null;
+    return {
+      customerId: session.customerId,
+      email: session.email,
+      preview: false,
+      userId: session.userId,
+      teamRole: u.teamRole === "advisor" ? "advisor" : "owner",
+    };
   }
   if (session.role === "ADMIN") {
     const id = (await cookies()).get(VIEW_AS_COOKIE)?.value;
@@ -32,7 +45,7 @@ export async function getBuyerContext(): Promise<BuyerContext | null> {
       where: { id },
       select: { id: true },
     });
-    if (customer) return { customerId: customer.id, email: session.email, preview: true };
+    if (customer) return { customerId: customer.id, email: session.email, preview: true, userId: null, teamRole: "owner" };
   }
   return null;
 }

@@ -27,6 +27,7 @@ import {
 import { sendLeadEmail } from "@/lib/calendar/lead-email";
 import { recordLeadProgress } from "@/lib/lead-progress";
 import { sendToBuyersOfCustomer } from "@/lib/push";
+import { notifyLeadPush } from "@/lib/team";
 import { loadConnection, type Busy, type CreatedEvent, type NewEvent } from "@/lib/calendar/tokens";
 
 export type { CalendarProvider } from "@/lib/calendar/tokens";
@@ -238,12 +239,15 @@ export async function bookAppointment(opts: {
   });
   // Push an den Kunden: neuer Termin (nicht bei Verschiebung).
   if (opts.notifyLead !== "rescheduled") {
-    await sendToBuyersOfCustomer(opts.customerId, {
+    const payload = {
       title: `📅 Neuer Termin: ${opts.leadName ?? "Lead"}`,
       body: `${new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }).format(start)} Uhr · ${opts.mode === "video" ? "Videocall" : "Telefonat"}`,
       tag: `appt:${appt.id}`,
       url: "/buyer",
-    }).catch((e) => console.error("[appt push]", e));
+    };
+    // Team: nur an den zuständigen Berater.
+    if (opts.leadId) await notifyLeadPush(opts.leadId, payload);
+    else await sendToBuyersOfCustomer(opts.customerId, payload).catch((e) => console.error("[appt push]", e));
   }
   // CRM mitführen: Termin ⇒ In Beratung, Erstkontakt setzen (DB + Airtable).
   if (opts.notifyLead !== "rescheduled") {
@@ -348,12 +352,14 @@ export async function cancelAppointment(
   // CRM: Lead zählt nicht mehr als Termin (außer es ist noch einer gebucht).
   await recordLeadProgress(appt.leadId, "cancelled");
   if (by === "lead") {
-    await sendToBuyersOfCustomer(customerId, {
+    const payload = {
       title: "❌ Termin abgesagt",
       body: "Ein Lead hat seinen Termin abgesagt und steht jetzt in deiner Rückrufliste.",
       tag: `appt-cancel:${appt.id}`,
       url: "/buyer/leads",
-    }).catch((e) => console.error("[appt push]", e));
+    };
+    if (appt.leadId) await notifyLeadPush(appt.leadId, payload);
+    else await sendToBuyersOfCustomer(customerId, payload).catch((e) => console.error("[appt push]", e));
   }
   if (notifyLead) {
     await sendLeadEmail(appt.id, "cancelled").catch((e) => console.error("[lead email]", e));

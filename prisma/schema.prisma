@@ -317,6 +317,9 @@ model Lead {
   emailedAt            DateTime?
   // Meta-Lead-ID (leadgen_id) bei direkt eingegangenen Leads – gegen Dubletten
   externalId           String?   @unique
+  // Zuständiger Berater (Team-Kunden); leer = Inhaber/alle
+  assignedUserId       String?
+  assignedUser         User?     @relation("LeadAssignee", fields: [assignedUserId], references: [id], onDelete: SetNull)
   // Rückrufliste: „Nicht erreicht" geklickt → bis dahin ausgeblendet.
   callbackSnoozedUntil DateTime?
   // Wiedervorlage: „Ruf mich in 1 Woche an", Angebot nachfassen … erscheint
@@ -352,6 +355,7 @@ model Lead {
   appointments  Appointment[]
 
   @@index([customerId, createdAt])
+  @@index([assignedUserId])
   @@index([createdAt])
   @@index([customerId, phone])
 }
@@ -439,13 +443,21 @@ enum UserRole {
 // Auth-Accounts. Admins sehen das ganze Dashboard, Buyer nur die eigene
 // Customer-Sicht (customerId verknüpft, NULL für Admins).
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String
-  role         UserRole
-  customerId   String?
-  createdAt    DateTime  @default(now())
-  lastLoginAt  DateTime?
+  id                 String           @id @default(cuid())
+  email              String           @unique
+  passwordHash       String
+  role               UserRole
+  customerId         String?
+  createdAt          DateTime         @default(now())
+  lastLoginAt        DateTime?
+  // Team (Großkunden): owner = Inhaber (sieht alles), advisor = Berater (nur eigene Leads)
+  teamRole           String           @default("owner")
+  displayName        String?
+  // Bekommt bei der Verteilung neue Leads
+  receivesLeads      Boolean          @default(true)
+  lastLeadAssignedAt DateTime?
+  assignedLeads      Lead[]           @relation("LeadAssignee")
+  advisorCalendar    AdvisorCalendar?
 
   customer       Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull)
   resetTokens    PasswordResetToken[]
@@ -701,6 +713,8 @@ model Appointment {
   // Getrennte Einladung für den Berater (interne Infos), gleicher Termin.
   // calendarEventId = Einladung des Leads (kundenfreundlich, ohne Interna).
   advisorEventId  String?
+  // In welchem Kalender der Termin liegt: Kunden-ID oder „user:<id>“ (Berater)
+  calendarKey     String?
   // Geheimer Link für den Lead: /book/manage/<token> (absagen/verschieben).
   manageToken     String?   @unique
   cancelledAt     DateTime?
@@ -1248,4 +1262,26 @@ model UnassignedLead {
   resolvedAt DateTime?
 
   @@index([formId, resolvedAt])
+}
+
+// Eigener Kalender eines Beraters (Team-Kunden). Kunden-Kalender des Inhabers
+// bleibt CalendarConnection; die Kalender-Funktionen unterscheiden über den
+// Schlüssel „user:<userId>“.
+model AdvisorCalendar {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customerId      String
+  provider        String    @default("google")
+  accountEmail    String?
+  calendarId      String    @default("primary")
+  accessTokenEnc  String?
+  refreshTokenEnc String?
+  tokenExpiresAt  DateTime?
+  scope           String?
+  status          String    @default("pending")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([customerId])
 }

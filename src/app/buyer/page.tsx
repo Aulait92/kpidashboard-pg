@@ -22,11 +22,12 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
   if (!(await hasWhatsAppInbox(ctx.customerId))) {
     return <ZahlenPage searchParams={searchParams} />;
   }
-  const [data, customer] = await Promise.all([
-    loadInbox(ctx.customerId),
+  const [data, customer, me] = await Promise.all([
+    loadInbox(ctx),
     prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true } }),
+    ctx.teamRole === "advisor" && ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true } }) : null,
   ]);
-  const first = (customer?.name ?? "").replace(/^Allianz\s+/i, "").split(" ")[0];
+  const first = (me?.displayName ?? (customer?.name ?? "").replace(/^Allianz\s+/i, "")).split(" ")[0];
   const hour = Number(
     new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", hourCycle: "h23" }).format(new Date()),
   );

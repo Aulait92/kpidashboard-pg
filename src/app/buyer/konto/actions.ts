@@ -12,7 +12,7 @@ import { reportError } from "@/lib/monitoring";
 /** Öffnet das Stripe-Kundenportal (nur der Kunde selbst, nicht in der Admin-Vorschau). */
 export async function openPortalAction() {
   const ctx = await getBuyerContext();
-  if (!ctx || ctx.preview) redirect("/buyer/konto?portal=vorschau");
+  if (!ctx || ctx.preview || ctx.teamRole === "advisor") redirect("/buyer/konto?portal=vorschau");
   const customer = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { stripeCustomerId: true } });
   if (!customer?.stripeCustomerId) redirect("/buyer/konto?portal=fehlt");
   let url: string;
@@ -30,6 +30,7 @@ export type PauseFormState = { ok?: boolean; error?: string };
 async function customerOnly() {
   const ctx = await getBuyerContext();
   if (!ctx || ctx.preview) throw new Error("In der Vorschau nicht möglich.");
+  if (ctx.teamRole === "advisor") throw new Error("Nur der Inhaber kann das ändern.");
   return ctx;
 }
 

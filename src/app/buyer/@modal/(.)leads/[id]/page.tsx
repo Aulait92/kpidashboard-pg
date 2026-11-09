@@ -23,7 +23,7 @@ export default async function BuyerLeadModal({
   const { id } = await params;
   return (
     <LeadDetailModalShell>
-      <LeadDetailBody leadId={id} customerId={session.customerId} />
+      <LeadDetailBody leadId={id} team={session} />
     </LeadDetailModalShell>
   );
 }

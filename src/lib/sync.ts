@@ -8,7 +8,9 @@ import {
 import { syncOutbrain, type OutbrainSyncResult } from "@/lib/outbrain";
 import { syncTikTok, type TikTokSyncResult } from "@/lib/tiktok";
 import { syncGoogleAds, type GoogleSyncResult } from "@/lib/google";
-import { sendToAdmins, sendToBuyersOfCustomer } from "@/lib/push";
+import { sendToAdmins, sendToBuyersOfCustomer, sendToUser } from "@/lib/push";
+import { assignLead } from "@/lib/team";
+import { prisma } from "@/lib/prisma";
 
 export type FullSyncResult = {
   airtable: SyncResult;
@@ -132,12 +134,16 @@ export async function runFullSync(): Promise<FullSyncResult> {
   // Notification.
   for (const lead of airtable.newLeads) {
     const leadName = lead.name ?? "ohne Name";
-    const buyerRes = await sendToBuyersOfCustomer(lead.customerId, {
+    const payload = {
       title: `🆕 Neuer Lead: ${leadName}`,
       body: lead.product,
       tag: `lead-buyer:${lead.airtableId}`,
       url: "/buyer",
-    });
+    };
+    // Team (Großkunden): gleichmäßig zuteilen, Push nur an den Zuständigen.
+    const row = await prisma.lead.findUnique({ where: { airtableId: lead.airtableId }, select: { id: true } }).catch(() => null);
+    const assignee = row ? await assignLead(row.id).catch(() => null) : null;
+    const buyerRes = assignee ? await sendToUser(assignee, payload) : await sendToBuyersOfCustomer(lead.customerId, payload);
     pushSent += buyerRes.sent;
     pushRemoved += buyerRes.removed;
   }

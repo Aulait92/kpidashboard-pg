@@ -13,6 +13,7 @@ export type SetupState = { ok?: boolean; error?: string };
 async function requireCustomer() {
   const ctx = await getBuyerContext();
   if (!ctx || ctx.preview) throw new Error("In der Vorschau nicht möglich.");
+  if (ctx.teamRole === "advisor") throw new Error("Nur der Inhaber kann das ändern.");
   const ob = await prisma.onboarding.findUnique({ where: { customerId: ctx.customerId }, include: { customer: { select: { name: true } } } });
   if (!ob) throw new Error("Kein Onboarding gefunden.");
   return { ctx, ob };

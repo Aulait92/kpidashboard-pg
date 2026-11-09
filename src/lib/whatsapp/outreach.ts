@@ -11,6 +11,7 @@
 //      möglich war oder 24 h danach noch kein Termin steht.
 
 import { recordLeadProgress } from "@/lib/lead-progress";
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   firstNameOf,
@@ -198,10 +199,11 @@ export async function hasWhatsAppOutreach(customerId: string): Promise<boolean> 
  * und WhatsApp hat nicht zum Termin geführt (nicht zustellbar oder 24 h nach
  * dem Anschreiben bzw. Eingang noch kein Termin).
  */
-export async function getCallbackLeads(customerId: string): Promise<CallbackLead[]> {
+export async function getCallbackLeads(customerId: string, scope?: Prisma.LeadWhereInput): Promise<CallbackLead[]> {
   const now = Date.now();
   const leads = await prisma.lead.findMany({
     where: {
+      ...(scope ?? {}),
       customerId,
       createdAt: { gte: new Date(now - CALLBACK_WINDOW_MS) },
       AND: [

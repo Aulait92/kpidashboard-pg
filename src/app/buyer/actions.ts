@@ -60,9 +60,11 @@ export async function cancelLeadAction(
     return { error: "Bitte einen Stornogrund auswählen.", leadId };
   }
 
-  // Zugriffsschutz: Buyer darf nur eigene Leads stornieren.
+  // Zugriffsschutz: Buyer darf nur eigene Leads stornieren (Berater nur zugewiesene).
+  const writeCustomerId = await writableCustomerId(leadId);
+  if (!writeCustomerId) return { error: "Lead nicht gefunden.", leadId };
   const lead = await prisma.lead.findFirst({
-    where: { id: leadId, customerId: session.customerId },
+    where: { id: leadId, customerId: writeCustomerId },
     select: {
       id: true,
       airtableId: true,

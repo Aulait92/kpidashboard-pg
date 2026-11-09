@@ -33,6 +33,7 @@ const PORTAL_MSG: Record<string, string> = {
 export default async function AccountPage({ searchParams }: { searchParams: Promise<{ portal?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
+  if (ctx.teamRole === "advisor") redirect("/buyer");
   const { portal } = await searchParams;
   const customer = await prisma.customer.findUnique({
     where: { id: ctx.customerId },

@@ -8,7 +8,8 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { normalizePhone } from "@/lib/whatsapp/phone";
 import { attachLeadToContact } from "@/lib/whatsapp/lead-link";
-import { sendToAdmins, sendToBuyersOfCustomer } from "@/lib/push";
+import { sendToAdmins } from "@/lib/push";
+import { assignLead, notifyLeadPush } from "@/lib/team";
 import { reportError } from "@/lib/monitoring";
 import { runOutreach } from "@/lib/whatsapp/outreach";
 import { emailLeads } from "@/lib/onboarding-cron";
@@ -181,13 +182,15 @@ export async function processNewLead(leadId: string) {
     select: { id: true, name: true, source: true, customerId: true, customer: { select: { plan: true } } },
   });
   if (!lead) return;
+  // Team (Großkunden): gleichmäßig zuteilen, Push nur an den Zuständigen.
+  await assignLead(lead.id).catch((err) => reportError(err, "lead-intake-assign"));
   await attachLeadToContact(lead.id).catch((err) => reportError(err, "lead-intake-attach"));
-  await sendToBuyersOfCustomer(lead.customerId, {
+  await notifyLeadPush(lead.id, {
     title: `🆕 Neuer Lead: ${lead.name ?? "ohne Name"}`,
     body: lead.source ?? "",
     tag: `lead-buyer:${lead.id}`,
     url: "/buyer",
-  }).catch(() => {});
+  });
   {
     await emailLeads(new Date(), lead.customerId).catch((err) => reportError(err, "lead-intake-email"));
   }

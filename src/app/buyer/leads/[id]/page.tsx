@@ -39,7 +39,7 @@ export default async function LeadDetailPage({
         <ArrowLeft className="h-3 w-3" />
         {backLabel}
       </Link>
-      <LeadDetailBody leadId={id} customerId={session.customerId} />
+      <LeadDetailBody leadId={id} team={session} />
     </main>
   );
 }

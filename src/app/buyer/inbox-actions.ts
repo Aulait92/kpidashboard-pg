@@ -8,6 +8,7 @@
 import { revalidatePath } from "next/cache";
 import { updateLeadEditableFields } from "@/lib/airtable-write";
 import { getBuyerContext } from "@/lib/buyer-context";
+import { conversationScope } from "@/lib/team";
 import { writableCustomerId } from "@/lib/buyer-write";
 import { syncFollowUpWithStatus, workdaysFromNow } from "@/lib/lead-followup";
 import { prisma } from "@/lib/prisma";
@@ -219,7 +220,7 @@ export async function chatDoneResult(conversationId: string): Promise<InboxResul
   const ctx = await getBuyerContext();
   if (!ctx) return { ok: false, error: "Nicht angemeldet." };
   const conv = await prisma.conversation.findFirst({
-    where: { id: conversationId, customerId: ctx.customerId },
+    where: { id: conversationId, ...conversationScope(ctx) },
     select: { id: true, needsAttention: true, attentionReason: true, attentionAt: true, leadId: true },
   });
   if (!conv) return { ok: false, error: "Chat nicht gefunden." };
@@ -254,7 +255,7 @@ export async function undoInboxAction(undo: UndoSnapshot): Promise<InboxResult> 
     const ctx = await getBuyerContext();
     if (!ctx) return { ok: false, error: "Nicht angemeldet." };
     await prisma.conversation.updateMany({
-      where: { id: undo.conversationId, customerId: ctx.customerId },
+      where: { id: undo.conversationId, ...conversationScope(ctx) },
       data: {
         needsAttention: undo.prev.needsAttention,
         attentionReason: undo.prev.attentionReason,

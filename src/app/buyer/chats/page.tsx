@@ -7,6 +7,7 @@ import { buttonClass } from "@/components/ui";
 import { chooseFollowup } from "@/lib/whatsapp/followup";
 import { SubmitButton } from "@/components/submit-button";
 import { getBuyerContext } from "@/lib/buyer-context";
+import { appointmentScope, conversationScope } from "@/lib/team";
 import { formatDateTime, formatPhone } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { displayProduct, statusLabel, statusToneClass } from "@/lib/products";
@@ -99,12 +100,12 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
     ...(q ? { q } : {}),
   }).toString();
   const attentionTotal = await prisma.conversation.count({
-    where: { customerId: ctx.customerId, needsAttention: true },
+    where: { ...conversationScope(ctx), needsAttention: true },
   });
 
   const conversations = await prisma.conversation.findMany({
     where: {
-      customerId: ctx.customerId,
+      ...conversationScope(ctx),
       ...(filter === "attention" ? { needsAttention: true } : {}),
       ...(q
         ? {
@@ -139,7 +140,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
   // Aktiven Chat NUR mit customerId laden (Mandantentrennung).
   const active = activeId
     ? await prisma.conversation.findFirst({
-        where: { id: activeId, customerId: ctx.customerId },
+        where: { id: activeId, ...conversationScope(ctx) },
         select: {
           id: true,
           contactName: true,
@@ -165,7 +166,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
   const appointments = active
     ? await prisma.appointment.findMany({
         where: {
-          customerId: ctx.customerId,
+          ...appointmentScope(ctx),
           status: "booked",
           OR: [
             { conversationId: active.id },

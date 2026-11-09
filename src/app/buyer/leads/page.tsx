@@ -14,6 +14,7 @@ import { LiveUpdated } from "@/components/live-updated";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { getStornogruendePerLead } from "@/app/buyer/actions";
 import { getBuyerContext } from "@/lib/buyer-context";
+import { isAdvisor, leadScope, type TeamCtx } from "@/lib/team";
 import { parseRangeFromSearchParams } from "@/lib/date-ranges";
 import { loadRetainerConfig } from "@/lib/customer-spend";
 import { prisma } from "@/lib/prisma";
@@ -77,6 +78,7 @@ export default async function BuyerLeadsPage({
         >
           <LeadsBody
             customerId={session.customerId}
+            team={{ customerId: session.customerId, userId: session.userId, teamRole: session.teamRole }}
             range={range}
             q={(sp.q ?? "").trim()}
             rangeParams={{ range: sp.range, from: sp.from, to: sp.to }}
@@ -89,11 +91,13 @@ export default async function BuyerLeadsPage({
 
 async function LeadsBody({
   customerId,
+  team,
   range,
   q,
   rangeParams,
 }: {
   customerId: string;
+  team: TeamCtx;
   range: { from: Date; to: Date };
   q: string;
   rangeParams: { range?: string; from?: string; to?: string };
@@ -101,7 +105,7 @@ async function LeadsBody({
   const qDigits = q.replace(/\D/g, "");
   const leadRows = await prisma.lead.findMany({
     where: {
-      customerId,
+      ...leadScope(team),
       // Bei einer Suche über alle Zeiträume (Rückrufer sind oft älter).
       ...(q
         ? {
@@ -138,7 +142,7 @@ async function LeadsBody({
   // Rückrufliste für alle WhatsApp-Kunden (auch ohne automatisches
   // Erstanschreiben: Antworten ohne Termin, Absagen).
   const whatsapp = await hasWhatsAppInbox(customerId);
-  const callbacks = whatsapp ? await getCallbackLeads(customerId) : [];
+  const callbacks = whatsapp ? await getCallbackLeads(customerId, isAdvisor(team) ? leadScope(team) : undefined) : [];
   const callbackIds = new Set(callbacks.map((c) => c.id));
   const appointments = whatsapp
     ? await prisma.appointment.findMany({

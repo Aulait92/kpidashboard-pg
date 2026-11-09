@@ -15,6 +15,8 @@ import { fetchLeadRecord } from "@/lib/airtable-write";
 import { formatDate, formatEUR } from "@/lib/format";
 import { displayProduct } from "@/lib/products";
 import { prisma } from "@/lib/prisma";
+import { isAdvisor, leadScope, teamMembers, type TeamCtx } from "@/lib/team";
+import { LeadAssignee } from "@/components/lead-assignee";
 import {
   ALL_GROUP_KEYS,
   COMMON_FIELDS,
@@ -116,14 +118,16 @@ function isoDateTimeLocal(raw: string | null): string {
 
 export async function LeadDetailBody({
   leadId,
-  customerId,
+  team,
 }: {
   leadId: string;
-  customerId: string;
+  team: TeamCtx;
 }) {
+  const customerId = team.customerId;
   const lead = await prisma.lead.findFirst({
-    where: { id: leadId, customerId },
+    where: { id: leadId, ...leadScope(team) },
     select: {
+      assignedUserId: true,
       id: true,
       airtableId: true,
       name: true,
@@ -166,6 +170,8 @@ export async function LeadDetailBody({
     /* still mit leer */
   }
   const stornoOptions = stornoOptionsMap.get(lead.id) ?? [];
+  // Team: Inhaber sieht und ändert, wer zuständig ist.
+  const members = isAdvisor(team) ? [] : await teamMembers(customerId);
 
   return (
     <>
@@ -216,6 +222,15 @@ export async function LeadDetailBody({
         <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
           Airtable-Detail konnte nicht geladen werden: {fetchError}
         </div>
+      ) : null}
+
+      {members.length > 1 ? (
+        <LeadAssignee
+          leadId={lead.id}
+          current={lead.assignedUserId}
+          members={members.map((m) => ({ id: m.id, name: m.displayName ?? m.email }))}
+          readOnly={!team.userId}
+        />
       ) : null}
 
       {whatsapp ? <WhatsAppBlock leadId={lead.id} /> : null}

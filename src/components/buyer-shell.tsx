@@ -16,6 +16,7 @@ import {
   Sun,
   TrendingUp,
   Users,
+  UsersRound,
 } from "lucide-react";
 import { logoutAction } from "@/app/login/actions";
 import { ToastProvider, useToast } from "@/components/ui/toast";
@@ -39,9 +40,12 @@ export function BuyerShell({
   showChats,
   chatBadge,
   setupOpen = 0,
+  teamRole = "owner",
   children,
 }: {
   displayName: string;
+  /** owner = Inhaber (Konto, Team), advisor = Berater (nur eigene Leads). */
+  teamRole?: "owner" | "advisor";
   showChats: boolean;
   chatBadge: number;
   /** Offene Einrichtungsschritte (Onboarding) – 0 = Reiter ausblenden. */
@@ -67,10 +71,14 @@ export function BuyerShell({
           match: (p) => p.startsWith("/buyer/chats"),
           badge: chatBadge,
         },
-        { href: "/buyer/zahlen", label: "Zahlen", icon: BarChart3, match: (p) => p.startsWith("/buyer/zahlen") },
+        ...(teamRole === "advisor"
+          ? []
+          : [{ href: "/buyer/zahlen", label: "Zahlen", icon: BarChart3, match: (p: string) => p.startsWith("/buyer/zahlen") }]),
       ]
     : [
-        { href: "/buyer", label: "Übersicht", icon: LayoutDashboard, match: (p) => p === "/buyer" },
+        ...(teamRole === "advisor"
+          ? []
+          : [{ href: "/buyer", label: "Übersicht", icon: LayoutDashboard, match: (p: string) => p === "/buyer" }]),
         { href: "/buyer/leads", label: "Leads", icon: Users, match: (p) => p.startsWith("/buyer/leads") },
         { href: "/buyer/kanban", label: "Pipeline", icon: Columns3, match: (p) => p.startsWith("/buyer/kanban") },
       ];
@@ -120,7 +128,7 @@ export function BuyerShell({
           </nav>
 
           <div className="ml-auto">
-            <ProfileMenu name={displayName} />
+            <ProfileMenu name={displayName} owner={teamRole === "owner"} />
           </div>
         </div>
       </header>
@@ -170,7 +178,7 @@ function Badge({ n }: { n: number }) {
   );
 }
 
-function ProfileMenu({ name }: { name: string }) {
+function ProfileMenu({ name, owner }: { name: string; owner: boolean }) {
   const [open, setOpen] = useState(false);
   const [feedback, setFeedback] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -212,7 +220,7 @@ function ProfileMenu({ name }: { name: string }) {
         <div className="absolute right-0 top-full mt-2 w-56 overflow-hidden rounded-xl border border-[color:var(--border)] bg-white py-1 text-sm shadow-lg">
           <div className="border-b border-[color:var(--border)] px-3 py-2">
             <div className="font-semibold">{name}</div>
-            <div className="text-xs text-[color:var(--muted)]">Dein CRM</div>
+            <div className="text-xs text-[color:var(--muted)]">{owner ? "Dein CRM" : "Berater-Zugang"}</div>
           </div>
           <button
             type="button"
@@ -224,13 +232,24 @@ function ProfileMenu({ name }: { name: string }) {
           >
             <MessageSquareText className="h-4 w-4" /> Etwas unklar? Feedback
           </button>
-          <Link
-            href="/buyer/konto"
-            onClick={() => setOpen(false)}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
-          >
-            <CreditCard className="h-4 w-4" /> Konto &amp; Rechnungen
-          </Link>
+          {owner ? (
+            <>
+              <Link
+                href="/buyer/team"
+                onClick={() => setOpen(false)}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
+              >
+                <UsersRound className="h-4 w-4" /> Team
+              </Link>
+              <Link
+                href="/buyer/konto"
+                onClick={() => setOpen(false)}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
+              >
+                <CreditCard className="h-4 w-4" /> Konto &amp; Rechnungen
+              </Link>
+            </>
+          ) : null}
           <a
             href="https://performancegrowth.de/impressum"
             target="_blank"

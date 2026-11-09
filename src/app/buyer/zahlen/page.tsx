@@ -30,6 +30,7 @@ import {
   formatPercent,
 } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { TeamStats } from "@/components/team-stats";
 
 type SearchParams = Promise<{
   range?: string;
@@ -52,6 +53,8 @@ export default async function BuyerPage({
   if (!session) {
     redirect("/login");
   }
+  // Berater: Zahlen (Kosten, Gewinn) sieht nur der Inhaber.
+  if (session.teamRole === "advisor") redirect("/buyer/leads");
 
   const sp = await searchParams;
   const { key: rangeKey, range } = parseRangeFromSearchParams(sp);
@@ -95,6 +98,7 @@ export default async function BuyerPage({
             customerId={session.customerId}
             range={range}
           />
+          <TeamStats customerId={session.customerId} range={range} />
         </Suspense>
       </main>
     </PullToRefresh>
