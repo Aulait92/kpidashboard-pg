@@ -99,17 +99,6 @@ async function handle(req: Request) {
             unmatched: result.google.result.unmatched,
           }
         : { ok: false, error: result.google.error },
-      sales: result.sales.ok
-        ? {
-            ok: true,
-            records: result.sales.result.records,
-            upserts: result.sales.result.upserts,
-            deletes: result.sales.result.deletes,
-            skipped: result.sales.result.skipped,
-            errors: result.sales.result.errors,
-            productSample: result.sales.result.productSample,
-          }
-        : { ok: false, error: result.sales.error },
       push: result.push,
     });
   } catch (err) {

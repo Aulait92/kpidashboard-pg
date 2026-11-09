@@ -14,7 +14,6 @@ export type OfferTarget = { dealId: string } | { salesContactId: string };
 
 export function offerAdminHref(o: OfferRef): string {
   if (o.salesContactId) return `/admin/vertrieb/kontakte/${o.salesContactId}`;
-  if (o.dealId) return `/admin/crm/${o.dealId}`;
   return "/admin/vertrieb";
 }
 

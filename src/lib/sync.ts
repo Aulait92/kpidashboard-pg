@@ -8,7 +8,6 @@ import {
 import { syncOutbrain, type OutbrainSyncResult } from "@/lib/outbrain";
 import { syncTikTok, type TikTokSyncResult } from "@/lib/tiktok";
 import { syncGoogleAds, type GoogleSyncResult } from "@/lib/google";
-import { syncSales, type SalesSyncResult } from "@/lib/sales";
 import { sendToAdmins, sendToBuyersOfCustomer } from "@/lib/push";
 
 export type FullSyncResult = {
@@ -26,7 +25,6 @@ export type FullSyncResult = {
   google:
     | { ok: true; result: GoogleSyncResult }
     | { ok: false; error: string };
-  sales: { ok: true; result: SalesSyncResult } | { ok: false; error: string };
   push: { sent: number; removed: number };
 };
 
@@ -100,17 +98,6 @@ export async function runFullSync(): Promise<FullSyncResult> {
     };
   }
 
-  let sales: FullSyncResult["sales"];
-  try {
-    const salesResult = await syncSales();
-    sales = { ok: true, result: salesResult };
-  } catch (err) {
-    sales = {
-      ok: false,
-      error: err instanceof Error ? err.message : String(err),
-    };
-  }
-
   let pushSent = 0;
   let pushRemoved = 0;
 
@@ -162,7 +149,6 @@ export async function runFullSync(): Promise<FullSyncResult> {
     outbrain,
     tiktok,
     google,
-    sales,
     push: { sent: pushSent, removed: pushRemoved },
   };
 }

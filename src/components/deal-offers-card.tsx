@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Copy, ExternalLink, FileDown, FileText, Mail, Plus, Send } from "lucide-react";
 import { Badge, Button, ButtonLink, Card, CardHeader } from "@/components/ui";
-import { markOfferSentAction, sendOfferEmailAction } from "@/app/admin/crm/offer-actions";
+import { markOfferSentAction, sendOfferEmailAction } from "@/app/admin/vertrieb/offer-actions";
 
 export type DealOfferRow = {
   id: string;

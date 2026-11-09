@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { Button, Card, CardHeader } from "@/components/ui";
-import { createOfferAction } from "@/app/admin/crm/offer-actions";
+import { createOfferAction } from "@/app/admin/vertrieb/offer-actions";
 import type { OfferTarget } from "@/lib/offer-links";
 import { computeOfferPrice, defaultStartDate, eur, PRICE_LIST, withVat, type OfferPackage, type OfferTerm } from "@/lib/offer-pricing";
 

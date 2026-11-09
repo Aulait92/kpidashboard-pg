@@ -27,6 +27,12 @@ async function handle(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Media Buyer ist abgeschaltet (wird ggf. später reaktiviert): ohne
+  // MEDIA_BUYER_ENABLED=1 steuert er nichts mehr an Meta.
+  if (process.env.MEDIA_BUYER_ENABLED !== "1") {
+    return NextResponse.json({ ok: true, skipped: "Media Buyer ist abgeschaltet (MEDIA_BUYER_ENABLED=1 zum Reaktivieren)." });
+  }
+
   // ?dryRun=1 simuliert nur (loggt + zeigt Entscheidungen, schreibt aber
   // nichts an Meta und schickt keine Push-Benachrichtigungen).
   // ?force=1 überspringt die Normalbetrieb-Drosselung (sofort nachsteuern).

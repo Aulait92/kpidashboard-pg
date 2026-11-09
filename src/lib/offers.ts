@@ -4,7 +4,6 @@
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { getAppUrl } from "@/lib/email";
-import { updateSalesDeal } from "@/lib/airtable-sales-write";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 import { computeOfferPrice, type OfferPackage, type OfferProduct, type OfferTerm } from "@/lib/offer-pricing";
@@ -12,8 +11,6 @@ import { logOfferActivity, offerAdminHref, setContactCustomerStage, type OfferTa
 import { billingEnabled } from "@/lib/billing";
 import { startOnboarding } from "@/lib/onboarding";
 
-export const WON_STATUS = "Serienbetrieb";
-export const OFFER_SENT_STATUS = "Angebot verschickt";
 
 export type OfferFormInput = {
   contactName: string;
@@ -193,40 +190,8 @@ export async function acceptOffer(
       .catch((err) => reportError(err, "offer-accept-contact-update", { offer: offer.number }));
     await logOfferActivity(offer, `Angebot ${offer.number} online angenommen von ${name}`, "Kunden-Pipeline: Vertrag");
   } else if (offer.dealId) {
-    try {
-      const deal = await prisma.deal.findUnique({
-        where: { id: offer.dealId },
-        select: { id: true, airtableId: true, status: true, wonAt: true, closeDate: true },
-      });
-      if (deal) {
-        const closeDate = deal.closeDate ?? now;
-        if (deal.airtableId) {
-          await updateSalesDeal({
-            airtableId: deal.airtableId,
-            status: WON_STATUS,
-            closeDate: closeDate.toISOString().slice(0, 10),
-          });
-        }
-        await prisma.$transaction([
-          prisma.deal.update({
-            where: { id: deal.id },
-            data: { status: WON_STATUS, wonAt: deal.wonAt ?? now, lostAt: null, closeDate },
-          }),
-          prisma.dealActivity.create({
-            data: {
-              dealId: deal.id,
-              kind: "status_change",
-              title: `Angebot ${offer.number} online angenommen von ${name}`,
-              body: `Status: ${deal.status ?? "—"} → ${WON_STATUS}`,
-              metadata: { fromStatus: deal.status, toStatus: WON_STATUS, offerId: offer.id },
-            },
-          }),
-        ]);
-      }
-    } catch (err) {
-      // Die Annahme selbst ist gespeichert; Deal-Status notfalls von Hand nachziehen.
-      reportError(err, "offer-accept-deal-update", { offer: offer.number });
-    }
+    // Altes Deal-Board (abgeschaltet): nur in der Historie vermerken.
+    await logOfferActivity(offer, `Angebot ${offer.number} online angenommen von ${name}`);
   }
 
   // Ohne Online-Zahlung startet das Onboarding direkt mit der Annahme

@@ -4,44 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-// Globale Admin-Navigation. Wird in /admin/crm und /admin/kpis genutzt
-// (und perspektivisch auch in /admin/buyers, /admin/media-buyer, /).
-// usePathname dient nur dem Active-State.
+// Globale Admin-Navigation; usePathname dient nur dem Active-State.
+// Abgeschaltet (Code bleibt): Media Buyer unter /admin/media-buyer.
 const TABS = [
   { href: "/", label: "Dashboard", match: (p: string) => p === "/" },
   { href: "/admin/vertrieb", label: "Vertrieb", match: (p: string) => p.startsWith("/admin/vertrieb") },
-  { href: "/admin/crm", label: "CRM (alt)", match: (p: string) => p.startsWith("/admin/crm") },
+  { href: "/admin/leads", label: "Leads", match: (p: string) => p.startsWith("/admin/leads") },
   { href: "/admin/lead-eingang", label: "Lead-Eingang", match: (p: string) => p.startsWith("/admin/lead-eingang") },
-  {
-    href: "/admin/activities",
-    label: "Aktivitäten",
-    match: (p: string) => p.startsWith("/admin/activities"),
-  },
-  {
-    href: "/admin/kpis",
-    label: "KPIs",
-    match: (p: string) => p.startsWith("/admin/kpis"),
-  },
-  {
-    href: "/admin/media-buyer",
-    label: "Media Buyer",
-    match: (p: string) => p.startsWith("/admin/media-buyer"),
-  },
-  {
-    href: "/admin/buyers",
-    label: "Buyer-Accounts",
-    match: (p: string) => p.startsWith("/admin/buyers"),
-  },
-  {
-    href: "/admin/whatsapp",
-    label: "WhatsApp",
-    match: (p: string) => p.startsWith("/admin/whatsapp"),
-  },
-  {
-    href: "/admin/nutzung",
-    label: "Nutzung",
-    match: (p: string) => p.startsWith("/admin/nutzung"),
-  },
+  { href: "/admin/buyers", label: "Kunden-Logins", match: (p: string) => p.startsWith("/admin/buyers") },
+  { href: "/admin/whatsapp", label: "WhatsApp", match: (p: string) => p.startsWith("/admin/whatsapp") },
+  { href: "/admin/nutzung", label: "Nutzung", match: (p: string) => p.startsWith("/admin/nutzung") },
 ];
 
 /** Admin-Navigation in der Kopfzeile (gleicher Stil wie der Kundenbereich). */

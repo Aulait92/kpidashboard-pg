@@ -3,18 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentSession } from "@/lib/auth";
 import { getAppUrl, sendOfferEmail } from "@/lib/email";
-import {
-  createOffer,
-  OFFER_SENT_STATUS,
-  type OfferFormInput,
-} from "@/lib/offers";
+import { createOffer, type OfferFormInput } from "@/lib/offers";
 import { prisma } from "@/lib/prisma";
 import { customerGreeting, logOfferActivity, offerAdminHref, type OfferTarget } from "@/lib/offer-links";
-import {
-  findSalesPhaseForStatus,
-  SALES_PIPELINE_PHASES,
-} from "@/lib/sales-phases";
-import { setDealStatusAction } from "./actions";
 
 async function requireAdmin() {
   const session = await getCurrentSession();
@@ -53,23 +44,6 @@ export async function createOfferAction(
   }
 }
 
-/** Deal auf „Angebot verschickt“, solange er noch davor steht. */
-async function advanceDeal(dealId: string | null) {
-  if (!dealId) return;
-  const deal = await prisma.deal.findUnique({
-    where: { id: dealId },
-    select: { status: true },
-  });
-  const order = SALES_PIPELINE_PHASES.map((p) => p.key);
-  const current = findSalesPhaseForStatus(deal?.status ?? "");
-  const target = findSalesPhaseForStatus(OFFER_SENT_STATUS);
-  if (!target) return;
-  if (current?.terminal) return;
-  if (current && order.indexOf(current.key) >= order.indexOf(target.key))
-    return;
-  await setDealStatusAction(dealId, OFFER_SENT_STATUS);
-}
-
 export async function markOfferSentAction(
   offerId: string,
 ): Promise<OfferActionResult> {
@@ -86,7 +60,6 @@ export async function markOfferSentAction(
     });
   }
   if (offer.salesContactId) await logOfferActivity(offer, `Angebot ${offer.number} als verschickt markiert`);
-  await advanceDeal(offer.dealId);
   revalidatePath(offerAdminHref(offer));
   return { ok: true };
 }
@@ -124,7 +97,6 @@ export async function sendOfferEmailAction(
     null,
     session.userId,
   );
-  await advanceDeal(offer.dealId);
   revalidatePath(offerAdminHref(offer));
   return { ok: true };
 }
