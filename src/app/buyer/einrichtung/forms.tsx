@@ -52,10 +52,6 @@ export function QuestionnaireForm({ software, initial, readOnly }: { software: b
             </div>
           </fieldset>
           <div>
-            <label className={label} htmlFor="hours">Wann haben Sie Zeit für Termine?</label>
-            <input id="hours" name="hours" className={`${input} mt-1`} placeholder="z. B. Mo–Fr 9–18 Uhr, Sa 10–13 Uhr" defaultValue={initial.hours ?? ""} />
-          </div>
-          <div>
             <label className={label} htmlFor="advisorEmail">E-Mail für Termineinladungen (z. B. Ihre Allianz-Adresse)</label>
             <input id="advisorEmail" name="advisorEmail" type="email" className={`${input} mt-1`} placeholder="vorname.nachname@allianz.de" defaultValue={initial.advisorEmail ?? ""} />
             <p className="mt-1 text-xs text-[color:var(--muted)]">Jeder gebuchte Termin landet so direkt in Ihrem Firmenkalender.</p>

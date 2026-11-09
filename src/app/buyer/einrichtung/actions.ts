@@ -36,12 +36,10 @@ export async function saveQuestionnaireAction(_prev: SetupState, fd: FormData): 
 
   if (software) {
     const formats = ["telefon", "video", "vorOrt"].filter((k) => fd.get(`format_${k}`) === "on");
-    const hours = str(fd, "hours", 300);
     const advisorEmail = str(fd, "advisorEmail", 200).toLowerCase();
     if (formats.length === 0) return { error: "Bitte mindestens eine Terminart wählen." };
-    if (!hours) return { error: "Bitte angeben, wann Sie Zeit für Termine haben." };
     if (advisorEmail && !isEmail(advisorEmail)) return { error: "Die E-Mail-Adresse für Termineinladungen sieht nicht gültig aus." };
-    Object.assign(data, { formats, hours, advisorEmail });
+    Object.assign(data, { formats, advisorEmail });
     if (advisorEmail) {
       await prisma.agentConfig
         .upsert({ where: { customerId: ob.customerId }, create: { customerId: ob.customerId, advisorEmail }, update: { advisorEmail } })
