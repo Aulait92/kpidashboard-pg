@@ -27,6 +27,14 @@ ENV DATABASE_URL=$DATABASE_URL
 # durch, wenn sie hier als ARG deklariert sind.
 ARG NEXT_PUBLIC_SENTRY_DSN
 ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
+
+# Sentry Source-Map-Upload: nur als Build-Arg (kein ENV), damit der Token
+# nicht in der Laufzeit-Umgebung des Containers landet. Ohne Token baut
+# next build normal, nur ohne Upload. Der Wert ändert den Build-Cache-Key,
+# daher baut Railway nach dem Setzen auch wirklich neu.
+ARG SENTRY_AUTH_TOKEN
+# Commit-ID als Sentry-Release (vom SDK automatisch erkannt).
+ARG RAILWAY_GIT_COMMIT_SHA
 RUN npm run build
 
 ENV NODE_ENV=production
