@@ -15,6 +15,7 @@ const PUBLIC_PREFIXES = [
   "/api/whatsapp", // 360dialog-Webhook + Dev-Seed (per WHATSAPP_WEBHOOK_SECRET-Token gesichert)
   "/book", // öffentliche Terminbuchung für Leads (lesbarer Slug je Kunde)
   "/angebot", // Angebote/Auftragsbestätigungen per geheimem Link (Token)
+  "/rechtliches", // AGB und Auftragsverarbeitungsvertrag (öffentlich)
   "/api/ops", // Betriebs-API (Buyer-Accounts anlegen), per ADMIN_API_TOKEN (Bearer) gesichert
   "/api/health", // Healthcheck für Railway/Uptime (gibt nur ok true/false zurück)
   "/manifest.webmanifest",
@@ -42,7 +43,8 @@ export async function middleware(req: NextRequest) {
   if (
     pathname === "/book" ||
     pathname.startsWith("/book/") ||
-    pathname.startsWith("/angebot/")
+    pathname.startsWith("/angebot/") ||
+    pathname.startsWith("/rechtliches/")
   ) {
     const headers = new Headers(req.headers);
     headers.set("x-bare-layout", "1");

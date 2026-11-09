@@ -28,11 +28,19 @@ export default async function OfferPage({
   if (!offer) notFound();
   const doc = toOfferDoc(offer);
 
-  if (print === "1") {
+  // Druckansicht für das PDF: Deckblatt (randlos) und Inhalt (mit Rändern)
+  // werden getrennt gerendert und im PDF-Endpunkt zusammengefügt.
+  if (print === "cover" || print === "body") {
     return (
-      <main className="bg-white px-10 py-10">
-        <style>{"html,body{background:#fff!important}"}</style>
-        <OfferDocument offer={doc} />
+      <main className="bg-white">
+        <style>{`
+          @page { size: A4; margin: ${print === "cover" ? "0" : "16mm 18mm 20mm"}; }
+          html, body { background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .offer-doc { max-width: none !important; }
+          .offer-doc table { table-layout: fixed; }
+          .offer-doc td, .offer-doc th { overflow-wrap: anywhere; }
+        `}</style>
+        <OfferDocument offer={doc} part={print} />
       </main>
     );
   }
@@ -45,7 +53,7 @@ export default async function OfferPage({
   const canAccept = (offer.status === "draft" || offer.status === "sent") && !expired && offer.termsUrl && offer.dpaUrl;
 
   return (
-    <main className="min-h-screen bg-[color:var(--background)] px-4 py-8 sm:py-12">
+    <main className="min-h-screen bg-[#eef2f8] px-3 py-6 sm:px-4 sm:py-12">
       <div className="mx-auto max-w-[920px]">
         <div className="mb-4 flex justify-end">
           <a
@@ -55,10 +63,10 @@ export default async function OfferPage({
             <Download className="h-4 w-4" /> Als PDF herunterladen
           </a>
         </div>
-        <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-6 shadow-[var(--shadow-md)] sm:p-10">
-          <OfferDocument offer={doc} />
-          {offer.status === "accepted" ? null : (
-            <section className="border-t border-[#e3e8f2] pt-8">
+        <OfferDocument offer={doc} />
+        {offer.status === "accepted" ? null : (
+          <div className="mx-auto mt-6 max-w-[880px] rounded-[20px] border border-[#e5e7eb] bg-white px-6 py-8 sm:px-12">
+            <section>
               <h2 className="text-lg font-bold">Angebot annehmen</h2>
               {offer.status === "superseded" ? (
                 <p className="mt-2 text-sm text-[color:var(--muted)]">
@@ -79,8 +87,8 @@ export default async function OfferPage({
                 </p>
               )}
             </section>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </main>
   );

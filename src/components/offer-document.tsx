@@ -1,17 +1,19 @@
 import { CheckCircle2 } from "lucide-react";
+import { LegalSections } from "@/components/legal-sections";
+import { AGB, PROVIDER } from "@/lib/legal-texts";
 import {
   computeOfferPrice,
   eur,
   PRICE_LIST,
-  TERM_LABEL,
   vatOf,
   withVat,
   type OfferProduct,
   type OfferTerm,
 } from "@/lib/offer-pricing";
 
-// Angebot / Auftragsbestätigung im Performancegrowth-Design. Wird auf der
-// öffentlichen Angebotsseite, in der Admin-Vorschau und im PDF genutzt.
+// Angebot / Auftragsbestätigung im Performancegrowth-Design (dunkles Deckblatt,
+// nummerierte Abschnitte, AGB als Bestandteil). Genutzt auf der öffentlichen
+// Angebotsseite und im PDF (Druckansicht).
 
 export type OfferDoc = {
   number: string;
@@ -39,16 +41,6 @@ export type OfferDoc = {
   dpaUrl: string | null;
 };
 
-const TZ = "Europe/Berlin";
-const date = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: TZ, day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
-const dateTime = (d: Date) =>
-  new Intl.DateTimeFormat("de-DE", { timeZone: TZ, day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(d);
-
-function providerLines(): string[] {
-  const raw = process.env.OFFER_PROVIDER_LINES?.trim();
-  return raw ? raw.split("|").map((l) => l.trim()).filter(Boolean) : ["Performancegrowth"];
-}
-
 type OfferRow = Omit<OfferDoc, "setupFee" | "monthlyFee" | "softwareFee" | "introMonthlyFee"> & {
   setupFee: unknown;
   monthlyFee: unknown;
@@ -73,228 +65,284 @@ export function offerProducts(products: unknown): OfferProduct[] {
     : [];
 }
 
-export function OfferDocument({ offer }: { offer: OfferDoc }) {
+const TZ = "Europe/Berlin";
+const date = (d: Date) =>
+  new Intl.DateTimeFormat("de-DE", { timeZone: TZ, day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
+const dateTime = (d: Date) =>
+  new Intl.DateTimeFormat("de-DE", { timeZone: TZ, day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(d);
+const eur2 = (n: number) =>
+  new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", minimumFractionDigits: 2 }).format(n);
+
+const SHORT_NAME = PROVIDER.name.replace(" (haftungsbeschränkt)", "");
+export const PROVIDER_FOOTER = `${SHORT_NAME} · ${PROVIDER.street} · ${PROVIDER.city}`;
+
+export function OfferDocument({ offer, part = "all" }: { offer: OfferDoc; part?: "all" | "cover" | "body" }) {
   const products = offerProducts(offer.products);
   const term = (offer.term === "12m" ? "12m" : "none") as OfferTerm;
   const list = computeOfferPrice({ term, products });
-  const monthlyBudget = list.monthlyBudget;
+  const extra = Math.max(0, products.length - 1);
   const setupIsList = Math.abs(list.setupFee - offer.setupFee) < 0.01;
   const monthlyIsList = list.monthlyFee != null && Math.abs(list.monthlyFee - offer.monthlyFee) < 0.01;
-  const extra = Math.max(0, products.length - 1);
+  const hasIntro = offer.introMonthlyFee != null && !!offer.introMonths;
+  const firstMonth = hasIntro ? offer.introMonthlyFee! : offer.monthlyFee;
+  const startTotal = offer.setupFee + firstMonth;
+  const productNames = products.map((p) => p.name).join(" & ");
 
   return (
-    <article className="offer-doc mx-auto w-full max-w-[860px] bg-white text-[15px] leading-relaxed text-[#111114]">
-      {/* Kopf */}
-      <header className="flex flex-col gap-6 border-b border-[#e3e8f2] pb-8 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2 text-lg font-semibold">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2563EB] text-white">↗</span>
-            performance<span className="text-[#2563EB]">growth</span>
+    <article className="offer-doc mx-auto w-full max-w-[880px] text-[#111827]">
+      {/* ── Deckblatt ─────────────────────────────────────────────── */}
+      {part !== "body" ? (
+      <section className="offer-cover relative overflow-hidden rounded-[20px] bg-[#0b1220] px-8 pb-8 pt-10 text-white sm:px-14 print:h-[297mm] print:rounded-none print:px-[18mm] print:pb-[12mm] print:pt-[18mm]">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_90%_at_100%_100%,rgba(37,99,235,0.45),transparent_60%)]" />
+        <div className="relative flex min-h-[640px] flex-col print:h-full print:min-h-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-[17px] font-semibold">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#2563EB] text-[13px]">↗</span>
+              performance<span className="text-[#7aa2ff]">growth</span>
+            </div>
+            <span className="text-xs text-[#9aa6bd]">performancegrowth.de</span>
           </div>
-          <h1 className="mt-6 text-3xl font-bold tracking-tight">Angebot &amp; Auftragsbestätigung</h1>
-          <p className="mt-1 text-[#5b5e68]">Leadgenerierung + Software für Versicherungsvermittler</p>
-        </div>
-        <dl className="grid grid-cols-[auto_auto] gap-x-4 gap-y-1 text-sm sm:text-right">
-          <dt className="text-[#5b5e68]">Angebot</dt>
-          <dd className="whitespace-nowrap font-semibold">{offer.number}{offer.version > 1 ? ` (Version ${offer.version})` : ""}</dd>
-          <dt className="text-[#5b5e68]">Datum</dt>
-          <dd>{date(offer.createdAt)}</dd>
-          <dt className="text-[#5b5e68]">Gültig bis</dt>
-          <dd>{date(offer.validUntil)}</dd>
-        </dl>
-      </header>
 
-      {/* Parteien */}
-      <section className="grid gap-6 border-b border-[#e3e8f2] py-8 sm:grid-cols-2">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-[#5b5e68]">Für</div>
-          <div className="mt-2">
-            {offer.company ? <div className="font-semibold">{offer.company}</div> : null}
-            <div>{offer.contactName}</div>
-            {offer.street ? <div>{offer.street}</div> : null}
-            {offer.zip || offer.city ? <div>{[offer.zip, offer.city].filter(Boolean).join(" ")}</div> : null}
-          </div>
-        </div>
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-[#5b5e68]">Von</div>
-          <div className="mt-2">
-            {providerLines().map((l, i) => (
-              <div key={i} className={i === 0 ? "font-semibold" : undefined}>{l}</div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Leistungen */}
-      <section className="break-inside-avoid border-b border-[#e3e8f2] py-8">
-        <h2 className="text-lg font-bold">Leistungen</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-xl bg-[#EFF6FF] p-5">
-            <div className="font-semibold">Leadgenerierung</div>
-            <ul className="mt-2 space-y-1 text-sm text-[#33343a]">
-              <li>• Kampagnen auf Facebook &amp; Instagram</li>
-              <li>• Werbemittel und Lead-Formular</li>
-              <li>• Laufende Optimierung und Austausch müder Anzeigen</li>
-              <li>• Exklusive Leads – nur für Sie</li>
-            </ul>
-          </div>
-          <div className="rounded-xl bg-[#EFF6FF] p-5">
-            <div className="font-semibold">Software</div>
-            <ul className="mt-2 space-y-1 text-sm text-[#33343a]">
-              <li>• Digitaler Assistent auf WhatsApp</li>
-              <li>• Terminbuchung im eigenen Kalender inkl. Erinnerungen</li>
-              <li>• „Heute“-Liste, Pipeline und Wiedervorlagen</li>
-              <li>• Zahlen: Kosten pro Lead, Termin und Abschluss</li>
-            </ul>
-          </div>
-        </div>
-
-        <table className="mt-6 w-full text-sm">
-          <thead>
-            <tr className="border-b border-[#e3e8f2] text-left text-[#5b5e68]">
-              <th className="py-2 font-medium">Produkt</th>
-              <th className="py-2 text-right font-medium">pro Tag</th>
-              <th className="whitespace-nowrap py-2 text-right font-medium">≈ pro Monat</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((p, i) => (
-              <tr key={i} className="border-b border-[#eef1f6]">
-                <td className="py-2">{p.name}</td>
-                <td className="whitespace-nowrap py-2 text-right">{eur(p.dailyBudget)}</td>
-                <td className="whitespace-nowrap py-2 text-right">{eur(Math.round(p.dailyBudget * PRICE_LIST.daysPerMonth))}</td>
-              </tr>
-            ))}
-            <tr>
-              <td className="py-2 font-semibold">Gesamt</td>
-              <td />
-              <td className="whitespace-nowrap py-2 text-right font-semibold">{eur(monthlyBudget)}</td>
-            </tr>
-          </tbody>
-        </table>
-        <p className="mt-2 text-xs text-[#5b5e68]">Das Werbebudget zahlen Sie direkt an Meta. Es ist in den Preisen unten nicht enthalten.</p>
-      </section>
-
-      {/* Preise */}
-      <section className="break-inside-avoid border-b border-[#e3e8f2] py-8">
-        <h2 className="text-lg font-bold">Preise</h2>
-        <table className="mt-4 w-full text-sm">
-          <thead>
-            <tr className="border-b border-[#e3e8f2] text-left text-[#5b5e68]">
-              <th className="py-2 font-medium">Position</th>
-              <th className="py-2 text-right font-medium">Netto</th>
-              <th className="hidden whitespace-nowrap py-2 text-right font-medium sm:table-cell print:table-cell">USt. 19 %</th>
-              <th className="py-2 text-right font-medium">Brutto</th>
-            </tr>
-          </thead>
-          <tbody>
-            <PriceRow
-              label="Setup (einmalig)"
-              note={
-                setupIsList
-                  ? `${term === "12m" ? "Mit 12 Monaten Laufzeit" : "Ohne Laufzeit"}${extra ? ` · inkl. ${extra} weiteres Produkt${extra > 1 ? "e" : ""}` : ""}`
-                  : "Sonderkondition"
-              }
-              net={offer.setupFee}
-            />
-            {offer.introMonthlyFee != null && offer.introMonths ? (
-              <PriceRow
-                label={`Betreuung + Software – Monat 1 bis ${offer.introMonths}`}
-                note="Startpreis"
-                net={offer.introMonthlyFee}
-              />
-            ) : null}
-            <PriceRow
-              label={
-                offer.introMonthlyFee != null && offer.introMonths
-                  ? `Betreuung + Software – ab Monat ${offer.introMonths + 1}`
-                  : "Betreuung + Software (monatlich)"
-              }
-              note={
-                monthlyIsList
-                  ? `Werbebudget ${list.tierLabel}${extra ? ` · inkl. ${extra} × ${eur(PRICE_LIST.extraProductMonthly)} für weitere Produkte` : ""}`
-                  : "Sonderkondition"
-              }
-              net={offer.monthlyFee}
-            />
-          </tbody>
-        </table>
-      </section>
-
-      {/* Konditionen */}
-      <section className="break-inside-avoid border-b border-[#e3e8f2] py-8">
-        <h2 className="text-lg font-bold">Konditionen</h2>
-        <ul className="mt-4 space-y-2 text-sm">
-          <Cond>
-            <b>Laufzeit:</b> {TERM_LABEL[term]}
-            {offer.startDate ? `, Start ${date(offer.startDate)}` : ""}.
-          </Cond>
-          <Cond>
-            <b>Pause oder Urlaub jederzeit:</b> Die Anzeigen werden gestoppt, Sie zahlen in dieser Zeit nur die
-            Software ({eur(offer.softwareFee)} netto im Monat).
-          </Cond>
-          <Cond>
-            <b>WhatsApp-Gebühren</b> von Meta werden nach Verbrauch weiterberechnet (meist 10–40 € im Monat).
-          </Cond>
-          <Cond>
-            <b>Garantie:</b> Läuft ein Produkt für Sie nicht profitabel, richten wir ein weiteres Produkt Ihrer Wahl
-            kostenlos ein – so lange, bis Sie ein Produkt haben, mit dem Sie zufrieden sind.
-          </Cond>
-        </ul>
-        {offer.specialTerms ? (
-          <div className="mt-5 rounded-xl border-l-4 border-[#2563EB] bg-[#EFF6FF] px-5 py-4 text-sm">
-            <div className="font-semibold">Sondervereinbarung</div>
-            <p className="mt-1 whitespace-pre-wrap">{offer.specialTerms}</p>
-          </div>
-        ) : null}
-        <p className="mt-4 text-xs text-[#5b5e68]">
-          Alle Preise in Euro, netto zzgl. 19 % USt.
-          {offer.termsUrl ? (
-            <>
-              {" "}Es gelten unsere <a className="underline" href={offer.termsUrl} target="_blank" rel="noreferrer">AGB</a>
-              {offer.dpaUrl ? (
-                <> und der <a className="underline" href={offer.dpaUrl} target="_blank" rel="noreferrer">Auftragsverarbeitungsvertrag</a></>
+          <div className="mt-24 sm:mt-32">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7aa2ff]">
+              Angebot · {date(offer.createdAt)}
+            </p>
+            <h1 className="mt-5 text-[32px] font-bold leading-[1.15] tracking-tight sm:text-[38px]">
+              Leadgenerierung + Software
+              {productNames ? (
+                <>
+                  <br />
+                  <span className="text-[#7aa2ff]">({productNames})</span>
+                </>
               ) : null}
-              .
-            </>
-          ) : null}
-        </p>
-      </section>
+            </h1>
+            <p className="mt-5 max-w-[520px] text-[15px] leading-relaxed text-[#c9d2e3]">
+              Exklusive Versicherungs-Leads über Facebook &amp; Instagram – mit digitalem Assistenten, der die Leads per
+              WhatsApp anschreibt und direkt Termine in Ihrem Kalender bucht.
+            </p>
+          </div>
 
-      {offer.acceptedAt ? (
-        <section className="py-8">
-          <div className="flex items-start gap-3 rounded-xl bg-emerald-50 px-5 py-4 text-emerald-900">
-            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
-            <div className="text-sm">
-              <div className="font-semibold">Angenommen</div>
-              Online angenommen am {dateTime(offer.acceptedAt)} Uhr von {offer.acceptedName}.
+          <div className="mt-12 grid grid-cols-1 gap-6 border-y border-white/15 py-6 sm:grid-cols-3 print:grid-cols-3">
+            <Stat k="Setup" v={eur(offer.setupFee)} sub="einmalig, netto zzgl. 19 % USt." />
+            <Stat
+              k="Monatlich"
+              v={eur(firstMonth)}
+              sub={hasIntro ? `Startpreis Monat 1–${offer.introMonths}, danach ${eur(offer.monthlyFee)}` : "Betreuung + Software, netto"}
+              accent
+            />
+            <Stat k="Laufzeit" v={term === "12m" ? "12 Monate" : "Monatlich kündbar"} sub="Pause jederzeit möglich" />
+          </div>
+
+          <div className="mt-8 grid gap-6 text-sm sm:grid-cols-2 print:grid-cols-2">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7aa2ff]">Anbieter</p>
+              <p className="mt-3 font-semibold">{SHORT_NAME}</p>
+              <p className="text-[#c9d2e3]">
+                {PROVIDER.street}, {PROVIDER.city}
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7aa2ff]">Angebot an</p>
+              <p className="mt-3 font-semibold">{offer.contactName}</p>
+              {offer.company ? <p className="text-[#c9d2e3]">{offer.company}</p> : null}
+              {offer.street || offer.city ? (
+                <p className="text-[#c9d2e3]">
+                  {[offer.street, [offer.zip, offer.city].filter(Boolean).join(" ")].filter(Boolean).join(", ")}
+                </p>
+              ) : null}
             </div>
           </div>
+
+          <div className="mt-auto flex flex-wrap justify-between gap-2 pt-12 text-[11px] text-[#6b7894]">
+            <span>{PROVIDER_FOOTER}</span>
+            <span>
+              {offer.number}
+              {offer.version > 1 ? ` · Version ${offer.version}` : ""} · gültig bis {date(offer.validUntil)}
+            </span>
+          </div>
+        </div>
+      </section>
+      ) : null}
+
+      {/* ── Inhalt ────────────────────────────────────────────────── */}
+      {part !== "cover" ? (
+      <div className="offer-body mt-6 rounded-[20px] border border-[#e5e7eb] bg-white px-6 py-10 text-[15px] leading-relaxed sm:px-12 print:mt-0 print:rounded-none print:border-0 print:p-0">
+        <H2>1. Angebotsgegenstand und Umfang</H2>
+        <p className="mt-3 text-[#374151]">
+          Gegenstand dieses Angebots ist die Generierung exklusiver Interessenten-Datensätze („Leads“) für die unten
+          genannten Versicherungsprodukte sowie die Bereitstellung der Software zur Bearbeitung der Leads.
+        </p>
+        <Table>
+          <Tr k="Leadgenerierung">
+            Konzeption, Erstellung und laufende Optimierung von Kampagnen auf Facebook &amp; Instagram im Werbekonto des
+            Kunden, inklusive Werbemitteln und Lead-Formular. Die Leads gehen exklusiv an den Kunden.
+          </Tr>
+          <Tr k="Software">
+            Digitaler Assistent auf WhatsApp (Erstkontakt, Bedarfsfragen, Terminbuchung), Terminbuchung im eigenen
+            Kalender mit Erinnerungen, „Heute“-Liste, Pipeline, Wiedervorlagen und Auswertungen bis zu den Kosten pro
+            Abschluss.
+          </Tr>
+          <Tr k="Produkte">
+            <ul className="space-y-0.5">
+              {products.map((p, i) => (
+                <li key={i}>
+                  <span className="font-medium text-[#111827]">{p.name}</span> – {eur(p.dailyBudget)} pro Tag (≈{" "}
+                  {eur(Math.round(p.dailyBudget * PRICE_LIST.daysPerMonth))} im Monat)
+                </li>
+              ))}
+            </ul>
+          </Tr>
+          <Tr k="Werbebudget">
+            ≈ {eur(list.monthlyBudget)} im Monat. Das Werbebudget zahlt der Kunde direkt an Meta; es ist in den Preisen
+            nicht enthalten.
+          </Tr>
+          {offer.startDate ? <Tr k="Start">{date(offer.startDate)}</Tr> : null}
+        </Table>
+
+        <H2 className="mt-12">2. Preise und Zahlungsbedingungen</H2>
+        <Table>
+          <Tr k="Setup (einmalig)">
+            <b className="text-[#111827]">{eur2(offer.setupFee)}</b> netto zzgl. 19 % USt.
+            <Note>
+              {setupIsList
+                ? `${term === "12m" ? "Mit 12 Monaten Laufzeit" : "Ohne Vertragslaufzeit"}${extra ? `, inklusive ${extra} weiteres Produkt${extra > 1 ? "e" : ""}` : ""}`
+                : "Sonderkondition"}
+            </Note>
+          </Tr>
+          {hasIntro ? (
+            <Tr k={`Startpreis Monat 1–${offer.introMonths}`}>
+              <b className="text-[#111827]">{eur2(offer.introMonthlyFee!)}</b> netto pro Monat zzgl. 19 % USt.
+            </Tr>
+          ) : null}
+          <Tr k={hasIntro ? `Ab Monat ${offer.introMonths! + 1}` : "Monatliche Vergütung"}>
+            <b className="text-[#111827]">{eur2(offer.monthlyFee)}</b> netto pro Monat zzgl. 19 % USt. – Betreuung +
+            Software
+            <Note>
+              {monthlyIsList
+                ? `Preisstufe Werbebudget ${list.tierLabel}${extra ? `, inklusive ${extra} × ${eur(PRICE_LIST.extraProductMonthly)} für weitere Produkte` : ""}`
+                : "Sonderkondition"}
+            </Note>
+          </Tr>
+          <Tr k="Vertragslaufzeit">
+            {term === "12m"
+              ? "12 Monate ab Start, danach monatlich kündbar zum Ende des Abrechnungsmonats."
+              : "Keine Mindestlaufzeit – kündbar zum Ende des jeweiligen Abrechnungsmonats."}
+          </Tr>
+          <Tr k="Pause / Urlaub">
+            Jederzeit möglich. Die Anzeigen werden gestoppt; in dieser Zeit fällt nur die Software-Gebühr von{" "}
+            {eur(offer.softwareFee)} netto im Monat an.
+          </Tr>
+          <Tr k="WhatsApp-Gebühren">Gebühren von Meta nach Verbrauch, in der Regel 10–40 € im Monat.</Tr>
+          <Tr k="Zum Start fällig">
+            <b className="text-[#111827]">{eur2(startTotal)}</b> netto (Setup + erster Monat)
+            <br />
+            zzgl. 19 % USt. {eur2(vatOf(startTotal))}
+            <br />
+            <b className="text-[#111827]">{eur2(withVat(startTotal))} brutto</b>
+          </Tr>
+        </Table>
+
+        <H3>2.1 Zahlung</H3>
+        <p className="text-[#374151]">
+          Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung monatlich im Voraus – per
+          SEPA-Lastschrift oder Überweisung innerhalb von 7 Tagen.
+        </p>
+        <H3>2.2 Garantie</H3>
+        <p className="text-[#374151]">
+          Läuft ein Produkt für Sie nicht profitabel, richten wir ein weiteres Produkt Ihrer Wahl ohne Setupgebühr ein –
+          so lange, bis Sie ein Produkt haben, mit dem Sie zufrieden sind.
+        </p>
+        {offer.specialTerms ? (
+          <>
+            <H3>2.3 Sondervereinbarung</H3>
+            <p className="whitespace-pre-wrap rounded-lg border-l-4 border-[#2563EB] bg-[#f3f6fd] px-4 py-3 text-[#111827]">
+              {offer.specialTerms}
+            </p>
+          </>
+        ) : null}
+
+        <div className="offer-agb mt-14">
+          <h2 className="text-xl font-bold">Allgemeine Geschäftsbedingungen (AGB)</h2>
+          <p className="mb-6 mt-1 text-sm text-[#6b7280]">
+            Die nachfolgenden Bedingungen sind Bestandteil dieses Angebots.
+            {offer.dpaUrl ? (
+              <>
+                {" "}Ergänzend gilt der{" "}
+                <a href={offer.dpaUrl} target="_blank" rel="noreferrer" className="underline">
+                  Auftragsverarbeitungsvertrag
+                </a>
+                .
+              </>
+            ) : null}
+          </p>
+          <LegalSections sections={AGB} compact />
+        </div>
+
+        <section className="mt-10 break-inside-avoid">
+          <H2>Annahme des Angebots</H2>
+          <p className="mt-3 text-[#374151]">
+            Die Annahme erfolgt online über den Angebotslink oder in Textform per E-Mail. Mit der Annahme nimmt der
+            Kunde das vorstehende Angebot einschließlich der Allgemeinen Geschäftsbedingungen und des
+            Auftragsverarbeitungsvertrags verbindlich an. Das Angebot gilt bis {date(offer.validUntil)}.
+          </p>
+          <p className="mt-6 text-[#374151]">
+            Berlin, {date(offer.createdAt)}
+            <br />
+            <b className="text-[#111827]">Ole Kannapinn</b> · {SHORT_NAME} (Anbieter)
+          </p>
+          {offer.acceptedAt ? (
+            <div className="mt-6 flex items-start gap-3 rounded-xl bg-emerald-50 px-5 py-4 text-emerald-900">
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+              <div className="text-sm">
+                <div className="font-semibold">Angenommen</div>
+                Online angenommen am {dateTime(offer.acceptedAt)} Uhr von {offer.acceptedName}.
+              </div>
+            </div>
+          ) : null}
         </section>
+      </div>
       ) : null}
     </article>
   );
 }
 
-function PriceRow({ label, note, net }: { label: string; note?: string; net: number }) {
+function Stat({ k, v, sub, accent }: { k: string; v: string; sub: string; accent?: boolean }) {
   return (
-    <tr className="border-b border-[#eef1f6] align-top">
-      <td className="py-3">
-        <div className="font-medium">{label}</div>
-        {note ? <div className="text-xs text-[#5b5e68]">{note}</div> : null}
-      </td>
-      <td className="whitespace-nowrap py-3 pl-3 text-right font-semibold">{eur(net)}</td>
-      <td className="hidden whitespace-nowrap py-3 pl-3 text-right text-[#5b5e68] sm:table-cell print:table-cell">{eur(vatOf(net))}</td>
-      <td className="whitespace-nowrap py-3 pl-3 text-right">{eur(withVat(net))}</td>
-    </tr>
+    <div>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7aa2ff]">{k}</p>
+      <p className={`mt-2 text-xl font-bold ${accent ? "text-[#7aa2ff]" : ""}`}>{v}</p>
+      <p className="mt-1 text-[11px] text-[#9aa6bd]">{sub}</p>
+    </div>
   );
 }
 
-function Cond({ children }: { children: React.ReactNode }) {
+function H2({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <h2 className={`text-xl font-bold tracking-tight ${className}`}>{children}</h2>;
+}
+
+function H3({ children }: { children: React.ReactNode }) {
+  return <h3 className="mb-1 mt-6 text-[15px] font-bold">{children}</h3>;
+}
+
+function Note({ children }: { children: React.ReactNode }) {
+  return <span className="mt-0.5 block text-[13px] text-[#6b7280]">{children}</span>;
+}
+
+function Table({ children }: { children: React.ReactNode }) {
   return (
-    <li className="flex gap-2">
-      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#2563EB]" />
-      <span>{children}</span>
-    </li>
+    <div className="mt-5 overflow-hidden rounded-md border border-[#e5e7eb]">
+      <table className="w-full border-collapse text-[14px]">
+        <tbody>{children}</tbody>
+      </table>
+    </div>
+  );
+}
+
+function Tr({ k, children }: { k: string; children: React.ReactNode }) {
+  return (
+    <tr className="break-inside-avoid border-b border-[#e5e7eb] align-top last:border-0">
+      <th className="w-[34%] bg-[#f6f7f9] px-4 py-3 text-left font-semibold text-[#111827]">{k}</th>
+      <td className="px-4 py-3 text-[#374151]">{children}</td>
+    </tr>
   );
 }

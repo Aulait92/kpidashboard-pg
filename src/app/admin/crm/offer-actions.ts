@@ -115,7 +115,7 @@ export async function sendOfferEmailAction(
     number: offer.number,
     offerUrl: `${getAppUrl()}/angebot/${offer.token}`,
     validUntil: offer.validUntil,
-    replyTo: session.email ?? null,
+    replyTo: process.env.OFFER_REPLY_TO ?? session.email ?? null,
   });
   if (!res.ok) return { ok: false, error: res.error };
   await prisma.$transaction([

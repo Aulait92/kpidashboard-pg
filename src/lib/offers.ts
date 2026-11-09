@@ -3,6 +3,7 @@
 
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { getAppUrl } from "@/lib/email";
 import { updateSalesDeal } from "@/lib/airtable-sales-write";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
@@ -31,9 +32,17 @@ export type OfferFormInput = {
 
 /** Rechtstexte, denen bei der Annahme zugestimmt wird (per Umgebungsvariable). */
 export function legalUrls() {
+  let base: string | null = null;
+  try {
+    base = getAppUrl();
+  } catch {
+    base = null;
+  }
+  // Standard: eigene Seiten /rechtliches/agb und /rechtliches/avv (Stand im
+  // Seitenkopf). Per Umgebungsvariable auf andere URLs umstellbar.
   return {
-    termsUrl: process.env.OFFER_TERMS_URL?.trim() || null,
-    dpaUrl: process.env.OFFER_DPA_URL?.trim() || null,
+    termsUrl: process.env.OFFER_TERMS_URL?.trim() || (base ? `${base}/rechtliches/agb` : null),
+    dpaUrl: process.env.OFFER_DPA_URL?.trim() || (base ? `${base}/rechtliches/avv` : null),
   };
 }
 

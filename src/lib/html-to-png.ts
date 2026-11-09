@@ -71,15 +71,17 @@ export async function renderHtmlToImage(
  */
 export async function renderUrlToPdf(url: string): Promise<Buffer> {
   const browser = await getBrowser();
-  const context = await browser.newContext({ viewport: { width: 1000, height: 1400 } });
+  const context = await browser.newContext({ viewport: { width: 794, height: 1123 } });
   const page = await context.newPage();
   try {
     await page.goto(url, { waitUntil: "networkidle", timeout: 20_000 });
     await page.evaluate(() => document.fonts?.ready);
+    // Seitenränder kommen aus dem CSS der Seite (@page), damit z. B. ein
+    // Deckblatt randlos sein kann.
     const pdf = await page.pdf({
       format: "A4",
       printBackground: true,
-      margin: { top: "14mm", bottom: "14mm", left: "12mm", right: "12mm" },
+      preferCSSPageSize: true,
     });
     return Buffer.from(pdf);
   } finally {
