@@ -2,6 +2,7 @@ import { checkAppointmentResponses } from "@/lib/calendar";
 import { runOutreach } from "@/lib/whatsapp/outreach";
 import { runReminders } from "@/lib/whatsapp/reminders";
 import { pruneUsage } from "@/lib/usage";
+import { reportError } from "@/lib/monitoring";
 
 // Zentraler WhatsApp-Cron (z. B. cron-job.org alle 5 Minuten):
 //   1. Erstanschreiben neuer Leads ohne Termin
@@ -22,17 +23,20 @@ function authorized(req: Request): boolean {
 async function handle(req: Request): Promise<Response> {
   if (!authorized(req))
     return Response.json({ error: "Unauthorized" }, { status: 401 });
-  const outreach = await runOutreach().catch((e: unknown) => ({
-    error: e instanceof Error ? e.message : String(e),
-  }));
+  const outreach = await runOutreach().catch((e: unknown) => {
+    reportError(e, "cron-outreach");
+    return { error: e instanceof Error ? e.message : String(e) };
+  });
   // Absagen über die Kalendereinladung (Lead oder Berater) erkennen — vor den
   // Erinnerungen, damit abgesagte Termine keine Erinnerung mehr bekommen.
-  const responses = await checkAppointmentResponses().catch((e: unknown) => ({
-    error: e instanceof Error ? e.message : String(e),
-  }));
-  const reminders = await runReminders().catch((e: unknown) => ({
-    error: e instanceof Error ? e.message : String(e),
-  }));
+  const responses = await checkAppointmentResponses().catch((e: unknown) => {
+    reportError(e, "cron-calendar-responses");
+    return { error: e instanceof Error ? e.message : String(e) };
+  });
+  const reminders = await runReminders().catch((e: unknown) => {
+    reportError(e, "cron-reminders");
+    return { error: e instanceof Error ? e.message : String(e) };
+  });
   // Einmal täglich (03:00–03:05 UTC): Nutzungsdaten > 180 Tage löschen.
   const now = new Date();
   const pruned =

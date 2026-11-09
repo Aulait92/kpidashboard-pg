@@ -1,4 +1,5 @@
 import { handleInboundPayload } from "@/lib/whatsapp/gateway";
+import { reportError } from "@/lib/monitoring";
 
 // 360dialog/Meta liefern eingehende WhatsApp-Nachrichten und Zustellstatus per
 // POST an diese URL. Nicht cachen (Route Handler sind standardmäßig nicht
@@ -50,11 +51,13 @@ export async function POST(req: Request): Promise<Response> {
     // Immer 200 quittieren, damit 360dialog/Meta nicht endlos erneut zustellen;
     // fachliche Fehler werden im Ergebnis gemeldet und geloggt.
     if (result.errors.length > 0) {
-      console.warn("[whatsapp webhook] Fehler:", result.errors);
+      reportError(new Error(result.errors.join(" | ").slice(0, 500)), "whatsapp-webhook", {
+        count: result.errors.length,
+      });
     }
     return Response.json({ ok: true, ...result });
   } catch (err) {
-    console.error("[whatsapp webhook]", err);
+    reportError(err, "whatsapp-webhook");
     return Response.json(
       { ok: false, error: err instanceof Error ? err.message : String(err) },
       { status: 200 },

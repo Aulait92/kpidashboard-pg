@@ -1,3 +1,4 @@
+import { reportError } from "@/lib/monitoring";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { runFullSync } from "@/lib/sync";
@@ -112,6 +113,7 @@ async function handle(req: Request) {
       push: result.push,
     });
   } catch (err) {
+    reportError(err, "sync");
     return NextResponse.json(
       { ok: false, error: err instanceof Error ? err.message : String(err) },
       { status: 500 },
