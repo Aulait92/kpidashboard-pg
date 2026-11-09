@@ -20,6 +20,7 @@ import type { FormAnswer } from "@/lib/lead-fields";
 import { loadOnboarding, onboardingChecklist, sendWelcome } from "@/lib/onboarding";
 import { readImpressum } from "@/lib/impressum";
 import { customerGreeting } from "@/lib/offer-links";
+import { runPauseCron } from "@/lib/pause";
 
 const DAY = 24 * 60 * 60 * 1000;
 const TZ = "Europe/Berlin";
@@ -279,6 +280,7 @@ export async function runOnboardingCron(now = new Date()) {
       result[name] = { error: err instanceof Error ? err.message : String(err) };
     }
   };
+  await step("pauses", () => runPauseCron(now)); // Pausen starten/beenden
   await step("leads", () => emailLeads(now)); // rund um die Uhr
   await step("upsell", () => upsellTasks(now));
   await step("websites", () => checkWebsites(now));

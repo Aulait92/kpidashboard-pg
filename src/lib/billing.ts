@@ -380,3 +380,85 @@ export async function createPortalUrl(stripeCustomerId: string, returnUrl: strin
   });
   return session.url;
 }
+
+// ─── Pause / Urlaub ────────────────────────────────────────────────────
+// Während der Pause fällt nur die Software-Gebühr an (bei „Nur Betreuung“
+// nichts), tagesgenau über Stripe-Prorations. Vorgehen: Betreuungs-Position
+// auf Menge 0 (Fallback: Position entfernen und später neu anlegen; bei nur
+// einer Position: Einzug aussetzen). Das gewählte Verfahren wird gespeichert,
+// damit das Fortsetzen exakt rückwärts läuft.
+
+export type BillingPauseState =
+  | { method: "qty0"; subscriptionId: string; itemId: string }
+  | { method: "removed"; subscriptionId: string; cents: number }
+  | { method: "pause_collection"; subscriptionId: string }
+  | { method: "none"; reason: string };
+
+export class IntroPhaseError extends Error {
+  constructor() {
+    super("INTRO_PHASE");
+  }
+}
+
+async function activeSubscription(stripe: Stripe, stripeCustomerId: string) {
+  const subs = await stripe.subscriptions.list({ customer: stripeCustomerId, status: "all", limit: 10 });
+  return subs.data.find((s) => ["active", "past_due", "trialing"].includes(s.status)) ?? null;
+}
+
+/** Hängt ein Zeitplan am Abo, wird er in der letzten Phase gelöst (sonst Startpreis-Phase → Fehler). */
+async function detachSchedule(stripe: Stripe, sub: Stripe.Subscription) {
+  const scheduleId = typeof sub.schedule === "string" ? sub.schedule : sub.schedule?.id;
+  if (!scheduleId) return;
+  const schedule = await stripe.subscriptionSchedules.retrieve(scheduleId);
+  if (schedule.status !== "active") return;
+  const now = Date.now() / 1000;
+  const last = schedule.phases[schedule.phases.length - 1];
+  if (last && last.start_date <= now) {
+    await stripe.subscriptionSchedules.release(scheduleId);
+    return;
+  }
+  throw new IntroPhaseError();
+}
+
+export async function pauseBilling(stripeCustomerId: string): Promise<BillingPauseState> {
+  const stripe = stripeClient();
+  if (!stripe) return { method: "none", reason: "Stripe nicht eingerichtet" };
+  const sub = await activeSubscription(stripe, stripeCustomerId);
+  if (!sub) return { method: "none", reason: "Kein laufendes Abo (startet ggf. erst noch)" };
+  await detachSchedule(stripe, sub);
+  const service = await productId(stripe, "service");
+  const item = sub.items.data.find((i) => (typeof i.price.product === "string" ? i.price.product : i.price.product.id) === service);
+  if (!item) return { method: "none", reason: "Keine Betreuungs-Position im Abo" };
+  try {
+    await stripe.subscriptionItems.update(item.id, { quantity: 0, proration_behavior: "create_prorations" });
+    return { method: "qty0", subscriptionId: sub.id, itemId: item.id };
+  } catch (err) {
+    reportError(err, "billing-pause-qty0", { subscription: sub.id });
+  }
+  if (sub.items.data.length > 1) {
+    const cents = item.price.unit_amount ?? 0;
+    await stripe.subscriptionItems.del(item.id, { proration_behavior: "create_prorations" });
+    return { method: "removed", subscriptionId: sub.id, cents };
+  }
+  await stripe.subscriptions.update(sub.id, { pause_collection: { behavior: "void" } });
+  return { method: "pause_collection", subscriptionId: sub.id };
+}
+
+export async function resumeBilling(state: BillingPauseState): Promise<void> {
+  const stripe = stripeClient();
+  if (!stripe || state.method === "none") return;
+  if (state.method === "qty0") {
+    await stripe.subscriptionItems.update(state.itemId, { quantity: 1, proration_behavior: "create_prorations" });
+  } else if (state.method === "removed") {
+    const [service, tax] = await Promise.all([productId(stripe, "service"), resolveTax(stripe)]);
+    await stripe.subscriptionItems.create({
+      subscription: state.subscriptionId,
+      quantity: 1,
+      proration_behavior: "create_prorations",
+      price_data: { currency: "eur", product: service, unit_amount: state.cents, recurring: { interval: "month" }, tax_behavior: "exclusive" },
+      ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
+    });
+  } else if (state.method === "pause_collection") {
+    await stripe.subscriptions.update(state.subscriptionId, { pause_collection: "" });
+  }
+}

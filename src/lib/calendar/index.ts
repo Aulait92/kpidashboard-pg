@@ -47,7 +47,7 @@ export function hasRequiredScopes(conn: { provider: string; scope: string | null
   return googleHasRequiredScopes(conn.scope);
 }
 
-async function adapterFor(customerId: string) {
+export async function adapterFor(customerId: string) {
   const conn = await loadConnection(customerId);
   const agent = await prisma.agentConfig.findUnique({
     where: { customerId },

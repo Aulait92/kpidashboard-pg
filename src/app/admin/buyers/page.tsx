@@ -36,6 +36,7 @@ export default async function AdminBuyersPage() {
       },
     }),
     prisma.customer.findMany({
+      where: { plan: { not: "internal" } },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),

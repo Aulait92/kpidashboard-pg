@@ -82,7 +82,7 @@ export default async function WhatsAppSettingsPage({
   });
 
   const otherCustomers = await prisma.customer.findMany({
-    where: { id: { notIn: customers.map((c) => c.id) } },
+    where: { id: { notIn: customers.map((c) => c.id) }, plan: { not: "internal" } },
     orderBy: { name: "asc" },
     select: { id: true, name: true },
   });

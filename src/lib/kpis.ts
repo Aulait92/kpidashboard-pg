@@ -413,6 +413,7 @@ function isTerminLead(
 
 export async function listCustomers() {
   return prisma.customer.findMany({
+    where: { plan: { not: "internal" } },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });
@@ -454,7 +455,7 @@ export async function computeCustomerLeaderboard(params: {
 
   const [customers, leads, revenueByCustomer, directCostByCustomer, globalCosts] =
     await Promise.all([
-      prisma.customer.findMany({ select: { id: true, name: true } }),
+      prisma.customer.findMany({ where: { plan: { not: "internal" } }, select: { id: true, name: true } }),
       prisma.lead.findMany({
         where: {
           ...productLeadClause,

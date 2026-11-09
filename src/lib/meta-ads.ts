@@ -477,3 +477,38 @@ export async function publishVariantToCampaign(opts: {
 
   return { campaignId: campaign.id, adId, imageHash: hash };
 }
+
+// ─── Pause/Urlaub: Kampagnen im Werbekonto eines Kunden ────────────────
+// Kundenkonten liegen per Partnerzugriff in unserem Business Manager; der
+// System-User-Token braucht dafür ads_management auf dem jeweiligen Konto.
+
+/** Aktive Kampagnen eines Kunden-Werbekontos pausieren; gibt die IDs zurück. */
+export async function pauseActiveCampaigns(adAccountId: string): Promise<string[]> {
+  const act = adAccountId.startsWith("act_") ? adAccountId : `act_${adAccountId}`;
+  const data = (await metaGet(`${act}/campaigns`, {
+    fields: "id,name,status,effective_status",
+    limit: "200",
+    effective_status: JSON.stringify(["ACTIVE"]),
+  })) as { data: MetaCampaign[] };
+  const ids: string[] = [];
+  for (const c of data.data) {
+    await setCampaignStatus(c.id, "PAUSED");
+    ids.push(c.id);
+  }
+  return ids;
+}
+
+/** Zuvor pausierte Kampagnen wieder aktivieren (nur diese – keine anderen). */
+export async function resumeCampaigns(campaignIds: string[]): Promise<{ resumed: string[]; failed: string[] }> {
+  const resumed: string[] = [];
+  const failed: string[] = [];
+  for (const id of campaignIds) {
+    try {
+      await setCampaignStatus(id, "ACTIVE");
+      resumed.push(id);
+    } catch {
+      failed.push(id);
+    }
+  }
+  return { resumed, failed };
+}

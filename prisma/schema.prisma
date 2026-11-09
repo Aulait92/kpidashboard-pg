@@ -130,6 +130,7 @@ model Customer {
   // ─── WhatsApp-CRM (Phase 0) ─────────────────────────────────────────
   onboarding         Onboarding?
   feedback           CustomerFeedback[]
+  pauses             CustomerPause[]
   salesContact       SalesContact?
   whatsAppAccount    WhatsAppAccount?
   calendarConnection CalendarConnection?
@@ -1141,6 +1142,10 @@ model Onboarding {
   staleNotifiedAt  DateTime?
   // Aufgabe „Jahresvertrag anbieten“ (Tag 90) angelegt
   upsellTaskAt     DateTime?
+  // 15-Minuten-Hilfetermin (Google-Kalender des Teams)
+  helpCallAt       DateTime?
+  helpCallEventId  String?
+  helpCallUrl      String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
@@ -1163,4 +1168,32 @@ model CustomerFeedback {
   answeredAt DateTime?
 
   @@unique([customerId, kind])
+}
+
+// Pause / Urlaub eines Kunden: Anzeigen stoppen, Abrechnung auf die
+// Software-Gebühr reduzieren (bei „Nur Betreuung“ 0 €), danach automatisch
+// wieder starten. Geplant vom Kunden selbst oder vom Admin.
+model CustomerPause {
+  id                String    @id @default(cuid())
+  customerId        String
+  customer          Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  startsAt          DateTime
+  // leer = bis auf Widerruf
+  endsAt            DateTime?
+  // planned | active | ended | cancelled
+  status            String    @default("planned")
+  reason            String?
+  // customer | admin
+  createdBy         String    @default("customer")
+  // Von uns pausierte Meta-Kampagnen (werden beim Fortsetzen reaktiviert)
+  pausedCampaignIds Json?
+  adsNote           String?
+  billingNote       String?
+  appliedAt         DateTime?
+  resumedAt         DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([customerId, status])
+  @@index([status, startsAt])
 }

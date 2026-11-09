@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { CalendlyForms, ColdCrmImport, ContactsImport, InstantlyCsvImport, InstantlySync } from "@/components/vertrieb/import-forms";
 import { coldCrmSourceConfigured } from "@/lib/vertrieb/cold-crm-import";
+import { teamCalendarStatus } from "@/lib/help-call";
 import { fmtDateTime } from "@/lib/vertrieb/dates";
 import { convertInboundLead } from "@/app/admin/vertrieb/actions";
 import { LI_LABEL } from "@/lib/vertrieb/linkedin";
@@ -24,6 +25,8 @@ export default async function ImportPage() {
   return (
     <div className="max-w-3xl space-y-5">
       <h1 className="text-xl font-semibold">Import & Instantly</h1>
+
+      <TeamCalendar status={await teamCalendarStatus()} />
 
       {coldCrmSourceConfigured() && (
         <section className="card space-y-3 border-sky-200 p-5">
@@ -211,5 +214,25 @@ export default async function ImportPage() {
         </section>
       )}
     </div>
+  );
+}
+
+function TeamCalendar({ status }: { status: { teamId: string; connected: boolean; accountEmail: string | null } }) {
+  return (
+    <section className="card space-y-2 p-5 text-sm">
+      <h2 className="font-medium">Team-Kalender für Hilfetermine</h2>
+      <p className="text-slate-600">
+        Kunden können in der Einrichtung einen 15-Minuten-Hilfetermin (Video) buchen. Gebucht wird in diesem Kalender,
+        Google verschickt die Einladung mit Meet-Link.
+      </p>
+      {status.connected ? (
+        <p className="font-medium text-emerald-700">Verbunden{status.accountEmail ? `: ${status.accountEmail}` : ""}</p>
+      ) : (
+        <p className="text-amber-700">Noch nicht verbunden: Ohne Kalender sehen Kunden nur die Telefonnummer.</p>
+      )}
+      <a href={`/api/google/connect?customerId=${status.teamId}`} className="btn-ghost inline-flex">
+        {status.connected ? "Neu verbinden" : "Google-Kalender verbinden"}
+      </a>
+    </section>
   );
 }

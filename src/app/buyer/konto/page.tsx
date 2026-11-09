@@ -7,6 +7,8 @@ import { billingEnabled, listCustomerInvoices, type CustomerInvoice } from "@/li
 import { reportError } from "@/lib/monitoring";
 import { prisma } from "@/lib/prisma";
 import { openPortalAction } from "./actions";
+import { PauseCard } from "./pause-card";
+import { currentPause, todayBerlin } from "@/lib/pause";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Konto & Rechnungen | performancegrowth" };
@@ -49,6 +51,10 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
     });
   }
   const monthly = customer.retainerMonthly != null ? Number(customer.retainerMonthly) : null;
+  const pause = await currentPause(ctx.customerId);
+  const today = todayBerlin();
+  const startYmd = customer.retainerStart ? new Intl.DateTimeFormat("sv-SE", { timeZone: TZ }).format(customer.retainerStart) : today;
+  const softwareFee = offer ? Number(offer.softwareFee) : customer.plan === "service" ? 0 : 349;
   const service = customer.plan === "service";
 
   return (
@@ -78,7 +84,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 <dd>{offer.term === "12m" ? "12 Monate, danach monatlich kündbar" : "Monatlich kündbar"}</dd>
                 <dt className="text-[color:var(--muted)]">Pause / Urlaub</dt>
                 <dd>
-                  Jederzeit möglich, kurze Nachricht genügt.{" "}
+                  Jederzeit selbst einstellbar (unten).{" "}
                   {Number(offer.softwareFee) > 0 ? `In der Pause fallen nur ${eur(Number(offer.softwareFee))} netto im Monat an.` : "In der Pause fällt keine Vergütung an."}
                 </dd>
                 <dt className="text-[color:var(--muted)]">Vertrag</dt>
@@ -91,6 +97,14 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             ) : null}
           </dl>
         </Card>
+
+        <PauseCard
+          pause={pause ? { status: pause.status, startsAt: pause.startsAt.toISOString(), endsAt: pause.endsAt?.toISOString() ?? null } : null}
+          today={today}
+          minDate={startYmd > today ? startYmd : today}
+          softwareFeeText={softwareFee > 0 ? `In der Pause berechnen wir nur die Software-Gebühr von ${eur(softwareFee)} netto im Monat, tagesgenau.` : "In der Pause fällt keine Vergütung an."}
+          readOnly={ctx.preview}
+        />
 
         <Card>
           <CardHeader title="Zahlung und Rechnungsdaten" icon={CreditCard} />

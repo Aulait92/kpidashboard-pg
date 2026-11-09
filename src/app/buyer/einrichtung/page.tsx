@@ -5,7 +5,8 @@ import { buttonClass, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { checklistProgress, loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
-import { MetaConfirmButton, QuestionnaireForm } from "./forms";
+import { HelpCallPicker, MetaConfirmButton, QuestionnaireForm } from "./forms";
+import { helpCallSlots } from "@/lib/help-call";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Einrichtung | performancegrowth" };
@@ -28,6 +29,10 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const progress = checklistProgress(items);
   const businessId = process.env.PG_META_BUSINESS_ID?.trim() || "3089330734489612";
   const readOnly = ctx.preview;
+  const helpUpcoming = ob.helpCallAt && ob.helpCallAt > new Date();
+  const slots = !helpUpcoming && !ob.liveAt ? await helpCallSlots().catch(() => []) : [];
+  const timeFmt = (d: Date) =>
+    new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" }).format(d);
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -117,11 +122,33 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             </li>
           </ol>
           <MetaConfirmButton done={done("metaAccess")} readOnly={readOnly} />
-          <p className="mt-4 text-sm text-[color:var(--muted)]">
-            Klappt etwas nicht? Antworten Sie einfach auf unsere Willkommens-Mail oder rufen Sie an:{" "}
-            <a href="tel:+4915152418846" className="font-medium text-[color:var(--brand)]">+49 151 52418846</a>. Dann
-            richten wir es in 10 Minuten gemeinsam per Bildschirmfreigabe ein.
-          </p>
+          <div className="mt-5 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4">
+            <p className="text-[15px] font-medium">Klappt etwas nicht? Wir machen es gemeinsam.</p>
+            {helpUpcoming ? (
+              <p className="mt-2 text-[15px]">
+                Ihr Hilfetermin: <b>{timeFmt(ob.helpCallAt!)} Uhr</b> (15 Minuten, Video).
+                {ob.helpCallUrl ? (
+                  <>
+                    {" "}
+                    <a href={ob.helpCallUrl} target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
+                      Zum Video-Call
+                    </a>
+                  </>
+                ) : null}
+              </p>
+            ) : slots.length ? (
+              <>
+                <p className="mb-3 mt-1 text-sm text-[color:var(--muted)]">
+                  Buchen Sie einen 15-Minuten-Termin per Video. Wir richten es per Bildschirmfreigabe gemeinsam ein.
+                </p>
+                <HelpCallPicker slots={slots} readOnly={readOnly} />
+              </>
+            ) : null}
+            <p className="mt-3 text-sm text-[color:var(--muted)]">
+              Oder rufen Sie an:{" "}
+              <a href="tel:+4915152418846" className="font-medium text-[color:var(--brand)]">+49 151 52418846</a>
+            </p>
+          </div>
         </Step>
 
         {software ? (

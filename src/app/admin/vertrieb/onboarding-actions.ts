@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { endPauseNow, planPause } from "@/lib/pause";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { MANUAL_FIELDS, sendGoLiveMail, sendWelcome, startOnboarding } from "@/lib/onboarding";
@@ -59,4 +61,24 @@ export async function resendWelcomeAction(fd: FormData) {
   await sendWelcome(id);
   const ob = await prisma.onboarding.findUnique({ where: { id }, select: { salesContactId: true } });
   refresh(ob?.salesContactId);
+}
+
+// ─── Pause / Urlaub (Admin) ────────────────────────────────────────────
+
+export async function adminPlanPauseAction(fd: FormData) {
+  await requireAuth();
+  const customerId = String(fd.get("customerId") ?? "");
+  const contactId = String(fd.get("contactId") ?? "") || null;
+  const until = String(fd.get("until") ?? "").trim();
+  const res = await planPause(customerId, { from: String(fd.get("from") ?? ""), until: until || null, reason: String(fd.get("reason") ?? "") }, "admin");
+  refresh(contactId);
+  if (!res.ok) redirect(`/admin/vertrieb/kontakte/${contactId}?pause=${encodeURIComponent(res.error)}`);
+}
+
+export async function adminEndPauseAction(fd: FormData) {
+  await requireAuth();
+  const customerId = String(fd.get("customerId") ?? "");
+  const contactId = String(fd.get("contactId") ?? "") || null;
+  await endPauseNow(customerId);
+  refresh(contactId);
 }

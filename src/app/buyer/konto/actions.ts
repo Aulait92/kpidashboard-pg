@@ -1,6 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { endPauseNow, planPause } from "@/lib/pause";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { createPortalUrl } from "@/lib/billing";
@@ -21,4 +23,37 @@ export async function openPortalAction() {
     redirect("/buyer/konto?portal=fehler");
   }
   redirect(url);
+}
+
+export type PauseFormState = { ok?: boolean; error?: string };
+
+async function customerOnly() {
+  const ctx = await getBuyerContext();
+  if (!ctx || ctx.preview) throw new Error("In der Vorschau nicht möglich.");
+  return ctx;
+}
+
+export async function planPauseAction(_prev: PauseFormState, fd: FormData): Promise<PauseFormState> {
+  try {
+    const ctx = await customerOnly();
+    const until = String(fd.get("until") ?? "").trim();
+    const res = await planPause(ctx.customerId, { from: String(fd.get("from") ?? ""), until: until || null, reason: String(fd.get("reason") ?? "") }, "customer");
+    if (!res.ok) return { error: res.error };
+    revalidatePath("/buyer", "layout");
+    return { ok: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
+  }
+}
+
+export async function endPauseAction(_prev: PauseFormState, _fd: FormData): Promise<PauseFormState> {
+  try {
+    const ctx = await customerOnly();
+    const res = await endPauseNow(ctx.customerId);
+    if (!res.ok) return { error: res.error };
+    revalidatePath("/buyer", "layout");
+    return { ok: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
+  }
 }

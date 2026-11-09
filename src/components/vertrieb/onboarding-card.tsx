@@ -2,7 +2,7 @@ import { CheckCircle2, Circle } from "lucide-react";
 import type { ChecklistItem } from "@/lib/onboarding";
 import type { ImpressumInfo } from "@/lib/impressum";
 import { checklistProgress } from "@/lib/onboarding";
-import { goLiveAction, resendWelcomeAction, startOnboardingAction, toggleOnboardingStepAction } from "@/app/admin/vertrieb/onboarding-actions";
+import { adminEndPauseAction, adminPlanPauseAction, goLiveAction, resendWelcomeAction, startOnboardingAction, toggleOnboardingStepAction } from "@/app/admin/vertrieb/onboarding-actions";
 
 const OWNER: Record<ChecklistItem["owner"], { label: string; cls: string }> = {
   kunde: { label: "Kunde", cls: "bg-sky-50 text-sky-700" },
@@ -21,7 +21,7 @@ export function OnboardingCard({
   feedback = [],
   websiteInfo = null,
 }: {
-  onboarding: { id: string; package: string; startDate: Date | null; liveAt: Date | null };
+  onboarding: { id: string; package: string; startDate: Date | null; liveAt: Date | null; helpCallAt?: Date | null; helpCallUrl?: string | null };
   items: ChecklistItem[];
   customerName: string;
   loginEmail: string | null;
@@ -92,6 +92,17 @@ export function OnboardingCard({
           <button className="btn-ghost">Willkommens-Mail erneut senden</button>
         </form>
       </div>
+      {onboarding.helpCallAt ? (
+        <p className="border-t border-slate-100 px-4 py-3 text-sm">
+          🛟 Hilfetermin: <b>{fmt(onboarding.helpCallAt)} Uhr</b>
+          {onboarding.helpCallUrl ? (
+            <>
+              {" · "}
+              <a href={onboarding.helpCallUrl} target="_blank" rel="noreferrer" className="text-sky-700 hover:underline">Video-Call ↗</a>
+            </>
+          ) : null}
+        </p>
+      ) : null}
       <ImpressumBlock info={websiteInfo} />
       {feedback.length > 0 && (
         <ul className="space-y-1 border-t border-slate-100 px-4 py-3 text-sm">
@@ -101,7 +112,7 @@ export function OnboardingCard({
               {f.answeredAt ? (
                 <>
                   <b className={f.score != null && f.score <= 2 ? "text-rose-700" : f.score != null && f.score >= 4 ? "text-emerald-700" : ""}>{f.score}/5</b>
-                  {f.comment ? <span className="text-slate-600"> – „{f.comment}“</span> : null}
+                  {f.comment ? <span className="text-slate-600">: „{f.comment}“</span> : null}
                 </>
               ) : (
                 <span className="text-slate-400">verschickt, noch keine Antwort</span>
@@ -182,5 +193,58 @@ function ImpressumBlock({ info }: { info: ImpressumInfo | null }) {
       )}
       {info.missing.length > 0 && !info.error && <p className="mt-1 text-xs text-amber-700">Fehlt: {info.missing.join(", ")}</p>}
     </div>
+  );
+}
+
+export function AdminPauseCard({
+  customerId,
+  contactId,
+  pause,
+  error,
+  today,
+}: {
+  customerId: string;
+  contactId: string;
+  pause: { status: string; startsAt: Date; endsAt: Date | null; adsNote: string | null; reason: string | null } | null;
+  error?: string | null;
+  today: string;
+}) {
+  const d = (x: Date) => x.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" });
+  return (
+    <section className="card p-4">
+      <h2 className="mb-2 font-medium">Pause / Urlaub</h2>
+      {error ? <p className="mb-2 text-sm text-rose-700">{error}</p> : null}
+      {pause ? (
+        <div className="space-y-2 text-sm">
+          <p className={pause.status === "active" ? "text-amber-800" : "text-sky-800"}>
+            {pause.status === "active" ? "Pausiert seit " : "Geplant ab "}
+            {d(pause.startsAt)}
+            {pause.endsAt ? `, Neustart ${d(pause.endsAt)}` : ", offen"}
+            {pause.reason ? ` · ${pause.reason}` : ""}
+          </p>
+          {pause.adsNote ? <p className="text-xs text-slate-500">Anzeigen: {pause.adsNote}</p> : null}
+          <form action={adminEndPauseAction}>
+            <input type="hidden" name="customerId" value={customerId} />
+            <input type="hidden" name="contactId" value={contactId} />
+            <button className="btn-ghost">{pause.status === "active" ? "Jetzt fortsetzen" : "Geplante Pause absagen"}</button>
+          </form>
+        </div>
+      ) : (
+        <form action={adminPlanPauseAction} className="grid gap-2 sm:grid-cols-2">
+          <input type="hidden" name="customerId" value={customerId} />
+          <input type="hidden" name="contactId" value={contactId} />
+          <div>
+            <label className="label">Pause ab</label>
+            <input type="date" name="from" required min={today} defaultValue={today} className="input" />
+          </div>
+          <div>
+            <label className="label">Neustart am (optional)</label>
+            <input type="date" name="until" min={today} className="input" />
+          </div>
+          <input name="reason" placeholder="Grund (optional)" className="input sm:col-span-2" />
+          <button className="btn-ghost sm:col-span-2">Pause eintragen</button>
+        </form>
+      )}
+    </section>
   );
 }

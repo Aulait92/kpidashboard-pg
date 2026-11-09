@@ -17,11 +17,13 @@ import { DealOffersCard } from "@/components/deal-offers-card";
 import { toOfferRow } from "@/lib/offer-links";
 import { getAppUrl } from "@/lib/email";
 import { loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
-import { OnboardingCard, StartOnboardingCard } from "@/components/vertrieb/onboarding-card";
+import { AdminPauseCard, OnboardingCard, StartOnboardingCard } from "@/components/vertrieb/onboarding-card";
+import { currentPause, todayBerlin } from "@/lib/pause";
 import type { ImpressumInfo } from "@/lib/impressum";
 
-export default async function ContactPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ContactPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ pause?: string }> }) {
   const { id } = await params;
+  const { pause: pauseError } = await searchParams;
   const c = await prisma.salesContact.findUnique({
     where: { id },
     include: {
@@ -42,7 +44,7 @@ export default async function ContactPage({ params }: { params: Promise<{ id: st
   const acceptedOffer = c.offers.find((o) => o.status === "accepted") ?? null;
   const freeCustomers =
     !onboarding && acceptedOffer
-      ? await prisma.customer.findMany({ where: { onboarding: null }, select: { id: true, name: true }, orderBy: { name: "asc" } })
+      ? await prisma.customer.findMany({ where: { onboarding: null, plan: { not: "internal" } }, select: { id: true, name: true }, orderBy: { name: "asc" } })
       : [];
   let appUrl = "";
   try {
@@ -211,6 +213,10 @@ export default async function ContactPage({ params }: { params: Promise<{ id: st
             />
           ) : acceptedOffer ? (
             <StartOnboardingCard offerId={acceptedOffer.id} offerNumber={acceptedOffer.number} customers={freeCustomers} />
+          ) : null}
+
+          {c.customerId ? (
+            <AdminPauseCard customerId={c.customerId} contactId={c.id} pause={await currentPause(c.customerId)} error={pauseError ?? null} today={todayBerlin()} />
           ) : null}
 
           <div id="angebot">

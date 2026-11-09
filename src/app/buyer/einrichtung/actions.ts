@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 import { logOfferActivity } from "@/lib/offer-links";
+import { bookHelpCall } from "@/lib/help-call";
 
 export type SetupState = { ok?: boolean; error?: string };
 
@@ -79,4 +80,16 @@ export async function confirmMetaAccessAction(_prev: SetupState, _fd: FormData):
   }
   revalidatePath("/buyer", "layout");
   return { ok: true };
+}
+
+export async function bookHelpCallAction(_prev: SetupState, fd: FormData): Promise<SetupState> {
+  try {
+    const { ctx } = await requireCustomer();
+    const res = await bookHelpCall(ctx.customerId, String(fd.get("start") ?? ""), String(fd.get("topic") ?? "").trim().slice(0, 200) || null);
+    if (!res.ok) return { error: res.error };
+    revalidatePath("/buyer", "layout");
+    return { ok: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Nicht möglich." };
+  }
 }
