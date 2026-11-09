@@ -53,7 +53,7 @@ export default async function BuyerLayout({
       {previewName ? (
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 bg-amber-400 px-4 py-2 text-sm font-medium text-amber-950">
           <span>
-            Vorschau: Du siehst das CRM von <b>{previewName}</b> – nur lesend
+            Vorschau: Du siehst das CRM von <b>{previewName}</b>, nur lesend
             (Demo-Leads lassen sich bearbeiten).
           </span>
           <form action={endPreviewAction}>

@@ -101,7 +101,7 @@ export function StornoDialog({
                 className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
               >
                 <option value="" disabled>
-                  – auswählen –
+                  Bitte auswählen
                 </option>
                 {stornoOptions.map((opt) => (
                   <option key={opt.recordId} value={opt.recordId}>

@@ -22,7 +22,7 @@ function Feedback({ state }: { state: SetupState }) {
   if (state.ok)
     return (
       <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
-        <CheckCircle2 className="h-4 w-4" /> Gespeichert – vielen Dank!
+        <CheckCircle2 className="h-4 w-4" /> Gespeichert. Vielen Dank!
       </p>
     );
   return null;
@@ -95,7 +95,7 @@ export function MetaConfirmButton({ done, readOnly }: { done: boolean; readOnly:
   if (done || state.ok)
     return (
       <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
-        <CheckCircle2 className="h-4 w-4" /> Erledigt – wir prüfen den Zugriff und melden uns, falls etwas fehlt.
+        <CheckCircle2 className="h-4 w-4" /> Erledigt. Wir prüfen den Zugriff und melden uns, falls etwas fehlt.
       </p>
     );
   return (

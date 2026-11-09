@@ -173,7 +173,7 @@ export async function sendOfferEmail(opts: {
       html: `
         <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0b1220">
           <p style="margin:0 0 16px;font-size:15px;line-height:1.6">${greeting}</p>
-          <p style="margin:0 0 16px;font-size:15px;line-height:1.6">vielen Dank für das Gespräch. Wie besprochen finden Sie Ihr Angebot unter folgendem Link – Sie können es dort direkt online annehmen oder als PDF herunterladen.</p>
+          <p style="margin:0 0 16px;font-size:15px;line-height:1.6">vielen Dank für das Gespräch. Wie besprochen finden Sie Ihr Angebot unter folgendem Link. Sie können es dort direkt online annehmen oder als PDF herunterladen.</p>
           <p style="margin:24px 0"><a href="${opts.offerUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">Angebot ansehen</a></p>
           <p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Angebot ${escapeHtml(opts.number)} · gültig bis ${until}</p>
           <p style="margin:24px 0 0;font-size:15px;line-height:1.6">Viele Grüße<br>performancegrowth</p>
@@ -216,7 +216,7 @@ export async function sendOnboardingWelcomeEmail(opts: {
       ? "Zugang einrichten: Über den Button legen Sie Ihr Passwort fest (Link 7 Tage gültig)."
       : `Einloggen unter ${opts.loginUrl} mit ${opts.to}.`,
     `Einrichtung im Kundenbereich (ca. 5 Minuten): kurzer Fragebogen, Freigabe Ihres Meta-Werbekontos${software ? ", Kalender verbinden" : ""}.`,
-    "Den Rest erledigen wir: Kampagne, Werbemittel und Leadformular – Sie bekommen Bescheid, sobald alles startklar ist.",
+    "Den Rest erledigen wir: Kampagne, Werbemittel und Leadformular. Sie bekommen Bescheid, sobald alles startklar ist.",
     start
       ? `Start am ${start}: Die Kampagne geht live${software ? ", der digitale Assistent schreibt neue Leads an und bucht Termine in Ihren Kalender" : ", jeder neue Lead kommt sofort per E-Mail"}.`
       : `Start: Die Kampagne geht live${software ? ", der digitale Assistent schreibt neue Leads an und bucht Termine in Ihren Kalender" : ", jeder neue Lead kommt sofort per E-Mail"}.`,
@@ -227,11 +227,11 @@ export async function sendOnboardingWelcomeEmail(opts: {
       from,
       to: opts.to,
       ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
-      subject: "Willkommen bei performancegrowth – Ihre nächsten Schritte",
+      subject: "Willkommen bei performancegrowth: Ihre nächsten Schritte",
       text: [
         opts.greeting,
         "",
-        `vielen Dank für Ihr Vertrauen – wir freuen uns auf die Zusammenarbeit${products ? ` (${products})` : ""}.`,
+        `vielen Dank für Ihr Vertrauen, wir freuen uns auf die Zusammenarbeit${products ? ` (${products})` : ""}.`,
         "So geht es weiter:",
         "",
         ...steps.map((s, i) => `${i + 1}. ${s}`),
@@ -248,7 +248,7 @@ export async function sendOnboardingWelcomeEmail(opts: {
       html: `
         <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0b1220">
           <p style="margin:0 0 16px;font-size:15px;line-height:1.6">${greeting}</p>
-          <p style="margin:0 0 16px;font-size:15px;line-height:1.6">vielen Dank für Ihr Vertrauen – wir freuen uns auf die Zusammenarbeit${products ? ` (${escapeHtml(products)})` : ""}. So geht es weiter:</p>
+          <p style="margin:0 0 16px;font-size:15px;line-height:1.6">vielen Dank für Ihr Vertrauen, wir freuen uns auf die Zusammenarbeit${products ? ` (${escapeHtml(products)})` : ""}. So geht es weiter:</p>
           <ol style="margin:0 0 20px;padding-left:20px;font-size:15px;line-height:1.6">
             ${steps.map((s) => `<li style="margin:0 0 8px">${escapeHtml(s)}</li>`).join("")}
           </ol>

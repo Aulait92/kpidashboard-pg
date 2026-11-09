@@ -102,7 +102,7 @@ export function DealEditForm({
                 {initialStatus} (nicht in Pipeline)
               </option>
             ) : null}
-            <option value="">– nicht gesetzt –</option>
+            <option value="">nicht gesetzt</option>
             {SALES_PIPELINE_PHASES.map((p) => (
               <option key={p.key} value={p.defaultStatus}>
                 {p.label}

@@ -7,6 +7,7 @@ import {
   BarChart3,
   ChevronDown,
   Columns3,
+  CreditCard,
   ListChecks,
   LayoutDashboard,
   LogOut,
@@ -223,6 +224,13 @@ function ProfileMenu({ name }: { name: string }) {
           >
             <MessageSquareText className="h-4 w-4" /> Etwas unklar? Feedback
           </button>
+          <Link
+            href="/buyer/konto"
+            onClick={() => setOpen(false)}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
+          >
+            <CreditCard className="h-4 w-4" /> Konto &amp; Rechnungen
+          </Link>
           <a
             href="https://performancegrowth.de/impressum"
             target="_blank"

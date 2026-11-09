@@ -85,7 +85,7 @@ export default async function OfferPage({
                 </p>
               ) : expired ? (
                 <p className="mt-2 text-sm text-[color:var(--muted)]">
-                  Dieses Angebot ist abgelaufen. Melden Sie sich gern – wir schicken Ihnen ein aktuelles.
+                  Dieses Angebot ist abgelaufen. Melden Sie sich gern, wir schicken Ihnen ein aktuelles.
                 </p>
               ) : canAccept ? (
                 <div className="mt-4">
@@ -93,7 +93,7 @@ export default async function OfferPage({
                 </div>
               ) : (
                 <p className="mt-2 text-sm text-[color:var(--muted)]">
-                  Bitte bestätigen Sie das Angebot kurz per E-Mail oder im Gespräch – wir schalten die Online-Annahme in
+                  Bitte bestätigen Sie das Angebot kurz per E-Mail oder im Gespräch, wir schalten die Online-Annahme in
                   Kürze frei.
                 </p>
               )}
@@ -122,7 +122,7 @@ function PaymentBox({
       <div className={`${box} flex items-start gap-3 border-emerald-200 bg-emerald-50 text-emerald-900`}>
         <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
         <div>
-          <div className="font-semibold">Zahlung erhalten – vielen Dank!</div>
+          <div className="font-semibold">Zahlung erhalten. Vielen Dank!</div>
           <p className="mt-1 text-sm">Wir melden uns in Kürze für den Onboarding-Termin. Ihre Rechnung kommt per E-Mail.</p>
         </div>
       </div>
@@ -133,7 +133,7 @@ function PaymentBox({
       <div className={`${box} flex items-start gap-3 border-sky-200 bg-sky-50 text-sky-900`}>
         <Clock className="mt-0.5 h-5 w-5 shrink-0" />
         <div>
-          <div className="font-semibold">Zahlung eingerichtet – vielen Dank!</div>
+          <div className="font-semibold">Zahlung eingerichtet. Vielen Dank!</div>
           <p className="mt-1 text-sm">
             Bei SEPA-Lastschrift dauert die Bestätigung ein paar Tage. Wir melden uns in Kürze für den
             Onboarding-Termin.
@@ -146,7 +146,7 @@ function PaymentBox({
   return (
     <div className={`${box} border-[#e5e7eb] bg-white`}>
       <div className="font-semibold">
-        {returned === "abgebrochen" ? "Die Zahlung wurde nicht abgeschlossen." : "Angebot angenommen – fehlt nur noch die Zahlung."}
+        {returned === "abgebrochen" ? "Die Zahlung wurde nicht abgeschlossen." : "Angebot angenommen. Es fehlt nur noch die Zahlung."}
       </div>
       <p className="mb-4 mt-1 text-sm text-[color:var(--muted)]">
         Richten Sie jetzt SEPA-Lastschrift oder Karte ein. Fällig ist jetzt nur das Setup; die Monatsgebühr wird ab dem Startdatum automatisch eingezogen. Die Zahlung läuft sicher über Stripe.

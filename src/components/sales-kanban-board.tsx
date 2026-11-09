@@ -250,7 +250,7 @@ export function SalesKanbanBoard({ deals: initialDeals }: { deals: KanbanDeal[] 
                   if (didDrag.current) return;
                   router.push(`/admin/crm/${deal.id}`);
                 }}
-                badge={deal.status ?? "—"}
+                badge={deal.status ?? "-"}
               />
             ))}
           </KanbanColumn>
@@ -463,7 +463,7 @@ function DealCard({
                 "shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
                 scoreTone(deal.priorityScore),
               )}
-              title={`Priorität-Score ${deal.priorityScore.toLocaleString("de-DE")} — Wert × Win-Wahrscheinlichkeit × Urgency`}
+              title={`Priorität-Score ${deal.priorityScore.toLocaleString("de-DE")}: Wert × Win-Wahrscheinlichkeit × Urgency`}
             >
               {deal.priorityScore >= 50_000 ? "🔥 " : ""}
               {formatScore(deal.priorityScore)}

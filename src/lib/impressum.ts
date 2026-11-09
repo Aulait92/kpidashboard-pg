@@ -116,7 +116,7 @@ export async function readImpressum(website: string | null | undefined): Promise
   if (!impressumHtml) return { ...empty, privacyUrl, error: "Impressum nicht gefunden." };
   const text = htmlToText(impressumHtml).slice(0, 20000);
 
-  if (!process.env.ANTHROPIC_API_KEY) return { ...empty, impressumUrl, privacyUrl, error: "ANTHROPIC_API_KEY fehlt – bitte von Hand prüfen." };
+  if (!process.env.ANTHROPIC_API_KEY) return { ...empty, impressumUrl, privacyUrl, error: "ANTHROPIC_API_KEY fehlt. Bitte von Hand prüfen." };
   try {
     const client = new Anthropic();
     const resp = await client.messages.create({
@@ -155,6 +155,6 @@ export async function readImpressum(website: string | null | undefined): Promise
     return info;
   } catch (err) {
     reportError(err, "impressum-extract", { url: impressumUrl });
-    return { ...empty, impressumUrl, privacyUrl, error: "Auslesen fehlgeschlagen – bitte von Hand prüfen." };
+    return { ...empty, impressumUrl, privacyUrl, error: "Auslesen fehlgeschlagen. Bitte von Hand prüfen." };
   }
 }

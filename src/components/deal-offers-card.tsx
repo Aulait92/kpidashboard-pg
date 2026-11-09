@@ -88,7 +88,7 @@ export function DealOffersCard({ newOfferHref, offers, appUrl }: { newOfferHref:
           actions={<ButtonLink href={newOfferHref} variant={current ? "secondary" : "primary"} icon={Plus}>{current ? "Neue Version" : "Angebot erstellen"}</ButtonLink>}
         />
         {!current ? (
-          <p className="px-5 py-4 text-sm text-[color:var(--muted)]">Noch kein Angebot. Erstelle es direkt im Gespräch – der Interessent kann es online annehmen.</p>
+          <p className="px-5 py-4 text-sm text-[color:var(--muted)]">Noch kein Angebot. Erstelle es direkt im Gespräch. Der Interessent kann es online annehmen.</p>
         ) : (
           <div className="space-y-3 px-5 py-4">
             <div className="flex flex-wrap items-center gap-2">

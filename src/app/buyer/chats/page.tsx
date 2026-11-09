@@ -28,12 +28,12 @@ type SearchParams = Promise<{ c?: string; err?: string; f?: string; q?: string }
 
 const ERRORS: Record<string, string> = {
   window:
-    "Der Lead hat seit über 24 Stunden nicht geschrieben – WhatsApp erlaubt dann keine freie Nachricht. Bitte anrufen.",
+    "Der Lead hat seit über 24 Stunden nicht geschrieben. WhatsApp erlaubt dann keine freie Nachricht. Bitte anrufen.",
   send: "Nachricht konnte nicht gesendet werden. Bitte später erneut versuchen.",
   preview: "In der Vorschau sind Änderungen deaktiviert.",
   template:
     "Für diese Nachfass-Situation ist noch keine freigegebene WhatsApp-Vorlage hinterlegt.",
-  followup_blocked: "Nachfassen ist in dieser Situation nicht sinnvoll – siehe Hinweis unten.",
+  followup_blocked: "Nachfassen ist in dieser Situation nicht sinnvoll, siehe Hinweis unten.",
 };
 
 const TZ = "Europe/Berlin";
@@ -224,7 +224,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                 <CalendarClock className="h-4 w-4" /> {formatAppt(a.startsAt)} Uhr
               </div>
               <div className="mt-0.5 text-xs text-blue-800">
-                {a.mode === "video" ? "Videocall" : "Telefonat – du rufst an"}
+                {a.mode === "video" ? "Videocall" : "Telefonat, du rufst an"}
               </div>
               <div className="mt-2 flex flex-wrap gap-3 text-xs">
                 {a.meetUrl ? (
@@ -279,7 +279,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
       <div className="hidden sm:block">
         <PageHeader
           title="Chats"
-          subtitle="WhatsApp-Gespräche deines Assistenten – du kannst jederzeit übernehmen."
+          subtitle="WhatsApp-Gespräche deines Assistenten. Du kannst jederzeit übernehmen."
         />
       </div>
 
@@ -509,7 +509,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
               ) : (
                 <div className="border-t border-[color:var(--border)] bg-white px-4 py-3">
                   <p className="text-xs text-[color:var(--muted)]">
-                    Letzte Nachricht des Leads ist über 24 h her – WhatsApp erlaubt jetzt nur eine
+                    Letzte Nachricht des Leads ist über 24 h her. WhatsApp erlaubt jetzt nur eine
                     freigegebene Vorlage. Anrufen oder nachfassen:
                   </p>
                   {followup?.kind === "blocked" ? (
@@ -533,7 +533,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                         </div>
                       ) : (
                         <p className="text-xs text-amber-700">
-                          Diese Vorlage ist noch nicht bei WhatsApp freigegeben – bitte dein Team
+                          Diese Vorlage ist noch nicht bei WhatsApp freigegeben. Bitte dein Team
                           kontaktieren. Bis dahin: anrufen.
                         </p>
                       )}

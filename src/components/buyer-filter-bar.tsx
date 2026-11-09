@@ -57,7 +57,7 @@ export function BuyerFilterBar({
   const rangeLabel =
     currentRange === "custom"
       ? customFrom && customTo
-        ? `${customFrom} – ${customTo}`
+        ? `${customFrom} bis ${customTo}`
         : "Eigener Zeitraum"
       : RANGE_LABELS[currentRange];
 
@@ -92,7 +92,7 @@ export function BuyerFilterBar({
                   }
                   className="min-w-0 flex-1 rounded-md border border-[color:var(--border)] bg-white px-2 py-1 text-xs focus:border-[color:var(--brand)] focus:outline-none"
                 />
-                <span className="text-[color:var(--muted)]">–</span>
+                <span className="text-[color:var(--muted)]">bis</span>
                 <input
                   type="date"
                   value={customTo ?? ""}

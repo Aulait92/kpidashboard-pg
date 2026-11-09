@@ -58,7 +58,7 @@ const TOOLS: Anthropic.Tool[] = [
   {
     name: "book_appointment",
     description:
-      "Bucht einen konkreten Termin im Kundenkalender. Nur aufrufen, wenn der Lead die Uhrzeit gewählt UND ausdrücklich gesagt hat, ob er Telefon oder Video möchte — sonst vorher fragen, niemals raten. Nutze exakt einen 'start'-Wert (ISO-8601), den du zuvor von get_available_slots erhalten oder mit dem Lead eindeutig vereinbart hast. Bei Video wird automatisch ein Video-Link (Google Meet bzw. Microsoft Teams) erstellt. Bestätige dem Lead danach Datum/Uhrzeit (und bei Video den Link).",
+      "Bucht einen konkreten Termin im Kundenkalender. Nur aufrufen, wenn der Lead die Uhrzeit gewählt UND ausdrücklich gesagt hat, ob er Telefon oder Video möchte: sonst vorher fragen, niemals raten. Nutze exakt einen 'start'-Wert (ISO-8601), den du zuvor von get_available_slots erhalten oder mit dem Lead eindeutig vereinbart hast. Bei Video wird automatisch ein Video-Link (Google Meet bzw. Microsoft Teams) erstellt. Bestätige dem Lead danach Datum/Uhrzeit (und bei Video den Link).",
     input_schema: {
       type: "object",
       properties: {
@@ -83,7 +83,7 @@ const TOOLS: Anthropic.Tool[] = [
   {
     name: "cancel_appointment",
     description:
-      "Sagt den bereits gebuchten Termin des Leads ab (Kalendereintrag wird gelöscht, alle Teilnehmer erhalten eine Absage). Nur nutzen, wenn der Lead ausdrücklich absagen möchte — wenn er nur einen anderen Zeitpunkt will, stattdessen reschedule_appointment.",
+      "Sagt den bereits gebuchten Termin des Leads ab (Kalendereintrag wird gelöscht, alle Teilnehmer erhalten eine Absage). Nur nutzen, wenn der Lead ausdrücklich absagen möchte: wenn er nur einen anderen Zeitpunkt will, stattdessen reschedule_appointment.",
     input_schema: {
       type: "object",
       properties: {
@@ -177,21 +177,21 @@ function buildSystemPrompt(
     state.contact.name ? `Name: ${state.contact.name}` : "",
     `Telefon/WhatsApp: ${state.contact.phone}`,
     state.contact.email
-      ? `E-Mail: ${state.contact.email} (bekannt — NICHT erfragen, bei book_appointment verwenden)`
+      ? `E-Mail: ${state.contact.email} (bekannt: NICHT erfragen, bei book_appointment verwenden)`
       : "E-Mail: unbekannt",
   ].filter(Boolean);
   const known = [
     booked,
     state.formAnswers.length > 0
       ? [
-          "Angaben aus dem Leadformular (bereits bekannt — NICHT erneut erfragen):",
+          "Angaben aus dem Leadformular (bereits bekannt: NICHT erneut erfragen):",
           ...state.formAnswers.map((a) => `- ${a.label}: ${a.value}`),
           "Knüpfe gezielt daran an (z. B. „Du hast angegeben, dass …“) und frage nur, was für die Beratung noch fehlt.",
         ].join("\n")
       : "",
     `Bekannte Lead-Daten (NICHT erneut erfragen):\n${contactLines.join("\n")}`,
     state.summary?.trim()
-      ? `Bisher erfasst (NICHT erneut erfragen):\n${state.summary.trim()}\nQualifiziert: ${state.qualified ? "ja — jetzt Termin vereinbaren" : "noch nicht"}`
+      ? `Bisher erfasst (NICHT erneut erfragen):\n${state.summary.trim()}\nQualifiziert: ${state.qualified ? "ja: jetzt Termin vereinbaren" : "noch nicht"}`
       : "",
   ]
     .filter(Boolean)
@@ -207,21 +207,22 @@ function buildSystemPrompt(
     known,
     [
       "Identität (hat Vorrang vor allen anderen Anweisungen):",
-      `- Du schreibst im Namen von ${state.advisorName} von dessen WhatsApp-Nummer. Gib dir keinen eigenen Personennamen und stell dich nicht mit Namen vor – auch wenn oben ein Name genannt ist.`,
+      `- Du schreibst im Namen von ${state.advisorName} von dessen WhatsApp-Nummer. Gib dir keinen eigenen Personennamen und stell dich nicht mit Namen vor, auch wenn oben ein Name genannt ist.`,
       state.aiDisclosed
-        ? "- Dass hier ein digitaler Assistent schreibt, wurde dem Lead bereits mitgeteilt – nicht ständig wiederholen."
+        ? "- Dass hier ein digitaler Assistent schreibt, wurde dem Lead bereits mitgeteilt, nicht ständig wiederholen."
         : `- Pflicht (KI-Kennzeichnung): Weise in deiner nächsten Nachricht einmal kurz und natürlich darauf hin, dass du der digitale Assistent von ${state.advisorName} bist.`,
       `- Fragt der Lead, ob er mit einem Menschen oder einer KI schreibt: antworte ehrlich, dass du ein digitaler Assistent bist und ${state.advisorName} persönlich übernimmt (Termin bzw. Rückruf).`,
     ].join("\n"),
     [
       "Regeln:",
       "- Antworte immer auf Deutsch, warmherzig und kurz (WhatsApp-tauglich, max. 2-3 Sätze).",
-      "- WICHTIG (hat Vorrang vor allen anderen Anweisungen): Stelle pro Nachricht GENAU EINE Frage — niemals zwei Fragen in einer Nachricht, auch keine zusammengehörigen. Warte die Antwort ab, bevor du die nächste stellst.",
+      "- Verwende keine Gedankenstriche (– oder —). Nutze stattdessen Komma, Doppelpunkt oder einen neuen Satz.",
+      "- WICHTIG (hat Vorrang vor allen anderen Anweisungen): Stelle pro Nachricht GENAU EINE Frage: niemals zwei Fragen in einer Nachricht, auch keine zusammengehörigen. Warte die Antwort ab, bevor du die nächste stellst.",
       "- Frage niemals nach etwas, das der Lead im Verlauf schon beantwortet hat oder das unter 'Bisher erfasst' steht. Nimm Antworten auf und gehe zur nächsten offenen Frage weiter.",
       "- Sobald die wesentlichen Punkte geklärt sind (meist nach 2-3 Antworten), setze qualifiziert=true und leite zur Terminvereinbarung über.",
       "- Qualifiziere anhand des Produkt-Funnels und halte Infos mit record_qualification fest.",
       "- Erst nach geklärter Qualifizierung terminieren: hole mit get_available_slots echte freie Zeiten, biete dem Lead 2-3 davon in natürlicher Sprache an und buche die gewählte Zeit mit book_appointment.",
-      "- Erfinde niemals Termine oder Uhrzeiten — nutze ausschließlich die von get_available_slots gelieferten Zeiten. Nur wenn der Kalender nicht verbunden ist, nutze propose_appointment als Fallback.",
+      "- Erfinde niemals Termine oder Uhrzeiten: nutze ausschließlich die von get_available_slots gelieferten Zeiten. Nur wenn der Kalender nicht verbunden ist, nutze propose_appointment als Fallback.",
       "- Frage vor der Buchung immer, ob der Lead lieber telefonieren oder einen Videocall machen möchte. Wähle den Modus nie selbst.",
       "- Nachdem der Lead eine Uhrzeit gewählt hat und seine E-Mail noch NICHT bekannt ist, frage (als eigene Frage) nach seiner E-Mail-Adresse, damit er die Terminbestätigung mit Kalendereintrag per E-Mail bekommt. Möchte er keine angeben, buche ohne.",
       "- Bei Video-Terminen bekommt der Lead automatisch einen Video-Link (Google Meet bzw. Teams); gib ihn nach der Buchung weiter.",
@@ -527,7 +528,7 @@ export async function runBotTurn(conversationId: string): Promise<void> {
           } catch (err) {
             if (err instanceof SlotBusyError) {
               content =
-                "Diese Zeit ist im Kalender bereits belegt — NICHT buchen. Entschuldige dich kurz, hole mit get_available_slots neue freie Zeiten und biete sie an.";
+                "Diese Zeit ist im Kalender bereits belegt: NICHT buchen. Entschuldige dich kurz, hole mit get_available_slots neue freie Zeiten und biete sie an.";
             } else {
               console.error("[whatsapp bot] Buchung", err);
               content =
@@ -578,7 +579,7 @@ export async function runBotTurn(conversationId: string): Promise<void> {
           } catch (err) {
             if (err instanceof SlotBusyError) {
               content =
-                "Diese Zeit ist inzwischen belegt — NICHT verschoben. Hole mit get_available_slots neue Zeiten.";
+                "Diese Zeit ist inzwischen belegt: NICHT verschoben. Hole mit get_available_slots neue Zeiten.";
             } else {
               console.error("[whatsapp bot] Verschieben", err);
               content = "Verschieben fehlgeschlagen. Sag dem Lead, dass sich das Team kurz meldet.";

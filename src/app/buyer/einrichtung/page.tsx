@@ -30,14 +30,14 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const readOnly = ctx.preview;
 
   return (
-    <div className="mx-auto w-full max-w-3xl">
+    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader
         title="Einrichtung"
         subtitle={
           ob.liveAt
             ? `Live seit ${dateFmt(ob.liveAt)}.`
             : ob.startDate
-              ? `Start am ${dateFmt(ob.startDate)} – bis dahin richten wir alles gemeinsam ein.`
+              ? `Start am ${dateFmt(ob.startDate)}. Bis dahin richten wir alles gemeinsam ein.`
               : "Wir richten alles gemeinsam ein."
         }
       />
@@ -45,14 +45,14 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
       <Card className="mb-5">
         <div className="p-5">
           <div className="flex items-center justify-between text-sm">
-            <span className="font-medium">{ob.liveAt ? "Alles eingerichtet – Sie sind live." : `${progress.done} von ${progress.total} Schritten erledigt`}</span>
+            <span className="font-medium">{ob.liveAt ? "Alles eingerichtet, Sie sind live." : `${progress.done} von ${progress.total} Schritten erledigt`}</span>
             <span className="text-[color:var(--muted)]">{ob.liveAt ? "100" : progress.percent} %</span>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-[color:var(--surface-sunken,#f1f5f9)]">
             <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${ob.liveAt ? 100 : progress.percent}%` }} />
           </div>
           <p className="mt-3 text-sm text-[color:var(--muted)]">
-            Ihre Aufgaben dauern zusammen etwa 5 Minuten. Alles andere erledigen wir – Kampagne, Werbemittel, Leadformular
+            Ihre Aufgaben dauern zusammen etwa 5 Minuten. Alles andere erledigen wir: Kampagne, Werbemittel, Leadformular
             {software ? ", WhatsApp-Assistent" : ""}.
           </p>
         </div>
@@ -81,7 +81,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 öffnen und mit Ihrem privaten Facebook-Profil anmelden (es bleibt unsichtbar für Kunden).
               </li>
               <li>
-                <b>Business-Portfolio erstellen</b>: Name Ihrer Agentur, Ihr Name und Ihre geschäftliche E-Mail – dann die
+                <b>Business-Portfolio erstellen</b>: Name Ihrer Agentur, Ihr Name und Ihre geschäftliche E-Mail, dann die
                 E-Mail bestätigen.
               </li>
               <li>
@@ -93,7 +93,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 Zeitzone Berlin).
               </li>
               <li>
-                Im Werbekonto unter <b>Abrechnung</b> eine Zahlungsmethode (z. B. Kreditkarte) hinterlegen – darüber zahlen
+                Im Werbekonto unter <b>Abrechnung</b> eine Zahlungsmethode (z. B. Kreditkarte) hinterlegen. Darüber zahlen
                 Sie das Werbebudget direkt an Meta.
               </li>
               <li>Danach weiter mit den Schritten unten.</li>
@@ -113,13 +113,13 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               Unsere Business-ID eingeben: <b className="select-all">{businessId}</b>
             </li>
             <li>
-              Ihr <b>Werbekonto</b> (Kampagnen verwalten) und Ihre <b>Facebook-Seite</b> auswählen, ggf. auch Instagram – speichern.
+              Ihr <b>Werbekonto</b> (Kampagnen verwalten) und Ihre <b>Facebook-Seite</b> auswählen, ggf. auch Instagram, und speichern.
             </li>
           </ol>
           <MetaConfirmButton done={done("metaAccess")} readOnly={readOnly} />
           <p className="mt-4 text-sm text-[color:var(--muted)]">
             Klappt etwas nicht? Antworten Sie einfach auf unsere Willkommens-Mail oder rufen Sie an:{" "}
-            <a href="tel:+4915152418846" className="font-medium text-[color:var(--brand)]">+49 151 52418846</a> – dann
+            <a href="tel:+4915152418846" className="font-medium text-[color:var(--brand)]">+49 151 52418846</a>. Dann
             richten wir es in 10 Minuten gemeinsam per Bildschirmfreigabe ein.
           </p>
         </Step>
@@ -133,8 +133,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             {gcal && gcal !== "connected" ? (
               <p className="mt-3 text-sm font-medium text-rose-700">
                 {gcal === "consent"
-                  ? "Ihr Unternehmen muss die Verbindung erst freigeben. Kein Problem – rufen Sie kurz an, dann richten wir es gemeinsam ein."
-                  : "Das hat nicht geklappt. Bitte noch einmal versuchen – oder kurz anrufen, dann erledigen wir es gemeinsam."}
+                  ? "Ihr Unternehmen muss die Verbindung erst freigeben. Kein Problem: Rufen Sie kurz an, dann richten wir es gemeinsam ein."
+                  : "Das hat nicht geklappt. Bitte noch einmal versuchen oder kurz anrufen, dann erledigen wir es gemeinsam."}
               </p>
             ) : null}
             {done("calendar") ? (
@@ -164,7 +164,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           </p>
         </Step>
       </div>
-    </div>
+    </main>
   );
 }
 

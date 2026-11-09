@@ -78,7 +78,7 @@ export async function cancelLeadAction(
   }
   if (!lead.airtableId) {
     return {
-      error: "Lead ohne Airtable-Referenz — bitte den Admin informieren.",
+      error: "Lead ohne Airtable-Referenz. Bitte den Admin informieren.",
       leadId,
     };
   }
@@ -137,13 +137,13 @@ export async function cancelLeadAction(
   // gefetchten Map lesen, damit Admin gleich den Grund mitsieht.
   try {
     const allGruende = await fetchAllStornogruende();
-    const grundLabel = allGruende.get(stornogrundRecordId)?.grund ?? "—";
+    const grundLabel = allGruende.get(stornogrundRecordId)?.grund ?? "-";
     const bodyParts = [lead.customer.name, lead.source, grundLabel].filter(
       (s): s is string => !!s,
     );
     await sendToAdmins({
       title: `🚫 Storno: ${lead.name ?? "Lead"}`,
-      body: bemerkung ? `${bodyParts.join(" · ")} — ${bemerkung}` : bodyParts.join(" · "),
+      body: bemerkung ? `${bodyParts.join(" · ")} : ${bemerkung}` : bodyParts.join(" · "),
       tag: `storno:${lead.airtableId}`,
       url: "/",
     });

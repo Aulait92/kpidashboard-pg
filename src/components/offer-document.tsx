@@ -119,8 +119,8 @@ export function OfferDocument({ offer, part = "all" }: { offer: OfferDoc; part?:
             </h1>
             <p className="mt-5 max-w-[520px] text-[15px] leading-relaxed text-[#c9d2e3]">
               {serviceOnly
-                ? "Exklusive Versicherungs-Leads über Facebook & Instagram – in Echtzeit per E-Mail und im Kundenbereich."
-                : "Exklusive Versicherungs-Leads über Facebook & Instagram – mit digitalem Assistenten, der die Leads per WhatsApp anschreibt und direkt Termine in Ihrem Kalender bucht."}
+                ? "Exklusive Versicherungs-Leads über Facebook & Instagram, in Echtzeit per E-Mail und im Kundenbereich."
+                : "Exklusive Versicherungs-Leads über Facebook & Instagram, mit digitalem Assistenten, der die Leads per WhatsApp anschreibt und direkt Termine in Ihrem Kalender bucht."}
             </p>
           </div>
 
@@ -199,7 +199,7 @@ export function OfferDocument({ offer, part = "all" }: { offer: OfferDoc; part?:
             <ul className="space-y-0.5">
               {products.map((p, i) => (
                 <li key={i}>
-                  <span className="font-medium text-[#111827]">{p.name}</span> – {eur(p.dailyBudget)} pro Tag (≈{" "}
+                  <span className="font-medium text-[#111827]">{p.name}</span>: {eur(p.dailyBudget)} pro Tag (≈{" "}
                   {eur(Math.round(p.dailyBudget * PRICE_LIST.daysPerMonth))} im Monat)
                 </li>
               ))}
@@ -209,7 +209,7 @@ export function OfferDocument({ offer, part = "all" }: { offer: OfferDoc; part?:
             ≈ {eur(list.monthlyBudget)} im Monat. Das Werbebudget zahlt der Kunde direkt an Meta; es ist in den Preisen
             nicht enthalten.
           </Tr>
-          {offer.startDate ? <Tr k="Start">{date(offer.startDate)} – ab diesem Tag läuft die monatliche Vergütung.</Tr> : null}
+          {offer.startDate ? <Tr k="Start">{date(offer.startDate)}. Ab diesem Tag läuft die monatliche Vergütung.</Tr> : null}
         </Table>
 
         <H2 className="mt-12">2. Preise und Zahlungsbedingungen</H2>
@@ -228,8 +228,7 @@ export function OfferDocument({ offer, part = "all" }: { offer: OfferDoc; part?:
             </Tr>
           ) : null}
           <Tr k={hasIntro ? `Ab Monat ${offer.introMonths! + 1}` : "Monatliche Vergütung"}>
-            <b className="text-[#111827]">{eur2(offer.monthlyFee)}</b> netto pro Monat zzgl. 19 % USt. –{" "}
-            {serviceOnly ? "Betreuung" : "Betreuung + Software"}
+            <b className="text-[#111827]">{eur2(offer.monthlyFee)}</b> netto pro Monat zzgl. 19 % USt. ({serviceOnly ? "Betreuung" : "Betreuung + Software"})
             <Note>
               {monthlyIsList
                 ? `${serviceOnly ? "Paket Nur Betreuung" : `Preisstufe Werbebudget ${list.tierLabel}`}${extra ? `, inklusive ${extra} × ${eur(PRICE_LIST.extraProductMonthly)} für weitere Produkte` : ""}`
@@ -239,7 +238,7 @@ export function OfferDocument({ offer, part = "all" }: { offer: OfferDoc; part?:
           <Tr k="Vertragslaufzeit">
             {term === "12m"
               ? "12 Monate ab Start, danach monatlich kündbar zum Ende des Abrechnungsmonats."
-              : "Keine Mindestlaufzeit – kündbar zum Ende des jeweiligen Abrechnungsmonats."}
+              : "Keine Mindestlaufzeit, kündbar zum Ende des jeweiligen Abrechnungsmonats."}
           </Tr>
           <Tr k="Pause / Urlaub">
             {offer.softwareFee > 0 ? (
@@ -268,11 +267,11 @@ export function OfferDocument({ offer, part = "all" }: { offer: OfferDoc; part?:
         <H3>2.1 Zahlung</H3>
         <p className="text-[#374151]">
           Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im
-          Voraus – per SEPA-Lastschrift oder Karte, automatisch eingezogen.
+          Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen.
         </p>
         <H3>2.2 Garantie</H3>
         <p className="text-[#374151]">
-          Läuft ein Produkt für Sie nicht profitabel, richten wir ein weiteres Produkt Ihrer Wahl ohne Setupgebühr ein –
+          Läuft ein Produkt für Sie nicht profitabel, richten wir ein weiteres Produkt Ihrer Wahl ohne Setupgebühr ein,
           so lange, bis Sie ein Produkt haben, mit dem Sie zufrieden sind.
         </p>
         {offer.specialTerms ? (

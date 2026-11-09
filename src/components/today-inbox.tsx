@@ -261,7 +261,7 @@ export function TodayInbox({ data }: { data: InboxData }) {
 
       {outcomes.length > 0 ? (
         <Card>
-          <CardHeader icon={CalendarCheck} title="Wie lief's?" count={outcomes.length} hint="Ergebnis eintragen – zählt in deine Abschlussquote" />
+          <CardHeader icon={CalendarCheck} title="Wie lief's?" count={outcomes.length} hint="Ergebnis eintragen, zählt in deine Abschlussquote" />
           <ul className="divide-y divide-[color:var(--border)]">
             {outcomes.map((o) => (
               <OutcomeRow
@@ -399,7 +399,7 @@ export function TodayInbox({ data }: { data: InboxData }) {
                         hint: "Morgen wieder in der Liste",
                         icon: PhoneMissed,
                         onSelect: () =>
-                          run(`r:${c.leadId}`, `${c.name}: nicht erreicht – morgen wieder`, () =>
+                          run(`r:${c.leadId}`, `${c.name}: nicht erreicht, morgen wieder`, () =>
                             callbackOutcomeResult(c.leadId, "not_reached"),
                           ),
                       },
@@ -481,7 +481,7 @@ function OutcomeRow({
           <Button icon={ThumbsDown} onClick={() => onDone("lost", null, "kein Interesse")}>
             Kein Interesse
           </Button>
-          <Button variant="ghost" icon={UserX} onClick={() => onDone("no_show", null, "nicht erschienen – in den Rückrufen")}>
+          <Button variant="ghost" icon={UserX} onClick={() => onDone("no_show", null, "nicht erschienen, steht in den Rückrufen")}>
             Nicht erschienen
           </Button>
         </div>

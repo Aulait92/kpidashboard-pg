@@ -30,7 +30,7 @@ export function cachedAccessToken(conn: {
 }
 
 export function refreshTokenOf(conn: { refreshTokenEnc: string | null }): string {
-  if (!conn.refreshTokenEnc) throw new Error("Kein Refresh-Token — Kalender neu verbinden.");
+  if (!conn.refreshTokenEnc) throw new Error("Kein Refresh-Token. Kalender neu verbinden.");
   return decryptSecret(conn.refreshTokenEnc);
 }
 

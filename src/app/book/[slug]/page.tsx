@@ -28,7 +28,7 @@ const ERRORS: Record<string, string> = {
   phone: "Bitte gib eine gültige Telefonnummer an.",
   email: "Bitte gib eine gültige E-Mail-Adresse an.",
   consent: "Bitte bestätige die Datenschutzhinweise.",
-  taken: "Diese Uhrzeit ist leider gerade vergeben worden — bitte wähle eine andere.",
+  taken: "Diese Uhrzeit ist leider gerade vergeben worden. Bitte wähle eine andere.",
   busy: "Gerade gehen sehr viele Buchungen ein. Bitte versuche es in ein paar Minuten erneut.",
   unavailable: "Die Online-Buchung ist aktuell nicht verfügbar.",
   invalid: "Die Buchung konnte nicht verarbeitet werden.",

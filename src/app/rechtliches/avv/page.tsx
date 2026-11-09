@@ -20,13 +20,13 @@ export default function AvvPage() {
           <LegalSections sections={AVV} />
         </div>
         <section className="mt-12">
-          <h2 className="text-lg font-bold">Anlage 1 – Technische und organisatorische Maßnahmen</h2>
+          <h2 className="text-lg font-bold">Anlage 1: Technische und organisatorische Maßnahmen</h2>
           <ul className="mt-3 list-disc space-y-1.5 pl-5 text-[15px] leading-relaxed text-[#374151]">
             {TOMS.map((t) => <li key={t}>{t}</li>)}
           </ul>
         </section>
         <section className="mt-10">
-          <h2 className="text-lg font-bold">Anlage 2 – Unterauftragsverarbeiter</h2>
+          <h2 className="text-lg font-bold">Anlage 2: Unterauftragsverarbeiter</h2>
           <div className="mt-3 overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>

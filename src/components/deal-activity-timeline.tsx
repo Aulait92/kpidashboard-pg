@@ -95,7 +95,7 @@ export function DealActivityTimeline({
       <header className="border-b border-[color:var(--border)] px-5 py-3">
         <h2 className="text-base font-semibold">Aktivität</h2>
         <p className="mt-0.5 text-xs text-[color:var(--muted)]">
-          Notizen, Anrufe, Mails, Termine — chronologisch (neueste zuerst).
+          Notizen, Anrufe, Mails, Termine, chronologisch (neueste zuerst).
           Status-Wechsel werden automatisch protokolliert.
         </p>
       </header>
@@ -151,7 +151,7 @@ function CreateActivityForm({ dealId }: { dealId: string }) {
           name="title"
           required
           minLength={2}
-          placeholder="Titel — z. B. 'Erstgespräch geführt'"
+          placeholder="Titel, z. B. 'Erstgespräch geführt'"
           className="rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
         />
       </div>
@@ -163,7 +163,7 @@ function CreateActivityForm({ dealId }: { dealId: string }) {
       />
       <label className="block">
         <span className="text-[11px] font-medium uppercase tracking-wide text-[color:var(--muted)]">
-          Geplant für (optional) — zeigt die Karte im Pipeline-Board als
+          Geplant für (optional): zeigt die Karte im Pipeline-Board als
           nächste Aktivität
         </span>
         <input

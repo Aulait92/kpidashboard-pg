@@ -257,13 +257,13 @@ export async function getCallbackLeads(customerId: string): Promise<CallbackLead
     let reason: string | null = null;
     const lastCancel = l.appointments[0]?.cancelledBy;
     if (l.appointments[0]?.status === "no_show") {
-      reason = "Nicht zum Termin erschienen – neuen Termin vereinbaren";
+      reason = "Nicht zum Termin erschienen, neuen Termin vereinbaren";
     } else if (lastCancel === "advisor") {
-      reason = "Du hast den Termin abgelehnt – bitte neuen Termin vereinbaren";
+      reason = "Du hast den Termin abgelehnt, bitte neuen Termin vereinbaren";
     } else if (lastCancel === "lead") {
-      reason = "Lead hat den Termin abgesagt – kurz nachfassen";
+      reason = "Lead hat den Termin abgesagt, kurz nachfassen";
     } else if (!l.phone) {
-      reason = "Keine Handynummer – bitte per E-Mail/Telefon nachfassen";
+      reason = "Keine Handynummer, bitte per E-Mail/Telefon nachfassen";
     } else if (status.startsWith("failed")) {
       reason = "WhatsApp nicht zustellbar";
     } else if (l.outreachAt && now - l.outreachAt.getTime() >= CALLBACK_AFTER_MS) {

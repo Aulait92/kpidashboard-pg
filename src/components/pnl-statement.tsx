@@ -233,10 +233,10 @@ export function PnLStatement({ pnl }: { pnl: PnL }) {
         </div>
         <div className="text-right text-[11px] text-[color:var(--muted)]">
           <div>
-            Aktuell: {formatDate(pnl.range.from)} – {formatDate(pnl.range.to)}
+            Aktuell: {formatDate(pnl.range.from)} bis {formatDate(pnl.range.to)}
           </div>
           <div>
-            Vorperiode: {formatDate(pnl.previousRange.from)} –{" "}
+            Vorperiode: {formatDate(pnl.previousRange.from)} bis{" "}
             {formatDate(pnl.previousRange.to)}
           </div>
         </div>

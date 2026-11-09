@@ -55,8 +55,8 @@ export async function chooseFollowup(conversationId: string): Promise<FollowupCh
       kind: "blocked",
       reason:
         status === "abschluss"
-          ? "Lead ist abgeschlossen – kein Nachfassen nötig."
-          : "Lead hat kein Interesse – bitte nicht erneut anschreiben.",
+          ? "Lead ist abgeschlossen, kein Nachfassen nötig."
+          : "Lead hat kein Interesse. Bitte nicht erneut anschreiben.",
     };
   }
 
@@ -78,7 +78,7 @@ export async function chooseFollowup(conversationId: string): Promise<FollowupCh
     }).format(upcoming.startsAt);
     return {
       kind: "blocked",
-      reason: `Termin am ${when} Uhr steht – die Erinnerung kommt automatisch.`,
+      reason: `Termin am ${when} Uhr steht, die Erinnerung kommt automatisch.`,
     };
   }
 

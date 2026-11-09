@@ -29,7 +29,7 @@ export function AcceptForm({
       <div className="flex items-center gap-3 rounded-xl bg-[#EFF6FF] px-5 py-4 text-[#1e3a8a]">
         <Loader2 className="h-5 w-5 shrink-0 animate-spin" />
         <div>
-          <div className="font-semibold">Vielen Dank – Ihr Auftrag ist bestätigt.</div>
+          <div className="font-semibold">Vielen Dank, Ihr Auftrag ist bestätigt.</div>
           <p className="mt-1 text-sm">Sie werden zur sicheren Zahlungseinrichtung (Stripe) weitergeleitet …</p>
         </div>
       </div>
@@ -41,7 +41,7 @@ export function AcceptForm({
       <div className="flex items-start gap-3 rounded-xl bg-emerald-50 px-5 py-4 text-emerald-900">
         <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
         <div>
-          <div className="font-semibold">Vielen Dank – Ihr Auftrag ist bestätigt.</div>
+          <div className="font-semibold">Vielen Dank, Ihr Auftrag ist bestätigt.</div>
           <p className="mt-1 text-sm">Wir melden uns in Kürze für den Onboarding-Termin.</p>
         </div>
       </div>

@@ -153,7 +153,7 @@ export function NotificationsButton() {
           status === "denied"
             ? "In den Geräte-Einstellungen freigeben"
             : status === "on"
-              ? "Benachrichtigungen aktiv — klick zum Deaktivieren"
+              ? "Benachrichtigungen aktiv, klick zum Deaktivieren"
               : "Benachrichtigungen aktivieren"
         }
         className={cn(

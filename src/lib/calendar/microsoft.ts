@@ -124,7 +124,7 @@ export async function microsoftExchangeCode(code: string, customerId: string): P
   });
   const calendarId = await ensureSubCalendar(
     json.access_token,
-    `Termine – ${customer?.name ?? customerId}`,
+    `Termine (${customer?.name ?? customerId})`,
   );
   await prisma.calendarConnection.update({
     where: { customerId },
@@ -208,7 +208,7 @@ export async function microsoftGetBusy(customerId: string, min: Date, max: Date)
     });
     if (!res.ok) {
       throw new Error(
-        `Outlook-Verfügbarkeit nicht abrufbar (${res.status}) — Kalender ggf. neu verbinden.`,
+        `Outlook-Verfügbarkeit nicht abrufbar (${res.status}). Kalender ggf. neu verbinden.`,
       );
     }
     const json = (await res.json()) as {

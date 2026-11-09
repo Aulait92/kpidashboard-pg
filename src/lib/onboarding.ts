@@ -137,7 +137,7 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
       { title: "Onboarding: Pflichtangaben (Impressum) der Agentur-Website prüfen", dueAt: dueBefore(null, 0, 1) },
       { title: "Onboarding: Kampagne und Leadformular anlegen", dueAt: dueBefore(start, 5, 2) },
       { title: "Onboarding: Testlead durchspielen", dueAt: dueBefore(start, 2, 3) },
-      { title: "Onboarding: Go-live – Kampagne aktivieren", dueAt: dueBefore(start, 0, 4) },
+      { title: "Onboarding: Go-live: Kampagne aktivieren", dueAt: dueBefore(start, 0, 4) },
     ];
     await prisma.salesTask
       .createMany({ data: tasks.map((t) => ({ ...t, contactId: contact.id, type: "SONSTIGES" as const })) })
@@ -334,11 +334,11 @@ export async function sendGoLiveMail(onboardingId: string) {
     subject: "Ihre Kampagne ist live 🚀",
     greeting: await customerGreeting({ salesContactId: ob.salesContactId, contactName: offer?.contactName ?? null }),
     paragraphs: [
-      "alles ist eingerichtet – Ihre Anzeigen laufen ab sofort. Die ersten Leads kommen in der Regel innerhalb von 1–3 Tagen.",
+      "alles ist eingerichtet, Ihre Anzeigen laufen ab sofort. Die ersten Leads kommen in der Regel innerhalb von 1–3 Tagen.",
       software
         ? "Neue Leads bekommen innerhalb weniger Minuten eine WhatsApp-Nachricht von Ihrem digitalen Assistenten und können direkt einen Termin in Ihrem Kalender buchen. Im Kundenbereich sehen Sie unter „Heute“, wen Sie anrufen sollten."
         : `Jeder neue Lead kommt sofort per E-Mail${q.leadEmails?.length ? ` an ${q.leadEmails.join(", ")}` : ""} und steht im Kundenbereich unter „Leads“. Am besten rufen Sie innerhalb der ersten Minuten an.`,
-      "Tipp: Installieren Sie den Kundenbereich auf Ihrem Handy (im Browser „Zum Startbildschirm hinzufügen“) – dann haben Sie neue Leads immer dabei.",
+      "Tipp: Installieren Sie den Kundenbereich auf Ihrem Handy (im Browser „Zum Startbildschirm hinzufügen“). Dann haben Sie neue Leads immer dabei.",
     ],
     button: { label: "Zum Kundenbereich", url: `${getAppUrl()}/buyer` },
   });

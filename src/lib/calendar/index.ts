@@ -350,7 +350,7 @@ export async function cancelAppointment(
   if (by === "lead") {
     await sendToBuyersOfCustomer(customerId, {
       title: "❌ Termin abgesagt",
-      body: "Ein Lead hat seinen Termin abgesagt – er steht jetzt in deiner Rückrufliste.",
+      body: "Ein Lead hat seinen Termin abgesagt und steht jetzt in deiner Rückrufliste.",
       tag: `appt-cancel:${appt.id}`,
       url: "/buyer/leads",
     }).catch((e) => console.error("[appt push]", e));

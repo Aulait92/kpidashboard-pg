@@ -91,7 +91,7 @@ async function remindCustomers(now: Date) {
         ],
         list: open.map((i) => i.label),
         button: { label: "Zur Einrichtung", url: `${getAppUrl()}/buyer/einrichtung` },
-        html: `<p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#5b5e68">Klappt etwas nicht? Antworten Sie einfach auf diese Mail oder rufen Sie an (+49 151 52418846) – dann erledigen wir es gemeinsam.</p>`,
+        html: `<p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#5b5e68">Klappt etwas nicht? Antworten Sie einfach auf diese Mail oder rufen Sie an (+49 151 52418846), dann erledigen wir es gemeinsam.</p>`,
       });
       if (!res.ok) reportError(new Error(res.error), "onboarding-reminder", { onboarding: ob.id });
     }
@@ -128,12 +128,12 @@ async function emailLeads(now: Date) {
         subject: `Neuer Lead: ${lead.name ?? "Interessent"}${lead.phone ? ` · +${lead.phone.replace(/^\+/, "")}` : ""}`,
         greeting: "Hallo,",
         paragraphs: [
-          "es gibt einen neuen Interessenten. Am besten jetzt gleich anrufen – in den ersten Minuten ist die Chance am höchsten.",
+          "es gibt einen neuen Interessenten. Am besten rufen Sie gleich an: In den ersten Minuten ist die Chance am höchsten.",
         ],
         list: [
-          `Name: ${lead.name ?? "–"}`,
-          `Telefon: ${lead.phone ? `+${lead.phone.replace(/^\+/, "")}` : "–"}`,
-          `E-Mail: ${lead.email ?? "–"}`,
+          `Name: ${lead.name ?? "nicht angegeben"}`,
+          `Telefon: ${lead.phone ? `+${lead.phone.replace(/^\+/, "")}` : "nicht angegeben"}`,
+          `E-Mail: ${lead.email ?? "nicht angegeben"}`,
           ...answers.map((a) => `${a.label}: ${a.value}`),
         ],
         button: { label: "Lead im Kundenbereich öffnen", url: `${getAppUrl()}/buyer/leads/${lead.id}` },
@@ -212,7 +212,7 @@ async function sendFeedback(now: Date) {
         to,
         subject: "Ihr erster Monat mit performancegrowth",
         greeting,
-        paragraphs: ["Ihr erster Monat ist um – hier die Zahlen der letzten 30 Tage:"],
+        paragraphs: ["Ihr erster Monat ist um. Hier die Zahlen der letzten 30 Tage:"],
         list,
         html: `<p style="margin:0 0 4px;font-size:15px;line-height:1.6">Wie zufrieden sind Sie insgesamt?</p>${smileyHtml(url)}`,
         button: { label: "Alle Zahlen im Kundenbereich", url: `${getAppUrl()}/buyer${ob.customer.plan === "service" ? "" : "/zahlen"}` },

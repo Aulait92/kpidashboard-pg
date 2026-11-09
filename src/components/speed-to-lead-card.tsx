@@ -22,7 +22,7 @@ export function SpeedToLeadCard({
             Speed-to-Lead
           </div>
           <h2 className="mt-0.5 text-lg font-semibold tracking-tight">
-            Wie schnell du reagierst — und was es kostet
+            Wie schnell du reagierst und was es kostet
           </h2>
         </div>
         <div className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--brand-dark)]">
@@ -43,7 +43,7 @@ export function SpeedToLeadCard({
               <TrendingUp className="mt-0.5 h-4 w-4 shrink-0" />
               <div>
                 Bei <strong>{data.bestBucket.label}</strong> Reaktion closet du{" "}
-                <strong>{formatPercent(data.bestBucket.closingRate)}</strong> —
+                <strong>{formatPercent(data.bestBucket.closingRate)}</strong>,
                 bei <strong>{data.worstBucket.label}</strong> nur{" "}
                 <strong>{formatPercent(data.worstBucket.closingRate)}</strong>.{" "}
                 {data.bestBucket.closingRate &&

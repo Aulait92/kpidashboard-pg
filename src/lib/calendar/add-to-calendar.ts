@@ -81,7 +81,7 @@ async function loadCustomerEvent(
     location:
       mode === "video"
         ? (appt.meetUrl ?? "Videocall")
-        : `Telefon – ${appt.customer.name} ruft dich an`,
+        : `Telefon: ${appt.customer.name} ruft dich an`,
     manageUrl,
     token,
     advisorName: appt.customer.name,

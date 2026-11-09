@@ -71,7 +71,7 @@ export default async function BuyerPage({
           subtitle={
             <>
               Guten Tag, {(customer?.name ?? "").replace(/^Allianz\s+/i, "").split(" ")[0] || "willkommen"} ·{" "}
-              {formatDate(range.from)} – {formatDate(range.to)} · aktualisiert{" "}
+              {formatDate(range.from)} bis {formatDate(range.to)} · aktualisiert{" "}
               <LiveUpdated since={renderedAt} />
             </>
           }

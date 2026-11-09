@@ -186,13 +186,13 @@ export async function createCheckoutForOffer(offerId: string): Promise<{ url: st
             ],
             payment_intent_data: {
               setup_future_usage: "off_session",
-              description: `Setup ${packageName(offer)} (${products}) – Angebot ${offer.number}`,
+              description: `Setup ${packageName(offer)} (${products}), Angebot ${offer.number}`,
               metadata: meta,
             },
             invoice_creation: {
               enabled: true,
               invoice_data: {
-                description: `Setup ${packageName(offer)} (${products}) – Angebot ${offer.number}`,
+                description: `Setup ${packageName(offer)} (${products}), Angebot ${offer.number}`,
                 metadata: meta,
               },
             },
@@ -290,7 +290,7 @@ export async function createScheduleForOffer(offerId: string, session: Stripe.Ch
         collection_method: "charge_automatically",
         ...(pm ? { default_payment_method: pm } : {}),
         ...(tax.automatic ? { automatic_tax: { enabled: true } } : {}),
-        description: `${packageName(offer)} (${products}) – Angebot ${offer.number}`,
+        description: `${packageName(offer)} (${products}), Angebot ${offer.number}`,
       },
       phases,
     },
@@ -315,4 +315,68 @@ export async function cancelScheduleForOffer(offerId: string): Promise<void> {
   if (schedule.status === "not_started" || schedule.status === "active") {
     await stripe.subscriptionSchedules.cancel(offer.stripeScheduleId);
   }
+}
+
+// ─── Kundenbereich „Konto & Rechnungen“ ────────────────────────────────
+
+export type CustomerInvoice = {
+  id: string;
+  number: string | null;
+  created: Date;
+  total: number;
+  status: string | null;
+  hostedUrl: string | null;
+  pdfUrl: string | null;
+};
+
+/** Rechnungen eines Stripe-Kunden (neueste zuerst, ohne Entwürfe). */
+export async function listCustomerInvoices(stripeCustomerId: string): Promise<CustomerInvoice[]> {
+  const stripe = stripeClient();
+  if (!stripe) return [];
+  const res = await stripe.invoices.list({ customer: stripeCustomerId, limit: 36 });
+  return res.data
+    .filter((i) => i.status !== "draft")
+    .map((i) => ({
+      id: i.id ?? "",
+      number: i.number ?? null,
+      created: new Date(i.created * 1000),
+      total: (i.total ?? 0) / 100,
+      status: i.status ?? null,
+      hostedUrl: i.hosted_invoice_url ?? null,
+      pdfUrl: i.invoice_pdf ?? null,
+    }));
+}
+
+let portalConfigId: string | null = null;
+
+/** Eigene Portal-Konfiguration: Zahlungsart, Rechnungsdaten, Rechnungen – keine Kündigung per Klick. */
+async function portalConfiguration(stripe: Stripe): Promise<string> {
+  if (portalConfigId) return portalConfigId;
+  const list = await stripe.billingPortal.configurations.list({ active: true, limit: 100 });
+  const found = list.data.find((c) => c.metadata?.pg_key === "kundenbereich");
+  if (found) return (portalConfigId = found.id);
+  const created = await stripe.billingPortal.configurations.create({
+    business_profile: { headline: "performancegrowth: Zahlung und Rechnungen" },
+    features: {
+      payment_method_update: { enabled: true },
+      invoice_history: { enabled: true },
+      customer_update: { enabled: true, allowed_updates: ["name", "email", "address", "tax_id"] },
+      subscription_cancel: { enabled: false },
+    },
+    metadata: { pg_key: "kundenbereich" },
+  });
+  return (portalConfigId = created.id);
+}
+
+/** Link ins Stripe-Kundenportal (Zahlungsart, Rechnungsadresse, USt-IdNr.). */
+export async function createPortalUrl(stripeCustomerId: string, returnUrl: string): Promise<string> {
+  const stripe = stripeClient();
+  if (!stripe) throw new Error("Zahlung ist nicht eingerichtet.");
+  const session = await stripe.billingPortal.sessions.create({
+    customer: stripeCustomerId,
+    configuration: await portalConfiguration(stripe),
+    return_url: returnUrl,
+    locale: "de",
+  });
+  return session.url;
 }

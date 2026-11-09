@@ -124,7 +124,7 @@ export async function googleGetBusy(customerId: string, min: Date, max: Date): P
   const cal = json.calendars?.primary;
   if (!res.ok || !cal || (cal.errors && cal.errors.length > 0)) {
     throw new Error(
-      `Google-Verfügbarkeit nicht abrufbar (${res.status}) — Kalender ggf. neu verbinden.`,
+      `Google-Verfügbarkeit nicht abrufbar (${res.status}). Kalender ggf. neu verbinden.`,
     );
   }
   return (cal.busy ?? []).map((b) => ({ start: new Date(b.start), end: new Date(b.end) }));

@@ -240,7 +240,7 @@ export function BuyerComparison({
         </table>
       </div>
       <div className="px-5 pb-4 pt-2 text-[11px] text-[color:var(--muted)]">
-        Andere Kundennamen werden niemals offengelegt — nur deren Werte.
+        Andere Kundennamen werden niemals offengelegt, nur deren Werte.
       </div>
     </div>
   );

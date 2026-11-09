@@ -59,7 +59,7 @@ function content(kind: LeadEmailKind, ev: CustomerEvent, firstName: string) {
       };
     case "reminder":
       return {
-        subject: `Erinnerung: Dein Termin mit ${ev.advisorName} – ${w}`,
+        subject: `Erinnerung: Dein Termin mit ${ev.advisorName}, ${w}`,
         lines: [hi, `kurze Erinnerung an deine ${art}: ${w}.`, how],
         calendar: true,
       };

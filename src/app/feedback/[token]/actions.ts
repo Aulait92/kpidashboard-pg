@@ -35,7 +35,7 @@ export async function submitFeedbackAction(token: string, _prev: FeedbackState, 
       });
       if (contactId) {
         await prisma.salesTask.create({
-          data: { contactId, type: "ANRUF", title: `Kunden heute anrufen – Feedback ${score}/5`, note: comment, dueAt: new Date() },
+          data: { contactId, type: "ANRUF", title: `Kunden heute anrufen: Feedback ${score}/5`, note: comment, dueAt: new Date() },
         });
       }
     }

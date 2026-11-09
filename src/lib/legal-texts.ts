@@ -25,7 +25,7 @@ export const AGB: LegalSection[] = [
   {
     title: "Vertragsschluss und Rangfolge",
     items: [
-      "Der Vertrag kommt durch die Annahme des Angebots zustande – online über den Angebotslink, per E-Mail oder in sonstiger Textform.",
+      "Der Vertrag kommt durch die Annahme des Angebots zustande: online über den Angebotslink, per E-Mail oder in sonstiger Textform.",
       "Es gelten in dieser Rangfolge: im Angebot vereinbarte Sondervereinbarungen, das Angebot, diese AGB, der Auftragsverarbeitungsvertrag.",
     ],
   },
@@ -50,7 +50,7 @@ export const AGB: LegalSection[] = [
   {
     title: "Mitwirkung des Kunden",
     items: [
-      "Der Kunde räumt dem Anbieter Zugriff auf sein Meta-Werbekonto ein, stellt eine Zahlungsmethode bei Meta bereit und verbindet – soweit gebucht – seine WhatsApp-Nummer und seinen Kalender.",
+      "Der Kunde räumt dem Anbieter Zugriff auf sein Meta-Werbekonto ein, stellt eine Zahlungsmethode bei Meta bereit und verbindet, soweit gebucht, seine WhatsApp-Nummer und seinen Kalender.",
       "Der Kunde bearbeitet die Leads zeitnah, prüft die Werbemittel und Nachrichtenvorlagen vor dem Start und gibt sie frei.",
       "Der Kunde ist für die Einhaltung seiner berufsrechtlichen Pflichten verantwortlich, insbesondere aus § 34d GewO, der Versicherungsvertriebsrichtlinie und den Vorgaben seines Versicherers, einschließlich etwaiger Werberichtlinien.",
       "Zugangsdaten sind geheim zu halten. Der Kunde informiert den Anbieter unverzüglich über einen Missbrauchsverdacht.",
@@ -83,7 +83,7 @@ export const AGB: LegalSection[] = [
   {
     title: "Garantie",
     items: [
-      "Läuft ein Produkt für den Kunden nicht profitabel, richtet der Anbieter auf Wunsch des Kunden ein weiteres Produkt seiner Wahl ohne Setupgebühr ein – so lange, bis der Kunde ein Produkt hat, mit dem er zufrieden ist. Die laufende monatliche Vergütung bleibt davon unberührt.",
+      "Läuft ein Produkt für den Kunden nicht profitabel, richtet der Anbieter auf Wunsch des Kunden ein weiteres Produkt seiner Wahl ohne Setupgebühr ein, so lange, bis der Kunde ein Produkt hat, mit dem er zufrieden ist. Die laufende monatliche Vergütung bleibt davon unberührt.",
     ],
   },
   {
@@ -105,7 +105,7 @@ export const AGB: LegalSection[] = [
   {
     title: "Vertraulichkeit",
     items: [
-      "Beide Seiten behandeln vertrauliche Informationen der jeweils anderen Seite, insbesondere Konditionen, Kennzahlen und Kampagnendaten, vertraulich – auch über das Vertragsende hinaus.",
+      "Beide Seiten behandeln vertrauliche Informationen der jeweils anderen Seite, insbesondere Konditionen, Kennzahlen und Kampagnendaten, vertraulich, auch über das Vertragsende hinaus.",
     ],
   },
   {
