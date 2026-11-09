@@ -1,33 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  /* Apple-Anmutung: Systemfarben (iOS), gruppierter Hintergrund, Haarlinien. */
-  --background: #f2f2f7;
-  --foreground: #1d1d1f;
-  --brand: #007aff;
-  --brand-dark: #0062cc;
-  --brand-soft: #e5f1ff;
+  --background: #f5f8ff;
+  --foreground: #0b1220;
+  --brand: #2563eb;
+  --brand-dark: #1d4ed8;
+  --brand-soft: #e5edff;
   --card: #ffffff;
-  --border: #e5e5ea;
-  --muted: #8e8e93;
-  --label-2: #3c3c43;
-  --green: #34c759;
-  --red: #ff3b30;
-  --orange: #ff9500;
-  --indigo: #5856d6;
-  --teal: #30b0c7;
-  --fill: rgba(120, 120, 128, 0.12);
+  --border: #e6ecf5;
+  --muted: #6b7a96;
 
   /* ─── Designsystem (siehe docs/design-system.md) ─────────────────── */
   --surface: #ffffff;
-  --surface-sunken: #f2f2f7;
-  --border-strong: #d1d1d6;
-  --success: #248a3d;
-  --warning: #c93400;
-  --danger: #d70015;
-  --radius-sm: 10px;
+  --surface-sunken: #f7f9fc;
+  --border-strong: #d6dee9;
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #e11d48;
+  --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 14px;
+  --radius-lg: 16px;
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
   --shadow-md: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -12px rgba(15, 23, 42, 0.12);
   --shadow-lg: 0 12px 32px -8px rgba(15, 23, 42, 0.18);
@@ -50,14 +42,14 @@
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(1200px 600px at 90% -10%, #dbe7ff 0%, transparent 60%),
+    radial-gradient(900px 500px at -10% 10%, #eaf1ff 0%, transparent 60%),
+    var(--background);
+  background-attachment: fixed;
   color: var(--foreground);
-  /* Auf Apple-Geräten SF Pro (Systemschrift), sonst Geist. */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-geist-sans), ui-sans-serif,
-    system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  letter-spacing: -0.01em;
-  -webkit-tap-highlight-color: transparent;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   /* iOS PWA: Safe-Area-Insets respektieren (Notch / Home-Indicator). */
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
     env(safe-area-inset-bottom) env(safe-area-inset-left);
@@ -85,7 +77,7 @@ body {
   to { background-position: 200% 0; }
 }
 .ui-skeleton {
-  background: linear-gradient(90deg, #e9e9ee 25%, #f2f2f7 50%, #e9e9ee 75%);
+  background: linear-gradient(90deg, #eef2f8 25%, #f6f8fc 50%, #eef2f8 75%);
   background-size: 200% 100%;
   animation: ui-shimmer 1.4s linear infinite;
 }
@@ -100,12 +92,10 @@ body {
 @utility label { @apply mb-1 block text-xs font-medium text-[color:var(--muted)]; }
 @utility badge { @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap; }
 
-/* ─── Apple-Bausteine ──────────────────────────────────────────────────── */
+/* ─── Aktionsblatt (Auswahl von unten auf dem Handy) ───────────────────── */
 @keyframes sheet-up { from { transform: translateY(100%); } to { transform: none; } }
-@keyframes sheet-pop { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes sheet-pop { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: none; } }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
-.ui-sheet { animation: sheet-up 260ms cubic-bezier(0.32, 0.72, 0, 1); }
-@media (min-width: 640px) { .ui-sheet { animation: sheet-pop 180ms ease-out; } }
-.ui-backdrop { animation: fade 200ms ease-out; }
-.ui-press { transition: background-color 120ms; }
-.ui-press:active { background-color: #e5e5ea; }
+.ui-sheet { animation: sheet-up 240ms cubic-bezier(0.32, 0.72, 0, 1); }
+@media (min-width: 640px) { .ui-sheet { animation: sheet-pop 160ms ease-out; } }
+.ui-backdrop { animation: fade 180ms ease-out; }

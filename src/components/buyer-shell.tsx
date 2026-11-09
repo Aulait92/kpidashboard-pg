@@ -99,10 +99,10 @@ export function BuyerShell({
   return (
     <ToastProvider>
     <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-30 border-b border-black/[0.06] bg-[#f2f2f7]/80 backdrop-blur-xl backdrop-saturate-150">
-        <div className="mx-auto flex h-12 w-full max-w-7xl items-center gap-6 px-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-30 border-b border-[color:var(--border)] bg-white/90 backdrop-blur">
+        <div className="mx-auto flex h-14 w-full max-w-7xl items-center gap-6 px-4 sm:px-6 lg:px-8">
           <Link href="/buyer" className="flex shrink-0 items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-[color:var(--brand)] text-white">
+            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[color:var(--brand)] text-white">
               <TrendingUp className="h-3.5 w-3.5" strokeWidth={2.75} />
             </span>
             <span className="hidden text-[15px] font-semibold tracking-tight sm:inline">
@@ -118,9 +118,9 @@ export function BuyerShell({
                   key={it.href}
                   href={it.href}
                   className={cn(
-                    "my-2 inline-flex items-center gap-2 rounded-full px-3.5 text-[15px] font-medium transition",
+                    "relative inline-flex items-center gap-2 px-3 text-sm font-medium transition",
                     active
-                      ? "bg-white text-[color:var(--foreground)] shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
+                      ? "text-[color:var(--foreground)] after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-[color:var(--brand)]"
                       : "text-[color:var(--muted)] hover:text-[color:var(--foreground)]",
                   )}
                 >
@@ -140,7 +140,7 @@ export function BuyerShell({
       <div className="flex-1 pb-20 md:pb-0">{children}</div>
 
       {/* Handy: Tab-Leiste unten wie in einer nativen App */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-black/[0.08] bg-[#f9f9f9]/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[color:var(--border)] bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
         <ul className="mx-auto flex max-w-md">
           {items.map((it) => {
             const active = it.match(pathname);
@@ -150,12 +150,12 @@ export function BuyerShell({
                 <Link
                   href={it.href}
                   className={cn(
-                    "flex flex-col items-center gap-0.5 pb-1 pt-1.5 text-[10px] font-medium",
-                    active ? "text-[color:var(--brand)]" : "text-[#999]",
+                    "flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium",
+                    active ? "text-[color:var(--brand)]" : "text-[color:var(--muted)]",
                   )}
                 >
                   <span className="relative">
-                    <Icon className="h-6 w-6" strokeWidth={active ? 2.3 : 1.8} />
+                    <Icon className="h-5 w-5" strokeWidth={active ? 2.4 : 1.9} />
                     {it.badge ? (
                       <span className="absolute -right-2.5 -top-1.5">
                         <Badge n={it.badge} />
@@ -176,7 +176,7 @@ export function BuyerShell({
 
 function Badge({ n }: { n: number }) {
   return (
-    <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[color:var(--red)] px-1 text-[11px] font-semibold leading-none text-white">
+    <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white">
       {n > 99 ? "99+" : n}
     </span>
   );

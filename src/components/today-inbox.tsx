@@ -6,7 +6,7 @@ import {
   CalendarClock,
   CalendarPlus,
   Check,
-  CheckCircle2,
+  ChevronRight,
   Clock,
   MessageCircle,
   Phone,
@@ -28,7 +28,8 @@ import {
   type InboxResult,
 } from "@/app/buyer/inbox-actions";
 import { useToast } from "@/components/ui/toast";
-import { ActionSheet, Avatar, IconTile, Row, RoundAction, Section, Sheet, type SheetAction } from "@/components/ui/ios";
+import { Button, ButtonLink, Card, CardHeader, EmptyState } from "@/components/ui";
+import { ActionSheet, Sheet, TapRow, type SheetAction } from "@/components/ui/sheet";
 import type { InboxData } from "@/lib/inbox";
 
 // Startseite „Heute": vier Listen, die man leer arbeitet. Jede Zeile hat eine
@@ -182,49 +183,67 @@ export function TodayInbox({ data }: { data: InboxData }) {
     setSheet({ kind: "actions", title: c.name, message: c.reason, actions });
   };
 
+  // Kleiner Pfeil rechts: Zeile antippen öffnet weitere Aktionen.
+  const more = <ChevronRight className="hidden h-4 w-4 shrink-0 text-[color:var(--border-strong)] sm:block" />;
+  const stop = (e: React.MouseEvent) => e.stopPropagation();
+
   return (
-    <div>
+    <div className="space-y-6">
       {nothing ? (
-        <div className="flex flex-col items-center px-6 py-20 text-center">
-          <CheckCircle2 className="h-16 w-16 text-[color:var(--green)]" strokeWidth={1.5} />
-          <div className="mt-4 text-[22px] font-bold">Alles erledigt</div>
-          <div className="mt-1 text-[15px] text-[color:var(--muted)]">Neue Aufgaben erscheinen hier von selbst.</div>
-        </div>
+        <Card>
+          <EmptyState icon={Check} title="Alles erledigt" text="Neue Aufgaben erscheinen hier von selbst." />
+        </Card>
       ) : (
-        <div className="mb-7 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Tile icon={MessageCircle} color="#ff9500" label="Chats" value={chats.length} target="chats" />
-          <Tile icon={CalendarClock} color="#007aff" label="Termine" value={appointments.length} target="termine" />
-          <Tile icon={Trophy} color="#5856d6" label="Wie lief's?" value={outcomes.length} target="ergebnis" />
-          <Tile icon={Phone} color="#34c759" label="Anrufen" value={calls.length} target="anrufen" />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Tile icon={MessageCircle} tone="rose" label="Chats" value={chats.length} target="chats" />
+          <Tile icon={CalendarClock} tone="brand" label="Termine" value={appointments.length} target="termine" />
+          <Tile icon={Trophy} tone="violet" label="Wie lief's?" value={outcomes.length} target="ergebnis" />
+          <Tile icon={Phone} tone="emerald" label="Anrufen" value={calls.length} target="anrufen" />
         </div>
       )}
 
       {chats.length > 0 ? (
-        <div id="chats">
-          <Section title="Braucht dich" count={chats.length}>
+        <Card>
+          <div id="chats" className="scroll-mt-20" />
+          <CardHeader icon={MessageCircle} title="Braucht dich" count={chats.length} />
+          <ul className="divide-y divide-[color:var(--border)]">
             {chats.map((c) => (
-              <Row
+              <TapRow
                 key={c.conversationId}
-                leading={<Avatar name={c.name} />}
-                title={c.name}
-                subtitle={c.reason ?? "Bitte melden"}
-                href={`/buyer/chats?c=${c.conversationId}`}
-                trailing={
-                  <RoundAction
-                    icon={Check}
-                    label="Erledigt"
-                    onClick={() => run(`c:${c.conversationId}`, `${c.name}: erledigt`, () => chatDoneResult(c.conversationId))}
-                  />
+                onTap={() =>
+                  setSheet({
+                    kind: "actions",
+                    title: c.name,
+                    message: c.reason ?? undefined,
+                    actions: [
+                      { label: "Antworten", icon: MessageCircle, href: `/buyer/chats?c=${c.conversationId}`, tone: "primary" },
+                      { label: "Erledigt", icon: Check, onSelect: () => run(`c:${c.conversationId}`, `${c.name}: erledigt`, () => chatDoneResult(c.conversationId)) },
+                    ],
+                  })
                 }
-              />
+              >
+                <span className="h-2 w-2 shrink-0 rounded-full bg-rose-500" />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-medium">{c.name}</div>
+                  <p className="truncate text-xs text-[color:var(--muted)]">{c.reason ?? "Bitte melden"}</p>
+                </div>
+                <span onClick={stop}>
+                  <ButtonLink href={`/buyer/chats?c=${c.conversationId}`} variant="primary" icon={MessageCircle}>
+                    Antworten
+                  </ButtonLink>
+                </span>
+                {more}
+              </TapRow>
             ))}
-          </Section>
-        </div>
+          </ul>
+        </Card>
       ) : null}
 
       {appointments.length > 0 ? (
-        <div id="termine">
-          <Section title="Termine" count={appointments.length}>
+        <Card>
+          <div id="termine" className="scroll-mt-20" />
+          <CardHeader icon={CalendarClock} title="Termine" count={appointments.length} />
+          <ul className="divide-y divide-[color:var(--border)]">
             {appointments.map((a) => {
               const video = a.mode === "video";
               const actions: SheetAction[] = [];
@@ -234,34 +253,42 @@ export function TodayInbox({ data }: { data: InboxData }) {
               if (a.leadId) actions.push({ label: "Lead öffnen", icon: UserRound, href: `/buyer/leads/${a.leadId}` });
               if (a.manageToken) actions.push({ label: "Verschieben oder absagen", icon: CalendarClock, href: `/book/manage/${a.manageToken}` });
               return (
-                <Row
+                <TapRow
                   key={a.id}
-                  leading={
-                    <div className="w-12 shrink-0 text-center">
-                      <div className="text-[17px] font-semibold tabular-nums leading-tight">{time(a.startsAt)}</div>
-                      <div className="text-[12px] text-[color:var(--muted)]">{a.isToday ? "heute" : day(a.startsAt)}</div>
-                    </div>
-                  }
-                  title={a.name}
-                  subtitle={a.summary ?? (video ? "Videocall" : "Telefonat")}
-                  onClick={() => setSheet({ kind: "actions", title: a.name, message: `${a.isToday ? "Heute" : day(a.startsAt)}, ${time(a.startsAt)} Uhr`, actions })}
-                  trailing={
-                    video && a.meetUrl ? (
-                      <RoundAction icon={Video} label="Videocall starten" href={a.meetUrl} color="#34c759" filled />
+                  onTap={() => setSheet({ kind: "actions", title: a.name, message: `${a.isToday ? "Heute" : day(a.startsAt)}, ${time(a.startsAt)} Uhr · ${video ? "Videocall" : "Telefonat"}`, actions })}
+                >
+                  <div className="w-12 shrink-0">
+                    <div className="text-lg font-semibold leading-none tabular-nums">{time(a.startsAt)}</div>
+                    <div className="mt-1 text-[11px] text-[color:var(--muted)]">{a.isToday ? "heute" : day(a.startsAt)}</div>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">{a.name}</div>
+                    <p className="truncate text-xs text-[color:var(--muted)]">{a.summary ?? (video ? "Videocall" : "Telefonat")}</p>
+                  </div>
+                  <span onClick={stop}>
+                    {video && a.meetUrl ? (
+                      <ButtonLink href={a.meetUrl} variant="primary" icon={Video}>
+                        Starten
+                      </ButtonLink>
                     ) : a.phone ? (
-                      <RoundAction icon={Phone} label="Anrufen" href={`tel:+${a.phone}`} color="#34c759" filled />
-                    ) : null
-                  }
-                />
+                      <ButtonLink href={`tel:+${a.phone}`} variant="primary" icon={Phone}>
+                        Anrufen
+                      </ButtonLink>
+                    ) : null}
+                  </span>
+                  {more}
+                </TapRow>
               );
             })}
-          </Section>
-        </div>
+          </ul>
+        </Card>
       ) : null}
 
       {outcomes.length > 0 ? (
-        <div id="ergebnis">
-          <Section title="Wie lief's?" count={outcomes.length}>
+        <Card>
+          <div id="ergebnis" className="scroll-mt-20" />
+          <CardHeader icon={Trophy} title="Wie lief's?" count={outcomes.length} />
+          <ul className="divide-y divide-[color:var(--border)]">
             {outcomes.map((o) => {
               const key = `o:${o.id}`;
               const open = () =>
@@ -281,54 +308,65 @@ export function TodayInbox({ data }: { data: InboxData }) {
                   ],
                 });
               return (
-                <Row
-                  key={o.id}
-                  leading={<Avatar name={o.name} />}
-                  title={o.name}
-                  subtitle={`${day(o.startsAt)}, ${time(o.startsAt)} · ${o.mode === "video" ? "Video" : "Telefon"}`}
-                  onClick={open}
-                  trailing={
-                    <span className="rounded-full bg-[color:var(--fill)] px-3 py-1.5 text-[15px] font-semibold text-[color:var(--brand)]">Eintragen</span>
-                  }
-                />
+                <TapRow key={o.id} onTap={open}>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">{o.name}</div>
+                    <p className="truncate text-xs text-[color:var(--muted)]">
+                      {day(o.startsAt)}, {time(o.startsAt)} Uhr · {o.mode === "video" ? "Videocall" : "Telefonat"}
+                    </p>
+                  </div>
+                  <Button
+                    icon={Trophy}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      open();
+                    }}
+                  >
+                    Ergebnis
+                  </Button>
+                  {more}
+                </TapRow>
               );
             })}
-          </Section>
-        </div>
+          </ul>
+        </Card>
       ) : null}
 
       {calls.length > 0 ? (
-        <div id="anrufen">
-          <Section title="Anrufen" count={calls.length}>
+        <Card>
+          <div id="anrufen" className="scroll-mt-20" />
+          <CardHeader icon={Phone} title="Anrufen" count={calls.length} />
+          <ul className="divide-y divide-[color:var(--border)]">
             {visibleCalls.map((c) => (
-              <Row
-                key={c.key}
-                leading={<Avatar name={c.name} />}
-                title={c.name}
-                subtitle={
-                  c.overdue ? (
-                    <>
-                      <span className="text-[color:var(--red)]">Überfällig</span> · {c.reason}
-                    </>
-                  ) : (
-                    c.reason
-                  )
-                }
-                onClick={() => callSheet(c)}
-                trailing={c.phone ? <RoundAction icon={Phone} label="Anrufen" href={`tel:+${c.phone}`} color="#34c759" filled /> : null}
-              />
+              <TapRow key={c.key} onTap={() => callSheet(c)}>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-medium">{c.name}</div>
+                  <p className="truncate text-xs text-[color:var(--muted)]">
+                    {c.overdue ? <span className="font-medium text-rose-600">Überfällig · </span> : null}
+                    {c.reason}
+                  </p>
+                </div>
+                {c.phone ? (
+                  <span onClick={stop}>
+                    <ButtonLink href={`tel:+${c.phone}`} variant="primary" icon={Phone}>
+                      Anrufen
+                    </ButtonLink>
+                  </span>
+                ) : null}
+                {more}
+              </TapRow>
             ))}
-            {calls.length > 6 ? (
-              <button
-                type="button"
-                onClick={() => setShowAll((v) => !v)}
-                className="ui-press h-12 w-full border-t border-[color:var(--border)] text-[17px] text-[color:var(--brand)]"
-              >
-                {showAll ? "Weniger" : `Alle ${calls.length} anzeigen`}
-              </button>
-            ) : null}
-          </Section>
-        </div>
+          </ul>
+          {calls.length > 6 ? (
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              className="w-full border-t border-[color:var(--border)] py-2.5 text-xs font-semibold text-[color:var(--brand)] hover:bg-[color:var(--surface-sunken)]"
+            >
+              {showAll ? "Weniger anzeigen" : `Alle ${calls.length} anzeigen`}
+            </button>
+          ) : null}
+        </Card>
       ) : null}
 
       <ActionSheet
@@ -340,7 +378,7 @@ export function TodayInbox({ data }: { data: InboxData }) {
       />
       <Sheet open={sheet?.kind === "win"} onClose={() => setSheet(null)} title={sheet?.kind === "win" ? `Abschluss mit ${sheet.name}` : undefined} message="Wert des Abschlusses (optional)">
         <form
-          className="rounded-b-[14px] border-t border-[color:var(--border)] bg-white p-4"
+          className="space-y-3 p-5"
           onSubmit={(e) => {
             e.preventDefault();
             if (sheet?.kind !== "win") return;
@@ -350,37 +388,49 @@ export function TodayInbox({ data }: { data: InboxData }) {
             save(Number.isFinite(n) ? n : null);
           }}
         >
-          <div className="flex items-center gap-2 rounded-[10px] bg-[color:var(--fill)] px-3">
+          <div className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 focus-within:border-[color:var(--brand)]">
             <input
               autoFocus
               inputMode="decimal"
-              placeholder="0"
+              placeholder="z. B. 1.200"
               value={winValue}
               onChange={(e) => setWinValue(e.target.value)}
-              className="h-12 min-w-0 flex-1 bg-transparent text-[22px] font-semibold outline-none"
+              className="h-11 min-w-0 flex-1 bg-transparent text-base outline-none"
             />
-            <span className="text-[17px] text-[color:var(--muted)]">€</span>
+            <span className="text-sm text-[color:var(--muted)]">€</span>
           </div>
-          <button type="submit" className="mt-3 h-12 w-full rounded-[12px] bg-[color:var(--brand)] text-[17px] font-semibold text-white active:opacity-80">
-            Speichern
-          </button>
+          <Button type="submit" variant="primary" size="md" icon={Trophy} className="w-full">
+            Abschluss speichern
+          </Button>
         </form>
       </Sheet>
     </div>
   );
 }
 
-function Tile({ icon, color, label, value, target }: { icon: typeof Phone; color: string; label: string; value: number; target: string }) {
+function Tile({
+  icon: Icon,
+  tone,
+  label,
+  value,
+  target,
+}: {
+  icon: typeof Phone;
+  tone: "rose" | "brand" | "violet" | "emerald";
+  label: string;
+  value: number;
+  target: string;
+}) {
+  const color = { rose: "text-rose-600", brand: "text-blue-600", violet: "text-violet-600", emerald: "text-emerald-600" }[tone];
   return (
     <a
       href={value ? `#${target}` : undefined}
-      className={`ui-press flex flex-col gap-2 rounded-[var(--radius-lg)] bg-white p-3 ${value ? "" : "pointer-events-none"}`}
+      className={`rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-4 py-3 shadow-[var(--shadow-sm)] transition ${value ? "hover:border-[color:var(--border-strong)]" : "pointer-events-none"}`}
     >
-      <div className="flex items-start justify-between">
-        <IconTile icon={icon} color={value ? color : "#c7c7cc"} size={32} />
-        <span className={`text-[28px] font-bold leading-none tabular-nums ${value ? "" : "text-[color:var(--border-strong)]"}`}>{value}</span>
+      <div className="flex items-center gap-1.5 text-xs text-[color:var(--muted)]">
+        <Icon className="h-3.5 w-3.5" /> {label}
       </div>
-      <span className="text-[15px] font-semibold text-[color:var(--muted)]">{label}</span>
+      <div className={`mt-1 text-2xl font-semibold tabular-nums ${value ? color : "text-[color:var(--muted)]"}`}>{value}</div>
     </a>
   );
 }

@@ -11,16 +11,17 @@ type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 type ButtonSize = "sm" | "md";
 
 const BUTTON_BASE =
-  "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full font-semibold transition active:opacity-70 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)] focus-visible:ring-offset-2";
+  "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-[var(--radius-sm)] font-semibold transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)] focus-visible:ring-offset-2";
 const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
-  primary: "bg-[color:var(--brand)] text-white hover:bg-[color:var(--brand-dark)]",
-  secondary: "bg-[color:var(--fill)] text-[color:var(--brand)] hover:bg-[rgba(120,120,128,0.18)]",
-  ghost: "text-[color:var(--brand)] hover:bg-[color:var(--fill)]",
-  danger: "bg-[color:var(--fill)] text-[color:var(--red)] hover:bg-[rgba(120,120,128,0.18)]",
+  primary: "bg-[color:var(--brand)] text-white shadow-[var(--shadow-sm)] hover:bg-[color:var(--brand-dark)]",
+  secondary:
+    "border border-[color:var(--border)] bg-white text-[color:var(--foreground)] shadow-[var(--shadow-sm)] hover:border-[color:var(--border-strong)] hover:bg-[color:var(--surface-sunken)]",
+  ghost: "text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)] hover:text-[color:var(--foreground)]",
+  danger: "border border-rose-200 bg-white text-rose-700 hover:bg-rose-50",
 };
 const BUTTON_SIZES: Record<ButtonSize, string> = {
-  sm: "h-8 px-3.5 text-[13px]",
-  md: "h-11 px-5 text-[15px]",
+  sm: "h-8 px-3 text-xs",
+  md: "h-10 px-4 text-sm",
 };
 
 export function buttonClass(variant: ButtonVariant = "secondary", size: ButtonSize = "sm", extra?: string) {
@@ -105,8 +106,8 @@ export function Card({
     <section
       className={cn(
         menus ? "" : "overflow-hidden",
-        "rounded-[var(--radius-lg)] bg-[color:var(--surface)]",
-        tone === "attention" ? "ring-1 ring-[color:var(--orange)]/40" : "",
+        "rounded-[var(--radius-lg)] border bg-[color:var(--surface)] shadow-[var(--shadow-md)]",
+        tone === "attention" ? "border-amber-200" : "border-[color:var(--border)]",
         className,
       )}
     >
@@ -129,10 +130,10 @@ export function CardHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-[color:var(--border)] px-4 py-3">
+    <div className="flex items-center justify-between gap-3 border-b border-[color:var(--border)] px-5 py-3.5">
       <div className="flex min-w-0 items-center gap-2.5">
-        {Icon ? <Icon className="h-[18px] w-[18px] shrink-0 text-[color:var(--brand)]" /> : null}
-        <h2 className="truncate text-[17px] font-semibold tracking-tight">
+        {Icon ? <Icon className="h-4 w-4 shrink-0 text-[color:var(--muted)]" /> : null}
+        <h2 className="truncate text-[15px] font-semibold tracking-tight">
           {title}
           {count != null ? <span className="ml-1.5 font-normal text-[color:var(--muted)]">{count}</span> : null}
         </h2>
@@ -191,9 +192,11 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
-      <Icon className="h-10 w-10 text-[color:var(--border-strong)]" strokeWidth={1.5} />
-      <div className="text-[17px] font-semibold">{title}</div>
-      {text ? <p className="max-w-sm text-[15px] text-[color:var(--muted)]">{text}</p> : null}
+      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[color:var(--surface-sunken)] text-[color:var(--muted)]">
+        <Icon className="h-5 w-5" />
+      </span>
+      <div className="text-sm font-semibold">{title}</div>
+      {text ? <p className="max-w-sm text-xs text-[color:var(--muted)]">{text}</p> : null}
       {action ? <div className="mt-2">{action}</div> : null}
     </div>
   );
