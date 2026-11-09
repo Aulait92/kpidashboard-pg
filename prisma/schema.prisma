@@ -129,6 +129,7 @@ model Customer {
 
   // ─── WhatsApp-CRM (Phase 0) ─────────────────────────────────────────
   onboarding         Onboarding?
+  feedback           CustomerFeedback[]
   salesContact       SalesContact?
   whatsAppAccount    WhatsAppAccount?
   calendarConnection CalendarConnection?
@@ -303,6 +304,8 @@ model Lead {
   // (sent | skipped_booked | skipped_contact | no_template | failed: …).
   outreachAt           DateTime?
   outreachStatus       String?
+  // „Nur Betreuung“: Lead per E-Mail an den Kunden zugestellt
+  emailedAt            DateTime?
   // Rückrufliste: „Nicht erreicht" geklickt → bis dahin ausgeblendet.
   callbackSnoozedUntil DateTime?
   // Wiedervorlage: „Ruf mich in 1 Woche an", Angebot nachfassen … erscheint
@@ -1134,8 +1137,30 @@ model Onboarding {
   testLeadAt       DateTime?
   liveAt           DateTime?
   lastReminderAt   DateTime?
+  // Push an Admin, wenn der Kunde lange nichts erledigt
+  staleNotifiedAt  DateTime?
+  // Aufgabe „Jahresvertrag anbieten“ (Tag 90) angelegt
+  upsellTaskAt     DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
   @@index([status])
+}
+
+// Kurzes Kunden-Feedback per Mail (Tag 7: Start, Tag 30: Monatsbericht).
+// Antwort per Klick ohne Login über den geheimen Token.
+model CustomerFeedback {
+  id         String    @id @default(cuid())
+  customerId String
+  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  // day7 | day30
+  kind       String
+  token      String    @unique
+  // 1–5 (Smileys)
+  score      Int?
+  comment    String?
+  sentAt     DateTime  @default(now())
+  answeredAt DateTime?
+
+  @@unique([customerId, kind])
 }

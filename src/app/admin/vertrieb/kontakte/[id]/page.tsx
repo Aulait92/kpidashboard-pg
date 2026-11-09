@@ -18,6 +18,7 @@ import { toOfferRow } from "@/lib/offer-links";
 import { getAppUrl } from "@/lib/email";
 import { loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
 import { OnboardingCard, StartOnboardingCard } from "@/components/vertrieb/onboarding-card";
+import type { ImpressumInfo } from "@/lib/impressum";
 
 export default async function ContactPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -205,6 +206,8 @@ export default async function ContactPage({ params }: { params: Promise<{ id: st
               items={onboardingChecklist(onboarding, obOffer)}
               customerName={onboarding.customer.name}
               loginEmail={onboarding.customer.users[0]?.email ?? null}
+              feedback={await prisma.customerFeedback.findMany({ where: { customerId: onboarding.customerId }, orderBy: { sentAt: "asc" } })}
+              websiteInfo={(onboarding.websiteInfo ?? null) as ImpressumInfo | null}
             />
           ) : acceptedOffer ? (
             <StartOnboardingCard offerId={acceptedOffer.id} offerNumber={acceptedOffer.number} customers={freeCustomers} />

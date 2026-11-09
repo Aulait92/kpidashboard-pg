@@ -1,5 +1,6 @@
 import { CheckCircle2, Circle } from "lucide-react";
 import type { ChecklistItem } from "@/lib/onboarding";
+import type { ImpressumInfo } from "@/lib/impressum";
 import { checklistProgress } from "@/lib/onboarding";
 import { goLiveAction, resendWelcomeAction, startOnboardingAction, toggleOnboardingStepAction } from "@/app/admin/vertrieb/onboarding-actions";
 
@@ -17,11 +18,15 @@ export function OnboardingCard({
   items,
   customerName,
   loginEmail,
+  feedback = [],
+  websiteInfo = null,
 }: {
   onboarding: { id: string; package: string; startDate: Date | null; liveAt: Date | null };
   items: ChecklistItem[];
   customerName: string;
   loginEmail: string | null;
+  feedback?: { kind: string; score: number | null; comment: string | null; answeredAt: Date | null }[];
+  websiteInfo?: ImpressumInfo | null;
 }) {
   const p = checklistProgress(items);
   const open = items.filter((i) => !i.done);
@@ -87,6 +92,24 @@ export function OnboardingCard({
           <button className="btn-ghost">Willkommens-Mail erneut senden</button>
         </form>
       </div>
+      <ImpressumBlock info={websiteInfo} />
+      {feedback.length > 0 && (
+        <ul className="space-y-1 border-t border-slate-100 px-4 py-3 text-sm">
+          {feedback.map((f) => (
+            <li key={f.kind}>
+              <span className="text-slate-500">Feedback {f.kind === "day7" ? "Tag 7" : "Tag 30"}: </span>
+              {f.answeredAt ? (
+                <>
+                  <b className={f.score != null && f.score <= 2 ? "text-rose-700" : f.score != null && f.score >= 4 ? "text-emerald-700" : ""}>{f.score}/5</b>
+                  {f.comment ? <span className="text-slate-600"> – „{f.comment}“</span> : null}
+                </>
+              ) : (
+                <span className="text-slate-400">verschickt, noch keine Antwort</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
       {loginEmail && <p className="px-4 pb-3 text-xs text-slate-500">Kunden-Login: {loginEmail}</p>}
     </section>
   );
@@ -121,5 +144,43 @@ export function StartOnboardingCard({
         <button className="btn-primary">Onboarding starten</button>
       </form>
     </section>
+  );
+}
+
+function ImpressumBlock({ info }: { info: ImpressumInfo | null }) {
+  if (!info) {
+    return <p className="border-t border-slate-100 px-4 py-3 text-xs text-slate-400">Impressum der Website wird in Kürze automatisch gelesen …</p>;
+  }
+  const rows: [string, string | null][] = [
+    ["Firma", info.companyName],
+    ["Inhaber", info.representative],
+    ["Anschrift", info.address],
+    ["Telefon", info.phone],
+    ["E-Mail", info.email],
+    ["Vermittlerregister", info.registerNumber],
+    ["Status", info.registerType],
+    ["Registerstelle", info.chamber],
+  ];
+  return (
+    <div className="border-t border-slate-100 px-4 py-3 text-sm">
+      <div className="mb-1 flex flex-wrap items-center gap-x-3 text-xs">
+        <span className="font-medium text-slate-700">Pflichtangaben (aus dem Impressum)</span>
+        {info.impressumUrl && <a href={info.impressumUrl} target="_blank" rel="noreferrer" className="text-sky-700 hover:underline">Impressum ↗</a>}
+        {info.privacyUrl && <a href={info.privacyUrl} target="_blank" rel="noreferrer" className="text-sky-700 hover:underline">Datenschutz ↗</a>}
+      </div>
+      {info.error ? (
+        <p className="text-xs text-amber-700">{info.error}</p>
+      ) : (
+        <dl className="grid grid-cols-[110px_1fr] gap-x-2 gap-y-0.5 text-xs">
+          {rows.map(([k, v]) => (
+            <div key={k} className="contents">
+              <dt className="text-slate-500">{k}</dt>
+              <dd className={v ? "text-slate-800" : "text-slate-400"}>{v ?? "–"}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {info.missing.length > 0 && !info.error && <p className="mt-1 text-xs text-amber-700">Fehlt: {info.missing.join(", ")}</p>}
+    </div>
   );
 }

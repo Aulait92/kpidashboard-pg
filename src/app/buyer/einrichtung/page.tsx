@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { CalendarDays, CheckCircle2, ClipboardList, KeyRound, Rocket, Video } from "lucide-react";
+import { CalendarDays, CheckCircle2, ClipboardList, KeyRound, Rocket } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { buttonClass, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
@@ -26,24 +26,30 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const done = (k: string) => items.find((i) => i.key === k)?.done ?? false;
   const software = ob.package !== "service";
   const progress = checklistProgress(items);
-  const businessId = process.env.PG_META_BUSINESS_ID?.trim() || null;
+  const businessId = process.env.PG_META_BUSINESS_ID?.trim() || "3089330734489612";
   const readOnly = ctx.preview;
 
   return (
     <div className="mx-auto w-full max-w-3xl">
       <PageHeader
         title="Einrichtung"
-        subtitle={ob.startDate ? `Start am ${dateFmt(ob.startDate)} – bis dahin richten wir alles gemeinsam ein.` : "Wir richten alles gemeinsam ein."}
+        subtitle={
+          ob.liveAt
+            ? `Live seit ${dateFmt(ob.liveAt)}.`
+            : ob.startDate
+              ? `Start am ${dateFmt(ob.startDate)} – bis dahin richten wir alles gemeinsam ein.`
+              : "Wir richten alles gemeinsam ein."
+        }
       />
 
       <Card className="mb-5">
         <div className="p-5">
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium">{ob.liveAt ? "Alles eingerichtet – Sie sind live." : `${progress.done} von ${progress.total} Schritten erledigt`}</span>
-            <span className="text-[color:var(--muted)]">{progress.percent} %</span>
+            <span className="text-[color:var(--muted)]">{ob.liveAt ? "100" : progress.percent} %</span>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-[color:var(--surface-sunken,#f1f5f9)]">
-            <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${progress.percent}%` }} />
+            <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${ob.liveAt ? 100 : progress.percent}%` }} />
           </div>
           <p className="mt-3 text-sm text-[color:var(--muted)]">
             Ihre Aufgaben dauern zusammen etwa 5 Minuten. Alles andere erledigen wir – Kampagne, Werbemittel, Leadformular
@@ -65,6 +71,34 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             Damit wir die Anzeigen in Ihrem Werbekonto schalten können, geben Sie uns als Partner Zugriff. Ihr Werbebudget
             bleibt dabei vollständig in Ihrer Hand.
           </p>
+          <details className="my-4 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3 text-[15px]">
+            <summary className="cursor-pointer font-medium">Sie haben noch keinen Business Manager (Business-Portfolio)? So legen Sie ihn an</summary>
+            <ol className="mt-3 list-decimal space-y-1.5 pl-5">
+              <li>
+                <a href="https://business.facebook.com/overview" target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
+                  business.facebook.com
+                </a>{" "}
+                öffnen und mit Ihrem privaten Facebook-Profil anmelden (es bleibt unsichtbar für Kunden).
+              </li>
+              <li>
+                <b>Business-Portfolio erstellen</b>: Name Ihrer Agentur, Ihr Name und Ihre geschäftliche E-Mail – dann die
+                E-Mail bestätigen.
+              </li>
+              <li>
+                Unter <b>Einstellungen → Konten → Seiten</b> Ihre Facebook-Seite hinzufügen (gibt es noch keine Seite, dort
+                direkt eine neue anlegen).
+              </li>
+              <li>
+                Unter <b>Einstellungen → Konten → Werbekonten</b> ein Werbekonto hinzufügen oder neu erstellen (Währung EUR,
+                Zeitzone Berlin).
+              </li>
+              <li>
+                Im Werbekonto unter <b>Abrechnung</b> eine Zahlungsmethode (z. B. Kreditkarte) hinterlegen – darüber zahlen
+                Sie das Werbebudget direkt an Meta.
+              </li>
+              <li>Danach weiter mit den Schritten unten.</li>
+            </ol>
+          </details>
           <ol className="my-4 list-decimal space-y-1.5 pl-5 text-[15px]">
             <li>
               <a href="https://business.facebook.com/settings/partners" target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
@@ -76,13 +110,18 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               <b>Hinzufügen</b> → „Einem Partner Zugriff auf deine Assets gewähren“.
             </li>
             <li>
-              Unsere Business-ID eingeben: <b>{businessId ?? "teilen wir Ihnen im Kickoff mit"}</b>
+              Unsere Business-ID eingeben: <b className="select-all">{businessId}</b>
             </li>
             <li>
               Ihr <b>Werbekonto</b> (Kampagnen verwalten) und Ihre <b>Facebook-Seite</b> auswählen, ggf. auch Instagram – speichern.
             </li>
           </ol>
           <MetaConfirmButton done={done("metaAccess")} readOnly={readOnly} />
+          <p className="mt-4 text-sm text-[color:var(--muted)]">
+            Klappt etwas nicht? Antworten Sie einfach auf unsere Willkommens-Mail oder rufen Sie an:{" "}
+            <a href="tel:+4915152418846" className="font-medium text-[color:var(--brand)]">+49 151 52418846</a> – dann
+            richten wir es in 10 Minuten gemeinsam per Bildschirmfreigabe ein.
+          </p>
         </Step>
 
         {software ? (
@@ -94,8 +133,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             {gcal && gcal !== "connected" ? (
               <p className="mt-3 text-sm font-medium text-rose-700">
                 {gcal === "consent"
-                  ? "Ihr Unternehmen muss die Verbindung erst freigeben. Kein Problem – wir richten das im Kickoff gemeinsam ein."
-                  : "Das hat nicht geklappt. Bitte noch einmal versuchen oder im Kickoff gemeinsam erledigen."}
+                  ? "Ihr Unternehmen muss die Verbindung erst freigeben. Kein Problem – rufen Sie kurz an, dann richten wir es gemeinsam ein."
+                  : "Das hat nicht geklappt. Bitte noch einmal versuchen – oder kurz anrufen, dann erledigen wir es gemeinsam."}
               </p>
             ) : null}
             {done("calendar") ? (
@@ -115,18 +154,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           </Step>
         ) : null}
 
-        <Step n={software ? 4 : 3} title="Kickoff-Termin" icon={Video} done={done("kickoff")}>
-          {ob.kickoffAt ? (
-            <p className="text-[15px]">Ihr Kickoff ist am <b>{dateFmt(ob.kickoffAt)}</b>. Wir freuen uns!</p>
-          ) : (
-            <p className="text-sm text-[color:var(--muted)]">
-              Im Kickoff (ca. 45 Minuten, Video) besprechen wir Zielgruppe, Anzeigen und Ablauf. Wir melden uns in Kürze mit
-              Terminvorschlägen.
-            </p>
-          )}
-        </Step>
-
-        <Step n={software ? 5 : 4} title="Start" icon={Rocket} done={!!ob.liveAt}>
+        <Step n={software ? 4 : 3} title="Start" icon={Rocket} done={!!ob.liveAt}>
           <p className="text-sm text-[color:var(--muted)]">
             {ob.startDate ? `Am ${dateFmt(ob.startDate)} ` : "Zum Start "}
             gehen die Anzeigen live.{" "}

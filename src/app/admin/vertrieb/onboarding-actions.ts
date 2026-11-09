@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
-import { MANUAL_FIELDS, sendWelcome, startOnboarding } from "@/lib/onboarding";
+import { MANUAL_FIELDS, sendGoLiveMail, sendWelcome, startOnboarding } from "@/lib/onboarding";
 import { logOfferActivity, setContactCustomerStage } from "@/lib/offer-links";
 
 function refresh(contactId?: string | null) {
@@ -47,7 +47,8 @@ export async function goLiveAction(fd: FormData) {
   const ref = { dealId: null, salesContactId: ob.salesContactId };
   if (!undo) {
     await setContactCustomerStage(ref, "TEST");
-    await logOfferActivity(ref, "Onboarding abgeschlossen – Kunde ist live", "Kunden-Pipeline: Test");
+    await sendGoLiveMail(ob.id);
+    await logOfferActivity(ref, "Onboarding abgeschlossen – Kunde ist live", "Kunden-Pipeline: Test · Go-live-Mail verschickt");
   }
   refresh(ob.salesContactId);
 }

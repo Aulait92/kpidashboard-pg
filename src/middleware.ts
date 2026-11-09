@@ -19,6 +19,7 @@ const PUBLIC_PREFIXES = [
   "/api/ops", // Betriebs-API (Buyer-Accounts anlegen), per ADMIN_API_TOKEN (Bearer) gesichert
   "/api/health", // Healthcheck für Railway/Uptime (gibt nur ok true/false zurück)
   "/api/stripe/webhook", // Stripe-Webhooks (per Signatur geprüft)
+  "/feedback", // Kunden-Feedback per Mail-Link (geheimer Token, ohne Login)
   "/api/vertrieb", // Vertriebs-Webhooks (Instantly, Calendly, Leads, LinkedIn) – per Token gesichert
   "/manifest.webmanifest",
   "/icon",
@@ -46,7 +47,8 @@ export async function middleware(req: NextRequest) {
     pathname === "/book" ||
     pathname.startsWith("/book/") ||
     pathname.startsWith("/angebot/") ||
-    pathname.startsWith("/rechtliches/")
+    pathname.startsWith("/rechtliches/") ||
+    pathname.startsWith("/feedback/")
   ) {
     const headers = new Headers(req.headers);
     headers.set("x-bare-layout", "1");

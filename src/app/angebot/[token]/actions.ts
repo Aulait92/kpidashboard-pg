@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { acceptOffer, getOfferByToken } from "@/lib/offers";
 import { billingEnabled, createCheckoutForOffer } from "@/lib/billing";
 
@@ -18,12 +19,14 @@ export async function acceptOfferAction(token: string, _prev: AcceptState, formD
   });
   if (!res.ok) return { error: res.error };
   revalidatePath(`/angebot/${token}`);
-  // Direkt weiter zur Zahlung (SEPA-Lastschrift, Karte, Überweisung).
+  // Direkt weiter zur Zahlung (SEPA-Lastschrift oder Karte). Serverseitige
+  // Weiterleitung: Die Seite wechselt nach der Annahme in die Zahlungsansicht,
+  // ein clientseitiger Redirect im Formular käme deshalb nicht mehr zum Zug.
   if (billingEnabled()) {
     const offer = await getOfferByToken(token);
     if (offer) {
       const checkout = await createCheckoutForOffer(offer.id);
-      if ("url" in checkout) return { ok: true, checkoutUrl: checkout.url };
+      if ("url" in checkout) redirect(checkout.url);
     }
   }
   return { ok: true };

@@ -159,6 +159,8 @@ export async function createCheckoutForOffer(offerId: string): Promise<{ url: st
       locale: "de" as const,
       client_reference_id: offer.id,
       integration_identifier: "pg-angebot-qkzvmtrb",
+      // Für deutsche Geschäftskunden irrelevant (Belgien).
+      excluded_payment_method_types: ["bancontact" as const],
       metadata: meta,
       success_url: `${base}/angebot/${offer.token}?zahlung=ok`,
       cancel_url: `${base}/angebot/${offer.token}?zahlung=abgebrochen`,

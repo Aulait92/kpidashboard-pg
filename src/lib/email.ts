@@ -214,7 +214,7 @@ export async function sendOnboardingWelcomeEmail(opts: {
       ? "Zugang einrichten: Über den Button legen Sie Ihr Passwort fest (Link 7 Tage gültig)."
       : `Einloggen unter ${opts.loginUrl} mit ${opts.to}.`,
     `Einrichtung im Kundenbereich (ca. 5 Minuten): kurzer Fragebogen, Freigabe Ihres Meta-Werbekontos${software ? ", Kalender verbinden" : ""}.`,
-    "Kickoff-Termin: Wir besprechen Zielgruppe, Kampagne und Ablauf – den Termin buchen Sie direkt im Kundenbereich.",
+    "Den Rest erledigen wir: Kampagne, Werbemittel und Leadformular – Sie bekommen Bescheid, sobald alles startklar ist.",
     start
       ? `Start am ${start}: Die Kampagne geht live${software ? ", der digitale Assistent schreibt neue Leads an und bucht Termine in Ihren Kalender" : ", jeder neue Lead kommt sofort per E-Mail"}.`
       : `Start: Die Kampagne geht live${software ? ", der digitale Assistent schreibt neue Leads an und bucht Termine in Ihren Kalender" : ", jeder neue Lead kommt sofort per E-Mail"}.`,
@@ -255,6 +255,61 @@ export async function sendOnboardingWelcomeEmail(opts: {
           ${start ? `<p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Start: ${start}</p>` : ""}
           <p style="margin:16px 0 0;font-size:15px;line-height:1.6">Bei Fragen antworten Sie einfach auf diese E-Mail.</p>
           <p style="margin:24px 0 0;font-size:15px;line-height:1.6">Viele Grüße<br>Ole Kannapinn<br>performancegrowth</p>
+        </div>`,
+    });
+    if (error) return { ok: false, error: error.message ?? "Resend hat abgelehnt." };
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Versand fehlgeschlagen" };
+  }
+}
+
+/**
+ * Einfache Kunden-Mail im performancegrowth-Stil (Absender wie Angebote).
+ * Absätze werden escaped; `html`-Blöcke (z. B. Smiley-Leiste) gehen roh durch.
+ */
+export async function sendCustomerMail(opts: {
+  to: string | string[];
+  subject: string;
+  greeting: string;
+  paragraphs: string[];
+  list?: string[];
+  button?: { label: string; url: string };
+  html?: string;
+  replyTo?: string | null;
+  signature?: string;
+}): Promise<SendResult> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>";
+  if (!apiKey) {
+    console.warn(`[email] RESEND_API_KEY fehlt — „${opts.subject}“ an ${[opts.to].flat().join(", ")}${opts.button ? `, Link: ${opts.button.url}` : ""}`);
+    return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
+  }
+  const signature = opts.signature ?? "Ole Kannapinn\nperformancegrowth";
+  const replyTo = opts.replyTo === undefined ? (process.env.OFFER_REPLY_TO ?? null) : opts.replyTo;
+  try {
+    const { error } = await new Resend(apiKey).emails.send({
+      from,
+      to: opts.to,
+      ...(replyTo ? { replyTo } : {}),
+      subject: opts.subject,
+      text: [
+        opts.greeting,
+        "",
+        ...opts.paragraphs.flatMap((p) => [p, ""]),
+        ...(opts.list?.length ? [...opts.list.map((l) => `• ${l}`), ""] : []),
+        ...(opts.button ? [`${opts.button.label}: ${opts.button.url}`, ""] : []),
+        "Viele Grüße",
+        signature,
+      ].join("\n"),
+      html: `
+        <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0b1220">
+          <p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(opts.greeting)}</p>
+          ${opts.paragraphs.map((p) => `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(p)}</p>`).join("")}
+          ${opts.list?.length ? `<ul style="margin:0 0 16px;padding-left:20px;font-size:15px;line-height:1.6">${opts.list.map((l) => `<li style="margin:0 0 6px">${escapeHtml(l)}</li>`).join("")}</ul>` : ""}
+          ${opts.html ?? ""}
+          ${opts.button ? `<p style="margin:24px 0"><a href="${opts.button.url}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">${escapeHtml(opts.button.label)}</a></p>` : ""}
+          <p style="margin:24px 0 0;font-size:15px;line-height:1.6">Viele Grüße<br>${signature.split("\n").map(escapeHtml).join("<br>")}</p>
         </div>`,
     });
     if (error) return { ok: false, error: error.message ?? "Resend hat abgelehnt." };

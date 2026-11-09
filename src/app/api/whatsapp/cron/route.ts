@@ -3,10 +3,12 @@ import { runOutreach } from "@/lib/whatsapp/outreach";
 import { runReminders } from "@/lib/whatsapp/reminders";
 import { pruneUsage } from "@/lib/usage";
 import { reportError } from "@/lib/monitoring";
+import { runOnboardingCron } from "@/lib/onboarding-cron";
 
-// Zentraler WhatsApp-Cron (z. B. cron-job.org alle 5 Minuten):
+// Zentraler Cron (z. B. cron-job.org alle 5 Minuten):
 //   1. Erstanschreiben neuer Leads ohne Termin
 //   2. Termin-Erinnerungen ~24 h vorher
+//   3. Onboarding-Automatik (siehe lib/onboarding-cron.ts)
 // Per WHATSAPP_WEBHOOK_SECRET gesichert (?token= oder x-webhook-secret).
 export const dynamic = "force-dynamic";
 
@@ -37,11 +39,16 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-reminders");
     return { error: e instanceof Error ? e.message : String(e) };
   });
+  // Onboarding: Erinnerungen, Leads per E-Mail (Nur Betreuung), Feedback, Tag 90.
+  const onboarding = await runOnboardingCron().catch((e: unknown) => {
+    reportError(e, "cron-onboarding");
+    return { error: e instanceof Error ? e.message : String(e) };
+  });
   // Einmal täglich (03:00–03:05 UTC): Nutzungsdaten > 180 Tage löschen.
   const now = new Date();
   const pruned =
     now.getUTCHours() === 3 && now.getUTCMinutes() < 5 ? await pruneUsage().catch(() => null) : undefined;
-  return Response.json({ ok: true, outreach, responses, reminders, pruned });
+  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned });
 }
 
 export const GET = handle;

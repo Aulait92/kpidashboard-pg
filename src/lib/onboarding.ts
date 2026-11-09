@@ -9,7 +9,7 @@
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, issuePasswordResetToken } from "@/lib/auth";
-import { buildResetUrl, getAppUrl, sendOnboardingWelcomeEmail } from "@/lib/email";
+import { buildResetUrl, getAppUrl, sendCustomerMail, sendOnboardingWelcomeEmail } from "@/lib/email";
 import { logOfferActivity, offerAdminHref, setContactCustomerStage } from "@/lib/offer-links";
 import { billingEnabled } from "@/lib/billing";
 import { sendToAdmins } from "@/lib/push";
@@ -252,7 +252,6 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
   items.push(
     { key: "welcome", label: "Willkommens-Mail verschickt", owner: "auto", done: !!ob.welcomeSentAt, at: ob.welcomeSentAt },
     { key: "login", label: "Kunde hat sich eingeloggt", owner: "kunde", done: !!firstLogin, at: firstLogin },
-    { key: "kickoff", label: "Kickoff-Termin gebucht", owner: "kunde", done: !!ob.kickoffAt, at: ob.kickoffAt },
     { key: "questionnaire", label: "Fragebogen ausgefüllt", owner: "kunde", done: !!ob.questionnaireAt, at: ob.questionnaireAt },
     { key: "metaAccess", label: "Meta-Zugriff (Werbekonto + Seite) erteilt", owner: "kunde", done: !!ob.metaAccessAt, at: ob.metaAccessAt, manual: "metaAccess" },
   );
@@ -316,4 +315,32 @@ export async function customerSetupOpenCount(customerId: string): Promise<number
   const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true } }) : null;
   const open = onboardingChecklist(ob, offer).filter((i) => !i.done && i.owner === "kunde" && i.key !== "login").length;
   return Math.max(open, 0);
+}
+
+/** Mail „Ihre Kampagne ist live“ – beim Live-Schalten im Admin. */
+export async function sendGoLiveMail(onboardingId: string) {
+  const ob = await prisma.onboarding.findUnique({
+    where: { id: onboardingId },
+    include: { customer: { include: { users: { where: { role: "BUYER" }, select: { email: true } } } } },
+  });
+  if (!ob) return;
+  const to = ob.customer.users.map((u) => u.email);
+  if (to.length === 0) return;
+  const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { contactName: true } }) : null;
+  const software = ob.package !== "service";
+  const q = (ob.questionnaire ?? {}) as { leadEmails?: string[] };
+  const res = await sendCustomerMail({
+    to,
+    subject: "Ihre Kampagne ist live 🚀",
+    greeting: offer?.contactName ? `Hallo ${offer.contactName},` : "Hallo,",
+    paragraphs: [
+      "alles ist eingerichtet – Ihre Anzeigen laufen ab sofort. Die ersten Leads kommen in der Regel innerhalb von 1–3 Tagen.",
+      software
+        ? "Neue Leads bekommen innerhalb weniger Minuten eine WhatsApp-Nachricht von Ihrem digitalen Assistenten und können direkt einen Termin in Ihrem Kalender buchen. Im Kundenbereich sehen Sie unter „Heute“, wen Sie anrufen sollten."
+        : `Jeder neue Lead kommt sofort per E-Mail${q.leadEmails?.length ? ` an ${q.leadEmails.join(", ")}` : ""} und steht im Kundenbereich unter „Leads“. Am besten rufen Sie innerhalb der ersten Minuten an.`,
+      "Tipp: Installieren Sie den Kundenbereich auf Ihrem Handy (im Browser „Zum Startbildschirm hinzufügen“) – dann haben Sie neue Leads immer dabei.",
+    ],
+    button: { label: "Zum Kundenbereich", url: `${getAppUrl()}/buyer` },
+  });
+  if (!res.ok) reportError(new Error(res.error), "onboarding-golive-mail", { onboarding: ob.id });
 }
