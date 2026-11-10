@@ -9,6 +9,7 @@ import {
   Check,
   ChevronDown,
   Mail,
+  Mic,
   MessageCircle,
   MoreHorizontal,
   Phone,
@@ -425,12 +426,21 @@ function ActionTile({
   );
 }
 
-/** Notizen: speichern sich beim Verlassen des Feldes von selbst. */
+/** Notizen: speichern sich beim Verlassen des Feldes von selbst.
+ *  Diktieren läuft bewusst über das Mikrofon der Handy-Tastatur (Diktat des
+ *  Betriebssystems) – kein eigener Spracherkennungsdienst für Kundendaten. */
 export function LeadNotes({ leadId, initial }: { leadId: string; initial: string }) {
   const toast = useToast();
   const [value, setValue] = useState(initial);
   const saved = useRef(initial);
+  const area = useRef<HTMLTextAreaElement>(null);
   const [state, setState] = useState<"idle" | "saving" | "saved">("idle");
+  const [touch, setTouch] = useState(false);
+  const [dictateHint, setDictateHint] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setTouch(window.matchMedia?.("(pointer: coarse)").matches ?? false), 0);
+    return () => clearTimeout(t);
+  }, []);
   useEffect(() => {
     if (state !== "saved") return;
     const t = setTimeout(() => setState("idle"), 2000);
@@ -452,22 +462,51 @@ export function LeadNotes({ leadId, initial }: { leadId: string; initial: string
     saved.current = value;
     setState("saved");
   }
+  function dictate() {
+    const el = area.current;
+    if (!el) return;
+    // Neue Zeile anhängen, damit Diktiertes nicht mitten im alten Text landet.
+    if (value && !value.endsWith("\n")) setValue(`${value}\n`);
+    el.focus();
+    requestAnimationFrame(() => el.setSelectionRange(el.value.length, el.value.length));
+    setDictateHint(true);
+  }
   return (
     <Card className="mt-6">
-      <div className="flex items-center justify-between border-b border-[color:var(--border)] px-5 py-3.5">
+      <div className="flex items-center justify-between gap-3 border-b border-[color:var(--border)] px-5 py-3">
         <h2 className="text-[15px] font-semibold tracking-tight">Notizen</h2>
-        <span className="text-xs text-[color:var(--muted)]">
-          {state === "saving" ? "Speichert …" : state === "saved" ? "Gespeichert" : ""}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-[color:var(--muted)]">
+            {state === "saving" ? "Speichert …" : state === "saved" ? "Gespeichert" : ""}
+          </span>
+          {touch ? (
+            <button
+              type="button"
+              onClick={dictate}
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[color:var(--border-strong)] px-3 text-sm font-medium hover:border-[color:var(--brand)]"
+            >
+              <Mic className="h-4 w-4" /> Diktieren
+            </button>
+          ) : null}
+        </div>
       </div>
       <textarea
-        rows={4}
+        ref={area}
+        rows={5}
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        onBlur={save}
+        onBlur={() => {
+          setDictateHint(false);
+          void save();
+        }}
         placeholder="Was wurde besprochen? Nächster Schritt?"
-        className="block w-full resize-y px-5 py-4 text-sm outline-none"
+        className="block w-full resize-y px-5 py-4 text-base outline-none"
       />
+      {dictateHint ? (
+        <p className="flex items-center gap-2 border-t border-[color:var(--border)] bg-[color:var(--brand-soft)] px-5 py-2.5 text-sm text-[color:var(--brand-dark)]">
+          <Mic className="h-4 w-4 shrink-0" /> Tippen Sie unten in der Tastatur auf das Mikrofon und sprechen Sie. Gespeichert wird automatisch.
+        </p>
+      ) : null}
     </Card>
   );
 }

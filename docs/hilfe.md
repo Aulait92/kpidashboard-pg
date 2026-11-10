@@ -60,7 +60,8 @@ Seiten aus der Liste „Seiten“ unten.
   (öffnet Ihr Mailprogramm), **Stornieren/Reklamieren** (bei gekauften Leads), **Daten löschen (DSGVO)** (nur Inhaber).
 - Karte zum nächsten Termin (Videocall, Verschieben) und die Zusammenfassung des Assistenten.
 - Inhaber können unter **Zuständig** den Lead einem Berater geben – der bekommt eine Push-Nachricht.
-- „Angaben zum Lead“: alle Antworten aus dem Formular. Darunter Notizen.
+- „Angaben zum Lead“: alle Antworten aus dem Formular. Darunter Notizen (speichern sich von selbst).
+- **Diktieren:** Auf dem Handy bei „Notizen“ auf „Diktieren“ tippen, dann unten in der Tastatur auf das Mikrofon und sprechen. Die Spracherkennung macht das Handy selbst, die App schickt keine Aufnahmen an Dritte.
 
 ## Pipeline
 
