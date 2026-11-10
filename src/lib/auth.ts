@@ -178,6 +178,9 @@ export async function completeTotpLogin(codeRaw: string): Promise<LoginResult> {
   return { ok: true, payload };
 }
 
+const LOGIN_MAX_FAILS = 10;
+const LOGIN_WINDOW_MIN = 15;
+
 export async function login(
   emailRaw: string,
   password: string,
@@ -190,14 +193,24 @@ export async function login(
   // Erst Bootstrap-Pfad — legt ggf. den Admin an, falls noch keiner da ist.
   await bootstrapAdminIfNeeded(email, password);
 
+  // Schutz gegen Durchprobieren: max. LOGIN_MAX_FAILS Fehlversuche je E-Mail
+  // in LOGIN_WINDOW_MIN Minuten (gezählt im Änderungsprotokoll).
+  const { audit } = await import("@/lib/audit");
+  const recentFails = await prisma.auditLog.count({
+    where: { action: "login.failed", actorEmail: email, at: { gt: new Date(Date.now() - LOGIN_WINDOW_MIN * 60_000) } },
+  });
+  if (recentFails >= LOGIN_MAX_FAILS) {
+    return { ok: false, error: `Zu viele Versuche. Bitte in ${LOGIN_WINDOW_MIN} Minuten erneut versuchen oder „Passwort vergessen“ nutzen.` };
+  }
+  const failed = async (): Promise<LoginResult> => {
+    await audit("login.failed", { actor: { email, role: null } });
+    return { ok: false, error: "Email oder Passwort falsch." };
+  };
+
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) {
-    return { ok: false, error: "Email oder Passwort falsch." };
-  }
+  if (!user) return failed();
   const valid = await verifyPassword(password, user.passwordHash);
-  if (!valid) {
-    return { ok: false, error: "Email oder Passwort falsch." };
-  }
+  if (!valid) return failed();
   if (user.totpEnabledAt && user.totpSecretEnc) {
     await setPendingTotp(user.id, 0);
     return { ok: false, needsTotp: true };
@@ -206,7 +219,6 @@ export async function login(
     where: { id: user.id },
     data: { lastLoginAt: new Date() },
   });
-  const { audit } = await import("@/lib/audit");
   await audit("login", { entity: "User", entityId: user.id, customerId: user.customerId, actor: { id: user.id, email: user.email, role: user.role } });
 
   const payload: SessionPayload = {

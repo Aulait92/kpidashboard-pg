@@ -12,10 +12,11 @@ import {
   MessageCircle,
   MoreHorizontal,
   Phone,
+  ShieldX,
   Trophy,
   X,
 } from "lucide-react";
-import { setLeadStatusAction, updateLeadDetailsAction } from "@/app/buyer/actions";
+import { eraseLeadAction, setLeadStatusAction, updateLeadDetailsAction } from "@/app/buyer/actions";
 import { clearFollowUpResult, setFollowUpResult, undoInboxAction } from "@/app/buyer/inbox-actions";
 import { Button, Card } from "@/components/ui";
 import { ActionSheet, Sheet, type SheetAction } from "@/components/ui/sheet";
@@ -43,6 +44,7 @@ type Props = {
   followUpNote: string | null;
   stornoOptions: StornogrundOption[];
   storniert: boolean;
+  canErase?: boolean;
 };
 
 const QUICK = [
@@ -56,7 +58,8 @@ export function LeadHeaderActions(p: Props) {
   const router = useRouter();
   const toast = useToast();
   const [, start] = useTransition();
-  const [open, setOpen] = useState<"phase" | "more" | "followup" | "win" | "storno" | null>(null);
+  const [open, setOpen] = useState<"phase" | "more" | "followup" | "win" | "storno" | "erase" | null>(null);
+  const [erasing, setErasing] = useState(false);
   const [winValue, setWinValue] = useState("");
   const [note, setNote] = useState(p.followUpNote ?? "");
   const [date, setDate] = useState("");
@@ -104,7 +107,22 @@ export function LeadHeaderActions(p: Props) {
     ...(!p.storniert && p.stornoOptions.length > 0
       ? [{ label: "Stornieren", icon: Ban, tone: "danger" as const, onSelect: () => setTimeout(() => setOpen("storno"), 0) }]
       : []),
+    ...(p.canErase
+      ? [{ label: "Daten löschen (Datenschutz)", icon: ShieldX, tone: "danger" as const, onSelect: () => setTimeout(() => setOpen("erase"), 0) }]
+      : []),
   ];
+
+  function erase() {
+    setErasing(true);
+    start(async () => {
+      const res = await eraseLeadAction(p.leadId);
+      setErasing(false);
+      setOpen(null);
+      if (!res.ok) return toast.show({ message: res.error, tone: "error" });
+      toast.show({ message: "Daten gelöscht" });
+      router.refresh();
+    });
+  }
 
   const dueLabel = p.followUpAt
     ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "numeric" }).format(new Date(p.followUpAt))
@@ -233,6 +251,20 @@ export function LeadHeaderActions(p: Props) {
               Wiedervorlage entfernen
             </Button>
           ) : null}
+        </div>
+      </Sheet>
+
+      <Sheet
+        open={open === "erase"}
+        onClose={() => setOpen(null)}
+        title="Daten löschen?"
+        message="Für Löschwünsche nach DSGVO. Name, Telefon, E-Mail, Angaben, Notizen, Chats und Termine werden endgültig gelöscht. Für Abrechnung und Zahlen bleibt ein anonymer Eintrag."
+      >
+        <div className="space-y-2 p-5">
+          <p className="text-xs text-[color:var(--muted)]">Termine in Ihrem eigenen Kalender bitte zusätzlich dort löschen.</p>
+          <Button variant="danger" size="md" icon={ShieldX} className="w-full" disabled={erasing} onClick={erase}>
+            {erasing ? "Wird gelöscht …" : "Endgültig löschen"}
+          </Button>
         </div>
       </Sheet>
 

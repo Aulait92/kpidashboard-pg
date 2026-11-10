@@ -10,6 +10,7 @@ export type AuditActor = { id?: string | null; email?: string | null; role?: str
 export const AUDIT_LABEL: Record<string, string> = {
   login: "Anmeldung",
   "login.2fa": "Anmeldung mit Zwei-Faktor",
+  "login.failed": "Anmeldung fehlgeschlagen",
   "2fa.enable": "Zwei-Faktor eingeschaltet",
   "2fa.disable": "Zwei-Faktor ausgeschaltet",
   "user.create": "Login angelegt",
@@ -22,6 +23,8 @@ export const AUDIT_LABEL: Record<string, string> = {
   "lead.reassign": "Lead umverteilt",
   "lead.export": "Leads exportiert (CSV)",
   "lead.storno": "Lead storniert",
+  "lead.erase": "Lead-Daten gelöscht (Datenschutz)",
+  "customer.erase": "Kundendaten gelöscht (Vertragsende)",
   "pause.plan": "Pause eingetragen",
   "pause.end": "Pause beendet",
   "offer.accept": "Angebot angenommen",
@@ -59,9 +62,17 @@ export async function audit(
   }
 }
 
-/** Einträge älter als 1 Jahr löschen (täglich im Cron). */
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Einträge älter als 1 Jahr löschen, Fehlversuche beim Login nach 30 Tagen (täglich im Cron). */
 export async function pruneAudit(now = new Date()) {
-  const cutoff = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-  const r = await prisma.auditLog.deleteMany({ where: { at: { lt: cutoff } } });
+  const r = await prisma.auditLog.deleteMany({
+    where: {
+      OR: [
+        { at: { lt: new Date(now.getTime() - 365 * DAY_MS) } },
+        { action: "login.failed", at: { lt: new Date(now.getTime() - 30 * DAY_MS) } },
+      ],
+    },
+  });
   return r.count;
 }

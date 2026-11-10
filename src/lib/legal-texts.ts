@@ -3,7 +3,7 @@
 // Angebot. Bei Änderungen LEGAL_VERSION anpassen – angenommene Angebote
 // speichern die URL, die zum Zeitpunkt der Annahme galt.
 
-export const LEGAL_VERSION = "09.11.2026";
+export const LEGAL_VERSION = "10.11.2026";
 
 export const PROVIDER = {
   name: "Ole Kannapinn UG (haftungsbeschränkt)",
@@ -193,11 +193,14 @@ export const AVV: LegalSection[] = [
 export const TOMS: string[] = [
   "Betrieb der Anwendung und Datenbank in Rechenzentren in der EU (Amsterdam).",
   "Verschlüsselte Übertragung (TLS) für alle Verbindungen.",
-  "Zugang nur mit persönlichem Konto; Passwörter werden ausschließlich als Hash gespeichert.",
-  "Strikte Trennung der Daten je Auftraggeber (Mandantentrennung) und Rollenkonzept (Administrator/Kunde).",
+  "Zugang nur mit persönlichem Konto; Passwörter werden ausschließlich als Hash gespeichert. Administratoren melden sich zusätzlich mit einem zweiten Faktor (Authenticator-App) an.",
+  "Begrenzung von Anmeldeversuchen; Sitzungen laufen automatisch ab.",
+  "Strikte Trennung der Daten je Auftraggeber (Mandantentrennung) und Rollenkonzept (Administrator, Inhaber, Berater); Berater sehen nur die ihnen zugeteilten Leads.",
+  "Änderungsprotokoll: Anmeldungen, Exporte, Löschungen und Änderungen an Zugängen werden mit Person und Zeitpunkt protokolliert (Aufbewahrung 1 Jahr).",
   "Zugangsdaten zu Drittdiensten (z. B. Kalender) werden verschlüsselt gespeichert.",
   "Tägliche und wöchentliche Datensicherungen sowie fortlaufende Sicherung zur zeitpunktgenauen Wiederherstellung.",
-  "Versionierte, geprüfte Datenbankänderungen; Healthchecks und automatische Fehlerüberwachung ohne Übermittlung personenbezogener Inhalte.",
+  "Versionierte, automatisch getestete Datenbank- und Programmänderungen; Healthchecks, Ausfallüberwachung und Fehlerüberwachung ohne Übermittlung personenbezogener Inhalte. Wiederherstellung aus der Sicherung wird regelmäßig getestet.",
+  "Löschfunktion je Lead für Betroffenenanfragen und vollständige Löschung der Lead-Daten bei Vertragsende.",
   "Pseudonyme Nutzungsstatistik ohne Lead-Inhalte, automatische Löschung nach 180 Tagen.",
   "Zugriff auf Kundendaten nur durch berechtigte, zur Vertraulichkeit verpflichtete Personen und nur, soweit für Betrieb und Support erforderlich.",
 ];

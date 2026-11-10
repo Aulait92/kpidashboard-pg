@@ -127,9 +127,17 @@ export async function LeadDetailBody({
       followUpAt: true,
       followUpNote: true,
       notes: true,
+      erasedAt: true,
     },
   });
   if (!lead) notFound();
+  if (lead.erasedAt) {
+    return (
+      <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-5 py-6 text-sm text-[color:var(--muted)]">
+        Die Daten dieses Leads wurden am {formatDate(lead.erasedAt)} auf Wunsch gelöscht. Für Abrechnung und Zahlen bleibt nur ein anonymer Eintrag.
+      </div>
+    );
+  }
 
   let fields: Record<string, unknown> | null = null;
   let fetchError: string | null = null;
@@ -158,6 +166,8 @@ export async function LeadDetailBody({
   const stornoOptions = stornoOptionsMap.get(lead.id) ?? [];
   // Team: Inhaber sieht und ändert, wer zuständig ist.
   const members = isAdvisor(team) ? [] : await teamMembers(customerId);
+  // Löschen (Datenschutz): Inhaber oder Admin in der Kundenansicht.
+  const canErase = !isAdvisor(team);
 
   const [conv, nextAppt, cal] = await Promise.all([
     prisma.conversation.findFirst({
@@ -194,6 +204,7 @@ export async function LeadDetailBody({
         followUpNote={lead.followUpNote}
         stornoOptions={stornoOptions}
         storniert={storniert}
+        canErase={canErase}
       />
 
       {conv?.needsAttention ? (

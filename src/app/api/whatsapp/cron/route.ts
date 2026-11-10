@@ -3,6 +3,7 @@ import { runOutreach } from "@/lib/whatsapp/outreach";
 import { runReminders } from "@/lib/whatsapp/reminders";
 import { pruneUsage } from "@/lib/usage";
 import { pruneAudit } from "@/lib/audit";
+import { pruneTransient } from "@/lib/erasure";
 import { reportError } from "@/lib/monitoring";
 import { runOnboardingCron } from "@/lib/onboarding-cron";
 import { beat } from "@/lib/heartbeat";
@@ -46,11 +47,15 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-onboarding");
     return { error: e instanceof Error ? e.message : String(e) };
   });
-  // Einmal täglich (03:00–03:05 UTC): Nutzungsdaten > 180 Tage löschen.
+  // Einmal täglich (03:00–03:05 UTC): Löschfristen (siehe docs/datenschutz.md).
   const now = new Date();
   const pruned =
     now.getUTCHours() === 3 && now.getUTCMinutes() < 5
-      ? { usage: await pruneUsage().catch(() => null), audit: await pruneAudit(now).catch(() => null) }
+      ? {
+          usage: await pruneUsage().catch(() => null),
+          audit: await pruneAudit(now).catch(() => null),
+          transient: await pruneTransient(now).catch(() => null),
+        }
       : undefined;
   const failed = Object.entries({ outreach, responses, reminders, onboarding })
     .filter(([, r]) => r && typeof r === "object" && "error" in r)

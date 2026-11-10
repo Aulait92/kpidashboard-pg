@@ -6,6 +6,7 @@ import { billingEnabled, listCustomerInvoices, type CustomerInvoice } from "@/li
 import { reportError } from "@/lib/monitoring";
 import { currentPause, todayBerlin } from "@/lib/pause";
 import { prisma } from "@/lib/prisma";
+import { EraseCustomerCard } from "./erase-card";
 
 const fmt = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
@@ -24,7 +25,7 @@ export default async function KundenAbrechnung({ params, searchParams }: { param
   const { pause: pauseError } = await searchParams;
   const c = await prisma.customer.findUnique({
     where: { id },
-    select: { id: true, stripeCustomerId: true, paymentOverdueSince: true, paymentWarnedAt: true, salesContact: { select: { id: true } } },
+    select: { id: true, name: true, stripeCustomerId: true, paymentOverdueSince: true, paymentWarnedAt: true, salesContact: { select: { id: true } } },
   });
   if (!c) notFound();
   let invoices: CustomerInvoice[] = [];
@@ -34,7 +35,7 @@ export default async function KundenAbrechnung({ params, searchParams }: { param
       return [];
     });
   }
-  const pause = await currentPause(id);
+  const [pause, leadCount] = await Promise.all([currentPause(id), prisma.lead.count({ where: { customerId: id, erasedAt: null } })]);
 
   return (
     <div className="grid gap-5 lg:grid-cols-2">
@@ -47,6 +48,7 @@ export default async function KundenAbrechnung({ params, searchParams }: { param
           </div>
         ) : null}
         <AdminPauseCard customerId={id} contactId={c.salesContact?.id ?? ""} pause={pause} error={pauseError ?? null} today={todayBerlin()} />
+        <EraseCustomerCard customerId={id} customerName={c.name} leadCount={leadCount} />
       </div>
 
       <Card>

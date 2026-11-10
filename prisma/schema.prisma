@@ -348,6 +348,9 @@ model Lead {
   // optional nach Airtable in eine Abschlusswert-Spalte gespiegelt; getrennt
   // von Revenue.amount (das ist der Lead-Einkaufspreis).
   closeValue           Decimal?  @db.Decimal(12, 2)
+  // DSGVO-Löschung (Art. 17): personenbezogene Felder geleert, Zeile bleibt
+  // für Abrechnung und Statistik. Der Airtable-Sync überschreibt sie nicht mehr.
+  erasedAt             DateTime?
 
   customer Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   revenues Revenue[]

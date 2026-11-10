@@ -509,3 +509,24 @@ export async function appointmentOutcomeAction(formData: FormData): Promise<void
   revalidatePath("/buyer/leads");
   revalidatePath("/buyer/kanban");
 }
+
+/**
+ * Datenschutz-Löschung eines Leads (Art. 17 DSGVO). Darf der Inhaber des
+ * Kunden (kein Berater) oder ein Admin, auch in der Kundenansicht.
+ */
+export async function eraseLeadAction(leadId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const session = await getCurrentSession();
+  if (!session) return { ok: false, error: "Bitte neu anmelden." };
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true } });
+  if (!lead) return { ok: false, error: "Lead nicht gefunden." };
+  if (session.role !== "ADMIN") {
+    const u = await prisma.user.findUnique({ where: { id: session.userId }, select: { customerId: true, teamRole: true } });
+    if (!u || u.customerId !== lead.customerId || u.teamRole === "advisor") {
+      return { ok: false, error: "Löschen kann nur der Inhaber." };
+    }
+  }
+  const { eraseLead } = await import("@/lib/erasure");
+  await eraseLead(lead.id);
+  revalidatePath("/buyer", "layout");
+  return { ok: true };
+}

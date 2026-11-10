@@ -67,9 +67,13 @@ export default async function BookingPage({ params, searchParams }: Props) {
     select: {
       customerId: true,
       status: true,
-      customer: { select: { name: true } },
+      customer: { select: { name: true, onboarding: { select: { websiteInfo: true } } } },
     },
   });
+  // Datenschutzhinweis des Beraters (verantwortlich für die Termindaten),
+  // sonst der allgemeine Link.
+  const customerPrivacy = (conn?.customer.onboarding?.websiteInfo as { privacyUrl?: string | null } | null)?.privacyUrl;
+  const privacyUrl = customerPrivacy && /^https?:\/\//.test(customerPrivacy) ? customerPrivacy : PRIVACY_URL;
 
   // Berater bucht für einen Lead (Rückrufliste): Kontaktdaten vorbelegen —
   // nur für den eingeloggten Kunden selbst, keine Daten in der URL.
@@ -313,7 +317,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
                 Ich bin einverstanden, dass meine Angaben zur Terminvereinbarung
                 und Beratung verarbeitet werden. Hinweise in der{" "}
                 <a
-                  href={PRIVACY_URL}
+                  href={privacyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline"

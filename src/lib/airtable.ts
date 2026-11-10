@@ -1175,8 +1175,10 @@ export async function syncAirtable(): Promise<SyncResult> {
         // auslösen muss.
         const existingLead = await prisma.lead.findUnique({
           where: { airtableId: rec.id },
-          select: { id: true, status: true },
+          select: { id: true, status: true, erasedAt: true },
         });
+        // Datenschutz-gelöscht: nicht wieder mit Airtable-Daten befüllen.
+        if (existingLead?.erasedAt) continue;
         const isNewLead = !existingLead;
         const wasAlreadyCancelled =
           existingLead?.status != null &&
