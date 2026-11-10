@@ -39,6 +39,15 @@ enthalten. Der Merge ist konfliktfrei.
 
 - [ ] Google Cloud Console: Redirect-URI `https://kpi.performancegrowth.de/api/google/callback`
       hinzufügen. Microsoft (Entra): ebenso `/api/microsoft/callback`.
+- [ ] **Login mit Microsoft/Google** (gleiche OAuth-Apps), Redirect-URIs zusätzlich eintragen,
+      für Sandbox und Produktion:
+      `https://termin.performancegrowth.de/api/auth/google/callback`,
+      `https://kpi.performancegrowth.de/api/auth/google/callback` (Google Cloud Console →
+      Anmeldedaten → OAuth-Client) und dasselbe mit `/api/auth/microsoft/callback` in Entra
+      (App-Registrierung → Authentifizierung → Web). In Entra unter „Unterstützte Kontotypen“
+      Konten in beliebigen Organisationen zulassen (Allianz-Konten), `MICROSOFT_TENANT=common`.
+      Google: Login braucht nur „openid email profile“ (keine Prüfung nötig), der
+      Zustimmungsbildschirm muss aber auf „In Produktion“ stehen, sonst kommen nur Testnutzer rein.
 - [ ] Stripe **Live**: Branding, Steuer, Kundenportal, Smart Retries (wie Sandbox:
       „Abonnement als unbezahlt markieren“). Webhook-Endpunkt
       `https://kpi.performancegrowth.de/api/stripe/webhook` mit den Ereignissen aus

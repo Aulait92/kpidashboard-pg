@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { LoginForm } from "./login-form";
+import { ssoEnabled } from "@/lib/sso";
+import { SSO_ERRORS } from "@/lib/sso-errors";
 
-type SearchParams = Promise<{ next?: string }>;
+type SearchParams = Promise<{ next?: string; fehler?: string; schritt?: string }>;
 
 export const metadata = {
   title: "Login | KPI-Dashboard",
@@ -27,7 +29,12 @@ export default async function LoginPage({
             Anmelden
           </h1>
         </div>
-        <LoginForm next={next} />
+        <LoginForm
+          next={next}
+          startWithCode={sp.schritt === "code"}
+          error={sp.fehler ? SSO_ERRORS[sp.fehler] : undefined}
+          sso={{ google: ssoEnabled("google"), microsoft: ssoEnabled("microsoft") }}
+        />
         <div className="mt-4 text-center text-xs text-[color:var(--muted)]">
           <Link
             href="/forgot-password"

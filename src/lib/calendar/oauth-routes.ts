@@ -12,7 +12,7 @@ async function teamRoleOf(userId: string): Promise<"owner" | "advisor"> {
 }
 
 /** Öffentliche Origin (hinter dem Railway-Proxy liefert req.url teils localhost). */
-function publicOrigin(req: Request): string {
+export function publicOrigin(req: Request): string {
   const fromEnv = process.env.APP_URL ?? process.env.GOOGLE_REDIRECT_URI;
   if (fromEnv) {
     try {

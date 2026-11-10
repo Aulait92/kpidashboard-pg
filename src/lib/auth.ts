@@ -319,3 +319,55 @@ export async function consumePasswordResetToken(
   ]);
   return { ok: true };
 }
+
+// ─── Anmeldung mit Microsoft / Google ───────────────────────────────────
+// Nur für bestehende Logins: die bestätigte E-Mail des Anbieters muss zu
+// einem Konto passen. Neue Konten entstehen weiterhin nur per Einladung.
+const SSO_COOKIE = "kpi_sso";
+
+export type SsoState = { provider: string; state: string; nonce: string; verifier: string; next: string };
+
+export async function setSsoState(s: SsoState) {
+  const token = await new SignJWT({ ...s, purpose: "sso" }).setProtectedHeader({ alg: "HS256" }).setIssuedAt().setExpirationTime("10m").sign(getSecret());
+  (await cookies()).set(SSO_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 600,
+    path: "/api/auth",
+  });
+}
+
+export async function takeSsoState(): Promise<SsoState | null> {
+  const store = await cookies();
+  const token = store.get(SSO_COOKIE)?.value;
+  store.delete({ name: SSO_COOKIE, path: "/api/auth" });
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, getSecret());
+    if (payload.purpose !== "sso") return null;
+    return payload as unknown as SsoState;
+  } catch {
+    return null;
+  }
+}
+
+/** Login mit vom Anbieter bestätigter E-Mail. Mit aktivem 2FA folgt der Code-Schritt. */
+export async function loginWithVerifiedEmail(emailRaw: string, method: "google" | "microsoft"): Promise<LoginResult> {
+  const email = emailRaw.trim().toLowerCase();
+  const user = await prisma.user.findUnique({ where: { email } });
+  const { audit } = await import("@/lib/audit");
+  if (!user) {
+    await audit("login.failed", { actor: { email, role: null }, details: { method } });
+    return { ok: false, error: `Für ${email} gibt es keinen Zugang. Bitte mit der E-Mail-Adresse anmelden, mit der Sie eingeladen wurden.` };
+  }
+  if (user.totpEnabledAt && user.totpSecretEnc) {
+    await setPendingTotp(user.id, 0);
+    return { ok: false, needsTotp: true };
+  }
+  await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+  await audit("login", { entity: "User", entityId: user.id, customerId: user.customerId, actor: { id: user.id, email: user.email, role: user.role }, details: { method } });
+  const payload: SessionPayload = { userId: user.id, email: user.email, role: user.role, customerId: user.customerId ?? undefined };
+  await setSessionCookie(payload);
+  return { ok: true, payload };
+}
