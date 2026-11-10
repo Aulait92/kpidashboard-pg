@@ -130,11 +130,15 @@ KI-Hilfe, die brauchen keine Migration).
      Schwarzkopf“ 1088907616945081 + Seite, volle Kontrolle). Danach in unserem Portfolio
      beides dem Systemnutzer zuweisen. Dann: Kundenakte → Leads & Formulare → Werbekonto
      1088907616945081 „Speichern & prüfen“; Lead-Eingang: Formular 1909684100014197 (Seite
-     996034096924997) zuordnen (Privatschutz), Testlead → erscheint bei Anid → Zap
-     „Allianz Lead Ads“ bzw. Anid-Zap ausschalten. Bis dahin läuft Anid über den Zap weiter.
+     996034096924997) zuordnen (Privatschutz), Testlead → erscheint bei Anid → Anids Zap
+     (Privatschutz → Airtable) ausschalten. Bis dahin läuft Anid über den Zap weiter.
+     **Nicht** „Allianz Lead Ads“ ausschalten: das ist unser eigener Vertriebs-Zap.
    - Zapier (Lead-Webhook, falls noch aktiv): `/api/leads/eingang?token=…`
-   - Instantly: `/api/vertrieb/…` (wie bisher in der Sandbox)
-   - Calendly: wie bisher in der Sandbox
+   - Instantly: Webhook-URL von `staging.` auf `app.` ändern (`/api/vertrieb/instantly/webhook`)
+   - Calendly: in der Produktion unter Vertrieb → Anbindungen „Calendly verbinden“
+   - Zaps „Allianz Lead Ads“ (`/api/vertrieb/leads/webhook`) und „Gmail to Webhooks on New
+     Email Match“ (`/api/vertrieb/linkedin/message`): URL von `staging.` auf `app.` ändern.
+     Token ggf. anpassen, falls `VERTRIEB_WEBHOOK_TOKEN` in der Produktion anders ist.
    - 360dialog: je Kunde in der Kundenakte → WhatsApp-Assistent → Nummer
      „ändern“ → speichern (setzt den Webhook auf die neue Adresse)
 7. **cron-job.org**:
