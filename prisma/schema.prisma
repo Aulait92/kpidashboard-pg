@@ -1287,3 +1287,11 @@ model AdvisorCalendar {
 
   @@index([customerId])
 }
+
+// Lebenszeichen der Hintergrund-Jobs (Cron, Sync) für die Überwachung (/api/status).
+model SystemHeartbeat {
+  key  String   @id // "cron" | "sync"
+  at   DateTime
+  ok   Boolean  @default(true)
+  note String?
+}

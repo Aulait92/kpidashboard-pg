@@ -4,6 +4,7 @@ import { runReminders } from "@/lib/whatsapp/reminders";
 import { pruneUsage } from "@/lib/usage";
 import { reportError } from "@/lib/monitoring";
 import { runOnboardingCron } from "@/lib/onboarding-cron";
+import { beat } from "@/lib/heartbeat";
 
 // Zentraler Cron (z. B. cron-job.org alle 5 Minuten):
 //   1. Erstanschreiben neuer Leads ohne Termin
@@ -48,6 +49,10 @@ async function handle(req: Request): Promise<Response> {
   const now = new Date();
   const pruned =
     now.getUTCHours() === 3 && now.getUTCMinutes() < 5 ? await pruneUsage().catch(() => null) : undefined;
+  const failed = Object.entries({ outreach, responses, reminders, onboarding })
+    .filter(([, r]) => r && typeof r === "object" && "error" in r)
+    .map(([k]) => k);
+  await beat("cron", failed.length === 0, failed.length ? `Fehler in: ${failed.join(", ")}` : null);
   return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned });
 }
 

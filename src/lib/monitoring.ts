@@ -9,11 +9,14 @@ import * as Sentry from "@sentry/nextjs";
 
 let initialized = false;
 
+/** DSN für die Server-Seite (in der Produktion bisher nur als NEXT_PUBLIC_SENTRY_DSN gesetzt). */
+export const sentryDsn = () => process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN || "";
+
 export function initSentry() {
-  if (initialized || !process.env.SENTRY_DSN) return;
+  if (initialized || !sentryDsn()) return;
   initialized = true;
   Sentry.init({
-    dsn: process.env.SENTRY_DSN,
+    dsn: sentryDsn(),
     environment: process.env.SENTRY_ENVIRONMENT ?? process.env.RAILWAY_SERVICE_NAME ?? "production",
     release: process.env.RAILWAY_GIT_COMMIT_SHA,
     tracesSampleRate: 0,
@@ -52,7 +55,7 @@ export function initSentry() {
 export function reportError(err: unknown, where: string, extra?: Record<string, string | number | boolean | null>) {
   const message = err instanceof Error ? err.message : String(err);
   console.error(`[fehler] ${where}: ${message}`);
-  if (!process.env.SENTRY_DSN) return;
+  if (!sentryDsn()) return;
   initSentry();
   Sentry.withScope((scope) => {
     scope.setTag("where", where);

@@ -18,6 +18,7 @@ const PUBLIC_PREFIXES = [
   "/rechtliches", // AGB und Auftragsverarbeitungsvertrag (öffentlich)
   "/api/ops", // Betriebs-API (Buyer-Accounts anlegen), per ADMIN_API_TOKEN (Bearer) gesichert
   "/api/health", // Healthcheck für Railway/Uptime (gibt nur ok true/false zurück)
+  "/api/status", // Überwachung (DB + Hintergrund-Jobs), Details nur mit Token
   "/api/stripe/webhook", // Stripe-Webhooks (per Signatur geprüft)
   "/api/meta/leadgen", // Meta-Webhook Lead Ads (Signatur mit META_APP_SECRET)
   "/api/leads/eingang", // Lead-Webhook (Zapier o. ä., per LEAD_WEBHOOK_TOKEN)

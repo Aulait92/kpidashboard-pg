@@ -1,4 +1,5 @@
 import { reportError } from "@/lib/monitoring";
+import { beat } from "@/lib/heartbeat";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { runFullSync } from "@/lib/sync";
@@ -42,6 +43,7 @@ async function handle(req: Request) {
     // Diagnose: rohes vs. effektives Lead-Ziel je Produkt (+ pro Kunde).
     const productGoals = await listProductGoalBreakdown();
     revalidatePath("/");
+    await beat("sync", result.airtable.errors.length === 0, result.airtable.errors.length ? result.airtable.errors.join("; ") : null);
     return NextResponse.json({
       ok: true,
       productMatchers,
@@ -103,6 +105,7 @@ async function handle(req: Request) {
     });
   } catch (err) {
     reportError(err, "sync");
+    await beat("sync", false, err instanceof Error ? err.message : String(err));
     return NextResponse.json(
       { ok: false, error: err instanceof Error ? err.message : String(err) },
       { status: 500 },
