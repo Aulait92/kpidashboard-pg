@@ -18,9 +18,8 @@ import {
   removeDemoAction,
   seedDemoAction,
   deleteTemplateAction,
-  saveOutreachSettingsAction,
-  saveTemplateAction,
 } from "./actions";
+import { AgentSettings, TemplateApproved, TemplateEditor } from "./controls";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "WhatsApp-Einstellungen | KPI-Dashboard" };
@@ -127,13 +126,6 @@ export default async function WhatsAppSettingsPage({
         </Link>
       </div>
 
-      <div className="mt-4 rounded-xl bg-[color:var(--brand-soft)]/50 p-4 text-xs leading-relaxed text-[color:var(--foreground)]">
-        <b>So funktioniert&apos;s:</b> Außerhalb des 24-h-Fensters darf WhatsApp nur
-        freigegebene Vorlagen senden. Lege die Vorlage zuerst bei 360dialog an
-        (gleicher Name, Sprache, Text), warte auf die Freigabe durch Meta und
-        trage sie hier ein. Erstanschreiben erst aktivieren, wenn das
-        Leadformular eine WhatsApp-Einwilligung enthält.
-      </div>
 
       <form
         action={addCustomerAction}
@@ -181,15 +173,15 @@ export default async function WhatsAppSettingsPage({
             <section
               key={c.id}
               id={`kunde-${c.id}`}
-              className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5"
+              className={only ? "space-y-4" : "space-y-4 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5"}
             >
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="text-lg font-semibold">{c.name}</h2>
-                <span className="text-xs text-[color:var(--muted)]">
-                  WhatsApp: {c.whatsAppAccount?.status ?? "nicht verbunden"} · Agent:{" "}
-                  {c.agentConfig?.active ? "aktiv" : "inaktiv"}
-                </span>
-              </div>
+              {only ? null : (
+                <h2 className="text-lg font-semibold">
+                  <Link href={`/admin/kunden/${c.id}/whatsapp`} className="hover:underline">
+                    {c.name}
+                  </Link>
+                </h2>
+              )}
 
               {demoTools ? (
                 <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
@@ -234,22 +226,27 @@ export default async function WhatsAppSettingsPage({
                 </div>
               ) : null}
 
-              <form
-                action={connectWhatsAppAction}
-                className="mt-4 flex flex-wrap items-end gap-4 rounded-xl border border-[color:var(--border)] p-3"
+              <details
+                open={c.whatsAppAccount?.status !== "connected"}
+                className="group rounded-xl border border-[color:var(--border)] bg-white [&>summary::-webkit-details-marker]:hidden"
               >
-                <input type="hidden" name="customerId" value={c.id} />
-                <div className="w-full text-sm font-semibold">
-                  WhatsApp-Nummer (360dialog){" "}
+                <summary className="flex min-h-[56px] cursor-pointer items-center gap-3 px-4 py-3">
+                  <span className="flex-1 font-medium">WhatsApp-Nummer</span>
                   {c.whatsAppAccount?.status === "connected" ? (
-                    <span className="font-normal text-emerald-700">
-                      · verbunden ✓{c.whatsAppAccount.phoneNumber ? ` +${c.whatsAppAccount.phoneNumber}` : ""}
+                    <span className="text-sm text-emerald-700">
+                      ✓ verbunden{c.whatsAppAccount.phoneNumber ? ` · +${c.whatsAppAccount.phoneNumber}` : ""}
                       {c.whatsAppAccount.phoneNumberId ? "" : " · wartet auf erste Nachricht"}
                     </span>
                   ) : (
-                    <span className="font-normal text-[color:var(--muted)]">· nicht verbunden</span>
+                    <span className="text-sm text-[color:var(--muted)]">nicht verbunden</span>
                   )}
-                </div>
+                  <span className="text-sm text-[color:var(--brand)] group-open:hidden">ändern</span>
+                </summary>
+              <form
+                action={connectWhatsAppAction}
+                className="flex flex-wrap items-end gap-4 border-t border-[color:var(--border)] p-4"
+              >
+                <input type="hidden" name="customerId" value={c.id} />
                 <label className="min-w-[200px] flex-1 text-xs text-[color:var(--muted)]">
                   Nummer (international)
                   <input
@@ -280,88 +277,21 @@ export default async function WhatsAppSettingsPage({
                   {c.whatsAppAccount?.status === "connected" ? "Neu verbinden" : "Verbinden"}
                 </SubmitButton>
               </form>
+              </details>
 
-              <form
-                action={saveOutreachSettingsAction}
-                className="mt-4 flex flex-wrap items-end gap-4 rounded-xl border border-[color:var(--border)] p-3"
-              >
-                <input type="hidden" name="customerId" value={c.id} />
-                <label className="flex items-center gap-2 text-sm font-medium">
-                  <input
-                    type="checkbox"
-                    name="outreachEnabled"
-                    defaultChecked={c.agentConfig?.outreachEnabled ?? false}
-                  />
-                  Neue Leads automatisch per WhatsApp anschreiben
-                </label>
-                <label className="text-xs text-[color:var(--muted)]">
-                  Wartezeit (Min.) für Selbstbuchung
-                  <input
-                    name="outreachDelayMin"
-                    type="number"
-                    min={0}
-                    max={1440}
-                    defaultValue={c.agentConfig?.outreachDelayMin ?? 10}
-                    className={`${input} mt-1 w-24`}
-                  />
-                </label>
-                <label className="min-w-[260px] flex-1 text-xs text-[color:var(--muted)]">
-                  Fester Video-Link (z. B. Webex-Raum) – leer = Google Meet / Teams
-                  <input
-                    name="videoRoomUrl"
-                    type="url"
-                    placeholder="https://allianz.webex.com/meet/…"
-                    defaultValue={c.agentConfig?.videoRoomUrl ?? ""}
-                    className={`${input} mt-1`}
-                  />
-                </label>
-                <label className="min-w-[260px] flex-1 text-xs text-[color:var(--muted)]">
-                  Berater-E-Mail (bekommt jeden Termin als Einladung, z. B. Allianz-Adresse)
-                  <input
-                    name="advisorEmail"
-                    type="email"
-                    placeholder="vorname.nachname@allianz.de"
-                    defaultValue={c.agentConfig?.advisorEmail ?? ""}
-                    className={`${input} mt-1`}
-                  />
-                </label>
-                <label className="min-w-[260px] flex-1 text-xs text-[color:var(--muted)]">
-                  Veröffentlichter Kalender (ICS-Link, nur Frei/Gebucht){" "}
-                  {c.agentConfig?.availabilityIcsUrlEnc ? (
-                    <span className="font-semibold text-emerald-700">· hinterlegt ✓</span>
-                  ) : null}
-                  <input
-                    name="availabilityIcsUrl"
-                    type="password"
-                    autoComplete="off"
-                    placeholder={
-                      c.agentConfig?.availabilityIcsUrlEnc
-                        ? "leer lassen = unverändert"
-                        : "https://outlook.office365.com/owa/calendar/…/calendar.ics"
-                    }
-                    className={`${input} mt-1`}
-                  />
-                  {c.agentConfig?.availabilityIcsUrlEnc ? (
-                    <span className="mt-1 flex items-center gap-1.5">
-                      <input type="checkbox" name="removeIcs" /> Link entfernen
-                    </span>
-                  ) : null}
-                </label>
-                <SubmitButton
-                  pendingLabel="Speichert …"
-                  className="rounded-lg bg-[color:var(--brand)] px-4 py-1.5 text-sm font-semibold text-white"
-                >
-                  Speichern
-                </SubmitButton>
-                {c.agentConfig?.outreachEnabled && !usedPurposes.has("outreach") ? (
-                  <span className="text-xs font-medium text-amber-700">
-                    ⚠ Aktiv, aber noch keine freigegebene Erstanschreiben-Vorlage
-                  </span>
-                ) : null}
-              </form>
+              <AgentSettings
+                customerId={c.id}
+                active={c.agentConfig?.active ?? false}
+                outreachEnabled={c.agentConfig?.outreachEnabled ?? false}
+                delayMin={c.agentConfig?.outreachDelayMin ?? 10}
+                videoRoomUrl={c.agentConfig?.videoRoomUrl ?? ""}
+                advisorEmail={c.agentConfig?.advisorEmail ?? ""}
+                hasIcs={!!c.agentConfig?.availabilityIcsUrlEnc}
+                outreachTemplateReady={usedPurposes.has("outreach")}
+              />
 
-              <div className="mt-4 rounded-xl border border-[color:var(--border)] p-3 text-sm">
-                <div className="font-semibold">Buchungskalender</div>
+              <div className="rounded-xl border border-[color:var(--border)] bg-white p-4 text-sm">
+                <div className="font-medium">Buchungskalender</div>
                 {c.calendarConnection?.status === "connected" ? (
                   <p className="mt-1 text-xs text-emerald-700">
                     ✓ {PROVIDER_LABELS[c.calendarConnection.provider] ?? "Kalender"} verbunden
@@ -400,91 +330,56 @@ export default async function WhatsAppSettingsPage({
                 ) : null}
               </div>
 
-              <h3 className="mt-5 text-sm font-semibold">Vorlagen</h3>
-              {c.messageTemplates.length === 0 ? (
-                <p className="mt-1 text-xs text-[color:var(--muted)]">Noch keine Vorlagen.</p>
-              ) : (
-                <ul className="mt-2 divide-y divide-[color:var(--border)] rounded-xl border border-[color:var(--border)]">
-                  {c.messageTemplates.map((t) => (
-                    <li key={t.id} className="flex items-start justify-between gap-3 p-3">
-                      <div className="min-w-0 text-xs">
-                        <div className="font-semibold">
-                          {PURPOSE_LABELS[t.purpose as NoticePurpose] ?? (t.purpose || "–")} ·{" "}
-                          <code>{t.name}</code> ({t.language}) ·{" "}
-                          <span
-                            className={
-                              t.status === "approved" ? "text-emerald-700" : "text-amber-700"
-                            }
-                          >
-                            {t.status === "approved" ? "freigegeben" : t.status}
-                          </span>
-                        </div>
-                        <p className="mt-1 whitespace-pre-wrap text-[color:var(--muted)]">
-                          {t.body}
-                        </p>
-                      </div>
-                      <form action={deleteTemplateAction}>
-                        <input type="hidden" name="id" value={t.id} />
-                        <SubmitButton
-                          pendingLabel="…"
-                          className="text-xs font-medium text-rose-700 hover:underline"
-                        >
-                          Entfernen
-                        </SubmitButton>
-                      </form>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              <details className="mt-3">
-                <summary className="cursor-pointer text-sm font-medium text-[color:var(--brand)]">
-                  + Vorlage hinterlegen
-                </summary>
-                <div className="mt-3 grid gap-4 sm:grid-cols-3">
-                  {PURPOSES.map((p) => (
-                    <form
-                      key={p}
-                      action={saveTemplateAction}
-                      className="space-y-2 rounded-xl border border-[color:var(--border)] p-3"
-                    >
-                      <input type="hidden" name="customerId" value={c.id} />
-                      <input type="hidden" name="purpose" value={p} />
-                      <div className="text-sm font-semibold">{PURPOSE_LABELS[p]}</div>
-                      <div className="text-[11px] text-[color:var(--muted)]">
-                        Platzhalter:{" "}
-                        {PURPOSE_PARAMS[p].map((x, i) => `{{${i + 1}}} ${x}`).join(", ")}
-                      </div>
-                      <input
-                        name="name"
-                        required
-                        placeholder="Vorlagenname (wie bei 360dialog)"
-                        className={input}
-                      />
-                      <input name="language" defaultValue="de" className={input} />
-                      <textarea
-                        name="body"
-                        required
-                        rows={5}
-                        defaultValue={SUGGESTED[p].replace(
-                          "[Berater]",
-                          c.name.replace(/^Allianz\s+/i, ""),
-                        )}
-                        className={input}
-                      />
-                      <label className="flex items-center gap-2 text-xs">
-                        <input type="checkbox" name="approved" /> von Meta freigegeben
-                      </label>
-                      <SubmitButton
-                        pendingLabel="Speichert …"
-                        className="w-full rounded-lg border border-[color:var(--brand)] py-1.5 text-xs font-semibold text-[color:var(--brand)]"
-                      >
-                        Vorlage speichern
-                      </SubmitButton>
-                    </form>
-                  ))}
+              <div className="rounded-xl border border-[color:var(--border)] bg-white">
+                <div className="flex items-center gap-2 px-4 py-3">
+                  <span className="flex-1 font-medium">Vorlagen</span>
+                  <span
+                    title="Außerhalb des 24-Stunden-Fensters darf WhatsApp nur freigegebene Vorlagen senden. Vorlage bei 360dialog mit gleichem Namen und Text anlegen, auf Freigabe durch Meta warten, dann hier als freigegeben markieren."
+                    className="cursor-help text-xs text-[color:var(--muted)]"
+                  >
+                    Wie funktioniert das? ⓘ
+                  </span>
                 </div>
-              </details>
+                {c.messageTemplates.length === 0 ? (
+                  <p className="border-t border-[color:var(--border)] px-4 py-3 text-sm text-[color:var(--muted)]">Noch keine Vorlagen.</p>
+                ) : (
+                  <ul className="divide-y divide-[color:var(--border)] border-t border-[color:var(--border)]">
+                    {c.messageTemplates.map((t) => (
+                      <li key={t.id} className="flex items-start gap-3 px-4 py-3">
+                        <div className="min-w-0 flex-1 text-sm">
+                          <div className="font-medium">
+                            {PURPOSE_LABELS[t.purpose as NoticePurpose] ?? (t.purpose || "–")}{" "}
+                            <span className="text-xs font-normal text-[color:var(--muted)]">{t.name}</span>
+                          </div>
+                          <p className="mt-0.5 line-clamp-2 text-xs text-[color:var(--muted)]">{t.body}</p>
+                        </div>
+                        <TemplateApproved id={t.id} approved={t.status === "approved"} />
+                        <form action={deleteTemplateAction}>
+                          <input type="hidden" name="id" value={t.id} />
+                          <SubmitButton pendingLabel="…" className="pt-1.5 text-xs font-medium text-rose-700 hover:underline">
+                            Entfernen
+                          </SubmitButton>
+                        </form>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <details className="border-t border-[color:var(--border)]">
+                  <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-[color:var(--brand)]">+ Vorlage hinzufügen</summary>
+                  <div className="px-4 pb-4">
+                    <TemplateEditor
+                      customerId={c.id}
+                      sender={c.name.replace(/^Allianz\s+/i, "")}
+                      purposes={PURPOSES.filter((p) => !usedPurposes.has(p)).concat(PURPOSES.filter((p) => usedPurposes.has(p))).map((p) => ({
+                        key: p,
+                        label: PURPOSE_LABELS[p],
+                        params: PURPOSE_PARAMS[p],
+                        suggested: SUGGESTED[p].replace("[Berater]", c.name.replace(/^Allianz\s+/i, "")),
+                      }))}
+                    />
+                  </div>
+                </details>
+              </div>
             </section>
           );
         })}

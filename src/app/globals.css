@@ -99,3 +99,4 @@ body {
 .ui-sheet { animation: sheet-up 240ms cubic-bezier(0.32, 0.72, 0, 1); }
 @media (min-width: 640px) { .ui-sheet { animation: sheet-pop 160ms ease-out; } }
 .ui-backdrop { animation: fade 180ms ease-out; }
+@keyframes wiggle { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }

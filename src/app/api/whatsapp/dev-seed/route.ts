@@ -1,18 +1,12 @@
 import { encryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
+import { STARTER_PROMPT } from "@/lib/whatsapp/starter-prompt";
 
 // NUR für den Sandbox-/Test-Deploy: legt einen Pilot-Kunden mit WhatsAppAccount
 // (Sandbox-API-Key, app-seitig verschlüsselt) und aktivem KI-Agenten an, damit
 // der Bot sofort antworten kann. Token-geschützt über WHATSAPP_WEBHOOK_SECRET.
 // Vor dem echten Pilot/Produktion entfernen.
 export const dynamic = "force-dynamic";
-
-const STARTER_PROMPT =
-  "Du bist der digitale Assistent des Beraters: freundlich, empathisch und überzeugend. " +
-  "Du meldest dich bei Interessenten, die über eine " +
-  "Anzeige Kontakt aufgenommen haben. Verstehe ihre Situation, stelle pro " +
-  "Nachricht genau eine Frage, kläre offene Punkte und führe qualifizierte " +
-  "Interessenten zu einem kurzen Kennenlerngespräch (Telefon oder Videocall).";
 
 export async function POST(req: Request): Promise<Response> {
   const expected = process.env.WHATSAPP_WEBHOOK_SECRET;

@@ -7,6 +7,7 @@ import { decryptSecret, encryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
 import { setWebhook } from "@/lib/whatsapp/dialog360";
 import { appUrl } from "@/lib/whatsapp/event-text";
+import { STARTER_PROMPT } from "@/lib/whatsapp/starter-prompt";
 
 async function requireAdmin() {
   const session = await getCurrentSession();
@@ -199,4 +200,64 @@ export async function removeDemoAction(formData: FormData): Promise<void> {
   revalidatePath("/admin/whatsapp/settings");
   revalidatePath("/admin/kunden", "layout");
   revalidatePath("/buyer");
+}
+
+export type SaveResult = { ok: true } | { ok: false; error: string };
+
+function revalidateSettings() {
+  revalidatePath("/admin/whatsapp/settings");
+  revalidatePath("/admin/kunden", "layout");
+}
+
+/** Assistent an/aus (Sofort-Schalter). Beim ersten Einschalten Start-Anweisung setzen. */
+export async function setAgentActiveAction(customerId: string, active: boolean): Promise<SaveResult> {
+  try {
+    await requireAdmin();
+    const cur = await prisma.agentConfig.findUnique({ where: { customerId }, select: { systemPrompt: true } });
+    const prompt = cur?.systemPrompt?.trim() ? {} : { systemPrompt: STARTER_PROMPT };
+    await prisma.agentConfig.upsert({
+      where: { customerId },
+      create: { customerId, active, systemPrompt: STARTER_PROMPT },
+      update: { active, ...prompt },
+    });
+    revalidateSettings();
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Speichern fehlgeschlagen." };
+  }
+}
+
+/** Einstellungen des Assistenten speichern (automatisch beim Ändern). */
+export async function saveAgentSettingsAction(formData: FormData): Promise<SaveResult> {
+  try {
+    await saveOutreachSettingsAction(formData);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Speichern fehlgeschlagen." };
+  }
+}
+
+/** Vorlage speichern (Editor mit Vorschau). */
+export async function saveTemplateResultAction(formData: FormData): Promise<SaveResult> {
+  try {
+    if (!String(formData.get("name") ?? "").trim() || !String(formData.get("body") ?? "").trim()) {
+      return { ok: false, error: "Name und Text der Vorlage fehlen." };
+    }
+    await saveTemplateAction(formData);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Speichern fehlgeschlagen." };
+  }
+}
+
+/** Status einer Vorlage umschalten (freigegeben / wartet). */
+export async function setTemplateApprovedAction(id: string, approved: boolean): Promise<SaveResult> {
+  try {
+    await requireAdmin();
+    await prisma.messageTemplate.update({ where: { id }, data: { status: approved ? "approved" : "pending" } });
+    revalidateSettings();
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Speichern fehlgeschlagen." };
+  }
 }

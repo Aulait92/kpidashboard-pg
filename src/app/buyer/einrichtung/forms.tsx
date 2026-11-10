@@ -52,14 +52,13 @@ export function QuestionnaireForm({ software, initial, readOnly }: { software: b
             </div>
           </fieldset>
           <div>
-            <label className={label} htmlFor="advisorEmail">E-Mail für Termineinladungen (z. B. Ihre Allianz-Adresse)</label>
+            <label className={label} htmlFor="advisorEmail">E-Mail für Termineinladungen</label>
             <input id="advisorEmail" name="advisorEmail" type="email" className={`${input} mt-1`} placeholder="vorname.nachname@allianz.de" defaultValue={initial.advisorEmail ?? ""} />
-            <p className="mt-1 text-xs text-[color:var(--muted)]">Jeder gebuchte Termin landet so direkt in Ihrem Firmenkalender.</p>
           </div>
         </>
       ) : (
         <div>
-          <label className={label} htmlFor="leadEmails">An welche E-Mail-Adresse(n) sollen neue Leads gehen?</label>
+          <label className={label} htmlFor="leadEmails">Neue Leads per E-Mail an</label>
           <input id="leadEmails" name="leadEmails" className={`${input} mt-1`} placeholder="z. B. agentur@beispiel.de, mitarbeiter@beispiel.de" defaultValue={initial.leadEmails?.join(", ") ?? ""} />
         </div>
       )}
