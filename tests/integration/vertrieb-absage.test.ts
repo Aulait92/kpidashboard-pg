@@ -32,6 +32,16 @@ describe("Vertrieb: Absage per Mail erzeugt keine Aufgabe", () => {
     expect(await prisma.salesTask.count({ where: { contactId, doneAt: null } })).toBe(0);
   });
 
+  it("Instantly markiert später als abgelehnt → Aufgabe weg", async () => {
+    const other = await prisma.salesContact.create({ data: { name: "Test Abgelehnt", email: `x-${email}` } });
+    await recordReply(other.id, { subject: "Re: Termin", text: "Wann passt Ihnen ein kurzes Gespräch?", isAutoReply: false, sentAt: new Date() });
+    expect(await prisma.salesTask.count({ where: { contactId: other.id, doneAt: null } })).toBe(1);
+    await handleWebhook({ lead_email: `x-${email}`, event_type: "lead_not_interested", campaign_name: "Test" });
+    expect(await prisma.salesTask.count({ where: { contactId: other.id, doneAt: null } })).toBe(0);
+    expect((await prisma.salesContact.findUniqueOrThrow({ where: { id: other.id } })).stage).toBe("VERLOREN");
+    await prisma.salesContact.delete({ where: { id: other.id } });
+  });
+
   it("räumt bestehende falsche Aufgaben auf", async () => {
     await prisma.salesTask.create({ data: { contactId, title: "Interessent aus Cold Mail anrufen", type: "NACHFASSEN", dueAt: new Date() } });
     expect(await fixDeclinedReplies()).toBeGreaterThanOrEqual(1);

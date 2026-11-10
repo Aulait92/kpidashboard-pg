@@ -255,13 +255,22 @@ export async function recordReply(contactId: string, r: Reply): Promise<boolean>
 }
 
 /** Absage per Mail: offene Antwort-Aufgaben entfernen, frühe Kontakte auf „Verloren – kein Interesse“. */
-export async function onDecline(contactId: string) {
+export async function onDecline(contactId: string, lossReason: "KEIN_INTERESSE" | "SONSTIGES" = "KEIN_INTERESSE", source = "Absage per Mail") {
   await prisma.salesTask.deleteMany({ where: { contactId, doneAt: null, title: { in: REPLY_TASKS } } });
   const c = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { stage: true } });
   if (c && ["NEU", "NICHT_ERREICHT", "WIEDERVORLAGE", "SPAETER"].includes(c.stage)) {
-    await prisma.salesContact.update({ where: { id: contactId }, data: { stage: "VERLOREN", lossReason: "KEIN_INTERESSE" } });
-    await prisma.salesActivity.create({ data: { contactId, type: "NOTIZ", outcome: "Absage per Mail", note: "Automatisch auf „Verloren – kein Interesse“ gesetzt.", occurredAt: new Date() } });
+    await prisma.salesContact.update({ where: { id: contactId }, data: { stage: "VERLOREN", lossReason } });
+    await prisma.salesActivity.create({ data: { contactId, type: "NOTIZ", outcome: source, note: "Automatisch auf „Verloren“ gesetzt, offene Antwort-Aufgabe entfernt.", occurredAt: new Date() } });
   }
+}
+
+const DECLINED = ["Kein Interesse", "Falsche Person", "Verloren"];
+
+/** Instantly-Status „abgelehnt“: letzte Antwort als negativ einstufen und wie eine Absage behandeln. */
+export async function markDeclined(contactId: string, why: string) {
+  const last = await prisma.salesEmail.findFirst({ where: { contactId, direction: "IN", isAutoReply: false }, orderBy: { sentAt: "desc" }, select: { id: true } });
+  if (last) await prisma.salesEmail.update({ where: { id: last.id }, data: { sentiment: "NEGATIV" } });
+  await onDecline(contactId, why === "Falsche Person" ? "SONSTIGES" : "KEIN_INTERESSE", `Instantly: ${why}`);
 }
 
 /** Letzte echte Antwort war eine Absage? Dann keine Aufgabe aus Instantly-Status. */
@@ -283,6 +292,12 @@ export async function fixDeclinedReplies(): Promise<number> {
   const tasks = await prisma.salesTask.findMany({ where: { doneAt: null, title: { in: REPLY_TASKS } }, select: { contactId: true } });
   let fixed = 0;
   for (const contactId of [...new Set(tasks.map((t) => t.contactId).filter((x): x is string => !!x))]) {
+    const declinedInInstantly = await prisma.salesCampaignLead.findFirst({ where: { contactId, interest: { in: DECLINED } }, select: { interest: true } });
+    if (declinedInInstantly) {
+      await markDeclined(contactId, declinedInInstantly.interest!);
+      fixed++;
+      continue;
+    }
     const last = await prisma.salesEmail.findFirst({
       where: { contactId, direction: "IN", isAutoReply: false },
       orderBy: { sentAt: "desc" },
@@ -338,6 +353,10 @@ async function saveLead(contactId: string, campaignId: string, d: LeadData, camp
     });
   }
   // Instantly hat den Lead als interessiert markiert → Aufgabe
+  // Instantly hat den Lead als abgelehnt markiert → Antwort-Aufgabe weg, Kontakt verloren
+  if (d.interest && d.interest !== prev?.interest && DECLINED.includes(d.interest)) {
+    await markDeclined(contactId, d.interest);
+  }
   if (d.interest && d.interest !== prev?.interest && ["Interessiert", "Termin gebucht"].includes(d.interest) && !(await lastReplyDeclined(contactId))) {
     await ensureReplyTask(contactId, `Instantly: ${d.interest} (Kampagne „${campaignName}“)`, "Interessent aus Cold Mail anrufen");
   }
@@ -469,6 +488,15 @@ export async function handleWebhook(p: Record<string, unknown>) {
         await ensureReplyTask(contact.id, `Instantly: als interessiert markiert (Kampagne „${name}“)`, "Interessent aus Cold Mail anrufen");
       }
       break;
+    case "lead_not_interested":
+    case "lead_wrong_person":
+    case "lead_closed":
+    case "lead_lost": {
+      const why = type === "lead_wrong_person" ? "Falsche Person" : type === "lead_not_interested" ? "Kein Interesse" : "Verloren";
+      await prisma.salesCampaignLead.upsert({ where: key, create: { ...base, interest: why }, update: { interest: why } });
+      await markDeclined(contact.id, why);
+      break;
+    }
     default:
       return { ignored: type };
   }
