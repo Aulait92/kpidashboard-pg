@@ -46,7 +46,7 @@ Bruttomarge · Aktive Kunden.
 
   | Produkt | Provision | Berechnung |
   |---|---|---|
-  | PKV-Tarifoptimierung | ca. 2.500 € je Abschluss | fester Betrag |
+  | PKV-Tarifoptimierung | X Monatsbeiträge (vorläufig 9, Ole bestätigt) | × Monatsbeitrag; ohne Beitrag Ø 2.500 € |
   | Privatschutz | 50–60 % (Mitte 55 %) | × Jahresnettobeitrag |
   | TKV | 50–60 % (Mitte 55 %) | × Jahresnettobeitrag |
   | Kindersparpläne | offen | Ole fragt nach |
@@ -56,6 +56,10 @@ Bruttomarge · Aktive Kunden.
   im „Wie lief's?“) als Jahresnettobeitrag nehmen; fehlt er, einen
   Durchschnittsbeitrag je Produkt als Ersatz (Wert offen, Ole). In der
   Anzeige ausweisen, wie viele Abschlüsse mit echtem Beitrag gerechnet sind.
+- **Eigene Sätze der Vertreter** (Ole, 10.11.): Kundenbereich → Einstellungen →
+  „Meine Provisionen“, je Produkt fester Betrag, Prozent vom Jahresbeitrag oder
+  Monatsbeiträge; vorausgefüllt mit den Standardwerten, nur Inhaber ändern.
+  Zahlen-Seite zeigt, bei wie vielen Kunden eigene Sätze hinterlegt sind.
 - **Investorentyp:** noch offen – Seite deckt VC (Wachstum, NRR) und
   strategische Investoren (Wirkung, Netzwerk) ab.
 
