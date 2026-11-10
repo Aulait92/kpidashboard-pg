@@ -158,7 +158,7 @@ export function AgentSettings(p: {
           aria-label="Minuten bis zum Anschreiben"
         />
         <span>Minuten anschreiben</span>
-        <Hint text="Die Wartezeit gibt dem Lead die Chance, selbst über die Danke-Seite einen Termin zu buchen. 0 = sofort." />
+        <Hint text="0 = sofort (empfohlen): Je schneller der erste Kontakt, desto besser die Erreichbarkeit. Eine Wartezeit gibt dem Lead die Chance, zuerst selbst über die Danke-Seite zu buchen." />
         <span className="ml-auto flex items-center gap-3">
           <SavedBadge state={state} />
           <Switch

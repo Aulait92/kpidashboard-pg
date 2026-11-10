@@ -283,7 +283,7 @@ export default async function WhatsAppSettingsPage({
                 customerId={c.id}
                 active={c.agentConfig?.active ?? false}
                 outreachEnabled={c.agentConfig?.outreachEnabled ?? false}
-                delayMin={c.agentConfig?.outreachDelayMin ?? 10}
+                delayMin={c.agentConfig?.outreachDelayMin ?? 0}
                 videoRoomUrl={c.agentConfig?.videoRoomUrl ?? ""}
                 advisorEmail={c.agentConfig?.advisorEmail ?? ""}
                 hasIcs={!!c.agentConfig?.availabilityIcsUrlEnc}

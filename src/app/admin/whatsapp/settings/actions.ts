@@ -30,10 +30,9 @@ export async function saveOutreachSettingsAction(formData: FormData): Promise<vo
   const customerId = String(formData.get("customerId") ?? "");
   if (!customerId) return;
   const enabled = formData.get("outreachEnabled") === "on";
-  const delay = Math.min(
-    24 * 60,
-    Math.max(0, Number.parseInt(String(formData.get("outreachDelayMin") ?? "10"), 10) || 10),
-  );
+  // 0 = sofort beim Eingang anschreiben (Standard). Nur ungültige Eingaben fallen auf 0 zurück.
+  const parsedDelay = Number.parseInt(String(formData.get("outreachDelayMin") ?? "0"), 10);
+  const delay = Math.min(24 * 60, Math.max(0, Number.isFinite(parsedDelay) ? parsedDelay : 0));
   const rawRoom = String(formData.get("videoRoomUrl") ?? "").trim();
   // Nur https-Links zulassen (landen in Einladungen + WhatsApp).
   const videoRoomUrl = /^https:\/\/\S+$/i.test(rawRoom) ? rawRoom : null;

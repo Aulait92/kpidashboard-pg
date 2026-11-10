@@ -661,7 +661,8 @@ model AgentConfig {
   // Automatisches WhatsApp-Erstanschreiben neuer Leads ohne Termin. Erst
   // aktivieren, wenn Einwilligung im Leadformular + freigegebene Vorlage da sind.
   outreachEnabled       Boolean  @default(false)
-  outreachDelayMin      Int      @default(10)
+  // 0 = sofort beim Eingang (Speed to Lead). Höher nur, wenn der Lead erst selbst buchen soll.
+  outreachDelayMin      Int      @default(0)
   // Fester Video-Link für alle Video-Termine (z. B. persönlicher Webex-Raum).
   // Leer = Google Meet bzw. Microsoft Teams wird pro Termin erzeugt.
   videoRoomUrl          String?
