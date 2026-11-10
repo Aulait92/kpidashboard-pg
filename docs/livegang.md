@@ -23,6 +23,7 @@ enthalten. Der Merge ist konfliktfrei.
 | `ENCRYPTION_KEY` | **neu** erzeugen: `openssl rand -base64 32` |
 | `WHATSAPP_WEBHOOK_SECRET` | **neu**, langer Zufallswert |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | **Live**-Schlüssel bzw. Signatur des Live-Webhooks |
+| `META_ACCESS_TOKEN` | **neuer** System-User-Token (mit leads_retrieval, pages_manage_metadata; 10.11. erzeugt) – ersetzt den alten, vorher in der Sandbox prüfen (Lead-Eingang: alles grün, Werbekonten lesbar) |
 | `META_APP_SECRET`, `META_WEBHOOK_VERIFY_TOKEN` | wie Sandbox |
 | `LEAD_WEBHOOK_TOKEN`, `VERTRIEB_WEBHOOK_TOKEN` | wie Sandbox (sonst Zapier/Instantly anpassen) |
 | `INSTANTLY_API_KEY`, `CALENDLY_TOKEN` | wie Sandbox |
@@ -75,6 +76,9 @@ enthalten. Der Merge ist konfliktfrei.
    danach `COLD_CRM_DATABASE_URL` löschen.
 6. **Webhooks umstellen** auf `https://kpi.performancegrowth.de/…`:
    - Meta-App → Webhooks → Page → `leadgen`: `/api/meta/leadgen`
+   - Admin → Einstellungen → Lead-Eingang: Anids Formular 1909684100014197 (Seite
+     996034096924997) zuordnen (Privatschutz), Testlead mit dem Lead-Ads-Testtool,
+     erscheint bei Anid → Zap „Allianz Lead Ads“ bzw. Anid-Zap ausschalten
    - Zapier (Lead-Webhook, falls noch aktiv): `/api/leads/eingang?token=…`
    - Instantly: `/api/vertrieb/…` (wie bisher in der Sandbox)
    - Calendly: wie bisher in der Sandbox
