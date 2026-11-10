@@ -33,9 +33,10 @@ import {
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { Button, ButtonLink, Card, CardHeader, EmptyState } from "@/components/ui";
-import { ActionSheet, Sheet, TapRow, type SheetAction } from "@/components/ui/sheet";
+import { ActionSheet, TapRow, type SheetAction } from "@/components/ui/sheet";
 import type { InboxData } from "@/lib/inbox";
 import { CallOutcomeSheet, useCallReturn, type CallOutcomeTarget } from "@/components/call-outcome";
+import { AbschlussSheet, asksCloseValue } from "@/components/abschluss-sheet";
 
 // Startseite „Heute": vier Listen, die man leer arbeitet. Jede Zeile hat eine
 // sichtbare Aktion (Anrufen/Antworten); alles Weitere per Antippen im
@@ -56,6 +57,7 @@ type CallItem = {
   kind: "callback" | "followup";
   leadId: string;
   name: string;
+  source: string | null;
   phone: string | null;
   reason: string;
   overdue: boolean;
@@ -64,7 +66,7 @@ type CallItem = {
 
 type SheetState =
   | { kind: "actions"; title: string; message?: string; actions: SheetAction[] }
-  | { kind: "win"; name: string; save: (value: number | null) => void }
+  | { kind: "win"; name: string; source: string | null; save: (value: number | null) => void }
   | null;
 
 export function TodayInbox({
@@ -89,7 +91,7 @@ export function TodayInbox({
   const lastCall = useRef<CallItem | null>(null);
   const markCallReturn = useCallReturn((key) => {
     const c = lastCall.current;
-    if (c && c.key === key) setOutcome({ key: c.key, leadId: c.leadId, name: c.name, kind: c.kind });
+    if (c && c.key === key) setOutcome({ key: c.key, leadId: c.leadId, name: c.name, source: c.source, kind: c.kind });
   });
   const markCall = (c: CallItem) => {
     lastCall.current = c;
@@ -105,7 +107,6 @@ export function TodayInbox({
   const [, startTransition] = useTransition();
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [sheet, setSheet] = useState<SheetState>(null);
-  const [winValue, setWinValue] = useState("");
   const [showAll, setShowAll] = useState(false);
   const hide = (key: string) => setHidden((h) => new Set(h).add(key));
   const unhide = (key: string) =>
@@ -143,9 +144,10 @@ export function TodayInbox({
     });
   }
 
-  const askWin = (name: string, save: (value: number | null) => void) => {
-    setWinValue("");
-    setSheet({ kind: "win", name, save });
+  // Fester Provisionsbetrag (Regelart „fixed“): ohne Eingabe direkt speichern.
+  const askWin = (name: string, source: string | null, save: (value: number | null) => void) => {
+    if (!asksCloseValue(source)) return save(null);
+    setSheet({ kind: "win", name, source, save });
   };
 
   const appointments = data.appointments.filter((a) => !hidden.has(`a:${a.id}`));
@@ -158,6 +160,7 @@ export function TodayInbox({
       kind: "followup" as const,
       leadId: f.leadId,
       name: f.name,
+      source: f.source,
       phone: f.phone,
       reason: f.note ?? "Nachfassen",
       overdue: f.overdue,
@@ -168,6 +171,7 @@ export function TodayInbox({
       kind: "callback" as const,
       leadId: c.leadId,
       name: c.name,
+      source: c.source,
       phone: c.phone,
       reason: `${c.reason} · ${ago(c.createdAt)}`,
       overdue: false,
@@ -222,7 +226,7 @@ export function TodayInbox({
         label: "Abschluss",
         icon: Trophy,
         onSelect: () =>
-          setTimeout(() => askWin(c.name, (v) => run(c.key, `${c.name}: Abschluss`, () => callbackOutcomeResult(c.leadId, "won", v))), 0),
+          setTimeout(() => askWin(c.name, c.source, (v) => run(c.key, `${c.name}: Abschluss`, () => callbackOutcomeResult(c.leadId, "won", v))), 0),
       },
       { label: "Lead öffnen", icon: UserRound, href: leadUrl(c.leadId) },
       { label: "Kein Interesse", icon: ThumbsDown, tone: "danger", onSelect: () => run(c.key, `${c.name}: kein Interesse`, () => callbackOutcomeResult(c.leadId, "lost")) },
@@ -351,7 +355,7 @@ export function TodayInbox({
                       label: "Abschluss",
                       icon: Trophy,
                       onSelect: () =>
-                        setTimeout(() => askWin(o.name, (v) => run(key, `${o.name}: Abschluss`, () => appointmentOutcomeResult(o.id, "closed", v))), 0),
+                        setTimeout(() => askWin(o.name, o.source, (v) => run(key, `${o.name}: Abschluss`, () => appointmentOutcomeResult(o.id, "closed", v))), 0),
                     },
                     { label: "Nicht erschienen", icon: UserX, onSelect: () => run(key, `${o.name}: steht jetzt bei Anrufen`, () => appointmentOutcomeResult(o.id, "no_show", null)) },
                     { label: "Kein Interesse", icon: ThumbsDown, tone: "danger", onSelect: () => run(key, `${o.name}: kein Interesse`, () => appointmentOutcomeResult(o.id, "lost", null)) },
@@ -441,7 +445,7 @@ export function TodayInbox({
           index={callMode.i}
           total={callMode.queue.length}
           onCall={() => markCall(current)}
-          onResult={() => setOutcome({ key: current.key, leadId: current.leadId, name: current.name, kind: current.kind })}
+          onResult={() => setOutcome({ key: current.key, leadId: current.leadId, name: current.name, source: current.source, kind: current.kind })}
           onSkip={advance}
           onEnd={() => setCallMode(null)}
         />
@@ -463,34 +467,18 @@ export function TodayInbox({
         message={sheet?.kind === "actions" ? sheet.message : undefined}
         actions={sheet?.kind === "actions" ? sheet.actions : []}
       />
-      <Sheet open={sheet?.kind === "win"} onClose={() => setSheet(null)} title={sheet?.kind === "win" ? `Abschluss mit ${sheet.name}` : undefined} message="Wert des Abschlusses (optional)">
-        <form
-          className="space-y-3 p-5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (sheet?.kind !== "win") return;
-            const n = Number.parseFloat(winValue.replace(/\./g, "").replace(",", "."));
-            const save = sheet.save;
-            setSheet(null);
-            save(Number.isFinite(n) ? n : null);
-          }}
-        >
-          <div className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 focus-within:border-[color:var(--brand)]">
-            <input
-              autoFocus
-              inputMode="decimal"
-              placeholder="z. B. 1.200"
-              value={winValue}
-              onChange={(e) => setWinValue(e.target.value)}
-              className="h-11 min-w-0 flex-1 bg-transparent text-base outline-none"
-            />
-            <span className="text-sm text-[color:var(--muted)]">€</span>
-          </div>
-          <Button type="submit" variant="primary" size="md" icon={Trophy} className="w-full">
-            Abschluss speichern
-          </Button>
-        </form>
-      </Sheet>
+      <AbschlussSheet
+        open={sheet?.kind === "win"}
+        title={sheet?.kind === "win" ? `Abschluss mit ${sheet.name}` : ""}
+        source={sheet?.kind === "win" ? sheet.source : null}
+        onClose={() => setSheet(null)}
+        onSave={(v) => {
+          if (sheet?.kind !== "win") return;
+          const save = sheet.save;
+          setSheet(null);
+          save(v);
+        }}
+      />
     </div>
   );
 }

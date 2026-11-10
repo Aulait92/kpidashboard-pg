@@ -14,6 +14,8 @@ import {
   type PipelinePhase,
 } from "@/lib/products";
 import { formatDate, formatEUR } from "@/lib/format";
+import { closeValueField, closeValueLabel, sumProvision } from "@/lib/provision";
+import { asksCloseValue } from "@/components/abschluss-sheet";
 import { cn } from "@/lib/utils";
 
 export type KanbanLead = {
@@ -118,6 +120,7 @@ export function KanbanBoard({
   const [closeDialog, setCloseDialog] = useState<{
     leadId: string;
     leadName: string | null;
+    source: string | null;
     currentValue: number | null;
   } | null>(null);
   const [, startTransition] = useTransition();
@@ -132,7 +135,7 @@ export function KanbanBoard({
   function commitStatus(
     leadId: string,
     nextStatus: LeadStatus,
-    closeValue?: number,
+    closeValue?: number | null,
   ) {
     const lead = leads.find((l) => l.id === leadId);
     if (!lead) return;
@@ -183,12 +186,13 @@ export function KanbanBoard({
     }
     const nextStatus = targetCol.defaultStatus;
 
-    // Spezial-Flow für Abschluss: erst Dialog mit Eingabe des
-    // Abschlusswerts in €, dann erst die Status-Action feuern.
-    if (nextStatus === CLOSED_STATUS) {
+    // Spezial-Flow für Abschluss: erst Dialog (Monats-/Jahresbeitrag bzw. Wert),
+    // dann erst die Status-Action feuern. Fester Satz: kein Dialog.
+    if (nextStatus === CLOSED_STATUS && asksCloseValue(lead.source)) {
       setCloseDialog({
         leadId,
         leadName: lead.name,
+        source: lead.source,
         currentValue: lead.closeValue,
       });
       return;
@@ -284,7 +288,7 @@ export function KanbanBoard({
               dot={PHASE_DOT[col.key]}
               label={col.label}
               count={items.length}
-              sum={items.reduce((n, l) => n + (l.status === CLOSED_STATUS && l.closeValue ? l.closeValue : 0), 0)}
+              sum={sumProvision(items.filter((l) => l.status === CLOSED_STATUS))}
               accent={col.accent}
               isOver={isOver}
               onDragOver={(e) => {
@@ -357,6 +361,7 @@ export function KanbanBoard({
       {closeDialog ? (
         <CloseValueDialog
           leadName={closeDialog.leadName}
+          source={closeDialog.source}
           currentValue={closeDialog.currentValue}
           onCancel={() => setCloseDialog(null)}
           onConfirm={(value) => {
@@ -372,15 +377,18 @@ export function KanbanBoard({
 
 function CloseValueDialog({
   leadName,
+  source,
   currentValue,
   onCancel,
   onConfirm,
 }: {
   leadName: string | null;
+  source: string | null;
   currentValue: number | null;
   onCancel: () => void;
-  onConfirm: (value: number) => void;
+  onConfirm: (value: number | null) => void;
 }) {
+  const field = closeValueField(source) ?? { label: "Wert des Abschlusses (optional)", hint: "", placeholder: "z. B. 1.200" };
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [value, setValue] = useState<string>(
     currentValue != null ? String(currentValue) : "",
@@ -390,8 +398,9 @@ function CloseValueDialog({
     if (d && !d.open) d.showModal();
   }, []);
 
-  const parsed = Number.parseFloat(value.replace(",", "."));
-  const valid = Number.isFinite(parsed) && parsed >= 0;
+  // Leer = ohne Angabe (bei Prozent-Produkten rechnen wir mit dem Standardbeitrag).
+  const parsed = value.trim() ? Number.parseFloat(value.replace(/\./g, "").replace(",", ".")) : null;
+  const valid = parsed === null || (Number.isFinite(parsed) && parsed >= 0);
 
   return (
     <dialog
@@ -429,7 +438,7 @@ function CloseValueDialog({
         <div className="space-y-4 px-5 py-4">
           <label className="block">
             <span className="text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
-              Abschlusswert (€)
+              {field.label}
             </span>
             <input
               type="text"
@@ -437,13 +446,10 @@ function CloseValueDialog({
               value={value}
               onChange={(e) => setValue(e.target.value)}
               autoFocus
-              placeholder="z. B. 1500"
+              placeholder={field.placeholder}
               className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
             />
-            <p className="mt-1 text-[11px] text-[color:var(--muted)]">
-              Wird als „Abschlusswert“ hinterlegt und fließt in
-              Umsatz, Umsatz/Lead und Gewinn/Lead.
-            </p>
+            {field.hint ? <p className="mt-1 text-[11px] text-[color:var(--muted)]">{field.hint}</p> : null}
           </label>
         </div>
         <footer className="flex items-center justify-end gap-2 border-t border-[color:var(--border)] bg-zinc-50 px-5 py-3">
@@ -507,7 +513,7 @@ function KanbanColumn({
             <span className={cn("h-2 w-2 shrink-0 rounded-full", dot ?? "bg-zinc-400")} />
             <span className="leading-tight">{label}</span>
           </span>
-          {sum > 0 ? <span className="mt-0.5 block pl-4 text-[11px] font-semibold tabular-nums text-emerald-700">{formatEUR(sum)}</span> : null}
+          {sum > 0 ? <span title="Geschätzte Provision" className="mt-0.5 block pl-4 text-[11px] font-semibold tabular-nums text-emerald-700">Provision ≈ {formatEUR(sum)}</span> : null}
         </span>
         <span className="shrink-0 text-xs font-medium tabular-nums text-[color:var(--muted)]">{count}</span>
       </header>
@@ -617,13 +623,11 @@ function KanbanCard({
           .
         </div>
       ) : null}
-      {/* Abschlusswert nur zeigen, wenn der Lead wirklich im Abschluss ist —
-          ein aus „Abschluss" zurückgezogener Lead soll keinen „Umsatz" tragen. */}
-      {lead.status === CLOSED_STATUS &&
-      lead.closeValue != null &&
-      lead.closeValue > 0 ? (
+      {/* Provision nur zeigen, wenn der Lead wirklich im Abschluss ist —
+          ein aus „Abschluss" zurückgezogener Lead soll keine Provision tragen. */}
+      {lead.status === CLOSED_STATUS && closeValueLabel(lead.source, lead.closeValue) ? (
         <div className="mt-1.5 inline-flex rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-emerald-800">
-          {formatEUR(lead.closeValue)}
+          {closeValueLabel(lead.source, lead.closeValue)}
         </div>
       ) : null}
 

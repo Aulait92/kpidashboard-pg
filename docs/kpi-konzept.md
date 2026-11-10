@@ -46,15 +46,16 @@ Bruttomarge · Aktive Kunden.
 
   | Produkt | Provision | Berechnung |
   |---|---|---|
-  | PKV-Tarifoptimierung | X Monatsbeiträge (vorläufig 9, Ole bestätigt) | × Monatsbeitrag; ohne Beitrag Ø 2.500 € |
+  | PKV-Tarifoptimierung | 9 Monatsbeiträge (vorläufig, Ole bestätigt) | × Monatsnettobeitrag; ohne Angabe 2.500 € |
   | Privatschutz | 50–60 % (Mitte 55 %) | × Jahresnettobeitrag |
   | TKV | 50–60 % (Mitte 55 %) | × Jahresnettobeitrag |
   | Kindersparpläne | offen | Ole fragt nach |
   | Kinderwunsch | – | wird nicht mehr angeboten |
 
-  Bei %-Produkten den beim Abschluss erfassten Wert („Wert des Abschlusses“
-  im „Wie lief's?“) als Jahresnettobeitrag nehmen; fehlt er, einen
-  Durchschnittsbeitrag je Produkt als Ersatz (Wert offen, Ole). In der
+  Umgesetzt in `src/lib/provision.ts` (Regelarten fixed / percent / monthly,
+  Standardbeiträge Privatschutz 600 €, TKV 350 €; kundenspezifische Sätze als
+  `overrides` vorbereitet). `Lead.closeValue` = Monatsbeitrag (PKV) bzw.
+  Jahresnettobeitrag (Privatschutz, TKV) bzw. freier Wert (sonstige). In der
   Anzeige ausweisen, wie viele Abschlüsse mit echtem Beitrag gerechnet sind.
 - **Eigene Sätze der Vertreter** (Ole, 10.11.): Kundenbereich → Einstellungen →
   „Meine Provisionen“, je Produkt fester Betrag, Prozent vom Jahresbeitrag oder

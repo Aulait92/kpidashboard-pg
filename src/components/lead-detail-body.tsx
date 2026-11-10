@@ -200,6 +200,7 @@ export async function LeadDetailBody({
       <LeadHeaderActions
         leadId={lead.id}
         name={lead.name}
+        source={lead.source}
         createdAt={lead.createdAt.toISOString()}
         phone={lead.phone}
         email={lead.email}

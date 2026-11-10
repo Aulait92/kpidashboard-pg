@@ -8,6 +8,7 @@ import {
 import { computeCustomerSpend, loadRetainerConfig } from "@/lib/customer-spend";
 import { computeKpis, type Kpis } from "@/lib/kpis";
 import { prisma } from "@/lib/prisma";
+import { sumProvision } from "@/lib/provision";
 
 export type ForecastRow = {
   label: string;
@@ -31,19 +32,11 @@ const monthFmt = new Intl.DateTimeFormat("de-DE", {
   year: "numeric",
 });
 
-function sumCloseValue(
-  rows: { closeValue: unknown; status: string | null }[],
-): number {
-  let sum = 0;
-  for (const r of rows) {
-    if (r.closeValue == null) continue;
-    // Nur tatsächlich abgeschlossene Leads — ein zurückgezogener Lead trägt
-    // keinen Umsatz, auch wenn der alte Abschlusswert noch am Datensatz hängt.
-    if (!r.status || r.status.toLowerCase() !== "abschluss") continue;
-    const n = Number(r.closeValue);
-    if (Number.isFinite(n)) sum += n;
-  }
-  return sum;
+// Geschätzte Provision (lib/provision.ts) nur aus tatsächlich abgeschlossenen
+// Leads — ein zurückgezogener Lead trägt nichts, auch wenn der alte Wert noch
+// am Datensatz hängt.
+function sumCloseValue(rows: { closeValue: unknown; status: string | null; source: string | null }[]): number {
+  return sumProvision(rows.filter((r) => r.status?.toLowerCase() === "abschluss"));
 }
 
 export async function computeMonthlyForecast(params: {
@@ -53,8 +46,8 @@ export async function computeMonthlyForecast(params: {
   // Einnahmen aus Lead-Verkauf), aus Kunden-Sicht „Lead-Kosten" (was
   // der Kunde an uns zahlt).
   revenueLabel?: string;
-  // Buyer-Modus: zusätzlich "Umsatz" (Σ Lead.closeValue im Zeitraum) +
-  // "Gewinn" (Umsatz − Lead-Kosten) ausweisen. Dafür entfällt die
+  // Buyer-Modus: zusätzlich "Provision (geschätzt)" (lib/provision.ts) +
+  // "Gewinn" (Provision − Lead-Kosten) ausweisen. Dafür entfällt die
   // admin-zentrische "Bruttogewinn"-Zeile (= unsere Marge).
   includeCloseValue?: boolean;
   // Tageszahlung: optional injizierbar für Tests, default = jetzt.
@@ -117,11 +110,11 @@ export async function computeMonthlyForecast(params: {
     const [mtdRows, prevRows] = await Promise.all([
       prisma.lead.findMany({
         where: { ...where, createdAt: { gte: monthStart, lte: mtdEnd } },
-        select: { closeValue: true, status: true },
+        select: { closeValue: true, status: true, source: true },
       }),
       prisma.lead.findMany({
         where: { ...where, createdAt: { gte: prevStart, lte: prevEnd } },
-        select: { closeValue: true, status: true },
+        select: { closeValue: true, status: true, source: true },
       }),
     ]);
     umsatzMtd = sumCloseValue(mtdRows);
@@ -177,13 +170,13 @@ export async function computeMonthlyForecast(params: {
   };
 
   if (params.includeCloseValue) {
-    // Reihenfolge im Buyer-Block: Umsatz → Lead-Kosten → Gewinn, damit
+    // Reihenfolge im Buyer-Block: Provision → Lead-Kosten → Gewinn, damit
     // sich der Gewinn visuell aus den beiden Zeilen darüber ergibt.
     const gewinnMtd = umsatzMtd - costMtd;
     const gewinnPrev = umsatzPrev - costPrev;
     rows.push(
       {
-        label: "Umsatz",
+        label: "Provision (geschätzt)",
         mtd: umsatzMtd,
         projected: projectCurrency(umsatzMtd),
         previousFull: umsatzPrev,

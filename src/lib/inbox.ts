@@ -33,11 +33,12 @@ export type InboxAppointment = {
   phone: string | null;
   summary: string | null;
 };
-export type InboxOutcome = { id: string; startsAt: string; mode: string; leadId: string; name: string };
+export type InboxOutcome = { id: string; startsAt: string; mode: string; leadId: string; name: string; source: string | null };
 export type InboxChat = { conversationId: string; name: string; reason: string | null; at: string | null };
 export type InboxCallback = {
   leadId: string;
   name: string;
+  source: string | null;
   phone: string | null;
   reason: string;
   createdAt: string;
@@ -46,6 +47,7 @@ export type InboxCallback = {
 export type InboxFollowUp = {
   leadId: string;
   name: string;
+  source: string | null;
   phone: string | null;
   status: string | null;
   note: string | null;
@@ -97,7 +99,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
       },
       orderBy: { startsAt: "desc" },
       take: 20,
-      select: { id: true, startsAt: true, mode: true, leadId: true, lead: { select: { name: true, status: true } } },
+      select: { id: true, startsAt: true, mode: true, leadId: true, lead: { select: { name: true, status: true, source: true } } },
     }),
     prisma.conversation.findMany({
       where: { ...conversationScope(ctx), needsAttention: true },
@@ -117,6 +119,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
       select: {
         id: true,
         name: true,
+        source: true,
         phone: true,
         status: true,
         followUpAt: true,
@@ -140,6 +143,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
     followUps: followUps.map((f) => ({
       leadId: f.id,
       name: f.name ?? "Lead",
+      source: f.source,
       phone: f.phone,
       status: f.status,
       note: f.followUpNote,
@@ -171,6 +175,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
         mode: a.mode,
         leadId: a.leadId!,
         name: a.lead?.name ?? "Lead",
+        source: a.lead?.source ?? null,
       })),
     chats: chats.map((c) => ({
       conversationId: c.id,
@@ -181,6 +186,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
     callbacks: callbacks.filter((c) => !followUpIds.has(c.id)).map((c) => ({
       leadId: c.id,
       name: c.name ?? "Unbekannt",
+      source: c.source ?? null,
       phone: c.phone,
       reason: c.reason,
       createdAt: c.createdAt.toISOString(),

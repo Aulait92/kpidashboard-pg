@@ -12,8 +12,8 @@ import {
   setFollowUpResult,
   type InboxResult,
 } from "@/app/buyer/inbox-actions";
-import { Button } from "@/components/ui";
-import { ActionSheet, Sheet, type SheetAction } from "@/components/ui/sheet";
+import { ActionSheet, type SheetAction } from "@/components/ui/sheet";
+import { AbschlussSheet, asksCloseValue } from "@/components/abschluss-sheet";
 
 /** Rückkehr erst nach mind. 3 s zählt (kein Fehlalarm), höchstens 10 Min. */
 const MIN_MS = 3_000;
@@ -66,6 +66,8 @@ export function useCallReturn(onReturn: (key: string) => void) {
 export type CallOutcomeTarget = {
   leadId: string;
   name: string;
+  /** Produkt (Lead.source): bestimmt das Feld beim Abschluss (Monats-/Jahresbeitrag). */
+  source?: string | null;
   /** Wiedervorlage: „Erledigt“ statt „Nicht erreicht“ als erste Wahl. */
   kind?: "callback" | "followup" | "lead";
 };
@@ -94,10 +96,8 @@ export function CallOutcomeSheet({
   onPick: (message: string, action: () => Promise<InboxResult>) => void;
 }) {
   const [step, setStep] = useState<"pick" | "win" | "later">("pick");
-  const [value, setValue] = useState("");
   const close = () => {
     setStep("pick");
-    setValue("");
     onClose();
   };
   if (!target) return null;
@@ -116,7 +116,9 @@ export function CallOutcomeSheet({
   actions.push(
     { label: "Angebot gesendet", icon: Send, onSelect: () => pick(`${t.name}: Angebot gesendet`, () => callbackOutcomeResult(t.leadId, "offer")) },
     // keepOpen: Folgeschritt statt Schließen.
-    { label: "Abschluss", icon: Trophy, keepOpen: true, onSelect: () => setStep("win") },
+    asksCloseValue(t.source)
+      ? { label: "Abschluss", icon: Trophy, keepOpen: true, onSelect: () => setStep("win") }
+      : { label: "Abschluss", icon: Trophy, onSelect: () => pick(`${t.name}: Abschluss`, () => callbackOutcomeResult(t.leadId, "won", null)) },
     { label: "Später nochmal", icon: Clock, keepOpen: true, onSelect: () => setStep("later") },
     { label: "Kein Interesse", icon: ThumbsDown, tone: "danger", onSelect: () => pick(`${t.name}: kein Interesse`, () => callbackOutcomeResult(t.leadId, "lost")) },
   );
@@ -136,31 +138,13 @@ export function CallOutcomeSheet({
   }
   if (step === "win") {
     return (
-      <Sheet open onClose={close} title={`Abschluss mit ${t.name}`} message="Wert des Abschlusses (optional)">
-        <form
-          className="space-y-3 p-5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const n = Number.parseFloat(value.replace(/\./g, "").replace(",", "."));
-            pick(`${t.name}: Abschluss`, () => callbackOutcomeResult(t.leadId, "won", Number.isFinite(n) ? n : null));
-          }}
-        >
-          <div className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 focus-within:border-[color:var(--brand)]">
-            <input
-              autoFocus
-              inputMode="decimal"
-              placeholder="z. B. 1.200"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              className="h-11 min-w-0 flex-1 bg-transparent text-base outline-none"
-            />
-            <span className="text-sm text-[color:var(--muted)]">€</span>
-          </div>
-          <Button type="submit" variant="primary" size="md" icon={Trophy} className="w-full">
-            Abschluss speichern
-          </Button>
-        </form>
-      </Sheet>
+      <AbschlussSheet
+        open
+        title={`Abschluss mit ${t.name}`}
+        source={t.source}
+        onClose={close}
+        onSave={(v) => pick(`${t.name}: Abschluss`, () => callbackOutcomeResult(t.leadId, "won", v))}
+      />
     );
   }
   return <ActionSheet open onClose={close} title={`Wie lief's mit ${t.name}?`} message="Ein Tipp – den Rest trägt die App ein." actions={actions} />;

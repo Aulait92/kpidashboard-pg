@@ -27,6 +27,7 @@ import { PHASE_DOT, findPhaseIn, statusToneClass, type LeadStatus, type Pipeline
 import { formatPhone } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { CallOutcomeSheet, useCallReturn } from "@/components/call-outcome";
+import { AbschlussSheet, asksCloseValue } from "@/components/abschluss-sheet";
 
 // Kopf des Lead-Details: Status antippen → Phase wählen; darunter eine Reihe
 // mit den Aktionen. Alles Seltene steckt unter „Mehr".
@@ -51,6 +52,8 @@ type Props = {
   daysInPhase?: number | null;
   /** Neue Oberfläche: nach „Anrufen“ und Rückkehr automatisch „Wie lief's?“ fragen. */
   askAfterCall?: boolean;
+  /** Produkt (Lead.source): Beitrag beim Abschluss (Monats-/Jahresbeitrag) bzw. kein Feld bei festem Satz. */
+  source?: string | null;
 };
 
 const QUICK = [
@@ -66,12 +69,17 @@ export function LeadHeaderActions(p: Props) {
   const [, start] = useTransition();
   const [open, setOpen] = useState<"phase" | "more" | "followup" | "win" | "storno" | "erase" | "lost" | null>(null);
   const [erasing, setErasing] = useState(false);
-  const [winValue, setWinValue] = useState("");
   const [note, setNote] = useState(p.followUpNote ?? "");
   const [date, setDate] = useState("");
   const phase = findPhaseIn(p.phases, p.status);
   const [afterCall, setAfterCall] = useState(false);
   const markCall = useCallReturn(() => setAfterCall(true));
+
+  // Fester Provisionsbetrag (Regelart „fixed“): Abschluss ohne Eingabe direkt speichern.
+  function askWin() {
+    if (asksCloseValue(p.source)) setTimeout(() => setOpen("win"), 0);
+    else setStatus("Abschluss" as LeadStatus, "Abschluss", null);
+  }
 
   function setStatus(status: LeadStatus, label: string, closeValue?: number | null) {
     start(async () => {
@@ -102,10 +110,8 @@ export function LeadHeaderActions(p: Props) {
     tone: ph.key === phase?.key ? "primary" : undefined,
     onSelect: () => {
       if (ph.key === phase?.key) return;
-      if (ph.key === "abschluss") {
-        setWinValue("");
-        setTimeout(() => setOpen("win"), 0);
-      } else setStatus(ph.defaultStatus, ph.label);
+      if (ph.key === "abschluss") askWin();
+      else setStatus(ph.defaultStatus, ph.label);
     },
   }));
 
@@ -161,8 +167,7 @@ export function LeadHeaderActions(p: Props) {
                 type="button"
                 onClick={() => {
                   if (won) return;
-                  setWinValue("");
-                  setOpen("win");
+                  askWin();
                 }}
                 className={cn(
                   "inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-sm)] px-3.5 text-sm font-semibold transition",
@@ -266,7 +271,7 @@ export function LeadHeaderActions(p: Props) {
 
       {p.askAfterCall ? (
         <CallOutcomeSheet
-          target={afterCall ? { leadId: p.leadId, name: p.name ?? "Lead", kind: p.followUpAt ? "followup" : "lead" } : null}
+          target={afterCall ? { leadId: p.leadId, name: p.name ?? "Lead", source: p.source, kind: p.followUpAt ? "followup" : "lead" } : null}
           bookingSlug={p.bookingSlug}
           onClose={() => setAfterCall(false)}
           onPick={(message, action) => followUp(action, message)}
@@ -276,25 +281,16 @@ export function LeadHeaderActions(p: Props) {
       <ActionSheet open={open === "more"} onClose={() => setOpen(null)} title={p.name ?? "Lead"} actions={moreActions} />
       <ActionSheet open={open === "lost"} onClose={() => setOpen(null)} title="Warum verloren?" actions={lostActions} />
 
-      <Sheet open={open === "win"} onClose={() => setOpen(null)} title="Abschluss" message="Wert des Abschlusses (optional)">
-        <form
-          className="space-y-3 p-5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const n = Number.parseFloat(winValue.replace(/\./g, "").replace(",", "."));
-            setOpen(null);
-            setStatus("Abschluss" as LeadStatus, "Abschluss", Number.isFinite(n) ? n : null);
-          }}
-        >
-          <div className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 focus-within:border-[color:var(--brand)]">
-            <input autoFocus inputMode="decimal" placeholder="z. B. 1.200" value={winValue} onChange={(e) => setWinValue(e.target.value)} className="h-11 min-w-0 flex-1 bg-transparent text-base outline-none" />
-            <span className="text-sm text-[color:var(--muted)]">€</span>
-          </div>
-          <Button type="submit" variant="primary" size="md" icon={Trophy} className="w-full">
-            Abschluss speichern
-          </Button>
-        </form>
-      </Sheet>
+      <AbschlussSheet
+        open={open === "win"}
+        title="Abschluss"
+        source={p.source}
+        onClose={() => setOpen(null)}
+        onSave={(v) => {
+          setOpen(null);
+          setStatus("Abschluss" as LeadStatus, "Abschluss", v);
+        }}
+      />
 
       <Sheet open={open === "followup"} onClose={() => setOpen(null)} title="Wiedervorlage" message="Erscheint am Tag auf „Heute“.">
         <div className="space-y-3 p-5">

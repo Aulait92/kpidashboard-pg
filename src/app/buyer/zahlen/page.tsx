@@ -31,6 +31,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { TeamStats } from "@/components/team-stats";
 import { nowMs } from "@/lib/now";
+import { sumProvision } from "@/lib/provision";
 
 type SearchParams = Promise<{
   range?: string;
@@ -153,14 +154,14 @@ async function BuyerDashboardBody({
           customerId,
           createdAt: { gte: range.from, lte: range.to },
         },
-        select: { closeValue: true, status: true },
+        select: { closeValue: true, status: true, source: true },
       }),
       prisma.lead.findMany({
         where: {
           customerId,
           createdAt: { gte: prev.from, lte: prev.to },
         },
-        select: { closeValue: true, status: true },
+        select: { closeValue: true, status: true, source: true },
       }),
       retainerCfg ? computeCustomerSpend(customerId, range, retainerCfg) : null,
       retainerCfg ? computeCustomerSpend(customerId, prev, retainerCfg) : null,
@@ -185,23 +186,13 @@ async function BuyerDashboardBody({
     ? `Werbebudget ${formatEUR(spend.adSpend)} + Retainer ${formatEUR(spend.retainer)}`
     : "Brutto im Zeitraum";
 
-  function sumCloseValue(
-    rows: { closeValue: unknown; status: string | null }[],
-  ): number {
-    let sum = 0;
-    for (const r of rows) {
-      if (r.closeValue == null) continue;
-      // Umsatz nur aus tatsächlich abgeschlossenen Leads — ein aus „Abschluss"
-      // zurückgezogener Lead (z. B. wieder „Neuer Lead") darf keinen Umsatz
-      // tragen, auch wenn der alte Abschlusswert noch am Datensatz hängt.
-      if (!r.status || r.status.toLowerCase() !== "abschluss") continue;
-      const n = Number(r.closeValue);
-      if (Number.isFinite(n)) sum += n;
-    }
-    return sum;
-  }
-  const umsatz = sumCloseValue(closeValueRows);
-  const umsatzPrev = sumCloseValue(closeValueRowsPrev);
+  // Geschätzte Provision (lib/provision.ts) nur aus tatsächlich
+  // abgeschlossenen Leads — ein aus „Abschluss" zurückgezogener Lead darf
+  // nichts tragen, auch wenn der alte Wert noch am Datensatz hängt.
+  const closedRows = (rows: { closeValue: unknown; status: string | null; source: string | null }[]) =>
+    rows.filter((r) => r.status?.toLowerCase() === "abschluss");
+  const umsatz = sumProvision(closedRows(closeValueRows));
+  const umsatzPrev = sumProvision(closedRows(closeValueRowsPrev));
   const gewinn = umsatz - cost;
   const gewinnPrev = umsatzPrev - costPrev;
 
@@ -221,7 +212,7 @@ async function BuyerDashboardBody({
             delta={delta(cost, costPrev, true)}
           />
           <KpiCard
-            label="Umsatz"
+            label="Provision (geschätzt)"
             value={formatEUR(umsatz)}
             tone="positive"
             hint={`aus ${formatNumber(k.closedLeads)} ${k.closedLeads === 1 ? "Abschluss" : "Abschlüssen"}`}
@@ -231,7 +222,7 @@ async function BuyerDashboardBody({
             label="Gewinn"
             value={formatEUR(gewinn)}
             tone={gewinn >= 0 ? "positive" : "negative"}
-            hint="Umsatz minus Lead-Kosten"
+            hint="Provision minus Lead-Kosten"
             delta={delta(gewinn, gewinnPrev)}
           />
           <KpiCard

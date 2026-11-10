@@ -36,7 +36,7 @@ Seiten aus der Liste „Seiten“ unten.
 - Oben vier Kacheln: Chats, Termine, Wie lief's?, Anrufen. Antippen springt zum Abschnitt.
 - **Braucht dich (Chats):** Leads, die geantwortet haben und auf Sie warten. „Antworten“ oder „Erledigt“.
 - **Termine:** Videocall starten, Anrufen, Chat öffnen, Lead öffnen, Verschieben/absagen.
-- **Wie lief's?:** Nach einem Termin tragen Sie das Ergebnis ein: Angebot gesendet, Abschluss (mit Wert),
+- **Wie lief's?:** Nach einem Termin tragen Sie das Ergebnis ein: Angebot gesendet, Abschluss (mit Beitrag, siehe unten „Abschluss und Provision“),
   Nicht erschienen (kommt auf die Anrufliste) oder Kein Interesse. Den Rest (Phase, Wiedervorlage) erledigt die App.
 - **Anrufliste:** Rückrufe und fällige Wiedervorlagen, „Überfällig“ markiert. Aktionen: Anrufen, Nicht erreicht,
   Erledigt, Später (Morgen / 3 Tage / 1 Woche / 2 Wochen), Termin buchen, Angebot gesendet, Abschluss,
@@ -68,7 +68,8 @@ Seiten aus der Liste „Seiten“ unten.
 - Spalten: Neuer Lead, Nicht erreicht, (Im Gespräch), Termin vereinbart, Angebot gesendet, Abschluss,
   Kein Interesse, Disqualifiziert.
 - Am Rechner Karten mit der Maus in eine andere Spalte ziehen. Auf dem Handy die Karte antippen und die Phase wählen.
-- In „Abschluss“ fragt die App nach dem Abschlusswert. Jede Spalte zeigt die Summe in Euro.
+- In „Abschluss“ fragt die App nach dem Beitrag (siehe „Abschluss und Provision“). Die Spalte „Abschluss“ zeigt
+  die geschätzte Provision, jede Karte „Beitrag … · Provision ≈ …“.
 - Karten zeigen, wie lange der Lead schon in der Phase ist, und warnen bei „Kein nächster Schritt“.
 
 ## Chats (WhatsApp)
@@ -145,7 +146,17 @@ Seiten aus der Liste „Seiten“ unten.
 ## Zahlen
 
 - Zeitraum wählen. Funnel: Leads → Erreicht → Termin → Abschluss.
-- Kosten & Ertrag: Lead-Kosten, Umsatz, Gewinn, Kosten pro Abschluss bzw. pro Termin, mit Vergleich zum Vorzeitraum.
+- Kosten & Ertrag: Lead-Kosten, Provision (geschätzt), Gewinn (Provision minus Lead-Kosten), Kosten pro Abschluss
+  bzw. pro Termin, mit Vergleich zum Vorzeitraum. Auch die Hochrechnung und die Team-Tabelle zeigen die
+  geschätzte Provision.
+
+## Abschluss und Provision
+- Beim Abschluss fragt die App je nach Produkt nach einem Beitrag, alles freiwillig:
+  - PKV-Tarifoptimierung: „Monatsbeitrag netto“. Provision ≈ 9 Monatsbeiträge; ohne Angabe rechnet die App mit 2.500 €.
+  - Privatschutz: „Jahresbeitrag netto“. Provision ≈ 55 % davon; ohne Angabe mit einem Beitrag von 600 €.
+  - TKV: „Jahresbeitrag netto“. Provision ≈ 55 % davon; ohne Angabe mit einem Beitrag von 350 €.
+  - Andere Produkte: „Wert des Abschlusses“, zählt direkt als Provision.
+- Es ist eine Schätzung für die eigenen Zahlen, keine Abrechnung. Wer den Beitrag einträgt, bekommt genauere Werte.
 - „Hochrechnung für diesen Monat“ zum Aufklappen. Bei Teams eine Tabelle pro Person.
 
 ## Team (nur Inhaber)

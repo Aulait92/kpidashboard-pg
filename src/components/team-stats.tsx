@@ -2,6 +2,7 @@ import { UsersRound } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui";
 import { formatEUR, formatNumber } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { estimatedProvision } from "@/lib/provision";
 import { memberName, teamMembers } from "@/lib/team";
 
 // Auswertung je Team-Mitglied (nur Inhaber, nur wenn es ein Team gibt).
@@ -15,6 +16,7 @@ export async function TeamStats({ customerId, range }: { customerId: string; ran
       status: true,
       reached: true,
       closeValue: true,
+      source: true,
       _count: { select: { appointments: true } },
     },
   });
@@ -28,7 +30,7 @@ export async function TeamStats({ customerId, range }: { customerId: string; ran
     if (l._count.appointments > 0) r.termine++;
     if (l.status?.toLowerCase() === "abschluss") {
       r.closed++;
-      r.umsatz += Number(l.closeValue ?? 0) || 0;
+      r.umsatz += estimatedProvision(l.source, l.closeValue) ?? 0;
     }
     rows.set(l.assignedUserId, r);
   }
@@ -51,7 +53,7 @@ export async function TeamStats({ customerId, range }: { customerId: string; ran
               <th className="px-3 py-2.5 text-right">Termine</th>
               <th className="px-3 py-2.5 text-right">Abschlüsse</th>
               <th className="px-3 py-2.5 text-right">Quote</th>
-              <th className="px-5 py-2.5 text-right">Umsatz</th>
+              <th className="px-5 py-2.5 text-right" title="Geschätzt aus Produkt und Jahresbeitrag">Provision</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[color:var(--border)] tabular-nums">
