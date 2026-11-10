@@ -9,8 +9,10 @@ enthalten. Der Merge ist konfliktfrei.
 
 ## Vorher (bis 20.11.)
 
-- [x] **Probelauf Migrationen** gegen eine PITR-Kopie der Produktion (10.11., siehe
-      unten). Vor dem Livegang nur wiederholen, wenn neue Migrationen dazukommen.
+- [x] **Probelauf Migrationen** gegen eine PITR-Kopie der Produktion (10.11., zweimal,
+      zuletzt mit Stand `362808f` und allen 22 Migrationen, siehe unten). Vor dem
+      Livegang nur wiederholen, wenn neue Migrationen dazukommen
+      (`ls prisma/migrations` mit der Liste unten vergleichen).
 - [x] **Healthcheck** am Service `kpidashboard-pg`: seit 10.11. `/login`, Timeout 300 s
       (der alte Produktions-Code hat `/api/health` noch nicht). Schlägt die Migration
       beim Livegang fehl, bleibt die alte Version online.
@@ -73,7 +75,10 @@ enthalten. Der Merge ist konfliktfrei.
    `[migrate] Alte Einträge aus früherem Verlauf (bleiben unberührt): …`
    `[migrate] Datenbank ohne (eigene) Migrations-Historie – wird einmalig eingemessen.`
    `[migrate] Schema wird angeglichen (nur hinzufügende Änderungen).`
-   14 × `Migration … marked as applied.` … `[migrate] Schema aktuell.`
+   22 × `Migration … marked as applied.`, dazwischen
+   `[migrate] 20261110120001_status_seit_trigger wird beim Einmessen ausgeführt.`,
+   am Ende `No pending migrations to apply.` und `[migrate] Schema aktuell.`
+   (Die roten Zeilen „Loaded Prisma config …“ sind nur Hinweise, keine Fehler.)
    Bricht es mit `ABBRUCH` ab: Es wurde nichts verändert, alte Version läuft weiter.
    Meldung lesen und mir schicken.
 4. **Kurztest** (je 1 Minute):
@@ -135,3 +140,19 @@ Kopie der Produktion per PITR (Stand 06:58 UTC), darauf der Stand
 - Zweiter Versuch **erfolgreich**: eingemessen (nur hinzufügende Änderungen),
   14 Migrationen als angewendet markiert, „Schema aktuell“. Alle bestehenden
   Tabellen danach unverändert; 19 neue, leere Tabellen dazu.
+
+## Ergebnis Probelauf 2 (10.11.2026, nachmittags)
+
+Neue PITR-Kopie der Produktion (Stand 15:17 UTC), darauf Stand `362808f`
+(`claude/whatsapp-crm`, inkl. Pay-per-Lead und Bestandskunden). **Erfolgreich.**
+
+- Vorher: 27 Tabellen, alle Zeilenzahlen identisch mit der Produktion
+  (u. a. Lead 2655, Revenue 2632, Customer 29, User 23, Deal 115).
+- Eingemessen: 22 Migrationen als angewendet markiert (`0_init` bis
+  `20261110140000_bestandskunden`). `20261110120001_status_seit_trigger` wurde dabei
+  wie vorgesehen ausgeführt (Markierung `-- @auch-beim-einmessen`), der Trigger für
+  „Phase seit“ ist damit auch in der Produktion da.
+- Nachher: 55 Tabellen (28 neue, leer), alle bestehenden Zeilenzahlen unverändert,
+  `_prisma_migrations` 3 alte + 22 neue Einträge. „No pending migrations“, „Schema aktuell“.
+- Dauer: ca. 30 Sekunden (Vergleich + Migration), dazu die normale Deploy-Zeit.
+- Danach aufgeräumt: Probe-Service, Kopie und deren Volume gelöscht.
