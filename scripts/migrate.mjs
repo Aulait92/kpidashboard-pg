@@ -43,13 +43,29 @@ async function connectWithRetry() {
   }
 }
 
-async function hasMigrationTable() {
+/**
+ * Stand der Migrations-Historie:
+ * - baselined: unsere erste Migration (0_init) ist als angewendet eingetragen
+ * - failed: unsere Migrationen, die als fehlgeschlagen markiert sind
+ * Die Produktion hatte schon eine `_prisma_migrations`-Tabelle mit alten
+ * Einträgen eines früheren Verlaufs – darum zählt nur, ob 0_init drinsteht.
+ */
+async function migrationState(names) {
   const client = await connectWithRetry();
   try {
-    const r = await client.query(
+    const t = await client.query(
       "select 1 from information_schema.tables where table_schema = 'public' and table_name = '_prisma_migrations'",
     );
-    return r.rowCount > 0;
+    if (t.rowCount === 0) return { baselined: false, failed: [], applied: [] };
+    const r = await client.query("select migration_name, finished_at, rolled_back_at from _prisma_migrations");
+    const ours = r.rows.filter((x) => names.includes(x.migration_name));
+    const foreign = r.rows.filter((x) => !names.includes(x.migration_name)).map((x) => x.migration_name);
+    if (foreign.length) console.log(`[migrate] Alte Einträge aus früherem Verlauf (bleiben unberührt): ${foreign.join(", ")}`);
+    return {
+      baselined: ours.some((x) => x.migration_name === names[0] && x.finished_at && !x.rolled_back_at),
+      failed: ours.filter((x) => !x.finished_at && !x.rolled_back_at).map((x) => x.migration_name),
+      applied: ours.filter((x) => x.finished_at && !x.rolled_back_at).map((x) => x.migration_name),
+    };
   } finally {
     await client.end();
   }
@@ -70,8 +86,11 @@ const migrations = readdirSync(dir)
   .filter((n) => statSync(path.join(dir, n)).isDirectory())
   .sort();
 
-if (!(await hasMigrationTable())) {
-  console.log("[migrate] Datenbank ohne Migrations-Historie – wird einmalig eingemessen.");
+const state = await migrationState(migrations);
+if (!state.baselined) {
+  console.log("[migrate] Datenbank ohne (eigene) Migrations-Historie – wird einmalig eingemessen.");
+  // Abgebrochene Versuche (z. B. ein früherer Start) erst als zurückgerollt markieren.
+  for (const name of state.failed) prisma(["migrate", "resolve", "--rolled-back", name]);
   const sql = prisma(
     ["migrate", "diff", "--from-config-datasource", "--to-schema", "prisma/schema.prisma", "--script"],
     true,
@@ -89,7 +108,9 @@ if (!(await hasMigrationTable())) {
     console.log("[migrate] Schema wird angeglichen (nur hinzufügende Änderungen).");
     prisma(["db", "execute", "--file", file]);
   }
-  for (const name of migrations) prisma(["migrate", "resolve", "--applied", name]);
+  for (const name of migrations) {
+    if (!state.applied.includes(name)) prisma(["migrate", "resolve", "--applied", name]);
+  }
 }
 
 prisma(["migrate", "deploy"]);
