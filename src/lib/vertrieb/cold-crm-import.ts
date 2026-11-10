@@ -74,3 +74,65 @@ export async function importFromColdCrm(): Promise<ImportReport> {
   }
   return report;
 }
+
+// ─── Neu-Import (ersetzt den Vertrieb) ────────────────────────────────────
+// Für den Umzug vom eingefrorenen Cold CRM: Vertriebsdaten leeren und frisch
+// übernehmen, damit auch Änderungen an schon übernommenen Kontakten ankommen.
+// Nur erlaubt, wenn VERTRIEB_NEUIMPORT_ERLAUBT=1 gesetzt ist (Testumgebung).
+// Vorher wird alles in ein eigenes Schema „backup_vertrieb_…“ kopiert
+// (außerhalb von public, stört Prisma/Migrationen nicht).
+
+/** Tabellen in Lösch-Reihenfolge; Angebote hängen per Cascade am Kontakt. */
+const REPLACE_TABLES = [
+  "SalesInboundLead",
+  "SalesLinkedInEvent",
+  "SalesMeeting",
+  "SalesEmail",
+  "SalesCampaignLead",
+  "SalesTask",
+  "SalesActivity",
+  "Offer",
+  "SalesContact",
+  "SalesCampaign",
+] as const;
+
+export function coldCrmReplaceAllowed() {
+  return coldCrmSourceConfigured() && process.env.VERTRIEB_NEUIMPORT_ERLAUBT === "1";
+}
+
+export function backupSchemaName(now = new Date()) {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `backup_vertrieb_${now.getUTCFullYear()}${p(now.getUTCMonth() + 1)}${p(now.getUTCDate())}_${p(now.getUTCHours())}${p(now.getUTCMinutes())}`;
+}
+
+export async function replaceFromColdCrm(now = new Date()): Promise<{ backup: string; report: ImportReport }> {
+  if (!coldCrmReplaceAllowed()) throw new Error("Neu-Import ist hier nicht freigeschaltet.");
+  // Quelle zuerst prüfen: ohne erreichbare, gefüllte Quelle wird nichts gelöscht.
+  const src = new Client({ connectionString: process.env.COLD_CRM_DATABASE_URL!.trim(), connectionTimeoutMillis: 15000 });
+  await src.connect();
+  try {
+    const n = Number((await src.query(`SELECT count(*)::int AS n FROM "Contact"`)).rows[0].n);
+    if (!n) throw new Error("Das Cold CRM liefert keine Kontakte. Abgebrochen, nichts gelöscht.");
+  } finally {
+    await src.end().catch(() => {});
+  }
+
+  const backup = backupSchemaName(now);
+  await prisma.$transaction(
+    async (tx) => {
+      await tx.$executeRawUnsafe(`CREATE SCHEMA "${backup}"`);
+      for (const t of REPLACE_TABLES) {
+        const where = t === "Offer" ? ` WHERE "salesContactId" IS NOT NULL` : "";
+        await tx.$executeRawUnsafe(`CREATE TABLE "${backup}"."${t}" AS SELECT * FROM "${t}"${where}`);
+      }
+      // Kunden behalten, nur die Verknüpfung zum Vertriebskontakt fällt weg.
+      await tx.$executeRawUnsafe(`DELETE FROM "SalesInboundLead"`);
+      await tx.$executeRawUnsafe(`DELETE FROM "SalesLinkedInEvent"`);
+      await tx.$executeRawUnsafe(`DELETE FROM "SalesContact"`);
+      await tx.$executeRawUnsafe(`DELETE FROM "SalesCampaign"`);
+    },
+    { timeout: 120_000 },
+  );
+  const report = await importFromColdCrm();
+  return { backup, report };
+}

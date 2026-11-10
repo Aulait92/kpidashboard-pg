@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { connectCalendlyAction, importColdCrmAction, importContactsAction, importInstantlyAction, syncCalendlyAction, syncInstantlyAction, type ImportState } from "@/app/admin/vertrieb/actions";
+import { connectCalendlyAction, importColdCrmAction, replaceColdCrmAction, importContactsAction, importInstantlyAction, syncCalendlyAction, syncInstantlyAction, type ImportState } from "@/app/admin/vertrieb/actions";
 
 function Result({ state }: { state: ImportState }) {
   if (!state) return null;
@@ -25,6 +25,26 @@ export function ColdCrmImport({ configured }: { configured: boolean }) {
     <form action={action} className="space-y-3">
       <button className="btn-primary" disabled={pending || !configured}>{pending ? "Übernehme …" : "Daten aus Cold CRM übernehmen"}</button>
       {!configured && <p className="text-sm text-amber-700">COLD_CRM_DATABASE_URL ist nicht gesetzt.</p>}
+      <Result state={state} />
+    </form>
+  );
+}
+
+/** Neu-Import: ersetzt alle Vertriebsdaten (nur in der Testumgebung freigeschaltet). */
+export function ColdCrmReplace() {
+  const [state, action, pending] = useActionState(replaceColdCrmAction, null);
+  return (
+    <form action={action} className="space-y-3 rounded-lg border border-rose-200 bg-rose-50/60 p-4">
+      <p className="text-sm font-medium text-rose-800">Neu-Import: ersetzt alle Vertriebsdaten</p>
+      <p className="text-sm text-slate-600">
+        Löscht hier alle Kontakte, Verlauf, Aufgaben, Kampagnen, Termine, Leads und Angebote im Vertrieb und holt alles frisch aus dem
+        Cold CRM. Vorher wird alles in eine Sicherung in der Datenbank kopiert. Kunden bleiben erhalten.
+      </p>
+      <label className="block text-sm">
+        Zur Bestätigung <b>ERSETZEN</b> eintippen
+        <input name="confirm" autoComplete="off" className="input mt-1" placeholder="ERSETZEN" />
+      </label>
+      <button className="btn-primary bg-rose-600 hover:bg-rose-700" disabled={pending}>{pending ? "Ersetze … (kann 1–2 Min. dauern)" : "Vertrieb neu importieren"}</button>
       <Result state={state} />
     </form>
   );

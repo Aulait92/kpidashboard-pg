@@ -12,7 +12,7 @@ import { importContactsCsv } from "@/lib/vertrieb/import-contacts";
 import { ensureSource } from "@/lib/vertrieb/source";
 import { connectCalendly, syncCalendly } from "@/lib/vertrieb/calendly";
 import { handleInboundLead } from "@/lib/vertrieb/inbound";
-import { importFromColdCrm } from "@/lib/vertrieb/cold-crm-import";
+import { importFromColdCrm, replaceFromColdCrm } from "@/lib/vertrieb/cold-crm-import";
 import { LI_LABEL, importWaalaxyCsv } from "@/lib/vertrieb/linkedin";
 import { ensureReplyTask, importInstantlyCsv, recordReply, removeReplyTaskIfNoPositive, syncInstantly } from "@/lib/vertrieb/instantly";
 import { audit } from "@/lib/audit";
@@ -496,6 +496,23 @@ export async function importColdCrmAction(_prev: ImportState, _fd: FormData): Pr
     return {
       ok: true,
       message: r.map((x) => `${x.table.replace(/^Sales/, "")}: ${x.inserted} übernommen${x.skipped ? `, ${x.skipped} übersprungen (schon vorhanden)` : ""}`).join(" · "),
+    };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+/** Neu-Import: Vertrieb leeren (mit Sicherung) und frisch aus dem Cold CRM holen. */
+export async function replaceColdCrmAction(_prev: ImportState, fd: FormData): Promise<ImportState> {
+  const session = await requireAuth();
+  if (s(fd, "confirm") !== "ERSETZEN") return { ok: false, message: "Zur Bestätigung bitte ERSETZEN eintippen." };
+  try {
+    const { backup, report } = await replaceFromColdCrm();
+    await audit("vertrieb.neuimport", { actor: { id: session.userId, email: session.email, role: session.role }, details: { backup, report } });
+    refresh();
+    return {
+      ok: true,
+      message: `Sicherung: ${backup} · ${report.map((x) => `${x.table.replace(/^Sales/, "")}: ${x.inserted}${x.skipped ? ` (${x.skipped} übersprungen)` : ""}`).join(" · ")}`,
     };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : String(e) };

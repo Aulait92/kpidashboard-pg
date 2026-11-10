@@ -23,6 +23,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "lead.reassign": "Lead umverteilt",
   "lead.export": "Leads exportiert (CSV)",
   "lead.storno": "Lead storniert",
+  "vertrieb.neuimport": "Vertrieb neu aus Cold CRM übernommen",
   "storno.approve": "Storno genehmigt",
   "storno.reject": "Storno abgelehnt",
   "ppl.order": "Leads bestellt",

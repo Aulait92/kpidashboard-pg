@@ -109,8 +109,12 @@ KI-Hilfe, die brauchen keine Migration).
    - Admin-Login, Zahlen, Kunden, Vertrieb, Leads öffnen
    - `https://app.performancegrowth.de/api/status` → `{"ok":true}`
    - Kunden-Login (Anid) → Heute, Leads
-5. **Cold CRM** ein letztes Mal importieren (Einstellungen → Import & Instantly),
-   danach `COLD_CRM_DATABASE_URL` löschen.
+5. **Vertrieb aus der Testumgebung übernehmen** (geändert am 10.11.): Das Cold CRM ist
+   seit 10.11. eingefroren, der Vertrieb wurde auf staging neu importiert und wird seitdem
+   dort geführt. Am Livegang kommen die Vertriebsdaten deshalb aus der staging-Datenbank,
+   **nicht** mehr aus dem Cold CRM. Verfahren (Übernahme staging → Produktion, ohne
+   Test-Angebote/Stripe-Testdaten) wird vor Probelauf 3 gebaut und dort geprobt.
+   Danach `COLD_CRM_DATABASE_URL` und `VERTRIEB_NEUIMPORT_ERLAUBT` auf staging löschen.
 6. **Webhooks umstellen** auf `https://app.performancegrowth.de/…`:
    - Meta-App → Webhooks → Page → `leadgen`: `/api/meta/leadgen`
    - **Anid erst nach seiner Freigabe (geplant Ende November)**: Anid muss als zweiter

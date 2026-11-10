@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { CalendlyForms, ColdCrmImport, ContactsImport, InstantlyCsvImport, InstantlySync } from "@/components/vertrieb/import-forms";
-import { coldCrmSourceConfigured } from "@/lib/vertrieb/cold-crm-import";
+import { CalendlyForms, ColdCrmImport, ColdCrmReplace, ContactsImport, InstantlyCsvImport, InstantlySync } from "@/components/vertrieb/import-forms";
+import { coldCrmReplaceAllowed, coldCrmSourceConfigured } from "@/lib/vertrieb/cold-crm-import";
 import { teamCalendarStatus } from "@/lib/help-call";
 import { fmtDateTime } from "@/lib/vertrieb/dates";
 import { convertInboundLead } from "@/app/admin/vertrieb/actions";
@@ -37,6 +37,7 @@ export default async function ImportPage() {
             alten Datenbank. Bereits vorhandene Datensätze werden übersprungen – mehrfaches Ausführen ist sicher.
           </p>
           <ColdCrmImport configured />
+          {coldCrmReplaceAllowed() ? <ColdCrmReplace /> : null}
         </section>
       )}
 
