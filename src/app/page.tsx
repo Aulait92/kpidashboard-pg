@@ -1,3 +1,4 @@
+import { SubTabs } from "@/components/admin-tabs";
 import { ChevronDown } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -87,6 +88,7 @@ export default async function DashboardPage({
     <PullToRefresh>
       <AutoRefresh />
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <SubTabs tabs={[{ href: "/", label: "Dashboard", exact: true }, { href: "/admin/nutzung", label: "Nutzung" }]} />
         <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>

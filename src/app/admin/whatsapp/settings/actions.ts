@@ -59,6 +59,7 @@ export async function saveOutreachSettingsAction(formData: FormData): Promise<vo
     update: data,
   });
   revalidatePath("/admin/whatsapp/settings");
+  revalidatePath("/admin/kunden", "layout");
 }
 
 /**
@@ -88,6 +89,7 @@ export async function saveTemplateAction(formData: FormData): Promise<void> {
     update: { purpose, status, body },
   });
   revalidatePath("/admin/whatsapp/settings");
+  revalidatePath("/admin/kunden", "layout");
 }
 
 /** Kunden für den WhatsApp-Assistenten vorbereiten (Agent noch inaktiv). */
@@ -103,6 +105,7 @@ export async function addCustomerAction(formData: FormData): Promise<void> {
     update: {},
   });
   revalidatePath("/admin/whatsapp/settings");
+  revalidatePath("/admin/kunden", "layout");
 }
 
 export async function deleteTemplateAction(formData: FormData): Promise<void> {
@@ -111,6 +114,7 @@ export async function deleteTemplateAction(formData: FormData): Promise<void> {
   if (!id) return;
   await prisma.messageTemplate.delete({ where: { id } }).catch(() => {});
   revalidatePath("/admin/whatsapp/settings");
+  revalidatePath("/admin/kunden", "layout");
 }
 
 /**
@@ -168,6 +172,7 @@ export async function connectWhatsAppAction(formData: FormData): Promise<void> {
     data: { status: ok ? "connected" : "pending" },
   });
   revalidatePath("/admin/whatsapp/settings");
+  revalidatePath("/admin/kunden", "layout");
   redirect(back(ok ? "ok" : "webhook"));
 }
 
@@ -180,6 +185,7 @@ export async function seedDemoAction(formData: FormData): Promise<void> {
   const { seedDemoData } = await import("@/lib/demo-data");
   await seedDemoData(customerId);
   revalidatePath("/admin/whatsapp/settings");
+  revalidatePath("/admin/kunden", "layout");
   revalidatePath("/buyer");
 }
 
@@ -191,5 +197,6 @@ export async function removeDemoAction(formData: FormData): Promise<void> {
   const { removeDemoData } = await import("@/lib/demo-data");
   await removeDemoData(customerId);
   revalidatePath("/admin/whatsapp/settings");
+  revalidatePath("/admin/kunden", "layout");
   revalidatePath("/buyer");
 }

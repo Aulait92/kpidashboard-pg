@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { ACTIVITY_LABEL, CUSTOMER_COLOR, CUSTOMER_LABEL, CUSTOMER_STAGES, SOURCES, SOURCE_COLOR, SOURCE_LABEL, LOSS_LABEL, shortName } from "@/lib/vertrieb/crm";
 import { dayKey, fmtDate, fmtDateTime, timeKey, todayKey } from "@/lib/vertrieb/dates";
@@ -19,13 +19,13 @@ import { DealOffersCard } from "@/components/deal-offers-card";
 import { toOfferRow } from "@/lib/offer-links";
 import { getAppUrl } from "@/lib/email";
 import { loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
-import { AdminPauseCard, OnboardingCard, StartOnboardingCard } from "@/components/vertrieb/onboarding-card";
-import { currentPause, todayBerlin } from "@/lib/pause";
+import { OnboardingCard, StartOnboardingCard } from "@/components/vertrieb/onboarding-card";
 import type { ImpressumInfo } from "@/lib/impressum";
 
-export default async function ContactPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ pause?: string }> }) {
+export default async function ContactPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ embedded?: string }> }) {
   const { id } = await params;
-  const { pause: pauseError } = await searchParams;
+  // embedded = in der Kundenakte (/admin/kunden/[id]) eingebettet.
+  const embedded = (await searchParams).embedded === "1";
   const c = await prisma.salesContact.findUnique({
     where: { id },
     include: {
@@ -38,6 +38,8 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
     },
   });
   if (!c) notFound();
+  // Kunden haben eine eigene Akte mit allen Reitern.
+  if (c.customerId && !embedded) redirect(`/admin/kunden/${c.customerId}`);
   const open = c.tasks.filter((t) => !t.doneAt);
   const suggested = c.customerSource ? null : await guessSource(c.id);
   const done = c.tasks.filter((t) => t.doneAt).slice(0, 10);
@@ -59,8 +61,12 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Link href="/admin/vertrieb/kontakte" className="text-sm text-slate-500 hover:underline">← Kontakte</Link>
-          <h1 className="mt-1 text-2xl font-semibold">{shortName(c.name)}</h1>
+          {embedded ? null : (
+            <>
+              <Link href="/admin/vertrieb/kontakte" className="text-sm text-slate-500 hover:underline">← Kontakte</Link>
+              <h1 className="mt-1 text-2xl font-semibold">{shortName(c.name)}</h1>
+            </>
+          )}
           {(c.firstName || c.leaderNames) && (
             <p className="text-sm text-slate-600">
               Ansprechpartner: {[c.salutation, c.firstName, c.lastName].filter(Boolean).join(" ")}
@@ -229,7 +235,6 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
             <StartOnboardingCard offerId={acceptedOffer.id} offerNumber={acceptedOffer.number} customers={freeCustomers} />
           ) : null}
 
-          {c.customerId ? <PauseSection customerId={c.customerId} contactId={c.id} error={pauseError ?? null} /> : null}
 
           <div id="angebot">
             <DealOffersCard
@@ -398,9 +403,3 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
   );
 }
 
-async function PauseSection({ customerId, contactId, error }: { customerId: string; contactId: string; error: string | null }) {
-  const pause = await currentPause(customerId);
-  const card = <AdminPauseCard customerId={customerId} contactId={contactId} pause={pause} error={error} today={todayBerlin()} />;
-  // Ohne Pause zugeklappt (selten gebraucht).
-  return pause || error ? card : <Fold title="Pause / Urlaub" summary="keine Pause">{card}</Fold>;
-}

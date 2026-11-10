@@ -1,3 +1,4 @@
+import { SubTabs } from "@/components/admin-tabs";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
@@ -173,15 +174,11 @@ export default async function AdminWhatsAppPage({
 
   return (
     <main className="mx-auto w-full max-w-[1500px] flex-1 px-4 py-6 sm:px-6">
+      <SubTabs tabs={[{ href: "/admin/leads", label: "Leads" }, { href: "/admin/whatsapp", label: "WhatsApp-Chats", exact: true }]} />
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          WhatsApp-Inbox
-        </h1>
-        <Link
-          href="/admin/whatsapp/settings"
-          className="text-sm font-medium text-[color:var(--brand)] hover:underline"
-        >
-          Einstellungen & Vorlagen →
+        <h1 className="text-2xl font-semibold tracking-tight">WhatsApp-Chats</h1>
+        <Link href="/admin/whatsapp/settings" className="text-sm font-medium text-[color:var(--brand)] hover:underline">
+          Einstellungen →
         </Link>
       </div>
 

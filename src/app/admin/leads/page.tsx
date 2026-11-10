@@ -1,3 +1,4 @@
+import { SubTabs } from "@/components/admin-tabs";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Download } from "lucide-react";
@@ -49,10 +50,10 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
 
   return (
     <main className="mx-auto w-full max-w-7xl flex-1 space-y-5 px-4 py-8 sm:px-6 lg:px-8">
+      <SubTabs tabs={[{ href: "/admin/leads", label: "Leads" }, { href: "/admin/whatsapp", label: "WhatsApp-Chats", exact: true }]} />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Leads</h1>
-          <p className="mt-1 text-sm text-[color:var(--muted)]">Alle Leads aller Kunden, egal ob über Airtable oder direkt eingegangen.</p>
         </div>
         <a href={`/admin/leads/export?${qs.toString()}`} className="inline-flex h-9 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-sm font-medium">
           <Download className="h-4 w-4" /> CSV exportieren

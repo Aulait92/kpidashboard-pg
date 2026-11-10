@@ -17,19 +17,23 @@ export const metadata = {
   title: "Buyer verwalten | KPI-Dashboard",
 };
 
-export default async function AdminBuyersPage() {
+export default async function AdminBuyersPage({ searchParams }: { searchParams?: Promise<{ kunde?: string }> }) {
   const session = await getCurrentSession();
   if (!session || session.role !== "ADMIN") {
     redirect("/login");
   }
+  // kunde = eingebettet in die Kundenakte (nur Logins dieses Kunden).
+  const only = (await searchParams)?.kunde ?? null;
 
   const [buyers, customers] = await Promise.all([
     prisma.user.findMany({
-      where: { role: "BUYER" },
+      where: { role: "BUYER", ...(only ? { customerId: only } : {}) },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
         email: true,
+        displayName: true,
+        teamRole: true,
         createdAt: true,
         lastLoginAt: true,
         customer: { select: { id: true, name: true } },
@@ -43,14 +47,24 @@ export default async function AdminBuyersPage() {
   ]);
 
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+    <main className={only ? "w-full max-w-4xl" : "mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 lg:px-8"}>
+      {only ? (
+        <form action={startPreviewAction} className="flex flex-wrap items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50/40 p-4">
+          <input type="hidden" name="customerId" value={only} />
+          <span className="flex-1 text-sm">So sieht der Kunde seinen Bereich (nur lesend).</span>
+          <button type="submit" className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-400">
+            Als Kunde ansehen
+          </button>
+        </form>
+      ) : (
+      <>
       <header className="mb-6 flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <Link
-            href="/"
+            href="/admin/einstellungen"
             className="text-xs text-[color:var(--brand)] hover:underline"
           >
-            ← zum Dashboard
+            ← Einstellungen
           </Link>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight">
             Kunden-Logins
@@ -85,10 +99,12 @@ export default async function AdminBuyersPage() {
           </button>
         </form>
       </section>
+      </>
+      )}
 
       <details className="group mt-6 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-md)] [&>summary::-webkit-details-marker]:hidden">
         <summary className="cursor-pointer text-base font-semibold text-[color:var(--brand)]">+ Neuen Login anlegen</summary>
-        <CreateBuyerForm customers={customers} />
+        <CreateBuyerForm customers={only ? customers.filter((c) => c.id === only) : customers} />
       </details>
 
       <section className="mt-6 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-md)]">
@@ -125,7 +141,13 @@ export default async function AdminBuyersPage() {
                     key={b.id}
                     className="border-b border-[color:var(--border)] last:border-b-0"
                   >
-                    <td className="py-2 pr-3 font-medium">{b.email}</td>
+                    <td className="py-2 pr-3">
+                      <div className="font-medium">{b.displayName ?? b.email}</div>
+                      <div className="text-xs text-[color:var(--muted)]">
+                        {b.displayName ? `${b.email} · ` : ""}
+                        {b.teamRole === "advisor" ? "Berater" : "Inhaber"}
+                      </div>
+                    </td>
                     <td className="py-2 pr-3">
                       <ReassignCustomerForm
                         userId={b.id}

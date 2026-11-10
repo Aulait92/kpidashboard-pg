@@ -55,7 +55,8 @@ export default async function LeadIntakePage({
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Lead-Eingang</h1>
+        <a href="/admin/einstellungen" className="text-xs text-[color:var(--brand)] hover:underline">← Einstellungen</a>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Lead-Eingang</h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">Leadformular einem Kunden zuordnen, dann kommen Leads direkt in die App.</p>
       </div>
       {sp.ok ? <p className="rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{sp.ok}</p> : null}

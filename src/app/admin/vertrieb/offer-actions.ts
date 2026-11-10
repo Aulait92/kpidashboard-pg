@@ -32,6 +32,7 @@ export async function createOfferAction(
       session.userId,
     );
     revalidatePath(offerAdminHref(offer));
+  revalidatePath("/admin/kunden", "layout");
     return { ok: true, offerId: offer.id };
   } catch (err) {
     return {
@@ -61,6 +62,7 @@ export async function markOfferSentAction(
   }
   if (offer.salesContactId) await logOfferActivity(offer, `Angebot ${offer.number} als verschickt markiert`);
   revalidatePath(offerAdminHref(offer));
+  revalidatePath("/admin/kunden", "layout");
   return { ok: true };
 }
 
@@ -98,5 +100,6 @@ export async function sendOfferEmailAction(
     session.userId,
   );
   revalidatePath(offerAdminHref(offer));
+  revalidatePath("/admin/kunden", "layout");
   return { ok: true };
 }

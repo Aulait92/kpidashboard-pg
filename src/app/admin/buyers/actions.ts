@@ -61,6 +61,7 @@ export async function createBuyerAccount(
   });
 
   revalidatePath("/admin/buyers");
+  revalidatePath("/admin/kunden", "layout");
   return { ok: true, createdEmail: email };
 }
 
@@ -87,6 +88,7 @@ export async function resetBuyerPassword(
     data: { passwordHash: await hashPassword(password) },
   });
   revalidatePath("/admin/buyers");
+  revalidatePath("/admin/kunden", "layout");
   return { ok: true, createdEmail: user.email };
 }
 
@@ -123,6 +125,7 @@ export async function reassignBuyerCustomer(
     data: { customerId },
   });
   revalidatePath("/admin/buyers");
+  revalidatePath("/admin/kunden", "layout");
   // createdEmail trägt hier den Kundennamen für die Bestätigung im UI.
   return { ok: true, createdEmail: customer.name };
 }
@@ -138,4 +141,5 @@ export async function deleteBuyerAccount(formData: FormData) {
   if (!user || user.role !== "BUYER") return;
   await prisma.user.delete({ where: { id: userId } });
   revalidatePath("/admin/buyers");
+  revalidatePath("/admin/kunden", "layout");
 }

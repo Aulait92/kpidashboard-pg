@@ -24,6 +24,7 @@ export default async function ImportPage() {
 
   return (
     <div className="max-w-3xl space-y-5">
+      <a href="/admin/einstellungen" className="text-xs text-[color:var(--brand)] hover:underline">← Einstellungen</a>
       <h1 className="text-xl font-semibold">Import & Instantly</h1>
 
       <TeamCalendar status={await teamCalendarStatus()} />

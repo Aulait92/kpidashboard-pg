@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import Link from "next/link";
+import { CheckCircle2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { SOURCE_LABEL, STAGES, shortName } from "@/lib/vertrieb/crm";
 import { addDays, fmtDateTime } from "@/lib/vertrieb/dates";
@@ -59,7 +60,11 @@ export default async function HeutePage() {
           {tasks.length ? (
             <ul className="divide-y divide-slate-100">{tasks.slice(0, 30).map((t) => <TaskRow key={t.id} t={t} />)}</ul>
           ) : (
-            <p className="px-4 py-8 text-center text-sm text-slate-500">Nichts fällig.</p>
+            <div className="flex flex-col items-center gap-2 px-4 py-12 text-center">
+              <CheckCircle2 className="h-10 w-10 text-emerald-500" strokeWidth={1.5} />
+              <p className="font-medium">Alles erledigt für heute.</p>
+              <p className="text-sm text-slate-500">Gute Arbeit!</p>
+            </div>
           )}
         </section>
         <div className="space-y-6">

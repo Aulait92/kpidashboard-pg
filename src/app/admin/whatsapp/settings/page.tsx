@@ -43,17 +43,21 @@ const WA_MESSAGES: Record<string, { ok: boolean; text: string }> = {
 export default async function WhatsAppSettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ wa?: string; c?: string }>;
+  searchParams: Promise<{ wa?: string; c?: string; kunde?: string }>;
 }) {
   const sp = await searchParams;
+  // kunde = eingebettet in die Kundenakte (nur dieser Kunde, ohne Seitenkopf).
+  const only = sp.kunde ?? null;
   const session = await getCurrentSession();
   if (!session || session.role !== "ADMIN") redirect("/login");
 
   // Kunden mit WhatsApp-Konto oder Agent — nur dort ergeben Einstellungen Sinn.
   const customers = await prisma.customer.findMany({
-    where: {
-      OR: [{ whatsAppAccount: { isNot: null } }, { agentConfig: { isNot: null } }],
-    },
+    where: only
+      ? { id: only, OR: [{ whatsAppAccount: { isNot: null } }, { agentConfig: { isNot: null } }] }
+      : {
+          OR: [{ whatsAppAccount: { isNot: null } }, { agentConfig: { isNot: null } }],
+        },
     orderBy: { name: "asc" },
     select: {
       id: true,
@@ -82,7 +86,7 @@ export default async function WhatsAppSettingsPage({
   });
 
   const otherCustomers = await prisma.customer.findMany({
-    where: { id: { notIn: customers.map((c) => c.id) }, plan: { not: "internal" }, archived: false },
+    where: { id: only ? { equals: only, notIn: customers.map((c) => c.id) } : { notIn: customers.map((c) => c.id) }, plan: { not: "internal" }, archived: false },
     orderBy: { name: "asc" },
     select: { id: true, name: true },
   });
@@ -101,16 +105,25 @@ export default async function WhatsAppSettingsPage({
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6">
+    <main className={only ? "w-full" : "mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6"}>
+      {only ? (
+        otherCustomers.length ? (
+          <form action={addCustomerAction} className="rounded-xl border border-[color:var(--border)] bg-white p-5">
+            <input type="hidden" name="customerId" value={only} />
+            <p className="text-sm text-[color:var(--muted)]">Für diesen Kunden ist der WhatsApp-Assistent noch nicht eingerichtet.</p>
+            <SubmitButton pendingLabel="…" className="mt-3 rounded-lg bg-[color:var(--brand)] px-4 py-2 text-sm font-semibold text-white">
+              WhatsApp-Assistent einrichten
+            </SubmitButton>
+          </form>
+        ) : null
+      ) : (
+        <>
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">
           WhatsApp-Einstellungen
         </h1>
-        <Link
-          href="/admin/whatsapp"
-          className="text-sm font-medium text-[color:var(--brand)] hover:underline"
-        >
-          ← zur Inbox
+        <Link href="/admin/einstellungen" className="text-sm font-medium text-[color:var(--brand)] hover:underline">
+          ← Einstellungen
         </Link>
       </div>
 
@@ -150,7 +163,10 @@ export default async function WhatsAppSettingsPage({
         </SubmitButton>
       </form>
 
-      {customers.length === 0 ? (
+        </>
+      )}
+
+      {customers.length === 0 && !only ? (
         <p className="mt-6 text-sm text-[color:var(--muted)]">
           Noch kein Kunde mit WhatsApp-Konto oder Agent.
         </p>

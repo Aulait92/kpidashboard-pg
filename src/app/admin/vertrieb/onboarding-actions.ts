@@ -10,6 +10,7 @@ import { logOfferActivity, setContactCustomerStage } from "@/lib/offer-links";
 
 function refresh(contactId?: string | null) {
   revalidatePath("/admin/vertrieb", "layout");
+  revalidatePath("/admin/kunden", "layout");
   if (contactId) revalidatePath(`/admin/vertrieb/kontakte/${contactId}`);
 }
 
@@ -72,7 +73,7 @@ export async function adminPlanPauseAction(fd: FormData) {
   const until = String(fd.get("until") ?? "").trim();
   const res = await planPause(customerId, { from: String(fd.get("from") ?? ""), until: until || null, reason: String(fd.get("reason") ?? "") }, "admin");
   refresh(contactId);
-  if (!res.ok) redirect(`/admin/vertrieb/kontakte/${contactId}?pause=${encodeURIComponent(res.error)}`);
+  if (!res.ok) redirect(`/admin/kunden/${customerId}/abrechnung?pause=${encodeURIComponent(res.error)}`);
 }
 
 export async function adminEndPauseAction(fd: FormData) {
