@@ -73,3 +73,39 @@ Bruttomarge · Aktive Kunden.
 1. Umsatzbuch + Kopfzeile + MRR-Brücke + Ströme + Margen
 2. Kohorten, Kündigungen, Abhängigkeit, Wirkung
 3. Kostenzweck + CAC/LTV, Investoren-Ansicht und -Update
+
+## Umgesetzt (11.11.2026, vor dem Livegang)
+Alle drei Schritte. Seite **/admin/zahlen** (Admin-A-Navigation „Zahlen“; die
+alte Seite „/“ heißt dort „Pay-per-Lead (Details)“), Einstellungen unter
+**/admin/einstellungen/kosten** („Laufende Kosten“: Tools mit Zweck, Gründerzeit,
+Kampagnen der eigenen Kundengewinnung). Migration `20261113090000_kosten_zweck`.
+
+- Rechenlogik ohne Datenbank: `src/lib/revenue-ledger.ts` (Umsatzbuch,
+  MRR-Brücke, Kohorten, Bindung, Kündigungsquote, Abhängigkeit), Loader und
+  alle Kennzahlen: `src/lib/zahlen.ts`, Ansicht: `src/components/admin/zahlen-view.tsx`.
+- **Annahmen Umsatzbuch** (Kopf von revenue-ledger.ts):
+  - Pay-per-Lead = nicht stornierte `Revenue`-Zeilen; bezahlte `LeadOrder`
+    werden nicht zusätzlich gezählt (sonst doppelt).
+  - Betreuung/Software = `Customer.retainerMonthly` ab `retainerStart`,
+    tagesanteilig; Software-Anteil = `Offer.softwareFee` des angenommenen
+    Angebots, ohne Angebot alles Betreuung; Startpreis-Phase und Kunden-Pausen
+    (nur Software zählt) berücksichtigt.
+  - Ende: gekündigtes Stripe-Abo → letzte Änderung des Angebots; archivierter
+    Kunde ohne Abo → Monat des letzten Leads.
+  - Einrichtung = `setupFee` angenommener Angebote im Monat der Zahlung
+    (sonst Annahme), nie im MRR. WhatsApp-Gebühren sind kein Umsatz.
+  - Laufender Monat: Pay-per-Lead und Meta-Kosten hochgerechnet, Retainer
+    voll. Brücke, Kündigung, Kohorten, Bindung, Marge und CAC nur mit
+    abgeschlossenen Monaten.
+- **Kosten:** Meta-`Cost` (LEAD) = direkt Pay-per-Lead, außer Kampagnen aus
+  den Einstellungen (Standard „Allianz Lead Ads“) = Kundengewinnung;
+  `Cost` OTHER = sonstiger Betrieb; Tools als laufende Kosten mit Zweck.
+  Achtung: Meta-Kampagnen, die keinem Produkt zugeordnet sind, landen im
+  Abgleich nicht in `Cost` (nur als „nicht zugeordnet“) – eigene Kampagnen
+  müssen also einem Produkt zugeordnet sein **oder** als laufende Kosten
+  „Kundengewinnung“ gepflegt werden.
+- **Ehrlich leer**, bis Daten da sind: Bindung bis 3 abgeschlossene Monate,
+  Brücke bis 2, Wirkung ohne Kunden mit ≥ 80 % Ergebnissen, Kanäle ohne
+  `customerSource`, Automatisierungsquote ohne WhatsApp-Kunden.
+- **Offen:** App hat keinen Dunkelmodus (Palette für dunkel vorbereitet),
+  Termin-Stufe im Wirkungs-Trichter nur aus der Terminbuchung (`Appointment`).

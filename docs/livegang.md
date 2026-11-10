@@ -14,7 +14,7 @@ enthalten. Der Merge ist konfliktfrei.
       Livegang nur wiederholen, wenn neue Migrationen dazukommen
       (`ls prisma/migrations` mit der Liste unten vergleichen).
 - [ ] **Probelauf 3** mit dem Stand, der live geht (ca. 19./20.11., nach Code-Stopp):
-      seit Probelauf 2 sind **7 Migrationen dazugekommen** (jetzt 29, siehe
+      seit Probelauf 2 sind **8 Migrationen dazugekommen** (jetzt 30, siehe
       „Neue Migrationen seit Probelauf 2“). Ablauf wie Probelauf 2.
 
 ### Neue Migrationen seit Probelauf 2 (Stand 11.11.)
@@ -28,6 +28,7 @@ enthalten. Der Merge ist konfliktfrei.
 | `20261112100000_heute_ausblenden` | Tabelle `AdminDismissal` (in „Heute“ abgehakte/auf später gelegte Punkte je Admin) | über den Schema-Abgleich, nur hinzufügend |
 | `20261112110000_storno_automatisch` | Spalte `LeadSubscription.stornoAutoApprove` (Standard aus = bisherige Regel) | über den Schema-Abgleich, nur hinzufügend |
 | `20261112120000_provisionen` | Spalten `Customer.vermittlerTyp` (Standard „vertreter“) und `Customer.provisionRates` | über den Schema-Abgleich, nur hinzufügend |
+| `20261113090000_kosten_zweck` | Tabellen `RecurringCost` (laufende Kosten mit Zweck) und `KpiSettings` (Gründerzeit, Kampagnen, Update-Texte) für die Zahlen-Seite | über den Schema-Abgleich, nur hinzufügend |
 
 Alle drei verändern keine bestehenden Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und
@@ -100,7 +101,7 @@ KI-Hilfe, die brauchen keine Migration).
    `[migrate] Alte Einträge aus früherem Verlauf (bleiben unberührt): …`
    `[migrate] Datenbank ohne (eigene) Migrations-Historie – wird einmalig eingemessen.`
    `[migrate] Schema wird angeglichen (nur hinzufügende Änderungen).`
-   29 × `Migration … marked as applied.` (bis `20261112120000_provisionen`), dazwischen
+   30 × `Migration … marked as applied.` (bis `20261113090000_kosten_zweck`), dazwischen
    `[migrate] 20261110120001_status_seit_trigger wird beim Einmessen ausgeführt.`,
    am Ende `No pending migrations to apply.` und `[migrate] Schema aktuell.`
    (Die roten Zeilen „Loaded Prisma config …“ sind nur Hinweise, keine Fehler.)

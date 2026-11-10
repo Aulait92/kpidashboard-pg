@@ -24,6 +24,8 @@ export const AUDIT_LABEL: Record<string, string> = {
   "lead.export": "Leads exportiert (CSV)",
   "lead.storno": "Lead storniert",
   "vertrieb.neuimport": "Vertrieb neu aus Cold CRM übernommen",
+  "kpi.kosten": "Laufende Kosten geändert",
+  "kpi.einstellungen": "Einstellungen der Zahlen-Seite geändert",
   "storno.approve": "Storno genehmigt",
   "storno.reject": "Storno abgelehnt",
   "ppl.order": "Leads bestellt",

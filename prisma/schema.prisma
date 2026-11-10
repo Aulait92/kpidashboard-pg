@@ -1631,3 +1631,31 @@ model AdminDismissal {
   @@unique([userId, key])
   @@index([userId, until])
 }
+
+// Laufende Kosten für die Zahlen-Seite (Tools, eigene Werbung …), vom Admin
+// gepflegt. Zweck: ppl / software (direkte Kosten → Marge des Stroms),
+// akquise (Kundengewinnung → CAC) oder betrieb (weder Marge noch CAC).
+model RecurringCost {
+  id            String    @id @default(cuid())
+  name          String
+  monthlyAmount Decimal   @db.Decimal(10, 2)
+  purpose       String    @default("ppl")
+  startsAt      DateTime
+  endsAt        DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Einstellungen der Zahlen-Seite (eine Zeile, id „default“).
+model KpiSettings {
+  id                   String   @id @default("default")
+  // Kalkulatorische Gründerzeit im Vertrieb für „CAC mit Gründerzeit“
+  founderHoursPerWeek  Int      @default(20)
+  founderHourlyRate    Decimal  @default(60) @db.Decimal(8, 2)
+  // Meta-Kampagnen der eigenen Kundengewinnung (kommagetrennt, enthält-Vergleich)
+  acquisitionCampaigns String   @default("Allianz Lead Ads")
+  // Freitexte fürs Investoren-Update
+  updateChallenges     String?
+  updateNext           String?
+  updatedAt            DateTime @updatedAt
+}

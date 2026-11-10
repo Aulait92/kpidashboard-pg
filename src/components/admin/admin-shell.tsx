@@ -33,7 +33,12 @@ export function adminAreas(counts: { heute: number; vertrieb: number }): Item[] 
       icon: Inbox,
       match: (p) => p.startsWith("/admin/leads") || p.startsWith("/admin/ppl") || (p.startsWith("/admin/whatsapp") && !isSettings(p)),
     },
-    { href: "/", label: "Zahlen", icon: BarChart3, match: (p) => p === "/" || p.startsWith("/admin/nutzung") },
+    {
+      href: "/admin/zahlen",
+      label: "Zahlen",
+      icon: BarChart3,
+      match: (p) => p === "/" || p.startsWith("/admin/zahlen") || p.startsWith("/admin/nutzung") || p.startsWith("/admin/einstellungen/kosten"),
+    },
   ];
 }
 
