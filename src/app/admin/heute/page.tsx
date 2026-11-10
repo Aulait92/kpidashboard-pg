@@ -1,60 +1,17 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import {
-  AlertTriangle,
-  CalendarDays,
-  CheckCircle2,
-  ChevronRight,
-  Euro,
-  FileText,
-  Inbox,
-  ListTodo,
-  MessageCircle,
-  Phone,
-  Star,
-  TrendingUp,
-  Undo2,
-  ClipboardList,
-  type LucideIcon,
-} from "lucide-react";
-import { greeting, loadAdminHeute, summary, type HeuteArea, type HeuteIcon, type HeuteItem, type HeuteTone } from "@/lib/admin-heute";
+import { CheckCircle2, ChevronRight, TrendingUp } from "lucide-react";
+import { greeting, loadAdminHeute, summary, type HeuteArea } from "@/lib/admin-heute";
 import { computeMonthlyForecast } from "@/lib/forecast";
 import { reportError } from "@/lib/monitoring";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { RememberList } from "@/components/admin/list-memory";
+import { HeuteList } from "@/components/admin/heute-list";
+import { HEUTE_ICONS as ICONS } from "@/components/admin/heute-icons";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Heute | KPI-Dashboard" };
-
-const ICONS: Record<HeuteIcon, LucideIcon> = {
-  phone: Phone,
-  calendar: CalendarDays,
-  euro: Euro,
-  inbox: Inbox,
-  form: ClipboardList,
-  undo: Undo2,
-  check: CheckCircle2,
-  chat: MessageCircle,
-  alert: AlertTriangle,
-  offer: FileText,
-  star: Star,
-  task: ListTodo,
-};
-
-const TONE: Record<HeuteTone, string> = {
-  bad: "bg-rose-50 text-rose-600",
-  warn: "bg-amber-50 text-amber-600",
-  info: "bg-[color:var(--brand-soft)] text-[color:var(--brand)]",
-};
-
-const AREA_COLOR: Record<HeuteArea, string> = {
-  Vertrieb: "text-sky-700",
-  Kunden: "text-emerald-700",
-  Leads: "text-violet-700",
-  "Pay-per-Lead": "text-violet-700",
-  System: "text-rose-700",
-};
 
 const FILTERS: { key: string; label: string; areas: HeuteArea[] }[] = [
   { key: "", label: "Alle", areas: [] },
@@ -69,11 +26,11 @@ const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", curren
 // allen Bereichen in einer Liste – mit einem Knopf direkt zur richtigen Stelle.
 export default async function AdminHeutePage({ searchParams }: { searchParams: Promise<{ bereich?: string }> }) {
   await connection();
-  await requireAuth();
+  const session = await requireAuth();
   const { bereich = "" } = await searchParams;
   const now = new Date();
   const [{ items, auto }, forecast] = await Promise.all([
-    loadAdminHeute(now),
+    loadAdminHeute(now, session.userId),
     computeMonthlyForecast({ customerId: null, revenueLabel: "Umsatz" }).catch((err) => {
       reportError(err, "admin-heute-forecast");
       return null;
@@ -123,11 +80,7 @@ export default async function AdminHeutePage({ searchParams }: { searchParams: P
             </div>
           ) : null}
           {shown.length ? (
-            <ul className="divide-y divide-[color:var(--border)] overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
-              {shown.map((it) => (
-                <ItemRow key={it.key} it={it} />
-              ))}
-            </ul>
+            <HeuteList items={shown} />
           ) : (
             <div className="flex flex-col items-center gap-2 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-4 py-12 text-center shadow-[var(--shadow-sm)]">
               <CheckCircle2 className="h-10 w-10 text-emerald-500" strokeWidth={1.5} />
@@ -191,35 +144,5 @@ export default async function AdminHeutePage({ searchParams }: { searchParams: P
         </div>
       </div>
     </main>
-  );
-}
-
-function ItemRow({ it }: { it: HeuteItem }) {
-  const Icon = ICONS[it.icon];
-  return (
-    <li className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:gap-4">
-      <div className="flex min-w-0 flex-1 gap-3">
-        <span className={cn("mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full", TONE[it.tone])}>
-          <Icon className="h-[18px] w-[18px]" />
-        </span>
-        <div className="min-w-0">
-          <div className={cn("text-[11px] font-semibold uppercase tracking-wide", AREA_COLOR[it.area])}>{it.area}</div>
-          <div className="font-medium leading-snug">{it.title}</div>
-          <div className="mt-0.5 text-sm text-[color:var(--muted)]">{it.detail}</div>
-        </div>
-      </div>
-      <Link
-        href={it.action.href}
-        className={cn(
-          "inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] px-4 text-sm font-semibold transition sm:h-9",
-          it.tone === "info"
-            ? "border border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:bg-[color:var(--surface-sunken)]"
-            : "bg-[color:var(--brand)] text-white hover:bg-[color:var(--brand-dark)]",
-        )}
-      >
-        {it.icon === "phone" ? <Phone className="h-4 w-4" /> : null}
-        {it.action.label}
-      </Link>
-    </li>
   );
 }

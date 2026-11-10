@@ -26,7 +26,31 @@ export type HeuteItem = {
   action: { label: string; href: string };
   /** Zeitpunkt für die Reihenfolge innerhalb gleicher Dringlichkeit (älteste zuerst) */
   since?: Date | null;
+  /** Sofort-Aktion direkt in der Liste */
+  quick?: HeuteQuick;
+  /** „Später“: blendet den Punkt für `days` Tage aus (je Admin) */
+  later?: { label: string; days: number };
 };
+
+export type HeuteQuick =
+  | { kind: "task"; taskId: string }
+  | { kind: "storno"; leadId: string }
+  | { kind: "offer"; offerId: string; contactId: string };
+
+/** Ausgeblendete Punkte („Später“, „Gelesen“, „Nachgefasst“) entfernen. */
+export function withoutDismissed(items: HeuteItem[], dismissedKeys: Iterable<string>): HeuteItem[] {
+  const hidden = new Set(dismissedKeys);
+  return hidden.size ? items.filter((i) => !hidden.has(i.key)) : items;
+}
+
+/** Schlüssel aus „Heute“: kurz, ohne Leerzeichen (Schutz vor Unsinn aus dem Formular). */
+export function validHeuteKey(key: unknown): key is string {
+  return typeof key === "string" && /^[a-z]+(?::[A-Za-z0-9_-]+)?$/.test(key) && key.length <= 120;
+}
+
+const TOMORROW = { label: "Morgen", days: 1 };
+/** So viele Reklamationen einzeln (mit Knöpfen), der Rest gesammelt */
+const STORNO_SINGLE = 4;
 
 export type AutoRow = { key: string; icon: HeuteIcon; title: string; detail: string; count: number };
 
@@ -83,7 +107,7 @@ const name = (n: string) => n.replace(/^Allianz\s+/i, "");
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 
-export async function loadAdminHeute(now = new Date()) {
+export async function loadAdminHeute(now = new Date(), userId?: string) {
   const { start, tomorrow } = dayBounds();
   const week = new Date(now.getTime() - 7 * DAY);
   const [
@@ -138,7 +162,11 @@ export async function loadAdminHeute(now = new Date()) {
       _min: { createdAt: true },
     }),
     prisma.poolLead.findMany({ where: { status: "parked" }, orderBy: { createdAt: "asc" }, select: { createdAt: true, productKey: true } }),
-    prisma.lead.findMany({ where: { stornoState: "review" }, orderBy: { stornoRequestedAt: "asc" }, select: { stornoRequestedAt: true, customer: { select: { name: true } } } }),
+    prisma.lead.findMany({
+      where: { stornoState: "review" },
+      orderBy: { stornoRequestedAt: "asc" },
+      select: { id: true, name: true, stornoReason: true, stornoNote: true, stornoRequestedAt: true, customer: { select: { name: true } } },
+    }),
     prisma.leadOrder.findMany({
       where: { status: "failed", periodEnd: { gte: now } },
       select: { id: true, amount: true, updatedAt: true, subscription: { select: { customer: { select: { id: true, name: true } } } } },
@@ -164,6 +192,7 @@ export async function loadAdminHeute(now = new Date()) {
         detail: `${problem.replace(/\.$/, "")} · ohne ${key === "cron" ? "diesen Job gehen Erinnerungen, Nachfassen und Mails nicht raus" : "Abgleich fehlen aktuelle Kosten und Leads"}.`,
         action: { label: "Status ansehen", href: "/api/status" },
         since: heartbeats.find((h) => h.key === key)?.at,
+        later: TOMORROW,
       });
     }
   }
@@ -180,6 +209,7 @@ export async function loadAdminHeute(now = new Date()) {
       detail: `Rechnung offen ${sinceText(since, now)}${c.pauses.length ? " · Anzeigen automatisch gestoppt, starten nach Zahlung wieder" : ""}`,
       action: { label: "Zur Abrechnung", href: `/admin/kunden/${c.id}/abrechnung` },
       since,
+      later: TOMORROW,
     });
   }
   for (const o of failedOrders) {
@@ -193,6 +223,7 @@ export async function loadAdminHeute(now = new Date()) {
       detail: `Bestellung über ${eur(Number(o.amount))} · ohne Zahlung bekommt der Käufer keine Leads`,
       action: { label: "Öffnen", href: `/admin/kunden/${c.id}/abrechnung` },
       since: o.updatedAt,
+      later: TOMORROW,
     });
   }
   const progress = await onboardingProgressFor(onboardings.map((o) => o.customerId));
@@ -209,6 +240,7 @@ export async function loadAdminHeute(now = new Date()) {
       detail: `${p.percent} % erledigt${start}`,
       action: { label: "Checkliste öffnen", href: `/admin/kunden/${ob.customerId}` },
       since: ob.startDate,
+      later: TOMORROW,
     });
   }
   const customerNames = new Map(
@@ -238,6 +270,8 @@ export async function loadAdminHeute(now = new Date()) {
       detail: `${parts.join(" · ")} · am besten kurz anrufen oder Hilfetermin anbieten`,
       action: { label: "Kundenakte", href: `/admin/kunden/${customerId}` },
       since: s.since,
+      // „Erledigt“ = angerufen/angeschrieben; kommt nach 3 Tagen wieder, falls weiter nichts passiert
+      later: { label: "Erledigt", days: 3 },
     });
   }
 
@@ -254,6 +288,7 @@ export async function loadAdminHeute(now = new Date()) {
       detail: `${plural(leads, "Lead wartet", "Leads warten")} im Posteingang, bis das Formular einem Kunden zugeordnet ist`,
       action: { label: "Zuordnen", href: "/admin/lead-eingang" },
       since: oldest,
+      later: TOMORROW,
     });
   }
   if (parked.length) {
@@ -267,19 +302,34 @@ export async function loadAdminHeute(now = new Date()) {
       detail: `${products} · kein Käufer mit freiem Kontingent. Ausliefern oder verwerfen.`,
       action: { label: "Ansehen", href: "/admin/ppl?ansicht=geparkt" },
       since: parked[0]?.createdAt,
+      later: TOMORROW,
     });
   }
-  if (stornoReview.length) {
-    const buyers = [...new Set(stornoReview.map((l) => name(l.customer.name)))].slice(0, 3).join(", ");
+  for (const l of stornoReview.slice(0, STORNO_SINGLE)) {
+    const reason = (l.stornoReason ?? "").replace(/^ppl:/, "") || "ohne Grund";
+    items.push({
+      key: `storno:${l.id}`,
+      area: "Pay-per-Lead",
+      tone: "warn",
+      icon: "undo",
+      title: `Reklamation prüfen: ${name(l.customer.name)}`,
+      detail: `${l.name ?? "Lead"} · Grund „${reason}“${l.stornoNote ? ` · ${l.stornoNote.slice(0, 100)}` : ""}`,
+      action: { label: "Details", href: "/admin/ppl?ansicht=storno" },
+      since: l.stornoRequestedAt,
+      quick: { kind: "storno", leadId: l.id },
+    });
+  }
+  if (stornoReview.length > STORNO_SINGLE) {
+    const rest = stornoReview.slice(STORNO_SINGLE);
     items.push({
       key: "storno",
       area: "Pay-per-Lead",
       tone: "warn",
       icon: "undo",
-      title: stornoReview.length === 1 ? "Reklamation prüfen" : `${stornoReview.length} Reklamationen prüfen`,
-      detail: `${buyers} · Grund „Sonstiges“ oder hohe Quote, deshalb nicht automatisch anerkannt`,
+      title: `${rest.length} weitere ${rest.length === 1 ? "Reklamation" : "Reklamationen"} prüfen`,
+      detail: `${[...new Set(rest.map((l) => name(l.customer.name)))].slice(0, 3).join(", ")} · Grund „Sonstiges“ oder hohe Quote, deshalb nicht automatisch anerkannt`,
       action: { label: "Prüfen", href: "/admin/ppl?ansicht=storno" },
-      since: stornoReview[0]?.stornoRequestedAt,
+      since: rest[0]?.stornoRequestedAt,
     });
   }
 
@@ -309,6 +359,7 @@ export async function loadAdminHeute(now = new Date()) {
       detail: `${late ? `Überfällig ${sinceText(t.dueAt, now)}` : "Heute fällig"}${t.note ? ` · ${t.note.slice(0, 120)}` : ""}`,
       action: t.contact ? { label: t.type === "ANRUF" ? "Anrufen" : "Öffnen", href: `/admin/vertrieb/kontakte/${t.contact.id}` } : { label: "Öffnen", href: "/admin/vertrieb/aufgaben" },
       since: t.dueAt,
+      quick: { kind: "task", taskId: t.id },
     });
   }
   if (tasks.length > shown.length) {
@@ -332,13 +383,15 @@ export async function loadAdminHeute(now = new Date()) {
       detail: `Gesendet ${o.sentAt ? agoText(o.sentAt, now) : ""} · ${o.viewedAt ? "angesehen, noch nicht angenommen" : "noch nicht geöffnet"} · ${eur(Number(o.monthlyFee))}/Monat`,
       action: { label: "Öffnen", href: o.salesContactId ? `/admin/vertrieb/kontakte/${o.salesContactId}` : "/admin/vertrieb/kontakte" },
       since: o.sentAt,
+      ...(o.salesContactId ? { quick: { kind: "offer" as const, offerId: o.id, contactId: o.salesContactId } } : { later: { label: "Nachgefasst", days: 5 } }),
     });
   }
 
   // ── Rückmeldungen ─────────────────────────────────────
   if (feedback.length || helpDown) {
     items.push({
-      key: "feedback",
+      // Neue Rückmeldungen ändern den Schlüssel → „Gelesen“ gilt nur für das Gesehene
+      key: `feedback:${feedback.at(-1)?.at.getTime() ?? 0}-${helpDown}`,
       area: "Kunden",
       tone: "info",
       icon: "star",
@@ -346,10 +399,18 @@ export async function loadAdminHeute(now = new Date()) {
       detail: "Was Vertreter suchen oder nicht verstehen, steht unter Nutzung",
       action: { label: "Ansehen", href: "/admin/nutzung" },
       since: feedback[0]?.at,
+      later: { label: "Gelesen", days: 30 },
     });
   }
 
-  return { items: rankItems(items), auto: await loadAuto(now) };
+  const dismissed = userId ? await activeDismissals(userId, now) : [];
+  return { items: rankItems(withoutDismissed(items, dismissed)), auto: await loadAuto(now) };
+}
+
+/** Schlüssel, die dieser Admin gerade ausgeblendet hat. */
+export async function activeDismissals(userId: string, now = new Date()): Promise<string[]> {
+  const rows = await prisma.adminDismissal.findMany({ where: { userId, until: { gt: now } }, select: { key: true } });
+  return rows.map((r) => r.key);
 }
 
 /** „Läuft von allein“: was die App in den letzten 7 Tagen ohne Zutun erledigt hat. */
@@ -388,17 +449,26 @@ async function loadAuto(now: Date): Promise<AutoRow[]> {
 }
 
 /** Schnelle Zahlen für die Navigation (ohne die ganze Heute-Liste zu laden). */
-export async function loadAdminNavCounts(): Promise<{ heute: number; vertrieb: number }> {
+export async function loadAdminNavCounts(userId?: string): Promise<{ heute: number; vertrieb: number }> {
   const { tomorrow } = dayBounds();
   try {
-    const [tasks, parked, storno, forms, overdue] = await Promise.all([
+    const [tasks, parked, storno, forms, overdue, dismissed] = await Promise.all([
       prisma.salesTask.count({ where: { doneAt: null, dueAt: { lt: tomorrow } } }),
       prisma.poolLead.count({ where: { status: "parked" } }),
-      prisma.lead.count({ where: { stornoState: "review" } }),
+      prisma.lead.findMany({ where: { stornoState: "review" }, orderBy: { stornoRequestedAt: "asc" }, select: { id: true } }),
       prisma.unassignedLead.count({ where: { resolvedAt: null } }),
-      prisma.customer.count({ where: { archived: false, paymentOverdueSince: { not: null } } }),
+      prisma.customer.findMany({ where: { archived: false, paymentOverdueSince: { not: null } }, select: { id: true } }),
+      userId ? activeDismissals(userId) : Promise.resolve([] as string[]),
     ]);
-    return { heute: (parked ? 1 : 0) + (storno ? 1 : 0) + (forms ? 1 : 0) + overdue, vertrieb: tasks };
+    const hidden = new Set(dismissed);
+    const visible = (key: string) => !hidden.has(key);
+    const heute =
+      (parked && visible("parked") ? 1 : 0) +
+      storno.slice(0, STORNO_SINGLE).filter((l) => visible(`storno:${l.id}`)).length +
+      (storno.length > STORNO_SINGLE && visible("storno") ? 1 : 0) +
+      (forms && visible("forms") ? 1 : 0) +
+      overdue.filter((c) => visible(`pay:${c.id}`)).length;
+    return { heute, vertrieb: tasks };
   } catch {
     return { heute: 0, vertrieb: 0 };
   }

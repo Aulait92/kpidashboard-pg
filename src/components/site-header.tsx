@@ -19,7 +19,7 @@ export async function SiteHeader() {
   const isAdmin = session?.role === "ADMIN";
   // Neue Admin-Oberfläche (Admin-A): Seitenleiste statt Kopfzeile.
   if (session && isAdmin && (await isAdminNewUi())) {
-    return <AdminShell email={session.email} counts={await loadAdminNavCounts()} />;
+    return <AdminShell email={session.email} counts={await loadAdminNavCounts(session.userId)} />;
   }
 
   return (

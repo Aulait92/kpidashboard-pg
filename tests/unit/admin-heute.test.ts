@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 // Nur die reine Logik von „Heute“ (Admin-A); die Datenbank wird nicht gebraucht.
 vi.mock("@/lib/prisma", () => ({ prisma: {} }));
 
-import { agoText, daysSince, greeting, heartbeatProblem, rankItems, sinceText, summary, type HeuteItem } from "@/lib/admin-heute";
+import { agoText, daysSince, greeting, heartbeatProblem, rankItems, sinceText, summary, validHeuteKey, withoutDismissed, type HeuteItem } from "@/lib/admin-heute";
 
 const item = (key: string, tone: HeuteItem["tone"], since?: Date): HeuteItem => ({
   key,
@@ -60,5 +60,16 @@ describe("Admin-Heute", () => {
     expect(heartbeatProblem("cron", { at: new Date(now.getTime() - 3 * 3600000), ok: true, note: null }, now)).toBe("letzter Lauf vor 3 Std.");
     expect(heartbeatProblem("sync", { at: new Date(now.getTime() - 60 * 60000), ok: true, note: null }, now)).toBeNull();
     expect(heartbeatProblem("cron", { at: now, ok: false, note: "Meta-Token abgelaufen" }, now)).toBe("Fehler: Meta-Token abgelaufen");
+  });
+
+  it("blendet abgehakte und auf später gelegte Punkte aus", () => {
+    const items = [item("task:a", "info"), item("pay:c1", "bad"), item("storno:l1", "warn")];
+    expect(withoutDismissed(items, ["pay:c1", "gibt-es-nicht"]).map((i) => i.key)).toEqual(["task:a", "storno:l1"]);
+    expect(withoutDismissed(items, [])).toBe(items);
+  });
+
+  it("nimmt nur gültige Schlüssel zum Ausblenden an", () => {
+    for (const ok of ["forms", "parked", "pay:c1", "stale:ckx_12-ab", "feedback:1731250000000-2"]) expect(validHeuteKey(ok)).toBe(true);
+    for (const bad of ["", "Pay:c1", "pay:c 1", "pay:c1:x", "a".repeat(130), 42, null]) expect(validHeuteKey(bad)).toBe(false);
   });
 });
