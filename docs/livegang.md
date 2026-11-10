@@ -171,6 +171,13 @@ Demo-Daten liegen nur in der Sandbox-Datenbank und kommen nicht mit.
    sollte in 2–3 s erscheinen (sonst puffert der Proxy; dann greift die Abfrage alle 3 s).
 5. **Nutzung** (Admin → Zahlen → Nutzung) in der ersten Woche täglich ansehen:
    Fragen an die KI-Hilfe, „nicht hilfreich“-Bewertungen, liegen gebliebene Aufgaben.
+6. **Neue Zahlen-Seite** (Admin → Zahlen) mit echten Daten prüfen: Umsatzbuch ab Juni plausibel
+   (Pay-per-Lead vs. Airtable-Summen), laufende Kosten unter Einstellungen → Laufende Kosten
+   eintragen (Instantly, Claude, Zapier …), eigene Meta-Kampagnen („Allianz Lead Ads“) prüfen.
+7. **Bankanbindung** (geplant nach dem Livegang): Commerzbank über Enable Banking (Ole legt das
+   Konto an, Zugangsdaten nur in Railway), täglicher Abruf der Abbuchungen, automatische
+   Zuordnung nach Empfänger, Liste „Bitte zuordnen“, Meta ohne Doppelzählung. Amex: bei Enable
+   Banking anfragen, sonst monatlicher CSV-Upload. Verzeichnis der Verarbeitungen ergänzen.
 
 ## Wenn etwas schiefgeht
 
