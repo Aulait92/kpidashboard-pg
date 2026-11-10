@@ -14,7 +14,7 @@ enthalten. Der Merge ist konfliktfrei.
       Livegang nur wiederholen, wenn neue Migrationen dazukommen
       (`ls prisma/migrations` mit der Liste unten vergleichen).
 - [ ] **Probelauf 3** mit dem Stand, der live geht (ca. 19./20.11., nach Code-Stopp):
-      seit Probelauf 2 sind **3 Migrationen dazugekommen** (jetzt 25, siehe
+      seit Probelauf 2 sind **4 Migrationen dazugekommen** (jetzt 26, siehe
       „Neue Migrationen seit Probelauf 2“). Ablauf wie Probelauf 2.
 
 ### Neue Migrationen seit Probelauf 2 (Stand 11.11.)
@@ -24,6 +24,7 @@ enthalten. Der Merge ist konfliktfrei.
 | `20261111090000_erstkontakt_sofort` | Standard-Wartezeit des Assistenten 10 → 0 Min. (Spalten-Standard) und bestehende Assistenten mit 10 Min. auf 0 | Spalten-Standard kommt über den Schema-Abgleich. Die Daten-Umstellung läuft beim Einmessen **nicht** – unkritisch, weil die Produktion noch keine Assistenten hat (`AgentConfig` = 0 Zeilen im Probelauf). |
 | `20261111100000_neue_oberflaeche` | Spalte `Customer.newUi` (neue Oberfläche je Kunde, Standard aus) | über den Schema-Abgleich, nur hinzufügend |
 | `20261111110000_nachfass_abfolgen` | Spalte `AgentConfig.followUpSequencesEnabled` (Standard aus) und Tabelle `LeadSequence` | über den Schema-Abgleich, nur hinzufügend |
+| `20261112090000_admin_neue_oberflaeche` | Spalte `User.adminNewUi` (Standard aus) | über den Schema-Abgleich, nur hinzufügend |
 
 Alle drei verändern keine bestehenden Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und
@@ -96,7 +97,7 @@ KI-Hilfe, die brauchen keine Migration).
    `[migrate] Alte Einträge aus früherem Verlauf (bleiben unberührt): …`
    `[migrate] Datenbank ohne (eigene) Migrations-Historie – wird einmalig eingemessen.`
    `[migrate] Schema wird angeglichen (nur hinzufügende Änderungen).`
-   25 × `Migration … marked as applied.` (bis `20261111110000_nachfass_abfolgen`), dazwischen
+   26 × `Migration … marked as applied.` (bis `20261112090000_admin_neue_oberflaeche`), dazwischen
    `[migrate] 20261110120001_status_seit_trigger wird beim Einmessen ausgeführt.`,
    am Ende `No pending migrations to apply.` und `[migrate] Schema aktuell.`
    (Die roten Zeilen „Loaded Prisma config …“ sind nur Hinweise, keine Fehler.)
