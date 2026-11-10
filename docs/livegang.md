@@ -115,6 +115,8 @@ KI-Hilfe, die brauchen keine Migration).
    **nicht** mehr aus dem Cold CRM. Verfahren (Übernahme staging → Produktion, ohne
    Test-Angebote/Stripe-Testdaten) wird vor Probelauf 3 gebaut und dort geprobt.
    Danach `COLD_CRM_DATABASE_URL` und `VERTRIEB_NEUIMPORT_ERLAUBT` auf staging löschen.
+   `MAIL_NUR_AN` (Mail-Sperre) gibt es **nur auf staging** – in der Produktion nicht setzen,
+   sonst bekommen Kunden und Leads keine Mails.
    **Vertriebskontakt ↔ Kundenakte verknüpfen** (Stand 10.11., laut Ole):
    - Norman Heller: Pay-per-Lead-Kunde (Kundenakte mit Bezug)
    - Andy Deibel: Kunde ohne Software („Nur Betreuung“)
