@@ -7,7 +7,7 @@
 // Ohne BOOKING_EMAIL_FROM oder RESEND_API_KEY wird bewusst NICHT gesendet
 // (kein Fallback auf die Agentur-Domain).
 
-import { Resend } from "resend";
+import { mailClient } from "@/lib/mail-guard";
 import {
   buildIcs,
   customerEventById,
@@ -147,7 +147,7 @@ async function sendLeadEmailInner(
     ev.advisorName,
   ].join("\n");
 
-  const resend = new Resend(apiKey);
+  const resend = mailClient(apiKey);
   const { error } = await resend.emails.send({
     from: `"${displayName}" <${fromAddress}>`,
     to,

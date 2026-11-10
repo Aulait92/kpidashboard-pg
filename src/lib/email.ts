@@ -1,4 +1,4 @@
-import { Resend } from "resend";
+import { mailClient } from "@/lib/mail-guard";
 
 export type SendResult = { ok: true } | { ok: false; error: string };
 
@@ -36,7 +36,7 @@ export async function sendPasswordResetEmail(opts: {
     return { ok: false, error: "Email-Service nicht konfiguriert." };
   }
 
-  const resend = new Resend(apiKey);
+  const resend = mailClient(apiKey);
   try {
     const { error } = await resend.emails.send({
       from,
@@ -93,7 +93,7 @@ export async function sendBuyerInviteEmail(opts: {
     return { ok: false, error: "Email-Service nicht konfiguriert." };
   }
   const loginUrl = `${getAppUrl()}/login`;
-  const resend = new Resend(apiKey);
+  const resend = mailClient(apiKey);
   try {
     const { error } = await resend.emails.send({
       from,
@@ -154,7 +154,7 @@ export async function sendOfferEmail(opts: {
   const until = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(opts.validUntil);
   const greeting = escapeHtml(opts.greeting);
   try {
-    const { error } = await new Resend(apiKey).emails.send({
+    const { error } = await mailClient(apiKey).emails.send({
       from,
       to: opts.to,
       ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
@@ -223,7 +223,7 @@ export async function sendOnboardingWelcomeEmail(opts: {
   ];
   const greeting = escapeHtml(opts.greeting);
   try {
-    const { error } = await new Resend(apiKey).emails.send({
+    const { error } = await mailClient(apiKey).emails.send({
       from,
       to: opts.to,
       ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
@@ -290,7 +290,7 @@ export async function sendCustomerMail(opts: {
   const signature = opts.signature ?? "Ole Kannapinn\nperformancegrowth";
   const replyTo = opts.replyTo === undefined ? (process.env.OFFER_REPLY_TO ?? null) : opts.replyTo;
   try {
-    const { error } = await new Resend(apiKey).emails.send({
+    const { error } = await mailClient(apiKey).emails.send({
       from,
       to: opts.to,
       ...(replyTo ? { replyTo } : {}),
@@ -330,7 +330,7 @@ export async function sendPlainMail(opts: { to: string | string[]; subject: stri
     return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
   }
   try {
-    const { error } = await new Resend(apiKey).emails.send({ from, to: opts.to, subject: opts.subject, text: opts.text });
+    const { error } = await mailClient(apiKey).emails.send({ from, to: opts.to, subject: opts.subject, text: opts.text });
     return error ? { ok: false, error: error.message } : { ok: true };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
