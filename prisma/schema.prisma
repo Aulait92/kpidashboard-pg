@@ -140,6 +140,10 @@ model Customer {
   pauses             CustomerPause[]
   whatsAppFees       WhatsAppFeeCharge[]
   leadSubscriptions  LeadSubscription[]
+  // Modul „Bestandskunden-Kampagnen“ (Zusatzmodul; Testkunden kostenlos)
+  existingCustomersEnabled Boolean @default(false)
+  existingCustomers  ExistingCustomer[]
+  campaigns          CustomerCampaign[]
   leadSources        LeadSource[]
   salesContact       SalesContact?
   whatsAppAccount    WhatsAppAccount?
@@ -1477,4 +1481,95 @@ model PoolLead {
   @@index([phone, createdAt])
   @@index([email, createdAt])
   @@index([status, productKey])
+}
+
+// ─── Bestandskunden (Import aus dem Versicherer-System) + Kampagnen ─────────
+// Gesundheitsangaben werden nie importiert. Einwilligung für WhatsApp/E-Mail
+// liegt laut Versicherer (Allianz) vor; dokumentiert mit Importdatum.
+model ExistingCustomer {
+  id          String    @id @default(cuid())
+  customerId  String
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  externalNo  String? // Kundennummer im Versicherer-System
+  firstName   String?
+  lastName    String?
+  phone       String? // normalisiert wie WhatsApp (4915…)
+  email       String?
+  birthday    DateTime?
+  street      String?
+  zip         String?
+  city        String?
+  // Sparten, z. B. ["KFZ", "Haftpflicht"] – für Segmente und den Assistenten
+  lines       String[]  @default([])
+  // nächster Ablauf/Hauptfälligkeit (z. B. KFZ) für Anlass „Wechsel/Ablauf“
+  nextRenewal DateTime?
+  consentAt   DateTime? // „Einwilligung laut Versicherer“ (Importdatum)
+  consentNote String?
+  optOutAt    DateTime? // „Stopp“ → keine Kampagnen mehr
+  lastCampaignAt DateTime?
+  importId    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  contracts  ExistingContract[]
+  recipients CampaignRecipient[]
+
+  @@unique([customerId, externalNo])
+  @@index([customerId, phone])
+  @@index([customerId, email])
+}
+
+model ExistingContract {
+  id                 String           @id @default(cuid())
+  existingCustomerId String
+  existingCustomer   ExistingCustomer @relation(fields: [existingCustomerId], references: [id], onDelete: Cascade)
+  line               String // normalisierte Sparte (KFZ, Hausrat, …)
+  product            String? // Originalbezeichnung
+  startDate          DateTime?
+  renewalDate        DateTime?
+
+  @@index([existingCustomerId])
+}
+
+model CustomerCampaign {
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name        String
+  // cross_sell | review | birthday | renewal
+  occasion    String
+  // Segment, z. B. { has: ["KFZ"], lacks: ["Hausrat"] } oder { birthdayDays: 30 }
+  segment     Json
+  // Thema für die Vorlage (z. B. „Hausrat“), Parameter {{2}}
+  topic       String?
+  dailyLimit  Int      @default(150)
+  // draft | running | paused | done
+  status      String   @default("draft")
+  createdById String?
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  recipients CampaignRecipient[]
+
+  @@index([customerId, status])
+}
+
+model CampaignRecipient {
+  id                 String           @id @default(cuid())
+  campaignId         String
+  campaign           CustomerCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  existingCustomerId String
+  existingCustomer   ExistingCustomer @relation(fields: [existingCustomerId], references: [id], onDelete: Cascade)
+  // queued | sent | replied | failed | skipped
+  status             String           @default("queued")
+  reason             String?
+  sentAt             DateTime?
+  repliedAt          DateTime?
+  conversationId     String?
+  leadId             String?
+
+  @@unique([campaignId, existingCustomerId])
+  @@index([campaignId, status])
 }

@@ -7,6 +7,7 @@ import { pruneTransient } from "@/lib/erasure";
 import { berlinMonth, chargeWhatsAppFees } from "@/lib/whatsapp/fees";
 import { renewOrders } from "@/lib/ppl/orders";
 import { redistributeParked } from "@/lib/ppl/engine";
+import { runCampaigns } from "@/lib/bestand/campaigns";
 import { reportError } from "@/lib/monitoring";
 import { runOnboardingCron } from "@/lib/onboarding-cron";
 import { beat } from "@/lib/heartbeat";
@@ -78,11 +79,16 @@ async function handle(req: Request): Promise<Response> {
     }),
     redistributed: await redistributeParked(undefined, now).catch(() => null),
   };
+  // Bestandskunden-Kampagnen: gedrosselter Versand (Mo–Sa 9–19 Uhr)
+  const campaigns = await runCampaigns(now).catch((e: unknown) => {
+    reportError(e, "cron-campaigns");
+    return null;
+  });
   const failed = Object.entries({ outreach, responses, reminders, onboarding })
     .filter(([, r]) => r && typeof r === "object" && "error" in r)
     .map(([k]) => k);
   await beat("cron", failed.length === 0, failed.length ? `Fehler in: ${failed.join(", ")}` : null);
-  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl });
+  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl, campaigns });
 }
 
 export const GET = handle;

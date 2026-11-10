@@ -199,7 +199,16 @@ function buildSystemPrompt(
   const base = [
     agent.systemPrompt?.trim() ||
       "Du bist ein freundlicher, empathischer digitaler Vertriebsassistent.",
-    product ? `Produkt/Thema dieses Leads: ${product}.` : "",
+    product === "Bestandskunde"
+      ? [
+          "Dies ist ein BESTANDSKUNDE des Beraters (kein Werbe-Lead). Er wurde vom Berater wegen eines Anlasses angeschrieben (siehe Kontext).",
+          "- Sieze ihn (Sie), auch wenn frühere Nachrichten anders klingen.",
+          "- Knüpfe am Anlass an und kläre kurz den Bedarf; die bestehenden Sparten sind bekannt, frage sie nicht ab und nenne keine Beträge oder Vertragsdetails.",
+          "- Ziel ist ein kurzer Beratungstermin mit dem Berater. Bei Vertragsfragen (Schaden, Kündigung, Änderung) handover_to_advisor nutzen.",
+        ].join("\n")
+      : product
+        ? `Produkt/Thema dieses Leads: ${product}.`
+        : "",
     agent.knowledge?.trim() ? `Wissen:\n${agent.knowledge.trim()}` : "",
     agent.personality?.trim()
       ? `Persönlichkeit/Ton:\n${agent.personality.trim()}`

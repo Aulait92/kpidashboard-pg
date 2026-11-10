@@ -71,6 +71,17 @@ Für jeden Kunden mit AVV (Annahme des Angebots, `Offer.dpaUrl` speichert die ge
 `LEGAL_VERSION` erhöhen und die Kunden in Textform informieren (AVV: 14 Tage Widerspruchsfrist
 gilt nur für neue Dienste, eine Streichung ist unkritisch, wird aber trotzdem mitgeteilt).
 
+### Bestandskunden-Kampagnen (Zusatzmodul)
+
+- **Daten:** Bestandskunden des Vertreters (Name, Kontakt, Geburtsdatum, Adresse, Kundennummer,
+  Sparten mit Beginn/Ablauf). **Keine Gesundheitsangaben** (Spalten werden beim Import
+  verworfen), keine Beiträge.
+- **Einwilligung:** liegt laut Versicherer vor; je Kunde dokumentiert („Einwilligung laut
+  Versicherer, Import TT.MM.JJJJ“). „Stopp“ sperrt den Kunden dauerhaft für Kampagnen.
+- **AVV:** Datenarten um „Vertragsdaten von Bestandskunden“ ergänzen (**Prüfen** Anwalt).
+- **Löschung:** mit dem Kundenkonto bzw. auf Wunsch des Vertreters (Liste neu hochladen
+  aktualisiert, löscht aber nicht – Löschen einzelner Bestandskunden: **noch offen**).
+
 ## 4. Löschkonzept
 
 | Daten | Frist | Wie |

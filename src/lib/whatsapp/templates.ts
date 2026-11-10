@@ -20,7 +20,11 @@ export type NoticePurpose =
   | "reminder"
   | "followup"
   | "followup_offer"
-  | "followup_noshow";
+  | "followup_noshow"
+  | "campaign_cross_sell"
+  | "campaign_review"
+  | "campaign_birthday"
+  | "campaign_renewal";
 
 export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   outreach: "Erstanschreiben",
@@ -29,6 +33,10 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   followup: "Nachfassen allgemein (Chat > 24 h still)",
   followup_offer: "Nachfassen nach Angebot",
   followup_noshow: "Nachfassen nach verpasstem Termin",
+  campaign_cross_sell: "Bestandskunden: Lücke schließen",
+  campaign_review: "Bestandskunden: Jahresgespräch",
+  campaign_birthday: "Bestandskunden: Geburtstag",
+  campaign_renewal: "Bestandskunden: Ablauf/Wechsel",
 };
 
 export const PURPOSE_PARAMS: Record<NoticePurpose, string[]> = {
@@ -38,6 +46,10 @@ export const PURPOSE_PARAMS: Record<NoticePurpose, string[]> = {
   followup: ["Vorname"],
   followup_offer: ["Vorname", "Thema (z. B. Hausrat, Haftpflicht)"],
   followup_noshow: ["Vorname"],
+  campaign_cross_sell: ["Vorname", "Thema (z. B. Hausrat)"],
+  campaign_review: ["Vorname"],
+  campaign_birthday: ["Vorname"],
+  campaign_renewal: ["Vorname", "Vertrag (z. B. KFZ)"],
 };
 
 /** Vorschläge für die bei Meta einzureichenden Texte ([Berater] = Name). */
@@ -52,6 +64,14 @@ export const SUGGESTED_TEMPLATE_TEXT: Record<NoticePurpose, string> = {
     "Hallo {{1}}, hier ist der digitale Assistent von [Berater]. Konntest du dir das Angebot zu {{2}} schon anschauen? Wenn du Fragen hast oder etwas anpassen möchtest, antworte einfach hier.",
   followup_noshow:
     "Hallo {{1}}, schade, dass es mit unserem Termin nicht geklappt hat. Hier ist der digitale Assistent von [Berater] – sollen wir einen neuen Termin finden? Antworte einfach hier.",
+  campaign_cross_sell:
+    "Hallo {{1}}, hier ist [Berater], Ihr Allianz-Berater. Kurze Frage: Sind Sie beim Thema {{2}} schon gut abgesichert? Wenn Sie möchten, schaue ich mir das gern kostenlos mit Ihnen an. Antworten Sie einfach hier. (Keine Nachrichten mehr? Antworten Sie mit STOPP.)",
+  campaign_review:
+    "Hallo {{1}}, hier ist [Berater], Ihr Allianz-Berater. Es ist Zeit für einen kurzen Check Ihrer Verträge: Passt noch alles zu Ihrer Situation? Antworten Sie einfach hier, dann finden wir einen Termin. (Keine Nachrichten mehr? Antworten Sie mit STOPP.)",
+  campaign_birthday:
+    "Hallo {{1}}, herzlichen Glückwunsch zum Geburtstag! Alles Gute für das neue Lebensjahr wünscht Ihnen [Berater]. Wenn ich etwas für Sie tun kann, antworten Sie einfach hier.",
+  campaign_renewal:
+    "Hallo {{1}}, hier ist [Berater], Ihr Allianz-Berater. Bei Ihrem Vertrag ({{2}}) steht bald ein guter Zeitpunkt an, um Beitrag und Leistung zu prüfen. Soll ich mir das kurz für Sie anschauen? Antworten Sie einfach hier. (Keine Nachrichten mehr? Antworten Sie mit STOPP.)",
 };
 
 export class NoTemplateError extends Error {

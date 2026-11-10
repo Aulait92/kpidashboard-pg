@@ -202,6 +202,16 @@ async function persistInbound(
     },
   });
 
+  // Bestandskunden-Kampagne: Antwort → Lead in der Pipeline; „Stopp“ → Sperre, Assistent schweigt.
+  let campaignStop = false;
+  try {
+    const { handleCampaignReply } = await import("@/lib/bestand/campaigns");
+    campaignStop = (await handleCampaignReply(conversation.id, from, body)).stop;
+  } catch (e) {
+    console.error("[whatsapp campaign-reply]", e);
+  }
+  if (campaignStop) return;
+
   // CRM: Lead hat geantwortet ⇒ „Im Gespräch" (nur aus Neu/Nicht erreicht).
   const linkedLead = await prisma.conversation.findUnique({
     where: { id: conversation.id },

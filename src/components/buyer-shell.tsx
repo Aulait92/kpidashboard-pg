@@ -7,6 +7,7 @@ import {
   BarChart3,
   CalendarDays,
   ChevronDown,
+  Contact,
   Columns3,
   CreditCard,
   ListChecks,
@@ -45,8 +46,11 @@ export function BuyerShell({
   teamRole = "owner",
   hasTeam = false,
   showOrders = false,
+  showBestand = false,
   children,
 }: {
+  /** Modul Bestandskunden-Kampagnen freigeschaltet. */
+  showBestand?: boolean;
   /** Pay-per-Lead-Käufer: Reiter „Bestellen“. */
   showOrders?: boolean;
   /** Mehrere Logins → „Mein Kalender" im Profilmenü. */
@@ -90,6 +94,9 @@ export function BuyerShell({
         { href: "/buyer/leads", label: "Leads", icon: Users, match: (p) => p.startsWith("/buyer/leads") },
         { href: "/buyer/kanban", label: "Pipeline", icon: Columns3, match: (p) => p.startsWith("/buyer/kanban") },
       ];
+  if (showBestand) {
+    items.push({ href: "/buyer/bestand", label: "Bestand", icon: Contact, match: (p) => p.startsWith("/buyer/bestand") });
+  }
   if (showOrders) {
     items.push({ href: "/buyer/bestellen", label: "Bestellen", icon: ShoppingCart, match: (p) => p.startsWith("/buyer/bestellen") });
   }

@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   // auflösen und deshalb von Turbopack nicht gebundlet werden können —
   // sie bleiben als externes node_modules-Require erhalten.
   serverExternalPackages: ["@ffmpeg-installer/ffmpeg"],
+  // Bestandskunden-Import (Excel/CSV mit tausenden Zeilen) per Server Action
+  experimental: { serverActions: { bodySizeLimit: "16mb" } },
 };
 
 export default withSentryConfig(nextConfig, {

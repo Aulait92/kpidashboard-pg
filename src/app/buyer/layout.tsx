@@ -43,7 +43,7 @@ export default async function BuyerLayout({
     : null;
   const previewName = ctx?.preview ? customerName : null;
   const advisor = ctx?.teamRole === "advisor";
-  const [showChats, chatBadge, setupOpen, me, logins, pplSubs] = ctx
+  const [showChats, chatBadge, setupOpen, me, logins, pplSubs, bestand] = ctx
     ? await Promise.all([
         hasWhatsAppInbox(ctx.customerId),
         attentionCount(ctx),
@@ -51,8 +51,9 @@ export default async function BuyerLayout({
         advisor && ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true, email: true } }) : null,
         prisma.user.count({ where: { customerId: ctx.customerId, role: "BUYER" } }),
         advisor ? 0 : prisma.leadSubscription.count({ where: { customerId: ctx.customerId, active: true, delivery: "app" } }),
+        advisor ? false : prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { existingCustomersEnabled: true } }).then((c) => !!c?.existingCustomersEnabled),
       ])
-    : [false, 0, 0, null, 0, 0];
+    : [false, 0, 0, null, 0, 0, false];
   // Anzeigename ohne Gesellschafts-Präfix („Allianz Anid Schwarzkopf").
   // Berater sehen ihren eigenen Namen.
   const displayName = me ? (me.displayName?.trim() || me.email) : (customerName ?? "").replace(/^Allianz\s+/i, "");
@@ -76,7 +77,7 @@ export default async function BuyerLayout({
         </div>
       ) : null}
       {ctx ? (
-        <BuyerShell displayName={displayName} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen} teamRole={ctx.teamRole} hasTeam={logins > 1} showOrders={pplSubs > 0}>
+        <BuyerShell displayName={displayName} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen} teamRole={ctx.teamRole} hasTeam={logins > 1} showOrders={pplSubs > 0} showBestand={bestand}>
           {children}
           {/* Lead-Detail-Modal innerhalb der Shell → Toasts funktionieren dort auch */}
           {modal}
