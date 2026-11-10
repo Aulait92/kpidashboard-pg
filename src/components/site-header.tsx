@@ -3,6 +3,7 @@ import { LogOut, TrendingUp } from "lucide-react";
 import { headers } from "next/headers";
 import { getCurrentSession } from "@/lib/auth";
 import { AdminNav } from "@/components/admin-tabs";
+import { CommandPalette } from "@/components/command-palette";
 import { logoutAction } from "@/app/login/actions";
 
 export async function SiteHeader() {
@@ -30,6 +31,7 @@ export async function SiteHeader() {
             <div className="h-full min-w-0 flex-1">
               <AdminNav />
             </div>
+            <CommandPalette />
             <form action={logoutAction} className="shrink-0">
               <button
                 type="submit"
