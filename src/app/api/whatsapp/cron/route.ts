@@ -8,6 +8,7 @@ import { berlinMonth, chargeWhatsAppFees } from "@/lib/whatsapp/fees";
 import { renewOrders } from "@/lib/ppl/orders";
 import { redistributeParked } from "@/lib/ppl/engine";
 import { runCampaigns } from "@/lib/bestand/campaigns";
+import { runSequences } from "@/lib/lead-sequences";
 import { reportError } from "@/lib/monitoring";
 import { runOnboardingCron } from "@/lib/onboarding-cron";
 import { beat } from "@/lib/heartbeat";
@@ -16,6 +17,7 @@ import { beat } from "@/lib/heartbeat";
 //   1. Erstanschreiben neuer Leads ohne Termin
 //   2. Termin-Erinnerungen ~24 h vorher
 //   3. Onboarding-Automatik (siehe lib/onboarding-cron.ts)
+//   4. Nachfass-Abfolgen (siehe lib/lead-sequences.ts)
 // Per WHATSAPP_WEBHOOK_SECRET gesichert (?token= oder x-webhook-secret).
 export const dynamic = "force-dynamic";
 
@@ -84,11 +86,16 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-campaigns");
     return null;
   });
-  const failed = Object.entries({ outreach, responses, reminders, onboarding })
+  // Nachfass-Abfolgen (WhatsApp Mo–Sa 9–19 Uhr, Anruf-Aufgaben jederzeit)
+  const sequences = await runSequences(now).catch((e: unknown) => {
+    reportError(e, "cron-sequences");
+    return { error: e instanceof Error ? e.message : String(e) };
+  });
+  const failed = Object.entries({ outreach, responses, reminders, onboarding, sequences })
     .filter(([, r]) => r && typeof r === "object" && "error" in r)
     .map(([k]) => k);
   await beat("cron", failed.length === 0, failed.length ? `Fehler in: ${failed.join(", ")}` : null);
-  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl, campaigns });
+  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl, campaigns, sequences });
 }
 
 export const GET = handle;

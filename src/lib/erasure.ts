@@ -80,6 +80,7 @@ async function eraseLeads(customerId: string, leads: LeadRef[]): Promise<EraseRe
     prisma.conversation.deleteMany({ where: { id: { in: convIds } } }),
     prisma.consentOptIn.deleteMany({ where: { customerId, contactPhone: { in: phones } } }),
     prisma.unassignedLead.deleteMany({ where: { externalId: { in: externalIds } } }),
+    prisma.leadSequence.deleteMany({ where: { leadId: { in: ids } } }),
     prisma.lead.updateMany({
       where: { id: { in: ids } },
       data: {

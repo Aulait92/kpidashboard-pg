@@ -91,6 +91,22 @@ Seiten aus der Liste „Seiten“ unten.
 - Wie sich der Assistent vorstellt und was er fragt, stellen wir für Sie ein. Änderungswünsche gern über
   „Etwas unklar? Feedback“ im Profilmenü oder im Hilfetermin.
 
+## Automatisches Nachfassen (Abfolgen)
+
+- Wenn wir es für Sie eingeschaltet haben, fasst die App nach einem Ergebnis selbst nach:
+  - **Nicht erreicht:** sofort eine WhatsApp („Wann passt es dir?“), nach 2 Tagen eine Anruf-Aufgabe auf
+    „Heute“, nach 6 Tagen eine letzte, freundliche WhatsApp. Danach ist Schluss.
+  - **Angebot gesendet:** nach 3 Tagen eine WhatsApp („Konntest du dir das Angebot anschauen?“),
+    nach 7 Tagen eine Anruf-Aufgabe.
+  - **Nicht erschienen:** sofort eine WhatsApp mit Link zum neuen Termin, nach 2 Tagen eine Anruf-Aufgabe.
+- WhatsApp geht nur Mo–Sa zwischen 9 und 19 Uhr raus. Geht keine WhatsApp (z. B. keine Handynummer),
+  legt die App stattdessen eine Anruf-Aufgabe an. Eine eigene, spätere Wiedervorlage bleibt bestehen.
+- Das Nachfassen hört sofort auf, wenn der Lead antwortet, einen Termin bucht, „Stopp“ schreibt, auf
+  Abschluss / Kein Interesse / Disqualifiziert steht, reklamiert oder gelöscht wird.
+- Im Lead sehen Sie unter „Automatisches Nachfassen“, was schon passiert ist und was als Nächstes kommt.
+  Mit „Automatisches Nachfassen stoppen“ beenden Sie es für diesen Lead.
+- Ein- oder ausschalten für Ihr ganzes Konto: bitte kurz bei uns melden.
+
 ## Termine
 
 - Buchung über „Termin“ beim Lead: Die Buchungsseite zeigt echte freie Zeiten aus Ihrem Kalender,

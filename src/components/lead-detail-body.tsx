@@ -15,6 +15,7 @@ import { nowMs } from "@/lib/now";
 import { isAdvisor, leadScope, teamMembers, type TeamCtx } from "@/lib/team";
 import { LeadAssignee } from "@/components/lead-assignee";
 import { LeadHeaderActions, LeadNotes } from "@/components/lead-actions";
+import { LeadSequenceCard } from "@/components/lead-sequence-card";
 import {
   ALL_GROUP_KEYS,
   COMMON_FIELDS,
@@ -283,6 +284,8 @@ export async function LeadDetailBody({
       {fields ? (
         <ReadOnlyCard fields={fields} source={lead.source} statusLabels={whatsapp ? WHATSAPP_STATUS_LABELS : {}} />
       ) : null}
+
+      <LeadSequenceCard leadId={lead.id} readOnly={!!lead.erasedAt} />
 
       <LeadNotes leadId={lead.id} initial={lead.notes ?? (fields ? (firstString(fields["Notizen"]) ?? "") : "")} />
     </>

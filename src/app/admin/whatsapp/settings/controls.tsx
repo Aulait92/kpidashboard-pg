@@ -9,6 +9,7 @@ import {
   saveAgentSettingsAction,
   saveTemplateResultAction,
   setAgentActiveAction,
+  setFollowUpSequencesAction,
   setTemplateApprovedAction,
   type SaveResult,
 } from "./actions";
@@ -97,6 +98,9 @@ export function AgentSettings(p: {
   advisorEmail: string;
   hasIcs: boolean;
   outreachTemplateReady: boolean;
+  sequencesEnabled: boolean;
+  /** Fehlende freigegebene Vorlagen für die Abfolgen (Anzeigenamen). */
+  sequenceTemplatesMissing: string[];
 }) {
   const toast = useToast();
   const router = useRouter();
@@ -174,6 +178,24 @@ export function AgentSettings(p: {
         </span>
         {v.outreachEnabled && !p.outreachTemplateReady ? (
           <p className="w-full text-xs font-medium text-amber-700">Es fehlt noch eine freigegebene Vorlage „Erstanschreiben“ (unten).</p>
+        ) : null}
+      </div>
+
+      <div className="flex min-h-[60px] flex-wrap items-center gap-x-2 gap-y-1 px-4 py-3">
+        <div className="min-w-0 flex-1">
+          <div className="font-medium">Automatisch nachfassen (Abfolgen)</div>
+          <div className="text-xs text-[color:var(--muted)]">
+            Nicht erreicht: WhatsApp sofort, Anruf-Aufgabe an Tag 2, letzte WhatsApp an Tag 6. Angebot: WhatsApp an Tag 3, Anruf an
+            Tag 7. Nicht erschienen: WhatsApp mit Buchungslink sofort, Anruf an Tag 2. Stoppt bei Antwort, Termin, Abschluss,
+            Kein Interesse, Reklamation oder „Stopp“. WhatsApp nur Mo–Sa 9–19 Uhr.
+          </div>
+        </div>
+        <Switch label="Automatisch nachfassen" checked={p.sequencesEnabled} onChange={(next) => setFollowUpSequencesAction(p.customerId, next)} />
+        {p.sequencesEnabled && p.sequenceTemplatesMissing.length ? (
+          <p className="w-full text-xs font-medium text-amber-700">
+            Ohne freigegebene Vorlage geht außerhalb des 24-h-Fensters keine WhatsApp raus – stattdessen entsteht eine Anruf-Aufgabe. Es
+            fehlen: {p.sequenceTemplatesMissing.join(", ")}.
+          </p>
         ) : null}
       </div>
 

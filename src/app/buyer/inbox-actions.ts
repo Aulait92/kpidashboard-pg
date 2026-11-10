@@ -13,6 +13,7 @@ import { writableCustomerId } from "@/lib/buyer-write";
 import { syncFollowUpWithStatus, workdaysFromNow } from "@/lib/lead-followup";
 import { prisma } from "@/lib/prisma";
 import { recordUsage } from "@/lib/usage";
+import { startSequence, stopSequences } from "@/lib/lead-sequences";
 
 type LeadPrev = {
   status: string | null;
@@ -117,6 +118,7 @@ export async function callbackOutcomeResult(
         ...(!lead.firstContactAt ? { firstContactAt: now } : {}),
       },
     });
+    await startSequence(lead.id, "not_reached", now).catch((e) => console.error("[lead-sequences]", e));
   } else if (outcome === "offer" || outcome === "won") {
     // Am Telefon direkt Angebot geschickt bzw. abgeschlossen.
     const status = outcome === "won" ? "Abschluss" : "Angebot gesendet";
@@ -207,6 +209,7 @@ export async function appointmentOutcomeResult(
     },
   });
   await syncFollowUpWithStatus(lead.id, nextStatus);
+  if (outcome === "no_show") await startSequence(lead.id, "no_show").catch((e) => console.error("[lead-sequences]", e));
   await recordUsage("action", `outcome.${outcome}`);
   refresh();
   return {
@@ -303,6 +306,8 @@ export async function undoInboxAction(undo: UndoSnapshot): Promise<InboxResult> 
         : {}),
     },
   });
+  // Gerade gestartete Nachfass-Abfolge mit zurücknehmen.
+  await stopSequences(lead.id, "Rückgängig gemacht", { since: new Date(Date.now() - 15 * 60 * 1000) }).catch((e) => console.error("[lead-sequences]", e));
   await recordUsage("action", `undo.${undo.kind}`);
   refresh();
   return { ok: true };

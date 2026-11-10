@@ -38,6 +38,8 @@ export const AUDIT_LABEL: Record<string, string> = {
   "offer.accept": "Angebot angenommen",
   "contact.delete": "Vertriebskontakt gelöscht",
   "agent.active": "WhatsApp-Assistent an/aus",
+  "agent.sequences": "Automatisch nachfassen an/aus",
+  "lead.sequence_stop": "Automatisches Nachfassen gestoppt",
   "leadsource.assign": "Leadformular zugeordnet",
   "leadsource.toggle": "Leadformular pausiert/aktiviert",
   "preview.start": "Kundenansicht geöffnet (Admin)",

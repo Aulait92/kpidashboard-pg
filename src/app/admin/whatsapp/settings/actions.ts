@@ -228,6 +228,23 @@ export async function setAgentActiveAction(customerId: string, active: boolean):
   }
 }
 
+/** Automatisch nachfassen (Nachfass-Abfolgen) an/aus. Ausschalten stoppt laufende Abfolgen beim nächsten Schritt. */
+export async function setFollowUpSequencesAction(customerId: string, enabled: boolean): Promise<SaveResult> {
+  try {
+    await requireAdmin();
+    await prisma.agentConfig.upsert({
+      where: { customerId },
+      create: { customerId, followUpSequencesEnabled: enabled, systemPrompt: STARTER_PROMPT },
+      update: { followUpSequencesEnabled: enabled },
+    });
+    await audit("agent.sequences", { entity: "AgentConfig", customerId, details: { enabled } });
+    revalidateSettings();
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Speichern fehlgeschlagen." };
+  }
+}
+
 /** Einstellungen des Assistenten speichern (automatisch beim Ändern). */
 export async function saveAgentSettingsAction(formData: FormData): Promise<SaveResult> {
   try {

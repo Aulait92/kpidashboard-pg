@@ -45,6 +45,11 @@ Für jeden Kunden mit AVV (Annahme des Angebots, `Offer.dpaUrl` speichert die ge
   Zapier/Airtable), Verwaltung und Verteilung im Team, WhatsApp-Kontakt durch den
   KI-Assistenten und die Berater, Terminbuchung und -erinnerung, Zustellung per E-Mail
   (Nur-Betreuung), Auswertungen.
+- **Automatisches Nachfassen (Abfolgen, je Kunde einschaltbar):** nutzt dieselbe
+  WhatsApp-Verarbeitung (gleiche Einwilligung, gleiche Dienste, keine neuen Datenarten).
+  Gespeichert wird nur der Ablauf je Lead (`LeadSequence`: Art, Schritt, Zeitpunkte,
+  Ergebnis – keine Nachrichteninhalte); wird mit dem Lead gelöscht. „Stopp“ oder eine
+  Antwort beendet das Nachfassen sofort.
 - **Datenarten und Betroffene:** wie AVV § „Art, Zweck und Umfang“. Keine Daten nach Art. 9.
 - **Unterauftragsverarbeiter:** AVV Anlage 2 (`SUBPROCESSORS`).
 - **Drittland:** USA bei Anthropic, Resend, Airtable, Zapier, Railway (Unternehmen), Meta,

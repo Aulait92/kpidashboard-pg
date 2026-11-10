@@ -381,6 +381,7 @@ model Lead {
   // ─── WhatsApp-CRM (Phase 0) ─────────────────────────────────────────
   conversations Conversation[]
   appointments  Appointment[]
+  sequences     LeadSequence[]
 
   @@index([customerId, createdAt])
   @@index([assignedUserId])
@@ -663,6 +664,9 @@ model AgentConfig {
   outreachEnabled       Boolean  @default(false)
   // 0 = sofort beim Eingang (Speed to Lead). Höher nur, wenn der Lead erst selbst buchen soll.
   outreachDelayMin      Int      @default(0)
+  // Automatisch nachfassen: feste Abfolgen nach „Nicht erreicht“, „Angebot gesendet“,
+  // „Nicht erschienen“ (lib/lead-sequences.ts). Standard aus.
+  followUpSequencesEnabled Boolean @default(false)
   // Fester Video-Link für alle Video-Termine (z. B. persönlicher Webex-Raum).
   // Leer = Google Meet bzw. Microsoft Teams wird pro Termin erzeugt.
   videoRoomUrl          String?
@@ -1573,4 +1577,28 @@ model CampaignRecipient {
 
   @@unique([campaignId, existingCustomerId])
   @@index([campaignId, status])
+}
+
+// Nachfass-Abfolge je Lead (lib/lead-sequences.ts): feste Schritte (WhatsApp /
+// Anruf-Aufgabe) mit Tagesabstand, vom 5-Minuten-Cron abgearbeitet. Stoppt bei
+// Antwort, Termin, Abschluss/Kein Interesse, Reklamation, Löschung, „Stopp“.
+model LeadSequence {
+  id         String    @id @default(cuid())
+  leadId     String
+  customerId String
+  // not_reached | offer | no_show
+  kind       String
+  // Index des nächsten Schritts
+  step       Int       @default(0)
+  nextAt     DateTime?
+  startedAt  DateTime  @default(now())
+  stoppedAt  DateTime?
+  stopReason String?
+  // Verlauf ohne Inhalte: [{ at, step, action, result, detail }]
+  log        Json      @default("[]")
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([stoppedAt, nextAt])
+  @@index([leadId])
 }
