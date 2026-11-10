@@ -1,4 +1,5 @@
 import { mailClient } from "@/lib/mail-guard";
+import { PROVIDER } from "@/lib/legal-texts";
 
 export type SendResult = { ok: true } | { ok: false; error: string };
 
@@ -51,6 +52,8 @@ export async function sendPasswordResetEmail(opts: {
         "Der Link ist 1 Stunde gültig.",
         "",
         "Falls du diese Anfrage nicht ausgelöst hast, kannst du diese Mail ignorieren.",
+        "",
+        signatureText(PROVIDER.brand),
       ].join("\n"),
       html: `
         <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#0b1220">
@@ -62,6 +65,7 @@ export async function sendPasswordResetEmail(opts: {
           <p style="margin:0 0 8px;font-size:12px;color:#6b7a96">Oder kopiere diesen Link:</p>
           <p style="margin:0 0 24px;font-size:12px;word-break:break-all;color:#2563eb">${opts.resetUrl}</p>
           <p style="margin:0;font-size:12px;color:#6b7a96">Der Link ist <strong>1 Stunde</strong> gültig. Wenn du den Reset nicht angefordert hast, kannst du diese Mail ignorieren.</p>
+          ${signatureHtml(PROVIDER.brand)}
         </div>
       `,
     });
@@ -110,6 +114,8 @@ export async function sendBuyerInviteEmail(opts: {
         loginUrl,
         "",
         `Deine Login-E-Mail: ${opts.to}`,
+        "",
+        signatureText(),
       ].join("\n"),
       html: `
         <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#0b1220">
@@ -120,6 +126,7 @@ export async function sendBuyerInviteEmail(opts: {
           </p>
           <p style="margin:0 0 8px;font-size:12px;color:#6b7a96">Login-E-Mail: ${opts.to}</p>
           <p style="margin:0;font-size:12px;color:#6b7a96">Der Link ist <strong>7 Tage</strong> gültig. Danach: <a href="${loginUrl}" style="color:#2563eb">${loginUrl}</a> → „Passwort vergessen".</p>
+          ${signatureHtml()}
         </div>
       `,
     });
@@ -137,6 +144,37 @@ export async function sendBuyerInviteEmail(opts: {
 
 const escapeHtml = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+// ─── Signatur ──────────────────────────────────────────────────────────
+// Einheitlich für alle Mails von performancegrowth: Gruß, Name, darunter die
+// Firmenangaben (Pflichtangaben für geschäftliche E-Mails der UG).
+const legalLines = () =>
+  [
+    PROVIDER.name,
+    `${PROVIDER.street} · ${PROVIDER.city}`,
+    [PROVIDER.phone && `Tel. ${PROVIDER.phone}`, PROVIDER.email, PROVIDER.website].filter(Boolean).join(" · "),
+    [`Geschäftsführer: ${PROVIDER.manager}`, PROVIDER.register].filter(Boolean).join(" · "),
+  ];
+
+/** Signatur als Text: „Viele Grüße“, Absender (Zeilen), Firmenangaben. */
+export function signatureText(personal = `${PROVIDER.manager}\n${PROVIDER.brand}`): string {
+  return ["Viele Grüße", personal, "", "--", ...legalLines()].join("\n");
+}
+
+/** Signatur als HTML (gleicher Inhalt, Firmenangaben klein und grau). */
+export function signatureHtml(personal = `${PROVIDER.manager}\n${PROVIDER.brand}`): string {
+  const [first, ...rest] = personal.split("\n");
+  return `
+          <p style="margin:24px 0 0;font-size:15px;line-height:1.6">Viele Grüße<br><strong>${escapeHtml(first)}</strong>${rest.map((l) => `<br>${escapeHtml(l)}`).join("")}</p>
+          <table role="presentation" cellpadding="0" cellspacing="0" style="margin:20px 0 0;border-top:1px solid #e3e9f3;padding-top:14px;width:100%">
+            <tr><td style="padding-top:14px">
+              <div style="font-size:15px;font-weight:700;letter-spacing:-.01em;margin:0 0 6px">performance<span style="color:#2563eb">growth</span></div>
+              <div style="font-size:12px;line-height:1.6;color:#66758f">${legalLines()
+                .map((l, i) => (i === 2 ? l.replace(PROVIDER.email, `<a href="mailto:${PROVIDER.email}" style="color:#66758f">${PROVIDER.email}</a>`).replace(PROVIDER.website, `<a href="https://${PROVIDER.website}" style="color:#2563eb;text-decoration:none">${PROVIDER.website}</a>`) : escapeHtml(l)))
+                .join("<br>")}</div>
+            </td></tr>
+          </table>`;
+}
 
 /** Schickt einem Interessenten den Link zu seinem Angebot. */
 export async function sendOfferEmail(opts: {
@@ -167,8 +205,7 @@ export async function sendOfferEmail(opts: {
         "",
         `Sie können es dort direkt online annehmen oder als PDF herunterladen. Das Angebot gilt bis ${until}.`,
         "",
-        "Viele Grüße",
-        "performancegrowth",
+        signatureText(),
       ].join("\n"),
       html: `
         <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0b1220">
@@ -176,7 +213,7 @@ export async function sendOfferEmail(opts: {
           <p style="margin:0 0 16px;font-size:15px;line-height:1.6">vielen Dank für das Gespräch. Wie besprochen finden Sie Ihr Angebot unter folgendem Link. Sie können es dort direkt online annehmen oder als PDF herunterladen.</p>
           <p style="margin:24px 0"><a href="${opts.offerUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">Angebot ansehen</a></p>
           <p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Angebot ${escapeHtml(opts.number)} · gültig bis ${until}</p>
-          <p style="margin:24px 0 0;font-size:15px;line-height:1.6">Viele Grüße<br>performancegrowth</p>
+          ${signatureHtml()}
         </div>`,
     });
     if (error) return { ok: false, error: error.message ?? "Resend hat abgelehnt." };
@@ -241,9 +278,7 @@ export async function sendOnboardingWelcomeEmail(opts: {
         "",
         "Bei Fragen antworten Sie einfach auf diese E-Mail.",
         "",
-        "Viele Grüße",
-        "Ole Kannapinn",
-        "performancegrowth",
+        signatureText(),
       ].join("\n"),
       html: `
         <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0b1220">
@@ -256,7 +291,7 @@ export async function sendOnboardingWelcomeEmail(opts: {
           <p style="margin:0 0 4px;font-size:13px;color:#5b5e68">Login-E-Mail: ${escapeHtml(opts.to)}</p>
           ${start ? `<p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Start: ${start}</p>` : ""}
           <p style="margin:16px 0 0;font-size:15px;line-height:1.6">Bei Fragen antworten Sie einfach auf diese E-Mail.</p>
-          <p style="margin:24px 0 0;font-size:15px;line-height:1.6">Viele Grüße<br>Ole Kannapinn<br>performancegrowth</p>
+          ${signatureHtml()}
         </div>`,
     });
     if (error) return { ok: false, error: error.message ?? "Resend hat abgelehnt." };
@@ -287,7 +322,7 @@ export async function sendCustomerMail(opts: {
     console.warn(`[email] RESEND_API_KEY fehlt — „${opts.subject}“ an ${[opts.to].flat().join(", ")}${opts.button ? `, Link: ${opts.button.url}` : ""}`);
     return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
   }
-  const signature = opts.signature ?? "Ole Kannapinn\nperformancegrowth";
+  const signature = opts.signature ?? `${PROVIDER.manager}\n${PROVIDER.brand}`;
   const replyTo = opts.replyTo === undefined ? (process.env.OFFER_REPLY_TO ?? null) : opts.replyTo;
   try {
     const { error } = await mailClient(apiKey).emails.send({
@@ -301,8 +336,7 @@ export async function sendCustomerMail(opts: {
         ...opts.paragraphs.flatMap((p) => [p, ""]),
         ...(opts.list?.length ? [...opts.list.map((l) => `• ${l}`), ""] : []),
         ...(opts.button ? [`${opts.button.label}: ${opts.button.url}`, ""] : []),
-        "Viele Grüße",
-        signature,
+        signatureText(signature),
       ].join("\n"),
       html: `
         <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0b1220">
@@ -311,7 +345,7 @@ export async function sendCustomerMail(opts: {
           ${opts.list?.length ? `<ul style="margin:0 0 16px;padding-left:20px;font-size:15px;line-height:1.6">${opts.list.map((l) => `<li style="margin:0 0 6px">${escapeHtml(l)}</li>`).join("")}</ul>` : ""}
           ${opts.html ?? ""}
           ${opts.button ? `<p style="margin:24px 0"><a href="${opts.button.url}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">${escapeHtml(opts.button.label)}</a></p>` : ""}
-          <p style="margin:24px 0 0;font-size:15px;line-height:1.6">Viele Grüße<br>${signature.split("\n").map(escapeHtml).join("<br>")}</p>
+          ${signatureHtml(signature)}
         </div>`,
     });
     if (error) return { ok: false, error: error.message ?? "Resend hat abgelehnt." };

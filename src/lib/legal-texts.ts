@@ -10,6 +10,12 @@ export const PROVIDER = {
   street: "Lorenzstraße 58",
   city: "12209 Berlin",
   email: "ole.kannapinn@performancegrowth.de",
+  brand: "performancegrowth",
+  website: "performancegrowth.de",
+  manager: "Ole Kannapinn",
+  // Für die Pflichtangaben in geschäftlichen E-Mails (UG): leer = Zeile entfällt
+  phone: "",
+  register: "",
 };
 
 export type LegalSection = { title: string; items: (string | { sub: string; text: string })[] };
