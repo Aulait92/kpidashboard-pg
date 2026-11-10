@@ -42,8 +42,20 @@ Bruttomarge · Aktive Kunden.
 - **Wirkung:** nur Kunden einrechnen, die ≥ 80 % ihrer Leads mit Ergebnis
   versehen (Retainer-Kunden ja, Pay-per-Lead-Käufer teils nicht). Basis
   („9 von 16 Kunden“) immer mit anzeigen.
-- **Provision je Produkt:** liefert Ole (Durchschnittsprovision je Produkt als
-  Einstellung pflegen).
+- **Provision je Produkt** (Ole, 10.11.; als Einstellung pflegbar machen):
+
+  | Produkt | Provision | Berechnung |
+  |---|---|---|
+  | PKV-Tarifoptimierung | ca. 2.500 € je Abschluss | fester Betrag |
+  | Privatschutz | 50–60 % (Mitte 55 %) | × Jahresnettobeitrag |
+  | TKV | 50–60 % (Mitte 55 %) | × Jahresnettobeitrag |
+  | Kindersparpläne | offen | Ole fragt nach |
+  | Kinderwunsch | – | wird nicht mehr angeboten |
+
+  Bei %-Produkten den beim Abschluss erfassten Wert („Wert des Abschlusses“
+  im „Wie lief's?“) als Jahresnettobeitrag nehmen; fehlt er, einen
+  Durchschnittsbeitrag je Produkt als Ersatz (Wert offen, Ole). In der
+  Anzeige ausweisen, wie viele Abschlüsse mit echtem Beitrag gerechnet sind.
 - **Investorentyp:** noch offen – Seite deckt VC (Wachstum, NRR) und
   strategische Investoren (Wirkung, Netzwerk) ab.
 
