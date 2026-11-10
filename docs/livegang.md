@@ -115,6 +115,12 @@ KI-Hilfe, die brauchen keine Migration).
    **nicht** mehr aus dem Cold CRM. Verfahren (Übernahme staging → Produktion, ohne
    Test-Angebote/Stripe-Testdaten) wird vor Probelauf 3 gebaut und dort geprobt.
    Danach `COLD_CRM_DATABASE_URL` und `VERTRIEB_NEUIMPORT_ERLAUBT` auf staging löschen.
+   **Vertriebskontakt ↔ Kundenakte verknüpfen** (Stand 10.11., laut Ole):
+   - Norman Heller: Pay-per-Lead-Kunde (Kundenakte mit Bezug)
+   - Andy Deibel: Kunde ohne Software („Nur Betreuung“)
+   - Beytullah, Jens Haferstroh: **noch keine Kunden**, im Gespräch. Gehören in die
+     Vertriebs-Pipeline, nicht in die Kunden-Pipeline.
+   Vor dem Livegang mit Ole abgleichen, ob sich daran etwas geändert hat.
 6. **Webhooks umstellen** auf `https://app.performancegrowth.de/…`:
    - Meta-App → Webhooks → Page → `leadgen`: `/api/meta/leadgen`
    - **Anid erst nach seiner Freigabe (geplant Ende November)**: Anid muss als zweiter
