@@ -1,3 +1,4 @@
+import { cleanToken, redactTokens } from "@/lib/meta-leads";
 import { addDays, format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { classifyCampaignProduct, isExcludedCampaign } from "@/lib/products";
@@ -75,7 +76,7 @@ async function fetchMetaPage(
     lastErr = json.error?.message ?? `HTTP ${res.status}`;
     if (!isRetryableMeta(res.status, json.error)) break;
   }
-  throw new Error(`Meta-API für act_${accountId} (${since}…${until}): ${lastErr}`);
+  throw new Error(redactTokens(`Meta-API für act_${accountId} (${since}…${until}): ${lastErr}`));
 }
 
 export type MetaProduct = "Wechsel" | "Neugeschäft" | "Kinderwunsch";
@@ -90,7 +91,7 @@ export type MetaSyncResult = {
 };
 
 function getEnv() {
-  const token = process.env.META_ACCESS_TOKEN;
+  const token = cleanToken(process.env.META_ACCESS_TOKEN) || undefined;
   const accountsRaw = process.env.META_AD_ACCOUNT_IDS;
   if (!token || !accountsRaw) {
     throw new Error(
@@ -356,7 +357,7 @@ export type CustomerAdSpendSyncResult = {
 
 export async function syncCustomerAdSpend(): Promise<CustomerAdSpendSyncResult> {
   const result: CustomerAdSpendSyncResult = { customers: 0, days: 0, errors: [] };
-  const token = process.env.META_ACCESS_TOKEN;
+  const token = cleanToken(process.env.META_ACCESS_TOKEN) || undefined;
   if (!token) return result;
   const customers = await prisma.customer.findMany({
     where: { metaAdAccountId: { not: null } },
@@ -434,7 +435,7 @@ async function fetchAccountDailySpend(
 export async function checkAdAccountAccess(
   accountId: string,
 ): Promise<{ ok: true; name: string; currency: string } | { ok: false; error: string }> {
-  const token = process.env.META_ACCESS_TOKEN;
+  const token = cleanToken(process.env.META_ACCESS_TOKEN) || undefined;
   if (!token) return { ok: false, error: "META_ACCESS_TOKEN fehlt." };
   try {
     const url = new URL(`${META_GRAPH}/act_${accountId}`);
@@ -443,7 +444,7 @@ export async function checkAdAccountAccess(
     const res = await fetch(url, { cache: "no-store" });
     const body = (await res.json()) as { name?: string; currency?: string; error?: { message?: string } };
     if (!res.ok || body.error) {
-      return { ok: false, error: `${body.error?.message ?? res.status}. Ist das Werbekonto unserem Systemnutzer zugewiesen?` };
+      return { ok: false, error: `${redactTokens(String(body.error?.message ?? res.status))}. Ist das Werbekonto unserem Systemnutzer zugewiesen?` };
     }
     return { ok: true, name: body.name ?? accountId, currency: body.currency ?? "" };
   } catch (err) {

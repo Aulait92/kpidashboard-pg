@@ -11,8 +11,18 @@ import crypto from "node:crypto";
 
 const GRAPH = "https://graph.facebook.com/v22.0";
 
+/** Token bereinigen: Leerzeichen/Zeilenumbrüche, Anführungszeichen, „Bearer “ beim Einfügen. */
+export function cleanToken(raw: string | undefined): string {
+  return (raw ?? "").trim().replace(/^["']|["']$/g, "").replace(/^Bearer\s+/i, "").replace(/\s+/g, "");
+}
+
+/** Zugangsdaten nie in Fehlermeldungen/Logs ausgeben. */
+export function redactTokens(text: string): string {
+  return text.replace(/EAA[A-Za-z0-9_-]{10,}/g, "EAA…(gekürzt)").replace(/(access_token|input_token)=[^&\s"]+/g, "$1=…");
+}
+
 function token(): string {
-  const t = process.env.META_ACCESS_TOKEN;
+  const t = cleanToken(process.env.META_ACCESS_TOKEN);
   if (!t) throw new Error("META_ACCESS_TOKEN nicht gesetzt.");
   return t;
 }
@@ -23,7 +33,7 @@ async function graphGet<T>(path: string, params: Record<string, string> = {}, ac
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
   const text = await res.text();
-  if (!res.ok) throw new Error(`Meta GET ${path} ${res.status}: ${text.slice(0, 300)}`);
+  if (!res.ok) throw new Error(redactTokens(`Meta GET ${path} ${res.status}: ${text.slice(0, 300)}`));
   return JSON.parse(text) as T;
 }
 
@@ -126,12 +136,13 @@ export async function metaDiagnostics(): Promise<MetaDiagnostics> {
     d.missing = NEEDED.filter((s) => !d.scopes.includes(s));
     if (dbg.data.is_valid === false) d.error = "Token ist ungültig oder abgelaufen.";
   } catch (err) {
-    d.error = err instanceof Error ? err.message : String(err);
+    d.error = redactTokens(err instanceof Error ? err.message : String(err));
+    d.missing = NEEDED; // Prüfung fehlgeschlagen → nichts als „ok“ anzeigen
   }
   try {
     d.pages = await listPages();
   } catch (err) {
-    d.error = d.error ?? (err instanceof Error ? err.message : String(err));
+    d.error = d.error ?? redactTokens(err instanceof Error ? err.message : String(err));
   }
   return d;
 }

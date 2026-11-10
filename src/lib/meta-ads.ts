@@ -11,10 +11,12 @@
 // Optional:
 //   META_DEFAULT_PIXEL_ID  — Conversion-Pixel für Tracking
 
+import { cleanToken, redactTokens } from "@/lib/meta-leads";
+
 const GRAPH_VERSION = "v22.0";
 
 function getToken(): string {
-  const t = process.env.META_ACCESS_TOKEN;
+  const t = cleanToken(process.env.META_ACCESS_TOKEN);
   if (!t) throw new Error("META_ACCESS_TOKEN nicht gesetzt.");
   return t;
 }
@@ -41,7 +43,7 @@ async function metaGet(
   const res = await fetch(url.toString());
   const text = await res.text();
   if (!res.ok) {
-    throw new Error(`Meta GET ${path} ${res.status}: ${text}`);
+    throw new Error(redactTokens(`Meta GET ${path} ${res.status}: ${text}`));
   }
   return JSON.parse(text) as unknown;
 }
@@ -63,7 +65,7 @@ async function metaPost(
   });
   const text = await res.text();
   if (!res.ok) {
-    throw new Error(`Meta POST ${path} ${res.status}: ${text}`);
+    throw new Error(redactTokens(`Meta POST ${path} ${res.status}: ${text}`));
   }
   return JSON.parse(text) as unknown;
 }
@@ -266,7 +268,7 @@ export async function getSpendByCampaign(params: {
   while (next) {
     const res = await fetch(next, { cache: "no-store" });
     const text = await res.text();
-    if (!res.ok) throw new Error(`Meta insights ${res.status}: ${text}`);
+    if (!res.ok) throw new Error(redactTokens(`Meta insights ${res.status}: ${text}`));
     const json = JSON.parse(text) as {
       data?: { campaign_id?: string; spend?: string }[];
       paging?: { next?: string };
