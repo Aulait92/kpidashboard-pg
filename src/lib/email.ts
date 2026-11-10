@@ -169,9 +169,18 @@ export function signatureHtml(personal = `${PROVIDER.manager}\n${PROVIDER.brand}
           <table role="presentation" cellpadding="0" cellspacing="0" style="margin:20px 0 0;border-top:1px solid #e3e9f3;padding-top:14px;width:100%">
             <tr><td style="padding-top:14px">
               <div style="font-size:15px;font-weight:700;letter-spacing:-.01em;margin:0 0 6px">performance<span style="color:#2563eb">growth</span></div>
-              <div style="font-size:12px;line-height:1.6;color:#66758f">${legalLines()
-                .map((l, i) => (i === 2 ? l.replace(PROVIDER.email, `<a href="mailto:${PROVIDER.email}" style="color:#66758f">${PROVIDER.email}</a>`).replace(PROVIDER.website, `<a href="https://${PROVIDER.website}" style="color:#2563eb;text-decoration:none">${PROVIDER.website}</a>`) : escapeHtml(l)))
-                .join("<br>")}</div>
+              <div style="font-size:12px;line-height:1.6;color:#66758f">${[
+                escapeHtml(PROVIDER.name),
+                escapeHtml(`${PROVIDER.street} · ${PROVIDER.city}`),
+                [
+                  PROVIDER.phone && `Tel. ${escapeHtml(PROVIDER.phone)}`,
+                  `<a href="mailto:${PROVIDER.email}" style="color:#66758f">${PROVIDER.email}</a>`,
+                  `<a href="https://${PROVIDER.website}" style="color:#2563eb;text-decoration:none">${PROVIDER.website}</a>`,
+                ]
+                  .filter(Boolean)
+                  .join(" · "),
+                escapeHtml([`Geschäftsführer: ${PROVIDER.manager}`, PROVIDER.register].filter(Boolean).join(" · ")),
+              ].join("<br>")}</div>
             </td></tr>
           </table>`;
 }
