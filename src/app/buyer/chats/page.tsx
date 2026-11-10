@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, Bot, CalendarClock, MessageCircle, Phone, SendHorizontal, UserRound } from "lucide-react";
 import { redirect } from "next/navigation";
-import { AutoRefresh } from "@/components/auto-refresh";
+import { LiveRefresh, StickToBottom } from "@/components/live-refresh";
 import { PageHeader } from "@/components/buyer-shell";
 import { buttonClass } from "@/components/ui";
 import { chooseFollowup } from "@/lib/whatsapp/followup";
@@ -277,7 +277,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
 
   return (
     <main className="mx-auto w-full max-w-7xl flex-1 px-0 py-0 sm:px-6 sm:py-6 lg:px-8">
-      <AutoRefresh intervalMs={15_000} />
+      <LiveRefresh />
       <div className="hidden sm:block">
         <PageHeader
           title="Chats"
@@ -503,6 +503,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                     </div>
                   );
                 })}
+                <StickToBottom count={active.messages.length} chatId={active.id} />
               </div>
 
               {windowOpen ? (

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/buyer-shell";
 import { TodayInbox } from "@/components/today-inbox";
 import { FirstDay } from "@/components/first-day";
-import { AutoRefresh } from "@/components/auto-refresh";
+import { LiveRefresh } from "@/components/live-refresh";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { loadInbox } from "@/lib/inbox";
 import { prisma } from "@/lib/prisma";
@@ -28,7 +28,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     // Erster Tag: noch kein Lead → erklären, wie es losgeht (statt leerer Zahlen/„Alles erledigt“).
     return (
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-        <AutoRefresh intervalMs={60_000} />
+        <LiveRefresh />
         <PageHeader title="Willkommen" subtitle="Schön, dass Sie da sind." />
         <FirstDay customerId={ctx.customerId} owner={ctx.teamRole !== "advisor"} whatsapp={whatsapp} />
       </main>
@@ -56,7 +56,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <AutoRefresh intervalMs={60_000} />
+      <LiveRefresh />
       <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
       <TodayInbox data={data} />
     </main>
