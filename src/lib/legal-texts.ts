@@ -14,8 +14,8 @@ export const PROVIDER = {
   website: "performancegrowth.de",
   manager: "Ole Kannapinn",
   // Für die Pflichtangaben in geschäftlichen E-Mails (UG): leer = Zeile entfällt
-  phone: "",
-  register: "",
+  phone: "0151 52418846",
+  register: "Amtsgericht Charlottenburg, HRB 172651",
 };
 
 export type LegalSection = { title: string; items: (string | { sub: string; text: string })[] };

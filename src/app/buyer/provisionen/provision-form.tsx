@@ -87,8 +87,8 @@ export function ProvisionForm({
 
   const visible = useMemo(() => {
     const allowed = productsForTyp(typ);
-    const filtered = known.length ? allowed.filter((p) => known.includes(p.key)) : allowed;
-    return filtered.length ? filtered : allowed;
+    // Nur Produkte, die der Kunde bei uns gewählt hat (leer = Hinweis statt Formular)
+    return allowed.filter((p) => known.includes(p.key));
   }, [typ, known]);
 
   const rowFor = (k: ProductKey): Row => own[k] ?? toRow(standardRate(k, typ));
@@ -146,6 +146,13 @@ export function ProvisionForm({
         </div>
       </Card>
 
+      {visible.length === 0 ? (
+        <Card>
+          <div className="p-5 text-sm text-[color:var(--muted)]">
+            Hier erscheinen deine Produkte, sobald du sie bei uns gebucht hast. Bis dahin rechnen wir mit unseren Standardwerten.
+          </div>
+        </Card>
+      ) : null}
       {visible.map((p) => {
         const r = rowFor(p.key);
         const ownVal = isOwn(p.key);
@@ -171,10 +178,9 @@ export function ProvisionForm({
                   <Field label="Ohne Beitragsangabe" suffix="€" value={r.fallbackAmount} onChange={(v) => update(p.key, { fallbackAmount: v })} />
                 </div>
               ) : (
-                <div className="grid gap-3 sm:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-2">
                   <Field label="Abschlussprovision" suffix="%" value={r.rate} onChange={(v) => update(p.key, { rate: v })} />
                   <Field label="Bestandsprovision pro Jahr" suffix="%" value={r.trail} onChange={(v) => update(p.key, { trail: v })} />
-                  <Field label="Typischer Jahresbeitrag" suffix="€" value={r.defaultPremium} onChange={(v) => update(p.key, { defaultPremium: v })} />
                 </div>
               )}
               <p className="mt-3 text-sm text-[color:var(--muted)]">{example(r)}</p>

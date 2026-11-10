@@ -23,16 +23,39 @@ export async function loadCustomerProvision(customerId: string | null | undefine
   return { typ, rates: effectiveRates(typ, custom), custom, hasCustom: Object.keys(custom).length > 0 };
 }
 
-/** Produkte, die der Kunde von uns bekommt (aus Lead-Quellen und Bezügen); leer = unbekannt. */
+/**
+ * Produkte, die der Kunde bei uns gewählt hat: gebuchte Produkte (CustomerProduct),
+ * Pay-per-Lead-Bezüge und die Produkte aus seinem angenommenen Angebot. Nur wenn
+ * davon nichts bekannt ist, zählen die Quellen seiner Leads. Leer = noch nichts gewählt.
+ */
 export async function customerProductKeys(customerId: string): Promise<ProductKey[]> {
-  const [sources, subs] = await Promise.all([
-    prisma.lead.findMany({ where: { customerId }, distinct: ["source"], select: { source: true }, take: 50 }),
+  const [booked, subs, onboarding] = await Promise.all([
+    prisma.customerProduct.findMany({ where: { customerId }, select: { product: { select: { name: true, displayName: true } } } }),
     prisma.leadSubscription.findMany({ where: { customerId }, select: { productKey: true } }),
+    prisma.onboarding.findUnique({ where: { customerId }, select: { offerId: true } }),
   ]);
+  const offer = onboarding?.offerId
+    ? await prisma.offer.findUnique({ where: { id: onboarding.offerId }, select: { products: true } })
+    : null;
+  const offerNames = Array.isArray(offer?.products)
+    ? (offer.products as unknown[]).map((p) => (p && typeof p === "object" && "name" in p ? String((p as { name: unknown }).name) : "")).filter(Boolean)
+    : [];
+  const chosen = [
+    ...booked.flatMap((b) => [b.product.name, b.product.displayName ?? ""]),
+    ...subs.map((x) => x.productKey),
+    ...offerNames,
+  ];
   const keys = new Set<ProductKey>();
-  for (const s of [...sources.map((x) => x.source), ...subs.map((x) => x.productKey)]) {
+  for (const s of chosen) {
     const k = productKeyFor(s);
     if (k) keys.add(k);
+  }
+  if (keys.size === 0) {
+    const sources = await prisma.lead.findMany({ where: { customerId }, distinct: ["source"], select: { source: true }, take: 50 });
+    for (const x of sources) {
+      const k = productKeyFor(x.source);
+      if (k) keys.add(k);
+    }
   }
   return [...keys];
 }

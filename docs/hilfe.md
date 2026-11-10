@@ -160,8 +160,9 @@ Seiten aus der Liste „Seiten“ unten.
 - „Provision (geschätzt)“ enthält bei Bestandsprovision den Betrag des 1. Jahres.
 - Es ist eine Schätzung für die eigenen Zahlen, keine Abrechnung. Wer den Beitrag einträgt, bekommt genauere Werte.
 - **Meine Provisionen** (Profilmenü, auch unter Konto und in der Einrichtung): „Ich arbeite als Vertreter / Makler“
-  wählen und je Produkt die eigenen Sätze eintragen: Abschlussprovision in %, Bestandsprovision in % pro Jahr,
-  typischer Jahresbeitrag; bei PKV die Monatsbeiträge. Vorausgefüllt mit üblichen Werten, „Auf Standard“ setzt
+  wählen und je Produkt die eigenen Sätze eintragen: Abschlussprovision in %, Bestandsprovision in % pro Jahr;
+  bei PKV die Monatsbeiträge. Es erscheinen nur die Produkte, die man bei uns gebucht hat (sonst ein Hinweis).
+  Ohne eingetragenen Beitrag rechnet die App mit einem Durchschnittsbeitrag. Vorausgefüllt mit üblichen Werten, „Auf Standard“ setzt
   zurück. Nur der Inhaber kann speichern, Berater sehen die Sätze. Alle Zahlen rechnen danach mit den eigenen Sätzen.
 - „Hochrechnung für diesen Monat“ zum Aufklappen. Bei Teams eine Tabelle pro Person.
 

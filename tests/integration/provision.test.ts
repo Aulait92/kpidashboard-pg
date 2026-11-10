@@ -55,4 +55,17 @@ describe("Meine Provisionen: speichern, Rechte, wirksame Sätze", () => {
     expect(c.provisionRates).toBeNull();
     expect(c.vermittlerTyp).toBe("vertreter");
   });
+
+  it("zeigt nur gewählte Produkte; Lead-Quellen nur, wenn nichts gewählt ist", async () => {
+    // Nur Leads (Privatschutz) → Rückfall auf Lead-Quellen
+    expect(await customerProductKeys(customerId)).toEqual(["privatschutz"]);
+    // Gebuchter Pay-per-Lead-Bezug TKV → nur noch der gewählte, nicht mehr Privatschutz aus den Leads
+    const sub = await prisma.leadSubscription.create({ data: { customerId, productKey: "TKV", price: 30 } });
+    expect(await customerProductKeys(customerId)).toEqual(["tkv"]);
+    await prisma.leadSubscription.delete({ where: { id: sub.id } });
+    // Kunde ohne Produkte und Leads → leer (Seite zeigt Hinweis)
+    const empty = await makeCustomer();
+    expect(await customerProductKeys(empty.id)).toEqual([]);
+    await cleanupCustomer(empty.id);
+  });
 });
