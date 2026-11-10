@@ -9,7 +9,7 @@ import { convertInboundLead } from "@/app/admin/vertrieb/actions";
 
 export const metadata = { title: "Anbindungen | KPI-Dashboard" };
 
-// Anbindungen des Vertriebs: woher Daten kommen (Instantly, Calendly, Waalaxy,
+// Anbindungen des Vertriebs: woher Daten kommen (Instantly, Calendly,
 // Formulare, LinkedIn), je mit Status „zuletzt empfangen“ und Adresse zum Kopieren.
 export default async function AnbindungenPage() {
   const h = await headers();
@@ -17,11 +17,10 @@ export default async function AnbindungenPage() {
   const token = process.env.VERTRIEB_WEBHOOK_TOKEN;
   const hook = (path: string, extra = "") => (token ? `${origin}${path}?token=${token}${extra}` : null);
 
-  const [contacts, lastMail, lastMeeting, lastWaalaxy, lastForm, lastLinkedIn, openLinkedIn, team] = await Promise.all([
+  const [contacts, lastMail, lastMeeting, lastForm, lastLinkedIn, openLinkedIn, team] = await Promise.all([
     prisma.salesContact.count(),
     prisma.salesEmail.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
     prisma.salesMeeting.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
-    prisma.salesLinkedInEvent.findFirst({ where: { source: "webhook" }, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
     prisma.salesInboundLead.findFirst({ where: { source: { not: "LINKEDIN" } }, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
     prisma.salesInboundLead.findFirst({ where: { source: "LINKEDIN" }, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
     prisma.salesInboundLead.findMany({ where: { source: "LINKEDIN", contactId: null }, orderBy: { createdAt: "desc" }, take: 10 }),
@@ -57,20 +56,12 @@ export default async function AnbindungenPage() {
         </Connection>
 
         <Connection
-          name="Waalaxy"
-          what="LinkedIn-Kampagnen: vernetzt, Nachricht, Antwort"
-          last={lastWaalaxy?.createdAt}
-          url={hook("/api/vertrieb/waalaxy/webhook")}
-          steps={["Waalaxy → Kampagne → Schritt „CRM Sync“ (Webhook)", "URL ersetzen und speichern"]}
-        />
-
-        <Connection
           name="Lead-Formulare"
           what="Meta-Formulare und Landingpages (über Zapier)"
           last={lastForm?.createdAt}
           url={hook("/api/vertrieb/leads/webhook")}
           steps={[
-            "Zapier → Zaps → Zap mit „Webhooks by Zapier → POST“ an cold-crm-production…/api/leads/webhook",
+            "Zapier → Zap History: Lauf mit „Webhooks by Zapier“ öffnen, so findest du den Zap",
             "Im Schritt „POST“ die URL ersetzen, testen, veröffentlichen",
             "Landingpage ohne Meta: am Ende &source=INBOUND anhängen",
           ]}
@@ -81,7 +72,7 @@ export default async function AnbindungenPage() {
           what="Neue Nachrichten aus der LinkedIn-Mail (über Zapier)"
           last={lastLinkedIn?.createdAt}
           url={hook("/api/vertrieb/linkedin/message")}
-          steps={["Zapier → Zap „Gmail → Webhooks“ an cold-crm-production…/api/linkedin/message", "Im Schritt „POST“ die URL ersetzen, testen, veröffentlichen"]}
+          steps={["Zapier → Zap „Gmail → Webhooks by Zapier“ öffnen", "Im Schritt „POST“ die URL ersetzen, testen, veröffentlichen"]}
         />
 
         <section className="card space-y-3 p-5">
