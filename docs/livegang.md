@@ -11,9 +11,10 @@ enthalten. Der Merge ist konfliktfrei.
 
 - [x] **Probelauf Migrationen** gegen eine PITR-Kopie der Produktion (10.11., siehe
       unten). Vor dem Livegang nur wiederholen, wenn neue Migrationen dazukommen.
-- [ ] **Healthcheck** am Service `kpidashboard-pg` setzen: Pfad `/api/health`,
-      Timeout 300 s. Schlägt die Migration fehl, bleibt dann die alte Version
-      online (heute ist dort kein Healthcheck eingetragen).
+- [x] **Healthcheck** am Service `kpidashboard-pg`: seit 10.11. `/login`, Timeout 300 s
+      (der alte Produktions-Code hat `/api/health` noch nicht). Schlägt die Migration
+      beim Livegang fehl, bleibt die alte Version online.
+      **Nach dem Livegang** auf `/api/health` umstellen (prüft auch die Datenbank).
 - [ ] **Variablen** im Service `kpidashboard-pg` ergänzen (Werte nicht aus der
       Sandbox kopieren, wo „neu“ steht):
 
