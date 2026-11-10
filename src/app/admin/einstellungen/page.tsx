@@ -9,7 +9,7 @@ const ITEMS = [
   { href: "/admin/lead-eingang", icon: Workflow, color: "bg-blue-500", title: "Lead-Eingang", text: "Meta-Verbindung und Leadformulare zuordnen" },
   { href: "/admin/whatsapp/settings", icon: MessageCircle, color: "bg-emerald-500", title: "WhatsApp-Assistent", text: "Nummern, Vorlagen, Erstanschreiben je Kunde" },
   { href: "/admin/buyers", icon: KeyRound, color: "bg-amber-500", title: "Kunden-Logins", text: "Zugänge anlegen, Passwort, Vorschau" },
-  { href: "/admin/vertrieb/import", icon: FileUp, color: "bg-violet-500", title: "Import & Instantly", text: "Kontakte importieren, Cold-Mail-Abgleich" },
+  { href: "/admin/vertrieb/import", icon: FileUp, color: "bg-violet-500", title: "Anbindungen", text: "Instantly, Calendly, Waalaxy, Formulare, Import" },
   { href: "/admin/einstellungen/sicherheit", icon: ShieldCheck, color: "bg-slate-600", title: "Sicherheit", text: "Zwei-Faktor-Login" },
   { href: "/admin/einstellungen/protokoll", icon: History, color: "bg-slate-400", title: "Änderungsprotokoll", text: "Wer hat wann was geändert" },
 ];

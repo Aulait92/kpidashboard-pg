@@ -24,7 +24,7 @@ const PAGES: Hit[] = [
   ["Lead-Eingang", "/admin/lead-eingang", "Einstellungen"],
   ["WhatsApp-Assistent", "/admin/whatsapp/settings", "Einstellungen"],
   ["Kunden-Logins", "/admin/buyers", "Einstellungen"],
-  ["Import & Instantly", "/admin/vertrieb/import", "Einstellungen"],
+  ["Anbindungen", "/admin/vertrieb/import", "Einstellungen"],
   ["Sicherheit (Zwei-Faktor)", "/admin/einstellungen/sicherheit", "Einstellungen"],
   ["Änderungsprotokoll", "/admin/einstellungen/protokoll", "Einstellungen"],
 ].map(([title, href, subtitle]) => ({ kind: "seite" as const, id: href, title, subtitle, href }));

@@ -1,240 +1,180 @@
+import Link from "next/link";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { CalendlyForms, ColdCrmImport, ColdCrmReplace, ContactsImport, InstantlyCsvImport, InstantlySync } from "@/components/vertrieb/import-forms";
+import { CalendlyForms, ColdCrmImport, ColdCrmReplace, ContactsImport, CopyField, InstantlyCsvImport, InstantlySync } from "@/components/vertrieb/import-forms";
 import { coldCrmReplaceAllowed, coldCrmSourceConfigured } from "@/lib/vertrieb/cold-crm-import";
 import { teamCalendarStatus } from "@/lib/help-call";
-import { fmtDateTime } from "@/lib/vertrieb/dates";
+import { fmtDateTime, isWithinDays } from "@/lib/vertrieb/dates";
 import { convertInboundLead } from "@/app/admin/vertrieb/actions";
-import { LI_LABEL } from "@/lib/vertrieb/linkedin";
-import Link from "next/link";
 
-export default async function ImportPage() {
+export const metadata = { title: "Anbindungen | KPI-Dashboard" };
+
+// Anbindungen des Vertriebs: woher Daten kommen (Instantly, Calendly, Waalaxy,
+// Formulare, LinkedIn), je mit Status „zuletzt empfangen“ und Adresse zum Kopieren.
+export default async function AnbindungenPage() {
   const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  const proto = h.get("x-forwarded-proto") ?? "https";
-  const [contacts, campaigns, liEvents, liCount, meetingCount, leads, liMessages] = await Promise.all([
+  const origin = process.env.APP_URL?.replace(/\/$/, "") || `${h.get("x-forwarded-proto") ?? "https"}://${h.get("x-forwarded-host") ?? h.get("host")}`;
+  const token = process.env.VERTRIEB_WEBHOOK_TOKEN;
+  const hook = (path: string, extra = "") => (token ? `${origin}${path}?token=${token}${extra}` : null);
+
+  const [contacts, lastMail, lastMeeting, lastWaalaxy, lastForm, lastLinkedIn, openLinkedIn, team] = await Promise.all([
     prisma.salesContact.count(),
-    prisma.salesCampaign.findMany({ include: { _count: { select: { leads: true } } }, orderBy: { createdAt: "desc" } }),
-    prisma.salesLinkedInEvent.findMany({ orderBy: { createdAt: "desc" }, take: 15, include: { contact: { select: { id: true, name: true } } } }),
-    prisma.salesContact.count({ where: { linkedinStatus: { not: null } } }),
-    prisma.salesMeeting.count(),
-    prisma.salesInboundLead.findMany({ where: { source: { not: "LINKEDIN" } }, orderBy: { createdAt: "desc" }, take: 15, include: { contact: { select: { id: true } } } }),
-    prisma.salesInboundLead.findMany({ where: { source: "LINKEDIN" }, orderBy: { createdAt: "desc" }, take: 15, include: { contact: { select: { id: true } } } }),
+    prisma.salesEmail.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
+    prisma.salesMeeting.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
+    prisma.salesLinkedInEvent.findFirst({ where: { source: "webhook" }, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
+    prisma.salesInboundLead.findFirst({ where: { source: { not: "LINKEDIN" } }, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
+    prisma.salesInboundLead.findFirst({ where: { source: "LINKEDIN" }, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
+    prisma.salesInboundLead.findMany({ where: { source: "LINKEDIN", contactId: null }, orderBy: { createdAt: "desc" }, take: 10 }),
+    teamCalendarStatus(),
   ]);
 
   return (
-    <div className="max-w-3xl space-y-5">
-      <a href="/admin/einstellungen" className="text-xs text-[color:var(--brand)] hover:underline">← Einstellungen</a>
-      <h1 className="text-xl font-semibold">Import & Instantly</h1>
+    <div className="max-w-4xl space-y-6">
+      <div>
+        <a href="/admin/einstellungen" className="text-xs text-[color:var(--brand)] hover:underline">← Einstellungen</a>
+        <h1 className="mt-1 text-xl font-semibold">Anbindungen</h1>
+        <p className="text-sm text-slate-500">Woher der Vertrieb seine Daten bekommt. Grün = in den letzten 7 Tagen etwas empfangen.</p>
+      </div>
 
-      <TeamCalendar status={await teamCalendarStatus()} />
+      <div className="grid gap-4 md:grid-cols-2">
+        <Connection
+          name="Instantly"
+          what="Cold Mails: gesendet, geöffnet, Antworten"
+          last={lastMail?.createdAt}
+          url={hook("/api/vertrieb/instantly/webhook")}
+          steps={["Instantly → Settings → Integrations → Webhooks", "Bestehenden Webhook bearbeiten, URL ersetzen, „All Events“"]}
+        >
+          <InstantlySync hasKey={!!process.env.INSTANTLY_API_KEY} />
+        </Connection>
 
-      {coldCrmSourceConfigured() && (
-        <section className="card space-y-3 border-sky-200 p-5">
-          <h2 className="font-medium">Übernahme aus dem alten Cold CRM</h2>
-          <p className="text-sm text-slate-600">
-            Kopiert Kontakte, Verlauf, Aufgaben, Kampagnen, Cold-Mail-Antworten, LinkedIn, Termine und Leads aus der
-            alten Datenbank. Bereits vorhandene Datensätze werden übersprungen – mehrfaches Ausführen ist sicher.
-          </p>
-          <ColdCrmImport configured />
-          {coldCrmReplaceAllowed() ? <ColdCrmReplace /> : null}
+        <Connection
+          name="Calendly"
+          what="Gebuchte, verschobene und abgesagte Termine"
+          last={lastMeeting?.createdAt}
+          steps={["„Calendly verbinden“ legt den Webhook selbst an", "Danach einmal „Bestehende Termine abgleichen“"]}
+        >
+          <CalendlyForms hasToken={!!process.env.CALENDLY_TOKEN} />
+        </Connection>
+
+        <Connection
+          name="Waalaxy"
+          what="LinkedIn-Kampagnen: vernetzt, Nachricht, Antwort"
+          last={lastWaalaxy?.createdAt}
+          url={hook("/api/vertrieb/waalaxy/webhook")}
+          steps={["Waalaxy → Kampagne → Schritt „CRM Sync“ (Webhook)", "URL ersetzen und speichern"]}
+        />
+
+        <Connection
+          name="Lead-Formulare"
+          what="Meta-Formulare und Landingpages (über Zapier)"
+          last={lastForm?.createdAt}
+          url={hook("/api/vertrieb/leads/webhook")}
+          steps={[
+            "Zapier → Zaps → Zap mit „Webhooks by Zapier → POST“ an cold-crm-production…/api/leads/webhook",
+            "Im Schritt „POST“ die URL ersetzen, testen, veröffentlichen",
+            "Landingpage ohne Meta: am Ende &source=INBOUND anhängen",
+          ]}
+        />
+
+        <Connection
+          name="LinkedIn-Nachrichten"
+          what="Neue Nachrichten aus der LinkedIn-Mail (über Zapier)"
+          last={lastLinkedIn?.createdAt}
+          url={hook("/api/vertrieb/linkedin/message")}
+          steps={["Zapier → Zap „Gmail → Webhooks“ an cold-crm-production…/api/linkedin/message", "Im Schritt „POST“ die URL ersetzen, testen, veröffentlichen"]}
+        />
+
+        <section className="card space-y-3 p-5">
+          <Head name="Team-Kalender" what="Für 15-Minuten-Hilfetermine der Kunden" ok={team.connected} label={team.connected ? (team.accountEmail ?? "Verbunden") : "Nicht verbunden"} />
+          <a href={`/api/google/connect?customerId=${team.teamId}`} className="btn-ghost inline-flex">
+            {team.connected ? "Neu verbinden" : "Google-Kalender verbinden"}
+          </a>
         </section>
-      )}
+      </div>
 
-      <section className="card space-y-3 p-5">
-        <h2 className="font-medium">1. Agenturliste importieren</h2>
-        <p className="text-sm text-slate-600">
-          Funktioniert mit der Cold-Calling-Liste (Numbers) und mit der Mailing-Liste aus Instantly
-          (inkl. Ansprechpartner, Teamgröße, Potenzial-Score). Neue Agenturen werden angelegt, bestehende ergänzt –
-          Pipeline, Aufgaben und Verlauf bleiben erhalten.
-        </p>
-        <p className="text-sm text-slate-600">
-          In Numbers: <b>Ablage → Exportieren → CSV</b>. Spalten werden über die Kopfzeile erkannt (name, email, phone, …).
-          Die Spalte ohne Überschrift nach „description“ wird als Anruf-Status gelesen und automatisch in Pipeline-Stufe,
-          Verlustgrund und Folgeaufgabe übersetzt. Erneuter Import ist sicher: Kontakte werden über die E-Mail erkannt.
-        </p>
-        <p className="text-sm text-slate-500">Aktuell {contacts.toLocaleString("de-DE")} Kontakte in der Datenbank.</p>
-        <ContactsImport />
-      </section>
-
-      <section className="card space-y-3 p-5">
-        <h2 className="font-medium">2. Cold Mails aus Instantly abgleichen</h2>
-        <p className="text-sm text-slate-600">
-          Holt alle Kampagnen und Leads über die Instantly API v2 und ordnet sie per E-Mail den Kontakten zu
-          (gesendet, geöffnet, geantwortet, bounced). Neue Antworten erzeugen automatisch eine Aufgabe.
-        </p>
-        <InstantlySync hasKey={!!process.env.INSTANTLY_API_KEY} />
-        <details className="text-sm">
-          <summary className="cursor-pointer text-slate-500">Alternative: CSV-Export aus Instantly hochladen</summary>
-          <div className="mt-3"><InstantlyCsvImport /></div>
-        </details>
-      </section>
-
-      <section className="card space-y-2 p-5 text-sm">
-        <h2 className="font-medium">3. Live-Updates per Webhook (optional)</h2>
-        <p className="text-slate-600">
-          In Instantly unter <b>Settings → Integrations → Webhooks</b> diese URL für alle Events eintragen
-          (benötigt den Hyper-Growth-Plan). Dann landen gesendete Mails und Antworten sofort im CRM.
-        </p>
-        <code className="block overflow-x-auto rounded-lg bg-slate-100 p-2 text-xs">
-          {proto}://{host}/api/vertrieb/instantly/webhook?token={process.env.VERTRIEB_WEBHOOK_TOKEN ? "<WEBHOOK_TOKEN>" : "(WEBHOOK_TOKEN setzen)"}
-        </code>
-      </section>
-
-      <section className="card space-y-3 p-5 text-sm">
-        <h2 className="font-medium">4. LinkedIn</h2>
-        <p className="text-slate-600">
-          LinkedIn-Status und -Profil pflegst du direkt am Kontakt. Der Status geht nur vorwärts:
-          Anfrage gesendet → Vernetzt → Nachricht gesendet → Geantwortet.
-          Aktuell {liCount.toLocaleString("de-DE")} Kontakte mit LinkedIn-Status.
-        </p>
-        {liEvents.length > 0 && (
-          <div>
-            <h3 className="mb-1 font-medium text-slate-700">Letzte LinkedIn-Ereignisse</h3>
-            <ul className="divide-y divide-slate-100">
-              {liEvents.map((e) => (
-                <li key={e.id} className="flex flex-wrap items-center gap-2 py-1.5">
-                  <span className="text-xs text-slate-400">{fmtDateTime(e.createdAt)}</span>
-                  <span>{e.name ?? "?"}{e.company ? ` · ${e.company}` : ""}</span>
-                  {e.status && <span className="badge bg-slate-100 text-slate-600">{LI_LABEL[e.status] ?? e.status}</span>}
-                  {e.contact ? (
-                    <Link href={`/admin/vertrieb/kontakte/${e.contact.id}`} className="ml-auto text-xs text-sky-700 hover:underline">→ zugeordnet</Link>
-                  ) : (
-                    <span className="ml-auto text-xs text-amber-700">nicht zugeordnet</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </section>
-
-      <section className="card space-y-3 p-5 text-sm">
-        <h2 className="font-medium">5. Termine aus Calendly</h2>
-        <p className="text-slate-600">
-          Jede Buchung über Calendly landet am Kontakt: Termin mit Datum, Ort/Link und Antworten aus dem Buchungsformular,
-          Aufgabe zum Termin, Stufe „Termin“ in der Pipeline. Absagen und Verschiebungen werden ebenfalls übernommen.
-          Zuordnung über E-Mail oder Name – unbekannte Bucher werden als neuer Kontakt angelegt.
-          Aktuell {meetingCount.toLocaleString("de-DE")} Termine im CRM.
-        </p>
-        <ol className="list-decimal space-y-1 pl-5 text-slate-600">
-          <li>In Calendly unter <b>Integrationen → API &amp; Webhooks</b> einen <b>Personal Access Token</b> erzeugen.</li>
-          <li>In Railway beim App-Service die Variable <code>CALENDLY_TOKEN</code> mit diesem Token anlegen.</li>
-          <li>Hier „Calendly verbinden“ klicken (legt den Webhook automatisch an, benötigt Calendly Standard oder höher), danach einmal „Bestehende Termine abgleichen“.</li>
-        </ol>
-        <CalendlyForms hasToken={!!process.env.CALENDLY_TOKEN} />
-      </section>
-
-      <section className="card space-y-3 p-5 text-sm">
-        <h2 className="font-medium">6. Leads aus Meta Ads (und Website-Formularen)</h2>
-        <p className="text-slate-600">
-          Jeder Lead wird einem bestehenden Kontakt zugeordnet (E-Mail oder Name) oder neu angelegt – mit Stufe „Interesse“,
-          Kanal „Meta Ads“, allen Formularantworten im Verlauf und der Aufgabe „Neuen Lead anrufen“.
-        </p>
-        <div>
-          <h3 className="mb-1 font-medium text-slate-700">Webhook-URL</h3>
-          <code className="block overflow-x-auto rounded-lg bg-slate-100 p-2 text-xs">
-            {proto}://{host}/api/vertrieb/leads/webhook?token={process.env.VERTRIEB_WEBHOOK_TOKEN ? "<WEBHOOK_TOKEN>" : "(WEBHOOK_TOKEN setzen)"}
-          </code>
-          <p className="mt-1 text-xs text-slate-500">Für Website-/Landingpage-Formulare ohne Meta-Bezug <code>&amp;source=INBOUND</code> anhängen.</p>
-        </div>
-        <ul className="list-disc space-y-1 pl-5 text-slate-600">
-          <li><b>Meta Lead-Formular (Instant Form):</b> In Zapier „Facebook Lead Ads → New Lead“ als Auslöser, als Aktion „Webhooks by Zapier → POST“ mit obiger URL (Payload: JSON, alle Felder). In Make analog mit „Facebook Lead Ads → Watch Leads“ + „HTTP → Make a request“.</li>
-          <li><b>Landingpage (z.B. Perspective, Typeform, Webflow):</b> In den Formular-Einstellungen einen Webhook mit obiger URL eintragen.</li>
-        </ul>
-        {leads.length > 0 && (
-          <div>
-            <h3 className="mb-1 font-medium text-slate-700">Zuletzt eingegangen</h3>
-            <ul className="divide-y divide-slate-100">
-              {leads.map((l) => (
-                <li key={l.id} className="flex flex-wrap items-center gap-2 py-1.5">
-                  <span className="text-xs text-slate-400">{fmtDateTime(l.createdAt)}</span>
-                  <span>{l.name ?? l.email ?? "?"}</span>
-                  {l.campaign && <span className="text-xs text-slate-500">{l.campaign}</span>}
-                  <span className={`badge ${l.created ? "bg-emerald-50 text-emerald-700" : "bg-sky-50 text-sky-700"}`}>{l.created ? "neuer Kontakt" : "bestehender Kontakt"}</span>
-                  {l.contact && <Link href={`/admin/vertrieb/kontakte/${l.contact.id}`} className="ml-auto text-xs text-sky-700 hover:underline">→ Kontakt</Link>}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </section>
-
-      <section className="card space-y-3 p-5 text-sm">
-        <h2 className="font-medium">7. LinkedIn-Nachrichten (Interesse an Video / Dienstleistung)</h2>
-        <p className="text-slate-600">
-          LinkedIn hat keine API für Direktnachrichten. Lösung: LinkedIn schickt bei jeder neuen Nachricht eine E-Mail –
-          Zapier leitet diese an das CRM weiter. Das CRM liest Absender, Profil-Link und Nachricht aus und erkennt Interesse
-          (z.B. „Video“, „Dienstleistung“, „mehr erfahren“, „Termin“). Bei Interesse: Lead anlegen bzw. Kontakt ergänzen,
-          Stufe „Interesse“, Kanal LinkedIn, Aufgabe „Auf LinkedIn-Anfrage reagieren“. Ohne erkanntes Interesse wird die
-          Nachricht nur protokolliert und kann unten per Klick übernommen werden.
-        </p>
-        <code className="block overflow-x-auto rounded-lg bg-slate-100 p-2 text-xs">
-          {proto}://{host}/api/vertrieb/linkedin/message?token={process.env.VERTRIEB_WEBHOOK_TOKEN ? "<WEBHOOK_TOKEN>" : "(WEBHOOK_TOKEN setzen)"}
-        </code>
-        <ol className="list-decimal space-y-1 pl-5 text-slate-600">
-          <li>In LinkedIn unter Einstellungen → Benachrichtigungen → Nachrichten die E-Mail-Benachrichtigung aktivieren.</li>
-          <li>Zapier: Auslöser <b>Gmail → New Email Matching Search</b> mit Suche <code>from:messages-noreply@linkedin.com</code>.</li>
-          <li>Aktion <b>Webhooks by Zapier → POST</b> an obige URL, Payload JSON, Data: <code>subject</code> = Subject, <code>from_name</code> = From Name, <code>body_plain</code> = Body Plain.</li>
-        </ol>
-        <p className="text-slate-600">Oder per Hand: <Link href="/admin/vertrieb/kontakte/neu" className="text-sky-700 hover:underline">+ Neuer Lead</Link>.</p>
-        {liMessages.length > 0 && (
-          <ul className="divide-y divide-slate-100">
-            {liMessages.map((l) => (
-              <li key={l.id} className="py-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-slate-400">{fmtDateTime(l.createdAt)}</span>
-                  <span className="font-medium">{l.name ?? "?"}</span>
-                  <span className="text-xs text-slate-500">{l.campaign}</span>
-                  {l.contact ? (
-                    <Link href={`/admin/vertrieb/kontakte/${l.contact.id}`} className="ml-auto text-xs text-sky-700 hover:underline">→ Kontakt</Link>
-                  ) : (
-                    <form action={convertInboundLead} className="ml-auto">
-                      <input type="hidden" name="id" value={l.id} />
-                      <button className="btn-ghost px-2 py-0.5 text-xs">Als Lead übernehmen</button>
-                    </form>
-                  )}
-                </div>
-                {l.answers && <p className="mt-1 line-clamp-2 text-xs text-slate-500">{l.answers}</p>}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {campaigns.length > 0 && (
+      {openLinkedIn.length > 0 && (
         <section className="card p-5 text-sm">
-          <h2 className="mb-2 font-medium">Kampagnen</h2>
+          <h2 className="mb-2 font-medium">LinkedIn-Nachrichten ohne Zuordnung</h2>
           <ul className="divide-y divide-slate-100">
-            {campaigns.map((c) => (
-              <li key={c.id} className="flex justify-between py-1.5">
-                <span>{c.name}</span>
-                <span className="tabular-nums text-slate-500">{c._count.leads} Kontakte</span>
+            {openLinkedIn.map((l) => (
+              <li key={l.id} className="flex flex-wrap items-center gap-2 py-2">
+                <span className="text-xs text-slate-400">{fmtDateTime(l.createdAt)}</span>
+                <span className="font-medium">{l.name ?? "?"}</span>
+                {l.answers && <span className="line-clamp-1 min-w-0 flex-1 text-xs text-slate-500">{l.answers}</span>}
+                <form action={convertInboundLead} className="ml-auto">
+                  <input type="hidden" name="id" value={l.id} />
+                  <button className="btn-ghost px-2 py-0.5 text-xs">Als Lead übernehmen</button>
+                </form>
               </li>
             ))}
           </ul>
         </section>
       )}
+
+      <section className="card space-y-4 p-5">
+        <div>
+          <h2 className="font-medium">Import</h2>
+          <p className="text-sm text-slate-500">{contacts.toLocaleString("de-DE")} Kontakte im Vertrieb. Erneuter Import ist sicher, Kontakte werden über die E-Mail erkannt.</p>
+        </div>
+        <Item title="Agenturliste (CSV)" hint="Numbers: Ablage → Exportieren → CSV">
+          <ContactsImport />
+        </Item>
+        <Item title="Instantly-Export (CSV)" hint="Nur nötig, wenn der Abgleich oben nicht reicht">
+          <InstantlyCsvImport />
+        </Item>
+        {coldCrmSourceConfigured() && (
+          <Item title="Altes Cold CRM" hint="Übernimmt nur, was hier noch fehlt">
+            <ColdCrmImport configured />
+            {coldCrmReplaceAllowed() ? <div className="mt-3"><ColdCrmReplace /></div> : null}
+          </Item>
+        )}
+      </section>
+
+      <p className="text-xs text-slate-400">
+        Kontakte von Hand anlegen: <Link href="/admin/vertrieb/kontakte/neu" className="text-sky-700 hover:underline">+ Neuer Lead</Link>
+      </p>
     </div>
   );
 }
 
-function TeamCalendar({ status }: { status: { teamId: string; connected: boolean; accountEmail: string | null } }) {
+function Head({ name, what, ok, label }: { name: string; what: string; ok: boolean; label: string }) {
   return (
-    <section className="card space-y-2 p-5 text-sm">
-      <h2 className="font-medium">Team-Kalender für Hilfetermine</h2>
-      <p className="text-slate-600">
-        Kunden können in der Einrichtung einen 15-Minuten-Hilfetermin (Video) buchen. Gebucht wird in diesem Kalender,
-        Google verschickt die Einladung mit Meet-Link.
-      </p>
-      {status.connected ? (
-        <p className="font-medium text-emerald-700">Verbunden{status.accountEmail ? `: ${status.accountEmail}` : ""}</p>
-      ) : (
-        <p className="text-amber-700">Noch nicht verbunden: Ohne Kalender sehen Kunden nur die Telefonnummer.</p>
-      )}
-      <a href={`/api/google/connect?customerId=${status.teamId}`} className="btn-ghost inline-flex">
-        {status.connected ? "Neu verbinden" : "Google-Kalender verbinden"}
-      </a>
+    <div className="flex items-start justify-between gap-3">
+      <div className="min-w-0">
+        <h2 className="font-medium">{name}</h2>
+        <p className="text-sm text-slate-500">{what}</p>
+      </div>
+      <span className={`badge shrink-0 ${ok ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>{label}</span>
+    </div>
+  );
+}
+
+function Connection({ name, what, last, url, steps, children }: { name: string; what: string; last?: Date | null; url?: string | null; steps: string[]; children?: React.ReactNode }) {
+  const fresh = isWithinDays(last, 7);
+  return (
+    <section className="card flex flex-col gap-3 p-5">
+      <Head name={name} what={what} ok={fresh} label={last ? `Zuletzt ${fmtDateTime(last)}` : "Noch nichts empfangen"} />
+      {url !== undefined ? url ? <CopyField value={url} /> : <p className="text-sm text-amber-700">VERTRIEB_WEBHOOK_TOKEN fehlt in Railway.</p> : null}
+      {children}
+      <details className="text-sm text-slate-600">
+        <summary className="cursor-pointer text-slate-500">So geht&apos;s</summary>
+        <ol className="mt-2 list-decimal space-y-1 pl-5">
+          {steps.map((s) => (
+            <li key={s}>{s}</li>
+          ))}
+        </ol>
+      </details>
     </section>
+  );
+}
+
+function Item({ title, hint, children }: { title: string; hint: string; children: React.ReactNode }) {
+  return (
+    <div className="border-t border-slate-100 pt-4">
+      <div className="mb-2 text-sm">
+        <span className="font-medium">{title}</span> <span className="text-slate-500">· {hint}</span>
+      </div>
+      {children}
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { connectCalendlyAction, importColdCrmAction, replaceColdCrmAction, importContactsAction, importInstantlyAction, syncCalendlyAction, syncInstantlyAction, type ImportState } from "@/app/admin/vertrieb/actions";
 
 function Result({ state }: { state: ImportState }) {
@@ -89,6 +89,31 @@ export function CalendlyForms({ hasToken }: { hasToken: boolean }) {
       {!hasToken && <p className="text-sm text-amber-700">CALENDLY_TOKEN ist nicht gesetzt.</p>}
       <Result state={cState} />
       <Result state={sState} />
+    </div>
+  );
+}
+
+/** Adresse mit Kopier-Knopf (Webhook-URLs auf der Seite „Anbindungen“). */
+export function CopyField({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="flex items-stretch gap-2">
+      <input readOnly value={value} onFocus={(e) => e.currentTarget.select()} className="input min-w-0 flex-1 font-mono text-xs" aria-label="Adresse" />
+      <button
+        type="button"
+        className="btn-ghost shrink-0"
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(value);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          } catch {
+            /* Zwischenablage gesperrt: Feld ist markierbar */
+          }
+        }}
+      >
+        {copied ? "Kopiert" : "Kopieren"}
+      </button>
     </div>
   );
 }

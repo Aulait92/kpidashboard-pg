@@ -61,3 +61,8 @@ export function relDay(d: Date): string {
 export function timeKey(d: Date): string {
   return d.toLocaleTimeString("de-DE", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hour12: false });
 }
+
+/** Liegt `d` höchstens `days` Tage zurück? (für Status-Anzeigen) */
+export function isWithinDays(d: Date | null | undefined, days: number, now = new Date()): boolean {
+  return !!d && now.getTime() - d.getTime() < days * 86_400_000;
+}
