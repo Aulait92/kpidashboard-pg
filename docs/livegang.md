@@ -13,6 +13,21 @@ enthalten. Der Merge ist konfliktfrei.
       zuletzt mit Stand `362808f` und allen 22 Migrationen, siehe unten). Vor dem
       Livegang nur wiederholen, wenn neue Migrationen dazukommen
       (`ls prisma/migrations` mit der Liste unten vergleichen).
+- [ ] **Probelauf 3** mit dem Stand, der live geht (ca. 19./20.11., nach Code-Stopp):
+      seit Probelauf 2 sind **3 Migrationen dazugekommen** (jetzt 25, siehe
+      „Neue Migrationen seit Probelauf 2“). Ablauf wie Probelauf 2.
+
+### Neue Migrationen seit Probelauf 2 (Stand 11.11.)
+
+| Migration | Was | Beim Einmessen |
+|---|---|---|
+| `20261111090000_erstkontakt_sofort` | Standard-Wartezeit des Assistenten 10 → 0 Min. (Spalten-Standard) und bestehende Assistenten mit 10 Min. auf 0 | Spalten-Standard kommt über den Schema-Abgleich. Die Daten-Umstellung läuft beim Einmessen **nicht** – unkritisch, weil die Produktion noch keine Assistenten hat (`AgentConfig` = 0 Zeilen im Probelauf). |
+| `20261111100000_neue_oberflaeche` | Spalte `Customer.newUi` (neue Oberfläche je Kunde, Standard aus) | über den Schema-Abgleich, nur hinzufügend |
+| `20261111110000_nachfass_abfolgen` | Spalte `AgentConfig.followUpSequencesEnabled` (Standard aus) und Tabelle `LeadSequence` | über den Schema-Abgleich, nur hinzufügend |
+
+Alle drei verändern keine bestehenden Daten der Produktion. Neue Funktionen sind
+pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und
+KI-Hilfe, die brauchen keine Migration).
 - [x] **Healthcheck** am Service `kpidashboard-pg`: seit 10.11. `/login`, Timeout 300 s
       (der alte Produktions-Code hat `/api/health` noch nicht). Schlägt die Migration
       beim Livegang fehl, bleibt die alte Version online.
@@ -75,7 +90,7 @@ enthalten. Der Merge ist konfliktfrei.
    `[migrate] Alte Einträge aus früherem Verlauf (bleiben unberührt): …`
    `[migrate] Datenbank ohne (eigene) Migrations-Historie – wird einmalig eingemessen.`
    `[migrate] Schema wird angeglichen (nur hinzufügende Änderungen).`
-   22 × `Migration … marked as applied.`, dazwischen
+   25 × `Migration … marked as applied.` (bis `20261111110000_nachfass_abfolgen`), dazwischen
    `[migrate] 20261110120001_status_seit_trigger wird beim Einmessen ausgeführt.`,
    am Ende `No pending migrations to apply.` und `[migrate] Schema aktuell.`
    (Die roten Zeilen „Loaded Prisma config …“ sind nur Hinweise, keine Fehler.)
@@ -115,6 +130,20 @@ enthalten. Der Merge ist konfliktfrei.
    als Testumgebung.
 
 Demo-Daten liegen nur in der Sandbox-Datenbank und kommen nicht mit.
+
+## Danach (ab 22.11.)
+
+1. **Kurztest KI-Hilfe**: mit einem Kunden-Login „Hilfe“ öffnen und eine Frage stellen
+   (braucht `ANTHROPIC_API_KEY`, ist für den WhatsApp-Assistenten schon gesetzt).
+2. **Neue Oberfläche** (Vertreter-A) für Pilot-Kunden einschalten: Kundenakte →
+   WhatsApp/Module → „Neue Oberfläche“. Erst ein Kunde, nach ein paar Tagen weitere.
+3. **Nachfass-Abfolgen** je Kunde einschalten (Admin → WhatsApp-Assistent), sobald die
+   Vorlagen `followup`, `followup_offer`, `followup_noshow`, `followup_last` bei Meta
+   freigegeben sind.
+4. **Live-Aktualisierung** einmal prüfen: Chat offen lassen, Testnachricht schicken –
+   sollte in 2–3 s erscheinen (sonst puffert der Proxy; dann greift die Abfrage alle 3 s).
+5. **Nutzung** (Admin → Zahlen → Nutzung) in der ersten Woche täglich ansehen:
+   Fragen an die KI-Hilfe, „nicht hilfreich“-Bewertungen, liegen gebliebene Aufgaben.
 
 ## Wenn etwas schiefgeht
 
