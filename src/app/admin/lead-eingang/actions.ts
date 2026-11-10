@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { fetchFormInfo, subscribePage } from "@/lib/meta-leads";
 import { assignPendingLeads } from "@/lib/lead-intake";
 import { reportError } from "@/lib/monitoring";
+import { audit } from "@/lib/audit";
 
 async function requireAdmin() {
   const s = await getCurrentSession();
@@ -44,6 +45,7 @@ export async function assignFormAction(fd: FormData) {
     create: { formId, pageId, formName, customerId, productKey, leadPrice, bezugAirtableId: bezug, questionLabels: questionLabels ?? undefined },
     update: { pageId: pageId ?? undefined, formName: formName ?? undefined, customerId, productKey, leadPrice, bezugAirtableId: bezug, active: true, ...(questionLabels ? { questionLabels } : {}) },
   });
+  await audit("leadsource.assign", { entity: "LeadSource", entityId: formId, customerId, details: { productKey, leadPrice: leadPrice ? Number(leadPrice) : null } });
 
   let note = "";
   if (pageId) {
@@ -67,7 +69,10 @@ export async function toggleSourceAction(fd: FormData) {
   await requireAdmin();
   const id = String(fd.get("id") ?? "");
   const s = await prisma.leadSource.findUnique({ where: { id }, select: { active: true } });
-  if (s) await prisma.leadSource.update({ where: { id }, data: { active: !s.active } });
+  if (s) {
+    const u = await prisma.leadSource.update({ where: { id }, data: { active: !s.active } });
+    await audit("leadsource.toggle", { entity: "LeadSource", entityId: u.formId, customerId: u.customerId, details: { active: u.active } });
+  }
   revalidatePath("/admin/lead-eingang");
   revalidatePath("/admin/kunden", "layout");
 }

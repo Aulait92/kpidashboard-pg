@@ -15,6 +15,7 @@ import { handleInboundLead } from "@/lib/vertrieb/inbound";
 import { importFromColdCrm } from "@/lib/vertrieb/cold-crm-import";
 import { LI_LABEL, importWaalaxyCsv } from "@/lib/vertrieb/linkedin";
 import { ensureReplyTask, importInstantlyCsv, recordReply, removeReplyTaskIfNoPositive, syncInstantly } from "@/lib/vertrieb/instantly";
+import { audit } from "@/lib/audit";
 
 const s = (fd: FormData, k: string) => {
   const v = fd.get(k);
@@ -208,7 +209,10 @@ export async function syncInstantlyAction(prev: ImportState): Promise<ImportStat
 export async function deleteContact(fd: FormData) {
   await requireAuth();
   const id = s(fd, "contactId");
-  if (id) await prisma.salesContact.delete({ where: { id } });
+  if (id) {
+    const gone = await prisma.salesContact.delete({ where: { id } });
+    await audit("contact.delete", { entity: "SalesContact", entityId: id, details: { name: gone.name } });
+  }
   revalidatePath("/admin/vertrieb", "layout");
   redirect("/admin/vertrieb/kontakte");
 }

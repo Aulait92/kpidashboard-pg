@@ -25,6 +25,8 @@ const PAGES: Hit[] = [
   ["WhatsApp-Assistent", "/admin/whatsapp/settings", "Einstellungen"],
   ["Kunden-Logins", "/admin/buyers", "Einstellungen"],
   ["Import & Instantly", "/admin/vertrieb/import", "Einstellungen"],
+  ["Sicherheit (Zwei-Faktor)", "/admin/einstellungen/sicherheit", "Einstellungen"],
+  ["Änderungsprotokoll", "/admin/einstellungen/protokoll", "Einstellungen"],
 ].map(([title, href, subtitle]) => ({ kind: "seite" as const, id: href, title, subtitle, href }));
 
 const ICON = { kunde: Building2, kontakt: User, lead: UserRound, seite: ArrowRight };

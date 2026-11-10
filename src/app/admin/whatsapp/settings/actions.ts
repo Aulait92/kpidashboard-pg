@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { setWebhook } from "@/lib/whatsapp/dialog360";
 import { appUrl } from "@/lib/whatsapp/event-text";
 import { STARTER_PROMPT } from "@/lib/whatsapp/starter-prompt";
+import { audit } from "@/lib/audit";
 
 async function requireAdmin() {
   const session = await getCurrentSession();
@@ -220,6 +221,7 @@ export async function setAgentActiveAction(customerId: string, active: boolean):
       create: { customerId, active, systemPrompt: STARTER_PROMPT },
       update: { active, ...prompt },
     });
+    await audit("agent.active", { entity: "AgentConfig", customerId, details: { active } });
     revalidateSettings();
     return { ok: true };
   } catch (err) {

@@ -10,6 +10,7 @@ import { computeOfferPrice, type OfferPackage, type OfferProduct, type OfferTerm
 import { logOfferActivity, offerAdminHref, setContactCustomerStage, type OfferTarget } from "@/lib/offer-links";
 import { billingEnabled } from "@/lib/billing";
 import { startOnboarding } from "@/lib/onboarding";
+import { audit } from "@/lib/audit";
 
 
 export type OfferFormInput = {
@@ -171,6 +172,12 @@ export async function acceptOffer(
     },
   });
   if (updated.count === 0) return { ok: false, error: "Dieses Angebot kann nicht mehr angenommen werden." };
+  await audit("offer.accept", {
+    entity: "Offer",
+    entityId: offer.id,
+    details: { number: offer.number, name: name.slice(0, 200), ip: opts.ip?.slice(0, 100) ?? null },
+    actor: { email: offer.email ?? null, role: "kunde" },
+  });
 
   // Deal bzw. Kontakt auf „gewonnen“ setzen und in der Historie vermerken.
   if (offer.salesContactId) {

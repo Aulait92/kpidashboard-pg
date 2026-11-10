@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentSession, hashPassword } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { audit } from "@/lib/audit";
 
 async function requireAdmin() {
   const session = await getCurrentSession();
@@ -51,7 +52,7 @@ export async function createBuyerAccount(
     return { error: "Email ist bereits vergeben." };
   }
 
-  await prisma.user.create({
+  const created = await prisma.user.create({
     data: {
       email,
       passwordHash: await hashPassword(password),
@@ -59,6 +60,7 @@ export async function createBuyerAccount(
       customerId,
     },
   });
+  await audit("user.create", { entity: "User", entityId: created.id, customerId, details: { email } });
 
   revalidatePath("/admin/buyers");
   revalidatePath("/admin/kunden", "layout");
@@ -87,6 +89,7 @@ export async function resetBuyerPassword(
     where: { id: userId },
     data: { passwordHash: await hashPassword(password) },
   });
+  await audit("user.password_reset", { entity: "User", entityId: userId });
   revalidatePath("/admin/buyers");
   revalidatePath("/admin/kunden", "layout");
   return { ok: true, createdEmail: user.email };
@@ -124,6 +127,7 @@ export async function reassignBuyerCustomer(
     where: { id: userId },
     data: { customerId },
   });
+  await audit("user.reassign", { entity: "User", entityId: userId, customerId });
   revalidatePath("/admin/buyers");
   revalidatePath("/admin/kunden", "layout");
   // createdEmail trägt hier den Kundennamen für die Bestätigung im UI.
@@ -139,7 +143,8 @@ export async function deleteBuyerAccount(formData: FormData) {
     select: { role: true },
   });
   if (!user || user.role !== "BUYER") return;
-  await prisma.user.delete({ where: { id: userId } });
+  const gone = await prisma.user.delete({ where: { id: userId } });
+  await audit("user.delete", { entity: "User", entityId: userId, customerId: gone.customerId, details: { email: gone.email } });
   revalidatePath("/admin/buyers");
   revalidatePath("/admin/kunden", "layout");
 }

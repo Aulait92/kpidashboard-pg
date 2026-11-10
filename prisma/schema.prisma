@@ -1300,3 +1300,22 @@ model SystemHeartbeat {
   ok   Boolean  @default(true)
   note String?
 }
+
+// Änderungsprotokoll: wer hat wann was Wichtiges geändert (Logins, Zugänge,
+// Team, Pausen, Angebote, Exporte, Einstellungen). Aufbewahrung 1 Jahr.
+model AuditLog {
+  id         String   @id @default(cuid())
+  at         DateTime @default(now())
+  actorId    String?
+  actorEmail String?
+  actorRole  String? // ADMIN | BUYER | system | lead
+  action     String // z. B. "login", "team.invite", "pause.plan"
+  entity     String? // z. B. "User", "Lead", "Customer"
+  entityId   String?
+  customerId String?
+  details    Json?
+
+  @@index([at])
+  @@index([customerId, at])
+  @@index([action, at])
+}

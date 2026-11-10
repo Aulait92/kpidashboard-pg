@@ -10,6 +10,7 @@ import { getAppUrl, sendCustomerMail } from "@/lib/email";
 import { customerGreeting, logOfferActivity, setContactCustomerStage } from "@/lib/offer-links";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
+import { audit } from "@/lib/audit";
 
 const TZ = "Europe/Berlin";
 const fmt = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: TZ, day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
@@ -84,6 +85,7 @@ export async function planPause(
       createdBy: by,
     },
   });
+  await audit("pause.plan", { entity: "CustomerPause", entityId: pause.id, customerId, details: { from: input.from, until: input.until, by } });
   if (startsAt.getTime() <= Date.now()) {
     await applyPause(pause.id);
   } else {
@@ -256,6 +258,7 @@ export async function endPauseNow(customerId: string, opts: { admin?: boolean } 
   if (p.kind === "dunning" && !opts.admin) {
     return { ok: false, error: "Die Anzeigen laufen automatisch wieder, sobald die offene Rechnung bezahlt ist." };
   }
+  await audit("pause.end", { entity: "CustomerPause", entityId: p.id, customerId, details: { status: p.status, kind: p.kind } });
   if (p.status === "planned") return cancelPlannedPause(p.id, customerId);
   await resumePause(p.id);
   return { ok: true };

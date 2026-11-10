@@ -19,6 +19,7 @@ import {
   type LeadStatus,
 } from "@/lib/products";
 import { sendToAdmins } from "@/lib/push";
+import { audit } from "@/lib/audit";
 
 // Admin-Vorschau („Als Kunde ansehen") ist bewusst schreibgeschützt.
 function previewError(session: { role: string } | null): string {
@@ -131,6 +132,8 @@ export async function cancelLeadAction(
       data: { cancelled: true },
     }),
   ]);
+
+  await audit("lead.storno", { entity: "Lead", entityId: lead.id, customerId: writeCustomerId, details: { grund: stornogrundRecordId } });
 
   // Push-Notification an Admins. Fehler hier dürfen den Storno nicht
   // scheitern lassen — nur warnen. Stornogrund-Label aus der vorab

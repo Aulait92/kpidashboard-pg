@@ -8,6 +8,7 @@ import { buildResetUrl, sendCustomerMail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
 import { memberName } from "@/lib/team";
+import { audit } from "@/lib/audit";
 
 // Team-Verwaltung im Kundenbereich: nur der Inhaber (owner), nie in der
 // Admin-Vorschau. Berater (advisor) sehen nur die ihnen zugeteilten Leads.
@@ -59,6 +60,7 @@ export async function inviteMemberAction(_prev: TeamFormState, fd: FormData): Pr
         receivesLeads: true,
       },
     });
+    await audit("team.invite", { entity: "User", customerId: ctx.customerId, details: { email, name } });
     const token = await issuePasswordResetToken(email, INVITE_TTL_MS);
     const url = token ? buildResetUrl(token.rawToken) : null;
     const agency = (customer?.name ?? "Ihre Agentur").replace(/^Allianz\s+/i, "");
@@ -110,6 +112,7 @@ export async function toggleReceivesLeadsAction(fd: FormData): Promise<void> {
     // Wer wieder einsteigt, reiht sich hinten ein (kein Nachholen verpasster Leads).
     data: { receivesLeads: !m.receivesLeads, ...(!m.receivesLeads ? { lastLeadAssignedAt: new Date() } : {}) },
   });
+  await audit("team.receives_leads", { entity: "User", entityId: m.id, customerId: ctx.customerId, details: { receivesLeads: !m.receivesLeads } });
   revalidatePath("/buyer/team");
 }
 
@@ -131,6 +134,7 @@ export async function removeMemberAction(fd: FormData): Promise<void> {
     prisma.lead.updateMany({ where: { customerId: ctx.customerId, assignedUserId: m.id }, data: { assignedUserId: null } }),
     prisma.user.delete({ where: { id: m.id } }),
   ]);
+  await audit("team.remove", { entity: "User", entityId: m.id, customerId: ctx.customerId, details: { email: m.email } });
   revalidatePath("/buyer/team");
 }
 
@@ -143,6 +147,7 @@ export async function reassignLeadAction(leadId: string, userId: string | null):
     const target = userId ? await memberOf(ctx.customerId, userId) : null;
     if (userId && !target) return { ok: false, error: "Team-Mitglied nicht gefunden." };
     await prisma.lead.update({ where: { id: lead.id }, data: { assignedUserId: target?.id ?? null } });
+    await audit("lead.reassign", { entity: "Lead", entityId: lead.id, customerId: ctx.customerId, details: { to: target?.email ?? null } });
     if (target && target.id !== ctx.userId) {
       const { sendToUser } = await import("@/lib/push");
       await sendToUser(target.id, {

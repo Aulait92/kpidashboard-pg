@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { VIEW_AS_COOKIE } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
+import { audit } from "@/lib/audit";
 
 /** Admin: Kunden-CRM eines Kunden schreibgeschützt ansehen. */
 export async function startPreviewAction(formData: FormData): Promise<void> {
@@ -15,6 +16,7 @@ export async function startPreviewAction(formData: FormData): Promise<void> {
     ? await prisma.customer.findUnique({ where: { id: customerId }, select: { id: true } })
     : null;
   if (!customer) redirect("/admin/buyers");
+  await audit("preview.start", { entity: "Customer", entityId: customer.id, customerId: customer.id });
   (await cookies()).set(VIEW_AS_COOKIE, customer.id, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

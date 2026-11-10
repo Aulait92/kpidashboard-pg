@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/vertrieb/auth";
 import { decryptSecret, encryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
 import { generateBackupCodes, generateTotpSecret, hashBackupCode, verifyTotp } from "@/lib/totp";
+import { audit } from "@/lib/audit";
 
 export type TotpState = { error?: string; backupCodes?: string[]; done?: boolean };
 
@@ -30,6 +31,7 @@ export async function confirmTotpAction(_prev: TotpState, fd: FormData): Promise
     where: { id: session.userId },
     data: { totpEnabledAt: user.totpEnabledAt ?? new Date(), totpBackupCodes: codes.map(hashBackupCode) },
   });
+  await audit("2fa.enable", { entity: "User", entityId: session.userId });
   // Kein Neu-Rendern der Seite: die Notfall-Codes sollen stehen bleiben, bis „Fertig“.
   return { backupCodes: codes, done: true };
 }
@@ -42,6 +44,7 @@ export async function disableTotpAction(_prev: TotpState, fd: FormData): Promise
     return { error: "Code stimmt nicht." };
   }
   await prisma.user.update({ where: { id: session.userId }, data: { totpSecretEnc: null, totpEnabledAt: null, totpBackupCodes: [] } });
+  await audit("2fa.disable", { entity: "User", entityId: session.userId });
   revalidatePath("/admin/einstellungen/sicherheit");
   return { done: true };
 }

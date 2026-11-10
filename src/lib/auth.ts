@@ -171,6 +171,8 @@ export async function completeTotpLogin(codeRaw: string): Promise<LoginResult> {
   }
   (await cookies()).delete(TOTP_COOKIE);
   await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+  const { audit } = await import("@/lib/audit");
+  await audit("login.2fa", { entity: "User", entityId: user.id, customerId: user.customerId, actor: { id: user.id, email: user.email, role: user.role } });
   const payload: SessionPayload = { userId: user.id, email: user.email, role: user.role, customerId: user.customerId ?? undefined };
   await setSessionCookie(payload);
   return { ok: true, payload };
@@ -204,6 +206,8 @@ export async function login(
     where: { id: user.id },
     data: { lastLoginAt: new Date() },
   });
+  const { audit } = await import("@/lib/audit");
+  await audit("login", { entity: "User", entityId: user.id, customerId: user.customerId, actor: { id: user.id, email: user.email, role: user.role } });
 
   const payload: SessionPayload = {
     userId: user.id,
