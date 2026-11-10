@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/buyer-shell";
 import { TodayInbox } from "@/components/today-inbox";
+import { FirstDay } from "@/components/first-day";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { loadInbox } from "@/lib/inbox";
@@ -19,7 +20,21 @@ type SearchParams = Promise<{ range?: string; from?: string; to?: string }>;
 export default async function BuyerHomePage({ searchParams }: { searchParams: SearchParams }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
-  if (!(await hasWhatsAppInbox(ctx.customerId))) {
+  const [whatsapp, leadCount] = await Promise.all([
+    hasWhatsAppInbox(ctx.customerId),
+    prisma.lead.count({ where: { customerId: ctx.customerId } }),
+  ]);
+  if (leadCount === 0) {
+    // Erster Tag: noch kein Lead → erklären, wie es losgeht (statt leerer Zahlen/„Alles erledigt“).
+    return (
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <AutoRefresh intervalMs={60_000} />
+        <PageHeader title="Willkommen" subtitle="Schön, dass Sie da sind." />
+        <FirstDay customerId={ctx.customerId} owner={ctx.teamRole !== "advisor"} whatsapp={whatsapp} />
+      </main>
+    );
+  }
+  if (!whatsapp) {
     return <ZahlenPage searchParams={searchParams} />;
   }
   const [data, customer, me] = await Promise.all([

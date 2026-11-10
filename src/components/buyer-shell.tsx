@@ -24,6 +24,7 @@ import {
 import { logoutAction } from "@/app/login/actions";
 import { ToastProvider, useToast } from "@/components/ui/toast";
 import { PushHint, PushMenuItem } from "@/components/push-prompt";
+import { HilfeChat } from "@/components/hilfe-chat";
 import { normalizePath, sendUsage } from "@/lib/usage-client";
 import { cn } from "@/lib/utils";
 
@@ -146,7 +147,8 @@ export function BuyerShell({
             })}
           </nav>
 
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <HilfeChat firstName={displayName.replace(/^Allianz\s+/i, "").split(/\s+/)[0] ?? ""} owner={teamRole === "owner"} />
             <ProfileMenu name={displayName} owner={teamRole === "owner"} hasTeam={hasTeam} />
           </div>
         </div>

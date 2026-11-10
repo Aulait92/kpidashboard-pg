@@ -1,10 +1,11 @@
 import { SubTabs } from "@/components/admin-tabs";
 import { redirect } from "next/navigation";
-import { AlertTriangle, MessageSquareText } from "lucide-react";
+import { AlertTriangle, MessageSquareText, Sparkles, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Badge, Card, CardHeader, EmptyState } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 import { formatDateTime } from "@/lib/format";
 import { computeUsageReport, type CustomerUsage } from "@/lib/usage-report";
+import { loadHelpQuestions } from "@/lib/hilfe-report";
 
 // Nutzung des Kunden-CRMs: Aktivität, genutzte Funktionen, Fehler, Feedback
 // und liegen gebliebene Aufgaben – Grundlage für UX-Verbesserungen.
@@ -35,7 +36,8 @@ export default async function UsagePage({ searchParams }: { searchParams: Promis
   const session = await getCurrentSession();
   if (!session || session.role !== "ADMIN") redirect("/login");
   const days = Math.min(90, Math.max(1, Number((await searchParams).days ?? 14) || 14));
-  const report = await computeUsageReport(days);
+  const [report, help] = await Promise.all([computeUsageReport(days), loadHelpQuestions(days)]);
+  const helpDown = help.filter((h) => h.rating === "down").length;
 
   return (
     <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -59,6 +61,35 @@ export default async function UsagePage({ searchParams }: { searchParams: Promis
           ))}
         </div>
       </div>
+
+      <Card className="mb-6">
+        <CardHeader
+          title="KI-Hilfe: Fragen der Vertreter"
+          actions={
+            <span className="text-xs text-[color:var(--muted)]">
+              {help.length} Fragen{helpDown ? ` · ${helpDown}× nicht hilfreich` : ""}
+            </span>
+          }
+        />
+        {help.length === 0 ? (
+          <EmptyState icon={Sparkles} title="Noch keine Fragen" text="Hier steht, was Vertreter die KI-Hilfe fragen – und was sie nicht verstehen." />
+        ) : (
+          <ul className="divide-y divide-[color:var(--border)]">
+            {help.map((h) => (
+              <li key={h.id} className="px-5 py-3 text-sm">
+                <details>
+                  <summary className="flex cursor-pointer items-start gap-2">
+                    {h.rating === "down" ? <ThumbsDown className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" /> : h.rating === "up" ? <ThumbsUp className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /> : <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" />}
+                    <span className="flex-1 font-medium">{h.question}</span>
+                    <span className="shrink-0 text-xs text-[color:var(--muted)]">{h.customer} · {formatDateTime(h.at)}</span>
+                  </summary>
+                  <p className="mt-2 whitespace-pre-line pl-6 text-[color:var(--muted)]">{h.answer}</p>
+                </details>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
 
       {report.customers.length === 0 ? (
         <Card>

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { CalendarDays, CheckCircle2,
-  ChevronDown, ClipboardList, KeyRound, Rocket } from "lucide-react";
+  ChevronDown, ClipboardList, KeyRound, Rocket, Smartphone } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { buttonClass, Card } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
@@ -8,6 +8,8 @@ import { checklistProgress, loadOnboarding, onboardingChecklist } from "@/lib/on
 import { prisma } from "@/lib/prisma";
 import { HelpCallPicker, MetaConfirmButton, QuestionnaireForm } from "./forms";
 import { helpCallSlots } from "@/lib/help-call";
+import { InstallApp } from "@/components/install-app";
+import { getAppUrl } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Einrichtung | performancegrowth" };
@@ -176,7 +178,11 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           </Step>
         ) : null}
 
-        <Step n={software ? 4 : 3} title="Start" icon={Rocket} done={!!ob.liveAt} open={current === "start"}>
+        <Step n={software ? 4 : 3} title="App aufs Handy" icon={Smartphone} done={false} open={current === "start" && !ob.liveAt}>
+          <InstallApp appUrl={appHost()} />
+        </Step>
+
+        <Step n={software ? 5 : 4} title="Start" icon={Rocket} done={!!ob.liveAt} open={current === "start" && !!ob.liveAt}>
           <p className="text-sm text-[color:var(--muted)]">
             {ob.startDate ? `Am ${dateFmt(ob.startDate)} ` : "Zum Start "}
             gehen die Anzeigen live.{" "}
@@ -188,6 +194,15 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
       </div>
     </main>
   );
+}
+
+/** Adresse der App ohne https:// (für die Handy-Anleitung). */
+function appHost(): string {
+  try {
+    return getAppUrl().replace(/^https?:\/\//, "");
+  } catch {
+    return "app.performancegrowth.de";
+  }
 }
 
 function Step({

@@ -1,0 +1,176 @@
+# Hilfe zur App (Wissensbasis der KI-Hilfe)
+
+Diese Datei ist die einzige Wissensquelle der KI-Hilfe im Kundenbereich
+(`src/lib/hilfe.ts`). Sie beschreibt die App aus Sicht des Vertreters.
+**Bei jeder Änderung an der Oberfläche hier mitpflegen.** Links nur auf die
+Seiten aus der Liste „Seiten“ unten.
+
+## Seiten
+
+| Pfad | Name | Wofür |
+|---|---|---|
+| /buyer | Heute | Was heute zu tun ist: Chats, Termine, „Wie lief's?“, Anrufliste |
+| /buyer/leads | Leads | Alle Leads als Liste, mit Filtern und Suche |
+| /buyer/kanban | Pipeline | Alle Leads nach Phase, Karten verschieben |
+| /buyer/chats | Chats | WhatsApp-Gespräche mit Leads |
+| /buyer/zahlen | Zahlen | Kosten, Ertrag, Funnel, Hochrechnung |
+| /buyer/konto | Konto & Rechnungen | Vertrag, Rechnungen, Zahlungsart, Pause/Urlaub (nur Inhaber) |
+| /buyer/team | Team | Berater einladen, Leads verteilen (nur Inhaber) |
+| /buyer/kalender | Mein Kalender | Eigenen Kalender verbinden (bei Team-Zugängen) |
+| /buyer/einrichtung | Einrichtung | Fragebogen, Meta-Zugriff, Kalender, App aufs Handy, Hilfetermin |
+| /buyer/bestand | Bestand | Bestandskunden und Kampagnen (wenn freigeschaltet) |
+| /buyer/bestand/import | Kundenliste hochladen | Excel/CSV importieren |
+| /buyer/bestellen | Bestellen | Leads für eine Woche bestellen (bei Pay-per-Lead) |
+
+## Aufbau der App
+
+- Oben bzw. auf dem Handy unten die Bereiche: Heute, Leads, Pipeline, Chats, Zahlen. Je nach Vertrag
+  zusätzlich Einrichtung, Bestand, Bestellen. Kunden ohne WhatsApp-Assistent sehen Übersicht, Leads, Pipeline.
+- Rechts oben das Profilmenü (Initialen): Benachrichtigungen, „Etwas unklar? Feedback“, Mein Kalender,
+  Team und Konto & Rechnungen (nur Inhaber), Impressum, Datenschutz, Abmelden.
+- Rollen: **Inhaber** sieht alles. **Berater** sehen nur ihre eigenen Leads, keine Zahlen, kein Konto, kein Team.
+- Fast jede Aktion zeigt unten kurz eine Meldung mit „Rückgängig“.
+
+## Heute
+
+- Oben vier Kacheln: Chats, Termine, Wie lief's?, Anrufen. Antippen springt zum Abschnitt.
+- **Braucht dich (Chats):** Leads, die geantwortet haben und auf Sie warten. „Antworten“ oder „Erledigt“.
+- **Termine:** Videocall starten, Anrufen, Chat öffnen, Lead öffnen, Verschieben/absagen.
+- **Wie lief's?:** Nach einem Termin tragen Sie das Ergebnis ein: Angebot gesendet, Abschluss (mit Wert),
+  Nicht erschienen (kommt auf die Anrufliste) oder Kein Interesse. Den Rest (Phase, Wiedervorlage) erledigt die App.
+- **Anrufliste:** Rückrufe und fällige Wiedervorlagen, „Überfällig“ markiert. Aktionen: Anrufen, Nicht erreicht,
+  Erledigt, Später (Morgen / 3 Tage / 1 Woche / 2 Wochen), Termin buchen, Angebot gesendet, Abschluss,
+  Lead öffnen, Kein Interesse.
+- Ist alles abgearbeitet, steht dort „Alles erledigt“. Neue Aufgaben erscheinen von selbst.
+- Solange noch kein einziger Lead da ist, erklärt „Heute“, wie es losgeht.
+
+## Leads
+
+- Zeitraum oben (Heute, Gestern, 7/30 Tage, Woche, Monat, Jahr, Maximum, eigener Zeitraum).
+- **Suche** nach Name, Telefon oder E-Mail – sucht immer über alle Zeiträume.
+- Ansichten: Alle, Rückruf nötig, Wiedervorlage fällig, Ohne nächsten Schritt, Termin.
+- Hinweis „Kein nächster Schritt“: Für diesen Lead ist nichts geplant – Wiedervorlage oder Termin setzen.
+
+## Lead öffnen (Lead-Detail)
+
+- Oben die Phasen-Leiste: antippen, um die Phase zu ändern. Knöpfe **Gewonnen** und **Verloren**
+  (bei Verloren fragt die App kurz nach dem Grund).
+- Aktionen: **Anrufen**, **Chat** (WhatsApp), **Termin** (öffnet die Buchungsseite mit vorausgefüllten Daten), **Mehr**.
+- Unter „Mehr“: **Wiedervorlage** setzen oder ändern (Schnellwahl oder Datum, mit Notiz), **E-Mail schreiben**
+  (öffnet Ihr Mailprogramm), **Stornieren/Reklamieren** (bei gekauften Leads), **Daten löschen (DSGVO)** (nur Inhaber).
+- Karte zum nächsten Termin (Videocall, Verschieben) und die Zusammenfassung des Assistenten.
+- Inhaber können unter **Zuständig** den Lead einem Berater geben – der bekommt eine Push-Nachricht.
+- „Angaben zum Lead“: alle Antworten aus dem Formular. Darunter Notizen.
+
+## Pipeline
+
+- Spalten: Neuer Lead, Nicht erreicht, (Im Gespräch), Termin vereinbart, Angebot gesendet, Abschluss,
+  Kein Interesse, Disqualifiziert.
+- Am Rechner Karten mit der Maus in eine andere Spalte ziehen. Auf dem Handy die Karte antippen und die Phase wählen.
+- In „Abschluss“ fragt die App nach dem Abschlusswert. Jede Spalte zeigt die Summe in Euro.
+- Karten zeigen, wie lange der Lead schon in der Phase ist, und warnen bei „Kein nächster Schritt“.
+
+## Chats (WhatsApp)
+
+- Liste mit Filter „Alle“ / „Braucht dich“ und Suche.
+- **Selbst schreiben:** Sobald Sie antworten, pausiert der Assistent in diesem Chat. Mit dem Schalter
+  „Assistent“ schalten Sie ihn für diesen Chat wieder ein oder aus.
+- **24-Stunden-Regel von WhatsApp:** Hat der Kunde länger als 24 Stunden nicht geschrieben, dürfen nur
+  freigegebene Vorlagen raus. Dann erscheint „Nachfassen senden“ statt des Textfelds. Antwortet der Kunde,
+  können Sie wieder frei schreiben.
+- „Erledigt“ entfernt den Chat aus „Braucht dich“.
+- Bei Terminen im Chat: Video-Link, Verschieben, Absagen.
+- Rechts bzw. oben: Kontakt, Angaben aus dem Formular, „Lead öffnen“.
+
+## Der WhatsApp-Assistent
+
+- Schreibt neue Leads in wenigen Minuten an, stellt ein paar Fragen und bucht einen Termin in freie Zeiten
+  Ihres Kalenders. Die Bestätigung und eine Erinnerung etwa 24 Stunden vorher gehen per WhatsApp raus.
+- Braucht ein Lead Sie (Frage, die der Assistent nicht beantworten soll), landet der Chat unter „Braucht dich“
+  und Sie bekommen eine Push-Nachricht.
+- Wie sich der Assistent vorstellt und was er fragt, stellen wir für Sie ein. Änderungswünsche gern über
+  „Etwas unklar? Feedback“ im Profilmenü oder im Hilfetermin.
+
+## Termine
+
+- Buchung über „Termin“ beim Lead: Die Buchungsseite zeigt echte freie Zeiten aus Ihrem Kalender,
+  Telefon oder Video.
+- Verschieben/Absagen: auf „Heute“ oder beim Lead an der Termin-Karte. Der Kunde bekommt die Änderung automatisch.
+- Leads können über ihren Link selbst verschieben oder absagen.
+- Damit Termine nur in freie Zeiten fallen: Kalender verbinden (Google oder Outlook/Microsoft 365) in der
+  Einrichtung bzw. unter „Mein Kalender“. Die App liest nur, wann Sie belegt sind.
+
+## Benachrichtigungen (Push)
+
+- Einschalten: oben im Kundenbereich „Benachrichtigungen einschalten“ oder im Profilmenü
+  „Benachrichtigungen“. Einmal pro Gerät. Im Profilmenü gibt es „Test senden“.
+- **iPhone:** Nur möglich, wenn die App auf dem Home-Bildschirm liegt: in **Safari** öffnen (nicht aus
+  WhatsApp heraus), unten auf „Teilen“, dann „Zum Home-Bildschirm“, danach die App über das neue Symbol
+  öffnen und Benachrichtigungen einschalten. Anleitung auch in der Einrichtung unter „App aufs Handy“.
+- **Android:** In Chrome „App installieren“ bzw. „Zum Startbildschirm hinzufügen“, dann einschalten.
+- Steht „im Browser gesperrt“: in den Browser-Einstellungen Benachrichtigungen für diese Seite erlauben.
+- Sie bekommen Push bei: neuem Lead, neuem oder abgesagtem Termin, Chat braucht Sie, Lead an Sie übergeben.
+
+## Reklamieren (Stornieren) gekaufter Leads
+
+- Lead öffnen → „Mehr“ → **Stornieren**. Grund aus der Liste wählen (z. B. falsche Nummer, doppelt), bei Bedarf Bemerkung.
+- Gelistete Gründe werden meist sofort anerkannt. Ist die Reklamationsquote hoch oder der Grund „Sonstiges“,
+  prüfen wir von Hand (1–2 Werktage). Der Status steht dann beim Lead („in Prüfung“ / „abgelehnt“).
+- Die Gutschrift wird bei der nächsten Bestellung abgezogen.
+- Reklamieren geht nur innerhalb weniger Tage nach Lieferung (die Frist steht in Ihrem Vertrag).
+
+## Leads bestellen (Pay-per-Lead)
+
+- „Bestellen“: einmal Zahlungsart hinterlegen, dann Anzahl wählen, ab sofort oder für nächste Woche.
+- „Jede Woche wiederholen“ verlängert die Bestellung freitags automatisch; beenden jederzeit möglich.
+- Status: bezahlt, Lastschrift läuft, Zahlung offen, fehlgeschlagen, storniert. Geliefert wird nur bei bezahlter Bestellung.
+
+## Zahlen
+
+- Zeitraum wählen. Funnel: Leads → Erreicht → Termin → Abschluss.
+- Kosten & Ertrag: Lead-Kosten, Umsatz, Gewinn, Kosten pro Abschluss bzw. pro Termin, mit Vergleich zum Vorzeitraum.
+- „Hochrechnung für diesen Monat“ zum Aufklappen. Bei Teams eine Tabelle pro Person.
+
+## Team (nur Inhaber)
+
+- „Team“ im Profilmenü: Berater mit Name und E-Mail einladen (Link per Mail), höchstens 10 Zugänge.
+- Neue Leads werden reihum verteilt. Schalter „Bekommt neue Leads“ pro Person (z. B. im Urlaub aus).
+- Namen ändern, Einladung erneut senden, aus dem Team entfernen (offene Leads gehen an den Inhaber zurück).
+- Einzelnen Lead weitergeben: Lead öffnen → „Zuständig“.
+
+## Konto & Rechnungen (nur Inhaber)
+
+- Vertrag (Paket, Monatsbetrag, Laufzeit, Start), Rechnungen mit Status und „Jetzt bezahlen“ bei offenen Rechnungen.
+- Zahlungsart, Rechnungsadresse, USt-IdNr.: über das Zahlungsportal (Stripe) auf dieser Seite.
+- WhatsApp-Gebühren von Meta für den Monat.
+- Schalter „Neue Leads per E-Mail“.
+- **Pause/Urlaub** selbst eintragen (Start, Ende, Grund): Anzeigen stoppen, reduzierte Gebühr; Pause jederzeit beenden.
+- Kündigung oder Vertragsfragen: bitte direkt bei uns melden.
+
+## Bestand (Bestandskunden, wenn freigeschaltet)
+
+- Kundenliste aus dem Versicherer-System als Excel oder CSV hochladen, Spalten zuordnen, Einwilligung bestätigen.
+  Gesundheitsdaten werden nie übernommen.
+- Die App schlägt Chancen vor: Lücke schließen (z. B. KFZ ohne Hausrat), Jahresgespräch, Geburtstag in 30 Tagen,
+  Ablauf/Wechsel in 60 Tagen.
+- Kampagne: Thema, Tageslimit, Vorschau, Start/Pause. Versand per WhatsApp Mo–Sa 9–19 Uhr.
+  Antworten werden zum Lead, wer „Stopp“ schreibt, bekommt nichts mehr.
+
+## Einrichtung
+
+- Schritte: kurzer Fragebogen, Zugriff auf Ihr Meta-Werbekonto (mit Anleitung), Kalender verbinden,
+  App aufs Handy, Start.
+- Meta-Zugriff: Hat Ihr Business-Konto einen zweiten Admin, muss er die Partner-Freigabe bestätigen.
+  Lieber gemeinsam? 15-Minuten-Hilfetermin in der Einrichtung buchen.
+
+## Datenschutz
+
+- Daten liegen auf Servern in der EU. Löschen eines Leads: Lead öffnen → „Mehr“ → „Daten löschen (DSGVO)“
+  (nur Inhaber, unwiderruflich).
+- Die KI-Hilfe kennt nur diese Anleitung, keine Kundendaten. Bitte keine Kundendaten in die Hilfe eingeben.
+
+## Kontakt zu uns
+
+- „Etwas unklar? Feedback“ im Profilmenü – wir melden uns.
+- 15-Minuten-Hilfetermin (Video) in der Einrichtung, solange sie offen ist.
+- Telefon: +49 151 52418846.

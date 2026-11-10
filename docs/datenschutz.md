@@ -29,6 +29,7 @@ Unterauftragsverarbeiter (Anlage 2) in `src/lib/legal-texts.ts`, öffentlich unt
 | Angebote und Verträge | Vertragsschluss | Kunde: Name, Firma, Anschrift, Annahme-Protokoll (Name, IP, Browser, Zeit) | Art. 6 Abs. 1 b, c | Stripe, Resend, Railway | 10 Jahre (§ 147 AO, § 257 HGB) |
 | Abrechnung, Mahnwesen | Zahlungen | Kunde: Rechnungsdaten, Zahlungsstatus (Bankdaten nur bei Stripe) | Art. 6 Abs. 1 b, c | Stripe | 10 Jahre |
 | Onboarding, Feedback | Einrichtung, Qualität | Kunde: Fragebogen, Impressumsangaben der Website, Bewertungen | Art. 6 Abs. 1 b, f | Anthropic (Impressum auslesen), Resend | mit dem Kundenkonto |
+| KI-Hilfe im Kundenbereich | Fragen zur Bedienung beantworten, App verbessern | Nutzer: gestellte Frage, Antwort, Bewertung, Seite (keine Lead-Daten; Hinweis „keine Kundendaten eingeben“) | Art. 6 Abs. 1 b, f | Anthropic (Antwort erzeugen), Railway | 180 Tage (mit den Nutzungsdaten) |
 | Logins und Sicherheit | Zugang, Missbrauch verhindern | Nutzer: E-Mail, Passwort-Hash, 2FA-Geheimnis (verschlüsselt), Anmeldungen, Fehlversuche | Art. 6 Abs. 1 b, f; Art. 32 | Railway | Konto: bis Löschung; Fehlversuche 30 Tage |
 | Änderungsprotokoll | Nachweis, Sicherheit | Nutzer: Person, Zeitpunkt, Aktion (keine Lead-Inhalte) | Art. 6 Abs. 1 c, f | Railway | 1 Jahr (automatisch) |
 | Nutzungsmessung | Bedienung verbessern | Nutzer pseudonym: Seitenaufrufe, Aktionen, Fehler | Art. 6 Abs. 1 f | Railway | 180 Tage (automatisch) |
