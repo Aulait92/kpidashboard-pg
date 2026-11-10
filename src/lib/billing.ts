@@ -30,7 +30,7 @@ export function stripeClient(): Stripe | null {
 
 export const billingEnabled = () => !!process.env.STRIPE_SECRET_KEY?.trim();
 
-type ProductKey = "software" | "service" | "setup" | "setup_service";
+type ProductKey = "software" | "service" | "setup" | "setup_service" | "whatsapp";
 const productCache = new Map<ProductKey, string>();
 
 const PRODUCT_DEFAULTS: Record<ProductKey, { name: string; description: string }> = {
@@ -49,6 +49,10 @@ const PRODUCT_DEFAULTS: Record<ProductKey, { name: string; description: string }
   setup_service: {
     name: "Setup Leadgenerierung",
     description: "Einmalige Einrichtung: Kampagne, Werbemittel und Lead-Formular.",
+  },
+  whatsapp: {
+    name: "WhatsApp-Gebühren (Meta)",
+    description: "Von Meta je Nachricht berechnete WhatsApp-Gebühren, weiterberechnet nach Verbrauch.",
   },
 };
 
@@ -461,4 +465,31 @@ export async function resumeBilling(state: BillingPauseState): Promise<void> {
   } else if (state.method === "pause_collection") {
     await stripe.subscriptions.update(state.subscriptionId, { pause_collection: "" });
   }
+}
+
+/**
+ * Einmaliger Rechnungsposten (z. B. WhatsApp-Gebühren). Ohne Rechnungs-ID
+ * bleibt er offen und erscheint auf der nächsten Abo-Rechnung des Kunden.
+ */
+export async function addInvoiceItem(opts: {
+  stripeCustomerId: string;
+  amountEur: number;
+  description: string;
+  idempotencyKey: string;
+  metadata?: Record<string, string>;
+}): Promise<string> {
+  const stripe = stripeClient();
+  if (!stripe) throw new Error("Stripe ist nicht eingerichtet.");
+  const [product, tax] = await Promise.all([productId(stripe, "whatsapp"), resolveTax(stripe)]);
+  const item = await stripe.invoiceItems.create(
+    {
+      customer: opts.stripeCustomerId,
+      description: opts.description,
+      price_data: { currency: "eur", product, unit_amount: cents(opts.amountEur), tax_behavior: "exclusive" },
+      ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
+      metadata: opts.metadata,
+    },
+    { idempotencyKey: opts.idempotencyKey },
+  );
+  return item.id;
 }

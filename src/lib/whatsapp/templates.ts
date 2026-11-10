@@ -108,6 +108,7 @@ export async function sendWhatsAppNotice(opts: {
   let mode: "text" | "template";
   let body: string;
   let messageId: string | null;
+  let pricingCategory: string | null = null;
 
   if (windowOpen) {
     mode = "text";
@@ -124,6 +125,7 @@ export async function sendWhatsAppNotice(opts: {
     });
     if (!tpl) throw new NoTemplateError(opts.purpose);
     mode = "template";
+    pricingCategory = tpl.category.toLowerCase();
     body = renderTemplate(tpl.body, opts.params);
     const components = opts.params.length
       ? [
@@ -170,6 +172,8 @@ export async function sendWhatsAppNotice(opts: {
       waMessageId: messageId,
       status: "sent",
       sentBy: "system",
+      // Vorlagen kosten (vorläufig); der Status-Webhook liefert Metas endgültige Angabe.
+      ...(pricingCategory ? { pricingCategory, billable: true } : {}),
     },
   });
 

@@ -17,7 +17,12 @@ type InboundMessage = {
   type?: string;
   text?: { body?: string };
 };
-type StatusUpdate = { id?: string; status?: string };
+type StatusUpdate = {
+  id?: string;
+  status?: string;
+  // Meta-Preisangabe (Abrechnung je Nachricht)
+  pricing?: { billable?: boolean; category?: string; pricing_model?: string };
+};
 // Coexistence: Nachrichten, die der Kunde selbst in seiner WhatsApp-Business-
 // App (Handy) an einen Kontakt schickt, kommen als „Echo" (Webhook-Feld
 // smb_message_echoes) — from = Geschäftsnummer, to = Kontakt.
@@ -278,9 +283,13 @@ async function persistEcho(
 
 async function applyStatus(s: StatusUpdate): Promise<void> {
   if (!s.id || !s.status) return;
+  const pricing =
+    s.pricing && typeof s.pricing.billable === "boolean"
+      ? { billable: s.pricing.billable, pricingCategory: s.pricing.category?.toLowerCase() ?? null }
+      : {};
   await prisma.message.updateMany({
     where: { waMessageId: s.id },
-    data: { status: s.status },
+    data: { status: s.status, ...pricing },
   });
 }
 

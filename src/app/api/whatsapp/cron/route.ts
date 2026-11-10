@@ -4,6 +4,7 @@ import { runReminders } from "@/lib/whatsapp/reminders";
 import { pruneUsage } from "@/lib/usage";
 import { pruneAudit } from "@/lib/audit";
 import { pruneTransient } from "@/lib/erasure";
+import { berlinMonth, chargeWhatsAppFees } from "@/lib/whatsapp/fees";
 import { reportError } from "@/lib/monitoring";
 import { runOnboardingCron } from "@/lib/onboarding-cron";
 import { beat } from "@/lib/heartbeat";
@@ -57,11 +58,21 @@ async function handle(req: Request): Promise<Response> {
           transient: await pruneTransient(now).catch(() => null),
         }
       : undefined;
+  // WhatsApp-Gebühren des Vormonats: am 1.–3. um 03 Uhr UTC (idempotent,
+  // Wiederholungen holen fehlgeschlagene Stripe-Übertragungen nach).
+  const berlinDay = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", day: "numeric" }).format(now));
+  const fees =
+    pruned && berlinDay <= 3
+      ? await chargeWhatsAppFees(berlinMonth(now, -1)).catch((e: unknown) => {
+          reportError(e, "cron-whatsapp-fees");
+          return { error: e instanceof Error ? e.message : String(e) };
+        })
+      : undefined;
   const failed = Object.entries({ outreach, responses, reminders, onboarding })
     .filter(([, r]) => r && typeof r === "object" && "error" in r)
     .map(([k]) => k);
   await beat("cron", failed.length === 0, failed.length ? `Fehler in: ${failed.join(", ")}` : null);
-  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned });
+  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees });
 }
 
 export const GET = handle;

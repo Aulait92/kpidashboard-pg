@@ -8,6 +8,7 @@ import { reportError } from "@/lib/monitoring";
 import { prisma } from "@/lib/prisma";
 import { openPortalAction } from "./actions";
 import { LeadEmailToggle, PauseCard } from "./pause-card";
+import { WhatsAppFeesCard } from "@/components/whatsapp-fees-card";
 import { currentPause, todayBerlin } from "@/lib/pause";
 
 export const dynamic = "force-dynamic";
@@ -44,6 +45,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       retainerStart: true,
       stripeCustomerId: true,
       leadEmail: true,
+      whatsAppAccount: { select: { id: true } },
       onboarding: { select: { offerId: true, questionnaire: true } },
     },
   });
@@ -111,6 +113,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           softwareFeeText={softwareFee > 0 ? `In der Pause zahlen Sie nur ${eur(softwareFee)} netto im Monat.` : "In der Pause zahlen Sie nichts."}
           readOnly={ctx.preview}
         />
+
+        {customer.whatsAppAccount ? <WhatsAppFeesCard customerId={ctx.customerId} /> : null}
 
         {customer.onboarding ? (
           <Card>
