@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { logoutAction } from "@/app/login/actions";
 import { ToastProvider, useToast } from "@/components/ui/toast";
+import { PushHint, PushMenuItem } from "@/components/push-prompt";
 import { normalizePath, sendUsage } from "@/lib/usage-client";
 import { cn } from "@/lib/utils";
 
@@ -151,7 +152,10 @@ export function BuyerShell({
         </div>
       </header>
 
-      <div className="flex-1 pb-20 md:pb-0">{children}</div>
+      <div className="flex-1 pb-20 md:pb-0">
+        <PushHint />
+        {children}
+      </div>
 
       {/* Handy: Tab-Leiste unten wie in einer nativen App */}
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[color:var(--border)] bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
@@ -240,6 +244,7 @@ function ProfileMenu({ name, owner, hasTeam }: { name: string; owner: boolean; h
             <div className="font-semibold">{name}</div>
             <div className="text-xs text-[color:var(--muted)]">{owner ? "Dein CRM" : "Berater-Zugang"}</div>
           </div>
+          <PushMenuItem />
           <button
             type="button"
             onClick={() => {

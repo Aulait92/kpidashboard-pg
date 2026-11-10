@@ -1,134 +1,11 @@
 "use client";
 
 import { Bell, BellOff, BellRing } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-
-type Status = "loading" | "unsupported" | "denied" | "off" | "on";
-
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const raw = atob(base64);
-  const arr = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
-  return arr;
-}
+import { usePush } from "@/lib/use-push";
 
 export function NotificationsButton() {
-  const [status, setStatus] = useState<Status>("loading");
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-
-  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-
-  const refresh = useCallback(async () => {
-    if (typeof window === "undefined") return;
-    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-      setStatus("unsupported");
-      return;
-    }
-    if (Notification.permission === "denied") {
-      setStatus("denied");
-      return;
-    }
-    try {
-      const reg = await navigator.serviceWorker.getRegistration("/");
-      const sub = await reg?.pushManager.getSubscription();
-      setStatus(sub ? "on" : "off");
-    } catch {
-      setStatus("off");
-    }
-  }, []);
-
-  useEffect(() => {
-    const t = setTimeout(() => void refresh(), 0);
-    return () => clearTimeout(t);
-  }, [refresh]);
-
-  async function enable() {
-    if (!publicKey) {
-      setMessage("VAPID-Schlüssel fehlen in den Umgebungsvariablen.");
-      return;
-    }
-    setBusy(true);
-    setMessage(null);
-    try {
-      const perm = await Notification.requestPermission();
-      if (perm !== "granted") {
-        setStatus(perm === "denied" ? "denied" : "off");
-        return;
-      }
-      const reg =
-        (await navigator.serviceWorker.getRegistration("/")) ??
-        (await navigator.serviceWorker.register("/sw.js", { scope: "/" }));
-      await navigator.serviceWorker.ready;
-      const keyBytes = urlBase64ToUint8Array(publicKey);
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        // PushManager erwartet BufferSource — Uint8Array passt zur Laufzeit,
-        // aber die DOM-Typen sind durch SharedArrayBuffer-Möglichkeit strenger.
-        applicationServerKey: keyBytes.buffer as ArrayBuffer,
-      });
-      const res = await fetch("/api/push/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sub.toJSON()),
-      });
-      if (!res.ok) throw new Error(`Server antwortete ${res.status}`);
-      setStatus("on");
-      setMessage("Aktiviert.");
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function disable() {
-    setBusy(true);
-    setMessage(null);
-    try {
-      const reg = await navigator.serviceWorker.getRegistration("/");
-      const sub = await reg?.pushManager.getSubscription();
-      if (sub) {
-        await fetch("/api/push/subscribe", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ endpoint: sub.endpoint }),
-        });
-        await sub.unsubscribe();
-      }
-      setStatus("off");
-      setMessage("Deaktiviert.");
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function sendTest() {
-    setBusy(true);
-    setMessage(null);
-    try {
-      const res = await fetch("/api/push/test", { method: "POST" });
-      const data = (await res.json()) as {
-        sent?: number;
-        removed?: number;
-        errors?: string[];
-      };
-      if (data.errors && data.errors.length > 0) {
-        setMessage(`Fehler: ${data.errors.join(", ")}`);
-      } else {
-        setMessage(`${data.sent ?? 0} Push gesendet`);
-      }
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBusy(false);
-    }
-  }
+  const { status, busy, message, enable, disable, sendTest } = usePush();
 
   if (status === "loading") {
     return null;
@@ -143,7 +20,7 @@ export function NotificationsButton() {
     <div className="relative">
       <button
         type="button"
-        onClick={status === "on" ? disable : enable}
+        onClick={() => void (status === "on" ? disable() : enable())}
         disabled={busy || status === "denied"}
         aria-label={
           status === "on"
@@ -177,7 +54,7 @@ export function NotificationsButton() {
       {status === "on" && !busy ? (
         <button
           type="button"
-          onClick={sendTest}
+          onClick={() => void sendTest()}
           className="absolute right-0 top-full mt-1 hidden text-[10px] text-[color:var(--brand)] hover:underline sm:block"
         >
           Test senden
