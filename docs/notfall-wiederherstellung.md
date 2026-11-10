@@ -19,7 +19,7 @@ bestehende Datenbank wird dabei nicht verändert.
 5. **Umschalten**: Service `kpidashboard-pg` → Variables → `DATABASE_URL` auf die
    Referenz des neuen Services setzen: `${{postgres-restore-<datum>.DATABASE_URL}}`.
    Railway startet die App neu.
-6. **Kurztest**: Login, Kunden, Leads; `https://kpi.performancegrowth.de/api/status`.
+6. **Kurztest**: Login, Kunden, Leads; `https://app.performancegrowth.de/api/status`.
 7. Die alte Datenbank **nicht sofort löschen** – erst nach ein paar Tagen, wenn
    klar ist, dass nichts mehr fehlt.
 

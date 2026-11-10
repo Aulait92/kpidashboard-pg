@@ -2,7 +2,7 @@
 
 Ziel: Der Stand aus `claude/whatsapp-crm` (Sandbox, termin.performancegrowth.de)
 geht auf die Produktion `claude/facebook-ad-media-buyer-GdTgt`
-(Service `kpidashboard-pg`, kpi.performancegrowth.de).
+(Service `kpidashboard-pg`, app.performancegrowth.de).
 
 Stand 10.11.: Der Produktions-Branch ist vollständig im Entwicklungs-Branch
 enthalten. Der Merge ist konfliktfrei.
@@ -28,9 +28,9 @@ enthalten. Der Merge ist konfliktfrei.
 | `LEAD_WEBHOOK_TOKEN`, `VERTRIEB_WEBHOOK_TOKEN` | wie Sandbox (sonst Zapier/Instantly anpassen) |
 | `INSTANTLY_API_KEY`, `CALENDLY_TOKEN` | wie Sandbox |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | wie Sandbox |
-| `GOOGLE_REDIRECT_URI` | `https://kpi.performancegrowth.de/api/google/callback` |
+| `GOOGLE_REDIRECT_URI` | `https://app.performancegrowth.de/api/google/callback` |
 | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `MICROSOFT_TENANT` | wie Sandbox |
-| `MICROSOFT_REDIRECT_URI` | `https://kpi.performancegrowth.de/api/microsoft/callback` |
+| `MICROSOFT_REDIRECT_URI` | `https://app.performancegrowth.de/api/microsoft/callback` |
 | `DIALOG360_BASE_URL` | wie Sandbox |
 | `OFFER_EMAIL_FROM`, `OFFER_REPLY_TO`, `BOOKING_EMAIL_FROM` | wie Sandbox |
 | `SENTRY_ENVIRONMENT` | `production` |
@@ -38,12 +38,12 @@ enthalten. Der Merge ist konfliktfrei.
   Nicht übernehmen: `DEMO_TOOLS`, `DIALOG360_SANDBOX_API_KEY`, `COLD_CRM_DATABASE_URL`
   (nur für den letzten Import nötig, danach löschen).
 
-- [ ] Google Cloud Console: Redirect-URI `https://kpi.performancegrowth.de/api/google/callback`
+- [ ] Google Cloud Console: Redirect-URI `https://app.performancegrowth.de/api/google/callback`
       hinzufügen. Microsoft (Entra): ebenso `/api/microsoft/callback`.
 - [ ] **Login mit Microsoft/Google** (gleiche OAuth-Apps), Redirect-URIs zusätzlich eintragen,
       für Sandbox und Produktion:
       `https://termin.performancegrowth.de/api/auth/google/callback`,
-      `https://kpi.performancegrowth.de/api/auth/google/callback` (Google Cloud Console →
+      `https://app.performancegrowth.de/api/auth/google/callback` (Google Cloud Console →
       Anmeldedaten → OAuth-Client) und dasselbe mit `/api/auth/microsoft/callback` in Entra
       (App-Registrierung → Authentifizierung → Web). In Entra unter „Unterstützte Kontotypen“
       Konten in beliebigen Organisationen zulassen (Allianz-Konten), `MICROSOFT_TENANT=common`.
@@ -51,8 +51,16 @@ enthalten. Der Merge ist konfliktfrei.
       Zustimmungsbildschirm muss aber auf „In Produktion“ stehen, sonst kommen nur Testnutzer rein.
 - [ ] Stripe **Live**: Branding, Steuer, Kundenportal, Smart Retries (wie Sandbox:
       „Abonnement als unbezahlt markieren“). Webhook-Endpunkt
-      `https://kpi.performancegrowth.de/api/stripe/webhook` mit den Ereignissen aus
+      `https://app.performancegrowth.de/api/stripe/webhook` mit den Ereignissen aus
       `src/lib/billing-webhook.ts` (`HANDLED_EVENTS`).
+
+- [ ] **Neue Adressen** (Produktion `app.performancegrowth.de`, Testumgebung
+      `staging.performancegrowth.de`): DNS beim Domain-Anbieter (CNAME laut Railway),
+      in Railway je Service die Custom Domain hinzufügen (alte Domains bleiben vorerst dran).
+      Variablen: `APP_URL` = neue Adresse, `LEGACY_HOSTS` = `kpi.performancegrowth.de` bzw.
+      `termin.performancegrowth.de` (Seitenaufrufe werden umgeleitet, `/api/…` läuft weiter).
+      Google/Microsoft: Redirect-URIs für `app.` und `staging.` (Kalender `/api/google|microsoft/callback`,
+      Login `/api/auth/google|microsoft/callback`).
 
 ## Am Tag
 
@@ -70,11 +78,11 @@ enthalten. Der Merge ist konfliktfrei.
    Meldung lesen und mir schicken.
 4. **Kurztest** (je 1 Minute):
    - Admin-Login, Zahlen, Kunden, Vertrieb, Leads öffnen
-   - `https://kpi.performancegrowth.de/api/status` → `{"ok":true}`
+   - `https://app.performancegrowth.de/api/status` → `{"ok":true}`
    - Kunden-Login (Anid) → Heute, Leads
 5. **Cold CRM** ein letztes Mal importieren (Einstellungen → Import & Instantly),
    danach `COLD_CRM_DATABASE_URL` löschen.
-6. **Webhooks umstellen** auf `https://kpi.performancegrowth.de/…`:
+6. **Webhooks umstellen** auf `https://app.performancegrowth.de/…`:
    - Meta-App → Webhooks → Page → `leadgen`: `/api/meta/leadgen`
    - Admin → Einstellungen → Lead-Eingang: Anids Formular 1909684100014197 (Seite
      996034096924997) zuordnen (Privatschutz), Testlead mit dem Lead-Ads-Testtool,
@@ -85,9 +93,9 @@ enthalten. Der Merge ist konfliktfrei.
    - 360dialog: je Kunde in der Kundenakte → WhatsApp-Assistent → Nummer
      „ändern“ → speichern (setzt den Webhook auf die neue Adresse)
 7. **cron-job.org**:
-   - WhatsApp-Cron auf `https://kpi.performancegrowth.de/api/whatsapp/cron?token=<WHATSAPP_WEBHOOK_SECRET>`
+   - WhatsApp-Cron auf `https://app.performancegrowth.de/api/whatsapp/cron?token=<WHATSAPP_WEBHOOK_SECRET>`
      (alle 5 Min.), Sync wieder aktivieren
-   - Neuer Job **Überwachung**: `https://kpi.performancegrowth.de/api/status`
+   - Neuer Job **Überwachung**: `https://app.performancegrowth.de/api/status`
      alle 5 Min., Benachrichtigung bei Fehlschlag per E-Mail an,
      „nach 2 Fehlschlägen“
    - Bei beiden Jobs „Bei Fehlschlag benachrichtigen“ einschalten

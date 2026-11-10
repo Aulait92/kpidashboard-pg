@@ -59,7 +59,7 @@
 4. Käufer mit Login: Bezug auf „Wochenbestellung“ stellen; Käufer hinterlegt Zahlungsart
    und bestellt im Kundenbereich unter „Bestellen“.
 5. Perspective: Webhook je Funnel auf
-   `https://kpi.performancegrowth.de/api/leads/pool?token=…&produkt=pkv-tarifoptimierung`
+   `https://app.performancegrowth.de/api/leads/pool?token=…&produkt=pkv-tarifoptimierung`
    (bzw. den jeweiligen Slug) umstellen, einen Testlead schicken (Admin → Pay-per-Lead → Eingang).
 6. Zaps ausschalten: „Zap 0 - Verteil-Zap“, „Verteil-Zap (SMS-Verifizierung)“,
    „Auslieferungs-Zap“, „Monatlich erhaltene Leads zurücksetzen“ (veraltet).
