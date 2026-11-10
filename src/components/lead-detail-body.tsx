@@ -130,6 +130,8 @@ export async function LeadDetailBody({
       notes: true,
       erasedAt: true,
       statusChangedAt: true,
+      stornoState: true,
+      stornoReason: true,
     },
   });
   if (!lead) notFound();
@@ -209,6 +211,16 @@ export async function LeadDetailBody({
         canErase={canErase}
         daysInPhase={Math.max(0, Math.floor((nowMs() - lead.statusChangedAt.getTime()) / 86_400_000))}
       />
+
+      {lead.stornoState === "review" || lead.stornoState === "rejected" ? (
+        <div
+          className={`mb-5 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${lead.stornoState === "review" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-rose-200 bg-rose-50 text-rose-900"}`}
+        >
+          {lead.stornoState === "review"
+            ? `Storno eingereicht (${lead.stornoReason ?? "Grund"}) – wird geprüft.`
+            : `Storno abgelehnt (${lead.stornoReason ?? "Grund"}). Bei Fragen melden Sie sich gern.`}
+        </div>
+      ) : null}
 
       {conv?.needsAttention ? (
         <a

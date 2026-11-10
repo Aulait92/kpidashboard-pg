@@ -20,6 +20,7 @@ import {
 } from "@/lib/products";
 import { sendToAdmins } from "@/lib/push";
 import { audit } from "@/lib/audit";
+import { PPL_REASON_PREFIX, pplStornoOptions, requestStorno } from "@/lib/ppl/storno";
 
 // Admin-Vorschau („Als Kunde ansehen") ist bewusst schreibgeschützt.
 function previewError(session: { role: string } | null): string {
@@ -82,6 +83,14 @@ export async function cancelLeadAction(
   if (lead.status && lead.status.toLowerCase().startsWith("storno")) {
     // Idempotent: schon storniert → erfolgreich quittieren.
     return { ok: true, leadId };
+  }
+
+  // Pay-per-Lead aus der App (eigener Bezug): Storno ohne Airtable.
+  if (stornogrundRecordId.startsWith(PPL_REASON_PREFIX)) {
+    const res = await requestStorno(lead.id, stornogrundRecordId.slice(PPL_REASON_PREFIX.length), bemerkung, { id: session.userId, email: session.email, role: session.role });
+    if (!res.ok) return { error: res.error, leadId };
+    revalidatePath("/buyer", "layout");
+    return { ok: true, leadId, ...(res.state === "review" ? { message: "Storno ist eingereicht und wird geprüft." } : {}) };
   }
 
   // Storno nur, wenn für den Bezug „Erlaubte Stornogründe" vertraglich
@@ -369,6 +378,9 @@ export async function getStornogruendePerLead(
 ): Promise<LeadStornogrundOptions> {
   const out: LeadStornogrundOptions = new Map();
   if (leadIds.length === 0) return out;
+  // Pay-per-Lead aus der App: Gründe vom Bezug, nur im Storno-Fenster.
+  const ppl = await pplStornoOptions(leadIds);
+  for (const [id, opts] of ppl) out.set(id, opts);
   const [allGruende, bezugMap] = await Promise.all([
     fetchAllStornogruende(),
     fetchBezugStornogruendeMap(),

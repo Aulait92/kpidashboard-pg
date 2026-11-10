@@ -14,6 +14,7 @@ import {
   LogOut,
   MessageCircle,
   MessageSquareText,
+  ShoppingCart,
   Sun,
   TrendingUp,
   Users,
@@ -43,8 +44,11 @@ export function BuyerShell({
   setupOpen = 0,
   teamRole = "owner",
   hasTeam = false,
+  showOrders = false,
   children,
 }: {
+  /** Pay-per-Lead-Käufer: Reiter „Bestellen“. */
+  showOrders?: boolean;
   /** Mehrere Logins → „Mein Kalender" im Profilmenü. */
   hasTeam?: boolean;
   displayName: string;
@@ -86,6 +90,9 @@ export function BuyerShell({
         { href: "/buyer/leads", label: "Leads", icon: Users, match: (p) => p.startsWith("/buyer/leads") },
         { href: "/buyer/kanban", label: "Pipeline", icon: Columns3, match: (p) => p.startsWith("/buyer/kanban") },
       ];
+  if (showOrders) {
+    items.push({ href: "/buyer/bestellen", label: "Bestellen", icon: ShoppingCart, match: (p) => p.startsWith("/buyer/bestellen") });
+  }
   if (setupOpen > 0) {
     items.unshift({
       href: "/buyer/einrichtung",

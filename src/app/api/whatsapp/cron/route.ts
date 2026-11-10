@@ -5,6 +5,8 @@ import { pruneUsage } from "@/lib/usage";
 import { pruneAudit } from "@/lib/audit";
 import { pruneTransient } from "@/lib/erasure";
 import { berlinMonth, chargeWhatsAppFees } from "@/lib/whatsapp/fees";
+import { renewOrders } from "@/lib/ppl/orders";
+import { redistributeParked } from "@/lib/ppl/engine";
 import { reportError } from "@/lib/monitoring";
 import { runOnboardingCron } from "@/lib/onboarding-cron";
 import { beat } from "@/lib/heartbeat";
@@ -68,11 +70,19 @@ async function handle(req: Request): Promise<Response> {
           return { error: e instanceof Error ? e.message : String(e) };
         })
       : undefined;
+  // Pay-per-Lead: Wochenbestellungen verlängern (Fr ab 10 Uhr), geparkte Leads erneut verteilen
+  const ppl = {
+    renewed: await renewOrders(now).catch((e: unknown) => {
+      reportError(e, "cron-ppl-renew");
+      return null;
+    }),
+    redistributed: await redistributeParked(undefined, now).catch(() => null),
+  };
   const failed = Object.entries({ outreach, responses, reminders, onboarding })
     .filter(([, r]) => r && typeof r === "object" && "error" in r)
     .map(([k]) => k);
   await beat("cron", failed.length === 0, failed.length ? `Fehler in: ${failed.join(", ")}` : null);
-  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees });
+  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl });
 }
 
 export const GET = handle;

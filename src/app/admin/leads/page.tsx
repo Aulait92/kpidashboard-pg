@@ -49,7 +49,7 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
 
   return (
     <main className="mx-auto w-full max-w-7xl flex-1 space-y-5 px-4 py-8 sm:px-6 lg:px-8">
-      <SubTabs tabs={[{ href: "/admin/leads", label: "Leads" }, { href: "/admin/whatsapp", label: "WhatsApp-Chats", exact: true }]} />
+      <SubTabs tabs={[{ href: "/admin/leads", label: "Leads" }, { href: "/admin/ppl", label: "Pay-per-Lead" }, { href: "/admin/whatsapp", label: "WhatsApp-Chats", exact: true }]} />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Leads</h1>

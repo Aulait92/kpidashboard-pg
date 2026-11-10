@@ -84,7 +84,7 @@ function prettify(key: string): string {
   return s ? s[0].toUpperCase() + s.slice(1) : key;
 }
 
-function extract(inc: IncomingLead, labels: Record<string, string>) {
+export function extract(inc: Pick<IncomingLead, "fields">, labels: Record<string, string>) {
   const used = new Set<string>();
   const take = (keys: string[]) => {
     const hit = pick(inc.fields, keys);

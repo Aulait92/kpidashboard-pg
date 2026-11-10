@@ -320,3 +320,19 @@ export async function sendCustomerMail(opts: {
     return { ok: false, error: err instanceof Error ? err.message : "Versand fehlgeschlagen" };
   }
 }
+
+/** Reine Text-Mail ohne HTML (für Empfänger, deren System die Mail ausliest). */
+export async function sendPlainMail(opts: { to: string | string[]; subject: string; text: string }): Promise<SendResult> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.LEAD_EMAIL_FROM ?? process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>";
+  if (!apiKey) {
+    console.warn(`[email] RESEND_API_KEY fehlt — „${opts.subject}“ an ${[opts.to].flat().join(", ")}`);
+    return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
+  }
+  try {
+    const { error } = await new Resend(apiKey).emails.send({ from, to: opts.to, subject: opts.subject, text: opts.text });
+    return error ? { ok: false, error: error.message } : { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}

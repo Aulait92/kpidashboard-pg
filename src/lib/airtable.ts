@@ -5,7 +5,7 @@ import { normalizePhone } from "@/lib/whatsapp/phone";
 import { attachLeadToContact } from "@/lib/whatsapp/lead-link";
 import { canonicalProductKey } from "@/lib/products";
 
-type AirtableRecord = {
+export type AirtableRecord = {
   id: string;
   fields: Record<string, unknown>;
   createdTime: string;
@@ -358,7 +358,7 @@ function getEnv() {
   return { token, baseId };
 }
 
-async function fetchAllRecords(tableName: string): Promise<AirtableRecord[]> {
+export async function fetchAllRecords(tableName: string): Promise<AirtableRecord[]> {
   const { token, baseId } = getEnv();
   const records: AirtableRecord[] = [];
   let offset: string | undefined;

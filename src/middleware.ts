@@ -22,6 +22,7 @@ const PUBLIC_PREFIXES = [
   "/api/stripe/webhook", // Stripe-Webhooks (per Signatur geprüft)
   "/api/meta/leadgen", // Meta-Webhook Lead Ads (Signatur mit META_APP_SECRET)
   "/api/leads/eingang", // Lead-Webhook (Zapier o. ä., per LEAD_WEBHOOK_TOKEN)
+  "/api/leads/pool", // Pay-per-Lead-Eingang (Perspective/Funnels, per LEAD_WEBHOOK_TOKEN)
   "/feedback", // Kunden-Feedback per Mail-Link (geheimer Token, ohne Login)
   "/api/vertrieb", // Vertriebs-Webhooks (Instantly, Calendly, Leads, LinkedIn) – per Token gesichert
   "/manifest.webmanifest",

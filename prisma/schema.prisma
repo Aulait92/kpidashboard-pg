@@ -139,6 +139,7 @@ model Customer {
   feedback           CustomerFeedback[]
   pauses             CustomerPause[]
   whatsAppFees       WhatsAppFeeCharge[]
+  leadSubscriptions  LeadSubscription[]
   leadSources        LeadSource[]
   salesContact       SalesContact?
   whatsAppAccount    WhatsAppAccount?
@@ -351,6 +352,21 @@ model Lead {
   // optional nach Airtable in eine Abschlusswert-Spalte gespiegelt; getrennt
   // von Revenue.amount (das ist der Lead-Einkaufspreis).
   closeValue           Decimal?  @db.Decimal(12, 2)
+  // ─── Pay-per-Lead (eigene Funnels, an Käufer verkauft) ─────────────────
+  subscriptionId       String?
+  subscription         LeadSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  orderId              String?
+  order                LeadOrder?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  deliveredAt          DateTime?
+  // Storno beim Pay-per-Lead: requested → approved | rejected | review (Prüfung durch Admin)
+  stornoState          String?
+  stornoReason         String?
+  stornoNote           String?
+  stornoRequestedAt    DateTime?
+  stornoDecidedAt      DateTime?
+  // Gutschrift für genehmigten Storno (EUR) und wann sie auf eine Rechnung kam
+  creditAmount         Decimal?          @db.Decimal(10, 2)
+  creditedAt           DateTime?
   // DSGVO-Löschung (Art. 17): personenbezogene Felder geleert, Zeile bleibt
   // für Abrechnung und Statistik. Der Airtable-Sync überschreibt sie nicht mehr.
   erasedAt             DateTime?
@@ -366,6 +382,8 @@ model Lead {
   @@index([assignedUserId])
   @@index([createdAt])
   @@index([customerId, phone])
+  @@index([subscriptionId, deliveredAt])
+  @@index([stornoState])
 }
 
 model Revenue {
@@ -1348,4 +1366,115 @@ model WhatsAppFeeCharge {
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@unique([customerId, month])
+}
+
+// ─── Pay-per-Lead ────────────────────────────────────────────────────────
+// Bezug: ein Käufer kauft Leads eines Produkts (Pool) zu einem Preis, mit
+// Filtern. Ersetzt den Airtable-„Kunden-Produkt-Bezug“.
+model LeadSubscription {
+  id           String    @id @default(cuid())
+  customerId   String
+  customer     Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  // Produkt/Pool wie Lead.source, z. B. „PKV-Tarifoptimierung“
+  productKey   String
+  label        String?
+  active       Boolean   @default(true)
+  // live | test (Test: Vorrang bis testQuantity, verteilt über testDays)
+  status       String    @default("live")
+  testQuantity Int?
+  testDays     Int?
+  // Kontingent ohne Bestellung (von Hand gepflegt): month | once; week = Bestellungen im Kundenbereich
+  period       String    @default("week")
+  goal         Int?
+  startDate    DateTime?
+  price        Decimal   @db.Decimal(10, 2)
+  // Filter
+  plzRanges    String? // "80000-85999|67300-67499|12345"
+  acceptWeak   Boolean   @default(true)
+  // Beitragsgrenze für „schwach“ (Standard 700 €), Beamte sind immer schwach
+  weakThreshold Int?
+  acceptCivilServants Boolean @default(true)
+  onlyWeak     Boolean   @default(false)
+  scoreFloor   Int?
+  insurerInclude String[] @default([])
+  insurerExclude String[] @default([])
+  // weitere Regeln: "feld=Wert1,Wert2|feld2=…" (Lead wird ausgeschlossen, wenn ein Wert passt)
+  excludeRules String?
+  // Storno
+  stornoDays   Int?
+  stornoReasons String[] @default([])
+  // Auslieferung: app (Kundenbereich, Push, E-Mail) | email (nur E-Mail) | webhook
+  delivery     String    @default("app")
+  deliveryEmail String?
+  // E-Mail-Vorlage für Systeme, die die Mail auslesen (z. B. „Feld: Wert“ je
+  // Zeile). Platzhalter {vorname}, {nachname}, {plz} … siehe lib/ppl/delivery.
+  emailSubject String?
+  emailTemplate String?
+  webhookUrl   String?
+  // standard (JSON mit lead/answers, Secret im Header) | convexa (FirstName, LastName …)
+  webhookFormat String   @default("standard")
+  webhookSecretEnc String?
+  airtableId   String?   @unique
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  orders LeadOrder[]
+  leads  Lead[]
+
+  @@index([productKey, active])
+  @@index([customerId])
+}
+
+// Bestellung für einen Zeitraum (meist Woche Mo–So), im Voraus bezahlt.
+model LeadOrder {
+  id             String           @id @default(cuid())
+  subscriptionId String
+  subscription   LeadSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  periodStart    DateTime
+  periodEnd      DateTime
+  quantity       Int
+  amount         Decimal          @db.Decimal(10, 2)
+  // open (Rechnung offen) | paid | processing (Lastschrift läuft) | failed | cancelled
+  status         String           @default("open")
+  // Folgewoche automatisch gleich bestellen
+  autoRenew      Boolean          @default(true)
+  stripeInvoiceId String?         @unique
+  createdById    String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  leads Lead[]
+
+  @@unique([subscriptionId, periodStart])
+  @@index([status, periodStart])
+}
+
+// Eingang eines Pool-Leads (vor der Verteilung): Dubletten-Historie,
+// geparkte Leads (kein freies Kontingent) und Prüfergebnis.
+model PoolLead {
+  id          String    @id @default(cuid())
+  externalId  String?   @unique
+  productKey  String
+  via         String // perspective | meta | webhook
+  name        String?
+  phone       String?
+  email       String?
+  plz         String?
+  insurer     String?
+  contribution Int?
+  civilServant Boolean  @default(false)
+  weak        Boolean   @default(false)
+  smsVerified Boolean   @default(false)
+  score       Int?
+  answers     Json?
+  // delivered | duplicate | invalid | parked
+  status      String
+  reason      String?
+  leadId      String?   @unique
+  createdAt   DateTime  @default(now())
+  deliveredAt DateTime?
+
+  @@index([phone, createdAt])
+  @@index([email, createdAt])
+  @@index([status, productKey])
 }

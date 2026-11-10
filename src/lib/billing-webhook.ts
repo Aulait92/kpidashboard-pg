@@ -76,6 +76,14 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
     case "checkout.session.async_payment_succeeded":
     case "checkout.session.async_payment_failed": {
       const session = event.data.object as Stripe.Checkout.Session;
+      // Zahlungsart für Lead-Bestellungen hinterlegt (Pay-per-Lead)
+      if (session.metadata?.kind === "payment_setup") {
+        if (event.type === "checkout.session.completed") {
+          const { savePaymentSetup } = await import("@/lib/billing");
+          await savePaymentSetup(session).catch((err) => reportError(err, "billing-payment-setup"));
+        }
+        return;
+      }
       const offer = await offerForSession(session);
       if (!offer) return;
       const subscriptionId = idOf(session.subscription);
@@ -162,6 +170,11 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
     case "invoice.payment_failed":
     case "invoice.overdue": {
       const invoice = event.data.object as Stripe.Invoice;
+      // Lead-Bestellung (Pay-per-Lead, Vorkasse)
+      if (invoice.metadata?.kind === "ppl_order" && invoice.metadata.order_id && event.type !== "invoice.overdue") {
+        const { orderInvoiceEvent } = await import("@/lib/ppl/orders");
+        await orderInvoiceEvent(invoice.metadata.order_id, event.type === "invoice.paid").catch((err) => reportError(err, "ppl-order-webhook"));
+      }
       // Zahlungsverzug je Kunde führen (unabhängig vom Angebot).
       const stripeCustomerId = idOf(invoice.customer as string | { id: string } | null);
       if (stripeCustomerId) {

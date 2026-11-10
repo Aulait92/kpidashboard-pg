@@ -30,7 +30,7 @@ export function stripeClient(): Stripe | null {
 
 export const billingEnabled = () => !!process.env.STRIPE_SECRET_KEY?.trim();
 
-type ProductKey = "software" | "service" | "setup" | "setup_service" | "whatsapp";
+type ProductKey = "software" | "service" | "setup" | "setup_service" | "whatsapp" | "leads";
 const productCache = new Map<ProductKey, string>();
 
 const PRODUCT_DEFAULTS: Record<ProductKey, { name: string; description: string }> = {
@@ -49,6 +49,10 @@ const PRODUCT_DEFAULTS: Record<ProductKey, { name: string; description: string }
   setup_service: {
     name: "Setup Leadgenerierung",
     description: "Einmalige Einrichtung: Kampagne, Werbemittel und Lead-Formular.",
+  },
+  leads: {
+    name: "Leads (Pay-per-Lead)",
+    description: "Exklusive Leads je Bestellung, im Voraus berechnet.",
   },
   whatsapp: {
     name: "WhatsApp-Gebühren (Meta)",
@@ -492,4 +496,111 @@ export async function addInvoiceItem(opts: {
     { idempotencyKey: opts.idempotencyKey },
   );
   return item.id;
+}
+
+// ─── Pay-per-Lead: Zahlungsart hinterlegen und Wochenrechnungen ───────────
+
+/** Stripe-Kunde für einen Käufer sicherstellen (ohne Angebot, z. B. Pay-per-Lead). */
+export async function ensureStripeCustomerFor(customerId: string): Promise<string> {
+  const stripe = stripeClient();
+  if (!stripe) throw new Error("Stripe ist nicht eingerichtet.");
+  const c = await prisma.customer.findUniqueOrThrow({
+    where: { id: customerId },
+    select: { name: true, stripeCustomerId: true, users: { where: { role: "BUYER" }, select: { email: true }, orderBy: { createdAt: "asc" }, take: 1 } },
+  });
+  if (c.stripeCustomerId) return c.stripeCustomerId;
+  const created = await stripe.customers.create(
+    { name: c.name, email: c.users[0]?.email, preferred_locales: ["de"], metadata: { customer_id: customerId } },
+    { idempotencyKey: `customer-${customerId}` },
+  );
+  await prisma.customer.update({ where: { id: customerId }, data: { stripeCustomerId: created.id } });
+  return created.id;
+}
+
+/** Stripe-Seite zum Hinterlegen der Zahlungsart (SEPA/Karte). */
+export async function createPaymentSetupUrl(customerId: string, returnUrl: string): Promise<string> {
+  const stripe = stripeClient();
+  if (!stripe) throw new Error("Stripe ist nicht eingerichtet.");
+  const stripeCustomerId = await ensureStripeCustomerFor(customerId);
+  const session = await stripe.checkout.sessions.create({
+    mode: "setup",
+    currency: "eur",
+    customer: stripeCustomerId,
+    locale: "de",
+    success_url: `${returnUrl}${returnUrl.includes("?") ? "&" : "?"}zahlung=ok`,
+    cancel_url: returnUrl,
+    metadata: { kind: "payment_setup", customer_id: customerId },
+    setup_intent_data: { metadata: { kind: "payment_setup", customer_id: customerId }, description: "Zahlungsart für Lead-Bestellungen" },
+  });
+  if (!session.url) throw new Error("Stripe hat keine Seite geliefert.");
+  return session.url;
+}
+
+/** Nach „Zahlungsart hinterlegen“: als Standard für Rechnungen setzen. */
+export async function savePaymentSetup(session: Stripe.Checkout.Session): Promise<void> {
+  const stripe = stripeClient();
+  if (!stripe) return;
+  const pm = await paymentMethodOf(stripe, session);
+  const customer = typeof session.customer === "string" ? session.customer : session.customer?.id;
+  if (pm && customer) await stripe.customers.update(customer, { invoice_settings: { default_payment_method: pm } });
+}
+
+export async function hasPaymentMethod(stripeCustomerId: string | null): Promise<boolean> {
+  const stripe = stripeClient();
+  if (!stripe || !stripeCustomerId) return false;
+  const c = await stripe.customers.retrieve(stripeCustomerId);
+  if (c.deleted) return false;
+  return !!c.invoice_settings?.default_payment_method;
+}
+
+/**
+ * Rechnung sofort erstellen und einziehen (Vorkasse für eine Bestellung).
+ * Liefert den Stand: paid | processing (Lastschrift läuft) | open | failed.
+ */
+export async function chargeNow(opts: {
+  stripeCustomerId: string;
+  lines: { description: string; amountEur: number }[];
+  description: string;
+  idempotencyKey: string;
+  metadata: Record<string, string>;
+}): Promise<{ invoiceId: string; status: "paid" | "processing" | "open" | "failed" }> {
+  const stripe = stripeClient();
+  if (!stripe) throw new Error("Stripe ist nicht eingerichtet.");
+  const [product, tax] = await Promise.all([productId(stripe, "leads"), resolveTax(stripe)]);
+  const invoice = await stripe.invoices.create(
+    {
+      customer: opts.stripeCustomerId,
+      collection_method: "charge_automatically",
+      auto_advance: true,
+      pending_invoice_items_behavior: "exclude",
+      description: opts.description,
+      metadata: opts.metadata,
+      ...(tax.automatic ? { automatic_tax: { enabled: true } } : {}),
+    },
+    { idempotencyKey: `${opts.idempotencyKey}-inv` },
+  );
+  for (const [i, l] of opts.lines.entries()) {
+    await stripe.invoiceItems.create(
+      {
+        customer: opts.stripeCustomerId,
+        invoice: invoice.id,
+        description: l.description,
+        price_data: { currency: "eur", product, unit_amount: cents(l.amountEur), tax_behavior: "exclusive" },
+        ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
+      },
+      { idempotencyKey: `${opts.idempotencyKey}-item-${i}` },
+    );
+  }
+  const finalized = await stripe.invoices.finalizeInvoice(invoice.id!);
+  if (finalized.status === "paid") return { invoiceId: finalized.id!, status: "paid" };
+  try {
+    const paid = await stripe.invoices.pay(finalized.id!);
+    return { invoiceId: paid.id!, status: paid.status === "paid" ? "paid" : "processing" };
+  } catch (err) {
+    // SEPA: Zahlung läuft (Bestätigung per Webhook); Karte abgelehnt → failed
+    const code = (err as { code?: string }).code;
+    if (code === "invoice_payment_intent_requires_action" || code === "payment_intent_action_required") return { invoiceId: finalized.id!, status: "open" };
+    reportError(err, "ppl-charge", { invoice: finalized.id ?? "" });
+    return { invoiceId: finalized.id!, status: "failed" };
+  }
 }
