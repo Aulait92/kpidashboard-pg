@@ -84,9 +84,13 @@ enthalten. Der Merge ist konfliktfrei.
    danach `COLD_CRM_DATABASE_URL` löschen.
 6. **Webhooks umstellen** auf `https://app.performancegrowth.de/…`:
    - Meta-App → Webhooks → Page → `leadgen`: `/api/meta/leadgen`
-   - Admin → Einstellungen → Lead-Eingang: Anids Formular 1909684100014197 (Seite
-     996034096924997) zuordnen (Privatschutz), Testlead mit dem Lead-Ads-Testtool,
-     erscheint bei Anid → Zap „Allianz Lead Ads“ bzw. Anid-Zap ausschalten
+   - **Anid erst nach seiner Freigabe (geplant Ende November)**: Anid muss als zweiter
+     Admin die Partnerfreigabe für „Ole Kannapinn UG“ bestätigen (Werbekonto „WK Anid
+     Schwarzkopf“ 1088907616945081 + Seite, volle Kontrolle). Danach in unserem Portfolio
+     beides dem Systemnutzer zuweisen. Dann: Kundenakte → Leads & Formulare → Werbekonto
+     1088907616945081 „Speichern & prüfen“; Lead-Eingang: Formular 1909684100014197 (Seite
+     996034096924997) zuordnen (Privatschutz), Testlead → erscheint bei Anid → Zap
+     „Allianz Lead Ads“ bzw. Anid-Zap ausschalten. Bis dahin läuft Anid über den Zap weiter.
    - Zapier (Lead-Webhook, falls noch aktiv): `/api/leads/eingang?token=…`
    - Instantly: `/api/vertrieb/…` (wie bisher in der Sandbox)
    - Calendly: wie bisher in der Sandbox
