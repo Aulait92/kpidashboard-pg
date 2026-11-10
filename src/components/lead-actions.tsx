@@ -25,6 +25,7 @@ import { StornoDialog, type StornogrundOption } from "@/components/storno-dialog
 import { PHASE_DOT, findPhaseIn, statusToneClass, type LeadStatus, type PipelinePhase } from "@/lib/products";
 import { formatPhone } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { CallOutcomeSheet, useCallReturn } from "@/components/call-outcome";
 
 // Kopf des Lead-Details: Status antippen → Phase wählen; darunter eine Reihe
 // mit den Aktionen. Alles Seltene steckt unter „Mehr".
@@ -47,6 +48,8 @@ type Props = {
   canErase?: boolean;
   /** Tage im aktuellen Status (auf dem Server berechnet). */
   daysInPhase?: number | null;
+  /** Neue Oberfläche: nach „Anrufen“ und Rückkehr automatisch „Wie lief's?“ fragen. */
+  askAfterCall?: boolean;
 };
 
 const QUICK = [
@@ -66,6 +69,8 @@ export function LeadHeaderActions(p: Props) {
   const [note, setNote] = useState(p.followUpNote ?? "");
   const [date, setDate] = useState("");
   const phase = findPhaseIn(p.phases, p.status);
+  const [afterCall, setAfterCall] = useState(false);
+  const markCall = useCallReturn(() => setAfterCall(true));
 
   function setStatus(status: LeadStatus, label: string, closeValue?: number | null) {
     start(async () => {
@@ -231,7 +236,14 @@ export function LeadHeaderActions(p: Props) {
         </div>
 
         <div className="mt-4 grid grid-cols-4 gap-2 sm:flex sm:flex-wrap">
-          <ActionTile icon={Phone} label="Anrufen" href={p.phone ? `tel:+${p.phone}` : undefined} primary title={p.phone ? formatPhone(p.phone) : undefined} />
+          <ActionTile
+            icon={Phone}
+            label="Anrufen"
+            href={p.phone ? `tel:+${p.phone}` : undefined}
+            onClick={p.askAfterCall ? () => markCall(p.leadId) : undefined}
+            primary
+            title={p.phone ? formatPhone(p.phone) : undefined}
+          />
           <ActionTile icon={MessageCircle} label="Chat" href={p.conversationId ? `/buyer/chats?c=${p.conversationId}` : undefined} />
           <ActionTile icon={CalendarPlus} label="Termin" href={p.bookingSlug ? `/book/${p.bookingSlug}?lead=${p.leadId}` : undefined} external />
           <ActionTile icon={MoreHorizontal} label="Mehr" onClick={() => setOpen("more")} />
@@ -251,6 +263,14 @@ export function LeadHeaderActions(p: Props) {
         ) : null}
       </header>
 
+      {p.askAfterCall ? (
+        <CallOutcomeSheet
+          target={afterCall ? { leadId: p.leadId, name: p.name ?? "Lead", kind: p.followUpAt ? "followup" : "lead" } : null}
+          bookingSlug={p.bookingSlug}
+          onClose={() => setAfterCall(false)}
+          onPick={(message, action) => followUp(action, message)}
+        />
+      ) : null}
       <ActionSheet open={open === "phase"} onClose={() => setOpen(null)} title="Status ändern" actions={phaseActions} />
       <ActionSheet open={open === "more"} onClose={() => setOpen(null)} title={p.name ?? "Lead"} actions={moreActions} />
       <ActionSheet open={open === "lost"} onClose={() => setOpen(null)} title="Warum verloren?" actions={lostActions} />
@@ -393,7 +413,7 @@ function ActionTile({
   );
   if (href) {
     return (
-      <a href={href} className={cls} {...(external ? { target: "_blank", rel: "noreferrer" } : {})}>
+      <a href={href} className={cls} onClick={onClick} {...(external ? { target: "_blank", rel: "noreferrer" } : {})}>
         {inner}
       </a>
     );

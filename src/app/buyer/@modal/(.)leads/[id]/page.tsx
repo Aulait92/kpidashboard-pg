@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { LeadDetailBody } from "@/components/lead-detail-body";
 import { LeadDetailModalShell } from "@/components/lead-detail-modal-shell";
 import { getBuyerContext } from "@/lib/buyer-context";
+import { isNewUi } from "@/lib/new-ui";
 
 // Intercepting Route für ALLE Buyer-Tabs (KPIs / Leads / Pipeline). (.)
 // matched /buyer/leads/[id] auf der /buyer-Ebene. Solange die Navigation
@@ -23,7 +24,7 @@ export default async function BuyerLeadModal({
   const { id } = await params;
   return (
     <LeadDetailModalShell>
-      <LeadDetailBody leadId={id} team={session} />
+      <LeadDetailBody leadId={id} team={session} newUi={await isNewUi(session.customerId)} />
     </LeadDetailModalShell>
   );
 }

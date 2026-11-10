@@ -13,6 +13,8 @@ export type SheetAction = {
   tone?: "danger" | "primary";
   href?: string;
   onSelect?: () => void;
+  /** Fenster nicht schließen (die Auswahl öffnet einen Folgeschritt). */
+  keepOpen?: boolean;
 };
 
 export function Sheet({
@@ -105,7 +107,14 @@ export function ActionSheet({
           return (
             <li key={a.label}>
               {a.href ? (
-                <a href={a.href} className={cls} onClick={onClose}>
+                <a
+                  href={a.href}
+                  className={cls}
+                  onClick={() => {
+                    if (!a.keepOpen) onClose();
+                    a.onSelect?.();
+                  }}
+                >
                   {inner}
                 </a>
               ) : (
@@ -113,7 +122,7 @@ export function ActionSheet({
                   type="button"
                   className={cls}
                   onClick={() => {
-                    onClose();
+                    if (!a.keepOpen) onClose();
                     a.onSelect?.();
                   }}
                 >

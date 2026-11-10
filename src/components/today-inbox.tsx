@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import {
   CalendarClock,
   CalendarPlus,
@@ -17,6 +17,9 @@ import {
   UserRound,
   UserX,
   Video,
+  X,
+  SkipForward,
+  PlayCircle,
 } from "lucide-react";
 import {
   appointmentOutcomeResult,
@@ -28,9 +31,11 @@ import {
   type InboxResult,
 } from "@/app/buyer/inbox-actions";
 import { useToast } from "@/components/ui/toast";
+import { cn } from "@/lib/utils";
 import { Button, ButtonLink, Card, CardHeader, EmptyState } from "@/components/ui";
 import { ActionSheet, Sheet, TapRow, type SheetAction } from "@/components/ui/sheet";
 import type { InboxData } from "@/lib/inbox";
+import { CallOutcomeSheet, useCallReturn, type CallOutcomeTarget } from "@/components/call-outcome";
 
 // Startseite „Heute": vier Listen, die man leer arbeitet. Jede Zeile hat eine
 // sichtbare Aktion (Anrufen/Antworten); alles Weitere per Antippen im
@@ -62,8 +67,40 @@ type SheetState =
   | { kind: "win"; name: string; save: (value: number | null) => void }
   | null;
 
-export function TodayInbox({ data }: { data: InboxData }) {
+export function TodayInbox({
+  data,
+  newUi = false,
+  leadHref = "/buyer/leads/{id}",
+  selectedLeadId = null,
+}: {
+  data: InboxData;
+  /** Neue Oberfläche: Details rechts (Desktop), Anrufmodus, „Wie lief's?“ nach jedem Anruf. */
+  newUi?: boolean;
+  /** Ziel „Lead öffnen“; {id} wird ersetzt. */
+  leadHref?: string;
+  /** Rechts geöffneter Kontakt (Desktop) – Zeile wird hervorgehoben. */
+  selectedLeadId?: string | null;
+}) {
   const router = useRouter();
+  const leadUrl = (id: string) => leadHref.replace("{id}", id);
+  const [outcome, setOutcome] = useState<(CallOutcomeTarget & { key: string }) | null>(null);
+  const [callMode, setCallMode] = useState<{ queue: CallItem[]; i: number } | null>(null);
+  // Zuletzt angerufener Kontakt (im Klick gesetzt, nicht beim Rendern).
+  const lastCall = useRef<CallItem | null>(null);
+  const markCallReturn = useCallReturn((key) => {
+    const c = lastCall.current;
+    if (c && c.key === key) setOutcome({ key: c.key, leadId: c.leadId, name: c.name, kind: c.kind });
+  });
+  const markCall = (c: CallItem) => {
+    lastCall.current = c;
+    markCallReturn(c.key);
+  };
+  /** Desktop (neue Oberfläche): Zeile öffnet die Details rechts statt eines Auswahlfensters. */
+  const openDetailOnDesktop = (leadId: string | null | undefined) => {
+    if (!newUi || !leadId || typeof window === "undefined" || !window.matchMedia("(min-width: 1280px)").matches) return false;
+    router.push(leadUrl(leadId), { scroll: false });
+    return true;
+  };
   const toast = useToast();
   const [, startTransition] = useTransition();
   const [hidden, setHidden] = useState<Set<string>>(new Set());
@@ -138,6 +175,16 @@ export function TodayInbox({ data }: { data: InboxData }) {
     })),
   ].filter((c) => !hidden.has(c.key));
   const visibleCalls = showAll ? calls : calls.slice(0, 6);
+  const current = callMode ? callMode.queue[callMode.i] : null;
+  const advance = () =>
+    setCallMode((m) => {
+      if (!m) return m;
+      if (m.i + 1 >= m.queue.length) {
+        toast.show({ message: "Anrufliste fertig. Gute Arbeit!" });
+        return null;
+      }
+      return { ...m, i: m.i + 1 };
+    });
   const nothing = appointments.length + outcomes.length + chats.length + calls.length === 0;
 
   const laterSheet = (c: CallItem) =>
@@ -157,7 +204,7 @@ export function TodayInbox({ data }: { data: InboxData }) {
 
   const callSheet = (c: CallItem) => {
     const actions: SheetAction[] = [];
-    if (c.phone) actions.push({ label: "Anrufen", icon: Phone, href: `tel:+${c.phone}`, tone: "primary" });
+    if (c.phone) actions.push({ label: "Anrufen", icon: Phone, href: `tel:+${c.phone}`, tone: "primary", onSelect: newUi ? () => markCall(c) : undefined });
     if (c.kind === "callback") {
       actions.push({
         label: "Nicht erreicht",
@@ -177,7 +224,7 @@ export function TodayInbox({ data }: { data: InboxData }) {
         onSelect: () =>
           setTimeout(() => askWin(c.name, (v) => run(c.key, `${c.name}: Abschluss`, () => callbackOutcomeResult(c.leadId, "won", v))), 0),
       },
-      { label: "Lead öffnen", icon: UserRound, href: `/buyer/leads/${c.leadId}` },
+      { label: "Lead öffnen", icon: UserRound, href: leadUrl(c.leadId) },
       { label: "Kein Interesse", icon: ThumbsDown, tone: "danger", onSelect: () => run(c.key, `${c.name}: kein Interesse`, () => callbackOutcomeResult(c.leadId, "lost")) },
     );
     setSheet({ kind: "actions", title: c.name, message: c.reason, actions });
@@ -186,6 +233,8 @@ export function TodayInbox({ data }: { data: InboxData }) {
   // Kleiner Pfeil rechts: Zeile antippen öffnet weitere Aktionen.
   const more = <ChevronRight className="hidden h-4 w-4 shrink-0 text-[color:var(--border-strong)] sm:block" />;
   const stop = (e: React.MouseEvent) => e.stopPropagation();
+  const sel = (leadId: string | null | undefined) =>
+    newUi && leadId && leadId === selectedLeadId ? "xl:bg-[color:var(--brand-soft)] xl:hover:bg-[color:var(--brand-soft)]" : undefined;
 
   return (
     <div className="space-y-6">
@@ -194,7 +243,7 @@ export function TodayInbox({ data }: { data: InboxData }) {
           <EmptyState icon={Check} title="Alles erledigt" text="Neue Aufgaben erscheinen hier von selbst." />
         </Card>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className={cn("grid grid-cols-2 gap-3 sm:grid-cols-4", newUi && "xl:grid-cols-2")}>
           <Tile icon={MessageCircle} tone="rose" label="Chats" value={chats.length} target="chats" />
           <Tile icon={CalendarClock} tone="brand" label="Termine" value={appointments.length} target="termine" />
           <Tile icon={Trophy} tone="violet" label="Wie lief's?" value={outcomes.length} target="ergebnis" />
@@ -250,12 +299,13 @@ export function TodayInbox({ data }: { data: InboxData }) {
               if (video && a.meetUrl) actions.push({ label: "Videocall starten", icon: Video, href: a.meetUrl, tone: "primary" });
               if (a.phone) actions.push({ label: "Anrufen", icon: Phone, href: `tel:+${a.phone}`, tone: video ? undefined : "primary" });
               if (a.conversationId) actions.push({ label: "Chat öffnen", icon: MessageCircle, href: `/buyer/chats?c=${a.conversationId}` });
-              if (a.leadId) actions.push({ label: "Lead öffnen", icon: UserRound, href: `/buyer/leads/${a.leadId}` });
+              if (a.leadId) actions.push({ label: "Lead öffnen", icon: UserRound, href: leadUrl(a.leadId) });
               if (a.manageToken) actions.push({ label: "Verschieben oder absagen", icon: CalendarClock, href: `/book/manage/${a.manageToken}` });
               return (
                 <TapRow
                   key={a.id}
-                  onTap={() => setSheet({ kind: "actions", title: a.name, message: `${a.isToday ? "Heute" : day(a.startsAt)}, ${time(a.startsAt)} Uhr · ${video ? "Videocall" : "Telefonat"}`, actions })}
+                  className={sel(a.leadId)}
+                  onTap={() => openDetailOnDesktop(a.leadId) || setSheet({ kind: "actions", title: a.name, message: `${a.isToday ? "Heute" : day(a.startsAt)}, ${time(a.startsAt)} Uhr · ${video ? "Videocall" : "Telefonat"}`, actions })}
                 >
                   <div className="w-12 shrink-0">
                     <div className="text-lg font-semibold leading-none tabular-nums">{time(a.startsAt)}</div>
@@ -308,7 +358,7 @@ export function TodayInbox({ data }: { data: InboxData }) {
                   ],
                 });
               return (
-                <TapRow key={o.id} onTap={open}>
+                <TapRow key={o.id} className={sel(o.leadId)} onTap={() => openDetailOnDesktop(o.leadId) || open()}>
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-medium">{o.name}</div>
                     <p className="truncate text-xs text-[color:var(--muted)]">
@@ -335,10 +385,21 @@ export function TodayInbox({ data }: { data: InboxData }) {
       {calls.length > 0 ? (
         <Card>
           <div id="anrufen" className="scroll-mt-20" />
-          <CardHeader icon={Phone} title="Anrufen" count={calls.length} />
+          <CardHeader
+            icon={Phone}
+            title="Anrufen"
+            count={calls.length}
+            actions={
+              newUi && calls.some((c) => c.phone) ? (
+                <Button variant="primary" icon={PlayCircle} onClick={() => setCallMode({ queue: calls.filter((c) => c.phone), i: 0 })}>
+                  Anrufliste starten
+                </Button>
+              ) : undefined
+            }
+          />
           <ul className="divide-y divide-[color:var(--border)]">
             {visibleCalls.map((c) => (
-              <TapRow key={c.key} onTap={() => callSheet(c)}>
+              <TapRow key={c.key} className={sel(c.leadId)} onTap={() => openDetailOnDesktop(c.leadId) || callSheet(c)}>
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{c.name}</div>
                   <p className="truncate text-xs text-[color:var(--muted)]">
@@ -347,7 +408,12 @@ export function TodayInbox({ data }: { data: InboxData }) {
                   </p>
                 </div>
                 {c.phone ? (
-                  <span onClick={stop}>
+                  <span
+                    onClick={(e) => {
+                      stop(e);
+                      if (newUi) markCall(c);
+                    }}
+                  >
                     <ButtonLink href={`tel:+${c.phone}`} variant="primary" icon={Phone}>
                       Anrufen
                     </ButtonLink>
@@ -369,6 +435,27 @@ export function TodayInbox({ data }: { data: InboxData }) {
         </Card>
       ) : null}
 
+      {current && callMode ? (
+        <CallModePanel
+          item={current}
+          index={callMode.i}
+          total={callMode.queue.length}
+          onCall={() => markCall(current)}
+          onResult={() => setOutcome({ key: current.key, leadId: current.leadId, name: current.name, kind: current.kind })}
+          onSkip={advance}
+          onEnd={() => setCallMode(null)}
+        />
+      ) : null}
+      <CallOutcomeSheet
+        target={outcome}
+        bookingSlug={data.bookingSlug}
+        onClose={() => setOutcome(null)}
+        onPick={(message, action) => {
+          const key = outcome?.key;
+          if (key) run(key, message, action);
+          if (callMode && key && callMode.queue[callMode.i]?.key === key) advance();
+        }}
+      />
       <ActionSheet
         open={sheet?.kind === "actions"}
         onClose={() => setSheet(null)}
@@ -432,5 +519,66 @@ function Tile({
       </div>
       <div className={`mt-1 text-2xl font-semibold tabular-nums ${value ? color : "text-[color:var(--muted)]"}`}>{value}</div>
     </a>
+  );
+}
+
+/** Anrufmodus: eine Person nach der anderen, großer Anrufen-Knopf. */
+function CallModePanel({
+  item,
+  index,
+  total,
+  onCall,
+  onResult,
+  onSkip,
+  onEnd,
+}: {
+  item: CallItem;
+  index: number;
+  total: number;
+  onCall: () => void;
+  onResult: () => void;
+  onSkip: () => void;
+  onEnd: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-40 flex flex-col bg-[color:var(--background)] md:items-center md:justify-center md:bg-slate-900/40" role="dialog" aria-label="Anrufliste">
+      <div className="flex w-full flex-1 flex-col bg-[color:var(--background)] md:max-w-lg md:flex-none md:rounded-[var(--radius-lg)] md:shadow-[var(--shadow-lg)]">
+        <div className="flex items-center justify-between border-b border-[color:var(--border)] px-5 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
+          <div>
+            <div className="text-base font-semibold">Anrufliste</div>
+            <div className="text-base text-[color:var(--muted)]">
+              {index + 1} von {total}
+            </div>
+          </div>
+          <button type="button" onClick={onEnd} className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-base font-medium text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)]">
+            <X className="h-5 w-5" /> Beenden
+          </button>
+        </div>
+        <div className="h-1 w-full bg-[color:var(--surface-sunken)]">
+          <div className="h-1 bg-[color:var(--brand)] transition-all" style={{ width: `${((index + 1) / total) * 100}%` }} />
+        </div>
+        <div className="flex flex-1 flex-col justify-center px-6 py-8 md:flex-none">
+          {item.overdue ? <div className="mb-2 text-base font-semibold text-rose-600">Überfällig</div> : null}
+          <div className="text-3xl font-semibold tracking-tight">{item.name}</div>
+          <p className="mt-2 text-base text-[color:var(--muted)]">{item.reason}</p>
+          <a
+            href={item.phone ? `tel:+${item.phone}` : undefined}
+            onClick={onCall}
+            className="mt-8 flex h-16 items-center justify-center gap-2 rounded-[var(--radius-lg)] bg-[color:var(--brand)] text-lg font-semibold text-white shadow-[var(--shadow-md)] active:scale-[0.99]"
+          >
+            <Phone className="h-6 w-6" /> Anrufen
+          </a>
+          <p className="mt-3 text-center text-base text-[color:var(--muted)]">Nach dem Gespräch fragt die App, wie es lief.</p>
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <Button size="md" icon={Check} onClick={onResult} className="h-12 text-base">
+              Ergebnis eintragen
+            </Button>
+            <Button size="md" icon={SkipForward} onClick={onSkip} className="h-12 text-base">
+              Überspringen
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

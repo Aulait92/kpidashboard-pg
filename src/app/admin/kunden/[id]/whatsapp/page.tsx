@@ -2,7 +2,7 @@ import WhatsAppSettingsPage from "@/app/admin/whatsapp/settings/page";
 import { WhatsAppFeesCard } from "@/components/whatsapp-fees-card";
 import { Card, CardHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
-import { toggleBestandModuleAction } from "./module-actions";
+import { toggleBestandModuleAction, toggleNewUiAction } from "./module-actions";
 
 // Reiter „WhatsApp-Assistent“: die WhatsApp-Einstellungen nur für diesen Kunden
 // und die weiterberechneten Meta-Gebühren.
@@ -15,6 +15,7 @@ export default async function KundenWhatsApp({ params, searchParams }: { params:
       <div className="grid max-w-5xl gap-5 lg:grid-cols-2">
         <WhatsAppFeesCard customerId={id} admin />
         <BestandModuleCard customerId={id} />
+        <NewUiCard customerId={id} />
       </div>
     </div>
   );
@@ -42,6 +43,29 @@ async function BestandModuleCard({ customerId }: { customerId: string }) {
           <input type="hidden" name="customerId" value={customerId} />
           <button className={`h-9 rounded-[var(--radius-sm)] px-3 text-sm font-semibold ${on ? "border border-[color:var(--border)] bg-white" : "bg-[color:var(--brand)] text-white"}`}>
             {on ? "Ausschalten" : "Freischalten"}
+          </button>
+        </form>
+      </div>
+    </Card>
+  );
+}
+
+async function NewUiCard({ customerId }: { customerId: string }) {
+  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { newUi: true } });
+  const on = !!c?.newUi;
+  return (
+    <Card>
+      <CardHeader title="Neue Oberfläche (Vertreter-A)" />
+      <div className="space-y-3 px-5 pb-5 text-sm">
+        <p className="text-[color:var(--muted)]">
+          Kundenbereich mit vier Bereichen (Heute, Kontakte, Nachrichten, Wachstum), Anrufmodus und Details in voller Breite. Für
+          Pilot-Kunden; aus = bisherige Oberfläche.
+        </p>
+        <p>{on ? "An" : "Aus"}</p>
+        <form action={toggleNewUiAction}>
+          <input type="hidden" name="customerId" value={customerId} />
+          <button className={`h-9 rounded-[var(--radius-sm)] px-3 text-sm font-semibold ${on ? "border border-[color:var(--border)] bg-white" : "bg-[color:var(--brand)] text-white"}`}>
+            {on ? "Ausschalten" : "Einschalten"}
           </button>
         </form>
       </div>

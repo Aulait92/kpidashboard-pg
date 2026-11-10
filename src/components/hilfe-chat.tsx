@@ -31,15 +31,34 @@ function suggestionsFor(path: string, owner: boolean): string[] {
   ];
 }
 
-export function HilfeChat({ firstName, owner }: { firstName: string; owner: boolean }) {
+export function HilfeChat({
+  firstName,
+  owner,
+  variant = "pill",
+}: {
+  firstName: string;
+  owner: boolean;
+  /** „nav“: als Zeile in der Seitenleiste der neuen Oberfläche. */
+  variant?: "pill" | "nav";
+}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [busy, setBusy] = useState(false);
   const [input, setInput] = useState("");
   const bodyRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Öffnen von außen (z. B. „Hilfe“ im Profilmenü). Es können zwei Instanzen
+  // eingebunden sein (Handy-Kopfzeile, Seitenleiste) – nur die sichtbare reagiert.
+  useEffect(() => {
+    const onOpen = () => {
+      if (triggerRef.current && triggerRef.current.offsetParent !== null) setOpen(true);
+    };
+    window.addEventListener("pg-hilfe-open", onOpen);
+    return () => window.removeEventListener("pg-hilfe-open", onOpen);
+  }, []);
   useEffect(() => {
     bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight });
   }, [msgs, busy, open]);
@@ -91,15 +110,29 @@ export function HilfeChat({ firstName, owner }: { firstName: string; owner: bool
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-3 text-sm font-semibold text-[color:var(--brand-dark)] transition hover:brightness-95"
-        aria-label="KI-Hilfe: Fragen zur App"
-      >
-        <Sparkles className="h-4 w-4" />
-        <span>Hilfe</span>
-      </button>
+      {variant === "nav" ? (
+        <button
+          ref={triggerRef}
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex h-11 w-full items-center gap-3 rounded-[var(--radius-sm)] px-3 text-[15px] font-medium text-[color:var(--foreground)] transition hover:bg-[color:var(--surface-sunken)]"
+          aria-label="KI-Hilfe: Fragen zur App"
+        >
+          <Sparkles className="h-5 w-5 text-[color:var(--brand)]" />
+          <span>KI-Hilfe</span>
+        </button>
+      ) : (
+        <button
+          ref={triggerRef}
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-3 text-sm font-semibold text-[color:var(--brand-dark)] transition hover:brightness-95"
+          aria-label="KI-Hilfe: Fragen zur App"
+        >
+          <Sparkles className="h-4 w-4" />
+          <span>Hilfe</span>
+        </button>
+      )}
 
       {/* Portal: die Kopfzeile hat backdrop-blur und wäre sonst der Bezugsrahmen für „fixed“. */}
       {open ? createPortal(

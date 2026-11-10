@@ -96,7 +96,15 @@ function subStatusLabel(lead: KanbanLead, col: ColumnDef): string | null {
 export function KanbanBoard({
   leads: initialLeads,
   phases = PIPELINE_PHASES,
+  detailBase = "/buyer/leads/",
+  detailSuffix = "?from=kanban",
+  minBoardWidth = 1100,
 }: {
+  /** Ziel beim Klick auf eine Karte: `${detailBase}${id}${detailSuffix}`. */
+  detailBase?: string;
+  detailSuffix?: string;
+  /** Mindestbreite der Spalten-Ansicht (darunter waagerecht scrollen). */
+  minBoardWidth?: number;
   leads: KanbanLead[];
   /** Spalten — WhatsApp-Kunden bekommen „Im Gespräch" (pipelinePhasesFor). */
   phases?: readonly PipelinePhase[];
@@ -249,7 +257,7 @@ export function KanbanBoard({
                 draggable={false}
                 onDragStart={() => {}}
                 onDragEnd={() => {}}
-                onClick={() => router.push(`/buyer/leads/${lead.id}?from=kanban`)}
+                onClick={() => router.push(`${detailBase}${lead.id}${detailSuffix}`)}
                 columns={COLUMNS}
                 currentKey={mobileCol.key}
                 onMove={(target) => moveLead(lead.id, target)}
@@ -261,8 +269,9 @@ export function KanbanBoard({
       </div>
     <div className="hidden overflow-x-auto pb-3 lg:block">
       <div
-        className="grid gap-2 min-w-[1100px]"
+        className="grid gap-2"
         style={{
+          minWidth: minBoardWidth,
           gridTemplateColumns: `repeat(${totalColumns}, minmax(0, 1fr))`,
         }}
       >
@@ -312,7 +321,7 @@ export function KanbanBoard({
                   }}
                   onClick={() => {
                     if (didDrag.current) return;
-                    router.push(`/buyer/leads/${lead.id}?from=kanban`);
+                    router.push(`${detailBase}${lead.id}${detailSuffix}`);
                   }}
                   hideProduct={singleProduct}
                 />
@@ -336,7 +345,7 @@ export function KanbanBoard({
                 onDragStart={() => {}}
                 onDragEnd={() => {}}
                 onClick={() =>
-                  router.push(`/buyer/leads/${lead.id}?from=kanban`)
+                  router.push(`${detailBase}${lead.id}${detailSuffix}`)
                 }
                 draggable={false}
               />

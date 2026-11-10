@@ -15,7 +15,9 @@ import {
   LogOut,
   MessageCircle,
   MessageSquareText,
+  Search,
   ShoppingCart,
+  Sparkles,
   Sun,
   TrendingUp,
   Users,
@@ -49,8 +51,11 @@ export function BuyerShell({
   hasTeam = false,
   showOrders = false,
   showBestand = false,
+  newUi = false,
   children,
 }: {
+  /** Neue Oberfläche (Vertreter-A), pro Kunde im Admin einschaltbar. */
+  newUi?: boolean;
   /** Modul Bestandskunden-Kampagnen freigeschaltet. */
   showBestand?: boolean;
   /** Pay-per-Lead-Käufer: Reiter „Bestellen“. */
@@ -71,6 +76,21 @@ export function BuyerShell({
   useEffect(() => {
     void sendUsage({ type: "page", name: normalizePath(pathname) });
   }, [pathname]);
+  if (newUi) {
+    return (
+      <BuyerShellA
+        pathname={pathname}
+        displayName={displayName}
+        showChats={showChats}
+        chatBadge={chatBadge}
+        setupOpen={setupOpen}
+        teamRole={teamRole}
+        hasTeam={hasTeam}
+      >
+        {children}
+      </BuyerShellA>
+    );
+  }
   // WhatsApp-Kunden: „Heute" ist die Startseite (Aufgabenliste), die Zahlen
   // haben einen eigenen Reiter. Alle anderen: Übersicht = Zahlen.
   const items: NavItem[] = showChats
@@ -202,7 +222,23 @@ function Badge({ n }: { n: number }) {
   );
 }
 
-function ProfileMenu({ name, owner, hasTeam }: { name: string; owner: boolean; hasTeam: boolean }) {
+function ProfileMenu({
+  name,
+  owner,
+  hasTeam,
+  newUi = false,
+  setupOpen = 0,
+  variant = "header",
+}: {
+  name: string;
+  owner: boolean;
+  hasTeam: boolean;
+  /** Neue Oberfläche: Einrichtung, Hilfe und Kalender im Menü. */
+  newUi?: boolean;
+  setupOpen?: number;
+  /** sidebar = unten in der Seitenleiste (Menü öffnet nach oben). */
+  variant?: "header" | "sidebar";
+}) {
   const [open, setOpen] = useState(false);
   const [feedback, setFeedback] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -229,24 +265,70 @@ function ProfileMenu({ name, owner, hasTeam }: { name: string; owner: boolean; h
 
   return (
     <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 text-sm transition hover:bg-[color:var(--background)]"
-      >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-xs font-bold text-[color:var(--brand-dark)]">
-          {initials}
-        </span>
-        <span className="hidden font-medium sm:inline">{name}</span>
-        <ChevronDown className="h-4 w-4 text-[color:var(--muted)]" />
-      </button>
+      {variant === "sidebar" ? (
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-2 py-2 text-left transition hover:bg-[color:var(--surface-sunken)]"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-xs font-bold text-[color:var(--brand-dark)]">
+            {initials}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold">{name}</span>
+            <span className="block text-xs text-[color:var(--muted)]">Profil &amp; Einstellungen</span>
+          </span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 text-sm transition hover:bg-[color:var(--background)]"
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-xs font-bold text-[color:var(--brand-dark)]">
+            {initials}
+          </span>
+          <span className="hidden font-medium sm:inline">{name}</span>
+          <ChevronDown className="h-4 w-4 text-[color:var(--muted)]" />
+        </button>
+      )}
       {open ? (
-        <div className="absolute right-0 top-full mt-2 w-56 overflow-hidden rounded-xl border border-[color:var(--border)] bg-white py-1 text-sm shadow-lg">
+        <div
+          className={cn(
+            "absolute z-40 overflow-hidden rounded-xl border border-[color:var(--border)] bg-white py-1 shadow-lg",
+            newUi ? "w-72 text-base [&_a]:min-h-11 [&_button]:min-h-11" : "w-60 text-sm",
+            variant === "sidebar" ? "bottom-full left-0 mb-2" : "right-0 top-full mt-2",
+          )}
+        >
           <div className="border-b border-[color:var(--border)] px-3 py-2">
             <div className="font-semibold">{name}</div>
-            <div className="text-xs text-[color:var(--muted)]">{owner ? "Dein CRM" : "Berater-Zugang"}</div>
+            <div className="text-xs text-[color:var(--muted)]">{owner ? (newUi ? "Inhaber-Zugang" : "Dein CRM") : "Berater-Zugang"}</div>
           </div>
+          {newUi && owner && setupOpen > 0 ? (
+            <Link
+              href="/buyer/einrichtung"
+              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
+            >
+              <ListChecks className="h-4 w-4" /> Einrichtung
+              <span className="ml-auto">
+                <Badge n={setupOpen} />
+              </span>
+            </Link>
+          ) : null}
           <PushMenuItem />
+          {newUi ? (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                window.dispatchEvent(new Event("pg-hilfe-open"));
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
+            >
+              <Sparkles className="h-4 w-4" /> Hilfe
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => {
@@ -257,7 +339,7 @@ function ProfileMenu({ name, owner, hasTeam }: { name: string; owner: boolean; h
           >
             <MessageSquareText className="h-4 w-4" /> Etwas unklar? Feedback
           </button>
-          {hasTeam ? (
+          {hasTeam || (newUi && !owner) ? (
             <Link
               href="/buyer/kalender"
               onClick={() => setOpen(false)}
@@ -312,6 +394,161 @@ function ProfileMenu({ name, owner, hasTeam }: { name: string; owner: boolean; h
       ) : null}
       {feedback ? <FeedbackDialog onClose={() => setFeedback(false)} /> : null}
     </div>
+  );
+}
+
+/**
+ * Neue Oberfläche (Vertreter-A): vier Bereiche – Heute, Kontakte, Nachrichten,
+ * Wachstum. Am Rechner eine Seitenleiste links, auf dem Handy Tabs unten.
+ */
+function BuyerShellA({
+  pathname,
+  displayName,
+  showChats,
+  chatBadge,
+  setupOpen,
+  teamRole,
+  hasTeam,
+  children,
+}: {
+  pathname: string;
+  displayName: string;
+  showChats: boolean;
+  chatBadge: number;
+  setupOpen: number;
+  teamRole: "owner" | "advisor";
+  hasTeam: boolean;
+  children: React.ReactNode;
+}) {
+  const owner = teamRole === "owner";
+  const items: NavItem[] = [
+    ...(showChats || owner
+      ? [{ href: "/buyer", label: showChats ? "Heute" : "Übersicht", icon: showChats ? Sun : LayoutDashboard, match: (p: string) => p === "/buyer" }]
+      : []),
+    { href: "/buyer/kontakte", label: "Kontakte", icon: Users, match: (p: string) => /^\/buyer\/(kontakte|leads|kanban)/.test(p) },
+    ...(showChats
+      ? [{ href: "/buyer/chats", label: "Nachrichten", icon: MessageCircle, match: (p: string) => p.startsWith("/buyer/chats"), badge: chatBadge }]
+      : []),
+    ...(owner
+      ? [{ href: "/buyer/wachstum", label: "Wachstum", icon: TrendingUp, match: (p: string) => /^\/buyer\/(wachstum|zahlen|bestellen|bestand)/.test(p) }]
+      : []),
+  ];
+  const firstName = displayName.replace(/^Allianz\s+/i, "").split(/\s+/)[0] ?? "";
+
+  return (
+    <ToastProvider>
+      <div className="min-h-dvh md:pl-60">
+        {/* Rechner: Seitenleiste */}
+        <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-[color:var(--border)] bg-white px-3 pb-3 pt-5 md:flex">
+          <Link href="/buyer" className="mb-5 flex items-center gap-2 px-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[color:var(--brand)] text-white">
+              <TrendingUp className="h-3.5 w-3.5" strokeWidth={2.75} />
+            </span>
+            <span className="text-[15px] font-semibold tracking-tight">
+              performance<span className="text-[color:var(--brand)]">growth</span>
+            </span>
+          </Link>
+          <Link
+            href="/buyer/kontakte"
+            className="mb-4 flex h-10 items-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken)] px-3 text-sm text-[color:var(--muted)] hover:border-[color:var(--border-strong)]"
+          >
+            <Search className="h-4 w-4" /> Kontakt suchen
+          </Link>
+          <nav className="space-y-1" aria-label="Bereiche">
+            {items.map((it) => {
+              const active = it.match(pathname);
+              const Icon = it.icon;
+              return (
+                <Link
+                  key={it.href}
+                  href={it.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex h-11 items-center gap-3 rounded-[var(--radius-md)] px-3 text-[15px] font-medium transition",
+                    active ? "bg-[color:var(--brand-soft)] text-[color:var(--brand-dark)]" : "text-[color:var(--foreground)] hover:bg-[color:var(--surface-sunken)]",
+                  )}
+                >
+                  <Icon className="h-[18px] w-[18px]" strokeWidth={active ? 2.4 : 1.9} />
+                  {it.label}
+                  {it.badge ? (
+                    <span className="ml-auto">
+                      <Badge n={it.badge} />
+                    </span>
+                  ) : null}
+                </Link>
+              );
+            })}
+            {owner && setupOpen > 0 ? (
+              <Link
+                href="/buyer/einrichtung"
+                className={cn(
+                  "flex h-11 items-center gap-3 rounded-[var(--radius-md)] px-3 text-[15px] font-medium transition",
+                  pathname.startsWith("/buyer/einrichtung") ? "bg-[color:var(--brand-soft)] text-[color:var(--brand-dark)]" : "text-[color:var(--foreground)] hover:bg-[color:var(--surface-sunken)]",
+                )}
+              >
+                <ListChecks className="h-[18px] w-[18px]" /> Einrichtung
+                <span className="ml-auto">
+                  <Badge n={setupOpen} />
+                </span>
+              </Link>
+            ) : null}
+          </nav>
+          <div className="mt-auto space-y-2 border-t border-[color:var(--border)] pt-3">
+            <HilfeChat firstName={firstName} owner={owner} variant="nav" />
+            <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} variant="sidebar" />
+          </div>
+        </aside>
+
+        {/* Handy: schmale Kopfzeile */}
+        <header className="sticky top-0 z-30 border-b border-[color:var(--border)] bg-white/90 backdrop-blur md:hidden">
+          <div className="flex h-14 items-center gap-2 px-4">
+            <Link href="/buyer" className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[color:var(--brand)] text-white">
+                <TrendingUp className="h-3.5 w-3.5" strokeWidth={2.75} />
+              </span>
+            </Link>
+            <div className="ml-auto flex items-center gap-2">
+              <HilfeChat firstName={firstName} owner={owner} />
+              <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} />
+            </div>
+          </div>
+        </header>
+
+        <div className="pb-20 md:pb-0">
+          <PushHint />
+          {children}
+        </div>
+
+        {/* Handy: vier Bereiche unten */}
+        <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[color:var(--border)] bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden" aria-label="Bereiche">
+          <ul className="mx-auto flex max-w-md">
+            {items.map((it) => {
+              const active = it.match(pathname);
+              const Icon = it.icon;
+              return (
+                <li key={it.href} className="flex-1">
+                  <Link
+                    href={it.href}
+                    aria-current={active ? "page" : undefined}
+                    className={cn("flex flex-col items-center gap-0.5 py-2 text-[12px] font-medium", active ? "text-[color:var(--brand)]" : "text-[color:var(--muted)]")}
+                  >
+                    <span className="relative">
+                      <Icon className="h-6 w-6" strokeWidth={active ? 2.4 : 1.9} />
+                      {it.badge ? (
+                        <span className="absolute -right-2.5 -top-1.5">
+                          <Badge n={it.badge} />
+                        </span>
+                      ) : null}
+                    </span>
+                    {it.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      </div>
+    </ToastProvider>
   );
 }
 

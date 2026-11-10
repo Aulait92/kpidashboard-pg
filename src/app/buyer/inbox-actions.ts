@@ -81,6 +81,7 @@ function refresh() {
   revalidatePath("/buyer");
   revalidatePath("/buyer/leads");
   revalidatePath("/buyer/kanban");
+  revalidatePath("/buyer/kontakte", "layout");
   revalidatePath("/buyer/zahlen");
 }
 

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { LeadDetailBody } from "@/components/lead-detail-body";
 import { getBuyerContext } from "@/lib/buyer-context";
+import { isNewUi } from "@/lib/new-ui";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +40,7 @@ export default async function LeadDetailPage({
         <ArrowLeft className="h-3 w-3" />
         {backLabel}
       </Link>
-      <LeadDetailBody leadId={id} team={session} />
+      <LeadDetailBody leadId={id} team={session} newUi={await isNewUi(session.customerId)} />
     </main>
   );
 }

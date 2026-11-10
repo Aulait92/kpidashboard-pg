@@ -142,6 +142,8 @@ model Customer {
   leadSubscriptions  LeadSubscription[]
   // Modul „Bestandskunden-Kampagnen“ (Zusatzmodul; Testkunden kostenlos)
   existingCustomersEnabled Boolean @default(false)
+  // Neue Oberfläche des Kundenbereichs (Vertreter-A); pro Kunde im Admin einschaltbar.
+  newUi                    Boolean @default(false)
   existingCustomers  ExistingCustomer[]
   campaigns          CustomerCampaign[]
   leadSources        LeadSource[]

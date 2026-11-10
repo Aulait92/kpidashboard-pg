@@ -1,8 +1,12 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ArrowLeft, MousePointerClick } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { TodayInbox } from "@/components/today-inbox";
 import { FirstDay } from "@/components/first-day";
 import { LiveRefresh } from "@/components/live-refresh";
+import { LeadDetailBody } from "@/components/lead-detail-body";
+import { isNewUi } from "@/lib/new-ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { loadInbox } from "@/lib/inbox";
 import { prisma } from "@/lib/prisma";
@@ -15,14 +19,15 @@ import ZahlenPage from "./zahlen/page";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Heute | performancegrowth" };
 
-type SearchParams = Promise<{ range?: string; from?: string; to?: string }>;
+type SearchParams = Promise<{ range?: string; from?: string; to?: string; lead?: string }>;
 
 export default async function BuyerHomePage({ searchParams }: { searchParams: SearchParams }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
-  const [whatsapp, leadCount] = await Promise.all([
+  const [whatsapp, leadCount, newUi] = await Promise.all([
     hasWhatsAppInbox(ctx.customerId),
     prisma.lead.count({ where: { customerId: ctx.customerId } }),
+    isNewUi(ctx.customerId),
   ]);
   if (leadCount === 0) {
     // Erster Tag: noch kein Lead → erklären, wie es losgeht (statt leerer Zahlen/„Alles erledigt“).
@@ -53,6 +58,52 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     day: "numeric",
     month: "long",
   }).format(new Date());
+
+  if (newUi) {
+    // Neue Oberfläche: Desktop (ab xl) links die Aufgaben, rechts der gewählte
+    // Kontakt. Handy/Tablet: Liste → Kontakt (Zurück „Heute“).
+    const { lead } = await searchParams;
+    const selected = lead && /^[\w-]{1,64}$/.test(lead) ? lead : null;
+    return (
+      <main className="w-full flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <LiveRefresh />
+        <div className="xl:grid xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] xl:items-start xl:gap-6">
+          <section className={selected ? "hidden xl:block" : undefined}>
+            <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
+            <TodayInbox data={data} newUi leadHref="/buyer?lead={id}" selectedLeadId={selected} />
+          </section>
+          <section
+            className={
+              selected
+                ? "xl:sticky xl:top-6 xl:max-h-[calc(100dvh-3rem)] xl:overflow-y-auto xl:rounded-[var(--radius-lg)] xl:border xl:border-[color:var(--border)] xl:bg-white xl:p-5"
+                : "hidden xl:sticky xl:top-6 xl:block"
+            }
+            aria-label="Kontakt"
+          >
+            {selected ? (
+              <>
+                <Link
+                  href="/buyer"
+                  scroll={false}
+                  className="mb-4 inline-flex min-h-11 items-center gap-1.5 text-base font-medium text-[color:var(--brand)] hover:underline xl:hidden"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Heute
+                </Link>
+                <LeadDetailBody leadId={selected} team={ctx} newUi />
+              </>
+            ) : (
+              <div className="flex min-h-[320px] flex-col items-center justify-center rounded-[var(--radius-lg)] border border-dashed border-[color:var(--border-strong)] px-6 text-center text-[color:var(--muted)]">
+                <MousePointerClick className="mb-3 h-8 w-8" />
+                <p className="text-base">Wählen Sie links eine Aufgabe.</p>
+                <p className="mt-1 text-sm">Die Details zum Kontakt erscheinen hier.</p>
+              </div>
+            )}
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">

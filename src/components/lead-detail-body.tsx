@@ -106,9 +106,12 @@ function formatValue(
 export async function LeadDetailBody({
   leadId,
   team,
+  newUi = false,
 }: {
   leadId: string;
   team: TeamCtx;
+  /** Neue Oberfläche: nach „Anrufen“ automatisch „Wie lief's?“. */
+  newUi?: boolean;
 }) {
   const customerId = team.customerId;
   const lead = await prisma.lead.findFirst({
@@ -211,6 +214,7 @@ export async function LeadDetailBody({
         storniert={storniert}
         canErase={canErase}
         daysInPhase={Math.max(0, Math.floor((nowMs() - lead.statusChangedAt.getTime()) / 86_400_000))}
+        askAfterCall={newUi}
       />
 
       {lead.stornoState === "review" || lead.stornoState === "rejected" ? (

@@ -68,7 +68,12 @@ export function BuyerLeadsTable({
   showLeadCost = true,
   statusLabels = {},
   title = "Alle Leads",
+  detailBase = "/buyer/leads/",
+  detailSuffix = "?from=leads",
 }: {
+  /** Ziel beim Klick auf einen Lead: `${detailBase}${id}${detailSuffix}`. */
+  detailBase?: string;
+  detailSuffix?: string;
   leads: BuyerLeadRow[];
   title?: string;
   /** Anzeige-Namen je Status (WhatsApp-Kunden: „In Beratung" → „Termin vereinbart"). */
@@ -108,7 +113,7 @@ export function BuyerLeadsTable({
               <li key={l.id}>
                 <button
                   type="button"
-                  onClick={() => router.push(`/buyer/leads/${l.id}?from=leads`)}
+                  onClick={() => router.push(`${detailBase}${l.id}${detailSuffix}`)}
                   className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left active:bg-[color:var(--background)]"
                 >
                   <div className="min-w-0">
@@ -157,7 +162,7 @@ export function BuyerLeadsTable({
               {leads.map((l) => {
                 const closed = l.closedAt != null;
                 const cancelled = isCancelled(l.status);
-                const href = `/buyer/leads/${l.id}?from=leads`;
+                const href = `${detailBase}${l.id}${detailSuffix}`;
                 return (
                   <tr
                     key={l.id}
