@@ -21,6 +21,9 @@ import { getAppUrl } from "@/lib/email";
 import { loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
 import { OnboardingCard, StartOnboardingCard } from "@/components/vertrieb/onboarding-card";
 import type { ImpressumInfo } from "@/lib/impressum";
+import { BackToList } from "@/components/admin/list-memory";
+import { isAdminNewUi } from "@/lib/admin-ui";
+import { VERTRIEB_LISTS } from "@/lib/admin-lists";
 
 export default async function ContactPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ embedded?: string }> }) {
   const { id } = await params;
@@ -63,7 +66,13 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
         <div>
           {embedded ? null : (
             <>
-              <Link href="/admin/vertrieb/kontakte" className="text-sm text-slate-500 hover:underline">← Kontakte</Link>
+              {(await isAdminNewUi()) ? (
+                <BackToList id="vertrieb" fallback="/admin/vertrieb/kontakte" allowed={VERTRIEB_LISTS} className="text-sm text-slate-500 hover:underline">
+                  ← Zurück
+                </BackToList>
+              ) : (
+                <Link href="/admin/vertrieb/kontakte" className="text-sm text-slate-500 hover:underline">← Kontakte</Link>
+              )}
               <h1 className="mt-1 text-2xl font-semibold">{shortName(c.name)}</h1>
             </>
           )}

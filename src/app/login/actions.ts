@@ -1,7 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { completeTotpLogin, login, logout, type LoginResult } from "@/lib/auth";
+import { completeTotpLogin, login, logout, type LoginResult, type SessionPayload } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export type LoginActionState = {
   error?: string;
@@ -33,8 +34,7 @@ export async function loginAction(
   }
 
   // Rolle bestimmt das Default-Ziel.
-  const target = result.payload.role === "BUYER" ? "/buyer" : "/";
-  redirect(next && next.startsWith("/") ? next : target);
+  redirect(next && next.startsWith("/") ? next : await homeFor(result.payload));
 }
 
 export async function totpAction(_prev: LoginActionState, formData: FormData): Promise<LoginActionState> {
@@ -48,8 +48,14 @@ export async function totpAction(_prev: LoginActionState, formData: FormData): P
   if (!result.ok) {
     return result.needsTotp ? { needsTotp: true, error: "Code stimmt nicht. Bitte den aktuellen Code eingeben." } : { error: result.error };
   }
-  const target = result.payload.role === "BUYER" ? "/buyer" : "/";
-  redirect(next && next.startsWith("/") ? next : target);
+  redirect(next && next.startsWith("/") ? next : await homeFor(result.payload));
+}
+
+/** Startseite nach dem Login: Kundenbereich bzw. Admin (neue Oberfläche startet bei „Heute“). */
+async function homeFor(p: SessionPayload): Promise<string> {
+  if (p.role === "BUYER") return "/buyer";
+  const u = await prisma.user.findUnique({ where: { id: p.userId }, select: { adminNewUi: true } }).catch(() => null);
+  return u?.adminNewUi ? "/admin/heute" : "/";
 }
 
 export async function logoutAction() {

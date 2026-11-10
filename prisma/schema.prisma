@@ -494,6 +494,8 @@ model User {
   // Bekommt bei der Verteilung neue Leads
   receivesLeads      Boolean          @default(true)
   lastLeadAssignedAt DateTime?
+  // Admins: neue Oberfläche (Admin-A) testen; Standard aus
+  adminNewUi         Boolean          @default(false)
   assignedLeads      Lead[]           @relation("LeadAssignee")
   advisorCalendar    AdvisorCalendar?
 

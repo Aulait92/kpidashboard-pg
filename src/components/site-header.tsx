@@ -1,10 +1,13 @@
 import Link from "next/link";
-import { LogOut, TrendingUp } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { headers } from "next/headers";
 import { getCurrentSession } from "@/lib/auth";
 import { AdminNav } from "@/components/admin-tabs";
+import { AdminProfileMenu } from "@/components/admin/admin-profile-menu";
+import { AdminShell } from "@/components/admin/admin-shell";
 import { CommandPalette } from "@/components/command-palette";
-import { logoutAction } from "@/app/login/actions";
+import { loadAdminNavCounts } from "@/lib/admin-heute";
+import { isAdminNewUi } from "@/lib/admin-ui";
 
 export async function SiteHeader() {
   // Öffentliche Lead-Seiten (Buchung) ohne Dashboard-Header.
@@ -14,6 +17,10 @@ export async function SiteHeader() {
   if (h.get("x-app-area") === "buyer") return null;
   const session = await getCurrentSession();
   const isAdmin = session?.role === "ADMIN";
+  // Neue Admin-Oberfläche (Admin-A): Seitenleiste statt Kopfzeile.
+  if (session && isAdmin && (await isAdminNewUi())) {
+    return <AdminShell email={session.email} counts={await loadAdminNavCounts()} />;
+  }
 
   return (
     <header className="sticky top-0 z-30 border-b border-[color:var(--border)] bg-white/90 backdrop-blur">
@@ -32,16 +39,9 @@ export async function SiteHeader() {
               <AdminNav />
             </div>
             <CommandPalette />
-            <form action={logoutAction} className="shrink-0">
-              <button
-                type="submit"
-                title="Abmelden"
-                className="inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-sm)] px-2 text-sm text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)] hover:text-[color:var(--foreground)]"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden lg:inline">Abmelden</span>
-              </button>
-            </form>
+            <div className="shrink-0">
+              <AdminProfileMenu email={session?.email ?? ""} newUi={false} />
+            </div>
           </>
         ) : null}
       </div>

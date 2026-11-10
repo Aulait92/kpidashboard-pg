@@ -100,3 +100,11 @@ body {
 @media (min-width: 640px) { .ui-sheet { animation: sheet-pop 160ms ease-out; } }
 .ui-backdrop { animation: fade 180ms ease-out; }
 @keyframes wiggle { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+/* ─── Neue Admin-Oberfläche (Admin-A) ─────────────────────────────────────
+   Die Admin-Seiten bleiben unverändert; die Shell (Seitenleiste bzw. Leiste
+   unten) liegt fest darüber, der Inhalt rückt hier zur Seite. */
+body:has([data-admin-shell]) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+@media (min-width: 1024px) {
+  body:has([data-admin-shell]) { padding-left: 15rem; padding-bottom: 0; }
+}

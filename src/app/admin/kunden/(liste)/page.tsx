@@ -5,14 +5,26 @@ import { Badge } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { onboardingProgressFor } from "@/lib/onboarding";
 import { CUSTOMER_COLOR, CUSTOMER_LABEL } from "@/lib/vertrieb/crm";
+import { isAdminNewUi } from "@/lib/admin-ui";
+import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Kunden | KPI-Dashboard" };
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 
+const FILTERS = [
+  { key: "", label: "Alle" },
+  { key: "warnung", label: "Zahlung offen" },
+  { key: "onboarding", label: "Onboarding" },
+  { key: "pausiert", label: "Pausiert" },
+] as const;
+
 // Alle Kunden auf einen Blick; Klick öffnet die Kundenakte.
-export default async function KundenUebersicht() {
+export default async function KundenUebersicht({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
   await connection();
+  const newUi = await isAdminNewUi();
+  const { filter: rawFilter = "" } = await searchParams;
+  const filter = newUi && FILTERS.some((f) => f.key === rawFilter) ? rawFilter : "";
   const since = daysAgo(30);
   const customers = await prisma.customer.findMany({
     where: { plan: { not: "internal" }, archived: false },
@@ -29,6 +41,14 @@ export default async function KundenUebersicht() {
     },
   });
   const progress = await onboardingProgressFor(customers.filter((c) => c.onboarding).map((c) => c.id));
+  const matches = (c: (typeof customers)[number], key: string) => {
+    const ob = progress.get(c.id);
+    if (key === "warnung") return !!c.paymentOverdueSince;
+    if (key === "onboarding") return !!ob && !ob.live;
+    if (key === "pausiert") return c.pauses.length > 0;
+    return true;
+  };
+  const visible = customers.filter((c) => matches(c, filter));
   const mrr = customers.reduce((a, c) => a + (c.salesContact?.customerStage === "AKTIV" ? (c.salesContact.monthlyValue ?? 0) : 0), 0);
 
   return (
@@ -36,9 +56,34 @@ export default async function KundenUebersicht() {
       <p className="text-sm text-[color:var(--muted)]">
         {customers.length} Kunden · {eur(mrr)} Monatsumsatz aktiv
       </p>
+      {newUi ? (
+        <div className="flex gap-1.5 overflow-x-auto" role="group" aria-label="Filter">
+          {FILTERS.map((f) => {
+            const n = customers.filter((c) => matches(c, f.key)).length;
+            if (f.key && !n) return null;
+            const active = f.key === filter;
+            return (
+              <Link
+                key={f.key}
+                href={f.key ? `/admin/kunden?filter=${f.key}` : "/admin/kunden"}
+                aria-current={active ? "true" : undefined}
+                className={cn(
+                  "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition",
+                  active
+                    ? "border-[color:var(--foreground)] bg-[color:var(--foreground)] text-white"
+                    : "border-[color:var(--border)] bg-white text-[color:var(--muted)] hover:text-[color:var(--foreground)]",
+                )}
+              >
+                {f.label}
+                <span className={cn("text-xs", active ? "text-white/70" : "")}>{n}</span>
+              </Link>
+            );
+          })}
+        </div>
+      ) : null}
       <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
         <ul className="divide-y divide-[color:var(--border)]">
-          {customers.map((c) => {
+          {visible.map((c) => {
             const ob = progress.get(c.id);
             const stage = c.salesContact?.customerStage ?? null;
             const pause = c.pauses[0];
@@ -71,7 +116,9 @@ export default async function KundenUebersicht() {
               </li>
             );
           })}
-          {customers.length === 0 ? <li className="px-5 py-8 text-center text-sm text-[color:var(--muted)]">Noch keine Kunden.</li> : null}
+          {visible.length === 0 ? (
+            <li className="px-5 py-8 text-center text-sm text-[color:var(--muted)]">{customers.length ? "Kein Kunde passt zu diesem Filter." : "Noch keine Kunden."}</li>
+          ) : null}
         </ul>
       </div>
     </div>
