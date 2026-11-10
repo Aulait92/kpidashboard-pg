@@ -105,7 +105,76 @@ async function bootstrapAdminIfNeeded(email: string, password: string) {
 
 export type LoginResult =
   | { ok: true; payload: SessionPayload }
-  | { ok: false; error: string };
+  | { ok: false; error: string; needsTotp?: false }
+  | { ok: false; needsTotp: true; error?: undefined };
+
+// ─── Zwei-Faktor-Login ──────────────────────────────────────────────────
+// Nach korrektem Passwort und aktivem 2FA gibt es noch KEINE Sitzung, nur ein
+// kurzlebiges Zwischen-Cookie (10 Min., max. 5 Versuche). Die Sitzung entsteht
+// erst nach gültigem Code (oder Notfall-Code).
+const TOTP_COOKIE = "kpi_2fa";
+const TOTP_MAX_ATTEMPTS = 5;
+
+async function setPendingTotp(userId: string, attempts: number) {
+  const token = await new SignJWT({ userId, purpose: "2fa", attempts })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("10m")
+    .sign(getSecret());
+  (await cookies()).set(TOTP_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 600,
+    path: "/",
+  });
+}
+
+async function readPendingTotp(): Promise<{ userId: string; attempts: number } | null> {
+  const token = (await cookies()).get(TOTP_COOKIE)?.value;
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, getSecret());
+    if (payload.purpose !== "2fa" || typeof payload.userId !== "string") return null;
+    return { userId: payload.userId, attempts: Number(payload.attempts ?? 0) };
+  } catch {
+    return null;
+  }
+}
+
+/** Zweiter Schritt der Anmeldung: Code aus der Authenticator-App oder Notfall-Code. */
+export async function completeTotpLogin(codeRaw: string): Promise<LoginResult> {
+  const pending = await readPendingTotp();
+  if (!pending) return { ok: false, error: "Bitte erneut mit E-Mail und Passwort anmelden." };
+  const user = await prisma.user.findUnique({ where: { id: pending.userId } });
+  if (!user?.totpEnabledAt || !user.totpSecretEnc) return { ok: false, error: "Bitte erneut anmelden." };
+  const { decryptSecret } = await import("@/lib/encryption");
+  const { hashBackupCode, verifyTotp } = await import("@/lib/totp");
+  const code = codeRaw.trim();
+  let ok = verifyTotp(decryptSecret(user.totpSecretEnc), code);
+  if (!ok && code.replace(/[\s-]/g, "").length === 10) {
+    const h = hashBackupCode(code);
+    if (user.totpBackupCodes.includes(h)) {
+      ok = true;
+      // Notfall-Code ist danach verbraucht.
+      await prisma.user.update({ where: { id: user.id }, data: { totpBackupCodes: user.totpBackupCodes.filter((x) => x !== h) } });
+    }
+  }
+  if (!ok) {
+    const attempts = pending.attempts + 1;
+    if (attempts >= TOTP_MAX_ATTEMPTS) {
+      (await cookies()).delete(TOTP_COOKIE);
+      return { ok: false, error: "Zu viele falsche Codes. Bitte erneut anmelden." };
+    }
+    await setPendingTotp(user.id, attempts);
+    return { ok: false, needsTotp: true };
+  }
+  (await cookies()).delete(TOTP_COOKIE);
+  await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+  const payload: SessionPayload = { userId: user.id, email: user.email, role: user.role, customerId: user.customerId ?? undefined };
+  await setSessionCookie(payload);
+  return { ok: true, payload };
+}
 
 export async function login(
   emailRaw: string,
@@ -126,6 +195,10 @@ export async function login(
   const valid = await verifyPassword(password, user.passwordHash);
   if (!valid) {
     return { ok: false, error: "Email oder Passwort falsch." };
+  }
+  if (user.totpEnabledAt && user.totpSecretEnc) {
+    await setPendingTotp(user.id, 0);
+    return { ok: false, needsTotp: true };
   }
   await prisma.user.update({
     where: { id: user.id },

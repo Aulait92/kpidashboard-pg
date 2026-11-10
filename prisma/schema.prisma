@@ -452,6 +452,11 @@ model User {
   customerId         String?
   createdAt          DateTime         @default(now())
   lastLoginAt        DateTime?
+  // Zwei-Faktor-Login (TOTP), vor allem für Admins: Schlüssel verschlüsselt,
+  // aktiv ab totpEnabledAt; Notfall-Codes nur als SHA-256-Hash.
+  totpSecretEnc      String?
+  totpEnabledAt      DateTime?
+  totpBackupCodes    String[]         @default([])
   // Team (Großkunden): owner = Inhaber (sieht alles), advisor = Berater (nur eigene Leads)
   teamRole           String           @default("owner")
   displayName        String?

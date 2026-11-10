@@ -78,7 +78,9 @@ enthalten. Der Merge ist konfliktfrei.
      alle 5 Min., Benachrichtigung bei Fehlschlag per E-Mail an,
      „nach 2 Fehlschlägen“
    - Bei beiden Jobs „Bei Fehlschlag benachrichtigen“ einschalten
-8. **Abschalten**: Railway-Projekt „Cold CRM“ (inkl. TCP-Proxy) stoppen bzw.
+8. **Zwei-Faktor-Login** für jeden Admin einrichten: Einstellungen → Sicherheit
+   (braucht `ENCRYPTION_KEY`). Notfall-Codes im Passwort-Manager sichern.
+9. **Abschalten**: Railway-Projekt „Cold CRM“ (inkl. TCP-Proxy) stoppen bzw.
    löschen, wenn alles läuft. Die Sandbox (termin.performancegrowth.de) bleibt
    als Testumgebung.
 
