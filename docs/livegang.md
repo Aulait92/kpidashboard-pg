@@ -9,9 +9,8 @@ enthalten. Der Merge ist konfliktfrei.
 
 ## Vorher (bis 20.11.)
 
-- [ ] **Probelauf Migrationen** gegen eine PITR-Kopie der Produktion (siehe unten
-      „Ergebnis Probelauf“). Die Produktion hat noch keine Migrations-Historie
-      und wird beim ersten Start einmalig eingemessen (`scripts/migrate.mjs`).
+- [x] **Probelauf Migrationen** gegen eine PITR-Kopie der Produktion (10.11., siehe
+      unten). Vor dem Livegang nur wiederholen, wenn neue Migrationen dazukommen.
 - [ ] **Healthcheck** am Service `kpidashboard-pg` setzen: Pfad `/api/health`,
       Timeout 300 s. Schlägt die Migration fehl, bleibt dann die alte Version
       online (heute ist dort kein Healthcheck eingetragen).
@@ -51,9 +50,11 @@ enthalten. Der Merge ist konfliktfrei.
    manuelles Backup anlegen.
 2. In cron-job.org die Jobs **Sync** und **WhatsApp-Cron** kurz pausieren.
 3. **Merge**: Pull Request `claude/whatsapp-crm` → `claude/facebook-ad-media-buyer-GdTgt`.
-   Railway baut und startet. Im Log von `kpidashboard-pg` erwartet:
-   `[migrate] Datenbank ohne Migrations-Historie – wird einmalig eingemessen.`
-   … `[migrate] Schema aktuell.`
+   Railway baut und startet. Im Log von `kpidashboard-pg` erwartet (wie im Probelauf):
+   `[migrate] Alte Einträge aus früherem Verlauf (bleiben unberührt): …`
+   `[migrate] Datenbank ohne (eigene) Migrations-Historie – wird einmalig eingemessen.`
+   `[migrate] Schema wird angeglichen (nur hinzufügende Änderungen).`
+   14 × `Migration … marked as applied.` … `[migrate] Schema aktuell.`
    Bricht es mit `ABBRUCH` ab: Es wurde nichts verändert, alte Version läuft weiter.
    Meldung lesen und mir schicken.
 4. **Kurztest** (je 1 Minute):
@@ -91,6 +92,18 @@ Demo-Daten liegen nur in der Sandbox-Datenbank und kommen nicht mit.
 - **Webhook kommt nicht an**: `/api/status?token=…` und Railway-Logs prüfen;
   Webhooks zur Not auf die Sandbox zurückstellen.
 
-## Ergebnis Probelauf
+## Ergebnis Probelauf (10.11.2026)
 
-(wird nach dem Probelauf ergänzt)
+Kopie der Produktion per PITR (Stand 06:58 UTC), darauf der Stand
+`claude/whatsapp-crm` mit `scripts/db-compare.mjs` vorher/nachher.
+
+- Vorher: 27 Tabellen, alle Zeilenzahlen identisch mit der Produktion
+  (u. a. Lead 2652, Revenue 2629, Customer 29, User 23).
+- Erster Versuch **gescheitert**: Die Produktion hat schon `_prisma_migrations`
+  mit 3 alten Einträgen (`20260101000000_baseline`,
+  `20260517000000_add_creative_tables`, `20260517010000_fix_creative_telegram_columns`).
+  Das Startskript übersprang das Einmessen, `0_init` brach ab
+  („type CostKind already exists“). Behoben in `scripts/migrate.mjs` (Commit 4dae9c9).
+- Zweiter Versuch **erfolgreich**: eingemessen (nur hinzufügende Änderungen),
+  14 Migrationen als angewendet markiert, „Schema aktuell“. Alle bestehenden
+  Tabellen danach unverändert; 19 neue, leere Tabellen dazu.
