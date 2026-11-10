@@ -16,6 +16,7 @@ import { leadScope } from "@/lib/team";
 import { parseRangeFromSearchParams } from "@/lib/date-ranges";
 import { prisma } from "@/lib/prisma";
 import { pipelinePhasesFor } from "@/lib/products";
+import { nowMs } from "@/lib/now";
 
 type SearchParams = Promise<{
   range?: string;
@@ -41,7 +42,7 @@ export default async function BuyerKanbanPage({
 
   const sp = await searchParams;
   const { key: rangeKey, range } = parseRangeFromSearchParams(sp);
-  const renderedAt = Date.now();
+  const renderedAt = nowMs();
 
 
   return (

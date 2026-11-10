@@ -11,9 +11,10 @@ const REFRESH_MS = 60_000; // 1 Minute
 // Hintergrund ist, holt nach Tab-Rückkehr verpasste Refreshes nach.
 export function AutoRefresh({ intervalMs = REFRESH_MS }: { intervalMs?: number } = {}) {
   const router = useRouter();
-  const lastRef = useRef(Date.now());
+  const lastRef = useRef(0);
 
   useEffect(() => {
+    lastRef.current = Date.now();
     function tick() {
       if (document.hidden) return;
       router.refresh();

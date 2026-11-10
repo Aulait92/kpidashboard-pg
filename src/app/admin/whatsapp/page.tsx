@@ -12,6 +12,7 @@ import {
 } from "@/lib/calendar";
 import { cancelAppointmentAction, sendReplyAction, toggleBotAction } from "./actions";
 import { SubmitButton } from "@/components/submit-button";
+import { nowMs } from "@/lib/now";
 
 export const dynamic = "force-dynamic";
 
@@ -168,7 +169,7 @@ export default async function AdminWhatsAppPage({
       : null;
 
   const windowOpen =
-    !!active?.windowExpiresAt && active.windowExpiresAt.getTime() > Date.now();
+    !!active?.windowExpiresAt && active.windowExpiresAt.getTime() > nowMs();
 
   const linkFor = (id: string) => `/admin/whatsapp?tab=${tab}&c=${id}`;
 
@@ -568,7 +569,7 @@ export default async function AdminWhatsAppPage({
               {bookingUrl ? (
                 <div className="mt-3">
                   <div className="mb-1 text-[10px] font-semibold text-[color:var(--muted)]">
-                    Buchungslink (Meta-Leadformular → „Custom")
+                    Buchungslink (Meta-Leadformular → „Custom“)
                   </div>
                   <input
                     readOnly

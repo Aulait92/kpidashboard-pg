@@ -41,6 +41,7 @@ import {
   formatPercent,
 } from "@/lib/format";
 import { listActiveProducts } from "@/lib/product-catalog";
+import { nowMs } from "@/lib/now";
 
 type SearchParams = Promise<{
   range?: string;
@@ -82,7 +83,7 @@ export default async function DashboardPage({
   // Produktname aus der Produkte-Tabelle). Ein unbekannter Wert liefert
   // schlicht leere Resultate, deshalb genügt die Nicht-Leer-Prüfung.
   const product = sp.product && sp.product.length > 0 ? sp.product : null;
-  const renderedAt = Date.now();
+  const renderedAt = nowMs();
 
   return (
     <PullToRefresh>

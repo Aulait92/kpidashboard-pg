@@ -8,6 +8,7 @@ import { PhoneField } from "@/components/phone-field";
 import { SubmitButton } from "@/components/submit-button";
 import { suggestSlots, type Slot } from "@/lib/calendar";
 import { bookPublicAction } from "./actions";
+import { nowMs } from "@/lib/now";
 
 // Öffentliche Buchungsseite je Kunde — z. B. als „Custom"-Scheduling-Link im
 // Meta-Leadformular. Zeigt echte freie Zeiten aus dem Google-Kalender.
@@ -171,7 +172,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
   const days = groupByDay(slots);
   const action = bookPublicAction.bind(null, slug);
   // Zeitstempel für die Bot-Falle (echte Menschen brauchen > 3 s).
-  const renderedAt = Date.now();
+  const renderedAt = nowMs();
   const error = sp.err ? (ERRORS[sp.err] ?? ERRORS.error) : null;
 
   return (

@@ -6,6 +6,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { suggestSlots, type Slot } from "@/lib/calendar";
 import { prisma } from "@/lib/prisma";
 import { cancelManageAction, rescheduleManageAction } from "./actions";
+import { nowMs } from "@/lib/now";
 
 // Self-Service für den Lead: Termin ansehen, verschieben oder absagen.
 // Erreichbar nur über den geheimen Link aus Bestätigung/Einladung/Erinnerung.
@@ -98,7 +99,7 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
     );
   }
 
-  if (appt.startsAt.getTime() <= Date.now()) {
+  if (appt.startsAt.getTime() <= nowMs()) {
     return (
       <Shell>
         <h1 className="text-xl font-bold">Termin liegt in der Vergangenheit</h1>

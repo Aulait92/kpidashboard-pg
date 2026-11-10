@@ -19,6 +19,7 @@ import {
   sendReplyBuyerAction,
   toggleBotBuyerAction,
 } from "../chat-actions";
+import { nowMs } from "@/lib/now";
 
 // WhatsApp-Chats im Kunden-CRM. Nur für Kunden mit WhatsApp-Assistent.
 // Strikte Mandantentrennung: alle Abfragen mit customerId des Buyers.
@@ -179,7 +180,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
     : [];
   const formAnswers = parseFormAnswers(active?.lead?.formData);
   const windowOpen =
-    !!active?.windowExpiresAt && active.windowExpiresAt.getTime() > Date.now();
+    !!active?.windowExpiresAt && active.windowExpiresAt.getTime() > nowMs();
   const followup = active && !windowOpen ? await chooseFollowup(active.id) : null;
 
   const leadInfo = active ? (

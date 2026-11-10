@@ -13,7 +13,10 @@
     "db:push": "prisma db push",
     "db:seed": "node --experimental-strip-types prisma/seed.ts",
     "db:studio": "prisma studio",
-    "vapid:generate": "web-push generate-vapid-keys"
+    "vapid:generate": "web-push generate-vapid-keys",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",
@@ -55,6 +58,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
   }
 }

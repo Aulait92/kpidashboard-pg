@@ -20,6 +20,7 @@ import { loadRetainerConfig } from "@/lib/customer-spend";
 import { prisma } from "@/lib/prisma";
 import { WHATSAPP_STATUS_LABELS } from "@/lib/products";
 import { getCallbackLeads } from "@/lib/whatsapp/outreach";
+import { nowMs } from "@/lib/now";
 
 type SearchParams = Promise<{
   range?: string;
@@ -46,7 +47,7 @@ export default async function BuyerLeadsPage({
 
   const sp = await searchParams;
   const { key: rangeKey, range } = parseRangeFromSearchParams(sp);
-  const renderedAt = Date.now();
+  const renderedAt = nowMs();
 
 
   return (
@@ -149,7 +150,7 @@ async function LeadsBody({
         where: {
           customerId,
           status: "booked",
-          startsAt: { gt: new Date(Date.now() - 2 * 60 * 60 * 1000) },
+          startsAt: { gt: new Date(nowMs() - 2 * 60 * 60 * 1000) },
           leadId: { in: leadRows.map((l) => l.id) },
         },
         orderBy: { startsAt: "asc" },

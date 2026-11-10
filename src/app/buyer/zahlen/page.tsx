@@ -30,6 +30,7 @@ import {
 } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { TeamStats } from "@/components/team-stats";
+import { nowMs } from "@/lib/now";
 
 type SearchParams = Promise<{
   range?: string;
@@ -57,7 +58,7 @@ export default async function BuyerPage({
 
   const sp = await searchParams;
   const { key: rangeKey, range } = parseRangeFromSearchParams(sp);
-  const renderedAt = Date.now();
+  const renderedAt = nowMs();
 
   const customer = await prisma.customer.findUnique({
     where: { id: session.customerId },

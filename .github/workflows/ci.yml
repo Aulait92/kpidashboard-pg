@@ -1,0 +1,49 @@
+name: Prüfung
+
+# Bei jedem Push und Pull Request: Typen, Lint, Unit-Tests, Migrationen auf
+# leerer Datenbank und Integrationstests gegen einen Wegwerf-Postgres.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pruefung:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: citest
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ci -d citest"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/citest
+      AUTH_SECRET: ci-only-secret-not-used-anywhere-else
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typen
+        run: npx tsc --noEmit
+      - name: Lint
+        run: npm run lint
+      - name: Unit-Tests
+        run: npm run test:unit
+      - name: Migrationen auf leerer Datenbank
+        run: node scripts/migrate.mjs
+      - name: Integrationstests
+        run: npm run test:integration

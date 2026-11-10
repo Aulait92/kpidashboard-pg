@@ -7,6 +7,7 @@ import { AcceptForm } from "./accept-form";
 import { PayButton } from "./pay-button";
 import { billingEnabled } from "@/lib/billing";
 import { CheckCircle2, Clock } from "lucide-react";
+import { nowMs } from "@/lib/now";
 
 // Öffentliches Angebot per geheimem Link. ?print=1 liefert die reine
 // Druckansicht (für das PDF).
@@ -52,7 +53,7 @@ export default async function OfferPage({
   const session = await getCurrentSession().catch(() => null);
   if (session?.role !== "ADMIN") await markOfferViewed(offer.id);
 
-  const expired = offer.validUntil.getTime() < Date.now();
+  const expired = offer.validUntil.getTime() < nowMs();
   const canAccept = (offer.status === "draft" || offer.status === "sent") && !expired && offer.termsUrl && offer.dpaUrl;
 
   return (

@@ -10,9 +10,12 @@ export function LiveUpdated({ since }: { since: number }) {
   const [now, setNow] = useState(since);
 
   useEffect(() => {
-    setNow(Date.now());
+    const first = setTimeout(() => setNow(Date.now()), 0);
     const id = setInterval(() => setNow(Date.now()), 15_000);
-    return () => clearInterval(id);
+    return () => {
+      clearTimeout(first);
+      clearInterval(id);
+    };
   }, [since]);
 
   const diffSec = Math.max(0, Math.floor((now - since) / 1000));
