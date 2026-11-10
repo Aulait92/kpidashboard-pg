@@ -54,7 +54,10 @@ export async function assignFormAction(fd: FormData) {
       note = " Seite für den Meta-Webhook abonniert.";
     } catch (err) {
       reportError(err, "lead-source-subscribe", { pageId });
-      note = " Seite konnte nicht abonniert werden (Berechtigung prüfen).";
+      const msg = err instanceof Error ? err.message : "";
+      note = /administrative permission|\(#200\)/i.test(msg)
+        ? " Seite konnte nicht abonniert werden: Unser Systemnutzer braucht auf der Seite „Volle Kontrolle“ (Business-Einstellungen → Seiten → Personen). Danach erneut „Zuordnen“."
+        : ` Seite konnte nicht abonniert werden (${msg.replace(/^Seite abonnieren fehlgeschlagen /, "").slice(0, 160)}).`;
     }
   } else {
     pageId = null;

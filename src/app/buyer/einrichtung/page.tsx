@@ -114,7 +114,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               Unsere Business-ID eingeben: <b className="select-all">{businessId}</b>
             </li>
             <li>
-              Ihr <b>Werbekonto</b> (Kampagnen verwalten) und Ihre <b>Facebook-Seite</b> auswählen, ggf. auch Instagram, und speichern.
+              Ihr <b>Werbekonto</b> (Kampagnen verwalten) und Ihre <b>Facebook-Seite</b> mit <b>„Volle Kontrolle“</b> auswählen (nötig, damit
+              Leads direkt bei Ihnen ankommen), ggf. auch Instagram, und speichern.
             </li>
           </ol>
           <MetaConfirmButton done={done("metaAccess")} readOnly={readOnly} />
