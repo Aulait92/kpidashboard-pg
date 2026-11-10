@@ -45,7 +45,30 @@ function getSecret(): Uint8Array | null {
   return new TextEncoder().encode(raw);
 }
 
+/**
+ * Alte Adressen (z. B. kpi.… nach dem Umzug auf app.…): Seitenaufrufe per 308
+ * auf APP_URL umleiten. Webhooks/API (/api/…) laufen ohne Umleitung weiter,
+ * bis sie bei den Diensten umgestellt sind. LEGACY_HOSTS = "kpi.example.de,…"
+ */
+function legacyRedirect(req: NextRequest): NextResponse | null {
+  const legacy = (process.env.LEGACY_HOSTS ?? "").split(",").map((h) => h.trim().toLowerCase()).filter(Boolean);
+  const appUrl = process.env.APP_URL;
+  if (!legacy.length || !appUrl) return null;
+  const host = (req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "").split(",")[0].trim().toLowerCase().replace(/:\d+$/, "");
+  if (!legacy.includes(host) || req.nextUrl.pathname.startsWith("/api/")) return null;
+  if (req.method !== "GET" && req.method !== "HEAD") return null;
+  try {
+    const target = new URL(req.nextUrl.pathname + req.nextUrl.search, appUrl);
+    if (target.host.toLowerCase() === host) return null;
+    return NextResponse.redirect(target, 308);
+  } catch {
+    return null;
+  }
+}
+
 export async function middleware(req: NextRequest) {
+  const moved = legacyRedirect(req);
+  if (moved) return moved;
   const { pathname } = req.nextUrl;
   // Lead-Seiten ohne Dashboard-Header rendern (SiteHeader liest das Flag).
   if (

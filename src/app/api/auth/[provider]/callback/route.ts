@@ -9,9 +9,17 @@ export async function GET(req: Request, { params }: { params: Promise<{ provider
   const { provider } = await params;
   const url = new URL(req.url);
   const saved = await takeSsoState();
-  const fail = (code: "abgebrochen" | "abgelaufen" | "kein-konto" | "fehlgeschlagen") => redirect(`/login?fehler=${code}`);
+  const fail = (code: "abgebrochen" | "abgelaufen" | "kein-konto" | "fehlgeschlagen" | "admin-freigabe" | "einstellung") => redirect(`/login?fehler=${code}`);
 
-  if (url.searchParams.get("error")) fail("abgebrochen");
+  const providerError = url.searchParams.get("error");
+  if (providerError) {
+    const desc = (url.searchParams.get("error_description") ?? "").slice(0, 400);
+    reportError(new Error(`${provider}: ${providerError} ${desc}`), "sso-provider-error", { provider });
+    // Nutzer hat selbst abgebrochen → „abgebrochen“; sonst Einstellungsfehler mit Hinweis
+    if (providerError === "access_denied" && !/AADSTS(65001|90094|90095)/.test(desc)) fail("abgebrochen");
+    if (/AADSTS(65001|90094|90095)|admin/i.test(desc)) fail("admin-freigabe");
+    fail("einstellung");
+  }
   if (!saved || saved.provider !== provider || saved.state !== url.searchParams.get("state")) {
     fail("abgelaufen");
   }
