@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Ban } from "lucide-react";
+import { AlertTriangle, Ban } from "lucide-react";
 import {
   StornoDialog,
   type StornogrundOption,
@@ -29,6 +29,8 @@ export type BuyerLeadRow = {
   callback?: boolean;
   /** Wiedervorlage (ISO), falls gesetzt. */
   followUpAt?: string | null;
+  /** Offen, aber weder Wiedervorlage noch Termin (Warnzeichen). */
+  noNextStep?: boolean;
 };
 
 function formatAppt(d: Date): string {
@@ -65,8 +67,10 @@ export function BuyerLeadsTable({
   leads,
   showLeadCost = true,
   statusLabels = {},
+  title = "Alle Leads",
 }: {
   leads: BuyerLeadRow[];
+  title?: string;
   /** Anzeige-Namen je Status (WhatsApp-Kunden: „In Beratung" → „Termin vereinbart"). */
   statusLabels?: Record<string, string>;
   /** Retainer-Kunden haben keinen Preis pro Lead → Spalte ausblenden. */
@@ -90,7 +94,7 @@ export function BuyerLeadsTable({
       <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
         <div className="flex items-baseline justify-between gap-3 border-b border-[color:var(--border)] px-5 py-3.5">
           <h2 className="text-base font-semibold tracking-tight">
-            Alle Leads <span className="font-normal text-[color:var(--muted)]">· {leads.length}</span>
+            {title} <span className="font-normal text-[color:var(--muted)]">· {leads.length}</span>
           </h2>
           <span className="hidden text-xs text-[color:var(--muted)] sm:inline">Zeile anklicken für Details</span>
         </div>
@@ -122,6 +126,8 @@ export function BuyerLeadsTable({
                       <div className="mt-1 text-xs font-medium text-violet-700">{followUpText(l.followUpAt)}</div>
                     ) : l.callback ? (
                       <div className="mt-1 text-xs font-medium text-amber-700">Rückruf nötig</div>
+                    ) : l.noNextStep ? (
+                      <div className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-amber-700"><AlertTriangle className="h-3.5 w-3.5" />Kein nächster Schritt</div>
                     ) : null}
                   </div>
                   <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset", statusToneClass(cancelled ? "Storno" : l.status))}>
@@ -194,6 +200,8 @@ export function BuyerLeadsTable({
                           <span className="text-xs font-medium text-violet-700">{followUpText(l.followUpAt)}</span>
                         ) : l.callback ? (
                           <span className="text-xs font-medium text-amber-700">Rückruf nötig</span>
+                        ) : l.noNextStep ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700"><AlertTriangle className="h-3.5 w-3.5" />Kein nächster Schritt</span>
                         ) : null}
                       </div>
                     </td>

@@ -339,6 +339,8 @@ model Lead {
   reached              Boolean   @default(false)
   contactAttempts      Int       @default(0)
   status               String?
+  // Letzte Statusänderung (DB-Trigger, greift für App, Bot und Sync) – „seit X Tagen in der Phase“
+  statusChangedAt      DateTime  @default(now())
   // Werbekanal, der den Lead generiert hat (aus Airtable-Spalte „Source").
   // Werte: "Meta" | "Outbrain" | null (= unbekannt). Wird in Channel-KPIs
   // und im Media-Buyer-Steuerlauf verwendet, um CPL pro Kanal zu berechnen.

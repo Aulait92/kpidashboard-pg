@@ -11,6 +11,7 @@ import {
 import { fetchLeadRecord } from "@/lib/airtable-write";
 import { formatDate, formatEUR } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { nowMs } from "@/lib/now";
 import { isAdvisor, leadScope, teamMembers, type TeamCtx } from "@/lib/team";
 import { LeadAssignee } from "@/components/lead-assignee";
 import { LeadHeaderActions, LeadNotes } from "@/components/lead-actions";
@@ -128,6 +129,7 @@ export async function LeadDetailBody({
       followUpNote: true,
       notes: true,
       erasedAt: true,
+      statusChangedAt: true,
     },
   });
   if (!lead) notFound();
@@ -205,6 +207,7 @@ export async function LeadDetailBody({
         stornoOptions={stornoOptions}
         storniert={storniert}
         canErase={canErase}
+        daysInPhase={Math.max(0, Math.floor((nowMs() - lead.statusChangedAt.getTime()) / 86_400_000))}
       />
 
       {conv?.needsAttention ? (

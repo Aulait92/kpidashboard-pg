@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { X } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AutoRefresh } from "@/components/auto-refresh";
@@ -18,7 +17,9 @@ import { isAdvisor, leadScope, type TeamCtx } from "@/lib/team";
 import { parseRangeFromSearchParams } from "@/lib/date-ranges";
 import { loadRetainerConfig } from "@/lib/customer-spend";
 import { prisma } from "@/lib/prisma";
-import { WHATSAPP_STATUS_LABELS } from "@/lib/products";
+import { findPhaseIn, pipelinePhasesFor, WHATSAPP_STATUS_LABELS } from "@/lib/products";
+import { FilterChips } from "@/components/ui/filter-chips";
+import { needsNextStep } from "@/lib/lead-next-step";
 import { getCallbackLeads } from "@/lib/whatsapp/outreach";
 import { nowMs } from "@/lib/now";
 
@@ -27,6 +28,8 @@ type SearchParams = Promise<{
   from?: string;
   to?: string;
   q?: string;
+  ansicht?: string;
+  phase?: string;
 }>;
 
 export const dynamic = "force-dynamic";
@@ -82,7 +85,9 @@ export default async function BuyerLeadsPage({
             team={{ customerId: session.customerId, userId: session.userId, teamRole: session.teamRole }}
             range={range}
             q={(sp.q ?? "").trim()}
-            rangeParams={{ range: sp.range, from: sp.from, to: sp.to }}
+            view={sp.ansicht ?? ""}
+            phaseKey={sp.phase ?? ""}
+            params={sp}
           />
         </Suspense>
       </main>
@@ -95,13 +100,17 @@ async function LeadsBody({
   team,
   range,
   q,
-  rangeParams,
+  view,
+  phaseKey,
+  params,
 }: {
   customerId: string;
   team: TeamCtx;
   range: { from: Date; to: Date };
   q: string;
-  rangeParams: { range?: string; from?: string; to?: string };
+  view: string;
+  phaseKey: string;
+  params: Record<string, string | undefined>;
 }) {
   const qDigits = q.replace(/\D/g, "");
   const leadRows = await prisma.lead.findMany({
@@ -129,6 +138,7 @@ async function LeadsBody({
       followUpAt: true,
       reached: true,
       closedAt: true,
+      erasedAt: true,
       revenues: { select: { amount: true }, take: 1 },
     },
   });
@@ -178,28 +188,59 @@ async function LeadsBody({
     appointment: apptByLead.get(l.id) ?? null,
     callback: callbackIds.has(l.id),
     followUpAt: l.followUpAt ? l.followUpAt.toISOString() : null,
+    noNextStep: needsNextStep({ status: l.status, closedAt: l.closedAt, erasedAt: l.erasedAt, followUpAt: l.followUpAt, hasUpcomingAppointment: apptByLead.has(l.id) }),
   }));
 
+  // Ansichten (wie gespeicherte Filter in Pipedrive) und Phase.
+  const phases = pipelinePhasesFor(whatsapp);
+  const today = new Date(nowMs());
+  today.setHours(23, 59, 59, 999);
+  const VIEWS: { key: string; label: string; match: (l: BuyerLeadRow) => boolean }[] = [
+    { key: "", label: "Alle", match: () => true },
+    ...(whatsapp ? [{ key: "rueckruf", label: "Rückruf nötig", match: (l: BuyerLeadRow) => !!l.callback }] : []),
+    { key: "wiedervorlage", label: "Wiedervorlage fällig", match: (l) => !!l.followUpAt && new Date(l.followUpAt) <= today },
+    { key: "ohne-schritt", label: "Ohne nächsten Schritt", match: (l) => !!l.noNextStep },
+    ...(whatsapp ? [{ key: "termin", label: "Termin", match: (l: BuyerLeadRow) => !!l.appointment }] : []),
+  ];
+  const activeView = VIEWS.find((v) => v.key === view) ?? VIEWS[0];
+  const phase = phases.find((p) => p.key === phaseKey);
+  const byPhase = phase ? leads.filter((l) => findPhaseIn(phases, l.status)?.key === phase.key) : leads;
+  const shown = byPhase.filter(activeView.match);
+  const hrefFor = (key: string) => {
+    const next = new URLSearchParams(Object.entries(params).filter(([k, v]) => v && k !== "ansicht") as [string, string][]);
+    if (key) next.set("ansicht", key);
+    const s = next.toString();
+    return s ? `/buyer/leads?${s}` : "/buyer/leads";
+  };
+
   return (
-    <div className="space-y-6">
-      <form action="/buyer/leads" className="flex gap-2">
-        {Object.entries(rangeParams).map(([k, v]) =>
-          v ? <input key={k} type="hidden" name={k} value={v} /> : null,
-        )}
-        <input
-          name="q"
-          defaultValue={q}
-          placeholder="Lead suchen: Name, Telefonnummer oder E-Mail"
-          className="min-w-0 flex-1 rounded-xl border border-[color:var(--border)] bg-white px-4 py-2.5 text-sm focus:border-[color:var(--brand)] focus:outline-none"
-        />
-        {q ? (
-          <Link href="/buyer/leads" className="rounded-xl border border-[color:var(--border)] bg-white px-4 py-2.5 text-sm">
-            <X className="h-4 w-4" />
-          </Link>
-        ) : null}
-      </form>
+    <div className="space-y-4">
+      <FilterChips
+        searchPlaceholder="Name, Telefon oder E-Mail"
+        fields={[{ kind: "select", key: "phase", label: "Phase", options: phases.map((p) => ({ value: p.key, label: p.label })) }]}
+      />
+      <nav className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1" aria-label="Ansichten">
+        {VIEWS.map((v) => {
+          const n = byPhase.filter(v.match).length;
+          const active = v.key === activeView.key;
+          return (
+            <Link
+              key={v.key || "alle"}
+              href={hrefFor(v.key)}
+              scroll={false}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                active ? "bg-[color:var(--foreground)] text-white" : "text-[color:var(--muted)] hover:bg-white hover:text-[color:var(--foreground)]"
+              }`}
+            >
+              {v.label}
+              <span className={`tabular-nums text-xs ${active ? "text-white/70" : ""}`}>{n}</span>
+            </Link>
+          );
+        })}
+      </nav>
       <BuyerLeadsTable
-        leads={leads}
+        leads={shown}
+        title={[activeView.key ? activeView.label : "Alle Leads", phase?.label].filter(Boolean).join(" · ")}
         statusLabels={whatsapp ? WHATSAPP_STATUS_LABELS : {}}
         showLeadCost={!(await loadRetainerConfig(customerId))}
       />

@@ -45,6 +45,8 @@ type Props = {
   stornoOptions: StornogrundOption[];
   storniert: boolean;
   canErase?: boolean;
+  /** Tage im aktuellen Status (auf dem Server berechnet). */
+  daysInPhase?: number | null;
 };
 
 const QUICK = [
@@ -58,7 +60,7 @@ export function LeadHeaderActions(p: Props) {
   const router = useRouter();
   const toast = useToast();
   const [, start] = useTransition();
-  const [open, setOpen] = useState<"phase" | "more" | "followup" | "win" | "storno" | "erase" | null>(null);
+  const [open, setOpen] = useState<"phase" | "more" | "followup" | "win" | "storno" | "erase" | "lost" | null>(null);
   const [erasing, setErasing] = useState(false);
   const [winValue, setWinValue] = useState("");
   const [note, setNote] = useState(p.followUpNote ?? "");
@@ -124,6 +126,20 @@ export function LeadHeaderActions(p: Props) {
     });
   }
 
+  const LOST_KEYS = new Set(["kein-interesse", "disqualifiziert"]);
+  const stepPhases = p.phases.filter((ph) => !LOST_KEYS.has(ph.key) && ph.key !== "abschluss");
+  const currentIdx = stepPhases.findIndex((ph) => ph.key === phase?.key);
+  const days = p.daysInPhase ?? null;
+  const lostActions: SheetAction[] = [
+    ...p.phases.filter((ph) => LOST_KEYS.has(ph.key)).map((ph) => ({ label: ph.label, onSelect: () => setStatus(ph.defaultStatus, ph.label) })),
+    ...(!p.storniert && p.stornoOptions.length > 0
+      ? [{ label: "Stornieren (Lead reklamieren)", icon: Ban, tone: "danger" as const, onSelect: () => setTimeout(() => setOpen("storno"), 0) }]
+      : []),
+  ];
+  const won = phase?.key === "abschluss";
+  const lost = !!phase && LOST_KEYS.has(phase.key);
+  const showBar = !p.storniert && !won && !lost && stepPhases.length > 1;
+
   const dueLabel = p.followUpAt
     ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "numeric" }).format(new Date(p.followUpAt))
     : null;
@@ -131,7 +147,68 @@ export function LeadHeaderActions(p: Props) {
   return (
     <>
       <header className="mb-5">
-        <h1 className="text-2xl font-semibold tracking-tight">{p.name ?? "Lead"}</h1>
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight">{p.name ?? "Lead"}</h1>
+          {!p.storniert ? (
+            <div className="hidden shrink-0 gap-2 sm:flex">
+              <button
+                type="button"
+                onClick={() => {
+                  if (won) return;
+                  setWinValue("");
+                  setOpen("win");
+                }}
+                className={cn(
+                  "inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-sm)] px-3.5 text-sm font-semibold transition",
+                  won ? "bg-emerald-100 text-emerald-800" : "bg-emerald-600 text-white hover:bg-emerald-700",
+                )}
+              >
+                <Trophy className="h-4 w-4" /> Gewonnen
+              </button>
+              <button
+                type="button"
+                onClick={() => setOpen("lost")}
+                className={cn(
+                  "inline-flex h-9 items-center rounded-[var(--radius-sm)] px-3.5 text-sm font-semibold transition",
+                  lost ? "bg-rose-100 text-rose-800" : "bg-rose-600 text-white hover:bg-rose-700",
+                )}
+              >
+                Verloren
+              </button>
+            </div>
+          ) : null}
+        </div>
+        {showBar ? (
+          <ol className="mt-3 hidden overflow-hidden rounded-[var(--radius-sm)] sm:flex" aria-label="Phasen">
+            {stepPhases.map((ph, i) => {
+              const done = currentIdx >= 0 && i < currentIdx;
+              const current = i === currentIdx;
+              return (
+                <li key={ph.key} className={cn("min-w-0", current ? "flex-[1.6]" : "flex-1")}>
+                  <button
+                    type="button"
+                    onClick={() => !current && setStatus(ph.defaultStatus, ph.label)}
+                    title={current ? undefined : `Auf „${ph.label}“ setzen`}
+                    className={cn(
+                      "relative flex h-8 w-full items-center justify-center truncate px-4 text-xs font-medium transition [clip-path:polygon(0_0,calc(100%-10px)_0,100%_50%,calc(100%-10px)_100%,0_100%,10px_50%)]",
+                      i === 0 && "[clip-path:polygon(0_0,calc(100%-10px)_0,100%_50%,calc(100%-10px)_100%,0_100%)]",
+                      current
+                        ? "bg-emerald-600 text-white"
+                        : done
+                          ? "bg-emerald-100 text-emerald-900 hover:bg-emerald-200"
+                          : "bg-[color:var(--surface-sunken,#f1f5f9)] text-[color:var(--muted)] hover:bg-slate-200",
+                    )}
+                  >
+                    <span className="truncate">
+                      {current && days != null ? `${days} ${days === 1 ? "Tag" : "Tage"} · ` : ""}
+                      {ph.label}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        ) : null}
         <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[color:var(--muted)]">
           {p.storniert ? (
             <span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-800">Storniert</span>
@@ -142,6 +219,7 @@ export function LeadHeaderActions(p: Props) {
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset transition hover:opacity-80",
                 statusToneClass(p.status),
+                showBar && "sm:hidden",
               )}
             >
               <span className={cn("h-2 w-2 rounded-full", PHASE_DOT[phase?.key ?? "neu"] ?? "bg-zinc-400")} />
@@ -175,6 +253,7 @@ export function LeadHeaderActions(p: Props) {
 
       <ActionSheet open={open === "phase"} onClose={() => setOpen(null)} title="Status ändern" actions={phaseActions} />
       <ActionSheet open={open === "more"} onClose={() => setOpen(null)} title={p.name ?? "Lead"} actions={moreActions} />
+      <ActionSheet open={open === "lost"} onClose={() => setOpen(null)} title="Warum verloren?" actions={lostActions} />
 
       <Sheet open={open === "win"} onClose={() => setOpen(null)} title="Abschluss" message="Wert des Abschlusses (optional)">
         <form

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Download } from "lucide-react";
 import { Badge, Card } from "@/components/ui";
+import { FilterChips } from "@/components/ui/filter-chips";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isStorno, leadSelect, leadWhere, priceOf, type LeadFilter } from "@/lib/admin-leads";
@@ -11,8 +12,6 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Leads | KPI-Dashboard" };
 
 const PAGE = 100;
-const input =
-  "h-9 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2.5 text-sm outline-none focus:border-[color:var(--brand)]";
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 const dt = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }).format(d);
@@ -60,55 +59,40 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
         </a>
       </div>
 
-      <form className="flex flex-wrap items-end gap-2">
-        <input name="q" defaultValue={sp.q ?? ""} placeholder="Name, Telefon, E-Mail" className={`${input} w-56`} />
-        <select name="kunde" defaultValue={sp.kunde ?? ""} className={input}>
-          <option value="">Alle Kunden</option>
-          {customers.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <select name="produkt" defaultValue={sp.produkt ?? ""} className={input}>
-          <option value="">Alle Produkte</option>
-          {products.map((p) => (
-            <option key={p.source} value={p.source!}>
-              {p.source}
-            </option>
-          ))}
-        </select>
-        <select name="status" defaultValue={sp.status ?? ""} className={input}>
-          <option value="">Alle Status</option>
-          <option value="offen">Offen</option>
-          <option value="abschluss">Abschluss</option>
-          <option value="storno">Storno</option>
-        </select>
-        <select name="monat" defaultValue={sp.monat ?? ""} className={input}>
-          <option value="">Zeitraum frei</option>
-          {months.map((m) => (
-            <option key={m} value={m}>
-              {new Intl.DateTimeFormat("de-DE", { month: "long", year: "numeric" }).format(new Date(`${m}-15T12:00:00Z`))}
-            </option>
-          ))}
-        </select>
-        {!sp.monat ? (
-          <>
-            <input type="date" name="von" defaultValue={sp.von ?? ""} className={input} />
-            <input type="date" name="bis" defaultValue={sp.bis ?? ""} className={input} />
-          </>
-        ) : null}
-        <button className="h-9 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-4 text-sm font-semibold text-white">Filtern</button>
-        <Link href="/admin/leads" className="h-9 px-2 text-sm leading-9 text-[color:var(--muted)] underline">
-          zurücksetzen
-        </Link>
-      </form>
+      <FilterChips
+        searchPlaceholder="Name, Telefon, E-Mail"
+        fields={[
+          { kind: "select", key: "kunde", label: "Kunde", options: customers.map((c) => ({ value: c.id, label: c.name })) },
+          { kind: "select", key: "produkt", label: "Produkt", options: products.map((p) => ({ value: p.source!, label: p.source! })) },
+          {
+            kind: "select",
+            key: "status",
+            label: "Status",
+            options: [
+              { value: "offen", label: "Offen" },
+              { value: "abschluss", label: "Abschluss" },
+              { value: "storno", label: "Storno" },
+            ],
+          },
+          {
+            kind: "period",
+            label: "Zeitraum",
+            monthKey: "monat",
+            fromKey: "von",
+            toKey: "bis",
+            months: months.map((m) => ({
+              value: m,
+              label: new Intl.DateTimeFormat("de-DE", { month: "long", year: "numeric" }).format(new Date(`${m}-15T12:00:00Z`)),
+            })),
+          },
+        ]}
+      />
 
-      <div className="flex flex-wrap gap-3 text-sm">
-        <Badge tone="neutral">{total.toLocaleString("de-DE")} Leads</Badge>
-        <Badge tone="success">Umsatz netto {eur(Number(sums._sum.amount ?? 0))}</Badge>
-        {stornos ? <Badge tone="danger">{stornos} Stornos</Badge> : null}
-      </div>
+      <p className="text-sm text-[color:var(--muted)]">
+        <b className="font-semibold text-[color:var(--foreground)]">{total.toLocaleString("de-DE")} Leads</b>
+        {" · "}Umsatz netto <b className="font-semibold text-[color:var(--foreground)]">{eur(Number(sums._sum.amount ?? 0))}</b>
+        {stornos ? <>{" · "}<span className="text-rose-700">{stornos} Stornos</span></> : null}
+      </p>
 
       <Card>
         <div className="overflow-x-auto">

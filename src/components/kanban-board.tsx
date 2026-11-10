@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRightLeft, X } from "lucide-react";
+import { AlertTriangle, ArrowRightLeft, Clock, X } from "lucide-react";
 import { ActionSheet } from "@/components/ui/sheet";
 import { setLeadStatusAction } from "@/app/buyer/actions";
 import {
@@ -27,7 +27,12 @@ export type KanbanLead = {
   appointment?: { startsAt: string; mode: string } | null;
   /** Wiedervorlage (ISO). */
   followUpAt?: string | null;
+  /** Tage im aktuellen Status (auf dem Server berechnet). */
+  daysInPhase?: number;
+  /** Offen, aber weder Wiedervorlage noch Termin. */
+  noNextStep?: boolean;
 };
+
 
 // Spalten-Design: nicht 1:1 pro Status, sondern in funktionalen Phasen
 // gruppiert (PIPELINE_PHASES in lib/products.ts ist die Single-Source-
@@ -270,6 +275,7 @@ export function KanbanBoard({
               dot={PHASE_DOT[col.key]}
               label={col.label}
               count={items.length}
+              sum={items.reduce((n, l) => n + (l.status === CLOSED_STATUS && l.closeValue ? l.closeValue : 0), 0)}
               accent={col.accent}
               isOver={isOver}
               onDragOver={(e) => {
@@ -456,6 +462,7 @@ function KanbanColumn({
   dot,
   label,
   count,
+  sum = 0,
   accent,
   isOver,
   onDragOver,
@@ -466,6 +473,7 @@ function KanbanColumn({
   dot?: string;
   label: string;
   count: number;
+  sum?: number;
   accent: string;
   isOver: boolean;
   onDragOver?: (e: React.DragEvent) => void;
@@ -485,11 +493,14 @@ function KanbanColumn({
       onDrop={onDrop}
     >
       <header className="flex items-center justify-between gap-2 px-3 py-2.5">
-        <span className="flex min-w-0 items-center gap-2 text-[13px] font-semibold tracking-tight">
-          <span className={cn("h-2 w-2 shrink-0 rounded-full", dot ?? "bg-zinc-400")} />
-          <span className="leading-tight">{label}</span>
+        <span className="min-w-0">
+          <span className="flex min-w-0 items-center gap-2 text-[13px] font-semibold tracking-tight">
+            <span className={cn("h-2 w-2 shrink-0 rounded-full", dot ?? "bg-zinc-400")} />
+            <span className="leading-tight">{label}</span>
+          </span>
+          {sum > 0 ? <span className="mt-0.5 block pl-4 text-[11px] font-semibold tabular-nums text-emerald-700">{formatEUR(sum)}</span> : null}
         </span>
-        <span className="text-xs font-medium tabular-nums text-[color:var(--muted)]">{count}</span>
+        <span className="shrink-0 text-xs font-medium tabular-nums text-[color:var(--muted)]">{count}</span>
       </header>
       <div className="flex-1 space-y-2 px-2 pb-3 pt-1 min-h-[120px]">
         {children}
@@ -541,6 +552,11 @@ function KanbanCard({
             <span className="text-[color:var(--muted)]">unbenannt</span>
           )}
         </div>
+        {lead.noNextStep ? (
+          <span title="Kein nächster Schritt: Wiedervorlage oder Termin setzen" className="shrink-0 text-amber-500">
+            <AlertTriangle className="h-4 w-4" />
+          </span>
+        ) : null}
         {subStatus ? (
           <span className="shrink-0 rounded-full bg-[color:var(--brand-soft)]/60 px-1.5 py-0.5 text-[10px] font-semibold text-[color:var(--brand-dark)]">
             {subStatus}
@@ -561,6 +577,15 @@ function KanbanCard({
           <MoveButton columns={columns} currentKey={currentKey} onMove={onMove} name={lead.name} />
         ) : null}
       </div>
+      {(() => {
+        const d = lead.daysInPhase ?? null;
+        return d != null && d >= 7 && lead.status !== CLOSED_STATUS ? (
+          <div className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-amber-700" title="Tage in dieser Phase">
+            <Clock className="h-3 w-3" />
+            {d} Tage
+          </div>
+        ) : null;
+      })()}
       {lead.appointment ? (
         <div className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-medium text-blue-700">
           {new Intl.DateTimeFormat("de-DE", {

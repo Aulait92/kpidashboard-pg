@@ -12,7 +12,7 @@
 // Mit Healthcheck in Railway bleibt dann die alte Version online.
 
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import pg from "pg";
@@ -109,7 +109,16 @@ if (!state.baselined) {
     prisma(["db", "execute", "--file", file]);
   }
   for (const name of migrations) {
-    if (!state.applied.includes(name)) prisma(["migrate", "resolve", "--applied", name]);
+    if (state.applied.includes(name)) continue;
+    // Trigger/Funktionen/Startwerte stehen nicht im Prisma-Schema: solche
+    // Migrationen (Markierung „-- @auch-beim-einmessen“, wiederholbar
+    // geschrieben) werden ausgeführt statt nur eingetragen.
+    const file = path.join(dir, name, "migration.sql");
+    if (readFileSync(file, "utf8").includes("-- @auch-beim-einmessen")) {
+      console.log(`[migrate] ${name} wird beim Einmessen ausgeführt.`);
+      prisma(["db", "execute", "--file", file]);
+    }
+    prisma(["migrate", "resolve", "--applied", name]);
   }
 }
 

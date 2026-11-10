@@ -15,6 +15,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { leadScope } from "@/lib/team";
 import { parseRangeFromSearchParams } from "@/lib/date-ranges";
 import { prisma } from "@/lib/prisma";
+import { needsNextStep } from "@/lib/lead-next-step";
 import { pipelinePhasesFor } from "@/lib/products";
 import { nowMs } from "@/lib/now";
 
@@ -115,6 +116,9 @@ async function KanbanBody({
       status: true,
       closeValue: true,
       followUpAt: true,
+      statusChangedAt: true,
+      closedAt: true,
+      erasedAt: true,
       appointments: {
         where: { status: "booked", startsAt: { gt: new Date() } },
         orderBy: { startsAt: "asc" },
@@ -141,6 +145,8 @@ async function KanbanBody({
       appointment: l.appointments[0]
         ? { startsAt: l.appointments[0].startsAt.toISOString(), mode: l.appointments[0].mode }
         : null,
+      daysInPhase: Math.floor((nowMs() - l.statusChangedAt.getTime()) / 86_400_000),
+      noNextStep: needsNextStep({ status: l.status, closedAt: l.closedAt, erasedAt: l.erasedAt, followUpAt: l.followUpAt, hasUpcomingAppointment: l.appointments.length > 0 }),
     }));
 
   return (
