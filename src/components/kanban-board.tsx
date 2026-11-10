@@ -1,5 +1,6 @@
 "use client";
 
+import { useProvisionRates } from "@/components/provision-context";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowRightLeft, Clock, X } from "lucide-react";
@@ -124,6 +125,7 @@ export function KanbanBoard({
     currentValue: number | null;
   } | null>(null);
   const [, startTransition] = useTransition();
+  const provisionRates = useProvisionRates();
   // Unterscheidung Click vs. Drag: didDrag wird beim DragStart gesetzt und
   // 100ms nach DragEnd zurückgesetzt — der trailing Click-Event nach einem
   // Drag wird so unterdrückt, ohne die normale Click-Navigation zu blocken.
@@ -188,7 +190,7 @@ export function KanbanBoard({
 
     // Spezial-Flow für Abschluss: erst Dialog (Monats-/Jahresbeitrag bzw. Wert),
     // dann erst die Status-Action feuern. Fester Satz: kein Dialog.
-    if (nextStatus === CLOSED_STATUS && asksCloseValue(lead.source)) {
+    if (nextStatus === CLOSED_STATUS && asksCloseValue(lead.source, provisionRates)) {
       setCloseDialog({
         leadId,
         leadName: lead.name,
@@ -288,7 +290,7 @@ export function KanbanBoard({
               dot={PHASE_DOT[col.key]}
               label={col.label}
               count={items.length}
-              sum={sumProvision(items.filter((l) => l.status === CLOSED_STATUS))}
+              sum={sumProvision(items.filter((l) => l.status === CLOSED_STATUS), provisionRates)}
               accent={col.accent}
               isOver={isOver}
               onDragOver={(e) => {
@@ -388,7 +390,8 @@ function CloseValueDialog({
   onCancel: () => void;
   onConfirm: (value: number | null) => void;
 }) {
-  const field = closeValueField(source) ?? { label: "Wert des Abschlusses (optional)", hint: "", placeholder: "z. B. 1.200" };
+  const provisionRates = useProvisionRates();
+  const field = closeValueField(source, provisionRates) ?? { label: "Wert des Abschlusses (optional)", hint: "", placeholder: "z. B. 1.200" };
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [value, setValue] = useState<string>(
     currentValue != null ? String(currentValue) : "",
@@ -550,6 +553,7 @@ function KanbanCard({
   currentKey?: string;
   onMove?: (target: ColumnDef) => void;
 }) {
+  const provisionRates = useProvisionRates();
   return (
     <div
       draggable={draggable}
@@ -625,9 +629,9 @@ function KanbanCard({
       ) : null}
       {/* Provision nur zeigen, wenn der Lead wirklich im Abschluss ist —
           ein aus „Abschluss" zurückgezogener Lead soll keine Provision tragen. */}
-      {lead.status === CLOSED_STATUS && closeValueLabel(lead.source, lead.closeValue) ? (
+      {lead.status === CLOSED_STATUS && closeValueLabel(lead.source, lead.closeValue, provisionRates) ? (
         <div className="mt-1.5 inline-flex rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-emerald-800">
-          {closeValueLabel(lead.source, lead.closeValue)}
+          {closeValueLabel(lead.source, lead.closeValue, provisionRates)}
         </div>
       ) : null}
 

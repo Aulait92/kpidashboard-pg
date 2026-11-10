@@ -4,11 +4,12 @@ import { useState } from "react";
 import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
-import { closeValueField } from "@/lib/provision";
+import { closeValueField, type ProvisionOverrides } from "@/lib/provision";
+import { useProvisionRates } from "@/components/provision-context";
 
 /** Braucht der Abschluss eine Eingabe? (nein bei festem Provisionsbetrag) */
-export function asksCloseValue(source: string | null | undefined): boolean {
-  return closeValueField(source) !== null;
+export function asksCloseValue(source: string | null | undefined, rates?: ProvisionOverrides): boolean {
+  return closeValueField(source, rates) !== null;
 }
 
 /**
@@ -30,7 +31,8 @@ export function AbschlussSheet({
   onSave: (value: number | null) => void;
 }) {
   const [value, setValue] = useState("");
-  const field = closeValueField(source) ?? { label: "Wert des Abschlusses (optional)", hint: "", placeholder: "z. B. 1.200" };
+  const rates = useProvisionRates();
+  const field = closeValueField(source, rates) ?? { label: "Wert des Abschlusses (optional)", hint: "", placeholder: "z. B. 1.200" };
   return (
     <Sheet
       open={open}

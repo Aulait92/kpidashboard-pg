@@ -46,7 +46,7 @@ Bruttomarge · Aktive Kunden.
 
   | Produkt | Provision | Berechnung |
   |---|---|---|
-  | PKV-Tarifoptimierung | 9 Monatsbeiträge (vorläufig, Ole bestätigt) | × Monatsnettobeitrag; ohne Angabe 2.500 € |
+  | PKV-Tarifoptimierung | nur Makler: 8–12 Monatsbeiträge (Standard 10) | × Monatsnettobeitrag; ohne Angabe 2.500 € |
   | Privatschutz | 50–60 % (Mitte 55 %) | × Jahresnettobeitrag |
   | TKV | 50–60 % (Mitte 55 %) | × Jahresnettobeitrag |
   | Kindersparpläne | offen | Ole fragt nach |
@@ -57,8 +57,13 @@ Bruttomarge · Aktive Kunden.
   `overrides` vorbereitet). `Lead.closeValue` = Monatsbeitrag (PKV) bzw.
   Jahresnettobeitrag (Privatschutz, TKV) bzw. freier Wert (sonstige). In der
   Anzeige ausweisen, wie viele Abschlüsse mit echtem Beitrag gerechnet sind.
+- **Vertreter vs. Makler** (Ole, 10.11.): `Customer.vermittlerTyp`. Makler bekommen bei
+  Sach (Privatschutz, TKV) keine Abschlussprovision, sondern 20–25 % Bestandsprovision
+  p. a. (Standard 22,5 %); PKV-Tarifoptimierung nur Makler. Geschätzte Provision =
+  Abschlussprovision + Bestand des 1. Jahres. Admin stellt den Typ in der Kundenakte um.
 - **Eigene Sätze der Vertreter** (Ole, 10.11.): Kundenbereich → Einstellungen →
-  „Meine Provisionen“, je Produkt fester Betrag, Prozent vom Jahresbeitrag oder
+  „Meine Provisionen“ (`/buyer/provisionen`, gespeichert in `Customer.provisionRates`),
+  je Produkt fester Betrag, Prozent vom Jahresbeitrag (Abschluss + Bestand) oder
   Monatsbeiträge; vorausgefüllt mit den Standardwerten, nur Inhaber ändern.
   Zahlen-Seite zeigt, bei wie vielen Kunden eigene Sätze hinterlegt sind.
 - **Investorentyp:** noch offen – Seite deckt VC (Wachstum, NRR) und

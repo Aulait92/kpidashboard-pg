@@ -8,7 +8,8 @@ import {
 import { computeCustomerSpend, loadRetainerConfig } from "@/lib/customer-spend";
 import { computeKpis, type Kpis } from "@/lib/kpis";
 import { prisma } from "@/lib/prisma";
-import { sumProvision } from "@/lib/provision";
+import { sumProvision, type ProvisionOverrides } from "@/lib/provision";
+import { loadCustomerProvision } from "@/lib/provision-server";
 
 export type ForecastRow = {
   label: string;
@@ -35,8 +36,8 @@ const monthFmt = new Intl.DateTimeFormat("de-DE", {
 // Geschätzte Provision (lib/provision.ts) nur aus tatsächlich abgeschlossenen
 // Leads — ein zurückgezogener Lead trägt nichts, auch wenn der alte Wert noch
 // am Datensatz hängt.
-function sumCloseValue(rows: { closeValue: unknown; status: string | null; source: string | null }[]): number {
-  return sumProvision(rows.filter((r) => r.status?.toLowerCase() === "abschluss"));
+function sumCloseValue(rows: { closeValue: unknown; status: string | null; source: string | null }[], rates?: ProvisionOverrides): number {
+  return sumProvision(rows.filter((r) => r.status?.toLowerCase() === "abschluss"), rates);
 }
 
 export async function computeMonthlyForecast(params: {
@@ -117,8 +118,9 @@ export async function computeMonthlyForecast(params: {
         select: { closeValue: true, status: true, source: true },
       }),
     ]);
-    umsatzMtd = sumCloseValue(mtdRows);
-    umsatzPrev = sumCloseValue(prevRows);
+    const { rates } = await loadCustomerProvision(params.customerId);
+    umsatzMtd = sumCloseValue(mtdRows, rates);
+    umsatzPrev = sumCloseValue(prevRows, rates);
   }
 
   const rows: ForecastRow[] = [

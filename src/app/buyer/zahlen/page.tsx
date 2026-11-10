@@ -31,7 +31,8 @@ import {
 import { prisma } from "@/lib/prisma";
 import { TeamStats } from "@/components/team-stats";
 import { nowMs } from "@/lib/now";
-import { sumProvision } from "@/lib/provision";
+import { includesTrail, sumProvision } from "@/lib/provision";
+import { loadCustomerProvision } from "@/lib/provision-server";
 
 type SearchParams = Promise<{
   range?: string;
@@ -191,8 +192,9 @@ async function BuyerDashboardBody({
   // nichts tragen, auch wenn der alte Wert noch am Datensatz hängt.
   const closedRows = (rows: { closeValue: unknown; status: string | null; source: string | null }[]) =>
     rows.filter((r) => r.status?.toLowerCase() === "abschluss");
-  const umsatz = sumProvision(closedRows(closeValueRows));
-  const umsatzPrev = sumProvision(closedRows(closeValueRowsPrev));
+  const { rates } = await loadCustomerProvision(customerId);
+  const umsatz = sumProvision(closedRows(closeValueRows), rates);
+  const umsatzPrev = sumProvision(closedRows(closeValueRowsPrev), rates);
   const gewinn = umsatz - cost;
   const gewinnPrev = umsatzPrev - costPrev;
 
@@ -215,7 +217,7 @@ async function BuyerDashboardBody({
             label="Provision (geschätzt)"
             value={formatEUR(umsatz)}
             tone="positive"
-            hint={`aus ${formatNumber(k.closedLeads)} ${k.closedLeads === 1 ? "Abschluss" : "Abschlüssen"}`}
+            hint={`aus ${formatNumber(k.closedLeads)} ${k.closedLeads === 1 ? "Abschluss" : "Abschlüssen"}${includesTrail(rates) ? " · inkl. Bestandsprovision 1. Jahr" : ""}`}
             delta={delta(umsatz, umsatzPrev)}
           />
           <KpiCard

@@ -5,6 +5,7 @@ import ContactPage from "@/app/admin/vertrieb/kontakte/[id]/page";
 import { loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
 import { OnboardingCard } from "@/components/vertrieb/onboarding-card";
 import { NewUiCard } from "@/components/admin/new-ui-card";
+import { VermittlerCard } from "@/components/admin/vermittler-card";
 import type { ImpressumInfo } from "@/lib/impressum";
 
 // Übersicht der Kundenakte: mit Vertriebskontakt die volle Kontaktseite
@@ -21,6 +22,7 @@ export default async function KundenakteUebersicht({ params }: { params: Promise
     return (
       <div className="space-y-5">
         <NewUiCard customerId={id} />
+        <VermittlerCard customerId={id} />
         <ContactPage params={Promise.resolve({ id: customer.salesContact.id })} searchParams={Promise.resolve({ embedded: "1" })} />
       </div>
     );
@@ -30,6 +32,7 @@ export default async function KundenakteUebersicht({ params }: { params: Promise
   return (
     <div className="space-y-5">
     <NewUiCard customerId={id} />
+    <VermittlerCard customerId={id} />
     <div className="grid gap-5 lg:grid-cols-[3fr_2fr]">
       <section className="card p-4 text-sm">
         <h2 className="mb-3 font-medium">Grunddaten</h2>

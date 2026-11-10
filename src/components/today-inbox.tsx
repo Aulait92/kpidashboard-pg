@@ -1,5 +1,6 @@
 "use client";
 
+import { useProvisionRates } from "@/components/provision-context";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import {
@@ -108,6 +109,7 @@ export function TodayInbox({
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [sheet, setSheet] = useState<SheetState>(null);
   const [showAll, setShowAll] = useState(false);
+  const provisionRates = useProvisionRates();
   const hide = (key: string) => setHidden((h) => new Set(h).add(key));
   const unhide = (key: string) =>
     setHidden((h) => {
@@ -146,7 +148,7 @@ export function TodayInbox({
 
   // Fester Provisionsbetrag (Regelart „fixed“): ohne Eingabe direkt speichern.
   const askWin = (name: string, source: string | null, save: (value: number | null) => void) => {
-    if (!asksCloseValue(source)) return save(null);
+    if (!asksCloseValue(source, provisionRates)) return save(null);
     setSheet({ kind: "win", name, source, save });
   };
 

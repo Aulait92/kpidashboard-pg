@@ -28,3 +28,17 @@ export async function toggleNewUiAction(fd: FormData): Promise<void> {
   revalidatePath(`/admin/kunden/${id}`, "layout");
   revalidatePath("/buyer", "layout");
 }
+
+/** Vermittlertyp (Vertreter/Makler) – bestimmt die Standard-Provisionssätze. */
+export async function setVermittlerTypAction(fd: FormData): Promise<void> {
+  const s = await getCurrentSession();
+  if (!s || s.role !== "ADMIN") throw new Error("Nur Admins.");
+  const id = String(fd.get("customerId") ?? "");
+  const typ = fd.get("typ") === "makler" ? "makler" : "vertreter";
+  const c = await prisma.customer.findUnique({ where: { id }, select: { vermittlerTyp: true } });
+  if (!c || c.vermittlerTyp === typ) return;
+  await prisma.customer.update({ where: { id }, data: { vermittlerTyp: typ } });
+  await audit("customer.provision", { entity: "Customer", entityId: id, customerId: id, details: { typ, durch: "admin" } });
+  revalidatePath(`/admin/kunden/${id}`, "layout");
+  revalidatePath("/buyer", "layout");
+}

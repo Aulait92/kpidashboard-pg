@@ -1,5 +1,6 @@
 "use client";
 
+import { useProvisionRates } from "@/components/provision-context";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
@@ -73,11 +74,12 @@ export function LeadHeaderActions(p: Props) {
   const [date, setDate] = useState("");
   const phase = findPhaseIn(p.phases, p.status);
   const [afterCall, setAfterCall] = useState(false);
+  const provisionRates = useProvisionRates();
   const markCall = useCallReturn(() => setAfterCall(true));
 
   // Fester Provisionsbetrag (Regelart „fixed“): Abschluss ohne Eingabe direkt speichern.
   function askWin() {
-    if (asksCloseValue(p.source)) setTimeout(() => setOpen("win"), 0);
+    if (asksCloseValue(p.source, provisionRates)) setTimeout(() => setOpen("win"), 0);
     else setStatus("Abschluss" as LeadStatus, "Abschluss", null);
   }
 

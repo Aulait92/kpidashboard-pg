@@ -3,12 +3,14 @@ import { Card, CardHeader } from "@/components/ui";
 import { formatEUR, formatNumber } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { estimatedProvision } from "@/lib/provision";
+import { loadCustomerProvision } from "@/lib/provision-server";
 import { memberName, teamMembers } from "@/lib/team";
 
 // Auswertung je Team-Mitglied (nur Inhaber, nur wenn es ein Team gibt).
 export async function TeamStats({ customerId, range }: { customerId: string; range: { from: Date; to: Date } }) {
   const members = await teamMembers(customerId);
   if (members.length < 2) return null;
+  const { rates } = await loadCustomerProvision(customerId);
   const leads = await prisma.lead.findMany({
     where: { customerId, createdAt: { gte: range.from, lte: range.to } },
     select: {
@@ -30,7 +32,7 @@ export async function TeamStats({ customerId, range }: { customerId: string; ran
     if (l._count.appointments > 0) r.termine++;
     if (l.status?.toLowerCase() === "abschluss") {
       r.closed++;
-      r.umsatz += estimatedProvision(l.source, l.closeValue) ?? 0;
+      r.umsatz += estimatedProvision(l.source, l.closeValue, rates) ?? 0;
     }
     rows.set(l.assignedUserId, r);
   }

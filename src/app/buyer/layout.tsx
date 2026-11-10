@@ -6,6 +6,8 @@ import { attentionCount } from "@/lib/whatsapp/attention";
 import { endPreviewAction } from "./preview-actions";
 import { customerSetupOpenCount } from "@/lib/onboarding";
 import { isNewUi } from "@/lib/new-ui";
+import { loadCustomerProvision } from "@/lib/provision-server";
+import { ProvisionRatesProvider } from "@/components/provision-context";
 
 // Gemeinsames Layout für den Buyer-Bereich. Hält den @modal-Parallel-Slot,
 // in den der Lead-Detail-Modal von ALLEN Buyer-Tabs (KPIs, Leads, Pipeline)
@@ -45,6 +47,7 @@ export default async function BuyerLayout({
   const previewName = ctx?.preview ? customerName : null;
   const newUi = ctx ? await isNewUi(ctx.customerId) : false;
   const advisor = ctx?.teamRole === "advisor";
+  const provision = ctx ? await loadCustomerProvision(ctx.customerId) : null;
   const [showChats, chatBadge, setupOpen, me, logins, pplSubs, bestand] = ctx
     ? await Promise.all([
         hasWhatsAppInbox(ctx.customerId),
@@ -79,11 +82,13 @@ export default async function BuyerLayout({
         </div>
       ) : null}
       {ctx ? (
-        <BuyerShell newUi={newUi} displayName={displayName} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen} teamRole={ctx.teamRole} hasTeam={logins > 1} showOrders={pplSubs > 0} showBestand={bestand}>
-          {children}
-          {/* Lead-Detail-Modal innerhalb der Shell → Toasts funktionieren dort auch */}
-          {modal}
-        </BuyerShell>
+        <ProvisionRatesProvider rates={provision?.rates ?? {}}>
+          <BuyerShell newUi={newUi} displayName={displayName} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen} teamRole={ctx.teamRole} hasTeam={logins > 1} showOrders={pplSubs > 0} showBestand={bestand}>
+            {children}
+            {/* Lead-Detail-Modal innerhalb der Shell → Toasts funktionieren dort auch */}
+            {modal}
+          </BuyerShell>
+        </ProvisionRatesProvider>
       ) : (
         <>
           {children}

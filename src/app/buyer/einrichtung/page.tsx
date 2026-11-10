@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { CalendarDays, CheckCircle2,
-  ChevronDown, ClipboardList, KeyRound, Rocket, Smartphone } from "lucide-react";
+  ChevronDown, ClipboardList, KeyRound, Percent, Rocket, Smartphone } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { buttonClass, Card } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
@@ -10,6 +10,8 @@ import { HelpCallPicker, MetaConfirmButton, QuestionnaireForm } from "./forms";
 import { helpCallSlots } from "@/lib/help-call";
 import { InstallApp } from "@/components/install-app";
 import { getAppUrl } from "@/lib/email";
+import { loadCustomerProvision } from "@/lib/provision-server";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Einrichtung | performancegrowth" };
@@ -33,6 +35,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const progress = checklistProgress(items);
   const businessId = process.env.PG_META_BUSINESS_ID?.trim() || "3089330734489612";
   const readOnly = ctx.preview;
+  const provision = await loadCustomerProvision(ctx.customerId);
   const order = ["questionnaire", "metaAccess", ...(software ? ["calendar"] : [])];
   const current = order.find((k) => !done(k)) ?? "start";
   const helpUpcoming = ob.helpCallAt && ob.helpCallAt > new Date();
@@ -182,7 +185,17 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           <InstallApp appUrl={appHost()} />
         </Step>
 
-        <Step n={software ? 5 : 4} title="Start" icon={Rocket} done={!!ob.liveAt} open={current === "start" && !!ob.liveAt}>
+        <Step n={software ? 5 : 4} title="Provisionen prüfen (1 Minute, optional)" icon={Percent} done={provision.hasCustom} open={false}>
+          <p className="text-sm text-[color:var(--muted)]">
+            Damit die App Ihre Provision je Abschluss richtig schätzt: kurz angeben, ob Sie als Vertreter oder Makler arbeiten, und die
+            Sätze prüfen. Vorausgefüllt mit üblichen Werten.
+          </p>
+          <Link href="/buyer/provisionen" className={buttonClass("secondary", "md", "mt-4")}>
+            Provisionen prüfen
+          </Link>
+        </Step>
+
+        <Step n={software ? 6 : 5} title="Start" icon={Rocket} done={!!ob.liveAt} open={current === "start" && !!ob.liveAt}>
           <p className="text-sm text-[color:var(--muted)]">
             {ob.startDate ? `Am ${dateFmt(ob.startDate)} ` : "Zum Start "}
             gehen die Anzeigen live.{" "}

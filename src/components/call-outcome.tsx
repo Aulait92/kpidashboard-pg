@@ -4,6 +4,7 @@
 // „Anrufen“ tippt und danach zurückkommt, bekommt automatisch die Ergebnis-
 // Auswahl. Nutzt ausschließlich die bestehenden Aktionen (inbox-actions).
 
+import { useProvisionRates } from "@/components/provision-context";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CalendarPlus, Check, Clock, PhoneMissed, Send, ThumbsDown, Trophy } from "lucide-react";
 import {
@@ -96,6 +97,7 @@ export function CallOutcomeSheet({
   onPick: (message: string, action: () => Promise<InboxResult>) => void;
 }) {
   const [step, setStep] = useState<"pick" | "win" | "later">("pick");
+  const provisionRates = useProvisionRates();
   const close = () => {
     setStep("pick");
     onClose();
@@ -116,7 +118,7 @@ export function CallOutcomeSheet({
   actions.push(
     { label: "Angebot gesendet", icon: Send, onSelect: () => pick(`${t.name}: Angebot gesendet`, () => callbackOutcomeResult(t.leadId, "offer")) },
     // keepOpen: Folgeschritt statt Schließen.
-    asksCloseValue(t.source)
+    asksCloseValue(t.source, provisionRates)
       ? { label: "Abschluss", icon: Trophy, keepOpen: true, onSelect: () => setStep("win") }
       : { label: "Abschluss", icon: Trophy, onSelect: () => pick(`${t.name}: Abschluss`, () => callbackOutcomeResult(t.leadId, "won", null)) },
     { label: "Später nochmal", icon: Clock, keepOpen: true, onSelect: () => setStep("later") },

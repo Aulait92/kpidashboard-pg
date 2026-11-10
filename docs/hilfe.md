@@ -152,11 +152,17 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Abschluss und Provision
 - Beim Abschluss fragt die App je nach Produkt nach einem Beitrag, alles freiwillig:
-  - PKV-Tarifoptimierung: „Monatsbeitrag netto“. Provision ≈ 9 Monatsbeiträge; ohne Angabe rechnet die App mit 2.500 €.
-  - Privatschutz: „Jahresbeitrag netto“. Provision ≈ 55 % davon; ohne Angabe mit einem Beitrag von 600 €.
-  - TKV: „Jahresbeitrag netto“. Provision ≈ 55 % davon; ohne Angabe mit einem Beitrag von 350 €.
+  - Privatschutz und TKV: „Jahresbeitrag netto“. Vertreter: Provision ≈ 55 % davon (Abschlussprovision).
+    Makler: keine Abschlussprovision, sondern Bestandsprovision ≈ 22,5 % pro Jahr. Ohne Angabe rechnet die App
+    mit einem Beitrag von 600 € (Privatschutz) bzw. 350 € (TKV).
+  - PKV-Tarifoptimierung (nur Makler): „Monatsbeitrag netto“. Provision ≈ 10 Monatsbeiträge; ohne Angabe 2.500 €.
   - Andere Produkte: „Wert des Abschlusses“, zählt direkt als Provision.
+- „Provision (geschätzt)“ enthält bei Bestandsprovision den Betrag des 1. Jahres.
 - Es ist eine Schätzung für die eigenen Zahlen, keine Abrechnung. Wer den Beitrag einträgt, bekommt genauere Werte.
+- **Meine Provisionen** (Profilmenü, auch unter Konto und in der Einrichtung): „Ich arbeite als Vertreter / Makler“
+  wählen und je Produkt die eigenen Sätze eintragen: Abschlussprovision in %, Bestandsprovision in % pro Jahr,
+  typischer Jahresbeitrag; bei PKV die Monatsbeiträge. Vorausgefüllt mit üblichen Werten, „Auf Standard“ setzt
+  zurück. Nur der Inhaber kann speichern, Berater sehen die Sätze. Alle Zahlen rechnen danach mit den eigenen Sätzen.
 - „Hochrechnung für diesen Monat“ zum Aufklappen. Bei Teams eine Tabelle pro Person.
 
 ## Team (nur Inhaber)

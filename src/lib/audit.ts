@@ -32,6 +32,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "bestand.campaign": "Bestandskunden-Kampagne gestartet",
   "bestand.module": "Modul Bestandskunden an/aus",
   "customer.new_ui": "Neue Oberfläche (Vertreter-A) an/aus",
+  "customer.provision": "Provisionssätze / Vermittlertyp geändert",
   "admin.new_ui": "Neue Admin-Oberfläche an/aus",
   "lead.erase": "Lead-Daten gelöscht (Datenschutz)",
   "customer.meta_account": "Meta-Werbekonto hinterlegt",

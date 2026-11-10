@@ -10,6 +10,7 @@ import {
   Contact,
   Columns3,
   CreditCard,
+  Percent,
   ListChecks,
   LayoutDashboard,
   LogOut,
@@ -366,6 +367,13 @@ function ProfileMenu({
               </Link>
             </>
           ) : null}
+          <Link
+            href="/buyer/provisionen"
+            onClick={() => setOpen(false)}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
+          >
+            <Percent className="h-4 w-4" /> Meine Provisionen
+          </Link>
           <a
             href="https://performancegrowth.de/impressum"
             target="_blank"

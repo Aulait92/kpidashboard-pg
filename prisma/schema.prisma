@@ -100,6 +100,11 @@ model Customer {
   // Paket: "software" = Betreuung + Software, "service" = nur Betreuung
   // (Leads per E-Mail, Kundenbereich nur mit Leads und Zahlen)
   plan                String    @default("software")
+  // Vertreter (Ausschließlichkeit) oder Makler – bestimmt die Standard-Provisionssätze
+  vermittlerTyp       String    @default("vertreter")
+  // Eigene Provisionssätze je Produkt (Kundenbereich → Konto → Meine Provisionen),
+  // geprüft über lib/provision.parseCustomRates; null = Standard
+  provisionRates      Json?
   // Kein aktueller Bezug mehr (aus Airtable) → in Listen ausgeblendet, Historie bleibt
   archived            Boolean   @default(false)
   // Jeder neue Lead zusätzlich per E-Mail an den Kunden (Kundenbereich → Konto)

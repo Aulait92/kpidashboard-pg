@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
-import { Bell, CreditCard, FileText, Package } from "lucide-react";
+import Link from "next/link";
+import { Bell, CreditCard, FileText, Package, Percent } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
-import { Badge, Card, CardHeader } from "@/components/ui";
+import { Badge, Card, CardHeader, buttonClass } from "@/components/ui";
+import { loadCustomerProvision } from "@/lib/provision-server";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { billingEnabled, listCustomerInvoices, type CustomerInvoice } from "@/lib/billing";
 import { reportError } from "@/lib/monitoring";
@@ -63,6 +65,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   }
   const monthly = customer.retainerMonthly != null ? Number(customer.retainerMonthly) : null;
   const pause = await currentPause(ctx.customerId);
+  const provision = await loadCustomerProvision(ctx.customerId);
   const today = todayBerlin();
   const startYmd = customer.retainerStart ? new Intl.DateTimeFormat("sv-SE", { timeZone: TZ }).format(customer.retainerStart) : today;
   const softwareFee = offer ? Number(offer.softwareFee) : customer.plan === "service" ? 0 : 349;
@@ -128,6 +131,18 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             </div>
           </Card>
         ) : null}
+
+        <Card>
+          <CardHeader title="Meine Provisionen" icon={Percent} />
+          <div className="flex flex-wrap items-center justify-between gap-3 p-5">
+            <p className="text-sm text-[color:var(--muted)]">
+              {provision.typ === "makler" ? "Makler" : "Vertreter"} · {provision.hasCustom ? "eigene Sätze hinterlegt" : "Standardwerte"}. Damit schätzt die App Ihre Provision je Abschluss.
+            </p>
+            <Link href="/buyer/provisionen" className={buttonClass("secondary", "md")}>
+              Provisionen prüfen
+            </Link>
+          </div>
+        </Card>
 
         <Card>
           <CardHeader title="Zahlung und Rechnungsdaten" icon={CreditCard} />
