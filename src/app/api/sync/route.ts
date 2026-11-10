@@ -1,8 +1,8 @@
 import { reportError } from "@/lib/monitoring";
 import { beat } from "@/lib/heartbeat";
 import { revalidatePath } from "next/cache";
-import { NextResponse } from "next/server";
-import { runFullSync } from "@/lib/sync";
+import { after, NextResponse } from "next/server";
+import { startFullSync, type FullSyncResult } from "@/lib/sync";
 import { listProductMatchers } from "@/lib/product-catalog";
 import { listProductGoalBreakdown } from "@/lib/media-buyer";
 
@@ -34,8 +34,40 @@ async function handle(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { started, promise } = startFullSync();
+
+  // Standard (Cron): sofort antworten, Sync läuft im Hintergrund weiter.
+  // Sonst bricht cron-job.org nach 30 s ab (499) und stößt jede Minute einen
+  // weiteren Lauf an. ?wait=1 wartet wie früher und liefert die Diagnose.
+  const wait = new URL(req.url).searchParams.get("wait") === "1";
+  if (!wait) {
+    if (started) {
+      after(async () => {
+        try {
+          const result = await promise;
+          revalidatePath("/");
+          await beat("sync", result.airtable.errors.length === 0, result.airtable.errors.join("; ") || null);
+        } catch (err) {
+          reportError(err, "sync");
+          await beat("sync", false, err instanceof Error ? err.message : String(err));
+        }
+      });
+    }
+    return NextResponse.json(
+      {
+        ok: true,
+        started,
+        message: started
+          ? "Sync gestartet, läuft im Hintergrund."
+          : "Es läuft bereits ein Sync, kein zweiter gestartet.",
+      },
+      { status: 202 },
+    );
+  }
+
   try {
-    const result = await runFullSync();
+    const result: FullSyncResult = await promise;
+    await beat("sync", result.airtable.errors.length === 0, result.airtable.errors.join("; ") || null);
     // Diagnose: welche Produkte + Match-Needles kennt der Matcher nach dem Sync?
     // Fehlt hier ein frisch angelegtes Produkt, ist es nicht in die DB gekommen
     // (Name-Feld leer/anders benannt, falsche Tabelle, o. ä.).
@@ -43,7 +75,6 @@ async function handle(req: Request) {
     // Diagnose: rohes vs. effektives Lead-Ziel je Produkt (+ pro Kunde).
     const productGoals = await listProductGoalBreakdown();
     revalidatePath("/");
-    await beat("sync", result.airtable.errors.length === 0, result.airtable.errors.length ? result.airtable.errors.join("; ") : null);
     return NextResponse.json({
       ok: true,
       productMatchers,

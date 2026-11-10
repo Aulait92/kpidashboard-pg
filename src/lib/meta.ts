@@ -184,7 +184,14 @@ async function fetchInsights(
   return rows;
 }
 
-export async function syncMeta(): Promise<MetaSyncResult> {
+// Inkrementeller Lauf: so viele Tage zurück (inkl. heute). Meta korrigiert
+// Spend der letzten Tage nachträglich noch, daher nicht nur „heute“.
+const META_INCREMENTAL_DAYS = 7;
+
+export async function syncMeta(
+  options: { full?: boolean } = {},
+): Promise<MetaSyncResult> {
+  const full = options.full ?? true;
   const { token, accounts } = getEnv();
   const result: MetaSyncResult = {
     accounts: [],
@@ -200,9 +207,17 @@ export async function syncMeta(): Promise<MetaSyncResult> {
     Date.UTC(today.getUTCFullYear() - 2, today.getUTCMonth(), 1),
   );
   const sinceEnv = process.env.META_SYNC_FROM;
-  const since = (sinceEnv && /^\d{4}-\d{2}-\d{2}$/.test(sinceEnv)
+  const fullSince = (sinceEnv && /^\d{4}-\d{2}-\d{2}$/.test(sinceEnv)
     ? sinceEnv
     : defaultSince.toISOString().slice(0, 10));
+  const incrementalSince = format(
+    addDays(today, -(META_INCREMENTAL_DAYS - 1)),
+    "yyyy-MM-dd",
+  );
+  const since =
+    full || incrementalSince < fullSince ? fullSince : incrementalSince;
+  // Ab hier werden bestehende Zeilen ersetzt; ältere bleiben unangetastet.
+  const replaceFrom = new Date(`${since}T00:00:00Z`);
   const until = today.toISOString().slice(0, 10);
 
   type Insertable = {
@@ -283,7 +298,11 @@ export async function syncMeta(): Promise<MetaSyncResult> {
     await prisma.$transaction([
       ...okAccountIds.map((id) =>
         prisma.cost.deleteMany({
-          where: { kind: "LEAD", note: { contains: `[act_${id}]` } },
+          where: {
+            kind: "LEAD",
+            note: { contains: `[act_${id}]` },
+            occurredAt: { gte: replaceFrom },
+          },
         }),
       ),
       ...(inserts.length > 0
@@ -291,8 +310,9 @@ export async function syncMeta(): Promise<MetaSyncResult> {
         : []),
     ]);
     result.costs = inserts.length;
-    // Unmatched-Transparenz aktualisieren, sobald mindestens ein Konto lief.
-    await persistUnmatched("Meta", result.unmatched);
+    // Unmatched-Transparenz aktualisieren, sobald mindestens ein Konto lief —
+    // nur beim vollen Lauf, sonst schrumpft die Liste auf die letzten Tage.
+    if (full) await persistUnmatched("Meta", result.unmatched);
   }
   // Wenn KEIN Konto sauber lief: altes Datenbild komplett unangetastet lassen.
 

@@ -36,14 +36,81 @@ const eur = new Intl.NumberFormat("de-DE", {
   maximumFractionDigits: 0,
 });
 
+// ─── Sync-Steuerung ──────────────────────────────────────────────────────
+// cron-job.org ruft /api/sync jede Minute auf, ein Lauf kann aber länger
+// dauern. Damit sich Läufe nicht stapeln, läuft immer nur einer gleichzeitig.
+// Der Zustand liegt auf globalThis, weil Route Handler und Server Actions in
+// getrennten Bundles laufen können (eigene Modul-Instanzen, gleicher Prozess).
+type SyncState = {
+  inFlight: Promise<FullSyncResult> | null;
+  lastMetaFullSyncAt: number | null;
+};
+const g = globalThis as typeof globalThis & { __kpiSyncState?: SyncState };
+const state: SyncState = (g.__kpiSyncState ??= {
+  inFlight: null,
+  lastMetaFullSyncAt: null,
+});
+
+/**
+ * Startet einen vollen Sync, falls gerade keiner läuft. Läuft schon einer,
+ * wird dessen Promise zurückgegeben (started: false) statt einen zweiten zu
+ * starten.
+ */
+export function startFullSync(): {
+  started: boolean;
+  promise: Promise<FullSyncResult>;
+} {
+  if (state.inFlight) return { started: false, promise: state.inFlight };
+  const promise = doFullSync().finally(() => {
+    state.inFlight = null;
+  });
+  state.inFlight = promise;
+  return { started: true, promise };
+}
+
+/** Voller Sync; wartet ggf. auf einen bereits laufenden statt doppelt zu syncen. */
 export async function runFullSync(): Promise<FullSyncResult> {
-  const airtable = await syncAirtable();
+  return startFullSync().promise;
+}
+
+// Meta: jede Minute nur die letzten Tage, die volle Historie einmal nachts
+// (ca. 3 Uhr Berlin) sowie beim ersten Lauf nach einem Deploy. Sicherheitsnetz:
+// spätestens nach 26 h wieder voll.
+function metaFullSyncDue(now: Date): boolean {
+  const last = state.lastMetaFullSyncAt;
+  if (last === null) return true;
+  const hoursSince = (now.getTime() - last) / 3_600_000;
+  if (hoursSince >= 26) return true;
+  const berlinHour = Number(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Berlin",
+      hour: "numeric",
+      hourCycle: "h23",
+    })
+      .formatToParts(now)
+      .find((p) => p.type === "hour")?.value,
+  );
+  return berlinHour === 3 && hoursSince >= 12;
+}
+
+async function timed<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  const t0 = Date.now();
+  try {
+    return await fn();
+  } finally {
+    console.log(`[sync] ${label}: ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+  }
+}
+
+async function doFullSync(): Promise<FullSyncResult> {
+  const t0 = Date.now();
+  const airtable = await timed("Airtable", () => syncAirtable());
 
   // Eigene Werbekonten der Retainer-Kunden (Spend nur für deren Dashboard).
   // Vor dem (langen) Agentur-Meta-Sync, damit er nicht davon blockiert wird.
   let customerAdSpend: FullSyncResult["customerAdSpend"];
   try {
-    const r = await syncCustomerAdSpend();
+    const r = await timed("Kunden-Werbekonten", () => syncCustomerAdSpend());
     console.log(
       `[sync] Kunden-Werbekonten: ${r.customers} Kunden, ${r.days} Tage` +
         (r.errors.length ? ` · Fehler: ${r.errors.join(" | ")}` : ""),
@@ -58,7 +125,12 @@ export async function runFullSync(): Promise<FullSyncResult> {
 
   let meta: FullSyncResult["meta"];
   try {
-    const metaResult = await syncMeta();
+    const metaFull = metaFullSyncDue(new Date());
+    const metaResult = await timed(
+      `Meta (${metaFull ? "voll" : "inkrementell"})`,
+      () => syncMeta({ full: metaFull }),
+    );
+    if (metaFull) state.lastMetaFullSyncAt = Date.now();
     meta = { ok: true, result: metaResult };
   } catch (err) {
     meta = {
@@ -69,7 +141,7 @@ export async function runFullSync(): Promise<FullSyncResult> {
 
   let outbrain: FullSyncResult["outbrain"];
   try {
-    const outbrainResult = await syncOutbrain();
+    const outbrainResult = await timed("Outbrain", () => syncOutbrain());
     outbrain = { ok: true, result: outbrainResult };
   } catch (err) {
     outbrain = {
@@ -80,7 +152,7 @@ export async function runFullSync(): Promise<FullSyncResult> {
 
   let tiktok: FullSyncResult["tiktok"];
   try {
-    const tiktokResult = await syncTikTok();
+    const tiktokResult = await timed("TikTok", () => syncTikTok());
     tiktok = { ok: true, result: tiktokResult };
   } catch (err) {
     tiktok = {
@@ -91,7 +163,7 @@ export async function runFullSync(): Promise<FullSyncResult> {
 
   let google: FullSyncResult["google"];
   try {
-    const googleResult = await syncGoogleAds();
+    const googleResult = await timed("Google Ads", () => syncGoogleAds());
     google = { ok: true, result: googleResult };
   } catch (err) {
     google = {
@@ -148,6 +220,7 @@ export async function runFullSync(): Promise<FullSyncResult> {
     pushRemoved += buyerRes.removed;
   }
 
+  console.log(`[sync] fertig in ${((Date.now() - t0) / 1000).toFixed(1)} s`);
   return {
     airtable,
     meta,

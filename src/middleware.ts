@@ -29,6 +29,7 @@ const PUBLIC_PREFIXES = [
   "/apple-icon",
   "/sw.js",
   "/favicon.ico",
+  "/monitoring", // Sentry-Tunnel (Fehler-Reports vom Login-Screen ebenfalls erfassen)
 ];
 
 function isPublic(path: string): boolean {
