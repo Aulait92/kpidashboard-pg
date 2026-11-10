@@ -112,6 +112,7 @@ export async function syncInstantly(): Promise<SyncStats> {
     } while (after);
   }
   stats.newReplies = await syncReplies();
+  await fixDeclinedReplies().catch(() => 0);
   return stats;
 }
 
@@ -206,7 +207,9 @@ export async function recordReply(contactId: string, r: Reply): Promise<boolean>
   // Eingangsbestätigungen/Abwesenheitsnotizen auch erkennen, wenn Instantly sie nicht markiert
   const instantlyPositive = sentimentFromInstantly(r.interest) === "POSITIV";
   r.isAutoReply = r.isAutoReply || (!instantlyPositive && isAutoReplyText(r.subject, stripQuoted(r.text ?? "")));
-  const sentiment: Sentiment = r.isAutoReply ? "NEUTRAL" : sentimentFromInstantly(r.interest) ?? classifyReply(stripQuoted(r.text ?? ""), r.subject?.replace(/^(re|aw|antw|fwd?|wg):\s*/i, ""));
+  // Klare Absage im Text hat Vorrang vor Instantlys Einstufung (deren KI markiert Absagen teils als „interessiert“).
+  const textSentiment = classifyReply(stripQuoted(r.text ?? ""), r.subject?.replace(/^(re|aw|antw|fwd?|wg):\s*/i, ""));
+  const sentiment: Sentiment = r.isAutoReply ? "NEUTRAL" : textSentiment === "NEGATIV" ? "NEGATIV" : (sentimentFromInstantly(r.interest) ?? textSentiment);
   await prisma.salesEmail.create({
     data: {
       sentiment,
@@ -245,9 +248,52 @@ export async function recordReply(contactId: string, r: Reply): Promise<boolean>
       data: { contactId, type: "COLD_MAIL", outcome: label, note: r.subject ? `${r.subject}\n\n${snippet}` : snippet, occurredAt: r.sentAt },
     });
   }
-  // Aufgabe nur bei positiver Antwort
+  // Aufgabe nur bei positiver Antwort; Absage räumt offene Antwort-Aufgaben weg
   if (sentiment === "POSITIV") await ensureReplyTask(contactId, snippet.slice(0, 300));
+  if (sentiment === "NEGATIV") await onDecline(contactId);
   return true;
+}
+
+/** Absage per Mail: offene Antwort-Aufgaben entfernen, frühe Kontakte auf „Verloren – kein Interesse“. */
+export async function onDecline(contactId: string) {
+  await prisma.salesTask.deleteMany({ where: { contactId, doneAt: null, title: { in: REPLY_TASKS } } });
+  const c = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { stage: true } });
+  if (c && ["NEU", "NICHT_ERREICHT", "WIEDERVORLAGE", "SPAETER"].includes(c.stage)) {
+    await prisma.salesContact.update({ where: { id: contactId }, data: { stage: "VERLOREN", lossReason: "KEIN_INTERESSE" } });
+    await prisma.salesActivity.create({ data: { contactId, type: "NOTIZ", outcome: "Absage per Mail", note: "Automatisch auf „Verloren – kein Interesse“ gesetzt.", occurredAt: new Date() } });
+  }
+}
+
+/** Letzte echte Antwort war eine Absage? Dann keine Aufgabe aus Instantly-Status. */
+async function lastReplyDeclined(contactId: string): Promise<boolean> {
+  const last = await prisma.salesEmail.findFirst({
+    where: { contactId, direction: "IN", isAutoReply: false },
+    orderBy: { sentAt: "desc" },
+    select: { sentiment: true, text: true, subject: true },
+  });
+  if (!last) return false;
+  return last.sentiment === "NEGATIV" || classifyReply(stripQuoted(last.text ?? ""), last.subject) === "NEGATIV";
+}
+
+/**
+ * Offene Antwort-Aufgaben prüfen: Ist die letzte Antwort laut Text eine Absage
+ * (z. B. von Instantly fälschlich als „interessiert“ markiert), Aufgabe weg.
+ */
+export async function fixDeclinedReplies(): Promise<number> {
+  const tasks = await prisma.salesTask.findMany({ where: { doneAt: null, title: { in: REPLY_TASKS } }, select: { contactId: true } });
+  let fixed = 0;
+  for (const contactId of [...new Set(tasks.map((t) => t.contactId).filter((x): x is string => !!x))]) {
+    const last = await prisma.salesEmail.findFirst({
+      where: { contactId, direction: "IN", isAutoReply: false },
+      orderBy: { sentAt: "desc" },
+      select: { id: true, text: true, subject: true },
+    });
+    if (!last || classifyReply(stripQuoted(last.text ?? ""), last.subject) !== "NEGATIV") continue;
+    await prisma.salesEmail.update({ where: { id: last.id }, data: { sentiment: "NEGATIV" } });
+    await onDecline(contactId);
+    fixed++;
+  }
+  return fixed;
 }
 
 const REPLY_TASKS = ["Auf Cold-Mail-Antwort reagieren", "Interessent aus Cold Mail anrufen"];
@@ -292,7 +338,7 @@ async function saveLead(contactId: string, campaignId: string, d: LeadData, camp
     });
   }
   // Instantly hat den Lead als interessiert markiert → Aufgabe
-  if (d.interest && d.interest !== prev?.interest && ["Interessiert", "Termin gebucht"].includes(d.interest)) {
+  if (d.interest && d.interest !== prev?.interest && ["Interessiert", "Termin gebucht"].includes(d.interest) && !(await lastReplyDeclined(contactId))) {
     await ensureReplyTask(contactId, `Instantly: ${d.interest} (Kampagne „${campaignName}“)`, "Interessent aus Cold Mail anrufen");
   }
   if (replyPlaceholder && d.replyCount > 0 && (prev?.replyCount ?? 0) === 0) {
@@ -415,7 +461,8 @@ export async function handleWebhook(p: Record<string, unknown>) {
     case "lead_interested":
     case "lead_meeting_booked":
       await prisma.salesCampaignLead.upsert({ where: key, create: { ...base, interest: type === "lead_interested" ? "Interessiert" : "Termin gebucht" }, update: { interest: type === "lead_interested" ? "Interessiert" : "Termin gebucht" } });
-      await prisma.salesEmail.updateMany({ where: { contactId: contact.id, direction: "IN", isAutoReply: false, sentiment: { not: "POSITIV" } }, data: { sentiment: "POSITIV" } });
+      if (type === "lead_interested" && (await lastReplyDeclined(contact.id))) break; // Instantly irrt: Text ist eine Absage
+      await prisma.salesEmail.updateMany({ where: { contactId: contact.id, direction: "IN", isAutoReply: false, sentiment: "NEUTRAL" }, data: { sentiment: "POSITIV" } });
       if (type === "lead_meeting_booked") {
         await prisma.salesTask.create({ data: { contactId: contact.id, title: "Termin aus Cold Mail vorbereiten", type: "TERMIN", dueAt: new Date() } });
       } else {

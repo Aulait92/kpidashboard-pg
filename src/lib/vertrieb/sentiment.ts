@@ -9,7 +9,13 @@ const NEGATIVE = [
   /nicht mehr (kontaktieren|anschreiben|schreiben)/, /sehen sie (bitte )?(davon )?ab/, /keine (weiteren )?(e-?mails|nachrichten|anfragen)/,
   /brauchen? (keine|nichts)/, /sind (bereits|schon) (gut )?versorgt/, /kein(en)? kontakt/, /nicht relevant/, /spam/,
   /not interested/, /remove me/,
+  /(haben|habe) (uns|mich) (dagegen|anders) entschieden/, /passt(\s+(aktuell|derzeit|gerade|momentan|leider|uns|mir|gar))*\s+nicht/, /kein(en)? mehrwert/,
+  /(möchten|möchte|wollen|will) (wir |ich )?(das |dies )?(aktuell |derzeit |vorerst )?nicht/, /verzichte(n)?/, /\babsage\b/, /\bsage(n)?(\s+\S+){0,2}\s+ab\b/,
+  /(aktuell|derzeit|momentan|vorerst) (kein|nicht)/, /nicht (mehr )?(nötig|notwendig|erforderlich)/, /lieber nicht/,
+  /(haben|nutzen|arbeiten)( bereits| schon)?( mit)?( bereits| schon)? (einen?|einer|eine) (anbieter|dienstleister|agentur|partner)/, /nicht zuständig/,
 ];
+// Positive Stichworte, die verneint sind („keinen Termin“, „kein Gespräch“)
+const NEGATED_POSITIVE = /\b(kein(e[nmrs]?)?|nicht|niemals)\b(\s+\S+){0,2}?\s+(termin|gespräch|telefonat|rückruf|anruf|interesse|bedarf|kontakt|infos?|informationen|unterlagen|angebot)/;
 const POSITIVE = [
   /interess(e|ant|iert)/, /gerne (mehr|infos?|informationen|unterlagen|einen termin|telefonieren|anrufen|zurückrufen|austauschen)/, /ruf(en)? sie (mich )?(gerne )?an/, /anrufen/, /telefon(at|ieren)/, /termin/,
   /mehr (infos?|informationen|details)/, /klingt (gut|spannend|interessant)/, /(schicken|senden) sie (mir )?(gerne )?/,
@@ -19,7 +25,7 @@ const POSITIVE = [
 
 export function classifyReply(text: string | null | undefined, subject?: string | null): Sentiment {
   const t = `${subject ?? ""}\n${text ?? ""}`.toLowerCase();
-  if (NEGATIVE.some((r) => r.test(t))) return "NEGATIV";
+  if (NEGATIVE.some((r) => r.test(t)) || NEGATED_POSITIVE.test(t)) return "NEGATIV";
   if (POSITIVE.some((r) => r.test(t))) return "POSITIV";
   return "NEUTRAL";
 }
