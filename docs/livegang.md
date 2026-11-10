@@ -67,7 +67,9 @@ KI-Hilfe, die brauchen keine Migration).
       Google: Login braucht nur „openid email profile“ (keine Prüfung nötig), der
       Zustimmungsbildschirm muss aber auf „In Produktion“ stehen, sonst kommen nur Testnutzer rein.
 - [ ] Stripe **Live**: Branding, Steuer, Kundenportal, Smart Retries (wie Sandbox:
-      „Abonnement als unbezahlt markieren“). Webhook-Endpunkt
+      „Abonnement als unbezahlt markieren“). Branding wie Sandbox: Logo mit weißem
+      Hintergrund (lesbar auf Rechnung und auf blauem Checkout), Checkout-Hintergrund weiß,
+      Schaltflächen #2563EB. Webhook-Endpunkt
       `https://app.performancegrowth.de/api/stripe/webhook` mit den Ereignissen aus
       `src/lib/billing-webhook.ts` (`HANDLED_EVENTS`).
 
@@ -78,6 +80,10 @@ KI-Hilfe, die brauchen keine Migration).
       `termin.performancegrowth.de` (Seitenaufrufe werden umgeleitet, `/api/…` läuft weiter).
       Google/Microsoft: Redirect-URIs für `app.` und `staging.` (Kalender `/api/google|microsoft/callback`,
       Login `/api/auth/google|microsoft/callback`).
+      Stand 10.11.: DNS beider Adressen verifiziert, Redirect-URIs eingetragen, Testumgebung
+      umgestellt (inkl. eigener VAPID-Schlüssel für Push). Offen nur noch die Produktion:
+      `APP_URL`, `GOOGLE_REDIRECT_URI`, `MICROSOFT_REDIRECT_URI` auf `app.…`,
+      `LEGACY_HOSTS=kpi.performancegrowth.de`.
 
 ## Am Tag
 
