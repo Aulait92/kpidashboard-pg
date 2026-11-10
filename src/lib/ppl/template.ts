@@ -16,7 +16,7 @@ const ALIASES: Record<string, string[]> = {
   geburtsdatum: ["geburtsdatum", "geburtstag", "birthday", "dateofbirth"],
   berufsstatus: ["berufsstatus", "berufsgruppe", "beruf", "situation", "tatigkeit", "taetigkeit"],
   versicherer: ["woversichert", "aktuelleversicherung", "versicherung", "gesellschaft", "welchepkv", "aktuellegesellschaft"],
-  versicherungsart: ["wieversichert", "versicherungsart", "artderversicherung"],
+  versicherungsart: ["wieversichert", "gesetzlichoderprivat", "versicherungsart", "artderversicherung"],
   beitrag: ["monatsbeitrag", "beitrag", "aktuellerbeitrag", "monatlicherbeitrag"],
 };
 

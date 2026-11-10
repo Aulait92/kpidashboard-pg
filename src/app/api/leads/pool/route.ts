@@ -1,5 +1,6 @@
 import { ingestPoolLead } from "@/lib/ppl/engine";
 import { prisma } from "@/lib/prisma";
+import { isPerspectivePayload, translatePerspective } from "@/lib/ppl/perspective";
 import { reportError } from "@/lib/monitoring";
 
 // Pay-per-Lead-Eingang (eigene Funnels, z. B. Perspective „PKV-Tarifoptimierung“):
@@ -35,16 +36,22 @@ export async function POST(req: Request) {
       select: { name: true },
     });
     const productKey = known?.name ?? rawProduct;
-    const fields: Record<string, string> = {};
-    for (const [k, v] of Object.entries(item)) {
-      if (META.has(k.toLowerCase()) || v == null || typeof v === "object") continue;
-      const s = String(v).trim();
-      if (s) fields[k] = s;
+    const slug = (await prisma.product.findFirst({ where: { name: productKey }, select: { slug: true } }))?.slug ?? rawProduct;
+    let fields: Record<string, string> = {};
+    let externalId: string | null = null;
+    if (isPerspectivePayload(item)) {
+      ({ fields, externalId } = translatePerspective(item, slug));
+    } else {
+      for (const [k, v] of Object.entries(item)) {
+        if (META.has(k.toLowerCase()) || v == null || typeof v === "object") continue;
+        const s = String(v).trim();
+        if (s) fields[k] = s;
+      }
     }
     const sms = String(item.sms_verifiziert ?? item.sms_verified ?? "").toLowerCase();
     try {
       const r = await ingestPoolLead({
-        externalId: String(item.id ?? item.lead_id ?? item.leadgen_id ?? "") || null,
+        externalId: externalId ?? (String(item.id ?? item.lead_id ?? item.leadgen_id ?? "") || null),
         productKey,
         via: url.searchParams.get("quelle") ?? "webhook",
         fields,
