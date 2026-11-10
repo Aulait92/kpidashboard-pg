@@ -24,6 +24,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "lead.export": "Leads exportiert (CSV)",
   "lead.storno": "Lead storniert",
   "lead.erase": "Lead-Daten gelöscht (Datenschutz)",
+  "customer.meta_account": "Meta-Werbekonto hinterlegt",
   "customer.erase": "Kundendaten gelöscht (Vertragsende)",
   "pause.plan": "Pause eingetragen",
   "pause.end": "Pause beendet",

@@ -4,6 +4,7 @@ import { Badge, Card, CardHeader } from "@/components/ui";
 import { toggleSourceAction } from "@/app/admin/lead-eingang/actions";
 import { prisma } from "@/lib/prisma";
 import { isStorno } from "@/lib/admin-leads";
+import { MetaAccountCard } from "./meta-account-card";
 
 const fmt = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(d);
@@ -13,7 +14,8 @@ const fmt = (d: Date) =>
 export default async function KundenLeads({ params }: { params: Promise<{ id: string }> }) {
   await connection();
   const { id } = await params;
-  const [sources, leads, total] = await Promise.all([
+  const [customer, sources, leads, total] = await Promise.all([
+    prisma.customer.findUnique({ where: { id }, select: { metaAdAccountId: true } }),
     prisma.leadSource.findMany({ where: { customerId: id }, orderBy: { createdAt: "desc" } }),
     prisma.lead.findMany({
       where: { customerId: id },
@@ -26,6 +28,8 @@ export default async function KundenLeads({ params }: { params: Promise<{ id: st
 
   return (
     <div className="grid gap-5 lg:grid-cols-[2fr_3fr]">
+      <div className="space-y-5">
+      <MetaAccountCard customerId={id} current={customer?.metaAdAccountId ?? null} />
       <Card>
         <CardHeader
           title="Leadformulare"
@@ -59,6 +63,7 @@ export default async function KundenLeads({ params }: { params: Promise<{ id: st
           </ul>
         )}
       </Card>
+      </div>
 
       <Card>
         <CardHeader

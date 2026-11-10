@@ -429,3 +429,24 @@ async function fetchAccountDailySpend(
   }
   return rows;
 }
+
+/** Prüft, ob unser Token das Werbekonto lesen darf (Onboarding). */
+export async function checkAdAccountAccess(
+  accountId: string,
+): Promise<{ ok: true; name: string; currency: string } | { ok: false; error: string }> {
+  const token = process.env.META_ACCESS_TOKEN;
+  if (!token) return { ok: false, error: "META_ACCESS_TOKEN fehlt." };
+  try {
+    const url = new URL(`${META_GRAPH}/act_${accountId}`);
+    url.searchParams.set("fields", "name,currency,account_status");
+    url.searchParams.set("access_token", token);
+    const res = await fetch(url, { cache: "no-store" });
+    const body = (await res.json()) as { name?: string; currency?: string; error?: { message?: string } };
+    if (!res.ok || body.error) {
+      return { ok: false, error: `${body.error?.message ?? res.status}. Ist das Werbekonto unserem Systemnutzer zugewiesen?` };
+    }
+    return { ok: true, name: body.name ?? accountId, currency: body.currency ?? "" };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
