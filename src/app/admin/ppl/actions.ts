@@ -66,6 +66,7 @@ export async function saveSubscriptionAction(_prev: BezugState, fd: FormData): P
     excludeRules: String(fd.get("excludeRules") ?? "").trim() || null,
     stornoDays: int(fd.get("stornoDays")),
     stornoReasons: list(fd.get("stornoReasons")),
+    stornoAutoApprove: fd.get("stornoAutoApprove") === "on",
     delivery: ["app", "email", "webhook"].includes(delivery) ? delivery : "app",
     deliveryEmail: String(fd.get("deliveryEmail") ?? "").trim() || null,
     emailSubject: String(fd.get("emailSubject") ?? "").trim() || null,

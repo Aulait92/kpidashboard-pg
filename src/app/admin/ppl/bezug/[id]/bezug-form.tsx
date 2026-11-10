@@ -9,7 +9,7 @@ type Sub = {
   testQuantity: number | null; testDays: number | null; period: string; goal: number | null; startDate: string;
   price: number; emailSubject: string | null; emailTemplate: string | null; plzRanges: string | null; acceptWeak: boolean; weakThreshold: number | null;
   acceptCivilServants: boolean; onlyWeak: boolean; scoreFloor: number | null; insurerInclude: string[]; insurerExclude: string[];
-  excludeRules: string | null; stornoDays: number | null; stornoReasons: string[]; delivery: string; deliveryEmail: string | null;
+  excludeRules: string | null; stornoDays: number | null; stornoReasons: string[]; stornoAutoApprove: boolean; delivery: string; deliveryEmail: string | null;
   webhookUrl: string | null; webhookFormat: string; hasSecret: boolean;
 };
 
@@ -145,9 +145,16 @@ export function BezugForm({ sub, customers, products }: { sub: Sub | null; custo
           <F label="Storno-Fenster (Tage)" hint="leer = kein Storno">
             <input name="stornoDays" inputMode="numeric" defaultValue={sub?.stornoDays ?? ""} className={input} />
           </F>
-          <F label="Erlaubte Stornogründe (je Zeile)" hint="„Sonstiges“ kommt automatisch dazu und wird geprüft">
+          <F label="Erlaubte Stornogründe (je Zeile)" hint="„Sonstiges“ kommt automatisch dazu">
             <textarea name="stornoReasons" rows={4} defaultValue={sub?.stornoReasons.join("\n") ?? ""} className={area} />
           </F>
+          <div className="sm:col-span-2">
+            <Check name="stornoAutoApprove" label="Reklamationen immer automatisch anerkennen" defaultChecked={sub?.stornoAutoApprove ?? false} />
+            <p className="mt-1 pl-6 text-xs text-[color:var(--muted)]">
+              Aus: Erlaubte Gründe werden sofort anerkannt, „Sonstiges“ und eine Stornoquote über 20 % (30 Tage) landen bei Ihnen zur Prüfung.
+              An: Jede Reklamation im Storno-Fenster wird sofort anerkannt und gutgeschrieben.
+            </p>
+          </div>
           <F label="Lieferung">
             <select name="delivery" value={delivery} onChange={(e) => setDelivery(e.target.value)} className={input}>
               <option value="app">Kundenbereich (Login, Push, E-Mail)</option>

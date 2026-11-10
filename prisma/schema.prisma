@@ -1417,6 +1417,9 @@ model LeadSubscription {
   // Storno
   stornoDays          Int?
   stornoReasons       String[]  @default([])
+  // true = jede Reklamation im Fenster sofort anerkennen (auch „Sonstiges“ und
+  // hohe Quote), sonst gehen diese in die Prüfung durch den Admin
+  stornoAutoApprove   Boolean   @default(false)
   // Auslieferung: app (Kundenbereich, Push, E-Mail) | email (nur E-Mail) | webhook
   delivery            String    @default("app")
   deliveryEmail       String?

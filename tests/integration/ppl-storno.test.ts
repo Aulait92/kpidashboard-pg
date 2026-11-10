@@ -62,4 +62,18 @@ describe("Pay-per-Lead: Storno und Bestellung", () => {
     const again = await placeOrder({ subscriptionId: subId, weekOffset: 1, quantity: 10, autoRenew: true, markPaid: true });
     expect(again.ok).toBe(false);
   });
+
+  it("„immer automatisch anerkennen“: auch „Sonstiges“ und hohe Quote ohne Prüfung", async () => {
+    await prisma.leadSubscription.update({ where: { id: subId }, data: { stornoAutoApprove: true } });
+    try {
+      const other = await requestStorno(leadIds[4], "Sonstiges", "Hat nie angefragt", { role: "BUYER" });
+      expect(other).toEqual({ ok: true, state: "approved" });
+      expect((await prisma.lead.findUniqueOrThrow({ where: { id: leadIds[4] } })).status).toBe("Storno");
+      // Grund-Regeln gelten weiter
+      expect((await requestStorno(leadIds[5], "Gefällt mir nicht", "", { role: "BUYER" })).ok).toBe(false);
+      expect((await requestStorno(leadIds[5], "Sonstiges", "", { role: "BUYER" })).ok).toBe(false);
+    } finally {
+      await prisma.leadSubscription.update({ where: { id: subId }, data: { stornoAutoApprove: false } });
+    }
+  });
 });

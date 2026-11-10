@@ -1,7 +1,8 @@
 // Storno beim Pay-per-Lead: innerhalb des Storno-Fensters, nur mit erlaubtem
 // Grund. Ersatzlos – der Käufer bekommt eine Gutschrift (nächste Rechnung).
 // Automatisch genehmigt, außer Grund „Sonstiges“ oder Stornoquote > 20 %
-// (letzte 30 Tage) → Prüfung durch Admin.
+// (letzte 30 Tage) → Prüfung durch Admin. Am Bezug abschaltbar
+// (`stornoAutoApprove`): dann wird jede Reklamation im Fenster anerkannt.
 
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
@@ -44,7 +45,7 @@ export async function requestStorno(
     where: { id: leadId },
     select: {
       id: true, customerId: true, name: true, deliveredAt: true, stornoState: true, source: true,
-      subscription: { select: { id: true, label: true, stornoDays: true, stornoReasons: true } },
+      subscription: { select: { id: true, label: true, stornoDays: true, stornoReasons: true, stornoAutoApprove: true } },
       revenues: { select: { id: true, amount: true }, take: 1 },
     },
   });
@@ -65,7 +66,8 @@ export async function requestStorno(
     prisma.lead.count({ where: { subscriptionId: sub.id, deliveredAt: { gte: since }, stornoState: { in: ["approved", "review", "requested"] } } }),
   ]);
   const quota = delivered ? (stornos + 1) / delivered : 1;
-  const review = other || quota > REVIEW_QUOTA;
+  // Ohne Prüfung, wenn am Bezug „immer automatisch anerkennen“ eingestellt ist
+  const review = !sub.stornoAutoApprove && (other || quota > REVIEW_QUOTA);
 
   await prisma.lead.update({
     where: { id: lead.id },
