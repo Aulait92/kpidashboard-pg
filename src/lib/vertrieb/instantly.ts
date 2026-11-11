@@ -102,7 +102,10 @@ async function upsertCampaign(name: string, instantlyId?: string) {
 }
 
 /** Kampagnen mit anderem Thema: kommen nicht ins CRM (umschaltbar unter Vertrieb → Import). */
-const IGNORE_CAMPAIGN = /pflege/i;
+const IGNORE_CAMPAIGN = /pflege|bad[\s-]?umbau|kinderwunsch/i;
+/** Ältere Instantly-Aktivität stammt aus früheren Pay-per-Lead-Kampagnen → keinen neuen Kontakt anlegen. */
+const CREATE_MAX_AGE_MS = 28 * 86400000;
+const recent = (d: string | Date | null | undefined) => !!d && Date.now() - new Date(d).getTime() <= CREATE_MAX_AGE_MS;
 
 async function contactMap(emails: string[]) {
   // Haupt- und weitere E-Mail-Adressen der Kontakte
@@ -142,7 +145,7 @@ export async function syncInstantly(): Promise<SyncStats> {
         let contactId = ids.get(l.email!.toLowerCase());
         if (!contactId) {
           // Nicht im CRM (z. B. Liste direkt in Instantly): anlegen, sobald angeschrieben oder geantwortet
-          if (!l.timestamp_last_contact && !(l.email_reply_count > 0)) {
+          if (!recent(l.timestamp_last_contact) && !recent(l.timestamp_last_reply)) {
             stats.unmatched++;
             continue;
           }
@@ -219,7 +222,7 @@ export async function syncReplies(full = false): Promise<number> {
       let contactId = ids.get(leadEmail);
       if (!contactId) {
         // Antwort aus einer Kampagne, deren Liste nicht im CRM ist: Kontakt anlegen (nicht für Abwesenheitsnotizen)
-        if (!e.campaign_id || e.is_auto_reply === 1 || !leadEmail) continue;
+        if (!e.campaign_id || e.is_auto_reply === 1 || !leadEmail || !recent(e.timestamp_email || e.timestamp_created)) continue;
         contactId = (await ensureInstantlyContact(leadEmail, {}, campaignNames.get(e.campaign_id) ?? "Instantly")).id;
         ids.set(leadEmail, contactId);
       }

@@ -57,13 +57,19 @@ describe("Instantly: Pflege-Kampagnen und Interesse vor Antworttext", () => {
   beforeAll(() => requireTestDb());
   afterAll(async () => {
     await prisma.salesContact.deleteMany({ where: { email: { in: [pflege, finter] } } });
-    await prisma.salesCampaign.deleteMany({ where: { name: { in: [`Pflegedienste ${t2}`, camp] } } });
+    await prisma.salesCampaign.deleteMany({ where: { name: { in: [`Pflegedienste ${t2}`, `Bad-Umbau ${t2}`, `Kinderwunsch ${t2}`, camp] } } });
   });
 
   it("Pflege-Kampagne: nichts kommt ins CRM", async () => {
     expect(await handleWebhook({ event_type: "reply_received", lead_email: pflege, campaign_name: `Pflegedienste ${t2}`, reply_text: "Ja gerne, rufen Sie an" })).toEqual({ ignored: "campaign ignored" });
     expect(await prisma.salesContact.findUnique({ where: { email: pflege } })).toBeNull();
     expect((await prisma.salesCampaign.findUniqueOrThrow({ where: { name: `Pflegedienste ${t2}` } })).ignored).toBe(true);
+  });
+
+  it("Badumbau und Kinderwunsch werden ebenfalls ignoriert", async () => {
+    for (const n of [`Bad-Umbau ${t2}`, `Kinderwunsch ${t2}`]) {
+      expect(await handleWebhook({ event_type: "email_sent", lead_email: pflege, campaign_name: n })).toEqual({ ignored: "campaign ignored" });
+    }
   });
 
   it("„interessiert“ vor der Antwort + Absage im Text: keine Aufgabe", async () => {
