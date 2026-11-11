@@ -8,7 +8,7 @@ import { inviteMemberAction, type TeamFormState } from "./actions";
 const input =
   "h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-[15px] outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20";
 
-export function InviteForm({ readOnly }: { readOnly: boolean }) {
+export function InviteForm({ readOnly, costHint = null }: { readOnly: boolean; costHint?: string | null }) {
   const [state, action, pending] = useActionState<TeamFormState, FormData>(inviteMemberAction, {});
   return (
     <Card>
@@ -19,6 +19,11 @@ export function InviteForm({ readOnly }: { readOnly: boolean }) {
           <input name="email" type="email" required placeholder="E-Mail-Adresse" className={input} />
         </div>
         <p className="text-sm text-[color:var(--muted)]">Die Person bekommt per E-Mail einen Link zum Passwort-Festlegen.</p>
+        {costHint ? (
+          <p className="rounded-[var(--radius-sm)] bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 ring-1 ring-amber-200" data-seat-cost>
+            + {costHint}
+          </p>
+        ) : null}
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="submit"

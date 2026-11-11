@@ -78,6 +78,7 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
           plan: pkg,
           retainerMonthly: offer.monthlyFee,
           retainerStart: offer.startDate,
+          ...billingTermsOf(offer),
           ...(stripeFree ? { stripeCustomerId: offer.stripeCustomerId } : {}),
         },
       })
@@ -87,6 +88,7 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
           plan: pkg,
           retainerMonthly: offer.monthlyFee,
           retainerStart: offer.startDate,
+          ...billingTermsOf(offer),
           ...(stripeFree ? { stripeCustomerId: offer.stripeCustomerId } : {}),
         },
       });
@@ -343,4 +345,26 @@ export async function sendGoLiveMail(onboardingId: string) {
     button: { label: "Zum Kundenbereich", url: `${getAppUrl()}/buyer` },
   });
   if (!res.ok) reportError(new Error(res.error), "onboarding-golive-mail", { onboarding: ob.id });
+}
+
+/**
+ * Konditionen aus dem Angebot an den Kunden: inklusive Logins, Preis je
+ * weiterem Login (im Abo zunächst die vereinbarte Zahl), Zahlweise und das
+ * Bestandskunden-Modul (schaltet den Bereich „Bestand“ frei).
+ */
+function billingTermsOf(offer: {
+  seats: number | null;
+  seatsIncluded: number | null;
+  seatMonthly: unknown;
+  bestandMonthly: unknown;
+  annualPrepay: boolean;
+}) {
+  const seatsBilled = offer.seats != null && offer.seatsIncluded != null && Number(offer.seatMonthly ?? 0) > 0
+    ? Math.max(0, offer.seats - offer.seatsIncluded)
+    : 0;
+  return {
+    ...(offer.seatsIncluded != null ? { seatsIncluded: offer.seatsIncluded, seatMonthly: offer.seatMonthly == null ? null : Number(offer.seatMonthly), seatsBilled } : {}),
+    billingInterval: offer.annualPrepay ? "year" : "month",
+    ...(offer.bestandMonthly != null ? { bestandMonthly: Number(offer.bestandMonthly), existingCustomersEnabled: true, bestandRequestedAt: null } : {}),
+  };
 }

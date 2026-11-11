@@ -5,6 +5,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
 import { sendToAdmins } from "@/lib/push";
+import { bestandQuota, QUOTA_REACHED } from "@/lib/bestand/quota";
 
 export type Occasion = "cross_sell" | "review" | "birthday" | "renewal";
 export type Segment = { has?: string[]; lacks?: string[]; birthdayDays?: number; renewalDays?: number };
@@ -103,6 +104,9 @@ export async function createCampaign(opts: {
   now?: Date;
 }) {
   const now = opts.now ?? new Date();
+  // Kontingent (inkl. WhatsApp-Gebühren) vor dem Start prüfen
+  const quota = await bestandQuota(opts.customerId, now);
+  if (quota.remaining <= 0) throw new Error(QUOTA_REACHED);
   const ids = await segmentIds(opts.customerId, opts.occasion, opts.segment, now);
   if (!ids.length) throw new Error("In diesem Segment ist gerade niemand erreichbar.");
   const name =
@@ -145,7 +149,9 @@ export async function runCampaigns(now = new Date()): Promise<{ sent: number; fa
   for (const c of campaigns) {
     if (!c.customer.existingCustomersEnabled) continue;
     const today = await prisma.campaignRecipient.count({ where: { campaignId: c.id, sentAt: { gte: dayStart } } });
-    const budget = Math.min(25, c.dailyLimit - today);
+    // Monatskontingent je Kunde: darüber wartet der Versand bis zum nächsten Monat
+    const quota = await bestandQuota(c.customerId, now);
+    const budget = Math.min(25, c.dailyLimit - today, quota.remaining);
     if (budget <= 0) continue;
     const batch = await prisma.campaignRecipient.findMany({
       where: { campaignId: c.id, status: "queued" },

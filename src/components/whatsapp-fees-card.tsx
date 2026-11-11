@@ -1,6 +1,7 @@
 import { MessageCircle } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
+import { PRICE_LIST } from "@/lib/offer-pricing";
 import { berlinMonth, CATEGORY_LABEL, FEE_CATEGORIES, feeUsage, type FeeCategory } from "@/lib/whatsapp/fees";
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
@@ -39,7 +40,10 @@ export async function WhatsAppFeesCard({ customerId, admin = false }: { customer
         )}
         <p className="text-xs text-[color:var(--muted)]">
           Meta berechnet vor allem Vorlagen-Nachrichten (z. B. die erste Nachricht an einen neuen Lead). Antworten innerhalb eines laufenden
-          Gesprächs sind meist kostenlos. Wir berechnen genau das weiter, was Meta berechnet, auf der Rechnung des Folgemonats.
+          Gesprächs sind meist kostenlos.{" "}
+          {PRICE_LIST.whatsappIncluded
+            ? "Die Gebühren sind im Preis enthalten und werden nicht weiterberechnet. Wir erfassen sie nur intern (Kosten auf der Zahlen-Seite)."
+            : "Wir berechnen genau das weiter, was Meta berechnet, auf der Rechnung des Folgemonats."}
         </p>
         {charges.length ? (
           <ul className="divide-y divide-[color:var(--border)] border-t border-[color:var(--border)]">

@@ -147,6 +147,23 @@ model Customer {
   leadSubscriptions        LeadSubscription[]
   // Modul „Bestandskunden-Kampagnen“ (Zusatzmodul; Testkunden kostenlos)
   existingCustomersEnabled Boolean             @default(false)
+  // ─── Preise: Berater-Plätze, Zahlweise, Bestandskunden-Modul (seit 11.11.2026) ───
+  // Inklusive Logins laut Angebot; null = keine Platz-Abrechnung (Alt-Verträge, individuell)
+  seatsIncluded            Int?
+  // Preis je weiterem Login und Monat (netto), aus dem Angebot eingefroren
+  seatMonthly              Decimal?            @db.Decimal(10, 2)
+  // Zurzeit im Stripe-Abo berechnete weitere Logins (Menge der Platz-Position)
+  seatsBilled              Int                 @default(0)
+  // "month" | "year" (jährlich im Voraus, Jahresbetrag = (12 − Freimonate) × Monatspreis)
+  billingInterval          String              @default("month")
+  // Gebuchtes Bestandskunden-Modul: Monatspreis netto; null = nicht gebucht
+  bestandMonthly           Decimal?            @db.Decimal(10, 2)
+  // Bestandsschutz: nutzte das Modul schon vor der Preisliste, bleibt kostenlos freigeschaltet
+  bestandGrandfathered     Boolean             @default(false)
+  // Kunde hat das Modul im Konto angefragt (Admin „Heute“)
+  bestandRequestedAt       DateTime?
+  // Kampagnen-Nachrichten je Monat inklusive; null = Standard aus der Preisliste
+  bestandMessageQuota      Int?
   // Neue Oberfläche des Kundenbereichs (Vertreter-A); pro Kunde im Admin einschaltbar.
   newUi                    Boolean             @default(false)
   existingCustomers        ExistingCustomer[]
@@ -885,6 +902,17 @@ model Offer {
   acceptedAgent           String?
   termsUrl                String?
   dpaUrl                  String?
+  // Zusätze (seit 11.11.2026; null = Alt-Angebot ohne Platz-Abrechnung)
+  // Logins gesamt (Inhaber + Berater) und davon inklusive
+  seats                   Int?
+  seatsIncluded           Int?
+  // Preis je weiterem Login und Monat (netto)
+  seatMonthly             Decimal?      @db.Decimal(10, 2)
+  // Bestandskunden-Modul: Monatspreis netto; null = nicht gebucht
+  bestandMonthly          Decimal?      @db.Decimal(10, 2)
+  // Jährlich im Voraus: Jahresbetrag = (12 − annualFreeMonths) × Monatspreis inkl. Zusätze
+  annualPrepay            Boolean       @default(false)
+  annualFreeMonths        Int?
   // Zahlung (Stripe)
   stripeCustomerId        String?
   stripeCheckoutSessionId String?

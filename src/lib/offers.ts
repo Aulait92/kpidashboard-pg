@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getAppUrl } from "@/lib/email";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
-import { computeOfferPrice, type OfferPackage, type OfferProduct, type OfferTerm } from "@/lib/offer-pricing";
+import { computeOfferPrice, offerAddOns, PRICE_LIST, type OfferPackage, type OfferProduct, type OfferTerm } from "@/lib/offer-pricing";
 import { logOfferActivity, offerAdminHref, setContactCustomerStage, type OfferTarget } from "@/lib/offer-links";
 import { billingEnabled } from "@/lib/billing";
 import { startOnboarding } from "@/lib/onboarding";
@@ -30,6 +30,12 @@ export type OfferFormInput = {
   specialTerms?: string | null;
   startDate?: string | null; // YYYY-MM-DD
   validDays?: number;
+  /** Logins gesamt (Inhaber + Berater); 3 inklusive. */
+  seats?: number | null;
+  /** Jährlich im Voraus (nur 12 Monate Laufzeit, nicht mit Startpreis). */
+  annual?: boolean;
+  /** Bestandskunden-Modul dazubuchen. */
+  bestandModule?: boolean;
 };
 
 /** Rechtstexte, denen bei der Annahme zugestimmt wird (per Umgebungsvariable). */
@@ -78,10 +84,19 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
     products,
     setupOverride: input.setupOverride,
     monthlyOverride: input.monthlyOverride,
+    seats: input.seats,
+    annual: input.annual,
+    bestandModule: input.bestandModule,
   });
   if (price.monthlyFee == null) {
-    throw new Error("Ab 10.000 € Werbebudget gibt es keinen Listenpreis – bitte die Monatsgebühr individuell eintragen.");
+    throw new Error(
+      price.seatsIndividual
+        ? `Ab ${PRICE_LIST.seatIndividualFrom} Logins gibt es keinen Listenpreis – bitte die Monatsgebühr individuell eintragen (inklusive aller Logins).`
+        : "Ab 10.000 € Werbebudget gibt es keinen Listenpreis – bitte die Monatsgebühr individuell eintragen.",
+    );
   }
+  if (input.annual && input.term !== "12m") throw new Error("Jährliche Vorauszahlung geht nur mit 12 Monaten Laufzeit.");
+  if (input.annual && input.introMonthlyFee != null) throw new Error("Startpreis und jährliche Vorauszahlung lassen sich nicht kombinieren.");
 
   const { termsUrl, dpaUrl } = legalUrls();
   const validUntil = new Date(Date.now() + (input.validDays ?? 14) * 24 * 60 * 60 * 1000);
@@ -120,6 +135,14 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             setupFee: price.setupFee,
             monthlyFee: price.monthlyFee!,
             softwareFee: price.softwareFee,
+            // Zusätze (nur Paket mit Software): Logins, Modul, Zahlweise
+            seats: pkg === "software" ? price.seats : null,
+            seatsIncluded: pkg === "software" ? price.seatsIncluded : null,
+            // Ab seatIndividualFrom sind alle Logins im individuellen Preis enthalten (0 €)
+            seatMonthly: pkg === "software" ? (price.seatsIndividual ? 0 : PRICE_LIST.seatMonthly) : null,
+            bestandMonthly: price.bestandFee > 0 ? price.bestandFee : null,
+            annualPrepay: price.annual,
+            annualFreeMonths: price.annual ? PRICE_LIST.annualFreeMonths : null,
             introMonthlyFee: input.introMonthlyFee ?? null,
             introMonths: input.introMonthlyFee != null ? (input.introMonths ?? null) : null,
             specialTerms: input.specialTerms?.trim() || null,
@@ -189,7 +212,8 @@ export async function acceptOffer(
       .update({
         where: { id: offer.salesContactId },
         data: {
-          monthlyValue: Math.round(Number(offer.monthlyFee)),
+          // Monatlich gesamt inkl. Logins und Modul (bei Jahreszahlung ohne Rabatt)
+          monthlyValue: Math.round(offerAddOns(offerAddOnsOf(offer)).monthlyTotal),
           ...(products ? { products } : {}),
           contractStart: offer.startDate ?? now,
         },
@@ -221,4 +245,25 @@ export async function markOfferViewed(id: string) {
   await prisma.offer
     .updateMany({ where: { id, viewedAt: null }, data: { viewedAt: new Date() } })
     .catch(() => {});
+}
+
+/** Snapshot-Felder eines Angebots für {@link offerAddOns}. */
+export function offerAddOnsOf(o: {
+  monthlyFee: unknown;
+  seats: number | null;
+  seatsIncluded: number | null;
+  seatMonthly: unknown;
+  bestandMonthly: unknown;
+  annualPrepay: boolean;
+  annualFreeMonths: number | null;
+}) {
+  return {
+    monthlyFee: Number(o.monthlyFee),
+    seats: o.seats,
+    seatsIncluded: o.seatsIncluded,
+    seatMonthly: o.seatMonthly == null ? null : Number(o.seatMonthly),
+    bestandMonthly: o.bestandMonthly == null ? null : Number(o.bestandMonthly),
+    annualPrepay: o.annualPrepay,
+    annualFreeMonths: o.annualFreeMonths,
+  };
 }

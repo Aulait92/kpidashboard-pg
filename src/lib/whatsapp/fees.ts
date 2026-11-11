@@ -1,5 +1,7 @@
-// WhatsApp-Gebühren von Meta an Kunden weiterberechnen (AGB: nach
-// tatsächlichem Verbrauch, ohne Aufschlag).
+// WhatsApp-Gebühren von Meta erfassen und (nur wenn PRICE_LIST.whatsappIncluded
+// false ist) an Kunden weiterberechnen. Seit 11.11.2026 sind sie im Preis
+// enthalten: die Weiterberechnung im Cron ist abgeschaltet, die Erfassung
+// (feeUsage, monthlyFeeCosts) bleibt für die Marge auf der Zahlen-Seite.
 //
 // Grundlage: Meta meldet je ausgehender Nachricht im Status-Webhook, ob sie
 // berechnet wird und in welcher Kategorie (Message.billable/pricingCategory).
@@ -10,6 +12,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
+import { PRICE_LIST } from "@/lib/offer-pricing";
 
 export const FEE_CATEGORIES = ["marketing", "utility", "authentication", "service"] as const;
 export type FeeCategory = (typeof FEE_CATEGORIES)[number];
@@ -170,4 +173,29 @@ export async function chargeWhatsAppFees(month: string): Promise<ChargeResult> {
     }
   }
   return res;
+}
+
+/** WhatsApp-Gebühren aller Kunden je Monat („YYYY-MM“, Berliner Zeit) – für die Kosten auf der Zahlen-Seite. */
+export async function monthlyFeeCosts(from: Date): Promise<Map<string, number>> {
+  const rows = await prisma.$queryRaw<{ month: string; category: string | null; n: number }[]>`
+    SELECT to_char(("createdAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Europe/Berlin', 'YYYY-MM') AS month,
+           "pricingCategory" AS category, COUNT(*)::int AS n
+    FROM "Message"
+    WHERE direction = 'outbound' AND billable = true AND "createdAt" >= ${from}
+    GROUP BY 1, 2`;
+  const rates = feeRates();
+  const out = new Map<string, number>();
+  for (const r of rows) {
+    const cat = (FEE_CATEGORIES as readonly string[]).includes(r.category ?? "") ? (r.category as FeeCategory) : "marketing";
+    out.set(r.month, Math.round(((out.get(r.month) ?? 0) + r.n * rates[cat]) * 100) / 100);
+  }
+  return out;
+}
+
+/**
+ * Weiterberechnung im Cron fällig? Nur am 1.–3. (Berliner Zeit) und nur, wenn die
+ * Gebühren nicht im Preis enthalten sind (PRICE_LIST.whatsappIncluded).
+ */
+export function feeChargeDue(berlinDay: number, included: boolean = PRICE_LIST.whatsappIncluded): boolean {
+  return berlinDay <= 3 && !included;
 }

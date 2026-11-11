@@ -27,6 +27,10 @@ export default async function TeamPage() {
   });
   const leads30 = new Map(counts.map((c) => [c.assignedUserId, c._count._all]));
   const receivers = members.filter((m) => m.receivesLeads).length;
+  const billing = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { seatsIncluded: true, seatMonthly: true } });
+  const seatPrice = Number(billing?.seatMonthly ?? 0);
+  // Platz-Abrechnung nur bei Verträgen mit Logins (seit 11.11.2026); Alt-Verträge unverändert
+  const seats = billing?.seatsIncluded != null && seatPrice > 0 ? { included: billing.seatsIncluded, price: seatPrice, used: members.length } : null;
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -62,10 +66,23 @@ export default async function TeamPage() {
           </ul>
         </Card>
 
-        <InviteForm readOnly={readOnly} />
+        {seats ? (
+          <p className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-4 py-3 text-sm text-[color:var(--muted)]">
+            {seats.included} Logins sind inklusive, Sie nutzen {seats.used}.{" "}
+            {seats.used > seats.included
+              ? `${seats.used - seats.included} weitere ${seats.used - seats.included === 1 ? "Login kostet" : "Logins kosten"} je ${fmtSeat(seats.price)} im Monat.`
+              : `Jeder weitere Login kostet ${fmtSeat(seats.price)} im Monat.`}
+          </p>
+        ) : null}
+
+        <InviteForm readOnly={readOnly} costHint={seats && seats.used >= seats.included ? `Dieser Login kostet zusätzlich ${fmtSeat(seats.price)} im Monat, tagesgenau abgerechnet.` : null} />
       </div>
     </main>
   );
+}
+
+function fmtSeat(n: number): string {
+  return `${n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: n % 1 ? 2 : 0 })} netto`;
 }
 
 function daysAgo(n: number): Date {

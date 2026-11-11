@@ -2,8 +2,13 @@
 // Eine Quelle für die öffentlichen Seiten /rechtliches/* und den Anhang im
 // Angebot. Bei Änderungen LEGAL_VERSION anpassen – angenommene Angebote
 // speichern die URL, die zum Zeitpunkt der Annahme galt.
+//
+// 11.11.2026: Logins, jährliche Vorauszahlung, Bestandskunden-Modul mit
+// Kampagnen-Kontingent, WhatsApp-Gebühren im Preis enthalten.
+// PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
+// (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
-export const LEGAL_VERSION = "10.11.2026";
+export const LEGAL_VERSION = "11.11.2026";
 
 export const PROVIDER = {
   name: "Ole Kannapinn UG (haftungsbeschränkt)",
@@ -51,6 +56,10 @@ export const AGB: LegalSection[] = [
       "Der digitale Assistent arbeitet KI-gestützt, gibt sich gegenüber Interessenten als digitaler Assistent zu erkennen und führt keine Versicherungsberatung durch. Er stellt Fragen zur Bedarfsklärung und vereinbart Termine. Beratung und Vermittlung bleiben vollständig beim Kunden, der Gespräche jederzeit selbst übernehmen kann.",
       "Der Anbieter strebt eine Verfügbarkeit von 99 % im Monatsmittel an, ausgenommen angekündigte Wartungen. Für Dienste Dritter (insbesondere Meta/WhatsApp, Kalender- und KI-Anbieter) übernimmt der Anbieter keine Gewähr.",
       "Der Anbieter darf die Software weiterentwickeln, solange die vereinbarten wesentlichen Funktionen erhalten bleiben.",
+      // Prüfen: Logins / Nutzerzahl
+      "Im Paket mit Software sind die im Angebot genannte Zahl an Logins enthalten (Inhaber und Berater). Weitere Logins kann der Kunde selbst anlegen; sie werden zum im Angebot genannten Preis je Login und Monat berechnet, anteilig ab dem Tag der Einrichtung bis zum Tag der Entfernung. Ab der im Angebot genannten Zahl an Logins gelten individuelle Konditionen.",
+      // Prüfen: Bestandskunden-Modul + Fair Use
+      "Das Bestandskunden-Modul (Import und Auswertung der Bestandskunden des Kunden, Kampagnen per WhatsApp) ist ein Zusatzmodul und nur enthalten, wenn es im Angebot vereinbart oder nachträglich in Textform gebucht wurde. Es ist zum Ende des Abrechnungsmonats kündbar, sofern im Angebot nichts anderes vereinbart ist.",
     ],
   },
   {
@@ -66,8 +75,11 @@ export const AGB: LegalSection[] = [
     title: "Vergütung und Zahlung",
     items: [
       "Die Setupgebühr wird mit Vertragsschluss fällig. Die monatliche Vergütung ist ab dem im Angebot genannten Startdatum monatlich im Voraus fällig. Alle Preise verstehen sich netto zuzüglich der gesetzlichen Umsatzsteuer.",
+      // Prüfen: jährliche Vorauszahlung
+      { sub: "Jährliche Vorauszahlung", text: "Ist im Angebot die jährliche Vorauszahlung vereinbart, ist die Vergütung für 12 Monate zum Start im Voraus fällig. Sie beträgt das im Angebot genannte Vielfache der monatlichen Vergütung einschließlich vereinbarter Zusätze (Nachlass für die Vorauszahlung). Während des Zahlungsjahres hinzukommende Logins oder Module werden anteilig für die Restlaufzeit berechnet. Eine anteilige Erstattung bei vorzeitiger Beendigung erfolgt nicht, außer bei Kündigung aus wichtigem Grund durch den Kunden." },
       "Die Höhe der monatlichen Vergütung richtet sich nach dem vereinbarten monatlichen Werbebudget (Preisstaffel laut Angebot). Ändert der Kunde das Budget dauerhaft, gilt die neue Stufe ab dem folgenden Abrechnungsmonat.",
-      "WhatsApp-Gebühren von Meta werden nach tatsächlichem Verbrauch weiterberechnet.",
+      // Prüfen: WhatsApp-Gebühren inklusive, Fair Use bei Bestandskampagnen
+      "Die Gebühren von Meta für WhatsApp-Nachrichten sind in der Vergütung enthalten. Das gilt ohne Mengenbegrenzung für die Kommunikation mit Leads (Erstkontakt, Erinnerungen, Nachfassen). Für Kampagnen an Bestandskunden sind die Gebühren für die im Angebot genannte Zahl an Kampagnen-Nachrichten je Kalendermonat enthalten (Fair Use); ist das Kontingent erreicht, startet die Software weitere Kampagnen erst im Folgemonat. Ein höheres Kontingent kann gesondert vereinbart werden.",
       "Rechnungen sind innerhalb von 7 Tagen per Überweisung oder SEPA-Lastschrift zu zahlen. Gerät der Kunde mehr als 30 Tage in Zahlungsverzug, darf der Anbieter die Kampagnen nach vorheriger Ankündigung pausieren. Nach Zahlungseingang werden sie wieder gestartet.",
     ],
   },
@@ -76,6 +88,8 @@ export const AGB: LegalSection[] = [
     items: [
       "Der Kunde kann die Kampagnen jederzeit pausieren, etwa für Urlaub. Während der Pause wird statt der monatlichen Vergütung nur die im Angebot genannte Software-Gebühr berechnet, tagesgenau anteilig; ist keine Software vereinbart, fällt während der Pause keine Vergütung an.",
       "Eine Pause verlängert eine vereinbarte Mindestlaufzeit nicht.",
+      // Prüfen: Pause bei Jahreszahlung
+      "Bei jährlicher Vorauszahlung können die Kampagnen ebenfalls pausiert werden; eine Gutschrift oder Verlängerung des Zahlungsjahres erfolgt dafür nicht.",
     ],
   },
   {
@@ -83,6 +97,8 @@ export const AGB: LegalSection[] = [
     items: [
       { sub: "Ohne Vertragslaufzeit", text: "Der Vertrag läuft unbefristet und kann von beiden Seiten zum Ende des jeweiligen Abrechnungsmonats in Textform gekündigt werden." },
       { sub: "Mit 12 Monaten Laufzeit", text: "Der Vertrag hat eine Mindestlaufzeit von 12 Monaten ab Start. Danach läuft er unbefristet weiter und kann zum Ende des jeweiligen Abrechnungsmonats gekündigt werden." },
+      // Prüfen: Verlängerung bei Jahreszahlung
+      { sub: "Mit jährlicher Vorauszahlung", text: "Der Vertrag hat eine Laufzeit von 12 Monaten ab Start und verlängert sich jeweils um weitere 12 Monate, wenn er nicht mit einer Frist von einem Monat zum Ende des Zahlungsjahres in Textform gekündigt wird. Der Kunde kann vor Ablauf des Zahlungsjahres in Textform auf monatliche Zahlung umstellen; dann gilt ab dem folgenden Zahlungszeitraum die Regel „Mit 12 Monaten Laufzeit“." },
       "Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt unberührt. Die Setupgebühr wird bei Vertragsende nicht erstattet.",
     ],
   },
@@ -142,6 +158,8 @@ export const AVV: LegalSection[] = [
     title: "Art, Zweck und Umfang der Verarbeitung",
     items: [
       "Erfassen, Speichern und Organisieren von Leads; Kontaktaufnahme mit Interessenten per WhatsApp und E-Mail im Namen des Auftraggebers, auch durch einen KI-gestützten digitalen Assistenten; Terminvereinbarung und -erinnerung; Auswertungen für den Auftraggeber.",
+      // Prüfen: Bestandskunden-Modul im AVV
+      "Bei gebuchtem Bestandskunden-Modul zusätzlich: Import, Speicherung und Auswertung der vom Auftraggeber hochgeladenen Bestandskundendaten (z. B. Vertragsarten, Ablaufdaten, Geburtsdatum) und deren Ansprache per WhatsApp im Namen des Auftraggebers. Der Auftraggeber stellt sicher, dass für die Ansprache eine Rechtsgrundlage und, soweit erforderlich, eine Einwilligung vorliegt.",
       { sub: "Datenarten", text: "Kontaktdaten (Name, Telefonnummer, E-Mail-Adresse, Anschrift), Angaben aus dem Lead-Formular (z. B. Lebenssituation, Versicherungsinteresse), Kommunikationsinhalte (Chatverläufe), Termindaten, Notizen und Status zum Lead sowie Nutzungsdaten der Nutzer des Auftraggebers." },
       { sub: "Betroffene", text: "Interessenten und Kunden des Auftraggebers sowie Nutzer des Auftraggebers." },
       "Besondere Kategorien personenbezogener Daten (Art. 9 DSGVO), insbesondere Gesundheitsdaten, sind nicht Gegenstand der Verarbeitung. Der Auftraggeber fragt solche Daten in Formularen und Gesprächsleitfäden nicht ab.",

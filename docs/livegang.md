@@ -14,7 +14,7 @@ enthalten. Der Merge ist konfliktfrei.
       Livegang nur wiederholen, wenn neue Migrationen dazukommen
       (`ls prisma/migrations` mit der Liste unten vergleichen).
 - [ ] **Probelauf 3** mit dem Stand, der live geht (ca. 19./20.11., nach Code-Stopp):
-      seit Probelauf 2 sind **8 Migrationen dazugekommen** (jetzt 30, siehe
+      seit Probelauf 2 sind **9 Migrationen dazugekommen** (jetzt 31, siehe
       „Neue Migrationen seit Probelauf 2“). Ablauf wie Probelauf 2.
 
 ### Neue Migrationen seit Probelauf 2 (Stand 11.11.)
@@ -29,8 +29,9 @@ enthalten. Der Merge ist konfliktfrei.
 | `20261112110000_storno_automatisch` | Spalte `LeadSubscription.stornoAutoApprove` (Standard aus = bisherige Regel) | über den Schema-Abgleich, nur hinzufügend |
 | `20261112120000_provisionen` | Spalten `Customer.vermittlerTyp` (Standard „vertreter“) und `Customer.provisionRates` | über den Schema-Abgleich, nur hinzufügend |
 | `20261113090000_kosten_zweck` | Tabellen `RecurringCost` (laufende Kosten mit Zweck) und `KpiSettings` (Gründerzeit, Kampagnen, Update-Texte) für die Zahlen-Seite | über den Schema-Abgleich, nur hinzufügend |
+| `20261113100000_preise_plaetze_jahr_bestand` | Preise 11.11.: Spalten am `Offer` (`seats`, `seatsIncluded`, `seatMonthly`, `bestandMonthly`, `annualPrepay`, `annualFreeMonths`) und am `Customer` (`seatsIncluded`, `seatMonthly`, `seatsBilled`, `billingInterval` Standard „month“, `bestandMonthly`, `bestandGrandfathered`, `bestandRequestedAt`, `bestandMessageQuota`); setzt `bestandGrandfathered` für Kunden mit freigeschaltetem Bestand | Spalten über den Schema-Abgleich, nur hinzufügend. Das `UPDATE` (Bestandsschutz-Markierung) läuft beim Einmessen **nicht** – unkritisch: der Zugang hängt weiter an `existingCustomersEnabled`, das unverändert bleibt; die Markierung ist nur Anzeige. Alt-Kunden haben `seatsIncluded = NULL` → keine Platz-Abrechnung. |
 
-Alle drei verändern keine bestehenden Daten der Produktion. Neue Funktionen sind
+Keine davon verändert bestehende Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und
 KI-Hilfe, die brauchen keine Migration).
 - [x] **Healthcheck** am Service `kpidashboard-pg`: seit 10.11. `/login`, Timeout 300 s
@@ -77,6 +78,13 @@ KI-Hilfe, die brauchen keine Migration).
       Schaltflächen #2563EB. Webhook-Endpunkt
       `https://app.performancegrowth.de/api/stripe/webhook` mit den Ereignissen aus
       `src/lib/billing-webhook.ts` (`HANDLED_EVENTS`).
+      **Preise 11.11.:** Produkte „Weiterer Berater-Login“ (`pg_key=seat`) und
+      „Bestandskunden-Modul“ (`pg_key=bestand`) legt die App beim ersten Bedarf selbst an
+      (wie die übrigen Produkte, über `metadata.pg_key`); Preise kommen je Abo als
+      `price_data` (49 € je Login/Monat, 149 €/Monat; bei Jahreszahlung Intervall „year“
+      mit 10 × Monatspreis). Nichts von Hand anlegen. Nach dem Livegang einmal in Stripe
+      prüfen, dass beide Produkte im Live-Modus da sind (nach dem ersten Abo mit Zusatz).
+      WhatsApp-Gebühren werden nicht mehr weiterberechnet (`PRICE_LIST.whatsappIncluded`).
 
 - [ ] **Neue Adressen** (Produktion `app.performancegrowth.de`, Testumgebung
       `staging.performancegrowth.de`): DNS beim Domain-Anbieter (CNAME laut Railway),
@@ -101,7 +109,7 @@ KI-Hilfe, die brauchen keine Migration).
    `[migrate] Alte Einträge aus früherem Verlauf (bleiben unberührt): …`
    `[migrate] Datenbank ohne (eigene) Migrations-Historie – wird einmalig eingemessen.`
    `[migrate] Schema wird angeglichen (nur hinzufügende Änderungen).`
-   30 × `Migration … marked as applied.` (bis `20261113090000_kosten_zweck`), dazwischen
+   31 × `Migration … marked as applied.` (bis `20261113100000_preise_plaetze_jahr_bestand`), dazwischen
    `[migrate] 20261110120001_status_seit_trigger wird beim Einmessen ausgeführt.`,
    am Ende `No pending migrations to apply.` und `[migrate] Schema aktuell.`
    (Die roten Zeilen „Loaded Prisma config …“ sind nur Hinweise, keine Fehler.)

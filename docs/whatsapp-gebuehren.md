@@ -1,4 +1,15 @@
-# WhatsApp-Gebühren weiterberechnen
+# WhatsApp-Gebühren
+
+> **Stand 11.11.2026: Die Gebühren sind im Preis enthalten und werden nicht mehr weiterberechnet**
+> (`PRICE_LIST.whatsappIncluded = true` in `src/lib/offer-pricing.ts`). Die monatliche
+> Weiterberechnung im Cron läuft nur, wenn der Schalter auf `false` steht; der Code bleibt.
+> Erfasst werden die Gebühren weiter: je Kunde (Karte im Admin-Reiter „WhatsApp-Assistent“) und
+> gesamt als direkte Software-Kosten auf der Zahlen-Seite (`monthlyFeeCosts`) – nie als Umsatz.
+> Bestandskunden-Kampagnen: bis 500 Nachrichten/Monat inklusive (Fair Use), darüber startet keine
+> neue Kampagne; Admin erhöht das Kontingent je Kunde unter „Abrechnung“.
+>
+> Der folgende Text beschreibt die (abgeschaltete) Weiterberechnung.
+
 
 Meta berechnet WhatsApp je Nachricht. Wir berechnen genau das an den Kunden weiter
 (AGB: „nach tatsächlichem Verbrauch“), ohne Aufschlag.

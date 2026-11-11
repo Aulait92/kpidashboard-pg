@@ -167,7 +167,7 @@ function PaymentBox({
         {returned === "abgebrochen" ? "Die Zahlung wurde nicht abgeschlossen." : "Angebot angenommen. Es fehlt nur noch die Zahlung."}
       </div>
       <p className="mb-4 mt-1 text-sm text-[color:var(--muted)]">
-        Richten Sie jetzt SEPA-Lastschrift oder Karte ein. Fällig ist jetzt nur das Setup; die Monatsgebühr wird ab dem Startdatum automatisch eingezogen. Die Zahlung läuft sicher über Stripe.
+        Richten Sie jetzt SEPA-Lastschrift oder Karte ein. Fällig ist jetzt nur das Setup; die laufende Vergütung (monatlich bzw. bei Jahreszahlung jährlich) wird ab dem Startdatum automatisch eingezogen. Die Zahlung läuft sicher über Stripe.
       </p>
       <PayButton token={token} />
     </div>

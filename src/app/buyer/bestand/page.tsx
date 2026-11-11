@@ -7,6 +7,9 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { OCCASIONS, opportunities, type Occasion } from "@/lib/bestand/campaigns";
 import { toggleCampaignAction } from "./actions";
+import { bestandQuota, QUOTA_REACHED } from "@/lib/bestand/quota";
+import { PRICE_LIST, eur } from "@/lib/offer-pricing";
+import { ModuleRequestButton } from "@/components/bestand/module-request";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Bestand | performancegrowth" };
@@ -18,13 +21,17 @@ const STATUS: Record<string, { label: string; tone: "success" | "warning" | "neu
   draft: { label: "Entwurf", tone: "neutral" },
 };
 
-export default async function BestandPage({ searchParams }: { searchParams: Promise<{ q?: string; gestartet?: string }> }) {
+export default async function BestandPage({ searchParams }: { searchParams: Promise<{ q?: string; gestartet?: string; kontingent?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
-  const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { existingCustomersEnabled: true } });
-  if (!c?.existingCustomersEnabled || ctx.teamRole !== "owner") redirect("/buyer");
-  const { q = "", gestartet } = await searchParams;
+  if (ctx.teamRole !== "owner") redirect("/buyer");
+  const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { existingCustomersEnabled: true, bestandRequestedAt: true } });
+  if (!c) redirect("/buyer");
+  // Ohne gebuchtes Modul: freundlicher Hinweis statt Sperre ohne Erklärung
+  if (!c.existingCustomersEnabled) return <LockedBestand requestedAt={c.bestandRequestedAt?.toISOString() ?? null} readOnly={ctx.preview} />;
+  const { q = "", gestartet, kontingent } = await searchParams;
   const customerId = ctx.customerId;
+  const quota = await bestandQuota(customerId);
 
   const [total, withPhone, optOut, campaigns] = await Promise.all([
     prisma.existingCustomer.count({ where: { customerId } }),
@@ -72,6 +79,16 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
           </ButtonLink>
         }
       />
+      {kontingent || quota.remaining <= 0 ? (
+        <div className="mb-5 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-quota-reached>
+          {QUOTA_REACHED} Diesen Monat sind {quota.used.toLocaleString("de-DE")} von {quota.limit.toLocaleString("de-DE")} Kampagnen-Nachrichten verschickt.
+          Laufende Kampagnen machen im nächsten Monat weiter.
+        </div>
+      ) : (
+        <p className="mb-5 text-sm text-[color:var(--muted)]" data-quota>
+          Kontingent diesen Monat: {quota.used.toLocaleString("de-DE")} von {quota.limit.toLocaleString("de-DE")} Kampagnen-Nachrichten (WhatsApp-Gebühren inklusive).
+        </p>
+      )}
       {gestartet ? (
         <div className="mb-5 rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
           Kampagne gestartet. Nachrichten gehen Mo–Sa zwischen 9 und 19 Uhr schrittweise raus. Antworten landen als Lead in der Pipeline.
@@ -170,6 +187,31 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
           </p>
         </div>
       )}
+    </main>
+  );
+}
+
+function LockedBestand({ requestedAt, readOnly }: { requestedAt: string | null; readOnly: boolean }) {
+  return (
+    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8" data-bestand-locked>
+      <PageHeader title="Bestand" subtitle="Ihre Bestandskunden gezielt ansprechen" />
+      <Card>
+        <CardHeader title="Bestandskunden-Modul" icon={Users} />
+        <div className="space-y-4 px-5 pb-5 pt-4 text-[15px]">
+          <p>
+            Laden Sie Ihre Kundenliste hoch, und die App zeigt Ihnen, wo Geschäft liegt: Lücken (z. B. KFZ ohne Hausrat), Jahresgespräche,
+            Geburtstage und auslaufende Verträge. Mit einem Klick schreiben Sie die passenden Kunden per WhatsApp an, Antworten landen als Lead
+            in Ihrer Pipeline.
+          </p>
+          <ul className="list-disc space-y-1 pl-5 text-sm text-[color:var(--muted)]">
+            <li>{eur(PRICE_LIST.bestandModuleMonthly)} netto im Monat, monatlich kündbar</li>
+            <li>WhatsApp-Gebühren für bis zu {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat inklusive</li>
+            <li>Gesundheitsdaten werden nie übernommen</li>
+          </ul>
+          <p className="text-sm text-[color:var(--muted)]">Dieses Modul ist für Ihr Konto noch nicht gebucht. Fragen Sie es hier an, wir melden uns.</p>
+          <ModuleRequestButton requestedAt={requestedAt} readOnly={readOnly} />
+        </div>
+      </Card>
     </main>
   );
 }

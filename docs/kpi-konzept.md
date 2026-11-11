@@ -13,7 +13,9 @@ Eine Zeile je Monat × Kunde × Strom, alle Kennzahlen rechnen nur daraus.
 | Betreuung | Stripe bzw. Retainer am Kunden | wiederkehrend (vertraglich) |
 | Pay-per-Lead | bezahlte LeadOrder minus Gutschriften (Storno) | wiederkehrend (nutzungsbasiert), seit Juni 2026 |
 | Einrichtung | Angebote (setupFee) | einmalig – **nicht im MRR** |
-| WhatsApp-Gebühren | Weiterberechnung | durchlaufend – **nicht als Umsatz** |
+| WhatsApp-Gebühren | im Preis enthalten (seit 11.11.2026) | **kein Umsatz**, direkte Software-Kosten (aus den verschickten Nachrichten) |
+| Weitere Logins, Bestandskunden-Modul | Abo-Positionen | Software (wiederkehrend) |
+| Jährliche Vorauszahlung | Jahresrechnung | MRR = Jahresbetrag ÷ 12 (Monatspreis × 10/12), keine Spitze im Zahlungsmonat |
 
 ## Kopfzeile
 Laufrate (MRR × 12) · MRR (+ vertraglicher Anteil) · Wachstum zum Vormonat ·
@@ -93,7 +95,7 @@ Kampagnen der eigenen Kundengewinnung). Migration `20261113090000_kosten_zweck`.
   - Ende: gekündigtes Stripe-Abo → letzte Änderung des Angebots; archivierter
     Kunde ohne Abo → Monat des letzten Leads.
   - Einrichtung = `setupFee` angenommener Angebote im Monat der Zahlung
-    (sonst Annahme), nie im MRR. WhatsApp-Gebühren sind kein Umsatz.
+    (sonst Annahme), nie im MRR. WhatsApp-Gebühren sind kein Umsatz (im Preis enthalten, als Kosten erfasst).
   - Laufender Monat: Pay-per-Lead und Meta-Kosten hochgerechnet, Retainer
     voll. Brücke, Kündigung, Kohorten, Bindung, Marge und CAC nur mit
     abgeschlossenen Monaten.

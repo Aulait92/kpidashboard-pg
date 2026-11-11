@@ -4,7 +4,8 @@ import { runReminders } from "@/lib/whatsapp/reminders";
 import { pruneUsage } from "@/lib/usage";
 import { pruneAudit } from "@/lib/audit";
 import { pruneTransient } from "@/lib/erasure";
-import { berlinMonth, chargeWhatsAppFees } from "@/lib/whatsapp/fees";
+import { berlinMonth, chargeWhatsAppFees, feeChargeDue } from "@/lib/whatsapp/fees";
+import { reconcileSeatBilling } from "@/lib/billing";
 import { renewOrders } from "@/lib/ppl/orders";
 import { redistributeParked } from "@/lib/ppl/engine";
 import { runCampaigns } from "@/lib/bestand/campaigns";
@@ -61,13 +62,20 @@ async function handle(req: Request): Promise<Response> {
           usage: await pruneUsage().catch(() => null),
           audit: await pruneAudit(now).catch(() => null),
           transient: await pruneTransient(now).catch(() => null),
+          // Logins im Abo nachziehen (z. B. nach Startpreis-Phase oder Abo-Start)
+          seats: await reconcileSeatBilling().catch((e: unknown) => {
+            reportError(e, "cron-seats");
+            return null;
+          }),
         }
       : undefined;
   // WhatsApp-Gebühren des Vormonats: am 1.–3. um 03 Uhr UTC (idempotent,
   // Wiederholungen holen fehlgeschlagene Stripe-Übertragungen nach).
   const berlinDay = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", day: "numeric" }).format(now));
   const fees =
-    pruned && berlinDay <= 3
+    // Seit 11.11.2026 sind WhatsApp-Gebühren im Preis enthalten (PRICE_LIST.whatsappIncluded):
+    // keine Weiterberechnung mehr; erfasst werden sie weiter (Zahlen-Seite: direkte Kosten).
+    pruned && feeChargeDue(berlinDay)
       ? await chargeWhatsAppFees(berlinMonth(now, -1)).catch((e: unknown) => {
           reportError(e, "cron-whatsapp-fees");
           return { error: e instanceof Error ? e.message : String(e) };

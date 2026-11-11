@@ -226,6 +226,25 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       later: TOMORROW,
     });
   }
+  // Bestandskunden-Modul vom Kunden angefragt (Konto oder Bereich „Bestand“)
+  const moduleRequests = await prisma.customer.findMany({
+    where: { archived: false, existingCustomersEnabled: false, bestandRequestedAt: { not: null } },
+    select: { id: true, name: true, bestandRequestedAt: true },
+    orderBy: { bestandRequestedAt: "asc" },
+  });
+  for (const c of moduleRequests) {
+    items.push({
+      key: `modul:${c.id}`,
+      area: "Kunden",
+      tone: "warn",
+      icon: "star",
+      title: `${name(c.name)} möchte das Bestandskunden-Modul`,
+      detail: `Angefragt ${agoText(c.bestandRequestedAt!, now)} · kurz anrufen, dann unter „Abrechnung“ buchen`,
+      action: { label: "Zur Abrechnung", href: `/admin/kunden/${c.id}/abrechnung` },
+      since: c.bestandRequestedAt,
+      later: TOMORROW,
+    });
+  }
   const progress = await onboardingProgressFor(onboardings.map((o) => o.customerId));
   for (const ob of onboardings) {
     const p = progress.get(ob.customerId);

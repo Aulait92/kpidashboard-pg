@@ -11,7 +11,8 @@ export default async function ImportPage() {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { existingCustomersEnabled: true } });
-  if (!c?.existingCustomersEnabled || ctx.teamRole !== "owner") redirect("/buyer");
+  if (ctx.teamRole !== "owner") redirect("/buyer");
+  if (!c?.existingCustomersEnabled) redirect("/buyer/bestand");
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <Link href="/buyer/bestand" className="text-sm text-[color:var(--brand)] hover:underline">

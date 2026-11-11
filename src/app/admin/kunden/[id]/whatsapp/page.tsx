@@ -2,10 +2,10 @@ import WhatsAppSettingsPage from "@/app/admin/whatsapp/settings/page";
 import { WhatsAppFeesCard } from "@/components/whatsapp-fees-card";
 import { Card, CardHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
-import { toggleBestandModuleAction } from "./module-actions";
+import Link from "next/link";
 
 // Reiter „WhatsApp-Assistent“: die WhatsApp-Einstellungen nur für diesen Kunden
-// und die weiterberechneten Meta-Gebühren.
+// und die Meta-Gebühren (im Preis enthalten, intern erfasst).
 export default async function KundenWhatsApp({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ wa?: string }> }) {
   const { id } = await params;
   const { wa } = await searchParams;
@@ -22,11 +22,12 @@ export default async function KundenWhatsApp({ params, searchParams }: { params:
 
 async function BestandModuleCard({ customerId }: { customerId: string }) {
   const [c, count, campaigns] = await Promise.all([
-    prisma.customer.findUnique({ where: { id: customerId }, select: { existingCustomersEnabled: true } }),
+    prisma.customer.findUnique({ where: { id: customerId }, select: { existingCustomersEnabled: true, bestandMonthly: true, bestandGrandfathered: true } }),
     prisma.existingCustomer.count({ where: { customerId } }),
     prisma.customerCampaign.count({ where: { customerId } }),
   ]);
   const on = !!c?.existingCustomersEnabled;
+  const status = !on ? "Nicht gebucht" : c?.bestandMonthly != null ? "Gebucht" : c?.bestandGrandfathered ? "Frei (Bestandsschutz)" : "Freigeschaltet";
   return (
     <Card>
       <CardHeader title="Bestandskunden-Kampagnen" />
@@ -36,16 +37,12 @@ async function BestandModuleCard({ customerId }: { customerId: string }) {
           „Bestandskunden: …“ oben einreichen.
         </p>
         <p>
-          {on ? "Freigeschaltet" : "Aus"} · {count.toLocaleString("de-DE")} Bestandskunden · {campaigns} Kampagnen
+          {status} · {count.toLocaleString("de-DE")} Bestandskunden · {campaigns} Kampagnen
         </p>
-        <form action={toggleBestandModuleAction}>
-          <input type="hidden" name="customerId" value={customerId} />
-          <button className={`h-9 rounded-[var(--radius-sm)] px-3 text-sm font-semibold ${on ? "border border-[color:var(--border)] bg-white" : "bg-[color:var(--brand)] text-white"}`}>
-            {on ? "Ausschalten" : "Freischalten"}
-          </button>
-        </form>
+        <Link href={`/admin/kunden/${customerId}/abrechnung`} className="text-sm font-medium text-[color:var(--brand)] hover:underline">
+          Buchen, freischalten und Kontingent unter „Abrechnung“ →
+        </Link>
       </div>
     </Card>
   );
 }
-

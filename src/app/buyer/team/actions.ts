@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
 import { memberName } from "@/lib/team";
 import { audit } from "@/lib/audit";
+import { syncSeatBilling } from "@/lib/billing";
 
 // Team-Verwaltung im Kundenbereich: nur der Inhaber (owner), nie in der
 // Admin-Vorschau. Berater (advisor) sehen nur die ihnen zugeteilten Leads.
@@ -42,7 +43,7 @@ export async function inviteMemberAction(_prev: TeamFormState, fd: FormData): Pr
     const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
     if (existing) return { error: "Diese E-Mail-Adresse hat schon einen Zugang. Bitte eine andere verwenden." };
     const count = await prisma.user.count({ where: { customerId: ctx.customerId, role: "BUYER" } });
-    if (count >= 10) return { error: "Maximal 10 Zugänge je Agentur. Bitte melden Sie sich bei uns." };
+    if (count >= 10) return { error: "Ab 10 Zugängen gibt es ein individuelles Angebot. Bitte melden Sie sich bei uns." };
 
     const [customer, owner] = await Promise.all([
       prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true } }),
@@ -61,6 +62,8 @@ export async function inviteMemberAction(_prev: TeamFormState, fd: FormData): Pr
       },
     });
     await audit("team.invite", { entity: "User", customerId: ctx.customerId, details: { email, name } });
+    // Weitere Logins über die inklusiven hinaus: Menge im Abo erhöhen (tagesgenau)
+    await syncSeatBilling(ctx.customerId).catch((err) => reportError(err, "team-seats"));
     const token = await issuePasswordResetToken(email, INVITE_TTL_MS);
     const url = token ? buildResetUrl(token.rawToken) : null;
     const agency = (customer?.name ?? "Ihre Agentur").replace(/^Allianz\s+/i, "");
@@ -135,6 +138,7 @@ export async function removeMemberAction(fd: FormData): Promise<void> {
     prisma.user.delete({ where: { id: m.id } }),
   ]);
   await audit("team.remove", { entity: "User", entityId: m.id, customerId: ctx.customerId, details: { email: m.email } });
+  await syncSeatBilling(ctx.customerId).catch((err) => reportError(err, "team-seats"));
   revalidatePath("/buyer/team");
 }
 

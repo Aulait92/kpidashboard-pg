@@ -57,6 +57,9 @@ export function OfferForm({
   const [specialTerms, setSpecialTerms] = useState("");
   const [startDate, setStartDate] = useState(defaultStartDate());
   const [validDays, setValidDays] = useState("14");
+  const [seats, setSeats] = useState(String(PRICE_LIST.seatsIncluded));
+  const [annual, setAnnual] = useState(false);
+  const [bestand, setBestand] = useState(false);
 
   const parsedProducts = products.map((p) => ({ name: p.name, dailyBudget: num(p.daily) ?? 0 }));
   // Berechnung ist billig – direkt pro Render statt useMemo.
@@ -66,7 +69,12 @@ export function OfferForm({
     products: parsedProducts,
     setupOverride: num(setupOverride),
     monthlyOverride: num(monthlyOverride),
+    seats: num(seats),
+    annual: annual && term === "12m",
+    bestandModule: bestand && pkg === "software",
   });
+  const softwarePkg = pkg === "software";
+  const annualPossible = term === "12m" && num(introFee) == null;
 
   function submit() {
     setError(null);
@@ -88,6 +96,9 @@ export function OfferForm({
         specialTerms,
         startDate: startDate || null,
         validDays: num(validDays) ?? 14,
+        seats: softwarePkg ? num(seats) : null,
+        annual: annual && annualPossible,
+        bestandModule: bestand && softwarePkg,
       });
       if (!res.ok) {
         setError(res.error);
@@ -218,6 +229,42 @@ export function OfferForm({
             </Field>
           </div>
         </Card>
+
+        <Card>
+          <CardHeader title="Logins, Zahlweise und Module" />
+          <div className="space-y-4 p-5">
+            {softwarePkg ? (
+              <Field l={`Logins gesamt (Inhaber + Berater) · ${PRICE_LIST.seatsIncluded} inklusive, jeder weitere ${eur(PRICE_LIST.seatMonthly)} / Monat`}>
+                <input className={input} inputMode="numeric" name="seats" value={seats} onChange={(e) => setSeats(e.target.value)} />
+              </Field>
+            ) : (
+              <p className="text-sm text-[color:var(--muted)]">Logins: im Paket „Nur Betreuung“ ohne Platz-Abrechnung.</p>
+            )}
+            {price.seatsIndividual ? (
+              <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                Ab {PRICE_LIST.seatIndividualFrom} Logins individuell: bitte oben „Monatlich abweichend“ eintragen (alle Logins inklusive).
+              </p>
+            ) : null}
+            <label className={`flex items-start gap-3 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${annualPossible ? "border-[color:var(--border)] bg-white" : "border-[color:var(--border)] bg-[color:var(--surface-sunken)] text-[color:var(--muted)]"}`}>
+              <input type="checkbox" name="annual" className="mt-0.5 h-4 w-4" disabled={!annualPossible} checked={annual && annualPossible} onChange={(e) => setAnnual(e.target.checked)} />
+              <span>
+                <span className="block font-semibold">Jährlich im Voraus zahlen: {PRICE_LIST.annualFreeMonths} Monate geschenkt</span>
+                <span className="block text-xs text-[color:var(--muted)]">
+                  {annualPossible ? `Jahresbetrag = ${12 - PRICE_LIST.annualFreeMonths} × Monatspreis inkl. Zusätze, fällig zum Start.` : "Nur mit 12 Monaten Laufzeit und ohne Startpreis."}
+                </span>
+              </span>
+            </label>
+            <label className={`flex items-start gap-3 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${softwarePkg ? "border-[color:var(--border)] bg-white" : "border-[color:var(--border)] bg-[color:var(--surface-sunken)] text-[color:var(--muted)]"}`}>
+              <input type="checkbox" name="bestand" className="mt-0.5 h-4 w-4" disabled={!softwarePkg} checked={bestand && softwarePkg} onChange={(e) => setBestand(e.target.checked)} />
+              <span>
+                <span className="block font-semibold">Bestandskunden-Modul · {eur(PRICE_LIST.bestandModuleMonthly)} / Monat</span>
+                <span className="block text-xs text-[color:var(--muted)]">
+                  Bestand importieren und per WhatsApp ansprechen, inkl. WhatsApp-Gebühren bis {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat.
+                </span>
+              </span>
+            </label>
+          </div>
+        </Card>
       </div>
 
       <div className="lg:sticky lg:top-6 lg:self-start">
@@ -230,10 +277,28 @@ export function OfferForm({
               <Sum k={`Monat 1–${num(introMonths) ?? "?"}`} v={eur(num(introFee)!)} sub={`${eur(withVat(num(introFee)!))} brutto`} />
             ) : null}
             <Sum
-              k={startDate ? `Monatlich ab ${startDate.split("-").reverse().join(".")}` : "Monatlich"}
+              k={startDate ? `Paket monatlich ab ${startDate.split("-").reverse().join(".")}` : "Paket monatlich"}
               v={price.monthlyFee == null ? "individuell" : eur(price.monthlyFee)}
               sub={price.monthlyFee == null ? "bitte oben eintragen" : `${eur(withVat(price.monthlyFee))} brutto · Pause: ${eur(price.softwareFee)}`}
             />
+            {price.extraSeats > 0 ? (
+              <Sum
+                k={`${price.extraSeats} weitere ${price.extraSeats === 1 ? "Login" : "Logins"}`}
+                v={price.seatsIndividual ? "inklusive" : eur(price.seatsFee)}
+                sub={price.seatsIndividual ? "im individuellen Preis" : `${price.extraSeats} × ${eur(PRICE_LIST.seatMonthly)} / Monat`}
+              />
+            ) : null}
+            {price.bestandFee > 0 ? <Sum k="Bestandskunden-Modul" v={eur(price.bestandFee)} sub="pro Monat" /> : null}
+            {price.monthlyTotal != null && (price.extraSeats > 0 || price.bestandFee > 0) ? (
+              <Sum k="Monatlich gesamt" v={eur(price.monthlyTotal)} sub={`${eur(withVat(price.monthlyTotal))} brutto`} />
+            ) : null}
+            {price.annualTotal != null ? (
+              <Sum
+                k="Jährlich im Voraus"
+                v={eur(price.annualTotal)}
+                sub={`${PRICE_LIST.annualFreeMonths} Monate geschenkt (spart ${eur(price.annualSavings)}) · ${eur(withVat(price.annualTotal))} brutto`}
+              />
+            ) : null}
             {error ? <p className="rounded-md bg-rose-50 px-3 py-2 text-rose-700">{error}</p> : null}
             <Button type="button" variant="primary" size="md" className="w-full" disabled={pending} onClick={submit}>
               {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}

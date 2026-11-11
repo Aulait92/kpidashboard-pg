@@ -184,8 +184,8 @@ export function ZahlenView({ data }: { data: ZahlenData }) {
   const hasRevenue = data.totals.some((t) => t.recurring > 0);
 
   const tiles = [
-    { lbl: "Jahresumsatz (Laufrate)", val: kEur(h.arr), delta: h.growth != null ? `${growthUp ? "+" : ""}${pct(h.growth * 100)}` : null, up: growthUp, note: "MRR × 12", def: "Wiederkehrender Monatsumsatz × 12. Ohne Einrichtungs- und WhatsApp-Gebühren." },
-    { lbl: "MRR", val: kEur(h.mrr), delta: h.mrrPrev > 0 ? `${h.mrr >= h.mrrPrev ? "+" : "−"}${kEur(Math.abs(h.mrr - h.mrrPrev))}` : null, up: h.mrr >= h.mrrPrev, note: `davon vertraglich ${kEur(h.contractual)}`, def: "Wiederkehrender Monatsumsatz des laufenden Monats (hochgerechnet): Software, Betreuung und Pay-per-Lead nach Stornos." },
+    { lbl: "Jahresumsatz (Laufrate)", val: kEur(h.arr), delta: h.growth != null ? `${growthUp ? "+" : ""}${pct(h.growth * 100)}` : null, up: growthUp, note: "MRR × 12", def: "Wiederkehrender Monatsumsatz × 12. Ohne Einrichtungsgebühren." },
+    { lbl: "MRR", val: kEur(h.mrr), delta: h.mrrPrev > 0 ? `${h.mrr >= h.mrrPrev ? "+" : "−"}${kEur(Math.abs(h.mrr - h.mrrPrev))}` : null, up: h.mrr >= h.mrrPrev, note: `davon vertraglich ${kEur(h.contractual)}`, def: "Wiederkehrender Monatsumsatz des laufenden Monats (hochgerechnet): Software (inkl. weiterer Logins und Module), Betreuung und Pay-per-Lead nach Stornos. Jahresabo: Jahresbetrag ÷ 12." },
     { lbl: "Wachstum zum Vormonat", val: h.growth != null ? `${growthUp ? "+" : ""}${pct(h.growth * 100)}` : "–", delta: h.avgGrowth != null ? `Ø ${h.avgGrowth >= 0 ? "+" : ""}${pct(h.avgGrowth * 100, 0)} pro Monat` : null, up: (h.avgGrowth ?? 0) >= 0, note: `${shortMonth(data.current)}* vs. ${shortMonth(data.lastComplete)}`, def: "Veränderung des MRR gegenüber dem letzten abgeschlossenen Monat; Ø = durchschnittliches Monatswachstum seit dem ersten Umsatzmonat." },
     { lbl: "Umsatzbindung", early: h.early, val: h.retention ? `${h.retention.pct} %` : "–", delta: null, up: true, note: h.retention ? `${h.retention.customers} Kunden, nach ${h.retention.lag} Monaten` : "noch zu wenig Historie", def: "Umsatz im letzten abgeschlossenen Monat von Kunden, die vor 3 (ab einem Jahr Historie: 12) Monaten aktiv waren, geteilt durch deren Umsatz damals. Mit Ausbau, abzüglich Kündigungen." },
     { lbl: "Bruttomarge", val: h.grossMargin != null ? pct(h.grossMargin * 100, 0) : "–", delta: h.grossMargin != null && h.grossMarginPrev != null ? `${h.grossMargin >= h.grossMarginPrev ? "+" : "−"}${pct(Math.abs(h.grossMargin - h.grossMarginPrev) * 100, 0).replace(" %", " Pkt.")}` : null, up: (h.grossMargin ?? 0) >= (h.grossMarginPrev ?? 0), note: `${longMonth(data.lastComplete)}, nach direkten Kosten`, def: "(Wiederkehrender Umsatz − direkte Kosten) ÷ Umsatz. Direkt: Meta-Werbung für Kunden-Leads und laufende Kosten mit Zweck „Pay-per-Lead“ oder „Software“." },
@@ -295,7 +295,7 @@ function Wachstum({ data }: { data: ZahlenData }) {
   return (
     <div className="space-y-3.5">
       <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        <Card title="Umsatz je Monat nach Strom" cap="Wiederkehrender Umsatz. Einrichtungsgebühren getrennt, WhatsApp-Gebühren nicht enthalten (durchlaufend).">
+        <Card title="Umsatz je Monat nach Strom" cap="Wiederkehrender Umsatz. Einrichtungsgebühren getrennt. WhatsApp-Gebühren sind im Preis enthalten und stehen als Kosten, nicht als Umsatz.">
           <Legend />
           <RevenueChart data={data} />
           <button type="button" className="text-[12.5px] text-[color:var(--brand)]" onClick={() => setTable((v) => !v)}>
@@ -625,7 +625,7 @@ function Wirtschaft({ data, investor }: { data: ZahlenData; investor: boolean })
               { name: "Gesamt", v: m.total, color: "var(--foreground)" },
             ] as const
           ).map((r) => <BarRow key={r.name} label={r.name} value={(r.v ?? 0) * 100} max={100} color={r.color} right={r.v != null ? pct(r.v * 100, 0) : "–"} />)}
-          <p className="mt-2 text-[12.5px] text-[color:var(--muted)]">Ohne Personalkosten. Betreuung: Kunden zahlen ihr Werbebudget selbst. Software: KI, Server, WhatsApp (als laufende Kosten „Software“ pflegen).</p>
+          <p className="mt-2 text-[12.5px] text-[color:var(--muted)]">Ohne Personalkosten. Betreuung: Kunden zahlen ihr Werbebudget selbst. Software: KI, Server (als laufende Kosten „Software“ pflegen); WhatsApp-Gebühren von Meta werden automatisch aus den verschickten Nachrichten erfasst.</p>
         </Card>
       </div>
       <Card title={`Kosten im ${longMonth(data.lastComplete)}`} cap="Zugeordnet nach Zweck: direkte Kosten (Marge), Kundengewinnung (CAC) oder sonstiger Betrieb.">
@@ -843,7 +843,7 @@ function UpdateSheet({ data, onClose }: { data: ZahlenData; onClose: () => void 
           </div>
         </form>
         <p className="mt-5 border-t border-[#e3e9f3] pt-2.5 text-xs text-[#8b97ab]">
-          Definitionen: MRR = wiederkehrender Monatsumsatz (Software, Betreuung, Pay-per-Lead nach Stornos), ohne Einrichtungs- und WhatsApp-Gebühren; laufender Monat hochgerechnet. Laufrate = MRR × 12. Bruttomarge = (Umsatz − direkte Kosten) ÷ Umsatz, ohne Personalkosten.
+          Definitionen: MRR = wiederkehrender Monatsumsatz (Software inkl. weiterer Logins und Bestandskunden-Modul, Betreuung, Pay-per-Lead nach Stornos), ohne Einrichtungsgebühren; laufender Monat hochgerechnet. Jahresabo (jährlich im Voraus): MRR = Jahresbetrag ÷ 12. WhatsApp-Gebühren sind im Preis enthalten: kein Umsatz, sondern direkte Software-Kosten. Laufrate = MRR × 12. Bruttomarge = (Umsatz − direkte Kosten) ÷ Umsatz, ohne Personalkosten.
         </p>
       </div>
     </div>

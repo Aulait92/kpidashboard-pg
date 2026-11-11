@@ -56,7 +56,8 @@ export default async function BuyerLayout({
         advisor && ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true, email: true } }) : null,
         prisma.user.count({ where: { customerId: ctx.customerId, role: "BUYER" } }),
         advisor ? 0 : prisma.leadSubscription.count({ where: { customerId: ctx.customerId, active: true, delivery: "app" } }),
-        advisor ? false : prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { existingCustomersEnabled: true } }).then((c) => !!c?.existingCustomersEnabled),
+        // Bestand: für Inhaber immer sichtbar – ohne gebuchtes Modul mit Hinweis zum Anfragen
+        !advisor,
       ])
     : [false, 0, 0, null, 0, 0, false];
   // Anzeigename ohne Gesellschafts-Präfix („Allianz Anid Schwarzkopf").

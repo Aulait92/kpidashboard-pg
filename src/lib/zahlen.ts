@@ -4,6 +4,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { effectiveRates, estimatedProvision } from "@/lib/provision";
+import { annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
+import { monthlyFeeCosts } from "@/lib/whatsapp/fees";
 import {
   activeCustomers,
   addMonths,
@@ -83,13 +85,17 @@ export async function loadLedger(now = new Date()) {
         archived: true,
         retainerMonthly: true,
         retainerStart: true,
+        seatsBilled: true,
+        seatMonthly: true,
+        bestandMonthly: true,
+        billingInterval: true,
         onboarding: { select: { offerId: true } },
         pauses: { where: { kind: "customer", status: { in: ["active", "ended"] } }, select: { startsAt: true, endsAt: true, resumedAt: true } },
       },
     }),
     prisma.offer.findMany({
       where: { status: "accepted" },
-      select: { id: true, setupFee: true, softwareFee: true, introMonthlyFee: true, introMonths: true, subscriptionStatus: true, updatedAt: true, paidAt: true, acceptedAt: true },
+      select: { id: true, setupFee: true, softwareFee: true, introMonthlyFee: true, introMonths: true, subscriptionStatus: true, updatedAt: true, paidAt: true, acceptedAt: true, annualFreeMonths: true },
     }),
   ]);
   const offerById = new Map(acceptedOffers.map((o) => [o.id, o]));
@@ -115,7 +121,11 @@ export async function loadLedger(now = new Date()) {
       end,
       softwareShare: offer ? n(offer.softwareFee) : 0,
       intro: offer?.introMonthlyFee != null && offer.introMonths ? { amount: n(offer.introMonthlyFee), months: offer.introMonths } : null,
-      pauses: c.pauses.map((p) => ({ from: p.startsAt, to: p.resumedAt ?? p.endsAt })),
+      // Weitere Logins und Bestandskunden-Modul zählen als Software (Stand heute, nicht historisch)
+      extras: c.seatsBilled * n(c.seatMonthly) + n(c.bestandMonthly),
+      // Jährlich im Voraus: MRR = Jahresbetrag / 12 (keine Spitze im Zahlungsmonat); Pausen ohne Gutschrift
+      annualFactor: c.billingInterval === "year" ? annualMultiplier(offer?.annualFreeMonths ?? PRICE_LIST.annualFreeMonths) / 12 : 1,
+      pauses: c.billingInterval === "year" ? [] : c.pauses.map((p) => ({ from: p.startsAt, to: p.resumedAt ?? p.endsAt })),
     };
   });
 
@@ -135,7 +145,7 @@ export async function loadLedger(now = new Date()) {
 
 // ─── Kosten je Monat und Zweck ───────────────────────────────────────────
 
-export type MonthCosts = { month: string; ppl: number; software: number; akquise: number; betrieb: number; metaPpl: number; metaAkquise: number };
+export type MonthCosts = { month: string; ppl: number; software: number; akquise: number; betrieb: number; metaPpl: number; metaAkquise: number; whatsapp: number };
 
 export async function loadCosts(months: string[], settings: KpiSettingsData, now = new Date()) {
   const from = monthStart(months[0]);
@@ -153,12 +163,16 @@ export async function loadCosts(months: string[], settings: KpiSettingsData, now
       GROUP BY 1`,
     prisma.recurringCost.findMany({ orderBy: [{ purpose: "asc" }, { name: "asc" }] }),
   ]);
+  // WhatsApp-Gebühren sind im Preis enthalten → direkte Software-Kosten (nie Umsatz).
+  // Ohne Inklusiv-Preis werden sie weiterberechnet und sind durchlaufend (weder Umsatz noch Kosten).
+  const waFees = PRICE_LIST.whatsappIncluded ? await monthlyFeeCosts(new Date(from.getTime() - DAY)) : new Map<string, number>();
   const current = monthKey(now);
   const costs: MonthCosts[] = months.map((m) => {
     const l = lead.find((x) => x.month === m);
     const o = other.find((x) => x.month === m);
-    const c: MonthCosts = { month: m, ppl: 0, software: 0, akquise: 0, betrieb: n(o?.amount), metaPpl: n(l?.direct), metaAkquise: n(l?.acq) };
+    const c: MonthCosts = { month: m, ppl: 0, software: 0, akquise: 0, betrieb: n(o?.amount), metaPpl: n(l?.direct), metaAkquise: n(l?.acq), whatsapp: waFees.get(m) ?? 0 };
     c.ppl += c.metaPpl;
+    c.software += c.whatsapp;
     c.akquise += c.metaAkquise;
     for (const rc of recurring) {
       const share = recurringShare(rc.startsAt, rc.endsAt, m);
@@ -175,7 +189,7 @@ export async function loadCosts(months: string[], settings: KpiSettingsData, now
       c.metaPpl *= f;
       c.metaAkquise *= f;
     }
-    for (const k of ["ppl", "software", "akquise", "betrieb", "metaPpl", "metaAkquise"] as const) c[k] = r2(c[k]);
+    for (const k of ["ppl", "software", "akquise", "betrieb", "metaPpl", "metaAkquise", "whatsapp"] as const) c[k] = r2(c[k]);
     return c;
   });
   return { costs, recurring };
@@ -342,6 +356,7 @@ export async function loadZahlen(now = new Date()): Promise<ZahlenData> {
   if (cLast) {
     const share = (a: number) => (tLast && tLast.recurring > 0 ? a / tLast.recurring : null);
     if (cLast.metaPpl) costTable.push({ name: "Meta-Werbung für Kunden-Leads", purpose: "ppl", amount: cLast.metaPpl, share: share(cLast.metaPpl) });
+    if (cLast.whatsapp) costTable.push({ name: "WhatsApp-Gebühren (Meta, im Preis enthalten)", purpose: "software", amount: cLast.whatsapp, share: share(cLast.whatsapp) });
     if (cLast.metaAkquise) costTable.push({ name: `Meta-Werbung eigene Kundengewinnung (${settings.acquisitionCampaigns.join(", ")})`, purpose: "akquise", amount: cLast.metaAkquise, share: share(cLast.metaAkquise) });
     for (const rc of recurring) {
       const s = recurringShare(rc.startsAt, rc.endsAt, lastComplete);

@@ -18,7 +18,7 @@ Seiten aus der Liste „Seiten“ unten.
 | /buyer/team | Team | Berater einladen, Leads verteilen (nur Inhaber) |
 | /buyer/kalender | Mein Kalender | Eigenen Kalender verbinden (bei Team-Zugängen) |
 | /buyer/einrichtung | Einrichtung | Fragebogen, Meta-Zugriff, Kalender, App aufs Handy, Hilfetermin |
-| /buyer/bestand | Bestand | Bestandskunden und Kampagnen (wenn freigeschaltet) |
+| /buyer/bestand | Bestand | Bestandskunden und Kampagnen (Zusatzmodul; ohne Modul mit Knopf „Modul anfragen“) |
 | /buyer/bestand/import | Kundenliste hochladen | Excel/CSV importieren |
 | /buyer/bestellen | Bestellen | Leads für eine Woche bestellen (bei Pay-per-Lead) |
 
@@ -169,20 +169,36 @@ Seiten aus der Liste „Seiten“ unten.
 ## Team (nur Inhaber)
 
 - „Team“ im Profilmenü: Berater mit Name und E-Mail einladen (Link per Mail), höchstens 10 Zugänge.
+- Im Paket mit Software sind 3 Logins inklusive (Inhaber + 2 Berater). Jeder weitere Login kostet 49 € netto im
+  Monat, anteilig ab dem Tag der Einladung bis zum Entfernen. Der Einladen-Dialog zeigt den Aufpreis vorher an.
+  Ab 10 Logins gibt es ein individuelles Angebot (bitte bei uns melden).
 - Neue Leads werden reihum verteilt. Schalter „Bekommt neue Leads“ pro Person (z. B. im Urlaub aus).
 - Namen ändern, Einladung erneut senden, aus dem Team entfernen (offene Leads gehen an den Inhaber zurück).
 - Einzelnen Lead weitergeben: Lead öffnen → „Zuständig“.
 
 ## Konto & Rechnungen (nur Inhaber)
 
-- Vertrag (Paket, Monatsbetrag, Laufzeit, Start), Rechnungen mit Status und „Jetzt bezahlen“ bei offenen Rechnungen.
+- Vertrag (Paket, Monatsbetrag, weitere Logins, Bestandskunden-Modul, Monatlich gesamt, Zahlweise, Laufzeit, Start),
+  Rechnungen mit Status und „Jetzt bezahlen“ bei offenen Rechnungen.
+- Zahlweise: monatlich oder jährlich im Voraus (2 Monate geschenkt: Jahresbetrag = 10 × Monatspreis inkl.
+  Zusätze, nur mit 12 Monaten Laufzeit). Umstellen: bitte bei uns melden.
 - Zahlungsart, Rechnungsadresse, USt-IdNr.: über das Zahlungsportal (Stripe) auf dieser Seite.
-- WhatsApp-Gebühren von Meta für den Monat.
+- WhatsApp-Gebühren von Meta sind im Preis enthalten, es kommt nichts dazu. Für Leads (Erstkontakt, Erinnerungen,
+  Nachfassen) ohne Begrenzung; für Bestandskunden-Kampagnen bis 500 Nachrichten im Monat.
+- Bestandskunden-Modul nicht gebucht: Karte „Bestandskunden-Modul“ mit Knopf „Modul anfragen“, wir melden uns.
 - Schalter „Neue Leads per E-Mail“.
 - **Pause/Urlaub** selbst eintragen (Start, Ende, Grund): Anzeigen stoppen, reduzierte Gebühr; Pause jederzeit beenden.
+  Bei jährlicher Vorauszahlung pausieren nur die Anzeigen, eine Gutschrift gibt es nicht.
 - Kündigung oder Vertragsfragen: bitte direkt bei uns melden.
 
-## Bestand (Bestandskunden, wenn freigeschaltet)
+## Bestand (Bestandskunden, Zusatzmodul)
+
+- Zusatzmodul für 149 € netto im Monat, inklusive WhatsApp-Gebühren für bis zu 500 Kampagnen-Nachrichten im Monat.
+  Ohne Modul zeigt „Bestand“ eine Beschreibung und den Knopf „Modul anfragen“ (Anfrage geht an uns).
+  Wer Bestand schon vor dem 11.11.2026 genutzt hat, behält den Zugang ohne Aufpreis.
+- Kontingent: Auf der Seite steht „Kontingent diesen Monat: X von 500“. Ist es erreicht, startet keine neue
+  Kampagne („Monatskontingent erreicht – mehr auf Anfrage“), laufende Kampagnen machen im nächsten Monat weiter.
+  Mehr Nachrichten: bitte bei uns melden, wir erhöhen das Kontingent.
 
 - Kundenliste aus dem Versicherer-System als Excel oder CSV hochladen, Spalten zuordnen, Einwilligung bestätigen.
   Gesundheitsdaten werden nie übernommen.

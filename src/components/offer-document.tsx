@@ -4,6 +4,7 @@ import { AGB, PROVIDER } from "@/lib/legal-texts";
 import {
   computeOfferPrice,
   eur,
+  offerAddOns,
   PRICE_LIST,
   vatOf,
   withVat,
@@ -40,13 +41,26 @@ export type OfferDoc = {
   acceptedName: string | null;
   termsUrl: string | null;
   dpaUrl: string | null;
+  /** Zusätze (null = Alt-Angebot ohne Platz-Abrechnung). */
+  seats: number | null;
+  seatsIncluded: number | null;
+  seatMonthly: number | null;
+  bestandMonthly: number | null;
+  annualPrepay: boolean;
+  annualFreeMonths: number | null;
 };
 
-type OfferRow = Omit<OfferDoc, "setupFee" | "monthlyFee" | "softwareFee" | "introMonthlyFee"> & {
+type OfferRow = Omit<OfferDoc, "setupFee" | "monthlyFee" | "softwareFee" | "introMonthlyFee" | "seatMonthly" | "bestandMonthly" | "seats" | "seatsIncluded" | "annualPrepay" | "annualFreeMonths"> & {
   setupFee: unknown;
   monthlyFee: unknown;
   softwareFee: unknown;
   introMonthlyFee: unknown;
+  seats?: number | null;
+  seatsIncluded?: number | null;
+  seatMonthly?: unknown;
+  bestandMonthly?: unknown;
+  annualPrepay?: boolean;
+  annualFreeMonths?: number | null;
 };
 
 /** Datenbank-Zeile (Decimal) → Darstellungsobjekt (number). */
@@ -57,6 +71,12 @@ export function toOfferDoc(o: OfferRow): OfferDoc {
     monthlyFee: Number(o.monthlyFee),
     softwareFee: Number(o.softwareFee),
     introMonthlyFee: o.introMonthlyFee == null ? null : Number(o.introMonthlyFee),
+    seats: o.seats ?? null,
+    seatsIncluded: o.seatsIncluded ?? null,
+    seatMonthly: o.seatMonthly == null ? null : Number(o.seatMonthly),
+    bestandMonthly: o.bestandMonthly == null ? null : Number(o.bestandMonthly),
+    annualPrepay: !!o.annualPrepay,
+    annualFreeMonths: o.annualFreeMonths ?? null,
   };
 }
 
@@ -73,6 +93,8 @@ const dateTime = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: TZ, day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(d);
 const eur2 = (n: number) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", minimumFractionDigits: 2 }).format(n);
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
 
 const SHORT_NAME = PROVIDER.name.replace(" (haftungsbeschränkt)", "");
 export const PROVIDER_FOOTER = `${SHORT_NAME} · ${PROVIDER.street} · ${PROVIDER.city}`;
@@ -94,8 +116,12 @@ export function OfferDocument({
   const extra = Math.max(0, products.length - 1);
   const setupIsList = Math.abs(list.setupFee - offer.setupFee) < 0.01;
   const monthlyIsList = list.monthlyFee != null && Math.abs(list.monthlyFee - offer.monthlyFee) < 0.01;
+  const add = offerAddOns(offer);
+  const hasExtras = add.seatsFee > 0 || add.bestandFee > 0;
   const hasIntro = offer.introMonthlyFee != null && !!offer.introMonths;
-  const firstMonth = hasIntro ? offer.introMonthlyFee! : offer.monthlyFee;
+  // Erster Monatsbetrag inkl. Zusätze (Startpreis gilt nur für das Paket)
+  const firstMonth = round2((hasIntro ? offer.introMonthlyFee! : offer.monthlyFee) + add.seatsFee + add.bestandFee);
+  const firstCharge = add.annualTotal ?? firstMonth;
   const productNames = products.map((p) => p.name).join(" & ");
 
   return (
@@ -135,16 +161,25 @@ export function OfferDocument({
 
           <div className="mt-12 grid grid-cols-1 gap-6 border-y border-white/15 py-6 sm:grid-cols-3 print:grid-cols-3">
             <Stat k="Setup" v={eur(offer.setupFee)} sub="einmalig, netto zzgl. 19 % USt." />
-            <Stat
-              k="Monatlich"
-              v={eur(firstMonth)}
-              sub={
-                hasIntro
-                  ? `Startpreis Monat 1–${offer.introMonths}, danach ${eur(offer.monthlyFee)}`
-                  : `${serviceOnly ? "Betreuung" : "Betreuung + Software"}, netto${offer.startDate ? ` · ab ${date(offer.startDate)}` : ""}`
-              }
-              accent
-            />
+            {add.annualTotal != null ? (
+              <Stat
+                k="Jährlich im Voraus"
+                v={eur(add.annualTotal)}
+                sub={`${add.freeMonths} Monate geschenkt · entspricht ${eur(round2(add.annualTotal / 12))} im Monat, netto`}
+                accent
+              />
+            ) : (
+              <Stat
+                k="Monatlich"
+                v={eur(firstMonth)}
+                sub={
+                  hasIntro
+                    ? `Startpreis Monat 1–${offer.introMonths}, danach ${eur(add.monthlyTotal)}`
+                    : `${serviceOnly ? "Betreuung" : "Betreuung + Software"}${hasExtras ? " inkl. Zusätze" : ""}, netto${offer.startDate ? ` · ab ${date(offer.startDate)}` : ""}`
+                }
+                accent
+              />
+            )}
             <Stat k="Laufzeit" v={term === "12m" ? "12 Monate" : "Monatlich kündbar"} sub="Pause jederzeit möglich" />
           </div>
 
@@ -214,6 +249,18 @@ export function OfferDocument({
               ))}
             </ul>
           </Tr>
+          {add.hasSeats ? (
+            <Tr k="Logins">
+              {add.seats} {add.seats === 1 ? "Login" : "Logins"} für Inhaber und Berater, davon {add.seatsIncluded} inklusive. Weitere Logins
+              lassen sich jederzeit im Kundenbereich unter „Team“ hinzufügen.
+            </Tr>
+          ) : null}
+          {add.bestandFee > 0 ? (
+            <Tr k="Bestandskunden-Modul">
+              Bestand importieren und gezielt per WhatsApp ansprechen (Lücken, Jahresgespräch, Geburtstag, Ablauf). Inklusive
+              WhatsApp-Gebühren für bis zu {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten je Kalendermonat.
+            </Tr>
+          ) : null}
           <Tr k="Werbebudget">
             ≈ {eur(list.monthlyBudget)} im Monat. Das Werbebudget zahlt der Kunde direkt an Meta; es ist in den Preisen
             nicht enthalten.
@@ -244,13 +291,48 @@ export function OfferDocument({
                 : "Sonderkondition"}
             </Note>
           </Tr>
+          {add.extraSeats > 0 ? (
+            <Tr k={`Weitere Logins (${add.extraSeats})`}>
+              {add.seatMonthly > 0 ? (
+                <>
+                  <b className="text-[#111827]">{eur2(add.seatsFee)}</b> netto pro Monat ({add.extraSeats} × {eur(add.seatMonthly)})
+                  <Note>Jeder weitere Login {eur(add.seatMonthly)} netto pro Monat, tagesgenau ab Einrichtung bzw. bis zur Entfernung.</Note>
+                </>
+              ) : (
+                "Im individuellen Monatspreis enthalten."
+              )}
+            </Tr>
+          ) : null}
+          {add.bestandFee > 0 ? (
+            <Tr k="Bestandskunden-Modul">
+              <b className="text-[#111827]">{eur2(add.bestandFee)}</b> netto pro Monat
+              <Note>Inklusive WhatsApp-Gebühren bis {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat; mehr auf Anfrage.</Note>
+            </Tr>
+          ) : null}
+          {hasExtras ? (
+            <Tr k="Monatlich gesamt">
+              <b className="text-[#111827]">{eur2(add.monthlyTotal)}</b> netto pro Monat zzgl. 19 % USt.
+            </Tr>
+          ) : null}
+          {add.annualTotal != null ? (
+            <Tr k="Zahlweise">
+              Jährlich im Voraus: <b className="text-[#111827]">{eur2(add.annualTotal)}</b> netto pro Jahr zzgl. 19 % USt.
+              <Note>
+                {add.freeMonths} Monate geschenkt ({12 - add.freeMonths} statt 12 Monatsbeträge), Ersparnis {eur2(add.annualSavings)}.
+              </Note>
+            </Tr>
+          ) : null}
           <Tr k="Vertragslaufzeit">
-            {term === "12m"
-              ? "12 Monate ab Start, danach monatlich kündbar zum Ende des Abrechnungsmonats."
-              : "Keine Mindestlaufzeit, kündbar zum Ende des jeweiligen Abrechnungsmonats."}
+            {add.annual
+              ? "12 Monate ab Start, jährlich im Voraus bezahlt. Danach verlängert sich der Vertrag um jeweils weitere 12 Monate, wenn er nicht mit einer Frist von einem Monat zum Ende der Laufzeit gekündigt wird."
+              : term === "12m"
+                ? "12 Monate ab Start, danach monatlich kündbar zum Ende des Abrechnungsmonats."
+                : "Keine Mindestlaufzeit, kündbar zum Ende des jeweiligen Abrechnungsmonats."}
           </Tr>
           <Tr k="Pause / Urlaub">
-            {offer.softwareFee > 0 ? (
+            {add.annual ? (
+              "Jederzeit möglich; die Anzeigen werden gestoppt. Bei jährlicher Vorauszahlung erfolgt für die Pausenzeit keine Gutschrift."
+            ) : offer.softwareFee > 0 ? (
               <>
                 Jederzeit möglich. Die Anzeigen werden gestoppt; in dieser Zeit fällt nur die Software-Gebühr von{" "}
                 {eur(offer.softwareFee)} netto im Monat an.
@@ -260,14 +342,18 @@ export function OfferDocument({
             )}
           </Tr>
           {serviceOnly ? null : (
-            <Tr k="WhatsApp-Gebühren">Gebühren von Meta nach Verbrauch, in der Regel 10–40 € im Monat.</Tr>
+            <Tr k="WhatsApp-Gebühren">
+              {PRICE_LIST.whatsappIncluded
+                ? "Im Preis enthalten (Erstkontakt, Erinnerungen, Nachfassen ohne Begrenzung)."
+                : "Gebühren von Meta nach Verbrauch, in der Regel 10–40 € im Monat."}
+            </Tr>
           )}
           <Tr k="Bei Annahme fällig">
             <b className="text-[#111827]">{eur2(offer.setupFee)}</b> netto (Setup) zzgl. 19 % USt. {eur2(vatOf(offer.setupFee))}
             {" = "}
             <b className="text-[#111827]">{eur2(withVat(offer.setupFee))} brutto</b>
             <Note>
-              Erste Monatsgebühr ({eur2(firstMonth)} netto, {eur2(withVat(firstMonth))} brutto)
+              {add.annualTotal != null ? "Jahresbetrag" : "Erste Monatsgebühr"} ({eur2(firstCharge)} netto, {eur2(withVat(firstCharge))} brutto)
               {offer.startDate ? ` am ${date(offer.startDate)}` : " zum Start"}.
             </Note>
           </Tr>
@@ -275,8 +361,9 @@ export function OfferDocument({
 
         <H3>2.1 Zahlung</H3>
         <p className="text-[#374151]">
-          Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im
-          Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen.
+          {add.annual
+            ? "Die Setupgebühr wird mit Vertragsschluss fällig, die Vergütung ab dem Startdatum jährlich im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen. Weitere Logins, die während des Jahres dazukommen, werden anteilig berechnet."
+            : "Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen."}
         </p>
         <H3>2.2 Garantie</H3>
         <p className="text-[#374151]">

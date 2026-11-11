@@ -15,7 +15,8 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { existingCustomersEnabled: true, name: true } });
-  if (!c?.existingCustomersEnabled || ctx.teamRole !== "owner") redirect("/buyer");
+  if (ctx.teamRole !== "owner") redirect("/buyer");
+  if (!c?.existingCustomersEnabled) redirect("/buyer/bestand");
   const sp = await searchParams;
   const occasion = (sp.anlass && sp.anlass in OCCASIONS ? sp.anlass : "review") as Occasion;
   let segment: Segment = {};

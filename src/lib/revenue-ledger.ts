@@ -20,7 +20,13 @@
 //   Abo → Monat seines letzten Leads (bessere Information gibt es nicht).
 // - Einrichtung („setup“): setupFee angenommener Angebote im Monat der
 //   Zahlung (sonst Annahme) – einmalig, nie im MRR.
-// - WhatsApp-Gebühren (Weiterberechnung) sind durchlaufend und KEIN Umsatz.
+// - WhatsApp-Gebühren sind seit 11.11.2026 im Preis enthalten: KEIN Umsatz,
+//   sondern direkte Software-Kosten (zahlen.ts). Vorher: durchlaufend.
+// - Weitere Logins (seatsBilled × seatMonthly) und das Bestandskunden-Modul
+//   zählen als „software“ (Stand des Kunden heute, nicht historisch).
+// - Jährlich im Voraus (billingInterval „year“): MRR = Jahresbetrag / 12, also
+//   Monatspreis × (12 − Freimonate) / 12 – keine Spitze im Zahlungsmonat;
+//   Pausen ohne Gutschrift, daher nicht abgezogen.
 // - Laufender Monat: Pay-per-Lead hochgerechnet (bisher × Tage im Monat /
 //   vergangene Tage), Retainer voller Vertragsbetrag; Monat ist als
 //   „hochgerechnet“ markiert. MRR-Brücke, Kündigungen, Kohorten und Bindung
@@ -95,6 +101,10 @@ export type RetainerInput = {
   intro?: { amount: number; months: number } | null;
   /** Angewendete Kunden-Pausen (Tage inklusive). */
   pauses: { from: Date; to: Date | null }[];
+  /** Monatliche Zusätze (weitere Logins, Module) – zählen als Software. */
+  extras?: number;
+  /** Faktor bei jährlicher Vorauszahlung (z. B. 10/12); Standard 1. */
+  annualFactor?: number;
 };
 
 function dayStart(key: string): number {
@@ -125,8 +135,9 @@ export function retainerRows(r: RetainerInput, months: string[], currentMonth: s
       const amount = r.intro && introEnd != null && d < introEnd ? r.intro.amount : r.monthly;
       const swMonth = Math.min(r.softwareShare, amount);
       const paused = pauses.some((p) => d >= p.from && d <= p.to);
-      sw += swMonth / dim;
-      if (!paused) svc += (amount - swMonth) / dim;
+      const f = r.annualFactor ?? 1;
+      sw += ((swMonth + (r.extras ?? 0)) * f) / dim;
+      if (!paused) svc += ((amount - swMonth) * f) / dim;
     }
     if (sw > 0.005) out.push({ month: m, customerId: r.customerId, stream: "software", amount: r2(sw), recurring: true });
     if (svc > 0.005) out.push({ month: m, customerId: r.customerId, stream: "service", amount: r2(svc), recurring: true });

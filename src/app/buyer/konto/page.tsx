@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Bell, CreditCard, FileText, Package, Percent } from "lucide-react";
+import { Bell, CreditCard, FileText, Package, Percent, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { Badge, Card, CardHeader, buttonClass } from "@/components/ui";
 import { loadCustomerProvision } from "@/lib/provision-server";
@@ -11,6 +11,8 @@ import { prisma } from "@/lib/prisma";
 import { openPortalAction } from "./actions";
 import { LeadEmailToggle, PauseCard } from "./pause-card";
 import { WhatsAppFeesCard } from "@/components/whatsapp-fees-card";
+import { ModuleRequestButton } from "@/components/bestand/module-request";
+import { annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
 import { currentPause, todayBerlin } from "@/lib/pause";
 
 export const dynamic = "force-dynamic";
@@ -47,13 +49,20 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       retainerStart: true,
       stripeCustomerId: true,
       leadEmail: true,
+      seatsIncluded: true,
+      seatMonthly: true,
+      seatsBilled: true,
+      billingInterval: true,
+      bestandMonthly: true,
+      existingCustomersEnabled: true,
+      bestandRequestedAt: true,
       whatsAppAccount: { select: { id: true } },
       onboarding: { select: { offerId: true, questionnaire: true } },
     },
   });
   if (!customer) redirect("/buyer");
   const offer = customer.onboarding?.offerId
-    ? await prisma.offer.findUnique({ where: { id: customer.onboarding.offerId }, select: { term: true, softwareFee: true, number: true, token: true } })
+    ? await prisma.offer.findUnique({ where: { id: customer.onboarding.offerId }, select: { term: true, softwareFee: true, number: true, token: true, annualFreeMonths: true } })
     : null;
 
   let invoices: CustomerInvoice[] = [];
@@ -70,6 +79,18 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const startYmd = customer.retainerStart ? new Intl.DateTimeFormat("sv-SE", { timeZone: TZ }).format(customer.retainerStart) : today;
   const softwareFee = offer ? Number(offer.softwareFee) : customer.plan === "service" ? 0 : 349;
   const service = customer.plan === "service";
+  // Zusätze (weitere Logins, Bestandskunden-Modul) und Zahlweise
+  const seatMonthly = customer.seatMonthly != null ? Number(customer.seatMonthly) : null;
+  const seatsFee = seatMonthly ? customer.seatsBilled * seatMonthly : 0;
+  const bestandFee = customer.bestandMonthly != null ? Number(customer.bestandMonthly) : 0;
+  const monthlyTotal = monthly != null ? monthly + seatsFee + bestandFee : null;
+  const annual = customer.billingInterval === "year";
+  const yearly = annual && monthlyTotal != null ? monthlyTotal * annualMultiplier(offer?.annualFreeMonths ?? PRICE_LIST.annualFreeMonths) : null;
+  const pauseText = annual
+    ? "Bei jährlicher Vorauszahlung pausieren nur die Anzeigen, eine Gutschrift gibt es dafür nicht."
+    : softwareFee > 0
+      ? `In der Pause zahlen Sie nur ${eur(softwareFee)} netto im Monat.`
+      : "In der Pause zahlen Sie nichts.";
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -82,8 +103,44 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             <dd>{service ? "Leadgenerierung (Betreuung)" : "Leadgenerierung + Software"}</dd>
             {monthly != null ? (
               <>
-                <dt className="text-[color:var(--muted)]">Monatlich</dt>
+                <dt className="text-[color:var(--muted)]">{seatsFee || bestandFee ? "Paket monatlich" : "Monatlich"}</dt>
                 <dd>{eur(monthly)} netto zzgl. USt.</dd>
+              </>
+            ) : null}
+            {customer.seatsIncluded != null ? (
+              <>
+                <dt className="text-[color:var(--muted)]">Logins</dt>
+                <dd data-konto-seats>
+                  {customer.seatsIncluded} inklusive
+                  {seatMonthly && customer.seatsBilled > 0 ? `, ${customer.seatsBilled} weitere je ${eur(seatMonthly)} = ${eur(seatsFee)} im Monat` : ""}
+                  {seatMonthly === 0 ? " · weitere nach Sondervereinbarung" : ""}
+                </dd>
+              </>
+            ) : null}
+            {customer.existingCustomersEnabled ? (
+              <>
+                <dt className="text-[color:var(--muted)]">Bestandskunden</dt>
+                <dd>{bestandFee ? `Modul gebucht, ${eur(bestandFee)} im Monat` : "Modul freigeschaltet"}</dd>
+              </>
+            ) : null}
+            {monthlyTotal != null && (seatsFee || bestandFee) ? (
+              <>
+                <dt className="text-[color:var(--muted)]">Monatlich gesamt</dt>
+                <dd className="font-semibold">{eur(monthlyTotal)} netto zzgl. USt.</dd>
+              </>
+            ) : null}
+            {monthly != null ? (
+              <>
+                <dt className="text-[color:var(--muted)]">Zahlweise</dt>
+                <dd data-konto-interval>
+                  {annual && yearly != null ? `Jährlich im Voraus: ${eur(yearly)} netto (${PRICE_LIST.annualFreeMonths} Monate geschenkt)` : "Monatlich"}
+                </dd>
+              </>
+            ) : null}
+            {PRICE_LIST.whatsappIncluded && customer.whatsAppAccount ? (
+              <>
+                <dt className="text-[color:var(--muted)]">WhatsApp-Gebühren</dt>
+                <dd>Im Preis enthalten</dd>
               </>
             ) : null}
             {customer.retainerStart ? (
@@ -95,7 +152,13 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             {offer ? (
               <>
                 <dt className="text-[color:var(--muted)]">Laufzeit</dt>
-                <dd>{offer.term === "12m" ? "12 Monate, danach monatlich kündbar" : "Monatlich kündbar"}</dd>
+                <dd>
+                  {annual
+                    ? "12 Monate, verlängert sich um 12 Monate, wenn nicht 1 Monat vor Ende gekündigt"
+                    : offer.term === "12m"
+                      ? "12 Monate, danach monatlich kündbar"
+                      : "Monatlich kündbar"}
+                </dd>
                 <dt className="text-[color:var(--muted)]">Pause / Urlaub</dt>
                 <dd>Jederzeit selbst einstellbar (siehe unten)</dd>
                 <dt className="text-[color:var(--muted)]">Vertrag</dt>
@@ -113,11 +176,24 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           pause={pause ? { status: pause.status, startsAt: pause.startsAt.toISOString(), endsAt: pause.endsAt?.toISOString() ?? null, kind: pause.kind } : null}
           today={today}
           minDate={startYmd > today ? startYmd : today}
-          softwareFeeText={softwareFee > 0 ? `In der Pause zahlen Sie nur ${eur(softwareFee)} netto im Monat.` : "In der Pause zahlen Sie nichts."}
+          softwareFeeText={pauseText}
           readOnly={ctx.preview}
         />
 
-        {customer.whatsAppAccount ? <WhatsAppFeesCard customerId={ctx.customerId} /> : null}
+        {customer.whatsAppAccount && !PRICE_LIST.whatsappIncluded ? <WhatsAppFeesCard customerId={ctx.customerId} /> : null}
+
+        {!customer.existingCustomersEnabled && !service ? (
+          <Card>
+            <CardHeader title="Bestandskunden-Modul" icon={Users} />
+            <div className="space-y-3 px-5 pb-5 pt-4 text-sm" data-konto-bestand>
+              <p>
+                Kundenliste hochladen, Lücken und Anlässe erkennen, passende Kunden per WhatsApp anschreiben. {eur(PRICE_LIST.bestandModuleMonthly)} netto
+                im Monat, WhatsApp-Gebühren für bis zu {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat inklusive.
+              </p>
+              <ModuleRequestButton requestedAt={customer.bestandRequestedAt?.toISOString() ?? null} readOnly={ctx.preview} />
+            </div>
+          </Card>
+        ) : null}
 
         {customer.onboarding ? (
           <Card>

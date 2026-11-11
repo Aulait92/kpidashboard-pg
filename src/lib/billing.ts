@@ -17,6 +17,8 @@ import { prisma } from "@/lib/prisma";
 import { getAppUrl } from "@/lib/email";
 import { reportError } from "@/lib/monitoring";
 import { offerProducts } from "@/components/offer-document";
+import { annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
+import { audit } from "@/lib/audit";
 
 let client: Stripe | null = null;
 
@@ -30,7 +32,7 @@ export function stripeClient(): Stripe | null {
 
 export const billingEnabled = () => !!process.env.STRIPE_SECRET_KEY?.trim();
 
-type ProductKey = "software" | "service" | "setup" | "setup_service" | "whatsapp" | "leads";
+type ProductKey = "software" | "service" | "setup" | "setup_service" | "whatsapp" | "leads" | "seat" | "bestand";
 const productCache = new Map<ProductKey, string>();
 
 const PRODUCT_DEFAULTS: Record<ProductKey, { name: string; description: string }> = {
@@ -53,6 +55,14 @@ const PRODUCT_DEFAULTS: Record<ProductKey, { name: string; description: string }
   leads: {
     name: "Leads (Pay-per-Lead)",
     description: "Exklusive Leads je Bestellung, im Voraus berechnet.",
+  },
+  seat: {
+    name: "Weiterer Berater-Login",
+    description: "Zusätzlicher Zugang zur performancegrowth-Software je Berater (über die inklusiven Logins hinaus).",
+  },
+  bestand: {
+    name: "Bestandskunden-Modul",
+    description: "Bestandskunden importieren und per WhatsApp ansprechen, inklusive WhatsApp-Gebühren bis zum Monatskontingent.",
   },
   whatsapp: {
     name: "WhatsApp-Gebühren (Meta)",
@@ -251,9 +261,11 @@ export async function createScheduleForOffer(offerId: string, session: Stripe.Ch
   const customerId = offer.stripeCustomerId ?? (typeof session.customer === "string" ? session.customer : session.customer?.id);
   if (!customerId) throw new Error(`Angebot ${offer.number}: kein Stripe-Kunde`);
 
-  const [software, service, tax, pm] = await Promise.all([
+  const [software, service, seat, bestand, tax, pm] = await Promise.all([
     productId(stripe, "software"),
     productId(stripe, "service"),
+    productId(stripe, "seat"),
+    productId(stripe, "bestand"),
     resolveTax(stripe),
     paymentMethodOf(stripe, session),
   ]);
@@ -264,16 +276,26 @@ export async function createScheduleForOffer(offerId: string, session: Stripe.Ch
   const monthly = Number(offer.monthlyFee);
   const softwareFee = Math.min(Number(offer.softwareFee), monthly);
   const taxRates = tax.automatic ? undefined : [tax.rateId!];
-  const item = (product: string, amount: number): Stripe.SubscriptionScheduleCreateParams.Phase.Item => ({
-    quantity: 1,
-    price_data: { currency: "eur", product, unit_amount: cents(amount), recurring: { interval: "month" }, tax_behavior: "exclusive" },
+  // Jährlich im Voraus: alle Positionen mit Intervall Jahr, Betrag × (12 − Freimonate)
+  const annual = offer.annualPrepay;
+  const factor = annual ? annualMultiplier(offer.annualFreeMonths ?? PRICE_LIST.annualFreeMonths) : 1;
+  const interval = annual ? ("year" as const) : ("month" as const);
+  const item = (product: string, amount: number, quantity = 1): Stripe.SubscriptionScheduleCreateParams.Phase.Item => ({
+    quantity,
+    price_data: { currency: "eur", product, unit_amount: cents(amount * factor), recurring: { interval }, tax_behavior: "exclusive" },
     ...(taxRates ? { tax_rates: taxRates } : {}),
   });
+  const extraSeats = offer.seats != null && offer.seatsIncluded != null ? Math.max(0, offer.seats - offer.seatsIncluded) : 0;
+  const seatPrice = Number(offer.seatMonthly ?? 0);
+  const bestandPrice = Number(offer.bestandMonthly ?? 0);
   const itemsFor = (total: number) => {
     const sw = Math.min(softwareFee, total);
     const items: Stripe.SubscriptionScheduleCreateParams.Phase.Item[] = [];
     if (sw > 0) items.push(item(software, sw));
     if (total - sw > 0) items.push(item(service, total - sw));
+    // Weitere Logins als Menge einer eigenen Position (Änderungen im Team passen die Menge an)
+    if (extraSeats > 0 && seatPrice > 0) items.push(item(seat, seatPrice, extraSeats));
+    if (bestandPrice > 0) items.push(item(bestand, bestandPrice));
     return items;
   };
 
@@ -433,6 +455,10 @@ export async function pauseBilling(stripeCustomerId: string): Promise<BillingPau
   if (!stripe) return { method: "none", reason: "Stripe nicht eingerichtet" };
   const sub = await activeSubscription(stripe, stripeCustomerId);
   if (!sub) return { method: "none", reason: "Kein laufendes Abo (startet ggf. erst noch)" };
+  // Jährliche Vorauszahlung: Pause ohne Gutschrift (AGB), Abo bleibt unverändert.
+  if (sub.items.data.some((i) => i.price.recurring?.interval === "year")) {
+    return { method: "none", reason: "Jährliche Vorauszahlung: Pause ohne Gutschrift" };
+  }
   await detachSchedule(stripe, sub);
   const service = await productId(stripe, "service");
   const item = sub.items.data.find((i) => (typeof i.price.product === "string" ? i.price.product : i.price.product.id) === service);
@@ -603,4 +629,179 @@ export async function chargeNow(opts: {
     reportError(err, "ppl-charge", { invoice: finalized.id ?? "" });
     return { invoiceId: finalized.id!, status: "failed" };
   }
+}
+
+// ─── Zusätze nach Vertragsstart: Logins, Bestandskunden-Modul, Zahlweise ──
+// Alle Änderungen tagesgenau über Stripe-Prorations. Ohne Stripe oder vor
+// dem Abo-Start wird nur der Stand in der Datenbank gepflegt; der tägliche
+// Abgleich im Cron holt Stripe nach, sobald das Abo läuft.
+
+export type AddOnResult = { ok: true; changed: boolean; note?: string } | { ok: false; error: string };
+
+const productOf = (i: Stripe.SubscriptionItem) => (typeof i.price.product === "string" ? i.price.product : i.price.product.id);
+const intervalOf = (sub: Stripe.Subscription): "month" | "year" =>
+  sub.items.data.some((i) => i.price.recurring?.interval === "year") ? "year" : "month";
+
+/** Laufendes Abo für Änderungen vorbereiten (Zeitplan lösen); null = noch nicht möglich. */
+async function editableSubscription(stripe: Stripe, stripeCustomerId: string): Promise<{ sub: Stripe.Subscription } | { note: string }> {
+  const sub = await activeSubscription(stripe, stripeCustomerId);
+  if (!sub) return { note: "Abo läuft noch nicht – wird beim Start abgeglichen." };
+  try {
+    await detachSchedule(stripe, sub);
+  } catch (err) {
+    if (err instanceof IntroPhaseError) return { note: "Startpreis-Phase läuft – wird danach automatisch abgeglichen." };
+    throw err;
+  }
+  return { sub };
+}
+
+async function setItemQuantity(stripe: Stripe, sub: Stripe.Subscription, key: "seat" | "bestand", quantity: number, monthlyUnit: number) {
+  const [product, tax] = await Promise.all([productId(stripe, key), resolveTax(stripe)]);
+  const item = sub.items.data.find((i) => productOf(i) === product);
+  const interval = intervalOf(sub);
+  const factor = interval === "year" ? annualMultiplier() : 1;
+  if (item) {
+    const unit = cents(monthlyUnit * factor);
+    if (quantity === 0 && key === "bestand") {
+      await stripe.subscriptionItems.del(item.id, { proration_behavior: "create_prorations" });
+    } else if (unit !== item.price.unit_amount && quantity > 0) {
+      // Preis je Platz/Modul geändert (Admin): Position mit neuem Preis, anteilig verrechnet
+      await stripe.subscriptionItems.update(item.id, {
+        quantity,
+        proration_behavior: "create_prorations",
+        price_data: { currency: "eur", product, unit_amount: unit, recurring: { interval }, tax_behavior: "exclusive" },
+      });
+    } else if ((item.quantity ?? 0) !== quantity) {
+      await stripe.subscriptionItems.update(item.id, { quantity, proration_behavior: "create_prorations" });
+    }
+    return;
+  }
+  if (quantity <= 0) return;
+  await stripe.subscriptionItems.create({
+    subscription: sub.id,
+    quantity,
+    proration_behavior: "create_prorations",
+    price_data: { currency: "eur", product, unit_amount: cents(monthlyUnit * factor), recurring: { interval }, tax_behavior: "exclusive" },
+    ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
+  });
+}
+
+/** Weitere Logins im Abo an die tatsächliche Zahl der Logins anpassen (Inhaber + Berater). */
+export async function syncSeatBilling(customerId: string, opts: { force?: boolean } = {}): Promise<AddOnResult> {
+  try {
+    const c = await prisma.customer.findUnique({
+      where: { id: customerId },
+      select: { seatsIncluded: true, seatMonthly: true, seatsBilled: true, stripeCustomerId: true },
+    });
+    if (!c) return { ok: false, error: "Kunde nicht gefunden." };
+    const price = Number(c.seatMonthly ?? 0);
+    // Ohne Preis (individuelle Sonderkondition) wird nichts automatisch berechnet;
+    // eine vorher berechnete Menge wird dann auf 0 gesetzt.
+    if (c.seatsIncluded == null || (!(price > 0) && c.seatsBilled === 0)) return { ok: true, changed: false, note: "Keine Platz-Abrechnung vereinbart." };
+    const logins = await prisma.user.count({ where: { customerId, role: "BUYER" } });
+    const want = price > 0 ? Math.max(0, logins - c.seatsIncluded) : 0;
+    if (want === c.seatsBilled && !opts.force) return { ok: true, changed: false };
+    const stripe = stripeClient();
+    if (stripe && c.stripeCustomerId) {
+      const ed = await editableSubscription(stripe, c.stripeCustomerId);
+      if ("note" in ed) return { ok: true, changed: false, note: ed.note };
+      await setItemQuantity(stripe, ed.sub, "seat", want, price);
+    }
+    await prisma.customer.update({ where: { id: customerId }, data: { seatsBilled: want } });
+    await audit("billing.seats", { entity: "Customer", entityId: customerId, customerId, details: { from: c.seatsBilled, to: want, logins } });
+    return { ok: true, changed: true, ...(stripe && c.stripeCustomerId ? {} : { note: "Ohne Stripe – bitte von Hand abrechnen." }) };
+  } catch (err) {
+    reportError(err, "billing-seats", { customer: customerId });
+    return { ok: false, error: "Die Abrechnung der Logins konnte nicht angepasst werden." };
+  }
+}
+
+/** Bestandskunden-Modul buchen, kostenlos freischalten (Bestandsschutz) oder abbestellen. */
+export async function setBestandModule(customerId: string, mode: "book" | "free" | "cancel"): Promise<AddOnResult> {
+  try {
+    const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { stripeCustomerId: true, bestandMonthly: true } });
+    if (!c) return { ok: false, error: "Kunde nicht gefunden." };
+    const price = mode === "book" ? Number(c.bestandMonthly ?? PRICE_LIST.bestandModuleMonthly) : 0;
+    let note: string | undefined;
+    const stripe = stripeClient();
+    if (stripe && c.stripeCustomerId) {
+      const ed = await editableSubscription(stripe, c.stripeCustomerId);
+      if ("note" in ed) note = ed.note;
+      else await setItemQuantity(stripe, ed.sub, "bestand", mode === "book" ? 1 : 0, price);
+    } else if (mode === "book") {
+      note = "Ohne Stripe – bitte von Hand abrechnen.";
+    }
+    await prisma.customer.update({
+      where: { id: customerId },
+      data:
+        mode === "book"
+          ? { existingCustomersEnabled: true, bestandMonthly: price, bestandGrandfathered: false, bestandRequestedAt: null }
+          : mode === "free"
+            ? { existingCustomersEnabled: true, bestandMonthly: null, bestandGrandfathered: true, bestandRequestedAt: null }
+            : { existingCustomersEnabled: false, bestandMonthly: null, bestandGrandfathered: false },
+    });
+    await audit("billing.bestand", { entity: "Customer", entityId: customerId, customerId, details: { mode, price } });
+    return { ok: true, changed: true, ...(note ? { note } : {}) };
+  } catch (err) {
+    reportError(err, "billing-bestand", { customer: customerId });
+    return { ok: false, error: "Das Modul konnte nicht umgestellt werden." };
+  }
+}
+
+/** Zahlweise umstellen (monatlich ↔ jährlich im Voraus). Alle Positionen werden neu bepreist. */
+export async function changeBillingInterval(customerId: string, interval: "month" | "year"): Promise<AddOnResult> {
+  try {
+    const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { stripeCustomerId: true, billingInterval: true } });
+    if (!c) return { ok: false, error: "Kunde nicht gefunden." };
+    if (c.billingInterval === interval) return { ok: true, changed: false };
+    let note: string | undefined;
+    const stripe = stripeClient();
+    if (stripe && c.stripeCustomerId) {
+      const ed = await editableSubscription(stripe, c.stripeCustomerId);
+      if ("note" in ed) return { ok: false, error: ed.note };
+      const sub = ed.sub;
+      const tax = await resolveTax(stripe);
+      const from = intervalOf(sub) === "year" ? annualMultiplier() : 1;
+      const to = interval === "year" ? annualMultiplier() : 1;
+      await stripe.subscriptions.update(sub.id, {
+        proration_behavior: "create_prorations",
+        billing_cycle_anchor: { type: "now" },
+        items: [
+          ...sub.items.data.map((i) => ({ id: i.id, deleted: true as const })),
+          ...sub.items.data.map((i) => ({
+            quantity: i.quantity ?? 1,
+            price_data: {
+              currency: "eur",
+              product: productOf(i),
+              unit_amount: Math.round(((i.price.unit_amount ?? 0) / from) * to),
+              recurring: { interval },
+              tax_behavior: "exclusive" as const,
+            },
+            ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
+          })),
+        ],
+      });
+    } else {
+      note = "Ohne Stripe – bitte von Hand abrechnen.";
+    }
+    await prisma.customer.update({ where: { id: customerId }, data: { billingInterval: interval } });
+    await audit("billing.interval", { entity: "Customer", entityId: customerId, customerId, details: { from: c.billingInterval, to: interval } });
+    return { ok: true, changed: true, ...(note ? { note } : {}) };
+  } catch (err) {
+    reportError(err, "billing-interval", { customer: customerId });
+    return { ok: false, error: "Die Zahlweise konnte nicht umgestellt werden." };
+  }
+}
+
+/** Täglicher Abgleich: Logins aller Kunden mit Platz-Abrechnung (holt verschobene Änderungen nach). */
+export async function reconcileSeatBilling(): Promise<{ changed: number; errors: number }> {
+  const customers = await prisma.customer.findMany({ where: { seatsIncluded: { not: null }, archived: false }, select: { id: true } });
+  let changed = 0;
+  let errors = 0;
+  for (const c of customers) {
+    const r = await syncSeatBilling(c.id);
+    if (!r.ok) errors++;
+    else if (r.changed) changed++;
+  }
+  return { changed, errors };
 }
