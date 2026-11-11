@@ -22,9 +22,10 @@ const ALL = [...CORE_PURPOSES, ...CAMPAIGN_PURPOSES];
 
 describe("Vorlagen-Plan", () => {
   it("Kampagnen-Vorlagen nur mit Bestandskunden-Modul", () => {
-    expect(purposesFor({ bestand: false })).toHaveLength(7);
+    expect(purposesFor({ bestand: false })).toHaveLength(8);
+    expect(purposesFor({ bestand: false })).toContain("reschedule");
     expect(purposesFor({ bestand: false })).not.toContain("campaign_review");
-    expect(purposesFor({ bestand: true })).toHaveLength(11);
+    expect(purposesFor({ bestand: true })).toHaveLength(12);
   });
 
   it("Name: pg_<zweck>_v1, nur Kleinbuchstaben/Ziffern/Unterstrich", () => {
@@ -36,6 +37,7 @@ describe("Vorlagen-Plan", () => {
   it("Kategorie: Termine UTILITY, sonst MARKETING", () => {
     expect(categoryFor("booking_confirmation")).toBe("UTILITY");
     expect(categoryFor("reminder")).toBe("UTILITY");
+    expect(categoryFor("reschedule")).toBe("UTILITY");
     expect(categoryFor("outreach")).toBe("MARKETING");
     expect(categoryFor("campaign_birthday")).toBe("MARKETING");
   });

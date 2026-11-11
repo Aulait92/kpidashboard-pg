@@ -57,7 +57,8 @@ Für jeden Kunden mit AVV (Annahme des Angebots, `Offer.dpaUrl` speichert die ge
   Eintrage-Fenster, nicht die Team-Liste, nicht der Admin (dort nur „abwesend bis …“) und nie
   die Leads (Assistent nennt keinen Grund). Betroffene: Inhaber und Berater des Kunden
   (Beschäftigtendaten des Kunden, wir verarbeiten im Auftrag). Löschung: mit dem Login
-  (Kaskade) bzw. bei „Vertragsende: Daten löschen“; keine Lead-Namen darin gespeichert; das Änderungsprotokoll hält den Eintrag 1 Jahr.
+  (Kaskade) bzw. bei „Vertragsende: Daten löschen“, spätestens 1 Jahr nach Ende der Abwesenheit (automatisch, täglich);
+  keine Lead-Namen darin gespeichert; das Änderungsprotokoll hält den Eintrag 1 Jahr.
 - **Datenarten und Betroffene:** wie AVV § „Art, Zweck und Umfang“. Keine Daten nach Art. 9
   (die Abwesenheits-Kategorie „Krank“ ohne Details ist bewusst so knapp gehalten; siehe oben).
 - **Unterauftragsverarbeiter:** AVV Anlage 2 (`SUBPROCESSORS`).
@@ -103,7 +104,7 @@ gilt nur für neue Dienste, eine Streichung ist unkritisch, wird aber trotzdem m
 |---|---|---|
 | Nutzungsmessung (`UsageEvent`) | 180 Tage | automatisch, Cron 03:00 UTC (`pruneUsage`) |
 | Änderungsprotokoll (`AuditLog`) | 1 Jahr | automatisch (`pruneAudit`) |
-| Abwesenheiten (`UserAbsence`) | mit dem Login bzw. bei Vertragsende | automatisch mit dem Login (Kaskade) und bei „Vertragsende: Daten löschen“; **Vorschlag**: abgelaufene Einträge nach 1 Jahr löschen (noch nicht automatisch) |
+| Abwesenheiten (`UserAbsence`) | 1 Jahr nach Ende der Abwesenheit, spätestens mit dem Login bzw. bei Vertragsende | automatisch täglich (`pruneTransient`), mit dem Login (Kaskade) und bei „Vertragsende: Daten löschen“ |
 | Login-Fehlversuche | 30 Tage | automatisch (`pruneAudit`) |
 | Nicht zugeordnete Leads (Rohdaten aus Meta) | 30 Tage nach Zuordnung, sonst 90 Tage | automatisch (`pruneTransient`) |
 | Passwort-Links | 7 Tage nach Ablauf | automatisch (`pruneTransient`) |

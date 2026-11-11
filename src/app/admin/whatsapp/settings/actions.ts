@@ -22,6 +22,7 @@ const PURPOSES = new Set([
   "outreach",
   "booking_confirmation",
   "reminder",
+  "reschedule",
   "followup",
   "followup_offer",
   "followup_noshow",

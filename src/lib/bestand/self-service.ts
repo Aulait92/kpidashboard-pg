@@ -10,6 +10,7 @@ import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 import { scheduleBestandCancel, selfServiceBillingBlocker, setBestandModule } from "@/lib/billing";
 import type { AuditActor } from "@/lib/audit";
+import { bestandTerms } from "@/lib/bestand/terms";
 
 export type SelfBookCustomer = {
   plan: string | null;
@@ -45,13 +46,14 @@ const fmtDate = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europ
 export async function selfBookBestand(customerId: string, actor: AuditActor & { email?: string | null }): Promise<{ ok: true } | { ok: false; error: string; fallback?: boolean }> {
   const check = await canSelfBookBestand(customerId);
   if (!check.ok) return { ok: false, error: check.reason, fallback: true };
-  const before = await prisma.customer.findUnique({ where: { id: customerId }, select: { name: true, bestandCancelAt: true } });
+  const before = await prisma.customer.findUnique({ where: { id: customerId }, select: { name: true, bestandCancelAt: true, billingInterval: true } });
   if (!before) return { ok: false, error: "Konto nicht gefunden." };
   const withdraw = !!before.bestandCancelAt && before.bestandCancelAt > new Date();
   // Kündigung zurückgenommen: laufender Zeitraum ist bezahlt → Position ohne anteilige Berechnung
   const res = await setBestandModule(customerId, "book", { requireStripe: true, proration: withdraw ? "none" : "create_prorations", actor });
   if (!res.ok) return { ok: false, error: res.error, fallback: true };
   const price = PRICE_LIST.bestandModuleMonthly;
+  const terms = bestandTerms({ annual: before.billingInterval === "year", monthlyNet: price, freeMonths: PRICE_LIST.annualFreeMonths });
   await notify({
     customerId,
     name: before.name,
@@ -62,7 +64,7 @@ export async function selfBookBestand(customerId: string, actor: AuditActor & { 
     customerParagraphs: withdraw
       ? ["Ihre Kündigung des Bestandskunden-Moduls ist zurückgenommen. Das Modul läuft wie bisher weiter."]
       : [
-          `vielen Dank – das Bestandskunden-Modul ist ab sofort für Sie freigeschaltet (${eur(price)} netto im Monat, anteilig ab heute, danach monatlich mit Ihrer Rechnung, monatlich kündbar).`,
+          `vielen Dank – das Bestandskunden-Modul ist ab sofort für Sie freigeschaltet (${eur(price)} netto im Monat). ${terms.charge}. ${terms.cancel}.`,
           `Laden Sie jetzt Ihre Kundenliste hoch: Die App zeigt Ihnen Lücken, Jahresgespräche, Geburtstage und auslaufende Verträge. WhatsApp-Gebühren für bis zu ${PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat sind inklusive.`,
         ],
   });

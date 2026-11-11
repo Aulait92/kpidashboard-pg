@@ -9,6 +9,7 @@
 //   outreach:             {{1}} Vorname
 //   booking_confirmation: {{1}} Vorname, {{2}} Datum/Uhrzeit, {{3}} Art, {{4}} Link/Hinweis
 //   reminder:             {{1}} Vorname, {{2}} Datum/Uhrzeit, {{3}} Art, {{4}} Link/Hinweis
+//   reschedule:           {{1}} Vorname, {{2}} neue Zeit, {{3}} Art, {{4}} Link/Hinweis
 
 import { decryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
@@ -18,6 +19,7 @@ export type NoticePurpose =
   | "outreach"
   | "booking_confirmation"
   | "reminder"
+  | "reschedule"
   | "followup"
   | "followup_offer"
   | "followup_noshow"
@@ -31,6 +33,7 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   outreach: "Erstanschreiben",
   booking_confirmation: "Buchungsbestätigung",
   reminder: "Termin-Erinnerung",
+  reschedule: "Termin verschoben",
   followup: "Nachfassen allgemein (Chat > 24 h still)",
   followup_offer: "Nachfassen nach Angebot",
   followup_noshow: "Nachfassen nach verpasstem Termin",
@@ -45,6 +48,7 @@ export const PURPOSE_PARAMS: Record<NoticePurpose, string[]> = {
   outreach: ["Vorname"],
   booking_confirmation: ["Vorname", "Datum/Uhrzeit", "Art", "Link/Hinweis"],
   reminder: ["Vorname", "Datum/Uhrzeit", "Art", "Link/Hinweis"],
+  reschedule: ["Vorname", "Datum/Uhrzeit", "Art", "Link/Hinweis"],
   followup: ["Vorname"],
   followup_offer: ["Vorname", "Thema (z. B. Hausrat, Haftpflicht)"],
   followup_noshow: ["Vorname"],
@@ -63,6 +67,8 @@ export const SUGGESTED_TEMPLATE_TEXT: Record<NoticePurpose, string> = {
     "Hallo {{1}}, vielen Dank für deine Buchung bei [Berater]. Dein Termin ist bestätigt: {{2}} ({{3}}). {{4}} Wir freuen uns auf das Gespräch!",
   reminder:
     "Hallo {{1}}, hier ist eine kurze Erinnerung an deinen Termin mit [Berater]: {{2}} ({{3}}). {{4}} Bis dann!",
+  reschedule:
+    "Hallo {{1}}, dein Termin mit [Berater] musste leider verschoben werden. Die neue Zeit ist {{2}} ({{3}}). {{4}} Vielen Dank für dein Verständnis!",
   followup:
     "Hallo {{1}}, hier ist nochmal der digitale Assistent von [Berater]. Passt es dir diese Woche noch für ein kurzes Gespräch? Antworte einfach hier, dann schlage ich dir Zeiten vor.",
   followup_offer:

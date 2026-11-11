@@ -5,7 +5,7 @@
 import { sendLeadEmail } from "@/lib/calendar/lead-email";
 import { prisma } from "@/lib/prisma";
 import { appUrl } from "@/lib/whatsapp/event-text";
-import { firstNameOf, sendWhatsAppNotice } from "@/lib/whatsapp/templates";
+import { firstNameOf, NoTemplateError, sendWhatsAppNotice } from "@/lib/whatsapp/templates";
 
 const LEAD_MS = 24 * 60 * 60 * 1000;
 const TZ = "Europe/Berlin";
@@ -91,16 +91,16 @@ export async function sendRescheduleNotice(opts: {
     `Hallo ${params[0]}, wir mussten deinen Termin leider verschieben. Neue Zeit: ${params[1]} (${params[2]}).` +
     (opts.manageUrl ? `\n\nPasst dir die Zeit nicht? Hier wählst du ganz einfach eine andere: ${opts.manageUrl}` : "") +
     "\n\nDanke für dein Verständnis! 🙂";
-  await sendWhatsAppNotice({
-    customerId: opts.customerId,
-    to: opts.to,
-    // Außerhalb des 24h-Fensters: freigegebene Bestätigungs-Vorlage mit neuer Zeit.
-    purpose: "booking_confirmation",
-    params,
-    text,
-    leadId: opts.leadId ?? null,
-    contactName: opts.name,
-  });
+  const send = (purpose: "reschedule" | "booking_confirmation") =>
+    sendWhatsAppNotice({ customerId: opts.customerId, to: opts.to, purpose, params, text, leadId: opts.leadId ?? null, contactName: opts.name });
+  // Außerhalb des 24h-Fensters: Vorlage „Termin verschoben“. Solange sie bei Meta
+  // noch nicht freigegeben ist, die Bestätigungs-Vorlage mit der neuen Zeit.
+  try {
+    await send("reschedule");
+  } catch (err) {
+    if (!(err instanceof NoTemplateError)) throw err;
+    await send("booking_confirmation");
+  }
 }
 
 export type ReminderResult ={ candidates: number; sent: number; errors: string[] };

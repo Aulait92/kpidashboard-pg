@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { ERASED_NAME, eraseCustomerData, eraseLead } from "@/lib/erasure";
-import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
+import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
 
 const actor = { id: "admin", email: "admin@test.local", role: "ADMIN" };
 
@@ -77,5 +77,33 @@ describe("Löschfristen für Hilfsdaten", () => {
     expect(left.map((l) => l.id)).toEqual([fresh.id]);
     expect([old.id, done.id]).not.toContain(left[0].id);
     await prisma.unassignedLead.deleteMany({ where: { formId: tag } });
+  });
+
+  it("löscht Abwesenheiten 1 Jahr nach ihrem Ende, behält jüngere", async () => {
+    const { pruneTransient } = await import("@/lib/erasure");
+    const day = 24 * 60 * 60 * 1000;
+    const c = await makeCustomer();
+    const u = await makeBuyer(c.id, "owner");
+    const now = Date.now();
+    const mk = (startDays: number, endDays: number, endedDays?: number) =>
+      prisma.userAbsence.create({
+        data: {
+          userId: u.id,
+          customerId: c.id,
+          kind: "krank",
+          startsAt: new Date(now - startDays * day),
+          endsAt: new Date(now - endDays * day),
+          endedAt: endedDays != null ? new Date(now - endedDays * day) : null,
+        },
+      });
+    const old = await mk(400, 380);
+    const earlyEnded = await mk(380, 300, 370); // geplant bis vor 300 Tagen, vorzeitig beendet vor 370 Tagen
+    const recent = await mk(200, 190);
+    await pruneTransient();
+    const left = (await prisma.userAbsence.findMany({ where: { customerId: c.id }, select: { id: true } })).map((a) => a.id);
+    expect(left).toEqual([recent.id]);
+    expect(left).not.toContain(old.id);
+    expect(left).not.toContain(earlyEnded.id);
+    await cleanupCustomer(c.id);
   });
 });

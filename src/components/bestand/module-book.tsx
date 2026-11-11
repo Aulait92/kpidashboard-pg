@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { bookBestandModuleAction, cancelBestandModuleAction, type BookState } from "@/app/buyer/bestand/actions";
 import { ModuleRequestButton } from "@/components/bestand/module-request";
+import { bestandTerms } from "@/lib/bestand/terms";
 
 const VAT_RATE = 0.19;
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
@@ -26,6 +27,8 @@ export function ModuleBookButton({
   reason,
   requestedAt,
   readOnly,
+  annual = false,
+  freeMonths = 2,
 }: {
   monthlyNet: number;
   includedMessages: number;
@@ -33,7 +36,11 @@ export function ModuleBookButton({
   reason: string | null;
   requestedAt: string | null;
   readOnly: boolean;
+  /** Jährliche Vorauszahlung: Modul läuft bis zum Ende des bezahlten Jahres. */
+  annual?: boolean;
+  freeMonths?: number;
 }) {
+  const terms = bestandTerms({ annual, monthlyNet, freeMonths });
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState<BookState, FormData>(bookBestandModuleAction, {});
 
@@ -70,8 +77,8 @@ export function ModuleBookButton({
             <dd className="text-right">{eur(Math.round(monthlyNet * (1 + VAT_RATE) * 100) / 100)}</dd>
           </dl>
           <ul className="list-disc space-y-1 pl-5 text-[color:var(--muted)]">
-            <li>Anteilig ab heute, danach monatlich mit Ihrer Rechnung</li>
-            <li>Monatlich kündbar zum Ende des Abrechnungszeitraums</li>
+            <li>{terms.charge}</li>
+            <li>{terms.cancel}</li>
             <li>WhatsApp-Gebühren für bis zu {includedMessages} Kampagnen-Nachrichten im Monat inklusive</li>
           </ul>
           <p className="text-xs text-[color:var(--muted)]">
@@ -97,7 +104,8 @@ export function ModuleBookButton({
 }
 
 /** Modul kündigen (zum Ende des Abrechnungszeitraums) bzw. Kündigung zurücknehmen. */
-export function ModuleCancelButton({ cancelAt, readOnly }: { cancelAt: string | null; readOnly: boolean }) {
+export function ModuleCancelButton({ cancelAt, readOnly, annual = false }: { cancelAt: string | null; readOnly: boolean; annual?: boolean }) {
+  const terms = bestandTerms({ annual, monthlyNet: 0, freeMonths: 0 });
   const [open, setOpen] = useState(false);
   const [cancelState, cancelAction, cancelling] = useActionState<BookState, FormData>(cancelBestandModuleAction, {});
   const [bookState, bookAction, booking] = useActionState<BookState, FormData>(bookBestandModuleAction, {});
@@ -124,8 +132,7 @@ export function ModuleCancelButton({ cancelAt, readOnly }: { cancelAt: string | 
       <Sheet open={open} onClose={() => setOpen(false)} title="Bestandskunden-Modul kündigen">
         <form action={cancelAction} className="max-h-[65dvh] space-y-4 overflow-y-auto px-5 py-4 text-sm" data-module-cancel-dialog>
           <p>
-            Das Modul läuft bis zum Ende des aktuellen Abrechnungszeitraums weiter und wird danach nicht mehr berechnet. Laufende Kampagnen
-            stoppen dann. Ihre hochgeladene Kundenliste bleibt gespeichert.
+            {terms.cancelDialog} Laufende Kampagnen stoppen dann. Ihre hochgeladene Kundenliste bleibt gespeichert.
           </p>
           <label className="flex items-start gap-2">
             <input type="checkbox" name="confirm" required className="mt-0.5 h-4 w-4" />

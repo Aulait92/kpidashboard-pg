@@ -28,7 +28,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
   if (ctx.teamRole !== "owner") redirect("/buyer");
   const c = await prisma.customer.findUnique({
     where: { id: ctx.customerId },
-    select: { existingCustomersEnabled: true, bestandRequestedAt: true, bestandCancelAt: true },
+    select: { existingCustomersEnabled: true, bestandRequestedAt: true, bestandCancelAt: true, billingInterval: true },
   });
   if (!c) redirect("/buyer");
   // Ohne gebuchtes Modul: freundlicher Hinweis statt Sperre ohne Erklärung
@@ -40,6 +40,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
         readOnly={ctx.preview}
         canBook={check.ok}
         reason={check.ok ? null : check.reason}
+        annual={c.billingInterval === "year"}
       />
     );
   }
@@ -214,7 +215,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
   );
 }
 
-function LockedBestand({ requestedAt, readOnly, canBook, reason }: { requestedAt: string | null; readOnly: boolean; canBook: boolean; reason: string | null }) {
+function LockedBestand({ requestedAt, readOnly, canBook, reason, annual }: { requestedAt: string | null; readOnly: boolean; canBook: boolean; reason: string | null; annual: boolean }) {
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8" data-bestand-locked>
       <PageHeader title="Bestand" subtitle="Ihre Bestandskunden gezielt ansprechen" />
@@ -227,7 +228,10 @@ function LockedBestand({ requestedAt, readOnly, canBook, reason }: { requestedAt
             in Ihrer Pipeline.
           </p>
           <ul className="list-disc space-y-1 pl-5 text-sm text-[color:var(--muted)]">
-            <li>{eur(PRICE_LIST.bestandModuleMonthly)} netto im Monat, monatlich kündbar</li>
+            <li>
+              {eur(PRICE_LIST.bestandModuleMonthly)} netto im Monat,{" "}
+              {annual ? "bei Ihrer jährlichen Vorauszahlung kündbar zum Ende des bezahlten Jahres" : "monatlich kündbar"}
+            </li>
             <li>WhatsApp-Gebühren für bis zu {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat inklusive</li>
             <li>Gesundheitsdaten werden nie übernommen</li>
           </ul>
@@ -241,6 +245,8 @@ function LockedBestand({ requestedAt, readOnly, canBook, reason }: { requestedAt
             reason={reason}
             requestedAt={requestedAt}
             readOnly={readOnly}
+            annual={annual}
+            freeMonths={PRICE_LIST.annualFreeMonths}
           />
         </div>
       </Card>

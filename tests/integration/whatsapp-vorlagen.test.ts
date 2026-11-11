@@ -85,20 +85,21 @@ afterAll(() => {
 });
 
 describe("WhatsApp-Vorlagen automatisch einreichen", () => {
-  it("nach dem Selbst-Verbinden: 7 Vorlagen eingereicht, lokal „in Prüfung“, Beratername eingesetzt", async () => {
+  it("nach dem Selbst-Verbinden: 8 Vorlagen eingereicht, lokal „in Prüfung“, Beratername eingesetzt", async () => {
     const res = await completeSelfConnect({ customerId, userId: null, clientId: "cl1", channels: ["chV1"] });
     expect(res.status).toBe("connected");
     expect(created.map((c) => c.name).sort()).toEqual(
-      ["outreach", "booking_confirmation", "reminder", "followup", "followup_offer", "followup_noshow", "followup_last"].map((p) => `pg_${p}_v1`).sort(),
+      ["outreach", "booking_confirmation", "reminder", "reschedule", "followup", "followup_offer", "followup_noshow", "followup_last"].map((p) => `pg_${p}_v1`).sort(),
     );
     const outreach = created.find((c) => c.name === "pg_outreach_v1")!;
     expect(outreach.category).toBe("MARKETING");
     expect(outreach.components[0].text).toContain("Anid Brand");
     expect(outreach.components[0].text).not.toContain("[Berater]");
     expect(created.find((c) => c.name === "pg_reminder_v1")!.category).toBe("UTILITY");
+    expect(created.find((c) => c.name === "pg_reschedule_v1")!.category).toBe("UTILITY");
 
     const local = await prisma.messageTemplate.findMany({ where: { customerId } });
-    expect(local).toHaveLength(7);
+    expect(local).toHaveLength(8);
     expect(local.every((t) => t.auto && t.status === "pending" && t.submittedAt && t.language === "de")).toBe(true);
     const acc = await prisma.whatsAppAccount.findUniqueOrThrow({ where: { customerId } });
     expect(acc.templatesCheckedAt).not.toBeNull();
@@ -110,7 +111,7 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     await prisma.customer.update({ where: { id: customerId }, data: { existingCustomersEnabled: true } });
     await connect();
     const s = await submitTemplatesForCustomer(customerId);
-    expect(s.submitted).toHaveLength(11);
+    expect(s.submitted).toHaveLength(12);
     const camp = created.find((c) => c.name === "pg_campaign_review_v1")!;
     expect(camp.components[0].text).toContain("Ihr Versicherungsberater");
     expect(camp.components[0].text).not.toContain("STOPP");
@@ -121,12 +122,12 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
   it("zweiter Lauf reicht nichts doppelt ein; Freigabe → approved, Ablehnung → Aufgabe + Push", async () => {
     await connect();
     await submitTemplatesForCustomer(customerId);
-    expect(created).toHaveLength(7);
+    expect(created).toHaveLength(8);
 
     remote.find((t) => t.name === "pg_outreach_v1")!.status = "APPROVED";
     Object.assign(remote.find((t) => t.name === "pg_reminder_v1")!, { status: "REJECTED", rejected_reason: "INVALID_FORMAT" });
     const s = await submitTemplatesForCustomer(customerId);
-    expect(created).toHaveLength(7);
+    expect(created).toHaveLength(8);
     expect(s.approved).toEqual(["pg_outreach_v1"]);
     expect(s.rejected).toEqual(["pg_reminder_v1"]);
 
@@ -159,7 +160,7 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     const s = await submitTemplatesForCustomer(customerId);
     expect(s.skipped).toEqual(["outreach"]);
     expect(created.map((c) => c.name)).not.toContain("pg_outreach_v1");
-    expect(created).toHaveLength(6);
+    expect(created).toHaveLength(7);
   });
 
   it("Cron: gedrosselt, Liste nicht abrufbar → Fehler nur gemeldet", async () => {

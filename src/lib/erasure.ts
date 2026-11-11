@@ -110,10 +110,12 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 /**
  * Löschfristen für Hilfsdaten (täglich im Cron): nicht zugeordnete Leads
  * (Rohdaten aus Meta) nach 30 Tagen, wenn erledigt, sonst nach 90 Tagen;
- * Passwort-Links 7 Tage nach Ablauf.
+ * Passwort-Links 7 Tage nach Ablauf; Abwesenheiten („Ich bin abwesend“, z. B. „krank“)
+ * 1 Jahr nach ihrem Ende (bzw. vorzeitigen Ende).
  */
 export async function pruneTransient(now = new Date()) {
-  const [unassigned, resetTokens] = await prisma.$transaction([
+  const absenceCutoff = new Date(now.getTime() - 365 * DAY_MS);
+  const [unassigned, resetTokens, absences] = await prisma.$transaction([
     prisma.unassignedLead.deleteMany({
       where: {
         OR: [
@@ -123,6 +125,7 @@ export async function pruneTransient(now = new Date()) {
       },
     }),
     prisma.passwordResetToken.deleteMany({ where: { expiresAt: { lt: new Date(now.getTime() - 7 * DAY_MS) } } }),
+    prisma.userAbsence.deleteMany({ where: { OR: [{ endsAt: { lt: absenceCutoff } }, { endedAt: { lt: absenceCutoff } }] } }),
   ]);
-  return { unassigned: unassigned.count, resetTokens: resetTokens.count };
+  return { unassigned: unassigned.count, resetTokens: resetTokens.count, absences: absences.count };
 }

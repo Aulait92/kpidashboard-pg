@@ -5,10 +5,12 @@
 //
 // 11.11.2026: Logins, jährliche Vorauszahlung, Bestandskunden-Modul mit
 // Kampagnen-Kontingent, WhatsApp-Gebühren im Preis enthalten.
+// 12.11.2026: Bestandskunden-Modul bei jährlicher Vorauszahlung: Kündigung zum Ende
+// des bezahlten Jahres, keine anteilige Erstattung (wie die Stripe-Abrechnung).
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
-export const LEGAL_VERSION = "11.11.2026";
+export const LEGAL_VERSION = "12.11.2026";
 
 export const PROVIDER = {
   name: "Ole Kannapinn UG (haftungsbeschränkt)",
@@ -58,8 +60,8 @@ export const AGB: LegalSection[] = [
       "Der Anbieter darf die Software weiterentwickeln, solange die vereinbarten wesentlichen Funktionen erhalten bleiben.",
       // Prüfen: Logins / Nutzerzahl
       "Im Paket mit Software sind die im Angebot genannte Zahl an Logins enthalten (Inhaber und Berater). Weitere Logins kann der Kunde selbst anlegen; sie werden zum im Angebot genannten Preis je Login und Monat berechnet, anteilig ab dem Tag der Einrichtung bis zum Tag der Entfernung. Ab der im Angebot genannten Zahl an Logins gelten individuelle Konditionen.",
-      // Prüfen: Bestandskunden-Modul + Fair Use
-      "Das Bestandskunden-Modul (Import und Auswertung der Bestandskunden des Kunden, Kampagnen per WhatsApp) ist ein Zusatzmodul und nur enthalten, wenn es im Angebot vereinbart oder nachträglich in Textform gebucht wurde. Es ist zum Ende des Abrechnungsmonats kündbar, sofern im Angebot nichts anderes vereinbart ist.",
+      // Prüfen: Bestandskunden-Modul + Fair Use; Kündigung bei jährlicher Vorauszahlung zum Ende des bezahlten Jahres (12.11.2026)
+      "Das Bestandskunden-Modul (Import und Auswertung der Bestandskunden des Kunden, Kampagnen per WhatsApp) ist ein Zusatzmodul und nur enthalten, wenn es im Angebot vereinbart oder nachträglich in Textform gebucht wurde. Es ist zum Ende des Abrechnungszeitraums kündbar, sofern im Angebot nichts anderes vereinbart ist: bei monatlicher Zahlweise zum Ende des Abrechnungsmonats, bei jährlicher Vorauszahlung zum Ende des bezahlten Abrechnungsjahres. Bei jährlicher Vorauszahlung wird das Modul bei Buchung anteilig bis zum Ende des laufenden Abrechnungsjahres berechnet; eine anteilige Erstattung bei Kündigung erfolgt nicht.",
       // Prüfen: Selbstbuchung von Zusatzmodulen im Kundenbereich (Ole, 11.11.2026)
       "Zusatzmodule können im Kundenbereich auch selbst gebucht und dort zum Ende des laufenden Abrechnungszeitraums gekündigt werden. Bei einer Buchung im laufenden Zeitraum wird die Vergütung tagesgenau anteilig berechnet; bei einer Kündigung bleibt das Modul bis zum Ende des bereits bezahlten Zeitraums nutzbar, eine anteilige Erstattung erfolgt nicht.",
     ],

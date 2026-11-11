@@ -126,7 +126,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 <dd className="space-y-2">
                   <div>{bestandFee ? `Modul gebucht, ${eur(bestandFee)} im Monat` : "Modul freigeschaltet"}</div>
                   {customer.bestandMonthly != null ? (
-                    <ModuleCancelButton cancelAt={customer.bestandCancelAt?.toISOString() ?? null} readOnly={ctx.preview} />
+                    <ModuleCancelButton cancelAt={customer.bestandCancelAt?.toISOString() ?? null} readOnly={ctx.preview} annual={annual} />
                   ) : null}
                 </dd>
               </>
@@ -207,6 +207,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 reason={bestandCheck && !bestandCheck.ok ? bestandCheck.reason : null}
                 requestedAt={customer.bestandRequestedAt?.toISOString() ?? null}
                 readOnly={ctx.preview}
+                annual={annual}
+                freeMonths={PRICE_LIST.annualFreeMonths}
               />
             </div>
           </Card>
