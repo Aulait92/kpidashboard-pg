@@ -14,6 +14,7 @@ import {
   STORNO_MAX,
   STORNO_MIN,
   VERTRAGS_GARANTIE_MIN_VERTRAEGE,
+  GARANTIE_FRISTEN,
   berechne,
   berechneBestand,
   budgetVergleich,
@@ -38,7 +39,7 @@ import type { VermittlerTyp } from "@/lib/provision";
 
 // Bedingungen der Vertrags-Garantie (wie Break-even-Garantie: 90 Tage, längstens 6 Monate, 80 %).
 // Beim Zusammenführen mit der Garantie-Prüfung (garantien.ts) auf die gemeinsame Konstante umstellen.
-const VERTRAGS_GARANTIE = { tage: 90, monateMax: 6, quote: 0.8 };
+const VERTRAGS_GARANTIE = { tage: GARANTIE_FRISTEN.breakEvenTage, monateMax: GARANTIE_FRISTEN.maxFreiMonate, quote: GARANTIE_FRISTEN.quote };
 
 const eur = (n: number, d = 0) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: d, minimumFractionDigits: d });
 const zahl = (n: number, d = 0) => n.toLocaleString("de-DE", { maximumFractionDigits: d, minimumFractionDigits: d });
