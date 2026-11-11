@@ -232,6 +232,7 @@ export async function loadOnboarding(where: { customerId: string } | { id: strin
         include: {
           users: { where: { role: "BUYER" }, select: { email: true, lastLoginAt: true } },
           calendarConnection: { select: { status: true } },
+          agentConfig: { select: { availabilityIcsUrlEnc: true, allianzCalendarEnc: true } },
           whatsAppAccount: { select: { status: true } },
           messageTemplates: { where: { purpose: "outreach", status: "approved" }, select: { id: true }, take: 1 },
         },
@@ -264,7 +265,17 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
   );
   if (software) {
     items.push(
-      { key: "calendar", label: "Kalender verbunden", owner: "kunde", done: ob.customer.calendarConnection?.status === "connected", at: null },
+      {
+        key: "calendar",
+        label: "Kalender verbunden",
+        owner: "kunde",
+        // Google/Microsoft verbunden oder freie Zeiten über ICS-Link bzw. Allianz-Online-Kalender.
+        done:
+          ob.customer.calendarConnection?.status === "connected" ||
+          !!ob.customer.agentConfig?.availabilityIcsUrlEnc ||
+          !!ob.customer.agentConfig?.allianzCalendarEnc,
+        at: null,
+      },
       { key: "whatsapp", label: "WhatsApp-Nummer verbunden", owner: selfConnectEnabled() ? "kunde" : "du", done: ob.customer.whatsAppAccount?.status === "connected", at: null },
       {
         key: "templates",
@@ -332,6 +343,7 @@ export async function onboardingProgressFor(customerIds: string[]) {
         include: {
           users: { where: { role: "BUYER" }, select: { email: true, lastLoginAt: true } },
           calendarConnection: { select: { status: true } },
+          agentConfig: { select: { availabilityIcsUrlEnc: true, allianzCalendarEnc: true } },
           whatsAppAccount: { select: { status: true } },
           messageTemplates: { where: { purpose: "outreach", status: "approved" }, select: { id: true }, take: 1 },
         },

@@ -1,11 +1,23 @@
 import { redirect } from "next/navigation";
-import { CalendarDays, CheckCircle2 } from "lucide-react";
+import { Ban, CalendarDays, CheckCircle2, Clock } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { buttonClass, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { PROVIDER_LABELS } from "@/lib/calendar";
 import { prisma } from "@/lib/prisma";
 import { disconnectOwnCalendarAction } from "./actions";
+import { BlockTimes, LeadTimesForm, SourcePicker } from "@/components/calendar-sources";
+import { userCalendarKey } from "@/lib/calendar/tokens";
+import { loadCalendarSetup } from "@/lib/calendar/setup-view";
+import {
+  addBlockAction,
+  connectAllianzAction,
+  deleteBlockAction,
+  disconnectAllianzAction,
+  removeIcsAction,
+  saveIcsAction,
+  saveLeadTimesAction,
+} from "./source-actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Mein Kalender | performancegrowth" };
@@ -25,6 +37,10 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
   ]);
   const connected = own?.status === "connected";
   const owner = ctx.teamRole === "owner";
+  // Inhaber stellt den Agentur-Kalender ein; ein Berater nur seinen eigenen (falls verbunden).
+  const key = owner || !ctx.userId ? ctx.customerId : connected ? userCalendarKey(ctx.userId) : null;
+  const setup = key ? await loadCalendarSetup(ctx.customerId, key) : null;
+  const ro = ctx.preview;
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -70,6 +86,44 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
           ) : null}
         </div>
       </Card>
+
+      {owner && setup ? (
+        <Card className="mt-5">
+          <CardHeader title="Freie Zeiten der Agentur" icon={CalendarDays} />
+          <div className="p-5">
+            <SourcePicker
+              status={setup.status}
+              readOnly={ro}
+              connectLinks={{ google: "/api/google/connect", microsoft: "/api/microsoft/connect" }}
+              icsAction={saveIcsAction}
+              removeIcsAction={removeIcsAction}
+              allianzAction={connectAllianzAction}
+              disconnectAllianzAction={disconnectAllianzAction}
+            />
+          </div>
+        </Card>
+      ) : null}
+
+      {setup ? (
+        <>
+          <Card className="mt-5">
+            <CardHeader title="Wann dürfen Leads Termine buchen?" icon={Clock} />
+            <div className="p-5">
+              <p className="mb-4 text-sm text-[color:var(--muted)]">Unser Assistent schlägt nur diese Zeiten vor, und nur wenn Sie dann frei sind.</p>
+              <LeadTimesForm initial={setup.leadTimes} action={saveLeadTimesAction} readOnly={ro} source={setup.source} />
+            </div>
+          </Card>
+          <Card className="mt-5">
+            <CardHeader title="Zeit blockieren" icon={Ban} />
+            <div className="p-5">
+              <p className="mb-4 text-sm text-[color:var(--muted)]">In diesen Zeiten bieten wir keine Termine an, auch wenn Ihr Kalender frei ist.</p>
+              <BlockTimes blocks={setup.blocks} addAction={addBlockAction} deleteAction={deleteBlockAction} readOnly={ro} />
+            </div>
+          </Card>
+        </>
+      ) : (
+        <p className="mt-5 text-sm text-[color:var(--muted)]">Ohne eigenen Kalender gelten für Ihre Leads die Zeiten der Agentur.</p>
+      )}
     </main>
   );
 }

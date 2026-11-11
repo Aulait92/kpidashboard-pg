@@ -16,7 +16,9 @@ function isFree(vevent: InstanceType<typeof ICAL.Component>): boolean {
   const msBusy = String(
     vevent.getFirstPropertyValue("x-microsoft-cdo-busystatus") ?? "",
   ).toUpperCase();
-  return transp === "TRANSPARENT" || status === "CANCELLED" || msBusy === "FREE";
+  // Serie „Leadtermine": vom Vertreter für unsere Lead-Termine freigehalten.
+  const summary = String(vevent.getFirstPropertyValue("summary") ?? "");
+  return transp === "TRANSPARENT" || status === "CANCELLED" || msBusy === "FREE" || /^\s*lead-?termin/i.test(summary);
 }
 
 /** ICS-Text → belegte Zeiträume im Fenster [min, max). */

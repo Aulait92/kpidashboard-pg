@@ -16,6 +16,15 @@ import Link from "next/link";
 import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 import { ERROR_HELP, parseConnectPath } from "@/lib/whatsapp/connect-guide";
 import { WhatsAppGuide } from "@/components/whatsapp-guide";
+import { LeadTimesForm, SourcePicker } from "@/components/calendar-sources";
+import { loadCalendarSetup } from "@/lib/calendar/setup-view";
+import {
+  connectAllianzAction,
+  disconnectAllianzAction,
+  removeIcsAction,
+  saveIcsAction,
+  saveLeadTimesAction,
+} from "@/app/buyer/kalender/source-actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Einrichtung | performancegrowth" };
@@ -54,6 +63,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const isOpen = (k: string) => current === k || schritt === k;
   const helpUpcoming = ob.helpCallAt && ob.helpCallAt > new Date();
   const slots = !helpUpcoming && !ob.liveAt ? await helpCallSlots().catch(() => []) : [];
+  const calendar = await loadCalendarSetup(ctx.customerId, ctx.customerId);
   const timeFmt = (d: Date) =>
     new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" }).format(d);
 
@@ -175,32 +185,38 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         </Step>
 
         {software ? (
-          <Step n={3} title="Kalender verbinden" icon={CalendarDays} done={done("calendar")} open={isOpen("calendar")} id="calendar">
-            <p className="text-sm text-[color:var(--muted)]">
-              Termine landen dann nur in freien Zeiten direkt in Ihrem Kalender.
+          <Step n={3} title="Kalender und freie Zeiten" icon={CalendarDays} done={done("calendar")} open={isOpen("calendar")} id="calendar">
+            <p className="mb-4 text-sm text-[color:var(--muted)]">
+              Damit Leads nur Termine bekommen, wenn Sie wirklich Zeit haben.
             </p>
-            {gcal === "connected" ? <p className="mt-3 text-sm font-medium text-emerald-700">Kalender verbunden.</p> : null}
+            {gcal === "connected" ? <p className="mb-3 text-sm font-medium text-emerald-700">Kalender verbunden.</p> : null}
             {gcal && gcal !== "connected" ? (
-              <p className="mt-3 text-sm font-medium text-rose-700">
+              <p className="mb-3 text-sm font-medium text-rose-700">
                 {gcal === "consent"
-                  ? "Ihr Unternehmen muss die Verbindung erst freigeben. Kein Problem: Rufen Sie kurz an, dann richten wir es gemeinsam ein."
+                  ? "Ihr Unternehmen muss die Verbindung erst freigeben. Kein Problem: Wählen Sie unten den Kalender-Link oder den Allianz-Online-Kalender, oder rufen Sie kurz an."
                   : "Das hat nicht geklappt. Bitte noch einmal versuchen oder kurz anrufen, dann erledigen wir es gemeinsam."}
               </p>
             ) : null}
-            {done("calendar") ? (
-              <p className="mt-3 flex items-center gap-1.5 text-sm font-medium text-emerald-700">
-                <CheckCircle2 className="h-4 w-4" /> Verbunden
+            <SourcePicker
+              status={calendar.status}
+              readOnly={readOnly}
+              connectLinks={{ google: "/api/google/connect", microsoft: "/api/microsoft/connect" }}
+              icsAction={saveIcsAction}
+              removeIcsAction={removeIcsAction}
+              allianzAction={connectAllianzAction}
+              disconnectAllianzAction={disconnectAllianzAction}
+            />
+            <div className="mt-6 border-t border-[color:var(--border)] pt-5">
+              <p className="text-[15px] font-medium">Wann dürfen Leads Termine buchen?</p>
+              <p className="mb-3 mt-1 text-sm text-[color:var(--muted)]">
+                Unser Assistent schlägt nur diese Zeiten vor, und nur wenn Sie dann frei sind. Einzelne Zeiten sperren Sie unter{" "}
+                <Link href="/buyer/kalender" className="font-medium text-[color:var(--brand)] underline">
+                  Mein Kalender
+                </Link>
+                .
               </p>
-            ) : (
-              <div className="mt-4 flex flex-wrap gap-2">
-                <a href="/api/google/connect" className={buttonClass("secondary", "md", readOnly ? "pointer-events-none opacity-60" : "")}>
-                  Google-Kalender verbinden
-                </a>
-                <a href="/api/microsoft/connect" className={buttonClass("secondary", "md", readOnly ? "pointer-events-none opacity-60" : "")}>
-                  Outlook / Microsoft 365 verbinden
-                </a>
-              </div>
-            )}
+              <LeadTimesForm initial={calendar.leadTimes} action={saveLeadTimesAction} readOnly={readOnly} source={calendar.source} />
+            </div>
           </Step>
         ) : null}
 

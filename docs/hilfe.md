@@ -16,7 +16,7 @@ Seiten aus der Liste „Seiten“ unten.
 | /buyer/zahlen | Zahlen | Kosten, Ertrag, Funnel, Hochrechnung |
 | /buyer/konto | Konto & Rechnungen | Vertrag, Rechnungen, Zahlungsart, Pause/Urlaub (nur Inhaber) |
 | /buyer/team | Team | Berater einladen, Leads verteilen (nur Inhaber) |
-| /buyer/kalender | Mein Kalender | Eigenen Kalender verbinden (bei Team-Zugängen) |
+| /buyer/kalender | Mein Kalender | Eigenen Kalender verbinden (bei Team-Zugängen), freie Zeiten erkennen, Lead-Zeiten, Zeit blockieren |
 | /buyer/einrichtung | Einrichtung | Fragebogen, Meta-Zugriff, Kalender, App aufs Handy, Hilfetermin |
 | /buyer/bestand | Bestand | Bestandskunden und Kampagnen (Zusatzmodul; ohne Modul mit Knopf „Jetzt buchen“, sonst „Modul anfragen“) |
 | /buyer/bestand/import | Kundenliste hochladen | Excel/CSV importieren |
@@ -130,8 +130,22 @@ Seiten aus der Liste „Seiten“ unten.
   Telefon oder Video.
 - Verschieben/Absagen: auf „Heute“ oder beim Lead an der Termin-Karte. Der Kunde bekommt die Änderung automatisch.
 - Leads können über ihren Link selbst verschieben oder absagen.
-- Damit Termine nur in freie Zeiten fallen: Kalender verbinden (Google oder Outlook/Microsoft 365) in der
-  Einrichtung bzw. unter „Mein Kalender“. Die App liest nur, wann Sie belegt sind.
+- Damit Termine nur in freie Zeiten fallen: in der Einrichtung bzw. unter „Mein Kalender“ bei „Wie sollen wir
+  Ihre freien Zeiten erkennen?“ einen Weg wählen. Die App liest nur, wann Sie belegt bzw. frei sind:
+  1. **Google- oder Microsoft-Kalender** verbinden.
+  2. **Kalender-Link (ICS):** In Outlook im Browser unter Einstellungen → Kalender → Freigegebene Kalender →
+     Kalender veröffentlichen, „Kann sehen, wann ich beschäftigt bin“ wählen und den ICS-Link einfügen.
+  3. **Allianz-Online-Kalender:** Link Ihrer Vertreter-Seite (vertretung.allianz.de/…) oder Ihre
+     Vertreternummer eingeben und zustimmen. Wir lesen dann die freien Termine Ihrer Online-Terminbuchung
+     (höchstens alle 10 Minuten). Für Tage, die dort noch nicht buchbar sind (meist heute und morgen),
+     gelten Ihre Lead-Zeiten.
+- **Wann dürfen Leads Termine buchen?** Wochentage und Uhrzeiten antippen (Standard: Mo–Fr 10, 14 und 16 Uhr).
+  Der Assistent schlägt nur diese Zeiten vor, und nur wenn Sie dann frei sind. Tipp: Blocken Sie diese Zeiten
+  als Serie „Leadtermine“ in Ihrem Allianz-Kalender (mit Kalender-Link: „Anzeigen als: Frei“; mit
+  Allianz-Online-Kalender bitte nicht blocken, sonst wirken sie belegt).
+- **Zeit blockieren:** unter „Mein Kalender“ Datum und von–bis eintragen. In dieser Zeit werden keine Termine
+  angeboten. Löschen jederzeit in der Liste.
+- Gebuchte Termine kommen weiter als Kalendereinladung an Ihre Adresse für Termineinladungen (z. B. Allianz-Mail).
 
 ## Benachrichtigungen (Push)
 

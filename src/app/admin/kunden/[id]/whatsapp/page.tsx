@@ -3,6 +3,7 @@ import { WhatsAppFeesCard } from "@/components/whatsapp-fees-card";
 import { Card, CardHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { AvailabilityCard } from "./availability-card";
 
 // Reiter „WhatsApp-Assistent“: die WhatsApp-Einstellungen nur für diesen Kunden
 // und die Meta-Gebühren (im Preis enthalten, intern erfasst).
@@ -12,6 +13,7 @@ export default async function KundenWhatsApp({ params, searchParams }: { params:
   return (
     <div className="space-y-5">
       <WhatsAppSettingsPage searchParams={Promise.resolve({ kunde: id, wa })} />
+      <AvailabilityCard customerId={id} />
       <div className="grid max-w-5xl gap-5 lg:grid-cols-2">
         <WhatsAppFeesCard customerId={id} admin />
         <BestandModuleCard customerId={id} />

@@ -420,8 +420,10 @@ export async function rescheduleAfterAbsence(
       const wall = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Berlin", hour: "numeric", minute: "numeric", hourCycle: "h23" }).formatToParts(r.startsAt);
       const h = Number(wall.find((p) => p.type === "hour")?.value);
       const m = Number(wall.find((p) => p.type === "minute")?.value);
-      const hours = [...new Set([...(m === 0 && h >= 8 && h <= 18 ? [h] : []), 10, 14, 16])];
-      const slots = await suggestSlots(actor.customerId, durationMin, used.size + 3, hours, 10, r.leadId, from);
+      // Gleiche Uhrzeit wie bisher bevorzugt, sonst die Lead-Zeiten des Kalenders.
+      const same = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+      const prefer = h >= 7 && h <= 19 && m % 5 === 0 ? [same] : [];
+      const slots = await suggestSlots(actor.customerId, durationMin, used.size + 3, { lead: true, prefer }, 10, r.leadId, from);
       const slot = slots.find((s) => !used.has(s.start));
       if (!slot) {
         res.failed.push(r.id);

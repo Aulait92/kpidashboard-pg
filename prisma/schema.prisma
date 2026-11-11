@@ -180,6 +180,8 @@ model Customer {
   whatsAppAccount          WhatsAppAccount?
   calendarConnection       CalendarConnection?
   agentConfig              AgentConfig?
+  calendarLeadTimes        CalendarLeadTimes[]
+  calendarBlocks           CalendarBlock[]
   conversations            Conversation[]
   appointments             Appointment[]
   messageTemplates         MessageTemplate[]
@@ -721,6 +723,16 @@ model AgentConfig {
   // Veröffentlichter Frei/Gebucht-Kalender (ICS-Link, verschlüsselt): belegte
   // Zeiten des Firmenkalenders fließen in die Terminvorschläge ein.
   availabilityIcsUrlEnc    String?
+  // Allianz-Online-Kalender (öffentlicher Buchungsdienst der Vertreter-Seite):
+  // aufgelöste Vertretung + Termin-Art als verschlüsseltes JSON
+  // (lib/calendar/allianz-online.ts). Nur mit Zustimmung (allianzConsentAt).
+  allianzCalendarEnc       String?
+  allianzConsentAt         DateTime?
+  // Letzter erfolgreicher Abruf, letzter Fehler (ohne Geheimnisse) und wann
+  // zuletzt eine Admin-Aufgabe dazu angelegt wurde (gedrosselt).
+  allianzLastOkAt          DateTime?
+  allianzLastError         String?
+  allianzAlertAt           DateTime?
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 
@@ -1826,4 +1838,38 @@ model GarantieFall {
 
   @@unique([customerId, art, monat])
   @@index([status])
+}
+
+// Feste Zeiten, zu denen Leads Termine buchen dürfen (je Kalender-Schlüssel:
+// customerId = Agentur-Kalender, user:<id> = Kalender eines Beraters).
+// Ohne Zeile gilt Mo–Fr 10, 14 und 16 Uhr (lib/calendar/lead-times.ts).
+model CalendarLeadTimes {
+  calendarKey String   @id
+  customerId  String
+  // Wochentage 0 = So … 6 = Sa
+  weekdays    Int[]
+  // Uhrzeiten "HH:MM" (Berliner Zeit)
+  times       String[]
+  updatedAt   DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+}
+
+// „Zeit blockieren": in diesem Zeitraum werden keine Termine vorgeschlagen
+// oder gebucht (zählt als belegt).
+model CalendarBlock {
+  id          String   @id @default(cuid())
+  customerId  String
+  calendarKey String
+  startsAt    DateTime
+  endsAt      DateTime
+  note        String?
+  createdAt   DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([calendarKey, endsAt])
+  @@index([customerId])
 }

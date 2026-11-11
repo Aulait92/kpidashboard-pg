@@ -12,6 +12,8 @@ import {
   googleHasRequiredScopes,
 } from "@/lib/calendar/google";
 import { fetchIcsBusy } from "@/lib/calendar/ics";
+import { allianzBusy, decodeAllianzCalendar } from "@/lib/calendar/allianz-online";
+import { berlinAt, calendarBlocksBusy, loadLeadTimes, type LeadTimes } from "@/lib/calendar/lead-times";
 import {
   microsoftCreateEvent,
   microsoftDeleteEvent,
@@ -52,14 +54,16 @@ export function hasRequiredScopes(conn: { provider: string; scope: string | null
 /** Adapter für einen Kalender-Schlüssel (customerId oder user:<id>). */
 export async function adapterFor(customerId: string) {
   const conn = await loadConnection(customerId);
-  // Veröffentlichter Firmenkalender (ICS) gilt nur für den Agentur-Kalender.
+  // Veröffentlichter Firmenkalender (ICS) und Allianz-Online-Kalender gelten
+  // nur für den Agentur-Kalender.
   const agent = userIdOfKey(customerId)
     ? null
     : await prisma.agentConfig.findUnique({
         where: { customerId },
-        select: { availabilityIcsUrlEnc: true },
+        select: { availabilityIcsUrlEnc: true, allianzCalendarEnc: true, allianzConsentAt: true },
       });
   const icsUrl = agent?.availabilityIcsUrlEnc ? decryptSecret(agent.availabilityIcsUrlEnc) : null;
+  const allianz = agent?.allianzConsentAt ? decodeAllianzCalendar(agent.allianzCalendarEnc) : null;
 
   const native =
     conn.provider === "microsoft"
@@ -76,14 +80,19 @@ export async function adapterFor(customerId: string) {
 
   return {
     // Belegt = Buchungskalender UND (falls hinterlegt) veröffentlichter
-    // Firmenkalender. Fällt eine Quelle aus, wird geworfen — nie still „frei".
+    // Firmenkalender UND Allianz-Online-Kalender UND „Zeit blockieren".
+    // Fällt eine Quelle aus, wird geworfen — nie still „frei".
     getBusy: async (min: Date, max: Date): Promise<Busy[]> => {
-      const [own, external] = await Promise.all([
+      const lists = await Promise.all([
         native.getBusy(min, max),
         icsUrl ? fetchIcsBusy(icsUrl, min, max) : Promise.resolve([] as Busy[]),
+        allianz ? allianzBusy(customerId, allianz, min, max) : Promise.resolve([] as Busy[]),
+        calendarBlocksBusy(customerId, min, max),
       ]);
-      return [...own, ...external];
+      return lists.flat();
     },
+    // Termine entstehen immer im Buchungskalender (Google/Microsoft); die
+    // Einladung an die Berater-Adresse (z. B. Allianz-Mail) setzt bookAppointment.
     createEvent: (ev: NewEvent): Promise<CreatedEvent> => native.createEvent(ev),
     deleteEvent: (id: string): Promise<void> => native.deleteEvent(id),
   };
@@ -108,32 +117,30 @@ function berlinParts(d: Date): { y: number; m: number; day: number; dow: number 
   };
 }
 
-/** UTC-Zeitpunkt für eine Berliner Wanduhrzeit (berücksichtigt Sommer-/Winterzeit). */
-function berlinTime(y: number, m: number, day: number, hour: number): Date {
-  const guess = Date.UTC(y, m - 1, day, hour);
-  const wall = new Intl.DateTimeFormat("en-US", {
-    timeZone: TZ,
-    hourCycle: "h23",
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-  }).formatToParts(new Date(guess));
-  const g = (t: string) => Number(wall.find((x) => x.type === t)?.value);
-  const asUtc = Date.UTC(g("year"), g("month") - 1, g("day"), g("hour"), g("minute"));
-  return new Date(guess - (asUtc - guess));
-}
-
 const overlaps = (busy: Busy[], start: Date, end: Date) =>
   busy.some((b) => b.start < end && b.end > start);
 
-/** Freie Slots der nächsten Werktage (Standard 10/14/16 Uhr Berliner Zeit). */
+/**
+ * Uhrzeiten für Vorschläge: feste Stunden (nur Mo–Fr) oder die Lead-Zeiten
+ * des jeweiligen Kalenders („lead"); `prefer` = zusätzlich zuerst diese
+ * Uhrzeiten an Lead-Tagen (z. B. alte Uhrzeit beim Verschieben).
+ */
+export type SlotHours = number[] | "lead" | { lead: true; prefer: string[] };
+
+/** Kandidaten-Uhrzeiten ("HH:MM") eines Kalendertags, in Vorschlags-Reihenfolge. */
+export function candidateTimes(spec: SlotHours, lt: LeadTimes, dow: number): string[] {
+  if (Array.isArray(spec)) return dow === 0 || dow === 6 ? [] : spec.map((h) => `${String(h).padStart(2, "0")}:00`);
+  if (!lt.weekdays.includes(dow)) return [];
+  const prefer = spec === "lead" ? [] : spec.prefer;
+  return [...new Set([...prefer, ...lt.times])];
+}
+
+/** Freie Slots der nächsten Tage (Standard: Lead-Zeiten, ohne Einstellung Mo–Fr 10/14/16 Uhr). */
 export async function suggestSlots(
   customerId: string,
   durationMin = 30,
   count = 3,
-  hours: number[] = [10, 14, 16],
+  hours: SlotHours = "lead",
   days = 10,
   /** Lead, für den gebucht wird (Team: Kalender des zuständigen Beraters). */
   leadId?: string | null,
@@ -153,23 +160,34 @@ export async function suggestSlots(
   // Team: frei, sobald EIN infrage kommender Kalender frei ist. Ein einzelner
   // ausgefallener Berater-Kalender blockiert nicht alle; fällt alles aus → Fehler.
   const results = await Promise.allSettled(keys.map(async (k) => (await adapterFor(k)).getBusy(timeMin, timeMax)));
-  const busyLists = results.flatMap((r, i) => (r.status === "fulfilled" ? [[...r.value, ...absent[i]]] : []));
-  if (busyLists.length === 0) {
+  const cals = await Promise.all(
+    results.map(async (r, i) =>
+      r.status === "fulfilled"
+        ? { busy: [...r.value, ...absent[i]], lt: Array.isArray(hours) ? null : await loadLeadTimes(keys[i]) }
+        : null,
+    ),
+  );
+  const usable = cals.filter((c): c is { busy: Busy[]; lt: LeadTimes | null } => !!c);
+  if (usable.length === 0) {
     const first = results[0];
     throw first?.status === "rejected" ? first.reason : new Error("Kein Kalender verfügbar.");
   }
-  const isFree = (start: Date, end: Date) => busyLists.some((busy) => !overlaps(busy, start, end));
 
   const slots: Slot[] = [];
   for (let d = 0; d < days && slots.length < count; d++) {
     const { y, m, day, dow } = berlinParts(new Date(base.getTime() + d * 24 * 60 * 60 * 1000));
-    if (dow === 0 || dow === 6) continue;
-    for (const h of hours) {
+    const ymd = `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    // Je Kalender eigene Lead-Zeiten; Reihenfolge: wie angegeben, dann chronologisch.
+    const perCal = usable.map((c) => new Set(candidateTimes(hours, c.lt ?? { weekdays: [], times: [] }, dow)));
+    const union = new Set(perCal.flatMap((x) => [...x]));
+    const prefer = Array.isArray(hours) || hours === "lead" ? [] : hours.prefer.filter((t) => union.has(t));
+    const ordered = Array.isArray(hours) ? [...union] : [...new Set([...prefer, ...[...union].sort()])];
+    for (const t of ordered) {
       if (slots.length >= count) break;
-      const start = berlinTime(y, m, day, h);
+      const start = berlinAt(ymd, t);
       if (start.getTime() < timeMin.getTime()) continue;
       const end = new Date(start.getTime() + durationMin * 60000);
-      if (isFree(start, end)) {
+      if (usable.some((c, i) => perCal[i].has(t) && !overlaps(c.busy, start, end))) {
         slots.push({ start: start.toISOString(), end: end.toISOString() });
       }
     }
