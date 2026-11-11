@@ -172,9 +172,10 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
           <ul className="divide-y divide-[color:var(--border)]">
             {rules.map((r) => (
               <li key={r.id} className="flex flex-wrap items-center gap-2 py-2 text-sm">
-                <span className="min-w-[140px] flex-1 font-medium">„{r.pattern}“{r.label && r.label !== r.pattern ? <span className="ml-1 font-normal text-[color:var(--muted)]">{r.label}</span> : null}</span>
+                <span className="min-w-[140px] flex-1 font-medium">„{r.pattern}“</span>
                 <form action={saveRuleAction} className="flex flex-wrap items-center gap-2">
                   <input type="hidden" name="id" value={r.id} />
+                  <input name="label" defaultValue={r.label ?? ""} placeholder="Name in der BWA" title="Name in der BWA" className="input h-9 w-44 text-sm" />
                   <select name="action" defaultValue={r.action} className={sel}>
                     {COST_ACTIONS.map((a) => (
                       <option key={a} value={a}>{ACTION_LABEL[a as CostAction]}</option>

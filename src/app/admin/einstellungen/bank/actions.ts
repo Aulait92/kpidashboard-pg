@@ -92,7 +92,9 @@ export async function saveRuleAction(fd: FormData) {
   const action = String(fd.get("action") ?? "") as CostAction;
   if (!COST_ACTIONS.includes(action)) return;
   const vat = fd.get("vat") === "on";
-  await prisma.costRule.update({ where: { id }, data: { action, vatIncluded: vat } });
+  // Bezeichnung = Zeilenname in der BWA (z. B. „Steuerberater“ statt „GC RE PHDRMUELLERSTBG“)
+  const label = String(fd.get("label") ?? "").trim().slice(0, 80) || null;
+  await prisma.costRule.update({ where: { id }, data: { action, vatIncluded: vat, ...(fd.has("label") ? { label } : {}) } });
   await applyRuleToOpen(id);
   await audit("cost.rule", { entity: "CostRule", entityId: id, details: { action, vat }, actor: { id: session.userId, email: session.email, role: session.role } });
   refresh();
