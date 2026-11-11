@@ -33,12 +33,10 @@ export const VAT = 0.19;
 export const BUDGET_MIN = 20;
 export const BUDGET_MAX = 150;
 
-// Berater-Plätze und Jahreszahlung – gleiche Werte wie im Angebot.
-// TODO: nach Merge der Preis-Erweiterungen auf PRICE_LIST (seatsIncluded,
-// seatMonthly, annualFreeMonths) umstellen.
-export const SEATS_INCLUDED = 3;
-export const SEAT_MONTHLY = 49;
-export const ANNUAL_PAID_MONTHS = 10;
+// Berater-Plätze und Jahreszahlung – aus der Preisliste des Angebots.
+export const SEATS_INCLUDED = PRICE_LIST.seatsIncluded;
+export const SEAT_MONTHLY = PRICE_LIST.seatMonthly;
+export const ANNUAL_PAID_MONTHS = 12 - PRICE_LIST.annualFreeMonths;
 
 // ─── Konfiguration (Admin → Einstellungen → Rechner) ─────────────────────
 
