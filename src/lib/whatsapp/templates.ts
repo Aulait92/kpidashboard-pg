@@ -59,8 +59,10 @@ export const PURPOSE_PARAMS: Record<NoticePurpose, string[]> = {
 export const SUGGESTED_TEMPLATE_TEXT: Record<NoticePurpose, string> = {
   outreach:
     "Hallo {{1}}, danke für deine Anfrage! Hier ist der digitale Assistent von [Berater]. Hast du kurz Zeit für zwei Fragen, damit wir dir ein passendes Angebot machen können?",
-  booking_confirmation: "Hallo {{1}}, dein Termin ist bestätigt: {{2}} ({{3}}). {{4}} Bis dann!",
-  reminder: "Hallo {{1}}, kurze Erinnerung an deinen Termin: {{2}} ({{3}}). {{4}} Bis dann!",
+  booking_confirmation:
+    "Hallo {{1}}, vielen Dank für deine Buchung bei [Berater]. Dein Termin ist bestätigt: {{2}} ({{3}}). {{4}} Wir freuen uns auf das Gespräch!",
+  reminder:
+    "Hallo {{1}}, hier ist eine kurze Erinnerung an deinen Termin mit [Berater]: {{2}} ({{3}}). {{4}} Bis dann!",
   followup:
     "Hallo {{1}}, hier ist nochmal der digitale Assistent von [Berater]. Passt es dir diese Woche noch für ein kurzes Gespräch? Antworte einfach hier, dann schlage ich dir Zeiten vor.",
   followup_offer:
