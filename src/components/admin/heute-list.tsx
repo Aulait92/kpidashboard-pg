@@ -95,16 +95,17 @@ function HeuteRow({ it }: { it: HeuteItem }) {
 
   return (
     <li className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:gap-4" data-heute={it.key}>
-      <div className="flex min-w-0 flex-1 gap-3">
+      {/* Ganze linke Seite führt zur Detailansicht (Kontakt, Kunde, Lead …) */}
+      <Link href={it.action.href} className="group flex min-w-0 flex-1 gap-3 rounded-lg" title="Öffnen">
         <span className={cn("mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full", TONE[it.tone])}>
           <Icon className="h-[18px] w-[18px]" />
         </span>
         <div className="min-w-0">
           <div className={cn("text-[11px] font-semibold uppercase tracking-wide", AREA_COLOR[it.area])}>{it.area}</div>
-          <div className="font-medium leading-snug">{it.title}</div>
+          <div className="font-medium leading-snug group-hover:text-[color:var(--brand)] group-hover:underline">{it.title}</div>
           <div className="mt-0.5 text-sm text-[color:var(--muted)]">{it.detail}</div>
         </div>
-      </div>
+      </Link>
       <div className="flex w-full items-center gap-2 sm:w-auto">
         {q?.kind === "task" ? (
           <>
