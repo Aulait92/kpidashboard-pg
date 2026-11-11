@@ -149,3 +149,16 @@ describe("Bank: Enable Banking", () => {
     expect(fromEnableBanking({ ...base, credit_debit_indicator: "DBIT", status: "PDNG" })).toBeNull();
   });
 });
+
+describe("Regeln: Gegenpartei vor Verwendungszweck", () => {
+  it("Privat-Regel auf den eigenen Namen fängt keine Rechnung mit dem Namen im Text", async () => {
+    const { matchRule, suggestPattern } = await import("@/lib/bank/rules");
+    const own = [
+      { pattern: "ole kannapinn", action: "ignore" as const },
+      { pattern: "xing", action: "akquise" as const },
+    ];
+    expect(matchRule({ counterparty: "XING SE + Co. KG", purpose: "XING PRM123 Ole Kannapinn Vielen Dank" }, own)?.action).toBe("akquise");
+    expect(matchRule({ counterparty: "Ole Kannapinn", purpose: "Umbuchung privat" }, own)?.action).toBe("ignore");
+    expect(suggestPattern({ counterparty: "XING SE + Co. KG" })).toBe("xing");
+  });
+});

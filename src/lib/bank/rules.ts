@@ -69,12 +69,15 @@ const norm = (s: string | null | undefined) => (s ?? "").toLowerCase().replace(/
 
 /** Passende Regel: eigene vor Standard, längeres Muster vor kürzerem. */
 export function matchRule(tx: { counterparty?: string | null; purpose?: string | null }, ownRules: Rule[], defaults: Rule[] = DEFAULT_RULES): Rule | null {
-  const hay = `${norm(tx.counterparty)} | ${norm(tx.purpose)}`;
-  const hit = (rules: Rule[]) =>
+  // Treffer in der Gegenpartei gehen vor Treffern im Verwendungszweck
+  // (sonst fängt z. B. eine Privat-Regel „ole kannapinn“ jede Rechnung, in deren Text der Name steht).
+  const hitIn = (hay: string, rules: Rule[]) =>
     rules
       .filter((r) => r.pattern.trim() && hay.includes(norm(r.pattern).trim()))
       .sort((a, b) => b.pattern.length - a.pattern.length)[0] ?? null;
-  return hit(ownRules) ?? hit(defaults);
+  const cp = norm(tx.counterparty);
+  const all = `${cp} | ${norm(tx.purpose)}`;
+  return (cp ? hitIn(cp, ownRules) : null) ?? (cp ? hitIn(cp, defaults) : null) ?? hitIn(all, ownRules) ?? hitIn(all, defaults);
 }
 
 /** Kostenbetrag (positiv, netto) aus einer Buchung. Einnahmen → 0. */
@@ -104,7 +107,7 @@ export function suggestPattern(tx: { counterparty?: string | null; purpose?: str
       .toLowerCase()
       .replace(/[0-9]{3,}[\w./-]*/g, " ")
       .replace(/\b(gmbh|ag|inc|ltd|llc|se|co|kg|bv|sarl|ireland|limited|europe|eu|de)\b\.?/g, " ")
-      .replace(/[*#,;:()]/g, " ")
+      .replace(/[*#,;:()+&]/g, " ")
       .replace(/\s+/g, " ")
       .trim();
   const c = clean(tx.counterparty ?? "");
