@@ -25,7 +25,7 @@ Unterauftragsverarbeiter (Anlage 2) in `src/lib/legal-texts.ts`, öffentlich unt
 
 | Tätigkeit | Zweck | Betroffene / Daten | Rechtsgrundlage | Empfänger | Löschung |
 |---|---|---|---|---|---|
-| Vertrieb an Versicherungsvermittler | Neukunden gewinnen | Vermittler (B2B): Name, Firma, Kontaktdaten, Verlauf, E-Mails, Termine | Art. 6 Abs. 1 f; Kalt-E-Mails **Prüfen** (§ 7 UWG, mutmaßliche Einwilligung B2B) | Instantly, Calendly, Resend, Railway | Widerspruch: sofort (Kontakt löschen). Sonst siehe Löschkonzept |
+| Vertrieb an Versicherungsvermittler | Neukunden gewinnen | Vermittler (B2B): Name, Firma, Kontaktdaten (fehlende Anschrift/Telefon automatisch aus dem öffentlichen Impressum der Agentur-Website ergänzt, nur leere Felder, Quelle im Verlauf), Verlauf, E-Mails, Termine | Art. 6 Abs. 1 f; Kalt-E-Mails **Prüfen** (§ 7 UWG, mutmaßliche Einwilligung B2B) | Instantly, Calendly, Resend, Railway | Widerspruch: sofort (Kontakt löschen). Sonst siehe Löschkonzept |
 | Angebote und Verträge | Vertragsschluss | Kunde: Name, Firma, Anschrift, Annahme-Protokoll (Name, IP, Browser, Zeit) | Art. 6 Abs. 1 b, c | Stripe, Resend, Railway | 10 Jahre (§ 147 AO, § 257 HGB) |
 | Abrechnung, Mahnwesen | Zahlungen | Kunde: Rechnungsdaten, Zahlungsstatus (Bankdaten nur bei Stripe) | Art. 6 Abs. 1 b, c | Stripe | 10 Jahre |
 | Onboarding, Feedback | Einrichtung, Qualität | Kunde: Fragebogen, Impressumsangaben der Website, Bewertungen | Art. 6 Abs. 1 b, f | Anthropic (Impressum auslesen), Resend | mit dem Kundenkonto |

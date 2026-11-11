@@ -35,6 +35,13 @@ enthalten. Der Merge ist konfliktfrei.
 | `20261113130000_abwesenheit` | Tabelle `UserAbsence` („Ich bin abwesend“: von–bis, Grund-Kategorie, Vertretung, verschobene Aufgaben zum Rückgängigmachen) | über den Schema-Abgleich, nur hinzufügend |
 | `20261113140000_makler_angebot` | Spalte `Offer.vermittlerTyp` (Standard „vertreter“): Makler-Angebote mit Vertrags-Garantie | über den Schema-Abgleich, nur hinzufügend |
 
+**Nach dem Livegang (11.11.) dazugekommen** – laufen beim nächsten Deploy normal über
+`prisma migrate deploy` (kein Einmessen mehr nötig):
+
+| Migration | Was | Hinweis |
+|---|---|---|
+| `20261114100000_adresse_anreichern` | Spalten `SalesContact.addressEnrichTriedAt`, `addressEnrichedAt` (Adresse aus Impressum ergänzt) | nur hinzufügend; der Nachhol-Lauf im WhatsApp-Cron arbeitet danach gedrosselt (10 Kontakte je Lauf, `ADDRESS_ENRICH_PER_RUN`), abschaltbar mit `ADDRESS_ENRICH=off` |
+
 Keine davon verändert bestehende Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und
 KI-Hilfe, die brauchen keine Migration).

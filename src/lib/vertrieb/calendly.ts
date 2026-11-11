@@ -3,6 +3,7 @@
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { Matcher } from "@/lib/vertrieb/linkedin";
+import { scheduleAddressEnrichment } from "@/lib/vertrieb/address-enrich";
 import { fmtDateTime } from "@/lib/vertrieb/dates";
 import type { SalesStage as Stage } from "@/generated/prisma/enums";
 
@@ -77,6 +78,7 @@ async function findOrCreateContact(inv: Invitee, matcher: Matcher): Promise<{ id
       description: "Über Calendly-Buchung angelegt",
     },
   });
+  await scheduleAddressEnrichment(c.id);
   return { id: c.id, created: true };
 }
 

@@ -1019,6 +1019,9 @@ model SalesContact {
   openingHours String?
   url          String?
   description  String?
+  // Adresse aus dem Impressum ergänzt (einmal automatisch versucht)
+  addressEnrichTriedAt DateTime?
+  addressEnrichedAt    DateTime?
 
   // Ansprechpartner & Zusatzinfos (aus der Instantly-Mailingliste)
   salutation     String?

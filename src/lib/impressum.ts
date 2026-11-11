@@ -26,12 +26,16 @@ export type ImpressumInfo = {
   checkedAt: string;
 };
 
-function normalizeUrl(raw: string): URL | null {
+const PRIVATE_HOST = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|0\.)/i;
+const PRIVATE_V6 = /^(::1?$|f[cd]|fe[89ab]|::ffff:)/i;
+
+/** Website-Angabe → URL (nur http/https, keine internen Ziele). */
+export function normalizeUrl(raw: string): URL | null {
   try {
     const u = new URL(/^https?:\/\//i.test(raw.trim()) ? raw.trim() : `https://${raw.trim()}`);
     if (!["http:", "https:"].includes(u.protocol)) return null;
     // Keine internen Ziele (Schutz vor Anfragen ins eigene Netz).
-    if (/^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|0\.|\[?::1)/i.test(u.hostname) || u.hostname.endsWith(".internal")) {
+    if (PRIVATE_HOST.test(u.hostname) || u.hostname.startsWith("[") || u.hostname.endsWith(".internal") || u.hostname.endsWith(".local") || !u.hostname.includes(".")) {
       return null;
     }
     return u;
@@ -40,10 +44,31 @@ function normalizeUrl(raw: string): URL | null {
   }
 }
 
-async function fetchHtml(url: string): Promise<string | null> {
+/** Löst der Name auf eine interne Adresse auf? (Schutz gegen DNS-Tricks) */
+async function resolvesPrivate(hostname: string): Promise<boolean> {
   try {
-    const res = await fetch(url, { headers: { "user-agent": UA, accept: "text/html" }, redirect: "follow", signal: AbortSignal.timeout(10000) });
+    const { lookup } = await import("node:dns/promises");
+    const addrs = await lookup(hostname, { all: true });
+    return addrs.some((a) => (a.family === 6 ? PRIVATE_V6.test(a.address) : PRIVATE_HOST.test(a.address)));
+  } catch {
+    return true; // nicht auflösbar → nicht abrufen
+  }
+}
+
+const MAX_BYTES = 1_500_000;
+
+async function fetchHtml(url: string, timeoutMs = 10000): Promise<string | null> {
+  try {
+    const u = normalizeUrl(url);
+    if (!u || (await resolvesPrivate(u.hostname))) return null;
+    const res = await fetch(u.toString(), { headers: { "user-agent": UA, accept: "text/html" }, redirect: "follow", signal: AbortSignal.timeout(timeoutMs) });
     if (!res.ok || !(res.headers.get("content-type") ?? "").includes("html")) return null;
+    // Nach Weiterleitungen nochmals prüfen, dass das Ziel öffentlich ist.
+    if (res.url && res.url !== u.toString()) {
+      const final = normalizeUrl(res.url);
+      if (!final || (await resolvesPrivate(final.hostname))) return null;
+    }
+    if (Number(res.headers.get("content-length") ?? 0) > MAX_BYTES) return null;
     return (await res.text()).slice(0, 600_000);
   } catch {
     return null;
@@ -62,7 +87,7 @@ function links(html: string, base: string): { href: string; text: string }[] {
   return out;
 }
 
-function htmlToText(html: string): string {
+export function htmlToText(html: string): string {
   return html
     .replace(/<(script|style|noscript|svg)[\s\S]*?<\/\1>/gi, " ")
     .replace(/<br\s*\/?>/gi, "\n")
@@ -87,6 +112,38 @@ const FIELDS = {
   chamber: "Zuständige Registerstelle/IHK",
 } as const;
 
+/**
+ * Impressum einer Website laden: Startseite → Link „Impressum“ (bevorzugt auf
+ * derselben Seite/demselben Pfad, z. B. vertretung.allianz.de/<name>/…),
+ * sonst …/impressum. Liefert den Text (ohne KI).
+ */
+export async function fetchImpressumText(
+  website: string,
+  opts: { timeoutMs?: number } = {},
+): Promise<{ impressumUrl: string; privacyUrl: string | null; text: string } | { error: string; privacyUrl?: string | null }> {
+  const base = normalizeUrl(website);
+  if (!base) return { error: "Keine (gültige) Website hinterlegt." };
+  const home = await fetchHtml(base.toString(), opts.timeoutMs);
+  if (!home) return { error: "Website nicht erreichbar." };
+  const all = links(home, base.toString());
+  const basePath = base.pathname.replace(/\/+$/, "");
+  const isImpressum = (l: { href: string; text: string }) => /impressum|imprint/i.test(l.href) || /impressum/i.test(l.text);
+  const sameSite = (l: { href: string }) => {
+    try {
+      const u = new URL(l.href);
+      return u.hostname === base.hostname && (!basePath || u.pathname.startsWith(basePath));
+    } catch {
+      return false;
+    }
+  };
+  const fallback = basePath ? new URL("impressum/", `${base.origin}${basePath}/`).toString() : new URL("/impressum", base).toString();
+  const impressumUrl = all.find((l) => isImpressum(l) && sameSite(l))?.href ?? all.find(isImpressum)?.href ?? fallback;
+  const privacyUrl = all.find((l) => /datenschutz|privacy/i.test(l.href) || /datenschutz/i.test(l.text))?.href ?? null;
+  const impressumHtml = await fetchHtml(impressumUrl, opts.timeoutMs);
+  if (!impressumHtml) return { error: "Impressum nicht gefunden.", privacyUrl };
+  return { impressumUrl, privacyUrl, text: htmlToText(impressumHtml).slice(0, 20000) };
+}
+
 export async function readImpressum(website: string | null | undefined): Promise<ImpressumInfo> {
   const empty: ImpressumInfo = {
     sourceUrl: website ?? null,
@@ -103,18 +160,10 @@ export async function readImpressum(website: string | null | undefined): Promise
     missing: [],
     checkedAt: new Date().toISOString(),
   };
-  const base = website ? normalizeUrl(website) : null;
-  if (!base) return { ...empty, error: "Keine (gültige) Website hinterlegt." };
-
-  const home = await fetchHtml(base.toString());
-  if (!home) return { ...empty, error: "Website nicht erreichbar." };
-  const all = links(home, base.toString());
-  const impressumUrl =
-    all.find((l) => /impressum|imprint/i.test(l.href) || /impressum/i.test(l.text))?.href ?? new URL("/impressum", base).toString();
-  const privacyUrl = all.find((l) => /datenschutz|privacy/i.test(l.href) || /datenschutz/i.test(l.text))?.href ?? null;
-  const impressumHtml = await fetchHtml(impressumUrl);
-  if (!impressumHtml) return { ...empty, privacyUrl, error: "Impressum nicht gefunden." };
-  const text = htmlToText(impressumHtml).slice(0, 20000);
+  if (!website) return { ...empty, error: "Keine (gültige) Website hinterlegt." };
+  const page = await fetchImpressumText(website);
+  if ("error" in page) return { ...empty, privacyUrl: page.privacyUrl ?? null, error: page.error };
+  const { impressumUrl, privacyUrl, text } = page;
 
   if (!process.env.ANTHROPIC_API_KEY) return { ...empty, impressumUrl, privacyUrl, error: "ANTHROPIC_API_KEY fehlt. Bitte von Hand prüfen." };
   try {

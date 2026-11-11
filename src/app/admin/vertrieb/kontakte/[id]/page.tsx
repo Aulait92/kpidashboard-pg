@@ -10,7 +10,7 @@ import { Mail, Phone } from "lucide-react";
 import { ActivityForm } from "@/components/vertrieb/activity-form";
 import { Collapsible } from "@/components/vertrieb/collapsible";
 import { TaskForm } from "@/components/vertrieb/task-form";
-import { addReplyManually, deleteActivity, linkContactCustomer, updateActivity, setReplySentiment, updateCustomer, updateLinkedIn } from "@/app/admin/vertrieb/actions";
+import { addReplyManually, deleteActivity, enrichAddressAction, linkContactCustomer, updateActivity, setReplySentiment, updateCustomer, updateLinkedIn } from "@/app/admin/vertrieb/actions";
 import { LI_LABEL, LI_STATUSES } from "@/lib/vertrieb/linkedin";
 import { ConfirmButton } from "@/components/vertrieb/confirm-button";
 import { taskInclude } from "@/lib/vertrieb/queries";
@@ -94,7 +94,15 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
             {c.customerSource && <span className={`badge ${SOURCE_COLOR[c.customerSource]}`}>über {SOURCE_LABEL[c.customerSource]}</span>}
             {c.lossReason && <span className="badge bg-rose-50 text-rose-700">{LOSS_LABEL[c.lossReason]}</span>}
             {c.competitor && <span className="badge bg-slate-100 text-slate-600">{c.competitor}</span>}
-            <span>{c.street}, {c.zip} {c.city}</span>
+            {(c.street || c.zip || c.city) && <span>{[c.street, [c.zip, c.city].filter(Boolean).join(" ")].filter(Boolean).join(", ")}</span>}
+            {(!c.street || !c.zip || !c.city) && (
+              <form action={enrichAddressAction}>
+                <input type="hidden" name="id" value={c.id} />
+                <button className="text-xs text-[color:var(--brand)] hover:underline" title="Adresse aus dem Impressum der Agentur-Website ergänzen (nur leere Felder)">
+                  Adresse ergänzen
+                </button>
+              </form>
+            )}
             <span>{c.callAttempts} Anrufversuch{c.callAttempts === 1 ? "" : "e"}</span>
           </div>
         </div>

@@ -6,6 +6,7 @@ import { Matcher, flatten, norm } from "@/lib/vertrieb/linkedin";
 import type { Prisma } from "@/generated/prisma/client";
 import { SOURCE_LABEL } from "@/lib/vertrieb/crm";
 import { normalizeLinkedInUrl } from "@/lib/vertrieb/linkedin";
+import { scheduleAddressEnrichment } from "@/lib/vertrieb/address-enrich";
 
 const K = {
   email: ["email", "emailadresse", "mail", "eMail", "workemail", "businessemail"],
@@ -154,6 +155,8 @@ export async function handleInboundLead(raw: unknown, source = "META_ADS", opts:
       });
       contactId = c.id;
       created = true;
+      // Adresse aus dem Impressum ergänzen (im Hintergrund, blockiert nichts)
+      await scheduleAddressEnrichment(c.id);
     }
   }
 

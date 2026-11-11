@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { checkAppointmentResponses } from "@/lib/calendar";
 import { runOutreach } from "@/lib/whatsapp/outreach";
 import { runReminders } from "@/lib/whatsapp/reminders";
@@ -14,6 +15,7 @@ import { reportError } from "@/lib/monitoring";
 import { runOnboardingCron } from "@/lib/onboarding-cron";
 import { beat } from "@/lib/heartbeat";
 import { runGarantien } from "@/lib/garantien-server";
+import { enrichPendingAddresses } from "@/lib/vertrieb/address-enrich";
 
 // Zentraler Cron (z. B. cron-job.org alle 5 Minuten):
 //   1. Erstanschreiben neuer Leads ohne Termin
@@ -105,6 +107,11 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-sequences");
     return { error: e instanceof Error ? e.message : String(e) };
   });
+  // Vertrieb: fehlende Adressen aus dem Impressum nachholen – nach der Antwort,
+  // damit der Cron nicht auf langsame Websites wartet (gedrosselt, je Kontakt einmal).
+  after(() =>
+    enrichPendingAddresses(Number(process.env.ADDRESS_ENRICH_PER_RUN ?? 10)).catch((e: unknown) => reportError(e, "cron-addresses")),
+  );
   const failed = Object.entries({ outreach, responses, reminders, onboarding, sequences })
     .filter(([, r]) => r && typeof r === "object" && "error" in r)
     .map(([k]) => k);
