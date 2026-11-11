@@ -199,7 +199,7 @@ export async function syncInstantlyAction(prev: ImportState): Promise<ImportStat
     refresh();
     return {
       ok: true,
-      message: `${r.campaigns} Kampagnen, ${r.leads} Leads: ${r.matched} zugeordnet, ${r.sent} mit gesendeter Mail, ${r.replies} mit Antwort (${r.newReplies} neue Antwort-Mails gespeichert), ${r.unmatched} nicht in der Kontaktliste.`,
+      message: `${r.campaigns} Kampagnen, ${r.leads} Leads: ${r.matched} zugeordnet, ${r.sent} mit gesendeter Mail, ${r.replies} mit Antwort (${r.newReplies} neue Antwort-Mails gespeichert), ${r.created} neu im CRM angelegt, ${r.unmatched} noch nicht angeschrieben und nicht im CRM.`,
     };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : String(e) };

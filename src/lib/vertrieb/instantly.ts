@@ -40,7 +40,48 @@ type ApiLead = {
   timestamp_last_open: string | null;
   timestamp_last_reply: string | null;
   lt_interest_status?: number;
+  first_name?: string | null;
+  last_name?: string | null;
+  company_name?: string | null;
+  website?: string | null;
+  phone?: string | null;
 };
+
+/**
+ * Kontakt für eine Instantly-Adresse, die (noch) nicht im CRM ist – z. B. eine
+ * Liste, die direkt in Instantly hochgeladen wurde (Signal Iduna o. ä.).
+ * Vorher wurden solche Antworten verworfen.
+ */
+export async function ensureInstantlyContact(
+  rawEmail: string,
+  lead: { firstName?: unknown; lastName?: unknown; company?: unknown; website?: unknown; phone?: unknown },
+  campaignName: string,
+): Promise<{ id: string; created: boolean }> {
+  const email = rawEmail.trim().toLowerCase();
+  const existing = await findContactIdByEmail(email);
+  if (existing) return { id: existing, created: false };
+  const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
+  const firstName = str(lead.firstName);
+  const lastName = str(lead.lastName);
+  const company = str(lead.company);
+  const person = [firstName, lastName].filter(Boolean).join(" ");
+  const website = str(lead.website);
+  const c = await prisma.salesContact.upsert({
+    where: { email },
+    create: {
+      email,
+      name: company ?? (person || email),
+      firstName,
+      lastName,
+      phone: str(lead.phone),
+      url: website ? (/^https?:\/\//i.test(website) ? website : `https://${website}`) : null,
+      description: `Über Instantly angelegt (Kampagne „${campaignName}“)`,
+    },
+    update: {},
+  });
+  await prisma.salesActivity.create({ data: { contactId: c.id, type: "IMPORT", note: `Aus Instantly übernommen (Kampagne „${campaignName}“)` } });
+  return { id: c.id, created: true };
+}
 
 async function upsertCampaign(name: string, instantlyId?: string) {
   if (instantlyId) {
@@ -59,11 +100,11 @@ async function contactMap(emails: string[]) {
   return contactIdsByEmails(emails);
 }
 
-export type SyncStats = { campaigns: number; leads: number; matched: number; unmatched: number; sent: number; replies: number; newReplies: number };
+export type SyncStats = { campaigns: number; leads: number; matched: number; unmatched: number; created: number; sent: number; replies: number; newReplies: number };
 
 /** Holt alle Kampagnen + Leads aus Instantly (API v2) und gleicht per E-Mail ab. */
 export async function syncInstantly(): Promise<SyncStats> {
-  const stats: SyncStats = { campaigns: 0, leads: 0, matched: 0, unmatched: 0, sent: 0, replies: 0, newReplies: 0 };
+  const stats: SyncStats = { campaigns: 0, leads: 0, matched: 0, unmatched: 0, created: 0, sent: 0, replies: 0, newReplies: 0 };
   const campaigns: ApiCampaign[] = [];
   let cursor: string | undefined;
   do {
@@ -88,10 +129,16 @@ export async function syncInstantly(): Promise<SyncStats> {
       stats.leads += leads.length;
       const ids = await contactMap(leads.map((l) => l.email!.toLowerCase()));
       for (const l of leads) {
-        const contactId = ids.get(l.email!.toLowerCase());
+        let contactId = ids.get(l.email!.toLowerCase());
         if (!contactId) {
-          stats.unmatched++;
-          continue;
+          // Nicht im CRM (z. B. Liste direkt in Instantly): anlegen, sobald angeschrieben oder geantwortet
+          if (!l.timestamp_last_contact && !(l.email_reply_count > 0)) {
+            stats.unmatched++;
+            continue;
+          }
+          const made = await ensureInstantlyContact(l.email!, { firstName: l.first_name, lastName: l.last_name, company: l.company_name, website: l.website, phone: l.phone }, c.name);
+          contactId = made.id;
+          if (made.created) stats.created++;
         }
         stats.matched++;
         const sentAt = l.timestamp_last_contact ? new Date(l.timestamp_last_contact) : null;
@@ -112,7 +159,8 @@ export async function syncInstantly(): Promise<SyncStats> {
       }
     } while (after);
   }
-  stats.newReplies = await syncReplies();
+  // Neu angelegte Kontakte: alle Antworten holen (auch ältere als die zuletzt gespeicherte)
+  stats.newReplies = await syncReplies(stats.created > 0);
   await fixDeclinedReplies().catch(() => 0);
   return stats;
 }
@@ -134,8 +182,8 @@ type ApiEmail = {
 };
 
 /** Holt empfangene E-Mails (Antworten) aus der Instantly-Unibox und speichert sie am Kontakt. */
-export async function syncReplies(): Promise<number> {
-  const last = await prisma.salesEmail.findFirst({ where: { direction: "IN", instantlyId: { not: null } }, orderBy: { sentAt: "desc" } });
+export async function syncReplies(full = false): Promise<number> {
+  const last = full ? null : await prisma.salesEmail.findFirst({ where: { direction: "IN", instantlyId: { not: null } }, orderBy: { sentAt: "desc" } });
   const since = last ? new Date(last.sentAt.getTime() - 3 * 86400000) : null;
   const campaignNames = new Map((await prisma.salesCampaign.findMany({ where: { instantlyId: { not: null } } })).map((c) => [c.instantlyId!, c.name]));
   let created = 0;
@@ -149,8 +197,14 @@ export async function syncReplies(): Promise<number> {
     const ids = await contactMap(page.items.map((e) => (e.lead ?? e.from_address_email ?? "").toLowerCase()).filter(Boolean));
     for (const e of page.items) {
       if (e.ue_type != null && e.ue_type !== 2) continue;
-      const contactId = ids.get((e.lead ?? e.from_address_email ?? "").toLowerCase());
-      if (!contactId) continue;
+      const leadEmail = (e.lead ?? e.from_address_email ?? "").toLowerCase();
+      let contactId = ids.get(leadEmail);
+      if (!contactId) {
+        // Antwort aus einer Kampagne, deren Liste nicht im CRM ist: Kontakt anlegen (nicht für Abwesenheitsnotizen)
+        if (!e.campaign_id || e.is_auto_reply === 1 || !leadEmail) continue;
+        contactId = (await ensureInstantlyContact(leadEmail, {}, campaignNames.get(e.campaign_id) ?? "Instantly")).id;
+        ids.set(leadEmail, contactId);
+      }
       const isNew = await recordReply(contactId, {
         instantlyId: e.id,
         subject: e.subject,
@@ -427,15 +481,34 @@ export async function importInstantlyCsv(text: string, campaignName: string) {
   return stats;
 }
 
+// Ereignisse, bei denen ein unbekannter Instantly-Kontakt im CRM angelegt wird
+const CREATE_ON = new Set(["email_sent", "reply_received", "lead_interested", "lead_meeting_booked", "lead_not_interested", "lead_wrong_person"]);
+
 /** Instantly-Webhook (email_sent, email_opened, reply_received, email_bounced, lead_unsubscribed …) */
 export async function handleWebhook(p: Record<string, unknown>) {
   const email = String(p.lead_email ?? "").trim().toLowerCase();
   const type = String(p.event_type ?? "");
   if (!email || !type) return { ignored: "missing lead_email/event_type" };
-  const contactId = await findContactIdByEmail(email);
-  if (!contactId) return { ignored: "unknown contact" };
-  const contact = { id: contactId };
   const name = String(p.campaign_name ?? "Instantly");
+  let contactId = await findContactIdByEmail(email);
+  if (!contactId) {
+    // Unbekannte Adresse (Liste direkt in Instantly): bei echter Interaktion anlegen
+    if (!CREATE_ON.has(type)) return { ignored: "unknown contact" };
+    contactId = (
+      await ensureInstantlyContact(
+        email,
+        {
+          firstName: p.firstName ?? p.first_name,
+          lastName: p.lastName ?? p.last_name,
+          company: p.companyName ?? p.company_name,
+          website: p.website,
+          phone: p.phone,
+        },
+        name,
+      )
+    ).id;
+  }
+  const contact = { id: contactId };
   const campaign = await upsertCampaign(name, p.campaign_id ? String(p.campaign_id) : undefined);
   const at = p.timestamp ? new Date(String(p.timestamp)) : new Date();
   const key = { contactId_campaignId: { contactId: contact.id, campaignId: campaign.id } };
