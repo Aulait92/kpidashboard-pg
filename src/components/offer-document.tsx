@@ -380,7 +380,7 @@ export function OfferDocument({
             <H3>2.2 Ihre Garantien</H3>
             <p className="text-[#374151]">
               <strong>Lead-Garantie:</strong> Bei mindestens 20 € Werbebudget pro Tag bekommen Sie in den ersten 30 Tagen nach
-              Kampagnenstart mindestens 100 Leads. Sonst ist die Betreuung im Folgemonat kostenlos.
+              Kampagnenstart mindestens 100 Leads. Sonst sind Betreuung und Software im Folgemonat kostenlos.
             </p>
             <p className="mt-2 text-[#374151]">
               <strong>Break-even-Garantie (für Vertreter):</strong> Liegt Ihre Provision nach 90 Tagen unter Ihren Kosten für Werbung und
