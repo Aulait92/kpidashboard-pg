@@ -2,15 +2,17 @@
 
 import { useActionState } from "react";
 import { Loader2 } from "lucide-react";
-import { confirmTotpAction, disableTotpAction, type TotpState } from "./actions";
+import type { TotpState } from "@/lib/totp-account";
+
+type FormAction = (prev: TotpState, fd: FormData) => Promise<TotpState>;
 
 const codeInput =
   "h-12 w-40 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white text-center text-xl tracking-[0.3em] outline-none focus:border-[color:var(--brand)]";
 const btn =
   "inline-flex h-12 items-center gap-2 rounded-[var(--radius-sm)] px-5 text-sm font-semibold transition disabled:opacity-60";
 
-export function ConfirmTotpForm() {
-  const [state, action, pending] = useActionState<TotpState, FormData>(confirmTotpAction, {});
+export function ConfirmTotpForm({ confirmAction, doneHref }: { confirmAction: FormAction; doneHref: string }) {
+  const [state, action, pending] = useActionState<TotpState, FormData>(confirmAction, {});
   if (state.backupCodes) {
     return (
       <div className="space-y-3">
@@ -26,7 +28,7 @@ export function ConfirmTotpForm() {
             </span>
           ))}
         </div>
-        <a href="/admin/einstellungen/sicherheit" className="inline-flex h-11 items-center rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 text-sm font-semibold text-white">
+        <a href={doneHref} className="inline-flex h-11 items-center rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 text-sm font-semibold text-white">
           Gesichert, fertig
         </a>
       </div>
@@ -44,13 +46,13 @@ export function ConfirmTotpForm() {
   );
 }
 
-export function DisableTotpForm() {
-  const [state, action, pending] = useActionState<TotpState, FormData>(disableTotpAction, {});
+export function DisableTotpForm({ disableAction }: { disableAction: FormAction }) {
+  const [state, action, pending] = useActionState<TotpState, FormData>(disableAction, {});
   return (
     <details className="text-sm">
       <summary className="cursor-pointer text-[color:var(--muted)]">Zwei-Faktor-Login ausschalten</summary>
       <form action={action} className="mt-3 flex flex-wrap items-center gap-3">
-        <input name="code" inputMode="numeric" required placeholder="123456" className={codeInput} />
+        <input name="code" inputMode="numeric" autoComplete="one-time-code" required placeholder="123456" className={codeInput} />
         <button type="submit" disabled={pending} className={`${btn} border border-rose-200 bg-white text-rose-700`}>
           Ausschalten
         </button>

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getCurrentSession, setSessionCookie, type SessionPayload } from "@/lib/auth";
+import { getCurrentSession, sessionPayloadFor, setSessionCookie } from "@/lib/auth";
 import { createHandoff, redeemHandoff, safeNext } from "@/lib/app-handoff";
 import { publicOrigin } from "@/lib/calendar/oauth-routes";
 import { prisma } from "@/lib/prisma";
@@ -21,9 +21,9 @@ export async function GET(req: Request): Promise<never> {
   const t = new URL(req.url).searchParams.get("t") ?? "";
   const hit = await redeemHandoff(t);
   if (!hit) redirect("/login?fehler=abgelaufen");
-  const user = await prisma.user.findUnique({ where: { id: hit.userId }, select: { id: true, email: true, role: true, customerId: true } });
+  const user = await prisma.user.findUnique({ where: { id: hit.userId }, select: { id: true, email: true, role: true, customerId: true, sessionVersion: true } });
   if (!user) redirect("/login");
-  const payload: SessionPayload = { userId: user.id, email: user.email, role: user.role as SessionPayload["role"], ...(user.customerId ? { customerId: user.customerId } : {}) };
+  const payload = sessionPayloadFor(user);
   // Cookie über next/headers setzen; redirect() übernimmt es in die Antwort (wie beim SSO-Login).
   await setSessionCookie(payload);
   redirect(hit.next);

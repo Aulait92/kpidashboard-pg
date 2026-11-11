@@ -13,6 +13,8 @@ export const AUDIT_LABEL: Record<string, string> = {
   "login.failed": "Anmeldung fehlgeschlagen",
   "2fa.enable": "Zwei-Faktor eingeschaltet",
   "2fa.disable": "Zwei-Faktor ausgeschaltet",
+  "session.revoke_all": "Überall abgemeldet",
+  "password.reset_self": "Passwort per Link geändert",
   "user.create": "Login angelegt",
   "user.delete": "Login gelöscht",
   "user.password_reset": "Passwort zurückgesetzt",

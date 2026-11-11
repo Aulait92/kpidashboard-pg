@@ -1,9 +1,13 @@
+import { limitResponse } from "@/lib/rate-limit";
 import { handleInboundLead } from "@/lib/vertrieb/inbound";
 
 // Lead-Eingang für Meta Lead Ads (über Zapier/Make) und Landingpage-Formulare.
 // https://<deine-domain>/api/vertrieb/leads/webhook?token=<WEBHOOK_TOKEN>&source=META_ADS
 // source = META_ADS (Standard) oder INBOUND (Website-Formular)
 export async function POST(req: Request) {
+  // Nur grobe Obergrenze (Absender schicken Bursts; Echtheit prüft die Signatur/das Token)
+  const limited = limitResponse("webhook", "vertrieb-leads");
+  if (limited) return limited;
   const url = new URL(req.url);
   const token = url.searchParams.get("token") ?? req.headers.get("x-webhook-token");
   if (!process.env.VERTRIEB_WEBHOOK_TOKEN || token !== process.env.VERTRIEB_WEBHOOK_TOKEN) {

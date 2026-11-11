@@ -1,6 +1,7 @@
 "use server";
 
 import { consumePasswordResetToken } from "@/lib/auth";
+import { checkLimit, requestIp } from "@/lib/rate-limit";
 
 export type ResetPasswordState = {
   ok?: boolean;
@@ -14,6 +15,9 @@ export async function resetPasswordAction(
   const token = String(formData.get("token") ?? "");
   const password = String(formData.get("password") ?? "");
   const confirm = String(formData.get("confirm") ?? "");
+  if (!checkLimit("passwordReset", `reset:${await requestIp()}`).ok) {
+    return { error: "Zu viele Versuche. Bitte in ein paar Minuten noch einmal versuchen." };
+  }
 
   if (password !== confirm) {
     return { error: "Die beiden Passwörter sind nicht identisch." };

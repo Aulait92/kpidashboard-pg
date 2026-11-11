@@ -1,3 +1,4 @@
+import { isCronAuthorized } from "@/lib/cron-auth";
 import { after } from "next/server";
 import { checkAppointmentResponses } from "@/lib/calendar";
 import { runOutreach } from "@/lib/whatsapp/outreach";
@@ -27,17 +28,13 @@ import { syncTemplates } from "@/lib/whatsapp/template-submit";
 //   2. Termin-Erinnerungen ~24 h vorher
 //   3. Onboarding-Automatik (siehe lib/onboarding-cron.ts)
 //   4. Nachfass-Abfolgen (siehe lib/lead-sequences.ts)
-// Per WHATSAPP_WEBHOOK_SECRET gesichert (?token= oder x-webhook-secret).
+// Per WHATSAPP_WEBHOOK_SECRET gesichert: Header „Authorization: Bearer …“ oder
+// x-cron-token (x-webhook-secret und ?token= nur noch im Übergang, lib/cron-auth.ts).
 export const dynamic = "force-dynamic";
 
+const LABEL = "whatsapp-cron";
 function authorized(req: Request): boolean {
-  const expected = process.env.WHATSAPP_WEBHOOK_SECRET;
-  if (!expected) return false;
-  const token =
-    new URL(req.url).searchParams.get("token") ??
-    req.headers.get("x-webhook-secret") ??
-    "";
-  return token === expected;
+  return isCronAuthorized(req, process.env.WHATSAPP_WEBHOOK_SECRET, { label: LABEL, legacyHeaders: ["x-webhook-secret"] });
 }
 
 async function handle(req: Request): Promise<Response> {

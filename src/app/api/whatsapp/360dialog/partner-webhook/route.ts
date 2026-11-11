@@ -1,3 +1,4 @@
+import { limitResponse } from "@/lib/rate-limit";
 import { reportError } from "@/lib/monitoring";
 import { retryPendingSelfConnect } from "@/lib/whatsapp/self-connect";
 import { syncTemplates } from "@/lib/whatsapp/template-submit";
@@ -10,6 +11,9 @@ import { syncTemplates } from "@/lib/whatsapp/template-submit";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request): Promise<Response> {
+  // Nur grobe Obergrenze (Absender schicken Bursts; Echtheit prüft die Signatur/das Token)
+  const limited = limitResponse("webhook", "360dialog-partner");
+  if (limited) return limited;
   const token = new URL(req.url).searchParams.get("token");
   const expected = process.env.WHATSAPP_WEBHOOK_SECRET;
   if (!expected || token !== expected) return Response.json({ error: "Unauthorized" }, { status: 401 });

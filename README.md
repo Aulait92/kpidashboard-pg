@@ -91,7 +91,7 @@ Kinderwunsch-Leads werden nur synchronisiert, wenn
 Täglich per Cron triggern (Token wie bei `/api/sync`):
 
 ```bash
-curl -X POST "https://.../api/media-buyer?token=$SYNC_TOKEN"
+curl -X POST -H "Authorization: Bearer $SYNC_TOKEN" "https://.../api/media-buyer"
 # Trockenlauf ohne Meta-Schreibzugriff: zusätzlich &dryRun=1
 ```
 

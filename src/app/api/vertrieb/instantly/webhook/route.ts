@@ -1,8 +1,12 @@
+import { limitResponse } from "@/lib/rate-limit";
 import { handleWebhook } from "@/lib/vertrieb/instantly";
 
 // Instantly → Settings → Integrations → Webhooks
 // URL: https://<deine-domain>/api/vertrieb/instantly/webhook?token=<WEBHOOK_TOKEN>
 export async function POST(req: Request) {
+  // Nur grobe Obergrenze (Absender schicken Bursts; Echtheit prüft die Signatur/das Token)
+  const limited = limitResponse("webhook", "instantly");
+  if (limited) return limited;
   const token = new URL(req.url).searchParams.get("token") ?? req.headers.get("x-webhook-token");
   if (!process.env.VERTRIEB_WEBHOOK_TOKEN || token !== process.env.VERTRIEB_WEBHOOK_TOKEN) {
     return Response.json({ error: "unauthorized" }, { status: 401 });

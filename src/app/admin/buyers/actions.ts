@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCurrentSession, hashPassword } from "@/lib/auth";
+import { getCurrentSession, hashPassword, invalidateUserSessions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 
@@ -89,6 +89,8 @@ export async function resetBuyerPassword(
     where: { id: userId },
     data: { passwordHash: await hashPassword(password) },
   });
+  // Neues Passwort → alle bestehenden Sitzungen dieses Logins beenden
+  await invalidateUserSessions(userId);
   await audit("user.password_reset", { entity: "User", entityId: userId });
   revalidatePath("/admin/buyers");
   revalidatePath("/admin/kunden", "layout");
@@ -127,6 +129,8 @@ export async function reassignBuyerCustomer(
     where: { id: userId },
     data: { customerId },
   });
+  // Kundenzuordnung steht im Sitzungs-Cookie → neu anmelden lassen
+  await invalidateUserSessions(userId);
   await audit("user.reassign", { entity: "User", entityId: userId, customerId });
   revalidatePath("/admin/buyers");
   revalidatePath("/admin/kunden", "layout");

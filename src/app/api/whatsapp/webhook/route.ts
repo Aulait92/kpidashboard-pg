@@ -1,3 +1,4 @@
+import { limitResponse } from "@/lib/rate-limit";
 import { handleInboundPayload } from "@/lib/whatsapp/gateway";
 import { reportError } from "@/lib/monitoring";
 
@@ -33,6 +34,9 @@ export async function GET(req: Request): Promise<Response> {
 }
 
 export async function POST(req: Request): Promise<Response> {
+  // Nur grobe Obergrenze (Absender schicken Bursts; Echtheit prüft die Signatur/das Token)
+  const limited = limitResponse("webhook", "whatsapp");
+  if (limited) return limited;
   if (!isAuthorized(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }

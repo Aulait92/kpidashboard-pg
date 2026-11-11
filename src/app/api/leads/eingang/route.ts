@@ -1,3 +1,4 @@
+import { limitResponse } from "@/lib/rate-limit";
 import { fromFlatPayload, ingestLead } from "@/lib/lead-intake";
 import { reportError } from "@/lib/monitoring";
 
@@ -8,6 +9,9 @@ import { reportError } from "@/lib/monitoring";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  // Nur grobe Obergrenze (Absender schicken Bursts; Echtheit prüft die Signatur/das Token)
+  const limited = limitResponse("webhook", "leads-eingang");
+  if (limited) return limited;
   const url = new URL(req.url);
   const token = url.searchParams.get("token") ?? req.headers.get("x-webhook-token");
   if (!process.env.LEAD_WEBHOOK_TOKEN || token !== process.env.LEAD_WEBHOOK_TOKEN) {

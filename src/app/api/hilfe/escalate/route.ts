@@ -2,6 +2,7 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { reportError } from "@/lib/monitoring";
 import { shortSummary } from "@/lib/support";
 import { contactEscalation, offerEscalation, type SupportChannel } from "@/lib/support-server";
+import { limitResponse } from "@/lib/rate-limit";
 
 // „Mit Mensch sprechen“ im Hilfe-Chat.
 // POST {questions?: string[], page?} → Weitergabe anbieten (Referenz + Kontakt-Links).
@@ -11,6 +12,8 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request): Promise<Response> {
   const ctx = await getBuyerContext();
   if (!ctx) return Response.json({ error: "Bitte neu anmelden." }, { status: 401 });
+  const limited = limitResponse("supportEscalation", ctx.userId ?? ctx.customerId);
+  if (limited) return limited;
   let body: { questions?: unknown; page?: unknown } = {};
   try {
     body = await req.json();
@@ -36,6 +39,7 @@ export async function POST(req: Request): Promise<Response> {
 export async function PATCH(req: Request): Promise<Response> {
   const ctx = await getBuyerContext();
   if (!ctx) return Response.json({ ok: false }, { status: 401 });
+  if (limitResponse("supportEscalation", `patch:${ctx.userId ?? ctx.customerId}`)) return Response.json({ ok: false }, { status: 429 });
   let body: { id?: unknown; channel?: unknown } = {};
   try {
     body = await req.json();

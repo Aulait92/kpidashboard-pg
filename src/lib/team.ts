@@ -45,7 +45,7 @@ export async function canAccessLead(ctx: TeamCtx, leadId: string): Promise<boole
 export async function teamMembers(customerId: string) {
   return prisma.user.findMany({
     where: { customerId, role: "BUYER" },
-    select: { id: true, email: true, displayName: true, teamRole: true, receivesLeads: true, lastLoginAt: true, createdAt: true, advisorCalendar: { select: { status: true, accountEmail: true } } },
+    select: { id: true, email: true, displayName: true, teamRole: true, receivesLeads: true, lastLoginAt: true, totpEnabledAt: true, createdAt: true, advisorCalendar: { select: { status: true, accountEmail: true } } },
     orderBy: [{ teamRole: "desc" }, { createdAt: "asc" }],
   });
 }

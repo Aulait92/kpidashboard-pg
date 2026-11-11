@@ -34,6 +34,7 @@ const PUBLIC_PREFIXES = [
   "/apple-icon",
   "/sw.js",
   "/favicon.ico",
+  "/api/csp-report", // CSP-Verstöße vom Browser (auch ohne Login)
   "/monitoring", // Sentry-Tunnel (Fehler-Reports vom Login-Screen ebenfalls erfassen)
 ];
 

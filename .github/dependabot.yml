@@ -1,0 +1,49 @@
+# Abhängigkeiten wöchentlich prüfen (Sicherheitsupdates kommen zusätzlich sofort).
+# Updates gruppiert, damit pro Woche nur wenige Pull Requests entstehen. Große
+# Versionssprünge (major) kommen einzeln und werden bewusst geprüft – kein
+# Ignorieren, damit auch Sicherheitsupdates für Major-Versionen ankommen.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    groups:
+      # Next.js + eslint-config-next immer zusammen (gleiche Version)
+      next:
+        patterns: ["next", "eslint-config-next", "@next/*"]
+      prisma:
+        patterns: ["prisma", "@prisma/*"]
+      sentry:
+        patterns: ["@sentry/*"]
+      minor-und-patch:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: npm
+    directory: /mobile
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 3
+    groups:
+      capacitor:
+        patterns: ["@capacitor/*", "@capacitor-*/*", "@capawesome/*"]
+      rest:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Berlin
+    groups:
+      actions:
+        patterns: ["*"]

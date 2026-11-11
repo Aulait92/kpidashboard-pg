@@ -1,3 +1,4 @@
+import { limitResponse } from "@/lib/rate-limit";
 import { fetchMetaLead, verifyMetaSignature } from "@/lib/meta-leads";
 import { fromMetaLead, ingestLead } from "@/lib/lead-intake";
 import { reportError } from "@/lib/monitoring";
@@ -23,6 +24,9 @@ export async function GET(req: Request) {
 type LeadgenChange = { field?: string; value?: { leadgen_id?: string; page_id?: string; form_id?: string } };
 
 export async function POST(req: Request) {
+  // Nur grobe Obergrenze (Absender schicken Bursts; Echtheit prüft die Signatur/das Token)
+  const limited = limitResponse("webhook", "meta-leadgen");
+  if (limited) return limited;
   const raw = await req.text();
   if (!verifyMetaSignature(raw, req.headers.get("x-hub-signature-256"))) {
     return Response.json({ error: "invalid signature" }, { status: 401 });

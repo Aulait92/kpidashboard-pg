@@ -36,7 +36,8 @@ const SECTIONS: { title: string; points: string[] }[] = [
     title: "Zugriffsschutz",
     points: [
       "Jede Person meldet sich mit einem eigenen Konto an. Fehlversuche bei der Anmeldung werden begrenzt, Sitzungen laufen automatisch ab.",
-      "Administratoren melden sich zusätzlich mit einem zweiten Faktor (Authenticator-App) an.",
+      "Administratoren melden sich zusätzlich mit einem zweiten Faktor (Authenticator-App) an. Für Kunden-Logins ist der zweite Faktor freiwillig einschaltbar.",
+      "Nach einer Passwortänderung werden alle anderen Sitzungen beendet; „Überall abmelden“ geht jederzeit. Wiederholte Anfragen werden gedrosselt.",
       "Rollen trennen, wer was sieht: Die Daten jedes Kunden sind strikt getrennt, Berater sehen nur die ihnen zugeteilten Leads.",
       "Ein Änderungsprotokoll hält Anmeldungen, Exporte, Löschungen und Änderungen an Zugängen mit Person und Zeitpunkt fest.",
       "Auf Kundendaten greifen nur berechtigte, zur Vertraulichkeit verpflichtete Personen zu, und nur soweit es für Betrieb und Support nötig ist.",

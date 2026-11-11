@@ -21,6 +21,8 @@ export type MemberView = {
   ownCalendar: boolean;
   leads30: number;
   loggedIn: boolean;
+  /** Zwei-Faktor-Login aktiv */
+  twoFactor?: boolean;
   /** Laufende oder kommende Abwesenheit */
   absence: AbsenceView | null;
 };
@@ -71,6 +73,7 @@ export function MemberRow({ m, readOnly, colleagues, today }: { m: MemberView; r
             {m.isMe ? <Badge>Sie</Badge> : null}
             {m.owner ? <Badge tone="success">Inhaber</Badge> : null}
             {!m.owner && !m.loggedIn ? <Badge tone="warning">eingeladen</Badge> : null}
+            {m.twoFactor ? <Badge tone="info">2FA</Badge> : null}
             {m.absence ? (
               <Badge tone="info">
                 {m.absence.active ? `abwesend bis ${dayShort(m.absence.to)}` : `abwesend ab ${dayShort(m.absence.from)}`}

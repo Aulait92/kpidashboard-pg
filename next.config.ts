@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs/config";
+import { securityHeaderRules } from "./src/lib/security-headers";
 
 const nextConfig: NextConfig = {
   // Pakete, die zur Laufzeit per Node-require ihre nativen Binaries
@@ -8,6 +9,16 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@ffmpeg-installer/ffmpeg"],
   // Bestandskunden-Import (Excel/CSV mit tausenden Zeilen) per Server Action
   experimental: { serverActions: { bodySizeLimit: "16mb" } },
+  // Kein „X-Powered-By: Next.js“ (verrät unnötig den Technik-Stack)
+  poweredByHeader: false,
+  // Sicherheits-Header für alle Antworten (src/lib/security-headers.ts).
+  // CSP zunächst nur „Report-Only“; erzwingen mit CSP_ENFORCE=on (zur Build-Zeit).
+  async headers() {
+    return securityHeaderRules({
+      dev: process.env.NODE_ENV === "development",
+      enforceCsp: process.env.CSP_ENFORCE === "on",
+    });
+  },
 };
 
 export default withSentryConfig(nextConfig, {

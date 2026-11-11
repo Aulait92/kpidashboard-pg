@@ -1,3 +1,4 @@
+import { limitResponse } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
@@ -22,6 +23,9 @@ import {
 // X-Telegram-Bot-Api-Secret-Token-Header, den wir bei setWebhook konfiguriert
 // haben — wir verifizieren ihn hier.
 export async function POST(req: Request) {
+  // Nur grobe Obergrenze (Absender schicken Bursts; Echtheit prüft die Signatur/das Token)
+  const limited = limitResponse("webhook", "telegram");
+  if (limited) return limited;
   const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
   if (secret) {
     const got = req.headers.get("x-telegram-bot-api-secret-token");

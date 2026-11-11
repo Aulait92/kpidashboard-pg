@@ -8,6 +8,7 @@ import { bookAppointment, SlotBusyError } from "@/lib/calendar";
 import { linkLeadToConversation } from "@/lib/whatsapp/lead-link";
 import { sendBookingConfirmation } from "@/lib/whatsapp/reminders";
 import { EMAIL_RE, normalizePhone } from "@/lib/whatsapp/phone";
+import { checkLimit, requestIp } from "@/lib/rate-limit";
 
 // Öffentliche Buchung (Buchungsseite / Meta-Leadformular). Kein Login — daher
 // alles serverseitig validieren, Slot direkt vor dem Anlegen neu prüfen
@@ -20,6 +21,7 @@ export async function bookPublicAction(
   formData: FormData,
 ): Promise<void> {
   const fail = (code: string): never => redirect(`/book/${slug}?err=${code}`);
+  if (!checkLimit("publicBooking", await requestIp()).ok) fail("busy");
 
   // Bot-Falle: unsichtbares Feld ausgefüllt UND blitzschnell abgeschickt.
   // Nur beides zusammen gilt als Bot — Autofill allein darf echte Leads

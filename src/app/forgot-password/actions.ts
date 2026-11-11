@@ -2,6 +2,7 @@
 
 import { issuePasswordResetToken } from "@/lib/auth";
 import { buildResetUrl, sendPasswordResetEmail } from "@/lib/email";
+import { checkLimit, requestIp } from "@/lib/rate-limit";
 
 export type ForgotPasswordState = {
   ok?: boolean;
@@ -13,6 +14,10 @@ export async function forgotPasswordAction(
   formData: FormData,
 ): Promise<ForgotPasswordState> {
   const email = String(formData.get("email") ?? "");
+  // Drossel je IP und je Adresse (gegen Mail-Bombing und Ausprobieren)
+  if (!checkLimit("passwordReset", await requestIp()).ok || !checkLimit("passwordReset", `mail:${email.trim().toLowerCase()}`).ok) {
+    return { error: "Zu viele Anfragen. Bitte in ein paar Minuten noch einmal versuchen." };
+  }
 
   try {
     const issued = await issuePasswordResetToken(email);

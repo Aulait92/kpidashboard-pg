@@ -1,8 +1,12 @@
+import { limitResponse } from "@/lib/rate-limit";
 import { handleCalendlyWebhook, verifySignature } from "@/lib/vertrieb/calendly";
 
 // Calendly → Webhook-Subscription (wird über "Calendly verbinden" im CRM angelegt)
 // https://<deine-domain>/api/vertrieb/calendly/webhook?token=<WEBHOOK_TOKEN>
 export async function POST(req: Request) {
+  // Nur grobe Obergrenze (Absender schicken Bursts; Echtheit prüft die Signatur/das Token)
+  const limited = limitResponse("webhook", "calendly");
+  if (limited) return limited;
   const secret = process.env.VERTRIEB_WEBHOOK_TOKEN;
   const raw = await req.text();
   const token = new URL(req.url).searchParams.get("token");

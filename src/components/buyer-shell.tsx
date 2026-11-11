@@ -24,6 +24,7 @@ import {
   Sun,
   TrendingUp,
   Users,
+  ShieldCheck,
   UsersRound,
 } from "lucide-react";
 import { ToastProvider, useToast } from "@/components/ui/toast";
@@ -399,6 +400,13 @@ function ProfileMenu({
               </Link>
             </>
           ) : null}
+          <Link
+            href="/buyer/konto/sicherheit"
+            onClick={() => setOpen(false)}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
+          >
+            <ShieldCheck className="h-4 w-4" /> Anmeldung &amp; Sicherheit
+          </Link>
           <Link
             href="/buyer/provisionen"
             onClick={() => setOpen(false)}

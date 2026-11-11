@@ -12,7 +12,26 @@ export type SessionPayload = {
   email: string;
   role: "ADMIN" | "BUYER";
   customerId?: string;
+  /**
+   * Sitzungsversion (User.sessionVersion beim Anmelden). Passt sie nicht mehr
+   * zur Datenbank, ist die Sitzung ungültig – z. B. nach Passwortänderung,
+   * Zwei-Faktor-Änderung, „Überall abmelden“. Fehlt bei älteren Cookies (= 0).
+   */
+  sv?: number;
 };
+
+type SessionUser = { id: string; email: string; role: string; customerId: string | null; sessionVersion: number };
+
+/** Sitzungsinhalt für einen Nutzer (immer mit aktueller Sitzungsversion). */
+export function sessionPayloadFor(user: SessionUser): SessionPayload {
+  return {
+    userId: user.id,
+    email: user.email,
+    role: user.role as SessionPayload["role"],
+    ...(user.customerId ? { customerId: user.customerId } : {}),
+    sv: user.sessionVersion,
+  };
+}
 
 function getSecret(): Uint8Array {
   const raw = process.env.AUTH_SECRET;
@@ -60,11 +79,62 @@ export async function clearSessionCookie() {
   store.delete(SESSION_COOKIE);
 }
 
+// ─── Sitzungsversion ─────────────────────────────────────────────────────
+// Sitzungen sind signierte Cookies (JWT, 30 Tage). Damit sie sich trotzdem
+// zentral beenden lassen, trägt jedes Cookie die Sitzungsversion des Nutzers;
+// getCurrentSession() vergleicht sie mit der Datenbank (kurz zwischengespeichert).
+// Ein gelöschter Login ist damit ebenfalls sofort abgemeldet.
+const SV_CACHE_MS = 15_000;
+const svCache = new Map<string, { sv: number | null; at: number }>();
+
+async function currentSessionVersion(userId: string): Promise<number | null> {
+  const hit = svCache.get(userId);
+  if (hit && Date.now() - hit.at < SV_CACHE_MS) return hit.sv;
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: { sessionVersion: true } });
+  const sv = u ? u.sessionVersion : null;
+  if (svCache.size > 5000) svCache.clear();
+  svCache.set(userId, { sv, at: Date.now() });
+  return sv;
+}
+
+/** Prüft, ob eine (signaturgültige) Sitzung noch zur Datenbank passt. */
+export async function isSessionCurrent(payload: SessionPayload): Promise<boolean> {
+  const sv = await currentSessionVersion(payload.userId);
+  return sv !== null && sv === (payload.sv ?? 0);
+}
+
+/**
+ * Beendet alle Sitzungen eines Nutzers (Version +1). Mit `keepCurrent` bekommt
+ * das aufrufende Gerät sofort ein neues Cookie und bleibt angemeldet.
+ */
+export async function invalidateUserSessions(userId: string, opts: { keepCurrent?: boolean } = {}): Promise<void> {
+  const u = await prisma.user.update({
+    where: { id: userId },
+    data: { sessionVersion: { increment: 1 } },
+    select: { id: true, email: true, role: true, customerId: true, sessionVersion: true },
+  });
+  svCache.delete(userId);
+  if (opts.keepCurrent) await setSessionCookie(sessionPayloadFor(u));
+}
+
+/** Nur für Tests. */
+export function clearSessionVersionCache() {
+  svCache.clear();
+}
+
 export async function getCurrentSession(): Promise<SessionPayload | null> {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  return verifySession(token);
+  const payload = await verifySession(token);
+  if (!payload) return null;
+  try {
+    return (await isSessionCurrent(payload)) ? payload : null;
+  } catch (err) {
+    // Datenbank nicht erreichbar → lieber abgemeldet als ungeprüft angemeldet
+    console.error("[auth] Sitzungsprüfung fehlgeschlagen:", err instanceof Error ? err.message : err);
+    return null;
+  }
 }
 
 export async function hashPassword(plain: string): Promise<string> {
@@ -173,7 +243,7 @@ export async function completeTotpLogin(codeRaw: string): Promise<LoginResult> {
   await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
   const { audit } = await import("@/lib/audit");
   await audit("login.2fa", { entity: "User", entityId: user.id, customerId: user.customerId, actor: { id: user.id, email: user.email, role: user.role } });
-  const payload: SessionPayload = { userId: user.id, email: user.email, role: user.role, customerId: user.customerId ?? undefined };
+  const payload = sessionPayloadFor(user);
   await setSessionCookie(payload);
   return { ok: true, payload };
 }
@@ -221,12 +291,7 @@ export async function login(
   });
   await audit("login", { entity: "User", entityId: user.id, customerId: user.customerId, actor: { id: user.id, email: user.email, role: user.role } });
 
-  const payload: SessionPayload = {
-    userId: user.id,
-    email: user.email,
-    role: user.role,
-    customerId: user.customerId ?? undefined,
-  };
+  const payload = sessionPayloadFor(user);
   await setSessionCookie(payload);
   return { ok: true, payload };
 }
@@ -310,13 +375,17 @@ export async function consumePasswordResetToken(
   await prisma.$transaction([
     prisma.user.update({
       where: { id: record.userId },
-      data: { passwordHash: await hashPassword(newPassword) },
+      // Neues Passwort beendet alle bestehenden Sitzungen (auch fremde Geräte)
+      data: { passwordHash: await hashPassword(newPassword), sessionVersion: { increment: 1 } },
     }),
     prisma.passwordResetToken.update({
       where: { id: record.id },
       data: { usedAt: new Date() },
     }),
   ]);
+  svCache.delete(record.userId);
+  const { audit } = await import("@/lib/audit");
+  await audit("password.reset_self", { entity: "User", entityId: record.userId, actor: { id: record.userId, role: null } });
   return { ok: true };
 }
 
@@ -367,7 +436,7 @@ export async function loginWithVerifiedEmail(emailRaw: string, method: "google" 
   }
   await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
   await audit("login", { entity: "User", entityId: user.id, customerId: user.customerId, actor: { id: user.id, email: user.email, role: user.role }, details: { method } });
-  const payload: SessionPayload = { userId: user.id, email: user.email, role: user.role, customerId: user.customerId ?? undefined };
+  const payload = sessionPayloadFor(user);
   await setSessionCookie(payload);
   return { ok: true, payload };
 }

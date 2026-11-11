@@ -89,6 +89,7 @@ Die Produktion ist seit 11.11. eingemessen; neue Migrationen laufen beim normale
 | `20261115090000_ppl_eingang` | Tabelle `PplIntake` (Pay-per-Lead-Eingang aus Airtable: alle Leads mit Ergebnis und Ablehnungsgrund, für die Auswertung); wird beim ersten Abgleich ab Juni 2026 gefüllt | nur hinzufügend |
 | `20261115100000_status` | Tabellen `StatusSample` (Messpunkt der öffentlichen Statusseite je Cron-Lauf, 90 Tage) und `StatusIncident` (Störungsmeldungen aus Admin → Einstellungen → Status & Support) | nur hinzufügend; Statusseite zeigt Verfügbarkeit erst, wenn Messpunkte da sind |
 | `20261115110000_budget_aendern` | Tabellen `CustomerBudget` (Tagesbudget je Produkt ab Datum; ohne Eintrag gilt das Angebot) und `BudgetChange` (Budgetänderungen der Kunden mit Stufe, Preis, Stripe-Stand, Anfragen) | nur hinzufügend |
+| `20261115120000_sitzungsversion` | Spalte `User.sessionVersion` (Standard 0): Sitzungen lassen sich zentral beenden (Passwort-/2FA-Änderung, „Überall abmelden“) | nur hinzufügend; bestehende Sitzungen bleiben gültig (fehlende Version = 0) |
 
 Keine davon verändert bestehende Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und
@@ -219,8 +220,9 @@ KI-Hilfe, die brauchen keine Migration).
      Token ggf. anpassen, falls `VERTRIEB_WEBHOOK_TOKEN` in der Produktion anders ist.
    - 360dialog: je Kunde in der Kundenakte → WhatsApp-Assistent → Nummer
      „ändern“ → speichern (setzt den Webhook auf die neue Adresse)
-7. **cron-job.org**:
-   - WhatsApp-Cron auf `https://app.performancegrowth.de/api/whatsapp/cron?token=<WHATSAPP_WEBHOOK_SECRET>`
+7. **cron-job.org** (Token per Header statt in der URL, siehe docs/sicherheit-cron.md):
+   - WhatsApp-Cron auf `https://app.performancegrowth.de/api/whatsapp/cron` mit Header
+     `Authorization: Bearer <WHATSAPP_WEBHOOK_SECRET>`
      (alle 5 Min.), Sync wieder aktivieren
    - Neuer Job **Überwachung**: `https://app.performancegrowth.de/api/status`
      alle 5 Min., Benachrichtigung bei Fehlschlag per E-Mail an,

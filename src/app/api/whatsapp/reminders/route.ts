@@ -1,17 +1,13 @@
+import { isCronAuthorized } from "@/lib/cron-auth";
 import { runReminders } from "@/lib/whatsapp/reminders";
 
 // Termin-Erinnerungen (Alt-Endpunkt; /api/whatsapp/cron erledigt Erinnerungen
 // UND Erstanschreiben in einem Aufruf). Per WHATSAPP_WEBHOOK_SECRET gesichert.
 export const dynamic = "force-dynamic";
 
+const LABEL = "whatsapp-reminders";
 function authorized(req: Request): boolean {
-  const expected = process.env.WHATSAPP_WEBHOOK_SECRET;
-  if (!expected) return false;
-  const token =
-    new URL(req.url).searchParams.get("token") ??
-    req.headers.get("x-webhook-secret") ??
-    "";
-  return token === expected;
+  return isCronAuthorized(req, process.env.WHATSAPP_WEBHOOK_SECRET, { label: LABEL, legacyHeaders: ["x-webhook-secret"] });
 }
 
 async function handle(req: Request): Promise<Response> {

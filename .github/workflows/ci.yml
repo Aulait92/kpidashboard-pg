@@ -37,6 +37,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Sicherheitslücken in Abhängigkeiten (nur Produktion, ab „hoch“)
+        run: npm audit --omit=dev --audit-level=high
       - name: Typen
         run: npx tsc --noEmit
       - name: Lint

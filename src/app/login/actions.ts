@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { completeTotpLogin, login, logout, type LoginResult, type SessionPayload } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { checkLimit, requestIp } from "@/lib/rate-limit";
 
 export type LoginActionState = {
   error?: string;
@@ -23,6 +24,11 @@ export async function loginAction(
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
   const next = String(formData.get("next") ?? "");
+
+  // Zusätzlich zur Sperre je E-Mail (lib/auth.ts): Drossel je IP
+  if (!checkLimit("login", await requestIp()).ok) {
+    return { error: "Zu viele Anmeldeversuche. Bitte in ein paar Minuten noch einmal versuchen." };
+  }
 
   let result: LoginResult;
   try {
@@ -45,6 +51,9 @@ export async function loginAction(
 
 export async function totpAction(_prev: LoginActionState, formData: FormData): Promise<LoginActionState> {
   const next = String(formData.get("next") ?? "");
+  if (!checkLimit("totp", await requestIp()).ok) {
+    return { needsTotp: true, error: "Zu viele Versuche. Bitte in ein paar Minuten noch einmal versuchen." };
+  }
   let result: LoginResult;
   try {
     result = await completeTotpLogin(String(formData.get("code") ?? ""));

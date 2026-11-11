@@ -1,3 +1,4 @@
+import { limitResponse } from "@/lib/rate-limit";
 import { ingestPoolLead } from "@/lib/ppl/engine";
 import { prisma } from "@/lib/prisma";
 import { isPerspectivePayload, translatePerspective } from "@/lib/ppl/perspective";
@@ -13,6 +14,9 @@ export const dynamic = "force-dynamic";
 const META = new Set(["id", "lead_id", "leadgen_id", "produkt", "product", "sms_verifiziert", "sms_verified", "score", "token"]);
 
 export async function POST(req: Request) {
+  // Nur grobe Obergrenze (Absender schicken Bursts; Echtheit prüft die Signatur/das Token)
+  const limited = limitResponse("webhook", "leads-pool");
+  if (limited) return limited;
   const url = new URL(req.url);
   const token = url.searchParams.get("token") ?? req.headers.get("x-webhook-token");
   if (!process.env.LEAD_WEBHOOK_TOKEN || token !== process.env.LEAD_WEBHOOK_TOKEN) {

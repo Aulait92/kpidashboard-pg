@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { cancelAppointment, rescheduleAppointment, SlotBusyError } from "@/lib/calendar";
 import { prisma } from "@/lib/prisma";
+import { checkLimit, requestIp } from "@/lib/rate-limit";
 import { sendBookingConfirmation } from "@/lib/whatsapp/reminders";
 
 // Lead verwaltet seinen Termin selbst über den geheimen Link. Der Token ist
@@ -41,6 +42,7 @@ async function logInternal(conversationId: string | null, kind: string, payload:
 }
 
 export async function cancelManageAction(token: string): Promise<void> {
+  if (!checkLimit("publicBooking", await requestIp()).ok) redirect(`/book/manage/${token}?err=busy`);
   const appt = await loadOpen(token);
   if (!appt) redirect(`/book/manage/${token}`);
   try {
@@ -54,6 +56,7 @@ export async function cancelManageAction(token: string): Promise<void> {
 }
 
 export async function rescheduleManageAction(token: string, formData: FormData): Promise<void> {
+  if (!checkLimit("publicBooking", await requestIp()).ok) redirect(`/book/manage/${token}?err=busy`);
   const start = String(formData.get("start") ?? "");
   const appt = await loadOpen(token);
   if (!appt) redirect(`/book/manage/${token}`);

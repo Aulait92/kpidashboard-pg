@@ -28,6 +28,7 @@ const LONG: Intl.DateTimeFormatOptions = {
 const ERRORS: Record<string, string> = {
   slot: "Bitte wähle eine neue Uhrzeit aus.",
   taken: "Diese Uhrzeit ist gerade vergeben worden. Bitte wähle eine andere.",
+  busy: "Zu viele Anfragen in kurzer Zeit. Bitte versuche es in ein paar Minuten erneut.",
   error: "Das hat leider nicht geklappt. Bitte versuche es erneut.",
 };
 

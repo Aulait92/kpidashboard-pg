@@ -571,6 +571,9 @@ model User {
   totpSecretEnc      String?
   totpEnabledAt      DateTime?
   totpBackupCodes    String[]         @default([])
+  // Sitzungsversion: +1 beendet alle Sitzungen (Passwort-/2FA-Änderung,
+  // „Überall abmelden“, Kundenwechsel). Steht als „sv“ im Sitzungs-Cookie.
+  sessionVersion     Int              @default(0)
   // Team (Großkunden): owner = Inhaber (sieht alles), advisor = Berater (nur eigene Leads)
   teamRole           String           @default("owner")
   displayName        String?

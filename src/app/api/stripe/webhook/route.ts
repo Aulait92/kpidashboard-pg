@@ -1,3 +1,4 @@
+import { limitResponse } from "@/lib/rate-limit";
 import { stripeClient } from "@/lib/billing";
 import { handleStripeEvent } from "@/lib/billing-webhook";
 import { reportError } from "@/lib/monitoring";
@@ -8,6 +9,9 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function POST(req: Request): Promise<Response> {
+  // Nur grobe Obergrenze (Absender schicken Bursts; Echtheit prüft die Signatur/das Token)
+  const limited = limitResponse("webhook", "stripe");
+  if (limited) return limited;
   const stripe = stripeClient();
   const secret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
   if (!stripe || !secret) return new Response("Stripe nicht konfiguriert", { status: 503 });

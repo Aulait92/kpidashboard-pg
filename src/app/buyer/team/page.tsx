@@ -63,6 +63,7 @@ export default async function TeamPage() {
                   ownCalendar: m.advisorCalendar?.status === "connected",
                   leads30: leads30.get(m.id) ?? 0,
                   loggedIn: !!m.lastLoginAt,
+                  twoFactor: !!m.totpEnabledAt,
                   absence: absences.get(m.id) ?? null,
                 }}
                 colleagues={members.filter((o) => o.id !== m.id).map((o) => ({ id: o.id, name: memberName(o) }))}

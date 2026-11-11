@@ -1,3 +1,4 @@
+import { isCronAuthorized } from "@/lib/cron-auth";
 import { reportError } from "@/lib/monitoring";
 import { beat } from "@/lib/heartbeat";
 import { revalidatePath } from "next/cache";
@@ -6,27 +7,9 @@ import { startFullSync, type FullSyncResult } from "@/lib/sync";
 import { listProductMatchers } from "@/lib/product-catalog";
 import { listProductGoalBreakdown } from "@/lib/media-buyer";
 
-// Token-Auth: vergleicht in konstanter Zeit, damit der Endpoint nicht
-// per Timing-Angriff probiert werden kann.
-function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return diff === 0;
-}
-
+const LABEL = "sync";
 function isAuthorized(req: Request): boolean {
-  const expected = process.env.SYNC_TOKEN;
-  if (!expected) return false;
-
-  const url = new URL(req.url);
-  const queryToken = url.searchParams.get("token");
-  const headerToken = req.headers
-    .get("authorization")
-    ?.replace(/^Bearer\s+/i, "");
-
-  const provided = headerToken ?? queryToken ?? "";
-  return timingSafeEqual(provided, expected);
+  return isCronAuthorized(req, process.env.SYNC_TOKEN, { label: LABEL });
 }
 
 async function handle(req: Request) {
@@ -150,7 +133,7 @@ export async function POST(req: Request) {
 }
 
 // GET zugelassen, damit du den Endpoint mit einem simplen
-//   curl https://.../api/sync?token=...
+//   curl -H "Authorization: Bearer $SYNC_TOKEN" https://.../api/sync
 // testen kannst. Bei produktiver Nutzung POST bevorzugen.
 export async function GET(req: Request) {
   return handle(req);

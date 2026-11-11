@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { detectEscalation, shortSummary } from "@/lib/support";
 import { offerEscalation } from "@/lib/support-server";
+import { checkLimit, clientIp } from "@/lib/rate-limit";
 
 // KI-Hilfe im Kundenbereich. POST {question, history, page} → {id, answer, links}.
 // PATCH {id, rating: "up"|"down"} → Bewertung speichern.
@@ -14,17 +15,6 @@ import { offerEscalation } from "@/lib/support-server";
 // fertige Links zu unserem Team (WhatsApp/E-Mail, siehe /api/hilfe/escalate).
 // Fragen landen (wie anderes Feedback) als UsageEvent im Admin unter „Nutzung“.
 export const dynamic = "force-dynamic";
-
-const LIMIT_PER_HOUR = 30;
-const recent = new Map<string, number[]>();
-function allowed(key: string): boolean {
-  const now = Date.now();
-  const list = (recent.get(key) ?? []).filter((t) => now - t < 60 * 60 * 1000);
-  if (list.length >= LIMIT_PER_HOUR) return false;
-  list.push(now);
-  recent.set(key, list);
-  return true;
-}
 
 export async function POST(req: Request): Promise<Response> {
   const ctx = await getBuyerContext();
@@ -45,7 +35,8 @@ export async function POST(req: Request): Promise<Response> {
         .slice(-6)
     : [];
 
-  if (!allowed(ctx.userId ?? ctx.customerId)) {
+  // Je Nutzer und je IP (KI kostet je Aufruf)
+  if (!checkLimit("aiHelp", ctx.userId ?? ctx.customerId).ok || !checkLimit("aiHelp", `ip:${clientIp(req.headers)}`).ok) {
     return Response.json({ error: "Sie haben gerade sehr viele Fragen gestellt. Bitte in ein paar Minuten noch einmal versuchen." }, { status: 429 });
   }
   if (!process.env.ANTHROPIC_API_KEY) {
