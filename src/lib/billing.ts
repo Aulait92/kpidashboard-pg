@@ -752,10 +752,11 @@ export async function syncSeatBilling(customerId: string, opts: { force?: boolea
 /** Bestandskunden-Modul buchen, kostenlos freischalten (Bestandsschutz) oder abbestellen. */
 export async function setBestandModule(customerId: string, mode: "book" | "free" | "cancel"): Promise<AddOnResult> {
   try {
-    const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { stripeCustomerId: true, bestandMonthly: true, vermittlerTyp: true } });
+    const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { stripeCustomerId: true, bestandMonthly: true } });
     if (!c) return { ok: false, error: "Kunde nicht gefunden." };
-    // Makler: Modul inklusive (0 €, keine Stripe-Position)
-    const price = mode === "book" ? (c.vermittlerTyp === "makler" ? 0 : Number(c.bestandMonthly ?? PRICE_LIST.bestandModuleMonthly)) : 0;
+    // Buchen: vereinbarter Monatspreis, sonst Liste (auch wenn bisher 0 € hinterlegt war)
+    const agreed = c.bestandMonthly != null ? Number(c.bestandMonthly) : 0;
+    const price = mode === "book" ? (agreed > 0 ? agreed : PRICE_LIST.bestandModuleMonthly) : 0;
     let note: string | undefined;
     const stripe = stripeClient();
     if (stripe && c.stripeCustomerId) {

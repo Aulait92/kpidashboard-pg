@@ -25,10 +25,10 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   if (ctx.teamRole !== "owner") redirect("/buyer");
-  const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { existingCustomersEnabled: true, bestandRequestedAt: true, vermittlerTyp: true } });
+  const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { existingCustomersEnabled: true, bestandRequestedAt: true } });
   if (!c) redirect("/buyer");
   // Ohne gebuchtes Modul: freundlicher Hinweis statt Sperre ohne Erklärung
-  if (!c.existingCustomersEnabled) return <LockedBestand requestedAt={c.bestandRequestedAt?.toISOString() ?? null} readOnly={ctx.preview} makler={c.vermittlerTyp === "makler"} />;
+  if (!c.existingCustomersEnabled) return <LockedBestand requestedAt={c.bestandRequestedAt?.toISOString() ?? null} readOnly={ctx.preview} />;
   const { q = "", gestartet, kontingent } = await searchParams;
   const customerId = ctx.customerId;
   const quota = await bestandQuota(customerId);
@@ -191,7 +191,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
   );
 }
 
-function LockedBestand({ requestedAt, readOnly, makler }: { requestedAt: string | null; readOnly: boolean; makler: boolean }) {
+function LockedBestand({ requestedAt, readOnly }: { requestedAt: string | null; readOnly: boolean }) {
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8" data-bestand-locked>
       <PageHeader title="Bestand" subtitle="Ihre Bestandskunden gezielt ansprechen" />
@@ -204,7 +204,7 @@ function LockedBestand({ requestedAt, readOnly, makler }: { requestedAt: string 
             in Ihrer Pipeline.
           </p>
           <ul className="list-disc space-y-1 pl-5 text-sm text-[color:var(--muted)]">
-            <li>{makler ? "Für Makler inklusive, ohne Aufpreis" : `${eur(PRICE_LIST.bestandModuleMonthly)} netto im Monat, monatlich kündbar`}</li>
+            <li>{eur(PRICE_LIST.bestandModuleMonthly)} netto im Monat, monatlich kündbar</li>
             <li>WhatsApp-Gebühren für bis zu {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat inklusive</li>
             <li>Gesundheitsdaten werden nie übernommen</li>
           </ul>

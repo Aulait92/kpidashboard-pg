@@ -33,7 +33,7 @@ enthalten. Der Merge ist konfliktfrei.
 | `20261113110000_rechner` | Tabelle `RechnerConfig` (Einstellungen des öffentlichen Break-even-Rechners als JSON) | über den Schema-Abgleich, nur hinzufügend |
 | `20261113120000_garantien` | Tabelle `GarantieFall` (Lead- und Break-even-Garantie: Fall je Kunde, Art und Monat mit Kennzahlen, Entscheidung, Stripe-Gutschrift), siehe `docs/garantien.md` | über den Schema-Abgleich, nur hinzufügend |
 | `20261113130000_abwesenheit` | Tabelle `UserAbsence` („Ich bin abwesend“: von–bis, Grund-Kategorie, Vertretung, verschobene Aufgaben zum Rückgängigmachen) | über den Schema-Abgleich, nur hinzufügend |
-| `20261113140000_makler_angebot` | Spalte `Offer.vermittlerTyp` (Standard „vertreter“): Makler-Angebote mit Vertrags-Garantie und Bestandskunden-Modul inklusive | über den Schema-Abgleich, nur hinzufügend |
+| `20261113140000_makler_angebot` | Spalte `Offer.vermittlerTyp` (Standard „vertreter“): Makler-Angebote mit Vertrags-Garantie | über den Schema-Abgleich, nur hinzufügend |
 
 Keine davon verändert bestehende Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und

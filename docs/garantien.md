@@ -127,7 +127,8 @@ Freigegeben von Ole am 11.11.2026, statt Break-even für Makler.
 - Mindestens **15 Verträge** → „Erfüllt“, auch schon vor Tag 90 (offene Fälle des
   laufenden Monats werden automatisch geschlossen). Sonst Anspruch bzw. „Bedingungen
   fehlen“ für den **laufenden Monat**: **Betreuung + Software** kostenlos (wie
-  Lead-Garantie), so lange, bis 15 erreicht sind.
+  Lead-Garantie), so lange, bis 15 erreicht sind. Auf Wunsch mit einem anderen Produkt
+  ohne Setupgebühr (wie Break-even; Wechsel läuft von Hand, keine Logik in der App).
 - Bedingungen wie Break-even, aber **ohne „Provisionssätze hinterlegt“**: Ø ≥ 20 € pro
   aktivem Tag, ≥ 80 % Termine wahrgenommen, ≥ 80 % der Leads mit Ergebnis, keine
   offene Rechnung.

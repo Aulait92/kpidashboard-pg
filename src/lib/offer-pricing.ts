@@ -29,7 +29,7 @@ export const PRICE_LIST = {
   seatIndividualFrom: 10,
   /** Jährlich im Voraus: so viele Monate geschenkt (nur mit 12 Monaten Laufzeit). */
   annualFreeMonths: 2,
-  /** Bestandskunden-Modul je Monat (netto), inkl. WhatsApp-Gebühren bis zum Kontingent. Für Makler inklusive (0 €). */
+  /** Bestandskunden-Modul je Monat (netto), inkl. WhatsApp-Gebühren bis zum Kontingent. */
   bestandModuleMonthly: 149,
   /** Kampagnen-Nachrichten im Bestandskunden-Modul je Kalendermonat inklusive. */
   bestandIncludedMessages: 500,
@@ -38,10 +38,8 @@ export const PRICE_LIST = {
 } as const;
 
 export type OfferTerm = "none" | "12m";
+/** Vertreter oder Makler: bestimmt die Garantien (Break-even bzw. Vertrags-Garantie). */
 export type OfferVermittler = "vertreter" | "makler";
-
-/** Monatspreis des Bestandskunden-Moduls: Makler inklusive (Cross-Selling ist ihr Hebel), sonst Liste. */
-export const bestandModulePrice = (typ: string | null | undefined): number => (typ === "makler" ? 0 : PRICE_LIST.bestandModuleMonthly);
 export type OfferPackage = "software" | "service";
 export type OfferProduct = { name: string; dailyBudget: number };
 
@@ -60,8 +58,6 @@ export type OfferInput = {
   annual?: boolean;
   /** Bestandskunden-Modul dazubuchen (nur Betreuung + Software). */
   bestandModule?: boolean;
-  /** Makler: Bestandskunden-Modul immer dabei und inklusive (0 €). Standard Vertreter. */
-  vermittlerTyp?: OfferVermittler;
 };
 
 export type OfferPrice = {
@@ -84,10 +80,8 @@ export type OfferPrice = {
   /** Ab {@link PRICE_LIST.seatIndividualFrom} Logins individuell. */
   seatsIndividual: boolean;
   bestandFee: number;
-  /** Modul Teil des Angebots (auch inklusive mit 0 €). */
+  /** Modul Teil des Angebots. */
   bestandActive: boolean;
-  /** Modul inklusive (Makler). */
-  bestandIncluded: boolean;
   /** Monatlich gesamt (Paket + Logins + Modul); null = individuell offen. */
   monthlyTotal: number | null;
   annual: boolean;
@@ -123,9 +117,8 @@ export function computeOfferPrice(input: OfferInput): OfferPrice {
   const seatsIndividual = !serviceOnly && seats >= PRICE_LIST.seatIndividualFrom;
   const extraSeats = serviceOnly ? 0 : Math.max(0, seats - seatsIncluded);
   const seatsFee = seatsIndividual ? 0 : extraSeats * PRICE_LIST.seatMonthly;
-  const bestandIncluded = !serviceOnly && input.vermittlerTyp === "makler";
-  const bestandActive = !serviceOnly && (!!input.bestandModule || bestandIncluded);
-  const bestandFee = bestandActive ? bestandModulePrice(input.vermittlerTyp) : 0;
+  const bestandActive = !serviceOnly && !!input.bestandModule;
+  const bestandFee = bestandActive ? PRICE_LIST.bestandModuleMonthly : 0;
   const listBase = seatsIndividual ? null : listMonthly;
 
   const setupFee = input.setupOverride != null && input.setupOverride >= 0 ? input.setupOverride : listSetup;
@@ -157,7 +150,6 @@ export function computeOfferPrice(input: OfferInput): OfferPrice {
     seatsIndividual,
     bestandFee,
     bestandActive,
-    bestandIncluded,
     monthlyTotal,
     annual,
     annualTotal,
@@ -185,7 +177,7 @@ export type OfferAddOns = {
   seatMonthly: number;
   seatsFee: number;
   bestandFee: number;
-  /** Modul vereinbart (bestandMonthly gesetzt, auch 0 € = inklusive für Makler). */
+  /** Modul vereinbart (bestandMonthly gesetzt; 0 € = Sonderkondition ohne Aufpreis). */
   bestandActive: boolean;
   monthlyTotal: number;
   annual: boolean;

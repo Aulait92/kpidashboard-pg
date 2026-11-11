@@ -174,7 +174,8 @@ Seiten aus der Liste „Seiten“ unten.
   mindestens 20 €/Tag an den aktiven Tagen, mindestens 80 % der Termine wahrgenommen, Ergebnisse bei mindestens 80 % der Leads
   eingetragen („Wie lief's?“, Abschluss mit Beitrag) und Provisionssätze unter „Meine Provisionen“ hinterlegt.
 - **Vertrags-Garantie (nur Makler, statt Break-even):** Sind nach 90 aktiven Tagen weniger als 15 Verträge abgeschlossen,
-  sind Betreuung und Software kostenlos, bis 15 erreicht sind, längstens 6 Monate. Voraussetzung: mindestens 20 €/Tag
+  sind Betreuung und Software kostenlos (auf Wunsch mit anderem Produkt, ohne Setupgebühr), bis 15 erreicht sind,
+  längstens 6 Monate. Voraussetzung: mindestens 20 €/Tag
   an den aktiven Tagen, mindestens 80 % der Termine wahrgenommen und Ergebnisse bei mindestens 80 % der Leads eingetragen.
   Als Vertrag zählt jeder Lead mit „Abschluss“. Wir können im Garantiefall eine Courtage-Abrechnung als Nachweis anfordern.
 - **Wo sehe ich meinen Stand?** Unter „Zahlen“ (ganz unten, Karte „Deine Garantie“, nur für den Inhaber): Tag x von 30
@@ -238,7 +239,7 @@ Seiten aus der Liste „Seiten“ unten.
 ## Bestand (Bestandskunden, Zusatzmodul)
 
 - Zusatzmodul für 149 € netto im Monat, inklusive WhatsApp-Gebühren für bis zu 500 Kampagnen-Nachrichten im Monat.
-  **Für Makler inklusive** (0 €, im Paket Betreuung + Software); das Kontingent gilt genauso.
+  Gilt für Vertreter und Makler gleich.
   Ohne Modul zeigt „Bestand“ eine Beschreibung und den Knopf „Modul anfragen“ (Anfrage geht an uns).
   Wer Bestand schon vor dem 11.11.2026 genutzt hat, behält den Zugang ohne Aufpreis.
 - Kontingent: Auf der Seite steht „Kontingent diesen Monat: X von 500“. Ist es erreicht, startet keine neue

@@ -73,10 +73,8 @@ export function OfferForm({
     seats: num(seats),
     annual: annual && term === "12m",
     bestandModule: bestand && pkg === "software",
-    vermittlerTyp: vermittler,
   });
   const softwarePkg = pkg === "software";
-  const maklerModul = softwarePkg && vermittler === "makler";
   const annualPossible = term === "12m" && num(introFee) == null;
 
   function submit() {
@@ -101,7 +99,7 @@ export function OfferForm({
         validDays: num(validDays) ?? 14,
         seats: softwarePkg ? num(seats) : null,
         annual: annual && annualPossible,
-        bestandModule: (bestand || maklerModul) && softwarePkg,
+        bestandModule: bestand && softwarePkg,
         vermittlerTyp: vermittler,
       });
       if (!res.ok) {
@@ -129,7 +127,7 @@ export function OfferForm({
         </Card>
 
         <Card>
-          <CardHeader title="Kunde ist …" hint="Makler: Vertrags-Garantie statt Break-even-Garantie, Bestandskunden-Modul inklusive" />
+          <CardHeader title="Kunde ist …" hint="Makler: Vertrags-Garantie statt Break-even-Garantie" />
           <div className="grid grid-cols-2 gap-2 p-5" role="radiogroup" aria-label="Vertreter oder Makler">
             {(
               [
@@ -288,13 +286,13 @@ export function OfferForm({
                 type="checkbox"
                 name="bestand"
                 className="mt-0.5 h-4 w-4"
-                disabled={!softwarePkg || maklerModul}
-                checked={(bestand || maklerModul) && softwarePkg}
+                disabled={!softwarePkg}
+                checked={bestand && softwarePkg}
                 onChange={(e) => setBestand(e.target.checked)}
               />
               <span>
                 <span className="block font-semibold">
-                  Bestandskunden-Modul · {maklerModul ? "inklusive für Makler" : `${eur(PRICE_LIST.bestandModuleMonthly)} / Monat`}
+                  Bestandskunden-Modul · {eur(PRICE_LIST.bestandModuleMonthly)} / Monat
                 </span>
                 <span className="block text-xs text-[color:var(--muted)]">
                   Bestand importieren und per WhatsApp ansprechen, inkl. WhatsApp-Gebühren bis {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat.
@@ -327,7 +325,6 @@ export function OfferForm({
               />
             ) : null}
             {price.bestandFee > 0 ? <Sum k="Bestandskunden-Modul" v={eur(price.bestandFee)} sub="pro Monat" /> : null}
-            {price.bestandIncluded ? <Sum k="Bestandskunden-Modul" v="inklusive" sub="für Makler" /> : null}
             {price.monthlyTotal != null && (price.extraSeats > 0 || price.bestandFee > 0) ? (
               <Sum k="Monatlich gesamt" v={eur(price.monthlyTotal)} sub={`${eur(withVat(price.monthlyTotal))} brutto`} />
             ) : null}

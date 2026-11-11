@@ -28,7 +28,6 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
         bestandRequestedAt: true,
         bestandMessageQuota: true,
         existingCustomersEnabled: true,
-        vermittlerTyp: true,
       },
     }),
     prisma.user.count({ where: { customerId, role: "BUYER" } }),
@@ -37,8 +36,6 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
   if (!c) return null;
   const seatPrice = c.seatMonthly != null ? Number(c.seatMonthly) : null;
   const bestandFee = c.bestandMonthly != null ? Number(c.bestandMonthly) : 0;
-  // Makler: Modul inklusive (gebucht mit 0 €)
-  const makler = c.vermittlerTyp === "makler";
   const base = c.retainerMonthly != null ? Number(c.retainerMonthly) : null;
   const total = base != null ? base + c.seatsBilled * (seatPrice ?? 0) + bestandFee : null;
   const annual = c.billingInterval === "year";
@@ -84,31 +81,22 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
           <p className="text-[color:var(--muted)]" data-admin-bestand-status>
             {c.existingCustomersEnabled
               ? bestandFee
-                ? `Gebucht, ${eur(bestandFee)}/Monat${makler ? " · als Makler wäre es inklusive („Buchen“ stellt auf 0 € um)" : ""}`
-                : c.bestandMonthly != null && makler
-                  ? "Gebucht, inklusive für Makler"
-                  : c.bestandGrandfathered
+                ? `Gebucht, ${eur(bestandFee)}/Monat`
+                : c.bestandGrandfathered
                   ? "Frei (Bestandsschutz, ohne Aufpreis)"
                   : "Freigeschaltet ohne Preis"
               : "Nicht gebucht"}
             {c.bestandRequestedAt && !c.existingCustomersEnabled ? ` · vom Kunden angefragt am ${fmt(c.bestandRequestedAt)}` : ""}
           </p>
           <div className="flex flex-wrap gap-2">
-            {!bestandFee && !(makler && c.existingCustomersEnabled && c.bestandMonthly != null) ? (
+            {!bestandFee ? (
               <form action={bestandModuleAction}>
                 {hidden}
                 <input type="hidden" name="mode" value="book" />
-                <button className={primary}>{makler ? "Buchen (inklusive für Makler)" : `Buchen (${eur(PRICE_LIST.bestandModuleMonthly)}/Monat)`}</button>
+                <button className={primary}>Buchen ({eur(PRICE_LIST.bestandModuleMonthly)}/Monat)</button>
               </form>
             ) : null}
-            {makler && bestandFee ? (
-              <form action={bestandModuleAction}>
-                {hidden}
-                <input type="hidden" name="mode" value="book" />
-                <button className={primary}>Auf inklusive umstellen (0 €)</button>
-              </form>
-            ) : null}
-            {!makler && (!c.existingCustomersEnabled || bestandFee) ? (
+            {!c.existingCustomersEnabled || bestandFee ? (
               <form action={bestandModuleAction}>
                 {hidden}
                 <input type="hidden" name="mode" value="free" />

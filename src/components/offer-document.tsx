@@ -131,7 +131,7 @@ export function OfferDocument({
   const firstCharge = add.annualTotal ?? firstMonth;
   const productNames = products.map((p) => p.name).join(" & ");
   const makler = offer.vermittlerTyp === "makler";
-  // Modul ohne Aufpreis vereinbart (Makler)
+  // Modul ohne Aufpreis vereinbart (Sonderkondition)
   const bestandInklusive = add.bestandActive && add.bestandFee === 0;
 
   return (
@@ -267,7 +267,7 @@ export function OfferDocument({
           ) : null}
           {add.bestandActive ? (
             <Tr k="Bestandskunden-Modul">
-              {bestandInklusive ? "Inklusive für Makler: " : ""}Bestand importieren und gezielt per WhatsApp ansprechen (Lücken, Jahresgespräch, Geburtstag, Ablauf). Inklusive
+              Bestand importieren und gezielt per WhatsApp ansprechen (Lücken, Jahresgespräch, Geburtstag, Ablauf). Inklusive
               WhatsApp-Gebühren für bis zu {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten je Kalendermonat.
             </Tr>
           ) : null}
@@ -316,7 +316,9 @@ export function OfferDocument({
           {add.bestandActive ? (
             <Tr k="Bestandskunden-Modul">
               {bestandInklusive ? (
-                <b className="text-[#111827]">Inklusive für Makler</b>
+                <>
+                  <b className="text-[#111827]">Ohne Aufpreis</b> (Sonderkondition)
+                </>
               ) : (
                 <>
                   <b className="text-[#111827]">{eur2(add.bestandFee)}</b> netto pro Monat
@@ -399,8 +401,8 @@ export function OfferDocument({
             {makler ? (
             <p className="mt-2 text-[#374151]">
               <strong>Vertrags-Garantie (für Makler):</strong> Haben Sie nach 90 aktiven Tagen weniger als{" "}
-              {VERTRAGS_GARANTIE_MIN_VERTRAEGE} Verträge abgeschlossen, sind Betreuung und Software kostenlos, bis Sie sie haben
-              (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten Termine
+              {VERTRAGS_GARANTIE_MIN_VERTRAEGE} Verträge abgeschlossen, betreuen wir Sie ohne Gebühr für Betreuung und Software weiter – auf Wunsch
+              mit einem anderen Produkt ohne Setupgebühr –, bis Sie sie haben (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten Termine
               wahrgenommen und Ergebnisse in der App eingetragen. Details in den AGB (Abschnitt „Garantien“).
             </p>
             ) : (

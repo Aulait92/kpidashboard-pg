@@ -364,7 +364,7 @@ function billingTermsOf(offer: {
     ? Math.max(0, offer.seats - offer.seatsIncluded)
     : 0;
   return {
-    // Makler-Angebot → Kunde ist Makler (Provisionssätze, Vertrags-Garantie, Modul inklusive)
+    // Makler-Angebot → Kunde ist Makler (Provisionssätze, Vertrags-Garantie)
     ...(offer.vermittlerTyp === "makler" ? { vermittlerTyp: "makler" } : {}),
     ...(offer.seatsIncluded != null ? { seatsIncluded: offer.seatsIncluded, seatMonthly: offer.seatMonthly == null ? null : Number(offer.seatMonthly), seatsBilled } : {}),
     billingInterval: offer.annualPrepay ? "year" : "month",

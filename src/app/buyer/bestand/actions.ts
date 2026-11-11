@@ -120,16 +120,15 @@ export async function requestBestandModuleAction(): Promise<RequestState> {
   const ctx = await getBuyerContext();
   if (!ctx || ctx.preview || !ctx.userId) return { error: "In der Vorschau nicht möglich." };
   if (ctx.teamRole !== "owner") return { error: "Nur der Inhaber kann Module anfragen." };
-  const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, existingCustomersEnabled: true, bestandRequestedAt: true, vermittlerTyp: true } });
+  const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, existingCustomersEnabled: true, bestandRequestedAt: true } });
   if (!c) return { error: "Konto nicht gefunden." };
   if (c.existingCustomersEnabled) return { ok: true };
-  const preis = c.vermittlerTyp === "makler" ? "inklusive für Makler" : `${PRICE_LIST.bestandModuleMonthly} € netto im Monat`;
   if (!c.bestandRequestedAt) {
     await prisma.customer.update({ where: { id: ctx.customerId }, data: { bestandRequestedAt: new Date() } });
     await audit("bestand.request", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId });
     await sendToAdmins({
       title: `Modul-Anfrage: ${c.name}`,
-      body: `Bestandskunden-Modul (${preis}) angefragt`,
+      body: `Bestandskunden-Modul (${PRICE_LIST.bestandModuleMonthly} €/Monat) angefragt`,
       url: `/admin/kunden/${ctx.customerId}/abrechnung`,
       tag: `bestand-request:${ctx.customerId}`,
     }).catch(() => {});
@@ -138,7 +137,7 @@ export async function requestBestandModuleAction(): Promise<RequestState> {
       subject: `Modul-Anfrage: Bestandskunden-Modul für ${c.name}`,
       greeting: "Hallo,",
       paragraphs: [
-        `${c.name} (${ctx.email}) möchte das Bestandskunden-Modul buchen (${preis}).`,
+        `${c.name} (${ctx.email}) möchte das Bestandskunden-Modul buchen (${PRICE_LIST.bestandModuleMonthly} € netto im Monat).`,
         "Buchen in der Kundenakte unter „Abrechnung“. Dabei wird das Stripe-Abo angepasst.",
       ],
       signature: PROVIDER.brand,
