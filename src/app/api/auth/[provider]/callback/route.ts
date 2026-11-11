@@ -14,9 +14,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ provider
   const providerError = url.searchParams.get("error");
   if (providerError) {
     const desc = (url.searchParams.get("error_description") ?? "").slice(0, 400);
+    // Nutzer hat selbst abgebrochen → „abgebrochen“, kein Fehler (nicht an Sentry melden)
+    const adminConsent = /AADSTS(65001|90094|90095)|admin/i.test(desc);
+    if (providerError === "access_denied" && !adminConsent) fail("abgebrochen");
     reportError(new Error(`${provider}: ${providerError} ${desc}`), "sso-provider-error", { provider });
-    // Nutzer hat selbst abgebrochen → „abgebrochen“; sonst Einstellungsfehler mit Hinweis
-    if (providerError === "access_denied" && !/AADSTS(65001|90094|90095)/.test(desc)) fail("abgebrochen");
     if (/AADSTS(65001|90094|90095)|admin/i.test(desc)) fail("admin-freigabe");
     fail("einstellung");
   }
