@@ -13,7 +13,7 @@ Konfiguration, URL), `src/lib/rechner-server.ts` (DB, echte Kosten pro Lead),
 
 | Größe | Rechnung |
 |---|---|
-| Leads | Budget/Tag × 30,4 ÷ Kosten pro Lead |
+| Leads | Budget/Tag × 30 ÷ Kosten pro Lead (Monat = 30 Tage, wie im Angebot) |
 | Kunden | Leads × Anteil Leads, die Kunde werden |
 | Verträge | Kunden × Verträge pro Kunde |
 | Provision je Vertrag | Jahresbeitrag × (Abschluss-% + Bestand-% 1. Jahr) bzw. Monatsbeitrag × Monatsbeiträge |
@@ -155,7 +155,7 @@ Kontrollwerte (wie Makler-Folie: 30 Tage, 40 €/Tag, 4 €/Lead, 12 %, 358 € 
 | Kosten je Vertrag | 36,4 € | 72,7 € |
 
 Budget-Vergleich mit Cross-Selling (30 Tage): 40 €/Tag 36 € / 60.970 €, 60 €/Tag 31 € / 91.456 €,
-95 €/Tag 27 € / 144.805 €. Mit den Rechner-Standards (30,4 Tage, 350 €): gedeckt Monat 7, alles
+95 €/Tag 27 € / 144.805 €. Mit den Rechner-Standards (30 Tage, 350 €): gedeckt Monat 7, alles
 zurück Monat 12, Faktor 8,2, Kosten je Vertrag 36 €.
 
 **Referenz (30 €/Tag, 6 €/Lead, 12 Monate, inkl. USt.)** – ohne Cross-Selling, im Unit-Test abgesichert:

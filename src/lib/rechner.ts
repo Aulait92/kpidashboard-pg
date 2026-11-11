@@ -3,7 +3,7 @@
 // gleiche Logik im Browser (live) und in Tests läuft.
 //
 // Formeln (je Monat, Erwartungswerte, nicht gerundet):
-//   Leads        = Budget/Tag × 30,4 ÷ Kosten pro Lead
+//   Leads        = Budget/Tag × 30 ÷ Kosten pro Lead
 //   Kunden       = Leads × Anteil Leads, die Kunde werden
 //   Verträge     = Kunden × Verträge pro Kunde (TKV: mehrere Katzen)
 //   Provision    = Verträge × Provision je Vertrag

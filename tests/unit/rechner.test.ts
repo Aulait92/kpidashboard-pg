@@ -31,7 +31,7 @@ const base = (over: Partial<RechnerInput> = {}, p: RechnerProduct = tkv, typ: "v
 describe("Break-even-Rechner", () => {
   it("TKV-Beispiel der Präsentation: 200 Leads → 24 Verträge → ≈ 8.600 € Beitrag → ≈ 5.000 € Provision", () => {
     // 800 € Werbung bei 4 €/Lead = 200 Leads; Beitrag 358 €, 58 % Abschlussprovision
-    const r = berechne(tkv, base({ budget: 800 / 30.4, beitrag: 358, rate: 0.58 }), 4);
+    const r = berechne(tkv, base({ budget: 800 / 30, beitrag: 358, rate: 0.58 }), 4);
     expect(r.leads).toBeCloseTo(200, 6);
     expect(r.kunden).toBeCloseTo(18, 6);
     expect(r.vertraege).toBeCloseTo(24, 6);
@@ -45,13 +45,13 @@ describe("Break-even-Rechner", () => {
   it("Standard TKV (6 € mit Puffer, 30 €/Tag): Leads, Verträge, Break-even", () => {
     expect(tkv.cpl).toBe(6);
     const r = berechne(tkv, base(), 6);
-    expect(r.leads).toBeCloseTo(152, 6);
-    expect(r.vertraege).toBeCloseTo(152 * 0.12, 6);
+    expect(r.leads).toBeCloseTo(150, 6); // 30 €/Tag × 30 Tage ÷ 6 €
+    expect(r.vertraege).toBeCloseTo(150 * 0.12, 6);
     expect(r.provisionJeVertrag).toBeCloseTo(350 * 0.55, 6);
-    // Kosten (912 + 1.000) × 1,19 = 2.275,28 → ⌈2.275,28 / 192,5⌉ = 12 Verträge
-    expect(r.kosten).toBeCloseTo(2275.28, 2);
+    // Kosten (900 + 1.000) × 1,19 = 2.261 → ⌈2.261 / 192,5⌉ = 12 Verträge
+    expect(r.kosten).toBeCloseTo(2261, 2);
     expect(r.breakEvenVertraege).toBe(12);
-    expect(r.breakEvenAnteilLeads).toBeCloseTo(12 / 152, 6);
+    expect(r.breakEvenAnteilLeads).toBeCloseTo(12 / 150, 6);
     expect(r.ueberschuss).toBeCloseTo(r.provision - r.kosten, 6);
   });
 
@@ -194,7 +194,8 @@ describe("Bestandssicht (Makler TKV, Storno)", () => {
   const rel = (a: number, b: number) => Math.abs(a - b) / b;
 
   it("Referenz Ole 11.11. (30 €/Tag, 6 €/Lead, 12 Monate, inkl. USt.)", () => {
-    const i = makler();
+    // Referenz wurde mit 30,4 Tagen gerechnet (912 € Werbung) → 30,4 €/Tag × 30 Tage
+    const i = makler({ budget: 30.4 });
     expect(maklerModus(tkv, i)).toBe(true);
     expect(i.storno).toBe(0.1);
     expect(i.kampagne).toBe(12);
@@ -224,7 +225,7 @@ describe("Bestandssicht (Makler TKV, Storno)", () => {
   });
 
   it("genau mit 18,2 Verträgen/Monat: Modellwerte", () => {
-    const i = makler({ customerRate: 18.2 / 152 / (4 / 3) });
+    const i = makler({ budget: 30.4, customerRate: 18.2 / 152 / (4 / 3) });
     const r = berechne(tkv, i, 6);
     expect(r.vertraege).toBeCloseTo(18.2, 9);
     const b = berechneBestand(tkv, i, r)!;
@@ -339,17 +340,18 @@ describe("Bestandssicht (Makler TKV, Storno)", () => {
 
   it("Kosten je Vertrag: Präsentations-Annahmen (4 €/Lead, 12 % Verträge, 1.000 € Betreuung, USt.)", () => {
     const i = base({ customerRate: 0.09, xs: false }, tkv, "makler"); // 9 % × 4/3 = 12 % Verträge je Lead; ohne Cross-Selling
-    const v = budgetVergleich(tkv, i, 4, [27, 40, 60, 98, 100]);
+    const v = budgetVergleich(tkv, i, 4, [27, 40, 60, 98, 100, 101]);
     const kjv = Object.fromEntries(v.map((z) => [z.budget, z.kostenJeVertrag!]));
     expect(kjv[27]).toBeCloseTo(89, -0.5); // ≈ 89 €
     expect(kjv[40]).toBeCloseTo(73, -0.5); // ≈ 73 €
     expect(kjv[60]).toBeCloseTo(62, -0.5); // ≈ 62 €
-    // 98 €/Tag = 2.979 € Werbebudget, noch erste Betreuungsstufe ≈ 53 €
+    // 98 €/Tag = 2.940 € Werbebudget, erste Betreuungsstufe ≈ 53 €
     expect(kjv[98]).toBeCloseTo(53, -0.5);
-    // 100 €/Tag = 3.040 € > 3.000 € → Betreuung 1.400 € (zweite Stufe), daher ≈ 58 € statt 53 €
-    expect(v.find((z) => z.budget === 100)!.betreuung).toBe(1400);
-    expect(kjv[100]).toBeGreaterThan(57);
-    expect(kjv[100]).toBeLessThan(59);
+    // 100 €/Tag = genau 3.000 € → noch erste Stufe; 101 €/Tag = 3.030 € → Betreuung 1.400 €, ≈ 58 €
+    expect(v.find((z) => z.budget === 100)!.betreuung).toBe(1000);
+    expect(v.find((z) => z.budget === 101)!.betreuung).toBe(1400);
+    expect(kjv[101]).toBeGreaterThan(57);
+    expect(kjv[101]).toBeLessThan(59);
     // mehr Budget = mehr Bestand
     expect(v[2].courtageJahrNach12).toBeGreaterThan(v[1].courtageJahrNach12);
     // Rechner-Standard (6 €/Lead): höher, Vergleich 40/60/95 wie angezeigt
@@ -398,8 +400,8 @@ describe("Kosten pro Lead im Makler-Modus (4 € reales Ergebnis, Ole 11.11.)", 
     const i = base({ budget: 40, beitrag: 358, xs: false }, tkv, "makler");
     expect(maklerModus(tkv, i)).toBe(true);
     const r = berechne(tkv, i, resolveCpl(tkv, null).makler!.cpl);
-    expect(r.leads).toBeCloseTo(304, 0); // 40 € × 30,4 Tage ÷ 4 €
-    expect(r.vertraege).toBeCloseTo(36.48, 2);
+    expect(r.leads).toBeCloseTo(300, 6); // 40 € × 30 Tage ÷ 4 €
+    expect(r.vertraege).toBeCloseTo(36, 6);
     const b = berechneBestand(tkv, i, r)!;
     expect(b.laufendGedecktMonat).toBeGreaterThanOrEqual(11);
     expect(b.laufendGedecktMonat).toBeLessThanOrEqual(12);

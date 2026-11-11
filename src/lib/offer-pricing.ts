@@ -21,7 +21,7 @@ export const PRICE_LIST = {
   ],
   /** Ab hier gibt es kein Listenpreis mehr → individuell. */
   individualFrom: 10000,
-  daysPerMonth: 30.4,
+  daysPerMonth: 30,
   // ─── Zusätze (Ole, 11.11.2026) ───
   /** Logins inklusive (Inhaber + 2 Berater), nur Paket Betreuung + Software. */
   seatsIncluded: 3,
