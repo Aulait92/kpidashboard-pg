@@ -36,3 +36,15 @@ Auswertung komplett in der App, Airtable/Zapier nur noch als Übergang.
 - Kundenliste zeigt Pay-per-Lead-Kunden fälschlich als „Betreuung + Software“
   (Paketart aus dem Airtable-Abgleich).
 - Sentry: N+1-Abfragen im Airtable-Abgleich (/api/sync).
+
+---
+
+# Ebenfalls für 12.11.2026 vorgemerkt: App im App Store
+
+- Kundenbereich als App für iPhone/Android, Start mit **Capacitor-Hülle** um die
+  bestehende App: native Push (APNs/FCM), Haptik, natives Teilen/Anrufen,
+  Face-ID-Login, App-Symbol-Zähler; Verteilung zunächst über **TestFlight** an Ole.
+- Ole testet ein paar Tage; reicht das Gefühl nicht → native Neuentwicklung
+  (Expo/React Native) mit eigener API-Schicht, Kernabläufe zuerst.
+- Ole: Apple-Developer-Konto für die UG beantragen (D-U-N-S-Nummer, dauert einige
+  Tage), Google-Play-Konto anlegen.
