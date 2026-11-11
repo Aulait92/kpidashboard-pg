@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { verifiedEmail } from "@/lib/sso";
+import { providerErrorCode, verifiedEmail } from "@/lib/sso";
 
 const now = Date.UTC(2026, 10, 10, 12);
 const exp = now / 1000 + 600;
@@ -31,5 +31,16 @@ describe("Anmeldung mit Google/Microsoft: ID-Token prüfen", () => {
     const c = { iss: `https://login.microsoftonline.com/${tid}/v2.0`, tid, aud: "app", exp, nonce: "n1", email: "privat@outlook.de" };
     expect(verifiedEmail("microsoft", c, base)).toBe("privat@outlook.de");
     expect(() => verifiedEmail("microsoft", { ...c, iss: "https://login.microsoftonline.com/andere/v2.0" }, base)).toThrow(/Aussteller/);
+  });
+});
+
+describe("Anmeldung: Fehlercode des Anbieters", () => {
+  it("schneidet maskiert angehängte Parameter ab", () => {
+    expect(providerErrorCode("access_denied")).toBe("access_denied");
+    expect(providerErrorCode("access_denied\\u0026error_subcode=cancel\\u0026state=x")).toBe("access_denied");
+    expect(providerErrorCode("access_deniedu0026error_subcode=cancel")).toBe("access_denied");
+    expect(providerErrorCode("access_denied%26error_subcode=cancel")).toBe("access_denied");
+    expect(providerErrorCode("access_denied&error_subcode=cancel")).toBe("access_denied");
+    expect(providerErrorCode("invalid_request")).toBe("invalid_request");
   });
 });

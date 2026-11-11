@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { loginWithVerifiedEmail, takeSsoState, type LoginResult } from "@/lib/auth";
 import { publicOrigin } from "@/lib/calendar/oauth-routes";
 import { reportError } from "@/lib/monitoring";
-import { exchangeCode, type SsoProvider } from "@/lib/sso";
+import { exchangeCode, providerErrorCode, type SsoProvider } from "@/lib/sso";
 
 // Rückkehr vom Anbieter: Code eintauschen, bestätigte E-Mail einem Login zuordnen.
 export async function GET(req: Request, { params }: { params: Promise<{ provider: string }> }) {
@@ -16,7 +16,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ provider
     const desc = (url.searchParams.get("error_description") ?? "").slice(0, 400);
     // Nutzer hat selbst abgebrochen → „abgebrochen“, kein Fehler (nicht an Sentry melden)
     const adminConsent = /AADSTS(65001|90094|90095)|admin/i.test(desc);
-    if (providerError === "access_denied" && !adminConsent) fail("abgebrochen");
+    if (providerErrorCode(providerError) === "access_denied" && !adminConsent) fail("abgebrochen");
     reportError(new Error(`${provider}: ${providerError} ${desc}`), "sso-provider-error", { provider });
     if (/AADSTS(65001|90094|90095)|admin/i.test(desc)) fail("admin-freigabe");
     fail("einstellung");

@@ -126,3 +126,10 @@ export async function exchangeCode(provider: SsoProvider, origin: string, code: 
   if (!res.ok || !body.id_token) throw new Error(body.error_description ?? body.error ?? `Anbieter antwortet mit ${res.status}.`);
   return verifiedEmail(provider, decodeIdToken(body.id_token), { clientId: c.clientId, nonce });
 }
+
+// Fehlercode aus dem `error`-Parameter des Anbieters. Microsoft hängt beim Abbruch
+// teils weitere Parameter mit maskiertem „&“ (`&`, `%26`) an den Wert an,
+// z. B. „access_denied&error_subcode=cancel&state=…“ → nur „access_denied“.
+export function providerErrorCode(raw: string): string {
+  return raw.split(/\\?u0026|%26|&/i)[0].trim();
+}
