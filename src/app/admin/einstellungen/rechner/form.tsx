@@ -36,7 +36,7 @@ function fromRow(r: Row): Record<string, unknown> {
 const NEW_PRODUCT: RechnerProduct = {
   key: "", name: "", active: false, maklerOnly: false, match: "", provisionKey: null, kind: "percent",
   vertreterRate: 0.5, vertreterTrail: 0, maklerRate: 0, maklerTrail: 0.225, months: 10,
-  cpl: 10, cplNote: "Annahme", cplOverride: false, customerRate: 0.1, contractsPerCustomer: 1, terminRate: 0, premium: 500, minLeads30: null,
+  cpl: 10, cplNote: "Annahme", cplOverride: false, cplMakler: null, cplMaklerNote: "", customerRate: 0.1, contractsPerCustomer: 1, terminRate: 0, premium: 500, minLeads30: null,
 };
 
 export function RechnerForm({ config, dataInfo }: { config: RechnerConfig; dataInfo: Record<string, CplData> }) {
@@ -113,6 +113,8 @@ export function RechnerForm({ config, dataInfo }: { config: RechnerConfig; dataI
                   <F label="Leads mit Termin % (nur Info, 0 = aus)"><input className={inp} value={String(r.terminRate)} onChange={(e) => upd(i, { terminRate: e.target.value })} /></F>
                   <F label="Kosten pro Lead € (Erfahrungswert mit Puffer)"><input className={inp} value={String(r.cpl)} onChange={(e) => upd(i, { cpl: e.target.value })} /></F>
                   <F label="Hinweis zu den Kosten"><input className={inp} value={String(r.cplNote)} onChange={(e) => upd(i, { cplNote: e.target.value })} placeholder="z. B. real zuletzt ca. 2 €" /></F>
+                  <F label="Kosten pro Lead € im Makler-Modus (leer = wie oben)"><input className={inp} value={String(r.cplMakler)} onChange={(e) => upd(i, { cplMakler: e.target.value })} placeholder="z. B. 4" /></F>
+                  <F label="Hinweis zum Makler-Wert"><input className={inp} value={String(r.cplMaklerNote)} onChange={(e) => upd(i, { cplMaklerNote: e.target.value })} placeholder="z. B. reales Ergebnis" /></F>
                   <F label="Text in Lead-Quelle/Kampagne (für echte Daten)"><input className={inp} value={String(r.match)} onChange={(e) => upd(i, { match: e.target.value })} /></F>
                   <Check label="Immer Erfahrungswert (echte Daten ignorieren)" checked={!!r.cplOverride} onChange={(v) => upd(i, { cplOverride: v })} />
                   <F label="Lead-Garantie: Mindest-Leads in 30 Tagen (leer = keine)"><input className={inp} value={String(r.minLeads30 ?? "")} onChange={(e) => upd(i, { minLeads30: e.target.value })} /></F>

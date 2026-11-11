@@ -33,8 +33,17 @@ Berater 3 inklusive, jeder weitere 49 €; nach Merge der Preis-Erweiterungen au
 
 - **Katzenversicherung (TKV)** – einziges aktives Produkt:
   - Kosten pro Lead **6 €** mit Sicherheitspuffer (real zuletzt ca. 2 €).
+  - **Makler-Modus: 4 € pro Lead** (Feld `cplMakler`, Hinweis „reales Ergebnis“, Ole 11.11.),
+    passend zur Makler-Präsentation. Vertreter bleiben bei 6 €. Einstellbar unter
+    Admin → Einstellungen → Rechner („Kosten pro Lead € im Makler-Modus“, leer = wie oben).
+    Ältere gespeicherte Einstellungen ohne das Feld bekommen den Standard 4 €.
   - Echte Daten (Cost LEAD ÷ Leads der letzten 180 Tage, Abgleich über den Text „tkv“,
-    mindestens 200 Leads) ersetzen den Wert **nur, wenn sie höher sind**.
+    mindestens 200 Leads) ersetzen den Wert **nur, wenn sie höher sind** – für Vertreter
+    und Makler-Wert getrennt geprüft (`resolveCpl` liefert beide).
+  - Kontrolle Makler (40 €/Tag, 4 €/Lead, 358 € Beitrag, 22,5 %, 10 % Storno, 12 Monate,
+    5 Jahre, inkl. USt.): 304 Leads, 36,5 Verträge pro Monat, laufend gedeckt ab Monat 12,
+    alles zurück nach Monat 18, Faktor 4,5, ≈ 417 Verträge nach 12 Monaten, ≈ 72 € je Vertrag
+    (Unit-Test „Kontrolle Präsentation“). Mit dem Standardbeitrag 350 €: Faktor 4,4.
   - 9 % der Leads werden Kunden, 1,33 Verträge pro Kunde (= 12 % Verträge je Lead).
   - Ø Jahresbeitrag 350 €, Vertreter 55 % Abschlussprovision, Makler 22,5 % Bestand p. a.
 - Privatschutz (12 €/Lead, 10 % Kunden, 600 €) und PKV-Tarifoptimierung (nur Makler,

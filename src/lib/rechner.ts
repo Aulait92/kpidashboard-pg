@@ -68,6 +68,10 @@ export type RechnerProduct = {
   cplNote: string;
   /** true = nie echte Daten nehmen, immer den Erfahrungswert */
   cplOverride: boolean;
+  /** Kosten pro Lead im Makler-Modus (€); null = wie cpl. TKV: 4 € (reales Ergebnis, Ole 11.11.) */
+  cplMakler: number | null;
+  /** Hinweis zum Makler-Wert, z. B. „reales Ergebnis“ */
+  cplMaklerNote: string;
   /** Anteil Leads, die Kunde werden (0–1) */
   customerRate: number;
   /** Verträge je Kunde (≥ 1) */
@@ -129,18 +133,19 @@ export const DEFAULT_PRODUCTS: RechnerProduct[] = [
     key: "tkv", name: "Katzenversicherung (TKV)", active: true, maklerOnly: false, match: "tkv",
     provisionKey: "tkv", kind: "percent", vertreterRate: 0.55, vertreterTrail: 0, maklerRate: 0, maklerTrail: 0.225, months: 0,
     cpl: 6, cplNote: "mit Sicherheitspuffer gerechnet, real zuletzt ca. 2 €", cplOverride: false,
+    cplMakler: 4, cplMaklerNote: "reales Ergebnis",
     customerRate: 0.09, contractsPerCustomer: 4 / 3, terminRate: 0, premium: 350, minLeads30: 100,
   },
   {
     key: "privatschutz", name: "Privatschutz", active: false, maklerOnly: false, match: "privatschutz",
     provisionKey: "privatschutz", kind: "percent", vertreterRate: 0.55, vertreterTrail: 0, maklerRate: 0, maklerTrail: 0.225, months: 0,
-    cpl: 12, cplNote: "Annahme", cplOverride: false,
+    cpl: 12, cplNote: "Annahme", cplOverride: false, cplMakler: null, cplMaklerNote: "",
     customerRate: 0.1, contractsPerCustomer: 1, terminRate: 0.3, premium: 600, minLeads30: null,
   },
   {
     key: "pkv", name: "PKV-Tarifoptimierung", active: false, maklerOnly: true, match: "pkv",
     provisionKey: "pkv", kind: "monthly", vertreterRate: 0, vertreterTrail: 0, maklerRate: 0, maklerTrail: 0, months: 10,
-    cpl: 25, cplNote: "Annahme", cplOverride: false,
+    cpl: 25, cplNote: "Annahme", cplOverride: false, cplMakler: null, cplMaklerNote: "",
     customerRate: 0.075, contractsPerCustomer: 1, terminRate: 0.25, premium: 250, minLeads30: null,
   },
 ];
@@ -224,6 +229,9 @@ export function parseRechnerConfig(raw: unknown): { config: RechnerConfig; error
       cpl: get("cpl", 0.5, 1000, base?.cpl ?? 10, "Kosten pro Lead 0,50–1.000 €"),
       cplNote: str(p.cplNote, 120, base?.cplNote ?? ""),
       cplOverride: bool(p.cplOverride, false),
+      // fehlt das Feld (ältere gespeicherte Konfiguration) → Standard des Produkts; leer = wie cpl
+      cplMakler: p.cplMakler === undefined ? (base?.cplMakler ?? null) : p.cplMakler === null || p.cplMakler === "" ? null : get("cplMakler", 0.5, 1000, base?.cplMakler ?? 4, "Kosten pro Lead Makler 0,50–1.000 €"),
+      cplMaklerNote: str(p.cplMaklerNote, 120, base?.cplMaklerNote ?? ""),
       customerRate: get("customerRate", 0, 1, base?.customerRate ?? 0.1, "Anteil Leads, die Kunde werden, 0–100 %"),
       contractsPerCustomer: get("contractsPerCustomer", 1, 10, base?.contractsPerCustomer ?? 1, "Verträge pro Kunde 1–10"),
       terminRate: get("terminRate", 0, 1, base?.terminRate ?? 0, "Termin-Quote 0–100 %"),
@@ -434,17 +442,31 @@ export function inputToParams(config: RechnerConfig, i: RechnerInput): URLSearch
 // ─── Kosten pro Lead ─────────────────────────────────────────────────────
 
 export type CplData = { cpl: number; leads: number } | null;
-export type CplInfo = { cpl: number; source: "daten" | "erfahrungswert"; note: string };
+export type CplInfo = {
+  cpl: number;
+  source: "daten" | "erfahrungswert";
+  note: string;
+  /** Wert für den Makler-Modus (nur gesetzt, wenn das Produkt einen eigenen Makler-Wert hat) */
+  makler?: CplInfo;
+};
 
-/** Konservativ: echte Daten nur, wenn höher als der Erfahrungswert (Puffer bleibt). */
+/**
+ * Konservativ: echte Daten nur, wenn höher als der Erfahrungswert (Puffer bleibt).
+ * Makler-Modus: Basis ist cplMakler (z. B. 4 € reales Ergebnis), gleiche Regel.
+ */
 export function resolveCpl(p: RechnerProduct, data: CplData): CplInfo {
+  const base = resolveCplFor(p, p.cpl, p.cplNote, data);
+  return p.cplMakler != null ? { ...base, makler: resolveCplFor(p, p.cplMakler, p.cplMaklerNote, data) } : base;
+}
+
+function resolveCplFor(p: RechnerProduct, wert: number, hinweis: string, data: CplData): CplInfo {
   const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 2 });
-  if (!p.cplOverride && data && data.cpl > p.cpl) {
+  if (!p.cplOverride && data && data.cpl > wert) {
     return { cpl: data.cpl, source: "daten", note: `aus ${data.leads.toLocaleString("de-DE")} Leads der letzten 6 Monate` };
   }
   const real = !p.cplOverride && data ? `real zuletzt ca. ${eur(data.cpl)}` : null;
-  const note = p.cplNote ? (real && /real zuletzt/i.test(p.cplNote) ? `mit Sicherheitspuffer gerechnet, ${real}` : p.cplNote) : real ? `mit Sicherheitspuffer gerechnet, ${real}` : "Erfahrungswert";
-  return { cpl: p.cpl, source: "erfahrungswert", note };
+  const note = hinweis ? (real && /real zuletzt/i.test(hinweis) ? `mit Sicherheitspuffer gerechnet, ${real}` : hinweis) : real ? `mit Sicherheitspuffer gerechnet, ${real}` : "Erfahrungswert";
+  return { cpl: wert, source: "erfahrungswert", note };
 }
 
 // ─── Rechnung ────────────────────────────────────────────────────────────

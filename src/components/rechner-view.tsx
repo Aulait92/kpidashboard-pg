@@ -54,7 +54,9 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
 
   const products = productsFor(config, input.typ);
   const product = products.find((p) => p.key === input.produkt) ?? products[0] ?? config.products[0];
-  const cplInfo = cpl[product.key] ?? { cpl: product.cpl, source: "erfahrungswert" as const, note: product.cplNote || "Erfahrungswert" };
+  const cplBasis: CplInfo = cpl[product.key] ?? { cpl: product.cpl, source: "erfahrungswert", note: product.cplNote || "Erfahrungswert" };
+  // Makler-Modus rechnet mit eigenem Wert (TKV: 4 € reales Ergebnis), Vertreter mit Puffer
+  const cplInfo = maklerModus(product, input) ? (cplBasis.makler ?? cplBasis) : cplBasis;
   const r = berechne(product, input, cplInfo.cpl); // günstig, ohne Memo
   const bestand = berechneBestand(product, input, r);
   const makler = maklerModus(product, input) && bestand != null;

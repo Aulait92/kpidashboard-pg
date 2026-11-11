@@ -342,3 +342,55 @@ describe("Bestandssicht (Makler TKV, Storno)", () => {
     expect(std[0].kostenJeVertrag!).toBeGreaterThan(std[1].kostenJeVertrag!);
   });
 });
+
+describe("Kosten pro Lead im Makler-Modus (4 € reales Ergebnis, Ole 11.11.)", () => {
+  it("TKV: Vertreter 6 € Puffer, Makler 4 €; teurere echte Daten gewinnen in beiden Fällen", () => {
+    expect(tkv.cplMakler).toBe(4);
+    const ohne = resolveCpl(tkv, null);
+    expect(ohne).toMatchObject({ cpl: 6, source: "erfahrungswert" });
+    expect(ohne.makler).toMatchObject({ cpl: 4, source: "erfahrungswert", note: "reales Ergebnis" });
+    const billig = resolveCpl(tkv, { cpl: 2.1, leads: 5000 });
+    expect(billig.cpl).toBe(6);
+    expect(billig.makler!.cpl).toBe(4);
+    const mittel = resolveCpl(tkv, { cpl: 5, leads: 5000 });
+    expect(mittel.cpl).toBe(6);
+    expect(mittel.makler).toMatchObject({ cpl: 5, source: "daten" });
+    const teuer = resolveCpl(tkv, { cpl: 7.2, leads: 5000 });
+    expect(teuer.makler).toMatchObject({ cpl: 7.2, source: "daten" });
+    // Produkte ohne eigenen Makler-Wert: kein makler-Eintrag (= wie cpl)
+    expect(resolveCpl(pkv, null).makler).toBeUndefined();
+  });
+
+  it("Konfiguration: fehlendes Feld → Standard, leer → wie cpl, ungültig → Fehler", () => {
+    const raw = (over: Record<string, unknown>) => ({ ...DEFAULT_CONFIG, products: DEFAULT_CONFIG.products.map((p) => (p.key === "tkv" ? { ...p, ...over } : p)) });
+    const alt = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    for (const p of alt.products) {
+      delete p.cplMakler;
+      delete p.cplMaklerNote;
+    }
+    const a = parseRechnerConfig(alt);
+    expect(a.errors).toEqual([]);
+    expect(a.config.products.find((p) => p.key === "tkv")!.cplMakler).toBe(4);
+    expect(a.config.products.find((p) => p.key === "tkv")!.cplMaklerNote).toBe("reales Ergebnis");
+    expect(parseRechnerConfig(raw({ cplMakler: "" })).config.products.find((p) => p.key === "tkv")!.cplMakler).toBeNull();
+    expect(parseRechnerConfig(raw({ cplMakler: "3,5" })).config.products.find((p) => p.key === "tkv")!.cplMakler).toBe(3.5);
+    expect(parseRechnerConfig(raw({ cplMakler: "0" })).errors.join()).toMatch(/Makler/);
+  });
+
+  it("Kontrolle Präsentation: 40 €/Tag, 4 €/Lead, 358 € → ≈ 300 Leads, gedeckt ≈ Monat 12, alles zurück ≈ Monat 18, ≈ 4,5 ×", () => {
+    const i = base({ budget: 40, beitrag: 358 }, tkv, "makler");
+    expect(maklerModus(tkv, i)).toBe(true);
+    const r = berechne(tkv, i, resolveCpl(tkv, null).makler!.cpl);
+    expect(r.leads).toBeCloseTo(304, 0); // 40 € × 30,4 Tage ÷ 4 €
+    expect(r.vertraege).toBeCloseTo(36.48, 2);
+    const b = berechneBestand(tkv, i, r)!;
+    expect(b.laufendGedecktMonat).toBeGreaterThanOrEqual(11);
+    expect(b.laufendGedecktMonat).toBeLessThanOrEqual(12);
+    expect(b.breakEvenMonat).toBeGreaterThanOrEqual(17);
+    expect(b.breakEvenMonat).toBeLessThanOrEqual(18);
+    expect(b.faktor).toBeGreaterThan(4.4);
+    expect(b.faktor).toBeLessThan(4.6);
+    expect(b.vertraegeNachKampagne).toBeGreaterThan(410);
+    expect(b.vertraegeNachKampagne).toBeLessThan(425);
+  });
+});
