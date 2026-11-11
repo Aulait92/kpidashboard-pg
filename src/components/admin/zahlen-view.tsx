@@ -677,7 +677,7 @@ function Wirtschaft({ data, investor }: { data: ZahlenData; investor: boolean })
         <Card title="Kundengewinnung" cap={`Was ein neuer Kunde kostet und einbringt (${u.window.map(shortMonth).join(", ") || "–"}).`}>
           <KV
             items={[
-              { k: "Kosten je Neukunde (CAC)", v: u.cac != null ? eur(u.cac) : "–", s: u.cacFounder != null ? `mit Gründerzeit ${eur(u.cacFounder)}` : `${u.newCustomers} neue Kunden` },
+              { k: "Kosten je Neukunde (CAC)", v: u.cac != null ? eur(u.cac) : "–", s: u.cacFounder != null ? `mit Gründerzeit ${eur(u.cacFounder)}` : `${u.newCustomers} ${u.newCustomers === 1 ? "neuer Kunde" : "neue Kunden"}` },
               { k: "Rohertrag je Kunde/Monat", v: u.grossProfitPerCustomer != null ? eur(u.grossProfitPerCustomer) : "–", s: "Umsatz − direkte Kosten" },
               { k: "Amortisation", v: fmtMonths(u.payback), s: u.paybackFounder != null ? `mit Gründerzeit ${fmtMonths(u.paybackFounder)}` : undefined },
               { k: "Kundenwert / CAC", v: u.ltvCac != null ? `${u.ltvCac.toLocaleString("de-DE", { maximumFractionDigits: 0 })}×` : "–", s: "LTV auf 24 Mon. gedeckelt, mit Gründerzeit · Ziel > 3×" },
@@ -1213,7 +1213,7 @@ function UpdateSheet({ data, onClose }: { data: ZahlenData; onClose: () => void 
     highlights.push(`MRR${ohne} seit ${longMonth(first.month).split(" ")[0]} von ${kEur(first.recurring)} auf ${kEur(last.recurring)}${h.avgGrowth != null ? `, im Schnitt ${h.avgGrowth >= 0 ? "+" : ""}${pct(h.avgGrowth * 100, 0)} pro Monat` : ""}.`);
   }
   if (h.growth != null) highlights.push(`${longMonth(data.current)} hochgerechnet: ${kEur(h.mrr)} MRR${ohne} (${h.growth >= 0 ? "+" : ""}${pct(h.growth * 100)} zum Vormonat), davon vertraglich ${kEur(h.contractual)}.`);
-  if (data.bridge && data.bridge.neu + data.bridge.ausbau > 0) highlights.push(`${data.bridge.counts.neu} neue Kunden, ${data.bridge.counts.ausbau} haben ausgebaut (${kEur(data.bridge.neu + data.bridge.ausbau)} Zuwachs im ${longMonth(data.bridge.to).split(" ")[0]}).`);
+  if (data.bridge && data.bridge.neu + data.bridge.ausbau > 0) highlights.push(`${data.bridge.counts.neu} ${data.bridge.counts.neu === 1 ? "neuer Kunde" : "neue Kunden"}, ${data.bridge.counts.ausbau} ${data.bridge.counts.ausbau === 1 ? "hat" : "haben"} ausgebaut (${kEur(data.bridge.neu + data.bridge.ausbau)} Zuwachs im ${longMonth(data.bridge.to).split(" ")[0]}).`);
   if (h.retention) highlights.push(`Umsatzbindung${ohne} nach ${h.retention.lag} Monaten: ${h.retention.pct} %.`);
   if (data.unit.paybackFounder != null) highlights.push(`Kundengewinnung amortisiert sich in ${data.unit.paybackFounder.toLocaleString("de-DE", { maximumFractionDigits: 1 })} Monaten, inklusive kalkulierter Gründerzeit.`);
   if (data.impact.perEuro != null) highlights.push(`Vertreter verdienen ${data.impact.perEuro.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € Provision je 1 € an uns (${data.impact.qualifying} Kunden mit vollständigen Ergebnissen).`);
