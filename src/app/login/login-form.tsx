@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { loginAction, totpAction, type LoginActionState } from "./actions";
 
 export function LoginForm({
@@ -21,6 +21,11 @@ export function LoginForm({
     FormData
   >(loginAction, startWithCode ? { needsTotp: true } : error ? { error } : {});
   const [totpState, totpFormAction, totpPending] = useActionState<LoginActionState, FormData>(totpAction, {});
+  // Nach erfolgreicher Anmeldung voll neu laden, damit Kopfzeile/Menü erscheinen.
+  const target = state.redirectTo ?? totpState.redirectTo;
+  useEffect(() => {
+    if (target) window.location.assign(target);
+  }, [target]);
 
   // Zweiter Schritt: Code aus der Authenticator-App.
   if (state.needsTotp && !(totpState.error && !totpState.needsTotp)) {

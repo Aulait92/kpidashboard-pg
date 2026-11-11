@@ -3,7 +3,6 @@
 import { Gauge, LogOut, MoreVertical, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { logoutAction } from "@/app/login/actions";
 import { cn } from "@/lib/utils";
 
 // Kompaktes "more"-Menü für admin-spezifische Aktionen, die auf Mobile
@@ -64,7 +63,7 @@ export function UserMenu() {
             <Gauge className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
             Media Buyer
           </Link>
-          <form action={logoutAction}>
+          <form action="/api/auth/logout" method="post">
             <button
               type="submit"
               className="flex w-full items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-left text-sm text-[color:var(--foreground)] transition hover:bg-zinc-50"

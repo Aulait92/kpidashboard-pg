@@ -26,7 +26,6 @@ import {
   Users,
   UsersRound,
 } from "lucide-react";
-import { logoutAction } from "@/app/login/actions";
 import { ToastProvider, useToast } from "@/components/ui/toast";
 import { PushHint, PushMenuItem } from "@/components/push-prompt";
 import { HilfeChat } from "@/components/hilfe-chat";
@@ -422,7 +421,7 @@ function ProfileMenu({
           >
             Datenschutz
           </a>
-          <form action={logoutAction} className="border-t border-[color:var(--border)]">
+          <form action="/api/auth/logout" method="post" className="border-t border-[color:var(--border)]">
             <button
               type="submit"
               className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"

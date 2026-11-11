@@ -8,6 +8,12 @@ export type LoginActionState = {
   error?: string;
   /** Passwort war richtig, jetzt fehlt der Code aus der Authenticator-App. */
   needsTotp?: boolean;
+  /**
+   * Erfolgreich angemeldet: Ziel für eine volle Seitennavigation. Kein redirect()
+   * aus der Server Action, sonst bleibt das Root-Layout im Login-Zustand
+   * (ohne Kopfzeile/Menü) stehen, bis neu geladen wird.
+   */
+  redirectTo?: string;
 };
 
 export async function loginAction(
@@ -34,7 +40,7 @@ export async function loginAction(
   }
 
   // Rolle bestimmt das Default-Ziel.
-  redirect(next && next.startsWith("/") ? next : await homeFor(result.payload));
+  return { redirectTo: safeNext(next) ?? (await homeFor(result.payload)) };
 }
 
 export async function totpAction(_prev: LoginActionState, formData: FormData): Promise<LoginActionState> {
@@ -48,7 +54,12 @@ export async function totpAction(_prev: LoginActionState, formData: FormData): P
   if (!result.ok) {
     return result.needsTotp ? { needsTotp: true, error: "Code stimmt nicht. Bitte den aktuellen Code eingeben." } : { error: result.error };
   }
-  redirect(next && next.startsWith("/") ? next : await homeFor(result.payload));
+  return { redirectTo: safeNext(next) ?? (await homeFor(result.payload)) };
+}
+
+/** Nur interne Pfade („/…“, nicht „//host“) als Ziel zulassen. */
+function safeNext(next: string): string | null {
+  return next.startsWith("/") && !next.startsWith("//") ? next : null;
 }
 
 /** Startseite nach dem Login: Kundenbereich bzw. Admin (neue Oberfläche startet bei „Heute“). */

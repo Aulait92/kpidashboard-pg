@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, LogOut, Settings, ShieldCheck, Sparkles, Undo2 } from "lucide-react";
-import { logoutAction } from "@/app/login/actions";
 import { toggleAdminNewUiAction } from "@/app/admin/ui-actions";
 import { cn } from "@/lib/utils";
 
@@ -86,7 +85,7 @@ export function AdminProfileMenu({ email, newUi, variant = "header" }: { email: 
           <Link href="/admin/einstellungen/sicherheit" onClick={() => setOpen(false)} className={itemCls}>
             <ShieldCheck className="h-4 w-4" /> Sicherheit (Zwei-Faktor)
           </Link>
-          <form action={logoutAction} className="border-t border-[color:var(--border)]">
+          <form action="/api/auth/logout" method="post" className="border-t border-[color:var(--border)]">
             <button type="submit" className={itemCls}>
               <LogOut className="h-4 w-4" /> Abmelden
             </button>
