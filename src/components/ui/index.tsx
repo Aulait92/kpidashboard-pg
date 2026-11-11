@@ -41,7 +41,7 @@ export function Button({
   icon?: LucideIcon;
 }) {
   return (
-    <button className={buttonClass(variant, size, className)} {...props}>
+    <button className={buttonClass(variant, size, className)} data-tone={variant === "danger" ? "danger" : undefined} {...props}>
       {Icon ? <Icon className={size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4"} /> : null}
       {children}
     </button>

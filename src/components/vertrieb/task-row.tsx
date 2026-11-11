@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { CalendarClock, Check, ChevronRight, MoreHorizontal, Phone, Trash2, UserRound } from "lucide-react";
 import { deleteTask, snoozeTask, toggleTask } from "@/app/admin/vertrieb/actions";
+import { success as hapticSuccess } from "@/lib/haptics";
 import { ActionSheet, type SheetAction } from "@/components/ui/sheet";
 import { STAGE_COLOR, STAGE_LABEL, TASK_LABEL, shortName } from "@/lib/vertrieb/crm";
 import { dayKey, fmtDateTime, relDay, todayKey } from "@/lib/vertrieb/dates";
@@ -54,6 +55,7 @@ export function TaskRow({ t, showContact = true }: { t: TaskWithContact; showCon
         title={doneLocal ? "Wieder öffnen" : "Erledigt"}
         aria-label={doneLocal ? "Wieder öffnen" : "Als erledigt markieren"}
         onClick={() => {
+          if (!doneLocal) hapticSuccess();
           setDoneLocal((v) => !v);
           run(() => toggleTask(fd({ id: t.id })));
         }}

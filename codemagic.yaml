@@ -1,0 +1,130 @@
+# Codemagic: baut die App-Store-App (Ordner mobile/, Capacitor-Hülle).
+# Anleitung und alle Variablen: docs/app-store.md
+#
+# Alle Werte unten sind PLATZHALTER-NAMEN. Die echten Schlüssel liegen nur in
+# Codemagic (Team → Integrations bzw. App → Environment variables → Gruppen),
+# niemals im Repository.
+#
+#   Integration „App Store Connect“ (API-Schlüssel):   Name  PG_ASC_KEY
+#   Gruppe „app_store“:
+#     APP_STORE_APPLE_ID          numerische Apple-ID der App in App Store Connect
+#     GOOGLE_SERVICE_INFO_PLIST   Base64 von GoogleService-Info.plist (optional, nur wenn
+#                                 iOS-Push später über Firebase laufen soll – derzeit APNs direkt)
+#   Gruppe „google_play“:
+#     GCLOUD_SERVICE_ACCOUNT_CREDENTIALS  JSON des Play-Console-Dienstkontos
+#     GOOGLE_SERVICES_JSON        Base64 von google-services.json (Firebase, für FCM)
+#   Android-Signatur (Codemagic → Code signing identities → Android keystores):
+#     Referenz PG_UPLOAD_KEYSTORE
+
+workflows:
+  ios-testflight:
+    name: iOS → TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: PG_ASC_KEY
+    environment:
+      groups:
+        - app_store
+      node: 22
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: de.performancegrowth.app
+      vars:
+        BUNDLE_ID: de.performancegrowth.app
+        XCODE_WORKSPACE: mobile/ios/App/App.xcodeproj
+        XCODE_SCHEME: App
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: "app-v*"
+    scripts:
+      - name: Abhängigkeiten
+        script: |
+          cd mobile
+          npm ci
+      - name: Capacitor sync (iOS)
+        script: |
+          cd mobile
+          npx cap sync ios
+      - name: Optional Firebase-Datei
+        script: |
+          if [ -n "$GOOGLE_SERVICE_INFO_PLIST" ]; then
+            echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > mobile/ios/App/App/GoogleService-Info.plist
+          fi
+      - name: Signatur einrichten
+        script: |
+          xcode-project use-profiles
+      - name: Build-Nummer hochzählen
+        script: |
+          cd mobile/ios/App
+          LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" || echo 0)
+          agvtool new-version -all $((LATEST + 1))
+      - name: IPA bauen
+        script: |
+          xcode-project build-ipa \
+            --project "$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        expire_build_submitted_for_review: true
+
+  android-play-internal:
+    name: Android → Play (interner Test)
+    max_build_duration: 45
+    instance_type: linux_x2
+    environment:
+      groups:
+        - google_play
+      node: 22
+      java: 21
+      android_signing:
+        - PG_UPLOAD_KEYSTORE
+      vars:
+        PACKAGE_NAME: de.performancegrowth.app
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: "app-v*"
+    scripts:
+      - name: Abhängigkeiten
+        script: |
+          cd mobile
+          npm ci
+      - name: Capacitor sync (Android)
+        script: |
+          cd mobile
+          npx cap sync android
+      - name: Firebase-Datei (für Push)
+        script: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            echo "$GOOGLE_SERVICES_JSON" | base64 --decode > mobile/android/app/google-services.json
+          else
+            echo "Hinweis: GOOGLE_SERVICES_JSON fehlt – App baut, aber ohne Push."
+          fi
+      - name: AAB bauen
+        script: |
+          LATEST=$(google-play get-latest-build-number --package-name "$PACKAGE_NAME" --tracks internal || echo 0)
+          cd mobile/android
+          ./gradlew bundleRelease \
+            -PversionCode=$((LATEST + 1)) \
+            -Pandroid.injected.signing.store.file="$CM_KEYSTORE_PATH" \
+            -Pandroid.injected.signing.store.password="$CM_KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$CM_KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$CM_KEY_PASSWORD"
+    artifacts:
+      - mobile/android/app/build/outputs/**/*.aab
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: true

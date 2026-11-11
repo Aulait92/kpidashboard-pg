@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { NativeAppBridge } from "@/components/native-app-bridge";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -49,6 +50,7 @@ export default function RootLayout({
         <SiteHeader />
         {children}
         <SiteFooter />
+        <NativeAppBridge />
       </body>
     </html>
   );

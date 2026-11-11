@@ -5,6 +5,7 @@
 // der Service Worker liegt unter /sw.js.
 
 import { useCallback, useEffect, useState } from "react";
+import { enableNativePush, forgetNativeDevice, isNativeApp, nativePushPermission } from "@/lib/native-bridge";
 
 export type PushStatus = "loading" | "unsupported" | "denied" | "off" | "on";
 
@@ -37,6 +38,14 @@ export function usePush() {
 
   const refresh = useCallback(async () => {
     if (typeof window === "undefined") return;
+    // App-Store-App: native Benachrichtigungen statt Web-Push
+    if (isNativeApp()) {
+      const perm = await nativePushPermission();
+      setNeedsInstall(false);
+      setStatus(perm === "granted" ? "on" : perm === "denied" ? "denied" : perm === "prompt" ? "off" : "unsupported");
+      if (perm === "granted") void enableNativePush(); // Token auffrischen
+      return;
+    }
     if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
       setNeedsInstall(iosNeedsInstall());
       setStatus("unsupported");
@@ -61,6 +70,16 @@ export function usePush() {
   }, [refresh]);
 
   const enable = useCallback(async (): Promise<boolean> => {
+    if (isNativeApp()) {
+      setBusy(true);
+      setMessage(null);
+      const state = await enableNativePush();
+      setBusy(false);
+      setStatus(state === "granted" ? "on" : state === "denied" ? "denied" : "off");
+      if (state === "denied") setMessage("Benachrichtigungen sind für die App ausgeschaltet. Bitte in den Einstellungen des Handys erlauben.");
+      else if (state === "granted") setMessage("Aktiviert.");
+      return state === "granted";
+    }
     if (!publicKey) {
       setMessage("Benachrichtigungen sind auf dem Server noch nicht eingerichtet.");
       return false;
@@ -107,6 +126,12 @@ export function usePush() {
   }, [publicKey]);
 
   const disable = useCallback(async () => {
+    if (isNativeApp()) {
+      forgetNativeDevice();
+      setStatus("off");
+      setMessage("Für dieses Gerät deaktiviert.");
+      return;
+    }
     setBusy(true);
     setMessage(null);
     try {

@@ -541,6 +541,8 @@ model User {
   // Abwesenheiten (Urlaub, Krankheit …) und Vertretungen
   absences      UserAbsence[] @relation("UserAbsences")
   substituteFor UserAbsence[] @relation("AbsenceSubstitute")
+  deviceTokens  DeviceToken[]
+  appHandoffs   AppHandoff[]
 
   @@index([customerId])
 }
@@ -1934,16 +1936,16 @@ model BankConnection {
 // Regel: Muster (Teil von Gegenpartei oder Verwendungszweck, ohne Groß-/Kleinschreibung)
 // → Zweck (ppl|software|akquise|betrieb) oder ignorieren. vatIncluded: Betrag enthält 19 % USt → netto rechnen.
 model CostRule {
-  id           String            @id @default(cuid())
-  pattern      String
-  action       String // ppl | software | akquise | betrieb | ignore
-  vatIncluded  Boolean           @default(false)
+  id               String            @id @default(cuid())
+  pattern          String
+  action           String // ppl | software | akquise | betrieb | ignore
+  vatIncluded      Boolean           @default(false)
   /// nur in der Gegenpartei suchen (nicht im Verwendungszweck), z. B. eigener Name für Privat-Überweisungen
-  counterpartyOnly Boolean       @default(false)
-  label        String?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  transactions BankTransaction[]
+  counterpartyOnly Boolean           @default(false)
+  label            String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  transactions     BankTransaction[]
 
   @@unique([pattern])
 }
@@ -1976,4 +1978,35 @@ model BankTransaction {
   @@unique([accountKey, externalId])
   @@index([status, bookingDate])
   @@index([bookingDate])
+}
+
+/// Geräte der App-Store-App (iOS/Android) für native Push-Benachrichtigungen
+/// (APNs bzw. Firebase Cloud Messaging). Web-Push bleibt in PushSubscription.
+model DeviceToken {
+  id         String   @id @default(cuid())
+  userId     String
+  platform   String // ios | android
+  token      String   @unique
+  appVersion String?
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// Einmal-Übergabe der Anmeldung aus der App in den System-Browser (z. B. für
+/// Google-/Microsoft-Kalender verbinden, das Google in eingebetteten Ansichten
+/// nicht erlaubt). Gültig 5 Minuten, nur einmal einlösbar.
+model AppHandoff {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  next      String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
 }

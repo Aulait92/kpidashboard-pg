@@ -8,6 +8,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { nextLiveState } from "@/lib/live-state";
+import { notification } from "@/lib/haptics";
 
 const POLL_MS = 3_000;
 const DEBOUNCE_MS = 400;
@@ -19,6 +20,14 @@ function isEditing(el: Element | null): boolean {
   if (el instanceof HTMLTextAreaElement) return true;
   if (el instanceof HTMLInputElement) return !["button", "submit", "checkbox", "radio", "hidden", "range", "color", "file"].includes(el.type);
   return (el as HTMLElement).isContentEditable === true;
+}
+
+/** Mehr Leads oder mehr offene Chats als vorher? (Fingerabdruck aus lib/live-state.ts) */
+function grew(prev: string, next: string): boolean {
+  const num = (f: string, re: RegExp) => Number(f.match(re)?.[1] ?? NaN);
+  const leads = (f: string) => num(f, /^l(\d+)\./);
+  const attention = (f: string) => num(f, /\|c\d+\.[^.|]*\.(\d+)\|/);
+  return leads(next) > leads(prev) || attention(next) > attention(prev);
 }
 
 export function LiveRefresh({ safetyMs = 60_000 }: { safetyMs?: number } = {}) {
@@ -57,9 +66,15 @@ export function LiveRefresh({ safetyMs = 60_000 }: { safetyMs?: number } = {}) {
       if (!refreshTimer) refreshTimer = setTimeout(doRefresh, DEBOUNCE_MS);
     };
     const handle = (v: string) => {
+      const prev = last;
       const s = nextLiveState(last, v);
       last = s.last;
-      if (s.changed) schedule();
+      if (s.changed) {
+        // Neuer Lead oder neue Nachricht, die Aufmerksamkeit braucht, im Vordergrund:
+        // kurz spürbar (nur App). Eigene Klicks (Status ändern) lösen nichts aus.
+        if (document.visibilityState === "visible" && prev && grew(prev, v)) notification();
+        schedule();
+      }
     };
 
     const pollOnce = async () => {

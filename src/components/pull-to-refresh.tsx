@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { runAirtableSync } from "@/lib/actions";
 import { cn } from "@/lib/utils";
+import { impact } from "@/lib/haptics";
 
 const THRESHOLD = 70; // px Pull-Distanz bis Refresh ausgelöst wird
 const MAX_PULL = 110; // px hartes Maximum (Resistance-Cap)
@@ -53,7 +54,9 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
       if (raf) cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
         setPull(next);
-        setPhase(next === 0 ? "idle" : next >= THRESHOLD ? "armed" : "pulling");
+        const ph: Phase = next === 0 ? "idle" : next >= THRESHOLD ? "armed" : "pulling";
+        if (ph === "armed" && phaseRef.current !== "armed") impact("light"); // Schwelle erreicht
+        setPhase(ph);
       });
     }
 
@@ -132,6 +135,7 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
       </div>
 
       <div
+        data-ptr=""
         style={{
           transform: `translateY(${pull}px)`,
           transition: pull === 0 ? "transform 250ms ease" : undefined,

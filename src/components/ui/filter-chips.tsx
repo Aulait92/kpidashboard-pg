@@ -142,7 +142,7 @@ function Chip({ label, valueLabel, open, onClick, onClear }: { label: string; va
         open && "ring-2 ring-[color:var(--brand)]/20",
       )}
     >
-      <button type="button" onClick={onClick} className="inline-flex h-full max-w-[260px] items-center gap-1.5 pl-3.5 pr-2" aria-expanded={open}>
+      <button type="button" onClick={onClick} data-haptic="selection" className="inline-flex h-full max-w-[260px] items-center gap-1.5 pl-3.5 pr-2" aria-expanded={open}>
         <span className={cn(active ? "text-[color:var(--brand-dark,var(--brand))]/70" : "text-[color:var(--muted)]")}>{label}{active ? ":" : ""}</span>
         {active ? <span className="truncate font-medium">{valueLabel}</span> : null}
         {!active ? <ChevronDown className="h-3.5 w-3.5 text-[color:var(--muted)]" /> : null}

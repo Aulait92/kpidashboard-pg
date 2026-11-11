@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { BellRing, CheckCircle2, Share, SquarePlus } from "lucide-react";
 import { Button } from "@/components/ui";
 import { usePush } from "@/lib/use-push";
+import { isNativeApp } from "@/lib/native-bridge";
 
 type Device = "ios" | "android" | "desktop";
 type InstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
@@ -16,7 +17,9 @@ function detect(): { device: Device; standalone: boolean; inSafari: boolean } {
   const ua = navigator.userAgent;
   const ios = /iPad|iPhone|iPod/.test(ua) || (ua.includes("Macintosh") && navigator.maxTouchPoints > 1);
   const android = /Android/i.test(ua);
+  // App-Store-App gilt als installiert
   const standalone =
+    isNativeApp() ||
     window.matchMedia?.("(display-mode: standalone)").matches ||
     (navigator as Navigator & { standalone?: boolean }).standalone === true;
   // In-App-Browser (WhatsApp, Instagram, Chrome auf iOS) können keine Web-App installieren.
@@ -58,7 +61,9 @@ export function InstallApp({ appUrl }: { appUrl: string }) {
       </div>
     ) : push.status === "denied" ? (
       <p className="mt-3 text-sm text-[color:var(--muted)]">
-        Benachrichtigungen sind im Browser blockiert. Bitte in den Einstellungen des Browsers für diese Seite erlauben.
+        {isNativeApp()
+          ? "Benachrichtigungen sind für die App ausgeschaltet. Bitte in den Einstellungen des Handys unter performancegrowth → Mitteilungen erlauben."
+          : "Benachrichtigungen sind im Browser blockiert. Bitte in den Einstellungen des Browsers für diese Seite erlauben."}
       </p>
     ) : null;
 

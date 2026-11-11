@@ -197,6 +197,7 @@ export function BuyerShell({
               <li key={it.href} className="flex-1">
                 <Link
                   href={it.href}
+                  data-haptic="selection"
                   className={cn(
                     "flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium",
                     active ? "text-[color:var(--brand)]" : "text-[color:var(--muted)]",
@@ -578,6 +579,7 @@ function BuyerShellA({
                 <li key={it.href} className="flex-1">
                   <Link
                     href={it.href}
+                    data-haptic="selection"
                     aria-current={active ? "page" : undefined}
                     className={cn("flex flex-col items-center gap-0.5 py-2 text-[12px] font-medium", active ? "text-[color:var(--brand)]" : "text-[color:var(--muted)]")}
                   >

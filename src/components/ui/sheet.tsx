@@ -4,6 +4,7 @@
 // Neben-Aktionen einer Zeile, damit pro Zeile nur eine Hauptaktion sichtbar ist.
 
 import { useEffect } from "react";
+import { impact } from "@/lib/haptics";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,7 @@ export function Sheet({
 }) {
   useEffect(() => {
     if (!open) return;
+    impact("light"); // Auswahlfenster/Kontextmenü öffnet
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
@@ -110,6 +112,7 @@ export function ActionSheet({
                 <a
                   href={a.href}
                   className={cls}
+                  data-tone={a.tone === "danger" ? "danger" : undefined}
                   onClick={() => {
                     if (!a.keepOpen) onClose();
                     a.onSelect?.();
@@ -121,6 +124,7 @@ export function ActionSheet({
                 <button
                   type="button"
                   className={cls}
+                  data-tone={a.tone === "danger" ? "danger" : undefined}
                   onClick={() => {
                     if (!a.keepOpen) onClose();
                     a.onSelect?.();

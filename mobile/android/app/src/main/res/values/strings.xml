@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">performancegrowth</string>
+    <string name="title_activity_main">performancegrowth</string>
+    <string name="package_name">de.performancegrowth.app</string>
+    <string name="custom_url_scheme">de.performancegrowth.app</string>
+</resources>

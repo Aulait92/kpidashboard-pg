@@ -1,0 +1,33 @@
+{
+  "name": "performancegrowth-app",
+  "private": true,
+  "version": "1.0.0",
+  "description": "App-Store-App (iOS/Android) f\u00fcr den Kundenbereich von performancegrowth \u2013 Capacitor-H\u00fclle um app.performancegrowth.de mit nativen Funktionen.",
+  "scripts": {
+    "add:ios": "cap add ios",
+    "add:android": "cap add android",
+    "assets": "capacitor-assets generate --iconBackgroundColor '#2563EB' --splashBackgroundColor '#FFFFFF'",
+    "sync": "cap sync",
+    "open:ios": "cap open ios",
+    "open:android": "cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.0",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/browser": "8.0.5",
+    "@capacitor/core": "8.6.0",
+    "@capacitor/haptics": "8.0.2",
+    "@capacitor/ios": "8.6.0",
+    "@capacitor/keyboard": "8.0.6",
+    "@capacitor/push-notifications": "8.1.3",
+    "@capacitor/share": "8.0.3",
+    "@capacitor/splash-screen": "8.0.2",
+    "@capacitor/status-bar": "8.0.4",
+    "@capawesome/capacitor-badge": "8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "4.0.0",
+    "@capacitor/cli": "8.6.0",
+    "typescript": "5.9.3"
+  }
+}

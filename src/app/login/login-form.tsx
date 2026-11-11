@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { isNativeApp } from "@/lib/native-bridge";
 import { loginAction, totpAction, type LoginActionState } from "./actions";
 
 export function LoginForm({
@@ -26,6 +27,11 @@ export function LoginForm({
   useEffect(() => {
     if (target) window.location.assign(target);
   }, [target]);
+  const [inApp, setInApp] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setInApp(isNativeApp()), 0);
+    return () => clearTimeout(t);
+  }, []);
 
   // Zweiter Schritt: Code aus der Authenticator-App.
   if (state.needsTotp && !(totpState.error && !totpState.needsTotp)) {
@@ -59,7 +65,8 @@ export function LoginForm({
   }
 
   const ssoHref = (p: string) => `/api/auth/${p}/start${next ? `?next=${encodeURIComponent(next)}` : ""}`;
-  const anySso = sso.google || sso.microsoft;
+  // In der App-Store-App erlauben Google/Microsoft die Anmeldung nicht im eingebetteten Fenster.
+  const anySso = (sso.google || sso.microsoft) && !inApp;
 
   return (
     <>

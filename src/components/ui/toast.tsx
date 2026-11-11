@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Check, X } from "lucide-react";
 import { sendUsage } from "@/lib/usage-client";
+import { error as hapticError, impact, success as hapticSuccess } from "@/lib/haptics";
 
 // Kurze Rückmeldung nach einer Aktion, optional mit „Rückgängig".
 // Sitzt unten mittig (am Handy über der Tab-Leiste) und verschwindet von selbst.
@@ -27,6 +28,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     if (timer.current) clearTimeout(timer.current);
     // Fehlermeldungen mitzählen (wo hängen Nutzer?).
     if (t.tone === "error") void sendUsage({ type: "error", name: `toast: ${t.message.slice(0, 80)}` });
+    // In der App: kurzes Vibrieren als Bestätigung (Erledigt, Gespeichert …)
+    if (t.tone === "error") hapticError();
+    else hapticSuccess();
     const id = Date.now();
     setToast({ ...t, id });
     timer.current = setTimeout(() => setToast((cur) => (cur?.id === id ? null : cur)), t.durationMs ?? 6000);
@@ -56,6 +60,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 onClick={() => {
+                  impact("light");
                   toast.onAction?.();
                   setToast(null);
                 }}

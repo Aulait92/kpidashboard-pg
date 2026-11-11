@@ -108,3 +108,73 @@ body:has([data-admin-shell]) { padding-bottom: calc(64px + env(safe-area-inset-b
 @media (min-width: 1024px) {
   body:has([data-admin-shell]) { padding-left: 15rem; padding-bottom: 0; }
 }
+
+/* ── App-Gefühl ───────────────────────────────────────────────────────────
+   Überall: kein grauer Tipp-Blitz, kurze Drück-Animation auf Knöpfen.
+   Nur in der App-Store-App (html.native-app, gesetzt von NativeAppBridge):
+   kein Markieren/Lupe bei Langdruck auf Bedienelementen, kein Gummiband der
+   ganzen Seite, Doppeltipp-Zoom aus. Safe-Areas regelt body oben. */
+/* In @layer base, damit Tailwind-Klassen (z. B. duration-300) weiter gewinnen. */
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:not(:disabled),
+  [role="button"],
+  [data-press] {
+    transition-property: scale, transform, background-color, border-color, color, box-shadow, opacity;
+    transition-duration: 120ms;
+  }
+  button:not(:disabled):active,
+  [role="button"]:active,
+  [data-press]:active {
+    scale: 0.97;
+  }
+
+  html.native-app,
+  html.native-app body {
+    overscroll-behavior-y: none;
+    touch-action: manipulation; /* kein Doppeltipp-Zoom */
+  }
+  html.native-app body {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  html.native-app input,
+  html.native-app textarea,
+  html.native-app select,
+  html.native-app [contenteditable="true"],
+  html.native-app .selectable,
+  html.native-app [data-selectable] {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+  }
+  html.native-app img,
+  html.native-app a {
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+  }
+  /* Listen und Dialoge dürfen weiter nachfedern, nur die Seite selbst nicht */
+  html.native-app [role="dialog"],
+  html.native-app .overflow-y-auto {
+    overscroll-behavior-y: contain;
+  }
+  /* Dezente Einblendung neuer Seiteninhalte (Seitenwechsel) */
+  @media (prefers-reduced-motion: no-preference) {
+    html.native-app main {
+      animation: app-page-in 180ms ease-out;
+    }
+  }
+}
+@keyframes app-page-in {
+  from {
+    opacity: 0.6;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

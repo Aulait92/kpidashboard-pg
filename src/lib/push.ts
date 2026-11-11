@@ -1,5 +1,6 @@
 import webpush from "web-push";
 import { prisma } from "@/lib/prisma";
+import { sendToDevices } from "@/lib/native-push";
 
 let configured = false;
 function configure() {
@@ -21,6 +22,15 @@ export type PushPayload = {
 };
 
 type SendOutcome = { sent: number; removed: number; errors: string[] };
+
+/** Web-Push (falls eingerichtet) plus native App-Geräte zusammenführen. */
+async function deliver(userIds: string[], webSubs: (() => Promise<{ id: string; endpoint: string; p256dh: string; auth: string }[]>) | null, payload: PushPayload): Promise<SendOutcome> {
+  const web: SendOutcome = configure() && webSubs ? await sendToSubscriptions(await webSubs(), payload) : { sent: 0, removed: 0, errors: [] };
+  const native = await sendToDevices(userIds, payload).catch((err: unknown) => ({ sent: 0, removed: 0, errors: [err instanceof Error ? err.message : String(err)] }));
+  const out = { sent: web.sent + native.sent, removed: web.removed + native.removed, errors: [...web.errors, ...native.errors] };
+  if (out.sent === 0 && !configure() && native.errors.length === 0) out.errors.push("VAPID nicht konfiguriert.");
+  return out;
+}
 
 // Niedrig-Level: schickt Payload an exakt diese Subscriptions.
 // Beendete Endpunkte (404/410) werden direkt aufgeräumt.
@@ -63,22 +73,17 @@ async function sendToSubscriptions(
 export async function sendToAdmins(
   payload: PushPayload,
 ): Promise<SendOutcome> {
-  if (!configure()) {
-    return { sent: 0, removed: 0, errors: ["VAPID nicht konfiguriert."] };
-  }
   const adminIds = (
     await prisma.user.findMany({
       where: { role: "ADMIN" },
       select: { id: true },
     })
   ).map((u) => u.id);
-
-  const subs = await prisma.pushSubscription.findMany({
-    where: {
-      OR: [{ userId: { in: adminIds } }, { userId: null }],
-    },
-  });
-  return sendToSubscriptions(subs, payload);
+  return deliver(
+    adminIds,
+    () => prisma.pushSubscription.findMany({ where: { OR: [{ userId: { in: adminIds } }, { userId: null }] } }),
+    payload,
+  );
 }
 
 // An alle Buyer-User eines bestimmten Kunden.
@@ -86,9 +91,6 @@ export async function sendToBuyersOfCustomer(
   customerId: string,
   payload: PushPayload,
 ): Promise<SendOutcome> {
-  if (!configure()) {
-    return { sent: 0, removed: 0, errors: ["VAPID nicht konfiguriert."] };
-  }
   const buyerIds = (
     await prisma.user.findMany({
       where: { role: "BUYER", customerId },
@@ -96,11 +98,7 @@ export async function sendToBuyersOfCustomer(
     })
   ).map((u) => u.id);
   if (buyerIds.length === 0) return { sent: 0, removed: 0, errors: [] };
-
-  const subs = await prisma.pushSubscription.findMany({
-    where: { userId: { in: buyerIds } },
-  });
-  return sendToSubscriptions(subs, payload);
+  return deliver(buyerIds, () => prisma.pushSubscription.findMany({ where: { userId: { in: buyerIds } } }), payload);
 }
 
 // Test-Endpoint: an Subscriptions des aktuell eingeloggten Users.
@@ -108,11 +106,5 @@ export async function sendToUser(
   userId: string,
   payload: PushPayload,
 ): Promise<SendOutcome> {
-  if (!configure()) {
-    return { sent: 0, removed: 0, errors: ["VAPID nicht konfiguriert."] };
-  }
-  const subs = await prisma.pushSubscription.findMany({
-    where: { userId },
-  });
-  return sendToSubscriptions(subs, payload);
+  return deliver([userId], () => prisma.pushSubscription.findMany({ where: { userId } }), payload);
 }
