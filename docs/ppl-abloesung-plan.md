@@ -48,3 +48,13 @@ Auswertung komplett in der App, Airtable/Zapier nur noch als Übergang.
   (Expo/React Native) mit eigener API-Schicht, Kernabläufe zuerst.
 - Ole: Apple-Developer-Konto für die UG beantragen (D-U-N-S-Nummer, dauert einige
   Tage), Google-Play-Konto anlegen.
+
+---
+
+# Offen für 12.11.2026: Support-Kontaktdaten von Ole
+
+- WhatsApp-Business-Nummer für den Support-Chat (Env `SUPPORT_WHATSAPP_NUMBER`)
+- Support-E-Mail (Env `SUPPORT_EMAIL`), z. B. support@performancegrowth.de
+- Adresse für Datenschutzfragen (Seite /sicherheit)
+- Danach in Railway (live-app und staging-app) eintragen, Support-Knopf ist bis dahin ausgeblendet.
+- Später optional: Support-Chats im eigenen WhatsApp-Posteingang (360dialog, Coexistence) mit Zuweisung Ole/Partner.
