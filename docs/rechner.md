@@ -100,8 +100,9 @@ Budget nicht verändert, springt es mit. QR-Code der Präsentation:
 Der Makler-Modus zeigt deutlich **Kosten je Vertrag** = (Werbung + Betreuung/Software
 + Berater, inkl. USt.) pro Monat ÷ neue Verträge pro Monat, darunter „Die Betreuung kostet
 bis 3.000 € Werbebudget immer gleich viel – mehr Budget macht jeden Vertrag günstiger.“
-(Grenze aus `PRICE_LIST`) und einen Vergleich 40 / 60 / 100 €/Tag mit Kosten je Vertrag
-und Courtage/Jahr nach 12 Monaten (`budgetVergleich`, gleiche Eingaben, nur anderes Budget).
+(Grenze aus `PRICE_LIST`) und einen Vergleich 40 / 60 / 95 €/Tag mit Kosten je Vertrag
+und Courtage/Jahr nach 12 Monaten (`budgetVergleich`, gleiche Eingaben, nur anderes Budget;
+mit Cross-Selling, wenn eingeschaltet). Tabelle unten: ohne Cross-Selling.
 
 | €/Tag | je Vertrag bei 4 €/Lead (Präsentation) | je Vertrag bei 6 €/Lead (Rechner-Standard) | Courtage/Jahr nach 12 Mon. (6 €) |
 |---|---|---|---|
@@ -119,7 +120,45 @@ Mit 40 €/Tag (Makler-Standard, 6 €/Lead, 12 Monate, +5 Jahre): 278 Verträge
 21.909 € Courtage/Jahr, Courtage gesamt 96.840 € gegen 32.823 € Kosten (≈ 3,0×),
 Break-even kumuliert in Monat 25.
 
-**Referenz (30 €/Tag, 6 €/Lead, 12 Monate, inkl. USt.)** – im Unit-Test abgesichert:
+### Cross-Selling (Ole, 11.11.; Erfahrungswert der Allianz-Zentrale)
+
+Im Makler-Modus rechnet der Rechner standardmäßig Cross-Selling ein: **1 Zusatzvertrag je
+Katzen-Vertrag** (z. B. Haftpflicht), **Ø 300 € Jahresbeitrag, 22,5 % Bestandscourtage**,
+**direkt beim Abschluss** (`CROSS_SELL_VERZOEGERUNG = 0`; die Logik kann auch eine
+Verzögerung, dann kommen Zusatzverträge auch noch nach Kampagnenende).
+
+- Zusatz-Bestand(m) = Zusatz-Bestand(m−1) × (1 − Storno)^(1/12) + neue Verträge(m − Verzögerung) × Rate
+  (gleicher Storno wie das Hauptprodukt), Courtage = Zusatz-Bestand × Beitrag × Bestand-% ÷ 12.
+- Kopfzahlen, Diagramm, gedeckt/alles zurück, Bestand und Courtage pro Jahr inkl. Cross-Selling;
+  darunter „Ohne Cross-Selling: gedeckt ab Monat X, alles zurück nach Monat Y“ (`ohneCrossSell`),
+  im Diagramm gestrichelt.
+- **Kosten je Vertrag** und Budget-Vergleich: Kosten eines Monats ÷ (Verträge + Zusatzverträge),
+  „Je Vertrag“-Courtage als Ø über beide. Ist Cross-Selling aus, wie vorher.
+- Eingaben im Block „Cross-Selling einrechnen“ (Schalter, Zusatzverträge je Vertrag 0–3,
+  Jahresbeitrag, Bestandscourtage). URL nur bei Abweichung: `xs=0`/`xs=1`, `xr`, `xb`, `xp` (%).
+- Standardwerte je Produkt in der Konfiguration (`crossSell: { rate, beitrag, trail }`,
+  Admin → Einstellungen → Rechner). Fehlt das Feld in einer gespeicherten Konfiguration,
+  gilt der Standard (TKV an, andere aus); `null` = aus. Vertreter-Modus unverändert.
+
+Kontrollwerte (wie Makler-Folie: 30 Tage, 40 €/Tag, 4 €/Lead, 12 %, 358 € Katze, 300 € Zusatz,
+22,5 %, 10 % Storno, 1.000 € Betreuung, Setup 990 €, USt., 12 Monate, +5 Jahre) – im Unit-Test:
+
+| | mit Cross-Selling | ohne |
+|---|---|---|
+| laufend gedeckt ab | Monat 7 | Monat 12 |
+| alles zurück | Monat 12 | Monat 18 |
+| Bestand nach 12 Monaten | 412 + 412 | 412 |
+| Courtage pro Jahr danach | 60.970 € | 33.172 € |
+| Courtage gesamt | 269.495 € (Katze 146.625 + Zusatz 122.870) | 146.625 € |
+| Kosten | 32.594 € | 32.594 € |
+| Faktor | 8,27 | 4,5 |
+| Kosten je Vertrag | 36,4 € | 72,7 € |
+
+Budget-Vergleich mit Cross-Selling (30 Tage): 40 €/Tag 36 € / 60.970 €, 60 €/Tag 31 € / 91.456 €,
+95 €/Tag 27 € / 144.805 €. Mit den Rechner-Standards (30,4 Tage, 350 €): gedeckt Monat 7, alles
+zurück Monat 12, Faktor 8,2, Kosten je Vertrag 36 €.
+
+**Referenz (30 €/Tag, 6 €/Lead, 12 Monate, inkl. USt.)** – ohne Cross-Selling, im Unit-Test abgesichert:
 
 | Kennzahl | Referenz Ole | Rechner (18,24 Verträge/Monat) |
 |---|---|---|

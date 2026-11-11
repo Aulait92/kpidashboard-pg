@@ -19,7 +19,8 @@
 //   Setup        = Setup-Preis (990 € mit 12 Monaten, 2.490 € ohne) × USt.
 //   Jahr 1       = 12 × Überschuss − Setup
 // Makler-Modus (Abschluss 0 %, Bestand > 0 %): Bestandssicht mit Storno über
-// Kampagne + Nachlauf, siehe berechneBestand() und docs/rechner.md.
+// Kampagne + Nachlauf, siehe berechneBestand() und docs/rechner.md; optional mit
+// Cross-Selling (Zusatzverträge direkt beim Abschluss, CROSS_SELL_VERZOEGERUNG).
 // Provision ist umsatzsteuerfrei (Versicherungsvermittlung), Kosten tragen bei
 // Vertretern meist 19 % USt., weil sie keine Vorsteuer abziehen können.
 //
@@ -82,7 +83,22 @@ export type RechnerProduct = {
   premium: number;
   /** Lead-Garantie: Mindest-Leads in 30 Tagen (null = keine Garantie für dieses Produkt) */
   minLeads30: number | null;
+  /** Cross-Selling im Makler-Modus (Standardwerte); null = aus */
+  crossSell: CrossSell | null;
 };
+
+/** Zusatzverträge je Katzen-Vertrag mit eigenem Jahresbeitrag und Bestandscourtage (Anteil). */
+export type CrossSell = { rate: number; beitrag: number; trail: number };
+
+/**
+ * Cross-Selling (Ole, 11.11.; Erfahrungswert der Allianz-Zentrale): 1 Zusatzvertrag
+ * je Kunde, z. B. Haftpflicht mit 300 € Jahresbeitrag und 22,5 % Bestandscourtage,
+ * direkt beim Abschluss des Katzen-Vertrags.
+ */
+export const CROSS_SELL_STANDARD: CrossSell = { rate: 1, beitrag: 300, trail: 0.225 };
+/** Monate zwischen Katzen-Vertrag und Zusatzvertrag (fest; 0 = im selben Monat, Ole 11.11.). */
+export const CROSS_SELL_VERZOEGERUNG = 0;
+export const CROSS_SELL_RATE_MAX = 3;
 
 export type Guarantee = { enabled: boolean; title: string; text: string };
 
@@ -135,18 +151,19 @@ export const DEFAULT_PRODUCTS: RechnerProduct[] = [
     cpl: 6, cplNote: "mit Sicherheitspuffer gerechnet, real zuletzt ca. 2 €", cplOverride: false,
     cplMakler: 4, cplMaklerNote: "reales Ergebnis",
     customerRate: 0.09, contractsPerCustomer: 4 / 3, terminRate: 0, premium: 350, minLeads30: 100,
+    crossSell: CROSS_SELL_STANDARD,
   },
   {
     key: "privatschutz", name: "Privatschutz", active: false, maklerOnly: false, match: "privatschutz",
     provisionKey: "privatschutz", kind: "percent", vertreterRate: 0.55, vertreterTrail: 0, maklerRate: 0, maklerTrail: 0.225, months: 0,
     cpl: 12, cplNote: "Annahme", cplOverride: false, cplMakler: null, cplMaklerNote: "",
-    customerRate: 0.1, contractsPerCustomer: 1, terminRate: 0.3, premium: 600, minLeads30: null,
+    customerRate: 0.1, contractsPerCustomer: 1, terminRate: 0.3, premium: 600, minLeads30: null, crossSell: null,
   },
   {
     key: "pkv", name: "PKV-Tarifoptimierung", active: false, maklerOnly: true, match: "pkv",
     provisionKey: "pkv", kind: "monthly", vertreterRate: 0, vertreterTrail: 0, maklerRate: 0, maklerTrail: 0, months: 10,
     cpl: 25, cplNote: "Annahme", cplOverride: false, cplMakler: null, cplMaklerNote: "",
-    customerRate: 0.075, contractsPerCustomer: 1, terminRate: 0.25, premium: 250, minLeads30: null,
+    customerRate: 0.075, contractsPerCustomer: 1, terminRate: 0.25, premium: 250, minLeads30: null, crossSell: null,
   },
 ];
 
@@ -212,6 +229,23 @@ export function parseRechnerConfig(raw: unknown): { config: RechnerConfig; error
       if (v == null && p[k] !== undefined && p[k] !== null && p[k] !== "") errors.push(`${label}: ${what}`);
       return v ?? fb;
     };
+    // Cross-Selling: fehlt das Feld (ältere gespeicherte Konfiguration) → Standard des Produkts; null = aus
+    let crossSell: CrossSell | null = base?.crossSell ?? null;
+    if (p.crossSell === null) crossSell = null;
+    else if (p.crossSell && typeof p.crossSell === "object") {
+      const x = p.crossSell as Record<string, unknown>;
+      const fb = base?.crossSell ?? CROSS_SELL_STANDARD;
+      const xget = (k: string, min: number, max: number, f: number, what: string) => {
+        const v = numIn(x[k], min, max);
+        if (v == null && x[k] !== undefined && x[k] !== null && x[k] !== "") errors.push(`${label}: ${what}`);
+        return v ?? f;
+      };
+      crossSell = {
+        rate: xget("rate", 0, CROSS_SELL_RATE_MAX, fb.rate, `Cross-Selling: Zusatzverträge je Kunde 0–${CROSS_SELL_RATE_MAX}`),
+        beitrag: xget("beitrag", 1, 100_000, fb.beitrag, "Cross-Selling: Jahresbeitrag ab 1 €"),
+        trail: xget("trail", 0, 1, fb.trail, "Cross-Selling: Bestandscourtage 0–100 %"),
+      };
+    }
     const minLeads = p.minLeads30 === null || p.minLeads30 === "" || p.minLeads30 === undefined ? null : numIn(p.minLeads30, 0, 100_000);
     products.push({
       key,
@@ -237,6 +271,7 @@ export function parseRechnerConfig(raw: unknown): { config: RechnerConfig; error
       terminRate: get("terminRate", 0, 1, base?.terminRate ?? 0, "Termin-Quote 0–100 %"),
       premium: get("premium", 1, 100_000, base?.premium ?? 500, "Beitrag ab 1 €"),
       minLeads30: minLeads != null ? Math.round(minLeads) : null,
+      crossSell,
     });
   }
   if (!products.some((p) => p.active)) errors.push("Mindestens ein Produkt muss aktiv sein.");
@@ -308,6 +343,11 @@ export type RechnerInput = {
   kampagne: Kampagne;
   /** Bestandssicht: Jahre nach Kampagnenende, bis zu denen Courtage gezählt wird */
   horizont: Horizont;
+  /** Makler-Modus: Cross-Selling an/aus und Werte (Zusatzverträge je Vertrag, Jahresbeitrag, Bestand-% als Anteil) */
+  xs: boolean;
+  xRate: number;
+  xBeitrag: number;
+  xTrail: number;
 };
 
 export const KAMPAGNE_OPTIONEN = [6, 12, 24] as const;
@@ -354,6 +394,10 @@ export function defaultInput(p: RechnerProduct, typ: VermittlerTyp, base?: Parti
     storno: base?.storno ?? STORNO_STANDARD,
     kampagne: base?.kampagne ?? KAMPAGNE_STANDARD,
     horizont: base?.horizont ?? HORIZONT_STANDARD,
+    xs: p.crossSell != null,
+    xRate: (p.crossSell ?? CROSS_SELL_STANDARD).rate,
+    xBeitrag: (p.crossSell ?? CROSS_SELL_STANDARD).beitrag,
+    xTrail: (p.crossSell ?? CROSS_SELL_STANDARD).trail,
   };
 }
 
@@ -403,6 +447,10 @@ export function inputFromParams(config: RechnerConfig, q: Params): RechnerInput 
     storno: n("st", STORNO_MIN * 100, STORNO_MAX * 100, d.storno, 100),
     kampagne: KAMPAGNE_OPTIONEN.find((k) => k === km) ?? d.kampagne,
     horizont: HORIZONT_OPTIONEN.find((h) => h === hz) ?? d.horizont,
+    xs: one(q, "xs") === "0" ? false : one(q, "xs") === "1" ? true : d.xs,
+    xRate: n("xr", 0, CROSS_SELL_RATE_MAX, d.xRate),
+    xBeitrag: n("xb", 1, 100_000, d.xBeitrag),
+    xTrail: n("xp", 0, 100, d.xTrail, 100),
   };
 }
 
@@ -436,6 +484,10 @@ export function inputToParams(config: RechnerConfig, i: RechnerInput): URLSearch
   if (diff(i.storno, d.storno)) q.set("st", String(pct(i.storno)));
   if (i.kampagne !== d.kampagne) q.set("km", String(i.kampagne));
   if (i.horizont !== d.horizont) q.set("hz", String(i.horizont));
+  if (i.xs !== d.xs) q.set("xs", i.xs ? "1" : "0");
+  if (diff(i.xRate, d.xRate)) q.set("xr", String(Math.round(i.xRate * 100) / 100));
+  if (diff(i.xBeitrag, d.xBeitrag)) q.set("xb", String(i.xBeitrag));
+  if (diff(i.xTrail, d.xTrail)) q.set("xp", String(pct(i.xTrail)));
   return q;
 }
 
@@ -576,9 +628,9 @@ export type BestandResult = {
   horizont: number;
   /** monatliche Bleibequote (1 − Storno)^(1/12) */
   bleibeMonat: number;
-  /** Faustformel: Jahresbeitrag × Bestand-% ÷ Storno (+ Abschluss im Mischfall), nicht abgezinst */
+  /** Faustformel: Jahresbeitrag × Bestand-% ÷ Storno (+ Abschluss im Mischfall), nicht abgezinst; mit Cross-Selling Ø über Haupt- und Zusatzverträge */
   lebenszeitJeVertrag: number;
-  /** laufende Kosten eines Kampagnenmonats ÷ Verträge im Monat (ohne Setup) */
+  /** laufende Kosten eines Kampagnenmonats ÷ Verträge im Monat (mit Cross-Selling inkl. Zusatzverträge; ohne Setup) */
   kostenJeVertrag: number | null;
   vertraegeNachKampagne: number;
   /** Bestandscourtage pro Jahr aus dem Bestand am Kampagnenende */
@@ -595,8 +647,19 @@ export type BestandResult = {
   laufendGedecktMonat: number | null;
   /** erster Monat mit kumulierter Courtage ≥ kumulierten Kosten (inkl. Nachlauf; null = nicht im Horizont) */
   breakEvenMonat: number | null;
-  /** Index = Monat 0 (nur Setup) … monate */
+  /** Cross-Selling eingerechnet (nur Makler-Modus, Schalter an, Zusatzverträge > 0) */
+  crossSell: boolean;
+  /** Zusatzverträge am Kampagnenende (0 ohne Cross-Selling) */
+  zusatzNachKampagne: number;
+  /** Courtage über alles getrennt: Hauptprodukt und Zusatzverträge */
+  courtageHaupt: number;
+  courtageZusatz: number;
+  /** dieselbe Rechnung ohne Cross-Selling (null, wenn Cross-Selling nicht eingerechnet) */
+  ohneCrossSell: BestandResult | null;
+  /** Index = Monat 0 (nur Setup) … monate; Hauptprodukt */
   bestand: number[];
+  /** Zusatzverträge je Monat */
+  bestandZusatz: number[];
   courtageMonat: number[];
   kostenMonat: number[];
   kumCourtage: number[];
@@ -613,6 +676,18 @@ export type BestandResult = {
  */
 export function berechneBestand(p: RechnerProduct, i: RechnerInput, r: RechnerResult): BestandResult | null {
   if (p.kind !== "percent" || i.trail <= 0) return null;
+  const mitZusatz = i.xs && i.xRate > 0 && maklerModus(p, i);
+  const ohne = mitZusatz ? bestandRechnung(p, i, r, false, null) : null;
+  return bestandRechnung(p, i, r, mitZusatz, ohne);
+}
+
+/**
+ * Cross-Selling (nur Makler-Modus): Zusatzverträge = neue Verträge × xRate,
+ * abgeschlossen CROSS_SELL_VERZOEGERUNG Monate später (Standard 0 = im selben
+ * Monat; bei > 0 auch noch nach Kampagnenende), gleicher Storno,
+ * Courtage = Zusatz-Bestand × xBeitrag × xTrail ÷ 12.
+ */
+function bestandRechnung(p: RechnerProduct, i: RechnerInput, r: RechnerResult, mitZusatz: boolean, ohne: BestandResult | null): BestandResult {
   const vat = i.ust ? 1 + VAT : 1;
   const storno = clamp(i.storno, STORNO_MIN, STORNO_MAX);
   const bleibe = Math.pow(1 - storno, 1 / 12);
@@ -624,17 +699,26 @@ export function berechneBestand(p: RechnerProduct, i: RechnerInput, r: RechnerRe
   const abschluss = provisionPerVertrag(p.kind, i, neu) - i.beitrag * i.trail;
   const trailMonat = (i.beitrag * i.trail) / 12;
 
-  const bestand = [0], courtageMonat = [0], kostenMonat = [r.setup], kumCourtage = [0], kumKosten = [r.setup];
-  let n = 0;
+  const zusatzMonat = mitZusatz ? (i.xBeitrag * i.xTrail) / 12 : 0;
+  const zusatzNeu = mitZusatz ? neu * i.xRate : 0;
+  const bestand = [0], bestandZusatz = [0], courtageMonat = [0], kostenMonat = [r.setup], kumCourtage = [0], kumKosten = [r.setup];
+  let n = 0, z = 0, cHaupt = 0, cZusatz = 0;
   let laufendGedecktMonat: number | null = null;
   let breakEvenMonat: number | null = null;
   for (let m = 1; m <= monate; m++) {
     const inKampagne = m <= kampagne;
     const zugang = inKampagne ? neu : 0;
     n = n * bleibe + zugang;
-    const c = n * trailMonat + zugang * abschluss;
+    const herkunft = m - CROSS_SELL_VERZOEGERUNG;
+    z = z * bleibe + (herkunft >= 1 && herkunft <= kampagne ? zusatzNeu : 0);
+    const ch = n * trailMonat + zugang * abschluss;
+    const cz = z * zusatzMonat;
+    cHaupt += ch;
+    cZusatz += cz;
+    const c = ch + cz;
     const k = ((inKampagne ? r.werbebudget : 0) + (m <= betreuungMonate ? r.betreuung + r.berater : 0)) * vat;
     bestand.push(n);
+    bestandZusatz.push(z);
     courtageMonat.push(c);
     kostenMonat.push(k);
     kumCourtage.push(kumCourtage[m - 1] + c);
@@ -646,15 +730,16 @@ export function berechneBestand(p: RechnerProduct, i: RechnerInput, r: RechnerRe
   const gesamtCourtage = kumCourtage[monate];
   const gesamtKosten = kumKosten[monate];
   const vertraegeNachKampagne = bestand[kampagne];
+  const zusatzNachKampagne = bestandZusatz[kampagne];
   return {
     monate,
     kampagne,
     horizont: i.horizont,
     bleibeMonat: bleibe,
-    lebenszeitJeVertrag: (i.beitrag * i.trail) / storno + Math.max(0, abschluss),
-    kostenJeVertrag: neu > 0 ? r.kosten / neu : null,
+    lebenszeitJeVertrag: (((i.beitrag * i.trail) / storno + Math.max(0, abschluss)) * neu + ((zusatzMonat * 12) / storno) * zusatzNeu) / Math.max(neu + zusatzNeu, 1e-9),
+    kostenJeVertrag: neu + zusatzNeu > 0 ? r.kosten / (neu + zusatzNeu) : null,
     vertraegeNachKampagne,
-    courtageJahrNachKampagne: vertraegeNachKampagne * i.beitrag * i.trail,
+    courtageJahrNachKampagne: vertraegeNachKampagne * i.beitrag * i.trail + zusatzNachKampagne * zusatzMonat * 12,
     courtageKampagne,
     courtageNachlauf: gesamtCourtage - courtageKampagne,
     gesamtCourtage,
@@ -663,7 +748,13 @@ export function berechneBestand(p: RechnerProduct, i: RechnerInput, r: RechnerRe
     ergebnis: gesamtCourtage - gesamtKosten,
     laufendGedecktMonat,
     breakEvenMonat,
+    crossSell: mitZusatz,
+    zusatzNachKampagne,
+    courtageHaupt: cHaupt,
+    courtageZusatz: cZusatz,
+    ohneCrossSell: ohne,
     bestand,
+    bestandZusatz,
     courtageMonat,
     kostenMonat,
     kumCourtage,
@@ -681,12 +772,15 @@ export type BudgetVergleichZeile = {
   betreuung: number;
   /** Bestandscourtage pro Jahr nach 12 Monaten Kampagne */
   courtageJahrNach12: number;
+  /** Cross-Selling eingerechnet (wie in der Hauptrechnung) */
+  crossSell: boolean;
 };
 
 /**
  * Gleiche Eingaben, anderes Tagesbudget: Kosten je Vertrag und Courtage/Jahr nach
  * 12 Monaten. Betreuung ist bis zur ersten Budget-Stufe gleich – mehr Budget
- * verteilt sie auf mehr Verträge.
+ * verteilt sie auf mehr Verträge. Cross-Selling wie in der Hauptrechnung (an/aus):
+ * Kosten je Vertrag = Kosten eines Monats ÷ (Verträge + Zusatzverträge).
  */
 export function budgetVergleich(p: RechnerProduct, i: RechnerInput, cpl: number, budgets: readonly number[] = BUDGET_VERGLEICH): BudgetVergleichZeile[] {
   return budgets.map((budget) => {
@@ -697,9 +791,10 @@ export function budgetVergleich(p: RechnerProduct, i: RechnerInput, cpl: number,
       budget,
       kostenMonat: r.kosten,
       vertraegeMonat: r.vertraege,
-      kostenJeVertrag: r.vertraege > 0 ? r.kosten / r.vertraege : null,
+      kostenJeVertrag: b ? b.kostenJeVertrag : r.vertraege > 0 ? r.kosten / r.vertraege : null,
       betreuung: r.betreuung,
       courtageJahrNach12: b ? b.courtageJahrNachKampagne : 0,
+      crossSell: b?.crossSell ?? false,
     };
   });
 }

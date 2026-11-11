@@ -2,18 +2,27 @@
 
 import { startTransition, useActionState, useState } from "react";
 import { saveRechnerAction, type RechnerFormState } from "./actions";
-import type { CplData, RechnerConfig, RechnerProduct } from "@/lib/rechner";
+import { CROSS_SELL_STANDARD, type CplData, type RechnerConfig, type RechnerProduct } from "@/lib/rechner";
 
 // Formular: Zahlen als Text (Komma erlaubt), Prozentfelder in % – beim
 // Speichern in Anteile umgerechnet und auf dem Server geprüft.
-type Row = Record<keyof RechnerProduct, string | boolean>;
+type ProductField = Exclude<keyof RechnerProduct, "crossSell">;
+// Cross-Selling als eigene Felder (Schalter + drei Werte), beim Speichern wieder ein Objekt.
+type Row = Record<ProductField, string | boolean> & { xsOn: boolean; xsRate: string; xsBeitrag: string; xsTrail: string };
+const XS_KEYS = ["xsOn", "xsRate", "xsBeitrag", "xsTrail"];
 
-const PCT: (keyof RechnerProduct)[] = ["vertreterRate", "vertreterTrail", "maklerRate", "maklerTrail", "customerRate", "terminRate"];
+const PCT: ProductField[] = ["vertreterRate", "vertreterTrail", "maklerRate", "maklerTrail", "customerRate", "terminRate"];
 const fmt = (n: number) => String(Math.round(n * 10000) / 10000).replace(".", ",");
 
 function toRow(p: RechnerProduct): Row {
   const r = {} as Row;
+  const x = p.crossSell ?? CROSS_SELL_STANDARD;
+  r.xsOn = p.crossSell != null;
+  r.xsRate = fmt(x.rate);
+  r.xsBeitrag = fmt(x.beitrag);
+  r.xsTrail = fmt(x.trail * 100);
   for (const [k, v] of Object.entries(p) as [keyof RechnerProduct, unknown][]) {
+    if (k === "crossSell") continue;
     if (typeof v === "boolean") r[k] = v;
     else if (typeof v === "number") r[k] = PCT.includes(k) ? fmt(v * 100) : fmt(v);
     else r[k] = v == null ? "" : String(v);
@@ -23,9 +32,15 @@ function toRow(p: RechnerProduct): Row {
 
 function fromRow(r: Row): Record<string, unknown> {
   const out: Record<string, unknown> = {};
+  const pctIn = (v: string) => {
+    const n = Number(v.replace(",", "."));
+    return v.trim() === "" || !Number.isFinite(n) ? v : n / 100;
+  };
+  out.crossSell = r.xsOn ? { rate: r.xsRate, beitrag: r.xsBeitrag, trail: pctIn(r.xsTrail) } : null;
   for (const [k, v] of Object.entries(r)) {
+    if (XS_KEYS.includes(k)) continue;
     if (typeof v === "boolean") out[k] = v;
-    else if (PCT.includes(k as keyof RechnerProduct)) {
+    else if (PCT.includes(k as ProductField)) {
       const n = Number(String(v).replace(",", "."));
       out[k] = String(v).trim() === "" || !Number.isFinite(n) ? v : n / 100;
     } else out[k] = k === "provisionKey" && v === "" ? null : v;
@@ -37,6 +52,7 @@ const NEW_PRODUCT: RechnerProduct = {
   key: "", name: "", active: false, maklerOnly: false, match: "", provisionKey: null, kind: "percent",
   vertreterRate: 0.5, vertreterTrail: 0, maklerRate: 0, maklerTrail: 0.225, months: 10,
   cpl: 10, cplNote: "Annahme", cplOverride: false, cplMakler: null, cplMaklerNote: "", customerRate: 0.1, contractsPerCustomer: 1, terminRate: 0, premium: 500, minLeads30: null,
+  crossSell: null,
 };
 
 export function RechnerForm({ config, dataInfo }: { config: RechnerConfig; dataInfo: Record<string, CplData> }) {
@@ -118,6 +134,18 @@ export function RechnerForm({ config, dataInfo }: { config: RechnerConfig; dataI
                   <F label="Text in Lead-Quelle/Kampagne (für echte Daten)"><input className={inp} value={String(r.match)} onChange={(e) => upd(i, { match: e.target.value })} /></F>
                   <Check label="Immer Erfahrungswert (echte Daten ignorieren)" checked={!!r.cplOverride} onChange={(v) => upd(i, { cplOverride: v })} />
                   <F label="Lead-Garantie: Mindest-Leads in 30 Tagen (leer = keine)"><input className={inp} value={String(r.minLeads30 ?? "")} onChange={(e) => upd(i, { minLeads30: e.target.value })} /></F>
+                  <div className="grid gap-3 rounded-[var(--radius-sm)] bg-slate-50 p-3 sm:col-span-2 sm:grid-cols-3">
+                    <div className="sm:col-span-3">
+                      <Check label="Cross-Selling im Makler-Modus einrechnen (Zusatzverträge direkt beim Abschluss)" checked={r.xsOn} onChange={(v) => upd(i, { xsOn: v })} />
+                    </div>
+                    {r.xsOn ? (
+                      <>
+                        <F label="Zusatzverträge je Kunde"><input className={inp} value={r.xsRate} onChange={(e) => upd(i, { xsRate: e.target.value })} /></F>
+                        <F label="Jahresbeitrag Zusatzvertrag €"><input className={inp} value={r.xsBeitrag} onChange={(e) => upd(i, { xsBeitrag: e.target.value })} /></F>
+                        <F label="Bestandscourtage Zusatzvertrag %"><input className={inp} value={r.xsTrail} onChange={(e) => upd(i, { xsTrail: e.target.value })} /></F>
+                      </>
+                    ) : null}
+                  </div>
                   <p className="text-xs text-[color:var(--muted)] sm:col-span-2">
                     Echte Daten (180 Tage): {data ? `${data.cpl.toLocaleString("de-DE", { style: "currency", currency: "EUR" })} pro Lead aus ${data.leads.toLocaleString("de-DE")} Leads` : "zu wenig Daten (mind. 200 Leads mit Kosten)"}
                   </p>

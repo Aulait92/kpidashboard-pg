@@ -6,6 +6,8 @@ import {
   BUDGET_MAX,
   BUDGET_MIN,
   BUDGET_STANDARD,
+  CROSS_SELL_RATE_MAX,
+  CROSS_SELL_VERZOEGERUNG,
   DAYS_PER_MONTH,
   SEAT_MONTHLY,
   SEATS_INCLUDED,
@@ -181,6 +183,30 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
                 </p>
               </details>
             </Card>
+
+            {makler || (maklerModus(product, input) && input.xs) ? (
+              <Card>
+                <div data-cross-selling>
+                  <label className="flex items-start gap-2">
+                    <input type="checkbox" className="mt-1 h-4 w-4" checked={input.xs} onChange={(e) => set({ xs: e.target.checked })} />
+                    <span>
+                      <span className="block text-base font-semibold">Cross-Selling einrechnen</span>
+                      <span className="block text-sm text-[color:var(--muted)]">
+                        Jeder Katzen-Kunde ist ein Kontakt für Haftpflicht, Hausrat und Unfall. Erfahrungswert eines großen Versicherers: 1 Zusatzvertrag je Kunde,
+                        {CROSS_SELL_VERZOEGERUNG === 0 ? " direkt beim Abschluss." : ` ${CROSS_SELL_VERZOEGERUNG} Monate später.`}
+                      </span>
+                    </span>
+                  </label>
+                  {input.xs ? (
+                    <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                      <NumField key={`xr-${version}`} label="Zusatzverträge" hint="je Vertrag" suffix="×" value={input.xRate} min={0} max={CROSS_SELL_RATE_MAX} step={0.1} onChange={(v) => set({ xRate: v })} />
+                      <NumField key={`xb-${version}`} label="Ø Jahresbeitrag" hint="Zusatzvertrag" suffix="€" value={input.xBeitrag} min={1} max={100000} onChange={(v) => set({ xBeitrag: v })} />
+                      <NumField key={`xp-${version}`} label="Bestandscourtage" hint="pro Jahr" suffix="%" value={pctOut(input.xTrail)} min={0} max={100} onChange={(v) => set({ xTrail: v / 100 })} />
+                    </div>
+                  ) : null}
+                </div>
+              </Card>
+            ) : null}
 
             <Card>
               <h2 className="mb-3 text-base font-semibold">Ihr Paket</h2>
@@ -381,11 +407,16 @@ function MaklerErgebnis({
         <p className="mt-1 text-sm text-[color:var(--muted)]">
           davon {eur(b.courtageKampagne)} während der Kampagne + {eur(b.courtageNachlauf)} in den {jahre}n danach
         </p>
+        {b.crossSell ? (
+          <p className="mt-1 text-sm text-[color:var(--muted)]" data-courtage-split>
+            {product.name}: {eur(b.courtageHaupt)} · Cross-Selling: {eur(b.courtageZusatz)}
+          </p>
+        ) : null}
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           <div className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2" data-je-vertrag>
             <div className="text-xs text-[color:var(--muted)]">Je Vertrag</div>
             <div className="text-sm">
-              <b className="tabular-nums">{eur(b.lebenszeitJeVertrag)}</b> Courtage über die Laufzeit
+              {b.crossSell ? "Ø " : ""}<b className="tabular-nums">{eur(b.lebenszeitJeVertrag)}</b> Courtage über die Laufzeit
             </div>
             <div className="text-sm">
               <b className="tabular-nums">{b.kostenJeVertrag != null ? eur(b.kostenJeVertrag) : "–"}</b> Kosten je Vertrag
@@ -393,7 +424,10 @@ function MaklerErgebnis({
           </div>
           <div className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2" data-nach-kampagne>
             <div className="text-xs text-[color:var(--muted)]">Nach {b.kampagne} Monaten Kampagne</div>
-            <div className="text-sm"><b className="tabular-nums">{zahl(b.vertraegeNachKampagne)}</b> Verträge im Bestand</div>
+            <div className="text-sm">
+              <b className="tabular-nums">{zahl(b.vertraegeNachKampagne)}</b> Verträge im Bestand
+              {b.crossSell ? <> + <b className="tabular-nums">{zahl(b.zusatzNachKampagne)}</b> Zusatzverträge</> : null}
+            </div>
             <div className="text-sm"><b className="tabular-nums">{eur(b.courtageJahrNachKampagne)}</b> Courtage pro Jahr, ohne weitere Kosten</div>
           </div>
         </div>
@@ -410,8 +444,9 @@ function MaklerErgebnis({
           <p className="text-3xl font-bold tracking-tight tabular-nums">{b.kostenJeVertrag != null ? eur(b.kostenJeVertrag) : "–"}</p>
         </div>
         <p className="text-sm text-[color:var(--muted)]">
-          Werbung + Betreuung/Software{input.ust ? " inkl. USt." : ""} pro Monat ({eur(r.kosten)}) ÷ {zahl(r.vertraege, 1)} neue Verträge pro Monat.
-          Dem stehen {eur(b.lebenszeitJeVertrag)} Courtage über die Laufzeit gegenüber.
+          Werbung + Betreuung/Software{input.ust ? " inkl. USt." : ""} pro Monat ({eur(r.kosten)}) ÷{" "}
+          {b.crossSell ? <>({zahl(r.vertraege, 1)} Verträge + {zahl(r.vertraege * input.xRate, 1)} Zusatzverträge)</> : <>{zahl(r.vertraege, 1)} neue Verträge</>} pro Monat.
+          Dem stehen Ø {eur(b.lebenszeitJeVertrag)} Courtage je Vertrag über die Laufzeit gegenüber.
         </p>
         <p className="mt-2 text-sm font-medium" data-budget-hinweis>
           Die Betreuung kostet bis {eur(PRICE_LIST.tiers[0].maxBudget)} Werbebudget immer gleich viel – mehr Budget macht jeden Vertrag günstiger.
@@ -443,6 +478,9 @@ function MaklerErgebnis({
             </tbody>
           </table>
         </div>
+        <p className="mt-1 text-xs text-[color:var(--muted)]" data-vergleich-hinweis>
+          12 Monate Kampagne, {b.crossSell ? "inkl. Cross-Selling" : "ohne Cross-Selling"}.
+        </p>
       </Card>
 
       <Card>
@@ -457,6 +495,12 @@ function MaklerErgebnis({
               Ab Monat {b.laufendGedecktMonat} deckt die laufende Courtage die monatlichen Kosten.
             </span>
           ) : null}
+          {b.ohneCrossSell ? (
+            <span className="mt-1 block text-sm text-[color:var(--muted)]" data-ohne-cross-selling>
+              Ohne Cross-Selling: {b.ohneCrossSell.laufendGedecktMonat != null ? `gedeckt ab Monat ${b.ohneCrossSell.laufendGedecktMonat}` : "laufend nicht gedeckt während der Kampagne"},{" "}
+              {b.ohneCrossSell.breakEvenMonat != null ? `alles zurück nach Monat ${b.ohneCrossSell.breakEvenMonat}` : `bis ${jahre} danach nicht zurück`} ({eur(b.ohneCrossSell.gesamtCourtage)} Courtage).
+            </span>
+          ) : null}
         </p>
         <BestandVerlauf b={b} />
         <p className="mt-3 text-xs leading-relaxed text-[color:var(--muted)]" data-annahmen>
@@ -464,7 +508,14 @@ function MaklerErgebnis({
           Ø Jahresbeitrag {eur(input.beitrag)}, {zahl(input.trail * 100, 1)} % Bestandscourtage pro Jahr
           {input.rate > 0 ? `, ${zahl(input.rate * 100, 1)} % Abschluss` : ""}, Beitrag und Satz bleiben gleich. Nach der Kampagne keine
           Kosten mehr{input.laufzeit === "12m" && b.kampagne < 12 ? " (Betreuung läuft bis Vertragsende nach 12 Monaten)" : ""}.
-          „Je Vertrag“ = Jahrescourtage ÷ Storno (Faustformel). {product.name}.
+          „Je Vertrag“ = Jahrescourtage ÷ Storno (Faustformel{b.crossSell ? ", Ø über Verträge und Zusatzverträge" : ""}). {product.name}.
+          {b.crossSell ? (
+            <>
+              {" "}Cross-Selling: Erfahrungswert eines großen Versicherers – {zahl(input.xRate, Number.isInteger(input.xRate) ? 0 : 1)} {input.xRate === 1 ? "Zusatzvertrag" : "Zusatzverträge"} je Kunde,
+              {CROSS_SELL_VERZOEGERUNG === 0 ? " direkt beim Abschluss" : ` ${CROSS_SELL_VERZOEGERUNG} Monate später`}; Ø Jahresbeitrag {eur(input.xBeitrag)},
+              {" "}{zahl(input.xTrail * 100, 1)} % Bestandscourtage, gleicher Storno.
+            </>
+          ) : null}
         </p>
       </Card>
     </>
@@ -518,6 +569,9 @@ function BestandVerlauf({ b }: { b: BestandResult }) {
       <div className="mb-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[color:var(--muted)]" aria-hidden>
         <span className="inline-flex items-center gap-1.5"><svg width="18" height="6"><line x1="0" x2="18" y1="3" y2="3" stroke="var(--brand)" strokeWidth="2.5" /></svg>Courtage kumuliert</span>
         <span className="inline-flex items-center gap-1.5"><svg width="18" height="6"><line x1="0" x2="18" y1="3" y2="3" stroke={KOSTEN_FARBE} strokeWidth="2" strokeDasharray="5 3" /></svg>Kosten kumuliert</span>
+        {b.ohneCrossSell ? (
+          <span className="inline-flex items-center gap-1.5"><svg width="18" height="6"><line x1="0" x2="18" y1="3" y2="3" stroke="var(--brand)" strokeOpacity="0.55" strokeWidth="1.5" strokeDasharray="2 3" /></svg>Courtage ohne Cross-Selling</span>
+        ) : null}
       </div>
       <div className="relative" ref={box}>
         <svg
@@ -532,6 +586,9 @@ function BestandVerlauf({ b }: { b: BestandResult }) {
           <line x1={x(b.kampagne)} x2={x(b.kampagne)} y1={T - 6} y2={y(0)} stroke="var(--border-strong)" strokeWidth="1" strokeDasharray="3 3" />
           <text x={x(b.kampagne) + 4} y={T - 8} fontSize="12" fill="var(--muted)">Kampagnenende</text>
           <path d={path(b.kumKosten)} fill="none" stroke={KOSTEN_FARBE} strokeWidth="2" strokeDasharray="6 4" strokeLinejoin="round" />
+          {b.ohneCrossSell ? (
+            <path d={path(b.ohneCrossSell.kumCourtage)} fill="none" stroke="var(--brand)" strokeOpacity="0.55" strokeWidth="1.5" strokeDasharray="2 3" strokeLinejoin="round" data-ohne-linie />
+          ) : null}
           <path d={path(b.kumCourtage)} fill="none" stroke="var(--brand)" strokeWidth="2.5" strokeLinejoin="round" />
           <text x={W - R} y={yc} textAnchor="end" fontSize="12" fill="var(--foreground)">Courtage</text>
           <text x={W - R} y={yk} textAnchor="end" fontSize="12" fill="var(--muted)">Kosten</text>
@@ -584,7 +641,11 @@ function BestandVerlauf({ b }: { b: BestandResult }) {
             data-tooltip
           >
             <b>{h === 0 ? "Start (Setup)" : `Monat ${h}`}</b> · Courtage {eur(b.kumCourtage[h])} · Kosten {eur(b.kumKosten[h])}
-            {h > 0 ? <span className="block opacity-80">{zahl(b.bestand[h])} Verträge im Bestand</span> : null}
+            {h > 0 ? (
+              <span className="block opacity-80">
+                {zahl(b.bestand[h])} Verträge im Bestand{b.crossSell ? ` + ${zahl(b.bestandZusatz[h])} Zusatzverträge` : ""}
+              </span>
+            ) : null}
           </div>
         ) : null}
       </div>

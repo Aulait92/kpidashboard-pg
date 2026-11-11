@@ -10,6 +10,8 @@ import {
   maklerModus,
   budgetVergleich,
   BUDGET_STANDARD,
+  CROSS_SELL_VERZOEGERUNG,
+  DAYS_PER_MONTH,
   parseRechnerConfig,
   productsFor,
   provisionPerVertrag,
@@ -176,8 +178,8 @@ describe("Break-even-Rechner", () => {
 });
 
 describe("Bestandssicht (Makler TKV, Storno)", () => {
-  // Referenzrechnung mit 30 €/Tag (Makler-Standard ist 40 €/Tag)
-  const makler = (over: Partial<RechnerInput> = {}) => base({ budget: 30, ...over }, tkv, "makler");
+  // Referenzrechnung mit 30 €/Tag (Makler-Standard ist 40 €/Tag), ohne Cross-Selling (eigener Block unten)
+  const makler = (over: Partial<RechnerInput> = {}) => base({ budget: 30, xs: false, ...over }, tkv, "makler");
   const rel = (a: number, b: number) => Math.abs(a - b) / b;
 
   it("Referenz Ole 11.11. (30 €/Tag, 6 €/Lead, 12 Monate, inkl. USt.)", () => {
@@ -321,7 +323,7 @@ describe("Bestandssicht (Makler TKV, Storno)", () => {
   });
 
   it("Kosten je Vertrag: Präsentations-Annahmen (4 €/Lead, 12 % Verträge, 1.000 € Betreuung, USt.)", () => {
-    const i = base({ customerRate: 0.09 }, tkv, "makler"); // 9 % × 4/3 = 12 % Verträge je Lead
+    const i = base({ customerRate: 0.09, xs: false }, tkv, "makler"); // 9 % × 4/3 = 12 % Verträge je Lead; ohne Cross-Selling
     const v = budgetVergleich(tkv, i, 4, [27, 40, 60, 98, 100]);
     const kjv = Object.fromEntries(v.map((z) => [z.budget, z.kostenJeVertrag!]));
     expect(kjv[27]).toBeCloseTo(89, -0.5); // ≈ 89 €
@@ -336,7 +338,7 @@ describe("Bestandssicht (Makler TKV, Storno)", () => {
     // mehr Budget = mehr Bestand
     expect(v[2].courtageJahrNach12).toBeGreaterThan(v[1].courtageJahrNach12);
     // Rechner-Standard (6 €/Lead): höher, Vergleich 40/60/95 wie angezeigt
-    const std = budgetVergleich(tkv, base({}, tkv, "makler"), 6);
+    const std = budgetVergleich(tkv, base({ xs: false }, tkv, "makler"), 6);
     expect(std.map((z) => z.budget)).toEqual([40, 60, 95]);
     expect(std[0].kostenJeVertrag!).toBeGreaterThan(kjv[40]);
     expect(std[0].kostenJeVertrag!).toBeGreaterThan(std[1].kostenJeVertrag!);
@@ -378,7 +380,7 @@ describe("Kosten pro Lead im Makler-Modus (4 € reales Ergebnis, Ole 11.11.)", 
   });
 
   it("Kontrolle Präsentation: 40 €/Tag, 4 €/Lead, 358 € → ≈ 300 Leads, gedeckt ≈ Monat 12, alles zurück ≈ Monat 18, ≈ 4,5 ×", () => {
-    const i = base({ budget: 40, beitrag: 358 }, tkv, "makler");
+    const i = base({ budget: 40, beitrag: 358, xs: false }, tkv, "makler");
     expect(maklerModus(tkv, i)).toBe(true);
     const r = berechne(tkv, i, resolveCpl(tkv, null).makler!.cpl);
     expect(r.leads).toBeCloseTo(304, 0); // 40 € × 30,4 Tage ÷ 4 €
@@ -392,5 +394,134 @@ describe("Kosten pro Lead im Makler-Modus (4 € reales Ergebnis, Ole 11.11.)", 
     expect(b.faktor).toBeLessThan(4.6);
     expect(b.vertraegeNachKampagne).toBeGreaterThan(410);
     expect(b.vertraegeNachKampagne).toBeLessThan(425);
+  });
+});
+
+describe("Cross-Selling im Makler-Modus (Allianz-Erfahrungswert, Ole 11.11.)", () => {
+  // Folien-Rechnung: 30 Tage/Monat, 4 €/Lead, 12 % Verträge, 358 € Katze, 300 € Zusatz, 22,5 %, 10 % Storno
+  // Rechner nutzt 30,4 Tage – Tagesbudget so skalieren, dass das Monatsbudget wie auf der Folie 40 € × 30 = 1.200 € ist
+  const tage = 30 / DAYS_PER_MONTH;
+  const folie = (over: Partial<RechnerInput> = {}) => base({ budget: 40 * tage, beitrag: 358, ...over }, tkv, "makler");
+  const r30 = (i: RechnerInput) => berechne(tkv, i, 4);
+  const rel = (a: number, b: number) => Math.abs(a - b) / b;
+
+  it("Standard: an für TKV, 1 Zusatzvertrag, 300 €, 22,5 %, direkt beim Abschluss", () => {
+    expect(tkv.crossSell).toEqual({ rate: 1, beitrag: 300, trail: 0.225 });
+    expect(CROSS_SELL_VERZOEGERUNG).toBe(0);
+    const i = defaultInput(tkv, "makler");
+    expect(i).toMatchObject({ xs: true, xRate: 1, xBeitrag: 300, xTrail: 0.225 });
+    expect(defaultInput(pkv, "makler").xs).toBe(false);
+  });
+
+  it("Kontrollwerte Folie: gedeckt Monat 7, alles zurück Monat 12, ≈ 8,3 ×", () => {
+    const i = folie();
+    const r = r30(i);
+    expect(r.vertraege).toBeCloseTo(36, 6);
+    const b = berechneBestand(tkv, i, r)!;
+    expect(b.crossSell).toBe(true);
+    expect(b.laufendGedecktMonat).toBe(7);
+    expect(b.breakEvenMonat).toBe(12);
+    expect(rel(b.vertraegeNachKampagne, 412)).toBeLessThan(0.01);
+    expect(rel(b.zusatzNachKampagne, 412)).toBeLessThan(0.01);
+    expect(rel(b.courtageJahrNachKampagne, 60970)).toBeLessThan(0.01);
+    expect(rel(b.gesamtCourtage, 269500)).toBeLessThan(0.01);
+    expect(rel(b.courtageHaupt, 146600)).toBeLessThan(0.01);
+    expect(rel(b.courtageZusatz, 122900)).toBeLessThan(0.01);
+    expect(rel(b.gesamtKosten, 32600)).toBeLessThan(0.01);
+    expect(b.faktor).toBeGreaterThan(8.2);
+    expect(b.faktor).toBeLessThan(8.4);
+    // ohne Cross-Selling unverändert
+    expect(b.ohneCrossSell!.laufendGedecktMonat).toBe(12);
+    expect(b.ohneCrossSell!.breakEvenMonat).toBe(18);
+    expect(rel(b.ohneCrossSell!.gesamtCourtage, 146600)).toBeLessThan(0.01);
+    expect(b.ohneCrossSell!.crossSell).toBe(false);
+  });
+
+  it("mit Rechner-Standards (30,4 Tage, 350 €) nahe an der Folie", () => {
+    const i = defaultInput(tkv, "makler");
+    const b = berechneBestand(tkv, i, berechne(tkv, i, 4))!;
+    expect(b.laufendGedecktMonat).toBeGreaterThanOrEqual(7);
+    expect(b.laufendGedecktMonat).toBeLessThanOrEqual(8);
+    expect(b.breakEvenMonat).toBeGreaterThanOrEqual(12);
+    expect(b.breakEvenMonat).toBeLessThanOrEqual(13);
+    expect(b.faktor).toBeGreaterThan(8);
+  });
+
+  it("aus = genau die Rechnung ohne Cross-Selling", () => {
+    const an = folie();
+    const aus = folie({ xs: false });
+    const bAus = berechneBestand(tkv, aus, r30(aus))!;
+    const bAn = berechneBestand(tkv, an, r30(an))!;
+    expect(bAus.crossSell).toBe(false);
+    expect(bAus.ohneCrossSell).toBeNull();
+    expect(bAus.courtageZusatz).toBe(0);
+    expect(bAus.gesamtCourtage).toBeCloseTo(bAn.ohneCrossSell!.gesamtCourtage, 6);
+    expect(bAus.kumCourtage).toEqual(bAn.ohneCrossSell!.kumCourtage);
+    // 0 Zusatzverträge wirkt wie aus
+    expect(berechneBestand(tkv, folie({ xRate: 0 }), r30(folie()))!.crossSell).toBe(false);
+    // Vertreter (Abschlussprovision) bleibt unverändert, auch mit Schalter an
+    const v = base({ xs: true }, tkv, "vertreter");
+    expect(maklerModus(tkv, v)).toBe(false);
+  });
+
+  it("Zusatzverträge nur in den Kampagnenmonaten, gleicher Storno wie Hauptprodukt", () => {
+    const i = folie();
+    const b = berechneBestand(tkv, i, r30(i))!;
+    // ohne Verzögerung: Zusatz-Bestand = Haupt-Bestand × Rate, in jedem Monat
+    for (let m = 0; m <= b.monate; m++) expect(b.bestandZusatz[m]).toBeCloseTo(b.bestand[m], 6);
+    // nach Kampagnenende kein Zugang mehr, nur Storno
+    expect(b.bestandZusatz[13]).toBeCloseTo(b.bestandZusatz[12] * b.bleibeMonat, 6);
+    // höherer Storno trifft auch die Zusatzverträge
+    const hoch = folie({ storno: 0.2 });
+    expect(berechneBestand(tkv, hoch, r30(hoch))!.zusatzNachKampagne).toBeLessThan(b.zusatzNachKampagne);
+    // halbe Rate = halber Zusatz-Bestand
+    const halb = folie({ xRate: 0.5 });
+    expect(berechneBestand(tkv, halb, r30(halb))!.zusatzNachKampagne).toBeCloseTo(b.zusatzNachKampagne / 2, 6);
+  });
+
+  it("Budget-Vergleich rechnet Cross-Selling ein, wenn an (Kosten ÷ Verträge + Zusatzverträge)", () => {
+    const v = budgetVergleich(tkv, folie(), 4, [40 * tage, 60 * tage, 95 * tage]);
+    expect(v.every((z) => z.crossSell)).toBe(true);
+    expect(v[0].kostenJeVertrag!).toBeCloseTo(36.4, 0);
+    expect(v[1].kostenJeVertrag!).toBeCloseTo(30.9, 0);
+    expect(v[2].kostenJeVertrag!).toBeCloseTo(26.8, 0);
+    expect(rel(v[0].courtageJahrNach12, 61000)).toBeLessThan(0.01);
+    expect(rel(v[1].courtageJahrNach12, 91500)).toBeLessThan(0.01);
+    expect(rel(v[2].courtageJahrNach12, 144800)).toBeLessThan(0.01);
+    const aus = budgetVergleich(tkv, folie({ xs: false }), 4, [40 * tage]);
+    expect(aus[0].crossSell).toBe(false);
+    expect(aus[0].kostenJeVertrag!).toBeCloseTo(72.7, 0);
+  });
+
+  it("URL: nur Abweichungen, Roundtrip", () => {
+    const d = defaultInput(tkv, "makler");
+    const q0 = inputToParams(DEFAULT_CONFIG, d);
+    expect(["xs", "xr", "xb", "xp"].some((k) => q0.has(k))).toBe(false);
+    const i = { ...d, xs: false };
+    const q1 = inputToParams(DEFAULT_CONFIG, i);
+    expect(q1.get("xs")).toBe("0");
+    expect(inputFromParams(DEFAULT_CONFIG, Object.fromEntries(q1))).toEqual(i);
+    const j = { ...d, xRate: 0.7, xBeitrag: 250, xTrail: 0.2 };
+    const q2 = inputToParams(DEFAULT_CONFIG, j);
+    expect(q2.get("xr")).toBe("0.7");
+    expect(q2.get("xb")).toBe("250");
+    expect(q2.get("xp")).toBe("20");
+    expect(inputFromParams(DEFAULT_CONFIG, Object.fromEntries(q2))).toEqual(j);
+    // Produkt ohne Cross-Selling-Standard: einschalten wird als xs=1 gespeichert
+    const p = { ...defaultInput(pkv, "makler"), xs: true };
+    expect(inputToParams(DEFAULT_CONFIG, p).get("xs")).toBe("1");
+  });
+
+  it("Konfiguration: fehlendes Feld → Standard, null → aus, ungültig → Fehler", () => {
+    const alt = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    for (const p of alt.products) delete p.crossSell;
+    const a = parseRechnerConfig(alt);
+    expect(a.errors).toEqual([]);
+    expect(a.config.products.find((p) => p.key === "tkv")!.crossSell).toEqual({ rate: 1, beitrag: 300, trail: 0.225 });
+    expect(a.config.products.find((p) => p.key === "pkv")!.crossSell).toBeNull();
+    const raw = (x: unknown) => ({ ...DEFAULT_CONFIG, products: DEFAULT_CONFIG.products.map((p) => (p.key === "tkv" ? { ...p, crossSell: x } : p)) });
+    expect(parseRechnerConfig(raw(null)).config.products.find((p) => p.key === "tkv")!.crossSell).toBeNull();
+    expect(parseRechnerConfig(raw({ rate: "0,5", beitrag: "250", trail: 0.2 })).config.products.find((p) => p.key === "tkv")!.crossSell).toEqual({ rate: 0.5, beitrag: 250, trail: 0.2 });
+    expect(parseRechnerConfig(raw({ rate: 5, beitrag: 300, trail: 0.225 })).errors.join()).toMatch(/Cross-Selling/);
   });
 });
