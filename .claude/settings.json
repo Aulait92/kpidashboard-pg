@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push origin HEAD:refs/heads/claude/facebook-ad-media-buyer-GdTgt)"
+    ]
+  },
+  "autoMode": {
+    "allow": [
+      "$defaults",
+      "Sentry-Fehler-Dienst: Ole hat ausdrücklich erlaubt, kleine, eindeutige Fehlerbehebungen automatisch live zu pushen mit `git push origin HEAD:refs/heads/claude/facebook-ad-media-buyer-GdTgt`, aber nur als Fast-Forward (kein Force-Push, kein --force/--force-with-lease), nur ohne Datenbank-Migrationen und nur wenn zuvor tsc, vitest und eslint grün waren."
+    ]
+  }
+}
