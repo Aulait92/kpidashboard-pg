@@ -48,11 +48,91 @@ Kosten (800 + 1.000) × 1,19 = 2.142 € wie auf der Folie. Abgesichert im Unit-
 Mit den Standardwerten (30 €/Tag, 6 €/Lead): 152 Leads, 18,2 Verträge, 3.511 € Provision,
 2.275 € Kosten → ≈ 1.236 € Überschuss/Monat, Break-even ab 12 Verträgen.
 
+## Makler: Bestandssicht (Ole, 11.11.: „bei Katze für Makler bleiben, 10 % Storno“)
+
+Makler bekommen bei TKV keine Abschlussprovision (0 %), sondern 22,5 % Bestandscourtage
+pro Jahr. „Überschuss pro Monat“ ist dafür die falsche Frage: Der Bestand zahlt nach der
+Kampagne weiter. Der Rechner schaltet deshalb **automatisch in den Makler-Modus**, wenn
+Abschluss = 0 % (auch in der Staffel) und Bestand > 0 % sind. Vertreter behalten die
+bisherige Ansicht; haben sie Bestandsprovision, steht darunter eine Zeile zum Bestand.
+
+| Größe | Rechnung (je Monat m) |
+|---|---|
+| Bleibequote | r = (1 − Storno)^(1/12), Storno Standard **10 % pro Jahr** (Eingabe unter „Ihre Erfahrungswerte“, 1–50 %) |
+| Bestand | N(m) = N(m−1) × r + neue Verträge (neue nur während der Kampagne) |
+| Courtage | N(m) × Jahresbeitrag × Bestand-% ÷ 12 + neue Verträge × Jahresbeitrag × Abschluss-% (Mischfall) |
+| Kosten | Werbung nur während der Kampagne; Betreuung + Berater während der Kampagne, bei 12 Monaten Laufzeit mindestens 12 Monate; × USt.; Setup in Monat 0 |
+| Kampagnendauer | 6 / 12 / 24 Monate, Standard 12 |
+| Horizont | Courtage zählt bis 3 / 5 / 10 Jahre nach Kampagnenende, Standard 5 |
+| Je Vertrag | Lebenszeit-Courtage = Jahresbeitrag × Bestand-% ÷ Storno (+ Abschluss) – Faustformel; Kosten je Vertrag = Monatskosten ÷ Verträge im Monat (ohne Setup) |
+| Nach der Kampagne | Bestand N(Kampagnenende) und laufende Courtage/Jahr = N × Jahresbeitrag × Bestand-% |
+| Gesamtrechnung | Courtage Monat 1 bis Kampagne + Horizont × 12 gegen alle Kosten inkl. Setup; Faktor = Courtage ÷ Kosten |
+| Laufend gedeckt ab | erster Kampagnenmonat mit Courtage(m) ≥ Kosten(m); nur angezeigt, wenn innerhalb der Kampagne |
+| Break-even | erster Monat mit kumulierter Courtage ≥ kumulierten Kosten, inkl. Nachlauf |
+
+Courtage ist **nicht abgezinst**; Beitrag und Satz bleiben über die Jahre gleich. Das steht
+so auch auf der Seite. URL-Parameter: `st` (Storno in %), `km` (Kampagnenmonate), `hz`
+(Horizont in Jahren), nur bei Abweichung vom Standard. Im Makler-Modus zeigt der
+Garantie-Kasten die Lead-Garantie und die **Vertrags-Garantie** (Freigabe Ole, 11.11.):
+„Nach 90 aktiven Tagen mindestens 15 Verträge – sonst sind Betreuung und Software kostenlos,
+bis sie erreicht sind, längstens 6 Monate. Voraussetzung: mindestens 20 € Werbebudget pro
+Tag, 80 % der Termine wahrgenommen, Ergebnisse bei 80 % der Leads eingetragen.“ Die
+Mindestzahl kommt aus `VERTRAGS_GARANTIE_MIN_VERTRAEGE` (rechner.ts), das Mindestbudget aus
+der Lead-Garantie. Die Break-even-Garantie nach 90 Tagen gilt vorerst nur für Vertreter
+(Makler liegen nach 90 Tagen naturgemäß unter den Kosten). Das Bestandskunden-Modul
+taucht im Rechner nicht als Kosten auf (für Makler künftig inklusive).
+
+**Budget statt Preis (Ole, 11.11.):** Für Makler empfehlen wir mehr Budget statt eines
+niedrigeren Preises. Ohne `budget`-Parameter startet der Makler-Modus mit **40 €/Tag**
+(`BUDGET_STANDARD`; Vertreter 30 €). Wechselt man von Vertreter auf Makler und hat das
+Budget nicht verändert, springt es mit. QR-Code der Präsentation:
+`/rechner?produkt=tkv&typ=makler&budget=40`.
+
+Der Makler-Modus zeigt deutlich **Kosten je Vertrag** = (Werbung + Betreuung/Software
++ Berater, inkl. USt.) pro Monat ÷ neue Verträge pro Monat, darunter „Die Betreuung kostet
+bis 3.000 € Werbebudget immer gleich viel – mehr Budget macht jeden Vertrag günstiger.“
+(Grenze aus `PRICE_LIST`) und einen Vergleich 40 / 60 / 100 €/Tag mit Kosten je Vertrag
+und Courtage/Jahr nach 12 Monaten (`budgetVergleich`, gleiche Eingaben, nur anderes Budget).
+
+| €/Tag | je Vertrag bei 4 €/Lead (Präsentation) | je Vertrag bei 6 €/Lead (Rechner-Standard) | Courtage/Jahr nach 12 Mon. (6 €) |
+|---|---|---|---|
+| 27 | 88 € | 132 € | 14.789 € |
+| 40 | 72 € | 108 € | 21.909 € |
+| 60 | 61 € | 92 € | 32.864 € |
+| 98 | 53 € | 80 € | 53.677 € |
+| 100 | 58 € ² | 87 € ² | 54.773 € |
+
+² 100 €/Tag sind 3.040 € im Monat und liegen damit über 3.000 € – die Betreuung springt auf
+1.400 € (zweite Stufe). Die Präsentation (≈ 53 € bei 100 €/Tag) rechnet noch mit 1.000 €;
+die erste Stufe reicht bis 98 €/Tag.
+
+Mit 40 €/Tag (Makler-Standard, 6 €/Lead, 12 Monate, +5 Jahre): 278 Verträge im Bestand,
+21.909 € Courtage/Jahr, Courtage gesamt 96.840 € gegen 32.823 € Kosten (≈ 3,0×),
+Break-even kumuliert in Monat 25.
+
+**Referenz (30 €/Tag, 6 €/Lead, 12 Monate, inkl. USt.)** – im Unit-Test abgesichert:
+
+| Kennzahl | Referenz Ole | Rechner (18,24 Verträge/Monat) |
+|---|---|---|
+| Verträge nach 12 Monaten | ≈ 208 | 208,7 |
+| laufende Courtage/Jahr | ≈ 16.396 € | 16.432 € |
+| Courtage während der Kampagne | ≈ 9.024 € | 9.044 € |
+| 5 Jahre nach Kampagnenende | ≈ 64.006 € | 63.586 € ¹ |
+| Kosten inkl. Setup | ≈ 28.500 € | 28.481 € |
+| Courtage gesamt / Faktor | ≈ 73.000 € / 2,6× | 72.630 € / 2,55× |
+| Lebenszeit je Vertrag | ≈ 788 € | 787,50 € |
+| Kosten je Vertrag | ≈ 125 € | 124,74 € |
+| Laufend gedeckt ab | Monat 21 | Monat 21 (nur bei 24 Monaten Kampagne sichtbar) |
+| Break-even kumuliert | – | Monat 28 (16 Monate nach Kampagnenende) |
+
+¹ Der Rechner zieht schon im ersten Monat nach Kampagnenende Storno ab; die Referenz
+(16.396 € ÷ 12 × Σ r^k, k = 0…59) nicht. Mit genau 18,2 Verträgen: 63.447 € statt 64.006 € (−0,9 %).
+
 ## Garantien (Freigabe Ole, 11.11.)
 
 - **Lead-Garantie – Standard an:** „Bei mindestens 20 € Werbebudget pro Tag bekommen
-  Sie in den ersten 30 Tagen nach Kampagnenstart mindestens 100 Leads – sonst ist die
-  Betreuung im Folgemonat kostenlos.“ Erscheint nur bei Produkten mit „Mindest-Leads
+  Sie in den ersten 30 Tagen nach Kampagnenstart mindestens 100 Leads – sonst sind
+  Betreuung und Software im Folgemonat kostenlos.“ Erscheint nur bei Produkten mit „Mindest-Leads
   in 30 Tagen“ (TKV: 100). Unter 20 €/Tag weist der Rechner darauf hin.
 - **Break-even-Garantie – Standard an:** „Liegt Ihre Provision nach 90 Tagen unter
   Ihren Kosten für Werbung und Betreuung, betreuen wir Sie ohne Betreuungsgebühr

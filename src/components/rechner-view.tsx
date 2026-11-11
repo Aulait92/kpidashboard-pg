@@ -1,18 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, Copy, ShieldCheck } from "lucide-react";
 import {
   BUDGET_MAX,
   BUDGET_MIN,
+  BUDGET_STANDARD,
   DAYS_PER_MONTH,
   SEAT_MONTHLY,
   SEATS_INCLUDED,
+  HORIZONT_OPTIONEN,
+  KAMPAGNE_OPTIONEN,
+  STORNO_MAX,
+  STORNO_MIN,
+  VERTRAGS_GARANTIE_MIN_VERTRAEGE,
   berechne,
+  berechneBestand,
+  budgetVergleich,
   defaultInput,
   inputToParams,
   leadGuaranteeFor,
+  maklerModus,
   productsFor,
+  type BestandResult,
+  type BudgetVergleichZeile,
+  type Horizont,
+  type Kampagne,
   type RechnerConfig,
   type RechnerInput,
   type RechnerProduct,
@@ -20,7 +33,12 @@ import {
   type StaffelStufe,
 } from "@/lib/rechner";
 import type { CplInfo } from "@/lib/rechner";
+import { PRICE_LIST } from "@/lib/offer-pricing";
 import type { VermittlerTyp } from "@/lib/provision";
+
+// Bedingungen der Vertrags-Garantie (wie Break-even-Garantie: 90 Tage, längstens 6 Monate, 80 %).
+// Beim Zusammenführen mit der Garantie-Prüfung (garantien.ts) auf die gemeinsame Konstante umstellen.
+const VERTRAGS_GARANTIE = { tage: 90, monateMax: 6, quote: 0.8 };
 
 const eur = (n: number, d = 0) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: d, minimumFractionDigits: d });
 const zahl = (n: number, d = 0) => n.toLocaleString("de-DE", { maximumFractionDigits: d, minimumFractionDigits: d });
@@ -37,6 +55,8 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
   const product = products.find((p) => p.key === input.produkt) ?? products[0] ?? config.products[0];
   const cplInfo = cpl[product.key] ?? { cpl: product.cpl, source: "erfahrungswert" as const, note: product.cplNote || "Erfahrungswert" };
   const r = berechne(product, input, cplInfo.cpl); // günstig, ohne Memo
+  const bestand = berechneBestand(product, input, r);
+  const makler = maklerModus(product, input) && bestand != null;
 
   // URL mitführen (teilbar), ohne neuen Verlaufseintrag
   useEffect(() => {
@@ -48,12 +68,22 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
   const reset = (typ: VermittlerTyp, key: string) => {
     const list = productsFor(config, typ);
     const p = list.find((x) => x.key === key) ?? list[0];
-    setInput((i) => defaultInput(p, typ, { budget: i.budget, laufzeit: i.laufzeit, jaehrlich: i.jaehrlich, berater: i.berater, ust: i.ust }));
+    setInput((i) =>
+      defaultInput(p, typ, {
+        // Standardbudget mitwechseln (Vertreter 30 €, Makler 40 €), eigenes Budget behalten
+        budget: i.typ !== typ && i.budget === BUDGET_STANDARD[i.typ] ? BUDGET_STANDARD[typ] : i.budget, laufzeit: i.laufzeit, jaehrlich: i.jaehrlich, berater: i.berater, ust: i.ust,
+        storno: i.storno, kampagne: i.kampagne, horizont: i.horizont,
+      }),
+    );
     setVersion((v) => v + 1);
   };
 
   const guarantee = leadGuaranteeFor(config, product, input.budget);
-  const anyGuarantee = config.guarantees.productSwap.enabled || !!guarantee || config.guarantees.breakEven.enabled;
+  // Makler: Lead- und Vertrags-Garantie, keine Break-even-Garantie (Bestandscourtage liegt nach 90 Tagen naturgemäß unter den Kosten)
+  const showBreakEven = config.guarantees.breakEven.enabled && !makler;
+  const showSwap = config.guarantees.productSwap.enabled && !makler;
+  const anyGuarantee = showSwap || !!guarantee || showBreakEven || makler;
+  const minBudget = config.guarantees.leads.minBudgetPerDay;
 
   return (
     <div className="min-h-screen bg-[color:var(--background)]">
@@ -139,6 +169,9 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
                   <NumField key={`kq-${version}`} label="Leads, die Kunde werden" suffix="%" value={pctOut(input.customerRate)} min={0} max={100} onChange={(v) => set({ customerRate: v / 100 })} />
                   <NumField key={`vk-${version}`} label="Verträge pro Kunde" hint="z. B. mehrere Katzen" suffix="×" value={Math.round(input.contractsPerCustomer * 100) / 100} min={1} max={10} onChange={(v) => set({ contractsPerCustomer: v })} />
                   <NumField key={`tq-${version}`} label="Leads mit Termin (optional)" hint="nur zur Info" suffix="%" value={pctOut(input.terminRate)} min={0} max={100} onChange={(v) => set({ terminRate: v / 100 })} />
+                  {bestand ? (
+                    <NumField key={`st-${version}`} label="Storno pro Jahr" hint="Anteil Verträge, die jährlich wegfallen" suffix="%" value={pctOut(input.storno)} min={STORNO_MIN * 100} max={STORNO_MAX * 100} onChange={(v) => set({ storno: v / 100 })} />
+                  ) : null}
                 </div>
                 <p className="mt-3 text-sm text-[color:var(--muted)]">
                   Kosten pro Lead: <b className="text-[color:var(--foreground)] tabular-nums">{eur(cplInfo.cpl, 2)}</b> · {cplInfo.note}
@@ -157,6 +190,27 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
                 <input type="checkbox" className="h-4 w-4" checked={input.jaehrlich} disabled={input.laufzeit !== "12m"} onChange={(e) => set({ jaehrlich: e.target.checked })} />
                 Jährlich im Voraus zahlen: 2 Monate geschenkt
               </label>
+              {makler ? (
+                <div className="mt-4 grid gap-3 sm:grid-cols-2" data-bestand-eingaben>
+                  <div>
+                    <Label>Kampagnendauer</Label>
+                    <Segmented
+                      value={String(input.kampagne)}
+                      options={KAMPAGNE_OPTIONEN.map((k) => ({ value: String(k), label: `${k} Mon.` }))}
+                      onChange={(v) => set({ kampagne: Number(v) as Kampagne })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Courtage zählen bis</Label>
+                    <Segmented
+                      value={String(input.horizont)}
+                      options={HORIZONT_OPTIONEN.map((h) => ({ value: String(h), label: `+${h} J.` }))}
+                      onChange={(v) => set({ horizont: Number(v) as Horizont })}
+                    />
+                    <span className="mt-1 block text-xs text-[color:var(--muted)]">Jahre nach Kampagnenende</span>
+                  </div>
+                </div>
+              ) : null}
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <NumField key={`ber-${version}`} label="Berater im Team" hint={`${SEATS_INCLUDED} inklusive, jeder weitere ${SEAT_MONTHLY} €`} value={input.berater} min={1} max={99} step={1} onChange={(v) => set({ berater: Math.round(v) })} />
               </div>
@@ -169,7 +223,11 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
 
           {/* ── Ergebnis ─────────────────────────────────────────── */}
           <section className="space-y-4 lg:sticky lg:top-6" aria-label="Ergebnis" aria-live="polite">
-            <Ergebnis r={r} product={product} />
+            {makler && bestand ? (
+              <MaklerErgebnis r={r} b={bestand} input={input} product={product} vergleich={budgetVergleich(product, input, cplInfo.cpl)} />
+            ) : (
+              <Ergebnis r={r} product={product} bestand={bestand} storno={input.storno} />
+            )}
             {anyGuarantee ? (
               <Card>
                 <h2 className="mb-2 flex items-center gap-2 text-base font-semibold"><ShieldCheck className="h-5 w-5 text-emerald-600" /> Ihre Sicherheit</h2>
@@ -183,13 +241,31 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
                       <p className="text-[color:var(--muted)]">{config.guarantees.leads.text}</p>
                     </li>
                   ) : null}
-                  {config.guarantees.breakEven.enabled ? (
+                  {makler ? (
+                    <li data-vertrags-garantie>
+                      <b>Vertrags-Garantie: mindestens {VERTRAGS_GARANTIE_MIN_VERTRAEGE} Verträge nach {VERTRAGS_GARANTIE.tage} aktiven Tagen</b>
+                      {input.budget >= minBudget ? null : (
+                        <span className="text-amber-700"> – gilt ab {eur(minBudget)} pro Tag, erhöhen Sie das Budget</span>
+                      )}
+                      <p className="text-[color:var(--muted)]">
+                        Nach {VERTRAGS_GARANTIE.tage} aktiven Tagen mindestens {VERTRAGS_GARANTIE_MIN_VERTRAEGE} Verträge – sonst sind Betreuung und Software
+                        kostenlos, bis sie erreicht sind, längstens {VERTRAGS_GARANTIE.monateMax} Monate. Voraussetzung: mindestens {eur(minBudget)} Werbebudget
+                        pro Tag, {zahl(VERTRAGS_GARANTIE.quote * 100)} % der Termine wahrgenommen, Ergebnisse bei {zahl(VERTRAGS_GARANTIE.quote * 100)} % der Leads eingetragen.
+                      </p>
+                    </li>
+                  ) : null}
+                  {showBreakEven ? (
                     <li><b>{config.guarantees.breakEven.title}</b><p className="text-[color:var(--muted)]">{config.guarantees.breakEven.text}</p></li>
                   ) : null}
-                  {config.guarantees.productSwap.enabled ? (
+                  {showSwap ? (
                     <li><b>{config.guarantees.productSwap.title}</b><p className="text-[color:var(--muted)]">{config.guarantees.productSwap.text}</p></li>
                   ) : null}
                 </ul>
+                {makler ? (
+                  <p className="mt-3 text-sm text-[color:var(--muted)]" data-makler-garantie>
+                    Für Makler: Lead- und Vertrags-Garantie. Ihr Bestand rechnet sich über die Laufzeit (siehe oben).
+                  </p>
+                ) : null}
                 <p className="mt-3 text-xs text-[color:var(--muted)]">
                   <a href={config.termsUrl} target="_blank" rel="noopener" className="underline hover:text-[color:var(--brand)]" data-agb-link>Details in unseren AGB</a>
                 </p>
@@ -227,7 +303,7 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
   );
 }
 
-function Ergebnis({ r, product }: { r: RechnerResult; product: RechnerProduct }) {
+function Ergebnis({ r, product, bestand, storno }: { r: RechnerResult; product: RechnerProduct; bestand: BestandResult | null; storno: number }) {
   const plus = r.ueberschuss >= 0;
   return (
     <>
@@ -271,8 +347,245 @@ function Ergebnis({ r, product }: { r: RechnerResult; product: RechnerProduct })
         </div>
         <Verlauf r={r} />
         <p className="mt-1 text-xs text-[color:var(--muted)]">Kumulierter Überschuss nach Setup, {product.name}.</p>
+        {bestand ? (
+          <p className="mt-3 text-sm" data-bestand-hinweis>
+            Dazu baut sich Bestand auf: nach {bestand.kampagne} Monaten ≈ <b className="tabular-nums">{zahl(bestand.vertraegeNachKampagne)} Verträge</b>,
+            die bei {zahl(storno * 100, 1)} % Storno pro Jahr weiter ≈ <b className="tabular-nums">{eur(bestand.courtageJahrNachKampagne)}</b> Bestandsprovision im Jahr bringen.
+          </p>
+        ) : null}
       </Card>
     </>
+  );
+}
+
+/** Makler-Modus: Bestandssicht statt „Überschuss pro Monat“. */
+function MaklerErgebnis({
+  r, b, input, product, vergleich,
+}: { r: RechnerResult; b: BestandResult; input: RechnerInput; product: RechnerProduct; vergleich: BudgetVergleichZeile[] }) {
+  const plus = b.ergebnis >= 0;
+  const jahre = b.horizont === 1 ? "1 Jahr" : `${b.horizont} Jahre`;
+  return (
+    <>
+      <Card>
+        <p className="text-sm text-[color:var(--muted)]">Courtage bis {jahre} nach Kampagnenende</p>
+        <p className={`text-4xl font-bold tracking-tight tabular-nums ${plus ? "text-emerald-700" : "text-rose-600"}`} data-courtage-gesamt>
+          ≈ {eur(b.gesamtCourtage)}
+        </p>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">
+          Kosten ≈ <b className="text-[color:var(--foreground)] tabular-nums">{eur(b.gesamtKosten)}</b> ({b.kampagne} Monate Kampagne inkl. Setup)
+          {b.gesamtKosten > 0 ? <> · <b className="text-[color:var(--foreground)] tabular-nums">{zahl(b.faktor, 1)}×</b> Ihre Kosten</> : null}
+        </p>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">
+          davon {eur(b.courtageKampagne)} während der Kampagne + {eur(b.courtageNachlauf)} in den {jahre}n danach
+        </p>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <div className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2" data-je-vertrag>
+            <div className="text-xs text-[color:var(--muted)]">Je Vertrag</div>
+            <div className="text-sm">
+              <b className="tabular-nums">{eur(b.lebenszeitJeVertrag)}</b> Courtage über die Laufzeit
+            </div>
+            <div className="text-sm">
+              <b className="tabular-nums">{b.kostenJeVertrag != null ? eur(b.kostenJeVertrag) : "–"}</b> Kosten je Vertrag
+            </div>
+          </div>
+          <div className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2" data-nach-kampagne>
+            <div className="text-xs text-[color:var(--muted)]">Nach {b.kampagne} Monaten Kampagne</div>
+            <div className="text-sm"><b className="tabular-nums">{zahl(b.vertraegeNachKampagne)}</b> Verträge im Bestand</div>
+            <div className="text-sm"><b className="tabular-nums">{eur(b.courtageJahrNachKampagne)}</b> Courtage pro Jahr, ohne weitere Kosten</div>
+          </div>
+        </div>
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          <Stat label="Leads/Monat" value={zahl(r.leads)} />
+          <Stat label="Verträge/Monat" value={zahl(r.vertraege, 1)} />
+          <Stat label="Kosten/Monat" value={eur(r.kosten)} sub="Werbung + Betreuung" />
+        </div>
+      </Card>
+
+      <Card>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1" data-kosten-je-vertrag>
+          <h2 className="text-base font-semibold">Kosten je Vertrag</h2>
+          <p className="text-3xl font-bold tracking-tight tabular-nums">{b.kostenJeVertrag != null ? eur(b.kostenJeVertrag) : "–"}</p>
+        </div>
+        <p className="text-sm text-[color:var(--muted)]">
+          Werbung + Betreuung/Software{input.ust ? " inkl. USt." : ""} pro Monat ({eur(r.kosten)}) ÷ {zahl(r.vertraege, 1)} neue Verträge pro Monat.
+          Dem stehen {eur(b.lebenszeitJeVertrag)} Courtage über die Laufzeit gegenüber.
+        </p>
+        <p className="mt-2 text-sm font-medium" data-budget-hinweis>
+          Die Betreuung kostet bis {eur(PRICE_LIST.tiers[0].maxBudget)} Werbebudget immer gleich viel – mehr Budget macht jeden Vertrag günstiger.
+        </p>
+        <div className="mt-3 overflow-hidden rounded-[var(--radius-sm)] border border-[color:var(--border)]">
+          <table className="w-full text-sm tabular-nums" data-budget-vergleich>
+            <thead className="bg-[color:var(--surface-sunken)] text-xs text-[color:var(--muted)]">
+              <tr>
+                <th className="px-3 py-1.5 text-left font-medium">Budget/Tag</th>
+                <th className="px-3 py-1.5 text-right font-medium">je Vertrag</th>
+                <th className="px-3 py-1.5 text-right font-medium">Courtage/Jahr nach 12 Mon.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {vergleich.map((z, k) => {
+                const aktiv = z.budget === input.budget;
+                const stufe = k > 0 && z.betreuung > vergleich[k - 1].betreuung;
+                return (
+                  <tr key={z.budget} className={`border-t border-[color:var(--border)] ${aktiv ? "bg-[color:var(--brand-soft)] font-semibold" : ""}`}>
+                    <td className="px-3 py-1.5">{eur(z.budget)}{aktiv ? <span className="ml-1 text-xs font-normal text-[color:var(--muted)]">Ihre Wahl</span> : null}</td>
+                    <td className="px-3 py-1.5 text-right">
+                      {z.kostenJeVertrag != null ? eur(z.kostenJeVertrag) : "–"}
+                      {stufe ? <span className="block text-[11px] font-normal text-[color:var(--muted)]">höhere Betreuungsstufe</span> : null}
+                    </td>
+                    <td className="px-3 py-1.5 text-right">{eur(z.courtageJahrNach12)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      <Card>
+        <p className="text-base" data-breakeven>
+          {b.breakEvenMonat != null ? (
+            <>Ihre Kosten sind ab <b className="text-[color:var(--brand)]">Monat {b.breakEvenMonat}</b> wieder drin{b.breakEvenMonat > b.kampagne ? <> – {b.breakEvenMonat - b.kampagne} Monate nach Kampagnenende, der Bestand zahlt weiter</> : null}.</>
+          ) : (
+            <>Bis {jahre} nach Kampagnenende ist die Courtage noch unter den Kosten.</>
+          )}
+          {b.laufendGedecktMonat != null ? (
+            <span className="block text-sm text-[color:var(--muted)]" data-laufend-gedeckt>
+              Ab Monat {b.laufendGedecktMonat} deckt die laufende Courtage die monatlichen Kosten.
+            </span>
+          ) : null}
+        </p>
+        <BestandVerlauf b={b} />
+        <p className="mt-3 text-xs leading-relaxed text-[color:var(--muted)]" data-annahmen>
+          Ehrlich gerechnet: Courtage nicht abgezinst. Annahmen: {zahl(input.storno * 100, 1)} % Storno pro Jahr (monatlich gleichmäßig),
+          Ø Jahresbeitrag {eur(input.beitrag)}, {zahl(input.trail * 100, 1)} % Bestandscourtage pro Jahr
+          {input.rate > 0 ? `, ${zahl(input.rate * 100, 1)} % Abschluss` : ""}, Beitrag und Satz bleiben gleich. Nach der Kampagne keine
+          Kosten mehr{input.laufzeit === "12m" && b.kampagne < 12 ? " (Betreuung läuft bis Vertragsende nach 12 Monaten)" : ""}.
+          „Je Vertrag“ = Jahrescourtage ÷ Storno (Faustformel). {product.name}.
+        </p>
+      </Card>
+    </>
+  );
+}
+
+const KOSTEN_FARBE = "#c2410c"; // zweite Serie, gegen --brand geprüft (Farbsehschwäche, Kontrast)
+
+/** Kumulierte Courtage vs. kumulierte Kosten: Kampagnenende und Break-even markiert. */
+function BestandVerlauf({ b }: { b: BestandResult }) {
+  const [hover, setHover] = useState<number | null>(null);
+  // Breite in echten Pixeln, damit Beschriftungen auf dem Handy lesbar bleiben (nicht mitskaliert)
+  const box = useRef<HTMLDivElement>(null);
+  const [W, setW] = useState(600);
+  useEffect(() => {
+    const el = box.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(([e]) => setW(Math.max(260, Math.round(e.contentRect.width))));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const H = 230, L = 8, R = 8, T = 22, B = 26;
+  const n = b.monate;
+  const max = Math.max(1, ...b.kumCourtage, ...b.kumKosten);
+  const x = (m: number) => L + ((W - L - R) * m) / n;
+  const y = (v: number) => T + (H - T - B) * (1 - v / max);
+  const path = (vals: number[]) => vals.map((v, m) => `${m ? "L" : "M"}${x(m).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const jahre = n / 12;
+  const platz = Math.max(2, Math.floor(W / 64)); // eine Beschriftung je ~64 px
+  const step = Math.max(1, Math.ceil(jahre / platz));
+  const ticks: number[] = [];
+  for (let j = 0; j <= jahre; j += step) ticks.push(j * 12);
+  const be = b.breakEvenMonat;
+  // Direkte Beschriftung am Linienende, bei Nähe auseinanderschieben
+  let yc = y(b.kumCourtage[n]) - 6, yk = y(b.kumKosten[n]) - 6;
+  if (Math.abs(yc - yk) < 14) {
+    if (b.kumCourtage[n] >= b.kumKosten[n]) yk = yc + 14;
+    else yc = yk + 14;
+  }
+  const h = hover;
+  const frac = h != null ? x(h) / W : 0;
+  // Monat unter dem Zeiger (Maus: Bewegung, Handy: Antippen)
+  const zeige = (e: React.PointerEvent<SVGRectElement>) => {
+    const box = e.currentTarget.ownerSVGElement?.getBoundingClientRect();
+    if (!box || box.width === 0) return;
+    const vx = ((e.clientX - box.left) / box.width) * W;
+    setHover(Math.max(0, Math.min(n, Math.round(((vx - L) / (W - L - R)) * n))));
+  };
+  return (
+    <div className="mt-4">
+      <div className="mb-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[color:var(--muted)]" aria-hidden>
+        <span className="inline-flex items-center gap-1.5"><svg width="18" height="6"><line x1="0" x2="18" y1="3" y2="3" stroke="var(--brand)" strokeWidth="2.5" /></svg>Courtage kumuliert</span>
+        <span className="inline-flex items-center gap-1.5"><svg width="18" height="6"><line x1="0" x2="18" y1="3" y2="3" stroke={KOSTEN_FARBE} strokeWidth="2" strokeDasharray="5 3" /></svg>Kosten kumuliert</span>
+      </div>
+      <div className="relative" ref={box}>
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          className="h-auto w-full"
+          role="img"
+          aria-label={`Kumulierte Courtage ${eur(b.gesamtCourtage)} gegenüber Kosten ${eur(b.gesamtKosten)} über ${n} Monate${be != null ? `, Break-even in Monat ${be}` : ""}`}
+          data-bestand-chart
+        >
+          <line x1={L} x2={W - R} y1={y(0)} y2={y(0)} stroke="var(--border-strong)" strokeWidth="1" />
+          {/* Kampagnenende */}
+          <line x1={x(b.kampagne)} x2={x(b.kampagne)} y1={T - 6} y2={y(0)} stroke="var(--border-strong)" strokeWidth="1" strokeDasharray="3 3" />
+          <text x={x(b.kampagne) + 4} y={T - 8} fontSize="12" fill="var(--muted)">Kampagnenende</text>
+          <path d={path(b.kumKosten)} fill="none" stroke={KOSTEN_FARBE} strokeWidth="2" strokeDasharray="6 4" strokeLinejoin="round" />
+          <path d={path(b.kumCourtage)} fill="none" stroke="var(--brand)" strokeWidth="2.5" strokeLinejoin="round" />
+          <text x={W - R} y={yc} textAnchor="end" fontSize="12" fill="var(--foreground)">Courtage</text>
+          <text x={W - R} y={yk} textAnchor="end" fontSize="12" fill="var(--muted)">Kosten</text>
+          {be != null ? (
+            <g data-breakeven-marker>
+              <circle cx={x(be)} cy={y(b.kumCourtage[be])} r={5} fill="var(--foreground)" stroke="#fff" strokeWidth="2" />
+              <text
+                x={x(be)}
+                y={y(b.kumCourtage[be]) + 22}
+                textAnchor={x(be) / W > 0.8 ? "end" : x(be) / W < 0.2 ? "start" : "middle"}
+                fontSize="12"
+                fill="var(--foreground)"
+                stroke="#fff"
+                strokeWidth="4"
+                paintOrder="stroke"
+              >
+                Break-even Monat {be}
+              </text>
+            </g>
+          ) : null}
+          {h != null ? (
+            <g pointerEvents="none">
+              <line x1={x(h)} x2={x(h)} y1={T} y2={y(0)} stroke="var(--muted)" strokeWidth="1" />
+              <circle cx={x(h)} cy={y(b.kumCourtage[h])} r={4} fill="var(--brand)" stroke="#fff" strokeWidth="2" />
+              <circle cx={x(h)} cy={y(b.kumKosten[h])} r={4} fill={KOSTEN_FARBE} stroke="#fff" strokeWidth="2" />
+            </g>
+          ) : null}
+          {ticks.map((m) => (
+            <text key={m} x={x(m)} y={H - 8} textAnchor={m === 0 ? "start" : m >= n - 6 ? "end" : "middle"} fontSize="12" fill="var(--muted)">
+              {m === 0 ? "Start" : `Jahr ${m / 12}`}
+            </text>
+          ))}
+          <rect
+            x={L}
+            y={0}
+            width={W - L - R}
+            height={H}
+            fill="transparent"
+            onPointerMove={zeige}
+            onPointerDown={zeige}
+            onPointerLeave={() => setHover(null)}
+          />
+        </svg>
+        {h != null ? (
+          <div
+            className={`pointer-events-none absolute whitespace-nowrap rounded-[6px] bg-[color:var(--foreground)] px-2 py-1 text-xs text-white shadow ${
+              frac < 0.3 ? "" : frac > 0.7 ? "-translate-x-full" : "-translate-x-1/2"
+            }`}
+            style={{ left: `${frac * 100}%`, top: 0 }}
+            data-tooltip
+          >
+            <b>{h === 0 ? "Start (Setup)" : `Monat ${h}`}</b> · Courtage {eur(b.kumCourtage[h])} · Kosten {eur(b.kumKosten[h])}
+            {h > 0 ? <span className="block opacity-80">{zahl(b.bestand[h])} Verträge im Bestand</span> : null}
+          </div>
+        ) : null}
+      </div>
+    </div>
   );
 }
 

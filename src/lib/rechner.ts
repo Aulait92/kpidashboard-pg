@@ -18,6 +18,8 @@
 //   Break-even   = kleinste Zahl Verträge n mit n × Provision(n) ≥ Kosten
 //   Setup        = Setup-Preis (990 € mit 12 Monaten, 2.490 € ohne) × USt.
 //   Jahr 1       = 12 × Überschuss − Setup
+// Makler-Modus (Abschluss 0 %, Bestand > 0 %): Bestandssicht mit Storno über
+// Kampagne + Nachlauf, siehe berechneBestand() und docs/rechner.md.
 // Provision ist umsatzsteuerfrei (Versicherungsvermittlung), Kosten tragen bei
 // Vertretern meist 19 % USt., weil sie keine Vorsteuer abziehen können.
 //
@@ -140,6 +142,9 @@ export const DEFAULT_PRODUCTS: RechnerProduct[] = [
   },
 ];
 
+/** Vertrags-Garantie für Makler (Freigabe Ole, 11.11.): Mindestzahl Verträge nach 90 aktiven Tagen. */
+export const VERTRAGS_GARANTIE_MIN_VERTRAEGE = 15;
+
 export const DEFAULT_CONFIG: RechnerConfig = {
   products: DEFAULT_PRODUCTS,
   headline: "Rechnet sich das für Sie?",
@@ -157,7 +162,7 @@ export const DEFAULT_CONFIG: RechnerConfig = {
     leads: {
       enabled: true,
       title: "Lead-Garantie",
-      text: "Bei mindestens 20 € Werbebudget pro Tag bekommen Sie in den ersten 30 Tagen nach Kampagnenstart mindestens 100 Leads – sonst ist die Betreuung im Folgemonat kostenlos.",
+      text: "Bei mindestens 20 € Werbebudget pro Tag bekommen Sie in den ersten 30 Tagen nach Kampagnenstart mindestens 100 Leads – sonst sind Betreuung und Software im Folgemonat kostenlos.",
       minBudgetPerDay: 20,
     },
     breakEven: {
@@ -288,7 +293,27 @@ export type RechnerInput = {
   jaehrlich: boolean;
   berater: number;
   ust: boolean;
+  /** Bestandssicht: Storno pro Jahr (Anteil, 0,1 = 10 %) */
+  storno: number;
+  /** Bestandssicht: Kampagnendauer in Monaten */
+  kampagne: Kampagne;
+  /** Bestandssicht: Jahre nach Kampagnenende, bis zu denen Courtage gezählt wird */
+  horizont: Horizont;
 };
+
+export const KAMPAGNE_OPTIONEN = [6, 12, 24] as const;
+export const HORIZONT_OPTIONEN = [3, 5, 10] as const;
+export type Kampagne = (typeof KAMPAGNE_OPTIONEN)[number];
+export type Horizont = (typeof HORIZONT_OPTIONEN)[number];
+export const STORNO_STANDARD = 0.1;
+export const STORNO_MIN = 0.01;
+export const STORNO_MAX = 0.5;
+const KAMPAGNE_STANDARD: Kampagne = 12;
+/** Standardbudget €/Tag ohne budget-Parameter. Makler: höheres Budget statt niedrigerem Preis (Ole, 11.11.). */
+export const BUDGET_STANDARD: Record<VermittlerTyp, number> = { vertreter: 30, makler: 40 };
+/** Vergleich „Kosten je Vertrag“ im Makler-Modus (€/Tag). */
+export const BUDGET_VERGLEICH = [40, 60, 100] as const;
+const HORIZONT_STANDARD: Horizont = 5;
 
 /** Standard-Provision eines Rechner-Produkts für einen Vermittlertyp. */
 export function defaultProvision(p: RechnerProduct, typ: VermittlerTyp): { rate: number; trail: number; months: number } {
@@ -306,7 +331,7 @@ export function defaultInput(p: RechnerProduct, typ: VermittlerTyp, base?: Parti
   return {
     produkt: p.key,
     typ,
-    budget: base?.budget ?? 30,
+    budget: base?.budget ?? BUDGET_STANDARD[typ],
     ...defaultProvision(p, typ),
     beitrag: p.premium,
     staffel: [],
@@ -317,6 +342,9 @@ export function defaultInput(p: RechnerProduct, typ: VermittlerTyp, base?: Parti
     jaehrlich: base?.jaehrlich ?? false,
     berater: base?.berater ?? 1,
     ust: base?.ust ?? true,
+    storno: base?.storno ?? STORNO_STANDARD,
+    kampagne: base?.kampagne ?? KAMPAGNE_STANDARD,
+    horizont: base?.horizont ?? HORIZONT_STANDARD,
   };
 }
 
@@ -345,6 +373,8 @@ export function inputFromParams(config: RechnerConfig, q: Params): RechnerInput 
     if (ab != null && w != null) staffel.push({ ab: Math.round(ab), wert: p.kind === "monthly" ? w : w / 100 });
   }
   const laufzeit = one(q, "lz") === "0" ? "none" : "12m";
+  const km = Number(one(q, "km"));
+  const hz = Number(one(q, "hz"));
   return {
     produkt: p.key,
     typ,
@@ -361,6 +391,9 @@ export function inputFromParams(config: RechnerConfig, q: Params): RechnerInput 
     jaehrlich: laufzeit === "12m" && one(q, "jv") === "1",
     berater: Math.round(n("ber", 1, 99, d.berater)),
     ust: one(q, "ust") !== "0",
+    storno: n("st", STORNO_MIN * 100, STORNO_MAX * 100, d.storno, 100),
+    kampagne: KAMPAGNE_OPTIONEN.find((k) => k === km) ?? d.kampagne,
+    horizont: HORIZONT_OPTIONEN.find((h) => h === hz) ?? d.horizont,
   };
 }
 
@@ -391,6 +424,9 @@ export function inputToParams(config: RechnerConfig, i: RechnerInput): URLSearch
   if (i.jaehrlich && i.laufzeit === "12m") q.set("jv", "1");
   if (i.berater !== 1) q.set("ber", String(i.berater));
   if (!i.ust) q.set("ust", "0");
+  if (diff(i.storno, d.storno)) q.set("st", String(pct(i.storno)));
+  if (i.kampagne !== d.kampagne) q.set("km", String(i.kampagne));
+  if (i.horizont !== d.horizont) q.set("hz", String(i.horizont));
   return q;
 }
 
@@ -497,6 +533,152 @@ export function berechne(p: RechnerProduct, i: RechnerInput, cpl: number): Rechn
     kumuliert,
     breakEvenMonat: bm > 0 ? bm : null,
   };
+}
+
+// ─── Bestandssicht (Makler, Bestandsprovision) ───────────────────────────
+
+/**
+ * Makler-Modus: reine Bestandscourtage ohne Abschlussprovision (z. B. TKV
+ * Makler 0 % + 22,5 % p. a.). Dann zeigt der Rechner die Bestandssicht statt
+ * „Überschuss pro Monat“; Vertreter behalten die bisherige Ansicht.
+ */
+export function maklerModus(p: RechnerProduct, i: RechnerInput): boolean {
+  return p.kind === "percent" && i.trail > 0 && i.rate === 0 && i.staffel.every((s) => s.wert === 0);
+}
+
+export type BestandResult = {
+  /** Monate Kampagne + Nachlauf (Horizont × 12) */
+  monate: number;
+  kampagne: number;
+  horizont: number;
+  /** monatliche Bleibequote (1 − Storno)^(1/12) */
+  bleibeMonat: number;
+  /** Faustformel: Jahresbeitrag × Bestand-% ÷ Storno (+ Abschluss im Mischfall), nicht abgezinst */
+  lebenszeitJeVertrag: number;
+  /** laufende Kosten eines Kampagnenmonats ÷ Verträge im Monat (ohne Setup) */
+  kostenJeVertrag: number | null;
+  vertraegeNachKampagne: number;
+  /** Bestandscourtage pro Jahr aus dem Bestand am Kampagnenende */
+  courtageJahrNachKampagne: number;
+  courtageKampagne: number;
+  courtageNachlauf: number;
+  gesamtCourtage: number;
+  /** Setup + alle Kosten bis Kampagnenende (Betreuung mindestens Vertragslaufzeit) */
+  gesamtKosten: number;
+  /** gesamtCourtage ÷ gesamtKosten */
+  faktor: number;
+  ergebnis: number;
+  /** erster Kampagnenmonat, in dem die Courtage des Monats die Kosten des Monats deckt (null = nicht innerhalb der Kampagne) */
+  laufendGedecktMonat: number | null;
+  /** erster Monat mit kumulierter Courtage ≥ kumulierten Kosten (inkl. Nachlauf; null = nicht im Horizont) */
+  breakEvenMonat: number | null;
+  /** Index = Monat 0 (nur Setup) … monate */
+  bestand: number[];
+  courtageMonat: number[];
+  kostenMonat: number[];
+  kumCourtage: number[];
+  kumKosten: number[];
+};
+
+/**
+ * Bestandsrechnung über Kampagne + Nachlauf, je Monat m:
+ *   Bestand(m)  = Bestand(m−1) × (1 − Storno)^(1/12) + neue Verträge (nur während der Kampagne)
+ *   Courtage(m) = Bestand(m) × Jahresbeitrag × Bestand-% ÷ 12 + neue Verträge × Jahresbeitrag × Abschluss-%
+ *   Kosten(m)   = Werbung (nur Kampagne) + Betreuung/Berater (Kampagne, mind. 12 Monate bei Laufzeit) × USt.
+ * Setup in Monat 0. Nach der Kampagne keine Kosten mehr, der Bestand zahlt weiter.
+ * Nicht abgezinst. null für Produkte ohne Bestandsprovision.
+ */
+export function berechneBestand(p: RechnerProduct, i: RechnerInput, r: RechnerResult): BestandResult | null {
+  if (p.kind !== "percent" || i.trail <= 0) return null;
+  const vat = i.ust ? 1 + VAT : 1;
+  const storno = clamp(i.storno, STORNO_MIN, STORNO_MAX);
+  const bleibe = Math.pow(1 - storno, 1 / 12);
+  const kampagne = i.kampagne;
+  const monate = kampagne + i.horizont * 12;
+  const betreuungMonate = i.laufzeit === "12m" ? Math.max(kampagne, 12) : kampagne;
+  const neu = r.vertraege;
+  // Abschluss-% (Staffel wie in berechne), Bestand-% läuft separat über den Bestand
+  const abschluss = provisionPerVertrag(p.kind, i, neu) - i.beitrag * i.trail;
+  const trailMonat = (i.beitrag * i.trail) / 12;
+
+  const bestand = [0], courtageMonat = [0], kostenMonat = [r.setup], kumCourtage = [0], kumKosten = [r.setup];
+  let n = 0;
+  let laufendGedecktMonat: number | null = null;
+  let breakEvenMonat: number | null = null;
+  for (let m = 1; m <= monate; m++) {
+    const inKampagne = m <= kampagne;
+    const zugang = inKampagne ? neu : 0;
+    n = n * bleibe + zugang;
+    const c = n * trailMonat + zugang * abschluss;
+    const k = ((inKampagne ? r.werbebudget : 0) + (m <= betreuungMonate ? r.betreuung + r.berater : 0)) * vat;
+    bestand.push(n);
+    courtageMonat.push(c);
+    kostenMonat.push(k);
+    kumCourtage.push(kumCourtage[m - 1] + c);
+    kumKosten.push(kumKosten[m - 1] + k);
+    if (inKampagne && laufendGedecktMonat == null && k > 0 && c >= k) laufendGedecktMonat = m;
+    if (breakEvenMonat == null && kumCourtage[m] >= kumKosten[m]) breakEvenMonat = m;
+  }
+  const courtageKampagne = kumCourtage[kampagne];
+  const gesamtCourtage = kumCourtage[monate];
+  const gesamtKosten = kumKosten[monate];
+  const vertraegeNachKampagne = bestand[kampagne];
+  return {
+    monate,
+    kampagne,
+    horizont: i.horizont,
+    bleibeMonat: bleibe,
+    lebenszeitJeVertrag: (i.beitrag * i.trail) / storno + Math.max(0, abschluss),
+    kostenJeVertrag: neu > 0 ? r.kosten / neu : null,
+    vertraegeNachKampagne,
+    courtageJahrNachKampagne: vertraegeNachKampagne * i.beitrag * i.trail,
+    courtageKampagne,
+    courtageNachlauf: gesamtCourtage - courtageKampagne,
+    gesamtCourtage,
+    gesamtKosten,
+    faktor: gesamtKosten > 0 ? gesamtCourtage / gesamtKosten : 0,
+    ergebnis: gesamtCourtage - gesamtKosten,
+    laufendGedecktMonat,
+    breakEvenMonat,
+    bestand,
+    courtageMonat,
+    kostenMonat,
+    kumCourtage,
+    kumKosten,
+  };
+}
+
+export type BudgetVergleichZeile = {
+  budget: number;
+  /** laufende Kosten im Monat (Werbung + Betreuung/Software + Berater, USt. wie gewählt) */
+  kostenMonat: number;
+  vertraegeMonat: number;
+  kostenJeVertrag: number | null;
+  /** Betreuung im Monat netto (Budget-Staffel) */
+  betreuung: number;
+  /** Bestandscourtage pro Jahr nach 12 Monaten Kampagne */
+  courtageJahrNach12: number;
+};
+
+/**
+ * Gleiche Eingaben, anderes Tagesbudget: Kosten je Vertrag und Courtage/Jahr nach
+ * 12 Monaten. Betreuung ist bis zur ersten Budget-Stufe gleich – mehr Budget
+ * verteilt sie auf mehr Verträge.
+ */
+export function budgetVergleich(p: RechnerProduct, i: RechnerInput, cpl: number, budgets: readonly number[] = BUDGET_VERGLEICH): BudgetVergleichZeile[] {
+  return budgets.map((budget) => {
+    const x: RechnerInput = { ...i, budget, kampagne: 12 };
+    const r = berechne(p, x, cpl);
+    const b = berechneBestand(p, x, r);
+    return {
+      budget,
+      kostenMonat: r.kosten,
+      vertraegeMonat: r.vertraege,
+      kostenJeVertrag: r.vertraege > 0 ? r.kosten / r.vertraege : null,
+      betreuung: r.betreuung,
+      courtageJahrNach12: b ? b.courtageJahrNachKampagne : 0,
+    };
+  });
 }
 
 /** Lead-Garantie für ein Produkt (null = nicht anzeigen). */
