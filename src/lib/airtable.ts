@@ -1,3 +1,4 @@
+import { classifyIntake, INTAKE_SINCE, saveIntake, type IntakeRow } from "@/lib/ppl/intake";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { extractFormAnswers } from "@/lib/lead-fields";
@@ -208,7 +209,7 @@ const PRODUKTE_TABLE = process.env.AIRTABLE_TABLE_PRODUKTE ?? "Produkte";
 // Bei nicht vorhandener Tabelle / fehlenden Permissions still mit leerer
 // Map zurück — der Lead-Sync hat dann zusätzliche Lookup-Fallbacks
 // (z. B. "Zielgruppe Bezeichnung (from Produkt …)").
-type ProductRef = { name: string; dbId: string; poolKind: "product" | "region" };
+export type ProductRef = { name: string; dbId: string; poolKind: "product" | "region" };
 
 // Liest Keyword-Aliase aus dem erstbesten der angegebenen Felder und liefert
 // sie als kommagetrennten, normalisierten String (oder null). Akzeptiert
@@ -1356,6 +1357,15 @@ export async function syncAirtable(): Promise<SyncResult> {
       }
     }
 
+    // Pay-per-Lead-Eingang: ALLE Lead-Records (auch ohne Käufer) mit Ergebnis
+    // und Ablehnungsgrund – für „Eingang“/„von uns abgelehnt“ in der Auswertung.
+    try {
+      const intake = await syncPplIntake(leadRecords, produkteMap, resolveBuyer);
+      if (intake.created || intake.updated) console.log(`[airtable] PPL-Eingang: ${intake.created} neu, ${intake.updated} aktualisiert`);
+    } catch (err) {
+      console.error("[airtable] PPL-Eingang fehlgeschlagen", err instanceof Error ? err.message : err);
+    }
+
     // Sweep: Leads, die in Airtable gelöscht wurden, auch lokal entfernen.
     // Nur ausführen, wenn der Fetch der Leads-Tabelle erfolgreich war —
     // sonst würden bei einem temporären 403/Netzwerk-Fehler ALLE Leads
@@ -1442,4 +1452,52 @@ export async function syncAirtable(): Promise<SyncResult> {
 
   result.customers = customerCache.size;
   return result;
+}
+
+
+/**
+ * Eingang aus allen Airtable-Lead-Records ableiten und speichern (ab FIRST_MONTH).
+ * Nur Zeitpunkt, Produkt, Quelle, Ergebnis und Grund – keine Lead-Inhalte.
+ */
+export async function syncPplIntake(
+  records: AirtableRecord[],
+  produkteMap: Map<string, ProductRef>,
+  resolveBuyer: (fields: Record<string, unknown>) => string | null,
+  now = new Date(),
+): Promise<{ created: number; updated: number }> {
+  const since = INTAKE_SINCE;
+  const leadIds = new Map(
+    (await prisma.lead.findMany({ where: { airtableId: { in: records.map((r) => r.id) } }, select: { id: true, airtableId: true } })).map((l) => [l.airtableId!, l.id]),
+  );
+  const rows: IntakeRow[] = [];
+  for (const rec of records) {
+    const receivedAt = new Date(rec.createdTime);
+    if (Number.isNaN(receivedAt.getTime()) || receivedAt < since) continue;
+    const f = rec.fields;
+    const beamter = f["ist_beamter"];
+    const { outcome, reason } = classifyIntake({
+      dublette: readChecked(f, "Dublette"),
+      consent: readString(f, "Weitergabe-Zustimmung"),
+      hasBezug: readLinkedIds(f, "Kunden-Produkt-Bezug").length > 0,
+      assigned: readDate(f, "Zuweisungsdatum") != null,
+      deliveryOk: (readString(f, "liefer_status") ?? "").toLowerCase() === "ok",
+      hasBuyer: resolveBuyer(f) != null,
+      weak: readChecked(f, "schwach"),
+      civilServant: beamter === true || beamter === 1 || beamter === "1",
+      ageHours: (now.getTime() - receivedAt.getTime()) / 3_600_000,
+    });
+    rows.push({
+      airtableId: rec.id,
+      receivedAt,
+      productKey: classifyLeadProduct(f, produkteMap),
+      source: readString(f, "Source"),
+      outcome,
+      reason,
+      leadId: leadIds.get(rec.id) ?? null,
+    });
+  }
+  const res = await saveIntake(rows);
+  // In Airtable gelöschte Leads auch aus dem Eingang entfernen
+  await prisma.pplIntake.deleteMany({ where: { airtableId: { notIn: records.map((r) => r.id) } } });
+  return res;
 }

@@ -80,6 +80,7 @@ Die Produktion ist seit 11.11. eingemessen; neue Migrationen laufen beim normale
 | `20261114260000_ppl_pilot_ende` | Spalte `KpiSettings.pplPilotEnd` (letzter Monat der Pay-per-Lead-Pilotphase, optional) | nur hinzufügend |
 | `20261114270000_termindauer` | Spalte `CalendarLeadTimes.durationMin` (Termindauer 15/30/45/60 Min. je Kalender, Standard 30) | nur hinzufügend; ohne Einstellung bleiben Termine 30 Min. |
 | `20261114280000_ppl_gebiete` | Tabelle `SubscriptionArea` (Gebiete je Pay-per-Lead-Bezug mit eigener Menge, Vorrang) und Spalte `PoolLead.areaId` | nur hinzufügend |
+| `20261115090000_ppl_eingang` | Tabelle `PplIntake` (Pay-per-Lead-Eingang aus Airtable: alle Leads mit Ergebnis und Ablehnungsgrund, für die Auswertung); wird beim ersten Abgleich ab Juni 2026 gefüllt | nur hinzufügend |
 
 Keine davon verändert bestehende Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und

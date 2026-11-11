@@ -15,7 +15,7 @@ Auswertung komplett in der App, Airtable/Zapier nur noch als Übergang.
   Vorrang gilt bis **100 % der Bestellung** je Gebiet und Zeitraum. Danach
   normale Verteilung.
 
-## 3. Auswertung Tag / Woche / Monat ✅ (Admin → Pay-per-Lead → „Auswertung“; Eingang/Ablehnungen erst ab Umstellung)
+## 3. Auswertung Tag / Woche / Monat ✅ (Admin → Pay-per-Lead → „Auswertung“; Eingang/Ablehnungen ab Juni 2026 aus dem Airtable-Abgleich, Tabelle `PplIntake`)
 - Eingegangen, geliefert, **abgelehnt durch uns** nach Grund (Dublette, schwach,
   Beamter, außerhalb aller Gebiete, geparkt/kein Abnehmer) und **reklamiert durch
   Kunden** (Stornos) – **getrennt** anzeigen.

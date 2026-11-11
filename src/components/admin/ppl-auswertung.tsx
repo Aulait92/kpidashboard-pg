@@ -144,6 +144,7 @@ export function PplReportView({ report }: { report: PplReport }) {
                 <th className={`${th} sticky left-0 bg-white`}>Zeitraum</th>
                 <th className={th}>Eingang</th>
                 <th className={th}>Geliefert</th>
+                <th className={th}>Offen</th>
                 <th className={th}>Abgelehnt (wir)</th>
                 {keys.map((k) => (
                   <th key={k} className={`${th} font-normal`}>{REJECT_LABELS[k]}</th>
@@ -164,6 +165,7 @@ export function PplReportView({ report }: { report: PplReport }) {
                   <td className={`${td} sticky left-0 bg-white font-medium`}>{r.label}{r.current ? " (bisher)" : ""}</td>
                   <td className={td}>{num(r.received)}</td>
                   <td className={td}>{r.delivered}</td>
+                  <td className={`${td} text-[color:var(--muted)]`} title="wartet auf Zustimmung bzw. noch in Bearbeitung">{r.pending || "–"}</td>
                   <td className={td}>{r.rejectedTotal || "–"}</td>
                   {keys.map((k) => (
                     <td key={k} className={`${td} text-[color:var(--muted)]`}>{r.rejected[k] || "–"}</td>
@@ -186,11 +188,13 @@ export function PplReportView({ report }: { report: PplReport }) {
             Leadpreis = Meta-Kosten Pay-per-Lead (ohne eigene Akquise-Kampagnen) ÷ Eingang bzw. ÷ geliefert bzw. ÷ (geliefert − reklamiert). Umsatz = verkaufte Leads
             nach Reklamationen. Ausgaben = Meta-Kosten + direkte Pay-per-Lead-Kosten aus Bank/Karte und laufenden Kosten (anteilig je Tag).
           </p>
-          <p className="font-medium text-amber-800">
-            Eingang und „von uns abgelehnt“ gibt es erst ab der Umstellung von Airtable/Zapier auf die App
-            {report.poolSince ? ` (erste Daten ${new Date(report.poolSince).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })})` : ""}. Leads, die Airtable/Zapier
-            aussortiert haben, sind nicht in der App – bis dahin zählt nur „geliefert“, und der Leadpreis vor Ablehnung bleibt leer.
+          <p>
+            Eingang und „von uns abgelehnt“ kommen aus der Airtable-Leads-Tabelle (alle eingegangenen Leads, auch nicht verteilte) und nach der Umstellung aus
+            der App. Leads ohne Produkt (z. B. Pflege-Check) zählen nicht dazu. „Offen“ = wartet auf Zustimmung zur Weitergabe oder noch in Bearbeitung.
           </p>
+          {report.poolSince ? null : (
+            <p className="font-medium text-amber-800">Noch keine Eingangsdaten – sie erscheinen nach dem nächsten Airtable-Abgleich.</p>
+          )}
           {report.otherCostNote ? <p>Mit Produktfilter: nur Meta-Kosten des Produkts; sonstige Pay-per-Lead-Kosten lassen sich keinem Produkt zuordnen.</p> : null}
         </div>
       </Card>

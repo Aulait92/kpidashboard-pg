@@ -2010,3 +2010,26 @@ model AppHandoff {
 
   @@index([expiresAt])
 }
+
+// Pay-per-Lead-Eingang aus Airtable (alle Lead-Records, auch ohne Käufer):
+// Grundlage für „Eingang“ und „von uns abgelehnt“ in der PPL-Auswertung,
+// solange die Verteilung noch in Airtable/Zapier läuft. Kein Lead-Inhalt,
+// nur Zeitpunkt, Produkt, Ergebnis und Grund.
+model PplIntake {
+  id         String   @id @default(cuid())
+  airtableId String   @unique
+  receivedAt DateTime
+  // kanonischer Produktschlüssel wie Lead.source; null = ohne Produkt (z. B. Pflege-Check)
+  productKey String?
+  source     String?
+  // geliefert | abgelehnt | offen
+  outcome    String
+  // Dublette | schwach | Beamter | Weitergabe abgelehnt | kein Abnehmer | wartet auf Zustimmung | in Bearbeitung
+  reason     String?
+  leadId     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([receivedAt])
+  @@index([productKey, receivedAt])
+}

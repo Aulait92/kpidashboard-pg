@@ -4,15 +4,17 @@
 //
 // Gemeinsame Basis für beide Lieferwege (heute Airtable-Abgleich, künftig
 // App-Engine): verkaufte Leads = Revenue-Zeilen (cancelled = reklamiert/
-// storniert), Produkt = Lead.source. Eingang und Ablehnungen durch uns kennt
-// nur die App-Engine (PoolLead); Leads, die Airtable/Zapier aussortiert haben,
-// kommen nie in die Datenbank → bis zur Umstellung fehlen sie (UI-Hinweis).
+// storniert), Produkt = Lead.source. Eingang und Ablehnungen durch uns: heute
+// aus dem Airtable-Eingang (PplIntake, alle Lead-Records inkl. aussortierter),
+// nach der Umstellung aus der App-Engine (PoolLead). Leads ohne Produkt
+// (z. B. Pflege-Check) zählen nicht zu Pay-per-Lead.
 
 import { prisma } from "@/lib/prisma";
 import { loadKpiSettings } from "@/lib/zahlen";
 import { productKeyOf } from "@/lib/produkte";
 import { netCost } from "@/lib/bank/rules";
 import { berlinMidnight, monthRange, weekRange } from "@/lib/ppl/periods";
+import { INTAKE_SINCE } from "@/lib/ppl/intake";
 
 const TZ = "Europe/Berlin";
 const DAY = 86_400_000;
@@ -31,6 +33,7 @@ export const REJECT_LABELS = {
   beamter: "Beamter",
   gebiet: "außerhalb Gebiet",
   ungueltig: "ungültig",
+  weitergabe: "Weitergabe abgelehnt",
   kein_abnehmer: "kein Abnehmer (geparkt)",
 } as const;
 export type RejectKey = keyof typeof REJECT_LABELS;
@@ -86,6 +89,18 @@ export function buckets(g: Granularity, now = new Date(), count = GRANULARITIES.
 
 export type SaleRow = { at: Date; product: string; amount: number; cancelled: boolean };
 export type PoolRow = { at: Date; product: string; status: string; reason: string | null };
+/** Airtable-Eingang (PplIntake): Ergebnis geliefert | abgelehnt | offen. */
+export type IntakeRow = { at: Date; product: string; outcome: string; reason: string | null };
+
+/** Ablehnungsgrund aus dem Airtable-Eingang → Kategorie. */
+export function intakeRejectCategory(reason: string | null): RejectKey {
+  const r = (reason ?? "").toLowerCase();
+  if (r.startsWith("dublette")) return "dublette";
+  if (r.startsWith("weitergabe")) return "weitergabe";
+  if (r.startsWith("beamt")) return "beamter";
+  if (r.startsWith("schwach")) return "schwach";
+  return "kein_abnehmer";
+}
 export type CostRow = { at: Date; product: string | null; amount: number };
 /** Direkte PPL-Kosten ohne Produkt (Bank/Karte netto, laufende Kosten anteilig je Tag). */
 export type OtherCostRow = { at: Date; amount: number };
@@ -95,6 +110,8 @@ export type ReportRow = {
   label: string;
   current: boolean;
   received: number | null;
+  /** eingegangen, aber noch nicht entschieden (wartet auf Zustimmung, in Bearbeitung) */
+  pending: number;
   delivered: number;
   rejected: Record<RejectKey, number>;
   rejectedTotal: number;
@@ -110,9 +127,19 @@ export type ReportRow = {
   margin: number | null;
 };
 
-const emptyRejects = (): Record<RejectKey, number> => ({ dublette: 0, schwach: 0, beamter: 0, gebiet: 0, ungueltig: 0, kein_abnehmer: 0 });
+const emptyRejects = (): Record<RejectKey, number> => ({ dublette: 0, schwach: 0, beamter: 0, gebiet: 0, ungueltig: 0, weitergabe: 0, kein_abnehmer: 0 });
 
-export function aggregateReport(input: { buckets: Bucket[]; sales: SaleRow[]; pool: PoolRow[]; costs: CostRow[]; other: OtherCostRow[]; product: string | null; poolSince: Date | null }): ReportRow[] {
+export function aggregateReport(input: {
+  buckets: Bucket[];
+  sales: SaleRow[];
+  pool: PoolRow[];
+  intake?: IntakeRow[];
+  costs: CostRow[];
+  other: OtherCostRow[];
+  product: string | null;
+  /** ab wann Eingangsdaten vorliegen (frühester PoolLead bzw. Airtable-Eingang) */
+  poolSince: Date | null;
+}): ReportRow[] {
   const inB = (b: Bucket, at: Date) => at >= b.start && at < b.end;
   const prodOk = (p: string | null) => !input.product || p === input.product;
   return input.buckets.map((b) => {
@@ -121,14 +148,27 @@ export function aggregateReport(input: { buckets: Bucket[]; sales: SaleRow[]; po
     const complaints = sales.filter((s) => s.cancelled).length;
     const revenue = r2(sales.filter((s) => !s.cancelled).reduce((n, s) => n + s.amount, 0));
     const rejected = emptyRejects();
+    let poolRejected = 0;
     for (const p of input.pool) {
       if (!inB(b, p.at) || !prodOk(p.product)) continue;
       const k = rejectCategory(p.status, p.reason);
-      if (k) rejected[k]++;
+      if (k) {
+        rejected[k]++;
+        poolRejected++;
+      }
+    }
+    let intakeCount = 0;
+    let pending = 0;
+    for (const i of input.intake ?? []) {
+      if (!inB(b, i.at) || !prodOk(i.product)) continue;
+      intakeCount++;
+      if (i.outcome === "abgelehnt") rejected[intakeRejectCategory(i.reason)]++;
+      else if (i.outcome === "offen") pending++;
     }
     const rejectedTotal = Object.values(rejected).reduce((n, v) => n + v, 0);
-    // Eingang nur, wenn die Engine im ganzen Zeitraum schon lief (sonst unbekannt)
-    const received = input.poolSince && input.poolSince <= b.start ? delivered + rejectedTotal : null;
+    // Eingang nur, wenn im ganzen Zeitraum Eingangsdaten vorliegen (sonst unbekannt).
+    // Airtable-Eingang zählt alle Leads; nach der Umstellung: geliefert + abgelehnt.
+    const received = input.poolSince && input.poolSince <= b.start ? Math.max(intakeCount + poolRejected, delivered + rejectedTotal + pending) : null;
     const metaCost = r2(input.costs.filter((c) => inB(b, c.at) && prodOk(c.product)).reduce((n, c) => n + c.amount, 0));
     const otherCost = input.product ? 0 : r2(input.other.filter((c) => inB(b, c.at)).reduce((n, c) => n + c.amount, 0));
     const spend = r2(metaCost + otherCost);
@@ -139,6 +179,7 @@ export function aggregateReport(input: { buckets: Bucket[]; sales: SaleRow[]; po
       label: b.label,
       current: b.current,
       received,
+      pending,
       delivered,
       rejected,
       rejectedTotal,
@@ -166,7 +207,7 @@ export async function loadPplReport(g: Granularity, productRaw: string | null, n
   const to = bs[bs.length - 1].end;
   const settings = await loadKpiSettings();
   const acq = settings.acquisitionCampaigns.map((c) => c.toLowerCase());
-  const [revenues, pool, costs, firstPool, bank, recurring] = await Promise.all([
+  const [revenues, pool, costs, firstPool, bank, recurring, intake, firstIntake] = await Promise.all([
     prisma.revenue.findMany({
       where: { occurredAt: { gte: from, lt: to }, customer: { plan: { not: "internal" } } },
       select: { occurredAt: true, amount: true, cancelled: true, lead: { select: { source: true } } },
@@ -179,9 +220,17 @@ export async function loadPplReport(g: Granularity, productRaw: string | null, n
       select: { bookingDate: true, amount: true, vatIncluded: true },
     }),
     prisma.recurringCost.findMany({ where: { purpose: "ppl" } }),
+    prisma.pplIntake.findMany({
+      where: { receivedAt: { gte: from, lt: to }, productKey: { not: null } },
+      select: { receivedAt: true, productKey: true, outcome: true, reason: true },
+    }),
+    prisma.pplIntake.findFirst({ where: { productKey: { not: null } }, orderBy: { receivedAt: "asc" }, select: { receivedAt: true } }),
   ]);
   const sales: SaleRow[] = revenues.map((r) => ({ at: r.occurredAt, product: productKeyOf(r.lead?.source), amount: Number(r.amount), cancelled: r.cancelled }));
   const poolRows: PoolRow[] = pool.map((p) => ({ at: p.createdAt, product: productKeyOf(p.productKey), status: p.status, reason: p.reason }));
+  const intakeRows: IntakeRow[] = intake.map((i) => ({ at: i.receivedAt, product: productKeyOf(i.productKey), outcome: i.outcome, reason: i.reason }));
+  // Der Airtable-Eingang ist ab INTAKE_SINCE vollständig (alle Leads, auch abgelehnte)
+  const dataSince = [firstPool?.createdAt, firstIntake ? INTAKE_SINCE : null].filter((d): d is Date => !!d).sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
   // Meta-Kosten Pay-per-Lead: ohne eigene Akquise-Kampagnen (wie Zahlen-Seite/BWA)
   const costRows: CostRow[] = costs
     .filter((c) => !acq.some((a) => (c.note ?? "").toLowerCase().includes(a)))
@@ -199,8 +248,8 @@ export async function loadPplReport(g: Granularity, productRaw: string | null, n
   }
   const products = [...new Set([...sales.map((s) => s.product), ...costRows.map((c) => c.product).filter((p): p is string => !!p)])].sort();
   const product = productRaw && products.includes(productRaw) ? productRaw : null;
-  const rows = aggregateReport({ buckets: bs, sales, pool: poolRows, costs: costRows, other, product, poolSince: firstPool?.createdAt ?? null });
-  return { granularity: g, product, products, rows, poolSince: firstPool?.createdAt.toISOString() ?? null, otherCostNote: !!product };
+  const rows = aggregateReport({ buckets: bs, sales, pool: poolRows, intake: intakeRows, costs: costRows, other, product, poolSince: dataSince });
+  return { granularity: g, product, products, rows, poolSince: dataSince?.toISOString() ?? null, otherCostNote: !!product };
 }
 
 // ─── Übersicht je Kunde (diese Woche / dieser Monat) ────────────────────
