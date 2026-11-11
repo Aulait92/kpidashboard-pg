@@ -83,7 +83,7 @@ export function InstallApp({ appUrl }: { appUrl: string }) {
           {!env.inSafari ? (
             <li className="flex gap-2.5"><Num n={1} /><span>Diese Seite in <b>Safari</b> öffnen (nicht in WhatsApp oder Chrome): {appUrl}</span></li>
           ) : null}
-          <li className="flex gap-2.5"><Num n={env.inSafari ? 1 : 2} /><span>Unten auf <Share className="inline h-4 w-4 align-[-3px]" /> <b>Teilen</b> tippen.</span></li>
+          <li className="flex gap-2.5"><Num n={env.inSafari ? 1 : 2} /><span>Unten auf die <b>drei Punkte (…)</b> und dann auf <Share className="inline h-4 w-4 align-[-3px]" /> <b>Teilen</b> tippen. Bei älteren iPhones ist <b>Teilen</b> direkt unten zu sehen.</span></li>
           <li className="flex gap-2.5"><Num n={env.inSafari ? 2 : 3} /><span><SquarePlus className="inline h-4 w-4 align-[-3px]" /> <b>„Zum Home-Bildschirm“</b> wählen, dann „Hinzufügen“.</span></li>
           <li className="flex gap-2.5"><Num n={env.inSafari ? 3 : 4} /><span>Die App über das neue Symbol öffnen und dort <b>Benachrichtigungen einschalten</b>.</span></li>
         </ol>

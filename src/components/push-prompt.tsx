@@ -53,8 +53,8 @@ export function PushHint() {
           <div className="font-semibold text-[color:var(--foreground)]">Benachrichtigungen einschalten</div>
           {status === "unsupported" ? (
             <p className="text-[color:var(--muted)]">
-              Auf dem iPhone: unten auf <Share className="inline h-3.5 w-3.5 align-[-2px]" /> „Teilen“ tippen, dann „Zum
-              Home-Bildschirm“. Danach die App über das neue Symbol öffnen und hier einschalten.
+              Auf dem iPhone: unten auf die drei Punkte (…) und dann auf <Share className="inline h-3.5 w-3.5 align-[-2px]" /> „Teilen“
+              tippen, dann „Zum Home-Bildschirm“. Danach die App über das neue Symbol öffnen und hier einschalten.
             </p>
           ) : (
             <p className="text-[color:var(--muted)]">

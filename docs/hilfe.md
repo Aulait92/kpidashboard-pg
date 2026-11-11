@@ -123,7 +123,8 @@ Seiten aus der Liste „Seiten“ unten.
 - Einschalten: oben im Kundenbereich „Benachrichtigungen einschalten“ oder im Profilmenü
   „Benachrichtigungen“. Einmal pro Gerät. Im Profilmenü gibt es „Test senden“.
 - **iPhone:** Nur möglich, wenn die App auf dem Home-Bildschirm liegt: in **Safari** öffnen (nicht aus
-  WhatsApp heraus), unten auf „Teilen“, dann „Zum Home-Bildschirm“, danach die App über das neue Symbol
+  WhatsApp heraus), unten auf die drei Punkte (…) und dann „Teilen“ (bei älteren iOS-Versionen ist „Teilen“
+  direkt unten), dann „Zum Home-Bildschirm“, danach die App über das neue Symbol
   öffnen und Benachrichtigungen einschalten. Anleitung auch in der Einrichtung unter „App aufs Handy“.
 - **Android:** In Chrome „App installieren“ bzw. „Zum Startbildschirm hinzufügen“, dann einschalten.
 - Steht „im Browser gesperrt“: in den Browser-Einstellungen Benachrichtigungen für diese Seite erlauben.
