@@ -166,6 +166,15 @@ Seiten aus der Liste „Seiten“ unten.
   zurück. Nur der Inhaber kann speichern, Berater sehen die Sätze. Alle Zahlen rechnen danach mit den eigenen Sätzen.
 - „Hochrechnung für diesen Monat“ zum Aufklappen. Bei Teams eine Tabelle pro Person.
 
+## Garantien (Katzenversicherung)
+- **Lead-Garantie:** Bei mindestens 20 € Werbebudget pro Tag gibt es in den ersten 30 Tagen nach Kampagnenstart mindestens
+  100 Leads, sonst ist die Betreuung im Folgemonat kostenlos.
+- **Break-even-Garantie:** Liegt die Provision nach 90 Tagen unter den Kosten für Werbung und Betreuung, betreuen wir ohne
+  Betreuungsgebühr weiter (auf Wunsch mit anderem Produkt), bis es sich rechnet, längstens 6 Monate. Voraussetzung:
+  mindestens 20 €/Tag ohne Pause, mindestens 80 % der Termine wahrgenommen, Ergebnisse bei mindestens 80 % der Leads
+  eingetragen („Wie lief's?“, Abschluss mit Beitrag) und Provisionssätze unter „Meine Provisionen“ hinterlegt.
+- Genaue Bedingungen stehen in den AGB (Abschnitt „Garantien“). Fragen dazu: bei performancegrowth melden.
+
 ## Team (nur Inhaber)
 
 - „Team“ im Profilmenü: Berater mit Name und E-Mail einladen (Link per Mail), höchstens 10 Zugänge.

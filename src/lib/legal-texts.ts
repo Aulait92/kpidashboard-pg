@@ -103,9 +103,13 @@ export const AGB: LegalSection[] = [
     ],
   },
   {
-    title: "Garantie",
+    title: "Garantien",
     items: [
-      "Läuft ein Produkt für den Kunden nicht profitabel, richtet der Anbieter auf Wunsch des Kunden ein weiteres Produkt seiner Wahl ohne Setupgebühr ein, so lange, bis der Kunde ein Produkt hat, mit dem er zufrieden ist. Die laufende monatliche Vergütung bleibt davon unberührt.",
+      // Prüfen: Garantien (von Ole am 11.11.2026 freigegeben)
+      "Die folgenden Garantien gelten für das Produkt Katzenversicherung (TKV) sowie für weitere Produkte, soweit sie im Angebot ausdrücklich genannt sind. Sie gelten ab Start der Kampagne (Tag der ersten Auslieferung der Anzeigen).",
+      { sub: "Lead-Garantie", text: "Beträgt das Werbebudget in den ersten 30 Tagen ununterbrochen mindestens 20 € pro Tag und Produkt und erhält der Kunde in diesem Zeitraum weniger als 100 Leads für dieses Produkt, entfällt die monatliche Vergütung für Betreuung und Software im folgenden Abrechnungsmonat. Das Werbebudget zahlt der Kunde weiterhin direkt an Meta." },
+      { sub: "Break-even-Garantie", text: "Liegt die Provision des Kunden aus den über den Anbieter gewonnenen Verträgen nach 90 Tagen unter der Summe aus Werbebudget und Vergütung für Betreuung und Software in diesem Zeitraum, betreut der Anbieter den Kunden ohne Vergütung für Betreuung und Software weiter, auf Wunsch mit einem anderen Produkt ohne Setupgebühr, bis die Provision seit Kampagnenstart diese Kosten erreicht, längstens jedoch 6 Monate. Voraussetzungen: Werbebudget während des gesamten Zeitraums mindestens 20 € pro Tag und Produkt ohne Pause; mindestens 80 % der über die Software gebuchten Termine wahrgenommen; für mindestens 80 % der Leads das Ergebnis in der Software eingetragen (z. B. erreicht, Termin, Abschluss mit Beitrag); Provisionssätze unter „Meine Provisionen“ hinterlegt. Maßgeblich ist die Berechnung in der Software auf Grundlage dieser Angaben; der Anbieter kann Nachweise zu Abschlüssen verlangen." },
+      "Weitergehende Ansprüche, insbesondere auf eine bestimmte Zahl von Verträgen oder eine bestimmte Provision, bestehen nicht.",
     ],
   },
   {

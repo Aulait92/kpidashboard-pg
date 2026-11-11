@@ -248,7 +248,7 @@ async function upsellTasks(now: Date) {
         data: {
           contactId: ob.salesContactId,
           type: "ANRUF",
-          title: "Jahresvertrag anbieten (Preisgarantie + 1 Monat Betreuung geschenkt)",
+          title: "Jahresvertrag anbieten (Setup gespart, bei Jahreszahlung 2 Monate geschenkt)",
           dueAt: now,
         },
       });

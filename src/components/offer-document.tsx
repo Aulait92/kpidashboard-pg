@@ -16,6 +16,12 @@ import {
 // nummerierte Abschnitte, AGB als Bestandteil). Genutzt auf der öffentlichen
 // Angebotsseite und im PDF (Druckansicht).
 
+
+/** Ab diesem Datum erstellte Angebote zeigen die neuen Garantien (ältere behalten ihren Text). */
+const GUARANTEES_FROM = new Date("2026-11-11T00:00:00+01:00");
+/** Garantien gelten für Katzenversicherung (TKV), siehe AGB „Garantien“. */
+const isGuaranteeProduct = (name: string) => /katze|\btkv\b|tierkranken/i.test(name);
+
 export type OfferDoc = {
   number: string;
   version: number;
@@ -365,11 +371,29 @@ export function OfferDocument({
             ? "Die Setupgebühr wird mit Vertragsschluss fällig, die Vergütung ab dem Startdatum jährlich im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen. Weitere Logins, die während des Jahres dazukommen, werden anteilig berechnet."
             : "Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen."}
         </p>
-        <H3>2.2 Garantie</H3>
-        <p className="text-[#374151]">
-          Läuft ein Produkt für Sie nicht profitabel, richten wir ein weiteres Produkt Ihrer Wahl ohne Setupgebühr ein,
-          so lange, bis Sie ein Produkt haben, mit dem Sie zufrieden sind.
-        </p>
+        {offer.createdAt < GUARANTEES_FROM ? (
+          <>
+            <H3>2.2 Garantie</H3>
+            <p className="text-[#374151]">
+              Läuft ein Produkt für Sie nicht profitabel, richten wir ein weiteres Produkt Ihrer Wahl ohne Setupgebühr ein,
+              so lange, bis Sie ein Produkt haben, mit dem Sie zufrieden sind.
+            </p>
+          </>
+        ) : products.some((p) => isGuaranteeProduct(p.name)) ? (
+          <>
+            <H3>2.2 Ihre Garantien</H3>
+            <p className="text-[#374151]">
+              <strong>Lead-Garantie:</strong> Bei mindestens 20 € Werbebudget pro Tag bekommen Sie in den ersten 30 Tagen nach
+              Kampagnenstart mindestens 100 Leads. Sonst ist die Betreuung im Folgemonat kostenlos.
+            </p>
+            <p className="mt-2 text-[#374151]">
+              <strong>Break-even-Garantie:</strong> Liegt Ihre Provision nach 90 Tagen unter Ihren Kosten für Werbung und
+              Betreuung, betreuen wir Sie ohne Betreuungsgebühr weiter, auf Wunsch mit einem anderen Produkt, bis es sich
+              rechnet (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten
+              Termine wahrgenommen und Ergebnisse in der App eingetragen. Details in den AGB (Abschnitt „Garantien“).
+            </p>
+          </>
+        ) : null}
         {offer.specialTerms ? (
           <>
             <H3>2.3 Sondervereinbarung</H3>
