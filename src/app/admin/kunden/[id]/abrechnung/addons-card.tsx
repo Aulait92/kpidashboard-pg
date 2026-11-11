@@ -26,6 +26,7 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
         bestandMonthly: true,
         bestandGrandfathered: true,
         bestandRequestedAt: true,
+        bestandCancelAt: true,
         bestandMessageQuota: true,
         existingCustomersEnabled: true,
       },
@@ -87,6 +88,7 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
                   : "Freigeschaltet ohne Preis"
               : "Nicht gebucht"}
             {c.bestandRequestedAt && !c.existingCustomersEnabled ? ` · vom Kunden angefragt am ${fmt(c.bestandRequestedAt)}` : ""}
+            {c.bestandCancelAt ? ` · vom Kunden gekündigt zum ${fmt(c.bestandCancelAt)} (Stripe-Position entfernt, Zugang bis dahin)` : ""}
           </p>
           <div className="flex flex-wrap gap-2">
             {!bestandFee ? (

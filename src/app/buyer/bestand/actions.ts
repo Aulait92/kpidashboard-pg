@@ -13,6 +13,7 @@ import { PROVIDER } from "@/lib/legal-texts";
 import { sendCustomerMail } from "@/lib/email";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
+import { selfBookBestand, selfCancelBestand } from "@/lib/bestand/self-service";
 
 const MAX_BYTES = 15 * 1024 * 1024;
 
@@ -110,6 +111,34 @@ export async function toggleCampaignAction(fd: FormData): Promise<void> {
   if (!c || c.status === "done") return;
   await prisma.customerCampaign.update({ where: { id: c.id }, data: { status: c.status === "running" ? "paused" : "running" } });
   revalidatePath("/buyer/bestand");
+}
+
+export type BookState = { ok?: boolean; error?: string; fallback?: boolean; until?: string };
+
+/** Modul selbst kostenpflichtig buchen (oder Kündigung zurücknehmen) – nur Inhaber, mit Bestätigung. */
+export async function bookBestandModuleAction(_prev: BookState, fd: FormData): Promise<BookState> {
+  const ctx = await getBuyerContext();
+  if (!ctx || ctx.preview || !ctx.userId) return { error: "In der Vorschau nicht möglich." };
+  if (ctx.teamRole !== "owner") return { error: "Bitte den Inhaber fragen – nur er kann Module buchen." };
+  if (fd.get("confirm") !== "on") return { error: "Bitte bestätigen Sie die kostenpflichtige Buchung." };
+  const res = await selfBookBestand(ctx.customerId, { id: ctx.userId, email: ctx.email ?? null, role: "kunde" });
+  revalidatePath("/buyer/bestand");
+  revalidatePath("/buyer/konto");
+  if (!res.ok) return { error: res.error, fallback: res.fallback };
+  return { ok: true };
+}
+
+/** Modul selbst zum Ende des Abrechnungszeitraums kündigen – nur Inhaber. */
+export async function cancelBestandModuleAction(_prev: BookState, fd: FormData): Promise<BookState> {
+  const ctx = await getBuyerContext();
+  if (!ctx || ctx.preview || !ctx.userId) return { error: "In der Vorschau nicht möglich." };
+  if (ctx.teamRole !== "owner") return { error: "Bitte den Inhaber fragen – nur er kann Module kündigen." };
+  if (fd.get("confirm") !== "on") return { error: "Bitte bestätigen Sie die Kündigung." };
+  const res = await selfCancelBestand(ctx.customerId, { id: ctx.userId, email: ctx.email ?? null, role: "kunde" });
+  revalidatePath("/buyer/bestand");
+  revalidatePath("/buyer/konto");
+  if (!res.ok) return { error: res.error };
+  return { ok: true, until: res.until.toISOString() };
 }
 
 export type RequestState = { ok?: boolean; error?: string };

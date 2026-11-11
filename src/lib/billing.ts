@@ -18,7 +18,7 @@ import { getAppUrl } from "@/lib/email";
 import { reportError } from "@/lib/monitoring";
 import { offerProducts } from "@/components/offer-document";
 import { annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
-import { audit } from "@/lib/audit";
+import { audit, type AuditActor } from "@/lib/audit";
 
 let client: Stripe | null = null;
 
@@ -689,7 +689,16 @@ async function editableSubscription(stripe: Stripe, stripeCustomerId: string): P
   return { sub };
 }
 
-async function setItemQuantity(stripe: Stripe, sub: Stripe.Subscription, key: "seat" | "bestand", quantity: number, monthlyUnit: number) {
+type Proration = "create_prorations" | "none";
+
+async function setItemQuantity(
+  stripe: Stripe,
+  sub: Stripe.Subscription,
+  key: "seat" | "bestand",
+  quantity: number,
+  monthlyUnit: number,
+  proration: Proration = "create_prorations",
+) {
   const [product, tax] = await Promise.all([productId(stripe, key), resolveTax(stripe)]);
   const item = sub.items.data.find((i) => productOf(i) === product);
   const interval = intervalOf(sub);
@@ -697,7 +706,7 @@ async function setItemQuantity(stripe: Stripe, sub: Stripe.Subscription, key: "s
   if (item) {
     const unit = cents(monthlyUnit * factor);
     if (quantity === 0 && key === "bestand") {
-      await stripe.subscriptionItems.del(item.id, { proration_behavior: "create_prorations" });
+      await stripe.subscriptionItems.del(item.id, { proration_behavior: proration });
     } else if (unit !== item.price.unit_amount && quantity > 0) {
       // Preis je Platz/Modul geändert (Admin): Position mit neuem Preis, anteilig verrechnet
       await stripe.subscriptionItems.update(item.id, {
@@ -714,7 +723,7 @@ async function setItemQuantity(stripe: Stripe, sub: Stripe.Subscription, key: "s
   await stripe.subscriptionItems.create({
     subscription: sub.id,
     quantity,
-    proration_behavior: "create_prorations",
+    proration_behavior: proration,
     price_data: { currency: "eur", product, unit_amount: cents(monthlyUnit * factor), recurring: { interval }, tax_behavior: "exclusive" },
     ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
   });
@@ -750,8 +759,17 @@ export async function syncSeatBilling(customerId: string, opts: { force?: boolea
   }
 }
 
-/** Bestandskunden-Modul buchen, kostenlos freischalten (Bestandsschutz) oder abbestellen. */
-export async function setBestandModule(customerId: string, mode: "book" | "free" | "cancel"): Promise<AddOnResult> {
+/**
+ * Bestandskunden-Modul buchen, kostenlos freischalten (Bestandsschutz) oder abbestellen (sofort, anteilig).
+ * opts.requireStripe (Selbstbuchung im Kundenbereich): nur mit laufendem, änderbarem Stripe-Abo –
+ * sonst wird nichts geändert (kein Freischalten ohne Abrechnung).
+ * opts.proration "none": z. B. Kündigung zurückgenommen – der laufende Zeitraum ist schon bezahlt.
+ */
+export async function setBestandModule(
+  customerId: string,
+  mode: "book" | "free" | "cancel",
+  opts: { requireStripe?: boolean; proration?: Proration; actor?: AuditActor } = {},
+): Promise<AddOnResult> {
   try {
     const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { stripeCustomerId: true, bestandMonthly: true } });
     if (!c) return { ok: false, error: "Kunde nicht gefunden." };
@@ -760,10 +778,13 @@ export async function setBestandModule(customerId: string, mode: "book" | "free"
     const price = mode === "book" ? (agreed > 0 ? agreed : PRICE_LIST.bestandModuleMonthly) : 0;
     let note: string | undefined;
     const stripe = stripeClient();
+    if (opts.requireStripe && !(stripe && c.stripeCustomerId)) return { ok: false, error: "Für Ihr Konto ist keine Online-Abrechnung eingerichtet." };
     if (stripe && c.stripeCustomerId) {
       const ed = await editableSubscription(stripe, c.stripeCustomerId);
-      if ("note" in ed) note = ed.note;
-      else await setItemQuantity(stripe, ed.sub, "bestand", mode === "book" && price > 0 ? 1 : 0, price);
+      if ("note" in ed) {
+        if (opts.requireStripe) return { ok: false, error: ed.note };
+        note = ed.note;
+      } else await setItemQuantity(stripe, ed.sub, "bestand", mode === "book" && price > 0 ? 1 : 0, price, opts.proration);
     } else if (mode === "book" && price > 0) {
       note = "Ohne Stripe – bitte von Hand abrechnen.";
     }
@@ -771,17 +792,117 @@ export async function setBestandModule(customerId: string, mode: "book" | "free"
       where: { id: customerId },
       data:
         mode === "book"
-          ? { existingCustomersEnabled: true, bestandMonthly: price, bestandGrandfathered: false, bestandRequestedAt: null }
+          ? { existingCustomersEnabled: true, bestandMonthly: price, bestandGrandfathered: false, bestandRequestedAt: null, bestandCancelAt: null }
           : mode === "free"
-            ? { existingCustomersEnabled: true, bestandMonthly: null, bestandGrandfathered: true, bestandRequestedAt: null }
-            : { existingCustomersEnabled: false, bestandMonthly: null, bestandGrandfathered: false },
+            ? { existingCustomersEnabled: true, bestandMonthly: null, bestandGrandfathered: true, bestandRequestedAt: null, bestandCancelAt: null }
+            : { existingCustomersEnabled: false, bestandMonthly: null, bestandGrandfathered: false, bestandCancelAt: null },
     });
-    await audit("billing.bestand", { entity: "Customer", entityId: customerId, customerId, details: { mode, price } });
+    await audit("billing.bestand", { entity: "Customer", entityId: customerId, customerId, details: { mode, price }, ...(opts.actor ? { actor: opts.actor } : {}) });
     return { ok: true, changed: true, ...(note ? { note } : {}) };
   } catch (err) {
     reportError(err, "billing-bestand", { customer: customerId });
     return { ok: false, error: "Das Modul konnte nicht umgestellt werden." };
   }
+}
+
+/** Ende des laufenden Abrechnungszeitraums einer Abo-Position (Stripe-API ab 2025: an der Position). */
+function periodEndOf(sub: Stripe.Subscription, item?: Stripe.SubscriptionItem): Date | null {
+  const raw =
+    (item as unknown as { current_period_end?: number } | undefined)?.current_period_end ??
+    (sub as unknown as { current_period_end?: number }).current_period_end ??
+    (sub.items.data[0] as unknown as { current_period_end?: number } | undefined)?.current_period_end;
+  return typeof raw === "number" ? new Date(raw * 1000) : null;
+}
+
+/** Ende des laufenden Kalendermonats (Berlin) – Rückfall ohne Stripe-Zeitraum. */
+export function endOfBerlinMonth(now = new Date()): Date {
+  const [y, m] = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit" }).format(now).split("-").map(Number);
+  // 1. des Folgemonats 00:00 Berlin (UTC+1/+2) minus 1 Sekunde, sicher innerhalb des Monats
+  const nextFirstUtc = Date.UTC(m === 12 ? y + 1 : y, m === 12 ? 0 : m, 1);
+  return new Date(nextFirstUtc - 2 * 60 * 60 * 1000 - 1000);
+}
+
+/**
+ * Voraussetzung für Selbstbuchungen im Kundenbereich: laufendes Abo (nicht im Zahlungsverzug)
+ * mit hinterlegter Zahlungsart. null = in Ordnung, sonst Grund für den Kunden.
+ */
+export async function selfServiceBillingBlocker(stripeCustomerId: string | null): Promise<string | null> {
+  const stripe = stripeClient();
+  if (!stripe || !stripeCustomerId) return "Für Ihr Konto ist keine Online-Abrechnung eingerichtet.";
+  try {
+    const sub = await activeSubscription(stripe, stripeCustomerId);
+    if (!sub) return "Ihr Abo läuft noch nicht.";
+    if (sub.status === "past_due") return "Es ist noch eine Rechnung offen.";
+    if (!sub.default_payment_method) {
+      const cust = await stripe.customers.retrieve(stripeCustomerId);
+      const pm = "deleted" in cust && cust.deleted ? null : (cust as Stripe.Customer).invoice_settings?.default_payment_method;
+      if (!pm) return "Für Ihr Konto ist keine Zahlungsart hinterlegt.";
+    }
+    return null;
+  } catch (err) {
+    reportError(err, "billing-selfservice-check", { customer: stripeCustomerId });
+    return "Die Abrechnung ist gerade nicht erreichbar.";
+  }
+}
+
+/**
+ * Bestandskunden-Modul zum Ende des Abrechnungszeitraums kündigen (Selbstbedienung).
+ * Die Abo-Position wird ohne Gutschrift entfernt – der laufende Zeitraum ist bezahlt, danach wird
+ * nichts mehr berechnet. Der Zugang bleibt bis bestandCancelAt; der WhatsApp-Cron schaltet danach ab
+ * (expireBestandCancellations). Ohne Stripe: zum Monatsende, Abrechnung von Hand.
+ */
+export async function scheduleBestandCancel(
+  customerId: string,
+  actor?: AuditActor,
+): Promise<{ ok: true; until: Date; note?: string } | { ok: false; error: string }> {
+  try {
+    const c = await prisma.customer.findUnique({
+      where: { id: customerId },
+      select: { stripeCustomerId: true, existingCustomersEnabled: true, bestandMonthly: true, bestandCancelAt: true },
+    });
+    if (!c) return { ok: false, error: "Kunde nicht gefunden." };
+    if (!c.existingCustomersEnabled || c.bestandMonthly == null) return { ok: false, error: "Das Modul ist nicht gebucht." };
+    if (c.bestandCancelAt) return { ok: true, until: c.bestandCancelAt };
+    let until: Date | null = null;
+    let note: string | undefined;
+    const stripe = stripeClient();
+    if (stripe && c.stripeCustomerId) {
+      const ed = await editableSubscription(stripe, c.stripeCustomerId);
+      if ("note" in ed) return { ok: false, error: ed.note };
+      const product = await productId(stripe, "bestand");
+      const item = ed.sub.items.data.find((i) => productOf(i) === product);
+      until = periodEndOf(ed.sub, item);
+      if (item) await stripe.subscriptionItems.del(item.id, { proration_behavior: "none" });
+    } else {
+      note = "Ohne Stripe – Abrechnung bitte von Hand beenden.";
+    }
+    if (!until) until = endOfBerlinMonth();
+    await prisma.customer.update({ where: { id: customerId }, data: { bestandCancelAt: until } });
+    await audit("billing.bestand", {
+      entity: "Customer",
+      entityId: customerId,
+      customerId,
+      details: { mode: "cancel_at_period_end", until: until.toISOString() },
+      ...(actor ? { actor } : {}),
+    });
+    return { ok: true, until, ...(note ? { note } : {}) };
+  } catch (err) {
+    reportError(err, "billing-bestand-cancel", { customer: customerId });
+    return { ok: false, error: "Die Kündigung konnte nicht gespeichert werden." };
+  }
+}
+
+/** Zum Periodenende gekündigte Module abschalten (WhatsApp-Cron). */
+export async function expireBestandCancellations(now = new Date()): Promise<number> {
+  const due = await prisma.customer.findMany({ where: { bestandCancelAt: { lte: now } }, select: { id: true } });
+  for (const c of due) {
+    await prisma.customer.update({
+      where: { id: c.id },
+      data: { existingCustomersEnabled: false, bestandMonthly: null, bestandGrandfathered: false, bestandCancelAt: null },
+    });
+    await audit("billing.bestand", { entity: "Customer", entityId: c.id, customerId: c.id, details: { mode: "expired" }, actor: { role: "system" } });
+  }
+  return due.length;
 }
 
 /** Zahlweise umstellen (monatlich ↔ jährlich im Voraus). Alle Positionen werden neu bepreist. */

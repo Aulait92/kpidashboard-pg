@@ -18,7 +18,7 @@ Seiten aus der Liste „Seiten“ unten.
 | /buyer/team | Team | Berater einladen, Leads verteilen (nur Inhaber) |
 | /buyer/kalender | Mein Kalender | Eigenen Kalender verbinden (bei Team-Zugängen) |
 | /buyer/einrichtung | Einrichtung | Fragebogen, Meta-Zugriff, Kalender, App aufs Handy, Hilfetermin |
-| /buyer/bestand | Bestand | Bestandskunden und Kampagnen (Zusatzmodul; ohne Modul mit Knopf „Modul anfragen“) |
+| /buyer/bestand | Bestand | Bestandskunden und Kampagnen (Zusatzmodul; ohne Modul mit Knopf „Jetzt buchen“, sonst „Modul anfragen“) |
 | /buyer/bestand/import | Kundenliste hochladen | Excel/CSV importieren |
 | /buyer/bestellen | Bestellen | Leads für eine Woche bestellen (bei Pay-per-Lead) |
 
@@ -237,7 +237,10 @@ Seiten aus der Liste „Seiten“ unten.
 - Zahlungsart, Rechnungsadresse, USt-IdNr.: über das Zahlungsportal (Stripe) auf dieser Seite.
 - WhatsApp-Gebühren von Meta sind im Preis enthalten, es kommt nichts dazu. Für Leads (Erstkontakt, Erinnerungen,
   Nachfassen) ohne Begrenzung; für Bestandskunden-Kampagnen bis 500 Nachrichten im Monat.
-- Bestandskunden-Modul nicht gebucht: Karte „Bestandskunden-Modul“ mit Knopf „Modul anfragen“, wir melden uns.
+- Bestandskunden-Modul nicht gebucht: Karte „Bestandskunden-Modul“ mit Knopf „Jetzt buchen – 149 € netto im Monat“
+  (Bestätigung mit Häkchen, danach sofort freigeschaltet). Gebucht: „Modul kündigen (zum Ende des
+  Abrechnungszeitraums)“; bis dahin nutzbar, die Kündigung lässt sich bis dahin mit „Kündigung zurücknehmen“
+  aufheben.
 - Schalter „Neue Leads per E-Mail“.
 - **Pause/Urlaub** selbst eintragen (Start, Ende, Grund): Anzeigen stoppen, reduzierte Gebühr; Pause jederzeit beenden.
   Bei jährlicher Vorauszahlung pausieren nur die Anzeigen, eine Gutschrift gibt es nicht.
@@ -247,7 +250,13 @@ Seiten aus der Liste „Seiten“ unten.
 
 - Zusatzmodul für 149 € netto im Monat, inklusive WhatsApp-Gebühren für bis zu 500 Kampagnen-Nachrichten im Monat.
   Gilt für Vertreter und Makler gleich.
-  Ohne Modul zeigt „Bestand“ eine Beschreibung und den Knopf „Modul anfragen“ (Anfrage geht an uns).
+  Ohne Modul zeigt „Bestand“ eine Beschreibung und den Knopf **„Jetzt buchen“** (nur Inhaber): kurze Bestätigung
+  mit Preis netto und brutto, „anteilig ab heute, danach monatlich mit Ihrer Rechnung, monatlich kündbar“.
+  Danach ist das Modul sofort freigeschaltet, es kommt eine Bestätigung per E-Mail.
+  Selbst buchen geht nur mit laufendem Abo und hinterlegter Zahlungsart, im Paket mit Software und ohne offene
+  Rechnung. Sonst erscheint der Grund und der Knopf „Modul anfragen“ (Anfrage geht an uns).
+  Kündigen unter „Konto & Rechnungen“: zum Ende des laufenden Abrechnungszeitraums, bis dahin nutzbar;
+  danach stoppen laufende Kampagnen, die hochgeladene Kundenliste bleibt gespeichert.
   Wer Bestand schon vor dem 11.11.2026 genutzt hat, behält den Zugang ohne Aufpreis.
 - Kontingent: Auf der Seite steht „Kontingent diesen Monat: X von 500“. Ist es erreicht, startet keine neue
   Kampagne („Monatskontingent erreicht – mehr auf Anfrage“), laufende Kampagnen machen im nächsten Monat weiter.

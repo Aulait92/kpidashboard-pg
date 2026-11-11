@@ -9,7 +9,8 @@ import { OCCASIONS, opportunities, type Occasion } from "@/lib/bestand/campaigns
 import { toggleCampaignAction } from "./actions";
 import { bestandQuota, QUOTA_REACHED } from "@/lib/bestand/quota";
 import { PRICE_LIST, eur } from "@/lib/offer-pricing";
-import { ModuleRequestButton } from "@/components/bestand/module-request";
+import { ModuleBookButton } from "@/components/bestand/module-book";
+import { canSelfBookBestand } from "@/lib/bestand/self-service";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Bestand | performancegrowth" };
@@ -25,10 +26,23 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   if (ctx.teamRole !== "owner") redirect("/buyer");
-  const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { existingCustomersEnabled: true, bestandRequestedAt: true } });
+  const c = await prisma.customer.findUnique({
+    where: { id: ctx.customerId },
+    select: { existingCustomersEnabled: true, bestandRequestedAt: true, bestandCancelAt: true },
+  });
   if (!c) redirect("/buyer");
   // Ohne gebuchtes Modul: freundlicher Hinweis statt Sperre ohne Erklärung
-  if (!c.existingCustomersEnabled) return <LockedBestand requestedAt={c.bestandRequestedAt?.toISOString() ?? null} readOnly={ctx.preview} />;
+  if (!c.existingCustomersEnabled) {
+    const check = await canSelfBookBestand(ctx.customerId);
+    return (
+      <LockedBestand
+        requestedAt={c.bestandRequestedAt?.toISOString() ?? null}
+        readOnly={ctx.preview}
+        canBook={check.ok}
+        reason={check.ok ? null : check.reason}
+      />
+    );
+  }
   const { q = "", gestartet, kontingent } = await searchParams;
   const customerId = ctx.customerId;
   const quota = await bestandQuota(customerId);
@@ -89,6 +103,15 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
           Kontingent diesen Monat: {quota.used.toLocaleString("de-DE")} von {quota.limit.toLocaleString("de-DE")} Kampagnen-Nachrichten (WhatsApp-Gebühren inklusive).
         </p>
       )}
+      {c.bestandCancelAt ? (
+        <div className="mb-5 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-bestand-cancel-notice>
+          Das Modul ist zum {c.bestandCancelAt.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })} gekündigt. Bis dahin können Sie es wie gewohnt
+          nutzen.{" "}
+          <Link href="/buyer/konto" className="font-medium underline">
+            Kündigung zurücknehmen
+          </Link>
+        </div>
+      ) : null}
       {gestartet ? (
         <div className="mb-5 rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
           Kampagne gestartet. Nachrichten gehen Mo–Sa zwischen 9 und 19 Uhr schrittweise raus. Antworten landen als Lead in der Pipeline.
@@ -191,7 +214,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
   );
 }
 
-function LockedBestand({ requestedAt, readOnly }: { requestedAt: string | null; readOnly: boolean }) {
+function LockedBestand({ requestedAt, readOnly, canBook, reason }: { requestedAt: string | null; readOnly: boolean; canBook: boolean; reason: string | null }) {
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8" data-bestand-locked>
       <PageHeader title="Bestand" subtitle="Ihre Bestandskunden gezielt ansprechen" />
@@ -208,8 +231,17 @@ function LockedBestand({ requestedAt, readOnly }: { requestedAt: string | null; 
             <li>WhatsApp-Gebühren für bis zu {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat inklusive</li>
             <li>Gesundheitsdaten werden nie übernommen</li>
           </ul>
-          <p className="text-sm text-[color:var(--muted)]">Dieses Modul ist für Ihr Konto noch nicht gebucht. Fragen Sie es hier an, wir melden uns.</p>
-          <ModuleRequestButton requestedAt={requestedAt} readOnly={readOnly} />
+          {canBook ? (
+            <p className="text-sm text-[color:var(--muted)]">Sofort nutzbar – Sie buchen es hier selbst, anteilig ab heute.</p>
+          ) : null}
+          <ModuleBookButton
+            monthlyNet={PRICE_LIST.bestandModuleMonthly}
+            includedMessages={PRICE_LIST.bestandIncludedMessages}
+            canBook={canBook}
+            reason={reason}
+            requestedAt={requestedAt}
+            readOnly={readOnly}
+          />
         </div>
       </Card>
     </main>

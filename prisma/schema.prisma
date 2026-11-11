@@ -164,6 +164,8 @@ model Customer {
   bestandGrandfathered     Boolean             @default(false)
   // Kunde hat das Modul im Konto angefragt (Admin „Heute“)
   bestandRequestedAt       DateTime?
+  // Modul zum Ende des Abrechnungszeitraums gekündigt: Zugang bis hier, danach schaltet der Cron ab
+  bestandCancelAt          DateTime?
   // Kampagnen-Nachrichten je Monat inklusive; null = Standard aus der Preisliste
   bestandMessageQuota      Int?
   // Neue Oberfläche des Kundenbereichs (Vertreter-A); pro Kunde im Admin einschaltbar.

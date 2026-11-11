@@ -11,7 +11,8 @@ import { prisma } from "@/lib/prisma";
 import { openPortalAction } from "./actions";
 import { LeadEmailToggle, PauseCard } from "./pause-card";
 import { WhatsAppFeesCard } from "@/components/whatsapp-fees-card";
-import { ModuleRequestButton } from "@/components/bestand/module-request";
+import { ModuleBookButton, ModuleCancelButton } from "@/components/bestand/module-book";
+import { canSelfBookBestand } from "@/lib/bestand/self-service";
 import { annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
 import { currentPause, todayBerlin } from "@/lib/pause";
 
@@ -56,6 +57,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       bestandMonthly: true,
       existingCustomersEnabled: true,
       bestandRequestedAt: true,
+      bestandCancelAt: true,
       whatsAppAccount: { select: { id: true } },
       onboarding: { select: { offerId: true, questionnaire: true } },
     },
@@ -73,6 +75,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
     });
   }
   const monthly = customer.retainerMonthly != null ? Number(customer.retainerMonthly) : null;
+  const bestandCheck = !customer.existingCustomersEnabled && customer.plan !== "service" ? await canSelfBookBestand(ctx.customerId) : null;
   const pause = await currentPause(ctx.customerId);
   const provision = await loadCustomerProvision(ctx.customerId);
   const today = todayBerlin();
@@ -120,7 +123,12 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             {customer.existingCustomersEnabled ? (
               <>
                 <dt className="text-[color:var(--muted)]">Bestandskunden</dt>
-                <dd>{bestandFee ? `Modul gebucht, ${eur(bestandFee)} im Monat` : "Modul freigeschaltet"}</dd>
+                <dd className="space-y-2">
+                  <div>{bestandFee ? `Modul gebucht, ${eur(bestandFee)} im Monat` : "Modul freigeschaltet"}</div>
+                  {customer.bestandMonthly != null ? (
+                    <ModuleCancelButton cancelAt={customer.bestandCancelAt?.toISOString() ?? null} readOnly={ctx.preview} />
+                  ) : null}
+                </dd>
               </>
             ) : null}
             {monthlyTotal != null && (seatsFee || bestandFee) ? (
@@ -192,7 +200,14 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 Kundenliste hochladen, Lücken und Anlässe erkennen, passende Kunden per WhatsApp anschreiben. {eur(PRICE_LIST.bestandModuleMonthly)} netto
                 im Monat, WhatsApp-Gebühren für bis zu {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat inklusive.
               </p>
-              <ModuleRequestButton requestedAt={customer.bestandRequestedAt?.toISOString() ?? null} readOnly={ctx.preview} />
+              <ModuleBookButton
+                monthlyNet={PRICE_LIST.bestandModuleMonthly}
+                includedMessages={PRICE_LIST.bestandIncludedMessages}
+                canBook={bestandCheck?.ok ?? false}
+                reason={bestandCheck && !bestandCheck.ok ? bestandCheck.reason : null}
+                requestedAt={customer.bestandRequestedAt?.toISOString() ?? null}
+                readOnly={ctx.preview}
+              />
             </div>
           </Card>
         ) : null}
