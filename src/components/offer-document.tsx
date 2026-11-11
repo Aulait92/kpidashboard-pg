@@ -387,7 +387,7 @@ export function OfferDocument({
               Kampagnenstart mindestens 100 Leads. Sonst ist die Betreuung im Folgemonat kostenlos.
             </p>
             <p className="mt-2 text-[#374151]">
-              <strong>Break-even-Garantie:</strong> Liegt Ihre Provision nach 90 Tagen unter Ihren Kosten für Werbung und
+              <strong>Break-even-Garantie (für Vertreter):</strong> Liegt Ihre Provision nach 90 Tagen unter Ihren Kosten für Werbung und
               Betreuung, betreuen wir Sie ohne Betreuungsgebühr weiter, auf Wunsch mit einem anderen Produkt, bis es sich
               rechnet (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten
               Termine wahrgenommen und Ergebnisse in der App eingetragen. Details in den AGB (Abschnitt „Garantien“).
