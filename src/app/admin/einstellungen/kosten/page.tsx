@@ -70,7 +70,7 @@ export default async function KostenPage() {
       <section className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 shadow-[var(--shadow-sm)] sm:p-5">
         <h2 className="font-semibold">Kundengewinnung</h2>
         <p className="mb-3 text-sm text-[color:var(--muted)]">Gründerzeit für „Kosten je Neukunde mit Gründerzeit“ und die Meta-Kampagnen, die der eigenen Kundengewinnung dienen.</p>
-        <KpiSettingsForm hours={settings.founderHoursPerWeek} rate={settings.founderHourlyRate} campaigns={settings.acquisitionCampaigns.join(", ")} />
+        <KpiSettingsForm hours={settings.founderHoursPerWeek} rate={settings.founderHourlyRate} campaigns={settings.acquisitionCampaigns.join(", ")} pplPilotEnd={settings.pplPilotEnd} />
       </section>
     </main>
   );

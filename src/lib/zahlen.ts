@@ -40,6 +40,7 @@ import {
   type OneTimeMonth,
   type Stream,
 } from "@/lib/revenue-ledger";
+import { costsForSicht, rowsForSicht, type Sicht } from "@/lib/zahlen-sicht";
 
 /** Pay-per-Lead startete im Juni 2026 – davor gibt es keine belastbaren Umsätze. */
 export const FIRST_MONTH = "2026-06";
@@ -62,6 +63,8 @@ export type KpiSettingsData = {
   acquisitionCampaigns: string[];
   updateChallenges: string;
   updateNext: string;
+  /** Letzter Monat der Pay-per-Lead-Pilotphase („YYYY-MM“), null = läuft noch. */
+  pplPilotEnd: string | null;
 };
 
 export async function loadKpiSettings(): Promise<KpiSettingsData> {
@@ -72,6 +75,7 @@ export async function loadKpiSettings(): Promise<KpiSettingsData> {
     acquisitionCampaigns: (s?.acquisitionCampaigns ?? "Allianz Lead Ads").split(",").map((x) => x.trim()).filter(Boolean),
     updateChallenges: s?.updateChallenges ?? "",
     updateNext: s?.updateNext ?? "",
+    pplPilotEnd: s?.pplPilotEnd && /^\d{4}-\d{2}$/.test(s.pplPilotEnd) ? s.pplPilotEnd : null,
   };
 }
 
@@ -276,6 +280,10 @@ export function recurringShare(startsAt: Date, endsAt: Date | null, month: strin
 // ─── Seite ───────────────────────────────────────────────────────────────
 
 export type ZahlenData = {
+  sicht: Sicht;
+  /** Pay-per-Lead-Pilotphase: erster Monat und (optional) letzter Monat „YYYY-MM“. */
+  pplPilot: { from: string; to: string | null };
+  allRecurring: { current: number; lastComplete: number; pplCurrent: number };
   generatedAt: string;
   months: MonthInfo[];
   current: string;
@@ -408,15 +416,24 @@ function median(xs: number[]): number | null {
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 
-export async function loadZahlen(now = new Date()): Promise<ZahlenData> {
+/**
+ * Kennzahlen der Zahlen-Seite. `sicht = "kern"`: ohne Pay-per-Lead (Pilot) –
+ * Umsatzbuch ohne Strom „ppl“ und Kosten ohne direkte Pay-per-Lead-Kosten;
+ * der Reiter „Pay-per-Lead“ rechnet immer mit allen Daten.
+ */
+export async function loadZahlen(now = new Date(), sicht: Sicht = "gesamt"): Promise<ZahlenData> {
   const settings = await loadKpiSettings();
   const { ledger, pplCounts, offerSetups, manual, manualRows, offerOfCustomer } = await loadLedger(now);
   const keys = ledger.months.map((m) => m.key);
-  const { costs, recurring } = await loadCosts(keys, settings, now);
-  const { rows, current, lastComplete } = ledger;
+  const { costs: allCosts, recurring } = await loadCosts(keys, settings, now);
+  const { current, lastComplete } = ledger;
+  const rows = rowsForSicht(ledger.rows, sicht);
+  const costs = costsForSicht(allCosts, sicht);
   const totals = totalsByMonth(rows, keys);
+  const totalsAll = sicht === "gesamt" ? totals : totalsByMonth(ledger.rows, keys);
   const tot = (m: string) => totals.find((t) => t.month === m);
   const cost = (m: string) => costs.find((c) => c.month === m);
+  const costAll = (m: string) => allCosts.find((c) => c.month === m);
   const complete = keys.filter((k) => k < current);
 
   // ── Kopfzeile ──
@@ -464,6 +481,7 @@ export async function loadZahlen(now = new Date()): Promise<ZahlenData> {
     if (cLast.whatsapp) costTable.push({ name: "WhatsApp-Gebühren (Meta, im Preis enthalten)", purpose: "software", amount: cLast.whatsapp, share: share(cLast.whatsapp) });
     if (cLast.metaAkquise) costTable.push({ name: `Meta-Werbung eigene Kundengewinnung (${settings.acquisitionCampaigns.join(", ")})`, purpose: "akquise", amount: cLast.metaAkquise, share: share(cLast.metaAkquise) });
     for (const rc of recurring) {
+      if (sicht === "kern" && rc.purpose === "ppl") continue; // Pay-per-Lead-Kosten gehören nicht zum Kerngeschäft
       const s = recurringShare(rc.startsAt, rc.endsAt, lastComplete);
       if (s <= 0) continue;
       const amount = r2(n(rc.monthlyAmount) * s);
@@ -550,7 +568,7 @@ export async function loadZahlen(now = new Date()): Promise<ZahlenData> {
     FROM "Revenue" WHERE cancelled = true AND "occurredAt" >= ${monthStart(keys[0])} GROUP BY 1`;
   const pplMonths = keys.map((m) => {
     const rowsM = pplCounts.filter((p) => p.month === m);
-    return { month: m, leads: rowsM.reduce((s, p) => s + p.n, 0), revenue: r2(rowsM.reduce((s, p) => s + p.amount, 0)), meta: cost(m)?.metaPpl ?? 0 };
+    return { month: m, leads: rowsM.reduce((s, p) => s + p.n, 0), revenue: r2(rowsM.reduce((s, p) => s + p.amount, 0)), meta: costAll(m)?.metaPpl ?? 0 };
   });
   const lastP = pplMonths.find((p) => p.month === lastComplete);
   const cancelledLast = cancelled.find((c) => c.month === lastComplete)?.n ?? 0;
@@ -645,6 +663,14 @@ export async function loadZahlen(now = new Date()): Promise<ZahlenData> {
 
   return {
     generatedAt: now.toISOString(),
+    sicht,
+    pplPilot: { from: FIRST_MONTH, to: settings.pplPilotEnd },
+    // Zur Einordnung in der Sicht „Kerngeschäft“: wiederkehrender Umsatz inkl. Pay-per-Lead
+    allRecurring: {
+      current: totalsAll.find((t) => t.month === current)?.recurring ?? 0,
+      lastComplete: totalsAll.find((t) => t.month === lastComplete)?.recurring ?? 0,
+      pplCurrent: totalsAll.find((t) => t.month === current)?.ppl ?? 0,
+    },
     months: ledger.months,
     current,
     lastComplete,
@@ -734,7 +760,7 @@ export async function loadZahlen(now = new Date()): Promise<ZahlenData> {
       months: pplMonths,
       avgPrice: lastP && lastP.leads ? r2(lastP.revenue / lastP.leads) : null,
       costPerLead: lastP && lastP.leads && lastP.meta ? r2(lastP.meta / lastP.leads) : null,
-      leadMargin: lastP && lastP.revenue > 0 && cLast ? (lastP.revenue - cLast.ppl) / lastP.revenue : null,
+      leadMargin: lastP && lastP.revenue > 0 && costAll(lastComplete) ? (lastP.revenue - costAll(lastComplete)!.ppl) / lastP.revenue : null,
       stornoQuote: lastP && lastP.leads + cancelledLast > 0 ? cancelledLast / (lastP.leads + cancelledLast) : null,
       parked,
     },

@@ -77,6 +77,7 @@ Die Produktion ist seit 11.11. eingemessen; neue Migrationen laufen beim normale
 | `20261114230000_bank_kosten` | Tabellen `BankConnection` (Enable Banking, Session verschlüsselt), `BankTransaction` (Konto-/Kartenumsätze, Zuordnung), `CostRule` (Muster → Zweck) | nur hinzufügend; ohne Verbindung/Import ändert sich keine Kennzahl |
 | `20261114240000_kosten_regeln` | Spalte `CostRule.counterpartyOnly`; legt Oles Zuordnungsregeln an (Papierkram, XING, Google, Kontoführung, Telekom, Steuerberater, DATEV, Asana, Privat) – der Cron wendet sie auf offene Buchungen an | nur Regeln |
 | `20261114250000_kosten_regeln_namen` | sprechende Bezeichnungen für bekannte Kosten-Regeln (Zeilennamen in der BWA) | nur Bezeichnungen |
+| `20261114260000_ppl_pilot_ende` | Spalte `KpiSettings.pplPilotEnd` (letzter Monat der Pay-per-Lead-Pilotphase, optional) | nur hinzufügend |
 
 Keine davon verändert bestehende Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und

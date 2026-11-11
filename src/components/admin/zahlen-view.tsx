@@ -9,6 +9,8 @@ import type { BwaData } from "@/lib/bwa";
 import { bwaCsv, displaySign, type BwaItem, type BwaRow } from "@/lib/bwa-shared";
 import { deleteManualRevenueAction, saveManualRevenueAction, saveUpdateTextsAction, type NachtragState } from "@/app/admin/zahlen/actions";
 import { cn } from "@/lib/utils";
+import { pilotEnded, pilotLabel, SICHT_LABEL, type Sicht } from "@/lib/zahlen-sicht";
+import { useRouter } from "next/navigation";
 
 // ─── Format ──────────────────────────────────────────────────────────────
 const eur = (v: number, d = 0) => v.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: d, minimumFractionDigits: d });
@@ -17,6 +19,9 @@ const pct = (v: number, d = 1) => `${v.toLocaleString("de-DE", { maximumFraction
 const MONTHS = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 const longMonth = (k: string) => `${MONTHS[Number(k.slice(5, 7)) - 1]} ${k.slice(0, 4)}`;
 const shortMonth = (k: string) => MONTHS[Number(k.slice(5, 7)) - 1].slice(0, 3);
+
+/** Ströme der Sicht: im Kerngeschäft ohne Pay-per-Lead. */
+const streamsFor = (sicht: Sicht) => (sicht === "kern" ? STREAMS.filter((x) => x.key !== "ppl") : STREAMS);
 
 const STREAMS = [
   { key: "ppl", name: "Pay-per-Lead", color: "var(--z-s1)" },
@@ -47,7 +52,7 @@ const TABS: { key: Tab; label: string; internal?: boolean }[] = [
   { key: "wirkung", label: "Wirkung beim Vertreter" },
   { key: "produkte", label: "Produkte", internal: true },
   { key: "vertrieb", label: "Vertrieb", internal: true },
-  { key: "ppl", label: "Pay-per-Lead", internal: true },
+  { key: "ppl", label: "Pay-per-Lead (Pilot)", internal: true },
   { key: "bwa", label: "BWA", internal: true },
 ];
 
@@ -172,6 +177,40 @@ export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData
   const [tab, setTab] = useState<Tab>("wachstum");
   const [investor, setInvestor] = useState(false);
   const [update, setUpdate] = useState(false);
+  const router = useRouter();
+  const [sichtPending, startSicht] = useTransition();
+  const kern = data.sicht === "kern";
+  // Sicht über ?sicht= (Server rechnet), gemerkt je Ansicht: intern Standard „Gesamt“, Investoren Standard „Kerngeschäft“
+  const goSicht = (s: Sicht, remember: boolean, inv = investor) => {
+    if (remember) {
+      try {
+        localStorage.setItem(inv ? "zahlen-sicht-investor" : "zahlen-sicht", s);
+      } catch {}
+    }
+    if (s === data.sicht) return;
+    const q = new URLSearchParams(window.location.search);
+    q.set("sicht", s);
+    startSicht(() => router.replace(`?${q.toString()}`, { scroll: false }));
+  };
+  const preferred = (inv: boolean): Sicht => {
+    try {
+      const v = localStorage.getItem(inv ? "zahlen-sicht-investor" : "zahlen-sicht");
+      if (v === "kern" || v === "gesamt") return v;
+    } catch {}
+    return inv ? "kern" : "gesamt";
+  };
+  const toggleInvestor = () => {
+    const next = !investor;
+    setInvestor(next);
+    goSicht(preferred(next), false, next);
+  };
+  useEffect(() => {
+    // Ohne ?sicht= in der Adresse: gemerkte Sicht der internen Ansicht wiederherstellen
+    if (new URLSearchParams(window.location.search).has("sicht")) return;
+    const p = preferred(false);
+    if (p !== data.sicht) goSicht(p, false, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- nur beim ersten Laden
+  }, []);
   const [drill, setDrill] = useState<DrillKind | null>(null);
   useEffect(() => {
     try {
@@ -194,10 +233,10 @@ export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData
 
   const tiles = [
     { lbl: "Jahresumsatz (Laufrate)", val: kEur(h.arr), delta: h.growth != null ? `${growthUp ? "+" : ""}${pct(h.growth * 100)}` : null, up: growthUp, drill: "arr" as DrillKind, note: "MRR × 12", def: "Wiederkehrender Monatsumsatz × 12. Ohne Einrichtungsgebühren." },
-    { lbl: "MRR", val: kEur(h.mrr), delta: h.mrrPrev > 0 ? `${h.mrr >= h.mrrPrev ? "+" : "−"}${kEur(Math.abs(h.mrr - h.mrrPrev))}` : null, up: h.mrr >= h.mrrPrev, drill: "mrr" as DrillKind, note: `davon vertraglich ${kEur(h.contractual)}`, def: "Wiederkehrender Monatsumsatz des laufenden Monats (hochgerechnet): Software (inkl. weiterer Logins und Module), Betreuung und Pay-per-Lead nach Stornos. Jahresabo: Jahresbetrag ÷ 12." },
+    { lbl: "MRR", val: kEur(h.mrr), delta: h.mrrPrev > 0 ? `${h.mrr >= h.mrrPrev ? "+" : "−"}${kEur(Math.abs(h.mrr - h.mrrPrev))}` : null, up: h.mrr >= h.mrrPrev, drill: "mrr" as DrillKind, note: `davon vertraglich ${kEur(h.contractual)}`, def: kern ? "Wiederkehrender Monatsumsatz des laufenden Monats: Software (inkl. weiterer Logins und Module) und Betreuung, ohne Pay-per-Lead (Pilot). Jahresabo: Jahresbetrag ÷ 12." : "Wiederkehrender Monatsumsatz des laufenden Monats (hochgerechnet): Software (inkl. weiterer Logins und Module), Betreuung und Pay-per-Lead nach Stornos. Jahresabo: Jahresbetrag ÷ 12." },
     { lbl: "Wachstum zum Vormonat", val: h.growth != null ? `${growthUp ? "+" : ""}${pct(h.growth * 100)}` : "–", delta: h.avgGrowth != null ? `Ø ${h.avgGrowth >= 0 ? "+" : ""}${pct(h.avgGrowth * 100, 0)} pro Monat` : null, up: (h.avgGrowth ?? 0) >= 0, note: `${shortMonth(data.current)}* vs. ${shortMonth(data.lastComplete)}`, def: "Veränderung des MRR gegenüber dem letzten abgeschlossenen Monat; Ø = durchschnittliches Monatswachstum seit dem ersten Umsatzmonat." },
     { lbl: "Umsatzbindung", early: h.early, val: h.retention ? `${h.retention.pct} %` : "–", delta: null, up: true, drill: h.retention ? ("retention" as DrillKind) : undefined, note: h.retention ? `${h.retention.customers} Kunden, nach ${h.retention.lag} Monaten` : "noch zu wenig Historie", def: "Umsatz im letzten abgeschlossenen Monat von Kunden, die vor 3 (ab einem Jahr Historie: 12) Monaten aktiv waren, geteilt durch deren Umsatz damals. Mit Ausbau, abzüglich Kündigungen." },
-    { lbl: "Bruttomarge", val: h.grossMargin != null ? pct(h.grossMargin * 100, 0) : "–", delta: h.grossMargin != null && h.grossMarginPrev != null ? `${h.grossMargin >= h.grossMarginPrev ? "+" : "−"}${pct(Math.abs(h.grossMargin - h.grossMarginPrev) * 100, 0).replace(" %", " Pkt.")}` : null, up: (h.grossMargin ?? 0) >= (h.grossMarginPrev ?? 0), drill: "margin" as DrillKind, note: `${longMonth(data.lastComplete)}, nach direkten Kosten`, def: "(Wiederkehrender Umsatz − direkte Kosten) ÷ Umsatz. Direkt: Meta-Werbung für Kunden-Leads und laufende Kosten mit Zweck „Pay-per-Lead“ oder „Software“." },
+    { lbl: "Bruttomarge", val: h.grossMargin != null ? pct(h.grossMargin * 100, 0) : "–", delta: h.grossMargin != null && h.grossMarginPrev != null ? `${h.grossMargin >= h.grossMarginPrev ? "+" : "−"}${pct(Math.abs(h.grossMargin - h.grossMarginPrev) * 100, 0).replace(" %", " Pkt.")}` : null, up: (h.grossMargin ?? 0) >= (h.grossMarginPrev ?? 0), drill: "margin" as DrillKind, note: `${longMonth(data.lastComplete)}, nach direkten Kosten`, def: kern ? "(Wiederkehrender Umsatz − direkte Kosten) ÷ Umsatz, ohne Pay-per-Lead: direkte Kosten = Software-Kosten (Tools, WhatsApp, laufende Kosten mit Zweck „Software“)." : "(Wiederkehrender Umsatz − direkte Kosten) ÷ Umsatz. Direkt: Meta-Werbung für Kunden-Leads und laufende Kosten mit Zweck „Pay-per-Lead“ oder „Software“." },
     { lbl: "Aktive Kunden", val: String(h.active), delta: `${h.active - h.activePrev >= 0 ? "+" : ""}${h.active - h.activePrev}`, up: h.active >= h.activePrev, drill: "active" as DrillKind, note: `${longMonth(data.lastComplete)} · ${h.churnedTotal} ${h.churnedTotal === 1 ? "Kündigung" : "Kündigungen"} seit Start`, def: "Kunden mit wiederkehrendem Umsatz im letzten abgeschlossenen Monat (ein Kunde zählt einmal, auch mit mehreren Strömen)." },
   ];
 
@@ -208,14 +247,30 @@ export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Zahlen</h1>
           <p className="mt-0.5 text-sm text-[color:var(--muted)]">
-            Stand {new Date(data.generatedAt).toLocaleDateString("de-DE")} · {longMonth(data.current)} hochgerechnet · Pay-per-Lead seit Juni 2026
+            Stand {new Date(data.generatedAt).toLocaleDateString("de-DE")} · {longMonth(data.current)} hochgerechnet · {SICHT_LABEL[data.sicht]}
+            {kern ? "" : ` · Pay-per-Lead-Pilot ${pilotLabel(data.pplPilot.from, data.pplPilot.to)}`}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <div role="radiogroup" aria-label="Sicht" className={cn("inline-flex rounded-full border border-[color:var(--border)] bg-white p-0.5 text-sm", sichtPending && "opacity-60")} data-sicht={data.sicht}>
+            {(["kern", "gesamt"] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                role="radio"
+                aria-checked={data.sicht === s}
+                disabled={sichtPending}
+                onClick={() => goSicht(s, true)}
+                className={cn("rounded-full px-3 py-1", data.sicht === s ? "bg-[color:var(--foreground)] font-semibold text-white" : "text-[color:var(--muted)]")}
+              >
+                {s === "kern" ? "Kerngeschäft" : "Gesamt"}
+              </button>
+            ))}
+          </div>
           <button
             type="button"
             aria-pressed={investor}
-            onClick={() => setInvestor((v) => !v)}
+            onClick={toggleInvestor}
             className="inline-flex items-center gap-2 rounded-full border border-[color:var(--border)] bg-white py-1.5 pl-1.5 pr-3 text-sm"
           >
             <span className={cn("relative h-5 w-[34px] rounded-full transition", investor ? "bg-[color:var(--brand)]" : "bg-slate-300")}>
@@ -231,7 +286,9 @@ export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData
 
       {!hasRevenue ? (
         <p className="mb-4 rounded-[10px] bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
-          Noch keine Umsätze im Umsatzbuch. In der Produktion stehen hier ab dem Livegang die echten Zahlen seit Juni 2026.
+          {kern
+            ? "Noch keine Kunden im Kerngeschäft (Software + Betreuung) mit Umsatz – die ersten Kunden starten ab November 2026. Unter „Gesamt“ steht der Pay-per-Lead-Pilot."
+            : "Noch keine Umsätze im Umsatzbuch. In der Produktion stehen hier ab dem Livegang die echten Zahlen seit Juni 2026."}
         </p>
       ) : null}
 
@@ -258,6 +315,13 @@ export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData
           </div>
         ))}
       </section>
+
+      {kern ? (
+        <p className="-mt-2 mb-4 text-[12.5px] text-[color:var(--muted)]" data-kern-hinweis>
+          Ohne Pay-per-Lead (Pilot {pilotLabel(data.pplPilot.from, data.pplPilot.to)}). Wiederkehrender Umsatz gesamt im {longMonth(data.current)}: {eur(data.allRecurring.current)}
+          {data.allRecurring.pplCurrent > 0 ? `, davon Pay-per-Lead ${eur(data.allRecurring.pplCurrent)}` : ""}.
+        </p>
+      ) : null}
 
       {!investor && data.missingRetainer.length ? <MissingRetainer data={data} /> : null}
 
@@ -315,7 +379,7 @@ function Wachstum({ data, investor }: { data: ZahlenData; investor: boolean }) {
     <div className="space-y-3.5">
       <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <Card title="Umsatz je Monat nach Strom" cap="Wiederkehrender Umsatz. Einrichtungsgebühren getrennt. WhatsApp-Gebühren sind im Preis enthalten und stehen als Kosten, nicht als Umsatz.">
-          <Legend />
+          <Legend sicht={data.sicht} />
           <RevenueChart data={data} />
           <button type="button" className="text-[12.5px] text-[color:var(--brand)]" onClick={() => setTable((v) => !v)}>
             {table ? "Tabelle ausblenden" : "Als Tabelle anzeigen"}
@@ -326,7 +390,7 @@ function Wachstum({ data, investor }: { data: ZahlenData; investor: boolean }) {
                 <thead className="text-left text-[color:var(--muted)]">
                   <tr>
                     <th className="py-1.5 pr-2 font-medium">Monat</th>
-                    {STREAMS.map((s) => <th key={s.key} className="px-2 text-right font-medium">{s.name}</th>)}
+                    {streamsFor(data.sicht).map((s) => <th key={s.key} className="px-2 text-right font-medium">{s.name}</th>)}
                     <th className="px-2 text-right font-medium">Gesamt</th>
                     <th className="pl-2 text-right font-medium">Einrichtung</th>
                   </tr>
@@ -335,7 +399,7 @@ function Wachstum({ data, investor }: { data: ZahlenData; investor: boolean }) {
                   {data.totals.map((t) => (
                     <tr key={t.month} className="border-t border-[color:var(--border)]">
                       <td className="py-1.5 pr-2">{shortMonth(t.month)}{t.month === data.current ? "*" : ""}</td>
-                      {STREAMS.map((s) => <td key={s.key} className="px-2 text-right">{eur(t[s.key])}</td>)}
+                      {streamsFor(data.sicht).map((s) => <td key={s.key} className="px-2 text-right">{eur(t[s.key])}</td>)}
                       <td className="px-2 text-right font-semibold">{eur(t.recurring)}</td>
                       <td className="pl-2 text-right">{eur(t.setup)}</td>
                     </tr>
@@ -365,10 +429,10 @@ function Wachstum({ data, investor }: { data: ZahlenData; investor: boolean }) {
           {cur && cur.recurring > 0 ? (
             <>
               <div className="flex h-[22px] gap-0.5 overflow-hidden rounded-md">
-                {STREAMS.map((s) => (cur[s.key] > 0 ? <div key={s.key} {...tipHandlers(<><b>{s.name}</b><br />{eur(cur[s.key])} · {pct((cur[s.key] / cur.recurring) * 100)}</>)} style={{ width: `${(cur[s.key] / cur.recurring) * 100}%`, background: s.color }} /> : null))}
+                {streamsFor(data.sicht).map((s) => (cur[s.key] > 0 ? <div key={s.key} {...tipHandlers(<><b>{s.name}</b><br />{eur(cur[s.key])} · {pct((cur[s.key] / cur.recurring) * 100)}</>)} style={{ width: `${(cur[s.key] / cur.recurring) * 100}%`, background: s.color }} /> : null))}
               </div>
               <div className="mt-2.5 flex flex-wrap gap-3.5 text-[12.5px] text-[color:var(--muted)]">
-                {STREAMS.map((s) => (
+                {streamsFor(data.sicht).map((s) => (
                   <span key={s.key} className="inline-flex items-center gap-1.5">
                     <i className="inline-block h-2.5 w-2.5 rounded-[3px]" style={{ background: s.color }} />
                     {s.name} <b className="tabular-nums text-[color:var(--foreground)]">{pct((cur[s.key] / cur.recurring) * 100, 0)}</b>
@@ -379,11 +443,11 @@ function Wachstum({ data, investor }: { data: ZahlenData; investor: boolean }) {
                 <KV
                   items={[
                     { k: "Vertraglich (Software + Betreuung)", v: kEur(cur.service + cur.software), s: `${pct((contractualShare(cur) ?? 0) * 100, 0)}${contractualShare(last) != null ? ` · Vormonat ${pct((contractualShare(last) ?? 0) * 100, 0)}` : ""}` },
-                    { k: "Nutzungsbasiert (Pay-per-Lead)", v: kEur(cur.ppl), s: `${pct((cur.ppl / cur.recurring) * 100, 0)} · wöchentliche Bestellungen` },
+                    ...(data.sicht === "kern" ? [] : [{ k: "Nutzungsbasiert (Pay-per-Lead)", v: kEur(cur.ppl), s: `${pct((cur.ppl / cur.recurring) * 100, 0)} · wöchentliche Bestellungen` }]),
                   ]}
                 />
               </div>
-              <p className="mt-2.5 text-[12.5px] text-[color:var(--muted)]">Ziel: Software und Betreuung wachsen schneller als Pay-per-Lead. Das macht den Umsatz planbarer und erhöht die Bewertung.</p>
+              <p className="mt-2.5 text-[12.5px] text-[color:var(--muted)]">{data.sicht === "kern" ? "Kerngeschäft: vertraglich wiederkehrender Umsatz aus Software und Betreuung." : "Ziel: Software und Betreuung wachsen schneller als Pay-per-Lead. Das macht den Umsatz planbarer und erhöht die Bewertung."}</p>
             </>
           ) : (
             <Empty />
@@ -395,10 +459,10 @@ function Wachstum({ data, investor }: { data: ZahlenData; investor: boolean }) {
   );
 }
 
-function Legend() {
+function Legend({ sicht }: { sicht: Sicht }) {
   return (
     <div className="mb-2 flex flex-wrap gap-3.5 text-[12.5px] text-[color:var(--muted)]">
-      {STREAMS.map((s) => (
+      {streamsFor(sicht).map((s) => (
         <span key={s.key} className="inline-flex items-center gap-1.5">
           <i className="inline-block h-2.5 w-2.5 rounded-[3px]" style={{ background: s.color }} />
           {s.name}
@@ -435,7 +499,7 @@ function RevenueChart({ data }: { data: ZahlenData }) {
         })}
         {data.totals.map((t, i) => {
           let acc = 0;
-          const segs = STREAMS.filter((s) => t[s.key] > 0);
+          const segs = streamsFor(data.sicht).filter((s) => t[s.key] > 0);
           const projected = t.month === data.current;
           return (
             <g key={t.month}>
@@ -463,7 +527,7 @@ function RevenueChart({ data }: { data: ZahlenData }) {
                 {...tipHandlers(
                   <>
                     <b>{longMonth(t.month)}{projected ? " (hochgerechnet)" : ""}</b>
-                    {STREAMS.map((s) => <div key={s.key}>{s.name}: {eur(t[s.key])}</div>)}
+                    {streamsFor(data.sicht).map((s) => <div key={s.key}>{s.name}: {eur(t[s.key])}</div>)}
                     <b>Gesamt: {eur(t.recurring)}</b>
                   </>,
                 )}
@@ -1105,6 +1169,9 @@ function Ppl({ data }: { data: ZahlenData }) {
   const max = Math.max(...p.months.map((m) => m.leads), 0);
   return (
     <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+      <p className="text-[13px] text-[color:var(--muted)] lg:col-span-2" data-ppl-pilot>
+        Pay-per-Lead (Pilotphase {pilotLabel(data.pplPilot.from, data.pplPilot.to)}). Dieser Reiter rechnet immer mit allen Pay-per-Lead-Daten, auch in der Sicht „Kerngeschäft“. Ende der Pilotphase unter Einstellungen → Kosten.
+      </p>
       <Card title="Verkaufte Leads je Monat" cap="Nicht stornierte Leads (Revenue-Zeilen).">
         {max ? p.months.map((m) => <BarRow key={m.month} label={`${shortMonth(m.month)}${m.month === data.current ? " (bisher)" : ""}`} value={m.leads} max={max} color="var(--z-s1)" right={m.leads.toLocaleString("de-DE")} labelWidth={90} />) : <Empty />}
       </Card>
@@ -1132,12 +1199,22 @@ function UpdateSheet({ data, onClose }: { data: ZahlenData; onClose: () => void 
   const first = data.totals.find((t) => t.recurring > 0 && t.month < data.current);
   const last = data.totals.find((t) => t.month === data.lastComplete);
   const highlights: string[] = [];
-  if (first && last && first.month !== last.month) {
-    highlights.push(`MRR seit ${longMonth(first.month).split(" ")[0]} von ${kEur(first.recurring)} auf ${kEur(last.recurring)}${h.avgGrowth != null ? `, im Schnitt ${h.avgGrowth >= 0 ? "+" : ""}${pct(h.avgGrowth * 100, 0)} pro Monat` : ""}.`);
+  const kern = data.sicht === "kern";
+  const ohne = kern ? " (ohne Pay-per-Lead)" : "";
+  if (kern) {
+    const pilot = pilotLabel(data.pplPilot.from, data.pplPilot.to);
+    highlights.push(
+      pilotEnded(data.pplPilot.to, data.current)
+        ? `Pay-per-Lead-Pilot (${pilot}) abgeschlossen; Fokus auf Software + Betreuung. Kennzahlen ohne Pay-per-Lead.`
+        : `Pay-per-Lead-Pilot (${pilot}) läuft aus; Fokus auf Software + Betreuung. Kennzahlen ohne Pay-per-Lead.`,
+    );
   }
-  if (h.growth != null) highlights.push(`${longMonth(data.current)} hochgerechnet: ${kEur(h.mrr)} MRR (${h.growth >= 0 ? "+" : ""}${pct(h.growth * 100)} zum Vormonat), davon vertraglich ${kEur(h.contractual)}.`);
+  if (first && last && first.month !== last.month) {
+    highlights.push(`MRR${ohne} seit ${longMonth(first.month).split(" ")[0]} von ${kEur(first.recurring)} auf ${kEur(last.recurring)}${h.avgGrowth != null ? `, im Schnitt ${h.avgGrowth >= 0 ? "+" : ""}${pct(h.avgGrowth * 100, 0)} pro Monat` : ""}.`);
+  }
+  if (h.growth != null) highlights.push(`${longMonth(data.current)} hochgerechnet: ${kEur(h.mrr)} MRR${ohne} (${h.growth >= 0 ? "+" : ""}${pct(h.growth * 100)} zum Vormonat), davon vertraglich ${kEur(h.contractual)}.`);
   if (data.bridge && data.bridge.neu + data.bridge.ausbau > 0) highlights.push(`${data.bridge.counts.neu} neue Kunden, ${data.bridge.counts.ausbau} haben ausgebaut (${kEur(data.bridge.neu + data.bridge.ausbau)} Zuwachs im ${longMonth(data.bridge.to).split(" ")[0]}).`);
-  if (h.retention) highlights.push(`Umsatzbindung nach ${h.retention.lag} Monaten: ${h.retention.pct} %.`);
+  if (h.retention) highlights.push(`Umsatzbindung${ohne} nach ${h.retention.lag} Monaten: ${h.retention.pct} %.`);
   if (data.unit.paybackFounder != null) highlights.push(`Kundengewinnung amortisiert sich in ${data.unit.paybackFounder.toLocaleString("de-DE", { maximumFractionDigits: 1 })} Monaten, inklusive kalkulierter Gründerzeit.`);
   if (data.impact.perEuro != null) highlights.push(`Vertreter verdienen ${data.impact.perEuro.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € Provision je 1 € an uns (${data.impact.qualifying} Kunden mit vollständigen Ergebnissen).`);
   return (
@@ -1163,6 +1240,7 @@ function UpdateSheet({ data, onClose }: { data: ZahlenData; onClose: () => void 
             <div key={k} className="rounded-[10px] border border-[#e3e9f3] p-2.5">
               <div className="text-xs text-[#66758f]">{k}</div>
               <div className="text-xl font-bold tabular-nums">{v}</div>
+              {kern ? <div className="text-[11px] text-[#8b97ab]">ohne Pay-per-Lead</div> : null}
             </div>
           ))}
         </div>
@@ -1186,7 +1264,7 @@ function UpdateSheet({ data, onClose }: { data: ZahlenData; onClose: () => void 
           </div>
         </form>
         <p className="mt-5 border-t border-[#e3e9f3] pt-2.5 text-xs text-[#8b97ab]">
-          Definitionen: MRR = wiederkehrender Monatsumsatz (Software inkl. weiterer Logins und Bestandskunden-Modul, Betreuung, Pay-per-Lead nach Stornos), ohne Einrichtungsgebühren; laufender Monat hochgerechnet. Jahresabo (jährlich im Voraus): MRR = Jahresbetrag ÷ 12. WhatsApp-Gebühren sind im Preis enthalten: kein Umsatz, sondern direkte Software-Kosten. Laufrate = MRR × 12. Bruttomarge = (Umsatz − direkte Kosten) ÷ Umsatz, ohne Personalkosten.
+          Definitionen: MRR = wiederkehrender Monatsumsatz (Software inkl. weiterer Logins und Bestandskunden-Modul, Betreuung{kern ? "; ohne Pay-per-Lead-Pilot" : ", Pay-per-Lead nach Stornos"}), ohne Einrichtungsgebühren; laufender Monat hochgerechnet. Jahresabo (jährlich im Voraus): MRR = Jahresbetrag ÷ 12. WhatsApp-Gebühren sind im Preis enthalten: kein Umsatz, sondern direkte Software-Kosten. Laufrate = MRR × 12. Bruttomarge = (Umsatz − direkte Kosten) ÷ Umsatz, ohne Personalkosten.
         </p>
       </div>
     </div>
@@ -1338,7 +1416,7 @@ function DrillSheet({ kind, data, onClose }: { kind: DrillKind; data: ZahlenData
       <div className="w-full max-w-[920px] rounded-xl bg-white p-5 shadow-2xl sm:p-7">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
-            <p className="text-[12.5px] text-[color:var(--muted)]">Woraus besteht das?</p>
+            <p className="text-[12.5px] text-[color:var(--muted)]">Woraus besteht das?{data.sicht === "kern" ? " · Kerngeschäft, ohne Pay-per-Lead" : ""}</p>
             <h3 className="text-lg font-semibold sm:text-xl">{titles[kind]}</h3>
           </div>
           <button type="button" onClick={onClose} className="shrink-0 rounded-[10px] border border-[color:var(--border)] px-3 py-1.5 text-sm font-semibold">

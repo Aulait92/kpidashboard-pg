@@ -56,6 +56,31 @@ describe("Zahlen-Seite: Umsatzbuch aus der Datenbank", () => {
     await prisma.offer.deleteMany({ where: { id: offerId } });
   });
 
+  it("Sicht „Kerngeschäft“: ohne Pay-per-Lead-Umsatz und -Kosten, Pay-per-Lead-Reiter unverändert", async () => {
+    const [gesamt, kern] = await Promise.all([loadZahlen(NOW, "gesamt"), loadZahlen(NOW, "kern")]);
+    expect(gesamt.sicht).toBe("gesamt");
+    expect(kern.sicht).toBe("kern");
+    const oct = kern.totals.find((t) => t.month === "2026-10")!;
+    expect(oct.ppl).toBe(0);
+    expect(oct.software).toBe(349);
+    // MRR ohne Pay-per-Lead; Gesamtumsatz zur Einordnung bleibt sichtbar
+    expect(kern.headline.mrr).toBe(1000);
+    expect(kern.allRecurring.current).toBe(1150);
+    expect(kern.allRecurring.pplCurrent).toBe(150);
+    expect(gesamt.headline.mrr).toBe(1150);
+    // Aktive Kunden im Oktober: nur der Retainer-Kunde
+    expect(kern.headline.active).toBe(gesamt.headline.active - 1);
+    // Direkte Pay-per-Lead-Kosten (Meta 80 €) zählen nicht in die Marge
+    expect(kern.costTable.some((c) => c.purpose === "ppl")).toBe(false);
+    expect(gesamt.costTable.some((c) => c.name.startsWith("Meta-Werbung für Kunden-Leads"))).toBe(true);
+    expect(kern.headline.grossMargin!).toBeGreaterThan(gesamt.headline.grossMargin!);
+    // Drilldown respektiert die Sicht
+    expect(kern.drill.last.customers.every((c) => c.streams.every((x) => x.stream !== "ppl"))).toBe(true);
+    // Pay-per-Lead-Reiter rechnet weiter mit allen Daten
+    expect(kern.ppl.months.find((m) => m.month === "2026-10")).toEqual(gesamt.ppl.months.find((m) => m.month === "2026-10"));
+    expect(kern.pplPilot.from).toBe("2026-06");
+  });
+
   it("rechnet Ströme, Hochrechnung, Brücke und Kosten richtig", async () => {
     const z = await loadZahlen(NOW);
     const oct = z.totals.find((t) => t.month === "2026-10")!;

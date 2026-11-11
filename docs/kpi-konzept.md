@@ -183,3 +183,12 @@ Vereinfachte betriebswirtschaftliche Auswertung je Monat, netto, Berliner Monate
 - Monate vor dem ersten Bankumsatz sind „unvollständig“ markiert. Hinweise: offene Ausgaben, letzter Amex-Import, Bankdaten ab.
 - Jede Zeile: „Woraus besteht das?“ je Monat (Kunden bzw. Buchungen mit Brutto/Netto). „Als CSV“: Semikolon, deutsche Zahlen, Kosten negativ (für den Steuerberater).
 - Gleiche Quellen wie `loadCosts`; Abweichung zur Zahlen-Übersicht nur durch die fehlende Hochrechnung im laufenden Monat.
+
+## Sicht „Kerngeschäft“ / „Gesamt“ (`?sicht=kern|gesamt`)
+
+- **Kerngeschäft (Software + Betreuung):** Umsatzbuch ohne Strom `ppl` (Pay-per-Lead-Pilot); Einrichtungsgebühren bleiben. Kosten ohne direkte Pay-per-Lead-Kosten (Meta-Werbung für Kunden-Leads, Bank/Karte und laufende Kosten mit Zweck „Pay-per-Lead“), damit die Bruttomarge nicht verzerrt wird. Gilt für MRR, Laufrate, Wachstum, aktive Kunden, Umsatzbindung, Kündigungen, Kohorten, Konzentration, Bruttomarge, CAC/Payback/LTV und die Drilldowns. Unter den Kopfzahlen steht immer der Gesamtumsatz inkl. Pay-per-Lead („nichts versteckt“).
+- **Gesamt:** wie bisher, inkl. Pay-per-Lead.
+- Standard: interne Ansicht „Gesamt“, Investoren-Ansicht „Kerngeschäft“; die zuletzt gewählte Sicht wird je Ansicht im Browser gemerkt (`zahlen-sicht`, `zahlen-sicht-investor`).
+- Reiter „Pay-per-Lead (Pilot)“ rechnet immer mit allen Daten. Pilotphase ab `FIRST_MONTH`, Ende optional unter Einstellungen → Kosten (`KpiSettings.pplPilotEnd`); erscheint im Investoren-Update („Pilot Juni–November 2026 abgeschlossen; Fokus auf Software + Betreuung“).
+- BWA bleibt vollständig; Pay-per-Lead-Zeilen sind mit „(Pilot)“ beschriftet.
+- Logik ohne Datenbank in `src/lib/zahlen-sicht.ts` (getestet).

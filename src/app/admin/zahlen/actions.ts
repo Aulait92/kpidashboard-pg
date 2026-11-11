@@ -70,14 +70,18 @@ export async function saveKpiSettingsAction(_prev: KostenState, fd: FormData): P
   const hours = Number(s(fd, "hours"));
   const rate = Number(s(fd, "rate").replace(",", "."));
   const campaigns = s(fd, "campaigns").slice(0, 500);
+  // Ende der Pay-per-Lead-Pilotphase: Monat „YYYY-MM“ (aus <input type="month">), leer = läuft noch
+  const pilotRaw = s(fd, "pplPilotEnd").trim();
+  if (pilotRaw && !/^\d{4}-\d{2}$/.test(pilotRaw)) return { error: "Ende Pilotphase: Monat im Format JJJJ-MM oder leer." };
+  const pplPilotEnd = pilotRaw || null;
   if (!Number.isInteger(hours) || hours < 0 || hours > 80) return { error: "Stunden pro Woche: 0 bis 80." };
   if (!Number.isFinite(rate) || rate < 0 || rate > 1000) return { error: "Stundensatz: 0 bis 1.000 €." };
   await prisma.kpiSettings.upsert({
     where: { id: "default" },
-    create: { id: "default", founderHoursPerWeek: hours, founderHourlyRate: rate, acquisitionCampaigns: campaigns },
-    update: { founderHoursPerWeek: hours, founderHourlyRate: rate, acquisitionCampaigns: campaigns },
+    create: { id: "default", founderHoursPerWeek: hours, founderHourlyRate: rate, acquisitionCampaigns: campaigns, pplPilotEnd },
+    update: { founderHoursPerWeek: hours, founderHourlyRate: rate, acquisitionCampaigns: campaigns, pplPilotEnd },
   });
-  await audit("kpi.einstellungen", { details: { hours, rate, campaigns } });
+  await audit("kpi.einstellungen", { details: { hours, rate, campaigns, pplPilotEnd } });
   revalidatePath("/admin/einstellungen/kosten");
   revalidatePath("/admin/zahlen");
   return { ok: true };

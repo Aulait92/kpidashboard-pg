@@ -51,7 +51,7 @@ export function CostForm({ cost }: { cost: { id: string; name: string; amount: s
   );
 }
 
-export function KpiSettingsForm({ hours, rate, campaigns }: { hours: number; rate: number; campaigns: string }) {
+export function KpiSettingsForm({ hours, rate, campaigns, pplPilotEnd }: { hours: number; rate: number; campaigns: string; pplPilotEnd?: string | null }) {
   const [state, action, pending] = useActionState<KostenState, FormData>(saveKpiSettingsAction, {});
   return (
     <form action={action} className="grid gap-3 sm:grid-cols-2">
@@ -66,6 +66,11 @@ export function KpiSettingsForm({ hours, rate, campaigns }: { hours: number; rat
       <label className="text-sm sm:col-span-2">
         Meta-Kampagnen der eigenen Kundengewinnung (kommagetrennt, Teil des Namens genügt)
         <input name="campaigns" defaultValue={campaigns} className={input} />
+      </label>
+      <label className="text-sm sm:col-span-2">
+        Pay-per-Lead-Pilotphase endet mit Monat (leer = läuft noch)
+        <input name="pplPilotEnd" type="month" defaultValue={pplPilotEnd ?? ""} className={input} />
+        <span className="mt-1 block text-xs text-[color:var(--muted)]">Erscheint im Reiter „Pay-per-Lead“ und im Investoren-Update („Pilot Juni–… abgeschlossen“).</span>
       </label>
       <div className="flex items-center gap-3 sm:col-span-2">
         <button className="btn-primary" disabled={pending}>{pending ? "Speichere …" : "Speichern"}</button>

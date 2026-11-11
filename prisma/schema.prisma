@@ -1786,6 +1786,8 @@ model KpiSettings {
   // Freitexte fürs Investoren-Update
   updateChallenges     String?
   updateNext           String?
+  // Letzter Monat der Pay-per-Lead-Pilotphase („YYYY-MM“), leer = läuft noch
+  pplPilotEnd          String?
   updatedAt            DateTime @updatedAt
 }
 
