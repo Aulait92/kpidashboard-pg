@@ -9,6 +9,9 @@ import { setWebhook } from "@/lib/whatsapp/dialog360";
 import { appUrl } from "@/lib/whatsapp/event-text";
 import { STARTER_PROMPT } from "@/lib/whatsapp/starter-prompt";
 import { audit } from "@/lib/audit";
+import { reportError } from "@/lib/monitoring";
+import { resubmitTemplate, submitTemplatesForCustomer, summaryText } from "@/lib/whatsapp/template-submit";
+import type { NoticePurpose } from "@/lib/whatsapp/templates";
 
 async function requireAdmin() {
   const session = await getCurrentSession();
@@ -22,6 +25,11 @@ const PURPOSES = new Set([
   "followup",
   "followup_offer",
   "followup_noshow",
+  "followup_last",
+  "campaign_cross_sell",
+  "campaign_review",
+  "campaign_birthday",
+  "campaign_renewal",
 ]);
 
 /** Erstanschreiben je Kunde an/aus + Wartezeit. */
@@ -172,9 +180,36 @@ export async function connectWhatsAppAction(formData: FormData): Promise<void> {
     where: { id: account.id },
     data: { status: ok ? "connected" : "pending" },
   });
+  // Neuer Key: Vorlagen gleich automatisch bei Meta einreichen.
+  if (ok && apiKeyRaw) await submitTemplatesForCustomer(customerId).catch((err) => reportError(err, "templates-after-admin-connect"));
   revalidatePath("/admin/whatsapp/settings");
   revalidatePath("/admin/kunden", "layout");
   redirect(back(ok ? "ok" : "webhook"));
+}
+
+/** Admin-Knopf: fehlende Vorlagen einreichen und Status bei 360dialog abfragen. */
+export async function submitTemplatesAction(customerId: string): Promise<SaveResult & { message?: string }> {
+  try {
+    await requireAdmin();
+    const res = await submitTemplatesForCustomer(customerId);
+    revalidateSettings();
+    return res.ok ? { ok: true, message: summaryText(res) } : { ok: false, error: summaryText(res) };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Einreichen fehlgeschlagen." };
+  }
+}
+
+/** Abgelehnte Vorlage mit aktuellem Text neu einreichen. */
+export async function resubmitTemplateAction(customerId: string, purpose: string): Promise<SaveResult & { message?: string }> {
+  try {
+    await requireAdmin();
+    if (!PURPOSES.has(purpose)) return { ok: false, error: "Unbekannter Zweck." };
+    const res = await resubmitTemplate(customerId, purpose as NoticePurpose);
+    revalidateSettings();
+    return res.ok ? { ok: true, message: `Neu eingereicht als ${res.name}` } : { ok: false, error: res.error ?? "Einreichen fehlgeschlagen." };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Einreichen fehlgeschlagen." };
+  }
 }
 
 // ─── Demo-Daten (nur Sandbox: DEMO_TOOLS=1) ──────────────────────────────

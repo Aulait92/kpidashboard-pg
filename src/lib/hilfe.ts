@@ -23,6 +23,7 @@ export const HILFE_PAGES: Record<string, string> = {
   "/buyer/bestand": "Bestand",
   "/buyer/bestand/import": "Kundenliste hochladen",
   "/buyer/bestellen": "Bestellen",
+  "/buyer/vorlagen": "WhatsApp-Vorlagen",
 };
 
 let knowledge: string | null = null;

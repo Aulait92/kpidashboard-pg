@@ -66,17 +66,31 @@ export const SUGGESTED_TEMPLATE_TEXT: Record<NoticePurpose, string> = {
   followup_offer:
     "Hallo {{1}}, hier ist der digitale Assistent von [Berater]. Konntest du dir das Angebot zu {{2}} schon anschauen? Wenn du Fragen hast oder etwas anpassen möchtest, antworte einfach hier.",
   followup_noshow:
-    "Hallo {{1}}, schade, dass es mit unserem Termin nicht geklappt hat. Hier ist der digitale Assistent von [Berater] – sollen wir einen neuen Termin finden? Antworte einfach hier.",
+    "Hallo {{1}}, schade, dass es mit unserem Termin nicht geklappt hat. Hier ist der digitale Assistent von [Berater]. Sollen wir einen neuen Termin finden? Antworte einfach hier.",
   followup_last:
-    "Hallo {{1}}, hier ist nochmal der digitale Assistent von [Berater]. Ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Dann antworte einfach hier. Wenn nicht, ist das völlig in Ordnung – wir melden uns dann nicht weiter.",
+    "Hallo {{1}}, hier ist nochmal der digitale Assistent von [Berater]. Ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Dann antworte einfach hier. Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
   campaign_cross_sell:
-    "Hallo {{1}}, hier ist [Berater], Ihr Allianz-Berater. Kurze Frage: Sind Sie beim Thema {{2}} schon gut abgesichert? Wenn Sie möchten, schaue ich mir das gern kostenlos mit Ihnen an. Antworten Sie einfach hier. (Keine Nachrichten mehr? Antworten Sie mit STOPP.)",
+    "Hallo {{1}}, hier ist [Berater], Ihr Versicherungsberater. Kurze Frage: Sind Sie beim Thema {{2}} schon gut abgesichert? Wenn Sie möchten, schaue ich mir das gern kostenlos mit Ihnen an. Antworten Sie einfach hier.",
   campaign_review:
-    "Hallo {{1}}, hier ist [Berater], Ihr Allianz-Berater. Es ist Zeit für einen kurzen Check Ihrer Verträge: Passt noch alles zu Ihrer Situation? Antworten Sie einfach hier, dann finden wir einen Termin. (Keine Nachrichten mehr? Antworten Sie mit STOPP.)",
+    "Hallo {{1}}, hier ist [Berater], Ihr Versicherungsberater. Es ist Zeit für einen kurzen Check Ihrer Verträge: Passt noch alles zu Ihrer Situation? Antworten Sie einfach hier, dann finden wir einen Termin.",
   campaign_birthday:
     "Hallo {{1}}, herzlichen Glückwunsch zum Geburtstag! Alles Gute für das neue Lebensjahr wünscht Ihnen [Berater]. Wenn ich etwas für Sie tun kann, antworten Sie einfach hier.",
   campaign_renewal:
-    "Hallo {{1}}, hier ist [Berater], Ihr Allianz-Berater. Bei Ihrem Vertrag ({{2}}) steht bald ein guter Zeitpunkt an, um Beitrag und Leistung zu prüfen. Soll ich mir das kurz für Sie anschauen? Antworten Sie einfach hier. (Keine Nachrichten mehr? Antworten Sie mit STOPP.)",
+    "Hallo {{1}}, hier ist [Berater], Ihr Versicherungsberater. Bei Ihrem Vertrag ({{2}}) steht bald ein guter Zeitpunkt an, um Beitrag und Leistung zu prüfen. Soll ich mir das kurz für Sie anschauen? Antworten Sie einfach hier.",
+};
+
+/**
+ * Schnellantwort-Knopf für Direktwerbung (Kampagnen an Bestandskunden): Hinweis auf das
+ * Widerspruchsrecht (Art. 21 Abs. 4 DSGVO). Ein Klick kommt als Antwort mit diesem Text
+ * zurück und wird wie „STOPP“ behandelt (lib/bestand/campaigns.ts → handleCampaignReply).
+ * Statische Quick-Reply-Knöpfe brauchen beim Senden keine Parameter.
+ */
+export const OPT_OUT_BUTTON = "Keine Nachrichten mehr";
+export const TEMPLATE_BUTTONS: Partial<Record<NoticePurpose, string[]>> = {
+  campaign_cross_sell: [OPT_OUT_BUTTON],
+  campaign_review: [OPT_OUT_BUTTON],
+  campaign_birthday: [OPT_OUT_BUTTON],
+  campaign_renewal: [OPT_OUT_BUTTON],
 };
 
 export class NoTemplateError extends Error {

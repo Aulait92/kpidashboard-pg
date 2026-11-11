@@ -84,3 +84,77 @@ export function sendTemplate(
     },
   });
 }
+
+// ─── Vorlagen (Template-Verwaltung über die WABA-API, Channel-API-Key) ───────
+// Quelle: docs.360dialog.com/partner/messaging/template-messages/create-and-manage-template-messages
+//   POST /v1/configs/templates  { name, category, language, components }
+//   GET  /v1/configs/templates  → { waba_templates: [{ name, language, status, rejected_reason, … }] }
+// Status laut Doku: submitted/PENDING → APPROVED | REJECTED, später ggf. PAUSED/DISABLED.
+
+export type RemoteTemplate = {
+  name: string;
+  language: string;
+  status: string;
+  category: string | null;
+  rejectedReason: string | null;
+};
+
+export type CreateTemplateInput = {
+  name: string;
+  category: "MARKETING" | "UTILITY";
+  language: string;
+  components: unknown[];
+};
+
+function str(v: unknown): string | null {
+  return typeof v === "string" && v.trim() ? v.trim() : null;
+}
+
+/** Alle Vorlagen des WhatsApp-Kontos (WABA) hinter diesem API-Key. */
+export async function listTemplates(apiKey: string): Promise<RemoteTemplate[]> {
+  const res = await fetch(`${BASE_URL}/v1/configs/templates?limit=1000`, {
+    headers: { "D360-API-KEY": apiKey },
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`360dialog ${res.status}: ${text.slice(0, 300)}`);
+  let json: { waba_templates?: unknown[] } | null = null;
+  try {
+    json = text ? (JSON.parse(text) as { waba_templates?: unknown[] }) : null;
+  } catch {
+    throw new Error("360dialog: Vorlagenliste ist kein JSON");
+  }
+  return (json?.waba_templates ?? [])
+    .map((t) => t as Record<string, unknown>)
+    .map((t) => ({
+      name: str(t.name) ?? "",
+      language: str(t.language) ?? "",
+      status: (str(t.status) ?? "").toUpperCase(),
+      category: str(t.category),
+      rejectedReason: str(t.rejected_reason),
+    }))
+    .filter((t) => t.name);
+}
+
+/** Vorlage bei Meta einreichen. Antwort enthält den Anfangsstatus (meist „submitted“/PENDING). */
+export async function createTemplate(apiKey: string, input: CreateTemplateInput): Promise<RemoteTemplate> {
+  const res = await fetch(`${BASE_URL}/v1/configs/templates`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "D360-API-KEY": apiKey },
+    body: JSON.stringify(input),
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`360dialog ${res.status}: ${text.slice(0, 300)}`);
+  let t: Record<string, unknown> = {};
+  try {
+    t = text ? (JSON.parse(text) as Record<string, unknown>) : {};
+  } catch {
+    /* kein JSON – Status bleibt „eingereicht“ */
+  }
+  return {
+    name: str(t.name) ?? input.name,
+    language: str(t.language) ?? input.language,
+    status: (str(t.status) ?? "SUBMITTED").toUpperCase(),
+    category: str(t.category) ?? input.category,
+    rejectedReason: str(t.rejected_reason),
+  };
+}

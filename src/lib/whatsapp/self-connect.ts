@@ -9,6 +9,7 @@ import { reportError } from "@/lib/monitoring";
 import { sendToAdmins } from "@/lib/push";
 import { saveWhatsAppKey } from "@/lib/whatsapp/connect";
 import { channelInfo, createChannelApiKey, partnerConfig } from "@/lib/whatsapp/dialog360-partner";
+import { submitTemplatesForCustomer } from "@/lib/whatsapp/template-submit";
 
 export type SelfConnectStatus = "connected" | "pending" | "error";
 export type SelfConnectResult = { status: SelfConnectStatus; phone?: string | null; reason?: string };
@@ -55,9 +56,13 @@ async function finishChannel(customerId: string, channelId: string, clientId: st
 
 async function onConnected(customerId: string, phone: string | null | undefined): Promise<void> {
   const name = await customerName(customerId);
+  // Vorlagen sofort bei Meta einreichen (Freigabe dauert Minuten bis Stunden).
+  await submitTemplatesForCustomer(customerId).catch((err) => reportError(err, "templates-after-connect"));
   await sendToAdmins({
     title: `WhatsApp verbunden: ${name}`,
-    body: phone ? `Nummer +${phone.replace(/^\+/, "")} – Vorlagen prüfen und Assistent einschalten.` : "Vorlagen prüfen und Assistent einschalten.",
+    body: phone
+      ? `Nummer +${phone.replace(/^\+/, "")} – Vorlagen sind eingereicht, danach Assistent einschalten.`
+      : "Vorlagen sind eingereicht, danach Assistent einschalten.",
     url: "/admin/whatsapp/settings",
     tag: `d360:${customerId}`,
   }).catch(() => {});

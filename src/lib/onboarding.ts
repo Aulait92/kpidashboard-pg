@@ -233,6 +233,7 @@ export async function loadOnboarding(where: { customerId: string } | { id: strin
           users: { where: { role: "BUYER" }, select: { email: true, lastLoginAt: true } },
           calendarConnection: { select: { status: true } },
           whatsAppAccount: { select: { status: true } },
+          messageTemplates: { where: { purpose: "outreach", status: "approved" }, select: { id: true }, take: 1 },
         },
       },
     },
@@ -265,6 +266,17 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
     items.push(
       { key: "calendar", label: "Kalender verbunden", owner: "kunde", done: ob.customer.calendarConnection?.status === "connected", at: null },
       { key: "whatsapp", label: "WhatsApp-Nummer verbunden", owner: selfConnectEnabled() ? "kunde" : "du", done: ob.customer.whatsAppAccount?.status === "connected", at: null },
+      {
+        key: "templates",
+        // Ohne freigegebene Vorlage darf WhatsApp neue Leads nicht anschreiben.
+        label:
+          (ob.customer.messageTemplates?.length ?? 0) > 0
+            ? "WhatsApp-Vorlage fürs Erstanschreiben von Meta freigegeben"
+            : "WhatsApp-Vorlage fürs Erstanschreiben noch nicht freigegeben: Assistent kann Leads noch nicht anschreiben",
+        owner: "auto",
+        done: (ob.customer.messageTemplates?.length ?? 0) > 0,
+        at: null,
+      },
     );
   }
   items.push(
@@ -321,6 +333,7 @@ export async function onboardingProgressFor(customerIds: string[]) {
           users: { where: { role: "BUYER" }, select: { email: true, lastLoginAt: true } },
           calendarConnection: { select: { status: true } },
           whatsAppAccount: { select: { status: true } },
+          messageTemplates: { where: { purpose: "outreach", status: "approved" }, select: { id: true }, take: 1 },
         },
       },
     },

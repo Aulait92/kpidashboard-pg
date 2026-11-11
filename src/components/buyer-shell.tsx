@@ -405,6 +405,13 @@ function ProfileMenu({
           >
             <Percent className="h-4 w-4" /> Meine Provisionen
           </Link>
+          <Link
+            href="/buyer/vorlagen"
+            onClick={() => setOpen(false)}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
+          >
+            <MessageSquareText className="h-4 w-4" /> WhatsApp-Vorlagen
+          </Link>
           <a
             href="https://performancegrowth.de/impressum"
             target="_blank"

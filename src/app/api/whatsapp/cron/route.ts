@@ -17,6 +17,7 @@ import { beat } from "@/lib/heartbeat";
 import { runGarantien } from "@/lib/garantien-server";
 import { enrichPendingAddresses } from "@/lib/vertrieb/address-enrich";
 import { retryPendingSelfConnect } from "@/lib/whatsapp/self-connect";
+import { syncTemplates } from "@/lib/whatsapp/template-submit";
 
 // Zentraler Cron (z. B. cron-job.org alle 5 Minuten):
 //   1. Erstanschreiben neuer Leads ohne Termin
@@ -124,7 +125,12 @@ async function handle(req: Request): Promise<Response> {
     .filter(([, r]) => r && typeof r === "object" && "error" in r)
     .map(([k]) => k);
   await beat("cron", failed.length === 0, failed.length ? `Fehler in: ${failed.join(", ")}` : null);
-  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl, campaigns, sequences, whatsappConnect });
+  // WhatsApp-Vorlagen: fehlende einreichen, Freigabestatus von Meta nachziehen (gedrosselt).
+  const templates = await syncTemplates(now).catch((e: unknown) => {
+    reportError(e, "cron-templates");
+    return null;
+  });
+  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl, campaigns, sequences, whatsappConnect, templates });
 }
 
 export const GET = handle;

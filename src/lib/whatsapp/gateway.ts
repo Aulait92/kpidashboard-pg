@@ -16,7 +16,20 @@ type InboundMessage = {
   id?: string;
   type?: string;
   text?: { body?: string };
+  // Antwort per Schnellantwort-Knopf einer Vorlage (z. B. „Keine Nachrichten mehr“)
+  button?: { text?: string; payload?: string };
+  // Antwort auf interaktive Knöpfe/Listen (freie Nachrichten im 24-h-Fenster)
+  interactive?: { button_reply?: { title?: string }; list_reply?: { title?: string } };
 };
+
+/** Lesbarer Text einer eingehenden Nachricht (Knopf-Antworten als Knopftext). */
+export function inboundBody(m: InboundMessage): string | null {
+  const type = m.type ?? "text";
+  if (type === "text") return m.text?.body ?? null;
+  if (type === "button") return m.button?.text ?? m.button?.payload ?? "[button]";
+  if (type === "interactive") return m.interactive?.button_reply?.title ?? m.interactive?.list_reply?.title ?? "[interactive]";
+  return `[${type}]`;
+}
 type StatusUpdate = {
   id?: string;
   status?: string;
@@ -190,7 +203,7 @@ async function persistInbound(
   }
 
   const type = m.type ?? "text";
-  const body = type === "text" ? (m.text?.body ?? null) : `[${type}]`;
+  const body = inboundBody(m);
 
   await prisma.message.create({
     data: {

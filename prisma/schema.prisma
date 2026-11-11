@@ -655,6 +655,9 @@ model WhatsAppAccount {
   // Client und Channel aus dem Redirect; der API-Key wird daraus erzeugt.
   dialog360ClientId  String?
   dialog360ChannelId String?
+  // Vorlagen automatisch einreichen/nachziehen (lib/whatsapp/template-submit.ts):
+  // letzter Abgleich mit 360dialog (gedrosselt im WhatsApp-Cron).
+  templatesCheckedAt DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -824,8 +827,13 @@ model MessageTemplate {
   // Parameter-Reihenfolge je Zweck siehe lib/whatsapp/templates.ts.
   purpose    String   @default("")
   category   String // utility | marketing | authentication
-  status     String   @default("pending") // pending | approved | rejected
+  status     String   @default("pending") // pending | approved | rejected | paused
   body       String
+  // Von der App automatisch bei 360dialog/Meta eingereicht (statt von Hand angelegt).
+  auto            Boolean   @default(false)
+  submittedAt     DateTime?
+  // Ablehnungsgrund von Meta (rejected_reason), z. B. INVALID_FORMAT
+  rejectionReason String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

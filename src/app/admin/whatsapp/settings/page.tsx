@@ -19,7 +19,7 @@ import {
   seedDemoAction,
   deleteTemplateAction,
 } from "./actions";
-import { AgentSettings, TemplateApproved, TemplateEditor } from "./controls";
+import { AgentSettings, ResubmitTemplateButton, SubmitTemplatesButton, TemplateApproved, TemplateAutoStatus, TemplateEditor } from "./controls";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "WhatsApp-Einstellungen | KPI-Dashboard" };
@@ -80,7 +80,7 @@ export default async function WhatsAppSettingsPage({
       },
       messageTemplates: {
         orderBy: [{ purpose: "asc" }, { updatedAt: "desc" }],
-        select: { id: true, name: true, language: true, purpose: true, status: true, body: true },
+        select: { id: true, name: true, language: true, purpose: true, status: true, body: true, auto: true, rejectionReason: true },
       },
     },
   });
@@ -343,8 +343,9 @@ export default async function WhatsAppSettingsPage({
               <div className="rounded-xl border border-[color:var(--border)] bg-white">
                 <div className="flex items-center gap-2 px-4 py-3">
                   <span className="flex-1 font-medium">Vorlagen</span>
+                  {c.whatsAppAccount?.status === "connected" && c.whatsAppAccount.apiKeyEnc ? <SubmitTemplatesButton customerId={c.id} /> : null}
                   <span
-                    title="Außerhalb des 24-Stunden-Fensters darf WhatsApp nur freigegebene Vorlagen senden. Vorlage bei 360dialog mit gleichem Namen und Text anlegen, auf Freigabe durch Meta warten, dann hier als freigegeben markieren."
+                    title="Außerhalb des 24-Stunden-Fensters darf WhatsApp nur freigegebene Vorlagen senden. Nach dem Verbinden reicht die App die Vorlagen automatisch bei Meta ein und übernimmt die Freigabe selbst (Abgleich alle 30 Minuten). Von Hand angelegte Vorlagen hier als freigegeben markieren."
                     className="cursor-help text-xs text-[color:var(--muted)]"
                   >
                     Wie funktioniert das? ⓘ
@@ -363,7 +364,14 @@ export default async function WhatsAppSettingsPage({
                           </div>
                           <p className="mt-0.5 line-clamp-2 text-xs text-[color:var(--muted)]">{t.body}</p>
                         </div>
-                        <TemplateApproved id={t.id} approved={t.status === "approved"} />
+                        {t.auto ? (
+                          <>
+                            <TemplateAutoStatus status={t.status} reason={t.rejectionReason} />
+                            {t.status === "rejected" ? <ResubmitTemplateButton customerId={c.id} purpose={t.purpose} /> : null}
+                          </>
+                        ) : (
+                          <TemplateApproved id={t.id} approved={t.status === "approved"} />
+                        )}
                         <form action={deleteTemplateAction}>
                           <input type="hidden" name="id" value={t.id} />
                           <SubmitButton pendingLabel="…" className="pt-1.5 text-xs font-medium text-rose-700 hover:underline">

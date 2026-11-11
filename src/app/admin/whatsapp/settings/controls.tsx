@@ -11,6 +11,8 @@ import {
   setAgentActiveAction,
   setFollowUpSequencesAction,
   setTemplateApprovedAction,
+  submitTemplatesAction,
+  resubmitTemplateAction,
   type SaveResult,
 } from "./actions";
 
@@ -258,6 +260,71 @@ export function TemplateApproved({ id, approved }: { id: string; approved: boole
       {approved ? "freigegeben" : "wartet"}
       <Switch label="Von Meta freigegeben" checked={approved} onChange={(next) => setTemplateApprovedAction(id, next)} />
     </label>
+  );
+}
+
+/** Status einer automatisch eingereichten Vorlage (wird von 360dialog nachgezogen). */
+export function TemplateAutoStatus({ status, reason }: { status: string; reason: string | null }) {
+  const map: Record<string, { label: string; cls: string }> = {
+    approved: { label: "freigegeben", cls: "bg-emerald-50 text-emerald-700" },
+    pending: { label: "in Prüfung bei Meta", cls: "bg-amber-50 text-amber-700" },
+    rejected: { label: "abgelehnt", cls: "bg-rose-50 text-rose-700" },
+    paused: { label: "pausiert", cls: "bg-amber-50 text-amber-700" },
+  };
+  const m = map[status] ?? map.pending;
+  return (
+    <span className="flex shrink-0 flex-col items-end gap-0.5 text-right">
+      <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", m.cls)}>{m.label}</span>
+      {status === "rejected" && reason ? <span className="max-w-40 text-[11px] text-rose-700">{reason}</span> : null}
+      <span className="text-[11px] text-[color:var(--muted)]">automatisch</span>
+    </span>
+  );
+}
+
+/** Knopf: fehlende Vorlagen einreichen und Status bei 360dialog abfragen. */
+export function SubmitTemplatesButton({ customerId }: { customerId: string }) {
+  const toast = useToast();
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  return (
+    <button
+      type="button"
+      disabled={pending}
+      onClick={() =>
+        start(async () => {
+          const res = await submitTemplatesAction(customerId);
+          toast.show(res.ok ? { message: res.message ?? "Vorlagen abgeglichen" } : { message: res.error, tone: "error" });
+          router.refresh();
+        })
+      }
+      className="inline-flex items-center gap-1.5 rounded-lg border border-[color:var(--border)] px-2.5 py-1 text-xs font-medium hover:bg-[color:var(--surface-2,#f5f7fb)] disabled:opacity-60"
+    >
+      {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+      Vorlagen einreichen &amp; prüfen
+    </button>
+  );
+}
+
+/** Abgelehnte Vorlage mit aktuellem Text neu einreichen. */
+export function ResubmitTemplateButton({ customerId, purpose }: { customerId: string; purpose: string }) {
+  const toast = useToast();
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  return (
+    <button
+      type="button"
+      disabled={pending}
+      onClick={() =>
+        start(async () => {
+          const res = await resubmitTemplateAction(customerId, purpose);
+          toast.show(res.ok ? { message: res.message ?? "Neu eingereicht" } : { message: res.error, tone: "error" });
+          router.refresh();
+        })
+      }
+      className="pt-1.5 text-xs font-medium text-[color:var(--brand)] hover:underline disabled:opacity-60"
+    >
+      {pending ? "…" : "neu einreichen"}
+    </button>
   );
 }
 

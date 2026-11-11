@@ -52,7 +52,7 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         action: "whatsapp",
         purpose: "followup_last",
         params: (c) => [c.firstName],
-        text: (c) => `Hallo ${c.firstName}, ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Dann antworte einfach hier. Wenn nicht, ist das völlig in Ordnung – ich melde mich dann nicht weiter. Alles Gute!`,
+        text: (c) => `Hallo ${c.firstName}, ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Dann antworte einfach hier. Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter. Alles Gute!`,
         fallbackNote: "Letzter Versuch: anrufen",
       },
     ],
