@@ -5,6 +5,8 @@ import { useActionState, useEffect, useLayoutEffect, useRef, useState, useTransi
 import type { DrillMonth, ZahlenData } from "@/lib/zahlen";
 import { PRODUKT_RANGES, LOW_SAMPLE, type ProdukteData } from "@/lib/produkte-shared";
 import type { VertriebStep, VertriebZahlen } from "@/lib/vertrieb-zahlen";
+import type { BwaData } from "@/lib/bwa";
+import { bwaCsv, displaySign, type BwaItem, type BwaRow } from "@/lib/bwa-shared";
 import { deleteManualRevenueAction, saveManualRevenueAction, saveUpdateTextsAction, type NachtragState } from "@/app/admin/zahlen/actions";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +39,7 @@ const PALETTE = {
   "--z-seq-6": "#184f95",
 } as CSSProperties;
 
-type Tab = "wachstum" | "kunden" | "wirtschaft" | "wirkung" | "produkte" | "vertrieb" | "ppl";
+type Tab = "wachstum" | "kunden" | "wirtschaft" | "wirkung" | "produkte" | "vertrieb" | "ppl" | "bwa";
 const TABS: { key: Tab; label: string; internal?: boolean }[] = [
   { key: "wachstum", label: "Wachstum" },
   { key: "kunden", label: "Kunden" },
@@ -46,6 +48,7 @@ const TABS: { key: Tab; label: string; internal?: boolean }[] = [
   { key: "produkte", label: "Produkte", internal: true },
   { key: "vertrieb", label: "Vertrieb", internal: true },
   { key: "ppl", label: "Pay-per-Lead", internal: true },
+  { key: "bwa", label: "BWA", internal: true },
 ];
 
 // ─── Tooltip ─────────────────────────────────────────────────────────────
@@ -165,7 +168,7 @@ function Def({ show, children }: { show: boolean; children: ReactNode }) {
 // ─── Hauptansicht ────────────────────────────────────────────────────────
 type DrillKind = "arr" | "mrr" | "retention" | "margin" | "active";
 
-export function ZahlenView({ data, produkte, vertrieb }: { data: ZahlenData; produkte: ProdukteData; vertrieb: VertriebZahlen }) {
+export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData; produkte: ProdukteData; vertrieb: VertriebZahlen; bwa: BwaData }) {
   const [tab, setTab] = useState<Tab>("wachstum");
   const [investor, setInvestor] = useState(false);
   const [update, setUpdate] = useState(false);
@@ -291,6 +294,7 @@ export function ZahlenView({ data, produkte, vertrieb }: { data: ZahlenData; pro
       {active === "wirkung" ? <Wirkung data={data} investor={investor} /> : null}
       {active === "produkte" ? <Produkte p={produkte} /> : null}
       {active === "vertrieb" ? <Vertrieb data={data} v={vertrieb} /> : null}
+      {active === "bwa" ? <BwaTab d={bwa} /> : null}
       {active === "ppl" ? <Ppl data={data} /> : null}
 
       {update ? <UpdateSheet data={data} onClose={() => setUpdate(false)} /> : null}
@@ -882,6 +886,213 @@ function VertriebSheet({ v, initial, rangeLabel, onClose }: { v: VertriebZahlen;
           </div>
         ) : (
           <p className="text-[13px] text-[color:var(--muted)]">Im Zeitraum nichts.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── BWA ─────────────────────────────────────────────────────────────────
+const eur2 = (v: number) => v.toLocaleString("de-DE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+function BwaTab({ d }: { d: BwaData }) {
+  const { bwa, hints } = d;
+  const [drill, setDrill] = useState<BwaRow | null>(null);
+  const incomplete = new Set(bwa.incomplete);
+  const fmtDay = (iso: string) => new Date(iso).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" });
+  const download = () => {
+    const csv = bwaCsv(bwa, (m) => longMonth(m));
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `BWA-${d.range}.csv`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  const cell = (r: BwaRow, v: number | null) => {
+    if (v == null) return "";
+    if (r.kind === "pct") return pct(v, 0);
+    const shown = displaySign(r) * v;
+    return shown === 0 ? "–" : eur2(shown);
+  };
+  const tone = (r: BwaRow, v: number | null) => (v != null && r.kind !== "pct" && displaySign(r) * v < 0 ? "text-rose-600" : "");
+  return (
+    <div className="space-y-3.5">
+      <div className="flex flex-wrap items-center gap-1.5" aria-label="Zeitraum">
+        {d.ranges.map((r) => (
+          <Link
+            key={r.key}
+            href={`/admin/zahlen?bwa=${r.key}`}
+            scroll={false}
+            className={cn(
+              "rounded-full border px-3 py-1 text-[13px]",
+              d.range === r.key ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)] font-semibold text-[color:var(--brand)]" : "border-[color:var(--border)] bg-white text-[color:var(--muted)]",
+            )}
+          >
+            {r.label}
+          </Link>
+        ))}
+        <button type="button" onClick={download} className="ml-auto rounded-[10px] border border-[color:var(--border)] bg-white px-3 py-1 text-[13px] font-semibold" data-bwa-csv>
+          Als CSV
+        </button>
+      </div>
+      <div className="flex flex-wrap gap-2 text-[12.5px]">
+        {hints.openExpenses ? (
+          <Link href="/admin/einstellungen/bank/zuordnen" className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-900 hover:underline">
+            Offene, nicht zugeordnete Ausgaben: {hints.openExpenses} →
+          </Link>
+        ) : null}
+        <span className="rounded-lg border border-[color:var(--border)] bg-white px-2.5 py-1 text-[color:var(--muted)]">
+          {hints.amexLastImport ? `Amex: letzter Import am ${fmtDay(hints.amexLastImport)} (CSV, Umsätze bis ${fmtDay(hints.amexLastBooking!)})` : "Amex: noch keine Umsätze importiert"}
+        </span>
+        <span className="rounded-lg border border-[color:var(--border)] bg-white px-2.5 py-1 text-[color:var(--muted)]">
+          {hints.bankFrom ? `Bankdaten ab ${longMonth(hints.bankFrom)}` : "Noch keine Bankdaten"}
+        </span>
+      </div>
+      <Card
+        title="BWA (vereinfacht, netto)"
+        cap="Umsatz und Kosten je Monat, ohne Hochrechnung. Ergebnis vor Steuern und ohne Unternehmerlohn. Zeile anklicken: woraus besteht das?"
+      >
+        <div className="-mx-4 overflow-x-auto sm:-mx-5" data-bwa-tabelle>
+          <table className="w-full min-w-max border-collapse text-[13px] tabular-nums">
+            <thead>
+              <tr className="text-[color:var(--muted)]">
+                <th className="sticky left-0 z-10 bg-white py-1.5 pl-4 pr-3 text-left font-medium sm:pl-5">Position</th>
+                {bwa.months.map((m) => (
+                  <th key={m} className={cn("whitespace-nowrap px-2 text-right font-medium", incomplete.has(m) && "text-slate-400")} title={incomplete.has(m) ? "Vor den ersten Bankdaten: Betriebskosten unvollständig" : undefined}>
+                    {shortMonth(m)} {m.slice(2, 4)}
+                    {m === bwa.current ? <span className="block text-[10.5px] font-normal">bisher</span> : incomplete.has(m) ? <span className="block text-[10.5px] font-normal">unvollst.</span> : null}
+                  </th>
+                ))}
+                <th className="whitespace-nowrap px-2 pr-4 text-right font-semibold sm:pr-5">Summe</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bwa.rows.map((r) =>
+                r.kind === "header" ? (
+                  <tr key={r.key}>
+                    <td colSpan={bwa.months.length + 2} className="sticky left-0 bg-white pb-1 pl-4 pt-3 text-[12px] font-semibold uppercase tracking-wide text-[color:var(--muted)] sm:pl-5">
+                      {r.label}
+                    </td>
+                  </tr>
+                ) : (
+                  <tr
+                    key={r.key}
+                    className={cn(
+                      "border-t border-[color:var(--border)]",
+                      (r.kind === "sum" || r.kind === "result") && "font-semibold",
+                      r.kind === "result" && "bg-slate-50",
+                      r.kind === "pct" && "text-[color:var(--muted)]",
+                    )}
+                  >
+                    <td className={cn("sticky left-0 z-10 max-w-[220px] truncate py-1.5 pl-4 pr-3 sm:pl-5", r.kind === "result" ? "bg-slate-50" : "bg-white", r.kind === "line" && "pl-6 sm:pl-7")}>
+                      {r.lines?.length ? (
+                        <button type="button" onClick={() => setDrill(r)} className="max-w-full truncate text-left hover:text-[color:var(--brand)] hover:underline" title="Woraus besteht das?" data-bwa-zeile={r.key}>
+                          {r.label}
+                        </button>
+                      ) : (
+                        r.label
+                      )}
+                    </td>
+                    {r.values.map((v, i) => (
+                      <td key={bwa.months[i]} className={cn("whitespace-nowrap px-2 text-right", tone(r, v), incomplete.has(bwa.months[i]) && "opacity-60")}>
+                        {cell(r, v)}
+                      </td>
+                    ))}
+                    <td className={cn("whitespace-nowrap px-2 pr-4 text-right font-semibold sm:pr-5", tone(r, r.total))}>{cell(r, r.total)}</td>
+                  </tr>
+                ),
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+      {drill ? <BwaDrill row={drill} items={d.items} months={bwa.months} onClose={() => setDrill(null)} /> : null}
+    </div>
+  );
+}
+
+function BwaDrill({ row, items, months, onClose }: { row: BwaRow; items: BwaItem[]; months: string[]; onClose: () => void }) {
+  const mine = items.filter((i) => row.lines!.includes(i.line));
+  const withData = months.filter((m) => mine.some((i) => i.month === m));
+  const [month, setMonth] = useState<string>(withData[withData.length - 1] ?? months[months.length - 1]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const list = mine.filter((i) => i.month === month).sort((a, b) => b.net - a.net);
+  const sum = list.reduce((s, i) => s + i.net, 0);
+  const hasGross = list.some((i) => i.gross != null);
+  return (
+    <div className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-slate-950/55 px-4 py-8" role="dialog" aria-modal="true" aria-label="Woraus besteht das?" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="w-full max-w-[920px] rounded-xl bg-white p-5 shadow-2xl sm:p-7">
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[12.5px] text-[color:var(--muted)]">Woraus besteht das?</p>
+            <h3 className="text-lg font-semibold sm:text-xl">
+              {row.label}, {longMonth(month)}: {eur(sum, 2)}
+            </h3>
+          </div>
+          <button type="button" onClick={onClose} className="shrink-0 rounded-[10px] border border-[color:var(--border)] px-3 py-1.5 text-sm font-semibold">
+            Schließen
+          </button>
+        </div>
+        <div className="mb-3 flex gap-1.5 overflow-x-auto pb-0.5" role="tablist">
+          {months.map((m) => (
+            <button
+              key={m}
+              type="button"
+              role="tab"
+              aria-selected={m === month}
+              onClick={() => setMonth(m)}
+              className={cn(
+                "shrink-0 rounded-full border px-3 py-1 text-[13px]",
+                m === month ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)] font-semibold text-[color:var(--brand)]" : "border-[color:var(--border)] text-[color:var(--muted)]",
+                !withData.includes(m) && m !== month && "opacity-50",
+              )}
+            >
+              {shortMonth(m)} {m.slice(2, 4)}
+            </button>
+          ))}
+        </div>
+        {list.length ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-[13px] tabular-nums" data-bwa-drill>
+              <thead className="text-left text-[color:var(--muted)]">
+                <tr>
+                  <th className={th}>Posten</th>
+                  <th className={th}>Datum</th>
+                  <th className={th}>Details</th>
+                  {hasGross ? <th className={thR}>Brutto</th> : null}
+                  <th className={thR}>Netto</th>
+                </tr>
+              </thead>
+              <tbody>
+                {list.map((i, k) => (
+                  <tr key={`${i.label}-${i.date ?? ""}-${k}`} className="border-t border-[color:var(--border)]">
+                    <td className="py-1.5 pr-2">
+                      {i.href ? (
+                        <Link href={i.href} className="font-medium text-[color:var(--brand)] hover:underline">
+                          {i.label}
+                        </Link>
+                      ) : (
+                        i.label
+                      )}
+                    </td>
+                    <td className="whitespace-nowrap py-1.5 pr-2">{i.date ? new Date(`${i.date}T12:00:00Z`).toLocaleDateString("de-DE") : "–"}</td>
+                    <td className="py-1.5 pr-2 text-[color:var(--muted)]">{i.detail ?? ""}</td>
+                    {hasGross ? <td className="whitespace-nowrap px-2 text-right">{i.gross != null ? eur(i.gross, 2) : ""}</td> : null}
+                    <td className="whitespace-nowrap px-2 text-right">{eur(i.net, 2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-[13px] text-[color:var(--muted)]">In diesem Monat nichts.</p>
         )}
       </div>
     </div>

@@ -170,3 +170,16 @@ Zahl besteht. Migration `20261114180000_zahlen_nachtrag`.
     als Beitrag. Provision = `estimatedProvision` mit den Sätzen des Kunden.
 - Tests: `tests/unit/zahlen-nachtrag.test.ts`, `tests/unit/produkte.test.ts`,
   `tests/integration/zahlen-drilldown.test.ts`.
+
+## BWA (Tab „BWA“, intern)
+
+Vereinfachte betriebswirtschaftliche Auswertung je Monat, netto, Berliner Monate (`lib/bwa.ts`, Aggregation in `lib/bwa-shared.ts`). Zeitraum über `?bwa=2026` (Jahr, Standard laufendes Jahr) oder `?bwa=12m`.
+
+- **Umsatzerlöse:** Software, Betreuung, Pay-per-Lead, Einrichtung/Einmal aus dem Umsatzbuch (ohne interne Kunden). Pay-per-Lead im laufenden Monat **nicht hochgerechnet** (Spalte „bisher“).
+- **Direkte Kosten:** Meta-Werbung Pay-per-Lead, WhatsApp-Gebühren (wenn im Preis enthalten), Bank/Karte „Direkt: Pay-per-Lead“ und „Direkt: Software“, laufende Kosten mit Zweck ppl/software → Rohertrag und Rohertragsquote.
+- **Kundengewinnung:** Meta-Akquise-Kampagnen, Bank/Karte „Kundengewinnung“, laufende Kosten akquise.
+- **Sonstiger Betrieb:** Bankbuchungen gruppiert nach Regel-Bezeichnung (ohne Klammerzusatz), sonst Empfänger; laufende Kosten betrieb; manuelle Kosten (OTHER). Posten unter 1 % der Betriebskosten im Zeitraum → „Sonstiges“.
+- **Betriebsergebnis** vor Steuern, ohne Unternehmerlohn, Marge und kumuliert.
+- Monate vor dem ersten Bankumsatz sind „unvollständig“ markiert. Hinweise: offene Ausgaben, letzter Amex-Import, Bankdaten ab.
+- Jede Zeile: „Woraus besteht das?“ je Monat (Kunden bzw. Buchungen mit Brutto/Netto). „Als CSV“: Semikolon, deutsche Zahlen, Kosten negativ (für den Steuerberater).
+- Gleiche Quellen wie `loadCosts`; Abweichung zur Zahlen-Übersicht nur durch die fehlende Hochrechnung im laufenden Monat.
