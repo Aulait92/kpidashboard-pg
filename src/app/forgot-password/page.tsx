@@ -18,7 +18,7 @@ export default function ForgotPasswordPage() {
             Passwort vergessen
           </h1>
           <p className="mt-1 text-sm text-[color:var(--muted)]">
-            Wir schicken dir einen Reset-Link an deine Email-Adresse.
+            Wir schicken Ihnen einen Link an Ihre E-Mail-Adresse, mit dem Sie ein neues Passwort festlegen.
           </p>
         </div>
         <ForgotPasswordForm />

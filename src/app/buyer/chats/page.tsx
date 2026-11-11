@@ -92,7 +92,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
     if (!(await showChatsTeaser(ctx.customerId))) redirect("/buyer/leads");
     const selfConnect = selfConnectEnabled() && ctx.teamRole === "owner";
     return (
-      <div className="mx-auto max-w-2xl">
+      <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6 sm:px-6">
         <PageHeader title="Chats" subtitle="WhatsApp-Gespräche mit Ihren Leads" />
         <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-6 text-center shadow-[var(--shadow-sm)]">
           <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand-soft,#eef3ff)] text-[color:var(--brand)]">
@@ -120,7 +120,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
             </p>
           ) : null}
         </div>
-      </div>
+      </main>
     );
   }
 

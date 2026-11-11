@@ -104,7 +104,7 @@ export function LeadTimesForm({
           ? "Halten Sie diese Zeiten in Ihrem Allianz-Kalender frei. Blocken Sie sie dort bitte nicht, sonst zeigt Ihr Online-Kalender sie als belegt und wir können sie nicht anbieten."
           : source === "ics"
             ? "Tragen Sie diese Zeiten als Serie „Leadtermine“ in Ihren Allianz-Kalender ein und stellen Sie „Anzeigen als: Frei“ ein. So bucht dort niemand anderes hinein, und wir sehen die Zeiten weiter als frei."
-            : "Blocken Sie diese Zeiten als Serie „Leadtermine“ in Ihrem Allianz-Kalender. So bucht dort niemand anderes hinein."}
+            : "Halten Sie diese Zeiten in Ihrem Kalender frei. Wenn Sie sie dort markieren möchten (z. B. als Serie „Leadtermine“), dann nur mit „Anzeigen als: Frei“. Sonst gelten sie als belegt und wir können sie nicht anbieten."}
       </p>
       <div className="flex flex-wrap items-center gap-3">
         <Submit pending={pending} disabled={readOnly}>
@@ -263,6 +263,7 @@ export function SourcePicker({
   allianzAction,
   disconnectAllianzAction,
   hidden,
+  allianzOption = true,
 }: {
   status: SourceStatus;
   readOnly: boolean;
@@ -272,6 +273,8 @@ export function SourcePicker({
   allianzAction: FormAction;
   disconnectAllianzAction: PlainAction;
   hidden?: Record<string, string>;
+  /** Allianz-Online-Kalender anbieten (nicht für Makler, außer schon verbunden). */
+  allianzOption?: boolean;
 }) {
   const initial = status.allianz ? "allianz" : status.hasIcs ? "ics" : "native";
   const [way, setWay] = useState<"native" | "ics" | "allianz">(initial);
@@ -281,10 +284,11 @@ export function SourcePicker({
     ["ics", "Kalender-Link (ICS)", "Ein veröffentlichter Link zeigt uns, wann Sie belegt sind.", status.hasIcs],
     ["allianz", "Allianz-Online-Kalender", "Wir lesen Ihre freien Termine aus der Online-Terminbuchung Ihrer Vertreter-Seite.", !!status.allianz],
   ];
+  if (!allianzOption && !status.allianz) options.pop();
   return (
     <div className="space-y-3">
       <p className="text-[15px] font-medium">Wie sollen wir Ihre freien Zeiten erkennen?</p>
-      <div className="grid gap-2 sm:grid-cols-3" role="radiogroup">
+      <div className={`grid gap-2 ${options.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`} role="radiogroup">
         {options.map(([k, title, text, active]) => (
           <button
             key={k}

@@ -41,6 +41,7 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
   const key = owner || !ctx.userId ? ctx.customerId : connected ? userCalendarKey(ctx.userId) : null;
   const setup = key ? await loadCalendarSetup(ctx.customerId, key) : null;
   const ro = ctx.preview;
+  const makler = (await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { vermittlerTyp: true } }))?.vermittlerTyp === "makler";
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -99,6 +100,7 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
               removeIcsAction={removeIcsAction}
               allianzAction={connectAllianzAction}
               disconnectAllianzAction={disconnectAllianzAction}
+              allianzOption={!makler}
             />
           </div>
         </Card>

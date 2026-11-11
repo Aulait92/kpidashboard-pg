@@ -17,9 +17,9 @@ export function ResetPasswordForm({ token }: { token: string }) {
     return (
       <div className="space-y-3">
         <div className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          <div className="font-medium">Passwort geändert.</div>
+          <div className="font-medium">Passwort gespeichert.</div>
           <p className="mt-1 text-xs text-emerald-700">
-            Du kannst dich jetzt mit deinem neuen Passwort anmelden.
+            Sie können sich jetzt mit Ihrem Passwort anmelden.
           </p>
         </div>
         <Link

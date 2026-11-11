@@ -271,8 +271,8 @@ export function OfferForm({
                 </span>
               </span>
             </label>
-            <Field l="Sondervereinbarung (erscheint wörtlich im Angebot)">
-              <textarea className={`${input} h-24 py-2`} value={specialTerms} onChange={(e) => setSpecialTerms(e.target.value)} />
+            <Field l="Sondervereinbarung (erscheint wörtlich im Angebot; Absätze bleiben erhalten, **Text** wird fett)">
+              <textarea className={`${input} h-40 py-2`} value={specialTerms} onChange={(e) => setSpecialTerms(e.target.value)} />
             </Field>
           </div>
         </Card>

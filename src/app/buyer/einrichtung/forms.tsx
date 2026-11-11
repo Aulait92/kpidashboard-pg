@@ -53,7 +53,7 @@ export function QuestionnaireForm({ software, initial, readOnly }: { software: b
           </fieldset>
           <div>
             <label className={label} htmlFor="advisorEmail">E-Mail für Termineinladungen</label>
-            <input id="advisorEmail" name="advisorEmail" type="email" className={`${input} mt-1`} placeholder="vorname.nachname@allianz.de" defaultValue={initial.advisorEmail ?? ""} />
+            <input id="advisorEmail" name="advisorEmail" type="email" className={`${input} mt-1`} placeholder="vorname.nachname@ihre-agentur.de" defaultValue={initial.advisorEmail ?? ""} />
           </div>
         </>
       ) : (

@@ -4,7 +4,7 @@ import { ResetPasswordForm } from "./reset-form";
 type SearchParams = Promise<{ token?: string }>;
 
 export const metadata = {
-  title: "Neues Passwort | KPI-Dashboard",
+  title: "Passwort festlegen | performancegrowth",
 };
 
 export default async function ResetPasswordPage({
@@ -24,10 +24,10 @@ export default async function ResetPasswordPage({
             performancegrowth
           </span>
           <h1 className="mt-3 text-2xl font-bold tracking-tight">
-            Neues Passwort
+            Passwort festlegen
           </h1>
           <p className="mt-1 text-sm text-[color:var(--muted)]">
-            Wähle ein neues Passwort (mind. 8 Zeichen).
+            Bitte wählen Sie Ihr Passwort (mindestens 8 Zeichen).
           </p>
         </div>
 
@@ -35,7 +35,7 @@ export default async function ResetPasswordPage({
           <ResetPasswordForm token={token} />
         ) : (
           <div className="rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            Kein Reset-Token in der URL. Bitte fordere einen{" "}
+            Kein Reset-Token in der URL. Bitte fordern Sie einen{" "}
             <Link
               href="/forgot-password"
               className="font-medium underline"

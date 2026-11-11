@@ -42,29 +42,29 @@ export async function sendPasswordResetEmail(opts: {
     const { error } = await resend.emails.send({
       from,
       to: opts.to,
-      subject: "Passwort zurücksetzen · KPI Dashboard",
+      subject: "Passwort zurücksetzen · performancegrowth",
       text: [
         "Hallo,",
         "",
-        "klicke auf den folgenden Link, um dein Passwort zurückzusetzen:",
+        "klicken Sie auf den folgenden Link, um Ihr Passwort zurückzusetzen:",
         opts.resetUrl,
         "",
         "Der Link ist 1 Stunde gültig.",
         "",
-        "Falls du diese Anfrage nicht ausgelöst hast, kannst du diese Mail ignorieren.",
+        "Falls Sie diese Anfrage nicht ausgelöst haben, können Sie diese Mail ignorieren.",
         "",
         signatureText(PROVIDER.brand),
       ].join("\n"),
       html: `
         <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#0b1220">
           <h1 style="margin:0 0 16px;font-size:18px;font-weight:700">Passwort zurücksetzen</h1>
-          <p style="margin:0 0 16px;font-size:14px;line-height:1.5">Klicke auf den folgenden Button, um ein neues Passwort zu setzen:</p>
+          <p style="margin:0 0 16px;font-size:14px;line-height:1.5">Klicken Sie auf den folgenden Button, um ein neues Passwort festzulegen:</p>
           <p style="margin:24px 0">
             <a href="${opts.resetUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">Neues Passwort festlegen</a>
           </p>
-          <p style="margin:0 0 8px;font-size:12px;color:#6b7a96">Oder kopiere diesen Link:</p>
+          <p style="margin:0 0 8px;font-size:12px;color:#6b7a96">Oder kopieren Sie diesen Link:</p>
           <p style="margin:0 0 24px;font-size:12px;word-break:break-all;color:#2563eb">${opts.resetUrl}</p>
-          <p style="margin:0;font-size:12px;color:#6b7a96">Der Link ist <strong>1 Stunde</strong> gültig. Wenn du den Reset nicht angefordert hast, kannst du diese Mail ignorieren.</p>
+          <p style="margin:0;font-size:12px;color:#6b7a96">Der Link ist <strong>1 Stunde</strong> gültig. Wenn Sie das nicht angefordert haben, können Sie diese Mail ignorieren.</p>
           ${signatureHtml(PROVIDER.brand)}
         </div>
       `,

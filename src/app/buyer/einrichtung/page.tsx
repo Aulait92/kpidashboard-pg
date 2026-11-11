@@ -64,6 +64,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const helpUpcoming = ob.helpCallAt && ob.helpCallAt > new Date();
   const slots = !helpUpcoming && !ob.liveAt ? await helpCallSlots().catch(() => []) : [];
   const calendar = await loadCalendarSetup(ctx.customerId, ctx.customerId);
+  const makler = (await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { vermittlerTyp: true } }))?.vermittlerTyp === "makler";
   const timeFmt = (d: Date) =>
     new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" }).format(d);
 
@@ -193,7 +194,9 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             {gcal && gcal !== "connected" ? (
               <p className="mb-3 text-sm font-medium text-rose-700">
                 {gcal === "consent"
-                  ? "Ihr Unternehmen muss die Verbindung erst freigeben. Kein Problem: Wählen Sie unten den Kalender-Link oder den Allianz-Online-Kalender, oder rufen Sie kurz an."
+                  ? makler
+                    ? "Ihr Unternehmen muss die Verbindung erst freigeben. Kein Problem: Wählen Sie unten den Kalender-Link, oder rufen Sie kurz an."
+                    : "Ihr Unternehmen muss die Verbindung erst freigeben. Kein Problem: Wählen Sie unten den Kalender-Link oder den Allianz-Online-Kalender, oder rufen Sie kurz an."
                   : "Das hat nicht geklappt. Bitte noch einmal versuchen oder kurz anrufen, dann erledigen wir es gemeinsam."}
               </p>
             ) : null}
@@ -205,6 +208,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               removeIcsAction={removeIcsAction}
               allianzAction={connectAllianzAction}
               disconnectAllianzAction={disconnectAllianzAction}
+              allianzOption={!makler}
             />
             <div className="mt-6 border-t border-[color:var(--border)] pt-5">
               <p className="text-[15px] font-medium">Wann dürfen Leads Termine buchen?</p>

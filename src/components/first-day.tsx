@@ -164,7 +164,7 @@ function BeforeStart({
   progress: ReturnType<typeof customerSetupProgress>;
 }) {
   const head = startHeadline(startDate);
-  const next = progress.open.slice(0, 3);
+  const next = progress.open.slice(0, 4);
   const short = startDate ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "numeric", month: "long" }).format(startDate) : null;
   const ourLabel = (i: ChecklistItem) =>
     i.key === "campaign" ? "Kampagne & Leadformular" : i.key === "testLead" ? "Testlead" : short ? `Go-live am ${short}` : "Go-live";

@@ -141,9 +141,9 @@ Seiten aus der Liste „Seiten“ unten.
      (höchstens alle 10 Minuten). Für Tage, die dort noch nicht buchbar sind (meist heute und morgen),
      gelten Ihre Lead-Zeiten.
 - **Wann dürfen Leads Termine buchen?** Wochentage und Uhrzeiten antippen (Standard: Mo–Fr 10, 14 und 16 Uhr).
-  Der Assistent schlägt nur diese Zeiten vor, und nur wenn Sie dann frei sind. Tipp: Blocken Sie diese Zeiten
-  als Serie „Leadtermine“ in Ihrem Allianz-Kalender (mit Kalender-Link: „Anzeigen als: Frei“; mit
-  Allianz-Online-Kalender bitte nicht blocken, sonst wirken sie belegt).
+  Der Assistent schlägt nur diese Zeiten vor, und nur wenn Sie dann frei sind. Tipp: Halten Sie diese Zeiten
+  in Ihrem Kalender frei. Wer sie markieren möchte (Serie „Leadtermine“), stellt „Anzeigen als: Frei“ ein; mit
+  Allianz-Online-Kalender bitte gar nicht blocken. Belegte Zeiten können wir nicht anbieten.
 - **Zeit blockieren:** unter „Mein Kalender“ Datum und von–bis eintragen. In dieser Zeit werden keine Termine
   angeboten. Löschen jederzeit in der Liste.
 - Gebuchte Termine kommen weiter als Kalendereinladung an Ihre Adresse für Termineinladungen (z. B. Allianz-Mail).

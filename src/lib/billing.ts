@@ -231,7 +231,7 @@ export async function createCheckoutForOffer(offerId: string): Promise<{ url: st
     return { url: session.url };
   } catch (err) {
     reportError(err, "billing-checkout", { offer: offer.number });
-    return { error: "Die Bezahlseite konnte gerade nicht geöffnet werden. Bitte versuche es gleich noch einmal." };
+    return { error: "Die Bezahlseite konnte gerade nicht geöffnet werden. Bitte versuchen Sie es gleich noch einmal." };
   }
 }
 

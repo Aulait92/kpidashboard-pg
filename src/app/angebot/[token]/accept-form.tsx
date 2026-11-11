@@ -171,7 +171,7 @@ function ChoiceFields({
       ) : null}
       {choice.choosesStart ? (
         <div>
-          <label htmlFor="startDate" className="text-sm font-medium">
+          <label htmlFor="startDate" className="block text-sm font-medium">
             Start
           </label>
           <input
@@ -183,7 +183,7 @@ function ChoiceFields({
             max={choice.start.max}
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="mt-1 h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-[15px] outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20 sm:w-60"
+            className="mt-1 block h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-[15px] outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20 sm:w-60"
           />
           <p className="mt-1 text-xs text-[color:var(--muted)]">
             Ab diesem Tag läuft die Monatsgebühr. Die Einrichtung dauert ca. 1–2 Wochen. Möglich: {fmtDate(choice.start.min)} bis{" "}

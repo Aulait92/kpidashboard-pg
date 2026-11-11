@@ -226,11 +226,11 @@ export async function acceptOffer(
   if (!offer) return { ok: false, error: "Angebot nicht gefunden." };
   if (offer.status === "accepted") return { ok: true };
   if (offer.status === "superseded") return { ok: false, error: "Dieses Angebot wurde durch eine neuere Version ersetzt." };
-  if (offer.validUntil.getTime() < Date.now()) return { ok: false, error: "Dieses Angebot ist abgelaufen. Bitte fordere ein neues an." };
+  if (offer.validUntil.getTime() < Date.now()) return { ok: false, error: "Dieses Angebot ist abgelaufen. Bitte fordern Sie ein neues an." };
   if (!offer.termsUrl || !offer.dpaUrl) return { ok: false, error: "Die Online-Annahme ist für dieses Angebot noch nicht freigeschaltet." };
-  if (!opts.termsAccepted) return { ok: false, error: "Bitte bestätige AGB und Auftragsverarbeitungsvertrag." };
+  if (!opts.termsAccepted) return { ok: false, error: "Bitte bestätigen Sie AGB und Auftragsverarbeitungsvertrag." };
   const name = opts.name.trim();
-  if (name.length < 3) return { ok: false, error: "Bitte gib deinen vollständigen Namen ein." };
+  if (name.length < 3) return { ok: false, error: "Bitte geben Sie Ihren vollständigen Namen ein." };
 
   // Laufzeit/Startdatum: Wahl des Kunden prüfen und Preise serverseitig neu berechnen.
   const choice = resolveOfferChoice(

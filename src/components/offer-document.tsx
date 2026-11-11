@@ -157,14 +157,14 @@ export function OfferDocument({
                 performance<span className="text-[#7aa2ff]">growth</span>
               </span>
             </div>
-            <span className="text-xs text-[#9aa6bd]">performancegrowth.de</span>
+            <span className="hidden text-xs text-[#9aa6bd] sm:inline print:inline">performancegrowth.de</span>
           </div>
 
           <div className="mt-24 sm:mt-32">
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7aa2ff]">
               Angebot · {date(offer.createdAt)}
             </p>
-            <h1 className="mt-5 text-[32px] font-bold leading-[1.15] tracking-tight sm:text-[38px]">
+            <h1 lang="de" className="mt-5 hyphens-auto break-words text-[28px] font-bold leading-[1.15] tracking-tight sm:text-[38px]">
               {serviceOnly ? "Leadgenerierung" : "Leadgenerierung + Software"}
               {productNames ? (
                 <>
@@ -448,7 +448,7 @@ export function OfferDocument({
           <>
             <H3>2.3 Sondervereinbarung</H3>
             <p className="whitespace-pre-wrap rounded-lg border-l-4 border-[#2563EB] bg-[#f3f6fd] px-4 py-3 text-[#111827]">
-              {offer.specialTerms}
+              {withBold(offer.specialTerms)}
             </p>
           </>
         ) : null}
@@ -569,5 +569,18 @@ function Tr({ k, children }: { k: string; children: React.ReactNode }) {
       <th className="w-[34%] bg-[#f6f7f9] px-4 py-3 text-left font-semibold text-[#111827]">{k}</th>
       <td className="px-4 py-3 text-[#374151]">{children}</td>
     </tr>
+  );
+}
+
+/** **fett** im Freitext der Sondervereinbarung als Fettdruck (sonst wörtlich). */
+function withBold(text: string): (string | React.JSX.Element)[] {
+  return text.split(/(\*\*[^*\n]+\*\*)/g).map((part, i) =>
+    part.startsWith("**") && part.endsWith("**") && part.length > 4 ? (
+      <b key={i} className="font-semibold">
+        {part.slice(2, -2)}
+      </b>
+    ) : (
+      part
+    ),
   );
 }
