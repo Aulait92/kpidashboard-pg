@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, FileUp, History, KeyRound, MessageCircle, ShieldCheck, Wallet, Workflow } from "lucide-react";
+import { Calculator, ChevronRight, FileUp, History, KeyRound, MessageCircle, ShieldCheck, Wallet, Workflow } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
 
@@ -11,6 +11,7 @@ const ITEMS = [
   { href: "/admin/buyers", icon: KeyRound, color: "bg-amber-500", title: "Kunden-Logins", text: "Zugänge anlegen, Passwort, Vorschau" },
   { href: "/admin/vertrieb/import", icon: FileUp, color: "bg-violet-500", title: "Anbindungen", text: "Instantly, Calendly, Formulare, Import" },
   { href: "/admin/einstellungen/kosten", icon: Wallet, color: "bg-emerald-600", title: "Laufende Kosten", text: "Tools und eigene Werbung für Marge und Kundengewinnung" },
+  { href: "/admin/einstellungen/rechner", icon: Calculator, color: "bg-sky-500", title: "Rechner", text: "Break-even-Rechner für Interessenten: Produkte, Quoten, Garantien" },
   { href: "/admin/einstellungen/sicherheit", icon: ShieldCheck, color: "bg-slate-600", title: "Sicherheit", text: "Zwei-Faktor-Login" },
   { href: "/admin/einstellungen/protokoll", icon: History, color: "bg-slate-400", title: "Änderungsprotokoll", text: "Wer hat wann was geändert" },
 ];

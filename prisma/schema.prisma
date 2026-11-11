@@ -1687,3 +1687,12 @@ model KpiSettings {
   updateNext           String?
   updatedAt            DateTime @updatedAt
 }
+
+// Öffentlicher Break-even-Rechner (/rechner): Produkte mit Erfahrungswerten,
+// Texte, Kontakt-Link und Garantien. Eine Zeile („default“), Inhalt als JSON,
+// geprüft in lib/rechner.ts (parseRechnerConfig). Keine personenbezogenen Daten.
+model RechnerConfig {
+  id        String   @id @default("default")
+  config    Json
+  updatedAt DateTime @updatedAt
+}

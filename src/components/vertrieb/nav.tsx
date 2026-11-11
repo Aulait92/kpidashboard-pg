@@ -39,6 +39,9 @@ export function VertriebNav({ dueCount }: { dueCount: number }) {
             </Link>
           );
         })}
+        <a href="/rechner" target="_blank" rel="noopener" className="ml-auto whitespace-nowrap px-3 py-1.5 text-sm font-medium text-[color:var(--brand)] hover:underline">
+          Rechner öffnen ↗
+        </a>
       </div>
     </nav>
   );

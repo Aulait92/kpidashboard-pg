@@ -56,6 +56,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "leadsource.assign": "Leadformular zugeordnet",
   "leadsource.toggle": "Leadformular pausiert/aktiviert",
   "preview.start": "Kundenansicht geöffnet (Admin)",
+  "rechner.config": "Rechner-Einstellungen geändert",
 };
 
 export async function audit(

@@ -16,6 +16,7 @@ const PUBLIC_PREFIXES = [
   "/book", // öffentliche Terminbuchung für Leads (lesbarer Slug je Kunde)
   "/angebot", // Angebote/Auftragsbestätigungen per geheimem Link (Token)
   "/rechtliches", // AGB und Auftragsverarbeitungsvertrag (öffentlich)
+  "/rechner", // Break-even-Rechner für Interessenten (öffentlich, keine personenbezogenen Daten)
   "/api/ops", // Betriebs-API (Buyer-Accounts anlegen), per ADMIN_API_TOKEN (Bearer) gesichert
   "/api/health", // Healthcheck für Railway/Uptime (gibt nur ok true/false zurück)
   "/api/status", // Überwachung (DB + Hintergrund-Jobs), Details nur mit Token
@@ -76,6 +77,7 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/book/") ||
     pathname.startsWith("/angebot/") ||
     pathname.startsWith("/rechtliches/") ||
+    pathname === "/rechner" ||
     pathname.startsWith("/feedback/")
   ) {
     const headers = new Headers(req.headers);
