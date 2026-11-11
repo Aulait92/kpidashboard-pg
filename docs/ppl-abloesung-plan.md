@@ -3,19 +3,19 @@
 Umsetzung geplant ab 12.11.2026. Ziel: Verteilung, Auslieferung, Storno und
 Auswertung komplett in der App, Airtable/Zapier nur noch als Übergang.
 
-## 1. Übersicht je Kunde
+## 1. Übersicht je Kunde ✅ (Admin → Pay-per-Lead → „Übersicht je Kunde“)
 - Leads **diese Woche** und **diesen Monat** je Kunde (und Produkt): bestellt,
   geliefert, Rest, Reklamationen, Umsatz.
 - Warnung, wenn ein Kunde hinter seiner Bestellung zurückliegt.
 
-## 2. Vorrang für Gebietskunden (Heinrich von Kleist)
+## 2. Vorrang für Gebietskunden (Heinrich von Kleist) ✅ (SubscriptionArea, Bezug → „Gebiete mit Vorrang“; greift in der App-Engine, also ab der Umstellung)
 - Kunden mit PLZ-Gebieten bekommen Leads aus ihren Gebieten **immer zuerst**,
   vor Kunden ohne Gebietseinschränkung (sofern Filter passen).
 - **Limits je PLZ-Gebiet**: jedes Gebiet hat eine eigene bestellte Menge;
   Vorrang gilt bis **100 % der Bestellung** je Gebiet und Zeitraum. Danach
   normale Verteilung.
 
-## 3. Auswertung Tag / Woche / Monat
+## 3. Auswertung Tag / Woche / Monat ✅ (Admin → Pay-per-Lead → „Auswertung“; Eingang/Ablehnungen erst ab Umstellung)
 - Eingegangen, geliefert, **abgelehnt durch uns** nach Grund (Dublette, schwach,
   Beamter, außerhalb aller Gebiete, geparkt/kein Abnehmer) und **reklamiert durch
   Kunden** (Stornos) – **getrennt** anzeigen.
@@ -32,7 +32,7 @@ Auswertung komplett in der App, Airtable/Zapier nur noch als Übergang.
   Eingangsadresse/Zapier-Parser → Webhook der App, oder Microsoft Graph mit
   Mail.Read). Beispiel-Mail von Ole besorgen.
 
-## 5. Nebenbei beheben
+## 5. Nebenbei beheben ✅ (Paketart-Anzeige „Pay-per-Lead“; Abgleich schreibt nur noch geänderte Kunden/Bezüge/Produkte)
 - Kundenliste zeigt Pay-per-Lead-Kunden fälschlich als „Betreuung + Software“
   (Paketart aus dem Airtable-Abgleich).
 - Sentry: N+1-Abfragen im Airtable-Abgleich (/api/sync).

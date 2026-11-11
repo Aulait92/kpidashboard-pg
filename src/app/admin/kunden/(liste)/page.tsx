@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { packageLabel } from "@/lib/customer-package";
 import { connection } from "next/server";
 import { ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui";
@@ -33,6 +34,7 @@ export default async function KundenUebersicht({ searchParams }: { searchParams:
       id: true,
       name: true,
       plan: true,
+      retainerMonthly: true,
       paymentOverdueSince: true,
       onboarding: { select: { id: true } },
       salesContact: { select: { customerStage: true, monthlyValue: true } },
@@ -98,7 +100,7 @@ export default async function KundenUebersicht({ searchParams }: { searchParams:
                       {pause ? <Badge tone="warning">{pause.kind === "dunning" ? "pausiert (Zahlung)" : "pausiert"}</Badge> : null}
                     </div>
                     <div className="mt-0.5 text-xs text-[color:var(--muted)]">
-                      {c.plan === "service" ? "Nur Betreuung" : "Betreuung + Software"}
+                      {packageLabel(c)}
                       {c.salesContact?.monthlyValue ? ` · ${eur(c.salesContact.monthlyValue)}/Monat` : ""}
                       {` · ${c._count.leads} Leads in 30 Tagen · ${c._count.users} ${c._count.users === 1 ? "Login" : "Logins"}`}
                     </div>

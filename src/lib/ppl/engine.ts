@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
 import { sendToAdmins } from "@/lib/push";
 import { extract } from "@/lib/lead-intake";
-import { isWeak, pickCandidate, rejectReason, type Candidate, type PoolLeadFacts } from "@/lib/ppl/rules";
+import { effectivePlzRanges, isWeak, openAreasFor, pickWithAreas, rejectReason, type AreaCandidate, type AreaQuota, type Candidate, type PoolLeadFacts } from "@/lib/ppl/rules";
 import { monthRange, weekRange } from "@/lib/ppl/periods";
 
 const DAY = 86_400_000;
@@ -72,6 +72,25 @@ export async function quotaFor(sub: SubRow, now = new Date()): Promise<(Candidat
   return { id: sub.id, quota: goal, delivered, orderId: null, test };
 }
 
+type AreaRow = Prisma.SubscriptionAreaGetPayload<object>;
+
+/** Zeitraum eines Gebiets: eigener Wert, sonst wie der Bezug (Wochenbestellung → Woche, sonst Monat). */
+export function areaPeriodRange(area: Pick<AreaRow, "period">, sub: Pick<SubRow, "period">, now = new Date()) {
+  const p = area.period ?? (sub.period === "week" ? "week" : "month");
+  return p === "week" ? weekRange(now) : monthRange(now);
+}
+
+/** Gebiete eines Bezugs mit Geliefertem im laufenden Zeitraum. */
+export async function areaQuotas(sub: SubRow & { areas: AreaRow[] }, now = new Date()): Promise<AreaQuota[]> {
+  return Promise.all(
+    sub.areas.map(async (a) => {
+      const r = areaPeriodRange(a, sub, now);
+      const delivered = await prisma.poolLead.count({ where: { areaId: a.id, status: "delivered", deliveredAt: { gte: r.start, lt: r.end } } });
+      return { id: a.id, plzRanges: a.plzRanges, quantity: a.quantity, delivered };
+    }),
+  );
+}
+
 export type PoolResult = { status: "delivered" | "duplicate" | "invalid" | "parked"; poolLeadId: string; leadId?: string; reason?: string };
 
 export async function ingestPoolLead(input: PoolInput, now = new Date()): Promise<PoolResult> {
@@ -132,19 +151,24 @@ export async function distribute(poolLeadId: string, now = new Date(), notify = 
     score: pl.score,
     answers: Object.fromEntries(((pl.answers ?? []) as { label: string; value: string }[]).map((a) => [a.label, a.value])),
   };
-  const subs = await prisma.leadSubscription.findMany({ where: { productKey: pl.productKey, active: true } });
-  const cands: (Candidate & { orderId: string | null; sub: SubRow })[] = [];
+  const subs = await prisma.leadSubscription.findMany({ where: { productKey: pl.productKey, active: true }, include: { areas: true } });
+  const cands: (AreaCandidate & { orderId: string | null; sub: SubRow })[] = [];
   const reasons: string[] = [];
   for (const sub of subs) {
-    const why = rejectReason(sub, facts);
+    // Gebietskunden bedienen nur ihre Gebiete (eigener PLZ-Filter hat Vorrang)
+    const why = rejectReason({ ...sub, plzRanges: effectivePlzRanges(sub.plzRanges, sub.areas) }, facts);
     if (why) {
       reasons.push(why);
       continue;
     }
     const q = await quotaFor(sub, now);
-    if (q) cands.push({ ...q, sub });
+    if (!q) continue;
+    const areas = sub.areas.length ? await areaQuotas(sub, now) : [];
+    // Ohne Ziel/Bestellung (Monat/einmalig) gilt die Summe der Gebietsmengen als Kontingent
+    const quota = sub.period !== "week" && !sub.goal && areas.length ? areas.reduce((n, a) => n + a.quantity, 0) : q.quota;
+    cands.push({ ...q, quota, area: openAreasFor(areas, facts.plz)[0] ?? null, sub });
   }
-  const pick = pickCandidate(cands) as (typeof cands)[number] | null;
+  const pick = pickWithAreas(cands);
   if (!pick) {
     const reason = subs.length === 0 ? "kein Bezug für dieses Produkt" : cands.length === 0 && reasons.length ? `kein passender Bezug (${[...new Set(reasons)].join(", ")})` : "alle Kontingente voll";
     await prisma.poolLead.update({ where: { id: pl.id }, data: { status: "parked", reason } });
@@ -156,12 +180,12 @@ export async function distribute(poolLeadId: string, now = new Date(), notify = 
     }).catch(() => {});
     return { status: "parked", reason };
   }
-  const leadId = await deliver(pl.id, pick.sub, pick.orderId, now);
+  const leadId = await deliver(pl.id, pick.sub, pick.orderId, now, pick.area?.id ?? null);
   return { status: "delivered", leadId };
 }
 
 /** Lead beim Käufer anlegen und über den gewählten Weg zustellen. */
-export async function deliver(poolLeadId: string, sub: SubRow, orderId: string | null, now = new Date()): Promise<string> {
+export async function deliver(poolLeadId: string, sub: SubRow, orderId: string | null, now = new Date(), areaId: string | null = null): Promise<string> {
   const pl = await prisma.poolLead.findUniqueOrThrow({ where: { id: poolLeadId } });
   const price = sub.price;
   const lead = await prisma.lead.create({
@@ -182,7 +206,7 @@ export async function deliver(poolLeadId: string, sub: SubRow, orderId: string |
   });
   await prisma.$transaction([
     prisma.revenue.create({ data: { customerId: sub.customerId, leadId: lead.id, amount: price, occurredAt: now } }),
-    prisma.poolLead.update({ where: { id: pl.id }, data: { status: "delivered", reason: null, leadId: lead.id, deliveredAt: now } }),
+    prisma.poolLead.update({ where: { id: pl.id }, data: { status: "delivered", reason: null, leadId: lead.id, deliveredAt: now, areaId } }),
   ]);
   const { sendDelivery } = await import("@/lib/ppl/delivery");
   await sendDelivery(lead.id, sub).catch((err: unknown) => reportError(err, "ppl-delivery", { lead: lead.id, sub: sub.id }));

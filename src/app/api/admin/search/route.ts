@@ -1,4 +1,5 @@
 import { getCurrentSession } from "@/lib/auth";
+import { packageLabel } from "@/lib/customer-package";
 import { prisma } from "@/lib/prisma";
 
 // Globale Admin-Suche (Cmd+K): Kunden, Vertriebskontakte, Leads.
@@ -20,7 +21,7 @@ export async function GET(req: Request): Promise<Response> {
       where: { name: text, plan: { not: "internal" } },
       take: 5,
       orderBy: { name: "asc" },
-      select: { id: true, name: true, archived: true, plan: true },
+      select: { id: true, name: true, archived: true, plan: true, retainerMonthly: true, onboarding: { select: { id: true } } },
     }),
     prisma.salesContact.findMany({
       where: {
@@ -52,7 +53,7 @@ export async function GET(req: Request): Promise<Response> {
       kind: "kunde" as const,
       id: c.id,
       title: short(c.name),
-      subtitle: `Kunde${c.archived ? " (archiviert)" : ""} · ${c.plan === "service" ? "Nur Betreuung" : "Betreuung + Software"}`,
+      subtitle: `Kunde${c.archived ? " (archiviert)" : ""} · ${packageLabel(c)}`,
       href: `/admin/kunden/${c.id}`,
     })),
     ...contacts.map((c) => ({

@@ -110,3 +110,36 @@ export function pickCandidate(cands: Candidate[]): Candidate | null {
   const pool = testDue.length ? testDue : open;
   return pool.reduce((best, c) => (c.quota / (c.delivered + 1) > best.quota / (best.delivered + 1) ? c : best));
 }
+
+// ─── Gebiete (Vorrang) ─────────────────────────────────────────────────────
+
+export type AreaQuota = { id: string; plzRanges: string; quantity: number; delivered: number };
+
+/** Gebiete eines Bezugs, in die die PLZ fällt und die noch Menge frei haben (meiste freie Menge zuerst). */
+export function openAreasFor(areas: AreaQuota[], plz: string | null): AreaQuota[] {
+  return areas
+    .filter((a) => a.quantity > a.delivered && (a.plzRanges ?? "").trim() && plzMatches(a.plzRanges, plz))
+    .sort((a, b) => b.quantity / (b.delivered + 1) - a.quantity / (a.delivered + 1));
+}
+
+/** PLZ-Filter eines Bezugs: eigener Filter, sonst die Gebiete zusammen (leer = keine Einschränkung). */
+export function effectivePlzRanges(subRanges: string | null, areas: Pick<AreaQuota, "plzRanges">[]): string | null {
+  if (subRanges?.trim()) return subRanges;
+  const joined = areas.map((a) => a.plzRanges.trim()).filter(Boolean).join("|");
+  return joined || null;
+}
+
+export type AreaCandidate = Candidate & { area: AreaQuota | null };
+
+/**
+ * Verteilung mit Gebietsvorrang: Bezüge, deren Gebiet die PLZ enthält und noch
+ * Menge frei hat (bis 100 % der Gebietsmenge), bekommen den Lead vor allen
+ * anderen (d'Hondt innerhalb der Gebiete). Sonst normale Verteilung.
+ */
+export function pickWithAreas<T extends AreaCandidate>(cands: T[]): T | null {
+  const prio = cands.filter((c) => c.area && c.quota > c.delivered);
+  if (prio.length) {
+    return prio.reduce((best, c) => (c.area!.quantity / (c.area!.delivered + 1) > best.area!.quantity / (best.area!.delivered + 1) ? c : best));
+  }
+  return pickCandidate(cands) as T | null;
+}

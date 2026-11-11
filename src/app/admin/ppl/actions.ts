@@ -137,3 +137,31 @@ export async function runImportAction(_prev: ImportState, fd: FormData): Promise
     return { error: err instanceof Error ? err.message : "Import fehlgeschlagen." };
   }
 }
+
+// ─── Gebiete (Vorrang je PLZ-Gebiet mit eigener Menge) ──────────────────────
+const PLZ_SPEC = /^\s*\d{1,5}(\s*-\s*\d{1,5})?(\s*[|,;\s]\s*\d{1,5}(\s*-\s*\d{1,5})?)*\s*$/;
+
+export async function saveAreaAction(fd: FormData): Promise<void> {
+  await requireAdmin();
+  const subscriptionId = String(fd.get("subscriptionId") ?? "");
+  const id = String(fd.get("id") ?? "");
+  const plzRanges = String(fd.get("plzRanges") ?? "").replace(/\s*-\s*/g, "-").replace(/[,;\s]+/g, "|").replace(/\|+/g, "|").replace(/^\||\|$/g, "");
+  const quantity = int(fd.get("quantity"));
+  const period = ["week", "month"].includes(String(fd.get("period"))) ? String(fd.get("period")) : null;
+  const label = String(fd.get("label") ?? "").trim() || null;
+  if (!subscriptionId || !plzRanges || !PLZ_SPEC.test(plzRanges) || quantity == null || quantity < 0) return;
+  const data = { label, plzRanges, quantity, period };
+  if (id) await prisma.subscriptionArea.update({ where: { id }, data });
+  else await prisma.subscriptionArea.create({ data: { ...data, subscriptionId } });
+  await audit("ppl.area", { entity: "LeadSubscription", entityId: subscriptionId, details: { plzRanges, quantity, period } });
+  revalidatePath(`/admin/ppl/bezug/${subscriptionId}`);
+  revalidatePath("/admin/ppl", "layout");
+}
+
+export async function deleteAreaAction(fd: FormData): Promise<void> {
+  await requireAdmin();
+  const id = String(fd.get("id") ?? "");
+  const a = await prisma.subscriptionArea.delete({ where: { id } });
+  await audit("ppl.area_delete", { entity: "LeadSubscription", entityId: a.subscriptionId, details: { plzRanges: a.plzRanges } });
+  revalidatePath(`/admin/ppl/bezug/${a.subscriptionId}`);
+}

@@ -256,6 +256,10 @@ async function fetchProdukte(): Promise<Map<string, ProductRef>> {
     );
     return map;
   }
+  // Bestehende Produkte einmal laden; unveränderte nicht erneut schreiben (Sentry: N+1).
+  const existingProducts = new Map(
+    (await prisma.product.findMany({ where: { airtableId: { not: null } }, select: { id: true, airtableId: true, name: true, slug: true, keywords: true, poolKind: true, active: true } })).map((p) => [p.airtableId!, p]),
+  );
   for (const rec of records) {
     const name =
       readString(rec.fields, "Zielgruppe Bezeichnung") ??
@@ -294,6 +298,11 @@ async function fetchProdukte(): Promise<Map<string, ProductRef>> {
       nameAlias && nameAlias !== name ? nameAlias : null,
     ].filter((s): s is string => !!s);
     const keywords = aliasParts.length > 0 ? aliasParts.join(",") : null;
+    const prevP = existingProducts.get(rec.id);
+    if (prevP && prevP.name === name && prevP.slug === slug && (prevP.keywords ?? null) === keywords && prevP.poolKind === poolKind && prevP.active) {
+      map.set(rec.id, { name, dbId: prevP.id, poolKind });
+      continue;
+    }
     try {
       const dbProduct = await prisma.product.upsert({
         where: { airtableId: rec.id },
@@ -939,6 +948,12 @@ export async function syncAirtable(): Promise<SyncResult> {
   // alle anderen (inaktiv, Bezug gelöscht) werden archiviert statt angezeigt.
   // Ist die Bezug-Tabelle nicht lesbar, bleibt alles wie bisher.
   const buyersWithBezug = new Set(bezugRows.map((r) => r.buyerAirtableId));
+  // Bestehende Kunden einmal laden (statt je Kunde ein Upsert): unveränderte
+  // Kunden brauchen keinen Schreibzugriff (Sentry: N+1 im Abgleich).
+  const existingCustomers = new Map(
+    (await prisma.customer.findMany({ select: { id: true, name: true, region: true, retainerMonthly: true, retainerStart: true, metaAdAccountId: true } })).map((c) => [c.name, c]),
+  );
+  for (const [name, c] of existingCustomers) if (!customerCache.has(name)) customerCache.set(name, c.id);
   for (const [buyerId, info] of buyerMap.entries()) {
     const key = info.name.trim();
     if (!key) continue;
@@ -949,6 +964,17 @@ export async function syncAirtable(): Promise<SyncResult> {
       retainerStart: info.retainerStart,
       metaAdAccountId: info.metaAdAccountId,
     };
+    const prev = existingCustomers.get(key);
+    const unchanged =
+      prev &&
+      (prev.region ?? null) === (info.region ?? null) &&
+      (prev.retainerMonthly == null ? null : Number(prev.retainerMonthly)) === (retainer.retainerMonthly ?? null) &&
+      (prev.retainerStart?.getTime() ?? null) === (retainer.retainerStart?.getTime() ?? null) &&
+      (prev.metaAdAccountId ?? null) === (retainer.metaAdAccountId ?? null);
+    if (unchanged) {
+      customerCache.set(key, prev.id);
+      continue;
+    }
     const customer = await prisma.customer.upsert({
       where: { name: key },
       create: { name: key, region: info.region, ...retainer },
@@ -967,6 +993,13 @@ export async function syncAirtable(): Promise<SyncResult> {
   // Produkte auf denselben kanonischen Key zeigen (z. B. PKV-Wechsel +
   // PKV-Tarifoptimierung → beide "Wechsel").
   const coveredCanonical = new Set<string>();
+  // Bestehende Bezüge einmal laden; unveränderte nicht erneut schreiben (Sentry: N+1).
+  const existingCp = new Map(
+    (await prisma.customerProduct.findMany({ select: { customerId: true, productId: true, leadGoal: true, leadPrice: true, startDate: true, testMode: true, testDurationDays: true, region: true } })).map((c) => [
+      `${c.customerId}|${c.productId}`,
+      c,
+    ]),
+  );
   async function upsertCustomerProduct(
     customerId: string,
     productId: string,
@@ -984,6 +1017,18 @@ export async function syncAirtable(): Promise<SyncResult> {
     if (coveredCanonical.has(canonKey)) return; // erste Quelle gewinnt (Bezug vor Buyer-Feld)
     coveredCanonical.add(canonKey);
     coveredCp.add(`${customerId}|${productId}`);
+    const prevCp = existingCp.get(`${customerId}|${productId}`);
+    if (
+      prevCp &&
+      prevCp.leadGoal === data.leadGoal &&
+      (prevCp.leadPrice == null ? null : Number(prevCp.leadPrice)) === (data.leadPrice ?? null) &&
+      (prevCp.startDate?.getTime() ?? null) === (data.startDate?.getTime() ?? null) &&
+      prevCp.testMode === data.testMode &&
+      prevCp.testDurationDays === data.testDurationDays &&
+      (prevCp.region ?? null) === (data.region ?? null)
+    ) {
+      return;
+    }
     try {
       await prisma.customerProduct.upsert({
         where: { customerId_productId: { customerId, productId } },

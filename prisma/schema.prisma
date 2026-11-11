@@ -1550,9 +1550,28 @@ model LeadSubscription {
 
   orders LeadOrder[]
   leads  Lead[]
+  areas  SubscriptionArea[]
 
   @@index([productKey, active])
   @@index([customerId])
+}
+
+// Gebiet eines Bezugs (z. B. Heinrich von Kleist): eigene PLZ-Bereiche und
+// eigene Menge je Zeitraum. Leads aus dem Gebiet gehen bis 100 % der Menge
+// bevorzugt an diesen Bezug (vor Bezügen ohne Gebiet), danach normale Verteilung.
+model SubscriptionArea {
+  id             String           @id @default(cuid())
+  subscriptionId String
+  subscription   LeadSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  label          String?
+  plzRanges      String // "80000-85999|67300-67499|12345"
+  quantity       Int
+  // week | month; leer = wie der Bezug (Wochenbestellung → week, sonst month)
+  period         String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([subscriptionId])
 }
 
 // Bestellung für einen Zeitraum (meist Woche Mo–So), im Voraus bezahlt.
@@ -1601,9 +1620,12 @@ model PoolLead {
   status       String
   reason       String?
   leadId       String?   @unique
+  // Gebiet, über das der Lead ausgeliefert wurde (Vorrang-Kontingent)
+  areaId       String?
   createdAt    DateTime  @default(now())
   deliveredAt  DateTime?
 
+  @@index([areaId, deliveredAt])
   @@index([phone, createdAt])
   @@index([email, createdAt])
   @@index([status, productKey])

@@ -8,6 +8,8 @@ import { prisma } from "@/lib/prisma";
 import { quotaFor } from "@/lib/ppl/engine";
 import { fmtWeek, weekRange } from "@/lib/ppl/periods";
 import { assignParkedAction, decideStornoAction, discardParkedAction } from "./actions";
+import { loadCustomerOverview, loadPplReport, type Granularity } from "@/lib/ppl/auswertung";
+import { PplOverview, PplReportView } from "@/components/admin/ppl-auswertung";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Pay-per-Lead | KPI-Dashboard" };
@@ -23,10 +25,10 @@ const POOL_STATUS: Record<string, { label: string; tone: "success" | "warning" |
   invalid: { label: "ungültig", tone: "danger" },
 };
 
-export default async function PplPage({ searchParams }: { searchParams: Promise<{ ansicht?: string }> }) {
+export default async function PplPage({ searchParams }: { searchParams: Promise<{ ansicht?: string; zeitraum?: string; produkt?: string }> }) {
   const session = await getCurrentSession();
   if (!session || session.role !== "ADMIN") redirect("/login");
-  const { ansicht = "" } = await searchParams;
+  const { ansicht = "", zeitraum, produkt } = await searchParams;
   const [subs, parkedCount, reviewCount] = await Promise.all([
     prisma.leadSubscription.findMany({ include: { customer: { select: { name: true } } }, orderBy: [{ productKey: "asc" }, { active: "desc" }, { createdAt: "asc" }] }),
     prisma.poolLead.count({ where: { status: "parked" } }),
@@ -34,6 +36,8 @@ export default async function PplPage({ searchParams }: { searchParams: Promise<
   ]);
   const views = [
     { key: "", label: "Bezüge" },
+    { key: "uebersicht", label: "Übersicht je Kunde" },
+    { key: "auswertung", label: "Auswertung" },
     { key: "geparkt", label: "Geparkt", count: parkedCount },
     { key: "storno", label: "Storno prüfen", count: reviewCount },
     { key: "eingang", label: "Eingang" },
@@ -65,7 +69,11 @@ export default async function PplPage({ searchParams }: { searchParams: Promise<
           </Link>
         ))}
       </nav>
-      {ansicht === "geparkt" ? (
+      {ansicht === "uebersicht" ? (
+        <PplOverview rows={await loadCustomerOverview()} />
+      ) : ansicht === "auswertung" ? (
+        <PplReportView report={await loadPplReport((["tag", "woche", "monat"].includes(zeitraum ?? "") ? zeitraum : "tag") as Granularity, produkt ?? null)} />
+      ) : ansicht === "geparkt" ? (
         <Parked subs={subs} />
       ) : ansicht === "storno" ? (
         <Review />
