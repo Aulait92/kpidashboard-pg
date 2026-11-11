@@ -99,6 +99,9 @@ export async function saveConnection(opts: {
     },
     update: {
       ...data,
+      // Neu verbinden = Hauptkalender des (evtl. anderen) Kontos; eine alte Kalender-Auswahl
+      // (z. B. Outlook-ID oder Unterkalender) würde sonst weiterverwendet und Termine landen unsichtbar.
+      calendarId: "primary",
       // Beim Anbieterwechsel alten Refresh-Token nie weiterverwenden.
       refreshTokenEnc: opts.refreshToken ? encryptSecret(opts.refreshToken) : null,
     },
