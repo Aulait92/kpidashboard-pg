@@ -66,6 +66,7 @@ Die Produktion ist seit 11.11. eingemessen; neue Migrationen laufen beim normale
 | `20261114100000_adresse_anreichern` | Spalten `SalesContact.addressEnrichTriedAt`, `addressEnrichedAt` (Adresse aus Impressum ergänzt) | nur hinzufügend; der Nachhol-Lauf im WhatsApp-Cron arbeitet danach gedrosselt (10 Kontakte je Lauf, `ADDRESS_ENRICH_PER_RUN`), abschaltbar mit `ADDRESS_ENRICH=off` |
 | `20261114120000_login_infokarte` | Tabelle `LoginInfo` (Infokarte auf der Login-Seite, Admin → Einstellungen → Login-Seite; Bild klein in der DB, öffentlich unter `/api/login-info/image`) | nur hinzufügend; ohne Eintrag zeigt die Login-Seite eine Standard-Karte |
 | `20261114130000_modul_selbst_buchen` | Spalte `Customer.bestandCancelAt` (Bestandskunden-Modul im Kundenbereich selbst gekündigt: Zugang bis zum Ende des Abrechnungszeitraums, danach schaltet der WhatsApp-Cron ab) | nur hinzufügend |
+| `20261114150000_admin_neue_oberflaeche_standard` | Neue Admin-Oberfläche als Standard: Spalten-Standard `User.adminNewUi` = true, bestehende Admins auf true (Umschalten im Profilmenü bleibt) | ändert Daten (nur Admin-Einstellung), unkritisch |
 
 Keine davon verändert bestehende Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und
