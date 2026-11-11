@@ -145,8 +145,6 @@ export const DEFAULT_PRODUCTS: RechnerProduct[] = [
   },
 ];
 
-/** Vertrags-Garantie für Makler (Freigabe Ole, 11.11.): Mindestzahl Verträge nach 90 aktiven Tagen. */
-export const VERTRAGS_GARANTIE_MIN_VERTRAEGE = 15;
 
 export const DEFAULT_CONFIG: RechnerConfig = {
   products: DEFAULT_PRODUCTS,
