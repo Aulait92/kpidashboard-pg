@@ -87,6 +87,8 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
         data: {
           name: await uniqueCustomerName((offer.company || offer.contactName).trim(), offer.city),
           plan: pkg,
+          // Neue Kunden mit Software starten direkt in der neuen Oberfläche (Ole, 11.11.).
+          newUi: pkg === "software",
           retainerMonthly: offer.monthlyFee,
           retainerStart: offer.startDate,
           ...billingTermsOf(offer),

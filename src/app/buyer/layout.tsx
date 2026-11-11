@@ -1,7 +1,7 @@
 import { BuyerShell } from "@/components/buyer-shell";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
-import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
+import { hasWhatsAppInbox, showChatsTeaser } from "@/lib/whatsapp/access";
 import { attentionCount } from "@/lib/whatsapp/attention";
 import { endPreviewAction } from "./preview-actions";
 import { customerSetupOpenCount } from "@/lib/onboarding";
@@ -53,7 +53,7 @@ export default async function BuyerLayout({
   const provision = ctx ? await loadCustomerProvision(ctx.customerId) : null;
   const [showChats, chatBadge, setupOpen, me, logins, pplSubs, bestand] = ctx
     ? await Promise.all([
-        hasWhatsAppInbox(ctx.customerId),
+        hasWhatsAppInbox(ctx.customerId).then(async (inbox) => inbox || (await showChatsTeaser(ctx.customerId))),
         attentionCount(ctx),
         advisor ? 0 : customerSetupOpenCount(ctx.customerId),
         advisor && ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true, email: true } }) : null,

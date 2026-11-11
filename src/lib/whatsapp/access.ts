@@ -12,3 +12,12 @@ export async function hasWhatsAppInbox(customerId: string): Promise<boolean> {
   ]);
   return !!account || !!agent?.active;
 }
+
+/**
+ * „Chats“ schon vor dem Verbinden zeigen (mit Hinweis „WhatsApp verbinden“):
+ * nur neue Oberfläche und Paket mit Software. Sonst wie bisher nur mit Postfach.
+ */
+export async function showChatsTeaser(customerId: string): Promise<boolean> {
+  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { newUi: true, plan: true } });
+  return !!c?.newUi && c.plan !== "service";
+}

@@ -11,7 +11,8 @@ import { appointmentScope, conversationScope } from "@/lib/team";
 import { formatDateTime, formatPhone } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { displayProduct, statusLabel, statusToneClass } from "@/lib/products";
-import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
+import { hasWhatsAppInbox, showChatsTeaser } from "@/lib/whatsapp/access";
+import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 import {
   cancelAppointmentBuyerAction,
   followupBuyerAction,
@@ -86,7 +87,42 @@ const INTERNAL_LABELS: Record<string, string> = {
 export default async function BuyerChatsPage({ searchParams }: { searchParams: SearchParams }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
-  if (!(await hasWhatsAppInbox(ctx.customerId))) redirect("/buyer/leads");
+  if (!(await hasWhatsAppInbox(ctx.customerId))) {
+    // Neue Oberfläche mit Software: „Chats“ schon vor dem Verbinden zeigen, mit Weg zum Verbinden.
+    if (!(await showChatsTeaser(ctx.customerId))) redirect("/buyer/leads");
+    const selfConnect = selfConnectEnabled() && ctx.teamRole === "owner";
+    return (
+      <div className="mx-auto max-w-2xl">
+        <PageHeader title="Chats" subtitle="WhatsApp-Gespräche mit Ihren Leads" />
+        <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-6 text-center shadow-[var(--shadow-sm)]">
+          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand-soft,#eef3ff)] text-[color:var(--brand)]">
+            <MessageCircle className="h-6 w-6" />
+          </span>
+          <h2 className="mt-3 text-base font-semibold">WhatsApp ist noch nicht verbunden</h2>
+          <p className="mx-auto mt-1 max-w-md text-sm text-[color:var(--muted)]">
+            Sobald Ihre Nummer verbunden ist, schreibt Ihr Assistent jeden neuen Lead in wenigen Minuten an. Alle Gespräche
+            sehen Sie hier – und können jederzeit selbst antworten.
+          </p>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            {selfConnect ? (
+              <Link href="/buyer/einrichtung?schritt=whatsapp#whatsapp" className={buttonClass("primary")}>
+                WhatsApp verbinden
+              </Link>
+            ) : ctx.teamRole === "owner" ? (
+              <Link href="/buyer/einrichtung" className={buttonClass("primary")}>
+                Zur Einrichtung
+              </Link>
+            ) : null}
+          </div>
+          {!selfConnect ? (
+            <p className="mt-3 text-xs text-[color:var(--muted)]">
+              {ctx.teamRole === "owner" ? "Wir verbinden WhatsApp gemeinsam mit Ihnen bei der Einrichtung." : "Die Verbindung richtet der Inhaber ein."}
+            </p>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
 
   const sp = await searchParams;
   const activeId = sp.c ?? null;
