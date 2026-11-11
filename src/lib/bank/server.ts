@@ -21,7 +21,7 @@ const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 
 async function ownRules(): Promise<Rule[]> {
   const rows = await prisma.costRule.findMany();
-  return rows.map((r) => ({ id: r.id, pattern: r.pattern, action: r.action as CostAction, vatIncluded: r.vatIncluded, label: r.label }));
+  return rows.map((r) => ({ id: r.id, pattern: r.pattern, action: r.action as CostAction, vatIncluded: r.vatIncluded, label: r.label, counterpartyOnly: r.counterpartyOnly }));
 }
 
 export type ImportStats = { total: number; created: number; existing: number; assigned: number; ignored: number; open: number };
@@ -103,10 +103,12 @@ export async function assignTransaction(id: string, action: CostAction, opts: { 
   let ruleId: string | null = null;
   if (opts.always && opts.pattern?.trim()) {
     const pattern = opts.pattern.trim().toLowerCase().slice(0, 80);
+    // Muster aus der Gegenpartei → nur dort suchen (sonst fängt z. B. ein Name jede Rechnung, in deren Text er steht)
+    const counterpartyOnly = !!tx.counterparty && tx.counterparty.toLowerCase().replace(/\s+/g, " ").includes(pattern);
     const rule = await prisma.costRule.upsert({
       where: { pattern },
-      create: { pattern, action, vatIncluded: !!opts.vatIncluded, label: tx.counterparty ?? null },
-      update: { action, vatIncluded: !!opts.vatIncluded },
+      create: { pattern, action, vatIncluded: !!opts.vatIncluded, label: tx.counterparty ?? null, counterpartyOnly },
+      update: { action, vatIncluded: !!opts.vatIncluded, counterpartyOnly },
     });
     ruleId = rule.id;
   }
@@ -131,7 +133,7 @@ export async function applyRuleToOpen(ruleId: string): Promise<number> {
   const rule = await prisma.costRule.findUnique({ where: { id: ruleId } });
   if (!rule) return 0;
   const open = await prisma.bankTransaction.findMany({ where: { status: "neu" }, select: { id: true, amount: true, counterparty: true, purpose: true } });
-  const r: Rule = { id: rule.id, pattern: rule.pattern, action: rule.action as CostAction, vatIncluded: rule.vatIncluded };
+  const r: Rule = { id: rule.id, pattern: rule.pattern, action: rule.action as CostAction, vatIncluded: rule.vatIncluded, counterpartyOnly: rule.counterpartyOnly };
   let n = 0;
   for (const t of open) {
     const c = classify({ amount: Number(t.amount), counterparty: t.counterparty, purpose: t.purpose }, [r], []);
@@ -139,6 +141,27 @@ export async function applyRuleToOpen(ruleId: string): Promise<number> {
     await prisma.bankTransaction.update({
       where: { id: t.id },
       data: { status: c.status, costPurpose: c.costPurpose, vatIncluded: c.vatIncluded, ruleId: rule.id, assignedAt: new Date() },
+    });
+    n++;
+  }
+  return n;
+}
+
+/**
+ * Alle eigenen Regeln auf noch offene Buchungen anwenden (z. B. nach neuen
+ * Regeln per Migration oder in den Einstellungen). Von Hand Zugeordnetes bleibt.
+ */
+export async function applyRulesToOpen(): Promise<number> {
+  const rules = await ownRules();
+  if (!rules.length) return 0;
+  const open = await prisma.bankTransaction.findMany({ where: { status: "neu" }, select: { id: true, amount: true, counterparty: true, purpose: true } });
+  let n = 0;
+  for (const t of open) {
+    const c = classify({ amount: Number(t.amount), counterparty: t.counterparty, purpose: t.purpose }, rules, []);
+    if (c.status === "neu" || !c.rule?.id) continue;
+    await prisma.bankTransaction.update({
+      where: { id: t.id },
+      data: { status: c.status, costPurpose: c.costPurpose, vatIncluded: c.vatIncluded, ruleId: c.rule.id, assignedAt: new Date() },
     });
     n++;
   }
@@ -281,6 +304,7 @@ export async function syncConnection(id: string, now = new Date()): Promise<Impo
 export async function runBankSync(now = new Date()): Promise<{ synced: number; reminded: number; errors: number }> {
   const res = { synced: 0, reminded: 0, errors: 0 };
   if (process.env.BANK_SYNC === "off") return res;
+  await applyRulesToOpen().catch(() => 0);
   const conns = await prisma.bankConnection.findMany({ where: { status: "active" } });
   for (const c of conns) {
     if (c.validUntil && c.validUntil.getTime() - now.getTime() < BANK_REMIND_DAYS * DAY && (!c.reminderAt || now.getTime() - c.reminderAt.getTime() > 6 * DAY)) {

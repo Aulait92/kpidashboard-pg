@@ -1912,6 +1912,8 @@ model CostRule {
   pattern      String
   action       String // ppl | software | akquise | betrieb | ignore
   vatIncluded  Boolean           @default(false)
+  /// nur in der Gegenpartei suchen (nicht im Verwendungszweck), z. B. eigener Name für Privat-Überweisungen
+  counterpartyOnly Boolean       @default(false)
   label        String?
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt

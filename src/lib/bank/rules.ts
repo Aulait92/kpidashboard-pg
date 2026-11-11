@@ -15,7 +15,7 @@ export const ACTION_LABEL: Record<CostAction, string> = {
   ignore: "Ignorieren (keine Kosten)",
 };
 
-export type Rule = { id?: string | null; pattern: string; action: CostAction; vatIncluded?: boolean; label?: string | null };
+export type Rule = { id?: string | null; pattern: string; action: CostAction; vatIncluded?: boolean; label?: string | null; counterpartyOnly?: boolean };
 
 /**
  * Standardregeln. Ignorieren, was sonst doppelt zählt oder keine Betriebskosten sind:
@@ -77,7 +77,8 @@ export function matchRule(tx: { counterparty?: string | null; purpose?: string |
       .sort((a, b) => b.pattern.length - a.pattern.length)[0] ?? null;
   const cp = norm(tx.counterparty);
   const all = `${cp} | ${norm(tx.purpose)}`;
-  return (cp ? hitIn(cp, ownRules) : null) ?? (cp ? hitIn(cp, defaults) : null) ?? hitIn(all, ownRules) ?? hitIn(all, defaults);
+  const anywhere = (rules: Rule[]) => rules.filter((r) => !r.counterpartyOnly);
+  return (cp ? hitIn(cp, ownRules) : null) ?? (cp ? hitIn(cp, defaults) : null) ?? hitIn(all, anywhere(ownRules)) ?? hitIn(all, anywhere(defaults));
 }
 
 /** Kostenbetrag (positiv, netto) aus einer Buchung. Einnahmen → 0. */

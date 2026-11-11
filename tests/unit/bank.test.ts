@@ -162,3 +162,12 @@ describe("Regeln: Gegenpartei vor Verwendungszweck", () => {
     expect(suggestPattern({ counterparty: "XING SE + Co. KG" })).toBe("xing");
   });
 });
+
+describe("Regeln: nur Gegenpartei", () => {
+  it("counterpartyOnly greift nicht im Verwendungszweck", async () => {
+    const { matchRule } = await import("@/lib/bank/rules");
+    const own = [{ pattern: "ole kannapinn", action: "ignore" as const, counterpartyOnly: true }];
+    expect(matchRule({ counterparty: "Unbekannt GmbH", purpose: "Rechnung für Ole Kannapinn" }, own, [])).toBeNull();
+    expect(matchRule({ counterparty: "Ole Kannapinn", purpose: "" }, own, [])?.action).toBe("ignore");
+  });
+});

@@ -75,6 +75,7 @@ Die Produktion ist seit 11.11. eingemessen; neue Migrationen laufen beim normale
 | `20261114210000_instantly_alte_kontakte` | Badumbau- und Kinderwunsch-Kampagnen ignorieren; **Löschung** der am 11.11. automatisch aus Instantly angelegten Kontakte dieser Themen sowie aller automatisch angelegten Instantly-Kontakte mit letzter Aktivität älter als 4 Wochen (alte Pay-per-Lead-Kampagnen); nie mit Angebot, Termin, Kundenkonto | löscht nur automatisch angelegte Kontakte |
 | `20261114220000_adressen_neu_anreichern` | setzt `addressEnrichTriedAt` bei Kontakten ohne vollständige Adresse zurück (Cron reichert neu an) | nur Zeitstempel |
 | `20261114230000_bank_kosten` | Tabellen `BankConnection` (Enable Banking, Session verschlüsselt), `BankTransaction` (Konto-/Kartenumsätze, Zuordnung), `CostRule` (Muster → Zweck) | nur hinzufügend; ohne Verbindung/Import ändert sich keine Kennzahl |
+| `20261114240000_kosten_regeln` | Spalte `CostRule.counterpartyOnly`; legt Oles Zuordnungsregeln an (Papierkram, XING, Google, Kontoführung, Telekom, Steuerberater, DATEV, Asana, Privat) – der Cron wendet sie auf offene Buchungen an | nur Regeln |
 
 Keine davon verändert bestehende Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und
