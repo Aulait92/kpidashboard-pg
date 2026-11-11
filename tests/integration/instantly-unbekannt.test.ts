@@ -48,3 +48,30 @@ describe("Instantly: unbekannte Adresse", () => {
     expect(await prisma.salesContact.count({ where: { email: parallel } })).toBe(1);
   });
 });
+
+describe("Instantly: Pflege-Kampagnen und Interesse vor Antworttext", () => {
+  const t2 = Math.random().toString(36).slice(2, 8);
+  const pflege = `pflege-${t2}@example.test`;
+  const finter = `finter-${t2}@example.test`;
+  const camp = `Allianz Test ${t2}`;
+  beforeAll(() => requireTestDb());
+  afterAll(async () => {
+    await prisma.salesContact.deleteMany({ where: { email: { in: [pflege, finter] } } });
+    await prisma.salesCampaign.deleteMany({ where: { name: { in: [`Pflegedienste ${t2}`, camp] } } });
+  });
+
+  it("Pflege-Kampagne: nichts kommt ins CRM", async () => {
+    expect(await handleWebhook({ event_type: "reply_received", lead_email: pflege, campaign_name: `Pflegedienste ${t2}`, reply_text: "Ja gerne, rufen Sie an" })).toEqual({ ignored: "campaign ignored" });
+    expect(await prisma.salesContact.findUnique({ where: { email: pflege } })).toBeNull();
+    expect((await prisma.salesCampaign.findUniqueOrThrow({ where: { name: `Pflegedienste ${t2}` } })).ignored).toBe(true);
+  });
+
+  it("„interessiert“ vor der Antwort + Absage im Text: keine Aufgabe", async () => {
+    await handleWebhook({ event_type: "lead_interested", lead_email: finter, campaign_name: camp });
+    const c = await prisma.salesContact.findUniqueOrThrow({ where: { email: finter }, include: { tasks: true } });
+    expect(c.tasks).toHaveLength(0);
+    await handleWebhook({ event_type: "reply_received", lead_email: finter, campaign_name: camp, reply_text: "Vielen Dank, wir haben kein Interesse.", timestamp: "2026-11-11T10:00:00Z" });
+    const after = await prisma.salesContact.findUniqueOrThrow({ where: { email: finter }, include: { tasks: { where: { doneAt: null } } } });
+    expect(after.tasks).toHaveLength(0);
+  });
+});

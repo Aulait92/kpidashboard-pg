@@ -96,10 +96,13 @@ async function upsertCampaign(name: string, instantlyId?: string) {
   }
   return prisma.salesCampaign.upsert({
     where: { name },
-    create: { name, instantlyId },
+    create: { name, instantlyId, ignored: IGNORE_CAMPAIGN.test(name) },
     update: instantlyId ? { instantlyId } : {},
   });
 }
+
+/** Kampagnen mit anderem Thema: kommen nicht ins CRM (umschaltbar unter Vertrieb → Import). */
+const IGNORE_CAMPAIGN = /pflege/i;
 
 async function contactMap(emails: string[]) {
   // Haupt- und weitere E-Mail-Adressen der Kontakte
@@ -124,6 +127,7 @@ export async function syncInstantly(): Promise<SyncStats> {
   for (const c of campaigns) {
     stats.campaigns++;
     const campaign = await upsertCampaign(c.name, c.id);
+    if (campaign.ignored) continue;
     let after: string | undefined;
     do {
       const page = await api<{ items: ApiLead[]; next_starting_after?: string }>("/leads/list", {
@@ -165,8 +169,13 @@ export async function syncInstantly(): Promise<SyncStats> {
       }
     } while (after);
   }
-  // Neu angelegte Kontakte: alle Antworten holen (auch ältere als die zuletzt gespeicherte)
-  stats.newReplies = await syncReplies(stats.created > 0);
+  // Neu angelegte Kontakte oder Antworten ohne Text: alle Antworten holen (auch ältere als die zuletzt gespeicherte)
+  const missingText = await prisma.salesCampaignLead.count({
+    where: { replyCount: { gt: 0 }, campaign: { ignored: false }, contact: { emails: { none: { direction: "IN" } } } },
+  });
+  stats.newReplies = await syncReplies(stats.created > 0 || missingText > 0);
+  // Interessenten-Aufgaben erst jetzt, wenn die Antworttexte da sind (Absage im Text hat Vorrang)
+  await ensureInterestTasks();
   await fixDeclinedReplies().catch(() => 0);
   return stats;
 }
@@ -191,7 +200,9 @@ type ApiEmail = {
 export async function syncReplies(full = false): Promise<number> {
   const last = full ? null : await prisma.salesEmail.findFirst({ where: { direction: "IN", instantlyId: { not: null } }, orderBy: { sentAt: "desc" } });
   const since = last ? new Date(last.sentAt.getTime() - 3 * 86400000) : null;
-  const campaignNames = new Map((await prisma.salesCampaign.findMany({ where: { instantlyId: { not: null } } })).map((c) => [c.instantlyId!, c.name]));
+  const allCampaigns = await prisma.salesCampaign.findMany({ where: { instantlyId: { not: null } } });
+  const campaignNames = new Map(allCampaigns.map((c) => [c.instantlyId!, c.name]));
+  const ignoredIds = new Set(allCampaigns.filter((c) => c.ignored).map((c) => c.instantlyId!));
   let created = 0;
   let cursor: string | undefined;
   do {
@@ -203,6 +214,7 @@ export async function syncReplies(full = false): Promise<number> {
     const ids = await contactMap(page.items.map((e) => (e.lead ?? e.from_address_email ?? "").toLowerCase()).filter(Boolean));
     for (const e of page.items) {
       if (e.ue_type != null && e.ue_type !== 2) continue;
+      if (e.campaign_id && ignoredIds.has(e.campaign_id)) continue;
       const leadEmail = (e.lead ?? e.from_address_email ?? "").toLowerCase();
       let contactId = ids.get(leadEmail);
       if (!contactId) {
@@ -373,6 +385,34 @@ export async function fixDeclinedReplies(): Promise<number> {
 }
 
 const REPLY_TASKS = ["Auf Cold-Mail-Antwort reagieren", "Interessent aus Cold Mail anrufen"];
+const POSITIVE_INTEREST = ["Interessiert", "Termin gebucht"];
+
+async function hasReply(contactId: string): Promise<boolean> {
+  return !!(await prisma.salesEmail.findFirst({ where: { contactId, direction: "IN", isAutoReply: false }, select: { id: true } }));
+}
+
+/**
+ * Von Instantly als interessiert markierte Leads: Aufgabe anlegen, sobald der
+ * Antworttext da ist und keine Absage ist. Nur einmal je Kontakt (auch eine
+ * erledigte Antwort-Aufgabe zählt), nie für verlorene Kontakte.
+ */
+export async function ensureInterestTasks(): Promise<number> {
+  const leads = await prisma.salesCampaignLead.findMany({
+    where: {
+      interest: { in: POSITIVE_INTEREST },
+      campaign: { ignored: false },
+      contact: { stage: { notIn: ["VERLOREN", "UNGUELTIG", "GEWONNEN"] }, tasks: { none: { title: { in: REPLY_TASKS } } }, emails: { some: { direction: "IN", isAutoReply: false } } },
+    },
+    select: { contactId: true, interest: true, campaign: { select: { name: true } } },
+  });
+  let n = 0;
+  for (const l of leads) {
+    if (await lastReplyDeclined(l.contactId)) continue;
+    await ensureReplyTask(l.contactId, `Instantly: ${l.interest} (Kampagne „${l.campaign.name}“)`, "Interessent aus Cold Mail anrufen");
+    n++;
+  }
+  return n;
+}
 
 /** Legt die Antwort-Aufgabe an, außer es gibt schon eine offene. */
 export async function ensureReplyTask(contactId: string, note?: string | null, title = REPLY_TASKS[0]) {
@@ -418,7 +458,8 @@ async function saveLead(contactId: string, campaignId: string, d: LeadData, camp
   if (d.interest && d.interest !== prev?.interest && DECLINED.includes(d.interest)) {
     await markDeclined(contactId, d.interest);
   }
-  if (d.interest && d.interest !== prev?.interest && ["Interessiert", "Termin gebucht"].includes(d.interest) && !(await lastReplyDeclined(contactId))) {
+  // Nur wenn die Antwort schon gespeichert ist und keine Absage ist – sonst nach dem Abholen der Antworten (ensureInterestTasks)
+  if (d.interest && d.interest !== prev?.interest && POSITIVE_INTEREST.includes(d.interest) && (await hasReply(contactId)) && !(await lastReplyDeclined(contactId))) {
     await ensureReplyTask(contactId, `Instantly: ${d.interest} (Kampagne „${campaignName}“)`, "Interessent aus Cold Mail anrufen");
   }
   if (replyPlaceholder && d.replyCount > 0 && (prev?.replyCount ?? 0) === 0) {
@@ -496,6 +537,8 @@ export async function handleWebhook(p: Record<string, unknown>) {
   const type = String(p.event_type ?? "");
   if (!email || !type) return { ignored: "missing lead_email/event_type" };
   const name = String(p.campaign_name ?? "Instantly");
+  const campaign = await upsertCampaign(name, p.campaign_id ? String(p.campaign_id) : undefined);
+  if (campaign.ignored) return { ignored: "campaign ignored" };
   let contactId = await findContactIdByEmail(email);
   if (!contactId) {
     // Unbekannte Adresse (Liste direkt in Instantly): bei echter Interaktion anlegen
@@ -515,7 +558,6 @@ export async function handleWebhook(p: Record<string, unknown>) {
     ).id;
   }
   const contact = { id: contactId };
-  const campaign = await upsertCampaign(name, p.campaign_id ? String(p.campaign_id) : undefined);
   const at = p.timestamp ? new Date(String(p.timestamp)) : new Date();
   const key = { contactId_campaignId: { contactId: contact.id, campaignId: campaign.id } };
   const prev = await prisma.salesCampaignLead.findUnique({ where: key });
@@ -549,6 +591,10 @@ export async function handleWebhook(p: Record<string, unknown>) {
       });
       if (isNew && !auto) {
         await prisma.salesCampaignLead.upsert({ where: key, create: { ...base, replyCount: 1, lastReplyAt: at }, update: { replyCount: { increment: 1 }, lastReplyAt: at } });
+        // Instantly hatte schon „interessiert“ gemeldet, bevor der Text da war: jetzt Aufgabe, außer der Text ist eine Absage
+        if (prev?.interest && POSITIVE_INTEREST.includes(prev.interest) && !(await lastReplyDeclined(contact.id))) {
+          await ensureReplyTask(contact.id, `Instantly: ${prev.interest} (Kampagne „${name}“)`, "Interessent aus Cold Mail anrufen");
+        }
       }
       break;
     }
@@ -562,6 +608,8 @@ export async function handleWebhook(p: Record<string, unknown>) {
     case "lead_meeting_booked":
       await prisma.salesCampaignLead.upsert({ where: key, create: { ...base, interest: type === "lead_interested" ? "Interessiert" : "Termin gebucht" }, update: { interest: type === "lead_interested" ? "Interessiert" : "Termin gebucht" } });
       if (type === "lead_interested" && (await lastReplyDeclined(contact.id))) break; // Instantly irrt: Text ist eine Absage
+      // Antwort noch nicht da: Aufgabe erst, wenn der Text kommt und keine Absage ist (recordReply)
+      if (type === "lead_interested" && !(await hasReply(contact.id))) break;
       await prisma.salesEmail.updateMany({ where: { contactId: contact.id, direction: "IN", isAutoReply: false, sentiment: "NEUTRAL" }, data: { sentiment: "POSITIV" } });
       if (type === "lead_meeting_booked") {
         await prisma.salesTask.create({ data: { contactId: contact.id, title: "Termin aus Cold Mail vorbereiten", type: "TERMIN", dueAt: new Date() } });

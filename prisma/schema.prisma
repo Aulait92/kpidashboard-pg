@@ -1150,6 +1150,8 @@ model SalesCampaign {
   id          String              @id @default(cuid())
   instantlyId String?             @unique
   name        String              @unique
+  /// Anderes Thema (z. B. Pflege): Ereignisse und Leads dieser Kampagne kommen nicht ins CRM
+  ignored     Boolean             @default(false)
   createdAt   DateTime            @default(now())
   leads       SalesCampaignLead[]
 }
