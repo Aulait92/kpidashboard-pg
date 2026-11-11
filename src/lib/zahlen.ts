@@ -30,6 +30,14 @@ import {
   type MonthInfo,
   type MonthTotals,
   type RetainerInput,
+  breakdown,
+  duplicateGroups,
+  manualSetups,
+  oneTimeByMonth,
+  retentionBreakdown,
+  type ManualEntry,
+  type OneTimeMonth,
+  type Stream,
 } from "@/lib/revenue-ledger";
 
 /** Pay-per-Lead startete im Juni 2026 – davor gibt es keine belastbaren Umsätze. */
@@ -118,7 +126,7 @@ export function retainerInputFor(
 
 export async function loadLedger(now = new Date()) {
   const from = monthStart(addMonths(FIRST_MONTH, 0));
-  const [ppl, retainerCustomers, acceptedOffers] = await Promise.all([
+  const [ppl, retainerCustomers, acceptedOffers, manualRows] = await Promise.all([
     prisma.$queryRaw<{ customerId: string; month: string; amount: number; n: number }[]>`
       SELECT "customerId", to_char(("occurredAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Europe/Berlin', 'YYYY-MM') AS month,
              SUM(amount)::float8 AS amount, COUNT(*)::int AS n
@@ -131,6 +139,7 @@ export async function loadLedger(now = new Date()) {
         archived: true,
         retainerMonthly: true,
         retainerStart: true,
+        retainerEnd: true,
         seatsBilled: true,
         seatMonthly: true,
         bestandMonthly: true,
@@ -143,6 +152,7 @@ export async function loadLedger(now = new Date()) {
       where: { status: "accepted" },
       select: { id: true, setupFee: true, softwareFee: true, introMonthlyFee: true, introMonths: true, subscriptionStatus: true, updatedAt: true, paidAt: true, acceptedAt: true, annualFreeMonths: true },
     }),
+    prisma.manualRevenue.findMany({ orderBy: [{ month: "desc" }, { createdAt: "desc" }], include: { customer: { select: { name: true } } } }),
   ]);
   const offerById = new Map(acceptedOffers.map((o) => [o.id, o]));
   const onboardings = await prisma.onboarding.findMany({ where: { offerId: { not: null } }, select: { customerId: true, offerId: true } });
@@ -160,14 +170,18 @@ export async function loadLedger(now = new Date()) {
   const retainers: RetainerInput[] = retainerCustomers.map((c) => {
     const offer = c.onboarding?.offerId ? offerById.get(c.onboarding.offerId) : undefined;
     let end: Date | null = null;
-    if (offer?.subscriptionStatus === "canceled") end = offer.updatedAt;
+    if (c.retainerEnd) end = c.retainerEnd;
+    else if (offer?.subscriptionStatus === "canceled") end = offer.updatedAt;
     else if (c.archived) end = lastLeadOf.get(c.id) ?? c.retainerStart ?? null;
     return retainerInputFor(c, offer, end, granted.filter((g) => g.customerId === c.id));
   });
 
-  const setups = acceptedOffers
+  const offerSetups = acceptedOffers
     .filter((o) => n(o.setupFee) > 0 && (o.paidAt ?? o.acceptedAt))
     .map((o) => ({ customerId: customerOfOffer.get(o.id) ?? `angebot:${o.id}`, month: monthKey((o.paidAt ?? o.acceptedAt)!), amount: n(o.setupFee) }));
+  // Von Hand nachgetragene Einmal-Umsätze (Admin → Zahlen) zählen ebenfalls als „setup“
+  const manual: ManualEntry[] = manualRows.map((m) => ({ id: m.id, month: m.month, customerId: m.customerId, amount: n(m.amount), kind: m.kind }));
+  const setups = [...offerSetups, ...manualSetups(manual)];
 
   const ledger = buildLedger({
     now,
@@ -176,7 +190,7 @@ export async function loadLedger(now = new Date()) {
     retainers,
     setups,
   });
-  return { ledger, pplCounts: ppl };
+  return { ledger, pplCounts: ppl, offerSetups, manual, manualRows, offerOfCustomer: new Map(retainerCustomers.filter((c) => c.onboarding?.offerId && offerById.has(c.onboarding.offerId)).map((c) => [c.id, true])) };
 }
 
 // ─── Kosten je Monat und Zweck ───────────────────────────────────────────
@@ -319,7 +333,46 @@ export type ZahlenData = {
     parked: number;
   };
   settings: KpiSettingsData;
+  /** „Woraus besteht das?“ für die Kopfzahlen (nur Admin). */
+  drill: {
+    current: DrillMonth;
+    last: DrillMonth;
+    retention: { base: string; month: string; rows: { customerId: string; name: string; link: boolean; then: number; now: number }[] } | null;
+    directCosts: { name: string; amount: number }[];
+  };
+  /** Live-Kunden mit Paket Betreuung/Software, aber ohne Betreuungsgebühr und ohne Angebot. */
+  missingRetainer: { customerId: string; name: string; plan: string; liveSince: string | null }[];
+  oneTime: {
+    months: OneTimeMonth[];
+    currentMonth: number;
+    year: number;
+    yearKey: string;
+    entries: { id: string; month: string; customerId: string | null; customerName: string | null; amount: number; kind: string; note: string | null; createdBy: string | null }[];
+  };
+  customers: { id: string; name: string }[];
 };
+
+export type DrillCustomer = {
+  customerId: string;
+  name: string;
+  /** Kundenakte verlinkbar (nicht bei Angebot ohne Kunde oder Nachtrag ohne Kunde) */
+  link: boolean;
+  total: number;
+  /** Verkaufte Leads im Monat (nicht stornierte Revenue-Zeilen) */
+  leads: number;
+  streams: { stream: Stream; amount: number; source: string }[];
+  /** Hinweise auf mögliche Nicht-Kunden (intern, Test, archiviert, wenige Leads, Dublette) */
+  flags: string[];
+};
+export type DrillMonth = { month: string; projected: boolean; total: number; customers: DrillCustomer[] };
+
+const PPL_SOURCE: Record<string, string> = {
+  airtable: "Airtable-Abgleich",
+  engine: "Pay-per-Lead-Engine",
+  eingang: "Lead-Eingang",
+  ohne: "Umsatz ohne Lead",
+};
+const TEST_NAME = /\b(test|demo|sandbox|muster|beispiel)\b/i;
 
 const CHANNEL_LABEL: Record<string, string> = {
   COLD_CALL: "Kaltakquise Telefon",
@@ -341,7 +394,7 @@ function median(xs: number[]): number | null {
 
 export async function loadZahlen(now = new Date()): Promise<ZahlenData> {
   const settings = await loadKpiSettings();
-  const { ledger, pplCounts } = await loadLedger(now);
+  const { ledger, pplCounts, offerSetups, manual, manualRows, offerOfCustomer } = await loadLedger(now);
   const keys = ledger.months.map((m) => m.key);
   const { costs, recurring } = await loadCosts(keys, settings, now);
   const { rows, current, lastComplete } = ledger;
@@ -487,6 +540,93 @@ export async function loadZahlen(now = new Date()): Promise<ZahlenData> {
   const cancelledLast = cancelled.find((c) => c.month === lastComplete)?.n ?? 0;
   const parked = await prisma.poolLead.count({ where: { status: "parked" } });
 
+  // ── Nachvollziehbarkeit: Woraus bestehen die Kopfzahlen? ──
+  const drillMonths = [current, lastComplete];
+  const pplSources = await prisma.$queryRaw<{ customerId: string; month: string; src: string; n: number }[]>`
+    SELECT r."customerId", to_char((r."occurredAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Europe/Berlin', 'YYYY-MM') AS month,
+           CASE WHEN r."leadId" IS NULL THEN 'ohne'
+                WHEN l."airtableId" IS NOT NULL THEN 'airtable'
+                WHEN l."subscriptionId" IS NOT NULL OR l."orderId" IS NOT NULL THEN 'engine'
+                ELSE 'eingang' END AS src,
+           COUNT(*)::int AS n
+    FROM "Revenue" r LEFT JOIN "Lead" l ON l.id = r."leadId"
+    WHERE r.cancelled = false AND r."occurredAt" >= ${new Date(monthStart(lastComplete).getTime() - DAY)}
+    GROUP BY 1, 2, 3`;
+  const allCustomers = await prisma.customer.findMany({
+    select: {
+      id: true,
+      name: true,
+      plan: true,
+      archived: true,
+      users: { where: { role: "BUYER" }, select: { email: true } },
+      salesContact: { select: { email: true } },
+      leadSubscriptions: { select: { status: true, active: true } },
+    },
+    orderBy: { name: "asc" },
+  });
+  const custById = new Map(allCustomers.map((c) => [c.id, c]));
+  const dupes = duplicateGroups(
+    allCustomers.filter((c) => c.plan !== "internal").map((c) => ({ id: c.id, name: c.name, emails: [...c.users.map((u) => u.email), c.salesContact?.email ?? ""] })),
+  );
+  const nameOf = (id: string) => custById.get(id)?.name ?? (id.startsWith("nachtrag:") ? "Nachtrag ohne Kunde" : id.startsWith("angebot:") ? "Angebot ohne Kundenakte" : "Unbekannt");
+  const leadsIn = (id: string, m: string) => pplCounts.filter((p) => p.customerId === id && p.month === m).reduce((a, p) => a + p.n, 0);
+  const sourceOf = (id: string, m: string, stream: Stream) => {
+    if (stream === "ppl") {
+      const srcs = pplSources.filter((p) => p.customerId === id && p.month === m).sort((a, b) => b.n - a.n);
+      return srcs.map((x) => (srcs.length > 1 ? `${PPL_SOURCE[x.src] ?? x.src} (${x.n})` : PPL_SOURCE[x.src] ?? x.src)).join(", ") || "Revenue";
+    }
+    if (stream === "setup") return id.startsWith("nachtrag:") ? "Nachtrag" : "Angebot";
+    return offerOfCustomer.get(id) ? "Angebot" : "Retainer in Kundenakte";
+  };
+  const flagsOf = (id: string, m: string, streams: Stream[]) => {
+    const c = custById.get(id);
+    const f: string[] = [];
+    if (!c) return f;
+    if (c.plan === "internal") f.push("intern");
+    if (TEST_NAME.test(c.name)) f.push("Test?");
+    if (c.leadSubscriptions.length && c.leadSubscriptions.every((x) => x.status === "test")) f.push("nur Test-Bezug");
+    if (c.archived) f.push("archiviert");
+    const leads = leadsIn(id, m);
+    if (streams.length === 1 && streams[0] === "ppl" && leads <= 2) f.push(`nur ${leads} ${leads === 1 ? "Lead" : "Leads"}`);
+    for (const other of dupes.get(id) ?? []) f.push(`doppelt? wie „${nameOf(other)}“`);
+    return f;
+  };
+  const drillMonth = (m: string): DrillMonth => {
+    const customers = breakdown(rows, m).map((b) => ({
+      customerId: b.customerId,
+      name: nameOf(b.customerId),
+      link: custById.has(b.customerId),
+      total: b.total,
+      leads: leadsIn(b.customerId, m),
+      streams: b.streams.map((x) => ({ stream: x.stream, amount: x.amount, source: sourceOf(b.customerId, m, x.stream) })),
+      flags: flagsOf(b.customerId, m, b.streams.map((x) => x.stream)),
+    }));
+    return { month: m, projected: m === current, total: r2(customers.reduce((a, c) => a + c.total, 0)), customers };
+  };
+  const retRows = ret ? retentionBreakdown(rows, lastComplete, lag) : [];
+
+  // ── Hinweis: live, Paket Betreuung/Software, aber keine Betreuungsgebühr und kein Angebot ──
+  const missingRows = await prisma.customer.findMany({
+    where: {
+      archived: false,
+      plan: { in: ["software", "service"] },
+      retainerMonthly: null,
+      OR: [{ onboarding: { liveAt: { not: null } } }, { retainerStart: { lte: now } }],
+    },
+    select: { id: true, name: true, plan: true, retainerStart: true, onboarding: { select: { liveAt: true, offerId: true } } },
+    orderBy: { name: "asc" },
+  });
+  const acceptedOfferIds = new Set((await prisma.offer.findMany({ where: { status: "accepted" }, select: { id: true } })).map((o) => o.id));
+  const missingRetainer = missingRows
+    .filter((c) => !(c.onboarding?.offerId && acceptedOfferIds.has(c.onboarding.offerId)))
+    .map((c) => ({ customerId: c.id, name: c.name, plan: c.plan, liveSince: (c.onboarding?.liveAt ?? c.retainerStart)?.toISOString() ?? null }));
+
+  // ── Einmal-Umsätze je Monat (eigener Zeitraum, auch vor Juni 2026) ──
+  const oneTimeFrom = [FIRST_MONTH, ...manual.map((x) => x.month), ...offerSetups.map((x) => x.month)].filter((x) => x <= current).sort()[0];
+  const oneTimeMonths = oneTimeByMonth(offerSetups, manual, monthRange(oneTimeFrom < addMonths(current, -23) ? addMonths(current, -23) : oneTimeFrom, current));
+  const yearKey = current.slice(0, 4);
+  const yearSum = oneTimeByMonth(offerSetups, manual, monthRange(`${yearKey}-01`, current)).reduce((a, m) => a + m.total, 0);
+
   return {
     generatedAt: now.toISOString(),
     months: ledger.months,
@@ -583,6 +723,23 @@ export async function loadZahlen(now = new Date()): Promise<ZahlenData> {
       parked,
     },
     settings,
+    drill: {
+      current: drillMonth(drillMonths[0]),
+      last: drillMonth(drillMonths[1]),
+      retention: ret
+        ? { base: addMonths(lastComplete, -lag), month: lastComplete, rows: retRows.map((x) => ({ ...x, name: nameOf(x.customerId), link: custById.has(x.customerId) })) }
+        : null,
+      directCosts: costTable.filter((c) => c.purpose === "ppl" || c.purpose === "software").map((c) => ({ name: c.name, amount: c.amount })),
+    },
+    missingRetainer,
+    oneTime: {
+      months: oneTimeMonths,
+      currentMonth: oneTimeMonths.find((m) => m.month === current)?.total ?? 0,
+      year: r2(yearSum),
+      yearKey,
+      entries: manualRows.map((m) => ({ id: m.id, month: m.month, customerId: m.customerId, customerName: m.customer?.name ?? null, amount: n(m.amount), kind: m.kind, note: m.note, createdBy: m.createdBy })),
+    },
+    customers: allCustomers.filter((c) => c.plan !== "internal").map((c) => ({ id: c.id, name: c.archived ? `${c.name} (archiviert)` : c.name })),
   };
 }
 

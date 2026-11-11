@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { audit } from "@/lib/audit";
+import { getCurrentSession } from "@/lib/auth";
 
 const s = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 
@@ -80,4 +81,44 @@ export async function saveKpiSettingsAction(_prev: KostenState, fd: FormData): P
   revalidatePath("/admin/einstellungen/kosten");
   revalidatePath("/admin/zahlen");
   return { ok: true };
+}
+
+export type NachtragState = { ok?: boolean; error?: string };
+
+/** Betrag in deutscher Schreibweise („1.490,50 €“) oder mit Punkt als Dezimaltrenner. */
+function parseEuro(raw: string): number {
+  const t = raw.replace(/\s|€/g, "");
+  const normalized = t.includes(",") ? t.replace(/\./g, "").replace(",", ".") : /^\d{1,3}(\.\d{3})+$/.test(t) ? t.replace(/\./g, "") : t;
+  return Number(normalized);
+}
+
+/** Einmal-Umsatz nachtragen (z. B. Einrichtungsgebühr aus der Papier-Zeit). Fließt als „setup“ ins Umsatzbuch. */
+export async function saveManualRevenueAction(_prev: NachtragState, fd: FormData): Promise<NachtragState> {
+  await requireAuth();
+  const month = s(fd, "month");
+  const customerId = s(fd, "customerId") || null;
+  const amount = parseEuro(s(fd, "amount"));
+  const kind = s(fd, "kind") === "other" ? "other" : "setup";
+  const note = s(fd, "note").slice(0, 300) || null;
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month) || month < "2020-01") return { error: "Bitte einen Monat wählen." };
+  const nowKey = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit" }).format(new Date()).slice(0, 7);
+  if (month > nowKey) return { error: "Der Monat liegt in der Zukunft." };
+  if (!Number.isFinite(amount) || amount <= 0 || amount > 1_000_000) return { error: "Bitte einen Betrag (netto) über 0 € eingeben." };
+  if (customerId && !(await prisma.customer.findUnique({ where: { id: customerId }, select: { id: true } }))) return { error: "Kunde nicht gefunden." };
+  const session = await getCurrentSession().catch(() => null);
+  const saved = await prisma.manualRevenue.create({ data: { month, customerId, amount, kind, note, createdBy: session?.email ?? null } });
+  await audit("kpi.nachtrag", { entity: "ManualRevenue", entityId: saved.id, customerId, details: { month, amount, kind, note } });
+  revalidatePath("/admin/zahlen");
+  return { ok: true };
+}
+
+export async function deleteManualRevenueAction(fd: FormData): Promise<void> {
+  await requireAuth();
+  const id = s(fd, "id");
+  if (!id) return;
+  const row = await prisma.manualRevenue.findUnique({ where: { id } });
+  if (!row) return;
+  await prisma.manualRevenue.delete({ where: { id } });
+  await audit("kpi.nachtrag", { entity: "ManualRevenue", entityId: id, customerId: row.customerId, details: { deleted: true, month: row.month, amount: Number(row.amount), kind: row.kind } });
+  revalidatePath("/admin/zahlen");
 }

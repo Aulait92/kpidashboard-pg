@@ -111,3 +111,62 @@ Kampagnen der eigenen Kundengewinnung). Migration `20261113090000_kosten_zweck`.
   `customerSource`, Automatisierungsquote ohne WhatsApp-Kunden.
 - **Offen:** App hat keinen Dunkelmodus (Palette für dunkel vorbereitet),
   Termin-Stufe im Wirkungs-Trichter nur aus der Terminbuchung (`Appointment`).
+
+## Nachvollziehbarkeit, Einrichtungsgebühren, Produkte (11.11.2026)
+Anlass: Ole zweifelte an „Aktive Kunden 9“ und Betreuung/Software 0 €. Stand
+heute gibt es nur Pay-per-Lead-Kunden (Betreuungskunden sind im Onboarding),
+0 € Betreuung/Software ist also richtig. Die Seite zeigt jetzt, woraus jede
+Zahl besteht. Migration `20261114180000_zahlen_nachtrag`.
+
+- **„Woraus besteht das?“** unter Laufrate, MRR, Umsatzbindung, Bruttomarge
+  und Aktive Kunden (nicht in der Investoren-Ansicht). Zeigt je Kunde den
+  Strom, den Betrag im Monat und die Quelle mit Link zur Kundenakte:
+  Pay-per-Lead nach Herkunft des Leads (Airtable-Abgleich, Pay-per-Lead-Engine,
+  Lead-Eingang, Umsatz ohne Lead), Betreuung/Software aus „Angebot“ oder
+  „Retainer in Kundenakte“, Einrichtung aus „Angebot“ oder „Nachtrag“.
+  Bruttomarge zusätzlich mit den direkten Kosten und der Rechnung, Umsatzbindung
+  je Kunde damals/heute.
+- **Aktive Kunden** zusätzlich mit verkauften Leads je Kunde und Hinweisen auf
+  mögliche Nicht-Kunden: `intern` (Paket internal), „Test?“ (Test/Demo im
+  Namen), „nur Test-Bezug“, „archiviert“, „nur N Leads“ (höchstens 2 verkaufte
+  Leads ohne weiteren Strom) und „doppelt?“ (zweite Kundenakte mit gleichem
+  Namen ohne Klammerzusatz/Rechtsform oder gleicher E-Mail eines Logins bzw.
+  Vertriebskontakts). Filter „nur mit Hinweis“. Hinweise sind Verdachtsfälle,
+  die Zählung selbst bleibt unverändert.
+- **Kunden ohne hinterlegte Betreuungsgebühr:** Hinweiskarte für Kunden, die
+  live sind (Onboarding `liveAt` gesetzt oder `retainerStart` erreicht), nicht
+  archiviert, Paket Betreuung oder Software, ohne `retainerMonthly` und ohne
+  angenommenes Angebot. Kunden im Onboarding vor dem Start werden nicht
+  gemeldet. Link „In der Kundenakte eintragen“ führt zu Kundenakte →
+  Abrechnung, Karte **Betreuungsgebühr** (Monatsbetrag netto, Start, optional
+  Ende `retainerEnd`; leerer Betrag entfernt sie). Ändert nichts in Stripe,
+  wirkt im Umsatzbuch und in den Lead-Kosten des Kunden-Dashboards;
+  Änderungsprotokoll `billing.retainer`. Das Ende von Hand geht vor den
+  Ableitungen aus Abo und Archiv.
+- **Einrichtungsgebühren je Monat** (Tab Wachstum, ersetzt „Einmalige
+  Umsätze“): Summe laufender Monat und Kalenderjahr, Balken je Monat getrennt
+  nach Angebot, Nachtrag Einrichtung, Nachtrag Sonstiges (eigener Zeitraum bis
+  24 Monate zurück, also auch vor Juni 2026). **„Einmal-Umsatz nachtragen“**:
+  Monat, Kunde optional, Betrag netto, Art, Notiz; Einträge mit Löschen.
+  Tabelle `ManualRevenue`, fließt als Strom `setup` ins Umsatzbuch (nie in den
+  MRR, ab Juni 2026 auch in der Tabelle „Umsatz je Monat“), Änderungsprotokoll
+  `kpi.nachtrag`.
+- **Tab Produkte** (intern; `src/lib/produkte.ts`, Zeitraum über
+  `?zeitraum=` 30 / 90 Tage, dieser/letzter Monat, Jahr, seit Juni 2026;
+  Standard 90 Tage): je Produkt Leads, Werbekosten, Kosten je Lead,
+  Termin-Quote, Abschlüsse, Abschlussquote, gemeldete Jahresbeiträge (Anzahl),
+  geschätzte Provision und Pay-per-Lead-Umsatz. Darunter Matrix Produkt ×
+  Vertreter mit Leads, Kosten je Lead und Abschlussquote, Name verlinkt zur
+  Kundenakte. Leer = „–“, unter 10 Leads „wenig Fälle“ bzw. Stern.
+  - Produkt = `Lead.source` über `canonicalProductKey` (PKV Wechsel und
+    Tarifoptimierung zusammen), Kosten über `Cost.product`, Umsatz über den Lead.
+  - Leads ohne anerkannte Stornos, interne Kunden ausgenommen.
+  - Werbekosten = Meta-`Cost` (LEAD) mit Produkt, ohne Kampagnen der eigenen
+    Kundengewinnung. Kosten ohne Kunde (Pool) werden in der Matrix nach Anteil
+    an den Leads des Produkts verteilt („anteilig“).
+  - Termin = Termin im Kalender oder Status „Termin vereinbart“.
+  - Jahresbeitrag = gemeldeter Wert bei Prozent-Produkten, Monatsbeitrag × 12
+    bei Monats-Produkten (PKV); freie Werte unbekannter Produkte zählen nicht
+    als Beitrag. Provision = `estimatedProvision` mit den Sätzen des Kunden.
+- Tests: `tests/unit/zahlen-nachtrag.test.ts`, `tests/unit/produkte.test.ts`,
+  `tests/integration/zahlen-drilldown.test.ts`.

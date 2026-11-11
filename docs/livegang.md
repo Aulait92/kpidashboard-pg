@@ -68,6 +68,7 @@ Die Produktion ist seit 11.11. eingemessen; neue Migrationen laufen beim normale
 | `20261114130000_modul_selbst_buchen` | Spalte `Customer.bestandCancelAt` (Bestandskunden-Modul im Kundenbereich selbst gekündigt: Zugang bis zum Ende des Abrechnungszeitraums, danach schaltet der WhatsApp-Cron ab) | nur hinzufügend |
 | `20261114150000_admin_neue_oberflaeche_standard` | Neue Admin-Oberfläche als Standard: Spalten-Standard `User.adminNewUi` = true, bestehende Admins auf true (Umschalten im Profilmenü bleibt) | ändert Daten (nur Admin-Einstellung), unkritisch |
 | `20261114160000_vorlagen_automatisch` | Spalten `WhatsAppAccount.templatesCheckedAt`, `MessageTemplate.auto`, `submittedAt`, `rejectionReason` (WhatsApp-Vorlagen automatisch bei Meta einreichen, siehe `docs/whatsapp-360dialog.md`) | nur hinzufügend; bestehende, von Hand angelegte Vorlagen bleiben unverändert (`auto = false`) |
+| `20261114180000_zahlen_nachtrag` | Spalte `Customer.retainerEnd` (Ende der Betreuungsgebühr von Hand) und Tabelle `ManualRevenue` (nachgetragene Einmal-Umsätze: Monat, Kunde optional, Betrag netto, Art Einrichtung/Sonstiges, Notiz, angelegt von) für die Zahlen-Seite | nur hinzufügend; ohne Einträge ändert sich keine Kennzahl |
 
 Keine davon verändert bestehende Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und

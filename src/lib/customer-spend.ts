@@ -18,6 +18,8 @@ export type CustomerSpend = {
 export type RetainerConfig = {
   retainerMonthly: number | null;
   retainerStart: Date | null;
+  /** Letzter Tag mit Retainer (inklusive), von Hand gesetzt; null = läuft. */
+  retainerEnd?: Date | null;
   metaAdAccountId: string | null;
 };
 
@@ -34,12 +36,12 @@ function toNumber(v: unknown): number {
 export async function loadRetainerConfig(customerId: string): Promise<RetainerConfig | null> {
   const c = await prisma.customer.findUnique({
     where: { id: customerId },
-    select: { retainerMonthly: true, retainerStart: true, metaAdAccountId: true },
+    select: { retainerMonthly: true, retainerStart: true, retainerEnd: true, metaAdAccountId: true },
   });
   if (!c) return null;
   const retainerMonthly = c.retainerMonthly == null ? null : toNumber(c.retainerMonthly);
   if (!retainerMonthly && !c.metaAdAccountId) return null;
-  return { retainerMonthly, retainerStart: c.retainerStart, metaAdAccountId: c.metaAdAccountId };
+  return { retainerMonthly, retainerStart: c.retainerStart, retainerEnd: c.retainerEnd, metaAdAccountId: c.metaAdAccountId };
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -51,7 +53,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export function retainerForRange(cfg: RetainerConfig, from: Date, to: Date): number {
   if (!cfg.retainerMonthly) return 0;
   const startBound = cfg.retainerStart ? Math.max(from.getTime(), cfg.retainerStart.getTime()) : from.getTime();
-  const endBound = Math.min(to.getTime(), endOfDay(new Date()).getTime());
+  const endBound = Math.min(to.getTime(), endOfDay(new Date()).getTime(), cfg.retainerEnd ? endOfDay(cfg.retainerEnd).getTime() : Infinity);
   if (endBound < startBound) return 0;
   let sum = 0;
   // Tagesweise in UTC iterieren (Datumsgrenzen genügen für die Anteilsrechnung).
@@ -126,7 +128,7 @@ type RetainerCustomer = { id: string; cfg: RetainerConfig; product: string | nul
 async function loadRetainerCustomers(): Promise<RetainerCustomer[]> {
   const rows = await prisma.customer.findMany({
     where: { retainerMonthly: { not: null } },
-    select: { id: true, retainerMonthly: true, retainerStart: true, metaAdAccountId: true },
+    select: { id: true, retainerMonthly: true, retainerStart: true, retainerEnd: true, metaAdAccountId: true },
   });
   const out: RetainerCustomer[] = [];
   for (const r of rows) {
@@ -141,7 +143,7 @@ async function loadRetainerCustomers(): Promise<RetainerCustomer[]> {
     });
     out.push({
       id: r.id,
-      cfg: { retainerMonthly: monthly, retainerStart: r.retainerStart, metaAdAccountId: r.metaAdAccountId },
+      cfg: { retainerMonthly: monthly, retainerStart: r.retainerStart, retainerEnd: r.retainerEnd, metaAdAccountId: r.metaAdAccountId },
       product: top[0]?.source ?? null,
     });
   }

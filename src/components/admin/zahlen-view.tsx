@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useLayoutEffect, useRef, useState, useTransition, type CSSProperties, type ReactNode } from "react";
-import type { ZahlenData } from "@/lib/zahlen";
-import { saveUpdateTextsAction } from "@/app/admin/zahlen/actions";
+import { useActionState, useEffect, useLayoutEffect, useRef, useState, useTransition, type CSSProperties, type ReactNode } from "react";
+import type { DrillMonth, ZahlenData } from "@/lib/zahlen";
+import { PRODUKT_RANGES, LOW_SAMPLE, type ProdukteData } from "@/lib/produkte-shared";
+import { deleteManualRevenueAction, saveManualRevenueAction, saveUpdateTextsAction, type NachtragState } from "@/app/admin/zahlen/actions";
 import { cn } from "@/lib/utils";
 
 // ─── Format ──────────────────────────────────────────────────────────────
@@ -35,12 +36,13 @@ const PALETTE = {
   "--z-seq-6": "#184f95",
 } as CSSProperties;
 
-type Tab = "wachstum" | "kunden" | "wirtschaft" | "wirkung" | "vertrieb" | "ppl";
+type Tab = "wachstum" | "kunden" | "wirtschaft" | "wirkung" | "produkte" | "vertrieb" | "ppl";
 const TABS: { key: Tab; label: string; internal?: boolean }[] = [
   { key: "wachstum", label: "Wachstum" },
   { key: "kunden", label: "Kunden" },
   { key: "wirtschaft", label: "Wirtschaftlichkeit" },
   { key: "wirkung", label: "Wirkung beim Vertreter" },
+  { key: "produkte", label: "Produkte", internal: true },
   { key: "vertrieb", label: "Vertrieb", internal: true },
   { key: "ppl", label: "Pay-per-Lead", internal: true },
 ];
@@ -160,10 +162,13 @@ function Def({ show, children }: { show: boolean; children: ReactNode }) {
 }
 
 // ─── Hauptansicht ────────────────────────────────────────────────────────
-export function ZahlenView({ data }: { data: ZahlenData }) {
+type DrillKind = "arr" | "mrr" | "retention" | "margin" | "active";
+
+export function ZahlenView({ data, produkte }: { data: ZahlenData; produkte: ProdukteData }) {
   const [tab, setTab] = useState<Tab>("wachstum");
   const [investor, setInvestor] = useState(false);
   const [update, setUpdate] = useState(false);
+  const [drill, setDrill] = useState<DrillKind | null>(null);
   useEffect(() => {
     try {
       const t = localStorage.getItem("zahlen-tab") as Tab | null;
@@ -184,12 +189,12 @@ export function ZahlenView({ data }: { data: ZahlenData }) {
   const hasRevenue = data.totals.some((t) => t.recurring > 0);
 
   const tiles = [
-    { lbl: "Jahresumsatz (Laufrate)", val: kEur(h.arr), delta: h.growth != null ? `${growthUp ? "+" : ""}${pct(h.growth * 100)}` : null, up: growthUp, note: "MRR × 12", def: "Wiederkehrender Monatsumsatz × 12. Ohne Einrichtungsgebühren." },
-    { lbl: "MRR", val: kEur(h.mrr), delta: h.mrrPrev > 0 ? `${h.mrr >= h.mrrPrev ? "+" : "−"}${kEur(Math.abs(h.mrr - h.mrrPrev))}` : null, up: h.mrr >= h.mrrPrev, note: `davon vertraglich ${kEur(h.contractual)}`, def: "Wiederkehrender Monatsumsatz des laufenden Monats (hochgerechnet): Software (inkl. weiterer Logins und Module), Betreuung und Pay-per-Lead nach Stornos. Jahresabo: Jahresbetrag ÷ 12." },
+    { lbl: "Jahresumsatz (Laufrate)", val: kEur(h.arr), delta: h.growth != null ? `${growthUp ? "+" : ""}${pct(h.growth * 100)}` : null, up: growthUp, drill: "arr" as DrillKind, note: "MRR × 12", def: "Wiederkehrender Monatsumsatz × 12. Ohne Einrichtungsgebühren." },
+    { lbl: "MRR", val: kEur(h.mrr), delta: h.mrrPrev > 0 ? `${h.mrr >= h.mrrPrev ? "+" : "−"}${kEur(Math.abs(h.mrr - h.mrrPrev))}` : null, up: h.mrr >= h.mrrPrev, drill: "mrr" as DrillKind, note: `davon vertraglich ${kEur(h.contractual)}`, def: "Wiederkehrender Monatsumsatz des laufenden Monats (hochgerechnet): Software (inkl. weiterer Logins und Module), Betreuung und Pay-per-Lead nach Stornos. Jahresabo: Jahresbetrag ÷ 12." },
     { lbl: "Wachstum zum Vormonat", val: h.growth != null ? `${growthUp ? "+" : ""}${pct(h.growth * 100)}` : "–", delta: h.avgGrowth != null ? `Ø ${h.avgGrowth >= 0 ? "+" : ""}${pct(h.avgGrowth * 100, 0)} pro Monat` : null, up: (h.avgGrowth ?? 0) >= 0, note: `${shortMonth(data.current)}* vs. ${shortMonth(data.lastComplete)}`, def: "Veränderung des MRR gegenüber dem letzten abgeschlossenen Monat; Ø = durchschnittliches Monatswachstum seit dem ersten Umsatzmonat." },
-    { lbl: "Umsatzbindung", early: h.early, val: h.retention ? `${h.retention.pct} %` : "–", delta: null, up: true, note: h.retention ? `${h.retention.customers} Kunden, nach ${h.retention.lag} Monaten` : "noch zu wenig Historie", def: "Umsatz im letzten abgeschlossenen Monat von Kunden, die vor 3 (ab einem Jahr Historie: 12) Monaten aktiv waren, geteilt durch deren Umsatz damals. Mit Ausbau, abzüglich Kündigungen." },
-    { lbl: "Bruttomarge", val: h.grossMargin != null ? pct(h.grossMargin * 100, 0) : "–", delta: h.grossMargin != null && h.grossMarginPrev != null ? `${h.grossMargin >= h.grossMarginPrev ? "+" : "−"}${pct(Math.abs(h.grossMargin - h.grossMarginPrev) * 100, 0).replace(" %", " Pkt.")}` : null, up: (h.grossMargin ?? 0) >= (h.grossMarginPrev ?? 0), note: `${longMonth(data.lastComplete)}, nach direkten Kosten`, def: "(Wiederkehrender Umsatz − direkte Kosten) ÷ Umsatz. Direkt: Meta-Werbung für Kunden-Leads und laufende Kosten mit Zweck „Pay-per-Lead“ oder „Software“." },
-    { lbl: "Aktive Kunden", val: String(h.active), delta: `${h.active - h.activePrev >= 0 ? "+" : ""}${h.active - h.activePrev}`, up: h.active >= h.activePrev, note: `${longMonth(data.lastComplete)} · ${h.churnedTotal} ${h.churnedTotal === 1 ? "Kündigung" : "Kündigungen"} seit Start`, def: "Kunden mit wiederkehrendem Umsatz im letzten abgeschlossenen Monat (ein Kunde zählt einmal, auch mit mehreren Strömen)." },
+    { lbl: "Umsatzbindung", early: h.early, val: h.retention ? `${h.retention.pct} %` : "–", delta: null, up: true, drill: h.retention ? ("retention" as DrillKind) : undefined, note: h.retention ? `${h.retention.customers} Kunden, nach ${h.retention.lag} Monaten` : "noch zu wenig Historie", def: "Umsatz im letzten abgeschlossenen Monat von Kunden, die vor 3 (ab einem Jahr Historie: 12) Monaten aktiv waren, geteilt durch deren Umsatz damals. Mit Ausbau, abzüglich Kündigungen." },
+    { lbl: "Bruttomarge", val: h.grossMargin != null ? pct(h.grossMargin * 100, 0) : "–", delta: h.grossMargin != null && h.grossMarginPrev != null ? `${h.grossMargin >= h.grossMarginPrev ? "+" : "−"}${pct(Math.abs(h.grossMargin - h.grossMarginPrev) * 100, 0).replace(" %", " Pkt.")}` : null, up: (h.grossMargin ?? 0) >= (h.grossMarginPrev ?? 0), drill: "margin" as DrillKind, note: `${longMonth(data.lastComplete)}, nach direkten Kosten`, def: "(Wiederkehrender Umsatz − direkte Kosten) ÷ Umsatz. Direkt: Meta-Werbung für Kunden-Leads und laufende Kosten mit Zweck „Pay-per-Lead“ oder „Software“." },
+    { lbl: "Aktive Kunden", val: String(h.active), delta: `${h.active - h.activePrev >= 0 ? "+" : ""}${h.active - h.activePrev}`, up: h.active >= h.activePrev, drill: "active" as DrillKind, note: `${longMonth(data.lastComplete)} · ${h.churnedTotal} ${h.churnedTotal === 1 ? "Kündigung" : "Kündigungen"} seit Start`, def: "Kunden mit wiederkehrendem Umsatz im letzten abgeschlossenen Monat (ein Kunde zählt einmal, auch mit mehreren Strömen)." },
   ];
 
   return (
@@ -240,10 +245,17 @@ export function ZahlenView({ data }: { data: ZahlenData }) {
               </span>
             ) : null}
             <div className="mt-1 text-xs text-[color:var(--muted)]">{t.note}</div>
+            {!investor && "drill" in t && t.drill ? (
+              <button type="button" onClick={() => setDrill(t.drill!)} className="mt-1.5 text-[12.5px] font-medium text-[color:var(--brand)] hover:underline" data-drill={t.drill}>
+                Woraus besteht das?
+              </button>
+            ) : null}
             <Def show={investor}>{t.def}</Def>
           </div>
         ))}
       </section>
+
+      {!investor && data.missingRetainer.length ? <MissingRetainer data={data} /> : null}
 
       <div className="mb-3.5 flex gap-1.5 overflow-x-auto pb-0.5" role="tablist">
         {visibleTabs.map((t) => (
@@ -272,20 +284,22 @@ export function ZahlenView({ data }: { data: ZahlenData }) {
         ) : null}
       </div>
 
-      {active === "wachstum" ? <Wachstum data={data} /> : null}
+      {active === "wachstum" ? <Wachstum data={data} investor={investor} /> : null}
       {active === "kunden" ? <Kunden data={data} investor={investor} /> : null}
       {active === "wirtschaft" ? <Wirtschaft data={data} investor={investor} /> : null}
       {active === "wirkung" ? <Wirkung data={data} investor={investor} /> : null}
+      {active === "produkte" ? <Produkte p={produkte} /> : null}
       {active === "vertrieb" ? <Vertrieb data={data} /> : null}
       {active === "ppl" ? <Ppl data={data} /> : null}
 
       {update ? <UpdateSheet data={data} onClose={() => setUpdate(false)} /> : null}
+      {drill ? <DrillSheet kind={drill} data={data} onClose={() => setDrill(null)} /> : null}
     </div>
   );
 }
 
 // ─── Wachstum ────────────────────────────────────────────────────────────
-function Wachstum({ data }: { data: ZahlenData }) {
+function Wachstum({ data, investor }: { data: ZahlenData; investor: boolean }) {
   const [table, setTable] = useState(false);
   const cur = data.totals.find((t) => t.month === data.current);
   const last = data.totals.find((t) => t.month === data.lastComplete);
@@ -370,18 +384,7 @@ function Wachstum({ data }: { data: ZahlenData }) {
             <Empty />
           )}
         </Card>
-        <Card title="Einmalige Umsätze" cap="Einrichtungsgebühren, bewusst nicht im MRR.">
-          {data.totals.some((t) => t.setup > 0) ? (
-            <>
-              {data.totals.map((t) => (
-                <BarRow key={t.month} label={shortMonth(t.month)} value={t.setup} max={Math.max(...data.totals.map((x) => x.setup))} color="#b8c2d3" right={eur(t.setup)} labelWidth={50} />
-              ))}
-              <p className="mt-2 text-[12.5px] text-[color:var(--muted)]">Summe seit Juni: {eur(data.totals.reduce((s, t) => s + t.setup, 0))}.</p>
-            </>
-          ) : (
-            <Empty>Noch keine Einrichtungsgebühren.</Empty>
-          )}
-        </Card>
+        <OneTimeCard data={data} investor={investor} />
       </div>
     </div>
   );
@@ -846,6 +849,548 @@ function UpdateSheet({ data, onClose }: { data: ZahlenData; onClose: () => void 
           Definitionen: MRR = wiederkehrender Monatsumsatz (Software inkl. weiterer Logins und Bestandskunden-Modul, Betreuung, Pay-per-Lead nach Stornos), ohne Einrichtungsgebühren; laufender Monat hochgerechnet. Jahresabo (jährlich im Voraus): MRR = Jahresbetrag ÷ 12. WhatsApp-Gebühren sind im Preis enthalten: kein Umsatz, sondern direkte Software-Kosten. Laufrate = MRR × 12. Bruttomarge = (Umsatz − direkte Kosten) ÷ Umsatz, ohne Personalkosten.
         </p>
       </div>
+    </div>
+  );
+}
+
+// ─── Nachvollziehbarkeit: Woraus besteht das? ────────────────────────────
+const STREAM_LABEL: Record<string, string> = { ppl: "Pay-per-Lead", service: "Betreuung", software: "Software", setup: "Einrichtung" };
+const STREAM_COLOR: Record<string, string> = { ppl: "var(--z-s1)", service: "var(--z-s2)", software: "var(--z-s3)", setup: "#b8c2d3" };
+
+function CustomerName({ id, name, link }: { id: string; name: string; link: boolean }) {
+  return link ? (
+    <Link href={`/admin/kunden/${id}`} className="font-medium text-[color:var(--brand)] hover:underline">
+      {name}
+    </Link>
+  ) : (
+    <span className="font-medium">{name}</span>
+  );
+}
+
+function Flag({ children }: { children: ReactNode }) {
+  return <span className="mr-1 inline-flex rounded-md bg-amber-50 px-1.5 py-px text-[11.5px] font-semibold text-amber-900">{children}</span>;
+}
+
+const th = "py-1.5 pr-2 font-medium";
+const thR = "whitespace-nowrap px-2 text-right font-medium";
+
+/** Ein Monat aus dem Umsatzbuch: eine Zeile je Kunde und Strom. */
+function StreamTable({ m, factor = 1 }: { m: DrillMonth; factor?: number }) {
+  if (!m.customers.length) return <Empty>Kein wiederkehrender Umsatz im {longMonth(m.month)}.</Empty>;
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-[13px] tabular-nums">
+        <thead className="text-left text-[color:var(--muted)]">
+          <tr>
+            <th className={th}>Kunde</th>
+            <th className="px-2 font-medium">Strom</th>
+            <th className={thR}>{factor === 12 ? "Betrag × 12" : "Betrag im Monat"}</th>
+            <th className="pl-2 font-medium">Quelle</th>
+          </tr>
+        </thead>
+        <tbody>
+          {m.customers.flatMap((c) =>
+            c.streams.map((s, i) => (
+              <tr key={`${c.customerId}-${s.stream}`} className={cn("border-t border-[color:var(--border)]", i > 0 && "border-dashed")}>
+                <td className="py-1.5 pr-2">
+                  {i === 0 ? (
+                    <>
+                      <CustomerName id={c.customerId} name={c.name} link={c.link} /> {c.flags.map((f) => <Flag key={f}>{f}</Flag>)}
+                    </>
+                  ) : null}
+                </td>
+                <td className="whitespace-nowrap px-2">
+                  <span className="inline-flex items-center gap-1.5">
+                    <i className="inline-block h-2.5 w-2.5 rounded-[3px]" style={{ background: STREAM_COLOR[s.stream] }} />
+                    {STREAM_LABEL[s.stream]}
+                  </span>
+                </td>
+                <td className="px-2 text-right">{eur(s.amount * factor, 2)}</td>
+                <td className="pl-2 text-[color:var(--muted)]">{s.source}</td>
+              </tr>
+            )),
+          )}
+          <tr className="border-t border-[color:var(--border)] font-semibold">
+            <td className="py-1.5 pr-2">Summe ({m.customers.length} Kunden)</td>
+            <td />
+            <td className="px-2 text-right">{eur(m.total * factor, 2)}</td>
+            <td />
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function ActiveTable({ m }: { m: DrillMonth }) {
+  const [onlyFlagged, setOnlyFlagged] = useState(false);
+  const flagged = m.customers.filter((c) => c.flags.length);
+  const list = onlyFlagged ? flagged : m.customers;
+  return (
+    <>
+      <div className="mb-2 flex flex-wrap items-center gap-3 text-[13px]">
+        <span>
+          <b>{m.customers.length}</b> Kunden mit wiederkehrendem Umsatz, davon <b>{flagged.length}</b> mit Hinweis.
+        </span>
+        {flagged.length ? (
+          <label className="inline-flex items-center gap-1.5 text-[color:var(--muted)]">
+            <input type="checkbox" checked={onlyFlagged} onChange={(e) => setOnlyFlagged(e.target.checked)} /> nur mit Hinweis
+          </label>
+        ) : null}
+      </div>
+      {list.length ? (
+        <div className="overflow-x-auto">
+          <table className="w-full text-[13px] tabular-nums" data-drill-active>
+            <thead className="text-left text-[color:var(--muted)]">
+              <tr>
+                <th className={th}>Kunde</th>
+                <th className={thR}>Verkaufte Leads</th>
+                <th className={thR}>Umsatz im Monat</th>
+                <th className="px-2 font-medium">Ströme</th>
+                <th className="pl-2 font-medium">Hinweis</th>
+              </tr>
+            </thead>
+            <tbody>
+              {list.map((c) => (
+                <tr key={c.customerId} className="border-t border-[color:var(--border)]">
+                  <td className="py-1.5 pr-2">
+                    <CustomerName id={c.customerId} name={c.name} link={c.link} />
+                  </td>
+                  <td className="px-2 text-right">{c.leads || "–"}</td>
+                  <td className="px-2 text-right">{eur(c.total, 2)}</td>
+                  <td className="px-2 text-[color:var(--muted)]">{c.streams.map((s) => STREAM_LABEL[s.stream]).join(", ")}</td>
+                  <td className="pl-2">{c.flags.length ? c.flags.map((f) => <Flag key={f}>{f}</Flag>) : <span className="text-[color:var(--muted)]">–</span>}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <Empty>Keine Kunden.</Empty>
+      )}
+      <p className="mt-2 text-[12.5px] text-[color:var(--muted)]">
+        Hinweise sind Verdachtsfälle, keine Fehler: intern oder Test im Namen, nur Test-Bezug, archiviert, höchstens 2 verkaufte Leads ohne weiteren Strom, oder eine zweite Kundenakte mit gleichem Namen bzw. gleicher E-Mail. Wer fälschlich zählt: in der Kundenakte archivieren, auf „intern“ stellen oder die Dublette zusammenführen.
+      </p>
+    </>
+  );
+}
+
+function DrillSheet({ kind, data, onClose }: { kind: DrillKind; data: ZahlenData; onClose: () => void }) {
+  const d = data.drill;
+  const h = data.headline;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const titles: Record<DrillKind, string> = {
+    arr: `Jahresumsatz (Laufrate): ${eur(h.arr)}`,
+    mrr: `MRR ${longMonth(data.current)}: ${eur(h.mrr, 2)}`,
+    retention: `Umsatzbindung: ${h.retention?.pct ?? "–"} %`,
+    margin: `Bruttomarge ${longMonth(data.lastComplete)}: ${h.grossMargin != null ? pct(h.grossMargin * 100, 0) : "–"}`,
+    active: `Aktive Kunden ${longMonth(data.lastComplete)}: ${h.active}`,
+  };
+  const directSum = d.directCosts.reduce((s, c) => s + c.amount, 0);
+  return (
+    <div className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-slate-950/55 px-4 py-8" role="dialog" aria-modal="true" aria-label="Woraus besteht das?" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="w-full max-w-[920px] rounded-xl bg-white p-5 shadow-2xl sm:p-7">
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[12.5px] text-[color:var(--muted)]">Woraus besteht das?</p>
+            <h3 className="text-lg font-semibold sm:text-xl">{titles[kind]}</h3>
+          </div>
+          <button type="button" onClick={onClose} className="shrink-0 rounded-[10px] border border-[color:var(--border)] px-3 py-1.5 text-sm font-semibold">
+            Schließen
+          </button>
+        </div>
+        {kind === "mrr" || kind === "arr" ? (
+          <>
+            <p className="mb-3 text-[13px] text-[color:var(--muted)]">
+              Wiederkehrender Umsatz im {longMonth(data.current)}
+              {kind === "arr" ? ", mal 12" : ""}. Pay-per-Lead ist für den laufenden Monat hochgerechnet (bisher × Tage im Monat ÷ vergangene Tage). Einrichtungsgebühren zählen nicht.
+            </p>
+            <StreamTable m={d.current} factor={kind === "arr" ? 12 : 1} />
+          </>
+        ) : null}
+        {kind === "active" ? (
+          <>
+            <p className="mb-3 text-[13px] text-[color:var(--muted)]">
+              Jeder Kunde mit wiederkehrendem Umsatz im {longMonth(data.lastComplete)} zählt einmal. Verkaufte Leads = nicht stornierte Lead-Umsätze im Monat.
+            </p>
+            <ActiveTable m={d.last} />
+          </>
+        ) : null}
+        {kind === "margin" ? (
+          <>
+            <p className="mb-3 text-[13px] text-[color:var(--muted)]">
+              ({eur(d.last.total, 2)} Umsatz − {eur(directSum, 2)} direkte Kosten) ÷ {eur(d.last.total, 2)} ={" "}
+              <b className="text-[color:var(--foreground)]">{d.last.total > 0 ? pct(((d.last.total - directSum) / d.last.total) * 100, 1) : "–"}</b>
+            </p>
+            <h4 className="mb-1 text-sm font-semibold">Direkte Kosten</h4>
+            {d.directCosts.length ? (
+              <table className="mb-4 w-full text-[13px] tabular-nums">
+                <tbody>
+                  {d.directCosts.map((c) => (
+                    <tr key={c.name} className="border-t border-[color:var(--border)]">
+                      <td className="py-1.5 pr-2">{c.name}</td>
+                      <td className="pl-2 text-right">{eur(c.amount, 2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="mb-4 text-[13px] text-[color:var(--muted)]">Keine direkten Kosten erfasst.</p>
+            )}
+            <h4 className="mb-1 text-sm font-semibold">Umsatz</h4>
+            <StreamTable m={d.last} />
+          </>
+        ) : null}
+        {kind === "retention" && d.retention ? (
+          <>
+            <p className="mb-3 text-[13px] text-[color:var(--muted)]">
+              Kunden mit Umsatz im {longMonth(d.retention.base)} und was sie im {longMonth(d.retention.month)} zahlen.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-[13px] tabular-nums">
+                <thead className="text-left text-[color:var(--muted)]">
+                  <tr>
+                    <th className={th}>Kunde</th>
+                    <th className={thR}>{longMonth(d.retention.base)}</th>
+                    <th className={thR}>{longMonth(d.retention.month)}</th>
+                    <th className="pl-2 text-right font-medium">Bindung</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {d.retention.rows.map((r) => (
+                    <tr key={r.customerId} className="border-t border-[color:var(--border)]">
+                      <td className="py-1.5 pr-2">
+                        <CustomerName id={r.customerId} name={r.name} link={r.link} />
+                      </td>
+                      <td className="px-2 text-right">{eur(r.then, 2)}</td>
+                      <td className="px-2 text-right">{eur(r.now, 2)}</td>
+                      <td className="pl-2 text-right">{r.then > 0 ? `${Math.round((r.now / r.then) * 100)} %` : "–"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function MissingRetainer({ data }: { data: ZahlenData }) {
+  const list = data.missingRetainer;
+  return (
+    <section className="mb-4 rounded-[var(--radius-lg)] border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-950" data-missing-retainer>
+      <h2 className="text-[14px] font-semibold">Kunden ohne hinterlegte Betreuungsgebühr ({list.length})</h2>
+      <p className="mt-0.5 text-amber-900">Live mit Paket Betreuung oder Software, aber ohne Angebot und ohne Monatsbetrag. Ihr Umsatz fehlt im MRR.</p>
+      <ul className="mt-2 divide-y divide-amber-200">
+        {list.map((c) => (
+          <li key={c.customerId} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5">
+            <span className="font-medium">{c.name}</span>
+            <span className="text-amber-900">
+              {c.plan === "service" ? "Nur Betreuung" : "Betreuung + Software"}
+              {c.liveSince ? ` · live seit ${new Date(c.liveSince).toLocaleDateString("de-DE")}` : ""}
+            </span>
+            <Link href={`/admin/kunden/${c.customerId}/abrechnung#betreuungsgebuehr`} className="ml-auto font-semibold text-[color:var(--brand)] hover:underline">
+              In der Kundenakte eintragen →
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+// ─── Einrichtungsgebühren ────────────────────────────────────────────────
+const ONE_TIME = [
+  { key: "offers", name: "Aus Angeboten", color: "#7b8aa3" },
+  { key: "manualSetup", name: "Nachgetragen: Einrichtung", color: "#b8c2d3" },
+  { key: "other", name: "Nachgetragen: Sonstiges", color: "#dde3ec" },
+] as const;
+
+function OneTimeCard({ data, investor }: { data: ZahlenData; investor: boolean }) {
+  const o = data.oneTime;
+  const [open, setOpen] = useState(false);
+  const months = o.months.filter((m, i) => m.total > 0 || i >= o.months.length - 6);
+  const max = Math.max(1, ...months.map((m) => m.total));
+  return (
+    <Card title="Einrichtungsgebühren je Monat" cap="Einmalige Umsätze, bewusst nicht im MRR: Einrichtung aus Angeboten und von Hand nachgetragen.">
+      <KV
+        items={[
+          { k: longMonth(data.current), v: eur(o.currentMonth) },
+          { k: `Summe ${o.yearKey}`, v: eur(o.year) },
+        ]}
+      />
+      <div className="mt-3" data-setup-chart>
+        {o.months.some((m) => m.total > 0) ? (
+          <>
+            {months.map((m) => (
+              <div key={m.month} className="my-1.5 grid items-center gap-2.5 text-[13px]" style={{ gridTemplateColumns: "64px minmax(0,1fr) 84px" }}>
+                <span className="truncate">
+                  {shortMonth(m.month)} {m.month.slice(2, 4)}
+                </span>
+                <div className="flex h-3 overflow-hidden rounded bg-[color:var(--surface-sunken)]">
+                  {ONE_TIME.map((k) =>
+                    m[k.key] > 0 ? (
+                      <div
+                        key={k.key}
+                        style={{ width: `${(m[k.key] / max) * 100}%`, background: k.color }}
+                        {...tipHandlers(
+                          <>
+                            <b>{k.name}</b>
+                            <br />
+                            {eur(m[k.key])}
+                          </>,
+                        )}
+                      />
+                    ) : null,
+                  )}
+                </div>
+                <span className="text-right font-semibold tabular-nums">{m.total ? eur(m.total) : "–"}</span>
+              </div>
+            ))}
+            <div className="mt-2 flex flex-wrap gap-3 text-[12px] text-[color:var(--muted)]">
+              {ONE_TIME.map((k) => (
+                <span key={k.key} className="inline-flex items-center gap-1.5">
+                  <i className="inline-block h-2.5 w-2.5 rounded-[3px]" style={{ background: k.color }} />
+                  {k.name}
+                </span>
+              ))}
+            </div>
+          </>
+        ) : (
+          <Empty>Noch keine Einrichtungsgebühren. Ältere Gebühren unten nachtragen.</Empty>
+        )}
+      </div>
+      {!investor ? (
+        <div className="mt-3 border-t border-[color:var(--border)] pt-3">
+          <button type="button" onClick={() => setOpen((v) => !v)} className="text-[13px] font-semibold text-[color:var(--brand)]" aria-expanded={open}>
+            {open ? "Nachtragen schließen" : "Einmal-Umsatz nachtragen"}
+          </button>
+          {open ? <NachtragForm data={data} /> : null}
+          {o.entries.length ? (
+            <ul className="mt-3 divide-y divide-[color:var(--border)] text-[13px]">
+              {o.entries.map((e) => (
+                <li key={e.id} className="flex flex-wrap items-center gap-x-3 gap-y-0.5 py-1.5">
+                  <span className="tabular-nums">
+                    {shortMonth(e.month)} {e.month.slice(0, 4)}
+                  </span>
+                  <span className="font-semibold tabular-nums">{eur(e.amount, 2)}</span>
+                  <span className="text-[color:var(--muted)]">
+                    {e.kind === "other" ? "Sonstiges" : "Einrichtung"}
+                    {e.customerName ? ` · ${e.customerName}` : ""}
+                    {e.note ? ` · ${e.note}` : ""}
+                  </span>
+                  <form
+                    action={deleteManualRevenueAction}
+                    className="ml-auto"
+                    onSubmit={(ev) => {
+                      if (!confirm("Eintrag löschen?")) ev.preventDefault();
+                    }}
+                  >
+                    <input type="hidden" name="id" value={e.id} />
+                    <button className="text-[12.5px] text-rose-700 hover:underline">Löschen</button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
+    </Card>
+  );
+}
+
+function NachtragForm({ data }: { data: ZahlenData }) {
+  const [state, action, pending] = useActionState<NachtragState, FormData>(saveManualRevenueAction, {});
+  const field = "h-9 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm";
+  const label = "grid gap-1 text-xs text-[color:var(--muted)]";
+  return (
+    <form action={action} className="mt-2.5 grid gap-2.5 sm:grid-cols-2" data-nachtrag-form>
+      <label className={label}>
+        Monat
+        <input name="month" type="month" required max={data.current} defaultValue={data.lastComplete} className={field} />
+      </label>
+      <label className={label}>
+        Betrag netto (€)
+        <input name="amount" inputMode="decimal" required placeholder="z. B. 990" className={cn(field, "tabular-nums")} />
+      </label>
+      <label className={label}>
+        Kunde (optional)
+        <select name="customerId" defaultValue="" className={field}>
+          <option value="">Ohne Kunde</option>
+          {data.customers.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className={label}>
+        Art
+        <select name="kind" defaultValue="setup" className={field}>
+          <option value="setup">Einrichtung</option>
+          <option value="other">Sonstiges</option>
+        </select>
+      </label>
+      <label className={cn(label, "sm:col-span-2")}>
+        Notiz
+        <input name="note" maxLength={300} placeholder="z. B. Rechnung 2026-014" className={field} />
+      </label>
+      <div className="flex items-center gap-3 sm:col-span-2">
+        <button disabled={pending} className="h-9 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-3 text-sm font-semibold text-white disabled:opacity-60">
+          {pending ? "Speichere …" : "Nachtragen"}
+        </button>
+        {state.error ? <span className="text-sm text-rose-700">{state.error}</span> : state.ok && !pending ? <span className="text-sm text-emerald-700">Gespeichert</span> : null}
+      </div>
+    </form>
+  );
+}
+
+// ─── Produkte ────────────────────────────────────────────────────────────
+const dash = (v: number | null, f: (n: number) => string) => (v == null ? "–" : f(v));
+const pct0 = (v: number) => pct(v * 100, 0);
+
+function Few() {
+  return (
+    <span className="ml-1 rounded px-1 py-px text-[10.5px] font-semibold text-amber-800" style={{ background: "#fff4dc" }} title={`Weniger als ${LOW_SAMPLE} Leads: geringe Fallzahl`}>
+      wenig Fälle
+    </span>
+  );
+}
+
+function Produkte({ p }: { p: ProdukteData }) {
+  const fmtDate = (s: string) => new Date(s).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" });
+  const cols = p.productOrder;
+  return (
+    <div className="space-y-3.5">
+      <div className="flex flex-wrap items-center gap-1.5" aria-label="Zeitraum">
+        {PRODUKT_RANGES.map((r) => (
+          <Link
+            key={r.key}
+            href={`/admin/zahlen?zeitraum=${r.key}`}
+            scroll={false}
+            className={cn(
+              "rounded-full border px-3 py-1 text-[13px]",
+              p.range === r.key ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)] font-semibold text-[color:var(--brand)]" : "border-[color:var(--border)] bg-white text-[color:var(--muted)]",
+            )}
+          >
+            {r.label}
+          </Link>
+        ))}
+        <span className="ml-1 text-[12.5px] text-[color:var(--muted)]">
+          {fmtDate(p.from)} bis {fmtDate(p.to)}
+        </span>
+      </div>
+      <Card title="Produkte über alle Vertreter" cap="Leads nach Eingang im Zeitraum (ohne anerkannte Stornos). Werbekosten: Meta-Kosten mit Produkt, ohne eigene Kundengewinnung. Jahresbeitrag und Provision nur, soweit Vertreter Abschlüsse melden.">
+        {p.products.length ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-[13px] tabular-nums" data-produkte-tabelle>
+              <thead className="text-left text-[color:var(--muted)]">
+                <tr>
+                  <th className={th}>Produkt</th>
+                  <th className={thR}>Leads</th>
+                  <th className={thR}>Werbekosten</th>
+                  <th className={thR}>Kosten je Lead</th>
+                  <th className={thR}>Termin-Quote</th>
+                  <th className={thR}>Abschlüsse</th>
+                  <th className={thR}>Abschlussquote</th>
+                  <th className={thR}>Jahresbeiträge</th>
+                  <th className={thR}>Provision</th>
+                  <th className="pl-2 text-right font-medium">Pay-per-Lead-Umsatz</th>
+                </tr>
+              </thead>
+              <tbody>
+                {p.products.map((x) => (
+                  <tr key={x.key} className="border-t border-[color:var(--border)]">
+                    <td className="py-1.5 pr-2 font-medium">
+                      {x.label}
+                      {x.lowSample && x.leads > 0 ? <Few /> : null}
+                    </td>
+                    <td className="px-2 text-right">{x.leads || "–"}</td>
+                    <td className="px-2 text-right">{dash(x.cost, (v) => eur(v))}</td>
+                    <td className="px-2 text-right">{dash(x.cpl, (v) => eur(v, 2))}</td>
+                    <td className="px-2 text-right">{dash(x.appointmentRate, pct0)}</td>
+                    <td className="px-2 text-right">{x.closes || "–"}</td>
+                    <td className="px-2 text-right">{dash(x.closeRate, pct0)}</td>
+                    <td className="px-2 text-right">
+                      {x.premiumsReported ? (
+                        <>
+                          {eur(x.premiumSum)} <span className="font-normal text-[color:var(--muted)]">({x.premiumsReported})</span>
+                        </>
+                      ) : (
+                        "–"
+                      )}
+                    </td>
+                    <td className="px-2 text-right">{x.provision ? eur(x.provision) : "–"}</td>
+                    <td className="pl-2 text-right">{x.pplRevenue ? eur(x.pplRevenue) : "–"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="mt-2 text-[12.5px] text-[color:var(--muted)]">
+              Jahresbeiträge: Summe der gemeldeten Beiträge (Anzahl in Klammern), Monatsprodukte × 12. Provision: geschätzt mit den Sätzen des Kunden. „wenig Fälle“: unter {LOW_SAMPLE} Leads, Quoten nur mit Vorsicht lesen.
+            </p>
+          </div>
+        ) : (
+          <Empty>Keine Leads im Zeitraum.</Empty>
+        )}
+      </Card>
+      <Card title="Produkt je Vertreter" cap="Leads, Kosten je Lead und Abschlussquote je Kunde. Pool-Kosten ohne Kunde sind nach dem Lead-Anteil verteilt (anteilig).">
+        {p.matrix.length && cols.length ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-[13px] tabular-nums" data-produkte-matrix>
+              <thead className="text-left text-[color:var(--muted)]">
+                <tr>
+                  <th className={cn(th, "sticky left-0 bg-white")}>Vertreter</th>
+                  {cols.map((c) => (
+                    <th key={c.key} className="min-w-[132px] px-2 font-medium">
+                      {c.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {p.matrix.map((r) => (
+                  <tr key={r.customerId} className="border-t border-[color:var(--border)] align-top">
+                    <td className="sticky left-0 bg-white py-1.5 pr-2">
+                      <Link href={`/admin/kunden/${r.customerId}`} className="font-medium text-[color:var(--brand)] hover:underline">
+                        {r.name}
+                      </Link>
+                    </td>
+                    {cols.map((c) => {
+                      const cell = r.cells[c.key];
+                      if (!cell || !cell.leads) return <td key={c.key} className="px-2 py-1.5 text-[color:var(--muted)]">–</td>;
+                      return (
+                        <td key={c.key} className={cn("px-2 py-1.5", cell.lowSample && "text-[color:var(--muted)]")}>
+                          <div className="font-semibold text-[color:var(--foreground)]">
+                            {cell.leads} {cell.leads === 1 ? "Lead" : "Leads"}
+                            {cell.lowSample ? <span title={`Weniger als ${LOW_SAMPLE} Leads`}>*</span> : null}
+                          </div>
+                          <div className="text-[12px]">
+                            {dash(cell.cpl, (v) => `${eur(v, 2)} je Lead`)}
+                            {cell.costShared && cell.cpl != null ? " (anteilig)" : ""}
+                          </div>
+                          <div className="text-[12px]">{cell.closes ? `${cell.closes} Abschl. · ${pct0(cell.closeRate ?? 0)}` : "keine Abschlüsse"}</div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="mt-2 text-[12.5px] text-[color:var(--muted)]">* weniger als {LOW_SAMPLE} Leads: geringe Fallzahl.</p>
+          </div>
+        ) : (
+          <Empty>Keine Leads im Zeitraum.</Empty>
+        )}
+      </Card>
     </div>
   );
 }

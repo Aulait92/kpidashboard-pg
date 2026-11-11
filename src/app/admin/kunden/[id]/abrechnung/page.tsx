@@ -8,6 +8,7 @@ import { currentPause, todayBerlin } from "@/lib/pause";
 import { prisma } from "@/lib/prisma";
 import { EraseCustomerCard } from "./erase-card";
 import { AddOnsCard } from "./addons-card";
+import { RetainerCard } from "./retainer-card";
 
 const fmt = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
@@ -20,10 +21,10 @@ const STATUS: Record<string, { label: string; tone: "success" | "warning" | "dan
 };
 
 // Reiter „Abrechnung & Pause“.
-export default async function KundenAbrechnung({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ pause?: string; zusatz?: string; fehler?: string }> }) {
+export default async function KundenAbrechnung({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ pause?: string; zusatz?: string; retainer?: string; fehler?: string }> }) {
   await connection();
   const { id } = await params;
-  const { pause: pauseError, zusatz, fehler } = await searchParams;
+  const { pause: pauseError, zusatz, retainer, fehler } = await searchParams;
   const c = await prisma.customer.findUnique({
     where: { id },
     select: { id: true, name: true, stripeCustomerId: true, paymentOverdueSince: true, paymentWarnedAt: true, salesContact: { select: { id: true } } },
@@ -48,7 +49,8 @@ export default async function KundenAbrechnung({ params, searchParams }: { param
             Nach 30 Tagen werden die Anzeigen automatisch pausiert.
           </div>
         ) : null}
-        <AddOnsCard customerId={id} message={zusatz ?? null} failed={!!fehler} />
+        <RetainerCard customerId={id} message={retainer ?? null} failed={!!fehler && !!retainer} />
+        <AddOnsCard customerId={id} message={zusatz ?? null} failed={!!fehler && !!zusatz} />
         <AdminPauseCard customerId={id} contactId={c.salesContact?.id ?? ""} pause={pause} error={pauseError ?? null} today={todayBerlin()} />
         <EraseCustomerCard customerId={id} customerName={c.name} leadCount={leadCount} />
       </div>

@@ -19,7 +19,11 @@
 //   „canceled“) → Monatsende der letzten Änderung; archivierter Kunde ohne
 //   Abo → Monat seines letzten Leads (bessere Information gibt es nicht).
 // - Einrichtung („setup“): setupFee angenommener Angebote im Monat der
-//   Zahlung (sonst Annahme) – einmalig, nie im MRR.
+//   Zahlung (sonst Annahme) – einmalig, nie im MRR. Dazu von Hand
+//   nachgetragene Einmal-Umsätze (ManualRevenue, Admin → Zahlen) im
+//   angegebenen Monat, ebenfalls als „setup“.
+// - Retainer-Ende von Hand (Customer.retainerEnd) geht vor den Ableitungen
+//   aus Abo und Archiv.
 // - WhatsApp-Gebühren sind seit 11.11.2026 im Preis enthalten: KEIN Umsatz,
 //   sondern direkte Software-Kosten (zahlen.ts). Vorher: durchlaufend.
 // - Weitere Logins (seatsBilled × seatMonthly) und das Bestandskunden-Modul
@@ -355,4 +359,86 @@ export function newCustomers(rows: LedgerRow[], month: string): number {
 export function avgMonthlyGrowth(first: number, last: number, months: number): number | null {
   if (!(first > 0) || !(last > 0) || months < 1) return null;
   return Math.pow(last / first, 1 / months) - 1;
+}
+
+// ─── Einmal-Umsätze und Nachvollziehbarkeit ──────────────────────────────
+
+export type ManualEntry = { id: string; month: string; customerId: string | null; amount: number; kind: string };
+
+/** Nachgetragene Einmal-Umsätze als Setup-Zeilen fürs Umsatzbuch (ohne Kunde: eigener Schlüssel). */
+export function manualSetups(entries: ManualEntry[]): { customerId: string; month: string; amount: number }[] {
+  return entries
+    .filter((e) => e.amount > 0 && /^\d{4}-\d{2}$/.test(e.month))
+    .map((e) => ({ customerId: e.customerId ?? `nachtrag:${e.id}`, month: e.month, amount: r2(e.amount) }));
+}
+
+export type OneTimeMonth = { month: string; offers: number; manualSetup: number; other: number; total: number };
+
+/** Einmal-Umsätze je Monat, getrennt nach Herkunft (Angebot, Nachtrag Einrichtung, Nachtrag Sonstiges). */
+export function oneTimeByMonth(offers: { month: string; amount: number }[], manual: ManualEntry[], months: string[]): OneTimeMonth[] {
+  return months.map((m) => {
+    const o = offers.filter((x) => x.month === m).reduce((s, x) => s + x.amount, 0);
+    const ms = manual.filter((x) => x.month === m && x.kind !== "other").reduce((s, x) => s + x.amount, 0);
+    const ot = manual.filter((x) => x.month === m && x.kind === "other").reduce((s, x) => s + x.amount, 0);
+    return { month: m, offers: r2(o), manualSetup: r2(ms), other: r2(ot), total: r2(o + ms + ot) };
+  });
+}
+
+export type CustomerMonth = { customerId: string; total: number; streams: { stream: Stream; amount: number }[] };
+
+/** Woraus besteht ein Monat: Umsatz je Kunde und Strom, größter zuerst. */
+export function breakdown(rows: LedgerRow[], month: string, recurringOnly = true): CustomerMonth[] {
+  const by = new Map<string, CustomerMonth>();
+  for (const r of rows) {
+    if (r.month !== month || !(r.amount > 0) || (recurringOnly && !r.recurring)) continue;
+    const c = by.get(r.customerId) ?? { customerId: r.customerId, total: 0, streams: [] };
+    const s = c.streams.find((x) => x.stream === r.stream);
+    if (s) s.amount = r2(s.amount + r.amount);
+    else c.streams.push({ stream: r.stream, amount: r.amount });
+    c.total = r2(c.total + r.amount);
+    by.set(r.customerId, c);
+  }
+  return [...by.values()].sort((a, b) => b.total - a.total);
+}
+
+/** Umsatzbindung je Kunde: Umsatz damals (vor `lag` Monaten) und heute. */
+export function retentionBreakdown(rows: LedgerRow[], month: string, lag: number): { customerId: string; then: number; now: number }[] {
+  const base = addMonths(month, -lag);
+  const out: { customerId: string; then: number; now: number }[] = [];
+  for (const [id, m] of recurringByCustomer(rows)) {
+    const a = val(m, base);
+    if (a <= 0) continue;
+    out.push({ customerId: id, then: r2(a), now: r2(val(m, month)) });
+  }
+  return out.sort((a, b) => b.then - a.then);
+}
+
+/** Name ohne Klammerzusätze, Rechtsform und Sonderzeichen – für die Dubletten-Suche. */
+export function normalizeName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/\b(gmbh|ug|e\.?\s?k|kg|ohg|ag|gbr|mbh)\b/g, " ")
+    .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+/** Mögliche Dubletten: gleicher Name (normalisiert) oder gemeinsame E-Mail. id → andere ids. */
+export function duplicateGroups(customers: { id: string; name: string; emails: string[] }[]): Map<string, string[]> {
+  const out = new Map<string, Set<string>>();
+  const link = (a: string, b: string) => {
+    if (a === b) return;
+    (out.get(a) ?? out.set(a, new Set()).get(a)!).add(b);
+    (out.get(b) ?? out.set(b, new Set()).get(b)!).add(a);
+  };
+  const byKey = new Map<string, string[]>();
+  for (const c of customers) {
+    const keys = new Set<string>();
+    const n = normalizeName(c.name);
+    if (n.length >= 3) keys.add(`n:${n}`);
+    for (const e of c.emails) if (e && e.includes("@")) keys.add(`e:${e.trim().toLowerCase()}`);
+    for (const k of keys) byKey.set(k, [...(byKey.get(k) ?? []), c.id]);
+  }
+  for (const ids of byKey.values()) for (let i = 1; i < ids.length; i++) for (let j = 0; j < i; j++) link(ids[i], ids[j]);
+  return new Map([...out].map(([k, v]) => [k, [...v]]));
 }

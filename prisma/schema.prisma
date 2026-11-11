@@ -130,6 +130,8 @@ model Customer {
   // (tagesanteilig ab retainerStart). Taucht NICHT als Agentur-Kosten auf.
   retainerMonthly Decimal?  @db.Decimal(12, 2)
   retainerStart   DateTime?
+  // Letzter Tag mit Retainer (inklusive), von Hand in Kundenakte → Abrechnung; null = läuft
+  retainerEnd     DateTime?
   // Eigenes Meta-Werbekonto des Kunden (nur Ziffern, ohne „act_").
   metaAdAccountId String?
 
@@ -171,6 +173,7 @@ model Customer {
   // Neue Oberfläche des Kundenbereichs (Vertreter-A); pro Kunde im Admin einschaltbar.
   newUi                    Boolean             @default(false)
   existingCustomers        ExistingCustomer[]
+  manualRevenues           ManualRevenue[]
   campaigns                CustomerCampaign[]
   leadSources              LeadSource[]
   salesContact             SalesContact?
@@ -1732,6 +1735,27 @@ model RecurringCost {
   endsAt        DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+// Von Hand nachgetragene Einmal-Umsätze (Admin → Zahlen), z. B. Einrichtungsgebühren
+// aus der Zeit vor den Online-Angeboten. Fließen als Strom „setup“ ins Umsatzbuch,
+// nie in den MRR. kind: "setup" (Einrichtung) | "other" (Sonstiges).
+model ManualRevenue {
+  id         String    @id @default(cuid())
+  // Monat „YYYY-MM“ (Berliner Zeit)
+  month      String
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  // Netto in EUR
+  amount     Decimal   @db.Decimal(12, 2)
+  kind       String    @default("setup")
+  note       String?
+  // E-Mail des Admins, der den Eintrag angelegt hat
+  createdBy  String?
+  createdAt  DateTime  @default(now())
+
+  @@index([month])
+  @@index([customerId])
 }
 
 // Einstellungen der Zahlen-Seite (eine Zeile, id „default“).
