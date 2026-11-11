@@ -23,7 +23,9 @@ export default async function FeedbackPage({
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-4 py-10">
       <div className="mb-6 flex items-center gap-2 text-[17px] font-semibold">
         <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[color:var(--brand)] text-[13px] text-white">↗</span>
-        performance<span className="text-[color:var(--brand)]">growth</span>
+        <span>
+          performance<span className="text-[color:var(--brand)]">growth</span>
+        </span>
       </div>
       <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-6 shadow-[var(--shadow-md)]">
         <h1 className="text-xl font-semibold tracking-tight">
