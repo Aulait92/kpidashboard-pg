@@ -100,7 +100,7 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
                 <SourcePicker
                   status={setup.status}
                   readOnly={ro}
-                  connectLinks={{ google: "/api/google/connect", microsoft: "/api/microsoft/connect" }}
+                  connectLinks={{ google: "/api/google/connect?zurueck=kalender", microsoft: "/api/microsoft/connect?zurueck=kalender" }}
                   icsAction={saveIcsAction}
                   removeIcsAction={removeIcsAction}
                   allianzAction={connectAllianzAction}

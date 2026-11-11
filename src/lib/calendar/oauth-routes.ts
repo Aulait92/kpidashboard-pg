@@ -24,6 +24,20 @@ export function publicOrigin(req: Request): string {
   return new URL(req.url).origin;
 }
 
+// Wohin nach dem Verbinden zurück (Kundenbereich): per kurzlebigem Cookie,
+// weil „state“ schon die Kalender-Zuordnung trägt. Nur feste Ziele erlaubt.
+const BACK_COOKIE = "pg_cal_back";
+const BACK_TARGETS: Record<string, string> = { kalender: "/buyer/kalender", einrichtung: "/buyer/einrichtung" };
+
+function cookieValue(req: Request, name: string): string | null {
+  const raw = req.headers.get("cookie") ?? "";
+  for (const part of raw.split(/;\s*/)) {
+    const i = part.indexOf("=");
+    if (i > 0 && part.slice(0, i) === name) return decodeURIComponent(part.slice(i + 1));
+  }
+  return null;
+}
+
 export async function connectRoute(
   req: Request,
   authUrl: (customerId: string) => string,
@@ -46,7 +60,12 @@ export async function connectRoute(
   }
   if (!customerId) return Response.json({ error: "customerId fehlt." }, { status: 400 });
   try {
-    return Response.redirect(authUrl(customerId), 302);
+    const back = new URL(req.url).searchParams.get("zurueck");
+    const headers = new Headers({ Location: authUrl(customerId) });
+    if (back && BACK_TARGETS[back]) {
+      headers.append("Set-Cookie", `${BACK_COOKIE}=${back}; Path=/api; Max-Age=900; HttpOnly; Secure; SameSite=Lax`);
+    }
+    return new Response(null, { status: 302, headers });
   } catch (err) {
     return Response.json(
       { error: err instanceof Error ? err.message : "Fehler" },
@@ -75,13 +94,17 @@ export async function callbackRoute(
   if (isBuyer && customerId !== ownKey && (customerId !== session.customerId || (await teamRoleOf(session.userId)) === "advisor")) {
     return Response.json({ error: "Nicht erlaubt." }, { status: 403 });
   }
+  const wanted = BACK_TARGETS[cookieValue(req, BACK_COOKIE) ?? ""];
   const back = (status: string) => {
     const dest = new URL(
-      isBuyer ? (customerId === ownKey ? "/buyer/kalender" : "/buyer/einrichtung") : "/admin/whatsapp",
+      isBuyer ? (wanted ?? (customerId === ownKey ? "/buyer/kalender" : "/buyer/einrichtung")) : "/admin/whatsapp",
       publicOrigin(req),
     );
     dest.searchParams.set("gcal", status);
-    return Response.redirect(dest.toString(), 302);
+    return new Response(null, {
+      status: 302,
+      headers: { Location: dest.toString(), "Set-Cookie": `${BACK_COOKIE}=; Path=/api; Max-Age=0; HttpOnly; Secure; SameSite=Lax` },
+    });
   };
   if (oauthError) {
     // z. B. Microsoft „admin consent required" bei Firmen-Tenants
