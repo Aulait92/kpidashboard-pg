@@ -80,7 +80,7 @@ export function AbsenceSheet({
   const [tasksUndone, setTasksUndone] = useState(false);
   const [paused, setPaused] = useState(false);
 
-  const who = person.isMe ? "Du" : person.name;
+  const who = person.isMe ? "Sie" : person.name;
   const subName = (id: string | null | undefined) => colleagues.find((c) => c.id === id)?.name ?? null;
 
   const save = () =>
@@ -168,9 +168,9 @@ export function AbsenceSheet({
             <Check className="mt-0.5 h-5 w-5 shrink-0" />
             <div>
               <b>
-                {who} {person.isMe ? "bist" : "ist"} {a.from === a.to ? `am ${dayShort(a.from)}` : `vom ${dayShort(a.from)} bis ${dayShort(a.to)}`} abwesend.
+                {who} {person.isMe ? "sind" : "ist"} {a.from === a.to ? `am ${dayShort(a.from)}` : `vom ${dayShort(a.from)} bis ${dayShort(a.to)}`} abwesend.
               </b>{" "}
-              In der Zeit {person.isMe ? "bekommst du" : "bekommt"} keine neuen Leads und keine Termine. Ab {dayShort(a.returnDay)} geht es normal weiter.
+              {absenceEffect(overview.solo, person.isMe, person.name, dayShort(a.returnDay))}
             </div>
           </div>
 
@@ -253,18 +253,29 @@ export function AbsenceSheet({
           ) : null}
 
           {overview.pauseHint && !paused ? (
-            <div className="rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-              <div className="flex items-center gap-2 font-semibold">
-                <PauseCircle className="h-4 w-4" /> Anzeigen pausieren?
+            overview.pauseHint.strong ? (
+              <div className="rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                <div className="flex items-center gap-2 font-semibold">
+                  <PauseCircle className="h-4 w-4" /> Anzeigen pausieren?
+                </div>
+                <p className="mt-1">
+                  Sie sind länger weg. Pausieren Sie die Anzeigen, kommen keine Leads, die warten müssten. Neustart am {dayShort(overview.pauseHint.until)}.
+                  Die Pause verlängert auch den Garantie-Zeitraum.
+                </p>
+                <Button className="mt-2" disabled={pending} onClick={pauseAds}>
+                  Anzeigen in dieser Zeit pausieren
+                </Button>
               </div>
-              <p className="mt-1">
-                Du bist länger weg. Pausierst du die Anzeigen, kommen keine Leads, die warten müssten. Neustart am {dayShort(overview.pauseHint.until)}. Die
-                Pause verlängert auch den Garantie-Zeitraum.
-              </p>
-              <Button className="mt-2" disabled={pending} onClick={pauseAds}>
-                Anzeigen in dieser Zeit pausieren
-              </Button>
-            </div>
+            ) : (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius-md)] border border-[color:var(--border)] px-4 py-2.5 text-sm">
+                <span className="text-[color:var(--muted)]">
+                  Anzeigen in dieser Zeit pausieren? Neustart am {dayShort(overview.pauseHint.until)}, verlängert den Garantie-Zeitraum.
+                </span>
+                <button type="button" disabled={pending} onClick={pauseAds} className="font-semibold text-[color:var(--brand)] hover:underline disabled:opacity-50">
+                  Pausieren
+                </button>
+              </div>
+            )
           ) : paused ? (
             <p className="text-sm font-medium text-emerald-700">Anzeigen-Pause eingetragen (siehe Konto).</p>
           ) : null}
@@ -395,8 +406,8 @@ export function AbsenceControl({ data }: { data: ShellAbsence }) {
           <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-1">
             <Plane className="h-4 w-4 shrink-0" />
             <span>
-              Du bist bis <b>{dayShort(cur.to)}</b> abwesend
-              {cur.substituteName ? `, ${cur.substituteName} vertritt dich` : ""}.
+              Sie sind bis <b>{dayShort(cur.to)}</b> abwesend
+              {cur.substituteName ? `, ${cur.substituteName} vertritt Sie` : ""}.
             </span>
             <span className="ml-auto flex gap-3">
               <button type="button" className="font-semibold underline-offset-2 hover:underline" onClick={() => setOpen(true)}>
@@ -424,4 +435,13 @@ export function AbsenceControl({ data }: { data: ShellAbsence }) {
       {open ? <AbsenceSheet open onClose={() => setOpen(false)} person={data.person} current={cur} colleagues={data.colleagues} today={data.today} /> : null}
     </>
   );
+}
+
+/** Was die Abwesenheit bewirkt – Einzel-Vertreter: Leads kommen weiter, Termine erst ab Rückkehr. */
+export function absenceEffect(solo: boolean, isMe: boolean, name: string, returnDay: string): string {
+  if (solo) return `Neue Leads kommen weiter rein – Ihr Assistent schreibt sie an und bietet Termine ab ${returnDay} an.`;
+  const end = returnDay.endsWith(".") ? "" : ".";
+  return isMe
+    ? `In der Zeit bekommen Sie keine neuen Leads; sie gehen an Ihr Team. Termine erst ab ${returnDay}${end}`
+    : `In der Zeit bekommt ${name} keine neuen Leads; sie gehen an das Team. Termine erst ab ${returnDay}${end}`;
 }

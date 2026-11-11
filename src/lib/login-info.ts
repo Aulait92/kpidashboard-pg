@@ -19,7 +19,7 @@ export const DEFAULT_LOGIN_INFO: LoginInfo = {
   enabled: true,
   badge: "Neu",
   title: "Urlaub oder krank?",
-  text: "Ein Klick auf „Ich bin abwesend“ – Leads, Termine und Rückrufe gehen an deine Vertretung oder warten bis zu deiner Rückkehr.",
+  text: "Ein Klick auf „Ich bin abwesend“ – Leads, Termine und Rückrufe gehen an Ihre Vertretung oder warten bis zu Ihrer Rückkehr.",
   linkText: null,
   linkUrl: null,
   hasImage: false,

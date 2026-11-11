@@ -158,6 +158,19 @@ export function asVermittlerTyp(v: unknown): VermittlerTyp {
   return v === "makler" ? "makler" : "vertreter";
 }
 
+/**
+ * Hinweis im Einrichtungsschritt „Provisionen prüfen“. Ist der Typ aus dem angenommenen Angebot
+ * bekannt, wird nicht mehr danach gefragt – nur die vorausgefüllten Sätze prüfen.
+ */
+export function provisionSetupHint(typ: VermittlerTyp, known: boolean): string {
+  if (!known) {
+    return "Damit die App Ihre Provision je Abschluss richtig schätzt: kurz angeben, ob Sie als Vertreter oder Makler arbeiten, und die Sätze prüfen. Vorausgefüllt mit üblichen Werten.";
+  }
+  return typ === "makler"
+    ? "Sie arbeiten als Makler – Ihre Sätze sind mit üblichen Werten für Makler vorausgefüllt (bei Sach z. B. 22,5 % Bestandscourtage pro Jahr statt Abschlussprovision). Kurz prüfen und bei Bedarf anpassen, damit die App Ihre Courtage je Abschluss richtig schätzt."
+    : "Sie arbeiten als Vertreter – Ihre Sätze sind mit üblichen Abschlussprovisionen vorausgefüllt (z. B. 55 % vom Jahresbeitrag bei Tierkranken und Privatschutz). Kurz prüfen und bei Bedarf anpassen, damit die App Ihre Provision je Abschluss richtig schätzt.";
+}
+
 /** Standard-Satz eines Produkts je Vermittlertyp. */
 export function standardRate(key: ProductKey, typ: VermittlerTyp): RateSpec {
   return (typ === "makler" ? MAKLER_STANDARD[key] : undefined) ?? PROVISION_PRODUCTS.find((p) => p.key === key)!.standard;

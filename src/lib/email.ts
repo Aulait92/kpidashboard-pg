@@ -232,6 +232,14 @@ export async function sendOfferEmail(opts: {
   }
 }
 
+/** Teilschritte der Einrichtung in der Reihenfolge der Einrichtungsseite. */
+export function setupParts(software: boolean, whatsappSelfConnect: boolean): string {
+  const parts = ["kurzer Fragebogen", "Freigabe Ihres Meta-Werbekontos"];
+  if (software) parts.push("Kalender verbinden");
+  if (software && whatsappSelfConnect) parts.push("WhatsApp verbinden");
+  return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} und ${parts[parts.length - 1]}` : parts[0];
+}
+
 /** Willkommens-Mail nach Vertragsannahme: Zugang, Einrichtung, Ablauf bis zum Start. */
 export async function sendOnboardingWelcomeEmail(opts: {
   to: string;
@@ -243,6 +251,8 @@ export async function sendOnboardingWelcomeEmail(opts: {
   setPasswordUrl: string | null;
   loginUrl: string;
   setupUrl: string;
+  /** Kunde verbindet seine WhatsApp-Nummer selbst (360dialog konfiguriert, Paket mit Software). */
+  whatsappSelfConnect?: boolean;
   replyTo?: string | null;
 }): Promise<SendResult> {
   const apiKey = process.env.RESEND_API_KEY;
@@ -261,7 +271,7 @@ export async function sendOnboardingWelcomeEmail(opts: {
     opts.setPasswordUrl
       ? "Zugang einrichten: Über den Button legen Sie Ihr Passwort fest (Link 7 Tage gültig)."
       : `Einloggen unter ${opts.loginUrl} mit ${opts.to}.`,
-    `Einrichtung im Kundenbereich (ca. 5 Minuten): kurzer Fragebogen, Freigabe Ihres Meta-Werbekontos${software ? ", Kalender verbinden" : ""}.`,
+    `Einrichtung im Kundenbereich (ca. 5 Minuten): ${setupParts(software, !!opts.whatsappSelfConnect)}. Auf Wunsch machen wir das gemeinsam in einem 15-Minuten-Termin, den Sie direkt in der Einrichtung buchen.`,
     "Den Rest erledigen wir: Kampagne, Werbemittel und Leadformular. Sie bekommen Bescheid, sobald alles startklar ist.",
     start
       ? `Start am ${start}: Die Kampagne geht live${software ? ", der digitale Assistent schreibt neue Leads an und bucht Termine in Ihren Kalender" : ", jeder neue Lead kommt sofort per E-Mail"}.`

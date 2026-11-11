@@ -22,6 +22,7 @@ import { sendRescheduleNotice } from "@/lib/whatsapp/reminders";
 import { memberName } from "@/lib/team";
 import {
   absenceDays,
+  pauseOfferLevel,
   absenceRange,
   addDaysYmd,
   berlinMidnight,
@@ -80,8 +81,10 @@ export type AbsenceOverview = {
   personName: string;
   appointments: AffectedAppointment[];
   tasks: { moved: number; transferred: number };
-  /** Einzel-Vertreter, ab 7 Tagen: Anzeigen pausieren anbieten. */
-  pauseHint: { from: string; until: string } | null;
+  /** Nur ein Nutzer im Konto: Leads kommen weiter, der Assistent bietet Termine erst ab der Rückkehr an. */
+  solo: boolean;
+  /** Einzel-Vertreter: Anzeigen pausieren anbieten – ab 3 Tagen dezent, ab 7 Tagen hervorgehoben (`strong`). */
+  pauseHint: { from: string; until: string; strong: boolean } | null;
 };
 
 // ─── Rechte ─────────────────────────────────────────────────────────────
@@ -99,7 +102,7 @@ export async function assertCanManage(actor: AbsenceActor, targetUserId: string)
   const target = await teamMember(actor.customerId, targetUserId);
   if (!target) throw new AbsenceError("Person nicht gefunden.");
   if (target.id !== actor.userId && actor.teamRole !== "owner") {
-    throw new AbsenceError("Du kannst nur deine eigene Abwesenheit eintragen.");
+    throw new AbsenceError("Sie können nur Ihre eigene Abwesenheit eintragen.");
   }
   return target;
 }
@@ -278,9 +281,10 @@ export async function absenceOverview(actor: AbsenceActor, absenceId: string, no
       moved: tasks.filter((t) => t.how === "moved").length,
       transferred: tasks.filter((t) => t.how === "transferred").length,
     },
+    solo: members === 1,
     pauseHint:
-      members === 1 && openPause === 0 && absenceDays(absence) >= 7 && actor.teamRole === "owner"
-        ? { from: view.from > today ? view.from : today, until: view.returnDay }
+      members === 1 && openPause === 0 && pauseOfferLevel(absenceDays(absence)) !== "none" && actor.teamRole === "owner"
+        ? { from: view.from > today ? view.from : today, until: view.returnDay, strong: pauseOfferLevel(absenceDays(absence)) === "strong" }
         : null,
   };
 }

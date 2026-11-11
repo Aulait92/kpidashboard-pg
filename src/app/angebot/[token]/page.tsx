@@ -180,8 +180,11 @@ function PaymentBox({
       <div className={`${box} flex items-start gap-3 border-emerald-200 bg-emerald-50 text-emerald-900`}>
         <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
         <div>
-          <div className="font-semibold">Zahlung erhalten. Vielen Dank!</div>
-          <p className="mt-1 text-sm">Wir melden uns in Kürze für den Onboarding-Termin. Ihre Rechnung kommt per E-Mail.</p>
+          <div className="font-semibold">Zahlung erhalten – vielen Dank!</div>
+          <p className="mt-1 text-sm">
+            Sie bekommen gleich eine E-Mail mit Ihrem Zugang. Die Einrichtung dauert ca. 5 Minuten; auf Wunsch helfen
+            wir Ihnen in einem 15-Minuten-Termin. Ihre Rechnung kommt per E-Mail.
+          </p>
         </div>
       </div>
     );
@@ -193,8 +196,8 @@ function PaymentBox({
         <div>
           <div className="font-semibold">Zahlung eingerichtet. Vielen Dank!</div>
           <p className="mt-1 text-sm">
-            Bei SEPA-Lastschrift dauert die Bestätigung ein paar Tage. Wir melden uns in Kürze für den
-            Onboarding-Termin.
+            Sie bekommen gleich eine E-Mail mit Ihrem Zugang und können direkt mit der Einrichtung (ca. 5 Minuten)
+            beginnen. Bei SEPA-Lastschrift dauert die Bestätigung der Bank ein paar Tage.
           </p>
         </div>
       </div>

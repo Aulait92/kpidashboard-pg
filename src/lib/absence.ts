@@ -99,6 +99,11 @@ export function absenceDays(a: AbsenceSpan): number {
   return Math.round((a.endsAt.getTime() - a.startsAt.getTime()) / DAY);
 }
 
+/** Pause-Angebot für Einzel-Vertreter: ab 3 Tagen dezent, ab 7 Tagen hervorgehoben. */
+export function pauseOfferLevel(days: number): "none" | "soft" | "strong" {
+  return days >= 7 ? "strong" : days >= 3 ? "soft" : "none";
+}
+
 export const isActiveAt = (a: AbsenceSpan, t: Date) => a.startsAt.getTime() <= t.getTime() && t.getTime() < a.endsAt.getTime();
 
 // ─── Belegte Zeiten ─────────────────────────────────────────────────────

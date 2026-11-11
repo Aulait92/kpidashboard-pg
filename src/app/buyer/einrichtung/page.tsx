@@ -4,13 +4,14 @@ import { CalendarDays, CheckCircle2,
 import { PageHeader } from "@/components/buyer-shell";
 import { buttonClass, Card } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
-import { checklistProgress, loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
+import { customerSetupProgress, loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
 import { HelpCallPicker, MetaConfirmButton, QuestionnaireForm } from "./forms";
 import { helpCallSlots } from "@/lib/help-call";
 import { InstallApp } from "@/components/install-app";
 import { getAppUrl } from "@/lib/email";
 import { loadCustomerProvision } from "@/lib/provision-server";
+import { provisionSetupHint } from "@/lib/provision";
 import Link from "next/link";
 import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 
@@ -20,20 +21,21 @@ export const metadata = { title: "Einrichtung | performancegrowth" };
 const dateFmt = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "2-digit", month: "long", year: "numeric" }).format(d);
 
-export default async function SetupPage({ searchParams }: { searchParams: Promise<{ gcal?: string; wa?: string }> }) {
+export default async function SetupPage({ searchParams }: { searchParams: Promise<{ gcal?: string; wa?: string; schritt?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   if (ctx.teamRole === "advisor") redirect("/buyer");
   const ob = await loadOnboarding({ customerId: ctx.customerId });
   if (!ob) redirect("/buyer");
-  const { gcal, wa } = await searchParams;
+  const { gcal, wa, schritt } = await searchParams;
   const offer = ob.offerId
     ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true } })
     : null;
   const items = onboardingChecklist(ob, offer);
   const done = (k: string) => items.find((i) => i.key === k)?.done ?? false;
   const software = ob.package !== "service";
-  const progress = checklistProgress(items);
+  // Fortschritt nur aus den Schritten, die der Kunde selbst erledigt (nicht Zahlung, Login, unsere Arbeit).
+  const progress = customerSetupProgress(items);
   const businessId = process.env.PG_META_BUSINESS_ID?.trim() || "3089330734489612";
   const readOnly = ctx.preview;
   const provision = await loadCustomerProvision(ctx.customerId);
@@ -46,6 +48,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   let stepNo = software ? 3 : 2;
   const nextNo = () => ++stepNo;
   const current = order.find((k) => !done(k)) ?? "start";
+  // Direkt-Link von der Startseite (?schritt=calendar) klappt diesen Schritt auf.
+  const isOpen = (k: string) => current === k || schritt === k;
   const helpUpcoming = ob.helpCallAt && ob.helpCallAt > new Date();
   const slots = !helpUpcoming && !ob.liveAt ? await helpCallSlots().catch(() => []) : [];
   const timeFmt = (d: Date) =>
@@ -67,23 +71,32 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
       <Card className="mb-5">
         <div className="p-5">
           <div className="flex items-center justify-between text-sm">
-            <span className="font-medium">{ob.liveAt ? "Alles eingerichtet, Sie sind live." : `${progress.done} von ${progress.total} Schritten erledigt`}</span>
+            <span className="font-medium">
+              {ob.liveAt
+                ? "Alles eingerichtet, Sie sind live."
+                : progress.complete
+                  ? "Ihr Teil ist erledigt – danke!"
+                  : `Ihr Teil: ${progress.done} von ${progress.total} erledigt`}
+            </span>
             <span className="text-[color:var(--muted)]">{ob.liveAt ? "100" : progress.percent} %</span>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-[color:var(--surface-sunken,#f1f5f9)]">
             <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${ob.liveAt ? 100 : progress.percent}%` }} />
           </div>
-          <p className="mt-3 text-sm text-[color:var(--muted)]">Ca. 5 Minuten für Sie. Den Rest erledigen wir.</p>
+          <p className="mt-3 text-sm text-[color:var(--muted)]">
+            {progress.complete ? "Den Rest erledigen wir." : "Ca. 5 Minuten für Sie. Den Rest erledigen wir."}
+          </p>
+          {!ob.liveAt ? <OurPart ours={progress.ours} startDate={ob.startDate} /> : null}
         </div>
       </Card>
 
       <div className="space-y-5">
-        <Step n={1} title="Kurzer Fragebogen" icon={ClipboardList} done={done("questionnaire")} open={current === "questionnaire"}>
+        <Step n={1} title="Kurzer Fragebogen" icon={ClipboardList} done={done("questionnaire")} open={isOpen("questionnaire")} id="questionnaire">
           <p className="mb-4 text-sm text-[color:var(--muted)]">Nur noch, wie Sie arbeiten möchten:</p>
           <QuestionnaireForm software={software} initial={(ob.questionnaire ?? {}) as Record<string, never>} readOnly={readOnly} />
         </Step>
 
-        <Step n={2} title="Zugriff auf Ihr Meta-Werbekonto" icon={KeyRound} done={done("metaAccess")} open={current === "metaAccess"}>
+        <Step n={2} title="Zugriff auf Ihr Meta-Werbekonto" icon={KeyRound} done={done("metaAccess")} open={isOpen("metaAccess")} id="metaAccess">
           <p className="text-sm text-[color:var(--muted)]">So schalten wir die Anzeigen in Ihrem Werbekonto. Das Budget bleibt bei Ihnen.</p>
           <details className="my-4 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3 text-[15px]">
             <summary className="cursor-pointer font-medium">Noch kein Business Manager? So legen Sie ihn an</summary>
@@ -160,7 +173,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         </Step>
 
         {software ? (
-          <Step n={3} title="Kalender verbinden" icon={CalendarDays} done={done("calendar")} open={current === "calendar"}>
+          <Step n={3} title="Kalender verbinden" icon={CalendarDays} done={done("calendar")} open={isOpen("calendar")} id="calendar">
             <p className="text-sm text-[color:var(--muted)]">
               Termine landen dann nur in freien Zeiten direkt in Ihrem Kalender.
             </p>
@@ -190,7 +203,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         ) : null}
 
         {waEnabled ? (
-          <Step n={nextNo()} title="WhatsApp verbinden" icon={MessageCircle} done={done("whatsapp")} open={current === "whatsapp" || !!wa} id="whatsapp">
+          <Step n={nextNo()} title="WhatsApp verbinden" icon={MessageCircle} done={done("whatsapp")} open={isOpen("whatsapp") || !!wa} id="whatsapp">
             <WhatsAppStep wa={wa} account={waAccount} done={done("whatsapp")} readOnly={readOnly} />
           </Step>
         ) : null}
@@ -200,10 +213,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         </Step>
 
         <Step n={nextNo()} title="Provisionen prüfen (1 Minute, optional)" icon={Percent} done={provision.hasCustom} open={false}>
-          <p className="text-sm text-[color:var(--muted)]">
-            Damit die App Ihre Provision je Abschluss richtig schätzt: kurz angeben, ob Sie als Vertreter oder Makler arbeiten, und die
-            Sätze prüfen. Vorausgefüllt mit üblichen Werten.
-          </p>
+          {/* Typ aus dem angenommenen Angebot bekannt → nicht mehr danach fragen. */}
+          <p className="text-sm text-[color:var(--muted)]">{provisionSetupHint(provision.typ, !!ob.offerId)}</p>
           <Link href="/buyer/provisionen" className={buttonClass("secondary", "md", "mt-4")}>
             Provisionen prüfen
           </Link>
@@ -220,6 +231,27 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         </Step>
       </div>
     </main>
+  );
+}
+
+/** Unser Teil der Einrichtung – nur zur Info, zählt nicht in den Fortschritt des Kunden. */
+function OurPart({ ours, startDate }: { ours: { key: string; done: boolean }[]; startDate: Date | null }) {
+  const short = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "numeric", month: "long" });
+  const label = (k: string) =>
+    k === "campaign" ? "Kampagne & Leadformular" : k === "testLead" ? "Testlead" : startDate ? `Go-live am ${short.format(startDate)}` : "Go-live";
+  return (
+    <div className="mt-4 border-t border-[color:var(--border)] pt-3 text-sm">
+      <span className="font-medium">Unser Teil: </span>
+      <span className="text-[color:var(--muted)]">
+        {ours.map((o, i) => (
+          <span key={o.key}>
+            {i > 0 ? " · " : ""}
+            {label(o.key)}
+            {o.done ? " ✓" : ""}
+          </span>
+        ))}
+      </span>
+    </div>
   );
 }
 

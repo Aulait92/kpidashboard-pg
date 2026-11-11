@@ -28,7 +28,7 @@ export function LoginForm({
       <form action={totpFormAction} className="space-y-4">
         <input type="hidden" name="next" value={next} />
         <label htmlFor="login-code" className="block text-center text-sm text-[color:var(--muted)]">
-          Code aus deiner Authenticator-App eingeben.
+          Code aus Ihrer Authenticator-App eingeben.
         </label>
         <input
           id="login-code"

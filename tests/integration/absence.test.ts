@@ -146,7 +146,9 @@ describe("Abwesenheit: Einzel-Vertreter, Termine", () => {
     const saved = await saveAbsence(actorOf(owner), { userId: owner.id, from, to, kind: "urlaub" });
     expect(saved.appointments.map((x) => x.id).sort()).toEqual(appts.map((x) => x.id).sort());
     expect(saved.tasks).toEqual({ moved: 1, transferred: 0 });
-    expect(saved.pauseHint).toEqual({ from, until: returnDayYmd({ endsAt: berlinMidnight(addDaysYmd(to, 1)) }) });
+    expect(saved.solo).toBe(true);
+    // 7 Tage allein → Pause hervorgehoben anbieten
+    expect(saved.pauseHint).toEqual({ from, until: returnDayYmd({ endsAt: berlinMidnight(addDaysYmd(to, 1)) }), strong: true });
     const back = saved.absence.returnDay;
     expect((await prisma.lead.findUnique({ where: { id: task.id } }))!.followUpAt!.toISOString()).toBe(at(back, 8).toISOString());
     expect((await prisma.lead.findUnique({ where: { id: later.id } }))!.followUpAt!.toISOString()).toBe(at(addDaysYmd(to, 10), 9).toISOString());
@@ -192,6 +194,7 @@ describe("Abwesenheit: Team mit Vertretung", () => {
     // Lead mit Termin: entscheidet die Termin-Liste (Aufgabe rückt zeitlich), anderer geht an B
     expect(saved.tasks).toEqual({ moved: 1, transferred: 1 });
     expect(saved.pauseHint).toBeNull(); // Team: kein Pause-Hinweis
+    expect(saved.solo).toBe(false);
     expect(saved.appointments).toHaveLength(1);
     expect(saved.appointments[0].canHandover).toBe(true);
     expect((await prisma.lead.findUnique({ where: { id: lead.id } }))!.assignedUserId).toBe(a.id);

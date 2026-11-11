@@ -44,7 +44,7 @@ export default async function LoginPage({
         <div className="mx-auto w-full max-w-[400px]">
           <div className="mb-7 text-center">
             <h1 className="text-[28px] font-bold leading-tight tracking-tight sm:text-3xl">Willkommen zurück</h1>
-            <p className="mt-2 text-[15px] text-[color:var(--muted)]">Schön, dass du da bist. Melde dich mit deinem Zugang an.</p>
+            <p className="mt-2 text-[15px] text-[color:var(--muted)]">Schön, dass Sie da sind. Melden Sie sich mit Ihrem Zugang an.</p>
           </div>
           <LoginForm
             next={next}
@@ -53,7 +53,7 @@ export default async function LoginPage({
             sso={{ google: ssoEnabled("google"), microsoft: ssoEnabled("microsoft") }}
           />
           <p className="mt-8 text-center text-sm text-[color:var(--muted)]">
-            Noch kein Zugang? Wir richten ihn mit dir zusammen ein –{" "}
+            Noch kein Zugang? Wir richten ihn gemeinsam mit Ihnen ein –{" "}
             <a href="https://performancegrowth.de" target="_blank" rel="noopener noreferrer" className="font-medium text-[color:var(--brand)] hover:underline">
               performancegrowth.de
             </a>

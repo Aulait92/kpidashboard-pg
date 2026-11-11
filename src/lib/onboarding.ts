@@ -190,6 +190,7 @@ export async function sendWelcome(onboardingId: string, opts: { setPasswordUrl?:
     setPasswordUrl,
     loginUrl: `${getAppUrl()}/login`,
     setupUrl: `${getAppUrl()}/buyer/einrichtung`,
+    whatsappSelfConnect: ob.package !== "service" && selfConnectEnabled(),
     replyTo: process.env.OFFER_REPLY_TO ?? null,
   });
   if (res.ok) {
@@ -276,6 +277,35 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
 export function checklistProgress(items: ChecklistItem[]) {
   const done = items.filter((i) => i.done).length;
   return { done, total: items.length, percent: Math.round((done / items.length) * 100) };
+}
+
+/** Schritte, die der Kunde in der Einrichtung selbst erledigt (Reihenfolge wie auf der Einrichtungsseite). */
+export const CUSTOMER_SETUP_KEYS = ["questionnaire", "metaAccess", "calendar", "whatsapp"] as const;
+/** Unser Teil, dem Kunden nur zur Information gezeigt (nicht im Fortschrittsbalken). */
+export const OUR_SETUP_KEYS = ["campaign", "testLead", "live"] as const;
+
+/**
+ * Fortschritt aus Sicht des Kunden: nur Schritte, die er aktiv erledigt (Fragebogen, Meta-Zugriff,
+ * Kalender, WhatsApp beim Selbst-Verbinden). Zahlung, Login und Willkommens-Mail zählen nicht,
+ * unsere Schritte (Kampagne, Testlead, Go-live) stehen getrennt in `ours`.
+ * Admin-Ansichten nutzen weiter `checklistProgress` (alle Punkte).
+ */
+export function customerSetupProgress(items: ChecklistItem[]) {
+  const steps = CUSTOMER_SETUP_KEYS.map((k) => items.find((i) => i.key === k && i.owner === "kunde")).filter(
+    (i): i is ChecklistItem => !!i,
+  );
+  const done = steps.filter((i) => i.done).length;
+  const total = steps.length;
+  const ours = OUR_SETUP_KEYS.map((k) => items.find((i) => i.key === k)).filter((i): i is ChecklistItem => !!i);
+  return {
+    steps,
+    done,
+    total,
+    percent: total ? Math.round((done / total) * 100) : 100,
+    complete: done === total,
+    open: steps.filter((i) => !i.done),
+    ours,
+  };
 }
 
 /** Fortschritt mehrerer Onboardings (für Übersichten), Schlüssel = customerId. */
