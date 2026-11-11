@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState, useEffect, useLayoutEffect, useRef, useState, useTransition, type CSSProperties, type ReactNode } from "react";
 import type { DrillMonth, ZahlenData } from "@/lib/zahlen";
 import { PRODUKT_RANGES, LOW_SAMPLE, type ProdukteData } from "@/lib/produkte-shared";
+import type { VertriebStep, VertriebZahlen } from "@/lib/vertrieb-zahlen";
 import { deleteManualRevenueAction, saveManualRevenueAction, saveUpdateTextsAction, type NachtragState } from "@/app/admin/zahlen/actions";
 import { cn } from "@/lib/utils";
 
@@ -164,7 +165,7 @@ function Def({ show, children }: { show: boolean; children: ReactNode }) {
 // ─── Hauptansicht ────────────────────────────────────────────────────────
 type DrillKind = "arr" | "mrr" | "retention" | "margin" | "active";
 
-export function ZahlenView({ data, produkte }: { data: ZahlenData; produkte: ProdukteData }) {
+export function ZahlenView({ data, produkte, vertrieb }: { data: ZahlenData; produkte: ProdukteData; vertrieb: VertriebZahlen }) {
   const [tab, setTab] = useState<Tab>("wachstum");
   const [investor, setInvestor] = useState(false);
   const [update, setUpdate] = useState(false);
@@ -289,7 +290,7 @@ export function ZahlenView({ data, produkte }: { data: ZahlenData; produkte: Pro
       {active === "wirtschaft" ? <Wirtschaft data={data} investor={investor} /> : null}
       {active === "wirkung" ? <Wirkung data={data} investor={investor} /> : null}
       {active === "produkte" ? <Produkte p={produkte} /> : null}
-      {active === "vertrieb" ? <Vertrieb data={data} /> : null}
+      {active === "vertrieb" ? <Vertrieb data={data} v={vertrieb} /> : null}
       {active === "ppl" ? <Ppl data={data} /> : null}
 
       {update ? <UpdateSheet data={data} onClose={() => setUpdate(false)} /> : null}
@@ -732,29 +733,157 @@ function Wirkung({ data, investor }: { data: ZahlenData; investor: boolean }) {
 }
 
 // ─── Vertrieb ────────────────────────────────────────────────────────────
-function Vertrieb({ data }: { data: ZahlenData }) {
-  const s = data.sales;
+function RangeChips({ param, current, from, to }: { param: string; current: string; from: string; to: string }) {
+  const fmtDate = (x: string) => new Date(x).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" });
+  // Bis-Datum exklusiv (Monatsanfang) → für die Anzeige den Vortag nehmen
+  const toShown = current === "vormonat" ? new Date(new Date(to).getTime() - 1).toISOString() : to;
   return (
-    <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-      <Card title="Vertriebstrichter (letzte 90 Tage)" cap="Von der ersten Ansprache bis zum Vertrag.">
-        <Funnel steps={s.funnel} labelWidth={170} />
-      </Card>
-      <Card title="Pipeline">
-        <KV
-          items={[
-            { k: "Offene Angebote", v: s.openOffers, s: `${eur(s.openMrr)} MRR` },
-            { k: "Abschlussquote Angebote", v: s.winRate != null ? pct(s.winRate * 100, 0) : "–", s: "letzte 90 Tage" },
-            { k: "Dauer bis Abschluss", v: s.cycleDays != null ? `${Math.round(s.cycleDays)} Tage` : "–", s: "Median, Erstkontakt → Vertrag" },
-            { k: "Gewichtete Pipeline", v: s.weighted != null ? eur(s.weighted) : "–", s: "MRR × Abschlussquote" },
-          ]}
-        />
-        <h2 className="mt-4 text-[15px] font-semibold">Woher Kunden kommen</h2>
-        {s.channels.length ? (
-          s.channels.map((c) => <BarRow key={c.name} label={c.name} value={c.v} max={100} color="var(--z-s1)" right={`${c.v} %`} labelWidth={160} />)
+    <div className="flex flex-wrap items-center gap-1.5" aria-label="Zeitraum">
+      {PRODUKT_RANGES.map((r) => (
+        <Link
+          key={r.key}
+          href={`/admin/zahlen?${param}=${r.key}`}
+          scroll={false}
+          className={cn(
+            "rounded-full border px-3 py-1 text-[13px]",
+            current === r.key ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)] font-semibold text-[color:var(--brand)]" : "border-[color:var(--border)] bg-white text-[color:var(--muted)]",
+          )}
+        >
+          {r.label}
+        </Link>
+      ))}
+      <span className="ml-1 text-[12.5px] text-[color:var(--muted)]">
+        {fmtDate(from)} bis {fmtDate(toShown)}
+      </span>
+    </div>
+  );
+}
+
+function Vertrieb({ data, v }: { data: ZahlenData; v: VertriebZahlen }) {
+  const s = data.sales;
+  const [open, setOpen] = useState<VertriebStep["key"] | null>(null);
+  const label = PRODUKT_RANGES.find((r) => r.key === v.range)?.label ?? "";
+  return (
+    <div className="space-y-3.5">
+      <RangeChips param="vzeitraum" current={v.range} from={v.from} to={v.to} />
+      <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        <Card title={`Vertriebstrichter (${label})`} cap="Von der ersten Ansprache bis zum Vertrag. Jede Stufe zählt, was im Zeitraum passiert ist.">
+          <Funnel steps={v.steps} labelWidth={170} />
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+            {v.steps.map((st) => (
+              <button key={st.key} type="button" onClick={() => setOpen(st.key)} className="text-[12.5px] font-medium text-[color:var(--brand)] hover:underline" data-vertrieb-drill={st.key}>
+                {st.name}: woraus besteht das?
+              </button>
+            ))}
+          </div>
+        </Card>
+        <Card title="Pipeline">
+          <KV
+            items={[
+              { k: "Offene Angebote", v: s.openOffers, s: `${eur(s.openMrr)} MRR (heute)` },
+              {
+                k: "Abschlussquote Angebote",
+                v: v.winRate != null ? pct(v.winRate * 100, 0) : "–",
+                s: v.offersSentInRange ? `${v.acceptedOfSent} von ${v.offersSentInRange} im Zeitraum versendeten angenommen` : "keine Angebote im Zeitraum",
+              },
+              { k: "Dauer bis Abschluss", v: s.cycleDays != null ? `${Math.round(s.cycleDays)} Tage` : "–", s: "Median, Erstkontakt → Vertrag (180 Tage)" },
+              { k: "Gewichtete Pipeline", v: s.weighted != null ? eur(s.weighted) : "–", s: "MRR × Abschlussquote (90 Tage)" },
+            ]}
+          />
+          <h2 className="mt-4 text-[15px] font-semibold">Woher Kunden kommen</h2>
+          {s.channels.length ? (
+            s.channels.map((c) => <BarRow key={c.name} label={c.name} value={c.v} max={100} color="var(--z-s1)" right={`${c.v} %`} labelWidth={160} />)
+          ) : (
+            <Empty>Noch keine Kunden mit Akquise-Kanal.</Empty>
+          )}
+        </Card>
+      </div>
+      {open ? <VertriebSheet v={v} initial={open} rangeLabel={label} onClose={() => setOpen(null)} /> : null}
+    </div>
+  );
+}
+
+function VertriebSheet({ v, initial, rangeLabel, onClose }: { v: VertriebZahlen; initial: VertriebStep["key"]; rangeLabel: string; onClose: () => void }) {
+  const [key, setKey] = useState(initial);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const st = v.steps.find((x) => x.key === key) ?? v.steps[0];
+  const fmt = (x: string) =>
+    new Date(x).toLocaleString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric", ...(key === "meetings" ? { hour: "2-digit", minute: "2-digit" } : {}) });
+  const dateLabel: Record<VertriebStep["key"], string> = { contacted: "Letzter Kontakt", replied: "Antwort", meetings: "Termin", offers: "Versendet", won: "Angenommen" };
+  return (
+    <div className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-slate-950/55 px-4 py-8" role="dialog" aria-modal="true" aria-label="Woraus besteht das?" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="w-full max-w-[920px] rounded-xl bg-white p-5 shadow-2xl sm:p-7">
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[12.5px] text-[color:var(--muted)]">Woraus besteht das? · {rangeLabel}</p>
+            <h3 className="text-lg font-semibold sm:text-xl">
+              {st.name}: {st.v.toLocaleString("de-DE")}
+            </h3>
+          </div>
+          <button type="button" onClick={onClose} className="shrink-0 rounded-[10px] border border-[color:var(--border)] px-3 py-1.5 text-sm font-semibold">
+            Schließen
+          </button>
+        </div>
+        <div className="mb-3 flex gap-1.5 overflow-x-auto pb-0.5" role="tablist">
+          {v.steps.map((x) => (
+            <button
+              key={x.key}
+              type="button"
+              role="tab"
+              aria-selected={x.key === key}
+              onClick={() => setKey(x.key)}
+              className={cn(
+                "shrink-0 rounded-full border px-3 py-1 text-[13px]",
+                x.key === key ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)] font-semibold text-[color:var(--brand)]" : "border-[color:var(--border)] text-[color:var(--muted)]",
+              )}
+            >
+              {x.name} ({x.v})
+            </button>
+          ))}
+        </div>
+        {st.note ? <p className="mb-2 text-[13px] text-[color:var(--muted)]">Gezählt {st.note}.</p> : null}
+        {st.rows.length ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-[13px] tabular-nums" data-vertrieb-liste={st.key}>
+              <thead className="text-left text-[color:var(--muted)]">
+                <tr>
+                  <th className={th}>Kontakt</th>
+                  <th className={th}>{dateLabel[st.key]}</th>
+                  <th className={th}>Details</th>
+                  <th className={th}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {st.rows.map((r) => (
+                  <tr key={r.id} className={cn("border-t border-[color:var(--border)]", r.muted && "text-[color:var(--muted)] line-through decoration-slate-300")}>
+                    <td className="py-1.5 pr-2">
+                      {r.href ? (
+                        <Link href={r.href} className="font-medium text-[color:var(--brand)] hover:underline">
+                          {r.name}
+                        </Link>
+                      ) : (
+                        r.name
+                      )}
+                    </td>
+                    <td className="whitespace-nowrap py-1.5 pr-2">{fmt(r.date)}</td>
+                    <td className="py-1.5 pr-2">{r.detail ?? "–"}</td>
+                    <td className="whitespace-nowrap py-1.5 pr-2">{r.status ?? ""}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {st.more ? <p className="mt-2 text-[12.5px] text-[color:var(--muted)]">… und {st.more} weitere.</p> : null}
+          </div>
         ) : (
-          <Empty>Noch keine Kunden mit Akquise-Kanal.</Empty>
+          <p className="text-[13px] text-[color:var(--muted)]">Im Zeitraum nichts.</p>
         )}
-      </Card>
+      </div>
     </div>
   );
 }
