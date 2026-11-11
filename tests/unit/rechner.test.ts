@@ -335,9 +335,9 @@ describe("Bestandssicht (Makler TKV, Storno)", () => {
     expect(kjv[100]).toBeLessThan(59);
     // mehr Budget = mehr Bestand
     expect(v[2].courtageJahrNach12).toBeGreaterThan(v[1].courtageJahrNach12);
-    // Rechner-Standard (6 €/Lead): höher, Vergleich 40/60/100 wie angezeigt
+    // Rechner-Standard (6 €/Lead): höher, Vergleich 40/60/95 wie angezeigt
     const std = budgetVergleich(tkv, base({}, tkv, "makler"), 6);
-    expect(std.map((z) => z.budget)).toEqual([40, 60, 100]);
+    expect(std.map((z) => z.budget)).toEqual([40, 60, 95]);
     expect(std[0].kostenJeVertrag!).toBeGreaterThan(kjv[40]);
     expect(std[0].kostenJeVertrag!).toBeGreaterThan(std[1].kostenJeVertrag!);
   });

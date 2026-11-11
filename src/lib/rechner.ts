@@ -321,7 +321,7 @@ const KAMPAGNE_STANDARD: Kampagne = 12;
 /** Standardbudget €/Tag ohne budget-Parameter. Makler: höheres Budget statt niedrigerem Preis (Ole, 11.11.). */
 export const BUDGET_STANDARD: Record<VermittlerTyp, number> = { vertreter: 30, makler: 40 };
 /** Vergleich „Kosten je Vertrag“ im Makler-Modus (€/Tag). */
-export const BUDGET_VERGLEICH = [40, 60, 100] as const;
+export const BUDGET_VERGLEICH = [40, 60, 95] as const;
 const HORIZONT_STANDARD: Horizont = 5;
 
 /** Standard-Provision eines Rechner-Produkts für einen Vermittlertyp. */
