@@ -114,8 +114,17 @@ KI-Hilfe, die brauchen keine Migration).
 5. **Vertrieb aus der Testumgebung übernehmen** (geändert am 10.11.): Das Cold CRM ist
    seit 10.11. eingefroren, der Vertrieb wurde auf staging neu importiert und wird seitdem
    dort geführt. Am Livegang kommen die Vertriebsdaten deshalb aus der staging-Datenbank,
-   **nicht** mehr aus dem Cold CRM. Verfahren (Übernahme staging → Produktion, ohne
-   Test-Angebote/Stripe-Testdaten) wird vor Probelauf 3 gebaut und dort geprobt.
+   **nicht** mehr aus dem Cold CRM. Verfahren (gebaut 11.11., in Probelauf 3 proben):
+   - In der Produktion vorübergehend setzen: `VERTRIEB_QUELLE_URL` = interne Adresse der
+     staging-Datenbank (Railway-Referenz `${{Postgres-mkXB.DATABASE_URL}}`) und
+     `VERTRIEB_NEUIMPORT_ERLAUBT=1`.
+   - Admin → Vertrieb → Anbindungen → „Vertrieb aus der Testumgebung“ → ERSETZEN.
+     Kopiert Kontakte, Verlauf, Aufgaben, Kampagnen, Mails, Termine, Leads; **keine Angebote**
+     (Stripe-Testdaten). Verknüpfungen zu Kundenakten werden geleert, Sicherung im Schema
+     `backup_vertrieb_…`.
+   - Danach am Kontakt „Mit Kundenakte verknüpfen“ (Kundendaten): Norman Heller → seine
+     Pay-per-Lead-Kundenakte, Andy Deibel → Kundenakte „Nur Betreuung“.
+   - Beide Variablen wieder löschen.
    Danach `COLD_CRM_DATABASE_URL` und `VERTRIEB_NEUIMPORT_ERLAUBT` auf staging löschen.
    `MAIL_NUR_AN` (Mail-Sperre) gibt es **nur auf staging** – in der Produktion nicht setzen,
    sonst bekommen Kunden und Leads keine Mails.

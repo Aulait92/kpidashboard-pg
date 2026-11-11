@@ -10,7 +10,7 @@ import { Mail, Phone } from "lucide-react";
 import { ActivityForm } from "@/components/vertrieb/activity-form";
 import { Collapsible } from "@/components/vertrieb/collapsible";
 import { TaskForm } from "@/components/vertrieb/task-form";
-import { addReplyManually, deleteActivity, updateActivity, setReplySentiment, updateCustomer, updateLinkedIn } from "@/app/admin/vertrieb/actions";
+import { addReplyManually, deleteActivity, linkContactCustomer, updateActivity, setReplySentiment, updateCustomer, updateLinkedIn } from "@/app/admin/vertrieb/actions";
 import { LI_LABEL, LI_STATUSES } from "@/lib/vertrieb/linkedin";
 import { ConfirmButton } from "@/components/vertrieb/confirm-button";
 import { taskInclude } from "@/lib/vertrieb/queries";
@@ -53,6 +53,12 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
     !onboarding && acceptedOffer
       ? await prisma.customer.findMany({ where: { onboarding: null, plan: { not: "internal" }, archived: false }, select: { id: true, name: true }, orderBy: { name: "asc" } })
       : [];
+  // Kundenakten für „Mit Kundenakte verknüpfen“: noch mit keinem Kontakt verknüpft (+ die eigene)
+  const linkable = await prisma.customer.findMany({
+    where: { archived: false, plan: { not: "internal" }, OR: [{ salesContact: null }, { id: c.customerId ?? "-" }] },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
   let appUrl = "";
   try {
     appUrl = getAppUrl();
@@ -380,6 +386,19 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
               <button className="btn-ghost sm:col-span-2">{c.customerStage ? "Speichern" : "Als Kunde speichern"}</button>
             </form>
             {c.customerSince && <p className="mt-2 text-xs text-slate-500">Aktiver Kunde seit {fmtDate(c.customerSince)}</p>}
+            <form action={linkContactCustomer} className="mt-3 flex flex-wrap items-end gap-2 border-t border-slate-100 pt-3">
+              <input type="hidden" name="contactId" value={c.id} />
+              <label className="min-w-0 flex-1">
+                <span className="label">Kundenakte</span>
+                <select name="customerId" defaultValue={c.customerId ?? ""} className="input">
+                  <option value="">Nicht verknüpft</option>
+                  {linkable.map((k) => (
+                    <option key={k.id} value={k.id}>{k.name}</option>
+                  ))}
+                </select>
+              </label>
+              <button className="btn-ghost">{c.customerId ? "Verknüpfung ändern" : "Mit Kundenakte verknüpfen"}</button>
+            </form>
           </Fold>
 
           <Fold title="Stammdaten">

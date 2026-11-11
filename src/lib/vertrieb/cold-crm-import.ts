@@ -42,20 +42,42 @@ export function coldCrmSourceConfigured() {
   return !!process.env.COLD_CRM_DATABASE_URL?.trim();
 }
 
-export async function importFromColdCrm(): Promise<ImportReport> {
-  const url = process.env.COLD_CRM_DATABASE_URL?.trim();
-  if (!url) throw new Error("COLD_CRM_DATABASE_URL ist nicht gesetzt.");
-  const src = new Client({ connectionString: url, connectionTimeoutMillis: 15000 });
+/**
+ * Quelle der Übernahme:
+ * - "cold":    altes Cold CRM (COLD_CRM_DATABASE_URL, Tabellen „Contact“ usw.)
+ * - "staging": Testumgebung (VERTRIEB_QUELLE_URL, gleiche Tabellen „Sales…“), für den
+ *   Livegang. Verknüpfungen zu Kundenakten (customerId) werden geleert, weil die
+ *   Kundenakten der Testumgebung in der Produktion nicht existieren.
+ */
+export type ImportSource = "cold" | "staging";
+
+function sourceUrl(source: ImportSource): string {
+  const url = (source === "cold" ? process.env.COLD_CRM_DATABASE_URL : process.env.VERTRIEB_QUELLE_URL)?.trim();
+  if (!url) throw new Error(source === "cold" ? "COLD_CRM_DATABASE_URL ist nicht gesetzt." : "VERTRIEB_QUELLE_URL ist nicht gesetzt.");
+  return url;
+}
+
+export function stagingSourceConfigured() {
+  return !!process.env.VERTRIEB_QUELLE_URL?.trim();
+}
+
+export async function importFromColdCrm(source: ImportSource = "cold"): Promise<ImportReport> {
+  const src = new Client({ connectionString: sourceUrl(source), connectionTimeoutMillis: 15000 });
   await src.connect();
   const report: ImportReport = [];
   try {
     for (const t of TABLES) {
-      const total = Number((await src.query(`SELECT count(*)::int AS n FROM "${t.from}"`)).rows[0].n);
+      const from = source === "staging" ? t.to : t.from;
+      const total = Number((await src.query(`SELECT count(*)::int AS n FROM "${from}"`)).rows[0].n);
       let inserted = 0;
       for (let offset = 0; offset < total; offset += CHUNK) {
         const { rows } = await src.query(
-          `SELECT coalesce(json_agg(x), '[]')::text AS j FROM (SELECT * FROM "${t.from}" ORDER BY id LIMIT ${CHUNK} OFFSET ${offset}) x`,
+          `SELECT coalesce(json_agg(x), '[]')::text AS j FROM (SELECT * FROM "${from}" ORDER BY id LIMIT ${CHUNK} OFFSET ${offset}) x`,
         );
+        let json: string = rows[0].j;
+        if (source === "staging" && t.to === "SalesContact") {
+          json = JSON.stringify((JSON.parse(json) as Record<string, unknown>[]).map((r) => ({ ...r, customerId: null })));
+        }
         const where = (t.fk ?? [])
           .map((f) => `(${f.nullable ? `r."${f.col}" IS NULL OR ` : ""}r."${f.col}" IN (SELECT id FROM "${f.table}"))`)
           .join(" AND ");
@@ -63,7 +85,7 @@ export async function importFromColdCrm(): Promise<ImportReport> {
         // vorhandener E-Mail) würden sonst die Fremdschlüssel verletzen.
         const n = await prisma.$executeRawUnsafe(
           `INSERT INTO "${t.to}" SELECT r.* FROM json_populate_recordset(NULL::"${t.to}", $1::json) r ${where ? `WHERE ${where}` : ""} ON CONFLICT DO NOTHING`,
-          rows[0].j,
+          json,
         );
         inserted += n;
       }
@@ -105,14 +127,14 @@ export function backupSchemaName(now = new Date()) {
   return `backup_vertrieb_${now.getUTCFullYear()}${p(now.getUTCMonth() + 1)}${p(now.getUTCDate())}_${p(now.getUTCHours())}${p(now.getUTCMinutes())}`;
 }
 
-export async function replaceFromColdCrm(now = new Date()): Promise<{ backup: string; report: ImportReport }> {
-  if (!coldCrmReplaceAllowed()) throw new Error("Neu-Import ist hier nicht freigeschaltet.");
+export async function replaceFromColdCrm(now = new Date(), source: ImportSource = "cold"): Promise<{ backup: string; report: ImportReport }> {
+  if (process.env.VERTRIEB_NEUIMPORT_ERLAUBT !== "1") throw new Error("Neu-Import ist hier nicht freigeschaltet.");
   // Quelle zuerst prüfen: ohne erreichbare, gefüllte Quelle wird nichts gelöscht.
-  const src = new Client({ connectionString: process.env.COLD_CRM_DATABASE_URL!.trim(), connectionTimeoutMillis: 15000 });
+  const src = new Client({ connectionString: sourceUrl(source), connectionTimeoutMillis: 15000 });
   await src.connect();
   try {
-    const n = Number((await src.query(`SELECT count(*)::int AS n FROM "Contact"`)).rows[0].n);
-    if (!n) throw new Error("Das Cold CRM liefert keine Kontakte. Abgebrochen, nichts gelöscht.");
+    const n = Number((await src.query(`SELECT count(*)::int AS n FROM "${source === "staging" ? "SalesContact" : "Contact"}"`)).rows[0].n);
+    if (!n) throw new Error(source === "staging" ? "Die Testumgebung liefert keine Kontakte. Abgebrochen, nichts gelöscht." : "Das Cold CRM liefert keine Kontakte. Abgebrochen, nichts gelöscht.");
   } finally {
     await src.end().catch(() => {});
   }
@@ -133,6 +155,6 @@ export async function replaceFromColdCrm(now = new Date()): Promise<{ backup: st
     },
     { timeout: 120_000 },
   );
-  const report = await importFromColdCrm();
+  const report = await importFromColdCrm(source);
   return { backup, report };
 }

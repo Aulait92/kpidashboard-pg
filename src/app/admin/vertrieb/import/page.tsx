@@ -2,7 +2,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { CalendlyForms, ColdCrmImport, ColdCrmReplace, ContactsImport, CopyField, InstantlyCsvImport, InstantlySync } from "@/components/vertrieb/import-forms";
-import { coldCrmReplaceAllowed, coldCrmSourceConfigured } from "@/lib/vertrieb/cold-crm-import";
+import { coldCrmReplaceAllowed, coldCrmSourceConfigured, stagingSourceConfigured } from "@/lib/vertrieb/cold-crm-import";
 import { teamCalendarStatus } from "@/lib/help-call";
 import { fmtDateTime, isWithinDays } from "@/lib/vertrieb/dates";
 import { convertInboundLead } from "@/app/admin/vertrieb/actions";
@@ -113,6 +113,11 @@ export default async function AnbindungenPage() {
         <Item title="Instantly-Export (CSV)" hint="Nur nötig, wenn der Abgleich oben nicht reicht">
           <InstantlyCsvImport />
         </Item>
+        {stagingSourceConfigured() && process.env.VERTRIEB_NEUIMPORT_ERLAUBT === "1" && (
+          <Item title="Vertrieb aus der Testumgebung" hint="Einmalig beim Livegang">
+            <ColdCrmReplace source="staging" />
+          </Item>
+        )}
         {coldCrmSourceConfigured() && (
           <Item title="Altes Cold CRM" hint="Übernimmt nur, was hier noch fehlt">
             <ColdCrmImport configured />

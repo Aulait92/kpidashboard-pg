@@ -31,14 +31,17 @@ export function ColdCrmImport({ configured }: { configured: boolean }) {
 }
 
 /** Neu-Import: ersetzt alle Vertriebsdaten (nur in der Testumgebung freigeschaltet). */
-export function ColdCrmReplace() {
+export function ColdCrmReplace({ source = "cold" }: { source?: "cold" | "staging" }) {
   const [state, action, pending] = useActionState(replaceColdCrmAction, null);
+  const from = source === "staging" ? "der Testumgebung (staging)" : "dem Cold CRM";
   return (
     <form action={action} className="space-y-3 rounded-lg border border-rose-200 bg-rose-50/60 p-4">
+      <input type="hidden" name="source" value={source} />
       <p className="text-sm font-medium text-rose-800">Neu-Import: ersetzt alle Vertriebsdaten</p>
       <p className="text-sm text-slate-600">
-        Löscht hier alle Kontakte, Verlauf, Aufgaben, Kampagnen, Termine, Leads und Angebote im Vertrieb und holt alles frisch aus dem
-        Cold CRM. Vorher wird alles in eine Sicherung in der Datenbank kopiert. Kunden bleiben erhalten.
+        Löscht hier alle Kontakte, Verlauf, Aufgaben, Kampagnen, Termine, Leads und Angebote im Vertrieb und holt alles frisch aus
+        {" "}{from}. Vorher wird alles in eine Sicherung in der Datenbank kopiert. Kunden bleiben erhalten
+        {source === "staging" ? "; Verknüpfungen zu Kundenakten werden danach neu gesetzt (am Kontakt „Mit Kundenakte verknüpfen“)." : "."}
       </p>
       <label className="block text-sm">
         Zur Bestätigung <b>ERSETZEN</b> eintippen

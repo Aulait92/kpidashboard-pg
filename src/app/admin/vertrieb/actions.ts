@@ -506,9 +506,11 @@ export async function importColdCrmAction(_prev: ImportState, _fd: FormData): Pr
 export async function replaceColdCrmAction(_prev: ImportState, fd: FormData): Promise<ImportState> {
   const session = await requireAuth();
   if (s(fd, "confirm") !== "ERSETZEN") return { ok: false, message: "Zur Bestätigung bitte ERSETZEN eintippen." };
+  // Quelle: altes Cold CRM oder (beim Livegang) die Testumgebung
+  const source = s(fd, "source") === "staging" ? "staging" : "cold";
   try {
-    const { backup, report } = await replaceFromColdCrm();
-    await audit("vertrieb.neuimport", { actor: { id: session.userId, email: session.email, role: session.role }, details: { backup, report } });
+    const { backup, report } = await replaceFromColdCrm(new Date(), source);
+    await audit("vertrieb.neuimport", { actor: { id: session.userId, email: session.email, role: session.role }, details: { source, backup, report } });
     refresh();
     return {
       ok: true,
@@ -517,4 +519,27 @@ export async function replaceColdCrmAction(_prev: ImportState, fd: FormData): Pr
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : String(e) };
   }
+}
+
+// ─── Vertriebskontakt mit Kundenakte verknüpfen ─────────────────────────
+/** Verknüpft einen Kontakt mit einer bestehenden Kundenakte (leer = lösen). */
+export async function linkContactCustomer(fd: FormData) {
+  await requireAuth();
+  const contactId = s(fd, "contactId")!;
+  const customerId = s(fd, "customerId");
+  if (customerId) {
+    const taken = await prisma.salesContact.findFirst({ where: { customerId, NOT: { id: contactId } }, select: { name: true } });
+    if (taken) throw new Error(`Diese Kundenakte ist schon mit „${taken.name}“ verknüpft.`);
+    await prisma.customer.findUniqueOrThrow({ where: { id: customerId }, select: { id: true } });
+  }
+  const c = await prisma.salesContact.update({
+    where: { id: contactId },
+    data: { customerId: customerId ?? null },
+    select: { customerStage: true },
+  });
+  // Verknüpft = Kunde: ohne Kunden-Phase landet er sonst nicht in der Kunden-Pipeline
+  if (customerId && !c.customerStage) await changeCustomerStage(contactId, CUSTOMER_STAGES[0].id);
+  await audit(customerId ? "vertrieb.verknuepft" : "vertrieb.verknuepfung_geloest", { entity: "SalesContact", entityId: contactId, customerId: customerId ?? null });
+  refresh(contactId);
+  if (customerId) revalidatePath(`/admin/kunden/${customerId}`);
 }
