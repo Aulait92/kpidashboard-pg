@@ -112,7 +112,7 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
 
   let slots: Slot[] = [];
   try {
-    slots = await suggestSlots(appt.customerId, 30, 24, [9, 10, 11, 13, 14, 15, 16, 17], 14, appt.leadId);
+    slots = await suggestSlots(appt.customerId, 30, 24, "lead", 14, appt.leadId);
   } catch (err) {
     console.error("[manage page] slots", err);
   }

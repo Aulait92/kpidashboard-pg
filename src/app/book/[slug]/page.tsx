@@ -167,7 +167,8 @@ export default async function BookingPage({ params, searchParams }: Props) {
       conn.customerId,
       30,
       24,
-      [9, 10, 11, 13, 14, 15, 16, 17],
+      // Leads buchen nur zu den Lead-Zeiten des Vertreters (Mein Kalender).
+      "lead",
       14,
     );
   } catch (err) {

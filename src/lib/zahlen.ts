@@ -126,14 +126,19 @@ export function retainerInputFor(
 
 export async function loadLedger(now = new Date()) {
   const from = monthStart(addMonths(FIRST_MONTH, 0));
+  // Interne Kunden (Paket „internal“, z. B. eigene Test- oder Firmenkäufer) sind keine
+  // Kunden: weder Umsatz noch „Aktive Kunden“ noch MRR.
   const [ppl, retainerCustomers, acceptedOffers, manualRows] = await Promise.all([
     prisma.$queryRaw<{ customerId: string; month: string; amount: number; n: number }[]>`
-      SELECT "customerId", to_char(("occurredAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Europe/Berlin', 'YYYY-MM') AS month,
-             SUM(amount)::float8 AS amount, COUNT(*)::int AS n
-      FROM "Revenue" WHERE cancelled = false AND "occurredAt" >= ${new Date(from.getTime() - DAY)}
+      SELECT r."customerId", to_char((r."occurredAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Europe/Berlin', 'YYYY-MM') AS month,
+             SUM(r.amount)::float8 AS amount, COUNT(*)::int AS n
+      FROM "Revenue" r
+      LEFT JOIN "Customer" c ON c.id = r."customerId"
+      WHERE r.cancelled = false AND r."occurredAt" >= ${new Date(from.getTime() - DAY)}
+        AND (c.plan IS NULL OR c.plan <> 'internal')
       GROUP BY 1, 2`,
     prisma.customer.findMany({
-      where: { retainerMonthly: { not: null } },
+      where: { retainerMonthly: { not: null }, plan: { not: "internal" } },
       select: {
         id: true,
         archived: true,

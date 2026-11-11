@@ -126,8 +126,9 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Termine
 
-- Buchung über „Termin“ beim Lead: Die Buchungsseite zeigt echte freie Zeiten aus Ihrem Kalender,
-  Telefon oder Video.
+- Buchung über „Termin“ beim Lead: Die Buchungsseite zeigt nur Ihre Lead-Zeiten (unter „Mein Kalender“),
+  die in Ihrem Kalender noch frei sind, Telefon oder Video. Das gilt auch, wenn ein Lead selbst bucht
+  oder verschiebt.
 - Verschieben/Absagen: auf „Heute“ oder beim Lead an der Termin-Karte. Der Kunde bekommt die Änderung automatisch.
 - Leads können über ihren Link selbst verschieben oder absagen.
 - Damit Termine nur in freie Zeiten fallen: in der Einrichtung bzw. unter „Mein Kalender“ bei „Wie sollen wir

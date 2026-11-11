@@ -79,7 +79,8 @@ describe("Zahlen-Seite: Drilldown und Nachträge", () => {
     expect(du.flags.some((f) => f.includes(`Agentur Nord`))).toBe(true);
     expect(du.streams[0].source).toBe("Umsatz ohne Lead");
 
-    expect(oct.customers.find((c) => c.customerId === intern)!.flags).toContain("intern");
+    // interne Käufer zählen weder als Kunde noch im Umsatz
+    expect(oct.customers.some((c) => c.customerId === intern)).toBe(false);
 
     // Retainer von Hand mit Ende 15.10.: Oktober anteilig, November nichts
     const r = oct.customers.find((c) => c.customerId === retainer)!;
