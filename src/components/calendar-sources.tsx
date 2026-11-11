@@ -251,8 +251,10 @@ export function IcsForm({ action, readOnly, hidden }: { action: FormAction; read
 }
 
 /**
- * „Wie sollen wir Ihre freien Zeiten erkennen?": drei Wege, einer aufgeklappt.
- * Vorauswahl: der bereits eingerichtete Weg, sonst Google/Microsoft.
+ * „Ihr Kalender“ (Inhaber = Kalender des Kundenkontos): Google/Outlook verbinden
+ * oder trennen. Darunter zugeklappt „Andere Quelle für freie Zeiten“ (ICS-Link,
+ * Allianz-Online-Kalender) für Fälle, in denen wir den Kalender nicht direkt
+ * lesen dürfen; Termine landen trotzdem im verbundenen Google-/Outlook-Kalender.
  */
 export function SourcePicker({
   status,
@@ -273,114 +275,144 @@ export function SourcePicker({
   removeIcsAction: PlainAction;
   allianzAction: FormAction;
   disconnectAllianzAction: PlainAction;
-  /** Google/Outlook-Agentur-Kalender trennen (optional). */
+  /** Google/Outlook-Kalender trennen (optional). */
   disconnectNativeAction?: PlainAction;
   hidden?: Record<string, string>;
   /** Allianz-Online-Kalender anbieten (nicht für Makler, außer schon verbunden). */
   allianzOption?: boolean;
 }) {
-  const initial = status.allianz ? "allianz" : status.hasIcs ? "ics" : "native";
-  const [way, setWay] = useState<"native" | "ics" | "allianz">(initial);
+  const showAllianz = allianzOption || !!status.allianz;
+  const [way, setWay] = useState<"ics" | "allianz">(status.allianz ? "allianz" : status.hasIcs || !showAllianz ? "ics" : "allianz");
   const hiddenInputs = hidden ? Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />) : null;
-  const options: Array<["native" | "ics" | "allianz", string, string, boolean]> = [
-    ["native", "Google- oder Microsoft-Kalender", "Wir sehen freie Zeiten und tragen Termine direkt ein.", status.native.connected],
+  const otherActive = status.hasIcs || !!status.allianz;
+  const options: Array<["ics" | "allianz", string, string, boolean]> = [
     ["ics", "Kalender-Link (ICS)", "Ein veröffentlichter Link zeigt uns, wann Sie belegt sind.", status.hasIcs],
-    ["allianz", "Allianz-Online-Kalender", "Wir lesen Ihre freien Termine aus der Online-Terminbuchung Ihrer Vertreter-Seite.", !!status.allianz],
   ];
-  if (!allianzOption && !status.allianz) options.pop();
+  if (showAllianz) options.unshift(["allianz", "Allianz-Online-Kalender", "Wir lesen Ihre freien Termine aus der Online-Terminbuchung Ihrer Vertreter-Seite.", !!status.allianz]);
   return (
-    <div className="space-y-3">
-      <p className="text-[15px] font-medium">Wie sollen wir Ihre freien Zeiten erkennen?</p>
-      <div className={`grid gap-2 ${options.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`} role="radiogroup">
-        {options.map(([k, title, text, active]) => (
-          <button
-            key={k}
-            type="button"
-            role="radio"
-            aria-checked={way === k}
-            onClick={() => setWay(k)}
-            className={`rounded-[var(--radius-md)] border px-4 py-3 text-left transition ${
-              way === k ? "border-[color:var(--brand)] bg-[#EFF6FF]" : "border-[color:var(--border)] bg-white hover:border-[color:var(--border-strong)]"
-            }`}
-          >
-            <span className="flex items-center gap-1.5 text-[15px] font-semibold">
-              {title}
-              {active ? <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-label="eingerichtet" /> : null}
+    <div className="space-y-4">
+      <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-4" data-ihr-kalender>
+        {status.native.connected ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="flex items-center gap-1.5 text-[15px] font-medium text-emerald-700">
+              <CheckCircle2 className="h-4 w-4" /> {status.native.label ?? "Kalender"} verbunden
             </span>
-            <span className="mt-1 block text-sm text-[color:var(--muted)]">{text}</span>
-          </button>
-        ))}
-      </div>
-
-      <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-4">
-        {way === "native" ? (
-          status.native.connected ? (
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
-                <CheckCircle2 className="h-4 w-4" /> {status.native.label ?? "Kalender"} verbunden
-              </span>
-              {disconnectNativeAction && !readOnly ? (
-                <form action={disconnectNativeAction}>
-                  {hiddenInputs}
-                  <button type="submit" className={buttonClass("ghost", "sm")}>
-                    Trennen
-                  </button>
-                </form>
-              ) : null}
-            </div>
-          ) : (
+            {disconnectNativeAction && !readOnly ? (
+              <form action={disconnectNativeAction}>
+                {hiddenInputs}
+                <button type="submit" className={buttonClass("ghost", "sm")}>
+                  Trennen
+                </button>
+              </form>
+            ) : null}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-[color:var(--muted)]">Verbinden Sie Ihren Kalender. Termine landen dann nur in Ihren freien Zeiten direkt dort.</p>
             <div className="flex flex-wrap gap-2">
-              <a href={connectLinks.google} className={buttonClass("secondary", "md", readOnly ? "pointer-events-none opacity-60" : "")}>
+              <a href={connectLinks.google} className={buttonClass("primary", "md", readOnly ? "pointer-events-none opacity-60" : "")}>
                 Google-Kalender verbinden
               </a>
               <a href={connectLinks.microsoft} className={buttonClass("secondary", "md", readOnly ? "pointer-events-none opacity-60" : "")}>
                 Outlook / Microsoft 365 verbinden
               </a>
             </div>
-          )
-        ) : null}
-
-        {way === "ics" ? (
-          status.hasIcs ? (
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
-                <CheckCircle2 className="h-4 w-4" /> Kalender-Link hinterlegt
-              </span>
-              <form action={removeIcsAction}>
-                {hiddenInputs}
-                <button type="submit" disabled={readOnly} className={buttonClass("ghost", "sm")}>
-                  Entfernen
-                </button>
-              </form>
-            </div>
-          ) : (
-            <IcsForm action={icsAction} readOnly={readOnly} hidden={hidden} />
-          )
-        ) : null}
-
-        {way === "allianz" ? (
-          status.allianz ? (
-            <div className="space-y-2 text-sm">
-              <p className="flex items-start gap-1.5 font-medium text-emerald-700">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-                <span>
-                  Verbunden{status.allianz.orgName ? `: ${status.allianz.orgName}` : ""}. Termin-Art „{status.allianz.templateName}“ ({status.allianz.durationMin} Min.).
-                </span>
-              </p>
-              {status.allianz.lastError ? <p className="text-rose-700">Letzter Abruf fehlgeschlagen: {status.allianz.lastError} Wir kümmern uns darum.</p> : null}
-              <form action={disconnectAllianzAction}>
-                {hiddenInputs}
-                <button type="submit" disabled={readOnly} className={buttonClass("ghost", "sm")}>
-                  Verbindung trennen
-                </button>
-              </form>
-            </div>
-          ) : (
-            <AllianzForm action={allianzAction} readOnly={readOnly} hidden={hidden} />
-          )
-        ) : null}
+          </div>
+        )}
       </div>
+
+      <details open={otherActive} className="group rounded-[var(--radius-md)] border border-[color:var(--border)] [&>summary::-webkit-details-marker]:hidden">
+        <summary className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3">
+          <span className="flex items-center gap-1.5 text-[15px] font-medium">
+            Andere Quelle für freie Zeiten
+            {otherActive ? <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-label="eingerichtet" /> : null}
+          </span>
+          <span className="text-sm text-[color:var(--muted)] group-open:hidden">{showAllianz ? "z. B. Allianz-Kalender" : "Kalender-Link"}</span>
+        </summary>
+        <div className="space-y-3 border-t border-[color:var(--border)] p-4">
+          <p className="text-sm text-[color:var(--muted)]">
+            Dürfen wir Ihren Firmenkalender nicht direkt lesen, erkennen wir Ihre belegten Zeiten auch so. Termine tragen wir trotzdem in den oben verbundenen Kalender ein.
+          </p>
+          {options.length > 1 ? (
+            <div className="grid gap-2 sm:grid-cols-2" role="radiogroup">
+              {options.map(([k, title, text, active]) => (
+                <button
+                  key={k}
+                  type="button"
+                  role="radio"
+                  aria-checked={way === k}
+                  onClick={() => setWay(k)}
+                  className={`rounded-[var(--radius-md)] border px-4 py-3 text-left transition ${
+                    way === k ? "border-[color:var(--brand)] bg-[#EFF6FF]" : "border-[color:var(--border)] bg-white hover:border-[color:var(--border-strong)]"
+                  }`}
+                >
+                  <span className="flex items-center gap-1.5 text-[15px] font-semibold">
+                    {title}
+                    {active ? <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-label="eingerichtet" /> : null}
+                  </span>
+                  <span className="mt-1 block text-sm text-[color:var(--muted)]">{text}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+
+          {way === "ics" ? (
+            status.hasIcs ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
+                  <CheckCircle2 className="h-4 w-4" /> Kalender-Link hinterlegt
+                </span>
+                <form action={removeIcsAction}>
+                  {hiddenInputs}
+                  <button type="submit" disabled={readOnly} className={buttonClass("ghost", "sm")}>
+                    Entfernen
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <IcsForm action={icsAction} readOnly={readOnly} hidden={hidden} />
+            )
+          ) : null}
+
+          {way === "allianz" ? (
+            status.allianz ? (
+              <div className="space-y-2 text-sm">
+                <p className="flex items-start gap-1.5 font-medium text-emerald-700">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>
+                    Verbunden{status.allianz.orgName ? `: ${status.allianz.orgName}` : ""}. Termin-Art „{status.allianz.templateName}“ ({status.allianz.durationMin} Min.).
+                  </span>
+                </p>
+                {status.allianz.lastError ? <p className="text-rose-700">Letzter Abruf fehlgeschlagen: {status.allianz.lastError} Wir kümmern uns darum.</p> : null}
+                <form action={disconnectAllianzAction}>
+                  {hiddenInputs}
+                  <button type="submit" disabled={readOnly} className={buttonClass("ghost", "sm")}>
+                    Verbindung trennen
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <AllianzForm action={allianzAction} readOnly={readOnly} hidden={hidden} />
+            )
+          ) : null}
+        </div>
+      </details>
     </div>
+  );
+}
+
+/** Team-Karte: Berater per E-Mail ans Verbinden erinnern. */
+export function RemindButton({ action, userId, readOnly }: { action: FormAction; userId: string; readOnly: boolean }) {
+  const [state, formAction, pending] = useActionState<SourceResult, FormData>(action, {});
+  return (
+    <form action={formAction} className="flex flex-wrap items-center gap-2">
+      <input type="hidden" name="userId" value={userId} />
+      <button type="submit" disabled={pending || readOnly || !!state.ok} className={buttonClass("secondary", "sm")}>
+        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+        {state.ok ? "Erinnert" : "Erinnern"}
+      </button>
+      {state.error ? <span className="text-xs font-medium text-rose-700">{state.error}</span> : null}
+    </form>
   );
 }
 

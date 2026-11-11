@@ -196,8 +196,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               <p className="mb-3 text-sm font-medium text-rose-700">
                 {gcal === "consent"
                   ? makler
-                    ? "Ihr Unternehmen muss die Verbindung erst freigeben. Kein Problem: Wählen Sie unten den Kalender-Link, oder rufen Sie kurz an."
-                    : "Ihr Unternehmen muss die Verbindung erst freigeben. Kein Problem: Wählen Sie unten den Kalender-Link oder den Allianz-Online-Kalender, oder rufen Sie kurz an."
+                    ? "Ihr Unternehmen muss die Verbindung erst freigeben. Kein Problem: Öffnen Sie unten „Andere Quelle für freie Zeiten“ und hinterlegen Sie einen Kalender-Link, oder rufen Sie kurz an."
+                    : "Ihr Unternehmen muss die Verbindung erst freigeben. Kein Problem: Öffnen Sie unten „Andere Quelle für freie Zeiten“ (Allianz-Online-Kalender oder Kalender-Link), oder rufen Sie kurz an."
                   : "Das hat nicht geklappt. Bitte noch einmal versuchen oder kurz anrufen, dann erledigen wir es gemeinsam."}
               </p>
             ) : null}

@@ -16,7 +16,7 @@ Seiten aus der Liste „Seiten“ unten.
 | /buyer/zahlen | Zahlen | Kosten, Ertrag, Funnel, Hochrechnung |
 | /buyer/konto | Konto & Rechnungen | Vertrag, Rechnungen, Zahlungsart, Pause/Urlaub (nur Inhaber) |
 | /buyer/team | Team | Berater einladen, Leads verteilen (nur Inhaber) |
-| /buyer/kalender | Mein Kalender | Eigenen Kalender verbinden (bei Team-Zugängen), freie Zeiten erkennen, Lead-Zeiten, Zeit blockieren |
+| /buyer/kalender | Mein Kalender | „Ihr Kalender“ verbinden (ein Kalender je Person), andere Quelle für freie Zeiten (ICS/Allianz), Team-Übersicht für Inhaber, Lead-Zeiten, Zeit blockieren |
 | /buyer/einrichtung | Einrichtung | Fragebogen, Meta-Zugriff, Kalender, App aufs Handy, Hilfetermin |
 | /buyer/bestand | Bestand | Bestandskunden und Kampagnen (Zusatzmodul; ohne Modul mit Knopf „Jetzt buchen“, sonst „Modul anfragen“) |
 | /buyer/bestand/import | Kundenliste hochladen | Excel/CSV importieren |
@@ -131,9 +131,14 @@ Seiten aus der Liste „Seiten“ unten.
   oder verschiebt.
 - Verschieben/Absagen: auf „Heute“ oder beim Lead an der Termin-Karte. Der Kunde bekommt die Änderung automatisch.
 - Leads können über ihren Link selbst verschieben oder absagen.
-- Damit Termine nur in freie Zeiten fallen: in der Einrichtung bzw. unter „Mein Kalender“ bei „Wie sollen wir
-  Ihre freien Zeiten erkennen?“ einen Weg wählen. Die App liest nur, wann Sie belegt bzw. frei sind:
-  1. **Google- oder Microsoft-Kalender** verbinden.
+- **Ein Kalender je Person:** Unter „Mein Kalender“ → „Ihr Kalender“ verbinden Sie Google oder Outlook. Der
+  Inhaber verbindet den Kalender der Agentur, jeder Berater im Team seinen eigenen. Die Agentur ist für Termine
+  frei, wenn mindestens eine Person frei ist; Termine werden reihum verteilt (Leads mit Zuständigem landen bei
+  ihm). Inhaber im Team sehen die Karte „Team“: wer verbunden ist, und „Erinnern“ (E-Mail, höchstens 1× am Tag).
+  War beim Inhaber früher ein persönlicher Kalender verbunden, erscheint „Als Ihren Kalender übernehmen“.
+- Damit Termine nur in freie Zeiten fallen, liest die App nur, wann Sie belegt bzw. frei sind:
+  1. **Google- oder Microsoft-Kalender** verbinden („Ihr Kalender“). Termine werden dort eingetragen.
+  Dürfen wir den Firmenkalender nicht direkt lesen, unter „Andere Quelle für freie Zeiten“ (zugeklappt):
   2. **Kalender-Link (ICS):** In Outlook im Browser unter Einstellungen → Kalender → Freigegebene Kalender →
      Kalender veröffentlichen, „Kann sehen, wann ich beschäftigt bin“ wählen und den ICS-Link einfügen.
   3. **Allianz-Online-Kalender:** Link Ihrer Vertreter-Seite (vertretung.allianz.de/…) oder Ihre

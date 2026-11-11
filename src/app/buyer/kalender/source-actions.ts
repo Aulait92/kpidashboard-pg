@@ -6,6 +6,7 @@ import { userCalendarKey } from "@/lib/calendar/tokens";
 import { prisma } from "@/lib/prisma";
 import { sendToAdmins } from "@/lib/push";
 import { audit } from "@/lib/audit";
+import { adoptOwnCalendar, remindAdvisorCalendar } from "@/lib/calendar/team";
 import {
   addBlock,
   connectAllianz,
@@ -125,4 +126,27 @@ export async function deleteBlockAction(fd: FormData): Promise<void> {
   if (row?.calendarKey !== c.key) return;
   await deleteBlock(c.ctx.customerId, id);
   refresh();
+}
+
+/** Inhaber: früher verbundenen „eigenen Kalender“ als seinen Kalender übernehmen. */
+export async function adoptOwnCalendarAction(): Promise<void> {
+  const c = await ctxOrError(true);
+  if ("error" in c || !c.ctx.userId) return;
+  const res = await adoptOwnCalendar(c.ctx.customerId, c.ctx.userId);
+  if (res.ok) await audit("calendar.adopt_own", { customerId: c.ctx.customerId, entity: "CalendarConnection" });
+  refresh();
+}
+
+/** Inhaber im Team: Berater per E-Mail ans Kalender-Verbinden erinnern (1× pro Tag). */
+export async function remindAdvisorCalendarAction(_prev: SourceResult, fd: FormData): Promise<SourceResult> {
+  const c = await ctxOrError(true);
+  if ("error" in c) return { error: c.error };
+  const res = await remindAdvisorCalendar({
+    customerId: c.ctx.customerId,
+    targetUserId: String(fd.get("userId") ?? ""),
+    actor: { id: c.ctx.userId, email: c.ctx.email ?? null },
+  });
+  if (!res.ok) return { error: res.error };
+  refresh();
+  return { ok: true, info: "Erinnerung gesendet." };
 }

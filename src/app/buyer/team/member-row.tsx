@@ -78,7 +78,7 @@ export function MemberRow({ m, readOnly, colleagues, today }: { m: MemberView; r
             ) : null}
           </div>
           <div className="truncate text-xs text-[color:var(--muted)]">
-            {m.leads30} {m.leads30 === 1 ? "Lead" : "Leads"} in 30 Tagen · {m.ownCalendar ? "eigener Kalender" : "Agentur-Kalender"}
+            {m.leads30} {m.leads30 === 1 ? "Lead" : "Leads"} in 30 Tagen · {m.ownCalendar ? "Kalender verbunden" : m.owner ? "Kalender unter „Mein Kalender“" : "kein Kalender (Termine beim Inhaber)"}
           </div>
         </div>
         <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
