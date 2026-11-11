@@ -28,6 +28,12 @@ ENV DATABASE_URL=$DATABASE_URL
 ARG NEXT_PUBLIC_SENTRY_DSN
 ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
 
+# Push (Web Push): der öffentliche VAPID-Schlüssel wird ebenfalls in den
+# Browser-Code eingebettet – ohne ihn meldet der Kundenbereich „Benachrichtigungen
+# sind auf dem Server noch nicht eingerichtet“.
+ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY
+ENV NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY
+
 # Sentry Source-Map-Upload: nur als Build-Arg (kein ENV), damit der Token
 # nicht in der Laufzeit-Umgebung des Containers landet. Ohne Token baut
 # next build normal, nur ohne Upload. Der Wert ändert den Build-Cache-Key,
