@@ -214,7 +214,7 @@ describe("Lead-Zeiten und Blockierungen", () => {
   });
 
   it("Standard bleibt Mo–Fr 10/14/16 Uhr", () => {
-    expect(DEFAULT_LEAD_TIMES).toEqual({ weekdays: [1, 2, 3, 4, 5], times: ["10:00", "14:00", "16:00"] });
+    expect(DEFAULT_LEAD_TIMES).toEqual({ weekdays: [1, 2, 3, 4, 5], times: ["10:00", "14:00", "16:00"], durationMin: 30 });
     expect(candidateTimes("lead", DEFAULT_LEAD_TIMES, 6)).toEqual([]);
     expect(candidateTimes("lead", DEFAULT_LEAD_TIMES, 2)).toEqual(["10:00", "14:00", "16:00"]);
     expect(candidateTimes({ lead: true, prefer: ["09:00"] }, DEFAULT_LEAD_TIMES, 2)).toEqual(["09:00", "10:00", "14:00", "16:00"]);

@@ -16,9 +16,37 @@ export type LeadTimes = {
   weekdays: number[];
   /** Uhrzeiten "HH:MM" (Berliner Zeit), aufsteigend. */
   times: string[];
+  /** Termindauer in Minuten (15/30/45/60); fehlt = Standard 30. */
+  durationMin?: number;
 };
 
-export const DEFAULT_LEAD_TIMES: LeadTimes = { weekdays: [1, 2, 3, 4, 5], times: ["10:00", "14:00", "16:00"] };
+/** Wählbare Termindauern (Minuten). */
+export const APPOINTMENT_DURATIONS = [15, 30, 45, 60] as const;
+export const DEFAULT_DURATION_MIN = 30;
+
+/** Ungültige Dauer → Standard 30 Minuten. */
+export function normalizeDuration(raw: unknown): number {
+  const n = Number(raw);
+  return (APPOINTMENT_DURATIONS as readonly number[]).includes(n) ? n : DEFAULT_DURATION_MIN;
+}
+
+export const DEFAULT_LEAD_TIMES: LeadTimes = { weekdays: [1, 2, 3, 4, 5], times: ["10:00", "14:00", "16:00"], durationMin: DEFAULT_DURATION_MIN };
+
+/**
+ * Startzeiten im festen Raster („alle 30 Min. von 9 bis 17 Uhr“): erste Zeit = von,
+ * letzte so, dass ein Termin dieser Schrittweite bis „bis“ endet.
+ */
+export function timeGrid(stepMin: number, from = "09:00", to = "17:00"): string[] {
+  const f = normalizeTime(from);
+  const t = normalizeTime(to);
+  if (!f || !t || !(stepMin >= 5)) return [];
+  const toMin = (s: string) => Number(s.slice(0, 2)) * 60 + Number(s.slice(3, 5));
+  const out: string[] = [];
+  for (let m = toMin(f); m + stepMin <= toMin(t) && out.length < 96; m += stepMin) {
+    out.push(`${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`);
+  }
+  return out;
+}
 
 export const WEEKDAY_SHORT = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"] as const;
 
@@ -51,15 +79,24 @@ export function leadTimesError(lt: LeadTimes): string | null {
 /** Lead-Zeiten eines Kalender-Schlüssels (ohne Eintrag: Standard). */
 export async function loadLeadTimes(calendarKey: string): Promise<LeadTimes> {
   const row = await prisma.calendarLeadTimes.findUnique({ where: { calendarKey } });
-  if (!row || row.weekdays.length === 0 || row.times.length === 0) return DEFAULT_LEAD_TIMES;
-  return { weekdays: row.weekdays, times: row.times };
+  if (!row) return DEFAULT_LEAD_TIMES;
+  const durationMin = normalizeDuration(row.durationMin);
+  if (row.weekdays.length === 0 || row.times.length === 0) return { ...DEFAULT_LEAD_TIMES, durationMin };
+  return { weekdays: row.weekdays, times: row.times, durationMin };
+}
+
+/** Eingestellte Termindauer eines Kalender-Schlüssels, null ohne Eintrag. */
+export async function durationForKey(calendarKey: string): Promise<number | null> {
+  const row = await prisma.calendarLeadTimes.findUnique({ where: { calendarKey }, select: { durationMin: true } });
+  return row ? normalizeDuration(row.durationMin) : null;
 }
 
 export async function saveLeadTimes(customerId: string, calendarKey: string, lt: LeadTimes): Promise<void> {
+  const durationMin = normalizeDuration(lt.durationMin);
   await prisma.calendarLeadTimes.upsert({
     where: { calendarKey },
-    create: { calendarKey, customerId, weekdays: lt.weekdays, times: lt.times },
-    update: { weekdays: lt.weekdays, times: lt.times },
+    create: { calendarKey, customerId, weekdays: lt.weekdays, times: lt.times, durationMin },
+    update: { weekdays: lt.weekdays, times: lt.times, durationMin },
   });
 }
 

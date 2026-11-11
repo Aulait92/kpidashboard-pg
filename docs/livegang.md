@@ -78,6 +78,7 @@ Die Produktion ist seit 11.11. eingemessen; neue Migrationen laufen beim normale
 | `20261114240000_kosten_regeln` | Spalte `CostRule.counterpartyOnly`; legt Oles Zuordnungsregeln an (Papierkram, XING, Google, Kontoführung, Telekom, Steuerberater, DATEV, Asana, Privat) – der Cron wendet sie auf offene Buchungen an | nur Regeln |
 | `20261114250000_kosten_regeln_namen` | sprechende Bezeichnungen für bekannte Kosten-Regeln (Zeilennamen in der BWA) | nur Bezeichnungen |
 | `20261114260000_ppl_pilot_ende` | Spalte `KpiSettings.pplPilotEnd` (letzter Monat der Pay-per-Lead-Pilotphase, optional) | nur hinzufügend |
+| `20261114270000_termindauer` | Spalte `CalendarLeadTimes.durationMin` (Termindauer 15/30/45/60 Min. je Kalender, Standard 30) | nur hinzufügend; ohne Einstellung bleiben Termine 30 Min. |
 
 Keine davon verändert bestehende Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und

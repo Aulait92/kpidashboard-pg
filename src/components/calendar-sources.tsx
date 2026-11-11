@@ -14,6 +14,8 @@ type PlainAction = (fd: FormData) => Promise<void>;
 
 const input =
   "h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-[15px] outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20";
+const inputTime =
+  "h-9 w-32 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20";
 const chip =
   "block min-w-[3.25rem] rounded-full border border-[color:var(--border)] bg-white px-3 py-1.5 text-center text-sm transition peer-checked:border-[color:var(--brand)] peer-checked:bg-[#EFF6FF] peer-checked:font-semibold peer-checked:text-[color:var(--brand)] peer-focus-visible:ring-2 peer-focus-visible:ring-[color:var(--brand)]/30";
 
@@ -49,6 +51,21 @@ const DAYS: Array<[number, string]> = [
   [0, "So"],
 ];
 const GRID = Array.from({ length: 12 }, (_, i) => `${String(8 + i).padStart(2, "0")}:00`);
+const DURATIONS = [15, 30, 45, 60] as const;
+const STEPS = [30, 45, 60] as const;
+
+/** Startzeiten im Raster (wie lib/calendar/lead-times.ts timeGrid, hier ohne Server-Import). */
+function grid(stepMin: number, from: string, to: string): string[] {
+  const toMin = (s: string) => (/^\d{1,2}:\d{2}$/.test(s) ? Number(s.split(":")[0]) * 60 + Number(s.split(":")[1]) : NaN);
+  const f = toMin(from);
+  const t = toMin(to);
+  if (!Number.isFinite(f) || !Number.isFinite(t)) return [];
+  const out: string[] = [];
+  for (let m = f; m + stepMin <= t && out.length < 96; m += stepMin) {
+    out.push(`${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`);
+  }
+  return out;
+}
 
 export function LeadTimesForm({
   initial,
@@ -57,7 +74,7 @@ export function LeadTimesForm({
   hidden,
   source = "none",
 }: {
-  initial: { weekdays: number[]; times: string[] };
+  initial: { weekdays: number[]; times: string[]; durationMin?: number };
   action: FormAction;
   readOnly: boolean;
   hidden?: Record<string, string>;
@@ -69,10 +86,34 @@ export function LeadTimesForm({
   source?: "none" | "ics" | "allianz";
 }) {
   const [state, formAction, pending] = useActionState<SourceResult, FormData>(action, {});
-  const times = [...new Set([...GRID, ...initial.times])].sort();
+  const [duration, setDuration] = useState<number>(initial.durationMin ?? 30);
+  const [selected, setSelected] = useState<Set<string>>(() => new Set(initial.times));
+  const [from, setFrom] = useState("09:00");
+  const [to, setTo] = useState("17:00");
+  // Volle Stunden immer zeigen, dazu jede gewählte Zeit (auch :15/:30/:45)
+  const times = [...new Set([...GRID, ...selected])].sort();
+  const toggle = (t: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(t)) next.delete(t);
+      else next.add(t);
+      return next;
+    });
+  const suggestedStep = duration === 45 ? 45 : duration === 60 ? 60 : 30;
   return (
     <form action={formAction} className="space-y-4">
       {hidden ? Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />) : null}
+      <fieldset>
+        <legend className="text-sm font-medium">Termindauer</legend>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {DURATIONS.map((d) => (
+            <label key={d} className="cursor-pointer">
+              <input type="radio" name="duration" value={d} checked={duration === d} onChange={() => setDuration(d)} className="peer sr-only" />
+              <span className={chip}>{d} Min.</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <fieldset>
         <legend className="text-sm font-medium">Wochentage</legend>
         <div className="mt-2 flex flex-wrap gap-2">
@@ -86,10 +127,30 @@ export function LeadTimesForm({
       </fieldset>
       <fieldset>
         <legend className="text-sm font-medium">Uhrzeiten</legend>
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm" data-raster>
+          <span className="text-[color:var(--muted)]">Schnellauswahl von</span>
+          <input type="time" step={900} value={from} onChange={(e) => setFrom(e.target.value)} aria-label="Von" className={inputTime} />
+          <span className="text-[color:var(--muted)]">bis</span>
+          <input type="time" step={900} value={to} onChange={(e) => setTo(e.target.value)} aria-label="Bis" className={inputTime} />
+          {STEPS.map((step) => (
+            <button
+              key={step}
+              type="button"
+              disabled={readOnly}
+              onClick={() => setSelected(new Set(grid(step, from, to)))}
+              className={buttonClass(step === suggestedStep ? "primary" : "secondary", "sm")}
+            >
+              Alle {step} Min.
+            </button>
+          ))}
+          <button type="button" disabled={readOnly} onClick={() => setSelected(new Set())} className={buttonClass("ghost", "sm")}>
+            Alle abwählen
+          </button>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
           {times.map((t) => (
             <label key={t} className="cursor-pointer">
-              <input type="checkbox" name={`time_${t}`} defaultChecked={initial.times.includes(t)} className="peer sr-only" />
+              <input type="checkbox" name={`time_${t}`} checked={selected.has(t)} onChange={() => toggle(t)} className="peer sr-only" />
               <span className={chip}>{t.replace(/^0/, "")}</span>
             </label>
           ))}

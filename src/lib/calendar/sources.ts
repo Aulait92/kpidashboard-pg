@@ -15,7 +15,7 @@ import {
   resolveAllianzCalendar,
   type AllianzCalendar,
 } from "@/lib/calendar/allianz-online";
-import { blockRange, leadTimesError, normalizeLeadTimes, normalizeTime, saveLeadTimes, type LeadTimes } from "@/lib/calendar/lead-times";
+import { blockRange, leadTimesError, normalizeDuration, normalizeLeadTimes, normalizeTime, saveLeadTimes, type LeadTimes } from "@/lib/calendar/lead-times";
 
 export type SourceResult = { ok?: boolean; error?: string; info?: string };
 
@@ -159,7 +159,7 @@ export function leadTimesFromForm(fd: FormData): LeadTimes {
   }
   const extra = String(fd.get("extraTime") ?? "").trim();
   if (extra) times.push(extra);
-  return normalizeLeadTimes({ weekdays, times });
+  return { ...normalizeLeadTimes({ weekdays, times }), durationMin: normalizeDuration(fd.get("duration")) };
 }
 
 export async function updateLeadTimes(customerId: string, calendarKey: string, fd: FormData): Promise<SourceResult> {

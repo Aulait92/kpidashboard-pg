@@ -1857,6 +1857,8 @@ model CalendarLeadTimes {
   weekdays    Int[]
   // Uhrzeiten "HH:MM" (Berliner Zeit)
   times       String[]
+  // Termindauer in Minuten (15/30/45/60) für Termine in diesem Kalender
+  durationMin Int      @default(30)
   updatedAt   DateTime @updatedAt
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)

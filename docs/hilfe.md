@@ -149,6 +149,8 @@ Seiten aus der Liste „Seiten“ unten.
   Der Assistent schlägt nur diese Zeiten vor, und nur wenn Sie dann frei sind. Tipp: Halten Sie diese Zeiten
   in Ihrem Kalender frei. Wer sie markieren möchte (Serie „Leadtermine“), stellt „Anzeigen als: Frei“ ein; mit
   Allianz-Online-Kalender bitte gar nicht blocken. Belegte Zeiten können wir nicht anbieten.
+  - **Termindauer:** 15, 30, 45 oder 60 Minuten (Standard 30). Gilt für Buchungsseite, Assistent und neue Termine; beim Verschieben behält ein Termin seine Dauer. Im Team kann jeder Berater eine eigene Dauer einstellen, sonst gilt die des Inhabers.
+  - **Schnellauswahl:** „Von … bis …“ wählen und „Alle 30 / 45 / 60 Min.“ tippen – die Uhrzeiten werden im Raster gesetzt (z. B. 9:00, 9:45, 10:30 …), danach einzelne Zeiten an- oder abwählen. „Alle abwählen“ leert die Auswahl. Gewählte Halb- und Viertelstunden erscheinen als eigene Knöpfe.
 - **Zeit blockieren:** unter „Mein Kalender“ Datum und von–bis eintragen. In dieser Zeit werden keine Termine
   angeboten. Löschen jederzeit in der Liste.
 - Gebuchte Termine kommen weiter als Kalendereinladung an Ihre Adresse für Termineinladungen (z. B. Allianz-Mail).

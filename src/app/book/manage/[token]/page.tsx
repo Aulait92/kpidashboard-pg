@@ -3,7 +3,7 @@ import { CheckCircle2, Video } from "lucide-react";
 import { buttonClass } from "@/components/ui";
 import { AddToCalendar } from "@/components/add-to-calendar";
 import { SubmitButton } from "@/components/submit-button";
-import { suggestSlots, type Slot } from "@/lib/calendar";
+import { bookingDurationMin, suggestSlots, type Slot } from "@/lib/calendar";
 import { prisma } from "@/lib/prisma";
 import { cancelManageAction, rescheduleManageAction } from "./actions";
 import { nowMs } from "@/lib/now";
@@ -47,6 +47,7 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
       customerId: true,
       status: true,
       startsAt: true,
+      endsAt: true,
       mode: true,
       meetUrl: true,
       leadId: true,
@@ -112,7 +113,11 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
 
   let slots: Slot[] = [];
   try {
-    slots = await suggestSlots(appt.customerId, 30, 24, "lead", 14, appt.leadId);
+    // Verschieben behält die Dauer des Termins
+    const durationMin = appt.endsAt
+      ? Math.max(15, Math.round((appt.endsAt.getTime() - appt.startsAt.getTime()) / 60000))
+      : await bookingDurationMin(appt.customerId, appt.leadId);
+    slots = await suggestSlots(appt.customerId, durationMin, 24, "lead", 14, appt.leadId);
   } catch (err) {
     console.error("[manage page] slots", err);
   }

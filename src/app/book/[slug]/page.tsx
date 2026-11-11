@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { AddToCalendar } from "@/components/add-to-calendar";
 import { PhoneField } from "@/components/phone-field";
 import { SubmitButton } from "@/components/submit-button";
-import { suggestSlots, type Slot } from "@/lib/calendar";
+import { bookingDurationMin, suggestSlots, type Slot } from "@/lib/calendar";
 import { bookPublicAction } from "./actions";
 import { nowMs } from "@/lib/now";
 
@@ -162,10 +162,12 @@ export default async function BookingPage({ params, searchParams }: Props) {
 
   // ── Buchungsformular ──────────────────────────────────────────────────
   let slots: Slot[] = [];
+  // Termindauer aus „Mein Kalender“ (15/30/45/60 Min.)
+  const durationMin = await bookingDurationMin(conn.customerId).catch(() => 30);
   try {
     slots = await suggestSlots(
       conn.customerId,
-      30,
+      durationMin,
       24,
       // Leads buchen nur zu den Lead-Zeiten des Vertreters (Mein Kalender).
       "lead",
@@ -201,7 +203,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
       </div>
       <div className="mt-3 flex flex-wrap gap-2 text-xs text-[color:var(--muted)]">
         <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--surface-sunken)] px-2.5 py-1">
-          <Clock className="h-3.5 w-3.5" /> 30 Minuten
+          <Clock className="h-3.5 w-3.5" /> {durationMin} Minuten
         </span>
         <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--surface-sunken)] px-2.5 py-1">
           <Phone className="h-3.5 w-3.5" /> Telefon oder <Video className="h-3.5 w-3.5" /> Video

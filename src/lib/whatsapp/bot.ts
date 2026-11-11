@@ -11,6 +11,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/prisma";
 import {
   bookAppointment,
+  bookingDurationMin,
   cancelAppointment,
   rescheduleAppointment,
   SlotBusyError,
@@ -451,7 +452,8 @@ export async function runBotTurn(conversationId: string): Promise<void> {
         // Termin aus der Buchung (book_appointment → recordLeadProgress).
       } else if (tu.name === "get_available_slots") {
         try {
-          const slots: Slot[] = await suggestSlots(conversation.customerId, 30, 3, "lead", 10, conversation.leadId);
+          const durationMin = await bookingDurationMin(conversation.customerId, conversation.leadId).catch(() => 30);
+          const slots: Slot[] = await suggestSlots(conversation.customerId, durationMin, 3, "lead", 10, conversation.leadId);
           // Berater abwesend (Urlaub, Krank …): ab wann wieder Termine gehen – ohne Grund.
           const pausedUntil = await bookingPausedUntil(conversation.customerId, conversation.leadId).catch(() => null);
           const absenceNote = pausedUntil

@@ -13,7 +13,7 @@ import {
 } from "@/lib/calendar/google";
 import { fetchIcsBusy } from "@/lib/calendar/ics";
 import { allianzBusy, decodeAllianzCalendar } from "@/lib/calendar/allianz-online";
-import { berlinAt, calendarBlocksBusy, loadLeadTimes, type LeadTimes } from "@/lib/calendar/lead-times";
+import { berlinAt, calendarBlocksBusy, DEFAULT_DURATION_MIN, durationForKey, loadLeadTimes, type LeadTimes } from "@/lib/calendar/lead-times";
 import {
   microsoftCreateEvent,
   microsoftDeleteEvent,
@@ -235,6 +235,20 @@ export async function bookingKeys(customerId: string, leadId?: string | null): P
   return keys;
 }
 
+/**
+ * Termindauer für Buchungen dieses Kunden/Leads: Dauer des ersten infrage
+ * kommenden Kalenders (Berater mit eigener Einstellung), sonst die des
+ * Agentur-Kalenders, sonst 30 Minuten.
+ */
+export async function durationForKeys(customerId: string, keys: string[]): Promise<number> {
+  const first = keys[0] && keys[0] !== customerId ? await durationForKey(keys[0]) : null;
+  return first ?? (await durationForKey(customerId)) ?? DEFAULT_DURATION_MIN;
+}
+
+export async function bookingDurationMin(customerId: string, leadId?: string | null): Promise<number> {
+  return durationForKeys(customerId, await bookingKeys(customerId, leadId));
+}
+
 /** Fehler, wenn der gewünschte Slot inzwischen belegt ist. */
 export class SlotBusyError extends Error {
   constructor() {
@@ -271,7 +285,9 @@ export async function bookAppointment(opts: {
   const manageToken = randomBytes(18).toString("base64url");
   const manageUrl = `${appUrl() ?? ""}/book/manage/${manageToken}`;
   const start = new Date(opts.start);
-  const end = new Date(start.getTime() + (opts.durationMin ?? 30) * 60000);
+  // Dauer: wie übergeben (z. B. beim Verschieben die alte), sonst die eingestellte Termindauer
+  const durationMin = opts.durationMin ?? (await durationForKeys(opts.customerId, keys));
+  const end = new Date(start.getTime() + durationMin * 60000);
   if (start.getTime() < Date.now()) throw new Error("Startzeit liegt in der Vergangenheit.");
   // Unmittelbar vor dem Anlegen erneut prüfen — der Slot kann seit dem
   // Vorschlag belegt worden sein (oder der Bot nennt eine eigene Zeit).
@@ -496,9 +512,11 @@ export async function rescheduleAppointment(opts: {
 }): Promise<{ appointmentId: string; meetUrl: string | null; start: string; manageUrl: string }> {
   const old = await prisma.appointment.findFirst({
     where: { id: opts.appointmentId, customerId: opts.customerId, status: "booked" },
-    select: { id: true, leadId: true, conversationId: true, mode: true },
+    select: { id: true, leadId: true, conversationId: true, mode: true, startsAt: true, endsAt: true },
   });
   if (!old) throw new Error("Termin nicht gefunden oder bereits abgesagt.");
+  // Beim Verschieben bleibt die Dauer des Termins erhalten.
+  const oldDuration = old.endsAt ? Math.max(15, Math.round((old.endsAt.getTime() - old.startsAt.getTime()) / 60000)) : undefined;
   const conv = old.conversationId
     ? await prisma.conversation.findUnique({
         where: { id: old.conversationId },
@@ -515,6 +533,7 @@ export async function rescheduleAppointment(opts: {
     leadId: old.leadId,
     conversationId: old.conversationId,
     start: opts.start,
+    durationMin: oldDuration,
     mode,
     summary: eventSummary(mode, name, lead?.source ?? null),
     description: buildEventDescription({
