@@ -78,6 +78,10 @@ export const AUDIT_LABEL: Record<string, string> = {
   "rechner.config": "Rechner-Einstellungen geändert",
   "status.incident": "Statusmeldung angelegt/geändert",
   "help.escalate": "Hilfe-Chat an das Team weitergegeben",
+  "budget.change": "Werbebudget geändert (Kunde)",
+  "budget.request": "Werbebudget angefragt (individuelles Angebot)",
+  "budget.decide": "Budget-Anfrage übernommen/abgelehnt",
+  "budget.fee": "Monatspreis nach Budgetänderung angepasst",
 };
 
 export async function audit(

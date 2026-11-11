@@ -187,6 +187,58 @@ model Customer {
   messageTemplates         MessageTemplate[]
   consentOptIns            ConsentOptIn[]
   adSpend                  CustomerAdSpend[]
+  budgets                  CustomerBudget[]
+  budgetChanges            BudgetChange[]
+}
+
+// Tagesbudget je Produkt (Kundenbereich → Konto → Werbebudget). Ohne Eintrag gilt das
+// angenommene Angebot (Offer.products). Je Produkt gilt der jüngste Eintrag mit validFrom ≤ jetzt.
+model CustomerBudget {
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  product     String
+  dailyBudget Decimal  @db.Decimal(10, 2)
+  validFrom   DateTime
+  changeId    String?
+  createdAt   DateTime @default(now())
+
+  @@index([customerId, validFrom])
+}
+
+// Budgetänderung durch den Kunden: Protokoll, Preisstufe und Stand der Stripe-Anpassung.
+model BudgetChange {
+  id                String    @id @default(cuid())
+  customerId        String
+  customer          Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  userId            String?
+  // [{ product, from, to }] in €/Tag
+  changes           Json
+  effectiveFrom     DateTime
+  monthlyBudgetFrom Int
+  monthlyBudgetTo   Int
+  // Monatspreis Betreuung + Software (netto) vorher/nachher; null = individuell/kein Listenpreis
+  feeFrom           Decimal?  @db.Decimal(10, 2)
+  feeTo             Decimal?  @db.Decimal(10, 2)
+  tierChange        Boolean   @default(false)
+  // Kunde hat den neuen Monatspreis bestätigt (Pflicht bei Stufenwechsel)
+  acknowledged      Boolean   @default(false)
+  // applied = übernommen | pending = Anfrage an uns (über Listenpreis) | rejected
+  status            String    @default("applied")
+  // Warum Anfrage bzw. Preis von Hand: individual_budget | individual_terms | annual | no_offer_price
+  reason            String?
+  // Stripe: none (kein Preiswechsel) | scheduled (ab effectiveFrom) | done | manual (Admin-Aufgabe) | error
+  stripeStatus      String    @default("none")
+  stripeNote        String?
+  // Monatspreis im Abo geändert (Abrechnung ab dem nächsten Abrechnungsmonat)
+  feeAppliedAt      DateTime?
+  note              String?
+  decidedBy         String?
+  decidedAt         DateTime?
+  createdAt         DateTime  @default(now())
+
+  @@index([customerId, createdAt])
+  @@index([stripeStatus, effectiveFrom])
 }
 
 // Tagesspend aus dem EIGENEN Werbekonto eines Kunden (Retainer-Modell).

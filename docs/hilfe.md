@@ -14,7 +14,7 @@ Seiten aus der Liste „Seiten“ unten.
 | /buyer/kanban | Pipeline | Alle Leads nach Phase, Karten verschieben |
 | /buyer/chats | Chats | WhatsApp-Gespräche mit Leads |
 | /buyer/zahlen | Zahlen | Kosten, Ertrag, Funnel, Hochrechnung |
-| /buyer/konto | Konto & Rechnungen | Vertrag, Rechnungen, Zahlungsart, Pause/Urlaub (nur Inhaber) |
+| /buyer/konto | Konto & Rechnungen | Vertrag, Werbebudget ändern, Rechnungen, Zahlungsart, Pause/Urlaub (nur Inhaber) |
 | /buyer/team | Team | Berater einladen, Leads verteilen (nur Inhaber) |
 | /buyer/kalender | Mein Kalender | „Ihr Kalender“ verbinden (ein Kalender je Person), andere Quelle für freie Zeiten (ICS/Allianz), Team-Übersicht für Inhaber, Lead-Zeiten, Zeit blockieren |
 | /buyer/einrichtung | Einrichtung | Fragebogen, Meta-Zugriff, Kalender, App aufs Handy, Hilfetermin |
@@ -278,6 +278,24 @@ Seiten aus der Liste „Seiten“ unten.
   (Bestätigung mit Häkchen, danach sofort freigeschaltet). Gebucht: „Modul kündigen (zum Ende des
   Abrechnungszeitraums)“; bis dahin nutzbar, die Kündigung lässt sich bis dahin mit „Kündigung zurücknehmen“
   aufheben.
+- **Werbebudget ändern** (Karte „Werbebudget“, auch über Wachstum → „Budget ändern“ und in der Einrichtung beim
+  Schritt „Start“): Tagesbudget je Produkt mit Plus/Minus (5-€-Schritte) oder Regler. Die Vorschau zeigt sofort
+  das Werbebudget pro Monat (Tagesbudget × 30), die erwarteten Leads pro Monat (mit dem eigenen Leadpreis der
+  letzten 30 Tage, sonst mit einem üblichen Leadpreis) und die Betreuungsstufe. Unter 20 € pro Tag erscheint der
+  Hinweis „Lead-Garantie gilt ab 20 €/Tag“.
+  - Betreuungsstufen (Betreuung + Software, netto im Monat): bis 3.000 € Werbebudget 1.000 €, 3.000 – 6.000 €
+    1.400 €, 6.000 – 10.000 € 1.800 €; jedes weitere Produkt 350 €. Wechselt die Stufe (nach oben oder unten),
+    steht das deutlich da, z. B. „Mit 3.300 € Werbebudget pro Monat gilt die nächste Betreuungsstufe
+    (3.000 – 6.000 €): 1.400 € statt 1.000 € netto im Monat, ab dem nächsten Abrechnungsmonat.“ Dann ist das
+    Häkchen „Ich habe den neuen Monatspreis zur Kenntnis genommen“ Pflicht.
+  - Ab wann: sofort oder ab einem Datum (bis 4 Monate im Voraus). Erhöhen und senken gilt immer sofort bzw. zum
+    Datum, ohne Freigabe. Die neue Stufe gilt ab dem folgenden Abrechnungsmonat. Die Anzeigen bei Meta stellen
+    wir in der Regel innerhalb eines Werktags um. Bestätigung kommt per E-Mail.
+  - Individuelle Konditionen (abweichender Preis, jährliche Vorauszahlung): Das Budget gilt trotzdem sofort, den
+    neuen Preis bestätigen wir gesondert.
+  - Über 10.000 € Werbebudget pro Monat: keine Selbstbedienung, Knopf „Anfrage senden“; wir melden uns mit einem
+    individuellen Angebot, bis dahin läuft das bisherige Budget.
+  - Paket „Nur Betreuung“: Der Monatspreis hängt nicht vom Werbebudget ab.
 - Schalter „Neue Leads per E-Mail“.
 - **Pause/Urlaub** selbst eintragen (Start, Ende, Grund): Anzeigen stoppen, reduzierte Gebühr; Pause jederzeit beenden.
   Bei jährlicher Vorauszahlung pausieren nur die Anzeigen, eine Gutschrift gibt es nicht.

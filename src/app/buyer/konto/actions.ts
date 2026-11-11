@@ -70,3 +70,35 @@ export async function toggleLeadEmailAction(_prev: PauseFormState, _fd: FormData
     return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
   }
 }
+
+export type BudgetFormState = { ok?: boolean; status?: "applied" | "pending"; message?: string; error?: string };
+
+/** Werbebudget ändern (nur Inhaber, nicht in der Vorschau). */
+export async function changeBudgetAction(_prev: BudgetFormState, fd: FormData): Promise<BudgetFormState> {
+  try {
+    const ctx = await customerOnly();
+    const { changeBudget } = await import("@/lib/budget");
+    const next = fd.getAll("product").map((p, i) => ({ product: String(p), dailyBudget: Number(String(fd.getAll("daily")[i] ?? "").replace(",", ".")) }));
+    const when = String(fd.get("when") ?? "now");
+    const res = await changeBudget({
+      customerId: ctx.customerId,
+      userId: ctx.userId,
+      next,
+      effectiveDate: when === "date" ? String(fd.get("date") ?? "") : null,
+      acknowledged: fd.get("ack") === "on",
+      actor: { id: ctx.userId, email: ctx.email, role: "BUYER" },
+    });
+    if (!res.ok) return { error: res.error };
+    revalidatePath("/buyer/konto");
+    return {
+      ok: true,
+      status: res.status,
+      message:
+        res.status === "pending"
+          ? "Danke, Ihre Anfrage ist bei uns. Wir melden uns mit einem individuellen Angebot."
+          : "Gespeichert. Wir stellen die Anzeigen bei Meta um und schicken Ihnen eine Bestätigung per E-Mail.",
+    };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
+  }
+}

@@ -252,6 +252,12 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               ? "Neue Leads bekommen innerhalb weniger Minuten eine WhatsApp-Nachricht und können direkt einen Termin buchen."
               : "Jeder neue Lead kommt sofort per E-Mail und steht hier im Kundenbereich unter „Leads“."}
           </p>
+          <p className="mt-2 text-sm text-[color:var(--muted)]">
+            Ihr Werbebudget können Sie jederzeit selbst anpassen:{" "}
+            <Link href="/buyer/konto#werbebudget" className="font-medium text-[color:var(--brand)] underline">
+              Budget ändern
+            </Link>
+          </p>
         </Step>
       </div>
     </main>

@@ -950,6 +950,70 @@ export async function changeBillingInterval(customerId: string, interval: "month
   }
 }
 
+/**
+ * Monatspreis Betreuung + Software im Abo ändern (Budget ändern → neue Preisstufe).
+ * Der Software-Anteil bleibt, die Betreuungs-Position bekommt den Rest. Ohne anteilige
+ * Verrechnung (proration "none"): der neue Preis gilt ab dem nächsten Abrechnungsmonat.
+ * Idempotent: steht der Preis schon so im Abo, passiert nichts. Ohne Stripe-Abo → note
+ * (der Aufrufer legt dann eine Admin-Aufgabe an).
+ */
+export async function changeMonthlyFee(
+  customerId: string,
+  monthlyTotal: number,
+  opts: { idempotencyKey?: string; actor?: AuditActor } = {},
+): Promise<AddOnResult & { from?: Date | null }> {
+  try {
+    const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { stripeCustomerId: true } });
+    if (!c) return { ok: false, error: "Kunde nicht gefunden." };
+    const stripe = stripeClient();
+    if (!stripe || !c.stripeCustomerId) return { ok: true, changed: false, note: "Ohne Stripe-Abo – Preis bitte von Hand anpassen." };
+    const ed = await editableSubscription(stripe, c.stripeCustomerId);
+    if ("note" in ed) return { ok: true, changed: false, note: ed.note };
+    const sub = ed.sub;
+    const [software, service, tax] = await Promise.all([productId(stripe, "software"), productId(stripe, "service"), resolveTax(stripe)]);
+    const interval = intervalOf(sub);
+    const factor = interval === "year" ? annualMultiplier() : 1;
+    const swItem = sub.items.data.find((i) => productOf(i) === software);
+    const svItem = sub.items.data.find((i) => productOf(i) === service);
+    const swMonthly = swItem ? (swItem.price.unit_amount ?? 0) / 100 / factor : 0;
+    const unit = cents(Math.max(0, monthlyTotal - swMonthly) * factor);
+    const from = periodEndOf(sub, svItem ?? swItem);
+    if (svItem && svItem.price.unit_amount === unit) return { ok: true, changed: false, from };
+    const key = opts.idempotencyKey ? { idempotencyKey: `${opts.idempotencyKey}-${unit}` } : undefined;
+    if (svItem && unit === 0) {
+      await stripe.subscriptionItems.del(svItem.id, { proration_behavior: "none" }, key);
+    } else if (svItem) {
+      await stripe.subscriptionItems.update(
+        svItem.id,
+        { proration_behavior: "none", price_data: { currency: "eur", product: service, unit_amount: unit, recurring: { interval }, tax_behavior: "exclusive" } },
+        key,
+      );
+    } else if (unit > 0) {
+      await stripe.subscriptionItems.create(
+        {
+          subscription: sub.id,
+          quantity: 1,
+          proration_behavior: "none",
+          price_data: { currency: "eur", product: service, unit_amount: unit, recurring: { interval }, tax_behavior: "exclusive" },
+          ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
+        },
+        key,
+      );
+    }
+    await audit("billing.retainer", {
+      entity: "Customer",
+      entityId: customerId,
+      customerId,
+      details: { source: "budget", monthlyTotal, serviceCents: { from: svItem?.price.unit_amount ?? null, to: unit }, from: from?.toISOString() ?? null },
+      ...(opts.actor ? { actor: opts.actor } : {}),
+    });
+    return { ok: true, changed: true, from };
+  } catch (err) {
+    reportError(err, "billing-budget-fee", { customer: customerId });
+    return { ok: false, error: "Der Monatspreis konnte im Abo nicht angepasst werden." };
+  }
+}
+
 /** Täglicher Abgleich: Logins aller Kunden mit Platz-Abrechnung (holt verschobene Änderungen nach). */
 export async function reconcileSeatBilling(): Promise<{ changed: number; errors: number }> {
   const customers = await prisma.customer.findMany({ where: { seatsIncluded: { not: null }, archived: false }, select: { id: true } });

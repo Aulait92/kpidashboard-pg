@@ -57,15 +57,15 @@ export default async function WachstumPage() {
         <HubCard
           href="/buyer/konto"
           icon={Megaphone}
-          title="Werbung & Pause"
+          title="Werbebudget & Pause"
           text={
             pause
               ? pause.status === "active"
                 ? "Ihre Werbung ist gerade pausiert."
                 : "Eine Pause ist geplant."
-              : "Ihre Werbung läuft. Im Urlaub können Sie sie hier pausieren."
+              : "Ihre Werbung läuft. Budget erhöhen oder senken, im Urlaub pausieren."
           }
-          cta="Werbung verwalten"
+          cta="Budget ändern"
         />
         <HubCard
           href="/buyer/zahlen"

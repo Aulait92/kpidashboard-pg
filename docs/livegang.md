@@ -88,6 +88,7 @@ Die Produktion ist seit 11.11. eingemessen; neue Migrationen laufen beim normale
 | `20261114280000_ppl_gebiete` | Tabelle `SubscriptionArea` (Gebiete je Pay-per-Lead-Bezug mit eigener Menge, Vorrang) und Spalte `PoolLead.areaId` | nur hinzufügend |
 | `20261115090000_ppl_eingang` | Tabelle `PplIntake` (Pay-per-Lead-Eingang aus Airtable: alle Leads mit Ergebnis und Ablehnungsgrund, für die Auswertung); wird beim ersten Abgleich ab Juni 2026 gefüllt | nur hinzufügend |
 | `20261115100000_status` | Tabellen `StatusSample` (Messpunkt der öffentlichen Statusseite je Cron-Lauf, 90 Tage) und `StatusIncident` (Störungsmeldungen aus Admin → Einstellungen → Status & Support) | nur hinzufügend; Statusseite zeigt Verfügbarkeit erst, wenn Messpunkte da sind |
+| `20261115110000_budget_aendern` | Tabellen `CustomerBudget` (Tagesbudget je Produkt ab Datum; ohne Eintrag gilt das Angebot) und `BudgetChange` (Budgetänderungen der Kunden mit Stufe, Preis, Stripe-Stand, Anfragen) | nur hinzufügend |
 
 Keine davon verändert bestehende Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und

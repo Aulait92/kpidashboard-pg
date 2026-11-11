@@ -7,6 +7,7 @@ import { pruneAudit } from "@/lib/audit";
 import { pruneTransient } from "@/lib/erasure";
 import { berlinMonth, chargeWhatsAppFees, feeChargeDue } from "@/lib/whatsapp/fees";
 import { expireBestandCancellations, reconcileSeatBilling } from "@/lib/billing";
+import { processDueBudgetFees } from "@/lib/budget";
 import { renewOrders } from "@/lib/ppl/orders";
 import { redistributeParked } from "@/lib/ppl/engine";
 import { runCampaigns } from "@/lib/bestand/campaigns";
@@ -65,6 +66,8 @@ async function handle(req: Request): Promise<Response> {
   const now = new Date();
   // Bestandskunden-Modul: zum Periodenende gekündigte Module abschalten (Kunde hat selbst gekündigt)
   await expireBestandCancellations(now).catch((e: unknown) => reportError(e, "cron-bestand-expire"));
+  // Budget ändern: Preisstufe ins Abo übernehmen, sobald ein geplantes Budget gilt
+  await processDueBudgetFees(now).catch((e: unknown) => reportError(e, "cron-budget-fee"));
   const pruned =
     now.getUTCHours() === 3 && now.getUTCMinutes() < 5
       ? {

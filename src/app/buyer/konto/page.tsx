@@ -15,6 +15,8 @@ import { ModuleBookButton, ModuleCancelButton } from "@/components/bestand/modul
 import { canSelfBookBestand } from "@/lib/bestand/self-service";
 import { annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
 import { currentPause, todayBerlin } from "@/lib/pause";
+import { budgetState } from "@/lib/budget";
+import { BudgetCard } from "./budget-card";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Konto & Rechnungen | performancegrowth" };
@@ -77,6 +79,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const monthly = customer.retainerMonthly != null ? Number(customer.retainerMonthly) : null;
   const bestandCheck = !customer.existingCustomersEnabled && customer.plan !== "service" ? await canSelfBookBestand(ctx.customerId) : null;
   const pause = await currentPause(ctx.customerId);
+  const budget = await budgetState(ctx.customerId);
   const provision = await loadCustomerProvision(ctx.customerId);
   const today = todayBerlin();
   const startYmd = customer.retainerStart ? new Intl.DateTimeFormat("sv-SE", { timeZone: TZ }).format(customer.retainerStart) : today;
@@ -181,6 +184,15 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             ) : null}
           </dl>
         </Card>
+
+        <BudgetCard
+          lines={budget.lines}
+          upcoming={budget.upcoming.map((u) => ({ ...u, validFrom: u.validFrom.toISOString() }))}
+          ctx={budget.ctx}
+          pending={budget.pending ? { monthlyBudgetTo: budget.pending.monthlyBudgetTo, createdAt: budget.pending.createdAt.toISOString() } : null}
+          today={today}
+          readOnly={ctx.preview}
+        />
 
         <PauseCard
           pause={pause ? { status: pause.status, startsAt: pause.startsAt.toISOString(), endsAt: pause.endsAt?.toISOString() ?? null, kind: pause.kind } : null}
