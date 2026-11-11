@@ -108,7 +108,8 @@ async function resolveTax(stripe: Stripe) {
       metadata: { pg_key: "ust19" },
     });
   }
-  reportError(new Error("Stripe Tax ohne aktive Registrierung – fester Steuersatz 19 % wird verwendet."), "billing-tax-fallback");
+  // Gewollter Normalfall (alle Kunden deutsche B2B-Kunden): kein Fehler, nur einmal ins Log.
+  if (!taxMode) console.info("[billing] Stripe Tax ohne aktive Registrierung – fester Steuersatz 19 % wird verwendet.");
   taxMode = { automatic: false, rateId: rate.id, checkedAt: Date.now() };
   return taxMode;
 }
