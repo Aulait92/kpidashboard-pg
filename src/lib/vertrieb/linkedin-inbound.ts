@@ -24,6 +24,12 @@ const SUBJECT_PATTERNS = [
 const BOILERPLATE =
   /^(antworten|reply|nachricht anzeigen|view message|alle nachrichten|abmelden|unsubscribe|hilfe|help|linkedin|©|diese e-mail|this email|sie erhalten|you are receiving|e-mail-einstellungen|email preferences|profil anzeigen|view profile|https?:\/\/|\[image|\s*$)/i;
 
+export const LINKEDIN_READ_TASK = "LinkedIn-Nachricht lesen und beantworten";
+
+// Zeilen der Benachrichtigung selbst („… hat Ihnen eine Nachricht gesendet“), kein Nachrichtentext
+const NOTIFY_LINE =
+  /(hat (ihnen|dir) (eine |1 )?(neue )?nachricht|hat (ihnen|dir) geschrieben|neue nachricht|ungelesene nachricht|sent you a (new )?message|new message|unread message|messaged you|nachricht(en)? (lesen|ansehen|öffnen)|jetzt antworten|reply now)/i;
+
 export type LiMessage = { name: string | null; profileUrl: string | null; message: string | null; subject: string | null };
 
 export function parseLinkedInMessage(raw: unknown): LiMessage {
@@ -56,7 +62,7 @@ export function parseLinkedInMessage(raw: unknown): LiMessage {
 
   // Nachricht: Boilerplate der Benachrichtigungs-Mail herausfiltern
   const lines = bodyRaw.split(/\r?\n/).map((x) => x.trim());
-  const kept = lines.filter((l) => !BOILERPLATE.test(l) && l !== name);
+  const kept = lines.filter((l) => !BOILERPLATE.test(l) && !NOTIFY_LINE.test(l) && l !== name);
   const message = kept.join("\n").replace(/\n{3,}/g, "\n\n").trim().slice(0, 3000) || null;
   return { name, profileUrl, message, subject };
 }
@@ -87,7 +93,51 @@ export async function handleLinkedInMessage(raw: unknown) {
 
   let contactId: string | null = match?.id ?? null;
   let created = false;
-  if (sentiment === "POSITIV") {
+  // LinkedIn zeigt den Nachrichtentext in der Benachrichtigungs-Mail oft nicht an.
+  // Dann nichts verlieren: Kontakt finden oder anlegen + Aufgabe „lesen und beantworten“.
+  const hidden = !msg.message || msg.message.replace(/\s+/g, " ").trim().length < 15;
+  if (hidden) {
+    if (!contactId) {
+      const slug = normalizeLinkedInUrl(msg.profileUrl);
+      const c = await prisma.salesContact.create({
+        data: {
+          email: slug ? `linkedin-${slug}@ohne-email.invalid` : `linkedin-${Date.now()}@ohne-email.invalid`,
+          name: msg.name ?? "LinkedIn-Kontakt",
+          firstName: firstName || null,
+          lastName,
+          linkedinUrl: msg.profileUrl,
+          description: "Über LinkedIn-Nachricht angelegt",
+        },
+      }).catch(async (err) => {
+        // gleiche Profil-Adresse schon vorhanden
+        if ((err as { code?: string }).code !== "P2002" || !slug) throw err;
+        return prisma.salesContact.findUniqueOrThrow({ where: { email: `linkedin-${slug}@ohne-email.invalid` } });
+      });
+      contactId = c.id;
+      created = true;
+    }
+    await prisma.salesActivity.create({
+      data: { contactId, type: "LINKEDIN", outcome: "LinkedIn-Nachricht erhalten", note: "Text nur auf LinkedIn sichtbar (nicht in der Benachrichtigungs-Mail)." },
+    });
+    const open = await prisma.salesTask.findFirst({ where: { contactId, doneAt: null, title: LINKEDIN_READ_TASK } });
+    if (!open) {
+      await prisma.salesTask.create({
+        data: {
+          contactId,
+          title: LINKEDIN_READ_TASK,
+          type: "NACHFASSEN",
+          dueAt: new Date(),
+          note: `Nachricht auf LinkedIn lesen: ${msg.profileUrl ?? "https://www.linkedin.com/messaging/"}`,
+        },
+      });
+    }
+    await prisma.salesInboundLead.create({
+      data: {
+        contactId, source: "LINKEDIN", name: msg.name, campaign: "LinkedIn-Nachricht (Text nicht in der Mail)", answers: msg.profileUrl, created,
+        payload: (raw ?? {}) as Prisma.InputJsonValue,
+      },
+    });
+  } else if (sentiment === "POSITIV") {
     // Lead anlegen bzw. bestehenden Kontakt hochstufen + Aufgabe
     const r = await handleInboundLead(
       { first_name: firstName || null, last_name: lastName, linkedin_url: msg.profileUrl, message: msg.message },
@@ -131,5 +181,5 @@ export async function handleLinkedInMessage(raw: unknown) {
       },
     });
   }
-  return { ok: true, sentiment, matched: match?.via ?? null, created, contactId };
+  return { ok: true, sentiment: hidden ? ("UNBEKANNT" as const) : sentiment, matched: match?.via ?? null, created, contactId };
 }
