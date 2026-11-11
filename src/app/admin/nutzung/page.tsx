@@ -1,11 +1,12 @@
 import { SubTabs } from "@/components/admin-tabs";
 import { redirect } from "next/navigation";
-import { AlertTriangle, MessageSquareText, Sparkles, ThumbsDown, ThumbsUp } from "lucide-react";
+import { AlertTriangle, LifeBuoy, MessageSquareText, Sparkles, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Badge, Card, CardHeader, EmptyState } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 import { formatDateTime } from "@/lib/format";
 import { computeUsageReport, type CustomerUsage } from "@/lib/usage-report";
 import { loadHelpQuestions } from "@/lib/hilfe-report";
+import { loadSupportRequests } from "@/lib/support-server";
 
 // Nutzung des Kunden-CRMs: Aktivität, genutzte Funktionen, Fehler, Feedback
 // und liegen gebliebene Aufgaben – Grundlage für UX-Verbesserungen.
@@ -36,7 +37,7 @@ export default async function UsagePage({ searchParams }: { searchParams: Promis
   const session = await getCurrentSession();
   if (!session || session.role !== "ADMIN") redirect("/login");
   const days = Math.min(90, Math.max(1, Number((await searchParams).days ?? 14) || 14));
-  const [report, help] = await Promise.all([computeUsageReport(days), loadHelpQuestions(days)]);
+  const [report, help, support] = await Promise.all([computeUsageReport(days), loadHelpQuestions(days), loadSupportRequests(days)]);
   const helpDown = help.filter((h) => h.rating === "down").length;
 
   return (
@@ -61,6 +62,30 @@ export default async function UsagePage({ searchParams }: { searchParams: Promis
           ))}
         </div>
       </div>
+
+      {support.length ? (
+        <div id="hilfe-team">
+        <Card className="mb-6">
+          <CardHeader title="Hilfe-Anfragen an das Team" actions={<span className="text-xs text-[color:var(--muted)]">{support.length} Anfragen</span>} />
+          <ul className="divide-y divide-[color:var(--border)]">
+            {support.map((r) => (
+              <li key={r.id} className="flex flex-wrap items-start gap-x-3 gap-y-1 px-5 py-3 text-sm">
+                <LifeBuoy className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium">
+                    {r.reason}: {r.summary}
+                  </div>
+                  <div className="text-xs text-[color:var(--muted)]">
+                    <a href={`/admin/kunden/${r.customerId}`} className="hover:underline">{r.customer}</a> · {r.channel === "whatsapp" ? "per WhatsApp" : r.channel === "email" ? "per E-Mail" : "bittet um Rückmeldung"} · {r.ref}
+                  </div>
+                </div>
+                <span className="shrink-0 text-xs text-[color:var(--muted)]">{formatDateTime(r.at)}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+        </div>
+      ) : null}
 
       <Card className="mb-6">
         <CardHeader

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { headers } from "next/headers";
 // Globaler Footer mit Pflicht-Links (Impressum, Datenschutz). Externe
 // Performance-Growth-Seiten, target=_blank damit der Buyer nicht aus dem
@@ -29,6 +30,12 @@ export async function SiteFooter() {
         >
           Datenschutz
         </a>
+        <Link href="/sicherheit" className="hover:text-[color:var(--brand)] hover:underline">
+          Sicherheit &amp; Datenschutz
+        </Link>
+        <Link href="/status" className="hover:text-[color:var(--brand)] hover:underline">
+          Status
+        </Link>
       </div>
     </footer>
   );

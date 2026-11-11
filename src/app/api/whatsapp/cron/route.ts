@@ -14,6 +14,7 @@ import { runSequences } from "@/lib/lead-sequences";
 import { reportError } from "@/lib/monitoring";
 import { runOnboardingCron } from "@/lib/onboarding-cron";
 import { beat } from "@/lib/heartbeat";
+import { recordStatusSample } from "@/lib/status-server";
 import { runGarantien } from "@/lib/garantien-server";
 import { enrichPendingAddresses } from "@/lib/vertrieb/address-enrich";
 import { runBankSync } from "@/lib/bank/server";
@@ -128,12 +129,17 @@ async function handle(req: Request): Promise<Response> {
     .filter(([, r]) => r && typeof r === "object" && "error" in r)
     .map(([k]) => k);
   await beat("cron", failed.length === 0, failed.length ? `Fehler in: ${failed.join(", ")}` : null);
+  // Statusseite: Messpunkt je Lauf (alle 5 Min.), Aufbewahrung 90 Tage
+  const status = await recordStatusSample(now).catch((e: unknown) => {
+    reportError(e, "cron-status-sample");
+    return null;
+  });
   // WhatsApp-Vorlagen: fehlende einreichen, Freigabestatus von Meta nachziehen (gedrosselt).
   const templates = await syncTemplates(now).catch((e: unknown) => {
     reportError(e, "cron-templates");
     return null;
   });
-  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl, campaigns, sequences, whatsappConnect, templates });
+  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl, campaigns, sequences, whatsappConnect, templates, status });
 }
 
 export const GET = handle;

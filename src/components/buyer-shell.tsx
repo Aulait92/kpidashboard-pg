@@ -429,6 +429,14 @@ function ProfileMenu({
           >
             Datenschutz
           </a>
+          <a
+            href="/sicherheit"
+            target="_blank"
+            rel="noopener"
+            className="block px-3 py-2 text-[color:var(--muted)] hover:bg-[color:var(--background)]"
+          >
+            Sicherheit &amp; Datenschutz
+          </a>
           <form action="/api/auth/logout" method="post" className="border-t border-[color:var(--border)]">
             <button
               type="submit"

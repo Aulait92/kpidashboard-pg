@@ -104,6 +104,8 @@ gilt nur für neue Dienste, eine Streichung ist unkritisch, wird aber trotzdem m
 |---|---|---|
 | Nutzungsmessung (`UsageEvent`) | 180 Tage | automatisch, Cron 03:00 UTC (`pruneUsage`) |
 | Änderungsprotokoll (`AuditLog`) | 1 Jahr | automatisch (`pruneAudit`) |
+| Messpunkte der Statusseite (`StatusSample`, ohne Personenbezug) | 90 Tage | automatisch je Cron-Lauf (`recordStatusSample`) |
+| Hilfe-Anfragen an das Team (`UsageEvent` Typ `support`: Grund, Kurzfassung ohne Kontaktdaten, Referenz) | 180 Tage | wie Nutzungsmessung (`pruneUsage`) |
 | Abwesenheiten (`UserAbsence`) | 1 Jahr nach Ende der Abwesenheit, spätestens mit dem Login bzw. bei Vertragsende | automatisch täglich (`pruneTransient`), mit dem Login (Kaskade) und bei „Vertragsende: Daten löschen“ |
 | Login-Fehlversuche | 30 Tage | automatisch (`pruneAudit`) |
 | Nicht zugeordnete Leads (Rohdaten aus Meta) | 30 Tage nach Zuordnung, sonst 90 Tage | automatisch (`pruneTransient`) |

@@ -1460,6 +1460,36 @@ model SystemHeartbeat {
   note String?
 }
 
+// Öffentliche Statusseite (/status): ein Messpunkt je Cron-Lauf (alle 5 Min.)
+// mit dem Zustand jeder Komponente ("ok" | "degraded" | "down"). Aufbewahrung 90 Tage.
+model StatusSample {
+  id       String   @id @default(cuid())
+  at       DateTime @default(now())
+  app      String
+  leads    String
+  whatsapp String
+  calendar String
+  payments String
+  jobs     String
+
+  @@index([at])
+}
+
+// Manuelle Störungsmeldungen für die Statusseite (Admin → Einstellungen → Status & Meldungen).
+model StatusIncident {
+  id         String    @id @default(cuid())
+  title      String
+  message    String?
+  level      String    @default("degraded") // "degraded" | "down" | "info"
+  component  String? // app | leads | whatsapp | calendar | payments | jobs; leer = allgemein
+  startsAt   DateTime  @default(now())
+  resolvedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([resolvedAt, startsAt])
+}
+
 // Änderungsprotokoll: wer hat wann was Wichtiges geändert (Logins, Zugänge,
 // Team, Pausen, Angebote, Exporte, Einstellungen). Aufbewahrung 1 Jahr.
 model AuditLog {

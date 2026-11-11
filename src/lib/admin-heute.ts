@@ -3,6 +3,7 @@
 // was die App von allein erledigt hat. Nur echte Daten, keine Platzhalter.
 
 import { prisma } from "@/lib/prisma";
+import { REASON_LABEL, type EscalationReason } from "@/lib/support";
 import { HEARTBEAT_MAX_AGE_MIN, type HeartbeatKey } from "@/lib/heartbeat";
 import { onboardingProgressFor } from "@/lib/onboarding";
 import { shortName } from "@/lib/vertrieb/crm";
@@ -129,6 +130,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
     heartbeats,
     helpDown,
     feedback,
+    supportRequests,
   ] = await Promise.all([
     openTasks({ dueAt: { lt: tomorrow } }),
     prisma.salesMeeting.findMany({
@@ -179,6 +181,13 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
     prisma.systemHeartbeat.findMany(),
     prisma.usageEvent.count({ where: { type: "help", at: { gte: week }, meta: { path: ["rating"], equals: "down" } } }),
     prisma.usageEvent.findMany({ where: { type: "feedback", preview: false, at: { gte: new Date(now.getTime() - 3 * DAY) } }, select: { at: true }, orderBy: { at: "asc" } }),
+    // Hilfe-Chat: Kunde hat unser Team kontaktiert (WhatsApp/E-Mail/Rückmeldung)
+    prisma.usageEvent.findMany({
+      where: { type: "support", name: "contacted", preview: false, at: { gte: new Date(now.getTime() - 3 * DAY) } },
+      orderBy: { at: "asc" },
+      take: 10,
+      select: { id: true, at: true, customerId: true, meta: true },
+    }),
   ]);
 
   const items: HeuteItem[] = [];
@@ -456,6 +465,27 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       since: o.sentAt,
       ...(o.salesContactId ? { quick: { kind: "offer" as const, offerId: o.id, contactId: o.salesContactId } } : { later: { label: "Nachgefasst", days: 5 } }),
     });
+  }
+
+  // ── Hilfe-Anfragen an das Team ────────────────────────
+  if (supportRequests.length) {
+    const names = new Map(
+      (await prisma.customer.findMany({ where: { id: { in: [...new Set(supportRequests.map((r) => r.customerId))] } }, select: { id: true, name: true } })).map((c) => [c.id, c.name]),
+    );
+    for (const r of supportRequests) {
+      const m = (r.meta ?? {}) as { ref?: string; reason?: string; summary?: string; channel?: string };
+      items.push({
+        key: `support:${r.id}`,
+        area: "Kunden",
+        tone: "warn",
+        icon: "chat",
+        title: `Hilfe-Anfrage ${m.ref ?? ""}${m.reason ? `: ${REASON_LABEL[m.reason as EscalationReason] ?? ""}` : ""}`.trim(),
+        detail: `${names.get(r.customerId) ?? "Kunde"} ${m.channel === "whatsapp" ? "schreibt per WhatsApp" : m.channel === "email" ? "schreibt per E-Mail" : "bittet um Rückmeldung"} · ${m.summary ?? ""}`,
+        action: { label: "Kunde öffnen", href: `/admin/kunden/${r.customerId}` },
+        since: r.at,
+        later: { label: "Erledigt", days: 30 },
+      });
+    }
   }
 
   // ── Rückmeldungen ─────────────────────────────────────

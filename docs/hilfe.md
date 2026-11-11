@@ -28,7 +28,7 @@ Seiten aus der Liste „Seiten“ unten.
 - Oben bzw. auf dem Handy unten die Bereiche: Heute, Leads, Pipeline, Chats, Zahlen. Je nach Vertrag
   zusätzlich Einrichtung, Bestand, Bestellen. Kunden ohne WhatsApp-Assistent sehen Übersicht, Leads, Pipeline.
 - Rechts oben das Profilmenü (Initialen): Benachrichtigungen, „Etwas unklar? Feedback“, Mein Kalender,
-  Team und Konto & Rechnungen (nur Inhaber), Impressum, Datenschutz, Abmelden.
+  Team und Konto & Rechnungen (nur Inhaber), Impressum, Datenschutz, Sicherheit & Datenschutz, Abmelden.
 - Rollen: **Inhaber** sieht alles. **Berater** sehen nur ihre eigenen Leads, keine Zahlen, kein Konto, kein Team.
 - Fast jede Aktion zeigt unten kurz eine Meldung mit „Rückgängig“.
 
@@ -378,9 +378,25 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
 - Daten liegen auf Servern in der EU. Löschen eines Leads: Lead öffnen → „Mehr“ → „Daten löschen (DSGVO)“
   (nur Inhaber, unwiderruflich).
 - Die KI-Hilfe kennt nur diese Anleitung, keine Kundendaten. Bitte keine Kundendaten in die Hilfe eingeben.
+- Wie wir Daten schützen (Hosting in der EU, Verschlüsselung, Datensicherung, Dienstleister): Seite
+  „Sicherheit & Datenschutz“ im Profilmenü bzw. unter /sicherheit.
+- Ob gerade alles läuft: öffentliche Statusseite /status (Link „Status“ unten auf der Login-Seite).
+
+## Support: Hilfe von unserem Team
+
+- Erst die KI-Hilfe fragen: Sie kennt die App und antwortet sofort.
+- Geht es um Rechnungen, Abbuchungen, den Vertrag oder eine Kündigung, um einen Fehler in der App, um
+  fehlende Leads oder Daten, oder hilft die Antwort nicht weiter, bietet die KI-Hilfe den Kontakt zu
+  unserem Team an. Jederzeit möglich: oben im Hilfe-Fenster „Mit Mensch sprechen“.
+- „Per WhatsApp an unser Team“ öffnet WhatsApp mit einer fertigen Nachricht (Name, Anliegen, Referenz
+  wie PG-AB12CD). Nur noch abschicken. „Per E-Mail“ öffnet eine vorbereitete E-Mail.
+- Wir antworten werktags in der Regel innerhalb weniger Stunden. Die Referenz hilft uns, Ihr Anliegen
+  schnell zuzuordnen.
+- Bitte keine Daten Ihrer Kunden (Namen, Telefonnummern) in die Nachricht schreiben.
 
 ## Kontakt zu uns
 
+- In der KI-Hilfe „Mit Mensch sprechen“ (WhatsApp oder E-Mail an unser Team).
 - „Etwas unklar? Feedback“ im Profilmenü – wir melden uns.
 - 15-Minuten-Hilfetermin (Video) in der Einrichtung, solange sie offen ist.
 - Telefon: +49 151 52418846.

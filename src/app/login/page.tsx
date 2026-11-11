@@ -79,6 +79,12 @@ export default async function LoginPage({
           <Link href="/rechtliches/agb" className="hover:text-[color:var(--brand)] hover:underline">
             AGB
           </Link>
+          <Link href="/sicherheit" className="hover:text-[color:var(--brand)] hover:underline">
+            Sicherheit &amp; Datenschutz
+          </Link>
+          <Link href="/status" className="hover:text-[color:var(--brand)] hover:underline">
+            Status
+          </Link>
         </div>
       </footer>
     </div>

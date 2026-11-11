@@ -3,17 +3,39 @@
 // KI-Hilfe im Kundenbereich: Knopf „Hilfe“ in der Kopfzeile, Fenster mit
 // Vorschlägen passend zur Seite, freie Fragen, Links an die richtige Stelle,
 // Bewertung (hilfreich ja/nein). Antworten kommen von /api/hilfe.
+// Kann die KI nicht helfen (Abrechnung, Vertrag, Fehler, fehlende Daten, Frust)
+// oder tippt man „Mit Mensch sprechen“, erscheint eine Karte mit Kontakt zu
+// unserem Team: WhatsApp (vorbefüllt mit Anliegen und Referenz) und E-Mail.
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { LifeBuoy, SendHorizontal, Sparkles, ThumbsDown, ThumbsUp, X } from "lucide-react";
+import { Check, LifeBuoy, Mail, MessageCircle, SendHorizontal, Sparkles, ThumbsDown, ThumbsUp, UserRound, X } from "lucide-react";
+import { haptic } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
+
+/** Antwort von /api/hilfe bzw. /api/hilfe/escalate (siehe lib/support-server.ts). */
+type Escalation = {
+  id: string;
+  ref: string;
+  summary: string;
+  responseTime: string;
+  whatsappUrl: string | null;
+  mailtoUrl: string | null;
+};
 
 type Msg =
   | { who: "me"; text: string }
-  | { who: "ai"; text: string; links?: { href: string; label: string }[]; id?: string | null; rating?: "up" | "down"; error?: boolean };
+  | {
+      who: "ai";
+      text: string;
+      links?: { href: string; label: string }[];
+      id?: string | null;
+      rating?: "up" | "down";
+      error?: boolean;
+      escalation?: Escalation | null;
+    };
 
 function suggestionsFor(path: string, owner: boolean): string[] {
   if (/^\/buyer\/leads\/./.test(path)) return ["Wie reklamiere ich einen Lead?", "Wie setze ich eine Wiedervorlage?", "Wie gebe ich den Lead einem Kollegen?"];
@@ -82,17 +104,50 @@ export function HilfeChat({
     setMsgs((m) => [...m, { who: "me", text: q }]);
     setInput("");
     setBusy(true);
+    haptic("selection");
     try {
       const res = await fetch("/api/hilfe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: q, history, page: pathname }),
       });
-      const data = (await res.json()) as { id?: string | null; answer?: string; links?: { href: string; label: string }[]; error?: string };
+      const data = (await res.json()) as {
+        id?: string | null;
+        answer?: string;
+        links?: { href: string; label: string }[];
+        escalation?: Escalation | null;
+        error?: string;
+      };
       if (!res.ok || !data.answer) throw new Error(data.error ?? "Das hat nicht geklappt. Bitte noch einmal versuchen.");
-      setMsgs((m) => [...m, { who: "ai", text: data.answer!, links: data.links ?? [], id: data.id ?? null }]);
+      setMsgs((m) => [...m, { who: "ai", text: data.answer!, links: data.links ?? [], id: data.id ?? null, escalation: data.escalation ?? null }]);
+      haptic(data.escalation ? "notification" : "light");
     } catch (err) {
       setMsgs((m) => [...m, { who: "ai", text: err instanceof Error ? err.message : "Das hat nicht geklappt.", error: true }]);
+      haptic("error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // „Mit Mensch sprechen“: Weitergabe ohne KI anbieten (letzte Fragen als Anliegen).
+  async function human() {
+    if (busy) return;
+    haptic("selection");
+    setBusy(true);
+    try {
+      const questions = msgs.filter((m) => m.who === "me").map((m) => m.text);
+      const res = await fetch("/api/hilfe/escalate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ questions, page: pathname }),
+      });
+      const data = (await res.json()) as { escalation?: Escalation; error?: string };
+      if (!res.ok || !data.escalation) throw new Error(data.error ?? "Das hat nicht geklappt. Bitte noch einmal versuchen.");
+      setMsgs((m) => [...m, { who: "ai", text: "Gern. Unser Team hilft Ihnen persönlich weiter.", escalation: data.escalation }]);
+      haptic("notification");
+    } catch (err) {
+      setMsgs((m) => [...m, { who: "ai", text: err instanceof Error ? err.message : "Das hat nicht geklappt.", error: true }]);
+      haptic("error");
     } finally {
       setBusy(false);
     }
@@ -102,11 +157,13 @@ export function HilfeChat({
     const m = msgs[i];
     if (m.who !== "ai" || !m.id) return;
     setMsgs((all) => all.map((x, j) => (j === i && x.who === "ai" ? { ...x, rating } : x)));
+    haptic("selection");
     await fetch("/api/hilfe", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: m.id, rating }) }).catch(() => {});
   }
 
   const asked = new Set(msgs.filter((m) => m.who === "me").map((m) => m.text));
   const chips = suggestionsFor(pathname, owner).filter((q) => !asked.has(q));
+  const offered = msgs.some((m) => m.who === "ai" && m.escalation);
 
   return (
     <>
@@ -149,8 +206,16 @@ export function HilfeChat({
               </span>
               <div className="min-w-0 flex-1">
                 <div className="font-semibold">KI-Hilfe</div>
-                <div className="text-xs text-[color:var(--muted)]">Antwortet sofort · kennt die App</div>
+                <div className="truncate text-xs text-[color:var(--muted)]">Antwortet sofort · kennt die App</div>
               </div>
+              <button
+                type="button"
+                onClick={() => void human()}
+                disabled={busy}
+                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-[color:var(--border)] px-3 text-[13px] font-semibold text-[color:var(--foreground)] hover:border-[color:var(--brand)] disabled:opacity-50"
+              >
+                <UserRound className="h-4 w-4" /> <span>Mit Mensch sprechen</span>
+              </button>
               <button type="button" onClick={() => setOpen(false)} className="rounded-full p-2 text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)]" aria-label="Hilfe schließen">
                 <X className="h-5 w-5" />
               </button>
@@ -174,11 +239,19 @@ export function HilfeChat({
                         ))}
                       </div>
                     ) : null}
+                    {m.escalation ? <EscalationCard e={m.escalation} /> : null}
                     {m.id ? (
                       m.rating ? (
-                        <p className="mt-1.5 text-xs text-[color:var(--muted)]">
-                          {m.rating === "up" ? "Danke für Ihr Feedback!" : "Schade. Schreiben Sie uns über „Etwas unklar? Feedback“ im Profilmenü – wir melden uns."}
-                        </p>
+                        m.rating === "up" || m.escalation ? (
+                          <p className="mt-1.5 text-xs text-[color:var(--muted)]">Danke für Ihr Feedback!</p>
+                        ) : (
+                          <p className="mt-1.5 text-xs text-[color:var(--muted)]">
+                            Schade.{" "}
+                            <button type="button" onClick={() => void human()} className="font-semibold text-[color:var(--brand)] hover:underline">
+                              Mit unserem Team sprechen
+                            </button>
+                          </p>
+                        )
                       ) : (
                         <div className="mt-1 flex items-center gap-1 text-xs text-[color:var(--muted)]">
                           Hilfreich?
@@ -196,7 +269,7 @@ export function HilfeChat({
                   <span className="animate-pulse">schreibt …</span>
                 </div>
               ) : null}
-              {!busy && chips.length ? (
+              {!busy && chips.length && !offered ? (
                 <div className="flex flex-col items-end gap-1.5 pt-1">
                   {chips.map((q) => (
                     <button key={q} type="button" onClick={() => void ask(q)} className="rounded-full border border-[color:var(--border-strong)] bg-white px-3 py-1.5 text-right text-[13px] font-medium hover:border-[color:var(--brand)]">
@@ -250,6 +323,56 @@ function AiBubble({ text, error, children }: { text: string; error?: boolean; ch
         </div>
         {children}
       </div>
+    </div>
+  );
+}
+
+/** Kontakt zu unserem Team: WhatsApp und E-Mail, falls eingerichtet; sonst „An unser Team weitergeben“. */
+function EscalationCard({ e }: { e: Escalation }) {
+  const [done, setDone] = useState<"whatsapp" | "email" | "team" | null>(null);
+  const contact = (channel: "whatsapp" | "email" | "team") => {
+    haptic("success");
+    setDone(channel);
+    // keepalive: Der Link öffnet WhatsApp/Mail sofort, die Meldung an uns läuft im Hintergrund weiter.
+    void fetch("/api/hilfe/escalate", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: e.id, channel }),
+      keepalive: true,
+    }).catch(() => {});
+  };
+  const btn = "flex h-11 w-full items-center justify-center gap-2 rounded-xl px-3 text-[14.5px] font-semibold transition active:scale-[0.98]";
+  return (
+    <div className="mt-2 rounded-2xl border border-[color:var(--border)] bg-white p-3">
+      <p className="text-[13.5px] font-semibold">Das klärt unser Team gern persönlich.</p>
+      <p className="mt-0.5 text-xs text-[color:var(--muted)]">{e.responseTime}</p>
+      <div className="mt-2.5 space-y-2">
+        {e.whatsappUrl ? (
+          <a href={e.whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={() => contact("whatsapp")} className={cn(btn, "bg-[#25D366] text-white")}>
+            <MessageCircle className="h-5 w-5" /> Per WhatsApp an unser Team
+          </a>
+        ) : null}
+        {e.mailtoUrl ? (
+          <a href={e.mailtoUrl} onClick={() => contact("email")} className={cn(btn, "border border-[color:var(--border-strong)] bg-white text-[color:var(--foreground)]")}>
+            <Mail className="h-5 w-5" /> Per E-Mail
+          </a>
+        ) : null}
+        {!e.whatsappUrl && !e.mailtoUrl ? (
+          <button type="button" disabled={!!done} onClick={() => contact("team")} className={cn(btn, "bg-[color:var(--brand)] text-white disabled:opacity-60")}>
+            <UserRound className="h-5 w-5" /> An unser Team weitergeben
+          </button>
+        ) : null}
+      </div>
+      {done ? (
+        <p className="mt-2 flex items-start gap-1.5 text-xs text-emerald-700">
+          <Check className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          {done === "team" ? "Weitergegeben. Wir melden uns bei Ihnen." : "Unser Team ist informiert. Schicken Sie die Nachricht einfach ab."} Referenz {e.ref}
+        </p>
+      ) : (
+        <p className="mt-2 text-[11px] text-[color:var(--muted)]">
+          Anliegen: {e.summary} · Referenz {e.ref}
+        </p>
+      )}
     </div>
   );
 }

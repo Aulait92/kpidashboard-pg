@@ -4,9 +4,14 @@ import { askHilfe, type HilfeTurn } from "@/lib/hilfe";
 import { reportError } from "@/lib/monitoring";
 import { prisma } from "@/lib/prisma";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
+import { detectEscalation, shortSummary } from "@/lib/support";
+import { offerEscalation } from "@/lib/support-server";
 
 // KI-Hilfe im Kundenbereich. POST {question, history, page} → {id, answer, links}.
 // PATCH {id, rating: "up"|"down"} → Bewertung speichern.
+// Bei Abrechnung, Vertrag, Fehlern, fehlenden Daten oder Frust (Regeln in
+// lib/support.ts oder Einschätzung der KI) kommt `escalation` mit: Referenz und
+// fertige Links zu unserem Team (WhatsApp/E-Mail, siehe /api/hilfe/escalate).
 // Fragen landen (wie anderes Feedback) als UsageEvent im Admin unter „Nutzung“.
 export const dynamic = "force-dynamic";
 
@@ -64,7 +69,32 @@ export async function POST(req: Request): Promise<Response> {
         select: { id: true },
       })
       .catch(() => null);
-    return Response.json({ id: ev?.id ?? null, ...res });
+    // Regeln zuerst (verlässlich), sonst die Einschätzung der KI
+    const thumbsDown = await prisma.usageEvent
+      .count({
+        where: {
+          type: "help",
+          customerId: ctx.customerId,
+          ...(ctx.userId ? { userId: ctx.userId } : {}),
+          at: { gte: new Date(Date.now() - 60 * 60 * 1000) },
+          meta: { path: ["rating"], equals: "down" },
+        },
+      })
+      .catch(() => 0);
+    const rule = detectEscalation(question, { thumbsDown });
+    const reason = rule ?? res.escalate?.reason ?? null;
+    const escalation = reason
+      ? await offerEscalation(ctx, {
+          reason,
+          summary: res.escalate?.summary || shortSummary(question),
+          source: rule ? "rule" : "ai",
+          page,
+        }).catch((e: unknown) => {
+          reportError(e, "hilfe-escalate");
+          return null;
+        })
+      : null;
+    return Response.json({ id: ev?.id ?? null, answer: res.answer, links: res.links, escalation });
   } catch (err) {
     if (err instanceof Anthropic.AuthenticationError) {
       reportError(err, "hilfe-auth");

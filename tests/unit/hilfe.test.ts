@@ -68,4 +68,19 @@ describe("KI-Hilfe", () => {
     expect(msgs[0].role).toBe("user");
     expect(msgs.at(-1).role).toBe("user");
   });
+
+  it("liest die Weitergabe an unser Team aus (ohne Kontaktdaten in der Zusammenfassung)", async () => {
+    create.mockResolvedValue(
+      reply(JSON.stringify({ answer: "Das klärt unser Team.", links: [], escalate: true, reason: "billing", summary: "Doppelte Abbuchung, Rückfragen an kunde@example.test" })),
+    );
+    const res = await askHilfe(base);
+    expect(res.escalate).toEqual({ reason: "billing", summary: "Doppelte Abbuchung, Rückfragen an [E-Mail]" });
+    const schema = create.mock.calls[0][0].output_config.format.schema;
+    expect(schema.required).toEqual(expect.arrayContaining(["escalate", "reason", "summary"]));
+  });
+
+  it("ohne Weitergabe bleibt escalate leer", async () => {
+    create.mockResolvedValue(reply(JSON.stringify({ answer: "ok", links: [], escalate: false, reason: "none", summary: "" })));
+    expect((await askHilfe(base)).escalate).toBeNull();
+  });
 });

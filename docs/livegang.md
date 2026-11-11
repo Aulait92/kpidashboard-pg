@@ -18,6 +18,12 @@ Kein Einmessen und kein Probelauf mehr nötig, solange Migrationen nur hinzufüg
 |---|---|---|
 | `20261114090000_angebot_kundenwahl` | Spalten `Offer.customerChoosesTerm` / `customerChoosesStart` (Standard false = bisherige Angebote unverändert): Kunde wählt Laufzeit und Startdatum bei der Annahme | nur hinzufügend, läuft per `migrate deploy` |
 
+Variablen Support im Hilfe-Chat (Railway, Produktion): `SUPPORT_WHATSAPP_NUMBER` (WhatsApp-Business-
+Nummer des Teams, z. B. `+49 151 …`), `SUPPORT_EMAIL` (Support-Adresse), optional `SUPPORT_RESPONSE_TIME`
+(Standard „Wir antworten werktags in der Regel innerhalb weniger Stunden.“). Fehlen beide, zeigt der
+Chat nur „An unser Team weitergeben“ (Push an Admins); Hinweis unter Admin → Einstellungen.
+Öffentliche Seiten ohne Variablen: `/sicherheit`, `/status` (Messpunkte kommen vom WhatsApp-Cron).
+
 Variable `OFFER_NUMBER_START` (Produktion: `141`): Angebotsnummern laufen ab PG-JJJJ-0141
 weiter (Papierkram bis 140); danach immer letzte Nummer + 1.
 
@@ -81,6 +87,7 @@ Die Produktion ist seit 11.11. eingemessen; neue Migrationen laufen beim normale
 | `20261114270000_termindauer` | Spalte `CalendarLeadTimes.durationMin` (Termindauer 15/30/45/60 Min. je Kalender, Standard 30) | nur hinzufügend; ohne Einstellung bleiben Termine 30 Min. |
 | `20261114280000_ppl_gebiete` | Tabelle `SubscriptionArea` (Gebiete je Pay-per-Lead-Bezug mit eigener Menge, Vorrang) und Spalte `PoolLead.areaId` | nur hinzufügend |
 | `20261115090000_ppl_eingang` | Tabelle `PplIntake` (Pay-per-Lead-Eingang aus Airtable: alle Leads mit Ergebnis und Ablehnungsgrund, für die Auswertung); wird beim ersten Abgleich ab Juni 2026 gefüllt | nur hinzufügend |
+| `20261115100000_status` | Tabellen `StatusSample` (Messpunkt der öffentlichen Statusseite je Cron-Lauf, 90 Tage) und `StatusIncident` (Störungsmeldungen aus Admin → Einstellungen → Status & Support) | nur hinzufügend; Statusseite zeigt Verfügbarkeit erst, wenn Messpunkte da sind |
 
 Keine davon verändert bestehende Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und

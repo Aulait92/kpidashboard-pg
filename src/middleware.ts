@@ -17,6 +17,8 @@ const PUBLIC_PREFIXES = [
   "/angebot", // Angebote/Auftragsbestätigungen per geheimem Link (Token)
   "/rechtliches", // AGB und Auftragsverarbeitungsvertrag (öffentlich)
   "/rechner", // Break-even-Rechner für Interessenten (öffentlich, keine personenbezogenen Daten)
+  "/sicherheit", // Sicherheit & Datenschutz (öffentlich)
+  "/status", // Statusseite (öffentlich, ohne interne Details)
   "/api/login-info", // Bild der Infokarte auf der Login-Seite (öffentlich, keine Personendaten)
   "/api/ops", // Betriebs-API (Buyer-Accounts anlegen), per ADMIN_API_TOKEN (Bearer) gesichert
   "/api/health", // Healthcheck für Railway/Uptime (gibt nur ok true/false zurück)
@@ -79,6 +81,8 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/angebot/") ||
     pathname.startsWith("/rechtliches/") ||
     pathname === "/rechner" ||
+    pathname === "/sicherheit" ||
+    pathname === "/status" ||
     pathname.startsWith("/feedback/")
   ) {
     const headers = new Headers(req.headers);

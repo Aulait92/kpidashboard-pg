@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Calculator, ChevronRight, FileUp, History, KeyRound, Landmark, LogIn, MessageCircle, ShieldCheck, Wallet, Workflow } from "lucide-react";
+import { Activity, Calculator, ChevronRight, FileUp, History, KeyRound, Landmark, LifeBuoy, LogIn, MessageCircle, ShieldCheck, Wallet, Workflow } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { supportConfig } from "@/lib/support";
 import { requireAuth } from "@/lib/vertrieb/auth";
 
 export const metadata = { title: "Einstellungen | performancegrowth Admin" };
@@ -14,6 +15,7 @@ const ITEMS = [
   { href: "/admin/einstellungen/bank", icon: Landmark, color: "bg-teal-600", title: "Bank & Karten", text: "Commerzbank und Amex: Ausgaben holen und als Kosten zuordnen" },
   { href: "/admin/einstellungen/rechner", icon: Calculator, color: "bg-sky-500", title: "Rechner", text: "Break-even-Rechner für Interessenten: Produkte, Quoten, Garantien" },
   { href: "/admin/einstellungen/login", icon: LogIn, color: "bg-indigo-500", title: "Login-Seite", text: "Infokarte neben dem Login: Neuigkeiten und Hinweise für Kunden" },
+  { href: "/admin/einstellungen/status", icon: Activity, color: "bg-emerald-500", title: "Status & Support", text: "Öffentliche Statusseite, Störungsmeldungen, Support-Kontakt im Hilfe-Chat" },
   { href: "/admin/einstellungen/sicherheit", icon: ShieldCheck, color: "bg-slate-600", title: "Sicherheit", text: "Zwei-Faktor-Login" },
   { href: "/admin/einstellungen/protokoll", icon: History, color: "bg-slate-400", title: "Änderungsprotokoll", text: "Wer hat wann was geändert" },
 ];
@@ -21,6 +23,7 @@ const ITEMS = [
 export default async function EinstellungenPage() {
   const session = await requireAuth();
   const me = await prisma.user.findUnique({ where: { id: session.userId }, select: { totpEnabledAt: true } });
+  const support = supportConfig();
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6">
       <h1 className="mb-5 text-2xl font-semibold tracking-tight">Einstellungen</h1>
@@ -32,6 +35,16 @@ export default async function EinstellungenPage() {
           <ShieldCheck className="h-4 w-4 shrink-0" />
           <span className="flex-1">Zwei-Faktor-Login ist noch nicht eingerichtet.</span>
           <span className="font-semibold">Einrichten</span>
+        </Link>
+      ) : null}
+      {!support.whatsapp && !support.email ? (
+        <Link
+          href="/admin/einstellungen/status"
+          className="mb-4 flex items-center gap-3 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+        >
+          <LifeBuoy className="h-4 w-4 shrink-0" />
+          <span className="flex-1">Support-Kontakt fehlt: Im Hilfe-Chat erscheinen keine Knöpfe für WhatsApp oder E-Mail (SUPPORT_WHATSAPP_NUMBER, SUPPORT_EMAIL).</span>
+          <span className="font-semibold">Ansehen</span>
         </Link>
       ) : null}
       <ul className="divide-y divide-[color:var(--border)] overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
