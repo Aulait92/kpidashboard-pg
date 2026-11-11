@@ -9,13 +9,13 @@ export function generateImageMetadata() {
       id: "192",
       size: { width: 192, height: 192 },
       contentType: "image/png",
-      alt: "KPI-Dashboard",
+      alt: "performancegrowth",
     },
     {
       id: "512",
       size: { width: 512, height: 512 },
       contentType: "image/png",
-      alt: "KPI-Dashboard",
+      alt: "performancegrowth",
     },
   ];
 }

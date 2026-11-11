@@ -3,7 +3,7 @@ import { Calculator, ChevronRight, FileUp, History, KeyRound, Landmark, LogIn, M
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
 
-export const metadata = { title: "Einstellungen | KPI-Dashboard" };
+export const metadata = { title: "Einstellungen | performancegrowth Admin" };
 
 const ITEMS = [
   { href: "/admin/lead-eingang", icon: Workflow, color: "bg-blue-500", title: "Lead-Eingang", text: "Meta-Verbindung und Leadformulare zuordnen" },

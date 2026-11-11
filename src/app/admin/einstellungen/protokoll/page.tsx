@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Änderungsprotokoll | KPI-Dashboard" };
+export const metadata = { title: "Änderungsprotokoll | performancegrowth Admin" };
 
 const PAGE = 100;
 const input = "h-9 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2.5 text-sm";

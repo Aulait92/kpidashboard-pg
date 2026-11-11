@@ -22,7 +22,7 @@ import {
 import { AgentSettings, ResubmitTemplateButton, SubmitTemplatesButton, TemplateApproved, TemplateAutoStatus, TemplateEditor } from "./controls";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "WhatsApp-Einstellungen | KPI-Dashboard" };
+export const metadata = { title: "WhatsApp-Einstellungen | performancegrowth Admin" };
 
 const PURPOSES = Object.keys(PURPOSE_LABELS) as NoticePurpose[];
 

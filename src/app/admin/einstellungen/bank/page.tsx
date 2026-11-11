@@ -8,7 +8,7 @@ import { BANK_REMIND_DAYS, bankRedirectUrl } from "@/lib/bank/server";
 import { connectBankAction, deleteRuleAction, disconnectBankAction, saveRuleAction } from "./actions";
 import { CsvUpload, SyncButton } from "./forms";
 
-export const metadata = { title: "Bank & Karten | KPI-Dashboard" };
+export const metadata = { title: "Bank & Karten | performancegrowth Admin" };
 
 const fmt = (d: Date | null | undefined, time = false) =>
   d ? d.toLocaleString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric", ...(time ? { hour: "2-digit", minute: "2-digit" } : {}) }) : "–";

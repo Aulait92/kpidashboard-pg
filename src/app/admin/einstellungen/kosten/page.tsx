@@ -5,7 +5,7 @@ import { COST_PURPOSE_LABEL, loadKpiSettings, type CostPurpose } from "@/lib/zah
 import { deleteRecurringCostAction } from "@/app/admin/zahlen/actions";
 import { CostForm, KpiSettingsForm } from "./forms";
 
-export const metadata = { title: "Laufende Kosten | KPI-Dashboard" };
+export const metadata = { title: "Laufende Kosten | performancegrowth Admin" };
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 2 });
 const day = (d: Date) => d.toISOString().slice(0, 10);

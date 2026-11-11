@@ -9,7 +9,7 @@ import { CUSTOMER_COLOR, CUSTOMER_LABEL } from "@/lib/vertrieb/crm";
 import { isAdminNewUi } from "@/lib/admin-ui";
 import { cn } from "@/lib/utils";
 
-export const metadata = { title: "Kunden | KPI-Dashboard" };
+export const metadata = { title: "Kunden | performancegrowth Admin" };
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 

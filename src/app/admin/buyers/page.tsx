@@ -14,7 +14,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Buyer verwalten | KPI-Dashboard",
+  title: "Buyer verwalten | performancegrowth Admin",
 };
 
 export default async function AdminBuyersPage({ searchParams }: { searchParams?: Promise<{ kunde?: string }> }) {

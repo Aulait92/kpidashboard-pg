@@ -5,7 +5,7 @@ import { ACTION_LABEL, COST_ACTIONS, netCost, suggestPattern, type CostAction } 
 import { transactionsForReview } from "@/lib/bank/server";
 import { assignAction } from "../actions";
 
-export const metadata = { title: "Kosten zuordnen | KPI-Dashboard" };
+export const metadata = { title: "Kosten zuordnen | performancegrowth Admin" };
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 2 });
 const day = (d: Date) => d.toLocaleDateString("de-DE", { timeZone: "UTC", day: "2-digit", month: "2-digit", year: "2-digit" });

@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { assignFormAction, dismissUnassignedAction, toggleSourceAction } from "./actions";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Lead-Eingang | KPI-Dashboard" };
+export const metadata = { title: "Lead-Eingang | performancegrowth Admin" };
 
 const input =
   "h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-sm outline-none focus:border-[color:var(--brand)]";

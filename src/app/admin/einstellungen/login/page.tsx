@@ -4,7 +4,7 @@ import { requireAuth } from "@/lib/vertrieb/auth";
 import { loadLoginInfo } from "@/lib/login-info-server";
 import { LoginInfoForm } from "./form";
 
-export const metadata = { title: "Login-Seite | KPI-Dashboard" };
+export const metadata = { title: "Login-Seite | performancegrowth Admin" };
 
 // Infokarte neben dem Login: Hinweise und Neuigkeiten für Kunden.
 export default async function LoginSeiteEinstellungenPage() {

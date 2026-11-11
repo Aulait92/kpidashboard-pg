@@ -12,7 +12,7 @@ import { loadCustomerOverview, loadPplReport, type Granularity } from "@/lib/ppl
 import { PplOverview, PplReportView } from "@/components/admin/ppl-auswertung";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Pay-per-Lead | KPI-Dashboard" };
+export const metadata = { title: "Pay-per-Lead | performancegrowth Admin" };
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 const dt = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(d);

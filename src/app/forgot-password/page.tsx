@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ForgotPasswordForm } from "./forgot-form";
 
 export const metadata = {
-  title: "Passwort vergessen | KPI-Dashboard",
+  title: "Passwort vergessen | performancegrowth",
 };
 
 export default function ForgotPasswordPage() {

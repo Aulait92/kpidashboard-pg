@@ -10,7 +10,7 @@ import { startTotpSetupAction } from "./actions";
 import { ConfirmTotpForm, DisableTotpForm } from "./forms";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Sicherheit | KPI-Dashboard" };
+export const metadata = { title: "Sicherheit | performancegrowth Admin" };
 
 export default async function SicherheitPage() {
   const session = await requireAuth();

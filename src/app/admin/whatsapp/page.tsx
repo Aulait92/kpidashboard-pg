@@ -16,7 +16,7 @@ import { nowMs } from "@/lib/now";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "WhatsApp-Inbox | KPI-Dashboard" };
+export const metadata = { title: "WhatsApp-Inbox | performancegrowth Admin" };
 
 const STATUS_TABS = [
   { key: "open", label: "Offen" },

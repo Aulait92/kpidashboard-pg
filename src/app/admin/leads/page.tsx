@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { isStorno, leadSelect, leadWhere, priceOf, type LeadFilter } from "@/lib/admin-leads";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Leads | KPI-Dashboard" };
+export const metadata = { title: "Leads | performancegrowth Admin" };
 
 const PAGE = 100;
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);

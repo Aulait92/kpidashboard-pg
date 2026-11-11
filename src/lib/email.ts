@@ -25,7 +25,7 @@ export async function sendPasswordResetEmail(opts: {
 }): Promise<SendResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const from =
-    process.env.RESEND_FROM ?? "KPI Dashboard <onboarding@resend.dev>";
+    process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>";
 
   if (!apiKey) {
     // In Dev / ohne Resend-Setup: Link in die Server-Logs schreiben damit
@@ -89,7 +89,7 @@ export async function sendBuyerInviteEmail(opts: {
 }): Promise<SendResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const from =
-    process.env.RESEND_FROM ?? "KPI Dashboard <onboarding@resend.dev>";
+    process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>";
   if (!apiKey) {
     console.warn(
       `[email] RESEND_API_KEY fehlt — Einladungs-URL für ${opts.to}: ${opts.setPasswordUrl}`,

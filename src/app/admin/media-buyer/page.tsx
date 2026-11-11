@@ -14,7 +14,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Media Buyer | KPI-Dashboard",
+  title: "Media Buyer | performancegrowth Admin",
 };
 
 function decToNum(v: unknown): number | null {

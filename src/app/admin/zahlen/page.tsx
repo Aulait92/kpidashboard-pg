@@ -7,7 +7,7 @@ import { loadVertriebZahlen } from "@/lib/vertrieb-zahlen";
 import { loadBwa } from "@/lib/bwa";
 import { ZahlenView } from "@/components/admin/zahlen-view";
 
-export const metadata = { title: "Zahlen | KPI-Dashboard" };
+export const metadata = { title: "Zahlen | performancegrowth Admin" };
 
 // Investorentaugliche Kennzahlen aus dem Umsatzbuch (lib/revenue-ledger.ts).
 // ?zeitraum= steuert den Tab „Produkte“ (lib/produkte.ts), ?vzeitraum= den Tab „Vertrieb“, ?bwa= den Tab „BWA“,

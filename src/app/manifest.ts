@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "KPI-Dashboard | performancegrowth",
-    short_name: "KPI Dashboard",
+    name: "performancegrowth",
+    short_name: "performancegrowth",
     description:
-      "Lead-, Umsatz- und Profitabilitäts-KPIs für performancegrowth",
+      "Leads, Termine und Abschlüsse für Versicherungsvermittler",
     start_url: "/",
     scope: "/",
     display: "standalone",

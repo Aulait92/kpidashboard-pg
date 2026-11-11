@@ -7,7 +7,7 @@ import { teamCalendarStatus } from "@/lib/help-call";
 import { fmtDateTime, isWithinDays } from "@/lib/vertrieb/dates";
 import { convertInboundLead } from "@/app/admin/vertrieb/actions";
 
-export const metadata = { title: "Anbindungen | KPI-Dashboard" };
+export const metadata = { title: "Anbindungen | performancegrowth Admin" };
 
 // Anbindungen des Vertriebs: woher Daten kommen (Instantly, Calendly,
 // Formulare, LinkedIn), je mit Status „zuletzt empfangen“ und Adresse zum Kopieren.

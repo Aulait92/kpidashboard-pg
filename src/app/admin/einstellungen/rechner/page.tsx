@@ -4,7 +4,7 @@ import { requireAuth } from "@/lib/vertrieb/auth";
 import { cplFromData, loadRechnerConfig } from "@/lib/rechner-server";
 import { RechnerForm } from "./form";
 
-export const metadata = { title: "Rechner | KPI-Dashboard" };
+export const metadata = { title: "Rechner | performancegrowth Admin" };
 
 // Einstellungen des öffentlichen Break-even-Rechners: Produkte mit
 // Erfahrungswerten, Texte, Kontakt-Link und Garantien.

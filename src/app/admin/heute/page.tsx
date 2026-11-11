@@ -11,7 +11,7 @@ import { HeuteList } from "@/components/admin/heute-list";
 import { HEUTE_ICONS as ICONS } from "@/components/admin/heute-icons";
 import { cn } from "@/lib/utils";
 
-export const metadata = { title: "Heute | KPI-Dashboard" };
+export const metadata = { title: "Heute | performancegrowth Admin" };
 
 const FILTERS: { key: string; label: string; areas: HeuteArea[] }[] = [
   { key: "", label: "Alle", areas: [] },

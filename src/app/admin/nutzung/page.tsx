@@ -10,7 +10,7 @@ import { loadHelpQuestions } from "@/lib/hilfe-report";
 // Nutzung des Kunden-CRMs: Aktivität, genutzte Funktionen, Fehler, Feedback
 // und liegen gebliebene Aufgaben – Grundlage für UX-Verbesserungen.
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Nutzung | KPI-Dashboard" };
+export const metadata = { title: "Nutzung | performancegrowth Admin" };
 
 const ACTION_LABELS: Record<string, string> = {
   "callback.not_reached": "Rückruf: nicht erreicht",

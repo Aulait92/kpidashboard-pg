@@ -16,13 +16,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "KPI-Dashboard | performancegrowth",
-  description: "Lead-, Umsatz- und Profitabilitäts-KPIs",
-  applicationName: "KPI Dashboard",
+  title: "performancegrowth",
+  description: "Leads, Termine und Abschlüsse für Versicherungsvermittler",
+  applicationName: "performancegrowth",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "KPI Dashboard",
+    title: "performancegrowth",
   },
   formatDetection: {
     telephone: false,
