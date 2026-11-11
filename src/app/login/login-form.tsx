@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { loginAction, totpAction, type LoginActionState } from "./actions";
 
@@ -24,24 +25,27 @@ export function LoginForm({
   // Zweiter Schritt: Code aus der Authenticator-App.
   if (state.needsTotp && !(totpState.error && !totpState.needsTotp)) {
     return (
-      <form action={totpFormAction} className="space-y-3">
+      <form action={totpFormAction} className="space-y-4">
         <input type="hidden" name="next" value={next} />
-        <p className="text-sm text-[color:var(--muted)]">Code aus deiner Authenticator-App eingeben.</p>
+        <label htmlFor="login-code" className="block text-center text-sm text-[color:var(--muted)]">
+          Code aus deiner Authenticator-App eingeben.
+        </label>
         <input
+          id="login-code"
           name="code"
           inputMode="numeric"
           autoComplete="one-time-code"
           autoFocus
           required
           placeholder="123456"
-          className="w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-3 text-center text-2xl tracking-[0.4em] focus:border-[color:var(--brand)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-soft)]"
+          className="h-14 w-full rounded-xl border border-[color:var(--border)] bg-white px-3 text-center text-2xl tracking-[0.4em] shadow-sm focus:border-[color:var(--brand)] focus:outline-none focus:ring-4 focus:ring-[color:var(--brand-soft)]"
         />
-        {totpState.error ? <div className="rounded-lg bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">{totpState.error}</div> : null}
-        <button
-          type="submit"
-          disabled={totpPending}
-          className="w-full rounded-lg bg-[color:var(--brand)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60"
-        >
+        {totpState.error ? (
+          <div role="alert" className="rounded-xl bg-rose-50 px-3 py-2.5 text-sm font-medium text-rose-700">
+            {totpState.error}
+          </div>
+        ) : null}
+        <button type="submit" disabled={totpPending} className={PRIMARY_BTN}>
           {totpPending ? "Prüfe…" : "Bestätigen"}
         </button>
         <p className="text-center text-xs text-[color:var(--muted)]">Handy nicht zur Hand? Einen Notfall-Code eingeben.</p>
@@ -54,77 +58,83 @@ export function LoginForm({
 
   return (
     <>
-    {anySso ? (
-      <div className="mb-5 space-y-2">
-        {sso.microsoft ? (
-          <a href={ssoHref("microsoft")} className={SSO_BTN}>
-            <MicrosoftLogo /> Mit Microsoft anmelden
-          </a>
-        ) : null}
-        {sso.google ? (
-          <a href={ssoHref("google")} className={SSO_BTN}>
-            <GoogleLogo /> Mit Google anmelden
-          </a>
-        ) : null}
-        <div className="flex items-center gap-3 pt-2 text-xs text-[color:var(--muted)]">
-          <span className="h-px flex-1 bg-[color:var(--border)]" />
-          oder mit Passwort
-          <span className="h-px flex-1 bg-[color:var(--border)]" />
-        </div>
-      </div>
-    ) : null}
-    <form action={formAction} className="space-y-3">
-      <input type="hidden" name="next" value={next} />
-      <label className="block">
-        <span className="text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
-          E-Mail
-        </span>
-        <input
-          name="email"
-          type="email"
-          required
-          autoComplete="email"
-          autoFocus
-          className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-soft)]"
-        />
-      </label>
-      <label className="block">
-        <span className="text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
-          Passwort
-        </span>
-        <input
-          name="password"
-          type="password"
-          required
-          autoComplete="current-password"
-          className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-soft)]"
-        />
-      </label>
-
-      {state.error || (totpState.error && !totpState.needsTotp) ? (
-        <div className="rounded-lg bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
-          {state.error ?? totpState.error}
+      {anySso ? (
+        <div className="mb-6 space-y-2.5">
+          {sso.microsoft ? (
+            <a href={ssoHref("microsoft")} className={SSO_BTN}>
+              <MicrosoftLogo /> Mit Microsoft anmelden
+            </a>
+          ) : null}
+          {sso.google ? (
+            <a href={ssoHref("google")} className={SSO_BTN}>
+              <GoogleLogo /> Mit Google anmelden
+            </a>
+          ) : null}
+          <div className="flex items-center gap-3 pt-3 text-xs text-[color:var(--muted)]">
+            <span className="h-px flex-1 bg-[color:var(--border)]" />
+            oder mit E-Mail
+            <span className="h-px flex-1 bg-[color:var(--border)]" />
+          </div>
         </div>
       ) : null}
+      <form action={formAction} className="space-y-4">
+        <input type="hidden" name="next" value={next} />
+        <div>
+          <label htmlFor="login-email" className="mb-1.5 block text-sm font-medium">
+            E-Mail
+          </label>
+          <input
+            id="login-email"
+            name="email"
+            type="email"
+            required
+            autoComplete="email"
+            autoFocus
+            placeholder="name@agentur.de"
+            className={INPUT}
+          />
+        </div>
+        <div>
+          <div className="mb-1.5 flex items-baseline justify-between gap-3">
+            <label htmlFor="login-password" className="block text-sm font-medium">
+              Passwort
+            </label>
+            <Link
+              href="/forgot-password"
+              className="text-sm font-medium text-[color:var(--brand)] hover:underline focus:outline-none focus-visible:underline"
+            >
+              Passwort vergessen?
+            </Link>
+          </div>
+          <input id="login-password" name="password" type="password" required autoComplete="current-password" className={INPUT} />
+        </div>
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full rounded-lg bg-[color:var(--brand)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60"
-      >
-        {pending ? "Anmelden…" : "Anmelden"}
-      </button>
-    </form>
+        {state.error || (totpState.error && !totpState.needsTotp) ? (
+          <div role="alert" className="rounded-xl bg-rose-50 px-3 py-2.5 text-sm font-medium text-rose-700">
+            {state.error ?? totpState.error}
+          </div>
+        ) : null}
+
+        <button type="submit" disabled={pending} className={PRIMARY_BTN}>
+          {pending ? "Anmelden…" : "Anmelden"}
+        </button>
+      </form>
     </>
   );
 }
 
 const SSO_BTN =
-  "flex w-full items-center justify-center gap-2.5 rounded-lg border border-[color:var(--border)] bg-white px-4 py-2.5 text-sm font-semibold text-[color:var(--foreground)] shadow-sm transition hover:border-[color:var(--border-strong)] hover:bg-[color:var(--surface-sunken,#f8fafc)]";
+  "flex h-12 w-full items-center justify-center gap-2.5 rounded-xl border border-[color:var(--border)] bg-white px-4 text-[15px] font-semibold text-[color:var(--foreground)] shadow-sm transition hover:border-[color:var(--border-strong)] hover:bg-[color:var(--surface-sunken,#f8fafc)] focus:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--brand-soft)]";
+
+const INPUT =
+  "h-12 w-full rounded-xl border border-[color:var(--border)] bg-white px-4 text-[15px] shadow-sm placeholder:text-slate-400 focus:border-[color:var(--brand)] focus:outline-none focus:ring-4 focus:ring-[color:var(--brand-soft)]";
+
+const PRIMARY_BTN =
+  "h-12 w-full rounded-xl bg-[color:var(--brand)] px-4 text-[15px] font-semibold text-white shadow-[0_8px_20px_-8px_rgba(37,99,235,0.6)] transition hover:bg-[color:var(--brand-dark)] focus:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--brand-soft)] disabled:opacity-60";
 
 function MicrosoftLogo() {
   return (
-    <svg width="16" height="16" viewBox="0 0 21 21" aria-hidden="true">
+    <svg width="18" height="18" viewBox="0 0 21 21" aria-hidden="true">
       <rect x="1" y="1" width="9" height="9" fill="#f25022" />
       <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
       <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
@@ -135,7 +145,7 @@ function MicrosoftLogo() {
 
 function GoogleLogo() {
   return (
-    <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true">
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
       <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
       <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
       <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z" />

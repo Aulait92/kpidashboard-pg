@@ -17,6 +17,7 @@ const PUBLIC_PREFIXES = [
   "/angebot", // Angebote/Auftragsbestätigungen per geheimem Link (Token)
   "/rechtliches", // AGB und Auftragsverarbeitungsvertrag (öffentlich)
   "/rechner", // Break-even-Rechner für Interessenten (öffentlich, keine personenbezogenen Daten)
+  "/api/login-info", // Bild der Infokarte auf der Login-Seite (öffentlich, keine Personendaten)
   "/api/ops", // Betriebs-API (Buyer-Accounts anlegen), per ADMIN_API_TOKEN (Bearer) gesichert
   "/api/health", // Healthcheck für Railway/Uptime (gibt nur ok true/false zurück)
   "/api/status", // Überwachung (DB + Hintergrund-Jobs), Details nur mit Token
@@ -82,6 +83,12 @@ export async function middleware(req: NextRequest) {
   ) {
     const headers = new Headers(req.headers);
     headers.set("x-bare-layout", "1");
+    return NextResponse.next({ request: { headers } });
+  }
+  // Login: eigene Seite mit Logo und Footer (ohne Kopfzeile und globalen Footer).
+  if (pathname === "/login") {
+    const headers = new Headers(req.headers);
+    headers.set("x-bare-layout", "login");
     return NextResponse.next({ request: { headers } });
   }
   if (isPublic(pathname)) return NextResponse.next();

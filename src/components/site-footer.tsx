@@ -5,7 +5,10 @@ import { headers } from "next/headers";
 // Wir haben sonst kein Footer-Inventar.
 export async function SiteFooter() {
   // Kundenbereich: Links stecken im Profilmenü der App-Shell.
-  if ((await headers()).get("x-app-area") === "buyer") return null;
+  const h = await headers();
+  if (h.get("x-app-area") === "buyer") return null;
+  // Login-Seite bringt ihren eigenen, dezenten Footer mit.
+  if (h.get("x-bare-layout") === "login") return null;
   return (
     <footer className="mt-12 border-t print:hidden border-[color:var(--border)] px-4 py-4 text-center text-xs text-[color:var(--muted)] sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-[1600px] flex-col items-center justify-center gap-x-4 gap-y-1 sm:flex-row">

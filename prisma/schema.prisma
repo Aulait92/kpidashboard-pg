@@ -1743,6 +1743,23 @@ model RechnerConfig {
   updatedAt DateTime @updatedAt
 }
 
+// Infokarte auf der Login-Seite (eine Zeile, id „default“). Vom Admin unter
+// Einstellungen → Login-Seite gepflegt; ohne Eintrag zeigt die Seite eine
+// Standard-Karte. Das Bild liegt klein in der DB und wird öffentlich unter
+// /api/login-info/image ausgeliefert (keine personenbezogenen Daten).
+model LoginInfo {
+  id        String   @id @default("default")
+  enabled   Boolean  @default(true)
+  badge     String?
+  title     String
+  text      String?
+  linkText  String?
+  linkUrl   String?
+  image     Bytes?
+  imageType String?
+  updatedAt DateTime @updatedAt
+}
+
 // Garantiefälle (Lead-Garantie, Break-even-Garantie; AGB „Garantien“).
 // Der tägliche Cron legt Fälle an bzw. aktualisiert offene; gutgeschrieben wird
 // erst, wenn ein Admin „Gewähren“ klickt (lib/garantien-server.ts).

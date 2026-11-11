@@ -28,6 +28,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "vertrieb.verknuepfung_geloest": "Verknüpfung Vertriebskontakt – Kundenakte gelöst",
   "kpi.kosten": "Laufende Kosten geändert",
   "kpi.einstellungen": "Einstellungen der Zahlen-Seite geändert",
+  "login_info.update": "Infokarte der Login-Seite geändert",
   "garantie.fall": "Garantiefall angelegt (automatisch)",
   "garantie.gewaehrt": "Garantie gewährt (Gutschrift)",
   "garantie.abgelehnt": "Garantie abgelehnt",

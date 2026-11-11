@@ -55,6 +55,7 @@ weiter (Papierkram bis 140); danach immer letzte Nummer + 1.
 | Migration | Was | Hinweis |
 |---|---|---|
 | `20261114100000_adresse_anreichern` | Spalten `SalesContact.addressEnrichTriedAt`, `addressEnrichedAt` (Adresse aus Impressum ergänzt) | nur hinzufügend; der Nachhol-Lauf im WhatsApp-Cron arbeitet danach gedrosselt (10 Kontakte je Lauf, `ADDRESS_ENRICH_PER_RUN`), abschaltbar mit `ADDRESS_ENRICH=off` |
+| `20261114120000_login_infokarte` | Tabelle `LoginInfo` (Infokarte auf der Login-Seite, Admin → Einstellungen → Login-Seite; Bild klein in der DB, öffentlich unter `/api/login-info/image`) | nur hinzufügend; ohne Eintrag zeigt die Login-Seite eine Standard-Karte |
 
 Keine davon verändert bestehende Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und
