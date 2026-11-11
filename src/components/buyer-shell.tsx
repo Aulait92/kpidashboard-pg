@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   BarChart3,
   CalendarDays,
@@ -599,7 +600,9 @@ function FeedbackDialog({ onClose }: { onClose: () => void }) {
   const toast = useToast();
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
-  return (
+  // Per Portal an <body>: Die Kopfleiste hat backdrop-blur, das „fixed“ sonst an die Kopfleiste bindet.
+  if (typeof document === "undefined") return null;
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 p-4 sm:items-center" onClick={onClose}>
       <div
         className="ui-fade-in w-full max-w-md rounded-[var(--radius-lg)] bg-white p-5 shadow-[var(--shadow-lg)]"
@@ -607,7 +610,7 @@ function FeedbackDialog({ onClose }: { onClose: () => void }) {
       >
         <h2 className="text-base font-semibold">Etwas unklar oder umständlich?</h2>
         <p className="mt-1 text-sm text-[color:var(--muted)]">
-          Schreib uns kurz, was du gesucht oder erwartet hast. Wir verbessern das CRM laufend.
+          Schreiben Sie uns kurz, was Sie gesucht oder erwartet haben. Wir verbessern die App laufend.
         </p>
         <textarea
           autoFocus
@@ -637,7 +640,8 @@ function FeedbackDialog({ onClose }: { onClose: () => void }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
