@@ -57,6 +57,22 @@ export async function connectAllianzAction(_prev: SourceResult, fd: FormData): P
   return res;
 }
 
+/**
+ * Agentur-Kalender (Google/Outlook) trennen, z. B. um auf einen anderen Kalender
+ * zu wechseln. Zugangsdaten werden gelöscht; der Buchungslink (Slug) bleibt,
+ * damit Links in Leadformularen gültig bleiben.
+ */
+export async function disconnectNativeCalendarAction(): Promise<void> {
+  const c = await ctxOrError(true);
+  if ("error" in c) return;
+  await prisma.calendarConnection.updateMany({
+    where: { customerId: c.ctx.customerId },
+    data: { status: "pending", accessTokenEnc: null, refreshTokenEnc: null, tokenExpiresAt: null, accountEmail: null, calendarId: "primary" },
+  });
+  await audit("calendar.disconnect", { customerId: c.ctx.customerId, entity: "CalendarConnection" });
+  refresh();
+}
+
 export async function disconnectAllianzAction(): Promise<void> {
   const c = await ctxOrError(true);
   if ("error" in c) return;

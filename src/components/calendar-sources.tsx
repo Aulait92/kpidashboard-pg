@@ -262,6 +262,7 @@ export function SourcePicker({
   removeIcsAction,
   allianzAction,
   disconnectAllianzAction,
+  disconnectNativeAction,
   hidden,
   allianzOption = true,
 }: {
@@ -272,6 +273,8 @@ export function SourcePicker({
   removeIcsAction: PlainAction;
   allianzAction: FormAction;
   disconnectAllianzAction: PlainAction;
+  /** Google/Outlook-Agentur-Kalender trennen (optional). */
+  disconnectNativeAction?: PlainAction;
   hidden?: Record<string, string>;
   /** Allianz-Online-Kalender anbieten (nicht für Makler, außer schon verbunden). */
   allianzOption?: boolean;
@@ -312,9 +315,19 @@ export function SourcePicker({
       <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-4">
         {way === "native" ? (
           status.native.connected ? (
-            <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
-              <CheckCircle2 className="h-4 w-4" /> {status.native.label ?? "Kalender"} verbunden
-            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
+                <CheckCircle2 className="h-4 w-4" /> {status.native.label ?? "Kalender"} verbunden
+              </span>
+              {disconnectNativeAction && !readOnly ? (
+                <form action={disconnectNativeAction}>
+                  {hiddenInputs}
+                  <button type="submit" className={buttonClass("ghost", "sm")}>
+                    Trennen
+                  </button>
+                </form>
+              ) : null}
+            </div>
           ) : (
             <div className="flex flex-wrap gap-2">
               <a href={connectLinks.google} className={buttonClass("secondary", "md", readOnly ? "pointer-events-none opacity-60" : "")}>

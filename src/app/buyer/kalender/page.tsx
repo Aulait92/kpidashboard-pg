@@ -14,6 +14,7 @@ import {
   connectAllianzAction,
   deleteBlockAction,
   disconnectAllianzAction,
+  disconnectNativeCalendarAction,
   removeIcsAction,
   saveIcsAction,
   saveLeadTimesAction,
@@ -100,6 +101,7 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
               removeIcsAction={removeIcsAction}
               allianzAction={connectAllianzAction}
               disconnectAllianzAction={disconnectAllianzAction}
+              disconnectNativeAction={disconnectNativeCalendarAction}
               allianzOption={!makler}
             />
           </div>

@@ -21,6 +21,7 @@ import { loadCalendarSetup } from "@/lib/calendar/setup-view";
 import {
   connectAllianzAction,
   disconnectAllianzAction,
+  disconnectNativeCalendarAction,
   removeIcsAction,
   saveIcsAction,
   saveLeadTimesAction,
@@ -208,6 +209,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               removeIcsAction={removeIcsAction}
               allianzAction={connectAllianzAction}
               disconnectAllianzAction={disconnectAllianzAction}
+              disconnectNativeAction={disconnectNativeCalendarAction}
               allianzOption={!makler}
             />
             <div className="mt-6 border-t border-[color:var(--border)] pt-5">
