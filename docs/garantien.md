@@ -21,7 +21,17 @@ erstellt wurde (`GUARANTEES_FROM`) und ein Produkt mit Katze/TKV enthält
 vom Angebot (`offer-document.tsx`) benutzt, damit Angebotstext und Prüfung nie
 auseinanderlaufen. Archivierte Kunden werden nicht geprüft. Jede Garantie lässt
 sich in der Rechner-Konfiguration abschalten (`guarantees.leads.enabled`,
-`guarantees.breakEven.enabled`).
+`guarantees.breakEven.enabled`; der Break-even-Schalter gilt auch für die
+Vertrags-Garantie der Makler, es ist die „zweite Garantie“).
+
+| Kunde (`Customer.vermittlerTyp`) | Garantien |
+|---|---|
+| Vertreter (Standard) | Lead-Garantie + Break-even-Garantie |
+| Makler | Lead-Garantie + Vertrags-Garantie |
+
+Den Typ setzt das Angebot (Feld „Kunde ist …“ im Angebots-Editor, `Offer.vermittlerTyp`)
+bei der Annahme am Kunden; sonst Kundenakte → WhatsApp/Provisionen bzw. der Kunde
+selbst unter „Meine Provisionen“.
 
 ## Eckwerte (nicht doppelt hinterlegt)
 
@@ -30,6 +40,7 @@ sich in der Rechner-Konfiguration abschalten (`guarantees.leads.enabled`,
 | 100 Leads | Rechner-Konfiguration, Produkt TKV `minLeads30` |
 | 20 € pro Tag | Rechner-Konfiguration, `guarantees.leads.minBudgetPerDay` (gilt für beide Garantien) |
 | 30 / 90 Tage, 80 %, 6 Monate | `GARANTIE_FRISTEN` in `src/lib/rechner.ts` |
+| 15 Verträge (Makler) | `VERTRAGS_GARANTIE_MIN_VERTRAEGE` in `src/lib/rechner.ts` |
 
 ## Kampagnenstart
 
@@ -72,9 +83,8 @@ Das gilt für jede Art von Pause, auch für Pausen wegen Zahlungsverzug.
 ## Break-even-Garantie
 
 - **Nur für Vertreter** (`Customer.vermittlerTyp = vertreter`). Makler bekommen bei
-  TKV nur Bestandsprovision und lägen nach 90 Tagen immer unter den Kosten: Status
-  „Nicht anwendbar (Makler)“, kein Fall, kein Eintrag in „Heute“; die Karten zeigen
-  „Für Makler gilt die Lead-Garantie“. Die Lead-Garantie gilt für beide.
+  TKV nur Bestandsprovision und lägen nach 90 Tagen immer unter den Kosten; für sie
+  gilt stattdessen die Vertrags-Garantie (unten). Die Lead-Garantie gilt für beide.
 - Erste Prüfung am Tag nach dem **90. aktiven Tag**, danach täglich, je Kalendermonat ein Fall.
 - **Provision seit Start**: Abschlüsse (Status „Abschluss“, Datum `closedAt`) seit Start,
   ohne anerkannte Reklamation, geschätzt mit `estimatedProvision` und den
@@ -103,17 +113,39 @@ Das gilt für jede Art von Pause, auch für Pausen wegen Zahlungsverzug.
 - **Längstens 6 Monate** ab dem Monat der ersten Prüfung; danach oder nach 6 gewährten
   Monaten „Abgelaufen“.
 
+## Vertrags-Garantie (Makler)
+
+Freigegeben von Ole am 11.11.2026, statt Break-even für Makler.
+
+- **Nur für Makler** (`Customer.vermittlerTyp = makler`), Vertreter sehen sie nicht.
+- Gleicher Zeitraum wie Break-even: erste Prüfung am Tag nach dem **90. aktiven Tag**
+  (Pausen verlängern), danach täglich, je Kalendermonat ein Fall, **längstens 6 Monate**
+  ab dem Monat der ersten Prüfung bzw. 6 gewährte Monate.
+- **Verträge seit Start** = Leads mit Status „Abschluss“ (Datum `closedAt`) seit Start,
+  ohne anerkannte Reklamation – **je Lead ein Vertrag** (mehrere Verträge eines Kunden
+  kennt die App nicht). So steht es auch in den AGB.
+- Mindestens **15 Verträge** → „Erfüllt“, auch schon vor Tag 90 (offene Fälle des
+  laufenden Monats werden automatisch geschlossen). Sonst Anspruch bzw. „Bedingungen
+  fehlen“ für den **laufenden Monat**: **Betreuung + Software** kostenlos (wie
+  Lead-Garantie), so lange, bis 15 erreicht sind.
+- Bedingungen wie Break-even, aber **ohne „Provisionssätze hinterlegt“**: Ø ≥ 20 € pro
+  aktivem Tag, ≥ 80 % Termine wahrgenommen, ≥ 80 % der Leads mit Ergebnis, keine
+  offene Rechnung.
+- Nachweis: Im Garantiefall dürfen wir eine Courtage-/Provisionsabrechnung des
+  Versicherers anfordern; verschwiegene Abschlüsse lassen den Anspruch entfallen (AGB).
+  Die App fordert nichts automatisch an – bei Zweifeln vor „Gewähren“ nachfragen.
+
 ## Status
 
 | Status | Bedeutung |
 |---|---|
 | Noch nicht gestartet | keine Meta-Kosten und kein Go-live |
 | Läuft | Zeitraum noch nicht vorbei (Fortschritt: „Tag 12 von 30 · 41 von 100 Leads“) |
-| Erfüllt | Ziel erreicht (100 Leads bzw. Break-even) |
+| Erfüllt | Ziel erreicht (100 Leads, Break-even bzw. 15 Verträge) |
 | Anspruch | Ziel verfehlt, alle Bedingungen erfüllt |
 | Bedingungen fehlen | Ziel verfehlt, mindestens eine Bedingung fehlt (mit Text, z. B. „Ergebnisse nur bei 54 % der Leads eingetragen“) |
-| Abgelaufen | Break-even: 6 Monate vorbei |
-| Nicht anwendbar (Makler) | Break-even bei Maklern |
+| Abgelaufen | Break-even/Vertrags-Garantie: 6 Monate vorbei |
+| Nicht anwendbar | Break-even bei Maklern bzw. Vertrags-Garantie bei Vertretern (wird nicht angezeigt) |
 
 ## Fälle, Cron und Entscheidung
 
@@ -127,19 +159,22 @@ Das gilt für jede Art von Pause, auch für Pausen wegen Zahlungsverzug.
   - Bedingungen fehlen: Hinweis mit den fehlenden Bedingungen; „Ablehnen“ ist mit
     der Begründung vorbelegt, „Gewähren“ bleibt als Kulanz möglich.
 - **Gewähren**: negativer Rechnungsposten in Stripe über den Nettobetrag des Monats
-  (Lead: Betreuung + Software inkl. Zusätze; Break-even: nur Betreuung), mit USt. wie
+  (Lead und Vertrag: Betreuung + Software inkl. Zusätze; Break-even: nur Betreuung), mit USt. wie
   die Abo-Positionen, idempotent je Fall (`garantie-<id>`). Stripe verrechnet ihn mit
   der nächsten Rechnung; ist er höher, bleibt Guthaben. Ohne Stripe-Kunde lehnt die
   App ab („Gutschrift bitte von Hand“). Protokoll: `garantie.gewaehrt`.
 - **Ablehnen** nur mit Begründung. Protokoll: `garantie.abgelehnt`.
-- **Umsatzbuch** (Admin → Zahlen): gewährte Monate fallen weg (Lead: Betreuung und
-  Software, Break-even: Betreuung), über `RetainerInput.freeMonths`.
+- **Umsatzbuch** (Admin → Zahlen): gewährte Monate fallen weg (Lead und Vertrag:
+  Betreuung und Software, Break-even: Betreuung), über `RetainerInput.freeMonths`.
 
 ## Offene Punkte
 
 - AGB: „ohne Pause“/„ununterbrochen“ an die Pausen-Regel anpassen, Break-even nur für
   Vertreter ergänzen; netto bestätigen.
 - Rechner-Text der Lead-Garantie sagt „Betreuung im Folgemonat“, AGB „Betreuung und Software“.
+- AGB Break-even: „ohne Vergütung für Betreuung und Software“ – die Prüfung schreibt
+  nur die Betreuung gut (Software läuft weiter). Eins von beiden angleichen.
+- Vertrags-Garantie: Prüfung durch Ole/Anwalt (AGB-Stelle mit „Prüfen:“ markiert).
 - Jahreszahler: Die Gutschrift landet auf der nächsten Rechnung, also ggf. erst bei der
   Verlängerung. Bei Bedarf manuell erstatten.
 - Kunden ohne Stripe-Kunde (Altkunden aus Airtable) können nicht per Knopf gewährt werden.

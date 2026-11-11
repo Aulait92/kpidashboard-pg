@@ -1,12 +1,13 @@
-// Garantien (AGB „Garantien“): Lead-Garantie (30 aktive Tage) und
-// Break-even-Garantie (ab 90 aktiven Tagen, monatlich, längstens 6 Monate).
+// Garantien (AGB „Garantien“): Lead-Garantie (30 aktive Tage), für Vertreter
+// die Break-even-Garantie und für Makler die Vertrags-Garantie (beide ab
+// 90 aktiven Tagen, monatlich, längstens 6 Monate).
 // Reine Bewertung ohne Datenbank – Laden, Cron und Gewähren stehen in
 // lib/garantien-server.ts. Regeln und Annahmen: docs/garantien.md.
 //
 // Eckwerte kommen aus der Rechner-Konfiguration (Mindest-Leads je Produkt,
 // Mindestbudget pro Tag, An/Aus) und GARANTIE_FRISTEN (rechner.ts).
 
-import { GARANTIE_FRISTEN, type RechnerConfig } from "@/lib/rechner";
+import { GARANTIE_FRISTEN, VERTRAGS_GARANTIE_MIN_VERTRAEGE, type RechnerConfig } from "@/lib/rechner";
 import { addMonths, dayKey, monthKey, monthRange, retainerRows, type RetainerInput } from "@/lib/revenue-ledger";
 
 /** Ab diesem Datum erstellte Angebote zeigen die neuen Garantien (ältere behalten ihren Text). */
@@ -14,11 +15,13 @@ export const GUARANTEES_FROM = new Date("2026-11-11T00:00:00+01:00");
 /** Garantien gelten für Katzenversicherung (TKV), siehe AGB „Garantien“. */
 export const isGuaranteeProduct = (name: string) => /katze|\btkv\b|tierkranken/i.test(name);
 
-export type GarantieArt = "lead" | "breakeven";
+export type GarantieArt = "lead" | "breakeven" | "vertrag";
 export type GarantieStatus = "nicht_gestartet" | "laeuft" | "erfuellt" | "anspruch" | "bedingungen_fehlen" | "abgelaufen" | "nicht_anwendbar";
 export type FallStatus = "offen" | "gewaehrt" | "abgelehnt";
 
-export const GARANTIE_LABEL: Record<GarantieArt, string> = { lead: "Lead-Garantie", breakeven: "Break-even-Garantie" };
+export const GARANTIE_LABEL: Record<GarantieArt, string> = { lead: "Lead-Garantie", breakeven: "Break-even-Garantie", vertrag: "Vertrags-Garantie" };
+/** Was im Garantiemonat kostenlos ist: Lead- und Vertrags-Garantie alles, Break-even nur Betreuung. */
+export const GARANTIE_UMFANG: Record<GarantieArt, "all" | "service"> = { lead: "all", breakeven: "service", vertrag: "all" };
 export const STATUS_LABEL: Record<GarantieStatus, string> = {
   nicht_gestartet: "Noch nicht gestartet",
   laeuft: "Läuft",
@@ -26,7 +29,7 @@ export const STATUS_LABEL: Record<GarantieStatus, string> = {
   anspruch: "Anspruch",
   bedingungen_fehlen: "Bedingungen fehlen",
   abgelaufen: "Abgelaufen",
-  nicht_anwendbar: "Nicht anwendbar (Makler)",
+  nicht_anwendbar: "Nicht anwendbar",
 };
 export const FALL_LABEL: Record<FallStatus, string> = { offen: "Offen", gewaehrt: "Gewährt", abgelehnt: "Abgelehnt" };
 
@@ -36,6 +39,8 @@ export const ERGEBNIS_KARENZ_TAGE = 3;
 export type GarantieRegeln = {
   lead: { aktiv: boolean; minLeads: number; tage: number };
   breakeven: { aktiv: boolean; tage: number; quote: number; maxFreiMonate: number };
+  /** Makler statt Break-even; gleicher Schalter wie Break-even (zweite Garantie) */
+  vertrag: { aktiv: boolean; tage: number; minVertraege: number; quote: number; maxFreiMonate: number };
   minBudgetPerDay: number;
 };
 
@@ -47,6 +52,13 @@ export function regelnAus(config: RechnerConfig): GarantieRegeln {
     breakeven: {
       aktiv: config.guarantees.breakEven.enabled,
       tage: GARANTIE_FRISTEN.breakEvenTage,
+      quote: GARANTIE_FRISTEN.quote,
+      maxFreiMonate: GARANTIE_FRISTEN.maxFreiMonate,
+    },
+    vertrag: {
+      aktiv: config.guarantees.breakEven.enabled,
+      tage: GARANTIE_FRISTEN.breakEvenTage,
+      minVertraege: VERTRAGS_GARANTIE_MIN_VERTRAEGE,
       quote: GARANTIE_FRISTEN.quote,
       maxFreiMonate: GARANTIE_FRISTEN.maxFreiMonate,
     },
@@ -82,7 +94,7 @@ export type GarantieInput = {
   termine: { startsAt: Date; status: string }[];
   /** Eigene Provisionssätze unter „Meine Provisionen“ hinterlegt */
   provisionssaetze: boolean;
-  /** Break-even-Garantie vorerst nur für Vertreter (Makler: nur Bestandsprovision) */
+  /** Vertreter: Break-even-Garantie; Makler (nur Bestandsprovision): Vertrags-Garantie */
   vermittlerTyp: "vertreter" | "makler";
   /** Betreuung/Software des Kunden (Basis wie im Umsatzbuch); null = keine Vergütung */
   retainer: RetainerInput | null;
@@ -128,6 +140,9 @@ export type Kennzahlen = {
   leads?: number;
   minLeads?: number;
   provision?: number;
+  /** Vertrags-Garantie: Abschlüsse seit Start und Mindestzahl */
+  vertraege?: number;
+  minVertraege?: number;
   kosten?: number;
   werbebudget?: number;
   betreuung?: number;
@@ -137,7 +152,7 @@ export type Kennzahlen = {
   ergebnisQuote?: number | null;
   /** Monat, der kostenlos wird (YYYY-MM) */
   monat?: string | null;
-  /** Break-even: der wievielte kostenlose Monat (1–6) */
+  /** Break-even/Vertrags-Garantie: der wievielte kostenlose Monat (1–6) */
   freiMonatNr?: number;
   /** Nettobetrag der Gutschrift für `monat` */
   betrag?: number;
@@ -226,14 +241,33 @@ export function ergebnisQuote(leads: GarantieInput["leads"], now: Date): { n: nu
   return { n: rel.length, quote: rel.filter((l) => l.status && l.status !== "Neuer Lead").length / rel.length };
 }
 
+/** Bedingungen „Termine wahrgenommen“ und „Ergebnisse eingetragen“ (Break-even und Vertrags-Garantie). */
+function quotenBedingungen(i: GarantieInput, start: number, q: number) {
+  const termine = terminQuote(i.termine.filter((t) => dayNum(t.startsAt) >= start), i.now);
+  const ergebnisse = ergebnisQuote(i.leads.filter((l) => dayNum(l.createdAt) >= start), i.now);
+  const bedingungen: Bedingung[] = [
+    termine.quote == null
+      ? { key: "termine", ok: true, text: "Noch keine vergangenen Termine aus der Software" }
+      : termine.quote >= q
+        ? { key: "termine", ok: true, text: `${pct(termine.quote)} der Termine wahrgenommen (mind. ${pct(q)})` }
+        : { key: "termine", ok: false, text: `Termine nur zu ${pct(termine.quote)} wahrgenommen (mind. ${pct(q)})` },
+    ergebnisse.quote == null
+      ? { key: "ergebnisse", ok: true, text: "Noch keine Leads zum Auswerten" }
+      : ergebnisse.quote >= q
+        ? { key: "ergebnisse", ok: true, text: `Ergebnisse bei ${pct(ergebnisse.quote)} der Leads eingetragen (mind. ${pct(q)})` }
+        : { key: "ergebnisse", ok: false, text: `Ergebnisse nur bei ${pct(ergebnisse.quote)} der Leads eingetragen (mind. ${pct(q)})` },
+  ];
+  return { termine, ergebnisse, bedingungen };
+}
+
 // ─── Kosten ──────────────────────────────────────────────────────────────
 
-/** Kostenlose Monate aus gewährten Fällen (Lead-Garantie: alles, Break-even: Betreuung). */
+/** Kostenlose Monate aus gewährten Fällen (Lead-/Vertrags-Garantie: alles, Break-even: Betreuung). */
 export function freeMonthsOf(faelle: GarantieInput["faelle"]): Record<string, "all" | "service"> {
   const out: Record<string, "all" | "service"> = {};
   for (const f of faelle) {
     if (f.status !== "gewaehrt") continue;
-    out[f.monat] = f.art === "lead" || out[f.monat] === "all" ? "all" : "service";
+    out[f.monat] = GARANTIE_UMFANG[f.art] === "all" || out[f.monat] === "all" ? "all" : "service";
   }
   return out;
 }
@@ -246,11 +280,11 @@ export function betreuungKosten(retainer: RetainerInput | null, von: Date, bis: 
   return r2(rows.reduce((n, r) => n + r.amount, 0));
 }
 
-/** Gutschrift netto für einen ganzen Monat: Lead-Garantie Betreuung + Software, Break-even nur Betreuung. */
+/** Gutschrift netto für einen ganzen Monat: Lead-/Vertrags-Garantie Betreuung + Software, Break-even nur Betreuung. */
 export function gutschriftBetrag(retainer: RetainerInput | null, monat: string, art: GarantieArt): number {
   if (!retainer) return 0;
   const rows = retainerRows({ ...retainer, end: null, pauses: [], countFrom: null, freeMonths: undefined }, [monat], monat);
-  return r2(rows.filter((r) => art === "lead" || r.stream === "service").reduce((n, r) => n + r.amount, 0));
+  return r2(rows.filter((r) => GARANTIE_UMFANG[art] === "all" || r.stream === "service").reduce((n, r) => n + r.amount, 0));
 }
 
 // ─── Bewertung ───────────────────────────────────────────────────────────
@@ -325,7 +359,7 @@ export function bewerteLeadGarantie(i: GarantieInput, r: GarantieRegeln): Garant
  * Provision seit Start die Kosten (Meta + Betreuung/Software, netto) erreicht.
  * Wenn nicht und alle Bedingungen erfüllt: Betreuung im laufenden Monat
  * kostenlos – längstens 6 Monate ab dem Monat der ersten Prüfung.
- * Vorerst nur für Vertreter; Makler: „nicht anwendbar“.
+ * Nur für Vertreter; Makler: „nicht anwendbar“ (dort gilt die Vertrags-Garantie).
  */
 export function bewerteBreakEven(i: GarantieInput, r: GarantieRegeln): GarantieErgebnis {
   const min = r.minBudgetPerDay;
@@ -344,8 +378,8 @@ export function bewerteBreakEven(i: GarantieInput, r: GarantieRegeln): GarantieE
   const werbebudget = r2(i.spend.filter((s) => dayNum(s.date) >= b.start && s.date <= i.now).reduce((n, s) => n + s.amount, 0));
   const betreuung = betreuungKosten(i.retainer, von, bis, i.faelle);
   const provision = r2(i.abschluesse.filter((a) => dayNum(a.at) >= b.start && a.at <= i.now).reduce((n, a) => n + a.provision, 0));
-  const termine = terminQuote(i.termine.filter((t) => dayNum(t.startsAt) >= b.start), i.now);
-  const ergebnisse = ergebnisQuote(i.leads.filter((l) => dayNum(l.createdAt) >= b.start), i.now);
+  const q = be.quote;
+  const { termine, ergebnisse, bedingungen: quoten } = quotenBedingungen(i, b.start, q);
   Object.assign(b.kz, {
     budgetSchnitt: budget.schnitt,
     provision,
@@ -357,19 +391,9 @@ export function bewerteBreakEven(i: GarantieInput, r: GarantieRegeln): GarantieE
     leadsGeprueft: ergebnisse.n,
     ergebnisQuote: ergebnisse.quote,
   });
-  const q = be.quote;
   const bedingungen: Bedingung[] = [
     budget.b,
-    termine.quote == null
-      ? { key: "termine", ok: true, text: "Noch keine vergangenen Termine aus der Software" }
-      : termine.quote >= q
-        ? { key: "termine", ok: true, text: `${pct(termine.quote)} der Termine wahrgenommen (mind. ${pct(q)})` }
-        : { key: "termine", ok: false, text: `Termine nur zu ${pct(termine.quote)} wahrgenommen (mind. ${pct(q)})` },
-    ergebnisse.quote == null
-      ? { key: "ergebnisse", ok: true, text: "Noch keine Leads zum Auswerten" }
-      : ergebnisse.quote >= q
-        ? { key: "ergebnisse", ok: true, text: `Ergebnisse bei ${pct(ergebnisse.quote)} der Leads eingetragen (mind. ${pct(q)})` }
-        : { key: "ergebnisse", ok: false, text: `Ergebnisse nur bei ${pct(ergebnisse.quote)} der Leads eingetragen (mind. ${pct(q)})` },
+    ...quoten,
     i.provisionssaetze
       ? { key: "provisionssaetze", ok: true, text: "Provisionssätze hinterlegt" }
       : { key: "provisionssaetze", ok: false, text: "Keine eigenen Provisionssätze unter „Meine Provisionen“ hinterlegt" },
@@ -389,9 +413,55 @@ export function bewerteBreakEven(i: GarantieInput, r: GarantieRegeln): GarantieE
   return finish("breakeven", bedingungen.every((x) => x.ok) ? "anspruch" : "bedingungen_fehlen", b.kz, bedingungen, von, bis);
 }
 
-/** Beide Garantien (nur die in der Konfiguration aktiven). */
+/**
+ * Vertrags-Garantie (nur Makler): ab dem 90. aktiven Tag monatlich prüfen,
+ * ob seit Start mindestens `minVertraege` Verträge eingetragen sind (je Lead
+ * mit Abschluss ein Vertrag). Wenn nicht und alle Bedingungen erfüllt:
+ * Betreuung + Software im laufenden Monat kostenlos – bis die Zahl erreicht
+ * ist, längstens 6 Monate ab dem Monat der ersten Prüfung.
+ */
+export function bewerteVertragsGarantie(i: GarantieInput, r: GarantieRegeln): GarantieErgebnis {
+  const min = r.minBudgetPerDay;
+  const vg = r.vertrag;
+  if (i.vermittlerTyp !== "makler") {
+    const e = nichtGestartet("vertrag", vg.tage, min);
+    return finish("vertrag", "nicht_anwendbar", e.kennzahlen, [], null, null);
+  }
+  if (!i.start) return nichtGestartet("vertrag", vg.tage, min);
+  const b = basis(i, "vertrag", vg.tage, min);
+  const von = new Date(b.start);
+  const bis = i.now;
+  const budget = budgetBedingung(i, activeBetween(b.start, b.today - DAY, b.paused), min);
+  const vertraege = i.abschluesse.filter((a) => dayNum(a.at) >= b.start && a.at <= i.now).length;
+  const { termine, ergebnisse, bedingungen: quoten } = quotenBedingungen(i, b.start, vg.quote);
+  Object.assign(b.kz, {
+    budgetSchnitt: budget.schnitt,
+    vertraege,
+    minVertraege: vg.minVertraege,
+    termine: termine.n,
+    terminQuote: termine.quote,
+    leadsGeprueft: ergebnisse.n,
+    ergebnisQuote: ergebnisse.quote,
+  });
+  const bedingungen: Bedingung[] = [budget.b, ...quoten, rechnungBedingung(i.offeneRechnung)];
+  if (vertraege >= vg.minVertraege) return finish("vertrag", "erfuellt", b.kz, bedingungen, von, bis);
+  if (!b.done) return finish("vertrag", "laeuft", b.kz, bedingungen, von, new Date(b.end));
+  // Erster Garantiemonat = Monat der ersten Prüfung (Tag nach dem 90. aktiven Tag)
+  const m0 = monthKey(new Date(b.end + DAY + 12 * 3_600_000));
+  const last = addMonths(m0, vg.maxFreiMonate - 1);
+  const mc = monthKey(i.now);
+  const gewaehrt = i.faelle.filter((f) => f.art === "vertrag" && f.status === "gewaehrt").length;
+  if (mc > last || gewaehrt >= vg.maxFreiMonate) return finish("vertrag", "abgelaufen", b.kz, bedingungen, von, bis);
+  const nr = monthRange(m0, mc).length;
+  Object.assign(b.kz, { monat: mc, freiMonatNr: nr, betrag: gutschriftBetrag(i.retainer, mc, "vertrag") });
+  return finish("vertrag", bedingungen.every((x) => x.ok) ? "anspruch" : "bedingungen_fehlen", b.kz, bedingungen, von, bis);
+}
+
+/** Lead-Garantie plus Break-even (Vertreter) bzw. Vertrags-Garantie (Makler) – nur die aktiven. */
 export function bewerteGarantien(i: GarantieInput, r: GarantieRegeln): GarantieErgebnis[] {
-  return [r.lead.aktiv ? bewerteLeadGarantie(i, r) : null, r.breakeven.aktiv ? bewerteBreakEven(i, r) : null].filter((x): x is GarantieErgebnis => !!x);
+  const zweite =
+    i.vermittlerTyp === "makler" ? (r.vertrag.aktiv ? bewerteVertragsGarantie(i, r) : null) : r.breakeven.aktiv ? bewerteBreakEven(i, r) : null;
+  return [r.lead.aktiv ? bewerteLeadGarantie(i, r) : null, zweite].filter((x): x is GarantieErgebnis => !!x);
 }
 
 // ─── Texte ───────────────────────────────────────────────────────────────
@@ -402,10 +472,14 @@ export const monatName = (key: string) => `${MONATE[Number(key.slice(5, 7)) - 1]
 /** Kurzer Fortschritt, z. B. „Tag 12 von 30 · 41 Leads“ oder „Provision 1.240 € / Kosten 3.100 €“. */
 export function fortschritt(e: GarantieErgebnis): string {
   const k = e.kennzahlen;
-  if (e.status === "nicht_anwendbar") return "Für Makler gilt die Lead-Garantie";
+  if (e.status === "nicht_anwendbar") return e.art === "vertrag" ? "Für Vertreter gilt die Break-even-Garantie" : "Für Makler gilt die Vertrags-Garantie";
   if (e.status === "nicht_gestartet") return "Startet mit der ersten Auslieferung der Anzeigen";
   const tag = `Tag ${Math.min(k.tag, k.tage)} von ${k.tage}${k.pausenTage ? ` (+${k.pausenTage} Pausentage)` : ""}`;
   if (e.art === "lead") return `${tag} · ${k.leads ?? 0} von ${k.minLeads} Leads`;
+  if (e.art === "vertrag") {
+    const v = `${k.vertraege ?? 0} von ${k.minVertraege} Verträgen`;
+    return e.status === "laeuft" ? `${tag} · ${v}` : v;
+  }
   const geld = `Provision ${eur0(k.provision ?? 0)} / Kosten ${eur0(k.kosten ?? 0)}`;
   return e.status === "laeuft" ? `${tag} · ${geld}` : geld;
 }
@@ -414,5 +488,6 @@ export function fortschritt(e: GarantieErgebnis): string {
 export function heuteTitel(kunde: string, art: GarantieArt, k: Kennzahlen): string {
   const monat = k.monat ? monatName(k.monat) : "";
   if (art === "lead") return `Garantiefall: ${kunde} – Lead-Garantie (${k.leads ?? 0} von ${k.minLeads} Leads) → Betreuung + Software im ${monat} kostenlos`;
+  if (art === "vertrag") return `Garantiefall: ${kunde} – Vertrags-Garantie (${k.vertraege ?? 0} von ${k.minVertraege} Verträgen) → Betreuung + Software im ${monat} kostenlos`;
   return `Garantiefall: ${kunde} – Break-even-Garantie (Provision ${eur0(k.provision ?? 0)} / Kosten ${eur0(k.kosten ?? 0)}) → Betreuung im ${monat} kostenlos`;
 }

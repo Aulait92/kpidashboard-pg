@@ -889,6 +889,9 @@ model Offer {
   // Konditionen (netto, EUR)
   // "software" = Betreuung + Software, "service" = nur Betreuung (ohne Software)
   package                 String        @default("software")
+  // Vertreter oder Makler: Makler bekommen die Vertrags-Garantie statt Break-even
+  // und das Bestandskunden-Modul inklusive (seit 11.11.2026); geht bei Annahme an den Kunden
+  vermittlerTyp           String        @default("vertreter")
   term                    String // "none" | "12m"
   products                Json // [{ name, dailyBudget }]
   setupFee                Decimal       @db.Decimal(10, 2)

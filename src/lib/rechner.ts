@@ -99,6 +99,9 @@ export const GARANTIE_FRISTEN = {
   maxFreiMonate: 6,
 } as const;
 
+/** Vertrags-Garantie (Makler): Mindestzahl Verträge nach den 90 aktiven Tagen. */
+export const VERTRAGS_GARANTIE_MIN_VERTRAEGE = 15;
+
 export type RechnerConfig = {
   products: RechnerProduct[];
   headline: string;

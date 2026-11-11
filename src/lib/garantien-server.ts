@@ -16,6 +16,7 @@ import { RETAINER_CUSTOMER_SELECT, retainerInputFor } from "@/lib/zahlen";
 import {
   bewerteGarantien,
   GARANTIE_LABEL,
+  GARANTIE_UMFANG,
   monatName,
   offerHasGuarantee,
   regelnAus,
@@ -139,7 +140,7 @@ export async function ladeGarantieInput(customerId: string, offerId: string, now
 
 export type GarantieUebersicht = { ergebnisse: GarantieErgebnis[]; faelle: GarantieFallRow[] };
 
-/** Für Kundenakte und Kundenbereich: aktueller Stand beider Garantien (null = keine Garantie). */
+/** Für Kundenakte und Kundenbereich: aktueller Stand der Garantien (null = keine Garantie). */
 export async function garantieStatus(customerId: string, now = new Date()): Promise<GarantieUebersicht | null> {
   const [k] = await garantieKunden([customerId]);
   if (!k) return null;
@@ -180,7 +181,12 @@ export async function speichereFaelle(customerId: string, ergebnisse: GarantieEr
       // Ziel doch erreicht (z. B. Abschlüsse nachgetragen): offene Fälle des laufenden Monats schließen
       const mc = monthKey(now);
       for (const f of offen.filter((x) => x.art === e.art && (e.art === "lead" || x.monat >= mc))) {
-        const grund = e.art === "lead" ? "Automatisch geschlossen: Mindest-Leads erreicht" : "Automatisch geschlossen: Break-even erreicht";
+        const grund =
+          e.art === "lead"
+            ? "Automatisch geschlossen: Mindest-Leads erreicht"
+            : e.art === "vertrag"
+              ? "Automatisch geschlossen: Mindestzahl Verträge erreicht"
+              : "Automatisch geschlossen: Break-even erreicht";
         const done = await prisma.garantieFall.updateMany({
           where: { id: f.id, status: "offen" },
           data: { status: "abgelehnt", grund, entschiedenVon: "system", entschiedenAm: now, kennzahlen: kennzahlenJson(e) },
@@ -228,7 +234,7 @@ export async function gewaehreFall(fallId: string, actor: AuditActor): Promise<E
   if (betrag > 0) {
     if (!f.customer.stripeCustomerId) return { ok: false, error: "Kunde hat kein Stripe-Konto. Gutschrift bitte von Hand anlegen." };
     const art = GARANTIE_LABEL[f.art as GarantieArt];
-    const was = f.art === "lead" ? "Betreuung und Software" : "Betreuung";
+    const was = GARANTIE_UMFANG[f.art as GarantieArt] === "all" ? "Betreuung und Software" : "Betreuung";
     try {
       stripeRef = await addGarantieGutschrift({
         stripeCustomerId: f.customer.stripeCustomerId,

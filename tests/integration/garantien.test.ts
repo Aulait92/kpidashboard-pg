@@ -173,16 +173,44 @@ describe("Garantien: Cron → Fall → Gewähren/Ablehnen", () => {
     expect((await prisma.garantieFall.findUniqueOrThrow({ where: { id: fall.id } })).status).toBe("abgelehnt");
   });
 
-  it("Makler: nach Tag 90 kein Break-even-Fall, Lead-Garantie gilt", async () => {
+  it("Makler: nach Tag 90 Vertrags-Garantie statt Break-even → Fall in „Heute“, Gewähren schreibt Betreuung + Software gut", async () => {
     const k = await garantieKunde({ leads: 60, makler: true });
     customers.push(k.customerId);
     offers.push(k.offerId);
-    // Break-even-Prüfung wäre ab 1.3. fällig (90. aktiver Tag = 28.2.)
+    // Werbung bis zur Prüfung weiterlaufen lassen (ab 10.1.), 9 Abschlüsse (unter 15)
+    await prisma.customerAdSpend.createMany({
+      data: Array.from({ length: 51 }, (_, i) => ({
+        customerId: k.customerId,
+        accountId: "act_test",
+        date: new Date(Date.parse("2027-01-10T12:00:00Z") + i * DAY),
+        amount: 25,
+      })),
+    });
+    const ls = await prisma.lead.findMany({ where: { customerId: k.customerId }, select: { id: true }, take: 9 });
+    await prisma.lead.updateMany({ where: { id: { in: ls.map((l) => l.id) } }, data: { status: "Abschluss", closedAt: D("2027-01-15"), closeValue: 350 } });
+    // Prüfung ab 1.3. fällig (90. aktiver Tag = 28.2.)
     await runGarantien(D("2027-03-02"));
-    const faelle = await prisma.garantieFall.findMany({ where: { customerId: k.customerId } });
-    expect(faelle.map((f) => f.art)).toEqual(["lead"]);
+    const faelle = await prisma.garantieFall.findMany({ where: { customerId: k.customerId }, orderBy: { art: "asc" } });
+    expect(faelle.map((f) => f.art)).toEqual(["lead", "vertrag"]);
     const s = await garantieStatus(k.customerId, D("2027-03-02"));
-    expect(s?.ergebnisse.find((e) => e.art === "breakeven")?.status).toBe("nicht_anwendbar");
+    expect(s?.ergebnisse.map((e) => e.art)).toEqual(["lead", "vertrag"]);
+    const vertrag = faelle.find((f) => f.art === "vertrag")!;
+    expect(vertrag.monat).toBe("2027-03");
+    expect((vertrag.kennzahlen as { vertraege?: number }).vertraege).toBe(9);
+
+    const heute = await loadAdminHeute(D("2027-03-02"));
+    const item = heute.items.find((i) => i.key === `garantie:${vertrag.id}`);
+    expect(item?.title).toContain("Vertrags-Garantie (9 von 15 Verträgen) → Betreuung + Software im März 2027 kostenlos");
+
+    stripeState.invoiceItems.length = 0;
+    const res = await gewaehreFall(vertrag.id, admin);
+    expect(res.ok).toBe(true);
+    expect(stripeState.invoiceItems[0].params.amount).toBe(-100000);
+    expect(String(stripeState.invoiceItems[0].params.description)).toBe("Vertrags-Garantie: Betreuung und Software März 2027 kostenlos");
+
+    // Monat komplett aus dem Umsatzbuch
+    const { ledger } = await loadLedger(D("2027-03-31"));
+    expect(ledger.rows.filter((r) => r.customerId === k.customerId && r.month === "2027-03")).toEqual([]);
   });
 
   it("Angebote ohne Katze/TKV bekommen keine Garantie", async () => {

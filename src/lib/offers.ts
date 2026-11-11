@@ -36,6 +36,8 @@ export type OfferFormInput = {
   annual?: boolean;
   /** Bestandskunden-Modul dazubuchen. */
   bestandModule?: boolean;
+  /** Vertreter (Standard) oder Makler: Garantien und Modul inklusive. */
+  vermittlerTyp?: "vertreter" | "makler";
 };
 
 /** Rechtstexte, denen bei der Annahme zugestimmt wird (per Umgebungsvariable). */
@@ -75,6 +77,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
   if (products.length === 0) throw new Error("Bitte mindestens ein Produkt angeben.");
 
   const pkg: OfferPackage = input.package === "service" ? "service" : "software";
+  const vermittlerTyp = input.vermittlerTyp === "makler" ? "makler" : "vertreter";
   if (!input.startDate || !/^\d{4}-\d{2}-\d{2}$/.test(input.startDate)) {
     throw new Error("Bitte ein Startdatum angeben – ab dann läuft die Monatsgebühr.");
   }
@@ -87,6 +90,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
     seats: input.seats,
     annual: input.annual,
     bestandModule: input.bestandModule,
+    vermittlerTyp,
   });
   if (price.monthlyFee == null) {
     throw new Error(
@@ -130,6 +134,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             zip: input.zip?.trim() || null,
             city: input.city?.trim() || null,
             package: pkg,
+            vermittlerTyp,
             term: input.term,
             products,
             setupFee: price.setupFee,
@@ -140,7 +145,8 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             seatsIncluded: pkg === "software" ? price.seatsIncluded : null,
             // Ab seatIndividualFrom sind alle Logins im individuellen Preis enthalten (0 €)
             seatMonthly: pkg === "software" ? (price.seatsIndividual ? 0 : PRICE_LIST.seatMonthly) : null,
-            bestandMonthly: price.bestandFee > 0 ? price.bestandFee : null,
+            // Modul gebucht: Monatspreis (Makler 0 € = inklusive); null = nicht gebucht
+            bestandMonthly: price.bestandActive ? price.bestandFee : null,
             annualPrepay: price.annual,
             annualFreeMonths: price.annual ? PRICE_LIST.annualFreeMonths : null,
             introMonthlyFee: input.introMonthlyFee ?? null,

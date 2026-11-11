@@ -151,6 +151,39 @@ describe("Preise: Annahme → Abo-Positionen und Kundenkonto", () => {
     expect(Number(after.bestandMonthly)).toBe(149);
   });
 
+  it("Makler-Angebot: Modul inklusive (keine Abo-Position), Annahme setzt Kunde auf Makler", async () => {
+    const offer = await makeOffer({ vermittlerTyp: "makler", bestandMonthly: 0, annualPrepay: false, annualFreeMonths: null });
+    offers.push(offer.id);
+    await createScheduleForOffer(offer.id, { customer: offer.stripeCustomerId, mode: "subscription" } as never);
+    const params = stripeState.scheduleParams[0] as { phases: { items: { price_data: { product: string } }[] }[] };
+    expect(params.phases[0].items.map((i) => i.price_data.product)).not.toContain("prod_bestand");
+
+    const angenommen = await makeOffer({ vermittlerTyp: "makler", bestandMonthly: 0, stripeCustomerId: null });
+    offers.push(angenommen.id);
+    const c = await makeCustomer();
+    customers.push(c.id);
+    expect((await startOnboarding(angenommen.id, { customerId: c.id })).ok).toBe(true);
+    const after = await prisma.customer.findUniqueOrThrow({ where: { id: c.id } });
+    expect(after).toMatchObject({ vermittlerTyp: "makler", existingCustomersEnabled: true });
+    expect(Number(after.bestandMonthly)).toBe(0);
+  });
+
+  it("Makler bucht das Modul nachträglich: 0 €, bisherige 149-€-Position fällt weg", async () => {
+    const c = await makeCustomer({ stripeCustomerId: `cus_${uid()}`, vermittlerTyp: "makler", existingCustomersEnabled: true, bestandMonthly: 149 });
+    customers.push(c.id);
+    stripeState.sub = {
+      id: "sub_m",
+      status: "active",
+      schedule: null,
+      items: { data: [{ id: "si_b", quantity: 1, price: { product: "prod_bestand", unit_amount: 14900, recurring: { interval: "month" } } }] },
+    };
+    expect(await setBestandModule(c.id, "book")).toEqual({ ok: true, changed: true });
+    expect(stripeState.sub.items.data).toHaveLength(0);
+    const after = await prisma.customer.findUniqueOrThrow({ where: { id: c.id } });
+    expect(after.existingCustomersEnabled).toBe(true);
+    expect(Number(after.bestandMonthly)).toBe(0);
+  });
+
   it("Berater hinzufügen/entfernen ändert die Menge im Abo (anteilig)", async () => {
     const c = await makeCustomer({ stripeCustomerId: `cus_${uid()}`, seatsIncluded: 3, seatMonthly: 49, seatsBilled: 0 });
     customers.push(c.id);

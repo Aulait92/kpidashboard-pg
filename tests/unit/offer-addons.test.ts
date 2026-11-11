@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { annualMultiplier, computeOfferPrice, offerAddOns, PRICE_LIST } from "@/lib/offer-pricing";
+import { annualMultiplier, bestandModulePrice, computeOfferPrice, offerAddOns, PRICE_LIST } from "@/lib/offer-pricing";
 import { retainerRows } from "@/lib/revenue-ledger";
 
 const p = (dailyBudget: number, name = "Privatschutz") => ({ name, dailyBudget });
@@ -45,6 +45,23 @@ describe("Preise 11.11.: Logins, Jahreszahlung, Bestandskunden-Modul", () => {
     const r = computeOfferPrice({ package: "software", term: "none", products: [p(50)], bestandModule: true });
     expect(r.bestandFee).toBe(149);
     expect(r.monthlyTotal).toBe(1149);
+  });
+
+  it("Makler: Bestandskunden-Modul immer dabei und inklusive (0 €), Vertreter zahlen 149 €", () => {
+    const m = computeOfferPrice({ package: "software", term: "12m", products: [p(30, "Katze")], vermittlerTyp: "makler" });
+    expect(m).toMatchObject({ bestandActive: true, bestandIncluded: true, bestandFee: 0, monthlyTotal: 1000 });
+    const v = computeOfferPrice({ package: "software", term: "12m", products: [p(30, "Katze")], vermittlerTyp: "vertreter", bestandModule: true });
+    expect(v).toMatchObject({ bestandActive: true, bestandIncluded: false, bestandFee: 149, monthlyTotal: 1149 });
+    expect(computeOfferPrice({ package: "software", term: "12m", products: [p(30)] }).bestandActive).toBe(false);
+    // Nur Betreuung: auch für Makler kein Modul
+    expect(computeOfferPrice({ package: "service", term: "12m", products: [p(30)], vermittlerTyp: "makler" })).toMatchObject({ bestandActive: false, bestandFee: 0 });
+    expect(bestandModulePrice("makler")).toBe(0);
+    expect(bestandModulePrice("vertreter")).toBe(149);
+    expect(bestandModulePrice(null)).toBe(149);
+    // Snapshot im Angebot: 0 € = vereinbart, aber inklusive
+    const a = offerAddOns({ monthlyFee: 1000, seats: 3, seatsIncluded: 3, seatMonthly: 49, bestandMonthly: 0, annualPrepay: false, annualFreeMonths: null });
+    expect(a).toMatchObject({ bestandActive: true, bestandFee: 0, monthlyTotal: 1000 });
+    expect(offerAddOns({ monthlyFee: 1000, seats: 3, seatsIncluded: 3, seatMonthly: 49, bestandMonthly: null, annualPrepay: false, annualFreeMonths: null }).bestandActive).toBe(false);
   });
 
   it("Nur Betreuung: keine Logins, kein Modul", () => {

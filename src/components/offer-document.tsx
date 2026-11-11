@@ -13,6 +13,7 @@ import {
 } from "@/lib/offer-pricing";
 // Ab wann und für welche Produkte die Garantien gelten (gleiche Regel wie die automatische Prüfung)
 import { GUARANTEES_FROM, isGuaranteeProduct } from "@/lib/garantien";
+import { VERTRAGS_GARANTIE_MIN_VERTRAEGE } from "@/lib/rechner";
 
 // Angebot / Auftragsbestätigung im Performancegrowth-Design (dunkles Deckblatt,
 // nummerierte Abschnitte, AGB als Bestandteil). Genutzt auf der öffentlichen
@@ -28,6 +29,8 @@ export type OfferDoc = {
   zip: string | null;
   city: string | null;
   package: string;
+  /** "vertreter" | "makler" (Alt-Angebote: vertreter) */
+  vermittlerTyp: string;
   term: string;
   products: unknown;
   setupFee: number;
@@ -52,7 +55,8 @@ export type OfferDoc = {
   annualFreeMonths: number | null;
 };
 
-type OfferRow = Omit<OfferDoc, "setupFee" | "monthlyFee" | "softwareFee" | "introMonthlyFee" | "seatMonthly" | "bestandMonthly" | "seats" | "seatsIncluded" | "annualPrepay" | "annualFreeMonths"> & {
+type OfferRow = Omit<OfferDoc, "setupFee" | "monthlyFee" | "softwareFee" | "introMonthlyFee" | "seatMonthly" | "bestandMonthly" | "seats" | "seatsIncluded" | "annualPrepay" | "annualFreeMonths" | "vermittlerTyp"> & {
+  vermittlerTyp?: string | null;
   setupFee: unknown;
   monthlyFee: unknown;
   softwareFee: unknown;
@@ -69,6 +73,7 @@ type OfferRow = Omit<OfferDoc, "setupFee" | "monthlyFee" | "softwareFee" | "intr
 export function toOfferDoc(o: OfferRow): OfferDoc {
   return {
     ...o,
+    vermittlerTyp: o.vermittlerTyp === "makler" ? "makler" : "vertreter",
     setupFee: Number(o.setupFee),
     monthlyFee: Number(o.monthlyFee),
     softwareFee: Number(o.softwareFee),
@@ -125,6 +130,9 @@ export function OfferDocument({
   const firstMonth = round2((hasIntro ? offer.introMonthlyFee! : offer.monthlyFee) + add.seatsFee + add.bestandFee);
   const firstCharge = add.annualTotal ?? firstMonth;
   const productNames = products.map((p) => p.name).join(" & ");
+  const makler = offer.vermittlerTyp === "makler";
+  // Modul ohne Aufpreis vereinbart (Makler)
+  const bestandInklusive = add.bestandActive && add.bestandFee === 0;
 
   return (
     <article className="offer-doc mx-auto w-full max-w-[880px] text-[#111827]">
@@ -257,9 +265,9 @@ export function OfferDocument({
               lassen sich jederzeit im Kundenbereich unter „Team“ hinzufügen.
             </Tr>
           ) : null}
-          {add.bestandFee > 0 ? (
+          {add.bestandActive ? (
             <Tr k="Bestandskunden-Modul">
-              Bestand importieren und gezielt per WhatsApp ansprechen (Lücken, Jahresgespräch, Geburtstag, Ablauf). Inklusive
+              {bestandInklusive ? "Inklusive für Makler: " : ""}Bestand importieren und gezielt per WhatsApp ansprechen (Lücken, Jahresgespräch, Geburtstag, Ablauf). Inklusive
               WhatsApp-Gebühren für bis zu {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten je Kalendermonat.
             </Tr>
           ) : null}
@@ -305,9 +313,15 @@ export function OfferDocument({
               )}
             </Tr>
           ) : null}
-          {add.bestandFee > 0 ? (
+          {add.bestandActive ? (
             <Tr k="Bestandskunden-Modul">
-              <b className="text-[#111827]">{eur2(add.bestandFee)}</b> netto pro Monat
+              {bestandInklusive ? (
+                <b className="text-[#111827]">Inklusive für Makler</b>
+              ) : (
+                <>
+                  <b className="text-[#111827]">{eur2(add.bestandFee)}</b> netto pro Monat
+                </>
+              )}
               <Note>Inklusive WhatsApp-Gebühren bis {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat; mehr auf Anfrage.</Note>
             </Tr>
           ) : null}
@@ -382,12 +396,21 @@ export function OfferDocument({
               <strong>Lead-Garantie:</strong> Bei mindestens 20 € Werbebudget pro Tag bekommen Sie in den ersten 30 Tagen nach
               Kampagnenstart mindestens 100 Leads. Sonst sind Betreuung und Software im Folgemonat kostenlos.
             </p>
+            {makler ? (
+            <p className="mt-2 text-[#374151]">
+              <strong>Vertrags-Garantie (für Makler):</strong> Haben Sie nach 90 aktiven Tagen weniger als{" "}
+              {VERTRAGS_GARANTIE_MIN_VERTRAEGE} Verträge abgeschlossen, sind Betreuung und Software kostenlos, bis Sie sie haben
+              (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten Termine
+              wahrgenommen und Ergebnisse in der App eingetragen. Details in den AGB (Abschnitt „Garantien“).
+            </p>
+            ) : (
             <p className="mt-2 text-[#374151]">
               <strong>Break-even-Garantie (für Vertreter):</strong> Liegt Ihre Provision nach 90 Tagen unter Ihren Kosten für Werbung und
               Betreuung, betreuen wir Sie ohne Betreuungsgebühr weiter, auf Wunsch mit einem anderen Produkt, bis es sich
               rechnet (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten
               Termine wahrgenommen und Ergebnisse in der App eingetragen. Details in den AGB (Abschnitt „Garantien“).
             </p>
+            )}
           </>
         ) : null}
         {offer.specialTerms ? (

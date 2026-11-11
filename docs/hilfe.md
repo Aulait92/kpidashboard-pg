@@ -173,9 +173,12 @@ Seiten aus der Liste „Seiten“ unten.
   Betreuungsgebühr weiter (auf Wunsch mit anderem Produkt), bis es sich rechnet, längstens 6 Monate. Voraussetzung:
   mindestens 20 €/Tag an den aktiven Tagen, mindestens 80 % der Termine wahrgenommen, Ergebnisse bei mindestens 80 % der Leads
   eingetragen („Wie lief's?“, Abschluss mit Beitrag) und Provisionssätze unter „Meine Provisionen“ hinterlegt.
-  Für Makler gilt die Lead-Garantie.
+- **Vertrags-Garantie (nur Makler, statt Break-even):** Sind nach 90 aktiven Tagen weniger als 15 Verträge abgeschlossen,
+  sind Betreuung und Software kostenlos, bis 15 erreicht sind, längstens 6 Monate. Voraussetzung: mindestens 20 €/Tag
+  an den aktiven Tagen, mindestens 80 % der Termine wahrgenommen und Ergebnisse bei mindestens 80 % der Leads eingetragen.
+  Als Vertrag zählt jeder Lead mit „Abschluss“. Wir können im Garantiefall eine Courtage-Abrechnung als Nachweis anfordern.
 - **Wo sehe ich meinen Stand?** Unter „Zahlen“ (ganz unten, Karte „Deine Garantie“, nur für den Inhaber): Tag x von 30
-  bzw. 90, Leads bzw. Provision und Kosten seit Kampagnenstart und welche Voraussetzungen erfüllt sind (Haken) oder noch
+  bzw. 90, Leads, Verträge bzw. Provision und Kosten seit Kampagnenstart und welche Voraussetzungen erfüllt sind (Haken) oder noch
   fehlen. Fehlen Provisionssätze, führt ein Link direkt zu „Meine Provisionen“.
 - Die Tage zählen ab der ersten Auslieferung der Anzeigen. **Pausen (Urlaub, Krankheit) verlängern den Zeitraum** um die
   Pausentage, die Garantie verfällt dadurch nicht. Eine offene Rechnung zum Prüfzeitpunkt verhindert die Gutschrift, bis
@@ -235,6 +238,7 @@ Seiten aus der Liste „Seiten“ unten.
 ## Bestand (Bestandskunden, Zusatzmodul)
 
 - Zusatzmodul für 149 € netto im Monat, inklusive WhatsApp-Gebühren für bis zu 500 Kampagnen-Nachrichten im Monat.
+  **Für Makler inklusive** (0 €, im Paket Betreuung + Software); das Kontingent gilt genauso.
   Ohne Modul zeigt „Bestand“ eine Beschreibung und den Knopf „Modul anfragen“ (Anfrage geht an uns).
   Wer Bestand schon vor dem 11.11.2026 genutzt hat, behält den Zugang ohne Aufpreis.
 - Kontingent: Auf der Seite steht „Kontingent diesen Monat: X von 500“. Ist es erreicht, startet keine neue

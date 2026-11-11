@@ -1,28 +1,34 @@
 // Kundenbereich → Zahlen: „Deine Garantie“ (Du-Form). Zeigt Fortschritt und
-// Voraussetzungen der Lead- und Break-even-Garantie. Nur bei Garantie-Angebot.
+// Voraussetzungen der Lead-Garantie und der Break-even- (Vertreter) bzw.
+// Vertrags-Garantie (Makler). Nur bei Garantie-Angebot.
 
 import Link from "next/link";
 import { CheckCircle2, Circle, ShieldCheck } from "lucide-react";
 import { garantieStatus } from "@/lib/garantien-server";
-import { fortschritt, GARANTIE_LABEL, monatName, type GarantieErgebnis } from "@/lib/garantien";
+import { fortschritt, GARANTIE_LABEL, GARANTIE_UMFANG, monatName, type GarantieErgebnis } from "@/lib/garantien";
 import type { GarantieFallRow } from "@/lib/garantien-server";
 
 function satz(e: GarantieErgebnis, fall: GarantieFallRow | undefined): string {
   const k = e.kennzahlen;
   const monat = k.monat ? monatName(k.monat) : "";
-  if (e.status === "nicht_anwendbar") return "Für Makler gilt die Lead-Garantie (die Break-even-Garantie rechnet mit Abschlussprovision).";
+  if (e.status === "nicht_anwendbar") return e.art === "vertrag" ? "Für Vertreter gilt die Break-even-Garantie." : "Für Makler gilt die Vertrags-Garantie.";
   if (e.status === "nicht_gestartet") return "Startet, sobald deine Anzeigen das erste Mal ausgeliefert werden.";
   if (e.art === "lead") {
     if (e.status === "laeuft") return `Mindestens ${k.minLeads} Leads in deinen ersten ${k.tage} aktiven Tagen – sonst sind Betreuung und Software im Folgemonat kostenlos.`;
     if (e.status === "erfuellt") return `Geschafft: ${k.leads} Leads in ${k.tage} Tagen.`;
+  } else if (e.art === "vertrag") {
+    if (e.status === "laeuft") return `Mindestens ${k.minVertraege} Verträge nach ${k.tage} aktiven Tagen – sonst sind Betreuung und Software kostenlos, bis du sie hast (längstens 6 Monate).`;
+    if (e.status === "erfuellt") return `Geschafft: ${k.vertraege} Verträge seit Kampagnenstart.`;
+    if (e.status === "abgelaufen") return "Der Garantiezeitraum von 6 Monaten ist vorbei.";
   } else {
     if (e.status === "laeuft") return `Ab Tag ${k.tage} prüfen wir jeden Monat, ob deine Provision deine Kosten deckt. Wenn nicht, betreuen wir dich ohne Betreuungsgebühr weiter (längstens 6 Monate).`;
     if (e.status === "erfuellt") return "Deine Provision deckt deine Kosten seit Kampagnenstart.";
     if (e.status === "abgelaufen") return "Der Garantiezeitraum von 6 Monaten ist vorbei.";
   }
-  if (fall?.status === "gewaehrt") return `${e.art === "lead" ? "Betreuung und Software" : "Betreuung"} im ${monat}: kostenlos, gutgeschrieben auf deiner Rechnung.`;
+  const alles = GARANTIE_UMFANG[e.art] === "all";
+  if (fall?.status === "gewaehrt") return `${alles ? "Betreuung und Software" : "Betreuung"} im ${monat}: kostenlos, gutgeschrieben auf deiner Rechnung.`;
   if (fall?.status === "abgelehnt") return fall.grund ? `Nicht gewährt: ${fall.grund}` : "Nicht gewährt.";
-  if (e.status === "anspruch") return `${e.art === "lead" ? "Betreuung und Software" : "Betreuung"} im ${monat} ${e.art === "lead" ? "sind" : "ist"} für dich kostenlos. Wir schreiben es dir gut.`;
+  if (e.status === "anspruch") return `${alles ? "Betreuung und Software" : "Betreuung"} im ${monat} ${alles ? "sind" : "ist"} für dich kostenlos. Wir schreiben es dir gut.`;
   return "Leider fehlen Voraussetzungen für die Garantie:";
 }
 

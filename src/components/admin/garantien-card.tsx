@@ -1,4 +1,4 @@
-// Kundenakte: Stand der Lead- und Break-even-Garantie mit Bedingungen und
+// Kundenakte: Stand der Lead- und Break-even- bzw. Vertrags-Garantie mit Bedingungen und
 // bisherigen Fällen. Nur für Kunden mit Garantie-Angebot (Katze/TKV ab 11.11.2026).
 
 import { CheckCircle2, Circle, XCircle } from "lucide-react";

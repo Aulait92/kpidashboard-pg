@@ -14,7 +14,7 @@ enthalten. Der Merge ist konfliktfrei.
       Livegang nur wiederholen, wenn neue Migrationen dazukommen
       (`ls prisma/migrations` mit der Liste unten vergleichen).
 - [ ] **Probelauf 3** mit dem Stand, der live geht (ca. 19./20.11., nach Code-Stopp):
-      seit Probelauf 2 sind **12 Migrationen dazugekommen** (jetzt 34, siehe
+      seit Probelauf 2 sind **13 Migrationen dazugekommen** (jetzt 35, siehe
       „Neue Migrationen seit Probelauf 2“). Ablauf wie Probelauf 2.
 
 ### Neue Migrationen seit Probelauf 2 (Stand 11.11.)
@@ -33,6 +33,7 @@ enthalten. Der Merge ist konfliktfrei.
 | `20261113110000_rechner` | Tabelle `RechnerConfig` (Einstellungen des öffentlichen Break-even-Rechners als JSON) | über den Schema-Abgleich, nur hinzufügend |
 | `20261113120000_garantien` | Tabelle `GarantieFall` (Lead- und Break-even-Garantie: Fall je Kunde, Art und Monat mit Kennzahlen, Entscheidung, Stripe-Gutschrift), siehe `docs/garantien.md` | über den Schema-Abgleich, nur hinzufügend |
 | `20261113130000_abwesenheit` | Tabelle `UserAbsence` („Ich bin abwesend“: von–bis, Grund-Kategorie, Vertretung, verschobene Aufgaben zum Rückgängigmachen) | über den Schema-Abgleich, nur hinzufügend |
+| `20261113140000_makler_angebot` | Spalte `Offer.vermittlerTyp` (Standard „vertreter“): Makler-Angebote mit Vertrags-Garantie und Bestandskunden-Modul inklusive | über den Schema-Abgleich, nur hinzufügend |
 
 Keine davon verändert bestehende Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und
@@ -112,7 +113,7 @@ KI-Hilfe, die brauchen keine Migration).
    `[migrate] Alte Einträge aus früherem Verlauf (bleiben unberührt): …`
    `[migrate] Datenbank ohne (eigene) Migrations-Historie – wird einmalig eingemessen.`
    `[migrate] Schema wird angeglichen (nur hinzufügende Änderungen).`
-   34 × `Migration … marked as applied.` (bis `20261113130000_abwesenheit`), dazwischen
+   35 × `Migration … marked as applied.` (bis `20261113140000_makler_angebot`), dazwischen
    `[migrate] 20261110120001_status_seit_trigger wird beim Einmessen ausgeführt.`,
    am Ende `No pending migrations to apply.` und `[migrate] Schema aktuell.`
    (Die roten Zeilen „Loaded Prisma config …“ sind nur Hinweise, keine Fehler.)

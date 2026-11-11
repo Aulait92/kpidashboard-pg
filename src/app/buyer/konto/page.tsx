@@ -56,6 +56,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       bestandMonthly: true,
       existingCustomersEnabled: true,
       bestandRequestedAt: true,
+      vermittlerTyp: true,
       whatsAppAccount: { select: { id: true } },
       onboarding: { select: { offerId: true, questionnaire: true } },
     },
@@ -187,8 +188,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             <CardHeader title="Bestandskunden-Modul" icon={Users} />
             <div className="space-y-3 px-5 pb-5 pt-4 text-sm" data-konto-bestand>
               <p>
-                Kundenliste hochladen, Lücken und Anlässe erkennen, passende Kunden per WhatsApp anschreiben. {eur(PRICE_LIST.bestandModuleMonthly)} netto
-                im Monat, WhatsApp-Gebühren für bis zu {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat inklusive.
+                Kundenliste hochladen, Lücken und Anlässe erkennen, passende Kunden per WhatsApp anschreiben.{" "}
+                {customer.vermittlerTyp === "makler" ? "Für Makler inklusive" : `${eur(PRICE_LIST.bestandModuleMonthly)} netto im Monat`}, WhatsApp-Gebühren für bis zu{" "}
+                {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat inklusive.
               </p>
               <ModuleRequestButton requestedAt={customer.bestandRequestedAt?.toISOString() ?? null} readOnly={ctx.preview} />
             </div>

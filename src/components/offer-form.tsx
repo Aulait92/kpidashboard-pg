@@ -6,7 +6,7 @@ import { Loader2, Plus, Trash2 } from "lucide-react";
 import { Button, Card, CardHeader } from "@/components/ui";
 import { createOfferAction } from "@/app/admin/vertrieb/offer-actions";
 import type { OfferTarget } from "@/lib/offer-links";
-import { computeOfferPrice, defaultStartDate, eur, PRICE_LIST, withVat, type OfferPackage, type OfferTerm } from "@/lib/offer-pricing";
+import { computeOfferPrice, defaultStartDate, eur, PRICE_LIST, withVat, type OfferPackage, type OfferTerm, type OfferVermittler } from "@/lib/offer-pricing";
 
 const PRODUCT_SUGGESTIONS = [
   "Privatschutz",
@@ -60,6 +60,7 @@ export function OfferForm({
   const [seats, setSeats] = useState(String(PRICE_LIST.seatsIncluded));
   const [annual, setAnnual] = useState(false);
   const [bestand, setBestand] = useState(false);
+  const [vermittler, setVermittler] = useState<OfferVermittler>("vertreter");
 
   const parsedProducts = products.map((p) => ({ name: p.name, dailyBudget: num(p.daily) ?? 0 }));
   // Berechnung ist billig – direkt pro Render statt useMemo.
@@ -72,8 +73,10 @@ export function OfferForm({
     seats: num(seats),
     annual: annual && term === "12m",
     bestandModule: bestand && pkg === "software",
+    vermittlerTyp: vermittler,
   });
   const softwarePkg = pkg === "software";
+  const maklerModul = softwarePkg && vermittler === "makler";
   const annualPossible = term === "12m" && num(introFee) == null;
 
   function submit() {
@@ -98,7 +101,8 @@ export function OfferForm({
         validDays: num(validDays) ?? 14,
         seats: softwarePkg ? num(seats) : null,
         annual: annual && annualPossible,
-        bestandModule: bestand && softwarePkg,
+        bestandModule: (bestand || maklerModul) && softwarePkg,
+        vermittlerTyp: vermittler,
       });
       if (!res.ok) {
         setError(res.error);
@@ -121,6 +125,31 @@ export function OfferForm({
             <Field l="Straße und Hausnummer"><input className={input} value={street} onChange={(e) => setStreet(e.target.value)} /></Field>
             <Field l="PLZ"><input className={input} value={zip} onChange={(e) => setZip(e.target.value)} /></Field>
             <Field l="Ort"><input className={input} value={city} onChange={(e) => setCity(e.target.value)} /></Field>
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader title="Kunde ist …" hint="Makler: Vertrags-Garantie statt Break-even-Garantie, Bestandskunden-Modul inklusive" />
+          <div className="grid grid-cols-2 gap-2 p-5" role="radiogroup" aria-label="Vertreter oder Makler">
+            {(
+              [
+                ["vertreter", "Vertreter", "Abschlussprovision · Break-even-Garantie"],
+                ["makler", "Makler", "Bestandscourtage · Vertrags-Garantie"],
+              ] as const
+            ).map(([k, t, s]) => (
+              <button
+                key={k}
+                type="button"
+                role="radio"
+                aria-checked={vermittler === k}
+                data-vermittler={k}
+                onClick={() => setVermittler(k)}
+                className={`min-w-0 rounded-[var(--radius-md)] border px-4 py-3 text-left text-sm transition ${vermittler === k ? "border-[color:var(--brand)] bg-[color:var(--brand-soft,#EFF6FF)] ring-2 ring-[color:var(--brand)]/20" : "border-[color:var(--border)] bg-white hover:border-[color:var(--border-strong)]"}`}
+              >
+                <div className="font-semibold">{t}</div>
+                <div className="text-xs text-[color:var(--muted)]">{s}</div>
+              </button>
+            ))}
           </div>
         </Card>
 
@@ -255,9 +284,18 @@ export function OfferForm({
               </span>
             </label>
             <label className={`flex items-start gap-3 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${softwarePkg ? "border-[color:var(--border)] bg-white" : "border-[color:var(--border)] bg-[color:var(--surface-sunken)] text-[color:var(--muted)]"}`}>
-              <input type="checkbox" name="bestand" className="mt-0.5 h-4 w-4" disabled={!softwarePkg} checked={bestand && softwarePkg} onChange={(e) => setBestand(e.target.checked)} />
+              <input
+                type="checkbox"
+                name="bestand"
+                className="mt-0.5 h-4 w-4"
+                disabled={!softwarePkg || maklerModul}
+                checked={(bestand || maklerModul) && softwarePkg}
+                onChange={(e) => setBestand(e.target.checked)}
+              />
               <span>
-                <span className="block font-semibold">Bestandskunden-Modul · {eur(PRICE_LIST.bestandModuleMonthly)} / Monat</span>
+                <span className="block font-semibold">
+                  Bestandskunden-Modul · {maklerModul ? "inklusive für Makler" : `${eur(PRICE_LIST.bestandModuleMonthly)} / Monat`}
+                </span>
                 <span className="block text-xs text-[color:var(--muted)]">
                   Bestand importieren und per WhatsApp ansprechen, inkl. WhatsApp-Gebühren bis {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat.
                 </span>
@@ -289,6 +327,7 @@ export function OfferForm({
               />
             ) : null}
             {price.bestandFee > 0 ? <Sum k="Bestandskunden-Modul" v={eur(price.bestandFee)} sub="pro Monat" /> : null}
+            {price.bestandIncluded ? <Sum k="Bestandskunden-Modul" v="inklusive" sub="für Makler" /> : null}
             {price.monthlyTotal != null && (price.extraSeats > 0 || price.bestandFee > 0) ? (
               <Sum k="Monatlich gesamt" v={eur(price.monthlyTotal)} sub={`${eur(withVat(price.monthlyTotal))} brutto`} />
             ) : null}

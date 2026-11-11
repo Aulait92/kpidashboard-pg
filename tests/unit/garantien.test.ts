@@ -6,6 +6,7 @@ import {
   bewerteBreakEven,
   bewerteGarantien,
   bewerteLeadGarantie,
+  bewerteVertragsGarantie,
   ergebnisQuote,
   fortschritt,
   freeMonthsOf,
@@ -18,7 +19,7 @@ import {
   terminQuote,
   type GarantieInput,
 } from "@/lib/garantien";
-import { DEFAULT_CONFIG, GARANTIE_FRISTEN, type RechnerConfig } from "@/lib/rechner";
+import { DEFAULT_CONFIG, GARANTIE_FRISTEN, VERTRAGS_GARANTIE_MIN_VERTRAEGE, type RechnerConfig } from "@/lib/rechner";
 import { retainerRows, type RetainerInput } from "@/lib/revenue-ledger";
 
 const DAY = 86_400_000;
@@ -62,6 +63,8 @@ describe("Regeln aus der Rechner-Konfiguration", () => {
     expect(regeln.lead).toEqual({ aktiv: true, minLeads: 100, tage: 30 });
     expect(regeln.minBudgetPerDay).toBe(20);
     expect(regeln.breakeven).toEqual({ aktiv: true, tage: 90, quote: 0.8, maxFreiMonate: 6 });
+    expect(regeln.vertrag).toEqual({ aktiv: true, tage: 90, minVertraege: 15, quote: 0.8, maxFreiMonate: 6 });
+    expect(VERTRAGS_GARANTIE_MIN_VERTRAEGE).toBe(15);
     expect(GARANTIE_FRISTEN.leadTage).toBe(30);
   });
   it("übernimmt geänderte Werte und Schalter", () => {
@@ -253,14 +256,96 @@ describe("Break-even-Garantie", () => {
 });
 
 describe("Makler", () => {
-  it("Break-even-Garantie gilt nicht für Makler, die Lead-Garantie schon", () => {
+  it("Makler: Lead- und Vertrags-Garantie statt Break-even; Vertreter: keine Vertrags-Garantie", () => {
     const i = input({ vermittlerTyp: "makler", now: D("2027-03-01"), leads: leads(40, "2026-12-01"), abschluesse: [] });
-    const [lead, be] = bewerteGarantien(i, regeln);
+    const [lead, zweite, dritte] = bewerteGarantien(i, regeln);
     expect(lead.status).toBe("anspruch");
+    expect(zweite.art).toBe("vertrag");
+    expect(dritte).toBeUndefined();
+    const be = bewerteBreakEven(i, regeln);
     expect(be.status).toBe("nicht_anwendbar");
     expect(be.kennzahlen.monat).toBeUndefined();
     expect(be.bedingungen).toEqual([]);
-    expect(fortschritt(be)).toBe("Für Makler gilt die Lead-Garantie");
+    expect(fortschritt(be)).toBe("Für Makler gilt die Vertrags-Garantie");
+    // Vertreter: Lead + Break-even, Vertrags-Garantie nicht anwendbar
+    expect(bewerteGarantien(input({ now: D("2027-03-01") }), regeln).map((e) => e.art)).toEqual(["lead", "breakeven"]);
+    const vg = bewerteVertragsGarantie(input({ now: D("2027-03-01") }), regeln);
+    expect(vg.status).toBe("nicht_anwendbar");
+    expect(fortschritt(vg)).toBe("Für Vertreter gilt die Break-even-Garantie");
+  });
+  it("Schalter der zweiten Garantie aus → auch keine Vertrags-Garantie", () => {
+    const cfg: RechnerConfig = structuredClone(DEFAULT_CONFIG);
+    cfg.guarantees.breakEven.enabled = false;
+    expect(bewerteGarantien(input({ vermittlerTyp: "makler" }), regelnAus(cfg)).map((e) => e.art)).toEqual(["lead"]);
+  });
+});
+
+describe("Vertrags-Garantie (Makler)", () => {
+  // Start 1.12., 90. aktiver Tag = 28.02.2027, erste Prüfung am 1.3.
+  const vertraege = (n: number, at = "2027-01-10") => Array.from({ length: n }, () => ({ at: D(at), provision: 80 }));
+  const vg = (over: Partial<GarantieInput> = {}) => bewerteVertragsGarantie(input({ vermittlerTyp: "makler", now: D("2027-03-01"), ...over }), regeln);
+
+  it("vor Tag 90: läuft mit Fortschritt", () => {
+    const e = vg({ now: D("2027-01-10"), abschluesse: vertraege(6, "2026-12-20") });
+    expect(e.status).toBe("laeuft");
+    expect(e.kennzahlen.ende).toBe("2027-02-28");
+    expect(fortschritt(e)).toBe("Tag 41 von 90 · 6 von 15 Verträgen");
+  });
+  it("14 Verträge nach 90 Tagen, alle Bedingungen erfüllt → Anspruch auf Betreuung + Software im laufenden Monat", () => {
+    const e = vg({ abschluesse: vertraege(14), leads: leads(50, "2026-12-01") });
+    expect(e.status).toBe("anspruch");
+    expect(e.kennzahlen.vertraege).toBe(14);
+    expect(e.kennzahlen.monat).toBe("2027-03");
+    expect(e.kennzahlen.freiMonatNr).toBe(1);
+    expect(e.kennzahlen.betrag).toBe(1000); // Betreuung + Software
+    expect(e.bedingungen.map((b) => b.key)).toEqual(["budget", "termine", "ergebnisse", "rechnung"]);
+    expect(heuteTitel("Muster", "vertrag", e.kennzahlen)).toBe(
+      "Garantiefall: Muster – Vertrags-Garantie (14 von 15 Verträgen) → Betreuung + Software im März 2027 kostenlos",
+    );
+  });
+  it("15 Verträge = erfüllt, auch schon vor Tag 90", () => {
+    expect(vg({ abschluesse: vertraege(15) }).status).toBe("erfuellt");
+    const frueh = vg({ now: D("2027-01-20"), abschluesse: vertraege(15) });
+    expect(frueh.status).toBe("erfuellt");
+    expect(fortschritt(frueh)).toBe("15 von 15 Verträgen");
+  });
+  it("Verträge vor dem Start zählen nicht", () => {
+    expect(vg({ abschluesse: [...vertraege(10), ...vertraege(10, "2026-11-25")] }).kennzahlen.vertraege).toBe(10);
+  });
+  it("keine Bedingung „Provisionssätze“", () => {
+    expect(vg({ provisionssaetze: false }).status).toBe("anspruch");
+  });
+  it("Bedingungen: Budget, Termine, Ergebnisse, offene Rechnung", () => {
+    expect(vg({ spend: tage("2026-12-01", 120, 10) }).fehlend).toEqual(["Werbebudget nur Ø 10 € pro Tag (mind. 20 €)"]);
+    const termine = [
+      ...Array.from({ length: 7 }, () => ({ startsAt: D("2026-12-10"), status: "completed" })),
+      ...Array.from({ length: 3 }, () => ({ startsAt: D("2026-12-11"), status: "no_show" })),
+    ];
+    expect(vg({ termine }).fehlend).toEqual(["Termine nur zu 70 % wahrgenommen (mind. 80 %)"]);
+    const l = [...leads(7, "2026-12-01"), ...leads(3, "2026-12-01", { status: "Neuer Lead" })];
+    expect(vg({ leads: l }).fehlend).toEqual(["Ergebnisse nur bei 70 % der Leads eingetragen (mind. 80 %)"]);
+    const e = vg({ offeneRechnung: true });
+    expect(e.status).toBe("bedingungen_fehlen");
+    expect(e.fehlend).toEqual(["Offene Rechnung (Zahlungsverzug)"]);
+  });
+  it("Pausen verlängern die 90 Tage", () => {
+    const e = vg({ pausen: [{ from: D("2027-01-01"), to: D("2027-01-14") }] });
+    expect(e.status).toBe("laeuft");
+    expect(e.kennzahlen.ende).toBe("2027-03-14");
+  });
+  it("monatlich weiter bis 15 erreicht, längstens 6 Monate", () => {
+    expect(vg({ now: D("2027-04-02"), faelle: [{ art: "vertrag", monat: "2027-03", status: "gewaehrt" }] }).kennzahlen.freiMonatNr).toBe(2);
+    expect(vg({ now: D("2027-08-15") }).kennzahlen.freiMonatNr).toBe(6);
+    expect(vg({ now: D("2027-09-01") }).status).toBe("abgelaufen");
+    const sechs = ["2027-03", "2027-04", "2027-05", "2027-06", "2027-07", "2027-08"].map((monat) => ({ art: "vertrag" as const, monat, status: "gewaehrt" as const }));
+    expect(vg({ now: D("2027-08-20"), faelle: sechs }).status).toBe("abgelaufen");
+    // im 4. Monat nachgetragen → erfüllt
+    expect(vg({ now: D("2027-06-05"), abschluesse: vertraege(15, "2027-05-30") }).status).toBe("erfuellt");
+  });
+  it("gewährter Monat ist komplett kostenlos (wie Lead-Garantie)", () => {
+    const free = retainerRows({ ...retainer, freeMonths: freeMonthsOf([{ art: "vertrag", monat: "2027-03", status: "gewaehrt" }]) }, ["2027-03"], "2027-03");
+    expect(free).toEqual([]);
+    expect(gutschriftBetrag(retainer, "2027-03", "vertrag")).toBe(1000);
   });
 });
 
