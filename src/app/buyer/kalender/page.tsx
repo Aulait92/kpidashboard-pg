@@ -43,20 +43,35 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
   const setup = key ? await loadCalendarSetup(ctx.customerId, key) : null;
   const ro = ctx.preview;
   const makler = (await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { vermittlerTyp: true } }))?.vermittlerTyp === "makler";
+  // Einzelkämpfer (nur ein Login): ein Kalender genügt – der „eigene Kalender“
+  // erscheint nur im Team, für Berater oder wenn er schon verbunden ist (zum Trennen).
+  const logins = await prisma.user.count({ where: { customerId: ctx.customerId, role: "BUYER" } });
+  const solo = logins <= 1;
+  const showOwn = !owner || !solo || connected;
+  const gcalNote =
+    gcal === "connected" ? (
+      <p className="font-medium text-emerald-700">Kalender verbunden.</p>
+    ) : gcal ? (
+      <p className="font-medium text-rose-700">
+        {gcal === "consent"
+          ? "Ihr Unternehmen muss die Verbindung erst freigeben. Bitte kurz bei uns melden, dann richten wir es gemeinsam ein."
+          : "Das hat nicht geklappt. Bitte noch einmal versuchen."}
+      </p>
+    ) : null;
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader title="Mein Kalender" subtitle="Termine für Ihre Leads direkt in Ihrem Kalender" />
+      {!showOwn && gcalNote ? <div className="mb-4">{gcalNote}</div> : null}
+      {showOwn ? (
       <Card>
         <CardHeader title="Eigener Kalender" icon={CalendarDays} />
         <div className="space-y-4 p-5 text-[15px]">
           <p className="text-[color:var(--muted)]">Termine für Ihre Leads landen dann nur in freien Zeiten direkt in Ihrem Kalender.</p>
-          {gcal === "connected" ? <p className="font-medium text-emerald-700">Kalender verbunden.</p> : null}
-          {gcal && gcal !== "connected" ? (
-            <p className="font-medium text-rose-700">
-              {gcal === "consent"
-                ? "Ihr Unternehmen muss die Verbindung erst freigeben. Bitte kurz bei uns melden, dann richten wir es gemeinsam ein."
-                : "Das hat nicht geklappt. Bitte noch einmal versuchen."}
+          {gcalNote}
+          {owner && solo && connected ? (
+            <p className="text-sm text-amber-800">
+              Sie arbeiten allein: Ein Kalender genügt. Termine landen im Kalender unten. Diesen eigenen Kalender können Sie trennen.
             </p>
           ) : null}
           {connected ? (
@@ -88,10 +103,11 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
           ) : null}
         </div>
       </Card>
+      ) : null}
 
       {owner && setup ? (
         <Card className="mt-5">
-          <CardHeader title="Freie Zeiten der Agentur" icon={CalendarDays} />
+          <CardHeader title={solo ? "Ihr Kalender" : "Freie Zeiten der Agentur"} icon={CalendarDays} />
           <div className="p-5">
             <SourcePicker
               status={setup.status}
