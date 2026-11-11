@@ -6,6 +6,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { effectiveRates, estimatedProvision } from "@/lib/provision";
 import { annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
+import { monthlyBankCosts } from "@/lib/bank/server";
 import { monthlyFeeCosts } from "@/lib/whatsapp/fees";
 import { freeMonthsOf, type GarantieArt } from "@/lib/garantien";
 import {
@@ -200,7 +201,7 @@ export async function loadLedger(now = new Date()) {
 
 // ─── Kosten je Monat und Zweck ───────────────────────────────────────────
 
-export type MonthCosts = { month: string; ppl: number; software: number; akquise: number; betrieb: number; metaPpl: number; metaAkquise: number; whatsapp: number };
+export type MonthCosts = { month: string; ppl: number; software: number; akquise: number; betrieb: number; metaPpl: number; metaAkquise: number; whatsapp: number; /** davon aus Bank & Karten (netto) */ bank?: number };
 
 export async function loadCosts(months: string[], settings: KpiSettingsData, now = new Date()) {
   const from = monthStart(months[0]);
@@ -218,6 +219,8 @@ export async function loadCosts(months: string[], settings: KpiSettingsData, now
       GROUP BY 1`,
     prisma.recurringCost.findMany({ orderBy: [{ purpose: "asc" }, { name: "asc" }] }),
   ]);
+  // Zugeordnete Ausgaben aus Bank & Karten (netto), je Monat und Zweck
+  const bank = await monthlyBankCosts(new Date(from.getTime() - DAY));
   // WhatsApp-Gebühren sind im Preis enthalten → direkte Software-Kosten (nie Umsatz).
   // Ohne Inklusiv-Preis werden sie weiterberechnet und sind durchlaufend (weder Umsatz noch Kosten).
   const waFees = PRICE_LIST.whatsappIncluded ? await monthlyFeeCosts(new Date(from.getTime() - DAY)) : new Map<string, number>();
@@ -229,6 +232,14 @@ export async function loadCosts(months: string[], settings: KpiSettingsData, now
     c.ppl += c.metaPpl;
     c.software += c.whatsapp;
     c.akquise += c.metaAkquise;
+    const b = bank.get(m);
+    if (b) {
+      c.bank = r2(b.ppl + b.software + b.akquise + b.betrieb);
+      c.ppl += b.ppl;
+      c.software += b.software;
+      c.akquise += b.akquise;
+      c.betrieb += b.betrieb;
+    }
     for (const rc of recurring) {
       const share = recurringShare(rc.startsAt, rc.endsAt, m);
       if (share <= 0) continue;

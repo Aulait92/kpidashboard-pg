@@ -647,15 +647,15 @@ model CreativeVariant {
 
 // WhatsApp-Business-Konto je Kunde (über 360dialog in der Überbrückungsphase).
 model WhatsAppAccount {
-  id            String   @id @default(cuid())
-  customerId    String   @unique
-  provider      String   @default("360dialog") // 360dialog | meta_cloud (später)
-  wabaId        String?
-  phoneNumberId String?
-  phoneNumber   String?
-  displayName   String?
-  apiKeyEnc     String? // app-seitig verschlüsselter 360dialog-API-Key
-  status        String   @default("pending") // pending | connected | disabled
+  id                 String    @id @default(cuid())
+  customerId         String    @unique
+  provider           String    @default("360dialog") // 360dialog | meta_cloud (später)
+  wabaId             String?
+  phoneNumberId      String?
+  phoneNumber        String?
+  displayName        String?
+  apiKeyEnc          String? // app-seitig verschlüsselter 360dialog-API-Key
+  status             String    @default("pending") // pending | connected | disabled
   // Selbst verbunden über 360dialog Integrated Onboarding (Partner-API):
   // Client und Channel aus dem Redirect; der API-Key wird daraus erzeugt.
   dialog360ClientId  String?
@@ -663,8 +663,8 @@ model WhatsAppAccount {
   // Vorlagen automatisch einreichen/nachziehen (lib/whatsapp/template-submit.ts):
   // letzter Abgleich mit 360dialog (gedrosselt im WhatsApp-Cron).
   templatesCheckedAt DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   customer      Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
   conversations Conversation[]
@@ -699,21 +699,21 @@ model CalendarConnection {
 
 // Konfigurierbarer KI-Agent je Kunde (Aufgabe/Regeln, Wissen, Persönlichkeit).
 model AgentConfig {
-  id                       String   @id @default(cuid())
-  customerId               String   @unique
-  name                     String   @default("Assistent")
-  systemPrompt             String   @default("")
-  knowledge                String   @default("")
-  personality              String   @default("")
-  active                   Boolean  @default(false)
+  id                       String    @id @default(cuid())
+  customerId               String    @unique
+  name                     String    @default("Assistent")
+  systemPrompt             String    @default("")
+  knowledge                String    @default("")
+  personality              String    @default("")
+  active                   Boolean   @default(false)
   // Automatisches WhatsApp-Erstanschreiben neuer Leads ohne Termin. Erst
   // aktivieren, wenn Einwilligung im Leadformular + freigegebene Vorlage da sind.
-  outreachEnabled          Boolean  @default(false)
+  outreachEnabled          Boolean   @default(false)
   // 0 = sofort beim Eingang (Speed to Lead). Höher nur, wenn der Lead erst selbst buchen soll.
-  outreachDelayMin         Int      @default(0)
+  outreachDelayMin         Int       @default(0)
   // Automatisch nachfassen: feste Abfolgen nach „Nicht erreicht“, „Angebot gesendet“,
   // „Nicht erschienen“ (lib/lead-sequences.ts). Standard aus.
-  followUpSequencesEnabled Boolean  @default(false)
+  followUpSequencesEnabled Boolean   @default(false)
   // Fester Video-Link für alle Video-Termine (z. B. persönlicher Webex-Raum).
   // Leer = Google Meet bzw. Microsoft Teams wird pro Termin erzeugt.
   videoRoomUrl             String?
@@ -733,8 +733,8 @@ model AgentConfig {
   allianzLastOkAt          DateTime?
   allianzLastError         String?
   allianzAlertAt           DateTime?
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 }
@@ -834,23 +834,23 @@ model Appointment {
 
 // WhatsApp-Vorlage je Kunde (für Erstansprache / außerhalb des 24h-Fensters).
 model MessageTemplate {
-  id         String   @id @default(cuid())
-  customerId String
-  name       String
-  language   String   @default("de")
+  id              String    @id @default(cuid())
+  customerId      String
+  name            String
+  language        String    @default("de")
   // Wofür die Vorlage genutzt wird: outreach | booking_confirmation | reminder.
   // Parameter-Reihenfolge je Zweck siehe lib/whatsapp/templates.ts.
-  purpose    String   @default("")
-  category   String // utility | marketing | authentication
-  status     String   @default("pending") // pending | approved | rejected | paused
-  body       String
+  purpose         String    @default("")
+  category        String // utility | marketing | authentication
+  status          String    @default("pending") // pending | approved | rejected | paused
+  body            String
   // Von der App automatisch bei 360dialog/Meta eingereicht (statt von Hand angelegt).
   auto            Boolean   @default(false)
   submittedAt     DateTime?
   // Ablehnungsgrund von Meta (rejected_reason), z. B. INVALID_FORMAT
   rejectionReason String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
@@ -1039,21 +1039,21 @@ enum SalesTaskType {
 }
 
 model SalesContact {
-  id           String  @id @default(cuid())
-  name         String
-  email        String  @unique
+  id                   String    @id @default(cuid())
+  name                 String
+  email                String    @unique
   /// Weitere E-Mail-Adressen (z. B. nach Zusammenführen); werden bei Calendly, Instantly und Inbound mit erkannt
-  altEmails    String[] @default([])
-  phone        String?
-  fax          String?
-  street       String?
-  zip          String?
-  city         String?
-  ratingValue  Float?
-  ratingCount  Int?
-  openingHours String?
-  url          String?
-  description  String?
+  altEmails            String[]  @default([])
+  phone                String?
+  fax                  String?
+  street               String?
+  zip                  String?
+  city                 String?
+  ratingValue          Float?
+  ratingCount          Int?
+  openingHours         String?
+  url                  String?
+  description          String?
   // Adresse aus dem Impressum ergänzt (einmal automatisch versucht)
   addressEnrichTriedAt DateTime?
   addressEnrichedAt    DateTime?
@@ -1877,4 +1877,75 @@ model CalendarBlock {
 
   @@index([calendarKey, endsAt])
   @@index([customerId])
+}
+
+// ─── Bank & Karten: Ausgaben importieren und als Kosten zuordnen ─────────
+// Verbindung über Enable Banking (PSD2, z. B. Commerzbank) – Zustimmung gilt
+// höchstens ~180 Tage. sessionEnc: Session-ID verschlüsselt (ENCRYPTION_KEY).
+// status: pending (Weiterleitung läuft) | active | expired | error | revoked
+model BankConnection {
+  id           String            @id @default(cuid())
+  provider     String            @default("enablebanking")
+  aspspName    String
+  aspspCountry String            @default("DE")
+  psuType      String            @default("business")
+  // Schutz gegen fremde Callbacks: Zufallswert der Weiterleitung (nur gehasht)
+  stateHash    String?           @unique
+  sessionEnc   String?
+  // [{ uid, name, iban (gekürzt) }]
+  accounts     Json?
+  validUntil   DateTime?
+  status       String            @default("pending")
+  lastSyncAt   DateTime?
+  lastError    String?
+  reminderAt   DateTime?
+  createdById  String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  transactions BankTransaction[]
+}
+
+// Regel: Muster (Teil von Gegenpartei oder Verwendungszweck, ohne Groß-/Kleinschreibung)
+// → Zweck (ppl|software|akquise|betrieb) oder ignorieren. vatIncluded: Betrag enthält 19 % USt → netto rechnen.
+model CostRule {
+  id           String            @id @default(cuid())
+  pattern      String
+  action       String // ppl | software | akquise | betrieb | ignore
+  vatIncluded  Boolean           @default(false)
+  label        String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  transactions BankTransaction[]
+
+  @@unique([pattern])
+}
+
+// Einzelne Buchung (Konto oder Kreditkarte). amount: Ausgaben negativ (EUR, brutto).
+// status: neu | zugeordnet | ignoriert. Zugeordnete Ausgaben fließen netto in die Zahlen-Seite.
+model BankTransaction {
+  id           String          @id @default(cuid())
+  connectionId String?
+  connection   BankConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  // Konto-Schlüssel: Enable-Banking-Konto-UID oder „csv:commerzbank“ / „csv:amex“
+  accountKey   String
+  externalId   String
+  source       String // enablebanking | csv
+  bookingDate  DateTime        @db.Date
+  amount       Decimal         @db.Decimal(12, 2)
+  currency     String          @default("EUR")
+  counterparty String?
+  purpose      String?
+  status       String          @default("neu")
+  costPurpose  String?
+  vatIncluded  Boolean         @default(false)
+  ruleId       String?
+  rule         CostRule?       @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  note         String?
+  assignedAt   DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@unique([accountKey, externalId])
+  @@index([status, bookingDate])
+  @@index([bookingDate])
 }

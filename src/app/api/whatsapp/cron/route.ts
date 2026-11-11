@@ -16,6 +16,7 @@ import { runOnboardingCron } from "@/lib/onboarding-cron";
 import { beat } from "@/lib/heartbeat";
 import { runGarantien } from "@/lib/garantien-server";
 import { enrichPendingAddresses } from "@/lib/vertrieb/address-enrich";
+import { runBankSync } from "@/lib/bank/server";
 import { retryPendingSelfConnect } from "@/lib/whatsapp/self-connect";
 import { syncTemplates } from "@/lib/whatsapp/template-submit";
 
@@ -116,6 +117,8 @@ async function handle(req: Request): Promise<Response> {
   after(() =>
     enrichPendingAddresses(Number(process.env.ADDRESS_ENRICH_PER_RUN ?? 20)).catch((e: unknown) => reportError(e, "cron-addresses")),
   );
+  // Bank & Karten: Kontoumsätze täglich abrufen, an Neuverbindung erinnern (nach der Antwort)
+  after(() => runBankSync(now).catch((e: unknown) => reportError(e, "cron-bank")));
   // WhatsApp selbst verbunden: API-Keys für Channels nachholen, die beim Redirect noch eingerichtet wurden
   const whatsappConnect = await retryPendingSelfConnect(now).catch((e: unknown) => {
     reportError(e, "cron-d360-connect");

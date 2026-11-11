@@ -74,6 +74,7 @@ Die Produktion ist seit 11.11. eingemessen; neue Migrationen laufen beim normale
 | `20261114200000_instantly_kampagnen_ignorieren` | Spalte `SalesCampaign.ignored` (Pflege-Kampagnen = true) und **Löschung** der am 11.11. automatisch aus Instantly angelegten Kontakte, die nur zu Pflege-Kampagnen gehören (nie mit Angebot, Termin, Kundenkonto oder anderer Kampagne) | löscht nur automatisch angelegte Pflege-Kontakte |
 | `20261114210000_instantly_alte_kontakte` | Badumbau- und Kinderwunsch-Kampagnen ignorieren; **Löschung** der am 11.11. automatisch aus Instantly angelegten Kontakte dieser Themen sowie aller automatisch angelegten Instantly-Kontakte mit letzter Aktivität älter als 4 Wochen (alte Pay-per-Lead-Kampagnen); nie mit Angebot, Termin, Kundenkonto | löscht nur automatisch angelegte Kontakte |
 | `20261114220000_adressen_neu_anreichern` | setzt `addressEnrichTriedAt` bei Kontakten ohne vollständige Adresse zurück (Cron reichert neu an) | nur Zeitstempel |
+| `20261114230000_bank_kosten` | Tabellen `BankConnection` (Enable Banking, Session verschlüsselt), `BankTransaction` (Konto-/Kartenumsätze, Zuordnung), `CostRule` (Muster → Zweck) | nur hinzufügend; ohne Verbindung/Import ändert sich keine Kennzahl |
 
 Keine davon verändert bestehende Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und

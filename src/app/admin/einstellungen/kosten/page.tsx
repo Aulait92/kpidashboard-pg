@@ -24,6 +24,11 @@ export default async function KostenPage() {
         <p className="text-sm text-[color:var(--muted)]">
           Monatliche Kosten mit Zweck. Direkte Kosten senken die Marge, Kundengewinnung fließt in die Kosten je Neukunde. Meta-Werbung kommt automatisch aus dem Abgleich.
         </p>
+        <p className="mt-1 text-sm">
+          Ausgaben, die über{" "}
+          <Link href="/admin/einstellungen/bank" className="text-[color:var(--brand)] hover:underline">Bank & Karten</Link>{" "}
+          kommen, hier nicht zusätzlich eintragen (sonst doppelt gezählt).
+        </p>
       </div>
 
       <section className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">

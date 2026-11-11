@@ -201,6 +201,21 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
     }
   }
 
+  // Bank & Karten: neue Ausgaben ohne Zuordnung (fehlen sonst in Marge/Kosten)
+  const bankOpen = await prisma.bankTransaction.count({ where: { status: "neu" } }).catch(() => 0);
+  if (bankOpen > 0) {
+    items.push({
+      key: "bank:open",
+      area: "System",
+      tone: "info",
+      icon: "euro",
+      title: `${bankOpen} ${bankOpen === 1 ? "Ausgabe" : "Ausgaben"} zuordnen`,
+      detail: "Aus Konto oder Kreditkarte · ohne Zuordnung fehlen sie in Marge und Kosten",
+      action: { label: "Zuordnen", href: "/admin/einstellungen/bank/zuordnen" },
+      later: { label: "Später", days: 3 },
+    });
+  }
+
   // ── Kunden ─────────────────────────────────────────────
   for (const c of overdueCustomers) {
     const since = c.paymentOverdueSince!;
