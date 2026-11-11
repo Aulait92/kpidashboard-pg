@@ -153,7 +153,9 @@ export function OfferDocument({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-[17px] font-semibold">
               <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#2563EB] text-[13px]">↗</span>
-              performance<span className="text-[#7aa2ff]">growth</span>
+              <span>
+                performance<span className="text-[#7aa2ff]">growth</span>
+              </span>
             </div>
             <span className="text-xs text-[#9aa6bd]">performancegrowth.de</span>
           </div>
