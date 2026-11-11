@@ -13,9 +13,9 @@ enthalten. Der Merge ist konfliktfrei.
       zuletzt mit Stand `362808f` und allen 22 Migrationen, siehe unten). Vor dem
       Livegang nur wiederholen, wenn neue Migrationen dazukommen
       (`ls prisma/migrations` mit der Liste unten vergleichen).
-- [ ] **Probelauf 3** mit dem Stand, der live geht (ca. 19./20.11., nach Code-Stopp):
-      seit Probelauf 2 sind **13 Migrationen dazugekommen** (jetzt 35, siehe
-      „Neue Migrationen seit Probelauf 2“). Ablauf wie Probelauf 2.
+- [x] **Probelauf 3** mit dem Stand, der live geht (11.11., Stand `70386ef`, alle 35
+      Migrationen, siehe „Ergebnis Probelauf 3“). Kommen bis zum Livegang neue
+      Migrationen dazu, nur diese gegen eine frische Kopie wiederholen.
 
 ### Neue Migrationen seit Probelauf 2 (Stand 11.11.)
 
@@ -240,3 +240,24 @@ Neue PITR-Kopie der Produktion (Stand 15:17 UTC), darauf Stand `362808f`
   `_prisma_migrations` 3 alte + 22 neue Einträge. „No pending migrations“, „Schema aktuell“.
 - Dauer: ca. 30 Sekunden (Vergleich + Migration), dazu die normale Deploy-Zeit.
 - Danach aufgeräumt: Probe-Service, Kopie und deren Volume gelöscht.
+
+## Ergebnis Probelauf 3 (11.11.2026)
+
+Livegang vorgezogen, deshalb am 11.11. statt 19./20.11. Kopie der Produktion diesmal per
+`pg_dump | psql` (Postgres 18) in eine neue, leere Postgres-Instanz in ams, Stand
+**09:57 UTC** (Dauer der Kopie 17 s, 0 Fehler). Eine PITR-Wiederherstellung lässt sich nur im
+Dashboard anstoßen; für den Migrationstest ist die logische Kopie gleichwertig (alle Tabellen,
+Daten, `_prisma_migrations` mit den 3 alten Einträgen). Darauf Stand `70386ef`
+(`claude/whatsapp-crm`) mit `scripts/db-compare.mjs` vorher/nachher gegen die Produktion
+(nur lesend). **Erfolgreich.**
+
+- Vorher: 27 Tabellen, 0 abweichend (u. a. Lead 2659, Revenue 2636, Customer 29, User 23,
+  Deal 115, Cost 339).
+- `[migrate] Alte Einträge aus früherem Verlauf (bleiben unberührt)` → eingemessen →
+  „Schema wird angeglichen (nur hinzufügende Änderungen)“ → **35 Migrationen** als angewendet
+  markiert (`0_init` bis `20261113140000_makler_angebot`), `20261110120001_status_seit_trigger`
+  dabei ausgeführt, „No pending migrations to apply“, „Schema aktuell“.
+- Nachher: 62 Tabellen (35 neue, alle leer), alle bestehenden Zeilenzahlen unverändert,
+  `_prisma_migrations` 3 alte + 35 neue = 38 Einträge.
+- Dauer: ca. 40 Sekunden (Vergleich + Migration), dazu die normale Deploy-Zeit.
+- Danach aufgeräumt: Probe-Services, Kopie und deren Volume gelöscht.
