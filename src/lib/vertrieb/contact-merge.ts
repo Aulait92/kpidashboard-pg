@@ -17,7 +17,8 @@ export async function findContactIdByEmail(raw: string | null | undefined): Prom
   const email = normalizeEmail(raw);
   if (!email) return null;
   const c = await prisma.salesContact.findFirst({
-    where: { OR: [{ email }, { altEmails: { has: email } }] },
+    // Groß-/Kleinschreibung egal (ältere Importe haben gemischte Schreibweise)
+    where: { OR: [{ email: { equals: email, mode: "insensitive" } }, { altEmails: { has: email } }] },
     orderBy: { createdAt: "asc" },
     select: { id: true },
   });
@@ -30,13 +31,16 @@ export async function contactIdsByEmails(raw: string[]): Promise<Map<string, str
   const out = new Map<string, string>();
   if (!emails.length) return out;
   const rows = await prisma.salesContact.findMany({
-    where: { OR: [{ email: { in: emails } }, { altEmails: { hasSome: emails } }] },
+    where: { OR: [{ email: { in: emails, mode: "insensitive" } }, { altEmails: { hasSome: emails } }] },
     orderBy: { createdAt: "asc" },
     select: { id: true, email: true, altEmails: true },
   });
   // Hauptadresse hat Vorrang vor weiterer Adresse
   for (const r of rows) for (const a of r.altEmails) if (emails.includes(a) && !out.has(a)) out.set(a, r.id);
-  for (const r of rows) if (emails.includes(r.email)) out.set(r.email, r.id);
+  for (const r of rows) {
+    const e = r.email.trim().toLowerCase();
+    if (emails.includes(e)) out.set(e, r.id);
+  }
   return out;
 }
 

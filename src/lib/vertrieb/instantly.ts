@@ -66,19 +66,25 @@ export async function ensureInstantlyContact(
   const company = str(lead.company);
   const person = [firstName, lastName].filter(Boolean).join(" ");
   const website = str(lead.website);
-  const c = await prisma.salesContact.upsert({
-    where: { email },
-    create: {
-      email,
-      name: company ?? (person || email),
-      firstName,
-      lastName,
-      phone: str(lead.phone),
-      url: website ? (/^https?:\/\//i.test(website) ? website : `https://${website}`) : null,
-      description: `Über Instantly angelegt (Kampagne „${campaignName}“)`,
-    },
-    update: {},
-  });
+  const data = {
+    email,
+    name: company ?? (person || email),
+    firstName,
+    lastName,
+    phone: str(lead.phone),
+    url: website ? (/^https?:\/\//i.test(website) ? website : `https://${website}`) : null,
+    description: `Über Instantly angelegt (Kampagne „${campaignName}“)`,
+  };
+  let c: { id: string };
+  try {
+    c = await prisma.salesContact.create({ data, select: { id: true } });
+  } catch (err) {
+    // Gleichzeitig angelegt (Webhook und Abgleich) oder gleiche Adresse in anderer Schreibweise
+    if ((err as { code?: string }).code !== "P2002") throw err;
+    const again = await findContactIdByEmail(email);
+    if (!again) throw err;
+    return { id: again, created: false };
+  }
   await prisma.salesActivity.create({ data: { contactId: c.id, type: "IMPORT", note: `Aus Instantly übernommen (Kampagne „${campaignName}“)` } });
   return { id: c.id, created: true };
 }

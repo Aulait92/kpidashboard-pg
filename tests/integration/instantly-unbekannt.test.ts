@@ -7,11 +7,12 @@ import { requireTestDb } from "./db";
 // Kontakt wird angelegt statt die Antwort zu verwerfen.
 const tag = Math.random().toString(36).slice(2, 8);
 const email = `christoph.engel-${tag}@signal-iduna.test`;
+const parallel = `parallel-${tag}@signal-iduna.test`;
 
 describe("Instantly: unbekannte Adresse", () => {
   beforeAll(() => requireTestDb());
   afterAll(async () => {
-    await prisma.salesContact.deleteMany({ where: { email } });
+    await prisma.salesContact.deleteMany({ where: { email: { in: [email, parallel] } } });
     await prisma.salesCampaign.deleteMany({ where: { name: `Signal Iduna ${tag}` } });
   });
 
@@ -38,5 +39,12 @@ describe("Instantly: unbekannte Adresse", () => {
     expect(c.emails).toHaveLength(1);
     expect(c.emails[0].direction).toBe("IN");
     expect(c.campaigns[0].replyCount).toBe(1);
+  });
+
+  it("gleichzeitige Ereignisse zur selben neuen Adresse legen genau einen Kontakt an", async () => {
+    const ev = (event_type: string) => handleWebhook({ event_type, lead_email: parallel, campaign_name: `Signal Iduna ${tag}`, timestamp: "2026-11-10T09:00:00Z" });
+    const res = await Promise.all([ev("email_sent"), ev("email_sent"), ev("lead_interested")]);
+    expect(res.every((r) => "ok" in r)).toBe(true);
+    expect(await prisma.salesContact.count({ where: { email: parallel } })).toBe(1);
   });
 });

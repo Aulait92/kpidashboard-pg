@@ -1105,16 +1105,19 @@ export async function syncAirtable(): Promise<SyncResult> {
   if (leadsFetched) {
     for (const rec of leadRecords) {
       try {
+        // Ohne Käufer kein Customer → überspringen, bevor das Produkt geprüft wird:
+        // alte, nie zugewiesene Leads ohne Produkt sind kein Fehler (sonst meldet
+        // „Heute“ dauerhaft „Abgleich hängt“).
+        const buyer = resolveBuyer(rec.fields);
+        if (!buyer) continue;
         const product = classifyLeadProduct(rec.fields, produkteMap);
         if (!product) {
-          // Ohne Produkt-Lookup keine Pool-Zuordnung möglich → skip.
+          // Zugewiesener Lead ohne Produkt-Lookup: keine Pool-Zuordnung möglich → melden.
           result.errors.push(
             `Record ${rec.id}: Produkt nicht klassifizierbar (Lookup-Feld leer oder unbekannter Wert).`,
           );
           continue;
         }
-        const buyer = resolveBuyer(rec.fields);
-        if (!buyer) continue; // ohne Buyer kein Customer
 
         // rec-ID des verknüpften Kunden-Produkt-Bezug-Records (für Storno-
         // Optionen). Erst-Eintrag genügt — pro Lead gibt es genau einen Bezug.
