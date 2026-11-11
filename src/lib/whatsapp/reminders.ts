@@ -66,7 +66,44 @@ export async function sendBookingConfirmation(opts: {
   });
 }
 
-export type ReminderResult = { candidates: number; sent: number; errors: string[] };
+/**
+ * Termin wurde vom Berater-Team verschoben (z. B. wegen Abwesenheit): neue
+ * Zeit + Link, um selbst eine andere Zeit zu wählen. Ohne Grund.
+ */
+export async function sendRescheduleNotice(opts: {
+  customerId: string;
+  to: string;
+  name: string | null;
+  leadId?: string | null;
+  startsAt: Date;
+  mode: string;
+  meetUrl: string | null;
+  manageUrl: string | null;
+}): Promise<void> {
+  const change = opts.manageUrl ? `Passt dir die Zeit nicht? Hier wählst du eine andere: ${opts.manageUrl}` : "";
+  const params = [
+    firstNameOf(opts.name),
+    formatWhenDE(opts.startsAt),
+    modeLabel(opts.mode),
+    [linkOrHint(opts.mode, opts.meetUrl), change].filter(Boolean).join(" "),
+  ];
+  const text =
+    `Hallo ${params[0]}, wir mussten deinen Termin leider verschieben. Neue Zeit: ${params[1]} (${params[2]}).` +
+    (opts.manageUrl ? `\n\nPasst dir die Zeit nicht? Hier wählst du ganz einfach eine andere: ${opts.manageUrl}` : "") +
+    "\n\nDanke für dein Verständnis! 🙂";
+  await sendWhatsAppNotice({
+    customerId: opts.customerId,
+    to: opts.to,
+    // Außerhalb des 24h-Fensters: freigegebene Bestätigungs-Vorlage mit neuer Zeit.
+    purpose: "booking_confirmation",
+    params,
+    text,
+    leadId: opts.leadId ?? null,
+    contactName: opts.name,
+  });
+}
+
+export type ReminderResult ={ candidates: number; sent: number; errors: string[] };
 
 /** Kurzfristig gebuchte Termine: Erinnerung erst so kurz vorher. */
 const SHORT_LEAD_MS = 2 * 60 * 60 * 1000;

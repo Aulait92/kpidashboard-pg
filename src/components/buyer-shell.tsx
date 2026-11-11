@@ -16,6 +16,7 @@ import {
   LogOut,
   MessageCircle,
   MessageSquareText,
+  Plane,
   Search,
   ShoppingCart,
   Sparkles,
@@ -28,6 +29,7 @@ import { logoutAction } from "@/app/login/actions";
 import { ToastProvider, useToast } from "@/components/ui/toast";
 import { PushHint, PushMenuItem } from "@/components/push-prompt";
 import { HilfeChat } from "@/components/hilfe-chat";
+import { AbsenceControl, dayShort, type ShellAbsence } from "@/components/absence-sheet";
 import { normalizePath, sendUsage } from "@/lib/usage-client";
 import { cn } from "@/lib/utils";
 
@@ -53,10 +55,13 @@ export function BuyerShell({
   showOrders = false,
   showBestand = false,
   newUi = false,
+  absence = null,
   children,
 }: {
   /** Neue Oberfläche (Vertreter-A), pro Kunde im Admin einschaltbar. */
   newUi?: boolean;
+  /** „Ich bin abwesend“ (null in der Admin-Vorschau). */
+  absence?: ShellAbsence | null;
   /** Modul Bestandskunden-Kampagnen freigeschaltet. */
   showBestand?: boolean;
   /** Pay-per-Lead-Käufer: Reiter „Bestellen“. */
@@ -87,6 +92,7 @@ export function BuyerShell({
         setupOpen={setupOpen}
         teamRole={teamRole}
         hasTeam={hasTeam}
+        absence={absence}
       >
         {children}
       </BuyerShellA>
@@ -170,12 +176,13 @@ export function BuyerShell({
 
           <div className="ml-auto flex items-center gap-2">
             <HilfeChat firstName={displayName.replace(/^Allianz\s+/i, "").split(/\s+/)[0] ?? ""} owner={teamRole === "owner"} />
-            <ProfileMenu name={displayName} owner={teamRole === "owner"} hasTeam={hasTeam} />
+            <ProfileMenu name={displayName} owner={teamRole === "owner"} hasTeam={hasTeam} absence={absence} />
           </div>
         </div>
       </header>
 
       <div className="flex-1 pb-20 md:pb-0">
+        {absence ? <AbsenceControl data={absence} /> : null}
         <PushHint />
         {children}
       </div>
@@ -230,7 +237,9 @@ function ProfileMenu({
   newUi = false,
   setupOpen = 0,
   variant = "header",
+  absence = null,
 }: {
+  absence?: ShellAbsence | null;
   name: string;
   owner: boolean;
   hasTeam: boolean;
@@ -318,6 +327,28 @@ function ProfileMenu({
             </Link>
           ) : null}
           <PushMenuItem />
+          {absence ? (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                window.dispatchEvent(new Event("pg-absence-open"));
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
+            >
+              <Plane className="h-4 w-4" />
+              {absence.current ? (
+                <span>
+                  Abwesenheit ändern
+                  <span className="block text-xs text-[color:var(--muted)]">
+                    {absence.current.active ? `bis ${dayShort(absence.current.to)}` : `ab ${dayShort(absence.current.from)}`}
+                  </span>
+                </span>
+              ) : (
+                "Ich bin abwesend"
+              )}
+            </button>
+          ) : null}
           {newUi ? (
             <button
               type="button"
@@ -417,8 +448,10 @@ function BuyerShellA({
   setupOpen,
   teamRole,
   hasTeam,
+  absence,
   children,
 }: {
+  absence: ShellAbsence | null;
   pathname: string;
   displayName: string;
   showChats: boolean;
@@ -503,7 +536,7 @@ function BuyerShellA({
           </nav>
           <div className="mt-auto space-y-2 border-t border-[color:var(--border)] pt-3">
             <HilfeChat firstName={firstName} owner={owner} variant="nav" />
-            <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} variant="sidebar" />
+            <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} variant="sidebar" absence={absence} />
           </div>
         </aside>
 
@@ -517,12 +550,13 @@ function BuyerShellA({
             </Link>
             <div className="ml-auto flex items-center gap-2">
               <HilfeChat firstName={firstName} owner={owner} />
-              <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} />
+              <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} absence={absence} />
             </div>
           </div>
         </header>
 
         <div className="pb-20 md:pb-0">
+          {absence ? <AbsenceControl data={absence} /> : null}
           <PushHint />
           {children}
         </div>

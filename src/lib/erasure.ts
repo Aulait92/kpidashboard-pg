@@ -45,6 +45,8 @@ export async function eraseCustomerData(customerId: string, actor?: AuditActor) 
     prisma.consentOptIn.deleteMany({ where: { customerId } }),
     prisma.calendarConnection.deleteMany({ where: { customerId } }),
     prisma.advisorCalendar.deleteMany({ where: { user: { customerId } } }),
+    // Abwesenheiten (Beschäftigtendaten des Kunden) gehen mit
+    prisma.userAbsence.deleteMany({ where: { customerId } }),
   ]);
   const total = {
     leads: leads.length,

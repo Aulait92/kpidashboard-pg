@@ -2,10 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { ChevronRight, Mail, Pencil, UserMinus } from "lucide-react";
+import { ChevronRight, Mail, Pencil, Plane, UserMinus } from "lucide-react";
 import { Badge, Button } from "@/components/ui";
 import { ActionSheet, Sheet, type SheetAction } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
+import { AbsenceSheet, dayShort, type AbsenceColleague } from "@/components/absence-sheet";
+import type { AbsenceView } from "@/lib/absence";
 import { removeMemberAction, renameMemberAction, resendInviteAction, toggleReceivesLeadsAction } from "./actions";
 
 export type MemberView = {
@@ -19,6 +21,8 @@ export type MemberView = {
   ownCalendar: boolean;
   leads30: number;
   loggedIn: boolean;
+  /** Laufende oder kommende Abwesenheit */
+  absence: AbsenceView | null;
 };
 
 const fd = (o: Record<string, string>) => {
@@ -27,11 +31,11 @@ const fd = (o: Record<string, string>) => {
   return f;
 };
 
-export function MemberRow({ m, readOnly }: { m: MemberView; readOnly: boolean }) {
+export function MemberRow({ m, readOnly, colleagues, today }: { m: MemberView; readOnly: boolean; colleagues: AbsenceColleague[]; today: string }) {
   const router = useRouter();
   const toast = useToast();
   const [pending, start] = useTransition();
-  const [open, setOpen] = useState<"menu" | "rename" | "remove" | null>(null);
+  const [open, setOpen] = useState<"menu" | "rename" | "remove" | "absence" | null>(null);
   const [name, setName] = useState(m.displayName ?? "");
 
   const run = (fn: () => Promise<void>, message: string) =>
@@ -46,6 +50,11 @@ export function MemberRow({ m, readOnly }: { m: MemberView; readOnly: boolean })
     });
 
   const actions: SheetAction[] = [
+    {
+      label: m.absence ? "Abwesenheit ändern" : "Abwesenheit eintragen",
+      icon: Plane,
+      onSelect: () => setTimeout(() => setOpen("absence"), 0),
+    },
     { label: "Namen ändern", icon: Pencil, onSelect: () => setTimeout(() => setOpen("rename"), 0) },
     ...(!m.owner && !m.loggedIn
       ? [{ label: "Einladung erneut senden", icon: Mail, onSelect: () => run(() => resendInviteAction(fd({ userId: m.id })), "Einladung gesendet") }]
@@ -62,6 +71,11 @@ export function MemberRow({ m, readOnly }: { m: MemberView; readOnly: boolean })
             {m.isMe ? <Badge>Sie</Badge> : null}
             {m.owner ? <Badge tone="success">Inhaber</Badge> : null}
             {!m.owner && !m.loggedIn ? <Badge tone="warning">eingeladen</Badge> : null}
+            {m.absence ? (
+              <Badge tone="info">
+                {m.absence.active ? `abwesend bis ${dayShort(m.absence.to)}` : `abwesend ab ${dayShort(m.absence.from)}`}
+              </Badge>
+            ) : null}
           </div>
           <div className="truncate text-xs text-[color:var(--muted)]">
             {m.leads30} {m.leads30 === 1 ? "Lead" : "Leads"} in 30 Tagen · {m.ownCalendar ? "eigener Kalender" : "Agentur-Kalender"}
@@ -85,6 +99,16 @@ export function MemberRow({ m, readOnly }: { m: MemberView; readOnly: boolean })
         </button>
       </label>
 
+      {open === "absence" ? (
+        <AbsenceSheet
+          open
+          onClose={() => setOpen(null)}
+          person={{ userId: m.id, name: m.name, isMe: m.isMe }}
+          current={m.absence}
+          colleagues={colleagues}
+          today={today}
+        />
+      ) : null}
       <ActionSheet open={open === "menu"} onClose={() => setOpen(null)} title={m.name} message={m.email} actions={actions} />
       <Sheet open={open === "rename"} onClose={() => setOpen(null)} title="Namen ändern">
         <form

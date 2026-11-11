@@ -15,12 +15,14 @@ import {
   rescheduleAppointment,
   SlotBusyError,
   suggestSlots,
+  bookingPausedUntil,
   type Slot,
 } from "@/lib/calendar";
 import type { FormAnswer } from "@/lib/lead-fields";
 import { buildEventDescription, eventSummary } from "@/lib/whatsapp/event-text";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
 import { EMAIL_RE } from "@/lib/whatsapp/phone";
+import { fmtDayLong } from "@/lib/absence";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
 const HISTORY_LIMIT = 20;
@@ -450,15 +452,20 @@ export async function runBotTurn(conversationId: string): Promise<void> {
       } else if (tu.name === "get_available_slots") {
         try {
           const slots: Slot[] = await suggestSlots(conversation.customerId, 30, 3, [10, 14, 16], 10, conversation.leadId);
+          // Berater abwesend (Urlaub, Krank …): ab wann wieder Termine gehen – ohne Grund.
+          const pausedUntil = await bookingPausedUntil(conversation.customerId, conversation.leadId).catch(() => null);
+          const absenceNote = pausedUntil
+            ? `\nHinweis: Termine sind erst ab ${fmtDayLong(pausedUntil)} möglich. Sag das dem Lead freundlich, wenn er früher möchte, ohne einen Grund zu nennen (keine Angaben zu Urlaub oder Krankheit).`
+            : "";
           if (slots.length === 0) {
             content =
-              "Aktuell keine freien Slots in den nächsten Werktagen gefunden. Frage den Lead nach seiner Wunschzeit und nutze propose_appointment.";
+              "Aktuell keine freien Slots in den nächsten Werktagen gefunden. Frage den Lead nach seiner Wunschzeit und nutze propose_appointment." + absenceNote;
           } else {
             content =
               "Freie Zeiten (biete dem Lead 2-3 davon an; zum Buchen den exakten start-Wert an book_appointment übergeben):\n" +
               slots
                 .map((s) => `- ${formatSlotDE(s.start)} (start=${s.start})`)
-                .join("\n");
+                .join("\n") + absenceNote;
           }
         } catch (err) {
           console.error("[whatsapp bot] Slots", err);

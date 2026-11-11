@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { CUSTOMER_COLOR, CUSTOMER_LABEL } from "@/lib/vertrieb/crm";
+import { fmtDayShort, teamAbsences } from "@/lib/absence";
+import { memberName } from "@/lib/team";
 
 // Kundenakte: alles zu einem Kunden an einem Ort, als Reiter.
 export default async function KundenakteLayout({ children, params }: { children: React.ReactNode; params: Promise<{ id: string }> }) {
@@ -30,6 +32,11 @@ export default async function KundenakteLayout({ children, params }: { children:
   });
   if (!c) notFound();
   const base = `/admin/kunden/${c.id}`;
+  // „Ich bin abwesend“: laufende/kommende Abwesenheiten im Team (nur Hinweis)
+  const absences = await teamAbsences(c.id);
+  const absentUsers = absences.size
+    ? await prisma.user.findMany({ where: { id: { in: [...absences.keys()] } }, select: { id: true, email: true, displayName: true } })
+    : [];
   const stage = c.salesContact?.customerStage ?? null;
   return (
     <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -57,6 +64,19 @@ export default async function KundenakteLayout({ children, params }: { children:
         {c.paymentOverdueSince ? <Badge tone="danger">Zahlung offen</Badge> : null}
         {c.pauses.length ? <Badge tone="warning">pausiert</Badge> : null}
       </div>
+      {absentUsers.length ? (
+        <p className="mt-2 text-sm text-[color:var(--muted)]">
+          {absentUsers
+            .map((u) => {
+              const a = absences.get(u.id)!;
+              const who = c._count.users > 1 ? `${memberName(u)} ` : "";
+              const when = a.active ? `bis ${fmtDayShort(a.to)}` : `${fmtDayShort(a.from)} bis ${fmtDayShort(a.to)}`;
+              // Ohne Grund (Datensparsamkeit): für die Betreuung reicht „abwesend“.
+              return `${who}abwesend ${when}${a.substituteName ? ` (Vertretung ${a.substituteName})` : ""}`;
+            })
+            .join(" · ")}
+        </p>
+      ) : null}
       <div className="mt-4">
         <SubTabs
           tabs={[

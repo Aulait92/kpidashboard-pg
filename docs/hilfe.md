@@ -189,9 +189,33 @@ Seiten aus der Liste „Seiten“ unten.
 - Im Paket mit Software sind 3 Logins inklusive (Inhaber + 2 Berater). Jeder weitere Login kostet 49 € netto im
   Monat, anteilig ab dem Tag der Einladung bis zum Entfernen. Der Einladen-Dialog zeigt den Aufpreis vorher an.
   Ab 10 Logins gibt es ein individuelles Angebot (bitte bei uns melden).
-- Neue Leads werden reihum verteilt. Schalter „Bekommt neue Leads“ pro Person (z. B. im Urlaub aus).
+- Neue Leads werden reihum verteilt. Schalter „Bekommt neue Leads“ pro Person (dauerhaft aus). Für Urlaub
+  oder Krankheit besser „Abwesenheit eintragen“ (Person antippen), dann geht alles danach von selbst wieder an.
+- In der Liste steht bei abwesenden Personen „abwesend bis …“.
 - Namen ändern, Einladung erneut senden, aus dem Team entfernen (offene Leads gehen an den Inhaber zurück).
 - Einzelnen Lead weitergeben: Lead öffnen → „Zuständig“.
+
+## Abwesenheit (Urlaub, Krankheit)
+
+- Profilmenü → „Ich bin abwesend“: von–bis (ganze Tage, auch ab heute), Grund (Urlaub, Krank, Sonstiges –
+  nur die Kategorie, keine Details) und optional eine Vertretung aus dem Team. Gilt sofort.
+- Der Inhaber kann das auch für jede Person im Team eintragen: Team → Person antippen → „Abwesenheit eintragen“.
+- Während der Abwesenheit: keine neuen Leads an diese Person (die anderen bekommen sie, der Schalter „Bekommt
+  neue Leads“ bleibt unverändert) und keine neuen Termine bei ihr, weder über den Assistenten noch über die
+  Buchungsseite. Ohne Team (allein) sind die frühesten Termine am ersten Werktag nach der Rückkehr. Der
+  Assistent sagt neuen Leads, ab wann Termine möglich sind, aber nie warum.
+- Termine, die schon in der Zeit liegen, zeigt die App direkt nach dem Speichern:
+  „Alle verschieben“ (neue Zeit nach der Rückkehr, möglichst gleiche Uhrzeit; der Kontakt bekommt sie per
+  E-Mail und WhatsApp mit Link, um selbst eine andere Zeit zu wählen), „An <Vertretung> übergeben“ (nur wenn
+  die Vertretung da und frei ist; der Termin bleibt zur selben Zeit, der Kontakt geht an die Vertretung) oder
+  pro Termin einzeln, auch „Selbst klären“.
+- Wiedervorlagen und zurückgestellte Rückrufe in der Zeit gehen an die Vertretung, sonst rücken sie auf den
+  ersten Werktag nach der Rückkehr (8 Uhr). Der Hinweis dazu hat „Rückgängig“.
+- Allein und mindestens 7 Tage weg: Die App bietet „Anzeigen in dieser Zeit pausieren“ an (die normale Pause
+  aus Konto & Rechnungen, Neustart am Rückkehrtag). Eine Pause verlängert auch den Garantie-Zeitraum.
+- Während der Abwesenheit steht oben ein Hinweis „Du bist bis … abwesend“ mit „ändern“ und „beenden“. Früher
+  zurück: „beenden“ (oder „Ich bin wieder da“). Eine geplante Abwesenheit lässt sich im Profilmenü ändern
+  oder löschen.
 
 ## Konto & Rechnungen (nur Inhaber)
 

@@ -8,6 +8,9 @@ import { customerSetupOpenCount } from "@/lib/onboarding";
 import { isNewUi } from "@/lib/new-ui";
 import { loadCustomerProvision } from "@/lib/provision-server";
 import { ProvisionRatesProvider } from "@/components/provision-context";
+import type { ShellAbsence } from "@/components/absence-sheet";
+import { berlinYmd, currentOrNextAbsence, toAbsenceView } from "@/lib/absence";
+import { memberName } from "@/lib/team";
 
 // Gemeinsames Layout für den Buyer-Bereich. Hält den @modal-Parallel-Slot,
 // in den der Lead-Detail-Modal von ALLEN Buyer-Tabs (KPIs, Leads, Pipeline)
@@ -63,6 +66,21 @@ export default async function BuyerLayout({
   // Anzeigename ohne Gesellschafts-Präfix („Allianz Anid Schwarzkopf").
   // Berater sehen ihren eigenen Namen.
   const displayName = me ? (me.displayName?.trim() || me.email) : (customerName ?? "").replace(/^Allianz\s+/i, "");
+  // „Ich bin abwesend“: eigene Abwesenheit + Kollegen für die Vertretung (nicht in der Vorschau)
+  let absence: ShellAbsence | null = null;
+  if (ctx?.userId && !ctx.preview) {
+    const [cur, members] = await Promise.all([
+      currentOrNextAbsence(ctx.userId),
+      prisma.user.findMany({ where: { customerId: ctx.customerId, role: "BUYER" }, select: { id: true, email: true, displayName: true }, orderBy: { createdAt: "asc" } }),
+    ]);
+    const self = members.find((m) => m.id === ctx.userId);
+    absence = {
+      person: { userId: ctx.userId, name: self ? memberName(self) : displayName, isMe: true },
+      current: cur ? toAbsenceView(cur) : null,
+      colleagues: members.filter((m) => m.id !== ctx.userId).map((m) => ({ id: m.id, name: memberName(m) })),
+      today: berlinYmd(new Date()),
+    };
+  }
 
   return (
     <>
@@ -84,7 +102,7 @@ export default async function BuyerLayout({
       ) : null}
       {ctx ? (
         <ProvisionRatesProvider rates={provision?.rates ?? {}}>
-          <BuyerShell newUi={newUi} displayName={displayName} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen} teamRole={ctx.teamRole} hasTeam={logins > 1} showOrders={pplSubs > 0} showBestand={bestand}>
+          <BuyerShell newUi={newUi} displayName={displayName} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen} teamRole={ctx.teamRole} hasTeam={logins > 1} showOrders={pplSubs > 0} showBestand={bestand} absence={absence}>
             {children}
             {/* Lead-Detail-Modal innerhalb der Shell → Toasts funktionieren dort auch */}
             {modal}

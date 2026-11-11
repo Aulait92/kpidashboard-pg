@@ -144,6 +144,7 @@ model Customer {
   onboarding               Onboarding?
   feedback                 CustomerFeedback[]
   pauses                   CustomerPause[]
+  absences                 UserAbsence[]
   whatsAppFees             WhatsAppFeeCharge[]
   leadSubscriptions        LeadSubscription[]
   // Modul „Bestandskunden-Kampagnen“ (Zusatzmodul; Testkunden kostenlos)
@@ -529,6 +530,10 @@ model User {
 
   // Konversationen, in denen dieser Agent das Gespräch übernommen hat.
   assignedConversations Conversation[]
+
+  // Abwesenheiten (Urlaub, Krankheit …) und Vertretungen
+  absences      UserAbsence[] @relation("UserAbsences")
+  substituteFor UserAbsence[] @relation("AbsenceSubstitute")
 
   @@index([customerId])
 }
@@ -1307,6 +1312,36 @@ model CustomerPause {
 
   @@index([customerId, status])
   @@index([status, startsAt])
+}
+
+// „Ich bin abwesend“: Abwesenheit eines Logins in ganzen Tagen (Berliner
+// Zeit). startsAt = Beginn des ersten Tags, endsAt = Beginn des Tags NACH dem
+// letzten Tag (exklusiv). Solange sie läuft: keine neuen Leads, keine Termine
+// bei dieser Person. Grund nur als Kategorie, keine Gesundheitsangaben.
+model UserAbsence {
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation("UserAbsences", fields: [userId], references: [id], onDelete: Cascade)
+  customerId       String
+  customer         Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  startsAt         DateTime
+  endsAt           DateTime
+  // urlaub | krank | sonstiges
+  kind             String    @default("urlaub")
+  // Vertretung (Kollege im Team), optional
+  substituteUserId String?
+  substitute       User?     @relation("AbsenceSubstitute", fields: [substituteUserId], references: [id], onDelete: SetNull)
+  createdById      String?
+  // Verschobene/übertragene Aufgaben zum Rückgängigmachen:
+  // [{ leadId, followUpAt, callbackSnoozedUntil, assignedUserId }]
+  movedTasks       Json?
+  // Vorzeitig beendet
+  endedAt          DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([customerId, endsAt])
+  @@index([userId, endsAt])
 }
 
 // Direkter Lead-Eingang (Meta-Webhook oder Zapier-Webhook): welches

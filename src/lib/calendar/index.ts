@@ -28,6 +28,7 @@ import { sendLeadEmail } from "@/lib/calendar/lead-email";
 import { recordLeadProgress } from "@/lib/lead-progress";
 import { sendToBuyersOfCustomer, sendToUser } from "@/lib/push";
 import { notifyLeadPush } from "@/lib/team";
+import { absenceBusyForKeys, availableAgainYmd, extraSearchDays } from "@/lib/absence";
 import { loadConnection, userCalendarKey, userIdOfKey, type Busy, type CreatedEvent, type NewEvent } from "@/lib/calendar/tokens";
 
 export type { CalendarProvider } from "@/lib/calendar/tokens";
@@ -136,15 +137,23 @@ export async function suggestSlots(
   days = 10,
   /** Lead, für den gebucht wird (Team: Kalender des zuständigen Beraters). */
   leadId?: string | null,
+  /** Frühester Suchbeginn (z. B. Tag nach einer Abwesenheit). */
+  from?: Date | null,
 ): Promise<Slot[]> {
   const keys = await bookingKeys(customerId, leadId);
   const now = new Date();
-  const timeMin = new Date(now.getTime() + 60 * 60 * 1000);
-  const timeMax = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+  const base = from && from.getTime() > now.getTime() ? from : now;
+  const timeMin = new Date(Math.max(now.getTime() + 60 * 60 * 1000, base.getTime()));
+  // Abwesenheit (Urlaub, Krank …): diese Zeit ist belegt, und die Suche läuft
+  // entsprechend länger, damit danach noch Termine gefunden werden.
+  const horizon = new Date(base.getTime() + (days + 60) * 24 * 60 * 60 * 1000);
+  const absent = await absenceBusyForKeys(customerId, keys, leadId, timeMin, horizon);
+  days += extraSearchDays(absent, base, days);
+  const timeMax = new Date(base.getTime() + days * 24 * 60 * 60 * 1000);
   // Team: frei, sobald EIN infrage kommender Kalender frei ist. Ein einzelner
   // ausgefallener Berater-Kalender blockiert nicht alle; fällt alles aus → Fehler.
   const results = await Promise.allSettled(keys.map(async (k) => (await adapterFor(k)).getBusy(timeMin, timeMax)));
-  const busyLists = results.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
+  const busyLists = results.flatMap((r, i) => (r.status === "fulfilled" ? [[...r.value, ...absent[i]]] : []));
   if (busyLists.length === 0) {
     const first = results[0];
     throw first?.status === "rejected" ? first.reason : new Error("Kein Kalender verfügbar.");
@@ -153,7 +162,7 @@ export async function suggestSlots(
 
   const slots: Slot[] = [];
   for (let d = 0; d < days && slots.length < count; d++) {
-    const { y, m, day, dow } = berlinParts(new Date(now.getTime() + d * 24 * 60 * 60 * 1000));
+    const { y, m, day, dow } = berlinParts(new Date(base.getTime() + d * 24 * 60 * 60 * 1000));
     if (dow === 0 || dow === 6) continue;
     for (const h of hours) {
       if (slots.length >= count) break;
@@ -166,6 +175,17 @@ export async function suggestSlots(
     }
   }
   return slots;
+}
+
+/**
+ * Ist gerade jeder infrage kommende Kalender wegen einer Abwesenheit gesperrt?
+ * Dann der erste Werktag, ab dem wieder Termine möglich sind (YYYY-MM-DD).
+ */
+export async function bookingPausedUntil(customerId: string, leadId?: string | null): Promise<string | null> {
+  const keys = await bookingKeys(customerId, leadId);
+  const now = new Date();
+  const absent = await absenceBusyForKeys(customerId, keys, leadId, now, new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000));
+  return availableAgainYmd(absent, now);
 }
 
 /**
@@ -240,7 +260,10 @@ export async function bookAppointment(opts: {
   let calendarKey: string | null = null;
   let adapter: Awaited<ReturnType<typeof adapterFor>> | null = null;
   let lastErr: unknown = null;
-  for (const key of keys) {
+  // Abwesende Person: in ihrem Kalender wird nichts gebucht.
+  const absent = await absenceBusyForKeys(opts.customerId, keys, opts.leadId, start, end);
+  for (const [i, key] of keys.entries()) {
+    if (overlaps(absent[i], start, end)) continue;
     try {
       const a = await adapterFor(key);
       if (!overlaps(await a.getBusy(start, end), start, end)) {
@@ -450,6 +473,8 @@ export async function rescheduleAppointment(opts: {
   start: string;
   mode?: "phone" | "video";
   by: "lead" | "team";
+  /** Keine Mail an den Lead (z. B. Übergabe an die Vertretung zur selben Zeit). */
+  silent?: boolean;
 }): Promise<{ appointmentId: string; meetUrl: string | null; start: string; manageUrl: string }> {
   const old = await prisma.appointment.findFirst({
     where: { id: opts.appointmentId, customerId: opts.customerId, status: "booked" },
@@ -487,7 +512,7 @@ export async function rescheduleAppointment(opts: {
     attendeeEmail: conv?.contactEmail ?? null,
     leadName: conv?.contactName ?? null,
     leadPhone: conv?.contactPhone ?? null,
-    notifyLead: "rescheduled",
+    notifyLead: opts.silent ? false : "rescheduled",
   });
   // Alte Zeit still absagen — der Lead bekommt nur die „verschoben"-Mail.
   await cancelAppointment(old.id, opts.customerId, opts.by, false);

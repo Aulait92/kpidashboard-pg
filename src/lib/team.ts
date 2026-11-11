@@ -8,6 +8,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendToBuyersOfCustomer, sendToUser, type PushPayload } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
+import { absentUserIds } from "@/lib/absence";
 
 export type TeamCtx = { customerId: string; userId: string | null; teamRole: "owner" | "advisor" };
 
@@ -52,7 +53,8 @@ export async function teamMembers(customerId: string) {
 /**
  * Neuen Lead gleichmäßig zuteilen: unter allen Team-Mitgliedern, die Leads
  * bekommen, an den, der am längsten keinen bekommen hat. Nur wenn es ein
- * Team gibt (mehr als ein Login); sonst bleibt alles wie bisher.
+ * Team gibt (mehr als ein Login); sonst bleibt alles wie bisher. Wer gerade
+ * abwesend ist, wird übersprungen.
  */
 export async function assignLead(leadId: string): Promise<string | null> {
   const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { customerId: true, assignedUserId: true } });
@@ -62,8 +64,10 @@ export async function assignLead(leadId: string): Promise<string | null> {
     select: { id: true, receivesLeads: true, lastLeadAssignedAt: true, createdAt: true },
   });
   if (members.length < 2) return null;
-  const receivers = members.filter((m) => m.receivesLeads);
-  if (receivers.length === 0) return null; // niemand eingeteilt → Inhaber sieht ihn
+  // Abwesende (Urlaub, Krank …) werden übersprungen, ohne ihren Schalter zu ändern.
+  const absent = await absentUserIds(lead.customerId);
+  const receivers = members.filter((m) => m.receivesLeads && !absent.has(m.id));
+  if (receivers.length === 0) return null; // niemand eingeteilt/da → Inhaber sieht ihn
   receivers.sort(
     (a, b) =>
       (a.lastLeadAssignedAt?.getTime() ?? 0) - (b.lastLeadAssignedAt?.getTime() ?? 0) ||

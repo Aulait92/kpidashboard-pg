@@ -5,6 +5,7 @@ import { Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { memberName, teamMembers } from "@/lib/team";
+import { berlinYmd, teamAbsences } from "@/lib/absence";
 import { InviteForm } from "./invite-form";
 import { MemberRow } from "./member-row";
 
@@ -27,6 +28,8 @@ export default async function TeamPage() {
   });
   const leads30 = new Map(counts.map((c) => [c.assignedUserId, c._count._all]));
   const receivers = members.filter((m) => m.receivesLeads).length;
+  const absences = await teamAbsences(ctx.customerId);
+  const today = berlinYmd(new Date());
   const billing = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { seatsIncluded: true, seatMonthly: true } });
   const seatPrice = Number(billing?.seatMonthly ?? 0);
   // Platz-Abrechnung nur bei Verträgen mit Logins (seit 11.11.2026); Alt-Verträge unverändert
@@ -34,7 +37,7 @@ export default async function TeamPage() {
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <PageHeader title="Team" subtitle="Neue Leads werden reihum verteilt. Berater sehen nur ihre eigenen." />
+      <PageHeader title="Team" subtitle="Neue Leads werden reihum verteilt, Abwesende übersprungen. Berater sehen nur ihre eigenen." />
       <div className="space-y-5">
         {members.length > 1 && receivers === 0 ? (
           <p className="rounded-[var(--radius-md)] bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 ring-1 ring-amber-200">
@@ -60,7 +63,10 @@ export default async function TeamPage() {
                   ownCalendar: m.advisorCalendar?.status === "connected",
                   leads30: leads30.get(m.id) ?? 0,
                   loggedIn: !!m.lastLoginAt,
+                  absence: absences.get(m.id) ?? null,
                 }}
+                colleagues={members.filter((o) => o.id !== m.id).map((o) => ({ id: o.id, name: memberName(o) }))}
+                today={today}
               />
             ))}
           </ul>
