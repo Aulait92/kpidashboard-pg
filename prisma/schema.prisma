@@ -901,6 +901,10 @@ model Offer {
   introMonths             Int?
   specialTerms            String?
   startDate               DateTime?
+  // Kunde wählt auf der Angebotsseite selbst (seit 11.11.2026): Laufzeit (nur ohne
+  // Sonderpreis) und Startdatum. Bei Annahme werden term/setupFee/startDate überschrieben.
+  customerChoosesTerm     Boolean       @default(false)
+  customerChoosesStart    Boolean       @default(false)
   validUntil              DateTime
   // Annahme (Protokoll)
   sentAt                  DateTime?

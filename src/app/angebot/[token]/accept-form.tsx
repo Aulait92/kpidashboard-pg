@@ -1,24 +1,46 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { acceptOfferAction, type AcceptState } from "./actions";
+import { eur, withVat, type OfferTerm } from "@/lib/offer-pricing";
+
+/** Wahl von Laufzeit/Startdatum (vom Server vorberechnet; verbindlich rechnet der Server bei Annahme neu). */
+export type OfferChoiceProps = {
+  choosesTerm: boolean;
+  choosesStart: boolean;
+  initialTerm: OfferTerm;
+  /** Setup je Laufzeit (netto). */
+  options: { term: OfferTerm; label: string; setup: number }[];
+  /** Monatlich gesamt inkl. Zusätze (netto). */
+  monthlyTotal: number;
+  /** Jahreszahlung im Angebot vereinbart (gilt nur mit 12 Monaten). */
+  annualOffered: boolean;
+  freeMonths: number;
+  start: { min: string; max: string; preset: string };
+};
+
+const fmtDate = (iso: string) => iso.split("-").reverse().join(".");
 
 export function AcceptForm({
   token,
   termsUrl,
   dpaUrl,
   defaultName,
+  choice,
 }: {
   token: string;
   termsUrl: string;
   dpaUrl: string;
   defaultName: string;
+  choice?: OfferChoiceProps | null;
 }) {
   const [state, action, pending] = useActionState<AcceptState, FormData>(
     acceptOfferAction.bind(null, token),
     {},
   );
+  const [term, setTerm] = useState<OfferTerm>(choice?.initialTerm ?? "12m");
+  const [startDate, setStartDate] = useState(choice?.start.preset ?? "");
 
   useEffect(() => {
     if (state.checkoutUrl) window.location.href = state.checkoutUrl;
@@ -50,6 +72,9 @@ export function AcceptForm({
 
   return (
     <form action={action} className="space-y-4">
+      {choice && (choice.choosesTerm || choice.choosesStart) ? (
+        <ChoiceFields choice={choice} term={term} setTerm={setTerm} startDate={startDate} setStartDate={setStartDate} />
+      ) : null}
       <div>
         <label htmlFor="name" className="text-sm font-medium">
           Ihr vollständiger Name
@@ -88,9 +113,95 @@ export function AcceptForm({
         Angebot verbindlich annehmen
       </button>
       <p className="text-xs text-[color:var(--muted)]">
-        Mit dem Klick schließen Sie den Vertrag zu den oben genannten Konditionen. Zeitpunkt und Name werden zur
-        Dokumentation gespeichert.
+        Mit dem Klick schließen Sie den Vertrag zu den oben genannten Konditionen
+        {choice && (choice.choosesTerm || choice.choosesStart) ? " mit der hier gewählten Laufzeit und dem gewählten Start" : ""}.
+        Zeitpunkt und Name werden zur Dokumentation gespeichert.
       </p>
     </form>
+  );
+}
+
+function ChoiceFields({
+  choice,
+  term,
+  setTerm,
+  startDate,
+  setStartDate,
+}: {
+  choice: OfferChoiceProps;
+  term: OfferTerm;
+  setTerm: (t: OfferTerm) => void;
+  startDate: string;
+  setStartDate: (d: string) => void;
+}) {
+  const opt = choice.options.find((o) => o.term === term) ?? choice.options[0];
+  const annual = choice.annualOffered && term === "12m";
+  const annualTotal = Math.round(choice.monthlyTotal * (12 - choice.freeMonths) * 100) / 100;
+  return (
+    <div className="space-y-4 rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-4 sm:p-5">
+      {choice.choosesTerm ? (
+        <fieldset>
+          <legend className="text-sm font-medium">Laufzeit wählen</legend>
+          <div className="mt-2 grid gap-2 sm:grid-cols-3" role="radiogroup">
+            {choice.options.map((o) => (
+              <label
+                key={o.term}
+                className={`flex cursor-pointer items-start gap-2 rounded-[var(--radius-md)] border bg-white px-3 py-2.5 text-sm transition ${
+                  term === o.term
+                    ? "border-[color:var(--brand)] ring-2 ring-[color:var(--brand)]/20"
+                    : "border-[color:var(--border)] hover:border-[color:var(--border-strong)]"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="term"
+                  value={o.term}
+                  checked={term === o.term}
+                  onChange={() => setTerm(o.term)}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-[color:var(--brand)]"
+                />
+                <span className="min-w-0">
+                  <span className="block font-semibold">{o.label}</span>
+                  <span className="block text-xs text-[color:var(--muted)]">Setup {eur(o.setup)} netto</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      ) : null}
+      {choice.choosesStart ? (
+        <div>
+          <label htmlFor="startDate" className="text-sm font-medium">
+            Start
+          </label>
+          <input
+            id="startDate"
+            name="startDate"
+            type="date"
+            required
+            min={choice.start.min}
+            max={choice.start.max}
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="mt-1 h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-[15px] outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20 sm:w-60"
+          />
+          <p className="mt-1 text-xs text-[color:var(--muted)]">
+            Ab diesem Tag läuft die Monatsgebühr. Die Einrichtung dauert ca. 1–2 Wochen. Möglich: {fmtDate(choice.start.min)} bis{" "}
+            {fmtDate(choice.start.max)}.
+          </p>
+        </div>
+      ) : null}
+      <div className="grid gap-2 border-t border-[#e5e7eb] pt-3 text-sm sm:grid-cols-2" aria-live="polite">
+        <div>
+          <span className="text-[color:var(--muted)]">Jetzt fällig (Setup): </span>
+          <b data-testid="choice-setup">{eur(opt.setup)} netto</b>
+          <span className="text-[color:var(--muted)]"> · {eur(withVat(opt.setup))} brutto</span>
+        </div>
+        <div>
+          <span className="text-[color:var(--muted)]">{annual ? "Jährlich im Voraus" : "Monatlich"}{startDate ? ` ab ${fmtDate(startDate)}` : ""}: </span>
+          <b data-testid="choice-recurring">{eur(annual ? annualTotal : choice.monthlyTotal)} netto</b>
+        </div>
+      </div>
+    </div>
   );
 }

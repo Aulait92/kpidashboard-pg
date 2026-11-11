@@ -251,3 +251,123 @@ export function defaultStartDate(now = new Date()): string {
   const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
   return d.toISOString().slice(0, 10);
 }
+
+// ─── Wahl des Kunden auf der Angebotsseite (Laufzeit, Startdatum) ───
+// Reine Funktionen: Live-Anzeige auf der Angebotsseite und verbindliche Prüfung
+// bei der Annahme (dort zählt nur die serverseitige Berechnung).
+
+/** Frühester Start: so viele Tage ab heute (die Einrichtung braucht Zeit). */
+export const START_MIN_DAYS = 7;
+/** Spätester Start: so viele Tage ab heute. */
+export const START_MAX_DAYS = 90;
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Heutiges Datum in Berlin als YYYY-MM-DD. */
+export function berlinTodayIso(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+}
+
+/** YYYY-MM-DD + Tage (kalendarisch, ohne Zeitzonen-Effekte). */
+export function addDaysIso(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+/** Gültiges Kalenderdatum im Format YYYY-MM-DD? */
+export function isIsoDate(v: unknown): v is string {
+  if (typeof v !== "string" || !ISO_DATE.test(v)) return false;
+  const [y, m, d] = v.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+}
+
+/**
+ * Erlaubter Bereich für das Startdatum: heute + {@link START_MIN_DAYS} bis heute + {@link START_MAX_DAYS}.
+ * Hat der Admin bewusst einen früheren Start (ab heute) vorgegeben, bleibt dieser wählbar.
+ * `preset` = Vorschlag (Vorgabe aus dem Angebot, in den Bereich geschoben).
+ */
+export function startDateBounds(todayIso: string, presetIso: string | null): { min: string; max: string; preset: string } {
+  let min = addDaysIso(todayIso, START_MIN_DAYS);
+  const max = addDaysIso(todayIso, START_MAX_DAYS);
+  const valid = presetIso != null && isIsoDate(presetIso);
+  if (valid && presetIso >= todayIso && presetIso < min) min = presetIso;
+  const wanted = valid ? presetIso : defaultStartDate(new Date(`${todayIso}T12:00:00Z`));
+  const preset = wanted < min ? min : wanted > max ? max : wanted;
+  return { min, max, preset };
+}
+
+/** Listen-Setup je Laufzeit inkl. weiterer Produkte. */
+export function setupForChoice(term: OfferTerm, productCount: number): number {
+  return setupForTerm(term) + Math.max(0, productCount - 1) * PRICE_LIST.extraProductSetup;
+}
+
+export const TERM_OPTIONS: readonly OfferTerm[] = ["12m", "3m", "none"];
+
+/** Gespeicherter Stand eines Angebots, soweit für die Kundenwahl nötig. */
+export type OfferChoiceSnapshot = {
+  term: string;
+  productCount: number;
+  setupFee: number;
+  /** Vorgabe des Admins (YYYY-MM-DD) oder null. */
+  startIso: string | null;
+  annualPrepay: boolean;
+  annualFreeMonths: number | null;
+  choosesTerm: boolean;
+  choosesStart: boolean;
+};
+
+export type OfferChoiceResult =
+  | { ok: true; term: OfferTerm; setupFee: number; startIso: string | null; annualPrepay: boolean; annualFreeMonths: number | null }
+  | { ok: false; error: string };
+
+/**
+ * Prüft die Wahl des Kunden und berechnet die verbindlichen Werte neu.
+ * Nicht freigegebene Felder müssen der Vorgabe entsprechen (oder fehlen).
+ */
+export function resolveOfferChoice(
+  snap: OfferChoiceSnapshot,
+  input: { term?: string | null; startDate?: string | null },
+  todayIso: string,
+): OfferChoiceResult {
+  const fixedTerm = normalizeTerm(snap.term);
+  let term: OfferTerm = fixedTerm;
+  let setupFee = snap.setupFee;
+  const wantedTerm = input.term?.trim() || null;
+  if (snap.choosesTerm) {
+    if (wantedTerm != null) {
+      if (!(TERM_OPTIONS as readonly string[]).includes(wantedTerm)) return { ok: false, error: "Bitte eine gültige Laufzeit wählen." };
+      term = wantedTerm as OfferTerm;
+    }
+    setupFee = setupForChoice(term, snap.productCount);
+  } else if (wantedTerm != null && wantedTerm !== fixedTerm) {
+    return { ok: false, error: "Die Laufzeit ist in diesem Angebot fest vereinbart." };
+  }
+
+  let startIso = snap.startIso;
+  const wantedStart = input.startDate?.trim() || null;
+  if (snap.choosesStart) {
+    const b = startDateBounds(todayIso, snap.startIso);
+    if (wantedStart == null) {
+      startIso = b.preset;
+    } else {
+      if (!isIsoDate(wantedStart)) return { ok: false, error: "Bitte ein gültiges Startdatum wählen." };
+      if (wantedStart < b.min || wantedStart > b.max) {
+        return { ok: false, error: "Das Startdatum liegt außerhalb des möglichen Zeitraums. Bitte ein Datum aus dem Kalender wählen." };
+      }
+      startIso = wantedStart;
+    }
+  } else if (wantedStart != null && wantedStart !== snap.startIso) {
+    return { ok: false, error: "Das Startdatum ist in diesem Angebot fest vereinbart." };
+  }
+
+  const annualPrepay = snap.annualPrepay && term === "12m";
+  return {
+    ok: true,
+    term,
+    setupFee: Math.round(setupFee * 100) / 100,
+    startIso,
+    annualPrepay,
+    annualFreeMonths: annualPrepay ? (snap.annualFreeMonths ?? PRICE_LIST.annualFreeMonths) : null,
+  };
+}

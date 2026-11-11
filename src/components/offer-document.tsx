@@ -7,6 +7,7 @@ import {
   normalizeTerm,
   offerAddOns,
   PRICE_LIST,
+  setupForChoice,
   vatOf,
   withVat,
   type OfferProduct,
@@ -54,6 +55,9 @@ export type OfferDoc = {
   bestandMonthly: number | null;
   annualPrepay: boolean;
   annualFreeMonths: number | null;
+  /** Kunde wählt Laufzeit bzw. Startdatum bei der Annahme (vorher = Vorschlag). */
+  customerChoosesTerm?: boolean;
+  customerChoosesStart?: boolean;
 };
 
 type OfferRow = Omit<OfferDoc, "setupFee" | "monthlyFee" | "softwareFee" | "introMonthlyFee" | "seatMonthly" | "bestandMonthly" | "seats" | "seatsIncluded" | "annualPrepay" | "annualFreeMonths" | "vermittlerTyp"> & {
@@ -125,6 +129,10 @@ export function OfferDocument({
   const setupIsList = Math.abs(list.setupFee - offer.setupFee) < 0.01;
   const monthlyIsList = list.monthlyFee != null && Math.abs(list.monthlyFee - offer.monthlyFee) < 0.01;
   const add = offerAddOns(offer);
+  // Vor der Annahme: Laufzeit/Start wählt der Kunde unten selbst (Werte hier = Vorschlag).
+  const open = offer.status === "draft" || offer.status === "sent";
+  const termOpen = open && !!offer.customerChoosesTerm;
+  const startOpen = open && !!offer.customerChoosesStart;
   const hasExtras = add.seatsFee > 0 || add.bestandFee > 0;
   const hasIntro = offer.introMonthlyFee != null && !!offer.introMonths;
   // Erster Monatsbetrag inkl. Zusätze (Startpreis gilt nur für das Paket)
@@ -191,7 +199,11 @@ export function OfferDocument({
                 accent
               />
             )}
-            <Stat k="Laufzeit" v={term === "12m" ? "12 Monate" : term === "3m" ? "3 Monate" : "Monatlich kündbar"} sub="Pause jederzeit möglich" />
+            <Stat
+              k="Laufzeit"
+              v={term === "12m" ? "12 Monate" : term === "3m" ? "3 Monate" : "Monatlich kündbar"}
+              sub={termOpen ? "Vorschlag – Laufzeit wählen Sie unten bei der Annahme" : "Pause jederzeit möglich"}
+            />
           </div>
 
           <div className="mt-8 grid gap-6 text-sm sm:grid-cols-2 print:grid-cols-2">
@@ -276,7 +288,12 @@ export function OfferDocument({
             ≈ {eur(list.monthlyBudget)} im Monat. Das Werbebudget zahlt der Kunde direkt an Meta; es ist in den Preisen
             nicht enthalten.
           </Tr>
-          {offer.startDate ? <Tr k="Start">{date(offer.startDate)}. Ab diesem Tag läuft die monatliche Vergütung.</Tr> : null}
+          {offer.startDate ? (
+            <Tr k="Start">
+              {date(offer.startDate)}. Ab diesem Tag läuft die monatliche Vergütung.
+              {startOpen ? <Note>Vorschlag – das Startdatum wählen Sie unten bei der Annahme.</Note> : null}
+            </Tr>
+          ) : null}
         </Table>
 
         <H2 className="mt-12">2. Preise und Zahlungsbedingungen</H2>
@@ -349,6 +366,12 @@ export function OfferDocument({
                 : term === "3m"
                   ? "3 Monate ab Start, danach monatlich kündbar zum Ende des Abrechnungsmonats."
                   : "Keine Mindestlaufzeit, kündbar zum Ende des jeweiligen Abrechnungsmonats."}
+            {termOpen ? (
+              <Note>
+                Laufzeit wählen Sie unten bei der Annahme: 12 Monate (Setup {eur(setupForChoice("12m", products.length || 1))}), 3 Monate (
+                {eur(setupForChoice("3m", products.length || 1))}) oder ohne Laufzeit ({eur(setupForChoice("none", products.length || 1))}), jeweils netto.
+              </Note>
+            ) : null}
           </Tr>
           <Tr k="Pause / Urlaub">
             {add.annual ? (
@@ -376,6 +399,7 @@ export function OfferDocument({
             <Note>
               {add.annualTotal != null ? "Jahresbetrag" : "Erste Monatsgebühr"} ({eur2(firstCharge)} netto, {eur2(withVat(firstCharge))} brutto)
               {offer.startDate ? ` am ${date(offer.startDate)}` : " zum Start"}.
+              {termOpen || startOpen ? " Setup und Start richten sich nach Ihrer Wahl bei der Annahme." : ""}
             </Note>
           </Tr>
         </Table>

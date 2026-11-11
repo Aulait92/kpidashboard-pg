@@ -1,9 +1,19 @@
 import { notFound } from "next/navigation";
 import { Download } from "lucide-react";
-import { OfferDocument, toOfferDoc } from "@/components/offer-document";
+import { OfferDocument, offerProducts, toOfferDoc } from "@/components/offer-document";
 import { getCurrentSession } from "@/lib/auth";
-import { getOfferByToken, markOfferViewed } from "@/lib/offers";
-import { AcceptForm } from "./accept-form";
+import { getOfferByToken, markOfferViewed, offerAddOnsOf } from "@/lib/offers";
+import {
+  berlinTodayIso,
+  normalizeTerm,
+  offerAddOns,
+  PRICE_LIST,
+  setupForChoice,
+  startDateBounds,
+  TERM_OPTIONS,
+  type OfferTerm,
+} from "@/lib/offer-pricing";
+import { AcceptForm, type OfferChoiceProps } from "./accept-form";
 import { PayButton } from "./pay-button";
 import { billingEnabled } from "@/lib/billing";
 import { CheckCircle2, Clock } from "lucide-react";
@@ -90,7 +100,13 @@ export default async function OfferPage({
                 </p>
               ) : canAccept ? (
                 <div className="mt-4">
-                  <AcceptForm token={token} termsUrl={offer.termsUrl!} dpaUrl={offer.dpaUrl!} defaultName={offer.contactName} />
+                  <AcceptForm
+                    token={token}
+                    termsUrl={offer.termsUrl!}
+                    dpaUrl={offer.dpaUrl!}
+                    defaultName={offer.contactName}
+                    choice={choiceProps(offer)}
+                  />
                 </div>
               ) : (
                 <p className="mt-2 text-sm text-[color:var(--muted)]">
@@ -121,6 +137,30 @@ export default async function OfferPage({
       </div>
     </main>
   );
+}
+
+const TERM_CHOICE_LABEL: Record<OfferTerm, string> = { "12m": "12 Monate", "3m": "3 Monate", none: "Ohne Laufzeit" };
+
+/** Vorberechnete Wahl für die Angebotsseite (null = feste Konditionen wie bisher). */
+function choiceProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToken>>>): OfferChoiceProps | null {
+  if (!offer.customerChoosesTerm && !offer.customerChoosesStart) return null;
+  const count = offerProducts(offer.products).length || 1;
+  const fixedTerm = normalizeTerm(offer.term);
+  const add = offerAddOns(offerAddOnsOf(offer));
+  return {
+    choosesTerm: offer.customerChoosesTerm,
+    choosesStart: offer.customerChoosesStart,
+    initialTerm: fixedTerm,
+    options: (offer.customerChoosesTerm ? TERM_OPTIONS : [fixedTerm]).map((t) => ({
+      term: t,
+      label: TERM_CHOICE_LABEL[t],
+      setup: offer.customerChoosesTerm ? setupForChoice(t, count) : Number(offer.setupFee),
+    })),
+    monthlyTotal: add.monthlyTotal,
+    annualOffered: offer.annualPrepay,
+    freeMonths: offer.annualFreeMonths ?? PRICE_LIST.annualFreeMonths,
+    start: startDateBounds(berlinTodayIso(new Date(nowMs())), offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null),
+  };
 }
 
 function PaymentBox({

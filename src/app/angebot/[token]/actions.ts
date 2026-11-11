@@ -14,6 +14,9 @@ export async function acceptOfferAction(token: string, _prev: AcceptState, formD
   const res = await acceptOffer(token, {
     name: String(formData.get("name") ?? ""),
     termsAccepted: formData.get("terms") === "on",
+    // Wahl auf der Angebotsseite (nur wirksam, wenn im Angebot freigegeben; serverseitig geprüft)
+    term: typeof formData.get("term") === "string" ? String(formData.get("term")) : null,
+    startDate: typeof formData.get("startDate") === "string" ? String(formData.get("startDate")) : null,
     ip,
     agent: h.get("user-agent"),
   });

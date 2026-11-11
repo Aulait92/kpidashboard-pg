@@ -6,7 +6,19 @@ import { prisma } from "@/lib/prisma";
 import { getAppUrl } from "@/lib/email";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
-import { computeOfferPrice, normalizeTerm, offerAddOns, PRICE_LIST, type OfferPackage, type OfferProduct, type OfferTerm } from "@/lib/offer-pricing";
+import {
+  berlinTodayIso,
+  computeOfferPrice,
+  normalizeTerm,
+  offerAddOns,
+  PRICE_LIST,
+  resolveOfferChoice,
+  type OfferPackage,
+  type OfferProduct,
+  type OfferTerm,
+} from "@/lib/offer-pricing";
+
+const TERM_SHORT: Record<OfferTerm, string> = { "12m": "12 Monate", "3m": "3 Monate", none: "ohne Laufzeit" };
 import { logOfferActivity, offerAdminHref, setContactCustomerStage, type OfferTarget } from "@/lib/offer-links";
 import { billingEnabled } from "@/lib/billing";
 import { startOnboarding } from "@/lib/onboarding";
@@ -38,6 +50,11 @@ export type OfferFormInput = {
   bestandModule?: boolean;
   /** Vertreter (Standard) oder Makler: bestimmt die Garantien. */
   vermittlerTyp?: "vertreter" | "makler";
+  /**
+   * Kunde darf Laufzeit und Startdatum auf der Angebotsseite selbst wählen (Standard an).
+   * Mit Sonderpreis (Setup/Monat abweichend) nur das Startdatum.
+   */
+  customerChoice?: boolean;
 };
 
 /** Rechtstexte, denen bei der Annahme zugestimmt wird (per Umgebungsvariable). */
@@ -56,6 +73,19 @@ export function legalUrls() {
   };
 }
 
+/** Startwert der laufenden Nummer (OFFER_NUMBER_START, z. B. 141 = weiter nach Papierkram). */
+export function offerNumberStart(): number {
+  const n = Math.floor(Number(process.env.OFFER_NUMBER_START));
+  return Number.isFinite(n) && n >= 1 ? n : 1;
+}
+
+/** Nächste laufende Nummer: nach der letzten vergebenen, mindestens der Startwert. */
+export function nextNumberAfter(last: string | null, prefix: string, start: number): string {
+  const lastN = last ? Number(last.slice(prefix.length)) : NaN;
+  const n = Math.max(Number.isFinite(lastN) ? lastN + 1 : 1, start);
+  return `${prefix}${String(n).padStart(4, "0")}`;
+}
+
 async function nextOfferNumber(): Promise<string> {
   const year = new Date().getFullYear();
   const prefix = `PG-${year}-`;
@@ -64,8 +94,7 @@ async function nextOfferNumber(): Promise<string> {
     orderBy: { number: "desc" },
     select: { number: true },
   });
-  const n = last ? Number(last.number.slice(prefix.length)) + 1 : 1;
-  return `${prefix}${String(n).padStart(4, "0")}`;
+  return nextNumberAfter(last?.number ?? null, prefix, offerNumberStart());
 }
 
 export async function createOffer(target: OfferTarget, input: OfferFormInput, createdById: string | null) {
@@ -101,6 +130,10 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
   }
   if (input.annual && term !== "12m") throw new Error("Jährliche Vorauszahlung geht nur mit 12 Monaten Laufzeit.");
   if (input.annual && input.introMonthlyFee != null) throw new Error("Startpreis und jährliche Vorauszahlung lassen sich nicht kombinieren.");
+
+  const choosesStart = input.customerChoice !== false;
+  // Mit Sonderpreis passt ein anderes Setup nicht zur Vereinbarung → Laufzeit fest.
+  const choosesTerm = choosesStart && input.setupOverride == null && input.monthlyOverride == null;
 
   const { termsUrl, dpaUrl } = legalUrls();
   const validUntil = new Date(Date.now() + (input.validDays ?? 14) * 24 * 60 * 60 * 1000);
@@ -153,6 +186,8 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             introMonths: input.introMonthlyFee != null ? (input.introMonths ?? null) : null,
             specialTerms: input.specialTerms?.trim() || null,
             startDate: input.startDate ? new Date(`${input.startDate}T12:00:00Z`) : null,
+            customerChoosesTerm: choosesTerm,
+            customerChoosesStart: choosesStart,
             validUntil,
             termsUrl,
             dpaUrl,
@@ -177,7 +212,15 @@ export type AcceptResult = { ok: true } | { ok: false; error: string };
 
 export async function acceptOffer(
   token: string,
-  opts: { name: string; ip: string | null; agent: string | null; termsAccepted: boolean },
+  opts: {
+    name: string;
+    ip: string | null;
+    agent: string | null;
+    termsAccepted: boolean;
+    /** Wahl des Kunden (nur wenn im Angebot freigegeben; serverseitig geprüft). */
+    term?: string | null;
+    startDate?: string | null;
+  },
 ): Promise<AcceptResult> {
   const offer = await getOfferByToken(token);
   if (!offer) return { ok: false, error: "Angebot nicht gefunden." };
@@ -189,6 +232,24 @@ export async function acceptOffer(
   const name = opts.name.trim();
   if (name.length < 3) return { ok: false, error: "Bitte gib deinen vollständigen Namen ein." };
 
+  // Laufzeit/Startdatum: Wahl des Kunden prüfen und Preise serverseitig neu berechnen.
+  const choice = resolveOfferChoice(
+    {
+      term: offer.term,
+      productCount: Array.isArray(offer.products) ? offer.products.length : 1,
+      setupFee: Number(offer.setupFee),
+      startIso: offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null,
+      annualPrepay: offer.annualPrepay,
+      annualFreeMonths: offer.annualFreeMonths,
+      choosesTerm: offer.customerChoosesTerm,
+      choosesStart: offer.customerChoosesStart,
+    },
+    { term: opts.term, startDate: opts.startDate },
+    berlinTodayIso(),
+  );
+  if (!choice.ok) return { ok: false, error: choice.error };
+  const startDate = choice.startIso ? new Date(`${choice.startIso}T12:00:00Z`) : null;
+
   const now = new Date();
   const updated = await prisma.offer.updateMany({
     where: { id: offer.id, status: { in: ["draft", "sent"] } },
@@ -198,13 +259,30 @@ export async function acceptOffer(
       acceptedName: name.slice(0, 200),
       acceptedIp: opts.ip?.slice(0, 100) ?? null,
       acceptedAgent: opts.agent?.slice(0, 400) ?? null,
+      term: choice.term,
+      setupFee: choice.setupFee,
+      startDate,
+      annualPrepay: choice.annualPrepay,
+      annualFreeMonths: choice.annualFreeMonths,
     },
   });
   if (updated.count === 0) return { ok: false, error: "Dieses Angebot kann nicht mehr angenommen werden." };
+  // Ab hier mit den angenommenen Werten weiterarbeiten.
+  const accepted = { ...offer, term: choice.term, startDate, annualPrepay: choice.annualPrepay, annualFreeMonths: choice.annualFreeMonths };
+  const chosenText = `${TERM_SHORT[choice.term]}${startDate ? `, Start ${startDate.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" })}` : ""}`;
   await audit("offer.accept", {
     entity: "Offer",
     entityId: offer.id,
-    details: { number: offer.number, name: name.slice(0, 200), ip: opts.ip?.slice(0, 100) ?? null },
+    details: {
+      number: offer.number,
+      name: name.slice(0, 200),
+      ip: opts.ip?.slice(0, 100) ?? null,
+      term: choice.term,
+      startDate: choice.startIso,
+      setupFee: choice.setupFee,
+      annualPrepay: choice.annualPrepay,
+      chosenByCustomer: offer.customerChoosesTerm || offer.customerChoosesStart,
+    },
     actor: { email: offer.email ?? null, role: "kunde" },
   });
 
@@ -219,16 +297,16 @@ export async function acceptOffer(
         where: { id: offer.salesContactId },
         data: {
           // Monatlich gesamt inkl. Logins und Modul (bei Jahreszahlung ohne Rabatt)
-          monthlyValue: Math.round(offerAddOns(offerAddOnsOf(offer)).monthlyTotal),
+          monthlyValue: Math.round(offerAddOns(offerAddOnsOf(accepted)).monthlyTotal),
           ...(products ? { products } : {}),
-          contractStart: offer.startDate ?? now,
+          contractStart: startDate ?? now,
         },
       })
       .catch((err) => reportError(err, "offer-accept-contact-update", { offer: offer.number }));
-    await logOfferActivity(offer, `Angebot ${offer.number} online angenommen von ${name}`, "Kunden-Pipeline: Vertrag");
+    await logOfferActivity(offer, `Angebot ${offer.number} online angenommen von ${name}: ${chosenText}`, "Kunden-Pipeline: Vertrag");
   } else if (offer.dealId) {
     // Altes Deal-Board (abgeschaltet): nur in der Historie vermerken.
-    await logOfferActivity(offer, `Angebot ${offer.number} online angenommen von ${name}`);
+    await logOfferActivity(offer, `Angebot ${offer.number} online angenommen von ${name}: ${chosenText}`);
   }
 
   // Ohne Online-Zahlung startet das Onboarding direkt mit der Annahme

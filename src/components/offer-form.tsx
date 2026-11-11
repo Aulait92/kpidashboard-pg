@@ -61,6 +61,7 @@ export function OfferForm({
   const [annual, setAnnual] = useState(false);
   const [bestand, setBestand] = useState(false);
   const [vermittler, setVermittler] = useState<OfferVermittler>("vertreter");
+  const [customerChoice, setCustomerChoice] = useState(true);
 
   const parsedProducts = products.map((p) => ({ name: p.name, dailyBudget: num(p.daily) ?? 0 }));
   // Berechnung ist billig – direkt pro Render statt useMemo.
@@ -101,6 +102,7 @@ export function OfferForm({
         annual: annual && annualPossible,
         bestandModule: bestand && softwarePkg,
         vermittlerTyp: vermittler,
+        customerChoice,
       });
       if (!res.ok) {
         setError(res.error);
@@ -252,6 +254,23 @@ export function OfferForm({
                 <input className={input} inputMode="numeric" value={validDays} onChange={(e) => setValidDays(e.target.value)} />
               </Field>
             </div>
+            <label className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3 text-sm">
+              <input
+                type="checkbox"
+                name="customerChoice"
+                className="mt-0.5 h-4 w-4"
+                checked={customerChoice}
+                onChange={(e) => setCustomerChoice(e.target.checked)}
+              />
+              <span>
+                <span className="block font-semibold">Kunde darf Laufzeit und Startdatum selbst wählen</span>
+                <span className="block text-xs text-[color:var(--muted)]">
+                  {num(setupOverride) != null || num(monthlyOverride) != null
+                    ? "Mit Sonderpreis nur das Startdatum – die Laufzeit bleibt wie hier gewählt."
+                    : "Ihre Auswahl hier ist der Vorschlag. Start frühestens in 7 Tagen, spätestens in 90 Tagen."}
+                </span>
+              </span>
+            </label>
             <Field l="Sondervereinbarung (erscheint wörtlich im Angebot)">
               <textarea className={`${input} h-24 py-2`} value={specialTerms} onChange={(e) => setSpecialTerms(e.target.value)} />
             </Field>

@@ -7,6 +7,20 @@ geht auf die Produktion `claude/facebook-ad-media-buyer-GdTgt`
 Stand 10.11.: Der Produktions-Branch ist vollständig im Entwicklungs-Branch
 enthalten. Der Merge ist konfliktfrei.
 
+**Livegang vorgezogen auf den 11.11.2026** (ca. 10:26 UTC, Stand `ece8da4`, 35 Migrationen
+eingemessen). Seitdem ist die Produktion eingemessen: Neue Migrationen laufen beim normalen
+Deploy über `scripts/migrate.mjs` → `prisma migrate deploy` (nur die neuen, nacheinander).
+Kein Einmessen und kein Probelauf mehr nötig, solange Migrationen nur hinzufügen.
+
+### Migrationen nach dem Livegang
+
+| Migration | Was | Hinweis |
+|---|---|---|
+| `20261114090000_angebot_kundenwahl` | Spalten `Offer.customerChoosesTerm` / `customerChoosesStart` (Standard false = bisherige Angebote unverändert): Kunde wählt Laufzeit und Startdatum bei der Annahme | nur hinzufügend, läuft per `migrate deploy` |
+
+Variable `OFFER_NUMBER_START` (Produktion: `141`): Angebotsnummern laufen ab PG-JJJJ-0141
+weiter (Papierkram bis 140); danach immer letzte Nummer + 1.
+
 ## Vorher (bis 20.11.)
 
 - [x] **Probelauf Migrationen** gegen eine PITR-Kopie der Produktion (10.11., zweimal,

@@ -227,6 +227,10 @@ Seiten aus der Liste „Seiten“ unten.
   Rechnungen mit Status und „Jetzt bezahlen“ bei offenen Rechnungen.
 - Laufzeit: ohne Laufzeit (Setup 2.490 €), 3 Monate (Setup 1.990 €) oder 12 Monate (Setup 990 €), jeweils netto;
   nach der Mindestlaufzeit monatlich kündbar.
+- Laufzeit und Start wählen Sie in der Regel selbst bei der Annahme des Angebots (Angebotsseite, Abschnitt
+  „Angebot annehmen“): Setup und Summen passen sich sofort an. Start frühestens 7 Tage, spätestens 90 Tage ab
+  heute; ab diesem Tag läuft die Monatsgebühr, die Einrichtung dauert ca. 1–2 Wochen. Bei Sonderpreisen ist die
+  Laufzeit fest vereinbart, das Startdatum bleibt wählbar.
 - Zahlweise: monatlich oder jährlich im Voraus (2 Monate geschenkt: Jahresbetrag = 10 × Monatspreis inkl.
   Zusätze, nur mit 12 Monaten Laufzeit). Umstellen: bitte bei uns melden.
 - Zahlungsart, Rechnungsadresse, USt-IdNr.: über das Zahlungsportal (Stripe) auf dieser Seite.
