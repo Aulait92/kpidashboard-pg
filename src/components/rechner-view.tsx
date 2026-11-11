@@ -36,7 +36,7 @@ import {
   type StaffelStufe,
 } from "@/lib/rechner";
 import type { CplInfo } from "@/lib/rechner";
-import { PRICE_LIST } from "@/lib/offer-pricing";
+import { PRICE_LIST, TERM_MONTHS, type OfferTerm } from "@/lib/offer-pricing";
 import type { VermittlerTyp } from "@/lib/provision";
 
 // Bedingungen der Vertrags-Garantie (wie Break-even-Garantie: 90 Tage, längstens 6 Monate, 80 %).
@@ -212,8 +212,12 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
               <h2 className="mb-3 text-base font-semibold">Ihr Paket</h2>
               <Segmented
                 value={input.laufzeit}
-                options={[{ value: "12m", label: "12 Monate (Setup 990 €)" }, { value: "none", label: "Ohne Laufzeit (2.490 €)" }]}
-                onChange={(v) => set({ laufzeit: v as "12m" | "none", jaehrlich: v === "12m" ? input.jaehrlich : false })}
+                options={[
+                  { value: "12m", label: `12 Monate (${eur(PRICE_LIST.setup12m)})` },
+                  { value: "3m", label: `3 Monate (${eur(PRICE_LIST.setup3m)})` },
+                  { value: "none", label: `Ohne Laufzeit (${eur(PRICE_LIST.setupNoTerm)})` },
+                ]}
+                onChange={(v) => set({ laufzeit: v as OfferTerm, jaehrlich: v === "12m" ? input.jaehrlich : false })}
               />
               <label className={`mt-3 flex items-center gap-2 text-sm ${input.laufzeit !== "12m" ? "opacity-50" : ""}`}>
                 <input type="checkbox" className="h-4 w-4" checked={input.jaehrlich} disabled={input.laufzeit !== "12m"} onChange={(e) => set({ jaehrlich: e.target.checked })} />
@@ -507,7 +511,7 @@ function MaklerErgebnis({
           Ehrlich gerechnet: Courtage nicht abgezinst. Annahmen: {zahl(input.storno * 100, 1)} % Storno pro Jahr (monatlich gleichmäßig),
           Ø Jahresbeitrag {eur(input.beitrag)}, {zahl(input.trail * 100, 1)} % Bestandscourtage pro Jahr
           {input.rate > 0 ? `, ${zahl(input.rate * 100, 1)} % Abschluss` : ""}, Beitrag und Satz bleiben gleich. Nach der Kampagne keine
-          Kosten mehr{input.laufzeit === "12m" && b.kampagne < 12 ? " (Betreuung läuft bis Vertragsende nach 12 Monaten)" : ""}.
+          Kosten mehr{TERM_MONTHS[input.laufzeit] > b.kampagne ? ` (Betreuung läuft bis Vertragsende nach ${TERM_MONTHS[input.laufzeit]} Monaten)` : ""}.
           „Je Vertrag“ = Jahrescourtage ÷ Storno (Faustformel{b.crossSell ? ", Ø über Verträge und Zusatzverträge" : ""}). {product.name}.
           {b.crossSell ? (
             <>

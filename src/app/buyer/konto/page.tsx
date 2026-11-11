@@ -157,7 +157,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                     ? "12 Monate, verlängert sich um 12 Monate, wenn nicht 1 Monat vor Ende gekündigt"
                     : offer.term === "12m"
                       ? "12 Monate, danach monatlich kündbar"
-                      : "Monatlich kündbar"}
+                      : offer.term === "3m"
+                        ? "3 Monate, danach monatlich kündbar"
+                        : "Monatlich kündbar"}
                 </dd>
                 <dt className="text-[color:var(--muted)]">Pause / Urlaub</dt>
                 <dd>Jederzeit selbst einstellbar (siehe unten)</dd>

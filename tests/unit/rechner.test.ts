@@ -110,6 +110,17 @@ describe("Break-even-Rechner", () => {
     expect(ohne.setup).toBeCloseTo(2490 * 1.19, 6);
   });
 
+  it("3 Monate Laufzeit: Setup 1.990 €, keine Jahreszahlung, URL lz=3 hin und zurück", () => {
+    const r3 = berechne(tkv, base({ laufzeit: "3m" }), 6);
+    expect(r3.setup).toBeCloseTo(1990 * 1.19, 6);
+    expect(r3.betreuung).toBe(1000);
+    const i = inputFromParams(DEFAULT_CONFIG, { lz: "3", jv: "1" });
+    expect(i.laufzeit).toBe("3m");
+    expect(i.jaehrlich).toBe(false);
+    const back = inputFromParams(DEFAULT_CONFIG, Object.fromEntries(inputToParams(DEFAULT_CONFIG, base({ laufzeit: "3m" }))));
+    expect(back.laufzeit).toBe("3m");
+  });
+
   it("Kosten pro Lead konservativ: Daten nur, wenn höher als der Erfahrungswert", () => {
     expect(resolveCpl(tkv, { cpl: 2.1, leads: 5000 })).toMatchObject({ cpl: 6, source: "erfahrungswert" });
     expect(resolveCpl(tkv, { cpl: 2.1, leads: 5000 }).note).toMatch(/Sicherheitspuffer.*2,10/);
@@ -274,6 +285,10 @@ describe("Bestandssicht (Makler TKV, Storno)", () => {
     expect(k6.kostenMonat[13]).toBe(0);
     const k6o = berechneBestand(tkv, makler({ kampagne: 6, laufzeit: "none" }), berechne(tkv, makler({ laufzeit: "none" }), 6))!;
     expect(k6o.kostenMonat[7]).toBe(0);
+    // 3 Monate Laufzeit, 6 Monate Kampagne: Betreuung endet mit der Kampagne
+    const k6d = berechneBestand(tkv, makler({ kampagne: 6, laufzeit: "3m" }), berechne(tkv, makler({ laufzeit: "3m" }), 6))!;
+    expect(k6d.kostenMonat[6]).toBeGreaterThan(0);
+    expect(k6d.kostenMonat[7]).toBe(0);
   });
 
   it("Mischfall: Abschlussprovision im Abschlussmonat + Bestand, kein Makler-Modus", () => {

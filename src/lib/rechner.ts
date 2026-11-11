@@ -28,7 +28,7 @@
 // wenn sie HÖHER liegen – der Erfahrungswert enthält bewusst einen Puffer
 // (TKV: real zuletzt ca. 2 €, gerechnet mit 6 €; Ole, 11.11.).
 
-import { computeOfferPrice, PRICE_LIST } from "@/lib/offer-pricing";
+import { computeOfferPrice, PRICE_LIST, TERM_MONTHS, type OfferTerm } from "@/lib/offer-pricing";
 import { standardRate, type ProductKey, type VermittlerTyp } from "@/lib/provision";
 
 export const DAYS_PER_MONTH = PRICE_LIST.daysPerMonth;
@@ -333,7 +333,7 @@ export type RechnerInput = {
   contractsPerCustomer: number;
   /** nur Info */
   terminRate: number;
-  laufzeit: "12m" | "none";
+  laufzeit: OfferTerm;
   jaehrlich: boolean;
   berater: number;
   ust: boolean;
@@ -425,7 +425,8 @@ export function inputFromParams(config: RechnerConfig, q: Params): RechnerInput 
     const w = numIn(one(q, `s${i}w`), 0, p.kind === "monthly" ? 24 : 100);
     if (ab != null && w != null) staffel.push({ ab: Math.round(ab), wert: p.kind === "monthly" ? w : w / 100 });
   }
-  const laufzeit = one(q, "lz") === "0" ? "none" : "12m";
+  const lz = one(q, "lz");
+  const laufzeit: OfferTerm = lz === "0" ? "none" : lz === "3" ? "3m" : "12m";
   const km = Number(one(q, "km"));
   const hz = Number(one(q, "hz"));
   return {
@@ -478,6 +479,7 @@ export function inputToParams(config: RechnerConfig, i: RechnerInput): URLSearch
   if (diff(i.contractsPerCustomer, d.contractsPerCustomer)) q.set("vk", String(Math.round(i.contractsPerCustomer * 100) / 100));
   if (diff(i.terminRate, d.terminRate)) q.set("tq", String(pct(i.terminRate)));
   if (i.laufzeit === "none") q.set("lz", "0");
+  if (i.laufzeit === "3m") q.set("lz", "3");
   if (i.jaehrlich && i.laufzeit === "12m") q.set("jv", "1");
   if (i.berater !== 1) q.set("ber", String(i.berater));
   if (!i.ust) q.set("ust", "0");
@@ -693,7 +695,7 @@ function bestandRechnung(p: RechnerProduct, i: RechnerInput, r: RechnerResult, m
   const bleibe = Math.pow(1 - storno, 1 / 12);
   const kampagne = i.kampagne;
   const monate = kampagne + i.horizont * 12;
-  const betreuungMonate = i.laufzeit === "12m" ? Math.max(kampagne, 12) : kampagne;
+  const betreuungMonate = Math.max(kampagne, TERM_MONTHS[i.laufzeit] ?? 0);
   const neu = r.vertraege;
   // Abschluss-% (Staffel wie in berechne), Bestand-% läuft separat über den Bestand
   const abschluss = provisionPerVertrag(p.kind, i, neu) - i.beitrag * i.trail;

@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getAppUrl } from "@/lib/email";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
-import { computeOfferPrice, offerAddOns, PRICE_LIST, type OfferPackage, type OfferProduct, type OfferTerm } from "@/lib/offer-pricing";
+import { computeOfferPrice, normalizeTerm, offerAddOns, PRICE_LIST, type OfferPackage, type OfferProduct, type OfferTerm } from "@/lib/offer-pricing";
 import { logOfferActivity, offerAdminHref, setContactCustomerStage, type OfferTarget } from "@/lib/offer-links";
 import { billingEnabled } from "@/lib/billing";
 import { startOnboarding } from "@/lib/onboarding";
@@ -81,9 +81,10 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
   if (!input.startDate || !/^\d{4}-\d{2}-\d{2}$/.test(input.startDate)) {
     throw new Error("Bitte ein Startdatum angeben – ab dann läuft die Monatsgebühr.");
   }
+  const term = normalizeTerm(input.term);
   const price = computeOfferPrice({
     package: pkg,
-    term: input.term,
+    term,
     products,
     setupOverride: input.setupOverride,
     monthlyOverride: input.monthlyOverride,
@@ -98,7 +99,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
         : "Ab 10.000 € Werbebudget gibt es keinen Listenpreis – bitte die Monatsgebühr individuell eintragen.",
     );
   }
-  if (input.annual && input.term !== "12m") throw new Error("Jährliche Vorauszahlung geht nur mit 12 Monaten Laufzeit.");
+  if (input.annual && term !== "12m") throw new Error("Jährliche Vorauszahlung geht nur mit 12 Monaten Laufzeit.");
   if (input.annual && input.introMonthlyFee != null) throw new Error("Startpreis und jährliche Vorauszahlung lassen sich nicht kombinieren.");
 
   const { termsUrl, dpaUrl } = legalUrls();
@@ -134,7 +135,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             city: input.city?.trim() || null,
             package: pkg,
             vermittlerTyp,
-            term: input.term,
+            term,
             products,
             setupFee: price.setupFee,
             monthlyFee: price.monthlyFee!,

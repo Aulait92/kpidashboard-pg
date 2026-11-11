@@ -21,7 +21,7 @@ Konfiguration, URL), `src/lib/rechner-server.ts` (DB, echte Kosten pro Lead),
 | Kosten | (Werbebudget + Betreuung nach Budget-Staffel + weitere Berater) × 1,19 (abschaltbar) |
 | Jahreszahlung | Betreuung + Berater × 10/12 (nur mit 12 Monaten) |
 | Break-even | kleinste Zahl Verträge n mit n × Provision(n) ≥ Kosten |
-| Setup | 990 € (12 Monate) bzw. 2.490 € (ohne Laufzeit) × USt.; „wieder drin nach“ = Setup ÷ Überschuss |
+| Setup | 990 € (12 Monate), 1.990 € (3 Monate) bzw. 2.490 € (ohne Laufzeit) × USt.; URL `lz=3` = 3 Monate, `lz=0` = ohne; „wieder drin nach“ = Setup ÷ Überschuss |
 | Jahr 1 | 12 × Überschuss − Setup |
 
 Provision ist umsatzsteuerfrei; Kosten werden für Vertreter standardmäßig inkl. 19 % USt.
@@ -70,7 +70,7 @@ bisherige Ansicht; haben sie Bestandsprovision, steht darunter eine Zeile zum Be
 | Bleibequote | r = (1 − Storno)^(1/12), Storno Standard **10 % pro Jahr** (Eingabe unter „Ihre Erfahrungswerte“, 1–50 %) |
 | Bestand | N(m) = N(m−1) × r + neue Verträge (neue nur während der Kampagne) |
 | Courtage | N(m) × Jahresbeitrag × Bestand-% ÷ 12 + neue Verträge × Jahresbeitrag × Abschluss-% (Mischfall) |
-| Kosten | Werbung nur während der Kampagne; Betreuung + Berater während der Kampagne, bei 12 Monaten Laufzeit mindestens 12 Monate; × USt.; Setup in Monat 0 |
+| Kosten | Werbung nur während der Kampagne; Betreuung + Berater während der Kampagne, bei 12 bzw. 3 Monaten Laufzeit mindestens 12 bzw. 3 Monate; × USt.; Setup in Monat 0 |
 | Kampagnendauer | 6 / 12 / 24 Monate, Standard 12 |
 | Horizont | Courtage zählt bis 3 / 5 / 10 Jahre nach Kampagnenende, Standard 5 |
 | Je Vertrag | Lebenszeit-Courtage = Jahresbeitrag × Bestand-% ÷ Storno (+ Abschluss) – Faustformel; Kosten je Vertrag = Monatskosten ÷ Verträge im Monat (ohne Setup) |

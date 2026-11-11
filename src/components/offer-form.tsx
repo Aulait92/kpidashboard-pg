@@ -207,10 +207,11 @@ export function OfferForm({
         <Card>
           <CardHeader title="Laufzeit und Konditionen" />
           <div className="space-y-4 p-5">
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-2 sm:grid-cols-3">
               {(
                 [
                   ["12m", "12 Monate", `Setup ${eur(PRICE_LIST.setup12m)}`],
+                  ["3m", "3 Monate", `Setup ${eur(PRICE_LIST.setup3m)}`],
                   ["none", "Ohne Laufzeit", `Setup ${eur(PRICE_LIST.setupNoTerm)}`],
                 ] as const
               ).map(([k, t, s]) => (

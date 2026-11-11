@@ -4,6 +4,7 @@ import { AGB, PROVIDER } from "@/lib/legal-texts";
 import {
   computeOfferPrice,
   eur,
+  normalizeTerm,
   offerAddOns,
   PRICE_LIST,
   vatOf,
@@ -117,7 +118,7 @@ export function OfferDocument({
   collapseAgb?: boolean;
 }) {
   const products = offerProducts(offer.products);
-  const term = (offer.term === "12m" ? "12m" : "none") as OfferTerm;
+  const term: OfferTerm = normalizeTerm(offer.term);
   const serviceOnly = offer.package === "service";
   const list = computeOfferPrice({ package: serviceOnly ? "service" : "software", term, products });
   const extra = Math.max(0, products.length - 1);
@@ -190,7 +191,7 @@ export function OfferDocument({
                 accent
               />
             )}
-            <Stat k="Laufzeit" v={term === "12m" ? "12 Monate" : "Monatlich kündbar"} sub="Pause jederzeit möglich" />
+            <Stat k="Laufzeit" v={term === "12m" ? "12 Monate" : term === "3m" ? "3 Monate" : "Monatlich kündbar"} sub="Pause jederzeit möglich" />
           </div>
 
           <div className="mt-8 grid gap-6 text-sm sm:grid-cols-2 print:grid-cols-2">
@@ -284,7 +285,7 @@ export function OfferDocument({
             <b className="text-[#111827]">{eur2(offer.setupFee)}</b> netto zzgl. 19 % USt.
             <Note>
               {setupIsList
-                ? `${term === "12m" ? "Mit 12 Monaten Laufzeit" : "Ohne Vertragslaufzeit"}${extra ? `, inklusive ${extra} weiteres Produkt${extra > 1 ? "e" : ""}` : ""}`
+                ? `${term === "12m" ? "Mit 12 Monaten Laufzeit" : term === "3m" ? "Mit 3 Monaten Laufzeit" : "Ohne Vertragslaufzeit"}${extra ? `, inklusive ${extra} weiteres Produkt${extra > 1 ? "e" : ""}` : ""}`
                 : "Sonderkondition"}
             </Note>
           </Tr>
@@ -345,7 +346,9 @@ export function OfferDocument({
               ? "12 Monate ab Start, jährlich im Voraus bezahlt. Danach verlängert sich der Vertrag um jeweils weitere 12 Monate, wenn er nicht mit einer Frist von einem Monat zum Ende der Laufzeit gekündigt wird."
               : term === "12m"
                 ? "12 Monate ab Start, danach monatlich kündbar zum Ende des Abrechnungsmonats."
-                : "Keine Mindestlaufzeit, kündbar zum Ende des jeweiligen Abrechnungsmonats."}
+                : term === "3m"
+                  ? "3 Monate ab Start, danach monatlich kündbar zum Ende des Abrechnungsmonats."
+                  : "Keine Mindestlaufzeit, kündbar zum Ende des jeweiligen Abrechnungsmonats."}
           </Tr>
           <Tr k="Pause / Urlaub">
             {add.annual ? (

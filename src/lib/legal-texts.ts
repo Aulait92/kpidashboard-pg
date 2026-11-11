@@ -96,6 +96,8 @@ export const AGB: LegalSection[] = [
     title: "Laufzeit und Kündigung",
     items: [
       { sub: "Ohne Vertragslaufzeit", text: "Der Vertrag läuft unbefristet und kann von beiden Seiten zum Ende des jeweiligen Abrechnungsmonats in Textform gekündigt werden." },
+      // Prüfen: Mindestlaufzeit 3 Monate (Ole, 11.11.2026)
+      { sub: "Mit 3 Monaten Laufzeit", text: "Der Vertrag hat eine Mindestlaufzeit von 3 Monaten ab Start. Danach läuft er unbefristet weiter und kann zum Ende des jeweiligen Abrechnungsmonats gekündigt werden." },
       { sub: "Mit 12 Monaten Laufzeit", text: "Der Vertrag hat eine Mindestlaufzeit von 12 Monaten ab Start. Danach läuft er unbefristet weiter und kann zum Ende des jeweiligen Abrechnungsmonats gekündigt werden." },
       // Prüfen: Verlängerung bei Jahreszahlung
       { sub: "Mit jährlicher Vorauszahlung", text: "Der Vertrag hat eine Laufzeit von 12 Monaten ab Start und verlängert sich jeweils um weitere 12 Monate, wenn er nicht mit einer Frist von einem Monat zum Ende des Zahlungsjahres in Textform gekündigt wird. Der Kunde kann vor Ablauf des Zahlungsjahres in Textform auf monatliche Zahlung umstellen; dann gilt ab dem folgenden Zahlungszeitraum die Regel „Mit 12 Monaten Laufzeit“." },

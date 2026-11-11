@@ -57,6 +57,7 @@ vi.mock("stripe", () => {
 import { prisma } from "@/lib/prisma";
 import { createScheduleForOffer, setBestandModule, syncSeatBilling } from "@/lib/billing";
 import { startOnboarding } from "@/lib/onboarding";
+import { createOffer } from "@/lib/offers";
 import { createCampaign } from "@/lib/bestand/campaigns";
 import { QUOTA_REACHED, bestandQuota } from "@/lib/bestand/quota";
 import { PRICE_LIST } from "@/lib/offer-pricing";
@@ -125,6 +126,28 @@ describe("Preise: Annahme → Abo-Positionen und Kundenkonto", () => {
       { product: "prod_seat", qty: 2, cents: 49 * 10 * 100, interval: "year" },
       { product: "prod_bestand", qty: 1, cents: 149 * 10 * 100, interval: "year" },
     ]);
+  });
+
+  it("Angebot mit 3 Monaten Laufzeit: Setup 1.990 €, Laufzeit gespeichert, keine Jahreszahlung", async () => {
+    const contact = await prisma.salesContact.create({ data: { name: "Laufzeit Test", email: `lz3-${uid()}@example.test` } });
+    const base = { contactName: "Laufzeit Test", term: "3m" as const, products: [{ name: "Katzenversicherung", dailyBudget: 40 }], startDate: "2026-12-01" };
+    const offer = await createOffer({ salesContactId: contact.id }, base, null);
+    offers.push(offer.id);
+    expect(offer.term).toBe("3m");
+    expect(Number(offer.setupFee)).toBe(1990);
+    expect(Number(offer.monthlyFee)).toBe(1000);
+    await expect(createOffer({ salesContactId: contact.id }, { ...base, annual: true }, null)).rejects.toThrow(/12 Monaten/);
+    // Monatsabo wie bei 12 Monaten
+    const accepted = await makeOffer({ term: "3m", setupFee: 1990, seats: 3, bestandMonthly: null, annualPrepay: false, annualFreeMonths: null });
+    offers.push(accepted.id);
+    await createScheduleForOffer(accepted.id, { customer: accepted.stripeCustomerId, mode: "subscription" } as never);
+    const params = stripeState.scheduleParams[0] as { phases: { items: { price_data: { product: string; recurring: { interval: string } } }[] }[] };
+    expect(params.phases[0].items.map((i) => [i.price_data.product, i.price_data.recurring.interval])).toEqual([
+      ["prod_software", "month"],
+      ["prod_service", "month"],
+    ]);
+    await prisma.offer.deleteMany({ where: { salesContactId: contact.id } });
+    await prisma.salesContact.delete({ where: { id: contact.id } }).catch(() => {});
   });
 
   it("Monatsabo ohne Zusätze: nur Software + Betreuung, Intervall Monat", async () => {

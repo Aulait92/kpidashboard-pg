@@ -4,6 +4,8 @@
 
 export const PRICE_LIST = {
   setupNoTerm: 2490,
+  /** Mindestlaufzeit 3 Monate (Ole, 11.11.2026). */
+  setup3m: 1990,
   setup12m: 990,
   extraProductSetup: 990,
   extraProductMonthly: 350,
@@ -37,7 +39,17 @@ export const PRICE_LIST = {
   whatsappIncluded: true,
 } as const;
 
-export type OfferTerm = "none" | "12m";
+export type OfferTerm = "none" | "3m" | "12m";
+
+/** Mindestlaufzeit in Monaten je Laufzeit-Option (0 = monatlich kündbar). */
+export const TERM_MONTHS: Record<OfferTerm, number> = { none: 0, "3m": 3, "12m": 12 };
+
+/** Unbekannte/alte Werte → „none“. */
+export const normalizeTerm = (t: unknown): OfferTerm => (t === "12m" || t === "3m" ? t : "none");
+
+/** Listen-Setup je Laufzeit (ohne weitere Produkte). */
+export const setupForTerm = (t: OfferTerm): number =>
+  t === "12m" ? PRICE_LIST.setup12m : t === "3m" ? PRICE_LIST.setup3m : PRICE_LIST.setupNoTerm;
 /** Vertreter oder Makler: bestimmt die Garantien (Break-even bzw. Vertrags-Garantie). */
 export type OfferVermittler = "vertreter" | "makler";
 export type OfferPackage = "software" | "service";
@@ -102,7 +114,7 @@ export function computeOfferPrice(input: OfferInput): OfferPrice {
   const products = input.products.filter((p) => p.name.trim());
   const monthlyBudget = monthlyBudgetOf(products);
   const extraProducts = Math.max(0, products.length - 1);
-  const baseSetup = input.term === "12m" ? PRICE_LIST.setup12m : PRICE_LIST.setupNoTerm;
+  const baseSetup = setupForTerm(normalizeTerm(input.term));
   const listSetup = baseSetup + extraProducts * PRICE_LIST.extraProductSetup;
 
   const serviceOnly = input.package === "service";
@@ -225,6 +237,7 @@ export const eur = (n: number) =>
 
 export const TERM_LABEL: Record<OfferTerm, string> = {
   none: "Ohne Vertragslaufzeit (monatlich kündbar)",
+  "3m": "3 Monate Laufzeit",
   "12m": "12 Monate Laufzeit",
 };
 
