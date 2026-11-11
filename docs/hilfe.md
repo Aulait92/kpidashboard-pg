@@ -171,8 +171,9 @@ Seiten aus der Liste „Seiten“ unten.
   100 Leads, sonst ist die Betreuung im Folgemonat kostenlos.
 - **Break-even-Garantie:** Liegt die Provision nach 90 Tagen unter den Kosten für Werbung und Betreuung, betreuen wir ohne
   Betreuungsgebühr weiter (auf Wunsch mit anderem Produkt), bis es sich rechnet, längstens 6 Monate. Voraussetzung:
-  mindestens 20 €/Tag ohne Pause, mindestens 80 % der Termine wahrgenommen, Ergebnisse bei mindestens 80 % der Leads
+  mindestens 20 €/Tag an den aktiven Tagen, mindestens 80 % der Termine wahrgenommen, Ergebnisse bei mindestens 80 % der Leads
   eingetragen („Wie lief's?“, Abschluss mit Beitrag) und Provisionssätze unter „Meine Provisionen“ hinterlegt.
+- Urlaub oder Krankheit (Pause) schaden der Garantie nicht: Pausentage verlängern den Zeitraum (30 bzw. 90 aktive Tage).
 - Genaue Bedingungen stehen in den AGB (Abschnitt „Garantien“). Fragen dazu: bei performancegrowth melden.
 
 ## Team (nur Inhaber)
