@@ -14,7 +14,7 @@ enthalten. Der Merge ist konfliktfrei.
       Livegang nur wiederholen, wenn neue Migrationen dazukommen
       (`ls prisma/migrations` mit der Liste unten vergleichen).
 - [ ] **Probelauf 3** mit dem Stand, der live geht (ca. 19./20.11., nach Code-Stopp):
-      seit Probelauf 2 sind **10 Migrationen dazugekommen** (jetzt 32, siehe
+      seit Probelauf 2 sind **11 Migrationen dazugekommen** (jetzt 33, siehe
       „Neue Migrationen seit Probelauf 2“). Ablauf wie Probelauf 2.
 
 ### Neue Migrationen seit Probelauf 2 (Stand 11.11.)
@@ -31,6 +31,7 @@ enthalten. Der Merge ist konfliktfrei.
 | `20261113090000_kosten_zweck` | Tabellen `RecurringCost` (laufende Kosten mit Zweck) und `KpiSettings` (Gründerzeit, Kampagnen, Update-Texte) für die Zahlen-Seite | über den Schema-Abgleich, nur hinzufügend |
 | `20261113100000_preise_plaetze_jahr_bestand` | Preise 11.11.: Spalten am `Offer` (`seats`, `seatsIncluded`, `seatMonthly`, `bestandMonthly`, `annualPrepay`, `annualFreeMonths`) und am `Customer` (`seatsIncluded`, `seatMonthly`, `seatsBilled`, `billingInterval` Standard „month“, `bestandMonthly`, `bestandGrandfathered`, `bestandRequestedAt`, `bestandMessageQuota`); setzt `bestandGrandfathered` für Kunden mit freigeschaltetem Bestand | Spalten über den Schema-Abgleich, nur hinzufügend. Das `UPDATE` (Bestandsschutz-Markierung) läuft beim Einmessen **nicht** – unkritisch: der Zugang hängt weiter an `existingCustomersEnabled`, das unverändert bleibt; die Markierung ist nur Anzeige. Alt-Kunden haben `seatsIncluded = NULL` → keine Platz-Abrechnung. |
 | `20261113110000_rechner` | Tabelle `RechnerConfig` (Einstellungen des öffentlichen Break-even-Rechners als JSON) | über den Schema-Abgleich, nur hinzufügend |
+| `20261113120000_garantien` | Tabelle `GarantieFall` (Lead- und Break-even-Garantie: Fall je Kunde, Art und Monat mit Kennzahlen, Entscheidung, Stripe-Gutschrift), siehe `docs/garantien.md` | über den Schema-Abgleich, nur hinzufügend |
 
 Keine davon verändert bestehende Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und
@@ -110,7 +111,7 @@ KI-Hilfe, die brauchen keine Migration).
    `[migrate] Alte Einträge aus früherem Verlauf (bleiben unberührt): …`
    `[migrate] Datenbank ohne (eigene) Migrations-Historie – wird einmalig eingemessen.`
    `[migrate] Schema wird angeglichen (nur hinzufügende Änderungen).`
-   32 × `Migration … marked as applied.` (bis `20261113110000_rechner`), dazwischen
+   33 × `Migration … marked as applied.` (bis `20261113120000_garantien`), dazwischen
    `[migrate] 20261110120001_status_seit_trigger wird beim Einmessen ausgeführt.`,
    am Ende `No pending migrations to apply.` und `[migrate] Schema aktuell.`
    (Die roten Zeilen „Loaded Prisma config …“ sind nur Hinweise, keine Fehler.)

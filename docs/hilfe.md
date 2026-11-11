@@ -168,12 +168,19 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Garantien (Katzenversicherung)
 - **Lead-Garantie:** Bei mindestens 20 € Werbebudget pro Tag gibt es in den ersten 30 Tagen nach Kampagnenstart mindestens
-  100 Leads, sonst ist die Betreuung im Folgemonat kostenlos.
+  100 Leads, sonst sind Betreuung und Software im Folgemonat kostenlos.
 - **Break-even-Garantie (nur Vertreter, nicht Makler):** Liegt die Provision nach 90 Tagen unter den Kosten für Werbung und Betreuung, betreuen wir ohne
   Betreuungsgebühr weiter (auf Wunsch mit anderem Produkt), bis es sich rechnet, längstens 6 Monate. Voraussetzung:
   mindestens 20 €/Tag an den aktiven Tagen, mindestens 80 % der Termine wahrgenommen, Ergebnisse bei mindestens 80 % der Leads
   eingetragen („Wie lief's?“, Abschluss mit Beitrag) und Provisionssätze unter „Meine Provisionen“ hinterlegt.
-- Urlaub oder Krankheit (Pause) schaden der Garantie nicht: Pausentage verlängern den Zeitraum (30 bzw. 90 aktive Tage).
+  Für Makler gilt die Lead-Garantie.
+- **Wo sehe ich meinen Stand?** Unter „Zahlen“ (ganz unten, Karte „Deine Garantie“, nur für den Inhaber): Tag x von 30
+  bzw. 90, Leads bzw. Provision und Kosten seit Kampagnenstart und welche Voraussetzungen erfüllt sind (Haken) oder noch
+  fehlen. Fehlen Provisionssätze, führt ein Link direkt zu „Meine Provisionen“.
+- Die Tage zählen ab der ersten Auslieferung der Anzeigen. **Pausen (Urlaub, Krankheit) verlängern den Zeitraum** um die
+  Pausentage, die Garantie verfällt dadurch nicht. Eine offene Rechnung zum Prüfzeitpunkt verhindert die Gutschrift, bis
+  sie bezahlt ist.
+- Die App prüft täglich automatisch; gutgeschrieben wird nach kurzer Prüfung durch uns auf der nächsten Rechnung.
 - Genaue Bedingungen stehen in den AGB (Abschnitt „Garantien“). Fragen dazu: bei performancegrowth melden.
 
 ## Team (nur Inhaber)

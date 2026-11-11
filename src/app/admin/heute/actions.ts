@@ -6,6 +6,7 @@ import { requireAuth } from "@/lib/vertrieb/auth";
 import { validHeuteKey } from "@/lib/admin-heute";
 import { decideStorno } from "@/lib/ppl/storno";
 import { addDays } from "@/lib/vertrieb/dates";
+import { gewaehreFall, lehneFallAb } from "@/lib/garantien-server";
 
 // Sofort-Aktionen in „Heute“ (Admin-A). Jede Aktion liefert, was „Rückgängig“
 // braucht. Server Functions sind per POST direkt erreichbar → überall requireAuth.
@@ -54,6 +55,24 @@ export async function decideStornoQuickAction(leadId: string, approve: boolean):
   revalidatePath("/admin/ppl", "layout");
   if (!done) return fail("Diese Reklamation ist schon entschieden.");
   return { ok: true, message: approve ? "Reklamation anerkannt, Gutschrift auf die nächste Rechnung" : "Reklamation abgelehnt" };
+}
+
+/** Garantiefall gewähren: Stripe-Gutschrift + Protokoll (kein „Rückgängig“ – Gutschrift ist gebucht). */
+export async function garantieGewaehrenAction(fallId: string): Promise<HeuteResult> {
+  const session = await requireAuth();
+  const res = await gewaehreFall(String(fallId), { id: session.userId, email: session.email, role: session.role });
+  revalidatePath("/admin/heute");
+  revalidatePath("/admin/kunden", "layout");
+  return res.ok ? { ok: true, message: res.message } : fail(res.error);
+}
+
+/** Garantiefall ablehnen (Begründung Pflicht) + Protokoll. */
+export async function garantieAblehnenAction(fallId: string, grund: string): Promise<HeuteResult> {
+  const session = await requireAuth();
+  const res = await lehneFallAb(String(fallId), String(grund ?? ""), { id: session.userId, email: session.email, role: session.role });
+  revalidatePath("/admin/heute");
+  revalidatePath("/admin/kunden", "layout");
+  return res.ok ? { ok: true, message: res.message } : fail(res.error);
 }
 
 /** Angebot nachgefasst: Notiz am Kontakt und 5 Tage ausblenden. */

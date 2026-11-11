@@ -134,6 +134,7 @@ model Customer {
   metaAdAccountId String?
 
   leads            Lead[]
+  garantieFaelle   GarantieFall[]
   revenues         Revenue[]
   costs            Cost[]
   users            User[]
@@ -1695,4 +1696,34 @@ model RechnerConfig {
   id        String   @id @default("default")
   config    Json
   updatedAt DateTime @updatedAt
+}
+
+// Garantiefälle (Lead-Garantie, Break-even-Garantie; AGB „Garantien“).
+// Der tägliche Cron legt Fälle an bzw. aktualisiert offene; gutgeschrieben wird
+// erst, wenn ein Admin „Gewähren“ klickt (lib/garantien-server.ts).
+model GarantieFall {
+  id             String    @id @default(cuid())
+  customerId     String
+  customer       Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  // lead | breakeven
+  art            String
+  // Abrechnungsmonat, der kostenlos wird (YYYY-MM, Europe/Berlin)
+  monat          String
+  periodeVon     DateTime
+  periodeBis     DateTime
+  // Schnappschuss der Kennzahlen bei der letzten Prüfung
+  kennzahlen     Json
+  // offen | gewaehrt | abgelehnt
+  status         String    @default("offen")
+  grund          String?
+  entschiedenVon String?
+  entschiedenAm  DateTime?
+  // Stripe-Gutschrift (Rechnungsposten-ID) und deren Nettobetrag
+  stripeRef      String?
+  betrag         Decimal?  @db.Decimal(12, 2)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([customerId, art, monat])
+  @@index([status])
 }

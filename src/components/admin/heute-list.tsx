@@ -8,6 +8,8 @@ import {
   completeTaskAction,
   decideStornoQuickAction,
   dismissAction,
+  garantieAblehnenAction,
+  garantieGewaehrenAction,
   offerFollowedUpAction,
   postponeTaskAction,
   undoHeuteAction,
@@ -56,6 +58,7 @@ function HeuteRow({ it }: { it: HeuteItem }) {
   const [hidden, setHidden] = useState(false);
   const [pending, start] = useTransition();
   const [confirm, setConfirm] = useState<"approve" | "reject" | null>(null);
+  const [grund, setGrund] = useState(it.quick?.kind === "garantie" ? it.quick.grundVorschlag : "");
 
   // Zeile sofort ausblenden; bei Fehler wieder zeigen. „Rückgängig“ holt sie zurück.
   function run(action: () => Promise<HeuteResult>) {
@@ -88,7 +91,7 @@ function HeuteRow({ it }: { it: HeuteItem }) {
 
   if (hidden) return null;
   const q = it.quick;
-  const mainIsPrimary = it.tone !== "info" && q?.kind !== "task" && q?.kind !== "storno";
+  const mainIsPrimary = it.tone !== "info" && q?.kind !== "task" && q?.kind !== "storno" && q?.kind !== "garantie";
 
   return (
     <li className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:gap-4" data-heute={it.key}>
@@ -136,6 +139,55 @@ function HeuteRow({ it }: { it: HeuteItem }) {
               <button type="button" disabled={pending} onClick={() => setConfirm("approve")} className={cn(btn, primary)}>
                 <Check className="h-4 w-4" />
                 Anerkennen
+              </button>
+              <button type="button" disabled={pending} onClick={() => setConfirm("reject")} className={cn(btn, secondary)}>
+                Ablehnen
+              </button>
+            </>
+          )
+        ) : null}
+
+        {q?.kind === "garantie" ? (
+          confirm === "reject" ? (
+            <form
+              className="flex w-full min-w-0 flex-1 items-center gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                run(() => garantieAblehnenAction(q.fallId, grund));
+              }}
+            >
+              <input
+                value={grund}
+                onChange={(e) => setGrund(e.target.value)}
+                required
+                minLength={3}
+                maxLength={500}
+                autoFocus
+                placeholder="Begründung"
+                aria-label="Begründung für die Ablehnung"
+                className="h-10 min-w-0 flex-[2] rounded-[var(--radius-sm)] border border-[color:var(--border)] px-2 text-sm sm:h-9 sm:w-64"
+              />
+              <button type="submit" disabled={pending || grund.trim().length < 3} className={cn(btn, "bg-rose-600 text-white hover:bg-rose-700")}>
+                Ablehnen
+              </button>
+              <button type="button" onClick={() => setConfirm(null)} className={cn(btn, secondary, "flex-none px-3 [&_svg]:block")} aria-label="Abbrechen">
+                <X className="h-4 w-4" />
+              </button>
+            </form>
+          ) : confirm === "approve" ? (
+            <>
+              <button type="button" disabled={pending} onClick={() => run(() => garantieGewaehrenAction(q.fallId))} className={cn(btn, primary)}>
+                Ja, gutschreiben
+              </button>
+              <button type="button" onClick={() => setConfirm(null)} className={cn(btn, secondary, "flex-none px-3 [&_svg]:block")} aria-label="Abbrechen">
+                <X className="h-4 w-4" />
+              </button>
+            </>
+          ) : (
+            <>
+              <button type="button" disabled={pending} onClick={() => setConfirm("approve")} className={cn(btn, it.tone === "info" ? secondary : primary)}>
+                <Check className="h-4 w-4" />
+                Gewähren
               </button>
               <button type="button" disabled={pending} onClick={() => setConfirm("reject")} className={cn(btn, secondary)}>
                 Ablehnen

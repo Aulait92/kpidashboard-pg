@@ -524,6 +524,39 @@ export async function addInvoiceItem(opts: {
   return item.id;
 }
 
+/**
+ * Garantie-Gutschrift: negativer Rechnungsposten (netto, zzgl. USt. wie die
+ * Abo-Positionen). Stripe verrechnet ihn mit der nächsten Rechnung des Kunden;
+ * ist er höher als die Rechnung, bleibt der Rest als Guthaben stehen.
+ * Idempotent je Garantiefall.
+ */
+export async function addGarantieGutschrift(opts: {
+  stripeCustomerId: string;
+  amountEur: number;
+  description: string;
+  fallId: string;
+  metadata?: Record<string, string>;
+}): Promise<string> {
+  const stripe = stripeClient();
+  if (!stripe) throw new Error("Stripe ist nicht eingerichtet.");
+  if (!(opts.amountEur > 0)) throw new Error("Kein Betrag für die Gutschrift.");
+  // Negativer Betrag geht nur über `amount` (price_data erlaubt keine negativen Preise), daher ohne Produkt.
+  const tax = await resolveTax(stripe);
+  const item = await stripe.invoiceItems.create(
+    {
+      customer: opts.stripeCustomerId,
+      description: opts.description,
+      amount: -cents(opts.amountEur),
+      currency: "eur",
+      tax_behavior: "exclusive",
+      ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
+      metadata: { pg_kind: "garantie", garantie_fall: opts.fallId, ...opts.metadata },
+    },
+    { idempotencyKey: `garantie-${opts.fallId}` },
+  );
+  return item.id;
+}
+
 // ─── Pay-per-Lead: Zahlungsart hinterlegen und Wochenrechnungen ───────────
 
 /** Stripe-Kunde für einen Käufer sicherstellen (ohne Angebot, z. B. Pay-per-Lead). */

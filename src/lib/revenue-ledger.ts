@@ -105,6 +105,10 @@ export type RetainerInput = {
   extras?: number;
   /** Faktor bei jährlicher Vorauszahlung (z. B. 10/12); Standard 1. */
   annualFactor?: number;
+  /** Erst ab diesem Tag zählen (z. B. Kosten seit Kampagnenstart); Einführungspreis bleibt an `start`. */
+  countFrom?: Date | null;
+  /** Per Garantie kostenlose Monate: "all" = Betreuung + Software, "service" = nur Betreuung. */
+  freeMonths?: Record<string, "all" | "service">;
 };
 
 function dayStart(key: string): number {
@@ -118,6 +122,7 @@ function dayStart(key: string): number {
 export function retainerRows(r: RetainerInput, months: string[], currentMonth: string): LedgerRow[] {
   if (!(r.monthly > 0)) return [];
   const startDay = r.start ? dayStart(dayKey(r.start)) : null;
+  const fromDay = r.countFrom ? dayStart(dayKey(r.countFrom)) : null;
   const endDay = r.end ? dayStart(dayKey(r.end)) : null;
   const pauses = r.pauses.map((p) => ({ from: dayStart(dayKey(p.from)), to: p.to ? dayStart(dayKey(p.to)) : Infinity }));
   const introEnd = r.intro && startDay != null ? dayStart(dayKey(new Date(addMonthsDate(startDay, r.intro.months)))) : null;
@@ -128,16 +133,18 @@ export function retainerRows(r: RetainerInput, months: string[], currentMonth: s
     const first = Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5, 7)) - 1, 1);
     let sw = 0;
     let svc = 0;
+    const free = r.freeMonths?.[m];
     for (let i = 0; i < dim; i++) {
       const d = first + i * DAY;
       if (startDay != null && d < startDay) continue;
+      if (fromDay != null && d < fromDay) continue;
       if (endDay != null && d > endDay) continue;
       const amount = r.intro && introEnd != null && d < introEnd ? r.intro.amount : r.monthly;
       const swMonth = Math.min(r.softwareShare, amount);
       const paused = pauses.some((p) => d >= p.from && d <= p.to);
       const f = r.annualFactor ?? 1;
-      sw += ((swMonth + (r.extras ?? 0)) * f) / dim;
-      if (!paused) svc += ((amount - swMonth) * f) / dim;
+      if (free !== "all") sw += ((swMonth + (r.extras ?? 0)) * f) / dim;
+      if (!paused && !free) svc += ((amount - swMonth) * f) / dim;
     }
     if (sw > 0.005) out.push({ month: m, customerId: r.customerId, stream: "software", amount: r2(sw), recurring: true });
     if (svc > 0.005) out.push({ month: m, customerId: r.customerId, stream: "service", amount: r2(svc), recurring: true });

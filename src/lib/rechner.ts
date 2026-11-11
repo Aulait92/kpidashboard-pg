@@ -80,6 +80,23 @@ export type RechnerProduct = {
 
 export type Guarantee = { enabled: boolean; title: string; text: string };
 
+/**
+ * Feste Eckwerte der Garantien laut AGB „Garantien“ (gemeinsam für Rechner,
+ * Angebot und die automatische Prüfung in lib/garantien.ts). Mindest-Leads je
+ * Produkt (minLeads30) und Mindestbudget (guarantees.leads.minBudgetPerDay)
+ * stehen in der Rechner-Konfiguration.
+ */
+export const GARANTIE_FRISTEN = {
+  /** Lead-Garantie: aktive Tage ab Kampagnenstart */
+  leadTage: 30,
+  /** Break-even-Garantie: aktive Tage ab Kampagnenstart */
+  breakEvenTage: 90,
+  /** Mindestquote wahrgenommene Termine bzw. Leads mit Ergebnis */
+  quote: 0.8,
+  /** Break-even: längstens so viele Monate ohne Betreuungsgebühr */
+  maxFreiMonate: 6,
+} as const;
+
 export type RechnerConfig = {
   products: RechnerProduct[];
   headline: string;

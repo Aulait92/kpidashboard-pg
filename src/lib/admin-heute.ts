@@ -7,6 +7,8 @@ import { HEARTBEAT_MAX_AGE_MIN, type HeartbeatKey } from "@/lib/heartbeat";
 import { onboardingProgressFor } from "@/lib/onboarding";
 import { shortName } from "@/lib/vertrieb/crm";
 import { dayBounds, openTasks } from "@/lib/vertrieb/queries";
+import { offeneGarantieFaelle } from "@/lib/garantien-server";
+import { GARANTIE_LABEL, heuteTitel, monatName, type Kennzahlen } from "@/lib/garantien";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -35,7 +37,9 @@ export type HeuteItem = {
 export type HeuteQuick =
   | { kind: "task"; taskId: string }
   | { kind: "storno"; leadId: string }
-  | { kind: "offer"; offerId: string; contactId: string };
+  | { kind: "offer"; offerId: string; contactId: string }
+  /** Garantiefall: Gewähren (Stripe-Gutschrift) oder Ablehnen mit Begründung */
+  | { kind: "garantie"; fallId: string; grundVorschlag: string };
 
 /** Ausgeblendete Punkte („Später“, „Gelesen“, „Nachgefasst“) entfernen. */
 export function withoutDismissed(items: HeuteItem[], dismissedKeys: Iterable<string>): HeuteItem[] {
@@ -225,6 +229,39 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       since: o.updatedAt,
       later: TOMORROW,
     });
+  }
+  // Garantiefälle (täglicher Cron, lib/garantien-server.ts): Anspruch → Gewähren/Ablehnen,
+  // Bedingungen fehlen → Hinweis (Ablehnen mit vorgeschlagener Begründung oder Kulanz)
+  for (const f of await offeneGarantieFaelle().catch(() => [])) {
+    const kz = f.kennzahlen as Kennzahlen & { fehlend?: string[] };
+    const fehlend = kz.fehlend ?? [];
+    const betrag = f.betrag ?? kz.betrag ?? 0;
+    const gutschrift = betrag > 0 ? `Gutschrift ${eur(betrag)} netto auf die nächste Rechnung` : "kein Betrag gutzuschreiben";
+    items.push(
+      kz.status === "bedingungen_fehlen"
+        ? {
+            key: `garantie:${f.id}`,
+            area: "Kunden",
+            tone: "info",
+            icon: "alert",
+            title: `Garantie ${name(f.kunde)}: ${GARANTIE_LABEL[f.art]} verfehlt, Bedingungen fehlen`,
+            detail: `${fehlend.join(" · ")} · ohne Anspruch, ${monatName(f.monat)} nur aus Kulanz kostenlos`,
+            action: { label: "Kundenakte", href: `/admin/kunden/${f.customerId}` },
+            since: f.createdAt,
+            quick: { kind: "garantie", fallId: f.id, grundVorschlag: `Bedingungen nicht erfüllt: ${fehlend.join("; ")}`.slice(0, 500) },
+          }
+        : {
+            key: `garantie:${f.id}`,
+            area: "Kunden",
+            tone: "warn",
+            icon: "euro",
+            title: heuteTitel(name(f.kunde), f.art, kz),
+            detail: `Alle Bedingungen erfüllt · ${gutschrift}`,
+            action: { label: "Kundenakte", href: `/admin/kunden/${f.customerId}` },
+            since: f.createdAt,
+            quick: { kind: "garantie", fallId: f.id, grundVorschlag: "" },
+          },
+    );
   }
   // Bestandskunden-Modul vom Kunden angefragt (Konto oder Bereich „Bestand“)
   const moduleRequests = await prisma.customer.findMany({
@@ -471,12 +508,13 @@ async function loadAuto(now: Date): Promise<AutoRow[]> {
 export async function loadAdminNavCounts(userId?: string): Promise<{ heute: number; vertrieb: number }> {
   const { tomorrow } = dayBounds();
   try {
-    const [tasks, parked, storno, forms, overdue, dismissed] = await Promise.all([
+    const [tasks, parked, storno, forms, overdue, garantien, dismissed] = await Promise.all([
       prisma.salesTask.count({ where: { doneAt: null, dueAt: { lt: tomorrow } } }),
       prisma.poolLead.count({ where: { status: "parked" } }),
       prisma.lead.findMany({ where: { stornoState: "review" }, orderBy: { stornoRequestedAt: "asc" }, select: { id: true } }),
       prisma.unassignedLead.count({ where: { resolvedAt: null } }),
       prisma.customer.findMany({ where: { archived: false, paymentOverdueSince: { not: null } }, select: { id: true } }),
+      prisma.garantieFall.findMany({ where: { status: "offen" }, select: { id: true } }),
       userId ? activeDismissals(userId) : Promise.resolve([] as string[]),
     ]);
     const hidden = new Set(dismissed);
@@ -486,7 +524,8 @@ export async function loadAdminNavCounts(userId?: string): Promise<{ heute: numb
       storno.slice(0, STORNO_SINGLE).filter((l) => visible(`storno:${l.id}`)).length +
       (storno.length > STORNO_SINGLE && visible("storno") ? 1 : 0) +
       (forms && visible("forms") ? 1 : 0) +
-      overdue.filter((c) => visible(`pay:${c.id}`)).length;
+      overdue.filter((c) => visible(`pay:${c.id}`)).length +
+      garantien.filter((g) => visible(`garantie:${g.id}`)).length;
     return { heute, vertrieb: tasks };
   } catch {
     return { heute: 0, vertrieb: 0 };

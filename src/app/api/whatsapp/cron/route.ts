@@ -13,6 +13,7 @@ import { runSequences } from "@/lib/lead-sequences";
 import { reportError } from "@/lib/monitoring";
 import { runOnboardingCron } from "@/lib/onboarding-cron";
 import { beat } from "@/lib/heartbeat";
+import { runGarantien } from "@/lib/garantien-server";
 
 // Zentraler Cron (z. B. cron-job.org alle 5 Minuten):
 //   1. Erstanschreiben neuer Leads ohne Termin
@@ -54,7 +55,7 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-onboarding");
     return { error: e instanceof Error ? e.message : String(e) };
   });
-  // Einmal täglich (03:00–03:05 UTC): Löschfristen (siehe docs/datenschutz.md).
+  // Einmal täglich (03:00–03:05 UTC): Löschfristen (siehe docs/datenschutz.md), Logins, Garantien.
   const now = new Date();
   const pruned =
     now.getUTCHours() === 3 && now.getUTCMinutes() < 5
@@ -65,6 +66,11 @@ async function handle(req: Request): Promise<Response> {
           // Logins im Abo nachziehen (z. B. nach Startpreis-Phase oder Abo-Start)
           seats: await reconcileSeatBilling().catch((e: unknown) => {
             reportError(e, "cron-seats");
+            return null;
+          }),
+          // Lead- und Break-even-Garantie prüfen: legt Fälle an, bucht nichts (Gewähren in Admin „Heute“)
+          garantien: await runGarantien(now).catch((e: unknown) => {
+            reportError(e, "cron-garantien");
             return null;
           }),
         }

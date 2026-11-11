@@ -30,6 +30,7 @@ import {
 } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { TeamStats } from "@/components/team-stats";
+import { GarantieKundeCard } from "@/components/garantie-kunde-card";
 import { nowMs } from "@/lib/now";
 import { includesTrail, sumProvision } from "@/lib/provision";
 import { loadCustomerProvision } from "@/lib/provision-server";
@@ -101,6 +102,7 @@ export default async function BuyerPage({
             range={range}
           />
           <TeamStats customerId={session.customerId} range={range} />
+          <GarantieKundeCard customerId={session.customerId} />
         </Suspense>
       </main>
     </PullToRefresh>

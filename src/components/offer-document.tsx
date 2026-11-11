@@ -11,16 +11,12 @@ import {
   type OfferProduct,
   type OfferTerm,
 } from "@/lib/offer-pricing";
+// Ab wann und für welche Produkte die Garantien gelten (gleiche Regel wie die automatische Prüfung)
+import { GUARANTEES_FROM, isGuaranteeProduct } from "@/lib/garantien";
 
 // Angebot / Auftragsbestätigung im Performancegrowth-Design (dunkles Deckblatt,
 // nummerierte Abschnitte, AGB als Bestandteil). Genutzt auf der öffentlichen
 // Angebotsseite und im PDF (Druckansicht).
-
-
-/** Ab diesem Datum erstellte Angebote zeigen die neuen Garantien (ältere behalten ihren Text). */
-const GUARANTEES_FROM = new Date("2026-11-11T00:00:00+01:00");
-/** Garantien gelten für Katzenversicherung (TKV), siehe AGB „Garantien“. */
-const isGuaranteeProduct = (name: string) => /katze|\btkv\b|tierkranken/i.test(name);
 
 export type OfferDoc = {
   number: string;

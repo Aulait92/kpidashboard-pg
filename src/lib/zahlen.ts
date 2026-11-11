@@ -2,10 +2,12 @@
 // Kennzahlen in einem Rutsch und gibt ein serialisierbares Objekt zurück.
 // Berechnungen ohne Datenbank stehen in revenue-ledger.ts (getestet).
 
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { effectiveRates, estimatedProvision } from "@/lib/provision";
 import { annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
 import { monthlyFeeCosts } from "@/lib/whatsapp/fees";
+import { freeMonthsOf, type GarantieArt } from "@/lib/garantien";
 import {
   activeCustomers,
   addMonths,
@@ -70,6 +72,50 @@ const monthStart = (key: string) => new Date(`${key}-01T00:00:00.000Z`);
 
 // ─── Umsatzbuch aus der Datenbank ────────────────────────────────────────
 
+/** Felder des Kunden, die retainerInputFor braucht (auch für die Garantie-Prüfung). */
+export const RETAINER_CUSTOMER_SELECT = {
+  id: true,
+  retainerMonthly: true,
+  retainerStart: true,
+  seatsBilled: true,
+  seatMonthly: true,
+  bestandMonthly: true,
+  billingInterval: true,
+  pauses: { where: { kind: "customer", status: { in: ["active", "ended"] } }, select: { startsAt: true, endsAt: true, resumedAt: true } },
+} satisfies Prisma.CustomerSelect;
+
+/** Retainer-Basis eines Kunden (Betreuung + Software + Zusätze), wie im Umsatzbuch. */
+export function retainerInputFor(
+  c: {
+    id: string;
+    retainerMonthly: unknown;
+    retainerStart: Date | null;
+    seatsBilled: number;
+    seatMonthly: unknown;
+    bestandMonthly: unknown;
+    billingInterval: string;
+    pauses: { startsAt: Date; endsAt: Date | null; resumedAt: Date | null }[];
+  },
+  offer: { softwareFee: unknown; introMonthlyFee: unknown; introMonths: number | null; annualFreeMonths: number | null } | undefined | null,
+  end: Date | null,
+  garantien: { art: string; monat: string }[] = [],
+): RetainerInput {
+  return {
+    customerId: c.id,
+    monthly: n(c.retainerMonthly),
+    start: c.retainerStart,
+    end,
+    softwareShare: offer ? n(offer.softwareFee) : 0,
+    intro: offer?.introMonthlyFee != null && offer.introMonths ? { amount: n(offer.introMonthlyFee), months: offer.introMonths } : null,
+    // Weitere Logins und Bestandskunden-Modul zählen als Software (Stand heute, nicht historisch)
+    extras: c.seatsBilled * n(c.seatMonthly) + n(c.bestandMonthly),
+    // Jährlich im Voraus: MRR = Jahresbetrag / 12 (keine Spitze im Zahlungsmonat); Pausen ohne Gutschrift
+    annualFactor: c.billingInterval === "year" ? annualMultiplier(offer?.annualFreeMonths ?? PRICE_LIST.annualFreeMonths) / 12 : 1,
+    pauses: c.billingInterval === "year" ? [] : c.pauses.map((p) => ({ from: p.startsAt, to: p.resumedAt ?? p.endsAt })),
+    freeMonths: freeMonthsOf(garantien.map((g) => ({ art: g.art as GarantieArt, monat: g.monat, status: "gewaehrt" as const }))),
+  };
+}
+
 export async function loadLedger(now = new Date()) {
   const from = monthStart(addMonths(FIRST_MONTH, 0));
   const [ppl, retainerCustomers, acceptedOffers] = await Promise.all([
@@ -109,24 +155,14 @@ export async function loadLedger(now = new Date()) {
     : [];
   const lastLeadOf = new Map(lastLeads.map((l) => [l.customerId, l._max.createdAt]));
 
+  // Per Garantie kostenlose Monate senken den Umsatz (lib/garantien.ts)
+  const granted = await prisma.garantieFall.findMany({ where: { status: "gewaehrt" }, select: { customerId: true, art: true, monat: true } });
   const retainers: RetainerInput[] = retainerCustomers.map((c) => {
     const offer = c.onboarding?.offerId ? offerById.get(c.onboarding.offerId) : undefined;
     let end: Date | null = null;
     if (offer?.subscriptionStatus === "canceled") end = offer.updatedAt;
     else if (c.archived) end = lastLeadOf.get(c.id) ?? c.retainerStart ?? null;
-    return {
-      customerId: c.id,
-      monthly: n(c.retainerMonthly),
-      start: c.retainerStart,
-      end,
-      softwareShare: offer ? n(offer.softwareFee) : 0,
-      intro: offer?.introMonthlyFee != null && offer.introMonths ? { amount: n(offer.introMonthlyFee), months: offer.introMonths } : null,
-      // Weitere Logins und Bestandskunden-Modul zählen als Software (Stand heute, nicht historisch)
-      extras: c.seatsBilled * n(c.seatMonthly) + n(c.bestandMonthly),
-      // Jährlich im Voraus: MRR = Jahresbetrag / 12 (keine Spitze im Zahlungsmonat); Pausen ohne Gutschrift
-      annualFactor: c.billingInterval === "year" ? annualMultiplier(offer?.annualFreeMonths ?? PRICE_LIST.annualFreeMonths) / 12 : 1,
-      pauses: c.billingInterval === "year" ? [] : c.pauses.map((p) => ({ from: p.startsAt, to: p.resumedAt ?? p.endsAt })),
-    };
+    return retainerInputFor(c, offer, end, granted.filter((g) => g.customerId === c.id));
   });
 
   const setups = acceptedOffers
