@@ -1,5 +1,6 @@
 import Papa from "papaparse";
 import { prisma } from "@/lib/prisma";
+import { contactIdsByEmails, findContactIdByEmail } from "@/lib/vertrieb/contact-merge";
 import { CAMPAIGN_STATUS } from "@/lib/vertrieb/crm";
 import { classifyReply, isAutoReplyText, sentimentFromInstantly, type Sentiment } from "@/lib/vertrieb/sentiment";
 
@@ -54,8 +55,8 @@ async function upsertCampaign(name: string, instantlyId?: string) {
 }
 
 async function contactMap(emails: string[]) {
-  const list = await prisma.salesContact.findMany({ where: { email: { in: emails } }, select: { id: true, email: true } });
-  return new Map(list.map((c) => [c.email, c.id]));
+  // Haupt- und weitere E-Mail-Adressen der Kontakte
+  return contactIdsByEmails(emails);
 }
 
 export type SyncStats = { campaigns: number; leads: number; matched: number; unmatched: number; sent: number; replies: number; newReplies: number };
@@ -431,8 +432,9 @@ export async function handleWebhook(p: Record<string, unknown>) {
   const email = String(p.lead_email ?? "").trim().toLowerCase();
   const type = String(p.event_type ?? "");
   if (!email || !type) return { ignored: "missing lead_email/event_type" };
-  const contact = await prisma.salesContact.findUnique({ where: { email }, select: { id: true } });
-  if (!contact) return { ignored: "unknown contact" };
+  const contactId = await findContactIdByEmail(email);
+  if (!contactId) return { ignored: "unknown contact" };
+  const contact = { id: contactId };
   const name = String(p.campaign_name ?? "Instantly");
   const campaign = await upsertCampaign(name, p.campaign_id ? String(p.campaign_id) : undefined);
   const at = p.timestamp ? new Date(String(p.timestamp)) : new Date();

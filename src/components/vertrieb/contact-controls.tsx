@@ -3,7 +3,8 @@
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { ChevronDown, ExternalLink, MoreHorizontal, Trash2 } from "lucide-react";
+import { ChevronDown, ExternalLink, GitMerge, MoreHorizontal, Trash2 } from "lucide-react";
+import { MergeSheet, type MergeCandidate } from "@/components/vertrieb/contact-merge";
 import { deleteContact, setStage } from "@/app/admin/vertrieb/actions";
 import { Button } from "@/components/ui";
 import { ActionSheet, Sheet, type SheetAction } from "@/components/ui/sheet";
@@ -82,12 +83,25 @@ export function StagePicker({ contactId, stage, competitor }: { contactId: strin
 }
 
 /** Seltene Aktionen eines Kontakts. */
-export function ContactMore({ contactId, name, url, linkedinUrl }: { contactId: string; name: string; url: string | null; linkedinUrl: string | null }) {
-  const [open, setOpen] = useState<"menu" | "delete" | null>(null);
+export function ContactMore({
+  contactId,
+  name,
+  url,
+  linkedinUrl,
+  duplicates = [],
+}: {
+  contactId: string;
+  name: string;
+  url: string | null;
+  linkedinUrl: string | null;
+  duplicates?: MergeCandidate[];
+}) {
+  const [open, setOpen] = useState<"menu" | "delete" | "merge" | null>(null);
   const [pending, start] = useTransition();
   const actions: SheetAction[] = [
     ...(url ? [{ label: "Website öffnen", icon: ExternalLink, href: url }] : []),
     ...(linkedinUrl ? [{ label: "LinkedIn-Profil öffnen", icon: ExternalLink, href: linkedinUrl }] : []),
+    { label: "Mit anderem Kontakt zusammenführen", icon: GitMerge, onSelect: () => setTimeout(() => setOpen("merge"), 0) },
     { label: "Kontakt löschen", icon: Trash2, tone: "danger", onSelect: () => setTimeout(() => setOpen("delete"), 0) },
   ];
   return (
@@ -96,6 +110,7 @@ export function ContactMore({ contactId, name, url, linkedinUrl }: { contactId: 
         <MoreHorizontal className="h-4 w-4" /> Mehr
       </button>
       <ActionSheet open={open === "menu"} onClose={() => setOpen(null)} title={name} actions={actions} />
+      {open === "merge" ? <MergeSheet open onClose={() => setOpen(null)} contactId={contactId} contactName={name} suggestions={duplicates} /> : null}
       <Sheet open={open === "delete"} onClose={() => setOpen(null)} title={`„${name}“ löschen?`} message="Verlauf, Aufgaben und Cold-Mail-Status werden mit gelöscht.">
         <div className="p-5">
           <Button

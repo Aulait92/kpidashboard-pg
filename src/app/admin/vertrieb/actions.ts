@@ -17,6 +17,7 @@ import { importFromColdCrm, replaceFromColdCrm } from "@/lib/vertrieb/cold-crm-i
 import { LI_LABEL, importWaalaxyCsv } from "@/lib/vertrieb/linkedin";
 import { ensureReplyTask, importInstantlyCsv, recordReply, removeReplyTaskIfNoPositive, syncInstantly } from "@/lib/vertrieb/instantly";
 import { audit } from "@/lib/audit";
+import { addContactEmail, makePrimaryEmail, mergeContacts, removeContactEmail, searchMergeCandidates } from "@/lib/vertrieb/contact-merge";
 
 const s = (fd: FormData, k: string) => {
   const v = fd.get(k);
@@ -560,4 +561,45 @@ export async function linkContactCustomer(fd: FormData) {
   await audit(customerId ? "vertrieb.verknuepft" : "vertrieb.verknuepfung_geloest", { entity: "SalesContact", entityId: contactId, customerId: customerId ?? null });
   refresh(contactId);
   if (customerId) revalidatePath(`/admin/kunden/${customerId}`);
+}
+
+// ─── Weitere E-Mail-Adressen und Zusammenführen ─────────────────────────
+export type ContactEmailState = { ok?: boolean; error?: string } | null;
+
+export async function addContactEmailAction(_prev: ContactEmailState, fd: FormData): Promise<ContactEmailState> {
+  await requireAuth();
+  const id = s(fd, "contactId")!;
+  const r = await addContactEmail(id, s(fd, "email") ?? "");
+  if (!r.ok) return { error: r.error };
+  refresh(id);
+  return { ok: true };
+}
+
+export async function removeContactEmailAction(fd: FormData) {
+  await requireAuth();
+  const id = s(fd, "contactId")!;
+  await removeContactEmail(id, s(fd, "email") ?? "");
+  refresh(id);
+}
+
+export async function makePrimaryEmailAction(fd: FormData) {
+  await requireAuth();
+  const id = s(fd, "contactId")!;
+  await makePrimaryEmail(id, s(fd, "email") ?? "");
+  refresh(id);
+}
+
+export async function searchMergeCandidatesAction(contactId: string, q: string) {
+  await requireAuth();
+  return searchMergeCandidates(contactId, q);
+}
+
+/** Führt `dropId` in `keepId` zusammen und öffnet danach den verbleibenden Kontakt. */
+export async function mergeContactsAction(keepId: string, dropId: string): Promise<{ error: string } | void> {
+  const session = await requireAuth();
+  const r = await mergeContacts(keepId, dropId, session.email ?? "Admin");
+  if (!r.ok) return { error: r.error };
+  await audit("contact.merge", { entity: "SalesContact", entityId: keepId, details: { dropId, moved: r.moved } });
+  refresh(keepId);
+  redirect(`/admin/vertrieb/kontakte/${keepId}`);
 }

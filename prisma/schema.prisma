@@ -1042,6 +1042,8 @@ model SalesContact {
   id           String  @id @default(cuid())
   name         String
   email        String  @unique
+  /// Weitere E-Mail-Adressen (z. B. nach Zusammenführen); werden bei Calendly, Instantly und Inbound mit erkannt
+  altEmails    String[] @default([])
   phone        String?
   fax          String?
   street       String?
@@ -1109,6 +1111,7 @@ model SalesContact {
   meetings       SalesMeeting[]
   inboundLeads   SalesInboundLead[]
 
+  @@index([altEmails], type: Gin)
   @@index([stage])
   @@index([customerStage])
   @@index([linkedinStatus])

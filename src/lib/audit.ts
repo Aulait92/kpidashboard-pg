@@ -62,6 +62,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "absence.undo_tasks": "Aufgaben-Verschiebung rückgängig gemacht",
   "offer.accept": "Angebot angenommen",
   "contact.delete": "Vertriebskontakt gelöscht",
+  "contact.merge": "Vertriebskontakte zusammengeführt",
   "agent.active": "WhatsApp-Assistent an/aus",
   "whatsapp.self_connect": "WhatsApp selbst verbunden (360dialog)",
   "agent.sequences": "Automatisch nachfassen an/aus",

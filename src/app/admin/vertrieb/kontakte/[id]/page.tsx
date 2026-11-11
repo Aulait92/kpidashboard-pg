@@ -6,6 +6,8 @@ import { dayKey, fmtDate, fmtDateTime, timeKey, todayKey } from "@/lib/vertrieb/
 import { stripQuoted } from "@/lib/vertrieb/instantly";
 import { TaskRow } from "@/components/vertrieb/ui";
 import { ContactMore, Fold, StagePicker } from "@/components/vertrieb/contact-controls";
+import { ContactEmails, DuplicateHint } from "@/components/vertrieb/contact-merge";
+import { likelyDuplicates } from "@/lib/vertrieb/contact-merge";
 import { Mail, Phone } from "lucide-react";
 import { ActivityForm } from "@/components/vertrieb/activity-form";
 import { Collapsible } from "@/components/vertrieb/collapsible";
@@ -59,6 +61,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });
+  const duplicates = await likelyDuplicates(c.id);
   let appUrl = "";
   try {
     appUrl = getAppUrl();
@@ -115,9 +118,10 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
           <a href={`mailto:${c.email}`} className="btn-ghost">
             <Mail className="h-4 w-4" /> E-Mail
           </a>
-          <ContactMore contactId={c.id} name={shortName(c.name)} url={c.url} linkedinUrl={c.linkedinUrl} />
+          <ContactMore contactId={c.id} name={shortName(c.name)} url={c.url} linkedinUrl={c.linkedinUrl} duplicates={duplicates} />
         </div>
       </div>
+      <DuplicateHint contactId={c.id} contactName={shortName(c.name)} duplicates={duplicates} />
 
       <div className="grid gap-5 lg:grid-cols-[3fr_2fr]">
         <div className="space-y-5">
@@ -413,6 +417,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
             <div className="text-sm">
             <dl className="grid grid-cols-[110px_1fr] gap-y-1.5">
               <dt className="text-slate-500">Name</dt><dd>{c.name}</dd>
+              <dt className="text-slate-500">E-Mail</dt><dd className="min-w-0"><ContactEmails contactId={c.id} email={c.email} altEmails={c.altEmails} /></dd>
               {c.fax && (<><dt className="text-slate-500">Fax</dt><dd>{c.fax}</dd></>)}
               {c.agencyType && (<><dt className="text-slate-500">Agenturtyp</dt><dd>{c.agencyType === "GENERAL" ? "Generalvertretung" : c.agencyType === "HAUPT" ? "Hauptvertretung" : c.agencyType}</dd></>)}
               {c.teamSize != null && (<><dt className="text-slate-500">Teamgröße</dt><dd>{c.teamSize}</dd></>)}

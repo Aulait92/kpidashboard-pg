@@ -137,7 +137,7 @@ const nameKey = (s: string | null | undefined) =>
   (s ?? "").toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
     .normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z]/g, "");
 
-type Lite = { id: string; email: string; name: string; city: string | null; firstName: string | null; lastName: string | null; leaderNames: string | null; linkedinUrl: string | null };
+type Lite = { id: string; email: string; altEmails?: string[]; name: string; city: string | null; firstName: string | null; lastName: string | null; leaderNames: string | null; linkedinUrl: string | null };
 
 export class Matcher {
   private bySlug = new Map<string, string>();
@@ -148,6 +148,7 @@ export class Matcher {
       const slug = normalizeLinkedInUrl(c.linkedinUrl);
       if (slug) this.bySlug.set(slug, c.id);
       this.byEmail.set(c.email.toLowerCase(), c.id);
+      for (const a of c.altEmails ?? []) if (!this.byEmail.has(a)) this.byEmail.set(a, c.id);
       const names = new Set<string>();
       if (c.firstName || c.lastName) names.add(nameKey(`${c.firstName ?? ""}${c.lastName ?? ""}`));
       for (const n of (c.leaderNames ?? "").split(",")) if (n.trim()) names.add(nameKey(n));
@@ -159,7 +160,7 @@ export class Matcher {
   }
   static async load() {
     const contacts = await prisma.salesContact.findMany({
-      select: { id: true, email: true, name: true, city: true, firstName: true, lastName: true, leaderNames: true, linkedinUrl: true },
+      select: { id: true, email: true, altEmails: true, name: true, city: true, firstName: true, lastName: true, leaderNames: true, linkedinUrl: true },
     });
     return new Matcher(contacts);
   }

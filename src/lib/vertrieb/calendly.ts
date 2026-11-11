@@ -2,6 +2,7 @@
 // plus einmaliger Abgleich bestehender Termine über die API.
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { findContactIdByEmail } from "@/lib/vertrieb/contact-merge";
 import { Matcher } from "@/lib/vertrieb/linkedin";
 import { scheduleAddressEnrichment } from "@/lib/vertrieb/address-enrich";
 import { fmtDateTime } from "@/lib/vertrieb/dates";
@@ -65,8 +66,8 @@ async function findOrCreateContact(inv: Invitee, matcher: Matcher): Promise<{ id
   const m = matcher.match({ url: null, slug: null, firstName, lastName, email: null, company: null, location: null, status: null, connectedAt: null, messageAt: null, repliedAt: null, list: null, tags: null });
   if (m) return { id: m.id, created: false };
 
-  const existing = await prisma.salesContact.findUnique({ where: { email }, select: { id: true } });
-  if (existing) return { id: existing.id, created: false };
+  const existing = await findContactIdByEmail(email);
+  if (existing) return { id: existing, created: false };
   const agency = (inv.questions_and_answers ?? []).find((qa) => /agentur|firma|unternehmen|company/i.test(qa.question))?.answer;
   const c = await prisma.salesContact.create({
     data: {

@@ -2,6 +2,7 @@
 // (z.B. Perspective) oder jedes andere Tool, das einen Webhook schicken kann.
 // Felder werden tolerant erkannt – inkl. Metas "field_data"-Format.
 import { prisma } from "@/lib/prisma";
+import { findContactIdByEmail } from "@/lib/vertrieb/contact-merge";
 import { Matcher, flatten, norm } from "@/lib/vertrieb/linkedin";
 import type { Prisma } from "@/generated/prisma/client";
 import { SOURCE_LABEL } from "@/lib/vertrieb/crm";
@@ -134,8 +135,8 @@ export async function handleInboundLead(raw: unknown, source = "META_ADS", opts:
     const fullName = [l.firstName, l.lastName].filter(Boolean).join(" ");
     const slug = normalizeLinkedInUrl(l.linkedinUrl);
     const email = l.email ?? (slug ? `linkedin-${slug}@ohne-email.invalid` : `lead-${Date.now()}@ohne-email.invalid`);
-    const existing = l.email ? await prisma.salesContact.findUnique({ where: { email }, select: { id: true } }) : null;
-    if (existing) contactId = existing.id;
+    const existing = l.email ? await findContactIdByEmail(email) : null;
+    if (existing) contactId = existing;
     else {
       const c = await prisma.salesContact.create({
         data: {

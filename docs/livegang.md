@@ -70,6 +70,7 @@ Die Produktion ist seit 11.11. eingemessen; neue Migrationen laufen beim normale
 | `20261114160000_vorlagen_automatisch` | Spalten `WhatsAppAccount.templatesCheckedAt`, `MessageTemplate.auto`, `submittedAt`, `rejectionReason` (WhatsApp-Vorlagen automatisch bei Meta einreichen, siehe `docs/whatsapp-360dialog.md`) | nur hinzufügend; bestehende, von Hand angelegte Vorlagen bleiben unverändert (`auto = false`) |
 | `20261114170000_kalender_quellen` | Spalten `AgentConfig.allianzCalendarEnc`, `allianzConsentAt`, `allianzLastOkAt`, `allianzLastError`, `allianzAlertAt` (Allianz-Online-Kalender, verschlüsselt) sowie Tabellen `CalendarLeadTimes` (Lead-Zeiten je Kalender) und `CalendarBlock` („Zeit blockieren“) | nur hinzufügend; ohne Eintrag gelten wie bisher Mo–Fr 10, 14 und 16 Uhr |
 | `20261114180000_zahlen_nachtrag` | Spalte `Customer.retainerEnd` (Ende der Betreuungsgebühr von Hand) und Tabelle `ManualRevenue` (nachgetragene Einmal-Umsätze: Monat, Kunde optional, Betrag netto, Art Einrichtung/Sonstiges, Notiz, angelegt von) für die Zahlen-Seite | nur hinzufügend; ohne Einträge ändert sich keine Kennzahl |
+| `20261114190000_kontakt_weitere_emails` | Spalte `SalesContact.altEmails` (weitere E-Mail-Adressen, GIN-Index) für Zusammenführen von Dubletten und Zuordnung bei Calendly/Instantly/Inbound | nur hinzufügend; Standard leere Liste |
 
 Keine davon verändert bestehende Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und
