@@ -275,13 +275,66 @@ Seiten aus der Liste „Seiten“ unten.
   App aufs Handy, Start.
 - Meta-Zugriff: Hat Ihr Business-Konto einen zweiten Admin, muss er die Partner-Freigabe bestätigen.
   Lieber gemeinsam? 15-Minuten-Hilfetermin in der Einrichtung buchen.
-- **WhatsApp verbinden** (nur Inhaber, Paket mit Software): „WhatsApp verbinden“ führt zu unserem
-  Partner 360dialog. Dort ein Konto anlegen, mit Ihrem Facebook-Konto anmelden (Inhaber des
-  Business-Portfolios), die Nummer wählen und per SMS oder Anruf bestätigen. Danach geht es
-  automatisch zurück in die App. Die Nummer darf nicht gleichzeitig in der normalen WhatsApp-App
-  aktiv sein – am einfachsten eine neue Handynummer oder die Festnetznummer. Steht dort „wird
-  eingerichtet“, ist nichts weiter zu tun (meist wenige Minuten). Klappt es nicht, bekommen wir
-  automatisch Bescheid und melden uns.
+- **WhatsApp verbinden** (nur Inhaber, Paket mit Software): Einrichtung → „WhatsApp verbinden“. Zuerst
+  wählen, welche Nummer der Assistent nutzen soll; danach zeigt die App genau die passende Anleitung.
+  Ausführlich mit Bildern unter „Ausführliche Anleitung“ (Seite /buyer/hilfe/whatsapp). Dauer etwa
+  10 Minuten, am besten am Computer.
+
+## WhatsApp verbinden: Schritt für Schritt
+
+**Welche Nummer?** (drei Wege, keine Wertung)
+- **Nummer aus der WhatsApp Business App** (häufigster Fall): Leads und Kunden kennen die Nummer schon.
+  Der Vermittler schreibt weiter in der App, der Assistent übernimmt neue Leads über dieselbe Nummer.
+  Nachrichten aus der App erscheinen auch unter „Chats“, der Assistent hält sich in dem Gespräch dann
+  zurück. Im Fenster von Meta „Ja, diese Nummer ist mit der WhatsApp Business App verbunden“ wählen,
+  danach in der App den QR-Code scannen. Voraussetzungen: aktuelle WhatsApp Business App, die Nummer
+  schon etwa 7 Tage in der App genutzt, die App mindestens alle 13 Tage öffnen (sonst trennt Meta die
+  Verbindung). Mit der App verknüpfte Geräte (z. B. WhatsApp Web) werden getrennt und müssen neu
+  verbunden werden.
+- **Neue Nummer oder Festnetz:** Berufliche Nummer und Nummer des Assistenten bleiben getrennt. Bei
+  Festnetz kommt der Bestätigungscode per Anruf (Ansage liest ihn vor).
+- **Private Nummer aus der normalen WhatsApp-App:** Geht nur, wenn das WhatsApp-Konto auf der Nummer
+  vorher gelöscht wird (die Chats dort sind dann weg). Alternative: die Nummer kostenlos auf WhatsApp
+  Business umstellen (die Chats bleiben dabei erhalten) und dann den Weg „WhatsApp Business App“ nehmen.
+
+**Nummer schon bei einem anderen Anbieter (z. B. Superchat, MessageBird, Charles, WATI)?** Die App fragt
+das beim Weg „WhatsApp Business App“ nach.
+- **Ja:** Das geht. Im Fenster von Meta die bestehende Nummer auswählen. Beim bisherigen Anbieter muss
+  vorher nichts gekündigt oder gelöscht werden. Danach in der Meta Business Suite festlegen, dass die
+  Gespräche an uns gehen. Beide Anbieter gleichzeitig funktionieren nicht zuverlässig. Wer den
+  bisherigen Anbieter weiter nutzen möchte, nimmt für den Assistenten besser eine zweite Nummer.
+- **Ja, und die Nummer läuft dort zusätzlich in der WhatsApp Business App:** Dann ist ein eigener Ablauf
+  nötig (Verbindung beim bisherigen Anbieter trennen, Chats sichern, neu verbinden). Dafür den
+  15-Minuten-Hilfetermin buchen, wir machen das gemeinsam.
+- **Weiß nicht:** Erkennbar an einer Rechnung oder einem Login bei einem WhatsApp-Tool, oder daran, dass
+  Nachrichten in einem Postfach im Browser ankommen statt nur in der App. Im Zweifel im
+  15-Minuten-Hilfetermin klären.
+
+**Bereithalten:** Facebook-Login mit Admin-Rechten im Meta-Unternehmensportfolio (dort, wo auch das
+Werbekonto liegt), das Telefon zur Nummer (Code) bzw. das Handy mit der WhatsApp Business App (QR-Code),
+einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
+
+**Ablauf:**
+1. Einrichtung → Nummer wählen → „Jetzt WhatsApp verbinden“.
+2. 360dialog (unser WhatsApp-Anbieter): Konto mit E-Mail und Passwort anlegen. Kostenlos, die Nummer
+   bleibt Eigentum des Kunden.
+3. Fenster von Meta: mit Facebook anmelden, „Weiter“.
+4. Unternehmensportfolio auswählen oder neu anlegen. Die Auswahl lässt sich später nicht ändern.
+5. WhatsApp-Profil: Anzeigename und Kategorie. Der Name muss zur Firma passen, z. B. „Max Mustermann
+   Versicherungsmakler“.
+6. Nummer bestätigen: Code per SMS oder Anruf eingeben. (Bei WhatsApp Business App stattdessen QR-Code
+   in der App scannen.)
+7. Automatisch zurück in die App: „Verbunden: +49 …“. Steht dort „wird eingerichtet“, ist nichts zu tun.
+
+**Wenn es hakt:**
+- Kein Fenster von Meta: Pop-up-Blocker. Pop-ups für die Seite erlauben und erneut verbinden.
+- Unternehmensportfolio fehlt in der Liste: keine Admin-Rechte dort. Admin-Rechte geben lassen oder ein
+  neues Portfolio anlegen.
+- „Nummer wird bereits verwendet“: Die Nummer läuft noch in einer WhatsApp-App. Den passenden Weg
+  wählen (Business App) oder eine andere Nummer nehmen.
+- Anzeigename abgelehnt: an den Firmennamen (wie im Impressum) anpassen.
+- Fehler nach der Rückkehr: Wir bekommen automatisch Bescheid und melden uns. Lieber gemeinsam?
+  15-Minuten-Hilfetermin in der Einrichtung buchen.
 
 ## Datenschutz
 

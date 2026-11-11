@@ -14,6 +14,8 @@ import { loadCustomerProvision } from "@/lib/provision-server";
 import { provisionSetupHint } from "@/lib/provision";
 import Link from "next/link";
 import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
+import { ERROR_HELP, parseConnectPath } from "@/lib/whatsapp/connect-guide";
+import { WhatsAppGuide } from "@/components/whatsapp-guide";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Einrichtung | performancegrowth" };
@@ -21,13 +23,13 @@ export const metadata = { title: "Einrichtung | performancegrowth" };
 const dateFmt = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "2-digit", month: "long", year: "numeric" }).format(d);
 
-export default async function SetupPage({ searchParams }: { searchParams: Promise<{ gcal?: string; wa?: string; schritt?: string }> }) {
+export default async function SetupPage({ searchParams }: { searchParams: Promise<{ gcal?: string; wa?: string; schritt?: string; weg?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   if (ctx.teamRole === "advisor") redirect("/buyer");
   const ob = await loadOnboarding({ customerId: ctx.customerId });
   if (!ob) redirect("/buyer");
-  const { gcal, wa, schritt } = await searchParams;
+  const { gcal, wa, schritt, weg } = await searchParams;
   const offer = ob.offerId
     ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true } })
     : null;
@@ -145,7 +147,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             </li>
           </ol>
           <MetaConfirmButton done={done("metaAccess")} readOnly={readOnly} />
-          <div className="mt-5 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4">
+          <div id="hilfetermin" className="mt-5 scroll-mt-20 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4">
             <p className="text-[15px] font-medium">Klappt etwas nicht? Wir machen es gemeinsam.</p>
             {helpUpcoming ? (
               <p className="mt-2 text-[15px]">
@@ -203,8 +205,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         ) : null}
 
         {waEnabled ? (
-          <Step n={nextNo()} title="WhatsApp verbinden" icon={MessageCircle} done={done("whatsapp")} open={isOpen("whatsapp") || !!wa} id="whatsapp">
-            <WhatsAppStep wa={wa} account={waAccount} done={done("whatsapp")} readOnly={readOnly} />
+          <Step n={nextNo()} title="WhatsApp verbinden" icon={MessageCircle} done={done("whatsapp")} open={isOpen("whatsapp") || !!wa || !!weg} id="whatsapp">
+            <WhatsAppStep wa={wa} weg={weg} account={waAccount} done={done("whatsapp")} readOnly={readOnly} />
           </Step>
         ) : null}
 
@@ -301,7 +303,7 @@ function Step({
 const WA_MESSAGES: Record<string, { ok: boolean; text: string }> = {
   ok: { ok: true, text: "WhatsApp ist verbunden. Wir prüfen noch die Nachrichtenvorlagen und schalten den Assistenten dann ein." },
   pending: { ok: true, text: "Fast geschafft: Ihre Nummer wird bei WhatsApp noch eingerichtet. Das dauert meist nur wenige Minuten, Sie müssen nichts weiter tun." },
-  error: { ok: false, text: "Das hat nicht ganz geklappt. Kein Problem: Wir haben eine Nachricht bekommen und melden uns kurz bei Ihnen." },
+  error: { ok: false, text: "Das hat nicht geklappt. Kein Problem: Wir haben eine Nachricht bekommen und melden uns bei Ihnen. Sie können es auch gleich noch einmal versuchen." },
   state: { ok: false, text: "Der Link war abgelaufen. Bitte noch einmal auf „WhatsApp verbinden“ tippen." },
   forbidden: { ok: false, text: "Das kann nur der Inhaber des Kontos." },
   off: { ok: false, text: "Das Verbinden ist gerade nicht verfügbar. Wir richten WhatsApp gemeinsam mit Ihnen ein." },
@@ -310,11 +312,13 @@ const WA_MESSAGES: Record<string, { ok: boolean; text: string }> = {
 /** Schritt „WhatsApp verbinden“: Erklärung, Knopf zum 360dialog-Onboarding, Status. */
 function WhatsAppStep({
   wa,
+  weg,
   account,
   done,
   readOnly,
 }: {
   wa?: string;
+  weg?: string;
   account: { status: string; phoneNumber: string | null; dialog360ChannelId: string | null } | null;
   done: boolean;
   readOnly: boolean;
@@ -324,27 +328,35 @@ function WhatsAppStep({
   return (
     <>
       {msg ? <p className={`mb-3 text-sm font-medium ${msg.ok ? "text-emerald-700" : "text-rose-700"}`}>{msg.text}</p> : null}
+      {wa === "error" ? (
+        <div className="mb-4 rounded-[var(--radius-md)] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+          <p className="font-medium">Häufige Ursachen:</p>
+          <ul className="mt-1 list-disc space-y-1 pl-5">
+            {ERROR_HELP.map((e) => (
+              <li key={e}>{e}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       {done ? (
-        <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
-          <CheckCircle2 className="h-4 w-4" /> Verbunden{account?.phoneNumber ? `: +${account.phoneNumber.replace(/^\+/, "")}` : ""}
-        </p>
+        <div className="space-y-2">
+          <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
+            <CheckCircle2 className="h-4 w-4" /> Verbunden{account?.phoneNumber ? `: +${account.phoneNumber.replace(/^\+/, "")}` : ""}
+          </p>
+          <p className="text-sm text-[color:var(--muted)]">
+            Ihr Assistent schreibt neue Leads ab dem Start über diese Nummer an. Alle Gespräche finden Sie unter „Chats“.
+          </p>
+        </div>
       ) : msg?.ok ? null : pending ? (
-        <p className="text-sm font-medium text-amber-700">Ihre Nummer wird gerade eingerichtet. Das dauert meist nur wenige Minuten.</p>
+        <p className="text-sm font-medium text-amber-700">
+          Ihre Nummer wird gerade eingerichtet. Das dauert meist nur wenige Minuten. Sie müssen nichts weiter tun, wir melden uns, falls etwas fehlt.
+        </p>
       ) : (
         <>
-          <p className="text-sm text-[color:var(--muted)]">
-            Über diese Nummer schreibt Ihr Assistent neuen Leads in Ihrem Namen. Sie melden sich dafür einmal mit Ihrem Facebook-Konto an
-            (Inhaber des Business-Portfolios) und bestätigen die Nummer per SMS oder Anruf.
+          <p className="mb-4 text-sm text-[color:var(--muted)]">
+            Über diese Nummer schreibt Ihr Assistent neuen Leads in Ihrem Namen. Das Verbinden machen Sie einmal, es dauert etwa 10 Minuten.
           </p>
-          <ul className="my-4 list-disc space-y-1.5 pl-5 text-[15px]">
-            <li>Die Nummer darf <b>nicht gleichzeitig in der normalen WhatsApp-App</b> aktiv sein.</li>
-            <li>Am einfachsten: eine <b>neue Handynummer</b> oder Ihre <b>Festnetznummer</b> (Bestätigung per Anruf).</li>
-            <li>Dauer: ca. 5 Minuten.</li>
-          </ul>
-          <a href="/buyer/whatsapp-verbinden" className={buttonClass("primary", "md", readOnly ? "pointer-events-none opacity-60" : "")}>
-            WhatsApp verbinden
-          </a>
-          <p className="mt-3 text-sm text-[color:var(--muted)]">Unsicher? Im 15-Minuten-Termin oben machen wir es gemeinsam.</p>
+          <WhatsAppGuide initialPath={parseConnectPath(weg)} readOnly={readOnly} helpHref="/buyer/einrichtung?schritt=metaAccess#hilfetermin" />
         </>
       )}
     </>
