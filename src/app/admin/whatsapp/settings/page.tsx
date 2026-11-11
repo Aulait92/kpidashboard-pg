@@ -62,7 +62,7 @@ export default async function WhatsAppSettingsPage({
       id: true,
       name: true,
       whatsAppAccount: {
-        select: { status: true, phoneNumber: true, phoneNumberId: true, apiKeyEnc: true },
+        select: { status: true, phoneNumber: true, phoneNumberId: true, apiKeyEnc: true, dialog360ChannelId: true },
       },
       calendarConnection: {
         select: { status: true, provider: true, accountEmail: true, calendarId: true },
@@ -238,9 +238,16 @@ export default async function WhatsAppSettingsPage({
                       ✓ verbunden{c.whatsAppAccount.phoneNumber ? ` · +${c.whatsAppAccount.phoneNumber}` : ""}
                       {c.whatsAppAccount.phoneNumberId ? "" : " · wartet auf erste Nachricht"}
                     </span>
+                  ) : c.whatsAppAccount?.dialog360ChannelId ? (
+                    <span className={`text-sm ${c.whatsAppAccount.status === "error" ? "text-red-700" : "text-amber-700"}`}>
+                      {c.whatsAppAccount.status === "error" ? "Selbst verbinden fehlgeschlagen – Key von Hand eintragen" : "Kunde verbindet selbst · wird eingerichtet"}
+                    </span>
                   ) : (
                     <span className="text-sm text-[color:var(--muted)]">nicht verbunden</span>
                   )}
+                  {c.whatsAppAccount?.dialog360ChannelId ? (
+                    <span className="hidden text-xs text-[color:var(--muted)] sm:inline">360dialog-Channel {c.whatsAppAccount.dialog360ChannelId}</span>
+                  ) : null}
                   <span className="text-sm text-[color:var(--brand)] group-open:hidden">ändern</span>
                 </summary>
               <form

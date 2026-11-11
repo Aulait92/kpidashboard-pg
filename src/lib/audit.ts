@@ -61,6 +61,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "offer.accept": "Angebot angenommen",
   "contact.delete": "Vertriebskontakt gelöscht",
   "agent.active": "WhatsApp-Assistent an/aus",
+  "whatsapp.self_connect": "WhatsApp selbst verbunden (360dialog)",
   "agent.sequences": "Automatisch nachfassen an/aus",
   "lead.sequence_stop": "Automatisches Nachfassen gestoppt",
   "leadsource.assign": "Leadformular zugeordnet",

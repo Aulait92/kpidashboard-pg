@@ -31,6 +31,15 @@ weiter (Papierkram bis 140); danach immer letzte Nummer + 1.
       Migrationen, siehe „Ergebnis Probelauf 3“). Kommen bis zum Livegang neue
       Migrationen dazu, nur diese gegen eine frische Kopie wiederholen.
 
+### Nach dem Livegang (ab 11.11.)
+
+Die Produktion ist seit 11.11. eingemessen; neue Migrationen laufen beim normalen Deploy
+(`scripts/migrate.mjs` → `prisma migrate deploy`). Nur hinzufügend:
+
+| Migration | Was |
+|---|---|
+| `20261114110000_whatsapp_selbst_verbinden` | Spalten `WhatsAppAccount.dialog360ClientId`, `WhatsAppAccount.dialog360ChannelId` (Kunde verbindet WhatsApp selbst, siehe `docs/whatsapp-360dialog.md`) |
+
 ### Neue Migrationen seit Probelauf 2 (Stand 11.11.)
 
 | Migration | Was | Beim Einmessen |

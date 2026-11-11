@@ -265,6 +265,13 @@ Seiten aus der Liste „Seiten“ unten.
   App aufs Handy, Start.
 - Meta-Zugriff: Hat Ihr Business-Konto einen zweiten Admin, muss er die Partner-Freigabe bestätigen.
   Lieber gemeinsam? 15-Minuten-Hilfetermin in der Einrichtung buchen.
+- **WhatsApp verbinden** (nur Inhaber, Paket mit Software): „WhatsApp verbinden“ führt zu unserem
+  Partner 360dialog. Dort ein Konto anlegen, mit Ihrem Facebook-Konto anmelden (Inhaber des
+  Business-Portfolios), die Nummer wählen und per SMS oder Anruf bestätigen. Danach geht es
+  automatisch zurück in die App. Die Nummer darf nicht gleichzeitig in der normalen WhatsApp-App
+  aktiv sein – am einfachsten eine neue Handynummer oder die Festnetznummer. Steht dort „wird
+  eingerichtet“, ist nichts weiter zu tun (meist wenige Minuten). Klappt es nicht, bekommen wir
+  automatisch Bescheid und melden uns.
 
 ## Datenschutz
 

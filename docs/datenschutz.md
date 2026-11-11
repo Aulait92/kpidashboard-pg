@@ -72,7 +72,7 @@ Für jeden Kunden mit AVV (Annahme des Angebots, `Offer.dpaUrl` speichert die ge
 |---|---|---|---|
 | Railway | Hosting, Datenbank (EU, Amsterdam) | | |
 | Anthropic | KI-Assistent, Impressum auslesen | | |
-| 360dialog | WhatsApp Business API | | |
+| 360dialog | WhatsApp Business API; seit 14.11. auch Partner-API für das Selbst-Verbinden der Kundennummer (Konto-/Channel-ID, Telefonnummer, Anzeigename; API-Key verschlüsselt gespeichert) | | |
 | Meta | WhatsApp, Lead-Formulare | | |
 | Resend | E-Mail-Versand | | |
 | Airtable | Lead-Daten (bis Dezember 2026) | | |

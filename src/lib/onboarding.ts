@@ -15,6 +15,7 @@ import { billingEnabled } from "@/lib/billing";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 import { offerProducts } from "@/components/offer-document";
+import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 
 const DAY = 24 * 60 * 60 * 1000;
 const INVITE_TTL_MS = 7 * DAY;
@@ -260,7 +261,7 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
   if (software) {
     items.push(
       { key: "calendar", label: "Kalender verbunden", owner: "kunde", done: ob.customer.calendarConnection?.status === "connected", at: null },
-      { key: "whatsapp", label: "WhatsApp-Nummer verbunden", owner: "du", done: ob.customer.whatsAppAccount?.status === "connected", at: null },
+      { key: "whatsapp", label: "WhatsApp-Nummer verbunden", owner: selfConnectEnabled() ? "kunde" : "du", done: ob.customer.whatsAppAccount?.status === "connected", at: null },
     );
   }
   items.push(

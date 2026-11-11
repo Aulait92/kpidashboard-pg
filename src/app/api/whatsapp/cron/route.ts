@@ -16,6 +16,7 @@ import { runOnboardingCron } from "@/lib/onboarding-cron";
 import { beat } from "@/lib/heartbeat";
 import { runGarantien } from "@/lib/garantien-server";
 import { enrichPendingAddresses } from "@/lib/vertrieb/address-enrich";
+import { retryPendingSelfConnect } from "@/lib/whatsapp/self-connect";
 
 // Zentraler Cron (z. B. cron-job.org alle 5 Minuten):
 //   1. Erstanschreiben neuer Leads ohne Termin
@@ -112,11 +113,16 @@ async function handle(req: Request): Promise<Response> {
   after(() =>
     enrichPendingAddresses(Number(process.env.ADDRESS_ENRICH_PER_RUN ?? 10)).catch((e: unknown) => reportError(e, "cron-addresses")),
   );
+  // WhatsApp selbst verbunden: API-Keys für Channels nachholen, die beim Redirect noch eingerichtet wurden
+  const whatsappConnect = await retryPendingSelfConnect(now).catch((e: unknown) => {
+    reportError(e, "cron-d360-connect");
+    return null;
+  });
   const failed = Object.entries({ outreach, responses, reminders, onboarding, sequences })
     .filter(([, r]) => r && typeof r === "object" && "error" in r)
     .map(([k]) => k);
   await beat("cron", failed.length === 0, failed.length ? `Fehler in: ${failed.join(", ")}` : null);
-  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl, campaigns, sequences });
+  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl, campaigns, sequences, whatsappConnect });
 }
 
 export const GET = handle;

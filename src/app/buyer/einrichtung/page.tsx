@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { CalendarDays, CheckCircle2,
-  ChevronDown, ClipboardList, KeyRound, Percent, Rocket, Smartphone } from "lucide-react";
+  ChevronDown, ClipboardList, KeyRound, MessageCircle, Percent, Rocket, Smartphone } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { buttonClass, Card } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
@@ -12,6 +12,7 @@ import { InstallApp } from "@/components/install-app";
 import { getAppUrl } from "@/lib/email";
 import { loadCustomerProvision } from "@/lib/provision-server";
 import Link from "next/link";
+import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Einrichtung | performancegrowth" };
@@ -19,13 +20,13 @@ export const metadata = { title: "Einrichtung | performancegrowth" };
 const dateFmt = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "2-digit", month: "long", year: "numeric" }).format(d);
 
-export default async function SetupPage({ searchParams }: { searchParams: Promise<{ gcal?: string }> }) {
+export default async function SetupPage({ searchParams }: { searchParams: Promise<{ gcal?: string; wa?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   if (ctx.teamRole === "advisor") redirect("/buyer");
   const ob = await loadOnboarding({ customerId: ctx.customerId });
   if (!ob) redirect("/buyer");
-  const { gcal } = await searchParams;
+  const { gcal, wa } = await searchParams;
   const offer = ob.offerId
     ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true } })
     : null;
@@ -36,7 +37,14 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const businessId = process.env.PG_META_BUSINESS_ID?.trim() || "3089330734489612";
   const readOnly = ctx.preview;
   const provision = await loadCustomerProvision(ctx.customerId);
-  const order = ["questionnaire", "metaAccess", ...(software ? ["calendar"] : [])];
+  // WhatsApp selbst verbinden (360dialog), nur mit Software und wenn der Partner-Zugang eingerichtet ist.
+  const waEnabled = software && selfConnectEnabled();
+  const waAccount = waEnabled
+    ? await prisma.whatsAppAccount.findUnique({ where: { customerId: ctx.customerId }, select: { status: true, phoneNumber: true, dialog360ChannelId: true } })
+    : null;
+  const order = ["questionnaire", "metaAccess", ...(software ? ["calendar"] : []), ...(waEnabled ? ["whatsapp"] : [])];
+  let stepNo = software ? 3 : 2;
+  const nextNo = () => ++stepNo;
   const current = order.find((k) => !done(k)) ?? "start";
   const helpUpcoming = ob.helpCallAt && ob.helpCallAt > new Date();
   const slots = !helpUpcoming && !ob.liveAt ? await helpCallSlots().catch(() => []) : [];
@@ -181,11 +189,17 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           </Step>
         ) : null}
 
-        <Step n={software ? 4 : 3} title="App aufs Handy" icon={Smartphone} done={false} open={current === "start" && !ob.liveAt}>
+        {waEnabled ? (
+          <Step n={nextNo()} title="WhatsApp verbinden" icon={MessageCircle} done={done("whatsapp")} open={current === "whatsapp" || !!wa} id="whatsapp">
+            <WhatsAppStep wa={wa} account={waAccount} done={done("whatsapp")} readOnly={readOnly} />
+          </Step>
+        ) : null}
+
+        <Step n={nextNo()} title="App aufs Handy" icon={Smartphone} done={false} open={current === "start" && !ob.liveAt}>
           <InstallApp appUrl={appHost()} />
         </Step>
 
-        <Step n={software ? 5 : 4} title="Provisionen prüfen (1 Minute, optional)" icon={Percent} done={provision.hasCustom} open={false}>
+        <Step n={nextNo()} title="Provisionen prüfen (1 Minute, optional)" icon={Percent} done={provision.hasCustom} open={false}>
           <p className="text-sm text-[color:var(--muted)]">
             Damit die App Ihre Provision je Abschluss richtig schätzt: kurz angeben, ob Sie als Vertreter oder Makler arbeiten, und die
             Sätze prüfen. Vorausgefüllt mit üblichen Werten.
@@ -195,7 +209,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           </Link>
         </Step>
 
-        <Step n={software ? 6 : 5} title="Start" icon={Rocket} done={!!ob.liveAt} open={current === "start" && !!ob.liveAt}>
+        <Step n={nextNo()} title="Start" icon={Rocket} done={!!ob.liveAt} open={current === "start" && !!ob.liveAt}>
           <p className="text-sm text-[color:var(--muted)]">
             {ob.startDate ? `Am ${dateFmt(ob.startDate)} ` : "Zum Start "}
             gehen die Anzeigen live.{" "}
@@ -224,8 +238,10 @@ function Step({
   icon: Icon,
   done,
   open,
+  id,
   children,
 }: {
+  id?: string;
   n: number;
   title: string;
   icon: typeof Rocket;
@@ -236,7 +252,7 @@ function Step({
 }) {
   // Erledigte Schritte sind zugeklappt (antippen zum Ansehen), offene aufgeklappt.
   return (
-    <details open={open} className="group overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)] [&>summary::-webkit-details-marker]:hidden">
+    <details id={id} open={open} className="group overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)] [&>summary::-webkit-details-marker]:hidden">
       <summary className="flex cursor-pointer items-center gap-2.5 px-5 py-3.5 group-open:border-b group-open:border-[color:var(--border)]">
         {done ? <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" /> : <Icon className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />}
         <span className={`flex-1 text-[15px] font-semibold tracking-tight ${done ? "text-[color:var(--muted)]" : ""}`}>
@@ -247,5 +263,58 @@ function Step({
       </summary>
       <div className="p-5">{children}</div>
     </details>
+  );
+}
+
+const WA_MESSAGES: Record<string, { ok: boolean; text: string }> = {
+  ok: { ok: true, text: "WhatsApp ist verbunden. Wir prüfen noch die Nachrichtenvorlagen und schalten den Assistenten dann ein." },
+  pending: { ok: true, text: "Fast geschafft: Ihre Nummer wird bei WhatsApp noch eingerichtet. Das dauert meist nur wenige Minuten, Sie müssen nichts weiter tun." },
+  error: { ok: false, text: "Das hat nicht ganz geklappt. Kein Problem: Wir haben eine Nachricht bekommen und melden uns kurz bei Ihnen." },
+  state: { ok: false, text: "Der Link war abgelaufen. Bitte noch einmal auf „WhatsApp verbinden“ tippen." },
+  forbidden: { ok: false, text: "Das kann nur der Inhaber des Kontos." },
+  off: { ok: false, text: "Das Verbinden ist gerade nicht verfügbar. Wir richten WhatsApp gemeinsam mit Ihnen ein." },
+};
+
+/** Schritt „WhatsApp verbinden“: Erklärung, Knopf zum 360dialog-Onboarding, Status. */
+function WhatsAppStep({
+  wa,
+  account,
+  done,
+  readOnly,
+}: {
+  wa?: string;
+  account: { status: string; phoneNumber: string | null; dialog360ChannelId: string | null } | null;
+  done: boolean;
+  readOnly: boolean;
+}) {
+  const msg = wa ? WA_MESSAGES[wa] : undefined;
+  const pending = !done && account?.status === "pending" && !!account.dialog360ChannelId;
+  return (
+    <>
+      {msg ? <p className={`mb-3 text-sm font-medium ${msg.ok ? "text-emerald-700" : "text-rose-700"}`}>{msg.text}</p> : null}
+      {done ? (
+        <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
+          <CheckCircle2 className="h-4 w-4" /> Verbunden{account?.phoneNumber ? `: +${account.phoneNumber.replace(/^\+/, "")}` : ""}
+        </p>
+      ) : msg?.ok ? null : pending ? (
+        <p className="text-sm font-medium text-amber-700">Ihre Nummer wird gerade eingerichtet. Das dauert meist nur wenige Minuten.</p>
+      ) : (
+        <>
+          <p className="text-sm text-[color:var(--muted)]">
+            Über diese Nummer schreibt Ihr Assistent neuen Leads in Ihrem Namen. Sie melden sich dafür einmal mit Ihrem Facebook-Konto an
+            (Inhaber des Business-Portfolios) und bestätigen die Nummer per SMS oder Anruf.
+          </p>
+          <ul className="my-4 list-disc space-y-1.5 pl-5 text-[15px]">
+            <li>Die Nummer darf <b>nicht gleichzeitig in der normalen WhatsApp-App</b> aktiv sein.</li>
+            <li>Am einfachsten: eine <b>neue Handynummer</b> oder Ihre <b>Festnetznummer</b> (Bestätigung per Anruf).</li>
+            <li>Dauer: ca. 5 Minuten.</li>
+          </ul>
+          <a href="/buyer/whatsapp-verbinden" className={buttonClass("primary", "md", readOnly ? "pointer-events-none opacity-60" : "")}>
+            WhatsApp verbinden
+          </a>
+          <p className="mt-3 text-sm text-[color:var(--muted)]">Unsicher? Im 15-Minuten-Termin oben machen wir es gemeinsam.</p>
+        </>
+      )}
+    </>
   );
 }

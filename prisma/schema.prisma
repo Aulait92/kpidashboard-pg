@@ -649,6 +649,10 @@ model WhatsAppAccount {
   displayName   String?
   apiKeyEnc     String? // app-seitig verschlüsselter 360dialog-API-Key
   status        String   @default("pending") // pending | connected | disabled
+  // Selbst verbunden über 360dialog Integrated Onboarding (Partner-API):
+  // Client und Channel aus dem Redirect; der API-Key wird daraus erzeugt.
+  dialog360ClientId  String?
+  dialog360ChannelId String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
