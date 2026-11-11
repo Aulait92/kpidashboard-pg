@@ -73,6 +73,8 @@ export function onboardingLink(cfg: PartnerConfig, opts: { redirectUrl: string; 
   url.searchParams.set("redirect_url", opts.redirectUrl);
   url.searchParams.set("state", opts.state);
   url.searchParams.set("lang", "de");
+  // Tarif vorwählen (wie im Partner Hub: „Regular“), sonst fragt 360dialog den Kunden nach einem Plan.
+  url.searchParams.set("plan_selection", "regular");
   if (opts.email) url.searchParams.set("email", opts.email);
   if (opts.name) url.searchParams.set("name", opts.name);
   return url.toString();

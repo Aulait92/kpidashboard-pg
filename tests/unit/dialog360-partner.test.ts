@@ -61,6 +61,7 @@ describe("360dialog Partner: Link und Redirect", () => {
     expect(link.searchParams.get("redirect_url")).toBe("https://app.example.de/api/whatsapp/360dialog/callback");
     expect(link.searchParams.get("state")).toBe("st");
     expect(link.searchParams.get("lang")).toBe("de");
+    expect(link.searchParams.get("plan_selection")).toBe("regular");
     expect(link.searchParams.get("email")).toBe("a@b.de");
   });
 
