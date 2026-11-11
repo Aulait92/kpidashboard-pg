@@ -48,7 +48,7 @@ describe("Vertrieb: Adresse aus dem Impressum ergänzen", () => {
     expect(c.addressEnrichedAt).not.toBeNull();
     expect(c.addressEnrichTriedAt).not.toBeNull();
     const act = await prisma.salesActivity.findFirst({ where: { contactId: `${P}1` } });
-    expect(act?.note).toContain("Adresse aus Impressum ergänzt");
+    expect(act?.note).toContain("Adresse von der Website ergänzt");
     expect(act?.note).toContain("https://agentur-muster-test.de/impressum");
     expect(calls).toHaveLength(2);
   });

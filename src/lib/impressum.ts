@@ -120,7 +120,7 @@ const FIELDS = {
 export async function fetchImpressumText(
   website: string,
   opts: { timeoutMs?: number } = {},
-): Promise<{ impressumUrl: string; privacyUrl: string | null; text: string } | { error: string; privacyUrl?: string | null }> {
+): Promise<{ impressumUrl: string; privacyUrl: string | null; text: string; homeText: string } | { error: string; privacyUrl?: string | null; homeText?: string }> {
   const base = normalizeUrl(website);
   if (!base) return { error: "Keine (gültige) Website hinterlegt." };
   const home = await fetchHtml(base.toString(), opts.timeoutMs);
@@ -140,8 +140,9 @@ export async function fetchImpressumText(
   const impressumUrl = all.find((l) => isImpressum(l) && sameSite(l))?.href ?? all.find(isImpressum)?.href ?? fallback;
   const privacyUrl = all.find((l) => /datenschutz|privacy/i.test(l.href) || /datenschutz/i.test(l.text))?.href ?? null;
   const impressumHtml = await fetchHtml(impressumUrl, opts.timeoutMs);
-  if (!impressumHtml) return { error: "Impressum nicht gefunden.", privacyUrl };
-  return { impressumUrl, privacyUrl, text: htmlToText(impressumHtml).slice(0, 20000) };
+  const homeText = htmlToText(home).slice(0, 40000);
+  if (!impressumHtml) return { error: "Impressum nicht gefunden.", privacyUrl, homeText };
+  return { impressumUrl, privacyUrl, text: htmlToText(impressumHtml).slice(0, 20000), homeText };
 }
 
 export async function readImpressum(website: string | null | undefined): Promise<ImpressumInfo> {

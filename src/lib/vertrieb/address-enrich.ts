@@ -34,6 +34,21 @@ const insurerRoot = (host: string) => INSURER.find((d) => host === d || host.end
  * Welche Website lesen wir für diesen Kontakt? Erst das Feld „url“, sonst die
  * E-Mail-Domain. null = keine geeignete Quelle.
  */
+/**
+ * Agentur-Seite eines Ausschließlichkeitsvertreters aus seiner Konzern-E-Mail
+ * (vorname.nachname@…) – dort stehen Adresse und Telefon:
+ *   Allianz        vertretung.allianz.de/vorname.nachname/
+ *   SIGNAL IDUNA   signal-iduna.de/vorname.nachname/
+ *   AXA            axa-betreuer.de/vorname_nachname
+ */
+export function agentPageFromEmail(local: string | undefined, domain: string | undefined): string | null {
+  if (!local || !domain || !/^[a-z0-9äöüß][a-z0-9äöüß_-]*\.[a-z0-9äöüß._-]+$/.test(local)) return null;
+  if (domain === "allianz.de") return `https://vertretung.allianz.de/${local}/`;
+  if (domain === "signal-iduna.net" || domain === "signal-iduna.de") return `https://www.signal-iduna.de/${local}/`;
+  if (domain === "axa.de" || domain === "axa-betreuer.de") return `https://www.axa-betreuer.de/${local.replace(/\./g, "_")}`;
+  return null;
+}
+
 export function enrichmentSourceUrl(c: { url?: string | null; email?: string | null }): string | null {
   if (c.url?.trim()) {
     const u = normalizeUrl(c.url);
@@ -45,7 +60,9 @@ export function enrichmentSourceUrl(c: { url?: string | null; email?: string | n
       if (!root || (host !== root && path.length > 1)) return u.toString();
     }
   }
-  const domain = c.email?.trim().toLowerCase().split("@")[1];
+  const [local, domain] = (c.email?.trim().toLowerCase() ?? "").split("@");
+  const agent = agentPageFromEmail(local, domain);
+  if (agent) return agent;
   if (!domain || domain.endsWith(".invalid") || !domain.includes(".")) return null;
   if (FREEMAIL.has(domain) || insurerRoot(domain)) return null;
   return `https://${domain}`;
@@ -144,8 +161,18 @@ export async function enrichContactAddress(contactId: string, opts: { force?: bo
   if (!sourceUrl) return { status: "no-source", sourceUrl: null };
 
   const page = await fetchImpressumText(sourceUrl, { timeoutMs: opts.timeoutMs ?? 8000 });
-  if ("error" in page) return { status: "not-found", sourceUrl, error: page.error };
-  const data = fillEmpty(c, extractAddress(page.text));
+  // Impressum gesperrt/leer (z. B. Allianz-Agenturseiten): Adresse steht oft auf der Startseite
+  let found = "error" in page ? null : extractAddress(page.text);
+  let usedUrl = "error" in page ? sourceUrl : page.impressumUrl;
+  if ((!found || (!found.street && !found.zip)) && page.homeText) {
+    const home = extractAddress(page.homeText);
+    if (home.street || home.zip || home.phone) {
+      found = { street: found?.street ?? home.street, zip: found?.zip ?? home.zip, city: found?.city ?? home.city, phone: found?.phone ?? home.phone };
+      usedUrl = sourceUrl;
+    }
+  }
+  if (!found) return { status: "not-found", sourceUrl, error: "error" in page ? page.error : undefined };
+  const data = fillEmpty(c, found);
   const fields = Object.keys(data);
   if (fields.length === 0) return { status: "nothing-new", sourceUrl };
 
@@ -155,11 +182,11 @@ export async function enrichContactAddress(contactId: string, opts: { force?: bo
       data: {
         contactId: c.id,
         type: "NOTIZ",
-        note: `Adresse aus Impressum ergänzt (${fields.map((f) => FIELD_LABEL[f]).join(", ")}). Quelle: ${page.impressumUrl}`,
+        note: `Adresse von der Website ergänzt (${fields.map((f) => FIELD_LABEL[f]).join(", ")}). Quelle: ${usedUrl}`,
       },
     }),
   ]);
-  return { status: "updated", fields, sourceUrl: page.impressumUrl };
+  return { status: "updated", fields, sourceUrl: usedUrl };
 }
 
 /** Nachhol-Lauf (WhatsApp-Cron): Kontakte ohne vollständige Adresse, noch nie versucht. */
@@ -167,10 +194,11 @@ export async function enrichPendingAddresses(limit = 10, budgetMs = 120_000): Pr
   const deadline = Date.now() + budgetMs;
   const pending = await prisma.salesContact.findMany({
     where: {
-      addressEnrichTriedAt: null,
-      OR: [{ street: null }, { zip: null }, { city: null }, { street: "" }, { zip: "" }, { city: "" }],
+      // nie versucht, oder erfolglos versucht vor mehr als 30 Tagen (Website kann sich ändern)
+      OR: [{ addressEnrichTriedAt: null }, { addressEnrichTriedAt: { lt: new Date(Date.now() - 30 * 86400000) }, addressEnrichedAt: null }],
+      AND: [{ OR: [{ street: null }, { zip: null }, { city: null }, { street: "" }, { zip: "" }, { city: "" }] }],
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ addressEnrichTriedAt: { sort: "asc", nulls: "first" } }, { createdAt: "desc" }],
     take: limit,
     select: { id: true },
   });

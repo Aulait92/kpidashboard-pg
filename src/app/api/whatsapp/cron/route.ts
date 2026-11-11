@@ -114,7 +114,7 @@ async function handle(req: Request): Promise<Response> {
   // Vertrieb: fehlende Adressen aus dem Impressum nachholen – nach der Antwort,
   // damit der Cron nicht auf langsame Websites wartet (gedrosselt, je Kontakt einmal).
   after(() =>
-    enrichPendingAddresses(Number(process.env.ADDRESS_ENRICH_PER_RUN ?? 10)).catch((e: unknown) => reportError(e, "cron-addresses")),
+    enrichPendingAddresses(Number(process.env.ADDRESS_ENRICH_PER_RUN ?? 20)).catch((e: unknown) => reportError(e, "cron-addresses")),
   );
   // WhatsApp selbst verbunden: API-Keys für Channels nachholen, die beim Redirect noch eingerichtet wurden
   const whatsappConnect = await retryPendingSelfConnect(now).catch((e: unknown) => {
