@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, Calculator, ChevronRight, FileUp, History, KeyRound, Landmark, LifeBuoy, LogIn, MessageCircle, ShieldCheck, Wallet, Workflow } from "lucide-react";
+import { Activity, Calculator, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, MessageCircle, ShieldCheck, Wallet, Workflow } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { supportConfig } from "@/lib/support";
 import { requireAuth } from "@/lib/vertrieb/auth";
@@ -14,6 +14,7 @@ const ITEMS = [
   { href: "/admin/einstellungen/kosten", icon: Wallet, color: "bg-emerald-600", title: "Laufende Kosten", text: "Tools und eigene Werbung für Marge und Kundengewinnung" },
   { href: "/admin/einstellungen/bank", icon: Landmark, color: "bg-teal-600", title: "Bank & Karten", text: "Commerzbank und Amex: Ausgaben holen und als Kosten zuordnen" },
   { href: "/admin/einstellungen/rechner", icon: Calculator, color: "bg-sky-500", title: "Rechner", text: "Break-even-Rechner für Interessenten: Produkte, Quoten, Garantien" },
+  { href: "/admin/einstellungen/empfehlungen", icon: Gift, color: "bg-emerald-600", title: "Kollegen empfehlen", text: "Empfehlungsprogramm: Prämie für Empfehler, Vorteil für Neukunden" },
   { href: "/admin/einstellungen/login", icon: LogIn, color: "bg-indigo-500", title: "Login-Seite", text: "Infokarte neben dem Login: Neuigkeiten und Hinweise für Kunden" },
   { href: "/admin/einstellungen/status", icon: Activity, color: "bg-emerald-500", title: "Status & Support", text: "Öffentliche Statusseite, Störungsmeldungen, Support-Kontakt im Hilfe-Chat" },
   { href: "/admin/einstellungen/sicherheit", icon: ShieldCheck, color: "bg-slate-600", title: "Sicherheit", text: "Zwei-Faktor-Login" },

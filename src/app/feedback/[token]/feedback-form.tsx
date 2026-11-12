@@ -17,6 +17,20 @@ export function FeedbackForm({ token, initialScore }: { token: string; initialSc
         <div>
           <div className="font-semibold">Vielen Dank für Ihr Feedback!</div>
           <p className="mt-1 text-sm">{score != null && score <= 3 ? "Wir melden uns kurzfristig bei Ihnen." : "Das freut uns sehr."}</p>
+          {state.referralUrl ? (
+            <div className="mt-3 border-t border-emerald-200 pt-3 text-sm" data-feedback-empfehlen>
+              <p>Kennen Sie Kollegen, denen wir genauso helfen können? Wird ein empfohlener Kollege Kunde, bedanken wir uns mit einer Prämie.</p>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(`Tipp für neue Kunden: performancegrowth – hier kann man sich unverbindlich ein Erstgespräch holen: ${state.referralUrl}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex min-h-10 items-center rounded-[var(--radius-sm)] bg-emerald-700 px-4 font-semibold text-white"
+              >
+                Per WhatsApp weiterempfehlen
+              </a>
+              <p className="mt-2 break-all text-xs">Ihr Link: {state.referralUrl}</p>
+            </div>
+          ) : null}
         </div>
       </div>
     );

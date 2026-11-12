@@ -26,6 +26,7 @@ Unterauftragsverarbeiter (Anlage 2) in `src/lib/legal-texts.ts`, öffentlich unt
 | Tätigkeit | Zweck | Betroffene / Daten | Rechtsgrundlage | Empfänger | Löschung |
 |---|---|---|---|---|---|
 | Vertrieb an Versicherungsvermittler | Neukunden gewinnen | Vermittler (B2B): Name, Firma, Kontaktdaten (fehlende Anschrift/Telefon automatisch aus dem öffentlichen Impressum der Agentur-Website ergänzt, nur leere Felder, Quelle im Verlauf), Verlauf, E-Mails, Termine | Art. 6 Abs. 1 f; Kalt-E-Mails **Prüfen** (§ 7 UWG, mutmaßliche Einwilligung B2B) | Instantly, Calendly, Resend, Railway | Widerspruch: sofort (Kontakt löschen). Sonst siehe Löschkonzept |
+| „Kollegen empfehlen“ (Empfehlungen von Kunden an Kollegen) | Neukunden gewinnen, Prämie für den Empfehler | Empfohlene (B2B): Name, Agentur, E-Mail, Telefon, Einwilligungstext und -zeitpunkt, Stand (Termin, Kunde); Empfehler: Code, Prämie | Art. 6 Abs. 1 a (Einwilligung auf /empfehlen/[code], auch dazu, dass der Empfehler den Stand sieht); Prämie Art. 6 Abs. 1 b | Resend, Stripe (Gutschrift), Railway | Angaben ohne Abschluss nach 12 Monaten automatisch entfernt (`pruneReferrals`); Vertriebskontakt wie Vertrieb. Widerruf: Kontakt löschen |
 | Angebote und Verträge | Vertragsschluss | Kunde: Name, Firma, Anschrift, Annahme-Protokoll (Name, IP, Browser, Zeit) | Art. 6 Abs. 1 b, c | Stripe, Resend, Railway | 10 Jahre (§ 147 AO, § 257 HGB) |
 | Abrechnung, Mahnwesen | Zahlungen | Kunde: Rechnungsdaten, Zahlungsstatus (Bankdaten nur bei Stripe) | Art. 6 Abs. 1 b, c | Stripe | 10 Jahre |
 | Onboarding, Feedback | Einrichtung, Qualität | Kunde: Fragebogen, Impressumsangaben der Website, Bewertungen | Art. 6 Abs. 1 b, f | Anthropic (Impressum auslesen), Resend | mit dem Kundenkonto |
@@ -107,6 +108,7 @@ gilt nur für neue Dienste, eine Streichung ist unkritisch, wird aber trotzdem m
 | Messpunkte der Statusseite (`StatusSample`, ohne Personenbezug) | 90 Tage | automatisch je Cron-Lauf (`recordStatusSample`) |
 | Hilfe-Anfragen an das Team (`UsageEvent` Typ `support`: Grund, Kurzfassung ohne Kontaktdaten, Referenz) | 180 Tage | wie Nutzungsmessung (`pruneUsage`) |
 | Abwesenheiten (`UserAbsence`) | 1 Jahr nach Ende der Abwesenheit, spätestens mit dem Login bzw. bei Vertragsende | automatisch täglich (`pruneTransient`), mit dem Login (Kaskade) und bei „Vertragsende: Daten löschen“ |
+| Angaben von Empfohlenen ohne Abschluss („Kollegen empfehlen“, `ColleagueReferral`) | 12 Monate nach Eingang | automatisch täglich 03:00 UTC (`pruneReferrals`): Name, Agentur, E-Mail, Telefon werden entfernt, Zähler und Prämie bleiben |
 | Login-Fehlversuche | 30 Tage | automatisch (`pruneAudit`) |
 | Nicht zugeordnete Leads (Rohdaten aus Meta) | 30 Tage nach Zuordnung, sonst 90 Tage | automatisch (`pruneTransient`) |
 | Passwort-Links | 7 Tage nach Ablauf | automatisch (`pruneTransient`) |

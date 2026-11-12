@@ -189,6 +189,10 @@ model Customer {
   adSpend                  CustomerAdSpend[]
   budgets                  CustomerBudget[]
   budgetChanges            BudgetChange[]
+  // „Kollegen empfehlen“ (B2B-Empfehlungsprogramm, lib/kollegen.ts)
+  referralCode             ReferralCode?
+  colleagueReferrals       ColleagueReferral[]
+  referralNudges           ReferralNudge[]
 }
 
 // Tagesbudget je Produkt (Kundenbereich → Konto → Werbebudget). Ohne Eintrag gilt das
@@ -1159,14 +1163,16 @@ model SalesContact {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  offers         Offer[]
-  activities     SalesActivity[]
-  tasks          SalesTask[]
-  campaigns      SalesCampaignLead[]
-  emails         SalesEmail[]
-  linkedinEvents SalesLinkedInEvent[]
-  meetings       SalesMeeting[]
-  inboundLeads   SalesInboundLead[]
+  offers             Offer[]
+  activities         SalesActivity[]
+  tasks              SalesTask[]
+  campaigns          SalesCampaignLead[]
+  emails             SalesEmail[]
+  linkedinEvents     SalesLinkedInEvent[]
+  meetings           SalesMeeting[]
+  inboundLeads       SalesInboundLead[]
+  // Über „Kollegen empfehlen“ von einem Kunden empfohlen
+  colleagueReferrals ColleagueReferral[]
 
   @@index([altEmails], type: Gin)
   @@index([stage])
@@ -2117,4 +2123,83 @@ model PplIntake {
 
   @@index([receivedAt])
   @@index([productKey, receivedAt])
+}
+
+// ─── „Kollegen empfehlen“ (seit 15.11.2026) ─────────────────────────────
+// Kunden (Vermittler) empfehlen performancegrowth an Kollegen (B2B). Der
+// Empfohlene trägt sich auf /empfehlen/[code] selbst ein → Vertriebskontakt.
+// Prämie für den Empfehler, sobald der Neukunde angenommen und die erste
+// Rechnung bezahlt hat (lib/kollegen.ts).
+
+// Persönlicher, stabiler Empfehlungscode je Kunde.
+model ReferralCode {
+  customerId String   @id
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  code       String   @unique
+  createdAt  DateTime @default(now())
+}
+
+// Eine Empfehlung (Formular auf der Landingpage).
+model ColleagueReferral {
+  id              String        @id @default(cuid())
+  referrerId      String
+  referrer        Customer      @relation(fields: [referrerId], references: [id], onDelete: Cascade)
+  // Vertriebskontakt des Empfohlenen (neu angelegt oder bestehender bei Dublette)
+  contactId       String?
+  contact         SalesContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  // Angaben des Empfohlenen (Löschfrist: 12 Monate ohne Abschluss, lib/kollegen.pruneReferrals)
+  name            String?
+  company         String?
+  email           String?
+  phone           String?
+  consentAt       DateTime
+  consentText     String
+  // Kontakt war vorher schon im CRM (Dublette)
+  existingContact Boolean       @default(false)
+  // open | blocked (z. B. Selbstempfehlung, schon Kunde)
+  status          String        @default("open")
+  blockedReason   String?
+  // Angebot angenommen (gesetzt bei Prämienprüfung)
+  wonAt           DateTime?
+  offerId         String?
+  // none | processing | credited | manual | done_manual | skipped
+  rewardStatus    String        @default("none")
+  rewardAmount    Decimal?      @db.Decimal(10, 2)
+  // Stripe-Rechnungsposten (negativer Betrag) der Gutschrift
+  rewardRef       String?
+  rewardNote      String?
+  rewardedAt      DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([referrerId, createdAt])
+  @@index([contactId])
+  @@index([createdAt])
+}
+
+// Hinweis-Karte „Kollegen empfehlen“ im Kundenbereich: je Anlass höchstens einmal.
+model ReferralNudge {
+  id           String    @id @default(cuid())
+  customerId   String
+  customer     Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  // garantie | abschluss5 | abschluss10 | feedback-day30 | feedback-day90
+  key          String
+  firstShownAt DateTime  @default(now())
+  // weggeklickt, Link geteilt oder nach 14 Tagen abgelaufen
+  closedAt     DateTime?
+
+  @@unique([customerId, key])
+}
+
+// Einstellungen des Empfehlungsprogramms (eine Zeile, id „default“).
+model ReferralSettings {
+  id          String   @id @default("default")
+  enabled     Boolean  @default(true)
+  // month = 1 Monat Betreuung (aktueller Monatspreis des Empfehlers) | fixed = fester Betrag
+  rewardKind  String   @default("month")
+  rewardFixed Decimal? @db.Decimal(10, 2)
+  // none | setup_free (Einrichtung gratis) | custom (eigener Text)
+  benefitKind String   @default("none")
+  benefitText String?
+  updatedAt   DateTime @updatedAt
 }

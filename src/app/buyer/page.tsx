@@ -12,6 +12,8 @@ import { loadInbox } from "@/lib/inbox";
 import { prisma } from "@/lib/prisma";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import ZahlenPage from "./zahlen/page";
+import { ReferralNudgeCard } from "@/components/kollegen";
+import { loadReferralNudge } from "@/lib/kollegen";
 
 // Startseite des Kundenbereichs. WhatsApp-Kunden: „Heute" – eine
 // Aufgabenliste (Termine, Ergebnisse, Chats, Rückrufe), die man leer
@@ -42,11 +44,14 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
   if (!whatsapp) {
     return <ZahlenPage searchParams={searchParams} />;
   }
-  const [data, customer, me] = await Promise.all([
+  const [data, customer, me, nudge] = await Promise.all([
     loadInbox(ctx),
     prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true } }),
     ctx.teamRole === "advisor" && ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true } }) : null,
+    // „Kollegen empfehlen“ nach positiven Momenten (nur Inhaber, nicht in der Vorschau)
+    ctx.teamRole === "owner" && !ctx.preview ? loadReferralNudge(ctx.customerId).catch(() => null) : null,
   ]);
+  const nudgeCard = nudge ? <ReferralNudgeCard nudgeKey={nudge.key} title={nudge.title} text={nudge.text} /> : null;
   const first = (me?.displayName ?? (customer?.name ?? "").replace(/^Allianz\s+/i, "")).split(" ")[0];
   const hour = Number(
     new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", hourCycle: "h23" }).format(new Date()),
@@ -70,6 +75,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
         <div className="xl:grid xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] xl:items-start xl:gap-6">
           <section className={selected ? "hidden xl:block" : undefined}>
             <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
+            {nudgeCard}
             <TodayInbox data={data} newUi leadHref="/buyer?lead={id}" selectedLeadId={selected} />
           </section>
           <section
@@ -109,6 +115,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <LiveRefresh />
       <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
+      {nudgeCard}
       <TodayInbox data={data} />
     </main>
   );

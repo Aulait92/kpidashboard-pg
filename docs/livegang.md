@@ -90,6 +90,7 @@ Die Produktion ist seit 11.11. eingemessen; neue Migrationen laufen beim normale
 | `20261115100000_status` | Tabellen `StatusSample` (Messpunkt der öffentlichen Statusseite je Cron-Lauf, 90 Tage) und `StatusIncident` (Störungsmeldungen aus Admin → Einstellungen → Status & Support) | nur hinzufügend; Statusseite zeigt Verfügbarkeit erst, wenn Messpunkte da sind |
 | `20261115110000_budget_aendern` | Tabellen `CustomerBudget` (Tagesbudget je Produkt ab Datum; ohne Eintrag gilt das Angebot) und `BudgetChange` (Budgetänderungen der Kunden mit Stufe, Preis, Stripe-Stand, Anfragen) | nur hinzufügend |
 | `20261115120000_sitzungsversion` | Spalte `User.sessionVersion` (Standard 0): Sitzungen lassen sich zentral beenden (Passwort-/2FA-Änderung, „Überall abmelden“) | nur hinzufügend; bestehende Sitzungen bleiben gültig (fehlende Version = 0) |
+| `20261115130000_kollegen_empfehlen` | Tabellen `ReferralCode` (Empfehlungscode je Kunde), `ColleagueReferral` (Empfehlungen über /empfehlen/[code] mit Einwilligung, Stand und Prämie), `ReferralNudge` (Hinweise im Kundenbereich, je Anlass einmal), `ReferralSettings` (Prämie und Neukunden-Vorteil) | nur hinzufügend; Programm ist sofort aktiv (Standard: 1 Monat Betreuung gratis), abschaltbar unter Einstellungen → Kollegen empfehlen |
 
 Keine davon verändert bestehende Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und

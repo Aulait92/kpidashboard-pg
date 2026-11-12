@@ -35,7 +35,18 @@ export function OfferForm({
 }: {
   target: OfferTarget;
   backHref: string;
-  initial: { contactName: string; company: string; email: string; product: string; street?: string; zip?: string; city?: string };
+  initial: {
+    contactName: string;
+    company: string;
+    email: string;
+    product: string;
+    street?: string;
+    zip?: string;
+    city?: string;
+    /** Vorbelegung, z. B. „Einrichtung gratis“ als Empfehlungsvorteil */
+    setupOverride?: string;
+    specialTerms?: string;
+  };
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -50,11 +61,11 @@ export function OfferForm({
   const [products, setProducts] = useState([{ name: initial.product || "Privatschutz", daily: "30" }]);
   const [pkg, setPkg] = useState<OfferPackage>("software");
   const [term, setTerm] = useState<OfferTerm>("12m");
-  const [setupOverride, setSetupOverride] = useState("");
+  const [setupOverride, setSetupOverride] = useState(initial.setupOverride ?? "");
   const [monthlyOverride, setMonthlyOverride] = useState("");
   const [introFee, setIntroFee] = useState("");
   const [introMonths, setIntroMonths] = useState("3");
-  const [specialTerms, setSpecialTerms] = useState("");
+  const [specialTerms, setSpecialTerms] = useState(initial.specialTerms ?? "");
   const [startDate, setStartDate] = useState(defaultStartDate());
   const [validDays, setValidDays] = useState("14");
   const [seats, setSeats] = useState(String(PRICE_LIST.seatsIncluded));

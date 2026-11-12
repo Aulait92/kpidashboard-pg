@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Bell, CreditCard, FileText, Package, Percent, Users } from "lucide-react";
+import { Bell, CreditCard, FileText, Gift, Package, Percent, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { Badge, Card, CardHeader, buttonClass } from "@/components/ui";
 import { loadCustomerProvision } from "@/lib/provision-server";
@@ -235,6 +235,18 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 email={((customer.onboarding.questionnaire ?? {}) as { leadEmails?: string[] }).leadEmails?.join(", ") || ctx.email}
                 readOnly={ctx.preview}
               />
+            </div>
+          </Card>
+        ) : null}
+
+        {customer.plan !== "internal" ? (
+          <Card>
+            <CardHeader title="Kollegen empfehlen" icon={Gift} />
+            <div className="flex flex-wrap items-center justify-between gap-3 p-5">
+              <p className="text-sm text-[color:var(--muted)]">Empfehlen Sie uns weiter – wird ein Kollege Kunde, bekommen Sie eine Prämie.</p>
+              <Link href="/buyer/empfehlen" className={buttonClass("secondary", "md")}>
+                Link teilen
+              </Link>
             </div>
           </Card>
         ) : null}

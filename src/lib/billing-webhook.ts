@@ -63,6 +63,16 @@ async function logActivity(offer: OfferLike, title: string, body?: string) {
   await logOfferActivity(offer, title, body ?? null);
 }
 
+/** „Kollegen empfehlen“: erste Zahlung eines empfohlenen Neukunden → Prämie (idempotent). */
+async function rewardReferral(offerId: string) {
+  try {
+    const { rewardReferralForOffer } = await import("@/lib/kollegen");
+    await rewardReferralForOffer(offerId);
+  } catch (err) {
+    reportError(err, "referral-reward", { offer: offerId });
+  }
+}
+
 export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
   // Idempotenz: jedes Ereignis nur einmal verarbeiten.
   try {
@@ -139,6 +149,8 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       } else {
         await logActivity(offer, `Zahlung für ${offer.number} bestätigt`);
       }
+      // Erste Zahlung eines empfohlenen Neukunden (auch SEPA, sobald bestätigt)
+      if (!failed && paid && (session.amount_total ?? 0) > 0) await rewardReferral(offer.id);
       return;
     }
     case "checkout.session.expired": {
@@ -190,6 +202,7 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       const label = invoice.number ?? invoice.id;
       if (event.type === "invoice.paid") {
         await logActivity(offer, `Rechnung ${label} bezahlt`, eur(invoice.amount_paid));
+        if ((invoice.amount_paid ?? 0) > 0) await rewardReferral(offer.id);
       } else {
         const what = event.type === "invoice.overdue" ? "überfällig" : "Zahlung fehlgeschlagen";
         await logActivity(offer, `Rechnung ${label}: ${what}`, eur(invoice.amount_due));

@@ -84,6 +84,8 @@ export const AUDIT_LABEL: Record<string, string> = {
   "budget.request": "Werbebudget angefragt (individuelles Angebot)",
   "budget.decide": "Budget-Anfrage übernommen/abgelehnt",
   "budget.fee": "Monatspreis nach Budgetänderung angepasst",
+  "referral.reward": "Empfehlungsprämie gutgeschrieben",
+  "referral.settings": "Empfehlungsprogramm-Einstellungen geändert",
 };
 
 export async function audit(

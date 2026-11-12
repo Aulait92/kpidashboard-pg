@@ -4,6 +4,8 @@ import { OfferForm } from "@/components/offer-form";
 import { legalUrls } from "@/lib/offers";
 import { prisma } from "@/lib/prisma";
 import { shortName } from "@/lib/vertrieb/crm";
+import { loadReferralSettings, referralForContact } from "@/lib/kollegen";
+import { benefitSentence } from "@/lib/kollegen-shared";
 
 export const metadata = { title: "Angebot erstellen | Vertrieb" };
 
@@ -20,6 +22,10 @@ export default async function ContactOfferPage({ params }: { params: Promise<{ i
   const legal = legalUrls();
   const person = [c.firstName, c.lastName].filter(Boolean).join(" ") || c.leaderNames?.split(",")[0]?.trim() || "";
   const back = `/admin/vertrieb/kontakte/${c.id}`;
+  // „Kollegen empfehlen“: Neukunden-Vorteil als Hinweis bzw. Vorbelegung
+  const referral = await referralForContact(c.id);
+  const settings = referral ? await loadReferralSettings() : null;
+  const benefit = settings ? benefitSentence(settings) : null;
 
   return (
     <div className="mx-auto w-full max-w-6xl">
@@ -34,6 +40,16 @@ export default async function ContactOfferPage({ params }: { params: Promise<{ i
           Online-Annahme noch nicht freigeschaltet: Bitte die Links zu AGB und Auftragsverarbeitungsvertrag hinterlegen.
         </p>
       ) : null}
+      {referral ? (
+        <p className="mt-4 rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" data-angebot-empfehlung>
+          Empfohlen von {referral.referrer.name}.{" "}
+          {benefit
+            ? settings?.benefitKind === "setup_free"
+              ? "Neukunden-Vorteil: Einrichtung gratis – ist unten vorbelegt."
+              : `Neukunden-Vorteil: ${benefit} (bitte als Sonderkondition eintragen).`
+            : "Kein Neukunden-Vorteil eingestellt."}
+        </p>
+      ) : null}
       <div className="mt-6">
         <OfferForm
           target={{ salesContactId: c.id }}
@@ -46,6 +62,9 @@ export default async function ContactOfferPage({ params }: { params: Promise<{ i
             street: c.street ?? "",
             zip: c.zip ?? "",
             city: c.city ?? "",
+            ...(referral && settings?.benefitKind === "setup_free"
+              ? { setupOverride: "0", specialTerms: `Empfehlung von ${referral.referrer.name}: Einrichtung ohne Gebühr.` }
+              : {}),
           }}
         />
       </div>

@@ -26,6 +26,8 @@ import type { ImpressumInfo } from "@/lib/impressum";
 import { BackToList } from "@/components/admin/list-memory";
 import { isAdminNewUi } from "@/lib/admin-ui";
 import { VERTRIEB_LISTS } from "@/lib/admin-lists";
+import { loadReferralSettings, referralForContact } from "@/lib/kollegen";
+import { benefitSentence } from "@/lib/kollegen-shared";
 
 export default async function ContactPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ embedded?: string }> }) {
   const { id } = await params;
@@ -62,6 +64,9 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
     orderBy: { name: "asc" },
   });
   const duplicates = await likelyDuplicates(c.id);
+  // „Kollegen empfehlen“: von einem Kunden empfohlen → Hinweis mit Neukunden-Vorteil
+  const referral = await referralForContact(c.id);
+  const referralBenefit = referral ? benefitSentence(await loadReferralSettings()) : null;
   let appUrl = "";
   try {
     appUrl = getAppUrl();
@@ -122,6 +127,16 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
         </div>
       </div>
       <DuplicateHint contactId={c.id} contactName={shortName(c.name)} duplicates={duplicates} />
+      {referral ? (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" data-kontakt-empfehlung>
+          <span className="font-medium">Empfohlen von </span>
+          <Link href={`/admin/kunden/${referral.referrer.id}`} className="font-medium underline">
+            {referral.referrer.name}
+          </Link>{" "}
+          am {fmtDate(referral.createdAt)}. Wird der Kontakt Kunde und zahlt die erste Rechnung, bekommt der Empfehler seine Prämie automatisch.
+          {referralBenefit ? <span className="block">Neukunden-Vorteil fürs Angebot: {referralBenefit}</span> : null}
+        </div>
+      ) : null}
 
       <div className="grid gap-5 lg:grid-cols-[3fr_2fr]">
         <div className="space-y-5">

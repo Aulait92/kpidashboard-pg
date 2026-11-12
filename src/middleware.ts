@@ -19,6 +19,7 @@ const PUBLIC_PREFIXES = [
   "/rechner", // Break-even-Rechner für Interessenten (öffentlich, keine personenbezogenen Daten)
   "/sicherheit", // Sicherheit & Datenschutz (öffentlich)
   "/status", // Statusseite (öffentlich, ohne interne Details)
+  "/empfehlen", // „Kollegen empfehlen“: Landingpage je Empfehlungscode (Formular mit Einwilligung)
   "/api/login-info", // Bild der Infokarte auf der Login-Seite (öffentlich, keine Personendaten)
   "/api/ops", // Betriebs-API (Buyer-Accounts anlegen), per ADMIN_API_TOKEN (Bearer) gesichert
   "/api/health", // Healthcheck für Railway/Uptime (gibt nur ok true/false zurück)
@@ -84,6 +85,7 @@ export async function middleware(req: NextRequest) {
     pathname === "/rechner" ||
     pathname === "/sicherheit" ||
     pathname === "/status" ||
+    pathname.startsWith("/empfehlen/") ||
     pathname.startsWith("/feedback/")
   ) {
     const headers = new Headers(req.headers);

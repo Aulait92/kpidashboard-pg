@@ -11,6 +11,7 @@ import {
   Contact,
   Columns3,
   CreditCard,
+  Gift,
   Percent,
   ListChecks,
   LayoutDashboard,
@@ -397,6 +398,13 @@ function ProfileMenu({
                 className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
               >
                 <CreditCard className="h-4 w-4" /> Konto &amp; Rechnungen
+              </Link>
+              <Link
+                href="/buyer/empfehlen"
+                onClick={() => setOpen(false)}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
+              >
+                <Gift className="h-4 w-4" /> Kollegen empfehlen
               </Link>
             </>
           ) : null}

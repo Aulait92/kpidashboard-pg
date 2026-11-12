@@ -10,6 +10,7 @@ const LINKS = [
   { href: `${BASE}/kontakte`, label: "Kontakte" },
   { href: `${BASE}/pipeline`, label: "Akquise-Pipeline" },
   { href: `${BASE}/aufgaben`, label: "Aufgaben" },
+  { href: `${BASE}/empfehlungen`, label: "Empfehlungen" },
 ];
 
 export function VertriebNav({ dueCount }: { dueCount: number }) {

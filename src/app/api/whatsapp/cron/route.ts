@@ -70,6 +70,8 @@ async function handle(req: Request): Promise<Response> {
       ? {
           usage: await pruneUsage().catch(() => null),
           audit: await pruneAudit(now).catch(() => null),
+          // „Kollegen empfehlen“: Angaben von Empfohlenen ohne Abschluss nach 12 Monaten entfernen
+          referrals: await import("@/lib/kollegen").then((m) => m.pruneReferrals(now)).catch(() => null),
           transient: await pruneTransient(now).catch(() => null),
           // Logins im Abo nachziehen (z. B. nach Startpreis-Phase oder Abo-Start)
           seats: await reconcileSeatBilling().catch((e: unknown) => {

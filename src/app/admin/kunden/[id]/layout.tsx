@@ -11,6 +11,7 @@ import { requireAuth } from "@/lib/vertrieb/auth";
 import { CUSTOMER_COLOR, CUSTOMER_LABEL } from "@/lib/vertrieb/crm";
 import { fmtDayShort, teamAbsences } from "@/lib/absence";
 import { memberName } from "@/lib/team";
+import { wonReferralCount } from "@/lib/kollegen";
 
 // Kundenakte: alles zu einem Kunden an einem Ort, als Reiter.
 export default async function KundenakteLayout({ children, params }: { children: React.ReactNode; params: Promise<{ id: string }> }) {
@@ -36,6 +37,8 @@ export default async function KundenakteLayout({ children, params }: { children:
   const base = `/admin/kunden/${c.id}`;
   // „Ich bin abwesend“: laufende/kommende Abwesenheiten im Team (nur Hinweis)
   const absences = await teamAbsences(c.id);
+  // „Kollegen empfehlen“: geworbene Kunden
+  const referred = await wonReferralCount(c.id).catch(() => 0);
   const absentUsers = absences.size
     ? await prisma.user.findMany({ where: { id: { in: [...absences.keys()] } }, select: { id: true, email: true, displayName: true } })
     : [];
@@ -65,6 +68,11 @@ export default async function KundenakteLayout({ children, params }: { children:
         ) : null}
         {c.paymentOverdueSince ? <Badge tone="danger">Zahlung offen</Badge> : null}
         {c.pauses.length ? <Badge tone="warning">pausiert</Badge> : null}
+        {referred ? (
+          <Link href="/admin/vertrieb/empfehlungen" title="Über „Kollegen empfehlen“">
+            <Badge tone="success">hat {referred} Kunden geworben</Badge>
+          </Link>
+        ) : null}
       </div>
       {absentUsers.length ? (
         <p className="mt-2 text-sm text-[color:var(--muted)]">

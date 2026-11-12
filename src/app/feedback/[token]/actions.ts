@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 
-export type FeedbackState = { ok?: boolean; error?: string };
+export type FeedbackState = { ok?: boolean; error?: string; referralUrl?: string | null };
 
 export async function submitFeedbackAction(token: string, _prev: FeedbackState, fd: FormData): Promise<FeedbackState> {
   const score = Number(fd.get("score"));
@@ -42,5 +42,13 @@ export async function submitFeedbackAction(token: string, _prev: FeedbackState, 
   } catch (err) {
     reportError(err, "feedback-followup");
   }
-  return { ok: true };
+  // Gute Bewertung nach 30/90 Tagen → „Kollegen empfehlen“ im Danke-Bildschirm
+  let referralUrl: string | null = null;
+  try {
+    const { referralLinkAfterFeedback } = await import("@/lib/kollegen");
+    referralUrl = await referralLinkAfterFeedback(fb.customerId, fb.kind, score);
+  } catch (err) {
+    reportError(err, "feedback-referral");
+  }
+  return { ok: true, referralUrl };
 }
