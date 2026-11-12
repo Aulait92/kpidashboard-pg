@@ -381,6 +381,22 @@ Seiten aus der Liste „Seiten“ unten.
   Modul mit der Testphase ohne Kosten, sonst zum Ende des Abrechnungszeitraums. Die Testphase gibt es einmal je Konto.
   Im Paket „Nur Betreuung“ gibt es das Modul nicht.
 
+## Bewertungs-Wächter (Teil von Empfehlungen & Bewertungen)
+
+- Unter „Empfehlungen & Bewertungen“ → „Google-Unternehmensprofil verbinden“ (nur Inhaber): mit dem Google-Konto
+  anmelden, das Ihr Profil verwaltet, Zugriff erlauben, Standort wählen.
+- Jede neue Google-Bewertung kommt als Push. Bei 1–3 Sternen dringend, mit der Aufgabe „Schlechte Google-Bewertung –
+  bitte antworten“ in „Heute“ (und am Kontakt, wenn der Name eindeutig zu einem Kunden mit Abschluss passt).
+- Die KI schlägt eine sachliche Antwort vor (ohne Namen, Vertrags- oder Versicherungsdetails; bei Kritik mit dem
+  Angebot, das offline zu klären). Sie passen sie an und veröffentlichen mit „Antwort auf Google veröffentlichen“.
+  Nichts geht automatisch raus.
+- Auswertung: Durchschnitt, Anzahl, neue Bewertungen pro Monat, Antwortquote, Entwicklung seit Start.
+- Unberechtigte Bewertung: im Modul gibt es eine Kurzanleitung und den Link zur offiziellen Google-Hilfe
+  „Unangemessene Rezensionen melden“. Gemeldet werden nur Verstöße gegen Googles Richtlinien, nicht bloße Kritik.
+- Steht dort „Bewertungs-Wächter wird freigeschaltet“: Google muss den Zugang für uns noch freigeben. Sie müssen
+  nichts tun, der Abgleich startet danach automatisch.
+- „Verbindung trennen“ löscht die abgeglichenen Bewertungen in der App (nicht bei Google).
+
 ## Zusatzmodule buchen
 
 - Konto & Rechnungen → **Zusatzmodule** (nur Inhaber): Empfehlungen & Bewertungen (59 €, 30 Tage kostenlos testen),

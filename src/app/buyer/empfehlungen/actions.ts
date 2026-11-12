@@ -130,3 +130,41 @@ export async function sendReferralLinkAction(_prev: ShareState, fd: FormData): P
   if (r.ok) return { ok: true, message: "Empfehlungslink per WhatsApp verschickt." };
   return { error: r.error, link: r.link, text: r.text };
 }
+
+
+// ─── Bewertungs-Wächter ─────────────────────────────────────────────────────
+
+export type GbpState = { ok?: boolean; error?: string; noAccess?: boolean };
+
+export async function chooseLocationAction(_prev: GbpState, fd: FormData): Promise<GbpState> {
+  const ctx = await ownerCtx();
+  if (!ctx) return { error: "Nur der Inhaber kann das Unternehmensprofil verbinden." };
+  const [accountName, locationName] = String(fd.get("location") ?? "").split("|");
+  const title = String(fd.get(`title_${locationName}`) ?? "");
+  const { chooseLocation, syncReviews } = await import("@/lib/empfehlung/google-business");
+  try {
+    await chooseLocation(ctx.customerId, { accountName: accountName ?? "", locationName: locationName ?? "", title: title || locationName || "" });
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Standort konnte nicht gespeichert werden." };
+  }
+  await syncReviews(ctx.customerId).catch(() => null);
+  refresh();
+  return { ok: true };
+}
+
+export async function disconnectGbpAction(): Promise<void> {
+  const ctx = await ownerCtx();
+  if (!ctx) return;
+  const { disconnect } = await import("@/lib/empfehlung/google-business");
+  await disconnect(ctx.customerId);
+  refresh();
+}
+
+export async function publishReplyAction(_prev: GbpState, fd: FormData): Promise<GbpState> {
+  const ctx = await ownerCtx();
+  if (!ctx) return { error: "Nur der Inhaber kann Antworten veröffentlichen." };
+  const { publishReply } = await import("@/lib/empfehlung/google-business");
+  const r = await publishReply(ctx.customerId, String(fd.get("reviewId") ?? ""), String(fd.get("reply") ?? ""));
+  refresh();
+  return r.ok ? { ok: true } : { error: r.error, noAccess: r.noAccess };
+}

@@ -11,6 +11,7 @@ import { advisorDisplayName } from "@/lib/whatsapp/template-plan";
 import { fmtDate } from "@/lib/empfehlung/shared";
 import { PRICE_LIST } from "@/lib/offer-pricing";
 import { EmpfehlungStatsGrid } from "@/components/empfehlung/server";
+import { WaechterSection } from "@/components/empfehlung/waechter";
 import { EmpfehlungBookButton, ResolveButton, SettingsForm, TestSendForm } from "@/components/empfehlung/client";
 
 // Modul „Empfehlungen & Bewertungen“: Einstellungen, Test, Auswertung, letzte Anfragen.
@@ -27,7 +28,7 @@ const STATUS: Record<string, string> = {
   off: "nicht anfragen",
 };
 
-export default async function EmpfehlungenPage() {
+export default async function EmpfehlungenPage({ searchParams }: { searchParams: Promise<{ google?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   if (ctx.teamRole !== "owner") redirect("/buyer");
@@ -102,6 +103,8 @@ export default async function EmpfehlungenPage() {
             <EmpfehlungStatsGrid s={stats} />
           </div>
         </Card>
+
+        <WaechterSection customerId={ctx.customerId} readOnly={ctx.preview} flash={(await searchParams).google ?? null} />
 
         <Card>
           <CardHeader title="Einstellungen" icon={Settings2} />

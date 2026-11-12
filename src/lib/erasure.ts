@@ -49,6 +49,8 @@ export async function eraseCustomerData(customerId: string, actor?: AuditActor) 
     prisma.userAbsence.deleteMany({ where: { customerId } }),
     prisma.reviewRequest.deleteMany({ where: { customerId } }),
     prisma.referralLink.deleteMany({ where: { customerId } }),
+    prisma.googleReview.deleteMany({ where: { customerId } }),
+    prisma.googleBusinessConnection.deleteMany({ where: { customerId } }),
   ]);
   const total = {
     leads: leads.length,
@@ -88,6 +90,7 @@ async function eraseLeads(customerId: string, leads: LeadRef[]): Promise<EraseRe
     // Empfehlungen & Bewertungen: Antworttext, Link und Verweis auf den Empfehlenden
     prisma.reviewRequest.deleteMany({ where: { leadId: { in: ids } } }),
     prisma.referralLink.deleteMany({ where: { leadId: { in: ids } } }),
+    prisma.googleReview.updateMany({ where: { leadId: { in: ids } }, data: { leadId: null } }),
     prisma.lead.updateMany({
       where: { id: { in: ids } },
       data: {

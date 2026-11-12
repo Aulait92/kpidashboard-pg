@@ -12,6 +12,9 @@ import { haptic } from "@/lib/haptics";
 import {
   bookEmpfehlungAction,
   cancelEmpfehlungAction,
+  chooseLocationAction,
+  publishReplyAction,
+  type GbpState,
   dismissHintAction,
   markResolvedAction,
   saveSettingsAction,
@@ -448,5 +451,50 @@ export function ShareReferral({ text }: { text: string }) {
         </button>
       </div>
     </div>
+  );
+}
+
+
+// ─── Bewertungs-Wächter ─────────────────────────────────────────────────────
+
+export function LocationPicker({ locations, readOnly }: { locations: { accountName: string; locationName: string; title: string }[]; readOnly: boolean }) {
+  const [state, action, pending] = useActionState<GbpState, FormData>(chooseLocationAction, {});
+  return (
+    <form action={action} className="space-y-2 text-sm">
+      {locations.map((l, i) => (
+        <label key={l.locationName} className="flex items-center gap-2">
+          <input type="radio" name="location" value={`${l.accountName}|${l.locationName}`} defaultChecked={i === 0} />
+          <input type="hidden" name={`title_${l.locationName}`} value={l.title} />
+          {l.title}
+        </label>
+      ))}
+      {state.error ? <p className="text-rose-700">{state.error}</p> : null}
+      <Button type="submit" variant="primary" size="md" disabled={readOnly || pending}>
+        {pending ? "Speichert …" : "Standort übernehmen"}
+      </Button>
+    </form>
+  );
+}
+
+export function ReplyEditor({ reviewId, suggestion, readOnly }: { reviewId: string; suggestion: string; readOnly: boolean }) {
+  const [state, action, pending] = useActionState<GbpState, FormData>(publishReplyAction, {});
+  const [text, setText] = useState(suggestion);
+  useEffect(() => {
+    if (state.ok) haptic("success");
+    else if (state.error) haptic("error");
+  }, [state]);
+  if (state.ok) return <p className="text-xs font-medium text-emerald-700">Antwort veröffentlicht.</p>;
+  return (
+    <form action={action} className="space-y-2" data-gbp-reply>
+      <input type="hidden" name="reviewId" value={reviewId} />
+      <label className="block text-xs font-medium text-[color:var(--muted)]">
+        Antwortvorschlag (bitte prüfen und anpassen, wird erst nach Klick veröffentlicht)
+        <textarea name="reply" rows={4} value={text} onChange={(e) => setText(e.target.value)} className="mt-1 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2 text-sm text-[color:var(--foreground)]" />
+      </label>
+      {state.error ? <p className={`text-xs ${state.noAccess ? "text-amber-800" : "text-rose-700"}`}>{state.error}</p> : null}
+      <Button type="submit" variant="primary" disabled={readOnly || pending || text.trim().length < 5}>
+        {pending ? "Veröffentlicht …" : "Antwort auf Google veröffentlichen"}
+      </Button>
+    </form>
   );
 }

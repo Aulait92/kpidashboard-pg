@@ -9,6 +9,7 @@ import { nowMs } from "@/lib/now";
 import type { TeamCtx } from "@/lib/team";
 import { moduleInfo, recentClosings } from "@/lib/empfehlung/module";
 import { loadEmpfehlungStats, type EmpfehlungStats } from "@/lib/empfehlung/requests";
+import { BAD_REVIEW_TASK } from "@/lib/empfehlung/google-business";
 import { ANNOUNCEMENT_KEY, CANDIDATE_MIN_CLOSINGS, DAY_MS, HINTS, fmtDate, isUnhappyTask } from "@/lib/empfehlung/shared";
 import { ModuleHint, OptOutToggle, ReferralLinkButton } from "@/components/empfehlung/client";
 
@@ -96,7 +97,25 @@ export async function EmpfehlungLeadCard({ leadId, team, readOnly }: { leadId: s
 export async function EmpfehlungHeuteHint({ ctx }: { ctx: { customerId: string; teamRole: string; preview: boolean } }) {
   if (ctx.teamRole !== "owner") return null;
   const info = await moduleInfo(ctx.customerId);
-  if (!info || info.active || info.service) return null;
+  if (info?.active) {
+    // Bewertungs-Wächter: schlechte Google-Bewertung ohne Antwort → Aufgabe in „Heute“
+    const bad = await prisma.googleReview.count({ where: { customerId: ctx.customerId, stars: { lte: 3 }, repliedAt: null, notifiedAt: { not: null } } });
+    if (!bad) return null;
+    return (
+      <Link
+        href="/buyer/empfehlungen#bewertungen"
+        className="mb-5 flex items-center gap-3 rounded-[var(--radius-md)] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900"
+        data-gbp-heute
+      >
+        <Star className="h-4 w-4 shrink-0" />
+        <span className="min-w-0 flex-1">
+          <b>{BAD_REVIEW_TASK}</b> {bad > 1 ? `(${bad})` : ""}
+        </span>
+        <span className="font-semibold">Antworten</span>
+      </Link>
+    );
+  }
+  if (!info || info.service) return null;
   const closings = info.dismissed.includes(HINTS.heute) ? 0 : await recentClosings(ctx.customerId);
   if (closings >= CANDIDATE_MIN_CLOSINGS) {
     return (

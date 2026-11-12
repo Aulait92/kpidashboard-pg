@@ -372,7 +372,13 @@ export async function runEmpfehlungen(now = new Date()) {
   const reviews = await sendDueReviews(now);
   const referrals = await sendDueReferrals(now);
   const thanks = await sendReferralThanks(now);
-  return { billing, scheduled, reviews, referrals, thanks };
+  // Bewertungs-Wächter: neue Google-Bewertungen (je Kunde höchstens alle 45 Min.)
+  const { runWaechter } = await import("@/lib/empfehlung/google-business");
+  const waechter = await runWaechter(now).catch((err) => {
+    reportError(err, "empfehlung-waechter");
+    return null;
+  });
+  return { billing, scheduled, reviews, referrals, thanks, waechter };
 }
 
 // ─── Antworten auswerten ────────────────────────────────────────────────────

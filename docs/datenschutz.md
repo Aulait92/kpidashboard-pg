@@ -129,6 +129,7 @@ gilt nur für neue Dienste, eine Streichung ist unkritisch, wird aber trotzdem m
 | Angaben von Empfohlenen ohne Abschluss („Kollegen empfehlen“, `ColleagueReferral`) | 12 Monate nach Eingang | automatisch täglich 03:00 UTC (`pruneReferrals`): Name, Agentur, E-Mail, Telefon werden entfernt, Zähler und Prämie bleiben |
 | Login-Fehlversuche | 30 Tage | automatisch (`pruneAudit`) |
 | Nachfragen nach Abschluss (`ReviewRequest`: Antworttext, Einordnung, Klicks) | 2 Jahre nach Anlage, sofort mit Lead-Löschung (Art. 17) bzw. Vertragsende | automatisch (`pruneTransient`), `eraseLead`/`eraseCustomerData` |
+| Google-Bewertungen (`GoogleReview`, Bewertungs-Wächter) | 2 Jahre nach Bewertung; sofort beim Trennen der Verbindung bzw. Vertragsende | automatisch im Cron (`runWaechter`), `disconnect`, `eraseCustomerData` |
 | Empfehlungslinks (`ReferralLink`) | mit dem Lead/Bestandskunden bzw. Vertragsende | `eraseLead`/`eraseCustomerData`, Kaskade |
 | Nicht zugeordnete Leads (Rohdaten aus Meta) | 30 Tage nach Zuordnung, sonst 90 Tage | automatisch (`pruneTransient`) |
 | Passwort-Links | 7 Tage nach Ablauf | automatisch (`pruneTransient`) |

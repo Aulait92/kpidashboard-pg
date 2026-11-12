@@ -212,6 +212,8 @@ model Customer {
   reviewSettings           ReviewSettings?
   reviewRequests           ReviewRequest[]
   referralLinks            ReferralLink[]
+  googleBusiness           GoogleBusinessConnection?
+  googleReviews            GoogleReview[]
 }
 
 // Tagesbudget je Produkt (Kundenbereich → Konto → Werbebudget). Ohne Eintrag gilt das
@@ -500,6 +502,8 @@ model Lead {
   referralLink      ReferralLink?  @relation("ReferredLeads", fields: [referralLinkId], references: [id], onDelete: SetNull)
   // Dank an den Empfehlenden verschickt (einmal, sobald dieser Lead abgeschlossen ist)
   referralThankedAt DateTime?
+  // Bewertungs-Wächter: Google-Bewertungen, die diesem Kontakt zugeordnet sind
+  googleReviews     GoogleReview[]
 
   @@index([customerId, createdAt])
   @@index([assignedUserId])
@@ -2320,6 +2324,57 @@ model ReferralLink {
   referredLeads      Lead[]            @relation("ReferredLeads")
 
   @@index([customerId])
+}
+
+// ─── Bewertungs-Wächter (Teil des Moduls „Empfehlungen & Bewertungen“) ───────
+// Verbindung zum Google-Unternehmensprofil (Scope business.manage), eigene
+// Verbindung neben dem Kalender, nur auf Wunsch. Tokens verschlüsselt.
+model GoogleBusinessConnection {
+  id              String    @id @default(cuid())
+  customerId      String    @unique
+  accessTokenEnc  String?
+  refreshTokenEnc String?
+  expiresAt       DateTime?
+  // pending_location (Standort wählen) | connected | no_access (Google-API noch nicht freigeschaltet) | error
+  status          String    @default("pending_location")
+  // accounts/123 und locations/456 (Namen aus der Google-API)
+  accountName     String?
+  locationName    String?
+  locationTitle   String?
+  lastSyncAt      DateTime?
+  lastError       String?
+  // Stand beim ersten Abgleich: Entwicklung seit Modulstart
+  startAverage    Float?
+  startCount      Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  customer        Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+// Google-Bewertung (nur ID, Sterne, Text, Name, Zeitpunkt; Löschfrist 2 Jahre).
+// Antworten werden nur nach Klick des Vertreters veröffentlicht.
+model GoogleReview {
+  id             String    @id @default(cuid())
+  customerId     String
+  // Name der Bewertung in der Google-API (accounts/…/locations/…/reviews/…)
+  googleName     String    @unique
+  stars          Int
+  text           String?
+  reviewerName   String?
+  reviewedAt     DateTime
+  replyText      String?
+  repliedAt      DateTime?
+  // KI-Vorschlag (bearbeitbar, nie automatisch veröffentlicht)
+  suggestedReply String?
+  leadId         String?
+  // Push/Aufgabe genau einmal
+  notifiedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  customer       Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  lead           Lead?     @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@index([customerId, reviewedAt])
 }
 
 // Einmalige Ankündigungen an Kunden (z. B. neues Zusatzmodul), vom Admin ausgelöst.
