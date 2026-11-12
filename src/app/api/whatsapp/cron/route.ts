@@ -19,7 +19,7 @@ import { runOnboardingCron } from "@/lib/onboarding-cron";
 import { beat } from "@/lib/heartbeat";
 import { recordStatusSample } from "@/lib/status-server";
 import { runGarantien } from "@/lib/garantien-server";
-import { enrichPendingAddresses } from "@/lib/vertrieb/address-enrich";
+import { enrichPendingContacts } from "@/lib/vertrieb/contact-enrich";
 import { runBankSync } from "@/lib/bank/server";
 import { retryPendingSelfConnect } from "@/lib/whatsapp/self-connect";
 import { syncTemplates } from "@/lib/whatsapp/template-submit";
@@ -121,10 +121,10 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-sequences");
     return { error: e instanceof Error ? e.message : String(e) };
   });
-  // Vertrieb: fehlende Adressen aus dem Impressum nachholen – nach der Antwort,
+  // Vertrieb: Kontakte anreichern (Website + Google Places) – nach der Antwort,
   // damit der Cron nicht auf langsame Websites wartet (gedrosselt, je Kontakt einmal).
   after(() =>
-    enrichPendingAddresses(Number(process.env.ADDRESS_ENRICH_PER_RUN ?? 20)).catch((e: unknown) => reportError(e, "cron-addresses")),
+    enrichPendingContacts(Number(process.env.ADDRESS_ENRICH_PER_RUN ?? 20)).catch((e: unknown) => reportError(e, "cron-addresses")),
   );
   // Instantly: Antworten alle 15 Minuten nachholen (Sicherheitsnetz, falls der Webhook nicht
   // ankommt, z. B. falsche URL). Nur wo INSTANTLY_AUTO_SYNC=1 gesetzt ist (Produktion).

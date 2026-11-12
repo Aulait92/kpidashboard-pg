@@ -6,6 +6,7 @@ import { coldCrmReplaceAllowed, coldCrmSourceConfigured, stagingSourceConfigured
 import { teamCalendarStatus } from "@/lib/help-call";
 import { fmtDateTime, isWithinDays } from "@/lib/vertrieb/dates";
 import { convertInboundLead } from "@/app/admin/vertrieb/actions";
+import { placesDailyLimit, placesKey, placesUsedToday } from "@/lib/vertrieb/contact-enrich";
 
 export const metadata = { title: "Anbindungen | performancegrowth Admin" };
 
@@ -25,6 +26,12 @@ export default async function AnbindungenPage() {
     prisma.salesInboundLead.findFirst({ where: { source: "LINKEDIN" }, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
     prisma.salesInboundLead.findMany({ where: { source: "LINKEDIN", contactId: null }, orderBy: { createdAt: "desc" }, take: 10 }),
     teamCalendarStatus(),
+  ]);
+  const placesOk = !!placesKey();
+  const [placesUsed, enrichedGoogle, enrichedWeb] = await Promise.all([
+    placesUsedToday().catch(() => 0),
+    prisma.salesContact.count({ where: { googlePlaceId: { not: null } } }),
+    prisma.salesContact.count({ where: { webEnrichAt: { not: null } } }),
   ]);
 
   return (
@@ -74,6 +81,23 @@ export default async function AnbindungenPage() {
           url={hook("/api/vertrieb/linkedin/message")}
           steps={["Zapier → Zap „Gmail → Webhooks by Zapier“ öffnen", "Im Schritt „POST“ die URL ersetzen, testen, veröffentlichen"]}
         />
+
+        <section className="card space-y-3 p-5" data-anreicherung>
+          <Head
+            name="Kontakte anreichern"
+            what="Adresse, Öffnungszeiten, Social-Links, Inhaber (Website) und Google-Bewertung"
+            ok={placesOk}
+            label={placesOk ? `Google: ${placesUsed}/${placesDailyLimit()} heute` : "Google-Bewertungen: Schlüssel fehlt"}
+          />
+          <p className="text-sm text-slate-600">
+            Website ausgewertet: {enrichedWeb} von {contacts} Kontakten · mit Google-Eintrag: {enrichedGoogle}
+          </p>
+          {!placesOk && (
+            <p className="text-sm text-amber-700">
+              GOOGLE_PLACES_API_KEY in Railway eintragen (Anleitung: docs/kontakt-anreicherung.md). Bis dahin wird nur die Website ausgewertet.
+            </p>
+          )}
+        </section>
 
         <section className="card space-y-3 p-5">
           <Head name="Team-Kalender" what="Für 15-Minuten-Hilfetermine der Kunden" ok={team.connected} label={team.connected ? (team.accountEmail ?? "Verbunden") : "Nicht verbunden"} />

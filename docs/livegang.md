@@ -94,6 +94,7 @@ Die Produktion ist seit 11.11. eingemessen; neue Migrationen laufen beim normale
 | `20261115140000_empfehlungen` | Modul „Empfehlungen & Bewertungen“: Spalten am `Customer` (Modulstand, Testphase, weggeklickte Hinweise), `Offer.empfehlungMonthly`, `Lead.referralLinkId`/`referralThankedAt`; Tabellen `ReviewSettings`, `ReviewRequest`, `ReferralLink`, `ModuleAnnouncement` | nur hinzufügend; Modul standardmäßig aus |
 | `20261115150000_bewertungs_waechter` | Tabellen `GoogleBusinessConnection` (Verbindung zum Google-Unternehmensprofil, Tokens verschlüsselt) und `GoogleReview` (ID, Sterne, Text, Name, Zeitpunkt, Antwort, KI-Vorschlag) | nur hinzufügend; ohne Google-Freigabe Hinweis „wird freigeschaltet“ (siehe docs/google-bewertungs-waechter.md) |
 | `20261116090000_produkt_buchen` | Tabellen `ProductBooking` (vom Kunden dazugebuchte Produkte mit Status, Preis, Einrichtung und Stripe-Stand; auch „Beenden angefragt“) und `ProductCatalogItem` (Katalog buchbarer Produkte, ohne Zeile gilt der Standard im Code) | nur hinzufügend; im Standard ist nur die Katzenversicherung buchbar |
+| `20261116100000_kontakt_anreicherung` | Spalten `SalesContact.webEnrichAt`, `googleCheckedAt`, `googlePlaceId`, `googleMapsUrl`, `businessStatus`, `insurer`, `enrichment` (Quellen/Zeitpunkte) und Tabelle `PlacesUsage` (Google-Anfragen je Tag) | nur hinzufügend; Cron wertet danach gedrosselt die Websites aller Kontakte aus (`ADDRESS_ENRICH_PER_RUN`, Standard 20), Google nur mit `GOOGLE_PLACES_API_KEY` und höchstens `GOOGLE_PLACES_MAX_PER_DAY` (Standard 200) Anfragen am Tag |
 
 Keine davon verändert bestehende Daten der Produktion. Neue Funktionen sind
 pro Kunde schaltbar und standardmäßig aus (Ausnahme: Live-Aktualisierung und
@@ -116,6 +117,7 @@ KI-Hilfe, die brauchen keine Migration).
 | `INSTANTLY_API_KEY`, `CALENDLY_TOKEN` | wie Sandbox |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | wie Sandbox |
 | `GOOGLE_REDIRECT_URI` | `https://app.performancegrowth.de/api/google/callback` |
+| `GOOGLE_PLACES_API_KEY` | Schlüssel nur für „Places API (New)“ (Kontakte anreichern, docs/kontakt-anreicherung.md); optional `GOOGLE_PLACES_MAX_PER_DAY` (Standard 200) |
 | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `MICROSOFT_TENANT` | wie Sandbox |
 | `MICROSOFT_REDIRECT_URI` | `https://app.performancegrowth.de/api/microsoft/callback` |
 | `DIALOG360_BASE_URL` | wie Sandbox |

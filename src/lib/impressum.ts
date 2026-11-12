@@ -57,7 +57,7 @@ async function resolvesPrivate(hostname: string): Promise<boolean> {
 
 const MAX_BYTES = 1_500_000;
 
-async function fetchHtml(url: string, timeoutMs = 10000): Promise<string | null> {
+export async function fetchHtml(url: string, timeoutMs = 10000): Promise<string | null> {
   try {
     const u = normalizeUrl(url);
     if (!u || (await resolvesPrivate(u.hostname))) return null;
@@ -120,7 +120,10 @@ const FIELDS = {
 export async function fetchImpressumText(
   website: string,
   opts: { timeoutMs?: number } = {},
-): Promise<{ impressumUrl: string; privacyUrl: string | null; text: string; homeText: string } | { error: string; privacyUrl?: string | null; homeText?: string }> {
+): Promise<
+  | { impressumUrl: string; privacyUrl: string | null; text: string; homeText: string; homeHtml: string; links: { href: string; text: string }[] }
+  | { error: string; privacyUrl?: string | null; homeText?: string; homeHtml?: string; links?: { href: string; text: string }[] }
+> {
   const base = normalizeUrl(website);
   if (!base) return { error: "Keine (gültige) Website hinterlegt." };
   const home = await fetchHtml(base.toString(), opts.timeoutMs);
@@ -141,8 +144,10 @@ export async function fetchImpressumText(
   const privacyUrl = all.find((l) => /datenschutz|privacy/i.test(l.href) || /datenschutz/i.test(l.text))?.href ?? null;
   const impressumHtml = await fetchHtml(impressumUrl, opts.timeoutMs);
   const homeText = htmlToText(home).slice(0, 40000);
-  if (!impressumHtml) return { error: "Impressum nicht gefunden.", privacyUrl, homeText };
-  return { impressumUrl, privacyUrl, text: htmlToText(impressumHtml).slice(0, 20000), homeText };
+  // Für die Anreicherung (Social-Links, Öffnungszeiten): Startseiten-HTML und Links mitgeben
+  const homeHtml = home.slice(0, 300_000);
+  if (!impressumHtml) return { error: "Impressum nicht gefunden.", privacyUrl, homeText, homeHtml, links: all };
+  return { impressumUrl, privacyUrl, text: htmlToText(impressumHtml).slice(0, 20000), homeText, homeHtml: `${homeHtml}\n${impressumHtml.slice(0, 200_000)}`, links: all };
 }
 
 export async function readImpressum(website: string | null | undefined): Promise<ImpressumInfo> {

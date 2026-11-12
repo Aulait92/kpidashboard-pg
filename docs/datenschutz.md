@@ -25,7 +25,7 @@ Unterauftragsverarbeiter (Anlage 2) in `src/lib/legal-texts.ts`, öffentlich unt
 
 | Tätigkeit | Zweck | Betroffene / Daten | Rechtsgrundlage | Empfänger | Löschung |
 |---|---|---|---|---|---|
-| Vertrieb an Versicherungsvermittler | Neukunden gewinnen | Vermittler (B2B): Name, Firma, Kontaktdaten (fehlende Anschrift/Telefon automatisch aus dem öffentlichen Impressum der Agentur-Website ergänzt, nur leere Felder, Quelle im Verlauf), Verlauf, E-Mails, Termine | Art. 6 Abs. 1 f; Kalt-E-Mails **Prüfen** (§ 7 UWG, mutmaßliche Einwilligung B2B) | Instantly, Calendly, Resend, Railway | Widerspruch: sofort (Kontakt löschen). Sonst siehe Löschkonzept |
+| Vertrieb an Versicherungsvermittler | Neukunden gewinnen | Vermittler (B2B): Name, Firma, Kontaktdaten (automatisch ergänzt aus öffentlichen Geschäftsangaben: Impressum/Website der Agentur – Anschrift, Telefon, Fax, Öffnungszeiten, Inhaber, Versicherer, Social-Media-Profile – und Google-Unternehmenseintrag über die Places API – Bewertung, Anzahl, Öffnungszeiten, Maps-Link, Betriebsstatus; nur leere Felder, Quelle und Zeitpunkt im Verlauf bzw. `enrichment`), Verlauf, E-Mails, Termine | Art. 6 Abs. 1 f; Kalt-E-Mails **Prüfen** (§ 7 UWG, mutmaßliche Einwilligung B2B) | Instantly, Calendly, Resend, Railway, Google (Places API: Suchtext aus Agenturname und Ort) | Widerspruch: sofort (Kontakt löschen). Sonst siehe Löschkonzept |
 | „Kollegen empfehlen“ (Empfehlungen von Kunden an Kollegen) | Neukunden gewinnen, Prämie für den Empfehler | Empfohlene (B2B): Name, Agentur, E-Mail, Telefon, Einwilligungstext und -zeitpunkt, Stand (Termin, Kunde); Empfehler: Code, Prämie | Art. 6 Abs. 1 a (Einwilligung auf /empfehlen/[code], auch dazu, dass der Empfehler den Stand sieht); Prämie Art. 6 Abs. 1 b | Resend, Stripe (Gutschrift), Railway | Angaben ohne Abschluss nach 12 Monaten automatisch entfernt (`pruneReferrals`); Vertriebskontakt wie Vertrieb. Widerruf: Kontakt löschen |
 | Angebote und Verträge | Vertragsschluss | Kunde: Name, Firma, Anschrift, Annahme-Protokoll (Name, IP, Browser, Zeit) | Art. 6 Abs. 1 b, c | Stripe, Resend, Railway | 10 Jahre (§ 147 AO, § 257 HGB) |
 | Abrechnung, Mahnwesen | Zahlungen | Kunde: Rechnungsdaten, Zahlungsstatus (Bankdaten nur bei Stripe) | Art. 6 Abs. 1 b, c | Stripe | 10 Jahre |
@@ -74,6 +74,7 @@ Für jeden Kunden mit AVV (Annahme des Angebots, `Offer.dpaUrl` speichert die ge
 |---|---|---|---|
 | Railway | Hosting, Datenbank (EU, Amsterdam) | | |
 | Anthropic | KI-Assistent, Impressum auslesen | | |
+| Google (Places API) | Öffentliche Unternehmensdaten von Vertriebskontakten abrufen (nur Suchtext: Agentur/Name und Ort; Antwort: öffentlicher Google-Eintrag) | | |
 | 360dialog | WhatsApp Business API; seit 14.11. auch Partner-API für das Selbst-Verbinden der Kundennummer (Konto-/Channel-ID, Telefonnummer, Anzeigename; API-Key verschlüsselt gespeichert) | | |
 | Meta | WhatsApp, Lead-Formulare | | |
 | Resend | E-Mail-Versand | | |

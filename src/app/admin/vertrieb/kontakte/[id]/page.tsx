@@ -103,14 +103,18 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
             {c.lossReason && <span className="badge bg-rose-50 text-rose-700">{LOSS_LABEL[c.lossReason]}</span>}
             {c.competitor && <span className="badge bg-slate-100 text-slate-600">{c.competitor}</span>}
             {(c.street || c.zip || c.city) && <span>{[c.street, [c.zip, c.city].filter(Boolean).join(" ")].filter(Boolean).join(", ")}</span>}
-            {(!c.street || !c.zip || !c.city) && (
-              <form action={enrichAddressAction}>
-                <input type="hidden" name="id" value={c.id} />
-                <button className="text-xs text-[color:var(--brand)] hover:underline" title="Adresse aus dem Impressum der Agentur-Website ergänzen (nur leere Felder)">
-                  Adresse ergänzen
-                </button>
-              </form>
+            {c.ratingValue != null && (
+              <span className="text-amber-600" title="Google-Bewertung" data-kontakt-rating>
+                ★ {c.ratingValue.toLocaleString("de-DE")} <span className="text-slate-400">({c.ratingCount ?? 0})</span>
+              </span>
             )}
+            {c.businessStatus === "CLOSED_PERMANENTLY" && <span className="badge bg-rose-50 text-rose-700">laut Google dauerhaft geschlossen</span>}
+            <form action={enrichAddressAction}>
+              <input type="hidden" name="id" value={c.id} />
+              <button className="text-xs text-[color:var(--brand)] hover:underline" title="Website und Google erneut auswerten: Adresse, Öffnungszeiten, Bewertung, Social-Links … (nur leere Felder)">
+                Jetzt anreichern
+              </button>
+            </form>
             <span>{c.callAttempts} Anrufversuch{c.callAttempts === 1 ? "" : "e"}</span>
           </div>
         </div>
@@ -435,20 +439,45 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
               <dt className="text-slate-500">E-Mail</dt><dd className="min-w-0"><ContactEmails contactId={c.id} email={c.email} altEmails={c.altEmails} /></dd>
               {c.fax && (<><dt className="text-slate-500">Fax</dt><dd>{c.fax}</dd></>)}
               {c.agencyType && (<><dt className="text-slate-500">Agenturtyp</dt><dd>{c.agencyType === "GENERAL" ? "Generalvertretung" : c.agencyType === "HAUPT" ? "Hauptvertretung" : c.agencyType}</dd></>)}
+              {c.insurer && (<><dt className="text-slate-500">Versicherer</dt><dd>{c.insurer}</dd></>)}
+              {c.leaderNames && (<><dt className="text-slate-500">Inhaber</dt><dd>{c.leaderNames}</dd></>)}
               {c.teamSize != null && (<><dt className="text-slate-500">Teamgröße</dt><dd>{c.teamSize}</dd></>)}
               {c.potentialScore != null && (<><dt className="text-slate-500">Potenzial-Score</dt><dd>{c.potentialScore}</dd></>)}
-              {(c.facebookUrl || c.instagramUrl || c.xingUrl) && (
+              {(c.facebookUrl || c.instagramUrl || c.xingUrl || c.linkedinUrl) && (
                 <>
                   <dt className="text-slate-500">Social</dt>
                   <dd className="flex flex-wrap gap-2">
-                    {[["Facebook", c.facebookUrl], ["Instagram", c.instagramUrl], ["Xing", c.xingUrl]]
+                    {[["Facebook", c.facebookUrl], ["Instagram", c.instagramUrl], ["XING", c.xingUrl], ["LinkedIn", c.linkedinUrl]]
                       .filter(([, u]) => u)
                       .map(([l, u]) => <a key={l} href={u!} target="_blank" rel="noreferrer" className="text-sky-700 hover:underline">{l}</a>)}
                   </dd>
                 </>
               )}
-              {c.ratingValue != null && (<><dt className="text-slate-500">Bewertung</dt><dd>★ {c.ratingValue} ({c.ratingCount})</dd></>)}
-              {c.openingHours && (<><dt className="text-slate-500">Öffnungszeiten</dt><dd className="text-xs">{c.openingHours.replaceAll("Mo ", "Mo ").replaceAll("Tu ", "Di ").replaceAll("We ", "Mi ").replaceAll("Th ", "Do ").replaceAll("Fr ", "Fr ")}</dd></>)}
+              {c.ratingValue != null && (
+                <>
+                  <dt className="text-slate-500">Bewertung</dt>
+                  <dd>
+                    <span className="text-amber-600">{"★".repeat(Math.round(c.ratingValue))}{"☆".repeat(Math.max(0, 5 - Math.round(c.ratingValue)))}</span>{" "}
+                    {c.ratingValue.toLocaleString("de-DE")} ({c.ratingCount ?? 0} Bewertungen)
+                    {c.googleMapsUrl && (
+                      <a href={c.googleMapsUrl} target="_blank" rel="noreferrer" className="ml-2 text-sky-700 hover:underline">Google Maps</a>
+                    )}
+                  </dd>
+                </>
+              )}
+              {c.ratingValue == null && c.googleMapsUrl && (<><dt className="text-slate-500">Google</dt><dd><a href={c.googleMapsUrl} target="_blank" rel="noreferrer" className="text-sky-700 hover:underline">Google Maps</a></dd></>)}
+              {c.openingHours && (
+                <>
+                  <dt className="text-slate-500">Öffnungszeiten</dt>
+                  <dd className="text-xs">
+                    <details>
+                      <summary className="cursor-pointer text-slate-600">{c.openingHours.split("\n")[0]}{c.openingHours.includes("\n") ? " …" : ""}</summary>
+                      <p className="mt-1 whitespace-pre-line text-slate-600">{c.openingHours}</p>
+                    </details>
+                  </dd>
+                </>
+              )}
+              {enrichedLine(c.enrichment) && (<><dt className="text-slate-500">Ergänzt</dt><dd className="text-xs text-slate-500">{enrichedLine(c.enrichment)}</dd></>)}
               {c.legacyStatus && (<><dt className="text-slate-500">Alter Status</dt><dd className="text-xs">{c.legacyStatus}</dd></>)}
             </dl>
             </div>
@@ -459,3 +488,11 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
   );
 }
 
+/** „Zuletzt ergänzt am … (Quelle)“ aus SalesContact.enrichment. */
+function enrichedLine(raw: unknown): string | null {
+  const e = (raw ?? {}) as { website?: { at?: string }; google?: { at?: string; status?: string } };
+  const parts: string[] = [];
+  if (e.website?.at) parts.push(`Website ${fmtDate(new Date(e.website.at))}`);
+  if (e.google?.at) parts.push(`Google ${fmtDate(new Date(e.google.at))}${e.google.status && e.google.status !== "gefunden" ? ` (${e.google.status})` : ""}`);
+  return parts.length ? `Zuletzt ergänzt: ${parts.join(" · ")}` : null;
+}

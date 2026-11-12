@@ -12,7 +12,7 @@ import { importContactsCsv } from "@/lib/vertrieb/import-contacts";
 import { ensureSource } from "@/lib/vertrieb/source";
 import { connectCalendly, syncCalendly } from "@/lib/vertrieb/calendly";
 import { handleInboundLead } from "@/lib/vertrieb/inbound";
-import { enrichContactAddress } from "@/lib/vertrieb/address-enrich";
+import { enrichContact } from "@/lib/vertrieb/contact-enrich";
 import { importFromColdCrm, replaceFromColdCrm } from "@/lib/vertrieb/cold-crm-import";
 import { LI_LABEL, importWaalaxyCsv } from "@/lib/vertrieb/linkedin";
 import { ensureReplyTask, importInstantlyCsv, recordReply, removeReplyTaskIfNoPositive, syncInstantly } from "@/lib/vertrieb/instantly";
@@ -469,19 +469,35 @@ export async function createLeadManually(fd: FormData) {
   redirect("/admin/vertrieb/kontakte/neu?fehler=1");
 }
 
-/** „Adresse ergänzen“ am Kontakt: Impressum der Agentur-Website lesen, nur leere Felder füllen. */
+/** „Jetzt anreichern“ am Kontakt: Website und Google erneut auswerten, nur leere Felder füllen. */
 export async function enrichAddressAction(fd: FormData) {
   await requireAuth();
   const id = s(fd, "id")!;
-  const r = await enrichContactAddress(id, { force: true });
-  if (r.status !== "updated" && r.status !== "complete") {
-    const why =
-      r.status === "no-source"
-        ? "Keine Agentur-Website bekannt (Feld Website leer, E-Mail bei Freemail/Versicherer)."
-        : r.status === "not-found"
-          ? `Impressum nicht lesbar${r.sourceUrl ? ` (${r.sourceUrl})` : ""}.`
-          : `Im Impressum keine neue Angabe gefunden${r.sourceUrl ? ` (${r.sourceUrl})` : ""}.`;
-    await prisma.salesActivity.create({ data: { contactId: id, type: "NOTIZ", note: `Adresse ergänzen: ${why}` } });
+  const r = await enrichContact(id, { force: true });
+  if (!r.fields.length) {
+    const web =
+      r.web === "no-source"
+        ? "keine Agentur-Website bekannt (Feld Website leer, E-Mail bei Freemail/Versicherer)"
+        : r.web === "not-found"
+          ? "Website nicht lesbar"
+          : r.web.startsWith("error")
+            ? "Website-Fehler"
+            : "Website ohne neue Angaben";
+    const google =
+      r.google === "no-key"
+        ? "Google: Schlüssel fehlt"
+        : r.google === "limit"
+          ? "Google: Tageskontingent erreicht"
+          : r.google === "unsure"
+            ? "Google: Treffer nicht eindeutig, nichts übernommen"
+            : r.google === "not-found"
+              ? "Google: kein Eintrag gefunden"
+              : r.google === "no-query"
+                ? "Google: Ort/PLZ fehlt für die Suche"
+                : r.google.startsWith("error")
+                  ? "Google: Fehler"
+                  : "Google: nichts Neues";
+    await prisma.salesActivity.create({ data: { contactId: id, type: "NOTIZ", note: `Anreichern: ${web}; ${google}.` } });
   }
   refresh();
 }

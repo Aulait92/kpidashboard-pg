@@ -213,11 +213,14 @@ export async function enrichPendingAddresses(limit = 10, budgetMs = 120_000): Pr
   return { tried, updated };
 }
 
-/** Nach dem Anlegen eines Kontakts im Hintergrund versuchen (blockiert nichts). */
+/** Nach dem Anlegen eines Kontakts im Hintergrund anreichern: Adresse, Öffnungszeiten, Google-Bewertung … (blockiert nichts). */
 export async function scheduleAddressEnrichment(contactId: string) {
   if (process.env.NODE_ENV === "test" || process.env.ADDRESS_ENRICH === "off") return;
+  // Seit 12.11.: maximal anreichern (Website + Google), siehe contact-enrich.ts
   const run = () =>
-    enrichContactAddress(contactId).catch((err) => console.warn("[adresse] Ergänzen fehlgeschlagen", contactId, err instanceof Error ? err.message : err));
+    import("@/lib/vertrieb/contact-enrich")
+      .then((m) => m.enrichContact(contactId))
+      .catch((err) => console.warn("[anreichern] fehlgeschlagen", contactId, err instanceof Error ? err.message : err));
   try {
     const { after } = await import("next/server");
     after(run);

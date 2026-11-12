@@ -86,6 +86,8 @@ export async function ensureInstantlyContact(
     return { id: again, created: false };
   }
   await prisma.salesActivity.create({ data: { contactId: c.id, type: "IMPORT", note: `Aus Instantly übernommen (Kampagne „${campaignName}“)` } });
+  // Adresse, Öffnungszeiten, Google-Bewertung … im Hintergrund ergänzen
+  await import("@/lib/vertrieb/address-enrich").then((m) => m.scheduleAddressEnrichment(c.id)).catch(() => {});
   return { id: c.id, created: true };
 }
 

@@ -1210,6 +1210,15 @@ model SalesContact {
   // Adresse aus dem Impressum ergänzt (einmal automatisch versucht)
   addressEnrichTriedAt DateTime?
   addressEnrichedAt    DateTime?
+  // Maximal anreichern (Website + Google, lib/vertrieb/contact-enrich.ts)
+  webEnrichAt          DateTime? // Website/Agenturseite ausgewertet (Öffnungszeiten, Social, Inhaber, Versicherer)
+  googleCheckedAt      DateTime? // Google Places zuletzt abgefragt (alle 90 Tage)
+  googlePlaceId        String?
+  googleMapsUrl        String?
+  businessStatus       String? // Google: OPERATIONAL | CLOSED_TEMPORARILY | CLOSED_PERMANENTLY
+  insurer              String? // Versicherer bzw. „Makler“ (aus Website/E-Mail)
+  /// Quellen und Zeitpunkte der automatischen Ergänzung: { website?: {at,url,fields}, google?: {at,placeId,fields} }
+  enrichment           Json?
 
   // Ansprechpartner & Zusatzinfos (aus der Instantly-Mailingliste)
   salutation     String?
@@ -2441,4 +2450,10 @@ model ModuleAnnouncement {
   sentAt    DateTime @default(now())
   sentCount Int      @default(0)
   sentBy    String?
+}
+
+// Google-Places-Anfragen je Tag (Kostenbremse GOOGLE_PLACES_MAX_PER_DAY)
+model PlacesUsage {
+  day   String @id // YYYY-MM-DD (UTC)
+  count Int    @default(0)
 }
