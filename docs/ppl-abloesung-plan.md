@@ -65,8 +65,11 @@ Auswertung komplett in der App, Airtable/Zapier nur noch als Übergang.
 
 Ziel: Nicht mehr zwischen CRM und Mailprogramm wechseln.
 - Mails direkt aus der Kontaktakte schreiben und senden – über Oles eigenes Postfach (Antworten
-  landen im Thread und im CRM-Verlauf, Zustellbarkeit wie bisher). Vorher klären: welches Postfach
-  (Microsoft 365/Outlook oder Google), Absendername, Signatur.
+  landen im Thread und im CRM-Verlauf, Zustellbarkeit wie bisher).
+  **Entschieden (Ole, 12.11.):** Outlook (Microsoft 365) über Microsoft Graph (Mail.Send, Mail.ReadWrite
+  für Thread/Gesendet), Signatur „Ole Kannapinn“. Outlook-Signaturen sind per Graph nicht abrufbar →
+  beim Verbinden aus einer zuletzt gesendeten Mail übernehmen (Vorschlag) bzw. einmal einfügen, dann
+  in den CRM-Einstellungen bearbeitbar.
 - Vorlagen mit Platzhaltern ({Vorname}, {Agentur}, {Ort}, Termin-Link, Angebots-Link, Rechner-Link),
   je Situation (nach Erstgespräch, Unterlagen, Nachfassen, Angebot, Absage-Reaktivierung).
 - Produktivität: KI-Entwurf aus Verlauf/Notizen, Einfügen von Terminvorschlägen aus dem Kalender,
