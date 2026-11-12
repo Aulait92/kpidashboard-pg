@@ -24,8 +24,11 @@ export const CORE_PURPOSES: NoticePurpose[] = [
 /** Nur mit gebuchtem Bestandskunden-Modul. */
 export const CAMPAIGN_PURPOSES: NoticePurpose[] = ["campaign_cross_sell", "campaign_review", "campaign_birthday", "campaign_renewal"];
 
-export function purposesFor(opts: { bestand: boolean }): NoticePurpose[] {
-  return opts.bestand ? [...CORE_PURPOSES, ...CAMPAIGN_PURPOSES] : [...CORE_PURPOSES];
+/** Nur mit Modul „Empfehlungen & Bewertungen“ (auch in der Testphase). */
+export const EMPFEHLUNG_PURPOSES: NoticePurpose[] = ["review_request", "referral_request", "referral_thanks"];
+
+export function purposesFor(opts: { bestand: boolean; empfehlung?: boolean }): NoticePurpose[] {
+  return [...CORE_PURPOSES, ...(opts.bestand ? CAMPAIGN_PURPOSES : []), ...(opts.empfehlung ? EMPFEHLUNG_PURPOSES : [])];
 }
 
 /** Stabiler Name je Zweck und Textversion, z. B. pg_outreach_v1 (Meta: Kleinbuchstaben, Unterstrich). */
@@ -60,6 +63,8 @@ const EXAMPLES: Record<string, string> = {
   "Thema (z. B. Hausrat, Haftpflicht)": "Hausrat",
   "Thema (z. B. Hausrat)": "Hausrat",
   "Vertrag (z. B. KFZ)": "KFZ",
+  "Google-Link": "https://app.performancegrowth.de/empfehlung/abc123/google",
+  Empfehlungslink: "https://app.performancegrowth.de/empfehlung/abc123",
 };
 
 export function exampleValuesFor(purpose: NoticePurpose): string[] {
@@ -103,6 +108,9 @@ export const CUSTOMER_TITLES: Record<NoticePurpose, { title: string; when: strin
   campaign_review: { title: "Bestandskunden: Jahresgespräch", when: "Kampagne für den jährlichen Vertrags-Check." },
   campaign_birthday: { title: "Bestandskunden: Geburtstag", when: "Am Geburtstag Ihrer Kunden." },
   campaign_renewal: { title: "Bestandskunden: Ablauf/Wechsel", when: "Vor dem Ablauf eines Vertrags." },
+  review_request: { title: "Nachfrage nach dem Abschluss mit Google-Link", when: "Einige Tage nach einem Abschluss (Modul Empfehlungen & Bewertungen)." },
+  referral_request: { title: "Bitte um Empfehlung", when: "Einige Wochen nach einem Abschluss (Modul Empfehlungen & Bewertungen)." },
+  referral_thanks: { title: "Dank an den Empfehlenden", when: "Sobald aus einer Empfehlung ein Abschluss wird." },
 };
 
 export type LocalStatus = "pending" | "approved" | "rejected" | "paused";

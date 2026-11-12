@@ -215,6 +215,15 @@ async function persistInbound(
     },
   });
 
+  // Empfehlungen & Bewertungen: Antwort auf die Nachfrage nach dem Abschluss → KI wertet aus
+  // (Kritik → Aufgabe „Kunde unzufrieden“), Assistent antwortet dann nicht.
+  try {
+    const { handleReviewReply } = await import("@/lib/empfehlung/requests");
+    if ((await handleReviewReply(conversation.id, from, body)).handled) return;
+  } catch (e) {
+    console.error("[whatsapp review-reply]", e);
+  }
+
   // Bestandskunden-Kampagne: Antwort → Lead in der Pipeline; „Stopp“ → Sperre, Assistent schweigt.
   let campaignStop = false;
   try {

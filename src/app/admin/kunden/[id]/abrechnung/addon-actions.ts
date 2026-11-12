@@ -9,7 +9,7 @@ import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
-import { changeBillingInterval, setBestandModule, syncSeatBilling, type AddOnResult } from "@/lib/billing";
+import { changeBillingInterval, setBestandModule, setEmpfehlungModule, syncSeatBilling, type AddOnResult } from "@/lib/billing";
 
 async function requireAdmin() {
   const s = await getCurrentSession();
@@ -56,6 +56,14 @@ export async function bestandModuleAction(fd: FormData): Promise<void> {
   const mode = String(fd.get("mode") ?? "");
   if (mode !== "book" && mode !== "free" && mode !== "cancel") done(id, { ok: false, error: "Unbekannte Aktion." });
   done(id, await setBestandModule(id, mode));
+}
+
+export async function empfehlungModuleAction(fd: FormData): Promise<void> {
+  await requireAdmin();
+  const id = String(fd.get("customerId") ?? "");
+  const mode = String(fd.get("mode") ?? "");
+  if (mode !== "book" && mode !== "free" && mode !== "cancel") done(id, { ok: false, error: "Unbekannte Aktion." });
+  done(id, await setEmpfehlungModule(id, mode));
 }
 
 /** Kampagnen-Kontingent je Monat; leer = Standard aus der Preisliste. */

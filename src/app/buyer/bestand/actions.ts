@@ -89,6 +89,10 @@ export async function startCampaignAction(fd: FormData): Promise<void> {
   const ctx = await ownerCtx();
   const occasion = String(fd.get("occasion")) as Occasion;
   if (!(occasion in OCCASIONS)) throw new Error("Unbekannter Anlass.");
+  if (occasion === "empfehlung") {
+    const m = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { empfehlungEnabled: true } });
+    if (!m?.empfehlungEnabled) redirect("/buyer/konto?modul=empfehlung#zusatzmodule");
+  }
   const segment = JSON.parse(String(fd.get("segment") ?? "{}")) as Segment;
   const quota = await bestandQuota(ctx.customerId);
   if (quota.remaining <= 0) redirect("/buyer/bestand?kontingent=1");

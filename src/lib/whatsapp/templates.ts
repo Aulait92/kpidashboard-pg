@@ -27,7 +27,10 @@ export type NoticePurpose =
   | "campaign_cross_sell"
   | "campaign_review"
   | "campaign_birthday"
-  | "campaign_renewal";
+  | "campaign_renewal"
+  | "review_request"
+  | "referral_request"
+  | "referral_thanks";
 
 export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   outreach: "Erstanschreiben",
@@ -42,6 +45,9 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   campaign_review: "Bestandskunden: Jahresgespräch",
   campaign_birthday: "Bestandskunden: Geburtstag",
   campaign_renewal: "Bestandskunden: Ablauf/Wechsel",
+  review_request: "Empfehlungen: Nachfrage + Google-Bewertung",
+  referral_request: "Empfehlungen: Bitte um Empfehlung",
+  referral_thanks: "Empfehlungen: Dank an den Empfehlenden",
 };
 
 export const PURPOSE_PARAMS: Record<NoticePurpose, string[]> = {
@@ -57,6 +63,9 @@ export const PURPOSE_PARAMS: Record<NoticePurpose, string[]> = {
   campaign_review: ["Vorname"],
   campaign_birthday: ["Vorname"],
   campaign_renewal: ["Vorname", "Vertrag (z. B. KFZ)"],
+  review_request: ["Vorname", "Google-Link"],
+  referral_request: ["Vorname", "Empfehlungslink"],
+  referral_thanks: ["Vorname"],
 };
 
 /** Vorschläge für die bei Meta einzureichenden Texte ([Berater] = Name). */
@@ -85,6 +94,13 @@ export const SUGGESTED_TEMPLATE_TEXT: Record<NoticePurpose, string> = {
     "Hallo {{1}}, herzlichen Glückwunsch zum Geburtstag! Alles Gute für das neue Lebensjahr wünscht Ihnen [Berater]. Wenn ich etwas für Sie tun kann, antworten Sie einfach hier.",
   campaign_renewal:
     "Hallo {{1}}, hier ist [Berater], Ihr Versicherungsberater. Bei Ihrem Vertrag ({{2}}) steht bald ein guter Zeitpunkt an, um Beitrag und Leistung zu prüfen. Soll ich mir das kurz für Sie anschauen? Antworten Sie einfach hier.",
+  // Alle bekommen dieselbe Nachricht: erst der direkte Draht, dann der Google-Link (kein Gating).
+  review_request:
+    "Hallo {{1}}, ich hoffe, Sie sind mit Ihrem neuen Vertrag gut versorgt. Wenn irgendetwas nicht gepasst hat, antworten Sie mir einfach direkt hier, ich kümmere mich persönlich darum. Und wenn Sie zufrieden waren, freue ich mich sehr über eine kurze Google-Bewertung: {{2}} Herzliche Grüße, [Berater]",
+  referral_request:
+    "Hallo {{1}}, hier ist [Berater]. Kennen Sie jemanden, dem ich genauso weiterhelfen kann? Über Ihren persönlichen Link kann die Person ganz einfach selbst Kontakt mit mir aufnehmen: {{2}} Vielen Dank für Ihr Vertrauen!",
+  referral_thanks:
+    "Hallo {{1}}, ich wollte mich noch einmal herzlich für Ihre Empfehlung bedanken. Ich konnte weiterhelfen. Das ist das schönste Lob für meine Arbeit! Herzliche Grüße, [Berater]",
 };
 
 /**
@@ -99,6 +115,7 @@ export const TEMPLATE_BUTTONS: Partial<Record<NoticePurpose, string[]>> = {
   campaign_review: [OPT_OUT_BUTTON],
   campaign_birthday: [OPT_OUT_BUTTON],
   campaign_renewal: [OPT_OUT_BUTTON],
+  referral_request: [OPT_OUT_BUTTON],
 };
 
 export class NoTemplateError extends Error {

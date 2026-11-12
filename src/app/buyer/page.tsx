@@ -7,6 +7,7 @@ import { FirstDay } from "@/components/first-day";
 import { LiveRefresh } from "@/components/live-refresh";
 import { LeadDetailBody } from "@/components/lead-detail-body";
 import { isNewUi } from "@/lib/new-ui";
+import { EmpfehlungHeuteHint } from "@/components/empfehlung/server";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { loadInbox } from "@/lib/inbox";
 import { prisma } from "@/lib/prisma";
@@ -76,6 +77,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
           <section className={selected ? "hidden xl:block" : undefined}>
             <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
             {nudgeCard}
+            <EmpfehlungHeuteHint ctx={ctx} />
             <TodayInbox data={data} newUi leadHref="/buyer?lead={id}" selectedLeadId={selected} />
           </section>
           <section
@@ -116,6 +118,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
       <LiveRefresh />
       <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
       {nudgeCard}
+      <EmpfehlungHeuteHint ctx={ctx} />
       <TodayInbox data={data} />
     </main>
   );

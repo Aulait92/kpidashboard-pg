@@ -99,6 +99,24 @@ gilt nur für neue Dienste, eine Streichung ist unkritisch, wird aber trotzdem m
 - **Löschung:** mit dem Kundenkonto bzw. auf Wunsch des Vertreters (Liste neu hochladen
   aktualisiert, löscht aber nicht – Löschen einzelner Bestandskunden: **noch offen**).
 
+### Empfehlungen & Bewertungen (Zusatzmodul)
+
+- **Daten:** Je Abschluss eine Nachfrage (`ReviewRequest`): Zeitpunkte, erste Antwort (Text, KI-Einordnung
+  positiv/kritisch/neutral), Klicks auf den Google-Link. Persönliche Empfehlungslinks (`ReferralLink`, nur Token
+  und Bezug zum Kontakt). Empfohlene Personen tragen sich selbst ein (Einwilligung mit Zeitstempel im Lead).
+- **Rechtsgrundlage (Prüfen Anwalt):** Nachfrage an Bestandskunden des Vertreters nach Abschluss
+  (berechtigtes Interesse / Kundenbeziehung, WhatsApp-Einwilligung aus dem Lead-Formular); Empfehlungsbitte als
+  Werbung – „Keine Nachrichten mehr“ beendet sie. Die empfohlene Person willigt selbst ein; der Empfehlende
+  gibt keine fremden Daten weiter.
+- **Kein Gating:** Alle Angeschriebenen bekommen denselben Google-Link; die KI-Einordnung steuert nur Aufgaben und
+  die Empfehlungsbitte, nie den Link.
+- **Dank an Empfehlende:** ohne Namen oder Details der empfohlenen Person. Ob schon der allgemeine Satz „ich konnte
+  weiterhelfen“ eine Information über Dritte ist, **prüfen** (ggf. Text neutraler fassen).
+- **Keine Prämien** für Endkunden (Provisionsabgabeverbot, Tippgeber-Regeln). Prämien höchstens nach rechtlicher
+  Prüfung durch Ole ergänzen.
+- **KI:** Antworttext geht zur Einordnung an Anthropic (bereits Unterauftragsverarbeiter), ohne Name/Telefonnummer.
+- **AVV:** Zweck „Nachfrage nach Abschluss, Empfehlungen“ ergänzt (**Prüfen**).
+
 ## 4. Löschkonzept
 
 | Daten | Frist | Wie |
@@ -110,6 +128,8 @@ gilt nur für neue Dienste, eine Streichung ist unkritisch, wird aber trotzdem m
 | Abwesenheiten (`UserAbsence`) | 1 Jahr nach Ende der Abwesenheit, spätestens mit dem Login bzw. bei Vertragsende | automatisch täglich (`pruneTransient`), mit dem Login (Kaskade) und bei „Vertragsende: Daten löschen“ |
 | Angaben von Empfohlenen ohne Abschluss („Kollegen empfehlen“, `ColleagueReferral`) | 12 Monate nach Eingang | automatisch täglich 03:00 UTC (`pruneReferrals`): Name, Agentur, E-Mail, Telefon werden entfernt, Zähler und Prämie bleiben |
 | Login-Fehlversuche | 30 Tage | automatisch (`pruneAudit`) |
+| Nachfragen nach Abschluss (`ReviewRequest`: Antworttext, Einordnung, Klicks) | 2 Jahre nach Anlage, sofort mit Lead-Löschung (Art. 17) bzw. Vertragsende | automatisch (`pruneTransient`), `eraseLead`/`eraseCustomerData` |
+| Empfehlungslinks (`ReferralLink`) | mit dem Lead/Bestandskunden bzw. Vertragsende | `eraseLead`/`eraseCustomerData`, Kaskade |
 | Nicht zugeordnete Leads (Rohdaten aus Meta) | 30 Tage nach Zuordnung, sonst 90 Tage | automatisch (`pruneTransient`) |
 | Passwort-Links | 7 Tage nach Ablauf | automatisch (`pruneTransient`) |
 | Sitzung (Cookie) | 30 Tage | läuft ab; 2FA-Zwischenschritt 10 Minuten |

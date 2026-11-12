@@ -33,6 +33,7 @@ export default async function VorlagenPage() {
       name: true,
       plan: true,
       existingCustomersEnabled: true,
+      empfehlungEnabled: true,
       whatsAppAccount: { select: { status: true } },
       messageTemplates: { select: { purpose: true, status: true, body: true, updatedAt: true }, orderBy: { updatedAt: "desc" } },
     },
@@ -40,7 +41,7 @@ export default async function VorlagenPage() {
   if (!customer) redirect("/buyer");
   const connected = customer.whatsAppAccount?.status === "connected";
   const advisor = advisorDisplayName(customer.name);
-  const purposes = purposesFor({ bestand: customer.existingCustomersEnabled });
+  const purposes = purposesFor({ bestand: customer.existingCustomersEnabled, empfehlung: customer.empfehlungEnabled });
 
   const rows = purposes.map((purpose) => {
     const list = customer.messageTemplates.filter((t) => t.purpose === purpose);

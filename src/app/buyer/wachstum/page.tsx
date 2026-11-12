@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { BarChart3, ChevronRight, Megaphone, ShoppingCart, TrendingUp, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
+import { EmpfehlungGrowthRow } from "@/components/empfehlung/server";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { parseRangeFromSearchParams } from "@/lib/date-ranges";
 import { computeMonthlyForecast } from "@/lib/forecast";
@@ -78,6 +79,9 @@ export default async function WachstumPage() {
           }
           cta="Hochrechnung ansehen"
         />
+      </div>
+      <div className="mt-5">
+        <EmpfehlungGrowthRow ctx={ctx} />
       </div>
     </main>
   );

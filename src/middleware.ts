@@ -20,6 +20,7 @@ const PUBLIC_PREFIXES = [
   "/sicherheit", // Sicherheit & Datenschutz (öffentlich)
   "/status", // Statusseite (öffentlich, ohne interne Details)
   "/empfehlen", // „Kollegen empfehlen“: Landingpage je Empfehlungscode (Formular mit Einwilligung)
+  "/empfehlung", // Empfehlungsseite + Google-Link (geheimer Token je Kontakt, Modul Empfehlungen & Bewertungen)
   "/api/login-info", // Bild der Infokarte auf der Login-Seite (öffentlich, keine Personendaten)
   "/api/ops", // Betriebs-API (Buyer-Accounts anlegen), per ADMIN_API_TOKEN (Bearer) gesichert
   "/api/health", // Healthcheck für Railway/Uptime (gibt nur ok true/false zurück)

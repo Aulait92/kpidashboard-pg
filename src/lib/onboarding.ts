@@ -416,6 +416,7 @@ function billingTermsOf(offer: {
   seatsIncluded: number | null;
   seatMonthly: unknown;
   bestandMonthly: unknown;
+  empfehlungMonthly?: unknown;
   annualPrepay: boolean;
 }) {
   const seatsBilled = offer.seats != null && offer.seatsIncluded != null && Number(offer.seatMonthly ?? 0) > 0
@@ -427,5 +428,9 @@ function billingTermsOf(offer: {
     ...(offer.seatsIncluded != null ? { seatsIncluded: offer.seatsIncluded, seatMonthly: offer.seatMonthly == null ? null : Number(offer.seatMonthly), seatsBilled } : {}),
     billingInterval: offer.annualPrepay ? "year" : "month",
     ...(offer.bestandMonthly != null ? { bestandMonthly: Number(offer.bestandMonthly), existingCustomersEnabled: true, bestandRequestedAt: null } : {}),
+    // Empfehlungen & Bewertungen im Angebot: ab Start freigeschaltet und berechnet (keine Testphase)
+    ...(offer.empfehlungMonthly != null
+      ? { empfehlungMonthly: Number(offer.empfehlungMonthly), empfehlungEnabled: true, empfehlungSince: new Date(), empfehlungCancelAt: null }
+      : {}),
   };
 }

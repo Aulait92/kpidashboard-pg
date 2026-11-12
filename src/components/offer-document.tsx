@@ -53,6 +53,8 @@ export type OfferDoc = {
   seatsIncluded: number | null;
   seatMonthly: number | null;
   bestandMonthly: number | null;
+  /** Modul „Empfehlungen & Bewertungen“ (fehlt bei Alt-Angeboten). */
+  empfehlungMonthly?: number | null;
   annualPrepay: boolean;
   annualFreeMonths: number | null;
   /** Kunde wählt Laufzeit bzw. Startdatum bei der Annahme (vorher = Vorschlag). */
@@ -60,7 +62,7 @@ export type OfferDoc = {
   customerChoosesStart?: boolean;
 };
 
-type OfferRow = Omit<OfferDoc, "setupFee" | "monthlyFee" | "softwareFee" | "introMonthlyFee" | "seatMonthly" | "bestandMonthly" | "seats" | "seatsIncluded" | "annualPrepay" | "annualFreeMonths" | "vermittlerTyp"> & {
+type OfferRow = Omit<OfferDoc, "setupFee" | "monthlyFee" | "softwareFee" | "introMonthlyFee" | "seatMonthly" | "bestandMonthly" | "empfehlungMonthly" | "seats" | "seatsIncluded" | "annualPrepay" | "annualFreeMonths" | "vermittlerTyp"> & {
   vermittlerTyp?: string | null;
   setupFee: unknown;
   monthlyFee: unknown;
@@ -70,6 +72,7 @@ type OfferRow = Omit<OfferDoc, "setupFee" | "monthlyFee" | "softwareFee" | "intr
   seatsIncluded?: number | null;
   seatMonthly?: unknown;
   bestandMonthly?: unknown;
+  empfehlungMonthly?: unknown;
   annualPrepay?: boolean;
   annualFreeMonths?: number | null;
 };
@@ -87,6 +90,7 @@ export function toOfferDoc(o: OfferRow): OfferDoc {
     seatsIncluded: o.seatsIncluded ?? null,
     seatMonthly: o.seatMonthly == null ? null : Number(o.seatMonthly),
     bestandMonthly: o.bestandMonthly == null ? null : Number(o.bestandMonthly),
+    empfehlungMonthly: o.empfehlungMonthly == null ? null : Number(o.empfehlungMonthly),
     annualPrepay: !!o.annualPrepay,
     annualFreeMonths: o.annualFreeMonths ?? null,
   };
@@ -133,10 +137,10 @@ export function OfferDocument({
   const open = offer.status === "draft" || offer.status === "sent";
   const termOpen = open && !!offer.customerChoosesTerm;
   const startOpen = open && !!offer.customerChoosesStart;
-  const hasExtras = add.seatsFee > 0 || add.bestandFee > 0;
+  const hasExtras = add.seatsFee > 0 || add.bestandFee > 0 || add.empfehlungFee > 0;
   const hasIntro = offer.introMonthlyFee != null && !!offer.introMonths;
   // Erster Monatsbetrag inkl. Zusätze (Startpreis gilt nur für das Paket)
-  const firstMonth = round2((hasIntro ? offer.introMonthlyFee! : offer.monthlyFee) + add.seatsFee + add.bestandFee);
+  const firstMonth = round2((hasIntro ? offer.introMonthlyFee! : offer.monthlyFee) + add.seatsFee + add.bestandFee + add.empfehlungFee);
   const firstCharge = add.annualTotal ?? firstMonth;
   const productNames = products.map((p) => p.name).join(" & ");
   const makler = offer.vermittlerTyp === "makler";
@@ -345,6 +349,20 @@ export function OfferDocument({
                 </>
               )}
               <Note>Inklusive WhatsApp-Gebühren bis {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat; mehr auf Anfrage.</Note>
+            </Tr>
+          ) : null}
+          {add.empfehlungActive ? (
+            <Tr k="Empfehlungen & Bewertungen">
+              {add.empfehlungFee === 0 ? (
+                <>
+                  <b className="text-[#111827]">Ohne Aufpreis</b> (Sonderkondition)
+                </>
+              ) : (
+                <>
+                  <b className="text-[#111827]">{eur2(add.empfehlungFee)}</b> netto pro Monat
+                </>
+              )}
+              <Note>Nach jedem Abschluss automatisch um eine Google-Bewertung und später um eine Empfehlung bitten, mit Empfehlungsseite und Auswertung.</Note>
             </Tr>
           ) : null}
           {hasExtras ? (

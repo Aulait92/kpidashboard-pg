@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/buyer-shell";
 import { Button, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
-import { OCCASIONS, segmentIds, TOPIC_LABEL, type Occasion, type Segment } from "@/lib/bestand/campaigns";
+import { NEEDS_EMPFEHLUNG, OCCASIONS, segmentIds, TOPIC_LABEL, type Occasion, type Segment } from "@/lib/bestand/campaigns";
 import { renderTemplate, SUGGESTED_TEMPLATE_TEXT, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { startCampaignAction } from "../actions";
 
@@ -14,11 +14,13 @@ export const dynamic = "force-dynamic";
 export default async function CampaignSetup({ searchParams }: { searchParams: Promise<{ anlass?: string; segment?: string; thema?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
-  const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { existingCustomersEnabled: true, name: true } });
+  const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { existingCustomersEnabled: true, empfehlungEnabled: true, name: true } });
   if (ctx.teamRole !== "owner") redirect("/buyer");
   if (!c?.existingCustomersEnabled) redirect("/buyer/bestand");
   const sp = await searchParams;
   const occasion = (sp.anlass && sp.anlass in OCCASIONS ? sp.anlass : "review") as Occasion;
+  // Empfehlungsbitte nur mit Modul „Empfehlungen & Bewertungen“ – sonst Hinweis zum Modul
+  const locked = NEEDS_EMPFEHLUNG.includes(occasion) && !c.empfehlungEnabled;
   let segment: Segment = {};
   try {
     segment = JSON.parse(sp.segment ?? "{}") as Segment;
@@ -34,8 +36,8 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   ]);
   const advisor = c.name.replace(/^Allianz\s+/i, "");
   const body = template?.body ?? SUGGESTED_TEMPLATE_TEXT[purpose].replace(/\[Berater\]/g, advisor);
-  const preview = renderTemplate(body, ["Erika", topic ?? ""]);
-  const ready = !!template && wa?.status === "connected" && ids.length > 0;
+  const preview = renderTemplate(body, ["Erika", occasion === "empfehlung" ? "https://app.performancegrowth.de/empfehlung/…" : (topic ?? "")]);
+  const ready = !locked && !!template && wa?.status === "connected" && ids.length > 0;
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -78,7 +80,16 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
           </div>
         </Card>
 
-        {!template ? (
+        {locked ? (
+          <p className="rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            Die Empfehlungsbitte gehört zum Modul „Empfehlungen &amp; Bewertungen“: Jeder Kunde bekommt seinen persönlichen Empfehlungslink, die empfohlene
+            Person trägt sich selbst ein und landet als Lead bei Ihnen.{" "}
+            <Link href="/buyer/konto?modul=empfehlung#zusatzmodule" className="font-semibold underline">
+              Modul 30 Tage kostenlos testen
+            </Link>
+          </p>
+        ) : null}
+        {!template && !locked ? (
           <p className="rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             Für diesen Anlass ist noch keine WhatsApp-Vorlage von Meta freigegeben. Wir reichen sie für Sie ein, das dauert meist 1–2 Tage. Melden Sie sich
             kurz bei uns.

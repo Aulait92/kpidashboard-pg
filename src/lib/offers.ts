@@ -48,6 +48,8 @@ export type OfferFormInput = {
   annual?: boolean;
   /** Bestandskunden-Modul dazubuchen. */
   bestandModule?: boolean;
+  /** Modul „Empfehlungen & Bewertungen“ dazubuchen. */
+  empfehlungModule?: boolean;
   /** Vertreter (Standard) oder Makler: bestimmt die Garantien. */
   vermittlerTyp?: "vertreter" | "makler";
   /**
@@ -120,6 +122,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
     seats: input.seats,
     annual: input.annual,
     bestandModule: input.bestandModule,
+    empfehlungModule: input.empfehlungModule,
   });
   if (price.monthlyFee == null) {
     throw new Error(
@@ -180,6 +183,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             seatMonthly: pkg === "software" ? (price.seatsIndividual ? 0 : PRICE_LIST.seatMonthly) : null,
             // Modul gebucht: Monatspreis; null = nicht gebucht
             bestandMonthly: price.bestandActive ? price.bestandFee : null,
+            empfehlungMonthly: price.empfehlungActive ? price.empfehlungFee : null,
             annualPrepay: price.annual,
             annualFreeMonths: price.annual ? PRICE_LIST.annualFreeMonths : null,
             introMonthlyFee: input.introMonthlyFee ?? null,
@@ -338,6 +342,7 @@ export function offerAddOnsOf(o: {
   seatsIncluded: number | null;
   seatMonthly: unknown;
   bestandMonthly: unknown;
+  empfehlungMonthly?: unknown;
   annualPrepay: boolean;
   annualFreeMonths: number | null;
 }) {
@@ -347,6 +352,7 @@ export function offerAddOnsOf(o: {
     seatsIncluded: o.seatsIncluded,
     seatMonthly: o.seatMonthly == null ? null : Number(o.seatMonthly),
     bestandMonthly: o.bestandMonthly == null ? null : Number(o.bestandMonthly),
+    empfehlungMonthly: o.empfehlungMonthly == null ? null : Number(o.empfehlungMonthly),
     annualPrepay: o.annualPrepay,
     annualFreeMonths: o.annualFreeMonths,
   };

@@ -93,6 +93,7 @@ export const RETAINER_CUSTOMER_SELECT = {
   seatsBilled: true,
   seatMonthly: true,
   bestandMonthly: true,
+  empfehlungMonthly: true,
   billingInterval: true,
   pauses: { where: { kind: "customer", status: { in: ["active", "ended"] } }, select: { startsAt: true, endsAt: true, resumedAt: true } },
 } satisfies Prisma.CustomerSelect;
@@ -106,6 +107,7 @@ export function retainerInputFor(
     seatsBilled: number;
     seatMonthly: unknown;
     bestandMonthly: unknown;
+    empfehlungMonthly?: unknown;
     billingInterval: string;
     pauses: { startsAt: Date; endsAt: Date | null; resumedAt: Date | null }[];
   },
@@ -121,7 +123,7 @@ export function retainerInputFor(
     softwareShare: offer ? n(offer.softwareFee) : 0,
     intro: offer?.introMonthlyFee != null && offer.introMonths ? { amount: n(offer.introMonthlyFee), months: offer.introMonths } : null,
     // Weitere Logins und Bestandskunden-Modul zählen als Software (Stand heute, nicht historisch)
-    extras: c.seatsBilled * n(c.seatMonthly) + n(c.bestandMonthly),
+    extras: c.seatsBilled * n(c.seatMonthly) + n(c.bestandMonthly) + n(c.empfehlungMonthly),
     // Jährlich im Voraus: MRR = Jahresbetrag / 12 (keine Spitze im Zahlungsmonat); Pausen ohne Gutschrift
     annualFactor: c.billingInterval === "year" ? annualMultiplier(offer?.annualFreeMonths ?? PRICE_LIST.annualFreeMonths) / 12 : 1,
     pauses: c.billingInterval === "year" ? [] : c.pauses.map((p) => ({ from: p.startsAt, to: p.resumedAt ?? p.endsAt })),
@@ -153,6 +155,7 @@ export async function loadLedger(now = new Date()) {
         seatsBilled: true,
         seatMonthly: true,
         bestandMonthly: true,
+        empfehlungMonthly: true,
         billingInterval: true,
         onboarding: { select: { offerId: true } },
         pauses: { where: { kind: "customer", status: { in: ["active", "ended"] } }, select: { startsAt: true, endsAt: true, resumedAt: true } },

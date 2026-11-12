@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { EmpfehlungGrowthRow } from "@/components/empfehlung/server";
 import { ChevronDown } from "lucide-react";
 import { Suspense } from "react";
 import { AutoRefresh } from "@/components/auto-refresh";
@@ -89,6 +90,8 @@ export default async function BuyerPage({
             />
           }
         />
+
+        <EmpfehlungGrowthRow ctx={{ customerId: session.customerId, teamRole: session.teamRole }} />
 
         <Suspense
           fallback={

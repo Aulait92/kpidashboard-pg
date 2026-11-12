@@ -346,6 +346,47 @@ Seiten aus der Liste „Seiten“ unten.
 - Kampagne: Thema, Tageslimit, Vorschau, Start/Pause. Versand per WhatsApp Mo–Sa 9–19 Uhr.
   Antworten werden zum Lead, wer „Stopp“ schreibt, bekommt nichts mehr.
 
+## Empfehlungen & Bewertungen (Zusatzmodul)
+
+- **Was es macht:** Einige Tage nach jedem Abschluss (Standard 7) bekommt Ihr Kunde per WhatsApp in Ihrem Namen
+  eine Nachricht: erst der direkte Draht zu Ihnen („Wenn etwas nicht gepasst hat, antworten Sie mir direkt hier“),
+  dann die Bitte um eine Google-Bewertung mit Link. **Alle bekommen dieselbe Nachricht** – es gibt keine Vorab-Frage,
+  die darüber entscheidet, wer den Google-Link bekommt (das verbieten die Google-Richtlinien).
+- **Antworten:** Die KI liest die Antwort. Kritik oder Beschwerde → sofort Push und die Aufgabe „Kunde unzufrieden –
+  bitte heute anrufen“ mit Zitat in „Heute“; die Bitte um Empfehlung geht an diesen Kunden nicht raus. Lob → kurzer
+  Dank (ohne zweiten Link). Rückfragen landen als „Braucht dich“ im Chat. Geklärte Kritik markieren Sie in
+  „Empfehlungen & Bewertungen“ mit „Als geklärt markieren“.
+- **Bitte um Empfehlung:** einige Wochen nach dem Abschluss (Standard 21 Tage), nicht bei Kritik und nicht bei offener
+  Aufgabe „unzufrieden“. Der persönliche Link führt Ihren Kunden auf eine Seite zum Teilen (WhatsApp oder Teilen-Knopf).
+  Die empfohlene Person trägt sich selbst ein (mit Einwilligung) und landet als Lead mit Quelle „Empfehlung“ bei Ihnen,
+  inklusive der üblichen ersten Nachricht. Wird daraus ein Abschluss, bekommt der Empfehlende automatisch einen Dank –
+  ohne Namen der empfohlenen Person und **ohne Prämie** (Provisionsabgabeverbot).
+- **Empfehlungslink senden:** In jedem Kontakt mit Abschluss (und bei Bestandskunden) gibt es den Knopf
+  „Empfehlungslink senden“ – jederzeit nutzbar, z. B. nach einem guten Gespräch. Ohne WhatsApp-Verbindung erscheint
+  der Text zum Kopieren oder Teilen. Mit Bestandskunden-Modul gibt es zusätzlich die Kampagne „Jährliche
+  Empfehlungsbitte“ (persönlicher Link je Kunde, höchstens einmal im Jahr).
+- **Nicht anfragen:** Im Kontakt können Sie die Nachfrage für einzelne Kunden abschalten (z. B. wer keine Nachrichten
+  möchte). Das ist kein Zufriedenheitsfilter und passiert nie automatisch.
+- **Einrichten:** Wachstum → „Empfehlungen & Bewertungen“ (bzw. Konto & Rechnungen → Zusatzmodule →
+  „Einstellungen & Auswertung“): Google-Bewertungslink hinterlegen (Google-Unternehmensprofil → „Rezensionen erhalten“ →
+  Link kopieren), Tage einstellen, Texte anpassen (Platzhalter {Vorname}, {Link}, {Vertreter}; Empfehlung: erst der
+  direkte Draht, dann der Link), „Test an mich senden“. Eigene Texte gelten im offenen WhatsApp-Chat; sonst sendet
+  die App die von Meta freigegebene Standardvorlage (Freigabe dauert meist wenige Stunden bis zwei Tage).
+- **Auswertung:** Empfehlungs-Leads, daraus Termine, Abschlüsse und geschätzte Provision (Ihre Provisionssätze),
+  dazu Nachfragen, Klicks auf den Google-Link, positive und kritische Rückmeldungen und geklärte Fälle.
+- **Buchen (nur Inhaber):** Konto & Rechnungen → Zusatzmodule → „30 Tage kostenlos testen“. Bestätigungsblatt mit
+  Preis und Bedingungen, Häkchen setzen, fertig – das Modul ist sofort frei. Die Testphase ist kostenlos; 3 Tage vor
+  dem Ende erinnern wir per Push und E-Mail. Danach läuft es automatisch für 59 € netto im Monat weiter (tagesgenau
+  anteilig mit der nächsten Rechnung), außer Sie kündigen vorher. Kündigen ebenfalls dort: in der Testphase endet das
+  Modul mit der Testphase ohne Kosten, sonst zum Ende des Abrechnungszeitraums. Die Testphase gibt es einmal je Konto.
+  Im Paket „Nur Betreuung“ gibt es das Modul nicht.
+
+## Zusatzmodule buchen
+
+- Konto & Rechnungen → **Zusatzmodule** (nur Inhaber): Empfehlungen & Bewertungen (59 €, 30 Tage kostenlos testen),
+  Bestandskunden-Modul (149 €, siehe „Bestand“) und weitere Berater-Logins (49 € je Login, im Team anlegen).
+  Buchen und Kündigen geht dort selbst; wir bekommen automatisch Bescheid.
+
 ## Einrichtung
 
 - Schritte: kurzer Fragebogen, Zugriff auf Ihr Meta-Werbekonto (mit Anleitung), Kalender verbinden,

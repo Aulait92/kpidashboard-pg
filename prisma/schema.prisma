@@ -170,6 +170,22 @@ model Customer {
   bestandCancelAt          DateTime?
   // Kampagnen-Nachrichten je Monat inklusive; null = Standard aus der Preisliste
   bestandMessageQuota      Int?
+  // ─── Zusatzmodul „Empfehlungen & Bewertungen“ (seit 12.11.2026) ───
+  // Freigeschaltet (Zugang); Abrechnung über empfehlungMonthly bzw. Testphase
+  empfehlungEnabled        Boolean             @default(false)
+  // Berechneter Monatspreis netto; null = (noch) nicht berechnet (Testphase, kostenlos)
+  empfehlungMonthly        Decimal?            @db.Decimal(10, 2)
+  // Testphase bis hier (gesetzt = Testphase wurde genutzt); danach automatisch kostenpflichtig
+  empfehlungTrialEndsAt    DateTime?
+  empfehlungTrialReminded  DateTime?
+  // Vom Admin kostenlos freigeschaltet (keine Berechnung)
+  empfehlungFree           Boolean             @default(false)
+  // Gekündigt: Zugang bis hier, danach schaltet der Cron ab
+  empfehlungCancelAt       DateTime?
+  // Seit wann aktiv: nur Abschlüsse ab hier lösen Anfragen aus
+  empfehlungSince          DateTime?
+  // Weggeklickte Hinweise auf Zusatzmodule (Schlüssel je Stelle)
+  moduleHintsDismissed     String[]            @default([])
   // Neue Oberfläche des Kundenbereichs (Vertreter-A); pro Kunde im Admin einschaltbar.
   newUi                    Boolean             @default(false)
   existingCustomers        ExistingCustomer[]
@@ -193,6 +209,9 @@ model Customer {
   referralCode             ReferralCode?
   colleagueReferrals       ColleagueReferral[]
   referralNudges           ReferralNudge[]
+  reviewSettings           ReviewSettings?
+  reviewRequests           ReviewRequest[]
+  referralLinks            ReferralLink[]
 }
 
 // Tagesbudget je Produkt (Kundenbereich → Konto → Werbebudget). Ohne Eintrag gilt das
@@ -471,6 +490,16 @@ model Lead {
   conversations Conversation[]
   appointments  Appointment[]
   sequences     LeadSequence[]
+
+  // Modul „Empfehlungen & Bewertungen“: Anfrage nach dem Abschluss (je Lead eine)
+  reviewRequest     ReviewRequest? @relation("ReviewRequestLead")
+  // Persönlicher Empfehlungslink dieses Kontakts (als Empfehlender)
+  ownReferralLink   ReferralLink?  @relation("ReferralLinkLead")
+  // Lead kam über den Empfehlungslink eines Kunden
+  referralLinkId    String?
+  referralLink      ReferralLink?  @relation("ReferredLeads", fields: [referralLinkId], references: [id], onDelete: SetNull)
+  // Dank an den Empfehlenden verschickt (einmal, sobald dieser Lead abgeschlossen ist)
+  referralThankedAt DateTime?
 
   @@index([customerId, createdAt])
   @@index([assignedUserId])
@@ -1013,6 +1042,8 @@ model Offer {
   seatMonthly             Decimal?      @db.Decimal(10, 2)
   // Bestandskunden-Modul: Monatspreis netto; null = nicht gebucht
   bestandMonthly          Decimal?      @db.Decimal(10, 2)
+  // Modul „Empfehlungen & Bewertungen“: Monatspreis netto; null = nicht gebucht
+  empfehlungMonthly       Decimal?      @db.Decimal(10, 2)
   // Jährlich im Voraus: Jahresbetrag = (12 − annualFreeMonths) × Monatspreis inkl. Zusätze
   annualPrepay            Boolean       @default(false)
   annualFreeMonths        Int?
@@ -1752,8 +1783,9 @@ model ExistingCustomer {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  contracts  ExistingContract[]
-  recipients CampaignRecipient[]
+  contracts    ExistingContract[]
+  recipients   CampaignRecipient[]
+  referralLink ReferralLink?
 
   @@unique([customerId, externalNo])
   @@index([customerId, phone])
@@ -2202,4 +2234,99 @@ model ReferralSettings {
   benefitKind String   @default("none")
   benefitText String?
   updatedAt   DateTime @updatedAt
+}
+
+// ─── Zusatzmodul „Empfehlungen & Bewertungen“ ────────────────────────────
+// Einstellungen je Kunde (Vertreter). Texte gelten im offenen 24-h-Fenster;
+// sonst sendet die App die bei Meta freigegebene Vorlage.
+model ReviewSettings {
+  id                 String   @id @default(cuid())
+  customerId         String   @unique
+  // Vertreter kann das Modul pausieren, ohne es zu kündigen
+  active             Boolean  @default(true)
+  // Link „Bewertung schreiben“ des Google-Unternehmensprofils
+  googleReviewUrl    String?
+  // Tage nach dem Abschluss: Zufriedenheitsfrage bzw. Bitte um Empfehlung
+  reviewDelayDays    Int      @default(7)
+  referralDelayDays  Int      @default(21)
+  // Eigene Texte (null = Standard): Anfrage (direkter Draht + Google-Link),
+  // Dank bei positiver Antwort, Antwort bei Kritik, Bitte um Empfehlung
+  reviewText         String?
+  thanksText         String?
+  unhappyText        String?
+  referralText       String?
+  referralThanksText String?
+  updatedAt          DateTime @updatedAt
+  customer           Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+// Je Abschluss eine Anfrage: dieselbe Nachricht an alle (erst direkter Draht zum
+// Vertreter, dann Google-Link – kein Gating). Antworten wertet die KI aus:
+// Kritik → Aufgabe „Kunde unzufrieden“ + keine Empfehlungsanfrage.
+// status „off“ = Vertreter hat „Nicht anfragen“ gewählt (je Kontakt, nie automatisch).
+model ReviewRequest {
+  id             String    @id @default(cuid())
+  customerId     String
+  leadId         String    @unique
+  // Geheimer Link für Google-Klick-Zählung und Empfehlungsseite
+  token          String    @unique
+  // scheduled | sent | answered | skipped | failed | off
+  status         String    @default("scheduled")
+  reviewDueAt    DateTime
+  reviewSentAt   DateTime?
+  // text (offenes Fenster) | template (freigegebene Vorlage)
+  sendMode       String?
+  conversationId String?
+  // Erste Antwort auf die Anfrage: positive | negative | neutral (KI-Auswertung)
+  sentiment      String?
+  comment        String?
+  answeredAt     DateTime?
+  // Kritik geklärt (Vertreter hat „Geklärt“ gewählt)
+  resolvedAt     DateTime?
+  googleClicks   Int       @default(0)
+  googleClickAt  DateTime?
+  // waiting | sent | skipped | failed
+  referralStatus String    @default("waiting")
+  referralDueAt  DateTime?
+  referralSentAt DateTime?
+  referralViews  Int       @default(0)
+  // Grund bei skipped/failed bzw. Hinweis (z. B. „Vorlage noch nicht freigegeben“)
+  note           String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  customer       Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  lead           Lead      @relation("ReviewRequestLead", fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, createdAt])
+  @@index([status, reviewDueAt])
+  @@index([referralStatus, referralDueAt])
+}
+
+// Persönlicher Empfehlungslink je Kontakt (Lead mit Abschluss oder Bestandskunde).
+// Seite /empfehlung/[token]: der Empfehlende teilt; /empfehlung/[token]/kontakt:
+// die empfohlene Person trägt sich selbst ein (mit Einwilligung) → neuer Lead.
+model ReferralLink {
+  id                 String            @id @default(cuid())
+  customerId         String
+  token              String            @unique
+  leadId             String?           @unique
+  existingCustomerId String?           @unique
+  views              Int               @default(0)
+  lastSentAt         DateTime?
+  createdAt          DateTime          @default(now())
+  customer           Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  lead               Lead?             @relation("ReferralLinkLead", fields: [leadId], references: [id], onDelete: Cascade)
+  existingCustomer   ExistingCustomer? @relation(fields: [existingCustomerId], references: [id], onDelete: Cascade)
+  referredLeads      Lead[]            @relation("ReferredLeads")
+
+  @@index([customerId])
+}
+
+// Einmalige Ankündigungen an Kunden (z. B. neues Zusatzmodul), vom Admin ausgelöst.
+model ModuleAnnouncement {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  sentAt    DateTime @default(now())
+  sentCount Int      @default(0)
+  sentBy    String?
 }

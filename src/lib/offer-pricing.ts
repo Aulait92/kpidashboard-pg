@@ -35,6 +35,10 @@ export const PRICE_LIST = {
   bestandModuleMonthly: 149,
   /** Kampagnen-Nachrichten im Bestandskunden-Modul je Kalendermonat inklusive. */
   bestandIncludedMessages: 500,
+  /** Modul „Empfehlungen & Bewertungen“ je Monat (netto), Ole 12.11.2026. */
+  empfehlungModuleMonthly: 59,
+  /** Testphase bei Selbstbuchung: so viele Tage kostenlos, danach automatisch kostenpflichtig. */
+  empfehlungTrialDays: 30,
   /** WhatsApp-Gebühren von Meta sind im Preis enthalten (keine Weiterberechnung). */
   whatsappIncluded: true,
 } as const;
@@ -70,6 +74,8 @@ export type OfferInput = {
   annual?: boolean;
   /** Bestandskunden-Modul dazubuchen (nur Betreuung + Software). */
   bestandModule?: boolean;
+  /** Modul „Empfehlungen & Bewertungen“ dazubuchen (nur Betreuung + Software). */
+  empfehlungModule?: boolean;
 };
 
 export type OfferPrice = {
@@ -94,7 +100,9 @@ export type OfferPrice = {
   bestandFee: number;
   /** Modul Teil des Angebots. */
   bestandActive: boolean;
-  /** Monatlich gesamt (Paket + Logins + Modul); null = individuell offen. */
+  empfehlungFee: number;
+  empfehlungActive: boolean;
+  /** Monatlich gesamt (Paket + Logins + Module); null = individuell offen. */
   monthlyTotal: number | null;
   annual: boolean;
   /** Jahresbetrag bei jährlicher Vorauszahlung; null ohne Jahreszahlung. */
@@ -131,12 +139,14 @@ export function computeOfferPrice(input: OfferInput): OfferPrice {
   const seatsFee = seatsIndividual ? 0 : extraSeats * PRICE_LIST.seatMonthly;
   const bestandActive = !serviceOnly && !!input.bestandModule;
   const bestandFee = bestandActive ? PRICE_LIST.bestandModuleMonthly : 0;
+  const empfehlungActive = !serviceOnly && !!input.empfehlungModule;
+  const empfehlungFee = empfehlungActive ? PRICE_LIST.empfehlungModuleMonthly : 0;
   const listBase = seatsIndividual ? null : listMonthly;
 
   const setupFee = input.setupOverride != null && input.setupOverride >= 0 ? input.setupOverride : listSetup;
   const monthlyFee =
     input.monthlyOverride != null && input.monthlyOverride >= 0 ? input.monthlyOverride : listBase;
-  const monthlyTotal = monthlyFee == null ? null : round2(monthlyFee + seatsFee + bestandFee);
+  const monthlyTotal = monthlyFee == null ? null : round2(monthlyFee + seatsFee + bestandFee + empfehlungFee);
   const annual = !!input.annual && input.term === "12m";
   const annualTotal = annual && monthlyTotal != null ? round2(monthlyTotal * (12 - PRICE_LIST.annualFreeMonths)) : null;
 
@@ -162,6 +172,8 @@ export function computeOfferPrice(input: OfferInput): OfferPrice {
     seatsIndividual,
     bestandFee,
     bestandActive,
+    empfehlungFee,
+    empfehlungActive,
     monthlyTotal,
     annual,
     annualTotal,
@@ -176,6 +188,8 @@ export type OfferAddOnsInput = {
   seatsIncluded: number | null;
   seatMonthly: number | null;
   bestandMonthly: number | null;
+  /** Fehlt bei Alt-Angeboten (vor 12.11.2026) = nicht gebucht. */
+  empfehlungMonthly?: number | null;
   annualPrepay: boolean;
   annualFreeMonths: number | null;
 };
@@ -191,6 +205,8 @@ export type OfferAddOns = {
   bestandFee: number;
   /** Modul vereinbart (bestandMonthly gesetzt; 0 € = Sonderkondition ohne Aufpreis). */
   bestandActive: boolean;
+  empfehlungFee: number;
+  empfehlungActive: boolean;
   monthlyTotal: number;
   annual: boolean;
   freeMonths: number;
@@ -206,7 +222,8 @@ export function offerAddOns(o: OfferAddOnsInput): OfferAddOns {
   const extraSeats = hasSeats ? Math.max(0, seats - seatsIncluded) : 0;
   const seatsFee = round2(extraSeats * seatMonthly);
   const bestandFee = o.bestandMonthly ?? 0;
-  const monthlyTotal = round2(o.monthlyFee + seatsFee + bestandFee);
+  const empfehlungFee = o.empfehlungMonthly ?? 0;
+  const monthlyTotal = round2(o.monthlyFee + seatsFee + bestandFee + empfehlungFee);
   const freeMonths = o.annualPrepay ? (o.annualFreeMonths ?? PRICE_LIST.annualFreeMonths) : 0;
   const annualTotal = o.annualPrepay ? round2(monthlyTotal * (12 - freeMonths)) : null;
   return {
@@ -218,6 +235,8 @@ export function offerAddOns(o: OfferAddOnsInput): OfferAddOns {
     seatsFee,
     bestandFee,
     bestandActive: o.bestandMonthly != null,
+    empfehlungFee,
+    empfehlungActive: o.empfehlungMonthly != null,
     monthlyTotal,
     annual: o.annualPrepay,
     freeMonths,

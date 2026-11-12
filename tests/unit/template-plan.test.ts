@@ -6,6 +6,7 @@ import {
   categoryFor,
   CORE_PURPOSES,
   CUSTOMER_TITLES,
+  EMPFEHLUNG_PURPOSES,
   exampleValuesFor,
   findRemote,
   mapRemoteStatus,
@@ -82,7 +83,8 @@ describe("Vorlagen-Plan", () => {
       "Hallo {{1}}, schade, dass es mit unserem Termin nicht geklappt hat. Hier ist der digitale Assistent von [Berater]. Sollen wir einen neuen Termin finden? Antworte einfach hier.",
     );
     expect(SUGGESTED_TEMPLATE_TEXT.followup_last).toContain("Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.");
-    for (const p of Object.keys(TEMPLATE_BUTTONS) as NoticePurpose[]) expect(CAMPAIGN_PURPOSES).toContain(p);
+    // Widerspruchs-Knopf nur bei Werbung: Bestandskunden-Kampagnen und Bitte um Empfehlung
+    for (const p of Object.keys(TEMPLATE_BUTTONS) as NoticePurpose[]) expect([...CAMPAIGN_PURPOSES, ...EMPFEHLUNG_PURPOSES]).toContain(p);
   });
 
   it("Freitext der Nachfass-Abfolgen ebenfalls ohne Gedankenstriche", () => {

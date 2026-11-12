@@ -34,6 +34,7 @@ import { HilfeChat } from "@/components/hilfe-chat";
 import { AbsenceControl, dayShort, type ShellAbsence } from "@/components/absence-sheet";
 import { normalizePath, sendUsage } from "@/lib/usage-client";
 import { cn } from "@/lib/utils";
+import { showNewBadge } from "@/lib/empfehlung/shared";
 
 // App-Shell des Kundenbereichs: eine Kopfzeile mit Navigation und Profil-
 // menü (Desktop), unten eine Tab-Leiste (Handy). Alle Seiten teilen sich
@@ -398,6 +399,11 @@ function ProfileMenu({
                 className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
               >
                 <CreditCard className="h-4 w-4" /> Konto &amp; Rechnungen
+                {showNewBadge() ? (
+                  <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800" title="Neu: Zusatzmodul Empfehlungen & Bewertungen">
+                    Neu
+                  </span>
+                ) : null}
               </Link>
               <Link
                 href="/buyer/empfehlen"
@@ -503,7 +509,7 @@ function BuyerShellA({
       ? [{ href: "/buyer/chats", label: "Nachrichten", icon: MessageCircle, match: (p: string) => p.startsWith("/buyer/chats"), badge: chatBadge }]
       : []),
     ...(owner
-      ? [{ href: "/buyer/wachstum", label: "Wachstum", icon: TrendingUp, match: (p: string) => /^\/buyer\/(wachstum|zahlen|bestellen|bestand)/.test(p) }]
+      ? [{ href: "/buyer/wachstum", label: "Wachstum", icon: TrendingUp, match: (p: string) => /^\/buyer\/(wachstum|zahlen|bestellen|bestand|empfehlungen)/.test(p) }]
       : []),
   ];
   const firstName = displayName.replace(/^Allianz\s+/i, "").split(/\s+/)[0] ?? "";

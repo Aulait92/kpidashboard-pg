@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ReferralLinkButton } from "@/components/empfehlung/client";
 import { redirect } from "next/navigation";
 import { Lightbulb, Megaphone, Upload, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
@@ -28,7 +29,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
   if (ctx.teamRole !== "owner") redirect("/buyer");
   const c = await prisma.customer.findUnique({
     where: { id: ctx.customerId },
-    select: { existingCustomersEnabled: true, bestandRequestedAt: true, bestandCancelAt: true, billingInterval: true },
+    select: { existingCustomersEnabled: true, bestandRequestedAt: true, bestandCancelAt: true, billingInterval: true, empfehlungEnabled: true },
   });
   if (!c) redirect("/buyer");
   // Ohne gebuchtes Modul: freundlicher Hinweis statt Sperre ohne Erklärung
@@ -148,6 +149,15 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                 );
               })}
               {!opps.length ? <li className="text-sm text-[color:var(--muted)]">Gerade keine erreichbaren Kunden (alle kürzlich angeschrieben oder ohne Mobilnummer).</li> : null}
+              {!c.empfehlungEnabled ? (
+                <li className="flex items-center gap-3 rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-strong)] p-4 sm:col-span-2" data-bestand-empfehlung-locked>
+                  <div className="min-w-0 flex-1 text-sm">
+                    <div className="font-semibold">Jährliche Empfehlungsbitte</div>
+                    <div className="text-[color:var(--muted)]">Zufriedene Bestandskunden mit persönlichem Link um eine Empfehlung bitten – mit dem Modul „Empfehlungen &amp; Bewertungen“.</div>
+                  </div>
+                  <ButtonLink href="/buyer/konto?modul=empfehlung#zusatzmodule">Modul ansehen</ButtonLink>
+                </li>
+              ) : null}
             </ul>
           </Card>
 
@@ -198,6 +208,11 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                     ))}
                   </span>
                   <span className="w-28 text-right text-xs text-[color:var(--muted)]">{e.phone ? `+${e.phone}` : "ohne Mobil"}</span>
+                  {c.empfehlungEnabled && !e.optOutAt ? (
+                    <span className="w-full sm:w-auto">
+                      <ReferralLinkButton existingCustomerId={e.id} readOnly={ctx.preview} />
+                    </span>
+                  ) : null}
                 </li>
               ))}
             </ul>

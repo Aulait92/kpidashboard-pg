@@ -32,7 +32,7 @@ export function stripeClient(): Stripe | null {
 
 export const billingEnabled = () => !!process.env.STRIPE_SECRET_KEY?.trim();
 
-type ProductKey = "software" | "service" | "setup" | "setup_service" | "whatsapp" | "leads" | "seat" | "bestand";
+type ProductKey = "software" | "service" | "setup" | "setup_service" | "whatsapp" | "leads" | "seat" | "bestand" | "empfehlung";
 const productCache = new Map<ProductKey, string>();
 
 const PRODUCT_DEFAULTS: Record<ProductKey, { name: string; description: string }> = {
@@ -63,6 +63,10 @@ const PRODUCT_DEFAULTS: Record<ProductKey, { name: string; description: string }
   bestand: {
     name: "Bestandskunden-Modul",
     description: "Bestandskunden importieren und per WhatsApp ansprechen, inklusive WhatsApp-Gebühren bis zum Monatskontingent.",
+  },
+  empfehlung: {
+    name: "Empfehlungen & Bewertungen",
+    description: "Nach jedem Abschluss automatisch um eine Google-Bewertung und später um eine Empfehlung bitten, inklusive Empfehlungsseite und Auswertung.",
   },
   whatsapp: {
     name: "WhatsApp-Gebühren (Meta)",
@@ -262,11 +266,12 @@ export async function createScheduleForOffer(offerId: string, session: Stripe.Ch
   const customerId = offer.stripeCustomerId ?? (typeof session.customer === "string" ? session.customer : session.customer?.id);
   if (!customerId) throw new Error(`Angebot ${offer.number}: kein Stripe-Kunde`);
 
-  const [software, service, seat, bestand, tax, pm] = await Promise.all([
+  const [software, service, seat, bestand, empfehlung, tax, pm] = await Promise.all([
     productId(stripe, "software"),
     productId(stripe, "service"),
     productId(stripe, "seat"),
     productId(stripe, "bestand"),
+    productId(stripe, "empfehlung"),
     resolveTax(stripe),
     paymentMethodOf(stripe, session),
   ]);
@@ -289,6 +294,7 @@ export async function createScheduleForOffer(offerId: string, session: Stripe.Ch
   const extraSeats = offer.seats != null && offer.seatsIncluded != null ? Math.max(0, offer.seats - offer.seatsIncluded) : 0;
   const seatPrice = Number(offer.seatMonthly ?? 0);
   const bestandPrice = Number(offer.bestandMonthly ?? 0);
+  const empfehlungPrice = Number(offer.empfehlungMonthly ?? 0);
   const itemsFor = (total: number) => {
     const sw = Math.min(softwareFee, total);
     const items: Stripe.SubscriptionScheduleCreateParams.Phase.Item[] = [];
@@ -297,6 +303,7 @@ export async function createScheduleForOffer(offerId: string, session: Stripe.Ch
     // Weitere Logins als Menge einer eigenen Position (Änderungen im Team passen die Menge an)
     if (extraSeats > 0 && seatPrice > 0) items.push(item(seat, seatPrice, extraSeats));
     if (bestandPrice > 0) items.push(item(bestand, bestandPrice));
+    if (empfehlungPrice > 0) items.push(item(empfehlung, empfehlungPrice));
     return items;
   };
 
@@ -694,7 +701,7 @@ type Proration = "create_prorations" | "none";
 async function setItemQuantity(
   stripe: Stripe,
   sub: Stripe.Subscription,
-  key: "seat" | "bestand",
+  key: "seat" | "bestand" | "empfehlung",
   quantity: number,
   monthlyUnit: number,
   proration: Proration = "create_prorations",
@@ -705,7 +712,7 @@ async function setItemQuantity(
   const factor = interval === "year" ? annualMultiplier() : 1;
   if (item) {
     const unit = cents(monthlyUnit * factor);
-    if (quantity === 0 && key === "bestand") {
+    if (quantity === 0 && key !== "seat") {
       await stripe.subscriptionItems.del(item.id, { proration_behavior: proration });
     } else if (unit !== item.price.unit_amount && quantity > 0) {
       // Preis je Platz/Modul geändert (Admin): Position mit neuem Preis, anteilig verrechnet
@@ -890,6 +897,126 @@ export async function scheduleBestandCancel(
     reportError(err, "billing-bestand-cancel", { customer: customerId });
     return { ok: false, error: "Die Kündigung konnte nicht gespeichert werden." };
   }
+}
+
+// ─── Modul „Empfehlungen & Bewertungen“ ───────────────────────────────────
+// Testphase ohne Abo-Position; danach (bzw. bei Buchung ohne Testphase) kommt die
+// Position „Empfehlungen & Bewertungen“ ins Abo, tagesgenau anteilig (AGB: Selbstbuchung).
+// Kündigung zum Ende des Abrechnungszeitraums (in der Testphase: zum Ende der Testphase).
+
+/**
+ * Position ins Abo aufnehmen (idempotent: steht sie schon mit dem Preis drin, passiert nichts).
+ * note = automatisch nicht möglich (ohne Stripe, Abo noch nicht gestartet, Startpreis-Phase) →
+ * der Aufrufer legt eine Admin-Aufgabe „Preis anpassen“ an.
+ */
+export async function addEmpfehlungToSubscription(
+  customerId: string,
+  monthly: number,
+  opts: { proration?: Proration } = {},
+): Promise<AddOnResult> {
+  try {
+    const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { stripeCustomerId: true } });
+    if (!c) return { ok: false, error: "Kunde nicht gefunden." };
+    const stripe = stripeClient();
+    if (!stripe || !c.stripeCustomerId) return { ok: true, changed: false, note: "Ohne Stripe – bitte von Hand abrechnen." };
+    const ed = await editableSubscription(stripe, c.stripeCustomerId);
+    if ("note" in ed) return { ok: true, changed: false, note: ed.note };
+    await setItemQuantity(stripe, ed.sub, "empfehlung", monthly > 0 ? 1 : 0, monthly, opts.proration ?? "create_prorations");
+    return { ok: true, changed: true };
+  } catch (err) {
+    reportError(err, "billing-empfehlung", { customer: customerId });
+    return { ok: false, error: "Das Abo konnte nicht angepasst werden." };
+  }
+}
+
+/**
+ * Admin: Modul buchen (sofort berechnet), kostenlos freischalten oder sofort abbestellen.
+ * Buchen nutzt den vereinbarten Preis, sonst die Preisliste.
+ */
+export async function setEmpfehlungModule(customerId: string, mode: "book" | "free" | "cancel", opts: { actor?: AuditActor } = {}): Promise<AddOnResult> {
+  try {
+    const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { empfehlungMonthly: true, empfehlungSince: true } });
+    if (!c) return { ok: false, error: "Kunde nicht gefunden." };
+    const agreed = c.empfehlungMonthly != null ? Number(c.empfehlungMonthly) : 0;
+    const price = mode === "book" ? (agreed > 0 ? agreed : PRICE_LIST.empfehlungModuleMonthly) : 0;
+    const r = await addEmpfehlungToSubscription(customerId, price);
+    if (!r.ok) return r;
+    const since = c.empfehlungSince ?? new Date();
+    await prisma.customer.update({
+      where: { id: customerId },
+      data:
+        mode === "book"
+          ? { empfehlungEnabled: true, empfehlungMonthly: price, empfehlungFree: false, empfehlungCancelAt: null, empfehlungSince: since }
+          : mode === "free"
+            ? { empfehlungEnabled: true, empfehlungMonthly: null, empfehlungFree: true, empfehlungCancelAt: null, empfehlungSince: since }
+            : { empfehlungEnabled: false, empfehlungMonthly: null, empfehlungFree: false, empfehlungCancelAt: null },
+    });
+    await audit("billing.empfehlung", { entity: "Customer", entityId: customerId, customerId, details: { mode, price }, ...(opts.actor ? { actor: opts.actor } : {}) });
+    return { ok: true, changed: true, ...(r.note && mode === "book" ? { note: r.note } : {}) };
+  } catch (err) {
+    reportError(err, "billing-empfehlung-admin", { customer: customerId });
+    return { ok: false, error: "Das Modul konnte nicht umgestellt werden." };
+  }
+}
+
+/**
+ * Kündigung zum Ende des Abrechnungszeitraums (Selbstbedienung). In der Testphase endet das Modul
+ * mit der Testphase, ohne Berechnung. Sonst wird die Position ohne Gutschrift entfernt.
+ */
+export async function scheduleEmpfehlungCancel(
+  customerId: string,
+  now = new Date(),
+): Promise<{ ok: true; until: Date; note?: string } | { ok: false; error: string }> {
+  try {
+    const c = await prisma.customer.findUnique({
+      where: { id: customerId },
+      select: { stripeCustomerId: true, empfehlungEnabled: true, empfehlungMonthly: true, empfehlungTrialEndsAt: true, empfehlungCancelAt: true, empfehlungFree: true },
+    });
+    if (!c) return { ok: false, error: "Kunde nicht gefunden." };
+    if (!c.empfehlungEnabled) return { ok: false, error: "Das Modul ist nicht gebucht." };
+    if (c.empfehlungFree) return { ok: false, error: "Das Modul ist für Sie kostenlos freigeschaltet – bitte bei uns melden." };
+    if (c.empfehlungCancelAt) return { ok: true, until: c.empfehlungCancelAt };
+    let until: Date | null = null;
+    let note: string | undefined;
+    if (c.empfehlungMonthly == null && c.empfehlungTrialEndsAt && c.empfehlungTrialEndsAt > now) {
+      until = c.empfehlungTrialEndsAt; // Testphase: keine Position im Abo
+    } else {
+      const stripe = stripeClient();
+      if (stripe && c.stripeCustomerId) {
+        const ed = await editableSubscription(stripe, c.stripeCustomerId);
+        if ("note" in ed) {
+          note = ed.note;
+        } else {
+          const product = await productId(stripe, "empfehlung");
+          const item = ed.sub.items.data.find((i) => productOf(i) === product);
+          until = periodEndOf(ed.sub, item);
+          if (item) await stripe.subscriptionItems.del(item.id, { proration_behavior: "none" });
+        }
+      } else {
+        note = "Ohne Stripe – Abrechnung bitte von Hand beenden.";
+      }
+    }
+    if (!until) until = endOfBerlinMonth(now);
+    await prisma.customer.update({ where: { id: customerId }, data: { empfehlungCancelAt: until } });
+    await audit("billing.empfehlung", { entity: "Customer", entityId: customerId, customerId, details: { mode: "cancel_at_period_end", until: until.toISOString() } });
+    return { ok: true, until, ...(note ? { note } : {}) };
+  } catch (err) {
+    reportError(err, "billing-empfehlung-cancel", { customer: customerId });
+    return { ok: false, error: "Die Kündigung konnte nicht gespeichert werden." };
+  }
+}
+
+/** Kündigung zurücknehmen: Zugang bleibt, Position kommt (ohne anteilige Berechnung) zurück ins Abo. */
+export async function withdrawEmpfehlungCancel(customerId: string): Promise<AddOnResult> {
+  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { empfehlungCancelAt: true, empfehlungMonthly: true } });
+  if (!c?.empfehlungCancelAt) return { ok: true, changed: false };
+  if (c.empfehlungMonthly != null && Number(c.empfehlungMonthly) > 0) {
+    const r = await addEmpfehlungToSubscription(customerId, Number(c.empfehlungMonthly), { proration: "none" });
+    if (!r.ok) return r;
+  }
+  await prisma.customer.update({ where: { id: customerId }, data: { empfehlungCancelAt: null } });
+  await audit("billing.empfehlung", { entity: "Customer", entityId: customerId, customerId, details: { mode: "cancel_withdrawn" } });
+  return { ok: true, changed: true };
 }
 
 /** Zum Periodenende gekündigte Module abschalten (WhatsApp-Cron). */

@@ -1,4 +1,5 @@
 import { CalendarClock, ClipboardList, MessageCircle } from "lucide-react";
+import { EmpfehlungLeadCard } from "@/components/empfehlung/server";
 import { ButtonLink, Card, CardHeader } from "@/components/ui";
 import { formatPhone } from "@/lib/format";
 import { pipelinePhasesFor, WHATSAPP_STATUS_LABELS } from "@/lib/products";
@@ -240,6 +241,8 @@ export async function LeadDetailBody({
           <span className="font-semibold">Antworten</span>
         </a>
       ) : null}
+
+      <EmpfehlungLeadCard leadId={lead.id} team={team} readOnly={!team.userId} />
 
       {members.length > 1 ? (
         <LeadAssignee

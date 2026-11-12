@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Bell, CreditCard, FileText, Gift, Package, Percent, Users } from "lucide-react";
+import { Bell, CreditCard, FileText, Gift, Package, Percent, Puzzle, Star, UserPlus, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { Badge, Card, CardHeader, buttonClass } from "@/components/ui";
 import { loadCustomerProvision } from "@/lib/provision-server";
@@ -17,6 +17,8 @@ import { annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
 import { currentPause, todayBerlin } from "@/lib/pause";
 import { budgetState } from "@/lib/budget";
 import { BudgetCard } from "./budget-card";
+import { EmpfehlungBookButton, EmpfehlungCancelButton } from "@/components/empfehlung/client";
+import { moduleState, showNewBadge, trialAvailable } from "@/lib/empfehlung/shared";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Konto & Rechnungen | performancegrowth" };
@@ -38,11 +40,11 @@ const PORTAL_MSG: Record<string, string> = {
   fehler: "Das hat gerade nicht geklappt. Bitte versuchen Sie es gleich noch einmal.",
 };
 
-export default async function AccountPage({ searchParams }: { searchParams: Promise<{ portal?: string }> }) {
+export default async function AccountPage({ searchParams }: { searchParams: Promise<{ portal?: string; modul?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   if (ctx.teamRole === "advisor") redirect("/buyer");
-  const { portal } = await searchParams;
+  const { portal, modul } = await searchParams;
   const customer = await prisma.customer.findUnique({
     where: { id: ctx.customerId },
     select: {
@@ -60,6 +62,13 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       existingCustomersEnabled: true,
       bestandRequestedAt: true,
       bestandCancelAt: true,
+      paymentOverdueSince: true,
+      empfehlungEnabled: true,
+      empfehlungMonthly: true,
+      empfehlungTrialEndsAt: true,
+      empfehlungFree: true,
+      empfehlungCancelAt: true,
+      empfehlungSince: true,
       whatsAppAccount: { select: { id: true } },
       onboarding: { select: { offerId: true, questionnaire: true } },
     },
@@ -89,7 +98,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const seatMonthly = customer.seatMonthly != null ? Number(customer.seatMonthly) : null;
   const seatsFee = seatMonthly ? customer.seatsBilled * seatMonthly : 0;
   const bestandFee = customer.bestandMonthly != null ? Number(customer.bestandMonthly) : 0;
-  const monthlyTotal = monthly != null ? monthly + seatsFee + bestandFee : null;
+  const empfehlungFee = customer.empfehlungMonthly != null ? Number(customer.empfehlungMonthly) : 0;
+  const empfehlungState = moduleState(customer);
+  const monthlyTotal = monthly != null ? monthly + seatsFee + bestandFee + empfehlungFee : null;
   const annual = customer.billingInterval === "year";
   const yearly = annual && monthlyTotal != null ? monthlyTotal * annualMultiplier(offer?.annualFreeMonths ?? PRICE_LIST.annualFreeMonths) : null;
   const pauseText = annual
@@ -109,7 +120,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             <dd>{service ? "Leadgenerierung (Betreuung)" : "Leadgenerierung + Software"}</dd>
             {monthly != null ? (
               <>
-                <dt className="text-[color:var(--muted)]">{seatsFee || bestandFee ? "Paket monatlich" : "Monatlich"}</dt>
+                <dt className="text-[color:var(--muted)]">{seatsFee || bestandFee || empfehlungFee ? "Paket monatlich" : "Monatlich"}</dt>
                 <dd>{eur(monthly)} netto zzgl. USt.</dd>
               </>
             ) : null}
@@ -134,7 +145,19 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 </dd>
               </>
             ) : null}
-            {monthlyTotal != null && (seatsFee || bestandFee) ? (
+            {empfehlungState !== "inactive" ? (
+              <>
+                <dt className="text-[color:var(--muted)]">Empfehlungen</dt>
+                <dd>
+                  {empfehlungState === "trial"
+                    ? `Testphase bis ${date(customer.empfehlungTrialEndsAt!)}, danach ${eur(PRICE_LIST.empfehlungModuleMonthly)} im Monat`
+                    : empfehlungFee
+                      ? `Modul gebucht, ${eur(empfehlungFee)} im Monat`
+                      : "Modul freigeschaltet"}
+                </dd>
+              </>
+            ) : null}
+            {monthlyTotal != null && (seatsFee || bestandFee || empfehlungFee) ? (
               <>
                 <dt className="text-[color:var(--muted)]">Monatlich gesamt</dt>
                 <dd className="font-semibold">{eur(monthlyTotal)} netto zzgl. USt.</dd>
@@ -204,25 +227,98 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
         {customer.whatsAppAccount && !PRICE_LIST.whatsappIncluded ? <WhatsAppFeesCard customerId={ctx.customerId} /> : null}
 
-        {!customer.existingCustomersEnabled && !service ? (
+        {!service ? (
           <Card>
-            <CardHeader title="Bestandskunden-Modul" icon={Users} />
-            <div className="space-y-3 px-5 pb-5 pt-4 text-sm" data-konto-bestand>
-              <p>
-                Kundenliste hochladen, Lücken und Anlässe erkennen, passende Kunden per WhatsApp anschreiben. {eur(PRICE_LIST.bestandModuleMonthly)} netto
-                im Monat, WhatsApp-Gebühren für bis zu {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat inklusive.
-              </p>
-              <ModuleBookButton
-                monthlyNet={PRICE_LIST.bestandModuleMonthly}
-                includedMessages={PRICE_LIST.bestandIncludedMessages}
-                canBook={bestandCheck?.ok ?? false}
-                reason={bestandCheck && !bestandCheck.ok ? bestandCheck.reason : null}
-                requestedAt={customer.bestandRequestedAt?.toISOString() ?? null}
-                readOnly={ctx.preview}
-                annual={annual}
-                freeMonths={PRICE_LIST.annualFreeMonths}
-              />
-            </div>
+            <div id="zusatzmodule" className="scroll-mt-20" />
+            <CardHeader title="Zusatzmodule" icon={Puzzle} />
+            <ul className="divide-y divide-[color:var(--border)] text-sm" data-konto-module>
+              <li className="space-y-3 px-5 py-4" data-konto-empfehlung>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Star className="h-4 w-4 text-amber-500" />
+                  <span className="font-semibold">Empfehlungen &amp; Bewertungen</span>
+                  {showNewBadge() && empfehlungState === "inactive" ? <Badge tone="success">Neu</Badge> : null}
+                  <span className="ml-auto text-[color:var(--muted)]">{eur(PRICE_LIST.empfehlungModuleMonthly)} netto/Monat</span>
+                </div>
+                <p className="text-[color:var(--muted)]">
+                  Nach jedem Abschluss automatisch um eine Google-Bewertung und später um eine Empfehlung bitten – Kritik landet zuerst bei Ihnen. Mit
+                  Auswertung: Empfehlungs-Leads, Abschlüsse und Provision.
+                </p>
+                {empfehlungState === "inactive" ? (
+                  <EmpfehlungBookButton
+                    trial={trialAvailable(customer)}
+                    annual={annual}
+                    monthly={PRICE_LIST.empfehlungModuleMonthly}
+                    readOnly={ctx.preview}
+                    autoOpen={modul === "empfehlung"}
+                    reason={customer.paymentOverdueSince ? "Es ist noch eine Rechnung offen. Bitte melden Sie sich kurz bei uns." : null}
+                  />
+                ) : (
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Badge tone="success">
+                      {empfehlungState === "trial" ? `Testphase bis ${date(customer.empfehlungTrialEndsAt!)}` : empfehlungState === "free" ? "Inklusive" : "Aktiv"}
+                    </Badge>
+                    <Link href="/buyer/empfehlungen" className={buttonClass("primary", "sm")}>
+                      Einstellungen &amp; Auswertung
+                    </Link>
+                    {empfehlungState !== "free" ? (
+                      <EmpfehlungCancelButton
+                        cancelAt={customer.empfehlungCancelAt?.toISOString() ?? null}
+                        trialEndsAt={customer.empfehlungMonthly == null ? (customer.empfehlungTrialEndsAt?.toISOString() ?? null) : null}
+                        readOnly={ctx.preview}
+                        annual={annual}
+                      />
+                    ) : null}
+                  </div>
+                )}
+              </li>
+              <li className="space-y-3 px-5 py-4" data-konto-bestand>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Users className="h-4 w-4 text-[color:var(--brand)]" />
+                  <span className="font-semibold">Bestandskunden-Modul</span>
+                  <span className="ml-auto text-[color:var(--muted)]">{eur(PRICE_LIST.bestandModuleMonthly)} netto/Monat</span>
+                </div>
+                <p className="text-[color:var(--muted)]">
+                  Kundenliste hochladen, Lücken und Anlässe erkennen, passende Kunden per WhatsApp anschreiben. WhatsApp-Gebühren für bis zu{" "}
+                  {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat inklusive.
+                </p>
+                {customer.existingCustomersEnabled ? (
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Badge tone="success">{bestandFee ? "Aktiv" : "Inklusive"}</Badge>
+                    <Link href="/buyer/bestand" className={buttonClass("primary", "sm")}>
+                      Zum Bestand
+                    </Link>
+                  </div>
+                ) : (
+                  <ModuleBookButton
+                    monthlyNet={PRICE_LIST.bestandModuleMonthly}
+                    includedMessages={PRICE_LIST.bestandIncludedMessages}
+                    canBook={bestandCheck?.ok ?? false}
+                    reason={bestandCheck && !bestandCheck.ok ? bestandCheck.reason : null}
+                    requestedAt={customer.bestandRequestedAt?.toISOString() ?? null}
+                    readOnly={ctx.preview}
+                    annual={annual}
+                    freeMonths={PRICE_LIST.annualFreeMonths}
+                  />
+                )}
+              </li>
+              {customer.seatsIncluded != null ? (
+                <li className="space-y-2 px-5 py-4" data-konto-seats-module>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <UserPlus className="h-4 w-4 text-[color:var(--brand)]" />
+                    <span className="font-semibold">Weitere Berater-Logins</span>
+                    <span className="ml-auto text-[color:var(--muted)]">
+                      {seatMonthly ? `${eur(seatMonthly)} netto/Monat je Login` : "nach Sondervereinbarung"}
+                    </span>
+                  </div>
+                  <p className="text-[color:var(--muted)]">
+                    {customer.seatsIncluded} Logins inklusive. Weitere legen Sie selbst im Team an, sie werden tagesgenau berechnet.
+                  </p>
+                  <Link href="/buyer/team" className={buttonClass("secondary", "sm")}>
+                    Zum Team
+                  </Link>
+                </li>
+              ) : null}
+            </ul>
           </Card>
         ) : null}
 

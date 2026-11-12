@@ -86,6 +86,13 @@ export const AUDIT_LABEL: Record<string, string> = {
   "budget.fee": "Monatspreis nach Budgetänderung angepasst",
   "referral.reward": "Empfehlungsprämie gutgeschrieben",
   "referral.settings": "Empfehlungsprogramm-Einstellungen geändert",
+  "billing.empfehlung": "Modul Empfehlungen & Bewertungen geändert",
+  "empfehlung.book": "Modul Empfehlungen & Bewertungen gebucht (Kunde)",
+  "empfehlung.cancel": "Modul Empfehlungen & Bewertungen gekündigt (Kunde)",
+  "empfehlung.trial_end": "Testphase Empfehlungen & Bewertungen beendet",
+  "empfehlung.settings": "Einstellungen Empfehlungen & Bewertungen geändert",
+  "empfehlung.announce": "Ankündigung Zusatzmodul versendet",
+  "empfehlung.link_sent": "Empfehlungslink verschickt",
 };
 
 export async function audit(

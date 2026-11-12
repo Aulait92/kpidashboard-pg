@@ -113,7 +113,7 @@ export async function submitTemplatesForCustomer(customerId: string, now = new D
     prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { id: true, status: true, apiKeyEnc: true } }),
     prisma.customer.findUnique({
       where: { id: customerId },
-      select: { id: true, name: true, existingCustomersEnabled: true, messageTemplates: { select: { name: true, purpose: true, status: true, auto: true } } },
+      select: { id: true, name: true, existingCustomersEnabled: true, empfehlungEnabled: true, messageTemplates: { select: { name: true, purpose: true, status: true, auto: true } } },
     }),
   ]);
   if (!customer) return { ...summary, ok: false, error: "Kunde nicht gefunden" };
@@ -135,7 +135,7 @@ export async function submitTemplatesForCustomer(customerId: string, now = new D
   }
 
   const advisor = advisorDisplayName(customer.name);
-  const purposes = purposesFor({ bestand: customer.existingCustomersEnabled });
+  const purposes = purposesFor({ bestand: customer.existingCustomersEnabled, empfehlung: customer.empfehlungEnabled });
   for (const purpose of purposes) {
     const manual = customer.messageTemplates.find((t) => !t.auto && t.purpose === purpose && (t.status === "approved" || t.status === "pending"));
     if (manual) {
@@ -197,7 +197,7 @@ export async function syncTemplates(now = new Date(), opts: { force?: boolean; l
     select: {
       customerId: true,
       templatesCheckedAt: true,
-      customer: { select: { existingCustomersEnabled: true, messageTemplates: { select: { name: true, purpose: true, status: true, auto: true } } } },
+      customer: { select: { existingCustomersEnabled: true, empfehlungEnabled: true, messageTemplates: { select: { name: true, purpose: true, status: true, auto: true } } } },
     },
     orderBy: { templatesCheckedAt: { sort: "asc", nulls: "first" } },
     take: opts.limit ?? 10,
@@ -207,7 +207,7 @@ export async function syncTemplates(now = new Date(), opts: { force?: boolean; l
   let rejected = 0;
   for (const acc of accounts) {
     const tpls = acc.customer.messageTemplates;
-    const purposes = purposesFor({ bestand: acc.customer.existingCustomersEnabled });
+    const purposes = purposesFor({ bestand: acc.customer.existingCustomersEnabled, empfehlung: acc.customer.empfehlungEnabled });
     const settled = purposes.every((p) => tpls.some((t) => t.purpose === p && (t.status === "approved" || (!t.auto && t.status === "pending"))));
     const recent = acc.templatesCheckedAt && now.getTime() - acc.templatesCheckedAt.getTime() < CHECK_INTERVAL_IDLE_MS;
     if (!opts.force && settled && recent) continue;

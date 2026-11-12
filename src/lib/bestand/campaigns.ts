@@ -7,7 +7,7 @@ import { reportError } from "@/lib/monitoring";
 import { sendToAdmins } from "@/lib/push";
 import { bestandQuota, QUOTA_REACHED } from "@/lib/bestand/quota";
 
-export type Occasion = "cross_sell" | "review" | "birthday" | "renewal";
+export type Occasion = "cross_sell" | "review" | "birthday" | "renewal" | "empfehlung";
 export type Segment = { has?: string[]; lacks?: string[]; birthdayDays?: number; renewalDays?: number };
 
 export const OCCASIONS: Record<Occasion, { label: string; hint: string; purpose: string }> = {
@@ -15,7 +15,14 @@ export const OCCASIONS: Record<Occasion, { label: string; hint: string; purpose:
   review: { label: "Jahresgespräch", hint: "Vertragscheck: Passt noch alles?", purpose: "campaign_review" },
   birthday: { label: "Geburtstag", hint: "Gruß zum Geburtstag mit Gesprächsangebot", purpose: "campaign_birthday" },
   renewal: { label: "Ablauf / Wechsel", hint: "Verträge mit Ablauf oder Wechseltermin in Kürze", purpose: "campaign_renewal" },
+  // Nur mit Modul „Empfehlungen & Bewertungen“: persönlicher Empfehlungslink je Kunde ({empfehlungslink})
+  empfehlung: { label: "Jährliche Empfehlungsbitte", hint: "Zufriedene Bestandskunden um eine Empfehlung bitten – mit persönlichem Link", purpose: "referral_request" },
 };
+
+/** Anlässe, die das Modul „Empfehlungen & Bewertungen“ brauchen. */
+export const NEEDS_EMPFEHLUNG: readonly Occasion[] = ["empfehlung"];
+/** Empfehlungsbitte höchstens einmal im Jahr je Kunde. */
+const REFERRAL_YEAR_DAYS = 365;
 
 /** Abstand zwischen zwei Kampagnen an denselben Kunden. */
 export const COOLDOWN_DAYS = 30;
@@ -50,6 +57,11 @@ export async function segmentIds(customerId: string, occasion: Occasion, seg: Se
   }
   if (occasion === "renewal") {
     where.nextRenewal = { gte: now, lte: new Date(now.getTime() + (seg.renewalDays ?? 60) * DAY) };
+  }
+  if (occasion === "empfehlung") {
+    where.AND = [
+      { OR: [{ referralLink: null }, { referralLink: { lastSentAt: null } }, { referralLink: { lastSentAt: { lt: new Date(now.getTime() - REFERRAL_YEAR_DAYS * DAY) } } }] },
+    ];
   }
   if (occasion === "birthday") {
     const rows = await prisma.existingCustomer.findMany({ where: { ...where, birthday: { not: null } }, select: { id: true, birthday: true } });
@@ -90,6 +102,11 @@ export async function opportunities(customerId: string, now = new Date()): Promi
   if (renewal) top.push({ occasion: "renewal", segment: { renewalDays: 60 }, topic: null, title: "Ablauf/Wechsel in den nächsten 60 Tagen", count: renewal });
   const review = (await segmentIds(customerId, "review", {}, now)).length;
   if (review) top.push({ occasion: "review", segment: {}, topic: null, title: "Jahresgespräch mit allen erreichbaren Kunden", count: review });
+  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { empfehlungEnabled: true } });
+  if (c?.empfehlungEnabled) {
+    const ref = (await segmentIds(customerId, "empfehlung", {}, now)).length;
+    if (ref) top.push({ occasion: "empfehlung", segment: {}, topic: null, title: "Jährliche Empfehlungsbitte", count: ref });
+  }
   return top;
 }
 
@@ -142,12 +159,17 @@ export async function runCampaigns(now = new Date()): Promise<{ sent: number; fa
   const { wd, hour } = berlinClock(now);
   if (wd === "Sun" || hour < 9 || hour >= 19) return { sent: 0, failed: 0 };
   const dayStart = new Date(now.getTime() - (hour * 3600_000 + now.getUTCMinutes() * 60_000));
-  const campaigns = await prisma.customerCampaign.findMany({ where: { status: "running" }, include: { customer: { select: { name: true, existingCustomersEnabled: true } } } });
+  const campaigns = await prisma.customerCampaign.findMany({ where: { status: "running" }, include: { customer: { select: { name: true, existingCustomersEnabled: true, empfehlungEnabled: true } } } });
   const { sendWhatsAppNotice, NoTemplateError } = await import("@/lib/whatsapp/templates");
   let sent = 0;
   let failed = 0;
   for (const c of campaigns) {
     if (!c.customer.existingCustomersEnabled) continue;
+    // Empfehlungsbitte ohne aktives Modul: pausieren (Link-Seite wäre nicht erreichbar)
+    if (NEEDS_EMPFEHLUNG.includes(c.occasion as Occasion) && !c.customer.empfehlungEnabled) {
+      await prisma.customerCampaign.update({ where: { id: c.id }, data: { status: "paused" } });
+      continue;
+    }
     const today = await prisma.campaignRecipient.count({ where: { campaignId: c.id, sentAt: { gte: dayStart } } });
     // Monatskontingent je Kunde: darüber wartet der Versand bis zum nächsten Monat
     const quota = await bestandQuota(c.customerId, now);
@@ -170,17 +192,20 @@ export async function runCampaigns(now = new Date()): Promise<{ sent: number; fa
       }
       const first = ec.firstName?.split(/\s+/)[0] || "";
       try {
+        // {empfehlungslink}: persönlicher Link je Bestandskunde
+        const referral = c.occasion === "empfehlung" ? await referralCampaignParts(c.customerId, ec.id, first) : null;
         const res = await sendWhatsAppNotice({
           customerId: c.customerId,
           to: ec.phone,
           purpose: OCCASIONS[c.occasion as Occasion].purpose as Parameters<typeof sendWhatsAppNotice>[0]["purpose"],
-          params: [first || "Hallo", c.topic ?? ""],
-          text: campaignText(c.occasion as Occasion, first, c.topic),
+          params: referral ? [first || "Hallo", referral.url] : [first || "Hallo", c.topic ?? ""],
+          text: referral ? referral.text : campaignText(c.occasion as Occasion, first, c.topic),
           contactName: [ec.firstName, ec.lastName].filter(Boolean).join(" ") || null,
         });
         await prisma.$transaction([
           prisma.campaignRecipient.update({ where: { id: r.id }, data: { status: "sent", sentAt: now, conversationId: res.conversationId } }),
           prisma.existingCustomer.update({ where: { id: ec.id }, data: { lastCampaignAt: now } }),
+          ...(referral ? [prisma.referralLink.update({ where: { id: referral.linkId }, data: { lastSentAt: now } })] : []),
         ]);
         sent++;
       } catch (err) {
@@ -198,6 +223,17 @@ export async function runCampaigns(now = new Date()): Promise<{ sent: number; fa
   return { sent, failed };
 }
 
+/** Empfehlungsbitte: persönlicher Link und Text (eigener Text des Vertreters, {empfehlungslink}). */
+async function referralCampaignParts(customerId: string, existingCustomerId: string, first: string) {
+  const { referralLinkOf, referralLinkFor, loadSettings } = await import("@/lib/empfehlung/requests");
+  const { renderText } = await import("@/lib/empfehlung/shared");
+  const { advisorDisplayName } = await import("@/lib/whatsapp/template-plan");
+  const link = await referralLinkOf({ customerId, existingCustomerId });
+  const url = referralLinkFor(link.token);
+  const [settings, cust] = await Promise.all([loadSettings(customerId), prisma.customer.findUnique({ where: { id: customerId }, select: { name: true } })]);
+  return { linkId: link.id, url, text: renderText(settings.texts.referral, { vorname: first, link: url, vertreter: advisorDisplayName(cust?.name ?? "") }) };
+}
+
 /** Text im offenen 24-h-Fenster (sonst gilt die freigegebene Vorlage). */
 export function campaignText(o: Occasion, first: string, topic: string | null): string {
   const hi = first ? `Hallo ${first}` : "Hallo";
@@ -208,6 +244,8 @@ export function campaignText(o: Occasion, first: string, topic: string | null): 
       return `${hi}, es ist Zeit für einen kurzen Check Ihrer Verträge: Passt noch alles zu Ihrer aktuellen Situation? Antworten Sie einfach hier, dann finden wir einen Termin.`;
     case "birthday":
       return `${hi}, herzlichen Glückwunsch zum Geburtstag! Alles Gute für das neue Lebensjahr.`;
+    case "empfehlung":
+      return `${hi}, kennen Sie jemanden, dem ich genauso weiterhelfen kann? Über Ihren persönlichen Link kann die Person ganz einfach selbst Kontakt mit mir aufnehmen.`;
     case "renewal":
       return `${hi}, bei Ihrem Vertrag ${topic ? `(${topic}) ` : ""}steht bald ein Termin an, zu dem man gut prüfen kann, ob Beitrag und Leistung noch passen. Soll ich mir das kurz für Sie anschauen?`;
   }

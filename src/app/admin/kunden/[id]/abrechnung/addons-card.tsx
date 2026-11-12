@@ -2,7 +2,8 @@ import { Card, CardHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
 import { bestandQuota } from "@/lib/bestand/quota";
-import { billingIntervalAction, bestandModuleAction, saveQuotaAction, saveSeatsAction, syncSeatsAction } from "./addon-actions";
+import { billingIntervalAction, bestandModuleAction, empfehlungModuleAction, saveQuotaAction, saveSeatsAction, syncSeatsAction } from "./addon-actions";
+import { moduleState } from "@/lib/empfehlung/shared";
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 const fmt = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
@@ -29,6 +30,12 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
         bestandCancelAt: true,
         bestandMessageQuota: true,
         existingCustomersEnabled: true,
+        empfehlungEnabled: true,
+        empfehlungMonthly: true,
+        empfehlungTrialEndsAt: true,
+        empfehlungFree: true,
+        empfehlungCancelAt: true,
+        empfehlungSince: true,
       },
     }),
     prisma.user.count({ where: { customerId, role: "BUYER" } }),
@@ -38,7 +45,9 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
   const seatPrice = c.seatMonthly != null ? Number(c.seatMonthly) : null;
   const bestandFee = c.bestandMonthly != null ? Number(c.bestandMonthly) : 0;
   const base = c.retainerMonthly != null ? Number(c.retainerMonthly) : null;
-  const total = base != null ? base + c.seatsBilled * (seatPrice ?? 0) + bestandFee : null;
+  const empfehlungFee = c.empfehlungMonthly != null ? Number(c.empfehlungMonthly) : 0;
+  const empfState = moduleState(c);
+  const total = base != null ? base + c.seatsBilled * (seatPrice ?? 0) + bestandFee + empfehlungFee : null;
   const annual = c.billingInterval === "year";
   const hidden = <input type="hidden" name="customerId" value={customerId} />;
 
@@ -124,6 +133,45 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
               Diesen Monat {quota.used} von {quota.limit} verschickt. Leer = Standard ({PRICE_LIST.bestandIncludedMessages}).
             </span>
           </form>
+        </section>
+
+        <section className="space-y-2 border-t border-[color:var(--border)] pt-4">
+          <h3 className="font-semibold">Empfehlungen &amp; Bewertungen</h3>
+          <p className="text-[color:var(--muted)]" data-admin-empfehlung-status>
+            {empfState === "inactive"
+              ? "Nicht gebucht"
+              : empfState === "trial"
+                ? `Testphase bis ${fmt(c.empfehlungTrialEndsAt!)}, danach ${eur(PRICE_LIST.empfehlungModuleMonthly)}/Monat automatisch`
+                : empfState === "free"
+                  ? "Frei (ohne Aufpreis)"
+                  : empfehlungFee
+                    ? `Gebucht, ${eur(empfehlungFee)}/Monat`
+                    : "Freigeschaltet ohne Preis"}
+            {c.empfehlungCancelAt ? ` · gekündigt zum ${fmt(c.empfehlungCancelAt)}` : ""}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {!empfehlungFee ? (
+              <form action={empfehlungModuleAction}>
+                {hidden}
+                <input type="hidden" name="mode" value="book" />
+                <button className={primary}>Buchen ({eur(PRICE_LIST.empfehlungModuleMonthly)}/Monat, sofort)</button>
+              </form>
+            ) : null}
+            {!c.empfehlungFree ? (
+              <form action={empfehlungModuleAction}>
+                {hidden}
+                <input type="hidden" name="mode" value="free" />
+                <button className={secondary}>Kostenlos freischalten</button>
+              </form>
+            ) : null}
+            {c.empfehlungEnabled ? (
+              <form action={empfehlungModuleAction}>
+                {hidden}
+                <input type="hidden" name="mode" value="cancel" />
+                <button className={secondary}>Abbestellen / sperren (sofort)</button>
+              </form>
+            ) : null}
+          </div>
         </section>
 
         <section className="space-y-2 border-t border-[color:var(--border)] pt-4">

@@ -71,6 +71,7 @@ export function OfferForm({
   const [seats, setSeats] = useState(String(PRICE_LIST.seatsIncluded));
   const [annual, setAnnual] = useState(false);
   const [bestand, setBestand] = useState(false);
+  const [empfehlung, setEmpfehlung] = useState(false);
   const [vermittler, setVermittler] = useState<OfferVermittler>("vertreter");
   const [customerChoice, setCustomerChoice] = useState(true);
 
@@ -85,6 +86,7 @@ export function OfferForm({
     seats: num(seats),
     annual: annual && term === "12m",
     bestandModule: bestand && pkg === "software",
+    empfehlungModule: empfehlung && pkg === "software",
   });
   const softwarePkg = pkg === "software";
   const annualPossible = term === "12m" && num(introFee) == null;
@@ -112,6 +114,7 @@ export function OfferForm({
         seats: softwarePkg ? num(seats) : null,
         annual: annual && annualPossible,
         bestandModule: bestand && softwarePkg,
+        empfehlungModule: empfehlung && softwarePkg,
         vermittlerTyp: vermittler,
         customerChoice,
       });
@@ -330,6 +333,24 @@ export function OfferForm({
                 </span>
               </span>
             </label>
+            <label className={`flex items-start gap-3 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${softwarePkg ? "border-[color:var(--border)] bg-white" : "border-[color:var(--border)] bg-[color:var(--surface-sunken)] text-[color:var(--muted)]"}`}>
+              <input
+                type="checkbox"
+                name="empfehlung"
+                className="mt-0.5 h-4 w-4"
+                disabled={!softwarePkg}
+                checked={empfehlung && softwarePkg}
+                onChange={(e) => setEmpfehlung(e.target.checked)}
+              />
+              <span>
+                <span className="block font-semibold">
+                  Empfehlungen &amp; Bewertungen · {eur(PRICE_LIST.empfehlungModuleMonthly)} / Monat
+                </span>
+                <span className="block text-xs text-[color:var(--muted)]">
+                  Nach jedem Abschluss automatisch um eine Google-Bewertung und später um eine Empfehlung bitten. Im Angebot ohne Testphase, ab Start berechnet.
+                </span>
+              </span>
+            </label>
           </div>
         </Card>
       </div>
@@ -356,7 +377,8 @@ export function OfferForm({
               />
             ) : null}
             {price.bestandFee > 0 ? <Sum k="Bestandskunden-Modul" v={eur(price.bestandFee)} sub="pro Monat" /> : null}
-            {price.monthlyTotal != null && (price.extraSeats > 0 || price.bestandFee > 0) ? (
+            {price.empfehlungFee > 0 ? <Sum k="Empfehlungen & Bewertungen" v={eur(price.empfehlungFee)} sub="pro Monat" /> : null}
+            {price.monthlyTotal != null && (price.extraSeats > 0 || price.bestandFee > 0 || price.empfehlungFee > 0) ? (
               <Sum k="Monatlich gesamt" v={eur(price.monthlyTotal)} sub={`${eur(withVat(price.monthlyTotal))} brutto`} />
             ) : null}
             {price.annualTotal != null ? (

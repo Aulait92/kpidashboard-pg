@@ -12,6 +12,7 @@ import { processDueBudgetFees } from "@/lib/budget";
 import { renewOrders } from "@/lib/ppl/orders";
 import { redistributeParked } from "@/lib/ppl/engine";
 import { runCampaigns } from "@/lib/bestand/campaigns";
+import { runEmpfehlungen } from "@/lib/empfehlung/requests";
 import { runSequences } from "@/lib/lead-sequences";
 import { reportError } from "@/lib/monitoring";
 import { runOnboardingCron } from "@/lib/onboarding-cron";
@@ -110,6 +111,11 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-campaigns");
     return null;
   });
+  // Empfehlungen & Bewertungen: Testphase/Abrechnung, Nachfrage nach Abschluss, Bitte um Empfehlung, Dank
+  const empfehlungen = await runEmpfehlungen(now).catch((e: unknown) => {
+    reportError(e, "cron-empfehlungen");
+    return null;
+  });
   // Nachfass-Abfolgen (WhatsApp Mo–Sa 9–19 Uhr, Anruf-Aufgaben jederzeit)
   const sequences = await runSequences(now).catch((e: unknown) => {
     reportError(e, "cron-sequences");
@@ -141,7 +147,7 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-templates");
     return null;
   });
-  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl, campaigns, sequences, whatsappConnect, templates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, whatsappConnect, templates, status });
 }
 
 export const GET = handle;

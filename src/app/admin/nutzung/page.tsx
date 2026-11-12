@@ -7,6 +7,7 @@ import { formatDateTime } from "@/lib/format";
 import { computeUsageReport, type CustomerUsage } from "@/lib/usage-report";
 import { loadHelpQuestions } from "@/lib/hilfe-report";
 import { loadSupportRequests } from "@/lib/support-server";
+import { ModuleCandidatesCard } from "./module-card";
 
 // Nutzung des Kunden-CRMs: Aktivität, genutzte Funktionen, Fehler, Feedback
 // und liegen gebliebene Aufgaben – Grundlage für UX-Verbesserungen.
@@ -33,10 +34,11 @@ const ACTION_LABELS: Record<string, string> = {
   "appointment.book_by_advisor": "Termin für Lead gebucht",
 };
 
-export default async function UsagePage({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
+export default async function UsagePage({ searchParams }: { searchParams: Promise<{ days?: string; ankuendigung?: string }> }) {
   const session = await getCurrentSession();
   if (!session || session.role !== "ADMIN") redirect("/login");
-  const days = Math.min(90, Math.max(1, Number((await searchParams).days ?? 14) || 14));
+  const sp = await searchParams;
+  const days = Math.min(90, Math.max(1, Number(sp.days ?? 14) || 14));
   const [report, help, support] = await Promise.all([computeUsageReport(days), loadHelpQuestions(days), loadSupportRequests(days)]);
   const helpDown = help.filter((h) => h.rating === "down").length;
 
@@ -62,6 +64,8 @@ export default async function UsagePage({ searchParams }: { searchParams: Promis
           ))}
         </div>
       </div>
+
+      <ModuleCandidatesCard message={sp.ankuendigung ?? null} />
 
       {support.length ? (
         <div id="hilfe-team">

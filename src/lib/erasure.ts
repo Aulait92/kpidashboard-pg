@@ -47,6 +47,8 @@ export async function eraseCustomerData(customerId: string, actor?: AuditActor) 
     prisma.advisorCalendar.deleteMany({ where: { user: { customerId } } }),
     // Abwesenheiten (Beschäftigtendaten des Kunden) gehen mit
     prisma.userAbsence.deleteMany({ where: { customerId } }),
+    prisma.reviewRequest.deleteMany({ where: { customerId } }),
+    prisma.referralLink.deleteMany({ where: { customerId } }),
   ]);
   const total = {
     leads: leads.length,
@@ -83,6 +85,9 @@ async function eraseLeads(customerId: string, leads: LeadRef[]): Promise<EraseRe
     prisma.consentOptIn.deleteMany({ where: { customerId, contactPhone: { in: phones } } }),
     prisma.unassignedLead.deleteMany({ where: { externalId: { in: externalIds } } }),
     prisma.leadSequence.deleteMany({ where: { leadId: { in: ids } } }),
+    // Empfehlungen & Bewertungen: Antworttext, Link und Verweis auf den Empfehlenden
+    prisma.reviewRequest.deleteMany({ where: { leadId: { in: ids } } }),
+    prisma.referralLink.deleteMany({ where: { leadId: { in: ids } } }),
     prisma.lead.updateMany({
       where: { id: { in: ids } },
       data: {
@@ -94,6 +99,7 @@ async function eraseLeads(customerId: string, leads: LeadRef[]): Promise<EraseRe
         followUpAt: null,
         followUpNote: null,
         callbackSnoozedUntil: null,
+        referralLinkId: null,
         erasedAt: new Date(),
       },
     }),
@@ -111,11 +117,12 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * Löschfristen für Hilfsdaten (täglich im Cron): nicht zugeordnete Leads
  * (Rohdaten aus Meta) nach 30 Tagen, wenn erledigt, sonst nach 90 Tagen;
  * Passwort-Links 7 Tage nach Ablauf; Abwesenheiten („Ich bin abwesend“, z. B. „krank“)
- * 1 Jahr nach ihrem Ende (bzw. vorzeitigen Ende).
+ * 1 Jahr nach ihrem Ende (bzw. vorzeitigen Ende); Nachfragen nach dem Abschluss
+ * (Antworttext, Klicks) 2 Jahre nach dem Anlegen.
  */
 export async function pruneTransient(now = new Date()) {
   const absenceCutoff = new Date(now.getTime() - 365 * DAY_MS);
-  const [unassigned, resetTokens, absences] = await prisma.$transaction([
+  const [unassigned, resetTokens, absences, reviewRequests] = await prisma.$transaction([
     prisma.unassignedLead.deleteMany({
       where: {
         OR: [
@@ -126,6 +133,7 @@ export async function pruneTransient(now = new Date()) {
     }),
     prisma.passwordResetToken.deleteMany({ where: { expiresAt: { lt: new Date(now.getTime() - 7 * DAY_MS) } } }),
     prisma.userAbsence.deleteMany({ where: { OR: [{ endsAt: { lt: absenceCutoff } }, { endedAt: { lt: absenceCutoff } }] } }),
+    prisma.reviewRequest.deleteMany({ where: { createdAt: { lt: new Date(now.getTime() - 730 * DAY_MS) } } }),
   ]);
-  return { unassigned: unassigned.count, resetTokens: resetTokens.count, absences: absences.count };
+  return { unassigned: unassigned.count, resetTokens: resetTokens.count, absences: absences.count, reviewRequests: reviewRequests.count };
 }
