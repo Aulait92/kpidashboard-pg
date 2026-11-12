@@ -16,7 +16,7 @@ describe("Adresse ergänzen: Quelle bestimmen", () => {
     expect(enrichmentSourceUrl({ email: "max.muster@allianz.de" })).toBe("https://vertretung.allianz.de/max.muster/");
     expect(enrichmentSourceUrl({ url: "https://www.allianz.de/", email: "max.muster@allianz.de" })).toBe("https://vertretung.allianz.de/max.muster/");
     expect(enrichmentSourceUrl({ email: "info@allianz.de" })).toBeNull();
-    expect(enrichmentSourceUrl({ email: "torsten.hosang@signal-iduna.net" })).toBe("https://www.signal-iduna.de/torsten.hosang/");
+    expect(enrichmentSourceUrl({ email: "torsten.hosang@signal-iduna.net" })).toBe("https://signal-iduna-agentur.de/torsten.hosang/");
     expect(enrichmentSourceUrl({ email: "volker.wenzel@axa.de" })).toBe("https://www.axa-betreuer.de/volker_wenzel");
     expect(enrichmentSourceUrl({ url: "https://www.allianz.de/versicherung/", email: null })).toBeNull();
     expect(enrichmentSourceUrl({ url: "https://vertretung.allianz.de/max.muster/" })).toBe("https://vertretung.allianz.de/max.muster/");

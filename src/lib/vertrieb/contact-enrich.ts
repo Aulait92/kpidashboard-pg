@@ -91,6 +91,11 @@ const isPersonName = (s: string) => {
 };
 
 /** Inhaber bzw. Geschäftsführer laut Impressum (nur echte Personennamen). */
+/** Impressum eines Versicherungskonzerns (nicht der Agentur): Vorstand oder Aufsichtsrat genannt. */
+export function isCorporateImprint(text: string): boolean {
+  return /aufsichtsrat|vorsitzende[rn]? des vorstand|^\s*vorstand\s*:?/im.test(text);
+}
+
 export function extractLeaders(text: string): string | null {
   const lines = text.split(/\n/).map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean);
   const found: string[] = [];
@@ -276,6 +281,9 @@ export function placeQuery(c: ContactForMatch): string | null {
   if (name && c.city) return `${name} ${c.city}`;
   if (person && c.zip) return [person, c.insurer, c.zip].filter(Boolean).join(" ");
   if (name && c.zip) return `${name} ${c.zip}`;
+  // Ausschließlichkeitsvertreter ohne Ort: Versicherer + Vor- und Nachname (Zuordnung nur bei vollem Namen + Versicherer im Eintrag)
+  const full = personName(c);
+  if (c.insurer && full) return `${c.insurer} ${full}`;
   return null; // ohne Ort/PLZ zu unsicher
 }
 
@@ -290,6 +298,15 @@ function hostOf(raw: string | null | undefined): string | null {
 const NAME_NOISE = new Set(
   "allianz axa ergo generali signal iduna devk ruv r v dvag zurich gothaer huk lvm provinzial versicherung versicherungen versicherungsbuero buero agentur generalvertretung hauptvertretung vertretung geschaeftsstelle gmbh ohg kg co und die der das fuer finanz finanzen service team makler".split(" "),
 );
+
+/** Vor- und Nachname: Felder, sonst E-Mail vorname.nachname@…, sonst zweiteiliger Kontaktname. */
+export function personName(c: Pick<ContactForMatch, "firstName" | "lastName" | "name" | "email">): string | null {
+  if (c.firstName?.trim() && c.lastName?.trim()) return `${c.firstName.trim()} ${c.lastName.trim()}`;
+  const parts = (c.email.split("@")[0] ?? "").toLowerCase().split(/[._-]/).filter(Boolean);
+  if (parts.length === 2 && parts.every((p) => /^[a-zäöüß]{2,}$/.test(p))) return parts.map((p) => p[0].toUpperCase() + p.slice(1)).join(" ");
+  const words = c.name.trim().split(/\s+/).filter((w) => !NAME_NOISE.has(norm(w)));
+  return words.length === 2 ? words.join(" ") : null;
+}
 
 /** Nachname: Feld lastName, sonst aus dem Kontaktnamen oder der E-Mail (vorname.nachname@…). */
 export function lastNameCandidates(c: Pick<ContactForMatch, "lastName" | "name" | "email">): string[] {
@@ -335,6 +352,14 @@ export function isPlausible(p: Place, c: ContactForMatch): boolean {
     };
     if (c.zip && (zip === c.zip.trim() || addr.split(" ").includes(c.zip.trim()))) return true;
     if (c.city && (cityOk(c.city, city) || (norm(c.city).length >= 4 && ` ${addr} `.includes(` ${norm(c.city)} `)))) return true;
+  }
+  // 4. Vor- und Nachname plus Versicherer im Namen des Eintrags (z. B. „SIGNAL IDUNA Versicherung Jens Sajdev“)
+  const full = personName(c);
+  // Nur ohne bekannten Ort – ist ein Ort hinterlegt, muss Regel 3 (Ort/PLZ) passen.
+  if (full && c.insurer && !c.city?.trim() && !c.zip?.trim()) {
+    const words = norm(full).split(" ");
+    const ins = norm(c.insurer).split(" ").filter((w) => w.length >= 3);
+    if (words.length >= 2 && words.every((w) => title.includes(w)) && ins.length && ins.every((w) => title.includes(w))) return true;
   }
   return false;
 }
@@ -406,6 +431,10 @@ async function webStep(c: Row, log: EnrichmentLog, force: boolean): Promise<{ st
     phone: address.phone ?? homeAddr?.phone ?? null,
     ...details,
   };
+  // Konzern-Impressum (Vorstand/Aufsichtsrat) statt Agentur: keine Adresse, kein Fax, keine „Inhaber“
+  if (isCorporateImprint(impressumText)) {
+    for (const k of ["street", "zip", "city", "phone", "fax", "leaderNames"]) found[k] = null;
+  }
   const fields: string[] = [];
   const cur = c as unknown as Record<string, unknown>;
   for (const [k, v] of Object.entries(found)) {

@@ -73,7 +73,8 @@ describe("Kontakt anreichern: Google-Treffer prüfen", () => {
   it("Suchtext: Agentur + Ort, sonst Person + Versicherer + PLZ", () => {
     expect(placeQuery(contact)).toBe("Agentur Muster Musterstadt");
     expect(placeQuery({ ...contact, city: null })).toBe("Max Muster Allianz 12345");
-    expect(placeQuery({ ...contact, city: null, zip: null })).toBeNull();
+    expect(placeQuery({ ...contact, city: null, zip: null })).toBe("Allianz Max Muster");
+    expect(placeQuery({ ...contact, city: null, zip: null, insurer: null })).toBeNull();
   });
 
   it("gleiche Website oder Telefon → plausibel", () => {
@@ -92,7 +93,20 @@ describe("Kontakt anreichern: Google-Treffer prüfen", () => {
     const ohneNachname = { ...contact, name: "Allianz Thomas Broza", lastName: null, firstName: null, email: "thomas.broza@allianz.de", zip: null, city: "Frankfurt" };
     expect(isPlausible(place({ displayName: { text: "Allianz Versicherung Thomas Broza - Generalvertretung" }, formattedAddress: "Hauptstr. 1, 60311 Frankfurt am Main", addressComponents: [{ longText: "Frankfurt am Main", types: ["locality"] }] }), ohneNachname)).toBe(true);
     expect(isPlausible(place({ displayName: { text: "Allianz Versicherung Thomas Broza" }, formattedAddress: "Ring 2, 80331 München", addressComponents: [{ longText: "München", types: ["locality"] }] }), ohneNachname)).toBe(false);
+    // Vor- + Nachname + Versicherer im Eintrag, ohne Ort am Kontakt (Fall Signal Iduna)
+    const si = { ...contact, name: "Jens Sajdev", firstName: null, lastName: null, email: "jens.sajdev@signal-iduna.net", zip: null, city: null, url: null, insurer: "Signal Iduna" };
+    expect(placeQuery(si)).toBe("Signal Iduna Jens Sajdev");
+    expect(isPlausible(place({ displayName: { text: "SIGNAL IDUNA Versicherung Jens Sajdev - Versicherungsagentur" }, formattedAddress: "Weidkamp 116, 45355 Essen" }), si)).toBe(true);
+    expect(isPlausible(place({ displayName: { text: "SIGNAL IDUNA Versicherung Jens Müller" } }), si)).toBe(false);
     // Konzern-Website allein reicht nicht
     expect(isPlausible(place({ websiteUri: "https://www.allianz.de/" }), { ...contact, url: "https://vertretung.allianz.de/max.muster/" })).toBe(false);
+  });
+});
+
+describe("Konzern-Impressum", () => {
+  it("erkennt Vorstand/Aufsichtsrat und übernimmt dann keine Agenturdaten", async () => {
+    const { isCorporateImprint } = await import("@/lib/vertrieb/contact-enrich");
+    expect(isCorporateImprint("Impressum\nVorstand: Claudia Pauls (Vorsitzende), Dr. Christian Schumacher\nVorsitzender des Aufsichtsrats: …")).toBe(true);
+    expect(isCorporateImprint("Impressum\nGeneralagentur Max Muster\nInhaber: Max Muster\nMusterweg 1, 12345 Musterstadt")).toBe(false);
   });
 });

@@ -38,13 +38,13 @@ const insurerRoot = (host: string) => INSURER.find((d) => host === d || host.end
  * Agentur-Seite eines Ausschließlichkeitsvertreters aus seiner Konzern-E-Mail
  * (vorname.nachname@…) – dort stehen Adresse und Telefon:
  *   Allianz        vertretung.allianz.de/vorname.nachname/
- *   SIGNAL IDUNA   signal-iduna.de/vorname.nachname/
+ *   SIGNAL IDUNA   signal-iduna-agentur.de/vorname.nachname/ (signal-iduna.de/… zeigt das Konzern-Impressum)
  *   AXA            axa-betreuer.de/vorname_nachname
  */
 export function agentPageFromEmail(local: string | undefined, domain: string | undefined): string | null {
   if (!local || !domain || !/^[a-z0-9äöüß][a-z0-9äöüß_-]*\.[a-z0-9äöüß._-]+$/.test(local)) return null;
   if (domain === "allianz.de") return `https://vertretung.allianz.de/${local}/`;
-  if (domain === "signal-iduna.net" || domain === "signal-iduna.de") return `https://www.signal-iduna.de/${local}/`;
+  if (domain === "signal-iduna.net" || domain === "signal-iduna.de") return `https://signal-iduna-agentur.de/${local}/`;
   if (domain === "axa.de" || domain === "axa-betreuer.de") return `https://www.axa-betreuer.de/${local.replace(/\./g, "_")}`;
   return null;
 }
