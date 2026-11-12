@@ -216,12 +216,11 @@ Seiten aus der Liste „Seiten“ unten.
   längstens 6 Monate. Voraussetzung: mindestens 20 €/Tag
   an den aktiven Tagen, mindestens 80 % der Termine wahrgenommen und Ergebnisse bei mindestens 80 % der Leads eingetragen.
   Als Vertrag zählt jeder Lead mit „Abschluss“. Wir können im Garantiefall eine Courtage-Abrechnung als Nachweis anfordern.
-- **Wo sehe ich meinen Stand?** Einen Garantie-Stand zeigt die App nicht an. Ist eine Garantie aus Ihrer Sicht
-  eingetreten, melden Sie sich bei uns – wir prüfen anhand Ihrer Zahlen.
+- **Garantie einfordern:** Einen eigenen Garantie-Stand zeigt die App nicht. Ist eine Garantie aus Ihrer Sicht eingetreten, melden Sie sich bei uns (KI-Hilfe → „Mit Mensch sprechen“ oder „Etwas unklar? Feedback“ im Profilmenü). Wir prüfen anhand Ihrer Zahlen in der App.
 - Die Tage zählen ab der ersten Auslieferung der Anzeigen. **Pausen (Urlaub, Krankheit) verlängern den Zeitraum** um die
   Pausentage, die Garantie verfällt dadurch nicht. Eine offene Rechnung zum Prüfzeitpunkt verhindert die Gutschrift, bis
   sie bezahlt ist.
-- Gutgeschrieben wird nach Prüfung durch uns auf der nächsten Rechnung.
+- Gutgeschrieben wird nach kurzer Prüfung durch uns auf der nächsten Rechnung.
 - Genaue Bedingungen stehen in den AGB (Abschnitt „Garantien“). Fragen dazu: bei performancegrowth melden.
 
 ## Team (nur Inhaber)
