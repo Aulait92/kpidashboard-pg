@@ -58,3 +58,18 @@ Auswertung komplett in der App, Airtable/Zapier nur noch als Übergang.
 - Adresse für Datenschutzfragen (Seite /sicherheit)
 - Danach in Railway (live-app und staging-app) eintragen, Support-Knopf ist bis dahin ausgeblendet.
 - Später optional: Support-Chats im eigenen WhatsApp-Posteingang (360dialog, Coexistence) mit Zuweisung Ole/Partner.
+
+---
+
+# Vorgemerkt (Ole, 12.11.2026): E-Mail-Versand direkt aus dem Vertriebs-CRM
+
+Ziel: Nicht mehr zwischen CRM und Mailprogramm wechseln.
+- Mails direkt aus der Kontaktakte schreiben und senden – über Oles eigenes Postfach (Antworten
+  landen im Thread und im CRM-Verlauf, Zustellbarkeit wie bisher). Vorher klären: welches Postfach
+  (Microsoft 365/Outlook oder Google), Absendername, Signatur.
+- Vorlagen mit Platzhaltern ({Vorname}, {Agentur}, {Ort}, Termin-Link, Angebots-Link, Rechner-Link),
+  je Situation (nach Erstgespräch, Unterlagen, Nachfassen, Angebot, Absage-Reaktivierung).
+- Produktivität: KI-Entwurf aus Verlauf/Notizen, Einfügen von Terminvorschlägen aus dem Kalender,
+  Senden später/geplant, Wiedervorlage „wenn keine Antwort in X Tagen“, Öffnungs-/Antwortstatus,
+  Massenversand an gefilterte Kontakte (gedrosselt, mit Abmeldelink), Anhänge (Präsentation/PDF).
+- Eingehende Antworten automatisch dem Kontakt zuordnen (wie Instantly/Calendly), Aufgabe bei Antwort.
