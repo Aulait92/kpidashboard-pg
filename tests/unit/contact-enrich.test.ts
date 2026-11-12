@@ -88,6 +88,10 @@ describe("Kontakt anreichern: Google-Treffer prüfen", () => {
     ];
     expect(isPlausible(place({ displayName: { text: "Allianz Versicherung Max Muster" }, addressComponents: comps }), contact)).toBe(true);
     expect(isPlausible(place({ displayName: { text: "Versicherungsbüro Andere" }, addressComponents: comps, websiteUri: "https://andere.test" }), contact)).toBe(false);
+    // Nachname aus Kontaktname bzw. E-Mail, Ort als Teil der Adresse
+    const ohneNachname = { ...contact, name: "Allianz Thomas Broza", lastName: null, firstName: null, email: "thomas.broza@allianz.de", zip: null, city: "Frankfurt" };
+    expect(isPlausible(place({ displayName: { text: "Allianz Versicherung Thomas Broza - Generalvertretung" }, formattedAddress: "Hauptstr. 1, 60311 Frankfurt am Main", addressComponents: [{ longText: "Frankfurt am Main", types: ["locality"] }] }), ohneNachname)).toBe(true);
+    expect(isPlausible(place({ displayName: { text: "Allianz Versicherung Thomas Broza" }, formattedAddress: "Ring 2, 80331 München", addressComponents: [{ longText: "München", types: ["locality"] }] }), ohneNachname)).toBe(false);
     // Konzern-Website allein reicht nicht
     expect(isPlausible(place({ websiteUri: "https://www.allianz.de/" }), { ...contact, url: "https://vertretung.allianz.de/max.muster/" })).toBe(false);
   });

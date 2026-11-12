@@ -113,7 +113,7 @@ describe("Vertriebskontakte maximal anreichern", () => {
     mockNet({});
     places = [{ ...alphaPlace, id: "place-fremd", displayName: { text: "Ganz andere Agentur" }, websiteUri: "https://andere-test.de" }];
     const r = await enrichContact(`${P}2`);
-    expect(r.google).toBe("unsure");
+    expect(r.google).toMatch(/^unsure/);
     const c = await prisma.salesContact.findUniqueOrThrow({ where: { id: `${P}2` } });
     expect(c.ratingValue).toBeNull();
     expect(c.googlePlaceId).toBeNull();

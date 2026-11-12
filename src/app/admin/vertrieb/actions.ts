@@ -488,8 +488,8 @@ export async function enrichAddressAction(fd: FormData) {
         ? "Google: Schlüssel fehlt"
         : r.google === "limit"
           ? "Google: Tageskontingent erreicht"
-          : r.google === "unsure"
-            ? "Google: Treffer nicht eindeutig, nichts übernommen"
+          : r.google.startsWith("unsure")
+            ? `Google: Treffer nicht eindeutig, nichts übernommen (bester Treffer: ${r.google.replace(/^unsure:\s*/, "") || "?"})`
             : r.google === "not-found"
               ? "Google: kein Eintrag gefunden"
               : r.google === "no-query"

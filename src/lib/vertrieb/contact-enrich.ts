@@ -287,6 +287,26 @@ function hostOf(raw: string | null | undefined): string | null {
   return u ? `${u.hostname.replace(/^www\./, "")}${u.pathname.replace(/\/+$/, "").toLowerCase()}` : null;
 }
 
+const NAME_NOISE = new Set(
+  "allianz axa ergo generali signal iduna devk ruv r v dvag zurich gothaer huk lvm provinzial versicherung versicherungen versicherungsbuero buero agentur generalvertretung hauptvertretung vertretung geschaeftsstelle gmbh ohg kg co und die der das fuer finanz finanzen service team makler".split(" "),
+);
+
+/** Nachname: Feld lastName, sonst aus dem Kontaktnamen oder der E-Mail (vorname.nachname@…). */
+export function lastNameCandidates(c: Pick<ContactForMatch, "lastName" | "name" | "email">): string[] {
+  const out = new Set<string>();
+  const add = (v: string | null | undefined) => {
+    const n = norm(v ?? "");
+    if (n.length >= 3 && !NAME_NOISE.has(n)) out.add(n);
+  };
+  add(c.lastName?.trim().split(/\s+/).pop());
+  const words = norm(c.name).split(" ").filter((w) => w && !NAME_NOISE.has(w));
+  if (words.length >= 2) add(words[words.length - 1]);
+  const local = (c.email.split("@")[0] ?? "").toLowerCase();
+  const parts = local.split(/[._-]/).filter(Boolean);
+  if (parts.length === 2 && /^[a-zäöüß]+$/.test(parts[1])) add(parts[1]);
+  return [...out];
+}
+
 /** Passt der Google-Treffer sicher zum Kontakt? Bei Zweifel nein. */
 export function isPlausible(p: Place, c: ContactForMatch): boolean {
   // 1. Website gleich (Domain bzw. Agentur-Unterseite)
@@ -303,11 +323,18 @@ export function isPlausible(p: Place, c: ContactForMatch): boolean {
   const b = digits(c.phone);
   if (a.length >= 7 && b.length >= 7 && a.slice(-7) === b.slice(-7)) return true;
   // 3. Nachname im Namen des Eintrags und Ort/PLZ passt
-  const last = c.lastName?.trim();
-  if (last && last.length >= 3 && norm(p.displayName?.text ?? "").split(" ").includes(norm(last))) {
+  const title = norm(p.displayName?.text ?? "").split(" ");
+  if (lastNameCandidates(c).some((l) => title.includes(l))) {
     const zip = component(p, "postal_code");
     const city = component(p, "locality");
-    if ((c.zip && zip && c.zip.trim() === zip) || (c.city && city && norm(c.city) === norm(city))) return true;
+    const addr = norm(p.formattedAddress ?? "");
+    const cityOk = (a: string | null | undefined, b: string | null | undefined) => {
+      const x = norm(a ?? "");
+      const y = norm(b ?? "");
+      return !!x && !!y && (x === y || x.startsWith(`${y} `) || y.startsWith(`${x} `));
+    };
+    if (c.zip && (zip === c.zip.trim() || addr.split(" ").includes(c.zip.trim()))) return true;
+    if (c.city && (cityOk(c.city, city) || (norm(c.city).length >= 4 && ` ${addr} `.includes(` ${norm(c.city)} `)))) return true;
   }
   return false;
 }
@@ -412,8 +439,10 @@ async function googleStep(c: Row, log: EnrichmentLog, force: boolean): Promise<{
   const p = places.find((x) => isPlausible(x, c));
   const data: Prisma.SalesContactUpdateInput = { googleCheckedAt: new Date() };
   if (!p) {
-    log.google = { at: new Date().toISOString(), placeId: null, fields: [], status: places.length ? "unsicher" : "nicht gefunden" };
-    return { status: places.length ? "unsure" : "not-found", data, fields: [], closed: false };
+    const top = places[0];
+    const cand = top ? `${top.displayName?.text ?? "?"}${top.formattedAddress ? `, ${top.formattedAddress}` : ""}`.slice(0, 160) : "";
+    log.google = { at: new Date().toISOString(), placeId: null, fields: [], status: places.length ? `unsicher: ${cand}` : "nicht gefunden" };
+    return { status: places.length ? `unsure: ${cand}` : "not-found", data, fields: [], closed: false };
   }
   const fields: string[] = [];
   const set = (k: string, v: unknown, onlyIfEmpty: boolean) => {
