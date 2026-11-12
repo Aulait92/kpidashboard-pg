@@ -515,10 +515,12 @@ export async function addInvoiceItem(opts: {
   description: string;
   idempotencyKey: string;
   metadata?: Record<string, string>;
+  /** Stripe-Produkt der Position (Standard: WhatsApp-Gebühren). */
+  productKey?: ProductKey;
 }): Promise<string> {
   const stripe = stripeClient();
   if (!stripe) throw new Error("Stripe ist nicht eingerichtet.");
-  const [product, tax] = await Promise.all([productId(stripe, "whatsapp"), resolveTax(stripe)]);
+  const [product, tax] = await Promise.all([productId(stripe, opts.productKey ?? "whatsapp"), resolveTax(stripe)]);
   const item = await stripe.invoiceItems.create(
     {
       customer: opts.stripeCustomerId,
@@ -530,6 +532,28 @@ export async function addInvoiceItem(opts: {
     { idempotencyKey: opts.idempotencyKey },
   );
   return item.id;
+}
+
+/**
+ * Offenen Rechnungsposten wieder entfernen (z. B. Einrichtung nach abgelehnter Produktbuchung).
+ * "removed" = gelöscht oder schon weg; "invoiced" = steht schon auf einer festgeschriebenen
+ * Rechnung (dann Gutschrift von Hand).
+ */
+export async function removeInvoiceItem(itemId: string): Promise<"removed" | "invoiced"> {
+  const stripe = stripeClient();
+  if (!stripe) throw new Error("Stripe ist nicht eingerichtet.");
+  let item: Stripe.InvoiceItem;
+  try {
+    item = await stripe.invoiceItems.retrieve(itemId);
+  } catch (err) {
+    if ((err as { code?: string })?.code === "resource_missing") return "removed";
+    throw err;
+  }
+  if ((item as unknown as { deleted?: boolean }).deleted) return "removed";
+  const inv = item.invoice ? (typeof item.invoice === "string" ? await stripe.invoices.retrieve(item.invoice) : item.invoice) : null;
+  if (inv && inv.status !== "draft") return "invoiced";
+  await stripe.invoiceItems.del(itemId);
+  return "removed";
 }
 
 /**

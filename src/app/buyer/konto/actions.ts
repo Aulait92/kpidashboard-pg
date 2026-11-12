@@ -102,3 +102,49 @@ export async function changeBudgetAction(_prev: BudgetFormState, fd: FormData): 
     return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
   }
 }
+
+export type ProductFormState = { ok?: boolean; status?: "setup" | "requested"; message?: string; error?: string };
+
+/** Weiteres Produkt buchen (nur Inhaber, nicht in der Vorschau). */
+export async function bookProductAction(_prev: ProductFormState, fd: FormData): Promise<ProductFormState> {
+  try {
+    const ctx = await customerOnly();
+    const { bookProduct } = await import("@/lib/produkt-buchen");
+    const when = String(fd.get("when") ?? "asap");
+    const res = await bookProduct({
+      customerId: ctx.customerId,
+      userId: ctx.userId,
+      catalogKey: String(fd.get("catalogKey") ?? ""),
+      dailyBudget: Number(String(fd.get("daily") ?? "").replace(",", ".")),
+      startDate: when === "date" ? String(fd.get("date") ?? "") : null,
+      acknowledged: fd.get("ack") === "on",
+      actor: { id: ctx.userId, email: ctx.email, role: "BUYER" },
+    });
+    if (!res.ok) return { error: res.error };
+    revalidatePath("/buyer/konto");
+    return {
+      ok: true,
+      status: res.status,
+      message:
+        res.status === "requested"
+          ? "Danke, Ihre Anfrage ist bei uns. Wir melden uns mit einem individuellen Angebot."
+          : "Gebucht. Wir richten das Produkt jetzt ein und schicken Ihnen eine Bestätigung per E-Mail.",
+    };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
+  }
+}
+
+/** Produkt beenden anfragen (keine Selbstabschaltung, die Laufzeit prüfen wir). */
+export async function requestProductEndAction(_prev: ProductFormState, fd: FormData): Promise<ProductFormState> {
+  try {
+    const ctx = await customerOnly();
+    const { requestProductEnd } = await import("@/lib/produkt-buchen");
+    const res = await requestProductEnd(ctx.customerId, String(fd.get("product") ?? ""), ctx.userId, { id: ctx.userId, email: ctx.email, role: "BUYER" });
+    if (!res.ok) return { error: res.error };
+    revalidatePath("/buyer/konto");
+    return { ok: true, message: "Ihre Anfrage ist bei uns. Wir prüfen die Laufzeit und melden uns." };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
+  }
+}

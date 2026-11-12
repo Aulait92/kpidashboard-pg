@@ -115,7 +115,7 @@ function validate(current: BudgetLine[], next: BudgetLine[]): string | null {
   return null;
 }
 
-function effectiveFromOf(ymd: string | null, now: Date): Date | { error: string } {
+export function effectiveFromOf(ymd: string | null, now: Date): Date | { error: string } {
   if (!ymd) return now;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return { error: "Bitte ein gültiges Datum wählen." };
   const today = berlinYmd(now);
@@ -126,7 +126,7 @@ function effectiveFromOf(ymd: string | null, now: Date): Date | { error: string 
   return d;
 }
 
-async function customerInfo(customerId: string) {
+export async function customerInfo(customerId: string) {
   const c = await prisma.customer.findUniqueOrThrow({
     where: { id: customerId },
     select: {
@@ -148,11 +148,11 @@ const changesOf = (current: BudgetLine[], next: BudgetLine[]): Change[] => {
 };
 const changeList = (changes: Change[]) => changes.map((c) => `${c.product}: ${eurDay(c.from)} → ${eurDay(c.to)}`);
 
-async function adminTask(contactId: string | null, title: string, note: string | null, dueAt: Date) {
+export async function adminTask(contactId: string | null, title: string, note: string | null, dueAt: Date) {
   await prisma.salesTask.create({ data: { contactId, type: "SONSTIGES", title, note, dueAt } }).catch((err) => reportError(err, "budget-task"));
 }
 
-async function notifyAdmins(title: string, body: string, contactId: string | null, customerId: string) {
+export async function notifyAdmins(title: string, body: string, contactId: string | null, customerId: string) {
   const { sendToAdmins } = await import("@/lib/push");
   await sendToAdmins({ title, body, url: contactId ? `/admin/vertrieb/kontakte/${contactId}` : `/admin/kunden/${customerId}/abrechnung` }).catch(() => {});
 }
@@ -266,7 +266,7 @@ function reasonLabel(r: string | null | undefined): string {
   return r === "annual" ? "Jahreszahler" : r === "no_offer_price" ? "kein Listenpreis hinterlegt" : r === "individual_budget" ? "über Listenpreis" : "abweichender Preis";
 }
 
-async function mailCustomer(info: { contactId: string | null; contactName: string | null; to: string[] }, m: { subject: string; paragraphs: string[]; list?: string[] }) {
+export async function mailCustomer(info: { contactId: string | null; contactName: string | null; to: string[] }, m: { subject: string; paragraphs: string[]; list?: string[] }) {
   if (!info.to.length) return;
   // Mail darf die Änderung nie scheitern lassen
   try {

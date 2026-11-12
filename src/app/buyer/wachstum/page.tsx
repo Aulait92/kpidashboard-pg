@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BarChart3, ChevronRight, Megaphone, ShoppingCart, TrendingUp, Users } from "lucide-react";
+import { BarChart3, ChevronRight, Layers, Megaphone, ShoppingCart, TrendingUp, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { EmpfehlungGrowthRow } from "@/components/empfehlung/server";
@@ -11,6 +11,7 @@ import { formatNumber } from "@/lib/format";
 import { computeKpis } from "@/lib/kpis";
 import { currentPause } from "@/lib/pause";
 import { prisma } from "@/lib/prisma";
+import { productOverview } from "@/lib/produkt-buchen";
 
 // Neue Oberfläche: „Wachstum“ bündelt alles, was nicht zum täglichen
 // Abarbeiten gehört – Zahlen, Leads bestellen, Bestand, Werbung & Pause.
@@ -30,6 +31,10 @@ export default async function WachstumPage() {
     prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { existingCustomersEnabled: true } }),
     currentPause(ctx.customerId),
   ]);
+  // Dezenter Hinweis „Weitere Sparte dazubuchen“, wenn es buchbare Produkte gibt
+  const bookable = await productOverview(ctx.customerId)
+    .then((o) => o.bookable)
+    .catch(() => []);
   const leadRow = forecast?.rows.find((r) => r.format === "number");
   const month = new Intl.DateTimeFormat("de-DE", { month: "long", timeZone: "Europe/Berlin" }).format(new Date());
 
@@ -83,6 +88,19 @@ export default async function WachstumPage() {
       <div className="mt-5">
         <EmpfehlungGrowthRow ctx={ctx} />
       </div>
+      {bookable.length ? (
+        <Link
+          href="/buyer/konto#produkte"
+          data-wachstum-produkt
+          className="mt-3 flex items-center gap-3 rounded-[var(--radius-md)] border border-dashed border-[color:var(--border)] px-4 py-3 text-[15px] text-[color:var(--muted)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--text)]"
+        >
+          <Layers className="h-4 w-4 shrink-0 text-[color:var(--brand)]" />
+          <span className="min-w-0 flex-1">
+            Weitere Sparte dazubuchen, z. B. {bookable.slice(0, 2).map((b) => b.name).join(" oder ")}
+          </span>
+          <ChevronRight className="h-4 w-4 shrink-0" />
+        </Link>
+      ) : null}
     </main>
   );
 }

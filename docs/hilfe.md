@@ -14,7 +14,7 @@ Seiten aus der Liste „Seiten“ unten.
 | /buyer/kanban | Pipeline | Alle Leads nach Phase, Karten verschieben |
 | /buyer/chats | Chats | WhatsApp-Gespräche mit Leads |
 | /buyer/zahlen | Zahlen | Kosten, Ertrag, Funnel, Hochrechnung |
-| /buyer/konto | Konto & Rechnungen | Vertrag, Werbebudget ändern, Rechnungen, Zahlungsart, Pause/Urlaub (nur Inhaber) |
+| /buyer/konto | Konto & Rechnungen | Vertrag, Werbebudget ändern, weiteres Produkt buchen, Rechnungen, Zahlungsart, Pause/Urlaub (nur Inhaber) |
 | /buyer/team | Team | Berater einladen, Leads verteilen (nur Inhaber) |
 | /buyer/kalender | Mein Kalender | „Ihr Kalender“ verbinden (ein Kalender je Person), andere Quelle für freie Zeiten (ICS/Allianz), Team-Übersicht für Inhaber, Lead-Zeiten, Zeit blockieren |
 | /buyer/einrichtung | Einrichtung | Fragebogen, Meta-Zugriff, Kalender, App aufs Handy, Hilfetermin |
@@ -300,6 +300,24 @@ Seiten aus der Liste „Seiten“ unten.
 - **Pause/Urlaub** selbst eintragen (Start, Ende, Grund): Anzeigen stoppen, reduzierte Gebühr; Pause jederzeit beenden.
   Bei jährlicher Vorauszahlung pausieren nur die Anzeigen, eine Gutschrift gibt es nicht.
 - Kündigung oder Vertragsfragen: bitte direkt bei uns melden.
+
+## Weiteres Produkt buchen (nur Inhaber)
+- **Wo:** Konto & Rechnungen → Karte „Produkte“ (auch über Wachstum → „Weitere Sparte dazubuchen“). Dort stehen die gebuchten
+  Produkte mit Tagesbudget und Status („Läuft“, „In Einrichtung“, „Anfrage offen“) und darunter die Sparten, die man dazubuchen kann
+  (z. B. Katzenversicherung; weitere wie Hund, Privatschutz, Unfall, Zahnzusatz oder Krankenhauszusatz, sobald wir sie freigeben).
+  „Bewährt“ heißt: mit Erfahrungswert (Leadpreis); „Testprodukt“: Erfahrungswert folgt, wir testen gemeinsam.
+- **Buchen:** „Produkt buchen“ → Tagesbudget wählen (Plus/Minus oder Regler), Start „so bald wie möglich“ oder ab Datum, Häkchen
+  setzen, „Jetzt kostenpflichtig buchen“. Die Vorschau zeigt: einmalig 990 € Einrichtung, monatlich 350 € mehr (netto, ab Start), das
+  neue Werbebudget gesamt pro Monat und – sehr deutlich – wenn dadurch eine andere Betreuungsstufe gilt (wie bei „Budget ändern“).
+  Über 10.000 € Werbebudget pro Monat wird daraus eine Anfrage; wir melden uns mit einem individuellen Angebot.
+- **Danach:** Status „In Einrichtung“. Wir richten Kampagne, Leadformular und die Fragen des WhatsApp-Assistenten ein (in der Regel
+  wenige Werktage) und geben Bescheid, sobald es läuft. Die Einrichtung steht auf der nächsten Rechnung; der neue Monatspreis gilt ab
+  dem Start (nächster Abrechnungsmonat). Erst ab dem Start zählen Budget und – nur bei der Katzenversicherung – die Garantien.
+- **Individuelle Konditionen** (abweichender Preis, Jahreszahler, Paket „Nur Betreuung“): Das Produkt wird trotzdem gebucht, den Preis
+  bestätigen wir gesondert.
+- **Beenden:** Nicht selbst abschaltbar. „Produkt beenden anfragen“ → wir prüfen die Vertragslaufzeit und melden uns mit dem
+  möglichen Enddatum; bis dahin läuft das Produkt weiter.
+- Das Budget eines laufenden Produkts ändert man wie gewohnt unter „Werbebudget“.
 
 ## Kollegen empfehlen (nur Inhaber)
 

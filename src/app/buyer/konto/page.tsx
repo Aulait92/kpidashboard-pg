@@ -17,6 +17,8 @@ import { annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
 import { currentPause, todayBerlin } from "@/lib/pause";
 import { budgetState } from "@/lib/budget";
 import { BudgetCard } from "./budget-card";
+import { ProductsCard } from "./produkte-card";
+import { productOverview } from "@/lib/produkt-buchen";
 import { EmpfehlungBookButton, EmpfehlungCancelButton } from "@/components/empfehlung/client";
 import { moduleState, showNewBadge, trialAvailable } from "@/lib/empfehlung/shared";
 
@@ -89,6 +91,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const bestandCheck = !customer.existingCustomersEnabled && customer.plan !== "service" ? await canSelfBookBestand(ctx.customerId) : null;
   const pause = await currentPause(ctx.customerId);
   const budget = await budgetState(ctx.customerId);
+  const products = await productOverview(ctx.customerId);
   const provision = await loadCustomerProvision(ctx.customerId);
   const today = todayBerlin();
   const startYmd = customer.retainerStart ? new Intl.DateTimeFormat("sv-SE", { timeZone: TZ }).format(customer.retainerStart) : today;
@@ -216,6 +219,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           today={today}
           readOnly={ctx.preview}
         />
+
+        <ProductsCard booked={products.booked} bookable={products.bookable} lines={products.lines} ctx={products.ctx} today={today} readOnly={ctx.preview} />
 
         <PauseCard
           pause={pause ? { status: pause.status, startsAt: pause.startsAt.toISOString(), endsAt: pause.endsAt?.toISOString() ?? null, kind: pause.kind } : null}

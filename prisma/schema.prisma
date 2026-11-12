@@ -205,6 +205,7 @@ model Customer {
   adSpend                  CustomerAdSpend[]
   budgets                  CustomerBudget[]
   budgetChanges            BudgetChange[]
+  productBookings          ProductBooking[]
   // „Kollegen empfehlen“ (B2B-Empfehlungsprogramm, lib/kollegen.ts)
   referralCode             ReferralCode?
   colleagueReferrals       ColleagueReferral[]
@@ -264,6 +265,62 @@ model BudgetChange {
 
   @@index([customerId, createdAt])
   @@index([stripeStatus, effectiveFrom])
+}
+
+// Weiteres Produkt (Sparte/Kampagne) selbst buchen (Kundenbereich → Konto → Produkte).
+// Das Budget zählt erst ab „Gestartet“ (Admin): dann entsteht der CustomerBudget-Eintrag.
+model ProductBooking {
+  id                String    @id @default(cuid())
+  customerId        String
+  customer          Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  userId            String?
+  // Katalog-Schlüssel (ProductCatalogItem.key bzw. Standardkatalog) und Produktname wie im Budget
+  catalogKey        String
+  product           String
+  dailyBudget       Decimal   @db.Decimal(10, 2)
+  // Startwunsch des Kunden (null = so bald wie möglich)
+  startWish         DateTime?
+  // requested = Anfrage (über individualFrom) | setup = in Einrichtung | live | rejected | ended
+  status            String    @default("setup")
+  monthlyBudgetFrom Int
+  monthlyBudgetTo   Int
+  // Monatspreis Betreuung + Software (netto) vorher/nachher; null = individuell
+  feeFrom           Decimal?  @db.Decimal(10, 2)
+  feeTo             Decimal?  @db.Decimal(10, 2)
+  setupFee          Decimal   @db.Decimal(10, 2)
+  tierChange        Boolean   @default(false)
+  acknowledged      Boolean   @default(false)
+  // list = Listenpreis, automatisch | individual = Preis von Hand (Aufgabe) | fixed = Paket ohne Staffel
+  pricing           String    @default("list")
+  reason            String?
+  // Einrichtungsgebühr: none | added | manual | removed | error
+  setupStatus       String    @default("none")
+  setupItemId       String?
+  // Monatspreis im Abo (beim Start): none | pending | done | manual | error | reverted
+  feeStatus         String    @default("none")
+  stripeNote        String?
+  note              String?
+  decidedBy         String?
+  startedAt         DateTime?
+  rejectedAt        DateTime?
+  endRequestedAt    DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([customerId, createdAt])
+  @@index([status])
+}
+
+// Katalog buchbarer Produkte (Admin → Einstellungen → Produkte). Ohne Zeile gilt der Standard
+// aus lib/produkt-buchen-shared.ts (DEFAULT_CATALOG).
+model ProductCatalogItem {
+  key       String   @id
+  name      String
+  benefit   String
+  proven    Boolean  @default(false)
+  enabled   Boolean  @default(false)
+  sort      Int      @default(0)
+  updatedAt DateTime @updatedAt
 }
 
 // Tagesspend aus dem EIGENEN Werbekonto eines Kunden (Retainer-Modell).
