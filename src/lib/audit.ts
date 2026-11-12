@@ -90,6 +90,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "produkt.start": "Gebuchtes Produkt gestartet",
   "produkt.end_request": "Produkt beenden angefragt (Kunde)",
   "produkt.catalog": "Produktkatalog geändert",
+  "produkt.anfrage": "Weiteres Produkt außerhalb des Katalogs angefragt (Kunde)",
   "referral.reward": "Empfehlungsprämie gutgeschrieben",
   "referral.settings": "Empfehlungsprogramm-Einstellungen geändert",
   "billing.empfehlung": "Modul Empfehlungen & Bewertungen geändert",

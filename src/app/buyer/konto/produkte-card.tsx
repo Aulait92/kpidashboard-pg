@@ -9,7 +9,7 @@ import { PRICE_LIST } from "@/lib/offer-pricing";
 import { BUDGET_MAX_DAILY, BUDGET_MIN_DAILY, BUDGET_STEP, LEAD_GUARANTEE_MIN_DAILY, type BudgetContext, type BudgetLine } from "@/lib/budget-shared";
 import { bookingSentence, previewBooking, STATUS_LABEL } from "@/lib/produkt-buchen-shared";
 import type { BookableProduct, BookedProduct } from "@/lib/produkt-buchen";
-import { bookProductAction, requestProductEndAction, type ProductFormState } from "./actions";
+import { bookProductAction, requestOtherProductAction, requestProductEndAction, type ProductFormState } from "./actions";
 
 const eur0 = (n: number) => `${Math.round(n).toLocaleString("de-DE")} €`;
 const eur2 = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
@@ -79,13 +79,40 @@ export function ProductsCard({ booked, bookable, lines, ctx, today, readOnly }: 
           </div>
         ) : null}
 
+        {!readOnly ? <OtherProductRequest /> : null}
+
         <p className="text-xs text-[color:var(--muted)]">
-          Je weiterem Produkt: einmalig {eur0(PRICE_LIST.extraProductSetup)} Einrichtung und {eur0(PRICE_LIST.extraProductMonthly)} im Monat zusätzlich (netto). Ihr Werbebudget ändern Sie
+          Je weiterem Produkt: Einrichtung kostenlos{PRICE_LIST.extraProductSetupSelfService > 0 ? ` (sonst ${eur0(PRICE_LIST.extraProductSetupSelfService)})` : ""}, {eur0(PRICE_LIST.extraProductMonthly)} im Monat zusätzlich (netto). Ihr Werbebudget ändern Sie
           oben unter <a href="#werbebudget" className="underline">Werbebudget</a>.
         </p>
       </div>
       {pick ? <BookSheet key={pick.key} product={pick} lines={lines} ctx={ctx} today={today} onClose={() => setPick(null)} /> : null}
     </Card>
+  );
+}
+
+/** „Weitere Produkte auf Anfrage“: kurzer Wunsch an uns (Aufgabe + Push für Ole). */
+function OtherProductRequest() {
+  const [state, action, pending] = useActionState<ProductFormState, FormData>(requestOtherProductAction, {});
+  const [open, setOpen] = useState(false);
+  if (state.ok) return <p className="flex items-center gap-1.5 text-sm text-emerald-700"><CheckCircle2 className="h-4 w-4" /> {state.message}</p>;
+  return (
+    <div className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--border)] p-4" data-produkt-anfrage>
+      {!open ? (
+        <button type="button" onClick={() => setOpen(true)} className="text-sm font-semibold text-[color:var(--brand)] hover:underline">
+          Weitere Produkte auf Anfrage – Wunsch senden
+        </button>
+      ) : (
+        <form action={action} className="space-y-2">
+          <label className="block text-sm font-semibold" htmlFor="produkt-wunsch">Welches Produkt interessiert Sie?</label>
+          <input id="produkt-wunsch" name="wish" required minLength={3} maxLength={300} placeholder="z. B. Berufsunfähigkeit, Kfz, Wohngebäude" className="h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-[15px]" />
+          {state.error ? <p className="text-sm text-rose-600">{state.error}</p> : null}
+          <button type="submit" disabled={pending} className="inline-flex h-10 items-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-4 text-sm font-semibold text-white disabled:opacity-50">
+            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Anfrage senden
+          </button>
+        </form>
+      )}
+    </div>
   );
 }
 
@@ -188,7 +215,7 @@ function BookSheet({ product, lines, ctx, today, onClose }: { product: BookableP
           <dl className="grid grid-cols-2 gap-3 text-[15px]" data-book-preview>
             <div className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] p-3">
               <dt className="text-xs text-[color:var(--muted)]">Einrichtung (einmalig)</dt>
-              <dd className="mt-1 font-semibold tabular-nums">{eur0(p.setupFee)} netto</dd>
+              <dd className="mt-1 font-semibold tabular-nums">{p.setupFee > 0 ? `${eur0(p.setupFee)} netto` : "kostenlos"}</dd>
             </div>
             <div className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] p-3">
               <dt className="text-xs text-[color:var(--muted)]">Monatlich ab Start</dt>
@@ -248,7 +275,7 @@ function BookSheet({ product, lines, ctx, today, onClose }: { product: BookableP
             <span>
               {p.overIndividual
                 ? "Ich möchte ein individuelles Angebot für dieses Produkt."
-                : `Ich buche ${product.name} mit einmalig ${eur0(p.setupFee)} Einrichtung und dem neuen Monatspreis (netto, zzgl. USt.).`}
+                : `Ich buche ${product.name}${p.setupFee > 0 ? ` mit einmalig ${eur0(p.setupFee)} Einrichtung und` : " (Einrichtung kostenlos) mit"} dem neuen Monatspreis (netto, zzgl. USt.).`}
             </span>
           </label>
 

@@ -11,7 +11,8 @@ const add = (daily: number) => ({ product: "Privatschutz", dailyBudget: daily })
 describe("Produkt buchen: Vorschau", () => {
   it("Listenpreis: Einrichtung + Aufschlag je weiterem Produkt, gleiche Stufe", () => {
     const p = previewBooking(tkv, add(30), ctx(), 12);
-    expect(p.setupFee).toBe(PRICE_LIST.extraProductSetup);
+    expect(p.setupFee).toBe(PRICE_LIST.extraProductSetupSelfService);
+    expect(p.setupFee).toBe(0); // Ole, 12.11.: Einrichtung bei Selbstbuchung kostenlos
     expect(p.extraMonthly).toBe(PRICE_LIST.extraProductMonthly);
     expect(p.monthlyFrom).toBe(900);
     expect(p.monthlyTo).toBe(1800);
@@ -45,8 +46,9 @@ describe("Produkt buchen: Vorschau", () => {
 });
 
 describe("Produkt buchen: Katalog", () => {
-  it("Standard: nur die Katze ist buchbar und bewährt", () => {
-    expect(DEFAULT_CATALOG.filter((c) => c.enabled).map((c) => c.key)).toEqual(["tkv-katze"]);
+  it("Standard: Ole-Liste buchbar, nur die Katze bewährt", () => {
+    expect(DEFAULT_CATALOG.filter((c) => c.enabled).map((c) => c.key)).toEqual(["tkv-katze", "tkv-hund", "tkv-pferd", "privatschutz", "sterbegeld", "kindersparplan"]);
+    expect(DEFAULT_CATALOG.filter((c) => c.proven).map((c) => c.key)).toEqual(["tkv-katze"]);
     expect(DEFAULT_CATALOG.find((c) => c.key === "tkv-katze")?.proven).toBe(true);
   });
 

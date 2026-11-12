@@ -148,3 +148,16 @@ export async function requestProductEndAction(_prev: ProductFormState, fd: FormD
     return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
   }
 }
+
+/** Weiteres Produkt auf Anfrage (nicht im Katalog). */
+export async function requestOtherProductAction(_prev: ProductFormState, fd: FormData): Promise<ProductFormState> {
+  try {
+    const ctx = await customerOnly();
+    const { requestOtherProduct } = await import("@/lib/produkt-buchen");
+    const res = await requestOtherProduct(ctx.customerId, String(fd.get("wish") ?? ""), { id: ctx.userId, email: ctx.email, role: "BUYER" });
+    if (!res.ok) return { error: res.error };
+    return { ok: true, message: "Danke! Wir prüfen Ihre Anfrage und melden uns." };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
+  }
+}

@@ -18,7 +18,7 @@ export default async function ProductCatalogPage() {
       </Link>
       <h1 className="mb-1 mt-1 text-2xl font-semibold tracking-tight">Produkte</h1>
       <p className="mb-6 text-sm text-[color:var(--muted)]">
-        Welche Sparten Kunden unter Konto & Rechnungen → Produkte selbst dazubuchen können. Preis je weiterem Produkt: {eur0(PRICE_LIST.extraProductSetup)} Einrichtung,
+        Welche Sparten Kunden unter Konto & Rechnungen → Produkte selbst dazubuchen können. Preis je weiterem Produkt: Einrichtung {PRICE_LIST.extraProductSetupSelfService > 0 ? eur0(PRICE_LIST.extraProductSetupSelfService) : "kostenlos"},
         {" "}
         {eur0(PRICE_LIST.extraProductMonthly)} im Monat (netto). „Bewährt“ zeigt den Erfahrungswert aus dem Rechner, Testprodukte zeigen „Erfahrungswert folgt“. Garantien gelten
         nur für die Katzenversicherung.

@@ -23,7 +23,8 @@ export type CatalogItem = {
   rechnerKey: string | null;
 };
 
-/** Standardkatalog (Ole, 12.11.2026): Katze bewährt; alles andere Test und aus, bis Ole freigibt. */
+/** Standardkatalog (Ole, 12.11.2026): buchbar Katze (bewährt), Hund, Pferd, Privatschutz, Sterbegeld,
+ *  Kindersparplan (Test); Unfall, Zahn- und Krankenhauszusatz nur auf Anfrage. */
 export const DEFAULT_CATALOG: CatalogItem[] = [
   {
     key: "tkv-katze",
@@ -40,9 +41,19 @@ export const DEFAULT_CATALOG: CatalogItem[] = [
     name: "Hundekrankenversicherung",
     benefit: "Hundehalter, die ihren Hund gegen hohe Tierarztkosten absichern möchten.",
     proven: false,
-    enabled: false,
+    enabled: true,
     sort: 20,
     match: "hund",
+    rechnerKey: null,
+  },
+  {
+    key: "tkv-pferd",
+    name: "Pferdeversicherung",
+    benefit: "Pferdehalter, die OP- und Krankheitskosten ihres Pferdes absichern möchten.",
+    proven: false,
+    enabled: true,
+    sort: 25,
+    match: "pferd",
     rechnerKey: null,
   },
   {
@@ -50,10 +61,30 @@ export const DEFAULT_CATALOG: CatalogItem[] = [
     name: "Privatschutz",
     benefit: "Haftpflicht, Hausrat und Rechtsschutz in einem Gespräch – ideal für Cross-Selling.",
     proven: false,
-    enabled: false,
+    enabled: true,
     sort: 30,
     match: "privatschutz",
     rechnerKey: "privatschutz",
+  },
+  {
+    key: "sterbegeld",
+    name: "Sterbegeldversicherung",
+    benefit: "Menschen, die ihre Angehörigen bei den Bestattungskosten entlasten möchten.",
+    proven: false,
+    enabled: true,
+    sort: 35,
+    match: "sterbegeld",
+    rechnerKey: null,
+  },
+  {
+    key: "kindersparplan",
+    name: "Kindersparplan",
+    benefit: "Eltern und Großeltern, die früh für die Zukunft ihrer Kinder vorsorgen möchten.",
+    proven: false,
+    enabled: true,
+    sort: 38,
+    match: "kinderspar|sparplan",
+    rechnerKey: null,
   },
   {
     key: "unfall",
@@ -141,7 +172,7 @@ export function previewBooking(current: BudgetLine[], add: BudgetLine, ctx: Budg
     // Ohne Listenpreis kein automatischer neuer Preis
     feeTo: bookingPricing === "list" ? base.feeTo : null,
     pricing: bookingPricing === "list" ? "list" : "individual",
-    setupFee: PRICE_LIST.extraProductSetup,
+    setupFee: PRICE_LIST.extraProductSetupSelfService,
     extraMonthly: PRICE_LIST.extraProductMonthly,
     bookingPricing,
     manualReason,

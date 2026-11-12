@@ -233,7 +233,7 @@ export async function bookProduct(input: BookInput, now = new Date()): Promise<B
     await adminTask(
       info.contactId,
       `Preis prüfen ${info.name}: ${item.name} dazugebucht`,
-      `${why}. Einrichtung ${eur(preview.setupFee)} netto${setup === "added" ? " (bereits auf der nächsten Rechnung)" : " bitte von Hand berechnen"}; Monatspreis bisher ${preview.feeFrom != null ? eur(preview.feeFrom) : "–"}, Listenpreis neu ${preview.tierTo ? eur(preview.tierTo.monthly + (ov.lines.length) * PRICE_LIST.extraProductMonthly) : "–"} netto. Bitte festlegen, bestätigen und in Stripe anpassen.`,
+      `${why}. ${preview.setupFee > 0 ? `Einrichtung ${eur(preview.setupFee)} netto${setup === "added" ? " (bereits auf der nächsten Rechnung)" : " bitte von Hand berechnen"}` : "Einrichtung kostenlos"}; Monatspreis bisher ${preview.feeFrom != null ? eur(preview.feeFrom) : "–"}, Listenpreis neu ${preview.tierTo ? eur(preview.tierTo.monthly + (ov.lines.length) * PRICE_LIST.extraProductMonthly) : "–"} netto. Bitte festlegen, bestätigen und in Stripe anpassen.`,
       now,
     );
   }
@@ -248,7 +248,7 @@ export async function bookProduct(input: BookInput, now = new Date()): Promise<B
   const paragraphs = [
     `vielen Dank für Ihre Buchung. Wir richten ${item.name} jetzt für Sie ein: Kampagne bei Meta, Leadformular und die Fragen Ihres WhatsApp-Assistenten. Gewünschter Start: ${wish}. Sobald alles läuft, bekommen Sie eine kurze Nachricht von uns.`,
     pricing === "list"
-      ? `Die Einrichtung (${eur(preview.setupFee)} netto, einmalig) erscheint auf Ihrer nächsten Rechnung. Ab dem Start gilt Ihr neuer Monatspreis von ${preview.feeTo != null ? eur(preview.feeTo) : "–"} netto (ab dem nächsten Abrechnungsmonat).`
+      ? `${preview.setupFee > 0 ? `Die Einrichtung (${eur(preview.setupFee)} netto, einmalig) erscheint auf Ihrer nächsten Rechnung.` : "Die Einrichtung ist für Sie kostenlos."} Ab dem Start gilt Ihr neuer Monatspreis von ${preview.feeTo != null ? eur(preview.feeTo) : "–"} netto (ab dem nächsten Abrechnungsmonat).`
       : "Da Ihre Konditionen individuell sind, bestätigen wir Ihnen Einrichtung und neuen Monatspreis gesondert.",
   ];
   if (sentence && pricing === "list" && preview.tierChange) paragraphs.push(sentence);
@@ -259,6 +259,7 @@ export async function bookProduct(input: BookInput, now = new Date()): Promise<B
 
 /** Einrichtungsgebühr als offene Position (idempotent je Buchung). */
 async function addSetupItem(bookingId: string, customerId: string, product: string, amount: number, auto: boolean): Promise<"added" | "manual" | "error"> {
+  if (amount <= 0) return "added"; // Einrichtung kostenlos: nichts zu berechnen
   const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { stripeCustomerId: true } });
   if (!auto || !billingEnabled() || !c?.stripeCustomerId) {
     await prisma.productBooking.update({ where: { id: bookingId }, data: { setupStatus: "manual", stripeNote: auto ? "Ohne Stripe – Einrichtung bitte von Hand berechnen." : null } });
@@ -443,6 +444,26 @@ export async function requestProductEnd(
   await mailCustomer(info, {
     subject: `Ihre Anfrage: ${product} beenden`,
     paragraphs: [`Ihre Anfrage, ${product} zu beenden, ist bei uns eingegangen. Wir prüfen Ihre Vertragslaufzeit und melden uns kurzfristig mit dem möglichen Enddatum. Bis dahin läuft das Produkt unverändert weiter.`],
+  });
+  return { ok: true };
+}
+
+/** Weiteres Produkt auf Anfrage (nicht im Katalog): Aufgabe + Push für Ole, Bestätigung an den Kunden. */
+export async function requestOtherProduct(
+  customerId: string,
+  wish: string,
+  actor?: AuditActor,
+  now = new Date(),
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const text = wish.trim().replace(/\s+/g, " ").slice(0, 300);
+  if (text.length < 3) return { ok: false, error: "Bitte kurz beschreiben, welches Produkt Sie interessiert." };
+  const info = await customerInfo(customerId);
+  await audit("produkt.anfrage", { entity: "Customer", entityId: customerId, customerId, details: { wish: text }, ...(actor ? { actor } : {}) });
+  await adminTask(info.contactId, `Produkt-Anfrage ${info.name}: ${text.slice(0, 80)}`, `Kunde wünscht ein weiteres Produkt, das nicht im Katalog ist: „${text}“. Bitte prüfen, ob wir es anbieten können, und den Kunden kontaktieren.`, now);
+  await notifyAdmins(`Produkt-Anfrage: ${info.name}`, text.slice(0, 120), info.contactId, customerId);
+  await mailCustomer(info, {
+    subject: "Ihre Anfrage zu einem weiteren Produkt",
+    paragraphs: [`vielen Dank für Ihre Anfrage („${text}“). Wir prüfen, ob und wie wir das für Sie umsetzen können, und melden uns kurzfristig bei Ihnen.`],
   });
   return { ok: true };
 }

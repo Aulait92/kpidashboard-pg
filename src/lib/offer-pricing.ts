@@ -9,6 +9,8 @@ export const PRICE_LIST = {
   setup12m: 990,
   extraProductSetup: 990,
   extraProductMonthly: 350,
+  /** Einrichtung, wenn ein Bestandskunde ein weiteres Produkt selbst bucht (Ole, 12.11.: entfällt). */
+  extraProductSetupSelfService: 0,
   softwareFee: 349,
   /** Paket „Nur Betreuung“ (ohne Software): fester Monatspreis, Pause 0 €. */
   serviceOnlyMonthly: 700,

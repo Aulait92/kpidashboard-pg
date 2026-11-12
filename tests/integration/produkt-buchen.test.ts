@@ -109,11 +109,14 @@ describe("Weiteres Produkt buchen", () => {
   beforeAll(async () => {
     requireTestDb();
     process.env.STRIPE_SECRET_KEY = "sk_test_mock";
+    // Die Stripe-Pfade der Einrichtung mit einer Gebühr testen (live ist sie 0 €, siehe Test unten)
+    (PRICE_LIST as { extraProductSetupSelfService: number }).extraProductSetupSelfService = PRICE_LIST.extraProductSetup;
     await saveCatalogItem("privatschutz", { enabled: true, proven: false, benefit: "Test" });
     await saveCatalogItem("unfall", { enabled: false, proven: false, benefit: "Test" });
   });
   afterAll(async () => {
     delete process.env.STRIPE_SECRET_KEY;
+    (PRICE_LIST as { extraProductSetupSelfService: number }).extraProductSetupSelfService = 0;
     await prisma.productCatalogItem.deleteMany({ where: { key: { in: ["privatschutz", "unfall"] } } });
     for (const id of customers) {
       const name = (await prisma.customer.findUnique({ where: { id }, select: { name: true } }))?.name;
@@ -146,6 +149,22 @@ describe("Weiteres Produkt buchen", () => {
     expect(keys).toContain("privatschutz");
     expect(keys).not.toContain("tkv-katze");
     expect(keys).not.toContain("unfall");
+  });
+
+  it("Einrichtung kostenlos (0 €): keine Stripe-Position, keine Aufgabe „Preis prüfen“", async () => {
+    const P = PRICE_LIST as { extraProductSetupSelfService: number };
+    const before = P.extraProductSetupSelfService;
+    P.extraProductSetupSelfService = 0;
+    try {
+      const { customerId } = track(await setup());
+      const r = await bookProduct({ customerId, userId: null, catalogKey: "privatschutz", dailyBudget: 30, startDate: null, acknowledged: true }, NOW);
+      expect(r).toMatchObject({ ok: true, status: "setup" });
+      expect(stripeState.calls.filter((c) => c.method === "invoiceItem.create")).toHaveLength(0);
+      const name = (await prisma.customer.findUniqueOrThrow({ where: { id: customerId } })).name;
+      expect(await prisma.salesTask.count({ where: { title: { startsWith: "Preis prüfen" }, AND: { title: { contains: name } } } })).toBe(0);
+    } finally {
+      P.extraProductSetupSelfService = before;
+    }
   });
 
   it("ausgeschaltetes Produkt ist nicht buchbar", async () => {

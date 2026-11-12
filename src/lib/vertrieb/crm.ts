@@ -59,7 +59,7 @@ export type Outcome = {
 };
 
 export const OUTCOMES: Outcome[] = [
-  { id: "nicht_erreicht", label: "Nicht erreicht (Mailbox etc.)", stage: "NICHT_ERREICHT", task: { title: "Erneut anrufen", type: "ANRUF", workdays: 2 } },
+  { id: "nicht_erreicht", label: "Nicht erreicht (Mailbox etc.)", stage: "NICHT_ERREICHT", task: { title: "Erneut anrufen", type: "ANRUF", workdays: 1 } },
   { id: "rueckruf", label: "Rückruf / Wiedervorlage", stage: "WIEDERVORLAGE", task: { title: "Nochmal anrufen", type: "ANRUF", workdays: 1 } },
   { id: "unterlagen", label: "Unterlagen gesendet (Einseiter / Präsentation)", stage: "INTERESSE", task: { title: "Nachfassen: Unterlagen gesendet", type: "NACHFASSEN", workdays: 3 } },
   { id: "unterlagen_senden", label: "Will Unterlagen – noch senden", stage: "INTERESSE", task: { title: "Unterlagen senden", type: "UNTERLAGEN", workdays: 0 } },
