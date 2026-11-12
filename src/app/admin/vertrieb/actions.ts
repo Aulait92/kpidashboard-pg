@@ -495,7 +495,7 @@ export async function enrichAddressAction(fd: FormData) {
               : r.google === "no-query"
                 ? "Google: Ort/PLZ fehlt für die Suche"
                 : r.google.startsWith("error")
-                  ? "Google: Fehler"
+                  ? `Google: Fehler (${r.google.replace(/^error:\s*/, "").slice(0, 180)})`
                   : "Google: nichts Neues";
     await prisma.salesActivity.create({ data: { contactId: id, type: "NOTIZ", note: `Anreichern: ${web}; ${google}.` } });
   }

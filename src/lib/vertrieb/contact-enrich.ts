@@ -454,7 +454,7 @@ export async function enrichContact(contactId: string, opts: { force?: boolean; 
   const g =
     opts.google === false
       ? { status: "skipped", data: {}, fields: [] as string[], closed: false }
-      : await googleStep(merged, log, force).catch((e: unknown) => ({ status: `error: ${e instanceof Error ? e.message : e}`, data: {} as Prisma.SalesContactUpdateInput, fields: [] as string[], closed: false }));
+      : await googleStep(merged, log, force).catch((e: unknown) => (console.error(`[anreichern] Google-Fehler: ${e instanceof Error ? e.message : e}`.slice(0, 400)), { status: `error: ${e instanceof Error ? e.message : e}`, data: {} as Prisma.SalesContactUpdateInput, fields: [] as string[], closed: false }));
 
   const fields = [...web.fields, ...g.fields];
   const data: Prisma.SalesContactUpdateInput = { ...web.data, ...g.data };
