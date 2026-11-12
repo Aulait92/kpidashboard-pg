@@ -126,6 +126,19 @@ async function handle(req: Request): Promise<Response> {
   after(() =>
     enrichPendingAddresses(Number(process.env.ADDRESS_ENRICH_PER_RUN ?? 20)).catch((e: unknown) => reportError(e, "cron-addresses")),
   );
+  // Instantly: Antworten alle 15 Minuten nachholen (Sicherheitsnetz, falls der Webhook nicht
+  // ankommt, z. B. falsche URL). Nur wo INSTANTLY_AUTO_SYNC=1 gesetzt ist (Produktion).
+  if (process.env.INSTANTLY_AUTO_SYNC === "1" && process.env.INSTANTLY_API_KEY && now.getUTCMinutes() % 15 < 5) {
+    after(async () => {
+      try {
+        const { ensureInterestTasks, syncReplies } = await import("@/lib/vertrieb/instantly");
+        await syncReplies(false);
+        await ensureInterestTasks();
+      } catch (e) {
+        reportError(e, "cron-instantly");
+      }
+    });
+  }
   // Bank & Karten: Kontoumsätze täglich abrufen, an Neuverbindung erinnern (nach der Antwort)
   after(() => runBankSync(now).catch((e: unknown) => reportError(e, "cron-bank")));
   // WhatsApp selbst verbunden: API-Keys für Channels nachholen, die beim Redirect noch eingerichtet wurden
