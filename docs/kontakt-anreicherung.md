@@ -16,14 +16,14 @@ Jeder neue Vertriebskontakt wird im Hintergrund angereichert, egal ob er aus Ins
 - Was: Bewertung und Anzahl, Öffnungszeiten, Link „Google Maps“ und Betriebsstatus. Adresse, Telefon und Website nur, wenn sie leer sind.
 - Suche: Agentur plus Ort, sonst Name plus Versicherer plus PLZ.
 - **Übernommen wird nur ein sicherer Treffer:** gleiche Website, gleiche Telefonnummer, oder Nachname im Google-Eintrag plus passende PLZ bzw. passender Ort. Im Zweifel bleibt der Kontakt unverändert.
-- Aufgefrischt wird alle 90 Tage.
+- Aufgefrischt wird alle 30 Tage.
 - Ist ein Eintrag laut Google „dauerhaft geschlossen“, steht ein Hinweis im Verlauf.
 
 **Regeln**
 - Es werden nur leere Felder gefüllt, Handeingaben nie überschrieben.
 - Ausnahme: Die Bewertung kommt immer frisch von Google. Öffnungszeiten ersetzt Google nur, wenn sie leer sind oder selbst automatisch ergänzt wurden.
 - Jede Ergänzung steht im Verlauf („Automatisch ergänzt: …“). Quelle und Zeitpunkt stehen im Feld `enrichment` und in der Kontaktakte unter Stammdaten → „Ergänzt“.
-- Der Knopf **„Jetzt anreichern“** in der Kontaktakte startet Website und Google sofort neu, auch vor Ablauf der 90 Tage. Das Tageslimit gilt dabei weiter.
+- Der Knopf **„Jetzt anreichern“** in der Kontaktakte startet Website und Google sofort neu, auch vor Ablauf der 30 Tage. Das Tageslimit gilt dabei weiter.
 
 ## Google-Schlüssel einrichten (Ole, einmalig, ca. 10 Minuten)
 
@@ -44,6 +44,6 @@ Jeder neue Vertriebskontakt wird im Hintergrund angereichert, egal ob er aus Ins
 
 ## Zu prüfen (Ole)
 
-- **Google-Nutzungsbedingungen:** Die Bedingungen der Google Maps Platform schränken das dauerhafte Speichern von Places-Inhalten ein. Die Place-ID ist ausgenommen. Wir speichern Bewertung und Öffnungszeiten und frischen sie alle 90 Tage auf.
+- **Google-Nutzungsbedingungen:** Die Bedingungen der Google Maps Platform schränken das dauerhafte Speichern von Places-Inhalten ein. Die Place-ID ist ausgenommen. Wir speichern Bewertung und Öffnungszeiten und frischen sie alle 30 Tage auf.
   - Bitte prüfen, ob das für unseren Zweck reicht. Andernfalls auf 30 Tage verkürzen (Konstante `GOOGLE_REFRESH_DAYS`) oder nur die Place-ID speichern und Bewertungen beim Öffnen der Kontaktakte frisch laden.
 - **Datenschutz:** Die Angaben sind öffentliche Geschäftsdaten von B2B-Kontakten, Rechtsgrundlage ist Art. 6 Abs. 1 f DSGVO. Google steht als Dienstleister im Verzeichnis in docs/datenschutz.md.

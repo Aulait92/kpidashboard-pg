@@ -12,7 +12,8 @@ import { fetchHtml, fetchImpressumText, htmlToText, normalizeUrl } from "@/lib/i
 import { enrichmentSourceUrl, extractAddress, needsAddress } from "@/lib/vertrieb/address-enrich";
 
 const DAY = 86400000;
-export const GOOGLE_REFRESH_DAYS = 90;
+// 30 Tage: Google Maps Platform erlaubt nur kurzfristiges Zwischenspeichern von Places-Inhalten
+export const GOOGLE_REFRESH_DAYS = 30;
 const WEB_RETRY_DAYS = 30;
 
 // ─── Website auswerten (reine Funktionen, testbar) ─────────────────────────
@@ -387,7 +388,7 @@ async function webStep(c: Row, log: EnrichmentLog, force: boolean): Promise<{ st
   return { status: fields.length ? "updated" : "nothing-new", data, fields };
 }
 
-/** Google-Stufe: alle 90 Tage, nur mit Schlüssel und Tageskontingent. */
+/** Google-Stufe: alle 30 Tage, nur mit Schlüssel und Tageskontingent. */
 async function googleStep(c: Row, log: EnrichmentLog, force: boolean): Promise<{ status: string; data: Prisma.SalesContactUpdateInput; fields: string[]; closed: boolean }> {
   const none = { data: {}, fields: [] as string[], closed: false };
   if (!placesKey()) return { status: "no-key", ...none };
