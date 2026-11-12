@@ -230,6 +230,11 @@ export async function reservePlacesCall(): Promise<boolean> {
   return rows.length > 0;
 }
 
+/** Fehlgeschlagene Abfrage (z. B. 403 ohne Abrechnung) nicht aufs Tageskontingent anrechnen. */
+export async function releasePlacesCall(): Promise<void> {
+  await prisma.$executeRaw`UPDATE "PlacesUsage" SET "count" = GREATEST("count" - 1, 0) WHERE "day" = ${today()}`;
+}
+
 export async function placesUsedToday(): Promise<number> {
   return (await prisma.placesUsage.findUnique({ where: { day: today() } }))?.count ?? 0;
 }
@@ -397,7 +402,13 @@ async function googleStep(c: Row, log: EnrichmentLog, force: boolean): Promise<{
   const query = placeQuery(c);
   if (!query) return { status: "no-query", data: { googleCheckedAt: new Date() }, fields: [], closed: false };
   if (!(await reservePlacesCall())) return { status: "limit", ...none };
-  const places = await searchPlace(query);
+  let places: Place[];
+  try {
+    places = await searchPlace(query);
+  } catch (e) {
+    await releasePlacesCall().catch(() => undefined);
+    throw e;
+  }
   const p = places.find((x) => isPlausible(x, c));
   const data: Prisma.SalesContactUpdateInput = { googleCheckedAt: new Date() };
   if (!p) {
