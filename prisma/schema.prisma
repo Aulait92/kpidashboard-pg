@@ -226,6 +226,7 @@ model Customer {
   monthlyReports           MonthlyReport[]
   campaignWishes           CampaignWish[]
   campaignHealth           CampaignHealth[]
+  mailTemplates            MailTemplate[]
 }
 
 // Tagesbudget je Produkt (Kundenbereich → Konto → Werbebudget). Ohne Eintrag gilt das
@@ -699,6 +700,7 @@ model User {
   adminDismissals    AdminDismissal[]
   assignedLeads      Lead[]           @relation("LeadAssignee")
   advisorCalendar    AdvisorCalendar?
+  mailConnection     MailConnection?
 
   customer       Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull)
   resetTokens    PasswordResetToken[]
@@ -2710,7 +2712,7 @@ model LeadHistory {
   leadId     String
   lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
   customerId String
-  // notiz | anruf | status | wiedervorlage | abschluss | police | dokument
+  // notiz | anruf | status | wiedervorlage | abschluss | police | dokument | email
   kind       String
   text       String
   userId     String?
@@ -2736,4 +2738,45 @@ model LeadFile {
   createdAt    DateTime @default(now())
 
   @@index([leadId])
+}
+
+// Eigenes Postfach eines Logins (Ole, 13.11.2026): E-Mails an Leads aus der App, gesendet über
+// Google (Gmail), Microsoft (Outlook/365) oder SMTP. Zugangsdaten verschlüsselt.
+model MailConnection {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customerId      String
+  // google | microsoft | smtp
+  provider        String
+  email           String
+  fromName        String?
+  accessTokenEnc  String?
+  refreshTokenEnc String?
+  expiresAt       DateTime?
+  smtpHost        String?
+  smtpPort        Int?
+  smtpUser        String?
+  smtpPassEnc     String?
+  // ok | error
+  status          String    @default("ok")
+  lastError       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([customerId])
+}
+
+// E-Mail-Vorlagen eines Kunden (Platzhalter {vorname}, {name}, {produkt}, {meinname}).
+model MailTemplate {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name       String
+  subject    String
+  body       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([customerId])
 }

@@ -19,6 +19,9 @@ import { LeadHeaderActions } from "@/components/lead-actions";
 import { AbschlussCard, LeadHistory } from "@/components/lead-history";
 import { loadLeadHistory } from "@/lib/lead-history";
 import { listLeadFiles } from "@/lib/lead-files";
+import { postfachOf } from "@/lib/mail/postfach";
+import { loadVorlagen } from "@/lib/mail/vorlagen";
+import { LeadMailComposer } from "@/components/lead-mail";
 import { LeadFiles } from "@/components/lead-files";
 import { loadCustomerProvision } from "@/lib/provision-server";
 import { estimatedProvision, ruleFor } from "@/lib/provision";
@@ -203,11 +206,14 @@ export async function LeadDetailBody({
   const storniert = !!lead.status?.toLowerCase().startsWith("storno");
   // Abschluss (Ole, 13.11.2026): Beitrag, geschätzte Provision und Police im Kontakt sehen
   const won = (lead.status ?? "").trim().toLowerCase() === "abschluss";
-  const [history, rates, files] = await Promise.all([
+  const [history, rates, files, postfach, me] = await Promise.all([
     loadLeadHistory(lead.id, team.userId),
     won ? loadCustomerProvision(customerId).then((p) => p.rates) : null,
     listLeadFiles(lead.id),
+    postfachOf(team.userId),
+    team.userId ? prisma.user.findUnique({ where: { id: team.userId }, select: { displayName: true } }) : null,
   ]);
+  const vorlagen = postfach ? await loadVorlagen(customerId) : [];
   let beitrag: string | null = null;
   let provision: string | null = null;
   if (won && rates) {
@@ -245,7 +251,19 @@ export async function LeadDetailBody({
         canErase={canErase}
         daysInPhase={Math.max(0, Math.floor((nowMs() - lead.statusChangedAt.getTime()) / 86_400_000))}
         askAfterCall={newUi}
+        mailReady={!!postfach}
       />
+      {postfach ? (
+        <LeadMailComposer
+          leadId={lead.id}
+          lead={{ name: lead.name, source: lead.source }}
+          to={lead.email}
+          from={postfach.email}
+          meinname={postfach.fromName ?? me?.displayName ?? ""}
+          vorlagen={vorlagen}
+          dateien={files.map((f) => ({ id: f.id, fileName: f.fileName, kind: f.kind }))}
+        />
+      ) : null}
 
       {won ? (
         <AbschlussCard
@@ -335,7 +353,7 @@ export async function LeadDetailBody({
 
       <LeadFiles leadId={lead.id} files={files} defaultKind={won ? "police" : "angebot"} />
 
-      <LeadHistory leadId={lead.id} initial={history} legacyNote={lead.notes ?? (fields ? (firstString(fields["Notizen"]) ?? null) : null)} />
+      <LeadHistory mailReady={!!postfach} leadId={lead.id} initial={history} legacyNote={lead.notes ?? (fields ? (firstString(fields["Notizen"]) ?? null) : null)} />
     </>
   );
 }

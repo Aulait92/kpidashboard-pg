@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CalendarDays, ChevronRight, Contact, CreditCard, Gift, Megaphone, MessageSquareText, Percent, ShieldCheck, UsersRound } from "lucide-react";
+import { CalendarDays, ChevronRight, Contact, CreditCard, Gift, Mail, Megaphone, MessageSquareText, Percent, ShieldCheck, UsersRound } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { unreadUpdates } from "@/lib/neuigkeiten";
@@ -35,6 +35,7 @@ export default async function EinstellungenPage() {
       items: [
         { href: "/buyer/kalender", icon: CalendarDays, color: "bg-emerald-600", title: "Mein Kalender", text: "Kalender verbinden und Zeiten für Termine festlegen" },
         { href: "/buyer/provisionen", icon: Percent, color: "bg-amber-500", title: "Meine Provisionen", text: "Ihre Sätze – daraus rechnet die App Provision und Zahlen" },
+        { href: "/buyer/postfach", icon: Mail, color: "bg-blue-500", title: "E-Mail-Postfach", text: "Eigenes Postfach verbinden, E-Mail-Vorlagen" },
         { href: "/buyer/vorlagen", icon: MessageSquareText, color: "bg-emerald-500", title: "WhatsApp-Vorlagen", text: "Nachrichten, die Ihr Assistent in Ihrem Namen schickt" },
         ...(owner ? [{ href: "/buyer/bestand", icon: Contact, color: "bg-sky-500", title: "Bestandskunden", text: "Kundenliste, Lücken und Anlässe, Kampagnen" }] : []),
       ],

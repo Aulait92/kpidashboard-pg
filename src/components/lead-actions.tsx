@@ -1,5 +1,6 @@
 "use client";
 
+import { LEAD_MAIL_EVENT } from "@/components/lead-mail";
 import { useProvisionRates } from "@/components/provision-context";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -35,6 +36,8 @@ import { AbschlussSheet, asksCloseValue } from "@/components/abschluss-sheet";
 // mit den Aktionen. Alles Seltene steckt unter „Mehr".
 
 type Props = {
+  /** Eigenes Postfach verbunden: E-Mail aus der App. */
+  mailReady?: boolean;
   leadId: string;
   name: string | null;
   createdAt: string;
@@ -120,7 +123,15 @@ export function LeadHeaderActions(p: Props) {
 
   const moreActions: SheetAction[] = [
     { label: p.followUpAt ? "Wiedervorlage ändern" : "Wiedervorlage setzen", icon: BellRing, onSelect: () => setTimeout(() => setOpen("followup"), 0) },
-    ...(p.email ? [{ label: "E-Mail schreiben", icon: Mail, href: `mailto:${p.email}` }] : []),
+    // Eigenes Postfach verbunden → E-Mail aus der App (mit Vorlagen), sonst Mailprogramm
+    ...(p.mailReady
+      ? [{ label: "E-Mail schreiben", icon: Mail, onSelect: () => setTimeout(() => window.dispatchEvent(new Event(LEAD_MAIL_EVENT)), 0) }]
+      : p.email
+        ? [
+            { label: "E-Mail schreiben", icon: Mail, href: `mailto:${p.email}` },
+            { label: "E-Mail aus der App: Postfach verbinden", icon: Mail, href: "/buyer/postfach" },
+          ]
+        : []),
     ...(!p.storniert && p.stornoOptions.length > 0
       ? [{ label: "Stornieren", icon: Ban, tone: "danger" as const, onSelect: () => setTimeout(() => setOpen("storno"), 0) }]
       : []),

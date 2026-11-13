@@ -5,7 +5,7 @@
 // Diktieren läuft über das Mikrofon der Handy-Tastatur (kein eigener Spracherkennungsdienst).
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { BellRing, CheckCircle2, FileCheck2, FileText, Loader2, Mic, Phone, RefreshCw, StickyNote, Trash2, Trophy } from "lucide-react";
+import { BellRing, CheckCircle2, FileCheck2, FileText, Loader2, Mail, Mic, Phone, RefreshCw, StickyNote, Trash2, Trophy } from "lucide-react";
 import { Button, Card } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { addLeadNoteAction, deleteLeadNoteAction, setPolicyDoneAction } from "@/app/buyer/lead-history-actions";
@@ -20,6 +20,7 @@ const ICON: Record<LeadHistoryKind, typeof Phone> = {
   abschluss: Trophy,
   police: FileCheck2,
   dokument: FileText,
+  email: Mail,
 };
 
 const when = (iso: string) =>
@@ -30,9 +31,12 @@ export function LeadHistory({
   initial,
   legacyNote,
   readOnly = false,
+  mailReady = false,
 }: {
   leadId: string;
   initial: LeadHistoryEntry[];
+  /** Eigenes Postfach verbunden: Knopf „E-Mail“ im Kopf. */
+  mailReady?: boolean;
   /** Bisherige Notiz aus dem alten Notizfeld (nur Anzeige). */
   legacyNote?: string | null;
   readOnly?: boolean;
@@ -75,6 +79,17 @@ export function LeadHistory({
     <Card className="mt-6" data-lead-history>
       <div className="flex items-center justify-between gap-3 border-b border-[color:var(--border)] px-5 py-3">
         <h2 className="text-[15px] font-semibold tracking-tight">Notizen & Verlauf</h2>
+        <div className="flex items-center gap-2">
+        {mailReady && !readOnly ? (
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event("pg-lead-mail-open"))}
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[color:var(--border-strong)] px-3 text-sm font-medium hover:border-[color:var(--brand)]"
+            data-lead-mail-open
+          >
+            <Mail className="h-4 w-4" /> E-Mail
+          </button>
+        ) : null}
         {touch && !readOnly ? (
           <button
             type="button"
@@ -87,6 +102,7 @@ export function LeadHistory({
             <Mic className="h-4 w-4" /> Diktieren
           </button>
         ) : null}
+        </div>
       </div>
       {!readOnly ? (
         <div className="border-b border-[color:var(--border)] px-5 py-4">

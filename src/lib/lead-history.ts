@@ -5,7 +5,7 @@
 import { prisma } from "@/lib/prisma";
 import { getBuyerContext } from "@/lib/buyer-context";
 
-export type LeadHistoryKind = "notiz" | "anruf" | "status" | "wiedervorlage" | "abschluss" | "police" | "dokument";
+export type LeadHistoryKind = "notiz" | "anruf" | "status" | "wiedervorlage" | "abschluss" | "police" | "dokument" | "email";
 export { POLICY_TODO } from "@/lib/lead-followup";
 
 export async function logLeadHistory(leadId: string, kind: LeadHistoryKind, text: string, opts: { customerId?: string; userId?: string | null } = {}): Promise<void> {
