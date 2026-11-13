@@ -9,8 +9,10 @@ import type { OfferTarget } from "@/lib/offer-links";
 import { computeOfferPrice, defaultStartDate, eur, PRICE_LIST, withVat, type OfferPackage, type OfferTerm, type OfferVermittler } from "@/lib/offer-pricing";
 
 const PRODUCT_SUGGESTIONS = [
+  "TKV-Katze",
+  "TKV-Hund",
+  "TKV-Pferd",
   "Privatschutz",
-  "Tierkrankenversicherung",
   "Unfallversicherung",
   "Krankenhauszusatz",
   "Zahnzusatz",
@@ -58,7 +60,7 @@ export function OfferForm({
   const [street, setStreet] = useState(initial.street ?? "");
   const [zip, setZip] = useState(initial.zip ?? "");
   const [city, setCity] = useState(initial.city ?? "");
-  const [products, setProducts] = useState([{ name: initial.product || "Privatschutz", daily: "30" }]);
+  const [products, setProducts] = useState([{ name: "TKV-Katze", daily: "30" }]);
   const [pkg, setPkg] = useState<OfferPackage>("software");
   const [term, setTerm] = useState<OfferTerm>("12m");
   const [setupOverride, setSetupOverride] = useState(initial.setupOverride ?? "");
