@@ -226,7 +226,7 @@ export async function LeadDetailBody({
       provision = `≈ ${formatEUR(p)}${trailYear2 > 0 ? `, ab dem 2. Jahr ≈ ${formatEUR(trailYear2)} Bestand pro Jahr` : ""}${v == null ? " (Standardbeitrag)" : ""}`;
     }
   }
-  const label = (whatsapp ? WHATSAPP_STATUS_LABELS[lead.status ?? ""] : null) ?? lead.status ?? "Neuer Lead";
+  const label = WHATSAPP_STATUS_LABELS[lead.status ?? ""] ?? lead.status ?? "Neuer Lead";
   const apptFmt = (d: Date) =>
     new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }).format(d);
 
@@ -346,7 +346,7 @@ export async function LeadDetailBody({
       ) : null}
 
       {fields ? (
-        <ReadOnlyCard fields={fields} source={lead.source} statusLabels={whatsapp ? WHATSAPP_STATUS_LABELS : {}} />
+        <ReadOnlyCard fields={fields} source={lead.source} statusLabels={WHATSAPP_STATUS_LABELS} />
       ) : null}
 
       <LeadSequenceCard leadId={lead.id} readOnly={!!lead.erasedAt} />

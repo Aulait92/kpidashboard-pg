@@ -240,8 +240,13 @@ const GESPRAECH_PHASE: PipelinePhase = {
   defaultStatus: "Im Gespräch",
 };
 
-export function pipelinePhasesFor(whatsapp: boolean): readonly PipelinePhase[] {
-  if (!whatsapp) return PIPELINE_PHASES;
+/**
+ * Spalten im Kundenbereich – seit 13.11.2026 für alle Kunden gleich (Ole): „Im Gespräch“
+ * (im Chat geantwortet bzw. erreicht, noch kein Termin) und „Termin vereinbart“ statt „In Beratung“.
+ * Der Parameter bleibt für bestehende Aufrufer.
+ */
+export function pipelinePhasesFor(whatsapp = true): readonly PipelinePhase[] {
+  void whatsapp;
   const out: PipelinePhase[] = [];
   for (const p of PIPELINE_PHASES) {
     if (p.key === "beratung") {
@@ -264,9 +269,10 @@ export const WHATSAPP_STATUS_LABELS: Record<string, string> = {
   "In Beratung": "Termin vereinbart",
 };
 
-export function statusLabel(status: string | null | undefined, whatsapp: boolean): string | null {
+export function statusLabel(status: string | null | undefined, whatsapp = true): string | null {
+  void whatsapp;
   if (!status) return null;
-  return whatsapp ? (WHATSAPP_STATUS_LABELS[status] ?? status) : status;
+  return WHATSAPP_STATUS_LABELS[status] ?? status;
 }
 
 // ─── Einheitliche Status-Farben (Liste, Pipeline, Detail, Chats) ──────────

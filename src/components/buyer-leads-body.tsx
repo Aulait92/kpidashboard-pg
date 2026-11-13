@@ -168,7 +168,7 @@ export async function BuyerLeadsBody({
       <BuyerLeadsTable
         leads={shown}
         title={[activeView.key ? activeView.label : "Alle Leads", phase?.label].filter(Boolean).join(" · ")}
-        statusLabels={whatsapp ? WHATSAPP_STATUS_LABELS : {}}
+        statusLabels={WHATSAPP_STATUS_LABELS}
         showLeadCost={!(await loadRetainerConfig(customerId))}
         detailBase={detailBase}
         detailSuffix={detailSuffix}
