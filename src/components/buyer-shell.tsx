@@ -106,34 +106,19 @@ export function BuyerShell({
       </BuyerShellA>
     );
   }
-  // WhatsApp-Kunden: „Heute" ist die Startseite (Aufgabenliste), die Zahlen
-  // haben einen eigenen Reiter. Alle anderen: Übersicht = Zahlen.
-  const items: NavItem[] = showChats
-    ? [
-        { href: "/buyer", label: "Heute", icon: Sun, match: (p) => p === "/buyer" },
-        { href: "/buyer/leads", label: "Leads", icon: Users, match: (p) => p.startsWith("/buyer/leads") },
-        { href: "/buyer/kanban", label: "Pipeline", icon: Columns3, match: (p) => p.startsWith("/buyer/kanban") },
-        {
-          href: "/buyer/chats",
-          label: "Chats",
-          icon: MessageCircle,
-          match: (p) => p.startsWith("/buyer/chats"),
-          badge: chatBadge,
-        },
-        ...(teamRole === "advisor"
-          ? []
-          : [{ href: "/buyer/zahlen", label: "Zahlen", icon: BarChart3, match: (p: string) => p.startsWith("/buyer/zahlen") }]),
-      ]
-    : [
-        ...(teamRole === "advisor"
-          ? []
-          : [{ href: "/buyer", label: "Übersicht", icon: LayoutDashboard, match: (p: string) => p === "/buyer" }]),
-        { href: "/buyer/leads", label: "Leads", icon: Users, match: (p) => p.startsWith("/buyer/leads") },
-        { href: "/buyer/kanban", label: "Pipeline", icon: Columns3, match: (p) => p.startsWith("/buyer/kanban") },
-      ];
-  if (showBestand) {
-    items.push({ href: "/buyer/bestand", label: "Bestand", icon: Contact, match: (p) => p.startsWith("/buyer/bestand") });
-  }
+  // „Heute“ ist für alle Kunden die Startseite (Aufgabenliste); Zahlen haben einen eigenen
+  // Reiter, Chats nur mit WhatsApp. Bestandskunden liegen im Profilmenü (Ole, 13.11.2026).
+  const items: NavItem[] = [
+    { href: "/buyer", label: "Heute", icon: Sun, match: (p) => p === "/buyer" },
+    { href: "/buyer/leads", label: "Leads", icon: Users, match: (p) => p.startsWith("/buyer/leads") },
+    { href: "/buyer/kanban", label: "Pipeline", icon: Columns3, match: (p) => p.startsWith("/buyer/kanban") },
+    ...(showChats
+      ? [{ href: "/buyer/chats", label: "Chats", icon: MessageCircle, match: (p: string) => p.startsWith("/buyer/chats"), badge: chatBadge }]
+      : []),
+    ...(teamRole === "advisor"
+      ? []
+      : [{ href: "/buyer/zahlen", label: "Zahlen", icon: BarChart3, match: (p: string) => p.startsWith("/buyer/zahlen") }]),
+  ];
   if (showOrders) {
     items.push({ href: "/buyer/bestellen", label: "Bestellen", icon: ShoppingCart, match: (p) => p.startsWith("/buyer/bestellen") });
   }
@@ -184,7 +169,7 @@ export function BuyerShell({
 
           <div className="ml-auto flex items-center gap-2">
             <HilfeChat firstName={displayName.replace(/^Allianz\s+/i, "").split(/\s+/)[0] ?? ""} owner={teamRole === "owner"} />
-            <ProfileMenu name={displayName} owner={teamRole === "owner"} hasTeam={hasTeam} absence={absence} updatesUnread={updatesUnread} />
+            <ProfileMenu name={displayName} owner={teamRole === "owner"} hasTeam={hasTeam} absence={absence} updatesUnread={updatesUnread} showBestand={showBestand} />
           </div>
         </div>
       </header>
@@ -248,7 +233,10 @@ function ProfileMenu({
   variant = "header",
   absence = null,
   updatesUnread = 0,
+  showBestand = false,
 }: {
+  /** Modul Bestandskunden freigeschaltet: Link im Menü */
+  showBestand?: boolean;
   absence?: ShellAbsence | null;
   updatesUnread?: number;
   name: string;
@@ -442,6 +430,15 @@ function ProfileMenu({
           >
             <ShieldCheck className="h-4 w-4" /> Anmeldung &amp; Sicherheit
           </Link>
+          {showBestand ? (
+            <Link
+              href="/buyer/bestand"
+              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
+            >
+              <Contact className="h-4 w-4" /> Bestandskunden
+            </Link>
+          ) : null}
           <Link
             href="/buyer/provisionen"
             onClick={() => setOpen(false)}
@@ -524,9 +521,7 @@ function BuyerShellA({
 }) {
   const owner = teamRole === "owner";
   const items: NavItem[] = [
-    ...(showChats || owner
-      ? [{ href: "/buyer", label: showChats ? "Heute" : "Übersicht", icon: showChats ? Sun : LayoutDashboard, match: (p: string) => p === "/buyer" }]
-      : []),
+    { href: "/buyer", label: "Heute", icon: Sun, match: (p: string) => p === "/buyer" },
     { href: "/buyer/kontakte", label: "Kontakte", icon: Users, match: (p: string) => /^\/buyer\/(kontakte|leads|kanban)/.test(p) },
     ...(showChats
       ? [{ href: "/buyer/chats", label: "Nachrichten", icon: MessageCircle, match: (p: string) => p.startsWith("/buyer/chats"), badge: chatBadge }]

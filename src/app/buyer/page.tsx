@@ -12,16 +12,15 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { loadInbox } from "@/lib/inbox";
 import { prisma } from "@/lib/prisma";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
-import ZahlenPage from "./zahlen/page";
 import { ReferralNudgeCard } from "@/components/kollegen";
 import { loadReferralNudge } from "@/lib/kollegen";
 import { UpdatesHeuteCard } from "@/components/neuigkeiten";
 import { unreadUpdates } from "@/lib/neuigkeiten";
 import { dismissUpdatesAction } from "./neuigkeiten/actions";
 
-// Startseite des Kundenbereichs. WhatsApp-Kunden: „Heute" – eine
+// Startseite des Kundenbereichs für alle Kunden: „Heute" – eine
 // Aufgabenliste (Termine, Ergebnisse, Chats, Rückrufe), die man leer
-// arbeitet. Alle anderen Kunden: die Zahlen (KPIs) wie bisher.
+// arbeitet (mit WhatsApp zusätzlich Chats). Die Zahlen haben einen eigenen Reiter.
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Heute | performancegrowth" };
 
@@ -44,9 +43,6 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
         <FirstDay customerId={ctx.customerId} owner={ctx.teamRole !== "advisor"} whatsapp={whatsapp} />
       </main>
     );
-  }
-  if (!whatsapp) {
-    return <ZahlenPage searchParams={searchParams} />;
   }
   const [data, customer, me, nudge, updates] = await Promise.all([
     loadInbox(ctx),

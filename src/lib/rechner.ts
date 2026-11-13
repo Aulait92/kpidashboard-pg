@@ -103,7 +103,7 @@ export const CROSS_SELL_RATE_MAX = 3;
  * Cross-Selling für Vertreter (Ole, 13.11.): Zusatzverträge bringen Abschluss- und
  * Bestandsprovision (1. Jahr) im selben Monat; Standard aus, Werte frei änderbar.
  */
-export const CROSS_SELL_VERTRETER = { rate: 1, beitrag: 300, ap: 0.2, trail: 0.1 } as const;
+export const CROSS_SELL_VERTRETER = { rate: 1, beitrag: 300, ap: 0.55, trail: 0.1 } as const;
 
 export type Guarantee = { enabled: boolean; title: string; text: string };
 
