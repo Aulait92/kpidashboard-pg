@@ -9,6 +9,7 @@ import { VermittlerCard } from "@/components/admin/vermittler-card";
 import { GarantienCard } from "@/components/admin/garantien-card";
 import { SetupCard } from "@/components/admin/setup-card";
 import { TestdatenCard } from "@/components/admin/testdaten-card";
+import { LeadQualitaetCard } from "@/components/admin/lead-qualitaet-card";
 import type { ImpressumInfo } from "@/lib/impressum";
 
 // Übersicht der Kundenakte: mit Vertriebskontakt die volle Kontaktseite
@@ -30,6 +31,7 @@ export default async function KundenakteUebersicht({ params, searchParams }: { p
         <GarantienCard customerId={id} />
         <SetupCard customerId={id} notice={notice} />
         <TestdatenCard customerId={id} />
+        <LeadQualitaetCard customerId={id} />
         <ContactPage params={Promise.resolve({ id: customer.salesContact.id })} searchParams={Promise.resolve({ embedded: "1" })} />
       </div>
     );

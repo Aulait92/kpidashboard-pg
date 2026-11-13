@@ -1,5 +1,6 @@
 "use client";
 
+import { DISQUALIFY_REASONS } from "@/lib/lead-quality";
 import { LEAD_MAIL_EVENT } from "@/components/lead-mail";
 import { useProvisionRates } from "@/components/provision-context";
 import { useRouter } from "next/navigation";
@@ -72,7 +73,7 @@ export function LeadHeaderActions(p: Props) {
   const router = useRouter();
   const toast = useToast();
   const [, start] = useTransition();
-  const [open, setOpen] = useState<"phase" | "more" | "followup" | "win" | "storno" | "erase" | "lost" | null>(null);
+  const [open, setOpen] = useState<"phase" | "more" | "followup" | "win" | "storno" | "erase" | "lost" | "disq" | null>(null);
   const [erasing, setErasing] = useState(false);
   const [note, setNote] = useState(p.followUpNote ?? "");
   const [date, setDate] = useState("");
@@ -87,9 +88,17 @@ export function LeadHeaderActions(p: Props) {
     else setStatus("Abschluss" as LeadStatus, "Abschluss", null);
   }
 
-  function setStatus(status: LeadStatus, label: string, closeValue?: number | null) {
+  function setStatus(status: LeadStatus, label: string, closeValue?: number | null, disqualifyReason?: string) {
+    // „Disqualifiziert“ fragt erst nach dem Grund (Ole, 13.11.2026)
+    if (status === "Disqualifiziert" && !disqualifyReason) {
+      setTimeout(() => setOpen("disq"), 0);
+      return;
+    }
     start(async () => {
-      const res = await setLeadStatusAction(p.leadId, status, closeValue !== undefined ? { closeValue } : undefined);
+      const res = await setLeadStatusAction(p.leadId, status, {
+        ...(closeValue !== undefined ? { closeValue } : {}),
+        ...(disqualifyReason ? { disqualifyReason } : {}),
+      });
       if (!res.ok) return toast.show({ message: res.error, tone: "error" });
       toast.show({ message: `Status: ${label}` });
       router.refresh();
@@ -299,6 +308,13 @@ export function LeadHeaderActions(p: Props) {
       <ActionSheet open={open === "phase"} onClose={() => setOpen(null)} title="Status ändern" actions={phaseActions} />
       <ActionSheet open={open === "more"} onClose={() => setOpen(null)} title={p.name ?? "Lead"} actions={moreActions} />
       <ActionSheet open={open === "lost"} onClose={() => setOpen(null)} title="Warum verloren?" actions={lostActions} />
+      <ActionSheet
+        open={open === "disq"}
+        onClose={() => setOpen(null)}
+        title="Warum disqualifiziert?"
+        message="Hilft uns, Formular und Zielgruppe zu verbessern."
+        actions={DISQUALIFY_REASONS.map((r) => ({ label: r.label, onSelect: () => setStatus("Disqualifiziert" as LeadStatus, "Disqualifiziert", undefined, r.key) }))}
+      />
 
       <AbschlussSheet
         open={open === "win"}

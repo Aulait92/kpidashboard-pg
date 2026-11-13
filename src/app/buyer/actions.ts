@@ -1,5 +1,6 @@
 "use server";
 
+import { disqualifyLabel, isDisqualifyReason } from "@/lib/lead-quality";
 import { abschlussText, logLeadHistory } from "@/lib/lead-history";
 import { revalidatePath } from "next/cache";
 import {
@@ -188,7 +189,7 @@ export type UpdateLeadState = {
 export async function setLeadStatusAction(
   leadId: string,
   status: LeadStatus,
-  opts?: { closeValue?: number | null },
+  opts?: { closeValue?: number | null; disqualifyReason?: string | null },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const writeCustomerId = await writableCustomerId(leadId);
   if (!writeCustomerId) {
@@ -251,6 +252,8 @@ export async function setLeadStatusAction(
       ...(closeValue !== undefined
         ? { closeValue: closeValue == null ? null : closeValue }
         : {}),
+      // Grund nur bei „Disqualifiziert“, sonst zurücksetzen
+      disqualifyReason: status === "Disqualifiziert" && isDisqualifyReason(opts?.disqualifyReason) ? opts!.disqualifyReason : null,
     },
   });
 
@@ -259,7 +262,9 @@ export async function setLeadStatusAction(
     await logLeadHistory(
       lead.id,
       isClosed ? "abschluss" : "status",
-      isClosed ? await abschlussText(writeCustomerId, lead.source, closeValue ?? null) : `Status: ${status}`,
+      isClosed
+        ? await abschlussText(writeCustomerId, lead.source, closeValue ?? null)
+        : `Status: ${status}${status === "Disqualifiziert" && disqualifyLabel(opts?.disqualifyReason) ? ` (${disqualifyLabel(opts?.disqualifyReason)})` : ""}`,
       { customerId: writeCustomerId },
     );
   }

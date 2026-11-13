@@ -549,6 +549,8 @@ model Lead {
   // Storno beim Pay-per-Lead: requested → approved | rejected | review (Prüfung durch Admin)
   stornoState          String?
   stornoReason         String?
+  // Grund bei „Disqualifiziert“ (lib/lead-quality.ts), z. B. falsche_nummer
+  disqualifyReason     String?
   stornoNote           String?
   stornoRequestedAt    DateTime?
   stornoDecidedAt      DateTime?
