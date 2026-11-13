@@ -244,7 +244,7 @@ export function LeadHeaderActions(p: Props) {
           <span>eingegangen {new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(p.createdAt))}</span>
         </div>
 
-        <div className="mt-4 grid grid-cols-4 gap-2 sm:flex sm:flex-wrap">
+        <div className="mt-4 grid grid-cols-5 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
           <ActionTile
             icon={Phone}
             label="Anrufen"
@@ -255,6 +255,8 @@ export function LeadHeaderActions(p: Props) {
           />
           <ActionTile icon={MessageCircle} label="Chat" href={p.conversationId ? `/buyer/chats?c=${p.conversationId}` : undefined} />
           <ActionTile icon={CalendarPlus} label="Termin" href={p.bookingSlug ? `/book/${p.bookingSlug}?lead=${p.leadId}` : undefined} external />
+          {/* Wiedervorlage direkt neben Anrufen/Chat/Termin (Ole, 13.11.2026: war zu versteckt) */}
+          <ActionTile icon={BellRing} label="Wiedervorlage" onClick={!p.storniert ? () => setOpen("followup") : undefined} />
           <ActionTile icon={MoreHorizontal} label="Mehr" onClick={() => setOpen("more")} />
         </div>
 
@@ -272,18 +274,6 @@ export function LeadHeaderActions(p: Props) {
               Erledigt
             </Button>
           </div>
-        ) : !p.storniert && !won && !lost ? (
-          // Ohne Wiedervorlage: gut sichtbar setzen statt versteckt unter „Mehr“ (Ole, 13.11.2026)
-          <button
-            type="button"
-            onClick={() => setOpen("followup")}
-            className="mt-4 flex w-full items-center gap-3 rounded-[var(--radius-md)] border border-dashed border-violet-300 px-4 py-2.5 text-left text-sm font-medium text-violet-800 transition hover:bg-violet-50"
-            data-followup-set
-          >
-            <BellRing className="h-4 w-4 shrink-0" />
-            <span className="flex-1">Wiedervorlage setzen</span>
-            <span className="text-xs font-normal text-violet-700/80">erscheint am Tag auf „Heute“</span>
-          </button>
         ) : null}
       </header>
 
@@ -414,7 +404,7 @@ function ActionTile({
 }) {
   const disabled = !href && !onClick;
   const cls = cn(
-    "flex flex-col items-center justify-center gap-1 rounded-[var(--radius-md)] px-3 py-2.5 text-xs font-semibold transition sm:flex-row sm:gap-2 sm:px-4 sm:text-sm",
+    "flex min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-md)] px-1.5 py-2.5 text-center text-[11px] font-semibold leading-tight transition sm:flex-row sm:gap-2 sm:px-4 sm:text-sm",
     primary
       ? "bg-[color:var(--brand)] text-white hover:bg-[color:var(--brand-dark)]"
       : "border border-[color:var(--border)] bg-white text-[color:var(--foreground)] shadow-[var(--shadow-sm)] hover:border-[color:var(--border-strong)]",

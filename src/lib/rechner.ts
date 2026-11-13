@@ -35,6 +35,8 @@ export const DAYS_PER_MONTH = PRICE_LIST.daysPerMonth;
 export const VAT = 0.19;
 export const BUDGET_MIN = 20;
 export const BUDGET_MAX = 150;
+/** Eintippen geht höher als der Regler (Ole, 13.11.2026: mehr Budget durchrechnen). */
+export const BUDGET_MAX_EINGABE = 1000;
 
 // Berater-Plätze und Jahreszahlung – aus der Preisliste des Angebots.
 export const SEATS_INCLUDED = PRICE_LIST.seatsIncluded;
@@ -478,7 +480,7 @@ export function inputFromParams(config: RechnerConfig, q: Params): RechnerInput 
   return {
     produkt: p.key,
     typ,
-    budget: clamp(Math.round(n("budget", 1, 10_000, d.budget)), BUDGET_MIN, BUDGET_MAX),
+    budget: clamp(Math.round(n("budget", 1, 10_000, d.budget)), BUDGET_MIN, BUDGET_MAX_EINGABE),
     rate: n("ap", 0, 100, d.rate, 100),
     trail: n("bp", 0, 100, d.trail, 100),
     months: n("mb", 0, 24, d.months),

@@ -137,7 +137,7 @@ describe("Break-even-Rechner", () => {
     const back = inputFromParams(DEFAULT_CONFIG, Object.fromEntries(inputToParams(DEFAULT_CONFIG, i)));
     expect(back).toEqual({ ...i, staffel: [{ ab: 20, wert: 0.65 }] });
     // Budget wird auf den Schieberegler begrenzt, unbekanntes Produkt → erstes aktives
-    expect(inputFromParams(DEFAULT_CONFIG, { budget: "999", produkt: "gibts-nicht" })).toMatchObject({ budget: 150, produkt: "tkv" });
+    expect(inputFromParams(DEFAULT_CONFIG, { budget: "9999", produkt: "gibts-nicht" })).toMatchObject({ budget: 1000, produkt: "tkv" });
   });
 
   it("URL ohne Parameter = Standardwerte (Prozente nicht doppelt umgerechnet)", () => {

@@ -56,8 +56,11 @@ export type InboxFollowUp = {
   overdue: boolean;
   conversationId: string | null;
 };
+/** Kommende Tage (Ole, 13.11.2026): Wiedervorlagen ab morgen und Termine ab übermorgen, 14 Tage. */
+export type InboxUpcoming = { key: string; kind: "wiedervorlage" | "termin"; leadId: string | null; name: string; note: string | null; at: string };
 export type InboxData = {
   followUps: InboxFollowUp[];
+  upcoming: InboxUpcoming[];
   appointments: InboxAppointment[];
   outcomes: InboxOutcome[];
   chats: InboxChat[];
@@ -72,6 +75,27 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
   const todayStart = berlinDayStart(now);
   const tomorrowEnd = new Date(todayStart.getTime() + 2 * DAY);
 
+  const horizon = new Date(todayStart.getTime() + 15 * DAY);
+  const followUpOpen = {
+    OR: [
+      { NOT: { status: { in: POST_STATUSES.filter((x) => x !== "Angebot gesendet") } } },
+      { status: "Abschluss", policyDoneAt: null, followUpNote: POLICY_TODO },
+    ],
+  };
+  const [laterFollowUps, laterAppts] = await Promise.all([
+    prisma.lead.findMany({
+      where: { ...leadScope(ctx), followUpAt: { gte: new Date(todayStart.getTime() + DAY), lt: horizon }, ...followUpOpen },
+      orderBy: { followUpAt: "asc" },
+      take: 100,
+      select: { id: true, name: true, followUpAt: true, followUpNote: true },
+    }),
+    prisma.appointment.findMany({
+      where: { ...apptScope, status: "booked", startsAt: { gte: tomorrowEnd, lt: horizon } },
+      orderBy: { startsAt: "asc" },
+      take: 100,
+      select: { id: true, startsAt: true, mode: true, leadId: true, lead: { select: { name: true } } },
+    }),
+  ]);
   const [upcoming, past, chats, callbacks, cal, followUps] = await Promise.all([
     prisma.appointment.findMany({
       where: {
@@ -145,6 +169,24 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
   const convById = new Map(convs.map((c) => [c.id, c]));
 
   return {
+    upcoming: [
+      ...laterFollowUps.map((f) => ({
+        key: `f:${f.id}`,
+        kind: "wiedervorlage" as const,
+        leadId: f.id,
+        name: f.name ?? "Lead",
+        note: f.followUpNote,
+        at: f.followUpAt!.toISOString(),
+      })),
+      ...laterAppts.map((a) => ({
+        key: `a:${a.id}`,
+        kind: "termin" as const,
+        leadId: a.leadId,
+        name: a.lead?.name ?? "Termin",
+        note: a.mode === "video" ? "Videocall" : "Telefonat",
+        at: a.startsAt.toISOString(),
+      })),
+    ].sort((x, y) => x.at.localeCompare(y.at)),
     followUps: followUps.map((f) => ({
       leadId: f.id,
       name: f.name ?? "Lead",

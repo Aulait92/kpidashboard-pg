@@ -5,6 +5,8 @@ import { useProvisionRates } from "@/components/provision-context";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import {
+  BellRing,
+  CalendarDays,
   CalendarClock,
   CalendarPlus,
   Check,
@@ -236,7 +238,12 @@ export function TodayInbox({
     } else {
       actions.push({ label: "Erledigt", icon: Check, onSelect: () => run(c.key, `${c.name}: erledigt`, () => clearFollowUpResult(c.leadId)) });
     }
-    actions.push({ label: "Später", icon: Clock, onSelect: () => setTimeout(() => laterSheet(c), 0) });
+    // Schnell schieben (Ole, 13.11.2026): +1 Tag / +1 Woche direkt, sonst „Später …“
+    actions.push(
+      { label: "+1 Tag (morgen)", icon: Clock, onSelect: () => run(c.key, `${c.name}: morgen wieder`, () => setFollowUpResult(c.leadId, { days: 1 })) },
+      { label: "+1 Woche", icon: Clock, onSelect: () => run(c.key, `${c.name}: in 1 Woche wieder`, () => setFollowUpResult(c.leadId, { days: 5 })) },
+      { label: "Später …", icon: Clock, onSelect: () => setTimeout(() => laterSheet(c), 0) },
+    );
     if (data.bookingSlug) actions.push({ label: "Termin buchen", icon: CalendarPlus, href: `/book/${data.bookingSlug}?lead=${c.leadId}` });
     actions.push(
       { label: "Angebot gesendet", icon: Send, onSelect: () => run(c.key, `${c.name}: Angebot gesendet`, () => callbackOutcomeResult(c.leadId, "offer")) },
@@ -457,6 +464,21 @@ export function TodayInbox({
         </Card>
       ) : null}
 
+      {data.upcoming.length > 0 ? (
+        <UpcomingCard
+          items={data.upcoming}
+          open={(id) => openDetailOnDesktop(id) || router.push(leadUrl(id))}
+          shift={(it, days) =>
+            startTransition(async () => {
+              const res = await setFollowUpResult(it.leadId!, { date: shiftYmd(it.at, days) });
+              if (!res.ok) return toast.show({ message: res.error, tone: "error" });
+              toast.show({ message: `${it.name}: ${days === 1 ? "einen Tag" : "eine Woche"} später` });
+              router.refresh();
+            })
+          }
+        />
+      ) : null}
+
       {current && callMode ? (
         <CallModePanel
           item={current}
@@ -509,6 +531,95 @@ export function TodayInbox({
         }}
       />
     </div>
+  );
+}
+
+/** Nächste Tage (Ole, 13.11.2026): Wiedervorlagen und Termine der kommenden 14 Tage, nach Tag. */
+/** Kalendertag (Berlin) des Zeitpunkts + n Tage, als YYYY-MM-DD; nie vor morgen. */
+function shiftYmd(iso: string, days: number): string {
+  const ymd = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+  const base = new Date(`${ymd(new Date(iso))}T12:00:00Z`);
+  base.setUTCDate(base.getUTCDate() + days);
+  const tomorrow = new Date(`${ymd(new Date())}T12:00:00Z`);
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+  return ymd(base < tomorrow ? tomorrow : base);
+}
+
+function UpcomingCard({
+  items,
+  open,
+  shift,
+}: {
+  items: InboxData["upcoming"];
+  open: (leadId: string) => void;
+  shift: (it: InboxData["upcoming"][number], days: number) => void;
+}) {
+  const [all, setAll] = useState(false);
+  const shown = all ? items : items.slice(0, 8);
+  const dayKey = (iso: string) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
+  const dayLabel = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "numeric", month: "long" }).format(new Date(iso));
+  const time = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
+  const groups: { key: string; label: string; rows: typeof items }[] = [];
+  for (const it of shown) {
+    const k = dayKey(it.at);
+    const g = groups.find((x) => x.key === k);
+    if (g) g.rows.push(it);
+    else groups.push({ key: k, label: dayLabel(it.at), rows: [it] });
+  }
+  return (
+    <Card data-upcoming>
+      <div id="naechste-tage" className="scroll-mt-20" />
+      <CardHeader icon={CalendarDays} title="Nächste Tage" count={items.length} />
+      {groups.map((g) => (
+        <div key={g.key}>
+          <div className="bg-[color:var(--surface-sunken,#f8fafc)] px-5 py-1.5 text-xs font-semibold text-[color:var(--muted)]">{g.label}</div>
+          <ul className="divide-y divide-[color:var(--border)]">
+            {g.rows.map((it) => (
+              <TapRow key={it.key} onTap={() => it.leadId && open(it.leadId)}>
+                {it.kind === "termin" ? (
+                  <CalendarClock className="h-4 w-4 shrink-0 text-[color:var(--brand)]" />
+                ) : (
+                  <BellRing className="h-4 w-4 shrink-0 text-violet-600" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-medium">{it.name}</div>
+                  <p className="truncate text-xs text-[color:var(--muted)]">
+                    {it.kind === "termin" ? `Termin ${time(it.at)} Uhr · ${it.note ?? ""}` : `Wiedervorlage${it.note ? ` · ${it.note}` : ""}`}
+                  </p>
+                </div>
+                {it.kind === "wiedervorlage" && it.leadId ? (
+                  <span className="flex shrink-0 gap-1" onClick={(e) => e.stopPropagation()}>
+                    {[
+                      { d: 1, l: "+1 Tag" },
+                      { d: 7, l: "+1 Woche" },
+                    ].map((b) => (
+                      <button
+                        key={b.d}
+                        type="button"
+                        onClick={() => shift(it, b.d)}
+                        className="rounded-full border border-[color:var(--border)] px-2.5 py-1 text-xs font-semibold text-[color:var(--muted)] hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
+                      >
+                        {b.l}
+                      </button>
+                    ))}
+                  </span>
+                ) : null}
+                <ChevronRight className="hidden h-4 w-4 shrink-0 text-[color:var(--border-strong)] sm:block" />
+              </TapRow>
+            ))}
+          </ul>
+        </div>
+      ))}
+      {items.length > 8 ? (
+        <button
+          type="button"
+          onClick={() => setAll((v) => !v)}
+          className="w-full border-t border-[color:var(--border)] py-2.5 text-xs font-semibold text-[color:var(--brand)] hover:bg-[color:var(--surface-sunken)]"
+        >
+          {all ? "Weniger anzeigen" : `Alle ${items.length} anzeigen`}
+        </button>
+      ) : null}
+    </Card>
   );
 }
 

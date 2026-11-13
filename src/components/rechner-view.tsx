@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check, Copy } from "lucide-react";
 import {
   BUDGET_MAX,
+  BUDGET_MAX_EINGABE,
   BUDGET_MIN,
   BUDGET_STANDARD,
   CPL_MAX,
@@ -106,7 +107,28 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
               <div className="mt-5">
                 <div className="flex items-baseline justify-between gap-2">
                   <Label htmlFor="budget">Werbebudget pro Tag</Label>
-                  <span className="text-lg font-semibold tabular-nums">{eur(input.budget)}</span>
+                  <label className="inline-flex items-baseline gap-1 text-lg font-semibold tabular-nums">
+                    <input
+                      key={`budget-${input.budget}`}
+                      type="number"
+                      inputMode="numeric"
+                      min={BUDGET_MIN}
+                      max={BUDGET_MAX_EINGABE}
+                      defaultValue={input.budget}
+                      aria-label="Werbebudget pro Tag in Euro"
+                      onBlur={(e) => {
+                        const v = Math.round(Number(e.target.value.replace(",", ".")));
+                        if (Number.isFinite(v) && v > 0) set({ budget: Math.min(BUDGET_MAX_EINGABE, Math.max(BUDGET_MIN, v)) });
+                        else e.target.value = String(input.budget);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                      }}
+                      className="w-[5ch] border-b border-dashed border-[color:var(--border-strong,#cbd5e1)] bg-transparent text-right outline-none [appearance:textfield] focus:border-[color:var(--brand)] [&::-webkit-inner-spin-button]:appearance-none"
+                      data-budget-eingabe
+                    />
+                    <span>€</span>
+                  </label>
                 </div>
                 <input
                   id="budget"
@@ -114,11 +136,18 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
                   min={BUDGET_MIN}
                   max={BUDGET_MAX}
                   step={1}
-                  value={input.budget}
+                  value={Math.min(input.budget, BUDGET_MAX)}
                   onChange={(e) => set({ budget: Number(e.target.value) })}
                   className="mt-2 w-full accent-[color:var(--brand)]"
                 />
-                <p className="text-xs text-[color:var(--muted)]">≈ {eur(input.budget * DAYS_PER_MONTH)} im Monat, zahlen Sie direkt an Meta</p>
+                <p className="text-xs text-[color:var(--muted)]">
+                  ≈ {eur(input.budget * DAYS_PER_MONTH)} im Monat, zahlen Sie direkt an Meta · Betrag antippen für mehr als {eur(BUDGET_MAX)}
+                </p>
+                {input.budget * DAYS_PER_MONTH > PRICE_LIST.individualFrom ? (
+                  <p className="mt-1 text-xs text-[color:var(--muted)]" data-budget-individuell>
+                    Ab {eur(PRICE_LIST.individualFrom)} Budget im Monat machen wir Ihnen ein individuelles Angebot. Gerechnet ist mit der höchsten Betreuungsstufe.
+                  </p>
+                ) : null}
               </div>
               <div className="mt-5" data-leadpreis>
                 <NumField
