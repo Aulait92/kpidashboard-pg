@@ -169,7 +169,9 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
               )}
               <p className="mt-2 text-sm">
                 = <b className="tabular-nums">{eur(r.provisionJeVertrag)}</b> Provision je Vertrag
-                {product.kind === "percent" && input.trail > 0 ? <span className="text-[color:var(--muted)]"> (inkl. Bestand 1. Jahr)</span> : null}
+                {product.kind === "percent" && input.trail > 0 && !maklerModus(product, input) ? (
+                  <span className="text-[color:var(--muted)]"> + {eur(input.beitrag * input.trail)} Bestandsprovision pro Jahr ab dem 2. Jahr</span>
+                ) : null}
               </p>
               <Staffel key={`st-${version}`} kind={product.kind} value={input.staffel} onChange={(staffel) => set({ staffel })} />
             </Card>
@@ -216,8 +218,8 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
                         <NumField key={`xp-${version}`} label="Bestandsprovision" hint="pro Jahr" suffix="%" value={pctOut(input.xTrail)} min={0} max={100} onChange={(v) => set({ xTrail: v / 100 })} />
                       </div>
                       <p className="mt-2 text-sm">
-                        = <b className="tabular-nums">{eur(input.xRate * input.xBeitrag * (input.xAp + input.xTrail))}</b> zusätzliche Provision je Vertrag
-                        {input.xTrail > 0 ? <span className="text-[color:var(--muted)]"> (inkl. Bestand 1. Jahr)</span> : null}
+                        = <b className="tabular-nums">{eur(input.xRate * input.xBeitrag * input.xAp)}</b> zusätzliche Abschlussprovision je Vertrag
+                        {input.xTrail > 0 ? <span className="text-[color:var(--muted)]"> + {eur(input.xRate * input.xBeitrag * input.xTrail)} Bestandsprovision pro Jahr ab dem 2. Jahr</span> : null}
                       </p>
                     </>
                   ) : null}
@@ -368,8 +370,9 @@ function Ergebnis({ r, bestand, storno }: { r: RechnerResult; bestand: BestandRe
         <p className="mt-1 text-xs text-[color:var(--muted)]">Kumulierter Überschuss nach Setup.</p>
         {bestand ? (
           <p className="mt-3 text-sm" data-bestand-hinweis>
-            Dazu baut sich Bestand auf: nach {bestand.kampagne} Monaten ≈ <b className="tabular-nums">{zahl(bestand.vertraegeNachKampagne)} Verträge</b>,
-            die bei {zahl(storno * 100, 1)} % Storno pro Jahr weiter ≈ <b className="tabular-nums">{eur(bestand.courtageJahrNachKampagne)}</b> Bestandsprovision im Jahr bringen.
+            Ab dem 2. Jahr kommt Bestandsprovision dazu: nach {bestand.kampagne} Monaten ≈ <b className="tabular-nums">{zahl(bestand.vertraegeNachKampagne)} Verträge</b>,
+            die bei {zahl(storno * 100, 1)} % Storno pro Jahr ≈ <b className="tabular-nums">{eur(bestand.courtageJahrNachKampagne)}</b> Bestandsprovision im Jahr bringen
+            (im 1. Vertragsjahr gibt es die Abschlussprovision).
           </p>
         ) : null}
       </Card>

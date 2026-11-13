@@ -66,7 +66,7 @@ describe("Break-even-Rechner", () => {
     const i = base({}, tkv, "makler");
     expect(i.rate).toBe(0);
     expect(i.trail).toBeCloseTo(0.225, 6);
-    expect(provisionPerVertrag("percent", i, 10)).toBeCloseTo(350 * 0.225, 6);
+    expect(provisionPerVertrag("percent", i, 10, true)).toBeCloseTo(350 * 0.225, 6);
   });
 
   it("PKV: Monatsbeiträge × Monatsbeitrag, nur für Makler wählbar", () => {
@@ -305,7 +305,7 @@ describe("Bestandssicht (Makler TKV, Storno)", () => {
   });
 
   it("Vertreter unverändert: kein Makler-Modus, ohne Bestand keine Bestandssicht", () => {
-    const i = base();
+    const i = base({ trail: 0 });
     expect(maklerModus(tkv, i)).toBe(false);
     const r = berechne(tkv, i, 6);
     expect(berechneBestand(tkv, i, r)).toBeNull();
@@ -573,13 +573,14 @@ describe("Cross-Selling für Vertreter", () => {
     expect(berechne(tkv, defaultInput(tkv, "vertreter"), 6).provisionZusatz).toBe(0);
   });
 
-  it("an: Zusatzverträge × Beitrag × (Abschluss + Bestand) kommen zur Provision dazu", () => {
+  it("an: Zusatzverträge × Beitrag × Abschlussprovision kommen zur Provision dazu", () => {
     const aus = defaultInput(pkv, "vertreter");
     const an: RechnerInput = { ...aus, xs: true, xRate: 0.5, xBeitrag: 400, xAp: 0.2, xTrail: 0.1 };
     const r0 = berechne(pkv, aus, 20);
     const r1 = berechne(pkv, an, 20);
     expect(r1.zusatzVertraege).toBeCloseTo(r0.vertraege * 0.5, 9);
-    expect(r1.provisionZusatz).toBeCloseTo(r0.vertraege * 0.5 * 400 * 0.3, 6);
+    // im 1. Jahr nur Abschlussprovision des Zusatzvertrags (Bestand erst ab dem 2. Jahr)
+    expect(r1.provisionZusatz).toBeCloseTo(r0.vertraege * 0.5 * 400 * 0.2, 6);
     expect(r1.provision).toBeCloseTo(r0.provision + r1.provisionZusatz, 6);
     expect(r1.ueberschuss).toBeGreaterThan(r0.ueberschuss);
     if (r0.breakEvenVertraege != null) expect(r1.breakEvenVertraege!).toBeLessThanOrEqual(r0.breakEvenVertraege);
@@ -597,5 +598,29 @@ describe("Cross-Selling für Vertreter", () => {
     const m = defaultInput(tkv, "makler");
     expect(maklerModus(tkv, m)).toBe(true);
     expect(berechne(tkv, m, 4).provisionZusatz).toBe(0);
+  });
+});
+
+describe("Vertreter: 10 % Bestandsprovision als Standard, erst ab dem 2. Jahr (Ole 13.11.)", () => {
+  it("Standard 10 % Bestand für Vertreter, Makler unverändert", () => {
+    expect(defaultInput(tkv, "vertreter").trail).toBeCloseTo(0.1, 9);
+    expect(defaultInput(tkv, "makler").trail).toBeCloseTo(0.225, 9);
+  });
+  it("1. Jahr: Provision je Vertrag ohne Bestand; Bestand kommt erst 12 Monate nach Abschluss", () => {
+    const i = defaultInput(tkv, "vertreter");
+    const r = berechne(tkv, i, 6);
+    expect(r.provisionJeVertrag).toBeCloseTo(i.beitrag * i.rate, 9);
+    const b = berechneBestand(tkv, i, r)!;
+    const abschluss = r.vertraege * i.beitrag * i.rate;
+    // Monate 1–12: nur Abschlussprovision
+    for (const m of [1, 6, 12]) expect(b.courtageMonat[m]).toBeCloseTo(abschluss, 6);
+    // Monat 13: Verträge aus Monat 1 bringen Bestand (nach 12 Monaten Storno)
+    const bleibe = Math.pow(1 - i.storno, 1 / 12);
+    expect(b.courtageMonat[13]).toBeCloseTo(r.vertraege * Math.pow(bleibe, 12) * ((i.beitrag * i.trail) / 12), 6);
+  });
+  it("Makler: Courtage weiter ab dem 1. Monat und in der Monatsrechnung", () => {
+    const i = defaultInput(tkv, "makler");
+    const r = berechne(tkv, i, 4);
+    expect(r.provisionJeVertrag).toBeCloseTo(i.beitrag * i.trail, 9);
   });
 });

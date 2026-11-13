@@ -377,6 +377,11 @@ export type RechnerInput = {
 export const CPL_MIN = 0.5;
 export const CPL_MAX = 500;
 
+/** Vertreter: Bestandsprovision ab dem 13. Monat nach Abschluss (1. Jahr: Abschlussprovision). */
+export const BESTAND_AB_MONAT_VERTRETER = 12;
+/** Vertreter: Standard-Bestandsprovision im Rechner (Ole, 13.11.2026). */
+export const BESTAND_STANDARD_VERTRETER = 0.1;
+
 export const KAMPAGNE_OPTIONEN = [6, 12, 24] as const;
 export const HORIZONT_OPTIONEN = [3, 5, 10] as const;
 export type Kampagne = (typeof KAMPAGNE_OPTIONEN)[number];
@@ -393,6 +398,12 @@ const HORIZONT_STANDARD: Horizont = 5;
 
 /** Standard-Provision eines Rechner-Produkts für einen Vermittlertyp. */
 export function defaultProvision(p: RechnerProduct, typ: VermittlerTyp): { rate: number; trail: number; months: number } {
+  const d = defaultProvisionRaw(p, typ);
+  // Vertreter: 10 % Bestandsprovision als Standard (ab dem 2. Jahr, siehe BESTAND_AB_MONAT_VERTRETER)
+  return typ === "vertreter" && d.months === 0 && d.rate > 0 ? { ...d, trail: BESTAND_STANDARD_VERTRETER } : d;
+}
+
+function defaultProvisionRaw(p: RechnerProduct, typ: VermittlerTyp): { rate: number; trail: number; months: number } {
   if (p.provisionKey) {
     const s = standardRate(p.provisionKey, typ);
     if (s.kind === "percent") return { rate: s.rate, trail: s.trail ?? 0, months: 0 };
@@ -560,10 +571,15 @@ function resolveCplFor(p: RechnerProduct, wert: number, hinweis: string, data: C
 // ─── Rechnung ────────────────────────────────────────────────────────────
 
 /** Provision je Vertrag bei n Verträgen im Monat (Staffel: höchste erreichte Stufe gilt für alle). */
-export function provisionPerVertrag(kind: ProvisionKind, i: RechnerInput, vertraege: number): number {
+/**
+ * Provision je Vertrag beim Abschluss (erstes Jahr). Die Bestandsprovision ist nicht enthalten:
+ * Vertreter bekommen sie erst ab dem 2. Vertragsjahr (im 1. Jahr gibt es die Abschlussprovision,
+ * Ole 13.11.2026), Makler laufend – beides rechnet die Bestandssicht (berechneBestand).
+ */
+export function provisionPerVertrag(kind: ProvisionKind, i: RechnerInput, vertraege: number, mitBestand = false): number {
   const stufe = [...i.staffel].sort((a, b) => b.ab - a.ab).find((s) => vertraege >= s.ab);
   if (kind === "monthly") return i.beitrag * (stufe ? stufe.wert : i.months);
-  return i.beitrag * ((stufe ? stufe.wert : i.rate) + i.trail);
+  return i.beitrag * ((stufe ? stufe.wert : i.rate) + (mitBestand ? i.trail : 0));
 }
 
 export type RechnerResult = {
@@ -606,9 +622,11 @@ export function berechne(p: RechnerProduct, i: RechnerInput, cpl: number): Rechn
   const leads = cpl > 0 ? werbebudget / cpl : 0;
   const kunden = leads * i.customerRate;
   const vertraege = kunden * i.contractsPerCustomer;
-  const provisionJeVertrag = provisionPerVertrag(p.kind, i, vertraege);
+  // Makler: Courtage läuft ab dem 1. Jahr mit; Vertreter: im 1. Jahr nur Abschlussprovision
+  const makler = i.typ === "makler";
+  const provisionJeVertrag = provisionPerVertrag(p.kind, i, vertraege, makler);
   // Cross-Selling (Vertreter-Sicht; im Makler-Modus rechnet die Bestandssicht)
-  const zusatzJeVertrag = i.xs && !maklerModus(p, i) ? i.xRate * i.xBeitrag * (i.xAp + i.xTrail) : 0;
+  const zusatzJeVertrag = i.xs && !maklerModus(p, i) ? i.xRate * i.xBeitrag * i.xAp : 0;
   const zusatzVertraege = zusatzJeVertrag > 0 ? vertraege * i.xRate : 0;
   const provisionZusatz = vertraege * zusatzJeVertrag;
   const provision = vertraege * provisionJeVertrag + provisionZusatz;
@@ -625,7 +643,7 @@ export function berechne(p: RechnerProduct, i: RechnerInput, cpl: number): Rechn
 
   let breakEvenVertraege: number | null = null;
   for (let n = 1; n <= 10_000; n++) {
-    if (n * (provisionPerVertrag(p.kind, i, n) + zusatzJeVertrag) >= kosten) { breakEvenVertraege = n; break; }
+    if (n * (provisionPerVertrag(p.kind, i, n, makler) + zusatzJeVertrag) >= kosten) { breakEvenVertraege = n; break; }
   }
   const kumuliert = Array.from({ length: 13 }, (_, m) => m * ueberschuss - setup);
   const bm = kumuliert.findIndex((v, m) => m > 0 && v >= 0);
@@ -742,22 +760,28 @@ function bestandRechnung(p: RechnerProduct, i: RechnerInput, r: RechnerResult, m
   const betreuungMonate = Math.max(kampagne, TERM_MONTHS[i.laufzeit] ?? 0);
   const neu = r.vertraege;
   // Abschluss-% (Staffel wie in berechne), Bestand-% läuft separat über den Bestand
-  const abschluss = provisionPerVertrag(p.kind, i, neu) - i.beitrag * i.trail;
+  const abschluss = provisionPerVertrag(p.kind, i, neu);
   const trailMonat = (i.beitrag * i.trail) / 12;
+  // Vertreter: Bestandsprovision erst ab dem 2. Vertragsjahr; Makler: Courtage ab dem ersten Monat
+  const trailAb = i.typ === "makler" ? 0 : BESTAND_AB_MONAT_VERTRETER;
+  const bleibeBisTrail = Math.pow(bleibe, trailAb);
 
   const zusatzMonat = mitZusatz ? (i.xBeitrag * i.xTrail) / 12 : 0;
   const zusatzNeu = mitZusatz ? neu * i.xRate : 0;
   const bestand = [0], bestandZusatz = [0], courtageMonat = [0], kostenMonat = [r.setup], kumCourtage = [0], kumKosten = [r.setup];
-  let n = 0, z = 0, cHaupt = 0, cZusatz = 0;
+  let n = 0, z = 0, alt = 0, cHaupt = 0, cZusatz = 0;
   let laufendGedecktMonat: number | null = null;
   let breakEvenMonat: number | null = null;
   for (let m = 1; m <= monate; m++) {
     const inKampagne = m <= kampagne;
     const zugang = inKampagne ? neu : 0;
     n = n * bleibe + zugang;
+    // Verträge, die schon Bestandsprovision bringen (bei Vertretern älter als 12 Monate)
+    const zugangVorher = trailAb === 0 ? zugang : m - trailAb >= 1 && m - trailAb <= kampagne ? neu * bleibeBisTrail : 0;
+    alt = alt * bleibe + zugangVorher;
     const herkunft = m - CROSS_SELL_VERZOEGERUNG;
     z = z * bleibe + (herkunft >= 1 && herkunft <= kampagne ? zusatzNeu : 0);
-    const ch = n * trailMonat + zugang * abschluss;
+    const ch = alt * trailMonat + zugang * abschluss;
     const cz = z * zusatzMonat;
     cHaupt += ch;
     cZusatz += cz;
