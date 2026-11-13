@@ -478,6 +478,10 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## WhatsApp verbinden: Schritt für Schritt
 
+**Video:** Ein Video (ca. 2:40 Minuten) macht den ganzen Ablauf einmal vor. Es steht oben auf der Seite
+„Ausführliche Anleitung“ (/buyer/hilfe/whatsapp), aufklappbar direkt über dem Knopf „Jetzt WhatsApp verbinden“
+in der Einrichtung und für Inhaber unter Profilmenü → **Einführung ansehen**.
+
 **Welche Nummer?** (drei Wege, keine Wertung)
 - **Nummer aus der WhatsApp Business App** (häufigster Fall): Leads und Kunden kennen die Nummer schon.
   Der Vermittler schreibt weiter in der App, der Assistent übernimmt neue Leads über dieselbe Nummer.

@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { CheckCircle2, Circle, LifeBuoy, ListChecks } from "lucide-react";
+import { CheckCircle2, Circle, LifeBuoy, ListChecks, PlayCircle } from "lucide-react";
+import { IntroVideo } from "@/components/intro-video";
+import { VIDEOS } from "@/lib/intro-videos";
 import { buttonClass } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import {
@@ -51,12 +53,15 @@ export function WhatsAppGuide({
   helpHref,
   connectHref = "/buyer/whatsapp-verbinden",
   showMoreLink = true,
+  showVideo = true,
 }: {
   initialPath: ConnectPath | null;
   readOnly: boolean;
   helpHref: string;
   connectHref?: string;
   showMoreLink?: boolean;
+  /** Video „WhatsApp verbinden“ aufklappbar über dem Knopf (Hilfeseite zeigt es separat). */
+  showVideo?: boolean;
 }) {
   const [path, setPath] = useState<ConnectPath | null>(initialPath);
   const [provider, setProvider] = useState<ProviderAnswer | null>(null);
@@ -190,6 +195,17 @@ export function WhatsAppGuide({
                 ))}
               </ol>
             </div>
+          ) : null}
+
+          {canStart && showVideo ? (
+            <details className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-3" data-whatsapp-video>
+              <summary className="flex cursor-pointer items-center gap-2 text-[15px] font-medium text-[color:var(--brand)]">
+                <PlayCircle className="h-4 w-4" /> Erst ansehen: {VIDEOS.whatsapp.title}
+              </summary>
+              <div className="mt-3">
+                <IntroVideo kind="whatsapp" />
+              </div>
+            </details>
           ) : null}
 
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">

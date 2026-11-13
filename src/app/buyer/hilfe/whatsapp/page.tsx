@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/buyer-shell";
 import { WhatsAppGuide } from "@/components/whatsapp-guide";
+import { IntroVideo } from "@/components/intro-video";
+import { VIDEOS } from "@/lib/intro-videos";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { parseConnectPath } from "@/lib/whatsapp/connect-guide";
 
@@ -83,7 +85,14 @@ export default async function WhatsAppHelpPage({ searchParams }: { searchParams:
           readOnly={ctx.preview || !owner}
           helpHref="/buyer/einrichtung?schritt=metaAccess#hilfetermin"
           showMoreLink={false}
+          showVideo={false}
         />
+      </section>
+
+      <section className="mb-8">
+        <h2 className="mb-1 text-lg font-semibold tracking-tight">{VIDEOS.whatsapp.title}</h2>
+        <p className="mb-3 text-sm text-[color:var(--muted)]">Der ganze Ablauf einmal vorgemacht – funktioniert auch ohne Ton.</p>
+        <IntroVideo kind="whatsapp" />
       </section>
 
       <section>

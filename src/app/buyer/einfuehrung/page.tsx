@@ -7,7 +7,7 @@ import { getBuyerContext } from "@/lib/buyer-context";
 
 export const metadata = { title: "Einführung | performancegrowth" };
 
-// Einführungsvideos jederzeit wieder ansehen (Profilmenü). Inhaber: kurz + ausführlich.
+// Einführungsvideos jederzeit wieder ansehen (Profilmenü). Inhaber: kurz + ausführlich + WhatsApp verbinden.
 // Berater sehen manche Bereiche aus dem ausführlichen Video nicht (Wachstum, Team) → nur das Kurzvideo.
 export default async function EinfuehrungPage() {
   const ctx = await getBuyerContext();
@@ -28,6 +28,15 @@ export default async function EinfuehrungPage() {
             <h2 className="mb-1 text-[15px] font-semibold">{VIDEOS.ausfuehrlich.title}</h2>
             <p className="mb-3 text-sm text-[color:var(--muted)]">Kontakt öffnen, Anrufliste, selbst schreiben, Pipeline, Zahlen, Kalender und Team.</p>
             <IntroVideo kind="ausfuehrlich" />
+          </div>
+        </Card>
+      ) : null}
+      {owner ? (
+        <Card>
+          <div className="p-5">
+            <h2 className="mb-1 text-[15px] font-semibold">{VIDEOS.whatsapp.title}</h2>
+            <p className="mb-3 text-sm text-[color:var(--muted)]">Ihre WhatsApp-Nummer Schritt für Schritt anbinden – mit Nummer aus der WhatsApp Business App oder einer neuen Nummer.</p>
+            <IntroVideo kind="whatsapp" />
           </div>
         </Card>
       ) : null}
