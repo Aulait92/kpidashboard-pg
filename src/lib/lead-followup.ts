@@ -5,6 +5,9 @@
 import { prisma } from "@/lib/prisma";
 import { onLeadStatus } from "@/lib/lead-sequences";
 
+/** Wiedervorlage nach dem Abschluss (gleicher Text wie lib/lead-history POLICY_TODO). */
+export const POLICY_TODO = "Police fertig machen";
+
 const DONE_STATUSES = new Set(["abschluss", "kein interesse", "disqualifiziert"]);
 
 /** Datum in N Werktagen, 9:00 Uhr (Berlin ≈ 8:00 UTC). */
@@ -27,7 +30,15 @@ export async function syncFollowUpWithStatus(leadId: string, status: string | nu
     console.error("[lead-sequences]", e);
     return { started: false };
   });
-  if (DONE_STATUSES.has(s)) {
+  if (s === "abschluss") {
+    // Nach dem Abschluss kommt noch die Police (Ole, 13.11.2026): Wiedervorlage für heute,
+    // „Erledigt“ hakt sie ab. Ist die Police schon fertig, entfällt die Wiedervorlage.
+    const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { policyDoneAt: true } });
+    await prisma.lead.update({
+      where: { id: leadId },
+      data: lead?.policyDoneAt ? { followUpAt: null, followUpNote: null } : { followUpAt: new Date(), followUpNote: POLICY_TODO },
+    });
+  } else if (DONE_STATUSES.has(s)) {
     await prisma.lead.updateMany({
       where: { id: leadId, followUpAt: { not: null } },
       data: { followUpAt: null, followUpNote: null },

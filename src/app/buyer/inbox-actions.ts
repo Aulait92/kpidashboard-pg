@@ -13,6 +13,7 @@ import { writableCustomerId } from "@/lib/buyer-write";
 import { syncFollowUpWithStatus, workdaysFromNow } from "@/lib/lead-followup";
 import { prisma } from "@/lib/prisma";
 import { recordUsage } from "@/lib/usage";
+import { abschlussText, fmtDayShort, logLeadHistory, POLICY_TODO } from "@/lib/lead-history";
 import { startSequence, stopSequences } from "@/lib/lead-sequences";
 
 type LeadPrev = {
@@ -53,6 +54,8 @@ const leadSelect = {
   firstContactAt: true,
   followUpAt: true,
   followUpNote: true,
+  source: true,
+  policyDoneAt: true,
 } as const;
 
 function snapshot(l: {
@@ -120,6 +123,7 @@ export async function callbackOutcomeResult(
       },
     });
     await startSequence(lead.id, "not_reached", now).catch((e) => console.error("[lead-sequences]", e));
+    await logLeadHistory(lead.id, "anruf", `Anruf: nicht erreicht (${attempts}. Versuch)`, { customerId });
   } else if (outcome === "offer" || outcome === "won") {
     // Am Telefon direkt Angebot geschickt bzw. abgeschlossen.
     const status = outcome === "won" ? "Abschluss" : "Angebot gesendet";
@@ -142,6 +146,7 @@ export async function callbackOutcomeResult(
       },
     });
     await syncFollowUpWithStatus(lead.id, status);
+    await logLeadHistory(lead.id, outcome === "won" ? "abschluss" : "anruf", outcome === "won" ? await abschlussText(customerId, lead.source, value) : "Anruf: Angebot gesendet", { customerId });
   } else {
     if (lead.airtableId) {
       await updateLeadEditableFields({
@@ -154,6 +159,7 @@ export async function callbackOutcomeResult(
       data: { status: "Kein Interesse", reached: true },
     });
     await syncFollowUpWithStatus(lead.id, "Kein Interesse");
+    await logLeadHistory(lead.id, "anruf", "Anruf: kein Interesse", { customerId });
   }
   await recordUsage("action", `callback.${outcome}`);
   refresh();
@@ -210,6 +216,16 @@ export async function appointmentOutcomeResult(
     },
   });
   await syncFollowUpWithStatus(lead.id, nextStatus);
+  await logLeadHistory(
+    lead.id,
+    outcome === "closed" ? "abschluss" : "status",
+    outcome === "closed"
+      ? await abschlussText(customerId, lead.source, value)
+      : outcome === "no_show"
+        ? "Termin: nicht erschienen"
+        : `Termin: ${nextStatus}`,
+    { customerId },
+  );
   if (outcome === "no_show") await startSequence(lead.id, "no_show").catch((e) => console.error("[lead-sequences]", e));
   await recordUsage("action", `outcome.${outcome}`);
   refresh();
@@ -345,6 +361,8 @@ export async function setFollowUpResult(
       callbackSnoozedUntil: at,
     },
   });
+  const noteText = (note ?? "").trim() || lead.followUpNote;
+  await logLeadHistory(lead.id, "wiedervorlage", `Wiedervorlage ${fmtDayShort(at)}${noteText ? ` · ${noteText}` : ""}`, { customerId });
   await recordUsage("action", "followup.set", { meta: "days" in when ? { days: when.days } : { date: true } });
   refresh();
   return { ok: true, undo: { kind: "lead", leadId, prev } };
@@ -357,7 +375,10 @@ export async function clearFollowUpResult(leadId: string): Promise<InboxResult> 
   const lead = await prisma.lead.findFirst({ where: { id: leadId, customerId }, select: leadSelect });
   if (!lead) return { ok: false, error: "Lead nicht gefunden." };
   const prev = snapshot(lead);
-  await prisma.lead.update({ where: { id: lead.id }, data: { followUpAt: null, followUpNote: null } });
+  // „Police fertig machen“ erledigt → Police abgehakt
+  const police = lead.followUpNote === POLICY_TODO && !lead.policyDoneAt;
+  await prisma.lead.update({ where: { id: lead.id }, data: { followUpAt: null, followUpNote: null, ...(police ? { policyDoneAt: new Date() } : {}) } });
+  await logLeadHistory(lead.id, police ? "police" : "wiedervorlage", police ? "Police fertig gemacht" : `Wiedervorlage erledigt${lead.followUpNote ? ` · ${lead.followUpNote}` : ""}`, { customerId });
   await recordUsage("action", "followup.done");
   refresh();
   return { ok: true, undo: { kind: "lead", leadId, prev } };

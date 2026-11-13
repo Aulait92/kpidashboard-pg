@@ -1,5 +1,6 @@
 "use server";
 
+import { abschlussText, logLeadHistory } from "@/lib/lead-history";
 import { revalidatePath } from "next/cache";
 import {
   fetchAllStornogruende,
@@ -199,7 +200,7 @@ export async function setLeadStatusAction(
 
   const lead = await prisma.lead.findFirst({
     where: { id: leadId, customerId: writeCustomerId },
-    select: { id: true, airtableId: true, firstContactAt: true, contactAttempts: true },
+    select: { id: true, airtableId: true, firstContactAt: true, contactAttempts: true, status: true, source: true },
   });
   if (!lead) return { ok: false, error: "Lead nicht gefunden." };
 
@@ -254,6 +255,14 @@ export async function setLeadStatusAction(
   });
 
   await syncFollowUpWithStatus(lead.id, status);
+  if (lead.status !== status) {
+    await logLeadHistory(
+      lead.id,
+      isClosed ? "abschluss" : "status",
+      isClosed ? await abschlussText(writeCustomerId, lead.source, closeValue ?? null) : `Status: ${status}`,
+      { customerId: writeCustomerId },
+    );
+  }
   await recordUsage("action", "pipeline.move", { meta: { to: status } });
   revalidatePath("/buyer");
   revalidatePath("/buyer/kanban");

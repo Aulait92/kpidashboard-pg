@@ -15,7 +15,11 @@ import { prisma } from "@/lib/prisma";
 import { nowMs } from "@/lib/now";
 import { isAdvisor, leadScope, teamMembers, type TeamCtx } from "@/lib/team";
 import { LeadAssignee } from "@/components/lead-assignee";
-import { LeadHeaderActions, LeadNotes } from "@/components/lead-actions";
+import { LeadHeaderActions } from "@/components/lead-actions";
+import { AbschlussCard, LeadHistory } from "@/components/lead-history";
+import { loadLeadHistory } from "@/lib/lead-history";
+import { loadCustomerProvision } from "@/lib/provision-server";
+import { estimatedProvision, ruleFor } from "@/lib/provision";
 import { LeadSequenceCard } from "@/components/lead-sequence-card";
 import {
   ALL_GROUP_KEYS,
@@ -134,6 +138,9 @@ export async function LeadDetailBody({
       followUpNote: true,
       notes: true,
       erasedAt: true,
+      closedAt: true,
+      closeValue: true,
+      policyDoneAt: true,
       statusChangedAt: true,
       stornoState: true,
       stornoReason: true,
@@ -192,6 +199,21 @@ export async function LeadDetailBody({
     prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true, bookingSlug: true } }),
   ]);
   const storniert = !!lead.status?.toLowerCase().startsWith("storno");
+  // Abschluss (Ole, 13.11.2026): Beitrag, geschätzte Provision und Police im Kontakt sehen
+  const won = (lead.status ?? "").trim().toLowerCase() === "abschluss";
+  const [history, rates] = await Promise.all([loadLeadHistory(lead.id, team.userId), won ? loadCustomerProvision(customerId).then((p) => p.rates) : null]);
+  let beitrag: string | null = null;
+  let provision: string | null = null;
+  if (won && rates) {
+    const v = lead.closeValue == null ? null : Number(lead.closeValue);
+    const rule = ruleFor(lead.source, rates);
+    if (v != null && v > 0) beitrag = rule.kind === "monthly" ? `${formatEUR(v)} im Monat` : rule.kind === "percent" ? `${formatEUR(v)} im Jahr` : formatEUR(v);
+    const p = estimatedProvision(lead.source, v, rates);
+    if (p != null) {
+      const trailYear2 = rule.kind === "percent" && rule.trailFromYear2 && (rule.trail ?? 0) > 0 ? (v ?? rule.defaultPremium) * (rule.trail ?? 0) : 0;
+      provision = `≈ ${formatEUR(p)}${trailYear2 > 0 ? `, ab dem 2. Jahr ≈ ${formatEUR(trailYear2)} Bestand pro Jahr` : ""}${v == null ? " (Standardbeitrag)" : ""}`;
+    }
+  }
   const label = (whatsapp ? WHATSAPP_STATUS_LABELS[lead.status ?? ""] : null) ?? lead.status ?? "Neuer Lead";
   const apptFmt = (d: Date) =>
     new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }).format(d);
@@ -218,6 +240,16 @@ export async function LeadDetailBody({
         daysInPhase={Math.max(0, Math.floor((nowMs() - lead.statusChangedAt.getTime()) / 86_400_000))}
         askAfterCall={newUi}
       />
+
+      {won ? (
+        <AbschlussCard
+          leadId={lead.id}
+          closedAt={lead.closedAt?.toISOString() ?? null}
+          beitrag={beitrag}
+          provision={provision}
+          policyDoneAt={lead.policyDoneAt?.toISOString() ?? null}
+        />
+      ) : null}
 
       {lead.stornoState === "review" || lead.stornoState === "rejected" ? (
         <div
@@ -295,7 +327,7 @@ export async function LeadDetailBody({
 
       <LeadSequenceCard leadId={lead.id} readOnly={!!lead.erasedAt} />
 
-      <LeadNotes leadId={lead.id} initial={lead.notes ?? (fields ? (firstString(fields["Notizen"]) ?? "") : "")} />
+      <LeadHistory leadId={lead.id} initial={history} legacyNote={lead.notes ?? (fields ? (firstString(fields["Notizen"]) ?? null) : null)} />
     </>
   );
 }

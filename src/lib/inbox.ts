@@ -2,6 +2,7 @@
 // Termine heute/morgen, Termine ohne Ergebnis, Chats die den Berater
 // brauchen, Rückrufe. Alles serialisierbar für die Client-Komponente.
 
+import { POLICY_TODO } from "@/lib/lead-followup";
 import { prisma } from "@/lib/prisma";
 import { getCallbackLeads } from "@/lib/whatsapp/outreach";
 import { getOrCreateBookingSlug } from "@/lib/calendar";
@@ -112,7 +113,11 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
       where: {
         ...leadScope(ctx),
         followUpAt: { lt: new Date(todayStart.getTime() + DAY) },
-        NOT: { status: { in: POST_STATUSES.filter((x) => x !== "Angebot gesendet") } },
+        // Nach dem Abschluss bleibt nur „Police fertig machen“ (Ole, 13.11.2026)
+        OR: [
+          { NOT: { status: { in: POST_STATUSES.filter((x) => x !== "Angebot gesendet") } } },
+          { status: "Abschluss", policyDoneAt: null, followUpNote: POLICY_TODO },
+        ],
       },
       orderBy: { followUpAt: "asc" },
       take: 50,
