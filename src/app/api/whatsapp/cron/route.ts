@@ -139,6 +139,15 @@ async function handle(req: Request): Promise<Response> {
       }
     });
   }
+  // Kampagnen-Agenten: liegengebliebene Läufe fortsetzen (z. B. nach Neustart)
+  after(async () => {
+    try {
+      const { resumeCampaignRuns } = await import("@/lib/kampagnen/run");
+      await resumeCampaignRuns();
+    } catch (e) {
+      reportError(e, "cron-kampagnen");
+    }
+  });
   // Bank & Karten: Kontoumsätze täglich abrufen, an Neuverbindung erinnern (nach der Antwort)
   after(() => runBankSync(now).catch((e: unknown) => reportError(e, "cron-bank")));
   // WhatsApp selbst verbunden: API-Keys für Channels nachholen, die beim Redirect noch eingerichtet wurden

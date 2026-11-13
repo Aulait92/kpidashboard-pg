@@ -1689,6 +1689,64 @@ Antworte mit GENAU EINEM <creative_html>-Block, KEINE anderen Tags:
   return { imageUrl, imagePrompt: html };
 }
 
+// ─── Kunden-Creatives (Kampagnen-Agenten, lib/kampagnen) ─────────────
+// Gleiche Pipeline wie oben (Claude-HTML → Platzhalter-Bilder → Playwright →
+// R2), aber ohne PKV-Vorgaben: Produkt, Ort und Vermittler kommen aus der
+// Kundenakte, die Texte vom Texter-Agenten.
+
+const PRODUCT_CREATIVE_SYSTEM_PROMPT = `Du bist Senior-Creative-Director für Meta-Ads (Feed, quadratisch 1080×1080) von Versicherungsvermittlern in Deutschland. Du designst ein komplettes Creative als HTML-Dokument.
+
+TECHNIK:
+- Ein vollständiges HTML-Dokument, festes Format 1080×1080 px (body ohne Rand, overflow hidden), nur Inline-CSS, Systemschriften oder Google Fonts per <link>.
+- Fotos über Platzhalter {{UNSPLASH:englische suchbegriffe}} (als <img src> oder background-image url), Illustrationen über {{COMIC:englische beschreibung}}. Keine anderen externen Bilder.
+- Text groß und auf dem Smartphone lesbar: Headline ≥ 64px, Subline ≥ 36px. Höchstens 20 % der Fläche Text.
+- Kein Logo eines Versicherers, keine Markenzeichen, keine Preise, keine Siegel, keine Garantie-Badges.
+- Seriös, warm, regional: echte Menschen bzw. Tiere in Alltagssituationen, ruhige Farben, klarer Kontrast.`;
+
+export async function renderProductCreative(opts: {
+  product: string;
+  place: string | null;
+  advisorName: string;
+  headline: string;
+  subline: string;
+  angle: string;
+  requestId: string;
+  index: number;
+}): Promise<{ imageUrl: string; imagePrompt: string }> {
+  const userPrompt = `Erstelle EIN Meta-Ad-Creative.
+
+PRODUKT: ${opts.product}
+ORT: ${opts.place ?? "Deutschland"}
+ABSENDER (klein im Bild, z. B. unten): ${opts.advisorName}
+WINKEL: ${opts.angle}
+
+TEXTE IM BILD (genau so verwenden):
+- Headline: "${opts.headline}"
+- Subline: "${opts.subline}"
+
+Antworte mit GENAU EINEM <creative_html>-Block:
+
+<creative_html>
+<!DOCTYPE html>
+<html lang="de">
+…
+</html>
+</creative_html>`;
+  const text = await llmText({
+    system: PRODUCT_CREATIVE_SYSTEM_PROMPT,
+    user: userPrompt,
+    maxTokens: 8000,
+    model: process.env.CAMPAIGN_CREATIVE_MODEL || "claude-opus-5-5",
+  });
+  const html = extractTag(text, "creative_html");
+  if (!html) throw new Error(`Creative lieferte kein <creative_html>: ${text.slice(0, 200)}`);
+  let resolvedHtml = await resolvePhotoPlaceholders(html);
+  resolvedHtml = await resolveComicPlaceholders(resolvedHtml);
+  const buffer = await renderHtmlToImage(resolvedHtml, { width: 1080, height: 1080, format: "jpeg", quality: 92 });
+  const imageUrl = await uploadImageToR2({ buffer, key: `kampagnen/${opts.requestId}/${opts.index + 1}-${Date.now()}.jpg`, contentType: "image/jpeg" });
+  return { imageUrl, imagePrompt: html };
+}
+
 // ─── Intent Parsing aus Telegram-Text ────────────────────────────────
 
 // ─── Video-Generation (Google Veo 3) ─────────────────────────────────

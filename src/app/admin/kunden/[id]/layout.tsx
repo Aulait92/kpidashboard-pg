@@ -92,6 +92,7 @@ export default async function KundenakteLayout({ children, params }: { children:
           tabs={[
             { href: base, label: "Übersicht", exact: true },
             { href: `${base}/leads`, label: "Leads & Formulare" },
+            { href: `${base}/kampagne`, label: "Kampagne (KI)" },
             ...(c.plan !== "service" ? [{ href: `${base}/whatsapp`, label: "WhatsApp-Assistent" }] : []),
             { href: `${base}/logins`, label: "Logins & Team" },
             { href: `${base}/abrechnung`, label: "Abrechnung & Pause" },

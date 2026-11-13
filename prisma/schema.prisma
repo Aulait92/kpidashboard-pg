@@ -134,6 +134,8 @@ model Customer {
   retainerEnd     DateTime?
   // Eigenes Meta-Werbekonto des Kunden (nur Ziffern, ohne „act_").
   metaAdAccountId String?
+  // Facebook-Seite des Kunden für Lead-Ads (Kampagnen-Agenten); sonst aus LeadSource.pageId
+  metaPageId      String?
 
   leads            Lead[]
   garantieFaelle   GarantieFall[]
@@ -215,6 +217,8 @@ model Customer {
   referralLinks            ReferralLink[]
   googleBusiness           GoogleBusinessConnection?
   googleReviews            GoogleReview[]
+  // Kampagnen-Agenten (lib/kampagnen)
+  campaignRuns             CampaignRun[]
 }
 
 // Tagesbudget je Produkt (Kundenbereich → Konto → Werbebudget). Ohne Eintrag gilt das
@@ -2456,4 +2460,44 @@ model ModuleAnnouncement {
 model PlacesUsage {
   day   String @id // YYYY-MM-DD (UTC)
   count Int    @default(0)
+}
+
+// Kampagnen-Agenten (lib/kampagnen): ein Lauf = ein Durchgang des KI-Teams für
+// eine Meta-Lead-Kampagne eines Kunden. Ergebnisse je Agent als JSON, Meta-IDs in
+// „built“ (idempotentes Anlegen; alles PAUSED, veröffentlicht wird von Hand).
+model CampaignRun {
+  id         String    @id @default(cuid())
+  customerId String
+  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  product    String
+  wish       String?
+  // queued | running | review | building | built | blocked | failed | cancelled
+  status     String    @default("queued")
+  // Nach grüner/gelber Prüfung direkt pausiert bei Meta anlegen (1 Klick)
+  autoBuild  Boolean   @default(true)
+  // Schritte je Agent: [{ key, status, startedAt, finishedAt, error, tokensIn, tokensOut }]
+  steps      Json
+  context    Json?
+  plan       Json?
+  angles     Json?
+  copies     Json?
+  creatives  Json?
+  form       Json?
+  review     Json?
+  // Bei Meta angelegte Objekte (campaignId, adSetIds, formId, imageHashes, creativeIds, adIds)
+  built      Json?
+  error      String?
+  // KI-Kosten grob in US-Cent und Tokens
+  costCents  Int       @default(0)
+  tokensIn   Int       @default(0)
+  tokensOut  Int       @default(0)
+  // Verarbeitung läuft gerade (Schutz vor Doppelverarbeitung durch Cron)
+  lockedAt   DateTime?
+  createdBy  String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  finishedAt DateTime?
+
+  @@index([customerId, createdAt])
+  @@index([status])
 }
