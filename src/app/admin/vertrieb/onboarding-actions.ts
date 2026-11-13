@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { endPauseNow, planPause } from "@/lib/pause";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
-import { MANUAL_FIELDS, sendGoLiveMail, sendWelcome, startOnboarding } from "@/lib/onboarding";
+import { MANUAL_FIELDS, openSetupForExisting, sendGoLiveMail, sendWelcome, startOnboarding } from "@/lib/onboarding";
 import { logOfferActivity, setContactCustomerStage } from "@/lib/offer-links";
 
 function refresh(contactId?: string | null) {
@@ -22,6 +22,16 @@ export async function startOnboardingAction(fd: FormData) {
   const offer = await prisma.offer.findUnique({ where: { id: offerId }, select: { salesContactId: true } });
   if (res.ok) await setContactCustomerStage({ dealId: null, salesContactId: offer?.salesContactId ?? null }, "ONBOARDING");
   refresh(offer?.salesContactId);
+}
+
+/** Kundenakte: Einrichtung für Bestandskunden ohne Onboarding freischalten. */
+export async function openSetupAction(fd: FormData) {
+  await requireAuth();
+  const customerId = String(fd.get("customerId") ?? "");
+  if (!customerId) return;
+  await openSetupForExisting(customerId);
+  revalidatePath(`/admin/kunden/${customerId}`);
+  revalidatePath("/buyer", "layout");
 }
 
 export async function toggleOnboardingStepAction(fd: FormData) {

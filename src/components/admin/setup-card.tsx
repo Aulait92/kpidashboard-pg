@@ -1,5 +1,5 @@
 import { CheckCircle2, Circle, XCircle } from "lucide-react";
-import { adminCheckMetaAction, sendSetupReminderAction, toggleOnboardingStepAction } from "@/app/admin/vertrieb/onboarding-actions";
+import { adminCheckMetaAction, openSetupAction, sendSetupReminderAction, toggleOnboardingStepAction } from "@/app/admin/vertrieb/onboarding-actions";
 import { REMINDER_DAYS, loadSetupOverview, type MetaCheck } from "@/lib/selbst-einrichtung";
 
 const fmt = (d: Date | string) =>
@@ -17,7 +17,23 @@ const NOTICE: Record<string, string> = {
  */
 export async function SetupCard({ customerId, notice }: { customerId: string; notice?: string }) {
   const o = await loadSetupOverview(customerId);
-  if (!o) return null;
+  if (!o) {
+    // Bestandskunde ohne Onboarding: Einrichtung (Kalender, WhatsApp, App, Provisionen) freischalten
+    return (
+      <section className="card px-4 py-3 text-sm" data-setup-card>
+        <h2 className="font-medium">Selbst-Einrichtung</h2>
+        <p className="mt-1 text-slate-600">
+          Für diesen Kunden gibt es noch keine Einrichtung (Kunde aus der Zeit vor dem Onboarding). Freischalten zeigt ihm im Kundenbereich
+          „Einrichtung“ mit den offenen Schritten: App aufs Handy, Kalender, Provisionen, WhatsApp verbinden, Einwilligung. Ohne Willkommens-Mail
+          und ohne Erinnerungen.
+        </p>
+        <form action={openSetupAction} className="mt-3">
+          <input type="hidden" name="customerId" value={customerId} />
+          <button className="btn-primary">Einrichtung freischalten</button>
+        </form>
+      </section>
+    );
+  }
   const { ob, steps, progress, days } = o;
   const meta = (ob.metaCheck ?? null) as MetaCheck | null;
   const sent = (ob.setupReminders && typeof ob.setupReminders === "object" ? ob.setupReminders : {}) as Record<string, string>;

@@ -448,10 +448,44 @@ export async function onboardingProgressFor(customerIds: string[]) {
 /** Offene Schritte, die der Kunde selbst erledigen muss (0 = kein Onboarding bzw. fertig). */
 export async function customerSetupOpenCount(customerId: string): Promise<number> {
   const ob = await loadOnboarding({ customerId });
-  if (!ob || ob.liveAt || ob.status === "cancelled") return 0;
+  if (!ob || ob.status === "cancelled") return 0;
   const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true } }) : null;
-  const open = onboardingChecklist(ob, offer).filter((i) => !i.done && i.owner === "kunde" && i.key !== "login").length;
+  // Nach dem Livegang zählen nur noch die Software-Schritte (z. B. WhatsApp nach einem Paketwechsel, Ole 13.11.2026)
+  const open = onboardingChecklist(ob, offer).filter(
+    (i) => !i.done && i.owner === "kunde" && i.key !== "login" && (!ob.liveAt || LIVE_SETUP_KEYS.has(i.key)),
+  ).length;
   return Math.max(open, 0);
+}
+
+/** Schritte, die auch nach dem Livegang in der Einrichtung offen bleiben. */
+const LIVE_SETUP_KEYS = new Set(["calendar", "whatsapp", "consent"]);
+
+/**
+ * Einrichtung für einen Bestandskunden ohne Onboarding freischalten (z. B. Kunden aus der Zeit
+ * vor dem Onboarding oder Testkunden): legt ein bereits live geschaltetes Onboarding an, sodass nur
+ * die Software-Schritte offen sind (Kalender, WhatsApp, Einwilligung, App, Provisionen).
+ * Keine Willkommens-Mail, keine Erinnerungen (die laufen nur vor dem Livegang).
+ */
+export async function openSetupForExisting(customerId: string): Promise<{ ok: true; created: boolean } | { ok: false; error: string }> {
+  const customer = await prisma.customer.findUnique({ where: { id: customerId }, select: { plan: true, onboarding: { select: { id: true } } } });
+  if (!customer) return { ok: false, error: "Kunde nicht gefunden." };
+  if (customer.onboarding) return { ok: true, created: false };
+  const now = new Date();
+  await prisma.onboarding.create({
+    data: {
+      customerId,
+      package: customer.plan === "service" ? "service" : "software",
+      status: "running",
+      welcomeSentAt: now,
+      questionnaireAt: now,
+      metaAccessAt: now,
+      websiteCheckedAt: now,
+      campaignReadyAt: now,
+      testLeadAt: now,
+      liveAt: now,
+    },
+  });
+  return { ok: true, created: true };
 }
 
 /** Mail „Ihre Kampagne ist live“ – beim Live-Schalten im Admin. */

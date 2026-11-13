@@ -214,11 +214,18 @@ export async function resubmitTemplateAction(customerId: string, purpose: string
 }
 
 // ─── Demo-Daten (nur Sandbox: DEMO_TOOLS=1) ──────────────────────────────
+/** Demo-Daten: in der Sandbox (DEMO_TOOLS=1) für alle, auf der Live-App nur für interne Testkunden. */
+async function demoAllowed(customerId: string): Promise<boolean> {
+  if (process.env.DEMO_TOOLS === "1") return true;
+  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { plan: true } });
+  return c?.plan === "internal";
+}
+
 export async function seedDemoAction(formData: FormData): Promise<void> {
   await requireAdmin();
-  if (process.env.DEMO_TOOLS !== "1") throw new Error("Demo-Werkzeuge sind deaktiviert.");
   const customerId = String(formData.get("customerId") ?? "");
   if (!customerId) return;
+  if (!(await demoAllowed(customerId))) throw new Error("Testdaten nur für interne Testkunden.");
   const { seedDemoData } = await import("@/lib/demo-data");
   await seedDemoData(customerId);
   revalidatePath("/admin/whatsapp/settings");
@@ -228,9 +235,9 @@ export async function seedDemoAction(formData: FormData): Promise<void> {
 
 export async function removeDemoAction(formData: FormData): Promise<void> {
   await requireAdmin();
-  if (process.env.DEMO_TOOLS !== "1") throw new Error("Demo-Werkzeuge sind deaktiviert.");
   const customerId = String(formData.get("customerId") ?? "");
   if (!customerId) return;
+  if (!(await demoAllowed(customerId))) throw new Error("Testdaten nur für interne Testkunden.");
   const { removeDemoData } = await import("@/lib/demo-data");
   await removeDemoData(customerId);
   revalidatePath("/admin/whatsapp/settings");
@@ -314,4 +321,14 @@ export async function setTemplateApprovedAction(id: string, approved: boolean): 
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Speichern fehlgeschlagen." };
   }
+}
+
+/** Kundenakte: Kunde als internen Testkunden markieren (zählt nicht in Zahlen/Umsätzen). */
+export async function markTestCustomerAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const customerId = String(formData.get("customerId") ?? "");
+  if (!customerId || formData.get("confirm") !== "on") return;
+  await prisma.customer.update({ where: { id: customerId }, data: { plan: "internal" } });
+  revalidatePath(`/admin/kunden/${customerId}`);
+  revalidatePath("/admin/kunden", "layout");
 }

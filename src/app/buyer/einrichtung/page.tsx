@@ -56,6 +56,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const appDone = await appInstalled(ctx.customerId);
   const steps = setupSteps(ob, items, { appDone, provisionDone: provision.hasCustom });
   const overall = setupProgress(steps);
+  // Live und nichts mehr offen = fertig. Live mit offenen Software-Schritten (z. B. nach Paketwechsel): Fortschritt zeigen.
+  const fertig = !!ob.liveAt && overall.open.length === 0;
   // WhatsApp selbst verbinden (360dialog), nur mit Software und wenn der Partner-Zugang eingerichtet ist.
   const waEnabled = software && selfConnectEnabled();
   const waAccount = waEnabled
@@ -95,14 +97,14 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         <div className="p-5">
           <div className="flex items-center justify-between text-sm" data-setup-progress>
             <span className="font-medium">
-              {ob.liveAt ? "Alles eingerichtet, Sie sind live." : `Einrichtung: ${overall.done} von ${overall.total} erledigt`}
+              {fertig ? "Alles eingerichtet, Sie sind live." : `Einrichtung: ${overall.done} von ${overall.total} erledigt`}
             </span>
-            <span className="text-[color:var(--muted)]">{ob.liveAt ? "100" : overall.percent} %</span>
+            <span className="text-[color:var(--muted)]">{fertig ? "100" : overall.percent} %</span>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-[color:var(--surface-sunken,#f1f5f9)]">
-            <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${ob.liveAt ? 100 : overall.percent}%` }} />
+            <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${fertig ? 100 : overall.percent}%` }} />
           </div>
-          {!ob.liveAt ? (
+          {!fertig ? (
             <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-sm" data-setup-steps>
               {steps.map((st) => (
                 <li key={st.key} className={`flex items-center gap-1 ${st.done ? "text-[color:var(--muted)]" : ""}`}>
@@ -292,7 +294,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           </Step>
         ) : null}
 
-        <Step n={nextNo()} title="App aufs Handy und Mitteilungen" icon={Smartphone} done={appDone} open={current === "start" && !ob.liveAt && !appDone} id="app">
+        <Step n={nextNo()} title="App aufs Handy und Mitteilungen" icon={Smartphone} done={appDone} open={current === "start" && !fertig && !appDone} id="app">
           <VideoHint url={video("app")} />
           <InstallApp appUrl={appHost()} />
         </Step>
