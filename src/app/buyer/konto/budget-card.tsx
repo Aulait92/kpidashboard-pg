@@ -30,9 +30,11 @@ export type BudgetCardProps = {
   pending: { monthlyBudgetTo: number; createdAt: string } | null;
   today: string;
   readOnly: boolean;
+  /** Budget aus den Werbeausgaben geschätzt (Kunde ohne Angebot in der App) */
+  estimated?: boolean;
 };
 
-export function BudgetCard({ lines, upcoming, ctx, pending, today, readOnly }: BudgetCardProps) {
+export function BudgetCard({ lines, upcoming, ctx, pending, today, readOnly, estimated = false }: BudgetCardProps) {
   const [values, setValues] = useState<Record<string, number>>(() => Object.fromEntries(lines.map((l) => [l.product, l.dailyBudget])));
   const [when, setWhen] = useState<"now" | "date">("now");
   const [ack, setAck] = useState(false);
@@ -75,6 +77,11 @@ export function BudgetCard({ lines, upcoming, ctx, pending, today, readOnly }: B
           </div>
         ) : null}
 
+        {estimated ? (
+          <p className="text-sm text-[color:var(--muted)]" data-budget-geschaetzt>
+            Ihr aktuelles Budget haben wir aus Ihren Werbeausgaben der letzten 14 Tage ermittelt. Stellen Sie hier ein, was künftig gelten soll.
+          </p>
+        ) : null}
         <div className="space-y-4">
           {lines.map((l) => {
             const v = values[l.product] ?? l.dailyBudget;

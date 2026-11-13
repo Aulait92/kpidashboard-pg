@@ -218,6 +218,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           pending={budget.pending ? { monthlyBudgetTo: budget.pending.monthlyBudgetTo, createdAt: budget.pending.createdAt.toISOString() } : null}
           today={today}
           readOnly={ctx.preview}
+          estimated={budget.estimated}
         />
 
         <ProductsCard booked={products.booked} bookable={products.bookable} lines={products.lines} ctx={products.ctx} today={today} readOnly={ctx.preview} />

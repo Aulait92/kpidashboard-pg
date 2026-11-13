@@ -220,3 +220,60 @@ describe("Budget ändern (Kundenbereich)", () => {
     expect(await changeBudget({ customerId, userId: null, next: [{ product: "Fremd", dailyBudget: 50 }], effectiveDate: null, acknowledged: false }, NOW)).toMatchObject({ ok: false });
   });
 });
+
+describe("Budget ändern ohne Angebot (ältere Kunden): Startwert aus den Werbeausgaben", () => {
+  const ids: string[] = [];
+  beforeAll(() => {
+    requireTestDb();
+    process.env.STRIPE_SECRET_KEY = "sk_test_mock";
+  });
+  afterAll(async () => {
+    delete process.env.STRIPE_SECRET_KEY;
+    for (const id of ids) await cleanupCustomer(id);
+  });
+
+  it("ohne Ausgaben und Leads: kein Budget; mit Ausgaben + Leads: Ø je Tag, verteilt auf die Produkte", async () => {
+    const c = await makeCustomer({ plan: "software", retainerMonthly: 700 });
+    ids.push(c.id);
+    expect((await currentBudgets(c.id, NOW)).lines).toEqual([]);
+    const day = (n: number) => new Date(NOW.getTime() - n * 86_400_000);
+    // 10 Tage à 60 € → Ø 60 €/Tag; Leads TKV (3) und Hund (1) → je 30 €
+    await prisma.customerAdSpend.createMany({ data: Array.from({ length: 10 }, (_, i) => ({ customerId: c.id, date: day(i + 1), amount: 60, accountId: `act_${c.id}` })) });
+    await prisma.lead.createMany({
+      data: [
+        ...Array.from({ length: 3 }, (_, i) => ({ customerId: c.id, name: `K${i}`, source: "TKV Katze", createdAt: day(2) })),
+        { customerId: c.id, name: "H", source: "TKV Hund", createdAt: day(3) },
+      ],
+    });
+    const b = await currentBudgets(c.id, NOW);
+    expect(b.estimated).toBe(true);
+    expect(b.lines).toEqual([
+      { product: "TKV Katze", dailyBudget: 30 },
+      { product: "TKV Hund", dailyBudget: 30 },
+    ]);
+  });
+
+  it("erste Änderung speichert auch die unveränderten Zeilen", async () => {
+    const c = await makeCustomer({ plan: "software", retainerMonthly: 700, stripeCustomerId: `cus_e_${uid()}` });
+    ids.push(c.id);
+    const u = await makeBuyer(c.id, "owner");
+    await prisma.customerAdSpend.create({ data: { customerId: c.id, date: new Date(NOW.getTime() - 86_400_000), amount: 80, accountId: `act_${c.id}` } });
+    await prisma.lead.createMany({
+      data: [
+        { customerId: c.id, name: "A", source: "TKV Katze", createdAt: new Date(NOW.getTime() - 2 * 86_400_000) },
+        { customerId: c.id, name: "B", source: "TKV Hund", createdAt: new Date(NOW.getTime() - 2 * 86_400_000) },
+      ],
+    });
+    const res = await changeBudget(
+      { customerId: c.id, userId: u.id, next: [{ product: "TKV Katze", dailyBudget: 60 }, { product: "TKV Hund", dailyBudget: 40 }], effectiveDate: null, acknowledged: true },
+      NOW,
+    );
+    expect(res).toMatchObject({ ok: true, status: "applied" });
+    const after = await currentBudgets(c.id, new Date(NOW.getTime() + 1000));
+    expect(after.estimated).toBeFalsy();
+    expect(after.lines.sort((a, b) => a.product.localeCompare(b.product))).toEqual([
+      { product: "TKV Hund", dailyBudget: 40 },
+      { product: "TKV Katze", dailyBudget: 60 },
+    ]);
+  });
+});

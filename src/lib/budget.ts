@@ -42,7 +42,7 @@ const fmtDate = (d: Date) => d.toLocaleDateString("de-DE", { timeZone: "Europe/B
 export type UpcomingBudget = { product: string; dailyBudget: number; validFrom: Date };
 
 /** Aktuelle Tagesbudgets je Produkt: angenommenes Angebot, überschrieben durch spätere Änderungen. */
-export async function currentBudgets(customerId: string, now = new Date()): Promise<{ lines: BudgetLine[]; upcoming: UpcomingBudget[] }> {
+export async function currentBudgets(customerId: string, now = new Date()): Promise<{ lines: BudgetLine[]; upcoming: UpcomingBudget[]; estimated?: boolean }> {
   const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { onboarding: { select: { offerId: true } } } });
   const offer = c?.onboarding?.offerId ? await prisma.offer.findUnique({ where: { id: c.onboarding.offerId }, select: { products: true } }) : null;
   const map = new Map<string, number>();
@@ -54,7 +54,42 @@ export async function currentBudgets(customerId: string, now = new Date()): Prom
     else upcoming.push({ product: r.product, dailyBudget: Number(r.dailyBudget), validFrom: r.validFrom });
     if (!map.has(r.product)) map.set(r.product, 0);
   }
+  if (!map.size) {
+    // Ältere Kunden ohne Angebot in der App: Budget aus den Werbeausgaben und Lead-Produkten ansetzen,
+    // damit sie es trotzdem selbst ändern können (Ole, 13.11.2026). Gespeichert wird erst bei einer Änderung.
+    const est = await estimatedBudgets(customerId, now);
+    if (est.length) return { lines: est, upcoming, estimated: true };
+  }
   return { lines: [...map].map(([product, dailyBudget]) => ({ product, dailyBudget })), upcoming };
+}
+
+/**
+ * Geschätzte Tagesbudgets ohne Angebot/Änderung: Ø Meta-Ausgaben der letzten 14 Tage (Tage mit Ausgaben),
+ * gleichmäßig auf die Produkte der Leads der letzten 90 Tage verteilt (höchstens 3). Ohne Leads: eine Zeile
+ * „Werbebudget“. Ohne Ausgaben und ohne Leads: keine Schätzung.
+ */
+export async function estimatedBudgets(customerId: string, now = new Date()): Promise<BudgetLine[]> {
+  const [spend, sources] = await Promise.all([
+    prisma.customerAdSpend.findMany({
+      where: { customerId, date: { gte: new Date(now.getTime() - 14 * DAY_MS), lte: now }, amount: { gt: 0 } },
+      select: { date: true, amount: true },
+    }),
+    prisma.lead.groupBy({
+      by: ["source"],
+      where: { customerId, source: { not: null }, createdAt: { gte: new Date(now.getTime() - 90 * DAY_MS) } },
+      _count: true,
+      orderBy: { _count: { source: "desc" } },
+      take: 3,
+    }),
+  ]);
+  const products = sources.map((s) => s.source!).filter((s) => s.trim());
+  if (!spend.length && !products.length) return [];
+  const days = new Set(spend.map((s) => s.date.toISOString().slice(0, 10))).size;
+  const daily = days ? spend.reduce((a, s) => a + Number(s.amount), 0) / days : 0;
+  const names = products.length ? products : ["Werbebudget"];
+  const each = daily > 0 ? daily / names.length : 30;
+  const per = Math.min(BUDGET_MAX_DAILY, Math.max(BUDGET_MIN_DAILY, Math.round(each)));
+  return names.map((product) => ({ product, dailyBudget: per }));
 }
 
 /** Leadpreis: echter Wert der letzten 30 Tage (ab 10 Leads), sonst Standard aus dem Rechner. */
@@ -77,7 +112,7 @@ export async function budgetState(customerId: string, now = new Date()) {
     where: { id: customerId },
     select: { plan: true, retainerMonthly: true, billingInterval: true, vermittlerTyp: true },
   });
-  const { lines, upcoming } = await currentBudgets(customerId, now);
+  const { lines, upcoming, estimated } = await currentBudgets(customerId, now);
   const { cpl, source } = await customerCpl(customerId, lines.map((l) => l.product), c.vermittlerTyp, now);
   const ctx: BudgetContext = {
     plan: c.plan,
@@ -87,7 +122,7 @@ export async function budgetState(customerId: string, now = new Date()) {
     cplSource: source,
   };
   const pending = await prisma.budgetChange.findFirst({ where: { customerId, status: "pending" }, orderBy: { createdAt: "desc" } });
-  return { lines, upcoming, ctx, pending };
+  return { lines, upcoming, ctx, pending, estimated: !!estimated };
 }
 
 export type BudgetChangeInput = {
@@ -160,7 +195,7 @@ export async function notifyAdmins(title: string, body: string, contactId: strin
 
 /** Budget ändern (Kunde). Speichert sofort bzw. zum Datum; über individualFrom nur als Anfrage. */
 export async function changeBudget(input: BudgetChangeInput, now = new Date()): Promise<BudgetChangeResult> {
-  const { lines: current, ctx, pending } = await budgetState(input.customerId, now);
+  const { lines: current, ctx, pending, estimated } = await budgetState(input.customerId, now);
   const invalid = validate(current, input.next);
   if (invalid) return { ok: false, error: invalid };
   const eff = effectiveFromOf(input.effectiveDate, now);
@@ -212,6 +247,13 @@ export async function changeBudget(input: BudgetChangeInput, now = new Date()): 
     // Spätere geplante Werte desselben Produkts ersetzt die neue Änderung
     await tx.customerBudget.deleteMany({ where: { customerId: input.customerId, product: { in: changes.map((c) => c.product) }, validFrom: { gt: now } } });
     await tx.customerBudget.createMany({ data: changes.map((c) => ({ customerId: input.customerId, product: c.product, dailyBudget: c.to, validFrom: eff, changeId: r.id })) });
+    // Geschätztes Budget (Kunde ohne Angebot): unveränderte Zeilen ab jetzt festschreiben, sonst gingen sie verloren
+    if (estimated) {
+      const rest = current.filter((l) => !changes.some((c) => c.product === l.product));
+      if (rest.length) await tx.customerBudget.createMany({ data: rest.map((l) => ({ customerId: input.customerId, product: l.product, dailyBudget: l.dailyBudget, validFrom: now, changeId: r.id })) });
+      // Bei späterem Wirksamwerden gilt bis dahin der bisherige (geschätzte) Wert
+      if (eff > now) await tx.customerBudget.createMany({ data: changes.map((c) => ({ customerId: input.customerId, product: c.product, dailyBudget: c.from, validFrom: now, changeId: r.id })) });
+    }
     return r;
   });
   await audit("budget.change", {
