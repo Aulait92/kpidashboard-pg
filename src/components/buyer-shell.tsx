@@ -5,14 +5,10 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
+  Settings,
   BarChart3,
-  CalendarDays,
   ChevronDown,
-  Contact,
   Columns3,
-  CreditCard,
-  Gift,
-  Percent,
   ListChecks,
   LayoutDashboard,
   LogOut,
@@ -26,8 +22,6 @@ import {
   Sun,
   TrendingUp,
   Users,
-  ShieldCheck,
-  UsersRound,
 } from "lucide-react";
 import { ToastProvider, useToast } from "@/components/ui/toast";
 import { PushHint, PushMenuItem } from "@/components/push-prompt";
@@ -227,13 +221,11 @@ function Badge({ n }: { n: number }) {
 function ProfileMenu({
   name,
   owner,
-  hasTeam,
   newUi = false,
   setupOpen = 0,
   variant = "header",
   absence = null,
   updatesUnread = 0,
-  showBestand = false,
 }: {
   /** Modul Bestandskunden freigeschaltet: Link im Menü */
   showBestand?: boolean;
@@ -315,7 +307,7 @@ function ProfileMenu({
             <div className="font-semibold">{name}</div>
             <div className="text-xs text-[color:var(--muted)]">{owner ? (newUi ? "Inhaber-Zugang" : "Dein CRM") : "Berater-Zugang"}</div>
           </div>
-          {newUi && owner && setupOpen > 0 ? (
+          {owner && setupOpen > 0 ? (
             <Link
               href="/buyer/einrichtung"
               onClick={() => setOpen(false)}
@@ -384,99 +376,19 @@ function ProfileMenu({
               </span>
             ) : null}
           </Link>
-          {hasTeam || (newUi && !owner) ? (
-            <Link
-              href="/buyer/kalender"
-              onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
-            >
-              <CalendarDays className="h-4 w-4" /> Mein Kalender
-            </Link>
-          ) : null}
-          {owner ? (
-            <>
-              <Link
-                href="/buyer/team"
-                onClick={() => setOpen(false)}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
-              >
-                <UsersRound className="h-4 w-4" /> Team
-              </Link>
-              <Link
-                href="/buyer/konto"
-                onClick={() => setOpen(false)}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
-              >
-                <CreditCard className="h-4 w-4" /> Konto &amp; Rechnungen
-                {showNewBadge() ? (
-                  <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800" title="Neu: Zusatzmodul Empfehlungen & Bewertungen">
-                    Neu
-                  </span>
-                ) : null}
-              </Link>
-              <Link
-                href="/buyer/empfehlen"
-                onClick={() => setOpen(false)}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
-              >
-                <Gift className="h-4 w-4" /> Kollegen empfehlen
-              </Link>
-            </>
-          ) : null}
           <Link
-            href="/buyer/konto/sicherheit"
+            href="/buyer/einstellungen"
             onClick={() => setOpen(false)}
             className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
+            data-menu-einstellungen
           >
-            <ShieldCheck className="h-4 w-4" /> Anmeldung &amp; Sicherheit
+            <Settings className="h-4 w-4" /> Einstellungen
+            {owner && showNewBadge() ? (
+              <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800" title="Neu: Zusatzmodul Empfehlungen & Bewertungen">
+                Neu
+              </span>
+            ) : null}
           </Link>
-          {showBestand ? (
-            <Link
-              href="/buyer/bestand"
-              onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
-            >
-              <Contact className="h-4 w-4" /> Bestandskunden
-            </Link>
-          ) : null}
-          <Link
-            href="/buyer/provisionen"
-            onClick={() => setOpen(false)}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
-          >
-            <Percent className="h-4 w-4" /> Meine Provisionen
-          </Link>
-          <Link
-            href="/buyer/vorlagen"
-            onClick={() => setOpen(false)}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
-          >
-            <MessageSquareText className="h-4 w-4" /> WhatsApp-Vorlagen
-          </Link>
-          <a
-            href="https://performancegrowth.de/impressum"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block px-3 py-2 text-[color:var(--muted)] hover:bg-[color:var(--background)]"
-          >
-            Impressum
-          </a>
-          <a
-            href="https://performancegrowth.de/datenschutz"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block px-3 py-2 text-[color:var(--muted)] hover:bg-[color:var(--background)]"
-          >
-            Datenschutz
-          </a>
-          <a
-            href="/sicherheit"
-            target="_blank"
-            rel="noopener"
-            className="block px-3 py-2 text-[color:var(--muted)] hover:bg-[color:var(--background)]"
-          >
-            Sicherheit &amp; Datenschutz
-          </a>
           <form action="/api/auth/logout" method="post" className="border-t border-[color:var(--border)]">
             <button
               type="submit"
@@ -485,6 +397,11 @@ function ProfileMenu({
               <LogOut className="h-4 w-4" /> Abmelden
             </button>
           </form>
+          <div className="flex flex-wrap gap-x-3 gap-y-1 border-t border-[color:var(--border)] px-3 py-2 text-xs text-[color:var(--muted)] [&_a]:!min-h-0">
+            <a href="https://performancegrowth.de/impressum" target="_blank" rel="noopener noreferrer" className="hover:underline">Impressum</a>
+            <a href="https://performancegrowth.de/datenschutz" target="_blank" rel="noopener noreferrer" className="hover:underline">Datenschutz</a>
+            <a href="/sicherheit" target="_blank" rel="noopener" className="hover:underline">Sicherheit</a>
+          </div>
         </div>
       ) : null}
       {feedback ? <FeedbackDialog onClose={() => setFeedback(false)} /> : null}
