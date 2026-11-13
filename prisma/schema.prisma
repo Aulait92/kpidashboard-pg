@@ -680,6 +680,8 @@ model User {
   // Sitzungsversion: +1 beendet alle Sitzungen (Passwort-/2FA-Änderung,
   // „Überall abmelden“, Kundenwechsel). Steht als „sv“ im Sitzungs-Cookie.
   sessionVersion     Int              @default(0)
+  // Neuigkeiten (Kundenbereich): zuletzt gelesen – Einträge danach zählen als ungelesen
+  updatesSeenAt      DateTime?
   // Team (Großkunden): owner = Inhaber (sieht alles), advisor = Berater (nur eigene Leads)
   teamRole           String           @default("owner")
   displayName        String?
@@ -2650,4 +2652,23 @@ model SetupSettings {
   // {"metaAccess": "https://www.loom.com/share/…", "whatsapp": "…", …}
   videos     Json?
   updatedAt  DateTime @updatedAt
+}
+
+// Neuigkeiten im Kundenbereich (/buyer/neuigkeiten): was wir verbessert haben.
+// publishedAt = null → Entwurf (für Kunden unsichtbar).
+model ProductUpdate {
+  id          String    @id @default(cuid())
+  title       String
+  // Kurzer Text, Absätze und **fett** wie bei der Sondervereinbarung im Angebot
+  body        String
+  // neu | verbessert | behoben
+  kind        String    @default("neu")
+  // alle | software (Betreuung + Software) | betreuung (Nur Betreuung)
+  audience    String    @default("alle")
+  publishedAt DateTime?
+  pushedAt    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([publishedAt])
 }

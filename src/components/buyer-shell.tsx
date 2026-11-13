@@ -16,6 +16,7 @@ import {
   ListChecks,
   LayoutDashboard,
   LogOut,
+  Megaphone,
   MessageCircle,
   MessageSquareText,
   Plane,
@@ -59,8 +60,11 @@ export function BuyerShell({
   showBestand = false,
   newUi = false,
   absence = null,
+  updatesUnread = 0,
   children,
 }: {
+  /** Ungelesene Neuigkeiten des Logins (Profilmenü). */
+  updatesUnread?: number;
   /** Neue Oberfläche (Vertreter-A), pro Kunde im Admin einschaltbar. */
   newUi?: boolean;
   /** „Ich bin abwesend“ (null in der Admin-Vorschau). */
@@ -96,6 +100,7 @@ export function BuyerShell({
         teamRole={teamRole}
         hasTeam={hasTeam}
         absence={absence}
+        updatesUnread={updatesUnread}
       >
         {children}
       </BuyerShellA>
@@ -179,7 +184,7 @@ export function BuyerShell({
 
           <div className="ml-auto flex items-center gap-2">
             <HilfeChat firstName={displayName.replace(/^Allianz\s+/i, "").split(/\s+/)[0] ?? ""} owner={teamRole === "owner"} />
-            <ProfileMenu name={displayName} owner={teamRole === "owner"} hasTeam={hasTeam} absence={absence} />
+            <ProfileMenu name={displayName} owner={teamRole === "owner"} hasTeam={hasTeam} absence={absence} updatesUnread={updatesUnread} />
           </div>
         </div>
       </header>
@@ -242,8 +247,10 @@ function ProfileMenu({
   setupOpen = 0,
   variant = "header",
   absence = null,
+  updatesUnread = 0,
 }: {
   absence?: ShellAbsence | null;
+  updatesUnread?: number;
   name: string;
   owner: boolean;
   hasTeam: boolean;
@@ -285,8 +292,9 @@ function ProfileMenu({
           onClick={() => setOpen((o) => !o)}
           className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-2 py-2 text-left transition hover:bg-[color:var(--surface-sunken)]"
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-xs font-bold text-[color:var(--brand-dark)]">
+          <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-xs font-bold text-[color:var(--brand-dark)]">
             {initials}
+            {updatesUnread > 0 ? <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[color:var(--brand)] ring-2 ring-white" aria-label="Neuigkeiten" /> : null}
           </span>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-semibold">{name}</span>
@@ -299,8 +307,9 @@ function ProfileMenu({
           onClick={() => setOpen((o) => !o)}
           className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 text-sm transition hover:bg-[color:var(--background)]"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-xs font-bold text-[color:var(--brand-dark)]">
+          <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-xs font-bold text-[color:var(--brand-dark)]">
             {initials}
+            {updatesUnread > 0 ? <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[color:var(--brand)] ring-2 ring-white" aria-label="Neuigkeiten" /> : null}
           </span>
           <span className="hidden font-medium sm:inline">{name}</span>
           <ChevronDown className="h-4 w-4 text-[color:var(--muted)]" />
@@ -375,6 +384,18 @@ function ProfileMenu({
           >
             <MessageSquareText className="h-4 w-4" /> Etwas unklar? Feedback
           </button>
+          <Link
+            href="/buyer/neuigkeiten"
+            onClick={() => setOpen(false)}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
+          >
+            <Megaphone className="h-4 w-4" /> Neuigkeiten
+            {updatesUnread > 0 ? (
+              <span className="ml-auto">
+                <Badge n={updatesUnread} />
+              </span>
+            ) : null}
+          </Link>
           {hasTeam || (newUi && !owner) ? (
             <Link
               href="/buyer/kalender"
@@ -487,9 +508,11 @@ function BuyerShellA({
   teamRole,
   hasTeam,
   absence,
+  updatesUnread,
   children,
 }: {
   absence: ShellAbsence | null;
+  updatesUnread: number;
   pathname: string;
   displayName: string;
   showChats: boolean;
@@ -574,7 +597,7 @@ function BuyerShellA({
           </nav>
           <div className="mt-auto space-y-2 border-t border-[color:var(--border)] pt-3">
             <HilfeChat firstName={firstName} owner={owner} variant="nav" />
-            <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} variant="sidebar" absence={absence} />
+            <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} variant="sidebar" absence={absence} updatesUnread={updatesUnread} />
           </div>
         </aside>
 
@@ -588,7 +611,7 @@ function BuyerShellA({
             </Link>
             <div className="ml-auto flex items-center gap-2">
               <HilfeChat firstName={firstName} owner={owner} />
-              <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} absence={absence} />
+              <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} absence={absence} updatesUnread={updatesUnread} />
             </div>
           </div>
         </header>

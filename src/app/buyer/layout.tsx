@@ -11,6 +11,7 @@ import { ProvisionRatesProvider } from "@/components/provision-context";
 import type { ShellAbsence } from "@/components/absence-sheet";
 import { berlinYmd, currentOrNextAbsence, toAbsenceView } from "@/lib/absence";
 import { memberName } from "@/lib/team";
+import { unreadUpdateCount } from "@/lib/neuigkeiten";
 
 // Gemeinsames Layout für den Buyer-Bereich. Hält den @modal-Parallel-Slot,
 // in den der Lead-Detail-Modal von ALLEN Buyer-Tabs (KPIs, Leads, Pipeline)
@@ -82,6 +83,9 @@ export default async function BuyerLayout({
     };
   }
 
+  // Neuigkeiten: ungelesene Einträge des Logins (Vorschau: keine Markierung)
+  const updatesUnread = ctx?.userId && !ctx.preview ? await unreadUpdateCount(ctx.userId, ctx.customerId).catch(() => 0) : 0;
+
   return (
     <>
       {previewName ? (
@@ -102,7 +106,7 @@ export default async function BuyerLayout({
       ) : null}
       {ctx ? (
         <ProvisionRatesProvider rates={provision?.rates ?? {}}>
-          <BuyerShell newUi={newUi} displayName={displayName} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen} teamRole={ctx.teamRole} hasTeam={logins > 1} showOrders={pplSubs > 0} showBestand={bestand} absence={absence}>
+          <BuyerShell newUi={newUi} displayName={displayName} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen} teamRole={ctx.teamRole} hasTeam={logins > 1} showOrders={pplSubs > 0} showBestand={bestand} absence={absence} updatesUnread={updatesUnread}>
             {children}
             {/* Lead-Detail-Modal innerhalb der Shell → Toasts funktionieren dort auch */}
             {modal}

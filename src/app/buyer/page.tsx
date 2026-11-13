@@ -15,6 +15,9 @@ import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import ZahlenPage from "./zahlen/page";
 import { ReferralNudgeCard } from "@/components/kollegen";
 import { loadReferralNudge } from "@/lib/kollegen";
+import { UpdatesHeuteCard } from "@/components/neuigkeiten";
+import { unreadUpdates } from "@/lib/neuigkeiten";
+import { dismissUpdatesAction } from "./neuigkeiten/actions";
 
 // Startseite des Kundenbereichs. WhatsApp-Kunden: „Heute" – eine
 // Aufgabenliste (Termine, Ergebnisse, Chats, Rückrufe), die man leer
@@ -45,13 +48,16 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
   if (!whatsapp) {
     return <ZahlenPage searchParams={searchParams} />;
   }
-  const [data, customer, me, nudge] = await Promise.all([
+  const [data, customer, me, nudge, updates] = await Promise.all([
     loadInbox(ctx),
     prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true } }),
     ctx.teamRole === "advisor" && ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true } }) : null,
     // „Kollegen empfehlen“ nach positiven Momenten (nur Inhaber, nicht in der Vorschau)
     ctx.teamRole === "owner" && !ctx.preview ? loadReferralNudge(ctx.customerId).catch(() => null) : null,
+    // Neuigkeiten seit dem letzten Besuch (nicht in der Vorschau)
+    ctx.userId && !ctx.preview ? unreadUpdates(ctx.userId, ctx.customerId).catch(() => []) : [],
   ]);
+  const updatesCard = updates.length ? <UpdatesHeuteCard title={updates[0].title} more={updates.length - 1} dismiss={dismissUpdatesAction} /> : null;
   const nudgeCard = nudge ? <ReferralNudgeCard nudgeKey={nudge.key} title={nudge.title} text={nudge.text} /> : null;
   const first = (me?.displayName ?? (customer?.name ?? "").replace(/^Allianz\s+/i, "")).split(" ")[0];
   const hour = Number(
@@ -76,6 +82,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
         <div className="xl:grid xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] xl:items-start xl:gap-6">
           <section className={selected ? "hidden xl:block" : undefined}>
             <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
+            {updatesCard}
             {nudgeCard}
             <EmpfehlungHeuteHint ctx={ctx} />
             <TodayInbox data={data} newUi leadHref="/buyer?lead={id}" selectedLeadId={selected} />
@@ -117,6 +124,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <LiveRefresh />
       <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
+      {updatesCard}
       {nudgeCard}
       <EmpfehlungHeuteHint ctx={ctx} />
       <TodayInbox data={data} />

@@ -201,6 +201,15 @@ Seiten aus der Liste „Seiten“ unten.
 - „Jede Woche wiederholen“ verlängert die Bestellung freitags automatisch; beenden jederzeit möglich.
 - Status: bezahlt, Lastschrift läuft, Zahlung offen, fehlgeschlagen, storniert. Geliefert wird nur bei bezahlter Bestellung.
 
+## Neuigkeiten
+
+- „Neuigkeiten“ im Profilmenü (Klick auf den eigenen Namen bzw. die Initialen) zeigt, was performancegrowth an der App
+  verbessert hat – neueste zuerst, nach Monat gruppiert, mit dem Etikett Neu, Verbessert oder Behoben.
+- Gibt es etwas Neues seit dem letzten Besuch, zeigt das Profil-Symbol einen blauen Punkt und im Menü steht die Anzahl.
+  In „Heute“ erscheint einmal eine kleine Karte „Neu: …“, die man wegklicken kann.
+- Beim Öffnen der Seite gilt alles als gelesen. Inhaber und Berater sehen dieselben Neuigkeiten; Kunden mit „Nur Betreuung“
+  sehen keine Einträge, die nur die Software betreffen.
+
 ## Zahlen
 
 - Zeitraum wählen. Funnel: Leads → Erreicht → Termin → Abschluss.
