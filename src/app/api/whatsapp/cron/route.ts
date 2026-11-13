@@ -66,6 +66,8 @@ async function handle(req: Request): Promise<Response> {
   await expireBestandCancellations(now).catch((e: unknown) => reportError(e, "cron-bestand-expire"));
   // Budget ändern: Preisstufe ins Abo übernehmen, sobald ein geplantes Budget gilt
   await processDueBudgetFees(now).catch((e: unknown) => reportError(e, "cron-budget-fee"));
+  // Budget ändern: neues Tagesbudget am Stichtag bei Meta umstellen (sonst Aufgabe)
+  await import("@/lib/kampagnen/budget-sync").then((m) => m.processDueMetaBudgets(now)).catch((e: unknown) => reportError(e, "cron-budget-meta"));
   const pruned =
     now.getUTCHours() === 3 && now.getUTCMinutes() < 5
       ? {
@@ -144,6 +146,11 @@ async function handle(req: Request): Promise<Response> {
     try {
       const { resumeCampaignRuns } = await import("@/lib/kampagnen/run");
       await resumeCampaignRuns();
+      // Automatik: gewünschte Läufe starten (Produkt gebucht), Kampagnen auf müde Anzeigen prüfen
+      const { processCampaignWishes } = await import("@/lib/kampagnen/launch");
+      await processCampaignWishes(now);
+      const { runCreativeRefresh } = await import("@/lib/kampagnen/refresh");
+      await runCreativeRefresh(now);
     } catch (e) {
       reportError(e, "cron-kampagnen");
     }

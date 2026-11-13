@@ -27,7 +27,7 @@ export default async function KundenKampagne({ params }: { params: Promise<{ id:
   const { id } = await params;
   const [products, runs] = await Promise.all([
     campaignProducts(id),
-    prisma.campaignRun.findMany({ where: { customerId: id }, orderBy: { createdAt: "desc" }, take: 10, select: { id: true, product: true, status: true, createdAt: true, costCents: true } }),
+    prisma.campaignRun.findMany({ where: { customerId: id }, orderBy: { createdAt: "desc" }, take: 10, select: { id: true, product: true, status: true, createdAt: true, costCents: true, kind: true, trigger: true } }),
   ]);
   const defaults = products[0] ? await loadCampaignContext(id, products[0].product).catch(() => null) : null;
   const latest = runs[0] ? await getRunView(runs[0].id) : null;
@@ -46,7 +46,10 @@ export default async function KundenKampagne({ params }: { params: Promise<{ id:
         <ul className="divide-y divide-[color:var(--border)] px-5 pb-4 text-sm">
           {runs.map((r) => (
             <li key={r.id} className="py-2">
-              <div className="font-medium">{r.product}</div>
+              <div className="font-medium">
+                {r.product}
+                {r.kind === "auffrischung" ? " · Auffrischung" : r.trigger === "produkt" ? " · automatisch" : ""}
+              </div>
               <div className="text-[color:var(--muted)]">
                 {fmt(r.createdAt)} · {STATUS[r.status] ?? r.status} · KI ≈ ${(r.costCents / 100).toFixed(2)}
               </div>

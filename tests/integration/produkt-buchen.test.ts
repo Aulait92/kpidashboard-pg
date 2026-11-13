@@ -191,7 +191,10 @@ describe("Weiteres Produkt buchen", () => {
     // Budget zählt noch nicht
     expect((await currentBudgets(customerId, NOW)).lines.map((l) => l.product)).toEqual([TKV]);
     const name = (await prisma.customer.findUniqueOrThrow({ where: { id: customerId } })).name;
-    expect(await prisma.salesTask.count({ where: { title: { startsWith: "Kampagne für Privatschutz" }, AND: { title: { contains: name } } } })).toBe(1);
+    // Kampagnen-Automatik (Standard an): Agenten-Team ist vorgemerkt; fehlende Voraussetzungen → eine Aufgabe
+    expect(await prisma.campaignWish.count({ where: { customerId, product: "Privatschutz", source: "produkt" } })).toBe(1);
+    expect(await prisma.salesTask.count({ where: { title: { startsWith: "Kampagne Privatschutz für" }, AND: { title: { contains: name } } } })).toBe(1);
+    expect(await prisma.salesTask.count({ where: { title: { startsWith: "Kampagne für Privatschutz" }, AND: { title: { contains: name } } } })).toBe(0);
     expect(await prisma.auditLog.count({ where: { action: "produkt.book", customerId } })).toBe(1);
 
     // Start: Budget gilt, Monatspreis ins Abo (Stufe + weiteres Produkt), idempotent

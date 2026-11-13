@@ -220,12 +220,15 @@ export async function bookProduct(input: BookInput, now = new Date()): Promise<B
   // Einrichtung: einmalige Position auf der nächsten Rechnung (nur Listenpreis, sonst von Hand)
   const setup = await addSetupItem(row.id, input.customerId, item.name, preview.setupFee, pricing === "list");
 
-  await adminTask(
-    info.contactId,
-    `Kampagne für ${item.name} bei ${info.name} aufsetzen (Meta, Formular, Assistent-Fragen)`,
-    [...lines, "Danach in der Kundenakte → Abrechnung → Produkte auf „Gestartet“ setzen: erst dann zählen Budget, Garantie und Monatspreis."].join("\n"),
-    startWish ?? now,
-  );
+  // Kampagne: Agenten-Team startet automatisch (pausiert); ohne Automatik bzw. bei Fehler die bisherige Aufgabe
+  if (!(await autoLaunch(input.customerId, item.name, row.id))) {
+    await adminTask(
+      info.contactId,
+      `Kampagne für ${item.name} bei ${info.name} aufsetzen (Meta, Formular, Assistent-Fragen)`,
+      [...lines, "Danach in der Kundenakte → Abrechnung → Produkte auf „Gestartet“ setzen: erst dann zählen Budget, Garantie und Monatspreis."].join("\n"),
+      startWish ?? now,
+    );
+  }
   const wa = await prisma.whatsAppAccount.findFirst({ where: { customerId: input.customerId }, select: { id: true } }).catch(() => null);
   if (wa) await adminTask(info.contactId, `WhatsApp-Vorlagen für ${item.name} bei ${info.name} prüfen`, "Erstanschreiben und Assistent-Fragen für das neue Produkt anlegen bzw. bei Meta einreichen.", startWish ?? now);
   if (pricing === "individual" || setup !== "added") {
@@ -283,6 +286,18 @@ async function addSetupItem(bookingId: string, customerId: string, product: stri
   }
 }
 
+/** Kampagnen-Automatik: Lauf starten bzw. vormerken. false = Automatik aus oder Fehler (dann Aufgabe wie bisher). */
+async function autoLaunch(customerId: string, product: string, bookingId: string): Promise<boolean> {
+  try {
+    const { requestCampaignLaunch } = await import("@/lib/kampagnen/launch");
+    const r = await requestCampaignLaunch({ customerId, product, source: "produkt", bookingId });
+    return r.status !== "disabled";
+  } catch (err) {
+    reportError(err, "produkt-kampagne-start", { customer: customerId });
+    return false;
+  }
+}
+
 // ─── Admin: Start, Annahme, Ablehnung ─────────────────────────────────────
 
 type AdminResult = { ok: true; note?: string } | { ok: false; error: string };
@@ -297,7 +312,11 @@ export async function acceptProductRequest(bookingId: string, note: string | nul
   const b = await prisma.productBooking.findUniqueOrThrow({ where: { id: bookingId } });
   const info = await customerInfo(b.customerId);
   await audit("produkt.decide", { entity: "ProductBooking", entityId: b.id, customerId: b.customerId, details: { accept: true, note }, ...(actor ? { actor } : {}) });
-  await adminTask(info.contactId, `Kampagne für ${b.product} bei ${info.name} aufsetzen (Meta, Formular, Assistent-Fragen)`, "Anfrage übernommen. Preis individuell: Einrichtung und Monatspreis bitte bestätigen und in Stripe anpassen.", b.startWish ?? now);
+  if (await autoLaunch(b.customerId, b.product, b.id)) {
+    await adminTask(info.contactId, `Preis bestätigen ${info.name}: ${b.product}`, "Anfrage übernommen. Preis individuell: Einrichtung und Monatspreis bitte bestätigen und in Stripe anpassen. Die Kampagne legt das Agenten-Team automatisch an (pausiert).", b.startWish ?? now);
+  } else {
+    await adminTask(info.contactId, `Kampagne für ${b.product} bei ${info.name} aufsetzen (Meta, Formular, Assistent-Fragen)`, "Anfrage übernommen. Preis individuell: Einrichtung und Monatspreis bitte bestätigen und in Stripe anpassen.", b.startWish ?? now);
+  }
   await mailCustomer(info, {
     subject: `Ihre Buchung: ${b.product}`,
     paragraphs: [`wir haben Ihre Anfrage zu ${b.product} übernommen und richten das Produkt jetzt für Sie ein. Den Preis bestätigen wir Ihnen gesondert.`, ...(note?.trim() ? [note.trim()] : [])],

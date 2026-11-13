@@ -6,8 +6,9 @@
 // - über PRICE_LIST.individualFrom: keine Selbstbedienung, Anfrage an uns;
 // - individuelle Konditionen (abweichender Preis, Jahreszahler): Budget sofort,
 //   Abo-Preis NICHT automatisch, sondern Aufgabe „Preis prüfen“.
-// Meta: Kundenkampagnen sind (noch) keinem Produkt zugeordnet → Aufgabe
-// „Meta-Budget auf X €/Tag stellen“.
+// Meta: Die App stellt das Tagesbudget der Kampagne automatisch um, wenn genau eine
+// passende Kampagne gefunden wird (lib/kampagnen/budget-sync.ts); sonst Aufgabe
+// „Meta-Budget auf X €/Tag stellen“ mit Grund.
 
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -21,13 +22,13 @@ import { adSpendForRange } from "@/lib/customer-spend";
 import { DEFAULT_PRODUCTS } from "@/lib/rechner";
 import { PRICE_LIST } from "@/lib/offer-pricing";
 import { berlinMidnight, berlinYmd } from "@/lib/absence";
+import { defaultBudgetSyncDeps, syncBudgetChangeToMeta } from "@/lib/kampagnen/budget-sync";
 import {
   BUDGET_MAX_DAILY,
   BUDGET_MIN_DAILY,
   decideApproval,
   needsAcknowledge,
   previewChange,
-  tierSentence,
   type BudgetContext,
   type BudgetLine,
   type BudgetPreview,
@@ -174,7 +175,6 @@ export async function changeBudget(input: BudgetChangeInput, now = new Date()): 
   const changes = changesOf(current, input.next);
   const immediate = eff.getTime() <= now.getTime();
   const when = immediate ? "ab sofort" : `ab ${fmtDate(eff)}`;
-  const tierText = tierSentence(preview);
   const base = {
     customerId: input.customerId,
     userId: input.userId,
@@ -208,7 +208,7 @@ export async function changeBudget(input: BudgetChangeInput, now = new Date()): 
   const price = approval.price;
   const stripeStatus = price === "auto" ? "scheduled" : price === "manual" ? "manual" : "none";
   const row = await prisma.$transaction(async (tx) => {
-    const r = await tx.budgetChange.create({ data: { ...base, status: "applied", reason: approval.price === "manual" ? approval.reason : null, stripeStatus, decidedAt: now, decidedBy: "auto" } });
+    const r = await tx.budgetChange.create({ data: { ...base, status: "applied", reason: approval.price === "manual" ? approval.reason : null, stripeStatus, metaStatus: "scheduled", decidedAt: now, decidedBy: "auto" } });
     // Spätere geplante Werte desselben Produkts ersetzt die neue Änderung
     await tx.customerBudget.deleteMany({ where: { customerId: input.customerId, product: { in: changes.map((c) => c.product) }, validFrom: { gt: now } } });
     await tx.customerBudget.createMany({ data: changes.map((c) => ({ customerId: input.customerId, product: c.product, dailyBudget: c.to, validFrom: eff, changeId: r.id })) });
@@ -222,13 +222,13 @@ export async function changeBudget(input: BudgetChangeInput, now = new Date()): 
     ...(input.actor ? { actor: input.actor } : {}),
   });
 
-  // Meta: Budget von Hand einstellen (keine Zuordnung Kundenkampagne ↔ Produkt)
-  await adminTask(
-    info.contactId,
-    `Meta-Budget ${info.name}: ${changes.map((c) => `${c.product} auf ${eurDay(c.to)}`).join(", ")}${immediate ? "" : ` (ab ${fmtDate(eff)})`}`,
-    [...changeList(changes), `Werbebudget pro Monat: ${eur(preview.monthlyFrom)} → ${eur(preview.monthlyTo)}`, tierText].filter(Boolean).join("\n"),
-    immediate ? now : eff,
-  );
+  // Meta: sofort bzw. am Stichtag (Cron) automatisch umstellen; sonst Aufgabe mit Grund
+  const metaSync = immediate
+    ? await syncBudgetChangeToMeta(row.id, { ...defaultBudgetSyncDeps(), notify: async () => undefined }, now).catch((err) => {
+        reportError(err, "budget-meta-sync");
+        return null;
+      })
+    : null;
   if (price === "manual") {
     await adminTask(
       info.contactId,
@@ -239,7 +239,9 @@ export async function changeBudget(input: BudgetChangeInput, now = new Date()): 
   }
   await notifyAdmins(
     `Budget geändert: ${info.name}`,
-    `${eur(preview.monthlyFrom)} → ${eur(preview.monthlyTo)}/Monat ${when}.${preview.tierChange ? ` Neue Stufe ${preview.tierTo?.label ?? ""}.` : ""} Meta-Budget bitte anpassen.`,
+    `${eur(preview.monthlyFrom)} → ${eur(preview.monthlyTo)}/Monat ${when}.${preview.tierChange ? ` Neue Stufe ${preview.tierTo?.label ?? ""}.` : ""} ${
+      metaSync?.status === "done" ? "Budget bei Meta umgestellt." : immediate ? "Meta-Budget bitte anpassen (siehe Aufgabe)." : "Wird am Stichtag bei Meta umgestellt."
+    }`,
     info.contactId,
     input.customerId,
   );
@@ -341,7 +343,10 @@ export async function decideBudgetRequest(changeId: string, accept: boolean, not
   await audit("budget.decide", { entity: "BudgetChange", entityId: changeId, customerId: ch.customerId, details: { accept, note }, ...(actor ? { actor } : {}) });
   const info = await customerInfo(ch.customerId);
   if (accept) {
-    await adminTask(info.contactId, `Meta-Budget ${info.name}: ${changes.map((c) => `${c.product} auf ${eurDay(c.to)}`).join(", ")}`, "Budget-Anfrage übernommen. Preis individuell: bitte bestätigen und in Stripe anpassen.", eff);
+    await adminTask(info.contactId, `Preis bestätigen ${info.name}: Budget-Anfrage übernommen`, "Preis individuell: bitte dem Kunden bestätigen und in Stripe anpassen.", eff);
+    // Meta-Budget: sofort bzw. am Stichtag automatisch (sonst Aufgabe mit Grund)
+    await prisma.budgetChange.update({ where: { id: changeId }, data: { metaStatus: "scheduled" } });
+    if (eff.getTime() <= now.getTime()) await syncBudgetChangeToMeta(changeId, defaultBudgetSyncDeps(), now).catch((err) => reportError(err, "budget-meta-sync"));
   }
   await mailCustomer(info, accept
     ? { subject: "Ihr Werbebudget wurde angepasst", paragraphs: [`wir haben Ihr gewünschtes Werbebudget übernommen, gültig ab ${fmtDate(eff)}. Den Preis für Ihre Betreuung bestätigen wir Ihnen gesondert.`, ...(note?.trim() ? [note.trim()] : [])], list: changeList(changes) }

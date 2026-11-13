@@ -146,8 +146,15 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
       { title: "Onboarding: Testlead durchspielen", dueAt: dueBefore(start, 2, 3) },
       { title: "Onboarding: Go-live: Kampagne aktivieren", dueAt: dueBefore(start, 0, 4) },
     ];
+    // Kampagnen-Automatik: Agenten-Team legt je Produkt die Kampagne pausiert an (sobald Meta-Zugriff
+    // usw. da ist) – dann entfällt die Aufgabe „Kampagne und Leadformular anlegen“.
+    const launched = await launchOfferCampaigns(customer.id, offer.products).catch((err) => {
+      reportError(err, "onboarding-kampagne");
+      return false;
+    });
+    const open = launched ? tasks.filter((t) => !t.title.startsWith("Onboarding: Kampagne und Leadformular")) : tasks;
     await prisma.salesTask
-      .createMany({ data: tasks.map((t) => ({ ...t, contactId: contact.id, type: "SONSTIGES" as const })) })
+      .createMany({ data: open.map((t) => ({ ...t, contactId: contact.id, type: "SONSTIGES" as const })) })
       .catch((err) => reportError(err, "onboarding-tasks"));
   }
 
@@ -166,6 +173,19 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
   }).catch((err) => reportError(err, "onboarding-push"));
 
   return { ok: true, onboardingId: onboarding.id, customerId: customer.id, created: true };
+}
+
+/** Je Angebotsprodukt mit Budget einen Kampagnen-Lauf vormerken/starten. false = Automatik aus. */
+async function launchOfferCampaigns(customerId: string, products: unknown): Promise<boolean> {
+  const { loadAutomationSettings } = await import("@/lib/kampagnen/settings");
+  if (!(await loadAutomationSettings()).autoLaunch) return false;
+  const { requestCampaignLaunch } = await import("@/lib/kampagnen/launch");
+  const list = (Array.isArray(products) ? products : []) as { name?: unknown; dailyBudget?: unknown }[];
+  for (const p of list) {
+    if (typeof p?.name !== "string" || !(Number(p.dailyBudget) > 0)) continue;
+    await requestCampaignLaunch({ customerId, product: p.name, source: "angebot" });
+  }
+  return true;
 }
 
 /** Paketwechsel eines Bestandskunden mit vorhandenem Onboarding (kein neues Onboarding, keine Einladung). */

@@ -222,6 +222,8 @@ model Customer {
   // Monatsberichte (lib/monatsbericht): je Kunde abschaltbar
   monthlyReportsOff        Boolean                   @default(false)
   monthlyReports           MonthlyReport[]
+  campaignWishes           CampaignWish[]
+  campaignHealth           CampaignHealth[]
 }
 
 // Tagesbudget je Produkt (Kundenbereich → Konto → Werbebudget). Ohne Eintrag gilt das
@@ -263,6 +265,9 @@ model BudgetChange {
   // Stripe: none (kein Preiswechsel) | scheduled (ab effectiveFrom) | done | manual (Admin-Aufgabe) | error
   stripeStatus      String    @default("none")
   stripeNote        String?
+  // Meta: none (nicht nötig/aus) | scheduled (ab effectiveFrom) | done | manual (Admin-Aufgabe) | error
+  metaStatus        String    @default("none")
+  metaNote          String?
   // Monatspreis im Abo geändert (Abrechnung ab dem nächsten Abrechnungsmonat)
   feeAppliedAt      DateTime?
   note              String?
@@ -2469,40 +2474,108 @@ model PlacesUsage {
 // eine Meta-Lead-Kampagne eines Kunden. Ergebnisse je Agent als JSON, Meta-IDs in
 // „built“ (idempotentes Anlegen; alles PAUSED, veröffentlicht wird von Hand).
 model CampaignRun {
-  id         String    @id @default(cuid())
-  customerId String
-  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  product    String
-  wish       String?
+  id                String    @id @default(cuid())
+  customerId        String
+  customer          Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  product           String
+  wish              String?
   // queued | running | review | building | built | blocked | failed | cancelled
-  status     String    @default("queued")
+  status            String    @default("queued")
   // Nach grüner/gelber Prüfung direkt pausiert bei Meta anlegen (1 Klick)
-  autoBuild  Boolean   @default(true)
+  autoBuild         Boolean   @default(true)
   // Schritte je Agent: [{ key, status, startedAt, finishedAt, error, tokensIn, tokensOut }]
-  steps      Json
-  context    Json?
-  plan       Json?
-  angles     Json?
-  copies     Json?
-  creatives  Json?
-  form       Json?
-  review     Json?
+  steps             Json
+  context           Json?
+  plan              Json?
+  angles            Json?
+  copies            Json?
+  creatives         Json?
+  form              Json?
+  review            Json?
   // Bei Meta angelegte Objekte (campaignId, adSetIds, formId, imageHashes, creativeIds, adIds)
-  built      Json?
-  error      String?
+  built             Json?
+  // neu = komplette Kampagne | auffrischung = neue Anzeigen in bestehender Anzeigengruppe
+  kind              String    @default("neu")
+  // Auslöser: manuell | produkt (Produkt gebucht/Angebot) | auffrischung (Cron)
+  trigger           String    @default("manuell")
+  // Auffrischung: Ursprungslauf, Meta-Kampagne und -Anzeigengruppe, erkannte müde Anzeigen
+  sourceRunId       String?
+  refreshCampaignId String?
+  refreshAdSetId    String?
+  fatigue           Json?
+  error             String?
   // KI-Kosten grob in US-Cent und Tokens
-  costCents  Int       @default(0)
-  tokensIn   Int       @default(0)
-  tokensOut  Int       @default(0)
+  costCents         Int       @default(0)
+  tokensIn          Int       @default(0)
+  tokensOut         Int       @default(0)
   // Verarbeitung läuft gerade (Schutz vor Doppelverarbeitung durch Cron)
-  lockedAt   DateTime?
-  createdBy  String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  finishedAt DateTime?
+  lockedAt          DateTime?
+  createdBy         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  finishedAt        DateTime?
 
   @@index([customerId, createdAt])
   @@index([status])
+  @@index([refreshCampaignId, createdAt])
+}
+
+// Kampagnen-Automatik (Ole, 13.11.2026): Schalter und Schwellen (eine Zeile, id „default“).
+model CampaignAutomationSettings {
+  id                  String   @id @default("default")
+  // Budgetänderung automatisch bei Meta umsetzen (sonst Aufgabe „Meta-Budget …“)
+  budgetSync          Boolean  @default(true)
+  // Produkt gebucht / Angebot angenommen → Kampagnen-Lauf automatisch starten
+  autoLaunch          Boolean  @default(true)
+  // Wöchentlich müde Anzeigen erkennen und neue (pausierte) Anzeigen erstellen
+  refresh             Boolean  @default(true)
+  refreshMaxFrequency Float    @default(3)
+  // CTR mindestens 30 % unter den ersten 7 Tagen
+  refreshCtrDrop      Float    @default(0.3)
+  // Leadpreis mindestens 40 % über dem Kampagnenschnitt
+  refreshCplRise      Float    @default(0.4)
+  // Mindestausgaben je Anzeige (14 Tage), bevor der Leadpreis zählt
+  refreshMinSpendEur  Float    @default(50)
+  updatedAt           DateTime @updatedAt
+}
+
+// Gewünschter Kampagnen-Lauf (Produkt gebucht / Angebot angenommen), der startet,
+// sobald die Voraussetzungen erfüllt sind (Cron prüft offene Wünsche).
+model CampaignWish {
+  id            String    @id @default(cuid())
+  customerId    String
+  customer      Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  product       String
+  // produkt | angebot
+  source        String
+  // waiting | started | done | failed | cancelled
+  status        String    @default("waiting")
+  // [{ key, message }] – was zuletzt fehlte
+  problems      Json?
+  runId         String?
+  // Aufgabe für Ole (fehlende Voraussetzungen bzw. Fehlschlag)
+  taskId        String?
+  bookingId     String?
+  lastCheckedAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([status])
+  @@index([customerId, product])
+}
+
+// Gesundheitsprüfung je Kunden-Kampagne (Creative-Auffrischung): wann zuletzt geprüft/aufgefrischt.
+model CampaignHealth {
+  campaignId    String    @id
+  customerId    String
+  customer      Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  lastCheckedAt DateTime?
+  lastRefreshAt DateTime?
+  // Ergebnis der letzten Prüfung (müde Anzeigen mit Gründen)
+  lastResult    Json?
+  updatedAt     DateTime  @updatedAt
+
+  @@index([customerId])
 }
 
 // ─── Monatsberichte (seit 17.11.2026) ─────────────────────────────────────

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, Calculator, FileBarChart, Layers, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, MessageCircle, ShieldCheck, Wallet, Workflow } from "lucide-react";
+import { Activity, Bot, Calculator, FileBarChart, Layers, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, MessageCircle, ShieldCheck, Wallet, Workflow } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { supportConfig } from "@/lib/support";
 import { requireAuth } from "@/lib/vertrieb/auth";
@@ -16,6 +16,7 @@ const ITEMS = [
   { href: "/admin/einstellungen/rechner", icon: Calculator, color: "bg-sky-500", title: "Rechner", text: "Break-even-Rechner für Interessenten: Produkte, Quoten, Garantien" },
   { href: "/admin/einstellungen/produkte", icon: Layers, color: "bg-orange-500", title: "Produkte", text: "Welche Sparten Kunden selbst dazubuchen können" },
   { href: "/admin/monatsberichte", icon: FileBarChart, color: "bg-blue-600", title: "Monatsberichte", text: "Berichte an Kunden: Entwürfe prüfen, senden oder lieber anrufen" },
+  { href: "/admin/einstellungen/kampagnen-automatik", icon: Bot, color: "bg-fuchsia-500", title: "Kampagnen-Automatik", text: "Budget bei Meta umstellen, Kampagne bei Produktbuchung, müde Anzeigen auffrischen" },
   { href: "/admin/einstellungen/empfehlungen", icon: Gift, color: "bg-emerald-600", title: "Kollegen empfehlen", text: "Empfehlungsprogramm: Prämie für Empfehler, Vorteil für Neukunden" },
   { href: "/admin/einstellungen/login", icon: LogIn, color: "bg-indigo-500", title: "Login-Seite", text: "Infokarte neben dem Login: Neuigkeiten und Hinweise für Kunden" },
   { href: "/admin/einstellungen/status", icon: Activity, color: "bg-emerald-500", title: "Status & Support", text: "Öffentliche Statusseite, Störungsmeldungen, Support-Kontakt im Hilfe-Chat" },

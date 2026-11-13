@@ -26,7 +26,11 @@ export async function campaignProducts(customerId: string): Promise<{ product: s
   return lines.filter((l) => l.dailyBudget > 0);
 }
 
-export async function loadCampaignContext(customerId: string, product: string, opts: { wish?: string | null; privacyUrl?: string | null } = {}): Promise<CampaignContext> {
+export async function loadCampaignContext(
+  customerId: string,
+  product: string,
+  opts: { wish?: string | null; privacyUrl?: string | null; dailyBudgetEur?: number | null } = {},
+): Promise<CampaignContext> {
   const c = await prisma.customer.findUniqueOrThrow({
     where: { id: customerId },
     select: {
@@ -66,7 +70,8 @@ export async function loadCampaignContext(customerId: string, product: string, o
     privacyUrl: httpUrl(opts.privacyUrl) ?? httpUrl(web.privacyUrl) ?? httpUrl(web.impressumUrl),
     pageId: c.metaPageId ?? c.leadSources[0]?.pageId ?? null,
     adAccountId: c.metaAdAccountId,
-    dailyBudgetEur: line?.dailyBudget ?? 0,
+    // Gebuchtes, noch nicht gestartetes Produkt: Budget aus der Buchung (zählt erst ab „Gestartet“)
+    dailyBudgetEur: line?.dailyBudget ?? (opts.dailyBudgetEur && opts.dailyBudgetEur > 0 ? opts.dailyBudgetEur : 0),
     cplEur: cpl?.cpl ?? null,
     special: q.special?.trim() || null,
     assistantKnowledge: knowledge || null,

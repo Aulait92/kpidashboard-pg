@@ -85,12 +85,21 @@ export type StartResult = { ok: true; runId: string } | { ok: false; problems: P
 
 /** Neuen Lauf anlegen (höchstens einer je Kunde gleichzeitig). Voraussetzungen werden vorher geprüft. */
 export async function startCampaignRun(
-  input: { customerId: string; product: string; wish?: string | null; privacyUrl?: string | null; autoBuild?: boolean; createdBy?: string | null },
+  input: {
+    customerId: string;
+    product: string;
+    wish?: string | null;
+    privacyUrl?: string | null;
+    autoBuild?: boolean;
+    createdBy?: string | null;
+    dailyBudgetEur?: number | null;
+    trigger?: "manuell" | "produkt";
+  },
   deps: CampaignDeps = defaultDeps(),
 ): Promise<StartResult> {
   const running = await prisma.campaignRun.findFirst({ where: { customerId: input.customerId, status: { in: ACTIVE_STATUSES } }, select: { id: true } });
   if (running) return { ok: false, problems: [{ key: "running", message: "Für diesen Kunden läuft schon ein Lauf. Bitte warten, bis er fertig ist." }] };
-  const ctx = await loadCampaignContext(input.customerId, input.product, { wish: input.wish, privacyUrl: input.privacyUrl });
+  const ctx = await loadCampaignContext(input.customerId, input.product, { wish: input.wish, privacyUrl: input.privacyUrl, dailyBudgetEur: input.dailyBudgetEur });
   const problems = await checkPrerequisites(ctx, { checkAdAccount: deps.checkAdAccount, pageToken: (p) => pageAccessToken(deps.meta, p), env: deps.env });
   if (problems.length) return { ok: false, problems };
   const run = await prisma.campaignRun.create({
@@ -102,6 +111,7 @@ export async function startCampaignRun(
       steps: json(initialSteps()),
       context: json(ctx),
       createdBy: input.createdBy ?? null,
+      trigger: input.trigger ?? "manuell",
     },
   });
   await audit("kampagne.start", { entity: "CampaignRun", entityId: run.id, customerId: input.customerId, details: { product: input.product } }).catch(() => undefined);
@@ -146,6 +156,8 @@ const place = (c: CampaignContext) => [c.zip, c.city].filter(Boolean).join(" ") 
 
 /** Lauf abarbeiten bzw. fortsetzen. Gibt den neuen Status zurück. */
 export async function processCampaignRun(id: string, deps: CampaignDeps = defaultDeps()): Promise<RunStatus> {
+  const kind = await prisma.campaignRun.findUnique({ where: { id }, select: { kind: true } });
+  if (kind?.kind === "auffrischung") return (await import("@/lib/kampagnen/refresh")).processRefreshRun(id, deps);
   if (!(await lock(id))) return (await prisma.campaignRun.findUniqueOrThrow({ where: { id }, select: { status: true } })).status as RunStatus;
   const row = await loadRun(id);
   const state = { id, steps: row.steps as unknown as RunStep[] };
@@ -314,7 +326,8 @@ async function fail(id: string, state: { id: string; steps: RunStep[] }, key: St
 
 /** Pausiert anlegen (automatisch nach grüner/gelber Prüfung oder per Knopf; setzt nach Fehlern fort). */
 export async function buildCampaignRun(id: string, deps: CampaignDeps = defaultDeps()): Promise<RunStatus> {
-  const pre = await prisma.campaignRun.findUniqueOrThrow({ where: { id }, select: { status: true, review: true } });
+  const pre = await prisma.campaignRun.findUniqueOrThrow({ where: { id }, select: { status: true, review: true, kind: true } });
+  if (pre.kind === "auffrischung") return (await import("@/lib/kampagnen/refresh")).processRefreshRun(id, deps);
   const review = pre.review as unknown as ReviewResult | null;
   if (!review || review.status === "rot") return pre.status as RunStatus;
   if (!["running", "review", "failed", "building"].includes(pre.status)) return pre.status as RunStatus;
@@ -435,10 +448,11 @@ export async function resumeCampaignRuns(deps: CampaignDeps = defaultDeps()): Pr
     },
     orderBy: { createdAt: "asc" },
     take: 2,
-    select: { id: true, status: true },
+    select: { id: true, status: true, kind: true },
   });
   for (const r of runs) {
-    if (r.status === "building") await buildCampaignRun(r.id, deps);
+    if (r.kind === "auffrischung") await (await import("@/lib/kampagnen/refresh")).processRefreshRun(r.id, deps);
+    else if (r.status === "building") await buildCampaignRun(r.id, deps);
     else await processCampaignRun(r.id, deps);
   }
   return runs.length;
@@ -477,3 +491,6 @@ export async function getRunView(id: string) {
 }
 
 export type { RunRow };
+
+// Für die Creative-Auffrischung (lib/kampagnen/refresh.ts)
+export { lock as lockRun, unlock as unlockRun, saveStep as saveRunStep, renderImages as renderRunImages, fail as failRun };

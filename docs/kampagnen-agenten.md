@@ -98,3 +98,41 @@ Kampagne pausiert ist. Modell änderbar mit `CAMPAIGN_AGENT_MODEL` bzw. `CAMPAIG
   Zielgruppe – dann Kampagne veröffentlichen.
 - Advantage+ Zielgruppe und Altersgrenzen: Meta kann die Altersgrenzen bei Advantage+ anders
   behandeln; das zeigt der Werbeanzeigenmanager vor dem Veröffentlichen.
+
+## Automatik (Ole, 13.11.2026)
+
+Schalter und Schwellen: Admin → Einstellungen → **Kampagnen-Automatik** (alle drei standardmäßig an).
+Bei Meta wird in keinem Fall etwas aktiviert oder pausiert.
+
+### 1. Budgetänderung → Meta (`lib/kampagnen/budget-sync.ts`)
+- Gilt eine Budgetänderung des Kunden (sofort bzw. am Stichtag per Cron), sucht die App je Produkt die
+  Kampagne: zuerst bekannte Meta-Kampagnen aus `CampaignRun` (Agenten-Team), sonst das
+  Benennungsschema `PG | <Kunde> | <Produkt> | …` auf dem Werbekonto des Kunden.
+- **Genau eine** passende Kampagne mit Kampagnenbudget → `POST /{campaign_id}` nur mit `daily_budget`
+  (Cent). Status bleibt unverändert (pausiert bleibt pausiert, aktiv bleibt aktiv).
+- Erfolg: Änderungsprotokoll („budget.meta“), Push „Budget bei Meta umgestellt“, keine Aufgabe.
+- Keine/mehrere Kampagnen, Budget auf Anzeigengruppen-Ebene, kein Zugriff oder Automatik aus →
+  Aufgabe „Meta-Budget …“ mit Grund (wie bisher). Stand je Änderung in `BudgetChange.metaStatus`.
+
+### 2. Produkt gebucht → Agenten-Team (`lib/kampagnen/launch.ts`)
+- Kunde bucht ein weiteres Produkt (bzw. Anfrage wird übernommen) oder ein Angebot wird angenommen
+  (Neukunde) → Wunsch (`CampaignWish`) je Produkt; ist alles da, startet sofort ein Lauf, der nach
+  grüner/gelber Prüfung pausiert anlegt (Push mit Link kommt vom Lauf).
+- Fehlt etwas (Meta-Zugriff, Seite, Datenschutz-URL, Budget …) → **eine** Aufgabe „Kampagne <Produkt>
+  für <Kunde>: Voraussetzungen fehlen“ mit Liste; der Cron prüft alle 30 Minuten und startet
+  automatisch, sobald alles da ist (Aufgabe wird dann erledigt).
+- Lauf gestoppt/abgebrochen → Aufgabe „… automatisch nicht möglich“ mit Grund.
+- Die bisherige Aufgabe „Kampagne aufsetzen“ bzw. „Onboarding: Kampagne und Leadformular anlegen“
+  entfällt, solange die Automatik an ist. Paketwechsel (Bestandskunde) starten nichts.
+- Budget eines gebuchten, noch nicht gestarteten Produkts kommt aus der Buchung.
+
+### 3. Müde Anzeigen auffrischen (`lib/kampagnen/refresh.ts`)
+- Laufende Kampagnen aus dem Agenten-Team werden höchstens alle 7 Tage geprüft (Insights der
+  letzten 14 Tage je Anzeige: Frequenz, CTR, Ausgaben, Leads; dazu CTR der ersten 7 Tage).
+- Müde, wenn: Frequenz > 3, **oder** CTR ≥ 30 % unter den ersten 7 Tagen (je ≥ 1.000 Impressionen),
+  **oder** Leadpreis ≥ 40 % über dem Kampagnenschnitt bei ≥ 50 € Ausgaben (ohne Lead = müde).
+- Dann: Winkel → Texter → Bilder → Prüfer (kein neuer Plan, kein neues Formular), 2–3 neue Anzeigen
+  **PAUSED** in derselben Anzeigengruppe (mit dem vorhandenen Formular). Höchstens alle 14 Tage je
+  Kampagne. Push + Aufgabe „Neue Anzeigen für <Kunde> bereit (pausiert) – müde Anzeigen: …“ mit
+  Vorschlag, welche Anzeigen Ole pausiert. KI-Kosten stehen am Lauf (Reiter „Kampagne (KI)“).
+

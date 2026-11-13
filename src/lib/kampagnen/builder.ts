@@ -268,6 +268,70 @@ export async function buildCampaign(api: MetaApi, input: BuildInput): Promise<Bu
   return built;
 }
 
+export type RefreshBuildInput = {
+  ctx: CampaignContext;
+  namePrefix: string;
+  adSetId: string;
+  formId: string;
+  copies: AdCopy[];
+  images: CreativeImage[];
+  built: BuiltState;
+  onProgress: (built: BuiltState) => Promise<void>;
+};
+
+/**
+ * Creative-Auffrischung: neue Bilder, Creatives und Anzeigen in einer BESTEHENDEN
+ * Anzeigengruppe – alles PAUSED, bestehende Anzeigen werden nicht angefasst.
+ */
+export async function buildRefreshAds(api: MetaApi, input: RefreshBuildInput): Promise<BuiltState> {
+  const { ctx, copies, images } = input;
+  const built: BuiltState = { ...input.built, adSetIds: [input.adSetId], formId: input.formId, imageHashes: [...input.built.imageHashes], creativeIds: [...input.built.creativeIds], adIds: [...input.built.adIds] };
+  const save = () => input.onProgress(built);
+  if (!ctx.adAccountId) throw new Error("Kein Werbekonto hinterlegt.");
+  if (!ctx.pageId) throw new Error("Keine Facebook-Seite hinterlegt.");
+  const act = `act_${ctx.adAccountId}`;
+  const pairs = copies.map((c, i) => ({ copy: c, image: images.find((im) => im.angleKey === c.angleKey) ?? images[i] ?? null })).filter((p) => p.image);
+  for (let i = 0; i < pairs.length; i++) {
+    const { copy, image } = pairs[i];
+    if (!built.imageHashes[i]) {
+      const r = await api.post<{ images?: Record<string, { hash: string }> }>(`${act}/adimages`, { url: image!.imageUrl });
+      const hash = r.images ? Object.values(r.images)[0]?.hash : undefined;
+      if (!hash) throw new Error("Meta /adimages lieferte keinen Hash.");
+      built.imageHashes[i] = hash;
+      await save();
+    }
+    if (!built.creativeIds[i]) {
+      const r = await safePost<{ id: string }>(api, `${act}/adcreatives`, {
+        name: `${input.namePrefix} | ${copy.angleKey}`.slice(0, 200),
+        object_story_spec: {
+          page_id: ctx.pageId,
+          link_data: {
+            image_hash: built.imageHashes[i],
+            link: "http://fb.me/",
+            message: copy.primaryText,
+            name: copy.headline,
+            description: copy.description,
+            call_to_action: { type: copy.cta, value: { lead_gen_form_id: input.formId } },
+          },
+        },
+      });
+      built.creativeIds[i] = r.id;
+      await save();
+    }
+    if (!built.adIds[i]) {
+      const r = await safePost<{ id: string }>(api, `${act}/ads`, {
+        name: `${input.namePrefix} | ${copy.angleKey}`.slice(0, 200),
+        adset_id: input.adSetId,
+        creative: { creative_id: built.creativeIds[i] },
+        status: "PAUSED",
+      });
+      built.adIds[i] = r.id;
+      await save();
+    }
+  }
+  return built;
+}
+
 /** Aufräumen nach Abbruch: Kampagne löschen (mit Gruppen/Anzeigen), Formular archivieren. */
 export async function cleanupCampaign(api: MetaApi, ctx: Pick<CampaignContext, "pageId">, built: BuiltState): Promise<string[]> {
   const done: string[] = [];

@@ -29,7 +29,7 @@ export default async function ProductCatalogPage() {
         ))}
       </div>
       <p className="mt-4 text-xs text-[color:var(--muted)]">
-        Buchungen landen als Aufgabe „Kampagne aufsetzen“ in Heute und in der Kundenakte → Abrechnung → Produkte. Dort auf „Gestartet“ setzen, sobald die Kampagne läuft.
+        Buchungen starten das KI-Agenten-Team (Kampagne pausiert anlegen; ohne Kampagnen-Automatik als Aufgabe „Kampagne aufsetzen“) und stehen in der Kundenakte → Abrechnung → Produkte. Dort auf „Gestartet“ setzen, sobald die Kampagne läuft.
       </p>
     </main>
   );
