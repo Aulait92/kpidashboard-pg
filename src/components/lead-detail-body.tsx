@@ -211,7 +211,7 @@ export async function LeadDetailBody({
     won ? loadCustomerProvision(customerId).then((p) => p.rates) : null,
     listLeadFiles(lead.id),
     postfachOf(team.userId),
-    team.userId ? prisma.user.findUnique({ where: { id: team.userId }, select: { displayName: true } }) : null,
+    team.userId ? prisma.user.findUnique({ where: { id: team.userId }, select: { displayName: true, mailSignature: true } }) : null,
   ]);
   const vorlagen = postfach ? await loadVorlagen(customerId) : [];
   let beitrag: string | null = null;
@@ -260,6 +260,7 @@ export async function LeadDetailBody({
           to={lead.email}
           from={postfach.email}
           meinname={postfach.fromName ?? me?.displayName ?? ""}
+          signatur={me?.mailSignature ?? ""}
           vorlagen={vorlagen}
           dateien={files.map((f) => ({ id: f.id, fileName: f.fileName, kind: f.kind }))}
         />

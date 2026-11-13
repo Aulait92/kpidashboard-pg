@@ -1,9 +1,9 @@
 // E-Mail-Vorlagen der Vermittler (Ole, 13.11.2026). Beim ersten Öffnen mit Standardvorlagen gefüllt.
-// Platzhalter: {vorname}, {name}, {produkt}, {meinname}.
+// Platzhalter: {vorname}, {name}, {produkt}, {meinname}, {signatur} (Signatur sonst automatisch darunter).
 
 import { prisma } from "@/lib/prisma";
 
-export { PLATZHALTER, fuelle, werteFuer, type Werte } from "@/lib/mail/platzhalter";
+export { PLATZHALTER, fuelle, fuelleMitSignatur, werteFuer, type Werte } from "@/lib/mail/platzhalter";
 
 export const STANDARD_VORLAGEN: { name: string; subject: string; body: string }[] = [
   {

@@ -4,7 +4,7 @@ import { useActionState, useState, useTransition } from "react";
 import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button, buttonClass } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
-import { deleteVorlageAction, saveSmtpAction, saveVorlageAction, testPostfachAction, type PostfachResult } from "./actions";
+import { deleteVorlageAction, saveSignaturAction, saveSmtpAction, saveVorlageAction, testPostfachAction, type PostfachResult } from "./actions";
 
 const input =
   "h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-[15px] outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20";
@@ -76,6 +76,30 @@ export function TestButton() {
       {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
       Test-E-Mail an mich
     </Button>
+  );
+}
+
+/** E-Mail-Signatur: steht automatisch unter jeder E-Mail an Leads. */
+export function SignaturForm({ signatur, readOnly }: { signatur: string; readOnly: boolean }) {
+  const [state, action, pending] = useActionState<PostfachResult, FormData>(saveSignaturAction, {});
+  return (
+    <form action={action} className="space-y-3" data-signatur-form>
+      <textarea
+        name="signatur"
+        defaultValue={signatur}
+        rows={6}
+        disabled={readOnly}
+        placeholder={"Jana Becker\nAgentur Becker – Ihre Versicherungsagentur\nTel. 0201 123456 · www.agentur-becker.de\nMusterstraße 1, 45127 Essen"}
+        className="w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2 text-[15px] outline-none focus:border-[color:var(--brand)]"
+        aria-label="Signatur"
+      />
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="submit" variant="primary" size="md" disabled={pending || readOnly}>
+          Signatur speichern
+        </Button>
+        <Msg s={state} />
+      </div>
+    </form>
   );
 }
 

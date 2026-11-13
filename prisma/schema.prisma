@@ -705,6 +705,8 @@ model User {
   assignedLeads      Lead[]           @relation("LeadAssignee")
   advisorCalendar    AdvisorCalendar?
   mailConnection     MailConnection?
+  // E-Mail-Signatur (Ole, 14.11.2026): kommt automatisch unter E-Mails an Leads
+  mailSignature      String?
   linkedInConnection LinkedInConnection?
 
   customer       Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull)

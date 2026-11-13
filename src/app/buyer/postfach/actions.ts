@@ -84,6 +84,19 @@ export async function saveVorlageAction(_prev: PostfachResult, fd: FormData): Pr
   }
 }
 
+/** E-Mail-Signatur speichern (je Login). */
+export async function saveSignaturAction(_prev: PostfachResult, fd: FormData): Promise<PostfachResult> {
+  try {
+    const ctx = await ctxWrite();
+    const sig = String(fd.get("signatur") ?? "").replace(/\r\n/g, "\n").trim().slice(0, 2000);
+    await prisma.user.update({ where: { id: ctx.userId }, data: { mailSignature: sig || null } });
+    revalidatePath("/buyer/postfach");
+    return { ok: true, info: sig ? "Signatur gespeichert." : "Signatur entfernt." };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Nicht möglich." };
+  }
+}
+
 export async function deleteVorlageAction(id: string): Promise<void> {
   const ctx = await ctxWrite().catch(() => null);
   if (!ctx) return;

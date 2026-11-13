@@ -10,7 +10,7 @@ import { Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
 import { sendLeadMailAction } from "@/app/buyer/postfach/actions";
-import { fuelle, werteFuer } from "@/lib/mail/platzhalter";
+import { fuelle, fuelleMitSignatur, werteFuer } from "@/lib/mail/platzhalter";
 import { cn } from "@/lib/utils";
 
 export const LEAD_MAIL_EVENT = "pg-lead-mail-open";
@@ -27,6 +27,7 @@ export function LeadMailComposer({
   to: initialTo,
   from,
   meinname,
+  signatur = "",
   vorlagen,
   dateien,
 }: {
@@ -35,6 +36,8 @@ export function LeadMailComposer({
   to: string | null;
   from: string;
   meinname: string;
+  /** E-Mail-Signatur (Postfach-Einstellungen); steht unter jeder E-Mail */
+  signatur?: string;
   vorlagen: Vorlage[];
   dateien: Datei[];
 }) {
@@ -44,10 +47,12 @@ export function LeadMailComposer({
   const [vorlage, setVorlage] = useState<string | null>(null);
   const [to, setTo] = useState(initialTo ?? "");
   const [subject, setSubject] = useState("");
-  const [text, setText] = useState("");
+  // Ohne Vorlage: Signatur schon unten im Text, darüber Platz zum Schreiben
+  const leer = signatur.trim() ? `\n\n${signatur.trim()}` : "";
+  const [text, setText] = useState(leer);
   const [files, setFiles] = useState<Set<string>>(new Set());
   const [pending, start] = useTransition();
-  const werte = werteFuer(lead, meinname);
+  const werte = { ...werteFuer(lead, meinname), signatur };
 
   useEffect(() => {
     const onOpen = () => setOpen(true);
@@ -58,7 +63,7 @@ export function LeadMailComposer({
   const pick = (v: Vorlage) => {
     setVorlage(v.id);
     setSubject(fuelle(v.subject, werte));
-    setText(fuelle(v.body, werte));
+    setText(fuelleMitSignatur(v.body, werte));
     // Angebot-Vorlage: vorhandenes Angebot gleich anhängen
     if (/angebot/i.test(v.name)) {
       const angebot = dateien.find((d) => d.kind === "angebot");
@@ -74,7 +79,7 @@ export function LeadMailComposer({
       setOpen(false);
       setVorlage(null);
       setSubject("");
-      setText("");
+      setText(leer);
       setFiles(new Set());
       router.refresh();
     });

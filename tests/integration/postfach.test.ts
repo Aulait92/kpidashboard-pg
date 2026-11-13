@@ -51,3 +51,22 @@ describe("Postfach", () => {
     await prisma.mailTemplate.deleteMany({ where: { customerId: c.id } });
   });
 });
+
+describe("E-Mail-Signatur", () => {
+  it("steht unter dem Text oder an der Stelle von {signatur}", async () => {
+    const { fuelleMitSignatur, werteFuer } = await import("@/lib/mail/platzhalter");
+    const w = { ...werteFuer({ name: "Eva Pohl", source: "Privatschutz" }, "Jana Becker"), signatur: "Jana Becker\nAgentur Becker\nTel. 0201 123456" };
+    expect(fuelleMitSignatur("Hallo {vorname},\n\nanbei.\n\nViele Grüße\n", w)).toBe("Hallo Eva,\n\nanbei.\n\nViele Grüße\n\nJana Becker\nAgentur Becker\nTel. 0201 123456");
+    expect(fuelleMitSignatur("Hallo {vorname},\n{signatur}\n\nPS: Danke", w)).toBe("Hallo Eva,\nJana Becker\nAgentur Becker\nTel. 0201 123456\n\nPS: Danke");
+    expect(fuelleMitSignatur("Hallo {vorname}", { ...w, signatur: "  " })).toBe("Hallo Eva");
+  });
+});
+
+describe("Fehlermeldungen beim Senden", () => {
+  it("übersetzt technische Fehler", async () => {
+    const { friendlySendError } = await import("@/lib/mail/postfach");
+    expect(friendlySendError('Gmail: { "error": { "code": 403, "message": "Gmail API has not been used in project 1 before or it is disabled.')).toMatch(/noch nicht freigeschaltet/);
+    expect(friendlySendError("Invalid login: 535 Authentication failed")).toMatch(/Passwort/);
+    expect(friendlySendError("etwas anderes")).toBe("etwas anderes");
+  });
+});

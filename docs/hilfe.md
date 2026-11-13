@@ -563,3 +563,15 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
 - „Etwas unklar? Feedback“ im Profilmenü – wir melden uns.
 - 15-Minuten-Hilfetermin (Video) in der Einrichtung, solange sie offen ist.
 - Telefon: +49 151 52418846.
+
+## E-Mails aus der App (eigenes Postfach)
+
+- **Einstellungen → E-Mail-Postfach**: Postfach verbinden – Microsoft (Outlook/365) per Anmeldung oder jeder andere
+  Anbieter per SMTP (z. B. IONOS, Strato, T-Online, GMX; Gmail mit App-Passwort: smtp.gmail.com, Port 587).
+  „Test senden“ schickt eine Probe-Mail an die eigene Adresse.
+- **Signatur**: einmal hinterlegen (Name, Agentur, Telefon, Adresse). Sie steht automatisch unter jeder E-Mail an
+  Leads – mit und ohne Vorlage. In einer Vorlage kann man die Stelle mit {signatur} selbst festlegen.
+- **Vorlagen** mit Platzhaltern {vorname}, {name}, {produkt}, {meinname}, {signatur}.
+- Beim Kontakt: **Notizen & Verlauf → E-Mail** (oder „Mehr → E-Mail schreiben“). Vorlage wählen, anpassen,
+  Dokumente (z. B. das Angebot) anhängen, senden. Die E-Mail geht von der eigenen Adresse raus und steht im Verlauf.
+- Firmen-Postfächer mancher Versicherer lassen sich oft nicht verbinden; dann das eigene Mailprogramm nutzen.

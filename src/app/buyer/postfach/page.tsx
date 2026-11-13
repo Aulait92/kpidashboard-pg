@@ -1,12 +1,13 @@
 import { redirect } from "next/navigation";
-import { CheckCircle2, Mail, TriangleAlert } from "lucide-react";
+import { CheckCircle2, Mail, PenLine, TriangleAlert } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { buttonClass, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { googleMailAvailable, microsoftMailAvailable, postfachOf, PROVIDER_LABEL } from "@/lib/mail/postfach";
 import { loadVorlagen, PLATZHALTER } from "@/lib/mail/vorlagen";
 import { disconnectPostfachAction } from "./actions";
-import { SmtpForm, TestButton, VorlagenListe } from "./forms";
+import { SignaturForm, SmtpForm, TestButton, VorlagenListe } from "./forms";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "E-Mail-Postfach | performancegrowth" };
@@ -21,13 +22,20 @@ const STATUS_TEXT: Record<string, { ok: boolean; text: string }> = {
 
 // Eigenes Postfach verbinden (Ole, 13.11.2026): E-Mails an Leads gehen aus Ihrem Postfach,
 // mit Vorlagen. Google, Microsoft oder SMTP (z. B. IONOS, Strato, T-Online).
-export default async function PostfachPage({ searchParams }: { searchParams: Promise<{ postfach?: string }> }) {
+export default async function PostfachPage({ searchParams }: { searchParams: Promise<{ postfach?: string; google?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   const sp = await searchParams;
-  const [conn, vorlagen] = await Promise.all([postfachOf(ctx.userId), loadVorlagen(ctx.customerId)]);
+  const [conn, vorlagen, me] = await Promise.all([
+    postfachOf(ctx.userId),
+    loadVorlagen(ctx.customerId),
+    ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { mailSignature: true } }) : null,
+  ]);
   const status = sp.postfach ? STATUS_TEXT[sp.postfach] : null;
   const readOnly = ctx.preview;
+  // Gmail erst anbieten, wenn Google die App geprüft hat (sonst Warnseite „nicht überprüft“).
+  // Zum Testen vorher: /buyer/postfach?google=1
+  const showGoogle = googleMailAvailable() && (process.env.GOOGLE_MAIL_VERIFIED === "1" || sp.google === "1");
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 space-y-5 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader title="E-Mail-Postfach" subtitle="E-Mails an Leads direkt aus der App senden – aus Ihrem eigenen Postfach, mit Vorlagen." />
@@ -74,7 +82,7 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
               <p className="text-sm text-[color:var(--muted)]">Verbinden Sie Ihr Postfach – danach schreiben Sie Leads direkt aus der App an, auf Wunsch mit dem Angebot im Anhang.</p>
               {!readOnly ? (
                 <div className="flex flex-wrap gap-2">
-                  {googleMailAvailable() ? (
+                  {showGoogle ? (
                     <a href="/api/mail/connect?anbieter=google" className={buttonClass("secondary", "md")}>
                       Mit Google (Gmail) verbinden
                     </a>
@@ -87,7 +95,7 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
                 </div>
               ) : null}
               <details className="rounded-[var(--radius-md)] border border-[color:var(--border)] px-4 py-3">
-                <summary className="cursor-pointer text-[15px] font-medium">Anderer Anbieter (SMTP, z. B. IONOS, Strato, T-Online, GMX)</summary>
+                <summary className="cursor-pointer text-[15px] font-medium">Anderer Anbieter (SMTP, z. B. IONOS, Strato, T-Online, GMX, Gmail mit App-Passwort)</summary>
                 <div className="mt-3">
                   <SmtpForm readOnly={readOnly} />
                 </div>
@@ -97,6 +105,16 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
               </p>
             </>
           )}
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader title="Signatur" icon={PenLine} />
+        <div className="p-5">
+          <p className="mb-3 text-sm text-[color:var(--muted)]">
+            Steht automatisch unter jeder E-Mail an Leads (auch ohne Vorlage). In einer Vorlage können Sie die Stelle mit {"{signatur}"} selbst bestimmen.
+          </p>
+          <SignaturForm signatur={me?.mailSignature ?? ""} readOnly={readOnly} />
         </div>
       </Card>
 

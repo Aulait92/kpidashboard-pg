@@ -315,8 +315,22 @@ export async function sendViaPostfach(userId: string, m: OutgoingMail): Promise<
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Senden fehlgeschlagen.";
     await prisma.mailConnection.update({ where: { id: c.id }, data: { status: "error", lastError: msg.slice(0, 300) } }).catch(() => {});
-    return { ok: false, error: `Senden hat nicht geklappt: ${msg.slice(0, 200)}` };
+    return { ok: false, error: `Senden hat nicht geklappt: ${friendlySendError(msg)}` };
   }
+}
+
+/** Technische Fehler der Anbieter in verständliche Sätze übersetzen (Rohtext bleibt in lastError). */
+export function friendlySendError(msg: string): string {
+  if (/has not been used in project|is disabled|SERVICE_DISABLED|accessNotConfigured/i.test(msg))
+    return "Der Versand über Gmail ist bei uns gerade noch nicht freigeschaltet. Bitte später erneut versuchen oder das Postfach per SMTP verbinden.";
+  if (/invalid_grant|401|unauthenticated|InvalidAuthenticationToken/i.test(msg))
+    return "Die Anmeldung beim Postfach ist abgelaufen. Bitte unter Einstellungen → E-Mail-Postfach neu verbinden.";
+  if (/insufficient|403|ErrorAccessDenied|Forbidden/i.test(msg))
+    return "Das Postfach erlaubt das Senden nicht. Bitte beim Verbinden das Senden von E-Mails erlauben oder SMTP nutzen.";
+  if (/EAUTH|535|authentication failed|Invalid login/i.test(msg)) return "Benutzername oder Passwort für SMTP stimmen nicht.";
+  if (/ECONNREFUSED|ETIMEDOUT|ENOTFOUND|ESOCKET/i.test(msg)) return "Der Mailserver ist nicht erreichbar. Bitte Server und Port prüfen.";
+  if (/too large|552|exceeds/i.test(msg)) return "Die E-Mail ist zu groß (Anhänge verkleinern).";
+  return msg.slice(0, 200);
 }
 
 export async function postfachOf(userId: string | null | undefined) {

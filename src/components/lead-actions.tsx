@@ -264,7 +264,7 @@ export function LeadHeaderActions(p: Props) {
           <span>eingegangen {new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(p.createdAt))}</span>
         </div>
 
-        <div className="mt-4 grid grid-cols-5 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
+        <div className="mt-4 grid grid-cols-3 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
           <ActionTile
             icon={Phone}
             label="Anrufen"
@@ -274,6 +274,13 @@ export function LeadHeaderActions(p: Props) {
             title={p.phone ? formatPhone(p.phone) : undefined}
           />
           <ActionTile icon={MessageCircle} label="Chat" href={p.conversationId ? `/buyer/chats?c=${p.conversationId}` : undefined} />
+          {/* E-Mail direkt sichtbar (Ole, 14.11.2026: war unter „Mehr“ versteckt). Mit Postfach aus der App, sonst Mailprogramm. */}
+          <ActionTile
+            icon={Mail}
+            label="E-Mail"
+            href={!p.mailReady && p.email ? `mailto:${p.email}` : undefined}
+            onClick={p.mailReady ? () => window.dispatchEvent(new Event(LEAD_MAIL_EVENT)) : undefined}
+          />
           <ActionTile icon={CalendarPlus} label="Termin" href={p.bookingSlug ? `/book/${p.bookingSlug}?lead=${p.leadId}` : undefined} external />
           {/* Wiedervorlage direkt neben Anrufen/Chat/Termin (Ole, 13.11.2026: war zu versteckt) */}
           <ActionTile icon={BellRing} label="Wiedervorlage" onClick={!p.storniert ? () => setOpen("followup") : undefined} />

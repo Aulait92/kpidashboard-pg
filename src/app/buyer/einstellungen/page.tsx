@@ -35,7 +35,7 @@ export default async function EinstellungenPage() {
       items: [
         { href: "/buyer/kalender", icon: CalendarDays, color: "bg-emerald-600", title: "Mein Kalender", text: "Kalender verbinden und Zeiten für Termine festlegen" },
         { href: "/buyer/provisionen", icon: Percent, color: "bg-amber-500", title: "Meine Provisionen", text: "Ihre Sätze – daraus rechnet die App Provision und Zahlen" },
-        { href: "/buyer/postfach", icon: Mail, color: "bg-blue-500", title: "E-Mail-Postfach", text: "Eigenes Postfach verbinden, E-Mail-Vorlagen" },
+        { href: "/buyer/postfach", icon: Mail, color: "bg-blue-500", title: "E-Mail-Postfach", text: "Eigenes Postfach verbinden, Signatur, E-Mail-Vorlagen" },
         { href: "/buyer/vorlagen", icon: MessageSquareText, color: "bg-emerald-500", title: "WhatsApp-Vorlagen", text: "Nachrichten, die Ihr Assistent in Ihrem Namen schickt" },
         ...(owner ? [{ href: "/buyer/bestand", icon: Contact, color: "bg-sky-500", title: "Bestandskunden", text: "Kundenliste, Lücken und Anlässe, Kampagnen" }] : []),
       ],
