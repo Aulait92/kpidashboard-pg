@@ -6,6 +6,7 @@ import { BarChart3, Briefcase, Building2, Inbox, Settings, Sun, TrendingUp, type
 import { CommandPalette } from "@/components/command-palette";
 import { AdminProfileMenu } from "@/components/admin/admin-profile-menu";
 import { cn } from "@/lib/utils";
+import { NotificationsButton } from "@/components/notifications-button";
 
 // Neue Admin-Oberfläche (Admin-A): Seitenleiste am Rechner, unten fünf
 // Bereiche am Handy. Die Seiten selbst bleiben dieselben wie bisher.
@@ -117,6 +118,9 @@ export function AdminShell({ email, counts }: { email: string; counts: { heute: 
           >
             <Settings className="h-4 w-4" /> Einstellungen
           </Link>
+          <div className="px-1 pb-1 [&>div>button]:w-full">
+            <NotificationsButton />
+          </div>
           <AdminProfileMenu email={email} newUi variant="sidebar" />
         </div>
       </aside>
@@ -128,6 +132,7 @@ export function AdminShell({ email, counts }: { email: string; counts: { heute: 
           <span className="min-w-0 truncate text-base font-semibold">{current}</span>
           <div className="ml-auto flex items-center gap-2">
             <CommandPalette />
+            <NotificationsButton />
             <AdminProfileMenu email={email} newUi />
           </div>
         </div>
