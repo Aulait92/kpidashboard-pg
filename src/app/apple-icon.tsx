@@ -15,17 +15,13 @@ export default function AppleIcon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background:
-            "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-          color: "#ffffff",
-          fontFamily:
-            "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-          fontWeight: 800,
-          fontSize: 92,
-          letterSpacing: -3,
+          background: "#2563EB",
         }}
       >
-        kpi
+        <svg width={108} height={108} viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth={2.75} strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+          <polyline points="16 7 22 7 22 13" />
+        </svg>
       </div>
     ),
     size,
