@@ -12,6 +12,7 @@ const LINKS = [
   { href: `${BASE}/aufgaben`, label: "Aufgaben" },
   { href: `${BASE}/angebote`, label: "Angebote" },
   { href: `${BASE}/empfehlungen`, label: "Empfehlungen" },
+  { href: `${BASE}/linkedin`, label: "LinkedIn" },
   { href: `${BASE}/unterlagen`, label: "Unterlagen" },
 ];
 

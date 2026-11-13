@@ -22,3 +22,15 @@ mit `INSERT INTO "ProductUpdate" (...) VALUES (...) ON CONFLICT ("id") DO NOTHIN
 - Kein Eintrag für: reine Admin-Funktionen, interne Technik, Sicherheits-Updates ohne sichtbare Änderung,
   kleine Korrekturen ohne spürbaren Unterschied. Fehlerbehebungen nur, wenn Kunden den Fehler bemerkt haben.
 - Mehrere kleine Änderungen eines Tages zu einem Eintrag zusammenfassen.
+
+## Webseite mitpflegen (Ole, 14.11.2026)
+
+Die Marketing-Webseite (Lovable-Projekt „Growth Leads Hub“, Seite `/software`) wird immer an den aktuellen
+Stand der App angepasst. Nach jeder Änderung, die Kunden (Vermittler) sehen oder nutzen – also immer dann,
+wenn auch eine Neuigkeit (`ProductUpdate`) entsteht –, die Webseite über die Lovable-Tools aktualisieren
+(`send_message` mit genauen Textänderungen, Ergebnis per `get_message`/`get_diff` prüfen, dann `deploy_project`).
+
+- Du-Form, Nutzen statt Technik, keine Preise (Platzhalter bleibt), keine neuen Garantie- oder Ergebnisversprechen.
+- Nur Verfügbares als verfügbar beschreiben; Angekündigtes als „demnächst“.
+- Keine Admin-/Ole-Funktionen (z. B. LinkedIn, Vertrieb) auf die Webseite.
+- Die Regeln stehen auch im Lovable-Projektwissen (Knowledge); bei Bedarf dort ergänzen.

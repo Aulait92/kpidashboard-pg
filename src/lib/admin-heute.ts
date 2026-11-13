@@ -521,6 +521,47 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
     });
   }
 
+  // ── LinkedIn: Entwürfe freigeben, fehlgeschlagene Posts, Zugang läuft ab ──
+  const [liDrafts, liFailed, liConn] = await Promise.all([
+    prisma.linkedInPost.findMany({ where: { status: "entwurf", scheduledAt: { gte: now } }, select: { scheduledAt: true }, orderBy: { scheduledAt: "asc" } }),
+    prisma.linkedInPost.count({ where: { status: "fehler" } }),
+    prisma.linkedInConnection.findFirst({ select: { expiresAt: true, status: true } }),
+  ]);
+  if (liDrafts.length) {
+    items.push({
+      key: `linkedin:drafts:${liDrafts[0].scheduledAt?.toISOString().slice(0, 10)}`,
+      area: "Vertrieb",
+      tone: "info",
+      icon: "check",
+      title: `LinkedIn: ${plural(liDrafts.length, "Entwurf", "Entwürfe")} freigeben`,
+      detail: `Erster Post ${liDrafts[0].scheduledAt ? liDrafts[0].scheduledAt.toLocaleString("de-DE", { timeZone: "Europe/Berlin", weekday: "short", hour: "2-digit", minute: "2-digit" }) : ""} · ohne Freigabe geht nichts raus`,
+      action: { label: "Ansehen", href: "/admin/vertrieb/linkedin" },
+      later: { label: "Morgen", days: 1 },
+    });
+  }
+  if (liFailed) {
+    items.push({
+      key: "linkedin:failed",
+      area: "Vertrieb",
+      tone: "warn",
+      icon: "alert",
+      title: `LinkedIn: ${plural(liFailed, "Post", "Posts")} nicht veröffentlicht`,
+      detail: "Fehler ansehen und neu freigeben",
+      action: { label: "Ansehen", href: "/admin/vertrieb/linkedin" },
+    });
+  }
+  if (liConn && (liConn.status !== "ok" || liConn.expiresAt.getTime() < now.getTime() + 7 * DAY)) {
+    items.push({
+      key: "linkedin:reconnect",
+      area: "Vertrieb",
+      tone: liConn.expiresAt <= now || liConn.status !== "ok" ? "warn" : "info",
+      icon: "alert",
+      title: liConn.expiresAt <= now ? "LinkedIn-Zugang abgelaufen" : "LinkedIn bald neu verbinden",
+      detail: "LinkedIn verlangt alle 60 Tage eine neue Anmeldung – ein Klick genügt",
+      action: { label: "Neu verbinden", href: "/api/linkedin/connect" },
+    });
+  }
+
   const dismissed = userId ? await activeDismissals(userId, now) : [];
   return { items: rankItems(withoutDismissed(items, dismissed)), auto: await loadAuto(now) };
 }

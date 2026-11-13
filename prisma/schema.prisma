@@ -705,6 +705,7 @@ model User {
   assignedLeads      Lead[]           @relation("LeadAssignee")
   advisorCalendar    AdvisorCalendar?
   mailConnection     MailConnection?
+  linkedInConnection LinkedInConnection?
 
   customer       Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull)
   resetTokens    PasswordResetToken[]
@@ -2783,4 +2784,99 @@ model MailTemplate {
   updatedAt  DateTime @updatedAt
 
   @@index([customerId])
+}
+
+// LinkedIn: persönliches Profil (Ole, 14.11.2026). KI-Entwürfe nach Reichweite,
+// Freigabe per Klick, Veröffentlichen zur geplanten Uhrzeit (docs/linkedin.md).
+model LinkedInConnection {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // urn:li:person:{sub}
+  personUrn      String
+  name           String?
+  accessTokenEnc String
+  expiresAt      DateTime
+  // gewährte Berechtigungen (z. B. „openid profile w_member_social r_member_postAnalytics“)
+  scopes         String   @default("")
+  // ok | error
+  status         String   @default("ok")
+  lastError      String?
+  // Erinnerung „neu verbinden“ (einmal je Ablauf)
+  remindedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// Einstellungen (eine Zeile, id „default“)
+model LinkedInSettings {
+  id          String   @id @default("default")
+  postsPerDay Int      @default(5)
+  // Uhrzeiten (deutsche Zeit), kommagetrennt
+  slots       String   @default("07:30,09:30,12:00,15:00,18:00")
+  weekdays    Boolean  @default(true)
+  // Über mich, Zielgruppe, Themen, Tonfall – Grundlage für die Entwürfe
+  about       String   @default("")
+  autoDrafts  Boolean  @default(true)
+  // Zielgruppe (ICP): optimiert wird auf Reichweite in dieser Gruppe, nicht auf Reichweite insgesamt
+  icp         String   @default("Versicherungsvermittler in Deutschland: Ausschließlichkeitsvertreter (z. B. Allianz-Agenturen), Mehrfachagenten und Makler, die mehr Neukunden wollen. Sie verkaufen z. B. PKV, Privatschutz und Tierkrankenversicherung. Wir verkaufen ihnen Leadgenerierung über Meta-Werbung plus unsere Software mit WhatsApp-Assistent, der Leads qualifiziert und Termine bucht.")
+  // Begriffe, an denen die Zielgruppe in den LinkedIn-Zuschauerdaten erkannt wird (Branche, Beruf)
+  icpKeywords String   @default("versicherung, insurance, makler, broker, vermittler, agentur, generalvertret, hauptvertret, finanzberat, financial advisor, allianz, ergo, axa, signal iduna, debeka, hallesche, gothaer")
+  // Anteil der Zielgruppe an allen Zuschauern (aus dem Profil-Export), Ersatz, wenn je Post nichts vorliegt
+  accountIcpShare Float?
+  // Uhrzeit (deutsche Zeit), ab der die Entwürfe für den nächsten Tag geschrieben werden
+  draftHour   Int      @default(17)
+  lastImportAt DateTime?
+  // Sperre gegen doppeltes Schreiben (Cron alle 5 Minuten, ein Lauf dauert ca. 1–2 Minuten)
+  draftingAt  DateTime?
+  updatedAt   DateTime @updatedAt
+}
+
+model LinkedInPost {
+  id             String    @id @default(cuid())
+  // entwurf | freigegeben | sendet | veroeffentlicht | verworfen | fehler | importiert
+  status         String
+  text           String    @default("")
+  // Thema in wenigen Worten und was der Post testen soll
+  idea           String?
+  hypothesis     String?
+  // Tag (YYYY-MM-DD, deutsche Zeit), für den der Entwurf geschrieben wurde
+  draftDate      String?
+  scheduledAt    DateTime?
+  publishedAt    DateTime?
+  // urn:li:share:… (aus der App) bzw. urn:li:activity:… (aus dem Export)
+  postUrn        String?   @unique
+  url            String?
+  impressions    Int?
+  membersReached Int?
+  reactions      Int?
+  comments       Int?
+  reposts        Int?
+  engagements    Int?
+  metricsAt      DateTime?
+  // Quelle der Zahlen: api | export | hand
+  metricsSource  String?
+  // Anteil der Zielgruppe an den Zuschauern dieses Posts (0–1, aus dem Post-Export)
+  icpShare       Float?
+  // Foto aus der Fotoablage (optional); bei Löschung des Fotos bleibt der Post ohne Bild
+  photoId        String?
+  photo          LinkedInPhoto? @relation(fields: [photoId], references: [id], onDelete: SetNull)
+  lastError      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([status, scheduledAt])
+  @@index([draftDate])
+}
+
+// Fotos von Ole für seine Posts (Ole, 14.11.2026). Beschreibung schreibt die KI beim Hochladen.
+model LinkedInPhoto {
+  id          String         @id @default(cuid())
+  fileName    String
+  contentType String
+  size        Int
+  data        Bytes
+  description String         @default("")
+  createdAt   DateTime       @default(now())
+  posts       LinkedInPost[]
 }
