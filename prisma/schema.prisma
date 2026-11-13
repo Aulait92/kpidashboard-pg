@@ -1418,6 +1418,8 @@ model SalesMeeting {
   inviteeName   String?
   inviteeEmail  String?
   taskId        String?
+  /// Aufgabe „Wie lief der Termin?“ nach Terminende (lib/vertrieb/termin-review.ts)
+  reviewTaskId  String?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 

@@ -64,6 +64,10 @@ export const OUTCOMES: Outcome[] = [
   { id: "unterlagen", label: "Unterlagen gesendet (Einseiter / Präsentation)", stage: "INTERESSE", task: { title: "Nachfassen: Unterlagen gesendet", type: "NACHFASSEN", workdays: 3 } },
   { id: "unterlagen_senden", label: "Will Unterlagen – noch senden", stage: "INTERESSE", task: { title: "Unterlagen senden", type: "UNTERLAGEN", workdays: 0 } },
   { id: "termin", label: "Termin vereinbart", stage: "TERMIN", task: { title: "Termin", type: "TERMIN", workdays: 2 } },
+  // Nach dem Termin (Aufgabe „Wie lief der Termin?“)
+  { id: "angebot_gesendet", label: "Termin gehabt – Angebot geschickt", stage: null, task: { title: "Nachfassen: Angebot", type: "NACHFASSEN", workdays: 3 } },
+  { id: "bedenkzeit", label: "Termin gehabt – Bedenkzeit", stage: null, task: { title: "Nach dem Termin nachfassen", type: "ANRUF", workdays: 2 } },
+  { id: "nicht_erschienen", label: "Termin: nicht erschienen", stage: null, task: { title: "Neuen Termin vereinbaren", type: "ANRUF", workdays: 0 } },
   { id: "gewonnen", label: "Gewonnen / Zusage", stage: "GEWONNEN", task: { title: "Vertrag senden", type: "SONSTIGES", workdays: 0 } },
   { id: "spaeter", label: "Später wieder (Monate)", stage: "SPAETER", task: { title: "Wieder melden", type: "ANRUF", workdays: 60 } },
   { id: "verloren", label: "Kein Interesse / Verloren", stage: "VERLOREN", closesTasks: true, needsReason: true },
@@ -72,6 +76,18 @@ export const OUTCOMES: Outcome[] = [
 ];
 
 export const OUTCOME_BY_ID = Object.fromEntries(OUTCOMES.map((o) => [o.id, o]));
+
+/** Aufgabe nach jedem Termin (Ole, 13.11.): Titel beginnt immer so. */
+export const TERMIN_REVIEW_PREFIX = "Wie lief der Termin";
+export const isTerminReview = (title: string) => title.startsWith(TERMIN_REVIEW_PREFIX);
+/** Schnellauswahl in der Aufgabe „Wie lief der Termin?“ (Knopftext + Ergebnis). */
+export const TERMIN_REVIEW_CHOICES: { outcome: string; label: string }[] = [
+  { outcome: "gewonnen", label: "Abschluss" },
+  { outcome: "angebot_gesendet", label: "Angebot geschickt" },
+  { outcome: "bedenkzeit", label: "Bedenkzeit" },
+  { outcome: "nicht_erschienen", label: "Nicht erschienen" },
+  { outcome: "verloren", label: "Kein Interesse" },
+];
 
 /** Reihenfolge, damit "Nicht erreicht" einen Kontakt aus z.B. Interesse nicht zurückstuft */
 export const STAGE_RANK: Record<Stage, number> = {

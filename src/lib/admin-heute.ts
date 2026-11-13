@@ -7,7 +7,7 @@ import { REASON_LABEL, type EscalationReason } from "@/lib/support";
 import { HEARTBEAT_MAX_AGE_MIN, type HeartbeatKey } from "@/lib/heartbeat";
 import { onboardingProgressFor } from "@/lib/onboarding";
 import { stuckSetups } from "@/lib/selbst-einrichtung";
-import { shortName } from "@/lib/vertrieb/crm";
+import { shortName, isTerminReview } from "@/lib/vertrieb/crm";
 import { dayBounds, openTasks } from "@/lib/vertrieb/queries";
 import { offeneGarantieFaelle } from "@/lib/garantien-server";
 import { GARANTIE_LABEL, heuteTitel, monatName, type Kennzahlen } from "@/lib/garantien";
@@ -38,6 +38,8 @@ export type HeuteItem = {
 
 export type HeuteQuick =
   | { kind: "task"; taskId: string }
+  /** „Wie lief der Termin?“: Ergebnis-Knöpfe */
+  | { kind: "termin"; taskId: string }
   | { kind: "storno"; leadId: string }
   | { kind: "offer"; offerId: string; contactId: string }
   /** Garantiefall: Gewähren (Stripe-Gutschrift) oder Ablehnen mit Begründung */
@@ -454,7 +456,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       detail: `${late ? `Überfällig ${sinceText(t.dueAt, now)}` : "Heute fällig"}${t.note ? ` · ${t.note.slice(0, 120)}` : ""}`,
       action: t.contact ? { label: t.type === "ANRUF" ? "Anrufen" : "Öffnen", href: `/admin/vertrieb/kontakte/${t.contact.id}` } : { label: "Öffnen", href: "/admin/vertrieb/aufgaben" },
       since: t.dueAt,
-      quick: { kind: "task", taskId: t.id },
+      quick: isTerminReview(t.title) ? { kind: "termin", taskId: t.id } : { kind: "task", taskId: t.id },
     });
   }
   if (tasks.length > shown.length) {

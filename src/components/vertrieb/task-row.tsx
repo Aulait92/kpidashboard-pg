@@ -8,7 +8,8 @@ import { CalendarClock, Check, ChevronRight, MoreHorizontal, Phone, Trash2, User
 import { deleteTask, snoozeTask, toggleTask } from "@/app/admin/vertrieb/actions";
 import { success as hapticSuccess } from "@/lib/haptics";
 import { ActionSheet, type SheetAction } from "@/components/ui/sheet";
-import { STAGE_COLOR, STAGE_LABEL, TASK_LABEL, shortName } from "@/lib/vertrieb/crm";
+import { STAGE_COLOR, STAGE_LABEL, TASK_LABEL, TERMIN_REVIEW_CHOICES, isTerminReview, shortName } from "@/lib/vertrieb/crm";
+import { meetingOutcomeAction } from "@/app/admin/heute/actions";
 import { dayKey, fmtDateTime, relDay, todayKey } from "@/lib/vertrieb/dates";
 import type { TaskWithContact } from "@/components/vertrieb/ui";
 
@@ -99,6 +100,35 @@ export function TaskRow({ t, showContact = true }: { t: TaskWithContact; showCon
             </button>
           );
         })()}
+        {!doneLocal && isTerminReview(t.title) ? (
+          <div className="mt-2 flex flex-wrap items-center gap-1.5" data-termin-ergebnis>
+            {TERMIN_REVIEW_CHOICES.map((c) => (
+              <button
+                key={c.outcome}
+                type="button"
+                disabled={pending}
+                onClick={() => {
+                  setDoneLocal(true);
+                  run(async () => {
+                    const res = await meetingOutcomeAction(t.id, c.outcome);
+                    if (!res.ok) {
+                      setDoneLocal(false);
+                      alert(res.error);
+                    }
+                  });
+                }}
+                className={clsx(
+                  "rounded-full border px-2.5 py-0.5 text-xs font-medium",
+                  c.outcome === "gewonnen"
+                    ? "border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700"
+                    : "border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-white",
+                )}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
         {!doneLocal ? (
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <button

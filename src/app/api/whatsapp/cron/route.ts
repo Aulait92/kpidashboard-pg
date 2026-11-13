@@ -20,6 +20,7 @@ import { beat } from "@/lib/heartbeat";
 import { recordStatusSample } from "@/lib/status-server";
 import { runGarantien } from "@/lib/garantien-server";
 import { enrichPendingContacts } from "@/lib/vertrieb/contact-enrich";
+import { createMeetingReviews } from "@/lib/vertrieb/termin-review";
 import { runBankSync } from "@/lib/bank/server";
 import { retryPendingSelfConnect } from "@/lib/whatsapp/self-connect";
 import { syncTemplates } from "@/lib/whatsapp/template-submit";
@@ -123,6 +124,11 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-sequences");
     return { error: e instanceof Error ? e.message : String(e) };
   });
+  // Vertrieb: nach jedem Termin Aufgabe „Wie lief der Termin?“ + Push
+  const terminNachfragen = await createMeetingReviews(now).catch((e: unknown) => {
+    reportError(e, "cron-termin-review");
+    return null;
+  });
   // Vertrieb: Kontakte anreichern (Website + Google Places) – nach der Antwort,
   // damit der Cron nicht auf langsame Websites wartet (gedrosselt, je Kontakt einmal).
   after(() =>
@@ -186,7 +192,7 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-templates");
     return null;
   });
-  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, whatsappConnect, templates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, terminNachfragen, whatsappConnect, templates, status });
 }
 
 export const GET = handle;

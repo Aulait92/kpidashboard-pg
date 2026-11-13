@@ -10,6 +10,7 @@ import {
   dismissAction,
   garantieAblehnenAction,
   garantieGewaehrenAction,
+  meetingOutcomeAction,
   offerFollowedUpAction,
   postponeTaskAction,
   undoHeuteAction,
@@ -18,6 +19,7 @@ import {
 import { ToastProvider, useToast } from "@/components/ui/toast";
 import { HEUTE_ICONS } from "@/components/admin/heute-icons";
 import { cn } from "@/lib/utils";
+import { TERMIN_REVIEW_CHOICES } from "@/lib/vertrieb/crm";
 
 
 const TONE: Record<HeuteTone, string> = {
@@ -91,7 +93,7 @@ function HeuteRow({ it }: { it: HeuteItem }) {
 
   if (hidden) return null;
   const q = it.quick;
-  const mainIsPrimary = it.tone !== "info" && q?.kind !== "task" && q?.kind !== "storno" && q?.kind !== "garantie";
+  const mainIsPrimary = it.tone !== "info" && q?.kind !== "task" && q?.kind !== "termin" && q?.kind !== "storno" && q?.kind !== "garantie";
 
   return (
     <li className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:gap-4" data-heute={it.key}>
@@ -107,6 +109,21 @@ function HeuteRow({ it }: { it: HeuteItem }) {
         </div>
       </Link>
       <div className="flex w-full items-center gap-2 sm:w-auto">
+        {q?.kind === "termin" ? (
+          <div className="flex flex-wrap gap-1.5" data-termin-ergebnis>
+            {TERMIN_REVIEW_CHOICES.map((c) => (
+              <button
+                key={c.outcome}
+                type="button"
+                disabled={pending}
+                onClick={() => run(() => meetingOutcomeAction(q.taskId, c.outcome))}
+                className={cn(btn, c.outcome === "gewonnen" ? primary : secondary, "px-2.5")}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
         {q?.kind === "task" ? (
           <>
             <button type="button" disabled={pending} onClick={() => run(() => completeTaskAction(q.taskId))} className={cn(btn, primary)}>

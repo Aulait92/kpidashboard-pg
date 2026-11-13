@@ -7,6 +7,8 @@ import { validHeuteKey } from "@/lib/admin-heute";
 import { decideStorno } from "@/lib/ppl/storno";
 import { addDays } from "@/lib/vertrieb/dates";
 import { gewaehreFall, lehneFallAb } from "@/lib/garantien-server";
+import { recordMeetingOutcome } from "@/lib/vertrieb/termin-review";
+import { TERMIN_REVIEW_CHOICES } from "@/lib/vertrieb/crm";
 
 // Sofort-Aktionen in „Heute“ (Admin-A). Jede Aktion liefert, was „Rückgängig“
 // braucht. Server Functions sind per POST direkt erreichbar → überall requireAuth.
@@ -34,6 +36,16 @@ export async function completeTaskAction(taskId: string): Promise<HeuteResult> {
   if (!t.doneAt) await prisma.salesTask.update({ where: { id: t.id }, data: { doneAt: new Date() } });
   refresh(t.contactId);
   return { ok: true, message: "Aufgabe erledigt", undo: { kind: "task-open", taskId: t.id } };
+}
+
+/** „Wie lief der Termin?“: Ergebnis mit einem Klick (Verlauf, Stufe, Folgeaufgabe). */
+export async function meetingOutcomeAction(taskId: string, outcome: string): Promise<HeuteResult> {
+  await requireAuth();
+  const res = await recordMeetingOutcome(String(taskId), String(outcome));
+  if (!res.ok) return fail(res.error);
+  refresh(res.contactId);
+  const label = TERMIN_REVIEW_CHOICES.find((c) => c.outcome === outcome)?.label ?? "Ergebnis";
+  return { ok: true, message: `Eingetragen: ${label}` };
 }
 
 export async function postponeTaskAction(taskId: string): Promise<HeuteResult> {
