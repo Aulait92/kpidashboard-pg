@@ -32,3 +32,21 @@ Stimme: OpenAI gpt-4o-mini-tts, Stimme „onyx“. Aufgenommen mit Demo-Daten (n
 - **Mein Kalender**: Unter ‚Mein Kalender‘ verbinden Sie Ihren Google- oder Outlook-Kalender und legen fest, wann Leads Termine buchen dürfen. Der Assistent bietet nur diese Zeiten an, und nur, wenn Sie dann frei sind.
 - **Team**: Arbeiten Sie im Team? Dann laden Sie unter ‚Team‘ Ihre Berater ein. Neue Leads werden automatisch reihum verteilt.
 - **outro**: Wenn Sie Fragen haben, hilft Ihnen die KI-Hilfe unten links sofort weiter, und mit einem Klick erreichen Sie unser Team. Viel Erfolg mit Performance Growth!
+
+## WhatsApp verbinden (ca. 2:40 Min.)
+
+Weg: Nummer aus der WhatsApp Business App. Schritte bei 360dialog und Meta als vereinfachte Darstellung (im Video gekennzeichnet).
+
+- **card_intro**: In diesem Video zeigen wir Ihnen, wie Sie Ihre WhatsApp-Nummer mit Performance Growth verbinden. Das machen Sie nur einmal, und es dauert etwa zehn Minuten.
+- **Vorher bereitlegen**: Legen Sie vorher drei Dinge bereit: Ihren Facebook-Login mit Admin-Rechten im Unternehmensportfolio, also dort, wo auch Ihr Werbekonto liegt. Ihr Handy mit der WhatsApp Business App. Und einen Computer, auf dem Pop-up-Fenster erlaubt sind.
+- **1. In der Software: Nummer wählen**: Öffnen Sie in der Software die Einrichtung und dort den Schritt „WhatsApp verbinden“. Zuerst wählen Sie, welche Nummer Ihr Assistent nutzen soll.
+- **Ihre Nummer aus der WhatsApp Business App**: Am häufigsten ist es Ihre Nummer aus der WhatsApp Business App. Leads und Kunden kennen sie schon, und Sie schreiben in der App einfach weiter.
+- **„Jetzt WhatsApp verbinden“**: Ist die Nummer nicht bei einem anderen WhatsApp-Anbieter verbunden, wählen Sie „Nein“. Dann klicken Sie auf „Jetzt WhatsApp verbinden“.
+- **2. Konto bei 360dialog anlegen**: Es öffnet sich die Seite von 360dialog, unserem WhatsApp-Anbieter. Dort legen Sie kostenlos ein Konto mit E-Mail und Passwort an. Die Nummer bleibt Ihre.
+- **3. Mit Facebook anmelden**: Danach öffnet sich ein Fenster von Meta. Sie melden sich mit Facebook an und klicken auf „Weiter“. Sehen Sie kein Fenster? Dann erlauben Sie Pop-ups im Browser und klicken noch einmal.
+- **4. Unternehmensportfolio wählen**: Wählen Sie Ihr Unternehmensportfolio, meist dasselbe wie für Ihr Werbekonto. Diese Auswahl lässt sich später nicht mehr ändern.
+- **5. „Mit der WhatsApp Business App verbunden“**: Meta fragt, ob die Nummer schon in WhatsApp läuft. Wählen Sie: „Ja, diese Nummer ist mit der WhatsApp Business App verbunden“.
+- **6. QR-Code mit dem Handy scannen**: Auf Ihrem Handy kommt eine Nachricht in der WhatsApp Business App. Tippen Sie darauf und scannen Sie den QR-Code auf dem Bildschirm. Chatverlauf und Kontakte können Sie dabei übernehmen.
+- **Fertig: verbunden**: Fertig. Das Fenster schließt sich, und in der Software steht „Verbunden“. Steht dort „wird eingerichtet“, ist das normal. Es dauert meist nur wenige Minuten.
+- **Andere Nummer?**: Sie nutzen eine neue Nummer oder Festnetz? Dann bestätigen Sie die Nummer mit einem Code per SMS oder Anruf. Eine private WhatsApp-Nummer stellen Sie vorher kostenlos auf WhatsApp Business um.
+- **card_outro**: Hakt es irgendwo? Buchen Sie in der Einrichtung einfach den Fünfzehn-Minuten-Hilfetermin. Dann verbinden wir WhatsApp gemeinsam.
