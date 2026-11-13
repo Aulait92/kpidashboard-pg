@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { isNewUi } from "@/lib/new-ui";
 import { HilfeChatButton } from "@/components/hilfe-chat";
 import { STEP_TEXT } from "@/components/first-day";
 import { ArrowRight, CalendarDays, CheckCircle2, ChevronDown, Circle, ClipboardList, KeyRound, MessageCircle, Percent, PlayCircle, Rocket, Smartphone } from "lucide-react";
@@ -53,6 +54,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const businessId = settings.businessId;
   const video = (k: SetupStepKey) => settings.videos[k] ?? null;
   const readOnly = ctx.preview;
+  const newUi = await isNewUi(ctx.customerId);
   const provision = await loadCustomerProvision(ctx.customerId);
   const appDone = await appInstalled(ctx.customerId);
   const steps = setupSteps(ob, items, { appDone, provisionDone: provision.confirmed });
@@ -138,6 +140,13 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             {progress.complete ? "Den Rest erledigen wir." : "Ca. 5 Minuten für Sie. Den Rest erledigen wir."}
           </p>
           {!ob.liveAt ? <OurPart ours={progress.ours} startDate={ob.startDate} /> : null}
+          {newUi && !readOnly ? (
+            <p className="mt-3 text-sm">
+              <Link href="/buyer/einfuehrung" className="inline-flex items-center gap-1.5 font-semibold text-[color:var(--brand)]" data-einrichtung-video>
+                <PlayCircle className="h-4 w-4" /> So arbeiten Sie mit der Software: Einführungsvideo (ca. 3 Minuten)
+              </Link>
+            </p>
+          ) : null}
         </div>
       </Card>
 

@@ -23,6 +23,14 @@ Seiten aus der Liste „Seiten“ unten.
 | /buyer/bestellen | Bestellen | Leads für eine Woche bestellen (bei Pay-per-Lead) |
 | /buyer/vorlagen | WhatsApp-Vorlagen | Welche Nachrichten der Assistent schickt und ob Meta sie freigegeben hat (nur lesen) |
 
+## Einführungsvideos
+
+- Beim ersten Öffnen von „Heute“ (neue Oberfläche) erscheint oben die Karte „Willkommen! Ihre Software in 1 Minute“
+  mit einem kurzen Rundgang. Nach Ansehen oder Wegklicken (X) erscheint sie nicht mehr.
+- Jederzeit wieder: **Profilmenü → „Einführung ansehen“** (/buyer/einfuehrung). Dort gibt es das Kurzvideo (ca. 1 Minute)
+  und für Inhaber zusätzlich die ausführliche Einführung (ca. 3 Minuten: Kontakt öffnen, Anrufliste, selbst schreiben,
+  Pipeline, Zahlen, Kalender, Team). Die Videos funktionieren auch ohne Ton (Einblendungen).
+
 ## Aufbau der App
 
 - Oben bzw. auf dem Handy unten die Bereiche: Heute, Leads, Pipeline, Chats, Zahlen. Je nach Vertrag

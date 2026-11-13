@@ -4,6 +4,7 @@ import { ArrowLeft, MousePointerClick } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { TodayInbox } from "@/components/today-inbox";
 import { FirstDay } from "@/components/first-day";
+import { IntroVideoCard } from "@/components/intro-video";
 import { LiveRefresh } from "@/components/live-refresh";
 import { LeadDetailBody } from "@/components/lead-detail-body";
 import { isNewUi } from "@/lib/new-ui";
@@ -29,17 +30,21 @@ type SearchParams = Promise<{ range?: string; from?: string; to?: string; lead?:
 export default async function BuyerHomePage({ searchParams }: { searchParams: SearchParams }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
-  const [whatsapp, leadCount, newUi] = await Promise.all([
+  const [whatsapp, leadCount, newUi, introSeen] = await Promise.all([
     hasWhatsAppInbox(ctx.customerId),
     prisma.lead.count({ where: { customerId: ctx.customerId } }),
     isNewUi(ctx.customerId),
+    ctx.userId && !ctx.preview ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { introVideoSeenAt: true } }).then((u) => !!u?.introVideoSeenAt) : true,
   ]);
+  // Einführungsvideo (nur neue Oberfläche): bis angesehen oder weggeklickt
+  const introCard = newUi && !introSeen ? <IntroVideoCard /> : null;
   if (leadCount === 0) {
     // Erster Tag: noch kein Lead → erklären, wie es losgeht (statt leerer Zahlen/„Alles erledigt“).
     return (
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
         <LiveRefresh />
         <PageHeader title="Willkommen" subtitle="Schön, dass Sie da sind." />
+        {introCard}
         <FirstDay customerId={ctx.customerId} owner={ctx.teamRole !== "advisor"} whatsapp={whatsapp} />
       </main>
     );
@@ -78,6 +83,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
         <div className="xl:grid xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] xl:items-start xl:gap-6">
           <section className={selected ? "hidden xl:block" : undefined}>
             <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
+            {introCard}
             {updatesCard}
             {nudgeCard}
             <EmpfehlungHeuteHint ctx={ctx} />

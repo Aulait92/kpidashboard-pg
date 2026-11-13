@@ -22,6 +22,7 @@ import {
   Sun,
   TrendingUp,
   Users,
+  PlayCircle,
 } from "lucide-react";
 import { ToastProvider, useToast } from "@/components/ui/toast";
 import { PushHint, PushMenuItem } from "@/components/push-prompt";
@@ -364,6 +365,16 @@ function ProfileMenu({
           >
             <MessageSquareText className="h-4 w-4" /> Etwas unklar? Feedback
           </button>
+          {newUi ? (
+            <Link
+              href="/buyer/einfuehrung"
+              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
+              data-menu-einfuehrung
+            >
+              <PlayCircle className="h-4 w-4" /> Einführung ansehen
+            </Link>
+          ) : null}
           <Link
             href="/buyer/neuigkeiten"
             onClick={() => setOpen(false)}

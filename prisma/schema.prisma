@@ -675,6 +675,8 @@ enum UserRole {
 // Customer-Sicht (customerId verknüpft, NULL für Admins).
 model User {
   id                 String           @id @default(cuid())
+  // Einführungsvideo auf „Heute“ angesehen oder weggeklickt (Ole, 13.11.2026)
+  introVideoSeenAt   DateTime?
   email              String           @unique
   passwordHash       String
   role               UserRole

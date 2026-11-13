@@ -17,6 +17,7 @@ const PUBLIC_PREFIXES = [
   "/angebot", // Angebote/Auftragsbestätigungen per geheimem Link (Token)
   "/rechtliches", // AGB und Auftragsverarbeitungsvertrag (öffentlich)
   "/rechner", // Break-even-Rechner für Interessenten (öffentlich, keine personenbezogenen Daten)
+  "/videos", // Einführungsvideos (nur Demo-Daten); sonst leitet die Rollenweiche Kunden auf /buyer um
   "/sicherheit", // Sicherheit & Datenschutz (öffentlich)
   "/status", // Statusseite (öffentlich, ohne interne Details)
   "/empfehlen", // „Kollegen empfehlen“: Landingpage je Empfehlungscode (Formular mit Einwilligung)
