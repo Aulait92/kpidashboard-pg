@@ -78,7 +78,7 @@ describe("Provision je Abschluss", () => {
   });
 
   it("effectiveRates: Typ-Standard, eigene Sätze darüber, Unsinn ignoriert", () => {
-    expect(effectiveRates("vertreter").privatschutz).toEqual({ kind: "percent", rate: 0.55, defaultPremium: 600 });
+    expect(effectiveRates("vertreter").privatschutz).toEqual({ kind: "percent", rate: 0.55, trail: 0.1, trailFromYear2: true, defaultPremium: 600 });
     expect(effectiveRates("quatsch").tkv).toEqual(standardRate("tkv", "vertreter"));
     const r = effectiveRates("makler", { tkv: { kind: "percent", rate: 0.1, trail: 0.2, defaultPremium: 400 }, privatschutz: { kind: "percent", rate: 5 } });
     expect(r.tkv).toEqual({ kind: "percent", rate: 0.1, trail: 0.2, defaultPremium: 400 });
@@ -103,5 +103,15 @@ describe("Provision je Abschluss", () => {
     expect(productsForTyp("makler").map((p) => p.key)).toEqual(["pkv", "privatschutz", "tkv"]);
     // Vertreter mit PKV-Lead: Makler-Standard, kein Fehler
     expect(estimatedProvision("PKV-Tarifoptimierung", null, effectiveRates("vertreter"))).toBe(2500);
+  });
+});
+
+describe("Vertreter: 10 % Bestand ab dem 2. Jahr", () => {
+  it("Provision im 1. Jahr ohne Bestand, Makler mit Bestand", async () => {
+    const { effectiveRates, estimatedProvision } = await import("@/lib/provision");
+    const v = effectiveRates("vertreter");
+    expect(estimatedProvision("TKV-Katze", 350, v)).toBe(192.5);
+    const own = effectiveRates("vertreter", { tkv: { kind: "percent", rate: 0.5, trail: 0.1, defaultPremium: 400 } });
+    expect(estimatedProvision("TKV-Katze", 400, own)).toBe(200);
   });
 });

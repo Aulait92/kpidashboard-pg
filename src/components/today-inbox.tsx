@@ -1,5 +1,6 @@
 "use client";
 
+import { fmtDay, LaterDateSheet } from "@/components/later-date-sheet";
 import { useProvisionRates } from "@/components/provision-context";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
@@ -68,6 +69,7 @@ type CallItem = {
 type SheetState =
   | { kind: "actions"; title: string; message?: string; actions: SheetAction[] }
   | { kind: "win"; name: string; source: string | null; save: (value: number | null) => void }
+  | { kind: "date"; title: string; save: (date: string) => void }
   | null;
 
 export function TodayInbox({
@@ -202,10 +204,24 @@ export function TodayInbox({
         { label: "In 3 Tagen", days: 3 },
         { label: "In 1 Woche", days: 5 },
         { label: "In 2 Wochen", days: 10 },
-      ].map((o) => ({
-        label: o.label,
-        onSelect: () => run(c.key, `${c.name}: ${o.label === "Morgen" ? "morgen" : o.label.toLowerCase()} wieder`, () => setFollowUpResult(c.leadId, { days: o.days })),
-      })),
+      ]
+        .map((o): SheetAction => ({
+          label: o.label,
+          onSelect: () => run(c.key, `${c.name}: ${o.label === "Morgen" ? "morgen" : o.label.toLowerCase()} wieder`, () => setFollowUpResult(c.leadId, { days: o.days })),
+        }))
+        .concat({
+          label: "Anderer Tag …",
+          onSelect: () =>
+            setTimeout(
+              () =>
+                setSheet({
+                  kind: "date",
+                  title: `${c.name} später anrufen`,
+                  save: (date) => run(c.key, `${c.name}: am ${fmtDay(date)} wieder`, () => setFollowUpResult(c.leadId, { date })),
+                }),
+              0,
+            ),
+        }),
     });
 
   const callSheet = (c: CallItem) => {
@@ -468,6 +484,17 @@ export function TodayInbox({
         title={sheet?.kind === "actions" ? sheet.title : undefined}
         message={sheet?.kind === "actions" ? sheet.message : undefined}
         actions={sheet?.kind === "actions" ? sheet.actions : []}
+      />
+      <LaterDateSheet
+        open={sheet?.kind === "date"}
+        title={sheet?.kind === "date" ? sheet.title : ""}
+        onClose={() => setSheet(null)}
+        onPick={(date) => {
+          if (sheet?.kind !== "date") return;
+          const save = sheet.save;
+          setSheet(null);
+          save(date);
+        }}
       />
       <AbschlussSheet
         open={sheet?.kind === "win"}

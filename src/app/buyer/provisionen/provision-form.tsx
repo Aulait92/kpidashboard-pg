@@ -48,7 +48,7 @@ function toSpec(r: Row): RateSpec | null {
 const same = (a: Row, b: Row) => JSON.stringify(a) === JSON.stringify(b);
 
 /** Beispielrechnung für eine Zeile. */
-function example(r: Row): string {
+function example(r: Row, typ: VermittlerTyp): string {
   const s = toSpec(r);
   if (!s) return "Bitte gültige Zahlen eintragen.";
   if (s.kind === "monthly") {
@@ -59,6 +59,8 @@ function example(r: Row): string {
     const p = s.defaultPremium;
     const abschluss = p * s.rate, bestand = p * (s.trail ?? 0);
     if (abschluss === 0 && bestand > 0) return `Bei ${eur(p)} Beitrag: ≈ ${eur(bestand)} Bestandsprovision pro Jahr`;
+    // Vertreter: Bestand erst ab dem 2. Jahr
+    if (bestand > 0 && typ === "vertreter") return `Bei ${eur(p)} Beitrag: ≈ ${eur(abschluss)} Provision, ab dem 2. Jahr ≈ ${eur(bestand)} Bestand pro Jahr`;
     if (bestand > 0) return `Bei ${eur(p)} Beitrag: ≈ ${eur(abschluss + bestand)} im 1. Jahr (${eur(abschluss)} Abschluss + ${eur(bestand)} Bestand)`;
     return `Bei ${eur(p)} Beitrag: ≈ ${eur(abschluss)} Provision`;
   }
@@ -198,10 +200,10 @@ export function ProvisionForm({
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Field label="Abschlussprovision" suffix="%" value={r.rate} onChange={(v) => update(p.key, { rate: v })} />
-                  <Field label="Bestandsprovision pro Jahr" suffix="%" value={r.trail} onChange={(v) => update(p.key, { trail: v })} />
+                  <Field label={typ === "vertreter" ? "Bestandsprovision pro Jahr (ab 2. Jahr)" : "Bestandsprovision pro Jahr"} suffix="%" value={r.trail} onChange={(v) => update(p.key, { trail: v })} />
                 </div>
               )}
-              <p className="mt-3 text-sm text-[color:var(--muted)]">{example(r)}</p>
+              <p className="mt-3 text-sm text-[color:var(--muted)]">{example(r, typ)}</p>
             </fieldset>
             </div>
           </Card>

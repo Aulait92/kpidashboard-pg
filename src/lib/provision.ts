@@ -27,7 +27,7 @@ export type RateSpec =
   | { kind: "fixed"; amount: number }
   // rate = Abschlussprovision vom Jahresbeitrag (darf 0 sein),
   // trail = laufende Bestandsprovision pro Jahr vom Jahresbeitrag
-  | { kind: "percent"; rate: number; defaultPremium: number; trail?: number }
+  | { kind: "percent"; rate: number; defaultPremium: number; trail?: number; trailFromYear2?: boolean }
   | { kind: "monthly"; months: number; fallbackAmount: number };
 
 export type ProvisionRule = (RateSpec & { key: ProductKey; product: string }) | { kind: "value" };
@@ -40,8 +40,9 @@ export const PROVISION_PRODUCTS: readonly { key: ProductKey; label: string; matc
   // PKV: nur Makler (8–12 Monatsbeiträge Abschlussprovision, Standard 10). Hat ein
   // Vertreter trotzdem einen PKV-Lead, gilt derselbe Standard.
   { key: "pkv", label: "PKV-Tarifoptimierung", match: /pkv/i, standard: { kind: "monthly", months: 10, fallbackAmount: 2500 } },
-  { key: "privatschutz", label: "Privatschutz", match: /privatschutz/i, standard: { kind: "percent", rate: 0.55, defaultPremium: 600 } },
-  { key: "tkv", label: "TKV", match: /\btkv\b|tierkranken/i, standard: { kind: "percent", rate: 0.55, defaultPremium: 350 } },
+  // Vertreter: 10 % Bestandsprovision, gezahlt ab dem 2. Jahr (Ole, 13.11.2026 – wie im Rechner)
+  { key: "privatschutz", label: "Privatschutz", match: /privatschutz/i, standard: { kind: "percent", rate: 0.55, trail: 0.1, trailFromYear2: true, defaultPremium: 600 } },
+  { key: "tkv", label: "TKV", match: /\btkv\b|tierkranken/i, standard: { kind: "percent", rate: 0.55, trail: 0.1, trailFromYear2: true, defaultPremium: 350 } },
 ];
 
 /** Produktschlüssel zu einer Lead-Quelle (null = unbekanntes Produkt). */
@@ -75,7 +76,9 @@ export function closeValueField(
     const fallback = `Ohne Angabe rechnen wir mit ${r.defaultPremium.toLocaleString("de-DE")} €.`;
     const trail = r.trail ?? 0;
     const what =
-      r.rate > 0 && trail > 0
+      r.trailFromYear2 && trail > 0
+        ? `deine Provision (${pctText(r.rate)} Abschluss; ab dem 2. Jahr ${pctText(trail)} Bestand pro Jahr)`
+        : r.rate > 0 && trail > 0
         ? `deine Provision (${pctText(r.rate)} Abschluss + ${pctText(trail)} Bestand im 1. Jahr)`
         : trail > 0
           ? `deine Bestandsprovision (${pctText(trail)} pro Jahr)`
@@ -107,7 +110,8 @@ export function estimatedProvision(
   const v = asNumber(closeValue);
   if (r.kind === "fixed") return r.amount;
   if (r.kind === "monthly") return v ? Math.round(v * r.months * 100) / 100 : r.fallbackAmount;
-  if (r.kind === "percent") return Math.round((v ?? r.defaultPremium) * (r.rate + (r.trail ?? 0)) * 100) / 100;
+  // Provision im 1. Jahr: Abschluss + Bestand, außer der Bestand kommt erst ab dem 2. Jahr (Vertreter)
+  if (r.kind === "percent") return Math.round((v ?? r.defaultPremium) * (r.rate + (r.trailFromYear2 ? 0 : (r.trail ?? 0))) * 100) / 100;
   return v;
 }
 
@@ -221,13 +225,17 @@ export function effectiveRates(typ: unknown, custom?: unknown): ProvisionOverrid
   const t = asVermittlerTyp(typ);
   const own = parseCustomRates(custom).rates;
   const out: ProvisionOverrides = {};
-  for (const p of PROVISION_PRODUCTS) out[p.key] = own[p.key] ?? standardRate(p.key, t);
+  for (const p of PROVISION_PRODUCTS) {
+    const spec = own[p.key] ?? standardRate(p.key, t);
+    // Vertreter bekommen Bestandsprovision erst ab dem 2. Jahr (auch bei eigenen Sätzen)
+    out[p.key] = spec.kind === "percent" && t === "vertreter" && (spec.trail ?? 0) > 0 ? { ...spec, trailFromYear2: true } : spec;
+  }
   return out;
 }
 
 /** Enthält die Schätzung Bestandsprovision? (für den Hinweis „inkl. Bestand 1. Jahr“) */
 export function includesTrail(overrides?: ProvisionOverrides): boolean {
-  return Object.values(overrides ?? {}).some((r) => r?.kind === "percent" && (r.trail ?? 0) > 0);
+  return Object.values(overrides ?? {}).some((r) => r?.kind === "percent" && (r.trail ?? 0) > 0 && !r.trailFromYear2);
 }
 
 /** Produkte, die ein Vermittlertyp überhaupt anbieten kann (PKV nur Makler). */

@@ -15,6 +15,7 @@ import {
 } from "@/app/buyer/inbox-actions";
 import { ActionSheet, type SheetAction } from "@/components/ui/sheet";
 import { AbschlussSheet, asksCloseValue } from "@/components/abschluss-sheet";
+import { fmtDay, LaterDateSheet } from "@/components/later-date-sheet";
 
 /** Rückkehr erst nach mind. 3 s zählt (kein Fehlalarm), höchstens 10 Min. */
 const MIN_MS = 3_000;
@@ -96,7 +97,7 @@ export function CallOutcomeSheet({
   onClose: () => void;
   onPick: (message: string, action: () => Promise<InboxResult>) => void;
 }) {
-  const [step, setStep] = useState<"pick" | "win" | "later">("pick");
+  const [step, setStep] = useState<"pick" | "win" | "later" | "date">("pick");
   const provisionRates = useProvisionRates();
   const close = () => {
     setStep("pick");
@@ -131,10 +132,23 @@ export function CallOutcomeSheet({
         open
         onClose={close}
         title={`${t.name} später anrufen`}
-        actions={LATER.map((o) => ({
-          label: o.label,
-          onSelect: () => pick(`${t.name}: ${o.label === "Morgen" ? "morgen" : o.label.toLowerCase()} wieder`, () => setFollowUpResult(t.leadId, { days: o.days })),
-        }))}
+        actions={[
+          ...LATER.map((o) => ({
+            label: o.label,
+            onSelect: () => pick(`${t.name}: ${o.label === "Morgen" ? "morgen" : o.label.toLowerCase()} wieder`, () => setFollowUpResult(t.leadId, { days: o.days })),
+          })),
+          { label: "Anderer Tag …", keepOpen: true, onSelect: () => setStep("date") },
+        ]}
+      />
+    );
+  }
+  if (step === "date") {
+    return (
+      <LaterDateSheet
+        open
+        title={`${t.name} später anrufen`}
+        onClose={close}
+        onPick={(date) => pick(`${t.name}: am ${fmtDay(date)} wieder`, () => setFollowUpResult(t.leadId, { date }))}
       />
     );
   }
