@@ -56,6 +56,10 @@ export function LoginForm({
             {totpState.error}
           </div>
         ) : null}
+        <label className="flex items-center justify-center gap-2 text-sm text-[color:var(--muted)]">
+          <input type="checkbox" name="remember" defaultChecked className="h-4 w-4" />
+          Diesem Gerät 30 Tage vertrauen
+        </label>
         <button type="submit" disabled={totpPending} className={PRIMARY_BTN}>
           {totpPending ? "Prüfe…" : "Bestätigen"}
         </button>

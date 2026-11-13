@@ -121,5 +121,22 @@ describe("Sitzungen und Zwei-Faktor für Kunden-Logins", () => {
     jar.clear();
     await login(email, "neues-Passwort-456");
     expect((await completeTotpLogin(ok.backupCodes![0])).ok).toBe(false);
+
+    // Gerät merken: 30 Tage ohne Code, bis Sitzungsversion oder 2FA sich ändern
+    jar.clear();
+    await login(email, "neues-Passwort-456");
+    expect((await completeTotpLogin(ok.backupCodes![1], true)).ok).toBe(true);
+    const trust = [...jar.keys()].find((k) => k.startsWith("kpi_trust_"))!;
+    expect(trust).toBeTruthy();
+    const trustValue = jar.get(trust)!;
+    jar.clear();
+    jar.set(trust, trustValue);
+    expect((await login(email, "neues-Passwort-456")).ok).toBe(true);
+    expect((await login(email, "falsches-Passwort")).ok).toBe(false); // Passwort bleibt nötig
+    await prisma.user.update({ where: { id: userId }, data: { sessionVersion: { increment: 1 } } });
+    clearSessionVersionCache();
+    jar.clear();
+    jar.set(trust, trustValue);
+    expect(await login(email, "neues-Passwort-456")).toMatchObject({ ok: false, needsTotp: true });
   });
 });

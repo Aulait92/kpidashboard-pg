@@ -212,8 +212,47 @@ async function readPendingTotp(): Promise<{ userId: string; attempts: number } |
   }
 }
 
+// ─── Vertrauenswürdiges Gerät (Ole, 13.11.2026) ──────────────────────────
+// Nach einem gültigen Code kann das Gerät 30 Tage lang ohne erneuten Code angemeldet werden
+// (Passwort bzw. Google/Microsoft bleibt nötig). Signiertes, httpOnly-Cookie je Login. Wird
+// ungültig bei Passwortänderung, „Überall abmelden“ (Sitzungsversion) und neu eingerichteter 2FA.
+const TRUST_DAYS = 30;
+const trustCookieName = (userId: string) => `kpi_trust_${crypto.createHash("sha256").update(userId).digest("hex").slice(0, 12)}`;
+
+async function setTrustedDevice(user: { id: string; sessionVersion: number; totpEnabledAt: Date | null }) {
+  const token = await new SignJWT({ userId: user.id, purpose: "trust", sv: user.sessionVersion, ts: user.totpEnabledAt?.getTime() ?? 0 })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(`${TRUST_DAYS}d`)
+    .sign(getSecret());
+  (await cookies()).set(trustCookieName(user.id), token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: TRUST_DAYS * 24 * 60 * 60,
+    path: "/",
+  });
+}
+
+/** Ist dieses Gerät für den Login noch vertrauenswürdig (gleiche Sitzungsversion, gleiche 2FA)? */
+async function isTrustedDevice(user: { id: string; sessionVersion: number; totpEnabledAt: Date | null }): Promise<boolean> {
+  const token = (await cookies()).get(trustCookieName(user.id))?.value;
+  if (!token) return false;
+  try {
+    const { payload } = await jwtVerify(token, getSecret());
+    return (
+      payload.purpose === "trust" &&
+      payload.userId === user.id &&
+      payload.sv === user.sessionVersion &&
+      payload.ts === (user.totpEnabledAt?.getTime() ?? 0)
+    );
+  } catch {
+    return false;
+  }
+}
+
 /** Zweiter Schritt der Anmeldung: Code aus der Authenticator-App oder Notfall-Code. */
-export async function completeTotpLogin(codeRaw: string): Promise<LoginResult> {
+export async function completeTotpLogin(codeRaw: string, rememberDevice = false): Promise<LoginResult> {
   const pending = await readPendingTotp();
   if (!pending) return { ok: false, error: "Bitte erneut mit E-Mail und Passwort anmelden." };
   const user = await prisma.user.findUnique({ where: { id: pending.userId } });
@@ -240,9 +279,10 @@ export async function completeTotpLogin(codeRaw: string): Promise<LoginResult> {
     return { ok: false, needsTotp: true };
   }
   (await cookies()).delete(TOTP_COOKIE);
+  if (rememberDevice) await setTrustedDevice(user);
   await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
   const { audit } = await import("@/lib/audit");
-  await audit("login.2fa", { entity: "User", entityId: user.id, customerId: user.customerId, actor: { id: user.id, email: user.email, role: user.role } });
+  await audit("login.2fa", { entity: "User", entityId: user.id, customerId: user.customerId, actor: { id: user.id, email: user.email, role: user.role }, ...(rememberDevice ? { details: { geraetMerken: true } } : {}) });
   const payload = sessionPayloadFor(user);
   await setSessionCookie(payload);
   return { ok: true, payload };
@@ -281,7 +321,7 @@ export async function login(
   if (!user) return failed();
   const valid = await verifyPassword(password, user.passwordHash);
   if (!valid) return failed();
-  if (user.totpEnabledAt && user.totpSecretEnc) {
+  if (user.totpEnabledAt && user.totpSecretEnc && !(await isTrustedDevice(user))) {
     await setPendingTotp(user.id, 0);
     return { ok: false, needsTotp: true };
   }
@@ -430,7 +470,7 @@ export async function loginWithVerifiedEmail(emailRaw: string, method: "google" 
     await audit("login.failed", { actor: { email, role: null }, details: { method } });
     return { ok: false, error: `Für ${email} gibt es keinen Zugang. Bitte mit der E-Mail-Adresse anmelden, mit der Sie eingeladen wurden.` };
   }
-  if (user.totpEnabledAt && user.totpSecretEnc) {
+  if (user.totpEnabledAt && user.totpSecretEnc && !(await isTrustedDevice(user))) {
     await setPendingTotp(user.id, 0);
     return { ok: false, needsTotp: true };
   }

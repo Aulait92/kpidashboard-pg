@@ -56,7 +56,7 @@ export async function totpAction(_prev: LoginActionState, formData: FormData): P
   }
   let result: LoginResult;
   try {
-    result = await completeTotpLogin(String(formData.get("code") ?? ""));
+    result = await completeTotpLogin(String(formData.get("code") ?? ""), formData.get("remember") === "on");
   } catch (err) {
     return { needsTotp: true, error: err instanceof Error ? err.message : "Anmeldung fehlgeschlagen." };
   }
