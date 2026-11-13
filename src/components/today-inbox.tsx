@@ -435,6 +435,22 @@ export function TodayInbox({
                     {c.overdue ? <span className="font-medium text-rose-600">Überfällig · </span> : null}
                     {c.reason}
                   </p>
+                  {/* Direkt schieben (Ole, 13.11.2026): +1 Tag / +1 Woche */}
+                  <span className="mt-1.5 flex gap-1" onClick={stop} data-call-shift>
+                    {[
+                      { days: 1, label: "+1 Tag", msg: "morgen" },
+                      { days: 5, label: "+1 Woche", msg: "in 1 Woche" },
+                    ].map((b) => (
+                      <button
+                        key={b.days}
+                        type="button"
+                        onClick={() => run(c.key, `${c.name}: ${b.msg} wieder`, () => setFollowUpResult(c.leadId, { days: b.days }))}
+                        className="rounded-full border border-[color:var(--border)] px-2.5 py-0.5 text-xs font-semibold text-[color:var(--muted)] hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
+                      >
+                        {b.label}
+                      </button>
+                    ))}
+                  </span>
                 </div>
                 {c.phone ? (
                   <span
