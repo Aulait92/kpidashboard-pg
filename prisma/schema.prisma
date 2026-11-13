@@ -566,6 +566,7 @@ model Lead {
   appointments  Appointment[]
   sequences     LeadSequence[]
   history       LeadHistory[]
+  files         LeadFile[]
 
   // Modul „Empfehlungen & Bewertungen“: Anfrage nach dem Abschluss (je Lead eine)
   reviewRequest     ReviewRequest? @relation("ReviewRequestLead")
@@ -2709,11 +2710,30 @@ model LeadHistory {
   leadId     String
   lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
   customerId String
-  // notiz | anruf | status | wiedervorlage | abschluss | police
+  // notiz | anruf | status | wiedervorlage | abschluss | police | dokument
   kind       String
   text       String
   userId     String?
   createdAt  DateTime @default(now())
 
   @@index([leadId, createdAt])
+}
+
+// Dokumente am Lead (Ole, 13.11.2026): z. B. das Angebot, das der Vermittler geschickt hat,
+// oder die Police. Gespeichert in der Datenbank, gelöscht mit dem Lead (Art. 17).
+model LeadFile {
+  id           String   @id @default(cuid())
+  leadId       String
+  lead         Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  customerId   String
+  // angebot | police | sonstiges
+  kind         String
+  fileName     String
+  contentType  String
+  size         Int
+  data         Bytes
+  uploadedById String?
+  createdAt    DateTime @default(now())
+
+  @@index([leadId])
 }

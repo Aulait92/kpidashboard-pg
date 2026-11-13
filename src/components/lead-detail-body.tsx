@@ -18,6 +18,8 @@ import { LeadAssignee } from "@/components/lead-assignee";
 import { LeadHeaderActions } from "@/components/lead-actions";
 import { AbschlussCard, LeadHistory } from "@/components/lead-history";
 import { loadLeadHistory } from "@/lib/lead-history";
+import { listLeadFiles } from "@/lib/lead-files";
+import { LeadFiles } from "@/components/lead-files";
 import { loadCustomerProvision } from "@/lib/provision-server";
 import { estimatedProvision, ruleFor } from "@/lib/provision";
 import { LeadSequenceCard } from "@/components/lead-sequence-card";
@@ -201,7 +203,11 @@ export async function LeadDetailBody({
   const storniert = !!lead.status?.toLowerCase().startsWith("storno");
   // Abschluss (Ole, 13.11.2026): Beitrag, geschätzte Provision und Police im Kontakt sehen
   const won = (lead.status ?? "").trim().toLowerCase() === "abschluss";
-  const [history, rates] = await Promise.all([loadLeadHistory(lead.id, team.userId), won ? loadCustomerProvision(customerId).then((p) => p.rates) : null]);
+  const [history, rates, files] = await Promise.all([
+    loadLeadHistory(lead.id, team.userId),
+    won ? loadCustomerProvision(customerId).then((p) => p.rates) : null,
+    listLeadFiles(lead.id),
+  ]);
   let beitrag: string | null = null;
   let provision: string | null = null;
   if (won && rates) {
@@ -326,6 +332,8 @@ export async function LeadDetailBody({
       ) : null}
 
       <LeadSequenceCard leadId={lead.id} readOnly={!!lead.erasedAt} />
+
+      <LeadFiles leadId={lead.id} files={files} defaultKind={won ? "police" : "angebot"} />
 
       <LeadHistory leadId={lead.id} initial={history} legacyNote={lead.notes ?? (fields ? (firstString(fields["Notizen"]) ?? null) : null)} />
     </>

@@ -5,7 +5,7 @@
 // Diktieren läuft über das Mikrofon der Handy-Tastatur (kein eigener Spracherkennungsdienst).
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { BellRing, CheckCircle2, FileCheck2, Loader2, Mic, Phone, RefreshCw, StickyNote, Trash2, Trophy } from "lucide-react";
+import { BellRing, CheckCircle2, FileCheck2, FileText, Loader2, Mic, Phone, RefreshCw, StickyNote, Trash2, Trophy } from "lucide-react";
 import { Button, Card } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { addLeadNoteAction, deleteLeadNoteAction, setPolicyDoneAction } from "@/app/buyer/lead-history-actions";
@@ -19,6 +19,7 @@ const ICON: Record<LeadHistoryKind, typeof Phone> = {
   wiedervorlage: BellRing,
   abschluss: Trophy,
   police: FileCheck2,
+  dokument: FileText,
 };
 
 const when = (iso: string) =>
