@@ -6,6 +6,8 @@ import {
   BUDGET_MAX,
   BUDGET_MIN,
   BUDGET_STANDARD,
+  CPL_MAX,
+  CPL_MIN,
   CROSS_SELL_RATE_MAX,
   CROSS_SELL_VERZOEGERUNG,
   DAYS_PER_MONTH,
@@ -59,7 +61,9 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
   const cplBasis: CplInfo = cpl[product.key] ?? { cpl: product.cpl, source: "erfahrungswert", note: product.cplNote || "Erfahrungswert" };
   // Makler-Modus rechnet mit eigenem Wert (TKV: 4 € reales Ergebnis), Vertreter mit Puffer
   const cplInfo = maklerModus(product, input) ? (cplBasis.makler ?? cplBasis) : cplBasis;
-  const r = berechne(product, input, cplInfo.cpl); // günstig, ohne Memo
+  // Eigener Leadpreis (Feld „Kosten pro Lead“) hat Vorrang vor unserem Wert
+  const cplWert = input.cpl ?? cplInfo.cpl;
+  const r = berechne(product, input, cplWert); // günstig, ohne Memo
   const bestand = berechneBestand(product, input, r);
   const makler = maklerModus(product, input) && bestand != null;
 
@@ -142,6 +146,36 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
                 />
                 <p className="text-xs text-[color:var(--muted)]">≈ {eur(input.budget * DAYS_PER_MONTH)} im Monat, zahlen Sie direkt an Meta</p>
               </div>
+              <div className="mt-5" data-leadpreis>
+                <NumField
+                  key={`cpl-${product.key}-${input.typ}-${version}`}
+                  label="Kosten pro Lead"
+                  hint={input.cpl == null ? cplInfo.note : `eigener Wert · unser Wert: ${eur(cplInfo.cpl, 2)} (${cplInfo.note})`}
+                  suffix="€"
+                  value={cplWert}
+                  min={CPL_MIN}
+                  max={CPL_MAX}
+                  onChange={(v) => set({ cpl: Math.abs(v - cplInfo.cpl) < 0.005 ? null : v })}
+                />
+                <p className="mt-1 text-xs text-[color:var(--muted)]">
+                  ≈ <b className="tabular-nums text-[color:var(--foreground)]">{Math.round(r.leads).toLocaleString("de-DE")}</b> Leads im Monat
+                  {input.cpl != null ? (
+                    <>
+                      {" · "}
+                      <button
+                        type="button"
+                        className="font-medium text-[color:var(--brand)] underline"
+                        onClick={() => {
+                          set({ cpl: null });
+                          setVersion((v) => v + 1);
+                        }}
+                      >
+                        Unseren Wert nehmen
+                      </button>
+                    </>
+                  ) : null}
+                </p>
+              </div>
             </Card>
 
             <Card>
@@ -178,9 +212,6 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
                     <NumField key={`st-${version}`} label="Storno pro Jahr" hint="Anteil Verträge, die jährlich wegfallen" suffix="%" value={pctOut(input.storno)} min={STORNO_MIN * 100} max={STORNO_MAX * 100} onChange={(v) => set({ storno: v / 100 })} />
                   ) : null}
                 </div>
-                <p className="mt-3 text-sm text-[color:var(--muted)]">
-                  Kosten pro Lead: <b className="text-[color:var(--foreground)] tabular-nums">{eur(cplInfo.cpl, 2)}</b> · {cplInfo.note}
-                </p>
               </details>
             </Card>
 
@@ -257,7 +288,7 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
           {/* ── Ergebnis ─────────────────────────────────────────── */}
           <section className="space-y-4 lg:sticky lg:top-6" aria-label="Ergebnis" aria-live="polite">
             {makler && bestand ? (
-              <MaklerErgebnis r={r} b={bestand} input={input} product={product} vergleich={budgetVergleich(product, input, cplInfo.cpl)} />
+              <MaklerErgebnis r={r} b={bestand} input={input} product={product} vergleich={budgetVergleich(product, input, cplWert)} />
             ) : (
               <Ergebnis r={r} product={product} bestand={bestand} storno={input.storno} />
             )}

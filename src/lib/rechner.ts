@@ -348,7 +348,13 @@ export type RechnerInput = {
   xRate: number;
   xBeitrag: number;
   xTrail: number;
+  /** Eigener Leadpreis (€ pro Lead); null = unser Wert (Erfahrungswert bzw. echte Daten) */
+  cpl: number | null;
 };
+
+/** Eigener Leadpreis: Grenzen für Eingabe und URL. */
+export const CPL_MIN = 0.5;
+export const CPL_MAX = 500;
 
 export const KAMPAGNE_OPTIONEN = [6, 12, 24] as const;
 export const HORIZONT_OPTIONEN = [3, 5, 10] as const;
@@ -398,6 +404,7 @@ export function defaultInput(p: RechnerProduct, typ: VermittlerTyp, base?: Parti
     xRate: (p.crossSell ?? CROSS_SELL_STANDARD).rate,
     xBeitrag: (p.crossSell ?? CROSS_SELL_STANDARD).beitrag,
     xTrail: (p.crossSell ?? CROSS_SELL_STANDARD).trail,
+    cpl: null,
   };
 }
 
@@ -452,6 +459,7 @@ export function inputFromParams(config: RechnerConfig, q: Params): RechnerInput 
     xRate: n("xr", 0, CROSS_SELL_RATE_MAX, d.xRate),
     xBeitrag: n("xb", 1, 100_000, d.xBeitrag),
     xTrail: n("xp", 0, 100, d.xTrail, 100),
+    cpl: numIn(one(q, "cpl"), CPL_MIN, CPL_MAX),
   };
 }
 
@@ -490,6 +498,7 @@ export function inputToParams(config: RechnerConfig, i: RechnerInput): URLSearch
   if (diff(i.xRate, d.xRate)) q.set("xr", String(Math.round(i.xRate * 100) / 100));
   if (diff(i.xBeitrag, d.xBeitrag)) q.set("xb", String(i.xBeitrag));
   if (diff(i.xTrail, d.xTrail)) q.set("xp", String(pct(i.xTrail)));
+  if (i.cpl != null) q.set("cpl", String(Math.round(i.cpl * 100) / 100));
   return q;
 }
 

@@ -542,3 +542,26 @@ describe("Cross-Selling im Makler-Modus (Allianz-Erfahrungswert, Ole 11.11.)", (
     expect(parseRechnerConfig(raw({ rate: 5, beitrag: 300, trail: 0.225 })).errors.join()).toMatch(/Cross-Selling/);
   });
 });
+
+describe("Eigener Leadpreis", () => {
+  it("Standard: kein eigener Wert, nicht in der URL", () => {
+    const i = inputFromParams(DEFAULT_CONFIG, { produkt: "tkv" });
+    expect(i.cpl).toBeNull();
+    expect(inputToParams(DEFAULT_CONFIG, i).has("cpl")).toBe(false);
+  });
+
+  it("eigener Wert landet in der URL und kommt zurück; ungültige Werte werden ignoriert", () => {
+    const i = { ...inputFromParams(DEFAULT_CONFIG, { produkt: "tkv" }), cpl: 3.5 };
+    const q = inputToParams(DEFAULT_CONFIG, i);
+    expect(q.get("cpl")).toBe("3.5");
+    expect(inputFromParams(DEFAULT_CONFIG, Object.fromEntries(q)).cpl).toBe(3.5);
+    expect(inputFromParams(DEFAULT_CONFIG, { cpl: "0" }).cpl).toBeNull();
+    expect(inputFromParams(DEFAULT_CONFIG, { cpl: "abc" }).cpl).toBeNull();
+    expect(inputFromParams(DEFAULT_CONFIG, { cpl: "3,5" }).cpl).toBe(3.5);
+  });
+
+  it("halber Leadpreis = doppelt so viele Leads", () => {
+    const i = defaultInput(tkv, "vertreter");
+    expect(berechne(tkv, i, 3).leads).toBeCloseTo(berechne(tkv, i, 6).leads * 2, 6);
+  });
+});
