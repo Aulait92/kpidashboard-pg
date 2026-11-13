@@ -1,7 +1,10 @@
 import Papa from "papaparse";
+import { htmlToText } from "@/lib/impressum";
+import { reportError } from "@/lib/monitoring";
 import { prisma } from "@/lib/prisma";
 import { contactIdsByEmails, findContactIdByEmail } from "@/lib/vertrieb/contact-merge";
 import { CAMPAIGN_STATUS } from "@/lib/vertrieb/crm";
+import { fillPhoneFromMail } from "@/lib/vertrieb/signature-phone";
 import { classifyReply, isAutoReplyText, sentimentFromInstantly, type Sentiment } from "@/lib/vertrieb/sentiment";
 
 const API = "https://api.instantly.ai/api/v2";
@@ -308,6 +311,8 @@ export async function recordReply(contactId: string, r: Reply): Promise<boolean>
     },
   });
 
+  // Leere Telefonnummer aus der Signatur ergänzen (nicht aus Abwesenheitsnotizen)
+  if (!r.isAutoReply) await fillPhoneFromMail(contactId, r.text || (r.html ? htmlToText(r.html) : null)).catch((e) => reportError(e, "phone-from-mail"));
   const snippet = stripQuoted(r.text ?? "").slice(0, 600) || r.subject || "";
   const label = r.isAutoReply
     ? "Automatische Antwort"

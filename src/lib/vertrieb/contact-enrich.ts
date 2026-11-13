@@ -10,6 +10,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { fetchHtml, fetchImpressumText, htmlToText, normalizeUrl } from "@/lib/impressum";
 import { enrichmentSourceUrl, extractAddress, needsAddress } from "@/lib/vertrieb/address-enrich";
+import { backfillPhonesFromMail } from "@/lib/vertrieb/signature-phone";
 
 const DAY = 86400000;
 // 30 Tage: Google Maps Platform erlaubt nur kurzfristiges Zwischenspeichern von Places-Inhalten
@@ -393,7 +394,7 @@ type Row = Prisma.SalesContactGetPayload<{ select: typeof SELECT }>;
 
 /** Website-Stufe: einmal je Kontakt (erneut nach 30 Tagen, wenn die Adresse noch fehlt). */
 async function webStep(c: Row, log: EnrichmentLog, force: boolean): Promise<{ status: string; data: Prisma.SalesContactUpdateInput; fields: string[] }> {
-  const due = force || !c.webEnrichAt || (needsAddress(c) && c.webEnrichAt.getTime() < Date.now() - WEB_RETRY_DAYS * DAY);
+  const due = force || !c.webEnrichAt || ((needsAddress(c) || empty(c.phone)) && c.webEnrichAt.getTime() < Date.now() - WEB_RETRY_DAYS * DAY);
   if (!due) return { status: "skipped", data: {}, fields: [] };
   const sourceUrl = enrichmentSourceUrl(c);
   const data: Prisma.SalesContactUpdateInput = { webEnrichAt: new Date(), addressEnrichTriedAt: c.addressEnrichTriedAt ?? new Date() };
@@ -544,7 +545,7 @@ export async function enrichPendingContacts(limit = 20, budgetMs = 120_000): Pro
     { webEnrichAt: null },
     {
       webEnrichAt: { lt: new Date(Date.now() - WEB_RETRY_DAYS * DAY) },
-      OR: [{ street: null }, { zip: null }, { city: null }, { street: "" }, { zip: "" }, { city: "" }],
+      OR: [{ street: null }, { zip: null }, { city: null }, { phone: null }, { street: "" }, { zip: "" }, { city: "" }, { phone: "" }],
     },
   ];
   if (placesKey() && (await placesUsedToday()) < placesDailyLimit()) {
@@ -556,8 +557,10 @@ export async function enrichPendingContacts(limit = 20, budgetMs = 120_000): Pro
     take: limit,
     select: { id: true },
   });
-  let tried = 0;
-  let updated = 0;
+  // Telefon aus bisherigen E-Mail-Antworten (Signatur) nachholen – nur Datenbank, kostet nichts
+  const mail = await backfillPhonesFromMail(50).catch(() => ({ tried: 0, updated: 0 }));
+  let tried = mail.tried;
+  let updated = mail.updated;
   for (const p of pending) {
     if (Date.now() > deadline) break;
     tried++;

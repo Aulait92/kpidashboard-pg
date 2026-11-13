@@ -1227,6 +1227,7 @@ model SalesContact {
   // Maximal anreichern (Website + Google, lib/vertrieb/contact-enrich.ts)
   webEnrichAt          DateTime? // Website/Agenturseite ausgewertet (Öffnungszeiten, Social, Inhaber, Versicherer)
   googleCheckedAt      DateTime? // Google Places zuletzt abgefragt (alle 90 Tage)
+  phoneMailCheckedAt   DateTime? // Telefonnummer aus E-Mail-Signaturen gesucht (lib/vertrieb/signature-phone.ts)
   googlePlaceId        String?
   googleMapsUrl        String?
   businessStatus       String? // Google: OPERATIONAL | CLOSED_TEMPORARILY | CLOSED_PERMANENTLY

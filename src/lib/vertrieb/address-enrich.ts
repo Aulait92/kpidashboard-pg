@@ -77,7 +77,7 @@ const FOREIGN_CONTEXT =
 const STREET =
   /^([A-ZÄÖÜa-zäöüß][A-Za-zÄÖÜäöüß.\- ]{1,60}?\s\d{1,4}\s?[a-zA-Z]?(?:\s?[-/]\s?\d{1,4}\s?[a-zA-Z]?)?)$/;
 const ZIP_CITY = /(?:^|\s|,)(?:D-)?(\d{5})\s+([A-ZÄÖÜ][A-Za-zÄÖÜäöüß.\- ]{1,40}(?:\s?\([^)]{1,30}\))?)/;
-const PHONE = /(?:Tel(?:efon)?|Fon|Phone|Festnetz|Büro)\.?\s*[:.]?\s*(\+?\d[\d\s/()\-–.]{5,24}\d)/i;
+const PHONE = /(?:Tel(?:efon)?|Fon|Phone|Festnetz|Büro|Mobil(?:funk)?|Handy)\.?\s*[:.]?\s*(\+?\d[\d\s/()\-–.]{5,24}\d)/i;
 
 const clean = (v: string) => v.replace(/\s+/g, " ").replace(/^(Anschrift|Adresse|Sitz|Büro|Agentur)\s*:\s*/i, "").trim();
 
