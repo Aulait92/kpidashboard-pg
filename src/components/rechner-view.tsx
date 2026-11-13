@@ -252,12 +252,13 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
               {makler ? (
                 <div className="mt-4 grid gap-3 sm:grid-cols-2" data-bestand-eingaben>
                   <div>
-                    <Label>Kampagnendauer</Label>
+                    <Label>Rechnen mit einer Kampagne von</Label>
                     <Segmented
                       value={String(input.kampagne)}
-                      options={KAMPAGNE_OPTIONEN.map((k) => ({ value: String(k), label: `${k} Mon.` }))}
+                      options={KAMPAGNE_OPTIONEN.map((k) => ({ value: String(k), label: k % 12 === 0 ? `${k / 12} J.` : `${k} Mon.` }))}
                       onChange={(v) => set({ kampagne: Number(v) as Kampagne })}
                     />
+                    <span className="mt-1 block text-xs text-[color:var(--muted)]">Nur für die Rechnung – die Kampagne läuft, solange Sie möchten.</span>
                   </div>
                   <div>
                     <Label>Courtage zählen bis</Label>
@@ -380,138 +381,152 @@ function Ergebnis({ r, bestand, storno }: { r: RechnerResult; bestand: BestandRe
   );
 }
 
-/** Makler-Modus: Bestandssicht statt „Überschuss pro Monat“. */
+/**
+ * Makler-Modus (Ole, 13.11.2026: schnell erfassbar): oben drei Kernaussagen – ab wann die Kosten
+ * drin sind, was der Bestand jedes Jahr bringt, was insgesamt zusammenkommt –, darunter der Verlauf.
+ * Alle Details und Annahmen aufklappbar.
+ */
 function MaklerErgebnis({
   r, b, input, vergleich,
 }: { r: RechnerResult; b: BestandResult; input: RechnerInput; vergleich: BudgetVergleichZeile[] }) {
   const plus = b.ergebnis >= 0;
   const jahre = b.horizont === 1 ? "1 Jahr" : `${b.horizont} Jahre`;
+  const vertraegeMonat = r.vertraege * (b.crossSell ? 1 + input.xRate : 1);
   return (
     <>
       <Card>
-        <p className="text-sm text-[color:var(--muted)]">Courtage bis {jahre} nach Kampagnenende</p>
-        <p className={`text-4xl font-bold tracking-tight tabular-nums ${plus ? "text-emerald-700" : "text-rose-600"}`} data-courtage-gesamt>
-          ≈ {eur(b.gesamtCourtage)}
-        </p>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">
-          Kosten ≈ <b className="text-[color:var(--foreground)] tabular-nums">{eur(b.gesamtKosten)}</b> ({b.kampagne} Monate Kampagne inkl. Setup)
-          {b.gesamtKosten > 0 ? <> · <b className="text-[color:var(--foreground)] tabular-nums">{zahl(b.faktor, 1)}×</b> Ihre Kosten</> : null}
-        </p>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">
-          davon {eur(b.courtageKampagne)} während der Kampagne + {eur(b.courtageNachlauf)} in den {jahre}n danach
-        </p>
-        {b.crossSell ? (
-          <p className="mt-1 text-sm text-[color:var(--muted)]" data-courtage-split>
-            Hauptverträge: {eur(b.courtageHaupt)} · Cross-Selling: {eur(b.courtageZusatz)}
-          </p>
-        ) : null}
-        <div className="mt-4 grid gap-2 sm:grid-cols-2">
-          <div className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2" data-je-vertrag>
-            <div className="text-xs text-[color:var(--muted)]">Je Vertrag</div>
-            <div className="text-sm">
-              {b.crossSell ? "Ø " : ""}<b className="tabular-nums">{eur(b.lebenszeitJeVertrag)}</b> Courtage über die Laufzeit
-            </div>
-            <div className="text-sm">
-              <b className="tabular-nums">{b.kostenJeVertrag != null ? eur(b.kostenJeVertrag) : "–"}</b> Kosten je Vertrag
-            </div>
-          </div>
-          <div className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2" data-nach-kampagne>
-            <div className="text-xs text-[color:var(--muted)]">Nach {b.kampagne} Monaten Kampagne</div>
-            <div className="text-sm">
-              <b className="tabular-nums">{zahl(b.vertraegeNachKampagne)}</b> Verträge im Bestand
-              {b.crossSell ? <> + <b className="tabular-nums">{zahl(b.zusatzNachKampagne)}</b> Zusatzverträge</> : null}
-            </div>
-            <div className="text-sm"><b className="tabular-nums">{eur(b.courtageJahrNachKampagne)}</b> Courtage pro Jahr, ohne weitere Kosten</div>
-          </div>
-        </div>
-        <div className="mt-2 grid grid-cols-3 gap-2">
-          <Stat label="Leads/Monat" value={zahl(r.leads)} />
-          <Stat label="Verträge/Monat" value={zahl(r.vertraege, 1)} />
-          <Stat label="Kosten/Monat" value={eur(r.kosten)} sub="Werbung + Betreuung" />
-        </div>
-      </Card>
-
-      <Card>
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1" data-kosten-je-vertrag>
-          <h2 className="text-base font-semibold">Kosten je Vertrag</h2>
-          <p className="text-3xl font-bold tracking-tight tabular-nums">{b.kostenJeVertrag != null ? eur(b.kostenJeVertrag) : "–"}</p>
-        </div>
-        <p className="text-sm text-[color:var(--muted)]">
-          Werbung + Betreuung/Software{input.ust ? " inkl. USt." : ""} pro Monat ({eur(r.kosten)}) ÷{" "}
-          {b.crossSell ? <>({zahl(r.vertraege, 1)} Verträge + {zahl(r.vertraege * input.xRate, 1)} Zusatzverträge)</> : <>{zahl(r.vertraege, 1)} neue Verträge</>} pro Monat.
-          Dem stehen Ø {eur(b.lebenszeitJeVertrag)} Courtage je Vertrag über die Laufzeit gegenüber.
-        </p>
-        <p className="mt-2 text-sm font-medium" data-budget-hinweis>
-          Die Betreuung kostet bis {eur(PRICE_LIST.tiers[0].maxBudget)} Werbebudget immer gleich viel – mehr Budget macht jeden Vertrag günstiger.
-        </p>
-        <div className="mt-3 overflow-hidden rounded-[var(--radius-sm)] border border-[color:var(--border)]">
-          <table className="w-full text-sm tabular-nums" data-budget-vergleich>
-            <thead className="bg-[color:var(--surface-sunken)] text-xs text-[color:var(--muted)]">
-              <tr>
-                <th className="px-3 py-1.5 text-left font-medium">Budget/Tag</th>
-                <th className="px-3 py-1.5 text-right font-medium">je Vertrag</th>
-                <th className="px-3 py-1.5 text-right font-medium">Courtage/Jahr nach 12 Mon.</th>
-              </tr>
-            </thead>
-            <tbody>
-              {vergleich.map((z, k) => {
-                const aktiv = z.budget === input.budget;
-                const stufe = k > 0 && z.betreuung > vergleich[k - 1].betreuung;
-                return (
-                  <tr key={z.budget} className={`border-t border-[color:var(--border)] ${aktiv ? "bg-[color:var(--brand-soft)] font-semibold" : ""}`}>
-                    <td className="px-3 py-1.5">{eur(z.budget)}{aktiv ? <span className="ml-1 text-xs font-normal text-[color:var(--muted)]">Ihre Wahl</span> : null}</td>
-                    <td className="px-3 py-1.5 text-right">
-                      {z.kostenJeVertrag != null ? eur(z.kostenJeVertrag) : "–"}
-                      {stufe ? <span className="block text-[11px] font-normal text-[color:var(--muted)]">höhere Betreuungsstufe</span> : null}
-                    </td>
-                    <td className="px-3 py-1.5 text-right">{eur(z.courtageJahrNach12)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-        <p className="mt-1 text-xs text-[color:var(--muted)]" data-vergleich-hinweis>
-          12 Monate Kampagne, {b.crossSell ? "inkl. Cross-Selling" : "ohne Cross-Selling"}.
-        </p>
-      </Card>
-
-      <Card>
-        <p className="text-base" data-breakeven>
+        <p className="text-sm font-medium text-[color:var(--muted)]">So rechnet sich das für Sie</p>
+        <p className="mt-1 text-2xl font-bold leading-tight tracking-tight sm:text-3xl" data-breakeven>
           {b.breakEvenMonat != null ? (
-            <>Ihre Kosten sind ab <b className="text-[color:var(--brand)]">Monat {b.breakEvenMonat}</b> wieder drin{b.breakEvenMonat > b.kampagne ? <> – {b.breakEvenMonat - b.kampagne} Monate nach Kampagnenende, der Bestand zahlt weiter</> : null}.</>
+            <>
+              Ab <span className="text-emerald-700">Monat {b.breakEvenMonat}</span> sind Ihre Kosten wieder drin.
+            </>
           ) : (
             <>Bis {jahre} nach Kampagnenende ist die Courtage noch unter den Kosten.</>
           )}
-          {b.laufendGedecktMonat != null ? (
-            <span className="block text-sm text-[color:var(--muted)]" data-laufend-gedeckt>
-              Ab Monat {b.laufendGedecktMonat} deckt die laufende Courtage die monatlichen Kosten.
-            </span>
-          ) : null}
-          {b.ohneCrossSell ? (
-            <span className="mt-1 block text-sm text-[color:var(--muted)]" data-ohne-cross-selling>
-              Ohne Cross-Selling: {b.ohneCrossSell.laufendGedecktMonat != null ? `gedeckt ab Monat ${b.ohneCrossSell.laufendGedecktMonat}` : "laufend nicht gedeckt während der Kampagne"},{" "}
-              {b.ohneCrossSell.breakEvenMonat != null ? `alles zurück nach Monat ${b.ohneCrossSell.breakEvenMonat}` : `bis ${jahre} danach nicht zurück`} ({eur(b.ohneCrossSell.gesamtCourtage)} Courtage).
-            </span>
-          ) : null}
         </p>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">
+          Danach arbeitet Ihr Bestand für Sie: Die Courtage kommt jedes Jahr wieder, auch wenn Sie keine Werbung mehr machen.
+        </p>
+        <div className="mt-4 grid gap-2 sm:grid-cols-3">
+          <BigStat label="Neue Verträge pro Monat" value={zahl(vertraegeMonat, 1)} sub={b.crossSell ? "inkl. Zusatzverträge" : `aus ${zahl(r.leads)} Leads`} />
+          <BigStat
+            label={`Ihr Bestand nach ${b.kampagne} Monaten`}
+            value={eur(b.courtageJahrNachKampagne)}
+            sub="Courtage pro Jahr, ohne weitere Kosten"
+            accent
+          />
+          <BigStat
+            label={`Courtage bis ${jahre} danach`}
+            value={eur(b.gesamtCourtage)}
+            sub={b.gesamtKosten > 0 ? `${zahl(b.faktor, 1)}× Ihre Kosten von ${eur(b.gesamtKosten)}` : undefined}
+            accent={plus}
+            data="courtage-gesamt"
+          />
+        </div>
+      </Card>
+
+      <Card>
         <BestandVerlauf b={b} />
-        <p className="mt-3 text-xs leading-relaxed text-[color:var(--muted)]" data-annahmen>
-          Ehrlich gerechnet: Courtage nicht abgezinst. Annahmen: {zahl(input.storno * 100, 1)} % Storno pro Jahr (monatlich gleichmäßig),
-          Ø Jahresbeitrag {eur(input.beitrag)}, {zahl(input.trail * 100, 1)} % Bestandscourtage pro Jahr
-          {input.rate > 0 ? `, ${zahl(input.rate * 100, 1)} % Abschluss` : ""}, Beitrag und Satz bleiben gleich. Nach der Kampagne keine
-          Kosten mehr{TERM_MONTHS[input.laufzeit] > b.kampagne ? ` (Betreuung läuft bis Vertragsende nach ${TERM_MONTHS[input.laufzeit]} Monaten)` : ""}.
-          „Je Vertrag“ = Jahrescourtage ÷ Storno (Faustformel{b.crossSell ? ", Ø über Verträge und Zusatzverträge" : ""}).
-          {b.crossSell ? (
-            <>
-              {" "}Cross-Selling: Erfahrungswert eines großen Versicherers – {zahl(input.xRate, Number.isInteger(input.xRate) ? 0 : 1)} {input.xRate === 1 ? "Zusatzvertrag" : "Zusatzverträge"} je Kunde,
-              {CROSS_SELL_VERZOEGERUNG === 0 ? " direkt beim Abschluss" : ` ${CROSS_SELL_VERZOEGERUNG} Monate später`}; Ø Jahresbeitrag {eur(input.xBeitrag)},
-              {" "}{zahl(input.xTrail * 100, 1)} % Bestandscourtage, gleicher Storno.
-            </>
-          ) : null}
+        <p className="mt-2 text-sm text-[color:var(--muted)]">
+          Kosten pro Monat {eur(r.kosten)} (Werbung + Betreuung{input.ust ? ", inkl. USt." : ""}) · {b.kostenJeVertrag != null ? <>{eur(b.kostenJeVertrag)} je Vertrag</> : null}
         </p>
       </Card>
+
+      <details className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]" data-details>
+        <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 text-[15px] font-semibold">
+          Alle Zahlen und Annahmen
+          <span className="text-sm font-normal text-[color:var(--brand)] group-open:hidden">anzeigen</span>
+          <span className="hidden text-sm font-normal text-[color:var(--brand)] group-open:inline">ausblenden</span>
+        </summary>
+        <div className="space-y-4 border-t border-[color:var(--border)] px-5 py-4 text-sm">
+          <div>
+            <p className="font-medium">Courtage und Kosten</p>
+            <p className="mt-1 text-[color:var(--muted)]">
+              Kosten ≈ <b className="text-[color:var(--foreground)] tabular-nums">{eur(b.gesamtKosten)}</b> ({b.kampagne} Monate Kampagne inkl. Setup) ·{" "}
+              {eur(b.courtageKampagne)} Courtage während der Kampagne + {eur(b.courtageNachlauf)} in den {jahre}n danach
+              {b.crossSell ? <> · Hauptverträge {eur(b.courtageHaupt)}, Cross-Selling {eur(b.courtageZusatz)}</> : null}.
+            </p>
+            <p className="mt-1 text-[color:var(--muted)]" data-nach-kampagne>
+              Nach {b.kampagne} Monaten: <b className="text-[color:var(--foreground)] tabular-nums">{zahl(b.vertraegeNachKampagne)}</b> Verträge im Bestand
+              {b.crossSell ? <> + <b className="text-[color:var(--foreground)] tabular-nums">{zahl(b.zusatzNachKampagne)}</b> Zusatzverträge</> : null} ·{" "}
+              {b.crossSell ? "Ø " : ""}{eur(b.lebenszeitJeVertrag)} Courtage je Vertrag über die Laufzeit.
+            </p>
+            {b.laufendGedecktMonat != null ? (
+              <p className="mt-1 text-[color:var(--muted)]" data-laufend-gedeckt>
+                Ab Monat {b.laufendGedecktMonat} deckt die laufende Courtage die monatlichen Kosten.
+              </p>
+            ) : null}
+            {b.ohneCrossSell ? (
+              <p className="mt-1 text-[color:var(--muted)]" data-ohne-cross-selling>
+                Ohne Cross-Selling: {b.ohneCrossSell.breakEvenMonat != null ? `Kosten ab Monat ${b.ohneCrossSell.breakEvenMonat} drin` : `bis ${jahre} danach nicht zurück`} ({eur(b.ohneCrossSell.gesamtCourtage)} Courtage).
+              </p>
+            ) : null}
+          </div>
+          <div>
+            <p className="font-medium" data-kosten-je-vertrag>Mehr Budget, günstigere Verträge</p>
+            <p className="mt-1 text-[color:var(--muted)]" data-budget-hinweis>
+              Die Betreuung kostet bis {eur(PRICE_LIST.tiers[0].maxBudget)} Werbebudget im Monat immer gleich viel – mehr Budget macht jeden Vertrag günstiger.
+            </p>
+            <div className="mt-2 overflow-hidden rounded-[var(--radius-sm)] border border-[color:var(--border)]">
+              <table className="w-full text-sm tabular-nums" data-budget-vergleich>
+                <thead className="bg-[color:var(--surface-sunken)] text-xs text-[color:var(--muted)]">
+                  <tr>
+                    <th className="px-3 py-1.5 text-left font-medium">Budget/Tag</th>
+                    <th className="px-3 py-1.5 text-right font-medium">je Vertrag</th>
+                    <th className="px-3 py-1.5 text-right font-medium">Courtage/Jahr nach 12 Mon.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {vergleich.map((z, k) => {
+                    const aktiv = z.budget === input.budget;
+                    const stufe = k > 0 && z.betreuung > vergleich[k - 1].betreuung;
+                    return (
+                      <tr key={z.budget} className={`border-t border-[color:var(--border)] ${aktiv ? "bg-[color:var(--brand-soft)] font-semibold" : ""}`}>
+                        <td className="px-3 py-1.5">{eur(z.budget)}{aktiv ? <span className="ml-1 text-xs font-normal text-[color:var(--muted)]">Ihre Wahl</span> : null}</td>
+                        <td className="px-3 py-1.5 text-right">
+                          {z.kostenJeVertrag != null ? eur(z.kostenJeVertrag) : "–"}
+                          {stufe ? <span className="block text-[11px] font-normal text-[color:var(--muted)]">höhere Betreuungsstufe</span> : null}
+                        </td>
+                        <td className="px-3 py-1.5 text-right">{eur(z.courtageJahrNach12)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-1 text-xs text-[color:var(--muted)]" data-vergleich-hinweis>
+              12 Monate Kampagne, {b.crossSell ? "inkl. Cross-Selling" : "ohne Cross-Selling"}.
+            </p>
+          </div>
+          <p className="text-xs leading-relaxed text-[color:var(--muted)]" data-annahmen>
+            Ehrlich gerechnet: Courtage nicht abgezinst. Annahmen: {zahl(input.storno * 100, 1)} % Storno pro Jahr (monatlich gleichmäßig),
+            Ø Jahresbeitrag {eur(input.beitrag)}, {zahl(input.trail * 100, 1)} % Bestandscourtage pro Jahr
+            {input.rate > 0 ? `, ${zahl(input.rate * 100, 1)} % Abschluss` : ""}, Beitrag und Satz bleiben gleich. Gerechnet wird mit {b.kampagne} Monaten
+            Kampagne und danach ohne Kosten – die Kampagne läuft in Wirklichkeit, solange Sie möchten
+            {TERM_MONTHS[input.laufzeit] > b.kampagne ? ` (Betreuung mindestens bis Vertragsende nach ${TERM_MONTHS[input.laufzeit]} Monaten)` : ""}.
+            „Je Vertrag“ = Jahrescourtage ÷ Storno (Faustformel{b.crossSell ? ", Ø über Verträge und Zusatzverträge" : ""}).
+            {b.crossSell ? (
+              <>
+                {" "}Cross-Selling: Erfahrungswert eines großen Versicherers – {zahl(input.xRate, Number.isInteger(input.xRate) ? 0 : 1)} {input.xRate === 1 ? "Zusatzvertrag" : "Zusatzverträge"} je Kunde,
+                {CROSS_SELL_VERZOEGERUNG === 0 ? " direkt beim Abschluss" : ` ${CROSS_SELL_VERZOEGERUNG} Monate später`}; Ø Jahresbeitrag {eur(input.xBeitrag)},
+                {" "}{zahl(input.xTrail * 100, 1)} % Bestandscourtage, gleicher Storno.
+              </>
+            ) : null}
+          </p>
+        </div>
+      </details>
     </>
+  );
+}
+
+function BigStat({ label, value, sub, accent, data }: { label: string; value: string; sub?: string; accent?: boolean; data?: string }) {
+  return (
+    <div className={`rounded-[var(--radius-md)] px-4 py-3 ${accent ? "bg-emerald-50" : "bg-[color:var(--surface-sunken)]"}`} {...(data ? { [`data-${data}`]: "" } : {})}>
+      <div className="text-xs text-[color:var(--muted)]">{label}</div>
+      <div className={`mt-0.5 text-2xl font-bold tracking-tight tabular-nums ${accent ? "text-emerald-700" : ""}`}>{value}</div>
+      {sub ? <div className="mt-0.5 text-xs text-[color:var(--muted)]">{sub}</div> : null}
+    </div>
   );
 }
 

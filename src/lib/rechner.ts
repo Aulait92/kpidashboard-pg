@@ -385,7 +385,8 @@ export const KUNDENQUOTE_MAKLER = 0.14;
 /** Vertreter: Standard-Bestandsprovision im Rechner (Ole, 13.11.2026). */
 export const BESTAND_STANDARD_VERTRETER = 0.1;
 
-export const KAMPAGNE_OPTIONEN = [6, 12, 24] as const;
+// Nur für die Rechnung, keine Begrenzung der echten Kampagne (Ole, 13.11.2026)
+export const KAMPAGNE_OPTIONEN = [6, 12, 24, 36, 60] as const;
 export const HORIZONT_OPTIONEN = [3, 5, 10] as const;
 export type Kampagne = (typeof KAMPAGNE_OPTIONEN)[number];
 export type Horizont = (typeof HORIZONT_OPTIONEN)[number];
