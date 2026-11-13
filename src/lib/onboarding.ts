@@ -289,6 +289,7 @@ export const MANUAL_FIELDS = {
   website: "websiteCheckedAt",
   campaign: "campaignReadyAt",
   testLead: "testLeadAt",
+  consent: "consentConfirmedAt",
 } as const;
 
 export async function loadOnboarding(where: { customerId: string } | { id: string }) {
@@ -355,6 +356,15 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
         done: (ob.customer.messageTemplates?.length ?? 0) > 0,
         at: null,
       },
+      {
+        key: "consent",
+        // Einwilligung zur Kontaktaufnahme per WhatsApp/Telefon im eigenen Leadformular (Kunde hakt ab, Admin kann bestätigen)
+        label: "Einwilligung im Leadformular bestätigt",
+        owner: "kunde",
+        done: !!ob.consentAt || !!ob.consentConfirmedAt,
+        at: ob.consentConfirmedAt ?? ob.consentAt,
+        manual: "consent",
+      },
     );
   }
   items.push(
@@ -372,7 +382,7 @@ export function checklistProgress(items: ChecklistItem[]) {
 }
 
 /** Schritte, die der Kunde in der Einrichtung selbst erledigt (Reihenfolge wie auf der Einrichtungsseite). */
-export const CUSTOMER_SETUP_KEYS = ["questionnaire", "metaAccess", "calendar", "whatsapp"] as const;
+export const CUSTOMER_SETUP_KEYS = ["questionnaire", "metaAccess", "calendar", "whatsapp", "consent"] as const;
 /** Unser Teil, dem Kunden nur zur Information gezeigt (nicht im Fortschrittsbalken). */
 export const OUR_SETUP_KEYS = ["campaign", "testLead", "live"] as const;
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, Bot, Calculator, FileBarChart, Layers, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, MessageCircle, ShieldCheck, Wallet, Workflow } from "lucide-react";
+import { Activity, Bot, Calculator, FileBarChart, Layers, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, MessageCircle, Rocket, ShieldCheck, Wallet, Workflow } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { supportConfig } from "@/lib/support";
 import { requireAuth } from "@/lib/vertrieb/auth";
@@ -14,6 +14,7 @@ const ITEMS = [
   { href: "/admin/einstellungen/kosten", icon: Wallet, color: "bg-emerald-600", title: "Laufende Kosten", text: "Tools und eigene Werbung für Marge und Kundengewinnung" },
   { href: "/admin/einstellungen/bank", icon: Landmark, color: "bg-teal-600", title: "Bank & Karten", text: "Commerzbank und Amex: Ausgaben holen und als Kosten zuordnen" },
   { href: "/admin/einstellungen/rechner", icon: Calculator, color: "bg-sky-500", title: "Rechner", text: "Break-even-Rechner für Interessenten: Produkte, Quoten, Garantien" },
+  { href: "/admin/einstellungen/einrichtung", icon: Rocket, color: "bg-blue-600", title: "Einrichtung neuer Kunden", text: "Business-ID für den Meta-Zugriff, Erklärvideos je Schritt" },
   { href: "/admin/einstellungen/produkte", icon: Layers, color: "bg-orange-500", title: "Produkte", text: "Welche Sparten Kunden selbst dazubuchen können" },
   { href: "/admin/monatsberichte", icon: FileBarChart, color: "bg-blue-600", title: "Monatsberichte", text: "Berichte an Kunden: Entwürfe prüfen, senden oder lieber anrufen" },
   { href: "/admin/einstellungen/kampagnen-automatik", icon: Bot, color: "bg-fuchsia-500", title: "Kampagnen-Automatik", text: "Budget bei Meta umstellen, Kampagne bei Produktbuchung, müde Anzeigen auffrischen" },

@@ -3,8 +3,8 @@
 // Ausführen schadet also nicht.
 //
 //  1. Erinnerung an den Kunden, wenn Einrichtungsschritte liegen bleiben
-//     (alle 2 Tage, höchstens 3×, nur werktags 9–18 Uhr)
-//  2. Push an den Admin, wenn nach 5 Tagen noch Schritte beim Kunden offen sind
+//     (Tag 1, 3 und 7, nur werktags 9–18 Uhr) und tägliche Nachprüfung des Meta-Zugriffs
+//  2. Push an den Admin, wenn nach 7 Tagen noch Schritte beim Kunden offen sind (dann auch in „Heute“)
 //  3. Neue Leads per E-Mail an den Kunden (abschaltbar, Standard: an)
 //  4. Feedback Tag 7 (Start) und Tag 30 (Monatsbericht) nach Go-live
 //  5. Tag 90: Aufgabe „Jahresvertrag anbieten“ (nur ohne Laufzeit)
@@ -14,13 +14,12 @@ import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { getAppUrl, sendCustomerMail } from "@/lib/email";
-import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 import type { FormAnswer } from "@/lib/lead-fields";
-import { loadOnboarding, onboardingChecklist, sendWelcome } from "@/lib/onboarding";
 import { readImpressum } from "@/lib/impressum";
 import { customerGreeting } from "@/lib/offer-links";
 import { runDunningCron, runPauseCron } from "@/lib/pause";
+import { recheckOpenMetaAccess, runSetupReminders } from "@/lib/selbst-einrichtung";
 
 const DAY = 24 * 60 * 60 * 1000;
 const TZ = "Europe/Berlin";
@@ -46,61 +45,8 @@ async function customerEmails(customerId: string): Promise<string[]> {
 }
 
 // ─── 1 + 2: Erinnerungen ───────────────────────────────────────────────
-
-async function remindCustomers(now: Date) {
-  const running = await prisma.onboarding.findMany({
-    where: { status: "running", liveAt: null, createdAt: { gt: new Date(now.getTime() - 21 * DAY) } },
-    select: { id: true, customerId: true },
-  });
-  let reminded = 0;
-  let stale = 0;
-  for (const { id, customerId } of running) {
-    const ob = await loadOnboarding({ customerId });
-    if (!ob) continue;
-    const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true } }) : null;
-    const open = onboardingChecklist(ob, offer).filter((i) => !i.done && i.owner === "kunde" && i.key !== "payment");
-    if (open.length === 0) continue;
-
-    // Admin-Push nach 5 Tagen (einmalig).
-    if (!ob.staleNotifiedAt && now.getTime() - ob.createdAt.getTime() > 5 * DAY) {
-      await sendToAdmins({
-        title: `⏳ Onboarding hängt: ${ob.customer.name}`,
-        body: `Offen beim Kunden: ${open.map((i) => i.label).join(", ")}`,
-        url: ob.salesContactId ? `/admin/vertrieb/kontakte/${ob.salesContactId}` : "/admin/vertrieb/kunden",
-        tag: `onboarding-stale:${ob.id}`,
-      }).catch((err) => reportError(err, "onboarding-stale-push"));
-      await prisma.onboarding.update({ where: { id }, data: { staleNotifiedAt: now } });
-      stale++;
-    }
-
-    // Kunden-Erinnerung alle 2 Tage, höchstens 3× (bis Tag ~7).
-    const last = ob.lastReminderAt ?? ob.welcomeSentAt ?? ob.createdAt;
-    if (now.getTime() - last.getTime() < 2 * DAY || now.getTime() - ob.createdAt.getTime() > 7.5 * DAY) continue;
-    const notLoggedIn = open.some((i) => i.key === "login");
-    if (notLoggedIn) {
-      // Noch nie eingeloggt → Willkommens-Mail mit frischem Einladungslink erneut.
-      await sendWelcome(ob.id);
-    } else {
-      const to = ob.customer.users.map((u) => u.email);
-      if (to.length === 0) continue;
-      const res = await sendCustomerMail({
-        to,
-        subject: "Kurze Erinnerung: Ihre Einrichtung bei performancegrowth",
-        greeting: await greetingOf(ob),
-        paragraphs: [
-          "damit Ihre Kampagne pünktlich starten kann, fehlen noch ein paar Minuten Einrichtung von Ihrer Seite:",
-        ],
-        list: open.map((i) => i.label),
-        button: { label: "Zur Einrichtung", url: `${getAppUrl()}/buyer/einrichtung` },
-        html: `<p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#5b5e68">Klappt etwas nicht? Antworten Sie einfach auf diese Mail oder rufen Sie an (+49 151 52418846), dann erledigen wir es gemeinsam.</p>`,
-      });
-      if (!res.ok) reportError(new Error(res.error), "onboarding-reminder", { onboarding: ob.id });
-    }
-    await prisma.onboarding.update({ where: { id }, data: { lastReminderAt: now } });
-    reminded++;
-  }
-  return { reminded, stale };
-}
+// Kunden-Erinnerung an Tag 1, 3 und 7 (Mail + Push), am Tag 7 einmal Push an Admins;
+// ab Tag 7 steht der Fall in Admin „Heute“ (siehe lib/selbst-einrichtung.ts).
 
 // ─── 3: Leads per E-Mail (alle Onboarding-Kunden, abschaltbar) ───────────
 
@@ -288,8 +234,9 @@ export async function runOnboardingCron(now = new Date()) {
   await step("leads", () => emailLeads(now)); // rund um die Uhr
   await step("upsell", () => upsellTasks(now));
   await step("websites", () => checkWebsites(now));
+  await step("meta", () => recheckOpenMetaAccess(now)); // offene Meta-Freigaben ~täglich nachprüfen
   if (isBusinessHours(now)) {
-    await step("reminders", () => remindCustomers(now));
+    await step("reminders", () => runSetupReminders(now));
     await step("feedback", () => sendFeedback(now));
     await step("dunning", () => runDunningCron(now)); // Mails nur zu Geschäftszeiten
   }

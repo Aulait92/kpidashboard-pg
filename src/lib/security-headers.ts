@@ -32,7 +32,8 @@ export function contentSecurityPolicy(opts: { dev?: boolean; frameAncestors?: st
     "connect-src": ["'self'", "https://*.ingest.sentry.io", "https://*.ingest.de.sentry.io", ...(opts.dev ? ["ws:"] : [])],
     // Sentry Session Replay nutzt einen Worker aus blob:
     "worker-src": ["'self'", "blob:"],
-    "frame-src": ["'self'"],
+    // Erklärvideos in der Einrichtung (Loom/YouTube ohne Cookies)
+    "frame-src": ["'self'", "https://www.loom.com", "https://www.youtube-nocookie.com"],
     "frame-ancestors": [opts.frameAncestors ?? "'none'"],
     // Formular-Weiterleitungen: Stripe Checkout/Portal, Google-/Microsoft-Login
     "form-action": [

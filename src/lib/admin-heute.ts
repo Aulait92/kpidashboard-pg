@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { REASON_LABEL, type EscalationReason } from "@/lib/support";
 import { HEARTBEAT_MAX_AGE_MIN, type HeartbeatKey } from "@/lib/heartbeat";
 import { onboardingProgressFor } from "@/lib/onboarding";
+import { stuckSetups } from "@/lib/selbst-einrichtung";
 import { shortName } from "@/lib/vertrieb/crm";
 import { dayBounds, openTasks } from "@/lib/vertrieb/queries";
 import { offeneGarantieFaelle } from "@/lib/garantien-server";
@@ -320,6 +321,20 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       detail: `${p.percent} % erledigt${start}`,
       action: { label: "Checkliste öffnen", href: `/admin/kunden/${ob.customerId}` },
       since: ob.startDate,
+      later: TOMORROW,
+    });
+  }
+  // Selbst-Einrichtung hängt seit mindestens 7 Tagen beim Kunden (vorher erinnert die App selbst, Tag 1/3/7)
+  for (const st of await stuckSetups(now).catch(() => [])) {
+    items.push({
+      key: `setup-stuck:${st.customerId}`,
+      area: "Kunden",
+      tone: "warn",
+      icon: "alert",
+      title: `Einrichtung hängt: ${name(st.name)} (seit ${st.days} Tagen)`,
+      detail: `Offen beim Kunden: ${st.open.join(", ")} · Erinnerungen Tag 1/3/7 sind raus – kurz anrufen oder Hilfetermin anbieten`,
+      action: { label: "Einrichtung ansehen", href: `/admin/kunden/${st.customerId}` },
+      since: null,
       later: TOMORROW,
     });
   }

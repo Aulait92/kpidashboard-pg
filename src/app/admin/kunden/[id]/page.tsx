@@ -7,13 +7,15 @@ import { OnboardingCard } from "@/components/vertrieb/onboarding-card";
 import { NewUiCard } from "@/components/admin/new-ui-card";
 import { VermittlerCard } from "@/components/admin/vermittler-card";
 import { GarantienCard } from "@/components/admin/garantien-card";
+import { SetupCard } from "@/components/admin/setup-card";
 import type { ImpressumInfo } from "@/lib/impressum";
 
 // Übersicht der Kundenakte: mit Vertriebskontakt die volle Kontaktseite
 // (Verlauf, Aufgaben, Onboarding, Angebote), sonst die Grunddaten.
-export default async function KundenakteUebersicht({ params }: { params: Promise<{ id: string }> }) {
+export default async function KundenakteUebersicht({ params, searchParams }: { params: Promise<{ id: string }>; searchParams?: Promise<{ einrichtung?: string }> }) {
   await connection();
   const { id } = await params;
+  const notice = (await searchParams)?.einrichtung;
   const customer = await prisma.customer.findUnique({
     where: { id },
     select: { id: true, name: true, region: true, retainerMonthly: true, retainerStart: true, metaAdAccountId: true, salesContact: { select: { id: true } } },
@@ -25,6 +27,7 @@ export default async function KundenakteUebersicht({ params }: { params: Promise
         <NewUiCard customerId={id} />
         <VermittlerCard customerId={id} />
         <GarantienCard customerId={id} />
+        <SetupCard customerId={id} notice={notice} />
         <ContactPage params={Promise.resolve({ id: customer.salesContact.id })} searchParams={Promise.resolve({ embedded: "1" })} />
       </div>
     );
@@ -36,6 +39,7 @@ export default async function KundenakteUebersicht({ params }: { params: Promise
     <NewUiCard customerId={id} />
     <VermittlerCard customerId={id} />
         <GarantienCard customerId={id} />
+        <SetupCard customerId={id} notice={notice} />
     <div className="grid gap-5 lg:grid-cols-[3fr_2fr]">
       <section className="card p-4 text-sm">
         <h2 className="mb-3 font-medium">Grunddaten</h2>

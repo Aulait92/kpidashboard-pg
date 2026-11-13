@@ -56,6 +56,26 @@ export async function goLiveAction(fd: FormData) {
   refresh(ob.salesContactId);
 }
 
+/** Selbst-Einrichtung: Erinnerung sofort an den Kunden (Mail + Push), unabhängig von Tag 1/3/7. */
+export async function sendSetupReminderAction(fd: FormData) {
+  await requireAuth();
+  const customerId = String(fd.get("customerId") ?? "");
+  const { sendSetupReminderNow } = await import("@/lib/selbst-einrichtung");
+  const res = await sendSetupReminderNow(customerId);
+  refresh();
+  redirect(`/admin/kunden/${customerId}?einrichtung=${res.ok ? "erinnert" : encodeURIComponent(res.error)}`);
+}
+
+/** Selbst-Einrichtung: Meta-Zugriff jetzt prüfen (mit den beim Kunden hinterlegten IDs). */
+export async function adminCheckMetaAction(fd: FormData) {
+  await requireAuth();
+  const customerId = String(fd.get("customerId") ?? "");
+  const { checkMetaAccess } = await import("@/lib/selbst-einrichtung");
+  const res = await checkMetaAccess(customerId, {}, { source: "admin" });
+  refresh();
+  redirect(`/admin/kunden/${customerId}?einrichtung=${res.ok ? (res.check.ok ? "meta-ok" : "meta-fehlt") : encodeURIComponent(res.error)}`);
+}
+
 export async function resendWelcomeAction(fd: FormData) {
   await requireAuth();
   const id = String(fd.get("id") ?? "");

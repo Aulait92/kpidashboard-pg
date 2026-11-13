@@ -17,7 +17,7 @@ Seiten aus der Liste „Seiten“ unten.
 | /buyer/konto | Konto & Rechnungen | Vertrag, Werbebudget ändern, weiteres Produkt buchen, Rechnungen, Zahlungsart, Pause/Urlaub (nur Inhaber) |
 | /buyer/team | Team | Berater einladen, Leads verteilen (nur Inhaber) |
 | /buyer/kalender | Mein Kalender | „Ihr Kalender“ verbinden (ein Kalender je Person), andere Quelle für freie Zeiten (ICS/Allianz), Team-Übersicht für Inhaber, Lead-Zeiten, Zeit blockieren |
-| /buyer/einrichtung | Einrichtung | Fragebogen, Meta-Zugriff, Kalender, App aufs Handy, Hilfetermin |
+| /buyer/einrichtung | Einrichtung | Fortschritt „Einrichtung x von y“, Fragebogen, Meta freigeben (prüfen/anfragen), Kalender, WhatsApp, Einwilligung im Leadformular, App aufs Handy, Provisionen, Hilfetermin |
 | /buyer/bestand | Bestand | Bestandskunden und Kampagnen (Zusatzmodul; ohne Modul mit Knopf „Jetzt buchen“, sonst „Modul anfragen“) |
 | /buyer/bestand/import | Kundenliste hochladen | Excel/CSV importieren |
 | /buyer/bestellen | Bestellen | Leads für eine Woche bestellen (bei Pay-per-Lead) |
@@ -154,6 +154,26 @@ Seiten aus der Liste „Seiten“ unten.
 - **Zeit blockieren:** unter „Mein Kalender“ Datum und von–bis eintragen. In dieser Zeit werden keine Termine
   angeboten. Löschen jederzeit in der Liste.
 - Gebuchte Termine kommen weiter als Kalendereinladung an Ihre Adresse für Termineinladungen (z. B. Allianz-Mail).
+
+## Einrichtung (neue Kunden)
+
+- Oben steht **„Einrichtung: x von y erledigt“** mit allen Schritten: Login, Fragebogen, App aufs Handy und Mitteilungen, Kalender,
+  Provisionen, Meta freigeben, WhatsApp verbinden, Einwilligung im Leadformular, Testlead (den macht performancegrowth).
+  Offene Schritte sind anklickbar. Bei einigen Schritten gibt es ein kurzes Erklärvideo.
+- **Meta freigeben:** Werbekonto-ID (Format act_…, steht im Werbeanzeigenmanager oben links bzw. in der Adresse nach „act=“; der ganze
+  Link geht auch) und Facebook-Seite (Adresse facebook.com/… oder Seiten-ID) eintragen. Dann:
+  - **„Anfrage von uns senden lassen“**: performancegrowth schickt die Partner-Anfrage, der Kunde bekommt in Meta eine Benachrichtigung
+    und bestätigt sie nur noch. Klappt das nicht, die Schritte darunter selbst ausführen (Business-Einstellungen → Partner → Hinzufügen →
+    unsere Business-ID → Werbekonto mit „Kampagnen verwalten“, Seite mit „Volle Kontrolle“).
+  - **„Zugriff prüfen“**: zeigt für Werbekonto, Seite und Leads einzeln, ob alles da ist und was noch fehlt. Ist alles grün, ist der
+    Schritt erledigt. Die App prüft offene Freigaben außerdem täglich selbst nach.
+- **WhatsApp verbinden:** Vorher prüfen: eine Nummer, die nicht in der normalen WhatsApp-App genutzt wird (zweite SIM, Festnetz oder
+  neue Nummer), SMS oder Anruf mit Code kann empfangen werden, Admin im Business Manager. Dann der geführte Ablauf.
+- **Einwilligung im Leadformular:** Formulare, die performancegrowth anlegt, enthalten sie automatisch. Bei eigenen Formularen den
+  angezeigten Text als Pflicht-Häkchen einfügen und „Ist in meinem Formular enthalten“ tippen.
+- **App aufs Handy:** gilt als erledigt, sobald Mitteilungen auf einem Gerät erlaubt sind.
+- **Erinnerungen:** Bleibt etwas offen, erinnert die App nach 1, 3 und 7 Tagen per E-Mail und Mitteilung. Danach meldet sich
+  performancegrowth persönlich. Hilfe jederzeit: 15-Minuten-Hilfetermin in der Einrichtung buchen.
 
 ## Benachrichtigungen (Push)
 

@@ -1,8 +1,18 @@
 "use client";
 
-import { useActionState } from "react";
-import { CheckCircle2, Loader2 } from "lucide-react";
-import { bookHelpCallAction, confirmMetaAccessAction, saveQuestionnaireAction, type SetupState } from "./actions";
+import { useActionState, useState } from "react";
+import { CheckCircle2, Copy, Loader2, Send, ShieldCheck, XCircle } from "lucide-react";
+import type { MetaCheck } from "@/lib/selbst-einrichtung";
+import {
+  bookHelpCallAction,
+  checkMetaAccessAction,
+  confirmConsentAction,
+  confirmMetaAccessAction,
+  requestMetaAccessAction,
+  saveQuestionnaireAction,
+  type MetaSetupState,
+  type SetupState,
+} from "./actions";
 
 const input =
   "h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-[15px] outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20";
@@ -104,6 +114,131 @@ export function MetaConfirmButton({ done, readOnly }: { done: boolean; readOnly:
         Zugriff ist erteilt
       </button>
       <Feedback state={state} />
+    </form>
+  );
+}
+
+/** Ampel-Zeile der Meta-Prüfung. */
+function CheckRow({ label, ok, detail }: { label: string; ok: boolean; detail?: string }) {
+  return (
+    <li className="flex items-start gap-2 text-[15px]">
+      {ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /> : <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />}
+      <span>
+        <b>{label}</b>
+        {detail ? <span className="block text-sm text-[color:var(--muted)]">{detail}</span> : null}
+      </span>
+    </li>
+  );
+}
+
+export function MetaCheckResult({ check }: { check: MetaCheck }) {
+  return (
+    <ul className="space-y-2 rounded-[var(--radius-md)] border border-[color:var(--border)] p-3" data-meta-check>
+      <CheckRow label="Werbekonto" ok={check.adAccount.ok} detail={check.adAccount.ok ? check.adAccount.name : check.adAccount.error} />
+      <CheckRow label="Facebook-Seite" ok={check.page.ok} detail={check.page.ok ? check.page.name : check.page.error} />
+      <CheckRow label="Zugriff auf Leads" ok={check.leads.ok} detail={check.leads.ok ? "Leads kommen direkt bei Ihnen an." : check.leads.error} />
+    </ul>
+  );
+}
+
+/** Meta freigeben: Werbekonto + Seite eintragen, von uns anfragen lassen oder Zugriff prüfen. */
+export function MetaAccessForm({
+  initial,
+  lastCheck,
+  done,
+  readOnly,
+}: {
+  initial: { adAccount: string; page: string };
+  lastCheck: MetaCheck | null;
+  done: boolean;
+  readOnly: boolean;
+}) {
+  const [checkState, checkAction, checking] = useActionState<MetaSetupState, FormData>(checkMetaAccessAction, {});
+  const [reqState, reqAction, requesting] = useActionState<MetaSetupState, FormData>(requestMetaAccessAction, {});
+  const check = checkState.check ?? lastCheck;
+  const busy = checking || requesting || readOnly;
+  return (
+    <form className="space-y-3" data-meta-form>
+      <div>
+        <label className={label} htmlFor="adAccount">Werbekonto-ID</label>
+        <input id="adAccount" name="adAccount" className={`${input} mt-1`} placeholder="act_123456789012345" defaultValue={initial.adAccount} />
+        <p className="mt-1 text-xs text-[color:var(--muted)]">
+          Zu finden im Werbeanzeigenmanager oben links unter dem Kontonamen oder in der Adresse nach „act=“. Den ganzen Link einfügen geht auch.
+        </p>
+      </div>
+      <div>
+        <label className={label} htmlFor="page">Facebook-Seite</label>
+        <input id="page" name="page" className={`${input} mt-1`} placeholder="facebook.com/ihre-agentur oder Seiten-ID" defaultValue={initial.page} />
+      </div>
+      <div className="flex flex-wrap items-center gap-3 pt-1">
+        <button
+          type="submit"
+          formAction={checkAction}
+          disabled={busy}
+          className="inline-flex h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 text-[15px] font-semibold text-white transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60"
+        >
+          {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+          Zugriff prüfen
+        </button>
+        {!done ? (
+          <button
+            type="submit"
+            formAction={reqAction}
+            disabled={busy}
+            className="inline-flex h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand)] bg-white px-5 text-[15px] font-semibold text-[color:var(--brand)] transition hover:bg-[#EFF6FF] disabled:opacity-60"
+          >
+            {requesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            Anfrage von uns senden lassen
+          </button>
+        ) : null}
+      </div>
+      {checkState.message ? <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700"><CheckCircle2 className="h-4 w-4" /> {checkState.message}</p> : null}
+      {checkState.error ? <p className="text-sm font-medium text-rose-700">{checkState.error}</p> : null}
+      {reqState.message ? <p className="text-sm font-medium text-emerald-700">{reqState.message}</p> : null}
+      {reqState.error ? <p className="text-sm font-medium text-rose-700">{reqState.error}</p> : null}
+      {check ? <MetaCheckResult check={check} /> : null}
+    </form>
+  );
+}
+
+/** Text zum Kopieren (Einwilligung). */
+export function CopyText({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken,#f8fafc)] p-3">
+      <p className="whitespace-pre-line text-[15px]" data-consent-text>{text}</p>
+      <button
+        type="button"
+        onClick={() => {
+          void navigator.clipboard?.writeText(text).then(() => setCopied(true));
+        }}
+        className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--brand)]"
+      >
+        <Copy className="h-4 w-4" /> {copied ? "Kopiert" : "Text kopieren"}
+      </button>
+    </div>
+  );
+}
+
+export function ConsentDoneButton({ done, readOnly }: { done: boolean; readOnly: boolean }) {
+  const [state, action, pending] = useActionState<SetupState, FormData>(confirmConsentAction, {});
+  if (done || state.ok)
+    return (
+      <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
+        <CheckCircle2 className="h-4 w-4" /> Erledigt, danke!
+      </p>
+    );
+  return (
+    <form action={action} className="flex flex-wrap items-center gap-3">
+      <button
+        type="submit"
+        disabled={pending || readOnly}
+        className="inline-flex h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 text-[15px] font-semibold text-white transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60"
+      >
+        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+        Ist in meinem Formular enthalten
+      </button>
+      {state.error ? <span className="text-sm font-medium text-rose-700">{state.error}</span> : null}
     </form>
   );
 }

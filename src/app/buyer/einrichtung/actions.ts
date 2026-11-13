@@ -7,6 +7,7 @@ import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 import { logOfferActivity } from "@/lib/offer-links";
 import { bookHelpCall } from "@/lib/help-call";
+import { checkMetaAccess, requestMetaAccess, type MetaCheck } from "@/lib/selbst-einrichtung";
 
 export type SetupState = { ok?: boolean; error?: string };
 
@@ -91,4 +92,53 @@ export async function bookHelpCallAction(_prev: SetupState, fd: FormData): Promi
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Nicht möglich." };
   }
+}
+
+// ─── Selbst-Einrichtung: Meta-Zugriff prüfen bzw. anfragen, Einwilligung ───
+
+export type MetaSetupState = { ok?: boolean; error?: string; message?: string; check?: MetaCheck };
+
+export async function checkMetaAccessAction(_prev: MetaSetupState, fd: FormData): Promise<MetaSetupState> {
+  try {
+    const { ctx } = await requireCustomer();
+    const r = await checkMetaAccess(ctx.customerId, { adAccount: str(fd, "adAccount", 200) || null, page: str(fd, "page", 300) || null }, { source: "kunde" });
+    revalidatePath("/buyer", "layout");
+    if (!r.ok) return { error: r.error, check: r.check };
+    return r.check.ok
+      ? { ok: true, check: r.check, message: "Alles freigegeben, danke! Wir kümmern uns jetzt um die Kampagne." }
+      : { ok: false, check: r.check };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Nicht möglich." };
+  }
+}
+
+export async function requestMetaAccessAction(_prev: MetaSetupState, fd: FormData): Promise<MetaSetupState> {
+  try {
+    const { ctx } = await requireCustomer();
+    const r = await requestMetaAccess(ctx.customerId, { adAccount: str(fd, "adAccount", 200) || null, page: str(fd, "page", 300) || null });
+    revalidatePath("/buyer", "layout");
+    if (!r.ok) return { error: r.error };
+    if (!r.sent.length) return { error: "Die Anfrage konnte nicht von uns gesendet werden. Bitte die Schritte unten selbst ausführen, das dauert ca. 3 Minuten." };
+    return {
+      ok: true,
+      message: `Anfrage gesendet (${r.sent.join(" und ")}). Sie bekommen in Meta eine Benachrichtigung: bitte öffnen und bestätigen, danach hier auf „Zugriff prüfen“ tippen.${r.failed.length ? ` Für ${r.failed.join(" und ")} bitte die Schritte unten nutzen.` : ""}`,
+    };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Nicht möglich." };
+  }
+}
+
+export async function confirmConsentAction(): Promise<SetupState> {
+  let ob;
+  try {
+    ({ ob } = await requireCustomer());
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Nicht möglich." };
+  }
+  if (!ob.consentAt) {
+    await prisma.onboarding.update({ where: { id: ob.id }, data: { consentAt: new Date() } });
+    await logOfferActivity({ dealId: null, salesContactId: ob.salesContactId }, "Onboarding: Kunde hat die Einwilligung im Leadformular bestätigt (bitte prüfen)");
+  }
+  revalidatePath("/buyer", "layout");
+  return { ok: true };
 }

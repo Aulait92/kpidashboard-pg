@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
-import { CalendarDays, CheckCircle2,
-  ChevronDown, ClipboardList, KeyRound, MessageCircle, Percent, Rocket, Smartphone } from "lucide-react";
+import { CalendarDays, CheckCircle2, ChevronDown, Circle, ClipboardList, FileCheck2, KeyRound, MessageCircle, Percent, PlayCircle, Rocket, Smartphone } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { buttonClass, Card } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { customerSetupProgress, loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
-import { HelpCallPicker, MetaConfirmButton, QuestionnaireForm } from "./forms";
+import { ConsentDoneButton, CopyText, HelpCallPicker, MetaAccessForm, QuestionnaireForm } from "./forms";
+import { appInstalled, consentText, loadSetupSettings, setupProgress, setupSteps, videoEmbedUrl, type MetaCheck, type SetupStepKey } from "@/lib/selbst-einrichtung";
 import { helpCallSlots } from "@/lib/help-call";
 import { InstallApp } from "@/components/install-app";
 import { getAppUrl } from "@/lib/email";
@@ -48,15 +48,20 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const software = ob.package !== "service";
   // Fortschritt nur aus den Schritten, die der Kunde selbst erledigt (nicht Zahlung, Login, unsere Arbeit).
   const progress = customerSetupProgress(items);
-  const businessId = process.env.PG_META_BUSINESS_ID?.trim() || "3089330734489612";
+  const settings = await loadSetupSettings();
+  const businessId = settings.businessId;
+  const video = (k: SetupStepKey) => settings.videos[k] ?? null;
   const readOnly = ctx.preview;
   const provision = await loadCustomerProvision(ctx.customerId);
+  const appDone = await appInstalled(ctx.customerId);
+  const steps = setupSteps(ob, items, { appDone, provisionDone: provision.hasCustom });
+  const overall = setupProgress(steps);
   // WhatsApp selbst verbinden (360dialog), nur mit Software und wenn der Partner-Zugang eingerichtet ist.
   const waEnabled = software && selfConnectEnabled();
   const waAccount = waEnabled
     ? await prisma.whatsAppAccount.findUnique({ where: { customerId: ctx.customerId }, select: { status: true, phoneNumber: true, dialog360ChannelId: true } })
     : null;
-  const order = ["questionnaire", "metaAccess", ...(software ? ["calendar"] : []), ...(waEnabled ? ["whatsapp"] : [])];
+  const order = ["questionnaire", "metaAccess", ...(software ? ["calendar"] : []), ...(waEnabled ? ["whatsapp"] : []), ...(software ? ["consent"] : [])];
   let stepNo = software ? 3 : 2;
   const nextNo = () => ++stepNo;
   const current = order.find((k) => !done(k)) ?? "start";
@@ -66,6 +71,10 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const slots = !helpUpcoming && !ob.liveAt ? await helpCallSlots().catch(() => []) : [];
   const calendar = await loadCalendarSetup(ctx.customerId, ctx.customerId);
   const makler = (await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { vermittlerTyp: true } }))?.vermittlerTyp === "makler";
+  const metaInit = {
+    adAccount: ob.customer.metaAdAccountId ? `act_${ob.customer.metaAdAccountId}` : "",
+    page: ob.customer.metaPageId ?? "",
+  };
   const timeFmt = (d: Date) =>
     new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" }).format(d);
 
@@ -84,19 +93,34 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
 
       <Card className="mb-5">
         <div className="p-5">
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-sm" data-setup-progress>
             <span className="font-medium">
-              {ob.liveAt
-                ? "Alles eingerichtet, Sie sind live."
-                : progress.complete
-                  ? "Ihr Teil ist erledigt – danke!"
-                  : `Ihr Teil: ${progress.done} von ${progress.total} erledigt`}
+              {ob.liveAt ? "Alles eingerichtet, Sie sind live." : `Einrichtung: ${overall.done} von ${overall.total} erledigt`}
             </span>
-            <span className="text-[color:var(--muted)]">{ob.liveAt ? "100" : progress.percent} %</span>
+            <span className="text-[color:var(--muted)]">{ob.liveAt ? "100" : overall.percent} %</span>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-[color:var(--surface-sunken,#f1f5f9)]">
-            <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${ob.liveAt ? 100 : progress.percent}%` }} />
+            <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${ob.liveAt ? 100 : overall.percent}%` }} />
           </div>
+          {!ob.liveAt ? (
+            <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-sm" data-setup-steps>
+              {steps.map((st) => (
+                <li key={st.key} className={`flex items-center gap-1 ${st.done ? "text-[color:var(--muted)]" : ""}`}>
+                  {st.done ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Circle className="h-4 w-4 text-[color:var(--muted)]" />}
+                  {st.owner === "kunde" && !st.done ? (
+                    <a href={st.href} className="underline decoration-dotted underline-offset-2">
+                      {st.label}
+                    </a>
+                  ) : (
+                    <span>
+                      {st.label}
+                      {st.owner === "wir" ? " (machen wir)" : ""}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : null}
           <p className="mt-3 text-sm text-[color:var(--muted)]">
             {progress.complete ? "Den Rest erledigen wir." : "Ca. 5 Minuten für Sie. Den Rest erledigen wir."}
           </p>
@@ -110,8 +134,27 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           <QuestionnaireForm software={software} initial={(ob.questionnaire ?? {}) as Record<string, never>} readOnly={readOnly} />
         </Step>
 
-        <Step n={2} title="Zugriff auf Ihr Meta-Werbekonto" icon={KeyRound} done={done("metaAccess")} open={isOpen("metaAccess")} id="metaAccess">
-          <p className="text-sm text-[color:var(--muted)]">So schalten wir die Anzeigen in Ihrem Werbekonto. Das Budget bleibt bei Ihnen.</p>
+        <Step n={2} title="Meta freigeben (Werbekonto und Seite)" icon={KeyRound} done={done("metaAccess")} open={isOpen("metaAccess")} id="metaAccess">
+          <p className="text-sm text-[color:var(--muted)]">So schalten wir die Anzeigen in Ihrem Werbekonto und Leads kommen direkt bei Ihnen an. Das Budget bleibt bei Ihnen.</p>
+          <VideoHint url={video("metaAccess")} />
+          <div className="my-4">
+            <p className="mb-2 text-[15px] font-medium">Am schnellsten: Werbekonto und Seite eintragen</p>
+            <p className="mb-3 text-sm text-[color:var(--muted)]">
+              Wir können Ihnen die Anfrage direkt in Meta schicken, Sie bestätigen sie nur noch. Danach auf „Zugriff prüfen“ tippen, die App sagt Ihnen genau, ob noch etwas fehlt.
+            </p>
+            <MetaAccessForm
+              initial={{ adAccount: metaInit.adAccount, page: metaInit.page }}
+              lastCheck={(ob.metaCheck ?? null) as MetaCheck | null}
+              done={done("metaAccess")}
+              readOnly={readOnly}
+            />
+            {ob.metaRequestedAt && !done("metaAccess") ? (
+              <p className="mt-2 text-sm text-[color:var(--muted)]">
+                Unsere Anfrage ging am {dateFmt(ob.metaRequestedAt)} raus. Wir prüfen täglich automatisch, ob sie bestätigt ist.
+              </p>
+            ) : null}
+          </div>
+          <p className="mt-5 text-[15px] font-medium">Oder selbst freigeben (ca. 3 Minuten)</p>
           <details className="my-4 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3 text-[15px]">
             <summary className="cursor-pointer font-medium">Noch kein Business Manager? So legen Sie ihn an</summary>
             <ol className="mt-3 list-decimal space-y-1.5 pl-5">
@@ -158,7 +201,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               Leads direkt bei Ihnen ankommen), ggf. auch Instagram, und speichern.
             </li>
           </ol>
-          <MetaConfirmButton done={done("metaAccess")} readOnly={readOnly} />
+          <p className="text-sm text-[color:var(--muted)]">Danach oben auf „Zugriff prüfen“ tippen.</p>
           <div id="hilfetermin" className="mt-5 scroll-mt-20 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4">
             <p className="text-[15px] font-medium">Klappt etwas nicht? Wir machen es gemeinsam.</p>
             {helpUpcoming ? (
@@ -191,6 +234,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             <p className="mb-4 text-sm text-[color:var(--muted)]">
               Damit Leads nur Termine bekommen, wenn Sie wirklich Zeit haben.
             </p>
+            <VideoHint url={video("calendar")} />
             {gcal === "connected" ? <p className="mb-3 text-sm font-medium text-emerald-700">Kalender verbunden.</p> : null}
             {gcal && gcal !== "connected" ? (
               <p className="mb-3 text-sm font-medium text-rose-700">
@@ -228,17 +272,35 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
 
         {waEnabled ? (
           <Step n={nextNo()} title="WhatsApp verbinden" icon={MessageCircle} done={done("whatsapp")} open={isOpen("whatsapp") || !!wa || !!weg} id="whatsapp">
+            <VideoHint url={video("whatsapp")} />
             <WhatsAppStep wa={wa} weg={weg} account={waAccount} done={done("whatsapp")} readOnly={readOnly} />
           </Step>
         ) : null}
 
-        <Step n={nextNo()} title="App aufs Handy" icon={Smartphone} done={false} open={current === "start" && !ob.liveAt}>
+        {software ? (
+          <Step n={nextNo()} title="Einwilligung im Leadformular" icon={FileCheck2} done={done("consent")} open={isOpen("consent")} id="consent">
+            <p className="mb-3 text-sm text-[color:var(--muted)]">
+              Damit Ihr Assistent neue Leads per WhatsApp anschreiben darf, muss im Leadformular die Einwilligung zur Kontaktaufnahme stehen.
+              Formulare, die wir für Sie anlegen, enthalten sie automatisch. Nutzen Sie eigene Formulare, fügen Sie bitte diesen Text als
+              Pflicht-Häkchen hinzu:
+            </p>
+            <VideoHint url={video("consent")} />
+            <CopyText text={consentText(ob.customer.name)} />
+            <div className="mt-4">
+              <ConsentDoneButton done={done("consent")} readOnly={readOnly} />
+            </div>
+          </Step>
+        ) : null}
+
+        <Step n={nextNo()} title="App aufs Handy und Mitteilungen" icon={Smartphone} done={appDone} open={current === "start" && !ob.liveAt && !appDone} id="app">
+          <VideoHint url={video("app")} />
           <InstallApp appUrl={appHost()} />
         </Step>
 
         <Step n={nextNo()} title="Provisionen prüfen (1 Minute, optional)" icon={Percent} done={provision.hasCustom} open={false}>
           {/* Typ aus dem angenommenen Angebot bekannt → nicht mehr danach fragen. */}
           <p className="text-sm text-[color:var(--muted)]">{provisionSetupHint(provision.typ, !!ob.offerId)}</p>
+          <VideoHint url={video("provision")} />
           <Link href="/buyer/provisionen" className={buttonClass("secondary", "md", "mt-4")}>
             Provisionen prüfen
           </Link>
@@ -282,6 +344,21 @@ function OurPart({ ours, startDate }: { ours: { key: string; done: boolean }[]; 
         ))}
       </span>
     </div>
+  );
+}
+
+/** Kurzes Erklärvideo je Schritt (Loom/YouTube eingebettet, sonst als Link). Ohne Video nichts. */
+function VideoHint({ url }: { url: string | null }) {
+  if (!url) return null;
+  const embed = videoEmbedUrl(url);
+  return embed ? (
+    <div className="my-3 overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border)]">
+      <iframe src={embed} title="Kurzes Erklärvideo" className="aspect-video w-full" allow="fullscreen; picture-in-picture" loading="lazy" />
+    </div>
+  ) : (
+    <a href={url} target="_blank" rel="noreferrer" className="my-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--brand)]">
+      <PlayCircle className="h-4 w-4" /> Kurzes Erklärvideo ansehen
+    </a>
   );
 }
 
@@ -384,6 +461,14 @@ function WhatsAppStep({
           <p className="mb-4 text-sm text-[color:var(--muted)]">
             Über diese Nummer schreibt Ihr Assistent neuen Leads in Ihrem Namen. Das Verbinden machen Sie einmal, es dauert etwa 10 Minuten.
           </p>
+          <div className="mb-4 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3" data-wa-checklist>
+            <p className="text-[15px] font-medium">Vorher kurz prüfen:</p>
+            <ul className="mt-2 space-y-1.5 text-[15px]">
+              <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" /> Eine Nummer, die <b>nicht</b> in der normalen WhatsApp-App genutzt wird (z. B. zweite SIM, Festnetz oder neue Nummer).</li>
+              <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" /> Sie können an dieser Nummer jetzt eine SMS oder einen Anruf mit Bestätigungscode empfangen.</li>
+              <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" /> Sie sind bei Facebook angemeldet und Admin Ihres Business Managers.</li>
+            </ul>
+          </div>
           <WhatsAppGuide initialPath={parseConnectPath(weg)} readOnly={readOnly} helpHref="/buyer/einrichtung?schritt=metaAccess#hilfetermin" />
         </>
       )}
