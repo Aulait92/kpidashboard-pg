@@ -1,4 +1,4 @@
-import { mailClient } from "@/lib/mail-guard";
+import { MAIL_BLOCKED_TEXT, mailClient, wasBlocked } from "@/lib/mail-guard";
 import { PROVIDER } from "@/lib/legal-texts";
 
 export type SendResult = { ok: true } | { ok: false; error: string };
@@ -244,7 +244,7 @@ export async function sendOfferEmail(opts: {
     signatureText(),
   ].join("\n");
   try {
-    const { error } = await mailClient(apiKey).emails.send({
+    const sent = await mailClient(apiKey).emails.send({
       from,
       to: opts.to,
       ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
@@ -262,6 +262,8 @@ export async function sendOfferEmail(opts: {
           ${signatureHtml()}
         </div>`,
     });
+    if (wasBlocked(sent)) return { ok: false, error: MAIL_BLOCKED_TEXT };
+    const { error } = sent;
     if (error) return { ok: false, error: error.message ?? "Resend hat abgelehnt." };
     return { ok: true, subject, text };
   } catch (err) {

@@ -17,7 +17,7 @@ import { importFromColdCrm, replaceFromColdCrm } from "@/lib/vertrieb/cold-crm-i
 import { LI_LABEL, importWaalaxyCsv } from "@/lib/vertrieb/linkedin";
 import { ensureReplyTask, importInstantlyCsv, recordReply, removeReplyTaskIfNoPositive, syncInstantly } from "@/lib/vertrieb/instantly";
 import { audit } from "@/lib/audit";
-import { addContactEmail, makePrimaryEmail, mergeContacts, removeContactEmail, searchMergeCandidates } from "@/lib/vertrieb/contact-merge";
+import { addContactEmail, makePrimaryEmail, mergeContacts, removeContactEmail, searchMergeCandidates, updatePrimaryEmail } from "@/lib/vertrieb/contact-merge";
 
 const s = (fd: FormData, k: string) => {
   const v = fd.get(k);
@@ -598,6 +598,15 @@ export async function addContactEmailAction(_prev: ContactEmailState, fd: FormDa
   await requireAuth();
   const id = s(fd, "contactId")!;
   const r = await addContactEmail(id, s(fd, "email") ?? "");
+  if (!r.ok) return { error: r.error };
+  refresh(id);
+  return { ok: true };
+}
+
+export async function updatePrimaryEmailAction(_prev: ContactEmailState, fd: FormData): Promise<ContactEmailState> {
+  await requireAuth();
+  const id = s(fd, "contactId")!;
+  const r = await updatePrimaryEmail(id, s(fd, "email") ?? "");
   if (!r.ok) return { error: r.error };
   refresh(id);
   return { ok: true };

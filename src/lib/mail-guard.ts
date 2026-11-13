@@ -40,7 +40,8 @@ export function mailClient(apiKey: string) {
         const to = filter(args.to as string | string[], list) ?? [];
         const blocked = [args.to].flat().filter((x) => !mailAllowed(String(x), list));
         if (blocked.length) console.warn(`[mail-sperre] nicht gesendet an ${blocked.length} Empfänger: „${args.subject}“`);
-        if (!to.length) return { data: { id: "gesperrt" }, error: null, headers: null } as unknown as Awaited<ReturnType<Resend["emails"]["send"]>>;
+        // blocked: true – interaktive Versande (z. B. Angebotsmail) melden das statt „gesendet“
+        if (!to.length) return { data: { id: "gesperrt" }, error: null, headers: null, blocked: true } as unknown as Awaited<ReturnType<Resend["emails"]["send"]>>;
         return resend.emails.send({
           ...args,
           to,
@@ -51,3 +52,8 @@ export function mailClient(apiKey: string) {
     },
   };
 }
+
+/** Hinweis, wenn die Testumgebung eine Mail komplett gesperrt hat (MAIL_NUR_AN). */
+export const MAIL_BLOCKED_TEXT =
+  "Testumgebung: Mails gehen nur an freigegebene Adressen (MAIL_NUR_AN), diese Adresse ist nicht freigegeben – nichts verschickt.";
+export const wasBlocked = (res: unknown) => !!(res && typeof res === "object" && (res as { blocked?: boolean }).blocked);

@@ -2,12 +2,13 @@
 
 import clsx from "clsx";
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
-import { GitMerge, Star, X } from "lucide-react";
+import { GitMerge, Pencil, Star, X } from "lucide-react";
 import {
   addContactEmailAction,
   makePrimaryEmailAction,
   mergeContactsAction,
   removeContactEmailAction,
+  updatePrimaryEmailAction,
   searchMergeCandidatesAction,
   type ContactEmailState,
 } from "@/app/admin/vertrieb/actions";
@@ -32,12 +33,32 @@ export function ContactEmails({ contactId, email, altEmails }: { contactId: stri
     return r;
   }, null);
   const [pending, start] = useTransition();
+  const [editing, setEditing] = useState(false);
+  const [editState, editAction, saving] = useActionState<ContactEmailState, FormData>(async (prev, f) => {
+    const r = await updatePrimaryEmailAction(prev, f);
+    if (r?.ok) setEditing(false);
+    return r;
+  }, null);
   return (
     <div className={clsx("space-y-1.5", pending && "opacity-60")}>
-      <div className="flex items-center gap-2">
-        <a href={`mailto:${email}`} className="truncate text-sky-700 hover:underline">{email}</a>
-        <span className="badge bg-slate-100 text-slate-600">Haupt</span>
-      </div>
+      {editing ? (
+        <form action={editAction} className="flex gap-2" data-email-edit>
+          <input type="hidden" name="contactId" value={contactId} />
+          <input name="email" type="email" required defaultValue={email} autoFocus className="input h-8 min-w-0 flex-1 text-sm" />
+          <button className="btn-primary h-8 text-sm" disabled={saving}>Speichern</button>
+          <button type="button" className="btn-ghost h-8 text-sm" onClick={() => setEditing(false)}>Abbrechen</button>
+        </form>
+      ) : (
+        <div className="flex items-center gap-2">
+          <a href={`mailto:${email}`} className="truncate text-sky-700 hover:underline">{email}</a>
+          <span className="badge bg-slate-100 text-slate-600">Haupt</span>
+          <button type="button" title="E-Mail korrigieren" aria-label="Haupt-E-Mail bearbeiten" className="text-slate-400 hover:text-sky-700" onClick={() => setEditing(true)}>
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+      {editState?.error ? <p className="text-xs text-rose-600">{editState.error}</p> : null}
+      {editing ? <p className="text-xs text-slate-500">Ersetzt die Adresse, auch in offenen Angeboten an diesen Kontakt.</p> : null}
       {altEmails.map((e) => (
         <div key={e} className="flex items-center gap-2">
           <a href={`mailto:${e}`} className="truncate text-sky-700 hover:underline">{e}</a>

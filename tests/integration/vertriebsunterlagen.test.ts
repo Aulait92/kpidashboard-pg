@@ -3,6 +3,8 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 // Angebotsmail: Resend abfangen, um Anhang und Rechner-Link zu prüfen
 const sent: { text: string; html: string; attachments?: { filename: string; content: Buffer }[] }[] = [];
 vi.mock("@/lib/mail-guard", () => ({
+  wasBlocked: () => false,
+  MAIL_BLOCKED_TEXT: "gesperrt",
   mailClient: () => ({
     emails: {
       send: async (m: (typeof sent)[number]) => {

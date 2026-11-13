@@ -3,6 +3,8 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 // Angebotsmail aus dem CRM: Du/Sie, Rechner, Präsentation – und die vollständige Mail im Verlauf
 const sent: { subject: string; text: string; attachments?: { filename: string }[] }[] = [];
 vi.mock("@/lib/mail-guard", () => ({
+  wasBlocked: () => false,
+  MAIL_BLOCKED_TEXT: "gesperrt",
   mailClient: () => ({ emails: { send: async (m: (typeof sent)[number]) => (sent.push(m), { error: null }) } }),
 }));
 vi.mock("next/cache", () => ({ revalidatePath: () => undefined }));

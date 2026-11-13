@@ -71,6 +71,30 @@ export async function makePrimaryEmail(contactId: string, raw: string): Promise<
   await prisma.salesContact.update({ where: { id: contactId }, data: { email, altEmails: [c.email, ...c.altEmails.filter((e) => e !== email)] } });
 }
 
+/**
+ * Haupt-E-Mail korrigieren (z. B. Tippfehler): ersetzt die Adresse, die alte wird nicht behalten.
+ * Offene Angebote des Kontakts (Entwurf/verschickt, nicht angenommen) mit der alten Adresse bekommen die neue.
+ */
+export async function updatePrimaryEmail(contactId: string, raw: string): Promise<EmailResult & { offers?: number }> {
+  const email = normalizeEmail(raw);
+  if (!email) return { ok: false, error: "Bitte eine gültige E-Mail-Adresse eingeben." };
+  const other = await findContactIdByEmail(email);
+  if (other && other !== contactId) return { ok: false, error: "Diese E-Mail gehört schon zu einem anderen Kontakt. Bitte die beiden Kontakte zusammenführen." };
+  const c = await prisma.salesContact.findUniqueOrThrow({ where: { id: contactId }, select: { email: true, altEmails: true } });
+  if (c.email === email) return { ok: true, offers: 0 };
+  const old = c.email;
+  const offers = await prisma.$transaction(async (tx) => {
+    await tx.salesContact.update({ where: { id: contactId }, data: { email, altEmails: c.altEmails.filter((e) => e !== email) } });
+    const r = await tx.offer.updateMany({
+      where: { salesContactId: contactId, email: { equals: old, mode: "insensitive" }, status: { in: ["draft", "sent"] }, acceptedAt: null },
+      data: { email },
+    });
+    await tx.salesActivity.create({ data: { contactId, type: "NOTIZ", outcome: "E-Mail geändert", note: `${old} → ${email}${r.count ? ` (auch in ${r.count} offenen Angebot${r.count === 1 ? "" : "en"})` : ""}` } });
+    return r.count;
+  });
+  return { ok: true, offers };
+}
+
 // Felder, die beim Zusammenführen aus dem zweiten Kontakt übernommen werden, wenn sie beim ersten leer sind.
 const FILL_FIELDS = [
   "phone", "fax", "street", "zip", "city", "ratingValue", "ratingCount", "openingHours", "url", "salutation", "firstName", "lastName",
