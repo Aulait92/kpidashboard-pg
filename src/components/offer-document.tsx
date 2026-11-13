@@ -110,6 +110,69 @@ const dateTime = (d: Date) =>
 const eur2 = (n: number) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", minimumFractionDigits: 2 }).format(n);
 
+/** Klarer Überblick: monatliche Gesamtkosten inkl. Werbebudget, netto und brutto. */
+function MonthlyOverview({
+  feeNet,
+  adNet,
+  serviceOnly,
+  annual,
+  intro,
+}: {
+  feeNet: number;
+  adNet: number;
+  serviceOnly: boolean;
+  annual: boolean;
+  intro: { months: number; fee: number } | null;
+}) {
+  const totalNet = feeNet + adNet;
+  const row = "grid grid-cols-2 gap-x-4 gap-y-1 py-3 text-[15px] sm:grid-cols-[1fr_9rem_9rem] sm:items-baseline";
+  const num = "whitespace-nowrap tabular-nums sm:text-right";
+  const cell = (label: string, value: string, strong = false) => (
+    <span className={num}>
+      <span className="mr-1 text-xs font-normal text-[#6B7280] sm:hidden">{label}</span>
+      <span className={strong ? "font-semibold" : undefined}>{value}</span>
+    </span>
+  );
+  return (
+    <div className="mt-8 overflow-hidden rounded-xl border-2 border-[#2563EB]/30 bg-[#F5F8FF]" data-offer-monthly-overview>
+      <div className="border-b border-[#2563EB]/20 px-5 py-3 text-[15px] font-semibold text-[#111827]">Ihre monatlichen Kosten im Überblick</div>
+      <div className="px-5">
+        <div className="hidden grid-cols-[1fr_9rem_9rem] gap-x-4 pt-3 text-xs font-medium uppercase tracking-wide text-[#6B7280] sm:grid">
+          <span />
+          <span className="text-right">netto</span>
+          <span className="text-right">brutto</span>
+        </div>
+        <div className={row}>
+          <span className="col-span-2 sm:col-span-1">
+            {serviceOnly ? "Betreuung" : "Betreuung + Software"}{" "}
+            <span className="text-[#6B7280]">(an performancegrowth{annual ? ", jährlich im Voraus – je Monat umgerechnet" : ""})</span>
+          </span>
+          {cell("netto", eur2(feeNet))}
+          {cell("brutto", eur2(withVat(feeNet)))}
+        </div>
+        <div className={`${row} border-t border-[#2563EB]/10`}>
+          <span className="col-span-2 sm:col-span-1">
+            Werbebudget <span className="text-[#6B7280]">(zahlen Sie direkt an Meta)</span>
+          </span>
+          {cell("netto", `≈ ${eur2(adNet)}`)}
+          {cell("brutto", `≈ ${eur2(withVat(adNet))}*`)}
+        </div>
+        <div className={`${row} border-t-2 border-[#2563EB]/30 font-semibold text-[#111827]`}>
+          <span className="col-span-2 sm:col-span-1">Gesamt pro Monat</span>
+          {cell("netto", `≈ ${eur2(totalNet)}`, true)}
+          {cell("brutto", `≈ ${eur2(withVat(feeNet) + withVat(adNet))}`, true)}
+        </div>
+      </div>
+      <p className="border-t border-[#2563EB]/20 px-5 py-3 text-xs leading-relaxed text-[#6B7280]">
+        {intro ? `In den ersten ${intro.months} Monaten gilt der Startpreis von ${eur2(intro.fee)} netto (${eur2(withVat(intro.fee))} brutto) statt der oben genannten Vergütung. ` : ""}
+        Brutto = inkl. 19 % USt. * Versicherungsvermittler sind in der Regel nicht zum Vorsteuerabzug berechtigt. Auf das Werbebudget fällt dann zusätzlich 19 % USt. an
+        (von Meta berechnet bzw. als Reverse-Charge). Mit Vorsteuerabzug gilt der Nettobetrag. Das Werbebudget richtet sich nach Ihrem gewählten
+        Tagesbudget × 30 Tage und lässt sich jederzeit anpassen.
+      </p>
+    </div>
+  );
+}
+
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 const SHORT_NAME = PROVIDER.name.replace(" (haftungsbeschränkt)", "");
@@ -423,6 +486,13 @@ export function OfferDocument({
             </Note>
           </Tr>
         </Table>
+        <MonthlyOverview
+          feeNet={add.annualTotal != null ? add.annualTotal / 12 : add.monthlyTotal ?? offer.monthlyFee}
+          adNet={list.monthlyBudget}
+          serviceOnly={serviceOnly}
+          annual={add.annualTotal != null}
+          intro={hasIntro ? { months: offer.introMonths!, fee: offer.introMonthlyFee! } : null}
+        />
 
         <H3>2.1 Zahlung</H3>
         <p className="text-[#374151]">

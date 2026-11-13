@@ -103,3 +103,33 @@ export async function sendOfferEmailAction(
   revalidatePath("/admin/kunden", "layout");
   return { ok: true };
 }
+
+/**
+ * Angebot löschen (z. B. Entwurf mit Fehler). Nur, solange es nicht angenommen bzw.
+ * bezahlt ist und kein Onboarding daran hängt. Die vorherige Version wird wieder aktuell.
+ */
+export async function deleteOfferAction(offerId: string): Promise<OfferActionResult> {
+  await requireAdmin();
+  const offer = await prisma.offer.findUnique({
+    where: { id: offerId },
+    select: { id: true, dealId: true, salesContactId: true, number: true, status: true, paymentStatus: true, acceptedAt: true, stripeCustomerId: true },
+  });
+  if (!offer) return { ok: false, error: "Angebot nicht gefunden." };
+  if (offer.status === "accepted" || offer.acceptedAt) return { ok: false, error: "Angenommene Angebote lassen sich nicht löschen." };
+  if (offer.paymentStatus && offer.paymentStatus !== "none") return { ok: false, error: "Zu diesem Angebot gibt es schon eine Zahlung – bitte nicht löschen." };
+  if (await prisma.onboarding.findFirst({ where: { offerId: offer.id }, select: { id: true } })) {
+    return { ok: false, error: "An diesem Angebot hängt bereits ein Onboarding." };
+  }
+  const owner = offer.salesContactId ? { salesContactId: offer.salesContactId } : offer.dealId ? { dealId: offer.dealId } : null;
+  await prisma.$transaction(async (tx) => {
+    await tx.offer.delete({ where: { id: offer.id } });
+    if (!owner || offer.status === "superseded") return;
+    // Vorherige Version wieder aktuell machen (sie wurde beim Erstellen dieser Version ersetzt)
+    const prev = await tx.offer.findFirst({ where: { ...owner, status: "superseded" }, orderBy: { version: "desc" }, select: { id: true, sentAt: true } });
+    if (prev) await tx.offer.update({ where: { id: prev.id }, data: { status: prev.sentAt ? "sent" : "draft" } });
+  });
+  if (offer.salesContactId) await logOfferActivity(offer, `Angebot ${offer.number} gelöscht`);
+  revalidatePath(offerAdminHref(offer));
+  revalidatePath("/admin/kunden", "layout");
+  return { ok: true };
+}

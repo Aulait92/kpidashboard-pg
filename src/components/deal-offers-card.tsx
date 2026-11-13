@@ -3,9 +3,9 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Copy, ExternalLink, FileDown, FileText, Mail, Plus, Send } from "lucide-react";
+import { Copy, ExternalLink, FileDown, FileText, Mail, Plus, Send, Trash2 } from "lucide-react";
 import { Badge, Button, ButtonLink, Card, CardHeader } from "@/components/ui";
-import { markOfferSentAction, sendOfferEmailAction } from "@/app/admin/vertrieb/offer-actions";
+import { deleteOfferAction, markOfferSentAction, sendOfferEmailAction } from "@/app/admin/vertrieb/offer-actions";
 
 export type DealOfferRow = {
   id: string;
@@ -137,6 +137,20 @@ export function DealOffersCard({ newOfferHref, offers, appUrl }: { newOfferHref:
                     </Button>
                   ) : null}
                 </>
+              ) : null}
+              {current.status !== "accepted" && !current.acceptedAt && (!current.paymentStatus || current.paymentStatus === "none") ? (
+                <Button
+                  icon={Trash2}
+                  variant="ghost"
+                  disabled={pending}
+                  className="text-rose-600 hover:bg-rose-50"
+                  onClick={() => {
+                    if (!confirm(`Angebot ${current.number} wirklich löschen? Der Link funktioniert danach nicht mehr.`)) return;
+                    run(current.id, () => deleteOfferAction(current.id), "Angebot gelöscht");
+                  }}
+                >
+                  Löschen
+                </Button>
               ) : null}
             </div>
             {msg ? <p className="text-xs font-medium text-emerald-700">{msg}</p> : null}
