@@ -376,3 +376,16 @@ function EscalationCard({ e }: { e: Escalation }) {
     </div>
   );
 }
+
+/** Öffnet die KI-Hilfe von beliebiger Stelle (z. B. Einrichtung, Startseite). */
+export function HilfeChatButton({ className, children }: { className?: string; children?: React.ReactNode }) {
+  return (
+    <button type="button" className={className} onClick={() => window.dispatchEvent(new Event("pg-hilfe-open"))} data-hilfe-open>
+      {children ?? (
+        <>
+          <Sparkles className="h-4 w-4" /> Frage an die KI-Hilfe
+        </>
+      )}
+    </button>
+  );
+}

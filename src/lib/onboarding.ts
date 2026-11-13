@@ -9,6 +9,7 @@
 import crypto from "node:crypto";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { loadCustomerProvision } from "@/lib/provision-server";
 import { hashPassword, issuePasswordResetToken } from "@/lib/auth";
 import { buildResetUrl, getAppUrl, sendCustomerMail, sendOnboardingWelcomeEmail } from "@/lib/email";
 import { customerGreeting, logOfferActivity, offerAdminHref, setContactCustomerStage } from "@/lib/offer-links";
@@ -383,7 +384,9 @@ export function checklistProgress(items: ChecklistItem[]) {
 }
 
 /** Schritte, die der Kunde in der Einrichtung selbst erledigt (Reihenfolge wie auf der Einrichtungsseite). */
-export const CUSTOMER_SETUP_KEYS = ["questionnaire", "metaAccess", "calendar", "whatsapp", "consent"] as const;
+export const CUSTOMER_SETUP_KEYS = ["questionnaire", "app", "calendar", "provision", "metaAccess", "whatsapp", "consent"] as const;
+/** App installiert / Provisionen hinterlegt: keine Checklisten-Punkte, kommen von außen dazu. */
+export type CustomerExtras = { appDone: boolean; provisionDone: boolean };
 /** Unser Teil, dem Kunden nur zur Information gezeigt (nicht im Fortschrittsbalken). */
 export const OUR_SETUP_KEYS = ["campaign", "testLead", "live"] as const;
 
@@ -393,8 +396,16 @@ export const OUR_SETUP_KEYS = ["campaign", "testLead", "live"] as const;
  * unsere Schritte (Kampagne, Testlead, Go-live) stehen getrennt in `ours`.
  * Admin-Ansichten nutzen weiter `checklistProgress` (alle Punkte).
  */
-export function customerSetupProgress(items: ChecklistItem[]) {
-  const steps = CUSTOMER_SETUP_KEYS.map((k) => items.find((i) => i.key === k && i.owner === "kunde")).filter(
+export function customerSetupProgress(items: ChecklistItem[], extras?: CustomerExtras) {
+  // Eine Zählung für Startkarte, Einrichtungsseite und Menü (Ole, 13.11.2026): nur, was der Kunde selbst tut
+  const extra: ChecklistItem[] = extras
+    ? [
+        { key: "app", label: "App aufs Handy und Mitteilungen", owner: "kunde", done: extras.appDone, at: null },
+        { key: "provision", label: "Provisionen hinterlegen", owner: "kunde", done: extras.provisionDone, at: null },
+      ]
+    : [];
+  const all = [...items, ...extra];
+  const steps = CUSTOMER_SETUP_KEYS.map((k) => all.find((i) => i.key === k && i.owner === "kunde")).filter(
     (i): i is ChecklistItem => !!i,
   );
   const done = steps.filter((i) => i.done).length;
@@ -453,15 +464,25 @@ export async function customerSetupOpenCount(customerId: string): Promise<number
   const ob = await loadOnboarding({ customerId });
   if (!ob || ob.status === "cancelled") return 0;
   const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true } }) : null;
-  // Nach dem Livegang zählen nur noch die Software-Schritte (z. B. WhatsApp nach einem Paketwechsel, Ole 13.11.2026)
-  const open = onboardingChecklist(ob, offer).filter(
-    (i) => !i.done && i.owner === "kunde" && i.key !== "login" && (!ob.liveAt || LIVE_SETUP_KEYS.has(i.key)),
-  ).length;
-  return Math.max(open, 0);
+  const progress = customerSetupProgress(onboardingChecklist(ob, offer), await customerExtras(customerId));
+  // Nach dem Livegang zählen nur noch die Software-Schritte (z. B. WhatsApp nach einem Paketwechsel, Ole 13.11.2026);
+  // Nur Betreuung: nach dem Livegang nichts mehr offen
+  if (ob.liveAt && ob.package === "service") return 0;
+  return progress.open.filter((i) => !ob.liveAt || LIVE_SETUP_KEYS.has(i.key)).length;
 }
 
 /** Schritte, die auch nach dem Livegang in der Einrichtung offen bleiben. */
-const LIVE_SETUP_KEYS = new Set(["questionnaire", "calendar", "whatsapp", "consent"]);
+const LIVE_SETUP_KEYS = new Set(["questionnaire", "app", "calendar", "provision", "whatsapp", "consent"]);
+
+/** App installiert (Push-Anmeldung eines Logins) und eigene Provisionssätze hinterlegt. */
+export async function customerExtras(customerId: string): Promise<CustomerExtras> {
+  const users = await prisma.user.findMany({ where: { customerId, role: "BUYER" }, select: { id: true } });
+  const [push, provision] = await Promise.all([
+    users.length ? prisma.pushSubscription.count({ where: { userId: { in: users.map((u) => u.id) } } }) : 0,
+    loadCustomerProvision(customerId),
+  ]);
+  return { appDone: push > 0, provisionDone: provision.hasCustom };
+}
 
 /**
  * Einrichtung neu starten (z. B. Bestandskunde wechselt auf Betreuung + Software, Ole 13.11.2026):

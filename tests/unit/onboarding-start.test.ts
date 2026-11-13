@@ -68,7 +68,8 @@ const fresh = (whatsappOwner: ChecklistItem["owner"] = "kunde"): ChecklistItem[]
 describe("customerSetupProgress", () => {
   it("zählt nur aktive Kundenschritte – Zahlung, Login, Willkommens-Mail und unsere Schritte nicht", () => {
     const p = customerSetupProgress(fresh());
-    expect(p.steps.map((s) => s.key)).toEqual(["questionnaire", "metaAccess", "calendar", "whatsapp"]);
+    // Reihenfolge wie auf der Einrichtungsseite
+    expect(p.steps.map((s) => s.key)).toEqual(["questionnaire", "calendar", "metaAccess", "whatsapp"]);
     expect(p.done).toBe(0);
     expect(p.total).toBe(4);
     expect(p.percent).toBe(0);
@@ -82,6 +83,13 @@ describe("customerSetupProgress", () => {
     expect(p.steps.some((s) => s.key === "whatsapp")).toBe(false);
     // … dann erscheint es unter „Unser Teil“
     expect(p.ours.map((s) => s.key)).toEqual(["whatsapp", "campaign", "testLead", "live"]);
+  });
+
+  it("mit App und Provisionen: dieselbe Zählung wie Einrichtungsseite und Menü", () => {
+    const p = customerSetupProgress(fresh("du"), { appDone: true, provisionDone: false });
+    expect(p.steps.map((s) => s.key)).toEqual(["questionnaire", "app", "calendar", "provision", "metaAccess"]);
+    expect(p.done).toBe(1);
+    expect(p.total).toBe(5);
   });
 
   it("Nur-Betreuung: Fragebogen und Meta-Zugriff", () => {

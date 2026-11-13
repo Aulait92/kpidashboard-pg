@@ -1,12 +1,14 @@
 import { redirect } from "next/navigation";
-import { CalendarDays, CheckCircle2, ChevronDown, Circle, ClipboardList, FileCheck2, KeyRound, MessageCircle, Percent, PlayCircle, Rocket, Smartphone } from "lucide-react";
+import { HilfeChatButton } from "@/components/hilfe-chat";
+import { STEP_TEXT } from "@/components/first-day";
+import { ArrowRight, CalendarDays, CheckCircle2, ChevronDown, Circle, ClipboardList, FileCheck2, KeyRound, MessageCircle, Percent, PlayCircle, Rocket, Smartphone } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { buttonClass, Card } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { customerSetupProgress, loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
 import { ConsentDoneButton, CopyText, HelpCallPicker, MetaAccessForm, QuestionnaireForm } from "./forms";
-import { appInstalled, consentText, loadSetupSettings, setupProgress, setupSteps, videoEmbedUrl, type MetaCheck, type SetupStepKey } from "@/lib/selbst-einrichtung";
+import { appInstalled, consentText, loadSetupSettings, setupSteps, videoEmbedUrl, type MetaCheck, type SetupStepKey } from "@/lib/selbst-einrichtung";
 import { helpCallSlots } from "@/lib/help-call";
 import { InstallApp } from "@/components/install-app";
 import { getAppUrl } from "@/lib/email";
@@ -47,7 +49,6 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const done = (k: string) => items.find((i) => i.key === k)?.done ?? false;
   const software = ob.package !== "service";
   // Fortschritt nur aus den Schritten, die der Kunde selbst erledigt (nicht Zahlung, Login, unsere Arbeit).
-  const progress = customerSetupProgress(items);
   const settings = await loadSetupSettings();
   const businessId = settings.businessId;
   const video = (k: SetupStepKey) => settings.videos[k] ?? null;
@@ -55,7 +56,10 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const provision = await loadCustomerProvision(ctx.customerId);
   const appDone = await appInstalled(ctx.customerId);
   const steps = setupSteps(ob, items, { appDone, provisionDone: provision.hasCustom });
-  const overall = setupProgress(steps);
+  // Eine Zählung wie auf der Startseite und im Menü: nur Schritte, die der Kunde selbst erledigt
+  const progress = customerSetupProgress(items, { appDone, provisionDone: provision.hasCustom });
+  const custSteps = steps.filter((st) => st.owner === "kunde" && st.key !== "login");
+  const overall = { done: progress.done, total: progress.total, percent: progress.percent, open: progress.open };
   // Live und nichts mehr offen = fertig. Live mit offenen Software-Schritten (z. B. nach Paketwechsel): Fortschritt zeigen.
   const fertig = !!ob.liveAt && overall.open.length === 0;
   // WhatsApp selbst verbinden (360dialog), nur mit Software und wenn der Partner-Zugang eingerichtet ist.
@@ -105,22 +109,29 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${fertig ? 100 : overall.percent}%` }} />
           </div>
           {!fertig ? (
-            <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-sm" data-setup-steps>
-              {steps.map((st) => (
-                <li key={st.key} className={`flex items-center gap-1 ${st.done ? "text-[color:var(--muted)]" : ""}`}>
-                  {st.done ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Circle className="h-4 w-4 text-[color:var(--muted)]" />}
-                  {st.owner === "kunde" && !st.done ? (
-                    <a href={st.href} className="underline decoration-dotted underline-offset-2">
-                      {st.label}
-                    </a>
-                  ) : (
-                    <span>
-                      {st.label}
-                      {st.owner === "wir" ? " (machen wir)" : ""}
-                    </span>
-                  )}
-                </li>
-              ))}
+            <ul className="mt-4 divide-y divide-[color:var(--border)] rounded-[var(--radius-md)] border border-[color:var(--border)]" data-setup-steps>
+              {custSteps.map((st) => {
+                const t = STEP_TEXT[st.key] ?? { label: st.label, icon: Circle };
+                const Icon = st.done ? CheckCircle2 : t.icon;
+                const inner = (
+                  <>
+                    <Icon className={`h-4 w-4 shrink-0 ${st.done ? "text-emerald-600" : "text-[color:var(--brand)]"}`} />
+                    <span className={`flex-1 ${st.done ? "text-[color:var(--muted)] line-through decoration-[color:var(--border-strong)]" : ""}`}>{t.label}</span>
+                    {st.done ? <span className="text-xs text-[color:var(--muted)]">Erledigt</span> : <ArrowRight className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />}
+                  </>
+                );
+                return (
+                  <li key={st.key}>
+                    {st.done ? (
+                      <span className="flex items-center gap-3 px-4 py-3 text-sm font-medium">{inner}</span>
+                    ) : (
+                      <a href={st.href} className="flex items-center gap-3 px-4 py-3 text-sm font-medium hover:bg-[color:var(--surface-sunken,#f8fafc)] hover:text-[color:var(--brand)]">
+                        {inner}
+                      </a>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           ) : null}
           <p className="mt-3 text-sm text-[color:var(--muted)]">
@@ -224,10 +235,11 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 <HelpCallPicker slots={slots} readOnly={readOnly} />
               </>
             ) : null}
-            <p className="mt-3 text-sm text-[color:var(--muted)]">
-              Oder rufen Sie an:{" "}
-              <a href="tel:+4915152418846" className="font-medium text-[color:var(--brand)]">+49 151 52418846</a>
-            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-[color:var(--muted)]">
+              <span>Schnelle Frage zwischendurch?</span>
+              <HilfeChatButton className="inline-flex items-center gap-1.5 font-semibold text-[color:var(--brand)]" />
+              <span>– antwortet sofort, auch abends.</span>
+            </div>
           </div>
         </Step>
 

@@ -151,7 +151,7 @@ async function sendLeadEmailInner(
   const { error } = await resend.emails.send({
     from: `"${displayName}" <${fromAddress}>`,
     to,
-    replyTo: appt.customer.agentConfig?.advisorEmail ?? undefined,
+    replyTo: appt.customer.agentConfig?.advisorEmail || (await ownerEmail(appt.customerId)),
     subject: c.subject,
     html,
     text,
@@ -172,4 +172,12 @@ async function sendLeadEmailInner(
     return { sent: false, reason: error.message ?? "send_failed" };
   }
   return { sent: true };
+}
+
+/** Antworten des Leads gehen an den Kunden: hinterlegte Berater-Adresse, sonst die Login-Adresse des Inhabers. */
+async function ownerEmail(customerId: string): Promise<string | undefined> {
+  const u = await prisma.user
+    .findFirst({ where: { customerId, role: "BUYER" }, orderBy: { createdAt: "asc" }, select: { email: true } })
+    .catch(() => null);
+  return u?.email || undefined;
 }

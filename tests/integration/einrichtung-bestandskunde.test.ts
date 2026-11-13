@@ -21,8 +21,9 @@ describe("Einrichtung für Bestandskunden", () => {
     const ob = await prisma.onboarding.findUniqueOrThrow({ where: { customerId: c.id } });
     expect(ob.liveAt).not.toBeNull(); // keine Erinnerungen / keine „hängt“-Hinweise
     const open = await customerSetupOpenCount(c.id);
-    expect(open).toBeGreaterThanOrEqual(2); // Kalender + Einwilligung (+ WhatsApp, wenn Selbst-Verbinden aktiv)
-    expect(open).toBeLessThanOrEqual(3);
+    // App, Kalender, Provisionen, Einwilligung (+ WhatsApp, wenn Selbst-Verbinden aktiv)
+    expect(open).toBeGreaterThanOrEqual(4);
+    expect(open).toBeLessThanOrEqual(5);
     expect(await openSetupForExisting(c.id)).toEqual({ ok: true, created: false });
   });
 

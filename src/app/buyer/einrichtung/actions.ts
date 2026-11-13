@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { sendToAdmins } from "@/lib/push";
-import { reportError } from "@/lib/monitoring";
 import { logOfferActivity } from "@/lib/offer-links";
 import { bookHelpCall } from "@/lib/help-call";
 import { checkMetaAccess, requestMetaAccess, type MetaCheck } from "@/lib/selbst-einrichtung";
@@ -31,22 +30,15 @@ export async function saveQuestionnaireAction(_prev: SetupState, fd: FormData): 
     return { error: e instanceof Error ? e.message : "Nicht möglich." };
   }
   const software = ob.package !== "service";
-  const callbackBy = str(fd, "callbackBy", 120);
   const special = str(fd, "special", 1500);
-  const data: Record<string, unknown> = { callbackBy, special };
-  if (!callbackBy) return { error: "Bitte angeben, wer die Leads zurückruft." };
+  // Frühere Antworten („Wer ruft zurück“, E-Mail für Termineinladungen) bleiben erhalten, werden aber nicht mehr abgefragt
+  const prev = (ob.questionnaire && typeof ob.questionnaire === "object" ? ob.questionnaire : {}) as Record<string, unknown>;
+  const data: Record<string, unknown> = { ...prev, special };
 
   if (software) {
     const formats = ["telefon", "video", "vorOrt"].filter((k) => fd.get(`format_${k}`) === "on");
-    const advisorEmail = str(fd, "advisorEmail", 200).toLowerCase();
     if (formats.length === 0) return { error: "Bitte mindestens eine Terminart wählen." };
-    if (advisorEmail && !isEmail(advisorEmail)) return { error: "Die E-Mail-Adresse für Termineinladungen sieht nicht gültig aus." };
-    Object.assign(data, { formats, advisorEmail });
-    if (advisorEmail) {
-      await prisma.agentConfig
-        .upsert({ where: { customerId: ob.customerId }, create: { customerId: ob.customerId, advisorEmail }, update: { advisorEmail } })
-        .catch((err) => reportError(err, "onboarding-agent-config"));
-    }
+    Object.assign(data, { formats });
   } else {
     const leadEmails = str(fd, "leadEmails", 500)
       .split(/[,;\s]+/)

@@ -2,10 +2,11 @@
 // Vor dem Go-live: Einrichtung prominent und positiv („Ihr Start am …“, eigener Fortschritt,
 // nächste Schritte direkt anklickbar). Nach dem Go-live: wie ein Lead ankommt.
 
+import { HilfeChatButton } from "@/components/hilfe-chat";
 import Link from "next/link";
-import { ArrowRight, BellRing, CalendarDays, CheckCircle2, Circle, ClipboardList, KeyRound, LifeBuoy, MessageCircle, Phone, Rocket, Smartphone } from "lucide-react";
+import { ArrowRight, BellRing, CalendarDays, CheckCircle2, Circle, ClipboardList, KeyRound, LifeBuoy, MessageCircle, Percent, Phone, Rocket, ShieldCheck, Smartphone } from "lucide-react";
 import { buttonClass, Card } from "@/components/ui";
-import { customerSetupProgress, loadOnboarding, onboardingChecklist, type ChecklistItem } from "@/lib/onboarding";
+import { customerExtras, customerSetupProgress, loadOnboarding, onboardingChecklist, type ChecklistItem } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
 
 const dateFmt = (d: Date) =>
@@ -28,7 +29,7 @@ export async function FirstDay({
   const offer = ob?.offerId
     ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true } })
     : null;
-  const progress = ob ? customerSetupProgress(onboardingChecklist(ob, offer)) : null;
+  const progress = ob ? customerSetupProgress(onboardingChecklist(ob, offer), await customerExtras(customerId)) : null;
   const live = !ob || !!ob.liveAt;
   const calendarOk = calendar?.status === "connected";
 
@@ -110,9 +111,9 @@ export async function FirstDay({
                 <LifeBuoy className="h-4 w-4" /> 15-Minuten-Hilfetermin
               </Link>
             ) : (
-              <a href="tel:+4915152418846" className={buttonClass("secondary", "md", "gap-1.5")}>
-                <LifeBuoy className="h-4 w-4" /> Fragen? +49 151 52418846
-              </a>
+              <HilfeChatButton className={buttonClass("secondary", "md", "gap-1.5")}>
+                <LifeBuoy className="h-4 w-4" /> Fragen? KI-Hilfe
+              </HilfeChatButton>
             )}
           </div>
         </div>
@@ -123,11 +124,14 @@ export async function FirstDay({
 
 // ─── Vor dem Go-live ────────────────────────────────────────────────────
 
-const STEP_TEXT: Record<string, { label: string; icon: typeof Rocket }> = {
+export const STEP_TEXT: Record<string, { label: string; icon: typeof Rocket }> = {
   questionnaire: { label: "Kurzen Fragebogen ausfüllen", icon: ClipboardList },
   metaAccess: { label: "Meta-Werbekonto freigeben", icon: KeyRound },
   calendar: { label: "Kalender verbinden", icon: CalendarDays },
   whatsapp: { label: "WhatsApp verbinden", icon: MessageCircle },
+  app: { label: "App aufs Handy legen und Benachrichtigungen einschalten", icon: Smartphone },
+  provision: { label: "Provisionen hinterlegen", icon: Percent },
+  consent: { label: "Einwilligung im Leadformular bestätigen", icon: ShieldCheck },
 };
 
 /** Ganze Tage bis zum Start (Berliner Kalendertage), nie negativ. */
@@ -164,7 +168,7 @@ function BeforeStart({
   progress: ReturnType<typeof customerSetupProgress>;
 }) {
   const head = startHeadline(startDate);
-  const next = progress.open.slice(0, 4);
+  const next = progress.open;
   const short = startDate ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "numeric", month: "long" }).format(startDate) : null;
   const ourLabel = (i: ChecklistItem) =>
     i.key === "whatsapp" ? "WhatsApp verbinden" : i.key === "campaign" ? "Kampagne & Leadformular" : i.key === "testLead" ? "Testlead" : short ? `Go-live am ${short}` : "Go-live";
@@ -211,7 +215,7 @@ function BeforeStart({
                     return (
                       <li key={s.key}>
                         <Link
-                          href={`/buyer/einrichtung?schritt=${s.key}#${s.key}`}
+                          href={s.key === "provision" ? "/buyer/provisionen" : `/buyer/einrichtung?schritt=${s.key}#${s.key}`}
                           className="flex items-center gap-3 px-4 py-3 text-sm font-medium hover:bg-[color:var(--surface-sunken,#f8fafc)] hover:text-[color:var(--brand)]"
                         >
                           <Icon className="h-4 w-4 shrink-0 text-[color:var(--brand)]" />
@@ -242,12 +246,6 @@ function BeforeStart({
           ) : null}
 
           <div className="mt-5 space-y-2 border-t border-[color:var(--border)] pt-4 text-sm">
-            {owner ? (
-              <Link href="/buyer/einrichtung" className="flex items-center gap-2.5 hover:text-[color:var(--brand)]">
-                <Smartphone className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
-                <span>App aufs Handy legen und Benachrichtigungen einschalten</span>
-              </Link>
-            ) : null}
             <p className="text-[color:var(--muted)]">
               <span className="font-medium text-[color:var(--foreground)]">Unser Teil: </span>
               {progress.ours.map((o, i) => (

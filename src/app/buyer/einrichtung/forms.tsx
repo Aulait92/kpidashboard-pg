@@ -55,16 +55,12 @@ export function QuestionnaireForm({ software, initial, readOnly }: { software: b
                 ] as const
               ).map(([k, l]) => (
                 <label key={k} className="flex items-center gap-2">
-                  <input type="checkbox" name={`format_${k}`} defaultChecked={initial.formats?.includes(k) ?? k === "telefon"} className="h-4 w-4 accent-[color:var(--brand)]" />
+                  <input type="checkbox" name={`format_${k}`} defaultChecked={initial.formats?.includes(k) ?? (k === "telefon" || k === "video")} className="h-4 w-4 accent-[color:var(--brand)]" />
                   {l}
                 </label>
               ))}
             </div>
           </fieldset>
-          <div>
-            <label className={label} htmlFor="advisorEmail">E-Mail für Termineinladungen</label>
-            <input id="advisorEmail" name="advisorEmail" type="email" className={`${input} mt-1`} placeholder="vorname.nachname@ihre-agentur.de" defaultValue={initial.advisorEmail ?? ""} />
-          </div>
         </>
       ) : (
         <div>
@@ -73,11 +69,8 @@ export function QuestionnaireForm({ software, initial, readOnly }: { software: b
         </div>
       )}
       <div>
-        <label className={label} htmlFor="callbackBy">Wer ruft die Leads zurück?</label>
-        <input id="callbackBy" name="callbackBy" className={`${input} mt-1`} placeholder="z. B. ich selbst / Frau Müller (Innendienst)" defaultValue={initial.callbackBy ?? ""} />
-      </div>
-      <div>
         <label className={label} htmlFor="special">Was macht Ihre Agentur besonders? (optional)</label>
+        <span className="block text-sm text-[color:var(--muted)]">Wir nutzen das für Ihre Anzeigentexte.</span>
         <textarea id="special" name="special" rows={3} className={`${input} mt-1 h-auto py-2`} placeholder="z. B. 20 Jahre Erfahrung, Beratung auch auf Türkisch, Termine abends" defaultValue={initial.special ?? ""} />
       </div>
       <div className="flex flex-wrap items-center gap-3">
@@ -188,10 +181,15 @@ export function MetaAccessForm({
             className="inline-flex h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand)] bg-white px-5 text-[15px] font-semibold text-[color:var(--brand)] transition hover:bg-[#EFF6FF] disabled:opacity-60"
           >
             {requesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            Anfrage von uns senden lassen
+            Zugriff bei mir anfragen
           </button>
         ) : null}
       </div>
+      {!done ? (
+        <p className="text-xs text-[color:var(--muted)]">
+          „Zugriff bei mir anfragen“: Wir schicken Ihnen die Freigabe-Anfrage direkt in Meta. Sie bekommen dort eine Benachrichtigung und tippen nur noch auf „Bestätigen“.
+        </p>
+      ) : null}
       {checkState.message ? <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700"><CheckCircle2 className="h-4 w-4" /> {checkState.message}</p> : null}
       {checkState.error ? <p className="text-sm font-medium text-rose-700">{checkState.error}</p> : null}
       {reqState.message ? <p className="text-sm font-medium text-emerald-700">{reqState.message}</p> : null}
