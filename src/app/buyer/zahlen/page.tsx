@@ -31,6 +31,7 @@ import {
 } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { TeamStats } from "@/components/team-stats";
+import { MonatsberichteKunde } from "@/components/monatsberichte-kunde";
 // Karte „Deine Garantie“ (components/garantie-kunde-card.tsx) ist seit 12.11.2026 ausgeblendet (Ole):
 // Kunden sehen den Garantie-Stand nicht mehr, die Prüfung läuft nur im Admin. Wieder einbauen mit
 //   import { GarantieKundeCard } from "@/components/garantie-kunde-card";  und  <GarantieKundeCard customerId={session.customerId} />
@@ -107,6 +108,7 @@ export default async function BuyerPage({
             range={range}
           />
           <TeamStats customerId={session.customerId} range={range} />
+          <MonatsberichteKunde customerId={session.customerId} />
         </Suspense>
       </main>
     </PullToRefresh>

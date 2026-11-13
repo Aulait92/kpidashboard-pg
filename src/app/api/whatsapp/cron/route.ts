@@ -148,6 +148,16 @@ async function handle(req: Request): Promise<Response> {
       reportError(e, "cron-kampagnen");
     }
   });
+  // Monatsberichte: ab dem 2. (bis 5., falls ein Lauf ausfällt) ab 7 Uhr, je Lauf wenige Kunden
+  // (Claude-Aufrufe), idempotent je Kunde und Monat. Nur „gut“ kann automatisch raus.
+  {
+    const berlin = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", day: "numeric", hour: "numeric", hourCycle: "h23" }).formatToParts(now);
+    const day = Number(berlin.find((p) => p.type === "day")?.value);
+    const hour = Number(berlin.find((p) => p.type === "hour")?.value);
+    if (day >= 2 && day <= 5 && hour >= 7 && process.env.ANTHROPIC_API_KEY) {
+      after(() => import("@/lib/monatsbericht/server").then((m) => m.runMonthlyReports(now, { limit: 3 })).catch((e: unknown) => reportError(e, "cron-monatsbericht")));
+    }
+  }
   // Bank & Karten: Kontoumsätze täglich abrufen, an Neuverbindung erinnern (nach der Antwort)
   after(() => runBankSync(now).catch((e: unknown) => reportError(e, "cron-bank")));
   // WhatsApp selbst verbunden: API-Keys für Channels nachholen, die beim Redirect noch eingerichtet wurden

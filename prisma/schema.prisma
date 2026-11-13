@@ -152,20 +152,20 @@ model Customer {
   whatsAppFees             WhatsAppFeeCharge[]
   leadSubscriptions        LeadSubscription[]
   // Modul „Bestandskunden-Kampagnen“ (Zusatzmodul; Testkunden kostenlos)
-  existingCustomersEnabled Boolean             @default(false)
+  existingCustomersEnabled Boolean                   @default(false)
   // ─── Preise: Berater-Plätze, Zahlweise, Bestandskunden-Modul (seit 11.11.2026) ───
   // Inklusive Logins laut Angebot; null = keine Platz-Abrechnung (Alt-Verträge, individuell)
   seatsIncluded            Int?
   // Preis je weiterem Login und Monat (netto), aus dem Angebot eingefroren
-  seatMonthly              Decimal?            @db.Decimal(10, 2)
+  seatMonthly              Decimal?                  @db.Decimal(10, 2)
   // Zurzeit im Stripe-Abo berechnete weitere Logins (Menge der Platz-Position)
-  seatsBilled              Int                 @default(0)
+  seatsBilled              Int                       @default(0)
   // "month" | "year" (jährlich im Voraus, Jahresbetrag = (12 − Freimonate) × Monatspreis)
-  billingInterval          String              @default("month")
+  billingInterval          String                    @default("month")
   // Gebuchtes Bestandskunden-Modul: Monatspreis netto; null = nicht gebucht
-  bestandMonthly           Decimal?            @db.Decimal(10, 2)
+  bestandMonthly           Decimal?                  @db.Decimal(10, 2)
   // Bestandsschutz: nutzte das Modul schon vor der Preisliste, bleibt kostenlos freigeschaltet
-  bestandGrandfathered     Boolean             @default(false)
+  bestandGrandfathered     Boolean                   @default(false)
   // Kunde hat das Modul im Konto angefragt (Admin „Heute“)
   bestandRequestedAt       DateTime?
   // Modul zum Ende des Abrechnungszeitraums gekündigt: Zugang bis hier, danach schaltet der Cron ab
@@ -174,22 +174,22 @@ model Customer {
   bestandMessageQuota      Int?
   // ─── Zusatzmodul „Empfehlungen & Bewertungen“ (seit 12.11.2026) ───
   // Freigeschaltet (Zugang); Abrechnung über empfehlungMonthly bzw. Testphase
-  empfehlungEnabled        Boolean             @default(false)
+  empfehlungEnabled        Boolean                   @default(false)
   // Berechneter Monatspreis netto; null = (noch) nicht berechnet (Testphase, kostenlos)
-  empfehlungMonthly        Decimal?            @db.Decimal(10, 2)
+  empfehlungMonthly        Decimal?                  @db.Decimal(10, 2)
   // Testphase bis hier (gesetzt = Testphase wurde genutzt); danach automatisch kostenpflichtig
   empfehlungTrialEndsAt    DateTime?
   empfehlungTrialReminded  DateTime?
   // Vom Admin kostenlos freigeschaltet (keine Berechnung)
-  empfehlungFree           Boolean             @default(false)
+  empfehlungFree           Boolean                   @default(false)
   // Gekündigt: Zugang bis hier, danach schaltet der Cron ab
   empfehlungCancelAt       DateTime?
   // Seit wann aktiv: nur Abschlüsse ab hier lösen Anfragen aus
   empfehlungSince          DateTime?
   // Weggeklickte Hinweise auf Zusatzmodule (Schlüssel je Stelle)
-  moduleHintsDismissed     String[]            @default([])
+  moduleHintsDismissed     String[]                  @default([])
   // Neue Oberfläche des Kundenbereichs (Vertreter-A); pro Kunde im Admin einschaltbar.
-  newUi                    Boolean             @default(false)
+  newUi                    Boolean                   @default(false)
   existingCustomers        ExistingCustomer[]
   manualRevenues           ManualRevenue[]
   campaigns                CustomerCampaign[]
@@ -219,6 +219,9 @@ model Customer {
   googleReviews            GoogleReview[]
   // Kampagnen-Agenten (lib/kampagnen)
   campaignRuns             CampaignRun[]
+  // Monatsberichte (lib/monatsbericht): je Kunde abschaltbar
+  monthlyReportsOff        Boolean                   @default(false)
+  monthlyReports           MonthlyReport[]
 }
 
 // Tagesbudget je Produkt (Kundenbereich → Konto → Werbebudget). Ohne Eintrag gilt das
@@ -2500,4 +2503,59 @@ model CampaignRun {
 
   @@index([customerId, createdAt])
   @@index([status])
+}
+
+// ─── Monatsberichte (seit 17.11.2026) ─────────────────────────────────────
+// Ein Bericht je Kunde und Monat (Vormonat). Einstufung gut/mittel/schwach ist intern
+// (nie für Kunden sichtbar). Nur „gut“ darf automatisch raus (wenn eingeschaltet);
+// mittel/schwach bleiben Entwurf, Ole entscheidet (senden, bearbeiten, anrufen, aussetzen).
+model MonthlyReport {
+  id          String    @id @default(cuid())
+  customerId  String
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  // YYYY-MM des berichteten Monats
+  month       String
+  // gut | mittel | schwach
+  rating      String
+  // ok | unsicher (zu wenige Ergebnisse eingetragen)
+  dataQuality String    @default("ok")
+  // Begründungen der Einstufung (intern)
+  reasons     Json?
+  // Kennzahlen Monat + Vormonat, Maßnahmen (Grundlage für Text und Prüfung)
+  metrics     Json
+  subject     String
+  // Absätze als Liste
+  body        Json
+  // Ergebnis der Prüfung: { ok, issues[] }
+  check       Json?
+  // draft | sent | skipped | call
+  status      String    @default("draft")
+  sentAt      DateTime?
+  decidedBy   String?
+  costCents   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([customerId, month])
+  @@index([month, status])
+}
+
+// Einstellungen Monatsberichte (eine Zeile, id „default“).
+model ReportSettings {
+  id                 String   @id @default("default")
+  // gut-Berichte automatisch senden (Standard aus: Ole sieht im ersten Monat alles zuerst)
+  autoSendGood       Boolean  @default(false)
+  senderName         String?
+  // Schwellen in % bzw. Anzahl
+  goodLeadsPct       Int      @default(85)
+  weakLeadsPct       Int      @default(60)
+  weakCplPct         Int      @default(150)
+  weakNoMeetingLeads Int      @default(15)
+  minResultPct       Int      @default(50)
+  minActiveDays      Int      @default(14)
+  // Ziel-Leadpreis (€); leer = aus dem Rechner (Katze)
+  targetCpl          Decimal? @db.Decimal(10, 2)
+  // Terminlink für „kurzes Gespräch“; leer = Kundenbereich
+  bookingUrl         String?
+  updatedAt          DateTime @updatedAt
 }

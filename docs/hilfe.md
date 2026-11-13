@@ -188,6 +188,14 @@ Seiten aus der Liste „Seiten“ unten.
   bzw. pro Termin, mit Vergleich zum Vorzeitraum. Auch die Hochrechnung und die Team-Tabelle zeigen die
   geschätzte Provision.
 
+## Monatsberichte
+
+- Jeden Monat bekommen Sie von uns einen kurzen Rückblick per E-Mail: Leads, Termine und – wenn eingetragen – Abschlüsse
+  und Provision im Vergleich zum Vormonat, was wir für Sie optimiert haben, unsere nächsten Schritte und 1–2 Tipps.
+- Alle bisherigen Berichte finden Sie unter „Zahlen“ ganz unten im Abschnitt „Monatsberichte“.
+- Je mehr Ergebnisse Sie bei Ihren Leads eintragen, desto genauer werden die Zahlen im Bericht.
+- Manchmal melden wir uns statt eines Berichts lieber persönlich – dann besprechen wir den Monat im Gespräch.
+
 ## Abschluss und Provision
 - Beim Abschluss fragt die App je nach Produkt nach einem Beitrag, alles freiwillig:
   - Privatschutz und TKV: „Jahresbeitrag netto“. Vertreter: Provision ≈ 55 % davon (Abschlussprovision).
