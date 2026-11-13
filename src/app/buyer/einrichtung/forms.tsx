@@ -1,14 +1,13 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { CheckCircle2, Copy, Loader2, Send, ShieldCheck, XCircle } from "lucide-react";
+import { CheckCircle2, Copy, Loader2, ShieldCheck, XCircle } from "lucide-react";
 import type { MetaCheck } from "@/lib/selbst-einrichtung";
 import {
   bookHelpCallAction,
   checkMetaAccessAction,
   confirmConsentAction,
   confirmMetaAccessAction,
-  requestMetaAccessAction,
   saveQuestionnaireAction,
   skipSetupStepAction,
   type MetaSetupState,
@@ -135,22 +134,19 @@ export function MetaCheckResult({ check }: { check: MetaCheck }) {
   );
 }
 
-/** Meta freigeben: Werbekonto + Seite eintragen, von uns anfragen lassen oder Zugriff prüfen. */
+/** Meta freigeben: Kunde gibt uns als Partner frei, trägt Werbekonto + Seite ein und prüft den Zugriff. */
 export function MetaAccessForm({
   initial,
   lastCheck,
-  done,
   readOnly,
 }: {
   initial: { adAccount: string; page: string };
   lastCheck: MetaCheck | null;
-  done: boolean;
   readOnly: boolean;
 }) {
   const [checkState, checkAction, checking] = useActionState<MetaSetupState, FormData>(checkMetaAccessAction, {});
-  const [reqState, reqAction, requesting] = useActionState<MetaSetupState, FormData>(requestMetaAccessAction, {});
   const check = checkState.check ?? lastCheck;
-  const busy = checking || requesting || readOnly;
+  const busy = checking || readOnly;
   return (
     <form className="space-y-3" data-meta-form>
       <div>
@@ -174,27 +170,9 @@ export function MetaAccessForm({
           {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
           Zugriff prüfen
         </button>
-        {!done ? (
-          <button
-            type="submit"
-            formAction={reqAction}
-            disabled={busy}
-            className="inline-flex h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand)] bg-white px-5 text-[15px] font-semibold text-[color:var(--brand)] transition hover:bg-[#EFF6FF] disabled:opacity-60"
-          >
-            {requesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            Zugriff bei mir anfragen
-          </button>
-        ) : null}
       </div>
-      {!done ? (
-        <p className="text-xs text-[color:var(--muted)]">
-          „Zugriff bei mir anfragen“: Wir schicken Ihnen die Freigabe-Anfrage direkt in Meta. Sie bekommen dort eine Benachrichtigung und tippen nur noch auf „Bestätigen“.
-        </p>
-      ) : null}
       {checkState.message ? <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700"><CheckCircle2 className="h-4 w-4" /> {checkState.message}</p> : null}
       {checkState.error ? <p className="text-sm font-medium text-rose-700">{checkState.error}</p> : null}
-      {reqState.message ? <p className="text-sm font-medium text-emerald-700">{reqState.message}</p> : null}
-      {reqState.error ? <p className="text-sm font-medium text-rose-700">{reqState.error}</p> : null}
       {check ? <MetaCheckResult check={check} /> : null}
     </form>
   );

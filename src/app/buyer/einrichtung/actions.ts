@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { sendToAdmins } from "@/lib/push";
 import { logOfferActivity } from "@/lib/offer-links";
 import { bookHelpCall } from "@/lib/help-call";
-import { checkMetaAccess, requestMetaAccess, type MetaCheck } from "@/lib/selbst-einrichtung";
+import { checkMetaAccess, type MetaCheck } from "@/lib/selbst-einrichtung";
 
 export type SetupState = { ok?: boolean; error?: string };
 
@@ -99,22 +99,6 @@ export async function checkMetaAccessAction(_prev: MetaSetupState, fd: FormData)
     return r.check.ok
       ? { ok: true, check: r.check, message: "Alles freigegeben, danke! Wir kümmern uns jetzt um die Kampagne." }
       : { ok: false, check: r.check };
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Nicht möglich." };
-  }
-}
-
-export async function requestMetaAccessAction(_prev: MetaSetupState, fd: FormData): Promise<MetaSetupState> {
-  try {
-    const { ctx } = await requireCustomer();
-    const r = await requestMetaAccess(ctx.customerId, { adAccount: str(fd, "adAccount", 200) || null, page: str(fd, "page", 300) || null });
-    revalidatePath("/buyer", "layout");
-    if (!r.ok) return { error: r.error };
-    if (!r.sent.length) return { error: "Die Anfrage konnte nicht von uns gesendet werden. Bitte die Schritte unten selbst ausführen, das dauert ca. 3 Minuten." };
-    return {
-      ok: true,
-      message: `Anfrage gesendet (${r.sent.join(" und ")}). Sie bekommen in Meta eine Benachrichtigung: bitte öffnen und bestätigen, danach hier auf „Zugriff prüfen“ tippen.${r.failed.length ? ` Für ${r.failed.join(" und ")} bitte die Schritte unten nutzen.` : ""}`,
-    };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Nicht möglich." };
   }

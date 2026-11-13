@@ -150,24 +150,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         <Step n={2} title="Meta freigeben (Werbekonto und Seite)" icon={KeyRound} done={done("metaAccess")} open={isOpen("metaAccess")} id="metaAccess">
           <p className="text-sm text-[color:var(--muted)]">So schalten wir die Anzeigen in Ihrem Werbekonto und Leads kommen direkt bei Ihnen an. Das Budget bleibt bei Ihnen.</p>
           <VideoHint url={video("metaAccess")} />
-          <div className="my-4">
-            <p className="mb-2 text-[15px] font-medium">Am schnellsten: Werbekonto und Seite eintragen</p>
-            <p className="mb-3 text-sm text-[color:var(--muted)]">
-              Wir können Ihnen die Anfrage direkt in Meta schicken, Sie bestätigen sie nur noch. Danach auf „Zugriff prüfen“ tippen, die App sagt Ihnen genau, ob noch etwas fehlt.
-            </p>
-            <MetaAccessForm
-              initial={{ adAccount: metaInit.adAccount, page: metaInit.page }}
-              lastCheck={(ob.metaCheck ?? null) as MetaCheck | null}
-              done={done("metaAccess")}
-              readOnly={readOnly}
-            />
-            {ob.metaRequestedAt && !done("metaAccess") ? (
-              <p className="mt-2 text-sm text-[color:var(--muted)]">
-                Unsere Anfrage ging am {dateFmt(ob.metaRequestedAt)} raus. Wir prüfen täglich automatisch, ob sie bestätigt ist.
-              </p>
-            ) : null}
-          </div>
-          <p className="mt-5 text-[15px] font-medium">Oder selbst freigeben (ca. 3 Minuten)</p>
+          <p className="mt-4 text-[15px] font-medium">So geben Sie uns Zugriff (ca. 3 Minuten)</p>
           <details className="my-4 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3 text-[15px]">
             <summary className="cursor-pointer font-medium">Noch kein Business Manager? So legen Sie ihn an</summary>
             <ol className="mt-3 list-decimal space-y-1.5 pl-5">
@@ -214,7 +197,14 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               Leads direkt bei Ihnen ankommen), ggf. auch Instagram, und speichern.
             </li>
           </ol>
-          <p className="text-sm text-[color:var(--muted)]">Danach oben auf „Zugriff prüfen“ tippen.</p>
+          <div className="my-4">
+            <p className="mb-3 text-[15px] font-medium">Dann Werbekonto und Seite eintragen und prüfen</p>
+            <MetaAccessForm
+              initial={{ adAccount: metaInit.adAccount, page: metaInit.page }}
+              lastCheck={(ob.metaCheck ?? null) as MetaCheck | null}
+              readOnly={readOnly}
+            />
+          </div>
           <div id="hilfetermin" className="mt-5 scroll-mt-20 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4">
             <p className="text-[15px] font-medium">Klappt etwas nicht? Wir machen es gemeinsam.</p>
             {helpUpcoming ? (
