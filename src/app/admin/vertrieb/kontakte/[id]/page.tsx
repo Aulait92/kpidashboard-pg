@@ -12,7 +12,7 @@ import { Mail, Phone } from "lucide-react";
 import { ActivityForm } from "@/components/vertrieb/activity-form";
 import { Collapsible } from "@/components/vertrieb/collapsible";
 import { TaskForm } from "@/components/vertrieb/task-form";
-import { addReplyManually, deleteActivity, enrichAddressAction, linkContactCustomer, updateActivity, setReplySentiment, updateCustomer, updateLinkedIn } from "@/app/admin/vertrieb/actions";
+import { addReplyManually, deleteActivity, enrichAddressAction, linkContactCustomer, updateActivity, updateContactAddress, setReplySentiment, updateCustomer, updateLinkedIn } from "@/app/admin/vertrieb/actions";
 import { LI_LABEL, LI_STATUSES } from "@/lib/vertrieb/linkedin";
 import { ConfirmButton } from "@/components/vertrieb/confirm-button";
 import { taskInclude } from "@/lib/vertrieb/queries";
@@ -438,6 +438,22 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
             <dl className="grid grid-cols-[110px_1fr] gap-y-1.5">
               <dt className="text-slate-500">Name</dt><dd>{c.name}</dd>
               <dt className="text-slate-500">E-Mail</dt><dd className="min-w-0"><ContactEmails contactId={c.id} email={c.email} altEmails={c.altEmails} /></dd>
+              <dt className="text-slate-500">Adresse</dt>
+              <dd className="min-w-0">
+                <span>{[c.street, [c.zip, c.city].filter(Boolean).join(" ")].filter(Boolean).join(", ") || <span className="text-slate-400">keine Adresse</span>}</span>
+                {c.phone ? <span className="block text-slate-500">Tel. {c.phone}</span> : null}
+                <details className="mt-1">
+                  <summary className="cursor-pointer list-none text-xs text-slate-400 hover:text-slate-600 [&::-webkit-details-marker]:hidden">✎ Adresse bearbeiten</summary>
+                  <CloseDetailsForm key={`${c.street}-${c.zip}-${c.city}-${c.phone}`} action={updateContactAddress} className="mt-2 grid gap-2 rounded-lg bg-slate-50 p-3 sm:grid-cols-[1fr_90px_1fr]">
+                    <input type="hidden" name="contactId" value={c.id} />
+                    <input name="street" defaultValue={c.street ?? ""} placeholder="Straße und Hausnummer" className="input sm:col-span-3" />
+                    <input name="zip" defaultValue={c.zip ?? ""} placeholder="PLZ" inputMode="numeric" className="input" />
+                    <input name="city" defaultValue={c.city ?? ""} placeholder="Ort" className="input sm:col-span-2" />
+                    <input name="phone" defaultValue={c.phone ?? ""} placeholder="Telefon" className="input sm:col-span-3" />
+                    <div className="sm:col-span-3"><button className="btn-primary">Speichern</button></div>
+                  </CloseDetailsForm>
+                </details>
+              </dd>
               {c.fax && (<><dt className="text-slate-500">Fax</dt><dd>{c.fax}</dd></>)}
               {c.agencyType && (<><dt className="text-slate-500">Agenturtyp</dt><dd>{c.agencyType === "GENERAL" ? "Generalvertretung" : c.agencyType === "HAUPT" ? "Hauptvertretung" : c.agencyType}</dd></>)}
               {c.insurer && (<><dt className="text-slate-500">Versicherer</dt><dd>{c.insurer}</dd></>)}

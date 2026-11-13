@@ -157,7 +157,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             data: { status: "superseded" },
           });
         }
-        return tx.offer.create({
+        const created = await tx.offer.create({
           data: {
             ...owner,
             number,
@@ -198,6 +198,16 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             createdById,
           },
         });
+        // Adresse aus dem Angebot in die Stammdaten des Vertriebskontakts übernehmen
+        const addr = {
+          ...(input.street?.trim() ? { street: input.street.trim() } : {}),
+          ...(input.zip?.trim() ? { zip: input.zip.trim() } : {}),
+          ...(input.city?.trim() ? { city: input.city.trim() } : {}),
+        };
+        if ("salesContactId" in owner && owner.salesContactId && Object.keys(addr).length) {
+          await tx.salesContact.update({ where: { id: owner.salesContactId }, data: addr });
+        }
+        return created;
       });
     } catch (err) {
       const unique = err instanceof Error && /Unique constraint|P2002/.test(err.message);

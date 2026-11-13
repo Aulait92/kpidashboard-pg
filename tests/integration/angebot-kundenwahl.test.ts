@@ -125,6 +125,12 @@ describe("Angebot: Kunde wählt Laufzeit und Startdatum", () => {
     expect(await accept(fixed.token)).toEqual({ ok: true });
   });
 
+  it("Adresse aus dem Angebot wird in die Stammdaten des Kontakts übernommen", async () => {
+    const offer = await newOffer({ street: "Hauptstraße 5", zip: "20095", city: "Hamburg" });
+    const c = await prisma.salesContact.findUniqueOrThrow({ where: { id: offer.salesContactId! } });
+    expect(c).toMatchObject({ street: "Hauptstraße 5", zip: "20095", city: "Hamburg" });
+  });
+
   it("Angebotsnummer startet bei OFFER_NUMBER_START", async () => {
     process.env.OFFER_NUMBER_START = "9141";
     const offer = await newOffer();

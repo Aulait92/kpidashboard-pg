@@ -200,6 +200,7 @@ function ChoiceFields({
         <div>
           <span className="text-[color:var(--muted)]">{annual ? "Jährlich im Voraus" : "Monatlich"}{startDate ? ` ab ${fmtDate(startDate)}` : ""}: </span>
           <b data-testid="choice-recurring">{eur(annual ? annualTotal : choice.monthlyTotal)} netto</b>
+          <span className="text-[color:var(--muted)]"> · {eur(withVat(annual ? annualTotal : choice.monthlyTotal))} brutto</span>
         </div>
       </div>
     </div>

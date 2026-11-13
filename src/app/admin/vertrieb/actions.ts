@@ -115,6 +115,18 @@ export async function updateContact(fd: FormData) {
   refresh(contactId);
 }
 
+/** Stammdaten: Adresse und Telefon von Hand pflegen (leeres Feld = löschen). */
+export async function updateContactAddress(fd: FormData) {
+  await requireAuth();
+  const contactId = s(fd, "contactId")!;
+  const v = (k: string) => (fd.get(k) == null ? undefined : (s(fd, k) ?? null));
+  await prisma.salesContact.update({
+    where: { id: contactId },
+    data: { street: v("street"), zip: v("zip"), city: v("city"), phone: v("phone") },
+  });
+  refresh(contactId);
+}
+
 // ─── Aufgaben ───────────────────────────────────────────────────────────
 export async function createTask(fd: FormData) {
   await requireAuth();
