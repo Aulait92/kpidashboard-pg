@@ -67,7 +67,15 @@ ${c.special ? `- Besonderheiten laut Kunde: ${c.special}` : ""}
 ${c.wish ? `- Zusatzwunsch von Ole: ${c.wish}` : ""}
 
 BEWÄHRTE MUSTER (unsere eigenen Kampagnen):
-${c.patterns}`;
+${c.patterns}${
+    c.libraryWinners
+      ? `
+
+GEWINNER AUS DER META-WERBEBIBLIOTHEK (Anzeigen anderer, die in Deutschland seit mindestens 30 Tagen laufen – lange Laufzeit heißt meist: sie rechnen sich):
+${c.libraryWinners}
+So nutzen: Hook, Aufbau, Tonfall und Winkel dieser Gewinner als Vorlage nehmen und leicht abwandeln – auf den Vermittler, seinen Ort und die Anrede zuschneiden. Nie wörtlich übernehmen, keine fremden Firmen-, Marken- oder Personennamen, keine Preise oder Versprechen daraus übernehmen.`
+      : ""
+  }`;
 }
 
 // ─── 1. Stratege ───────────────────────────────────────────────────────
@@ -165,7 +173,9 @@ AUFGABE: Leite ${plan.adsPerAdSet} unterschiedliche Werbe-Winkel ab (3–5). Jed
 - title: Name des Winkels
 - hook: die erste Zeile bzw. Kernbotschaft, die im Feed stoppt
 - insight: warum das bei dieser Zielgruppe in dieser Region wirkt
-Die Winkel sollen sich klar unterscheiden (z. B. Kosten-Realität, Regionalität/persönlicher Berater, Neugier/Wissenslücke, Alltagsszene, Vergleich).`,
+Die Winkel sollen sich klar unterscheiden (z. B. Kosten-Realität, Regionalität/persönlicher Berater, Neugier/Wissenslücke, Alltagsszene, Vergleich).${
+        c.libraryWinners ? "\nMindestens zwei Winkel lehnen sich an die Gewinner aus der Werbebibliothek an (leicht abgewandelt); nenne im insight, an welchen." : ""
+      }`,
       schema: ANGLES_SCHEMA,
     },
     validateAngles,

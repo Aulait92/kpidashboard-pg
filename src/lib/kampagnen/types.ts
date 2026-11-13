@@ -58,6 +58,8 @@ export type CampaignContext = {
   assistantKnowledge: string | null;
   /** Bewährte Muster unserer eigenen Kampagnen für dieses Produkt. */
   patterns: string;
+  /** Lange laufende Anzeigen anderer aus der Meta-Werbebibliothek (Vorlage, nicht wörtlich übernehmen). */
+  libraryWinners?: string | null;
 };
 
 // ─── Agenten-Ergebnisse ─────────────────────────────────────────────────

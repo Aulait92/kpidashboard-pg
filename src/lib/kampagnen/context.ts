@@ -1,5 +1,6 @@
 // Kampagnen-Agenten: Kontext aus der Kundenakte laden und Voraussetzungen prüfen.
 
+import { libraryWinners, winnersBlock } from "@/lib/kampagnen/ad-library";
 import { prisma } from "@/lib/prisma";
 import { currentBudgets, customerCpl } from "@/lib/budget";
 import { productPatterns } from "@/lib/kampagnen/agents";
@@ -76,6 +77,8 @@ export async function loadCampaignContext(
     special: q.special?.trim() || null,
     assistantKnowledge: knowledge || null,
     patterns: productPatterns(product),
+    // Gewinner anderer aus der Meta-Werbebibliothek (ohne Zugang zur Bibliothek: leer)
+    libraryWinners: winnersBlock(await libraryWinners(product, { excludePages: [c.name] }).catch(() => [])),
   };
 }
 
