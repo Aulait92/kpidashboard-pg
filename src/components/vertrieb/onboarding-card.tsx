@@ -1,4 +1,5 @@
 import { CheckCircle2, Circle } from "lucide-react";
+import { isNpsKind, isUnhappy, kindLabel } from "@/lib/nps";
 import type { ChecklistItem } from "@/lib/onboarding";
 import type { ImpressumInfo } from "@/lib/impressum";
 import { checklistProgress } from "@/lib/onboarding";
@@ -108,10 +109,20 @@ export function OnboardingCard({
         <ul className="space-y-1 border-t border-slate-100 px-4 py-3 text-sm">
           {feedback.map((f) => (
             <li key={f.kind}>
-              <span className="text-slate-500">Feedback {f.kind === "day7" ? "Tag 7" : "Tag 30"}: </span>
+              <span className="text-slate-500">{kindLabel(f.kind)}: </span>
               {f.answeredAt ? (
                 <>
-                  <b className={f.score != null && f.score <= 2 ? "text-rose-700" : f.score != null && f.score >= 4 ? "text-emerald-700" : ""}>{f.score}/5</b>
+                  <b
+                    className={
+                      f.score != null && isUnhappy(f.kind, f.score)
+                        ? "text-rose-700"
+                        : f.score != null && (isNpsKind(f.kind) ? f.score >= 9 : f.score >= 4)
+                          ? "text-emerald-700"
+                          : ""
+                    }
+                  >
+                    {f.score}/{isNpsKind(f.kind) ? 10 : 5}
+                  </b>
                   {f.comment ? <span className="text-slate-600">: „{f.comment}“</span> : null}
                 </>
               ) : (

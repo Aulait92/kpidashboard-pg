@@ -1513,10 +1513,10 @@ model CustomerFeedback {
   id         String    @id @default(cuid())
   customerId String
   customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  // day7 | day30
+  // day7 (Smileys 1–5) | day30, day90, day180 … (Weiterempfehlung 0–10, NPS)
   kind       String
   token      String    @unique
-  // 1–5 (Smileys)
+  // day7: 1–5, sonst 0–10
   score      Int?
   comment    String?
   sentAt     DateTime  @default(now())

@@ -183,7 +183,7 @@ describe("Kollegen empfehlen", () => {
     await closeReferralNudge(c.id, "abschluss5", now);
     expect(await loadReferralNudge(c.id, now)).toBeNull();
     // gutes Feedback nach 30 Tagen: erst nach 30 Tagen Abstand
-    await prisma.customerFeedback.create({ data: { customerId: c.id, kind: "day30", token: `fb-${uid()}-${uid()}-${uid()}`, score: 5, answeredAt: now } });
+    await prisma.customerFeedback.create({ data: { customerId: c.id, kind: "day30", token: `fb-${uid()}-${uid()}-${uid()}`, score: 9, answeredAt: now } });
     expect(await loadReferralNudge(c.id, new Date(now.getTime() + 10 * DAY))).toBeNull();
     const later = await loadReferralNudge(c.id, new Date(now.getTime() + 31 * DAY));
     expect(later?.key).toBe("feedback-day30");

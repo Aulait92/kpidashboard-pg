@@ -7,7 +7,9 @@ import { submitFeedbackAction, type FeedbackState } from "./actions";
 const SMILEYS = ["😞", "🙁", "😐", "🙂", "😃"];
 const LABELS = ["sehr unzufrieden", "unzufrieden", "geht so", "zufrieden", "sehr zufrieden"];
 
-export function FeedbackForm({ token, initialScore }: { token: string; initialScore: number | null }) {
+/** nps: 0–10 „Würden Sie uns weiterempfehlen?“ (ab Tag 30), sonst Smileys 1–5 (Tag 7). */
+export function FeedbackForm({ token, initialScore, nps = false }: { token: string; initialScore: number | null; nps?: boolean }) {
+  const unhappy = (s: number | null) => s != null && (nps ? s <= 6 : s <= 3);
   const [score, setScore] = useState<number | null>(initialScore);
   const [state, action, pending] = useActionState<FeedbackState, FormData>(submitFeedbackAction.bind(null, token), {});
   if (state.ok) {
@@ -16,7 +18,7 @@ export function FeedbackForm({ token, initialScore }: { token: string; initialSc
         <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
         <div>
           <div className="font-semibold">Vielen Dank für Ihr Feedback!</div>
-          <p className="mt-1 text-sm">{score != null && score <= 3 ? "Wir melden uns kurzfristig bei Ihnen." : "Das freut uns sehr."}</p>
+          <p className="mt-1 text-sm">{unhappy(score) ? "Wir melden uns kurzfristig bei Ihnen." : "Das freut uns sehr."}</p>
           {state.referralUrl ? (
             <div className="mt-3 border-t border-emerald-200 pt-3 text-sm" data-feedback-empfehlen>
               <p>Kennen Sie Kollegen, denen wir genauso helfen können? Wird ein empfohlener Kollege Kunde, bedanken wir uns mit einer Prämie.</p>
@@ -38,6 +40,31 @@ export function FeedbackForm({ token, initialScore }: { token: string; initialSc
   return (
     <form action={action} className="space-y-5">
       <input type="hidden" name="score" value={score ?? ""} />
+      {nps ? (
+        <div data-nps-scale>
+          <div className="grid grid-cols-11 gap-1">
+            {Array.from({ length: 11 }, (_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setScore(i)}
+                aria-label={`${i} von 10`}
+                className={`flex h-11 min-w-0 items-center justify-center rounded-lg border text-[15px] font-semibold transition ${
+                  score === i
+                    ? "border-[color:var(--brand)] bg-[color:var(--brand)] text-white"
+                    : "border-[color:var(--border)] bg-white hover:border-[color:var(--border-strong)]"
+                }`}
+              >
+                {i}
+              </button>
+            ))}
+          </div>
+          <div className="mt-1.5 flex justify-between text-[11px] text-[color:var(--muted)]">
+            <span>gar nicht wahrscheinlich</span>
+            <span>äußerst wahrscheinlich</span>
+          </div>
+        </div>
+      ) : (
       <div className="grid grid-cols-5 gap-1.5">
         {SMILEYS.map((s, i) => (
           <button
@@ -52,9 +79,14 @@ export function FeedbackForm({ token, initialScore }: { token: string; initialSc
           </button>
         ))}
       </div>
+      )}
       <div>
         <label htmlFor="comment" className="text-sm font-medium">
-          {score != null && score <= 3 ? "Was können wir besser machen?" : "Möchten Sie noch etwas ergänzen? (optional)"}
+          {nps
+            ? "Was ist der wichtigste Grund für Ihre Bewertung? (optional)"
+            : unhappy(score)
+              ? "Was können wir besser machen?"
+              : "Möchten Sie noch etwas ergänzen? (optional)"}
         </label>
         <textarea
           id="comment"

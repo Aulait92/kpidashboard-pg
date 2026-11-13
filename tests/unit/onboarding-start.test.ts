@@ -167,3 +167,22 @@ describe("Willkommens-Mail", () => {
     expect(sent[1].text).not.toContain("Kalender verbinden");
   });
 });
+
+describe("NPS-Abfrage", () => {
+  it("Tag 7 Smileys, Tag 30 und alle 90 Tage 0–10, keine Nachzügler", async () => {
+    const { dueFeedbackKind, npsOf, isUnhappy } = await import("@/lib/nps");
+    const live = new Date("2026-01-01T09:00:00Z");
+    const at = (d: number) => new Date(live.getTime() + d * 86400000);
+    expect(dueFeedbackKind(live, at(3), new Set())).toBeNull();
+    expect(dueFeedbackKind(live, at(8), new Set())).toBe("day7");
+    expect(dueFeedbackKind(live, at(8), new Set(["day7"]))).toBeNull();
+    expect(dueFeedbackKind(live, at(31), new Set(["day7"]))).toBe("day30");
+    expect(dueFeedbackKind(live, at(92), new Set(["day7", "day30"]))).toBe("day90");
+    expect(dueFeedbackKind(live, at(185), new Set(["day30", "day90"]))).toBe("day180");
+    expect(dueFeedbackKind(live, at(215), new Set(["day30", "day90"]))).toBeNull();
+    expect(npsOf([10, 9, 8, 7, 3])).toMatchObject({ nps: 20, promoters: 2, passives: 2, detractors: 1, total: 5 });
+    expect(isUnhappy("day30", 6)).toBe(true);
+    expect(isUnhappy("day30", 7)).toBe(false);
+    expect(isUnhappy("day7", 2)).toBe(true);
+  });
+});

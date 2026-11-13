@@ -23,8 +23,10 @@ import {
 
 const tkv = DEFAULT_CONFIG.products.find((p) => p.key === "tkv")!;
 const pkv = DEFAULT_CONFIG.products.find((p) => p.key === "pkv")!;
+// Kontrollwerte der Präsentation (Vertreter) ohne Cross-Selling; Standard ist seit 13.11. „an“
 const base = (over: Partial<RechnerInput> = {}, p: RechnerProduct = tkv, typ: "vertreter" | "makler" = "vertreter") => ({
   ...defaultInput(p, typ),
+  ...(typ === "vertreter" ? { xs: false } : {}),
   ...over,
 });
 
@@ -143,7 +145,7 @@ describe("Break-even-Rechner", () => {
     expect(inputFromParams(DEFAULT_CONFIG, {})).toEqual(defaultInput(tkv, "vertreter"));
     expect(inputFromParams(DEFAULT_CONFIG, { typ: "makler" })).toEqual(defaultInput(tkv, "makler"));
     // nur Budget im Link → Überschuss wie in der Doku (≈ 1.236 €), nicht Millionen
-    const r = berechne(tkv, inputFromParams(DEFAULT_CONFIG, { budget: "30" }), 6);
+    const r = berechne(tkv, inputFromParams(DEFAULT_CONFIG, { budget: "30", xs: "0" }), 6);
     expect(r.ueberschuss).toBeGreaterThan(1200);
     expect(r.ueberschuss).toBeLessThan(1300);
     expect(inputToParams(DEFAULT_CONFIG, inputFromParams(DEFAULT_CONFIG, {})).toString()).toBe("produkt=tkv&typ=vertreter&budget=30");
@@ -190,7 +192,7 @@ describe("Break-even-Rechner", () => {
 
 describe("Bestandssicht (Makler TKV, Storno)", () => {
   // Referenzrechnung mit 30 €/Tag (Makler-Standard ist 40 €/Tag), ohne Cross-Selling (eigener Block unten)
-  // Referenzwerte vom 11.11. mit 9 % Kundenquote (Standard für Makler seit 13.11.: 18 %)
+  // Referenzwerte vom 11.11. mit 9 % Kundenquote (Standard für Makler seit 13.11.: 14 %)
   const makler = (over: Partial<RechnerInput> = {}) => base({ budget: 30, xs: false, customerRate: 0.09, ...over }, tkv, "makler");
   const rel = (a: number, b: number) => Math.abs(a - b) / b;
 
@@ -428,7 +430,7 @@ describe("Cross-Selling im Makler-Modus (Allianz-Erfahrungswert, Ole 11.11.)", (
     expect(CROSS_SELL_VERZOEGERUNG).toBe(0);
     const i = defaultInput(tkv, "makler");
     expect(i).toMatchObject({ xs: true, xRate: 1, xBeitrag: 300, xTrail: 0.225 });
-    expect(defaultInput(pkv, "makler").xs).toBe(false);
+    expect(defaultInput(pkv, "makler").xs).toBe(true); // seit 13.11. grundsätzlich an
   });
 
   it("Kontrollwerte Folie: gedeckt Monat 7, alles zurück Monat 12, ≈ 8,3 ×", () => {
@@ -525,9 +527,9 @@ describe("Cross-Selling im Makler-Modus (Allianz-Erfahrungswert, Ole 11.11.)", (
     expect(q2.get("xb")).toBe("250");
     expect(q2.get("xp")).toBe("20");
     expect(inputFromParams(DEFAULT_CONFIG, Object.fromEntries(q2))).toEqual(j);
-    // Produkt ohne Cross-Selling-Standard: einschalten wird als xs=1 gespeichert
-    const p = { ...defaultInput(pkv, "makler"), xs: true };
-    expect(inputToParams(DEFAULT_CONFIG, p).get("xs")).toBe("1");
+    // Abwählen wird als xs=0 gespeichert (Standard: an)
+    const p = { ...defaultInput(pkv, "makler"), xs: false };
+    expect(inputToParams(DEFAULT_CONFIG, p).get("xs")).toBe("0");
   });
 
   it("Konfiguration: fehlendes Feld → Standard, null → aus, ungültig → Fehler", () => {
@@ -568,14 +570,15 @@ describe("Eigener Leadpreis", () => {
 });
 
 describe("Cross-Selling für Vertreter", () => {
-  it("Standard aus (Vertreter), Makler-TKV bleibt an", () => {
-    expect(defaultInput(tkv, "vertreter").xs).toBe(false);
+  it("Standard an (seit 13.11. für alle), abwählbar", () => {
+    expect(defaultInput(tkv, "vertreter").xs).toBe(true);
     expect(defaultInput(tkv, "makler").xs).toBe(true);
-    expect(berechne(tkv, defaultInput(tkv, "vertreter"), 6).provisionZusatz).toBe(0);
+    expect(berechne(tkv, defaultInput(tkv, "vertreter"), 6).provisionZusatz).toBeGreaterThan(0);
+    expect(berechne(tkv, { ...defaultInput(tkv, "vertreter"), xs: false }, 6).provisionZusatz).toBe(0);
   });
 
   it("an: Zusatzverträge × Beitrag × Abschlussprovision kommen zur Provision dazu", () => {
-    const aus = defaultInput(pkv, "vertreter");
+    const aus = { ...defaultInput(pkv, "vertreter"), xs: false };
     const an: RechnerInput = { ...aus, xs: true, xRate: 0.5, xBeitrag: 400, xAp: 0.2, xTrail: 0.1 };
     const r0 = berechne(pkv, aus, 20);
     const r1 = berechne(pkv, an, 20);
@@ -626,9 +629,9 @@ describe("Vertreter: 10 % Bestandsprovision als Standard, erst ab dem 2. Jahr (O
   });
 });
 
-describe("Makler: 18 % der Leads werden Kunde (Standard seit 13.11.)", () => {
-  it("Standard 18 % für Makler, Vertreter unverändert", () => {
-    expect(defaultInput(tkv, "makler").customerRate).toBeCloseTo(0.18, 9);
+describe("Makler: 14 % der Leads werden Kunde (Standard seit 13.11.)", () => {
+  it("Standard 14 % für Makler, Vertreter unverändert", () => {
+    expect(defaultInput(tkv, "makler").customerRate).toBeCloseTo(0.14, 9);
     expect(defaultInput(tkv, "vertreter").customerRate).toBeCloseTo(tkv.customerRate, 9);
     expect(inputToParams(DEFAULT_CONFIG, defaultInput(tkv, "makler")).has("kq")).toBe(false);
   });

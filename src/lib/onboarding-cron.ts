@@ -10,6 +10,7 @@
 //  5. Tag 90: Aufgabe „Jahresvertrag anbieten“ (nur ohne Laufzeit)
 //  6. Pflichtangaben aus dem Impressum der Agentur-Website lesen
 
+import { dueFeedbackKind } from "@/lib/nps";
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
@@ -106,6 +107,16 @@ export async function emailLeads(now: Date, onlyCustomerId?: string) {
 
 const SMILEYS = ["😞", "🙁", "😐", "🙂", "😃"];
 
+/** 0–10 als anklickbare Zahlen (E-Mail-tauglich, Tabelle). */
+function npsHtml(url: (score: number) => string) {
+  const cells = Array.from({ length: 11 }, (_, i) =>
+    `<td style="padding:2px"><a href="${url(i)}" style="display:block;width:30px;height:30px;line-height:30px;text-align:center;border:1px solid #CBD5E1;border-radius:6px;color:#0F172A;font-weight:600;text-decoration:none;font-size:14px">${i}</a></td>`,
+  ).join("");
+  return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:8px 0 4px"><tr>${cells}</tr></table><p style="margin:0 0 20px;font-size:12px;color:#64748B">0 = gar nicht wahrscheinlich · 10 = äußerst wahrscheinlich</p>`;
+}
+
+const NPS_QUESTION = "Wie wahrscheinlich ist es, dass Sie performancegrowth einem Kollegen weiterempfehlen?";
+
 function smileyHtml(url: (score: number) => string) {
   return `<p style="margin:8px 0 20px;font-size:32px;line-height:1">${SMILEYS.map(
     (s, i) => `<a href="${url(i + 1)}" style="text-decoration:none;margin-right:10px" title="${i + 1} von 5">${s}</a>`,
@@ -126,15 +137,15 @@ async function monthlyNumbers(customerId: string, plan: string, now: Date) {
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 
 async function sendFeedback(now: Date) {
+  // Tag 7 (Smileys), Tag 30 und danach alle 90 Tage Weiterempfehlung 0–10 (NPS, Ole 13.11.2026)
   const live = await prisma.onboarding.findMany({
-    where: { liveAt: { not: null, lte: new Date(now.getTime() - 7 * DAY), gt: new Date(now.getTime() - 60 * DAY) } },
+    where: { liveAt: { not: null, lte: new Date(now.getTime() - 7 * DAY) }, status: { not: "cancelled" }, customer: { archived: false, plan: { not: "internal" } } },
     select: { customerId: true, liveAt: true, package: true, offerId: true, salesContactId: true, customer: { select: { plan: true, feedback: { select: { kind: true } } } } },
   });
   let sent = 0;
   for (const ob of live) {
-    const age = now.getTime() - ob.liveAt!.getTime();
     const kinds = new Set(ob.customer.feedback.map((f) => f.kind));
-    const kind = age >= 30 * DAY && !kinds.has("day30") ? "day30" : !kinds.has("day7") && age < 30 * DAY ? "day7" : null;
+    const kind = dueFeedbackKind(ob.liveAt!, now, kinds);
     if (!kind) continue;
     const to = await customerEmails(ob.customerId);
     if (to.length === 0) continue;
@@ -149,6 +160,14 @@ async function sendFeedback(now: Date) {
         greeting,
         paragraphs: ["Ihre Kampagne läuft jetzt seit einer Woche. Wie zufrieden sind Sie bisher? Ein Klick genügt:"],
         html: smileyHtml(url),
+      });
+    } else if (kind !== "day30") {
+      res = await sendCustomerMail({
+        to,
+        subject: "Kurze Frage: Würden Sie uns weiterempfehlen?",
+        greeting,
+        paragraphs: [`${NPS_QUESTION} Ein Klick genügt, danach können Sie uns noch einen Satz dazu schreiben.`],
+        html: npsHtml(url),
       });
     } else {
       const n = await monthlyNumbers(ob.customerId, ob.customer.plan, now);
@@ -165,7 +184,7 @@ async function sendFeedback(now: Date) {
         greeting,
         paragraphs: ["Ihr erster Monat ist um. Hier die Zahlen der letzten 30 Tage:"],
         list,
-        html: `<p style="margin:0 0 4px;font-size:15px;line-height:1.6">Wie zufrieden sind Sie insgesamt?</p>${smileyHtml(url)}`,
+        html: `<p style="margin:0 0 4px;font-size:15px;line-height:1.6">${NPS_QUESTION}</p>${npsHtml(url)}`,
         button: { label: "Alle Zahlen im Kundenbereich", url: `${getAppUrl()}/buyer${ob.customer.plan === "service" ? "" : "/zahlen"}` },
       });
     }

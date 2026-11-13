@@ -8,6 +8,7 @@ import { computeUsageReport, type CustomerUsage } from "@/lib/usage-report";
 import { loadHelpQuestions } from "@/lib/hilfe-report";
 import { loadSupportRequests } from "@/lib/support-server";
 import { ModuleCandidatesCard } from "./module-card";
+import { NpsCard } from "./nps-card";
 
 // Nutzung des Kunden-CRMs: Aktivität, genutzte Funktionen, Fehler, Feedback
 // und liegen gebliebene Aufgaben – Grundlage für UX-Verbesserungen.
@@ -64,6 +65,8 @@ export default async function UsagePage({ searchParams }: { searchParams: Promis
           ))}
         </div>
       </div>
+
+      <NpsCard />
 
       <ModuleCandidatesCard message={sp.ankuendigung ?? null} />
 

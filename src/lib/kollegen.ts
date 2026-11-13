@@ -7,6 +7,7 @@
 //    → Gutschrift beim Empfehler (idempotent), sonst Admin-Aufgabe
 //  - Hinweise im Kundenbereich nach positiven Momenten (je Anlass einmal)
 
+import { NPS_PROMOTER } from "@/lib/nps";
 import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
 import { audit, type AuditActor } from "@/lib/audit";
@@ -16,7 +17,6 @@ import {
   CONSENT_TEXT,
   CODE_RE,
   DEFAULT_SETTINGS,
-  GOOD_FEEDBACK,
   NUDGE_TEXT,
   isSelfReferral,
   newReferralCode,
@@ -512,7 +512,7 @@ export async function loadReferralNudge(customerId: string, now = new Date()): P
 
   const [closedDeals, feedback] = await Promise.all([
     prisma.lead.count({ where: { customerId, status: "Abschluss" } }),
-    prisma.customerFeedback.findMany({ where: { customerId, kind: { in: ["day30", "day90"] }, score: { gte: GOOD_FEEDBACK } }, select: { kind: true } }),
+    prisma.customerFeedback.findMany({ where: { customerId, kind: { in: ["day30", "day90"] }, score: { gte: NPS_PROMOTER } }, select: { kind: true } }),
   ]);
   const goodFeedback = feedback.map((f) => f.kind as "day30" | "day90");
   let picked = pickNudge(nudgeCandidates({ closedDeals, guaranteeMet: false, goodFeedback }), states, now);
@@ -540,7 +540,8 @@ export async function closeReferralNudge(customerId: string, key: string, now = 
 
 /** Feedback-Danke-Bildschirm: Link nur bei guter Bewertung nach 30/90 Tagen. */
 export async function referralLinkAfterFeedback(customerId: string, kind: string, score: number): Promise<string | null> {
-  if (score < GOOD_FEEDBACK || !["day30", "day90"].includes(kind)) return null;
+  // Ab Tag 30 wird 0–10 gefragt (NPS): nur Promotoren (9–10) bekommen den Empfehlungs-Link
+  if (score < NPS_PROMOTER || !["day30", "day90"].includes(kind)) return null;
   const settings = await loadReferralSettings();
   if (!settings.enabled) return null;
   const customer = await prisma.customer.findUnique({ where: { id: customerId }, select: { plan: true, archived: true } });

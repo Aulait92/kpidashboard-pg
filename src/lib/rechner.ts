@@ -381,7 +381,7 @@ export const CPL_MAX = 500;
 /** Vertreter: Bestandsprovision ab dem 13. Monat nach Abschluss (1. Jahr: Abschlussprovision). */
 export const BESTAND_AB_MONAT_VERTRETER = 12;
 /** Makler: Standard „Leads, die Kunde werden“ im Rechner (Ole, 13.11.2026). */
-export const KUNDENQUOTE_MAKLER = 0.18;
+export const KUNDENQUOTE_MAKLER = 0.14;
 /** Vertreter: Standard-Bestandsprovision im Rechner (Ole, 13.11.2026). */
 export const BESTAND_STANDARD_VERTRETER = 0.1;
 
@@ -425,7 +425,7 @@ export function defaultInput(p: RechnerProduct, typ: VermittlerTyp, base?: Parti
     ...defaultProvision(p, typ),
     beitrag: p.premium,
     staffel: [],
-    // Makler: 18 % der Leads werden Kunde (Ole, 13.11.2026); Vertreter: Erfahrungswert des Produkts
+    // Makler: 14 % der Leads werden Kunde (Ole, 13.11.2026); Vertreter: Erfahrungswert des Produkts
     customerRate: typ === "makler" ? KUNDENQUOTE_MAKLER : p.customerRate,
     contractsPerCustomer: p.contractsPerCustomer,
     terminRate: p.terminRate,
@@ -436,8 +436,8 @@ export function defaultInput(p: RechnerProduct, typ: VermittlerTyp, base?: Parti
     storno: base?.storno ?? STORNO_STANDARD,
     kampagne: base?.kampagne ?? KAMPAGNE_STANDARD,
     horizont: base?.horizont ?? HORIZONT_STANDARD,
-    // Makler: Standard des Produkts (TKV an); Vertreter: aus, eigene Standardwerte
-    xs: typ === "makler" ? p.crossSell != null : false,
+    // Cross-Selling grundsätzlich eingerechnet (Ole, 13.11.2026); abwählbar
+    xs: true,
     xRate: typ === "makler" ? (p.crossSell ?? CROSS_SELL_STANDARD).rate : CROSS_SELL_VERTRETER.rate,
     xBeitrag: typ === "makler" ? (p.crossSell ?? CROSS_SELL_STANDARD).beitrag : CROSS_SELL_VERTRETER.beitrag,
     xTrail: typ === "makler" ? (p.crossSell ?? CROSS_SELL_STANDARD).trail : CROSS_SELL_VERTRETER.trail,
