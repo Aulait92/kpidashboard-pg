@@ -64,9 +64,10 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
   if (customerId) {
     const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { id: true } });
     if (!c) return { ok: false, error: "Kundenkonto nicht gefunden." };
-    if (await prisma.onboarding.findUnique({ where: { customerId }, select: { id: true } })) {
-      return { ok: false, error: "Für dieses Kundenkonto läuft bereits ein Onboarding." };
-    }
+    // Bestandskunde wechselt das Paket (z. B. Nur Betreuung → Betreuung + Software, Fall Anid 13.11.):
+    // kein zweites Onboarding, sondern Paket, Preis und Oberfläche am bestehenden Konto umstellen.
+    const prior = await prisma.onboarding.findUnique({ where: { customerId }, select: { id: true } });
+    if (prior) return upgradeExistingCustomer(offer, customerId, prior.id, contact?.id ?? null);
   }
   const stripeFree =
     offer.stripeCustomerId &&
@@ -77,6 +78,7 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
         where: { id: customerId },
         data: {
           plan: pkg,
+          ...(pkg === "software" ? { newUi: true } : {}),
           retainerMonthly: offer.monthlyFee,
           retainerStart: offer.startDate,
           ...billingTermsOf(offer),
@@ -164,6 +166,51 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
   }).catch((err) => reportError(err, "onboarding-push"));
 
   return { ok: true, onboardingId: onboarding.id, customerId: customer.id, created: true };
+}
+
+/** Paketwechsel eines Bestandskunden mit vorhandenem Onboarding (kein neues Onboarding, keine Einladung). */
+async function upgradeExistingCustomer(
+  offer: NonNullable<Awaited<ReturnType<typeof prisma.offer.findUnique>>>,
+  customerId: string,
+  onboardingId: string,
+  contactId: string | null,
+): Promise<StartResult> {
+  const pkg = offer.package === "service" ? "service" : "software";
+  const stripeFree =
+    offer.stripeCustomerId &&
+    !(await prisma.customer.findUnique({ where: { stripeCustomerId: offer.stripeCustomerId }, select: { id: true } }));
+  const customer = await prisma.customer.update({
+    where: { id: customerId },
+    data: {
+      plan: pkg,
+      ...(pkg === "software" ? { newUi: true } : {}),
+      retainerMonthly: offer.monthlyFee,
+      ...(offer.startDate ? { retainerStart: offer.startDate } : {}),
+      ...billingTermsOf(offer),
+      ...(stripeFree ? { stripeCustomerId: offer.stripeCustomerId } : {}),
+    },
+  });
+  await prisma.onboarding.update({ where: { id: onboardingId }, data: { offerId: offer.id, package: pkg, ...(offer.startDate ? { startDate: offer.startDate } : {}) } });
+  if (contactId) {
+    await prisma.salesTask
+      .create({
+        data: {
+          contactId,
+          type: "SONSTIGES",
+          title: `Paketwechsel ${customer.name}: ${pkg === "software" ? "Software einrichten (WhatsApp, Kalender, App, Team)" : "auf Nur Betreuung umstellen"}`,
+          dueAt: dueBefore(null, 0, 0),
+        },
+      })
+      .catch((err) => reportError(err, "upgrade-task"));
+  }
+  await logOfferActivity(offer, `Paketwechsel angenommen (${pkg === "service" ? "Nur Betreuung" : "Betreuung + Software"})`, `Kundenkonto: ${customer.name}`);
+  await sendToAdmins({
+    title: `⬆️ Paketwechsel: ${customer.name}`,
+    body: pkg === "software" ? "Jetzt Betreuung + Software – Einrichtung starten" : "Jetzt Nur Betreuung",
+    url: offerAdminHref(offer),
+    tag: `upgrade:${customerId}`,
+  }).catch((err) => reportError(err, "upgrade-push"));
+  return { ok: true, onboardingId, customerId, created: false };
 }
 
 /** Willkommens-Mail (erneut) senden. Ohne Link wird ein frischer Einladungslink erzeugt, solange der Kunde noch nie eingeloggt war. */

@@ -174,6 +174,22 @@ describe("Preise: Annahme → Abo-Positionen und Kundenkonto", () => {
     expect(Number(after.bestandMonthly)).toBe(149);
   });
 
+  it("Bestandskunde mit Onboarding wechselt von Nur Betreuung auf Software (Upgrade statt Fehler)", async () => {
+    const c = await makeCustomer({ plan: "service" });
+    customers.push(c.id);
+    const alt = await makeOffer({ stripeCustomerId: null });
+    offers.push(alt.id);
+    await prisma.onboarding.create({ data: { customerId: c.id, offerId: alt.id, package: "service" } });
+    const neu = await makeOffer({ stripeCustomerId: null });
+    offers.push(neu.id);
+    const r = await startOnboarding(neu.id, { customerId: c.id });
+    expect(r).toMatchObject({ ok: true, created: false });
+    const after = await prisma.customer.findUniqueOrThrow({ where: { id: c.id } });
+    expect(after).toMatchObject({ plan: "software", newUi: true });
+    expect((await prisma.onboarding.findUniqueOrThrow({ where: { customerId: c.id } })).offerId).toBe(neu.id);
+    await prisma.onboarding.deleteMany({ where: { customerId: c.id } });
+  });
+
   it("Makler-Angebot: Modul kostet 149 € wie bei Vertretern, Annahme setzt Kunde auf Makler", async () => {
     const offer = await makeOffer({ vermittlerTyp: "makler", bestandMonthly: 149, annualPrepay: false, annualFreeMonths: null });
     offers.push(offer.id);
