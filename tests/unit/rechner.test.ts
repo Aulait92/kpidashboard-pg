@@ -190,7 +190,8 @@ describe("Break-even-Rechner", () => {
 
 describe("Bestandssicht (Makler TKV, Storno)", () => {
   // Referenzrechnung mit 30 €/Tag (Makler-Standard ist 40 €/Tag), ohne Cross-Selling (eigener Block unten)
-  const makler = (over: Partial<RechnerInput> = {}) => base({ budget: 30, xs: false, ...over }, tkv, "makler");
+  // Referenzwerte vom 11.11. mit 9 % Kundenquote (Standard für Makler seit 13.11.: 18 %)
+  const makler = (over: Partial<RechnerInput> = {}) => base({ budget: 30, xs: false, customerRate: 0.09, ...over }, tkv, "makler");
   const rel = (a: number, b: number) => Math.abs(a - b) / b;
 
   it("Referenz Ole 11.11. (30 €/Tag, 6 €/Lead, 12 Monate, inkl. USt.)", () => {
@@ -355,7 +356,7 @@ describe("Bestandssicht (Makler TKV, Storno)", () => {
     // mehr Budget = mehr Bestand
     expect(v[2].courtageJahrNach12).toBeGreaterThan(v[1].courtageJahrNach12);
     // Rechner-Standard (6 €/Lead): höher, Vergleich 40/60/95 wie angezeigt
-    const std = budgetVergleich(tkv, base({ xs: false }, tkv, "makler"), 6);
+    const std = budgetVergleich(tkv, base({ xs: false, customerRate: 0.09 }, tkv, "makler"), 6);
     expect(std.map((z) => z.budget)).toEqual([40, 60, 95]);
     expect(std[0].kostenJeVertrag!).toBeGreaterThan(kjv[40]);
     expect(std[0].kostenJeVertrag!).toBeGreaterThan(std[1].kostenJeVertrag!);
@@ -397,7 +398,7 @@ describe("Kosten pro Lead im Makler-Modus (4 € reales Ergebnis, Ole 11.11.)", 
   });
 
   it("Kontrolle Präsentation: 40 €/Tag, 4 €/Lead, 358 € → ≈ 300 Leads, gedeckt ≈ Monat 12, alles zurück ≈ Monat 18, ≈ 4,5 ×", () => {
-    const i = base({ budget: 40, beitrag: 358, xs: false }, tkv, "makler");
+    const i = base({ budget: 40, beitrag: 358, xs: false, customerRate: 0.09 }, tkv, "makler");
     expect(maklerModus(tkv, i)).toBe(true);
     const r = berechne(tkv, i, resolveCpl(tkv, null).makler!.cpl);
     expect(r.leads).toBeCloseTo(300, 6); // 40 € × 30 Tage ÷ 4 €
@@ -418,7 +419,7 @@ describe("Cross-Selling im Makler-Modus (Allianz-Erfahrungswert, Ole 11.11.)", (
   // Folien-Rechnung: 30 Tage/Monat, 4 €/Lead, 12 % Verträge, 358 € Katze, 300 € Zusatz, 22,5 %, 10 % Storno
   // Rechner nutzt 30,4 Tage – Tagesbudget so skalieren, dass das Monatsbudget wie auf der Folie 40 € × 30 = 1.200 € ist
   const tage = 30 / DAYS_PER_MONTH;
-  const folie = (over: Partial<RechnerInput> = {}) => base({ budget: 40 * tage, beitrag: 358, ...over }, tkv, "makler");
+  const folie = (over: Partial<RechnerInput> = {}) => base({ budget: 40 * tage, beitrag: 358, customerRate: 0.09, ...over }, tkv, "makler");
   const r30 = (i: RechnerInput) => berechne(tkv, i, 4);
   const rel = (a: number, b: number) => Math.abs(a - b) / b;
 
@@ -454,8 +455,8 @@ describe("Cross-Selling im Makler-Modus (Allianz-Erfahrungswert, Ole 11.11.)", (
     expect(b.ohneCrossSell!.crossSell).toBe(false);
   });
 
-  it("mit Rechner-Standards (30,4 Tage, 350 €) nahe an der Folie", () => {
-    const i = defaultInput(tkv, "makler");
+  it("mit Rechner-Standards (30,4 Tage, 350 €) nahe an der Folie (Folie: 9 % Kundenquote)", () => {
+    const i = { ...defaultInput(tkv, "makler"), customerRate: 0.09 };
     const b = berechneBestand(tkv, i, berechne(tkv, i, 4))!;
     expect(b.laufendGedecktMonat).toBeGreaterThanOrEqual(7);
     expect(b.laufendGedecktMonat).toBeLessThanOrEqual(8);
@@ -622,5 +623,13 @@ describe("Vertreter: 10 % Bestandsprovision als Standard, erst ab dem 2. Jahr (O
     const i = defaultInput(tkv, "makler");
     const r = berechne(tkv, i, 4);
     expect(r.provisionJeVertrag).toBeCloseTo(i.beitrag * i.trail, 9);
+  });
+});
+
+describe("Makler: 18 % der Leads werden Kunde (Standard seit 13.11.)", () => {
+  it("Standard 18 % für Makler, Vertreter unverändert", () => {
+    expect(defaultInput(tkv, "makler").customerRate).toBeCloseTo(0.18, 9);
+    expect(defaultInput(tkv, "vertreter").customerRate).toBeCloseTo(tkv.customerRate, 9);
+    expect(inputToParams(DEFAULT_CONFIG, defaultInput(tkv, "makler")).has("kq")).toBe(false);
   });
 });

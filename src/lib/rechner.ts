@@ -379,6 +379,8 @@ export const CPL_MAX = 500;
 
 /** Vertreter: Bestandsprovision ab dem 13. Monat nach Abschluss (1. Jahr: Abschlussprovision). */
 export const BESTAND_AB_MONAT_VERTRETER = 12;
+/** Makler: Standard „Leads, die Kunde werden“ im Rechner (Ole, 13.11.2026). */
+export const KUNDENQUOTE_MAKLER = 0.18;
 /** Vertreter: Standard-Bestandsprovision im Rechner (Ole, 13.11.2026). */
 export const BESTAND_STANDARD_VERTRETER = 0.1;
 
@@ -422,7 +424,8 @@ export function defaultInput(p: RechnerProduct, typ: VermittlerTyp, base?: Parti
     ...defaultProvision(p, typ),
     beitrag: p.premium,
     staffel: [],
-    customerRate: p.customerRate,
+    // Makler: 18 % der Leads werden Kunde (Ole, 13.11.2026); Vertreter: Erfahrungswert des Produkts
+    customerRate: typ === "makler" ? KUNDENQUOTE_MAKLER : p.customerRate,
     contractsPerCustomer: p.contractsPerCustomer,
     terminRate: p.terminRate,
     laufzeit: base?.laufzeit ?? "12m",

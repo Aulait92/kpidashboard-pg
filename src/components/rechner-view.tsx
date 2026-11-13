@@ -124,7 +124,7 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
                 <NumField
                   key={`cpl-${product.key}-${input.typ}-${version}`}
                   label="Kosten pro Lead"
-                  hint={input.cpl == null ? cplInfo.note : `eigener Wert · unser Wert: ${eur(cplInfo.cpl, 2)} (${cplInfo.note})`}
+                  hint={input.cpl == null ? undefined : "eigener Wert"}
                   suffix="€"
                   value={cplWert}
                   min={CPL_MIN}
@@ -144,7 +144,7 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
                           setVersion((v) => v + 1);
                         }}
                       >
-                        Unseren Wert nehmen
+                        Zurücksetzen
                       </button>
                     </>
                   ) : null}
