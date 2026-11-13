@@ -59,12 +59,14 @@ export async function selfBookBestand(customerId: string, actor: AuditActor & { 
     name: before.name,
     email: actor.email ?? null,
     adminTitle: withdraw ? `Modul-Kündigung zurückgenommen: ${before.name}` : `Bestandskunden-Modul selbst gebucht: ${before.name}`,
-    adminBody: withdraw ? "Bestandskunden-Modul läuft weiter" : `${eur(price)} netto im Monat, Stripe-Abo angepasst`,
+    adminBody: withdraw ? "Bestandskunden-Modul läuft weiter" : `${eur(price)} netto im Monat, Stripe-Abo angepasst${res.note ? ` (${res.note.replace(/\.$/, "")})` : ""}`,
     customerSubject: withdraw ? "Ihr Bestandskunden-Modul läuft weiter" : "Ihr Bestandskunden-Modul ist gebucht",
     customerParagraphs: withdraw
       ? ["Ihre Kündigung des Bestandskunden-Moduls ist zurückgenommen. Das Modul läuft wie bisher weiter."]
       : [
-          `vielen Dank – das Bestandskunden-Modul ist ab sofort für Sie freigeschaltet (${eur(price)} netto im Monat). ${terms.charge}. ${terms.cancel}.`,
+          `vielen Dank – das Bestandskunden-Modul ist ab sofort für Sie freigeschaltet (${eur(price)} netto im Monat). ${
+            res.note?.startsWith("Berechnet ab Abo-Start") ? res.note.replace(/\.$/, "") : terms.charge
+          }. ${terms.cancel}.`,
           `Laden Sie jetzt Ihre Kundenliste hoch: Die App zeigt Ihnen Lücken, Jahresgespräche, Geburtstage und auslaufende Verträge. WhatsApp-Gebühren für bis zu ${PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat sind inklusive.`,
         ],
   });

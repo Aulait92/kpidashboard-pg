@@ -7,6 +7,8 @@ const PERIOD_END = Math.floor(Date.UTC(2026, 11, 1, 0, 0, 0) / 1000); // 01.12.2
 const st = vi.hoisted(() => ({
   sub: null as null | { id: string; status: string; schedule: null; default_payment_method: string | null; items: { data: Item[] } },
   customerPm: null as string | null,
+  // Geplanter Abo-Start (vor dem Startdatum)
+  schedule: null as null | { id: string; status: string; default_settings: { default_payment_method: string | null }; phases: { start_date: number; end_date: number; metadata: Record<string, string>; items: { price: { id: string; product: string; recurring: { interval: string } }; quantity: number; tax_rates: [] }[] }[] },
   calls: [] as { method: string; args: unknown[] }[],
 }));
 
@@ -24,6 +26,14 @@ vi.mock("stripe", () => {
       retrieve: async () => ({ id: "cus", invoice_settings: { default_payment_method: s.customerPm } }),
     };
     subscriptions = { list: async () => ({ data: s.sub ? [s.sub] : [] }) };
+    subscriptionSchedules = {
+      list: async () => ({ data: s.schedule ? [s.schedule] : [] }),
+      retrieve: async () => s.schedule,
+      update: async (id: string, p: unknown) => {
+        log("subscriptionSchedules.update", [id, p]);
+        return {};
+      },
+    };
     subscriptionItems = {
       create: async (p: { quantity: number; proration_behavior: string; price_data: Item["price"] }) => {
         log("subscriptionItems.create", [p]);
@@ -117,6 +127,7 @@ describe("Bestandskunden-Modul selbst buchen/kündigen", () => {
     expect(await canSelfBookBestand(noStripe.c.id)).toMatchObject({ ok: false, reason: "Für Ihr Konto ist keine Online-Abrechnung eingerichtet." });
 
     st.sub = null;
+    st.schedule = null;
     const noSub = await customer();
     expect(await canSelfBookBestand(noSub.c.id)).toEqual({ ok: false, reason: "Ihr Abo läuft noch nicht." });
 
@@ -135,6 +146,36 @@ describe("Bestandskunden-Modul selbst buchen/kündigen", () => {
       const a = await prisma.customer.findUniqueOrThrow({ where: { id: x.c.id } });
       expect(a.existingCustomersEnabled).toBe(false);
     }
+  });
+
+  it("vor dem Startdatum: Modul geht in den geplanten Abo-Start, berechnet ab Abo-Beginn", async () => {
+    st.sub = null;
+    const start = Math.floor(Date.UTC(2026, 11, 1, 8, 0, 0) / 1000);
+    st.schedule = {
+      id: "sub_sched_1",
+      status: "not_started",
+      default_settings: { default_payment_method: "pm_1" },
+      phases: [
+        {
+          start_date: start,
+          end_date: start + 30 * 86400,
+          metadata: { offer_id: "o1" },
+          items: [{ price: { id: "price_sw", product: "prod_software", recurring: { interval: "month" } }, quantity: 1, tax_rates: [] }],
+        },
+      ],
+    };
+    const { c, owner } = await customer();
+    expect(await canSelfBookBestand(c.id)).toEqual({ ok: true });
+    const r = await selfBookBestand(c.id, { id: owner.id, role: "kunde" });
+    expect(r).toEqual({ ok: true });
+    const upd = st.calls.find((x) => x.method === "subscriptionSchedules.update")!;
+    const phases = (upd.args[1] as { phases: { items: { price?: string; price_data?: { product: string; unit_amount: number } }[] }[] }).phases;
+    expect(phases[0].items).toHaveLength(2);
+    expect(phases[0].items[0]).toMatchObject({ price: "price_sw", quantity: 1 });
+    expect(phases[0].items[1].price_data).toMatchObject({ product: "prod_bestand", unit_amount: 14900 });
+    const after = await prisma.customer.findUniqueOrThrow({ where: { id: c.id } });
+    expect(after.existingCustomersEnabled).toBe(true);
+    st.schedule = null;
   });
 
   it("Kündigen: Position ohne Gutschrift entfernt, Zugang bis Periodenende, dann aus; Zurücknehmen ohne Doppelberechnung", async () => {

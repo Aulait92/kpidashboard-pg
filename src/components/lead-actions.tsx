@@ -14,6 +14,7 @@ import {
   MessageCircle,
   MoreHorizontal,
   Phone,
+  Pencil,
   ShieldX,
   Trophy,
   X,
@@ -264,10 +265,25 @@ export function LeadHeaderActions(p: Props) {
               <b>Wiedervorlage {dueLabel}</b>
               {p.followUpNote ? ` · ${p.followUpNote}` : ""}
             </button>
+            <Button variant="ghost" icon={Pencil} onClick={() => setOpen("followup")} data-followup-edit>
+              Ändern
+            </Button>
             <Button variant="ghost" icon={Check} onClick={() => followUp(() => clearFollowUpResult(p.leadId), "Wiedervorlage erledigt")}>
               Erledigt
             </Button>
           </div>
+        ) : !p.storniert && !won && !lost ? (
+          // Ohne Wiedervorlage: gut sichtbar setzen statt versteckt unter „Mehr“ (Ole, 13.11.2026)
+          <button
+            type="button"
+            onClick={() => setOpen("followup")}
+            className="mt-4 flex w-full items-center gap-3 rounded-[var(--radius-md)] border border-dashed border-violet-300 px-4 py-2.5 text-left text-sm font-medium text-violet-800 transition hover:bg-violet-50"
+            data-followup-set
+          >
+            <BellRing className="h-4 w-4 shrink-0" />
+            <span className="flex-1">Wiedervorlage setzen</span>
+            <span className="text-xs font-normal text-violet-700/80">erscheint am Tag auf „Heute“</span>
+          </button>
         ) : null}
       </header>
 

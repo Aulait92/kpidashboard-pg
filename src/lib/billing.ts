@@ -701,7 +701,7 @@ export async function chargeNow(opts: {
 // dem Abo-Start wird nur der Stand in der Datenbank gepflegt; der tägliche
 // Abgleich im Cron holt Stripe nach, sobald das Abo läuft.
 
-export type AddOnResult = { ok: true; changed: boolean; note?: string } | { ok: false; error: string };
+export type AddOnResult = { ok: true; changed: boolean; note?: string; scheduledFrom?: Date } | { ok: false; error: string };
 
 const productOf = (i: Stripe.SubscriptionItem) => (typeof i.price.product === "string" ? i.price.product : i.price.product.id);
 const intervalOf = (sub: Stripe.Subscription): "month" | "year" =>
@@ -721,6 +721,63 @@ async function editableSubscription(stripe: Stripe, stripeCustomerId: string): P
 }
 
 type Proration = "create_prorations" | "none";
+
+/** Geplanter, noch nicht gestarteter Abo-Start des Kunden (Angebot vor dem Startdatum). */
+async function notStartedSchedule(stripe: Stripe, stripeCustomerId: string) {
+  const list = await stripe.subscriptionSchedules.list({ customer: stripeCustomerId, limit: 10 });
+  return list.data.find((s) => s.status === "not_started") ?? null;
+}
+
+const fmtDay = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
+
+/**
+ * Zusatzmodul vor dem Abo-Start (Ole, 13.11.2026: auch vor dem Startdatum selbst buchbar):
+ * Position in alle Phasen des geplanten Abo-Starts aufnehmen bzw. entfernen – berechnet wird ab
+ * Abo-Beginn. null = kein geplanter Start vorhanden.
+ */
+async function setScheduleItem(
+  stripe: Stripe,
+  stripeCustomerId: string,
+  key: "seat" | "bestand" | "empfehlung",
+  quantity: number,
+  monthlyUnit: number,
+): Promise<{ startsAt: Date } | null> {
+  const found = await notStartedSchedule(stripe, stripeCustomerId);
+  if (!found) return null;
+  const schedule = await stripe.subscriptionSchedules.retrieve(found.id, { expand: ["phases.items.price"] });
+  const [product, tax] = await Promise.all([productId(stripe, key), resolveTax(stripe)]);
+  const priceObj = (i: Stripe.SubscriptionSchedule.Phase.Item) => (typeof i.price === "string" ? null : (i.price as Stripe.Price));
+  const productOfItem = (i: Stripe.SubscriptionSchedule.Phase.Item) => {
+    const p = priceObj(i);
+    return p ? (typeof p.product === "string" ? p.product : p.product.id) : null;
+  };
+  const interval = priceObj(schedule.phases[0]?.items[0] as Stripe.SubscriptionSchedule.Phase.Item)?.recurring?.interval === "year" ? "year" : "month";
+  const factor = interval === "year" ? annualMultiplier() : 1;
+  const phases: Stripe.SubscriptionScheduleUpdateParams.Phase[] = schedule.phases.map((ph) => {
+    const items: Stripe.SubscriptionScheduleUpdateParams.Phase.Item[] = ph.items
+      .filter((i) => productOfItem(i) !== product)
+      .map((i) => ({
+        price: typeof i.price === "string" ? i.price : i.price.id,
+        quantity: i.quantity ?? 1,
+        ...(i.tax_rates?.length ? { tax_rates: i.tax_rates.map((t) => (typeof t === "string" ? t : t.id)) } : {}),
+      }));
+    if (quantity > 0) {
+      items.push({
+        quantity,
+        price_data: { currency: "eur", product, unit_amount: cents(monthlyUnit * factor), recurring: { interval }, tax_behavior: "exclusive" },
+        ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
+      });
+    }
+    return {
+      items,
+      start_date: ph.start_date,
+      end_date: ph.end_date,
+      ...(ph.metadata && Object.keys(ph.metadata).length ? { metadata: ph.metadata } : {}),
+    };
+  });
+  await stripe.subscriptionSchedules.update(schedule.id, { phases, proration_behavior: "none" });
+  return { startsAt: new Date(schedule.phases[0].start_date * 1000) };
+}
 
 async function setItemQuantity(
   stripe: Stripe,
@@ -813,8 +870,14 @@ export async function setBestandModule(
     if (stripe && c.stripeCustomerId) {
       const ed = await editableSubscription(stripe, c.stripeCustomerId);
       if ("note" in ed) {
-        if (opts.requireStripe) return { ok: false, error: ed.note };
-        note = ed.note;
+        // Abo startet erst noch: Modul in den geplanten Start aufnehmen
+        const planned = await setScheduleItem(stripe, c.stripeCustomerId, "bestand", mode === "book" && price > 0 ? 1 : 0, price);
+        if (planned) {
+          if (mode === "book" && price > 0) note = `Berechnet ab Abo-Start am ${fmtDay(planned.startsAt)}.`;
+        } else {
+          if (opts.requireStripe) return { ok: false, error: ed.note };
+          note = ed.note;
+        }
       } else await setItemQuantity(stripe, ed.sub, "bestand", mode === "book" && price > 0 ? 1 : 0, price, opts.proration);
     } else if (mode === "book" && price > 0) {
       note = "Ohne Stripe – bitte von Hand abrechnen.";
@@ -862,7 +925,16 @@ export async function selfServiceBillingBlocker(stripeCustomerId: string | null)
   if (!stripe || !stripeCustomerId) return "Für Ihr Konto ist keine Online-Abrechnung eingerichtet.";
   try {
     const sub = await activeSubscription(stripe, stripeCustomerId);
-    if (!sub) return "Ihr Abo läuft noch nicht.";
+    if (!sub) {
+      // Vor dem Startdatum: Buchung geht in den geplanten Abo-Start (berechnet ab Abo-Beginn)
+      const planned = await notStartedSchedule(stripe, stripeCustomerId);
+      if (!planned) return "Ihr Abo läuft noch nicht.";
+      const pmSchedule = planned.default_settings?.default_payment_method;
+      if (pmSchedule) return null;
+      const cust = await stripe.customers.retrieve(stripeCustomerId);
+      const pm = "deleted" in cust && cust.deleted ? null : (cust as Stripe.Customer).invoice_settings?.default_payment_method;
+      return pm ? null : "Für Ihr Konto ist keine Zahlungsart hinterlegt.";
+    }
     if (sub.status === "past_due") return "Es ist noch eine Rechnung offen.";
     if (!sub.default_payment_method) {
       const cust = await stripe.customers.retrieve(stripeCustomerId);
@@ -944,7 +1016,11 @@ export async function addEmpfehlungToSubscription(
     const stripe = stripeClient();
     if (!stripe || !c.stripeCustomerId) return { ok: true, changed: false, note: "Ohne Stripe – bitte von Hand abrechnen." };
     const ed = await editableSubscription(stripe, c.stripeCustomerId);
-    if ("note" in ed) return { ok: true, changed: false, note: ed.note };
+    if ("note" in ed) {
+      // Abo startet erst noch: Modul in den geplanten Start aufnehmen (berechnet ab Abo-Beginn)
+      const planned = await setScheduleItem(stripe, c.stripeCustomerId, "empfehlung", monthly > 0 ? 1 : 0, monthly);
+      return planned ? { ok: true, changed: true, scheduledFrom: planned.startsAt } : { ok: true, changed: false, note: ed.note };
+    }
     await setItemQuantity(stripe, ed.sub, "empfehlung", monthly > 0 ? 1 : 0, monthly, opts.proration ?? "create_prorations");
     return { ok: true, changed: true };
   } catch (err) {
