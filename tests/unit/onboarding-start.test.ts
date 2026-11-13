@@ -80,6 +80,8 @@ describe("customerSetupProgress", () => {
     const p = customerSetupProgress(fresh("du"));
     expect(p.total).toBe(3);
     expect(p.steps.some((s) => s.key === "whatsapp")).toBe(false);
+    // … dann erscheint es unter „Unser Teil“
+    expect(p.ours.map((s) => s.key)).toEqual(["whatsapp", "campaign", "testLead", "live"]);
   });
 
   it("Nur-Betreuung: Fragebogen und Meta-Zugriff", () => {

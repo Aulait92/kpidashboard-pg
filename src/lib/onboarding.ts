@@ -399,7 +399,9 @@ export function customerSetupProgress(items: ChecklistItem[]) {
   );
   const done = steps.filter((i) => i.done).length;
   const total = steps.length;
-  const ours = OUR_SETUP_KEYS.map((k) => items.find((i) => i.key === k)).filter((i): i is ChecklistItem => !!i);
+  // WhatsApp ohne Selbst-Verbinden (kein 360dialog-Partnerzugang): machen wir – dann unter „Unser Teil“ zeigen
+  const waOurs = items.find((i) => i.key === "whatsapp" && i.owner !== "kunde");
+  const ours = [...(waOurs ? [waOurs] : []), ...OUR_SETUP_KEYS.map((k) => items.find((i) => i.key === k)).filter((i): i is ChecklistItem => !!i)];
   return {
     steps,
     done,

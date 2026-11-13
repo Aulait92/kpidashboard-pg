@@ -332,7 +332,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
 function OurPart({ ours, startDate }: { ours: { key: string; done: boolean }[]; startDate: Date | null }) {
   const short = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "numeric", month: "long" });
   const label = (k: string) =>
-    k === "campaign" ? "Kampagne & Leadformular" : k === "testLead" ? "Testlead" : startDate ? `Go-live am ${short.format(startDate)}` : "Go-live";
+    k === "whatsapp" ? "WhatsApp verbinden" : k === "campaign" ? "Kampagne & Leadformular" : k === "testLead" ? "Testlead" : startDate ? `Go-live am ${short.format(startDate)}` : "Go-live";
   return (
     <div className="mt-4 border-t border-[color:var(--border)] pt-3 text-sm">
       <span className="font-medium">Unser Teil: </span>
