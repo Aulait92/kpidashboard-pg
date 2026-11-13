@@ -2,7 +2,7 @@
 # (libnss3, libatk, libdrm, ...) bereits mit. Spart uns das manuelle
 # apt-get-Geraffel und garantiert dass die Browser-Version zur Playwright-
 # JS-Version passt.
-FROM mcr.microsoft.com/playwright:v1.60.0-jammy
+FROM mcr.microsoft.com/playwright:v1.65.0-jammy
 
 WORKDIR /app
 
