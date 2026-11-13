@@ -12,15 +12,23 @@ import {
   type VermittlerTyp,
 } from "@/lib/provision";
 
-export type CustomerProvision = { typ: VermittlerTyp; rates: ProvisionOverrides; custom: ProvisionOverrides; hasCustom: boolean };
+export type CustomerProvision = {
+  typ: VermittlerTyp;
+  rates: ProvisionOverrides;
+  custom: ProvisionOverrides;
+  hasCustom: boolean;
+  /** Einrichtungsschritt erledigt: eigene Sätze oder Standard bestätigt. */
+  confirmed: boolean;
+};
 
 export async function loadCustomerProvision(customerId: string | null | undefined): Promise<CustomerProvision> {
   const c = customerId
-    ? await prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerTyp: true, provisionRates: true } }).catch(() => null)
+    ? await prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerTyp: true, provisionRates: true, provisionCheckedAt: true } }).catch(() => null)
     : null;
   const typ = asVermittlerTyp(c?.vermittlerTyp);
   const custom = parseCustomRates(c?.provisionRates).rates;
-  return { typ, rates: effectiveRates(typ, custom), custom, hasCustom: Object.keys(custom).length > 0 };
+  const hasCustom = Object.keys(custom).length > 0;
+  return { typ, rates: effectiveRates(typ, custom), custom, hasCustom, confirmed: hasCustom || !!c?.provisionCheckedAt };
 }
 
 /**
@@ -78,7 +86,11 @@ export async function saveCustomerProvision(
   if (errors.length) return { ok: false, error: errors.join(" · ") };
   await prisma.customer.update({
     where: { id: customerId },
-    data: { vermittlerTyp: input.typ, provisionRates: Object.keys(rates).length ? (rates as Prisma.InputJsonValue) : Prisma.DbNull },
+    data: {
+      vermittlerTyp: input.typ,
+      provisionRates: Object.keys(rates).length ? (rates as Prisma.InputJsonValue) : Prisma.DbNull,
+      provisionCheckedAt: new Date(),
+    },
   });
   return { ok: true, changed: Object.keys(rates) };
 }

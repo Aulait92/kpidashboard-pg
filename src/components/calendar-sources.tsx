@@ -4,8 +4,8 @@
 // Allianz-Online-Kalender), Lead-Zeiten und „Zeit blockieren".
 // Die Server-Actions kommen als Props (Kundenbereich bzw. Admin mit customerId).
 
-import { useActionState, useState } from "react";
-import { CheckCircle2, Loader2, Trash2 } from "lucide-react";
+import { useActionState, useState, useTransition } from "react";
+import { CheckCircle2, Copy, Loader2, Plus, Trash2, X } from "lucide-react";
 import { buttonClass } from "@/components/ui";
 import type { SourceResult } from "@/lib/calendar/sources";
 
@@ -50,23 +50,74 @@ const DAYS: Array<[number, string]> = [
   [6, "Sa"],
   [0, "So"],
 ];
-const GRID = Array.from({ length: 12 }, (_, i) => `${String(8 + i).padStart(2, "0")}:00`);
 const DURATIONS = [15, 30, 45, 60] as const;
-const STEPS = [30, 45, 60] as const;
+const STEPS = [15, 30, 45, 60] as const;
+const DEFAULT_STEP = 60;
 
-/** Startzeiten im Raster (wie lib/calendar/lead-times.ts timeGrid, hier ohne Server-Import). */
-function grid(stepMin: number, from: string, to: string): string[] {
-  const toMin = (s: string) => (/^\d{1,2}:\d{2}$/.test(s) ? Number(s.split(":")[0]) * 60 + Number(s.split(":")[1]) : NaN);
-  const f = toMin(from);
-  const t = toMin(to);
+type Range = [string, string];
+type Days = Record<number, Range[]>;
+export type LeadTimesInitial = {
+  weekdays: number[];
+  times: string[];
+  durationMin?: number;
+  schedule?: { step: number; days: Record<number, Range[]> } | null;
+};
+
+const toMin = (s: string) => (s === "24:00" ? 1440 : /^\d{1,2}:\d{2}$/.test(s) ? Number(s.split(":")[0]) * 60 + Number(s.split(":")[1]) : NaN);
+const fromMin = (m: number) => (m >= 1440 ? "24:00" : `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`);
+const hm = (s: string) => s.replace(/^0/, "");
+
+/** Startzeiten eines Zeitraums (wie lib/calendar/lead-times.ts rangeStarts, hier ohne Server-Import). */
+function starts(range: Range, step: number, duration: number): string[] {
+  const f = toMin(range[0]);
+  const t = toMin(range[1]);
   if (!Number.isFinite(f) || !Number.isFinite(t)) return [];
   const out: string[] = [];
-  for (let m = f; m + stepMin <= t && out.length < 96; m += stepMin) {
-    out.push(`${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`);
-  }
+  for (let m = f; m + duration <= t && m < 1440 && out.length < 96; m += step) out.push(fromMin(m));
   return out;
 }
 
+/** Einheitliche Zeiten (z. B. 10, 14, 16 Uhr) als Zeiträume je Tag (wie scheduleFromTimes). */
+function initialSchedule(initial: LeadTimesInitial): { step: number; days: Days } {
+  if (initial.schedule) return { step: initial.schedule.step, days: initial.schedule.days };
+  const dur = initial.durationMin ?? 30;
+  const mins = [...initial.times].sort().map(toMin);
+  const diffs = mins.slice(1).map((m, i) => m - mins[i]);
+  const counts = new Map<number, number>();
+  diffs.forEach((d) => counts.set(d, (counts.get(d) ?? 0) + 1));
+  const common = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  const step = common && (STEPS as readonly number[]).includes(common) ? common : DEFAULT_STEP;
+  const ranges: Range[] = [];
+  for (let i = 0; i < mins.length; ) {
+    let j = i;
+    while (j + 1 < mins.length && mins[j + 1] - mins[j] === step) j++;
+    ranges.push([fromMin(mins[i]), fromMin(Math.min(mins[j] + dur, 1440))]);
+    i = j + 1;
+  }
+  const days: Days = {};
+  for (const d of initial.weekdays) days[d] = ranges.map((r) => [r[0], r[1]] as Range);
+  return { step, days };
+}
+
+function IconButton({ label, onClick, disabled, children }: { label: string; onClick: () => void; disabled?: boolean; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      title={label}
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[color:var(--muted)] transition hover:bg-[color:var(--surface-sunken,#f1f5f9)] hover:text-[color:var(--foreground,#0f172a)] disabled:opacity-50"
+    >
+      {children}
+    </button>
+  );
+}
+
+/**
+ * „Wann dürfen Leads Termine buchen?“ – wie bei Calendly: je Wochentag ein oder
+ * mehrere Zeiträume (z. B. Montag nur 8–13 Uhr), Startzeiten im gewählten Abstand.
+ */
 export function LeadTimesForm({
   initial,
   action,
@@ -74,7 +125,7 @@ export function LeadTimesForm({
   hidden,
   source = "none",
 }: {
-  initial: { weekdays: number[]; times: string[]; durationMin?: number };
+  initial: LeadTimesInitial;
   action: FormAction;
   readOnly: boolean;
   hidden?: Record<string, string>;
@@ -86,86 +137,147 @@ export function LeadTimesForm({
   source?: "none" | "ics" | "allianz";
 }) {
   const [state, formAction, pending] = useActionState<SourceResult, FormData>(action, {});
+  const [, startTransition] = useTransition();
+  const init = initialSchedule(initial);
   const [duration, setDuration] = useState<number>(initial.durationMin ?? 30);
-  const [selected, setSelected] = useState<Set<string>>(() => new Set(initial.times));
-  const [from, setFrom] = useState("09:00");
-  const [to, setTo] = useState("17:00");
-  // Volle Stunden immer zeigen, dazu jede gewählte Zeit (auch :15/:30/:45)
-  const times = [...new Set([...GRID, ...selected])].sort();
-  const toggle = (t: string) =>
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(t)) next.delete(t);
-      else next.add(t);
+  const [step, setStep] = useState<number>(init.step);
+  const [days, setDays] = useState<Days>(init.days);
+  const [lastRange, setLastRange] = useState<Range>(() => Object.values(init.days)[0]?.[0] ?? ["09:00", "17:00"]);
+
+  const setDay = (d: number, ranges: Range[]) =>
+    setDays((prev) => {
+      const next = { ...prev };
+      if (ranges.length) next[d] = ranges;
+      else delete next[d];
       return next;
     });
-  const suggestedStep = duration === 45 ? 45 : duration === 60 ? 60 : 30;
+  const update = (d: number, i: number, which: 0 | 1, v: string) => {
+    const ranges = (days[d] ?? []).map((r, k) => (k === i ? ((which === 0 ? [v, r[1]] : [r[0], v]) as Range) : r));
+    setDay(d, ranges);
+    if (ranges[i]) setLastRange(ranges[i]);
+  };
+  const add = (d: number) => {
+    const ranges = days[d] ?? [];
+    if (!ranges.length) return setDay(d, [lastRange]);
+    const end = toMin(ranges[ranges.length - 1][1]);
+    const f = Math.min(end + 60, 22 * 60);
+    setDay(d, [...ranges, [fromMin(f), fromMin(Math.min(f + 120, 23 * 60))]]);
+  };
+  const copyToAll = (d: number) => {
+    const ranges = days[d] ?? [];
+    setDays((prev) => {
+      const next: Days = {};
+      for (const [k] of DAYS) if (prev[k]?.length || k === d) next[k] = ranges.map((r) => [r[0], r[1]] as Range);
+      return next;
+    });
+  };
+
+  const submit = (e: React.FormEvent<HTMLFormElement>) => {
+    // Kein automatisches Zurücksetzen des Formulars nach dem Speichern (sonst springt die Anzeige auf den alten Stand)
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    startTransition(() => formAction(fd));
+  };
+
   return (
-    <form action={formAction} className="space-y-4">
+    <form onSubmit={submit} className="space-y-5" data-lead-times>
       {hidden ? Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />) : null}
+      <input type="hidden" name="duration" value={duration} />
+      <input type="hidden" name="schedule" value={JSON.stringify({ step, days })} />
       <fieldset>
         <legend className="text-sm font-medium">Termindauer</legend>
         <div className="mt-2 flex flex-wrap gap-2">
           {DURATIONS.map((d) => (
             <label key={d} className="cursor-pointer">
-              <input type="radio" name="duration" value={d} checked={duration === d} onChange={() => setDuration(d)} className="peer sr-only" />
+              <input type="radio" name="_duration" checked={duration === d} onChange={() => setDuration(d)} className="peer sr-only" />
               <span className={chip}>{d} Min.</span>
             </label>
           ))}
         </div>
       </fieldset>
       <fieldset>
-        <legend className="text-sm font-medium">Wochentage</legend>
+        <legend className="text-sm font-medium">Termine beginnen alle</legend>
         <div className="mt-2 flex flex-wrap gap-2">
-          {DAYS.map(([d, l]) => (
-            <label key={d} className="cursor-pointer">
-              <input type="checkbox" name={`day_${d}`} defaultChecked={initial.weekdays.includes(d)} className="peer sr-only" />
-              <span className={chip}>{l}</span>
+          {STEPS.map((st) => (
+            <label key={st} className="cursor-pointer">
+              <input type="radio" name="_step" checked={step === st} onChange={() => setStep(st)} className="peer sr-only" />
+              <span className={chip}>{st} Min.</span>
             </label>
           ))}
         </div>
       </fieldset>
       <fieldset>
-        <legend className="text-sm font-medium">Uhrzeiten</legend>
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm" data-raster>
-          <span className="text-[color:var(--muted)]">Schnellauswahl von</span>
-          <input type="time" step={900} value={from} onChange={(e) => setFrom(e.target.value)} aria-label="Von" className={inputTime} />
-          <span className="text-[color:var(--muted)]">bis</span>
-          <input type="time" step={900} value={to} onChange={(e) => setTo(e.target.value)} aria-label="Bis" className={inputTime} />
-          {STEPS.map((step) => (
-            <button
-              key={step}
-              type="button"
-              disabled={readOnly}
-              onClick={() => setSelected(new Set(grid(step, from, to)))}
-              className={buttonClass(step === suggestedStep ? "primary" : "secondary", "sm")}
-            >
-              Alle {step} Min.
-            </button>
-          ))}
-          <button type="button" disabled={readOnly} onClick={() => setSelected(new Set())} className={buttonClass("ghost", "sm")}>
-            Alle abwählen
-          </button>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {times.map((t) => (
-            <label key={t} className="cursor-pointer">
-              <input type="checkbox" name={`time_${t}`} checked={selected.has(t)} onChange={() => toggle(t)} className="peer sr-only" />
-              <span className={chip}>{t.replace(/^0/, "")}</span>
-            </label>
-          ))}
-        </div>
-        <label className="mt-3 flex max-w-xs items-center gap-2 text-sm text-[color:var(--muted)]">
-          Andere Uhrzeit
-          <input name="extraTime" type="time" step={300} className={`${input} h-9 w-32`} />
-        </label>
+        <legend className="text-sm font-medium">Zeiten je Wochentag</legend>
+        <ul className="mt-2 divide-y divide-[color:var(--border)]">
+          {DAYS.map(([d, label]) => {
+            const ranges = days[d] ?? [];
+            const all = [...new Set(ranges.flatMap((r) => starts(r, step, duration)))].sort();
+            return (
+              <li key={d} className="flex items-start gap-3 py-3" data-day={d}>
+                <span
+                  className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                    ranges.length ? "bg-[color:var(--brand)] text-white" : "bg-[color:var(--surface-sunken,#f1f5f9)] text-[color:var(--muted)]"
+                  }`}
+                >
+                  {label}
+                </span>
+                <div className="min-w-0 flex-1 space-y-2">
+                  {ranges.length === 0 ? (
+                    <div className="flex h-9 items-center gap-2">
+                      <span className="text-sm text-[color:var(--muted)]">Keine Termine</span>
+                      <IconButton label={`Zeiten für ${label} hinzufügen`} onClick={() => add(d)} disabled={readOnly}>
+                        <Plus className="h-4 w-4" />
+                      </IconButton>
+                    </div>
+                  ) : (
+                    ranges.map((r, i) => (
+                      <div key={i} className="flex flex-wrap items-center gap-1.5">
+                        <input type="time" step={300} value={r[0]} onChange={(e) => update(d, i, 0, e.target.value)} aria-label={`${label} von`} className={`${inputTime} w-[7.5rem]`} disabled={readOnly} />
+                        <span className="text-[color:var(--muted)]">–</span>
+                        <input
+                          type="time"
+                          step={300}
+                          value={r[1] === "24:00" ? "23:59" : r[1]}
+                          onChange={(e) => update(d, i, 1, e.target.value)}
+                          aria-label={`${label} bis`}
+                          className={`${inputTime} w-[7.5rem]`}
+                          disabled={readOnly}
+                        />
+                        <IconButton label={`Zeitraum bei ${label} entfernen`} onClick={() => setDay(d, ranges.filter((_, k) => k !== i))} disabled={readOnly}>
+                          <X className="h-4 w-4" />
+                        </IconButton>
+                        {i === 0 ? (
+                          <>
+                            <IconButton label={`Weiteren Zeitraum für ${label}`} onClick={() => add(d)} disabled={readOnly}>
+                              <Plus className="h-4 w-4" />
+                            </IconButton>
+                            <IconButton label={`Zeiten von ${label} auf alle Tage mit Terminen übertragen`} onClick={() => copyToAll(d)} disabled={readOnly}>
+                              <Copy className="h-4 w-4" />
+                            </IconButton>
+                          </>
+                        ) : null}
+                      </div>
+                    ))
+                  )}
+                  {ranges.length ? (
+                    <p className={`text-xs ${all.length ? "text-[color:var(--muted)]" : "font-medium text-rose-700"}`}>
+                      {all.length
+                        ? `${all.length} ${all.length === 1 ? "Startzeit" : "Startzeiten"}: ${all.length > 6 ? `${hm(all[0])}, ${hm(all[1])} … ${hm(all[all.length - 1])}` : all.map(hm).join(", ")} Uhr`
+                        : "Zeitraum kürzer als ein Termin – hier wird nichts angeboten."}
+                    </p>
+                  ) : null}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       </fieldset>
       <p className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3 text-sm">
         {source === "allianz"
           ? "Halten Sie diese Zeiten in Ihrem Allianz-Kalender frei. Blocken Sie sie dort bitte nicht, sonst zeigt Ihr Online-Kalender sie als belegt und wir können sie nicht anbieten."
           : source === "ics"
             ? "Tragen Sie diese Zeiten als Serie „Leadtermine“ in Ihren Allianz-Kalender ein und stellen Sie „Anzeigen als: Frei“ ein. So bucht dort niemand anderes hinein, und wir sehen die Zeiten weiter als frei."
-            : "Halten Sie diese Zeiten in Ihrem Kalender frei. Wenn Sie sie dort markieren möchten (z. B. als Serie „Leadtermine“), dann nur mit „Anzeigen als: Frei“. Sonst gelten sie als belegt und wir können sie nicht anbieten."}
+            : "Termine werden nur angeboten, wenn Sie in Ihrem Kalender frei sind. Wenn Sie diese Zeiten dort markieren möchten (z. B. als Serie „Leadtermine“), dann nur mit „Anzeigen als: Frei“."}
       </p>
       <div className="flex flex-wrap items-center gap-3">
         <Submit pending={pending} disabled={readOnly}>

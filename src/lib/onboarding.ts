@@ -80,6 +80,7 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
         where: { id: customerId },
         data: {
           plan: pkg,
+          vermittlerTyp: offer.vermittlerTyp === "makler" ? "makler" : "vertreter",
           ...(pkg === "software" ? { newUi: true } : {}),
           retainerMonthly: offer.monthlyFee,
           retainerStart: offer.startDate,
@@ -91,6 +92,8 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
         data: {
           name: await uniqueCustomerName((offer.company || offer.contactName).trim(), offer.city),
           plan: pkg,
+          // Vertreter oder Makler aus dem Angebot übernehmen (Provisionen, Rechner, Budget-Empfehlung)
+          vermittlerTyp: offer.vermittlerTyp === "makler" ? "makler" : "vertreter",
           // Neue Kunden mit Software starten direkt in der neuen Oberfläche (Ole, 11.11.).
           newUi: pkg === "software",
           retainerMonthly: offer.monthlyFee,
@@ -360,10 +363,11 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
       },
       {
         key: "consent",
-        // Einwilligung zur Kontaktaufnahme per WhatsApp/Telefon im eigenen Leadformular (Kunde hakt ab, Admin kann bestätigen)
-        label: "Einwilligung im Leadformular bestätigt",
-        owner: "kunde",
-        done: !!ob.consentAt || !!ob.consentConfirmedAt,
+        // Einwilligung zur Kontaktaufnahme im Leadformular: die Formulare legen wir an (Ole, 13.11.2026),
+        // also unser Schritt – erledigt mit der Kampagne oder per Admin-Bestätigung
+        label: "Einwilligung im Leadformular enthalten",
+        owner: "du",
+        done: !!ob.consentAt || !!ob.consentConfirmedAt || !!ob.campaignReadyAt,
         at: ob.consentConfirmedAt ?? ob.consentAt,
         manual: "consent",
       },
@@ -384,7 +388,7 @@ export function checklistProgress(items: ChecklistItem[]) {
 }
 
 /** Schritte, die der Kunde in der Einrichtung selbst erledigt (Reihenfolge wie auf der Einrichtungsseite). */
-export const CUSTOMER_SETUP_KEYS = ["questionnaire", "app", "calendar", "provision", "metaAccess", "whatsapp", "consent"] as const;
+export const CUSTOMER_SETUP_KEYS = ["questionnaire", "app", "calendar", "provision", "metaAccess", "whatsapp"] as const;
 /** App installiert / Provisionen hinterlegt: keine Checklisten-Punkte, kommen von außen dazu. */
 export type CustomerExtras = { appDone: boolean; provisionDone: boolean };
 /** Unser Teil, dem Kunden nur zur Information gezeigt (nicht im Fortschrittsbalken). */
@@ -472,16 +476,17 @@ export async function customerSetupOpenCount(customerId: string): Promise<number
 }
 
 /** Schritte, die auch nach dem Livegang in der Einrichtung offen bleiben. */
-const LIVE_SETUP_KEYS = new Set(["questionnaire", "app", "calendar", "provision", "whatsapp", "consent"]);
+const LIVE_SETUP_KEYS = new Set(["questionnaire", "app", "calendar", "provision", "whatsapp"]);
 
 /** App installiert (Push-Anmeldung eines Logins) und eigene Provisionssätze hinterlegt. */
 export async function customerExtras(customerId: string): Promise<CustomerExtras> {
   const users = await prisma.user.findMany({ where: { customerId, role: "BUYER" }, select: { id: true } });
-  const [push, provision] = await Promise.all([
+  const [push, provision, ob] = await Promise.all([
     users.length ? prisma.pushSubscription.count({ where: { userId: { in: users.map((u) => u.id) } } }) : 0,
     loadCustomerProvision(customerId),
+    prisma.onboarding.findUnique({ where: { customerId }, select: { appSkippedAt: true } }),
   ]);
-  return { appDone: push > 0, provisionDone: provision.hasCustom };
+  return { appDone: push > 0 || !!ob?.appSkippedAt, provisionDone: provision.confirmed };
 }
 
 /**

@@ -368,6 +368,8 @@ export function setupProgress(steps: SetupStep[]) {
 
 /** App installiert und Mitteilungen erlaubt = mindestens eine Push-Anmeldung eines Logins des Kunden. */
 export async function appInstalled(customerId: string): Promise<boolean> {
+  const ob = await prisma.onboarding.findUnique({ where: { customerId }, select: { appSkippedAt: true } });
+  if (ob?.appSkippedAt) return true;
   const users = await prisma.user.findMany({ where: { customerId, role: "BUYER" }, select: { id: true } });
   if (!users.length) return false;
   return (await prisma.pushSubscription.count({ where: { userId: { in: users.map((u) => u.id) } } })) > 0;
@@ -378,7 +380,7 @@ export async function loadSetupOverview(customerId: string) {
   if (!ob) return null;
   const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true } }) : null;
   const items = onboardingChecklist(ob, offer);
-  const [appDone, provisionDone] = await Promise.all([appInstalled(customerId), loadCustomerProvision(customerId).then((p) => p.hasCustom)]);
+  const [appDone, provisionDone] = await Promise.all([appInstalled(customerId), loadCustomerProvision(customerId).then((p) => p.confirmed)]);
   const steps = setupSteps(ob, items, { appDone, provisionDone });
   const days = Math.floor((Date.now() - setupBase(ob).getTime()) / DAY);
   return { ob, items, steps, progress: setupProgress(steps), days };

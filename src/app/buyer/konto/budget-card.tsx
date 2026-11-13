@@ -48,7 +48,8 @@ export function BudgetCard({ lines, upcoming, ctx, pending, today, readOnly, est
   const p = useMemo(() => previewChange(lines, next, ctx), [lines, next, ctx]);
   const sentence = tierSentence(p);
   const mustAck = needsAcknowledge(p);
-  const sliderMax = Math.max(200, ...lines.map((l) => l.dailyBudget * 2));
+  // Regler fürs Feine (bis 200 € bzw. doppeltes Budget); höher per „+“ oder Eintippen bis zum Höchstwert
+  const sliderMaxFor = (current: number, v: number) => Math.min(BUDGET_MAX_DAILY, Math.max(200, current * 2, v));
 
   const set = (product: string, v: number) => {
     setValues((s) => ({ ...s, [product]: clamp(v) }));
@@ -105,8 +106,34 @@ export function BudgetCard({ lines, upcoming, ctx, pending, today, readOnly, est
                     <Minus className="h-4 w-4" />
                   </button>
                   <div className="min-w-0 flex-1 text-center">
-                    <div className="text-2xl font-bold tabular-nums">{eur0(v)}</div>
-                    <div className="text-xs text-[color:var(--muted)]">pro Tag</div>
+                    <label className="inline-flex items-baseline justify-center gap-1 text-2xl font-bold tabular-nums">
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={BUDGET_MIN_DAILY}
+                        max={BUDGET_MAX_DAILY}
+                        step={BUDGET_STEP}
+                        aria-label={`Tagesbudget ${l.product} in Euro`}
+                        key={v}
+                        defaultValue={v}
+                        disabled={readOnly}
+                        onBlur={(e) => {
+                          const n = Number(e.target.value.replace(",", "."));
+                          if (Number.isFinite(n) && n > 0) set(l.product, n);
+                          else e.target.value = String(v);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            (e.target as HTMLInputElement).blur();
+                          }
+                        }}
+                        className="w-[4.5ch] rounded-[var(--radius-sm)] border-b border-dashed border-[color:var(--border-strong,#cbd5e1)] bg-transparent text-right outline-none [appearance:textfield] focus:border-[color:var(--brand)] [&::-webkit-inner-spin-button]:appearance-none"
+                        data-budget-input
+                      />
+                      <span>€</span>
+                    </label>
+                    <div className="text-xs text-[color:var(--muted)]">pro Tag · zum Eintippen antippen</div>
                   </div>
                   <button
                     type="button"
@@ -122,13 +149,18 @@ export function BudgetCard({ lines, upcoming, ctx, pending, today, readOnly, est
                   type="range"
                   aria-label={`Tagesbudget ${l.product}`}
                   min={BUDGET_MIN_DAILY}
-                  max={sliderMax}
+                  max={sliderMaxFor(l.dailyBudget, v)}
                   step={BUDGET_STEP}
-                  value={Math.min(v, sliderMax)}
+                  value={Math.min(v, sliderMaxFor(l.dailyBudget, v))}
                   disabled={readOnly}
                   onChange={(e) => set(l.product, Number(e.target.value))}
                   className="mt-3 w-full accent-[color:var(--brand)]"
                 />
+                {v >= BUDGET_MAX_DAILY ? (
+                  <p className="mt-2 text-sm text-[color:var(--muted)]">
+                    Mehr als {eur0(BUDGET_MAX_DAILY)} pro Tag? Schreiben Sie uns kurz, dafür machen wir Ihnen ein individuelles Angebot.
+                  </p>
+                ) : null}
                 {low ? (
                   <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-amber-800">
                     <AlertTriangle className="h-4 w-4 shrink-0" /> Lead-Garantie gilt ab {LEAD_GUARANTEE_MIN_DAILY} €/Tag

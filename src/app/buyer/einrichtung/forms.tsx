@@ -10,6 +10,7 @@ import {
   confirmMetaAccessAction,
   requestMetaAccessAction,
   saveQuestionnaireAction,
+  skipSetupStepAction,
   type MetaSetupState,
   type SetupState,
 } from "./actions";
@@ -276,6 +277,35 @@ export function HelpCallPicker({ slots, readOnly }: { slots: { start: string }[]
         </button>
         {state.error ? <span className="text-sm font-medium text-rose-700">{state.error}</span> : null}
       </div>
+    </form>
+  );
+}
+
+/** Schritt abhaken ohne Formular: App überspringen, Provisionen „Passt so“. */
+export function SkipButton({ kind, label, readOnly, primary }: { kind: "app" | "provision"; label: string; readOnly: boolean; primary?: boolean }) {
+  const [state, action, pending] = useActionState<SetupState, FormData>(skipSetupStepAction, {});
+  if (state.ok)
+    return (
+      <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
+        <CheckCircle2 className="h-4 w-4" /> Erledigt
+      </p>
+    );
+  return (
+    <form action={action} className="inline-flex flex-wrap items-center gap-3">
+      <input type="hidden" name="kind" value={kind} />
+      <button
+        type="submit"
+        disabled={pending || readOnly}
+        className={
+          primary
+            ? "inline-flex h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 text-[15px] font-semibold text-white transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60"
+            : "inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--muted)] underline decoration-dotted underline-offset-2 hover:text-[color:var(--brand)] disabled:opacity-60"
+        }
+      >
+        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : primary ? <CheckCircle2 className="h-4 w-4" /> : null}
+        {label}
+      </button>
+      {state.error ? <span className="text-sm font-medium text-rose-700">{state.error}</span> : null}
     </form>
   );
 }

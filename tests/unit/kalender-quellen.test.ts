@@ -231,3 +231,43 @@ describe("Lead-Zeiten und Blockierungen", () => {
     expect(blockRange("", "09:00", "10:00")).toEqual({ error: expect.stringMatching(/Datum/) });
   });
 });
+
+describe("Lead-Zeiten je Wochentag (wie Calendly)", () => {
+  it("Montag nur vormittags, sonst ganztags", async () => {
+    const { parseSchedule, leadTimesFromSchedule, timesForDay } = await import("@/lib/calendar/lead-times");
+    const p = parseSchedule({ step: 60, days: { 1: [["08:00", "13:00"]], 2: [["08:00", "19:00"]], 3: [["08:00", "12:00"], ["14:00", "18:00"]] } });
+    if (!p || "error" in p) throw new Error("ungültig");
+    const lt = leadTimesFromSchedule(p.schedule, 30);
+    expect(timesForDay(lt, 1)).toEqual(["08:00", "09:00", "10:00", "11:00", "12:00"]);
+    expect(timesForDay(lt, 2)).toHaveLength(11);
+    expect(timesForDay(lt, 3)).toEqual(["08:00", "09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00"]);
+    expect(timesForDay(lt, 0)).toEqual([]);
+    expect(lt.weekdays).toEqual([1, 2, 3]);
+    // Vorschläge nutzen die Zeiten des Tages
+    expect(candidateTimes("lead", lt, 1)).not.toContain("14:00");
+    expect(candidateTimes("lead", lt, 2)).toContain("14:00");
+  });
+
+  it("Termin muss in den Zeitraum passen; Fehler bei bis vor von", async () => {
+    const { parseSchedule, leadTimesFromSchedule, timesForDay, leadTimesError } = await import("@/lib/calendar/lead-times");
+    const p = parseSchedule({ step: 30, days: { 1: [["09:00", "10:00"]] } });
+    if (!p || "error" in p) throw new Error("ungültig");
+    expect(timesForDay(leadTimesFromSchedule(p.schedule, 60), 1)).toEqual(["09:00"]);
+    expect(leadTimesError(leadTimesFromSchedule(p.schedule, 60))).toBeNull();
+    const short = parseSchedule({ step: 30, days: { 1: [["09:00", "09:30"]] } });
+    if (!short || "error" in short) throw new Error("ungültig");
+    expect(leadTimesError(leadTimesFromSchedule(short.schedule, 60))).toMatch(/mindestens einen Tag/);
+    expect(parseSchedule({ step: 30, days: { 1: [["13:00", "09:00"]] } })).toEqual({ error: "Mo: „bis“ muss nach „von“ liegen." });
+  });
+
+  it("alte einheitliche Zeiten werden zu Zeiträumen", async () => {
+    const { scheduleFromTimes, leadTimesFromSchedule, timesForDay } = await import("@/lib/calendar/lead-times");
+    const old = { weekdays: [1, 2, 3, 4, 5], times: ["10:00", "14:00", "16:00"], durationMin: 30 };
+    const s = scheduleFromTimes(old);
+    expect(s.days[1]).toEqual([["10:00", "10:30"], ["14:00", "14:30"], ["16:00", "16:30"]]);
+    expect(timesForDay(leadTimesFromSchedule(s, 30), 3)).toEqual(old.times);
+    const grid = { weekdays: [1], times: ["09:00", "09:30", "10:00"], durationMin: 30 };
+    const g = scheduleFromTimes(grid);
+    expect(g).toEqual({ step: 30, days: { 1: [["09:00", "10:30"]] } });
+  });
+});

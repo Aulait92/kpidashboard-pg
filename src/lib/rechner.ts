@@ -116,7 +116,7 @@ export type Guarantee = { enabled: boolean; title: string; text: string };
 export const GARANTIE_FRISTEN = {
   /** Lead-Garantie: aktive Tage ab Kampagnenstart */
   leadTage: 30,
-  /** Break-even-Garantie (Vertreter): aktive Tage ab Kampagnenstart – „spätestens ab dem 4. Monat profitabel“ */
+  /** Break-even-Garantie (Vertreter): aktive Tage ab Kampagnenstart – „spätestens ab dem 5. Monat profitabel“ (Prüfung nach 4 Monaten) */
   breakEvenTage: 120,
   /** Break-even-Garantie für Angebote vor BREAK_EVEN_4_MONATE_AB (alte Zusage) */
   breakEvenTageAlt: 90,
@@ -210,7 +210,7 @@ export const DEFAULT_CONFIG: RechnerConfig = {
     breakEven: {
       enabled: true,
       title: "Break-even-Garantie",
-      text: "Spätestens ab dem 4. Monat profitabel: Liegt Ihre Provision nach 4 Monaten unter Ihren Kosten für Werbung und Betreuung, betreuen wir Sie ohne Betreuungsgebühr weiter – auf Wunsch mit einem anderen Produkt –, bis es sich rechnet (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten Termine wahrgenommen und Ergebnisse in der App eingetragen.",
+      text: "Spätestens ab dem 5. Monat profitabel: Liegt Ihre Provision nach 4 Monaten unter Ihren Kosten für Werbung und Betreuung, betreuen wir Sie ohne Betreuungsgebühr weiter – auf Wunsch mit einem anderen Produkt –, bis es sich rechnet (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten Termine wahrgenommen und Ergebnisse in der App eingetragen.",
     },
   },
   termsUrl: "/rechtliches/agb",
@@ -298,7 +298,8 @@ export function parseRechnerConfig(raw: unknown): { config: RechnerConfig; error
   const guarantee = (k: "productSwap" | "leads" | "breakEven"): Guarantee => ({
     enabled: bool(g[k]?.enabled, d.guarantees[k].enabled),
     title: str(g[k]?.title, 80, d.guarantees[k].title) || d.guarantees[k].title,
-    text: str(g[k]?.text, 800, d.guarantees[k].text) || d.guarantees[k].text,
+    // Gespeicherte Texte mit der alten Formulierung angleichen (Prüfung nach 4 Monaten → ab dem 5. Monat profitabel, Ole 13.11.2026)
+    text: (str(g[k]?.text, 800, d.guarantees[k].text) || d.guarantees[k].text).replace(/ab dem 4\. Monat profitabel/gi, "ab dem 5. Monat profitabel"),
   });
   const contactUrl = str(r.contactUrl, 400, d.contactUrl) || d.contactUrl;
   const urlOk = /^(https:\/\/|mailto:|tel:)/i.test(contactUrl);

@@ -97,6 +97,9 @@ export default async function EmpfehlenPage({ params }: { params: Promise<{ code
           {guarantees.length ? (
             <div className="mt-6 space-y-3">
               <h2 className="text-lg font-semibold tracking-tight">Unsere Garantien</h2>
+              <p className="text-sm text-[color:var(--muted)]" data-garantie-produkt>
+                Gelten für die Katzenversicherung (TKV-Katze). Für weitere Produkte nur, wenn sie im Angebot ausdrücklich genannt sind.
+              </p>
               {guarantees.map((g) => (
                 <div key={g.title} className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-4">
                   <div className="font-semibold">{g.title}</div>

@@ -21,9 +21,9 @@ describe("Einrichtung für Bestandskunden", () => {
     const ob = await prisma.onboarding.findUniqueOrThrow({ where: { customerId: c.id } });
     expect(ob.liveAt).not.toBeNull(); // keine Erinnerungen / keine „hängt“-Hinweise
     const open = await customerSetupOpenCount(c.id);
-    // App, Kalender, Provisionen, Einwilligung (+ WhatsApp, wenn Selbst-Verbinden aktiv)
-    expect(open).toBeGreaterThanOrEqual(4);
-    expect(open).toBeLessThanOrEqual(5);
+    // App, Kalender, Provisionen (+ WhatsApp, wenn Selbst-Verbinden aktiv); Einwilligung machen wir
+    expect(open).toBeGreaterThanOrEqual(3);
+    expect(open).toBeLessThanOrEqual(4);
     expect(await openSetupForExisting(c.id)).toEqual({ ok: true, created: false });
   });
 
@@ -59,7 +59,7 @@ describe("Einrichtung neu starten (Paketwechsel)", () => {
     expect(ob.consentAt).toBeNull();
     expect(ob.metaAccessAt?.toISOString()).toBe(done.toISOString());
     expect(ob.liveAt?.toISOString()).toBe(done.toISOString());
-    // Fragebogen + Einwilligung kommen dazu (Kalender/WhatsApp waren schon offen)
-    expect(await customerSetupOpenCount(c.id)).toBe(vorher + 2);
+    // Fragebogen kommt dazu (Kalender/WhatsApp waren schon offen; Einwilligung ist unser Schritt)
+    expect(await customerSetupOpenCount(c.id)).toBe(vorher + 1);
   });
 });

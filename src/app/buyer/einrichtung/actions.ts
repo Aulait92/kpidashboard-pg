@@ -134,3 +134,26 @@ export async function confirmConsentAction(): Promise<SetupState> {
   revalidatePath("/buyer", "layout");
   return { ok: true };
 }
+
+/**
+ * Schritt ohne Formular abhaken (Ole, 13.11.2026: die ganze Liste muss erledigt werden können):
+ * „App ohne Handy“ überspringen bzw. Provisionen „Passt so“ (Standardsätze übernehmen).
+ */
+export async function skipSetupStepAction(_prev: SetupState, fd: FormData): Promise<SetupState> {
+  let ob;
+  try {
+    ({ ob } = await requireCustomer());
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Nicht möglich." };
+  }
+  const kind = String(fd.get("kind") ?? "");
+  if (kind === "app") {
+    await prisma.onboarding.update({ where: { id: ob.id }, data: { appSkippedAt: new Date() } });
+  } else if (kind === "provision") {
+    await prisma.customer.update({ where: { id: ob.customerId }, data: { provisionCheckedAt: new Date() } });
+  } else {
+    return { error: "Unbekannter Schritt." };
+  }
+  revalidatePath("/buyer", "layout");
+  return { ok: true };
+}

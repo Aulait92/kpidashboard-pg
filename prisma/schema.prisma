@@ -105,6 +105,8 @@ model Customer {
   // Eigene Provisionssätze je Produkt (Kundenbereich → Konto → Meine Provisionen),
   // geprüft über lib/provision.parseCustomRates; null = Standard
   provisionRates      Json?
+  // Kunde hat seine Provisionen geprüft (auch ohne Abweichung vom Standard) – Einrichtungsschritt erledigt
+  provisionCheckedAt  DateTime?
   // Kein aktueller Bezug mehr (aus Airtable) → in Listen ausgeblendet, Historie bleibt
   archived            Boolean   @default(false)
   // Jeder neue Lead zusätzlich per E-Mail an den Kunden (Kundenbereich → Konto)
@@ -1453,6 +1455,8 @@ model SalesInboundLead {
 // plus Kalender-/WhatsApp-Verbindung und erstem Login des Kunden.
 model Onboarding {
   id                 String    @id @default(cuid())
+  // Kunde nutzt die App ohne Handy/Mitteilungen – Schritt „App aufs Handy“ übersprungen
+  appSkippedAt       DateTime?
   customerId         String    @unique
   customer           Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   offerId            String?   @unique
@@ -2102,6 +2106,9 @@ model CalendarLeadTimes {
   times       String[]
   // Termindauer in Minuten (15/30/45/60) für Termine in diesem Kalender
   durationMin Int      @default(30)
+  // Zeiten je Wochentag wie bei Calendly: { step, days: { "1": [["08:00","13:00"]] } }.
+  // Gesetzt → gilt statt weekdays/times (die dann nur die Zusammenfassung sind).
+  schedule    Json?
   updatedAt   DateTime @updatedAt
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)

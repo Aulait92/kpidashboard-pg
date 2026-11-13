@@ -511,6 +511,9 @@ export function OfferDocument({
         ) : products.some((p) => isGuaranteeProduct(p.name)) ? (
           <>
             <H3>2.2 Ihre Garantien</H3>
+            <p className="mb-2 text-sm text-[#6B7280]">
+              Die Garantien gelten für {products.filter((p) => isGuaranteeProduct(p.name)).map((p) => p.name).join(", ")}.
+            </p>
             <p className="text-[#374151]">
               <strong>Lead-Garantie:</strong> Bei mindestens 20 € Werbebudget pro Tag bekommen Sie in den ersten 30 Tagen nach
               Kampagnenstart mindestens 100 Leads. Sonst sind Betreuung und Software im Folgemonat kostenlos.
@@ -526,7 +529,7 @@ export function OfferDocument({
             <p className="mt-2 text-[#374151]">
               {breakEvenTageFuer(offer.createdAt) > 90 ? (
                 <>
-                  <strong>Break-even-Garantie (für Vertreter): Spätestens ab dem 4. Monat profitabel.</strong> Liegt Ihre Provision nach 4 Monaten
+                  <strong>Break-even-Garantie (für Vertreter): Spätestens ab dem 5. Monat profitabel.</strong> Liegt Ihre Provision nach 4 Monaten
                   unter Ihren Kosten für Werbung und Betreuung, betreuen wir Sie ohne Betreuungsgebühr weiter, auf Wunsch mit einem anderen Produkt,
                   bis es sich rechnet (längstens 6 Monate).
                 </>

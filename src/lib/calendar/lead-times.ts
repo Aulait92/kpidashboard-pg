@@ -6,6 +6,7 @@
 // blockierte Zeiträume zählen überall als belegt.
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 import { addDaysYmd, berlinYmd, weekdayOfYmd } from "@/lib/absence";
 import type { Busy } from "@/lib/calendar/tokens";
 
@@ -18,7 +19,106 @@ export type LeadTimes = {
   times: string[];
   /** Termindauer in Minuten (15/30/45/60); fehlt = Standard 30. */
   durationMin?: number;
+  /** Zeiten je Wochentag (wie Calendly). Gesetzt → gilt statt weekdays/times. */
+  schedule?: WeekSchedule | null;
 };
+
+/** Zeitraum "HH:MM"–"HH:MM" (Ende darf "24:00" sein). */
+export type DayRange = [string, string];
+/** Zeitfenster je Wochentag (0 = So … 6 = Sa) und Abstand der Startzeiten in Minuten. */
+export type WeekSchedule = { step: number; days: Record<number, DayRange[]> };
+
+/** Wählbare Abstände der Startzeiten (Minuten); Vorauswahl 60. */
+export const START_STEPS = [15, 30, 45, 60] as const;
+export const DEFAULT_STEP = 60;
+
+const toMinutes = (hhmm: string) => (hhmm === "24:00" ? 1440 : Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5)));
+const fromMinutes = (m: number) => (m >= 1440 ? "24:00" : `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`);
+
+/** Startzeiten in einem Zeitraum: alle `step` Minuten, solange der Termin bis zum Ende passt. */
+export function rangeStarts(from: string, to: string, step: number, durationMin: number): string[] {
+  const f = toMinutes(from);
+  const t = toMinutes(to);
+  if (!Number.isFinite(f) || !Number.isFinite(t) || !(step >= 5)) return [];
+  const out: string[] = [];
+  for (let m = f; m + durationMin <= t && m < 1440 && out.length < 96; m += step) out.push(fromMinutes(m));
+  return out;
+}
+
+/** Startzeiten eines Wochentags (aufsteigend), mit Zeiten je Tag oder den einheitlichen Zeiten. */
+export function timesForDay(lt: LeadTimes, dow: number): string[] {
+  if (lt.schedule) {
+    const dur = normalizeDuration(lt.durationMin);
+    const ranges = lt.schedule.days[dow] ?? [];
+    return [...new Set(ranges.flatMap(([f, t]) => rangeStarts(f, t, lt.schedule!.step, dur)))].sort();
+  }
+  return lt.weekdays.includes(dow) ? lt.times : [];
+}
+
+/** Gespeicherte/eingegebene Zeiten je Tag bereinigen; ungültig → null bzw. Fehlertext. */
+export function parseSchedule(raw: unknown): { schedule: WeekSchedule } | { error: string } | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as { step?: unknown; days?: unknown };
+  const step = (START_STEPS as readonly number[]).includes(Number(r.step)) ? Number(r.step) : DEFAULT_STEP;
+  const days: Record<number, DayRange[]> = {};
+  const src = r.days && typeof r.days === "object" ? (r.days as Record<string, unknown>) : {};
+  for (const [k, list] of Object.entries(src)) {
+    const dow = Number(k);
+    if (!Number.isInteger(dow) || dow < 0 || dow > 6 || !Array.isArray(list)) continue;
+    const ranges: DayRange[] = [];
+    for (const item of list.slice(0, 6)) {
+      if (!Array.isArray(item)) continue;
+      const f = normalizeTime(String(item[0] ?? ""));
+      const tRaw = String(item[1] ?? "").trim();
+      const t = tRaw === "24:00" || tRaw === "00:00" || tRaw === "23:59" ? "24:00" : normalizeTime(tRaw);
+      if (!f || !t) return { error: `${WEEKDAY_SHORT[dow]}: Bitte die Uhrzeiten als HH:MM angeben.` };
+      if (toMinutes(t) <= toMinutes(f)) return { error: `${WEEKDAY_SHORT[dow]}: „bis“ muss nach „von“ liegen.` };
+      ranges.push([f, t]);
+    }
+    ranges.sort((a, b) => a[0].localeCompare(b[0]));
+    if (ranges.length) days[dow] = ranges;
+  }
+  return { schedule: { step, days } };
+}
+
+/** Zeiten je Tag → vollständige Lead-Zeiten (weekdays/times als Zusammenfassung). */
+export function leadTimesFromSchedule(schedule: WeekSchedule, durationRaw: unknown): LeadTimes {
+  const durationMin = normalizeDuration(durationRaw);
+  const base: LeadTimes = { weekdays: [], times: [], durationMin, schedule };
+  const weekdays: number[] = [];
+  const all = new Set<string>();
+  for (let d = 0; d <= 6; d++) {
+    const t = timesForDay(base, d);
+    if (t.length) weekdays.push(d);
+    t.forEach((x) => all.add(x));
+  }
+  return { ...base, weekdays, times: [...all].sort() };
+}
+
+/**
+ * Für die Anzeige: einheitliche Zeiten (z. B. 10, 14, 16 Uhr) als Zeiträume je Tag.
+ * Aufeinanderfolgende Zeiten im gleichen Abstand werden ein Zeitraum.
+ */
+export function scheduleFromTimes(lt: LeadTimes): WeekSchedule {
+  if (lt.schedule) return lt.schedule;
+  const dur = normalizeDuration(lt.durationMin);
+  const mins = [...lt.times].sort().map(toMinutes);
+  const diffs = mins.slice(1).map((m, i) => m - mins[i]);
+  const counts = new Map<number, number>();
+  diffs.forEach((d) => counts.set(d, (counts.get(d) ?? 0) + 1));
+  const common = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  const step = common && (START_STEPS as readonly number[]).includes(common) ? common : DEFAULT_STEP;
+  const ranges: DayRange[] = [];
+  for (let i = 0; i < mins.length; ) {
+    let j = i;
+    while (j + 1 < mins.length && mins[j + 1] - mins[j] === step) j++;
+    ranges.push([fromMinutes(mins[i]), fromMinutes(Math.min(mins[j] + dur, 1440))]);
+    i = j + 1;
+  }
+  const days: Record<number, DayRange[]> = {};
+  for (const d of lt.weekdays) days[d] = ranges.map((r) => [r[0], r[1]] as DayRange);
+  return { step, days };
+}
 
 /** Wählbare Termindauern (Minuten). */
 export const APPOINTMENT_DURATIONS = [15, 30, 45, 60] as const;
@@ -71,6 +171,7 @@ export function normalizeLeadTimes(input: { weekdays: unknown[]; times: unknown[
 
 /** Prüft eine Einstellung; Fehlertext für die Oberfläche oder null. */
 export function leadTimesError(lt: LeadTimes): string | null {
+  if (lt.schedule && lt.times.length === 0) return "Bitte mindestens einen Tag mit Uhrzeiten angeben (der Zeitraum muss mindestens so lang wie ein Termin sein).";
   if (lt.weekdays.length === 0) return "Bitte mindestens einen Wochentag wählen.";
   if (lt.times.length === 0) return "Bitte mindestens eine Uhrzeit wählen.";
   return null;
@@ -81,6 +182,11 @@ export async function loadLeadTimes(calendarKey: string): Promise<LeadTimes> {
   const row = await prisma.calendarLeadTimes.findUnique({ where: { calendarKey } });
   if (!row) return DEFAULT_LEAD_TIMES;
   const durationMin = normalizeDuration(row.durationMin);
+  const parsed = parseSchedule(row.schedule);
+  if (parsed && "schedule" in parsed) {
+    const lt = leadTimesFromSchedule(parsed.schedule, durationMin);
+    if (lt.times.length) return lt;
+  }
   if (row.weekdays.length === 0 || row.times.length === 0) return { ...DEFAULT_LEAD_TIMES, durationMin };
   return { weekdays: row.weekdays, times: row.times, durationMin };
 }
@@ -93,10 +199,11 @@ export async function durationForKey(calendarKey: string): Promise<number | null
 
 export async function saveLeadTimes(customerId: string, calendarKey: string, lt: LeadTimes): Promise<void> {
   const durationMin = normalizeDuration(lt.durationMin);
+  const schedule = lt.schedule ? (lt.schedule as unknown as Prisma.InputJsonValue) : Prisma.DbNull;
   await prisma.calendarLeadTimes.upsert({
     where: { calendarKey },
-    create: { calendarKey, customerId, weekdays: lt.weekdays, times: lt.times, durationMin },
-    update: { weekdays: lt.weekdays, times: lt.times, durationMin },
+    create: { calendarKey, customerId, weekdays: lt.weekdays, times: lt.times, durationMin, schedule },
+    update: { weekdays: lt.weekdays, times: lt.times, durationMin, schedule },
   });
 }
 
@@ -131,8 +238,7 @@ export function leadTimeWindows(lt: LeadTimes, min: Date, max: Date, lengthMin: 
   const out: Busy[] = [];
   const last = berlinYmd(max);
   for (let ymd = berlinYmd(min), i = 0; ymd <= last && i < 400; ymd = addDaysYmd(ymd, 1), i++) {
-    if (!lt.weekdays.includes(weekdayOfYmd(ymd))) continue;
-    for (const t of lt.times) {
+    for (const t of timesForDay(lt, weekdayOfYmd(ymd))) {
       const start = berlinAt(ymd, t);
       const end = new Date(start.getTime() + lengthMin * 60000);
       if (end > min && start < max) out.push({ start, end });

@@ -1,14 +1,14 @@
 import { redirect } from "next/navigation";
 import { HilfeChatButton } from "@/components/hilfe-chat";
 import { STEP_TEXT } from "@/components/first-day";
-import { ArrowRight, CalendarDays, CheckCircle2, ChevronDown, Circle, ClipboardList, FileCheck2, KeyRound, MessageCircle, Percent, PlayCircle, Rocket, Smartphone } from "lucide-react";
+import { ArrowRight, CalendarDays, CheckCircle2, ChevronDown, Circle, ClipboardList, KeyRound, MessageCircle, Percent, PlayCircle, Rocket, Smartphone } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { buttonClass, Card } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { customerSetupProgress, loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
-import { ConsentDoneButton, CopyText, HelpCallPicker, MetaAccessForm, QuestionnaireForm } from "./forms";
-import { appInstalled, consentText, loadSetupSettings, setupSteps, videoEmbedUrl, type MetaCheck, type SetupStepKey } from "@/lib/selbst-einrichtung";
+import { HelpCallPicker, MetaAccessForm, QuestionnaireForm, SkipButton } from "./forms";
+import { appInstalled, loadSetupSettings, setupSteps, videoEmbedUrl, type MetaCheck, type SetupStepKey } from "@/lib/selbst-einrichtung";
 import { helpCallSlots } from "@/lib/help-call";
 import { InstallApp } from "@/components/install-app";
 import { getAppUrl } from "@/lib/email";
@@ -55,9 +55,9 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const readOnly = ctx.preview;
   const provision = await loadCustomerProvision(ctx.customerId);
   const appDone = await appInstalled(ctx.customerId);
-  const steps = setupSteps(ob, items, { appDone, provisionDone: provision.hasCustom });
+  const steps = setupSteps(ob, items, { appDone, provisionDone: provision.confirmed });
   // Eine Zählung wie auf der Startseite und im Menü: nur Schritte, die der Kunde selbst erledigt
-  const progress = customerSetupProgress(items, { appDone, provisionDone: provision.hasCustom });
+  const progress = customerSetupProgress(items, { appDone, provisionDone: provision.confirmed });
   const custSteps = steps.filter((st) => st.owner === "kunde" && st.key !== "login");
   const overall = { done: progress.done, total: progress.total, percent: progress.percent, open: progress.open };
   // Live und nichts mehr offen = fertig. Live mit offenen Software-Schritten (z. B. nach Paketwechsel): Fortschritt zeigen.
@@ -67,7 +67,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const waAccount = waEnabled
     ? await prisma.whatsAppAccount.findUnique({ where: { customerId: ctx.customerId }, select: { status: true, phoneNumber: true, dialog360ChannelId: true } })
     : null;
-  const order = ["questionnaire", "metaAccess", ...(software ? ["calendar"] : []), ...(waEnabled ? ["whatsapp"] : []), ...(software ? ["consent"] : [])];
+  const order = ["questionnaire", "metaAccess", ...(software ? ["calendar"] : []), ...(waEnabled ? ["whatsapp"] : [])];
   let stepNo = software ? 3 : 2;
   const nextNo = () => ++stepNo;
   const current = order.find((k) => !done(k)) ?? "start";
@@ -291,33 +291,27 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           </Step>
         ) : null}
 
-        {software ? (
-          <Step n={nextNo()} title="Einwilligung im Leadformular" icon={FileCheck2} done={done("consent")} open={isOpen("consent")} id="consent">
-            <p className="mb-3 text-sm text-[color:var(--muted)]">
-              Damit Ihr Assistent neue Leads per WhatsApp anschreiben darf, muss im Leadformular die Einwilligung zur Kontaktaufnahme stehen.
-              Formulare, die wir für Sie anlegen, enthalten sie automatisch. Nutzen Sie eigene Formulare, fügen Sie bitte diesen Text als
-              Pflicht-Häkchen hinzu:
-            </p>
-            <VideoHint url={video("consent")} />
-            <CopyText text={consentText(ob.customer.name)} />
-            <div className="mt-4">
-              <ConsentDoneButton done={done("consent")} readOnly={readOnly} />
-            </div>
-          </Step>
-        ) : null}
 
         <Step n={nextNo()} title="App aufs Handy und Mitteilungen" icon={Smartphone} done={appDone} open={current === "start" && !fertig && !appDone} id="app">
           <VideoHint url={video("app")} />
           <InstallApp appUrl={appHost()} />
+          {!appDone ? (
+            <div className="mt-4">
+              <SkipButton kind="app" readOnly={readOnly} label="Ich nutze die App ohne Handy – Schritt überspringen" />
+            </div>
+          ) : null}
         </Step>
 
-        <Step n={nextNo()} title="Provisionen prüfen (1 Minute, optional)" icon={Percent} done={provision.hasCustom} open={false}>
+        <Step n={nextNo()} title="Provisionen prüfen (1 Minute)" icon={Percent} done={provision.confirmed} open={false} id="provision">
           {/* Typ aus dem angenommenen Angebot bekannt → nicht mehr danach fragen. */}
           <p className="text-sm text-[color:var(--muted)]">{provisionSetupHint(provision.typ, !!ob.offerId)}</p>
           <VideoHint url={video("provision")} />
-          <Link href="/buyer/provisionen" className={buttonClass("secondary", "md", "mt-4")}>
-            Provisionen prüfen
-          </Link>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Link href="/buyer/provisionen" className={buttonClass("secondary", "md")}>
+              Provisionen ansehen
+            </Link>
+            {!provision.confirmed ? <SkipButton kind="provision" readOnly={readOnly} label="Passt so" primary /> : null}
+          </div>
         </Step>
 
         <Step n={nextNo()} title="Start" icon={Rocket} done={!!ob.liveAt} open={current === "start" && !!ob.liveAt}>

@@ -15,7 +15,7 @@ import {
   resolveAllianzCalendar,
   type AllianzCalendar,
 } from "@/lib/calendar/allianz-online";
-import { blockRange, leadTimesError, normalizeDuration, normalizeLeadTimes, normalizeTime, saveLeadTimes, type LeadTimes } from "@/lib/calendar/lead-times";
+import { blockRange, leadTimesError, leadTimesFromSchedule, parseSchedule, normalizeDuration, normalizeLeadTimes, normalizeTime, saveLeadTimes, type LeadTimes } from "@/lib/calendar/lead-times";
 
 export type SourceResult = { ok?: boolean; error?: string; info?: string };
 
@@ -163,6 +163,24 @@ export function leadTimesFromForm(fd: FormData): LeadTimes {
 }
 
 export async function updateLeadTimes(customerId: string, calendarKey: string, fd: FormData): Promise<SourceResult> {
+  // Neues Formular: Zeiten je Wochentag (wie Calendly) als JSON
+  const rawSchedule = fd.get("schedule");
+  if (typeof rawSchedule === "string" && rawSchedule.trim()) {
+    let json: unknown;
+    try {
+      json = JSON.parse(rawSchedule);
+    } catch {
+      return { error: "Die Zeiten konnten nicht gelesen werden. Bitte Seite neu laden." };
+    }
+    const parsed = parseSchedule(json);
+    if (!parsed) return { error: "Die Zeiten konnten nicht gelesen werden. Bitte Seite neu laden." };
+    if ("error" in parsed) return { error: parsed.error };
+    const lt = leadTimesFromSchedule(parsed.schedule, fd.get("duration"));
+    const err = leadTimesError(lt);
+    if (err) return { error: err };
+    await saveLeadTimes(customerId, calendarKey, lt);
+    return { ok: true, info: "Gespeichert." };
+  }
   const extra = String(fd.get("extraTime") ?? "").trim();
   if (extra && !normalizeTime(extra)) return { error: "Die zusätzliche Uhrzeit bitte als HH:MM angeben (z. B. 17:30)." };
   const lt = leadTimesFromForm(fd);

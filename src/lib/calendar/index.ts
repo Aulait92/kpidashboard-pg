@@ -13,7 +13,7 @@ import {
 } from "@/lib/calendar/google";
 import { fetchIcsBusy } from "@/lib/calendar/ics";
 import { allianzBusy, decodeAllianzCalendar } from "@/lib/calendar/allianz-online";
-import { berlinAt, calendarBlocksBusy, DEFAULT_DURATION_MIN, durationForKey, loadLeadTimes, type LeadTimes } from "@/lib/calendar/lead-times";
+import { berlinAt, calendarBlocksBusy, DEFAULT_DURATION_MIN, durationForKey, loadLeadTimes, timesForDay, type LeadTimes } from "@/lib/calendar/lead-times";
 import {
   microsoftCreateEvent,
   microsoftDeleteEvent,
@@ -130,9 +130,10 @@ export type SlotHours = number[] | "lead" | { lead: true; prefer: string[] };
 /** Kandidaten-Uhrzeiten ("HH:MM") eines Kalendertags, in Vorschlags-Reihenfolge. */
 export function candidateTimes(spec: SlotHours, lt: LeadTimes, dow: number): string[] {
   if (Array.isArray(spec)) return dow === 0 || dow === 6 ? [] : spec.map((h) => `${String(h).padStart(2, "0")}:00`);
-  if (!lt.weekdays.includes(dow)) return [];
+  const own = timesForDay(lt, dow);
+  if (!own.length) return [];
   const prefer = spec === "lead" ? [] : spec.prefer;
-  return [...new Set([...prefer, ...lt.times])];
+  return [...new Set([...prefer, ...own])];
 }
 
 /** Freie Slots der nächsten Tage (Standard: Lead-Zeiten, ohne Einstellung Mo–Fr 10/14/16 Uhr). */

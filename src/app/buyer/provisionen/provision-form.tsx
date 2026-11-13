@@ -67,18 +67,22 @@ function example(r: Row): string {
 
 export function ProvisionForm({
   typ: initialTyp,
+  typKnown = false,
   custom,
   known,
   canEdit,
   readOnlyReason,
 }: {
   typ: VermittlerTyp;
+  /** Typ steht im Angebot: nur anzeigen, Ändern auf Klick. */
+  typKnown?: boolean;
   custom: ProvisionOverrides;
   known: ProductKey[];
   canEdit: boolean;
   readOnlyReason?: string;
 }) {
   const [typ, setTyp] = useState<VermittlerTyp>(initialTyp);
+  const [changeTyp, setChangeTyp] = useState(!typKnown);
   // Zeilen mit eigenem Wert behalten ihn beim Typwechsel; Standard-Zeilen folgen dem Typ.
   const [own, setOwn] = useState<Partial<Record<ProductKey, Row>>>(() =>
     Object.fromEntries(Object.entries(custom).map(([k, v]) => [k, toRow(v as RateSpec)])),
@@ -120,36 +124,50 @@ export function ProvisionForm({
         <p className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-4 py-3 text-sm text-[color:var(--muted)]">{readOnlyReason}</p>
       ) : null}
 
+      {changeTyp ? (
       <Card>
-        <div className="p-5">
-        <fieldset className="min-w-0" disabled={disabled}>
-          <legend className="mb-3 text-[15px] font-semibold">Ich arbeite als</legend>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {VERMITTLER_TYPEN.map((t) => (
-              <label
-                key={t.key}
-                className={`flex cursor-pointer items-center gap-3 rounded-[var(--radius-md)] border px-4 py-3 text-[15px] ${
-                  typ === t.key ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)]" : "border-[color:var(--border)]"
-                } ${disabled ? "cursor-default opacity-80" : ""}`}
-              >
-                <input type="radio" name="typ" value={t.key} checked={typ === t.key} onChange={() => setTyp(t.key)} className="h-4 w-4" />
-                {t.label}
-              </label>
-            ))}
+          <div className="p-5">
+          <fieldset className="min-w-0" disabled={disabled}>
+            <legend className="mb-3 text-[15px] font-semibold">Ich arbeite als</legend>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {VERMITTLER_TYPEN.map((t) => (
+                <label
+                  key={t.key}
+                  className={`flex cursor-pointer items-center gap-3 rounded-[var(--radius-md)] border px-4 py-3 text-[15px] ${
+                    typ === t.key ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)]" : "border-[color:var(--border)]"
+                  } ${disabled ? "cursor-default opacity-80" : ""}`}
+                >
+                  <input type="radio" name="typ" value={t.key} checked={typ === t.key} onChange={() => setTyp(t.key)} className="h-4 w-4" />
+                  {t.label}
+                </label>
+              ))}
+            </div>
+            <p className="mt-3 text-sm text-[color:var(--muted)]">
+              {typ === "makler"
+                ? "Makler: bei Sach meist keine Abschlussprovision, sondern laufende Bestandsprovision. PKV-Tarifoptimierung in Monatsbeiträgen."
+                : "Vertreter: Abschlussprovision in Prozent vom Jahresbeitrag."}
+            </p>
+          </fieldset>
           </div>
-          <p className="mt-3 text-sm text-[color:var(--muted)]">
-            {typ === "makler"
-              ? "Makler: bei Sach meist keine Abschlussprovision, sondern laufende Bestandsprovision. PKV-Tarifoptimierung in Monatsbeiträgen."
-              : "Vertreter: Abschlussprovision in Prozent vom Jahresbeitrag."}
-          </p>
-        </fieldset>
+        </Card>
+      ) : (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3 text-[15px]" data-typ-known>
+          <input type="hidden" name="typ" value={typ} />
+          <span>
+            Sie arbeiten als <b>{typ === "makler" ? "Makler" : "Vertreter"}</b>, die Sätze sind passend vorausgefüllt.
+          </span>
+          {!disabled ? (
+            <button type="button" onClick={() => setChangeTyp(true)} className="text-sm font-semibold text-[color:var(--brand)]">
+              Ändern
+            </button>
+          ) : null}
         </div>
-      </Card>
+      )}
 
       {visible.length === 0 ? (
         <Card>
           <div className="p-5 text-sm text-[color:var(--muted)]">
-            Hier erscheinen deine Produkte, sobald du sie bei uns gebucht hast. Bis dahin rechnen wir mit unseren Standardwerten.
+            Hier erscheinen Ihre Produkte, sobald Sie sie bei uns gebucht haben. Bis dahin rechnen wir mit unseren Standardwerten.
           </div>
         </Card>
       ) : null}
@@ -195,7 +213,7 @@ export function ProvisionForm({
           <Button type="submit" variant="primary" size="md" icon={Check} disabled={pending}>
             {pending ? "Speichere …" : "Speichern"}
           </Button>
-          {state.ok ? <span className="text-sm font-medium text-emerald-700" role="status">Gespeichert. Deine Zahlen rechnen ab jetzt damit.</span> : null}
+          {state.ok ? <span className="text-sm font-medium text-emerald-700" role="status">Gespeichert. Ihre Zahlen rechnen ab jetzt damit.</span> : null}
           {state.error ? <span className="text-sm font-medium text-rose-700" role="alert">{state.error}</span> : null}
         </div>
       ) : null}

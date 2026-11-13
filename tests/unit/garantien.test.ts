@@ -369,7 +369,7 @@ describe("Umsatzbuch und Gutschrift", () => {
   });
 });
 
-describe("Break-even-Garantie ab 13.11.2026: spätestens ab dem 4. Monat profitabel (120 aktive Tage)", () => {
+describe("Break-even-Garantie ab 13.11.2026: spätestens ab dem 5. Monat profitabel (Prüfung nach 120 aktiven Tagen)", () => {
   it("Frist je Angebot: vor dem Stichtag 90 Tage, danach 120", () => {
     expect(breakEvenTageFuer(new Date("2026-11-12T10:00:00+01:00"))).toBe(90);
     expect(breakEvenTageFuer(new Date("2026-11-14T10:00:00+01:00"))).toBe(120);
