@@ -18,11 +18,11 @@ export function offerAdminHref(o: OfferRef): string {
 }
 
 /** Eintrag in der Historie des Deals bzw. Kontakts. */
-export async function logOfferActivity(o: OfferRef, title: string, body?: string | null, createdById?: string | null) {
+export async function logOfferActivity(o: OfferRef, title: string, body?: string | null, createdById?: string | null, type: "NOTIZ" | "EMAIL" = "NOTIZ") {
   try {
     if (o.salesContactId) {
       await prisma.salesActivity.create({
-        data: { contactId: o.salesContactId, type: "NOTIZ", outcome: title, note: body ?? null },
+        data: { contactId: o.salesContactId, type, outcome: title, note: body ?? null },
       });
     } else if (o.dealId) {
       await prisma.dealActivity.create({
@@ -81,7 +81,15 @@ export function toOfferRow(o: Offer): DealOfferRow {
 }
 
 /** Anrede für Kundenmails: „Hallo Herr Weber,“ – sonst mit vollem Namen bzw. neutral. */
-export async function customerGreeting(o: { salesContactId: string | null; contactName?: string | null }): Promise<string> {
+export async function customerGreeting(o: { salesContactId: string | null; contactName?: string | null }, du = false): Promise<string> {
+  if (du) {
+    // Du-Form: „Hallo Max,“ (Vorname aus dem Kontakt, sonst erstes Wort des Namens im Angebot)
+    const c = o.salesContactId
+      ? await prisma.salesContact.findUnique({ where: { id: o.salesContactId }, select: { firstName: true } }).catch(() => null)
+      : null;
+    const first = c?.firstName?.trim() || o.contactName?.trim().replace(/^(herr|frau)\s+/i, "").split(/\s+/)[0] || "";
+    return first ? `Hallo ${first},` : "Hallo,";
+  }
   if (o.salesContactId) {
     const c = await prisma.salesContact
       .findUnique({ where: { id: o.salesContactId }, select: { salutation: true, lastName: true } })

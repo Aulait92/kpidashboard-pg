@@ -185,6 +185,27 @@ export function signatureHtml(personal = `${PROVIDER.manager}\n${PROVIDER.brand}
           </table>`;
 }
 
+/** Texte der Angebotsmail in Sie- oder Du-Form. */
+export function offerMailTexts(du: boolean) {
+  return du
+    ? {
+        subject: "Dein Angebot von performancegrowth",
+        introText: "vielen Dank für das Gespräch. Wie besprochen findest du dein Angebot hier:",
+        introHtml: "vielen Dank für das Gespräch. Wie besprochen findest du dein Angebot unter folgendem Link.",
+        accept: "Du kannst es dort direkt online annehmen oder als PDF herunterladen.",
+        rechner: "Mit unserem Rechner siehst du, wie viele Verträge du für dein Budget brauchst und was am Ende übrig bleibt",
+        anhang: "Unsere Präsentation findest du zum Nachlesen im Anhang.",
+      }
+    : {
+        subject: "Ihr Angebot von performancegrowth",
+        introText: "vielen Dank für das Gespräch. Wie besprochen finden Sie Ihr Angebot hier:",
+        introHtml: "vielen Dank für das Gespräch. Wie besprochen finden Sie Ihr Angebot unter folgendem Link.",
+        accept: "Sie können es dort direkt online annehmen oder als PDF herunterladen.",
+        rechner: "Mit unserem Rechner sehen Sie, wie viele Verträge Sie für Ihr Budget brauchen und was am Ende übrig bleibt",
+        anhang: "Unsere Präsentation finden Sie zum Nachlesen im Anhang.",
+      };
+}
+
 /** Schickt einem Interessenten den Link zu seinem Angebot. */
 export async function sendOfferEmail(opts: {
   to: string;
@@ -198,46 +219,51 @@ export async function sendOfferEmail(opts: {
   rechnerUrl?: string | null;
   /** Optional: Präsentation als PDF-Anhang */
   attachment?: { filename: string; content: Buffer } | null;
-}): Promise<SendResult> {
+  /** Anrede: true = Du-Form, sonst Sie */
+  du?: boolean;
+}): Promise<SendResult & { subject?: string; text?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>";
   if (!apiKey) return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
   const rechner = opts.rechnerUrl ?? null;
   const anhang = opts.attachment ?? null;
+  const t = offerMailTexts(!!opts.du);
   const until = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(opts.validUntil);
   const greeting = escapeHtml(opts.greeting);
+  const subject = `${t.subject} (${opts.number})`;
+  const text = [
+    opts.greeting,
+    "",
+    t.introText,
+    opts.offerUrl,
+    "",
+    `${t.accept} Das Angebot gilt bis ${until}.`,
+    "",
+    ...(rechner ? [`${t.rechner}:`, rechner, ""] : []),
+    ...(anhang ? [t.anhang, ""] : []),
+    signatureText(),
+  ].join("\n");
   try {
     const { error } = await mailClient(apiKey).emails.send({
       from,
       to: opts.to,
       ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
-      subject: `Ihr Angebot von performancegrowth (${opts.number})`,
+      subject,
       ...(anhang ? { attachments: [{ filename: anhang.filename, content: anhang.content }] } : {}),
-      text: [
-        opts.greeting,
-        "",
-        "vielen Dank für das Gespräch. Wie besprochen finden Sie Ihr Angebot hier:",
-        opts.offerUrl,
-        "",
-        `Sie können es dort direkt online annehmen oder als PDF herunterladen. Das Angebot gilt bis ${until}.`,
-        "",
-        ...(rechner ? ["Mit unserem Rechner sehen Sie, wie viele Verträge Sie für Ihr Budget brauchen und was am Ende übrig bleibt:", rechner, ""] : []),
-        ...(anhang ? ["Unsere Präsentation finden Sie zum Nachlesen im Anhang.", ""] : []),
-        signatureText(),
-      ].join("\n"),
+      text,
       html: `
         <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0b1220">
           <p style="margin:0 0 16px;font-size:15px;line-height:1.6">${greeting}</p>
-          <p style="margin:0 0 16px;font-size:15px;line-height:1.6">vielen Dank für das Gespräch. Wie besprochen finden Sie Ihr Angebot unter folgendem Link. Sie können es dort direkt online annehmen oder als PDF herunterladen.</p>
+          <p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.introHtml} ${t.accept}</p>
           <p style="margin:24px 0"><a href="${opts.offerUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">Angebot ansehen</a></p>
           <p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Angebot ${escapeHtml(opts.number)} · gültig bis ${until}</p>
-          ${rechner ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">Mit unserem Rechner sehen Sie, wie viele Verträge Sie für Ihr Budget brauchen und was am Ende übrig bleibt: <a href="${escapeHtml(rechner)}" style="color:#2563eb;font-weight:600">Zum Rechner</a></p>` : ""}
-          ${anhang ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">Unsere Präsentation finden Sie zum Nachlesen im Anhang.</p>` : ""}
+          ${rechner ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.rechner}: <a href="${escapeHtml(rechner)}" style="color:#2563eb;font-weight:600">Zum Rechner</a></p>` : ""}
+          ${anhang ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.anhang}</p>` : ""}
           ${signatureHtml()}
         </div>`,
     });
     if (error) return { ok: false, error: error.message ?? "Resend hat abgelehnt." };
-    return { ok: true };
+    return { ok: true, subject, text };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Versand fehlgeschlagen" };
   }

@@ -15,6 +15,7 @@ vi.mock("@/lib/mail-guard", () => ({
 
 import { prisma } from "@/lib/prisma";
 import { sendOfferEmail } from "@/lib/email";
+import { customerGreeting } from "@/lib/offer-links";
 import {
   audienceForContact,
   deletePresentation,
@@ -81,7 +82,7 @@ describe("Vertriebsunterlagen (Präsentationen)", () => {
     const file = await getPresentation("makler", "pdf");
     sent.length = 0;
     const base = { to: "k@example.test", greeting: "Hallo Herr Kunde,", number: "PG-1", offerUrl: "https://app.test/angebot/x", validUntil: new Date() };
-    expect(await sendOfferEmail({ ...base, rechnerUrl: "https://app.test/rechner?typ=makler", attachment: { filename: file!.fileName, content: Buffer.from(file!.data) } })).toEqual({ ok: true });
+    expect(await sendOfferEmail({ ...base, rechnerUrl: "https://app.test/rechner?typ=makler", attachment: { filename: file!.fileName, content: Buffer.from(file!.data) } })).toMatchObject({ ok: true });
     expect(sent[0].attachments?.[0].filename).toBe("Neu.pdf");
     expect(sent[0].text).toContain("https://app.test/rechner?typ=makler");
     expect(sent[0].text).toContain("Präsentation");
@@ -90,5 +91,25 @@ describe("Vertriebsunterlagen (Präsentationen)", () => {
     await sendOfferEmail(base);
     expect(sent[1].attachments).toBeUndefined();
     expect(sent[1].text).not.toContain("Rechner");
+  });
+
+  it("Du-Form: Betreff, Text und Anrede mit Vornamen", async () => {
+    sent.length = 0;
+    const c = await prisma.salesContact.create({ data: { name: "Max Muster", firstName: "Max", lastName: "Muster", salutation: "Herr", email: `du-${Date.now()}@example.test` } });
+    try {
+      expect(await customerGreeting({ salesContactId: c.id, contactName: "Max Muster" }, true)).toBe("Hallo Max,");
+      expect(await customerGreeting({ salesContactId: c.id, contactName: "Max Muster" })).toBe("Hallo Herr Muster,");
+      expect(await customerGreeting({ salesContactId: null, contactName: "Herr Karl Kunde" }, true)).toBe("Hallo Karl,");
+      await sendOfferEmail({ to: "k@example.test", greeting: "Hallo Max,", number: "PG-2", offerUrl: "https://app.test/angebot/y", validUntil: new Date(), du: true, rechnerUrl: "https://app.test/rechner", attachment: { filename: "p.pdf", content: Buffer.from("x") } });
+      const m = sent[0] as unknown as { subject: string; text: string; html: string };
+      expect(m.subject).toMatch(/^Dein Angebot/);
+      expect(m.text).toContain("findest du dein Angebot");
+      expect(m.text).toContain("siehst du");
+      expect(m.text).toContain("findest du zum Nachlesen");
+      expect(m.text).not.toMatch(/\b(Sie|Ihr|Ihnen)\b/);
+      expect(m.html).not.toMatch(/\b(Sie|Ihr|Ihnen)\b/);
+    } finally {
+      await prisma.salesContact.delete({ where: { id: c.id } });
+    }
   });
 });

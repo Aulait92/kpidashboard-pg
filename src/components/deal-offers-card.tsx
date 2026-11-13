@@ -71,6 +71,7 @@ export function DealOffersCard({
   const [mitRechner, setMitRechner] = useState(false);
   const [mitPraesentation, setMitPraesentation] = useState(false);
   const [audience, setAudience] = useState<Audience>(mail.audience);
+  const [du, setDu] = useState(false);
   const pdfDa = mail.pdf[audience];
   const [msg, setMsg] = useState<string | null>(null);
   const flash = (m: string) => {
@@ -148,7 +149,7 @@ export function DealOffersCard({
                     onClick={() =>
                       run(
                         current.id,
-                        () => sendOfferEmailAction(current.id, { rechner: mitRechner, praesentation: mitPraesentation && pdfDa, audience }),
+                        () => sendOfferEmailAction(current.id, { rechner: mitRechner, praesentation: mitPraesentation && pdfDa, audience, du }),
                         `Angebot an ${current.email} gesendet`,
                       )
                     }
@@ -179,6 +180,22 @@ export function DealOffersCard({
             </div>
             {current.status === "draft" || current.status === "sent" ? (
               <div className="space-y-2 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2.5 text-sm" data-mail-extras>
+                <div className="flex items-center gap-2" data-anrede>
+                  <span className="text-xs font-medium text-[color:var(--muted)]">Anrede</span>
+                  <div className="inline-flex rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white p-0.5">
+                    {([false, true] as const).map((v) => (
+                      <button
+                        key={String(v)}
+                        type="button"
+                        onClick={() => setDu(v)}
+                        aria-pressed={du === v}
+                        className={`rounded-[6px] px-2.5 py-0.5 text-xs font-medium ${du === v ? "bg-[color:var(--brand)] text-white" : "text-[color:var(--muted)] hover:text-[color:var(--foreground)]"}`}
+                      >
+                        {v ? "Du" : "Sie"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="text-xs font-medium text-[color:var(--muted)]">Mit der E-Mail mitschicken</div>
                 <label className="flex items-center gap-2">
                   <input type="checkbox" className="h-4 w-4" checked={mitRechner} onChange={(e) => setMitRechner(e.target.checked)} />

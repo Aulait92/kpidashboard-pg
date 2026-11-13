@@ -9,7 +9,7 @@ import { customerGreeting, logOfferActivity, offerAdminHref, type OfferTarget } 
 import { AUDIENCE_LABEL, getPresentation, isAudience, rechnerUrl, type Audience } from "@/lib/vertrieb/praesentationen";
 
 /** Extras der Angebotsmail: Rechner-Link und/oder Präsentation (PDF) der gewählten Zielgruppe. */
-export type OfferMailExtras = { rechner?: boolean; praesentation?: boolean; audience?: Audience };
+export type OfferMailExtras = { rechner?: boolean; praesentation?: boolean; audience?: Audience; du?: boolean };
 
 async function requireAdmin() {
   const session = await getCurrentSession();
@@ -97,7 +97,8 @@ export async function sendOfferEmailAction(
     rechnerUrl: rechner,
     attachment,
     to: offer.email,
-    greeting: await customerGreeting(offer),
+    du: !!extras.du,
+    greeting: await customerGreeting(offer, !!extras.du),
     number: offer.number,
     offerUrl: `${getAppUrl()}/angebot/${offer.token}`,
     validUntil: offer.validUntil,
@@ -115,8 +116,19 @@ export async function sendOfferEmailAction(
         ? ` (mit ${[rechner ? "Rechner-Link" : null, attachment ? `${AUDIENCE_LABEL[audience]}-Präsentation` : null].filter(Boolean).join(" und ")})`
         : ""
     }`,
-    null,
+    // Vollständige Mail im Verlauf (Empfänger, Betreff, Anhang, Text)
+    [
+      `An: ${offer.email}`,
+      res.subject ? `Betreff: ${res.subject}` : null,
+      attachment ? `Anhang: ${attachment.filename}` : null,
+      "",
+      res.text ?? "",
+    ]
+      .filter((l) => l !== null)
+      .join("\n")
+      .trim(),
     session.userId,
+    "EMAIL",
   );
   revalidatePath(offerAdminHref(offer));
   revalidatePath("/admin/kunden", "layout");
