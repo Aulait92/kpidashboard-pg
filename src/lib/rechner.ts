@@ -99,6 +99,11 @@ export const CROSS_SELL_STANDARD: CrossSell = { rate: 1, beitrag: 300, trail: 0.
 /** Monate zwischen Katzen-Vertrag und Zusatzvertrag (fest; 0 = im selben Monat, Ole 11.11.). */
 export const CROSS_SELL_VERZOEGERUNG = 0;
 export const CROSS_SELL_RATE_MAX = 3;
+/**
+ * Cross-Selling für Vertreter (Ole, 13.11.): Zusatzverträge bringen Abschluss- und
+ * Bestandsprovision (1. Jahr) im selben Monat; Standard aus, Werte frei änderbar.
+ */
+export const CROSS_SELL_VERTRETER = { rate: 1, beitrag: 300, ap: 0.2, trail: 0.1 } as const;
 
 export type Guarantee = { enabled: boolean; title: string; text: string };
 
@@ -348,6 +353,8 @@ export type RechnerInput = {
   xRate: number;
   xBeitrag: number;
   xTrail: number;
+  /** Vertreter: Abschlussprovision des Zusatzvertrags (Anteil vom Jahresbeitrag) */
+  xAp: number;
   /** Eigener Leadpreis (€ pro Lead); null = unser Wert (Erfahrungswert bzw. echte Daten) */
   cpl: number | null;
 };
@@ -400,10 +407,12 @@ export function defaultInput(p: RechnerProduct, typ: VermittlerTyp, base?: Parti
     storno: base?.storno ?? STORNO_STANDARD,
     kampagne: base?.kampagne ?? KAMPAGNE_STANDARD,
     horizont: base?.horizont ?? HORIZONT_STANDARD,
-    xs: p.crossSell != null,
-    xRate: (p.crossSell ?? CROSS_SELL_STANDARD).rate,
-    xBeitrag: (p.crossSell ?? CROSS_SELL_STANDARD).beitrag,
-    xTrail: (p.crossSell ?? CROSS_SELL_STANDARD).trail,
+    // Makler: Standard des Produkts (TKV an); Vertreter: aus, eigene Standardwerte
+    xs: typ === "makler" ? p.crossSell != null : false,
+    xRate: typ === "makler" ? (p.crossSell ?? CROSS_SELL_STANDARD).rate : CROSS_SELL_VERTRETER.rate,
+    xBeitrag: typ === "makler" ? (p.crossSell ?? CROSS_SELL_STANDARD).beitrag : CROSS_SELL_VERTRETER.beitrag,
+    xTrail: typ === "makler" ? (p.crossSell ?? CROSS_SELL_STANDARD).trail : CROSS_SELL_VERTRETER.trail,
+    xAp: typ === "makler" ? 0 : CROSS_SELL_VERTRETER.ap,
     cpl: null,
   };
 }
@@ -459,6 +468,7 @@ export function inputFromParams(config: RechnerConfig, q: Params): RechnerInput 
     xRate: n("xr", 0, CROSS_SELL_RATE_MAX, d.xRate),
     xBeitrag: n("xb", 1, 100_000, d.xBeitrag),
     xTrail: n("xp", 0, 100, d.xTrail, 100),
+    xAp: n("xa", 0, 100, d.xAp, 100),
     cpl: numIn(one(q, "cpl"), CPL_MIN, CPL_MAX),
   };
 }
@@ -498,6 +508,7 @@ export function inputToParams(config: RechnerConfig, i: RechnerInput): URLSearch
   if (diff(i.xRate, d.xRate)) q.set("xr", String(Math.round(i.xRate * 100) / 100));
   if (diff(i.xBeitrag, d.xBeitrag)) q.set("xb", String(i.xBeitrag));
   if (diff(i.xTrail, d.xTrail)) q.set("xp", String(pct(i.xTrail)));
+  if (diff(i.xAp, d.xAp)) q.set("xa", String(pct(i.xAp)));
   if (i.cpl != null) q.set("cpl", String(Math.round(i.cpl * 100) / 100));
   return q;
 }
@@ -548,7 +559,11 @@ export type RechnerResult = {
   /** nur Info (0 = ausgeblendet) */
   termine: number;
   provisionJeVertrag: number;
+  /** Provision gesamt (inkl. Cross-Selling) */
   provision: number;
+  /** Vertreter-Cross-Selling: Zusatzverträge und deren Provision pro Monat (0 = aus) */
+  zusatzVertraege: number;
+  provisionZusatz: number;
   beitragsvolumen: number;
   werbebudget: number;
   betreuung: number;
@@ -578,7 +593,11 @@ export function berechne(p: RechnerProduct, i: RechnerInput, cpl: number): Rechn
   const kunden = leads * i.customerRate;
   const vertraege = kunden * i.contractsPerCustomer;
   const provisionJeVertrag = provisionPerVertrag(p.kind, i, vertraege);
-  const provision = vertraege * provisionJeVertrag;
+  // Cross-Selling (Vertreter-Sicht; im Makler-Modus rechnet die Bestandssicht)
+  const zusatzJeVertrag = i.xs && !maklerModus(p, i) ? i.xRate * i.xBeitrag * (i.xAp + i.xTrail) : 0;
+  const zusatzVertraege = zusatzJeVertrag > 0 ? vertraege * i.xRate : 0;
+  const provisionZusatz = vertraege * zusatzJeVertrag;
+  const provision = vertraege * provisionJeVertrag + provisionZusatz;
 
   const price = computeOfferPrice({ package: "software", term: i.laufzeit, products: [{ name: p.name, dailyBudget: i.budget }] });
   const individuell = price.listMonthly == null;
@@ -592,7 +611,7 @@ export function berechne(p: RechnerProduct, i: RechnerInput, cpl: number): Rechn
 
   let breakEvenVertraege: number | null = null;
   for (let n = 1; n <= 10_000; n++) {
-    if (n * provisionPerVertrag(p.kind, i, n) >= kosten) { breakEvenVertraege = n; break; }
+    if (n * (provisionPerVertrag(p.kind, i, n) + zusatzJeVertrag) >= kosten) { breakEvenVertraege = n; break; }
   }
   const kumuliert = Array.from({ length: 13 }, (_, m) => m * ueberschuss - setup);
   const bm = kumuliert.findIndex((v, m) => m > 0 && v >= 0);
@@ -603,6 +622,8 @@ export function berechne(p: RechnerProduct, i: RechnerInput, cpl: number): Rechn
     termine: leads * i.terminRate,
     provisionJeVertrag,
     provision,
+    zusatzVertraege,
+    provisionZusatz,
     beitragsvolumen: p.kind === "monthly" ? vertraege * i.beitrag * 12 : vertraege * i.beitrag,
     werbebudget,
     betreuung,

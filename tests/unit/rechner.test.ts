@@ -565,3 +565,37 @@ describe("Eigener Leadpreis", () => {
     expect(berechne(tkv, i, 3).leads).toBeCloseTo(berechne(tkv, i, 6).leads * 2, 6);
   });
 });
+
+describe("Cross-Selling für Vertreter", () => {
+  it("Standard aus (Vertreter), Makler-TKV bleibt an", () => {
+    expect(defaultInput(tkv, "vertreter").xs).toBe(false);
+    expect(defaultInput(tkv, "makler").xs).toBe(true);
+    expect(berechne(tkv, defaultInput(tkv, "vertreter"), 6).provisionZusatz).toBe(0);
+  });
+
+  it("an: Zusatzverträge × Beitrag × (Abschluss + Bestand) kommen zur Provision dazu", () => {
+    const aus = defaultInput(pkv, "vertreter");
+    const an: RechnerInput = { ...aus, xs: true, xRate: 0.5, xBeitrag: 400, xAp: 0.2, xTrail: 0.1 };
+    const r0 = berechne(pkv, aus, 20);
+    const r1 = berechne(pkv, an, 20);
+    expect(r1.zusatzVertraege).toBeCloseTo(r0.vertraege * 0.5, 9);
+    expect(r1.provisionZusatz).toBeCloseTo(r0.vertraege * 0.5 * 400 * 0.3, 6);
+    expect(r1.provision).toBeCloseTo(r0.provision + r1.provisionZusatz, 6);
+    expect(r1.ueberschuss).toBeGreaterThan(r0.ueberschuss);
+    if (r0.breakEvenVertraege != null) expect(r1.breakEvenVertraege!).toBeLessThanOrEqual(r0.breakEvenVertraege);
+  });
+
+  it("Werte gehen über den Link mit", () => {
+    const i: RechnerInput = { ...defaultInput(pkv, "vertreter"), xs: true, xRate: 0.5, xAp: 0.25 };
+    const back = inputFromParams(DEFAULT_CONFIG, Object.fromEntries(inputToParams(DEFAULT_CONFIG, i)));
+    expect(back.xs).toBe(true);
+    expect(back.xRate).toBe(0.5);
+    expect(back.xAp).toBeCloseTo(0.25, 9);
+  });
+
+  it("Makler-Modus: Cross-Selling bleibt in der Bestandssicht, nicht doppelt in der Monatsrechnung", () => {
+    const m = defaultInput(tkv, "makler");
+    expect(maklerModus(tkv, m)).toBe(true);
+    expect(berechne(tkv, m, 4).provisionZusatz).toBe(0);
+  });
+});

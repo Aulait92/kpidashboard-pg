@@ -215,20 +215,40 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
               </details>
             </Card>
 
-            {makler || (maklerModus(product, input) && input.xs) ? (
+            {makler || !maklerModus(product, input) || input.xs ? (
               <Card>
                 <div data-cross-selling>
                   <label className="flex items-start gap-2">
                     <input type="checkbox" className="mt-1 h-4 w-4" checked={input.xs} onChange={(e) => set({ xs: e.target.checked })} />
                     <span>
                       <span className="block text-base font-semibold">Cross-Selling einrechnen</span>
-                      <span className="block text-sm text-[color:var(--muted)]">
-                        Jeder Katzen-Kunde ist ein Kontakt für Haftpflicht, Hausrat und Unfall. Erfahrungswert eines großen Versicherers: 1 Zusatzvertrag je Kunde,
-                        {CROSS_SELL_VERZOEGERUNG === 0 ? " direkt beim Abschluss." : ` ${CROSS_SELL_VERZOEGERUNG} Monate später.`}
-                      </span>
+                      {maklerModus(product, input) ? (
+                        <span className="block text-sm text-[color:var(--muted)]">
+                          Jeder Katzen-Kunde ist ein Kontakt für Haftpflicht, Hausrat und Unfall. Erfahrungswert eines großen Versicherers: 1 Zusatzvertrag je Kunde,
+                          {CROSS_SELL_VERZOEGERUNG === 0 ? " direkt beim Abschluss." : ` ${CROSS_SELL_VERZOEGERUNG} Monate später.`}
+                        </span>
+                      ) : (
+                        <span className="block text-sm text-[color:var(--muted)]">
+                          Jeder neue Kunde ist ein Kontakt für weitere Verträge, z. B. Haftpflicht, Hausrat oder Unfall. Tragen Sie ein, wie viel Sie zusätzlich abschließen.
+                        </span>
+                      )}
                     </span>
                   </label>
-                  {input.xs ? (
+                  {input.xs && !maklerModus(product, input) ? (
+                    <>
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2" data-cross-selling-vertreter>
+                        <NumField key={`xr-${version}`} label="Zusatzverträge" hint="je Vertrag, z. B. 0,5 = jeder zweite" suffix="×" value={input.xRate} min={0} max={CROSS_SELL_RATE_MAX} step={0.1} onChange={(v) => set({ xRate: v })} />
+                        <NumField key={`xb-${version}`} label="Ø Jahresbeitrag" hint="Zusatzvertrag" suffix="€" value={input.xBeitrag} min={1} max={100000} onChange={(v) => set({ xBeitrag: v })} />
+                        <NumField key={`xa-${version}`} label="Abschlussprovision" hint="vom Jahresbeitrag" suffix="%" value={pctOut(input.xAp)} min={0} max={100} onChange={(v) => set({ xAp: v / 100 })} />
+                        <NumField key={`xp-${version}`} label="Bestandsprovision" hint="pro Jahr" suffix="%" value={pctOut(input.xTrail)} min={0} max={100} onChange={(v) => set({ xTrail: v / 100 })} />
+                      </div>
+                      <p className="mt-2 text-sm">
+                        = <b className="tabular-nums">{eur(input.xRate * input.xBeitrag * (input.xAp + input.xTrail))}</b> zusätzliche Provision je Vertrag
+                        {input.xTrail > 0 ? <span className="text-[color:var(--muted)]"> (inkl. Bestand 1. Jahr)</span> : null}
+                      </p>
+                    </>
+                  ) : null}
+                  {input.xs && maklerModus(product, input) ? (
                     <div className="mt-3 grid gap-3 sm:grid-cols-3">
                       <NumField key={`xr-${version}`} label="Zusatzverträge" hint="je Vertrag" suffix="×" value={input.xRate} min={0} max={CROSS_SELL_RATE_MAX} step={0.1} onChange={(v) => set({ xRate: v })} />
                       <NumField key={`xb-${version}`} label="Ø Jahresbeitrag" hint="Zusatzvertrag" suffix="€" value={input.xBeitrag} min={1} max={100000} onChange={(v) => set({ xBeitrag: v })} />
@@ -379,10 +399,15 @@ function Ergebnis({ r, product, bestand, storno }: { r: RechnerResult; product: 
         <p className="mt-1 text-sm text-[color:var(--muted)]">
           Provision {eur(r.provision)} − Kosten {eur(r.kosten)}
         </p>
+        {r.provisionZusatz > 0 ? (
+          <p className="mt-1 text-sm text-[color:var(--muted)]" data-cross-selling-anteil>
+            davon Cross-Selling: <b className="tabular-nums text-[color:var(--foreground)]">{eur(r.provisionZusatz)}</b> aus {zahl(r.zusatzVertraege, 1)} Zusatzverträgen
+          </p>
+        ) : null}
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
           <Stat label="Leads" value={zahl(r.leads)} />
           <Stat label="Kunden" value={zahl(r.kunden)} sub={r.termine > 0 ? `≈ ${zahl(r.termine)} Termine` : undefined} />
-          <Stat label="Verträge" value={zahl(r.vertraege, 1)} />
+          <Stat label="Verträge" value={zahl(r.vertraege, 1)} sub={r.zusatzVertraege > 0 ? `+ ${zahl(r.zusatzVertraege, 1)} Zusatzverträge` : undefined} />
           <Stat label="Provision" value={eur(r.provision)} />
           <Stat label="Kosten" value={eur(r.kosten)} sub="Werbung + Betreuung" />
           <Stat label="Pro 1 € Kosten" value={`${zahl(r.proEuro, 2)} €`} sub="Provision" />
