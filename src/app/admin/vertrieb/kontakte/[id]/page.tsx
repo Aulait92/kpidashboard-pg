@@ -28,6 +28,7 @@ import { isAdminNewUi } from "@/lib/admin-ui";
 import { VERTRIEB_LISTS } from "@/lib/admin-lists";
 import { loadReferralSettings, referralForContact } from "@/lib/kollegen";
 import { benefitSentence } from "@/lib/kollegen-shared";
+import { CloseDetailsForm } from "@/components/ui/close-details-on-submit";
 
 export default async function ContactPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ embedded?: string }> }) {
   const { id } = await params;
@@ -243,7 +244,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
                   {a.note && <p className="mt-1 whitespace-pre-wrap text-slate-600">{a.note}</p>}
                   <details className="mt-1">
                     <summary className="cursor-pointer list-none text-xs text-slate-400 hover:text-slate-600 [&::-webkit-details-marker]:hidden">✎ Bearbeiten</summary>
-                    <form key={`${a.outcome}-${a.note}-${a.occurredAt.getTime()}-${a.type}`} action={updateActivity} className="mt-2 grid gap-2 rounded-lg bg-slate-50 p-3 sm:grid-cols-[130px_1fr_140px_100px]">
+                    <CloseDetailsForm key={`${a.outcome}-${a.note}-${a.occurredAt.getTime()}-${a.type}`} action={updateActivity} className="mt-2 grid gap-2 rounded-lg bg-slate-50 p-3 sm:grid-cols-[130px_1fr_140px_100px]">
                       <input type="hidden" name="id" value={a.id} />
                       <select name="type" defaultValue={a.type} className="input">
                         {Object.entries(ACTIVITY_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
@@ -258,7 +259,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
                           🗑 Eintrag löschen
                         </ConfirmButton>
                       </div>
-                    </form>
+                    </CloseDetailsForm>
                   </details>
                 </li>
               ))}
