@@ -194,10 +194,16 @@ export async function sendOfferEmail(opts: {
   offerUrl: string;
   validUntil: Date;
   replyTo?: string | null;
+  /** Optional: Link zum Rechner (mit Budget/Zielgruppe vorausgefüllt) */
+  rechnerUrl?: string | null;
+  /** Optional: Präsentation als PDF-Anhang */
+  attachment?: { filename: string; content: Buffer } | null;
 }): Promise<SendResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>";
   if (!apiKey) return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
+  const rechner = opts.rechnerUrl ?? null;
+  const anhang = opts.attachment ?? null;
   const until = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(opts.validUntil);
   const greeting = escapeHtml(opts.greeting);
   try {
@@ -206,6 +212,7 @@ export async function sendOfferEmail(opts: {
       to: opts.to,
       ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
       subject: `Ihr Angebot von performancegrowth (${opts.number})`,
+      ...(anhang ? { attachments: [{ filename: anhang.filename, content: anhang.content }] } : {}),
       text: [
         opts.greeting,
         "",
@@ -214,6 +221,8 @@ export async function sendOfferEmail(opts: {
         "",
         `Sie können es dort direkt online annehmen oder als PDF herunterladen. Das Angebot gilt bis ${until}.`,
         "",
+        ...(rechner ? ["Mit unserem Rechner sehen Sie, wie viele Verträge Sie für Ihr Budget brauchen und was am Ende übrig bleibt:", rechner, ""] : []),
+        ...(anhang ? ["Unsere Präsentation finden Sie zum Nachlesen im Anhang.", ""] : []),
         signatureText(),
       ].join("\n"),
       html: `
@@ -222,6 +231,8 @@ export async function sendOfferEmail(opts: {
           <p style="margin:0 0 16px;font-size:15px;line-height:1.6">vielen Dank für das Gespräch. Wie besprochen finden Sie Ihr Angebot unter folgendem Link. Sie können es dort direkt online annehmen oder als PDF herunterladen.</p>
           <p style="margin:24px 0"><a href="${opts.offerUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">Angebot ansehen</a></p>
           <p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Angebot ${escapeHtml(opts.number)} · gültig bis ${until}</p>
+          ${rechner ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">Mit unserem Rechner sehen Sie, wie viele Verträge Sie für Ihr Budget brauchen und was am Ende übrig bleibt: <a href="${escapeHtml(rechner)}" style="color:#2563eb;font-weight:600">Zum Rechner</a></p>` : ""}
+          ${anhang ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">Unsere Präsentation finden Sie zum Nachlesen im Anhang.</p>` : ""}
           ${signatureHtml()}
         </div>`,
     });

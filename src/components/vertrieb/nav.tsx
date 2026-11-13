@@ -11,6 +11,7 @@ const LINKS = [
   { href: `${BASE}/pipeline`, label: "Akquise-Pipeline" },
   { href: `${BASE}/aufgaben`, label: "Aufgaben" },
   { href: `${BASE}/empfehlungen`, label: "Empfehlungen" },
+  { href: `${BASE}/unterlagen`, label: "Unterlagen" },
 ];
 
 export function VertriebNav({ dueCount }: { dueCount: number }) {

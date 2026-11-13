@@ -53,7 +53,25 @@ const fmt = (iso: string) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 
-export function DealOffersCard({ newOfferHref, offers, appUrl }: { newOfferHref: string; offers: DealOfferRow[]; appUrl: string }) {
+type Audience = "vertreter" | "makler";
+/** Präsentationen (PDF) je Zielgruppe vorhanden? und Vorschlag aus dem Kontakt (Makler/Vertreter). */
+export type OfferMailOptions = { audience: Audience; pdf: Record<Audience, boolean> };
+
+export function DealOffersCard({
+  newOfferHref,
+  offers,
+  appUrl,
+  mail = { audience: "vertreter", pdf: { vertreter: false, makler: false } },
+}: {
+  newOfferHref: string;
+  offers: DealOfferRow[];
+  appUrl: string;
+  mail?: OfferMailOptions;
+}) {
+  const [mitRechner, setMitRechner] = useState(false);
+  const [mitPraesentation, setMitPraesentation] = useState(false);
+  const [audience, setAudience] = useState<Audience>(mail.audience);
+  const pdfDa = mail.pdf[audience];
   const [msg, setMsg] = useState<string | null>(null);
   const flash = (m: string) => {
     setMsg(m);
@@ -127,7 +145,13 @@ export function DealOffersCard({ newOfferHref, offers, appUrl }: { newOfferHref:
                     icon={Mail}
                     disabled={pending || !current.email}
                     title={current.email ? `An ${current.email}` : "Keine E-Mail im Angebot"}
-                    onClick={() => run(current.id, () => sendOfferEmailAction(current.id), `Angebot an ${current.email} gesendet`)}
+                    onClick={() =>
+                      run(
+                        current.id,
+                        () => sendOfferEmailAction(current.id, { rechner: mitRechner, praesentation: mitPraesentation && pdfDa, audience }),
+                        `Angebot an ${current.email} gesendet`,
+                      )
+                    }
                   >
                     {busy === current.id ? "Sende …" : "Per E-Mail senden"}
                   </Button>
@@ -153,6 +177,42 @@ export function DealOffersCard({ newOfferHref, offers, appUrl }: { newOfferHref:
                 </Button>
               ) : null}
             </div>
+            {current.status === "draft" || current.status === "sent" ? (
+              <div className="space-y-2 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2.5 text-sm" data-mail-extras>
+                <div className="text-xs font-medium text-[color:var(--muted)]">Mit der E-Mail mitschicken</div>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" className="h-4 w-4" checked={mitRechner} onChange={(e) => setMitRechner(e.target.checked)} />
+                  Rechner-Link
+                </label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className={`flex items-center gap-2 ${pdfDa ? "" : "opacity-60"}`}>
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4"
+                      disabled={!pdfDa}
+                      checked={mitPraesentation && pdfDa}
+                      onChange={(e) => setMitPraesentation(e.target.checked)}
+                    />
+                    Präsentation als PDF
+                  </label>
+                  <select
+                    aria-label="Präsentation für"
+                    value={audience}
+                    onChange={(e) => setAudience(e.target.value as Audience)}
+                    className="h-8 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm"
+                  >
+                    <option value="vertreter">Vertreter</option>
+                    <option value="makler">Makler</option>
+                  </select>
+                  {!pdfDa ? (
+                    <Link href="/admin/vertrieb/unterlagen" className="text-xs text-[color:var(--brand)] underline">
+                      PDF unter Unterlagen hochladen
+                    </Link>
+                  ) : null}
+                </div>
+                <p className="text-xs text-[color:var(--muted)]">Der Rechner öffnet sich mit Budget aus dem Angebot und der gewählten Zielgruppe.</p>
+              </div>
+            ) : null}
             {msg ? <p className="text-xs font-medium text-emerald-700">{msg}</p> : null}
           </div>
         )}

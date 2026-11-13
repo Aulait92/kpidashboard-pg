@@ -6,6 +6,10 @@ import { getAppUrl, sendOfferEmail } from "@/lib/email";
 import { createOffer, type OfferFormInput } from "@/lib/offers";
 import { prisma } from "@/lib/prisma";
 import { customerGreeting, logOfferActivity, offerAdminHref, type OfferTarget } from "@/lib/offer-links";
+import { AUDIENCE_LABEL, getPresentation, isAudience, rechnerUrl, type Audience } from "@/lib/vertrieb/praesentationen";
+
+/** Extras der Angebotsmail: Rechner-Link und/oder Präsentation (PDF) der gewählten Zielgruppe. */
+export type OfferMailExtras = { rechner?: boolean; praesentation?: boolean; audience?: Audience };
 
 async function requireAdmin() {
   const session = await getCurrentSession();
@@ -68,6 +72,7 @@ export async function markOfferSentAction(
 
 export async function sendOfferEmailAction(
   offerId: string,
+  extras: OfferMailExtras = {},
 ): Promise<OfferActionResult> {
   const session = await requireAdmin();
   const offer = await prisma.offer.findUnique({ where: { id: offerId } });
@@ -80,7 +85,17 @@ export async function sendOfferEmailAction(
   if (offer.status === "superseded" || offer.status === "accepted") {
     return { ok: false, error: "Dieses Angebot ist nicht mehr offen." };
   }
+  const audience: Audience = isAudience(extras.audience) ? extras.audience : "vertreter";
+  let attachment: { filename: string; content: Buffer } | null = null;
+  if (extras.praesentation) {
+    const file = await getPresentation(audience, "pdf");
+    if (!file) return { ok: false, error: `Für ${AUDIENCE_LABEL[audience]} ist noch keine PDF-Präsentation hinterlegt (Vertrieb → Unterlagen).` };
+    attachment = { filename: file.fileName.toLowerCase().endsWith(".pdf") ? file.fileName : `${file.fileName}.pdf`, content: Buffer.from(file.data) };
+  }
+  const rechner = extras.rechner ? rechnerUrl(getAppUrl(), audience, offer.products) : null;
   const res = await sendOfferEmail({
+    rechnerUrl: rechner,
+    attachment,
     to: offer.email,
     greeting: await customerGreeting(offer),
     number: offer.number,
@@ -95,7 +110,11 @@ export async function sendOfferEmailAction(
   });
   await logOfferActivity(
     offer,
-    `Angebot ${offer.number} per E-Mail an ${offer.email} gesendet`,
+    `Angebot ${offer.number} per E-Mail an ${offer.email} gesendet${
+      rechner || attachment
+        ? ` (mit ${[rechner ? "Rechner-Link" : null, attachment ? `${AUDIENCE_LABEL[audience]}-Präsentation` : null].filter(Boolean).join(" und ")})`
+        : ""
+    }`,
     null,
     session.userId,
   );

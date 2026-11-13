@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, Copy, ShieldCheck } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import {
   BUDGET_MAX,
   BUDGET_MIN,
@@ -17,14 +17,11 @@ import {
   KAMPAGNE_OPTIONEN,
   STORNO_MAX,
   STORNO_MIN,
-  VERTRAGS_GARANTIE_MIN_VERTRAEGE,
-  GARANTIE_FRISTEN,
   berechne,
   berechneBestand,
   budgetVergleich,
   defaultInput,
   inputToParams,
-  leadGuaranteeFor,
   maklerModus,
   productsFor,
   type BestandResult,
@@ -33,17 +30,12 @@ import {
   type Kampagne,
   type RechnerConfig,
   type RechnerInput,
-  type RechnerProduct,
   type RechnerResult,
   type StaffelStufe,
 } from "@/lib/rechner";
 import type { CplInfo } from "@/lib/rechner";
 import { PRICE_LIST, TERM_MONTHS, type OfferTerm } from "@/lib/offer-pricing";
 import type { VermittlerTyp } from "@/lib/provision";
-
-// Bedingungen der Vertrags-Garantie (wie Break-even-Garantie: 90 Tage, längstens 6 Monate, 80 %).
-// Beim Zusammenführen mit der Garantie-Prüfung (garantien.ts) auf die gemeinsame Konstante umstellen.
-const VERTRAGS_GARANTIE = { tage: GARANTIE_FRISTEN.breakEvenTage, monateMax: GARANTIE_FRISTEN.maxFreiMonate, quote: GARANTIE_FRISTEN.quote };
 
 const eur = (n: number, d = 0) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: d, minimumFractionDigits: d });
 const zahl = (n: number, d = 0) => n.toLocaleString("de-DE", { maximumFractionDigits: d, minimumFractionDigits: d });
@@ -87,12 +79,6 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
     setVersion((v) => v + 1);
   };
 
-  const guarantee = leadGuaranteeFor(config, product, input.budget);
-  // Makler: Lead- und Vertrags-Garantie, keine Break-even-Garantie (Bestandscourtage liegt nach 90 Tagen naturgemäß unter den Kosten)
-  const showBreakEven = config.guarantees.breakEven.enabled && !makler;
-  const showSwap = config.guarantees.productSwap.enabled && !makler;
-  const anyGuarantee = showSwap || !!guarantee || showBreakEven || makler;
-  const minBudget = config.guarantees.leads.minBudgetPerDay;
 
   return (
     <div className="min-h-screen bg-[color:var(--background)]">
@@ -117,18 +103,6 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
                 options={[{ value: "vertreter", label: "Vertreter" }, { value: "makler", label: "Makler" }]}
                 onChange={(v) => reset(v as VermittlerTyp, input.produkt)}
               />
-              {products.length > 1 ? (
-                <div className="mt-4">
-                  <Label htmlFor="produkt">Produkt</Label>
-                  <select id="produkt" value={product.key} onChange={(e) => reset(input.typ, e.target.value)} className={inputCls}>
-                    {products.map((p) => (
-                      <option key={p.key} value={p.key}>{p.name}</option>
-                    ))}
-                  </select>
-                </div>
-              ) : (
-                <p className="mt-4 text-sm"><span className="text-[color:var(--muted)]">Produkt: </span><b>{product.name}</b></p>
-              )}
               <div className="mt-5">
                 <div className="flex items-baseline justify-between gap-2">
                   <Label htmlFor="budget">Werbebudget pro Tag</Label>
@@ -207,7 +181,6 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
                 <div className="grid gap-3 sm:grid-cols-2">
                   <NumField key={`kq-${version}`} label="Leads, die Kunde werden" suffix="%" value={pctOut(input.customerRate)} min={0} max={100} onChange={(v) => set({ customerRate: v / 100 })} />
                   <NumField key={`vk-${version}`} label="Verträge pro Kunde" hint="z. B. mehrere Katzen" suffix="×" value={Math.round(input.contractsPerCustomer * 100) / 100} min={1} max={10} onChange={(v) => set({ contractsPerCustomer: v })} />
-                  <NumField key={`tq-${version}`} label="Leads mit Termin (optional)" hint="nur zur Info" suffix="%" value={pctOut(input.terminRate)} min={0} max={100} onChange={(v) => set({ terminRate: v / 100 })} />
                   {bestand ? (
                     <NumField key={`st-${version}`} label="Storno pro Jahr" hint="Anteil Verträge, die jährlich wegfallen" suffix="%" value={pctOut(input.storno)} min={STORNO_MIN * 100} max={STORNO_MAX * 100} onChange={(v) => set({ storno: v / 100 })} />
                   ) : null}
@@ -224,7 +197,7 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
                       <span className="block text-base font-semibold">Cross-Selling einrechnen</span>
                       {maklerModus(product, input) ? (
                         <span className="block text-sm text-[color:var(--muted)]">
-                          Jeder Katzen-Kunde ist ein Kontakt für Haftpflicht, Hausrat und Unfall. Erfahrungswert eines großen Versicherers: 1 Zusatzvertrag je Kunde,
+                          Jeder neue Kunde ist ein Kontakt für Haftpflicht, Hausrat und Unfall. Erfahrungswert eines großen Versicherers: 1 Zusatzvertrag je Kunde,
                           {CROSS_SELL_VERZOEGERUNG === 0 ? " direkt beim Abschluss." : ` ${CROSS_SELL_VERZOEGERUNG} Monate später.`}
                         </span>
                       ) : (
@@ -308,53 +281,10 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
           {/* ── Ergebnis ─────────────────────────────────────────── */}
           <section className="space-y-4 lg:sticky lg:top-6" aria-label="Ergebnis" aria-live="polite">
             {makler && bestand ? (
-              <MaklerErgebnis r={r} b={bestand} input={input} product={product} vergleich={budgetVergleich(product, input, cplWert)} />
+              <MaklerErgebnis r={r} b={bestand} input={input} vergleich={budgetVergleich(product, input, cplWert)} />
             ) : (
-              <Ergebnis r={r} product={product} bestand={bestand} storno={input.storno} />
+              <Ergebnis r={r} bestand={bestand} storno={input.storno} />
             )}
-            {anyGuarantee ? (
-              <Card>
-                <h2 className="mb-2 flex items-center gap-2 text-base font-semibold"><ShieldCheck className="h-5 w-5 text-emerald-600" /> Ihre Sicherheit</h2>
-                <ul className="space-y-3 text-sm" data-garantien>
-                  {guarantee ? (
-                    <li>
-                      <b>{config.guarantees.leads.title}: mindestens {zahl(guarantee.minLeads)} Leads in 30 Tagen</b>
-                      {guarantee.erfuellt ? null : (
-                        <span className="text-amber-700"> – gilt ab {eur(guarantee.minBudget)} pro Tag, erhöhen Sie das Budget</span>
-                      )}
-                      <p className="text-[color:var(--muted)]">{config.guarantees.leads.text}</p>
-                    </li>
-                  ) : null}
-                  {makler ? (
-                    <li data-vertrags-garantie>
-                      <b>Vertrags-Garantie: mindestens {VERTRAGS_GARANTIE_MIN_VERTRAEGE} Verträge nach {VERTRAGS_GARANTIE.tage} aktiven Tagen</b>
-                      {input.budget >= minBudget ? null : (
-                        <span className="text-amber-700"> – gilt ab {eur(minBudget)} pro Tag, erhöhen Sie das Budget</span>
-                      )}
-                      <p className="text-[color:var(--muted)]">
-                        Nach {VERTRAGS_GARANTIE.tage} aktiven Tagen mindestens {VERTRAGS_GARANTIE_MIN_VERTRAEGE} Verträge – sonst sind Betreuung und Software
-                        kostenlos, bis sie erreicht sind, längstens {VERTRAGS_GARANTIE.monateMax} Monate. Voraussetzung: mindestens {eur(minBudget)} Werbebudget
-                        pro Tag, {zahl(VERTRAGS_GARANTIE.quote * 100)} % der Termine wahrgenommen, Ergebnisse bei {zahl(VERTRAGS_GARANTIE.quote * 100)} % der Leads eingetragen.
-                      </p>
-                    </li>
-                  ) : null}
-                  {showBreakEven ? (
-                    <li><b>{config.guarantees.breakEven.title}</b><p className="text-[color:var(--muted)]">{config.guarantees.breakEven.text}</p></li>
-                  ) : null}
-                  {showSwap ? (
-                    <li><b>{config.guarantees.productSwap.title}</b><p className="text-[color:var(--muted)]">{config.guarantees.productSwap.text}</p></li>
-                  ) : null}
-                </ul>
-                {makler ? (
-                  <p className="mt-3 text-sm text-[color:var(--muted)]" data-makler-garantie>
-                    Für Makler: Lead- und Vertrags-Garantie. Ihr Bestand rechnet sich über die Laufzeit (siehe oben).
-                  </p>
-                ) : null}
-                <p className="mt-3 text-xs text-[color:var(--muted)]">
-                  <a href={config.termsUrl} target="_blank" rel="noopener" className="underline hover:text-[color:var(--brand)]" data-agb-link>Details in unseren AGB</a>
-                </p>
-              </Card>
-            ) : null}
             <div className="flex flex-col gap-2 sm:flex-row">
               <a href={config.contactUrl} className="inline-flex h-11 flex-1 items-center justify-center rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 font-semibold text-white hover:bg-[color:var(--brand-dark)]">
                 {config.contactLabel}
@@ -387,7 +317,7 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
   );
 }
 
-function Ergebnis({ r, product, bestand, storno }: { r: RechnerResult; product: RechnerProduct; bestand: BestandResult | null; storno: number }) {
+function Ergebnis({ r, bestand, storno }: { r: RechnerResult; bestand: BestandResult | null; storno: number }) {
   const plus = r.ueberschuss >= 0;
   return (
     <>
@@ -406,7 +336,7 @@ function Ergebnis({ r, product, bestand, storno }: { r: RechnerResult; product: 
         ) : null}
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
           <Stat label="Leads" value={zahl(r.leads)} />
-          <Stat label="Kunden" value={zahl(r.kunden)} sub={r.termine > 0 ? `≈ ${zahl(r.termine)} Termine` : undefined} />
+          <Stat label="Kunden" value={zahl(r.kunden)} />
           <Stat label="Verträge" value={zahl(r.vertraege, 1)} sub={r.zusatzVertraege > 0 ? `+ ${zahl(r.zusatzVertraege, 1)} Zusatzverträge` : undefined} />
           <Stat label="Provision" value={eur(r.provision)} />
           <Stat label="Kosten" value={eur(r.kosten)} sub="Werbung + Betreuung" />
@@ -435,7 +365,7 @@ function Ergebnis({ r, product, bestand, storno }: { r: RechnerResult; product: 
           </div>
         </div>
         <Verlauf r={r} />
-        <p className="mt-1 text-xs text-[color:var(--muted)]">Kumulierter Überschuss nach Setup, {product.name}.</p>
+        <p className="mt-1 text-xs text-[color:var(--muted)]">Kumulierter Überschuss nach Setup.</p>
         {bestand ? (
           <p className="mt-3 text-sm" data-bestand-hinweis>
             Dazu baut sich Bestand auf: nach {bestand.kampagne} Monaten ≈ <b className="tabular-nums">{zahl(bestand.vertraegeNachKampagne)} Verträge</b>,
@@ -449,8 +379,8 @@ function Ergebnis({ r, product, bestand, storno }: { r: RechnerResult; product: 
 
 /** Makler-Modus: Bestandssicht statt „Überschuss pro Monat“. */
 function MaklerErgebnis({
-  r, b, input, product, vergleich,
-}: { r: RechnerResult; b: BestandResult; input: RechnerInput; product: RechnerProduct; vergleich: BudgetVergleichZeile[] }) {
+  r, b, input, vergleich,
+}: { r: RechnerResult; b: BestandResult; input: RechnerInput; vergleich: BudgetVergleichZeile[] }) {
   const plus = b.ergebnis >= 0;
   const jahre = b.horizont === 1 ? "1 Jahr" : `${b.horizont} Jahre`;
   return (
@@ -469,7 +399,7 @@ function MaklerErgebnis({
         </p>
         {b.crossSell ? (
           <p className="mt-1 text-sm text-[color:var(--muted)]" data-courtage-split>
-            {product.name}: {eur(b.courtageHaupt)} · Cross-Selling: {eur(b.courtageZusatz)}
+            Hauptverträge: {eur(b.courtageHaupt)} · Cross-Selling: {eur(b.courtageZusatz)}
           </p>
         ) : null}
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -568,7 +498,7 @@ function MaklerErgebnis({
           Ø Jahresbeitrag {eur(input.beitrag)}, {zahl(input.trail * 100, 1)} % Bestandscourtage pro Jahr
           {input.rate > 0 ? `, ${zahl(input.rate * 100, 1)} % Abschluss` : ""}, Beitrag und Satz bleiben gleich. Nach der Kampagne keine
           Kosten mehr{TERM_MONTHS[input.laufzeit] > b.kampagne ? ` (Betreuung läuft bis Vertragsende nach ${TERM_MONTHS[input.laufzeit]} Monaten)` : ""}.
-          „Je Vertrag“ = Jahrescourtage ÷ Storno (Faustformel{b.crossSell ? ", Ø über Verträge und Zusatzverträge" : ""}). {product.name}.
+          „Je Vertrag“ = Jahrescourtage ÷ Storno (Faustformel{b.crossSell ? ", Ø über Verträge und Zusatzverträge" : ""}).
           {b.crossSell ? (
             <>
               {" "}Cross-Selling: Erfahrungswert eines großen Versicherers – {zahl(input.xRate, Number.isInteger(input.xRate) ? 0 : 1)} {input.xRate === 1 ? "Zusatzvertrag" : "Zusatzverträge"} je Kunde,

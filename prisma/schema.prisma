@@ -2673,3 +2673,19 @@ model ProductUpdate {
 
   @@index([publishedAt])
 }
+
+/// Vertriebsunterlagen (Ole, 13.11.2026): aktuelle Makler- und Vertreter-Präsentation als PPTX und PDF.
+/// Je Zielgruppe und Format genau eine Datei; ein neuer Upload ersetzt die alte.
+model SalesPresentation {
+  id           String   @id @default(cuid())
+  audience     String // "makler" | "vertreter"
+  format       String // "pdf" | "pptx"
+  fileName     String
+  contentType  String
+  size         Int
+  data         Bytes
+  uploadedAt   DateTime @default(now())
+  uploadedById String?
+
+  @@unique([audience, format])
+}

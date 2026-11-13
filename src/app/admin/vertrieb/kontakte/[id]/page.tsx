@@ -29,6 +29,7 @@ import { VERTRIEB_LISTS } from "@/lib/admin-lists";
 import { loadReferralSettings, referralForContact } from "@/lib/kollegen";
 import { benefitSentence } from "@/lib/kollegen-shared";
 import { CloseDetailsForm } from "@/components/ui/close-details-on-submit";
+import { audienceForContact, listPresentations } from "@/lib/vertrieb/praesentationen";
 
 export default async function ContactPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ embedded?: string }> }) {
   const { id } = await params;
@@ -68,6 +69,8 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
   // „Kollegen empfehlen“: von einem Kunden empfohlen → Hinweis mit Neukunden-Vorteil
   const referral = await referralForContact(c.id);
   const referralBenefit = referral ? benefitSentence(await loadReferralSettings()) : null;
+  // Präsentationen (PDF) für die Angebotsmail
+  const pdfs = new Set((await listPresentations()).filter((p) => p.format === "pdf").map((p) => p.audience));
   let appUrl = "";
   try {
     appUrl = getAppUrl();
@@ -288,6 +291,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
               newOfferHref={`/admin/vertrieb/kontakte/${c.id}/angebot`}
               appUrl={appUrl}
               offers={c.offers.map(toOfferRow)}
+              mail={{ audience: audienceForContact(c), pdf: { vertreter: pdfs.has("vertreter"), makler: pdfs.has("makler") } }}
             />
           </div>
 
