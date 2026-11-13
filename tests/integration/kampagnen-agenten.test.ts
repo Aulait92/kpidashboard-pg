@@ -91,15 +91,20 @@ function deps(meta: MetaApi, llm: LlmCall = fakeLlm(), adAccountOk = true): Camp
 
 describe("Kampagnen-Agenten (Ende zu Ende, gemockt)", () => {
   const ids: string[] = [];
-  async function customer(extra: { budget?: boolean; account?: string | null; page?: string | null; privacy?: string | null } = {}) {
+  async function customer(extra: { budget?: boolean; account?: string | null; page?: string | null; privacy?: string | null; calendar?: boolean } = {}) {
     const c = await makeCustomer({ metaAdAccountId: extra.account === undefined ? "123456789" : extra.account, metaPageId: extra.page === undefined ? "555" : extra.page });
     ids.push(c.id);
     if (extra.budget !== false) await prisma.customerBudget.create({ data: { customerId: c.id, product: PRODUCT, dailyBudget: 30, validFrom: new Date("2026-01-01") } });
     await prisma.onboarding.create({ data: { customerId: c.id, websiteInfo: { privacyUrl: extra.privacy === undefined ? "https://agentur.test/datenschutz" : extra.privacy } } });
+    // Verbundener Kalender: die Dankeseite des Formulars braucht den Buchungskalender
+    if (extra.calendar !== false) await prisma.calendarConnection.create({ data: { customerId: c.id, status: "connected" } });
     return c.id;
   }
 
-  beforeAll(() => requireTestDb());
+  beforeAll(() => {
+    requireTestDb();
+    process.env.APP_URL ??= "https://app.example.de";
+  });
   afterAll(async () => {
     await prisma.leadSource.deleteMany({ where: { customerId: { in: ids } } });
     for (const id of ids) await cleanupCustomer(id);
@@ -126,6 +131,10 @@ describe("Kampagnen-Agenten (Ende zu Ende, gemockt)", () => {
     expect(campaign.body).toMatchObject({ objective: "OUTCOME_LEADS", status: "PAUSED", special_ad_categories: [], daily_budget: 3000 });
     // Formular mit Seiten-Token, Creative verweist aufs Formular
     expect(posts.find((p) => p.path.endsWith("/leadgen_forms"))!.token).toBe("PAGE_TOKEN");
+    // Dankeseite führt zum Buchungskalender des Kunden
+    const formBody = JSON.stringify(posts.find((p) => p.path.endsWith("/leadgen_forms"))!.body);
+    expect(formBody).toMatch(/Jetzt Termin buchen/);
+    expect(formBody).toMatch(/https:\/\/app\.example\.de\/book\//);
     const creative = posts.find((p) => p.path.endsWith("/adcreatives"))!;
     expect(JSON.stringify(creative.body)).toMatch(/lead_gen_form_id/);
 
@@ -194,12 +203,12 @@ describe("Kampagnen-Agenten (Ende zu Ende, gemockt)", () => {
   });
 
   it("fehlende Voraussetzungen ergeben klare Meldungen", async () => {
-    const id = await customer({ budget: false, privacy: null, page: null });
+    const id = await customer({ budget: false, privacy: null, page: null, calendar: false });
     const r = await startCampaignRun({ customerId: id, product: PRODUCT }, deps(fakeMeta(), fakeLlm(), false));
     expect(r.ok).toBe(false);
     if (r.ok) return;
     const keys = r.problems.map((p) => p.key);
-    expect(keys).toEqual(expect.arrayContaining(["budget", "privacy", "page", "adAccount"]));
+    expect(keys).toEqual(expect.arrayContaining(["budget", "privacy", "page", "adAccount", "booking"]));
     expect(r.problems.find((p) => p.key === "adAccount")!.message).toMatch(/ads_management/);
     expect(await prisma.campaignRun.count({ where: { customerId: id } })).toBe(0);
   });

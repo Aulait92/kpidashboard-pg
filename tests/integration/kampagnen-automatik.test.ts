@@ -94,6 +94,8 @@ describe("Kampagnen-Automatik", () => {
     ids.push(c.id);
     if (extra.budget !== false) await prisma.customerBudget.create({ data: { customerId: c.id, product: PRODUCT, dailyBudget: 30, validFrom: new Date("2026-01-01") } });
     await prisma.onboarding.create({ data: { customerId: c.id, websiteInfo: extra.privacy === null ? {} : { privacyUrl: extra.privacy ?? "https://agentur.test/datenschutz" } } });
+    // Verbundener Kalender: Dankeseite des Formulars mit Buchungskalender
+    await prisma.calendarConnection.create({ data: { customerId: c.id, status: "connected" } });
     return c;
   }
   async function builtRun(customerId: string, meta = fakeMeta()) {
@@ -106,7 +108,10 @@ describe("Kampagnen-Automatik", () => {
     return run.built as unknown as BuiltState;
   }
 
-  beforeAll(() => requireTestDb());
+  beforeAll(() => {
+    requireTestDb();
+    process.env.APP_URL ??= "https://app.example.de";
+  });
   afterEach(async () => {
     await saveAutomationSettings(DEFAULT_AUTOMATION);
   });

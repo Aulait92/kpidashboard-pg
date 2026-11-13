@@ -60,6 +60,10 @@ export type CampaignContext = {
   patterns: string;
   /** Lange laufende Anzeigen anderer aus der Meta-Werbebibliothek (Vorlage, nicht wörtlich übernehmen). */
   libraryWinners?: string | null;
+  /** Buchungsseite des Kunden – Pflicht auf der Dankeseite (Ole, 13.11.2026), damit Leads direkt einen Termin buchen. */
+  bookingUrl?: string | null;
+  /** Paket mit Software: Buchungsseite ist Pflicht (Nur Betreuung: ohne Kalender). */
+  needsBooking?: boolean;
 };
 
 // ─── Agenten-Ergebnisse ─────────────────────────────────────────────────

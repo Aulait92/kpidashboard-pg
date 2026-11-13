@@ -94,7 +94,7 @@ const slug = (s: string) =>
     .slice(0, 40) || "antwort";
 
 /** Payload für POST /{page_id}/leadgen_forms (Felder laut Graph-Referenz „Page leadgen_forms“). */
-export function leadFormPayload(form: LeadFormDraft, ctx: Pick<CampaignContext, "privacyUrl" | "website" | "advisorName">): Record<string, unknown> {
+export function leadFormPayload(form: LeadFormDraft, ctx: Pick<CampaignContext, "privacyUrl" | "website" | "advisorName" | "bookingUrl">): Record<string, unknown> {
   if (!ctx.privacyUrl) throw new Error("Datenschutz-URL fehlt.");
   return {
     name: form.formName,
@@ -118,10 +118,13 @@ export function leadFormPayload(form: LeadFormDraft, ctx: Pick<CampaignContext, 
       body: { text: form.consentText },
       checkboxes: [{ key: "einwilligung_kontakt", text: "Ich bin einverstanden.", is_required: true, is_checked_by_default: false }],
     },
-    thank_you_page: ctx.website
-      ? { title: form.thankYouTitle, body: form.thankYouBody, button_type: "VIEW_WEBSITE", button_text: "Zur Website", website_url: ctx.website }
-      : { title: form.thankYouTitle, body: form.thankYouBody, button_type: "NONE" },
-    ...(ctx.website ? { follow_up_action_url: ctx.website } : {}),
+    // Dankeseite: immer zum Buchungskalender des Kunden (Ole, 13.11.2026), sonst Website
+    thank_you_page: ctx.bookingUrl
+      ? { title: form.thankYouTitle, body: form.thankYouBody, button_type: "VIEW_WEBSITE", button_text: "Jetzt Termin buchen", website_url: ctx.bookingUrl }
+      : ctx.website
+        ? { title: form.thankYouTitle, body: form.thankYouBody, button_type: "VIEW_WEBSITE", button_text: "Zur Website", website_url: ctx.website }
+        : { title: form.thankYouTitle, body: form.thankYouBody, button_type: "NONE" },
+    ...(ctx.bookingUrl ? { follow_up_action_url: ctx.bookingUrl } : ctx.website ? { follow_up_action_url: ctx.website } : {}),
   };
 }
 

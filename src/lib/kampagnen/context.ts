@@ -1,5 +1,7 @@
 // Kampagnen-Agenten: Kontext aus der Kundenakte laden und Voraussetzungen prüfen.
 
+import { getAppUrl } from "@/lib/email";
+import { getOrCreateBookingSlug } from "@/lib/calendar";
 import { libraryWinners, winnersBlock } from "@/lib/kampagnen/ad-library";
 import { prisma } from "@/lib/prisma";
 import { currentBudgets, customerCpl } from "@/lib/budget";
@@ -37,6 +39,8 @@ export async function loadCampaignContext(
     select: {
       id: true,
       name: true,
+      plan: true,
+      calendarConnection: { select: { status: true } },
       vermittlerTyp: true,
       region: true,
       metaAdAccountId: true,
@@ -77,6 +81,12 @@ export async function loadCampaignContext(
     special: q.special?.trim() || null,
     assistantKnowledge: knowledge || null,
     patterns: productPatterns(product),
+    // Dankeseite: Buchungskalender des Kunden (nur mit verbundenem Kalender)
+    needsBooking: c.plan !== "service",
+    bookingUrl:
+      c.plan !== "service" && c.calendarConnection?.status === "connected"
+        ? `${getAppUrl().replace(/\/$/, "")}/book/${await getOrCreateBookingSlug(c.id)}`
+        : null,
     // Gewinner anderer aus der Meta-Werbebibliothek (ohne Zugang zur Bibliothek: leer)
     libraryWinners: winnersBlock(await libraryWinners(product, { excludePages: [c.name] }).catch(() => [])),
   };
@@ -99,6 +109,12 @@ export async function checkPrerequisites(ctx: CampaignContext, deps: Prerequisit
   if (!env.meta) out.push({ key: "meta", message: "META_ACCESS_TOKEN fehlt in Railway." });
   if (ctx.dailyBudgetEur <= 0) {
     out.push({ key: "budget", message: `Für „${ctx.product}“ ist kein Werbebudget hinterlegt (Angebot bzw. Konto → Werbebudget).` });
+  }
+  if (ctx.needsBooking && !ctx.bookingUrl) {
+    out.push({
+      key: "booking",
+      message: "Der Kalender des Kunden ist nicht verbunden: Die Dankeseite des Formulars braucht den Buchungskalender, damit Leads direkt einen Termin buchen (Kunde: Einstellungen → Mein Kalender).",
+    });
   }
   if (!ctx.privacyUrl) {
     out.push({ key: "privacy", message: "Keine Datenschutz-URL: Bitte die Datenschutzseite des Kunden eintragen (Pflicht im Sofortformular)." });

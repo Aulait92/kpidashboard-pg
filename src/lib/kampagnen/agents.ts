@@ -291,6 +291,11 @@ const FORM_SPEC = `- formName: interner Name, z. B. „${"PG | <Kunde> | <Produk
 - thankYouTitle (höchstens ${LIMITS.thankYouTitle} Zeichen), thankYouBody: was jetzt passiert (z. B. „Ich melde mich in Kürze per WhatsApp oder Telefon.“)
 - consentText: Einwilligung zur Kontaktaufnahme durch den Vermittler per Telefon, E-Mail und WhatsApp zu dieser Anfrage, jederzeit widerrufbar (mit Name des Vermittlers bzw. der Agentur).`;
 
+/** Dankeseite mit Buchungskalender: stark auf den Termin lenken (Ole, 13.11.2026). */
+const BOOKING_THANKS = `DANKESEITE MIT TERMINBUCHUNG: Unter dem Text steht der Knopf „Jetzt Termin buchen“ (Buchungskalender des Vermittlers).
+- thankYouTitle: lenkt klar auf den Termin, z. B. „Fast geschafft: Jetzt Termin wählen“ (nicht „Vielen Dank“ allein).
+- thankYouBody: 1–2 Sätze, die stark zum Buchen motivieren: Termin dauert nur ca. 30 Sekunden, Sie wählen selbst eine passende Zeit, so geht nichts verloren und das Gespräch findet zur Wunschzeit statt. Ohne Druck-Lügen („nur heute“), ohne Versprechen.`;
+
 export async function formAgent(llm: LlmCall, c: CampaignContext): Promise<{ value: LeadFormDraft; usage: AgentUsage }> {
   return runAgent(
     llm,
@@ -303,7 +308,8 @@ WISSEN DES WHATSAPP-ASSISTENTEN DIESES KUNDEN (gekürzt, für passende Fragen):
 ${c.assistantKnowledge ?? "(nicht hinterlegt)"}
 
 AUFGABE: Entwirf das Sofortformular für „${c.product}“, Anrede „${c.anrede}“.
-${FORM_SPEC}`,
+${FORM_SPEC}${c.bookingUrl ? `
+${BOOKING_THANKS}` : ""}`,
       schema: FORM_SCHEMA,
     },
     validateForm,

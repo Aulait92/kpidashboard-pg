@@ -120,6 +120,13 @@ describe("Kampagnen-Agenten: Bauer", () => {
     expect(p.questions.map((q) => q.key)).toEqual(["katze_alter", "haltung", "full_name", "phone_number", "email"]);
     expect(p.custom_disclaimer.checkboxes[0].is_required).toBe(true);
     expect(() => leadFormPayload(form, { ...ctx, privacyUrl: null })).toThrow(/Datenschutz/);
+    // Dankeseite: Buchungskalender des Kunden geht vor der Website (Ole, 13.11.2026)
+    const booking = leadFormPayload(form, { ...ctx, bookingUrl: "https://app.example.de/book/agentur-muster" }) as {
+      thank_you_page: { button_type: string; button_text: string; website_url: string };
+      follow_up_action_url: string;
+    };
+    expect(booking.thank_you_page).toMatchObject({ button_type: "VIEW_WEBSITE", button_text: "Jetzt Termin buchen", website_url: "https://app.example.de/book/agentur-muster" });
+    expect(booking.follow_up_action_url).toBe("https://app.example.de/book/agentur-muster");
   });
 
   it("Targeting: Stadt mit Umkreis, Advantage+ mit weiter Altersgrenze, sonst Deutschland", () => {
