@@ -7,6 +7,7 @@
 // per Knopf am Vertriebskontakt (z. B. für Bestandskunden).
 
 import crypto from "node:crypto";
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, issuePasswordResetToken } from "@/lib/auth";
 import { buildResetUrl, getAppUrl, sendCustomerMail, sendOnboardingWelcomeEmail } from "@/lib/email";
@@ -458,7 +459,36 @@ export async function customerSetupOpenCount(customerId: string): Promise<number
 }
 
 /** Schritte, die auch nach dem Livegang in der Einrichtung offen bleiben. */
-const LIVE_SETUP_KEYS = new Set(["calendar", "whatsapp", "consent"]);
+const LIVE_SETUP_KEYS = new Set(["questionnaire", "calendar", "whatsapp", "consent"]);
+
+/**
+ * Einrichtung neu starten (z. B. Bestandskunde wechselt auf Betreuung + Software, Ole 13.11.2026):
+ * Fragebogen und Einwilligung wieder offen; Kalender und WhatsApp sind ohnehin offen, solange nicht
+ * verbunden. Meta-Zugriff, Kampagne, Testlead und Livegang bleiben erledigt – Leads und Daten unberührt.
+ */
+export async function restartSetup(customerId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const opened = await openSetupForExisting(customerId);
+  if (!opened.ok) return opened;
+  const ob = await prisma.onboarding.findUnique({ where: { customerId } });
+  if (!ob) return { ok: false, error: "Keine Einrichtung gefunden." };
+  const now = new Date();
+  await prisma.onboarding.update({
+    where: { id: ob.id },
+    data: {
+      status: "running",
+      questionnaireAt: null,
+      consentAt: null,
+      consentConfirmedAt: null,
+      setupReminders: Prisma.DbNull,
+      metaAccessAt: ob.metaAccessAt ?? now,
+      websiteCheckedAt: ob.websiteCheckedAt ?? now,
+      campaignReadyAt: ob.campaignReadyAt ?? now,
+      testLeadAt: ob.testLeadAt ?? now,
+      liveAt: ob.liveAt ?? now,
+    },
+  });
+  return { ok: true };
+}
 
 /**
  * Einrichtung für einen Bestandskunden ohne Onboarding freischalten (z. B. Kunden aus der Zeit

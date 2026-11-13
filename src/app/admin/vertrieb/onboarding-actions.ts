@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { endPauseNow, planPause } from "@/lib/pause";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
-import { MANUAL_FIELDS, openSetupForExisting, sendGoLiveMail, sendWelcome, startOnboarding } from "@/lib/onboarding";
+import { MANUAL_FIELDS, openSetupForExisting, restartSetup, sendGoLiveMail, sendWelcome, startOnboarding } from "@/lib/onboarding";
 import { logOfferActivity, setContactCustomerStage } from "@/lib/offer-links";
 
 function refresh(contactId?: string | null) {
@@ -30,6 +30,16 @@ export async function openSetupAction(fd: FormData) {
   const customerId = String(fd.get("customerId") ?? "");
   if (!customerId) return;
   await openSetupForExisting(customerId);
+  revalidatePath(`/admin/kunden/${customerId}`);
+  revalidatePath("/buyer", "layout");
+}
+
+/** Kundenakte: Einrichtung neu starten (Fragebogen, Kalender, WhatsApp, Einwilligung wieder offen). */
+export async function restartSetupAction(fd: FormData) {
+  await requireAuth();
+  const customerId = String(fd.get("customerId") ?? "");
+  if (!customerId || fd.get("confirm") !== "on") return;
+  await restartSetup(customerId);
   revalidatePath(`/admin/kunden/${customerId}`);
   revalidatePath("/buyer", "layout");
 }

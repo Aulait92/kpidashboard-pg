@@ -1,5 +1,5 @@
 import { CheckCircle2, Circle, XCircle } from "lucide-react";
-import { adminCheckMetaAction, openSetupAction, sendSetupReminderAction, toggleOnboardingStepAction } from "@/app/admin/vertrieb/onboarding-actions";
+import { adminCheckMetaAction, openSetupAction, restartSetupAction, sendSetupReminderAction, toggleOnboardingStepAction } from "@/app/admin/vertrieb/onboarding-actions";
 import { REMINDER_DAYS, loadSetupOverview, type MetaCheck } from "@/lib/selbst-einrichtung";
 
 const fmt = (d: Date | string) =>
@@ -117,6 +117,21 @@ export async function SetupCard({ customerId, notice }: { customerId: string; no
           </button>
         </form>
       </div>
+      <details className="border-t border-slate-100 px-4 py-3 text-sm" data-setup-restart>
+        <summary className="cursor-pointer text-slate-600">Einrichtung neu starten</summary>
+        <p className="mt-2 text-slate-600">
+          Für Paketwechsel (z. B. von Nur Betreuung auf Betreuung + Software): Fragebogen und Einwilligung im Leadformular wieder offen,
+          Kalender und WhatsApp bleiben offen, bis sie verbunden sind. Meta-Zugriff, Kampagne und Livegang bleiben erledigt. Leads und
+          Daten bleiben unverändert.
+        </p>
+        <form action={restartSetupAction} className="mt-2 flex flex-wrap items-center gap-3">
+          <input type="hidden" name="customerId" value={customerId} />
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="confirm" required className="h-4 w-4" /> Ja, neu starten
+          </label>
+          <button className="btn-ghost">Einrichtung neu starten</button>
+        </form>
+      </details>
     </section>
   );
 }
