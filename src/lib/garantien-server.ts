@@ -11,6 +11,7 @@ import { CLOSED_STATUS } from "@/lib/products";
 import { estimatedProvision } from "@/lib/provision";
 import { loadCustomerProvision } from "@/lib/provision-server";
 import { loadRechnerConfig } from "@/lib/rechner-server";
+import { breakEvenTageFuer } from "@/lib/rechner";
 import { monthKey } from "@/lib/revenue-ledger";
 import { RETAINER_CUSTOMER_SELECT, retainerInputFor } from "@/lib/zahlen";
 import {
@@ -89,7 +90,7 @@ export async function ladeGarantieInput(customerId: string, offerId: string, now
     prisma.customer.findUniqueOrThrow({ where: { id: customerId }, select: { ...RETAINER_CUSTOMER_SELECT, paymentOverdueSince: true } }),
     prisma.offer.findUniqueOrThrow({
       where: { id: offerId },
-      select: { acceptedAt: true, softwareFee: true, introMonthlyFee: true, introMonths: true, annualFreeMonths: true, subscriptionStatus: true, updatedAt: true },
+      select: { acceptedAt: true, createdAt: true, softwareFee: true, introMonthlyFee: true, introMonths: true, annualFreeMonths: true, subscriptionStatus: true, updatedAt: true },
     }),
     prisma.onboarding.findUnique({ where: { customerId }, select: { liveAt: true } }),
     prisma.customerAdSpend.findMany({ where: { customerId, date: { lte: now } }, select: { date: true, amount: true }, orderBy: { date: "asc" } }),
@@ -133,6 +134,7 @@ export async function ladeGarantieInput(customerId: string, offerId: string, now
     termine,
     provisionssaetze: provision.hasCustom,
     vermittlerTyp: provision.typ,
+    breakEvenTage: breakEvenTageFuer(offer.createdAt),
     retainer: Number(customer.retainerMonthly ?? 0) > 0 ? retainerInputFor(customer, offer, end) : null,
     faelle: faelle.map((f) => ({ art: f.art as GarantieArt, monat: f.monat, status: f.status as FallStatus })),
   };

@@ -116,13 +116,27 @@ export type Guarantee = { enabled: boolean; title: string; text: string };
 export const GARANTIE_FRISTEN = {
   /** Lead-Garantie: aktive Tage ab Kampagnenstart */
   leadTage: 30,
-  /** Break-even-Garantie: aktive Tage ab Kampagnenstart */
-  breakEvenTage: 90,
+  /** Break-even-Garantie (Vertreter): aktive Tage ab Kampagnenstart – „spätestens ab dem 4. Monat profitabel“ */
+  breakEvenTage: 120,
+  /** Break-even-Garantie für Angebote vor BREAK_EVEN_4_MONATE_AB (alte Zusage) */
+  breakEvenTageAlt: 90,
+  /** Vertrags-Garantie (Makler): aktive Tage ab Kampagnenstart */
+  vertragTage: 90,
   /** Mindestquote wahrgenommene Termine bzw. Leads mit Ergebnis */
   quote: 0.8,
   /** Break-even: längstens so viele Monate ohne Betreuungsgebühr */
   maxFreiMonate: 6,
 } as const;
+
+/**
+ * Ab diesem Zeitpunkt erstellte Angebote: Break-even-Garantie nach 4 Monaten (120 aktiven Tagen)
+ * statt 90 Tagen (Ole, 13.11.2026). Ältere Angebote behalten ihre Zusage von 90 Tagen.
+ */
+export const BREAK_EVEN_4_MONATE_AB = new Date("2026-11-13T19:00:00+01:00");
+/** Frist der Break-even-Garantie für ein Angebot (nach Erstellungsdatum, wie im Angebotsdokument). */
+export function breakEvenTageFuer(offerCreatedAt: Date): number {
+  return offerCreatedAt < BREAK_EVEN_4_MONATE_AB ? GARANTIE_FRISTEN.breakEvenTageAlt : GARANTIE_FRISTEN.breakEvenTage;
+}
 
 /** Vertrags-Garantie (Makler): Mindestzahl Verträge nach den 90 aktiven Tagen. */
 export const VERTRAGS_GARANTIE_MIN_VERTRAEGE = 15;
@@ -196,7 +210,7 @@ export const DEFAULT_CONFIG: RechnerConfig = {
     breakEven: {
       enabled: true,
       title: "Break-even-Garantie",
-      text: "Liegt Ihre Provision nach 90 Tagen unter Ihren Kosten für Werbung und Betreuung, betreuen wir Sie ohne Betreuungsgebühr weiter – auf Wunsch mit einem anderen Produkt –, bis es sich rechnet (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten Termine wahrgenommen und Ergebnisse in der App eingetragen.",
+      text: "Spätestens ab dem 4. Monat profitabel: Liegt Ihre Provision nach 4 Monaten unter Ihren Kosten für Werbung und Betreuung, betreuen wir Sie ohne Betreuungsgebühr weiter – auf Wunsch mit einem anderen Produkt –, bis es sich rechnet (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten Termine wahrgenommen und Ergebnisse in der App eingetragen.",
     },
   },
   termsUrl: "/rechtliches/agb",

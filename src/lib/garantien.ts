@@ -57,7 +57,7 @@ export function regelnAus(config: RechnerConfig): GarantieRegeln {
     },
     vertrag: {
       aktiv: config.guarantees.breakEven.enabled,
-      tage: GARANTIE_FRISTEN.breakEvenTage,
+      tage: GARANTIE_FRISTEN.vertragTage,
       minVertraege: VERTRAGS_GARANTIE_MIN_VERTRAEGE,
       quote: GARANTIE_FRISTEN.quote,
       maxFreiMonate: GARANTIE_FRISTEN.maxFreiMonate,
@@ -96,6 +96,8 @@ export type GarantieInput = {
   provisionssaetze: boolean;
   /** Vertreter: Break-even-Garantie; Makler (nur Bestandsprovision): Vertrags-Garantie */
   vermittlerTyp: "vertreter" | "makler";
+  /** Break-even-Frist dieses Kunden (aktive Tage, je nach Angebotsdatum 90 oder 120); fehlt = Regel */
+  breakEvenTage?: number;
   /** Betreuung/Software des Kunden (Basis wie im Umsatzbuch); null = keine Vergütung */
   retainer: RetainerInput | null;
   /** Bereits angelegte Fälle des Kunden */
@@ -363,7 +365,7 @@ export function bewerteLeadGarantie(i: GarantieInput, r: GarantieRegeln): Garant
  */
 export function bewerteBreakEven(i: GarantieInput, r: GarantieRegeln): GarantieErgebnis {
   const min = r.minBudgetPerDay;
-  const be = r.breakeven;
+  const be = { ...r.breakeven, tage: i.breakEvenTage ?? r.breakeven.tage };
   // Makler bekommen nur Bestandsprovision und lägen nach 90 Tagen immer unter den Kosten
   if (i.vermittlerTyp === "makler") {
     const e = nichtGestartet("breakeven", be.tage, min);
@@ -399,7 +401,7 @@ export function bewerteBreakEven(i: GarantieInput, r: GarantieRegeln): GarantieE
       : { key: "provisionssaetze", ok: false, text: "Keine eigenen Provisionssätze unter „Meine Provisionen“ hinterlegt" },
     rechnungBedingung(i.offeneRechnung),
   ];
-  // Vor Tag 90: läuft (Fortschritt), Bedingungen als Vorschau
+  // Vor Ablauf der Frist (90 bzw. 120 aktive Tage): läuft (Fortschritt), Bedingungen als Vorschau
   if (!b.done) return finish("breakeven", "laeuft", b.kz, bedingungen, von, new Date(b.end));
   // Erster Garantiemonat = Monat der ersten Prüfung (Tag nach dem 90. aktiven Tag)
   const m0 = monthKey(new Date(b.end + DAY + 12 * 3_600_000));

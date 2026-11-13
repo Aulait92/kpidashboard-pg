@@ -15,7 +15,7 @@ import {
 } from "@/lib/offer-pricing";
 // Ab wann und für welche Produkte die Garantien gelten (gleiche Regel wie die automatische Prüfung)
 import { GUARANTEES_FROM, isGuaranteeProduct } from "@/lib/garantien";
-import { VERTRAGS_GARANTIE_MIN_VERTRAEGE } from "@/lib/rechner";
+import { VERTRAGS_GARANTIE_MIN_VERTRAEGE, breakEvenTageFuer } from "@/lib/rechner";
 
 // Angebot / Auftragsbestätigung im Performancegrowth-Design (dunkles Deckblatt,
 // nummerierte Abschnitte, AGB als Bestandteil). Genutzt auf der öffentlichen
@@ -524,9 +524,19 @@ export function OfferDocument({
             </p>
             ) : (
             <p className="mt-2 text-[#374151]">
-              <strong>Break-even-Garantie (für Vertreter):</strong> Liegt Ihre Provision nach 90 Tagen unter Ihren Kosten für Werbung und
-              Betreuung, betreuen wir Sie ohne Betreuungsgebühr weiter, auf Wunsch mit einem anderen Produkt, bis es sich
-              rechnet (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten
+              {breakEvenTageFuer(offer.createdAt) > 90 ? (
+                <>
+                  <strong>Break-even-Garantie (für Vertreter): Spätestens ab dem 4. Monat profitabel.</strong> Liegt Ihre Provision nach 4 Monaten
+                  unter Ihren Kosten für Werbung und Betreuung, betreuen wir Sie ohne Betreuungsgebühr weiter, auf Wunsch mit einem anderen Produkt,
+                  bis es sich rechnet (längstens 6 Monate).
+                </>
+              ) : (
+                <>
+                  <strong>Break-even-Garantie (für Vertreter):</strong> Liegt Ihre Provision nach 90 Tagen unter Ihren Kosten für Werbung und
+                  Betreuung, betreuen wir Sie ohne Betreuungsgebühr weiter, auf Wunsch mit einem anderen Produkt, bis es sich
+                  rechnet (längstens 6 Monate).
+                </>
+              )} Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten
               Termine wahrgenommen und Ergebnisse in der App eingetragen. Details in den AGB (Abschnitt „Garantien“).
             </p>
             )}

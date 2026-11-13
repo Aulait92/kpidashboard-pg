@@ -19,7 +19,7 @@ import {
   terminQuote,
   type GarantieInput,
 } from "@/lib/garantien";
-import { DEFAULT_CONFIG, GARANTIE_FRISTEN, VERTRAGS_GARANTIE_MIN_VERTRAEGE, type RechnerConfig } from "@/lib/rechner";
+import { DEFAULT_CONFIG, GARANTIE_FRISTEN, VERTRAGS_GARANTIE_MIN_VERTRAEGE, breakEvenTageFuer, type RechnerConfig } from "@/lib/rechner";
 import { retainerRows, type RetainerInput } from "@/lib/revenue-ledger";
 
 const DAY = 86_400_000;
@@ -62,7 +62,7 @@ describe("Regeln aus der Rechner-Konfiguration", () => {
   it("nimmt Mindest-Leads und Mindestbudget aus der Konfiguration, Fristen aus GARANTIE_FRISTEN", () => {
     expect(regeln.lead).toEqual({ aktiv: true, minLeads: 100, tage: 30 });
     expect(regeln.minBudgetPerDay).toBe(20);
-    expect(regeln.breakeven).toEqual({ aktiv: true, tage: 90, quote: 0.8, maxFreiMonate: 6 });
+    expect(regeln.breakeven).toEqual({ aktiv: true, tage: 120, quote: 0.8, maxFreiMonate: 6 });
     expect(regeln.vertrag).toEqual({ aktiv: true, tage: 90, minVertraege: 15, quote: 0.8, maxFreiMonate: 6 });
     expect(VERTRAGS_GARANTIE_MIN_VERTRAEGE).toBe(15);
     expect(GARANTIE_FRISTEN.leadTage).toBe(30);
@@ -173,9 +173,9 @@ describe("Lead-Garantie", () => {
   });
 });
 
-describe("Break-even-Garantie", () => {
+describe("Break-even-Garantie (Bestandsverträge: 90 Tage)", () => {
   // Start 1.12., 90. aktiver Tag = 28.02.2027, erste Prüfung am 1.3.
-  const be = (over: Partial<GarantieInput> = {}) => bewerteBreakEven(input({ now: D("2027-03-01"), ...over }), regeln);
+  const be = (over: Partial<GarantieInput> = {}) => bewerteBreakEven(input({ now: D("2027-03-01"), breakEvenTage: 90, ...over }), regeln);
   const termine = (ok: number, nein: number) => [
     ...Array.from({ length: ok }, () => ({ startsAt: D("2026-12-10"), status: "completed" })),
     ...Array.from({ length: nein }, (_, i) => ({ startsAt: D("2026-12-11"), status: i % 2 ? "no_show" : "booked" })),
@@ -366,5 +366,20 @@ describe("Umsatzbuch und Gutschrift", () => {
     expect(gutschriftBetrag(r, "2027-02", "lead")).toBe(1049);
     expect(gutschriftBetrag(r, "2027-02", "breakeven")).toBe(700);
     expect(gutschriftBetrag(null, "2027-02", "lead")).toBe(0);
+  });
+});
+
+describe("Break-even-Garantie ab 13.11.2026: spätestens ab dem 4. Monat profitabel (120 aktive Tage)", () => {
+  it("Frist je Angebot: vor dem Stichtag 90 Tage, danach 120", () => {
+    expect(breakEvenTageFuer(new Date("2026-11-12T10:00:00+01:00"))).toBe(90);
+    expect(breakEvenTageFuer(new Date("2026-11-14T10:00:00+01:00"))).toBe(120);
+  });
+  it("neue Verträge: nach 90 Tagen läuft sie noch, Prüfung erst nach dem 120. aktiven Tag", () => {
+    const e90 = bewerteBreakEven(input({ now: D("2027-03-01"), abschluesse: [{ at: D("2027-01-10"), provision: 1240 }] }), regeln);
+    expect(e90.status).toBe("laeuft");
+    expect(e90.kennzahlen.ende).toBe("2027-03-30"); // Start 1.12. + 120 aktive Tage
+    expect(fortschritt(e90)).toMatch(/von 120/);
+    const e121 = bewerteBreakEven(input({ now: D("2027-04-01"), abschluesse: [{ at: D("2027-01-10"), provision: 1240 }] }), regeln);
+    expect(e121.status).not.toBe("laeuft");
   });
 });
