@@ -136,7 +136,7 @@ export async function ladeGarantieInput(customerId: string, offerId: string, now
     offeneRechnung: customer.paymentOverdueSince != null || pausen.some((p) => p.kind === "dunning" && p.status === "active"),
     leads: leads.map((l) => ({ createdAt: l.createdAt, source: l.source, status: l.status })),
     // Provision je Vertrag mit der Rate seiner Sparte (Cross-Selling bei bezahlten Leads zählt mit)
-    abschluesse: contractsOfPaid.map((c) => ({ at: c.signedAt, provision: contractProvision(c, provision.rates).firstYear })),
+    abschluesse: contractsOfPaid.filter((c) => c.status !== "storniert").map((c) => ({ at: c.signedAt, provision: contractProvision(c, provision.rates).firstYear })),
     termine,
     provisionssaetze: provision.hasCustom,
     vermittlerTyp: provision.typ,

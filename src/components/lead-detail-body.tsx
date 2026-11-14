@@ -263,12 +263,16 @@ export async function LeadDetailBody({
   if (won && rates) {
     const active = contracts.filter((c) => c.status === "aktiv");
     const sum = active.map((c) => contractProvision(c, rates));
-    const premiums = active.map((c) => ({ v: c.premium, monthly: sparteInfo(c.sparte).rateKey === "pkv" })).filter((x) => x.v != null);
+    // Beitrag je Jahr; PKV als Monatsbeitrag; Tarifoptimierung hat keinen Beitrag (premium = Ersparnis)
+    const premiums = active
+      .filter((c) => sparteInfo(c.sparte).rateKey !== "pkv_tarif")
+      .map((c) => ({ v: c.premium, monthly: sparteInfo(c.sparte).rateKey === "pkv" }))
+      .filter((x) => x.v != null);
     if (premiums.length === 1) beitrag = `${formatEUR(premiums[0].v!)} ${premiums[0].monthly ? "im Monat" : "im Jahr"}`;
     else if (premiums.length > 1) beitrag = `${formatEUR(premiums.reduce((n, x) => n + x.v! * (x.monthly ? 12 : 1), 0))} im Jahr (${premiums.length} Verträge)`;
     const first = sum.reduce((s, p) => s + p.firstYear, 0);
     const trail = sum.filter((p) => p.trailFromYear2).reduce((s, p) => s + p.trailPerYear, 0);
-    const missing = active.some((c) => c.premium == null && c.provisionValue == null);
+    const missing = active.some((c) => c.premium == null && c.provisionValue == null && c.beitragssumme == null);
     if (active.length) provision = `≈ ${formatEUR(first)}${trail > 0 ? `, ab dem 2. Jahr ≈ ${formatEUR(trail)} Bestand pro Jahr` : ""}${missing ? " (Standardbeitrag)" : ""}`;
   }
   const label = WHATSAPP_STATUS_LABELS[lead.status ?? ""] ?? lead.status ?? "Neuer Lead";

@@ -4,8 +4,9 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { canEditProvision, customerProductKeys, loadCustomerProvision } from "@/lib/provision-server";
 import { ProvisionForm } from "./provision-form";
-import { CrossSellReminderToggle } from "./cross-sell-toggle";
-import { sparteInfo } from "@/lib/provision";
+import { CrossSellReminderToggle, PoliceReminderToggle } from "./cross-sell-toggle";
+import { realStornoQuote, sparteInfo } from "@/lib/provision";
+import { loadCustomerContracts } from "@/lib/vertraege";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Meine Provisionen | performancegrowth" };
@@ -16,14 +17,17 @@ export const metadata = { title: "Meine Provisionen | performancegrowth" };
 export default async function ProvisionenPage() {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
-  const [provision, booked, ob, used, customer] = await Promise.all([
+  const [provision, booked, ob, used, customer, contracts] = await Promise.all([
     loadCustomerProvision(ctx.customerId),
     customerProductKeys(ctx.customerId),
     prisma.onboarding.findUnique({ where: { customerId: ctx.customerId }, select: { offerId: true } }).catch(() => null),
     // Sparten, die schon in Verträgen vorkommen (Cross-Selling), stehen oben mit
     prisma.leadContract.findMany({ where: { customerId: ctx.customerId }, distinct: ["sparte"], select: { sparte: true } }).catch(() => []),
-    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { crossSellReminder: true } }).catch(() => null),
+    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { crossSellReminder: true, policeReminder: true } }).catch(() => null),
+    loadCustomerContracts(ctx.customerId).catch(() => []),
   ]);
+  // Tatsächliche Stornoquote aus gekündigten Verträgen (erst ab 20 Verträgen)
+  const real = realStornoQuote(contracts.map((c) => ({ signedAt: c.signedAt, cancelledAt: c.status === "storniert" ? c.cancelledAt : null })), new Date());
   const known = [...new Set([...booked, ...used.map((u) => sparteInfo(u.sparte).rateKey)])];
   // Vertreter oder Makler steht im angenommenen Angebot – dann nicht mehr fragen (Ole, 13.11.2026)
   const typKnown = !!ob?.offerId;
@@ -40,8 +44,18 @@ export default async function ProvisionenPage() {
         title="Meine Provisionen"
         subtitle="Damit schätzt die App bei jedem Abschluss Ihre Provision. Vorausgefüllt mit üblichen Werten, passen Sie sie bei Bedarf an Ihren Vertrag an."
       />
-      <ProvisionForm typ={provision.typ} typKnown={typKnown} custom={provision.custom} known={known} canEdit={canEdit} readOnlyReason={readOnlyReason} />
+      <ProvisionForm
+        typ={provision.typ}
+        typKnown={typKnown}
+        custom={provision.custom}
+        known={known}
+        canEdit={canEdit}
+        readOnlyReason={readOnlyReason}
+        storno={provision.stornoCustom ? provision.storno : null}
+        real={{ quote: real.quote, contracts: real.contracts, cancelled: real.cancelled }}
+      />
       <CrossSellReminderToggle on={customer?.crossSellReminder ?? true} canEdit={canEdit} />
+      <PoliceReminderToggle on={customer?.policeReminder ?? true} canEdit={canEdit} />
     </main>
   );
 }

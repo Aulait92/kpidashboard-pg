@@ -45,7 +45,7 @@ export async function loadTipSignals(customerId: string, data: ErtragData, now =
   ]);
   const leadIds = new Set(data.contracts.map((c) => c.leadId));
   const total = data.contracts.reduce((s, c) => s + contractProvision(c, data.rates).firstYear, 0);
-  const missingPremium = data.contracts.filter((c) => c.premium == null && c.provisionValue == null).length;
+  const missingPremium = data.contracts.filter((c) => c.status !== "storniert" && c.premium == null && c.provisionValue == null && c.beitragssumme == null).length;
   const enough = own.nettoLeads >= MIN_LEADS_FOR_RATES;
   const rate = (o: number | null, a: number | null | undefined) => ({ own: enough ? o : null, avg: a ?? null });
   return {

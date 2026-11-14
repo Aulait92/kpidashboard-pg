@@ -3,7 +3,7 @@
 // brauchen, Rückrufe. Alles serialisierbar für die Client-Komponente.
 
 import { POLICY_TODO } from "@/lib/lead-followup";
-import { CROSS_SELL_TODO } from "@/lib/vertraege-shared";
+import { CROSS_SELL_TODO, POLICE_TODO } from "@/lib/vertraege-shared";
 import { prisma } from "@/lib/prisma";
 import { getCallbackLeads } from "@/lib/whatsapp/outreach";
 import { getOrCreateBookingSlug } from "@/lib/calendar";
@@ -82,6 +82,8 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
       { status: "Abschluss", policyDoneAt: null, followUpNote: POLICY_TODO },
       // Cross-Selling: „Weiteres Produkt anbieten?“ 3 Wochen nach dem Abschluss (lib/vertraege)
       { status: "Abschluss", followUpNote: { startsWith: CROSS_SELL_TODO } },
+      // „Police da und erste Zahlung erfolgt?“ 2 Wochen nach dem Abschluss (lib/vertraege)
+      { status: "Abschluss", followUpNote: POLICE_TODO },
     ],
   };
   const [laterFollowUps, laterAppts] = await Promise.all([
@@ -143,6 +145,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
           { NOT: { status: { in: POST_STATUSES.filter((x) => x !== "Angebot gesendet") } } },
           { status: "Abschluss", policyDoneAt: null, followUpNote: POLICY_TODO },
           { status: "Abschluss", followUpNote: { startsWith: CROSS_SELL_TODO } },
+          { status: "Abschluss", followUpNote: POLICE_TODO },
         ],
       },
       orderBy: { followUpAt: "asc" },
