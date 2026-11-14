@@ -10,7 +10,13 @@ import { recordUsage } from "@/lib/usage";
 import { leadScope } from "@/lib/team";
 import { logLeadHistory, loadLeadHistory, type LeadHistoryEntry } from "@/lib/lead-history";
 import { saveSmtp, sendViaPostfach } from "@/lib/mail/postfach";
-import { planTerminErinnerung } from "@/lib/mail/termin-erinnerung";
+import { fuehreNachfassenAus } from "@/lib/mail/termin-erinnerung";
+import { nachfassenFuer } from "@/lib/mail/phasen";
+import { asAnsprache } from "@/lib/ansprache";
+import { datumKurz, musterKuendigung } from "@/lib/mail/platzhalter";
+import { beratungsPdfInhalt, pdfDateiname } from "@/lib/mail/beratung";
+import { textPdf } from "@/lib/mail/text-pdf";
+import { saveLeadFile } from "@/lib/lead-files";
 
 export type PostfachResult = { ok?: boolean; error?: string; info?: string };
 
@@ -105,6 +111,11 @@ export async function deleteVorlageAction(id: string): Promise<void> {
   revalidatePath("/buyer/postfach");
 }
 
+/** PDF-Anhang aus dem Dialog (wird erzeugt, angehängt und nach dem Senden unter Dokumente abgelegt). */
+export type MailPdf =
+  | { art: "beratung"; wuensche: string; rat: string }
+  | { art: "kuendigung"; versicherer: string; vertragsnummer: string; kuendigungstermin: string };
+
 /** E-Mail an einen Lead über das eigene Postfach; steht danach im Verlauf. */
 export async function sendLeadMailAction(input: {
   leadId: string;
@@ -112,14 +123,25 @@ export async function sendLeadMailAction(input: {
   subject: string;
   text: string;
   fileIds: string[];
-  /** Erinnern, falls kein Termin gebucht wird (Werktage), nur bei E-Mails mit Terminlink */
+  /** Gewählte Standardvorlage (z. B. „unterlagen_fehlen“); bestimmt die Nachfass-Aufgabe */
+  vorlageKey?: string | null;
+  /** Nachfass-Aufgabe gewünscht (Terminlink, Nicht erschienen, Unterlagen) und in wie vielen Werktagen */
+  erinnern?: boolean;
+  erinnernTage?: number;
+  /** Text enthält den Terminlink */
+  mitLink?: boolean;
+  /** „Wie besprochen“: vereinbarter Tag (YYYY-MM-DD) für die Wiedervorlage */
+  meldeTag?: string | null;
+  /** PDF erzeugen und anhängen */
+  pdf?: MailPdf | null;
+  /** Alt: Erinnern, falls kein Termin gebucht wird (Werktage) */
   remindDays?: number | null;
 }): Promise<{ ok: true; history: LeadHistoryEntry[]; reminder?: string | null } | { ok: false; error: string }> {
   try {
     const ctx = await ctxWrite();
     const customerId = await writableCustomerId(input.leadId);
     if (!customerId) return { ok: false, error: "In der Vorschau nur mit Demo-Leads möglich." };
-    const lead = await prisma.lead.findFirst({ where: { id: input.leadId, ...leadScope(ctx) }, select: { id: true, erasedAt: true } });
+    const lead = await prisma.lead.findFirst({ where: { id: input.leadId, ...leadScope(ctx) }, select: { id: true, erasedAt: true, name: true, source: true } });
     if (!lead || lead.erasedAt) return { ok: false, error: "Lead nicht gefunden." };
     const to = input.to.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return { ok: false, error: "Bitte eine gültige E-Mail-Adresse angeben." };
@@ -132,21 +154,56 @@ export async function sendLeadMailAction(input: {
           select: { fileName: true, contentType: true, data: true, size: true },
         })
       : [];
-    if (files.reduce((s, f) => s + f.size, 0) > 20 * 1024 * 1024) return { ok: false, error: "Anhänge zusammen höchstens 20 MB." };
-    const res = await sendViaPostfach(ctx.userId, {
-      to,
-      subject,
-      text,
-      attachments: files.map((f) => ({ fileName: f.fileName, contentType: f.contentType, data: Buffer.from(f.data) })),
-    });
+    const pdf = input.pdf ? await mailPdf(input.pdf, { customerId, userId: ctx.userId, kunde: lead.name ?? "", produkt: lead.source }) : null;
+    const attachments = files.map((f) => ({ fileName: f.fileName, contentType: f.contentType, data: Buffer.from(f.data) }));
+    if (pdf) attachments.push({ fileName: pdf.fileName, contentType: "application/pdf", data: Buffer.from(pdf.data) });
+    if (attachments.reduce((s, f) => s + f.data.length, 0) > 20 * 1024 * 1024) return { ok: false, error: "Anhänge zusammen höchstens 20 MB." };
+    const res = await sendViaPostfach(ctx.userId, { to, subject, text, attachments });
     if (!res.ok) return { ok: false, error: res.error };
-    const anh = files.length ? `\n\nAnhang: ${files.map((f) => f.fileName).join(", ")}` : "";
+    const anh = attachments.length ? `\n\nAnhang: ${attachments.map((f) => f.fileName).join(", ")}` : "";
     await logLeadHistory(lead.id, "email", `E-Mail an ${to}: ${subject}\n\n${text}${anh}`, { customerId, userId: ctx.userId });
     await recordUsage("action", "lead.email");
-    const reminder = input.remindDays ? await planTerminErinnerung(lead.id, input.remindDays, { customerId, userId: ctx.userId }).catch(() => null) : null;
+    const notes: string[] = [];
+    // PDF im Kontakt unter Dokumente ablegen
+    if (pdf) {
+      const saved = await saveLeadFile({ leadId: lead.id, customerId, kind: "sonstiges", fileName: pdf.fileName, data: pdf.data, userId: ctx.userId }).catch(() => null);
+      notes.push(saved?.ok ? "PDF unter Dokumente abgelegt." : "PDF gesendet, aber nicht unter Dokumente abgelegt.");
+    }
+    // Nachfass-Aufgabe je Vorlage, ohne Doppelungen (lib/mail/termin-erinnerung.ts)
+    const plan =
+      input.remindDays != null && input.erinnern === undefined
+        ? nachfassenFuer(input.vorlageKey, { erinnern: input.remindDays > 0, tage: input.remindDays, mitLink: true })
+        : nachfassenFuer(input.vorlageKey, { erinnern: !!input.erinnern, tage: input.erinnernTage ?? 2, mitLink: !!input.mitLink, meldeTag: input.meldeTag });
+    const reminder = await fuehreNachfassenAus(lead.id, plan, { customerId, userId: ctx.userId }).catch(() => null);
+    if (reminder) notes.push(reminder);
     revalidatePath(`/buyer/leads/${lead.id}`);
-    return { ok: true, history: await loadLeadHistory(lead.id, ctx.userId), reminder };
+    return { ok: true, history: await loadLeadHistory(lead.id, ctx.userId), reminder: notes.join(" ") || null };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Nicht möglich." };
   }
+}
+
+/** PDF für die Gesprächszusammenfassung bzw. Musterkündigung erzeugen. */
+async function mailPdf(p: MailPdf, o: { customerId: string; userId: string; kunde: string; produkt: string | null }): Promise<{ fileName: string; data: Uint8Array }> {
+  const kurz = (v: string, n: number) => String(v ?? "").trim().slice(0, n);
+  if (p.art === "kuendigung") {
+    const muster = musterKuendigung({ name: o.kunde, versicherer: kurz(p.versicherer, 120), vertragsnummer: kurz(p.vertragsnummer, 60), kuendigungstermin: datumKurz(kurz(p.kuendigungstermin, 10)) });
+    const [titel, , ...rest] = muster.split("\n");
+    return { fileName: pdfDateiname("Musterkuendigung", o.kunde), data: await textPdf({ titel, bloecke: [{ text: rest.join("\n") }] }) };
+  }
+  const [c, conn, me] = await Promise.all([
+    prisma.customer.findUnique({ where: { id: o.customerId }, select: { leadAddress: true } }),
+    prisma.mailConnection.findUnique({ where: { userId: o.userId }, select: { fromName: true } }),
+    prisma.user.findUnique({ where: { id: o.userId }, select: { displayName: true } }),
+  ]);
+  const berater = conn?.fromName ?? me?.displayName ?? "";
+  const inhalt = beratungsPdfInhalt({
+    an: asAnsprache(c?.leadAddress),
+    kunde: o.kunde,
+    produkt: (o.produkt ?? "").trim() || "Versicherung",
+    berater,
+    wuensche: kurz(p.wuensche, 6000),
+    rat: kurz(p.rat, 6000),
+  });
+  return { fileName: pdfDateiname("Beratungsdokumentation", o.kunde), data: await textPdf({ ...inhalt, autor: berater || undefined }) };
 }
