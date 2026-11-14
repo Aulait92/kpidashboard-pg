@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- Vorschaubilder aus der eigenen Admin-API, keine Optimierung nötig */
 
 import { useActionState, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -90,30 +91,33 @@ export function DraftCard(props: {
         {text.length} / {COUNT_LIMIT} Zeichen · vor „mehr anzeigen“: {lines.slice(0, 2).join(" ").slice(0, 60)}…
       </p>
       <div className="mt-3">
-        <p className="mb-1.5 text-xs font-semibold text-[color:var(--muted)]">Bild</p>
-        <div className="flex gap-2 overflow-x-auto pb-1" role="radiogroup" aria-label="Bild">
-          <button type="button" onClick={() => setImage("keins")} className={cn(tile(image === "keins"), "flex items-center justify-center text-[color:var(--muted)]")} aria-pressed={image === "keins"} title="Ohne Bild">
-            <ImageOff className="h-5 w-5" />
-          </button>
-          {graphic.trim() ? (
-            <button type="button" onClick={() => setImage("grafik")} className={tile(image === "grafik")} aria-pressed={image === "grafik"} title="Text-Grafik">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={graphicSrc} alt="Text-Grafik" className="h-full w-full object-cover" loading="lazy" />
-            </button>
-          ) : null}
-          {props.aiPhotoId ? (
-            <button type="button" onClick={() => setImage(props.aiPhotoId!)} className={cn(tile(image === props.aiPhotoId), "relative")} aria-pressed={image === props.aiPhotoId} title="KI-Bild">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/api/linkedin/foto/${props.aiPhotoId}`} alt="KI-Bild" className="h-full w-full object-cover" loading="lazy" />
-              <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 text-[10px] font-semibold text-white">KI</span>
-            </button>
-          ) : null}
-          {props.photos.map((f) => (
-            <button key={f.id} type="button" onClick={() => setImage(f.id)} className={tile(image === f.id)} aria-pressed={image === f.id} title={f.description}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/api/linkedin/foto/${f.id}`} alt={f.description} className="h-full w-full object-cover" loading="lazy" />
-            </button>
-          ))}
+        <p className="mb-1.5 text-xs font-semibold text-[color:var(--muted)]">Bild auswählen (eins wird gepostet)</p>
+        <div className="flex flex-wrap items-start gap-4">
+          {/* Große Vorschau des gewählten Bilds */}
+          <div className="h-40 w-40 shrink-0 overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken)]" data-li-preview>
+            {image === "keins" ? (
+              <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-xs text-[color:var(--muted)]">
+                <ImageOff className="h-6 w-6" /> Ohne Bild
+              </div>
+            ) : (
+              <img src={image === "grafik" ? graphicSrc : `/api/linkedin/foto/${image}`} alt="Gewähltes Bild" className="h-full w-full object-cover" />
+            )}
+          </div>
+          <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1" role="radiogroup" aria-label="Bild">
+            {[
+              { key: "keins", label: "Ohne", node: <ImageOff className="h-5 w-5" /> },
+              ...(props.aiPhotoId
+                ? [{ key: props.aiPhotoId, label: "KI-Bild", node: <img src={`/api/linkedin/foto/${props.aiPhotoId}`} alt="KI-Bild" className="h-full w-full object-cover" loading="lazy" /> }]
+                : []),
+              ...(graphic.trim() ? [{ key: "grafik", label: "Grafik", node: <img src={graphicSrc} alt="Text-Grafik" className="h-full w-full object-cover" loading="lazy" /> }] : []),
+              ...props.photos.map((f) => ({ key: f.id, label: "Foto", node: <img src={`/api/linkedin/foto/${f.id}`} alt={f.description} className="h-full w-full object-cover" loading="lazy" /> })),
+            ].map((o) => (
+              <button key={o.key} type="button" onClick={() => setImage(o.key)} aria-pressed={image === o.key} className="flex shrink-0 flex-col items-center gap-1 text-xs text-[color:var(--muted)]">
+                <span className={cn(tile(image === o.key), "flex items-center justify-center")}>{o.node}</span>
+                <span className={image === o.key ? "font-semibold text-[color:var(--brand)]" : undefined}>{o.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
         {image === "grafik" || !graphic.trim() ? (
           <label className="mt-2 block text-xs text-[color:var(--muted)]">
@@ -313,7 +317,6 @@ export function PhotoItem({ id, description, used }: { id: string; description: 
   const [pending, start] = useTransition();
   return (
     <li className="overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={`/api/linkedin/foto/${id}`} alt={description} className="aspect-square w-full object-cover" loading="lazy" />
       <div className="space-y-2 p-2">
         <textarea
