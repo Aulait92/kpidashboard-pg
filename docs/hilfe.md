@@ -366,7 +366,7 @@ Seiten aus der Liste „Seiten“ unten.
 ## Kollegen empfehlen (nur Inhaber)
 
 - Wo: Profilmenü → „Kollegen empfehlen“ oder Konto & Rechnungen → Karte „Kollegen empfehlen“. Nach schönen
-  Momenten (Garantie erreicht, 5. bzw. 10. Abschluss, gute Bewertung im Feedback nach 30/90 Tagen) erscheint in
+  Momenten (5. bzw. 10. Abschluss, gute Bewertung im Feedback nach 30/90 Tagen) erscheint in
   „Heute“ einmalig ein Hinweis; jeder Hinweis kommt höchstens einmal, mit mindestens 30 Tagen Abstand, und lässt
   sich wegklicken.
 - Ihr persönlicher Link (`/empfehlen/…`) bleibt immer gleich. Teilen per „Teilen“ (Handy), WhatsApp oder E-Mail mit

@@ -515,13 +515,7 @@ export async function loadReferralNudge(customerId: string, now = new Date()): P
     prisma.customerFeedback.findMany({ where: { customerId, kind: { in: ["day30", "day90"] }, score: { gte: NPS_PROMOTER } }, select: { kind: true } }),
   ]);
   const goodFeedback = feedback.map((f) => f.kind as "day30" | "day90");
-  let picked = pickNudge(nudgeCandidates({ closedDeals, guaranteeMet: false, goodFeedback }), states, now);
-  // Garantie nur prüfen, wenn sonst nichts ansteht und der Anlass noch nie gezeigt wurde (teurer)
-  if (!picked.show && pickNudge(["garantie"], states, now).show === "garantie") {
-    const { garantieStatus } = await import("@/lib/garantien-server");
-    const g = await garantieStatus(customerId, now).catch(() => null);
-    if (g?.ergebnisse.some((e) => e.status === "erfuellt")) picked = pickNudge(["garantie"], states, now);
-  }
+  const picked = pickNudge(nudgeCandidates({ closedDeals, goodFeedback }), states, now);
   if (picked.expire.length) {
     await prisma.referralNudge.updateMany({ where: { customerId, key: { in: picked.expire }, closedAt: null }, data: { closedAt: now } });
   }

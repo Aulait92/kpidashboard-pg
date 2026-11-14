@@ -7,6 +7,7 @@ import {
   newReferralCode,
   nudgeCandidates,
   pickNudge,
+  NUDGE_TEXT,
   referralStage,
   rewardAmount,
   rewardSentence,
@@ -75,10 +76,15 @@ describe("Stand einer Empfehlung", () => {
 });
 
 describe("Hinweise „Kollegen empfehlen“", () => {
-  it("Anlässe: gutes Feedback, 5./10. Abschluss, Garantie", () => {
-    expect(nudgeCandidates({ closedDeals: 4, guaranteeMet: false, goodFeedback: [] })).toEqual([]);
-    expect(nudgeCandidates({ closedDeals: 5, guaranteeMet: false, goodFeedback: [] })).toEqual(["abschluss5"]);
-    expect(nudgeCandidates({ closedDeals: 12, guaranteeMet: true, goodFeedback: ["day30"] })).toEqual(["feedback-day30", "abschluss10", "garantie"]);
+  it("Anlässe: gutes Feedback, 5./10. Abschluss (kein Anlass „Garantie erreicht“)", () => {
+    expect(nudgeCandidates({ closedDeals: 4, goodFeedback: [] })).toEqual([]);
+    expect(nudgeCandidates({ closedDeals: 5, goodFeedback: [] })).toEqual(["abschluss5"]);
+    expect(nudgeCandidates({ closedDeals: 12, goodFeedback: ["day30"] })).toEqual(["feedback-day30", "abschluss10"]);
+    expect(Object.keys(NUDGE_TEXT)).not.toContain("garantie");
+  });
+  it("ein noch offener alter Hinweis „garantie“ wird nicht mehr gezeigt", () => {
+    const states: NudgeState[] = [{ key: "garantie", firstShownAt: ago(2), closedAt: null }];
+    expect(pickNudge(["abschluss5"], states, now).show).not.toBe("garantie");
   });
   it("jeder Anlass höchstens einmal", () => {
     const states: NudgeState[] = [{ key: "abschluss5", firstShownAt: ago(60), closedAt: ago(59) }];
@@ -88,16 +94,16 @@ describe("Hinweise „Kollegen empfehlen“", () => {
     const open: NudgeState[] = [{ key: "abschluss5", firstShownAt: ago(3), closedAt: null }];
     expect(pickNudge(["abschluss5"], open, now)).toEqual({ show: "abschluss5", expire: [] });
     const old: NudgeState[] = [{ key: "abschluss5", firstShownAt: ago(20), closedAt: null }];
-    const r = pickNudge(["abschluss5", "garantie"], old, now);
+    const r = pickNudge(["abschluss5", "abschluss10"], old, now);
     expect(r.expire).toEqual(["abschluss5"]);
     // abgelaufen vor 6 Tagen → Abstand von 30 Tagen gilt auch hier
     expect(r.show).toBeNull();
   });
   it("mindestens 30 Tage zwischen zwei Hinweisen", () => {
     const states: NudgeState[] = [{ key: "abschluss5", firstShownAt: ago(25), closedAt: ago(20) }];
-    expect(pickNudge(["garantie"], states, now).show).toBeNull();
+    expect(pickNudge(["abschluss10"], states, now).show).toBeNull();
     const later: NudgeState[] = [{ key: "abschluss5", firstShownAt: ago(40), closedAt: ago(31) }];
-    expect(pickNudge(["garantie"], later, now).show).toBe("garantie");
+    expect(pickNudge(["abschluss10"], later, now).show).toBe("abschluss10");
   });
 });
 

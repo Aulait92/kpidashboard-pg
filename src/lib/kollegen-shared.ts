@@ -142,14 +142,11 @@ export function isSelfReferral(referredEmail: string, referrerEmails: string[]):
 export const NUDGE_GAP_DAYS = 30;
 export const NUDGE_EXPIRE_DAYS = 14;
 
-export type NudgeKey = "garantie" | "abschluss5" | "abschluss10" | "feedback-day30" | "feedback-day90";
+// „Garantie erreicht“ gibt es nicht mehr: Kunden sehen den Garantiestatus nicht in der App (Ole, 14.11.2026).
+export type NudgeKey = "abschluss5" | "abschluss10" | "feedback-day30" | "feedback-day90";
 export type NudgeState = { key: string; firstShownAt: Date; closedAt: Date | null };
 
 export const NUDGE_TEXT: Record<NudgeKey, { title: string; text: string }> = {
-  garantie: {
-    title: "Ihre Garantie ist erreicht – Glückwunsch!",
-    text: "Kennen Sie Kollegen, die das auch wollen? Mit Ihrem persönlichen Link empfehlen Sie uns in einer Minute weiter.",
-  },
   abschluss5: {
     title: "5 Abschlüsse – stark!",
     text: "Kennen Sie Kollegen, denen das auch helfen würde? Empfehlen Sie uns weiter.",
@@ -184,7 +181,7 @@ export function pickNudge(candidates: NudgeKey[], states: NudgeState[], now: Dat
   const closedAt = (s: NudgeState) => s.closedAt ?? (now.getTime() - s.firstShownAt.getTime() > NUDGE_EXPIRE_DAYS * DAY_MS ? new Date(s.firstShownAt.getTime() + NUDGE_EXPIRE_DAYS * DAY_MS) : null);
   for (const s of states) if (!s.closedAt && closedAt(s)) expire.push(s.key as NudgeKey);
   // Offener (gezeigter, nicht abgelaufener) Hinweis hat Vorrang – auch wenn der Anlass inzwischen ein anderer ist.
-  const open = states.find((s) => !closedAt(s));
+  const open = states.find((s) => !closedAt(s) && s.key in NUDGE_TEXT);
   if (open) return { show: open.key as NudgeKey, expire };
   const lastClosed = Math.max(0, ...states.map((s) => closedAt(s)?.getTime() ?? 0));
   if (lastClosed && now.getTime() - lastClosed < NUDGE_GAP_DAYS * DAY_MS) return { show: null, expire };
@@ -193,12 +190,11 @@ export function pickNudge(candidates: NudgeKey[], states: NudgeState[], now: Dat
 }
 
 /** Anlässe aus den Kennzahlen (höchste zuerst). */
-export function nudgeCandidates(input: { closedDeals: number; guaranteeMet: boolean; goodFeedback: ("day30" | "day90")[] }): NudgeKey[] {
+export function nudgeCandidates(input: { closedDeals: number; goodFeedback: ("day30" | "day90")[] }): NudgeKey[] {
   const out: NudgeKey[] = [];
   for (const k of input.goodFeedback) out.push(`feedback-${k}` as NudgeKey);
   if (input.closedDeals >= 10) out.push("abschluss10");
   else if (input.closedDeals >= 5) out.push("abschluss5");
-  if (input.guaranteeMet) out.push("garantie");
   return out;
 }
 
