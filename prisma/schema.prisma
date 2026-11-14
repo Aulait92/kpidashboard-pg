@@ -580,6 +580,14 @@ model Lead {
   referralLink      ReferralLink?  @relation("ReferredLeads", fields: [referralLinkId], references: [id], onDelete: SetNull)
   // Dank an den Empfehlenden verschickt (einmal, sobald dieser Lead abgeschlossen ist)
   referralThankedAt DateTime?
+  // Empfohlene Person erlaubt, dass der Empfehlende eine Rückmeldung bekommt (Empfehlungsseite)
+  referralStatusConsent Boolean @default(false)
+  // Letzte Rückmeldung an den Empfehlenden: gemeldet | termin
+  referralNotifiedStage String?
+  // Dankeschön an den Empfehlenden für diese Empfehlung: offen | erledigt | entfaellt
+  referralRewardStatus  String?
+  referralRewardDueAt   DateTime?
+  referralRewardDoneAt  DateTime?
   // Bewertungs-Wächter: Google-Bewertungen, die diesem Kontakt zugeordnet sind
   googleReviews     GoogleReview[]
 
@@ -993,6 +1001,8 @@ model Appointment {
   meetUrl         String?
   status          String    @default("booked") // booked | cancelled | completed | no_show
   reminderSentAt  DateTime? // gesetzt, sobald die WhatsApp-Erinnerung raus ist
+  // Empfehlungen: nach diesem Termin geprüft, ob der Empfehlungslink rausgeht (einmal je Termin)
+  referralAskedAt DateTime?
   // Getrennte Einladung für den Berater (interne Infos), gleicher Termin.
   // calendarEventId = Einladung des Leads (kundenfreundlich, ohne Interna).
   advisorEventId  String?
@@ -2372,6 +2382,32 @@ model ReviewSettings {
   unhappyText        String?
   referralText       String?
   referralThanksText String?
+  praiseReferralText String?
+  // Playbook (14.11.2026): Empfehlungsangebot für die empfohlene Person.
+  // none | ordner | kfz | luecke | custom (eigene Überschrift + Text, ohne Prämien)
+  offerKind          String   @default("none")
+  offerHeadline      String?
+  offerText          String?
+  // Bei Lob direkt den Empfehlungslink mitschicken (statt erst nach referralDelayDays)
+  referralOnPraise   Boolean  @default(true)
+  // Rückmeldung an Empfehlende (nur mit Einwilligung der empfohlenen Person)
+  statusUpdates      Boolean  @default(true)
+  // Aufgabe „Empfehlung nachfassen“ so viele Stunden nach „Empfehlungslink senden“ (0 = aus)
+  followUpHours      Int      @default(48)
+  // Dankeschön für Empfehlende (Tippgeber-Vergütung), standardmäßig aus. Nie für die empfohlene
+  // Person und nie für einen eigenen Vertrag (§ 48b VAG). none | gutschein | spende
+  rewardKind         String   @default("none")
+  // Wert in Euro
+  rewardAmount       Int?
+  // Gutschein: Art (z. B. „Wunschgutschein“); Spende: Empfänger
+  rewardNote         String?
+  // termin = Termin mit der empfohlenen Person hat stattgefunden | abschluss = Abschluss
+  rewardTrigger      String   @default("termin")
+  // Vertreter hat bestätigt, dass er die Zulässigkeit geprüft hat
+  rewardConfirmedAt  DateTime?
+  // Nach einem stattgefundenen Termin mit einem Kunden (Abschluss/Bestandskunde) automatisch den
+  // Empfehlungslink senden, höchstens alle 180 Tage je Kontakt. Standardmäßig aus.
+  referralAfterAppointment Boolean @default(false)
   updatedAt          DateTime @updatedAt
   customer           Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 }
@@ -2429,13 +2465,32 @@ model ReferralLink {
   existingCustomerId String?           @unique
   views              Int               @default(0)
   lastSentAt         DateTime?
+  // contact = Link eines Kontakts | general = allgemeiner Link des Vertreters (Aufsteller, Signatur)
+  kind               String            @default("contact")
+  // Anlass des letzten Versands: schaden | ersparnis | jahresgespraech | termin (QR im Gespräch)
+  lastOccasion       String?
   createdAt          DateTime          @default(now())
   customer           Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
   lead               Lead?             @relation("ReferralLinkLead", fields: [leadId], references: [id], onDelete: Cascade)
   existingCustomer   ExistingCustomer? @relation(fields: [existingCustomerId], references: [id], onDelete: Cascade)
   referredLeads      Lead[]            @relation("ReferredLeads")
+  visits             ReferralVisit[]
 
   @@index([customerId])
+}
+
+// Einzelne Besucher der Kontaktseite einer Empfehlung (für den Trichter: Personen statt Klicks).
+// visitorHash = gekürzter Hash aus Link, IP und Browser – keine IP im Klartext. Löschfrist 12 Monate.
+model ReferralVisit {
+  id          String       @id @default(cuid())
+  linkId      String
+  customerId  String
+  visitorHash String
+  createdAt   DateTime     @default(now())
+  link        ReferralLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+
+  @@unique([linkId, visitorHash])
+  @@index([customerId, createdAt])
 }
 
 // ─── Bewertungs-Wächter (Teil des Moduls „Empfehlungen & Bewertungen“) ───────

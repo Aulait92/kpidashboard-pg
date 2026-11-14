@@ -415,14 +415,42 @@ Seiten aus der Liste „Seiten“ unten.
   dann die Bitte um eine Google-Bewertung mit Link. **Alle bekommen dieselbe Nachricht** – es gibt keine Vorab-Frage,
   die darüber entscheidet, wer den Google-Link bekommt (das verbieten die Google-Richtlinien).
 - **Antworten:** Die KI liest die Antwort. Kritik oder Beschwerde → sofort Push und die Aufgabe „Kunde unzufrieden –
-  bitte heute anrufen“ mit Zitat in „Heute“; die Bitte um Empfehlung geht an diesen Kunden nicht raus. Lob → kurzer
-  Dank (ohne zweiten Link). Rückfragen landen als „Braucht dich“ im Chat. Geklärte Kritik markieren Sie in
+  bitte heute anrufen“ mit Zitat in „Heute“; die Bitte um Empfehlung geht an diesen Kunden nicht raus. Lob → Dank
+  mit dem persönlichen Empfehlungslink (abschaltbar unter „Der richtige Moment“; ohne zweiten Google-Link). Rückfragen landen als „Braucht dich“ im Chat. Geklärte Kritik markieren Sie in
   „Empfehlungen & Bewertungen“ mit „Als geklärt markieren“.
 - **Bitte um Empfehlung:** einige Wochen nach dem Abschluss (Standard 21 Tage), nicht bei Kritik und nicht bei offener
   Aufgabe „unzufrieden“. Der persönliche Link führt Ihren Kunden auf eine Seite zum Teilen (WhatsApp oder Teilen-Knopf).
   Die empfohlene Person trägt sich selbst ein (mit Einwilligung) und landet als Lead mit Quelle „Empfehlung“ bei Ihnen,
   inklusive der üblichen ersten Nachricht. Wird daraus ein Abschluss, bekommt der Empfehlende automatisch einen Dank –
-  ohne Namen der empfohlenen Person und **ohne Prämie** (Provisionsabgabeverbot).
+  ohne Namen der empfohlenen Person.
+- **Empfehlungsangebot:** In den Einstellungen wählen Sie, was die empfohlene Person bekommt: Versicherungs-Check,
+  Kfz-Check, Absicherungs-Check oder ein eigenes Angebot. Es steht auf der Empfehlungsseite und im Text, den Ihr Kunde
+  weiterleitet. Keine Prämien, Gutscheine, Geldbeträge oder Garantien im Angebot.
+- **Anlass wählen:** Bei „Empfehlungslink senden“ können Sie einen Anlass wählen (Schaden geregelt, Beitrag gespart,
+  nach dem Jahresgespräch). Der Text passt dann zum Moment.
+- **Im Termin zeigen:** Im Kontakt öffnet „Im Termin zeigen“ einen QR-Code zum persönlichen Link. Ihr Kunde scannt ihn
+  und teilt die Empfehlung gleich am Tisch.
+- **Aufsteller und Signatur:** In „Empfehlungen & Bewertungen“ → „Im Gespräch und im Büro“ finden Sie einen Aufsteller
+  zum Drucken und eine Zeile für Ihre E-Mail-Signatur. Beide nutzen einen allgemeinen Link; Empfehlungen darüber
+  lassen sich keinem einzelnen Kunden zuordnen.
+- **Per WhatsApp anfragen:** Ist Ihr WhatsApp verbunden, kann die empfohlene Person mit einem Tipp schreiben statt
+  das Formular auszufüllen. Die Nachricht ist vorgeschrieben und landet als Lead mit Quelle „Empfehlung“ in Ihrem Chat.
+- **Persönlicher Link am Aufsteller:** Scannt ein Kunde den Aufsteller, kann er seine Handynummer angeben und bekommt
+  seinen persönlichen Link. So wissen Sie, von wem die Empfehlung kommt.
+- **Nach jedem Termin (optional):** Unter „Der richtige Moment“ einschaltbar. Markieren Sie einen Termin mit einem Kunden
+  als stattgefunden, geht einige Stunden später der Empfehlungslink raus (höchstens alle 180 Tage je Kontakt).
+- **Nachfassen:** Nach „Empfehlungslink senden“ oder „Im Termin zeigen“ legt die App eine Aufgabe in „Heute“ an
+  (Standard nach 48 Stunden, einstellbar, 0 = aus), wenn am Kontakt keine andere Wiedervorlage steht.
+- **Wo gehen Empfehlungen verloren?** Der Trichter zeigt: Links ausgegeben, vom Kunden geöffnet, Besucher (je Person
+  einmal gezählt), Empfehlungen, Neukunden – mit einem Hinweis, wo es gerade am meisten hakt.
+- **Empfehlende auf dem Laufenden halten:** Wenn die empfohlene Person auf der Empfehlungsseite zustimmt, bekommt Ihr
+  Kunde eine kurze Nachricht, sobald sie sich gemeldet hat und sobald ein Termin steht. Abschaltbar.
+- **Gesprächsleitfaden:** vier Schritte mit Formulierungen, wie Sie Empfehlungen im Gespräch ansprechen.
+- **Dankeschön für Empfehlende (optional, standardmäßig aus):** Gutschein oder Spende, vorher angekündigt auf der
+  Seite Ihres Kunden. Fällig nach einem stattgefundenen Gespräch oder 30 Tage nach dem Abschluss; die App erinnert
+  Sie, Sie übergeben selbst und haken unter „Offene Dankeschöns“ ab. Es geht nie an die empfohlene Person und nicht
+  bei Selbstempfehlung. Bis 15 € je Vertrag und Jahr ist es unkritisch; darüber bitte vorher mit Ihrem Versicherer
+  oder Ihrer Rechtsberatung klären (§ 48b VAG). Die App gibt dazu keine Rechtsberatung.
 - **Empfehlungslink senden:** In jedem Kontakt mit Abschluss (und bei Bestandskunden) gibt es den Knopf
   „Empfehlungslink senden“ – jederzeit nutzbar, z. B. nach einem guten Gespräch. Ohne WhatsApp-Verbindung erscheint
   der Text zum Kopieren oder Teilen. Mit Bestandskunden-Modul gibt es zusätzlich die Kampagne „Jährliche

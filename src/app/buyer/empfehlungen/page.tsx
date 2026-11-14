@@ -1,18 +1,20 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AlertTriangle, BarChart3, ListChecks, Settings2, Star } from "lucide-react";
+import QRCode from "qrcode";
+import { AlertTriangle, BarChart3, Filter, Gift, ListChecks, MessagesSquare, QrCode, Settings2, Star } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { Badge, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
+import { nowMs } from "@/lib/now";
 import { moduleInfo } from "@/lib/empfehlung/module";
-import { loadEmpfehlungStats, loadSettings, recentRequests } from "@/lib/empfehlung/requests";
+import { generalLinkOf, loadEmpfehlungStats, loadSettings, openRewards, recentRequests, referralLinkFor } from "@/lib/empfehlung/requests";
 import { advisorDisplayName } from "@/lib/whatsapp/template-plan";
-import { fmtDate } from "@/lib/empfehlung/shared";
+import { fmtDate, resolveOffer, signatureLine } from "@/lib/empfehlung/shared";
 import { PRICE_LIST } from "@/lib/offer-pricing";
-import { EmpfehlungStatsGrid } from "@/components/empfehlung/server";
+import { EmpfehlungFunnel, EmpfehlungStatsGrid, Leitfaden } from "@/components/empfehlung/server";
 import { WaechterSection } from "@/components/empfehlung/waechter";
-import { EmpfehlungBookButton, ResolveButton, SettingsForm, TestSendForm } from "@/components/empfehlung/client";
+import { CopyText, EmpfehlungBookButton, ResolveButton, RewardButtons, SettingsForm, TestSendForm } from "@/components/empfehlung/client";
 
 // Modul „Empfehlungen & Bewertungen“: Einstellungen, Test, Auswertung, letzte Anfragen.
 export const dynamic = "force-dynamic";
@@ -34,7 +36,7 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
   if (ctx.teamRole !== "owner") redirect("/buyer");
   const info = await moduleInfo(ctx.customerId);
   if (!info) redirect("/buyer");
-  const customer = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, whatsAppAccount: { select: { status: true } } } });
+  const customer = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, vermittlerTyp: true, whatsAppAccount: { select: { status: true } } } });
   const vertreter = advisorDisplayName(customer?.name ?? "");
 
   if (!info.active) {
@@ -69,6 +71,12 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
     recentRequests(ctx.customerId, 30),
     prisma.messageTemplate.findMany({ where: { customerId: ctx.customerId, purpose: { in: ["review_request", "referral_request", "referral_thanks"] } }, select: { purpose: true, status: true } }),
   ]);
+  // Allgemeiner Link für Aufsteller und Signatur (in der Admin-Vorschau nichts anlegen)
+  const general = ctx.preview ? await prisma.referralLink.findFirst({ where: { customerId: ctx.customerId, kind: "general" } }) : await generalLinkOf(ctx.customerId);
+  const generalUrl = general ? referralLinkFor(general.token) : null;
+  const generalQr = generalUrl ? await QRCode.toDataURL(generalUrl, { margin: 1, width: 280 }) : null;
+  const offer = resolveOffer(settings, vertreter);
+  const rewards = await openRewards(ctx.customerId);
   const approved = (p: string) => templates.some((t) => t.purpose === p && t.status === "approved");
   const warnings = [
     !settings.googleReviewUrl ? "Bitte Ihren Google-Bewertungslink hinterlegen – ohne ihn geht keine Nachfrage raus." : null,
@@ -104,6 +112,79 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
           </div>
         </Card>
 
+        {rewards.length ? (
+          <Card>
+            <CardHeader title="Offene Dankeschöns" icon={Gift} count={rewards.length} />
+            <ul className="divide-y divide-[color:var(--border)] text-sm" data-empfehlung-rewards>
+              {rewards.map((r) => (
+                <li key={r.leadId} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3">
+                  <span className="min-w-0 flex-1">
+                    <b>{r.label}</b> für{" "}
+                    {r.recommenderLeadId ? (
+                      <Link href={`/buyer/leads/${r.recommenderLeadId}`} className="font-medium hover:underline">
+                        {r.recommender}
+                      </Link>
+                    ) : (
+                      <span className="font-medium">{r.recommender}</span>
+                    )}
+                    <span className="block text-xs text-[color:var(--muted)]">
+                      Empfehlung: {r.referred}
+                      {r.dueAt && r.dueAt.getTime() > nowMs() ? ` · frühestens ab ${fmtDate(r.dueAt)} (Widerrufsfrist abwarten)` : ""}
+                    </span>
+                  </span>
+                  <RewardButtons leadId={r.leadId} readOnly={ctx.preview} />
+                </li>
+              ))}
+            </ul>
+          </Card>
+        ) : null}
+
+        <Card>
+          <CardHeader title="Wo gehen Empfehlungen verloren? (letzte 90 Tage)" icon={Filter} />
+          <div className="px-5 pb-5 pt-4">
+            <EmpfehlungFunnel s={stats} />
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader title="Im Gespräch und im Büro" icon={QrCode} />
+          <div className="grid gap-5 px-5 pb-5 pt-4 text-sm sm:grid-cols-[auto_1fr]" data-empfehlung-gespraech>
+            {generalQr ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={generalQr} alt="QR-Code zu Ihrem allgemeinen Empfehlungslink" className="h-36 w-36 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-1.5" />
+            ) : null}
+            <div className="space-y-3">
+              <p>
+                <b>Im Termin:</b> Öffnen Sie den Kontakt und tippen Sie auf „Im Termin zeigen“. Ihr Kunde scannt seinen persönlichen QR-Code und teilt die Empfehlung
+                gleich am Tisch. So wissen Sie später, von wem eine Empfehlung kam.
+              </p>
+              <p>
+                <b>Aufsteller fürs Büro:</b> ein Blatt mit {offer ? "Ihrem Empfehlungsangebot" : "Ihrem Empfehlungslink"} und QR-Code, für Beratungstisch und Empfang.{" "}
+                <Link href="/buyer/empfehlungen/aufsteller" className="font-semibold text-[color:var(--brand)] hover:underline">
+                  Aufsteller öffnen und drucken
+                </Link>
+              </p>
+              {generalUrl ? (
+                <div className="space-y-2">
+                  <p>
+                    <b>E-Mail-Signatur:</b> Diese Zeile unter Ihre Mails setzen.
+                  </p>
+                  <p className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] p-3 text-xs">{signatureLine(generalUrl, offer)}</p>
+                  <CopyText text={signatureLine(generalUrl, offer)} label="Zeile kopieren" />
+                </div>
+              ) : null}
+              <p className="text-xs text-[color:var(--muted)]">Aufsteller und Signatur nutzen einen allgemeinen Link. Empfehlungen darüber kommen als Lead an, lassen sich aber keinem einzelnen Kunden zuordnen.</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader title="Gesprächsleitfaden: So sprechen Sie Empfehlungen an" icon={MessagesSquare} />
+          <div className="px-5 pb-5 pt-4">
+            <Leitfaden />
+          </div>
+        </Card>
+
         <WaechterSection customerId={ctx.customerId} readOnly={ctx.preview} flash={(await searchParams).google ?? null} />
 
         <Card>
@@ -116,7 +197,16 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
                 reviewDelayDays: settings.reviewDelayDays,
                 referralDelayDays: settings.referralDelayDays,
                 custom: settings.custom,
+                offerKind: settings.offerKind,
+                offerHeadline: settings.offerHeadline ?? "",
+                offerText: settings.offerText ?? "",
+                referralOnPraise: settings.referralOnPraise,
+                statusUpdates: settings.statusUpdates,
+                followUpHours: settings.followUpHours,
+                referralAfterAppointment: settings.referralAfterAppointment,
+                reward: { kind: settings.rewardRaw.kind, amount: settings.rewardRaw.amount, note: settings.rewardRaw.note, trigger: settings.rewardRaw.trigger, confirmed: !!settings.rewardRaw.confirmedAt },
               }}
+              vermittlerTyp={customer?.vermittlerTyp ?? null}
               vertreter={vertreter}
               readOnly={ctx.preview}
             />
@@ -163,7 +253,10 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
 
         <p className="text-xs text-[color:var(--muted)]">
           Alle angeschriebenen Kunden bekommen dieselbe Nachricht mit demselben Google-Link – unabhängig davon, wie zufrieden sie sind (Google-Richtlinien).
-          Empfehlende bekommen keine Prämie (Provisionsabgabeverbot); der Dank geht automatisch raus, sobald aus einer Empfehlung ein Abschluss wird.
+          {settings.reward
+            ? "Das Dankeschön geht nur an Empfehlende, nie an die empfohlene Person. Der Dank per WhatsApp geht automatisch raus, sobald aus einer Empfehlung ein Abschluss wird."
+            : "Empfehlende bekommen ohne eingestelltes Dankeschön keine Prämie; der Dank geht automatisch raus, sobald aus einer Empfehlung ein Abschluss wird."}
+          Rückmeldungen an Empfehlende gibt es nur, wenn die empfohlene Person zugestimmt hat.
         </p>
       </div>
     </main>

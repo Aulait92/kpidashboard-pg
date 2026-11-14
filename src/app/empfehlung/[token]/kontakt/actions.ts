@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { submitReferral } from "@/lib/empfehlung/requests";
+import { claimPersonalLink, submitReferral } from "@/lib/empfehlung/requests";
 import { EMAIL_RE, normalizePhone } from "@/lib/whatsapp/phone";
 import { checkLimit, requestIp } from "@/lib/rate-limit";
 
@@ -25,7 +25,21 @@ export async function submitReferralAction(token: string, fd: FormData): Promise
   if (!name) fail("name");
   if (!phone) fail("phone");
   if (emailRaw && !EMAIL_RE.test(emailRaw)) fail("email");
-  const r = await submitReferral(token, { name, phone: phone!, email: emailRaw || null, topic, message, consent: fd.get("consent") === "on" });
+  const r = await submitReferral(token, { name, phone: phone!, email: emailRaw || null, topic, message, consent: fd.get("consent") === "on", statusConsent: fd.get("statusConsent") === "on" });
   if (!r.ok) fail(r.error);
   redirect(`${base}?ok=1`);
+}
+
+/**
+ * Aufsteller/Signatur (allgemeiner Link): Kunde gibt seine Handynummer an und landet auf seinem
+ * persönlichen Empfehlungslink. Unbekannte Nummer → zurück zur allgemeinen Seite (teilen geht trotzdem).
+ */
+export async function claimPersonalLinkAction(token: string, fd: FormData): Promise<void> {
+  if (!/^[\w-]{10,64}$/.test(token)) redirect("/");
+  const base = `/empfehlung/${token}`;
+  if (!checkLimit("publicBooking", `empfehlung-claim:${await requestIp()}`).ok) redirect(`${base}?p=busy`);
+  const phone = normalizePhone(String(fd.get("phone") ?? ""));
+  if (!phone) redirect(`${base}?p=invalid`);
+  const personal = await claimPersonalLink(token, phone!);
+  redirect(personal ? `/empfehlung/${personal}` : `${base}?p=unknown`);
 }

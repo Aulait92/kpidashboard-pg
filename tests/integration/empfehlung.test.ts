@@ -86,11 +86,23 @@ import {
   sendReferralThanks,
   setReviewOptOut,
   submitReferral,
+  countReferralVisit,
+  generalLinkOf,
+  loadReferralPage,
+  openRewards,
+  planReferralRewards,
+  sendReferralLinkNow,
+  sendReferralUpdates,
+  settleReward,
+  claimPersonalLink,
+  handleReferralInbound,
+  sendAfterAppointmentReferrals,
 } from "@/lib/empfehlung/requests";
-import { DAY_MS, UNHAPPY_TASK } from "@/lib/empfehlung/shared";
+import { DAY_MS, UNHAPPY_TASK, isFollowUpTask, isRewardTask, refCodeOf } from "@/lib/empfehlung/shared";
 import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
 
 const uid = () => Math.random().toString(36).slice(2, 8);
+const NUM = () => `4915${String(Math.floor(Math.random() * 1e9)).padStart(9, "0")}`;
 // Dienstag, 17.11.2026, 11:00 Uhr Berlin (Versandfenster Mo–Sa 9–19 Uhr)
 const NOW = new Date("2026-11-17T10:00:00Z");
 const GOOGLE = "https://g.page/r/test-agentur/review";
@@ -261,7 +273,7 @@ describe("Empfehlungen & Bewertungen", () => {
     expect((await prisma.reviewRequest.findUniqueOrThrow({ where: { leadId: a.id } })).status).toBe("off");
   });
 
-  it("Kritik → Aufgabe „unzufrieden“, Push, keine Empfehlungsanfrage; Lob → Dank ohne zweiten Link", async () => {
+  it("Kritik → Aufgabe „unzufrieden“, Push, keine Empfehlungsanfrage; Lob → Dank mit Empfehlungslink (kein zweiter Google-Link)", async () => {
     const id = await activeModule();
     const sad = await closedLead(id, `4915${uid()}41`, "Dora Kritisch");
     const happy = await closedLead(id, `4915${uid()}42`, "Emil Froh");
@@ -284,15 +296,212 @@ describe("Empfehlungen & Bewertungen", () => {
     const thanks = state.messages.find((m) => m.to === happy.phone);
     expect(thanks?.body).toContain("Vielen Dank");
     expect(thanks?.body).not.toContain("/empfehlung/g/");
+    // Der beste Moment ist das Lob: der persönliche Empfehlungslink geht gleich mit
+    expect(thanks?.body).toMatch(/\/empfehlung\/[\w-]+ /);
+    const rrHappy = await prisma.reviewRequest.findUniqueOrThrow({ where: { leadId: happy.id } });
+    expect(rrHappy.referralStatus).toBe("sent");
+    expect((await prisma.referralLink.findUniqueOrThrow({ where: { leadId: happy.id } })).lastOccasion).toBe("lob");
     // Nur die erste Antwort zählt
     expect((await handleReviewReply(convHappy.id, happy.phone!, "Noch was", new Date(NOW.getTime() + 7200_000))).handled).toBe(false);
 
-    // Tag 21: Bitte um Empfehlung nur an den Zufriedenen
+    // Tag 21: keine zweite Bitte (der Zufriedene hat den Link schon, der Kritische bekommt keine)
     const day21 = new Date(NOW.getTime() + 14 * DAY_MS);
     await sendDueReferrals(day21);
+    expect(state.notices.filter((n) => n.customerId === id && n.purpose === "referral_request")).toHaveLength(0);
+  });
+
+  it("„Bei Lob direkt um Empfehlung bitten“ aus: einfacher Dank, Bitte um Empfehlung an Tag 21", async () => {
+    const id = await activeModule();
+    await prisma.reviewSettings.update({ where: { customerId: id }, data: { referralOnPraise: false } });
+    const happy = await closedLead(id, `4915${uid()}43`, "Emma Später");
+    await scheduleReviewRequests(NOW);
+    await sendDueReviews(NOW);
+    const conv = await prisma.conversation.create({ data: { customerId: id, contactPhone: happy.phone!, leadId: happy.id } });
+    await handleReviewReply(conv.id, happy.phone!, "Alles super, danke!", new Date(NOW.getTime() + 3600_000));
+    expect(state.messages.find((m) => m.to === happy.phone)?.body).not.toContain("/empfehlung/");
+    await sendDueReferrals(new Date(NOW.getTime() + 14 * DAY_MS));
     const referrals = state.notices.filter((n) => n.customerId === id && n.purpose === "referral_request");
     expect(referrals.map((n) => n.to)).toEqual([happy.phone]);
     expect(referrals[0].params[1]).toMatch(/\/empfehlung\/[\w-]+$/);
+  });
+
+  it("Empfehlungslink mit Anlass: passender Text, Aufgabe zum Nachfassen (ohne andere Wiedervorlage zu überschreiben)", async () => {
+    const id = await activeModule();
+    const a = await closedLead(id, `4915${uid()}81`, "Anna Schaden", 25);
+    const r = await sendReferralLinkNow(id, { leadId: a.id }, undefined, "schaden");
+    expect(r).toMatchObject({ ok: true, followUp: true });
+    const n = state.notices.find((x) => x.to === a.phone && x.purpose === "referral_request");
+    expect(n?.text).toContain("Schaden");
+    const la = await prisma.lead.findUniqueOrThrow({ where: { id: a.id } });
+    expect(isFollowUpTask(la.followUpNote)).toBe(true);
+    expect(la.followUpAt!.getTime()).toBeGreaterThan(Date.now() + 47 * 3600_000);
+    expect((await prisma.referralLink.findUniqueOrThrow({ where: { leadId: a.id } })).lastOccasion).toBe("schaden");
+
+    const b = await closedLead(id, `4915${uid()}82`, "Bernd Belegt", 25);
+    await prisma.lead.update({ where: { id: b.id }, data: { followUpAt: NOW, followUpNote: "Police nachreichen" } });
+    expect(await sendReferralLinkNow(id, { leadId: b.id })).toMatchObject({ ok: true, followUp: false });
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: b.id } })).followUpNote).toBe("Police nachreichen");
+  });
+
+  it("Angebot auf der Seite, einzelne Besucher, Rückmeldung nur mit Einwilligung, Trichter", async () => {
+    const id = await activeModule();
+    await prisma.reviewSettings.update({ where: { customerId: id }, data: { offerKind: "kfz" } });
+    const rec = await closedLead(id, `4915${uid()}91`, "Rita Empfiehlt", 25);
+    const link = await prisma.referralLink.create({ data: { customerId: id, leadId: rec.id, token: `tok-of-${uid()}-abcdef`, lastSentAt: NOW, views: 1 } });
+    const page = (await loadReferralPage(link.token))!;
+    expect(page.offer?.headline).toBe("Kostenloser Kfz-Check");
+    expect(page.statusUpdates).toBe(true);
+    expect(page.rewardText).toBeNull();
+
+    // Besucher: je Person einmal, Link-Vorschauen zählen nicht
+    await countReferralVisit(page, { ip: "1.1.1.1", userAgent: "Mozilla/5.0 (iPhone)" });
+    await countReferralVisit(page, { ip: "1.1.1.1", userAgent: "Mozilla/5.0 (iPhone)" });
+    await countReferralVisit(page, { ip: "2.2.2.2", userAgent: "Mozilla/5.0 (Android)" });
+    await countReferralVisit(page, { ip: "3.3.3.3", userAgent: "WhatsApp/2.23" });
+    expect(await prisma.referralVisit.count({ where: { linkId: link.id } })).toBe(2);
+    const stored = await prisma.referralVisit.findFirstOrThrow({ where: { linkId: link.id } });
+    expect(stored.visitorHash).not.toContain("1.1.1.1");
+
+    // Ohne Einwilligung: keine Rückmeldung
+    await submitReferral(link.token, { name: "Otto Ohne", phone: `4915${uid()}92`, email: null, topic: null, message: null, consent: true }, NOW);
+    expect(await sendReferralUpdates(NOW)).toBe(0);
+    // Mit Einwilligung: „gemeldet“, nach dem Termin „Termin“, je Stufe einmal
+    await submitReferral(link.token, { name: "Mia Mit", phone: `4915${uid()}93`, email: null, topic: null, message: null, consent: true, statusConsent: true }, NOW);
+    const mia = await prisma.lead.findFirstOrThrow({ where: { referralLinkId: link.id, name: "Mia Mit" } });
+    expect(JSON.stringify(mia.formData)).toContain("Kostenloser Kfz-Check");
+    expect(await sendReferralUpdates(NOW)).toBe(1);
+    expect(await sendReferralUpdates(NOW)).toBe(0);
+    await prisma.appointment.create({ data: { customerId: id, leadId: mia.id, mode: "phone", startsAt: new Date(NOW.getTime() + DAY_MS) } });
+    expect(await sendReferralUpdates(NOW)).toBe(1);
+    expect(await sendReferralUpdates(NOW)).toBe(0);
+    const ups = state.notices.filter((n) => n.purpose === "referral_update");
+    expect(ups.map((n) => n.to)).toEqual([rec.phone, rec.phone]);
+    expect(ups[0].params[1]).toBe("Mia hat sich über Ihren Link bei mir gemeldet.");
+    expect(ups[1].params[1]).toMatch(/Termin/);
+    expect(ups.some((n) => n.text.includes("Otto"))).toBe(false);
+
+    const s = await loadEmpfehlungStats(id, 90, new Date(NOW.getTime() + 1000));
+    expect(s.funnel).toMatchObject({ linksSent: 1, linksOpened: 1, leads: 2, closings: 0 });
+  });
+
+  it("Allgemeiner Link (Aufsteller, Signatur): ein Link je Vertreter, Lead ohne Empfehlenden, keine Rückmeldung", async () => {
+    const id = await activeModule();
+    const g1 = await generalLinkOf(id);
+    const g2 = await generalLinkOf(id);
+    expect(g2.id).toBe(g1.id);
+    const page = (await loadReferralPage(g1.token))!;
+    expect(page).toMatchObject({ general: true, recommender: null, statusUpdates: false });
+    await submitReferral(g1.token, { name: "Gabi Aufsteller", phone: `4915${uid()}95`, email: null, topic: null, message: null, consent: true, statusConsent: true }, NOW);
+    const lead = await prisma.lead.findFirstOrThrow({ where: { referralLinkId: g1.id } });
+    expect(JSON.stringify(lead.formData)).toContain("allgemeiner Link");
+    expect(lead.referralStatusConsent).toBe(false);
+    expect(await sendReferralUpdates(NOW)).toBe(0);
+  });
+
+  it("Dankeschön: nur eingeschaltet und bestätigt, erst nach dem Gespräch, nie bei Selbstempfehlung, von Hand erledigt", async () => {
+    const id = await activeModule();
+    const rec = await closedLead(id, `49151${String(Math.floor(Math.random() * 1e8)).padStart(8, "0")}`, "Dana Dank", 25);
+    const link = await prisma.referralLink.create({ data: { customerId: id, leadId: rec.id, token: `tok-rw-${uid()}-abcdef` } });
+    // Aus: nichts
+    await submitReferral(link.token, { name: "Vor Her", phone: `4915${uid()}02`, email: null, topic: null, message: null, consent: true }, new Date(NOW.getTime() - DAY_MS));
+    expect(await planReferralRewards(NOW)).toBe(0);
+    expect((await loadReferralPage(link.token))!.rewardText).toBeNull();
+
+    await prisma.reviewSettings.update({ where: { customerId: id }, data: { rewardKind: "gutschein", rewardAmount: 15, rewardNote: "Wunschgutschein", rewardTrigger: "termin", rewardConfirmedAt: new Date(Date.now() - 1000) } });
+    expect((await loadReferralPage(link.token))!.rewardText).toContain("Wunschgutschein über 15 €");
+    await submitReferral(link.token, { name: "Neu Kunde", phone: `4915${uid()}03`, email: null, topic: null, message: null, consent: true }, NOW);
+    await submitReferral(link.token, { name: "Dana Selbst", phone: rec.phone!, email: null, topic: null, message: null, consent: true }, new Date(NOW.getTime() + 31 * DAY_MS));
+    const neu = await prisma.lead.findFirstOrThrow({ where: { referralLinkId: link.id, name: "Neu Kunde" } });
+    const selbst = await prisma.lead.findFirstOrThrow({ where: { referralLinkId: link.id, name: "Dana Selbst" } });
+    expect(selbst.referralRewardStatus).toBe("entfaellt");
+    // Noch kein Gespräch → nichts fällig
+    expect(await planReferralRewards(NOW)).toBe(0);
+    await prisma.appointment.create({ data: { customerId: id, leadId: neu.id, mode: "phone", startsAt: NOW, status: "completed" } });
+    await prisma.appointment.create({ data: { customerId: id, leadId: selbst.id, mode: "phone", startsAt: NOW, status: "completed" } });
+    expect(await planReferralRewards(NOW)).toBe(1);
+    expect(await planReferralRewards(NOW)).toBe(0);
+    const open = await openRewards(id);
+    expect(open).toHaveLength(1);
+    expect(open[0]).toMatchObject({ referred: "Neu", recommender: "Dana Dank", label: "Wunschgutschein über 15 €" });
+    // Aufgabe am Kontakt der Empfehlenden
+    expect(isRewardTask((await prisma.lead.findUniqueOrThrow({ where: { id: rec.id } })).followUpNote)).toBe(true);
+    expect(await settleReward(id, neu.id, "erledigt", NOW)).toBe(true);
+    expect(await settleReward(id, neu.id, "erledigt", NOW)).toBe(false);
+    expect(await openRewards(id)).toHaveLength(0);
+  });
+
+  it("WhatsApp-Knopf: Anfrage mit Code → Lead „Empfehlung“ am Chat, ohne Erstanschreiben; ohne Code oder bei bekanntem Kontakt nichts", async () => {
+    const id = await activeModule();
+    await prisma.whatsAppAccount.create({ data: { customerId: id, status: "connected", phoneNumber: "+49 30 1234567" } });
+    await prisma.reviewSettings.update({ where: { customerId: id }, data: { offerKind: "ordner" } });
+    const rec = await closedLead(id, NUM(), "Wanda Wirbt", 25);
+    const link = await prisma.referralLink.create({ data: { customerId: id, leadId: rec.id, token: `Wa${uid()}tok-abcdefgh12` } });
+    const page = (await loadReferralPage(link.token))!;
+    expect(page.whatsappUrl).toMatch(/^https:\/\/wa\.me\/49301234567\?text=/);
+    const text = decodeURIComponent(page.whatsappUrl!.split("text=")[1]);
+    expect(text).toContain("Empfehlung von Wanda");
+    expect(text).toContain(`(Ref ${refCodeOf(link.token)})`);
+
+    const from = NUM();
+    const conv = await prisma.conversation.create({ data: { customerId: id, contactPhone: from, contactName: "Tom Tippt" } });
+    expect((await handleReferralInbound(conv.id, from, "Hallo, eine Frage", "Tom Tippt", NOW)).leadId).toBeNull();
+    const r = await handleReferralInbound(conv.id, from, text, "Tom Tippt", NOW);
+    const lead = await prisma.lead.findUniqueOrThrow({ where: { id: r.leadId! } });
+    expect(lead).toMatchObject({ source: "Empfehlung", name: "Tom Tippt", phone: from, referralLinkId: link.id, outreachStatus: "skipped_contact", referralRewardStatus: null });
+    expect(JSON.stringify(lead.formData)).toContain("Empfehlung von Wanda Wirbt");
+    expect(JSON.stringify(lead.formData)).toContain("Kostenloser Versicherungs-Check");
+    expect((await prisma.conversation.findUniqueOrThrow({ where: { id: conv.id } })).leadId).toBe(lead.id);
+    // Zweite Nachricht mit Code: kein zweiter Lead
+    expect((await handleReferralInbound(conv.id, from, text, "Tom Tippt", NOW)).leadId).toBeNull();
+    expect(await prisma.lead.count({ where: { referralLinkId: link.id } })).toBe(1);
+    // Die Empfehlende schreibt selbst mit ihrem Code: Lead ja, Dankeschön nein
+    const convSelf = await prisma.conversation.create({ data: { customerId: id, contactPhone: `x${rec.phone}`, contactName: "Wanda" } });
+    const self = await handleReferralInbound(convSelf.id, rec.phone!, text, "Wanda", NOW);
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: self.leadId! } })).referralRewardStatus).toBe("entfaellt");
+  });
+
+  it("Aufsteller: Kunde holt mit seiner Handynummer den persönlichen Link; unbekannte Nummer oder kein allgemeiner Link → nichts", async () => {
+    const id = await activeModule();
+    const general = await generalLinkOf(id);
+    const kunde = await closedLead(id, NUM(), "Karl Kunde", 25);
+    const offen = await prisma.lead.create({ data: { customerId: id, name: "Ina Interessent", phone: NUM(), status: "Neuer Lead", source: "TKV" } });
+    const token = await claimPersonalLink(general.token, kunde.phone!, NOW);
+    expect(token).toBeTruthy();
+    const personal = await prisma.referralLink.findUniqueOrThrow({ where: { token: token! } });
+    expect(personal).toMatchObject({ leadId: kunde.id, kind: "contact", lastOccasion: "aufsteller" });
+    expect(await claimPersonalLink(general.token, kunde.phone!, NOW)).toBe(token);
+    expect(await claimPersonalLink(general.token, offen.phone!, NOW)).toBeNull();
+    expect(await claimPersonalLink(general.token, "4915900000000", NOW)).toBeNull();
+    expect(await claimPersonalLink(token!, kunde.phone!, NOW)).toBeNull();
+  });
+
+  it("Nach dem Termin: nur eingeschaltet, nur Kunden, einmal je Termin, höchstens alle 180 Tage, nicht bei Kritik", async () => {
+    const id = await activeModule();
+    const kunde = await closedLead(id, NUM(), "Tina Termin", 60);
+    const kritisch = await closedLead(id, NUM(), "Kurt Kritik", 60);
+    const offen = await prisma.lead.create({ data: { customerId: id, name: "Olaf Offen", phone: NUM(), status: "Im Gespräch", source: "TKV" } });
+    await prisma.lead.update({ where: { id: kritisch.id }, data: { followUpAt: NOW, followUpNote: `${UNHAPPY_TASK}: „Test“` } });
+    const mk = (leadId: string) => prisma.appointment.create({ data: { customerId: id, leadId, mode: "phone", startsAt: new Date(NOW.getTime() - 5 * 3600_000), status: "completed" } });
+    const a1 = await mk(kunde.id);
+    await mk(kritisch.id);
+    await mk(offen.id);
+    // „stattgefunden“ vor 3 Stunden (Prisma setzt updatedAt selbst → direkt in der Datenbank)
+    const at = new Date(NOW.getTime() - 3 * 3600_000);
+    await prisma.$executeRaw`UPDATE "Appointment" SET "updatedAt" = ${at} WHERE "customerId" = ${id}`;
+
+    // Aus (Standard): nichts
+    expect(await sendAfterAppointmentReferrals(NOW)).toEqual({ sent: 0, skipped: 0 });
+    await prisma.reviewSettings.update({ where: { customerId: id }, data: { referralAfterAppointment: true } });
+    expect(await sendAfterAppointmentReferrals(NOW)).toEqual({ sent: 1, skipped: 2 });
+    const sent = state.notices.filter((n) => n.customerId === id && n.purpose === "referral_request");
+    expect(sent.map((n) => n.to)).toEqual([kunde.phone]);
+    expect(sent[0].text).toContain("danke für das gute Gespräch");
+    expect((await prisma.appointment.findUniqueOrThrow({ where: { id: a1.id } })).referralAskedAt).not.toBeNull();
+    // Einmal je Termin; neuer Termin innerhalb von 180 Tagen → übersprungen
+    expect(await sendAfterAppointmentReferrals(NOW)).toEqual({ sent: 0, skipped: 0 });
+    await mk(kunde.id);
+    await prisma.$executeRaw`UPDATE "Appointment" SET "updatedAt" = ${at} WHERE "customerId" = ${id} AND "referralAskedAt" IS NULL`;
+    expect(await sendAfterAppointmentReferrals(NOW)).toEqual({ sent: 0, skipped: 1 });
   });
 
   it("offene Aufgabe „unzufrieden“ hält die Empfehlungsanfrage zurück", async () => {

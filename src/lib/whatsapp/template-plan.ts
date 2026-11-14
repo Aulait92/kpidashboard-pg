@@ -25,7 +25,7 @@ export const CORE_PURPOSES: NoticePurpose[] = [
 export const CAMPAIGN_PURPOSES: NoticePurpose[] = ["campaign_cross_sell", "campaign_review", "campaign_birthday", "campaign_renewal"];
 
 /** Nur mit Modul „Empfehlungen & Bewertungen“ (auch in der Testphase). */
-export const EMPFEHLUNG_PURPOSES: NoticePurpose[] = ["review_request", "referral_request", "referral_thanks"];
+export const EMPFEHLUNG_PURPOSES: NoticePurpose[] = ["review_request", "referral_request", "referral_thanks", "referral_update"];
 
 export function purposesFor(opts: { bestand: boolean; empfehlung?: boolean }): NoticePurpose[] {
   return [...CORE_PURPOSES, ...(opts.bestand ? CAMPAIGN_PURPOSES : []), ...(opts.empfehlung ? EMPFEHLUNG_PURPOSES : [])];
@@ -65,6 +65,7 @@ const EXAMPLES: Record<string, string> = {
   "Vertrag (z. B. KFZ)": "KFZ",
   "Google-Link": "https://app.performancegrowth.de/empfehlung/abc123/google",
   Empfehlungslink: "https://app.performancegrowth.de/empfehlung/abc123",
+  "Stand der Empfehlung": "Über Ihren Link hat sich jemand bei mir gemeldet.",
 };
 
 export function exampleValuesFor(purpose: NoticePurpose): string[] {
@@ -111,6 +112,7 @@ export const CUSTOMER_TITLES: Record<NoticePurpose, { title: string; when: strin
   review_request: { title: "Nachfrage nach dem Abschluss mit Google-Link", when: "Einige Tage nach einem Abschluss (Modul Empfehlungen & Bewertungen)." },
   referral_request: { title: "Bitte um Empfehlung", when: "Einige Wochen nach einem Abschluss (Modul Empfehlungen & Bewertungen)." },
   referral_thanks: { title: "Dank an den Empfehlenden", when: "Sobald aus einer Empfehlung ein Abschluss wird." },
+  referral_update: { title: "Rückmeldung an den Empfehlenden", when: "Wenn sich eine empfohlene Person meldet oder ein Termin zustande kommt (nur mit deren Einwilligung)." },
 };
 
 export type LocalStatus = "pending" | "approved" | "rejected" | "paused";
