@@ -514,7 +514,8 @@ Seiten aus der Liste „Seiten“ unten.
   500er-Paket (99 € netto) nach, bis höchstens zu dem Betrag, den Sie je Monat eintragen. Bei jeder Nachbuchung
   kommt eine E-Mail.
 
-- Kundenliste aus dem Versicherer-System als Excel oder CSV hochladen, Spalten zuordnen, Einwilligung bestätigen.
+- Kundenliste aus dem Versicherer-System als Excel oder CSV hochladen, Spalten zuordnen, Nutzungsbefugnis bestätigen
+  (Einwilligungen siehe „Einwilligung je Kanal“ unten).
   Gesundheitsdaten werden nie übernommen (Spalten wie Vorerkrankungen, Diagnosen, Gewicht werden ausgelassen).
 - **Mehrere Verträge je Kunde:** Eine Zeile je Kunde oder je Vertrag geht beides. Zeilen desselben Kunden werden
   zusammengeführt (gleiche Kundennummer, sonst gleiches Telefon, sonst gleiche E-Mail, sonst Nachname + Geburtsdatum).
@@ -557,8 +558,84 @@ Seiten aus der Liste „Seiten“ unten.
   das Beitragsvolumen der Empfänger und die fünf wertvollsten.
 - Die App schlägt Chancen vor: Lücke schließen (z. B. KFZ ohne Hausrat), Jahresgespräch, Geburtstag in 30 Tagen,
   Ablauf/Wechsel in 60 Tagen.
-- Kampagne: Thema, Tageslimit, Vorschau, Start/Pause. Versand per WhatsApp Mo–Sa 9–19 Uhr.
-  Antworten werden zum Lead, wer „Stopp“ schreibt, bekommt nichts mehr.
+- Kampagne: Kanal, Thema, Tageslimit, Vorschau, Start/Pause. WhatsApp Mo–Sa 9–19 Uhr, E-Mail werktags 8 bis 18 Uhr.
+  Antworten werden zum Lead, wer „Stopp“ schreibt oder sich abmeldet, bekommt nichts mehr.
+
+### Kampagnen per WhatsApp und E-Mail (seit 14.11.2026)
+
+- **Zwei Kanäle:** In jeder Kampagne wählen Sie **„WhatsApp bevorzugt, sonst E-Mail“** (Standard), **„Nur WhatsApp“**
+  oder **„Nur E-Mail“**. Die Vorschau zeigt, wie viele Kunden per WhatsApp und wie viele per E-Mail angeschrieben
+  werden und warum andere nicht dabei sind (z. B. „keine WhatsApp-Einwilligung“, „E-Mail abgemeldet“). Ist Ihre
+  WhatsApp-Nummer nicht verbunden, gehen bei „WhatsApp bevorzugt“ alle erreichbaren Kunden per E-Mail raus.
+- **E-Mails gehen über Ihr eigenes Postfach** (Einstellungen → E-Mail-Postfach: Gmail, Outlook oder SMTP), als
+  persönliche Einzelmail (kein Verteiler), Text plus schlichtes HTML ohne Tracking-Pixel. Ohne Postfach steht
+  „Postfach verbinden“. Unter jeder Mail stehen automatisch ein **Abmeldelink** (ein Klick, ohne Login) und Ihre
+  **Pflichtangaben** (Impressum), die Sie unter **Bestand → Einwilligungen & Versand** pflegen (vorbefüllt aus dem
+  Impressum Ihrer Website). Betreff und Text sind je Kampagne änderbar, Platzhalter {anrede}, {thema}, {meinname}.
+  Bestandskunden werden gesiezt („Guten Tag Frau Muster,“, ohne Namen „Guten Tag,“).
+- **Langsam verteilt:** E-Mails werktags 8 bis 18 Uhr in zufälligen Abständen, mit Tageslimit je Postfach (Gmail
+  privat 150, Google Workspace 1.000, Outlook privat 100, Microsoft 365 300, SMTP 200). Bei Fehlern oder vielen
+  unzustellbaren Adressen drosselt die App automatisch (Tageslimit halbiert, kurze Pause) und schickt Ihnen und uns
+  einen Hinweis.
+- **Kontingent:** 2.000 Kampagnen-E-Mails im Monat sind im Modul enthalten, getrennt von den WhatsApp-Nachrichten.
+- **Antworten auf E-Mails** landen in Ihrem Postfach (die App hat nur das Recht zu senden, nicht zu lesen). Tragen Sie
+  sie in der Kampagne unter **„Antwort zuordnen“** ein (Adresse und Text einfügen): Interesse wird ein Lead in Ihrer
+  Pipeline, „bitte abmelden“ sperrt den Kunden für E-Mails, Abwesenheitsnotizen werden ignoriert, Unzustellbares
+  bremst den Versand.
+- **WhatsApp-Vorlagen:** Die Vorlagen der Kampagnen reichen wir automatisch bei Meta ein, sobald das Modul gebucht und
+  Ihre Nummer verbunden ist. Ist eine Vorlage noch in Prüfung, können Sie die Kampagne schon vorbereiten: WhatsApp
+  startet nach der Freigabe von selbst, E-Mails gehen sofort los. Lehnt Meta eine Vorlage ab, kümmern wir uns darum.
+
+### Einwilligung je Kanal
+
+Die App prüft vor jedem Versand nach diesen Regeln. Das ist eine Hilfe und keine Rechtsberatung: **Die rechtliche
+Bewertung im Einzelfall liegt bei Ihnen.**
+
+- **WhatsApp nur mit Einwilligung.** Ohne Opt-in geht keine WhatsApp-Kampagne raus, egal zu welchem Anlass (auch
+  Meta verlangt ein Opt-in vor geschäftlichen Nachrichten).
+- **E-Mail mit Einwilligung:** alle Anlässe.
+- **E-Mail ohne Einwilligung** nur als Bestandskundenwerbung nach § 7 Abs. 3 UWG: Sie bestätigen einmalig unter
+  **Bestand → Einwilligungen & Versand**, dass die Adressen aus Vertragsabschlüssen stammen und die Kunden auf ihr
+  Widerspruchsrecht hingewiesen wurden. Dann gehen ohne Einwilligung nur Anlässe zum **selben Bedarf bzw. Vertrag**
+  raus: Ablauf oder Wechsel, Vertragscheck im Jahresgespräch. **Nicht:** Cross-Selling in andere Sparten (z. B.
+  Hausrat an Kfz-Kunden), Geburtstag mit Angebot, Empfehlungs- oder Bewertungsbitte. Ohne Bestätigung gehen ohne
+  Einwilligung keine Mails raus.
+- **Einwilligung im Import:** Die Spalten „E-Mail-Einwilligung“ und „WhatsApp-Einwilligung“ (ja, nein oder Datum)
+  lassen sich zuordnen. Ohne Angabe bleibt die Einwilligung „unbekannt“. „Alle Kunden dieser Liste haben
+  eingewilligt“ geht je Kanal nur mit ausdrücklicher Bestätigung (z. B. laut Versicherer); ein „nein“ wird dabei nie
+  überschrieben. Im Kunden (Schild-Knopf in der Kundenliste) setzen Sie die Einwilligung je Kanal auf ja, nein oder
+  unbekannt, optional mit Datum.
+- **Altdaten:** Bis zum 14.11.2026 hat jeder Import pauschal bestätigt „Für diese Kunden liegt die Einwilligung zur
+  Kontaktaufnahme per WhatsApp/E-Mail vor (laut Versicherer)“. Diese Bestätigung gilt als Einwilligung für WhatsApp und
+  E-Mail. Bitte prüfen Sie das unter **Bestand → Einwilligungen & Versand**: „Passt so“ oder die Einwilligungen auf
+  „unbekannt“ setzen (nur WhatsApp oder beide).
+- **Einwilligung einholen:** In der Kundenliste (Schild-Knopf) erstellt „Link erstellen“ einen persönlichen Link mit
+  Text, z. B. für nach dem Termin, dem Abschluss oder dem Jahresgespräch. Der Kunde wählt auf einer Seite in Ihrem
+  Namen, ob Sie ihn per E-Mail und bzw. oder WhatsApp informieren dürfen; bei E-Mail bestätigt er per Link
+  (Double-Opt-in). Protokolliert werden Zeitpunkt, Text, Kanal und IP. Die Bitte per E-Mail zu senden geht nur bei
+  Kunden, die Sie per E-Mail anschreiben dürfen, denn sie ist selbst Werbung.
+- **Abmeldung:** „Stopp“ per WhatsApp sperrt alle Kanäle. Der Abmeldelink in E-Mails meldet von E-Mails ab, optional
+  auch von WhatsApp. Abmeldungen wirken sofort und dauerhaft, auch nach einem erneuten Import (die App merkt sich
+  E-Mail und Nummer verschlüsselt als Sperrliste).
+- **Vor der ersten Kampagne** bestätigen Sie, dass Sie die Kundendaten nutzen dürfen (als Ausschließlichkeitsvertreter
+  gehören sie oft dem Versicherer). Beim Import weist die App auf Personenversicherungen (Kranken, Leben, BU, Unfall,
+  Pflege) hin: Hier ist schon die Tatsache des Vertrags besonders geschützt.
+
+### Ergebnisse der Kampagnen
+
+- Unter **Bestand** stehen Kacheln für die letzten 30 Tage, 90 Tage oder 12 Monate: angeschrieben, Antwortquote,
+  Termine, Abschlüsse und Provision, jeweils getrennt nach WhatsApp und E-Mail. Darunter alle Kampagnen mit ihren
+  Zahlen und ein Vergleich nach Anlass und nach Thema bzw. Sparte.
+- **Detailseite je Kampagne:** Trichter je Kanal mit Quoten (angeschrieben, zugestellt, bei WhatsApp gelesen,
+  geantwortet, Lead, Termin, Abschluss, abgemeldet, unzustellbar, nicht verschickt mit Gründen), Abschlüsse nach
+  Sparte und der Ertrag: Abschluss- und Bestandsprovision mit Ihrem Satz der verkauften Sparte, WhatsApp-Gebühren
+  (im Modul enthalten), Ergebnis und Euro pro angeschriebenem Kunden.
+- **Zuordnung:** Ein Abschluss zählt für eine Kampagne, wenn er innerhalb von 60 Tagen nach dem Anschreiben kommt und
+  der Lead aus der Kampagne stammt oder es derselbe Bestandskunde ist. Bei mehreren Kampagnen zählt die letzte.
+  Empfehlungen zählen nicht doppelt. Die gleichen Abschlüsse stehen in **Zahlen** unter „Kosten & Ertrag“ als
+  „aus Bestandskampagnen: X Abschlüsse, Y €“ und zählen in den Gewinn; die Quoten dort bleiben bei bezahlten Leads.
+- **Potenzial:** „312 Kunden ohne Hausrat noch nicht angeschrieben“ mit Knopf „Kampagne starten“ (nur Kunden ohne
+  Abmeldung und mit Einwilligung).
 
 ## Empfehlungen & Bewertungen (Zusatzmodul)
 
