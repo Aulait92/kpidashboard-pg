@@ -5,17 +5,21 @@
 
 import { refreshBestandSummary } from "@/lib/vertraege";
 import Papa from "papaparse";
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { groupRows, isActiveContract, type Mapping, type Row } from "@/lib/bestand/rows";
+import { groupRows, isActiveContract, mappingBlocker, type Mapping, type Row } from "@/lib/bestand/rows";
 
 export {
   FIELDS,
   FIELD_GROUPS,
   detectMapping,
+  displayName,
   groupRows,
   importWarning,
   isActiveContract,
   isBlockedColumn,
+  mappingBlocker,
+  mappingIssues,
   normalizeLine,
   normalizeSalutation,
   normalizeStatus,
@@ -60,11 +64,17 @@ export type ImportResult = {
   withPhone: number;
 };
 
-/** Zeilen übernehmen. Eine Zeile je Kunde oder je Vertrag – Kunden werden zusammengeführt. */
-export async function importRows(customerId: string, rows: Row[], m: Mapping, now = new Date()): Promise<ImportResult> {
+/**
+ * Zeilen übernehmen. Eine Zeile je Kunde oder je Vertrag – Kunden werden zusammengeführt.
+ * importId: Import-Lauf (ExistingCustomerImport), wird nur bei neu angelegten Kunden gesetzt.
+ */
+export async function importRows(customerId: string, rows: Row[], m: Mapping, now = new Date(), opts: { importId?: string } = {}): Promise<ImportResult> {
+  // Offensichtlich falsche Zuordnung (z. B. E-Mail-Spalte als Telefon) nie übernehmen
+  const blocker = mappingBlocker(rows, m);
+  if (blocker) throw new Error(blocker);
   const g = groupRows(rows, m);
   // Nie still 0 Kunden übernehmen (Ole, 14.11.2026: Vertriebsliste statt Kundenliste hochgeladen)
-  if (rows.length && g.groups.size === 0) throw new Error("Mit dieser Zuordnung würde kein Kunde übernommen. Bitte Name und Telefon, E-Mail oder Kundennummer zuordnen.");
+  if (rows.length && g.groups.size === 0) throw new Error("Mit dieser Zuordnung würde kein Kunde übernommen. Bitte Telefon, E-Mail oder Kundennummer zuordnen.");
   const res: ImportResult = {
     customers: g.groups.size,
     created: 0,
@@ -100,7 +110,7 @@ export async function importRows(customerId: string, rows: Row[], m: Mapping, no
     };
     const saved = existing
       ? await prisma.existingCustomer.update({ where: { id: existing.id }, data })
-      : await prisma.existingCustomer.create({ data: { ...data, customerId } });
+      : await prisma.existingCustomer.create({ data: { ...data, customerId, importId: opts.importId ?? null } });
     if (existing) res.updated++;
     else res.created++;
     if (a.phone) res.withPhone++;
@@ -129,4 +139,44 @@ export async function importRows(customerId: string, rows: Row[], m: Mapping, no
     }
   }
   return res;
+}
+
+// ─── Import-Läufe und „Letzten Import rückgängig machen“ ──────────────────
+
+/** Letzter Import-Lauf, der sich noch rückgängig machen lässt (null = keiner). */
+export async function lastUndoableImport(customerId: string) {
+  const run = await prisma.existingCustomerImport.findFirst({ where: { customerId, undoneAt: null }, orderBy: { createdAt: "desc" } });
+  if (!run) return null;
+  const removable = await prisma.existingCustomer.count({ where: undoWhere(customerId, run.id) });
+  return { ...run, removable };
+}
+
+/** Löschbar sind nur Kunden dieses Laufs, die noch nicht angeschrieben und nicht gesperrt sind. */
+function undoWhere(customerId: string, importId: string): Prisma.ExistingCustomerWhereInput {
+  return {
+    customerId,
+    importId,
+    optOutAt: null,
+    lastCampaignAt: null,
+    recipients: { none: { sentAt: { not: null } } },
+    OR: [{ referralLink: null }, { referralLink: { lastSentAt: null } }],
+  };
+}
+
+export type UndoResult = { ok: true; removed: number; kept: number; at: Date } | { ok: false; error: string };
+
+/**
+ * Letzten Import rückgängig machen: löscht die Bestandskunden, die dieser Lauf angelegt hat (mit ihren Verträgen).
+ * Bereits angeschriebene oder gesperrte bleiben (Sperre „Stopp“ darf nicht verloren gehen). Aktualisierte Kunden
+ * behalten den neuen Stand, weil der alte nicht gespeichert ist.
+ */
+export async function undoLastImport(customerId: string, userId: string | null, now = new Date()): Promise<UndoResult> {
+  const run = await prisma.existingCustomerImport.findFirst({ where: { customerId, undoneAt: null }, orderBy: { createdAt: "desc" } });
+  if (!run) return { ok: false, error: "Es gibt keinen Import, der sich rückgängig machen lässt." };
+  const claimed = await prisma.existingCustomerImport.updateMany({ where: { id: run.id, undoneAt: null }, data: { undoneAt: now, undoneById: userId } });
+  if (!claimed.count) return { ok: false, error: "Der Import wurde schon rückgängig gemacht." };
+  const del = await prisma.existingCustomer.deleteMany({ where: undoWhere(customerId, run.id) });
+  const kept = await prisma.existingCustomer.count({ where: { customerId, importId: run.id } });
+  await prisma.existingCustomerImport.update({ where: { id: run.id }, data: { removed: del.count, kept } });
+  return { ok: true, removed: del.count, kept, at: run.createdAt };
 }

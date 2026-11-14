@@ -290,7 +290,7 @@ describe("Bestandskunden-Modul: Sperre, Bestandsschutz, Kontingent", () => {
     await prisma.campaignRecipient.update({ where: { id: rec.id }, data: { status: "sent", sentAt: now } });
     const ec2 = await prisma.existingCustomer.create({ data: { customerId, firstName: "Max", lastName: "Probe", phone: "4915100000002", lines: ["KFZ"] } });
     await prisma.campaignRecipient.create({ data: { campaignId: first.id, existingCustomerId: ec2.id, status: "sent", sentAt: now } });
-    expect(await bestandQuota(customerId, now)).toEqual({ limit: 2, used: 2, remaining: 0 });
+    expect(await bestandQuota(customerId, now)).toMatchObject({ limit: 2, used: 2, remaining: 0, packs: [], low: true });
     await expect(createCampaign({ customerId, occasion: "review", segment: {}, topic: null, dailyLimit: 50, now })).rejects.toThrow(QUOTA_REACHED);
     // Admin erhöht das Kontingent → wieder möglich
     await prisma.customer.update({ where: { id: customerId }, data: { bestandMessageQuota: null } });

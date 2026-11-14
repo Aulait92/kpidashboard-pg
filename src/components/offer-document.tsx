@@ -8,6 +8,7 @@ import {
   offerAddOns,
   offerSetupDiscount,
   PRICE_LIST,
+  bestandPacksText,
   setupForChoice,
   vatOf,
   withVat,
@@ -369,7 +370,8 @@ export function OfferDocument({
           {add.bestandActive ? (
             <Tr k="Bestandskunden-Modul">
               Bestand importieren und gezielt per WhatsApp ansprechen (Lücken, Jahresgespräch, Geburtstag, Ablauf). Inklusive
-              WhatsApp-Gebühren für bis zu {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten je Kalendermonat.
+              WhatsApp-Gebühren für bis zu {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten je Kalendermonat. Mehr Nachrichten jederzeit
+              als Zusatzpaket: {bestandPacksText()}.
             </Tr>
           ) : null}
           <Tr k="Werbebudget">
@@ -446,7 +448,9 @@ export function OfferDocument({
                   <b className="text-[#111827]">{eur2(add.bestandFee)}</b> netto pro Monat
                 </>
               )}
-              <Note>Inklusive WhatsApp-Gebühren bis {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat; mehr auf Anfrage.</Note>
+              <Note>
+                Inklusive WhatsApp-Gebühren bis {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat. Zusatzpakete: {bestandPacksText()}.
+              </Note>
             </Tr>
           ) : null}
           {add.empfehlungActive ? (

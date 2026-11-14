@@ -9,6 +9,11 @@ import { NEEDS_EMPFEHLUNG, OCCASIONS, segmentIds, TOPIC_LABEL, type Occasion, ty
 import { rankTemplates, renderTemplate, templateTextFor, fillNames, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { templateNamesOf } from "@/lib/whatsapp/template-plan";
 import { startCampaignAction } from "../actions";
+import { bestandQuota } from "@/lib/bestand/quota";
+import { packPurchaseBlocker } from "@/lib/bestand/packs";
+import { PRICE_LIST } from "@/lib/offer-pricing";
+import { QuotaLowNotice } from "@/components/bestand/quota-bar";
+import { displayName } from "@/lib/bestand/rows";
 
 export const dynamic = "force-dynamic";
 
@@ -30,10 +35,12 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   }
   const topic = sp.thema ?? (segment.lacks?.[0] ? (TOPIC_LABEL[segment.lacks[0]] ?? segment.lacks[0]) : null);
   const purpose = OCCASIONS[occasion].purpose as NoticePurpose;
-  const [ids, templates, wa] = await Promise.all([
+  const [ids, templates, wa, quota, packBlocker] = await Promise.all([
     segmentIds(ctx.customerId, occasion, segment),
     prisma.messageTemplate.findMany({ where: { customerId: ctx.customerId, purpose, status: "approved" }, orderBy: { updatedAt: "desc" } }),
     prisma.whatsAppAccount.findUnique({ where: { customerId: ctx.customerId }, select: { status: true } }),
+    bestandQuota(ctx.customerId),
+    packPurchaseBlocker(ctx.customerId),
   ]);
   // Zielgruppe nach Wert: Summe der Jahresbeiträge und die wertvollsten Empfänger (werden zuerst angeschrieben)
   const [value, top] = ids.length
@@ -43,7 +50,7 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
           where: { id: { in: ids }, premiumTotal: { not: null } },
           orderBy: { premiumTotal: "desc" },
           take: 5,
-          select: { id: true, firstName: true, lastName: true, premiumTotal: true },
+          select: { id: true, firstName: true, lastName: true, company: true, email: true, premiumTotal: true },
         }),
       ])
     : [null, []];
@@ -55,7 +62,7 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   const preview = pick
     ? renderTemplate(pick.tpl.body, pick.params(rest))
     : renderTemplate(fillNames(templateTextFor(purpose, "sie"), templateNamesOf(c.name)), ["Frau Muster", ...rest]);
-  const ready = !locked && !!pick && wa?.status === "connected" && ids.length > 0;
+  const ready = !locked && !!pick && wa?.status === "connected" && ids.length > 0 && quota.remaining > 0;
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -63,6 +70,20 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
         ← Bestand
       </Link>
       <PageHeader title={`Kampagne: ${OCCASIONS[occasion].label}`} subtitle={OCCASIONS[occasion].hint} />
+      {/* Außerhalb des Kampagnen-Formulars: Das Paket-Fenster hat ein eigenes Formular */}
+      {quota.low ? (
+        <div className="mb-5">
+          <QuotaLowNotice
+            quota={quota}
+            booking={{ packs: PRICE_LIST.bestandPacks, months: PRICE_LIST.bestandPackMonths, individualFrom: PRICE_LIST.bestandPackIndividualFrom, readOnly: ctx.preview, blocker: packBlocker }}
+          />
+        </div>
+      ) : ids.length > quota.remaining ? (
+        <p className="mb-5 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-4 py-3 text-sm text-[color:var(--muted)]" data-campaign-quota-hint>
+          Diesen Monat sind noch {quota.remaining.toLocaleString("de-DE")} Nachrichten frei. Die übrigen Empfänger bekommen ihre Nachricht nach einem Zusatzpaket oder im
+          nächsten Monat, bis dahin pausiert die Kampagne.
+        </p>
+      ) : null}
       <form action={startCampaignAction} className="space-y-5">
         <input type="hidden" name="occasion" value={occasion} />
         <input type="hidden" name="segment" value={JSON.stringify(segment)} />
@@ -81,7 +102,7 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
                 <ol className="mt-2 space-y-0.5 text-[color:var(--muted)]">
                   {top.map((t) => (
                     <li key={t.id} className="flex justify-between gap-3">
-                      <span>{[t.firstName, t.lastName].filter(Boolean).join(" ")}</span>
+                      <span className="min-w-0 truncate">{displayName(t)}</span>
                       <span className="tabular-nums">{eurRound(Number(t.premiumTotal))}</span>
                     </li>
                   ))}

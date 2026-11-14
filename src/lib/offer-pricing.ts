@@ -37,6 +37,17 @@ export const PRICE_LIST = {
   bestandModuleMonthly: 149,
   /** Kampagnen-Nachrichten im Bestandskunden-Modul je Kalendermonat inklusive. */
   bestandIncludedMessages: 500,
+  /**
+   * Zusatzpakete Kampagnen-Nachrichten (Ole, 14.11.2026): netto, Einmalposten im laufenden Monat,
+   * sofort freigeschaltet, gültig bestandPackMonths Monate. Verbrauch: erst Monatskontingent, dann ältestes Paket.
+   */
+  bestandPacks: [
+    { messages: 500, price: 99 },
+    { messages: 2000, price: 349 },
+  ],
+  bestandPackMonths: 3,
+  /** Ab so vielen zusätzlichen Nachrichten im Monat individuell (Anfrage, Aufgabe für uns). */
+  bestandPackIndividualFrom: 5000,
   /** Modul „Empfehlungen & Bewertungen“ je Monat (netto), Ole 12.11.2026. */
   empfehlungModuleMonthly: 59,
   /** Testphase bei Selbstbuchung: so viele Tage kostenlos, danach automatisch kostenpflichtig. */
@@ -443,4 +454,10 @@ export function resolveOfferChoice(
     annualPrepay,
     annualFreeMonths: annualPrepay ? (snap.annualFreeMonths ?? PRICE_LIST.annualFreeMonths) : null,
   };
+}
+
+/** Zusatzpakete Bestandskunden-Modul als Satz: „+500 Nachrichten für 99 €, +2.000 für 349 € (netto, einmalig, gültig 3 Monate)“. */
+export function bestandPacksText(): string {
+  const parts = PRICE_LIST.bestandPacks.map((p, i) => `+${p.messages.toLocaleString("de-DE")}${i === 0 ? " Nachrichten" : ""} für ${eur(p.price)}`);
+  return `${parts.join(", ")} (netto, einmalig, gültig ${PRICE_LIST.bestandPackMonths} Monate)`;
 }

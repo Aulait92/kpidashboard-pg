@@ -35,9 +35,12 @@ describe("Nachgetragene Einmal-Umsätze im Umsatzbuch", () => {
 
   it("Einmal-Umsätze je Monat getrennt nach Herkunft", () => {
     const m = oneTimeByMonth([{ month: "2026-10", amount: 1490 }], manual, ["2026-09", "2026-10", "2026-11"]);
-    expect(m[0]).toEqual({ month: "2026-09", offers: 0, manualSetup: 990, other: 0, total: 990 });
-    expect(m[1]).toEqual({ month: "2026-10", offers: 1490, manualSetup: 0, other: 500, total: 1990 });
+    expect(m[0]).toEqual({ month: "2026-09", offers: 0, manualSetup: 990, other: 0, packs: 0, total: 990 });
+    expect(m[1]).toEqual({ month: "2026-10", offers: 1490, manualSetup: 0, other: 500, packs: 0, total: 1990 });
     expect(m[2].total).toBe(0);
+    // Zusatzpakete Bestandskunden-Modul (Kaufmonat) als eigene Herkunft
+    const withPacks = oneTimeByMonth([], [], ["2026-11"], [{ month: "2026-11", amount: 99 }, { month: "2026-11", amount: 349 }]);
+    expect(withPacks[0]).toEqual({ month: "2026-11", offers: 0, manualSetup: 0, other: 0, packs: 448, total: 448 });
   });
 });
 

@@ -34,7 +34,7 @@ export function stripeClient(): Stripe | null {
 
 export const billingEnabled = () => !!process.env.STRIPE_SECRET_KEY?.trim();
 
-type ProductKey = "software" | "service" | "setup" | "setup_service" | "whatsapp" | "leads" | "seat" | "bestand" | "empfehlung";
+type ProductKey = "software" | "service" | "setup" | "setup_service" | "whatsapp" | "leads" | "seat" | "bestand" | "bestand_paket" | "empfehlung";
 const productCache = new Map<ProductKey, string>();
 
 const PRODUCT_DEFAULTS: Record<ProductKey, { name: string; description: string }> = {
@@ -65,6 +65,10 @@ const PRODUCT_DEFAULTS: Record<ProductKey, { name: string; description: string }
   bestand: {
     name: "Bestandskunden-Modul",
     description: "Bestandskunden importieren und per WhatsApp ansprechen, inklusive WhatsApp-Gebühren bis zum Monatskontingent.",
+  },
+  bestand_paket: {
+    name: "Zusatzpaket Kampagnen-Nachrichten",
+    description: "Zusätzliche Kampagnen-Nachrichten im Bestandskunden-Modul, einmalig, gültig 3 Monate, inklusive WhatsApp-Gebühren.",
   },
   empfehlung: {
     name: "Empfehlungen & Bewertungen",
@@ -674,10 +678,12 @@ export async function chargeNow(opts: {
   description: string;
   idempotencyKey: string;
   metadata: Record<string, string>;
+  /** Stripe-Produkt der Positionen (Standard: Leads). */
+  productKey?: ProductKey;
 }): Promise<{ invoiceId: string; status: "paid" | "processing" | "open" | "failed" }> {
   const stripe = stripeClient();
   if (!stripe) throw new Error("Stripe ist nicht eingerichtet.");
-  const [product, tax] = await Promise.all([productId(stripe, "leads"), resolveTax(stripe)]);
+  const [product, tax] = await Promise.all([productId(stripe, opts.productKey ?? "leads"), resolveTax(stripe)]);
   const invoice = await stripe.invoices.create(
     {
       customer: opts.stripeCustomerId,

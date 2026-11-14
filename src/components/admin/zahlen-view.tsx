@@ -1533,6 +1533,7 @@ const ONE_TIME = [
   { key: "offers", name: "Aus Angeboten", color: "#7b8aa3" },
   { key: "manualSetup", name: "Nachgetragen: Einrichtung", color: "#b8c2d3" },
   { key: "other", name: "Nachgetragen: Sonstiges", color: "#dde3ec" },
+  { key: "packs", name: "Zusatzpakete Bestand", color: "#9fc5b0" },
 ] as const;
 
 function OneTimeCard({ data, investor }: { data: ZahlenData; investor: boolean }) {
@@ -1541,7 +1542,7 @@ function OneTimeCard({ data, investor }: { data: ZahlenData; investor: boolean }
   const months = o.months.filter((m, i) => m.total > 0 || i >= o.months.length - 6);
   const max = Math.max(1, ...months.map((m) => m.total));
   return (
-    <Card title="Einrichtungsgebühren je Monat" cap="Einmalige Umsätze, bewusst nicht im MRR: Einrichtung aus Angeboten und von Hand nachgetragen.">
+    <Card title="Einrichtungsgebühren je Monat" cap="Einmalige Umsätze, bewusst nicht im MRR: Einrichtung aus Angeboten, von Hand nachgetragen und Zusatzpakete im Bestandskunden-Modul.">
       <KV
         items={[
           { k: longMonth(data.current), v: eur(o.currentMonth) },
