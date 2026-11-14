@@ -186,14 +186,8 @@ export async function bookEmpfehlung(customerId: string, opts: { actor?: AuditAc
 
 /** WhatsApp-Vorlagen des Moduls gleich einreichen (sonst übernimmt der Cron). */
 async function submitTemplatesSoon(customerId: string) {
-  try {
-    const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { status: true } });
-    if (acc?.status !== "connected") return;
-    const { submitTemplatesForCustomer } = await import("@/lib/whatsapp/template-submit");
-    await submitTemplatesForCustomer(customerId);
-  } catch {
-    // Cron reicht nach
-  }
+  const { submitTemplatesAfterModule } = await import("@/lib/whatsapp/template-submit");
+  await submitTemplatesAfterModule(customerId);
 }
 
 /** Kündigen: in der Testphase zum Ende der Testphase (ohne Kosten), sonst zum Ende des Abrechnungszeitraums. */

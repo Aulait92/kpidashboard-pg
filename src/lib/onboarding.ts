@@ -168,6 +168,11 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
     await sendWelcome(onboarding.id, { setPasswordUrl });
   }
 
+  // Module aus dem Angebot (Bestand, Empfehlungen): Vorlagen gleich einreichen, falls die Nummer schon verbunden ist
+  if (offer.bestandMonthly != null || offer.empfehlungMonthly != null) {
+    const { submitTemplatesAfterModule } = await import("@/lib/whatsapp/template-submit");
+    await submitTemplatesAfterModule(customer.id);
+  }
   await setContactCustomerStage(offer, "ONBOARDING");
   await logOfferActivity(offer, `Onboarding gestartet (${pkg === "service" ? "Nur Betreuung" : "Betreuung + Software"})`, `Kundenkonto: ${customer.name}`);
   await sendToAdmins({
