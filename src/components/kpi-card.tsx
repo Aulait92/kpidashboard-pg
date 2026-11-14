@@ -29,13 +29,8 @@ const ppFmt = new Intl.NumberFormat("de-DE", {
 });
 
 function DeltaBadge({ delta }: { delta: Delta }) {
-  if (delta.pct == null || !Number.isFinite(delta.pct)) {
-    return (
-      <span className="inline-flex items-center gap-0.5 rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500">
-        <ArrowRight className="h-3 w-3" /> n/a
-      </span>
-    );
-  }
+  // Ohne Vergleichszeitraum kein Badge (nie „n/a“ zeigen, Ole 14.11.2026)
+  if (delta.pct == null || !Number.isFinite(delta.pct)) return null;
 
   const lowerIsBetter = delta.lowerIsBetter === true;
   const isGood =

@@ -311,7 +311,11 @@ async function BuyerDashboardBody({
       {tips.length ? (
         <ZahlenTippsCard
           tips={tips.map(({ key, title, text, href, cta }) => ({ key, title, text, href, cta }))}
-          intro={earlyHint(months, bestand.inYears) ?? "Ihre Zahlen sind gerade im Minus. Diese Schritte bringen am meisten:"}
+          intro={
+            cur.gewinn < 0
+              ? (earlyHint(months, bestand.inYears) ?? "Ihre Zahlen sind gerade im Minus. Diese Schritte bringen am meisten:")
+              : "Für diesen Monat zeichnet sich ein Minus ab. Diese Schritte bringen am meisten:"
+          }
           canDismiss={!!ctx && !ctx.preview}
         />
       ) : null}
