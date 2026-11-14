@@ -17,7 +17,7 @@ import { prisma } from "@/lib/prisma";
 import { getAppUrl } from "@/lib/email";
 import { reportError } from "@/lib/monitoring";
 import { offerProducts } from "@/components/offer-document";
-import { annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
+import { annualMultiplier, offerSetupDiscount, PRICE_LIST } from "@/lib/offer-pricing";
 import { audit, type AuditActor } from "@/lib/audit";
 import { seatsToBill } from "@/lib/seats";
 import { MANUAL_SEAT_TASK, manualSeatTask, seatUsage } from "@/lib/seats-server";
@@ -175,6 +175,23 @@ export async function createCheckoutForOffer(offerId: string): Promise<{ url: st
     const products = offerProducts(offer.products).map((p) => p.name).join(", ");
     const meta = offerMeta(offer);
     const setupFee = Number(offer.setupFee);
+    // Empfehlungsrabatt: Listenpreis als Posten, Rabatt als einmaliger Gutschein auf den
+    // Setup-Posten. So steht auf der Rechnung „Empfehlungsrabatt“, der Betrag = setupFee.
+    const discount = setupFee > 0 ? offerSetupDiscount(offer) : null;
+    const coupon = discount
+      ? await stripe.coupons.create(
+          {
+            amount_off: cents(discount.discount),
+            currency: "eur",
+            duration: "once",
+            max_redemptions: 1,
+            name: "Empfehlungsrabatt",
+            applies_to: { products: [setup] },
+            metadata: { ...meta, pg_kind: "empfehlungsrabatt", referral_id: offer.referralId ?? "" },
+          },
+          { idempotencyKey: `offer-coupon-${offer.id}-${cents(discount.discount)}-${cents(discount.list)}` },
+        )
+      : null;
     const base = getAppUrl();
     const common = {
       customer: customerId,
@@ -203,12 +220,13 @@ export async function createCheckoutForOffer(offerId: string): Promise<{ url: st
                 price_data: {
                   currency: "eur",
                   product: setup,
-                  unit_amount: cents(setupFee),
+                  unit_amount: cents(discount ? discount.list : setupFee),
                   tax_behavior: "exclusive",
                 },
                 ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
               },
             ],
+            ...(coupon ? { discounts: [{ coupon: coupon.id }] } : {}),
             payment_intent_data: {
               setup_future_usage: "off_session",
               description: `Setup ${packageName(offer)} (${products}), Angebot ${offer.number}`,

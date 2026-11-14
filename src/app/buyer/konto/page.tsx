@@ -22,6 +22,8 @@ import { productOverview } from "@/lib/produkt-buchen";
 import { EmpfehlungBookButton, EmpfehlungCancelButton } from "@/components/empfehlung/client";
 import { moduleState, showNewBadge, trialAvailable } from "@/lib/empfehlung/shared";
 import { includedPhrase } from "@/lib/seats";
+import { loadReferralSettings } from "@/lib/kollegen";
+import { referralIncentiveSentence } from "@/lib/kollegen-shared";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Konto & Rechnungen | performancegrowth" };
@@ -347,7 +349,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <Card>
             <CardHeader title="Kollegen empfehlen" icon={Gift} />
             <div className="flex flex-wrap items-center justify-between gap-3 p-5">
-              <p className="text-sm text-[color:var(--muted)]">Empfehlen Sie uns weiter – wird ein Kollege Kunde, bekommen Sie eine Prämie.</p>
+              <p className="text-sm text-[color:var(--muted)]" data-konto-kollegen>
+                {referralIncentiveSentence(await loadReferralSettings())}
+              </p>
               <Link href="/buyer/empfehlen" className={buttonClass("secondary", "md")}>
                 Link teilen
               </Link>

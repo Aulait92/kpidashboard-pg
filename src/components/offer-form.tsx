@@ -34,6 +34,7 @@ export function OfferForm({
   target,
   backHref,
   initial,
+  referralDiscount = null,
 }: {
   target: OfferTarget;
   backHref: string;
@@ -49,6 +50,8 @@ export function OfferForm({
     setupOverride?: string;
     specialTerms?: string;
   };
+  /** Empfohlener Kontakt: Einrichtungsrabatt (vorbelegt, übersteuerbar). */
+  referralDiscount?: { amount: number; label: string; note: string | null } | null;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -64,6 +67,7 @@ export function OfferForm({
   const [pkg, setPkg] = useState<OfferPackage>("software");
   const [term, setTerm] = useState<OfferTerm>("12m");
   const [setupOverride, setSetupOverride] = useState(initial.setupOverride ?? "");
+  const [discount, setDiscount] = useState(referralDiscount ? String(referralDiscount.amount) : "");
   const [monthlyOverride, setMonthlyOverride] = useState("");
   const [introFee, setIntroFee] = useState("");
   const [introMonths, setIntroMonths] = useState("3");
@@ -89,6 +93,7 @@ export function OfferForm({
     annual: annual && term === "12m",
     bestandModule: bestand && pkg === "software",
     empfehlungModule: empfehlung && pkg === "software",
+    setupDiscount: referralDiscount ? num(discount) : null,
   });
   const softwarePkg = pkg === "software";
   const annualPossible = term === "12m" && num(introFee) == null;
@@ -107,6 +112,8 @@ export function OfferForm({
         term,
         products: parsedProducts,
         setupOverride: num(setupOverride),
+        // Empfohlener Kontakt: Wert aus dem Feld (0 = bewusst kein Rabatt), sonst automatisch
+        setupDiscount: referralDiscount ? (num(discount) ?? 0) : undefined,
         monthlyOverride: num(monthlyOverride),
         introMonthlyFee: num(introFee),
         introMonths: num(introMonths),
@@ -248,6 +255,23 @@ export function OfferForm({
               <Field l={`Setup abweichend (Liste: ${eur(price.listSetup)})`}>
                 <input className={input} inputMode="decimal" placeholder="leer = Listenpreis" value={setupOverride} onChange={(e) => setSetupOverride(e.target.value)} />
               </Field>
+              {referralDiscount ? (
+                <Field l={`${referralDiscount.label}: Rabatt auf die Einrichtung (netto)`}>
+                  <input
+                    className={input}
+                    inputMode="decimal"
+                    name="setupDiscount"
+                    placeholder="0 = kein Rabatt"
+                    value={discount}
+                    onChange={(e) => setDiscount(e.target.value)}
+                    data-angebot-setup-rabatt
+                  />
+                  {referralDiscount.note ? <span className="block text-xs text-amber-700">{referralDiscount.note}</span> : null}
+                  {num(discount) && price.setupDiscount === 0 ? (
+                    <span className="block text-xs text-[color:var(--muted)]">„Setup abweichend“ ist günstiger, der Rabatt wird nicht zusätzlich abgezogen.</span>
+                  ) : null}
+                </Field>
+              ) : null}
               <Field l={`Monatlich abweichend (Liste: ${price.listMonthly == null ? "individuell" : eur(price.listMonthly)})`}>
                 <input className={input} inputMode="decimal" placeholder={price.listMonthly == null ? "bitte eintragen" : "leer = Listenpreis"} value={monthlyOverride} onChange={(e) => setMonthlyOverride(e.target.value)} />
               </Field>
@@ -362,7 +386,11 @@ export function OfferForm({
           <CardHeader title="Zusammenfassung" />
           <div className="space-y-3 p-5 text-sm">
             <Sum k="Werbebudget / Monat" v={`≈ ${eur(price.monthlyBudget)}`} sub={price.tierLabel} />
-            <Sum k="Setup einmalig" v={eur(price.setupFee)} sub={`${eur(withVat(price.setupFee))} brutto · bei Annahme`} />
+            <Sum
+              k="Setup einmalig"
+              v={eur(price.setupFee)}
+              sub={`${price.setupDiscount > 0 ? `statt ${eur(price.listSetup)}, ${referralDiscount?.label ?? "Empfehlungsrabatt"} ${eur(price.setupDiscount)} · ` : ""}${eur(withVat(price.setupFee))} brutto · bei Annahme`}
+            />
             {num(introFee) != null ? (
               <Sum k={`Monat 1–${num(introMonths) ?? "?"}`} v={eur(num(introFee)!)} sub={`${eur(withVat(num(introFee)!))} brutto`} />
             ) : null}

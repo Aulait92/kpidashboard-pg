@@ -52,7 +52,8 @@ export default async function EmpfehlenPage({ params }: { params: Promise<{ code
 
   const config = await loadRechnerConfig();
   const guarantees = [config.guarantees.leads, config.guarantees.breakEven, config.guarantees.productSwap].filter((g) => g.enabled);
-  const benefit = benefitSentence(settings);
+  // Satz aus der Einstellung, mit Namen des Empfehlers (steht ohnehin in der Überschrift)
+  const benefit = benefitSentence(settings, ref.person);
   const bookingUrl = /^https:\/\//i.test(config.contactUrl) ? config.contactUrl : null;
   const who = ref.person !== ref.agency && ref.agency ? (
     <>

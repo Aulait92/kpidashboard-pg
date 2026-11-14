@@ -19,7 +19,8 @@
 //   „canceled“) → Monatsende der letzten Änderung; archivierter Kunde ohne
 //   Abo → Monat seines letzten Leads (bessere Information gibt es nicht).
 // - Einrichtung („setup“): setupFee angenommener Angebote im Monat der
-//   Zahlung (sonst Annahme) – einmalig, nie im MRR. Dazu von Hand
+//   Zahlung (sonst Annahme) – einmalig, nie im MRR. setupFee ist schon nach
+//   Empfehlungsrabatt (Kollegen empfehlen), der Rabatt mindert den Umsatz also. Dazu von Hand
 //   nachgetragene Einmal-Umsätze (ManualRevenue, Admin → Zahlen) im
 //   angegebenen Monat, ebenfalls als „setup“.
 // - Retainer-Ende von Hand (Customer.retainerEnd) geht vor den Ableitungen

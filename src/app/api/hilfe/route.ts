@@ -45,7 +45,15 @@ export async function POST(req: Request): Promise<Response> {
 
   try {
     const whatsapp = await hasWhatsAppInbox(ctx.customerId);
-    const res = await askHilfe({ question, history, page, role: ctx.teamRole, whatsapp });
+    // Konditionen „Kollegen empfehlen“ immer aktuell aus den Einstellungen (Rabatt, Prämie)
+    const referralInfo = await import("@/lib/kollegen")
+      .then(async (m) => {
+        const settings = await m.loadReferralSettings();
+        const shared = await import("@/lib/kollegen-shared");
+        return settings.enabled ? `${shared.referralIncentiveSentence(settings)} ${shared.rewardSentence(settings, null)}` : "Das Empfehlungsprogramm ist gerade pausiert.";
+      })
+      .catch(() => null);
+    const res = await askHilfe({ question, history, page, role: ctx.teamRole, whatsapp, referralInfo });
     const ev = await prisma.usageEvent
       .create({
         data: {

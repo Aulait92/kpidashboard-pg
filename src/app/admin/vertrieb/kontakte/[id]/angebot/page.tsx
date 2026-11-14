@@ -4,8 +4,9 @@ import { OfferForm } from "@/components/offer-form";
 import { legalUrls } from "@/lib/offers";
 import { prisma } from "@/lib/prisma";
 import { shortName } from "@/lib/vertrieb/crm";
-import { loadReferralSettings, referralForContact } from "@/lib/kollegen";
+import { loadReferralSettings, referralForContact, referralSetupDiscount } from "@/lib/kollegen";
 import { benefitSentence } from "@/lib/kollegen-shared";
+import { eur } from "@/lib/offer-pricing";
 
 export const metadata = { title: "Angebot erstellen | Vertrieb" };
 
@@ -26,6 +27,8 @@ export default async function ContactOfferPage({ params }: { params: Promise<{ i
   const referral = await referralForContact(c.id);
   const settings = referral ? await loadReferralSettings() : null;
   const benefit = settings ? benefitSentence(settings) : null;
+  // Rabatt auf die Einrichtung: automatisch vorbelegt, wenn berechtigt; sonst 0 mit Grund (übersteuerbar)
+  const discount = referral && settings?.benefitKind === "setup_discount" ? await referralSetupDiscount(c.id) : null;
 
   return (
     <div className="mx-auto w-full max-w-6xl">
@@ -43,17 +46,30 @@ export default async function ContactOfferPage({ params }: { params: Promise<{ i
       {referral ? (
         <p className="mt-4 rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" data-angebot-empfehlung>
           Empfohlen von {referral.referrer.name}.{" "}
-          {benefit
-            ? settings?.benefitKind === "setup_free"
-              ? "Neukunden-Vorteil: Einrichtung gratis – ist unten vorbelegt."
-              : `Neukunden-Vorteil: ${benefit} (bitte als Sonderkondition eintragen).`
-            : "Kein Neukunden-Vorteil eingestellt."}
+          {discount
+            ? discount.eligible
+              ? `Empfehlungsrabatt: ${eur(discount.amount)} auf die Einrichtung, ist unten vorbelegt und wird automatisch abgezogen.`
+              : `Kein automatischer Empfehlungsrabatt: ${discount.reason}. Bei Bedarf unten von Hand eintragen.`
+            : benefit
+              ? settings?.benefitKind === "setup_free"
+                ? "Neukunden-Vorteil: Einrichtung gratis, ist unten vorbelegt."
+                : `Neukunden-Vorteil: ${benefit} (bitte als Sonderkondition eintragen).`
+              : "Kein Neukunden-Vorteil eingestellt."}
         </p>
       ) : null}
       <div className="mt-6">
         <OfferForm
           target={{ salesContactId: c.id }}
           backHref={back}
+          referralDiscount={
+            discount
+              ? {
+                  amount: discount.eligible ? discount.amount : 0,
+                  label: discount.label,
+                  note: discount.eligible ? null : `Nicht automatisch: ${discount.reason}.`,
+                }
+              : null
+          }
           initial={{
             contactName: person,
             company: c.name,

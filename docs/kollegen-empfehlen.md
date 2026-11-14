@@ -26,9 +26,28 @@ Kunden (Vermittler) empfehlen performancegrowth an Kollegen. Code: `src/lib/koll
 
 ## Einstellungen
 
-Admin → Einstellungen → „Kollegen empfehlen“: an/aus, Prämie (1 Monat Betreuung = aktueller `retainerMonthly` des
-Empfehlers, oder fester Betrag), Neukunden-Vorteil (keiner / Einrichtung gratis – im Angebot vorbelegt / eigener
-Text). Übersicht: Vertrieb → Empfehlungen (Top-Empfehler, neuer Monatsumsatz, Prämien, offene manuelle Prämien).
+Admin → Einstellungen → „Kollegen empfehlen“: an/aus, Hinweise im Kundenbereich an/aus (Standard aus, Programm wird
+vorerst nicht aktiv beworben), Prämie (Standard seit 14.11.2026: Bestandskunden-Modul N Monate gratis, Standard 3;
+alternativ 1 Monat Betreuung = aktueller `retainerMonthly` des Empfehlers oder fester Betrag), Neukunden-Vorteil
+(keiner / Einrichtung gratis, im Angebot vorbelegt / Rabatt auf die Einrichtung als Betrag netto, rechnet automatisch /
+eigener Text, wird nicht gerechnet).
+
+Empfehlungsrabatt (lib/kollegen.ts `referralSetupDiscount`, lib/offer-pricing.ts `applySetupDiscount`):
+- Neues Angebot an einen empfohlenen Kontakt: Rabatt automatisch, im Formular übersteuerbar (0 = keiner).
+  Voraussetzungen: offene Empfehlung mit Kontakt, keine Selbstempfehlung, Kontakt nicht schon Kunde, nicht schon vorher
+  im CRM (`existingContact`), kein Angebot vor der Empfehlung, Empfehlung jünger als 12 Monate.
+- Gilt für jede Laufzeit, nie unter 0; „Setup abweichend“ wird nicht addiert, der günstigere Betrag gilt.
+- Gespeichert am Angebot: `setupListFee` (Listenpreis), `setupDiscount` (vereinbarter Rabatt), `setupDiscountLabel`,
+  `referralId`; `setupFee` bleibt der zu zahlende Betrag (Umsatz, Kundenerfolg und Agenturkosten rechnen damit).
+- Stripe: Setup-Posten zum Listenpreis plus einmaliger Gutschein „Empfehlungsrabatt“ (amount_off, nur auf den
+  Setup-Posten), Rechnungsbetrag = `setupFee`.
+- Offene Angebote nachziehen: Vertrieb → Empfehlungen → „Offene Angebote an Empfohlene“ (Liste = Trockenlauf,
+  Knopf übernimmt).
+
+Prämie „Bestandskunden-Modul gratis“ (lib/kollegen.ts `grantBestandReward`): Modul nicht gebucht → `setBestandModule`
+„book“ und N Monatsbeiträge als Gutschrift, `Customer.bestandFreeUntil` = heute + N Monate (Hinweis 14 Tage vorher,
+`remindBestandFreeEnd` im täglichen Cron). Modul gebucht → N Monatsbeiträge gutschreiben (läuft eine Gratiszeit, wird
+sie verlängert). Modul kostenlos (Bestandsschutz, inklusive, Makler mit 0 €) → Admin-Aufgabe. Übersicht: Vertrieb → Empfehlungen (Top-Empfehler, neuer Monatsumsatz, Prämien, offene manuelle Prämien).
 Kundenakte zeigt „hat X Kunden geworben“.
 
 ## Offen für Ole

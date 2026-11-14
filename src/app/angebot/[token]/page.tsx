@@ -147,6 +147,9 @@ function choiceProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToke
   const count = offerProducts(offer.products).length || 1;
   const fixedTerm = normalizeTerm(offer.term);
   const add = offerAddOns(offerAddOnsOf(offer));
+  // Empfehlungsrabatt gilt für jede Laufzeit (Listenpreis durchgestrichen)
+  const discount = offer.setupDiscount == null ? null : Number(offer.setupDiscount);
+  const fixedList = offer.setupListFee == null ? null : Number(offer.setupListFee);
   return {
     choosesTerm: offer.customerChoosesTerm,
     choosesStart: offer.customerChoosesStart,
@@ -154,7 +157,8 @@ function choiceProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToke
     options: (offer.customerChoosesTerm ? TERM_OPTIONS : [fixedTerm]).map((t) => ({
       term: t,
       label: TERM_CHOICE_LABEL[t],
-      setup: offer.customerChoosesTerm ? setupForChoice(t, count) : Number(offer.setupFee),
+      setup: offer.customerChoosesTerm ? setupForChoice(t, count, discount) : Number(offer.setupFee),
+      list: discount ? (offer.customerChoosesTerm ? setupForChoice(t, count) : fixedList) : null,
     })),
     monthlyTotal: add.monthlyTotal,
     annualOffered: offer.annualPrepay,

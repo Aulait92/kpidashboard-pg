@@ -135,6 +135,8 @@ describe("Kollegen empfehlen", () => {
     }) as unknown as Stripe.Event;
 
   it("erste Zahlung des Neukunden → genau eine Gutschrift beim Empfehler", async () => {
+    // Diese Tests prüfen die Prämie „1 Monat Betreuung“ (Standard seit 14.11.2026: Bestandskunden-Modul)
+    await prisma.referralSettings.upsert({ where: { id: "default" }, create: { id: "default", rewardKind: "month" }, update: { rewardKind: "month" } });
     const r = await submitReferral(form(`zahlt-${tag}@kollegen-agentur.test`));
     const contactId = r.ok ? r.contactId! : "";
     const n = uid();
@@ -153,6 +155,8 @@ describe("Kollegen empfehlen", () => {
   });
 
   it("ohne Stripe-Kunde des Empfehlers → Admin-Aufgabe „Prämie manuell gutschreiben“", async () => {
+    // Diese Tests prüfen die Prämie „1 Monat Betreuung“ (Standard seit 14.11.2026: Bestandskunden-Modul)
+    await prisma.referralSettings.upsert({ where: { id: "default" }, create: { id: "default", rewardKind: "month" }, update: { rewardKind: "month" } });
     const other = await makeCustomer({ retainerMonthly: 1000 });
     customers.push(other.id);
     await makeBuyer(other.id, "owner");
@@ -172,6 +176,8 @@ describe("Kollegen empfehlen", () => {
   });
 
   it("Hinweise: 5. Abschluss einmal zeigen, nach Wegklicken nie wieder, 30 Tage Abstand", async () => {
+    // Hinweise sind seit 14.11.2026 standardmäßig aus (nicht aktiv bewerben) → hier eingeschaltet
+    await prisma.referralSettings.upsert({ where: { id: "default" }, create: { id: "default", nudgesEnabled: true }, update: { nudgesEnabled: true } });
     const c = await makeCustomer({ retainerMonthly: 1000 });
     customers.push(c.id);
     const now = new Date();
@@ -188,6 +194,15 @@ describe("Kollegen empfehlen", () => {
     const later = await loadReferralNudge(c.id, new Date(now.getTime() + 31 * DAY));
     expect(later?.key).toBe("feedback-day30");
     expect(await prisma.referralNudge.count({ where: { customerId: c.id } })).toBe(2);
+    await prisma.referralSettings.deleteMany({});
+  });
+
+  it("Hinweise standardmäßig aus: auch beim 5. Abschluss kein Hinweis", async () => {
+    await prisma.referralSettings.deleteMany({});
+    const c = await makeCustomer({ retainerMonthly: 1000 });
+    customers.push(c.id);
+    for (let i = 0; i < 5; i++) await prisma.lead.create({ data: { customerId: c.id, source: "TKV", status: "Abschluss" } });
+    expect(await loadReferralNudge(c.id)).toBeNull();
   });
 
   it("Programm pausiert → keine Hinweise, Landingpage nimmt nichts an", async () => {

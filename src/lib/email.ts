@@ -206,6 +206,17 @@ export function offerMailTexts(du: boolean) {
       };
 }
 
+const eurMail = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: n % 1 ? 2 : 0 }).format(n);
+
+/** Empfehlungsrabatt in der Angebotsmail: Text- und HTML-Zeile (Listenpreis durchgestrichen). */
+export function offerDiscountLine(d: { label: string; discount: number; list: number; fee: number; anyTerm: boolean }): { text: string; html: string } {
+  const tail = d.anyTerm ? " Gilt bei jeder Laufzeit." : "";
+  return {
+    text: `${d.label}: − ${eurMail(d.discount)} auf die Einrichtung. Einrichtung ${eurMail(d.fee)} statt ${eurMail(d.list)} netto.${tail}`,
+    html: `<b>${escapeHtml(d.label)}: − ${eurMail(d.discount)}</b> auf die Einrichtung. Einrichtung <s>${eurMail(d.list)}</s> <b>${eurMail(d.fee)}</b> netto.${tail}`,
+  };
+}
+
 /** Schickt einem Interessenten den Link zu seinem Angebot. */
 export async function sendOfferEmail(opts: {
   to: string;
@@ -221,6 +232,8 @@ export async function sendOfferEmail(opts: {
   attachment?: { filename: string; content: Buffer } | null;
   /** Anrede: true = Du-Form, sonst Sie */
   du?: boolean;
+  /** Empfehlungsrabatt auf die Einrichtung (eigene Zeile, Listenpreis durchgestrichen). */
+  discount?: { label: string; discount: number; list: number; fee: number; anyTerm: boolean } | null;
 }): Promise<SendResult & { subject?: string; text?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>";
@@ -231,6 +244,7 @@ export async function sendOfferEmail(opts: {
   const until = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(opts.validUntil);
   const greeting = escapeHtml(opts.greeting);
   const subject = `${t.subject} (${opts.number})`;
+  const discount = opts.discount ? offerDiscountLine(opts.discount) : null;
   const text = [
     opts.greeting,
     "",
@@ -239,6 +253,7 @@ export async function sendOfferEmail(opts: {
     "",
     `${t.accept} Das Angebot gilt bis ${until}.`,
     "",
+    ...(discount ? [discount.text, ""] : []),
     ...(rechner ? [`${t.rechner}:`, rechner, ""] : []),
     ...(anhang ? [t.anhang, ""] : []),
     signatureText(),
@@ -257,6 +272,7 @@ export async function sendOfferEmail(opts: {
           <p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.introHtml} ${t.accept}</p>
           <p style="margin:24px 0"><a href="${opts.offerUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">Angebot ansehen</a></p>
           <p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Angebot ${escapeHtml(opts.number)} · gültig bis ${until}</p>
+          ${discount ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#047857">${discount.html}</p>` : ""}
           ${rechner ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.rechner}: <a href="${escapeHtml(rechner)}" style="color:#2563eb;font-weight:600">Zum Rechner</a></p>` : ""}
           ${anhang ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.anhang}</p>` : ""}
           ${signatureHtml()}

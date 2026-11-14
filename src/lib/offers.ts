@@ -23,6 +23,7 @@ import { logOfferActivity, offerAdminHref, setContactCustomerStage, type OfferTa
 import { billingEnabled } from "@/lib/billing";
 import { startOnboarding } from "@/lib/onboarding";
 import { audit } from "@/lib/audit";
+import { referralSetupDiscount } from "@/lib/kollegen";
 
 
 export type OfferFormInput = {
@@ -52,6 +53,11 @@ export type OfferFormInput = {
   empfehlungModule?: boolean;
   /** Vertreter (Standard) oder Makler: bestimmt die Garantien. */
   vermittlerTyp?: "vertreter" | "makler";
+  /**
+   * Empfehlungsrabatt auf die Einrichtung (netto). undefined = automatisch aus der
+   * Kollegen-Empfehlung des Kontakts; Zahl = vom Admin übersteuert (0 = kein Rabatt).
+   */
+  setupDiscount?: number | null;
   /**
    * Kunde darf Laufzeit und Startdatum auf der Angebotsseite selbst wählen (Standard an).
    * Mit Sonderpreis (Setup/Monat abweichend) nur das Startdatum.
@@ -113,6 +119,19 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
     throw new Error("Bitte ein Startdatum angeben – ab dann läuft die Monatsgebühr.");
   }
   const term = normalizeTerm(input.term);
+  // Empfehlungsrabatt: automatisch für gültig empfohlene Kontakte, vom Admin übersteuerbar
+  let discount: { amount: number; label: string; referralId: string } | null = null;
+  const wanted = input.setupDiscount;
+  if ("salesContactId" in owner && owner.salesContactId) {
+    const d = await referralSetupDiscount(owner.salesContactId);
+    const amount = wanted !== undefined ? wanted : d?.eligible ? d.amount : null;
+    if (amount != null && Number.isFinite(amount) && amount > 0) {
+      if (!d) throw new Error("Einen Empfehlungsrabatt gibt es nur für empfohlene Kontakte. Bitte sonst „Setup abweichend“ eintragen.");
+      discount = { amount: Math.round(amount * 100) / 100, label: d.label, referralId: d.referralId };
+    }
+  } else if (wanted != null && wanted > 0) {
+    throw new Error("Einen Empfehlungsrabatt gibt es nur für empfohlene Kontakte.");
+  }
   const price = computeOfferPrice({
     package: pkg,
     term,
@@ -123,7 +142,10 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
     annual: input.annual,
     bestandModule: input.bestandModule,
     empfehlungModule: input.empfehlungModule,
+    setupDiscount: discount?.amount ?? null,
   });
+  // Ist „Setup abweichend“ günstiger, gilt nur dieser (Rabatt wird nicht addiert)
+  const discountApplied = discount != null && price.setupDiscount > 0;
   if (price.monthlyFee == null) {
     throw new Error(
       price.seatsIndividual
@@ -174,6 +196,10 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             term,
             products,
             setupFee: price.setupFee,
+            setupListFee: discountApplied ? price.listSetup : null,
+            setupDiscount: discountApplied ? discount!.amount : null,
+            setupDiscountLabel: discountApplied ? discount!.label : null,
+            referralId: discountApplied ? discount!.referralId : null,
             monthlyFee: price.monthlyFee!,
             softwareFee: price.softwareFee,
             // Zusätze (nur Paket mit Software): Logins, Modul, Zahlweise
@@ -257,6 +283,8 @@ export async function acceptOffer(
       annualFreeMonths: offer.annualFreeMonths,
       choosesTerm: offer.customerChoosesTerm,
       choosesStart: offer.customerChoosesStart,
+      setupDiscount: offer.setupDiscount == null ? null : Number(offer.setupDiscount),
+      setupListFee: offer.setupListFee == null ? null : Number(offer.setupListFee),
     },
     { term: opts.term, startDate: opts.startDate },
     berlinTodayIso(),
@@ -275,6 +303,7 @@ export async function acceptOffer(
       acceptedAgent: opts.agent?.slice(0, 400) ?? null,
       term: choice.term,
       setupFee: choice.setupFee,
+      ...(offer.setupDiscount != null ? { setupListFee: choice.setupListFee } : {}),
       startDate,
       annualPrepay: choice.annualPrepay,
       annualFreeMonths: choice.annualFreeMonths,

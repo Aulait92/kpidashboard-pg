@@ -72,7 +72,7 @@ export async function loadVertriebZahlen(rangeKey?: string, now = new Date()): P
     prisma.offer.findMany({
       where: { acceptedAt: inRange },
       orderBy: { acceptedAt: "desc" },
-      select: { id: true, number: true, acceptedAt: true, monthlyFee: true, setupFee: true, company: true, contactName: true, salesContactId: true },
+      select: { id: true, number: true, acceptedAt: true, monthlyFee: true, setupFee: true, setupListFee: true, setupDiscount: true, company: true, contactName: true, salesContactId: true },
     }),
   ]);
 
@@ -131,7 +131,9 @@ export async function loadVertriebZahlen(rangeKey?: string, now = new Date()): P
     name: offerName(o),
     href: o.salesContactId ? contactHref(o.salesContactId) : null,
     date: o.acceptedAt!.toISOString(),
-    detail: `${o.number} · ${eur(o.monthlyFee)}/Monat${Number(o.setupFee) > 0 ? ` · Setup ${eur(o.setupFee)}` : ""}`,
+    detail: `${o.number} · ${eur(o.monthlyFee)}/Monat${Number(o.setupFee) > 0 ? ` · Setup ${eur(o.setupFee)}` : ""}${
+      o.setupListFee != null && o.setupDiscount != null && Number(o.setupListFee) > Number(o.setupFee) ? ` (Empfehlungsrabatt − ${eur(Number(o.setupListFee) - Number(o.setupFee))})` : ""
+    }`,
     status: "angenommen",
   }));
 

@@ -81,6 +81,8 @@ export async function askHilfe(opts: {
   page: string | null;
   role: "owner" | "advisor";
   whatsapp: boolean;
+  /** Aktuelle Konditionen „Kollegen empfehlen“ (aus den Einstellungen, z. B. Rabatt und Prämie). */
+  referralInfo?: string | null;
 }): Promise<HilfeAnswer> {
   const client = new Anthropic();
   const role =
@@ -91,7 +93,7 @@ export async function askHilfe(opts: {
   const system: Anthropic.Beta.BetaTextBlockParam[] = [
     { type: "text", text: `${INSTRUCTIONS}\n\n<anleitung>\n${loadKnowledge()}\n</anleitung>`, cache_control: { type: "ephemeral" } },
   ];
-  const context = `Hinweis: Die Person ist ${role}. ${opts.whatsapp ? "Sie nutzt den WhatsApp-Assistenten." : "Sie nutzt keinen WhatsApp-Assistenten (kein Chats-Bereich)."} Aktuelle Seite: ${opts.page ?? "unbekannt"}.`;
+  const context = `Hinweis: Die Person ist ${role}. ${opts.whatsapp ? "Sie nutzt den WhatsApp-Assistenten." : "Sie nutzt keinen WhatsApp-Assistenten (kein Chats-Bereich)."} Aktuelle Seite: ${opts.page ?? "unbekannt"}.${opts.referralInfo ? ` Aktuelle Konditionen „Kollegen empfehlen“ (gehen der Anleitung vor): ${opts.referralInfo}` : ""}`;
   // Verlauf kürzen; er muss mit einer Nutzerfrage beginnen (API-Regel).
   const recent = opts.history.slice(-6);
   while (recent.length && recent[0].role !== "user") recent.shift();
