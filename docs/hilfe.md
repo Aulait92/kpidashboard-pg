@@ -763,6 +763,9 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
 - **Signatur**: einmal hinterlegen (Name, Agentur, Telefon, Adresse). Sie steht automatisch unter jeder E-Mail an
   Leads – mit und ohne Vorlage. In einer Vorlage kann man die Stelle mit {signatur} selbst festlegen.
 - **Vorlagen** mit Platzhaltern {anrede}, {vorname}, {nachname}, {name}, {produkt}, {terminlink}, {meinname}, {signatur}.
+  Dazu Platzhalter, die das Fenster über eigene Felder füllt: {termin_datum}, {termin_art}, {videolink} (Satz entfällt ohne
+  Link), {termin_unterlagen}, {fehlende_unterlagen}, {melde_datum}, {versicherer}, {vertragsnummer}, {kuendigungstermin},
+  {musterkuendigung}, {wuensche}, {rat}. Sie funktionieren auch in eigenen Vorlagen.
   {anrede} richtet sich nach der Ansprache: „Guten Tag Frau Beispiel“ (Sie mit bekannter Anrede; sonst „Guten Tag Anna
   Beispiel“, ohne Nachname „Guten Tag“) oder „Hallo Anna“ (Du).
   Die Standardvorlagen gibt es in beiden Fassungen; beim Wechsel der Ansprache ziehen unveränderte Standardvorlagen mit,
@@ -775,4 +778,36 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
 - **Erinnern, falls kein Termin gebucht wird**: Steht der Terminlink in der Mail, legt die App nach dem Senden eine
   Wiedervorlage „Kein Termin gebucht: nachfassen“ an (morgen, in 2 Werktagen oder in 1 Woche). Bucht der Kontakt
   vorher, verschwindet sie. Gibt es schon eine Wiedervorlage oder läuft eine Nachfass-Abfolge, kommt keine zweite dazu.
+- **Vorlagen nach Phase**: Im Fenster „E-Mail schreiben“ stehen oben die Vorlagen, die gerade zum Kontakt passen
+  (hervorgehoben), alle übrigen unter **Weitere**. Regeln: Nicht erreicht → „Nicht erreicht“; Termin gebucht →
+  „Termin: Vorbereitung“; letzter Termin nicht erschienen → „Nicht erschienen“; Termin vorbei ohne Ergebnis →
+  „Gesprächszusammenfassung“, „Unterlagen fehlen noch“, „Angebot“; Angebot gesendet → „Nachfassen Angebot“; Abschluss →
+  „Kündigung alte Versicherung“, „Nach dem Abschluss“; Police fertig gemacht → „Willkommen: Police ist da“, „Kündigung
+  alte Versicherung“; eigene Wiedervorlage in der Zukunft (Später) → „Wie besprochen: später melden“; Kein Interesse →
+  „Kein Interesse: Tür offen“. Die Zuordnung hängt an der Standardvorlage, auch wenn Sie Name oder Text ändern.
+- **Neue Standardvorlagen (14.11.2026)**, in Sie und Du, ändern unter „Vorlagen & Signatur“. Bestehende Kunden
+  bekommen sie beim nächsten Öffnen dazu; eigene Vorlagen und geänderte Texte bleiben, nichts wird doppelt angelegt.
+  - **Termin: Vorbereitung**: Datum und Art des Termins (Telefon oder Videocall mit Link) und was bereitliegen sollte,
+    je Produkt (Tier: Tierpass bzw. Chipnummer, Tierarztrechnungen; Sach: bisherige Police; immer: IBAN). Ergänzt die
+    automatische Terminbestätigung, ersetzt sie nicht.
+  - **Nicht erschienen**: freundlich, ohne Vorwurf, mit Terminlink zum neuen Buchen. Auf Wunsch Wiedervorlage
+    „Nicht erschienen: nachfassen“, die bei einer neuen Buchung wieder verschwindet.
+  - **Gesprächszusammenfassung**: Wünsche und Bedürfnisse sowie Rat und Gründe (Beratungsdokumentation, §§ 61, 62 VVG).
+    Die Wünsche sind aus Formular und Assistent vorbefüllt, Notizen lassen sich mit einem Klick übernehmen; Rat und
+    Gründe schreiben Sie selbst. Die App gibt keinen Rat, bitte prüfen Sie den Inhalt vor dem Senden. Auf Wunsch geht
+    sie als PDF mit und liegt danach im Kontakt unter **Dokumente**.
+  - **Unterlagen fehlen noch**: fehlende Angaben per Häkchen auswählen (plus freies Feld); der Kontakt kann einfach
+    auf die E-Mail antworten. Auf Wunsch Wiedervorlage „Unterlagen nachfassen“ nach 3 Werktagen.
+  - **Willkommen: Police ist da**: Erreichbarkeit und wie man einen Schaden meldet. Nach „Police erledigt“ schlägt die
+    Abschluss-Karte die Mail direkt vor; eine hochgeladene Police wird angehängt.
+  - **Kündigung alte Versicherung**: Musterkündigung als Textbaustein in der Mail, Felder Versicherer, Vertragsnummer
+    und Kündigungstermin; auf Wunsch zusätzlich als PDF (liegt dann unter Dokumente).
+  - **Wie besprochen: später melden**: Datum im Fenster wählen; nach dem Senden steht die Wiedervorlage „Wie besprochen
+    melden“ zu diesem Tag (eine andere Wiedervorlage wird dabei ersetzt, nie doppelt).
+  - **Kein Interesse: Tür offen**: kurz und ohne Angebot. Nach dem Senden endet das automatische Nachfassen für den
+    Kontakt und eine offene Wiedervorlage entfällt, damit keine weiteren Nachrichten kommen.
+- Jahresgespräch, Empfehlungsbitte und Geburtstag gibt es bewusst nicht als freie Vorlage: Das ist Werbung und läuft
+  nur über die Bestandskampagnen mit Prüfung der Einwilligung.
+- Wiedervorlagen ohne Doppelungen: Steht schon eine Wiedervorlage oder läuft eine Nachfass-Abfolge, legt eine Vorlage
+  keine zweite an (Ausnahme: der ausdrücklich vereinbarte Tag bei „Wie besprochen“).
 - Firmen-Postfächer mancher Versicherer lassen sich oft nicht verbinden; dann das eigene Mailprogramm nutzen.

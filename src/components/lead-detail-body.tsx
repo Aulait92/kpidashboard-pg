@@ -23,6 +23,9 @@ import { loadLeadHistory } from "@/lib/lead-history";
 import { listLeadFiles } from "@/lib/lead-files";
 import { postfachOf } from "@/lib/mail/postfach";
 import { loadVorlagen } from "@/lib/mail/vorlagen";
+import { passendeVorlagen } from "@/lib/mail/phasen";
+import { istSpaeter } from "@/lib/mail/termin-erinnerung";
+import { wuenscheVorschlag } from "@/lib/mail/beratung";
 import { LeadMailComposer } from "@/components/lead-mail";
 import { asAnsprache, namePartsFromForm, salutationFromForm } from "@/lib/ansprache";
 import { appUrl } from "@/lib/whatsapp/event-text";
@@ -202,7 +205,7 @@ export async function LeadDetailBody({
     prisma.conversation.findFirst({
       where: { leadId: lead.id },
       orderBy: { lastMessageAt: "desc" },
-      select: { id: true, qualificationSummary: true, needsAttention: true, attentionReason: true },
+      select: { id: true, qualificationSummary: true, qualificationData: true, needsAttention: true, attentionReason: true },
     }),
     prisma.appointment.findFirst({
       where: { leadId: lead.id, status: "booked", startsAt: { gt: twoHoursAgo() } },
@@ -222,6 +225,25 @@ export async function LeadDetailBody({
     team.userId ? prisma.user.findUnique({ where: { id: team.userId }, select: { displayName: true, mailSignature: true } }) : null,
   ]);
   const vorlagen = postfach ? await loadVorlagen(customerId) : [];
+  // Vorlagen nach Phase (Ole, 14.11.2026): letzter vergangener Termin, Notizen für die Gesprächszusammenfassung
+  const [lastAppt, notizen] = postfach
+    ? await Promise.all([
+        prisma.appointment.findFirst({
+          where: { leadId: lead.id, startsAt: { lte: new Date() }, status: { in: ["booked", "completed", "no_show"] } },
+          orderBy: { startsAt: "desc" },
+          select: { status: true },
+        }),
+        prisma.leadHistory.findMany({ where: { leadId: lead.id, kind: "notiz" }, orderBy: { createdAt: "desc" }, take: 3, select: { text: true } }),
+      ])
+    : [null, []];
+  const empfohlen = passendeVorlagen({
+    status: lead.status,
+    contactAttempts: lead.contactAttempts,
+    naechsterTermin: !!nextAppt && nextAppt.startsAt.getTime() > nowMs(),
+    letzterTermin: (lastAppt?.status as "booked" | "completed" | "no_show" | undefined) ?? null,
+    policeFertig: !!lead.policyDoneAt,
+    spaeter: istSpaeter(lead.followUpAt, lead.followUpNote),
+  });
   // E-Mail: Ansprache des Kunden und persönlicher Buchungslink für diesen Lead (Ole, 14.11.2026).
   // Steht schon ein Termin an, entfällt der Satz mit dem Link.
   const ansprache = postfach
@@ -287,6 +309,12 @@ export async function LeadDetailBody({
           ansprache={ansprache}
           terminlink={terminlink}
           vorlagen={vorlagen}
+          empfohlen={empfohlen}
+          termin={nextAppt ? { startsAt: nextAppt.startsAt.toISOString(), mode: nextAppt.mode, meetUrl: nextAppt.meetUrl } : null}
+          beratung={{
+            wuensche: wuenscheVorschlag({ produkt: lead.source, formData: lead.formData, qualificationData: conv?.qualificationData, qualificationSummary: conv?.qualificationSummary }),
+            notizen: notizen.map((n) => n.text),
+          }}
           dateien={files.map((f) => ({ id: f.id, fileName: f.fileName, kind: f.kind }))}
         />
       ) : null}
@@ -298,6 +326,7 @@ export async function LeadDetailBody({
           beitrag={beitrag}
           provision={provision}
           policyDoneAt={lead.policyDoneAt?.toISOString() ?? null}
+          mailVorschlag={!!postfach && vorlagen.some((v) => v.standardKey === "willkommen")}
         >
           <LeadContracts leadId={lead.id} contracts={contracts} readOnly={!team.userId} />
         </AbschlussCard>

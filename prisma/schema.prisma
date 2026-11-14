@@ -205,6 +205,8 @@ model Customer {
   newUi                    Boolean                   @default(false)
   // Ansprache von Leads und Kunden in allen Texten (E-Mail, WhatsApp-Assistent, Vorlagen, Termin-Nachrichten): "sie" | "du" (Ole, 14.11.2026)
   leadAddress              String                    @default("sie")
+  // Stand der Standard-E-Mail-Vorlagen (lib/mail/vorlagen.ts VORLAGEN_STAND): neue Standards beim nächsten Laden ergänzen
+  mailVorlagenStand        Int                       @default(0)
   existingCustomers        ExistingCustomer[]
   manualRevenues           ManualRevenue[]
   campaigns                CustomerCampaign[]
@@ -3087,6 +3089,8 @@ model MailTemplate {
   name       String
   subject    String
   body       String
+  // Welche Standardvorlage (lib/mail/vorlagen.ts, z. B. „nicht_erreicht“); null = eigene Vorlage
+  standardKey String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

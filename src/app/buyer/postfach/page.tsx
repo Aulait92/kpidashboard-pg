@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/buyer-shell";
 import { buttonClass, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { googleMailAvailable, microsoftMailAvailable, postfachOf, PROVIDER_LABEL } from "@/lib/mail/postfach";
-import { loadVorlagen, PLATZHALTER } from "@/lib/mail/vorlagen";
+import { loadVorlagen, PLATZHALTER, ZUSATZ_PLATZHALTER } from "@/lib/mail/vorlagen";
 import { AnspracheForm } from "@/components/ansprache-form";
 import { asAnsprache } from "@/lib/ansprache";
 import { disconnectPostfachAction } from "./actions";
@@ -128,6 +128,10 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
             Platzhalter werden beim Schreiben ersetzt: {PLATZHALTER.join(", ")}. {"{anrede}"} wird je nach Ansprache zu „Guten Tag Frau Beispiel“
             (Sie; ohne bekannte Anrede „Guten Tag Anna Beispiel“, ohne Nachname „Guten Tag“) oder „Hallo Anna“ (Du). {"{terminlink}"} ist der persönliche Buchungslink des Kontakts; steht schon ein
             Termin an, fällt der Satz weg.
+          </p>
+          <p className="mb-3 text-sm text-[color:var(--muted)]" data-zusatz-platzhalter>
+            Diese Platzhalter füllen Sie beim Schreiben über Felder im Fenster: {ZUSATZ_PLATZHALTER.join(", ")}. Im Fenster stehen die Vorlagen vorn, die zur Phase des
+            Kontakts passen.
           </p>
           {ctx.teamRole === "owner" ? (
             <div className="mb-4">

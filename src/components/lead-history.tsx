@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/toast";
 import { addLeadNoteAction, deleteLeadNoteAction, setPolicyDoneAction } from "@/app/buyer/lead-history-actions";
 import type { LeadHistoryEntry, LeadHistoryKind } from "@/lib/lead-history";
 import { cn } from "@/lib/utils";
+import { oeffneLeadMail } from "@/components/lead-mail";
 
 const ICON: Record<LeadHistoryKind, typeof Phone> = {
   notiz: StickyNote,
@@ -196,6 +197,7 @@ export function AbschlussCard({
   provision,
   policyDoneAt,
   readOnly = false,
+  mailVorschlag = false,
   children,
 }: {
   leadId: string;
@@ -204,17 +206,21 @@ export function AbschlussCard({
   provision: string | null;
   policyDoneAt: string | null;
   readOnly?: boolean;
+  /** Nach „Police erledigt“ die Willkommens-Mail vorschlagen (Postfach verbunden, Vorlage vorhanden) */
+  mailVorschlag?: boolean;
   /** Verträge (Cross-Selling) unter dem ersten Abschluss. */
   children?: React.ReactNode;
 }) {
   const toast = useToast();
   const [doneAt, setDoneAt] = useState(policyDoneAt);
+  const [vorschlag, setVorschlag] = useState(false);
   const [pending, start] = useTransition();
   const toggle = (next: boolean) =>
     start(async () => {
       const res = await setPolicyDoneAction(leadId, next);
       if (!res.ok) return toast.show({ message: res.error, tone: "error" });
       setDoneAt(next ? new Date().toISOString() : null);
+      setVorschlag(next && mailVorschlag);
       toast.show({ message: next ? "Police abgehakt" : "Police wieder offen" });
     });
   const day = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(iso));
@@ -239,6 +245,11 @@ export function AbschlussCard({
           <>
             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
             <span>Police fertig gemacht am {day(doneAt)}</span>
+            {vorschlag ? (
+              <Button variant="primary" size="sm" onClick={() => oeffneLeadMail("willkommen")} data-willkommen-mail>
+                <Mail className="h-4 w-4" /> Willkommens-Mail schreiben
+              </Button>
+            ) : null}
             {!readOnly ? (
               <button type="button" disabled={pending} onClick={() => toggle(false)} className="ml-auto text-xs text-[color:var(--muted)] underline">
                 Wieder öffnen
