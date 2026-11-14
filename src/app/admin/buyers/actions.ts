@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCurrentSession, hashPassword, invalidateUserSessions } from "@/lib/auth";
+import { getCurrentSession, hashPassword, invalidateUserSessions, issuePasswordResetToken } from "@/lib/auth";
+import { buildResetUrl, sendBuyerInviteEmail, sendPasswordResetEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 
@@ -136,6 +137,43 @@ export async function reassignBuyerCustomer(
   revalidatePath("/admin/kunden", "layout");
   // createdEmail trägt hier den Kundennamen für die Bestätigung im UI.
   return { ok: true, createdEmail: customer.name };
+}
+
+const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Zugangslink per E-Mail: Wer sich noch nie angemeldet hat, bekommt die Einladung
+ * erneut (Passwort festlegen, 7 Tage gültig), alle anderen den Link „Passwort ändern“.
+ */
+export async function sendBuyerAccessLink(
+  formData: FormData,
+): Promise<{ ok: boolean; message?: string; error?: string }> {
+  await requireAdmin();
+  const userId = String(formData.get("userId") ?? "");
+  const user = userId
+    ? await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true, role: true, lastLoginAt: true, customerId: true, customer: { select: { name: true } } },
+      })
+    : null;
+  if (!user || user.role !== "BUYER") return { ok: false, error: "Login nicht gefunden." };
+  const invite = !user.lastLoginAt;
+  const token = await issuePasswordResetToken(user.email, invite ? INVITE_TTL_MS : undefined);
+  if (!token) return { ok: false, error: "Link konnte nicht erzeugt werden." };
+  const url = buildResetUrl(token.rawToken);
+  const sent = invite
+    ? await sendBuyerInviteEmail({ to: user.email, customerName: user.customer?.name ?? "performancegrowth", setPasswordUrl: url })
+    : await sendPasswordResetEmail({ to: user.email, resetUrl: url });
+  await audit(invite ? "user.invite" : "user.reset_link", {
+    entity: "User",
+    entityId: user.id,
+    customerId: user.customerId,
+    details: { email: user.email, sent: sent.ok },
+  });
+  if (!sent.ok) return { ok: false, error: `E-Mail an ${user.email} ging nicht raus: ${sent.error}` };
+  revalidatePath("/admin/buyers");
+  revalidatePath("/admin/kunden", "layout");
+  return { ok: true, message: invite ? `Einladung an ${user.email} gesendet` : `Link zum Passwort ändern an ${user.email} gesendet` };
 }
 
 export async function deleteBuyerAccount(formData: FormData) {
