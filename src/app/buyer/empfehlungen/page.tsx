@@ -13,7 +13,9 @@ import { fmtDate, resolveOffer, signatureLine } from "@/lib/empfehlung/shared";
 import { PRICE_LIST } from "@/lib/offer-pricing";
 import { EmpfehlungFunnel, EmpfehlungStatsGrid } from "@/components/empfehlung/server";
 import { WaechterSection } from "@/components/empfehlung/waechter";
-import { CopyText, EmpfehlungBookButton, ResolveButton, RewardButtons, SettingsForm, TestSendForm } from "@/components/empfehlung/client";
+import { CopyText, EmpfehlungBookButton, GoogleUrlQuickForm, ResolveButton, RewardButtons, SettingsForm, TestSendForm } from "@/components/empfehlung/client";
+import { buttonClass } from "@/components/ui";
+import { resumeAction } from "./actions";
 
 // Modul „Empfehlungen & Bewertungen“: Einstellungen, Test, Auswertung, letzte Anfragen.
 export const dynamic = "force-dynamic";
@@ -78,14 +80,37 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
   const offer = resolveOffer(settings, vertreter);
   const rewards = await openRewards(ctx.customerId);
   const approved = (p: string) => templates.some((t) => t.purpose === p && t.status === "approved");
-  const warnings = [
-    !settings.googleReviewUrl ? "Bitte Ihren Google-Bewertungslink hinterlegen – ohne ihn geht keine Nachfrage raus." : null,
-    customer?.whatsAppAccount?.status !== "connected" ? "WhatsApp ist noch nicht verbunden. Die Nachrichten gehen über Ihre WhatsApp-Nummer raus." : null,
-    customer?.whatsAppAccount?.status === "connected" && (!approved("review_request") || !approved("referral_request"))
-      ? "Die WhatsApp-Vorlagen des Moduls sind bei Meta eingereicht und noch nicht freigegeben (meist wenige Stunden bis zwei Tage). Bis dahin warten die Nachfragen."
+  // Hinweise mit Knopf, der das Problem direkt löst (Ole, 14.11.2026)
+  type Warning = { key: string; text: string; fix?: React.ReactNode };
+  const fixLink = (href: string, label: string) => (
+    <Link href={href} className={buttonClass("primary", "md", "shrink-0")}>
+      {label}
+    </Link>
+  );
+  const warnings = ([
+    !settings.googleReviewUrl
+      ? { key: "google", text: "Bitte Ihren Google-Bewertungslink hinterlegen – ohne ihn geht keine Nachfrage raus.", fix: <GoogleUrlQuickForm readOnly={ctx.preview} /> }
       : null,
-    !settings.active ? "Automatisches Nachfragen ist pausiert." : null,
-  ].filter((w): w is string => !!w);
+    customer?.whatsAppAccount?.status !== "connected"
+      ? { key: "wa", text: "WhatsApp ist noch nicht verbunden. Die Nachrichten gehen über Ihre WhatsApp-Nummer raus.", fix: fixLink("/buyer/einrichtung#whatsapp", "WhatsApp verbinden") }
+      : null,
+    customer?.whatsAppAccount?.status === "connected" && (!approved("review_request") || !approved("referral_request"))
+      ? { key: "tpl", text: "Die WhatsApp-Vorlagen des Moduls sind bei Meta eingereicht und noch nicht freigegeben (meist wenige Stunden bis zwei Tage). Bis dahin warten die Nachfragen." }
+      : null,
+    !settings.active
+      ? {
+          key: "paused",
+          text: "Automatisches Nachfragen ist pausiert.",
+          fix: (
+            <form action={resumeAction}>
+              <button type="submit" disabled={ctx.preview} className={buttonClass("primary", "md", "shrink-0")}>
+                Wieder einschalten
+              </button>
+            </form>
+          ),
+        }
+      : null,
+  ] as (Warning | null)[]).filter((w): w is Warning => !!w);
 
   const tabs = [
     { id: "uebersicht", label: "Übersicht" },
@@ -122,10 +147,11 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
         {warnings.length ? (
           <div className="space-y-2" data-empfehlung-warnings>
             {warnings.map((w) => (
-              <p key={w} className="flex items-start gap-2 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                {w}
-              </p>
+              <div key={w.key} className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-warning={w.key}>
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span className="min-w-0 flex-1">{w.text}</span>
+                {w.fix}
+              </div>
             ))}
           </div>
         ) : null}
@@ -210,10 +236,10 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
         </Card>
 
         <p className="text-sm text-[color:var(--muted)]">
-          Alle angeschriebenen Kunden bekommen dieselbe Nachricht mit demselben Google-Link – unabhängig davon, wie zufrieden sie sind (Google-Richtlinien).
+          Alle angeschriebenen Kunden bekommen dieselbe Nachricht mit demselben Google-Link – unabhängig davon, wie zufrieden sie sind (Google-Richtlinien).{" "}
           {settings.reward
             ? "Das Dankeschön geht nur an Empfehlende, nie an die empfohlene Person. Der Dank per WhatsApp geht automatisch raus, sobald aus einer Empfehlung ein Abschluss wird."
-            : "Empfehlende bekommen ohne eingestelltes Dankeschön keine Prämie; der Dank geht automatisch raus, sobald aus einer Empfehlung ein Abschluss wird."}
+            : "Empfehlende bekommen ohne eingestelltes Dankeschön keine Prämie; der Dank geht automatisch raus, sobald aus einer Empfehlung ein Abschluss wird."}{" "}
           Rückmeldungen an Empfehlende gibt es nur, wenn die empfohlene Person zugestimmt hat.
         </p>
           </>

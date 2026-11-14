@@ -112,6 +112,28 @@ export async function saveSettingsAction(_prev: SettingsState, fd: FormData): Pr
   return { ok: true };
 }
 
+/** Hinweis „Google-Link fehlt“: Link direkt im Hinweis speichern (Ole, 14.11.2026). */
+export async function saveGoogleUrlAction(_prev: SettingsState, fd: FormData): Promise<SettingsState> {
+  const ctx = await ownerCtx();
+  if (!ctx) return { error: "Nur der Inhaber kann das ändern." };
+  const rawUrl = String(fd.get("googleReviewUrl") ?? "").trim();
+  const googleReviewUrl = normalizeGoogleUrl(rawUrl);
+  if (!googleReviewUrl) return { error: "Bitte einen vollständigen Link mit https:// eingeben." };
+  await prisma.reviewSettings.upsert({ where: { customerId: ctx.customerId }, create: { customerId: ctx.customerId, googleReviewUrl }, update: { googleReviewUrl } });
+  await audit("empfehlung.settings", { entity: "ReviewSettings", entityId: ctx.customerId, customerId: ctx.customerId, details: { google: true, via: "hinweis" } });
+  refresh();
+  return { ok: true };
+}
+
+/** Hinweis „pausiert“: automatisches Nachfragen wieder einschalten. */
+export async function resumeAction(): Promise<void> {
+  const ctx = await ownerCtx();
+  if (!ctx) return;
+  await prisma.reviewSettings.upsert({ where: { customerId: ctx.customerId }, create: { customerId: ctx.customerId, active: true }, update: { active: true } });
+  await audit("empfehlung.settings", { entity: "ReviewSettings", entityId: ctx.customerId, customerId: ctx.customerId, details: { active: true, via: "hinweis" } });
+  refresh();
+}
+
 export type TestState = { ok?: boolean; error?: string; message?: string };
 
 export async function sendTestAction(_prev: TestState, fd: FormData): Promise<TestState> {

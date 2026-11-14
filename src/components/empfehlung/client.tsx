@@ -20,6 +20,7 @@ import {
   dismissHintAction,
   markResolvedAction,
   saveSettingsAction,
+  saveGoogleUrlAction,
   sendReferralLinkAction,
   sendTestAction,
   setOptOutAction,
@@ -582,7 +583,7 @@ export function SettingsForm({
       >
         <p className="text-sm text-[color:var(--muted)]">
           Ein vorher angekündigtes Dankeschön erhöht die Bereitschaft zu empfehlen. Es geht immer an den Empfehlenden, nie an die empfohlene Person und nie
-          für einen eigenen Vertrag. Ihr Kunde sieht es auf seiner Empfehlungsseite. Sie übergeben es selbst, die App erinnert Sie daran.
+          für einen eigenen Vertrag. Ihr Kunde sieht es auf seiner Empfehlungsseite. Den Gutschein besorgen und übergeben Sie selbst (z. B. per Post, E-Mail oder beim nächsten Termin); sobald er fällig ist, erinnert Sie die App in „Heute“ und unter „Offene Dankeschöns“.
         </p>
         <div className="flex flex-wrap gap-4">
           <label className="block">
@@ -806,3 +807,26 @@ export function RewardButtons({ leadId, readOnly }: { leadId: string; readOnly: 
     </span>
   );
 }
+
+/** Google-Bewertungslink direkt im Hinweis speichern. */
+export function GoogleUrlQuickForm({ readOnly }: { readOnly: boolean }) {
+  const [state, action, pending] = useActionState<SettingsState, FormData>(saveGoogleUrlAction, {});
+  if (state.ok) return <span className="font-medium text-emerald-700">Gespeichert. Die Nachfragen gehen jetzt raus.</span>;
+  return (
+    <form action={action} className="mt-2 flex w-full flex-wrap items-center gap-2" data-google-quick>
+      <input
+        name="googleReviewUrl"
+        type="url"
+        inputMode="url"
+        required
+        placeholder="https://g.page/r/…/review"
+        className="h-10 min-w-0 flex-1 rounded-[var(--radius-sm)] border border-amber-300 bg-white px-3 text-sm text-[color:var(--foreground)]"
+      />
+      <Button type="submit" variant="primary" size="md" disabled={readOnly || pending}>
+        {pending ? "Speichert …" : "Link speichern"}
+      </Button>
+      {state.error ? <span className="w-full text-rose-700">{state.error}</span> : null}
+    </form>
+  );
+}
+
