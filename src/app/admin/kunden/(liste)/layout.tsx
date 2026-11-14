@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { SubTabs } from "@/components/admin-tabs";
+import { SubTabs } from "@/components/admin/sub-tabs";
 import { RememberList } from "@/components/admin/list-memory";
 import { KUNDEN_LISTS } from "@/lib/admin-lists";
 import { requireAuth } from "@/lib/vertrieb/auth";

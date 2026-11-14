@@ -3,10 +3,12 @@ import { TrendingUp } from "lucide-react";
 import { LoginForm } from "./login-form";
 import { ssoEnabled } from "@/lib/sso";
 import { SSO_ERRORS } from "@/lib/sso-errors";
-import { loadLoginInfo } from "@/lib/login-info-server";
+import { headers } from "next/headers";
+import { activeLoginCards } from "@/lib/login-karten-server";
+import { LOGIN_CARD_HEADER, cardClickHref, parseCardCounter, pickCard, safeInternalPath } from "@/lib/login-karten";
 import { LoginInfoCard } from "@/components/login-info-card";
 
-type SearchParams = Promise<{ next?: string; fehler?: string; schritt?: string }>;
+type SearchParams = Promise<{ next?: string; fehler?: string; schritt?: string; karte?: string }>;
 
 export const metadata = {
   title: "Anmelden | performancegrowth",
@@ -18,10 +20,12 @@ export default async function LoginPage({
   searchParams: SearchParams;
 }) {
   const sp = await searchParams;
-  const next = sp.next && sp.next.startsWith("/") ? sp.next : "";
-  const info = await loadLoginInfo();
-  const showInfo = info.enabled;
-  const imageSrc = info.hasImage ? `/api/login-info/image?v=${info.version}` : null;
+  const next = safeInternalPath(sp.next) ?? "";
+  // Infokarte: nach Klick auf eine Karte (?karte=) dieselbe, sonst reihum (Zähler aus der Middleware)
+  const cards = await activeLoginCards();
+  const clicked = sp.karte ? (cards.find((c) => c.id === sp.karte) ?? null) : null;
+  const card = clicked ?? pickCard(cards, parseCardCounter((await headers()).get(LOGIN_CARD_HEADER)) ?? 0);
+  const showInfo = !!card;
 
   return (
     <div className="flex min-h-dvh flex-1 flex-col bg-white">
@@ -45,6 +49,11 @@ export default async function LoginPage({
           <div className="mb-7 text-center">
             <h1 className="text-[28px] font-bold leading-tight tracking-tight sm:text-3xl">Willkommen zurück</h1>
             <p className="mt-2 text-[15px] text-[color:var(--muted)]">Schön, dass Sie da sind. Melden Sie sich mit Ihrem Zugang an.</p>
+            {clicked?.linkText && next ? (
+              <p className="mt-3 rounded-[var(--radius-md)] bg-[color:var(--brand-soft)] px-3 py-2 text-sm text-[color:var(--brand-dark)]">
+                Nach der Anmeldung geht es direkt weiter: <b>{clicked.linkText}</b>
+              </p>
+            ) : null}
           </div>
           <LoginForm
             next={next}
@@ -53,16 +62,16 @@ export default async function LoginPage({
             sso={{ google: ssoEnabled("google"), microsoft: ssoEnabled("microsoft") }}
           />
           <p className="mt-8 text-center text-sm text-[color:var(--muted)]">
-            Noch kein Zugang? Wir richten ihn gemeinsam mit Ihnen ein –{" "}
+            Noch kein Zugang? Wir richten ihn gemeinsam mit Ihnen ein:{" "}
             <a href="https://performancegrowth.de" target="_blank" rel="noopener noreferrer" className="font-medium text-[color:var(--brand)] hover:underline">
               performancegrowth.de
             </a>
           </p>
         </div>
 
-        {showInfo ? (
+        {card ? (
           <div className="mx-auto w-full max-w-[560px] lg:max-w-none">
-            <LoginInfoCard info={info} imageSrc={imageSrc} />
+            <LoginInfoCard info={card} imageSrc={card.imageSrc} linkHref={card.linkUrl ? cardClickHref(card.id) : undefined} />
           </div>
         ) : null}
       </main>

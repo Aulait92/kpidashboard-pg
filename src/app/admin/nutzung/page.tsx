@@ -1,4 +1,4 @@
-import { SubTabs } from "@/components/admin-tabs";
+import { SubTabs } from "@/components/admin/sub-tabs";
 import { redirect } from "next/navigation";
 import { AlertTriangle, LifeBuoy, MessageSquareText, Sparkles, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Badge, Card, CardHeader, EmptyState } from "@/components/ui";

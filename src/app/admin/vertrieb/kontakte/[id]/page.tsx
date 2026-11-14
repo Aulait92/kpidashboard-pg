@@ -24,7 +24,6 @@ import { loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
 import { OnboardingCard, StartOnboardingCard } from "@/components/vertrieb/onboarding-card";
 import type { ImpressumInfo } from "@/lib/impressum";
 import { BackToList } from "@/components/admin/list-memory";
-import { isAdminNewUi } from "@/lib/admin-ui";
 import { VERTRIEB_LISTS } from "@/lib/admin-lists";
 import { loadReferralSettings, referralForContact, referralSetupDiscount } from "@/lib/kollegen";
 import { benefitSentence } from "@/lib/kollegen-shared";
@@ -92,13 +91,9 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
         <div>
           {embedded ? null : (
             <>
-              {(await isAdminNewUi()) ? (
-                <BackToList id="vertrieb" fallback="/admin/vertrieb/kontakte" allowed={VERTRIEB_LISTS} className="text-sm text-slate-500 hover:underline">
-                  ← Zurück
-                </BackToList>
-              ) : (
-                <Link href="/admin/vertrieb/kontakte" className="text-sm text-slate-500 hover:underline">← Kontakte</Link>
-              )}
+              <BackToList id="vertrieb" fallback="/admin/vertrieb/kontakte" allowed={VERTRIEB_LISTS} className="text-sm text-slate-500 hover:underline">
+                ← Zurück
+              </BackToList>
               <h1 className="mt-1 text-2xl font-semibold">{shortName(c.name)}</h1>
             </>
           )}

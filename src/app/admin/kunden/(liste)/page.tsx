@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { onboardingProgressFor } from "@/lib/onboarding";
 import { CUSTOMER_COLOR, CUSTOMER_LABEL } from "@/lib/vertrieb/crm";
-import { isAdminNewUi } from "@/lib/admin-ui";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Kunden | performancegrowth Admin" };
@@ -23,9 +22,8 @@ const FILTERS = [
 // Alle Kunden auf einen Blick; Klick öffnet die Kundenakte.
 export default async function KundenUebersicht({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
   await connection();
-  const newUi = await isAdminNewUi();
   const { filter: rawFilter = "" } = await searchParams;
-  const filter = newUi && FILTERS.some((f) => f.key === rawFilter) ? rawFilter : "";
+  const filter = FILTERS.some((f) => f.key === rawFilter) ? rawFilter : "";
   const since = daysAgo(30);
   const customers = await prisma.customer.findMany({
     where: { plan: { not: "internal" }, archived: false },
@@ -58,31 +56,29 @@ export default async function KundenUebersicht({ searchParams }: { searchParams:
       <p className="text-sm text-[color:var(--muted)]">
         {customers.length} Kunden · {eur(mrr)} Monatsumsatz aktiv
       </p>
-      {newUi ? (
-        <div className="flex gap-1.5 overflow-x-auto" role="group" aria-label="Filter">
-          {FILTERS.map((f) => {
-            const n = customers.filter((c) => matches(c, f.key)).length;
-            if (f.key && !n) return null;
-            const active = f.key === filter;
-            return (
-              <Link
-                key={f.key}
-                href={f.key ? `/admin/kunden?filter=${f.key}` : "/admin/kunden"}
-                aria-current={active ? "true" : undefined}
-                className={cn(
-                  "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition",
-                  active
-                    ? "border-[color:var(--foreground)] bg-[color:var(--foreground)] text-white"
-                    : "border-[color:var(--border)] bg-white text-[color:var(--muted)] hover:text-[color:var(--foreground)]",
-                )}
-              >
-                {f.label}
-                <span className={cn("text-xs", active ? "text-white/70" : "")}>{n}</span>
-              </Link>
-            );
-          })}
-        </div>
-      ) : null}
+      <div className="flex gap-1.5 overflow-x-auto" role="group" aria-label="Filter">
+        {FILTERS.map((f) => {
+          const n = customers.filter((c) => matches(c, f.key)).length;
+          if (f.key && !n) return null;
+          const active = f.key === filter;
+          return (
+            <Link
+              key={f.key}
+              href={f.key ? `/admin/kunden?filter=${f.key}` : "/admin/kunden"}
+              aria-current={active ? "true" : undefined}
+              className={cn(
+                "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition",
+                active
+                  ? "border-[color:var(--foreground)] bg-[color:var(--foreground)] text-white"
+                  : "border-[color:var(--border)] bg-white text-[color:var(--muted)] hover:text-[color:var(--foreground)]",
+              )}
+            >
+              {f.label}
+              <span className={cn("text-xs", active ? "text-white/70" : "")}>{n}</span>
+            </Link>
+          );
+        })}
+      </div>
       <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
         <ul className="divide-y divide-[color:var(--border)]">
           {visible.map((c) => {

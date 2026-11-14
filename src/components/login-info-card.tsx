@@ -1,18 +1,25 @@
 import { ArrowRight } from "lucide-react";
-import type { LoginInfo } from "@/lib/login-info";
+
+export type LoginCardContent = { badge: string | null; title: string; text: string | null; linkText: string | null; linkUrl: string | null };
 
 /**
  * Infokarte rechts neben dem Login (auf dem Handy darunter). Auch als Vorschau
  * in den Admin-Einstellungen genutzt (imageSrc dort ggf. als lokale Vorschau).
+ * linkHref: Ziel des Links auf der Login-Seite (zählt den Klick), sonst linkUrl.
  */
 export function LoginInfoCard({
   info,
   imageSrc,
+  linkHref,
   compact = false,
+  footer,
 }: {
-  info: Pick<LoginInfo, "badge" | "title" | "text" | "linkText" | "linkUrl">;
+  info: LoginCardContent;
   imageSrc?: string | null;
+  linkHref?: string;
   compact?: boolean;
+  /** z. B. Blättern in der Admin-Vorschau */
+  footer?: React.ReactNode;
 }) {
   const external = !!info.linkUrl && /^https?:\/\//i.test(info.linkUrl);
   return (
@@ -35,7 +42,7 @@ export function LoginInfoCard({
         ) : null}
         {info.linkUrl && info.linkText ? (
           <a
-            href={info.linkUrl}
+            href={linkHref ?? info.linkUrl}
             {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
             className="mt-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-[color:var(--brand)] transition hover:bg-[color:var(--brand-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)]"
           >
@@ -56,6 +63,7 @@ export function LoginInfoCard({
           <Decoration compact={compact} />
         )}
       </div>
+      {footer}
     </section>
   );
 }

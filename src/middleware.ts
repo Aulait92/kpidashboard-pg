@@ -1,5 +1,6 @@
 import { jwtVerify } from "jose";
 import { NextResponse, type NextRequest } from "next/server";
+import { LOGIN_CARD_COOKIE, LOGIN_CARD_HEADER, nextCardCounter, parseCardCounter } from "@/lib/login-karten";
 
 const SESSION_COOKIE = "kpi_session";
 
@@ -22,7 +23,8 @@ const PUBLIC_PREFIXES = [
   "/status", // Statusseite (öffentlich, ohne interne Details)
   "/empfehlen", // „Kollegen empfehlen“: Landingpage je Empfehlungscode (Formular mit Einwilligung)
   "/empfehlung", // Empfehlungsseite + Google-Link (geheimer Token je Kontakt, Modul Empfehlungen & Bewertungen)
-  "/api/login-info", // Bild der Infokarte auf der Login-Seite (öffentlich, keine Personendaten)
+  "/api/login-info", // Bilder und Klick-Zählung der Infokarten auf der Login-Seite (öffentlich, keine Personendaten)
+  "/login-karten", // Bilder der Infokarten auf der Login-Seite (public/login-karten)
   "/api/ops", // Betriebs-API (Buyer-Accounts anlegen), per ADMIN_API_TOKEN (Bearer) gesichert
   "/api/health", // Healthcheck für Railway/Uptime (gibt nur ok true/false zurück)
   "/api/status", // Überwachung (DB + Hintergrund-Jobs), Details nur mit Token
@@ -103,7 +105,28 @@ export async function middleware(req: NextRequest) {
   if (pathname === "/login") {
     const headers = new Headers(req.headers);
     headers.set("x-bare-layout", "login");
-    return NextResponse.next({ request: { headers } });
+    // Infokarten: bei jedem Seitenaufruf die nächste Karte (Zähler im Cookie, ohne Cookie zufällig).
+    // Nicht beim Absenden (Server Action = POST), beim Vorabladen oder nach Klick auf eine Karte (?karte=).
+    const saved = req.cookies.get(LOGIN_CARD_COOKIE)?.value;
+    const dest = req.headers.get("sec-fetch-dest");
+    const advance =
+      req.method === "GET" &&
+      !req.headers.get("next-router-prefetch") &&
+      (!dest || dest === "document" || dest === "empty") &&
+      !req.nextUrl.searchParams.has("karte");
+    const counter = advance ? nextCardCounter(saved) : (parseCardCounter(saved) ?? 0);
+    headers.set(LOGIN_CARD_HEADER, String(counter));
+    const res = NextResponse.next({ request: { headers } });
+    if (advance) {
+      res.cookies.set(LOGIN_CARD_COOKIE, String(counter), {
+        path: "/login",
+        maxAge: 60 * 60 * 24 * 365,
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
+    }
+    return res;
   }
   if (isPublic(pathname)) return NextResponse.next();
 

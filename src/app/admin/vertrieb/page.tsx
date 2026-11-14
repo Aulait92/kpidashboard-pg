@@ -7,7 +7,8 @@ import { addDays, fmtDateTime } from "@/lib/vertrieb/dates";
 import { Stat, TaskRow } from "@/components/vertrieb/ui";
 import { dayBounds, openTasks } from "@/lib/vertrieb/queries";
 
-export default async function HeutePage() {
+// Vertriebs-Übersicht: fällige Aufgaben, Antworten, Termine, neue Anfragen, Pipeline.
+export default async function VertriebUebersichtPage() {
   await connection();
   const { start, tomorrow } = dayBounds();
   const [tasks, stageCounts, sent, replies, mailNoCall, total, liConnected, liReplies, meetings, leads] = await Promise.all([
@@ -38,7 +39,7 @@ export default async function HeutePage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold">Heute</h1>
+        <h1 className="text-xl font-semibold">Vertrieb: Übersicht</h1>
         <Link href="/admin/vertrieb/kontakte/neu" className="btn-primary">+ Neuer Lead</Link>
       </div>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

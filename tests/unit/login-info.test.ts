@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkLoginInfoImage, DEFAULT_LOGIN_INFO, LOGIN_INFO_LIMITS, parseLoginInfoInput, safeLinkUrl } from "@/lib/login-info";
+import { checkLoginInfoImage, LOGIN_INFO_LIMITS, parseLoginInfoInput, safeLinkUrl } from "@/lib/login-info";
 
 const base = { enabled: "1", badge: "Neu", title: "Release am 24.11.", text: "Zeile eins\nZeile zwei", linkText: "Mehr erfahren", linkUrl: "https://performancegrowth.de/news" };
 
@@ -44,13 +44,6 @@ describe("Infokarte Login-Seite: Eingaben prüfen", () => {
   it("Link und Link-Text nur gemeinsam", () => {
     expect(parseLoginInfoInput({ ...base, linkText: "" }).ok).toBe(false);
     expect(parseLoginInfoInput({ ...base, linkUrl: "" }).ok).toBe(false);
-  });
-
-  it("Standard-Karte ist ohne Bild und ohne Zahlen", () => {
-    expect(DEFAULT_LOGIN_INFO.enabled).toBe(true);
-    expect(DEFAULT_LOGIN_INFO.hasImage).toBe(false);
-    expect(DEFAULT_LOGIN_INFO.title.length).toBeLessThanOrEqual(LOGIN_INFO_LIMITS.title);
-    expect(DEFAULT_LOGIN_INFO.text!.length).toBeLessThanOrEqual(LOGIN_INFO_LIMITS.text);
   });
 });
 

@@ -1,30 +1,6 @@
-// Infokarte auf der Login-Seite: Typen, Standard-Inhalt und Prüfung der Eingaben.
-// Ohne Datenbank (testbar); Laden/Speichern in lib/login-info-server.ts.
-
-export type LoginInfo = {
-  enabled: boolean;
-  badge: string | null;
-  title: string;
-  text: string | null;
-  linkText: string | null;
-  linkUrl: string | null;
-  /** Bild hinterlegt (ausgeliefert unter /api/login-info/image?v=…). */
-  hasImage: boolean;
-  /** Cache-Schlüssel fürs Bild (Zeitpunkt der letzten Änderung). */
-  version: number;
-};
-
-/** Ohne gepflegte Karte: Hinweis auf eine neue Funktion, ohne Bild und ohne erfundene Zahlen. */
-export const DEFAULT_LOGIN_INFO: LoginInfo = {
-  enabled: true,
-  badge: "Neu",
-  title: "Urlaub oder krank?",
-  text: "Ein Klick auf „Ich bin abwesend“ – Leads, Termine und Rückrufe gehen an Ihre Vertretung oder warten bis zu Ihrer Rückkehr.",
-  linkText: null,
-  linkUrl: null,
-  hasImage: false,
-  version: 0,
-};
+// Infokarten auf der Login-Seite: Prüfung der Eingaben je Karte.
+// Ohne Datenbank (testbar); Rotation und Ziele in lib/login-karten.ts,
+// Laden/Speichern in lib/login-karten-server.ts.
 
 export const LOGIN_INFO_LIMITS = {
   badge: 24,

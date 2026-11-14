@@ -1,21 +1,24 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { LoginInfoCard } from "@/components/login-info-card";
-import { LOGIN_INFO_LIMITS, type LoginInfo } from "@/lib/login-info";
-import { saveLoginInfoAction, type LoginInfoFormState } from "./actions";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { LoginInfoCard, type LoginCardContent } from "@/components/login-info-card";
+import { LOGIN_INFO_LIMITS } from "@/lib/login-info";
+import type { LoginCardView } from "@/lib/login-karten-server";
+import { deleteLoginCardAction, saveLoginCardAction, type LoginCardFormState } from "./actions";
 
 const INPUT =
   "w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 py-2 text-sm outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20";
 
-export function LoginInfoForm({ info, imageUrl }: { info: LoginInfo; imageUrl: string | null }) {
-  const [state, action, pending] = useActionState<LoginInfoFormState, FormData>(saveLoginInfoAction, {});
-  const [enabled, setEnabled] = useState(info.enabled);
-  const [badge, setBadge] = useState(info.badge ?? "");
-  const [title, setTitle] = useState(info.title);
-  const [text, setText] = useState(info.text ?? "");
-  const [linkText, setLinkText] = useState(info.linkText ?? "");
-  const [linkUrl, setLinkUrl] = useState(info.linkUrl ?? "");
+/** Karte bearbeiten oder neu anlegen (card null), mit Live-Vorschau. */
+export function LoginCardForm({ card, justCreated = false }: { card: LoginCardView | null; justCreated?: boolean }) {
+  const [state, action, pending] = useActionState<LoginCardFormState, FormData>(saveLoginCardAction, justCreated ? { ok: true } : {});
+  const [enabled, setEnabled] = useState(card?.enabled ?? true);
+  const [badge, setBadge] = useState(card?.badge ?? "");
+  const [title, setTitle] = useState(card?.title ?? "");
+  const [text, setText] = useState(card?.text ?? "");
+  const [linkText, setLinkText] = useState(card?.linkText ?? "");
+  const [linkUrl, setLinkUrl] = useState(card?.linkUrl ?? "");
   const [localImage, setLocalImage] = useState<string | null>(null);
   const [removeImage, setRemoveImage] = useState(false);
 
@@ -23,16 +26,18 @@ export function LoginInfoForm({ info, imageUrl }: { info: LoginInfo; imageUrl: s
     if (localImage) URL.revokeObjectURL(localImage);
   }, [localImage]);
 
+  const imageUrl = card?.imageSrc ?? null;
   const previewImage = removeImage ? null : (localImage ?? imageUrl);
   const L = LOGIN_INFO_LIMITS;
 
   return (
-    <form action={action} className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
+    <form action={action} className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
+      {card ? <input type="hidden" name="id" value={card.id} /> : null}
       <div className="space-y-4 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-sm)]">
         <label className="flex items-center justify-between gap-4">
           <span>
-            <span className="block font-medium">Infokarte anzeigen</span>
-            <span className="block text-sm text-[color:var(--muted)]">Aus: Die Login-Seite zeigt nur das Formular.</span>
+            <span className="block font-medium">Karte aktiv</span>
+            <span className="block text-sm text-[color:var(--muted)]">Aktive Karten wechseln sich auf der Login-Seite ab.</span>
           </span>
           <input
             type="checkbox"
@@ -44,25 +49,25 @@ export function LoginInfoForm({ info, imageUrl }: { info: LoginInfo; imageUrl: s
           />
         </label>
 
-        <Field label="Etikett" hint={`optional, z. B. „Neu“ oder „Termin“ – max. ${L.badge} Zeichen`}>
+        <Field label="Etikett" hint={`optional, z. B. „Neu“ oder „Termin“, max. ${L.badge} Zeichen`}>
           <input name="badge" value={badge} maxLength={L.badge} onChange={(e) => setBadge(e.target.value)} className={INPUT} />
         </Field>
         <Field label="Überschrift" hint={`max. ${L.title} Zeichen`}>
           <input name="title" value={title} required maxLength={L.title} onChange={(e) => setTitle(e.target.value)} className={INPUT} />
         </Field>
-        <Field label="Text" hint={`2–3 Zeilen, max. ${L.text} Zeichen (${text.length}/${L.text})`}>
+        <Field label="Text" hint={`2 bis 3 Zeilen, max. ${L.text} Zeichen (${text.length}/${L.text})`}>
           <textarea name="text" value={text} rows={3} maxLength={L.text} onChange={(e) => setText(e.target.value)} className={`${INPUT} resize-y`} />
         </Field>
         <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
           <Field label="Link-Text" hint="optional, z. B. „Mehr erfahren“">
             <input name="linkText" value={linkText} maxLength={L.linkText} onChange={(e) => setLinkText(e.target.value)} className={INPUT} />
           </Field>
-          <Field label="Link" hint="https://… oder ein Pfad wie /rechner">
-            <input name="linkUrl" value={linkUrl} inputMode="url" onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://" className={INPUT} />
+          <Field label="Link" hint="https://… oder ein Pfad wie /buyer/bestand (nach der Anmeldung geht es direkt dorthin)">
+            <input name="linkUrl" value={linkUrl} inputMode="url" onChange={(e) => setLinkUrl(e.target.value)} placeholder="/buyer/…" className={INPUT} />
           </Field>
         </div>
 
-        <Field label="Bild" hint="optional, PNG/JPG/WebP bis 1,5 MB – am besten im Querformat (z. B. 1200 × 800)">
+        <Field label="Bild" hint="optional, PNG/JPG/WebP bis 1,5 MB, am besten im Querformat (z. B. 1200 × 700)">
           <input
             type="file"
             name="image"
@@ -90,27 +95,67 @@ export function LoginInfoForm({ info, imageUrl }: { info: LoginInfo; imageUrl: s
             ))}
           </ul>
         ) : null}
-        {state.ok ? <p role="status" className="rounded-[var(--radius-md)] bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">Gespeichert – die Login-Seite zeigt jetzt die neue Karte.</p> : null}
+        {state.ok ? <p role="status" className="rounded-[var(--radius-md)] bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">Gespeichert.</p> : null}
 
         <button type="submit" disabled={pending} className="btn-primary">
-          {pending ? "Speichern…" : "Speichern"}
+          {pending ? "Speichern…" : card ? "Speichern" : "Karte anlegen"}
         </button>
       </div>
 
       <div className="space-y-2 self-start lg:sticky lg:top-20">
-        <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Vorschau</p>
-        {enabled ? (
+        <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Vorschau{enabled ? "" : " (Karte ist aus)"}</p>
+        <div className={enabled ? undefined : "opacity-60"}>
           <LoginInfoCard
             info={{ badge: badge.trim() || null, title: title.trim() || "Überschrift", text: text.trim() || null, linkText: linkText.trim() || null, linkUrl: linkUrl.trim() || null }}
             imageSrc={previewImage}
           />
-        ) : (
-          <div className="rounded-[var(--radius-lg)] border border-dashed border-[color:var(--border-strong)] p-6 text-center text-sm text-[color:var(--muted)]">
-            Infokarte ist aus.
-          </div>
-        )}
+        </div>
       </div>
     </form>
+  );
+}
+
+/** Vorschau der aktiven Karten zum Durchklicken (so wechseln sie auf der Login-Seite). */
+export function LoginCardsPreview({ cards }: { cards: (LoginCardContent & { id: string; imageSrc: string | null })[] }) {
+  const [i, setI] = useState(0);
+  if (!cards.length) {
+    return (
+      <div className="rounded-[var(--radius-lg)] border border-dashed border-[color:var(--border-strong)] p-6 text-center text-sm text-[color:var(--muted)]">
+        Keine Karte aktiv: Die Login-Seite zeigt nur das Formular.
+      </div>
+    );
+  }
+  const n = cards.length;
+  const idx = i % n;
+  const card = cards[idx];
+  const btn = "flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:bg-[color:var(--surface-sunken)] disabled:opacity-40";
+  return (
+    <div className="space-y-3">
+      <LoginInfoCard key={card.id} info={card} imageSrc={card.imageSrc} compact />
+      <div className="flex items-center justify-between gap-3">
+        <button type="button" className={btn} onClick={() => setI((idx - 1 + n) % n)} disabled={n < 2} aria-label="Vorherige Karte">
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <div className="flex items-center gap-1.5" aria-label={`Karte ${idx + 1} von ${n}`}>
+          {cards.map((c, k) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => setI(k)}
+              aria-label={`Karte ${k + 1}: ${c.title}`}
+              aria-current={k === idx ? "true" : undefined}
+              className={`h-2 rounded-full transition-all ${k === idx ? "w-5 bg-[color:var(--brand)]" : "w-2 bg-slate-300 hover:bg-slate-400"}`}
+            />
+          ))}
+        </div>
+        <button type="button" className={btn} onClick={() => setI((idx + 1) % n)} disabled={n < 2} aria-label="Nächste Karte">
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+      <p className="text-center text-xs text-[color:var(--muted)]">
+        Karte {idx + 1} von {n} · bei jedem Aufruf der Login-Seite kommt die nächste
+      </p>
+    </div>
   );
 }
 
@@ -121,5 +166,22 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
       {children}
       {hint ? <span className="mt-1 block text-sm text-[color:var(--muted)]">{hint}</span> : null}
     </label>
+  );
+}
+
+/** Löschen mit Rückfrage. */
+export function DeleteCardButton({ id, title }: { id: string; title: string }) {
+  return (
+    <form
+      action={deleteLoginCardAction}
+      onSubmit={(e) => {
+        if (!window.confirm(`Karte „${title}“ löschen? Das lässt sich nicht rückgängig machen.`)) e.preventDefault();
+      }}
+    >
+      <input type="hidden" name="id" value={id} />
+      <button type="submit" className="text-sm font-medium text-rose-700 hover:underline">
+        Karte löschen
+      </button>
+    </form>
   );
 }

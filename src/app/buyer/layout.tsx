@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { BuyerShell } from "@/components/buyer-shell";
+import { InhaberHinweis } from "@/components/inhaber-hinweis";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { hasWhatsAppInbox, showChatsTeaser } from "@/lib/whatsapp/access";
@@ -107,6 +109,13 @@ export default async function BuyerLayout({
       {ctx ? (
         <ProvisionRatesProvider rates={provision?.rates ?? {}}>
           <BuyerShell newUi={newUi} displayName={displayName} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen} teamRole={ctx.teamRole} hasTeam={logins > 1} showOrders={pplSubs > 0} showBestand={bestand} absence={absence} updatesUnread={updatesUnread}>
+            {ctx.teamRole === "advisor" ? (
+              <Suspense fallback={null}>
+                <div className="px-4 sm:px-6 lg:px-8">
+                  <InhaberHinweis />
+                </div>
+              </Suspense>
+            ) : null}
             {children}
             {/* Lead-Detail-Modal innerhalb der Shell → Toasts funktionieren dort auch */}
             {modal}

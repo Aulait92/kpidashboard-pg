@@ -2,16 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, LogOut, Megaphone, Settings, ShieldCheck, Sparkles, Undo2 } from "lucide-react";
-import { toggleAdminNewUiAction } from "@/app/admin/ui-actions";
+import { ChevronDown, LogOut, Settings, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * Profilmenü des Admins: Umschalten zwischen alter und neuer Oberfläche
- * (Admin-A), Einstellungen, Abmelden. variant „sidebar“ = unten in der
- * Seitenleiste der neuen Oberfläche, sonst kompakt in der Kopfzeile.
+ * Profilmenü des Admins: E-Mail und Rolle, Einstellungen, Sicherheit, Abmelden.
+ * Bereiche wie Marketing stehen in der Navigation (Seitenleiste bzw. „Mehr“ am Handy).
+ * variant „sidebar“ = unten in der Seitenleiste, sonst kompakt in der Kopfzeile (Handy).
  */
-export function AdminProfileMenu({ email, newUi, variant = "header" }: { email: string; newUi: boolean; variant?: "header" | "sidebar" }) {
+export function AdminProfileMenu({ email, variant = "header" }: { email: string; variant?: "header" | "sidebar" }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const initials = (email.split("@")[0] ?? "").replace(/[^a-zA-Z]/g, "").slice(0, 2).toUpperCase() || "A";
@@ -71,17 +70,8 @@ export function AdminProfileMenu({ email, newUi, variant = "header" }: { email: 
         >
           <div className="border-b border-[color:var(--border)] px-3 py-2">
             <div className="truncate font-semibold">{email}</div>
-            <div className="text-xs text-[color:var(--muted)]">{newUi ? "Neue Oberfläche (Test)" : "Admin"}</div>
+            <div className="text-xs text-[color:var(--muted)]">Admin</div>
           </div>
-          <form action={toggleAdminNewUiAction}>
-            <button type="submit" className={itemCls}>
-              {newUi ? <Undo2 className="h-4 w-4" /> : <Sparkles className="h-4 w-4 text-[color:var(--brand)]" />}
-              {newUi ? "Zur alten Oberfläche" : "Neue Oberfläche testen"}
-            </button>
-          </form>
-          <Link href="/admin/marketing" onClick={() => setOpen(false)} className={itemCls}>
-            <Megaphone className="h-4 w-4" /> Marketing (LinkedIn, Empfehlungen)
-          </Link>
           <Link href="/admin/einstellungen" onClick={() => setOpen(false)} className={itemCls}>
             <Settings className="h-4 w-4" /> Einstellungen
           </Link>
