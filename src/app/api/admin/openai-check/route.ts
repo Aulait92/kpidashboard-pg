@@ -1,3 +1,4 @@
+import { imageModelCandidates } from "@/lib/openai-image-models";
 import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 
@@ -40,7 +41,7 @@ export async function GET() {
     return NextResponse.json({ error: "OPENAI_API_KEY nicht gesetzt." }, { status: 500 });
   }
   const textModel = process.env.OPENAI_TEXT_MODEL || "gpt-5.5";
-  const imageModel = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
+  const imageModel = imageModelCandidates()[0];
   const imageQuality = process.env.OPENAI_IMAGE_QUALITY || "low";
 
   // 1. Text-Call (winzig). Reasoning-Modelle (gpt-5*/o-Serie) brauchen

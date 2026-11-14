@@ -1,4 +1,5 @@
 import { fetchStockUrl } from "@/lib/unsplash";
+import { imageModelCandidates, isModelUnavailable, rememberWorkingModel } from "@/lib/openai-image-models";
 
 // Bild-Generation via OpenAI Images (gpt-image-1, "Images 2.0").
 // Zwei Platzhalter-Typen im HTML:
@@ -15,7 +16,7 @@ import { fetchStockUrl } from "@/lib/unsplash";
 //
 // Env:
 //   OPENAI_API_KEY           — Pflicht für echte Generierung
-//   OPENAI_IMAGE_MODEL       — Modell-ID (default "gpt-image-1")
+//   OPENAI_IMAGE_MODEL       — Modell-ID (sonst das erste verfügbare aus lib/openai-image-models.ts)
 //   OPENAI_IMAGE_QUALITY     — "low" | "medium" | "high" | "auto" (default "low")
 //   OPENAI_IMAGE_TIMEOUT_MS  — Abbruch pro Bild in ms (default 90000)
 
@@ -45,7 +46,9 @@ async function generateImage(
     console.warn("[openai-image] OPENAI_API_KEY nicht gesetzt — Fallback.");
     return FALLBACK_DATA_URL;
   }
-  const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
+  // Modell: aktuelles verfügbares Modell der Reihe nach (gpt-image-1 gibt es nicht mehr, 14.11.2026)
+  const candidates = imageModelCandidates();
+  let mi = 0;
   const quality = process.env.OPENAI_IMAGE_QUALITY || "low";
   const timeoutMs = Number(process.env.OPENAI_IMAGE_TIMEOUT_MS) || 90000;
   const prompt = `${keywords}${styleSuffix}`;
@@ -62,10 +65,16 @@ async function generateImage(
           Authorization: `Bearer ${apiKey}`,
           "content-type": "application/json",
         },
-        body: JSON.stringify({ model, prompt, size: "1024x1024", quality, n: 1 }),
+        body: JSON.stringify({ model: candidates[mi], prompt, size: "1024x1024", quality, n: 1 }),
         signal: controller.signal,
       });
       const text = await res.text();
+      if (!res.ok && isModelUnavailable(res.status, text) && mi + 1 < candidates.length) {
+        // Modell gibt es (für diesen Schlüssel) nicht → nächstes Modell, zählt nicht als Versuch
+        mi++;
+        attempt--;
+        continue;
+      }
       if (!res.ok) {
         // Quota/Billing → sofort Fallback, kein Retry.
         if (res.status === 429 && /quota|billing|insufficient_quota/i.test(text)) {
@@ -89,6 +98,7 @@ async function generateImage(
       const json = JSON.parse(text) as {
         data?: { b64_json?: string; url?: string }[];
       };
+      rememberWorkingModel(candidates[mi]);
       const first = json.data?.[0];
       console.log(
         `[openai-image] "${keywords}" ok in ${Date.now() - startedAt}ms (q=${quality})`,
