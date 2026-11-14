@@ -33,6 +33,38 @@ describe("Bestandskunden: Import, Segmente, Kampagne, Antwort", () => {
     expect(again).toMatchObject({ created: 0, updated: 3 });
   });
 
+  it("Vertragsfelder: Beitrag, Vertragsnummer, Versicherer, Status; stornierte Sparten zählen nicht; 0 Kunden wird abgelehnt", async () => {
+    const own = (await makeCustomer({ existingCustomersEnabled: true })).id;
+    try {
+      const csv = [
+        "Kundennummer;Anrede;Vorname;Nachname;Firma;Mobil;Sparte;Vertragsnummer;Gesellschaft;Jahresbeitrag;Status;Hauptfälligkeit",
+        "2001;Frau;Anna;Alt;;0151 5555555;KFZ;KF-1;Allianz;480,50 €;aktiv;01.01.2099",
+        "2001;Frau;Anna;Alt;;0151 5555555;Hausrat;HR-9;Allianz;120,00;storniert;01.02.2099",
+        "2002;Herr;Bernd;Bau;Bau GmbH;0151 6666666;Haftpflicht;PH-3;AXA;99;;",
+      ].join("\n");
+      const { headers, rows } = await parseFile(Buffer.from(csv), "bestand.csv");
+      const r = await importRows(own, rows, detectMapping(headers));
+      expect(r).toMatchObject({ customers: 2, contracts: 3, inactiveContracts: 1, premiumTotal: 579.5 });
+      const anna = await prisma.existingCustomer.findFirstOrThrow({ where: { customerId: own, externalNo: "2001" }, include: { contracts: { orderBy: { line: "asc" } } } });
+      expect(anna.salutation).toBe("Frau");
+      expect(anna.lines).toEqual(["KFZ"]); // Hausrat storniert → Lücke „Hausrat“ bleibt eine Chance
+      expect(Number(anna.premiumTotal)).toBe(480.5);
+      expect(anna.nextRenewal?.toISOString().slice(0, 10)).toBe("2099-01-01");
+      expect(anna.contracts.map((c) => [c.line, c.contractNo, c.insurer, c.status, Number(c.annualPremium)])).toEqual([
+        ["Hausrat", "HR-9", "Allianz", "storniert", 120],
+        ["KFZ", "KF-1", "Allianz", "aktiv", 480.5],
+      ]);
+      const bernd = await prisma.existingCustomer.findFirstOrThrow({ where: { customerId: own, externalNo: "2002" } });
+      expect(bernd.company).toBe("Bau GmbH");
+      // Liste ohne Namen → Fehler, nichts gespeichert
+      const sales = await parseFile(Buffer.from("Firma;Segment;Opener\nAgentur A;A;Hallo\nAgentur B;B;Hi"), "vertrieb.csv");
+      await expect(importRows(own, sales.rows, detectMapping(sales.headers))).rejects.toThrow(/kein Kunde/);
+      expect(await prisma.existingCustomer.count({ where: { customerId: own } })).toBe(2);
+    } finally {
+      await cleanupCustomer(own);
+    }
+  });
+
   it("Segmente und Chancen: KFZ ohne Haftpflicht", async () => {
     const ids = await segmentIds(customerId, "cross_sell", { has: ["KFZ"], lacks: ["Haftpflicht"] });
     expect(ids).toHaveLength(1); // nur Max (Erika hat Haftpflicht, Lisa kein Handy)

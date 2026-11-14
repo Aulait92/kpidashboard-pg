@@ -12,6 +12,7 @@ import { bestandQuota, QUOTA_REACHED } from "@/lib/bestand/quota";
 import { PRICE_LIST, eur } from "@/lib/offer-pricing";
 import { ModuleBookButton } from "@/components/bestand/module-book";
 import { canSelfBookBestand } from "@/lib/bestand/self-service";
+import { loadCustomerProvision } from "@/lib/provision-server";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Bestand | performancegrowth" };
@@ -23,7 +24,9 @@ const STATUS: Record<string, { label: string; tone: "success" | "warning" | "neu
   draft: { label: "Entwurf", tone: "neutral" },
 };
 
-export default async function BestandPage({ searchParams }: { searchParams: Promise<{ q?: string; gestartet?: string; kontingent?: string }> }) {
+const eurRound = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+
+export default async function BestandPage({ searchParams }: { searchParams: Promise<{ q?: string; gestartet?: string; kontingent?: string; sort?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   if (ctx.teamRole !== "owner") redirect("/buyer");
@@ -45,16 +48,23 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
       />
     );
   }
-  const { q = "", gestartet, kontingent } = await searchParams;
+  const { q = "", gestartet, kontingent, sort } = await searchParams;
+  const byValue = sort === "beitrag";
   const customerId = ctx.customerId;
   const quota = await bestandQuota(customerId);
 
-  const [total, withPhone, optOut, campaigns] = await Promise.all([
+  const [total, withPhone, optOut, campaigns, volume, provision] = await Promise.all([
     prisma.existingCustomer.count({ where: { customerId } }),
     prisma.existingCustomer.count({ where: { customerId, phone: { not: null }, optOutAt: null } }),
     prisma.existingCustomer.count({ where: { customerId, optOutAt: { not: null } } }),
     prisma.customerCampaign.findMany({ where: { customerId }, orderBy: { createdAt: "desc" }, take: 20 }),
+    prisma.existingCustomer.aggregate({ where: { customerId, premiumTotal: { not: null } }, _sum: { premiumTotal: true }, _count: { _all: true } }),
+    loadCustomerProvision(customerId),
   ]);
+  // Beitragsvolumen aktiver Verträge und grobe Bestandsprovision (Satz für Sach/Privatschutz aus „Meine Provisionen“)
+  const premiumSum = Number(volume._sum.premiumTotal ?? 0);
+  const ps = provision.rates.privatschutz;
+  const trailRate = ps?.kind === "percent" ? (ps.trail ?? 0) : 0;
   const stats = await Promise.all(
     campaigns.map(async (k) => {
       const g = await prisma.campaignRecipient.groupBy({ by: ["status"], where: { campaignId: k.id }, _count: { _all: true } });
@@ -79,7 +89,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
               }
             : {}),
         },
-        orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+        orderBy: byValue ? [{ premiumTotal: { sort: "desc", nulls: "last" } }, { lastName: "asc" }] : [{ lastName: "asc" }, { firstName: "asc" }],
         take: 50,
       })
     : [];
@@ -131,6 +141,30 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
         </Card>
       ) : (
         <div className="space-y-5">
+          {premiumSum > 0 ? (
+            <Card>
+              <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2 px-5 py-4" data-bestand-volume>
+                <div>
+                  <div className="text-sm text-[color:var(--muted)]">Beitragsvolumen pro Jahr</div>
+                  <div className="text-2xl font-semibold tabular-nums">{eurRound(premiumSum)}</div>
+                  <div className="text-sm text-[color:var(--muted)]">aktive Verträge von {volume._count._all.toLocaleString("de-DE")} Kunden</div>
+                </div>
+                {trailRate > 0 ? (
+                  <div>
+                    <div className="text-sm text-[color:var(--muted)]">≈ Bestandsprovision pro Jahr</div>
+                    <div className="text-2xl font-semibold tabular-nums">{eurRound(premiumSum * trailRate)}</div>
+                    <div className="text-sm text-[color:var(--muted)]">
+                      Schätzung mit {(trailRate * 100).toLocaleString("de-DE", { maximumFractionDigits: 1 })} % aus{" "}
+                      <Link href="/buyer/provisionen" className="underline">
+                        Meine Provisionen
+                      </Link>{" "}
+                      für alle Sparten
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </Card>
+          ) : null}
           <Card>
             <CardHeader title="Chancen" icon={Lightbulb} />
             <ul className="grid gap-3 px-5 pb-5 sm:grid-cols-2">
@@ -190,14 +224,26 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
 
           <Card>
             <CardHeader title="Kunden" icon={Users} count={total} />
-            <form className="px-5 pb-3">
-              <input name="q" defaultValue={q} placeholder="Name, Telefon, E-Mail oder Kundennummer" className="h-10 w-full rounded-full border border-[color:var(--border)] bg-white px-4 text-sm outline-none focus:border-[color:var(--brand)]" />
+            <form className="flex flex-wrap gap-2 px-5 pb-3">
+              <input name="q" defaultValue={q} placeholder="Name, Telefon, E-Mail oder Kundennummer" className="h-10 min-w-0 flex-1 rounded-full border border-[color:var(--border)] bg-white px-4 text-sm outline-none focus:border-[color:var(--brand)]" />
+              {premiumSum > 0 ? (
+                <select name="sort" defaultValue={byValue ? "beitrag" : ""} aria-label="Sortierung" className="h-10 rounded-full border border-[color:var(--border)] bg-white px-3 text-sm">
+                  <option value="">Nach Name</option>
+                  <option value="beitrag">Nach Jahresbeitrag</option>
+                </select>
+              ) : null}
+              {premiumSum > 0 ? (
+                <button type="submit" className="h-10 rounded-full border border-[color:var(--border)] bg-white px-4 text-sm font-medium">
+                  Anzeigen
+                </button>
+              ) : null}
             </form>
             <ul className="divide-y divide-[color:var(--border)]">
               {list.map((e) => (
                 <li key={e.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-2.5 text-sm">
                   <span className="min-w-0 flex-1 font-medium">
                     {[e.firstName, e.lastName].filter(Boolean).join(" ")}
+                    {e.company ? <span className="ml-1 font-normal text-[color:var(--muted)]">· {e.company}</span> : null}
                     {e.optOutAt ? <span className="ml-2 text-xs font-normal text-rose-700">gesperrt</span> : null}
                   </span>
                   <span className="flex flex-wrap gap-1">
@@ -207,6 +253,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                       </span>
                     ))}
                   </span>
+                  {e.premiumTotal != null ? <span className="w-24 text-right text-sm tabular-nums">{eurRound(Number(e.premiumTotal))}</span> : null}
                   <span className="w-28 text-right text-xs text-[color:var(--muted)]">{e.phone ? `+${e.phone}` : "ohne Mobil"}</span>
                   {c.empfehlungEnabled && !e.optOutAt ? (
                     <span className="w-full sm:w-auto">

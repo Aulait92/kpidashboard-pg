@@ -41,19 +41,26 @@ export type AnalyzeState = {
   preview?: Record<string, string>[];
   total?: number;
   blocked?: string[];
+  /** Alle Zeilen ohne gesperrte Spalten – für die Live-Vorschau „Zeilen → Kunden → Verträge“ (bis 20.000 Zeilen). */
+  rows?: Record<string, string>[];
 };
+
+const PREVIEW_ROW_LIMIT = 20_000;
 
 export async function analyzeImportAction(_prev: AnalyzeState, fd: FormData): Promise<AnalyzeState> {
   try {
     await ownerCtx();
     const { headers, rows } = await readUpload(fd);
     if (!rows.length) return { error: "In der Datei wurden keine Zeilen gefunden." };
+    const allowed = headers.filter((h) => !isBlockedColumn(h));
+    const strip = (r: Record<string, string>) => Object.fromEntries(allowed.map((h) => [h, r[h] ?? ""]));
     return {
-      headers: headers.filter((h) => !isBlockedColumn(h)),
+      headers: allowed,
       blocked: headers.filter(isBlockedColumn),
       mapping: detectMapping(headers),
-      preview: rows.slice(0, 5),
+      preview: rows.slice(0, 5).map(strip),
       total: rows.length,
+      rows: rows.length <= PREVIEW_ROW_LIMIT ? rows.map(strip) : undefined,
     };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Die Datei konnte nicht gelesen werden." };
@@ -77,8 +84,12 @@ export async function runImportAction(_prev: ImportState, fd: FormData): Promise
     const r = await importRows(ctx.customerId, rows, mapping);
     await audit("bestand.import", { entity: "ExistingCustomer", customerId: ctx.customerId, details: { ...r } });
     revalidatePath("/buyer/bestand");
+    const de = (n: number) => n.toLocaleString("de-DE");
     return {
-      message: `${r.customers} Kunden übernommen (${r.created} neu, ${r.updated} aktualisiert), ${r.contracts} Verträge, ${r.withPhone} mit Mobilnummer.${r.skipped ? ` ${r.skipped} Zeilen ohne Namen/Kontakt übersprungen.` : ""}`,
+      message:
+        `${de(r.customers)} Kunden übernommen (${de(r.created)} neu, ${de(r.updated)} aktualisiert) mit ${de(r.contracts)} Verträgen, ${de(r.withPhone)} mit Mobilnummer.` +
+        (r.inactiveContracts ? ` ${de(r.inactiveContracts)} Verträge sind storniert oder ruhend und zählen nicht für Chancen.` : "") +
+        (r.skipped ? ` ${de(r.skipped)} Zeilen ohne Namen/Kontakt übersprungen.` : ""),
     };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Import fehlgeschlagen." };

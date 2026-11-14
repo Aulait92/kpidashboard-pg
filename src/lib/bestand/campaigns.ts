@@ -177,6 +177,8 @@ export async function runCampaigns(now = new Date()): Promise<{ sent: number; fa
     if (budget <= 0) continue;
     const batch = await prisma.campaignRecipient.findMany({
       where: { campaignId: c.id, status: "queued" },
+      // Wertvollste Kunden zuerst (höchster Jahresbeitrag), dann in Anlage-Reihenfolge
+      orderBy: [{ existingCustomer: { premiumTotal: { sort: "desc", nulls: "last" } } }, { id: "asc" }],
       take: budget,
       include: { existingCustomer: true },
     });

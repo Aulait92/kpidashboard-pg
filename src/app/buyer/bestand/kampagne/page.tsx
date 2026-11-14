@@ -34,6 +34,20 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
     prisma.messageTemplate.findFirst({ where: { customerId: ctx.customerId, purpose, status: "approved" }, orderBy: { updatedAt: "desc" } }),
     prisma.whatsAppAccount.findUnique({ where: { customerId: ctx.customerId }, select: { status: true } }),
   ]);
+  // Zielgruppe nach Wert: Summe der Jahresbeiträge und die wertvollsten Empfänger (werden zuerst angeschrieben)
+  const [value, top] = ids.length
+    ? await Promise.all([
+        prisma.existingCustomer.aggregate({ where: { id: { in: ids }, premiumTotal: { not: null } }, _sum: { premiumTotal: true } }),
+        prisma.existingCustomer.findMany({
+          where: { id: { in: ids }, premiumTotal: { not: null } },
+          orderBy: { premiumTotal: "desc" },
+          take: 5,
+          select: { id: true, firstName: true, lastName: true, premiumTotal: true },
+        }),
+      ])
+    : [null, []];
+  const valueSum = Number(value?._sum.premiumTotal ?? 0);
+  const eurRound = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
   const advisor = c.name.replace(/^Allianz\s+/i, "");
   const body = template?.body ?? SUGGESTED_TEMPLATE_TEXT[purpose].replace(/\[Berater\]/g, advisor);
   const preview = renderTemplate(body, ["Erika", occasion === "empfehlung" ? "https://app.performancegrowth.de/empfehlung/…" : (topic ?? "")]);
@@ -55,6 +69,21 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
               {occasion === "cross_sell" ? `Kunden mit ${segment.has?.join(", ")} und ohne ${segment.lacks?.join(", ")}. ` : ""}
               Nicht dabei: gesperrte Kunden, Kunden ohne Mobilnummer und alle, die in den letzten 30 Tagen schon angeschrieben wurden.
             </p>
+            {valueSum > 0 ? (
+              <div className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-4 py-3" data-campaign-value>
+                <p>
+                  <b>Beitragsvolumen der Empfänger: {eurRound(valueSum)} pro Jahr.</b> Die wertvollsten Kunden (höchster Jahresbeitrag) werden zuerst angeschrieben.
+                </p>
+                <ol className="mt-2 space-y-0.5 text-[color:var(--muted)]">
+                  {top.map((t) => (
+                    <li key={t.id} className="flex justify-between gap-3">
+                      <span>{[t.firstName, t.lastName].filter(Boolean).join(" ")}</span>
+                      <span className="tabular-nums">{eurRound(Number(t.premiumTotal))}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ) : null}
             {occasion === "cross_sell" || occasion === "renewal" ? (
               <label className="block text-xs font-medium text-[color:var(--muted)]">
                 Thema in der Nachricht

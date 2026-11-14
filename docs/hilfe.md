@@ -402,7 +402,29 @@ Seiten aus der Liste „Seiten“ unten.
   Mehr Nachrichten: bitte bei uns melden, wir erhöhen das Kontingent.
 
 - Kundenliste aus dem Versicherer-System als Excel oder CSV hochladen, Spalten zuordnen, Einwilligung bestätigen.
-  Gesundheitsdaten werden nie übernommen.
+  Gesundheitsdaten werden nie übernommen (Spalten wie Vorerkrankungen, Diagnosen, Gewicht werden ausgelassen).
+- **Mehrere Verträge je Kunde:** Eine Zeile je Kunde oder je Vertrag geht beides. Zeilen desselben Kunden werden
+  zusammengeführt (gleiche Kundennummer, sonst gleiches Telefon, sonst gleiche E-Mail, sonst Nachname + Geburtsdatum).
+  Jede Zeile mit Sparte wird ein Vertrag; mehrere Sparten in einer Zelle („Haftpflicht, Unfall“) werden mehrere Verträge.
+- **Spalten zuordnen** in zwei Gruppen:
+  - **Kunde:** Vorname, Nachname bzw. Name komplett, Mobil/Telefon, E-Mail, Kundennummer, Anrede (Herr/Frau/Divers),
+    Firma (Gewerbekunden), Geburtsdatum, Adresse. Ein Name ist Pflicht – Firma allein reicht nicht.
+  - **Vertrag:** Sparte/Produkt, Jahresbeitrag (z. B. „1.234,56 €“; Monatsbeiträge werden nicht als Jahresbeitrag
+    erkannt), Vertragsnummer, Versicherer, Vertragsstatus, Ablauf/Hauptfälligkeit, Vertragsbeginn.
+- **Vorschau vor dem Übernehmen:** „4.493 Zeilen → 1.870 Kunden mit 4.493 Verträgen“, live berechnet mit der gewählten
+  Zuordnung, dazu Beitragsvolumen, stornierte Verträge und übersprungene Zeilen. Würde kein einziger Kunde übernommen
+  (z. B. eine Liste ohne Namen), erscheint eine rote Warnung und der Knopf ist gesperrt. Wird mehr als die Hälfte
+  übersprungen, kommt eine gelbe Warnung.
+- **Vertragsstatus:** grob vereinheitlicht zu aktiv, storniert/gekündigt, ruhend (z. B. beitragsfrei) oder unbekannt.
+  Stornierte und ruhende Verträge zählen nicht als Sparte (Lücke schließen), nicht für Ablauf/Wechsel und nicht
+  fürs Beitragsvolumen. Ohne Status-Spalte gilt jeder Vertrag als aktiv.
+- **Erneut hochladen** aktualisiert vorhandene Kunden; ihre Verträge werden durch die neue Liste ersetzt
+  (die Vertragsnummer wird mitgespeichert).
+- **Beitragsvolumen:** Auf „Bestand“ steht die Summe der Jahresbeiträge aktiver Verträge. Ist in „Meine Provisionen“
+  eine Bestandsprovision hinterlegt, steht daneben „≈ Bestandsprovision pro Jahr“ – eine grobe Schätzung mit dem Satz
+  für Privatschutz/Sach, für alle Sparten gleich angesetzt. Die Kundenliste lässt sich nach Jahresbeitrag sortieren.
+  In Kampagnen werden die Kunden mit dem höchsten Jahresbeitrag zuerst angeschrieben; die Kampagnenseite zeigt
+  das Beitragsvolumen der Empfänger und die fünf wertvollsten.
 - Die App schlägt Chancen vor: Lücke schließen (z. B. KFZ ohne Hausrat), Jahresgespräch, Geburtstag in 30 Tagen,
   Ablauf/Wechsel in 60 Tagen.
 - Kampagne: Thema, Tageslimit, Vorschau, Start/Pause. Versand per WhatsApp Mo–Sa 9–19 Uhr.

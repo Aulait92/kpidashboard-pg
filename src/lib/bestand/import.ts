@@ -1,77 +1,29 @@
 // Bestandskunden-Import (Excel/CSV aus dem Versicherer-System).
 // Spalten werden erkannt und vom Vertreter bestätigt. Übernommen werden nur
 // bekannte Felder – alle anderen Spalten (auch Gesundheitsangaben) verfallen.
+// Felder, Parser und Gruppierung: lib/bestand/rows.ts (auch für die Vorschau im Browser).
 
 import Papa from "papaparse";
 import { prisma } from "@/lib/prisma";
-import { normalizePhone } from "@/lib/whatsapp/phone";
+import { groupRows, isActiveContract, type Mapping, type Row } from "@/lib/bestand/rows";
 
-export const FIELDS = {
-  externalNo: "Kundennummer",
-  firstName: "Vorname",
-  lastName: "Nachname",
-  fullName: "Name (komplett)",
-  phone: "Mobil/Telefon",
-  email: "E-Mail",
-  birthday: "Geburtsdatum",
-  street: "Straße",
-  zip: "PLZ",
-  city: "Ort",
-  line: "Sparte/Produkt",
-  startDate: "Vertragsbeginn",
-  renewalDate: "Ablauf/Hauptfälligkeit",
-} as const;
-export type FieldKey = keyof typeof FIELDS;
-export type Mapping = Partial<Record<FieldKey, string>>;
-export type Row = Record<string, string>;
-
-const norm = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]/g, "");
-
-const SYNONYMS: Record<FieldKey, string[]> = {
-  externalNo: ["kundennummer", "kundennr", "kdnr", "vnnr", "versicherungsnehmernr", "partnernummer", "partnernr", "kundenid"],
-  firstName: ["vorname", "firstname"],
-  lastName: ["nachname", "name", "familienname", "lastname", "zuname"],
-  fullName: ["vollstandigername", "kunde", "kundenname", "versicherungsnehmer", "vorundnachname"],
-  phone: ["mobil", "handy", "mobilnummer", "mobiltelefon", "telefon", "telefonnummer", "tel", "telmobil", "rufnummer", "phone"],
-  email: ["email", "emailadresse", "mail"],
-  birthday: ["geburtsdatum", "geburtstag", "gebdatum", "gebdat", "birthday"],
-  street: ["strasse", "strase", "strassehausnr", "adresse", "anschrift"],
-  zip: ["plz", "postleitzahl"],
-  city: ["ort", "wohnort", "stadt"],
-  line: ["sparte", "produkt", "vertrag", "tarif", "produktname", "sparten", "vertragsart"],
-  startDate: ["beginn", "vertragsbeginn", "versicherungsbeginn", "beginndatum"],
-  renewalDate: ["ablauf", "hauptfalligkeit", "fallig", "falligkeit", "vertragsende", "ablaufdatum"],
-};
-
-// Spalten, die nie übernommen werden (Gesundheitsangaben u. Ä.)
-const BLOCKED = /gesund|diagnos|vorerkrank|krankheit|behandl|medikament|bmi|gewicht|grosse|risikozuschlag|leistungsfall/i;
-
-export function isBlockedColumn(header: string): boolean {
-  return BLOCKED.test(header);
-}
-
-/** Spalten automatisch zuordnen (erste passende Spalte je Feld). */
-export function detectMapping(headers: string[]): Mapping {
-  const m: Mapping = {};
-  const used = new Set<string>();
-  const order: FieldKey[] = ["externalNo", "firstName", "fullName", "lastName", "phone", "email", "birthday", "street", "zip", "city", "line", "startDate", "renewalDate"];
-  for (const key of order) {
-    const hit = headers.find((h) => !used.has(h) && !isBlockedColumn(h) && SYNONYMS[key].some((syn) => norm(h) === syn || (syn.length > 4 && norm(h).includes(syn))));
-    if (hit) {
-      m[key] = hit;
-      used.add(hit);
-    }
-  }
-  // „Name“ ohne Vorname-Spalte ist meist der volle Name
-  if (m.lastName && !m.firstName && !m.fullName && norm(m.lastName) === "name") {
-    m.fullName = m.lastName;
-    delete m.lastName;
-  }
-  // Mobil hat Vorrang vor Festnetz
-  const mobile = headers.find((h) => /mobil|handy/i.test(h));
-  if (mobile) m.phone = mobile;
-  return m;
-}
+export {
+  FIELDS,
+  FIELD_GROUPS,
+  detectMapping,
+  groupRows,
+  importWarning,
+  isActiveContract,
+  isBlockedColumn,
+  normalizeLine,
+  normalizeSalutation,
+  normalizeStatus,
+  parseDate,
+  parseMoney,
+  type FieldKey,
+  type Mapping,
+  type Row,
+} from "@/lib/bestand/rows";
 
 /** Datei lesen: CSV (Komma/Semikolon) oder Excel (.xlsx). */
 export async function parseFile(buf: Buffer, fileName: string): Promise<{ headers: string[]; rows: Row[] }> {
@@ -96,89 +48,40 @@ function cell(v: unknown): string {
   return String(v).trim();
 }
 
-export function parseDate(raw: string | undefined): Date | null {
-  const s = (raw ?? "").trim();
-  if (!s) return null;
-  let m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
-  if (m) return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
-  m = /^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/.exec(s);
-  if (m) {
-    const y = m[3].length === 2 ? 1900 + +m[3] + (+m[3] < 30 ? 100 : 0) : +m[3];
-    return new Date(Date.UTC(y, +m[2] - 1, +m[1]));
-  }
-  if (/^\d{5}$/.test(s)) return new Date(Date.UTC(1899, 11, 30) + Number(s) * 86_400_000); // Excel-Seriennummer
-  return null;
-}
-
-const LINE_RULES: [RegExp, string][] = [
-  [/kfz|kraftfahrt|auto|pkw|motorrad|wohnmobil|kraftrad/, "KFZ"],
-  [/hausrat/, "Hausrat"],
-  [/haftpflicht|phv/, "Haftpflicht"],
-  [/geb(ä|a)ude|wohngeb/, "Wohngebäude"],
-  [/unfall/, "Unfall"],
-  [/rechtsschutz/, "Rechtsschutz"],
-  [/berufsunf|\bbu\b/, "BU"],
-  [/pflege/, "Pflege"],
-  [/kranken|\bpkv\b|zahn|station(ä|a)r|ambulant/, "Kranken"],
-  [/risikoleben|leben|rente|riester|r(ü|u)rup|altersvorsorge|pension|fonds/, "Vorsorge"],
-  [/tier|hund|pferd|katze/, "Tier"],
-  [/reise/, "Reise"],
-];
-
-export function normalizeLine(raw: string): string | null {
-  const s = raw.toLowerCase();
-  if (!s.trim()) return null;
-  return LINE_RULES.find(([re]) => re.test(s))?.[1] ?? "Sonstiges";
-}
-
-export type ImportResult = { customers: number; created: number; updated: number; contracts: number; skipped: number; withPhone: number };
+export type ImportResult = {
+  customers: number;
+  created: number;
+  updated: number;
+  contracts: number;
+  inactiveContracts: number;
+  premiumTotal: number;
+  skipped: number;
+  withPhone: number;
+};
 
 /** Zeilen übernehmen. Eine Zeile je Kunde oder je Vertrag – Kunden werden zusammengeführt. */
 export async function importRows(customerId: string, rows: Row[], m: Mapping, now = new Date()): Promise<ImportResult> {
-  const get = (r: Row, k: FieldKey) => (m[k] ? (r[m[k]!] ?? "").trim() : "");
-  type Acc = {
-    externalNo: string | null; firstName: string | null; lastName: string | null; phone: string | null; email: string | null;
-    birthday: Date | null; street: string | null; zip: string | null; city: string | null;
-    contracts: { line: string; product: string; startDate: Date | null; renewalDate: Date | null }[];
+  const g = groupRows(rows, m);
+  // Nie still 0 Kunden übernehmen (Ole, 14.11.2026: Vertriebsliste statt Kundenliste hochgeladen)
+  if (rows.length && g.groups.size === 0) throw new Error("Mit dieser Zuordnung würde kein Kunde übernommen. Bitte Name und Telefon, E-Mail oder Kundennummer zuordnen.");
+  const res: ImportResult = {
+    customers: g.groups.size,
+    created: 0,
+    updated: 0,
+    contracts: 0,
+    inactiveContracts: g.inactiveContracts,
+    premiumTotal: g.premiumTotal,
+    skipped: g.skipped,
+    withPhone: 0,
   };
-  const groups = new Map<string, Acc>();
-  let skipped = 0;
-  for (const r of rows) {
-    let first = get(r, "firstName") || null;
-    let last = get(r, "lastName") || null;
-    const full = get(r, "fullName");
-    if (!first && !last && full) {
-      const parts = full.includes(",") ? full.split(",").map((x) => x.trim()).reverse() : full.split(/\s+/);
-      first = parts.slice(0, -1).join(" ") || null;
-      last = parts.at(-1) || null;
-    }
-    const phone = normalizePhone(get(r, "phone")) || null;
-    const email = get(r, "email").toLowerCase() || null;
-    const ext = get(r, "externalNo") || null;
-    const birthday = parseDate(get(r, "birthday"));
-    const key = ext ?? phone ?? email ?? (last && birthday ? `${last}|${birthday.toISOString()}` : null);
-    if (!key || (!first && !last)) {
-      skipped++;
-      continue;
-    }
-    const acc = groups.get(key) ?? {
-      externalNo: ext, firstName: first, lastName: last, phone, email, birthday,
-      street: get(r, "street") || null, zip: get(r, "zip").replace(/\D/g, "").slice(0, 5) || null, city: get(r, "city") || null, contracts: [],
-    };
-    acc.phone ??= phone;
-    acc.email ??= email;
-    for (const product of get(r, "line").split(/[;,/|]+/).map((x) => x.trim()).filter(Boolean)) {
-      const line = normalizeLine(product);
-      if (line) acc.contracts.push({ line, product, startDate: parseDate(get(r, "startDate")), renewalDate: parseDate(get(r, "renewalDate")) });
-    }
-    groups.set(key, acc);
-  }
-
-  const res: ImportResult = { customers: groups.size, created: 0, updated: 0, contracts: 0, skipped, withPhone: 0 };
   const consentNote = `Einwilligung laut Versicherer (Import ${now.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })})`;
-  for (const a of groups.values()) {
-    const lines = [...new Set(a.contracts.map((c) => c.line))].sort();
-    const upcoming = a.contracts.map((c) => c.renewalDate).filter((d): d is Date => !!d && d > now).sort((x, y) => +x - +y)[0] ?? null;
+  for (const a of g.groups.values()) {
+    // Stornierte und ruhende Verträge zählen nicht für Sparten (Lücken), Ablauf und Beitragsvolumen
+    const active = a.contracts.filter((c) => isActiveContract(c.status));
+    const lines = [...new Set(active.map((c) => c.line))].sort();
+    const upcoming = active.map((c) => c.renewalDate).filter((d): d is Date => !!d && d > now).sort((x, y) => +x - +y)[0] ?? null;
+    const premiums = active.map((c) => c.annualPremium).filter((p): p is number => p != null);
+    const premiumTotal = premiums.length ? Math.round(premiums.reduce((s, p) => s + p, 0) * 100) / 100 : null;
     const existing = a.externalNo
       ? await prisma.existingCustomer.findUnique({ where: { customerId_externalNo: { customerId, externalNo: a.externalNo } }, select: { id: true } })
       : await prisma.existingCustomer.findFirst({
@@ -186,8 +89,8 @@ export async function importRows(customerId: string, rows: Row[], m: Mapping, no
           select: { id: true },
         });
     const data = {
-      externalNo: a.externalNo, firstName: a.firstName, lastName: a.lastName, phone: a.phone, email: a.email, birthday: a.birthday,
-      street: a.street, zip: a.zip, city: a.city, lines, nextRenewal: upcoming, consentAt: now, consentNote,
+      externalNo: a.externalNo, salutation: a.salutation, firstName: a.firstName, lastName: a.lastName, company: a.company, phone: a.phone, email: a.email,
+      birthday: a.birthday, street: a.street, zip: a.zip, city: a.city, lines, nextRenewal: upcoming, premiumTotal, consentAt: now, consentNote,
     };
     const saved = existing
       ? await prisma.existingCustomer.update({ where: { id: existing.id }, data })
@@ -196,10 +99,21 @@ export async function importRows(customerId: string, rows: Row[], m: Mapping, no
     else res.created++;
     if (a.phone) res.withPhone++;
     if (a.contracts.length) {
+      // Verträge eines Kunden werden bei jedem Import ersetzt (Vertragsnummer wird mitgespeichert)
       await prisma.$transaction([
         prisma.existingContract.deleteMany({ where: { existingCustomerId: saved.id } }),
         prisma.existingContract.createMany({
-          data: a.contracts.map((c) => ({ existingCustomerId: saved.id, line: c.line, product: c.product.slice(0, 120), startDate: c.startDate, renewalDate: c.renewalDate })),
+          data: a.contracts.map((c) => ({
+            existingCustomerId: saved.id,
+            line: c.line,
+            product: c.product.slice(0, 120) || null,
+            startDate: c.startDate,
+            renewalDate: c.renewalDate,
+            annualPremium: c.annualPremium,
+            contractNo: c.contractNo,
+            insurer: c.insurer,
+            status: c.status,
+          })),
         }),
       ]);
       res.contracts += a.contracts.length;

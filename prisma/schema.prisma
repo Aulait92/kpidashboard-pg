@@ -1888,6 +1888,9 @@ model ExistingCustomer {
   externalNo     String? // Kundennummer im Versicherer-System
   firstName      String?
   lastName       String?
+  // Anrede (Herr | Frau | Divers) und Firma bei Gewerbekunden (Import 14.11.2026)
+  salutation     String?
+  company        String?
   phone          String? // normalisiert wie WhatsApp (4915…)
   email          String?
   birthday       DateTime?
@@ -1898,6 +1901,8 @@ model ExistingCustomer {
   lines          String[]  @default([])
   // nächster Ablauf/Hauptfälligkeit (z. B. KFZ) für Anlass „Wechsel/Ablauf“
   nextRenewal    DateTime?
+  // Summe der Jahresbeiträge aktiver Verträge (für Sortierung und Beitragsvolumen); null = kein Beitrag bekannt
+  premiumTotal   Decimal?  @db.Decimal(12, 2)
   consentAt      DateTime? // „Einwilligung laut Versicherer“ (Importdatum)
   consentNote    String?
   optOutAt       DateTime? // „Stopp“ → keine Kampagnen mehr
@@ -1923,6 +1928,11 @@ model ExistingContract {
   product            String? // Originalbezeichnung
   startDate          DateTime?
   renewalDate        DateTime?
+  // Import 14.11.2026: Jahresbeitrag, Vertragsnummer, Versicherer, Status (aktiv | storniert | ruhend | unbekannt; null = nicht geliefert)
+  annualPremium      Decimal?         @db.Decimal(12, 2)
+  contractNo         String?
+  insurer            String?
+  status             String?
 
   @@index([existingCustomerId])
 }
