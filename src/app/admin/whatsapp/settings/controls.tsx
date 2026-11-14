@@ -352,6 +352,7 @@ export function PhonePreview({ text, sender }: { text: string; sender: string })
 
 const EXAMPLES: Record<string, string> = {
   Vorname: "Julia",
+  "Anrede und Nachname": "Frau Schneider",
   "Datum/Uhrzeit": "Di., 18.11., 10:00 Uhr",
   Art: "Telefonat",
   "Link/Hinweis": "Wir rufen dich an.",

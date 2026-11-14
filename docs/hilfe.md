@@ -103,6 +103,12 @@ Seiten aus der Liste „Seiten“ unten.
 - **Ansprache (Sie oder Du)**: Standard ist „Sie“. Inhaber stellen das unter **Einstellungen → WhatsApp-Vorlagen**,
   **Einstellungen → E-Mail-Postfach** oder im Einrichtungs-Fragebogen um. Es gilt für den Assistenten,
   WhatsApp-Vorlagen, Termin-Nachrichten, Termin-E-Mails, die Buchungsseite und die E-Mail-Vorlagen.
+- **Anrede**: Bei „Sie“ beginnen Nachrichten mit „Guten Tag Frau Schneider,“ bzw. „Guten Tag Herr Schneider,“, wenn die
+  Anrede bekannt ist (Feld Anrede oder Geschlecht im Leadformular, Anrede beim Bestandskunden). Sonst mit vollem Namen
+  („Guten Tag Julia Schneider,“), ohne Nachnamen mit „Guten Tag,“. Die Anrede wird nie aus dem Vornamen geraten.
+  Bei „Du“: „Hallo Julia,“. Das gilt auch für den Assistenten im weiteren Chat.
+- **Namen in Nachrichten**: „Ihre Buchung bei …“ und „digitaler Assistent von …“ nennen Ihren Firmennamen; „Ihr
+  Videocall mit …“ nennt die Person, bei Teams den zuständigen Berater (Anzeigename unter **Team**).
 - Wie sich der Assistent vorstellt und was er fragt, stellen wir für Sie ein. Änderungswünsche gern über
   „Etwas unklar? Feedback“ im Profilmenü oder im Hilfetermin.
 
@@ -112,15 +118,18 @@ Seiten aus der Liste „Seiten“ unten.
   Funkstille) nur mit einem Text, den Meta vorher geprüft hat. Diese Vorlagen reichen wir für Ihre
   Nummer automatisch bei Meta ein, sobald WhatsApp verbunden ist. Sie müssen nichts tun.
 - Ansehen: Profilmenü → **WhatsApp-Vorlagen**. Jede Vorlage steht als WhatsApp-Blase mit Beispielwerten
-  (z. B. „Julia“) da; beim Senden setzt die App den echten Namen und Termin ein.
+  (z. B. „Frau Schneider“ bzw. „Julia“) da; beim Senden setzt die App die echte Anrede, den Namen und den Termin ein.
 - Status: **In Prüfung bei Meta** (meist Minuten bis wenige Stunden), **Freigegeben** oder
   **Abgelehnt**: dann kümmern wir uns und reichen einen angepassten Text neu ein.
 - Erst wenn „Erste Nachricht an neue Leads“ freigegeben ist, kann der Assistent neue Leads anschreiben.
 - Mit dem Bestandskunden-Modul kommen vier Kampagnen-Vorlagen dazu. Sie haben unten den Knopf
   „Keine Nachrichten mehr“: Wer ihn antippt, bekommt keine Kampagnen mehr (wie bei „STOPP“).
-- **Sie-Fassungen**: Die Vorlagen des Assistenten gibt es in einer Du- und einer Sie-Fassung. Bei „Sie“ reichen wir die
-  Sie-Fassung automatisch bei Meta ein. Bis sie freigegeben ist, steht „Sie-Fassung in Prüfung bei Meta“ und die
-  bisher freigegebene Fassung geht raus. Der Erstkontakt wird dadurch nie aufgehalten.
+- **Sie- und Du-Fassungen**: Die Vorlagen des Assistenten gibt es als Du-Fassung („Hallo Julia,“) und als Sie-Fassung
+  („Guten Tag Frau Schneider,“). Für Kontakte ohne bekannten Nachnamen gibt es eine eigene Sie-Fassung, die mit
+  „Guten Tag,“ beginnt. Wir reichen alle Fassungen automatisch bei Meta ein, so greift ein Wechsel der Ansprache
+  sofort. Bis eine neue Fassung freigegeben ist, steht „Neue Fassung in Prüfung bei Meta“ und die bisher
+  freigegebene Fassung geht raus. Der Erstkontakt wird dadurch nie aufgehalten.
+- Kampagnen an Bestandskunden und die Nachrichten rund um Empfehlungen sind immer gesiezt.
 - Text anders formulieren? Schreiben Sie uns über „Etwas unklar? Feedback“, wir passen ihn an.
 
 ## Automatisches Nachfassen (Abfolgen)
@@ -562,7 +571,7 @@ Seiten aus der Liste „Seiten“ unten.
   möchte). Das ist kein Zufriedenheitsfilter und passiert nie automatisch.
 - **Einrichten:** Wachstum → „Empfehlungen & Bewertungen“ (bzw. Konto & Rechnungen → Zusatzmodule →
   „Einstellungen & Auswertung“): Google-Bewertungslink hinterlegen (Google-Unternehmensprofil → „Rezensionen erhalten“ →
-  Link kopieren), Tage einstellen, Texte anpassen (Platzhalter {Vorname}, {Link}, {Vertreter}; Empfehlung: erst der
+  Link kopieren), Tage einstellen, Texte anpassen (Platzhalter {Anrede} für „Guten Tag Frau Schneider“, {Vorname}, {Link}, {Vertreter}; Empfehlung: erst der
   direkte Draht, dann der Link), „Test an mich senden“. Eigene Texte gelten im offenen WhatsApp-Chat; sonst sendet
   die App die von Meta freigegebene Standardvorlage (Freigabe dauert meist wenige Stunden bis zwei Tage).
 - **Auswertung:** Empfehlungs-Leads, daraus Termine, Abschlüsse und geschätzte Provision (Ihre Provisionssätze),
@@ -706,7 +715,8 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
 - **Signatur**: einmal hinterlegen (Name, Agentur, Telefon, Adresse). Sie steht automatisch unter jeder E-Mail an
   Leads – mit und ohne Vorlage. In einer Vorlage kann man die Stelle mit {signatur} selbst festlegen.
 - **Vorlagen** mit Platzhaltern {anrede}, {vorname}, {nachname}, {name}, {produkt}, {terminlink}, {meinname}, {signatur}.
-  {anrede} richtet sich nach der Ansprache: „Hallo Anna Beispiel“ (Sie; ohne Nachname „Guten Tag“) oder „Hallo Anna“ (Du).
+  {anrede} richtet sich nach der Ansprache: „Guten Tag Frau Beispiel“ (Sie mit bekannter Anrede; sonst „Guten Tag Anna
+  Beispiel“, ohne Nachname „Guten Tag“) oder „Hallo Anna“ (Du).
   Die Standardvorlagen gibt es in beiden Fassungen; beim Wechsel der Ansprache ziehen unveränderte Standardvorlagen mit,
   eigene Texte bleiben.
 - **{terminlink}**: persönlicher Buchungslink für genau diesen Kontakt (Zeiten aus Ihrem Kalender, Buchung landet

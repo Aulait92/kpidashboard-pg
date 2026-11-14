@@ -52,28 +52,34 @@ export function customerEventSummary(mode: "phone" | "video", advisorName: strin
   return `${mode === "video" ? "Videoberatung" : "Telefonische Beratung"} mit ${advisorName}`;
 }
 
-/** Beschreibung der Einladung für den Lead — freundlich, ohne interne Daten. */
+/** Beschreibung der Einladung für den Lead — freundlich, ohne interne Daten. hi = Anrede-Zeile (lib/ansprache.ts). */
 export function customerEventDescription(d: {
-  firstName: string;
+  hi: string;
+  an?: "sie" | "du";
   mode: "phone" | "video";
   phone: string | null;
   videoUrl: string | null;
   manageUrl: string;
   advisorName: string;
 }): string {
+  const du = d.an === "du";
   const how =
     d.mode === "video"
       ? d.videoUrl
         ? `Hier der Link zum Videocall:\n${d.videoUrl}`
-        : "Den Link zum Videocall bekommst du rechtzeitig vor dem Termin."
+        : du
+          ? "Den Link zum Videocall bekommst du rechtzeitig vor dem Termin."
+          : "Den Link zum Videocall bekommen Sie rechtzeitig vor dem Termin."
       : d.phone
-        ? `Wir rufen dich zur vereinbarten Zeit unter +${d.phone} an.`
-        : "Wir rufen dich zur vereinbarten Zeit an.";
+        ? `${d.advisorName} ruft ${du ? "dich" : "Sie"} zur vereinbarten Zeit unter +${d.phone} an.`
+        : `${d.advisorName} ruft ${du ? "dich" : "Sie"} zur vereinbarten Zeit an.`;
   return [
-    `Hallo ${d.firstName},`,
-    "vielen Dank für deine Terminbuchung!",
+    d.hi,
+    du ? "vielen Dank für deine Terminbuchung!" : "vielen Dank für Ihre Terminbuchung!",
     how,
-    `Falls etwas dazwischenkommt, kannst du den Termin hier verschieben oder absagen:\n${d.manageUrl}`,
+    du
+      ? `Falls etwas dazwischenkommt, kannst du den Termin hier verschieben oder absagen:\n${d.manageUrl}`
+      : `Falls etwas dazwischenkommt, können Sie den Termin hier verschieben oder absagen:\n${d.manageUrl}`,
     `Bis bald!\n${d.advisorName}`,
   ].join("\n\n");
 }

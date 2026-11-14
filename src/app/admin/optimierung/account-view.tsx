@@ -102,8 +102,8 @@ export function AccountView({ detail, showBackLink = true }: { detail: Detail; s
           <ProtocolCard measures={detail.measures} />
         </div>
         <div className="space-y-5">
-          <Card>
-            <CardHeader title="Lauf und Trockenlauf" />
+          <Card id="lauf" className="scroll-mt-20">
+            <CardHeader title="Lauf und Trockenlauf" hint="Trockenlauf: liest bei Meta nur und zeigt, was geplant würde" />
             <RunPanel accountId={a.id} customerId={a.customerId} />
           </Card>
           <Card>

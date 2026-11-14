@@ -130,6 +130,7 @@ export async function followupBuyerAction(formData: FormData): Promise<void> {
         text: choice.preview,
         leadId: conv.leadId,
         contactName: conv.contactName,
+        anrede: choice.anrede,
       });
     } catch (e) {
       console.error("[buyer followup]", e);

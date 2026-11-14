@@ -36,7 +36,7 @@ export function LeadMailComposer({
   dateien,
 }: {
   leadId: string;
-  lead: { name: string | null; source: string | null };
+  lead: { name: string | null; source: string | null; salutation?: string | null; firstName?: string | null; lastName?: string | null };
   to: string | null;
   from: string;
   meinname: string;

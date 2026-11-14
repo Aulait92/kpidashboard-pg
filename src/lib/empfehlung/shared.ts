@@ -12,6 +12,7 @@
 //  4. „Nicht anfragen“ je Kontakt schaltet der Vertreter selbst – nie automatisch.
 
 import { PRICE_LIST } from "@/lib/offer-pricing";
+import { anredeName, anredeZeile, type AnredeKontakt } from "@/lib/ansprache";
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -47,23 +48,26 @@ export const DEFAULT_DELAYS = { review: 7, referral: 21 } as const;
 export const DELAY_LIMITS = { min: 1, max: 120 } as const;
 
 // ─── Texte ─────────────────────────────────────────────────────────────────
-// Platzhalter: {Vorname}, {Link}, {Vertreter}. Eigene Texte gelten im offenen
+// Platzhalter: {Anrede}, {Vorname}, {Link}, {Vertreter}. Eigene Texte gelten im offenen
 // 24-h-Fenster (und für Antworten); sonst die bei Meta freigegebene Vorlage.
+// {Anrede} = „Guten Tag Frau Schneider“ bzw. „Guten Tag Julia Schneider“ / „Guten Tag“ (Empfehlungen
+// siezen immer; Regel in lib/ansprache.ts). Ältere eigene Texte mit „Hallo {Vorname},“ am Anfang
+// bekommen dieselbe Anrede; {Vorname} mitten im Text wird zu „Frau Schneider“ (bzw. entfällt).
 
 export const DEFAULT_TEXTS = {
   review:
-    "Hallo {Vorname}, ich hoffe, Sie sind mit Ihrem neuen Vertrag gut versorgt. Wenn irgendetwas nicht gepasst hat, antworten Sie mir einfach direkt hier, ich kümmere mich persönlich darum. Und wenn Sie zufrieden waren, freue ich mich sehr über eine kurze Google-Bewertung: {Link} Herzliche Grüße, {Vertreter}",
-  thanks: "Vielen Dank für Ihre Rückmeldung, {Vorname}! Das freut mich sehr. Wenn Sie etwas brauchen, schreiben Sie mir einfach hier. Herzliche Grüße, {Vertreter}",
+    "{Anrede}, ich hoffe, Sie sind mit Ihrem neuen Vertrag gut versorgt. Wenn irgendetwas nicht gepasst hat, antworten Sie mir einfach direkt hier, ich kümmere mich persönlich darum. Und wenn Sie zufrieden waren, freue ich mich sehr über eine kurze Google-Bewertung: {Link} Herzliche Grüße, {Vertreter}",
+  thanks: "{Anrede}, vielen Dank für Ihre Rückmeldung! Das freut mich sehr. Wenn Sie etwas brauchen, schreiben Sie mir einfach hier. Herzliche Grüße, {Vertreter}",
   // Dank bei Lob MIT Empfehlungslink (Einstellung „bei Lob direkt um Empfehlung bitten“). Kein zweiter Google-Link.
   praiseReferral:
-    "Vielen Dank für Ihre Rückmeldung, {Vorname}! Das freut mich sehr. Falls Sie jemanden kennen, dem ich genauso weiterhelfen kann: Über Ihren persönlichen Link kann die Person ganz einfach selbst Kontakt mit mir aufnehmen: {Link} Herzliche Grüße, {Vertreter}",
+    "{Anrede}, vielen Dank für Ihre Rückmeldung! Das freut mich sehr. Falls Sie jemanden kennen, dem ich genauso weiterhelfen kann: Über Ihren persönlichen Link kann die Person ganz einfach selbst Kontakt mit mir aufnehmen: {Link} Herzliche Grüße, {Vertreter}",
   unhappy:
-    "Danke, dass Sie mir das so offen schreiben, {Vorname}. Das möchte ich gern klären und melde mich heute noch persönlich bei Ihnen. Herzliche Grüße, {Vertreter}",
+    "{Anrede}, danke, dass Sie mir das so offen schreiben. Das möchte ich gern klären und melde mich heute noch persönlich bei Ihnen. Herzliche Grüße, {Vertreter}",
   referral:
-    "Hallo {Vorname}, hier ist {Vertreter}. Kennen Sie jemanden, dem ich genauso weiterhelfen kann? Über Ihren persönlichen Link kann die Person ganz einfach selbst Kontakt mit mir aufnehmen: {Link} Vielen Dank für Ihr Vertrauen!",
+    "{Anrede}, hier ist {Vertreter}. Kennen Sie jemanden, dem ich genauso weiterhelfen kann? Über Ihren persönlichen Link kann die Person ganz einfach selbst Kontakt mit mir aufnehmen: {Link} Vielen Dank für Ihr Vertrauen!",
   // Bewusst ohne Namen und Details der empfohlenen Person (Datenschutz), ohne Prämie
   referralThanks:
-    "Hallo {Vorname}, ich wollte mich noch einmal herzlich für Ihre Empfehlung bedanken. Ich konnte weiterhelfen. Das ist das schönste Lob für meine Arbeit! Herzliche Grüße, {Vertreter}",
+    "{Anrede}, ich wollte mich noch einmal herzlich für Ihre Empfehlung bedanken. Ich konnte weiterhelfen. Das ist das schönste Lob für meine Arbeit! Herzliche Grüße, {Vertreter}",
 } as const;
 export type TextKey = keyof typeof DEFAULT_TEXTS;
 
@@ -90,10 +94,20 @@ export const TEXT_LABELS: Record<TextKey, { title: string; hint: string; needsLi
 
 export const MAX_TEXT = 700;
 
-export function renderText(text: string, vars: { vorname?: string | null; link?: string | null; vertreter: string }): string {
+export function renderText(
+  text: string,
+  vars: { vorname?: string | null; link?: string | null; vertreter: string; anrede?: AnredeKontakt | null },
+): string {
+  // Empfehlungen siezen immer. Ohne Angaben zur Person: Anrede nur aus dem Vornamen („Guten Tag“)
+  const k: AnredeKontakt | null = vars.anrede ?? null;
+  const gruss = anredeZeile("sie", k ?? { firstName: vars.vorname }).replace(/,$/, "");
+  const nameMitten = k ? (anredeName("sie", k) ?? "") : (vars.vorname?.trim() || "");
   return text
+    .replace(/^\s*Hallo\s+\{Vorname\}\s*,?/, k ? "{Anrede}," : "$&")
+    .split("{Anrede}")
+    .join(gruss)
     .split("{Vorname}")
-    .join(vars.vorname?.trim() || "")
+    .join(nameMitten)
     .split("{Link}")
     .join(vars.link ?? "")
     .split("{empfehlungslink}")
@@ -101,6 +115,7 @@ export function renderText(text: string, vars: { vorname?: string | null; link?:
     .split("{Vertreter}")
     .join(vars.vertreter)
     .replace(/\s+,/g, ",")
+    .replace(/,\s*([!.?])/g, "$1")
     .replace(/[ \t]{2,}/g, " ")
     .trim();
 }
@@ -321,15 +336,15 @@ export type Occasion = "schaden" | "ersparnis" | "jahresgespraech";
 export const OCCASIONS: Record<Occasion, { label: string; text: string }> = {
   schaden: {
     label: "Schaden geregelt",
-    text: "Hallo {Vorname}, schön, dass wir Ihren Schaden gut regeln konnten. Falls Sie jemanden kennen, der sich so einen Ansprechpartner auch wünscht: Über Ihren persönlichen Link kann die Person ganz einfach selbst Kontakt mit mir aufnehmen: {Link} Herzliche Grüße, {Vertreter}",
+    text: "{Anrede}, schön, dass wir Ihren Schaden gut regeln konnten. Falls Sie jemanden kennen, der sich so einen Ansprechpartner auch wünscht: Über Ihren persönlichen Link kann die Person ganz einfach selbst Kontakt mit mir aufnehmen: {Link} Herzliche Grüße, {Vertreter}",
   },
   ersparnis: {
     label: "Beitrag gespart / besser abgesichert",
-    text: "Hallo {Vorname}, schön, dass wir bei Ihren Verträgen etwas verbessern konnten. Falls Sie jemanden kennen, bei dem ich genauso draufschauen soll: Über Ihren persönlichen Link kann die Person ganz einfach selbst Kontakt mit mir aufnehmen: {Link} Herzliche Grüße, {Vertreter}",
+    text: "{Anrede}, schön, dass wir bei Ihren Verträgen etwas verbessern konnten. Falls Sie jemanden kennen, bei dem ich genauso draufschauen soll: Über Ihren persönlichen Link kann die Person ganz einfach selbst Kontakt mit mir aufnehmen: {Link} Herzliche Grüße, {Vertreter}",
   },
   jahresgespraech: {
     label: "Nach dem Jahresgespräch",
-    text: "Hallo {Vorname}, danke für das gute Gespräch. Wie besprochen hier Ihr persönlicher Link: Darüber können Freunde, Familie oder Kollegen ganz einfach selbst Kontakt mit mir aufnehmen: {Link} Herzliche Grüße, {Vertreter}",
+    text: "{Anrede}, danke für das gute Gespräch. Wie besprochen hier Ihr persönlicher Link: Darüber können Freunde, Familie oder Kollegen ganz einfach selbst Kontakt mit mir aufnehmen: {Link} Herzliche Grüße, {Vertreter}",
   },
 };
 export const isOccasion = (v: unknown): v is Occasion => typeof v === "string" && v in OCCASIONS;
@@ -383,10 +398,11 @@ export function statusUpdateLine(stage: UpdateStage, referredFirstName: string |
   if (stage === "termin") return n ? `Mit ${n} habe ich inzwischen einen Termin vereinbart.` : "Wir haben inzwischen einen Termin vereinbart.";
   return n ? `${n} hat sich über Ihren Link bei mir gemeldet.` : "Über Ihren Link hat sich jemand bei mir gemeldet.";
 }
-export function statusUpdateText(stage: UpdateStage, vars: { vorname?: string | null; referred?: string | null; vertreter: string }): string {
-  return renderText("Hallo {Vorname}, kurze Rückmeldung zu Ihrer Empfehlung: " + statusUpdateLine(stage, vars.referred) + " Vielen Dank, dass Sie an mich gedacht haben! Herzliche Grüße, {Vertreter}", {
+export function statusUpdateText(stage: UpdateStage, vars: { vorname?: string | null; referred?: string | null; vertreter: string; anrede?: AnredeKontakt | null }): string {
+  return renderText("{Anrede}, kurze Rückmeldung zu Ihrer Empfehlung: " + statusUpdateLine(stage, vars.referred) + " Vielen Dank, dass Sie an mich gedacht haben! Herzliche Grüße, {Vertreter}", {
     vorname: vars.vorname,
     vertreter: vars.vertreter,
+    anrede: vars.anrede,
   });
 }
 /** Zusätzliche, freiwillige Einwilligung der empfohlenen Person. */

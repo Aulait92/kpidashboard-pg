@@ -7,7 +7,8 @@
 // Ohne BOOKING_EMAIL_FROM oder RESEND_API_KEY wird bewusst NICHT gesendet
 // (kein Fallback auf die Agentur-Domain).
 
-import { a, asAnsprache, begruessung, type Ansprache } from "@/lib/ansprache";
+import { a, anredeZeile, asAnsprache, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
+import { ansprechpartner } from "@/lib/lead-anrede";
 import { mailClient } from "@/lib/mail-guard";
 import {
   buildIcs,
@@ -35,11 +36,11 @@ function esc(v: string): string {
   return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-function content(kind: LeadEmailKind, ev: CustomerEvent, contactName: string, an: Ansprache = "sie") {
+export function content(kind: LeadEmailKind, ev: CustomerEvent, kontakt: AnredeKontakt | string, an: Ansprache = "sie") {
   const w = when(ev.start);
   const art = ev.mode === "video" ? "Videoberatung" : "telefonische Beratung";
-  // Anrede je Ansprache des Kunden (Ole, 14.11.2026): Sie mit vollem Namen bzw. „Guten Tag“, Du mit Vorname
-  const hi = `${begruessung(an, contactName)},`;
+  // Anrede je Ansprache des Kunden (Ole, 14.11.2026): „Guten Tag Frau Schneider,“ (bzw. voller Name / „Guten Tag,“), Du „Hallo Julia,“
+  const hi = anredeZeile(an, typeof kontakt === "string" ? { fullName: kontakt } : kontakt);
   const how =
     ev.mode === "video"
       ? ev.videoUrl
@@ -109,20 +110,22 @@ async function sendLeadEmailInner(
     select: {
       customerId: true,
       conversationId: true,
+      leadId: true,
       customer: { select: { leadAddress: true, agentConfig: { select: { advisorEmail: true } } } },
     },
   });
   if (!appt?.conversationId) return { sent: false, reason: "no_conversation" };
   const conv = await prisma.conversation.findUnique({
     where: { id: appt.conversationId },
-    select: { contactEmail: true, contactName: true },
+    select: { contactEmail: true, contactName: true, contactPhone: true },
   });
   const to = conv?.contactEmail?.trim();
   if (!to) return { sent: false, reason: "no_email" };
   const ev = await customerEventById(appointmentId);
   if (!ev) return { sent: false, reason: "not_found" };
 
-  const c = content(kind, ev, conv?.contactName ?? "", asAnsprache(appt.customer?.leadAddress));
+  const who = await ansprechpartner({ customerId: appt.customerId, leadId: appt.leadId, phone: conv?.contactPhone, name: conv?.contactName });
+  const c = content(kind, ev, who.kontakt, asAnsprache(appt.customer?.leadAddress));
   const displayName = ev.advisorName.replace(/["<>]/g, "");
   const icsUrl = `${new URL(ev.manageUrl).origin}/book/manage/${ev.token}/ics`;
 

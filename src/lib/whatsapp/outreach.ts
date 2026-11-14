@@ -13,16 +13,9 @@
 import { recordLeadProgress } from "@/lib/lead-progress";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import {
-  firstNameOf,
-  isSieTemplateName,
-  NoTemplateError,
-  pickApprovedTemplate,
-  renderTemplate,
-  sendWhatsAppNotice,
-} from "@/lib/whatsapp/templates";
-import type { Ansprache } from "@/lib/ansprache";
+import { firstNameOf, NoTemplateError, noticeText, sendWhatsAppNotice } from "@/lib/whatsapp/templates";
 import { anspracheOf } from "@/lib/whatsapp/reminders";
+import { ansprechpartner } from "@/lib/lead-anrede";
 
 /** Nur frische, noch unbearbeitete Leads anschreiben. */
 const OUTREACH_STATUSES = [null, "Neuer Lead"];
@@ -31,11 +24,6 @@ const OUTREACH_MAX_AGE_MS = 48 * 60 * 60 * 1000;
 export const CALLBACK_AFTER_MS = 24 * 60 * 60 * 1000;
 const CALLBACK_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 const CALLBACK_STATUSES = ["Neuer Lead", "Nicht erreicht", "Im Gespräch"];
-
-const DEFAULT_OUTREACH_TEXT: Record<Ansprache, string> = {
-  du: "Hallo {{1}}, danke für deine Anfrage! Hier ist der digitale Assistent deines Beraters. Hast du kurz Zeit für zwei Fragen, damit wir dir ein passendes Angebot machen können?",
-  sie: "Hallo {{1}}, vielen Dank für Ihre Anfrage! Hier ist der digitale Assistent Ihres Beraters. Haben Sie kurz Zeit für zwei Fragen, damit wir Ihnen ein passendes Angebot machen können?",
-};
 
 async function hasAppointment(leadId: string, conversationId?: string | null) {
   const n = await prisma.appointment.count({
@@ -98,9 +86,8 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
       take: 50,
     });
 
-    // Freitext-Variante (offenes Fenster) = Text der Outreach-Vorlage.
-    // Vorlage passend zur Ansprache (Sie-Fassung, sobald freigegeben)
-    const tpl = await pickApprovedTemplate(agent.customerId, "outreach");
+    // Freitext (offenes Fenster) = Text der aktuellen Outreach-Vorlage mit Anrede nach Regel;
+    // Vorlage passend zu Ansprache und Kontakt (sendWhatsAppNotice → rankTemplates)
     const an = await anspracheOf(agent.customerId);
 
     for (const lead of leads) {
@@ -139,14 +126,16 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
 
       const params = [firstNameOf(lead.name)];
       try {
+        const who = await ansprechpartner({ customerId: agent.customerId, leadId: lead.id, phone, name: lead.name });
         await sendWhatsAppNotice({
           customerId: agent.customerId,
           to: phone,
           purpose: "outreach",
           params,
-          text: renderTemplate(tpl && isSieTemplateName(tpl.name) === (an === "sie") ? tpl.body : DEFAULT_OUTREACH_TEXT[an], params),
+          text: noticeText("outreach", an, who, who.kontakt, []),
           leadId: lead.id,
           contactName: lead.name,
+          anrede: who.kontakt,
         });
         await prisma.lead.update({
           where: { id: lead.id },

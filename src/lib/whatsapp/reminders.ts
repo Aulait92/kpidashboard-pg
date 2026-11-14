@@ -6,7 +6,8 @@ import { sendLeadEmail } from "@/lib/calendar/lead-email";
 import { prisma } from "@/lib/prisma";
 import { appUrl } from "@/lib/whatsapp/event-text";
 import { firstNameOf, NoTemplateError, sendWhatsAppNotice } from "@/lib/whatsapp/templates";
-import { a, asAnsprache, type Ansprache } from "@/lib/ansprache";
+import { a, anredeZeile, asAnsprache, type Ansprache } from "@/lib/ansprache";
+import { ansprechpartner } from "@/lib/lead-anrede";
 
 /** Ansprache des Kunden (Sie/Du) für Texte an Leads. */
 export async function anspracheOf(customerId: string): Promise<Ansprache> {
@@ -33,6 +34,11 @@ function modeLabel(mode: string): string {
   return mode === "video" ? "Videocall" : "Telefonat";
 }
 
+/** „Ihr Telefonat“ / „Ihren Videocall“ (akk = Akkusativ). */
+function terminWort(mode: string, an: Ansprache, akk = false): string {
+  return mode === "video" ? `${a(an, akk ? "deinen" : "dein", akk ? "Ihren" : "Ihr")} Videocall` : `${a(an, "dein", "Ihr")} Telefonat`;
+}
+
 function linkOrHint(mode: string, meetUrl: string | null, an: Ansprache = "du"): string {
   return mode === "video" && meetUrl ? meetUrl : a(an, "Wir rufen dich an.", "Wir rufen Sie an.");
 }
@@ -50,6 +56,7 @@ export async function sendBookingConfirmation(opts: {
   manageUrl?: string | null;
 }): Promise<void> {
   const an = await anspracheOf(opts.customerId);
+  const who = await ansprechpartner({ customerId: opts.customerId, leadId: opts.leadId, phone: opts.to, name: opts.name });
   const manage = opts.manageUrl ? ` Absagen oder verschieben: ${opts.manageUrl}` : "";
   const params = [
     firstNameOf(opts.name),
@@ -57,11 +64,12 @@ export async function sendBookingConfirmation(opts: {
     modeLabel(opts.mode),
     `${linkOrHint(opts.mode, opts.meetUrl, an)}${manage}`,
   ];
+  // „Guten Tag Frau Schneider, Ihr Videocall mit Susanne Meier ist bestätigt: …“
   const text =
-    `Hallo ${params[0]}, ${a(an, "dein", "Ihr")} Termin ist bestätigt: ${params[1]} (${params[2]}). ` +
+    `${anredeZeile(an, who.kontakt)} ${terminWort(opts.mode, an)} mit ${who.advisor} ist bestätigt: ${params[1]}. ` +
     (opts.mode === "video" && opts.meetUrl
       ? `Hier der Link zum Videocall: ${opts.meetUrl}`
-      : a(an, "Wir rufen dich zur vereinbarten Zeit an.", "Wir rufen Sie zur vereinbarten Zeit an.")) +
+      : a(an, `${who.advisor} ruft dich zur vereinbarten Zeit an.`, `${who.advisor} ruft Sie zur vereinbarten Zeit an.`)) +
     (opts.manageUrl ? `\n\nFalls etwas dazwischenkommt: ${opts.manageUrl}` : "") +
     " Bis dann! 🙂";
   await sendWhatsAppNotice({
@@ -72,6 +80,7 @@ export async function sendBookingConfirmation(opts: {
     text,
     leadId: opts.leadId ?? null,
     contactName: opts.name,
+    anrede: who.kontakt,
   });
 }
 
@@ -90,6 +99,7 @@ export async function sendRescheduleNotice(opts: {
   manageUrl: string | null;
 }): Promise<void> {
   const an = await anspracheOf(opts.customerId);
+  const who = await ansprechpartner({ customerId: opts.customerId, leadId: opts.leadId, phone: opts.to, name: opts.name });
   const change = opts.manageUrl
     ? a(an, `Passt dir die Zeit nicht? Hier wählst du eine andere: ${opts.manageUrl}`, `Passt Ihnen die Zeit nicht? Hier wählen Sie eine andere: ${opts.manageUrl}`)
     : "";
@@ -100,13 +110,13 @@ export async function sendRescheduleNotice(opts: {
     [linkOrHint(opts.mode, opts.meetUrl, an), change].filter(Boolean).join(" "),
   ];
   const text =
-    `Hallo ${params[0]}, wir mussten ${a(an, "deinen", "Ihren")} Termin leider verschieben. Neue Zeit: ${params[1]} (${params[2]}).` +
+    `${anredeZeile(an, who.kontakt)} wir mussten ${a(an, "deinen", "Ihren")} Termin mit ${who.advisor} leider verschieben. Neue Zeit: ${params[1]} (${params[2]}).` +
     (opts.manageUrl
       ? `\n\n${a(an, "Passt dir die Zeit nicht? Hier wählst du ganz einfach eine andere", "Passt Ihnen die Zeit nicht? Hier wählen Sie ganz einfach eine andere")}: ${opts.manageUrl}`
       : "") +
     `\n\n${a(an, "Danke für dein Verständnis!", "Danke für Ihr Verständnis!")} 🙂`;
   const send = (purpose: "reschedule" | "booking_confirmation") =>
-    sendWhatsAppNotice({ customerId: opts.customerId, to: opts.to, purpose, params, text, leadId: opts.leadId ?? null, contactName: opts.name });
+    sendWhatsAppNotice({ customerId: opts.customerId, to: opts.to, purpose, params, text, leadId: opts.leadId ?? null, contactName: opts.name, anrede: who.kontakt });
   // Außerhalb des 24h-Fensters: Vorlage „Termin verschoben“. Solange sie bei Meta
   // noch nicht freigegeben ist, die Bestätigungs-Vorlage mit der neuen Zeit.
   try {
@@ -172,17 +182,19 @@ export async function runReminders(): Promise<ReminderResult> {
 
     const manageUrl = appt.manageToken ? `${appUrl() ?? ""}/book/manage/${appt.manageToken}` : null;
     const an = await anspracheOf(appt.customerId);
+    const who = await ansprechpartner({ customerId: appt.customerId, leadId: appt.leadId, phone: conv.contactPhone, name: conv.contactName });
     const params = [
       firstNameOf(conv.contactName),
       formatWhenDE(appt.startsAt),
       modeLabel(appt.mode),
       `${linkOrHint(appt.mode, appt.meetUrl, an)}${manageUrl ? ` Absagen oder verschieben: ${manageUrl}` : ""}`,
     ];
+    // „Guten Tag Frau Schneider, kurze Erinnerung an Ihren Videocall mit Susanne Meier am …“
     const text =
-      `Kurze Erinnerung an unseren ${params[2]} am ${params[1]}.` +
+      `${anredeZeile(an, who.kontakt)} kurze Erinnerung an ${terminWort(appt.mode, an, true)} mit ${who.advisor} am ${params[1]}.` +
       (appt.mode === "video" && appt.meetUrl
         ? ` Hier der Link: ${appt.meetUrl}`
-        : ` ${a(an, "Wir rufen dich an.", "Wir rufen Sie an.")}`) +
+        : ` ${a(an, `${who.advisor} ruft dich an.`, `${who.advisor} ruft Sie an.`)}`) +
       (manageUrl ? `\n\nPasst es doch nicht? ${manageUrl}` : "") +
       " Bis dann! 🙂";
     // WhatsApp + E-Mail; als erledigt gilt die Erinnerung, sobald EIN Kanal
@@ -196,6 +208,8 @@ export async function runReminders(): Promise<ReminderResult> {
         params,
         text,
         leadId: appt.leadId,
+        contactName: conv.contactName,
+        anrede: who.kontakt,
       });
       delivered = true;
     } catch (err) {

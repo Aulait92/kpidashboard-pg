@@ -40,7 +40,8 @@ export default async function OptimierungPage() {
                   <th className="py-2 pr-3 font-medium">Modus</th>
                   <th className="py-2 pr-3 font-medium">Letzte Maßnahme</th>
                   <th className="py-2 pr-3 font-medium">Offen</th>
-                  <th className="py-2 font-medium">Letzter Lauf</th>
+                  <th className="py-2 pr-3 font-medium">Letzter Lauf</th>
+                  <th className="py-2 font-medium"><span className="sr-only">Aktion</span></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[color:var(--border)]">
@@ -62,7 +63,13 @@ export default async function OptimierungPage() {
                     <td className="py-2 pr-3">
                       {r.planned ? <Badge tone="brand">{r.planned} geplant</Badge> : null} {r.approved ? <Badge tone="success">{r.approved} freigegeben</Badge> : null}
                     </td>
-                    <td className="py-2 text-xs text-[color:var(--muted)]">{r.lastRunAt ? `${fmt(r.lastRunAt)}${r.lastRunNote ? `: ${r.lastRunNote}` : ""}` : "noch kein Lauf"}</td>
+                    <td className="py-2 pr-3 text-xs text-[color:var(--muted)]">{r.lastRunAt ? `${fmt(r.lastRunAt)}${r.lastRunNote ? `: ${r.lastRunNote}` : ""}` : "noch kein Lauf"}</td>
+                    <td className="py-2 text-right">
+                      {/* Trockenlauf und Freigaben liegen in der Kontoansicht (Ole sah den Knopf nicht) */}
+                      <Link href={`/admin/optimierung/${r.id}#lauf`} className="btn-ghost whitespace-nowrap text-sm">
+                        Öffnen und Trockenlauf
+                      </Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>

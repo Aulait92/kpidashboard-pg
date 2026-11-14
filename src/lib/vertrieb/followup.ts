@@ -14,6 +14,7 @@ import { addDays, dayKey, fmtDate, fmtDateTime, fromDayKey } from "@/lib/vertrie
 import { parseDue } from "@/lib/vertrieb/legacy";
 import { inSendWindow, isLaterInterest, laterTiming, monthPhrase, nextWorkdayKey, workdayMorning, workdaysLater } from "@/lib/vertrieb/spaeter";
 import { accountSignature, latestReceivedFrom, replyInThread, stripQuoted, threadEmails } from "@/lib/vertrieb/instantly";
+import { anredeZeile } from "@/lib/ansprache";
 
 export const FOLLOWUP_CAMPAIGN = "Später-Follow-up";
 export const STOP_STAGES: Stage[] = ["TERMIN", "GEWONNEN", "VERLOREN", "UNGUELTIG"];
@@ -214,11 +215,10 @@ type Ctx = {
   bookingUrl: string | null;
 };
 
-function greetingFor(c: { salutation: string | null; firstName: string | null; lastName: string | null }): string {
-  const sal = c.salutation?.trim();
-  if (sal && /^(herr|frau)$/i.test(sal) && c.lastName) return `Guten Tag ${sal[0].toUpperCase()}${sal.slice(1).toLowerCase()} ${c.lastName},`;
-  if (c.firstName && c.lastName) return `Guten Tag ${c.firstName} ${c.lastName},`;
-  return "Guten Tag,";
+/** Anrede-Zeile nach der zentralen Regel (lib/ansprache.ts): „Guten Tag Frau Meier,“ / „Guten Tag Anna Meier,“ / „Guten Tag,“. */
+export function greetingFor(c: { salutation: string | null; firstName: string | null; lastName: string | null }): string {
+  // Nur mit echtem Nachnamen (nicht aus dem Vornamen ableiten)
+  return anredeZeile("sie", { salutation: c.salutation, firstName: c.firstName, lastName: c.lastName });
 }
 
 async function contextFor(f: { contactId: string; replyEmailId: string | null; timing: string | null }): Promise<Ctx> {

@@ -104,6 +104,7 @@ export async function sendTemplateAction(conversationId: string, purpose: string
       to: conv.contactPhone,
       purpose: option.purpose,
       params: option.params,
+      anrede: option.anrede,
       text: option.preview,
       leadId: conv.leadId,
       contactName: conv.contactName,

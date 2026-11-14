@@ -34,10 +34,10 @@ describe("Termin verschoben", () => {
     await sendRescheduleNotice(base);
     expect(sent).toEqual(["reschedule", "booking_confirmation"]);
   });
-  it("Text: vier Platzhalter, Berater, keine Gedankenstriche", () => {
+  it("Text: vier Platzhalter, Firma, keine Gedankenstriche", () => {
     const t = SUGGESTED_TEMPLATE_TEXT.reschedule;
     expect(t.match(/\{\{\d\}\}/g)).toHaveLength(PURPOSE_PARAMS.reschedule.length);
-    expect(t).toContain("[Berater]");
+    expect(t).toContain("Termin bei [Firma]");
     expect(t).not.toMatch(/[–—]/);
   });
 });

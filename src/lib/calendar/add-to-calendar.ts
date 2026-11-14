@@ -4,7 +4,9 @@
 // kundenfreundlichem Text: Berater-Name, Rückrufnummer bzw. Video-Link,
 // Link zum Verschieben/Absagen — keine internen Daten.
 
-import { advisorDisplayName } from "@/lib/advisor-name";
+import { advisorPerson } from "@/lib/advisor-name";
+import { anredeZeile, asAnsprache } from "@/lib/ansprache";
+import { kontaktFromLead } from "@/lib/lead-anrede";
 import { prisma } from "@/lib/prisma";
 import {
   appUrl,
@@ -52,7 +54,8 @@ async function loadCustomerEvent(
       mode: true,
       meetUrl: true,
       conversationId: true,
-      customer: { select: { name: true } },
+      customer: { select: { name: true, leadAddress: true } },
+      lead: { select: { name: true, formData: true, assignedUser: { select: { displayName: true } } } },
     },
   });
   if (!appt || (!allowCancelled && appt.status !== "booked")) return null;
@@ -63,17 +66,20 @@ async function loadCustomerEvent(
         select: { contactName: true, contactPhone: true },
       })
     : null;
-  const advisor = advisorDisplayName(appt.customer.name) ?? appt.customer.name;
+  // Person (Ole, 14.11.2026): Anzeigename des zuständigen Beraters, sonst „Agentur Susanne Meier“ → „Susanne Meier“
+  const advisor = advisorPerson(appt.customer.name, appt.lead?.assignedUser?.displayName) || appt.customer.name;
   const mode = appt.mode === "video" ? "video" : "phone";
   const manageUrl = `${appUrl() ?? ""}/book/manage/${token}`;
-  const firstName = (conv?.contactName ?? "").trim().split(/\s+/)[0] || "";
+  const an = asAnsprache(appt.customer.leadAddress);
+  const hi = anredeZeile(an, kontaktFromLead(appt.lead, conv?.contactName ?? null));
   return {
     uid: `${appt.id}@termin`,
     start: appt.startsAt,
     end: appt.endsAt ?? new Date(appt.startsAt.getTime() + 30 * 60000),
     summary: customerEventSummary(mode, advisor),
     description: customerEventDescription({
-      firstName: firstName || "und herzlich willkommen",
+      hi,
+      an,
       mode,
       phone: conv?.contactPhone ?? null,
       videoUrl: appt.meetUrl,
@@ -83,7 +89,7 @@ async function loadCustomerEvent(
     location:
       mode === "video"
         ? (appt.meetUrl ?? "Videocall")
-        : `Telefon: ${advisor} ruft dich an`,
+        : `Telefon: ${advisor} ruft ${an === "du" ? "dich" : "Sie"} an`,
     manageUrl,
     token,
     advisorName: advisor,

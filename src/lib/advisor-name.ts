@@ -20,3 +20,24 @@ export function advisorDisplayName(name: string | null | undefined): string | nu
   if (AGENCY.test(`${s} `) && !s.includes(" ")) return null; // nur „Agentur“
   return s.length >= 2 ? s : null;
 }
+
+/** Firmenname für Texte an Leads (Kundenname ohne vorangestelltes „Allianz“). */
+export function firmDisplayName(customerName: string | null | undefined): string {
+  const n = (customerName ?? "").replace(/\s+/g, " ").trim();
+  return n.replace(/^Allianz\s+/i, "").trim() || n;
+}
+
+/**
+ * Beratername als Person: „Agentur Susanne Meier“ → „Susanne Meier“. Bleibt nur ein Wort übrig
+ * („Generalvertretung Meier“ → „Meier“), lieber der Firmenname.
+ */
+export function personFromCustomerName(customerName: string | null | undefined): string {
+  const p = advisorDisplayName(customerName);
+  return p && p.includes(" ") ? p : firmDisplayName(customerName);
+}
+
+/** Person: Anzeigename des zuständigen Beraters, sonst aus dem Kundennamen. */
+export function advisorPerson(customerName: string | null | undefined, assignedDisplayName?: string | null): string {
+  const own = (assignedDisplayName ?? "").replace(/\s+/g, " ").trim();
+  return own.length >= 2 ? own : personFromCustomerName(customerName);
+}

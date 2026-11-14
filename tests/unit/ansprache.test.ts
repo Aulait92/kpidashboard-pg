@@ -1,35 +1,343 @@
 import { describe, expect, it } from "vitest";
-import { a, asAnsprache, begruessung } from "@/lib/ansprache";
-import { isTemplateRevisionOf, templateBodyFor, templateNameFor } from "@/lib/whatsapp/template-plan";
-import { isSieTemplateName, SIE_TEMPLATE_TEXT, SUGGESTED_TEMPLATE_TEXT, templateTextFor } from "@/lib/whatsapp/templates";
+import { a, anredeName, anredeZeile, asAnsprache, begruessung, kontaktParts, salutationFromForm, salutationOf, type Ansprache } from "@/lib/ansprache";
+import {
+  buildTemplateRequest,
+  exampleValuesFor,
+  isTemplateRevisionOf,
+  metaTemplateProblems,
+  plannedTemplates,
+  previewBodyFor,
+  purposesFor,
+  templateBodyFor,
+  templateNameFor,
+  templateNamesOf,
+} from "@/lib/whatsapp/template-plan";
+import {
+  formsFor,
+  isSieTemplateName,
+  nameSlotOf,
+  noticeText,
+  rankTemplates,
+  renderTemplate,
+  SIE_TEMPLATE_TEXT,
+  SUGGESTED_TEMPLATE_TEXT,
+  TEMPLATE_BODY,
+  templateParams,
+  templateTextFor,
+  type NoticePurpose,
+} from "@/lib/whatsapp/templates";
+import { buildSystemPrompt } from "@/lib/whatsapp/bot";
+import { campaignText } from "@/lib/bestand/campaigns";
+import { renderText, OCCASIONS } from "@/lib/empfehlung/shared";
+import { werteFuer, fuelle } from "@/lib/mail/platzhalter";
+import { customerEventDescription } from "@/lib/whatsapp/event-text";
+import { content } from "@/lib/calendar/lead-email";
+import { greetingFor } from "@/lib/vertrieb/followup";
+import { advisorPerson, firmDisplayName, personFromCustomerName } from "@/lib/advisor-name";
 
-describe("Ansprache Sie/Du (14.11.2026)", () => {
-  it("Standard ist Sie; Begrüßung je Ansprache", () => {
-    expect(asAnsprache(undefined)).toBe("sie");
-    expect(asAnsprache("du")).toBe("du");
-    expect(a("sie", "dich", "Sie")).toBe("Sie");
-    expect(begruessung("sie", "Anna Beispiel")).toBe("Hallo Anna Beispiel");
+// Vier Kontakte: mit/ohne Anrede × mit/ohne Nachnamen
+const FRAU = { firstName: "Julia", lastName: "Schneider", salutation: "Frau" };
+const OHNE_ANREDE = { fullName: "Julia Schneider" };
+const NUR_VORNAME_FRAU = { fullName: "Julia", salutation: "weiblich" };
+const NUR_VORNAME = { fullName: "Julia" };
+
+describe("Anrede-Zeile (Ole, 14.11.2026)", () => {
+  it("Sie: Frau/Herr mit Nachnamen, sonst voller Name, ohne Nachnamen „Guten Tag,“", () => {
+    expect(anredeZeile("sie", FRAU)).toBe("Guten Tag Frau Schneider,");
+    expect(anredeZeile("sie", { fullName: "Peter Schneider", salutation: "Herr" })).toBe("Guten Tag Herr Schneider,");
+    expect(anredeZeile("sie", OHNE_ANREDE)).toBe("Guten Tag Julia Schneider,");
+    expect(anredeZeile("sie", NUR_VORNAME_FRAU)).toBe("Guten Tag,");
+    expect(anredeZeile("sie", NUR_VORNAME)).toBe("Guten Tag,");
+    expect(anredeZeile("sie", null)).toBe("Guten Tag,");
+  });
+
+  it("Du: „Hallo Vorname,“, mit und ohne Anrede bzw. Nachnamen", () => {
+    expect(anredeZeile("du", FRAU)).toBe("Hallo Julia,");
+    expect(anredeZeile("du", OHNE_ANREDE)).toBe("Hallo Julia,");
+    expect(anredeZeile("du", NUR_VORNAME_FRAU)).toBe("Hallo Julia,");
+    expect(anredeZeile("du", NUR_VORNAME)).toBe("Hallo Julia,");
+    expect(anredeZeile("du", {})).toBe("Hallo,");
+  });
+
+  it("Anrede wird nicht aus dem Vornamen geraten", () => {
+    expect(anredeName("sie", { fullName: "Maria Schneider" })).toBe("Maria Schneider");
+    expect(anredeName("sie", { fullName: "Peter Meier" })).toBe("Peter Meier");
+  });
+
+  it("Herr/Frau robust aus Formularwerten; divers und Unbekanntes → unbekannt", () => {
+    for (const v of ["Herr", "herr", "Hr.", "männlich", "maennlich", "m", "M", "Mr", "Mr.", "male"]) expect(salutationOf(v), v).toBe("Herr");
+    for (const v of ["Frau", "frau", "Fr.", "weiblich", "w", "W", "f", "Mrs", "Mrs.", "Ms", "female"]) expect(salutationOf(v), v).toBe("Frau");
+    for (const v of ["divers", "d", "Divers", "keine Angabe", "", null, undefined, 3, "Firma"]) expect(salutationOf(v), String(v)).toBeNull();
+  });
+
+  it("Anrede aus Lead.formData: nur passende Felder (nicht „Geschlecht (Tier)“)", () => {
+    expect(salutationFromForm([{ label: "Anrede", value: "Frau" }])).toBe("Frau");
+    expect(salutationFromForm([{ label: "Geschlecht", value: "männlich" }])).toBe("Herr");
+    expect(salutationFromForm([{ label: "Geschlecht (Tier)", value: "weiblich" }])).toBeNull();
+    expect(salutationFromForm([{ label: "Anrede", value: "divers" }])).toBeNull();
+    expect(salutationFromForm(null)).toBeNull();
+  });
+
+  it("Namensteile: Zusätze, „Frau Schneider“ im Namensfeld, getrennte Felder", () => {
+    expect(kontaktParts({ fullName: "Anna von Schneider" }).last).toBe("von Schneider");
+    expect(anredeZeile("sie", { fullName: "Frau Schneider" })).toBe("Guten Tag Frau Schneider,");
+    expect(anredeZeile("sie", { fullName: "Herr Peter Schneider" })).toBe("Guten Tag Herr Schneider,");
+    expect(anredeZeile("du", { fullName: "Frau Schneider" })).toBe("Hallo,");
+    expect(anredeZeile("sie", { firstName: "Julia", lastName: "Schneider" })).toBe("Guten Tag Julia Schneider,");
+    expect(begruessung("sie", "Anna Beispiel")).toBe("Guten Tag Anna Beispiel");
     expect(begruessung("sie", "Anna")).toBe("Guten Tag");
     expect(begruessung("du", "Anna Beispiel")).toBe("Hallo Anna");
+    expect(asAnsprache(undefined)).toBe("sie");
+    expect(a("sie", "dich", "Sie")).toBe("Sie");
+  });
+});
+
+const ALL = purposesFor({ bestand: true, empfehlung: true });
+
+describe("Meta-Vorlagen: Fassungen, Namen, Regeln", () => {
+  it("je Zweck alle Fassungen: Du, Sie, Sie ohne Namen (Kampagnen/Empfehlungen nur Sie)", () => {
+    expect(formsFor("outreach")).toEqual(["du", "sie", "sie_ohne_name"]);
+    expect(formsFor("campaign_review")).toEqual(["sie", "sie_ohne_name"]);
+    const names = plannedTemplates(purposesFor({ bestand: false })).map((t) => templateNameFor(t.purpose, "v2", t.form));
+    expect(names).toHaveLength(24);
+    expect(names).toContain("pg_outreach_v2");
+    expect(names).toContain("pg_outreach_v2_sie");
+    expect(names).toContain("pg_outreach_v2_sie_ohne_name");
+    expect(new Set(names).size).toBe(names.length);
   });
 
-  it("WhatsApp: eigener Vorlagenname und Text für die Sie-Fassung, Kampagnen unverändert", () => {
-    expect(templateNameFor("outreach", "v1", "sie")).toBe("pg_outreach_v1_sie");
-    expect(templateNameFor("outreach", "v1", "du")).toBe("pg_outreach_v1");
-    expect(templateNameFor("campaign_review", "v1", "sie")).toBe("pg_campaign_review_v1");
-    expect(templateTextFor("outreach", "sie")).toContain("Ihre Anfrage");
-    expect(templateBodyFor("outreach", "Anid Brand", "sie")).toContain("Anid Brand");
-    expect(isSieTemplateName("pg_outreach_v1_sie_r2")).toBe(true);
-    expect(isSieTemplateName("pg_outreach_v1_r2")).toBe(false);
-    expect(isTemplateRevisionOf("pg_outreach_v1_r3", "pg_outreach_v1")).toBe(true);
-    expect(isTemplateRevisionOf("pg_outreach_v1_sie", "pg_outreach_v1")).toBe(false);
+  it("Texte: Du „Hallo {{1}},“, Sie „Guten Tag {{1}},“, ohne Namen „Guten Tag,“ mit nachgerückten Platzhaltern", () => {
+    expect(templateTextFor("booking_confirmation", "du")).toMatch(/^Hallo \{\{1\}\}, vielen Dank für deine Buchung bei \[Firma\]\. Dein Termin ist bestätigt: \{\{2\}\} \(\{\{3\}\}\)\. \{\{4\}\}/);
+    expect(templateTextFor("booking_confirmation", "sie")).toMatch(/^Guten Tag \{\{1\}\}, vielen Dank für Ihre Buchung bei \[Firma\]\. Ihr Termin ist bestätigt: \{\{2\}\}/);
+    expect(templateTextFor("booking_confirmation", "sie_ohne_name")).toMatch(/^Guten Tag, vielen Dank für Ihre Buchung bei \[Firma\]\. Ihr Termin ist bestätigt: \{\{1\}\} \(\{\{2\}\}\)\. \{\{3\}\}/);
+    expect(templateTextFor("outreach", "sie_ohne_name")).not.toMatch(/\{\{\d+\}\}/);
+    expect(SIE_TEMPLATE_TEXT.outreach).toBe(templateTextFor("outreach", "sie"));
   });
 
-  it("keine Gedankenstriche und kein Duzen in den Sie-Fassungen", () => {
-    for (const t of Object.values(SIE_TEMPLATE_TEXT)) {
-      expect(t).not.toMatch(/[–—]/);
-      expect(t).not.toMatch(/\b(du|dich|dir|dein|deine)\b/i);
+  it("alle Fassungen erfüllen Metas Regeln (kein Platzhalter am Anfang/Ende, keine leeren Beispiele, fortlaufend)", () => {
+    for (const { purpose, form } of plannedTemplates(ALL)) {
+      const req = buildTemplateRequest(purpose, templateNamesOf("Agentur Susanne Meier"), "v2", form);
+      const body = req.components[0] as { text: string; example?: { body_text: string[][] } };
+      const examples = body.example?.body_text[0] ?? [];
+      expect(metaTemplateProblems(body.text, examples), `${req.name}: ${body.text}`).toEqual([]);
+      expect(body.text).not.toMatch(/\[(Firma|Berater)\]/);
+      expect(req.name).toMatch(/^[a-z0-9_]+$/);
+    }
+    // Die Prüfung selbst schlägt an
+    expect(metaTemplateProblems("{{1}}, hallo", ["x"])).toContain("Platzhalter am Anfang");
+    expect(metaTemplateProblems("Hallo {{1}}", ["x"])).toContain("Platzhalter am Ende");
+    expect(metaTemplateProblems("Hallo {{1}} und {{3}}.", ["x", "y"])).toContain("Platzhalter nicht fortlaufend ab {{1}}");
+    expect(metaTemplateProblems("Guten Tag {{1}}, ok.", [""])).toContain("leerer Beispielwert");
+  });
+
+  it("Sie-Fassungen siezen, Du-Fassungen duzen; keine Gedankenstriche", () => {
+    for (const p of Object.keys(TEMPLATE_BODY) as NoticePurpose[]) {
+      expect(TEMPLATE_BODY[p].sie, p).not.toMatch(/\b(du|dich|dir|dein|deine|deinen)\b/i);
+      expect(TEMPLATE_BODY[p].sie, p).not.toMatch(/[–—]/);
+      if (TEMPLATE_BODY[p].du) expect(TEMPLATE_BODY[p].du, p).not.toMatch(/\b(Sie|Ihnen|Ihr|Ihre)\b/);
     }
     for (const t of Object.values(SUGGESTED_TEMPLATE_TEXT)) expect(t).not.toMatch(/[–—]/);
+  });
+
+  it("Firma und Berater getrennt: „Buchung bei Agentur Susanne Meier“, „hier ist Susanne Meier“", () => {
+    const names = templateNamesOf("Agentur Susanne Meier");
+    expect(names).toEqual({ firm: "Agentur Susanne Meier", advisor: "Susanne Meier" });
+    expect(templateBodyFor("booking_confirmation", names, "sie")).toContain("Buchung bei Agentur Susanne Meier");
+    expect(templateBodyFor("outreach", names, "du")).toContain("digitale Assistent von Agentur Susanne Meier");
+    expect(templateBodyFor("campaign_review", names, "sie")).toContain("hier ist Susanne Meier, Ihr Versicherungsberater");
+    expect(templateNamesOf("Allianz Anid Brand")).toEqual({ firm: "Anid Brand", advisor: "Anid Brand" });
+    expect(personFromCustomerName("Allianz Generalvertretung Meier")).toBe("Generalvertretung Meier");
+    expect(advisorPerson("Agentur Susanne Meier", "Tom Berater")).toBe("Tom Berater");
+    expect(advisorPerson("Agentur Susanne Meier", null)).toBe("Susanne Meier");
+    expect(firmDisplayName("Allianz Agentur Meier")).toBe("Agentur Meier");
+  });
+
+  it("Namen: Sie-Fassungen erkennbar, Revisionen getrennt", () => {
+    expect(isSieTemplateName("pg_outreach_v2_sie")).toBe(true);
+    expect(isSieTemplateName("pg_outreach_v2_sie_ohne_name_r2")).toBe(true);
+    expect(isSieTemplateName("pg_outreach_v1_sie_r2")).toBe(true);
+    expect(isSieTemplateName("pg_outreach_v2_r2")).toBe(false);
+    expect(isTemplateRevisionOf("pg_outreach_v2_r3", "pg_outreach_v2")).toBe(true);
+    expect(isTemplateRevisionOf("pg_outreach_v2_sie", "pg_outreach_v2")).toBe(false);
+    expect(isTemplateRevisionOf("pg_outreach_v2_sie_ohne_name", "pg_outreach_v2_sie")).toBe(false);
+  });
+});
+
+describe("Vorschau auf der Seite WhatsApp-Vorlagen", () => {
+  const names = templateNamesOf("Agentur Susanne Meier");
+  it("Sie: „Guten Tag Frau Schneider, vielen Dank für Ihre Anfrage!“ (nicht „Hallo Julia“)", () => {
+    const t = previewBodyFor("outreach", names, "sie");
+    expect(t.startsWith("Guten Tag Frau Schneider, vielen Dank für Ihre Anfrage!")).toBe(true);
+    expect(t).not.toContain("Hallo");
+    expect(previewBodyFor("booking_confirmation", names, "sie")).toContain("Guten Tag Frau Schneider, vielen Dank für Ihre Buchung bei Agentur Susanne Meier.");
+    expect(previewBodyFor("booking_confirmation", names, "sie")).toContain("Wir rufen Sie unter Ihrer Nummer an.");
+  });
+  it("Du: „Hallo Julia, danke für deine Anfrage!“", () => {
+    expect(previewBodyFor("outreach", names, "du").startsWith("Hallo Julia, danke für deine Anfrage!")).toBe(true);
+    // Kampagnen siezen immer, auch bei „Du“
+    expect(previewBodyFor("campaign_review", names, "du").startsWith("Guten Tag Frau Schneider, hier ist Susanne Meier")).toBe(true);
+    expect(exampleValuesFor("outreach", "sie")).toEqual(["Frau Schneider"]);
+    expect(exampleValuesFor("outreach", "sie_ohne_name")).toEqual([]);
+  });
+});
+
+describe("Vorlage wählen und Parameter setzen", () => {
+  const v1du = { name: "pg_booking_confirmation_v1", body: "Hallo {{1}}, vielen Dank für deine Buchung bei X. Dein Termin ist bestätigt: {{2}} ({{3}}). {{4}} Wir freuen uns!" };
+  const v1sie = { name: "pg_booking_confirmation_v1_sie", body: "Hallo {{1}}, vielen Dank für Ihre Buchung bei X. Ihr Termin ist bestätigt: {{2}} ({{3}}). {{4}} Wir freuen uns!" };
+  const v2du = { name: "pg_booking_confirmation_v2", body: templateBodyFor("booking_confirmation", "X", "du") };
+  const v2sie = { name: "pg_booking_confirmation_v2_sie", body: templateBodyFor("booking_confirmation", "X", "sie") };
+  const v2ohne = { name: "pg_booking_confirmation_v2_sie_ohne_name", body: templateBodyFor("booking_confirmation", "X", "sie_ohne_name") };
+  const rest = ["Mo., 10:00 Uhr", "Telefonat", "Wir rufen Sie an."];
+  const send = (list: { name: string; body: string }[], an: Ansprache, k: Parameters<typeof rankTemplates>[3]) => {
+    const r = rankTemplates(list, "booking_confirmation", an, k);
+    return r ? { name: r.tpl.name, text: renderTemplate(r.tpl.body, r.params(rest)) } : null;
+  };
+
+  it("Sie-Kunde mit Anrede und Nachnamen → „Guten Tag Frau Schneider“", () => {
+    const r = send([v1du, v1sie, v2du, v2sie, v2ohne], "sie", FRAU)!;
+    expect(r.name).toBe("pg_booking_confirmation_v2_sie");
+    expect(r.text.startsWith("Guten Tag Frau Schneider, vielen Dank für Ihre Buchung")).toBe(true);
+  });
+  it("Sie-Kunde ohne Anrede → voller Name", () => {
+    expect(send([v2sie, v2ohne], "sie", OHNE_ANREDE)!.text.startsWith("Guten Tag Julia Schneider,")).toBe(true);
+  });
+  it("Sie-Kunde ohne Nachnamen (mit und ohne Anrede) → Fassung ohne Namen, Platzhalter rücken auf", () => {
+    for (const k of [NUR_VORNAME, NUR_VORNAME_FRAU]) {
+      const r = send([v2sie, v2ohne, v1sie], "sie", k)!;
+      expect(r.name).toBe("pg_booking_confirmation_v2_sie_ohne_name");
+      expect(r.text).toBe(`Guten Tag, vielen Dank für Ihre Buchung bei X. Ihr Termin ist bestätigt: ${rest[0]} (${rest[1]}). ${rest[2]} Wir freuen uns auf das Gespräch!`);
+    }
+    // Nur die Fassung mit Namen freigegeben → nie mit leerem Namen, sondern die bisherige
+    expect(send([v2sie, v1sie], "sie", NUR_VORNAME)!.name).toBe("pg_booking_confirmation_v1_sie");
+    expect(send([v2sie], "sie", NUR_VORNAME)).toBeNull();
+  });
+  it("bis zur Freigabe der neuen Fassung bleibt die bisherige freigegebene im Einsatz", () => {
+    expect(send([v1du, v1sie], "sie", FRAU)!.name).toBe("pg_booking_confirmation_v1_sie");
+    expect(send([v1du], "sie", FRAU)!.text.startsWith("Hallo Julia,")).toBe(true);
+    expect(send([v1du, v1sie], "du", FRAU)!.name).toBe("pg_booking_confirmation_v1");
+  });
+  it("Du-Kunde (mit/ohne Anrede, mit/ohne Nachnamen) → „Hallo Julia“", () => {
+    for (const k of [FRAU, OHNE_ANREDE, NUR_VORNAME_FRAU, NUR_VORNAME]) {
+      const r = send([v1du, v1sie, v2du, v2sie, v2ohne], "du", k)!;
+      expect(r.name).toBe("pg_booking_confirmation_v2");
+      expect(r.text.startsWith("Hallo Julia, vielen Dank für deine Buchung")).toBe(true);
+    }
+  });
+  it("Namensplatzhalter am Text erkannt, auch bei von Hand angelegten Vorlagen", () => {
+    expect(nameSlotOf("Guten Tag {{1}}, …")).toBe("anrede");
+    expect(nameSlotOf("Guten Tag, kurze Rückmeldung: {{1}} Danke")).toBe("ohne");
+    expect(nameSlotOf("Hallo {{1}}, …")).toBe("vorname");
+    expect(templateParams("Guten Tag {{1}}, x {{2}}.", "sie", NUR_VORNAME, ["a"])).toBeNull();
+    expect(templateParams("Hallo {{1}}, x {{2}}.", "du", {}, ["a"])).toEqual(["du", "a"]);
+  });
+  it("Freitext im offenen Fenster: gleiche Anrede-Regel", () => {
+    const names = { firm: "Agentur Susanne Meier", advisor: "Susanne Meier" };
+    expect(noticeText("outreach", "sie", names, FRAU, [])).toBe(
+      "Guten Tag Frau Schneider, vielen Dank für Ihre Anfrage! Hier ist der digitale Assistent von Agentur Susanne Meier. Haben Sie kurz Zeit für zwei Fragen, damit wir Ihnen ein passendes Angebot machen können?",
+    );
+    expect(noticeText("outreach", "sie", names, NUR_VORNAME, []).startsWith("Guten Tag, vielen Dank")).toBe(true);
+    expect(noticeText("outreach", "du", names, FRAU, []).startsWith("Hallo Julia, danke für deine Anfrage!")).toBe(true);
+    expect(noticeText("followup_offer", "sie", names, OHNE_ANREDE, ["Hausrat"])).toContain("Guten Tag Julia Schneider, hier ist der digitale Assistent von Agentur Susanne Meier. Konnten Sie sich das Angebot zu Hausrat");
+  });
+});
+
+describe("KI-Assistent: Anrede im Prompt", () => {
+  const agent = { systemPrompt: "", knowledge: "", personality: "" };
+  const base = (anrede: object | null, ansprache: Ansprache, name = "Julia Schneider") => ({
+    qualified: false,
+    summary: null,
+    contact: { name, phone: "4917600000001", email: null },
+    upcoming: null,
+    formAnswers: [],
+    advisorName: "Susanne Meier",
+    firmName: "Agentur Susanne Meier",
+    aiDisclosed: false,
+    ansprache,
+    anrede: anrede as never,
+  });
+  it("Sie mit Anrede: „Guten Tag Frau Schneider“, im Verlauf nur „Frau Schneider“", () => {
+    const p = buildSystemPrompt(agent, "Privatschutz", base(FRAU, "sie"));
+    expect(p).toContain("Begrüßung: „Guten Tag Frau Schneider,“");
+    expect(p).toContain("nur als „Frau Schneider“, nie mit dem Vornamen allein");
+    expect(p).toContain("Anrede: Frau");
+    expect(p).toContain("Sieze den Lead");
+    expect(p).toContain("digitale Assistent von Agentur Susanne Meier");
+    expect(p).toContain("„Susanne Meier schaut sich das an“");
+  });
+  it("Sie ohne Anrede: voller Name, Herr/Frau nicht raten", () => {
+    const p = buildSystemPrompt(agent, "Privatschutz", base(OHNE_ANREDE, "sie"));
+    expect(p).toContain("Begrüßung: „Guten Tag Julia Schneider,“");
+    expect(p).toContain("leite es nie aus dem Vornamen ab");
+  });
+  it("Sie ohne Nachnamen: „Guten Tag,“ ohne Namen", () => {
+    const p = buildSystemPrompt(agent, "Privatschutz", base(NUR_VORNAME_FRAU, "sie", "Julia"));
+    expect(p).toContain("Begrüßung: „Guten Tag,“");
+    expect(p).toContain("ohne Namen an, nie mit dem Vornamen");
+  });
+  it("Du: „Hallo Julia,“ und Vorname im Verlauf (mit und ohne Nachnamen)", () => {
+    for (const k of [FRAU, NUR_VORNAME]) {
+      const p = buildSystemPrompt(agent, "Privatschutz", base(k, "du"));
+      expect(p).toContain("Begrüßung: „Hallo Julia,“");
+      expect(p).toContain("Duze den Lead");
+      expect(p).not.toContain("Guten Tag");
+    }
+  });
+  it("Bestandskunde: immer Sie, auch bei Kundeneinstellung „Du“", () => {
+    const p = buildSystemPrompt(agent, "Bestandskunde", base(FRAU, "du"));
+    expect(p).toContain("Begrüßung: „Guten Tag Frau Schneider,“");
+    expect(p).not.toContain("Duze den Lead");
+  });
+});
+
+describe("Weitere Texte an Leads und Kunden", () => {
+  it("Bestandskampagnen: Sie mit Anrede aus dem Bestand", () => {
+    expect(campaignText("review", { firstName: "Erika", lastName: "Muster", salutation: "Frau" }, null)).toMatch(/^Guten Tag Frau Muster, es ist Zeit/);
+    expect(campaignText("birthday", { firstName: "Erika", lastName: "Muster" }, null)).toMatch(/^Guten Tag Erika Muster, herzlichen Glückwunsch/);
+    expect(campaignText("cross_sell", "Erika", "Hausrat")).toMatch(/^Guten Tag, eine kurze Frage/);
+  });
+
+  it("Empfehlungs-Anlässe: „Guten Tag Frau Schneider“ statt „Hallo Julia“ mit Sie; alte eigene Texte auch", () => {
+    const k = { firstName: "Julia", lastName: "Schneider", salutation: "Frau" };
+    for (const o of Object.values(OCCASIONS)) {
+      const t = renderText(o.text, { vorname: "Julia", link: "L", vertreter: "Susanne Meier", anrede: k });
+      expect(t.startsWith("Guten Tag Frau Schneider, ")).toBe(true);
+      expect(t).not.toMatch(/[–—]/);
+    }
+    expect(renderText("Hallo {Vorname}, danke! {Link}", { vorname: "Julia", link: "L", vertreter: "X", anrede: k })).toBe("Guten Tag Frau Schneider, danke! L");
+    expect(renderText("Hallo {Vorname}, danke! {Link}", { vorname: "Julia", link: "L", vertreter: "X", anrede: { firstName: "Julia" } })).toBe("Guten Tag, danke! L");
+    expect(renderText("Danke, {Vorname}! Gruß", { vertreter: "X", anrede: { firstName: "Julia" } })).toBe("Danke! Gruß");
+  });
+
+  it("E-Mail-Vorlagen: {anrede} je Ansprache und Anrede", () => {
+    const sie = werteFuer({ name: "Julia Schneider", source: null, salutation: "Frau" }, "Susanne Meier", { ansprache: "sie" });
+    expect(fuelle("{anrede},\n\nText", sie)).toBe("Guten Tag Frau Schneider,\n\nText");
+    expect(werteFuer({ name: "Julia Schneider", source: null }, "S", { ansprache: "sie" }).anrede).toBe("Guten Tag Julia Schneider");
+    expect(werteFuer({ name: "Julia", source: null, salutation: "Frau" }, "S", { ansprache: "sie" }).anrede).toBe("Guten Tag");
+    expect(werteFuer({ name: "Julia Schneider", source: null, salutation: "Frau" }, "S", { ansprache: "du" }).anrede).toBe("Hallo Julia");
+    expect(werteFuer({ name: "Julia Schneider", source: null }, "S").nachname).toBe("Schneider");
+  });
+
+  it("Termin-Mails: Anrede, Person im Betreff", () => {
+    const ev = { advisorName: "Susanne Meier", start: new Date("2026-11-20T09:00:00Z"), mode: "video", videoUrl: "https://meet.example/x" } as Parameters<typeof content>[1];
+    const sie = content("booked", ev, FRAU, "sie");
+    expect(sie.lines[0]).toBe("Guten Tag Frau Schneider,");
+    expect(sie.subject).toContain("Ihr Termin mit Susanne Meier");
+    expect(content("reminder", ev, NUR_VORNAME, "sie").lines[0]).toBe("Guten Tag,");
+    expect(content("booked", ev, FRAU, "du").lines[0]).toBe("Hallo Julia,");
+    expect(content("booked", ev, "Julia Schneider", "sie").lines[0]).toBe("Guten Tag Julia Schneider,");
+  });
+
+  it("Kalendereintrag für den Lead: Anrede und Ansprache", () => {
+    const d = customerEventDescription({ hi: "Guten Tag Frau Schneider,", an: "sie", mode: "phone", phone: "4917600000001", videoUrl: null, manageUrl: "https://x", advisorName: "Susanne Meier" });
+    expect(d.startsWith("Guten Tag Frau Schneider,\n\nvielen Dank für Ihre Terminbuchung!")).toBe(true);
+    expect(d).toContain("Susanne Meier ruft Sie zur vereinbarten Zeit");
+    expect(d).not.toMatch(/\b(dich|du|deine)\b/);
+  });
+
+  it("Vertriebs-Follow-ups: dieselbe Regel", () => {
+    expect(greetingFor({ salutation: "frau", firstName: "Anna", lastName: "Meier" })).toBe("Guten Tag Frau Meier,");
+    expect(greetingFor({ salutation: "w", firstName: "Anna", lastName: "Meier" })).toBe("Guten Tag Frau Meier,");
+    expect(greetingFor({ salutation: null, firstName: "Anna", lastName: "Meier" })).toBe("Guten Tag Anna Meier,");
+    expect(greetingFor({ salutation: "Herr", firstName: "Anna", lastName: null })).toBe("Guten Tag,");
   });
 });

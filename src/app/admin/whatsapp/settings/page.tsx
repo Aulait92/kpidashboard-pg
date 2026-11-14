@@ -8,8 +8,10 @@ import {
   PURPOSE_LABELS,
   PURPOSE_PARAMS,
   SUGGESTED_TEMPLATE_TEXT,
+  fillNames,
   type NoticePurpose,
 } from "@/lib/whatsapp/templates";
+import { templateNamesOf } from "@/lib/whatsapp/template-plan";
 import {
   addCustomerAction,
   connectWhatsAppAction,
@@ -346,7 +348,7 @@ export default async function WhatsAppSettingsPage({
                         key: p,
                         label: PURPOSE_LABELS[p],
                         params: PURPOSE_PARAMS[p],
-                        suggested: SUGGESTED[p].replace("[Berater]", c.name.replace(/^Allianz\s+/i, "")),
+                        suggested: fillNames(SUGGESTED[p], templateNamesOf(c.name)),
                       }))}
                     />
                   </div>

@@ -1,6 +1,6 @@
 // Platzhalter in E-Mail-Vorlagen (rein, auch im Browser nutzbar).
 
-import { begruessung, type Ansprache } from "@/lib/ansprache";
+import { anredeZeile, kontaktParts, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
 
 export const PLATZHALTER = ["{anrede}", "{vorname}", "{nachname}", "{name}", "{produkt}", "{terminlink}", "{meinname}", "{signatur}"] as const;
 
@@ -12,7 +12,7 @@ export type Werte = {
   signatur?: string;
   /** Nachname (letztes Wort des Namens) */
   nachname?: string;
-  /** Begrüßung je Ansprache: „Hallo Anna“ bzw. „Hallo Anna Beispiel“ / „Guten Tag“ */
+  /** Begrüßung je Ansprache (ohne Komma): „Hallo Anna“ bzw. „Guten Tag Frau Beispiel“ / „Guten Tag Anna Beispiel“ / „Guten Tag“ */
   anrede?: string;
   /** Persönlicher Buchungslink; leer = Satz mit {terminlink} entfällt (z. B. Termin steht schon) */
   terminlink?: string | null;
@@ -56,21 +56,25 @@ export function fuelleMitSignatur(text: string, w: Werte): string {
   return `${filled.trimEnd()}\n\n${sig}`;
 }
 
-/** Werte für einen Lead (Vorname = erstes Wort des Namens). */
+/**
+ * Werte für einen Lead (Vorname = erstes Wort des Namens). {anrede} nach der Regel in lib/ansprache.ts;
+ * Herr/Frau nur, wenn bekannt (salutation, z. B. aus dem Formularfeld Anrede), nie geraten.
+ */
 export function werteFuer(
-  lead: { name: string | null; source: string | null },
+  lead: { name: string | null; source: string | null } & Pick<AnredeKontakt, "firstName" | "lastName" | "salutation">,
   meinname: string,
   opts: { ansprache?: Ansprache; terminlink?: string | null } = {},
 ): Werte {
   const name = (lead.name ?? "").trim();
-  const parts = name.split(/\s+/).filter(Boolean);
+  const kontakt: AnredeKontakt = { fullName: name, firstName: lead.firstName, lastName: lead.lastName, salutation: lead.salutation };
+  const parts = kontaktParts(kontakt);
   return {
-    vorname: parts[0] || "",
-    nachname: parts.length >= 2 ? parts[parts.length - 1] : "",
+    vorname: parts.first,
+    nachname: parts.last,
     name,
     produkt: (lead.source ?? "").trim() || (opts.ansprache === "du" ? "deine Versicherung" : "Ihre Versicherung"),
     meinname,
-    anrede: begruessung(opts.ansprache ?? "sie", name),
+    anrede: anredeZeile(opts.ansprache ?? "sie", kontakt).replace(/,$/, ""),
     terminlink: opts.terminlink ?? null,
   };
 }
