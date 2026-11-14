@@ -297,12 +297,27 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Monatsberichte
 
-- Jeden Monat bekommen Sie von uns einen kurzen Rückblick per E-Mail: Leads (bezahlte Leads), Termine und, wenn
-  eingetragen, Abschlüsse, Abschlussprovision (Makler: Courtage 1. Jahr) und neue Bestandsprovision im Vergleich zum
-  Vormonat, was wir für Sie optimiert haben, unsere nächsten Schritte und 1–2 Tipps.
+- Anfang jedes Monats bekommen Sie von uns einen Rückblick auf den Vormonat per E-Mail. Im Betreff steht Ihr
+  Ergebnis, z. B. „Ihr Oktober: 4 Abschlüsse und 490 € Gewinn“ (ohne Gewinn: Ihre Abschlüsse bzw. Termine).
+- Der Bericht hat diese Abschnitte, Abschnitte ohne Daten lassen wir weg:
+  - kurzer Einstieg mit dem Wichtigsten des Monats,
+  - **Ihr Vertriebstrichter:** Leads, Erreicht, Termine und Abschlüsse mit Quote und Vormonat (nur bezahlte Leads,
+    damit die Quoten stimmen),
+  - **Ihr Ergebnis im Monat** als Rechnung: Abschlussprovision aus Leads (Makler: Courtage 1. Jahr), aus Empfehlungen
+    und aus Bestandskampagnen, minus Lead-Kosten, minus Betreuung & Software (inklusive USt., Gutschriften
+    abgezogen), ergibt den Gewinn. Es sind dieselben Zahlen wie unter „Zahlen“ für diesen Monat,
+  - **Ihr Bestand wächst:** Bestandsprovision pro Jahr aus allen bisherigen Verträgen und ein kleines Balkendiagramm
+    für die nächsten 5 Jahre, wenn Sie im gleichen Tempo weitermachen (10 % Storno pro Jahr),
+  - **Empfehlungen** (Kunden gefragt, Empfehlungen, Abschlüsse, Provision) und **Bestandskampagnen**, sobald es dort
+    etwas gibt,
+  - **Was wir für Sie getan haben:** die echten Maßnahmen des Monats in Ihrem Werbekonto bzw. Ihrer Kampagne, z. B.
+    neue Motive, pausierte schwache Anzeigen oder ein angepasstes Budget,
+  - **Unsere Tipps für den nächsten Monat:** 1 bis 2 Tipps wie auf der Karte „So holen Sie mehr raus“,
+  - die Knöpfe „Alle Zahlen ansehen“ (öffnet „Zahlen“ für genau diesen Monat) und „Gespräch vereinbaren“.
 - Alle bisherigen Berichte finden Sie unter „Zahlen“ ganz unten im Abschnitt „Monatsberichte“.
 - Je mehr Ergebnisse Sie bei Ihren Leads eintragen, desto genauer werden die Zahlen im Bericht.
-- Manchmal melden wir uns statt eines Berichts lieber persönlich – dann besprechen wir den Monat im Gespräch.
+- Wir prüfen jeden Bericht vor dem Versand. Manchmal melden wir uns statt eines Berichts lieber persönlich, dann
+  besprechen wir den Monat im Gespräch.
 
 ## Abschluss und Provision
 - Beim Abschluss fragt die App je nach Produkt nach einem Beitrag, alles freiwillig:

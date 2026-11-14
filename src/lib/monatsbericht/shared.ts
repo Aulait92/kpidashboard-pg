@@ -30,7 +30,7 @@ export type ReportMetrics = {
   /** erwartete Leads laut Ziel-Leadpreis */
   expectedLeads: number | null;
   targetCpl: number | null;
-  /** Was wir getan haben (Kampagnen-Läufe, Budgetänderungen) */
+  /** Was wir getan haben (rohe Maßnahmen aller Quellen, intern; leer = nichts eingetragen) */
   actions: string[];
 };
 
@@ -86,7 +86,7 @@ export function classify(m: ReportMetrics, t: ReportThresholds = DEFAULT_THRESHO
     reasons.push(leadsPct != null ? `Leads ${leadsPct} % der Erwartung` : "im Rahmen");
   }
   const dataQuality: DataQuality = c.ergebnisQuote != null && c.ergebnisQuote * 100 < t.minResultPct ? "unsicher" : "ok";
-  if (dataQuality === "unsicher") reasons.push(`nur ${Math.round((c.ergebnisQuote ?? 0) * 100)} % der Leads mit Ergebnis – Abschlusszahlen unsicher`);
+  if (dataQuality === "unsicher") reasons.push(`nur ${Math.round((c.ergebnisQuote ?? 0) * 100)} % der Leads mit Ergebnis, Abschlusszahlen unsicher`);
   return { rating, dataQuality, reasons };
 }
 
@@ -174,11 +174,19 @@ const PROMISES = /garantier|versprech|\bsicher(?:e|en)?\s+(?:mehr|ab)|verdoppel|
 
 export type CheckResult = { ok: boolean; issues: string[] };
 
-/** Keine erfundenen Zahlen, kein Wort „Garantie“, keine Versprechen. */
+/** Gedankenstrich (– oder — bzw. „ - “)? Bis-Striche zwischen Zahlen („1–3“) sind erlaubt. */
+export function hasDash(text: string): boolean {
+  if (/—/.test(text)) return true;
+  if (/\s-\s/.test(text)) return true;
+  return /–/.test(text.replace(/\d\s?–\s?\d/g, ""));
+}
+
+/** Keine erfundenen Zahlen, kein Wort „Garantie“, keine Versprechen, keine Gedankenstriche. */
 export function checkText(text: string, allowed: Set<string>): CheckResult {
   const issues: string[] = [];
   if (/garantie/i.test(text)) issues.push("Das Wort „Garantie“ darf nicht vorkommen.");
   if (PROMISES.test(text)) issues.push("Text enthält ein Versprechen bzw. eine Zusicherung.");
+  if (hasDash(text)) issues.push("Bitte keine Gedankenstriche (– oder —), stattdessen Komma, Doppelpunkt oder neuer Satz.");
   const nums = text.match(/\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d+(?:,\d+)?/g) ?? [];
   const bad = [...new Set(nums.filter((s) => !allowed.has(norm(parseGermanNumber(s)))))];
   if (bad.length) issues.push(`Zahlen ohne Grundlage in den Daten: ${bad.slice(0, 6).join(", ")}`);

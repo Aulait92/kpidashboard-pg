@@ -25,7 +25,7 @@ export default async function MonatsberichtePage({ searchParams }: { searchParam
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Monatsberichte</h1>
           <p className="mt-1 text-sm text-[color:var(--muted)]">
-            Einstufung ist intern. Nur „gut“ kann automatisch raus{settings.autoSendGood ? "" : " – ist derzeit aus, du siehst alles zuerst"}. Mittel und schwach gehen nie automatisch raus.
+            Einstufung ist intern. Nur „gut“ mit mindestens einer Maßnahme im Monat kann automatisch raus{settings.autoSendGood ? "" : " (ist derzeit aus, du siehst alles zuerst)"}. Mittel, schwach und Berichte ohne Maßnahme gehen nie automatisch raus.
           </p>
         </div>
         <Link href="/admin/einstellungen/monatsberichte" className="text-sm text-[color:var(--brand)] hover:underline">Einstellungen</Link>

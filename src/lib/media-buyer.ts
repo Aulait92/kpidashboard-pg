@@ -422,7 +422,7 @@ function productPoolLabel(canonicalKey: string, displayName: string): string {
 // DeliveryPool-Records); jedes andere regionsbasierte Produkt bekommt den
 // Produkt-Key mit hinein, damit zwei Region-Produkte derselben Stadt nicht
 // auf denselben Pool kollidieren.
-function regionPoolKey(canonicalKey: string, region: string): string {
+export function regionPoolKey(canonicalKey: string, region: string): string {
   return canonicalKey === "Kinderwunsch"
     ? `region:${region}`
     : `region:${canonicalKey}:${region}`;
