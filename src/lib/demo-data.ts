@@ -254,13 +254,13 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
     };
     const hasHaft = interest.includes("Haftpflicht");
     const hasHausrat = interest.includes("Hausrat");
-    const [contractAnswer, contractNote] = hasHaft
+    const [contractAnswer, contractNote, contractPoint] = hasHaft
       ? rand() < 0.5
-        ? ["Haftpflicht hab ich, aber die ist schon über 10 Jahre alt", "Haftpflicht vorhanden, aber über 10 Jahre alt"]
-        : ["Nein, bisher hab ich gar nichts", "noch keine Verträge"]
+        ? ["Haftpflicht hab ich, aber die ist schon über 10 Jahre alt", "Haftpflicht vorhanden, aber über 10 Jahre alt", "Haftpflicht (über 10 Jahre alt)"]
+        : ["Nein, bisher hab ich gar nichts", "noch keine Verträge", "keine Verträge"]
       : rand() < 0.5
-        ? ["Nein, noch nichts davon", "noch keine Verträge"]
-        : ["Rechtsschutz hatte ich mal, ist aber ausgelaufen", "Rechtsschutz ausgelaufen"];
+        ? ["Nein, noch nichts davon", "noch keine Verträge", "keine Verträge"]
+        : ["Rechtsschutz hatte ich mal, ist aber ausgelaufen", "Rechtsschutz ausgelaufen", "Rechtsschutz (ausgelaufen)"];
     const situationQA: Record<string, [string, string]> = {
       Single: hasHausrat
         ? ["Wohnst du zur Miete oder im Eigentum? Das ist für die Hausrat wichtig.", "Zur Miete, 2-Zimmer-Wohnung"]
@@ -271,6 +271,8 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
       "Paar, Kinder aus dem Haus": ["Soll der Schutz für euch beide gelten?", "Ja, für uns beide"],
     };
     const [sitQ, sitA] = situationQA[situation] ?? ["Für wen soll der Schutz gelten?", "Für mich"];
+    // Strukturierte Qualifizierung wie vom Bot (record_qualification → angaben)
+    const kinder: Record<string, string> = { Alleinerziehend: "Sohn, 9", "Familie mit Kindern": "4 und 7 Jahre" };
 
     // Termin vorab festlegen, damit Chat und Termin übereinstimmen.
     const slotHour = [10, 11, 14, 15, 16][Math.floor(rand() * 5)];
@@ -406,6 +408,16 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
           ? `${situation}, Interesse an ${interest}; ${contractNote}. Rückfrage: „${sitA}".` +
             (hasAppt ? ` Bevorzugt ${mode === "phone" ? "Telefon" : "Videocall"}.` : "")
           : null,
+        qualificationData:
+          replied && scenario !== "no_interest"
+            ? {
+                lebenssituation: situation,
+                interesse: interest,
+                vorhanden: contractPoint,
+                ...(kinder[situation] ? { kinder: kinder[situation] } : {}),
+                ...(hasAppt ? { wunsch: mode === "phone" ? "Telefon" : "Videocall" } : {}),
+              }
+            : undefined,
         status: scenario === "no_interest" ? "done" : "open",
         needsAttention: attention != null,
         attentionReason: attention,

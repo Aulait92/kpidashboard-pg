@@ -3,13 +3,25 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { cancelAppointment } from "@/lib/calendar";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
+import { ADMIN_FOLLOWUP_PURPOSES, chooseFollowup, followupOptions } from "@/lib/whatsapp/followup";
+import { NoTemplateError, sendWhatsAppNotice } from "@/lib/whatsapp/templates";
 
 async function requireAdmin() {
   const session = await getCurrentSession();
   if (!session || session.role !== "ADMIN") throw new Error("Nicht erlaubt.");
   return session;
+}
+
+export type AdminChatResult = { ok: true } | { ok: false; error: string };
+
+/** Bot an/aus für eine Konversation (gemeinsam für Knopf und „Übernehmen beim Tippen“). */
+async function setBotActive(conversationId: string, active: boolean): Promise<boolean> {
+  const res = await prisma.conversation.updateMany({
+    where: { id: conversationId },
+    data: { botActive: active },
+  });
+  return res.count > 0;
 }
 
 /** KI-Bot für eine Konversation an- oder ausschalten (Mensch übernimmt). */
@@ -22,29 +34,33 @@ export async function toggleBotAction(formData: FormData): Promise<void> {
     select: { botActive: true },
   });
   if (!conv) return;
-  await prisma.conversation.update({
-    where: { id: conversationId },
-    data: { botActive: !conv.botActive },
-  });
+  await setBotActive(conversationId, !conv.botActive);
   revalidatePath("/admin/whatsapp");
 }
 
-/** Als Agent manuell antworten (sendet über 360dialog). */
-export async function sendReplyAction(formData: FormData): Promise<void> {
+/** Übernehmen (Bot aus), z. B. sobald der Admin im Chat zu tippen beginnt. Idempotent. */
+export async function takeOverAction(conversationId: string): Promise<AdminChatResult> {
+  await requireAdmin();
+  if (typeof conversationId !== "string" || !conversationId) return { ok: false, error: "Chat nicht gefunden." };
+  const ok = await setBotActive(conversationId, false);
+  revalidatePath("/admin/whatsapp");
+  return ok ? { ok: true } : { ok: false, error: "Chat nicht gefunden." };
+}
+
+/** Als Agent manuell antworten (sendet über 360dialog, nur im offenen 24h-Fenster). */
+export async function sendReplyAction(conversationId: string, rawBody: string): Promise<AdminChatResult> {
   const session = await requireAdmin();
-  const conversationId = String(formData.get("conversationId") ?? "");
-  const body = String(formData.get("body") ?? "").trim();
-  if (!conversationId || !body) return;
+  const body = typeof rawBody === "string" ? rawBody.trim() : "";
+  if (typeof conversationId !== "string" || !conversationId || !body) return { ok: false, error: "Bitte eine Nachricht eingeben." };
 
   const conv = await prisma.conversation.findUnique({
     where: { id: conversationId },
-    select: { customerId: true, contactPhone: true },
+    select: { customerId: true, contactPhone: true, windowExpiresAt: true },
   });
-  if (!conv) return;
-
-  const userId = await prisma.user
-    .findUnique({ where: { email: session.email }, select: { id: true } })
-    .then((u) => u?.id ?? null);
+  if (!conv) return { ok: false, error: "Chat nicht gefunden." };
+  if (!conv.windowExpiresAt || conv.windowExpiresAt.getTime() <= Date.now()) {
+    return { ok: false, error: "Das Antwortfenster ist geschlossen. Bitte eine Vorlage senden." };
+  }
 
   try {
     await sendWhatsAppMessage({
@@ -52,29 +68,50 @@ export async function sendReplyAction(formData: FormData): Promise<void> {
       to: conv.contactPhone,
       body,
       sentBy: "agent",
-      sentByUserId: userId,
+      sentByUserId: session.userId,
     });
   } catch (err) {
     console.error("[whatsapp reply]", err);
+    return { ok: false, error: "Nachricht konnte nicht gesendet werden." };
   }
+  // Wer selbst schreibt, hat übernommen: der Bot antwortet nicht dazwischen.
+  await setBotActive(conversationId, false);
   revalidatePath("/admin/whatsapp");
+  return { ok: true };
 }
 
-/** Termin absagen (Kalender-Event löschen → Teilnehmer erhalten Absage). */
-export async function cancelAppointmentAction(formData: FormData): Promise<void> {
+/**
+ * Fenster geschlossen: freigegebene Nachfass-Vorlage senden. Der Client wählt
+ * nur den Zweck; Parameter und Text entstehen serverseitig. Gleiche Sperren wie
+ * im Kundenbereich (kein Interesse, Abschluss, Termin steht).
+ */
+export async function sendTemplateAction(conversationId: string, purpose: string): Promise<AdminChatResult> {
   await requireAdmin();
-  const appointmentId = String(formData.get("appointmentId") ?? "");
-  if (!appointmentId) return;
-  const appt = await prisma.appointment.findUnique({
-    where: { id: appointmentId },
-    select: { customerId: true },
+  if (typeof conversationId !== "string" || !conversationId) return { ok: false, error: "Chat nicht gefunden." };
+  if (!(ADMIN_FOLLOWUP_PURPOSES as readonly string[]).includes(purpose)) return { ok: false, error: "Bitte eine Vorlage wählen." };
+  const conv = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    select: { id: true, customerId: true, contactPhone: true, contactName: true, leadId: true },
   });
-  if (!appt) return;
+  if (!conv) return { ok: false, error: "Chat nicht gefunden." };
+  const situation = await chooseFollowup(conv.id);
+  if (situation.kind === "blocked") return { ok: false, error: situation.reason };
+  const option = (await followupOptions(conv.id)).find((o) => o.purpose === purpose);
+  if (!option?.approved) return { ok: false, error: "Für diese Vorlage gibt es noch keine Freigabe von Meta." };
   try {
-    const res = await cancelAppointment(appointmentId, appt.customerId);
-    if (res.note) console.warn("[cancel appointment]", res.note);
+    await sendWhatsAppNotice({
+      customerId: conv.customerId,
+      to: conv.contactPhone,
+      purpose: option.purpose,
+      params: option.params,
+      text: option.preview,
+      leadId: conv.leadId,
+      contactName: conv.contactName,
+    });
   } catch (err) {
-    console.error("[cancel appointment]", err);
+    console.error("[whatsapp template]", err);
+    return { ok: false, error: err instanceof NoTemplateError ? "Für diese Vorlage gibt es noch keine Freigabe von Meta." : "Vorlage konnte nicht gesendet werden." };
   }
   revalidatePath("/admin/whatsapp");
+  return { ok: true };
 }

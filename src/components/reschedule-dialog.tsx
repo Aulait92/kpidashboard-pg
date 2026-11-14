@@ -10,8 +10,8 @@ import {
   cancelAppointmentBuyerAction,
   loadRescheduleDialog,
   rescheduleAppointmentBuyerAction,
-  type RescheduleLoadResult,
 } from "@/app/buyer/appointment-actions";
+import type { AppointmentChangeResult, RescheduleLoadResult } from "@/lib/calendar/manage";
 import { Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
@@ -26,21 +26,55 @@ const shortWhen = (iso: string) => `${fmt(iso, { weekday: "short", day: "numeric
 
 export type RescheduleStep = "move" | "cancel";
 
+/**
+ * Server-Aktionen hinter dem Dialog. Standard: Kundenbereich (Kunden- bzw.
+ * Team-Rechte). Der Admin-Chat gibt eigene Aktionen mit Admin-Prüfung mit.
+ */
+export type RescheduleActions = {
+  load: (appointmentId: string) => Promise<RescheduleLoadResult>;
+  reschedule: (appointmentId: string, start: string) => Promise<AppointmentChangeResult>;
+  cancel: (appointmentId: string) => Promise<AppointmentChangeResult>;
+  /** Hinweis, wenn freie Zeiten fehlen (wo der Kalender verbunden wird). */
+  calendarHint?: string;
+};
+
+const BUYER_ACTIONS: RescheduleActions = {
+  load: loadRescheduleDialog,
+  reschedule: rescheduleAppointmentBuyerAction,
+  cancel: cancelAppointmentBuyerAction,
+};
+
 export function RescheduleDialog({
   appointmentId,
   open,
   onClose,
   initialStep = "move",
+  actions = BUYER_ACTIONS,
+  onChanged,
 }: {
   appointmentId: string | null;
   open: boolean;
   onClose: () => void;
   /** „cancel“: direkt die Rückfrage zum Absagen zeigen. */
   initialStep?: RescheduleStep;
+  actions?: RescheduleActions;
+  /** Nach erfolgreichem Verschieben oder Absagen (z. B. Seite neu laden). */
+  onChanged?: () => void;
 }) {
   return (
     <Sheet open={open && !!appointmentId} onClose={onClose} title={initialStep === "cancel" ? "Termin absagen" : "Termin verschieben"}>
-      {appointmentId ? <RescheduleContent key={`${appointmentId}:${initialStep}`} appointmentId={appointmentId} initialStep={initialStep} onDone={onClose} /> : null}
+      {appointmentId ? (
+        <RescheduleContent
+          key={`${appointmentId}:${initialStep}`}
+          appointmentId={appointmentId}
+          initialStep={initialStep}
+          actions={actions}
+          onDone={() => {
+            onClose();
+            onChanged?.();
+          }}
+        />
+      ) : null}
     </Sheet>
   );
 }
@@ -50,11 +84,15 @@ export function RescheduleButton({
   appointmentId,
   className,
   initialStep = "move",
+  actions,
+  onChanged,
   children,
 }: {
   appointmentId: string;
   className?: string;
   initialStep?: RescheduleStep;
+  actions?: RescheduleActions;
+  onChanged?: () => void;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -63,7 +101,14 @@ export function RescheduleButton({
       <button type="button" className={className} onClick={() => setOpen(true)} data-reschedule={initialStep}>
         {children}
       </button>
-      <RescheduleDialog appointmentId={appointmentId} open={open} onClose={() => setOpen(false)} initialStep={initialStep} />
+      <RescheduleDialog
+        appointmentId={appointmentId}
+        open={open}
+        onClose={() => setOpen(false)}
+        initialStep={initialStep}
+        actions={actions}
+        onChanged={onChanged}
+      />
     </>
   );
 }
@@ -71,10 +116,12 @@ export function RescheduleButton({
 function RescheduleContent({
   appointmentId,
   initialStep,
+  actions,
   onDone,
 }: {
   appointmentId: string;
   initialStep: RescheduleStep;
+  actions: RescheduleActions;
   onDone: () => void;
 }) {
   const toast = useToast();
@@ -87,13 +134,14 @@ function RescheduleContent({
 
   useEffect(() => {
     let alive = true;
-    loadRescheduleDialog(appointmentId)
+    actions
+      .load(appointmentId)
       .then((r) => alive && setRes(r))
       .catch(() => alive && setRes({ ok: false, error: "Das hat leider nicht geklappt. Bitte versuchen Sie es erneut." }));
     return () => {
       alive = false;
     };
-  }, [appointmentId, reload]);
+  }, [appointmentId, reload, actions]);
 
   if (!res) {
     return (
@@ -124,7 +172,7 @@ function RescheduleContent({
     if (!picked) return;
     const start = picked;
     startTransition(async () => {
-      const r = await rescheduleAppointmentBuyerAction(d.id, start);
+      const r = await actions.reschedule(d.id, start);
       if (!r.ok) {
         toast.show({ message: r.error, tone: "error" });
         if (r.code === "taken") {
@@ -140,7 +188,7 @@ function RescheduleContent({
   };
   const cancel = () =>
     startTransition(async () => {
-      const r = await cancelAppointmentBuyerAction(d.id);
+      const r = await actions.cancel(d.id);
       if (!r.ok) {
         toast.show({ message: r.error, tone: "error" });
         return;
@@ -193,7 +241,9 @@ function RescheduleContent({
     <div className="max-h-[70vh] space-y-4 overflow-y-auto p-5" data-move-step>
       {current}
       {d.slotsError ? (
-        <p className="text-sm text-[color:var(--muted)]">Freie Zeiten konnten gerade nicht geladen werden. Bitte prüfen Sie unter „Mein Kalender“, ob Ihr Kalender verbunden ist.</p>
+        <p className="text-sm text-[color:var(--muted)]">
+          Freie Zeiten konnten gerade nicht geladen werden. {actions.calendarHint ?? "Bitte prüfen Sie unter „Mein Kalender“, ob Ihr Kalender verbunden ist."}
+        </p>
       ) : !day ? (
         <p className="text-sm text-[color:var(--muted)]">In den nächsten zwei Wochen sind keine freien Lead-Zeiten mehr verfügbar.</p>
       ) : (

@@ -24,6 +24,7 @@ import type { FormAnswer } from "@/lib/lead-fields";
 import { buildEventDescription, eventSummary } from "@/lib/whatsapp/event-text";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
 import { EMAIL_RE } from "@/lib/whatsapp/phone";
+import { mergeQualificationData, QUALIFICATION_INPUT_SCHEMA, qualificationLines } from "@/lib/whatsapp/qualification";
 import { fmtDayLong } from "@/lib/absence";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
@@ -34,7 +35,7 @@ const TOOLS: Anthropic.Tool[] = [
   {
     name: "record_qualification",
     description:
-      "Hält strukturierte Qualifizierungs-Infos zum Lead fest, sobald du sie erfährst (z. B. Bedarf, Situation, Einwände). Setze qualifiziert=true, wenn alle nötigen Fragen geklärt sind.",
+      "Hält strukturierte Qualifizierungs-Infos zum Lead fest, sobald du sie erfährst (z. B. Bedarf, Situation, Einwände). Setze qualifiziert=true, wenn alle nötigen Fragen geklärt sind. Trage die Punkte zusätzlich einzeln unter 'angaben' ein (Stichworte, z. B. lebenssituation: \"Alleinerziehend\", interesse: \"Unfall, Haftpflicht\", wunsch: \"Videocall\").",
     input_schema: {
       type: "object",
       properties: {
@@ -42,6 +43,7 @@ const TOOLS: Anthropic.Tool[] = [
           type: "string",
           description: "Kurze Zusammenfassung der bisher erfassten Angaben.",
         },
+        angaben: QUALIFICATION_INPUT_SCHEMA as unknown as Anthropic.Tool.InputSchema,
         qualifiziert: {
           type: "boolean",
           description: "True, wenn der Lead qualifiziert ist.",
@@ -156,6 +158,8 @@ function buildSystemPrompt(
   state: {
     qualified: boolean;
     summary: string | null;
+    /** Dieselben Angaben strukturiert (Conversation.qualificationData). */
+    points?: string;
     /** Bereits bekannte Kontaktdaten (später auch aus dem Meta-Leadformular). */
     contact: { name: string | null; phone: string; email: string | null };
     /** Bereits gebuchter, kommender Termin (z. B. über die Buchungsseite). */
@@ -197,8 +201,8 @@ function buildSystemPrompt(
         ].join("\n")
       : "",
     `Bekannte Lead-Daten (NICHT erneut erfragen):\n${contactLines.join("\n")}`,
-    state.summary?.trim()
-      ? `Bisher erfasst (NICHT erneut erfragen):\n${state.summary.trim()}\nQualifiziert: ${state.qualified ? "ja: jetzt Termin vereinbaren" : "noch nicht"}`
+    state.summary?.trim() || state.points
+      ? `Bisher erfasst (NICHT erneut erfragen):\n${[state.summary?.trim(), state.points].filter(Boolean).join("\n")}\nQualifiziert: ${state.qualified ? "ja: jetzt Termin vereinbaren" : "noch nicht"}`
       : "",
   ]
     .filter(Boolean)
@@ -338,6 +342,7 @@ export async function runBotTurn(conversationId: string): Promise<void> {
       leadId: true,
       qualified: true,
       qualificationSummary: true,
+      qualificationData: true,
     },
   });
   if (!conversation || !conversation.botActive) return;
@@ -399,6 +404,7 @@ export async function runBotTurn(conversationId: string): Promise<void> {
     formAnswers: parseFormAnswers(lead?.formData),
     qualified: conversation.qualified,
     summary: conversation.qualificationSummary,
+    points: qualificationLines(conversation.qualificationData) || undefined,
     contact: {
       name: conversation.contactName,
       phone: conversation.contactPhone,
@@ -445,8 +451,14 @@ export async function runBotTurn(conversationId: string): Promise<void> {
         const input = tu.input as {
           zusammenfassung?: unknown;
           qualifiziert?: unknown;
+          angaben?: unknown;
         };
         await persistInternal(conversation.id, "qualification", tu.input); // Audit-Log
+        // Strukturierte Punkte zusätzlich zum Fließtext; neue Angaben ergänzen die bisherigen.
+        const prevData = (
+          await prisma.conversation.findUnique({ where: { id: conversation.id }, select: { qualificationData: true } })
+        )?.qualificationData;
+        const data = input.angaben !== undefined ? mergeQualificationData(prevData, input.angaben) : undefined;
         await prisma.conversation.update({
           where: { id: conversation.id },
           data: {
@@ -455,6 +467,7 @@ export async function runBotTurn(conversationId: string): Promise<void> {
                 ? input.zusammenfassung
                 : undefined,
             qualified: input.qualifiziert === true ? true : undefined,
+            ...(data ? { qualificationData: data } : {}),
           },
         });
         // Kein Statuswechsel bei bloßer Qualifizierung: „In Beratung" zählt

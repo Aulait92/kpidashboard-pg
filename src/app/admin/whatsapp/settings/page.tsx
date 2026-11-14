@@ -2,8 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SubmitButton } from "@/components/submit-button";
 import { getCurrentSession } from "@/lib/auth";
-import { getOrCreateBookingSlug, PROVIDER_LABELS } from "@/lib/calendar";
-import { appUrl } from "@/lib/whatsapp/event-text";
 import { hasDemoData } from "@/lib/demo-data";
 import { prisma } from "@/lib/prisma";
 import {
@@ -19,6 +17,7 @@ import {
   seedDemoAction,
   deleteTemplateAction,
 } from "./actions";
+import { CalendarCard } from "./calendar-card";
 import { AgentSettings, ResubmitTemplateButton, SubmitTemplatesButton, TemplateApproved, TemplateAutoStatus, TemplateEditor } from "./controls";
 
 export const dynamic = "force-dynamic";
@@ -64,9 +63,6 @@ export default async function WhatsAppSettingsPage({
       whatsAppAccount: {
         select: { status: true, phoneNumber: true, phoneNumberId: true, apiKeyEnc: true, dialog360ChannelId: true },
       },
-      calendarConnection: {
-        select: { status: true, provider: true, accountEmail: true, calendarId: true },
-      },
       agentConfig: {
         select: {
           active: true,
@@ -95,26 +91,21 @@ export default async function WhatsAppSettingsPage({
   if (demoTools) {
     for (const c of customers) demoState.set(c.id, await hasDemoData(c.id));
   }
-  // Buchungslinks für Kunden mit verbundenem Kalender.
-  const base = appUrl() ?? "";
-  const bookingUrls = new Map<string, string>();
-  for (const c of customers) {
-    if (c.calendarConnection?.status === "connected") {
-      bookingUrls.set(c.id, `${base}/book/${await getOrCreateBookingSlug(c.id)}`);
-    }
-  }
-
   return (
     <main className={only ? "w-full" : "mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6"}>
       {only ? (
         otherCustomers.length ? (
-          <form action={addCustomerAction} className="rounded-xl border border-[color:var(--border)] bg-white p-5">
-            <input type="hidden" name="customerId" value={only} />
-            <p className="text-sm text-[color:var(--muted)]">Für diesen Kunden ist der WhatsApp-Assistent noch nicht eingerichtet.</p>
-            <SubmitButton pendingLabel="…" className="mt-3 rounded-lg bg-[color:var(--brand)] px-4 py-2 text-sm font-semibold text-white">
-              WhatsApp-Assistent einrichten
-            </SubmitButton>
-          </form>
+          <div className="space-y-4">
+            <form action={addCustomerAction} className="rounded-xl border border-[color:var(--border)] bg-white p-5">
+              <input type="hidden" name="customerId" value={only} />
+              <p className="text-sm text-[color:var(--muted)]">Für diesen Kunden ist der WhatsApp-Assistent noch nicht eingerichtet.</p>
+              <SubmitButton pendingLabel="…" className="mt-3 rounded-lg bg-[color:var(--brand)] px-4 py-2 text-sm font-semibold text-white">
+                WhatsApp-Assistent einrichten
+              </SubmitButton>
+            </form>
+            {/* Kalender auch ohne eingerichteten Assistenten (Ziel des Hinweises im Chat) */}
+            <CalendarCard customerId={only} anchor="kalender" />
+          </div>
         ) : null
       ) : (
         <>
@@ -300,45 +291,8 @@ export default async function WhatsAppSettingsPage({
                 sequenceTemplatesMissing={(["followup", "followup_offer", "followup_noshow", "followup_last"] as const).filter((x) => !usedPurposes.has(x)).map((x) => PURPOSE_LABELS[x])}
               />
 
-              <div className="rounded-xl border border-[color:var(--border)] bg-white p-4 text-sm">
-                <div className="font-medium">Buchungskalender</div>
-                {c.calendarConnection?.status === "connected" ? (
-                  <p className="mt-1 text-xs text-emerald-700">
-                    ✓ {PROVIDER_LABELS[c.calendarConnection.provider] ?? "Kalender"} verbunden
-                    {c.calendarConnection.accountEmail ? ` (${c.calendarConnection.accountEmail})` : ""}
-                    {c.calendarConnection.calendarId !== "primary" ? " · eigener Unterkalender" : ""}
-                  </p>
-                ) : (
-                  <p className="mt-1 text-sm text-[color:var(--muted)]">Noch nicht verbunden.</p>
-                )}
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <a
-                    href={`/api/microsoft/connect?customerId=${c.id}`}
-                    className="rounded-lg border border-[color:var(--brand)] px-3 py-1.5 text-xs font-semibold text-[color:var(--brand)] hover:bg-[color:var(--brand-soft)]/40"
-                  >
-                    {c.calendarConnection?.provider === "microsoft" ? "Outlook neu verbinden" : "Outlook / Microsoft 365 verbinden"}
-                  </a>
-                  <a
-                    href={`/api/google/connect?customerId=${c.id}`}
-                    className="rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-xs font-semibold hover:border-[color:var(--brand)]"
-                  >
-                    {c.calendarConnection?.provider === "google" ? "Google neu verbinden" : "Google-Kalender verbinden"}
-                  </a>
-                </div>
-                {bookingUrls.get(c.id) ? (
-                  <div className="mt-2 text-xs">
-                    <span className="text-[color:var(--muted)]">Buchungslink: </span>
-                    <a
-                      href={bookingUrls.get(c.id)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="font-mono text-[color:var(--brand)] hover:underline"
-                    >
-                      {bookingUrls.get(c.id)}
-                    </a>
-                  </div>
-                ) : null}
-              </div>
+              {/* Kalender des Kunden (früher in der Seitenleiste jedes Chats): Verbindung und Buchungslink */}
+              <CalendarCard customerId={c.id} anchor={only ? "kalender" : `kalender-${c.id}`} />
 
               <div className="rounded-xl border border-[color:var(--border)] bg-white">
                 <div className="flex items-center gap-2 px-4 py-3">

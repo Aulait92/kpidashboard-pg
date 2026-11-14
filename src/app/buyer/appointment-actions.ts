@@ -6,39 +6,20 @@
 // nur lesend.
 
 import { revalidatePath } from "next/cache";
-import { SlotBusyError, type Slot } from "@/lib/calendar";
+import { SlotBusyError } from "@/lib/calendar";
 import {
   cancelOpenAppointment,
   isOpenAppointment,
   manageAppointmentSelect,
-  rescheduleDurationMin,
+  rescheduleDialogData,
   rescheduleOpenAppointment,
-  rescheduleSlots,
+  type AppointmentChangeResult,
+  type RescheduleLoadResult,
 } from "@/lib/calendar/manage";
 import { getBuyerContext, type BuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { appointmentScope } from "@/lib/team";
 import { recordUsage } from "@/lib/usage";
-
-export type RescheduleDialogData = {
-  id: string;
-  startsAt: string;
-  mode: "phone" | "video";
-  durationMin: number;
-  name: string | null;
-  /** false = Admin-Vorschau: nur ansehen. */
-  canEdit: boolean;
-  /** Wie der Kontakt von der Änderung erfährt (WhatsApp nur beim Verschieben). */
-  notify: { whatsapp: boolean; email: boolean };
-  slots: Slot[];
-  /** Freie Zeiten konnten nicht geladen werden (z. B. Kalender getrennt). */
-  slotsError: boolean;
-};
-
-export type RescheduleLoadResult = { ok: true; data: RescheduleDialogData } | { ok: false; error: string };
-export type AppointmentChangeResult =
-  | { ok: true; start?: string }
-  | { ok: false; error: string; code?: "taken" | "closed" | "preview" | "notfound" | "error" };
 
 const ERR = {
   notfound: "Termin nicht gefunden.",
@@ -48,10 +29,6 @@ const ERR = {
   taken: "Diese Uhrzeit ist gerade vergeben worden. Bitte wählen Sie eine andere.",
   error: "Das hat leider nicht geklappt. Bitte versuchen Sie es erneut.",
 } as const;
-
-/** Freie Zeiten für das Blättern im Dialog (ganze zwei Wochen, nicht nur die ersten). */
-const DIALOG_SLOTS = 300;
-const DIALOG_DAYS = 14;
 
 /** Termin NUR im Sichtbereich des Logins laden (Kunde, Berater: eigene Termine). */
 async function loadOwn(ctx: BuyerContext, appointmentId: string) {
@@ -84,36 +61,7 @@ export async function loadRescheduleDialog(appointmentId: string): Promise<Resch
   const appt = await loadOwn(ctx, appointmentId);
   if (!appt) return { ok: false, error: ERR.notfound };
   if (!isOpenAppointment(appt)) return { ok: false, error: ERR.closed };
-  const conv = appt.conversationId
-    ? await prisma.conversation.findUnique({
-        where: { id: appt.conversationId },
-        select: { contactName: true, contactEmail: true },
-      })
-    : null;
-  let slots: Slot[] = [];
-  let slotsError = false;
-  try {
-    // Die bisherige Uhrzeit selbst ist keine neue Zeit.
-    const current = appt.startsAt.toISOString();
-    slots = (await rescheduleSlots(appt, DIALOG_SLOTS, DIALOG_DAYS)).filter((s) => s.start !== current);
-  } catch (err) {
-    console.error("[buyer reschedule] slots", err);
-    slotsError = true;
-  }
-  return {
-    ok: true,
-    data: {
-      id: appt.id,
-      startsAt: appt.startsAt.toISOString(),
-      mode: appt.mode === "video" ? "video" : "phone",
-      durationMin: await rescheduleDurationMin(appt),
-      name: appt.lead?.name?.trim() || conv?.contactName?.trim() || null,
-      canEdit: !ctx.preview && !!ctx.userId,
-      notify: { whatsapp: !!conv, email: !!conv?.contactEmail?.trim() },
-      slots,
-      slotsError,
-    },
-  };
+  return { ok: true, data: await rescheduleDialogData(appt, !ctx.preview && !!ctx.userId, "buyer reschedule") };
 }
 
 /** Auf eine neue Zeit verschieben; der Kontakt wird wie beim Lead-Link benachrichtigt. */

@@ -113,3 +113,49 @@ export async function chooseFollowup(conversationId: string): Promise<FollowupCh
     approved: !!tpl,
   };
 }
+
+export type FollowupOption = {
+  purpose: NoticePurpose;
+  label: string;
+  params: string[];
+  preview: string;
+  approved: boolean;
+};
+
+/** Nachfass-Vorlagen, die der Admin bei geschlossenem Fenster wählen kann. */
+export const ADMIN_FOLLOWUP_PURPOSES = ["followup", "followup_offer", "followup_noshow", "followup_last"] as const satisfies readonly NoticePurpose[];
+
+/**
+ * Admin-Chat: alle Nachfass-Vorlagen zur Auswahl (vorgeschlagen ist die zur
+ * Situation passende aus chooseFollowup). Parameter und Vorschau entstehen
+ * serverseitig, der Client wählt nur den Zweck.
+ */
+export async function followupOptions(conversationId: string): Promise<FollowupOption[]> {
+  const conv = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    select: {
+      customerId: true,
+      contactName: true,
+      customer: { select: { name: true } },
+      lead: { select: { formData: true, source: true } },
+    },
+  });
+  if (!conv) return [];
+  const first = firstNameOf(conv.contactName);
+  const advisor = (conv.customer.name ?? "").replace(/^Allianz\s+/i, "");
+  const an = await anspracheOf(conv.customerId);
+  const labels: Record<(typeof ADMIN_FOLLOWUP_PURPOSES)[number], string> = {
+    followup: "Allgemein nachfassen",
+    followup_offer: "Angebot nachfassen",
+    followup_noshow: "Nach verpasstem Termin",
+    followup_last: "Letzte Nachricht",
+  };
+  return Promise.all(
+    ADMIN_FOLLOWUP_PURPOSES.map(async (purpose) => {
+      const params = purpose === "followup_offer" ? [first, interestFrom(conv.lead?.formData, conv.lead?.source ?? null)] : [first];
+      const tpl = await pickApprovedTemplate(conv.customerId, purpose);
+      const body = tpl?.body ?? templateTextFor(purpose, an).replace("[Berater]", advisor);
+      return { purpose, label: labels[purpose], params, preview: renderTemplate(body, params), approved: !!tpl };
+    }),
+  );
+}

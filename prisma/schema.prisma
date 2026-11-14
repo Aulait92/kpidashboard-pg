@@ -944,6 +944,9 @@ model Conversation {
   // Vom KI-Bot gepflegte Qualifizierung (strukturiert, nicht nur als Notiz).
   qualified            Boolean   @default(false)
   qualificationSummary String?
+  // Dieselben Angaben strukturiert (lib/whatsapp/qualification.ts), z. B.
+  // { lebenssituation, interesse, vorhanden, kinder, wunsch }; null bei Altfällen.
+  qualificationData    Json?
   status               String    @default("open") // open | snoozed | done
   // „Braucht dich": Assistent hat übergeben (Frage, die er nicht klären kann,
   // Lead will den Berater sprechen) oder Lead schreibt in einem übernommenen
