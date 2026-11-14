@@ -358,15 +358,6 @@ export function CopyText({ text, label = "Kopieren" }: { text: string; label?: s
   );
 }
 
-/** Aufsteller drucken. */
-export function PrintButton() {
-  return (
-    <Button type="button" variant="primary" size="md" onClick={() => window.print()}>
-      Drucken
-    </Button>
-  );
-}
-
 // ─── Einstellungen mit Handy-Vorschau ──────────────────────────────────────
 
 export function SettingsForm({

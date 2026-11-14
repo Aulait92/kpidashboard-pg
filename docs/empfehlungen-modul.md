@@ -33,16 +33,17 @@ Regeln und Texte: `src/lib/empfehlung/shared.ts` (unterer Teil), Abläufe: `requ
 2. **Link sofort bei Lob** (`referralOnPraise`, Standard an), siehe oben.
 3. **Anlässe**: „Empfehlungslink senden“ mit Anlass (Schaden geregelt, gespart, Jahresgespräch) → passender Text im
    offenen Chat; sonst die freigegebene Vorlage.
-4. **Gesprächsmodus**: „Im Termin zeigen“ im Kontakt (QR zum persönlichen Link), Aufsteller
-   `/buyer/empfehlungen/aufsteller` und Signatur-Zeile mit dem **allgemeinen Link** (`ReferralLink.kind = general`,
-   keinem Kunden zugeordnet → kein Dank, keine Rückmeldung, kein Dankeschön).
+4. **Gesprächsmodus**: „Im Termin zeigen“ im Kontakt (QR zum persönlichen Link, auch für Online-Beratung) und
+   Signatur-Zeile mit dem **allgemeinen Link** (`ReferralLink.kind = general`, keinem Kunden zugeordnet → kein
+   Dank, keine Rückmeldung, kein Dankeschön). Bewusst kein gedruckter Aufsteller (Ole, 14.11.2026: Kunden
+   arbeiten digital).
 5. **Nachfassen** (`followUpHours`, Standard 48, 0 = aus): Nach „senden“ oder „im Termin zeigen“ Wiedervorlage
    „Empfehlung nachfassen“ am Kontakt, nur wenn dort keine andere Wiedervorlage steht. Nicht bei automatischen Bitten.
 6. **Trichter mit Diagnose**: Links ausgegeben → geöffnet → einzelne Besucher (`ReferralVisit`, nur Hash, 12 Monate,
    Vorschau-Bots zählen nicht) → Empfehlungen → Neukunden; `funnelHint` nennt den auffälligsten Übergang.
 7. **Rückmeldung an Empfehlende** (`statusUpdates`, Standard an): „hat sich gemeldet“ und „Termin vereinbart“, nur mit
    freiwilliger Einwilligung der empfohlenen Person (zweites Häkchen auf der Kontaktseite), Vorlage `referral_update`.
-8. **Gesprächsleitfaden** in der Modulseite (`LEITFADEN`), eigene Formulierungen.
+8. **Gesprächsleitfaden**: nur in der Hilfe (`docs/hilfe.md`), nicht auf der Modulseite (Ole, 14.11.2026: Seite war überladen).
 9. **Dankeschön für Empfehlende** (`rewardKind`: none | gutschein | spende, Standard aus): vorher angekündigt auf der
    Seite des Empfehlenden; fällig nach stattgefundenem Gespräch oder 30 Tage nach Abschluss; Aufgabe + Liste „Offene
    Dankeschöns“, Übergabe von Hand. Nie an die empfohlene Person, nie bei Selbstempfehlung (gleiche Nummer), nie über
@@ -52,7 +53,7 @@ Regeln und Texte: `src/lib/empfehlung/shared.ts` (unterer Teil), Abläufe: `requ
     Vertreters mit Code `(Ref xxxxxxxx)` (erste 8 Zeichen des Link-Tokens). Eingehende Nachricht mit Code von einem
     unbekannten Absender → Lead „Empfehlung“ am Chat, ohne Erstanschreiben (`handleReferralInbound`, Aufruf in
     `whatsapp/gateway.ts`). Das Formular bleibt als zweite Möglichkeit.
-11. **Persönlicher Link aus Aufsteller/Signatur**: Auf der allgemeinen Seite kann ein Kunde seine Handynummer angeben
+11. **Persönlicher Link aus der Signatur**: Auf der allgemeinen Seite kann ein Kunde seine Handynummer angeben
     und landet auf seinem persönlichen Link (`claimPersonalLink`; nur Abschluss/Bestandskunde, gedrosselt je IP).
 12. **Nach dem Termin** (`referralAfterAppointment`, Standard aus): Termin mit einem Kunden als stattgefunden markiert →
     2 Stunden bis 3 Tage später Empfehlungslink (Vorlage `referral_request`), höchstens alle 180 Tage je Kontakt, nicht

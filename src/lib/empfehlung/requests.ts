@@ -140,7 +140,7 @@ export async function referralLinkOf(owner: { customerId: string; leadId?: strin
   }
 }
 
-/** Allgemeiner Link des Vertreters (Aufsteller, E-Mail-Signatur): keinem Kontakt zugeordnet. */
+/** Allgemeiner Link des Vertreters (E-Mail-Signatur): keinem Kontakt zugeordnet. */
 export async function generalLinkOf(customerId: string) {
   const found = await prisma.referralLink.findFirst({ where: { customerId, kind: "general" }, orderBy: { createdAt: "asc" } });
   if (found) return found;
@@ -615,7 +615,7 @@ export async function handleReferralInbound(conversationId: string, from: string
       outreachAt: now,
       outreachStatus: "skipped_contact",
       formData: [
-        { label: "Quelle", value: recName ? `Empfehlung von ${recName}` : "Empfehlung (allgemeiner Link: Aufsteller oder E-Mail-Signatur)" },
+        { label: "Quelle", value: recName ? `Empfehlung von ${recName}` : "Empfehlung (allgemeiner Link aus der E-Mail-Signatur)" },
         ...(offer ? [{ label: "Angebot", value: offer.headline }] : []),
         { label: "Kontakt", value: `Hat selbst per WhatsApp geschrieben (Empfehlungsseite, ${stamp})` },
       ],
@@ -629,7 +629,7 @@ export async function handleReferralInbound(conversationId: string, from: string
 }
 
 /**
- * Aufsteller/Signatur: Ein Kunde gibt auf der allgemeinen Seite seine Handynummer an und bekommt
+ * Allgemeiner Link (Signatur): Ein Kunde gibt auf der allgemeinen Seite seine Handynummer an und bekommt
  * seinen persönlichen Link (damit die Empfehlung ihm zugeordnet wird). null = Nummer nicht gefunden.
  */
 export async function claimPersonalLink(generalToken: string, phone: string, now = new Date()): Promise<string | null> {
@@ -644,7 +644,7 @@ export async function claimPersonalLink(generalToken: string, phone: string, now
   const existing = lead ? null : await prisma.existingCustomer.findFirst({ where: { customerId, phone, optOutAt: null }, select: { id: true } });
   if (!lead && !existing) return null;
   const link = await referralLinkOf({ customerId, leadId: lead?.id, existingCustomerId: existing?.id });
-  await prisma.referralLink.update({ where: { id: link.id }, data: { lastSentAt: now, lastOccasion: "aufsteller" } });
+  await prisma.referralLink.update({ where: { id: link.id }, data: { lastSentAt: now, lastOccasion: "signatur" } });
   return link.token;
 }
 
@@ -1018,7 +1018,7 @@ export async function submitReferral(token: string, input: ReferralSubmit, now =
       referralStatusConsent: statusConsent && !self,
       referralRewardStatus: self ? "entfaellt" : null,
       formData: [
-        { label: "Quelle", value: recName ? `Empfehlung von ${recName}` : "Empfehlung (allgemeiner Link: Aufsteller oder E-Mail-Signatur)" },
+        { label: "Quelle", value: recName ? `Empfehlung von ${recName}` : "Empfehlung (allgemeiner Link aus der E-Mail-Signatur)" },
         ...(page.offer ? [{ label: "Angebot", value: page.offer.headline }] : []),
         ...(input.topic ? [{ label: "Thema", value: input.topic }] : []),
         ...(input.message ? [{ label: "Nachricht", value: input.message }] : []),

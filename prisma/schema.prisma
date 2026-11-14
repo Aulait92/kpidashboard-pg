@@ -2465,7 +2465,7 @@ model ReferralLink {
   existingCustomerId String?           @unique
   views              Int               @default(0)
   lastSentAt         DateTime?
-  // contact = Link eines Kontakts | general = allgemeiner Link des Vertreters (Aufsteller, Signatur)
+  // contact = Link eines Kontakts | general = allgemeiner Link des Vertreters (E-Mail-Signatur)
   kind               String            @default("contact")
   // Anlass des letzten Versands: schaden | ersparnis | jahresgespraech | termin (QR im Gespräch)
   lastOccasion       String?

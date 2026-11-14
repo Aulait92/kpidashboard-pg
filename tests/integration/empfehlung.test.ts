@@ -384,14 +384,14 @@ describe("Empfehlungen & Bewertungen", () => {
     expect(s.funnel).toMatchObject({ linksSent: 1, linksOpened: 1, leads: 2, closings: 0 });
   });
 
-  it("Allgemeiner Link (Aufsteller, Signatur): ein Link je Vertreter, Lead ohne Empfehlenden, keine Rückmeldung", async () => {
+  it("Allgemeiner Link (Signatur): ein Link je Vertreter, Lead ohne Empfehlenden, keine Rückmeldung", async () => {
     const id = await activeModule();
     const g1 = await generalLinkOf(id);
     const g2 = await generalLinkOf(id);
     expect(g2.id).toBe(g1.id);
     const page = (await loadReferralPage(g1.token))!;
     expect(page).toMatchObject({ general: true, recommender: null, statusUpdates: false });
-    await submitReferral(g1.token, { name: "Gabi Aufsteller", phone: `4915${uid()}95`, email: null, topic: null, message: null, consent: true, statusConsent: true }, NOW);
+    await submitReferral(g1.token, { name: "Gabi Signatur", phone: `4915${uid()}95`, email: null, topic: null, message: null, consent: true, statusConsent: true }, NOW);
     const lead = await prisma.lead.findFirstOrThrow({ where: { referralLinkId: g1.id } });
     expect(JSON.stringify(lead.formData)).toContain("allgemeiner Link");
     expect(lead.referralStatusConsent).toBe(false);
@@ -460,7 +460,7 @@ describe("Empfehlungen & Bewertungen", () => {
     expect((await prisma.lead.findUniqueOrThrow({ where: { id: self.leadId! } })).referralRewardStatus).toBe("entfaellt");
   });
 
-  it("Aufsteller: Kunde holt mit seiner Handynummer den persönlichen Link; unbekannte Nummer oder kein allgemeiner Link → nichts", async () => {
+  it("Allgemeiner Link: Kunde holt mit seiner Handynummer den persönlichen Link; unbekannte Nummer oder kein allgemeiner Link → nichts", async () => {
     const id = await activeModule();
     const general = await generalLinkOf(id);
     const kunde = await closedLead(id, NUM(), "Karl Kunde", 25);
@@ -468,7 +468,7 @@ describe("Empfehlungen & Bewertungen", () => {
     const token = await claimPersonalLink(general.token, kunde.phone!, NOW);
     expect(token).toBeTruthy();
     const personal = await prisma.referralLink.findUniqueOrThrow({ where: { token: token! } });
-    expect(personal).toMatchObject({ leadId: kunde.id, kind: "contact", lastOccasion: "aufsteller" });
+    expect(personal).toMatchObject({ leadId: kunde.id, kind: "contact", lastOccasion: "signatur" });
     expect(await claimPersonalLink(general.token, kunde.phone!, NOW)).toBe(token);
     expect(await claimPersonalLink(general.token, offen.phone!, NOW)).toBeNull();
     expect(await claimPersonalLink(general.token, "4915900000000", NOW)).toBeNull();

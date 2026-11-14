@@ -31,7 +31,7 @@ export async function submitReferralAction(token: string, fd: FormData): Promise
 }
 
 /**
- * Aufsteller/Signatur (allgemeiner Link): Kunde gibt seine Handynummer an und landet auf seinem
+ * Allgemeiner Link (E-Mail-Signatur): Kunde gibt seine Handynummer an und landet auf seinem
  * persönlichen Empfehlungslink. Unbekannte Nummer → zurück zur allgemeinen Seite (teilen geht trotzdem).
  */
 export async function claimPersonalLinkAction(token: string, fd: FormData): Promise<void> {

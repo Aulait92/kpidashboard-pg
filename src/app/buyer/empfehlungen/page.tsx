@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import QRCode from "qrcode";
-import { AlertTriangle, BarChart3, Filter, Gift, ListChecks, MessagesSquare, QrCode, Settings2, Star } from "lucide-react";
+import { AlertTriangle, BarChart3, Filter, Gift, ListChecks, QrCode, Settings2, Star } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { Badge, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
@@ -12,7 +11,7 @@ import { generalLinkOf, loadEmpfehlungStats, loadSettings, openRewards, recentRe
 import { advisorDisplayName } from "@/lib/whatsapp/template-plan";
 import { fmtDate, resolveOffer, signatureLine } from "@/lib/empfehlung/shared";
 import { PRICE_LIST } from "@/lib/offer-pricing";
-import { EmpfehlungFunnel, EmpfehlungStatsGrid, Leitfaden } from "@/components/empfehlung/server";
+import { EmpfehlungFunnel, EmpfehlungStatsGrid } from "@/components/empfehlung/server";
 import { WaechterSection } from "@/components/empfehlung/waechter";
 import { CopyText, EmpfehlungBookButton, ResolveButton, RewardButtons, SettingsForm, TestSendForm } from "@/components/empfehlung/client";
 
@@ -71,10 +70,9 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
     recentRequests(ctx.customerId, 30),
     prisma.messageTemplate.findMany({ where: { customerId: ctx.customerId, purpose: { in: ["review_request", "referral_request", "referral_thanks"] } }, select: { purpose: true, status: true } }),
   ]);
-  // Allgemeiner Link für Aufsteller und Signatur (in der Admin-Vorschau nichts anlegen)
+  // Allgemeiner Link für die E-Mail-Signatur (in der Admin-Vorschau nichts anlegen)
   const general = ctx.preview ? await prisma.referralLink.findFirst({ where: { customerId: ctx.customerId, kind: "general" } }) : await generalLinkOf(ctx.customerId);
   const generalUrl = general ? referralLinkFor(general.token) : null;
-  const generalQr = generalUrl ? await QRCode.toDataURL(generalUrl, { margin: 1, width: 280 }) : null;
   const offer = resolveOffer(settings, vertreter);
   const rewards = await openRewards(ctx.customerId);
   const approved = (p: string) => templates.some((t) => t.purpose === p && t.status === "approved");
@@ -147,41 +145,25 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
         </Card>
 
         <Card>
-          <CardHeader title="Im Gespräch und im Büro" icon={QrCode} />
-          <div className="grid gap-5 px-5 pb-5 pt-4 text-sm sm:grid-cols-[auto_1fr]" data-empfehlung-gespraech>
-            {generalQr ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={generalQr} alt="QR-Code zu Ihrem allgemeinen Empfehlungslink" className="h-36 w-36 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-1.5" />
+          <CardHeader title="Im Gespräch und per E-Mail" icon={QrCode} />
+          <div className="space-y-3 px-5 pb-5 pt-4 text-sm" data-empfehlung-gespraech>
+            <p>
+              <b>Im Termin:</b> Öffnen Sie den Kontakt und tippen Sie auf „Im Termin zeigen“. Ihr Kunde scannt seinen persönlichen QR-Code von Ihrem Bildschirm und
+              teilt die Empfehlung gleich im Gespräch, auch in der Online-Beratung. So wissen Sie später, von wem eine Empfehlung kam.
+            </p>
+            {generalUrl ? (
+              <div className="space-y-2">
+                <p>
+                  <b>E-Mail-Signatur:</b> Diese Zeile unter Ihre Mails setzen.
+                </p>
+                <p className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] p-3 text-xs">{signatureLine(generalUrl, offer)}</p>
+                <CopyText text={signatureLine(generalUrl, offer)} label="Zeile kopieren" />
+                <p className="text-xs text-[color:var(--muted)]">
+                  Die Signatur nutzt einen allgemeinen Link. Ihr Kunde kann dort seine Handynummer angeben und bekommt seinen persönlichen Link; sonst kommt die
+                  Empfehlung als Lead an, lässt sich aber keinem einzelnen Kunden zuordnen.
+                </p>
+              </div>
             ) : null}
-            <div className="space-y-3">
-              <p>
-                <b>Im Termin:</b> Öffnen Sie den Kontakt und tippen Sie auf „Im Termin zeigen“. Ihr Kunde scannt seinen persönlichen QR-Code und teilt die Empfehlung
-                gleich am Tisch. So wissen Sie später, von wem eine Empfehlung kam.
-              </p>
-              <p>
-                <b>Aufsteller fürs Büro:</b> ein Blatt mit {offer ? "Ihrem Empfehlungsangebot" : "Ihrem Empfehlungslink"} und QR-Code, für Beratungstisch und Empfang.{" "}
-                <Link href="/buyer/empfehlungen/aufsteller" className="font-semibold text-[color:var(--brand)] hover:underline">
-                  Aufsteller öffnen und drucken
-                </Link>
-              </p>
-              {generalUrl ? (
-                <div className="space-y-2">
-                  <p>
-                    <b>E-Mail-Signatur:</b> Diese Zeile unter Ihre Mails setzen.
-                  </p>
-                  <p className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] p-3 text-xs">{signatureLine(generalUrl, offer)}</p>
-                  <CopyText text={signatureLine(generalUrl, offer)} label="Zeile kopieren" />
-                </div>
-              ) : null}
-              <p className="text-xs text-[color:var(--muted)]">Aufsteller und Signatur nutzen einen allgemeinen Link. Empfehlungen darüber kommen als Lead an, lassen sich aber keinem einzelnen Kunden zuordnen.</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card>
-          <CardHeader title="Gesprächsleitfaden: So sprechen Sie Empfehlungen an" icon={MessagesSquare} />
-          <div className="px-5 pb-5 pt-4">
-            <Leitfaden />
           </div>
         </Card>
 

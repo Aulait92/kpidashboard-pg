@@ -392,7 +392,7 @@ export function statusConsentText(recommender: string | null, vertreter: string)
   return `${recommender ?? "Die Person, die mich empfohlen hat,"} darf von ${vertreter} erfahren, dass ich mich gemeldet habe und ob ein Termin zustande gekommen ist (mit meinem Vornamen, ohne Details zu meinem Anliegen). Freiwillig.`;
 }
 
-// ─── Allgemeiner Link: Aufsteller und E-Mail-Signatur ───────────────────────
+// ─── Allgemeiner Link: E-Mail-Signatur ──────────────────────────────────────
 
 export function signatureLine(link: string, offer: ResolvedOffer | null): string {
   return offer
@@ -447,36 +447,6 @@ export function funnelHint(f: Funnel): FunnelHint {
   }
   return { stage: "ok", title: "Der Trichter läuft rund", text: "Kein Übergang fällt auf. Mehr Links ausgeben bringt jetzt am meisten." };
 }
-
-// ─── Gesprächsleitfaden ─────────────────────────────────────────────────────
-
-export const LEITFADEN: { title: string; when: string; say: string; why: string }[] = [
-  {
-    title: "1. Zu Beginn ankündigen",
-    when: "Bei der Übersicht, was heute besprochen wird",
-    say: "„Am Ende würde ich gern kurz hören, wie zufrieden Sie mit unserer Zusammenarbeit sind. Nur wenn Sie wirklich zufrieden sind, erzählen Sie ja auch anderen von mir.“",
-    why: "Das Thema ist von Anfang an auf dem Tisch. Am Ende überrascht nichts.",
-  },
-  {
-    title: "2. Den Aha-Moment nutzen",
-    when: "Wenn Ihr Kunde merkt, dass sich der Blick auf seine Verträge gelohnt hat",
-    say: "„So geht es den meisten, die ihre Verträge lange nicht angeschaut haben. Gibt es in Ihrem Umfeld auch jemanden, bei dem das so sein könnte? Überlegen Sie gern schon mal, ich zeige Ihnen am Ende, wie einfach das geht.“",
-    why: "Ihr Kunde denkt schon im Gespräch an konkrete Personen. „Mir fällt gerade niemand ein“ kommt dann kaum noch.",
-  },
-  {
-    title: "3. Erst fragen, dann zeigen",
-    when: "Am Ende des Gesprächs",
-    say: "„Wie zufrieden sind Sie bisher mit unserer Zusammenarbeit?“ Ist die Antwort klar positiv: „Das freut mich. Darf ich Ihnen kurz zeigen, wie Sie mich ganz einfach weiterempfehlen können?“ Dann den QR-Code im Kontakt öffnen und gemeinsam die Seite ansehen.",
-    why: "Sie bitten nicht um einen Gefallen, Sie zeigen ein Angebot für Freunde und Familie. Bei Kritik: zuhören, klären, heute nicht um Empfehlung bitten.",
-  },
-  {
-    title: "4. Verbindlich machen",
-    when: "Direkt nach dem Teilen",
-    say: "„Ich melde mich in zwei Tagen kurz bei Ihnen und erzähle, ob sich schon jemand gemeldet hat. Passt das?“",
-    why: "Mit festem Termin wird heute geteilt statt irgendwann. Die App legt Ihnen die Aufgabe dafür automatisch an.",
-  },
-];
-export const LEITFADEN_KURZ = "Kurzer Kontakt (Schaden, Rückruf, Vertragsänderung)? Dann reicht: den guten Moment benennen, nach der Zufriedenheit fragen, Link senden.";
 
 // ─── Dankeschön für Empfehlende (Tippgeber-Vergütung) ───────────────────────
 // Standardmäßig aus. Rechtlicher Rahmen (Stand 11/2026, keine Rechtsberatung):
