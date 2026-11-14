@@ -1,5 +1,6 @@
 "use client";
 
+import { openLeadBooking } from "@/components/lead-booking";
 // „Wie lief's?“ nach einem Anruf (neue Oberfläche): Wer in der App auf
 // „Anrufen“ tippt und danach zurückkommt, bekommt automatisch die Ergebnis-
 // Auswahl. Nutzt ausschließlich die bestehenden Aktionen (inbox-actions).
@@ -116,7 +117,7 @@ export function CallOutcomeSheet({
     actions.push({ label: "Gesprochen, erledigt", icon: Check, tone: "primary", onSelect: () => pick(`${t.name}: erledigt`, () => clearFollowUpResult(t.leadId)) });
   }
   actions.push({ label: "Nicht erreicht", icon: PhoneMissed, onSelect: () => pick(`${t.name}: morgen wieder in der Liste`, () => callbackOutcomeResult(t.leadId, "not_reached")) });
-  if (bookingSlug) actions.push({ label: "Termin vereinbart", icon: CalendarPlus, href: `/book/${bookingSlug}?lead=${t.leadId}` });
+  if (bookingSlug) actions.push({ label: "Termin vereinbart", icon: CalendarPlus, onSelect: () => openLeadBooking(t.leadId, t.name) });
   actions.push(
     { label: "Angebot gesendet", icon: Send, onSelect: () => pick(`${t.name}: Angebot gesendet`, () => callbackOutcomeResult(t.leadId, "offer")) },
     // keepOpen: Folgeschritt statt Schließen.

@@ -120,7 +120,10 @@ Seiten aus der Liste „Seiten“ unten.
   (bei Verloren fragt die App nach dem Grund, siehe „Verloren und nicht erreicht“).
 - Hat der Lead keinen nächsten Schritt, steht oben ein Hinweis mit dem Knopf **Nächster Schritt**.
 - Aktionen: **Anrufen**, **Chat** (WhatsApp), **Termin**, **Mehr**.
-- **Termin:** Mit verbundenem Kalender öffnet „Termin in Ihrem Kalender buchen“ die Buchungsseite mit vorausgefüllten Daten.
+- **Termin:** Mit verbundenem Kalender öffnet sich ein Fenster direkt in der App (kein neuer Tab) mit Ihren freien
+  Zeiten wie auf der Buchungsseite: Telefon oder Video wählen, Zeit antippen, **Termin buchen**. Der Lead bekommt die
+  Einladung per E-Mail und eine Bestätigung per WhatsApp, die Phase wird „Termin vereinbart“. Dasselbe Fenster öffnet
+  „Termin buchen“ auf „Heute“ und „Termin vereinbart“ nach einem Anruf.
   Darunter (auch ohne Kalender) **Termin von Hand eintragen**: Datum, Uhrzeit, Art (Telefon, Video, Vor Ort) und Notiz.
   Der Termin steht dann auf „Heute“ und im Kontakt, die Phase wird „Termin vereinbart“. Er wird nicht in den Kalender
   übertragen, und der Lead bekommt keine automatische Erinnerung.
@@ -218,7 +221,7 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Termine
 
-- Buchung über „Termin“ beim Lead: Die Buchungsseite zeigt nur Ihre Lead-Zeiten (unter „Mein Kalender“),
+- Buchung über „Termin“ beim Lead (Fenster in der App) oder die Buchungsseite: Beide zeigen nur Ihre Lead-Zeiten (unter „Mein Kalender“),
   die in Ihrem Kalender noch frei sind, Telefon oder Video. Das gilt auch, wenn ein Lead selbst bucht
   oder verschiebt.
 - **Verschieben oder absagen:** auf „Heute“ (Termin antippen → **Verschieben oder absagen**), beim Lead an der

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { eraseLeadAction, setLeadStatusAction, updateLeadDetailsAction } from "@/app/buyer/actions";
 import { manualAppointmentAction, startLeadChatAction } from "@/app/buyer/lead-manual-actions";
+import { SlotPicker } from "@/components/lead-booking";
 import { clearFollowUpResult, setFollowUpResult, undoInboxAction } from "@/app/buyer/inbox-actions";
 import { Button, Card } from "@/components/ui";
 import { ActionSheet, Sheet, type SheetAction } from "@/components/ui/sheet";
@@ -561,14 +562,10 @@ function TerminSheet({ leadId, bookingSlug, onClose, onSaved }: { leadId: string
     <Sheet open onClose={onClose} title="Termin">
       <div className="max-h-[75vh] space-y-4 overflow-y-auto p-5 text-sm" data-termin-sheet>
         {bookingSlug ? (
-          <a
-            href={`/book/${bookingSlug}?lead=${leadId}`}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-4 py-2.5 font-semibold text-white"
-          >
-            <CalendarPlus className="h-4 w-4" /> Termin in Ihrem Kalender buchen
-          </a>
+          <div className="space-y-2" data-termin-kalender>
+            <p className="font-semibold">Freie Zeit in Ihrem Kalender</p>
+            <SlotPicker leadId={leadId} onBooked={onSaved} />
+          </div>
         ) : (
           <div className="space-y-2 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950" data-termin-ohne-kalender>
             <p>Für Terminbuchungen verbinden Sie Ihren Kalender. Dann sieht der Lead nur Ihre freien Zeiten, und der Termin landet direkt in Ihrem Kalender.</p>
@@ -578,7 +575,7 @@ function TerminSheet({ leadId, bookingSlug, onClose, onSaved }: { leadId: string
           </div>
         )}
         <div className="space-y-3" data-termin-manuell>
-          <p className="font-semibold">Termin von Hand eintragen</p>
+          <p className="font-semibold">{bookingSlug ? "Oder von Hand eintragen" : "Termin von Hand eintragen"}</p>
           <div className="grid grid-cols-2 gap-2">
             <label className="block">
               <span className="mb-1 block text-[color:var(--muted)]">Datum</span>

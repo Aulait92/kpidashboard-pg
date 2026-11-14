@@ -1,5 +1,6 @@
 "use client";
 
+import { openLeadBooking } from "@/components/lead-booking";
 import { terminArtKurz, terminArtLabel } from "@/lib/termin-art";
 
 import { fmtDay, LaterDateSheet } from "@/components/later-date-sheet";
@@ -263,7 +264,7 @@ export function TodayInbox({
       { label: "+1 Woche", icon: Clock, onSelect: () => run(c.key, `${c.name}: in 1 Woche wieder`, () => setFollowUpResult(c.leadId, { days: 5 })) },
       { label: "Später …", icon: Clock, onSelect: () => setTimeout(() => laterSheet(c), 0) },
     );
-    if (data.bookingSlug) actions.push({ label: "Termin buchen", icon: CalendarPlus, href: `/book/${data.bookingSlug}?lead=${c.leadId}` });
+    if (data.bookingSlug) actions.push({ label: "Termin buchen", icon: CalendarPlus, onSelect: () => openLeadBooking(c.leadId, c.name) });
     actions.push(
       { label: "Angebot gesendet", icon: Send, onSelect: () => run(c.key, `${c.name}: Angebot gesendet`, () => callbackOutcomeResult(c.leadId, "offer")) },
       {

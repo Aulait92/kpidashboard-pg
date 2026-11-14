@@ -10,6 +10,7 @@ import { customerSetupOpenCount } from "@/lib/onboarding";
 import { isNewUi } from "@/lib/new-ui";
 import { loadCustomerProvision } from "@/lib/provision-server";
 import { ProvisionRatesProvider } from "@/components/provision-context";
+import { LeadBookingHost } from "@/components/lead-booking";
 import type { ShellAbsence } from "@/components/absence-sheet";
 import { berlinYmd, currentOrNextAbsence, toAbsenceView } from "@/lib/absence";
 import { leadScope, memberName } from "@/lib/team";
@@ -122,6 +123,8 @@ export default async function BuyerLayout({
             {children}
             {/* Lead-Detail-Modal innerhalb der Shell → Toasts funktionieren dort auch */}
             {modal}
+            {/* Termin buchen im Fenster (Heute, Rückrufe …), components/lead-booking.tsx */}
+            <LeadBookingHost />
           </BuyerShell>
         </ProvisionRatesProvider>
       ) : (

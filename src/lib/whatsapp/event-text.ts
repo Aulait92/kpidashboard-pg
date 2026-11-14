@@ -24,8 +24,8 @@ export function buildEventDescription(d: {
   product: string | null;
   mode: "phone" | "video";
   summary: string | null;
-  conversationId: string;
-  bookedVia: "bot" | "booking_page";
+  conversationId: string | null;
+  bookedVia: "bot" | "booking_page" | "advisor";
 }): string {
   const base = appUrl();
   return [
@@ -38,10 +38,12 @@ export function buildEventDescription(d: {
     "Qualifizierung:",
     d.summary?.trim() || "-",
     "",
-    base ? `Chatverlauf: ${base}/admin/whatsapp?c=${d.conversationId}` : "",
+    base && d.conversationId ? `Chatverlauf: ${base}/admin/whatsapp?c=${d.conversationId}` : "",
     d.bookedVia === "bot"
       ? "Gebucht durch den KI-Assistenten via WhatsApp."
-      : "Vom Lead selbst gebucht (Buchungsseite / Meta-Leadformular).",
+      : d.bookedVia === "advisor"
+        ? "Vom Berater in der App gebucht."
+        : "Vom Lead selbst gebucht (Buchungsseite / Meta-Leadformular).",
   ]
     .filter((l, i, arr) => l !== "" || arr[i - 1] !== "")
     .join("\n");
