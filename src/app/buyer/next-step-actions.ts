@@ -10,6 +10,7 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { writableCustomerId } from "@/lib/buyer-write";
 import { planNextCallAttempt, registerCallAttempt, type CallAttemptResult } from "@/lib/call-attempts";
 import { fmtAttemptAt } from "@/lib/call-plan";
+import { formWithOverrides } from "@/lib/lead-stammdaten";
 import { a, anredeZeile, asAnsprache, namePartsFromForm, salutationFromForm, type Ansprache } from "@/lib/ansprache";
 import { syncFollowUpWithStatus, workdaysFromNow } from "@/lib/lead-followup";
 import { fmtDayShort, logLeadHistory } from "@/lib/lead-history";
@@ -270,7 +271,7 @@ export async function keepTryingResult(leadId: string): Promise<AttemptResult> {
 export async function notReachedTextsAction(leadId: string): Promise<{ ok: true; whatsapp: string; subject: string; body: string } | { ok: false; error: string }> {
   const ctx = await getBuyerContext();
   if (!ctx) return { ok: false, error: "Nicht angemeldet." };
-  const lead = await prisma.lead.findFirst({ where: { id: leadId, customerId: ctx.customerId }, select: { id: true, name: true, source: true, formData: true } });
+  const lead = await prisma.lead.findFirst({ where: { id: leadId, customerId: ctx.customerId }, select: { id: true, name: true, source: true, formData: true, contactOverrides: true } });
   if (!lead) return { ok: false, error: "Lead nicht gefunden." };
   const [an, link, me, postfach, own] = await Promise.all([
     anspracheFor(ctx.customerId),
@@ -280,9 +281,9 @@ export async function notReachedTextsAction(leadId: string): Promise<{ ok: true;
     prisma.mailTemplate.findFirst({ where: { customerId: ctx.customerId, name: "Nicht erreicht" }, select: { subject: true, body: true } }),
   ]);
   const meinname = postfach?.fromName ?? me?.displayName ?? "";
-  const werte = { ...werteFuer({ name: lead.name, source: lead.source, salutation: salutationFromForm(lead.formData), ...namePartsFromForm(lead.formData) }, meinname, { ansprache: an, terminlink: link }), signatur: me?.mailSignature ?? "" };
+  const werte = { ...werteFuer({ name: lead.name, source: lead.source, salutation: salutationFromForm(formWithOverrides(lead.formData, lead.contactOverrides)), ...namePartsFromForm(formWithOverrides(lead.formData, lead.contactOverrides)) }, meinname, { ansprache: an, terminlink: link }), signatur: me?.mailSignature ?? "" };
   const v = own ?? STANDARD_VORLAGEN_JE[an].find((x) => x.name === "Nicht erreicht")!;
-  const kontakt = { fullName: lead.name, salutation: salutationFromForm(lead.formData), ...namePartsFromForm(lead.formData) };
+  const kontakt = { fullName: lead.name, salutation: salutationFromForm(formWithOverrides(lead.formData, lead.contactOverrides)), ...namePartsFromForm(formWithOverrides(lead.formData, lead.contactOverrides)) };
   const hi = anredeZeile(an, kontakt);
   const whatsapp = [
     `${hi} ${a(an, "ich habe gerade versucht, dich anzurufen, leider ohne Erfolg.", "ich habe gerade versucht, Sie anzurufen, leider ohne Erfolg.")}`,
@@ -337,7 +338,7 @@ export async function nextStepTaskResult(leadId: string): Promise<{ ok: true; cr
 export async function appointmentTextsAction(leadId: string): Promise<{ ok: true; link: string; whatsapp: string; subject: string; body: string } | { ok: false; error: string }> {
   const ctx = await getBuyerContext();
   if (!ctx) return { ok: false, error: "Nicht angemeldet." };
-  const lead = await prisma.lead.findFirst({ where: { id: leadId, customerId: ctx.customerId }, select: { id: true, name: true, formData: true } });
+  const lead = await prisma.lead.findFirst({ where: { id: leadId, customerId: ctx.customerId }, select: { id: true, name: true, formData: true, contactOverrides: true } });
   if (!lead) return { ok: false, error: "Lead nicht gefunden." };
   const link = await terminlinkFor(ctx.customerId, lead.id);
   if (!link) return { ok: false, error: "Für den Terminlink bitte zuerst den Kalender verbinden." };
@@ -347,7 +348,7 @@ export async function appointmentTextsAction(leadId: string): Promise<{ ok: true
     postfachOf(ctx.userId),
   ]);
   const meinname = postfach?.fromName ?? me?.displayName ?? "";
-  const hi = anredeZeile(an, { fullName: lead.name, salutation: salutationFromForm(lead.formData), ...namePartsFromForm(lead.formData) });
+  const hi = anredeZeile(an, { fullName: lead.name, salutation: salutationFromForm(formWithOverrides(lead.formData, lead.contactOverrides)), ...namePartsFromForm(formWithOverrides(lead.formData, lead.contactOverrides)) });
   const core = `${hi} ${a(an, "lass uns kurz sprechen. Such dir hier einfach einen passenden Termin aus:", "lassen Sie uns kurz sprechen. Suchen Sie sich hier einfach einen passenden Termin aus:")}\n\n${link}`;
   const gruss = meinname ? `Viele Grüße\n${meinname}` : "";
   return {

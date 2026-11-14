@@ -55,7 +55,7 @@ async function loadCustomerEvent(
       meetUrl: true,
       conversationId: true,
       customer: { select: { name: true, leadAddress: true } },
-      lead: { select: { name: true, formData: true, assignedUser: { select: { displayName: true } } } },
+      lead: { select: { name: true, formData: true, contactOverrides: true, assignedUser: { select: { displayName: true } } } },
     },
   });
   if (!appt || (!allowCancelled && appt.status !== "booked")) return null;

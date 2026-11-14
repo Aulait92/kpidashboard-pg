@@ -10,16 +10,19 @@ import { prisma } from "@/lib/prisma";
 import { firmDisplayName, personFromCustomerName, advisorPerson } from "@/lib/advisor-name";
 
 export { firmDisplayName, personFromCustomerName, advisorPerson };
+import { formWithOverrides } from "@/lib/lead-stammdaten";
 import { kontaktParts, namePartsFromForm, salutationFromForm, salutationOf, type AnredeKontakt } from "@/lib/ansprache";
 
 /** Anrede-Angaben aus einem Lead (Name, formData). */
-export function kontaktFromLead(lead: { name?: string | null; formData?: unknown } | null | undefined, fallbackName?: string | null): AnredeKontakt {
-  const parts = namePartsFromForm(lead?.formData);
+export function kontaktFromLead(lead: { name?: string | null; formData?: unknown; contactOverrides?: unknown } | null | undefined, fallbackName?: string | null): AnredeKontakt {
+  // Im Kontakt korrigierte Angaben (lib/lead-stammdaten.ts) haben Vorrang vor dem Formular
+  const form = formWithOverrides(lead?.formData, lead?.contactOverrides);
+  const parts = namePartsFromForm(form);
   return {
     fullName: lead?.name ?? fallbackName ?? null,
     firstName: parts.firstName,
     lastName: parts.lastName,
-    salutation: salutationFromForm(lead?.formData),
+    salutation: salutationFromForm(form),
   };
 }
 
@@ -54,7 +57,7 @@ export async function ansprechpartner(opts: {
   const [lead, customer] = await Promise.all([
     opts.leadId
       ? prisma.lead
-          .findUnique({ where: { id: opts.leadId }, select: { name: true, formData: true, phone: true, assignedUser: { select: { displayName: true } } } })
+          .findUnique({ where: { id: opts.leadId }, select: { name: true, formData: true, contactOverrides: true, phone: true, assignedUser: { select: { displayName: true } } } })
           .catch(() => null)
       : null,
     prisma.customer.findUnique({ where: { id: opts.customerId }, select: { name: true } }).catch(() => null),

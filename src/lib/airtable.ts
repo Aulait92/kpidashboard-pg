@@ -1224,8 +1224,10 @@ export async function syncAirtable(): Promise<SyncResult> {
         // auslösen muss.
         const existingLead = await prisma.lead.findUnique({
           where: { airtableId: rec.id },
-          select: { id: true, status: true, erasedAt: true },
+          select: { id: true, status: true, erasedAt: true, contactEditedAt: true },
         });
+        // Im Kontakt korrigierte Stammdaten (lib/lead-stammdaten.ts) nicht mit Airtable überschreiben
+        const keepContact = !!existingLead?.contactEditedAt;
         // Datenschutz-gelöscht: nicht wieder mit Airtable-Daten befüllen.
         if (existingLead?.erasedAt) continue;
         const isNewLead = !existingLead;
@@ -1255,7 +1257,6 @@ export async function syncAirtable(): Promise<SyncResult> {
           update: {
             source: product,
             customerId,
-            name,
             bezugAirtableId,
             createdAt,
             firstContactAt,
@@ -1264,8 +1265,7 @@ export async function syncAirtable(): Promise<SyncResult> {
             contactAttempts,
             status,
             adChannel,
-            phone,
-            email,
+            ...(keepContact ? {} : { name, phone, email }),
             formData,
           },
         });

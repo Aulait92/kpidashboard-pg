@@ -14,10 +14,12 @@ export type ReadOnlyField = {
 
 // Immer relevante Kontaktfelder.
 export const COMMON_FIELDS: ReadOnlyField[] = [
+  { key: "Anrede", label: "Anrede" },
   { key: "Vorname", label: "Vorname" },
   { key: "Nachname", label: "Nachname" },
   { key: "Telefonnummer", label: "Telefonnummer" },
   { key: "E-Mail", label: "E-Mail" },
+  { key: "Straße", label: "Straße" },
   { key: "Postleitzahl", label: "Postleitzahl" },
   { key: "Ort", label: "Ort" },
   { key: "Bundesland", label: "Bundesland" },

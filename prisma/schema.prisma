@@ -533,6 +533,10 @@ model Lead {
   // Snapshot der produktspezifischen Formularangaben (Label/Wert-Liste aus
   // lib/lead-fields) — Kontext für den WhatsApp-Bot.
   formData             Json?
+  // Korrekturen der Stammdaten im Kontakt (lib/lead-stammdaten.ts, Ole 14.11.2026): Anrede, Vor-/Nachname,
+  // Adresse. Ab contactEditedAt überschreibt der Airtable-Abgleich Name, Telefon und E-Mail nicht mehr.
+  contactOverrides     Json?
+  contactEditedAt      DateTime?
   // WhatsApp-Erstanschreiben (Outreach-Job): Zeitpunkt + Ergebnis
   // (sent | skipped_booked | skipped_contact | no_template | failed: …).
   outreachAt           DateTime?

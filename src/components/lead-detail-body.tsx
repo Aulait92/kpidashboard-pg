@@ -33,6 +33,8 @@ import { LeadMailComposer } from "@/components/lead-mail";
 import { asAnsprache, namePartsFromForm, salutationFromForm } from "@/lib/ansprache";
 import { appUrl } from "@/lib/whatsapp/event-text";
 import { LeadFiles } from "@/components/lead-files";
+import { LeadStammdatenEdit } from "@/components/lead-stammdaten-edit";
+import { applyStammdatenToFields, currentStammdaten, formWithOverrides } from "@/lib/lead-stammdaten";
 import { loadCustomerProvision } from "@/lib/provision-server";
 import { contractProvision, sparteInfo } from "@/lib/provision";
 import { listLeadContracts, syncPrimaryContract } from "@/lib/vertraege";
@@ -149,6 +151,8 @@ export async function LeadDetailBody({
       phone: true,
       email: true,
       formData: true,
+      contactOverrides: true,
+      contactEditedAt: true,
       contactAttempts: true,
       firstContactAt: true,
       followUpAt: true,
@@ -188,6 +192,20 @@ export async function LeadDetailBody({
       "Erster Kontaktversuch": lead.firstContactAt?.toISOString(),
     };
   }
+
+  // Korrigierte Stammdaten (lib/lead-stammdaten.ts) über die Formular- bzw. Airtable-Felder legen
+  if (fields) fields = applyStammdatenToFields(fields, lead);
+  const stamm = currentStammdaten(lead, fields);
+  const stammInitial = {
+    salutation: stamm.salutation ?? "",
+    firstName: stamm.firstName,
+    lastName: stamm.lastName,
+    phone: stamm.phone ? formatPhone(stamm.phone) : "",
+    email: stamm.email ?? "",
+    street: stamm.street,
+    zip: stamm.zip,
+    city: stamm.city,
+  };
 
   const whatsapp = await hasWhatsAppInbox(customerId);
   let stornoOptionsMap: LeadStornogrundOptions = new Map();
@@ -322,7 +340,7 @@ export async function LeadDetailBody({
       {postfach ? (
         <LeadMailComposer
           leadId={lead.id}
-          lead={{ name: lead.name, source: lead.source, salutation: salutationFromForm(lead.formData), ...namePartsFromForm(lead.formData) }}
+          lead={{ name: lead.name, source: lead.source, salutation: salutationFromForm(formWithOverrides(lead.formData, lead.contactOverrides)), ...namePartsFromForm(formWithOverrides(lead.formData, lead.contactOverrides)) }}
           to={lead.email}
           from={postfach.email}
           meinname={postfach.fromName ?? me?.displayName ?? ""}
@@ -424,7 +442,12 @@ export async function LeadDetailBody({
       ) : null}
 
       {fields ? (
-        <ReadOnlyCard fields={fields} source={lead.source} statusLabels={WHATSAPP_STATUS_LABELS} />
+        <ReadOnlyCard
+          fields={fields}
+          source={lead.source}
+          statusLabels={WHATSAPP_STATUS_LABELS}
+          edit={team.userId ? <LeadStammdatenEdit leadId={lead.id} initial={stammInitial} /> : null}
+        />
       ) : null}
 
       <LeadSequenceCard leadId={lead.id} readOnly={!!lead.erasedAt} />
@@ -440,10 +463,13 @@ function ReadOnlyCard({
   fields,
   source,
   statusLabels = {},
+  edit = null,
 }: {
   fields: Record<string, unknown>;
   source: string | null;
   statusLabels?: Record<string, string>;
+  /** Stift „Bearbeiten“ im Kartenkopf */
+  edit?: React.ReactNode;
 }) {
   const kind = detectLeadKind(source, fields);
   let group = fieldGroupFor(kind);
@@ -526,7 +552,7 @@ function ReadOnlyCard({
 
   return (
     <Card>
-      <CardHeader icon={ClipboardList} title="Angaben zum Lead" />
+      <CardHeader icon={ClipboardList} title="Angaben zum Lead" actions={edit} />
       <dl className="divide-y divide-[color:var(--border)]">
         {rows.map(({ def, value }) => (
           <DetailRow key={def.label} label={def.label}>

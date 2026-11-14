@@ -12,3 +12,4 @@ Letzte Aktualisierung der Webseite: 14.11.2026 (Zahlen, mehrere Verträge, Schne
 - 14.11.: Bestandskunden-Modul: E-Mail-Kampagnen als zweiter Kanal (mit Einwilligung und Abmeldelink), Statistik je Kampagne.
 - 14.11.: Provision: Leben/BU nach Beitragssumme, eigene Stornoquote, gekündigte Verträge eintragen, Gewinn wahlweise mit künftigem Bestand.
 - 14.11.: Mein Kalender: eigene Buchungsseite mit Link zum Kopieren.
+- 14.11.: Kontakt: Angaben zum Lead (Name, Nummer, E-Mail, Adresse) selbst korrigieren, Änderung steht im Verlauf.
