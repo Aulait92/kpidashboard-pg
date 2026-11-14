@@ -71,7 +71,7 @@ type CallItem = {
 
 type SheetState =
   | { kind: "actions"; title: string; message?: string; actions: SheetAction[] }
-  | { kind: "win"; name: string; source: string | null; save: (value: number | null) => void }
+  | { kind: "win"; name: string; source: string | null; save: (value: number | null, sparte: string | null) => void }
   | { kind: "date"; title: string; save: (date: string) => void }
   | { kind: "reschedule"; appointmentId: string }
   | null;
@@ -153,8 +153,8 @@ export function TodayInbox({
   }
 
   // Fester Provisionsbetrag (Regelart „fixed“): ohne Eingabe direkt speichern.
-  const askWin = (name: string, source: string | null, save: (value: number | null) => void) => {
-    if (!asksCloseValue(source, provisionRates)) return save(null);
+  const askWin = (name: string, source: string | null, save: (value: number | null, sparte: string | null) => void) => {
+    if (!asksCloseValue(source, provisionRates)) return save(null, null);
     setSheet({ kind: "win", name, source, save });
   };
 
@@ -253,7 +253,7 @@ export function TodayInbox({
         label: "Abschluss",
         icon: Trophy,
         onSelect: () =>
-          setTimeout(() => askWin(c.name, c.source, (v) => run(c.key, `${c.name}: Abschluss`, () => callbackOutcomeResult(c.leadId, "won", v))), 0),
+          setTimeout(() => askWin(c.name, c.source, (v, sp) => run(c.key, `${c.name}: Abschluss`, () => callbackOutcomeResult(c.leadId, "won", v, sp))), 0),
       },
       { label: "Lead öffnen", icon: UserRound, href: leadUrl(c.leadId) },
       { label: "Kein Interesse", icon: ThumbsDown, tone: "danger", onSelect: () => run(c.key, `${c.name}: kein Interesse`, () => callbackOutcomeResult(c.leadId, "lost")) },
@@ -386,7 +386,7 @@ export function TodayInbox({
                       label: "Abschluss",
                       icon: Trophy,
                       onSelect: () =>
-                        setTimeout(() => askWin(o.name, o.source, (v) => run(key, `${o.name}: Abschluss`, () => appointmentOutcomeResult(o.id, "closed", v))), 0),
+                        setTimeout(() => askWin(o.name, o.source, (v, sp) => run(key, `${o.name}: Abschluss`, () => appointmentOutcomeResult(o.id, "closed", v, sp))), 0),
                     },
                     { label: "Nicht erschienen", icon: UserX, onSelect: () => run(key, `${o.name}: steht jetzt bei Anrufen`, () => appointmentOutcomeResult(o.id, "no_show", null)) },
                     { label: "Kein Interesse", icon: ThumbsDown, tone: "danger", onSelect: () => run(key, `${o.name}: kein Interesse`, () => appointmentOutcomeResult(o.id, "lost", null)) },
@@ -550,11 +550,11 @@ export function TodayInbox({
         title={sheet?.kind === "win" ? `Abschluss mit ${sheet.name}` : ""}
         source={sheet?.kind === "win" ? sheet.source : null}
         onClose={() => setSheet(null)}
-        onSave={(v) => {
+        onSave={(v, sp) => {
           if (sheet?.kind !== "win") return;
           const save = sheet.save;
           setSheet(null);
-          save(v);
+          save(v, sp);
         }}
       />
     </div>

@@ -196,6 +196,7 @@ export function AbschlussCard({
   provision,
   policyDoneAt,
   readOnly = false,
+  children,
 }: {
   leadId: string;
   closedAt: string | null;
@@ -203,6 +204,8 @@ export function AbschlussCard({
   provision: string | null;
   policyDoneAt: string | null;
   readOnly?: boolean;
+  /** Verträge (Cross-Selling) unter dem ersten Abschluss. */
+  children?: React.ReactNode;
 }) {
   const toast = useToast();
   const [doneAt, setDoneAt] = useState(policyDoneAt);
@@ -227,9 +230,10 @@ export function AbschlussCard({
         </div>
         <div className="text-sm">
           <span className="text-[color:var(--muted)]">Provision </span>
-          <b>{provision ?? "–"}</b>
+          <b>{provision ?? "keine Angabe"}</b>
         </div>
       </div>
+      {children}
       <div className="flex flex-wrap items-center gap-3 border-t border-[color:var(--border)] px-5 py-3 text-sm">
         {doneAt ? (
           <>

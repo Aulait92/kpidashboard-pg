@@ -44,7 +44,7 @@ export async function saveLeadFile(input: {
   fileName: string;
   data: Uint8Array;
   userId: string | null;
-}): Promise<{ ok: true } | { ok: false; error: string }> {
+}): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   if (!input.data.length) return { ok: false, error: "Die Datei ist leer." };
   if (input.data.length > MAX_FILE_BYTES) return { ok: false, error: "Die Datei ist zu groß (höchstens 15 MB)." };
   const fileName = input.fileName.replace(/[\\/\r\n"]/g, "_").slice(0, 160) || "dokument.pdf";
@@ -52,7 +52,8 @@ export async function saveLeadFile(input: {
   if (!contentType) return { ok: false, error: "Bitte eine PDF-, Bild- (JPG/PNG), Word- oder Excel-Datei hochladen." };
   const count = await prisma.leadFile.count({ where: { leadId: input.leadId } });
   if (count >= 30) return { ok: false, error: "Zu diesem Lead sind schon 30 Dokumente gespeichert. Bitte erst alte löschen." };
-  await prisma.leadFile.create({
+  const saved = await prisma.leadFile.create({
+    select: { id: true },
     data: {
       leadId: input.leadId,
       customerId: input.customerId,
@@ -65,7 +66,7 @@ export async function saveLeadFile(input: {
     },
   });
   await logLeadHistory(input.leadId, "dokument", `${FILE_KIND_LABEL[input.kind]} hochgeladen: ${fileName}`, { customerId: input.customerId, userId: input.userId });
-  return { ok: true };
+  return { ok: true, id: saved.id };
 }
 
 export const fileSize = (bytes: number) =>

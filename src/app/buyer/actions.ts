@@ -12,6 +12,7 @@ import {
 import { getCurrentSession } from "@/lib/auth";
 import { writableCustomerId } from "@/lib/buyer-write";
 import { syncFollowUpWithStatus } from "@/lib/lead-followup";
+import { syncPrimaryContract } from "@/lib/vertraege";
 import { recordUsage } from "@/lib/usage";
 import { prisma } from "@/lib/prisma";
 import {
@@ -189,7 +190,7 @@ export type UpdateLeadState = {
 export async function setLeadStatusAction(
   leadId: string,
   status: LeadStatus,
-  opts?: { closeValue?: number | null; disqualifyReason?: string | null },
+  opts?: { closeValue?: number | null; disqualifyReason?: string | null; sparte?: string | null },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const writeCustomerId = await writableCustomerId(leadId);
   if (!writeCustomerId) {
@@ -258,12 +259,14 @@ export async function setLeadStatusAction(
   });
 
   await syncFollowUpWithStatus(lead.id, status);
+  // Erster Vertrag (Cross-Selling): Abschluss am Lead → Vertrag mit Sparte und Beitrag
+  if (isClosed) await syncPrimaryContract(lead.id, { sparte: opts?.sparte, reopen: lead.status !== status }).catch((e) => console.error("[vertraege]", e));
   if (lead.status !== status) {
     await logLeadHistory(
       lead.id,
       isClosed ? "abschluss" : "status",
       isClosed
-        ? await abschlussText(writeCustomerId, lead.source, closeValue ?? null)
+        ? await abschlussText(writeCustomerId, lead.source, closeValue ?? null, lead.id)
         : `Status: ${status}${status === "Disqualifiziert" && disqualifyLabel(opts?.disqualifyReason) ? ` (${disqualifyLabel(opts?.disqualifyReason)})` : ""}`,
       { customerId: writeCustomerId },
     );
@@ -531,6 +534,7 @@ export async function appointmentOutcomeAction(formData: FormData): Promise<void
       ...(outcome === "no_show" ? { callbackSnoozedUntil: null } : {}),
     },
   });
+  if (outcome === "closed") await syncPrimaryContract(appt.leadId, { reopen: true }).catch((e) => console.error("[vertraege]", e));
   revalidatePath("/buyer");
   revalidatePath("/buyer/leads");
   revalidatePath("/buyer/kanban");

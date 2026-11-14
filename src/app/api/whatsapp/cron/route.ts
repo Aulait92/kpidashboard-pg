@@ -124,6 +124,17 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-sequences");
     return { error: e instanceof Error ? e.message : String(e) };
   });
+  // Cross-Selling: „Weiteres Produkt anbieten?“ 3 Wochen nach dem Abschluss, Abschlüsse in den Bestand
+  const vertraege = {
+    crossSell: await import("@/lib/vertraege").then((m) => m.runCrossSellReminders(now)).catch((e: unknown) => {
+      reportError(e, "cron-cross-sell");
+      return null;
+    }),
+    bestand: await import("@/lib/vertraege").then((m) => m.syncPendingBestand(100)).catch((e: unknown) => {
+      reportError(e, "cron-vertraege-bestand");
+      return null;
+    }),
+  };
   // Vertrieb: nach jedem Termin Aufgabe „Wie lief der Termin?“ + Push
   const terminNachfragen = await createMeetingReviews(now).catch((e: unknown) => {
     reportError(e, "cron-termin-review");
@@ -197,7 +208,7 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-templates");
     return null;
   });
-  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, terminNachfragen, whatsappConnect, templates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, vertraege, terminNachfragen, whatsappConnect, templates, status });
 }
 
 export const GET = handle;

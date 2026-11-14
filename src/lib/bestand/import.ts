@@ -3,6 +3,7 @@
 // bekannte Felder – alle anderen Spalten (auch Gesundheitsangaben) verfallen.
 // Felder, Parser und Gruppierung: lib/bestand/rows.ts (auch für die Vorschau im Browser).
 
+import { refreshBestandSummary } from "@/lib/vertraege";
 import Papa from "papaparse";
 import { prisma } from "@/lib/prisma";
 import { groupRows, isActiveContract, type Mapping, type Row } from "@/lib/bestand/rows";
@@ -82,12 +83,17 @@ export async function importRows(customerId: string, rows: Row[], m: Mapping, no
     const upcoming = active.map((c) => c.renewalDate).filter((d): d is Date => !!d && d > now).sort((x, y) => +x - +y)[0] ?? null;
     const premiums = active.map((c) => c.annualPremium).filter((p): p is number => p != null);
     const premiumTotal = premiums.length ? Math.round(premiums.reduce((s, p) => s + p, 0) * 100) / 100 : null;
+    const byContact = () =>
+      a.phone || a.email
+        ? prisma.existingCustomer.findFirst({
+            where: { customerId, ...(a.externalNo ? { externalNo: null } : {}), OR: [...(a.phone ? [{ phone: a.phone }] : []), ...(a.email ? [{ email: a.email }] : [])] },
+            select: { id: true },
+          })
+        : null;
+    // Mit Kundennummer: sonst gleicher Kunde ohne Nummer (z. B. aus einem Abschluss in der App übernommen), keine Doppelung
     const existing = a.externalNo
-      ? await prisma.existingCustomer.findUnique({ where: { customerId_externalNo: { customerId, externalNo: a.externalNo } }, select: { id: true } })
-      : await prisma.existingCustomer.findFirst({
-          where: { customerId, OR: [...(a.phone ? [{ phone: a.phone }] : []), ...(a.email ? [{ email: a.email }] : [])] },
-          select: { id: true },
-        });
+      ? ((await prisma.existingCustomer.findUnique({ where: { customerId_externalNo: { customerId, externalNo: a.externalNo } }, select: { id: true } })) ?? (await byContact()))
+      : await byContact();
     const data = {
       externalNo: a.externalNo, salutation: a.salutation, firstName: a.firstName, lastName: a.lastName, company: a.company, phone: a.phone, email: a.email,
       birthday: a.birthday, street: a.street, zip: a.zip, city: a.city, lines, nextRenewal: upcoming, premiumTotal, consentAt: now, consentNote,
@@ -99,9 +105,11 @@ export async function importRows(customerId: string, rows: Row[], m: Mapping, no
     else res.created++;
     if (a.phone) res.withPhone++;
     if (a.contracts.length) {
-      // Verträge eines Kunden werden bei jedem Import ersetzt (Vertragsnummer wird mitgespeichert)
+      // Verträge eines Kunden werden bei jedem Import ersetzt (Vertragsnummer wird mitgespeichert). Verträge aus der
+      // App (Abschlüsse, leadContractId) bleiben, außer der Import liefert denselben Vertrag (gleiche Vertragsnummer).
+      const importedNos = a.contracts.map((c) => c.contractNo).filter((x): x is string => !!x);
       await prisma.$transaction([
-        prisma.existingContract.deleteMany({ where: { existingCustomerId: saved.id } }),
+        prisma.existingContract.deleteMany({ where: { existingCustomerId: saved.id, OR: [{ leadContractId: null }, ...(importedNos.length ? [{ contractNo: { in: importedNos } }] : [])] } }),
         prisma.existingContract.createMany({
           data: a.contracts.map((c) => ({
             existingCustomerId: saved.id,
@@ -117,6 +125,7 @@ export async function importRows(customerId: string, rows: Row[], m: Mapping, no
         }),
       ]);
       res.contracts += a.contracts.length;
+      if (await prisma.existingContract.count({ where: { existingCustomerId: saved.id, leadContractId: { not: null } } })) await refreshBestandSummary(saved.id);
     }
   }
   return res;

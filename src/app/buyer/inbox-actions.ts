@@ -14,6 +14,7 @@ import { syncFollowUpWithStatus, workdaysFromNow } from "@/lib/lead-followup";
 import { prisma } from "@/lib/prisma";
 import { recordUsage } from "@/lib/usage";
 import { abschlussText, fmtDayShort, logLeadHistory, POLICY_TODO } from "@/lib/lead-history";
+import { syncPrimaryContract } from "@/lib/vertraege";
 import { startSequence, stopSequences } from "@/lib/lead-sequences";
 
 type LeadPrev = {
@@ -93,6 +94,7 @@ export async function callbackOutcomeResult(
   leadId: string,
   outcome: "not_reached" | "lost" | "offer" | "won",
   closeValue?: number | null,
+  sparte?: string | null,
 ): Promise<InboxResult> {
   const customerId = await writableCustomerId(leadId);
   if (!customerId) return { ok: false, error: "In der Vorschau nur mit Demo-Leads möglich." };
@@ -146,7 +148,8 @@ export async function callbackOutcomeResult(
       },
     });
     await syncFollowUpWithStatus(lead.id, status);
-    await logLeadHistory(lead.id, outcome === "won" ? "abschluss" : "anruf", outcome === "won" ? await abschlussText(customerId, lead.source, value) : "Anruf: Angebot gesendet", { customerId });
+    if (outcome === "won") await syncPrimaryContract(lead.id, { sparte, reopen: true }).catch((e) => console.error("[vertraege]", e));
+    await logLeadHistory(lead.id, outcome === "won" ? "abschluss" : "anruf", outcome === "won" ? await abschlussText(customerId, lead.source, value, lead.id) : "Anruf: Angebot gesendet", { customerId });
   } else {
     if (lead.airtableId) {
       await updateLeadEditableFields({
@@ -178,6 +181,7 @@ export async function appointmentOutcomeResult(
   appointmentId: string,
   outcome: "offer" | "closed" | "lost" | "no_show",
   closeValue?: number | null,
+  sparte?: string | null,
 ): Promise<InboxResult> {
   const nextStatus = OUTCOME_STATUS[outcome];
   const appt = await prisma.appointment.findUnique({
@@ -216,11 +220,12 @@ export async function appointmentOutcomeResult(
     },
   });
   await syncFollowUpWithStatus(lead.id, nextStatus);
+  if (outcome === "closed") await syncPrimaryContract(lead.id, { sparte, reopen: true }).catch((e) => console.error("[vertraege]", e));
   await logLeadHistory(
     lead.id,
     outcome === "closed" ? "abschluss" : "status",
     outcome === "closed"
-      ? await abschlussText(customerId, lead.source, value)
+      ? await abschlussText(customerId, lead.source, value, lead.id)
       : outcome === "no_show"
         ? "Termin: nicht erschienen"
         : `Termin: ${nextStatus}`,

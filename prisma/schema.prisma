@@ -190,6 +190,10 @@ model Customer {
   empfehlungSince          DateTime?
   // Weggeklickte Hinweise auf Zusatzmodule (Schlüssel je Stelle)
   moduleHintsDismissed     String[]                  @default([])
+  // Erinnerung „Weiteres Produkt anbieten?“ 3 Wochen nach dem ersten Abschluss (Cross-Selling, Standard an)
+  crossSellReminder        Boolean                   @default(true)
+  // Weggeklickte Tipps der Karte „So holen Sie mehr raus“ (/buyer/zahlen): { tippSchlüssel: ISO-Datum }, je 30 Tage
+  zahlenTipsDismissed      Json?
   // Neue Oberfläche des Kundenbereichs (Vertreter-A); pro Kunde im Admin einschaltbar.
   newUi                    Boolean                   @default(false)
   // Ansprache von Leads und Kunden in allen Texten (E-Mail, WhatsApp-Assistent, Vorlagen, Termin-Nachrichten): "sie" | "du" (Ole, 14.11.2026)
@@ -572,6 +576,12 @@ model Lead {
   sequences     LeadSequence[]
   history       LeadHistory[]
   files         LeadFile[]
+  // Verträge (Abschlüsse) dieses Leads: der erste aus closedAt/closeValue, dazu Cross-Selling (lib/vertraege.ts)
+  contracts     LeadContract[]
+  // Erinnerung „Weiteres Produkt anbieten?“ angelegt (einmal je Lead)
+  crossSellRemindedAt DateTime?
+  // Kunde mit Abschluss im Bestand (ExistingCustomer.leadId)
+  bestandKunde  ExistingCustomer? @relation("BestandAusLead")
 
   // Modul „Empfehlungen & Bewertungen“: Anfrage nach dem Abschluss (je Lead eine)
   reviewRequest     ReviewRequest? @relation("ReviewRequestLead")
@@ -1969,6 +1979,9 @@ model ExistingCustomer {
   optOutAt       DateTime? // „Stopp“ → keine Kampagnen mehr
   lastCampaignAt DateTime?
   importId       String?
+  // Aus einem Lead mit Abschluss übernommen (lib/vertraege.syncLeadToBestand); der Import übernimmt den Eintrag
+  leadId         String?   @unique
+  lead           Lead?     @relation("BestandAusLead", fields: [leadId], references: [id], onDelete: SetNull)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -1994,6 +2007,9 @@ model ExistingContract {
   contractNo         String?
   insurer            String?
   status             String?
+  // Spiegel eines Vertrags aus der App (LeadContract); null = aus dem Import
+  leadContractId     String?          @unique
+  leadContract       LeadContract?    @relation(fields: [leadContractId], references: [id], onDelete: Cascade)
 
   @@index([existingCustomerId])
 }
@@ -2870,6 +2886,44 @@ model LeadFile {
   uploadedById String?
   createdAt    DateTime @default(now())
 
+  contracts    LeadContract[]
+
+  @@index([leadId])
+}
+
+// Verträge je Lead (Cross-Selling, Ole 14.11.2026): Sparte, Beitrag, Datum, optional Versicherer,
+// Vertragsnummer und Police. Der erste Abschluss (Lead.closedAt/closeValue) hat primaryLeadId = leadId.
+// Provision je Vertrag mit der Rate seiner Sparte (lib/provision.contractProvision).
+model LeadContract {
+  id             String    @id @default(cuid())
+  leadId         String
+  lead           Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  customerId     String
+  // = leadId beim ersten Abschluss des Leads (höchstens einer je Lead), sonst null
+  primaryLeadId  String?   @unique
+  // Sparte (lib/provision SPARTEN): katze | hund | pferd | privatschutz | unfall | hausrat | wohngebaeude |
+  // rechtsschutz | kindersparplan | kfz | leben_bu | pkv | sonstiges
+  sparte         String
+  // Jahresbeitrag netto; bei PKV der Monatsbeitrag. null = nicht eingetragen (Standardbeitrag der Sparte)
+  premium        Decimal?  @db.Decimal(12, 2)
+  // Fester Provisionswert aus der Zeit vor den Verträgen (frei eingegebener Abschlusswert); gilt, solange kein Beitrag eingetragen ist
+  provisionValue Decimal?  @db.Decimal(12, 2)
+  signedAt       DateTime
+  insurer        String?
+  contractNo     String?
+  // Police als Dokument am Lead
+  fileId         String?
+  file           LeadFile? @relation(fields: [fileId], references: [id], onDelete: SetNull)
+  // aktiv | storniert
+  status         String    @default("aktiv")
+  cancelledAt    DateTime?
+  createdById    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  existingContract ExistingContract?
+
+  @@index([customerId, signedAt])
   @@index([leadId])
 }
 

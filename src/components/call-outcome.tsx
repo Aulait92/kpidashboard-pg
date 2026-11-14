@@ -159,7 +159,7 @@ export function CallOutcomeSheet({
         title={`Abschluss mit ${t.name}`}
         source={t.source}
         onClose={close}
-        onSave={(v) => pick(`${t.name}: Abschluss`, () => callbackOutcomeResult(t.leadId, "won", v))}
+        onSave={(v, sp) => pick(`${t.name}: Abschluss`, () => callbackOutcomeResult(t.leadId, "won", v, sp))}
       />
     );
   }
