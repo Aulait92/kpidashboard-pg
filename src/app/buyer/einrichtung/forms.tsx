@@ -19,6 +19,7 @@ const input =
 const label = "text-sm font-medium";
 
 type Answers = {
+  ansprache?: "sie" | "du";
   callbackBy?: string;
   special?: string;
   formats?: string[];
@@ -68,6 +69,25 @@ export function QuestionnaireForm({ software, initial, readOnly }: { software: b
           <input id="leadEmails" name="leadEmails" className={`${input} mt-1`} placeholder="z. B. agentur@beispiel.de, mitarbeiter@beispiel.de" defaultValue={initial.leadEmails?.join(", ") ?? ""} />
         </div>
       )}
+      {software ? (
+        <fieldset>
+          <legend className={label}>Wie sollen Ihre Leads angesprochen werden?</legend>
+          <span className="block text-sm text-[color:var(--muted)]">Gilt für WhatsApp-Assistent, Termin-Nachrichten und E-Mail-Vorlagen. Später änderbar.</span>
+          <div className="mt-2 flex flex-wrap gap-4 text-[15px]">
+            {(
+              [
+                ["sie", "Sie (förmlich)"],
+                ["du", "Du (persönlich)"],
+              ] as const
+            ).map(([k, l]) => (
+              <label key={k} className="flex items-center gap-2">
+                <input type="radio" name="ansprache" value={k} defaultChecked={(initial.ansprache ?? "sie") === k} className="h-4 w-4 accent-[color:var(--brand)]" />
+                {l}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      ) : null}
       <div>
         <label className={label} htmlFor="special">Was macht Ihre Agentur besonders? (optional)</label>
         <span className="block text-sm text-[color:var(--muted)]">Wir nutzen das für Ihre Anzeigentexte.</span>

@@ -15,10 +15,14 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   firstNameOf,
+  isSieTemplateName,
   NoTemplateError,
+  pickApprovedTemplate,
   renderTemplate,
   sendWhatsAppNotice,
 } from "@/lib/whatsapp/templates";
+import type { Ansprache } from "@/lib/ansprache";
+import { anspracheOf } from "@/lib/whatsapp/reminders";
 
 /** Nur frische, noch unbearbeitete Leads anschreiben. */
 const OUTREACH_STATUSES = [null, "Neuer Lead"];
@@ -28,8 +32,10 @@ export const CALLBACK_AFTER_MS = 24 * 60 * 60 * 1000;
 const CALLBACK_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 const CALLBACK_STATUSES = ["Neuer Lead", "Nicht erreicht", "Im Gespräch"];
 
-const DEFAULT_OUTREACH_TEXT =
-  "Hallo {{1}}, danke für deine Anfrage! Hier ist der digitale Assistent deines Beraters. Hast du kurz Zeit für zwei Fragen, damit wir dir ein passendes Angebot machen können?";
+const DEFAULT_OUTREACH_TEXT: Record<Ansprache, string> = {
+  du: "Hallo {{1}}, danke für deine Anfrage! Hier ist der digitale Assistent deines Beraters. Hast du kurz Zeit für zwei Fragen, damit wir dir ein passendes Angebot machen können?",
+  sie: "Hallo {{1}}, vielen Dank für Ihre Anfrage! Hier ist der digitale Assistent Ihres Beraters. Haben Sie kurz Zeit für zwei Fragen, damit wir Ihnen ein passendes Angebot machen können?",
+};
 
 async function hasAppointment(leadId: string, conversationId?: string | null) {
   const n = await prisma.appointment.count({
@@ -93,11 +99,9 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
     });
 
     // Freitext-Variante (offenes Fenster) = Text der Outreach-Vorlage.
-    const tpl = await prisma.messageTemplate.findFirst({
-      where: { customerId: agent.customerId, purpose: "outreach", status: "approved" },
-      orderBy: { updatedAt: "desc" },
-      select: { body: true },
-    });
+    // Vorlage passend zur Ansprache (Sie-Fassung, sobald freigegeben)
+    const tpl = await pickApprovedTemplate(agent.customerId, "outreach");
+    const an = await anspracheOf(agent.customerId);
 
     for (const lead of leads) {
       result.candidates++;
@@ -140,7 +144,7 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
           to: phone,
           purpose: "outreach",
           params,
-          text: renderTemplate(tpl?.body ?? DEFAULT_OUTREACH_TEXT, params),
+          text: renderTemplate(tpl && isSieTemplateName(tpl.name) === (an === "sie") ? tpl.body : DEFAULT_OUTREACH_TEXT[an], params),
           leadId: lead.id,
           contactName: lead.name,
         });

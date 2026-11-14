@@ -290,7 +290,7 @@ async function thankReferrer(customerId: string, referredLabel: string, amount: 
   try {
     const { sendToUser } = await import("@/lib/push");
     for (const o of owners) {
-      await sendToUser(o.id, { title: "Danke für Ihre Empfehlung! 🎁", body: `${referredLabel} ist jetzt Kunde – ${gift}.`, url: "/buyer/empfehlen", tag: "referral-reward" }).catch(() => {});
+      await sendToUser(o.id, { title: "Danke für Ihre Empfehlung! 🎁", body: `${referredLabel} ist jetzt Kunde: ${gift}.`, url: "/buyer/empfehlen", tag: "referral-reward" }).catch(() => {});
     }
   } catch (err) {
     reportError(err, "referral-thanks-push");
@@ -354,7 +354,7 @@ export async function rewardReferralForOffer(offerId: string, now = new Date()):
       ref = await addGarantieGutschrift({
         stripeCustomerId: referrer.stripeCustomerId,
         amountEur: amount,
-        description: `Empfehlungsprämie: ${referredLabel} ist Kunde geworden – danke!`,
+        description: `Empfehlungsprämie: ${referredLabel} ist Kunde geworden. Danke!`,
         fallId: `empfehlung-${referral.id}`,
         metadata: { pg_kind: "empfehlung", empfehlung: referral.id },
       });

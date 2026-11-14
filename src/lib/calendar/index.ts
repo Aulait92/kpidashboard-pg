@@ -2,6 +2,7 @@
 // Doppelbuchungs-Schutz, Buchungs-Slug. Die eigentliche API spricht je
 // Verbindung der passende Adapter (Google oder Microsoft/Outlook).
 
+import { clearTerminErinnerung } from "@/lib/mail/termin-erinnerung";
 import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import {
@@ -360,6 +361,8 @@ export async function bookAppointment(opts: {
       manageToken,
     },
   });
+  // Termin gebucht: Erinnerung „Kein Termin gebucht: nachfassen“ aus einer E-Mail mit Terminlink entfällt
+  if (opts.leadId) await clearTerminErinnerung(opts.leadId).catch(() => {});
   // Team: Lead ohne Zuständigen gehört jetzt dem Berater, bei dem gebucht wurde.
   if (advisorUserId && opts.leadId) {
     const n = await prisma.lead.updateMany({ where: { id: opts.leadId, assignedUserId: null }, data: { assignedUserId: advisorUserId } });

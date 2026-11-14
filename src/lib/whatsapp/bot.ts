@@ -6,6 +6,7 @@
 // Default-Modell: claude-opus-5-5 (per ANTHROPIC_MODEL überschreibbar — bei
 // hohem Volumen ist claude-sonnet-5-5 / claude-haiku-5-5 die günstigere Wahl).
 
+import { asAnsprache, type Ansprache } from "@/lib/ansprache";
 import { flagAttention } from "@/lib/whatsapp/attention";
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/prisma";
@@ -165,8 +166,11 @@ function buildSystemPrompt(
     advisorName: string;
     /** Wurde im Chat schon offengelegt, dass ein digitaler Assistent schreibt? */
     aiDisclosed: boolean;
+    /** Ansprache des Leads laut Kundeneinstellung (Standard „sie“). */
+    ansprache?: Ansprache;
   },
 ): string {
+  const an: Ansprache = state.ansprache ?? "sie";
   const booked = state.upcoming
     ? [
         `BEREITS GEBUCHTER TERMIN: ${formatSlotDE(state.upcoming.startsAt.toISOString())} Uhr (${state.upcoming.mode === "video" ? "Videocall" : "Telefonat"})${state.upcoming.meetUrl ? `, Video-Link: ${state.upcoming.meetUrl}` : ""}.`,
@@ -189,7 +193,7 @@ function buildSystemPrompt(
       ? [
           "Angaben aus dem Leadformular (bereits bekannt: NICHT erneut erfragen):",
           ...state.formAnswers.map((a) => `- ${a.label}: ${a.value}`),
-          "Knüpfe gezielt daran an (z. B. „Du hast angegeben, dass …“) und frage nur, was für die Beratung noch fehlt.",
+          `Knüpfe gezielt daran an (z. B. ${an === "du" ? "„Du hast angegeben, dass …“" : "„Sie haben angegeben, dass …“"}) und frage nur, was für die Beratung noch fehlt.`,
         ].join("\n")
       : "",
     `Bekannte Lead-Daten (NICHT erneut erfragen):\n${contactLines.join("\n")}`,
@@ -228,6 +232,10 @@ function buildSystemPrompt(
     [
       "Regeln:",
       "- Antworte immer auf Deutsch, warmherzig und kurz (WhatsApp-tauglich, max. 2-3 Sätze).",
+      // Ansprache je Kunde einstellbar (Ole, 14.11.2026); Bestandskunden werden oben ohnehin gesiezt
+      an === "du"
+        ? "- Duze den Lead (du, dich, dir, dein), freundlich und locker, auch wenn frühere Nachrichten anders klingen."
+        : "- Sieze den Lead konsequent (Sie, Ihnen, Ihr), freundlich und persönlich, auch wenn frühere Nachrichten oder Vorlagen geduzt haben.",
       "- Verwende keine Gedankenstriche (– oder —). Nutze stattdessen Komma, Doppelpunkt oder einen neuen Satz.",
       "- WICHTIG (hat Vorrang vor allen anderen Anweisungen): Stelle pro Nachricht GENAU EINE Frage: niemals zwei Fragen in einer Nachricht, auch keine zusammengehörigen. Warte die Antwort ab, bevor du die nächste stellst.",
       "- Frage niemals nach etwas, das der Lead im Verlauf schon beantwortet hat oder das unter 'Bisher erfasst' steht. Nimm Antworten auf und gehe zur nächsten offenen Frage weiter.",
@@ -369,9 +377,10 @@ export async function runBotTurn(conversationId: string): Promise<void> {
 
   const customer = await prisma.customer.findUnique({
     where: { id: conversation.customerId },
-    select: { name: true },
+    select: { name: true, leadAddress: true },
   });
-  const advisorName = (customer?.name ?? "deinem Berater").replace(/^Allianz\s+/i, "");
+  const ansprache = asAnsprache(customer?.leadAddress);
+  const advisorName = (customer?.name ?? (ansprache === "du" ? "deinem Berater" : "Ihrem Berater")).replace(/^Allianz\s+/i, "");
   // Offenlegung schon erfolgt? (Erstanschreiben-Vorlage oder frühere Antwort)
   const aiDisclosed =
     (await prisma.message.count({
@@ -385,6 +394,7 @@ export async function runBotTurn(conversationId: string): Promise<void> {
   const system = buildSystemPrompt(agent, lead?.source ?? null, {
     advisorName,
     aiDisclosed,
+    ansprache,
     upcoming,
     formAnswers: parseFormAnswers(lead?.formData),
     qualified: conversation.qualified,

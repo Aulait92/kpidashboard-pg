@@ -155,7 +155,7 @@ export async function bookEmpfehlung(customerId: string, opts: { actor?: AuditAc
       customerId,
       `Ihre Testphase „${MODULE}“ läuft`,
       [
-        `vielen Dank – das Modul „${MODULE}“ ist ab sofort freigeschaltet.`,
+        `vielen Dank, das Modul „${MODULE}“ ist ab sofort freigeschaltet.`,
         "Hinterlegen Sie jetzt Ihren Google-Bewertungslink, dann bitten wir nach jedem Abschluss automatisch um eine Bewertung und später um eine Empfehlung.",
       ],
       terms.lines,
@@ -179,7 +179,7 @@ export async function bookEmpfehlung(customerId: string, opts: { actor?: AuditAc
     await informAdmin(customerId, `${MODULE} gebucht: ${name}`, `${eurNet(price)}/Monat, Stripe-Abo angepasst. Nichts zu tun.`);
   }
   await audit("empfehlung.book", { entity: "Customer", entityId: customerId, customerId, details: { mode: "paid", price, stripe: r.ok ? (r.note ?? "ok") : r.error }, ...(opts.actor ? { actor: opts.actor } : {}) });
-  await mailCustomer(customerId, `Ihr Modul „${MODULE}“ ist gebucht`, [`vielen Dank – das Modul „${MODULE}“ ist ab sofort freigeschaltet.`], terms.lines);
+  await mailCustomer(customerId, `Ihr Modul „${MODULE}“ ist gebucht`, [`vielen Dank, das Modul „${MODULE}“ ist ab sofort freigeschaltet.`], terms.lines);
   await submitTemplatesSoon(customerId);
   return { ok: true, state: "active", trialEndsAt: c.empfehlungTrialEndsAt, ...(r.ok && r.note ? { note: r.note } : {}) };
 }
@@ -245,7 +245,7 @@ export async function processEmpfehlungBilling(now = new Date()): Promise<{ remi
     }).catch(() => {});
     await mailCustomer(c.id, `Ihre Testphase „${MODULE}“ endet am ${until}`, [
       `Ihre kostenlose Testphase endet am ${until}. Danach läuft das Modul automatisch weiter für ${eurNet(PRICE_LIST.empfehlungModuleMonthly)} im Monat, tagesgenau anteilig mit Ihrer nächsten Rechnung.`,
-      "Wenn Sie das Modul nicht behalten möchten, kündigen Sie einfach vorher unter „Konto & Rechnungen“ – dann entstehen keine Kosten.",
+      "Wenn Sie das Modul nicht behalten möchten, kündigen Sie einfach vorher unter „Konto & Rechnungen“, dann entstehen keine Kosten.",
     ]);
     reminded++;
   }
@@ -325,11 +325,11 @@ export const ANNOUNCEMENT = {
   subject: "Neu: Empfehlungen & Google-Bewertungen automatisch",
   paragraphs: [
     "ab sofort gibt es im Kundenbereich das Zusatzmodul „Empfehlungen & Bewertungen“.",
-    "Nach jedem Abschluss fragt die App Ihren Kunden per WhatsApp in Ihrem Namen, ob alles gepasst hat – mit direktem Draht zu Ihnen – und bittet um eine Google-Bewertung. Einige Wochen später kommt die Bitte um eine Empfehlung: Die empfohlene Person trägt sich selbst ein und landet als neuer Lead bei Ihnen.",
+    "Nach jedem Abschluss fragt die App Ihren Kunden per WhatsApp in Ihrem Namen, ob alles gepasst hat, mit direktem Draht zu Ihnen, und bittet um eine Google-Bewertung. Einige Wochen später kommt die Bitte um eine Empfehlung: Die empfohlene Person trägt sich selbst ein und landet als neuer Lead bei Ihnen.",
     "Kritische Antworten landen sofort als Aufgabe bei Ihnen, damit Sie sie persönlich klären können.",
     `Sie können das Modul ${PRICE_LIST.empfehlungTrialDays} Tage kostenlos testen, danach ${eurNet(PRICE_LIST.empfehlungModuleMonthly)} im Monat, monatlich kündbar.`,
   ],
-  inApp: `Neu: Empfehlungen & Bewertungen – nach jedem Abschluss automatisch um eine Google-Bewertung und eine Empfehlung bitten. ${PRICE_LIST.empfehlungTrialDays} Tage kostenlos testen.`,
+  inApp: `Neu: Empfehlungen & Bewertungen. Nach jedem Abschluss automatisch um eine Google-Bewertung und eine Empfehlung bitten. ${PRICE_LIST.empfehlungTrialDays} Tage kostenlos testen.`,
 } as const;
 
 /** Einmalige Ankündigung an alle aktiven Kunden ohne Modul (nur per Knopf, nie automatisch). */

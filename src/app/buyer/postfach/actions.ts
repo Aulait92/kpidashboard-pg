@@ -10,6 +10,7 @@ import { recordUsage } from "@/lib/usage";
 import { leadScope } from "@/lib/team";
 import { logLeadHistory, loadLeadHistory, type LeadHistoryEntry } from "@/lib/lead-history";
 import { saveSmtp, sendViaPostfach } from "@/lib/mail/postfach";
+import { planTerminErinnerung } from "@/lib/mail/termin-erinnerung";
 
 export type PostfachResult = { ok?: boolean; error?: string; info?: string };
 
@@ -111,7 +112,9 @@ export async function sendLeadMailAction(input: {
   subject: string;
   text: string;
   fileIds: string[];
-}): Promise<{ ok: true; history: LeadHistoryEntry[] } | { ok: false; error: string }> {
+  /** Erinnern, falls kein Termin gebucht wird (Werktage), nur bei E-Mails mit Terminlink */
+  remindDays?: number | null;
+}): Promise<{ ok: true; history: LeadHistoryEntry[]; reminder?: string | null } | { ok: false; error: string }> {
   try {
     const ctx = await ctxWrite();
     const customerId = await writableCustomerId(input.leadId);
@@ -140,8 +143,9 @@ export async function sendLeadMailAction(input: {
     const anh = files.length ? `\n\nAnhang: ${files.map((f) => f.fileName).join(", ")}` : "";
     await logLeadHistory(lead.id, "email", `E-Mail an ${to}: ${subject}\n\n${text}${anh}`, { customerId, userId: ctx.userId });
     await recordUsage("action", "lead.email");
+    const reminder = input.remindDays ? await planTerminErinnerung(lead.id, input.remindDays, { customerId, userId: ctx.userId }).catch(() => null) : null;
     revalidatePath(`/buyer/leads/${lead.id}`);
-    return { ok: true, history: await loadLeadHistory(lead.id, ctx.userId) };
+    return { ok: true, history: await loadLeadHistory(lead.id, ctx.userId), reminder };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Nicht möglich." };
   }

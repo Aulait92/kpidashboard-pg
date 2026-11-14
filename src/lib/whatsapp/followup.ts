@@ -4,11 +4,13 @@
 // Senden genutzt (der Client kann den Zweck nicht selbst wählen).
 
 import { prisma } from "@/lib/prisma";
+import { anspracheOf } from "@/lib/whatsapp/reminders";
 import { displayProduct } from "@/lib/products";
 import {
   firstNameOf,
   renderTemplate,
-  SUGGESTED_TEMPLATE_TEXT,
+  pickApprovedTemplate,
+  templateTextFor,
   type NoticePurpose,
 } from "@/lib/whatsapp/templates";
 
@@ -92,13 +94,11 @@ export async function chooseFollowup(conversationId: string): Promise<FollowupCh
     params = [first, interestFrom(conv.lead?.formData, conv.lead?.source ?? null)];
   }
 
-  const tpl = await prisma.messageTemplate.findFirst({
-    where: { customerId: conv.customerId, purpose, status: "approved" },
-    orderBy: { updatedAt: "desc" },
-    select: { body: true },
-  });
+  // Vorlage, die tatsächlich gesendet würde (Sie-Fassung, sobald freigegeben)
+  const tpl = await pickApprovedTemplate(conv.customerId, purpose);
   const advisor = (conv.customer.name ?? "").replace(/^Allianz\s+/i, "");
-  const body = tpl?.body ?? SUGGESTED_TEMPLATE_TEXT[purpose].replace("[Berater]", advisor);
+  const an = await anspracheOf(conv.customerId);
+  const body = tpl?.body ?? templateTextFor(purpose, an).replace("[Berater]", advisor);
   const labels: Partial<Record<NoticePurpose, string>> = {
     followup: "Allgemein nachfassen",
     followup_offer: "Angebot nachfassen",

@@ -40,7 +40,7 @@ export default async function EmpfehlenPage({ params }: { params: Promise<{ code
         <div className="mt-6 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-6 shadow-[var(--shadow-md)]">
           <h1 className="text-xl font-semibold tracking-tight">Dieser Empfehlungslink ist nicht (mehr) gültig.</h1>
           <p className="mt-2 text-[15px] text-[color:var(--muted)]">
-            Sie können sich trotzdem gern melden – oder vorab ausrechnen, ob sich Leadgenerierung für Sie lohnt.
+            Sie können sich trotzdem gern melden oder vorab ausrechnen, ob sich Leadgenerierung für Sie lohnt.
           </p>
           <Link href="/rechner" className="mt-4 inline-flex h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 text-[15px] font-semibold text-white">
             <Calculator className="h-4 w-4" /> Zum Rechner
@@ -72,7 +72,7 @@ export default async function EmpfehlenPage({ params }: { params: Promise<{ code
             {who} empfiehlt Ihnen performancegrowth
           </h1>
           <p className="mt-3 text-[17px] leading-relaxed text-[color:var(--muted)]">
-            Wir gewinnen für Versicherungsvermittler neue Kunden über Werbung bei Meta – und liefern die Software, mit der Sie jeden Kontakt nachverfolgen.
+            Wir gewinnen für Versicherungsvermittler neue Kunden über Werbung bei Meta und liefern die Software, mit der Sie jeden Kontakt nachverfolgen.
           </p>
           {benefit ? (
             <div className="mt-4 flex items-start gap-2 rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50 px-4 py-3 text-[15px] text-emerald-900" data-empfehlen-benefit>
@@ -83,11 +83,11 @@ export default async function EmpfehlenPage({ params }: { params: Promise<{ code
           <ul className="mt-6 space-y-3 text-[15px]">
             <li className="flex gap-3">
               <TrendingUp className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--brand)]" />
-              <span>Anzeigen bei Facebook und Instagram für Ihre Region und Ihre Produkte – wir kümmern uns um Kampagnen und Formulare.</span>
+              <span>Anzeigen bei Facebook und Instagram für Ihre Region und Ihre Produkte. Wir kümmern uns um Kampagnen und Formulare.</span>
             </li>
             <li className="flex gap-3">
               <Smartphone className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--brand)]" />
-              <span>Jeder neue Lead kommt sofort in Ihre App – mit Anrufliste, Wiedervorlagen und Terminen.</span>
+              <span>Jeder neue Lead kommt sofort in Ihre App, mit Anrufliste, Wiedervorlagen und Terminen.</span>
             </li>
             <li className="flex gap-3">
               <MessageCircle className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--brand)]" />

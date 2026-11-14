@@ -34,3 +34,12 @@ wenn auch eine Neuigkeit (`ProductUpdate`) entsteht –, die Webseite über die 
 - Nur Verfügbares als verfügbar beschreiben; Angekündigtes als „demnächst“.
 - Keine Admin-/Ole-Funktionen (z. B. LinkedIn, Vertrieb) auf die Webseite.
 - Die Regeln stehen auch im Lovable-Projektwissen (Knowledge); bei Bedarf dort ergänzen.
+
+## Texte an Leads und Kunden (Ole, 14.11.2026)
+
+- Keine Gedankenstriche (– oder —) in Texten, die an Leads, Bestandskunden oder unsere Kunden rausgehen
+  (WhatsApp, E-Mails, Vorlagen, öffentliche Seiten wie /book, /empfehlung, /angebot). Komma, Doppelpunkt oder neuer Satz.
+  Bis-Striche in Zahlenbereichen („1–3 Tage“) sind ok. Code-Kommentare sind egal.
+- Ansprache von Leads/Kunden folgt `Customer.leadAddress` (Standard „sie“, Helfer in `src/lib/ansprache.ts`).
+  Neue Texte an Leads immer in beiden Fassungen (`a(an, du, sie)`); die Oberfläche für Vermittler bleibt Sie-Form.
+

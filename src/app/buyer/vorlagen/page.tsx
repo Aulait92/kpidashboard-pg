@@ -3,8 +3,10 @@ import { CheckCircle2, Clock, Info, MessageCircle, TriangleAlert } from "lucide-
 import { PageHeader } from "@/components/buyer-shell";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
-import { advisorDisplayName, CUSTOMER_TITLES, exampleValuesFor, previewBodyFor, purposesFor } from "@/lib/whatsapp/template-plan";
-import { renderTemplate, TEMPLATE_BUTTONS, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { advisorDisplayName, CUSTOMER_TITLES, exampleValuesFor, previewBodyFor, purposesFor, templateNameFor, TEMPLATE_VERSION, isTemplateRevisionOf } from "@/lib/whatsapp/template-plan";
+import { AnspracheForm } from "@/components/ansprache-form";
+import { asAnsprache } from "@/lib/ansprache";
+import { hasSieVariant, renderTemplate, TEMPLATE_BUTTONS, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -34,8 +36,9 @@ export default async function VorlagenPage() {
       plan: true,
       existingCustomersEnabled: true,
       empfehlungEnabled: true,
+      leadAddress: true,
       whatsAppAccount: { select: { status: true } },
-      messageTemplates: { select: { purpose: true, status: true, body: true, updatedAt: true }, orderBy: { updatedAt: "desc" } },
+      messageTemplates: { select: { name: true, purpose: true, status: true, body: true, updatedAt: true }, orderBy: { updatedAt: "desc" } },
     },
   });
   if (!customer) redirect("/buyer");
@@ -43,11 +46,20 @@ export default async function VorlagenPage() {
   const advisor = advisorDisplayName(customer.name);
   const purposes = purposesFor({ bestand: customer.existingCustomersEnabled, empfehlung: customer.empfehlungEnabled });
 
+  const an = asAnsprache(customer.leadAddress);
   const rows = purposes.map((purpose) => {
     const list = customer.messageTemplates.filter((t) => t.purpose === purpose);
-    const tpl = list.find((t) => t.status === "approved") ?? list[0] ?? null;
-    const text = tpl ? renderTemplate(tpl.body, exampleValuesFor(purpose)) : previewBodyFor(purpose, advisor);
-    return { purpose, tpl, text, badge: badgeFor(tpl?.status ?? null, connected), buttons: TEMPLATE_BUTTONS[purpose as NoticePurpose] ?? [] };
+    // Fassung zur gewählten Ansprache (Sie-Fassung: eigener Name bei Meta)
+    const wanted = templateNameFor(purpose, TEMPLATE_VERSION, an);
+    const own = list.filter((t) => isTemplateRevisionOf(t.name, wanted));
+    const tpl = own.find((t) => t.status === "approved") ?? own[0] ?? null;
+    const fallback = !tpl || tpl.status !== "approved" ? list.find((t) => t.status === "approved" && !isTemplateRevisionOf(t.name, wanted)) : null;
+    const text = tpl ? renderTemplate(tpl.body, exampleValuesFor(purpose, an)) : previewBodyFor(purpose, advisor, an);
+    const badge: Badge =
+      fallback && an === "sie" && hasSieVariant(purpose)
+        ? { label: "Sie-Fassung in Prüfung bei Meta", hint: "Bis zur Freigabe geht die bisherige Du-Fassung raus.", cls: "bg-amber-50 text-amber-700", icon: Clock }
+        : badgeFor(tpl?.status ?? null, connected);
+    return { purpose, tpl, text, badge, buttons: TEMPLATE_BUTTONS[purpose as NoticePurpose] ?? [] };
   });
 
   return (
@@ -60,6 +72,7 @@ export default async function VorlagenPage() {
         </p>
       ) : (
         <div className="flex flex-col gap-4">
+          {ctx.teamRole === "owner" ? <AnspracheForm current={an} readOnly={ctx.preview} /> : null}
           <div className="flex gap-3 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 text-sm">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--brand)]" />
             <p className="text-[color:var(--muted)]">

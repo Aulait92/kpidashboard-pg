@@ -192,6 +192,8 @@ model Customer {
   moduleHintsDismissed     String[]                  @default([])
   // Neue Oberfläche des Kundenbereichs (Vertreter-A); pro Kunde im Admin einschaltbar.
   newUi                    Boolean                   @default(false)
+  // Ansprache von Leads und Kunden in allen Texten (E-Mail, WhatsApp-Assistent, Vorlagen, Termin-Nachrichten): "sie" | "du" (Ole, 14.11.2026)
+  leadAddress              String                    @default("sie")
   existingCustomers        ExistingCustomer[]
   manualRevenues           ManualRevenue[]
   campaigns                CustomerCampaign[]

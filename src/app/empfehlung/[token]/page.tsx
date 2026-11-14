@@ -36,7 +36,7 @@ export default async function ReferralSharePage({ params, searchParams }: { para
       <h1 className="mt-4 text-2xl font-bold tracking-tight">{page.recommender ? `Danke, ${page.recommender}!` : "Vielen Dank!"}</h1>
       <p className="mt-2 text-[15px] leading-relaxed text-[color:var(--muted)]">
         Schön, dass Sie {page.vertreter} weiterempfehlen möchten. Leiten Sie diese Nachricht einfach an Freunde, Familie oder Kollegen weiter. Die Person
-        entscheidet selbst, ob sie sich meldet – Sie müssen keine Daten von anderen weitergeben.
+        entscheidet selbst, ob sie sich meldet. Sie müssen keine Daten von anderen weitergeben.
       </p>
       {page.offer ? (
         <div className="mt-4 rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50/60 p-4" data-referral-offer>

@@ -65,8 +65,9 @@ Seiten aus der Liste „Seiten“ unten.
 - Oben die Phasen-Leiste: antippen, um die Phase zu ändern. Knöpfe **Gewonnen** und **Verloren**
   (bei Verloren fragt die App kurz nach dem Grund).
 - Aktionen: **Anrufen**, **Chat** (WhatsApp), **Termin** (öffnet die Buchungsseite mit vorausgefüllten Daten), **Mehr**.
-- Unter „Mehr“: **Wiedervorlage** setzen oder ändern (Schnellwahl oder Datum, mit Notiz), **E-Mail schreiben**
-  (öffnet Ihr Mailprogramm), **Stornieren/Reklamieren** (bei gekauften Leads), **Daten löschen (DSGVO)** (nur Inhaber).
+- Eigene Kacheln für **E-Mail** und **Wiedervorlage**. Unter „Mehr“ nur noch, was nicht als Kachel da ist:
+  **Postfach verbinden** (ohne verbundenes Postfach), **Stornieren/Reklamieren** (bei gekauften Leads),
+  **Daten löschen (DSGVO)** (nur Inhaber).
 - Karte zum nächsten Termin (Videocall, Verschieben) und die Zusammenfassung des Assistenten.
 - Inhaber können unter **Zuständig** den Lead einem Berater geben – der bekommt eine Push-Nachricht.
 - „Angaben zum Lead“: alle Antworten aus dem Formular. Darunter Notizen (speichern sich von selbst).
@@ -99,6 +100,9 @@ Seiten aus der Liste „Seiten“ unten.
   Ihres Kalenders. Die Bestätigung und eine Erinnerung etwa 24 Stunden vorher gehen per WhatsApp raus.
 - Braucht ein Lead Sie (Frage, die der Assistent nicht beantworten soll), landet der Chat unter „Braucht dich“
   und Sie bekommen eine Push-Nachricht.
+- **Ansprache (Sie oder Du)**: Standard ist „Sie“. Inhaber stellen das unter **Einstellungen → WhatsApp-Vorlagen**,
+  **Einstellungen → E-Mail-Postfach** oder im Einrichtungs-Fragebogen um. Es gilt für den Assistenten,
+  WhatsApp-Vorlagen, Termin-Nachrichten, Termin-E-Mails, die Buchungsseite und die E-Mail-Vorlagen.
 - Wie sich der Assistent vorstellt und was er fragt, stellen wir für Sie ein. Änderungswünsche gern über
   „Etwas unklar? Feedback“ im Profilmenü oder im Hilfetermin.
 
@@ -114,6 +118,9 @@ Seiten aus der Liste „Seiten“ unten.
 - Erst wenn „Erste Nachricht an neue Leads“ freigegeben ist, kann der Assistent neue Leads anschreiben.
 - Mit dem Bestandskunden-Modul kommen vier Kampagnen-Vorlagen dazu. Sie haben unten den Knopf
   „Keine Nachrichten mehr“: Wer ihn antippt, bekommt keine Kampagnen mehr (wie bei „STOPP“).
+- **Sie-Fassungen**: Die Vorlagen des Assistenten gibt es in einer Du- und einer Sie-Fassung. Bei „Sie“ reichen wir die
+  Sie-Fassung automatisch bei Meta ein. Bis sie freigegeben ist, steht „Sie-Fassung in Prüfung bei Meta“ und die
+  bisher freigegebene Fassung geht raus. Der Erstkontakt wird dadurch nie aufgehalten.
 - Text anders formulieren? Schreiben Sie uns über „Etwas unklar? Feedback“, wir passen ihn an.
 
 ## Automatisches Nachfassen (Abfolgen)
@@ -628,7 +635,16 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
   „Test senden“ schickt eine Probe-Mail an die eigene Adresse.
 - **Signatur**: einmal hinterlegen (Name, Agentur, Telefon, Adresse). Sie steht automatisch unter jeder E-Mail an
   Leads – mit und ohne Vorlage. In einer Vorlage kann man die Stelle mit {signatur} selbst festlegen.
-- **Vorlagen** mit Platzhaltern {vorname}, {name}, {produkt}, {meinname}, {signatur}.
-- Beim Kontakt: **Notizen & Verlauf → E-Mail** (oder „Mehr → E-Mail schreiben“). Vorlage wählen, anpassen,
-  Dokumente (z. B. das Angebot) anhängen, senden. Die E-Mail geht von der eigenen Adresse raus und steht im Verlauf.
+- **Vorlagen** mit Platzhaltern {anrede}, {vorname}, {nachname}, {name}, {produkt}, {terminlink}, {meinname}, {signatur}.
+  {anrede} richtet sich nach der Ansprache: „Hallo Anna Beispiel“ (Sie; ohne Nachname „Guten Tag“) oder „Hallo Anna“ (Du).
+  Die Standardvorlagen gibt es in beiden Fassungen; beim Wechsel der Ansprache ziehen unveränderte Standardvorlagen mit,
+  eigene Texte bleiben.
+- **{terminlink}**: persönlicher Buchungslink für genau diesen Kontakt (Zeiten aus Ihrem Kalender, Buchung landet
+  am Kontakt). Steht schon ein Termin an oder ist kein Kalender verbunden, fällt der Satz mit dem Link weg.
+  In „Nicht erreicht“ und „Nachfassen Angebot“ ist er schon drin.
+- Beim Kontakt: Kachel **E-Mail**. Vorlage wählen, anpassen, Dokumente (z. B. das Angebot) anhängen, senden.
+  Die E-Mail geht von der eigenen Adresse raus und steht im Verlauf.
+- **Erinnern, falls kein Termin gebucht wird**: Steht der Terminlink in der Mail, legt die App nach dem Senden eine
+  Wiedervorlage „Kein Termin gebucht: nachfassen“ an (morgen, in 2 Werktagen oder in 1 Woche). Bucht der Kontakt
+  vorher, verschwindet sie. Gibt es schon eine Wiedervorlage oder läuft eine Nachfass-Abfolge, kommt keine zweite dazu.
 - Firmen-Postfächer mancher Versicherer lassen sich oft nicht verbinden; dann das eigene Mailprogramm nutzen.

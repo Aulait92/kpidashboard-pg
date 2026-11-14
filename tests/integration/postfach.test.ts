@@ -45,7 +45,10 @@ describe("Postfach", () => {
     expect(v.map((x) => x.name)).toEqual(STANDARD_VORLAGEN.map((x) => x.name));
     expect((await loadVorlagen(c.id)).length).toBe(STANDARD_VORLAGEN.length); // nicht doppelt
     const w = werteFuer({ name: "Anna Schmitt", source: "TKV-Katze" }, "Susanne Meier");
-    expect(fuelle(v[0].body, w)).toContain("Hallo Anna,");
+    // Standard „Sie“: voller Name in der Anrede, ohne Terminlink fällt der Satz weg, keine Gedankenstriche
+    expect(fuelle(v[0].body, w)).toContain("Hallo Anna Schmitt,");
+    expect(fuelle(v[0].body, w)).not.toContain("{terminlink}");
+    expect(fuelle(v[0].body, w)).not.toMatch(/[\u2013\u2014]/);
     expect(fuelle(v[0].body, w)).toContain("Susanne Meier");
     expect(fuelle(v[0].subject, w)).toBe("Ihre Anfrage: TKV-Katze");
     await prisma.mailTemplate.deleteMany({ where: { customerId: c.id } });
@@ -92,5 +95,64 @@ describe("Fehlermeldungen beim Senden", () => {
     expect(friendlySendError('Gmail: { "error": { "code": 403, "message": "Gmail API has not been used in project 1 before or it is disabled.')).toMatch(/noch nicht freigeschaltet/);
     expect(friendlySendError("Invalid login: 535 Authentication failed")).toMatch(/Passwort/);
     expect(friendlySendError("etwas anderes")).toBe("etwas anderes");
+  });
+});
+
+describe("Ansprache, Terminlink und Erinnerung (14.11.2026)", () => {
+  it("Anrede je Ansprache, Terminlink eingesetzt oder Satz entfernt", async () => {
+    const { werteFuer, fuelle } = await import("@/lib/mail/platzhalter");
+    const { STANDARD_VORLAGEN_JE } = await import("@/lib/mail/vorlagen");
+    const link = "https://app.example/book/abc?lead=l1";
+    const sie = fuelle(STANDARD_VORLAGEN_JE.sie[0].body, werteFuer({ name: "Eva Pohl", source: "TKV" }, "Jana", { ansprache: "sie", terminlink: link }));
+    expect(sie.startsWith("Hallo Eva Pohl,")).toBe(true);
+    expect(sie).toContain(`Termin aussuchen: ${link}`);
+    const ohneNachname = fuelle(STANDARD_VORLAGEN_JE.sie[0].body, werteFuer({ name: "Eva", source: "TKV" }, "Jana", { ansprache: "sie" }));
+    expect(ohneNachname.startsWith("Guten Tag,")).toBe(true);
+    expect(ohneNachname).not.toContain("aussuchen");
+    expect(ohneNachname).toContain("Wann passt es Ihnen für ein kurzes Telefonat?");
+    const du = fuelle(STANDARD_VORLAGEN_JE.du[0].body, werteFuer({ name: "Eva Pohl", source: "TKV" }, "Jana", { ansprache: "du", terminlink: link }));
+    expect(du.startsWith("Hallo Eva,")).toBe(true);
+    expect(du).toContain("kannst du dir");
+  });
+
+  it("Ansprache wechseln stellt nur unveränderte Standardvorlagen um", async () => {
+    const { loadVorlagen, vorlagenAufAnsprache, STANDARD_VORLAGEN_JE } = await import("@/lib/mail/vorlagen");
+    const c = await makeCustomer();
+    try {
+      await loadVorlagen(c.id);
+      const eigen = await prisma.mailTemplate.findFirstOrThrow({ where: { customerId: c.id, name: "Angebot" } });
+      await prisma.mailTemplate.update({ where: { id: eigen.id }, data: { body: "Mein eigener Text" } });
+      await vorlagenAufAnsprache(c.id, "du");
+      const after = await prisma.mailTemplate.findMany({ where: { customerId: c.id } });
+      expect(after.find((t) => t.name === "Nicht erreicht")!.body).toBe(STANDARD_VORLAGEN_JE.du[0].body);
+      expect(after.find((t) => t.name === "Angebot")!.body).toBe("Mein eigener Text");
+    } finally {
+      await prisma.mailTemplate.deleteMany({ where: { customerId: c.id } });
+      await cleanupCustomer(c.id);
+    }
+  });
+
+  it("Erinnerung „Kein Termin gebucht“: angelegt, keine Doppelung, bei Buchung entfernt", async () => {
+    const { planTerminErinnerung, clearTerminErinnerung, TERMIN_ERINNERUNG_NOTE } = await import("@/lib/mail/termin-erinnerung");
+    const c = await makeCustomer();
+    try {
+      const lead = await prisma.lead.create({ data: { customerId: c.id, name: "Eva Pohl" } });
+      const now = new Date("2026-11-16T10:00:00Z"); // Montag
+      expect(await planTerminErinnerung(lead.id, 2, { customerId: c.id, now })).toContain("Erinnerung am");
+      const l1 = await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } });
+      expect(l1.followUpNote).toBe(TERMIN_ERINNERUNG_NOTE);
+      expect(l1.followUpAt!.toISOString().slice(0, 10)).toBe("2026-11-18");
+      // Zweite Mail: bestehende Wiedervorlage bleibt, keine zweite
+      expect(await planTerminErinnerung(lead.id, 1, { customerId: c.id, now })).toBe("Die bestehende Wiedervorlage bleibt.");
+      expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).followUpAt!.toISOString().slice(0, 10)).toBe("2026-11-18");
+      // Buchung entfernt nur unsere Erinnerung
+      await clearTerminErinnerung(lead.id);
+      expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).followUpAt).toBeNull();
+      await prisma.lead.update({ where: { id: lead.id }, data: { followUpAt: now, followUpNote: "Eigene Notiz" } });
+      await clearTerminErinnerung(lead.id);
+      expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).followUpNote).toBe("Eigene Notiz");
+    } finally {
+      await cleanupCustomer(c.id);
+    }
   });
 });

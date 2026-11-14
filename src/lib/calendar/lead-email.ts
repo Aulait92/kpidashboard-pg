@@ -7,6 +7,7 @@
 // Ohne BOOKING_EMAIL_FROM oder RESEND_API_KEY wird bewusst NICHT gesendet
 // (kein Fallback auf die Agentur-Domain).
 
+import { a, asAnsprache, begruessung, type Ansprache } from "@/lib/ansprache";
 import { mailClient } from "@/lib/mail-guard";
 import {
   buildIcs,
@@ -34,42 +35,48 @@ function esc(v: string): string {
   return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-function content(kind: LeadEmailKind, ev: CustomerEvent, firstName: string) {
+function content(kind: LeadEmailKind, ev: CustomerEvent, contactName: string, an: Ansprache = "sie") {
   const w = when(ev.start);
   const art = ev.mode === "video" ? "Videoberatung" : "telefonische Beratung";
-  const hi = firstName ? `Hallo ${firstName},` : "Hallo,";
+  // Anrede je Ansprache des Kunden (Ole, 14.11.2026): Sie mit vollem Namen bzw. „Guten Tag“, Du mit Vorname
+  const hi = `${begruessung(an, contactName)},`;
   const how =
     ev.mode === "video"
       ? ev.videoUrl
         ? `Hier der Link zum Videocall: ${ev.videoUrl}`
-        : "Den Link zum Videocall bekommst du rechtzeitig vor dem Termin."
-      : `${ev.advisorName} ruft dich zur vereinbarten Zeit an.`;
+        : a(an, "Den Link zum Videocall bekommst du rechtzeitig vor dem Termin.", "Den Link zum Videocall bekommen Sie rechtzeitig vor dem Termin.")
+      : a(an, `${ev.advisorName} ruft dich zur vereinbarten Zeit an.`, `${ev.advisorName} ruft Sie zur vereinbarten Zeit an.`);
+  const dein = a(an, "Dein", "Ihr");
   switch (kind) {
     case "booked":
       return {
-        subject: `Dein Termin mit ${ev.advisorName}: ${w}`,
-        lines: [hi, `vielen Dank! Deine ${art} ist gebucht: ${w}.`, how],
+        subject: `${dein} Termin mit ${ev.advisorName}: ${w}`,
+        lines: [hi, `vielen Dank! ${a(an, "Deine", "Ihre")} ${art} ist gebucht: ${w}.`, how],
         calendar: true,
       };
     case "rescheduled":
       return {
         subject: `Neuer Termin mit ${ev.advisorName}: ${w}`,
-        lines: [hi, `dein Termin wurde verschoben. Neue Zeit: ${w}.`, how],
+        lines: [hi, `${a(an, "dein", "Ihr")} Termin wurde verschoben. Neue Zeit: ${w}.`, how],
         calendar: true,
       };
     case "reminder":
       return {
-        subject: `Erinnerung: Dein Termin mit ${ev.advisorName}, ${w}`,
-        lines: [hi, `kurze Erinnerung an deine ${art}: ${w}.`, how],
+        subject: `Erinnerung: ${dein} Termin mit ${ev.advisorName}, ${w}`,
+        lines: [hi, `kurze Erinnerung an ${a(an, "deine", "Ihre")} ${art}: ${w}.`, how],
         calendar: true,
       };
     case "cancelled":
       return {
-        subject: `Abgesagt: Dein Termin mit ${ev.advisorName} am ${w}`,
+        subject: `Abgesagt: ${dein} Termin mit ${ev.advisorName} am ${w}`,
         lines: [
           hi,
-          `dein Termin am ${w} wurde abgesagt.`,
-          "Wenn du einen neuen Termin möchtest, antworte einfach auf diese E-Mail oder melde dich per WhatsApp.",
+          `${a(an, "dein", "Ihr")} Termin am ${w} wurde abgesagt.`,
+          a(
+            an,
+            "Wenn du einen neuen Termin möchtest, antworte einfach auf diese E-Mail oder melde dich per WhatsApp.",
+            "Wenn Sie einen neuen Termin möchten, antworten Sie einfach auf diese E-Mail oder melden Sie sich per WhatsApp.",
+          ),
         ],
         calendar: false,
       };
@@ -102,7 +109,7 @@ async function sendLeadEmailInner(
     select: {
       customerId: true,
       conversationId: true,
-      customer: { select: { agentConfig: { select: { advisorEmail: true } } } },
+      customer: { select: { leadAddress: true, agentConfig: { select: { advisorEmail: true } } } },
     },
   });
   if (!appt?.conversationId) return { sent: false, reason: "no_conversation" };
@@ -115,8 +122,7 @@ async function sendLeadEmailInner(
   const ev = await customerEventById(appointmentId);
   if (!ev) return { sent: false, reason: "not_found" };
 
-  const firstName = (conv?.contactName ?? "").trim().split(/\s+/)[0] ?? "";
-  const c = content(kind, ev, firstName);
+  const c = content(kind, ev, conv?.contactName ?? "", asAnsprache(appt.customer?.leadAddress));
   const displayName = ev.advisorName.replace(/["<>]/g, "");
   const icsUrl = `${new URL(ev.manageUrl).origin}/book/manage/${ev.token}/ics`;
 

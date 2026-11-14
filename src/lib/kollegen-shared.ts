@@ -85,7 +85,7 @@ export function rewardSentence(settings: ReferralSettingsLike, referrerMonthly: 
     return `Wird ein empfohlener Kollege Kunde, schreiben wir Ihnen ${eur(settings.rewardFixed)} netto auf Ihre nächste Rechnung gut.`;
   }
   const amount = referrerMonthly != null && referrerMonthly > 0 ? ` (derzeit ${eur(referrerMonthly)} netto)` : "";
-  return `Wird ein empfohlener Kollege Kunde, schenken wir Ihnen einen Monat Betreuung${amount} – als Gutschrift auf Ihrer nächsten Rechnung.`;
+  return `Wird ein empfohlener Kollege Kunde, schenken wir Ihnen einen Monat Betreuung${amount} als Gutschrift auf Ihrer nächsten Rechnung.`;
 }
 
 /** Vorteil für den Neukunden (Landingpage, Angebot) – null = kein Vorteil. */
@@ -103,7 +103,7 @@ export function defaultShareText(referrerName: string, url: string): string {
     "",
     "für die Gewinnung neuer Kunden arbeite ich mit performancegrowth zusammen: Werbung bei Meta, Leads direkt aufs Handy und eine App, mit der ich jeden Kontakt nachverfolge.",
     "",
-    "Falls das auch für deine/Ihre Agentur interessant ist – hier kann man sich unverbindlich ein Erstgespräch holen:",
+    "Falls das auch für deine/Ihre Agentur interessant ist: Hier kann man sich unverbindlich ein Erstgespräch holen.",
     url,
     "",
     "Viele Grüße",
@@ -148,11 +148,11 @@ export type NudgeState = { key: string; firstShownAt: Date; closedAt: Date | nul
 
 export const NUDGE_TEXT: Record<NudgeKey, { title: string; text: string }> = {
   abschluss5: {
-    title: "5 Abschlüsse – stark!",
+    title: "5 Abschlüsse, stark!",
     text: "Kennen Sie Kollegen, denen das auch helfen würde? Empfehlen Sie uns weiter.",
   },
   abschluss10: {
-    title: "10 Abschlüsse – herzlichen Glückwunsch!",
+    title: "10 Abschlüsse, herzlichen Glückwunsch!",
     text: "Kennen Sie Kollegen, denen das auch helfen würde? Empfehlen Sie uns weiter.",
   },
   "feedback-day30": {

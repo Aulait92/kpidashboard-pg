@@ -21,7 +21,12 @@ import {
   renderTemplate,
   sendWhatsAppNotice,
   type NoticePurpose,
+  pickApprovedTemplate,
+  hasSieVariant,
+  isSieTemplateName,
 } from "@/lib/whatsapp/templates";
+import { a, type Ansprache } from "@/lib/ansprache";
+import { anspracheOf } from "@/lib/whatsapp/reminders";
 
 export type SequenceKind = "not_reached" | "offer" | "no_show";
 
@@ -29,7 +34,7 @@ const DAY = 24 * 60 * 60 * 1000;
 const DONE_STATUSES = new Set(["abschluss", "kein interesse", "disqualifiziert"]);
 const STOP_WORDS = /^\s*(stopp?|stop|abmelden|keine (weiteren )?nachrichten|nicht mehr (schreiben|kontaktieren))\b/i;
 
-type Ctx = { firstName: string; topic: string; bookingUrl: string | null };
+type Ctx = { firstName: string; topic: string; bookingUrl: string | null; an: Ansprache };
 type Step =
   | { day: number; action: "whatsapp"; purpose: NoticePurpose; params: (c: Ctx) => string[]; text: (c: Ctx) => string; fallbackNote: string }
   | { day: number; action: "call"; note: string };
@@ -43,7 +48,8 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         action: "whatsapp",
         purpose: "followup",
         params: (c) => [c.firstName],
-        text: (c) => `Hallo ${c.firstName}, ich habe gerade versucht, dich anzurufen. Wann passt es dir am besten? Antworte einfach hier, dann melde ich mich zu deiner Wunschzeit.`,
+        text: (c) =>
+          a(c.an, `Hallo ${c.firstName}, ich habe gerade versucht, dich anzurufen. Wann passt es dir am besten? Antworte einfach hier, dann melde ich mich zu deiner Wunschzeit.`, `Hallo ${c.firstName}, ich habe gerade versucht, Sie anzurufen. Wann passt es Ihnen am besten? Antworten Sie einfach hier, dann melde ich mich zu Ihrer Wunschzeit.`),
         fallbackNote: "Nicht erreicht: nochmal anrufen",
       },
       { day: 2, action: "call", note: "Nachfassen: nochmal anrufen" },
@@ -52,7 +58,8 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         action: "whatsapp",
         purpose: "followup_last",
         params: (c) => [c.firstName],
-        text: (c) => `Hallo ${c.firstName}, ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Dann antworte einfach hier. Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter. Alles Gute!`,
+        text: (c) =>
+          a(c.an, `Hallo ${c.firstName}, ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Dann antworte einfach hier. Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter. Alles Gute!`, `Hallo ${c.firstName}, ich melde mich ein letztes Mal: Ist das Thema für Sie noch aktuell? Dann antworten Sie einfach hier. Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter. Alles Gute!`),
         fallbackNote: "Letzter Versuch: anrufen",
       },
     ],
@@ -65,7 +72,8 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         action: "whatsapp",
         purpose: "followup_offer",
         params: (c) => [c.firstName, c.topic],
-        text: (c) => `Hallo ${c.firstName}, konntest du dir das Angebot zu ${c.topic} schon anschauen? Wenn du Fragen hast oder etwas anpassen möchtest, antworte einfach hier.`,
+        text: (c) =>
+          a(c.an, `Hallo ${c.firstName}, konntest du dir das Angebot zu ${c.topic} schon anschauen? Wenn du Fragen hast oder etwas anpassen möchtest, antworte einfach hier.`, `Hallo ${c.firstName}, konnten Sie sich das Angebot zu ${c.topic} schon anschauen? Wenn Sie Fragen haben oder etwas anpassen möchten, antworten Sie einfach hier.`),
         fallbackNote: "Angebot nachfassen: anrufen",
       },
       { day: 7, action: "call", note: "Angebot nachfassen: anrufen" },
@@ -80,7 +88,7 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         purpose: "followup_noshow",
         params: (c) => [c.firstName],
         text: (c) =>
-          `Hallo ${c.firstName}, schade, dass es mit unserem Termin nicht geklappt hat. Sollen wir einen neuen finden?${c.bookingUrl ? ` Hier kannst du dir direkt eine Zeit aussuchen: ${c.bookingUrl}` : " Antworte einfach hier."}`,
+          `Hallo ${c.firstName}, schade, dass es mit unserem Termin nicht geklappt hat. Sollen wir einen neuen finden?${c.bookingUrl ? a(c.an, ` Hier kannst du dir direkt eine Zeit aussuchen: ${c.bookingUrl}`, ` Hier können Sie sich direkt eine Zeit aussuchen: ${c.bookingUrl}`) : a(c.an, " Antworte einfach hier.", " Antworten Sie einfach hier.")}`,
         fallbackNote: "Nicht erschienen: neuen Termin vereinbaren",
       },
       { day: 2, action: "call", note: "Neuen Termin vereinbaren" },
@@ -298,15 +306,14 @@ async function sendStep(
     firstName: firstNameOf(lead.name),
     topic: topicOf(lead.formData, lead.source),
     bookingUrl: cal?.status === "connected" && cal.bookingSlug && appUrl ? `${appUrl}/book/${cal.bookingSlug}` : null,
+    an: await anspracheOf(seq.customerId),
   };
   const params = step.params(ctx);
   // Freitext = freigegebene Vorlage (falls vorhanden), sonst unser Standardtext.
-  const tpl = await prisma.messageTemplate.findFirst({
-    where: { customerId: seq.customerId, purpose: step.purpose, status: "approved" },
-    orderBy: { updatedAt: "desc" },
-    select: { body: true },
-  });
-  const text = step.purpose === "followup_noshow" && ctx.bookingUrl ? step.text(ctx) : tpl ? renderTemplate(tpl.body, params) : step.text(ctx);
+  // Nur eine Vorlage in der passenden Ansprache als Freitext übernehmen, sonst unser Text
+  const tpl = await pickApprovedTemplate(seq.customerId, step.purpose);
+  const tplFits = !!tpl && (!hasSieVariant(step.purpose) || isSieTemplateName(tpl.name) === (ctx.an === "sie"));
+  const text = step.purpose === "followup_noshow" && ctx.bookingUrl ? step.text(ctx) : tpl && tplFits ? renderTemplate(tpl.body, params) : step.text(ctx);
   try {
     const { mode } = await sendWhatsAppNotice({
       customerId: seq.customerId,

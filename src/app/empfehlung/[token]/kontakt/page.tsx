@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ token: st
   const robots = { index: false, follow: false };
   if (!page) return { title: "Kontakt aufnehmen", robots };
   const title = page.offer ? `${page.offer.headline} bei ${page.vertreter}` : `Kontakt zu ${page.vertreter}`;
-  const description = page.offer ? "Kostenlos und unverbindlich. Einfach Nummer hinterlassen." : `${page.vertreter} meldet sich persönlich bei Ihnen – unverbindlich und kostenlos.`;
+  const description = page.offer ? "Kostenlos und unverbindlich. Einfach Nummer hinterlassen." : `${page.vertreter} meldet sich persönlich bei Ihnen, unverbindlich und kostenlos.`;
   return { title, description, robots, openGraph: { title, description, type: "website" } };
 }
 
@@ -85,7 +85,7 @@ export default async function ReferralContactPage({ params, searchParams }: { pa
       ) : (
         <p className="mt-2 text-[15px] leading-relaxed text-[color:var(--muted)]">
           {page.recommender ? `${page.recommender} hat Ihnen ${page.vertreter} empfohlen. ` : ""}Hinterlassen Sie Ihre Nummer, dann meldet sich {page.vertreter}{" "}
-          persönlich – unverbindlich und kostenlos.
+          persönlich, unverbindlich und kostenlos.
         </p>
       )}
       {sp.err && ERRORS[sp.err] ? <p className="mt-4 rounded-[var(--radius-sm)] bg-rose-50 px-3 py-2 text-sm font-medium text-rose-800">{ERRORS[sp.err]}</p> : null}

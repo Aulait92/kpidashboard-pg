@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { a, asAnsprache, type Ansprache } from "@/lib/ansprache";
 import { CheckCircle2, Video } from "lucide-react";
 import { buttonClass } from "@/components/ui";
 import { AddToCalendar } from "@/components/add-to-calendar";
@@ -25,12 +26,15 @@ const LONG: Intl.DateTimeFormatOptions = {
   minute: "2-digit",
 };
 
-const ERRORS: Record<string, string> = {
-  slot: "Bitte wähle eine neue Uhrzeit aus.",
-  taken: "Diese Uhrzeit ist gerade vergeben worden. Bitte wähle eine andere.",
-  busy: "Zu viele Anfragen in kurzer Zeit. Bitte versuche es in ein paar Minuten erneut.",
-  error: "Das hat leider nicht geklappt. Bitte versuche es erneut.",
-};
+// Texte je Ansprache des Beraters (Ole, 14.11.2026: Standard Sie)
+function errorsFor(an: Ansprache): Record<string, string> {
+  return {
+    slot: a(an, "Bitte wähle eine neue Uhrzeit aus.", "Bitte wählen Sie eine neue Uhrzeit aus."),
+    taken: a(an, "Diese Uhrzeit ist gerade vergeben worden. Bitte wähle eine andere.", "Diese Uhrzeit ist gerade vergeben worden. Bitte wählen Sie eine andere."),
+    busy: a(an, "Zu viele Anfragen in kurzer Zeit. Bitte versuche es in ein paar Minuten erneut.", "Zu viele Anfragen in kurzer Zeit. Bitte versuchen Sie es in ein paar Minuten erneut."),
+    error: a(an, "Das hat leider nicht geklappt. Bitte versuche es erneut.", "Das hat leider nicht geklappt. Bitte versuchen Sie es erneut."),
+  };
+}
 
 type Props = {
   params: Promise<{ token: string }>;
@@ -54,7 +58,7 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
       leadId: true,
       calendarKey: true,
       customer: {
-        select: { name: true, calendarConnection: { select: { bookingSlug: true } } },
+        select: { name: true, leadAddress: true, calendarConnection: { select: { bookingSlug: true } } },
       },
     },
   });
@@ -78,13 +82,15 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
   const advisor = advisorUser?.displayName?.trim() || appt.customer.name;
   const slug = appt.customer.calendarConnection?.bookingSlug;
   const when = `${fmt(appt.startsAt, LONG)} Uhr`;
+  const an = asAnsprache(appt.customer.leadAddress);
+  const ERRORS = errorsFor(an);
   const kind = appt.mode === "video" ? "Videocall" : "Telefonat";
 
   if (appt.status === "cancelled") {
     return (
       <Shell>
         <h1 className="text-xl font-bold">
-          {sp.done === "cancelled" ? "Dein Termin ist abgesagt" : "Dieser Termin wurde abgesagt"}
+          {sp.done === "cancelled" ? a(an, "Dein Termin ist abgesagt", "Ihr Termin ist abgesagt") : "Dieser Termin wurde abgesagt"}
         </h1>
         <p className="mt-2 text-sm text-[color:var(--muted)]">
           {kind} mit {advisor} am {when}. Alle Teilnehmer wurden informiert.
@@ -133,10 +139,10 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
     <Shell>
       {sp.done === "rescheduled" ? (
         <div className="mb-4 flex items-start gap-2 rounded-[var(--radius-sm)] bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-emerald-200">
-          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> Dein Termin wurde verschoben. Trag die neue Zeit am besten gleich in deinen Kalender ein.
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> {a(an, "Dein Termin wurde verschoben. Trag die neue Zeit am besten gleich in deinen Kalender ein.", "Ihr Termin wurde verschoben. Tragen Sie die neue Zeit am besten gleich in Ihren Kalender ein.")}
         </div>
       ) : null}
-      <h1 className="text-xl font-semibold leading-tight tracking-tight">Dein Termin mit {advisor}</h1>
+      <h1 className="text-xl font-semibold leading-tight tracking-tight">{a(an, "Dein", "Ihr")} Termin mit {advisor}</h1>
       <div className="mt-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] p-4">
         <div className="text-sm text-[color:var(--muted)]">{kind}</div>
         <div className="mt-1 text-lg font-semibold">{when}</div>

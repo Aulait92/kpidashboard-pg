@@ -212,8 +212,8 @@ export function bookingTerms(opts: { trial: boolean; annual: boolean; now?: Date
 
 /** Text zum Weiterleiten auf der Seite des Empfehlenden (mit Empfehlungsangebot, falls eingestellt). */
 export function shareText(vertreter: string, link: string, offer?: ResolvedOffer | null): string {
-  if (offer) return `Ich kann dir ${vertreter} sehr empfehlen – hat mich super beraten. Über meinen Link bekommst du: ${offer.headline}. Einfach hier eintragen: ${link}`;
-  return `Ich kann dir ${vertreter} sehr empfehlen – hat mich super beraten. Hier kannst du ganz einfach selbst Kontakt aufnehmen: ${link}`;
+  if (offer) return `Ich kann dir ${vertreter} sehr empfehlen, hat mich super beraten. Über meinen Link bekommst du: ${offer.headline}. Einfach hier eintragen: ${link}`;
+  return `Ich kann dir ${vertreter} sehr empfehlen, hat mich super beraten. Hier kannst du ganz einfach selbst Kontakt aufnehmen: ${link}`;
 }
 
 export const firstName = (name: string | null | undefined) => (name ?? "").trim().split(/\s+/)[0] ?? "";
@@ -265,13 +265,13 @@ export const OFFER_PRESETS: Record<Exclude<OfferKind, "none" | "custom">, { labe
   kfz: {
     label: "Kfz-Check (ein Vertrag, schneller Einstieg)",
     headline: "Kostenloser Kfz-Check",
-    text: "{Vertreter} prüft Ihre Kfz-Versicherung: Passt der Beitrag noch, stimmen die Leistungen? Sie bekommen eine klare Einschätzung – kostenlos und unverbindlich.",
+    text: "{Vertreter} prüft Ihre Kfz-Versicherung: Passt der Beitrag noch, stimmen die Leistungen? Sie bekommen eine klare Einschätzung, kostenlos und unverbindlich.",
     cta: "Kfz-Check anfragen",
   },
   luecke: {
     label: "Absicherungs-Check (Lücken sichtbar machen)",
     headline: "Kostenloser Absicherungs-Check",
-    text: "In einem kurzen Gespräch zeigt Ihnen {Vertreter}, wie Sie bei Berufsunfähigkeit, im Alter und für Ihre Familie heute abgesichert sind – und wo es Lücken gibt. Kostenlos und unverbindlich.",
+    text: "In einem kurzen Gespräch zeigt Ihnen {Vertreter}, wie Sie bei Berufsunfähigkeit, im Alter und für Ihre Familie heute abgesichert sind und wo es Lücken gibt. Kostenlos und unverbindlich.",
     cta: "Check anfragen",
   },
 };

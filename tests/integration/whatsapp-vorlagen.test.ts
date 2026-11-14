@@ -73,7 +73,7 @@ beforeEach(async () => {
   listFails = false;
   vi.stubGlobal("fetch", vi.fn(fake360));
   vi.mocked(sendToAdmins).mockClear();
-  customerId = (await makeCustomer({ name: "Allianz Anid Brand" })).id;
+  customerId = (await makeCustomer({ name: "Allianz Anid Brand", leadAddress: "du" })).id;
 });
 afterEach(async () => {
   vi.unstubAllGlobals();
@@ -191,6 +191,27 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     remote.find((t) => t.name === "pg_outreach_v1")!.status = "APPROVED";
     await submitTemplatesForCustomer(customerId);
     expect((await item())?.done).toBe(true);
+  });
+
+  it("Ansprache „Sie“: Sie-Fassungen eingereicht (_sie), bis zur Freigabe sendet die App die freigegebene Du-Fassung", async () => {
+    await prisma.customer.update({ where: { id: customerId }, data: { leadAddress: "sie" } });
+    await connect();
+    await submitTemplatesForCustomer(customerId);
+    const names = created.map((c) => c.name).sort();
+    expect(names).toContain("pg_outreach_v1_sie");
+    expect(names).not.toContain("pg_outreach_v1");
+    const sie = created.find((c) => c.name === "pg_outreach_v1_sie")!;
+    expect(JSON.stringify(sie.components)).toContain("Ihre Anfrage");
+    // Du-Fassung war schon freigegeben, Sie-Fassung noch in Prüfung → Du-Fassung
+    await prisma.messageTemplate.create({ data: { customerId, name: "pg_outreach_v1", language: "de", purpose: "outreach", category: "marketing", status: "approved", body: "Hallo {{1}}, du", auto: true } });
+    const { pickApprovedTemplate } = await import("@/lib/whatsapp/templates");
+    expect((await pickApprovedTemplate(customerId, "outreach"))?.name).toBe("pg_outreach_v1");
+    // Sie-Fassung freigegeben → Sie-Fassung
+    await prisma.messageTemplate.updateMany({ where: { customerId, name: "pg_outreach_v1_sie" }, data: { status: "approved" } });
+    expect((await pickApprovedTemplate(customerId, "outreach"))?.name).toBe("pg_outreach_v1_sie");
+    // Wieder „Du“ → Du-Fassung
+    await prisma.customer.update({ where: { id: customerId }, data: { leadAddress: "du" } });
+    expect((await pickApprovedTemplate(customerId, "outreach"))?.name).toBe("pg_outreach_v1");
   });
 
   it("nicht verbunden → nichts eingereicht", async () => {

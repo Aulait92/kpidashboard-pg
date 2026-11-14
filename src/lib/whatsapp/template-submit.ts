@@ -19,10 +19,13 @@ import {
   purposesFor,
   templateBodyFor,
   templateNameFor,
+  isTemplateRevisionOf,
   TEMPLATE_LANGUAGE,
+  TEMPLATE_VERSION,
   type LocalStatus,
 } from "@/lib/whatsapp/template-plan";
 import { PURPOSE_LABELS, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { asAnsprache } from "@/lib/ansprache";
 
 export type SubmitSummary = {
   ok: boolean;
@@ -113,7 +116,7 @@ export async function submitTemplatesForCustomer(customerId: string, now = new D
     prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { id: true, status: true, apiKeyEnc: true } }),
     prisma.customer.findUnique({
       where: { id: customerId },
-      select: { id: true, name: true, existingCustomersEnabled: true, empfehlungEnabled: true, messageTemplates: { select: { name: true, purpose: true, status: true, auto: true } } },
+      select: { id: true, name: true, leadAddress: true, existingCustomersEnabled: true, empfehlungEnabled: true, messageTemplates: { select: { name: true, purpose: true, status: true, auto: true } } },
     }),
   ]);
   if (!customer) return { ...summary, ok: false, error: "Kunde nicht gefunden" };
@@ -135,6 +138,7 @@ export async function submitTemplatesForCustomer(customerId: string, now = new D
   }
 
   const advisor = advisorDisplayName(customer.name);
+  const ansprache = asAnsprache(customer.leadAddress);
   const purposes = purposesFor({ bestand: customer.existingCustomersEnabled, empfehlung: customer.empfehlungEnabled });
   for (const purpose of purposes) {
     const manual = customer.messageTemplates.find((t) => !t.auto && t.purpose === purpose && (t.status === "approved" || t.status === "pending"));
@@ -142,9 +146,10 @@ export async function submitTemplatesForCustomer(customerId: string, now = new D
       summary.skipped.push(purpose);
       continue;
     }
-    const name = templateNameFor(purpose);
-    const req = buildTemplateRequest(purpose, advisor);
-    const body = templateBodyFor(purpose, advisor);
+    // Fassung passend zur Ansprache; bis die Sie-Fassung freigegeben ist, sendet die App die freigegebene Du-Fassung
+    const name = templateNameFor(purpose, TEMPLATE_VERSION, ansprache);
+    const req = buildTemplateRequest(purpose, advisor, TEMPLATE_VERSION, ansprache);
+    const body = templateBodyFor(purpose, advisor, ansprache);
     let hit = findRemote(remote, name);
     let submittedAt: Date | undefined;
     if (!hit) {
@@ -167,7 +172,7 @@ export async function submitTemplatesForCustomer(customerId: string, now = new D
   }
 
   // Ältere automatisch eingereichte Versionen (andere Namen) ebenfalls nachziehen.
-  const current = new Set(purposes.map((p) => templateNameFor(p)));
+  const current = new Set(purposes.map((p) => templateNameFor(p, TEMPLATE_VERSION, ansprache)));
   for (const t of customer.messageTemplates.filter((x) => x.auto && !current.has(x.name))) {
     const hit = findRemote(remote, t.name);
     if (!hit) continue;
@@ -197,7 +202,7 @@ export async function syncTemplates(now = new Date(), opts: { force?: boolean; l
     select: {
       customerId: true,
       templatesCheckedAt: true,
-      customer: { select: { existingCustomersEnabled: true, empfehlungEnabled: true, messageTemplates: { select: { name: true, purpose: true, status: true, auto: true } } } },
+      customer: { select: { leadAddress: true, existingCustomersEnabled: true, empfehlungEnabled: true, messageTemplates: { select: { name: true, purpose: true, status: true, auto: true } } } },
     },
     orderBy: { templatesCheckedAt: { sort: "asc", nulls: "first" } },
     take: opts.limit ?? 10,
@@ -208,7 +213,12 @@ export async function syncTemplates(now = new Date(), opts: { force?: boolean; l
   for (const acc of accounts) {
     const tpls = acc.customer.messageTemplates;
     const purposes = purposesFor({ bestand: acc.customer.existingCustomersEnabled, empfehlung: acc.customer.empfehlungEnabled });
-    const settled = purposes.every((p) => tpls.some((t) => t.purpose === p && (t.status === "approved" || (!t.auto && t.status === "pending"))));
+    const ansprache = asAnsprache(acc.customer.leadAddress);
+    // Erledigt, wenn je Zweck die Fassung zur Ansprache freigegeben ist (oder der Admin eine eigene angelegt hat)
+    const settled = purposes.every((p) => {
+      const wanted = templateNameFor(p, TEMPLATE_VERSION, ansprache);
+      return tpls.some((t) => t.purpose === p && ((t.auto && isTemplateRevisionOf(t.name, wanted) && t.status === "approved") || (!t.auto && (t.status === "approved" || t.status === "pending"))));
+    });
     const recent = acc.templatesCheckedAt && now.getTime() - acc.templatesCheckedAt.getTime() < CHECK_INTERVAL_IDLE_MS;
     if (!opts.force && settled && recent) continue;
     const res = await submitTemplatesForCustomer(acc.customerId, now).catch((err) => {
@@ -230,17 +240,18 @@ export async function syncTemplates(now = new Date(), opts: { force?: boolean; l
 export async function resubmitTemplate(customerId: string, purpose: NoticePurpose, now = new Date()): Promise<{ ok: boolean; name?: string; error?: string }> {
   const [account, customer] = await Promise.all([
     prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { status: true, apiKeyEnc: true } }),
-    prisma.customer.findUnique({ where: { id: customerId }, select: { id: true, name: true } }),
+    prisma.customer.findUnique({ where: { id: customerId }, select: { id: true, name: true, leadAddress: true } }),
   ]);
   if (!customer || !account || account.status !== "connected" || !account.apiKeyEnc) return { ok: false, error: "WhatsApp ist nicht verbunden" };
-  const base = templateNameFor(purpose);
+  const ansprache = asAnsprache(customer.leadAddress);
+  const base = templateNameFor(purpose, TEMPLATE_VERSION, ansprache);
   const existing = await prisma.messageTemplate.count({ where: { customerId, name: { startsWith: `${base}_r` } } });
   const name = `${base}_r${existing + 2}`;
   const advisor = advisorDisplayName(customer.name);
-  const req = { ...buildTemplateRequest(purpose, advisor), name };
+  const req = { ...buildTemplateRequest(purpose, advisor, TEMPLATE_VERSION, ansprache), name };
   try {
     const hit = await createTemplate(decryptSecret(account.apiKeyEnc), req);
-    await applyRemote(customer, purpose, name, templateBodyFor(purpose, advisor), req.category, { ...hit, name }, { submittedAt: now });
+    await applyRemote(customer, purpose, name, templateBodyFor(purpose, advisor, ansprache), req.category, { ...hit, name }, { submittedAt: now });
     return { ok: true, name };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message.slice(0, 200) : "Einreichen fehlgeschlagen" };

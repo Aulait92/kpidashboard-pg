@@ -11,7 +11,8 @@ import { Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
 import { sendLeadMailAction } from "@/app/buyer/postfach/actions";
-import { fuelle, fuelleMitSignatur, werteFuer } from "@/lib/mail/platzhalter";
+import { fuelle, fuelleMitSignatur, hatTerminlink, werteFuer } from "@/lib/mail/platzhalter";
+import type { Ansprache } from "@/lib/ansprache";
 import { cn } from "@/lib/utils";
 
 export const LEAD_MAIL_EVENT = "pg-lead-mail-open";
@@ -29,6 +30,8 @@ export function LeadMailComposer({
   from,
   meinname,
   signatur = "",
+  ansprache = "sie",
+  terminlink = null,
   vorlagen,
   dateien,
 }: {
@@ -39,6 +42,10 @@ export function LeadMailComposer({
   meinname: string;
   /** E-Mail-Signatur (Postfach-Einstellungen); steht unter jeder E-Mail */
   signatur?: string;
+  /** Ansprache des Kunden (Sie/Du) für {anrede} */
+  ansprache?: Ansprache;
+  /** Persönlicher Buchungslink für diesen Lead (null = schon ein Termin oder kein Kalender) */
+  terminlink?: string | null;
   vorlagen: Vorlage[];
   dateien: Datei[];
 }) {
@@ -53,7 +60,11 @@ export function LeadMailComposer({
   const [text, setText] = useState(leer);
   const [files, setFiles] = useState<Set<string>>(new Set());
   const [pending, start] = useTransition();
-  const werte = { ...werteFuer(lead, meinname), signatur };
+  const werte = { ...werteFuer(lead, meinname, { ansprache, terminlink }), signatur };
+  // Erinnern, falls kein Termin gebucht wird (nur wenn der Terminlink im Text steht)
+  const [remind, setRemind] = useState(true);
+  const [remindDays, setRemindDays] = useState(2);
+  const mitLink = hatTerminlink(text, terminlink);
 
   useEffect(() => {
     const onOpen = () => setOpen(true);
@@ -74,9 +85,9 @@ export function LeadMailComposer({
 
   const send = () =>
     start(async () => {
-      const res = await sendLeadMailAction({ leadId, to, subject, text, fileIds: [...files] });
+      const res = await sendLeadMailAction({ leadId, to, subject, text, fileIds: [...files], remindDays: mitLink && remind ? remindDays : null });
       if (!res.ok) return toast.show({ message: res.error, tone: "error" });
-      toast.show({ message: `E-Mail an ${to} gesendet` });
+      toast.show({ message: res.reminder ? `E-Mail gesendet. ${res.reminder}` : `E-Mail an ${to} gesendet` });
       setOpen(false);
       setVorlage(null);
       setSubject("");
@@ -134,6 +145,19 @@ export function LeadMailComposer({
                 <span className="truncate">{d.fileName}</span>
               </label>
             ))}
+          </div>
+        ) : null}
+        {mitLink ? (
+          <div className="flex flex-wrap items-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2 text-sm" data-mail-remind>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" className="h-4 w-4" checked={remind} onChange={(e) => setRemind(e.target.checked)} />
+              Erinnern, falls kein Termin gebucht wird
+            </label>
+            <select value={remindDays} onChange={(e) => setRemindDays(Number(e.target.value))} disabled={!remind} aria-label="Erinnern in" className="h-8 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2">
+              <option value={1}>morgen</option>
+              <option value={2}>in 2 Werktagen</option>
+              <option value={5}>in 1 Woche</option>
+            </select>
           </div>
         ) : null}
         <Button variant="primary" size="md" className="w-full" disabled={pending || !to.trim() || !subject.trim() || !text.trim()} onClick={send} data-lead-mail-send>

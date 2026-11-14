@@ -4,7 +4,8 @@
 // Version hochsetzen (TEMPLATE_VERSION) – dann wird er als neue Vorlage
 // eingereicht; die alte bleibt nutzbar, bis die neue freigegeben ist.
 
-import { PURPOSE_PARAMS, SUGGESTED_TEMPLATE_TEXT, TEMPLATE_BUTTONS, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { PURPOSE_PARAMS, TEMPLATE_BUTTONS, hasSieVariant, templateTextFor, type NoticePurpose } from "@/lib/whatsapp/templates";
+import type { Ansprache } from "@/lib/ansprache";
 import type { CreateTemplateInput, RemoteTemplate } from "@/lib/whatsapp/dialog360";
 
 export const TEMPLATE_VERSION = "v1";
@@ -31,9 +32,13 @@ export function purposesFor(opts: { bestand: boolean; empfehlung?: boolean }): N
   return [...CORE_PURPOSES, ...(opts.bestand ? CAMPAIGN_PURPOSES : []), ...(opts.empfehlung ? EMPFEHLUNG_PURPOSES : [])];
 }
 
-/** Stabiler Name je Zweck und Textversion, z. B. pg_outreach_v1 (Meta: Kleinbuchstaben, Unterstrich). */
-export function templateNameFor(purpose: NoticePurpose, version = TEMPLATE_VERSION): string {
-  return `pg_${purpose}_${version}`.toLowerCase().replace(/[^a-z0-9_]/g, "_");
+/**
+ * Stabiler Name je Zweck und Textversion, z. B. pg_outreach_v1 (Meta: Kleinbuchstaben, Unterstrich).
+ * Sie-Fassung (nur Zwecke, deren Standard duzt): pg_outreach_v1_sie.
+ */
+export function templateNameFor(purpose: NoticePurpose, version = TEMPLATE_VERSION, ansprache: Ansprache = "du"): string {
+  const sie = ansprache === "sie" && hasSieVariant(purpose) ? "_sie" : "";
+  return `pg_${purpose}_${version}${sie}`.toLowerCase().replace(/[^a-z0-9_]/g, "_");
 }
 
 /**
@@ -50,8 +55,8 @@ export function advisorDisplayName(customerName: string): string {
 }
 
 /** Text der Vorlage für diesen Kunden. */
-export function templateBodyFor(purpose: NoticePurpose, advisor: string): string {
-  return SUGGESTED_TEMPLATE_TEXT[purpose].split("[Berater]").join(advisor);
+export function templateBodyFor(purpose: NoticePurpose, advisor: string, ansprache: Ansprache = "du"): string {
+  return templateTextFor(purpose, ansprache).split("[Berater]").join(advisor);
 }
 
 /** Beispielwerte für die Prüfung durch Meta (je Platzhalter, Reihenfolge wie PURPOSE_PARAMS). */
@@ -68,31 +73,38 @@ const EXAMPLES: Record<string, string> = {
   "Stand der Empfehlung": "Über Ihren Link hat sich jemand bei mir gemeldet.",
 };
 
-export function exampleValuesFor(purpose: NoticePurpose): string[] {
-  return PURPOSE_PARAMS[purpose].map((label) => EXAMPLES[label] ?? label);
+export function exampleValuesFor(purpose: NoticePurpose, ansprache: Ansprache = "du"): string[] {
+  return PURPOSE_PARAMS[purpose].map((label) =>
+    label === "Link/Hinweis" && ansprache === "sie" ? "Wir rufen Sie unter Ihrer Nummer an." : (EXAMPLES[label] ?? label),
+  );
 }
 
 /** Antrag für POST /v1/configs/templates. */
-export function buildTemplateRequest(purpose: NoticePurpose, advisor: string, version = TEMPLATE_VERSION): CreateTemplateInput {
-  const text = templateBodyFor(purpose, advisor);
-  const examples = exampleValuesFor(purpose);
+export function buildTemplateRequest(purpose: NoticePurpose, advisor: string, version = TEMPLATE_VERSION, ansprache: Ansprache = "du"): CreateTemplateInput {
+  const text = templateBodyFor(purpose, advisor, ansprache);
+  const examples = exampleValuesFor(purpose, ansprache);
   const body: Record<string, unknown> = { type: "BODY", text };
   if (examples.length) body.example = { body_text: [examples] };
   const components: unknown[] = [body];
   const buttons = TEMPLATE_BUTTONS[purpose] ?? [];
   if (buttons.length) components.push({ type: "BUTTONS", buttons: buttons.map((text) => ({ type: "QUICK_REPLY", text })) });
   return {
-    name: templateNameFor(purpose, version),
+    name: templateNameFor(purpose, version, ansprache),
     category: categoryFor(purpose),
     language: TEMPLATE_LANGUAGE,
     components,
   };
 }
 
+/** Gehört der Vorlagenname zu dieser Fassung? (genau oder Revision …_r2, …_r3) */
+export function isTemplateRevisionOf(name: string, base: string): boolean {
+  return name === base || new RegExp(`^${base}_r\\d+$`).test(name);
+}
+
 /** Vorschau mit eingesetzten Beispielwerten (Kundenansicht). */
-export function previewBodyFor(purpose: NoticePurpose, advisor: string): string {
-  const values = exampleValuesFor(purpose);
-  return templateBodyFor(purpose, advisor).replace(/\{\{(\d+)\}\}/g, (_, n: string) => values[Number(n) - 1] ?? "");
+export function previewBodyFor(purpose: NoticePurpose, advisor: string, ansprache: Ansprache = "du"): string {
+  const values = exampleValuesFor(purpose, ansprache);
+  return templateBodyFor(purpose, advisor, ansprache).replace(/\{\{(\d+)\}\}/g, (_, n: string) => values[Number(n) - 1] ?? "");
 }
 
 /** Verständliche Titel für die Kundenansicht. */

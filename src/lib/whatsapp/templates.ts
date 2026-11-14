@@ -13,6 +13,7 @@
 
 import { decryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
+import { asAnsprache, type Ansprache } from "@/lib/ansprache";
 import { sendTemplate, sendText } from "@/lib/whatsapp/dialog360";
 
 export type NoticePurpose =
@@ -110,6 +111,44 @@ export const SUGGESTED_TEMPLATE_TEXT: Record<NoticePurpose, string> = {
 };
 
 /**
+ * Sie-Fassungen (Ole, 14.11.2026: Ansprache je Kunde, Standard „Sie“). Nur für Zwecke, deren Standardtext duzt;
+ * Kampagnen und Empfehlungen siezen ohnehin. Werden als eigene Vorlage (Name mit „_sie“) bei Meta eingereicht.
+ */
+export const SIE_TEMPLATE_TEXT: Partial<Record<NoticePurpose, string>> = {
+  outreach:
+    "Hallo {{1}}, vielen Dank für Ihre Anfrage! Hier ist der digitale Assistent von [Berater]. Haben Sie kurz Zeit für zwei Fragen, damit wir Ihnen ein passendes Angebot machen können?",
+  booking_confirmation:
+    "Hallo {{1}}, vielen Dank für Ihre Buchung bei [Berater]. Ihr Termin ist bestätigt: {{2}} ({{3}}). {{4}} Wir freuen uns auf das Gespräch!",
+  reminder:
+    "Hallo {{1}}, hier ist eine kurze Erinnerung an Ihren Termin mit [Berater]: {{2}} ({{3}}). {{4}} Bis dann!",
+  reschedule:
+    "Hallo {{1}}, Ihr Termin mit [Berater] musste leider verschoben werden. Die neue Zeit ist {{2}} ({{3}}). {{4}} Vielen Dank für Ihr Verständnis!",
+  followup:
+    "Hallo {{1}}, hier ist nochmal der digitale Assistent von [Berater]. Passt es Ihnen diese Woche noch für ein kurzes Gespräch? Antworten Sie einfach hier, dann schlage ich Ihnen Zeiten vor.",
+  followup_offer:
+    "Hallo {{1}}, hier ist der digitale Assistent von [Berater]. Konnten Sie sich das Angebot zu {{2}} schon anschauen? Wenn Sie Fragen haben oder etwas anpassen möchten, antworten Sie einfach hier.",
+  followup_noshow:
+    "Hallo {{1}}, schade, dass es mit unserem Termin nicht geklappt hat. Hier ist der digitale Assistent von [Berater]. Sollen wir einen neuen Termin finden? Antworten Sie einfach hier.",
+  followup_last:
+    "Hallo {{1}}, hier ist nochmal der digitale Assistent von [Berater]. Ich melde mich ein letztes Mal: Ist das Thema für Sie noch aktuell? Dann antworten Sie einfach hier. Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
+};
+
+/** Vorlagentext je Ansprache (Sie-Fassung, falls vorhanden). */
+export function templateTextFor(purpose: NoticePurpose, ansprache: Ansprache = "du"): string {
+  return (ansprache === "sie" ? SIE_TEMPLATE_TEXT[purpose] : undefined) ?? SUGGESTED_TEMPLATE_TEXT[purpose];
+}
+
+/** Gibt es für diesen Zweck eine eigene Sie-Fassung? */
+export function hasSieVariant(purpose: NoticePurpose): boolean {
+  return !!SIE_TEMPLATE_TEXT[purpose];
+}
+
+/** Ist dieser (automatisch eingereichte) Vorlagenname eine Sie-Fassung? pg_outreach_v1_sie, …_sie_r2 */
+export function isSieTemplateName(name: string): boolean {
+  return /_sie(_r\d+)?$/.test(name);
+}
+
+/**
  * Schnellantwort-Knopf für Direktwerbung (Kampagnen an Bestandskunden): Hinweis auf das
  * Widerspruchsrecht (Art. 21 Abs. 4 DSGVO). Ein Klick kommt als Antwort mit diesem Text
  * zurück und wird wie „STOPP“ behandelt (lib/bestand/campaigns.ts → handleCampaignReply).
@@ -128,6 +167,20 @@ export class NoTemplateError extends Error {
   constructor(purpose: string) {
     super(`Keine freigegebene WhatsApp-Vorlage für „${purpose}".`);
   }
+}
+
+/**
+ * Freigegebene Vorlage für den Versand: passend zur Ansprache des Kunden (Sie-Fassung bei „sie“),
+ * sonst die freigegebene andere Fassung. Der Erstkontakt wird nie blockiert, solange irgendeine freigegeben ist.
+ */
+export async function pickApprovedTemplate(customerId: string, purpose: NoticePurpose) {
+  const [customer, approved] = await Promise.all([
+    prisma.customer.findUnique({ where: { id: customerId }, select: { leadAddress: true } }),
+    prisma.messageTemplate.findMany({ where: { customerId, purpose, status: "approved" }, orderBy: { updatedAt: "desc" } }),
+  ]);
+  if (!approved.length) return null;
+  const wantSie = asAnsprache(customer?.leadAddress) === "sie" && hasSieVariant(purpose);
+  return approved.find((t) => isSieTemplateName(t.name) === wantSie) ?? approved[0];
 }
 
 /** {{1}}, {{2}} … durch Parameter ersetzen. */
@@ -185,14 +238,7 @@ export async function sendWhatsAppNotice(opts: {
     body = opts.text;
     messageId = (await sendText(apiKey, opts.to, opts.text)).messageId;
   } else {
-    const tpl = await prisma.messageTemplate.findFirst({
-      where: {
-        customerId: opts.customerId,
-        purpose: opts.purpose,
-        status: "approved",
-      },
-      orderBy: { updatedAt: "desc" },
-    });
+    const tpl = await pickApprovedTemplate(opts.customerId, opts.purpose);
     if (!tpl) throw new NoTemplateError(opts.purpose);
     mode = "template";
     pricingCategory = tpl.category.toLowerCase();

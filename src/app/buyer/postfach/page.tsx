@@ -5,6 +5,8 @@ import { buttonClass, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { googleMailAvailable, microsoftMailAvailable, postfachOf, PROVIDER_LABEL } from "@/lib/mail/postfach";
 import { loadVorlagen, PLATZHALTER } from "@/lib/mail/vorlagen";
+import { AnspracheForm } from "@/components/ansprache-form";
+import { asAnsprache } from "@/lib/ansprache";
 import { disconnectPostfachAction } from "./actions";
 import { SignaturForm, SmtpForm, TestButton, VorlagenListe } from "./forms";
 import { prisma } from "@/lib/prisma";
@@ -26,10 +28,11 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   const sp = await searchParams;
-  const [conn, vorlagen, me] = await Promise.all([
+  const [conn, vorlagen, me, ansprache] = await Promise.all([
     postfachOf(ctx.userId),
     loadVorlagen(ctx.customerId),
     ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { mailSignature: true } }) : null,
+    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { leadAddress: true } }),
   ]);
   const status = sp.postfach ? STATUS_TEXT[sp.postfach] : null;
   const readOnly = ctx.preview;
@@ -122,8 +125,15 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
         <CardHeader title="Vorlagen" icon={Mail} />
         <div className="p-5">
           <p className="mb-3 text-sm text-[color:var(--muted)]">
-            Platzhalter werden beim Schreiben ersetzt: {PLATZHALTER.join(", ")}.
+            Platzhalter werden beim Schreiben ersetzt: {PLATZHALTER.join(", ")}. {"{anrede}"} wird je nach Ansprache zu „Hallo Anna Beispiel“
+            (Sie, ohne Nachname „Guten Tag“) oder „Hallo Anna“ (Du). {"{terminlink}"} ist der persönliche Buchungslink des Kontakts; steht schon ein
+            Termin an, fällt der Satz weg.
           </p>
+          {ctx.teamRole === "owner" ? (
+            <div className="mb-4">
+              <AnspracheForm current={asAnsprache(ansprache?.leadAddress)} readOnly={readOnly} />
+            </div>
+          ) : null}
           <VorlagenListe vorlagen={vorlagen} readOnly={readOnly} />
         </div>
       </Card>

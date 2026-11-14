@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { a, asAnsprache, type Ansprache } from "@/lib/ansprache";
 import { CheckCircle2, Clock, Phone, Video } from "lucide-react";
 import { buttonClass } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
@@ -23,18 +24,21 @@ const TZ = "Europe/Berlin";
 const PRIVACY_URL =
   process.env.BOOKING_PRIVACY_URL ?? "https://performancegrowth.de/datenschutz";
 
-const ERRORS: Record<string, string> = {
-  slot: "Bitte wähle eine Uhrzeit aus.",
-  name: "Bitte gib deinen Namen an.",
-  phone: "Bitte gib eine gültige Telefonnummer an.",
-  email: "Bitte gib eine gültige E-Mail-Adresse an.",
-  consent: "Bitte bestätige die Datenschutzhinweise.",
-  taken: "Diese Uhrzeit ist leider gerade vergeben worden. Bitte wähle eine andere.",
-  busy: "Gerade gehen sehr viele Buchungen ein. Bitte versuche es in ein paar Minuten erneut.",
-  unavailable: "Die Online-Buchung ist aktuell nicht verfügbar.",
-  invalid: "Die Buchung konnte nicht verarbeitet werden.",
-  error: "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
-};
+// Fehlertexte je Ansprache des Beraters (Ole, 14.11.2026: Standard Sie)
+function errorsFor(an: Ansprache): Record<string, string> {
+  return {
+    slot: a(an, "Bitte wähle eine Uhrzeit aus.", "Bitte wählen Sie eine Uhrzeit aus."),
+    name: a(an, "Bitte gib deinen Namen an.", "Bitte geben Sie Ihren Namen an."),
+    phone: a(an, "Bitte gib eine gültige Telefonnummer an.", "Bitte geben Sie eine gültige Telefonnummer an."),
+    email: a(an, "Bitte gib eine gültige E-Mail-Adresse an.", "Bitte geben Sie eine gültige E-Mail-Adresse an."),
+    consent: a(an, "Bitte bestätige die Datenschutzhinweise.", "Bitte bestätigen Sie die Datenschutzhinweise."),
+    taken: a(an, "Diese Uhrzeit ist leider gerade vergeben worden. Bitte wähle eine andere.", "Diese Uhrzeit ist leider gerade vergeben worden. Bitte wählen Sie eine andere."),
+    busy: a(an, "Gerade gehen sehr viele Buchungen ein. Bitte versuche es in ein paar Minuten erneut.", "Gerade gehen sehr viele Buchungen ein. Bitte versuchen Sie es in ein paar Minuten erneut."),
+    unavailable: "Die Online-Buchung ist aktuell nicht verfügbar.",
+    invalid: "Die Buchung konnte nicht verarbeitet werden.",
+    error: a(an, "Etwas ist schiefgelaufen. Bitte versuche es erneut.", "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."),
+  };
+}
 
 function fmt(d: Date, opts: Intl.DateTimeFormatOptions): string {
   return new Intl.DateTimeFormat("de-DE", { timeZone: TZ, ...opts }).format(d);
@@ -67,7 +71,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
     select: {
       customerId: true,
       status: true,
-      customer: { select: { name: true, onboarding: { select: { websiteInfo: true } } } },
+      customer: { select: { name: true, leadAddress: true, onboarding: { select: { websiteInfo: true } } } },
     },
   });
   // Datenschutzhinweis des Beraters (verantwortlich für die Termindaten),
@@ -105,6 +109,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
   }
 
   const advisor = conn.customer.name;
+  const an = asAnsprache(conn.customer.leadAddress);
 
   // ── Bestätigung ───────────────────────────────────────────────────────
   if (sp.ok && sp.a) {
@@ -138,8 +143,8 @@ export default async function BookingPage({ params, searchParams }: Props) {
           </div>
           <p className="mt-4 text-sm leading-relaxed text-[color:var(--muted)]">
             {appt.mode === "video"
-              ? "Die Bestätigung mit dem Link zum Videocall bekommst du per WhatsApp und E-Mail."
-              : "Wir rufen dich zur vereinbarten Zeit an. Die Bestätigung bekommst du per WhatsApp und E-Mail."}
+              ? a(an, "Die Bestätigung mit dem Link zum Videocall bekommst du per WhatsApp und E-Mail.", "Die Bestätigung mit dem Link zum Videocall bekommen Sie per WhatsApp und E-Mail.")
+              : a(an, "Wir rufen dich zur vereinbarten Zeit an. Die Bestätigung bekommst du per WhatsApp und E-Mail.", "Wir rufen Sie zur vereinbarten Zeit an. Die Bestätigung bekommen Sie per WhatsApp und E-Mail.")}
           </p>
           {appt.mode === "video" && appt.meetUrl ? (
             <a href={appt.meetUrl} className={buttonClass("primary", "md", "mt-4 w-full")}>
@@ -180,6 +185,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
   const action = bookPublicAction.bind(null, slug);
   // Zeitstempel für die Bot-Falle (echte Menschen brauchen > 3 s).
   const renderedAt = nowMs();
+  const ERRORS = errorsFor(an);
   const error = sp.err ? (ERRORS[sp.err] ?? ERRORS.error) : null;
 
   return (
@@ -219,13 +225,13 @@ export default async function BookingPage({ params, searchParams }: Props) {
       {days.length === 0 ? (
         <p className="mt-6 rounded-xl bg-[color:var(--background)] p-4 text-sm">
           Aktuell sind keine Termine online buchbar. Wir melden uns in Kürze
-          bei dir, um einen Termin zu vereinbaren.
+          {a(an, " bei dir", " bei Ihnen")}, um einen Termin zu vereinbaren.
         </p>
       ) : (
         <form action={action} className="mt-6 space-y-6">
           <section>
             <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-              <StepNo n={1} /> Wähle eine Uhrzeit
+              <StepNo n={1} /> {a(an, "Wähle eine Uhrzeit", "Wählen Sie eine Uhrzeit")}
             </h2>
             <div className="space-y-4">
               {days.map((day) => (
@@ -257,7 +263,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
 
           <section>
             <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-              <StepNo n={2} /> Wie möchtest du sprechen?
+              <StepNo n={2} /> {a(an, "Wie möchtest du sprechen?", "Wie möchten Sie sprechen?")}
             </h2>
             <div className="grid grid-cols-2 gap-2">
               {[
@@ -284,7 +290,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
 
           <section className="space-y-3">
             <h2 className="flex items-center gap-2 text-sm font-semibold">
-              <StepNo n={3} /> Deine Kontaktdaten
+              <StepNo n={3} /> {a(an, "Deine Kontaktdaten", "Ihre Kontaktdaten")}
             </h2>
             <Field name="name" label="Vor- und Nachname" autoComplete="name" defaultValue={prefill?.name} />
             <Field

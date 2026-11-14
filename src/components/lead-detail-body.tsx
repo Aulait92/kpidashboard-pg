@@ -22,6 +22,8 @@ import { listLeadFiles } from "@/lib/lead-files";
 import { postfachOf } from "@/lib/mail/postfach";
 import { loadVorlagen } from "@/lib/mail/vorlagen";
 import { LeadMailComposer } from "@/components/lead-mail";
+import { asAnsprache } from "@/lib/ansprache";
+import { appUrl } from "@/lib/whatsapp/event-text";
 import { LeadFiles } from "@/components/lead-files";
 import { loadCustomerProvision } from "@/lib/provision-server";
 import { estimatedProvision, ruleFor } from "@/lib/provision";
@@ -214,6 +216,13 @@ export async function LeadDetailBody({
     team.userId ? prisma.user.findUnique({ where: { id: team.userId }, select: { displayName: true, mailSignature: true } }) : null,
   ]);
   const vorlagen = postfach ? await loadVorlagen(customerId) : [];
+  // E-Mail: Ansprache des Kunden und persönlicher Buchungslink für diesen Lead (Ole, 14.11.2026).
+  // Steht schon ein Termin an, entfällt der Satz mit dem Link.
+  const ansprache = postfach
+    ? asAnsprache((await prisma.customer.findUnique({ where: { id: customerId }, select: { leadAddress: true } }))?.leadAddress)
+    : "sie";
+  const base = appUrl();
+  const terminlink = postfach && !nextAppt && cal?.status === "connected" && cal.bookingSlug && base ? `${base}/book/${cal.bookingSlug}?lead=${lead.id}` : null;
   let beitrag: string | null = null;
   let provision: string | null = null;
   if (won && rates) {
@@ -261,6 +270,8 @@ export async function LeadDetailBody({
           from={postfach.email}
           meinname={postfach.fromName ?? me?.displayName ?? ""}
           signatur={me?.mailSignature ?? ""}
+          ansprache={ansprache}
+          terminlink={terminlink}
           vorlagen={vorlagen}
           dateien={files.map((f) => ({ id: f.id, fileName: f.fileName, kind: f.kind }))}
         />

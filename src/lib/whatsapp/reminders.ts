@@ -6,6 +6,13 @@ import { sendLeadEmail } from "@/lib/calendar/lead-email";
 import { prisma } from "@/lib/prisma";
 import { appUrl } from "@/lib/whatsapp/event-text";
 import { firstNameOf, NoTemplateError, sendWhatsAppNotice } from "@/lib/whatsapp/templates";
+import { a, asAnsprache, type Ansprache } from "@/lib/ansprache";
+
+/** Ansprache des Kunden (Sie/Du) für Texte an Leads. */
+export async function anspracheOf(customerId: string): Promise<Ansprache> {
+  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { leadAddress: true } });
+  return asAnsprache(c?.leadAddress);
+}
 
 const LEAD_MS = 24 * 60 * 60 * 1000;
 const TZ = "Europe/Berlin";
@@ -25,8 +32,8 @@ function modeLabel(mode: string): string {
   return mode === "video" ? "Videocall" : "Telefonat";
 }
 
-function linkOrHint(mode: string, meetUrl: string | null): string {
-  return mode === "video" && meetUrl ? meetUrl : "Wir rufen dich an.";
+function linkOrHint(mode: string, meetUrl: string | null, an: Ansprache = "du"): string {
+  return mode === "video" && meetUrl ? meetUrl : a(an, "Wir rufen dich an.", "Wir rufen Sie an.");
 }
 
 /** Bestätigung nach Buchung (z. B. über die Buchungsseite). */
@@ -41,18 +48,19 @@ export async function sendBookingConfirmation(opts: {
   /** Link zum Absagen/Verschieben (Self-Service). */
   manageUrl?: string | null;
 }): Promise<void> {
+  const an = await anspracheOf(opts.customerId);
   const manage = opts.manageUrl ? ` Absagen oder verschieben: ${opts.manageUrl}` : "";
   const params = [
     firstNameOf(opts.name),
     formatWhenDE(opts.startsAt),
     modeLabel(opts.mode),
-    `${linkOrHint(opts.mode, opts.meetUrl)}${manage}`,
+    `${linkOrHint(opts.mode, opts.meetUrl, an)}${manage}`,
   ];
   const text =
-    `Hallo ${params[0]}, dein Termin ist bestätigt: ${params[1]} (${params[2]}). ` +
+    `Hallo ${params[0]}, ${a(an, "dein", "Ihr")} Termin ist bestätigt: ${params[1]} (${params[2]}). ` +
     (opts.mode === "video" && opts.meetUrl
       ? `Hier der Link zum Videocall: ${opts.meetUrl}`
-      : "Wir rufen dich zur vereinbarten Zeit an.") +
+      : a(an, "Wir rufen dich zur vereinbarten Zeit an.", "Wir rufen Sie zur vereinbarten Zeit an.")) +
     (opts.manageUrl ? `\n\nFalls etwas dazwischenkommt: ${opts.manageUrl}` : "") +
     " Bis dann! 🙂";
   await sendWhatsAppNotice({
@@ -80,17 +88,22 @@ export async function sendRescheduleNotice(opts: {
   meetUrl: string | null;
   manageUrl: string | null;
 }): Promise<void> {
-  const change = opts.manageUrl ? `Passt dir die Zeit nicht? Hier wählst du eine andere: ${opts.manageUrl}` : "";
+  const an = await anspracheOf(opts.customerId);
+  const change = opts.manageUrl
+    ? a(an, `Passt dir die Zeit nicht? Hier wählst du eine andere: ${opts.manageUrl}`, `Passt Ihnen die Zeit nicht? Hier wählen Sie eine andere: ${opts.manageUrl}`)
+    : "";
   const params = [
     firstNameOf(opts.name),
     formatWhenDE(opts.startsAt),
     modeLabel(opts.mode),
-    [linkOrHint(opts.mode, opts.meetUrl), change].filter(Boolean).join(" "),
+    [linkOrHint(opts.mode, opts.meetUrl, an), change].filter(Boolean).join(" "),
   ];
   const text =
-    `Hallo ${params[0]}, wir mussten deinen Termin leider verschieben. Neue Zeit: ${params[1]} (${params[2]}).` +
-    (opts.manageUrl ? `\n\nPasst dir die Zeit nicht? Hier wählst du ganz einfach eine andere: ${opts.manageUrl}` : "") +
-    "\n\nDanke für dein Verständnis! 🙂";
+    `Hallo ${params[0]}, wir mussten ${a(an, "deinen", "Ihren")} Termin leider verschieben. Neue Zeit: ${params[1]} (${params[2]}).` +
+    (opts.manageUrl
+      ? `\n\n${a(an, "Passt dir die Zeit nicht? Hier wählst du ganz einfach eine andere", "Passt Ihnen die Zeit nicht? Hier wählen Sie ganz einfach eine andere")}: ${opts.manageUrl}`
+      : "") +
+    `\n\n${a(an, "Danke für dein Verständnis!", "Danke für Ihr Verständnis!")} 🙂`;
   const send = (purpose: "reschedule" | "booking_confirmation") =>
     sendWhatsAppNotice({ customerId: opts.customerId, to: opts.to, purpose, params, text, leadId: opts.leadId ?? null, contactName: opts.name });
   // Außerhalb des 24h-Fensters: Vorlage „Termin verschoben“. Solange sie bei Meta
@@ -157,17 +170,18 @@ export async function runReminders(): Promise<ReminderResult> {
     if (!conv?.contactPhone) continue;
 
     const manageUrl = appt.manageToken ? `${appUrl() ?? ""}/book/manage/${appt.manageToken}` : null;
+    const an = await anspracheOf(appt.customerId);
     const params = [
       firstNameOf(conv.contactName),
       formatWhenDE(appt.startsAt),
       modeLabel(appt.mode),
-      `${linkOrHint(appt.mode, appt.meetUrl)}${manageUrl ? ` Absagen oder verschieben: ${manageUrl}` : ""}`,
+      `${linkOrHint(appt.mode, appt.meetUrl, an)}${manageUrl ? ` Absagen oder verschieben: ${manageUrl}` : ""}`,
     ];
     const text =
       `Kurze Erinnerung an unseren ${params[2]} am ${params[1]}.` +
       (appt.mode === "video" && appt.meetUrl
         ? ` Hier der Link: ${appt.meetUrl}`
-        : " Wir rufen dich an.") +
+        : ` ${a(an, "Wir rufen dich an.", "Wir rufen Sie an.")}`) +
       (manageUrl ? `\n\nPasst es doch nicht? ${manageUrl}` : "") +
       " Bis dann! 🙂";
     // WhatsApp + E-Mail; als erledigt gilt die Erinnerung, sobald EIN Kanal

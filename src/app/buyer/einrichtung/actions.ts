@@ -7,6 +7,8 @@ import { sendToAdmins } from "@/lib/push";
 import { logOfferActivity } from "@/lib/offer-links";
 import { bookHelpCall } from "@/lib/help-call";
 import { checkMetaAccess, type MetaCheck } from "@/lib/selbst-einrichtung";
+import { asAnsprache } from "@/lib/ansprache";
+import { vorlagenAufAnsprache } from "@/lib/mail/vorlagen";
 
 export type SetupState = { ok?: boolean; error?: string };
 
@@ -38,7 +40,14 @@ export async function saveQuestionnaireAction(_prev: SetupState, fd: FormData): 
   if (software) {
     const formats = ["telefon", "video", "vorOrt"].filter((k) => fd.get(`format_${k}`) === "on");
     if (formats.length === 0) return { error: "Bitte mindestens eine Terminart wählen." };
-    Object.assign(data, { formats });
+    const ansprache = asAnsprache(String(fd.get("ansprache") ?? "sie"));
+    Object.assign(data, { formats, ansprache });
+    // Ansprache gilt sofort für alle Texte an Leads (Ole, 14.11.2026)
+    const before = await prisma.customer.findUnique({ where: { id: ob.customerId }, select: { leadAddress: true } });
+    if (asAnsprache(before?.leadAddress) !== ansprache) {
+      await prisma.customer.update({ where: { id: ob.customerId }, data: { leadAddress: ansprache } });
+      await vorlagenAufAnsprache(ob.customerId, ansprache);
+    }
   } else {
     const leadEmails = str(fd, "leadEmails", 500)
       .split(/[,;\s]+/)

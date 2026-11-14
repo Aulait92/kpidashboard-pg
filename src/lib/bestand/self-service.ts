@@ -64,7 +64,7 @@ export async function selfBookBestand(customerId: string, actor: AuditActor & { 
     customerParagraphs: withdraw
       ? ["Ihre Kündigung des Bestandskunden-Moduls ist zurückgenommen. Das Modul läuft wie bisher weiter."]
       : [
-          `vielen Dank – das Bestandskunden-Modul ist ab sofort für Sie freigeschaltet (${eur(price)} netto im Monat). ${
+          `vielen Dank, das Bestandskunden-Modul ist ab sofort für Sie freigeschaltet (${eur(price)} netto im Monat). ${
             res.note?.startsWith("Berechnet ab Abo-Start") ? res.note.replace(/\.$/, "") : terms.charge
           }. ${terms.cancel}.`,
           `Laden Sie jetzt Ihre Kundenliste hoch: Die App zeigt Ihnen Lücken, Jahresgespräche, Geburtstage und auslaufende Verträge. WhatsApp-Gebühren für bis zu ${PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat sind inklusive.`,
