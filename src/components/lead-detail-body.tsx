@@ -240,7 +240,7 @@ export async function LeadDetailBody({
     const sum = active.map((c) => contractProvision(c, rates));
     const premiums = active.map((c) => ({ v: c.premium, monthly: sparteInfo(c.sparte).rateKey === "pkv" })).filter((x) => x.v != null);
     if (premiums.length === 1) beitrag = `${formatEUR(premiums[0].v!)} ${premiums[0].monthly ? "im Monat" : "im Jahr"}`;
-    else if (premiums.length > 1) beitrag = `${premiums.length} Verträge`;
+    else if (premiums.length > 1) beitrag = `${formatEUR(premiums.reduce((n, x) => n + x.v! * (x.monthly ? 12 : 1), 0))} im Jahr (${premiums.length} Verträge)`;
     const first = sum.reduce((s, p) => s + p.firstYear, 0);
     const trail = sum.filter((p) => p.trailFromYear2).reduce((s, p) => s + p.trailPerYear, 0);
     const missing = active.some((c) => c.premium == null && c.provisionValue == null);

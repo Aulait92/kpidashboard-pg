@@ -33,7 +33,7 @@ import { originWhere } from "@/lib/lead-herkunft";
 import { earlyHint, pickTips } from "@/lib/zahlen-tipps";
 import { loadTipSignals, monthsSinceStart } from "@/lib/zahlen-tipps-server";
 import { ZahlenTippsCard } from "@/components/zahlen-tipps-card";
-import { BestandGrowthChart } from "@/components/bestand-growth-chart";
+import { BestandGrowthSection } from "@/components/bestand-growth-chart";
 
 type SearchParams = Promise<{
   range?: string;
@@ -225,7 +225,7 @@ async function BuyerDashboardBody({
 
       <section>
         <h2 className="mb-3 text-[15px] font-semibold tracking-tight">Kosten &amp; Ertrag</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <KpiCard
             label="Lead-Kosten"
             value={formatEUR(cost)}
@@ -327,23 +327,10 @@ async function BuyerDashboardBody({
       </details>
 
       {bestand.growth.some((g) => g.total > 0) ? (
-        <details
-          className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)] [&>summary::-webkit-details-marker]:hidden"
-          data-bestand-wachstum
-        >
-          <summary className="flex cursor-pointer items-center justify-between px-5 py-3.5 text-[15px] font-semibold">
-            So wächst Ihr Bestand
-            <ChevronDown className="h-4 w-4 text-[color:var(--muted)] transition group-open:rotate-180" />
-          </summary>
-          <div className="border-t border-[color:var(--border)] p-4 sm:p-5">
-            <p className="mb-3 text-sm text-[color:var(--muted)]">
-              {makler ? "Bestandscourtage" : "Bestandsprovision"} pro Jahr, wenn Sie im aktuellen Tempo weitermachen:{" "}
-              {bestand.perMonth.toLocaleString("de-DE")} {bestand.perMonth === 1 ? "Vertrag" : "Verträge"} pro Monat wie in den letzten 3 Monaten,{" "}
-              {Math.round(bestand.storno * 100)} % Storno pro Jahr.
-            </p>
-            <BestandGrowthChart points={bestand.growth} />
-          </div>
-        </details>
+        <BestandGrowthSection
+          points={bestand.growth}
+          intro={`${makler ? "Bestandscourtage" : "Bestandsprovision"} pro Jahr, wenn Sie im aktuellen Tempo weitermachen: ${bestand.perMonth.toLocaleString("de-DE")} ${bestand.perMonth === 1 ? "Vertrag" : "Verträge"} pro Monat wie in den letzten 3 Monaten, ${Math.round(bestand.storno * 100)} % Storno pro Jahr.`}
+        />
       ) : null}
 
       {/* BuyerComparison/Leaderboard temporär ausgeblendet —

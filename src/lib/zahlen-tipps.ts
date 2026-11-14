@@ -61,7 +61,8 @@ const pct = (n: number) => `${Math.round(n * 100)} %`;
 const WEAK_GAP = 0.03;
 
 function weak(r: { own: number | null; avg: number | null }): number | null {
-  if (r.own == null || r.avg == null) return null;
+  // Nur echte Quoten vergleichen (Termine sind nicht immer Teil von „Erreicht“, dann über 100 %)
+  if (r.own == null || r.avg == null || r.own > 1 || r.avg > 1) return null;
   const gap = r.avg - r.own;
   return gap > WEAK_GAP ? gap : null;
 }
