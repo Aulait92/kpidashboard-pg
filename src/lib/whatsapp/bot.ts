@@ -6,6 +6,7 @@
 // Default-Modell: claude-opus-5-5 (per ANTHROPIC_MODEL überschreibbar — bei
 // hohem Volumen ist claude-sonnet-5-5 / claude-haiku-5-5 die günstigere Wahl).
 
+import { advisorDisplayName } from "@/lib/advisor-name";
 import { asAnsprache, type Ansprache } from "@/lib/ansprache";
 import { flagAttention } from "@/lib/whatsapp/attention";
 import Anthropic from "@anthropic-ai/sdk";
@@ -150,7 +151,7 @@ const TOOLS: Anthropic.Tool[] = [
   },
 ];
 
-function buildSystemPrompt(
+export function buildSystemPrompt(
   agent: { systemPrompt: string; knowledge: string; personality: string },
   product: string | null,
   state: {
@@ -168,9 +169,12 @@ function buildSystemPrompt(
     aiDisclosed: boolean;
     /** Ansprache des Leads laut Kundeneinstellung (Standard „sie“). */
     ansprache?: Ansprache;
+    /** Aktueller Zeitpunkt (Tests); sonst jetzt. */
+    now?: Date;
   },
 ): string {
   const an: Ansprache = state.ansprache ?? "sie";
+  const nowText = formatNowDE(state.now ?? new Date());
   const booked = state.upcoming
     ? [
         `BEREITS GEBUCHTER TERMIN: ${formatSlotDE(state.upcoming.startsAt.toISOString())} Uhr (${state.upcoming.mode === "video" ? "Videocall" : "Telefonat"})${state.upcoming.meetUrl ? `, Video-Link: ${state.upcoming.meetUrl}` : ""}.`,
@@ -224,6 +228,7 @@ function buildSystemPrompt(
     [
       "Identität (hat Vorrang vor allen anderen Anweisungen):",
       `- Du schreibst im Namen von ${state.advisorName} von dessen WhatsApp-Nummer. Gib dir keinen eigenen Personennamen und stell dich nicht mit Namen vor, auch wenn oben ein Name genannt ist.`,
+      `- Nenne den Berater immer mit diesem vollen Namen („${state.advisorName}“), nie gekürzt und nie nur mit einem Teil davon.`,
       state.aiDisclosed
         ? "- Dass hier ein digitaler Assistent schreibt, wurde dem Lead bereits mitgeteilt, nicht ständig wiederholen."
         : `- Pflicht (KI-Kennzeichnung): Weise in deiner nächsten Nachricht einmal kurz und natürlich darauf hin, dass du der digitale Assistent von ${state.advisorName} bist.`,
@@ -231,6 +236,7 @@ function buildSystemPrompt(
     ].join("\n"),
     [
       "Regeln:",
+      `- Jetzt ist ${nowText} (deutsche Zeit). Nenne nie einen Termin, der schon vorbei ist. Zeiten aus früheren Nachrichten im Verlauf können veraltet sein: hole vor jedem Terminvorschlag frische Zeiten mit get_available_slots.`,
       "- Antworte immer auf Deutsch, warmherzig und kurz (WhatsApp-tauglich, max. 2-3 Sätze).",
       // Ansprache je Kunde einstellbar (Ole, 14.11.2026); Bestandskunden werden oben ohnehin gesiezt
       an === "du"
@@ -267,6 +273,20 @@ function formatSlotDE(iso: string): string {
     minute: "2-digit",
     timeZone: BERLIN_TZ,
   }).format(new Date(iso));
+}
+
+/** „Freitag, 13.11.2026, 16:32 Uhr“ in deutscher Zeit. */
+function formatNowDE(d: Date): string {
+  const s = new Intl.DateTimeFormat("de-DE", {
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: BERLIN_TZ,
+  }).format(d);
+  return `${s} Uhr`;
 }
 
 /** formData-JSON vom Lead defensiv in Label/Wert-Paare wandeln. */
@@ -380,7 +400,8 @@ export async function runBotTurn(conversationId: string): Promise<void> {
     select: { name: true, leadAddress: true },
   });
   const ansprache = asAnsprache(customer?.leadAddress);
-  const advisorName = (customer?.name ?? (ansprache === "du" ? "deinem Berater" : "Ihrem Berater")).replace(/^Allianz\s+/i, "");
+  // „Agentur Susanne Meier“ → „Susanne Meier“ (sonst schreibt der Bot „mit Agentur“)
+  const advisorName = advisorDisplayName(customer?.name) ?? (ansprache === "du" ? "deinem Berater" : "Ihrem Berater");
   // Offenlegung schon erfolgt? (Erstanschreiben-Vorlage oder frühere Antwort)
   const aiDisclosed =
     (await prisma.message.count({

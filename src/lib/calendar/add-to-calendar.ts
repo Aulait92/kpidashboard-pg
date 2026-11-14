@@ -4,6 +4,7 @@
 // kundenfreundlichem Text: Berater-Name, Rückrufnummer bzw. Video-Link,
 // Link zum Verschieben/Absagen — keine internen Daten.
 
+import { advisorDisplayName } from "@/lib/advisor-name";
 import { prisma } from "@/lib/prisma";
 import {
   appUrl,
@@ -62,6 +63,7 @@ async function loadCustomerEvent(
         select: { contactName: true, contactPhone: true },
       })
     : null;
+  const advisor = advisorDisplayName(appt.customer.name) ?? appt.customer.name;
   const mode = appt.mode === "video" ? "video" : "phone";
   const manageUrl = `${appUrl() ?? ""}/book/manage/${token}`;
   const firstName = (conv?.contactName ?? "").trim().split(/\s+/)[0] || "";
@@ -69,22 +71,22 @@ async function loadCustomerEvent(
     uid: `${appt.id}@termin`,
     start: appt.startsAt,
     end: appt.endsAt ?? new Date(appt.startsAt.getTime() + 30 * 60000),
-    summary: customerEventSummary(mode, appt.customer.name),
+    summary: customerEventSummary(mode, advisor),
     description: customerEventDescription({
       firstName: firstName || "und herzlich willkommen",
       mode,
       phone: conv?.contactPhone ?? null,
       videoUrl: appt.meetUrl,
       manageUrl,
-      advisorName: appt.customer.name,
+      advisorName: advisor,
     }),
     location:
       mode === "video"
         ? (appt.meetUrl ?? "Videocall")
-        : `Telefon: ${appt.customer.name} ruft dich an`,
+        : `Telefon: ${advisor} ruft dich an`,
     manageUrl,
     token,
-    advisorName: appt.customer.name,
+    advisorName: advisor,
     mode,
     videoUrl: appt.meetUrl,
   };
