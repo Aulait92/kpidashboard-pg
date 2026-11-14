@@ -333,11 +333,11 @@ Seiten aus der Liste „Seiten“ unten.
     Daten“. „So rechnen wir“ antippen für Satz, Stornoquote (mit Link zum Ändern) und Annahmen.
   - **Gewinn:** Abschlussprovision (bzw. Courtage 1. Jahr) minus Rückbelastungen minus Lead-Kosten minus Betreuung.
     Mit dem Umschalter in der Karte wählen Sie:
-    - **Nur jetzt** (Standard): ehrlich ohne künftige Bestandsprovision, nur was im Zeitraum verdient ist.
-    - **Inkl. Bestand** (Etikett „mit künftigem Bestand“): dazu die künftige Bestandsprovision der Verträge, die im
+    - **Inkl. Bestand** (Standard, Etikett „mit künftigem Bestand“): dazu die künftige Bestandsprovision der Verträge, die im
       **gewählten Zeitraum** abgeschlossen wurden (nicht Ihr ganzer Bestand), über ihre ersten 5 Jahre. Vertreter bei
       Sach ab dem 2. Jahr, Makler, KFZ und Leben/BU ab dem 1. Jahr (das 1. Jahr steckt dann schon in „Nur jetzt“).
-      Gerechnet mit Ihrer Stornoquote, ohne Abzinsung, gekündigte Verträge nur bis zum Kündigungsdatum. Darunter
+      Gerechnet mit Ihrer Stornoquote, ohne Abzinsung, gekündigte Verträge nur bis zum Kündigungsdatum.
+    - **Nur jetzt:** ehrlich ohne künftige Bestandsprovision, nur was im Zeitraum verdient ist. Darunter
       „davon künftige Bestandsprovision: … (5 Jahre)“. Das ist eine **Prognose**, kein schon verdientes Geld. Der
       Vergleich mit dem Vorzeitraum rechnet genauso.
     Die Wahl merkt sich die App je Login. „Aufschlüsselung“ antippen (am Rechner: mit der Maus darüber) zeigt Provision,

@@ -773,7 +773,7 @@ model User {
   // Früher: neue Admin-Oberfläche an/aus. Nicht mehr genutzt (alle Admins fest auf der neuen, 18.11.)
   adminNewUi         Boolean          @default(true)
   // /buyer/zahlen, Karte Gewinn: „Inkl. Bestand“ statt „Nur jetzt“ (Wahl je Login)
-  gewinnMitBestand   Boolean          @default(false)
+  gewinnMitBestand   Boolean          @default(true)
   adminDismissals    AdminDismissal[]
   assignedLeads      Lead[]           @relation("LeadAssignee")
   advisorCalendar    AdvisorCalendar?

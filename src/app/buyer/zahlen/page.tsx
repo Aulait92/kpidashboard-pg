@@ -338,14 +338,14 @@ async function BuyerDashboardBody({
                     </span>
                   </Info>
                   <Info>
-                    „Nur jetzt“ zählt, was im Zeitraum verdient ist. „Inkl. Bestand“ rechnet die künftige{" "}
+                    „Inkl. Bestand“ (Standard) rechnet zu dem, was im Zeitraum verdient ist, die künftige{" "}
                     {makler ? "Bestandscourtage" : "Bestandsprovision"} der Verträge dazu, die in diesem Zeitraum abgeschlossen wurden, über ihre ersten
                     5 Jahre ({makler ? "das 1. Jahr steckt schon in der Courtage" : "als Vertreter bei Sach ab dem 2. Jahr"}). Das ist eine Prognose: mit
                     Ihrer Stornoquote von {stornoPct} pro Jahr (
                     <a href="/buyer/provisionen#storno" className="font-medium text-[color:var(--brand)] underline">
                       ändern
                     </a>
-                    ), ohne Abzinsung, gekündigte Verträge nur bis zum Kündigungsdatum. Ihr bisheriger Bestand zählt hier nicht mit.
+                    ), ohne Abzinsung, gekündigte Verträge nur bis zum Kündigungsdatum. Ihr bisheriger Bestand zählt hier nicht mit. „Nur jetzt“ zählt nur, was im Zeitraum verdient ist.
                   </Info>
                 </>
               }

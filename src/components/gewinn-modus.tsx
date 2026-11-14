@@ -1,7 +1,7 @@
 "use client";
 
-// Umschalter der Karte „Gewinn“ auf /buyer/zahlen (Ole, 14.11.2026): „Nur jetzt“ (Standard) oder
-// „Inkl. Bestand“ (plus künftige Bestandsprovision der Verträge dieses Zeitraums, 5 Jahre). Die Wahl
+// Umschalter der Karte „Gewinn“ auf /buyer/zahlen (Ole, 14.11.2026): „Inkl. Bestand“ (Standard, plus künftige
+// Bestandsprovision der Verträge dieses Zeitraums, 5 Jahre) oder „Nur jetzt“. Die Wahl
 // wird je Login gespeichert (in der Admin-Vorschau nur im Browser, per Cookie).
 
 import { useOptimistic, useTransition } from "react";
@@ -38,8 +38,8 @@ export function GewinnModusSwitch({ mitBestand }: { mitBestand: boolean }) {
       aria-label="Gewinn rechnen"
       data-gewinn-modus={value ? "bestand" : "jetzt"}
     >
-      {opt(false, "Nur jetzt")}
       {opt(true, "Inkl. Bestand")}
+      {opt(false, "Nur jetzt")}
     </div>
   );
 }
