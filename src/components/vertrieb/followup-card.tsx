@@ -1,7 +1,7 @@
 import clsx from "clsx";
-import { approveFollowupAction, planFollowupAction, redraftFollowupAction, saveFollowupAction, stopFollowupAction } from "@/app/admin/vertrieb/followup-actions";
+import { approveFollowupAction, planFollowupAction, saveFollowupAction, stopFollowupAction } from "@/app/admin/vertrieb/followup-actions";
 import { ConfirmButton } from "@/components/vertrieb/confirm-button";
-import { FollowupSendNow } from "@/components/vertrieb/followup-send";
+import { FollowupRedraft, FollowupSendNow } from "@/components/vertrieb/followup-send";
 import { addDays, dayKey, fmtDate, fmtDateTime, timeKey } from "@/lib/vertrieb/dates";
 import { STATUS_LABEL, type FollowupStatus } from "@/lib/vertrieb/followup";
 
@@ -90,13 +90,11 @@ export function FollowupCard({ contactId, followups, plannable, eaccount }: { co
               <p className="text-xs text-slate-500">Die Signatur des Postfachs wird beim Versand unter beide Mails gesetzt.</p>
               <div className="flex flex-wrap gap-2">
                 <button className="btn-ghost">Speichern</button>
-                <button formAction={redraftFollowupAction} className="btn-ghost" title="Texte aus Originalmail und Antwort neu schreiben (überschreibt Änderungen)">
-                  Texte neu schreiben
-                </button>
               </div>
             </form>
           ) : null}
           <div className="flex flex-wrap items-start gap-2 border-t border-slate-100 pt-3">
+            {f.step < 2 ? <FollowupRedraft id={f.id} /> : null}
             {f.step < 2 ? <FollowupSendNow id={f.id} step={f.step} /> : null}
             <form action={stopFollowupAction}>
               <input type="hidden" name="contactId" value={contactId} />

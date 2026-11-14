@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { fromDayKey } from "@/lib/vertrieb/dates";
-import { approveFollowups, draftFollowup, planExistingFollowups, planFollowup, sendFollowupStep, stopFollowup, updateFollowup } from "@/lib/vertrieb/followup";
+import { approveFollowups, draftFollowup, loadFollowupSettings, planExistingFollowups, planFollowup, sendFollowupStep, stopFollowup, updateFollowup } from "@/lib/vertrieb/followup";
 
 const s = (fd: FormData, k: string) => {
   const v = fd.get(k);
@@ -68,6 +68,20 @@ export async function redraftFollowupAction(fd: FormData) {
   await requireAuth();
   const f = await draftFollowup(s(fd, "id")!, { force: true });
   refresh(f.contactId);
+}
+
+/** „Texte neu schreiben“ mit Rückmeldung (KI braucht ein paar Sekunden) */
+export async function redraftFollowupNowAction(_p: FollowupState, fd: FormData): Promise<FollowupState> {
+  await requireAuth();
+  try {
+    const f = await draftFollowup(s(fd, "id")!, { force: true });
+    refresh(f.contactId);
+    const settings = await loadFollowupSettings();
+    const link = settings.bookingUrl && f.body1?.includes(settings.bookingUrl) ? " mit Buchungslink" : settings.bookingUrl ? "" : " (kein Buchungslink eingestellt)";
+    return { ok: true, message: `Texte neu geschrieben (${f.textSource === "KI" ? "per KI" : "Vorlage"})${link}.` };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Texte konnten nicht neu geschrieben werden." };
+  }
 }
 
 export async function saveFollowupSettingsAction(fd: FormData) {
