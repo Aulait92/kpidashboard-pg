@@ -90,12 +90,13 @@ describe("Bestand-Import: Vertragsfelder, Gruppierung, Warnung (14.11.2026)", ()
       { Nr: "", Name: "", Mobil: "0151 3333333", Sparte: "KFZ", Beitrag: "1", Status: "" },
     ];
     const g = groupRows(rows, { externalNo: "Nr", fullName: "Name", phone: "Mobil", line: "Sparte", annualPremium: "Beitrag", contractStatus: "Status" });
-    expect(g.groups.size).toBe(2);
-    expect(g.contracts).toBe(4); // Erika 2, Max 2 (zwei Sparten in einer Zelle)
+    // Seit 14.11.2026 ist der Name kein Pflichtfeld: Die Zeile mit Mobilnummer ohne Namen zählt mit
+    expect(g.groups.size).toBe(3);
+    expect(g.contracts).toBe(5); // Erika 2, Max 2 (zwei Sparten in einer Zelle), ohne Namen 1
     expect(g.inactiveContracts).toBe(1);
-    expect(g.premiumTotal).toBe(480); // Hausrat storniert, Max: Beitrag nicht aufteilbar
-    expect(g.skipped).toBe(1);
-    expect(g.skipReasons["ohne Namen"]).toBe(1);
+    expect(g.premiumTotal).toBe(481); // Hausrat storniert, Max: Beitrag nicht aufteilbar
+    expect(g.skipped).toBe(0);
+    expect(g.withoutName).toBe(1);
     expect(importWarning(g)).toBeNull();
   });
 

@@ -13,7 +13,7 @@ import { LeadEmailToggle, PauseCard } from "./pause-card";
 import { WhatsAppFeesCard } from "@/components/whatsapp-fees-card";
 import { ModuleBookButton, ModuleCancelButton } from "@/components/bestand/module-book";
 import { canSelfBookBestand } from "@/lib/bestand/self-service";
-import { annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
+import { annualMultiplier, bestandPacksText, PRICE_LIST } from "@/lib/offer-pricing";
 import { currentPause, todayBerlin } from "@/lib/pause";
 import { budgetState } from "@/lib/budget";
 import { BudgetCard } from "./budget-card";
@@ -286,7 +286,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 </div>
                 <p className="text-[color:var(--muted)]">
                   Kundenliste hochladen, Lücken und Anlässe erkennen, passende Kunden per WhatsApp anschreiben. WhatsApp-Gebühren für bis zu{" "}
-                  {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat inklusive.
+                  {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat inklusive. Mehr mit Zusatzpaketen unter{" "}
+                  <b>Bestand</b>: {bestandPacksText()}.
                 </p>
                 {customer.existingCustomersEnabled ? (
                   <div className="flex flex-wrap items-center gap-3">

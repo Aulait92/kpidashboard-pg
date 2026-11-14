@@ -15,7 +15,7 @@ const secondary = `${btn} border border-[color:var(--border)] bg-white`;
 
 /** Verkäufer-Plätze, Bestandskunden-Modul (inkl. Kontingent) und Zahlweise – mit Stripe-Abgleich. */
 export async function AddOnsCard({ customerId, message, failed }: { customerId: string; message: string | null; failed: boolean }) {
-  const [c, usage, quota] = await Promise.all([
+  const [c, usage, quota, packHistory] = await Promise.all([
     prisma.customer.findUnique({
       where: { id: customerId },
       select: {
@@ -41,6 +41,7 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
     }),
     seatUsage(customerId),
     bestandQuota(customerId),
+    prisma.bestandMessagePack.findMany({ where: { customerId }, orderBy: { purchasedAt: "desc" }, take: 6 }),
   ]);
   if (!c) return null;
   const seatPrice = c.seatMonthly != null ? Number(c.seatMonthly) : null;
@@ -131,9 +132,21 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
             </label>
             <button className={secondary}>Kontingent speichern</button>
             <span className="pb-2 text-xs text-[color:var(--muted)]">
-              Diesen Monat {quota.used} von {quota.limit} verschickt. Leer = Standard ({PRICE_LIST.bestandIncludedMessages}).
+              Diesen Monat {quota.sentThisMonth} verschickt ({quota.used} von {quota.limit} inklusive, {quota.packRemaining} aus Paketen frei). Leer = Standard ({PRICE_LIST.bestandIncludedMessages}).
             </span>
           </form>
+          {packHistory.length ? (
+            <div className="text-xs" data-admin-packs>
+              <div className="font-medium">Zusatzpakete (vom Kunden gebucht, eigener Rechnungsposten)</div>
+              <ul className="mt-1 space-y-0.5 text-[color:var(--muted)]">
+                {packHistory.map((p) => (
+                  <li key={p.id}>
+                    {fmt(p.purchasedAt)}: +{p.messages} Nachrichten, {eur(Number(p.amount))} netto{p.source === "auto" ? " (automatisch)" : ""}, gültig bis {fmt(p.expiresAt)} · Stripe {p.stripeStatus}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </section>
 
         <section className="space-y-2 border-t border-[color:var(--border)] pt-4">

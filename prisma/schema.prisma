@@ -174,6 +174,10 @@ model Customer {
   bestandCancelAt          DateTime?
   // Kampagnen-Nachrichten je Monat inklusive; null = Standard aus der Preisliste
   bestandMessageQuota      Int?
+  // Zusatzpakete automatisch nachbuchen (500er-Pakete) bis höchstens so viele € netto je Monat; null = aus (Standard)
+  bestandAutoTopUpMax      Int?
+  bestandPacks             BestandMessagePack[]
+  existingImports          ExistingCustomerImport[]
   // ─── Zusatzmodul „Empfehlungen & Bewertungen“ (seit 12.11.2026) ───
   // Freigeschaltet (Zugang); Abrechnung über empfehlungMonthly bzw. Testphase
   empfehlungEnabled        Boolean                   @default(false)
@@ -1971,6 +1975,7 @@ model ExistingCustomer {
   consentNote    String?
   optOutAt       DateTime? // „Stopp“ → keine Kampagnen mehr
   lastCampaignAt DateTime?
+  // Import-Lauf, der den Datensatz angelegt hat (ExistingCustomerImport.id); Aktualisierungen ändern ihn nicht
   importId       String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -1982,6 +1987,30 @@ model ExistingCustomer {
   @@unique([customerId, externalNo])
   @@index([customerId, phone])
   @@index([customerId, email])
+  @@index([importId])
+}
+
+// Ein Import-Lauf (Datei hochgeladen und übernommen). Der letzte Lauf lässt sich rückgängig machen:
+// Dann werden nur die Bestandskunden gelöscht, die dieser Lauf angelegt hat (ExistingCustomer.importId),
+// außer bereits angeschriebenen oder gesperrten. Aktualisierte Kunden behalten den neuen Stand.
+model ExistingCustomerImport {
+  id          String    @id @default(cuid())
+  customerId  String
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdById String?
+  fileName    String?
+  rows        Int       @default(0)
+  created     Int       @default(0)
+  updated     Int       @default(0)
+  contracts   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  undoneAt    DateTime?
+  undoneById  String?
+  // Beim Rückgängigmachen gelöscht bzw. behalten (schon angeschrieben oder gesperrt)
+  removed     Int?
+  kept        Int?
+
+  @@index([customerId, createdAt])
 }
 
 model ExistingContract {
@@ -2015,6 +2044,8 @@ model CustomerCampaign {
   dailyLimit  Int       @default(150)
   // draft | running | paused | done
   status      String    @default("draft")
+  // Grund der Pause: kontingent (Kontingent aufgebraucht, läuft nach Paketkauf bzw. im nächsten Monat weiter); null = von Hand o. Ä.
+  pausedReason String?
   createdById String?
   startedAt   DateTime?
   finishedAt  DateTime?
@@ -2039,9 +2070,40 @@ model CampaignRecipient {
   repliedAt          DateTime?
   conversationId     String?
   leadId             String?
+  // Aus welchem Zusatzpaket die Nachricht bezahlt ist; null = Monatskontingent
+  packId             String?
+  pack               BestandMessagePack? @relation(fields: [packId], references: [id], onDelete: SetNull)
 
   @@unique([campaignId, existingCustomerId])
   @@index([campaignId, status])
+  @@index([packId])
+}
+
+// Zusatzpaket Kampagnen-Nachrichten im Bestandskunden-Modul (Ole, 14.11.2026): Einmalposten,
+// sofort freigeschaltet, gültig 3 Monate. Verbrauch: erst das Monatskontingent, dann das älteste Paket.
+// Betrag und Kaufdatum für Umsatz (Admin) und Kosten des Kunden (lib/bestand/packs.ts → bestandPackSpend).
+model BestandMessagePack {
+  id                  String              @id @default(cuid())
+  customerId          String
+  customer            Customer            @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  messages            Int
+  // Netto in EUR
+  amount              Decimal             @db.Decimal(10, 2)
+  purchasedAt         DateTime            @default(now())
+  expiresAt           DateTime
+  // kauf (Inhaber im Kundenbereich) | auto (automatisch nachgebucht)
+  source              String              @default("kauf")
+  createdById         String?
+  // Stripe: Rechnungsposten (bzw. Rechnung bei Jahreszahlern); stripeStatus added | invoiced | failed
+  stripeInvoiceItemId String?
+  stripeInvoiceId     String?
+  stripeStatus        String              @default("added")
+  createdAt           DateTime            @default(now())
+
+  recipients CampaignRecipient[]
+
+  @@index([customerId, expiresAt])
+  @@index([purchasedAt])
 }
 
 // Nachfass-Abfolge je Lead (lib/lead-sequences.ts): feste Schritte (WhatsApp /

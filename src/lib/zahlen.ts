@@ -194,7 +194,10 @@ export async function loadLedger(now = new Date()) {
     .map((o) => ({ customerId: customerOfOffer.get(o.id) ?? `angebot:${o.id}`, month: monthKey((o.paidAt ?? o.acceptedAt)!), amount: n(o.setupFee) }));
   // Von Hand nachgetragene Einmal-Umsätze (Admin → Zahlen) zählen ebenfalls als „setup“
   const manual: ManualEntry[] = manualRows.map((m) => ({ id: m.id, month: m.month, customerId: m.customerId, amount: n(m.amount), kind: m.kind }));
-  const setups = [...offerSetups, ...manualSetups(manual)];
+  // Zusatzpakete Bestandskunden-Modul (Einmalposten, Kaufmonat) zählen ebenfalls als Einmal-Umsatz („setup“), nie im MRR
+  const { bestandPackRevenueRows } = await import("@/lib/bestand/packs");
+  const packRevenue = await bestandPackRevenueRows(new Date(from.getTime() - DAY));
+  const setups = [...offerSetups, ...manualSetups(manual), ...packRevenue];
 
   const ledger = buildLedger({
     now,
@@ -203,7 +206,7 @@ export async function loadLedger(now = new Date()) {
     retainers,
     setups,
   });
-  return { ledger, pplCounts: ppl, offerSetups, manual, manualRows, offerOfCustomer: new Map(retainerCustomers.filter((c) => c.onboarding?.offerId && offerById.has(c.onboarding.offerId)).map((c) => [c.id, true])) };
+  return { ledger, pplCounts: ppl, offerSetups, manual, manualRows, packRevenue, offerOfCustomer: new Map(retainerCustomers.filter((c) => c.onboarding?.offerId && offerById.has(c.onboarding.offerId)).map((c) => [c.id, true])) };
 }
 
 // ─── Kosten je Monat und Zweck ───────────────────────────────────────────
@@ -426,7 +429,7 @@ function median(xs: number[]): number | null {
  */
 export async function loadZahlen(now = new Date(), sicht: Sicht = "gesamt"): Promise<ZahlenData> {
   const settings = await loadKpiSettings();
-  const { ledger, pplCounts, offerSetups, manual, manualRows, offerOfCustomer } = await loadLedger(now);
+  const { ledger, pplCounts, offerSetups, manual, manualRows, packRevenue, offerOfCustomer } = await loadLedger(now);
   const keys = ledger.months.map((m) => m.key);
   const { costs: allCosts, recurring } = await loadCosts(keys, settings, now);
   const { current, lastComplete } = ledger;
@@ -612,7 +615,12 @@ export async function loadZahlen(now = new Date(), sicht: Sicht = "gesamt"): Pro
       const srcs = pplSources.filter((p) => p.customerId === id && p.month === m).sort((a, b) => b.n - a.n);
       return srcs.map((x) => (srcs.length > 1 ? `${PPL_SOURCE[x.src] ?? x.src} (${x.n})` : PPL_SOURCE[x.src] ?? x.src)).join(", ") || "Revenue";
     }
-    if (stream === "setup") return id.startsWith("nachtrag:") ? "Nachtrag" : "Angebot";
+    if (stream === "setup") {
+      if (id.startsWith("nachtrag:")) return "Nachtrag";
+      const pack = packRevenue.some((p) => p.customerId === id && p.month === m);
+      const offer = offerSetups.some((o) => o.customerId === id && o.month === m);
+      return pack ? (offer ? "Angebot, Zusatzpaket" : "Zusatzpaket Bestand") : "Angebot";
+    }
     return offerOfCustomer.get(id) ? "Angebot" : "Retainer in Kundenakte";
   };
   const flagsOf = (id: string, m: string, streams: Stream[]) => {
@@ -659,10 +667,10 @@ export async function loadZahlen(now = new Date(), sicht: Sicht = "gesamt"): Pro
     .map((c) => ({ customerId: c.id, name: c.name, plan: c.plan, liveSince: (c.onboarding?.liveAt ?? c.retainerStart)?.toISOString() ?? null }));
 
   // ── Einmal-Umsätze je Monat (eigener Zeitraum, auch vor Juni 2026) ──
-  const oneTimeFrom = [FIRST_MONTH, ...manual.map((x) => x.month), ...offerSetups.map((x) => x.month)].filter((x) => x <= current).sort()[0];
-  const oneTimeMonths = oneTimeByMonth(offerSetups, manual, monthRange(oneTimeFrom < addMonths(current, -23) ? addMonths(current, -23) : oneTimeFrom, current));
+  const oneTimeFrom = [FIRST_MONTH, ...manual.map((x) => x.month), ...offerSetups.map((x) => x.month), ...packRevenue.map((x) => x.month)].filter((x) => x <= current).sort()[0];
+  const oneTimeMonths = oneTimeByMonth(offerSetups, manual, monthRange(oneTimeFrom < addMonths(current, -23) ? addMonths(current, -23) : oneTimeFrom, current), packRevenue);
   const yearKey = current.slice(0, 4);
-  const yearSum = oneTimeByMonth(offerSetups, manual, monthRange(`${yearKey}-01`, current)).reduce((a, m) => a + m.total, 0);
+  const yearSum = oneTimeByMonth(offerSetups, manual, monthRange(`${yearKey}-01`, current), packRevenue).reduce((a, m) => a + m.total, 0);
 
   return {
     generatedAt: now.toISOString(),

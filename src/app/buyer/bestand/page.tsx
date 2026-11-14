@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ReferralLinkButton } from "@/components/empfehlung/client";
 import { redirect } from "next/navigation";
 import { Lightbulb, Megaphone, Upload, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
@@ -8,8 +7,15 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { OCCASIONS, opportunities, type Occasion } from "@/lib/bestand/campaigns";
 import { toggleCampaignAction } from "./actions";
-import { bestandQuota, QUOTA_REACHED } from "@/lib/bestand/quota";
-import { PRICE_LIST, eur } from "@/lib/offer-pricing";
+import { bestandQuota, QUOTA_PAUSE } from "@/lib/bestand/quota";
+import { PRICE_LIST, bestandPacksText, eur } from "@/lib/offer-pricing";
+import { displayName } from "@/lib/bestand/rows";
+import { lastUndoableImport } from "@/lib/bestand/import";
+import { autoTopUpState, packPurchaseBlocker } from "@/lib/bestand/packs";
+import { QuotaBar, QuotaLowNotice, type PackBooking } from "@/components/bestand/quota-bar";
+import { AutoTopUpForm } from "@/components/bestand/packs";
+import { CustomerRowActions } from "@/components/bestand/customer-actions";
+import { ImportUndoButton } from "@/components/bestand/import-undo";
 import { ModuleBookButton } from "@/components/bestand/module-book";
 import { canSelfBookBestand } from "@/lib/bestand/self-service";
 import { loadCustomerProvision } from "@/lib/provision-server";
@@ -51,7 +57,19 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
   const { q = "", gestartet, kontingent, sort } = await searchParams;
   const byValue = sort === "beitrag";
   const customerId = ctx.customerId;
-  const quota = await bestandQuota(customerId);
+  const [quota, packBlocker, autoState, lastImport] = await Promise.all([
+    bestandQuota(customerId),
+    packPurchaseBlocker(customerId),
+    autoTopUpState(customerId),
+    lastUndoableImport(customerId),
+  ]);
+  const booking: PackBooking = {
+    packs: PRICE_LIST.bestandPacks,
+    months: PRICE_LIST.bestandPackMonths,
+    individualFrom: PRICE_LIST.bestandPackIndividualFrom,
+    readOnly: ctx.preview,
+    blocker: packBlocker,
+  };
 
   const [total, withPhone, optOut, campaigns, volume, provision] = await Promise.all([
     prisma.existingCustomer.count({ where: { customerId } }),
@@ -83,13 +101,16 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                 OR: [
                   { lastName: { contains: q, mode: "insensitive" } },
                   { firstName: { contains: q, mode: "insensitive" } },
+                  { company: { contains: q, mode: "insensitive" } },
                   { email: { contains: q, mode: "insensitive" } },
                   ...(qDigits.length >= 3 ? [{ phone: { contains: qDigits } }, { externalNo: { contains: q } }] : []),
                 ],
               }
             : {}),
         },
-        orderBy: byValue ? [{ premiumTotal: { sort: "desc", nulls: "last" } }, { lastName: "asc" }] : [{ lastName: "asc" }, { firstName: "asc" }],
+        orderBy: byValue
+          ? [{ premiumTotal: { sort: "desc", nulls: "last" } }, { lastName: "asc" }]
+          : [{ lastName: { sort: "asc", nulls: "last" } }, { firstName: "asc" }, { company: { sort: "asc", nulls: "last" } }, { email: "asc" }],
         take: 50,
       })
     : [];
@@ -105,16 +126,12 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
           </ButtonLink>
         }
       />
-      {kontingent || quota.remaining <= 0 ? (
-        <div className="mb-5 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-quota-reached>
-          {QUOTA_REACHED} Diesen Monat sind {quota.used.toLocaleString("de-DE")} von {quota.limit.toLocaleString("de-DE")} Kampagnen-Nachrichten verschickt.
-          Laufende Kampagnen machen im nächsten Monat weiter.
-        </div>
-      ) : (
-        <p className="mb-5 text-sm text-[color:var(--muted)]" data-quota>
-          Kontingent diesen Monat: {quota.used.toLocaleString("de-DE")} von {quota.limit.toLocaleString("de-DE")} Kampagnen-Nachrichten (WhatsApp-Gebühren inklusive).
+      {kontingent && quota.remaining <= 0 ? (
+        <p className="mb-2 text-sm font-medium text-amber-900" data-quota-reached>
+          Für eine neue Kampagne ist diesen Monat nichts mehr frei.
         </p>
-      )}
+      ) : null}
+      <QuotaBar quota={quota} booking={booking} />
       {c.bestandCancelAt ? (
         <div className="mb-5 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-bestand-cancel-notice>
           Das Modul ist zum {c.bestandCancelAt.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })} gekündigt. Bis dahin können Sie es wie gewohnt
@@ -200,7 +217,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
               <CardHeader title="Kampagnen" icon={Megaphone} count={stats.length} />
               <ul className="divide-y divide-[color:var(--border)]">
                 {stats.map(({ k, queued, sent, replied }) => (
-                  <li key={k.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3 text-sm">
+                  <li key={k.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3 text-sm">
                     <div className="min-w-0 flex-1">
                       <div className="font-medium">
                         {OCCASIONS[k.occasion as Occasion]?.label ?? k.occasion}: {k.name}
@@ -215,6 +232,11 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                         <input type="hidden" name="id" value={k.id} />
                         <button className="text-xs font-medium text-[color:var(--brand)] hover:underline">{k.status === "running" ? "Pausieren" : "Fortsetzen"}</button>
                       </form>
+                    ) : null}
+                    {k.status === "paused" && k.pausedReason === QUOTA_PAUSE ? (
+                      <div className="w-full" data-campaign-quota-paused>
+                        <QuotaLowNotice quota={quota} booking={booking} paused />
+                      </div>
                     ) : null}
                   </li>
                 ))}
@@ -238,39 +260,74 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                 </button>
               ) : null}
             </form>
-            <ul className="divide-y divide-[color:var(--border)]">
-              {list.map((e) => (
-                <li key={e.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-2.5 text-sm">
-                  <span className="min-w-0 flex-1 font-medium">
-                    {[e.firstName, e.lastName].filter(Boolean).join(" ")}
-                    {e.company ? <span className="ml-1 font-normal text-[color:var(--muted)]">· {e.company}</span> : null}
-                    {e.optOutAt ? <span className="ml-2 text-xs font-normal text-rose-700">gesperrt</span> : null}
-                  </span>
-                  <span className="flex flex-wrap gap-1">
-                    {e.lines.map((l) => (
-                      <span key={l} className="rounded-full bg-[color:var(--surface-sunken,#f1f5f9)] px-2 py-0.5 text-xs">
-                        {l}
-                      </span>
-                    ))}
-                  </span>
-                  {e.premiumTotal != null ? <span className="w-24 text-right text-sm tabular-nums">{eurRound(Number(e.premiumTotal))}</span> : null}
-                  <span className="w-28 text-right text-xs text-[color:var(--muted)]">{e.phone ? `+${e.phone}` : "ohne Mobil"}</span>
-                  {c.empfehlungEnabled && !e.optOutAt ? (
-                    <span className="w-full sm:w-auto">
-                      <ReferralLinkButton existingCustomerId={e.id} readOnly={ctx.preview} />
+            <ul className="divide-y divide-[color:var(--border)]" data-bestand-list>
+              {list.map((e) => {
+                const person = [e.firstName, e.lastName].filter(Boolean).join(" ");
+                const title = displayName(e);
+                // Zweite Zeile: Firma (bzw. E-Mail, wenn die Firma schon als Name steht)
+                const second = person ? e.company : e.company ? e.email : null;
+                return (
+                  <li key={e.id} className="flex items-center gap-3 px-5 py-2.5 text-sm" data-bestand-row>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="truncate font-medium" title={title}>
+                          {title}
+                        </span>
+                        {e.optOutAt ? <span className="shrink-0 text-xs text-rose-700">gesperrt</span> : null}
+                      </div>
+                      {second || e.lines.length ? (
+                        <div className="truncate text-xs text-[color:var(--muted)]" title={[second, e.lines.join(", ")].filter(Boolean).join(" · ")}>
+                          {second}
+                          {e.lines.length ? (
+                            <span className="md:hidden">
+                              {second ? " · " : ""}
+                              {e.lines.join(", ")}
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                    <span className="hidden max-w-[14rem] shrink-0 flex-wrap justify-end gap-1 md:flex">
+                      {e.lines.map((l) => (
+                        <span key={l} className="rounded-full bg-[color:var(--surface-sunken,#f1f5f9)] px-2 py-0.5 text-xs">
+                          {l}
+                        </span>
+                      ))}
                     </span>
-                  ) : null}
-                </li>
-              ))}
+                    {e.premiumTotal != null ? <span className="hidden w-20 shrink-0 text-right text-sm tabular-nums sm:block">{eurRound(Number(e.premiumTotal))}</span> : null}
+                    <span className="hidden w-32 shrink-0 truncate text-right text-xs text-[color:var(--muted)] sm:block">{e.phone ? `+${e.phone}` : "keine Mobilnummer"}</span>
+                    {c.empfehlungEnabled && !e.optOutAt ? <CustomerRowActions existingCustomerId={e.id} name={title} hasPhone={!!e.phone} readOnly={ctx.preview} /> : null}
+                  </li>
+                );
+              })}
             </ul>
             {total > list.length ? <p className="px-5 py-3 text-xs text-[color:var(--muted)]">Erste {list.length} von {total.toLocaleString("de-DE")}, Suche nutzen.</p> : null}
           </Card>
-          <p className="text-xs text-[color:var(--muted)]">
-            <Link href="/buyer/bestand/import" className="underline">
-              Liste erneut hochladen
-            </Link>{" "}
-            aktualisiert vorhandene Kunden (Abgleich über Kundennummer, sonst Telefon/E-Mail).
-          </p>
+          <Card>
+            <div className="px-5 py-4" data-bestand-settings>
+              <AutoTopUpForm
+                max={autoState.max}
+                spent={autoState.spent}
+                packPrice={PRICE_LIST.bestandPacks[0].price}
+                packMessages={PRICE_LIST.bestandPacks[0].messages}
+                readOnly={ctx.preview}
+              />
+            </div>
+          </Card>
+          <div className="flex flex-wrap items-center gap-3 text-xs text-[color:var(--muted)]">
+            <p className="min-w-0 flex-1">
+              <Link href="/buyer/bestand/import" className="underline">
+                Liste erneut hochladen
+              </Link>{" "}
+              aktualisiert vorhandene Kunden (Abgleich über Kundennummer, sonst Telefon/E-Mail).
+            </p>
+            {lastImport && lastImport.removable > 0 ? (
+              <ImportUndoButton
+                readOnly={ctx.preview}
+                run={{ createdAt: lastImport.createdAt.toISOString(), fileName: lastImport.fileName, created: lastImport.created, updated: lastImport.updated, removable: lastImport.removable }}
+              />
+            ) : null}
+          </div>
         </div>
       )}
     </main>
@@ -295,6 +352,7 @@ function LockedBestand({ requestedAt, readOnly, canBook, reason, annual }: { req
               {annual ? "bei Ihrer jährlichen Vorauszahlung kündbar zum Ende des bezahlten Jahres" : "monatlich kündbar"}
             </li>
             <li>WhatsApp-Gebühren für bis zu {PRICE_LIST.bestandIncludedMessages} Kampagnen-Nachrichten im Monat inklusive</li>
+            <li>Mehr Nachrichten jederzeit als Zusatzpaket: {bestandPacksText()}</li>
             <li>Gesundheitsdaten werden nie übernommen</li>
           </ul>
           {canBook ? (

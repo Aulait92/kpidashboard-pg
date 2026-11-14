@@ -337,7 +337,8 @@ Seiten aus der Liste „Seiten“ unten.
   Zusätze, nur mit 12 Monaten Laufzeit). Umstellen: bitte bei uns melden.
 - Zahlungsart, Rechnungsadresse, USt-IdNr.: über das Zahlungsportal (Stripe) auf dieser Seite.
 - WhatsApp-Gebühren von Meta sind im Preis enthalten, es kommt nichts dazu. Für Leads (Erstkontakt, Erinnerungen,
-  Nachfassen) ohne Begrenzung; für Bestandskunden-Kampagnen bis 500 Nachrichten im Monat.
+  Nachfassen) ohne Begrenzung; für Bestandskunden-Kampagnen bis 500 Nachrichten im Monat, mehr mit Zusatzpaketen
+  (+500 für 99 €, +2.000 für 349 €, netto, gültig 3 Monate, siehe „Bestand“). Pakete stehen als eigener Posten auf der Rechnung.
 - Bestandskunden-Modul nicht gebucht: Karte „Bestandskunden-Modul“ mit Knopf „Jetzt buchen – 149 € netto im Monat“
   (Bestätigung mit Häkchen, danach sofort freigeschaltet). Gebucht: „Modul kündigen (zum Ende des
   Abrechnungszeitraums)“; bis dahin nutzbar, die Kündigung lässt sich bis dahin mit „Kündigung zurücknehmen“
@@ -419,9 +420,24 @@ Seiten aus der Liste „Seiten“ unten.
   Kündigen unter „Konto & Rechnungen“: zum Ende des laufenden Abrechnungszeitraums, bis dahin nutzbar;
   danach stoppen laufende Kampagnen, die hochgeladene Kundenliste bleibt gespeichert.
   Wer Bestand schon vor dem 11.11.2026 genutzt hat, behält den Zugang ohne Aufpreis.
-- Kontingent: Auf der Seite steht „Kontingent diesen Monat: X von 500“. Ist es erreicht, startet keine neue
-  Kampagne („Monatskontingent erreicht – mehr auf Anfrage“), laufende Kampagnen machen im nächsten Monat weiter.
-  Mehr Nachrichten: bitte bei uns melden, wir erhöhen das Kontingent.
+- **Kontingent:** Oben auf „Bestand“ zeigt ein Balken die Kampagnen-Nachrichten dieses Monats: verbraucht,
+  inklusive (500 im Monat) und gebuchte Zusatzpakete mit Ablaufdatum. Verbraucht wird zuerst das Monatskontingent,
+  dann das älteste Paket. Bei weniger als 10 % Rest steht dort und beim Kampagnenstart „Noch X Nachrichten diesen
+  Monat“ mit dem Knopf **„Paket dazubuchen“**. Ist alles aufgebraucht, startet keine neue Kampagne, und laufende
+  Kampagnen **pausieren mit diesem Hinweis** (Push an den Inhaber). Sie laufen automatisch weiter, sobald ein Paket
+  gebucht ist oder der neue Monat beginnt.
+- **Zusatzpakete** (nur Inhaber, Bestand → „Paket dazubuchen“): **+500 Nachrichten für 99 € netto** oder
+  **+2.000 Nachrichten für 349 € netto**, jeweils einmalig. Sofort freigeschaltet, gültig 3 Monate, WhatsApp-Gebühren
+  enthalten. Abgerechnet als eigener Posten auf der nächsten Rechnung (bei jährlicher Vorauszahlung als eigene
+  Rechnung). Online buchen geht mit laufendem Abo, hinterlegter Zahlungsart und ohne offene Rechnung; sonst
+  erscheint der Grund, und das Paket lässt sich anfragen. **Ab 5.000 Nachrichten im Monat:** individuell, bitte über
+  „Ab 5.000 Nachrichten im Monat: individuell, bitte anfragen“ melden, wir machen ein Angebot.
+- **Viele Nachrichten brauchen mehrere Tage:** WhatsApp (Meta) begrenzt, wie viele Menschen eine Nummer innerhalb
+  von 24 Stunden neu anschreiben darf. Kampagnen verteilen die Nachrichten deshalb über mehrere Tage
+  (Höchstwert pro Tag in der Kampagne, Standard 150, Mo–Sa). 2.000 Nachrichten dauern so etwa 14 Versandtage.
+- **Automatisch nachbuchen** (unten auf „Bestand“, Standard aus): Ist das Kontingent aufgebraucht, bucht die App ein
+  500er-Paket (99 € netto) nach, bis höchstens zu dem Betrag, den Sie je Monat eintragen. Bei jeder Nachbuchung
+  kommt eine E-Mail.
 
 - Kundenliste aus dem Versicherer-System als Excel oder CSV hochladen, Spalten zuordnen, Einwilligung bestätigen.
   Gesundheitsdaten werden nie übernommen (Spalten wie Vorerkrankungen, Diagnosen, Gewicht werden ausgelassen).
@@ -430,7 +446,16 @@ Seiten aus der Liste „Seiten“ unten.
   Jede Zeile mit Sparte wird ein Vertrag; mehrere Sparten in einer Zelle („Haftpflicht, Unfall“) werden mehrere Verträge.
 - **Spalten zuordnen** in zwei Gruppen:
   - **Kunde:** Vorname, Nachname bzw. Name komplett, Mobil/Telefon, E-Mail, Kundennummer, Anrede (Herr/Frau/Divers),
-    Firma (Gewerbekunden), Geburtsdatum, Adresse. Ein Name ist Pflicht – Firma allein reicht nicht.
+    Firma (Gewerbekunden), Geburtsdatum, Adresse. Ein Name ist **kein** Pflichtfeld: Es reicht ein Merkmal zum
+    Wiedererkennen (Kundennummer, Telefon oder E-Mail). Ohne Namen zeigt die Liste die Firma bzw. die E-Mail, und
+    Nachrichten beginnen neutral mit „Guten Tag,“. Die Vorschau zeigt „X Kunden ohne Namen, werden neutral angesprochen“.
+    Mobil/Telefon und Sparte sind als „empfohlen“ markiert. Ohne Telefon-Spalte erscheint: „Ohne Telefonnummer können
+    wir diese Kunden nicht per WhatsApp anschreiben. Import ist trotzdem möglich (für E-Mail bzw. Übersicht).“
+    Felder, die nicht in der Datei stehen, bleiben auf „Nicht zuordnen“.
+  - **Prüfung der Zuordnung:** Liegt dieselbe Spalte auf mehreren Feldern, steht eine Warnung direkt am Feld. Die App
+    prüft außerdem Stichproben (die ersten 50 gefüllten Werte): Telefon muss nach Telefonnummer aussehen, E-Mail nach
+    E-Mail, ein Name darf keine E-Mail sein, ein Datum muss ein Datum sein. Passt mehr als die Hälfte nicht, wird das
+    Feld rot markiert, die Erklärung steht darunter, und der Import ist gesperrt, bis die Zuordnung stimmt.
   - **Vertrag:** Sparte/Produkt, Jahresbeitrag (z. B. „1.234,56 €“; Monatsbeiträge werden nicht als Jahresbeitrag
     erkannt), Vertragsnummer, Versicherer, Vertragsstatus, Ablauf/Hauptfälligkeit, Vertragsbeginn.
 - **Vorschau vor dem Übernehmen:** „4.493 Zeilen → 1.870 Kunden mit 4.493 Verträgen“, live berechnet mit der gewählten
@@ -442,6 +467,14 @@ Seiten aus der Liste „Seiten“ unten.
   fürs Beitragsvolumen. Ohne Status-Spalte gilt jeder Vertrag als aktiv.
 - **Erneut hochladen** aktualisiert vorhandene Kunden; ihre Verträge werden durch die neue Liste ersetzt
   (die Vertragsnummer wird mitgespeichert).
+- **Letzten Import rückgängig machen** (nur Inhaber, unten auf „Bestand“ und auf der Import-Seite): löscht die Kunden,
+  die der letzte Import neu angelegt hat, mit ihren Verträgen. Kunden, die schon angeschrieben wurden oder „Stopp“
+  geschrieben haben, bleiben. Kunden, die der Import nur aktualisiert hat, behalten den neuen Stand. Danach die Liste
+  mit der richtigen Zuordnung neu hochladen.
+- **Kundenliste:** je Kunde eine Zeile mit Name (bzw. Firma oder E-Mail), darunter die Firma; lange Namen werden
+  abgeschnitten (ganzer Name beim Darüberfahren). Rechts kompakte Knöpfe: **Senden** (Empfehlungslink per WhatsApp)
+  und **„…“** (Im Termin zeigen per QR-Code, Text und Link zum Kopieren). Ohne Mobilnummer ist „Senden“ ausgegraut
+  („keine Mobilnummer“), Text und Link zum Kopieren gehen trotzdem.
 - **Beitragsvolumen:** Auf „Bestand“ steht die Summe der Jahresbeiträge aktiver Verträge. Ist in „Meine Provisionen“
   eine Bestandsprovision hinterlegt, steht daneben „≈ Bestandsprovision pro Jahr“ – eine grobe Schätzung mit dem Satz
   für Privatschutz/Sach, für alle Sparten gleich angesetzt. Die Kundenliste lässt sich nach Jahresbeitrag sortieren.
@@ -502,7 +535,10 @@ Seiten aus der Liste „Seiten“ unten.
   oder Ihrer Rechtsberatung klären (§ 48b VAG). Die App gibt dazu keine Rechtsberatung.
 - **Empfehlungslink senden:** In jedem Kontakt mit Abschluss (und bei Bestandskunden) gibt es den Knopf
   „Empfehlungslink senden“ – jederzeit nutzbar, z. B. nach einem guten Gespräch. Ohne WhatsApp-Verbindung erscheint
-  der Text zum Kopieren oder Teilen. Mit Bestandskunden-Modul gibt es zusätzlich die Kampagne „Jährliche
+  der Text zum Kopieren oder Teilen. In der Kundenliste unter „Bestand“ öffnet der Knopf ein kleines Fenster:
+  „Warum melden Sie sich?“ mit den Anlässen als Karten (ohne besonderen Anlass, Schaden geregelt, Beitrag gespart,
+  nach dem Jahresgespräch). Der Anlass bestimmt nur den Einstieg der Nachricht; darunter steht die Vorschau des Textes,
+  dann „Senden“. Mit Bestandskunden-Modul gibt es zusätzlich die Kampagne „Jährliche
   Empfehlungsbitte“ (persönlicher Link je Kunde, höchstens einmal im Jahr).
 - **Nicht anfragen:** Im Kontakt können Sie die Nachfrage für einzelne Kunden abschalten (z. B. wer keine Nachrichten
   möchte). Das ist kein Zufriedenheitsfilter und passiert nie automatisch.

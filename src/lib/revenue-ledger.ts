@@ -372,15 +372,19 @@ export function manualSetups(entries: ManualEntry[]): { customerId: string; mont
     .map((e) => ({ customerId: e.customerId ?? `nachtrag:${e.id}`, month: e.month, amount: r2(e.amount) }));
 }
 
-export type OneTimeMonth = { month: string; offers: number; manualSetup: number; other: number; total: number };
+export type OneTimeMonth = { month: string; offers: number; manualSetup: number; other: number; packs: number; total: number };
 
-/** Einmal-Umsätze je Monat, getrennt nach Herkunft (Angebot, Nachtrag Einrichtung, Nachtrag Sonstiges). */
-export function oneTimeByMonth(offers: { month: string; amount: number }[], manual: ManualEntry[], months: string[]): OneTimeMonth[] {
+/**
+ * Einmal-Umsätze je Monat, getrennt nach Herkunft (Angebot, Nachtrag Einrichtung, Nachtrag Sonstiges,
+ * Zusatzpakete Bestandskunden-Modul nach Kaufmonat).
+ */
+export function oneTimeByMonth(offers: { month: string; amount: number }[], manual: ManualEntry[], months: string[], packs: { month: string; amount: number }[] = []): OneTimeMonth[] {
   return months.map((m) => {
     const o = offers.filter((x) => x.month === m).reduce((s, x) => s + x.amount, 0);
     const ms = manual.filter((x) => x.month === m && x.kind !== "other").reduce((s, x) => s + x.amount, 0);
     const ot = manual.filter((x) => x.month === m && x.kind === "other").reduce((s, x) => s + x.amount, 0);
-    return { month: m, offers: r2(o), manualSetup: r2(ms), other: r2(ot), total: r2(o + ms + ot) };
+    const pk = packs.filter((x) => x.month === m).reduce((s, x) => s + x.amount, 0);
+    return { month: m, offers: r2(o), manualSetup: r2(ms), other: r2(ot), packs: r2(pk), total: r2(o + ms + ot + pk) };
   });
 }
 

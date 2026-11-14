@@ -5,7 +5,8 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
 import { sendToAdmins } from "@/lib/push";
-import { bestandQuota, QUOTA_REACHED } from "@/lib/bestand/quota";
+import { bestandQuota, consume, nextFunding, QUOTA_PAUSE, QUOTA_REACHED } from "@/lib/bestand/quota";
+import { displayName } from "@/lib/bestand/rows";
 
 export type Occasion = "cross_sell" | "review" | "birthday" | "renewal" | "empfehlung";
 export type Segment = { has?: string[]; lacks?: string[]; birthdayDays?: number; renewalDays?: number };
@@ -23,6 +24,9 @@ export const OCCASIONS: Record<Occasion, { label: string; hint: string; purpose:
 export const NEEDS_EMPFEHLUNG: readonly Occasion[] = ["empfehlung"];
 /** Empfehlungsbitte höchstens einmal im Jahr je Kunde. */
 const REFERRAL_YEAR_DAYS = 365;
+
+/** Vorlagen-Parameter {{1}} (nach „Hallo“) für Kunden ohne Namen. */
+export const NAMELESS_PARAM = "und guten Tag";
 
 /** Abstand zwischen zwei Kampagnen an denselben Kunden. */
 export const COOLDOWN_DAYS = 30;
@@ -159,6 +163,12 @@ export async function runCampaigns(now = new Date()): Promise<{ sent: number; fa
   const { wd, hour } = berlinClock(now);
   if (wd === "Sun" || hour < 9 || hour >= 19) return { sent: 0, failed: 0 };
   const dayStart = new Date(now.getTime() - (hour * 3600_000 + now.getUTCMinutes() * 60_000));
+  const { autoTopUp, pauseForQuota, resumeQuotaPausedCampaigns } = await import("@/lib/bestand/packs");
+  // Am Kontingent pausierte Kampagnen laufen weiter, sobald wieder etwas frei ist (neuer Monat, Paket, Admin)
+  const quotaPaused = await prisma.customerCampaign.findMany({ where: { status: "paused", pausedReason: QUOTA_PAUSE }, select: { customerId: true }, distinct: ["customerId"] });
+  for (const p of quotaPaused) {
+    if ((await bestandQuota(p.customerId, now)).remaining > 0) await resumeQuotaPausedCampaigns(p.customerId, now);
+  }
   const campaigns = await prisma.customerCampaign.findMany({ where: { status: "running" }, include: { customer: { select: { name: true, existingCustomersEnabled: true, empfehlungEnabled: true } } } });
   const { sendWhatsAppNotice, NoTemplateError } = await import("@/lib/whatsapp/templates");
   let sent = 0;
@@ -171,10 +181,20 @@ export async function runCampaigns(now = new Date()): Promise<{ sent: number; fa
       continue;
     }
     const today = await prisma.campaignRecipient.count({ where: { campaignId: c.id, sentAt: { gte: dayStart } } });
-    // Monatskontingent je Kunde: darüber wartet der Versand bis zum nächsten Monat
-    const quota = await bestandQuota(c.customerId, now);
+    // Tageslimit: verteilt große Kampagnen über mehrere Tage (schont die Nummer, Meta-Limit für Erstkontakte je 24 h)
+    if (c.dailyLimit - today <= 0) continue;
+    if (!(await prisma.campaignRecipient.count({ where: { campaignId: c.id, status: "queued" } }))) {
+      await prisma.customerCampaign.update({ where: { id: c.id }, data: { status: "done", finishedAt: now } });
+      continue;
+    }
+    // Kontingent: Monat + Zusatzpakete. Leer → ggf. automatisch nachbuchen, sonst mit Hinweis pausieren
+    let quota = await bestandQuota(c.customerId, now);
+    if (quota.remaining <= 0 && (await autoTopUp(c.customerId, now))) quota = await bestandQuota(c.customerId, now);
+    if (quota.remaining <= 0) {
+      await pauseForQuota(c.id, c.customerId);
+      continue;
+    }
     const budget = Math.min(25, c.dailyLimit - today, quota.remaining);
-    if (budget <= 0) continue;
     const batch = await prisma.campaignRecipient.findMany({
       where: { campaignId: c.id, status: "queued" },
       // Wertvollste Kunden zuerst (höchster Jahresbeitrag), dann in Anlage-Reihenfolge
@@ -200,12 +220,16 @@ export async function runCampaigns(now = new Date()): Promise<{ sent: number; fa
           customerId: c.customerId,
           to: ec.phone,
           purpose: OCCASIONS[c.occasion as Occasion].purpose as Parameters<typeof sendWhatsAppNotice>[0]["purpose"],
-          params: referral ? [first || "Hallo", referral.url] : [first || "Hallo", c.topic ?? ""],
+          // Vorlage beginnt mit „Hallo {{1}}“: ohne Namen neutral „Hallo und guten Tag“
+          params: referral ? [first || NAMELESS_PARAM, referral.url] : [first || NAMELESS_PARAM, c.topic ?? ""],
           text: referral ? referral.text : campaignText(c.occasion as Occasion, first, c.topic),
-          contactName: [ec.firstName, ec.lastName].filter(Boolean).join(" ") || null,
+          contactName: displayName(ec),
         });
+        // Erst Monatskontingent, dann ältestes Paket
+        const funding = nextFunding(quota) ?? null;
+        consume(quota, funding);
         await prisma.$transaction([
-          prisma.campaignRecipient.update({ where: { id: r.id }, data: { status: "sent", sentAt: now, conversationId: res.conversationId } }),
+          prisma.campaignRecipient.update({ where: { id: r.id }, data: { status: "sent", sentAt: now, conversationId: res.conversationId, packId: funding } }),
           prisma.existingCustomer.update({ where: { id: ec.id }, data: { lastCampaignAt: now } }),
           ...(referral ? [prisma.referralLink.update({ where: { id: referral.linkId }, data: { lastSentAt: now } })] : []),
         ]);
@@ -238,7 +262,8 @@ async function referralCampaignParts(customerId: string, existingCustomerId: str
 
 /** Text im offenen 24-h-Fenster (sonst gilt die freigegebene Vorlage). */
 export function campaignText(o: Occasion, first: string, topic: string | null): string {
-  const hi = first ? `Hallo ${first}` : "Hallo";
+  // Ohne Namen neutral (Import ohne Namen-Spalte möglich seit 14.11.2026)
+  const hi = first ? `Hallo ${first}` : "Guten Tag";
   switch (o) {
     case "cross_sell":
       return `${hi}, eine kurze Frage: Sind Sie beim Thema ${topic ?? "Absicherung"} schon gut versorgt? Wenn Sie möchten, schaue ich mir das gern einmal mit Ihnen an. Antworten Sie einfach hier.`;
@@ -294,7 +319,7 @@ export async function handleCampaignReply(conversationId: string, from: string, 
       data: {
         customerId: conv.customerId,
         source: "Bestandskunde",
-        name: [ec.firstName, ec.lastName].filter(Boolean).join(" ") || null,
+        name: [ec.firstName, ec.lastName].filter(Boolean).join(" ") || ec.company || null,
         phone: ec.phone,
         email: ec.email,
         status: "Im Gespräch",
@@ -311,7 +336,7 @@ export async function handleCampaignReply(conversationId: string, from: string, 
     const { assignLead, notifyLeadPush } = await import("@/lib/team");
     await assignLead(leadId).catch(() => null);
     await notifyLeadPush(leadId, {
-      title: `💬 Bestandskunde antwortet: ${[ec.firstName, ec.lastName].filter(Boolean).join(" ") || "Kunde"}`,
+      title: `💬 Bestandskunde antwortet: ${displayName(ec)}`,
       body: recipient.campaign.name,
       tag: `campaign-reply:${leadId}`,
       url: `/buyer/leads/${leadId}`,
