@@ -130,17 +130,10 @@ export function LeadHeaderActions(p: Props) {
     },
   }));
 
+  // Nur Aktionen, die nicht schon als eigene Kachel sichtbar sind (Ole, 14.11.2026: „Wiedervorlage setzen ist doppelt“).
+  // Die Kacheln E-Mail und Wiedervorlage stehen auf jeder Breite (Handy: Raster mit 3 Spalten).
   const moreActions: SheetAction[] = [
-    { label: p.followUpAt ? "Wiedervorlage ändern" : "Wiedervorlage setzen", icon: BellRing, onSelect: () => setTimeout(() => setOpen("followup"), 0) },
-    // Eigenes Postfach verbunden → E-Mail aus der App (mit Vorlagen), sonst Mailprogramm
-    ...(p.mailReady
-      ? [{ label: "E-Mail schreiben", icon: Mail, onSelect: () => setTimeout(() => window.dispatchEvent(new Event(LEAD_MAIL_EVENT)), 0) }]
-      : p.email
-        ? [
-            { label: "E-Mail schreiben", icon: Mail, href: `mailto:${p.email}` },
-            { label: "E-Mail aus der App: Postfach verbinden", icon: Mail, href: "/buyer/postfach" },
-          ]
-        : []),
+    ...(!p.mailReady && p.email ? [{ label: "E-Mail aus der App: Postfach verbinden", icon: Mail, href: "/buyer/postfach" }] : []),
     ...(!p.storniert && p.stornoOptions.length > 0
       ? [{ label: "Stornieren", icon: Ban, tone: "danger" as const, onSelect: () => setTimeout(() => setOpen("storno"), 0) }]
       : []),
