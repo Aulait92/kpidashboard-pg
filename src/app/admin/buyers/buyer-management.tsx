@@ -1,11 +1,10 @@
 "use client";
 
 import { useActionState } from "react";
+import { cn } from "@/lib/utils";
 import {
   createBuyerAccount,
-  deleteBuyerAccount,
   reassignBuyerCustomer,
-  resetBuyerPassword,
   type CreateBuyerState,
 } from "./actions";
 
@@ -94,34 +93,40 @@ export function CreateBuyerForm({
 
 // Kunden-Zuordnung eines bestehenden Buyer-Logins direkt in der Tabelle ändern.
 // Auswahl speichert sofort (Auto-Submit onChange) — Passwort bleibt erhalten.
+// Der aktuelle Kunde steht immer in der Auswahl, auch wenn er intern oder archiviert ist
+// (sonst zeigt das Feld den ersten Kunden der Liste an, z. B. beim Demo-Kunden).
 export function ReassignCustomerForm({
   userId,
-  currentCustomerId,
+  current,
   customers,
+  className,
 }: {
   userId: string;
-  currentCustomerId: string | null;
+  current: { id: string; name: string } | null;
   customers: { id: string; name: string }[];
+  className?: string;
 }) {
+  const options = current && !customers.some((c) => c.id === current.id) ? [current, ...customers] : customers;
   const [state, formAction, pending] = useActionState<
     CreateBuyerState,
     FormData
   >(reassignBuyerCustomer, {});
 
   return (
-    <form action={formAction} className="flex items-center gap-2">
+    <form action={formAction} className={cn("flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1", className)}>
       <input type="hidden" name="userId" value={userId} />
       <select
         name="customerId"
-        defaultValue={currentCustomerId ?? ""}
+        aria-label="Kunde"
+        defaultValue={current?.id ?? ""}
         disabled={pending}
         onChange={(e) => e.currentTarget.form?.requestSubmit()}
-        className="max-w-[220px] rounded-lg border border-[color:var(--border)] bg-white px-2 py-1 text-sm focus:border-[color:var(--brand)] focus:outline-none disabled:opacity-60"
+        className="w-full min-w-0 max-w-[220px] rounded-lg border border-[color:var(--border)] bg-white px-2 py-1 text-sm focus:border-[color:var(--brand)] focus:outline-none disabled:opacity-60"
       >
         <option value="" disabled>
-          – nicht zugeordnet –
+          nicht zugeordnet
         </option>
-        {customers.map((c) => (
+        {options.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name}
           </option>
@@ -137,85 +142,6 @@ export function ReassignCustomerForm({
         <span className="text-[10px] font-medium text-rose-700">
           {state.error}
         </span>
-      ) : null}
-    </form>
-  );
-}
-
-export function DeleteBuyerButton({
-  userId,
-  email,
-}: {
-  userId: string;
-  email: string;
-}) {
-  return (
-    <form
-      action={deleteBuyerAccount}
-      onSubmit={(e) => {
-        if (!confirm(`Buyer-Account "${email}" wirklich löschen?`)) {
-          e.preventDefault();
-        }
-      }}
-    >
-      <input type="hidden" name="userId" value={userId} />
-      <button
-        type="submit"
-        className="text-xs font-medium text-rose-600 hover:underline"
-      >
-        Löschen
-      </button>
-    </form>
-  );
-}
-
-// Inline-Passwort-Reset für Buyer aus der Admin-Übersicht. Umgeht den
-// Forgot-Password-Email-Flow, wenn er nicht zustande kommt (E-Mail-Versand
-// kaputt, Link verloren). Admin tippt das neue Passwort, Server-Action
-// hash't es und überschreibt den passwordHash direkt.
-export function ResetPasswordButton({
-  userId,
-  email,
-}: {
-  userId: string;
-  email: string;
-}) {
-  const [state, formAction, pending] = useActionState<
-    CreateBuyerState,
-    FormData
-  >(resetBuyerPassword, {});
-
-  return (
-    <form
-      action={formAction}
-      className="inline-flex items-center gap-2"
-      onSubmit={(e) => {
-        const form = e.currentTarget;
-        const input = form.elements.namedItem("password") as HTMLInputElement;
-        const pw = prompt(
-          `Neues Passwort für "${email}" (min. 8 Zeichen):`,
-          "",
-        );
-        if (!pw || pw.length < 8) {
-          e.preventDefault();
-          return;
-        }
-        input.value = pw;
-      }}
-    >
-      <input type="hidden" name="userId" value={userId} />
-      <input type="hidden" name="password" defaultValue="" />
-      <button
-        type="submit"
-        disabled={pending}
-        className="text-xs font-medium text-[color:var(--brand)] hover:underline disabled:opacity-60"
-      >
-        {pending ? "Setze…" : "Passwort"}
-      </button>
-      {state.ok ? (
-        <span className="text-[10px] font-medium text-emerald-700">gesetzt</span>
-      ) : state.error ? (
-        <span className="text-[10px] font-medium text-rose-700">{state.error}</span>
       ) : null}
     </form>
   );

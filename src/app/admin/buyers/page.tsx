@@ -3,19 +3,23 @@ import { startPreviewAction } from "@/app/buyer/preview-actions";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatDate } from "@/lib/format";
-import {
-  CreateBuyerForm,
-  DeleteBuyerButton,
-  ReassignCustomerForm,
-  ResetPasswordButton,
-} from "./buyer-management";
+import { CreateBuyerForm } from "./buyer-management";
+import { LoginList, type LoginRow } from "./login-list";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Buyer verwalten | performancegrowth Admin",
 };
+
+const dayMonth = new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "2-digit", timeZone: "Europe/Berlin" });
+const dayMonthYear = new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Europe/Berlin" });
+const yearOf = (d: Date) => Number(new Intl.DateTimeFormat("de-DE", { year: "numeric", timeZone: "Europe/Berlin" }).format(d));
+
+/** „14.11.“ im laufenden Jahr, sonst „14.11.2025“. */
+function shortDate(d: Date): string {
+  return yearOf(d) === yearOf(new Date()) ? dayMonth.format(d) : dayMonthYear.format(d);
+}
 
 export default async function AdminBuyersPage({ searchParams }: { searchParams?: Promise<{ kunde?: string }> }) {
   const session = await getCurrentSession();
@@ -45,6 +49,16 @@ export default async function AdminBuyersPage({ searchParams }: { searchParams?:
       orderBy: { name: "asc" },
     }),
   ]);
+
+  const rows: LoginRow[] = buyers.map((b) => ({
+    id: b.id,
+    email: b.email,
+    displayName: b.displayName,
+    owner: b.teamRole !== "advisor",
+    created: shortDate(b.createdAt),
+    lastLogin: b.lastLoginAt ? shortDate(b.lastLoginAt) : null,
+    customer: b.customer,
+  }));
 
   return (
     <main className={only ? "w-full max-w-4xl" : "mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 lg:px-8"}>
@@ -114,75 +128,7 @@ export default async function AdminBuyersPage({ searchParams }: { searchParams?:
             Noch keine Buyer-Accounts angelegt.
           </p>
         ) : (
-          <div className="mt-3 overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
-                <tr>
-                  <th className="border-b border-[color:var(--border)] py-2 pr-3 text-left">
-                    Email
-                  </th>
-                  <th className="border-b border-[color:var(--border)] py-2 pr-3 text-left">
-                    Kunde
-                  </th>
-                  <th className="border-b border-[color:var(--border)] py-2 pr-3 text-left">
-                    Angelegt
-                  </th>
-                  <th className="border-b border-[color:var(--border)] py-2 pr-3 text-left">
-                    Letzter Login
-                  </th>
-                  <th className="border-b border-[color:var(--border)] py-2 text-right">
-                    Aktionen
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {buyers.map((b) => (
-                  <tr
-                    key={b.id}
-                    className="border-b border-[color:var(--border)] last:border-b-0"
-                  >
-                    <td className="py-2 pr-3">
-                      <div className="font-medium">{b.displayName ?? b.email}</div>
-                      <div className="text-xs text-[color:var(--muted)]">
-                        {b.displayName ? `${b.email} · ` : ""}
-                        {b.teamRole === "advisor" ? "Berater" : "Inhaber"}
-                      </div>
-                    </td>
-                    <td className="py-2 pr-3">
-                      <ReassignCustomerForm
-                        userId={b.id}
-                        currentCustomerId={b.customer?.id ?? null}
-                        customers={customers}
-                      />
-                    </td>
-                    <td className="py-2 pr-3 text-[color:var(--muted)]">
-                      {formatDate(b.createdAt)}
-                    </td>
-                    <td className="py-2 pr-3 text-[color:var(--muted)]">
-                      {b.lastLoginAt ? formatDate(b.lastLoginAt) : "noch nie"}
-                    </td>
-                    <td className="py-2 text-right">
-                      <div className="flex items-center justify-end gap-4">
-                        {b.customer ? (
-                          <form action={startPreviewAction}>
-                            <input type="hidden" name="customerId" value={b.customer.id} />
-                            <button
-                              type="submit"
-                              className="text-xs font-medium text-amber-700 hover:underline"
-                            >
-                              Ansehen
-                            </button>
-                          </form>
-                        ) : null}
-                        <ResetPasswordButton userId={b.id} email={b.email} />
-                        <DeleteBuyerButton userId={b.id} email={b.email} />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <LoginList rows={rows} customers={customers} />
         )}
       </section>
     </main>
