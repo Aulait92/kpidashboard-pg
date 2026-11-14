@@ -3,9 +3,10 @@
 // USt-IdNr. bzw. Steuernummer). Unabhängig davon, was im Stripe-Konto steht, schreibt die
 // Software das als Footer (und die Steuernummer als Zusatzfeld) auf jede Rechnung:
 // als Standard am Stripe-Kunden (gilt für Abo-Rechnungen) und direkt beim Erstellen von
-// Rechnungen bzw. Checkout-Rechnungen. Die Steuernummer trägt Ole unter
-// Admin → Einstellungen → Rechnungsangaben ein; leer = Zeile entfällt.
+// Rechnungen bzw. Checkout-Rechnungen. Standard ist die USt-IdNr. aus PROVIDER (legal-texts);
+// ein abweichender Wert unter Admin → Einstellungen → Rechnungsangaben geht vor (Ole, 14.11.2026).
 
+import type Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { PROVIDER } from "@/lib/legal-texts";
 
@@ -75,14 +76,24 @@ export function invoiceDefaultsFor(taxNumber: string | null | undefined): Invoic
   return { footer: invoiceFooter(taxNumber), customFields: invoiceCustomFields(taxNumber) };
 }
 
-/** Gespeicherte Steuernummer (ohne Datenbank bzw. Tabelle: null, die Rechnung geht trotzdem raus). */
-export async function loadTaxNumber(): Promise<string | null> {
+/** Gilt auf Rechnungen: abweichender Wert aus den Einstellungen, sonst die USt-IdNr. aus PROVIDER. */
+export function effectiveTaxNumber(override: string | null | undefined): string | null {
+  return cleanTaxNumber(override) ?? cleanTaxNumber(PROVIDER.vatId);
+}
+
+/** Abweichender Wert aus den Einstellungen (ohne Datenbank bzw. Tabelle: null, die Rechnung geht trotzdem raus). */
+export async function loadTaxNumberOverride(): Promise<string | null> {
   try {
     const row = await prisma.invoiceSettings.findUnique({ where: { id: "default" }, select: { taxNumber: true } });
     return cleanTaxNumber(row?.taxNumber);
   } catch {
     return null;
   }
+}
+
+/** USt-IdNr. bzw. Steuernummer, die auf Rechnungen steht (Einstellung, sonst PROVIDER). */
+export async function loadTaxNumber(): Promise<string | null> {
+  return effectiveTaxNumber(await loadTaxNumberOverride());
 }
 
 /** Footer und Zusatzfelder mit der aktuell gespeicherten Steuernummer. */
@@ -105,9 +116,54 @@ export function invoiceFooterParams(d: InvoiceDefaults) {
   return { footer: d.footer, ...(d.customFields.length ? { custom_fields: d.customFields } : {}) };
 }
 
-/** Admin-Warnung, solange keine Steuernummer eingetragen ist (null = alles da). */
+/** Admin-Warnung, falls weder Einstellung noch PROVIDER eine Steuernummer liefern (null = alles da). */
 export function taxNumberWarning(taxNumber: string | null | undefined): string | null {
   return cleanTaxNumber(taxNumber)
     ? null
     : "Rechnungen ohne Steuernummer: Auf Stripe-Rechnungen fehlt die USt-IdNr. bzw. Steuernummer (§ 14 Abs. 4 UStG). Bitte unter Einstellungen → Rechnungsangaben eintragen.";
+}
+
+// ─── Steuer-ID des eigenen Stripe-Kontos (account_tax_ids) ─────────────
+// Ole, 14.11.2026: Ist im Stripe-Konto keine Standard-Steuer-ID für Rechnungen gesetzt
+// (settings.invoices.default_account_tax_ids leer), geben wir die passende Steuer-ID beim
+// Erstellen von Rechnungen selbst mit. Die ID (txi_…) kommt aus der API, nicht aus dem Code.
+
+const TAX_ID_TTL_MS = 10 * 60 * 1000;
+let accountTaxIdCache: { ids: string[]; checkedAt: number } | null = null;
+
+/** Für Tests: Zwischenspeicher leeren. */
+export function resetAccountTaxIdCache() {
+  accountTaxIdCache = null;
+}
+
+const compactTax = (v: string | null | undefined) => (v ?? "").replace(/[\s./-]/g, "").toUpperCase();
+
+/**
+ * IDs für account_tax_ids: leer, wenn Stripe schon eine Standard-Steuer-ID setzt, wenn die
+ * Steuer-ID im Konto nicht angelegt ist oder Stripe gerade nicht antwortet (die Rechnung geht
+ * trotzdem raus, die USt-IdNr. steht ohnehin im Footer). 10 Minuten zwischengespeichert.
+ */
+export async function resolveAccountTaxIds(stripe: Stripe): Promise<string[]> {
+  if (accountTaxIdCache && Date.now() - accountTaxIdCache.checkedAt < TAX_ID_TTL_MS) return accountTaxIdCache.ids;
+  try {
+    const account = await stripe.accounts.retrieveCurrent();
+    let ids: string[] = [];
+    if (!(account.settings?.invoices?.default_account_tax_ids ?? []).length) {
+      const want = compactTax(await loadTaxNumber());
+      const list = await stripe.taxIds.list({ limit: 100 });
+      const found = want ? list.data.find((t) => compactTax(t.value) === want) : undefined;
+      ids = found ? [found.id] : [];
+    }
+    accountTaxIdCache = { ids, checkedAt: Date.now() };
+    return ids;
+  } catch (err) {
+    console.warn("[billing] Steuer-ID des Stripe-Kontos nicht ermittelbar:", (err as Error)?.message ?? err);
+    return [];
+  }
+}
+
+/** Zum Einsetzen in invoices.create, Checkout invoice_data bzw. Abo-Zeitplan invoice_settings. */
+export async function accountTaxIdParams(stripe: Stripe): Promise<{ account_tax_ids?: string[] }> {
+  const ids = await resolveAccountTaxIds(stripe);
+  return ids.length ? { account_tax_ids: ids } : {};
 }

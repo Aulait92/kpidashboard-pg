@@ -3,19 +3,25 @@
 import { useState, useTransition } from "react";
 import { CreditCard, Loader2 } from "lucide-react";
 import { startPaymentAction } from "./actions";
+import { ZahlartAuswahl } from "@/components/zahlart-auswahl";
+import { ZAHLART_STANDARD, type Zahlart } from "@/lib/zahlart";
 
 export function PayButton({ token }: { token: string }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [zahlart, setZahlart] = useState<Zahlart>(ZAHLART_STANDARD);
   return (
-    <div>
+    <div className="space-y-4">
+      <div className="max-w-md">
+        <ZahlartAuswahl value={zahlart} onChange={setZahlart} />
+      </div>
       <button
         type="button"
         disabled={pending}
         onClick={() =>
           start(async () => {
             setError(null);
-            const res = await startPaymentAction(token);
+            const res = await startPaymentAction(token, zahlart);
             if (res.url) window.location.href = res.url;
             else setError(res.error ?? "Fehler");
           })
@@ -25,7 +31,7 @@ export function PayButton({ token }: { token: string }) {
         {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
         Zahlung einrichten
       </button>
-      {error ? <p className="mt-2 text-sm text-rose-700">{error}</p> : null}
+      {error ? <p className="text-sm text-rose-700">{error}</p> : null}
     </div>
   );
 }

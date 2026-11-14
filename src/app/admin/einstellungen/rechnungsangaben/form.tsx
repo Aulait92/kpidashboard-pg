@@ -17,11 +17,12 @@ export function TaxNumberForm({ initial }: { initial: string }) {
     <form action={action} className="space-y-3">
       <div>
         <label className="text-sm font-medium" htmlFor="taxNumber">
-          USt-IdNr. oder Steuernummer
+          Abweichende USt-IdNr. oder Steuernummer
         </label>
-        <input id="taxNumber" name="taxNumber" defaultValue={initial} placeholder="z. B. DE123456789 oder 29/123/45678" className="input mt-1 w-full" />
+        <input id="taxNumber" name="taxNumber" defaultValue={initial} placeholder="leer = Standard aus den Stammdaten" className="input mt-1 w-full" />
         <p className="mt-1 text-sm text-[color:var(--muted)]">
-          Mit USt-IdNr. steht „USt-IdNr.:“ auf der Rechnung, sonst „Steuernummer:“. Nach dem Speichern werden alle Stripe-Kunden automatisch aktualisiert.
+          Mit USt-IdNr. steht „USt-IdNr.:“ auf der Rechnung, sonst „Steuernummer:“. Leer lassen für den Standard. Nach dem Speichern werden alle
+          Stripe-Kunden automatisch aktualisiert.
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-3">

@@ -6,9 +6,9 @@
 // Abo-Zeitplan an, der erst am vereinbarten Startdatum beginnt – mit
 // Startpreis-Phase (falls vereinbart) und danach dem normalen Monatspreis.
 // (Checkout selbst kann Setup sofort + Monatsgebühr später nicht abbilden.)
-// Zahlungsarten kommen dynamisch aus den Dashboard-Einstellungen –
-// bewusst ohne payment_method_types; ohne Wiederverwendbarkeit (z. B.
-// Überweisung) blendet Stripe sie wegen setup_future_usage selbst aus.
+// Zahlungsarten (Ole, 14.11.2026): Lastschrift zuerst und vorausgewählt, danach Karte mit
+// Apple Pay und Google Pay, sonst nichts. Der Kunde wählt vor Stripe (siehe lib/zahlart.ts),
+// Checkout bekommt allowed_payment_method_types als Filter auf die Dashboard-Einstellungen.
 // Steuer: Stripe Tax, wenn eine aktive Registrierung existiert; sonst fester
 // Steuersatz „USt. 19 %“, damit nie ohne Umsatzsteuer abgerechnet wird.
 
@@ -21,7 +21,8 @@ import { annualMultiplier, offerSetupDiscount, PRICE_LIST } from "@/lib/offer-pr
 import { audit, type AuditActor } from "@/lib/audit";
 import { seatsToBill } from "@/lib/seats";
 import { MANUAL_SEAT_TASK, manualSeatTask, seatUsage } from "@/lib/seats-server";
-import { customerInvoiceSettingsCreate, customerInvoiceSettingsUpdate, invoiceFooterParams, loadInvoiceDefaults } from "@/lib/invoice-footer";
+import { accountTaxIdParams, customerInvoiceSettingsCreate, customerInvoiceSettingsUpdate, invoiceFooterParams, loadInvoiceDefaults } from "@/lib/invoice-footer";
+import { allowedPaymentMethodTypes, type Zahlart } from "@/lib/zahlart";
 
 let client: Stripe | null = null;
 
@@ -159,11 +160,26 @@ const offerMeta = (offer: OfferRow) => ({
 const packageName = (offer: OfferRow) => (offer.package === "service" ? "Leadgenerierung" : "Leadgenerierung + Software");
 
 /**
+ * Checkout mit der gewählten Zahlart (allowed_payment_method_types). Ist die Lastschrift im
+ * Konto nicht freigeschaltet, lehnt Stripe ab; dann mit Lastschrift und Karte, damit der Kunde
+ * trotzdem bezahlen kann.
+ */
+async function createCheckoutSession(stripe: Stripe, params: Stripe.Checkout.SessionCreateParams, zahlart?: Zahlart | null) {
+  try {
+    return await stripe.checkout.sessions.create({ ...params, allowed_payment_method_types: allowedPaymentMethodTypes(zahlart) });
+  } catch (err) {
+    if (zahlart !== "sepa" || (err as { type?: string })?.type !== "StripeInvalidRequestError") throw err;
+    reportError(err, "billing-checkout-sepa");
+    return stripe.checkout.sessions.create({ ...params, allowed_payment_method_types: allowedPaymentMethodTypes(null) });
+  }
+}
+
+/**
  * Erstellt (oder erneuert) die Stripe-Bezahlseite für ein angenommenes
  * Angebot und gibt die URL zurück. Bezahlt wird nur das Setup; die
  * Zahlungsart wird für die Monatsgebühren gespeichert.
  */
-export async function createCheckoutForOffer(offerId: string): Promise<{ url: string } | { error: string }> {
+export async function createCheckoutForOffer(offerId: string, zahlart?: Zahlart | null): Promise<{ url: string } | { error: string }> {
   const stripe = stripeClient();
   if (!stripe) return { error: "Zahlung ist noch nicht eingerichtet." };
   const offer = await prisma.offer.findUnique({ where: { id: offerId } });
@@ -174,10 +190,11 @@ export async function createCheckoutForOffer(offerId: string): Promise<{ url: st
   }
 
   try {
-    const [setup, tax, invoiceDefaults] = await Promise.all([
+    const [setup, tax, invoiceDefaults, taxIds] = await Promise.all([
       productId(stripe, offer.package === "service" ? "setup_service" : "setup"),
       resolveTax(stripe),
       loadInvoiceDefaults(),
+      accountTaxIdParams(stripe),
     ]);
     const customerId = await ensureCustomer(stripe, offer);
     const products = offerProducts(offer.products).map((p) => p.name).join(", ");
@@ -209,16 +226,15 @@ export async function createCheckoutForOffer(offerId: string): Promise<{ url: st
       locale: "de" as const,
       client_reference_id: offer.id,
       integration_identifier: "pg-angebot-qkzvmtrb",
-      // Für deutsche Geschäftskunden irrelevant (Belgien).
-      excluded_payment_method_types: ["bancontact" as const],
       metadata: meta,
       success_url: `${base}/angebot/${offer.token}?zahlung=ok`,
       cancel_url: `${base}/angebot/${offer.token}?zahlung=abgebrochen`,
     };
 
-    const session =
+    const session = await createCheckoutSession(
+      stripe,
       setupFee > 0
-        ? await stripe.checkout.sessions.create({
+        ? {
             ...common,
             mode: "payment",
             ...(tax.automatic ? { automatic_tax: { enabled: true } } : {}),
@@ -246,15 +262,18 @@ export async function createCheckoutForOffer(offerId: string): Promise<{ url: st
                 description: `Setup ${packageName(offer)} (${products}), Angebot ${offer.number}`,
                 metadata: meta,
                 ...invoiceFooterParams(invoiceDefaults),
+                ...taxIds,
               },
             },
-          })
-        : await stripe.checkout.sessions.create({
+          }
+        : {
             ...common,
             mode: "setup",
             currency: "eur",
             setup_intent_data: { metadata: meta, description: `Zahlungsart für Angebot ${offer.number}` },
-          });
+          },
+      zahlart,
+    );
 
     await prisma.offer.update({
       where: { id: offer.id },
@@ -295,7 +314,7 @@ export async function createScheduleForOffer(offerId: string, session: Stripe.Ch
   const customerId = offer.stripeCustomerId ?? (typeof session.customer === "string" ? session.customer : session.customer?.id);
   if (!customerId) throw new Error(`Angebot ${offer.number}: kein Stripe-Kunde`);
 
-  const [software, service, seat, bestand, empfehlung, tax, pm] = await Promise.all([
+  const [software, service, seat, bestand, empfehlung, tax, pm, taxIds] = await Promise.all([
     productId(stripe, "software"),
     productId(stripe, "service"),
     productId(stripe, "seat"),
@@ -303,6 +322,7 @@ export async function createScheduleForOffer(offerId: string, session: Stripe.Ch
     productId(stripe, "empfehlung"),
     resolveTax(stripe),
     paymentMethodOf(stripe, session),
+    accountTaxIdParams(stripe),
   ]);
   if (pm) {
     // Pflichtangaben mitsetzen (Kunden aus der Zeit vor dem Footer)
@@ -359,6 +379,8 @@ export async function createScheduleForOffer(offerId: string, session: Stripe.Ch
         collection_method: "charge_automatically",
         ...(pm ? { default_payment_method: pm } : {}),
         ...(tax.automatic ? { automatic_tax: { enabled: true } } : {}),
+        // Steuer-ID auf Abo-Rechnungen (nur ohne Standard-Steuer-ID im Stripe-Konto)
+        ...(taxIds.account_tax_ids ? { invoice_settings: { account_tax_ids: taxIds.account_tax_ids } } : {}),
         description: `${packageName(offer)} (${products}), Angebot ${offer.number}`,
       },
       phases,
@@ -645,26 +667,37 @@ export async function ensureStripeCustomerFor(customerId: string): Promise<strin
   return created.id;
 }
 
-/** Stripe-Seite zum Hinterlegen der Zahlungsart (SEPA/Karte). */
-export async function createPaymentSetupUrl(customerId: string, returnUrl: string): Promise<string> {
+/** Stripe-Seite zum Hinterlegen der Zahlungsart (Lastschrift bzw. Karte mit Apple Pay und Google Pay). */
+export async function createPaymentSetupUrl(
+  customerId: string,
+  returnUrl: string,
+  opts: { zahlart?: Zahlart | null; description?: string } = {},
+): Promise<string> {
   const stripe = stripeClient();
   if (!stripe) throw new Error("Stripe ist nicht eingerichtet.");
   const stripeCustomerId = await ensureStripeCustomerFor(customerId);
-  const session = await stripe.checkout.sessions.create({
-    mode: "setup",
-    currency: "eur",
-    customer: stripeCustomerId,
-    locale: "de",
-    success_url: `${returnUrl}${returnUrl.includes("?") ? "&" : "?"}zahlung=ok`,
-    cancel_url: returnUrl,
-    metadata: { kind: "payment_setup", customer_id: customerId },
-    setup_intent_data: { metadata: { kind: "payment_setup", customer_id: customerId }, description: "Zahlungsart für Lead-Bestellungen" },
-  });
+  const session = await createCheckoutSession(
+    stripe,
+    {
+      mode: "setup",
+      currency: "eur",
+      customer: stripeCustomerId,
+      locale: "de",
+      success_url: `${returnUrl}${returnUrl.includes("?") ? "&" : "?"}zahlung=ok`,
+      cancel_url: returnUrl,
+      metadata: { kind: "payment_setup", customer_id: customerId },
+      setup_intent_data: { metadata: { kind: "payment_setup", customer_id: customerId }, description: opts.description ?? "Zahlungsart für Lead-Bestellungen" },
+    },
+    opts.zahlart,
+  );
   if (!session.url) throw new Error("Stripe hat keine Seite geliefert.");
   return session.url;
 }
 
-/** Nach „Zahlungsart hinterlegen“: als Standard für Rechnungen setzen. */
+/**
+ * Nach „Zahlungsart hinterlegen“: als Standard für Rechnungen setzen, beim Kunden und bei
+ * laufenden bzw. geplanten Abos (sonst zieht das Abo weiter von der alten Zahlungsart ein).
+ */
 export async function savePaymentSetup(session: Stripe.Checkout.Session): Promise<void> {
   const stripe = stripeClient();
   if (!stripe) return;
@@ -673,8 +706,25 @@ export async function savePaymentSetup(session: Stripe.Checkout.Session): Promis
   if (pm && customer) {
     const d = await loadInvoiceDefaults();
     await stripe.customers.update(customer, { invoice_settings: { default_payment_method: pm, ...customerInvoiceSettingsUpdate(d) } });
+    const [subs, schedules] = await Promise.all([
+      stripe.subscriptions.list({ customer, status: "all", limit: 10 }),
+      stripe.subscriptionSchedules.list({ customer, limit: 10 }),
+    ]);
+    for (const sub of subs.data) {
+      if (["active", "past_due", "trialing", "unpaid"].includes(sub.status) && idOfPm(sub.default_payment_method) !== pm) {
+        await stripe.subscriptions.update(sub.id, { default_payment_method: pm });
+      }
+    }
+    // Zeitpläne setzen die Zahlungsart bei jedem Phasenwechsel neu, deshalb dort ebenfalls umstellen
+    for (const sc of schedules.data) {
+      if ((sc.status === "not_started" || sc.status === "active") && idOfPm(sc.default_settings?.default_payment_method) !== pm) {
+        await stripe.subscriptionSchedules.update(sc.id, { default_settings: { default_payment_method: pm } });
+      }
+    }
   }
 }
+
+const idOfPm = (v: string | { id: string } | null | undefined) => (typeof v === "string" ? v : (v?.id ?? null));
 
 export async function hasPaymentMethod(stripeCustomerId: string | null): Promise<boolean> {
   const stripe = stripeClient();
@@ -699,7 +749,12 @@ export async function chargeNow(opts: {
 }): Promise<{ invoiceId: string; status: "paid" | "processing" | "open" | "failed" }> {
   const stripe = stripeClient();
   if (!stripe) throw new Error("Stripe ist nicht eingerichtet.");
-  const [product, tax, invoiceDefaults] = await Promise.all([productId(stripe, opts.productKey ?? "leads"), resolveTax(stripe), loadInvoiceDefaults()]);
+  const [product, tax, invoiceDefaults, taxIds] = await Promise.all([
+    productId(stripe, opts.productKey ?? "leads"),
+    resolveTax(stripe),
+    loadInvoiceDefaults(),
+    accountTaxIdParams(stripe),
+  ]);
   const invoice = await stripe.invoices.create(
     {
       customer: opts.stripeCustomerId,
@@ -709,6 +764,7 @@ export async function chargeNow(opts: {
       description: opts.description,
       metadata: opts.metadata,
       ...invoiceFooterParams(invoiceDefaults),
+      ...taxIds,
       ...(tax.automatic ? { automatic_tax: { enabled: true } } : {}),
     },
     { idempotencyKey: `${opts.idempotencyKey}-inv` },

@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { requireAuth } from "@/lib/vertrieb/auth";
-import { invoiceFooter, loadTaxNumber, taxNumberWarning } from "@/lib/invoice-footer";
+import { effectiveTaxNumber, invoiceFooter, loadTaxNumberOverride, taxNumberWarning } from "@/lib/invoice-footer";
+import { PROVIDER } from "@/lib/legal-texts";
 import { loadAccountCheck } from "@/lib/rechnungsangaben";
 import { CustomerFootersForm, InvoiceCountForm, TaxNumberForm } from "./form";
 
@@ -11,7 +12,9 @@ const card = "rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-
 
 export default async function RechnungsangabenPage() {
   await requireAuth();
-  const [taxNumber, account] = await Promise.all([loadTaxNumber(), loadAccountCheck()]);
+  const [override, account] = await Promise.all([loadTaxNumberOverride(), loadAccountCheck()]);
+  // Standard ist die USt-IdNr. aus den Stammdaten (PROVIDER), das Feld überschreibt sie
+  const taxNumber = effectiveTaxNumber(override);
   const warning = taxNumberWarning(taxNumber);
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 space-y-5 px-4 py-8 sm:px-6">
@@ -35,9 +38,12 @@ export default async function RechnungsangabenPage() {
 
       <section className={card} aria-labelledby="h-steuer">
         <h2 id="h-steuer" className="mb-3 font-semibold">
-          Steuernummer
+          USt-IdNr. bzw. Steuernummer
         </h2>
-        <TaxNumberForm initial={taxNumber ?? ""} />
+        <p className="mb-3 text-sm text-[color:var(--muted)]">
+          Standard ist die USt-IdNr. {PROVIDER.vatId} aus den Stammdaten. Nur ausfüllen, wenn auf Rechnungen etwas anderes stehen soll.
+        </p>
+        <TaxNumberForm initial={override ?? ""} />
         <p className="mt-4 text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">So steht es auf jeder Rechnung</p>
         <p className="mt-1 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2 text-sm">{invoiceFooter(taxNumber)}</p>
       </section>
@@ -57,10 +63,16 @@ export default async function RechnungsangabenPage() {
             <ul className="divide-y divide-[color:var(--border)]">
               {account.checks.map((c) => (
                 <li key={c.key} className="flex items-start gap-3 py-2 text-sm">
-                  {c.ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /> : <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />}
+                  {c.tone === "ok" ? (
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  ) : c.tone === "info" ? (
+                    <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" />
+                  ) : (
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                  )}
                   <span className="min-w-0 flex-1">
                     <span className="font-medium">{c.label}:</span> <span className="break-words">{c.value}</span>
-                    <span className={`block ${c.ok ? "text-[color:var(--muted)]" : "text-amber-800"}`}>{c.hint}</span>
+                    <span className={`block ${c.tone === "warn" ? "text-amber-800" : "text-[color:var(--muted)]"}`}>{c.hint}</span>
                   </span>
                 </li>
               ))}

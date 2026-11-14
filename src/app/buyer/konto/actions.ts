@@ -5,9 +5,10 @@ import { revalidatePath } from "next/cache";
 import { endPauseNow, planPause } from "@/lib/pause";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
-import { createPortalUrl } from "@/lib/billing";
+import { createPaymentSetupUrl, createPortalUrl } from "@/lib/billing";
 import { getAppUrl } from "@/lib/email";
 import { reportError } from "@/lib/monitoring";
+import { parseZahlart } from "@/lib/zahlart";
 
 /** Öffnet das Stripe-Kundenportal (nur der Kunde selbst, nicht in der Admin-Vorschau). */
 export async function openPortalAction() {
@@ -20,6 +21,26 @@ export async function openPortalAction() {
     url = await createPortalUrl(customer.stripeCustomerId, `${getAppUrl()}/buyer/konto`);
   } catch (err) {
     reportError(err, "billing-portal", { customer: ctx.customerId });
+    redirect("/buyer/konto?portal=fehler");
+  }
+  redirect(url);
+}
+
+/**
+ * „Zahlungsart hinterlegen“: Stripe-Seite mit der gewählten Zahlart (Lastschrift vorausgewählt).
+ * Die neue Zahlart wird per Webhook Standard für Kunde und Abo (savePaymentSetup).
+ */
+export async function paymentSetupAction(fd: FormData) {
+  const ctx = await getBuyerContext();
+  if (!ctx || ctx.preview || ctx.teamRole === "advisor") redirect("/buyer/konto?portal=vorschau");
+  let url: string;
+  try {
+    url = await createPaymentSetupUrl(ctx.customerId, `${getAppUrl()}/buyer/konto`, {
+      zahlart: parseZahlart(fd.get("zahlart")),
+      description: "Zahlungsart für Rechnungen",
+    });
+  } catch (err) {
+    reportError(err, "billing-payment-setup-konto", { customer: ctx.customerId });
     redirect("/buyer/konto?portal=fehler");
   }
   redirect(url);

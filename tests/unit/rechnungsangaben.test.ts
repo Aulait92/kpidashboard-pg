@@ -1,5 +1,6 @@
 // Pflichtangaben auf jeder Stripe-Rechnung (Ole, 14.11.2026): Footer beim Anlegen von Kunden
-// und Rechnungen, bestehende Kunden nachziehen (Trockenlauf), Warnung ohne Steuernummer,
+// und Rechnungen (Standard: USt-IdNr. aus PROVIDER), bestehende Kunden nachziehen (Trockenlauf),
+// Warnung ohne Steuernummer,
 // Plausibilitätsprüfung des Stripe-Kontos, Zählung verschickter Rechnungen. Stripe und die
 // Datenbank sind gemockt.
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -22,6 +23,7 @@ vi.mock("stripe", () => {
       create: async (p: { metadata: { pg_key: string } }) => ({ id: `prod_${p.metadata.pg_key}` }),
     };
     tax = { registrations: { list: async () => ({ data: [{ id: "taxreg_1" }] }) } };
+    accounts = { retrieveCurrent: async () => ({ settings: { invoices: { default_account_tax_ids: ["txi_std"] } } }) };
     customers = {
       create: async (params: Record<string, unknown>) => {
         s.created.push(params);
@@ -63,11 +65,13 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 import { chargeNow, ensureStripeCustomerFor } from "@/lib/billing";
-import { cleanTaxNumber, invoiceFooter, taxNumberWarning, validateTaxNumber } from "@/lib/invoice-footer";
-import { checkAccount, countInvoices, customerUpToDate, startOfBerlinDay, updateCustomerFooters } from "@/lib/rechnungsangaben";
+import { cleanTaxNumber, customerInvoiceSettingsUpdate, invoiceFooter, loadTaxNumber, taxNumberWarning, validateTaxNumber } from "@/lib/invoice-footer";
+import { checkAccount, countInvoices, customerUpToDate, isTestKey, startOfBerlinDay, updateCustomerFooters } from "@/lib/rechnungsangaben";
 import { rechnungItem } from "@/lib/admin-heute";
 
 const BASE = "Ole Kannapinn UG (haftungsbeschränkt) · Lorenzstraße 58 · 12209 Berlin · Geschäftsführer: Ole Kannapinn · Amtsgericht Charlottenburg, HRB 172651";
+/** Standard aus PROVIDER (legal-texts), solange in den Einstellungen nichts Abweichendes steht. */
+const STD = `${BASE} · USt-IdNr.: DE295007828`;
 
 beforeAll(() => {
   process.env.STRIPE_SECRET_KEY = "sk_test_mock";
@@ -116,9 +120,9 @@ describe("Footer beim Anlegen von Kunden und Rechnungen", () => {
     });
   });
 
-  it("ohne Steuernummer: Footer ohne die Zeile, kein Zusatzfeld", async () => {
+  it("ohne abweichenden Wert: USt-IdNr. aus den Stammdaten (PROVIDER) im Footer und als Zusatzfeld", async () => {
     await ensureStripeCustomerFor("c1");
-    expect(s.created[0].invoice_settings).toEqual({ footer: BASE });
+    expect(s.created[0].invoice_settings).toEqual({ footer: STD, custom_fields: [{ name: "USt-IdNr.", value: "DE295007828" }] });
   });
 
   it("selbst erstellte Rechnung (Vorkasse) trägt den Footer", async () => {
@@ -165,11 +169,13 @@ describe("Bestehende Stripe-Kunden aktualisieren", () => {
     });
   });
 
-  it("ohne Steuernummer werden alte Zusatzfelder entfernt", async () => {
+  it("abweichender Wert gelöscht: zurück auf den Standard aus PROVIDER", async () => {
     s.customers = [cust("cus_a", `${BASE} · Steuernummer: 1`, [{ name: "Steuernummer", value: "1" }])];
     const run = await updateCustomerFooters({ dryRun: false, taxNumber: null });
     expect(run).toMatchObject({ affected: 1, updated: 1 });
-    expect(s.updated[0].params).toEqual({ invoice_settings: { footer: BASE, custom_fields: "" } });
+    expect(s.updated[0].params).toEqual({ invoice_settings: { footer: STD, custom_fields: [{ name: "USt-IdNr.", value: "DE295007828" }] } });
+    // ganz ohne Steuernummer würden alte Zusatzfelder entfernt
+    expect(customerInvoiceSettingsUpdate({ footer: BASE, customFields: [] })).toEqual({ footer: BASE, custom_fields: "" });
     expect(customerUpToDate(cust("x", BASE, []) as unknown as Parameters<typeof customerUpToDate>[0], { footer: BASE, customFields: [] })).toBe(true);
   });
 
@@ -182,7 +188,15 @@ describe("Bestehende Stripe-Kunden aktualisieren", () => {
 });
 
 describe("Warnung ohne Steuernummer", () => {
-  it("Admin-Hinweis und Heute-Punkt nur, solange das Feld leer ist", () => {
+  it("fällt weg: ohne Einstellung gilt die USt-IdNr. aus PROVIDER", async () => {
+    expect(await loadTaxNumber()).toBe("DE295007828");
+    expect(taxNumberWarning(await loadTaxNumber())).toBeNull();
+    expect(rechnungItem(await loadTaxNumber())).toBeNull();
+    s.taxNumber = "29/123/45678";
+    expect(await loadTaxNumber()).toBe("29/123/45678");
+  });
+
+  it("Admin-Hinweis und Heute-Punkt nur, wenn gar keine Steuernummer da ist", () => {
     expect(taxNumberWarning(null)).toMatch(/^Rechnungen ohne Steuernummer/);
     expect(taxNumberWarning(" ")).not.toBeNull();
     expect(taxNumberWarning("DE123456789")).toBeNull();
@@ -194,7 +208,7 @@ describe("Warnung ohne Steuernummer", () => {
 });
 
 describe("Plausibilitätsprüfung des Stripe-Kontos", () => {
-  it("erkennt die Sandbox-Platzhalter", () => {
+  it("erkennt die Sandbox-Platzhalter (Live-Schlüssel: Warnung)", () => {
     const checks = checkAccount(
       {
         country: "DE",
@@ -214,6 +228,58 @@ describe("Plausibilitätsprüfung des Stripe-Kontos", () => {
     expect(by.phone.ok).toBe(false);
     expect(by.phone.hint).toMatch(/Platzhalter/);
     expect(by.tax.ok).toBe(false);
+    expect(by.tax_default).toMatchObject({ ok: false, tone: "warn" });
+  });
+
+  it("Testschlüssel: Sandbox-Platzhalter nur als neutraler Hinweis", () => {
+    const checks = checkAccount(
+      {
+        country: "DE",
+        business_profile: {
+          name: "Ole Kannapinn UG (haftungsbeschränkt)",
+          support_phone: "+1 415-555-0199",
+          support_address: { line1: "Hauptstraße 1", line2: null, postal_code: "15712", city: "Königs Wusterhausen", state: null, country: "DE" },
+        } as never,
+      },
+      "DE295007828",
+      { testmode: true, accountTaxIds: [] },
+    );
+    const by = Object.fromEntries(checks.map((c) => [c.key, c]));
+    for (const k of ["address", "phone"]) {
+      expect(by[k]).toMatchObject({ ok: true, tone: "info" });
+      expect(by[k].hint).toMatch(/^Testkonto mit Platzhaltern/);
+    }
+    // address_full_match ebenso
+    const viaLine = checkAccount(
+      { business_profile: { support_address: { line1: "address_full_match", line2: null, postal_code: "10115", city: "Berlin", state: null, country: "DE" } } as never },
+      "DE295007828",
+      { testmode: true },
+    ).find((c) => c.key === "address");
+    expect(viaLine?.tone).toBe("info");
+    // im Live-Konto bleibt Königs Wusterhausen eine Warnung
+    const live = checkAccount(
+      { business_profile: { support_address: { line1: "Hauptstraße 1", line2: null, postal_code: "15712", city: "Königs Wusterhausen", state: null, country: "DE" } } as never },
+      "DE295007828",
+      { testmode: false },
+    ).find((c) => c.key === "address");
+    expect(live).toMatchObject({ ok: false, tone: "warn" });
+    expect(isTestKey("sk_test_abc")).toBe(true);
+    expect(isTestKey("rk_test_abc")).toBe(true);
+    expect(isTestKey("sk_live_abc")).toBe(false);
+  });
+
+  it("zeigt an, wenn keine Standard-Steuer-ID für Rechnungen gesetzt ist", () => {
+    const without = checkAccount({ settings: { invoices: { default_account_tax_ids: [] } } as never }, "DE295007828", {
+      accountTaxIds: [{ id: "txi_pg", value: "DE295007828" }],
+    }).find((c) => c.key === "tax_default");
+    expect(without).toMatchObject({ ok: false, tone: "warn", value: "(keine gesetzt)" });
+    expect(without?.hint).toMatch(/keine Standard-Steuer-ID/);
+    const missing = checkAccount({}, "DE295007828", { accountTaxIds: [] }).find((c) => c.key === "tax_default");
+    expect(missing?.hint).toMatch(/nicht als Steuer-ID angelegt/);
+    const withDefault = checkAccount({ settings: { invoices: { default_account_tax_ids: ["txi_pg"] } } as never }, "DE295007828", {
+      accountTaxIds: [{ id: "txi_pg", value: "DE295007828" }],
+    }).find((c) => c.key === "tax_default");
+    expect(withDefault).toMatchObject({ ok: true, tone: "ok", value: "DE295007828" });
   });
 
   it("andere US-Nummer und abweichende Adresse sind Warnungen", () => {
@@ -222,7 +288,7 @@ describe("Plausibilitätsprüfung des Stripe-Kontos", () => {
         business_profile: {
           name: "Ole Kannapinn UG (haftungsbeschränkt)",
           support_phone: "+1 212 555 1234",
-          support_address: { line1: "Hauptstraße 1", line2: null, postal_code: "15712", city: "Königs Wusterhausen", state: null, country: "DE" },
+          support_address: { line1: "Hauptstraße 1", line2: null, postal_code: "14467", city: "Potsdam", state: null, country: "DE" },
         } as never,
       },
       "DE123456789",
@@ -246,11 +312,12 @@ describe("Plausibilitätsprüfung des Stripe-Kontos", () => {
           support_address: { line1: "Lorenzstr. 58", line2: null, postal_code: "12209", city: "Berlin", state: null, country: "DE" },
         } as never,
         company: { vat_id_provided: true } as never,
+        settings: { invoices: { default_account_tax_ids: ["txi_1"] } } as never,
       },
       "DE123456789",
     );
-    expect(checks.every((c) => c.ok)).toBe(true);
-    expect(checks.map((c) => c.key)).toEqual(["name", "address", "phone", "tax"]);
+    expect(checks.every((c) => c.ok && c.tone === "ok")).toBe(true);
+    expect(checks.map((c) => c.key)).toEqual(["name", "address", "phone", "tax", "tax_default"]);
   });
 
   it("anderes Land wird gemeldet", () => {
