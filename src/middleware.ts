@@ -20,6 +20,7 @@ const PUBLIC_PREFIXES = [
   "/rechner", // Break-even-Rechner für Interessenten (öffentlich, keine personenbezogenen Daten)
   "/videos", // Einführungsvideos (nur Demo-Daten); sonst leitet die Rollenweiche Kunden auf /buyer um
   "/sicherheit", // Sicherheit & Datenschutz (öffentlich)
+  "/microsoft-freigabe", // Rücksprung nach der Microsoft-Admin-Freigabe durch die IT des Kunden
   "/status", // Statusseite (öffentlich, ohne interne Details)
   "/empfehlen", // „Kollegen empfehlen“: Landingpage je Empfehlungscode (Formular mit Einwilligung)
   "/empfehlung", // Empfehlungsseite + Google-Link (geheimer Token je Kontakt, Modul Empfehlungen & Bewertungen)
@@ -102,6 +103,7 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/rechtliches/") ||
     pathname === "/rechner" ||
     pathname === "/sicherheit" ||
+    pathname === "/microsoft-freigabe" ||
     pathname === "/status" ||
     pathname.startsWith("/empfehlen/") ||
     pathname.startsWith("/feedback/")

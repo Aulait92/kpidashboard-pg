@@ -4,6 +4,8 @@ import { HilfeChatButton } from "@/components/hilfe-chat";
 import { STEP_TEXT } from "@/components/first-day";
 import { ArrowRight, CalendarDays, CheckCircle2, ChevronDown, Circle, ClipboardList, KeyRound, MessageCircle, Percent, PlayCircle, Rocket, Smartphone } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
+import { MicrosoftAdminConsent } from "@/components/microsoft-admin-consent";
+import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
 import { buttonClass, Card } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { customerSetupProgress, loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
@@ -258,6 +260,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                   : "Das hat nicht geklappt. Bitte noch einmal versuchen oder kurz anrufen, dann erledigen wir es gemeinsam."}
               </p>
             ) : null}
+            {gcal === "consent" && microsoftAdminConsentUrl() ? <MicrosoftAdminConsent url={microsoftAdminConsentUrl()!} /> : null}
             <SourcePicker
               status={calendar.status}
               readOnly={readOnly}

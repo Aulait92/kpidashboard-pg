@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { CheckCircle2, Mail, PenLine, TriangleAlert } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
+import { MicrosoftAdminConsent } from "@/components/microsoft-admin-consent";
+import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
 import { buttonClass, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { googleMailAvailable, microsoftMailAvailable, postfachOf, PROVIDER_LABEL } from "@/lib/mail/postfach";
@@ -17,7 +19,7 @@ export const metadata = { title: "E-Mail-Postfach | performancegrowth" };
 const STATUS_TEXT: Record<string, { ok: boolean; text: string }> = {
   connected: { ok: true, text: "Postfach verbunden." },
   denied: { ok: false, text: "Die Anmeldung wurde abgebrochen." },
-  consent: { ok: false, text: "Ihr Firmenkonto erlaubt das Verbinden nicht ohne Freigabe Ihrer IT. Bitte dort nachfragen oder SMTP nutzen." },
+  consent: { ok: false, text: "Ihr Firmenkonto erlaubt das Verbinden nicht ohne Freigabe Ihrer IT. Bei Microsoft 365 hilft der Link unten, sonst SMTP nutzen." },
   scope: { ok: false, text: "Bitte beim Anmelden das Senden von E-Mails erlauben." },
   error: { ok: false, text: "Das Verbinden hat nicht geklappt. Bitte noch einmal versuchen oder SMTP nutzen." },
 };
@@ -47,6 +49,7 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
           {status.ok ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <TriangleAlert className="h-4 w-4 shrink-0" />} {status.text}
         </p>
       ) : null}
+      {sp.postfach === "consent" && microsoftAdminConsentUrl() ? <MicrosoftAdminConsent url={microsoftAdminConsentUrl()!} /> : null}
 
       <Card>
         <CardHeader title="Ihr Postfach" icon={Mail} />

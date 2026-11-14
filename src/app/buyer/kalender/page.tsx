@@ -5,6 +5,8 @@ import { buttonClass, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { getOrCreateBookingSlug, PROVIDER_LABELS } from "@/lib/calendar";
 import { BookingLinkCard } from "@/components/booking-link-card";
+import { MicrosoftAdminConsent } from "@/components/microsoft-admin-consent";
+import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
 import { appUrl } from "@/lib/whatsapp/event-text";
 import { prisma } from "@/lib/prisma";
 import { disconnectOwnCalendarAction } from "./actions";
@@ -59,15 +61,17 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
     ) : gcal ? (
       <p className="mb-4 font-medium text-rose-700">
         {gcal === "consent"
-          ? "Ihr Unternehmen muss die Verbindung erst freigeben. Bitte kurz bei uns melden, dann richten wir es gemeinsam ein."
+          ? "Ihr Unternehmen muss die Verbindung erst freigeben. Bei Microsoft 365 hilft der Link unten, sonst melden Sie sich kurz bei uns."
           : "Das hat nicht geklappt. Bitte noch einmal versuchen."}
       </p>
     ) : null;
+  const consentUrl = gcal === "consent" ? microsoftAdminConsentUrl() : null;
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader title="Mein Kalender" subtitle="Termine für Ihre Leads direkt in Ihrem Kalender" />
       {gcalNote}
+      {consentUrl ? <MicrosoftAdminConsent url={consentUrl} /> : null}
 
       <BookingLinkCard url={bookingUrl} calendarConnected={mainConnected || ownConnected} />
 
