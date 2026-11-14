@@ -4,6 +4,7 @@
 import {
   barWidths,
   bestandForecastNote,
+  KUENFTIG_NOTE,
   bestandIntro,
   bestandskampagnenCells,
   BUTTON_GESPRAECH,
@@ -72,7 +73,20 @@ export function MonatsberichtAnsicht({ model: m, intro, links = true }: { model:
               <dt>= Gewinn</dt>
               <dd className={m.result.gewinn >= 0 ? "text-emerald-700" : "text-red-700"}>{formatEUR(m.result.gewinn)}</dd>
             </div>
+            {m.result.gewinnMitBestand != null ? (
+              <>
+                <div className="flex justify-between gap-3 border-b border-[color:var(--border)] py-1.5 tabular-nums">
+                  <dt>+ künftige Bestandsprovision (5 Jahre)</dt>
+                  <dd className="text-emerald-700">{signedEur(m.result.kuenftigerBestand ?? 0, "+")}</dd>
+                </div>
+                <div className="flex justify-between gap-3 border-t-2 border-[color:var(--foreground)] py-1.5 font-semibold tabular-nums" data-gewinn-mit-bestand>
+                  <dt>= Gewinn mit künftigem Bestand</dt>
+                  <dd className={m.result.gewinnMitBestand >= 0 ? "text-emerald-700" : "text-red-700"}>{formatEUR(m.result.gewinnMitBestand)}</dd>
+                </div>
+              </>
+            ) : null}
           </dl>
+          {m.result.gewinnMitBestand != null ? <p className="mt-1 text-xs text-[color:var(--muted)]">{KUENFTIG_NOTE}</p> : null}
         </section>
       ) : null}
 

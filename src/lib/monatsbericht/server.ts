@@ -14,7 +14,7 @@ import { audit, type AuditActor } from "@/lib/audit";
 import { reportError } from "@/lib/monitoring";
 import { CLOSED_STATUS } from "@/lib/products";
 import { contractProvision } from "@/lib/provision";
-import { ertragForRange, loadErtragData, summarizeBestand, type ErtragData } from "@/lib/ertrag";
+import { bestandOf, ertragForRange, loadErtragData, type ErtragData } from "@/lib/ertrag";
 import { originWhere, PAID_LEAD_WHERE } from "@/lib/lead-herkunft";
 import { computeKpis } from "@/lib/kpis";
 import { computeCustomerSpend, loadRetainerConfig } from "@/lib/customer-spend";
@@ -51,6 +51,8 @@ import {
   type ReportThresholds,
 } from "@/lib/monatsbericht/shared";
 import {
+  checkGewinnPair,
+  gewinnPairText,
   reportNumbers,
   reportSectionsHtml,
   reportSectionsText,
@@ -127,7 +129,8 @@ async function monthMetrics(customerId: string, month: string, data: ErtragData)
   const spend = spendRows.reduce((s, r) => s + Number(r.amount), 0);
   const activeDays = new Set(spendRows.filter((r) => Number(r.amount) > 0).map((r) => r.date.toISOString().slice(0, 10))).size;
   const inMonth = data.contracts.filter((c) => c.signedAt >= from && c.signedAt < to);
-  const provKnown = inMonth.map((c) => contractProvision(c, data.rates));
+  // Gekündigte Verträge zählen wie auf /buyer/zahlen mit ihrer Abschlussprovision (Rückbelastung im Ergebnis)
+  const provKnown = inMonth.map((c) => contractProvision({ ...c, status: "aktiv" }, data.rates));
   const bestandProJahr = provKnown.reduce((s, p) => s + p.trailPerYear, 0);
   return {
     leads: leads.length,
@@ -286,7 +289,8 @@ export async function collectReportData(customerId: string, month: string, setti
   // Lead-Kosten aus Kundensicht wie /buyer/zahlen: Retainer = Werbebudget + Retainer, sonst Lead-Preis
   const cost = spend ? spend.total : Number(k.revenue);
   const cur = await ertragForRange(customerId, data, range, now, cost);
-  const bestand = summarizeBestand(data.contracts, data.rates, data.typ, now);
+  // Bestand mit der Stornoquote des Kunden, gekündigte Verträge ab dem Datum raus (wie /buyer/zahlen)
+  const bestand = bestandOf(data, now);
   const makler = data.typ === "makler";
   const prov = cur.provision;
 
@@ -316,9 +320,11 @@ export async function collectReportData(customerId: string, month: string, setti
   ];
   if (prov.byOrigin.empfehlung.amount > 0) lines.push({ key: "empfehlung", label: "aus Empfehlungen", amount: prov.byOrigin.empfehlung.amount, sign: "+" });
   if (prov.byOrigin.bestand.amount > 0) lines.push({ key: "bestand", label: "aus Bestandskampagnen", amount: prov.byOrigin.bestand.amount, sign: "+" });
+  if (prov.chargeback > 0) lines.push({ key: "rueckbelastung", label: "Rückbelastung (gekündigte Verträge)", amount: prov.chargeback, sign: "-" });
   lines.push({ key: "leadkosten", label: "Lead-Kosten", amount: cur.leadCosts, sign: "-" });
   lines.push({ key: "betreuung", label: "Betreuung & Software (inkl. USt., Gutschriften abgezogen)", amount: r2(Math.abs(agency)), sign: agency >= 0 ? "-" : "+" });
-  const result = prov.firstYear > 0 || cur.costs !== 0 ? { lines, gewinn: cur.gewinn } : null;
+  // Immer beide Zahlen: Gewinn und Gewinn mit künftigem Bestand (Kohorte des Monats, 5 Jahre, Prognose)
+  const result = prov.firstYear > 0 || prov.chargeback > 0 || cur.costs !== 0 ? { lines, gewinn: cur.gewinn, gewinnMitBestand: cur.gewinnMitBestand, kuenftigerBestand: prov.futureTrail } : null;
 
   const bestandBlock =
     bestand.perYear > 0 || bestand.growth.some((g) => g.total > 0)
@@ -329,6 +335,7 @@ export async function collectReportData(customerId: string, month: string, setti
           fromYear2: bestand.fromYear2,
           inYears: bestand.inYears,
           storno: bestand.storno,
+          stornoReal: bestand.real.quote,
           perMonth: bestand.perMonth,
           years: bestand.growth.map((g) => ({ year: g.year, existing: Math.round(g.existing), added: Math.round(g.added), total: Math.round(g.total) })),
         }
@@ -411,6 +418,7 @@ const WRITER_SYSTEM = `Du schreibst zwei Teile für den Monatsbericht von perfor
 2) massnahmen: die Liste massnahmen_roh verständlich für den Kunden zusammenfassen, 1 bis 6 kurze Punkte im Stil „Wir haben …“. Nutzen statt Technik, keine internen Namen, gleichartige Maßnahmen zusammenfassen. Nur, was in massnahmen_roh steht: nichts erfinden, keine Floskeln wie „laufende Optimierung“. Ist massnahmen_roh leer, dann massnahmen = [].
 Regeln:
 - Nur Zahlen aus den gelieferten Daten. Keine Prozent-Werte selbst ausrechnen.
+- Nennst du den Gewinn, dann immer beide Zahlen wie in ergebnis_im_monat.so_nennen („Gewinn: 490 €, mit künftigem Bestand: 2.590 €“). Der Wert mit künftigem Bestand ist eine Prognose, nicht schon verdient.
 - Das Wort „Garantie“ (und Abwandlungen) nie verwenden. Keine Versprechen oder Zusicherungen („garantiert“, „sicher mehr“, „verdoppeln“).
 - Keine Gedankenstriche (– oder —), stattdessen Komma, Doppelpunkt oder neuer Satz. Keine Abkürzungen wie „z. B.“.
 - Ton: positiv ehrlich, kurz, wertschätzend, nie vorwurfsvoll. Keine Floskeln, keine Ausrufezeichen-Kaskaden.
@@ -422,6 +430,7 @@ const CHECKER_SYSTEM = `Du prüfst Einstieg und Maßnahmen eines Kundenberichts 
 - eine Maßnahme genannt wird, die nicht in massnahmen_roh steht, oder eine Maßnahme nur eine Floskel ist,
 - „Garantie“ oder ein Versprechen bzw. eine Zusicherung vorkommt,
 - ein Gedankenstrich (– oder —) vorkommt,
+- der Gewinn genannt wird, aber nicht beide Zahlen (Gewinn und Gewinn mit künftigem Bestand, siehe ergebnis_im_monat.so_nennen), oder der Wert mit künftigem Bestand als schon verdient dargestellt wird,
 - der Ton vorwurfsvoll, entmutigend oder übertrieben ist,
 - Fehler in Rechtschreibung oder Grammatik vorkommen.
 Sonst ok=true und issues=[]. Antworte ausschließlich mit JSON laut Schema.`;
@@ -436,9 +445,22 @@ export function writerInput(customerName: string, d: ReportData, c: Classificati
       datenlage: c.dataQuality === "ok" ? "verlässlich" : "zu wenige Ergebnisse eingetragen, keine Abschlussquote betonen",
       betreff: reportSubject(d),
       vertriebstrichter_nur_bezahlte_leads: d.funnel?.steps.map((s) => ({ name: s.label, wert: s.value, quote: s.rate != null ? `${fmtPct(s.rate)} ${s.rateLabel}` : null, vormonat: s.previous })) ?? null,
-      ergebnis_im_monat: d.result ? { zeilen: d.result.lines.map((l) => `${signedEur(l.amount, l.sign)} ${l.label}`), gewinn: fmtValue({ value: d.result.gewinn, unit: "€" }) } : null,
+      ergebnis_im_monat: d.result
+        ? {
+            zeilen: d.result.lines.map((l) => `${signedEur(l.amount, l.sign)} ${l.label}`),
+            gewinn: fmtValue({ value: d.result.gewinn, unit: "€" }),
+            gewinn_mit_kuenftigem_bestand: d.result.gewinnMitBestand != null ? fmtValue({ value: d.result.gewinnMitBestand, unit: "€" }) : null,
+            kuenftige_bestandsprovision_5_jahre_prognose: d.result.kuenftigerBestand != null ? fmtValue({ value: d.result.kuenftigerBestand, unit: "€" }) : null,
+            so_nennen: gewinnPairText(d.result),
+          }
+        : null,
       bestand: d.bestand
-        ? { pro_jahr: fmtValue({ value: d.bestand.perYear, unit: "€" }), vertraege: d.bestand.contracts, in_5_jahren: fmtValue({ value: d.bestand.inYears, unit: "€" }), prognose_je_jahr: d.bestand.years.map((y) => `${y.year}. Jahr: ${fmtValue({ value: y.total, unit: "€" })}`) }
+        ? {
+            pro_jahr: fmtValue({ value: d.bestand.perYear, unit: "€" }),
+            vertraege: d.bestand.contracts,
+            in_5_jahren: fmtValue({ value: d.bestand.inYears, unit: "€" }),
+            prognose_je_jahr: d.bestand.years.map((y) => `${y.year}. Jahr: ${fmtValue({ value: y.total, unit: "€" })}`),
+          }
         : null,
       empfehlungen: d.empfehlungen,
       bestandskampagnen: d.bestandskampagnen,
@@ -469,6 +491,10 @@ export async function writeReport(customerName: string, d: ReportData, c: Classi
     usage = add(usage, w.usage);
     const text = [w.value.intro, ...w.value.massnahmen].join("\n");
     const det = checkText(text, allowed);
+    // Gewinn immer mit beiden Zahlen (Nur jetzt und mit künftigem Bestand)
+    const pair = checkGewinnPair(text, d.result);
+    if (pair) det.issues.push(pair);
+    det.ok = det.ok && !pair;
     let ai: CheckResult = { ok: true, issues: [] };
     try {
       const r = await runAgent(llm, { agent: "Berichtsprüfer", system: CHECKER_SYSTEM, user: `Daten:\n${input}\n\nEinstieg und Maßnahmen:\n${text}`, schema: CHECK_SCHEMA, maxTokens: 4000 }, validateCheck);

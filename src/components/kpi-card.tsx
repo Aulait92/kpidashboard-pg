@@ -74,10 +74,13 @@ export function KpiCard({
   tone = "default",
   delta,
   sparkline,
+  extra,
 }: {
-  label: string;
+  label: ReactNode;
   value: string;
   hint?: string | ReactNode;
+  /** Optional unter der Überschrift, z. B. ein Umschalter. */
+  extra?: ReactNode;
   tone?: Tone;
   delta?: Delta;
   sparkline?: {
@@ -105,6 +108,7 @@ export function KpiCard({
         </div>
         {delta ? <DeltaBadge delta={delta} /> : null}
       </div>
+      {extra}
       <div
         className={cn(
           "mt-2 text-2xl font-semibold tabular-nums tracking-tight sm:text-[28px]",

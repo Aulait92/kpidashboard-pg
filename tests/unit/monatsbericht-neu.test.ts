@@ -170,7 +170,7 @@ describe("Monatsbericht neu: Tipps und Rechenweg", () => {
     const read = (p: string) => readFileSync(path.resolve(__dirname, "../..", p), "utf8");
     const page = read("src/app/buyer/zahlen/page.tsx");
     const server = read("src/lib/monatsbericht/server.ts");
-    for (const fn of ["ertragForRange(", "summarizeBestand(", "loadErtragData(", "computeCustomerSpend(", "loadRetainerConfig(", "pickTips(", "loadTipSignals("]) {
+    for (const fn of ["ertragForRange(", "bestandOf(", "loadErtragData(", "computeCustomerSpend(", "loadRetainerConfig(", "pickTips(", "loadTipSignals("]) {
       expect(page, fn).toContain(fn);
       expect(server, fn).toContain(fn);
     }
