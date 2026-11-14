@@ -5,7 +5,8 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Mail, Paperclip } from "lucide-react";
+import Link from "next/link";
+import { Loader2, Mail, Paperclip, Pencil } from "lucide-react";
 import { Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
@@ -104,6 +105,10 @@ export function LeadMailComposer({
             ))}
           </div>
         ) : null}
+        {/* Vorlagen/Signatur ändern direkt aus dem Fenster (Ole, 14.11.2026) */}
+        <Link href="/buyer/postfach#vorlagen" className="inline-flex items-center gap-1.5 text-sm font-medium text-[color:var(--brand)] hover:underline" data-mail-edit-templates>
+          <Pencil className="h-3.5 w-3.5" /> Vorlagen & Signatur bearbeiten
+        </Link>
         <input value={to} onChange={(e) => setTo(e.target.value)} type="email" placeholder="An" aria-label="An" className={`${input} h-11`} />
         <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Betreff" aria-label="Betreff" className={`${input} h-11`} />
         <textarea value={text} onChange={(e) => setText(e.target.value)} rows={9} placeholder="Text" aria-label="Text" className={`${input} py-2.5`} />

@@ -108,7 +108,7 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
         </div>
       </Card>
 
-      <Card>
+      <Card id="signatur">
         <CardHeader title="Signatur" icon={PenLine} />
         <div className="p-5">
           <p className="mb-3 text-sm text-[color:var(--muted)]">
@@ -118,7 +118,7 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
         </div>
       </Card>
 
-      <Card>
+      <Card id="vorlagen">
         <CardHeader title="Vorlagen" icon={Mail} />
         <div className="p-5">
           <p className="mb-3 text-sm text-[color:var(--muted)]">

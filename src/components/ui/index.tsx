@@ -91,11 +91,14 @@ export function ButtonLink({
 
 // ─── Card ──────────────────────────────────────────────────────────────
 export function Card({
+  id,
   className,
   children,
   tone = "default",
   menus = false,
 }: {
+  /** Sprungmarke (z. B. /buyer/postfach#vorlagen) */
+  id?: string;
   className?: string;
   children: React.ReactNode;
   tone?: "default" | "attention";
@@ -104,8 +107,10 @@ export function Card({
 }) {
   return (
     <section
+      id={id}
       className={cn(
         menus ? "" : "overflow-hidden",
+        id && "scroll-mt-20",
         "rounded-[var(--radius-lg)] border bg-[color:var(--surface)] shadow-[var(--shadow-md)]",
         tone === "attention" ? "border-amber-200" : "border-[color:var(--border)]",
         className,
