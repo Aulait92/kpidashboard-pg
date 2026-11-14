@@ -3,7 +3,7 @@
 Admin → Marketing → **LinkedIn** (`/admin/marketing/linkedin`).
 
 ## Was passiert
-1. Täglich ab 17 Uhr (einstellbar) schreibt die KI die Entwürfe für den nächsten Posting-Tag
+1. Ab 17 Uhr (einstellbar) schreibt die KI Entwürfe; „Immer N Tage im Voraus planen“ hält N Posting-Tage gefüllt (je Lauf ein Tag). Per Knopf auch für die nächsten 1/3/5/7/14 Tage auf einmal
    (Posts pro Tag und Uhrzeiten einstellbar, Standard 5 · Mo–Fr). Push an Admins.
 2. Ole liest, ändert bei Bedarf Text oder Foto und klickt **Freigeben** (oder „Jetzt posten“).
    Ohne Freigabe geht nichts raus.
@@ -17,7 +17,7 @@ Texte immer ohne Gedankenstriche und ohne Hashtags (Regel für die KI + Bereinig
 Stil wie Oles beste Posts: kurze Ein-Satz-Absätze, konkrete Zahlen/Fälle, Pfeile (→) für Rechnungen, Schluss-Frage + „Schreib mir eine DM“.
 
 **Bilder** je Post: eigenes Foto/Beweis-Screenshot aus der Fotoablage → sonst fotorealistisches KI-Bild
-(gpt-image-1, keine Illustrationen, kein Text im Bild, keine echten Personen/Marken) → sonst Text-Grafik
+(aktuelles OpenAI-Bildmodell; meist fotorealistisch, etwa jedes vierte Bild als Illustration/Zeichnung; kein Text im Bild, keine echten Personen/Marken) → sonst Text-Grafik
 (Kernaussage auf Blau mit Logo, nur Typografie). Beim Freigeben wählbar: Foto, KI-Bild, Grafik oder keins.
 
 **Trust-Posts**: Die KI bekommt echte, zusammengefasste Zahlen aus der Software (Leads und Termine der letzten

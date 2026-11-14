@@ -6,17 +6,17 @@ import { prisma } from "@/lib/prisma";
 import { claudeCall, runAgent, type LlmCall } from "@/lib/kampagnen/llm";
 import type { Valid } from "@/lib/kampagnen/types";
 import { sendToAdmins } from "@/lib/push";
-import { getSettings, liftLabel, liftOf, nextPostingDay, scoreOf, slotTimes, type Scored } from "@/lib/linkedin/posts";
+import { getSettings, liftLabel, liftOf, postingDays, scoreOf, slotTimes, type Scored } from "@/lib/linkedin/posts";
 import type { LinkedInPost } from "@/generated/prisma/client";
 import { postText } from "@/lib/linkedin/text";
 import { loadTrustFacts } from "@/lib/linkedin/trust";
-import { createAiImage, type ImageGenerator } from "@/lib/linkedin/ai-image";
+import { createAiImage, type ImageGenerator, type ImageStyle } from "@/lib/linkedin/ai-image";
 
 const DAY = 86_400_000;
 
 /** Bild zum Post: eigenes Foto, KI-Foto (fotorealistisch), Text-Grafik oder keins. */
 export type ImageKind = "foto" | "ki" | "grafik" | "keins";
-export type Draft = { idea: string; hypothesis: string; text: string; image: ImageKind; photoId: string | null; imagePrompt: string; graphic: string };
+export type Draft = { idea: string; hypothesis: string; text: string; image: ImageKind; photoId: string | null; imagePrompt: string; imageStyle: ImageStyle; graphic: string };
 export type PhotoInfo = { id: string; description: string; lastUsed: Date | null };
 
 export const DRAFT_SCHEMA = {
@@ -29,7 +29,7 @@ export const DRAFT_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["idea", "hypothesis", "text", "image", "photoId", "imagePrompt", "graphic"],
+        required: ["idea", "hypothesis", "text", "image", "photoId", "imagePrompt", "imageStyle", "graphic"],
         properties: {
           idea: { type: "string", description: "Thema in wenigen Worten" },
           hypothesis: { type: "string", description: "Was dieser Post gegenüber dem bisher besten anders macht und warum das mehr Zielgruppen-Reichweite bringen soll (ein Satz)" },
@@ -37,6 +37,7 @@ export const DRAFT_SCHEMA = {
           image: { type: "string", enum: ["foto", "ki", "grafik", "keins"], description: "foto = Foto aus der Fotoablage, ki = fotorealistisches KI-Bild, grafik = Text-Grafik mit Kernaussage, keins = ohne Bild" },
           photoId: { type: "string", description: "Bei image=foto: ID aus der Fotoablage, sonst leer" },
           imagePrompt: { type: "string", description: "Immer ausfüllen: englische Bildbeschreibung einer fotorealistischen, emotionalen Szene passend zum Post (Personen, Ort, Licht, Stimmung)" },
+          imageStyle: { type: "string", enum: ["foto", "illustration"], description: "Stil des KI-Bilds: meist foto (fotorealistisch), etwa jedes vierte Bild illustration (Zeichnung), wenn es zur Geschichte passt" },
           graphic: { type: "string", description: "Immer ausfüllen: Kernaussage für die Ersatz-Grafik (max. 90 Zeichen, ohne Gedankenstriche)" },
         },
       },
@@ -68,7 +69,8 @@ export function validateDrafts(x: unknown, n: number, photoIds: string[] = []): 
     if (image !== "foto" && image !== "ki" && image !== "grafik") image = "keins";
     // Ole (14.11.2026): fotorealistische Bilder statt Grafiken – Grafik nur als Ersatz
     if (image === "grafik" && imagePrompt.length >= 20) image = "ki";
-    out.push({ idea: idea.slice(0, 120), hypothesis: hypothesis.slice(0, 300), text, image, photoId: image === "foto" ? photoId : null, imagePrompt, graphic });
+    const imageStyle: ImageStyle = str(d.imageStyle) === "illustration" ? "illustration" : "foto";
+    out.push({ idea: idea.slice(0, 120), hypothesis: hypothesis.slice(0, 300), text, image, photoId: image === "foto" ? photoId : null, imagePrompt, imageStyle, graphic });
   }
   if (out.length !== n) errors.push(`Genau ${n} Posts schreiben (geliefert: ${out.length})`);
   const firsts = out.map((d) => d.text.slice(0, 60).toLowerCase());
@@ -145,7 +147,7 @@ export function buildDraftPrompt(input: PromptInput): { system: string; user: st
     "Formate, die bei ihm funktionieren: (1) Trust-Post mit echtem Kunden-Case und Zahlen (sein bester Post), (2) „Stell dir vor:“-Geschichte aus dem Alltag eines Vermittlers oder seiner Kunden mit emotionaler Wendung und Schluss-Frage. Trust-Posts nur mit Fakten aus „Trust-Fakten“ oder „Trust-Material“.",
     "Wahrheit: Erfinde keine Zahlen, Kundennamen, Zitate, Erlebnisse oder Ergebnisse. Nutze nur, was in „Über mich“, „Zielgruppe“ oder seinen bisherigen Posts steht. Wo eine konkrete Zahl fehlt, formuliere ohne Zahl.",
     "Keine Versprechen über Ergebnisse für Kunden, keine Aussagen über Mitbewerber oder einzelne Versicherer.",
-    "Bilder (image): Jeder Post bekommt ein Bild. Passt ein Foto aus der Fotoablage (Fotos von ihm oder Beweis-Screenshots), nimm es (image=foto, kein Foto zweimal am selben Tag, kürzlich genutzte meiden; der Text darf das Foto nur so beschreiben, wie es in der Beschreibung steht). Sonst image=ki mit einer fotorealistischen, emotionalen Szene passend zur Geschichte (z. B. Vater mit Sohn am Krankenbett): keine Zeichnungen oder Illustrationen, kein Text im Bild, keine echten Personen, Marken oder Logos. Wähle image=grafik nicht selbst; die Text-Grafik ist nur der Ersatz, falls das KI-Bild nicht erzeugt werden kann. Fülle imagePrompt und graphic deshalb immer aus.",
+    "Bilder (image): Jeder Post bekommt ein Bild. Passt ein Foto aus der Fotoablage (Fotos von ihm oder Beweis-Screenshots), nimm es (image=foto, kein Foto zweimal am selben Tag, kürzlich genutzte meiden; der Text darf das Foto nur so beschreiben, wie es in der Beschreibung steht). Sonst image=ki mit einer emotionalen Szene passend zur Geschichte: meist fotorealistisch (imageStyle=foto, z. B. Vater mit Sohn am Krankenbett), etwa jedes vierte Bild als Illustration oder Zeichnung (imageStyle=illustration, z. B. Kinderzeichnung „Unser Zuhause“), wenn es zur Geschichte passt. Kein Text im Bild, keine echten Personen, Marken oder Logos. Wähle image=grafik nicht selbst; die Text-Grafik ist nur der Ersatz, falls das KI-Bild nicht erzeugt werden kann. Fülle imagePrompt und graphic deshalb immer aus.",
     "Antworte nur mit JSON im vorgegebenen Format.",
   ].join("\n");
 
@@ -232,7 +234,7 @@ export async function generateDrafts(day: string, opts: { llm?: LlmCall; now?: D
     let photoId = d.photoId;
     let useGraphic = d.image === "grafik";
     if (d.image === "ki") {
-      photoId = await createAiImage(d.imagePrompt, opts.imageGen).catch(() => null);
+      photoId = await createAiImage(d.imagePrompt, opts.imageGen, d.imageStyle).catch(() => null);
       if (!photoId) useGraphic = !!d.graphic;
     }
     await prisma.linkedInPost.create({
@@ -261,14 +263,18 @@ export async function generateDrafts(day: string, opts: { llm?: LlmCall; now?: D
   return value.length;
 }
 
-/** Cron: Entwürfe ab der eingestellten Uhrzeit für den nächsten Posting-Tag schreiben. */
+/** Cron: ab der eingestellten Uhrzeit Entwürfe für die Posting-Tage im Vorlauf schreiben (je Lauf ein Tag). */
 export async function maybeGenerateDrafts(now: Date, llm?: LlmCall): Promise<number> {
   const settings = await getSettings();
   if (!settings.autoDrafts || !settings.about.trim() || !process.env.ANTHROPIC_API_KEY) return 0;
   const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", hour: "numeric", hourCycle: "h23" }).format(now));
   if (hour < settings.draftHour) return 0;
-  const day = nextPostingDay(settings, now);
-  if (await prisma.linkedInPost.count({ where: { draftDate: day } })) return 0;
+  // Vorlauf: erster Posting-Tag im Fenster, für den noch gar nichts geschrieben wurde (je Lauf ein Tag)
+  const window = postingDays(settings, now, Math.max(1, Math.min(14, settings.planDays)));
+  const counts = await prisma.linkedInPost.groupBy({ by: ["draftDate"], where: { draftDate: { in: window } }, _count: true });
+  const done = new Set(counts.map((c) => c.draftDate));
+  const day = window.find((d) => !done.has(d));
+  if (!day) return 0;
   // Sperre: nur ein Lauf gleichzeitig (abgelaufen nach 15 Minuten)
   const lock = await prisma.linkedInSettings.updateMany({
     where: { id: "default", OR: [{ draftingAt: null }, { draftingAt: { lt: new Date(now.getTime() - 15 * 60_000) } }] },

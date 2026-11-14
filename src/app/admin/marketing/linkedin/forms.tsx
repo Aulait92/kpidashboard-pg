@@ -187,9 +187,10 @@ export function UnapproveButton({ id }: { id: string }) {
   );
 }
 
-export function GenerateButton({ disabled }: { disabled?: boolean }) {
+export function GenerateButton({ disabled, defaultDays = 1 }: { disabled?: boolean; defaultDays?: number }) {
   const router = useRouter();
   const [res, setRes] = useState<LiResult | null>(null);
+  const [days, setDays] = useState(defaultDays);
   const [pending, start] = useTransition();
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -200,13 +201,23 @@ export function GenerateButton({ disabled }: { disabled?: boolean }) {
         disabled={pending || disabled}
         onClick={() =>
           start(async () => {
-            setRes(await generateNowAction());
+            setRes(await generateNowAction(days));
             router.refresh();
           })
         }
       >
-        {pending ? "Schreibe Entwürfe … (ca. 1–2 Min.)" : "Jetzt Entwürfe schreiben"}
+        {pending ? `Schreibe Entwürfe … (ca. ${days * 2} Min.)` : "Jetzt Entwürfe schreiben"}
       </Button>
+      <label className="flex items-center gap-2 text-sm text-[color:var(--muted)]">
+        für
+        <select value={days} onChange={(e) => setDays(Number(e.target.value))} disabled={pending} className="rounded border border-[color:var(--border)] px-2 py-1.5 text-sm text-[color:var(--foreground)]">
+          {[...new Set([1, 3, 5, 7, 14, defaultDays])].sort((a, b) => a - b).map((n) => (
+            <option key={n} value={n}>
+              {n === 1 ? "den nächsten Tag" : `die nächsten ${n} Tage`}
+            </option>
+          ))}
+        </select>
+      </label>
       <Note res={res} />
     </div>
   );
@@ -218,6 +229,7 @@ export function SettingsForm(props: {
   weekdays: boolean;
   autoDrafts: boolean;
   draftHour: number;
+  planDays: number;
   about: string;
   icp: string;
   icpKeywords: string;
@@ -275,7 +287,18 @@ export function SettingsForm(props: {
               </option>
             ))}
           </select>
-          Uhr für den nächsten Tag
+          Uhr
+        </label>
+        <label className="flex items-center gap-2">
+          Immer
+          <select name="planDays" defaultValue={props.planDays} className="rounded border border-[color:var(--border)] px-1 py-0.5">
+            {[1, 2, 3, 5, 7, 10, 14].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+          {props.planDays === 1 ? "Tag" : "Tage"} im Voraus planen
         </label>
       </div>
       <div className="flex items-center gap-3">

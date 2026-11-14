@@ -108,10 +108,12 @@ export default async function LinkedInPage({ searchParams }: { searchParams: Pro
           <div>
             <h2 className="text-lg font-semibold">Zur Freigabe</h2>
             <p className="text-sm text-[color:var(--muted)]">
-              {settings.autoDrafts ? `Neue Entwürfe kommen täglich ab ${settings.draftHour}:00 Uhr für den nächsten Tag (Push).` : "Automatische Entwürfe sind aus."} Freigegebene Posts gehen zur angezeigten Uhrzeit raus.
+              {settings.autoDrafts
+                ? `Neue Entwürfe kommen ab ${settings.draftHour}:00 Uhr automatisch, ${settings.planDays > 1 ? `immer ${settings.planDays} Tage im Voraus` : "für den nächsten Tag"} (Push).`
+                : "Automatische Entwürfe sind aus."} Freigegebene Posts gehen zur angezeigten Uhrzeit raus.
             </p>
           </div>
-          <GenerateButton disabled={!settings.about.trim()} />
+          <GenerateButton disabled={!settings.about.trim()} defaultDays={settings.planDays > 1 ? Math.min(14, settings.planDays) : 1} />
         </div>
         {drafts.length ? (
           drafts.map((d) => (
@@ -238,6 +240,7 @@ export default async function LinkedInPage({ searchParams }: { searchParams: Pro
             weekdays={settings.weekdays}
             autoDrafts={settings.autoDrafts}
             draftHour={settings.draftHour}
+            planDays={settings.planDays}
             about={settings.about}
             icp={settings.icp}
             icpKeywords={settings.icpKeywords}

@@ -54,6 +54,17 @@ export function nextPostingDay(settings: Pick<LinkedInSettings, "weekdays">, now
   return dayKey(d);
 }
 
+/** Die nächsten `n` Posting-Tage ab morgen (am Wochenende übersprungen, wenn nur werktags). */
+export function postingDays(settings: Pick<LinkedInSettings, "weekdays">, now: Date, n: number): string[] {
+  const out: string[] = [];
+  let d = addDays(now, 1);
+  for (let i = 0; out.length < n && i < n * 3 + 7; i++, d = addDays(d, 1)) {
+    const key = dayKey(d);
+    if (!(settings.weekdays && isWeekend(key))) out.push(key);
+  }
+  return out;
+}
+
 const TAKEN = ["freigegeben", "sendet", "veroeffentlicht"];
 
 /** Nächste freie Uhrzeit ab `from` (mind. 2 Minuten in der Zukunft), sonst null (innerhalb 14 Tagen). */

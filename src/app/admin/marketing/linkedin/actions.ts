@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { audit } from "@/lib/audit";
-import { approveNow, approvePost, getSettings, icpTerms, imageFields, MAX_POSTS_PER_DAY, nextPostingDay, parseSlots } from "@/lib/linkedin/posts";
+import { approveNow, approvePost, getSettings, icpTerms, imageFields, MAX_POSTS_PER_DAY, parseSlots, postingDays } from "@/lib/linkedin/posts";
 import { generateDrafts } from "@/lib/linkedin/drafts";
 import { addPhoto } from "@/lib/linkedin/photos";
 import { importFile } from "@/lib/linkedin/import";
@@ -55,18 +55,23 @@ export async function unapproveAction(id: string): Promise<LiResult> {
   return { ok: true };
 }
 
-export async function generateNowAction(): Promise<LiResult> {
+/** Entwürfe für die nächsten `days` Posting-Tage schreiben (nur Tage mit freien Uhrzeiten). */
+export async function generateNowAction(days = 1): Promise<LiResult> {
   await requireAuth();
   const settings = await getSettings();
   if (!settings.about.trim()) return { error: "Bitte zuerst „Über mich“ in den Einstellungen ausfüllen." };
   if (!process.env.ANTHROPIC_API_KEY) return { error: "KI ist auf diesem Server nicht eingerichtet (ANTHROPIC_API_KEY)." };
+  const n = Math.max(1, Math.min(14, Math.round(days) || 1));
+  let made = 0;
   try {
-    const day = nextPostingDay(settings, new Date());
-    const n = await generateDrafts(day, { push: false });
+    for (const day of postingDays(settings, new Date(), n)) made += await generateDrafts(day, { push: false });
     revalidatePath(PATH);
-    return n ? { ok: true, info: `${n} neue Entwürfe.` } : { ok: true, info: "Für den nächsten Posting-Tag sind schon alle Uhrzeiten belegt." };
+    return made
+      ? { ok: true, info: `${made} neue Entwürfe für die nächsten ${n === 1 ? "Posting-Tag" : `${n} Posting-Tage`}.` }
+      : { ok: true, info: n === 1 ? "Für den nächsten Posting-Tag sind schon alle Uhrzeiten belegt." : `Die nächsten ${n} Posting-Tage sind schon voll geplant.` };
   } catch (e) {
-    return { error: msg(e) };
+    revalidatePath(PATH);
+    return { error: `${made ? `${made} Entwürfe geschrieben, dann: ` : ""}${msg(e)}` };
   }
 }
 
@@ -76,6 +81,7 @@ export async function saveSettingsAction(_prev: LiResult, fd: FormData): Promise
   const slots = parseSlots(String(fd.get("slots") ?? ""));
   if (slots.length < postsPerDay) return { error: `Bitte mindestens ${postsPerDay} Uhrzeiten angeben (z. B. 07:30, 12:00, 18:00).` };
   const draftHour = Math.max(0, Math.min(23, Number(fd.get("draftHour") ?? 17) || 17));
+  const planDays = Math.max(1, Math.min(14, Number(fd.get("planDays") ?? 1) || 1));
   const icpKeywords = String(fd.get("icpKeywords") ?? "").slice(0, 2000);
   if (!icpTerms(icpKeywords).length) return { error: "Bitte mindestens einen Begriff für die Zielgruppe angeben." };
   await getSettings();
@@ -87,6 +93,7 @@ export async function saveSettingsAction(_prev: LiResult, fd: FormData): Promise
       weekdays: fd.get("weekdays") === "on",
       autoDrafts: fd.get("autoDrafts") === "on",
       draftHour,
+      planDays,
       about: String(fd.get("about") ?? "").slice(0, 4000),
       icp: String(fd.get("icp") ?? "").slice(0, 4000),
       icpKeywords,

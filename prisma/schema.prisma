@@ -2828,6 +2828,8 @@ model LinkedInSettings {
   accountIcpShare Float?
   // Trust-Material von Ole (z. B. freigegebene Kundenstimmen, Erfolge) – nur das darf als Fakt/Zitat in Posts
   trustNotes  String   @default("")
+  // Vorlauf: so viele Posting-Tage im Voraus hält die Automatik mit Entwürfen gefüllt (Ole, 14.11.2026)
+  planDays    Int      @default(1)
   // Uhrzeit (deutsche Zeit), ab der die Entwürfe für den nächsten Tag geschrieben werden
   draftHour   Int      @default(17)
   lastImportAt DateTime?

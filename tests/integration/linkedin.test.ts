@@ -329,6 +329,28 @@ describe("LinkedIn – Datenbank", () => {
     expect(prompt).toContain("Eine Allianz-Agentur hat aus 100 Katzenbesitzern 12 Kunden gemacht.");
   });
 
+  it("Vorlauf: Automatik füllt mehrere Tage, je Lauf einen; Knopf für mehrere Tage", async () => {
+    process.env.ANTHROPIC_API_KEY ??= "test";
+    const { postingDays } = await import("@/lib/linkedin/posts");
+    expect(postingDays({ weekdays: true }, new Date("2026-11-13T18:00:00Z"), 3)).toEqual(["2026-11-16", "2026-11-17", "2026-11-18"]);
+    expect(postingDays({ weekdays: false }, new Date("2026-11-13T18:00:00Z"), 2)).toEqual(["2026-11-14", "2026-11-15"]);
+    await prisma.linkedInSettings.create({ data: { id: "default", postsPerDay: 1, about: "Gründer", planDays: 3, draftHour: 17 } });
+    const evening = new Date("2026-11-13T17:30:00Z"); // Freitag 18:30
+    const styles: (string | undefined)[] = [];
+    const imageGen = async (_p: string, style?: string) => (styles.push(style), Buffer.from("png"));
+    const llm: LlmCall = async () => ({
+      text: JSON.stringify({ posts: [{ idea: "x", hypothesis: "h", text: TEXT(Math.floor(Math.random() * 1e6)), image: "ki", photoId: "", imagePrompt: "a child drawing of a family house with parents", imageStyle: "illustration", graphic: "g" }] }),
+      usage: { tokensIn: 1, tokensOut: 1, costCents: 0 },
+    });
+    const { maybeGenerateDrafts: run } = await import("@/lib/linkedin/drafts");
+    for (let i = 0; i < 4; i++) await run(evening, llm);
+    const days = (await prisma.linkedInPost.findMany({ where: { status: "entwurf" }, select: { draftDate: true } })).map((d) => d.draftDate).sort();
+    expect(days).toEqual(["2026-11-16", "2026-11-17", "2026-11-18"]);
+    // KI-Bild im Stil „illustration“ angefragt (ohne Generator-Override: kein Bild → Grafik); hier über generateDrafts
+    await generateDrafts("2026-11-19", { llm, imageGen });
+    expect(styles).toEqual(["illustration"]);
+  });
+
   it("Text-Grafik wird gerendert und beim Posten statt Foto mitgeschickt", async () => {
     const { renderGraphic } = await import("@/lib/linkedin/graphic");
     const png = await renderGraphic("100 Leads → 12 Abschlüsse → 4.300 € Nettoprämie");
