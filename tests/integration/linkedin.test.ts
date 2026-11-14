@@ -305,6 +305,26 @@ describe("LinkedIn – Datenbank", () => {
     expect(again).toMatchObject({ matched: 1, created: 0 });
   });
 
+  it("Schon gepostete Fotos/Screenshots schlägt die KI nicht erneut vor", async () => {
+    await prisma.linkedInSettings.create({ data: { id: "default", postsPerDay: 1, about: "x" } });
+    const used = await addPhoto({ name: "beweis.png", type: "image/png", data: Buffer.from("png") }, { description: "WhatsApp-Screenshot Katzen-Case", describe: null });
+    const fresh = await addPhoto({ name: "ole.png", type: "image/png", data: Buffer.from("png") }, { description: "Ole am Laptop", describe: null });
+    const usedId = used.ok ? used.id : "";
+    const freshId = fresh.ok ? fresh.id : "";
+    await prisma.linkedInPost.create({
+      data: { status: "veroeffentlicht", text: "Eine Allianz-Agentur hat aus 100 Katzenbesitzern 12 Kunden gemacht.", photoId: usedId, scheduledAt: new Date("2026-11-10T08:00:00Z"), publishedAt: new Date("2026-11-10T08:00:00Z") },
+    });
+    let prompt = "";
+    const llm: LlmCall = async (req) => {
+      prompt = req.user;
+      return { text: JSON.stringify({ posts: [{ idea: "x", hypothesis: "h", text: TEXT(9), image: "keins", photoId: "", imagePrompt: "", graphic: "g" }] }), usage: { tokensIn: 1, tokensOut: 1, costCents: 0 } };
+    };
+    await generateDrafts("2026-11-16", { llm, now: new Date("2026-11-14T18:00:00Z") });
+    expect(prompt).toContain(freshId);
+    expect(prompt).not.toContain(usedId);
+    expect(prompt).toContain("Eine Allianz-Agentur hat aus 100 Katzenbesitzern 12 Kunden gemacht.");
+  });
+
   it("Text-Grafik wird gerendert und beim Posten statt Foto mitgeschickt", async () => {
     const { renderGraphic } = await import("@/lib/linkedin/graphic");
     const png = await renderGraphic("100 Leads → 12 Abschlüsse → 4.300 € Nettoprämie");

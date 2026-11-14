@@ -24,6 +24,8 @@ Stil wie Oles beste Posts: kurze Ein-Satz-Absätze, konkrete Zahlen/Fälle, Pfei
 30 Tage, Reaktionszeit des Assistenten, NPS, Neuigkeiten; ohne Kundennamen) und Oles „Trust-Material“
 (Einstellungen). Kunden-Cases/Zitate nur aus dem Trust-Material, Namen nur mit ausdrücklicher Freigabe.
 Bei mehreren Posts am Tag ist mindestens einer ein Trust-Post.
+Keine Wiederholungen: Die KI sieht die Einstiege aller Posts der letzten 6 Monate; schon gepostete Cases nur mit neuem
+Blickwinkel. Fotos/Screenshots aus Posts der letzten 90 Tage schlägt sie nicht erneut vor (von Hand weiter wählbar).
 
 Ziel ist Reichweite bei Versicherungsvermittlern, nicht Reichweite insgesamt. Zielgruppe und
 Erkennungsbegriffe (Branche/Beruf) stehen in den Einstellungen.

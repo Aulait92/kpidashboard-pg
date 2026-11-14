@@ -139,6 +139,7 @@ export function buildDraftPrompt(input: PromptInput): { system: string; user: st
     "Die Posts eines Tages testen verschiedene Hypothesen. Was in früheren Tests verloren hat, nicht wiederholen; was gewonnen hat, weiter ausbauen.",
     "LinkedIn-Handwerk (so schreibt er in seinen besten Posts): Die ersten zwei Zeilen entscheiden (vor „mehr anzeigen“) und zeigen sofort, dass es um Versicherungsvermittler geht. Sehr kurze Absätze, oft nur ein Satz, mit Leerzeile dazwischen. Konkrete Zahlen und Fälle statt Allgemeinplätzen. Rechnungen gern mit Pfeilen (100 Leads → 12 Abschlüsse → 4.300 € Nettoprämie). Am Ende eine echte Frage an die Vermittler und oft eine Einladung zur Direktnachricht („Schreib mir eine DM.“). Höchstens 1 bis 2 Emojis, keine Links im Text.",
     "Verboten: Gedankenstriche (– oder —); stattdessen Punkt, Komma, Doppelpunkt oder neuer Absatz. Keine Hashtags.",
+    "Keine Wiederholungen: Von den besten Posts lernst du Stil, Aufbau und Art der Belege, nicht den Inhalt. Ein Case, der schon gepostet wurde (siehe bisherige Posts, oder im Trust-Material als „schon gepostet“ markiert), darf nur mit einem klar neuen Blickwinkel vorkommen (z. B. was danach passiert ist), nie mit demselben Einstieg, derselben Rechnung oder demselben Bild.",
     "Formate, die bei ihm funktionieren: (1) Trust-Post mit echtem Kunden-Case und Zahlen (sein bester Post), (2) „Stell dir vor:“-Geschichte aus dem Alltag eines Vermittlers oder seiner Kunden mit emotionaler Wendung und Schluss-Frage. Trust-Posts nur mit Fakten aus „Trust-Fakten“ oder „Trust-Material“.",
     "Wahrheit: Erfinde keine Zahlen, Kundennamen, Zitate, Erlebnisse oder Ergebnisse. Nutze nur, was in „Über mich“, „Zielgruppe“ oder seinen bisherigen Posts steht. Wo eine konkrete Zahl fehlt, formuliere ohne Zahl.",
     "Keine Versprechen über Ergebnisse für Kunden, keine Aussagen über Mitbewerber oder einzelne Versicherer.",
@@ -156,7 +157,7 @@ export function buildDraftPrompt(input: PromptInput): { system: string; user: st
     top.length > 1 ? `## Weitere starke Posts\n${top.slice(1).map((p) => block(p, scored, share)).join("\n\n")}` : "",
     flop.length ? `## Schwache Posts (daraus lernen)\n${flop.map((p) => block(p, scored, share)).join("\n\n")}` : "",
     tests.length ? `## Bisherige Tests (Hypothese → Ergebnis gegenüber üblicher Zielgruppen-Reichweite)\n${tests.join("\n")}` : "",
-    input.recent.length ? `## Zuletzt geschrieben (nicht wiederholen)\n${input.recent.map((t) => `- ${t.replace(/\s+/g, " ").slice(0, 160)}`).join("\n")}` : "",
+    input.recent.length ? `## Bisherige Posts und Entwürfe (Einstiege; nichts davon wiederholen)\n${input.recent.map((t) => `- ${t.replace(/\s+/g, " ").slice(0, 160)}`).join("\n")}` : "",
     input.trustFacts?.length ? `## Trust-Fakten aus der Software (echt, zusammengefasst, ohne Kundennamen)\n${input.trustFacts.map((f) => `- ${f}`).join("\n")}` : "",
     input.trustNotes?.trim()
       ? `## Trust-Material von ihm (nur das darf als Kunden-Case, Zitat oder Erfolg verwendet werden; Namen nur, wenn hier ausdrücklich freigegeben)\n${input.trustNotes.trim()}`
@@ -188,17 +189,21 @@ export async function generateDrafts(day: string, opts: { llm?: LlmCall; now?: D
     where: { status: { in: ["veroeffentlicht", "importiert"] }, publishedAt: { gte: new Date(now.getTime() - 180 * DAY) } },
     select: { id: true, text: true, hypothesis: true, impressions: true, reactions: true, comments: true, reposts: true, publishedAt: true, status: true, photoId: true, icpShare: true },
   });
-  const recent = (
-    await prisma.linkedInPost.findMany({
-      where: { createdAt: { gte: new Date(now.getTime() - 21 * DAY) }, text: { not: "" } },
-      orderBy: { createdAt: "desc" },
-      take: 30,
-      select: { text: true },
-    })
-  ).map((r) => r.text);
+  // Nicht wiederholen: Entwürfe der letzten 3 Wochen + alle Posts der letzten 6 Monate (auch ältere, importierte)
+  const recentRows = await prisma.linkedInPost.findMany({
+    where: {
+      text: { not: "" },
+      OR: [{ createdAt: { gte: new Date(now.getTime() - 21 * DAY) } }, { status: { in: ["veroeffentlicht", "importiert", "freigegeben"] }, publishedAt: { gte: new Date(now.getTime() - 180 * DAY) } }],
+    },
+    orderBy: { createdAt: "desc" },
+    take: 80,
+    select: { text: true },
+  });
+  const recent = [...new Set(recentRows.map((r) => r.text.replace(/\s+/g, " ").slice(0, 160)))];
 
+  // Fotos/Screenshots, die in den letzten 90 Tagen schon in einem veröffentlichten Post waren, nicht erneut vorschlagen
   const photoRows = await prisma.linkedInPhoto.findMany({
-    where: { generated: false },
+    where: { generated: false, NOT: { posts: { some: { status: { in: ["veroeffentlicht", "freigegeben", "sendet"] }, scheduledAt: { gte: new Date(now.getTime() - 90 * DAY) } } } } },
     orderBy: { createdAt: "asc" },
     take: 60,
     select: { id: true, description: true, posts: { orderBy: { scheduledAt: "desc" }, take: 1, select: { scheduledAt: true } } },
