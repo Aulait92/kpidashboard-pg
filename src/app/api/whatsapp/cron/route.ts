@@ -164,6 +164,9 @@ async function handle(req: Request): Promise<Response> {
       reportError(e, "cron-kampagnen");
     }
   });
+  // Optimierung je Werbekonto: Freigegebenes ausführen, wöchentlich planen (wenige Konten je Lauf),
+  // Meta-Änderungsprotokoll holen, ab dem 20. Frühwarnung (nach der Antwort, lib/optimierung)
+  after(() => import("@/lib/optimierung/server").then((m) => m.runOptimizationCron(now)).catch((e: unknown) => reportError(e, "cron-optimierung")));
   // Monatsberichte: ab dem 2. (bis 5., falls ein Lauf ausfällt) ab 7 Uhr, je Lauf wenige Kunden
   // (Claude-Aufrufe), idempotent je Kunde und Monat. Nur „gut“ kann automatisch raus.
   {

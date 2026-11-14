@@ -222,7 +222,31 @@ async function checkCampaign(sourceRunId: string, customerId: string, campaignId
   const counts = new Map<string, number>();
   for (const f of fatigued) counts.set(f.adSetId, (counts.get(f.adSetId) ?? 0) + 1);
   const adSetId = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? srcBuilt.adSetIds[0];
-  if (!adSetId || !srcBuilt.formId) return false;
+  const runId = await createRefreshRun({ sourceRunId, customerId, campaignId, adSetId, fatigued, createdBy: "automatik", now });
+  if (!runId) return false;
+  const status = await processRefreshRun(runId, deps);
+  return status === "built";
+}
+
+/**
+ * Auffrischungs-Lauf anlegen (neue Motive in eine bestehende Anzeigengruppe einer von den
+ * Agenten angelegten Kampagne). Auch von der Optimierung je Werbekonto genutzt (lib/optimierung).
+ * null = nicht möglich (Ursprungslauf ohne Formular bzw. ohne Anzeigengruppe).
+ */
+export async function createRefreshRun(input: {
+  sourceRunId: string;
+  customerId: string;
+  campaignId: string;
+  adSetId: string | null | undefined;
+  fatigued: Fatigued[];
+  createdBy: string;
+  now?: Date;
+}): Promise<string | null> {
+  const src = await prisma.campaignRun.findUniqueOrThrow({ where: { id: input.sourceRunId } });
+  const srcBuilt = src.built as unknown as BuiltState;
+  const adSetId = input.adSetId ?? srcBuilt.adSetIds[0];
+  if (!adSetId || !srcBuilt.formId) return null;
+  const { customerId, campaignId, fatigued } = input;
   const steps: RunStep[] = initialSteps().map((s) => (["stratege", "formular"].includes(s.key) ? { ...s, status: "uebersprungen", note: "Auffrischung: Plan und Formular bleiben" } : s));
   const run = await prisma.campaignRun.create({
     data: {
@@ -231,7 +255,7 @@ async function checkCampaign(sourceRunId: string, customerId: string, campaignId
       kind: "auffrischung",
       trigger: "auffrischung",
       autoBuild: true,
-      sourceRunId,
+      sourceRunId: input.sourceRunId,
       refreshCampaignId: campaignId,
       refreshAdSetId: adSetId,
       fatigue: json(fatigued),
@@ -240,12 +264,12 @@ async function checkCampaign(sourceRunId: string, customerId: string, campaignId
       plan: json(src.plan),
       form: json(src.form),
       built: json({ ...emptyBuilt(), campaignId, adSetIds: [adSetId], formId: srcBuilt.formId }),
-      createdBy: "automatik",
+      createdBy: input.createdBy,
     },
   });
-  await prisma.campaignHealth.update({ where: { campaignId }, data: { lastRefreshAt: now } });
-  const status = await processRefreshRun(run.id, deps);
-  return status === "built";
+  const now = input.now ?? new Date();
+  await prisma.campaignHealth.upsert({ where: { campaignId }, create: { campaignId, customerId, lastRefreshAt: now }, update: { lastRefreshAt: now } });
+  return run.id;
 }
 
 // ─── Auffrischungs-Lauf ────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, Bot, Calculator, Clock, FileBarChart, Layers, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, Megaphone, MessageCircle, Rocket, ShieldCheck, Wallet, Workflow } from "lucide-react";
+import { Activity, Bot, Calculator, Clock, FileBarChart, Layers, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, Megaphone, MessageCircle, Rocket, ShieldCheck, TrendingUp, Wallet, Workflow } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { supportConfig } from "@/lib/support";
 import { requireAuth } from "@/lib/vertrieb/auth";
@@ -18,6 +18,8 @@ const GROUPS = [
       { href: "/admin/einstellungen/einrichtung", icon: Rocket, color: "bg-blue-600", title: "Einrichtung neuer Kunden", text: "Business-ID für den Meta-Zugriff, Erklärvideos je Schritt" },
       { href: "/admin/einstellungen/produkte", icon: Layers, color: "bg-orange-500", title: "Produkte", text: "Welche Sparten Kunden selbst dazubuchen können" },
       { href: "/admin/einstellungen/kampagnen-automatik", icon: Bot, color: "bg-fuchsia-500", title: "Kampagnen-Automatik", text: "Budget bei Meta umstellen, Kampagne bei Produktbuchung, müde Anzeigen auffrischen" },
+      // Eintrag zur Optimierung je Werbekonto (Teil B, 18.11.2026): Übersicht, Freigabe, Autopilot
+      { href: "/admin/optimierung", icon: TrendingUp, color: "bg-rose-500", title: "Optimierung je Werbekonto", text: "Wöchentliche Maßnahmen je Konto freigeben, Autopilot, letzte Maßnahme je Konto" },
     ],
   },
   {
