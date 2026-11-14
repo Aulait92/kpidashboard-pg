@@ -126,6 +126,7 @@ describe("LinkedIn – reine Funktionen", () => {
     const { system, user } = buildDraftPrompt({
       about: "Gründer von performancegrowth.",
       icp: "Versicherungsvermittler",
+      focus: "Hauptprodukt Tierkrankenversicherung, PKV nur §204 VVG",
       accountIcpShare: null,
       n: 2,
       slots: [d(16), d(16)],
@@ -138,6 +139,7 @@ describe("LinkedIn – reine Funktionen", () => {
     });
     expect(system).toMatch(/NICHT Reichweite insgesamt/);
     expect(user.indexOf("## Zielgruppe")).toBe(0);
+    expect(user).toContain("## Produkt-Schwerpunkt (verbindlich)\nHauptprodukt Tierkrankenversicherung, PKV nur §204 VVG");
     expect(user).toMatch(/Zu schlagen: bester Post in der Zielgruppe \(1200[^)]*\)\n— [^\n]+\nNISCHE/);
     expect(user).toContain("f1: Ole am Laptop im Büro");
     expect(icpTerms("versicherung, , ab, Makler")).toEqual(["versicherung", "makler"]);

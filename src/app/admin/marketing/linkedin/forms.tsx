@@ -232,6 +232,7 @@ export function SettingsForm(props: {
   planDays: number;
   about: string;
   icp: string;
+  focus: string;
   icpKeywords: string;
   trustNotes: string;
 }) {
@@ -241,6 +242,11 @@ export function SettingsForm(props: {
       <label className="block">
         <span className="text-sm font-semibold">Zielgruppe (für sie schreibt die KI)</span>
         <textarea name="icp" defaultValue={props.icp} rows={4} className="mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--border)] p-3 text-sm" />
+      </label>
+      <label className="block">
+        <span className="text-sm font-semibold">Produkt-Schwerpunkt</span>
+        <span className="block text-xs text-[color:var(--muted)]">Über welche Produkte die Posts sprechen und wie oft.</span>
+        <textarea name="focus" defaultValue={props.focus} rows={3} className="mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--border)] p-3 text-sm" />
       </label>
       <label className="block">
         <span className="text-sm font-semibold">Über mich</span>

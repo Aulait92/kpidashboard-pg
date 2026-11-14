@@ -27,6 +27,8 @@ Bei mehreren Posts am Tag ist mindestens einer ein Trust-Post.
 Keine Wiederholungen: Die KI sieht die Einstiege aller Posts der letzten 6 Monate; schon gepostete Cases nur mit neuem
 Blickwinkel. Fotos/Screenshots aus Posts der letzten 90 Tage schlägt sie nicht erneut vor (von Hand weiter wählbar).
 
+**Produkt-Schwerpunkt** (Einstellung): Hauptprodukt Tierkrankenversicherung; PKV nur selten und nur als Optimierung nach §204 VVG.
+
 Ziel ist Reichweite bei Versicherungsvermittlern, nicht Reichweite insgesamt. Zielgruppe und
 Erkennungsbegriffe (Branche/Beruf) stehen in den Einstellungen.
 

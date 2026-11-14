@@ -96,6 +96,7 @@ export async function saveSettingsAction(_prev: LiResult, fd: FormData): Promise
       planDays,
       about: String(fd.get("about") ?? "").slice(0, 4000),
       icp: String(fd.get("icp") ?? "").slice(0, 4000),
+      focus: String(fd.get("focus") ?? "").slice(0, 2000),
       icpKeywords,
       trustNotes: String(fd.get("trustNotes") ?? "").slice(0, 6000),
     },

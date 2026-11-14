@@ -270,6 +270,7 @@ export default async function LinkedInPage({ searchParams }: { searchParams: Pro
             planDays={settings.planDays}
             about={settings.about}
             icp={settings.icp}
+            focus={settings.focus}
             icpKeywords={settings.icpKeywords}
             trustNotes={settings.trustNotes}
           />

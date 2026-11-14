@@ -108,6 +108,8 @@ function photoBlock(photos: PhotoInfo[], scored: PostRow[], share: number | null
 export type PromptInput = {
   about: string;
   icp: string;
+  /** Produkt-Schwerpunkt (z. B. Hauptprodukt TKV, PKV nur §204 VVG) */
+  focus?: string;
   accountIcpShare: number | null;
   n: number;
   slots: Date[];
@@ -143,6 +145,7 @@ export function buildDraftPrompt(input: PromptInput): { system: string; user: st
     "Die Posts eines Tages testen verschiedene Hypothesen. Was in früheren Tests verloren hat, nicht wiederholen; was gewonnen hat, weiter ausbauen.",
     "LinkedIn-Handwerk (so schreibt er in seinen besten Posts): Die ersten zwei Zeilen entscheiden (vor „mehr anzeigen“) und zeigen sofort, dass es um Versicherungsvermittler geht. Sehr kurze Absätze, oft nur ein Satz, mit Leerzeile dazwischen. Konkrete Zahlen und Fälle statt Allgemeinplätzen. Rechnungen gern mit Pfeilen (100 Leads → 12 Abschlüsse → 4.300 € Nettoprämie). Am Ende eine echte Frage an die Vermittler und oft eine Einladung zur Direktnachricht („Schreib mir eine DM.“). Höchstens 1 bis 2 Emojis, keine Links im Text.",
     "Verboten: Gedankenstriche (– oder —); stattdessen Punkt, Komma, Doppelpunkt oder neuer Absatz. Keine Hashtags.",
+    "Halte dich an den „Produkt-Schwerpunkt“: Er bestimmt, über welche Produkte die Posts sprechen und wie oft.",
     "Keine Wiederholungen: Von den besten Posts lernst du Stil, Aufbau und Art der Belege, nicht den Inhalt. Ein Case, der schon gepostet wurde (siehe bisherige Posts, oder im Trust-Material als „schon gepostet“ markiert), darf nur mit einem klar neuen Blickwinkel vorkommen (z. B. was danach passiert ist), nie mit demselben Einstieg, derselben Rechnung oder demselben Bild.",
     "Formate, die bei ihm funktionieren: (1) Trust-Post mit echtem Kunden-Case und Zahlen (sein bester Post), (2) „Stell dir vor:“-Geschichte aus dem Alltag eines Vermittlers oder seiner Kunden mit emotionaler Wendung und Schluss-Frage. Trust-Posts nur mit Fakten aus „Trust-Fakten“ oder „Trust-Material“.",
     "Wahrheit: Erfinde keine Zahlen, Kundennamen, Zitate, Erlebnisse oder Ergebnisse. Nutze nur, was in „Über mich“, „Zielgruppe“ oder seinen bisherigen Posts steht. Wo eine konkrete Zahl fehlt, formuliere ohne Zahl.",
@@ -153,6 +156,7 @@ export function buildDraftPrompt(input: PromptInput): { system: string; user: st
 
   const user = [
     `## Zielgruppe (für sie schreiben)\n${input.icp.trim() || "Versicherungsvermittler (Vertreter und Makler)"}`,
+    input.focus?.trim() ? `## Produkt-Schwerpunkt (verbindlich)\n${input.focus.trim()}` : "",
     `## Über mich\n${input.about.trim() || "(noch nichts hinterlegt)"}`,
     share != null ? `Über das ganze Profil gehören etwa ${pct(share)} der Zuschauer zur Zielgruppe.` : "",
     best
@@ -217,6 +221,7 @@ export async function generateDrafts(day: string, opts: { llm?: LlmCall; now?: D
   const { system, user } = buildDraftPrompt({
     about: settings.about,
     icp: settings.icp,
+    focus: settings.focus,
     accountIcpShare: settings.accountIcpShare,
     n: free.length,
     slots: free,

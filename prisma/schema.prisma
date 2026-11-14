@@ -2821,7 +2821,9 @@ model LinkedInSettings {
   about       String   @default("")
   autoDrafts  Boolean  @default(true)
   // Zielgruppe (ICP): optimiert wird auf Reichweite in dieser Gruppe, nicht auf Reichweite insgesamt
-  icp         String   @default("Versicherungsvermittler in Deutschland: Ausschließlichkeitsvertreter (z. B. Allianz-Agenturen), Mehrfachagenten und Makler, die mehr Neukunden wollen. Sie verkaufen z. B. PKV, Privatschutz und Tierkrankenversicherung. Wir verkaufen ihnen Leadgenerierung über Meta-Werbung plus unsere Software mit WhatsApp-Assistent, der Leads qualifiziert und Termine bucht.")
+  icp         String   @default("Versicherungsvermittler in Deutschland: Ausschließlichkeitsvertreter (z. B. Allianz-Agenturen), Mehrfachagenten und Makler, die mehr Neukunden wollen. Sie verkaufen z. B. Tierkrankenversicherung, Privatschutz und PKV. Wir verkaufen ihnen Leadgenerierung über Meta-Werbung plus unsere Software mit WhatsApp-Assistent, der Leads qualifiziert und Termine bucht.")
+  // Produkt-Schwerpunkt der Posts (Ole, 14.11.2026: Hauptprodukt TKV, PKV nur als Optimierung nach §204 VVG)
+  focus       String   @default("Hauptprodukt ist die Tierkrankenversicherung (Katze und Hund): Die meisten Posts drehen sich darum (Leads, Abschlüsse, Cross-Selling aus TKV-Kunden). PKV nur selten und dann ausschließlich als PKV-Optimierung nach §204 VVG (Tarifwechsel beim eigenen Versicherer), nie als PKV-Neugeschäft. Andere Sparten nur am Rand.")
   // Begriffe, an denen die Zielgruppe in den LinkedIn-Zuschauerdaten erkannt wird (Branche, Beruf)
   icpKeywords String   @default("versicherung, insurance, makler, broker, vermittler, agentur, generalvertret, hauptvertret, finanzberat, financial advisor, allianz, ergo, axa, signal iduna, debeka, hallesche, gothaer")
   // Anteil der Zielgruppe an allen Zuschauern (aus dem Profil-Export), Ersatz, wenn je Post nichts vorliegt
