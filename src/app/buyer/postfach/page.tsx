@@ -77,12 +77,15 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
                 </div>
               ) : null}
               <p className="text-sm text-[color:var(--muted)]">
-                Gesendete E-Mails finden Sie auch im Gesendet-Ordner Ihres Postfachs{conn.provider === "smtp" ? " (je nach Anbieter)" : ""}. Beim Lead stehen sie im Verlauf.
+                Gesendete E-Mails finden Sie auch im Gesendet-Ordner Ihres Postfachs{conn.provider === "smtp" ? " (je nach Anbieter)" : ""}. Beim Lead stehen sie im Verlauf. Wir senden nur E-Mails, die Sie selbst auslösen, und lesen Ihr Postfach nicht.
               </p>
             </>
           ) : (
             <>
-              <p className="text-sm text-[color:var(--muted)]">Verbinden Sie Ihr Postfach – danach schreiben Sie Leads direkt aus der App an, auf Wunsch mit dem Angebot im Anhang.</p>
+              <p className="text-sm text-[color:var(--muted)]">Verbinden Sie Ihr Postfach. Danach schreiben Sie Leads direkt aus der App an, auf Wunsch mit dem Angebot im Anhang.</p>
+              <p className="text-sm text-[color:var(--muted)]" data-postfach-datenschutz>
+                Wir senden nur E-Mails, die Sie selbst auslösen, und lesen Ihr Postfach nicht.
+              </p>
               {!readOnly ? (
                 <div className="flex flex-wrap gap-2">
                   {showGoogle ? (

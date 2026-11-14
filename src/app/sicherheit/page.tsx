@@ -44,6 +44,15 @@ const SECTIONS: { title: string; points: string[] }[] = [
     ],
   },
   {
+    title: "Kalender und E-Mail-Postfach",
+    points: [
+      "Beim verbundenen Kalender lesen wir nur, wann Sie belegt sind, tragen gebuchte Termine ein und sehen bei diesen Terminen, ob der Lead zugesagt hat. Inhalte anderer Termine sehen und speichern wir nicht.",
+      "Beim verbundenen Postfach senden wir nur E-Mails, die Sie selbst auslösen, und lesen Ihr Postfach nicht.",
+      "Die Verbindung lässt sich jederzeit in der App trennen. Den Zugriff können Sie zusätzlich in Ihrem Google- oder Microsoft-Konto entziehen.",
+      "Daten aus Google-Diensten nutzen wir nur für diese Funktionen, geben sie nicht weiter und verwenden sie nicht für Werbung oder zum Trainieren von KI-Modellen.",
+    ],
+  },
+  {
     title: "Datensparsamkeit und Löschfristen",
     points: [
       "Die Nutzungsstatistik ist pseudonym, enthält keine Lead-Inhalte und wird nach 180 Tagen automatisch gelöscht.",

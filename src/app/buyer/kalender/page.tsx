@@ -132,6 +132,9 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
           ) : (
             <div className="space-y-3">
               <p className="text-sm text-[color:var(--muted)]">Verbinden Sie Ihren Kalender. Termine für Ihre Leads landen dann nur in Ihren freien Zeiten direkt dort.</p>
+              <p className="text-sm text-[color:var(--muted)]" data-kalender-datenschutz>
+                Wir lesen nur, wann Sie belegt sind, tragen gebuchte Termine ein und sehen bei diesen Terminen, ob der Lead zugesagt hat. Inhalte anderer Termine sehen und speichern wir nicht.
+              </p>
               <div className="flex flex-wrap gap-2">
                 <a href="/api/google/connect?fuer=mich" className={buttonClass("primary", "md", ro ? "pointer-events-none opacity-60" : "")}>
                   Google-Kalender verbinden
