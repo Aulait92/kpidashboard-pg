@@ -149,9 +149,9 @@ describe("Empfehlungen & Bewertungen – Regeln", () => {
 });
 
 describe("Empfehlungen – Angebot, Anlässe, Trichter, Dankeschön (14.11.2026)", () => {
-  it("Angebot: Vorlagen ohne Prämien, Vertreter eingesetzt, „none“ = bisheriges Verhalten", () => {
+  it("Angebot: Vorlagen ohne Prämien, Vertreter eingesetzt, „none“ = kein Angebot, Standard = Versicherungs-Check", () => {
     expect(resolveOffer({ offerKind: "none" }, "Max Muster")).toBeNull();
-    expect(resolveOffer({ offerKind: null }, "Max Muster")).toBeNull();
+    expect(resolveOffer({ offerKind: null }, "Max Muster")?.headline).toBe(OFFER_PRESETS.ordner.headline);
     const o = resolveOffer({ offerKind: "kfz" }, "Max Muster")!;
     expect(o.headline).toBe(OFFER_PRESETS.kfz.headline);
     expect(o.text).toContain("Max Muster");

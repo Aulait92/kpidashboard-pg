@@ -33,6 +33,7 @@ import {
   referralBlocker,
   renderText,
   resolveOffer,
+  DEFAULT_OFFER_KIND,
   resolveReward,
   rewardLabel,
   rewardSentence,
@@ -105,7 +106,7 @@ export async function loadSettings(customerId: string): Promise<Settings> {
     referralDelayDays: s?.referralDelayDays ?? DEFAULT_DELAYS.referral,
     texts: { ...DEFAULT_TEXTS, ...custom },
     custom,
-    offerKind: (s?.offerKind ?? "none") as OfferKind,
+    offerKind: (s?.offerKind ?? DEFAULT_OFFER_KIND) as OfferKind,
     offerHeadline: s?.offerHeadline ?? null,
     offerText: s?.offerText ?? null,
     referralOnPraise: s?.referralOnPraise ?? true,
@@ -600,7 +601,7 @@ export async function handleReferralInbound(conversationId: string, from: string
   const self = isSelfReferral(link.lead?.phone ?? link.existingCustomer?.phone, from);
   const stamp = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", dateStyle: "short", timeStyle: "short" }).format(now);
   const rs = await prisma.reviewSettings.findUnique({ where: { customerId: conv.customerId }, select: { offerKind: true, offerHeadline: true, offerText: true } });
-  const offer = rs ? resolveOffer(rs, await advisorOf(conv.customerId)) : null;
+  const offer = resolveOffer(rs ?? { offerKind: null }, await advisorOf(conv.customerId));
   const lead = await prisma.lead.create({
     data: {
       customerId: conv.customerId,
@@ -954,9 +955,9 @@ export async function loadReferralPage(token: string, opts: { countView?: boolea
     // Ein Tipp statt Formular: vorgeschriebene Anfrage an die WhatsApp-Nummer des Vertreters
     whatsappUrl:
       wa?.status === "connected" && wa.phoneNumber
-        ? whatsappLink(wa.phoneNumber, whatsappRequestText({ vertreter, recommender: recommenderName, offer: rs ? resolveOffer(rs, vertreter) : null, token: link.token }))
+        ? whatsappLink(wa.phoneNumber, whatsappRequestText({ vertreter, recommender: recommenderName, offer: resolveOffer(rs ?? { offerKind: null }, vertreter), token: link.token }))
         : null,
-    offer: (rs ? resolveOffer(rs, vertreter) : null) as ResolvedOffer | null,
+    offer: resolveOffer(rs ?? { offerKind: null }, vertreter) as ResolvedOffer | null,
     // Rückmeldung an den Empfehlenden nur bei Links eines Kontakts
     statusUpdates: (rs?.statusUpdates ?? true) && link.kind !== "general",
     vertreter,

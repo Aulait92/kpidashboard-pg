@@ -251,6 +251,8 @@ export function referralBlocker(r: { status: string; sentiment: string | null },
 
 export type OfferKind = "none" | "ordner" | "kfz" | "luecke" | "custom";
 export const OFFER_KINDS: OfferKind[] = ["none", "ordner", "kfz", "luecke", "custom"];
+/** Standard-Angebot (Ole, 14.11.2026): Versicherungs-Check über alle Verträge. */
+export const DEFAULT_OFFER_KIND: OfferKind = "ordner";
 export type ResolvedOffer = { kind: Exclude<OfferKind, "none">; headline: string; text: string; cta: string };
 
 export const OFFER_PRESETS: Record<Exclude<OfferKind, "none" | "custom">, { label: string; headline: string; text: string; cta: string }> = {
@@ -297,9 +299,9 @@ export function offerWarning(headline: string, text: string, vermittlerTyp: stri
   return INDEPENDENT.test(`${headline} ${text}`) ? "Als gebundener Vertreter bitte nicht mit „unabhängig“ oder „Vergleich aller Anbieter“ werben." : null;
 }
 
-/** Angebot für Seiten und Teilen-Text. null = kein Angebot (bisheriges Verhalten: „Kontakt aufnehmen“). */
+/** Angebot für Seiten und Teilen-Text. null = kein Angebot („Kontakt aufnehmen“). Nicht gesetzt = Standard-Angebot. */
 export function resolveOffer(s: { offerKind: string | null | undefined; offerHeadline?: string | null; offerText?: string | null }, vertreter: string): ResolvedOffer | null {
-  const kind = (s.offerKind ?? "none") as OfferKind;
+  const kind = (s.offerKind ?? DEFAULT_OFFER_KIND) as OfferKind;
   if (kind === "none" || !OFFER_KINDS.includes(kind)) return null;
   if (kind === "custom") {
     const headline = (s.offerHeadline ?? "").trim();

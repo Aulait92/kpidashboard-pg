@@ -2385,7 +2385,7 @@ model ReviewSettings {
   praiseReferralText String?
   // Playbook (14.11.2026): Empfehlungsangebot für die empfohlene Person.
   // none | ordner | kfz | luecke | custom (eigene Überschrift + Text, ohne Prämien)
-  offerKind          String   @default("none")
+  offerKind          String   @default("ordner")
   offerHeadline      String?
   offerText          String?
   // Bei Lob direkt den Empfehlungslink mitschicken (statt erst nach referralDelayDays)

@@ -11,7 +11,7 @@ import { canAccessLead } from "@/lib/team";
 import { normalizePhone } from "@/lib/whatsapp/phone";
 import { bookEmpfehlung, cancelEmpfehlung, dismissHint } from "@/lib/empfehlung/module";
 import { canSendReferral, loadSettings, markResolved, settleReward, planReferralFollowUp, referralLinkFor, referralLinkOf, sendReferralLinkNow, sendTestMessage, setReviewOptOut } from "@/lib/empfehlung/requests";
-import { TEXT_LABELS, clampDelay, clampFollowUp, DEFAULT_DELAYS, isOccasion, normalizeGoogleUrl, validateOffer, validateReward, validateText, type TextKey } from "@/lib/empfehlung/shared";
+import { TEXT_LABELS, clampDelay, clampFollowUp, DEFAULT_DELAYS, DEFAULT_OFFER_KIND, isOccasion, normalizeGoogleUrl, validateOffer, validateReward, validateText, type TextKey } from "@/lib/empfehlung/shared";
 
 async function ownerCtx() {
   const ctx = await getBuyerContext();
@@ -74,7 +74,7 @@ export async function saveSettingsAction(_prev: SettingsState, fd: FormData): Pr
     if (err) return { error: `${TEXT_LABELS[key].title}: ${err}` };
     texts[key] = v || null;
   }
-  const offerKind = String(fd.get("offerKind") ?? "none");
+  const offerKind = String(fd.get("offerKind") ?? DEFAULT_OFFER_KIND);
   const offerHeadline = String(fd.get("offerHeadline") ?? "").trim();
   const offerText = String(fd.get("offerText") ?? "").trim();
   const offerErr = validateOffer(offerKind, offerHeadline, offerText);
