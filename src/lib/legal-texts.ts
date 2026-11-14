@@ -8,6 +8,7 @@
 // 12.11.2026: Bestandskunden-Modul bei jährlicher Vorauszahlung: Kündigung zum Ende
 // des bezahlten Jahres, keine anteilige Erstattung (wie die Stripe-Abrechnung).
 // 14.11.2026: Statt Logins zählen aktive Verkäufer (bekommen Leads); Mitglieder ohne Leads kostenlos.
+// 14.11.2026: AVV: Verschwiegenheit nach § 203 StGB, E-Mail-Kampagnen im Bestandskunden-Modul.
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
@@ -174,7 +175,9 @@ export const AVV: LegalSection[] = [
       "Erfassen, Speichern und Organisieren von Leads; Kontaktaufnahme mit Interessenten per WhatsApp und E-Mail im Namen des Auftraggebers, auch durch einen KI-gestützten digitalen Assistenten; Terminvereinbarung und -erinnerung; Auswertungen für den Auftraggeber.",
       // Prüfen: Bestandskunden-Modul im AVV
       "Bei gebuchtem Bestandskunden-Modul zusätzlich: Import, Speicherung und Auswertung der vom Auftraggeber hochgeladenen Bestandskundendaten (z. B. Vertragsarten, Ablaufdaten, Geburtsdatum) und deren Ansprache per WhatsApp im Namen des Auftraggebers. Der Auftraggeber stellt sicher, dass für die Ansprache eine Rechtsgrundlage und, soweit erforderlich, eine Einwilligung vorliegt.",
-      { sub: "Datenarten", text: "Kontaktdaten (Name, Telefonnummer, E-Mail-Adresse, Anschrift), Angaben aus dem Lead-Formular (z. B. Lebenssituation, Versicherungsinteresse), Kommunikationsinhalte (Chatverläufe), Termindaten, Notizen und Status zum Lead sowie Nutzungsdaten der Nutzer des Auftraggebers." },
+      // Prüfen: E-Mail-Kampagnen über das Postfach des Auftraggebers (Ole, 14.11.2026)
+      "Bei gebuchtem Bestandskunden-Modul außerdem: Versand von E-Mail-Kampagnen an Bestandskunden im Namen des Auftraggebers über dessen verbundenes E-Mail-Postfach (z. B. Google, Microsoft oder SMTP) als einzelne E-Mails, einschließlich Verarbeitung von Antworten, Zustellfehlern und Abmeldungen sowie Speicherung des Einwilligungs- und Abmeldestatus je Kunde und Kanal. Der Auftragnehmer verarbeitet dazu die E-Mail-Adresse, den Namen und die für die Kampagne genutzten Vertragsangaben. Abmeldungen werden dauerhaft gespeichert und bei späteren Kampagnen und erneuten Importen berücksichtigt. Inhalte des Postfachs, die nicht zu Kampagnen oder Kontakten aus der Software gehören, werden nicht verarbeitet. Die Verantwortung für die wettbewerbs- und datenschutzrechtliche Zulässigkeit der Ansprache (insbesondere § 7 UWG) verbleibt beim Auftraggeber.",
+      { sub: "Datenarten", text: "Kontaktdaten (Name, Telefonnummer, E-Mail-Adresse, Anschrift), Angaben aus dem Lead-Formular (z. B. Lebenssituation, Versicherungsinteresse), Kommunikationsinhalte (Chatverläufe und E-Mails), Termindaten, Notizen und Status zum Lead, bei gebuchtem Bestandskunden-Modul Vertragsangaben der Bestandskunden (z. B. Sparte, Versicherer, Vertragsnummer, Beitrag, Ablaufdatum) sowie Einwilligungs- und Abmeldestatus, außerdem Nutzungsdaten der Nutzer des Auftraggebers." },
       { sub: "Betroffene", text: "Interessenten und Kunden des Auftraggebers sowie Nutzer des Auftraggebers." },
       "Besondere Kategorien personenbezogener Daten (Art. 9 DSGVO), insbesondere Gesundheitsdaten, sind nicht Gegenstand der Verarbeitung. Der Auftraggeber fragt solche Daten in Formularen und Gesprächsleitfäden nicht ab.",
     ],
@@ -190,6 +193,11 @@ export const AVV: LegalSection[] = [
     title: "Pflichten des Auftragnehmers",
     items: [
       "Die zur Verarbeitung befugten Personen sind zur Vertraulichkeit verpflichtet.",
+      // Prüfen: Verschwiegenheit nach § 203 StGB (Ole, 14.11.2026; Anwalt prüft)
+      {
+        sub: "Verschwiegenheit nach § 203 StGB",
+        text: "Soweit der Auftraggeber als Versicherungsvermittler einer gesetzlichen Schweigepflicht nach § 203 StGB unterliegt und dem Auftragnehmer dabei fremde Geheimnisse zugänglich werden (z. B. die Tatsache eines Vertrags in der Personenversicherung), wirkt der Auftragnehmer als sonstige mitwirkende Person im Sinne von § 203 Abs. 3 Satz 2 StGB mit. Der Auftragnehmer verpflichtet sich zur Verschwiegenheit über alle Geheimnisse, die ihm dabei bekannt werden, auch über das Ende dieses Vertrags hinaus. Er erhält Kenntnis nur, soweit dies für die vertragliche Leistung erforderlich ist. Der Auftraggeber weist hiermit darauf hin, dass eine unbefugte Offenbarung nach § 203 Abs. 4 StGB strafbar ist. Der Auftragnehmer verpflichtet seine Mitarbeiter und alle weiteren mitwirkenden Personen, die bei der Leistung Kenntnis von solchen Geheimnissen erlangen können, vor Aufnahme der Tätigkeit in Textform zur Verschwiegenheit und belehrt sie über die Strafbarkeit nach § 203 StGB. Unterauftragsverarbeiter werden in gleicher Weise verpflichtet, soweit sie Kenntnis von solchen Geheimnissen erlangen können.",
+      },
       "Der Auftragnehmer trifft die technischen und organisatorischen Maßnahmen nach Art. 32 DSGVO gemäß Anlage 1 und passt sie dem Stand der Technik an, ohne das Schutzniveau zu unterschreiten.",
       "Er unterstützt den Auftraggeber bei der Erfüllung der Betroffenenrechte (Art. 12–23 DSGVO) und der Pflichten aus Art. 32–36 DSGVO.",
       "Er meldet dem Auftraggeber Verletzungen des Schutzes personenbezogener Daten unverzüglich, spätestens innerhalb von 48 Stunden nach Kenntnis.",
@@ -240,7 +248,7 @@ export const TOMS: string[] = [
   "Versionierte, automatisch getestete Datenbank- und Programmänderungen; Healthchecks, Ausfallüberwachung und Fehlerüberwachung ohne Übermittlung personenbezogener Inhalte. Wiederherstellung aus der Sicherung wird regelmäßig getestet.",
   "Löschfunktion je Lead für Betroffenenanfragen und vollständige Löschung der Lead-Daten bei Vertragsende.",
   "Pseudonyme Nutzungsstatistik ohne Lead-Inhalte, automatische Löschung nach 180 Tagen.",
-  "Zugriff auf Kundendaten nur durch berechtigte, zur Vertraulichkeit verpflichtete Personen und nur, soweit für Betrieb und Support erforderlich.",
+  "Zugriff auf Kundendaten nur durch berechtigte, zur Vertraulichkeit und zur Verschwiegenheit nach § 203 StGB verpflichtete und belehrte Personen und nur, soweit für Betrieb und Support erforderlich.",
 ];
 
 export const SUBPROCESSORS: { name: string; purpose: string; location: string }[] = [
@@ -252,5 +260,5 @@ export const SUBPROCESSORS: { name: string; purpose: string; location: string }[
   { name: "Formagrid Inc. (Airtable)", purpose: "Lead-Datenhaltung", location: "USA" },
   { name: "Zapier, Inc.", purpose: "Übertragung der Leads aus den Meta-Formularen", location: "USA" },
   { name: "Functional Software, Inc. (Sentry)", purpose: "Fehlerüberwachung ohne personenbezogene Inhalte", location: "Datenregion EU" },
-  { name: "Google Ireland Ltd. / Microsoft Ireland Operations Ltd.", purpose: "Kalenderanbindung, sofern vom Auftraggeber genutzt", location: "Irland / USA" },
+  { name: "Google Ireland Ltd. / Microsoft Ireland Operations Ltd.", purpose: "Kalenderanbindung und E-Mail-Versand über das Postfach des Auftraggebers (einzelne E-Mails und E-Mail-Kampagnen), sofern vom Auftraggeber genutzt", location: "Irland / USA" },
 ];
