@@ -255,12 +255,6 @@ export function zahlenLink(month: string, appUrl = getAppUrl()): string {
   return `${appUrl}/buyer/zahlen?range=custom&from=${ymd(r.from)}&to=${ymd(r.to)}`;
 }
 
-function gespraechLink(settings: ReportSettingsView): string | null {
-  if (settings.bookingUrl) return settings.bookingUrl;
-  const reply = process.env.OFFER_REPLY_TO?.trim();
-  return reply ? `mailto:${reply}?subject=${encodeURIComponent("Gespräch zum Monatsbericht")}` : null;
-}
-
 /**
  * Alle Abschnitte des Berichts. Rechnet wie /buyer/zahlen mit denselben Funktionen: Trichter aus
  * computeKpis (nur bezahlte Leads), Lead-Kosten aus customer-spend bzw. Lead-Preis, Ergebnis aus
@@ -356,7 +350,7 @@ export async function collectReportData(customerId: string, month: string, setti
     empfehlungen: Object.values(empf).some((n) => n > 0) ? empf : null,
     bestandskampagnen: Object.values(bk).some((n) => n > 0) ? bk : null,
     tips,
-    links: { zahlen: zahlenLink(month), gespraech: gespraechLink(settings) },
+    links: { zahlen: zahlenLink(month) },
     rawMeasures,
   };
 }
@@ -525,7 +519,7 @@ export function reportMailContent(
     paragraphs: body.paragraphs,
     list: body.tips,
     html: tilesHtml(body.facts ?? []),
-    button: { label: "Kurzes Gespräch vereinbaren", url: o.bookingUrl ?? `${o.appUrl}/buyer/zahlen` },
+    button: { label: "Alle Zahlen ansehen", url: `${o.appUrl}/buyer/zahlen` },
     signature: o.signature,
   };
 }

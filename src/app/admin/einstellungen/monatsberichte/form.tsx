@@ -46,11 +46,6 @@ export function ReportSettingsForm({ s }: { s: ReportSettingsView }) {
         <span className="font-semibold">Absender bzw. Signatur</span>
         <textarea name="senderName" defaultValue={s.senderName ?? ""} rows={2} placeholder={"Ole Kannapinn\nperformancegrowth"} className="input mt-1 w-full" />
       </label>
-      <label className="block text-sm">
-        <span className="font-semibold">Terminlink für „kurzes Gespräch“</span>
-        <span className="block text-[color:var(--muted)]">https-Link, z. B. Calendly. Leer = Kundenbereich.</span>
-        <input name="bookingUrl" defaultValue={s.bookingUrl ?? ""} placeholder="https://" className="input mt-1 w-full" />
-      </label>
       <div className="flex items-center gap-3">
         <button className="btn-primary h-10" disabled={pending}>{pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Speichern</button>
         {state.error ? <span className="text-sm text-rose-700">{state.error}</span> : null}

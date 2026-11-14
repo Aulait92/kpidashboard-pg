@@ -79,7 +79,7 @@ describe("Monatsbericht neu: Abschnitte und E-Mail", () => {
     expect(order.every((i) => i >= 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
     expect(html).toContain("Alle Zahlen ansehen");
-    expect(html).toContain("Gespräch vereinbaren");
+    expect(html).not.toContain("Gespräch vereinbaren"); // kein Gesprächs-Knopf (Ole, 14.11.2026)
     expect(html).toContain("= Gewinn");
     expect(html).toContain("− 800,00 €");
   });

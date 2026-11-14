@@ -6,7 +6,6 @@ import {
   bestandForecastNote,
   bestandIntro,
   bestandskampagnenCells,
-  BUTTON_GESPRAECH,
   BUTTON_ZAHLEN,
   empfehlungCells,
   FUNNEL_NOTE,
@@ -149,11 +148,6 @@ export function MonatsberichtAnsicht({ model: m, intro, links = true }: { model:
           <a href={m.links.zahlen} className="rounded-[var(--radius-md)] bg-[color:var(--brand)] px-4 py-2 text-sm font-semibold text-white">
             {BUTTON_ZAHLEN}
           </a>
-          {m.links.gespraech ? (
-            <a href={m.links.gespraech} className="rounded-[var(--radius-md)] border border-[color:var(--brand)] px-4 py-2 text-sm font-semibold text-[color:var(--brand)]">
-              {BUTTON_GESPRAECH}
-            </a>
-          ) : null}
         </div>
       ) : null}
     </div>

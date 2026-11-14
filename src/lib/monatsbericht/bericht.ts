@@ -53,7 +53,8 @@ export type ReportModel = {
   /** Kundentaugliche Sätze „Was wir für Sie getan haben“ (von der KI zusammengefasst und geprüft) */
   measures: string[];
   tips: ReportTip[];
-  links: { zahlen: string; gespraech: string | null };
+  // gespraech: nur noch in älteren gespeicherten Berichten, wird nicht mehr angezeigt (Ole, 14.11.2026)
+  links: { zahlen: string; gespraech?: string | null };
 };
 
 // ─── Betreff ─────────────────────────────────────────────────────────────
@@ -97,7 +98,6 @@ export const SECTION_TITLES = {
 
 export const FUNNEL_NOTE = "Nur bezahlte Leads, damit die Quoten stimmen.";
 export const BUTTON_ZAHLEN = "Alle Zahlen ansehen";
-export const BUTTON_GESPRAECH = "Gespräch vereinbaren";
 
 export function bestandIntro(b: ReportBestand): string {
   return `${b.label} pro Jahr aus allen bisherigen Verträgen: + ${formatEUR(b.perYear)} pro Jahr (aus ${plural(b.contracts, "Vertrag", "Verträgen")}, ${b.fromYear2 ? "ab dem 2. Jahr" : "ab sofort"}).`;
@@ -220,10 +220,7 @@ function tipsHtml(tips: ReportTip[], appUrl: string): string {
 
 function buttonsHtml(links: ReportModel["links"]): string {
   const primary = `<td style="padding:0 8px 8px 0"><a href="${esc(links.zahlen)}" style="display:inline-block;background:${C.brand};color:#ffffff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;border:1px solid ${C.brand}">${BUTTON_ZAHLEN}</a></td>`;
-  const secondary = links.gespraech
-    ? `<td style="padding:0 0 8px 0"><a href="${esc(links.gespraech)}" style="display:inline-block;background:#ffffff;color:${C.brand};padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;border:1px solid ${C.brand}">${esc(BUTTON_GESPRAECH)}</a></td>`
-    : "";
-  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0 8px"><tr>${primary}${secondary}</tr></table>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0 8px"><tr>${primary}</tr></table>`;
 }
 
 const absolute = (href: string, appUrl: string) => (/^https?:\/\//.test(href) ? href : `${appUrl}${href.startsWith("/") ? "" : "/"}${href}`);
@@ -279,7 +276,6 @@ export function reportSectionsText(m: ReportModel, appUrl: string): string[] {
     for (const t of m.tips) out.push(`• ${t.title}. ${t.text} ${absolute(t.href, appUrl)}`);
   }
   out.push("", `${BUTTON_ZAHLEN}: ${m.links.zahlen}`);
-  if (m.links.gespraech) out.push(`${BUTTON_GESPRAECH}: ${m.links.gespraech}`);
   return out;
 }
 
