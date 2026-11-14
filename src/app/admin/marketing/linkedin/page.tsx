@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { CheckCircle2, Circle, ExternalLink } from "lucide-react";
+import { CheckCircle2, ChevronRight, Circle, ExternalLink } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { analyticsScopeEnabled, linkedInAvailable } from "@/lib/linkedin/api";
@@ -142,11 +142,38 @@ export default async function LinkedInPage({ searchParams }: { searchParams: Pro
           <h2 className="text-lg font-semibold">Geplant</h2>
           <ul className="divide-y divide-[color:var(--border)] rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white">
             {planned.map((p) => (
-              <li key={p.id} className="flex items-center gap-3 px-4 py-3 text-sm">
-                <span className="w-32 shrink-0 font-semibold">{fmt(p.scheduledAt)}</span>
-                <span className="min-w-0 flex-1 truncate">{p.text.split("\n")[0]}</span>
-                {p.photoId ? <span className="text-xs text-[color:var(--muted)]">mit Bild</span> : p.useGraphic ? <span className="text-xs text-[color:var(--muted)]">mit Grafik</span> : null}
-                {p.status === "freigegeben" ? <UnapproveButton id={p.id} /> : <span className="text-xs">wird gesendet …</span>}
+              // Per Klick aufklappen: ganzer Text + Bild, das mitgeht (Ole, 14.11.2026)
+              <li key={p.id} className="text-sm">
+                <details className="group" data-li-planned={p.id}>
+                  <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 hover:bg-[color:var(--surface-sunken)]">
+                    <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-90" />
+                    <span className="w-32 shrink-0 font-semibold">{fmt(p.scheduledAt)}</span>
+                    <span className="min-w-0 flex-1 truncate">{p.text.split("\n")[0]}</span>
+                    {p.photoId ? <span className="text-xs text-[color:var(--muted)]">mit Bild</span> : p.useGraphic ? <span className="text-xs text-[color:var(--muted)]">mit Grafik</span> : null}
+                  </summary>
+                  <div className="flex flex-col gap-4 border-t border-[color:var(--border)] bg-[color:var(--surface-sunken)]/40 px-4 py-4 sm:flex-row">
+                    <p className="min-w-0 flex-1 whitespace-pre-wrap text-[15px] leading-relaxed">{p.text}</p>
+                    {p.photoId || (p.useGraphic && p.graphic) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={p.photoId ? `/api/linkedin/foto/${p.photoId}` : `/api/linkedin/grafik/${p.id}`}
+                        alt="Bild zum Post"
+                        className="h-56 w-56 shrink-0 rounded-[var(--radius-md)] border border-[color:var(--border)] object-cover"
+                        loading="lazy"
+                      />
+                    ) : null}
+                  </div>
+                  <div className="flex items-center justify-end gap-2 px-4 pb-3">
+                    {p.status === "freigegeben" ? (
+                      <>
+                        <span className="text-xs text-[color:var(--muted)]">Zum Ändern zurücknehmen, dann steht er wieder unter „Zur Freigabe“.</span>
+                        <UnapproveButton id={p.id} />
+                      </>
+                    ) : (
+                      <span className="text-xs">wird gesendet …</span>
+                    )}
+                  </div>
+                </details>
               </li>
             ))}
           </ul>
