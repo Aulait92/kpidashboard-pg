@@ -6,7 +6,8 @@
 // Zuständig: Berater für ihre zugeteilten Leads. Inhaber: eigene und nicht zugeteilte Leads (ohne Team: alle).
 
 import type { Prisma } from "@/generated/prisma/client";
-import { getAppUrl, sendPlainMail } from "@/lib/email";
+import { sendPlainMail } from "@/lib/email";
+import { appUrl } from "@/lib/whatsapp/event-text";
 import { NEXT_STEP_TASK_NOTE, resultMissingWhere, withoutNextStepWhere } from "@/lib/lead-next-step";
 import { prisma } from "@/lib/prisma";
 import { sendToUser } from "@/lib/push";
@@ -55,6 +56,7 @@ export async function runNextStepReminders(now = new Date()): Promise<ReminderRu
   });
   const res: ReminderRun = { due: true, users: users.length, sent: 0 };
   const teamSize = new Map<string, number>();
+  const base = appUrl();
   for (const u of users) {
     // Sperre je Tag: nur wer den Tag beansprucht, erinnert (parallele Läufe, Neustarts).
     const claimed = await prisma.user.updateMany({
@@ -62,30 +64,44 @@ export async function runNextStepReminders(now = new Date()): Promise<ReminderRu
       data: { nextStepReminderDay: day },
     });
     if (claimed.count === 0 || !u.customerId) continue;
-    if (!teamSize.has(u.customerId)) teamSize.set(u.customerId, await prisma.user.count({ where: { customerId: u.customerId, role: "BUYER" } }));
-    const scope: Prisma.LeadWhereInput =
-      u.teamRole === "advisor"
-        ? { customerId: u.customerId, assignedUserId: u.id }
-        : (teamSize.get(u.customerId) ?? 1) > 1
-          ? { customerId: u.customerId, OR: [{ assignedUserId: u.id }, { assignedUserId: null }] }
-          : { customerId: u.customerId };
-    const [missing, resultMissing, tasks] = await Promise.all([
-      prisma.lead.count({ where: { AND: [scope, withoutNextStepWhere(now)] } }),
-      prisma.lead.count({ where: { AND: [scope, resultMissingWhere(now)] } }),
-      // Aufgaben „Nächsten Schritt festlegen“ von gestern zählen ebenfalls (Dialog ohne Wahl geschlossen)
-      prisma.lead.count({ where: { AND: [scope, { followUpNote: NEXT_STEP_TASK_NOTE, followUpAt: { lte: now } }] } }),
-    ]);
-    const total = missing + tasks;
-    if (total === 0) continue;
-    const t = reminderText(total, resultMissing);
-    const url = "/buyer/kontakte?ansicht=ohne-schritt";
-    await sendToUser(u.id, { title: t.title, body: t.body, url: "/buyer", tag: `next-step:${day}` }).catch((e) => console.error("[next-step reminder push]", e));
-    await sendPlainMail({
-      to: u.email,
-      subject: t.title,
-      text: `Guten Morgen,\n\n${t.body}\n\n${getAppUrl()}${url}\n\nDiese Erinnerung können Sie unter Einstellungen abschalten.\n\nIhr performancegrowth-Team`,
-    }).catch((e) => console.error("[next-step reminder mail]", e));
-    res.sent++;
+    // Fehler bei einem Login halten die anderen nicht auf
+    if (await remindUser(u as { id: string; email: string; teamRole: string; customerId: string }, now, day, teamSize, base).catch((e) => {
+      console.error("[next-step reminder]", u.id, e);
+      return false;
+    })) res.sent++;
   }
   return res;
+}
+
+async function remindUser(
+  u: { id: string; email: string; teamRole: string; customerId: string },
+  now: Date,
+  day: string,
+  teamSize: Map<string, number>,
+  base: string | null,
+): Promise<boolean> {
+  if (!teamSize.has(u.customerId)) teamSize.set(u.customerId, await prisma.user.count({ where: { customerId: u.customerId, role: "BUYER" } }));
+  const scope: Prisma.LeadWhereInput =
+    u.teamRole === "advisor"
+      ? { customerId: u.customerId, assignedUserId: u.id }
+      : (teamSize.get(u.customerId) ?? 1) > 1
+        ? { customerId: u.customerId, OR: [{ assignedUserId: u.id }, { assignedUserId: null }] }
+        : { customerId: u.customerId };
+  const [missing, resultMissing, tasks] = await Promise.all([
+    prisma.lead.count({ where: { AND: [scope, withoutNextStepWhere(now)] } }),
+    prisma.lead.count({ where: { AND: [scope, resultMissingWhere(now)] } }),
+    // Aufgaben „Nächsten Schritt festlegen“ von gestern zählen ebenfalls (Dialog ohne Wahl geschlossen)
+    prisma.lead.count({ where: { AND: [scope, { followUpNote: NEXT_STEP_TASK_NOTE, followUpAt: { lte: now } }] } }),
+  ]);
+  const total = missing + tasks;
+  if (total === 0) return false;
+  const t = reminderText(total, resultMissing);
+  const url = "/buyer/kontakte?ansicht=ohne-schritt";
+  await sendToUser(u.id, { title: t.title, body: t.body, url: "/buyer", tag: `next-step:${day}` }).catch((e) => console.error("[next-step reminder push]", e));
+  await sendPlainMail({
+    to: u.email,
+    subject: t.title,
+    text: `Guten Morgen,\n\n${t.body}${base ? `\n\n${base}${url}` : ""}\n\nDiese Erinnerung können Sie unter Einstellungen abschalten.\n\nIhr performancegrowth-Team`,
+  }).catch((e) => console.error("[next-step reminder mail]", e));
+  return true;
 }

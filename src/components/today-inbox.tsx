@@ -285,7 +285,8 @@ export function TodayInbox({
   return (
     <div className="space-y-6">
       {noStep.length > 0 ? (
-        <Card className="border-amber-200" data-no-next-step>
+        <div data-no-next-step>
+        <Card className="border-amber-200">
           <div id="ohne-schritt" className="scroll-mt-20" />
           <CardHeader
             icon={AlertTriangle}
@@ -354,6 +355,7 @@ export function TodayInbox({
             </button>
           ) : null}
         </Card>
+        </div>
       ) : null}
       {nothing ? (
         <Card>

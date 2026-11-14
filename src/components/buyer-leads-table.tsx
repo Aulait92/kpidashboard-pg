@@ -50,7 +50,7 @@ function formatAppt(d: Date): string {
 }
 
 function followUpText(iso: string): string {
-  return `Wiedervorlage ${new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit" }).format(new Date(iso))}.`;
+  return `Wiedervorlage ${new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit" }).format(new Date(iso))}`;
 }
 
 function statusText(

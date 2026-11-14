@@ -132,6 +132,11 @@ export function attemptMessage(prefix: string, a: Attempt): string {
   return head;
 }
 
+/** „Versuch 3 von 6“ (der Versuch, der eingetragen würde) bzw. „6 von 6 gemacht“. */
+function attemptBadge(done: number): string {
+  return done >= CALL_ATTEMPTS_TARGET ? `${CALL_ATTEMPTS_TARGET} von ${CALL_ATTEMPTS_TARGET} gemacht` : `Versuch ${done + 1} von ${CALL_ATTEMPTS_TARGET}`;
+}
+
 function useStepInfo(leadId: string) {
   const [info, setInfo] = useState<LeadStepInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -330,7 +335,7 @@ export function LostSheet({
                 <span className="flex items-center justify-between gap-2">
                   <span className="font-semibold text-[color:var(--brand)]">Nicht erreicht?</span>
                   <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-[color:var(--brand)]">
-                    Versuch {Math.min(attempts + 1, CALL_ATTEMPTS_TARGET)} von {CALL_ATTEMPTS_TARGET}
+                    {attemptBadge(attempts)}
                   </span>
                 </span>
                 <span className="block text-xs text-[color:var(--muted)]">
@@ -696,7 +701,7 @@ export function NextStepSheet({
             <button type="button" className={cn(chip, "w-full justify-start px-4")} disabled={busy} onClick={() => run(`${name}: nicht erreicht`, () => notReachedResult(leadId))} data-step="nicht-erreicht">
               <PhoneMissed className="h-4 w-4" />
               <span className="flex-1 text-left">Nicht erreicht</span>
-              {info ? <span className="text-xs text-[color:var(--muted)]">Versuch {Math.min(info.callAttempts + 1, CALL_ATTEMPTS_TARGET)} von {CALL_ATTEMPTS_TARGET}</span> : null}
+              {info ? <span className="text-xs text-[color:var(--muted)]">{attemptBadge(info.callAttempts)}</span> : null}
             </button>
           ) : null}
           <div className="grid grid-cols-2 gap-2">
