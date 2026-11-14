@@ -1311,6 +1311,7 @@ model SalesContact {
   tasks              SalesTask[]
   campaigns          SalesCampaignLead[]
   emails             SalesEmail[]
+  followups          SalesFollowup[]
   linkedinEvents     SalesLinkedInEvent[]
   meetings           SalesMeeting[]
   inboundLeads       SalesInboundLead[]
@@ -1398,12 +1399,70 @@ model SalesEmail {
   html        String?
   fromEmail   String?
   threadId    String?
+  /// Unser Instantly-Postfach, das die Mail empfangen bzw. gesendet hat (Antwort im selben Thread)
+  eaccount    String?
   isAutoReply Boolean      @default(false)
-  sentiment   String? // POSITIV, NEGATIV, NEUTRAL
+  sentiment   String? // POSITIV, NEGATIV, NEUTRAL, SPAETER (Später-Interesse)
   sentAt      DateTime
   createdAt   DateTime     @default(now())
 
   @@index([contactId, sentAt])
+}
+
+// Später-Follow-up (lib/vertrieb/followup.ts): Kontakt hat „gerne später“ geantwortet
+// oder „Später wieder“ bekommen. Zwei Mails als Antwort im selben Instantly-Thread,
+// danach Aufgabe „Wieder melden“.
+model SalesFollowup {
+  id           String       @id @default(cuid())
+  contactId    String
+  contact      SalesContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  /// = contactId, solange das Follow-up läuft (höchstens eines je Kontakt), sonst NULL
+  activeFor    String?      @unique
+  status       String       @default("GEPLANT") // FREIGABE (wartet auf Freigabe), GEPLANT, FERTIG, GESTOPPT
+  step         Int          @default(0) // 0 = noch nichts gesendet, 1 = Mail 1 gesendet, 2 = Mail 2 gesendet
+  source       String // ANTWORT (Später-Antwort), AUSGANG (Ergebnis „Später wieder“), BESTAND (nachträglich eingeplant)
+  /// Geplanter Zeitpunkt für Mail 1
+  dueAt        DateTime
+  /// Nächster Schritt (Mail 1, Mail 2 oder Aufgabe nach Mail 2)
+  nextAt       DateTime
+  /// Erkannter Zeitpunkt aus der Antwort, z. B. „ab März“
+  timing       String?
+  /// Die Später-Antwort (SalesEmail), auf die im Thread geantwortet wird
+  replyEmailId String?
+  subject      String?
+  body1        String?
+  body2        String?
+  textSource   String? // KI, VORLAGE, MANUELL
+  mail1SentAt  DateTime?
+  mail2SentAt  DateTime?
+  /// Sperre gegen Doppelversand (gesetzt während des Sendens)
+  sendingAt    DateTime?
+  attempts     Int          @default(0)
+  lastError    String?
+  stoppedAt    DateTime?
+  stopReason   String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([status, nextAt])
+  @@index([contactId])
+}
+
+// Einstellungen Später-Follow-ups (eine Zeile, id „default“)
+model SalesFollowupSettings {
+  id         String   @id @default("default")
+  enabled    Boolean  @default(true)
+  /// Höchstens so viele Follow-up-Mails je Tag und Postfach
+  perDay     Int      @default(15)
+  /// Texte per KI aus Originalmail und Antwort (sonst feste Vorlage)
+  useAi      Boolean  @default(true)
+  /// Buchungslink für den kurzen Termin (leer = ohne Link)
+  bookingUrl String?
+  /// Kurzer Bezug auf das Angebot (für KI und Vorlage)
+  pitch      String   @default("Wir sorgen über Meta-Werbung für planbare Kundenanfragen in Ihrer Region. Ein WhatsApp-Assistent meldet sich sofort bei jeder Anfrage und vereinbart Termine für Sie.")
+  /// Bestehende Später-Kontakte einmalig eingeplant (wartet auf Freigabe)
+  backfillAt DateTime?
+  updatedAt  DateTime @updatedAt
 }
 
 // Rohdaten aus Waalaxy (Webhook), auch nicht zugeordnete – zum Nachvollziehen
