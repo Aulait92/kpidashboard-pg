@@ -36,8 +36,8 @@ export const DRAFT_SCHEMA = {
           text: { type: "string", description: "Fertiger Post-Text, genau so wie er auf LinkedIn erscheinen soll" },
           image: { type: "string", enum: ["foto", "ki", "grafik", "keins"], description: "foto = Foto aus der Fotoablage, ki = fotorealistisches KI-Bild, grafik = Text-Grafik mit Kernaussage, keins = ohne Bild" },
           photoId: { type: "string", description: "Bei image=foto: ID aus der Fotoablage, sonst leer" },
-          imagePrompt: { type: "string", description: "Bei image=ki: englische Bildbeschreibung einer fotorealistischen, emotionalen Szene passend zum Post (Personen, Ort, Licht, Stimmung), sonst leer" },
-          graphic: { type: "string", description: "Kernaussage für eine Text-Grafik (max. 90 Zeichen, ohne Gedankenstriche); bei image=grafik Pflicht, sonst als Ersatz trotzdem ausfüllen" },
+          imagePrompt: { type: "string", description: "Immer ausfüllen: englische Bildbeschreibung einer fotorealistischen, emotionalen Szene passend zum Post (Personen, Ort, Licht, Stimmung)" },
+          graphic: { type: "string", description: "Immer ausfüllen: Kernaussage für die Ersatz-Grafik (max. 90 Zeichen, ohne Gedankenstriche)" },
         },
       },
     },
@@ -61,11 +61,13 @@ export function validateDrafts(x: unknown, n: number, photoIds: string[] = []): 
     const imagePrompt = str(d.imagePrompt).slice(0, 800);
     const graphic = postText(str(d.graphic)).slice(0, 120);
     if (image === "ki" && imagePrompt.length < 20) errors.push(`Post ${i + 1}: imagePrompt für das KI-Bild fehlt`);
-    if (image === "grafik" && !graphic) errors.push(`Post ${i + 1}: graphic (Kernaussage) fehlt`);
+    if ((image === "grafik" || image === "ki") && !graphic) errors.push(`Post ${i + 1}: graphic (Kernaussage für die Ersatz-Grafik) fehlt`);
     if (text.length < 150) errors.push(`Post ${i + 1}: Text zu kurz (mind. 150 Zeichen)`);
     if (text.length > 2900) errors.push(`Post ${i + 1}: Text zu lang (höchstens 2.900 Zeichen)`);
     if (!hypothesis) errors.push(`Post ${i + 1}: Hypothese fehlt`);
     if (image !== "foto" && image !== "ki" && image !== "grafik") image = "keins";
+    // Ole (14.11.2026): fotorealistische Bilder statt Grafiken – Grafik nur als Ersatz
+    if (image === "grafik" && imagePrompt.length >= 20) image = "ki";
     out.push({ idea: idea.slice(0, 120), hypothesis: hypothesis.slice(0, 300), text, image, photoId: image === "foto" ? photoId : null, imagePrompt, graphic });
   }
   if (out.length !== n) errors.push(`Genau ${n} Posts schreiben (geliefert: ${out.length})`);
@@ -143,7 +145,7 @@ export function buildDraftPrompt(input: PromptInput): { system: string; user: st
     "Formate, die bei ihm funktionieren: (1) Trust-Post mit echtem Kunden-Case und Zahlen (sein bester Post), (2) „Stell dir vor:“-Geschichte aus dem Alltag eines Vermittlers oder seiner Kunden mit emotionaler Wendung und Schluss-Frage. Trust-Posts nur mit Fakten aus „Trust-Fakten“ oder „Trust-Material“.",
     "Wahrheit: Erfinde keine Zahlen, Kundennamen, Zitate, Erlebnisse oder Ergebnisse. Nutze nur, was in „Über mich“, „Zielgruppe“ oder seinen bisherigen Posts steht. Wo eine konkrete Zahl fehlt, formuliere ohne Zahl.",
     "Keine Versprechen über Ergebnisse für Kunden, keine Aussagen über Mitbewerber oder einzelne Versicherer.",
-    "Bilder (image): Jeder Post bekommt ein Bild. Passt ein Foto aus der Fotoablage (Fotos von ihm oder Beweis-Screenshots), nimm es (image=foto, kein Foto zweimal am selben Tag, kürzlich genutzte meiden; der Text darf das Foto nur so beschreiben, wie es in der Beschreibung steht). Sonst image=ki mit einer fotorealistischen, emotionalen Szene passend zur Geschichte (z. B. Vater mit Sohn am Krankenbett): keine Zeichnungen oder Illustrationen, kein Text im Bild, keine echten Personen, Marken oder Logos. Für Zahlen-Aussagen ohne passendes Foto geht image=grafik (Kernaussage groß als Text). Fülle graphic immer als Ersatz aus.",
+    "Bilder (image): Jeder Post bekommt ein Bild. Passt ein Foto aus der Fotoablage (Fotos von ihm oder Beweis-Screenshots), nimm es (image=foto, kein Foto zweimal am selben Tag, kürzlich genutzte meiden; der Text darf das Foto nur so beschreiben, wie es in der Beschreibung steht). Sonst image=ki mit einer fotorealistischen, emotionalen Szene passend zur Geschichte (z. B. Vater mit Sohn am Krankenbett): keine Zeichnungen oder Illustrationen, kein Text im Bild, keine echten Personen, Marken oder Logos. Wähle image=grafik nicht selbst; die Text-Grafik ist nur der Ersatz, falls das KI-Bild nicht erzeugt werden kann. Fülle imagePrompt und graphic deshalb immer aus.",
     "Antworte nur mit JSON im vorgegebenen Format.",
   ].join("\n");
 

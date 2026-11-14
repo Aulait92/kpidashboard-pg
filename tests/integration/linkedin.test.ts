@@ -112,6 +112,9 @@ describe("LinkedIn – reine Funktionen", () => {
       expect(ok.value[0].text).not.toMatch(/[–—#]/);
       expect(ok.value[0].graphic).toBe("100 Leads, 12 Abschlüsse");
     }
+    // Grafik nur als Ersatz: mit Bildbeschreibung wird daraus ein KI-Bild
+    const g = validateDrafts({ posts: [{ idea: "a", hypothesis: "h", text: TEXT(3), image: "grafik", photoId: "", imagePrompt: "a calm office desk with a phone showing a booked appointment", graphic: "Termin statt Telefonnummer" }] }, 1);
+    expect(g.ok && g.value[0].image).toBe("ki");
     const bad = validateDrafts({ posts: [{ idea: "a", hypothesis: "", text: "kurz", image: "foto", photoId: "gibtsnicht", imagePrompt: "", graphic: "" }] }, 2, ["f1"]);
     expect(bad.ok).toBe(false);
     if (!bad.ok) for (const m of [/zu kurz/, /Hypothese/, /Foto-ID/, /Genau 2/]) expect(bad.errors.join(" ")).toMatch(m);
@@ -210,6 +213,7 @@ describe("LinkedIn – Datenbank", () => {
             hypothesis: `Test ${i}`,
             text: TEXT(i),
             image: i === 0 && photoId ? "foto" : i === 1 ? "ki" : "grafik",
+            // (Post 3: „grafik“ ohne Bildbeschreibung → bleibt Grafik; mit Beschreibung würde KI-Bild daraus)
             photoId: i === 0 ? photoId : "",
             imagePrompt: i === 1 ? "an insurance agent at a desk talking on the phone, natural light" : "",
             graphic: `Kernaussage ${i}`,
