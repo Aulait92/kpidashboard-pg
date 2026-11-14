@@ -346,6 +346,9 @@ Seiten aus der Liste „Seiten“ unten.
     Die Wahl merkt sich die App je Login. „Aufschlüsselung“ antippen (am Rechner: mit der Maus darüber) zeigt Provision,
     Rückbelastung, Lead-Kosten, Betreuung & Software, weitere Posten und bei „Inkl. Bestand“ die künftige
     Bestandsprovision. Kosten pro Abschluss und die Tipps richten sich immer nach „Nur jetzt“.
+  - **Hochgeladene Bestandsverträge zählen nicht zum Gewinn, nur neue Abschlüsse.** Verträge aus Ihrer Kundenliste
+    (Bestand → Kundenliste hochladen) zählen weder in Provision, Gewinn, „Inkl. Bestand“, Bestandsprovision noch in den
+    Monatsbericht. Schließt ein Bestandskunde über eine Bestandskampagne neu ab, zählt dieser neue Vertrag voll mit.
   - **Kosten pro Abschluss** bzw. pro Termin: alle Kosten (Lead-Kosten plus Betreuung) geteilt durch die Abschlüsse
     bzw. Termine aus bezahlten Leads, passend zum Gewinn.
 - **Betreuung in den Zahlen:** Betreuung & Software (Monatspreis laut Ihrem Vertrag), weitere Verkäufer bzw. Logins,

@@ -297,7 +297,7 @@ async function BuyerDashboardBody({
                   <a href="/buyer/provisionen#storno" className="font-medium text-[color:var(--brand)] underline">
                     ändern
                   </a>
-                  ). Neue Abschlüsse sind nicht eingerechnet.
+                  ). Neue Abschlüsse sind nicht eingerechnet. Hochgeladene Bestandsverträge (Kundenliste) zählen nicht dazu, nur Abschlüsse in der App.
                 </Info>
               </>
             }
@@ -351,7 +351,7 @@ async function BuyerDashboardBody({
                     <a href="/buyer/provisionen#storno" className="font-medium text-[color:var(--brand)] underline">
                       ändern
                     </a>
-                    ), ohne Abzinsung, gekündigte Verträge nur bis zum Kündigungsdatum. Ihr bisheriger Bestand zählt hier nicht mit. „Nur jetzt“ zählt nur, was im Zeitraum verdient ist.
+                    ), ohne Abzinsung, gekündigte Verträge nur bis zum Kündigungsdatum. Ihr bisheriger Bestand zählt hier nicht mit: Hochgeladene Bestandsverträge zählen nicht zum Gewinn, nur neue Abschlüsse, auch aus Bestandskampagnen. „Nur jetzt“ zählt nur, was im Zeitraum verdient ist.
                   </Info>
                 </>
               }
