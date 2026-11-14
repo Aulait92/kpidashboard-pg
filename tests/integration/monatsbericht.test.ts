@@ -17,19 +17,16 @@ vi.mock("@/lib/push", () => ({ sendToAdmins: async () => ({}) }));
 
 import { prisma } from "@/lib/prisma";
 import { callInstead, runMonthlyReports, saveReportSettings } from "@/lib/monatsbericht/server";
-import type { LlmCall } from "@/lib/kampagnen/llm";
+import { addManualMeasure } from "@/lib/optimierung/server";
+import { fakeLlm } from "./bericht-llm";
 import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
 
 const MONTH = "2026-10";
 const NOW = new Date("2026-11-02T08:00:00Z");
-const usage = { tokensIn: 10, tokensOut: 10, costCents: 1 };
 
-/** Claude-Ersatz: Schreiber liefert einen Text, Prüfer sagt ok. */
-const fakeLlm = (paragraphs: string[] = ["Im Oktober 2026 kamen neue Anfragen herein.", "Wir haben die Anzeigen weiter optimiert und melden uns mit den nächsten Schritten."]): LlmCall =>
-  vi.fn(async (req) => ({
-    text: req.agent === "Berichtsprüfer" ? JSON.stringify({ ok: true, issues: [] }) : JSON.stringify({ subject: "Ihr Rückblick auf den Oktober", paragraphs, tips: ["Rufen Sie neue Leads möglichst innerhalb von 5 Minuten an."] }),
-    usage,
-  }));
+/** Maßnahme von Hand im Oktober (ohne Maßnahme geht kein Bericht automatisch raus). */
+const addMeasure = (customerId: string) =>
+  addManualMeasure({ customerId, topic: "anzeigen", title: "Zwei neue Motive für die Katzenkampagne", executedAt: new Date("2026-10-15T10:00:00Z") }, { email: "ole@test.local" }, NOW);
 
 async function setupCustomer(leads: number, termine: number, activeDays = 25) {
   const c = await makeCustomer({ plan: "software" });
@@ -83,22 +80,24 @@ describe("Monatsberichte", () => {
     await saveReportSettings({ autoSendGood: true });
     const id = await setupCustomer(95, 12);
     ids.push(id);
+    await addMeasure(id);
     await runMonthlyReports(NOW, { month: MONTH, llm: fakeLlm(), customerIds: [id] });
     const r = await prisma.monthlyReport.findFirstOrThrow({ where: { customerId: id } });
     expect(r.status).toBe("sent");
     expect(mail.sent).toHaveLength(1);
   });
 
-  it("schwach geht nie automatisch raus – auch wenn automatisch an", async () => {
+  it("schwach geht nie automatisch raus, auch wenn automatisch an", async () => {
     await saveReportSettings({ autoSendGood: true });
     const id = await setupCustomer(40, 2);
     ids.push(id);
+    await addMeasure(id);
     await runMonthlyReports(NOW, { month: MONTH, llm: fakeLlm(), customerIds: [id] });
     const r = await prisma.monthlyReport.findFirstOrThrow({ where: { customerId: id } });
     expect(r).toMatchObject({ rating: "schwach", status: "draft" });
     expect(mail.sent).toHaveLength(0);
     const name = (await prisma.customer.findUniqueOrThrow({ where: { id } })).name;
-    expect(await prisma.salesTask.count({ where: { title: { contains: `${name} (schwach) – Empfehlung: anrufen statt schicken` } } })).toBe(1);
+    expect(await prisma.salesTask.count({ where: { title: { contains: `${name} (schwach): Empfehlung: anrufen statt schicken` } } })).toBe(1);
     await prisma.salesTask.deleteMany({ where: { title: { contains: name } } });
   });
 
@@ -106,6 +105,7 @@ describe("Monatsberichte", () => {
     await saveReportSettings({ autoSendGood: true });
     const id = await setupCustomer(72, 8);
     ids.push(id);
+    await addMeasure(id);
     await runMonthlyReports(NOW, { month: MONTH, llm: fakeLlm(), customerIds: [id] });
     const r = await prisma.monthlyReport.findFirstOrThrow({ where: { customerId: id } });
     expect(r).toMatchObject({ rating: "mittel", status: "draft" });
@@ -116,7 +116,8 @@ describe("Monatsberichte", () => {
     await saveReportSettings({ autoSendGood: true });
     const id = await setupCustomer(95, 12);
     ids.push(id);
-    await runMonthlyReports(NOW, { month: MONTH, llm: fakeLlm(["Ihre Lead-Garantie ist erfüllt.", "Weiter so im nächsten Monat."]), customerIds: [id] });
+    await addMeasure(id);
+    await runMonthlyReports(NOW, { month: MONTH, llm: fakeLlm("Ihre Lead-Garantie ist erfüllt. Weiter so im nächsten Monat, wir bleiben dran."), customerIds: [id] });
     const r = await prisma.monthlyReport.findFirstOrThrow({ where: { customerId: id } });
     expect(r.status).toBe("draft");
     expect((r.check as { ok: boolean }).ok).toBe(false);

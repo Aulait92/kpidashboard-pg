@@ -375,11 +375,7 @@ export async function sendOnboardingWelcomeEmail(opts: {
   }
 }
 
-/**
- * Einfache Kunden-Mail im performancegrowth-Stil (Absender wie Angebote).
- * Absätze werden escaped; `html`-Blöcke (z. B. Smiley-Leiste) gehen roh durch.
- */
-export async function sendCustomerMail(opts: {
+export type CustomerMailOpts = {
   to: string | string[];
   subject: string;
   greeting: string;
@@ -387,32 +383,32 @@ export async function sendCustomerMail(opts: {
   list?: string[];
   button?: { label: string; url: string };
   html?: string;
+  /** Zusätzliche Zeilen für die Textfassung (an der Stelle von `html`) */
+  textBlocks?: string[];
   replyTo?: string | null;
   signature?: string;
-}): Promise<SendResult> {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>";
-  if (!apiKey) {
-    console.warn(`[email] RESEND_API_KEY fehlt — „${opts.subject}“ an ${[opts.to].flat().join(", ")}${opts.button ? `, Link: ${opts.button.url}` : ""}`);
-    return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
-  }
+};
+
+type MailBody = Pick<CustomerMailOpts, "greeting" | "paragraphs" | "list" | "button" | "html" | "textBlocks" | "signature">;
+
+/** Textfassung einer Kunden-Mail (rein, z. B. für Vorschau und Tests). */
+export function customerMailText(opts: MailBody): string {
   const signature = opts.signature ?? `${PROVIDER.manager}\n${PROVIDER.brand}`;
-  const replyTo = opts.replyTo === undefined ? (process.env.OFFER_REPLY_TO ?? null) : opts.replyTo;
-  try {
-    const { error } = await mailClient(apiKey).emails.send({
-      from,
-      to: opts.to,
-      ...(replyTo ? { replyTo } : {}),
-      subject: opts.subject,
-      text: [
-        opts.greeting,
-        "",
-        ...opts.paragraphs.flatMap((p) => [p, ""]),
-        ...(opts.list?.length ? [...opts.list.map((l) => `• ${l}`), ""] : []),
-        ...(opts.button ? [`${opts.button.label}: ${opts.button.url}`, ""] : []),
-        signatureText(signature),
-      ].join("\n"),
-      html: `
+  return [
+    opts.greeting,
+    "",
+    ...opts.paragraphs.flatMap((p) => [p, ""]),
+    ...(opts.list?.length ? [...opts.list.map((l) => `• ${l}`), ""] : []),
+    ...(opts.textBlocks?.length ? [...opts.textBlocks, ""] : []),
+    ...(opts.button ? [`${opts.button.label}: ${opts.button.url}`, ""] : []),
+    signatureText(signature),
+  ].join("\n");
+}
+
+/** HTML einer Kunden-Mail (rein, z. B. für Vorschau und Tests). */
+export function customerMailHtml(opts: MailBody): string {
+  const signature = opts.signature ?? `${PROVIDER.manager}\n${PROVIDER.brand}`;
+  return `
         <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0b1220">
           <p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(opts.greeting)}</p>
           ${opts.paragraphs.map((p) => `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${escapeHtml(p)}</p>`).join("")}
@@ -420,7 +416,29 @@ export async function sendCustomerMail(opts: {
           ${opts.html ?? ""}
           ${opts.button ? `<p style="margin:24px 0"><a href="${opts.button.url}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">${escapeHtml(opts.button.label)}</a></p>` : ""}
           ${signatureHtml(signature)}
-        </div>`,
+        </div>`;
+}
+
+/**
+ * Einfache Kunden-Mail im performancegrowth-Stil (Absender wie Angebote).
+ * Absätze werden escaped; `html`-Blöcke (z. B. Smiley-Leiste) gehen roh durch.
+ */
+export async function sendCustomerMail(opts: CustomerMailOpts): Promise<SendResult> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>";
+  if (!apiKey) {
+    console.warn(`[email] RESEND_API_KEY fehlt — „${opts.subject}“ an ${[opts.to].flat().join(", ")}${opts.button ? `, Link: ${opts.button.url}` : ""}`);
+    return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
+  }
+  const replyTo = opts.replyTo === undefined ? (process.env.OFFER_REPLY_TO ?? null) : opts.replyTo;
+  try {
+    const { error } = await mailClient(apiKey).emails.send({
+      from,
+      to: opts.to,
+      ...(replyTo ? { replyTo } : {}),
+      subject: opts.subject,
+      text: customerMailText(opts),
+      html: customerMailHtml(opts),
     });
     if (error) return { ok: false, error: error.message ?? "Resend hat abgelehnt." };
     return { ok: true };

@@ -37,7 +37,7 @@ export function ReportDecision({ id, subject, body, rating }: { id: string; subj
           <input type="hidden" name="edited" value="1" />
           <label className="block text-sm font-semibold" htmlFor="b-subject">Betreff</label>
           <input id="b-subject" name="subject" defaultValue={subject} className="input w-full" required />
-          <label className="block text-sm font-semibold" htmlFor="b-body">Text (Absätze mit Leerzeile trennen)</label>
+          <label className="block text-sm font-semibold" htmlFor="b-body">Einstieg (Absätze mit Leerzeile trennen, die Zahlen-Abschnitte bleiben wie berechnet)</label>
           <textarea id="b-body" name="body" defaultValue={body} rows={14} className="input w-full text-sm" required />
           <div className="flex flex-wrap gap-2">
             <button className="btn-primary h-10" disabled={busy}>{sending ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Bearbeitet senden</button>
