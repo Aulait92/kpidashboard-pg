@@ -430,13 +430,12 @@ Seiten aus der Liste „Seiten“ unten.
   nach dem Jahresgespräch). Der Text passt dann zum Moment.
 - **Im Termin zeigen:** Im Kontakt öffnet „Im Termin zeigen“ einen QR-Code zum persönlichen Link. Ihr Kunde scannt ihn
   und teilt die Empfehlung gleich am Tisch.
-- **Aufsteller und Signatur:** In „Empfehlungen & Bewertungen“ → „Im Gespräch und im Büro“ finden Sie einen Aufsteller
-  zum Drucken und eine Zeile für Ihre E-Mail-Signatur. Beide nutzen einen allgemeinen Link; Empfehlungen darüber
-  lassen sich keinem einzelnen Kunden zuordnen.
+- **E-Mail-Signatur:** In „Empfehlungen & Bewertungen“ → „Im Gespräch und per E-Mail“ finden Sie eine Zeile für Ihre
+  E-Mail-Signatur. Sie nutzt einen allgemeinen Link.
 - **Per WhatsApp anfragen:** Ist Ihr WhatsApp verbunden, kann die empfohlene Person mit einem Tipp schreiben statt
   das Formular auszufüllen. Die Nachricht ist vorgeschrieben und landet als Lead mit Quelle „Empfehlung“ in Ihrem Chat.
-- **Persönlicher Link am Aufsteller:** Scannt ein Kunde den Aufsteller, kann er seine Handynummer angeben und bekommt
-  seinen persönlichen Link. So wissen Sie, von wem die Empfehlung kommt.
+- **Persönlicher Link aus der Signatur:** Öffnet ein Kunde den Link aus Ihrer Signatur, kann er seine Handynummer
+  angeben und bekommt seinen persönlichen Link. So wissen Sie, von wem die Empfehlung kommt.
 - **Nach jedem Termin (optional):** Unter „Der richtige Moment“ einschaltbar. Markieren Sie einen Termin mit einem Kunden
   als stattgefunden, geht einige Stunden später der Empfehlungslink raus (höchstens alle 180 Tage je Kontakt).
 - **Nachfassen:** Nach „Empfehlungslink senden“ oder „Im Termin zeigen“ legt die App eine Aufgabe in „Heute“ an
@@ -445,7 +444,13 @@ Seiten aus der Liste „Seiten“ unten.
   einmal gezählt), Empfehlungen, Neukunden – mit einem Hinweis, wo es gerade am meisten hakt.
 - **Empfehlende auf dem Laufenden halten:** Wenn die empfohlene Person auf der Empfehlungsseite zustimmt, bekommt Ihr
   Kunde eine kurze Nachricht, sobald sie sich gemeldet hat und sobald ein Termin steht. Abschaltbar.
-- **Gesprächsleitfaden:** vier Schritte mit Formulierungen, wie Sie Empfehlungen im Gespräch ansprechen.
+- **Empfehlungen im Gespräch ansprechen (Leitfaden):** 1. Zu Beginn ankündigen, dass Sie am Ende kurz nach der
+  Zufriedenheit fragen. 2. Den Moment nutzen, in dem Ihr Kunde merkt, dass sich der Blick auf seine Verträge gelohnt
+  hat: „Gibt es in Ihrem Umfeld jemanden, bei dem das auch so sein könnte?“ 3. Am Ende erst nach der Zufriedenheit
+  fragen, bei klar positiver Antwort „Im Termin zeigen“ öffnen und gemeinsam die Seite ansehen; bei Kritik zuhören und
+  heute nicht um Empfehlung bitten. 4. Verbindlich machen: „Ich melde mich in zwei Tagen kurz und erzähle, ob sich
+  schon jemand gemeldet hat.“ Die Aufgabe dafür legt die App an. Bei kurzen Kontakten (Schaden, Rückruf) reicht:
+  guten Moment benennen, nach der Zufriedenheit fragen, Link senden.
 - **Dankeschön für Empfehlende (optional, standardmäßig aus):** Gutschein oder Spende, vorher angekündigt auf der
   Seite Ihres Kunden. Fällig nach einem stattgefundenen Gespräch oder 30 Tage nach dem Abschluss; die App erinnert
   Sie, Sie übergeben selbst und haken unter „Offene Dankeschöns“ ab. Es geht nie an die empfohlene Person und nicht

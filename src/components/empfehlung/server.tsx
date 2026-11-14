@@ -10,7 +10,7 @@ import type { TeamCtx } from "@/lib/team";
 import { moduleInfo, recentClosings } from "@/lib/empfehlung/module";
 import { loadEmpfehlungStats, type EmpfehlungStats } from "@/lib/empfehlung/requests";
 import { BAD_REVIEW_TASK } from "@/lib/empfehlung/google-business";
-import { ANNOUNCEMENT_KEY, CANDIDATE_MIN_CLOSINGS, DAY_MS, HINTS, LEITFADEN, LEITFADEN_KURZ, fmtDate, isUnhappyTask } from "@/lib/empfehlung/shared";
+import { ANNOUNCEMENT_KEY, CANDIDATE_MIN_CLOSINGS, DAY_MS, HINTS, fmtDate, isUnhappyTask } from "@/lib/empfehlung/shared";
 import { ModuleHint, OptOutToggle, ReferralLinkButton } from "@/components/empfehlung/client";
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -198,28 +198,7 @@ export function EmpfehlungFunnel({ s }: { s: EmpfehlungStats }) {
           <b>{s.hint.title}.</b> {s.hint.text}
         </span>
       </div>
-      <p className="text-[11px] text-[color:var(--muted)]">Besucher werden je Person einmal gezählt, Link-Vorschauen zählen nicht. Empfehlungen über Aufsteller und Signatur zählen bei Besuchern, Empfehlungen und Neukunden mit.</p>
-    </div>
-  );
-}
-
-/** Gesprächsleitfaden: vier Schritte, die die Empfehlung zum roten Faden im Gespräch machen. */
-export function Leitfaden() {
-  return (
-    <div className="space-y-3 text-sm" data-empfehlung-leitfaden>
-      <p className="text-[color:var(--muted)]">
-        Wer aktiv fragt, bekommt ein Vielfaches an Empfehlungen. Entscheidend ist, dass die Frage nicht erst am Ende vom Himmel fällt.
-      </p>
-      {LEITFADEN.map((x) => (
-        <details key={x.title} className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3">
-          <summary className="cursor-pointer font-semibold">
-            {x.title} <span className="font-normal text-[color:var(--muted)]">· {x.when}</span>
-          </summary>
-          <p className="mt-2 leading-relaxed">{x.say}</p>
-          <p className="mt-2 text-xs text-[color:var(--muted)]">Warum: {x.why}</p>
-        </details>
-      ))}
-      <p className="text-xs text-[color:var(--muted)]">{LEITFADEN_KURZ}</p>
+      <p className="text-[11px] text-[color:var(--muted)]">Besucher werden je Person einmal gezählt, Link-Vorschauen zählen nicht. Empfehlungen über den Link in der E-Mail-Signatur zählen bei Besuchern, Empfehlungen und Neukunden mit.</p>
     </div>
   );
 }
