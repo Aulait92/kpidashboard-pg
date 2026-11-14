@@ -64,8 +64,8 @@ export default async function EinwilligungenPage() {
                 <tr>
                   <th className="px-5 py-2 font-medium">Anlass</th>
                   <th className="px-3 py-2 text-right font-medium">WhatsApp</th>
-                  <th className="px-3 py-2 text-right font-medium">E-Mail</th>
-                  <th className="px-5 py-2 text-left font-medium">Nicht erreichbar, häufigster Grund</th>
+                  <th className="whitespace-nowrap px-3 py-2 text-right font-medium">E-Mail</th>
+                  <th className="hidden px-5 py-2 text-left font-medium sm:table-cell">Nicht erreichbar, häufigster Grund</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[color:var(--border)] tabular-nums">
@@ -73,13 +73,16 @@ export default async function EinwilligungenPage() {
                   const top = Object.entries(r.counts.excluded).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0];
                   return (
                     <tr key={r.occasion} data-reach-row={r.occasion}>
-                      <td className="px-5 py-2">{OCCASIONS[r.occasion].label}</td>
+                      <td className="px-5 py-2">
+                        {OCCASIONS[r.occasion].label}
+                        <span className="block text-[11px] text-[color:var(--muted)] sm:hidden">{top ? `nicht erreichbar: ${de(r.counts.excludedTotal)}, meist ${top[0]}` : null}</span>
+                      </td>
                       <td className="px-3 py-2 text-right">{de(r.counts.whatsapp)}</td>
                       <td className="px-3 py-2 text-right">
                         {de(r.counts.email)}
                         {r.counts.emailUwg ? <span className="block text-[11px] text-[color:var(--muted)]">davon {de(r.counts.emailUwg)} nach § 7 Abs. 3</span> : null}
                       </td>
-                      <td className="px-5 py-2 text-xs text-[color:var(--muted)]">{top ? `${de(r.counts.excludedTotal)}: ${top[0]}` : "keine"}</td>
+                      <td className="hidden px-5 py-2 text-xs text-[color:var(--muted)] sm:table-cell">{top ? `${de(r.counts.excludedTotal)}: ${top[0]}` : "keine"}</td>
                     </tr>
                   );
                 })}

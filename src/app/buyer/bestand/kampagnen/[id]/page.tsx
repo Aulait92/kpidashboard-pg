@@ -46,7 +46,7 @@ export default async function CampaignDetail({ params, searchParams }: { params:
         ← Bestand
       </Link>
       <PageHeader
-        title={`${OCCASIONS[s.occasion as Occasion]?.label ?? s.occasion}: ${s.name}`}
+        title={(OCCASIONS[s.occasion as Occasion]?.label ?? s.occasion) === s.name ? s.name : `${OCCASIONS[s.occasion as Occasion]?.label ?? s.occasion}: ${s.name}`}
         subtitle={`${CHANNEL_MODES.find((m) => m.key === s.channelMode)?.label ?? ""} · gestartet ${s.startedAt?.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" }) ?? ""} · max. ${s.dailyLimit}/Tag`}
         actions={
           <div className="flex items-center gap-3">

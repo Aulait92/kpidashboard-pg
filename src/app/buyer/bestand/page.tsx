@@ -40,6 +40,12 @@ const eurRound = (n: number) => n.toLocaleString("de-DE", { style: "currency", c
 
 const PERIODS = [30, 90, 365] as const;
 
+/** „Lücke schließen: KFZ ohne Hausrat“, ohne Doppelung, wenn der Name der Anlass ist. */
+function campaignTitle(occasion: string, name: string): string {
+  const label = OCCASIONS[occasion as Occasion]?.label ?? occasion;
+  return name === label ? label : `${label}: ${name}`;
+}
+
 export default async function BestandPage({ searchParams }: { searchParams: Promise<{ q?: string; gestartet?: string; kontingent?: string; sort?: string; tage?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
@@ -327,7 +333,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                     <li key={k.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3 text-sm">
                       <div className="min-w-0 flex-1">
                         <Link href={`/buyer/bestand/kampagnen/${k.id}`} className="font-medium hover:underline">
-                          {OCCASIONS[k.occasion as Occasion]?.label ?? k.occasion}: {k.name}
+                          {campaignTitle(k.occasion, k.name)}
                         </Link>
                         <div className="text-xs text-[color:var(--muted)]">
                           {de(g.angeschrieben)} angeschrieben

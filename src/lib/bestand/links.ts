@@ -19,7 +19,7 @@ export function signLink(kind: LinkKind, id: string): string {
 
 /** Token prüfen; null bei falscher Signatur. */
 export function verifyLink(token: string): { kind: LinkKind; id: string } | null {
-  const m = /^([re])([A-Za-z0-9_-]{8,40})\.([A-Za-z0-9_-]{22})$/.exec(token);
+  const m = /^([re])([A-Za-z0-9_-]{1,64})\.([A-Za-z0-9_-]{22})$/.exec(token);
   if (!m) return null;
   const expected = Buffer.from(sig(`${m[1]}${m[2]}`));
   const given = Buffer.from(m[3]);

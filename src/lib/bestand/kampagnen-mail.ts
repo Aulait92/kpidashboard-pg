@@ -79,7 +79,9 @@ export function fillCampaignMail(tpl: { subject: string; body: string }, w: Mail
     "{empfehlungslink}": w.empfehlungslink ?? "",
     "{meinname}": w.meinname,
   };
-  const fill = (s: string) => s.replace(/\{(anrede|thema|empfehlungslink|meinname)\}/g, (m) => map[m] ?? m);
+  // Ohne Thema: „Ihr Vertrag {thema}“ → „Ihr Vertrag“ (statt „Ihr Vertrag Ihre Absicherung“)
+  const noTopic = (s: string) => (w.thema?.trim() ? s : s.replace(/(Vertrag) \{thema\}/g, "$1"));
+  const fill = (s: string) => noTopic(s).replace(/\{(anrede|thema|empfehlungslink|meinname)\}/g, (m) => map[m] ?? m);
   // „Ihr Vertrag : bald …“ vermeiden, falls der Betreff ohne Thema endet
   return { subject: fill(tpl.subject).replace(/\s+:/g, ":").trim(), body: fill(tpl.body).trim() };
 }
