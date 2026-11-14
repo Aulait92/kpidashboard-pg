@@ -129,6 +129,8 @@ export const AUDIT_LABEL: Record<string, string> = {
   "empfehlung.settings": "Einstellungen Empfehlungen & Bewertungen geändert",
   "empfehlung.announce": "Ankündigung Zusatzmodul versendet",
   "empfehlung.link_sent": "Empfehlungslink verschickt",
+  "rechnung.steuernummer": "Steuernummer für Rechnungen geändert",
+  "rechnung.kunden": "Pflichtangaben bei Stripe-Kunden aktualisiert",
 };
 
 export async function audit(

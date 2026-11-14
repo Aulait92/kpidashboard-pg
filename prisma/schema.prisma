@@ -2848,6 +2848,14 @@ model ReportSettings {
   updatedAt          DateTime @updatedAt
 }
 
+// Rechnungsangaben (eine Zeile, id „default“): USt-IdNr. bzw. Steuernummer für den Footer jeder
+// Stripe-Rechnung (§ 14 Abs. 4 UStG). Leer = Zeile entfällt, Admin sieht eine Warnung.
+model InvoiceSettings {
+  id        String   @id @default("default")
+  taxNumber String?
+  updatedAt DateTime @updatedAt
+}
+
 // Selbst-Einrichtung (eine Zeile, id „default“): unsere Business-ID für den Meta-Partnerzugriff
 // und je Einrichtungsschritt eine Video-URL (Loom/YouTube), die der Kunde eingebettet sieht.
 model SetupSettings {

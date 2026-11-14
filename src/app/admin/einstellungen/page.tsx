@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Activity, Bot, Calculator, Clock, FileBarChart, Layers, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, Megaphone, MessageCircle, Rocket, ShieldCheck, TrendingUp, Wallet, Workflow } from "lucide-react";
+import { Activity, Bot, Calculator, Clock, FileBarChart, Layers, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, Megaphone, MessageCircle, Receipt, Rocket, ShieldCheck, TrendingUp, Wallet, Workflow } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { supportConfig } from "@/lib/support";
+import { loadTaxNumber, taxNumberWarning } from "@/lib/invoice-footer";
 import { requireAuth } from "@/lib/vertrieb/auth";
 
 export const metadata = { title: "Einstellungen | performancegrowth Admin" };
@@ -48,6 +49,7 @@ const GROUPS = [
     items: [
       { href: "/admin/einstellungen/kosten", icon: Wallet, color: "bg-emerald-600", title: "Laufende Kosten", text: "Tools und eigene Werbung für Marge und Kundengewinnung" },
       { href: "/admin/einstellungen/bank", icon: Landmark, color: "bg-teal-600", title: "Bank & Karten", text: "Commerzbank und Amex: Ausgaben holen und als Kosten zuordnen" },
+      { href: "/admin/einstellungen/rechnungsangaben", icon: Receipt, color: "bg-slate-500", title: "Rechnungsangaben", text: "Steuernummer und Pflichtangaben auf Stripe-Rechnungen, Prüfung des Stripe-Kontos" },
     ],
   },
   {
@@ -62,8 +64,12 @@ const GROUPS = [
 
 export default async function EinstellungenPage() {
   const session = await requireAuth();
-  const me = await prisma.user.findUnique({ where: { id: session.userId }, select: { totpEnabledAt: true } });
+  const [me, taxNumber] = await Promise.all([
+    prisma.user.findUnique({ where: { id: session.userId }, select: { totpEnabledAt: true } }),
+    loadTaxNumber(),
+  ]);
   const support = supportConfig();
+  const taxWarning = taxNumberWarning(taxNumber);
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6">
       <h1 className="mb-5 text-2xl font-semibold tracking-tight">Einstellungen</h1>
@@ -75,6 +81,16 @@ export default async function EinstellungenPage() {
           <ShieldCheck className="h-4 w-4 shrink-0" />
           <span className="flex-1">Zwei-Faktor-Login ist noch nicht eingerichtet.</span>
           <span className="font-semibold">Einrichten</span>
+        </Link>
+      ) : null}
+      {taxWarning ? (
+        <Link
+          href="/admin/einstellungen/rechnungsangaben"
+          className="mb-4 flex items-center gap-3 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+        >
+          <Receipt className="h-4 w-4 shrink-0" />
+          <span className="flex-1">Rechnungen ohne Steuernummer: Auf Stripe-Rechnungen fehlt die USt-IdNr. bzw. Steuernummer.</span>
+          <span className="font-semibold">Eintragen</span>
         </Link>
       ) : null}
       {!support.whatsapp && !support.email ? (
