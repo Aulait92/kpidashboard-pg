@@ -16,6 +16,7 @@ import { prisma } from "@/lib/prisma";
 import { nowMs } from "@/lib/now";
 import { isAdvisor, leadScope, teamMembers, type TeamCtx } from "@/lib/team";
 import { LeadAssignee } from "@/components/lead-assignee";
+import { addsSeatCost, berlinDayStart, fmtSeatPrice, isActiveSeller } from "@/lib/seats";
 import { LeadHeaderActions } from "@/components/lead-actions";
 import { AbschlussCard, LeadHistory } from "@/components/lead-history";
 import { loadLeadHistory } from "@/lib/lead-history";
@@ -190,6 +191,8 @@ export async function LeadDetailBody({
   const stornoOptions = stornoOptionsMap.get(lead.id) ?? [];
   // Team: Inhaber sieht und ändert, wer zuständig ist.
   const members = isAdvisor(team) ? [] : await teamMembers(customerId);
+  // Zuteilen an ein Mitglied ohne „bekommt Leads“ macht es heute zum aktiven Verkäufer (lib/seats.ts): Kostenhinweis
+  const assignCost = members.length > 1 ? await assignCostHints(customerId, members) : new Map<string, string>();
   // Löschen (Datenschutz): Inhaber oder Admin in der Kundenansicht.
   const canErase = !isAdvisor(team);
 
@@ -317,7 +320,7 @@ export async function LeadDetailBody({
         <LeadAssignee
           leadId={lead.id}
           current={lead.assignedUserId}
-          members={members.map((m) => ({ id: m.id, name: m.displayName ?? m.email }))}
+          members={members.map((m) => ({ id: m.id, name: m.displayName ?? m.email, costHint: assignCost.get(m.id) ?? null }))}
           readOnly={!team.userId}
         />
       ) : null}
@@ -548,4 +551,17 @@ function statusTone(status: string): "emerald" | "amber" | "rose" | "blue" | "zi
 /** Termine ab 2 Stunden vor jetzt (laufende Termine bleiben sichtbar). */
 function twoHoursAgo(): Date {
   return new Date(Date.now() - 2 * 60 * 60 * 1000);
+}
+
+/** Kostenhinweis je Mitglied, falls ein Lead von Hand es heute zum weiteren aktiven Verkäufer macht. */
+async function assignCostHints(customerId: string, members: { id: string; receivesLeads: boolean; leadReceivedAt: Date | null }[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { seatsIncluded: true, seatMonthly: true } });
+  const price = Number(c?.seatMonthly ?? 0);
+  if (c?.seatsIncluded == null || !(price > 0)) return out;
+  const dayStart = berlinDayStart(new Date());
+  const active = members.filter((m) => isActiveSeller(m, dayStart)).length;
+  if (!addsSeatCost({ active, included: c.seatsIncluded, price })) return out;
+  for (const m of members) if (!isActiveSeller(m, dayStart)) out.set(m.id, `Das Mitglied bekommt sonst keine Leads. Durch das Zuteilen zählt es heute als weiterer aktiver Verkäufer (${fmtSeatPrice(price)} im Monat, tagesgenau abgerechnet).`);
+  return out;
 }

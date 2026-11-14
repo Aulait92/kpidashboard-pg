@@ -294,18 +294,18 @@ export function OfferForm({
         </Card>
 
         <Card>
-          <CardHeader title="Logins, Zahlweise und Module" />
+          <CardHeader title="Verkäufer, Zahlweise und Module" />
           <div className="space-y-4 p-5">
             {softwarePkg ? (
-              <Field l={`Logins gesamt (Inhaber + Berater) · ${PRICE_LIST.seatsIncluded} inklusive, jeder weitere ${eur(PRICE_LIST.seatMonthly)} / Monat`}>
+              <Field l={`Aktive Verkäufer (bekommen Leads) · ${PRICE_LIST.seatsIncluded} inklusive, jeder weitere ${eur(PRICE_LIST.seatMonthly)} / Monat, Mitglieder ohne Leads kostenlos`}>
                 <input className={input} inputMode="numeric" name="seats" value={seats} onChange={(e) => setSeats(e.target.value)} />
               </Field>
             ) : (
-              <p className="text-sm text-[color:var(--muted)]">Logins: im Paket „Nur Betreuung“ ohne Platz-Abrechnung.</p>
+              <p className="text-sm text-[color:var(--muted)]">Verkäufer: im Paket „Nur Betreuung“ ohne Platz-Abrechnung.</p>
             )}
             {price.seatsIndividual ? (
               <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                Ab {PRICE_LIST.seatIndividualFrom} Logins individuell: bitte oben „Monatlich abweichend“ eintragen (alle Logins inklusive).
+                Ab {PRICE_LIST.seatIndividualFrom} aktiven Verkäufern individuell: bitte oben „Monatlich abweichend“ eintragen (alle Verkäufer inklusive).
               </p>
             ) : null}
             <label className={`flex items-start gap-3 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${annualPossible ? "border-[color:var(--border)] bg-white" : "border-[color:var(--border)] bg-[color:var(--surface-sunken)] text-[color:var(--muted)]"}`}>
@@ -373,7 +373,7 @@ export function OfferForm({
             />
             {price.extraSeats > 0 ? (
               <Sum
-                k={`${price.extraSeats} weitere ${price.extraSeats === 1 ? "Login" : "Logins"}`}
+                k={`${price.extraSeats} ${price.extraSeats === 1 ? "weiterer Verkäufer" : "weitere Verkäufer"}`}
                 v={price.seatsIndividual ? "inklusive" : eur(price.seatsFee)}
                 sub={price.seatsIndividual ? "im individuellen Preis" : `${price.extraSeats} × ${eur(PRICE_LIST.seatMonthly)} / Monat`}
               />

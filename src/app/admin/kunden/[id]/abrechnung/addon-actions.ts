@@ -23,14 +23,14 @@ function done(id: string, r: AddOnResult): never {
   redirect(`/admin/kunden/${id}/abrechnung?zusatz=${encodeURIComponent(msg)}${r.ok ? "" : "&fehler=1"}`);
 }
 
-/** Inklusive Logins und Preis je weiterem Login setzen, danach Abo abgleichen. */
+/** Inklusive aktive Verkäufer und Preis je weiterem Verkäufer setzen, danach Abo abgleichen. */
 export async function saveSeatsAction(fd: FormData): Promise<void> {
   await requireAdmin();
   const id = String(fd.get("customerId") ?? "");
   const included = Number(fd.get("seatsIncluded"));
   const price = Number(String(fd.get("seatMonthly") ?? "").replace(",", "."));
   if (!Number.isInteger(included) || included < 1 || included > 100 || !Number.isFinite(price) || price < 0 || price > 10_000) {
-    done(id, { ok: false, error: "Bitte gültige Werte eingeben (Logins 1–100, Preis ab 0 €)." });
+    done(id, { ok: false, error: "Bitte gültige Werte eingeben (Verkäufer 1 bis 100, Preis ab 0 €)." });
   }
   const c = await prisma.customer.findUnique({ where: { id }, select: { seatsIncluded: true, seatMonthly: true } });
   if (!c) done(id, { ok: false, error: "Kunde nicht gefunden." });

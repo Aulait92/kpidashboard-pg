@@ -342,9 +342,10 @@ export function OfferDocument({
             </ul>
           </Tr>
           {add.hasSeats ? (
-            <Tr k="Logins">
-              {add.seats} {add.seats === 1 ? "Login" : "Logins"} für Inhaber und Berater, davon {add.seatsIncluded} inklusive. Weitere Logins
-              lassen sich jederzeit im Kundenbereich unter „Team“ hinzufügen.
+            <Tr k="Verkäufer">
+              {add.seats} {add.seats === 1 ? "aktiver Verkäufer" : "aktive Verkäufer"}, davon {add.seatsIncluded} inklusive. Aktiv ist, wer Leads bekommt.
+              Mitglieder ohne Leads (z. B. Inhaber, der nur steuert, oder Assistenz) sind kostenlos. Weitere Mitglieder lassen sich
+              jederzeit im Kundenbereich unter „Team“ hinzufügen.
             </Tr>
           ) : null}
           {add.bestandActive ? (
@@ -389,11 +390,11 @@ export function OfferDocument({
             </Note>
           </Tr>
           {add.extraSeats > 0 ? (
-            <Tr k={`Weitere Logins (${add.extraSeats})`}>
+            <Tr k={`Weitere Verkäufer (${add.extraSeats})`}>
               {add.seatMonthly > 0 ? (
                 <>
                   <b className="text-[#111827]">{eur2(add.seatsFee)}</b> netto pro Monat ({add.extraSeats} × {eur(add.seatMonthly)})
-                  <Note>Jeder weitere Login {eur(add.seatMonthly)} netto pro Monat, tagesgenau ab Einrichtung bzw. bis zur Entfernung.</Note>
+                  <Note>Jeder weitere aktive Verkäufer {eur(add.seatMonthly)} netto pro Monat, tagesgenau ab dem Tag, an dem er Leads bekommt, bis zum Abschalten.</Note>
                 </>
               ) : (
                 "Im individuellen Monatspreis enthalten."
@@ -497,7 +498,7 @@ export function OfferDocument({
         <H3>2.1 Zahlung</H3>
         <p className="text-[#374151]">
           {add.annual
-            ? "Die Setupgebühr wird mit Vertragsschluss fällig, die Vergütung ab dem Startdatum jährlich im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen. Weitere Logins, die während des Jahres dazukommen, werden anteilig berechnet."
+            ? "Die Setupgebühr wird mit Vertragsschluss fällig, die Vergütung ab dem Startdatum jährlich im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen. Weitere aktive Verkäufer, die während des Jahres dazukommen, werden anteilig berechnet."
             : "Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im Voraus, per SEPA-Lastschrift oder Karte, automatisch eingezogen."}
         </p>
         {offer.createdAt < GUARANTEES_FROM ? (

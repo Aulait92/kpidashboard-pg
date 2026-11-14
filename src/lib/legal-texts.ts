@@ -7,10 +7,11 @@
 // Kampagnen-Kontingent, WhatsApp-Gebühren im Preis enthalten.
 // 12.11.2026: Bestandskunden-Modul bei jährlicher Vorauszahlung: Kündigung zum Ende
 // des bezahlten Jahres, keine anteilige Erstattung (wie die Stripe-Abrechnung).
+// 14.11.2026: Statt Logins zählen aktive Verkäufer (bekommen Leads); Mitglieder ohne Leads kostenlos.
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
-export const LEGAL_VERSION = "12.11.2026";
+export const LEGAL_VERSION = "14.11.2026";
 
 export const PROVIDER = {
   name: "Ole Kannapinn UG (haftungsbeschränkt)",
@@ -58,8 +59,8 @@ export const AGB: LegalSection[] = [
       "Der digitale Assistent arbeitet KI-gestützt, gibt sich gegenüber Interessenten als digitaler Assistent zu erkennen und führt keine Versicherungsberatung durch. Er stellt Fragen zur Bedarfsklärung und vereinbart Termine. Beratung und Vermittlung bleiben vollständig beim Kunden, der Gespräche jederzeit selbst übernehmen kann.",
       "Der Anbieter strebt eine Verfügbarkeit von 99 % im Monatsmittel an, ausgenommen angekündigte Wartungen. Für Dienste Dritter (insbesondere Meta/WhatsApp, Kalender- und KI-Anbieter) übernimmt der Anbieter keine Gewähr.",
       "Der Anbieter darf die Software weiterentwickeln, solange die vereinbarten wesentlichen Funktionen erhalten bleiben.",
-      // Prüfen: Logins / Nutzerzahl
-      "Im Paket mit Software sind die im Angebot genannte Zahl an Logins enthalten (Inhaber und Berater). Weitere Logins kann der Kunde selbst anlegen; sie werden zum im Angebot genannten Preis je Login und Monat berechnet, anteilig ab dem Tag der Einrichtung bis zum Tag der Entfernung. Ab der im Angebot genannten Zahl an Logins gelten individuelle Konditionen.",
+      // Prüfen: aktive Verkäufer statt Logins (Ole, 14.11.2026)
+      "Im Paket mit Software ist die im Angebot genannte Zahl aktiver Verkäufer enthalten. Aktiv ist ein Zugang, der Leads zugeteilt bekommt (Einstellung „bekommt Leads“) oder an einem Tag Leads zugewiesen bekommen hat; er zählt dann für diesen Tag als aktiv. Zugänge ohne Leads (z. B. Inhaber, der nur steuert, oder Assistenz) sind kostenlos. Weitere Zugänge kann der Kunde selbst anlegen; jeder weitere aktive Verkäufer wird zum im Angebot genannten Preis je Monat berechnet, tagesgenau anteilig. Ab der im Angebot genannten Zahl an Zugängen gelten individuelle Konditionen.",
       // Prüfen: Bestandskunden-Modul + Fair Use; Kündigung bei jährlicher Vorauszahlung zum Ende des bezahlten Jahres (12.11.2026)
       "Das Bestandskunden-Modul (Import und Auswertung der Bestandskunden des Kunden, Kampagnen per WhatsApp) ist ein Zusatzmodul und nur enthalten, wenn es im Angebot vereinbart oder nachträglich in Textform gebucht wurde. Es ist zum Ende des Abrechnungszeitraums kündbar, sofern im Angebot nichts anderes vereinbart ist: bei monatlicher Zahlweise zum Ende des Abrechnungsmonats, bei jährlicher Vorauszahlung zum Ende des bezahlten Abrechnungsjahres. Bei jährlicher Vorauszahlung wird das Modul bei Buchung anteilig bis zum Ende des laufenden Abrechnungsjahres berechnet; eine anteilige Erstattung bei Kündigung erfolgt nicht.",
       // Prüfen: Selbstbuchung von Zusatzmodulen im Kundenbereich (Ole, 11.11.2026)
@@ -80,7 +81,7 @@ export const AGB: LegalSection[] = [
     items: [
       "Die Setupgebühr wird mit Vertragsschluss fällig. Die monatliche Vergütung ist ab dem im Angebot genannten Startdatum monatlich im Voraus fällig. Alle Preise verstehen sich netto zuzüglich der gesetzlichen Umsatzsteuer.",
       // Prüfen: jährliche Vorauszahlung
-      { sub: "Jährliche Vorauszahlung", text: "Ist im Angebot die jährliche Vorauszahlung vereinbart, ist die Vergütung für 12 Monate zum Start im Voraus fällig. Sie beträgt das im Angebot genannte Vielfache der monatlichen Vergütung einschließlich vereinbarter Zusätze (Nachlass für die Vorauszahlung). Während des Zahlungsjahres hinzukommende Logins oder Module werden anteilig für die Restlaufzeit berechnet. Eine anteilige Erstattung bei vorzeitiger Beendigung erfolgt nicht, außer bei Kündigung aus wichtigem Grund durch den Kunden." },
+      { sub: "Jährliche Vorauszahlung", text: "Ist im Angebot die jährliche Vorauszahlung vereinbart, ist die Vergütung für 12 Monate zum Start im Voraus fällig. Sie beträgt das im Angebot genannte Vielfache der monatlichen Vergütung einschließlich vereinbarter Zusätze (Nachlass für die Vorauszahlung). Während des Zahlungsjahres hinzukommende aktive Verkäufer oder Module werden anteilig für die Restlaufzeit berechnet. Eine anteilige Erstattung bei vorzeitiger Beendigung erfolgt nicht, außer bei Kündigung aus wichtigem Grund durch den Kunden." },
       "Die Höhe der monatlichen Vergütung richtet sich nach dem vereinbarten monatlichen Werbebudget (Preisstaffel laut Angebot). Ändert der Kunde das Budget dauerhaft, gilt die neue Stufe ab dem folgenden Abrechnungsmonat.",
       // Prüfen: WhatsApp-Gebühren inklusive, Fair Use bei Bestandskampagnen
       "Die Gebühren von Meta für WhatsApp-Nachrichten sind in der Vergütung enthalten. Das gilt ohne Mengenbegrenzung für die Kommunikation mit Leads (Erstkontakt, Erinnerungen, Nachfassen). Für Kampagnen an Bestandskunden sind die Gebühren für die im Angebot genannte Zahl an Kampagnen-Nachrichten je Kalendermonat enthalten (Fair Use); ist das Kontingent erreicht, startet die Software weitere Kampagnen erst im Folgemonat. Ein höheres Kontingent kann gesondert vereinbart werden.",

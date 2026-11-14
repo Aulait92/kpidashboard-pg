@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { loadCatalog } from "@/lib/produkt-buchen";
+import { NEU_HINWEIS } from "@/lib/produkt-buchen-shared";
 import { PRICE_LIST } from "@/lib/offer-pricing";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { CatalogItemForm } from "./form";
@@ -20,7 +21,7 @@ export default async function ProductCatalogPage() {
       <p className="mb-6 text-sm text-[color:var(--muted)]">
         Welche Sparten Kunden unter Konto & Rechnungen → Produkte selbst dazubuchen können. Preis je weiterem Produkt: Einrichtung {PRICE_LIST.extraProductSetupSelfService > 0 ? eur0(PRICE_LIST.extraProductSetupSelfService) : "kostenlos"},
         {" "}
-        {eur0(PRICE_LIST.extraProductMonthly)} im Monat (netto). „Bewährt“ zeigt den Erfahrungswert aus dem Rechner, Testprodukte zeigen „Erfahrungswert folgt“. Garantien gelten
+        {eur0(PRICE_LIST.extraProductMonthly)} im Monat (netto). „Bewährt“ zeigt den Leadpreis aus dem Rechner (als Spanne, wenn dort „von“ gesetzt ist). Ohne Häkchen zeigt das Produkt das Abzeichen „Neu“ mit dem Hinweis „{NEU_HINWEIS}“ Garantien gelten
         nur für die Katzenversicherung.
       </p>
       <div className="divide-y divide-[color:var(--border)] overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">

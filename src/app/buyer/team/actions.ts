@@ -10,6 +10,7 @@ import { reportError } from "@/lib/monitoring";
 import { memberName } from "@/lib/team";
 import { audit } from "@/lib/audit";
 import { syncSeatBilling } from "@/lib/billing";
+import { markLeadReceived } from "@/lib/seats-server";
 
 // Team-Verwaltung im Kundenbereich: nur der Inhaber (owner), nie in der
 // Admin-Vorschau. Berater (advisor) sehen nur die ihnen zugeteilten Leads.
@@ -38,6 +39,8 @@ export async function inviteMemberAction(_prev: TeamFormState, fd: FormData): Pr
     const ctx = await requireOwner();
     const name = String(fd.get("name") ?? "").trim().slice(0, 80);
     const email = String(fd.get("email") ?? "").trim().toLowerCase();
+    // „bekommt Leads“ beim Einladen wählbar (Standard an); nur aktive Verkäufer kosten (lib/seats.ts)
+    const receivesLeads = fd.get("receivesLeads") !== "off";
     if (!name) return { error: "Bitte einen Namen eingeben." };
     if (!EMAIL_RE.test(email)) return { error: "Bitte eine gültige E-Mail-Adresse eingeben." };
     const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
@@ -58,11 +61,11 @@ export async function inviteMemberAction(_prev: TeamFormState, fd: FormData): Pr
         customerId: ctx.customerId,
         teamRole: "advisor",
         displayName: name,
-        receivesLeads: true,
+        receivesLeads,
       },
     });
-    await audit("team.invite", { entity: "User", customerId: ctx.customerId, details: { email, name } });
-    // Weitere Logins über die inklusiven hinaus: Menge im Abo erhöhen (tagesgenau)
+    await audit("team.invite", { entity: "User", customerId: ctx.customerId, details: { email, name, receivesLeads } });
+    // Aktive Verkäufer über die inklusiven hinaus: Menge im Abo sofort anpassen (tagesgenau)
     await syncSeatBilling(ctx.customerId).catch((err) => reportError(err, "team-seats"));
     const token = await issuePasswordResetToken(email, INVITE_TTL_MS);
     const url = token ? buildResetUrl(token.rawToken) : null;
@@ -116,6 +119,9 @@ export async function toggleReceivesLeadsAction(fd: FormData): Promise<void> {
     data: { receivesLeads: !m.receivesLeads, ...(!m.receivesLeads ? { lastLeadAssignedAt: new Date() } : {}) },
   });
   await audit("team.receives_leads", { entity: "User", entityId: m.id, customerId: ctx.customerId, details: { receivesLeads: !m.receivesLeads } });
+  // Aktive Verkäufer ändern sich: Platz-Menge im Abo tagesgenau anpassen. Wer heute schon Leads
+  // bekommen hat, zählt beim Ausschalten bis zum täglichen Abgleich weiter (lib/seats.ts).
+  await syncSeatBilling(ctx.customerId).catch((err) => reportError(err, "team-seats"));
   revalidatePath("/buyer/team");
 }
 
@@ -152,6 +158,11 @@ export async function reassignLeadAction(leadId: string, userId: string | null):
     if (userId && !target) return { ok: false, error: "Team-Mitglied nicht gefunden." };
     await prisma.lead.update({ where: { id: lead.id }, data: { assignedUserId: target?.id ?? null } });
     await audit("lead.reassign", { entity: "Lead", entityId: lead.id, customerId: ctx.customerId, details: { to: target?.email ?? null } });
+    if (target) {
+      // Zuteilen von Hand macht das Mitglied heute zum aktiven Verkäufer, auch mit „bekommt Leads“ aus
+      await markLeadReceived(target.id);
+      if (!target.receivesLeads) await syncSeatBilling(ctx.customerId).catch((err) => reportError(err, "team-seats"));
+    }
     if (target && target.id !== ctx.userId) {
       const { sendToUser } = await import("@/lib/push");
       await sendToUser(target.id, {

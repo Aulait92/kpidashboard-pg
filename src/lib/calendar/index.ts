@@ -366,7 +366,10 @@ export async function bookAppointment(opts: {
   // Team: Lead ohne Zuständigen gehört jetzt dem Berater, bei dem gebucht wurde.
   if (advisorUserId && opts.leadId) {
     const n = await prisma.lead.updateMany({ where: { id: opts.leadId, assignedUserId: null }, data: { assignedUserId: advisorUserId } });
-    if (n.count) await prisma.user.update({ where: { id: advisorUserId }, data: { lastLeadAssignedAt: new Date() } });
+    if (n.count) {
+      const now = new Date();
+      await prisma.user.update({ where: { id: advisorUserId }, data: { lastLeadAssignedAt: now, leadReceivedAt: now } });
+    }
   }
   // Push an den Kunden: neuer Termin (nicht bei Verschiebung).
   if (opts.notifyLead !== "rescheduled") {

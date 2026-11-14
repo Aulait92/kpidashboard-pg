@@ -4,6 +4,7 @@ import { annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
 import { bestandQuota } from "@/lib/bestand/quota";
 import { billingIntervalAction, bestandModuleAction, empfehlungModuleAction, saveQuotaAction, saveSeatsAction, syncSeatsAction } from "./addon-actions";
 import { moduleState } from "@/lib/empfehlung/shared";
+import { seatUsage } from "@/lib/seats-server";
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 const fmt = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
@@ -12,9 +13,9 @@ const btn = "h-9 rounded-[var(--radius-sm)] px-3 text-sm font-semibold";
 const primary = `${btn} bg-[color:var(--brand)] text-white`;
 const secondary = `${btn} border border-[color:var(--border)] bg-white`;
 
-/** Logins, Bestandskunden-Modul (inkl. Kontingent) und Zahlweise – mit Stripe-Abgleich. */
+/** Verkäufer-Plätze, Bestandskunden-Modul (inkl. Kontingent) und Zahlweise – mit Stripe-Abgleich. */
 export async function AddOnsCard({ customerId, message, failed }: { customerId: string; message: string | null; failed: boolean }) {
-  const [c, logins, quota] = await Promise.all([
+  const [c, usage, quota] = await Promise.all([
     prisma.customer.findUnique({
       where: { id: customerId },
       select: {
@@ -38,7 +39,7 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
         empfehlungSince: true,
       },
     }),
-    prisma.user.count({ where: { customerId, role: "BUYER" } }),
+    seatUsage(customerId),
     bestandQuota(customerId),
   ]);
   if (!c) return null;
@@ -53,16 +54,16 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
 
   return (
     <Card>
-      <CardHeader title="Logins, Module und Zahlweise" />
+      <CardHeader title="Verkäufer, Module und Zahlweise" />
       <div className="space-y-5 px-5 pb-5 pt-4 text-sm" data-admin-addons>
         {message ? (
           <p className={`rounded-[var(--radius-sm)] px-3 py-2 font-medium ${failed ? "bg-rose-50 text-rose-800" : "bg-emerald-50 text-emerald-900"}`}>{message}</p>
         ) : null}
 
         <section className="space-y-2">
-          <h3 className="font-semibold">Logins</h3>
-          <p className="text-[color:var(--muted)]">
-            {logins} Logins genutzt
+          <h3 className="font-semibold">Aktive Verkäufer</h3>
+          <p className="text-[color:var(--muted)]" data-admin-seats>
+            {usage.active} aktiv (bekommen Leads oder heute Leads bekommen) · {usage.logins} Logins
             {c.seatsIncluded != null ? ` · ${c.seatsIncluded} inklusive · ${c.seatsBilled} berechnet` : " · keine Platz-Abrechnung vereinbart (Altvertrag)"}
             {seatPrice != null ? (seatPrice > 0 ? ` à ${eur(seatPrice)}/Monat` : " · Preis individuell (nicht automatisch)") : ""}
           </p>
@@ -73,7 +74,7 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
               <input name="seatsIncluded" type="number" min={1} max={100} defaultValue={c.seatsIncluded ?? PRICE_LIST.seatsIncluded} className={input} />
             </label>
             <label className="grid gap-1 text-xs text-[color:var(--muted)]">
-              € je weiterem Login
+              € je weiterem Verkäufer
               <input name="seatMonthly" inputMode="decimal" defaultValue={String(seatPrice ?? PRICE_LIST.seatMonthly).replace(".", ",")} className={input} />
             </label>
             <button className={primary}>Speichern und abgleichen</button>

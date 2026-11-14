@@ -65,14 +65,19 @@ export async function saveCatalogItem(
   return { ok: true };
 }
 
-/** Leadpreis für ein Katalog-Produkt aus der Rechner-Konfiguration (null = noch kein Erfahrungswert). */
-async function catalogCpls(catalog: CatalogItem[], vermittlerTyp: string): Promise<Record<string, number | null>> {
+/**
+ * Leadpreis für ein Katalog-Produkt aus der Rechner-Konfiguration (null = noch kein Erfahrungswert),
+ * mit unterem Wert der Spanne (Ole, 14.11.2026). Makler mit eigenem Makler-Wert: Einzelwert.
+ */
+async function catalogCpls(catalog: CatalogItem[], vermittlerTyp: string): Promise<Record<string, { cpl: number; cplFrom: number | null } | null>> {
   const cfg = await loadRechnerConfig().catch(() => null);
-  const out: Record<string, number | null> = {};
+  const out: Record<string, { cpl: number; cplFrom: number | null } | null> = {};
   for (const c of catalog) {
     const p = c.rechnerKey ? cfg?.products.find((x) => x.key === c.rechnerKey) : null;
-    // Nur bewährte Produkte bekommen einen Leadpreis; bei Testprodukten sind die Werte Annahmen
-    out[c.key] = p && c.proven ? (vermittlerTyp === "makler" && p.cplMakler != null ? p.cplMakler : p.cpl) : null;
+    // Nur bewährte Produkte bekommen einen Leadpreis; bei neuen Produkten sind die Werte Annahmen
+    if (!p || !c.proven) out[c.key] = null;
+    else if (vermittlerTyp === "makler" && p.cplMakler != null) out[c.key] = { cpl: p.cplMakler, cplFrom: null };
+    else out[c.key] = { cpl: p.cpl, cplFrom: p.cplFrom != null && p.cplFrom < p.cpl ? p.cplFrom : null };
   }
   return out;
 }
@@ -87,7 +92,13 @@ export type BookedProduct = {
   startWish: string | null;
   endRequestedAt: string | null;
 };
-export type BookableProduct = Pick<CatalogItem, "key" | "name" | "benefit" | "proven"> & { cpl: number | null; guarantee: boolean };
+export type BookableProduct = Pick<CatalogItem, "key" | "name" | "benefit" | "proven"> & {
+  /** Leadpreis (oberer Wert, damit wird gerechnet); null = neues Produkt ohne Erfahrungswert */
+  cpl: number | null;
+  /** unterer Wert der Spanne; null = Einzelwert */
+  cplFrom: number | null;
+  guarantee: boolean;
+};
 
 export async function productOverview(customerId: string, now = new Date()) {
   const [{ lines, ctx, pending }, catalog, bookings, c] = await Promise.all([
@@ -114,7 +125,7 @@ export async function productOverview(customerId: string, now = new Date()) {
   const taken = (item: CatalogItem) => booked.some((p) => matchesCatalog(item, p.name));
   const bookable: BookableProduct[] = catalog
     .filter((i) => i.enabled && !taken(i))
-    .map((i) => ({ key: i.key, name: i.name, benefit: i.benefit, proven: i.proven, cpl: cpls[i.key] ?? null, guarantee: /katze|\btkv\b|tierkranken/i.test(i.name) }));
+    .map((i) => ({ key: i.key, name: i.name, benefit: i.benefit, proven: i.proven, cpl: cpls[i.key]?.cpl ?? null, cplFrom: cpls[i.key]?.cplFrom ?? null, guarantee: /katze|\btkv\b|tierkranken/i.test(i.name) }));
   return { lines, ctx, booked, bookable, budgetRequestPending: !!pending, bookings };
 }
 
