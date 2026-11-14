@@ -54,14 +54,17 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Heute
 
-- Oben vier Kacheln: Chats, Termine, Wie lief's?, Anrufen. Antippen springt zum Abschnitt.
+- Ganz oben, solange es welche gibt: **X Leads ohne nächsten Schritt** (siehe „Nächster Schritt“). Je Zeile
+  direkt Morgen, In 3 Tagen oder Verloren, mit **Weiter** alle Möglichkeiten (Wiedervorlage, Termin anbieten,
+  Nicht erreicht, Gewonnen, Verloren). „Alle ansehen“ öffnet die Kontakte mit dem Filter „Ohne nächsten Schritt“.
+- Darunter vier Kacheln: Chats, Termine, Wie lief's?, Anrufen. Antippen springt zum Abschnitt.
 - **Braucht dich (Chats):** Leads, die geantwortet haben und auf Sie warten. „Antworten“ oder „Erledigt“.
 - **Termine:** Videocall starten, Anrufen, Chat öffnen, Lead öffnen, Verschieben oder absagen (öffnet ein Fenster direkt in der App, siehe „Termine“).
 - **Wie lief's?:** Nach einem Termin tragen Sie das Ergebnis ein: Angebot gesendet, Abschluss (mit Beitrag, siehe unten „Abschluss und Provision“),
-  Nicht erschienen (kommt auf die Anrufliste) oder Kein Interesse. Den Rest (Phase, Wiedervorlage) erledigt die App.
+  Nicht erschienen (kommt auf die Anrufliste) oder Verloren (mit Grund). Den Rest (Phase, Wiedervorlage) erledigt die App.
 - **Anrufliste:** Rückrufe und fällige Wiedervorlagen, „Überfällig“ markiert. Aktionen: Anrufen, Nicht erreicht,
   Erledigt, Später (Morgen / 3 Tage / 1 Woche / 2 Wochen), Termin buchen, Angebot gesendet, Abschluss,
-  Lead öffnen, Kein Interesse.
+  Lead öffnen, Verloren (mit Grund, siehe „Verloren und nicht erreicht“).
 - Ist alles abgearbeitet, steht dort „Alles erledigt“. Neue Aufgaben erscheinen von selbst.
 - Solange noch kein einziger Lead da ist, erklärt „Heute“, wie es losgeht.
 
@@ -70,12 +73,52 @@ Seiten aus der Liste „Seiten“ unten.
 - Zeitraum oben (Heute, Gestern, 7/30 Tage, Woche, Monat, Jahr, Maximum, eigener Zeitraum).
 - **Suche** nach Name, Telefon oder E-Mail – sucht immer über alle Zeiträume.
 - Ansichten: Alle, Rückruf nötig, Wiedervorlage fällig, Ohne nächsten Schritt, Termin.
-- Hinweis „Kein nächster Schritt“: Für diesen Lead ist nichts geplant – Wiedervorlage oder Termin setzen.
+- **Ohne nächsten Schritt** zeigt alle offenen Leads ohne Schritt, egal aus welchem Zeitraum. Die Zahl steht auch
+  an „Kontakte“ in der Navigation.
+- Hinweis „Kein nächster Schritt“ bzw. „Ergebnis fehlt“ mit dem Knopf **Nächster Schritt** direkt in der Zeile.
+
+## Nächster Schritt
+
+- Jeder Lead in Bearbeitung hat einen nächsten Schritt oder ist **Gewonnen** bzw. **Verloren**.
+- Als nächster Schritt zählt: ein Termin, der noch kommt, eine Wiedervorlage bzw. Aufgabe mit Datum oder ein
+  laufendes Gespräch mit dem WhatsApp-Assistenten (Nachricht in den letzten 24 Stunden).
+- Neue Leads zählen noch nicht: Ihr nächster Schritt ist der erste Anruf (Anrufliste auf „Heute“).
+- **Ergebnis fehlt:** Der Termin ist vorbei, aber es ist noch kein Ergebnis eingetragen.
+- Nach einem Anrufergebnis, einer Notiz, einer E-Mail, einem übernommenen Chat oder einem vorbeigegangenen
+  Termin fragt die App **„Wie geht es weiter?“**, wenn der Lead danach keinen nächsten Schritt hat:
+  - Wiedervorlage: heute später, morgen, in 3 Tagen oder an einem Datum
+  - Termin anbieten: Ihr persönlicher Terminlink per E-Mail, per WhatsApp oder kopiert. Bucht der Lead nicht,
+    erinnert die App Sie in 2 Werktagen.
+  - Nicht erreicht, Gewonnen, Verloren (mit Grund)
+  Schließen Sie das Fenster ohne Wahl, legt die App für morgen die Aufgabe „Nächsten Schritt festlegen“ an.
+- **Tägliche Erinnerung:** Um 8 Uhr per Push und E-Mail, wenn Leads keinen nächsten Schritt haben oder ein
+  Termin-Ergebnis fehlt. Berater bekommen sie für ihre Leads, Inhaber für eigene und nicht zugeteilte.
+  Abschalten unter **Einstellungen → Benachrichtigungen**.
+- Unter **Zahlen** steht die Kennzahl **Leads mit nächstem Schritt** (Ziel 100 %), im Team je Berater.
+
+## Verloren und nicht erreicht
+
+- **Verloren** fragt immer nach dem Grund: Kein Interesse (im Gespräch abgelehnt), Schon versichert, Zu teuer
+  oder passt nicht, Falsche oder ungültige Daten (Nummer existiert nicht, Fake-Angaben), Hat nichts angefragt,
+  Nach 6 Versuchen nicht erreichbar, Sonstiges (mit kurzer Begründung). Das gilt überall: im Kontakt, in der
+  Pipeline, auf „Heute“, in der Anrufliste und auf dem Handy.
+- Ganz oben steht **Nicht erreicht?**: Die App trägt einen Anrufversuch ein, plant den nächsten Versuch und
+  bietet die Nachricht „Nicht erreicht“ per WhatsApp bzw. E-Mail an. Der Lead bleibt offen.
+- Viele Leads erreicht man erst beim 4. bis 6. Versuch. Wurde ein Lead nie erreicht und hat er weniger als
+  6 Anrufversuche, warnt die App: **Weiter versuchen** plant den nächsten Versuch, **Trotzdem verloren** geht
+  nur mit Begründung. Ohne Warnung: falsche Daten, „Hat nichts angefragt“ und „Kein Interesse“ im Gespräch.
+- **Nach 6 Versuchen nicht erreichbar** ist erst nach 6 dokumentierten Versuchen wählbar.
+- **Anrufplan** bei „nicht erreicht“: 6 Versuche über mindestens 3 Tage zu verschiedenen Tageszeiten
+  (Tag 1: sofort, nach 2 Stunden und abends; Tag 2 vormittags; Tag 4 nachmittags; Tag 6 abends). Der nächste
+  Versuch steht als Wiedervorlage „Anrufversuch X von 6“ auf „Heute“. Eine eigene, spätere Wiedervorlage bleibt.
+- Ein Anrufversuch zählt, wenn Sie nach dem Anruf „Nicht erreicht“ wählen, höchstens einmal je 30 Minuten.
+  Jeder Versuch steht im Verlauf des Kontakts.
 
 ## Lead öffnen (Lead-Detail)
 
 - Oben die Phasen-Leiste: antippen, um die Phase zu ändern. Knöpfe **Gewonnen** und **Verloren**
-  (bei Verloren fragt die App kurz nach dem Grund).
+  (bei Verloren fragt die App nach dem Grund, siehe „Verloren und nicht erreicht“).
+- Hat der Lead keinen nächsten Schritt, steht oben ein Hinweis mit dem Knopf **Nächster Schritt**.
 - Aktionen: **Anrufen**, **Chat** (WhatsApp), **Termin** (öffnet die Buchungsseite mit vorausgefüllten Daten), **Mehr**.
 - Eigene Kacheln für **E-Mail** und **Wiedervorlage**. Unter „Mehr“ nur noch, was nicht als Kachel da ist:
   **Postfach verbinden** (ohne verbundenes Postfach), **Stornieren/Reklamieren** (bei gekauften Leads),
@@ -92,7 +135,8 @@ Seiten aus der Liste „Seiten“ unten.
 - Am Rechner Karten mit der Maus in eine andere Spalte ziehen. Auf dem Handy die Karte antippen und die Phase wählen.
 - In „Abschluss“ fragt die App nach dem Beitrag (siehe „Abschluss und Provision“). Die Spalte „Abschluss“ zeigt
   die geschätzte Provision über alle Verträge, jede Karte „Sparte · Beitrag … · Provision ≈ …“ bzw. „2 Verträge · …“.
-- Karten zeigen, wie lange der Lead schon in der Phase ist, und warnen bei „Kein nächster Schritt“.
+- Karten zeigen, wie lange der Lead schon in der Phase ist, und warnen bei „Kein nächster Schritt“ bzw. „Ergebnis fehlt“.
+- Ziehen auf „Kein Interesse“ oder „Disqualifiziert“ fragt nach dem Grund (siehe „Verloren und nicht erreicht“).
 
 ## Chats (WhatsApp)
 
@@ -147,8 +191,9 @@ Seiten aus der Liste „Seiten“ unten.
 ## Automatisches Nachfassen (Abfolgen)
 
 - Wenn wir es für Sie eingeschaltet haben, fasst die App nach einem Ergebnis selbst nach:
-  - **Nicht erreicht:** sofort eine WhatsApp („Wann passt es dir?“), nach 2 Tagen eine Anruf-Aufgabe auf
-    „Heute“, nach 6 Tagen eine letzte, freundliche WhatsApp. Danach ist Schluss.
+  - **Nicht erreicht:** sofort eine WhatsApp („Wann passt es dir?“), nach 6 Tagen eine letzte, freundliche
+    WhatsApp. Die Anrufe dazwischen plant der Anrufplan (siehe „Verloren und nicht erreicht“), es kommt keine
+    zweite Anruf-Aufgabe dazu. Danach ist Schluss.
   - **Angebot gesendet:** nach 3 Tagen eine WhatsApp („Konntest du dir das Angebot anschauen?“),
     nach 7 Tagen eine Anruf-Aufgabe.
   - **Nicht erschienen:** sofort eine WhatsApp mit Link zum neuen Termin, nach 2 Tagen eine Anruf-Aufgabe.

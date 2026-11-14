@@ -23,7 +23,8 @@ export type TipKey =
   | "erreichbarkeit"
   | "terminquote"
   | "abschlussquote"
-  | "beitrag";
+  | "beitrag"
+  | "naechster_schritt";
 
 export type Tip = { key: TipKey; title: string; text: string; href: string; cta: string; impact: number };
 
@@ -46,6 +47,9 @@ export type TipSignals = {
   withoutCrossSell: number;
   /** Abschlüsse ohne eingetragenen Beitrag. */
   missingPremium: number;
+  /** Offene Leads ohne nächsten Schritt (lib/lead-next-step.ts) und Quote „mit nächstem Schritt“ (0..1). */
+  withoutNextStep?: number;
+  nextStepRate?: number | null;
   /** Eigene Quoten (bezahlte Leads) und Schnitt aller Kunden; null = zu wenig Daten. */
   rates: {
     reach: { own: number | null; avg: number | null };
@@ -100,6 +104,18 @@ export function candidateTips(s: TipSignals): Tip[] {
       href: "/buyer/leads",
       cta: "Kunden ansehen",
       impact: s.withoutCrossSell * 0.15 * prov,
+    });
+  }
+  // Nächster Schritt (Ole, 14.11.2026): Leads ohne Wiedervorlage, Termin oder Ergebnis gehen verloren.
+  const noStep = s.withoutNextStep ?? 0;
+  if (noStep >= 3 && s.nextStepRate != null && s.nextStepRate < 0.9) {
+    out.push({
+      key: "naechster_schritt",
+      title: "Jedem Lead einen nächsten Schritt geben",
+      text: `${noStep} offene Leads haben keinen nächsten Schritt (${pct(s.nextStepRate)} mit Schritt, Ziel 100 %). Legen Sie eine Wiedervorlage oder einen Termin fest oder tragen Sie Gewonnen bzw. Verloren ein.`,
+      href: "/buyer/kontakte?ansicht=ohne-schritt",
+      cta: "Leads ansehen",
+      impact: noStep * 0.3 * Math.max(closing, 0.05) * prov,
     });
   }
   if (s.missingPremium >= 1) {

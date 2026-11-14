@@ -8,6 +8,7 @@ import { CLOSED_STATUS } from "@/lib/products";
 import { contractProvision } from "@/lib/provision";
 import type { ErtragData } from "@/lib/ertrag";
 import type { TipSignals } from "@/lib/zahlen-tipps";
+import { nextStepRate } from "@/lib/lead-next-step-server";
 
 const DAY = 86_400_000;
 const MIN_LEADS_FOR_RATES = 10;
@@ -24,7 +25,7 @@ async function averageKpis(now: Date): Promise<Kpis | null> {
 
 export async function loadTipSignals(customerId: string, data: ErtragData, now = new Date()): Promise<TipSignals> {
   const since90 = new Date(now.getTime() - 90 * DAY);
-  const [customer, own, avg, paidLeads, notAsked, settings, imported, campaigns, withoutCross] = await Promise.all([
+  const [customer, own, avg, paidLeads, notAsked, settings, imported, campaigns, withoutCross, steps] = await Promise.all([
     prisma.customer.findUnique({ where: { id: customerId }, select: { empfehlungEnabled: true, retainerMonthly: true } }),
     computeKpis({ range: { from: since90, to: now }, customerId, origin: "paid" }),
     averageKpis(now),
@@ -42,6 +43,7 @@ export async function loadTipSignals(customerId: string, data: ErtragData, now =
         contracts: { none: { primaryLeadId: null, status: "aktiv" } },
       },
     }),
+    nextStepRate(customerId, { now }).catch(() => null),
   ]);
   const leadIds = new Set(data.contracts.map((c) => c.leadId));
   const total = data.contracts.reduce((s, c) => s + contractProvision(c, data.rates).firstYear, 0);
@@ -61,6 +63,8 @@ export async function loadTipSignals(customerId: string, data: ErtragData, now =
     bestandCampaigns: campaigns,
     withoutCrossSell: withoutCross,
     missingPremium,
+    withoutNextStep: steps?.withoutNextStep ?? 0,
+    nextStepRate: steps?.rate ?? null,
     rates: {
       reach: rate(own.reachabilityRate, avg?.reachabilityRate),
       termin: rate(own.terminRate, avg?.terminRate),

@@ -34,6 +34,7 @@ import { earlyHint, pickTips } from "@/lib/zahlen-tipps";
 import { loadTipSignals, monthsSinceStart } from "@/lib/zahlen-tipps-server";
 import { ZahlenTippsCard } from "@/components/zahlen-tipps-card";
 import { BestandGrowthSection } from "@/components/bestand-growth-chart";
+import { NextStepKpi } from "@/components/next-step-kpi";
 
 type SearchParams = Promise<{
   range?: string;
@@ -222,6 +223,8 @@ async function BuyerDashboardBody({
           </>
         }
       />
+
+      <NextStepKpi customerId={customerId} />
 
       <section>
         <h2 className="mb-3 text-[15px] font-semibold tracking-tight">Kosten &amp; Ertrag</h2>

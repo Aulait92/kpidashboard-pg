@@ -4,6 +4,8 @@ import { CalendarDays, ChevronRight, Contact, CreditCard, Gift, Mail, Megaphone,
 import { PageHeader } from "@/components/buyer-shell";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { unreadUpdates } from "@/lib/neuigkeiten";
+import { prisma } from "@/lib/prisma";
+import { NextStepReminderToggle } from "@/components/next-step-reminder-toggle";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Einstellungen | performancegrowth" };
@@ -16,6 +18,7 @@ export default async function EinstellungenPage() {
   if (!ctx) redirect("/login");
   const owner = ctx.teamRole !== "advisor";
   const unread = ctx.userId && !ctx.preview ? (await unreadUpdates(ctx.userId, ctx.customerId).catch(() => [])).length : 0;
+  const reminder = ctx.userId ? ((await prisma.user.findUnique({ where: { id: ctx.userId }, select: { nextStepReminder: true } }))?.nextStepReminder ?? true) : true;
 
   const groups: { title: string; items: Item[] }[] = [
     {
@@ -79,6 +82,12 @@ export default async function EinstellungenPage() {
               </ul>
             </section>
           ))}
+        <section>
+          <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Benachrichtigungen</h2>
+          <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
+            <NextStepReminderToggle initial={reminder} disabled={!ctx.userId || ctx.preview} />
+          </div>
+        </section>
         <p className="flex flex-wrap gap-x-4 gap-y-1 px-1 text-sm text-[color:var(--muted)]">
           <a href="https://performancegrowth.de/impressum" target="_blank" rel="noopener noreferrer" className="hover:underline">Impressum</a>
           <a href="https://performancegrowth.de/datenschutz" target="_blank" rel="noopener noreferrer" className="hover:underline">Datenschutz</a>

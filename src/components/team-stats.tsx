@@ -6,6 +6,8 @@ import { contractProvision } from "@/lib/provision";
 import { loadErtragData } from "@/lib/ertrag";
 import { leadOrigin, LEAD_ORIGIN_SELECT } from "@/lib/lead-herkunft";
 import { memberName, teamMembers } from "@/lib/team";
+import { nextStepRatesByAdvisor } from "@/lib/lead-next-step-server";
+import { NEXT_STEP_WARN_BELOW } from "@/lib/lead-next-step";
 
 // Auswertung je Team-Mitglied (nur Inhaber, nur wenn es ein Team gibt). Gleiche Logik wie die Karten
 // (Ole, 14.11.2026): Leads und Quoten nur aus bezahlten Leads, Provision über alle Verträge
@@ -13,7 +15,7 @@ import { memberName, teamMembers } from "@/lib/team";
 export async function TeamStats({ customerId, range }: { customerId: string; range: { from: Date; to: Date } }) {
   const members = await teamMembers(customerId);
   if (members.length < 2) return null;
-  const [data, leads] = await Promise.all([
+  const [data, leads, steps] = await Promise.all([
     loadErtragData(customerId),
     prisma.lead.findMany({
       where: { customerId, createdAt: { gte: range.from, lte: range.to } },
@@ -25,6 +27,8 @@ export async function TeamStats({ customerId, range }: { customerId: string; ran
         _count: { select: { appointments: true } },
       },
     }),
+    // Nächster Schritt je Berater (Stand jetzt, Ziel 100 %)
+    nextStepRatesByAdvisor(customerId),
   ]);
   type Row = { leads: number; reached: number; termine: number; closed: number; umsatz: number; bestand: number };
   const empty = (): Row => ({ leads: 0, reached: 0, termine: 0, closed: 0, umsatz: 0, bestand: 0 });
@@ -49,7 +53,7 @@ export async function TeamStats({ customerId, range }: { customerId: string; ran
   }
   const list = [
     ...members.map((m) => ({ key: m.id, name: memberName(m), row: rows.get(m.id) })),
-    ...(rows.get(null) ? [{ key: "none", name: "Nicht zugeteilt", row: rows.get(null) }] : []),
+    ...(rows.get(null) || steps.get(null) ? [{ key: "none", name: "Nicht zugeteilt", row: rows.get(null) }] : []),
   ];
   const pct = (a: number, b: number) => (b > 0 ? `${Math.round((a / b) * 100)} %` : "keine Angabe");
   const makler = data.typ === "makler";
@@ -67,6 +71,9 @@ export async function TeamStats({ customerId, range }: { customerId: string; ran
               <th className="px-3 py-2.5 text-right">Termine</th>
               <th className="px-3 py-2.5 text-right">Abschlüsse</th>
               <th className="px-3 py-2.5 text-right">Quote</th>
+              <th className="px-3 py-2.5 text-right" title="Offene Leads mit Termin, Wiedervorlage oder laufendem Gespräch, Stand jetzt. Ziel 100 %">
+                Nächster Schritt
+              </th>
               <th className="px-3 py-2.5 text-right" title="Geschätzt aus Sparte und Beitrag, inklusive Empfehlungen und Cross-Selling">
                 {makler ? "Courtage 1. Jahr" : "Abschlussprovision"}
               </th>
@@ -78,6 +85,7 @@ export async function TeamStats({ customerId, range }: { customerId: string; ran
           <tbody className="divide-y divide-[color:var(--border)] tabular-nums">
             {list.map(({ key, name, row }) => {
               const r = row ?? empty();
+              const st = steps.get(key === "none" ? null : key);
               return (
                 <tr key={key}>
                   <td className="px-5 py-2.5 font-medium">{name}</td>
@@ -88,6 +96,10 @@ export async function TeamStats({ customerId, range }: { customerId: string; ran
                   <td className="px-3 py-2.5 text-right">{formatNumber(r.termine)}</td>
                   <td className="px-3 py-2.5 text-right">{formatNumber(r.closed)}</td>
                   <td className="px-3 py-2.5 text-right">{pct(r.closed, r.leads)}</td>
+                  <td className={`px-3 py-2.5 text-right ${st?.rate != null && st.rate < NEXT_STEP_WARN_BELOW ? "font-semibold text-rose-600" : ""}`}>
+                    {st?.rate != null ? `${Math.round(st.rate * 100)} %` : "keine Angabe"}
+                    {st && st.withoutNextStep > 0 ? <span className="block text-xs font-normal text-[color:var(--muted)]">{st.withoutNextStep} ohne</span> : null}
+                  </td>
                   <td className="px-3 py-2.5 text-right">{formatEUR(r.umsatz)}</td>
                   <td className="px-5 py-2.5 text-right">{formatEUR(r.bestand)}</td>
                 </tr>
