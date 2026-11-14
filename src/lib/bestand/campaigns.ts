@@ -624,7 +624,8 @@ async function sendMailPart(
     mb.state = u.state;
     await saveMailbox(mb);
     if (u.warn) await warnMailbox(mb, u.warn);
-    if (outcome === "error") break;
+    // Nach Fehler oder Bounce in diesem Lauf nichts mehr (Abstand laut Drosselung)
+    if (outcome !== "ok") break;
   }
   return out;
 }
