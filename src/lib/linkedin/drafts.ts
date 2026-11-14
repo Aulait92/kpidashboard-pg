@@ -190,7 +190,8 @@ export async function generateDrafts(day: string, opts: { llm?: LlmCall; now?: D
   // Verworfene Entwürfe geben ihre Uhrzeit frei (Ole hatte gelöscht → „alle Uhrzeiten belegt“)
   const existing = await prisma.linkedInPost.findMany({ where: { draftDate: day, status: { not: "verworfen" } }, select: { scheduledAt: true } });
   const usedMs = new Set(existing.map((e) => e.scheduledAt?.getTime()));
-  const free = slots.filter((s) => !usedMs.has(s.getTime()));
+  // Nur Uhrzeiten, die noch kommen (mind. 15 Minuten Vorlauf)
+  const free = slots.filter((s) => !usedMs.has(s.getTime()) && s.getTime() > now.getTime() + 15 * 60_000);
   if (!free.length) return 0;
 
   const posts = await prisma.linkedInPost.findMany({

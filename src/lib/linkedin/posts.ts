@@ -54,10 +54,21 @@ export function nextPostingDay(settings: Pick<LinkedInSettings, "weekdays">, now
   return dayKey(d);
 }
 
-/** Die nächsten `n` Posting-Tage ab morgen (am Wochenende übersprungen, wenn nur werktags). */
-export function postingDays(settings: Pick<LinkedInSettings, "weekdays">, now: Date, n: number): string[] {
+/**
+ * Die nächsten `n` Posting-Tage (am Wochenende übersprungen, wenn nur werktags). Ab morgen –
+ * mit `includeToday` auch heute, falls heute noch eine Uhrzeit frei ist (Ole schrieb nachts um 1 Uhr
+ * Entwürfe „für den nächsten Tag“ und erwartete den Post am selben Morgen).
+ */
+export function postingDays(
+  settings: Pick<LinkedInSettings, "weekdays" | "slots" | "postsPerDay">,
+  now: Date,
+  n: number,
+  opts: { includeToday?: boolean } = {},
+): string[] {
   const out: string[] = [];
-  let d = addDays(now, 1);
+  const today = dayKey(now);
+  const todayOpen = opts.includeToday && slotTimes(settings, today).some((t) => t.getTime() > now.getTime() + 15 * 60_000);
+  let d = todayOpen ? now : addDays(now, 1);
   for (let i = 0; out.length < n && i < n * 3 + 7; i++, d = addDays(d, 1)) {
     const key = dayKey(d);
     if (!(settings.weekdays && isWeekend(key))) out.push(key);

@@ -64,7 +64,7 @@ export async function generateNowAction(days = 1): Promise<LiResult> {
   const n = Math.max(1, Math.min(14, Math.round(days) || 1));
   let made = 0;
   try {
-    for (const day of postingDays(settings, new Date(), n)) made += await generateDrafts(day, { push: false });
+    for (const day of postingDays(settings, new Date(), n, { includeToday: true })) made += await generateDrafts(day, { push: false });
     revalidatePath(PATH);
     return made
       ? { ok: true, info: `${made} neue Entwürfe für die nächsten ${n === 1 ? "Posting-Tag" : `${n} Posting-Tage`}.` }

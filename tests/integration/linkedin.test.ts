@@ -27,6 +27,8 @@ import { addPhoto } from "@/lib/linkedin/photos";
 import type { LlmCall } from "@/lib/kampagnen/llm";
 import { requireTestDb } from "./db";
 
+// Fester „Jetzt“-Zeitpunkt vor den Test-Tagen (Uhrzeiten in der Vergangenheit werden nicht mehr verplant)
+const FIXED_NOW = new Date("2026-11-13T18:00:00Z");
 const TEXT = (i: number) => `Einstieg ${i}: Warum Vermittler Leads verlieren, bevor sie anrufen.\n\n` + "Kurzer Absatz mit Gedanken zum Vertrieb. ".repeat(6);
 
 async function reset() {
@@ -232,7 +234,7 @@ describe("LinkedIn – Datenbank", () => {
     const photoId = photo.ok ? photo.id : "";
     const prompts: string[] = [];
     const imageGen = async (prompt: string) => (prompts.push(prompt), Buffer.from("png"));
-    const n = await generateDrafts("2026-11-16", { llm: fakeLlm(photoId), imageGen });
+    const n = await generateDrafts("2026-11-16", { llm: fakeLlm(photoId), imageGen, now: FIXED_NOW });
     expect(n).toBe(3);
     const drafts = await prisma.linkedInPost.findMany({ where: { draftDate: "2026-11-16" }, orderBy: { scheduledAt: "asc" }, include: { photo: true } });
     expect(drafts.map((d) => d.status)).toEqual(["entwurf", "entwurf", "entwurf"]);
@@ -243,10 +245,10 @@ describe("LinkedIn – Datenbank", () => {
     expect([drafts[2].photoId, drafts[2].useGraphic, drafts[2].graphic]).toEqual([null, true, "Kernaussage 2"]);
     expect(drafts[0].scheduledAt?.toISOString()).toBe("2026-11-16T06:30:00.000Z");
     expect(pushes[0].title).toMatch(/3 Entwürfe für Montag/);
-    expect(await generateDrafts("2026-11-16", { llm: fakeLlm(), imageGen })).toBe(0);
+    expect(await generateDrafts("2026-11-16", { llm: fakeLlm(), imageGen, now: FIXED_NOW })).toBe(0);
     // Verworfene Entwürfe geben ihre Uhrzeit frei
     await prisma.linkedInPost.updateMany({ where: { id: drafts[0].id }, data: { status: "verworfen" } });
-    expect(await generateDrafts("2026-11-16", { llm: fakeLlm(), imageGen })).toBe(1);
+    expect(await generateDrafts("2026-11-16", { llm: fakeLlm(), imageGen, now: FIXED_NOW })).toBe(1);
   });
 
   it("Automatik erst ab der eingestellten Uhrzeit und nur mit „Über mich“", async () => {
@@ -334,8 +336,13 @@ describe("LinkedIn – Datenbank", () => {
   it("Vorlauf: Automatik füllt mehrere Tage, je Lauf einen; Knopf für mehrere Tage", async () => {
     process.env.ANTHROPIC_API_KEY ??= "test";
     const { postingDays } = await import("@/lib/linkedin/posts");
-    expect(postingDays({ weekdays: true }, new Date("2026-11-13T18:00:00Z"), 3)).toEqual(["2026-11-16", "2026-11-17", "2026-11-18"]);
-    expect(postingDays({ weekdays: false }, new Date("2026-11-13T18:00:00Z"), 2)).toEqual(["2026-11-14", "2026-11-15"]);
+    const cfg = { slots: "07:30, 12:00", postsPerDay: 2 };
+    expect(postingDays({ ...cfg, weekdays: true }, new Date("2026-11-13T18:00:00Z"), 3)).toEqual(["2026-11-16", "2026-11-17", "2026-11-18"]);
+    expect(postingDays({ ...cfg, weekdays: false }, new Date("2026-11-13T18:00:00Z"), 2)).toEqual(["2026-11-14", "2026-11-15"]);
+    // Nachts um 1 Uhr „ab heute“: heute 07:30 ist noch frei → heute zählt mit
+    expect(postingDays({ ...cfg, weekdays: false }, new Date("2026-11-14T00:00:00Z"), 2, { includeToday: true })).toEqual(["2026-11-14", "2026-11-15"]);
+    // Abends nach der letzten Uhrzeit: ab morgen
+    expect(postingDays({ ...cfg, weekdays: false }, new Date("2026-11-14T20:00:00Z"), 1, { includeToday: true })).toEqual(["2026-11-15"]);
     await prisma.linkedInSettings.create({ data: { id: "default", postsPerDay: 1, about: "Gründer", planDays: 3, draftHour: 17 } });
     const evening = new Date("2026-11-13T17:30:00Z"); // Freitag 18:30
     const styles: (string | undefined)[] = [];
@@ -349,7 +356,7 @@ describe("LinkedIn – Datenbank", () => {
     const days = (await prisma.linkedInPost.findMany({ where: { status: "entwurf" }, select: { draftDate: true } })).map((d) => d.draftDate).sort();
     expect(days).toEqual(["2026-11-16", "2026-11-17", "2026-11-18"]);
     // KI-Bild im Stil „illustration“ angefragt (ohne Generator-Override: kein Bild → Grafik); hier über generateDrafts
-    await generateDrafts("2026-11-19", { llm, imageGen });
+    await generateDrafts("2026-11-19", { llm, imageGen, now: FIXED_NOW });
     expect(styles).toEqual(["illustration"]);
   });
 
