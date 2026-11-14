@@ -1,10 +1,15 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { cancelAppointment, rescheduleAppointment, SlotBusyError } from "@/lib/calendar";
+import { SlotBusyError } from "@/lib/calendar";
+import {
+  cancelOpenAppointment,
+  isOpenAppointment,
+  manageAppointmentSelect,
+  rescheduleOpenAppointment,
+} from "@/lib/calendar/manage";
 import { prisma } from "@/lib/prisma";
 import { checkLimit, requestIp } from "@/lib/rate-limit";
-import { sendBookingConfirmation } from "@/lib/whatsapp/reminders";
 
 // Lead verwaltet seinen Termin selbst über den geheimen Link. Der Token ist
 // die einzige Berechtigung (144 Bit, nicht erratbar) — nur offene, künftige
@@ -13,32 +18,10 @@ import { sendBookingConfirmation } from "@/lib/whatsapp/reminders";
 async function loadOpen(token: string) {
   const appt = await prisma.appointment.findUnique({
     where: { manageToken: token },
-    select: {
-      id: true,
-      customerId: true,
-      conversationId: true,
-      leadId: true,
-      status: true,
-      startsAt: true,
-    },
+    select: manageAppointmentSelect,
   });
-  if (!appt || appt.status !== "booked" || appt.startsAt.getTime() <= Date.now()) return null;
+  if (!appt || !isOpenAppointment(appt)) return null;
   return appt;
-}
-
-async function logInternal(conversationId: string | null, kind: string, payload: unknown) {
-  if (!conversationId) return;
-  await prisma.message
-    .create({
-      data: {
-        conversationId,
-        direction: "internal",
-        kind,
-        body: JSON.stringify(payload),
-        sentBy: "lead",
-      },
-    })
-    .catch(() => {});
 }
 
 export async function cancelManageAction(token: string): Promise<void> {
@@ -46,8 +29,7 @@ export async function cancelManageAction(token: string): Promise<void> {
   const appt = await loadOpen(token);
   if (!appt) redirect(`/book/manage/${token}`);
   try {
-    await cancelAppointment(appt.id, appt.customerId, "lead");
-    await logInternal(appt.conversationId, "appointment_cancelled", { via: "manage_link" });
+    await cancelOpenAppointment(appt, { by: "lead" }, "manage_link");
   } catch (err) {
     console.error("[manage cancel]", err);
     redirect(`/book/manage/${token}?err=error`);
@@ -66,41 +48,8 @@ export async function rescheduleManageAction(token: string, formData: FormData):
 
   let newToken: string | null = null;
   try {
-    const res = await rescheduleAppointment({
-      appointmentId: appt.id,
-      customerId: appt.customerId,
-      start,
-      by: "lead",
-    });
-    const fresh = await prisma.appointment.findUnique({
-      where: { id: res.appointmentId },
-      select: { manageToken: true, mode: true },
-    });
-    newToken = fresh?.manageToken ?? null;
-    await logInternal(appt.conversationId, "appointment_rescheduled", {
-      von: appt.startsAt.toISOString(),
-      auf: res.start,
-      via: "manage_link",
-    });
-    // WhatsApp-Bestätigung der neuen Zeit (Fehler blockieren nicht).
-    const conv = appt.conversationId
-      ? await prisma.conversation.findUnique({
-          where: { id: appt.conversationId },
-          select: { contactPhone: true, contactName: true },
-        })
-      : null;
-    if (conv) {
-      await sendBookingConfirmation({
-        customerId: appt.customerId,
-        to: conv.contactPhone,
-        name: conv.contactName,
-        leadId: appt.leadId,
-        startsAt: new Date(res.start),
-        mode: fresh?.mode ?? "phone",
-        meetUrl: res.meetUrl,
-        manageUrl: res.manageUrl,
-      }).catch((e) => console.error("[manage reschedule confirmation]", e));
-    }
+    const res = await rescheduleOpenAppointment(appt, start, { by: "lead" }, "manage_link");
+    newToken = res.manageToken;
   } catch (err) {
     if (err instanceof SlotBusyError) redirect(`/book/manage/${token}?err=taken`);
     console.error("[manage reschedule]", err);

@@ -3,8 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getBuyerContext } from "@/lib/buyer-context";
-import { appointmentScope, conversationScope } from "@/lib/team";
-import { cancelAppointment } from "@/lib/calendar";
+import { conversationScope } from "@/lib/team";
 import { prisma } from "@/lib/prisma";
 import { recordUsage } from "@/lib/usage";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
@@ -17,7 +16,7 @@ async function requireBuyer() {
   const ctx = await getBuyerContext();
   if (!ctx || ctx.preview || !ctx.userId) return null;
   // Team: Berater sehen/bearbeiten nur Chats ihrer eigenen Leads.
-  return { ...ctx, userId: ctx.userId, conv: conversationScope(ctx), appt: appointmentScope(ctx) };
+  return { ...ctx, userId: ctx.userId, conv: conversationScope(ctx) };
 }
 
 function chatUrl(conversationId: string, err?: string) {
@@ -84,26 +83,6 @@ export async function sendReplyBuyerAction(formData: FormData): Promise<void> {
   }
   revalidatePath("/buyer/chats");
   redirect(chatUrl(conv.id, failed ? "send" : undefined));
-}
-
-/** Termin absagen (nur eigene Termine; Teilnehmer erhalten eine Absage). */
-export async function cancelAppointmentBuyerAction(formData: FormData): Promise<void> {
-  const appointmentId = String(formData.get("appointmentId") ?? "");
-  const conversationId = String(formData.get("conversationId") ?? "");
-  const session = await requireBuyer();
-  if (!session) redirect(chatUrl(conversationId, "preview"));
-  try {
-    // cancelAppointment prüft customerId → fremde Termine sind nicht absagbar;
-    // Berater nur eigene Termine.
-    const own = await prisma.appointment.count({ where: { id: appointmentId, ...session.appt } });
-    if (!own) redirect(chatUrl(conversationId));
-    await cancelAppointment(appointmentId, session.customerId);
-    await recordUsage("action", "appointment.cancel");
-  } catch (err) {
-    console.error("[buyer cancel appointment]", err);
-  }
-  revalidatePath("/buyer/chats");
-  redirect(chatUrl(conversationId));
 }
 
 /** „Braucht dich" als erledigt markieren (z. B. nach einem Anruf). */

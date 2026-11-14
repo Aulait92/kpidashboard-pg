@@ -41,6 +41,7 @@ import { ActionSheet, TapRow, type SheetAction } from "@/components/ui/sheet";
 import type { InboxData } from "@/lib/inbox";
 import { CallOutcomeSheet, useCallReturn, type CallOutcomeTarget } from "@/components/call-outcome";
 import { AbschlussSheet, asksCloseValue } from "@/components/abschluss-sheet";
+import { RescheduleDialog } from "@/components/reschedule-dialog";
 
 // Startseite „Heute": vier Listen, die man leer arbeitet. Jede Zeile hat eine
 // sichtbare Aktion (Anrufen/Antworten); alles Weitere per Antippen im
@@ -72,6 +73,7 @@ type SheetState =
   | { kind: "actions"; title: string; message?: string; actions: SheetAction[] }
   | { kind: "win"; name: string; source: string | null; save: (value: number | null) => void }
   | { kind: "date"; title: string; save: (date: string) => void }
+  | { kind: "reschedule"; appointmentId: string }
   | null;
 
 export function TodayInbox({
@@ -329,7 +331,11 @@ export function TodayInbox({
               if (a.phone) actions.push({ label: "Anrufen", icon: Phone, href: `tel:+${a.phone}`, tone: video ? undefined : "primary" });
               if (a.conversationId) actions.push({ label: "Chat öffnen", icon: MessageCircle, href: `/buyer/chats?c=${a.conversationId}` });
               if (a.leadId) actions.push({ label: "Lead öffnen", icon: UserRound, href: leadUrl(a.leadId) });
-              if (a.manageToken) actions.push({ label: "Verschieben oder absagen", icon: CalendarClock, href: `/book/manage/${a.manageToken}` });
+              actions.push({
+                label: "Verschieben oder absagen",
+                icon: CalendarClock,
+                onSelect: () => setTimeout(() => setSheet({ kind: "reschedule", appointmentId: a.id }), 0),
+              });
               return (
                 <TapRow
                   key={a.id}
@@ -533,6 +539,11 @@ export function TodayInbox({
           setSheet(null);
           save(date);
         }}
+      />
+      <RescheduleDialog
+        appointmentId={sheet?.kind === "reschedule" ? sheet.appointmentId : null}
+        open={sheet?.kind === "reschedule"}
+        onClose={() => setSheet(null)}
       />
       <AbschlussSheet
         open={sheet?.kind === "win"}
