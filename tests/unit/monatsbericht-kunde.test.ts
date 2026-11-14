@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { PDFDocument } from "pdf-lib";
 import { berichteUrl, reportSectionsHtml, reportSectionsText, SECTION_TITLES, type ReportModel } from "@/lib/monatsbericht/bericht";
 import { berichtPdf, berichtPdfBlocks, berichtPdfName } from "@/lib/monatsbericht/pdf";
+import { pdfSicher } from "@/lib/mail/text-pdf";
 import { ersterBerichtMonat } from "@/components/monatsberichte-kunde";
 import { neueBuchungenSeit } from "@/lib/admin-buchungen-neu";
 
@@ -45,6 +46,10 @@ describe("Monatsberichte im Kundenbereich", () => {
     const doc = await PDFDocument.load(bytes);
     expect(doc.getTitle()).toBe("Monatsbericht Oktober 2026");
     expect(berichtPdfName("2026-10")).toBe("monatsbericht-2026-10.pdf");
+  });
+
+  it("Minuszeichen erscheint im PDF als Minus, nicht als Fragezeichen", () => {
+    expect(pdfSicher("\u2212 800,00 €")).toBe("- 800,00 €");
   });
 
   it("alte Berichte (ohne Modell) ergeben ebenfalls ein PDF", () => {

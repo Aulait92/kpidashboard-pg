@@ -10,7 +10,8 @@ const WIN_ANSI_EXTRA = new Set([..."€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“�
 
 /** Nicht darstellbare Zeichen (z. B. Emojis) ersetzen, statt am Font zu scheitern. */
 export function pdfSicher(text: string): string {
-  return [...text.replace(/\t/g, "    ").replace(/\r\n?/g, "\n")]
+  // Rechenzeichen ohne Glyphe in Helvetica auf ASCII abbilden (z. B. „− 800,00 €“ im Monatsbericht)
+  return [...text.replace(/\t/g, "    ").replace(/\r\n?/g, "\n").replace(/\u2212/g, "-").replace(/[\u2009\u202f]/g, " ")]
     .map((ch) => {
       const c = ch.codePointAt(0)!;
       if (ch === "\n") return ch;
