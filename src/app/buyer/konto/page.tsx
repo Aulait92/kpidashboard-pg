@@ -8,7 +8,8 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { billingEnabled, listCustomerInvoices, type CustomerInvoice } from "@/lib/billing";
 import { reportError } from "@/lib/monitoring";
 import { prisma } from "@/lib/prisma";
-import { openPortalAction } from "./actions";
+import { openPortalAction, paymentSetupAction } from "./actions";
+import { ZahlartAuswahl } from "@/components/zahlart-auswahl";
 import { LeadEmailToggle, PauseCard } from "./pause-card";
 import { WhatsAppFeesCard } from "@/components/whatsapp-fees-card";
 import { ModuleBookButton, ModuleCancelButton } from "@/components/bestand/module-book";
@@ -45,11 +46,11 @@ const PORTAL_MSG: Record<string, string> = {
   fehler: "Das hat gerade nicht geklappt. Bitte versuchen Sie es gleich noch einmal.",
 };
 
-export default async function AccountPage({ searchParams }: { searchParams: Promise<{ portal?: string; modul?: string }> }) {
+export default async function AccountPage({ searchParams }: { searchParams: Promise<{ portal?: string; modul?: string; zahlung?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   if (ctx.teamRole === "advisor") redirect("/buyer");
-  const { portal, modul } = await searchParams;
+  const { portal, modul, zahlung } = await searchParams;
   const customer = await prisma.customer.findUnique({
     where: { id: ctx.customerId },
     select: {
@@ -375,15 +376,32 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         <Card>
           <CardHeader title="Zahlung und Rechnungsdaten" icon={CreditCard} />
           <div className="p-5">
-            <p className="text-sm text-[color:var(--muted)]">Lastschrift oder Karte, Rechnungsadresse, USt-IdNr.</p>
-            {portal && PORTAL_MSG[portal] ? <p className="mt-3 text-sm font-medium text-rose-700">{PORTAL_MSG[portal]}</p> : null}
-            <form action={openPortalAction} className="mt-4">
+            {zahlung === "ok" ? (
+              <p className="mb-3 rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+                Danke, Ihre Zahlungsart ist hinterlegt und gilt ab der nächsten Rechnung.
+              </p>
+            ) : null}
+            {portal && PORTAL_MSG[portal] ? <p className="mb-3 text-sm font-medium text-rose-700">{PORTAL_MSG[portal]}</p> : null}
+            {billingEnabled() && customer.stripeCustomerId ? (
+              <form action={paymentSetupAction} className="max-w-md space-y-4" data-konto-zahlart>
+                <ZahlartAuswahl />
+                <button
+                  type="submit"
+                  disabled={ctx.preview}
+                  className="inline-flex h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 text-[15px] font-semibold text-white transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60"
+                >
+                  Zahlungsart hinterlegen
+                </button>
+              </form>
+            ) : null}
+            <p className="mt-5 text-sm text-[color:var(--muted)]">Rechnungsadresse, USt-IdNr. und gespeicherte Zahlungsarten:</p>
+            <form action={openPortalAction} className="mt-2">
               <button
                 type="submit"
                 disabled={!customer.stripeCustomerId || ctx.preview}
-                className="inline-flex h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 text-[15px] font-semibold text-white transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60"
+                className={buttonClass("secondary", "md")}
               >
-                Zahlungsart und Rechnungsdaten ändern
+                Rechnungsdaten ändern
               </button>
             </form>
             {!customer.stripeCustomerId ? (

@@ -9,6 +9,7 @@ import { openCredits } from "@/lib/ppl/storno";
 import { MIN_ORDER } from "@/lib/ppl/orders";
 import { OrderForm } from "./order-form";
 import { paymentSetupAction, toggleAutoRenewAction } from "./actions";
+import { ZahlartAuswahl } from "@/components/zahlart-auswahl";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Bestellen | performancegrowth" };
@@ -65,10 +66,13 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
         ) : null}
         {!hasPm ? (
           <Card>
-            <div className="flex flex-wrap items-center gap-3 p-5">
-              <CreditCard className="h-5 w-5 text-[color:var(--brand)]" />
-              <p className="min-w-0 flex-1 text-sm">Für Bestellungen brauchen wir einmalig eine Zahlungsart (Lastschrift oder Karte).</p>
-              <form action={paymentSetupAction}>
+            <div className="space-y-4 p-5">
+              <div className="flex items-center gap-3">
+                <CreditCard className="h-5 w-5 shrink-0 text-[color:var(--brand)]" />
+                <p className="min-w-0 flex-1 text-sm">Für Bestellungen brauchen wir einmalig eine Zahlungsart.</p>
+              </div>
+              <form action={paymentSetupAction} className="max-w-md space-y-4">
+                <ZahlartAuswahl hint="Am einfachsten per Lastschrift, der Betrag wird je Bestellung automatisch eingezogen." />
                 <Button type="submit" variant="primary" size="md">Zahlungsart hinterlegen</Button>
               </form>
             </div>

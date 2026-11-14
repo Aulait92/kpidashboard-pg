@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { acceptOffer, getOfferByToken } from "@/lib/offers";
 import { billingEnabled, createCheckoutForOffer } from "@/lib/billing";
 import { checkLimit, clientIp, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit";
+import { parseZahlart } from "@/lib/zahlart";
 
 export type AcceptState = { ok?: boolean; error?: string; checkoutUrl?: string };
 
@@ -24,13 +25,13 @@ export async function acceptOfferAction(token: string, _prev: AcceptState, formD
   });
   if (!res.ok) return { error: res.error };
   revalidatePath(`/angebot/${token}`);
-  // Direkt weiter zur Zahlung (SEPA-Lastschrift oder Karte). Serverseitige
+  // Direkt weiter zur Zahlung (gewählte Zahlart, Standard Lastschrift). Serverseitige
   // Weiterleitung: Die Seite wechselt nach der Annahme in die Zahlungsansicht,
   // ein clientseitiger Redirect im Formular käme deshalb nicht mehr zum Zug.
   if (billingEnabled()) {
     const offer = await getOfferByToken(token);
     if (offer) {
-      const checkout = await createCheckoutForOffer(offer.id);
+      const checkout = await createCheckoutForOffer(offer.id, parseZahlart(formData.get("zahlart")));
       if ("url" in checkout) redirect(checkout.url);
     }
   }
@@ -38,10 +39,10 @@ export async function acceptOfferAction(token: string, _prev: AcceptState, formD
 }
 
 /** Zahlung (erneut) starten – z. B. nach Abbruch auf der Bezahlseite. */
-export async function startPaymentAction(token: string): Promise<{ url?: string; error?: string }> {
+export async function startPaymentAction(token: string, zahlart?: string): Promise<{ url?: string; error?: string }> {
   if (!checkLimit("offerAccept", clientIp(await headers())).ok) return { error: RATE_LIMIT_MESSAGE };
   const offer = await getOfferByToken(token);
   if (!offer) return { error: "Angebot nicht gefunden." };
-  const res = await createCheckoutForOffer(offer.id);
+  const res = await createCheckoutForOffer(offer.id, parseZahlart(zahlart));
   return "url" in res ? { url: res.url } : { error: res.error };
 }

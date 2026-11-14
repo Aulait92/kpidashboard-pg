@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { acceptOfferAction, type AcceptState } from "./actions";
 import { eur, withVat, type OfferTerm } from "@/lib/offer-pricing";
+import { ZahlartAuswahl } from "@/components/zahlart-auswahl";
 
 /** Wahl von Laufzeit/Startdatum (vom Server vorberechnet; verbindlich rechnet der Server bei Annahme neu). */
 export type OfferChoiceProps = {
@@ -28,12 +29,15 @@ export function AcceptForm({
   dpaUrl,
   defaultName,
   choice,
+  payment = false,
 }: {
   token: string;
   termsUrl: string;
   dpaUrl: string;
   defaultName: string;
   choice?: OfferChoiceProps | null;
+  /** Online-Zahlung eingerichtet: Zahlart vor dem Weiterleiten wählen (Lastschrift vorausgewählt) */
+  payment?: boolean;
 }) {
   const [state, action, pending] = useActionState<AcceptState, FormData>(
     acceptOfferAction.bind(null, token),
@@ -103,6 +107,11 @@ export function AcceptForm({
           und nehme dieses Angebot verbindlich an.
         </span>
       </label>
+      {payment ? (
+        <div className="max-w-md">
+          <ZahlartAuswahl />
+        </div>
+      ) : null}
       {state.error ? <p className="text-sm font-medium text-rose-700">{state.error}</p> : null}
       <button
         type="submit"

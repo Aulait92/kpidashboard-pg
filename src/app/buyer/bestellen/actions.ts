@@ -6,6 +6,7 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { getAppUrl } from "@/lib/email";
 import { placeOrder } from "@/lib/ppl/orders";
+import { parseZahlart } from "@/lib/zahlart";
 
 export type OrderFormState = { ok?: boolean; error?: string; message?: string };
 
@@ -47,9 +48,9 @@ export async function toggleAutoRenewAction(fd: FormData): Promise<void> {
   revalidatePath("/buyer/bestellen");
 }
 
-export async function paymentSetupAction(): Promise<void> {
+export async function paymentSetupAction(fd: FormData): Promise<void> {
   const ctx = await ownerCtx();
   const { createPaymentSetupUrl } = await import("@/lib/billing");
-  const url = await createPaymentSetupUrl(ctx.customerId, `${getAppUrl()}/buyer/bestellen`);
+  const url = await createPaymentSetupUrl(ctx.customerId, `${getAppUrl()}/buyer/bestellen`, { zahlart: parseZahlart(fd.get("zahlart")) });
   redirect(url);
 }

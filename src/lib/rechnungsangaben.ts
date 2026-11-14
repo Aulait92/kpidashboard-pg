@@ -1,5 +1,6 @@
 // Admin → Einstellungen → Rechnungsangaben (Ole, 14.11.2026):
-// - Steuernummer speichern (danach alle Stripe-Kunden automatisch nachziehen)
+// - abweichende Steuernummer speichern (Standard: USt-IdNr. aus PROVIDER; danach alle
+//   Stripe-Kunden automatisch nachziehen)
 // - bestehende Stripe-Kunden mit Trockenlauf auf den neuen Footer setzen
 // - eigenes Stripe-Konto auf plausible Angaben prüfen (nur lesen)
 // - zählen, wie viele finalisierte Rechnungen ohne den Footer verschickt wurden (nur Zahlen)
@@ -11,8 +12,10 @@ import { PROVIDER } from "@/lib/legal-texts";
 import {
   FOOTER_MARKER,
   customerInvoiceSettingsUpdate,
+  effectiveTaxNumber,
   invoiceDefaultsFor,
   loadTaxNumber,
+  loadTaxNumberOverride,
   validateTaxNumber,
   type InvoiceCustomField,
   type InvoiceDefaults,
@@ -23,10 +26,14 @@ const MAX_PAGES = 100;
 
 // ─── Steuernummer speichern ────────────────────────────────────────────
 
+/**
+ * Abweichende USt-IdNr. bzw. Steuernummer speichern; leer = Standard aus PROVIDER.
+ * value ist der gespeicherte (abweichende) Wert, changed bezieht sich darauf.
+ */
 export async function saveTaxNumber(raw: string): Promise<{ ok: true; value: string | null; changed: boolean } | { ok: false; error: string }> {
   const v = validateTaxNumber(raw);
   if (!v.ok) return v;
-  const before = await loadTaxNumber();
+  const before = await loadTaxNumberOverride();
   await prisma.invoiceSettings.upsert({
     where: { id: "default" },
     create: { id: "default", taxNumber: v.value },
@@ -66,7 +73,8 @@ export type CustomerFooterResult = { total: number; affected: number; updated: n
 export async function updateCustomerFooters(opts: { dryRun: boolean; taxNumber?: string | null }): Promise<CustomerFooterResult | { error: string }> {
   const stripe = stripeClient();
   if (!stripe) return { error: "Stripe ist nicht eingerichtet (STRIPE_SECRET_KEY fehlt)." };
-  const d = invoiceDefaultsFor(opts.taxNumber === undefined ? await loadTaxNumber() : opts.taxNumber);
+  // taxNumber = abweichender Wert aus den Einstellungen (null = Standard aus PROVIDER)
+  const d = invoiceDefaultsFor(opts.taxNumber === undefined ? await loadTaxNumber() : effectiveTaxNumber(opts.taxNumber));
   const customers = await allCustomers(stripe);
   const affected = customers.filter((c) => !c.deleted && !customerUpToDate(c, d));
   const res: CustomerFooterResult = { total: customers.length, affected: affected.length, updated: 0, failed: 0, dryRun: opts.dryRun };
@@ -84,11 +92,35 @@ export async function updateCustomerFooters(opts: { dryRun: boolean; taxNumber?:
 
 // ─── Prüfung des eigenen Stripe-Kontos (nur lesen) ─────────────────────
 
-export type AccountCheck = { key: "name" | "address" | "phone" | "tax" | "country"; label: string; value: string; ok: boolean; hint: string };
+export type AccountCheck = {
+  key: "name" | "address" | "phone" | "tax" | "tax_default" | "country";
+  label: string;
+  value: string;
+  /** false = Warnung; neutrale Hinweise (tone "info") zählen als ok */
+  ok: boolean;
+  tone: "ok" | "warn" | "info";
+  hint: string;
+};
+
+/** Steuer-ID des eigenen Kontos (Stripe Account Tax IDs), nur was die Prüfung braucht. */
+export type AccountTaxId = { id: string; value: string; type?: string };
+
+export type AccountCheckOptions = {
+  /** Testschlüssel (sk_test bzw. livemode false): Sandbox-Platzhalter nur als Hinweis */
+  testmode?: boolean;
+  /** Steuer-IDs des Kontos; undefined = nicht gelesen */
+  accountTaxIds?: AccountTaxId[];
+};
 
 /** Platzhalter aus Stripe-Sandboxen bzw. Test-Adressen. */
 const PLACEHOLDER_PHONES = ["+14155550199", "14155550199", "4155550199"];
 const TEST_ADDRESS = /^address_|address_full_match/i;
+/** Ort der Sandbox-Platzhalteradresse. */
+const PLACEHOLDER_CITY = /k(ö|oe)nigs\s*wusterhausen/i;
+const SANDBOX_HINT = "Testkonto mit Platzhaltern. Im Live-Konto stehen die echten Angaben.";
+
+const check = (c: Omit<AccountCheck, "ok">): AccountCheck => ({ ...c, ok: c.tone !== "warn" });
+const compactTax = (v: string | null | undefined) => (v ?? "").replace(/[\s./-]/g, "").toUpperCase();
 
 const digitsPlus = (v: string) => v.replace(/[^\d+]/g, "");
 const norm = (v: string | null | undefined) => (v ?? "").toLowerCase().replace(/\s+/g, " ").trim();
@@ -106,7 +138,11 @@ function formatAddress(a: Stripe.Address | null | undefined): string {
  * Stripe druckt diese Angaben in den Kopf jeder Rechnung; die Pflichtangaben im Footer
  * kommen unabhängig davon aus der Software.
  */
-export function checkAccount(account: Partial<Pick<Stripe.Account, "business_profile" | "company" | "settings" | "country">>, taxNumber: string | null): AccountCheck[] {
+export function checkAccount(
+  account: Partial<Pick<Stripe.Account, "business_profile" | "company" | "settings" | "country">>,
+  taxNumber: string | null,
+  opts: AccountCheckOptions = {},
+): AccountCheck[] {
   const bp = account.business_profile ?? null;
   const company = account.company ?? null;
   const checks: AccountCheck[] = [];
@@ -114,20 +150,21 @@ export function checkAccount(account: Partial<Pick<Stripe.Account, "business_pro
   // Name
   const name = bp?.name || company?.name || account.settings?.dashboard?.display_name || "";
   const nameOk = norm(name) === norm(PROVIDER.name) || (norm(name).includes("kannapinn") && norm(name).includes("ug"));
-  checks.push({
+  checks.push(check({
     key: "name",
     label: "Name",
     value: name || "(leer)",
-    ok: nameOk,
+    tone: nameOk ? "ok" : "warn",
     hint: nameOk
       ? "Voller Name mit Rechtsform."
       : `Auf der Rechnung sollte der volle Name mit Rechtsform stehen: „${PROVIDER.name}“ (Stripe: Einstellungen → Unternehmensdaten bzw. Öffentliche Angaben).`,
-  });
+  }));
 
   // Adresse
   const addr = bp?.support_address ?? company?.address ?? null;
   const addrText = formatAddress(addr);
-  const isTest = !!addr && [addr.line1, addr.line2, addr.city, addr.postal_code].some((v) => v && TEST_ADDRESS.test(v));
+  const isTest =
+    !!addr && ([addr.line1, addr.line2, addr.city, addr.postal_code].some((v) => v && TEST_ADDRESS.test(v)) || PLACEHOLDER_CITY.test(addr.city ?? ""));
   const addrOk =
     !!addr &&
     !isTest &&
@@ -135,17 +172,19 @@ export function checkAccount(account: Partial<Pick<Stripe.Account, "business_pro
     norm(addr.city) === norm(providerCity) &&
     norm(addr.line1).replace(/straße|str\./g, "str").includes(norm(PROVIDER.street).replace(/straße|str\./g, "str")) &&
     (!addr.country || addr.country === "DE");
-  checks.push({
+  checks.push(check({
     key: "address",
     label: "Adresse",
     value: addrText || "(leer)",
-    ok: addrOk,
+    tone: addrOk ? "ok" : isTest && opts.testmode ? "info" : "warn",
     hint: addrOk
       ? "Stimmt mit der Anschrift im Impressum überein."
       : isTest
-        ? "Test-Adresse aus der Sandbox (z. B. „address_full_match“). Bitte die echte Anschrift eintragen."
+        ? opts.testmode
+          ? SANDBOX_HINT
+          : "Test-Adresse aus der Sandbox (z. B. „address_full_match“). Bitte die echte Anschrift eintragen."
         : `Weicht von der Anschrift ab: ${PROVIDER.street}, ${PROVIDER.city}.`,
-  });
+  }));
 
   // Telefon
   const phone = bp?.support_phone || company?.phone || "";
@@ -153,47 +192,80 @@ export function checkAccount(account: Partial<Pick<Stripe.Account, "business_pro
   const placeholder = PLACEHOLDER_PHONES.some((x) => p.endsWith(x));
   const us = p.startsWith("+1") || p.startsWith("001");
   const phoneOk = !!p && !placeholder && !us;
-  checks.push({
+  checks.push(check({
     key: "phone",
     label: "Telefon",
     value: phone || "(leer)",
-    ok: phoneOk,
+    tone: phoneOk ? "ok" : placeholder && opts.testmode ? "info" : "warn",
     hint: phoneOk
       ? "Plausible Nummer."
       : placeholder
-        ? "Platzhalter aus der Sandbox (+1 415-555-0199). Bitte die echte Nummer eintragen."
+        ? opts.testmode
+          ? SANDBOX_HINT
+          : "Platzhalter aus der Sandbox (+1 415-555-0199). Bitte die echte Nummer eintragen."
         : us
           ? "US-Telefonnummer. Bitte eine deutsche Nummer eintragen."
           : `Keine Telefonnummer hinterlegt${PROVIDER.phone ? ` (z. B. ${PROVIDER.phone})` : ""}.`,
-  });
+  }));
 
-  // Steuer-ID
+  // Steuer-ID im Footer (Einstellung, sonst PROVIDER)
   const stripeTax = !!(company?.tax_id_provided || company?.vat_id_provided);
   const taxOk = !!taxNumber;
-  checks.push({
+  checks.push(check({
     key: "tax",
     label: "Steuer-ID",
-    value: [taxNumber ? `Einstellung: ${taxNumber}` : "Einstellung: (leer)", `Stripe-Konto: ${stripeTax ? "hinterlegt" : "nicht hinterlegt"}`].join(" · "),
-    ok: taxOk,
+    value: [taxNumber ? `Rechnungsfuß: ${taxNumber}` : "Rechnungsfuß: (leer)", `Stripe-Konto: ${stripeTax ? "hinterlegt" : "nicht hinterlegt"}`].join(" · "),
+    tone: taxOk ? "ok" : "warn",
     hint: taxOk
       ? "Steht über den Footer auf jeder Rechnung."
       : "Keine Steuernummer in den Rechnungsangaben: Rechnungen gehen ohne USt-IdNr. bzw. Steuernummer raus.",
-  });
+  }));
+
+  // Standard-Steuer-ID für Rechnungen (Kopf der Rechnung, Stripe: Account Tax IDs)
+  const defaults = (account.settings?.invoices?.default_account_tax_ids ?? []).map((t) => (typeof t === "string" ? t : t.id));
+  const want = compactTax(taxNumber);
+  const match = opts.accountTaxIds?.find((t) => want && compactTax(t.value) === want);
+  const defaultValues = defaults.map((id) => opts.accountTaxIds?.find((t) => t.id === id)?.value ?? id);
+  checks.push(check({
+    key: "tax_default",
+    label: "Standard-Steuer-ID für Rechnungen",
+    value: defaults.length ? defaultValues.join(", ") : "(keine gesetzt)",
+    tone: defaults.length ? "ok" : "warn",
+    hint: defaults.length
+      ? "Stripe setzt sie auf jede Rechnung."
+      : opts.accountTaxIds === undefined
+        ? "Im Stripe-Konto ist keine Standard-Steuer-ID für Rechnungen gesetzt."
+        : match
+          ? `Im Stripe-Konto ist keine Standard-Steuer-ID für Rechnungen gesetzt. Die Software gibt ${match.value} bei neuen Rechnungen und neuen Abos selbst mit; für bestehende Abos in Stripe unter Einstellungen → Rechnungen als Standard auswählen.`
+          : `Im Stripe-Konto ist keine Standard-Steuer-ID für Rechnungen gesetzt und ${taxNumber ?? "die USt-IdNr."} ist dort nicht als Steuer-ID angelegt. Bitte in Stripe unter Einstellungen → Steuer-IDs anlegen und unter Einstellungen → Rechnungen als Standard auswählen.`,
+  }));
 
   // Land
   if (account.country && account.country !== "DE") {
-    checks.push({ key: "country", label: "Land", value: account.country, ok: false, hint: "Das Stripe-Konto ist nicht auf Deutschland eingestellt." });
+    checks.push(check({ key: "country", label: "Land", value: account.country, tone: "warn", hint: "Das Stripe-Konto ist nicht auf Deutschland eingestellt." }));
   }
   return checks;
+}
+
+/** Testschlüssel (sk_test_ bzw. rk_test_): Konto im Testmodus bzw. Sandbox. */
+export function isTestKey(key: string | null | undefined): boolean {
+  return /^(sk|rk)_test_/.test((key ?? "").trim());
 }
 
 export async function loadAccountCheck(): Promise<{ checks: AccountCheck[]; livemode: boolean | null } | { error: string }> {
   const stripe = stripeClient();
   if (!stripe) return { error: "Stripe ist nicht eingerichtet (STRIPE_SECRET_KEY fehlt)." };
   try {
-    const [account, taxNumber] = await Promise.all([stripe.accounts.retrieveCurrent(), loadTaxNumber()]);
-    const live = process.env.STRIPE_SECRET_KEY?.trim().startsWith("sk_live_") ?? null;
-    return { checks: checkAccount(account, taxNumber), livemode: live };
+    const [account, taxNumber, taxIds] = await Promise.all([
+      stripe.accounts.retrieveCurrent(),
+      loadTaxNumber(),
+      stripe.taxIds
+        .list({ limit: 100 })
+        .then((r) => r.data.map((t) => ({ id: t.id, value: t.value, type: t.type })))
+        .catch(() => undefined),
+    ]);
+    const testmode = isTestKey(process.env.STRIPE_SECRET_KEY);
+    return { checks: checkAccount(account, taxNumber, { testmode, accountTaxIds: taxIds }), livemode: !testmode };
   } catch (err) {
     return { error: `Stripe-Konto konnte nicht gelesen werden: ${(err as Error).message.slice(0, 160)}` };
   }
