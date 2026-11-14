@@ -78,7 +78,7 @@ export default async function VorlagenPage() {
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">
                       <h2 className="text-sm font-semibold">{meta.title}</h2>
-                      <p className="text-xs text-[color:var(--muted)]">{meta.when}</p>
+                      <p className="text-sm text-[color:var(--muted)]">{meta.when}</p>
                     </div>
                     <span className={cn("inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium", r.badge.cls)}>
                       <Icon className="h-3.5 w-3.5" />
@@ -107,7 +107,7 @@ export default async function VorlagenPage() {
               );
             })}
           </ul>
-          <p className="text-xs text-[color:var(--muted)]">Sie möchten einen Text anders formulieren? Schreiben Sie uns, wir passen ihn an und reichen ihn neu ein.</p>
+          <p className="text-sm text-[color:var(--muted)]">Sie möchten einen Text anders formulieren? Schreiben Sie uns, wir passen ihn an und reichen ihn neu ein.</p>
         </div>
       )}
     </main>

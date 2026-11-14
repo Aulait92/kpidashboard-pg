@@ -86,7 +86,7 @@ export async function EmpfehlungLeadCard({ leadId, team, readOnly }: { leadId: s
           <ReferralLinkButton leadId={leadId} readOnly={readOnly} />
         </div>
         {canOptOut ? (
-          <p className="text-xs text-[color:var(--muted)]">„Nicht anfragen“ z. B. bei Kunden, die keine Nachrichten möchten. Alle anderen bekommen dieselbe Nachricht mit Google-Link.</p>
+          <p className="text-sm text-[color:var(--muted)]">„Nicht anfragen“ z. B. bei Kunden, die keine Nachrichten möchten. Alle anderen bekommen dieselbe Nachricht mit Google-Link.</p>
         ) : null}
       </div>
     </Card>
@@ -158,7 +158,7 @@ export function EmpfehlungStatsGrid({ s }: { s: EmpfehlungStats }) {
         <div key={t.k} className={`rounded-[var(--radius-md)] border p-3 ${t.strong ? "border-emerald-200 bg-emerald-50/50" : "border-[color:var(--border)] bg-white"}`}>
           <div className="text-2xl font-semibold tabular-nums">{t.v}</div>
           <div className="text-xs font-medium">{t.k}</div>
-          {t.sub ? <div className="text-[11px] text-[color:var(--muted)]">{t.sub}</div> : null}
+          {t.sub ? <div className="text-xs text-[color:var(--muted)]">{t.sub}</div> : null}
         </div>
       ))}
     </div>
@@ -184,7 +184,7 @@ export function EmpfehlungFunnel({ s }: { s: EmpfehlungStats }) {
             <span className="text-right text-lg font-semibold tabular-nums">{x.v}</span>
             <span>
               <span className="font-medium">{x.k}</span>
-              <span className="block text-[11px] text-[color:var(--muted)]">{x.sub}</span>
+              <span className="block text-xs text-[color:var(--muted)]">{x.sub}</span>
             </span>
             <span className="col-span-2 h-2 rounded-full bg-[color:var(--surface-sunken)] sm:col-span-1" aria-hidden="true">
               <span className="block h-2 rounded-full bg-emerald-500" style={{ width: `${Math.round((x.v / max) * 100)}%` }} />
@@ -198,7 +198,7 @@ export function EmpfehlungFunnel({ s }: { s: EmpfehlungStats }) {
           <b>{s.hint.title}.</b> {s.hint.text}
         </span>
       </div>
-      <p className="text-[11px] text-[color:var(--muted)]">Besucher werden je Person einmal gezählt, Link-Vorschauen zählen nicht. Empfehlungen über den Link in der E-Mail-Signatur zählen bei Besuchern, Empfehlungen und Neukunden mit.</p>
+      <p className="text-xs text-[color:var(--muted)]">Besucher werden je Person einmal gezählt, Link-Vorschauen zählen nicht. Empfehlungen über den Link in der E-Mail-Signatur zählen bei Besuchern, Empfehlungen und Neukunden mit.</p>
     </div>
   );
 }

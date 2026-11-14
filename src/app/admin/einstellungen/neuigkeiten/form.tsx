@@ -23,7 +23,7 @@ export function NeuigkeitenAdmin({ items }: { items: UpdateView[] }) {
             <li key={u.id} className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-3">
               <div className="min-w-0 flex-1">
                 <div className="truncate font-medium">{u.title}</div>
-                <div className="text-xs text-[color:var(--muted)]">
+                <div className="text-sm text-[color:var(--muted)]">
                   {KIND_LABEL[u.kind]} · {AUDIENCE_LABEL[u.audience]} ·{" "}
                   {u.publishedAt ? new Date(u.publishedAt).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" }) : <span className="text-amber-700">Entwurf</span>}
                 </div>

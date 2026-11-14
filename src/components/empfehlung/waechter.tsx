@@ -113,7 +113,7 @@ export async function WaechterSection({ customerId, readOnly, flash }: { custome
                   {stars(r.stars)}
                 </span>
                 <span className="font-medium">{r.reviewerName ?? "Google-Nutzer"}</span>
-                <span className="text-xs text-[color:var(--muted)]">{fmtDate(r.reviewedAt)}</span>
+                <span className="text-sm text-[color:var(--muted)]">{fmtDate(r.reviewedAt)}</span>
                 {r.lead ? (
                   <Link href={`/buyer/leads/${r.lead.id}`} className="text-xs font-semibold text-[color:var(--brand)] hover:underline">
                     Kontakt öffnen
@@ -146,7 +146,7 @@ export async function WaechterSection({ customerId, readOnly, flash }: { custome
         {guide}
         {conn && !readOnly ? (
           <form action={disconnectGbpAction}>
-            <button className="text-xs text-[color:var(--muted)] underline">Verbindung trennen (abgeglichene Bewertungen werden gelöscht)</button>
+            <button className="text-sm text-[color:var(--muted)] underline">Verbindung trennen (abgeglichene Bewertungen werden gelöscht)</button>
           </form>
         ) : null}
       </div>
@@ -159,7 +159,7 @@ function Tile({ k, v, sub, warn }: { k: string; v: string; sub?: string; warn?: 
     <div className={`rounded-[var(--radius-md)] border p-3 ${warn ? "border-rose-200 bg-rose-50" : "border-[color:var(--border)] bg-white"}`}>
       <div className="text-2xl font-semibold tabular-nums">{v}</div>
       <div className="text-xs font-medium">{k}</div>
-      {sub ? <div className="text-[11px] text-[color:var(--muted)]">{sub}</div> : null}
+      {sub ? <div className="text-xs text-[color:var(--muted)]">{sub}</div> : null}
     </div>
   );
 }

@@ -102,7 +102,7 @@ export default async function KollegenEmpfehlenPage() {
                   <span className="min-w-0 flex-1">
                     <span className="font-medium">{r.name}</span>
                     {r.company ? <span className="text-[color:var(--muted)]"> · {r.company}</span> : null}
-                    <span className="block text-xs text-[color:var(--muted)]">seit {date(r.createdAt)}</span>
+                    <span className="block text-sm text-[color:var(--muted)]">seit {date(r.createdAt)}</span>
                   </span>
                   <Badge tone={STAGE_TONE[r.stage]}>{STAGE_LABEL[r.stage]}</Badge>
                   {r.stage === "praemie" && r.rewardAmount != null ? <span className="text-sm font-medium text-emerald-700">+{eur(r.rewardAmount)}</span> : null}

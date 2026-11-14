@@ -146,7 +146,7 @@ export function RechnerForm({ config, dataInfo }: { config: RechnerConfig; dataI
                       </>
                     ) : null}
                   </div>
-                  <p className="text-xs text-[color:var(--muted)] sm:col-span-2">
+                  <p className="text-sm text-[color:var(--muted)] sm:col-span-2">
                     Echte Daten (180 Tage): {data ? `${data.cpl.toLocaleString("de-DE", { style: "currency", currency: "EUR" })} pro Lead aus ${data.leads.toLocaleString("de-DE")} Leads` : "zu wenig Daten (mind. 200 Leads mit Kosten)"}
                   </p>
                   <button type="button" onClick={() => setRows((rs) => rs.filter((_, k) => k !== i))} className="justify-self-start text-sm text-rose-600 hover:underline">Produkt entfernen</button>

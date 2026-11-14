@@ -154,9 +154,9 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-medium">
                       {r.name}
-                      {r.owner ? <span className="ml-1.5 text-xs font-normal text-[color:var(--muted)]">Inhaber</span> : null}
+                      {r.owner ? <span className="ml-1.5 text-sm font-normal text-[color:var(--muted)]">Inhaber</span> : null}
                     </div>
-                    <div className="truncate text-xs text-[color:var(--muted)]">
+                    <div className="truncate text-sm text-[color:var(--muted)]">
                       {r.name !== r.email ? `${r.email} · ` : ""}
                       {r.receivesLeads ? "erhält Leads" : "erhält keine Leads"}
                     </div>
@@ -172,7 +172,7 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
                     <RemindButton action={remindAdvisorCalendarAction} userId={r.userId} readOnly={ro} />
                   ) : null}
                   {!r.owner && !r.connected && r.remindedAt ? (
-                    <span className="w-full text-xs text-[color:var(--muted)] sm:w-auto">
+                    <span className="w-full text-sm text-[color:var(--muted)] sm:w-auto">
                       erinnert am {r.remindedAt.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}
                     </span>
                   ) : null}

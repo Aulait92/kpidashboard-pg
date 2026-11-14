@@ -100,7 +100,7 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
                   <SmtpForm readOnly={readOnly} />
                 </div>
               </details>
-              <p className="text-xs text-[color:var(--muted)]">
+              <p className="text-sm text-[color:var(--muted)]">
                 Firmen-Postfächer mancher Versicherer (z. B. Allianz) lassen sich oft nicht verbinden. Dann bleibt „E-Mail schreiben“ über Ihr Mailprogramm.
               </p>
             </>

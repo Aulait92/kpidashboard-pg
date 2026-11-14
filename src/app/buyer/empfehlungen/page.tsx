@@ -125,7 +125,7 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
                     ) : (
                       <span className="font-medium">{r.recommender}</span>
                     )}
-                    <span className="block text-xs text-[color:var(--muted)]">
+                    <span className="block text-sm text-[color:var(--muted)]">
                       Empfehlung: {r.referred}
                       {r.dueAt && r.dueAt.getTime() > nowMs() ? ` · frühestens ab ${fmtDate(r.dueAt)} (Widerrufsfrist abwarten)` : ""}
                     </span>
@@ -158,7 +158,7 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
                 </p>
                 <p className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] p-3 text-xs">{signatureLine(generalUrl, offer)}</p>
                 <CopyText text={signatureLine(generalUrl, offer)} label="Zeile kopieren" />
-                <p className="text-xs text-[color:var(--muted)]">
+                <p className="text-sm text-[color:var(--muted)]">
                   Die Signatur nutzt einen allgemeinen Link. Ihr Kunde kann dort seine Handynummer angeben und bekommt seinen persönlichen Link; sonst kommt die
                   Empfehlung als Lead an, lässt sich aber keinem einzelnen Kunden zuordnen.
                 </p>
@@ -233,7 +233,7 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
           )}
         </Card>
 
-        <p className="text-xs text-[color:var(--muted)]">
+        <p className="text-sm text-[color:var(--muted)]">
           Alle angeschriebenen Kunden bekommen dieselbe Nachricht mit demselben Google-Link – unabhängig davon, wie zufrieden sie sind (Google-Richtlinien).
           {settings.reward
             ? "Das Dankeschön geht nur an Empfehlende, nie an die empfohlene Person. Der Dank per WhatsApp geht automatisch raus, sobald aus einer Empfehlung ein Abschluss wird."

@@ -109,7 +109,7 @@ export default async function LeadIntakePage({
                 </a>
                 <form action={dismissUnassignedAction}>
                   <input type="hidden" name="formId" value={u.formId ?? ""} />
-                  <button className="text-xs text-[color:var(--muted)] underline">verwerfen</button>
+                  <button className="text-sm text-[color:var(--muted)] underline">verwerfen</button>
                 </form>
               </li>
             ))}
@@ -139,7 +139,7 @@ export default async function LeadIntakePage({
                   <tr key={s.id} className={s.active ? "" : "opacity-50"}>
                     <td className="px-5 py-2">
                       <div className="font-medium">{s.formName ?? "Formular"}</div>
-                      <div className="text-xs text-[color:var(--muted)]">{s.formId}</div>
+                      <div className="text-sm text-[color:var(--muted)]">{s.formId}</div>
                     </td>
                     <td className="px-3 py-2">{s.customer.name}</td>
                     <td className="px-3 py-2">{s.productKey}</td>
@@ -227,7 +227,7 @@ export default async function LeadIntakePage({
             </details>
             <div className="md:col-span-2">
               <button className="h-10 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 font-semibold text-white">Zuordnen</button>
-              <span className="ml-3 text-xs text-[color:var(--muted)]">Wartende Leads des Formulars werden übernommen.</span>
+              <span className="ml-3 text-sm text-[color:var(--muted)]">Wartende Leads des Formulars werden übernommen.</span>
             </div>
           </form>
         </div>

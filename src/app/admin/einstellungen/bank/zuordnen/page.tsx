@@ -57,7 +57,7 @@ export default async function ZuordnenPage({ searchParams }: { searchParams: Pro
                   <span className="min-w-0 flex-1 font-medium">{t.counterparty ?? "(ohne Gegenpartei)"}</span>
                   <span className={`font-semibold tabular-nums ${amount < 0 ? "" : "text-emerald-700"}`}>{eur(amount)}</span>
                 </div>
-                <div className="mt-0.5 text-xs text-[color:var(--muted)]">
+                <div className="mt-0.5 text-sm text-[color:var(--muted)]">
                   {day(t.bookingDate)} · {SOURCE_LABEL(t.accountKey)}
                   {t.purpose ? ` · ${t.purpose.slice(0, 140)}` : ""}
                 </div>

@@ -70,7 +70,7 @@ export function KpiSettingsForm({ hours, rate, campaigns, pplPilotEnd }: { hours
       <label className="text-sm sm:col-span-2">
         Pay-per-Lead-Pilotphase endet mit Monat (leer = läuft noch)
         <input name="pplPilotEnd" type="month" defaultValue={pplPilotEnd ?? ""} className={input} />
-        <span className="mt-1 block text-xs text-[color:var(--muted)]">Erscheint im Reiter „Pay-per-Lead“ und im Investoren-Update („Pilot Juni–… abgeschlossen“).</span>
+        <span className="mt-1 block text-sm text-[color:var(--muted)]">Erscheint im Reiter „Pay-per-Lead“ und im Investoren-Update („Pilot Juni–… abgeschlossen“).</span>
       </label>
       <div className="flex items-center gap-3 sm:col-span-2">
         <button className="btn-primary" disabled={pending}>{pending ? "Speichere …" : "Speichern"}</button>

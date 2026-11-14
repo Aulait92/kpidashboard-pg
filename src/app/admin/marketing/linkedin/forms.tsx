@@ -87,7 +87,7 @@ export function DraftCard(props: {
         className="w-full rounded-[var(--radius-md)] border border-[color:var(--border)] p-3 text-[15px] leading-relaxed"
         aria-label="Post-Text"
       />
-      <p className={cn("mt-1 text-right text-xs", text.length > COUNT_LIMIT ? "text-rose-700" : "text-[color:var(--muted)]")}>
+      <p className={cn("mt-1 text-right text-sm", text.length > COUNT_LIMIT ? "text-rose-700" : "text-[color:var(--muted)]")}>
         {text.length} / {COUNT_LIMIT} Zeichen · vor „mehr anzeigen“: {lines.slice(0, 2).join(" ").slice(0, 60)}…
       </p>
       <div className="mt-3">
@@ -96,7 +96,7 @@ export function DraftCard(props: {
           {/* Große Vorschau des gewählten Bilds */}
           <div className="h-40 w-40 shrink-0 overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken)]" data-li-preview>
             {image === "keins" ? (
-              <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-xs text-[color:var(--muted)]">
+              <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-sm text-[color:var(--muted)]">
                 <ImageOff className="h-6 w-6" /> Ohne Bild
               </div>
             ) : (
@@ -112,7 +112,7 @@ export function DraftCard(props: {
               ...(graphic.trim() ? [{ key: "grafik", label: "Grafik", node: <img src={graphicSrc} alt="Text-Grafik" className="h-full w-full object-cover" loading="lazy" /> }] : []),
               ...props.photos.map((f) => ({ key: f.id, label: "Foto", node: <img src={`/api/linkedin/foto/${f.id}`} alt={f.description} className="h-full w-full object-cover" loading="lazy" /> })),
             ].map((o) => (
-              <button key={o.key} type="button" onClick={() => setImage(o.key)} aria-pressed={image === o.key} className="flex shrink-0 flex-col items-center gap-1 text-xs text-[color:var(--muted)]">
+              <button key={o.key} type="button" onClick={() => setImage(o.key)} aria-pressed={image === o.key} className="flex shrink-0 flex-col items-center gap-1 text-sm text-[color:var(--muted)]">
                 <span className={cn(tile(image === o.key), "flex items-center justify-center")}>{o.node}</span>
                 <span className={image === o.key ? "font-semibold text-[color:var(--brand)]" : undefined}>{o.label}</span>
               </button>
@@ -120,7 +120,7 @@ export function DraftCard(props: {
           </div>
         </div>
         {image === "grafik" || !graphic.trim() ? (
-          <label className="mt-2 block text-xs text-[color:var(--muted)]">
+          <label className="mt-2 block text-sm text-[color:var(--muted)]">
             Aussage der Grafik
             <input value={graphic} onChange={(e) => setGraphic(e.target.value.slice(0, 120))} className="mt-1 w-full rounded border border-[color:var(--border)] px-2 py-1.5 text-sm text-[color:var(--foreground)]" placeholder="z. B. 100 Leads → 12 Abschlüsse" />
           </label>
@@ -245,17 +245,17 @@ export function SettingsForm(props: {
       </label>
       <label className="block">
         <span className="text-sm font-semibold">Produkt-Schwerpunkt</span>
-        <span className="block text-xs text-[color:var(--muted)]">Über welche Produkte die Posts sprechen und wie oft.</span>
+        <span className="block text-sm text-[color:var(--muted)]">Über welche Produkte die Posts sprechen und wie oft.</span>
         <textarea name="focus" defaultValue={props.focus} rows={3} className="mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--border)] p-3 text-sm" />
       </label>
       <label className="block">
         <span className="text-sm font-semibold">Über mich</span>
-        <span className="block text-xs text-[color:var(--muted)]">Wer du bist, was du erlebt hast, deine Haltung, Tonfall (Du/Sie). Nur was hier steht, darf die KI als Fakt verwenden.</span>
+        <span className="block text-sm text-[color:var(--muted)]">Wer du bist, was du erlebt hast, deine Haltung, Tonfall (Du/Sie). Nur was hier steht, darf die KI als Fakt verwenden.</span>
         <textarea name="about" defaultValue={props.about} rows={6} className="mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--border)] p-3 text-sm" placeholder="z. B. Gründer von performancegrowth, vorher … Ich schreibe per Du, direkt, ohne Floskeln …" />
       </label>
       <label className="block">
         <span className="text-sm font-semibold">Trust-Material</span>
-        <span className="block text-xs text-[color:var(--muted)]">
+        <span className="block text-sm text-[color:var(--muted)]">
           Echte Kunden-Cases, Ergebnisse, Kundenstimmen. Nur was hier steht, darf die KI als Case oder Zitat verwenden. Namen nur, wenn du sie ausdrücklich freigibst (z. B. „Name darf genannt werden“). Zahlen aus der Software (Leads, Termine, Reaktionszeit, NPS) kommen automatisch dazu.
         </span>
         <textarea name="trustNotes" defaultValue={props.trustNotes} rows={6} className="mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--border)] p-3 text-sm" placeholder="z. B. Allianz-Agentur, Tierkrankenversicherung Katze: 100 Leads → 12 Abschlüsse → 4.300 € Nettoprämie, Provision knapp 2.500 € (WhatsApp vom Kunden liegt als Screenshot in den Fotos)." />
@@ -334,7 +334,7 @@ export function PhotoUpload() {
           onChange={(e) => e.currentTarget.files?.length && e.currentTarget.form?.requestSubmit()}
         />
       </label>
-      <span className="text-xs text-[color:var(--muted)]">Mehrere auf einmal möglich (JPG, PNG, WebP).</span>
+      <span className="text-sm text-[color:var(--muted)]">Mehrere auf einmal möglich (JPG, PNG, WebP).</span>
       <Note res={res} />
     </form>
   );
@@ -356,7 +356,7 @@ export function PhotoItem({ id, description, used }: { id: string; description: 
           className="w-full rounded border border-[color:var(--border)] p-1.5 text-xs"
           aria-label="Beschreibung"
         />
-        <div className="flex items-center justify-between text-xs text-[color:var(--muted)]">
+        <div className="flex items-center justify-between text-sm text-[color:var(--muted)]">
           <span>{used ? `${used}× genutzt` : "noch nicht genutzt"}</span>
           <button
             type="button"
@@ -394,7 +394,7 @@ export function ImportForm() {
           onChange={(e) => e.currentTarget.files?.length && e.currentTarget.form?.requestSubmit()}
         />
       </label>
-      <span className="text-xs text-[color:var(--muted)]">Excel-Datei (.xlsx) aus LinkedIn, wie sie heruntergeladen wurde.</span>
+      <span className="text-sm text-[color:var(--muted)]">Excel-Datei (.xlsx) aus LinkedIn, wie sie heruntergeladen wurde.</span>
       <Note res={res} />
     </form>
   );

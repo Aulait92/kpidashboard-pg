@@ -28,7 +28,7 @@ export default async function ProductCatalogPage() {
           <CatalogItemForm key={c.key} item={c} />
         ))}
       </div>
-      <p className="mt-4 text-xs text-[color:var(--muted)]">
+      <p className="mt-4 text-sm text-[color:var(--muted)]">
         Buchungen starten das KI-Agenten-Team (Kampagne pausiert anlegen; ohne Kampagnen-Automatik als Aufgabe „Kampagne aufsetzen“) und stehen in der Kundenakte → Abrechnung → Produkte. Dort auf „Gestartet“ setzen, sobald die Kampagne läuft.
       </p>
     </main>

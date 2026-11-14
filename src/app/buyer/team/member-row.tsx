@@ -80,13 +80,13 @@ export function MemberRow({ m, readOnly, colleagues, today }: { m: MemberView; r
               </Badge>
             ) : null}
           </div>
-          <div className="truncate text-xs text-[color:var(--muted)]">
+          <div className="truncate text-sm text-[color:var(--muted)]">
             {m.leads30} {m.leads30 === 1 ? "Lead" : "Leads"} in 30 Tagen · {m.ownCalendar ? "Kalender verbunden" : m.owner ? "Kalender unter „Mein Kalender“" : "kein Kalender (Termine beim Inhaber)"}
           </div>
         </div>
         <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
       </button>
-      <label className="flex shrink-0 items-center gap-2 text-xs text-[color:var(--muted)]">
+      <label className="flex shrink-0 items-center gap-2 text-sm text-[color:var(--muted)]">
         <button
           type="button"
           role="switch"

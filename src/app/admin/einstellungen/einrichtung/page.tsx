@@ -31,7 +31,7 @@ export default async function SetupSettingsPage() {
           envHint={envHint}
         />
       </div>
-      <p className="mt-4 text-xs text-[color:var(--muted)]">Anleitung und Video-Vorschläge: docs/selbst-einrichtung.md</p>
+      <p className="mt-4 text-sm text-[color:var(--muted)]">Anleitung und Video-Vorschläge: docs/selbst-einrichtung.md</p>
     </main>
   );
 }

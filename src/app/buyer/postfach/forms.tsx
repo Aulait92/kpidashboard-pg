@@ -53,7 +53,7 @@ export function SmtpForm({ readOnly }: { readOnly: boolean }) {
         </Button>
         <Msg s={state} />
       </div>
-      <p className="text-xs text-[color:var(--muted)] sm:col-span-2">Das Passwort wird verschlüsselt gespeichert und nur zum Senden genutzt.</p>
+      <p className="text-sm text-[color:var(--muted)] sm:col-span-2">Das Passwort wird verschlüsselt gespeichert und nur zum Senden genutzt.</p>
     </form>
   );
 }

@@ -37,7 +37,7 @@ export default async function EmpfehlungenPage() {
           { l: "Prämien gutgeschrieben", v: eur(totals.rewards) },
         ].map((k) => (
           <div key={k.l} className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4">
-            <div className="text-xs text-[color:var(--muted)]">{k.l}</div>
+            <div className="text-sm text-[color:var(--muted)]">{k.l}</div>
             <div className="mt-1 text-xl font-semibold tabular-nums">{k.v}</div>
           </div>
         ))}
@@ -111,7 +111,7 @@ export default async function EmpfehlungenPage() {
                     )}
                     {r.company ? <span className="text-[color:var(--muted)]"> · {r.company}</span> : null}
                     {r.existingContact && r.status !== "blocked" ? <span className="block text-xs text-amber-700">war schon im CRM</span> : null}
-                    {r.status === "blocked" ? <span className="block text-xs text-[color:var(--muted)]">{r.blockedReason}</span> : null}
+                    {r.status === "blocked" ? <span className="block text-sm text-[color:var(--muted)]">{r.blockedReason}</span> : null}
                   </td>
                   <td className="px-4 py-2">
                     <Link href={`/admin/kunden/${r.referrer.id}`} className="hover:underline">
@@ -120,12 +120,12 @@ export default async function EmpfehlungenPage() {
                   </td>
                   <td className="px-4 py-2">
                     <Badge tone={TONE[r.stage]}>{STAGE_LABEL[r.stage]}</Badge>
-                    {r.newMonthly ? <span className="block text-xs text-[color:var(--muted)]">{eur(r.newMonthly)}/Monat</span> : null}
+                    {r.newMonthly ? <span className="block text-sm text-[color:var(--muted)]">{eur(r.newMonthly)}/Monat</span> : null}
                   </td>
                   <td className="px-4 py-2">
                     <span>{REWARD_STATUS_LABEL[r.rewardStatus] ?? r.rewardStatus}</span>
                     {r.rewardAmount != null ? <span className="tabular-nums"> · {eur(r.rewardAmount)}</span> : null}
-                    {r.rewardNote ? <span className="block text-xs text-[color:var(--muted)]">{r.rewardNote}</span> : null}
+                    {r.rewardNote ? <span className="block text-sm text-[color:var(--muted)]">{r.rewardNote}</span> : null}
                     {r.rewardStatus === "manual" ? (
                       <form action={markRewardDoneAction} className="mt-1 flex items-center gap-2">
                         <input type="hidden" name="id" value={r.id} />

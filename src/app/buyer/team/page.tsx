@@ -46,7 +46,7 @@ export default async function TeamPage() {
         ) : null}
 
         <Card>
-          <CardHeader title={`Mitglieder (${members.length})`} icon={UsersRound} actions={<span className="text-xs text-[color:var(--muted)]">bekommt Leads</span>} />
+          <CardHeader title={`Mitglieder (${members.length})`} icon={UsersRound} actions={<span className="text-sm text-[color:var(--muted)]">bekommt Leads</span>} />
           <ul className="divide-y divide-[color:var(--border)]">
             {members.map((m) => (
               <MemberRow

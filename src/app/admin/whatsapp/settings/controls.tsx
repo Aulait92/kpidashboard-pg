@@ -80,7 +80,7 @@ function Hint({ text }: { text: string }) {
 function SavedBadge({ state }: { state: "idle" | "saving" | "saved" }) {
   if (state === "idle") return null;
   return (
-    <span className="inline-flex items-center gap-1 text-xs text-[color:var(--muted)]">
+    <span className="inline-flex items-center gap-1 text-sm text-[color:var(--muted)]">
       {state === "saving" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3 text-emerald-600" />}
       {state === "saving" ? "Speichert" : "Gespeichert"}
     </span>
@@ -148,7 +148,7 @@ export function AgentSettings(p: {
       <div className="flex min-h-[60px] items-center gap-4 px-4 py-3">
         <div className="min-w-0 flex-1">
           <div className="font-medium">Assistent aktiv</div>
-          <div className="text-xs text-[color:var(--muted)]">Antwortet Leads auf WhatsApp und bucht Termine.</div>
+          <div className="text-sm text-[color:var(--muted)]">Antwortet Leads auf WhatsApp und bucht Termine.</div>
         </div>
         <Switch label="Assistent aktiv" checked={p.active} onChange={(next) => setAgentActiveAction(p.customerId, next)} />
       </div>
@@ -186,7 +186,7 @@ export function AgentSettings(p: {
       <div className="flex min-h-[60px] flex-wrap items-center gap-x-2 gap-y-1 px-4 py-3">
         <div className="min-w-0 flex-1">
           <div className="font-medium">Automatisch nachfassen (Abfolgen)</div>
-          <div className="text-xs text-[color:var(--muted)]">
+          <div className="text-sm text-[color:var(--muted)]">
             Nicht erreicht: WhatsApp sofort, Anruf-Aufgabe an Tag 2, letzte WhatsApp an Tag 6. Angebot: WhatsApp an Tag 3, Anruf an
             Tag 7. Nicht erschienen: WhatsApp mit Buchungslink sofort, Anruf an Tag 2. Stoppt bei Antwort, Termin, Abschluss,
             Kein Interesse, Reklamation oder „Stopp“. WhatsApp nur Mo–Sa 9–19 Uhr.
@@ -256,7 +256,7 @@ export function AgentSettings(p: {
 // ─── Vorlagen ──────────────────────────────────────────────────────────
 export function TemplateApproved({ id, approved }: { id: string; approved: boolean }) {
   return (
-    <label className="flex shrink-0 items-center gap-2 text-xs text-[color:var(--muted)]">
+    <label className="flex shrink-0 items-center gap-2 text-sm text-[color:var(--muted)]">
       {approved ? "freigegeben" : "wartet"}
       <Switch label="Von Meta freigegeben" checked={approved} onChange={(next) => setTemplateApprovedAction(id, next)} />
     </label>
@@ -276,7 +276,7 @@ export function TemplateAutoStatus({ status, reason }: { status: string; reason:
     <span className="flex shrink-0 flex-col items-end gap-0.5 text-right">
       <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", m.cls)}>{m.label}</span>
       {status === "rejected" && reason ? <span className="max-w-40 text-[11px] text-rose-700">{reason}</span> : null}
-      <span className="text-[11px] text-[color:var(--muted)]">automatisch</span>
+      <span className="text-xs text-[color:var(--muted)]">automatisch</span>
     </span>
   );
 }
@@ -430,7 +430,7 @@ export function TemplateEditor({
           rows={6}
           className="w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2 text-sm outline-none focus:border-[color:var(--brand)]"
         />
-        <p className="text-xs text-[color:var(--muted)]">
+        <p className="text-sm text-[color:var(--muted)]">
           Platzhalter: {cur?.params.map((x, i) => `{{${i + 1}}} ${x}`).join(" · ")}
         </p>
         <div className="flex flex-wrap items-center justify-between gap-3">

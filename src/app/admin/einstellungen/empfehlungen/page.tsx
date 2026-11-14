@@ -24,7 +24,7 @@ export default async function ReferralSettingsPage() {
       <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-sm)]">
         <ReferralSettingsForm initial={s} />
       </div>
-      <p className="mt-4 text-xs text-[color:var(--muted)]">
+      <p className="mt-4 text-sm text-[color:var(--muted)]">
         Prämien sind Gutschriften an Geschäftskunden, keine Provision an Versicherungsnehmer. Die steuerliche Behandlung bitte mit dem Steuerberater
         abstimmen (siehe docs/kollegen-empfehlen.md).
       </p>

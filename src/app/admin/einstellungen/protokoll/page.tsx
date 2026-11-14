@@ -81,10 +81,10 @@ export default async function ProtokollPage({ searchParams }: { searchParams: Pr
                   <td className="px-3 py-2 font-medium">{AUDIT_LABEL[r.action] ?? r.action}</td>
                   <td className="px-3 py-2">
                     {r.actorEmail ?? "-"}
-                    <span className="block text-xs text-[color:var(--muted)]">{ROLE[r.actorRole ?? ""] ?? r.actorRole ?? ""}</span>
+                    <span className="block text-sm text-[color:var(--muted)]">{ROLE[r.actorRole ?? ""] ?? r.actorRole ?? ""}</span>
                   </td>
                   <td className="px-3 py-2">{r.customerId ? (names.get(r.customerId) ?? "-") : "-"}</td>
-                  <td className="max-w-md px-3 py-2 text-xs text-[color:var(--muted)]">{detailText(r.details)}</td>
+                  <td className="max-w-md px-3 py-2 text-sm text-[color:var(--muted)]">{detailText(r.details)}</td>
                 </tr>
               ))}
               {rows.length === 0 ? (

@@ -246,7 +246,7 @@ export default async function WhatsAppSettingsPage({
                     <span className="text-sm text-[color:var(--muted)]">nicht verbunden</span>
                   )}
                   {c.whatsAppAccount?.dialog360ChannelId ? (
-                    <span className="hidden text-xs text-[color:var(--muted)] sm:inline">360dialog-Channel {c.whatsAppAccount.dialog360ChannelId}</span>
+                    <span className="hidden text-sm text-[color:var(--muted)] sm:inline">360dialog-Channel {c.whatsAppAccount.dialog360ChannelId}</span>
                   ) : null}
                   <span className="text-sm text-[color:var(--brand)] group-open:hidden">ändern</span>
                 </summary>
@@ -255,7 +255,7 @@ export default async function WhatsAppSettingsPage({
                 className="flex flex-wrap items-end gap-4 border-t border-[color:var(--border)] p-4"
               >
                 <input type="hidden" name="customerId" value={c.id} />
-                <label className="min-w-[200px] flex-1 text-xs text-[color:var(--muted)]">
+                <label className="min-w-[200px] flex-1 text-sm text-[color:var(--muted)]">
                   Nummer (international)
                   <input
                     name="phoneNumber"
@@ -265,7 +265,7 @@ export default async function WhatsAppSettingsPage({
                     className={`${input} mt-1`}
                   />
                 </label>
-                <label className="min-w-[260px] flex-[2] text-xs text-[color:var(--muted)]">
+                <label className="min-w-[260px] flex-[2] text-sm text-[color:var(--muted)]">
                   API-Key aus 360dialog{" "}
                   {c.whatsAppAccount?.apiKeyEnc ? (
                     <span className="font-semibold text-emerald-700">· hinterlegt ✓</span>
@@ -309,7 +309,7 @@ export default async function WhatsAppSettingsPage({
                     {c.calendarConnection.calendarId !== "primary" ? " · eigener Unterkalender" : ""}
                   </p>
                 ) : (
-                  <p className="mt-1 text-xs text-[color:var(--muted)]">Noch nicht verbunden.</p>
+                  <p className="mt-1 text-sm text-[color:var(--muted)]">Noch nicht verbunden.</p>
                 )}
                 <div className="mt-2 flex flex-wrap gap-2">
                   <a
@@ -346,7 +346,7 @@ export default async function WhatsAppSettingsPage({
                   {c.whatsAppAccount?.status === "connected" && c.whatsAppAccount.apiKeyEnc ? <SubmitTemplatesButton customerId={c.id} /> : null}
                   <span
                     title="Außerhalb des 24-Stunden-Fensters darf WhatsApp nur freigegebene Vorlagen senden. Nach dem Verbinden reicht die App die Vorlagen automatisch bei Meta ein und übernimmt die Freigabe selbst (Abgleich alle 30 Minuten). Von Hand angelegte Vorlagen hier als freigegeben markieren."
-                    className="cursor-help text-xs text-[color:var(--muted)]"
+                    className="cursor-help text-sm text-[color:var(--muted)]"
                   >
                     Wie funktioniert das? ⓘ
                   </span>
@@ -360,9 +360,9 @@ export default async function WhatsAppSettingsPage({
                         <div className="min-w-0 flex-1 text-sm">
                           <div className="font-medium">
                             {PURPOSE_LABELS[t.purpose as NoticePurpose] ?? (t.purpose || "–")}{" "}
-                            <span className="text-xs font-normal text-[color:var(--muted)]">{t.name}</span>
+                            <span className="text-sm font-normal text-[color:var(--muted)]">{t.name}</span>
                           </div>
-                          <p className="mt-0.5 line-clamp-2 text-xs text-[color:var(--muted)]">{t.body}</p>
+                          <p className="mt-0.5 line-clamp-2 text-sm text-[color:var(--muted)]">{t.body}</p>
                         </div>
                         {t.auto ? (
                           <>

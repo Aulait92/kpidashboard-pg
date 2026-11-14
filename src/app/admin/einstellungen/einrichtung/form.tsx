@@ -30,13 +30,13 @@ export function SetupSettingsForm({
           Unsere Meta Business-ID
         </label>
         <input id="businessId" name="businessId" defaultValue={initial.businessId} placeholder="z. B. 3089330734489612" className="input mt-1 w-full" />
-        <p className="mt-1 text-xs text-[color:var(--muted)]">{envHint}</p>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">{envHint}</p>
       </div>
       <div className="space-y-3">
         <p className="text-sm font-medium">Erklärvideos je Schritt (Loom oder YouTube, optional)</p>
         {steps.map((k) => (
           <div key={k}>
-            <label className="text-xs text-[color:var(--muted)]" htmlFor={`video_${k}`}>
+            <label className="text-sm text-[color:var(--muted)]" htmlFor={`video_${k}`}>
               {LABEL[k] ?? k}
             </label>
             <input id={`video_${k}`} name={`video_${k}`} defaultValue={initial.videos[k] ?? ""} placeholder="https://www.loom.com/share/…" className="input mt-1 w-full" />

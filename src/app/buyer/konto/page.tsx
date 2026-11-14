@@ -380,7 +380,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
               </button>
             </form>
             {!customer.stripeCustomerId ? (
-              <p className="mt-3 text-xs text-[color:var(--muted)]">Für Ihr Konto ist noch keine Online-Zahlung hinterlegt.</p>
+              <p className="mt-3 text-sm text-[color:var(--muted)]">Für Ihr Konto ist noch keine Online-Zahlung hinterlegt.</p>
             ) : null}
           </div>
         </Card>

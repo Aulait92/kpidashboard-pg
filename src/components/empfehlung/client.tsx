@@ -91,7 +91,7 @@ export function EmpfehlungBookButton({
               <li key={l}>{l}</li>
             ))}
           </ul>
-          <p className="text-xs text-[color:var(--muted)]">
+          <p className="text-sm text-[color:var(--muted)]">
             Es gelten unsere{" "}
             <a href="/rechtliches/agb" target="_blank" rel="noreferrer" className="underline">
               AGB
@@ -425,7 +425,7 @@ export function SettingsForm({
           placeholder="https://g.page/r/…/review"
           className="mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3"
         />
-        <span className="mt-1 block text-xs text-[color:var(--muted)]">
+        <span className="mt-1 block text-sm text-[color:var(--muted)]">
           So finden Sie ihn: In Google nach Ihrem Unternehmen suchen (angemeldet mit dem Google-Konto des Profils) → „Rezensionen erhalten“ bzw. „Nach
           Rezensionen fragen“ → Link kopieren. Alle angeschriebenen Kunden bekommen denselben Link.
         </span>
@@ -448,8 +448,8 @@ export function SettingsForm({
       </div>
 
       <fieldset className="space-y-3 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4" data-empfehlung-offer>
-        <legend className="px-1 font-semibold">Empfehlungsangebot</legend>
-        <p className="text-xs text-[color:var(--muted)]">
+        <legend className="text-base px-1 font-semibold">Empfehlungsangebot</legend>
+        <p className="text-sm text-[color:var(--muted)]">
           Was bekommt die empfohlene Person? Ein konkreter, kostenloser Check wird deutlich lieber weitergegeben als „melde dich mal bei meinem Berater“.
           Das Angebot steht auf der Empfehlungsseite und im Text, den Ihr Kunde weiterleitet.
         </p>
@@ -473,7 +473,7 @@ export function SettingsForm({
         {preset ? (
           <div className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] p-3">
             <div className="font-semibold">{preset.headline}</div>
-            <p className="mt-1 text-xs text-[color:var(--muted)]">{preset.text.split("{Vertreter}").join(vertreter)}</p>
+            <p className="mt-1 text-sm text-[color:var(--muted)]">{preset.text.split("{Vertreter}").join(vertreter)}</p>
           </div>
         ) : null}
         {offerKind === "custom" ? (
@@ -501,19 +501,19 @@ export function SettingsForm({
                 className="mt-1 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2 text-sm"
               />
             </label>
-            <p className="text-xs text-[color:var(--muted)]">Ein Satz, den Ihr Kunde beim Grillabend weitererzählen kann. Keine Prämien, Gutscheine, Geldbeträge oder Garantien.</p>
+            <p className="text-sm text-[color:var(--muted)]">Ein Satz, den Ihr Kunde beim Grillabend weitererzählen kann. Keine Prämien, Gutscheine, Geldbeträge oder Garantien.</p>
             {warn ? <p className="text-xs font-medium text-amber-700">{warn}</p> : null}
           </div>
         ) : null}
       </fieldset>
 
       <fieldset className="space-y-3 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4" data-empfehlung-moments>
-        <legend className="px-1 font-semibold">Der richtige Moment</legend>
+        <legend className="text-base px-1 font-semibold">Der richtige Moment</legend>
         <label className="flex items-start gap-2">
           <input type="checkbox" name="referralOnPraise" defaultChecked={initial.referralOnPraise} className="mt-0.5 h-4 w-4" />
           <span>
             <span className="font-medium">Bei Lob direkt um Empfehlung bitten</span>
-            <span className="block text-xs text-[color:var(--muted)]">
+            <span className="block text-sm text-[color:var(--muted)]">
               Antwortet Ihr Kunde positiv auf die Nachfrage, bekommt er den Dank gleich mit seinem persönlichen Link. Die spätere Bitte entfällt dann.
             </span>
           </span>
@@ -522,7 +522,7 @@ export function SettingsForm({
           <input type="checkbox" name="statusUpdates" defaultChecked={initial.statusUpdates} className="mt-0.5 h-4 w-4" />
           <span>
             <span className="font-medium">Empfehlende auf dem Laufenden halten</span>
-            <span className="block text-xs text-[color:var(--muted)]">
+            <span className="block text-sm text-[color:var(--muted)]">
               Kurze Nachricht, wenn sich jemand gemeldet hat und wenn ein Termin steht. Nur, wenn die empfohlene Person dem auf der Empfehlungsseite zugestimmt hat.
             </span>
           </span>
@@ -531,7 +531,7 @@ export function SettingsForm({
           <input type="checkbox" name="referralAfterAppointment" defaultChecked={initial.referralAfterAppointment} className="mt-0.5 h-4 w-4" />
           <span>
             <span className="font-medium">Nach jedem stattgefundenen Termin mit einem Kunden</span>
-            <span className="block text-xs text-[color:var(--muted)]">
+            <span className="block text-sm text-[color:var(--muted)]">
               Markieren Sie einen Termin mit einem Kunden (Abschluss oder Bestandskunde) als stattgefunden, geht einige Stunden später der Empfehlungslink raus.
               Höchstens alle 180 Tage je Kontakt, nicht bei Kritik. Standardmäßig aus.
             </span>
@@ -543,15 +543,15 @@ export function SettingsForm({
             <input name="followUpHours" type="number" min={FOLLOWUP_LIMITS.min} max={FOLLOWUP_LIMITS.max} defaultValue={initial.followUpHours} className="h-10 w-20 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 tabular-nums" />
             Stunden (0 = aus)
           </span>
-          <span className="mt-1 block text-xs text-[color:var(--muted)]">
+          <span className="mt-1 block text-sm text-[color:var(--muted)]">
             Nach „Empfehlungslink senden“ oder „Im Termin zeigen“ legt die App eine Aufgabe in „Heute“ an: kurz nachfragen, ob der Link weitergeleitet wurde.
           </span>
         </label>
       </fieldset>
 
       <fieldset className="space-y-3 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4" data-empfehlung-reward>
-        <legend className="px-1 font-semibold">Dankeschön für Empfehlende (optional)</legend>
-        <p className="text-xs text-[color:var(--muted)]">
+        <legend className="text-base px-1 font-semibold">Dankeschön für Empfehlende (optional)</legend>
+        <p className="text-sm text-[color:var(--muted)]">
           Ein vorher angekündigtes Dankeschön erhöht die Bereitschaft zu empfehlen. Es geht immer an den Empfehlenden, nie an die empfohlene Person und nie
           für einen eigenen Vertrag. Ihr Kunde sieht es auf seiner Empfehlungsseite. Sie übergeben es selbst, die App erinnert Sie daran.
         </p>
@@ -604,7 +604,7 @@ export function SettingsForm({
         {rewardKind !== "none" ? (
           <>
             {rewardWarn ? <p className="rounded-[var(--radius-sm)] bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">{rewardWarn}</p> : null}
-            <p className="text-xs text-[color:var(--muted)]">
+            <p className="text-sm text-[color:var(--muted)]">
               Rechtlicher Rahmen: Zuwendungen an Versicherungsnehmer sind nach § 48b VAG nur bis {REWARD_SAFE_LIMIT} € je Vertrag und Jahr unkritisch. Eine Vergütung
               für den reinen Tipp ist davon im Regelfall nicht erfasst, bei eigenen Kunden aber im Einzelfall zu prüfen. Wer sich selbst empfiehlt, bekommt kein
               Dankeschön. Beachten Sie auch die Vorgaben Ihres Versicherers. Das ist keine Rechtsberatung.
@@ -622,7 +622,7 @@ export function SettingsForm({
           {(Object.keys(TEXT_LABELS) as TextKey[]).map((k) => (
             <label key={k} className="block">
               <span className="font-medium">{TEXT_LABELS[k].title}</span>
-              <span className="block text-xs text-[color:var(--muted)]">{TEXT_LABELS[k].hint}</span>
+              <span className="block text-sm text-[color:var(--muted)]">{TEXT_LABELS[k].hint}</span>
               <textarea
                 name={`text_${k}`}
                 rows={k === "review" || k === "referral" ? 4 : 3}
@@ -634,7 +634,7 @@ export function SettingsForm({
               />
             </label>
           ))}
-          <p className="text-xs text-[color:var(--muted)]">
+          <p className="text-sm text-[color:var(--muted)]">
             Platzhalter: {"{Vorname}"}, {"{Link}"}, {"{Vertreter}"}. Leer = Standardtext. Ihr Text geht raus, wenn der WhatsApp-Chat offen ist; sonst
             sendet die App die von Meta freigegebene Standardvorlage mit demselben Inhalt.
           </p>

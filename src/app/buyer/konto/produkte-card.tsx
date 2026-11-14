@@ -58,7 +58,7 @@ export function ProductsCard({ booked, bookable, lines, ctx, today, readOnly }: 
                       {p.guarantee ? <Badge tone="neutral">mit Garantie</Badge> : null}
                     </div>
                     <p className="mt-1 text-sm text-[color:var(--muted)]">{p.benefit}</p>
-                    <p className="mt-1 text-xs text-[color:var(--muted)]">
+                    <p className="mt-1 text-sm text-[color:var(--muted)]">
                       {p.cpl
                         ? `Erfahrungswert: ca. ${eur2(p.cpl)} pro Lead · bei ${eur0(DEFAULT_DAILY)}/Tag ca. ${Math.round((DEFAULT_DAILY * PRICE_LIST.daysPerMonth) / p.cpl)} Leads im Monat`
                         : "Erfahrungswert folgt – wir testen gemeinsam mit Ihnen."}
@@ -81,7 +81,7 @@ export function ProductsCard({ booked, bookable, lines, ctx, today, readOnly }: 
 
         {!readOnly ? <OtherProductRequest /> : null}
 
-        <p className="text-xs text-[color:var(--muted)]">
+        <p className="text-sm text-[color:var(--muted)]">
           Je weiterem Produkt: Einrichtung kostenlos{PRICE_LIST.extraProductSetupSelfService > 0 ? ` (sonst ${eur0(PRICE_LIST.extraProductSetupSelfService)})` : ""}, {eur0(PRICE_LIST.extraProductMonthly)} im Monat zusätzlich (netto). Ihr Werbebudget ändern Sie
           oben unter <a href="#werbebudget" className="underline">Werbebudget</a>.
         </p>
@@ -198,7 +198,7 @@ function BookSheet({ product, lines, ctx, today, onClose }: { product: BookableP
               </button>
               <div className="flex-1 text-center">
                 <div className="text-2xl font-bold tabular-nums">{eur0(daily)}</div>
-                <div className="text-xs text-[color:var(--muted)]">pro Tag · {eur0(daily * PRICE_LIST.daysPerMonth)} im Monat</div>
+                <div className="text-sm text-[color:var(--muted)]">pro Tag · {eur0(daily * PRICE_LIST.daysPerMonth)} im Monat</div>
               </div>
               <button type="button" aria-label={`${product.name}: 5 € mehr`} disabled={daily >= BUDGET_MAX_DAILY} onClick={() => (selection(), set(daily + BUDGET_STEP))} className="grid h-11 w-11 place-items-center rounded-full border border-[color:var(--border)] bg-white disabled:opacity-40">
                 <Plus className="h-4 w-4" />
@@ -214,15 +214,15 @@ function BookSheet({ product, lines, ctx, today, onClose }: { product: BookableP
 
           <dl className="grid grid-cols-2 gap-3 text-[15px]" data-book-preview>
             <div className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] p-3">
-              <dt className="text-xs text-[color:var(--muted)]">Einrichtung (einmalig)</dt>
+              <dt className="text-sm text-[color:var(--muted)]">Einrichtung (einmalig)</dt>
               <dd className="mt-1 font-semibold tabular-nums">{p.setupFee > 0 ? `${eur0(p.setupFee)} netto` : "kostenlos"}</dd>
             </div>
             <div className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] p-3">
-              <dt className="text-xs text-[color:var(--muted)]">Monatlich ab Start</dt>
+              <dt className="text-sm text-[color:var(--muted)]">Monatlich ab Start</dt>
               <dd className="mt-1 font-semibold tabular-nums">+{eur0(p.extraMonthly)} netto</dd>
             </div>
             <div className="col-span-2 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] p-3">
-              <dt className="text-xs text-[color:var(--muted)]">Werbebudget gesamt pro Monat</dt>
+              <dt className="text-sm text-[color:var(--muted)]">Werbebudget gesamt pro Monat</dt>
               <dd className="mt-1 flex flex-wrap items-center gap-1.5 font-semibold tabular-nums">
                 <span className="text-[color:var(--muted)] line-through decoration-1">{eur0(p.monthlyFrom)}</span>
                 <ArrowRight className="h-3.5 w-3.5 text-[color:var(--muted)]" />
@@ -264,7 +264,7 @@ function BookSheet({ product, lines, ctx, today, onClose }: { product: BookableP
                 <input type="radio" name="when" value="date" checked={when === "date"} onChange={() => setWhen("date")} /> Ab Datum
                 {when === "date" ? <input type="date" name="date" min={today} required className="h-10 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3" /> : null}
               </label>
-              <p className="text-xs text-[color:var(--muted)]">Die Einrichtung dauert in der Regel wenige Werktage.</p>
+              <p className="text-sm text-[color:var(--muted)]">Die Einrichtung dauert in der Regel wenige Werktage.</p>
             </fieldset>
           ) : (
             <input type="hidden" name="when" value="asap" />

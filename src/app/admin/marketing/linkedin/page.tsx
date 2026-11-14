@@ -96,9 +96,9 @@ export default async function LinkedInPage({ searchParams }: { searchParams: Pro
           { l: "Zur Freigabe", v: String(drafts.length), h: `${planned.length} geplant` },
         ].map((k) => (
           <div key={k.l} className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4">
-            <div className="text-xs text-[color:var(--muted)]">{k.l}</div>
+            <div className="text-sm text-[color:var(--muted)]">{k.l}</div>
             <div className="mt-1 text-xl font-semibold tabular-nums">{k.v}</div>
-            <div className="mt-0.5 text-xs text-[color:var(--muted)]">{k.h}</div>
+            <div className="mt-0.5 text-sm text-[color:var(--muted)]">{k.h}</div>
           </div>
         ))}
       </div>
@@ -149,7 +149,7 @@ export default async function LinkedInPage({ searchParams }: { searchParams: Pro
                     <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-90" />
                     <span className="w-32 shrink-0 font-semibold">{fmt(p.scheduledAt)}</span>
                     <span className="min-w-0 flex-1 truncate">{p.text.split("\n")[0]}</span>
-                    {p.photoId ? <span className="text-xs text-[color:var(--muted)]">mit Bild</span> : p.useGraphic ? <span className="text-xs text-[color:var(--muted)]">mit Grafik</span> : null}
+                    {p.photoId ? <span className="text-sm text-[color:var(--muted)]">mit Bild</span> : p.useGraphic ? <span className="text-sm text-[color:var(--muted)]">mit Grafik</span> : null}
                   </summary>
                   <div className="flex flex-col gap-4 border-t border-[color:var(--border)] bg-[color:var(--surface-sunken)]/40 px-4 py-4 sm:flex-row">
                     <p className="min-w-0 flex-1 whitespace-pre-wrap text-[15px] leading-relaxed">{p.text}</p>
@@ -166,7 +166,7 @@ export default async function LinkedInPage({ searchParams }: { searchParams: Pro
                   <div className="flex items-center justify-end gap-2 px-4 pb-3">
                     {p.status === "freigegeben" ? (
                       <>
-                        <span className="text-xs text-[color:var(--muted)]">Zum Ändern zurücknehmen, dann steht er wieder unter „Zur Freigabe“.</span>
+                        <span className="text-sm text-[color:var(--muted)]">Zum Ändern zurücknehmen, dann steht er wieder unter „Zur Freigabe“.</span>
                         <UnapproveButton id={p.id} />
                       </>
                     ) : (

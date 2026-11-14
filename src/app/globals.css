@@ -8,7 +8,8 @@
   --brand-soft: #e5edff;
   --card: #ffffff;
   --border: #e6ecf5;
-  --muted: #6b7a96;
+  /* Grau für Hinweise: etwas dunkler, damit kleine Texte gut lesbar bleiben (Ole, 14.11.2026) */
+  --muted: #5b6883;
 
   /* ─── Designsystem (siehe docs/design-system.md) ─────────────────── */
   --surface: #ffffff;
@@ -39,6 +40,9 @@
   --color-border-strong: var(--border-strong);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  /* Kleinste Standardschrift 13 statt 12 px – Einstellungen und Hinweise waren zu klein (Ole, 14.11.2026) */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: calc(1.25 / 0.8125);
 }
 
 body {

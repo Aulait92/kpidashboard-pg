@@ -81,7 +81,7 @@ function BankCard({
               </>
             ) : null}
           </div>
-          <p className="mt-2 text-xs text-[color:var(--muted)]">{csvHint}</p>
+          <p className="mt-2 text-sm text-[color:var(--muted)]">{csvHint}</p>
         </div>
       </div>
     </section>

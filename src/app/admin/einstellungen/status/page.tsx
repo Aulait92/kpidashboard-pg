@@ -66,7 +66,7 @@ export default async function StatusEinstellungenPage() {
           ))}
         </ul>
         {beats.length ? (
-          <p className="mt-3 text-xs text-[color:var(--muted)]">
+          <p className="mt-3 text-sm text-[color:var(--muted)]">
             Intern: {beats.map((b) => `${b.key} ${fmt(b.at)}${b.ok ? "" : ` (${b.note ?? "Fehler"})`}`).join(" · ")}
           </p>
         ) : null}
@@ -89,7 +89,7 @@ export default async function StatusEinstellungenPage() {
                 <li key={i.id} className="flex flex-wrap items-start justify-between gap-3 py-3 text-sm">
                   <div className="min-w-0 flex-1">
                     <div className="font-medium">{i.title}</div>
-                    <div className="text-xs text-[color:var(--muted)]">
+                    <div className="text-sm text-[color:var(--muted)]">
                       {LEVEL_TEXT[i.level] ?? i.level} · {label(i.component)} · {fmt(i.startsAt)}
                       {i.resolvedAt ? ` bis ${fmt(i.resolvedAt)}` : " · läuft"}
                     </div>
@@ -103,7 +103,7 @@ export default async function StatusEinstellungenPage() {
                     ) : null}
                     <form action={deleteIncidentAction}>
                       <input type="hidden" name="id" value={i.id} />
-                      <button className="rounded-[var(--radius-sm)] px-3 py-1.5 text-xs text-[color:var(--muted)] hover:text-rose-600">Löschen</button>
+                      <button className="rounded-[var(--radius-sm)] px-3 py-1.5 text-sm text-[color:var(--muted)] hover:text-rose-600">Löschen</button>
                     </form>
                   </div>
                 </li>

@@ -80,11 +80,11 @@ function Slot({ slot }: { slot: UnterlagenSlot }) {
         <div className="min-w-0 flex-1">
           <div className="text-sm font-medium">{FORMAT_LABEL[slot.format]}</div>
           {slot.file ? (
-            <div className="truncate text-xs text-[color:var(--muted)]" title={slot.file.fileName}>
+            <div className="truncate text-sm text-[color:var(--muted)]" title={slot.file.fileName}>
               {slot.file.fileName} · {size(slot.file.size)} · {when(slot.file.uploadedAt)}
             </div>
           ) : (
-            <div className="text-xs text-[color:var(--muted)]">Noch keine Datei hinterlegt</div>
+            <div className="text-sm text-[color:var(--muted)]">Noch keine Datei hinterlegt</div>
           )}
         </div>
       </div>

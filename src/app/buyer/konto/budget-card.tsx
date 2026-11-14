@@ -133,7 +133,7 @@ export function BudgetCard({ lines, upcoming, ctx, pending, today, readOnly, est
                       />
                       <span>€</span>
                     </label>
-                    <div className="text-xs text-[color:var(--muted)]">pro Tag · zum Eintippen antippen</div>
+                    <div className="text-sm text-[color:var(--muted)]">pro Tag · zum Eintippen antippen</div>
                   </div>
                   <button
                     type="button"
@@ -174,7 +174,7 @@ export function BudgetCard({ lines, upcoming, ctx, pending, today, readOnly, est
         {/* Live-Vorschau */}
         <dl className="grid grid-cols-2 gap-3 text-[15px]" data-budget-preview>
           <div className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] p-3">
-            <dt className="text-xs text-[color:var(--muted)]">Werbebudget pro Monat</dt>
+            <dt className="text-sm text-[color:var(--muted)]">Werbebudget pro Monat</dt>
             <dd className="mt-1 flex flex-wrap items-center gap-1.5 font-semibold tabular-nums">
               {p.changed ? (
                 <>
@@ -186,13 +186,13 @@ export function BudgetCard({ lines, upcoming, ctx, pending, today, readOnly, est
             </dd>
           </div>
           <div className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] p-3">
-            <dt className="text-xs text-[color:var(--muted)]">Erwartete Leads pro Monat</dt>
+            <dt className="text-sm text-[color:var(--muted)]">Erwartete Leads pro Monat</dt>
             <dd className="mt-1 font-semibold tabular-nums">
               ca. {p.leadsTo.toLocaleString("de-DE")}
               {p.changed ? <span className="ml-1 text-sm font-normal text-[color:var(--muted)]">(bisher ca. {p.leadsFrom.toLocaleString("de-DE")})</span> : null}
             </dd>
           </div>
-          <p className="col-span-2 -mt-1 text-xs text-[color:var(--muted)]">
+          <p className="col-span-2 -mt-1 text-sm text-[color:var(--muted)]">
             {ctx.cplSource === "kunde"
               ? `Gerechnet mit Ihrem Leadpreis der letzten 30 Tage (${eur2(ctx.cpl)}). Monat = ${PRICE_LIST.daysPerMonth} Tage.`
               : `Gerechnet mit einem üblichen Leadpreis von ${eur2(ctx.cpl)}. Monat = ${PRICE_LIST.daysPerMonth} Tage. Keine Zusage.`}
@@ -264,7 +264,7 @@ export function BudgetCard({ lines, upcoming, ctx, pending, today, readOnly, est
           {state.error ? <span className="text-sm font-medium text-rose-700">{state.error}</span> : null}
           {state.ok && state.message ? <span className="text-sm font-medium text-emerald-700" role="status">{state.message}</span> : null}
         </div>
-        <p className="text-xs text-[color:var(--muted)]">
+        <p className="text-sm text-[color:var(--muted)]">
           Erhöhen und senken können Sie jederzeit. Eine neue Betreuungsstufe gilt ab dem folgenden Abrechnungsmonat. Die Anzeigen bei Meta stellen wir in der Regel
           innerhalb eines Werktags um.
         </p>

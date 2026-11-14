@@ -28,7 +28,7 @@ export function ReferralSettingsForm({
       </label>
 
       <fieldset className="space-y-2">
-        <legend className="mb-1 font-semibold">Prämie für den Empfehler</legend>
+        <legend className="text-base mb-1 font-semibold">Prämie für den Empfehler</legend>
         <label className="flex items-start gap-2 text-[15px]">
           <input type="radio" name="rewardKind" value="month" checked={rewardKind === "month"} onChange={() => setRewardKind("month")} className="mt-1" />
           <span>
@@ -43,14 +43,14 @@ export function ReferralSettingsForm({
         {rewardKind === "fixed" ? (
           <input name="rewardFixed" inputMode="decimal" defaultValue={initial.rewardFixed ?? ""} placeholder="z. B. 500" className={`${input} max-w-[200px]`} />
         ) : null}
-        <p className="text-xs text-[color:var(--muted)]">
+        <p className="text-sm text-[color:var(--muted)]">
           Gebucht wird automatisch als Gutschrift in Stripe, sobald der Neukunde angenommen und die erste Zahlung geleistet hat. Ohne Stripe-Konto entsteht
           die Aufgabe „Prämie manuell gutschreiben“.
         </p>
       </fieldset>
 
       <fieldset className="space-y-2">
-        <legend className="mb-1 font-semibold">Vorteil für den Neukunden</legend>
+        <legend className="text-base mb-1 font-semibold">Vorteil für den Neukunden</legend>
         {[
           { v: "none", l: "Kein Vorteil" },
           { v: "setup_free", l: "Einrichtung gratis (wird im Angebot vorbelegt)" },
@@ -64,7 +64,7 @@ export function ReferralSettingsForm({
         {benefitKind === "custom" ? (
           <input name="benefitText" defaultValue={initial.benefitText ?? ""} maxLength={300} placeholder="z. B. 200 € Rabatt auf die Einrichtung" className={input} />
         ) : null}
-        <p className="text-xs text-[color:var(--muted)]">Steht auf der Landingpage und als Hinweis beim Angebot für den empfohlenen Kontakt.</p>
+        <p className="text-sm text-[color:var(--muted)]">Steht auf der Landingpage und als Hinweis beim Angebot für den empfohlenen Kontakt.</p>
       </fieldset>
 
       {state.error ? <p className="text-sm font-medium text-rose-700">{state.error}</p> : null}
