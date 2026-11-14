@@ -12,20 +12,20 @@ function formatVal(value: number, fmt: "number" | "currency"): string {
   return fmt === "currency" ? formatEUR(value) : formatNumber(value);
 }
 
-function deltaInfo(projected: number, previous: number) {
+function deltaInfo(projected: number, previous: number, lowerIsBetter = false) {
   if (previous === 0 && projected === 0) {
     return { text: "±0", tone: "neutral" as const };
   }
   if (previous === 0) {
     return { text: "neu", tone: "neutral" as const };
   }
-  const pct = (projected - previous) / previous;
+  const pct = (projected - previous) / Math.abs(previous);
   const sign = pct > 0 ? "+" : "";
   const text = `${sign}${(pct * 100).toFixed(0)} %`;
   const tone =
     Math.abs(pct) < 0.01
       ? ("neutral" as const)
-      : pct > 0
+      : (pct > 0) !== lowerIsBetter
         ? ("good" as const)
         : ("bad" as const);
   return { text, tone };
@@ -77,7 +77,7 @@ export function MonthlyForecast({ forecast }: { forecast: Forecast }) {
           </thead>
           <tbody>
             {forecast.rows.map((row) => {
-              const d = deltaInfo(row.projected, row.previousFull);
+              const d = deltaInfo(row.projected, row.previousFull, row.lowerIsBetter);
               const Icon =
                 d.tone === "good"
                   ? ArrowUpRight

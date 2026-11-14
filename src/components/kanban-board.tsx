@@ -35,6 +35,9 @@ export type KanbanLead = {
   daysInPhase?: number;
   /** Offen, aber weder Wiedervorlage noch Termin. */
   noNextStep?: boolean;
+  /** Verträge (Cross-Selling): geschätzte Provision 1. Jahr und Kurztext, auf dem Server berechnet. */
+  contractProvision?: number | null;
+  contractLabel?: string | null;
 };
 
 
@@ -298,7 +301,9 @@ export function KanbanBoard({
               dot={PHASE_DOT[col.key]}
               label={col.label}
               count={items.length}
-              sum={sumProvision(items.filter((l) => l.status === CLOSED_STATUS), provisionRates)}
+              sum={items
+                .filter((l) => l.status === CLOSED_STATUS)
+                .reduce((n, l) => n + (l.contractProvision ?? sumProvision([l], provisionRates)), 0)}
               accent={col.accent}
               isOver={isOver}
               onDragOver={(e) => {
@@ -651,9 +656,9 @@ function KanbanCard({
       ) : null}
       {/* Provision nur zeigen, wenn der Lead wirklich im Abschluss ist —
           ein aus „Abschluss" zurückgezogener Lead soll keine Provision tragen. */}
-      {lead.status === CLOSED_STATUS && closeValueLabel(lead.source, lead.closeValue, provisionRates) ? (
+      {lead.status === CLOSED_STATUS && (lead.contractLabel ?? closeValueLabel(lead.source, lead.closeValue, provisionRates)) ? (
         <div className="mt-1.5 inline-flex rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-emerald-800">
-          {closeValueLabel(lead.source, lead.closeValue, provisionRates)}
+          {lead.contractLabel ?? closeValueLabel(lead.source, lead.closeValue, provisionRates)}
         </div>
       ) : null}
 

@@ -13,17 +13,9 @@ import { MonthlyForecast } from "@/components/monthly-forecast";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
-import {
-  computeCustomerSpend,
-  customerSpendForBuckets,
-  loadRetainerConfig,
-} from "@/lib/customer-spend";
+import { computeCustomerSpend, loadRetainerConfig } from "@/lib/customer-spend";
 import { computeMonthlyForecast } from "@/lib/forecast";
-import {
-  computeKpis,
-  computeTimeSeries,
-  type Kpis,
-} from "@/lib/kpis";
+import { computeKpis, type Kpis } from "@/lib/kpis";
 import {
   formatDate,
   formatEUR,
@@ -36,8 +28,12 @@ import { MonatsberichteKunde } from "@/components/monatsberichte-kunde";
 // Kunden sehen den Garantie-Stand nicht mehr, die Prüfung läuft nur im Admin. Wieder einbauen mit
 //   import { GarantieKundeCard } from "@/components/garantie-kunde-card";  und  <GarantieKundeCard customerId={session.customerId} />
 import { nowMs } from "@/lib/now";
-import { includesTrail, sumProvision } from "@/lib/provision";
-import { loadCustomerProvision } from "@/lib/provision-server";
+import { contractsPerCustomer, ertragForRange, loadErtragData, summarizeBestand } from "@/lib/ertrag";
+import { originWhere } from "@/lib/lead-herkunft";
+import { earlyHint, pickTips } from "@/lib/zahlen-tipps";
+import { loadTipSignals, monthsSinceStart } from "@/lib/zahlen-tipps-server";
+import { ZahlenTippsCard } from "@/components/zahlen-tipps-card";
+import { BestandGrowthChart } from "@/components/bestand-growth-chart";
 
 type SearchParams = Promise<{
   range?: string;
@@ -136,84 +132,100 @@ async function BuyerDashboardBody({
   range: { from: Date; to: Date };
 }) {
   const prev = previousRange(range);
+  const now = new Date();
   // BuyerComparison/Leaderboard ist aktuell ausgeblendet — die Berechnung
   // (computeCustomerLeaderboard) sparen wir uns hier, bis der Vergleich
   // wieder eingeblendet wird.
+  // Trichter, Quoten und Kosten pro Lead/Termin/Abschluss nur aus bezahlten Leads (lib/lead-herkunft);
+  // Provision und Gewinn zählen alle Herkünfte (Empfehlungen, Bestandskampagnen). Rechnung: lib/ertrag.
   const retainerCfg = await loadRetainerConfig(customerId);
-  const [
-    k,
-    p,
-    ts,
-    forecast,
-    closeValueRows,
-    closeValueRowsPrev,
-    spend,
-    spendPrev,
-  ] = await Promise.all([
-      computeKpis({ range, customerId, product: null }) as Promise<Kpis>,
-      computeKpis({ range: prev, customerId, product: null }) as Promise<Kpis>,
-      computeTimeSeries({ range, customerId, product: null }),
-      computeMonthlyForecast({ customerId, includeCloseValue: true }),
-      // Abschlusswerte aus dem Lead-Modell direkt aggregieren — eine eigene
-      // Spalte am Lead, getrennt vom Lead-Einkaufspreis (Revenue.amount).
-      // Stornierte Leads ausschließen, damit Umsatz konsistent zu nettoLeads
-      // gerechnet wird.
-      prisma.lead.findMany({
-        where: {
-          customerId,
-          createdAt: { gte: range.from, lte: range.to },
-        },
-        select: { closeValue: true, status: true, source: true },
-      }),
-      prisma.lead.findMany({
-        where: {
-          customerId,
-          createdAt: { gte: prev.from, lte: prev.to },
-        },
-        select: { closeValue: true, status: true, source: true },
-      }),
-      retainerCfg ? computeCustomerSpend(customerId, range, retainerCfg) : null,
-      retainerCfg ? computeCustomerSpend(customerId, prev, retainerCfg) : null,
-    ]);
+  const [k, p, forecast, spend, spendPrev, data, extraClosed] = await Promise.all([
+    computeKpis({ range, customerId, product: null, origin: "paid" }) as Promise<Kpis>,
+    computeKpis({ range: prev, customerId, product: null, origin: "paid" }) as Promise<Kpis>,
+    computeMonthlyForecast({ customerId, includeCloseValue: true }),
+    retainerCfg ? computeCustomerSpend(customerId, range, retainerCfg) : null,
+    retainerCfg ? computeCustomerSpend(customerId, prev, retainerCfg) : null,
+    loadErtragData(customerId),
+    Promise.all(
+      (["empfehlung", "bestand"] as const).map((o) =>
+        prisma.lead.count({ where: { customerId, createdAt: { gte: range.from, lte: range.to }, closedAt: { not: null }, ...originWhere(o) } }),
+      ),
+    ),
+  ]);
 
   // Lead-Kosten aus Kundensicht: Pro-Lead-Kunden = Lead-Preis (Revenue),
   // Retainer-Kunden = eigenes Werbebudget + Retainer.
   const cost = spend ? spend.total : Number(k.revenue);
   const costPrev = spendPrev ? spendPrev.total : Number(p.revenue);
-  if (retainerCfg) {
-    const series = await customerSpendForBuckets(
-      customerId,
-      ts.points.map((pt) => pt.bucket),
-      range.to,
-      retainerCfg,
-    );
-    ts.points.forEach((pt, i) => {
-      pt.revenue = series[i] ?? 0;
-    });
-  }
   const costHint = spend
     ? `Werbebudget ${formatEUR(spend.adSpend)} + Retainer ${formatEUR(spend.retainer)}`
     : "Brutto im Zeitraum";
 
-  // Geschätzte Provision (lib/provision.ts) nur aus tatsächlich
-  // abgeschlossenen Leads — ein aus „Abschluss" zurückgezogener Lead darf
-  // nichts tragen, auch wenn der alte Wert noch am Datensatz hängt.
-  const closedRows = (rows: { closeValue: unknown; status: string | null; source: string | null }[]) =>
-    rows.filter((r) => r.status?.toLowerCase() === "abschluss");
-  const { rates } = await loadCustomerProvision(customerId);
-  const umsatz = sumProvision(closedRows(closeValueRows), rates);
-  const umsatzPrev = sumProvision(closedRows(closeValueRowsPrev), rates);
-  const gewinn = umsatz - cost;
-  const gewinnPrev = umsatzPrev - costPrev;
+  const [cur, before] = await Promise.all([
+    ertragForRange(customerId, data, range, now, cost),
+    ertragForRange(customerId, data, prev, now, costPrev),
+  ]);
+  const bestand = summarizeBestand(data.contracts, data.rates, data.typ, now);
+  const makler = data.typ === "makler";
+  const prov = cur.provision;
+  const perCustomer = contractsPerCustomer(data.contracts);
+  const a = cur.agency;
+
+  // Tipps, wenn der Gewinn im Zeitraum oder in der Hochrechnung negativ ist (Seite nur für Inhaber)
+  const negative = cur.gewinn < 0 || (forecast.buyer?.gewinnProjected ?? 0) < 0;
+  const [tipSignals, months, dismissed] = negative
+    ? await Promise.all([
+        loadTipSignals(customerId, data, now).catch(() => null),
+        monthsSinceStart(customerId, now),
+        prisma.customer.findUnique({ where: { id: customerId }, select: { zahlenTipsDismissed: true } }).then((c) => c?.zahlenTipsDismissed ?? null),
+      ])
+    : [null, null, null];
+  const tips = tipSignals ? pickTips(tipSignals, dismissed, now) : [];
+  const ctx = await getBuyerContext();
+
+  const [empfClosed, bestandClosed] = extraClosed;
+  const extras = [
+    empfClosed > 0 ? `+ ${formatNumber(empfClosed)} ${empfClosed === 1 ? "Abschluss" : "Abschlüsse"} aus Empfehlungen` : null,
+    bestandClosed > 0 ? `+ ${formatNumber(bestandClosed)} aus Bestandskampagnen` : null,
+  ].filter(Boolean);
+  const breakdown: [string, number][] = [
+    [makler ? "Courtage 1. Jahr" : "Abschlussprovision", prov.firstYear],
+    ["Lead-Kosten", -cur.leadCosts],
+    [a.baseInLeadCosts ? "USt. auf den Retainer" : "Betreuung & Software", -a.betreuung],
+  ];
+  if (a.logins > 0) breakdown.push(["Weitere Logins", -a.logins]);
+  if (a.module > 0) breakdown.push(["Zusatzmodule", -a.module]);
+  if (a.whatsapp > 0) breakdown.push(["WhatsApp-Gebühren", -a.whatsapp]);
+  if (a.setup > 0) breakdown.push(["Einrichtung (verteilt)", -a.setup]);
+  if (a.gutschrift > 0) breakdown.push(["Gutschrift Empfehlung", a.gutschrift]);
+  const breakdownTitle = [...breakdown.map(([l, v]) => `${l}: ${formatEUR(v)}`), `ergibt Gewinn: ${formatEUR(cur.gewinn)}`].join("\n");
+  const provSub = [
+    prov.crossSell.contracts > 0
+      ? `davon Cross-Selling: ${formatNumber(prov.crossSell.contracts)} ${prov.crossSell.contracts === 1 ? "Vertrag" : "Verträge"}, ${formatEUR(prov.crossSell.amount)}`
+      : null,
+    prov.byOrigin.empfehlung.amount > 0 ? `davon aus Empfehlungen: ${formatEUR(prov.byOrigin.empfehlung.amount)}` : null,
+    prov.byOrigin.bestand.contracts > 0
+      ? `aus Bestandskampagnen: ${formatNumber(prov.byOrigin.bestand.leads)} ${prov.byOrigin.bestand.leads === 1 ? "Abschluss" : "Abschlüsse"}, ${formatEUR(prov.byOrigin.bestand.amount)}`
+      : null,
+    perCustomer != null && perCustomer > 1 ? `Verträge pro Kunde: ${perCustomer.toLocaleString("de-DE")}` : null,
+  ].filter((x): x is string => !!x);
+  const perClose = k.closedLeads > 0 ? cur.costs / k.closedLeads : null;
 
   return (
     <div className="mt-6 space-y-6">
-      <FunnelHero kpis={k} />
-
+      <FunnelHero
+        kpis={k}
+        footer={
+          <>
+            Nur bezahlte Leads, damit die Quoten stimmen.
+            {extras.length ? <span className="ml-1 font-medium text-[color:var(--foreground)]">{extras.join(" · ")}</span> : null}
+          </>
+        }
+      />
 
       <section>
         <h2 className="mb-3 text-[15px] font-semibold tracking-tight">Kosten &amp; Ertrag</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <KpiCard
             label="Lead-Kosten"
             value={formatEUR(cost)}
@@ -222,31 +234,87 @@ async function BuyerDashboardBody({
             delta={delta(cost, costPrev, true)}
           />
           <KpiCard
-            label="Provision (geschätzt)"
-            value={formatEUR(umsatz)}
+            label={makler ? "Courtage 1. Jahr (geschätzt)" : "Abschlussprovision (geschätzt)"}
+            value={formatEUR(prov.firstYear)}
             tone="positive"
-            hint={`aus ${formatNumber(k.closedLeads)} ${k.closedLeads === 1 ? "Abschluss" : "Abschlüssen"}${includesTrail(rates) ? " · inkl. Bestandsprovision 1. Jahr" : ""}`}
-            delta={delta(umsatz, umsatzPrev)}
+            hint={
+              <>
+                aus {formatNumber(prov.leads)} {prov.leads === 1 ? "Abschluss" : "Abschlüssen"}, {makler ? "im 1. Jahr" : "einmalig"}
+                {provSub.map((t) => (
+                  <span key={t} className="block">
+                    {t}
+                  </span>
+                ))}
+              </>
+            }
+            delta={delta(prov.firstYear, before.provision.firstYear)}
           />
           <KpiCard
-            label="Gewinn"
-            value={formatEUR(gewinn)}
-            tone={gewinn >= 0 ? "positive" : "negative"}
-            hint="Provision minus Lead-Kosten"
-            delta={delta(gewinn, gewinnPrev)}
+            label={makler ? "Bestandscourtage" : "Bestandsprovision"}
+            value={`+ ${formatEUR(bestand.perYear)} pro Jahr`}
+            tone={bestand.perYear > 0 ? "positive" : "neutral"}
+            hint={
+              <>
+                aus {formatNumber(bestand.contracts)} {bestand.contracts === 1 ? "Vertrag" : "Verträgen"}, {bestand.fromYear2 ? "ab dem 2. Jahr" : "ab sofort"}
+                <span className="block font-medium text-[color:var(--foreground)]">in 5 Jahren: {formatEUR(bestand.inYears)}</span>
+                {prov.trailPerYear > 0 ? <span className="block">+ {formatEUR(prov.trailPerYear)} pro Jahr aus diesem Zeitraum</span> : null}
+                <Info>
+                  {makler ? "Bestandscourtage" : "Bestandsprovision"} aus allen Verträgen seit Start, mit Ihren Sätzen aus Meine Provisionen
+                  {bestand.fromYear2 ? " (als Vertreter ab dem 2. Vertragsjahr)" : ""}. Gerechnet mit dem eingetragenen Jahresbeitrag, ohne Angabe
+                  mit dem Standardbeitrag der Sparte. Für „in 5 Jahren“ nehmen wir an, dass jedes Jahr {Math.round(bestand.storno * 100)} % der
+                  Verträge wegfallen. Neue Abschlüsse sind nicht eingerechnet.
+                </Info>
+              </>
+            }
           />
+          <div title={breakdownTitle} data-gewinn-karte>
+            <KpiCard
+              label="Gewinn"
+              value={formatEUR(cur.gewinn)}
+              tone={cur.gewinn >= 0 ? "positive" : "negative"}
+              hint={
+                <>
+                  Provision minus Lead-Kosten und Betreuung
+                  {bestand.inYears > 0 ? <span className="block">plus Bestand: {formatEUR(bestand.inYears)} in 5 Jahren</span> : null}
+                  <Info label="Aufschlüsselung">
+                    <span className="block space-y-0.5">
+                      {breakdown.map(([l, v]) => (
+                        <span key={l} className="flex justify-between gap-3 tabular-nums">
+                          <span>{l}</span>
+                          <span>{formatEUR(v)}</span>
+                        </span>
+                      ))}
+                      <span className="flex justify-between gap-3 border-t border-[color:var(--border)] pt-0.5 font-semibold tabular-nums">
+                        <span>ergibt Gewinn</span>
+                        <span>{formatEUR(cur.gewinn)}</span>
+                      </span>
+                    </span>
+                    <span className="mt-1 block">
+                      Betreuung &amp; Software inklusive USt., weil Versicherungsvermittler meist keine Vorsteuer ziehen. Die Einrichtung verteilen
+                      wir über die Mindestlaufzeit.{a.baseInLeadCosts ? " Der Retainer steckt schon in den Lead-Kosten." : ""}
+                    </span>
+                  </Info>
+                </>
+              }
+              delta={delta(cur.gewinn, before.gewinn)}
+            />
+          </div>
           <KpiCard
             label="Kosten pro Abschluss"
-            value={formatEUR(k.closedLeads > 0 ? cost / k.closedLeads : null)}
-            hint={k.terminLeads > 0 ? `${formatEUR(cost / k.terminLeads)} pro Termin` : undefined}
-            delta={delta(
-              k.closedLeads > 0 ? cost / k.closedLeads : null,
-              p.closedLeads > 0 ? costPrev / p.closedLeads : null,
-              true,
-            )}
+            value={formatEUR(perClose)}
+            hint={k.terminLeads > 0 ? `${formatEUR(cur.costs / k.terminLeads)} pro Termin · alle Kosten` : "Lead-Kosten plus Betreuung"}
+            delta={delta(perClose, p.closedLeads > 0 ? before.costs / p.closedLeads : null, true)}
           />
         </div>
       </section>
+
+      {tips.length ? (
+        <ZahlenTippsCard
+          tips={tips.map(({ key, title, text, href, cta }) => ({ key, title, text, href, cta }))}
+          intro={earlyHint(months, bestand.inYears) ?? "Ihre Zahlen sind gerade im Minus. Diese Schritte bringen am meisten:"}
+          canDismiss={!!ctx && !ctx.preview}
+        />
+      ) : null}
 
       <details className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)] [&>summary::-webkit-details-marker]:hidden">
         <summary className="flex cursor-pointer items-center justify-between px-5 py-3.5 text-[15px] font-semibold">
@@ -258,8 +326,38 @@ async function BuyerDashboardBody({
         </div>
       </details>
 
+      {bestand.growth.some((g) => g.total > 0) ? (
+        <details
+          className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)] [&>summary::-webkit-details-marker]:hidden"
+          data-bestand-wachstum
+        >
+          <summary className="flex cursor-pointer items-center justify-between px-5 py-3.5 text-[15px] font-semibold">
+            So wächst Ihr Bestand
+            <ChevronDown className="h-4 w-4 text-[color:var(--muted)] transition group-open:rotate-180" />
+          </summary>
+          <div className="border-t border-[color:var(--border)] p-4 sm:p-5">
+            <p className="mb-3 text-sm text-[color:var(--muted)]">
+              {makler ? "Bestandscourtage" : "Bestandsprovision"} pro Jahr, wenn Sie im aktuellen Tempo weitermachen:{" "}
+              {bestand.perMonth.toLocaleString("de-DE")} {bestand.perMonth === 1 ? "Vertrag" : "Verträge"} pro Monat wie in den letzten 3 Monaten,{" "}
+              {Math.round(bestand.storno * 100)} % Storno pro Jahr.
+            </p>
+            <BestandGrowthChart points={bestand.growth} />
+          </div>
+        </details>
+      ) : null}
+
       {/* BuyerComparison/Leaderboard temporär ausgeblendet —
           wird wieder eingebaut, sobald der Vergleich freigegeben ist. */}
     </div>
+  );
+}
+
+/** Kurzer Infotext zum Antippen (in Karten). */
+function Info({ label = "So rechnen wir", children }: { label?: string; children: React.ReactNode }) {
+  return (
+    <details className="mt-1 [&>summary::-webkit-details-marker]:hidden">
+      <summary className="cursor-pointer list-none font-medium text-[color:var(--brand)]">{label}</summary>
+      <span className="mt-1 block text-[11px] leading-snug text-[color:var(--muted)]">{children}</span>
+    </details>
   );
 }

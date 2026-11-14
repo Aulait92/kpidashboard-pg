@@ -11,8 +11,12 @@ export type MonthMetrics = {
   cpl: number | null;
   termine: number;
   abschluesse: number;
-  /** geschätzte Provision € (null ohne Provisionssätze/Abschlüsse) */
+  /** geschätzte Abschlussprovision € (Makler: Courtage 1. Jahr; null ohne Abschlüsse) */
   provision: number | null;
+  /** neue Bestandsprovision pro Jahr aus den Abschlüssen des Monats (null = keine) */
+  bestandProJahr?: number | null;
+  /** Bezeichnung der Provision (Vertreter/Makler); Standard „Abschlussprovision (geschätzt)“ */
+  provisionLabel?: string;
   /** Anteil Leads mit eingetragenem Ergebnis (0–1, null ohne relevante Leads) */
   ergebnisQuote: number | null;
   /** Tage mit Werbeausgaben */
@@ -113,7 +117,10 @@ export function visibleFacts(m: ReportMetrics, c: Classification): Fact[] {
   if (c.dataQuality === "ok" && cur.abschluesse > 0) {
     out.push({ key: "abschluesse", label: "Abschlüsse", value: cur.abschluesse, unit: "", previous: prev?.abschluesse ?? null });
     if (cur.provision != null && cur.provision > 0) {
-      out.push({ key: "provision", label: "Provision (geschätzt)", value: Math.round(cur.provision), unit: "€", previous: prev?.provision != null ? Math.round(prev.provision) : null });
+      out.push({ key: "provision", label: cur.provisionLabel ?? "Abschlussprovision (geschätzt)", value: Math.round(cur.provision), unit: "€", previous: prev?.provision != null ? Math.round(prev.provision) : null });
+    }
+    if (cur.bestandProJahr != null && cur.bestandProJahr > 0) {
+      out.push({ key: "bestand", label: "Neue Bestandsprovision pro Jahr", value: cur.bestandProJahr, unit: "€", previous: prev?.bestandProJahr ?? null });
     }
   }
   return out;

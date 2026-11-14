@@ -7,9 +7,7 @@ import {
 } from "date-fns";
 import { computeCustomerSpend, loadRetainerConfig } from "@/lib/customer-spend";
 import { computeKpis, type Kpis } from "@/lib/kpis";
-import { prisma } from "@/lib/prisma";
-import { sumProvision, type ProvisionOverrides } from "@/lib/provision";
-import { loadCustomerProvision } from "@/lib/provision-server";
+import { ertragForRange, loadErtragData } from "@/lib/ertrag";
 
 export type ForecastRow = {
   label: string;
@@ -17,6 +15,8 @@ export type ForecastRow = {
   projected: number;
   previousFull: number;
   format: "number" | "currency";
+  /** Kosten: Anstieg ist schlecht (Pfeil rot). */
+  lowerIsBetter?: boolean;
 };
 
 export type Forecast = {
@@ -26,19 +26,14 @@ export type Forecast = {
   daysTotal: number;
   rows: ForecastRow[];
   previousMonthLabel: string;
+  /** Kundensicht: hochgerechneter Gewinn (für die Tipps-Karte) und Zusatzzeile Bestand. */
+  buyer?: { gewinnProjected: number; bestandPerYearMtd: number };
 };
 
 const monthFmt = new Intl.DateTimeFormat("de-DE", {
   month: "long",
   year: "numeric",
 });
-
-// Geschätzte Provision (lib/provision.ts) nur aus tatsächlich abgeschlossenen
-// Leads — ein zurückgezogener Lead trägt nichts, auch wenn der alte Wert noch
-// am Datensatz hängt.
-function sumCloseValue(rows: { closeValue: unknown; status: string | null; source: string | null }[], rates?: ProvisionOverrides): number {
-  return sumProvision(rows.filter((r) => r.status?.toLowerCase() === "abschluss"), rates);
-}
 
 export async function computeMonthlyForecast(params: {
   customerId: string | null;
@@ -47,9 +42,9 @@ export async function computeMonthlyForecast(params: {
   // Einnahmen aus Lead-Verkauf), aus Kunden-Sicht „Lead-Kosten" (was
   // der Kunde an uns zahlt).
   revenueLabel?: string;
-  // Buyer-Modus: zusätzlich "Provision (geschätzt)" (lib/provision.ts) +
-  // "Gewinn" (Provision − Lead-Kosten) ausweisen. Dafür entfällt die
-  // admin-zentrische "Bruttogewinn"-Zeile (= unsere Marge).
+  // Buyer-Modus (Kundensicht, lib/ertrag): Abschlussprovision bzw. Courtage 1. Jahr, Lead-Kosten,
+  // Agenturkosten und Gewinn wie auf /buyer/zahlen; Leads/Termine/Abschlüsse nur bezahlte Leads.
+  // Dafür entfällt die admin-zentrische "Bruttogewinn"-Zeile (= unsere Marge).
   includeCloseValue?: boolean;
   // Tageszahlung: optional injizierbar für Tests, default = jetzt.
   now?: Date;
@@ -70,16 +65,19 @@ export async function computeMonthlyForecast(params: {
 
   // MTD und Vormonat parallel rechnen, beide via existierender computeKpis
   // (die respektiert customerId und liefert die uns interessierenden Zahlen).
+  const origin = params.includeCloseValue ? ("paid" as const) : null;
   const [mtd, prevFull] = await Promise.all([
     computeKpis({
       range: { from: monthStart, to: mtdEnd },
       customerId: params.customerId,
       product: params.product ?? null,
+      origin,
     }) as Promise<Kpis>,
     computeKpis({
       range: { from: prevStart, to: prevEnd },
       customerId: params.customerId,
       product: params.product ?? null,
+      origin,
     }) as Promise<Kpis>,
   ]);
 
@@ -96,31 +94,6 @@ export async function computeMonthlyForecast(params: {
   }
   function projectCurrency(value: number): number {
     return (value / daysElapsed) * daysTotal;
-  }
-
-  // Im Buyer-Modus zusätzlich Σ Abschlusswerte für MTD + Vormonat ziehen.
-  // Stornos rausfiltern, damit die Umsatzzeile konsistent zum nettoLeads-
-  // Counter im Rest der Kachelreihe ist.
-  let umsatzMtd = 0;
-  let umsatzPrev = 0;
-  if (params.includeCloseValue) {
-    const where = {
-      ...(params.customerId ? { customerId: params.customerId } : {}),
-      ...(params.product ? { source: params.product } : {}),
-    };
-    const [mtdRows, prevRows] = await Promise.all([
-      prisma.lead.findMany({
-        where: { ...where, createdAt: { gte: monthStart, lte: mtdEnd } },
-        select: { closeValue: true, status: true, source: true },
-      }),
-      prisma.lead.findMany({
-        where: { ...where, createdAt: { gte: prevStart, lte: prevEnd } },
-        select: { closeValue: true, status: true, source: true },
-      }),
-    ]);
-    const { rates } = await loadCustomerProvision(params.customerId);
-    umsatzMtd = sumCloseValue(mtdRows, rates);
-    umsatzPrev = sumCloseValue(prevRows, rates);
   }
 
   const rows: ForecastRow[] = [
@@ -171,28 +144,42 @@ export async function computeMonthlyForecast(params: {
     format: "currency",
   };
 
-  if (params.includeCloseValue) {
-    // Reihenfolge im Buyer-Block: Provision → Lead-Kosten → Gewinn, damit
-    // sich der Gewinn visuell aus den beiden Zeilen darüber ergibt.
-    const gewinnMtd = umsatzMtd - costMtd;
-    const gewinnPrev = umsatzPrev - costPrev;
+  let buyer: Forecast["buyer"];
+  if (params.includeCloseValue && params.customerId) {
+    // Reihenfolge im Buyer-Block: Provision → Lead-Kosten → Agenturkosten → Gewinn, damit sich
+    // der Gewinn aus den Zeilen darüber ergibt (gleiche Rechnung wie die Karten, lib/ertrag).
+    const data = await loadErtragData(params.customerId);
+    const [a, b] = await Promise.all([
+      ertragForRange(params.customerId, data, { from: monthStart, to: mtdEnd }, now, costMtd),
+      ertragForRange(params.customerId, data, { from: prevStart, to: prevEnd }, now, costPrev),
+    ]);
+    const gewinnProjected = projectCurrency(a.provision.firstYear) - projectCurrency(costMtd) - projectCurrency(a.agency.total);
     rows.push(
       {
-        label: "Provision (geschätzt)",
-        mtd: umsatzMtd,
-        projected: projectCurrency(umsatzMtd),
-        previousFull: umsatzPrev,
+        label: data.typ === "makler" ? "Courtage 1. Jahr (geschätzt)" : "Abschlussprovision (geschätzt)",
+        mtd: a.provision.firstYear,
+        projected: projectCurrency(a.provision.firstYear),
+        previousFull: b.provision.firstYear,
         format: "currency",
       },
-      leadKostenRow,
+      { ...leadKostenRow, lowerIsBetter: true },
+      {
+        label: "Betreuung & Software (inkl. USt.)",
+        lowerIsBetter: true,
+        mtd: a.agency.total,
+        projected: projectCurrency(a.agency.total),
+        previousFull: b.agency.total,
+        format: "currency",
+      },
       {
         label: "Gewinn",
-        mtd: gewinnMtd,
-        projected: projectCurrency(gewinnMtd),
-        previousFull: gewinnPrev,
+        mtd: a.gewinn,
+        projected: gewinnProjected,
+        previousFull: b.gewinn,
         format: "currency",
       },
     );
+    buyer = { gewinnProjected, bestandPerYearMtd: a.provision.trailPerYear };
   } else {
     rows.push(leadKostenRow, {
       label: "Bruttogewinn",
@@ -210,5 +197,6 @@ export async function computeMonthlyForecast(params: {
     daysTotal,
     rows,
     previousMonthLabel: monthFmt.format(prevDate),
+    ...(buyer ? { buyer } : {}),
   };
 }

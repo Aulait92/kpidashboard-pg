@@ -24,9 +24,14 @@ describe("Provision je Abschluss", () => {
   });
 
   it("unbekanntes Produkt: eingegebener Wert wie bisher", () => {
-    expect(estimatedProvision("Kindersparplan", 1200)).toBe(1200);
+    expect(estimatedProvision("Sterbegeld", 1200)).toBe(1200);
     expect(estimatedProvision(null, null)).toBeNull();
-    expect(closeValueField("Kindersparplan")?.label).toBe("Wert des Abschlusses (optional)");
+    expect(closeValueField("Sterbegeld")?.label).toBe("Wert des Abschlusses (optional)");
+  });
+
+  it("Kindersparplan hat seit dem Cross-Selling eine eigene Sparte (vorläufig Sach-Standard)", () => {
+    expect(estimatedProvision("Kindersparplan", 1200)).toBe(660);
+    expect(closeValueField("Kindersparplan")?.label).toBe("Jahresbeitrag netto (optional)");
   });
 
   it("Kartentext nennt Beitrag und Provision", () => {
@@ -34,7 +39,7 @@ describe("Provision je Abschluss", () => {
     expect(lbl("Privatschutz", 600)).toBe("Beitrag 600 € · Provision ≈ 330 €");
     expect(lbl("PKV-Tarifoptimierung", null)).toBe("Provision ≈ 2.500 €");
     expect(lbl("PKV-Tarifoptimierung", 300)).toBe("Beitrag 300 €/Monat · Provision ≈ 3.000 €");
-    expect(lbl("Kindersparplan", null)).toBeNull();
+    expect(lbl("Sterbegeld", null)).toBeNull();
   });
 
   it("kundenspezifische Sätze gelten vor dem Standard", () => {
@@ -51,9 +56,11 @@ describe("Provision je Abschluss", () => {
   });
 
   it("Produktliste mit stabilen Schlüsseln, Summen", () => {
-    expect(PROVISION_PRODUCTS.map((p) => p.key)).toEqual(["pkv", "privatschutz", "tkv"]);
+    expect(PROVISION_PRODUCTS.map((p) => p.key)).toEqual(["pkv", "privatschutz", "tkv", "unfall", "hausrat", "wohngebaeude", "rechtsschutz", "kindersparplan", "kfz", "leben_bu", "sonstiges"]);
     expect(productKeyFor("Allianz TKV Hund")).toBe("tkv");
-    expect(productKeyFor("Kindersparplan")).toBeNull();
+    expect(productKeyFor("Hund-OP")).toBe("tkv");
+    expect(productKeyFor("Kindersparplan")).toBe("kindersparplan");
+    expect(productKeyFor("Empfehlung")).toBeNull();
     expect(sumProvision([{ source: "PKV-Tarifoptimierung", closeValue: null }, { source: "Privatschutz", closeValue: 800 }, { source: "x", closeValue: 100 }])).toBe(3040);
     expect(sumProvision([{ source: "PKV-Tarifoptimierung", closeValue: 250 }])).toBe(2500);
   });
@@ -99,8 +106,9 @@ describe("Provision je Abschluss", () => {
   });
 
   it("PKV nur bei Maklern in der Produktliste", () => {
-    expect(productsForTyp("vertreter").map((p) => p.key)).toEqual(["privatschutz", "tkv"]);
-    expect(productsForTyp("makler").map((p) => p.key)).toEqual(["pkv", "privatschutz", "tkv"]);
+    expect(productsForTyp("vertreter").map((p) => p.key).slice(0, 2)).toEqual(["privatschutz", "tkv"]);
+    expect(productsForTyp("vertreter").some((p) => p.key === "pkv")).toBe(false);
+    expect(productsForTyp("makler").map((p) => p.key).slice(0, 3)).toEqual(["pkv", "privatschutz", "tkv"]);
     // Vertreter mit PKV-Lead: Makler-Standard, kein Fehler
     expect(estimatedProvision("PKV-Tarifoptimierung", null, effectiveRates("vertreter"))).toBe(2500);
   });

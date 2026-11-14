@@ -10,8 +10,6 @@ import { audit, type AuditActor } from "@/lib/audit";
 import { reportError } from "@/lib/monitoring";
 import { getAppUrl } from "@/lib/email";
 import { advisorDisplayName } from "@/lib/whatsapp/template-plan";
-import { estimatedProvision } from "@/lib/provision";
-import { loadCustomerProvision } from "@/lib/provision-server";
 import {
   DAY_MS,
   DEFAULT_DELAYS,
@@ -1048,8 +1046,10 @@ export async function loadEmpfehlungStats(customerId: string, days = 90, now = n
     select: { id: true, status: true, source: true, closeValue: true, _count: { select: { appointments: true } } },
   });
   const closed = referred.filter((l) => l.status === CLOSED);
-  const rates = (await loadCustomerProvision(customerId).catch(() => null))?.rates;
-  const provision = closed.reduce((n, l) => n + (estimatedProvision(l.source, l.closeValue, rates) ?? 0), 0);
+  // Gleiche Zahl wie „davon aus Empfehlungen“ auf /buyer/zahlen: Verträge der Empfehlungs-Leads mit der Rate ihrer Sparte
+  const { loadErtragData, summarizeProvision } = await import("@/lib/ertrag");
+  const ertrag = await loadErtragData(customerId).catch(() => null);
+  const provision = ertrag ? summarizeProvision(ertrag.contracts.filter((c) => c.origin === "empfehlung"), ertrag.rates, { from: since, to: now }).firstYear : 0;
   const links = await prisma.referralLink.aggregate({ where: { customerId }, _sum: { views: true } });
   // Trichter: Links ausgegeben → vom Kunden geöffnet → einzelne Besucher → Empfehlungen → Neukunden
   const [linksSent, linksOpened, visitors] = await Promise.all([
