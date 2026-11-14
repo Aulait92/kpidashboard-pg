@@ -96,7 +96,8 @@ export default async function FollowupsPage() {
         <h2 className="font-medium">Einstellungen</h2>
         {!autoSync ? (
           <p className="rounded bg-amber-50 px-3 py-2 text-sm text-amber-800">
-            Automatischer Versand ist in dieser Umgebung aus (INSTANTLY_AUTO_SYNC=1 und INSTANTLY_API_KEY nötig). „Jetzt senden“ im Kontakt geht trotzdem, wenn der Instantly-Schlüssel gesetzt ist.
+            Automatischer Versand ist in dieser Umgebung nicht eingerichtet. Follow-ups gehen hier nur über „Jetzt senden“ im Kontakt raus.
+            <span className="mt-1 block text-xs text-amber-700">Technisch: INSTANTLY_AUTO_SYNC=1 und INSTANTLY_API_KEY nötig.</span>
           </p>
         ) : null}
         <form action={saveFollowupSettingsAction} className="grid gap-3 sm:grid-cols-2" key={settings.updatedAt.getTime()}>
@@ -180,6 +181,7 @@ function Group({
                   <p className="whitespace-pre-wrap rounded bg-slate-50 p-2 text-xs text-slate-600">{f.body1 ?? "Text wird beim nächsten Lauf erstellt."}</p>
                   <p className="whitespace-pre-wrap rounded bg-slate-50 p-2 text-xs text-slate-600">{f.body2 ?? "Text wird beim nächsten Lauf erstellt."}</p>
                 </div>
+                <p className="mt-1 text-xs text-slate-500">Beide Mails gehen mit der Signatur des Postfachs raus, als Antwort im selben Verlauf.</p>
               </details>
             </li>
           ))}

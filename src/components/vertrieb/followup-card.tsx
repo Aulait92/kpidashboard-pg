@@ -87,6 +87,7 @@ export function FollowupCard({ contactId, followups, plannable, eaccount }: { co
                 <span className="label">Mail 2 (falls keine Antwort)</span>
                 <textarea name="body2" rows={4} defaultValue={f.body2 ?? ""} placeholder="Text wird beim nächsten Lauf erstellt." className="input font-normal" />
               </label>
+              <p className="text-xs text-slate-500">Die Signatur des Postfachs wird beim Versand unter beide Mails gesetzt.</p>
               <div className="flex flex-wrap gap-2">
                 <button className="btn-ghost">Speichern</button>
                 <button formAction={redraftFollowupAction} className="btn-ghost" title="Texte aus Originalmail und Antwort neu schreiben (überschreibt Änderungen)">
