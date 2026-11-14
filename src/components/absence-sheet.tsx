@@ -1,5 +1,7 @@
 "use client";
 
+import { terminArtKurz, terminArtLabel } from "@/lib/termin-art";
+
 // „Ich bin abwesend“: Eintragen/Ändern als Fenster (Handy: von unten), danach
 // direkt die Folgen – Termine im Zeitraum (alle verschieben, an Vertretung
 // übergeben, einzeln), verschobene Aufgaben (rückgängig) und bei Einzel-
@@ -201,7 +203,7 @@ export function AbsenceSheet({
                   <li key={x.id} className="px-3 py-2.5">
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="truncate font-medium">{x.leadName}</span>
-                      <span className="shrink-0 text-xs text-[color:var(--muted)]">{x.mode === "video" ? "Video" : "Telefon"}</span>
+                      <span className="shrink-0 text-xs text-[color:var(--muted)]">{terminArtKurz(x.mode)}</span>
                     </div>
                     <div className="text-sm text-[color:var(--muted)]">{timeShort(x.startsAt)}</div>
                     {done[x.id] ? (

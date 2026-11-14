@@ -1,5 +1,7 @@
 "use client";
 
+import { terminArtKurz, terminArtLabel } from "@/lib/termin-art";
+
 import { fmtDay, LaterDateSheet } from "@/components/later-date-sheet";
 import { useProvisionRates } from "@/components/provision-context";
 import { useRouter } from "next/navigation";
@@ -428,7 +430,7 @@ export function TodayInbox({
                 <TapRow
                   key={a.id}
                   className={sel(a.leadId)}
-                  onTap={() => openDetailOnDesktop(a.leadId) || setSheet({ kind: "actions", title: a.name, message: `${a.isToday ? "Heute" : day(a.startsAt)}, ${time(a.startsAt)} Uhr · ${video ? "Videocall" : "Telefonat"}`, actions })}
+                  onTap={() => openDetailOnDesktop(a.leadId) || setSheet({ kind: "actions", title: a.name, message: `${a.isToday ? "Heute" : day(a.startsAt)}, ${time(a.startsAt)} Uhr · ${terminArtLabel(a.mode)}`, actions })}
                 >
                   <div className="w-12 shrink-0">
                     <div className="text-lg font-semibold leading-none tabular-nums">{time(a.startsAt)}</div>
@@ -436,7 +438,7 @@ export function TodayInbox({
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-medium">{a.name}</div>
-                    <p className="truncate text-xs text-[color:var(--muted)]">{a.summary ?? (video ? "Videocall" : "Telefonat")}</p>
+                    <p className="truncate text-xs text-[color:var(--muted)]">{a.summary ?? terminArtLabel(a.mode)}</p>
                   </div>
                   <span onClick={stop}>
                     {video && a.meetUrl ? (
@@ -485,7 +487,7 @@ export function TodayInbox({
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-medium">{o.name}</div>
                     <p className="truncate text-xs text-[color:var(--muted)]">
-                      {day(o.startsAt)}, {time(o.startsAt)} Uhr · {o.mode === "video" ? "Videocall" : "Telefonat"}
+                      {day(o.startsAt)}, {time(o.startsAt)} Uhr · {terminArtLabel(o.mode)}
                     </p>
                   </div>
                   <Button

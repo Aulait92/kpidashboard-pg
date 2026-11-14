@@ -1,5 +1,7 @@
 "use client";
 
+import { terminArtKurz, terminArtLabel } from "@/lib/termin-art";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Ban } from "lucide-react";
@@ -130,7 +132,7 @@ export function BuyerLeadsTable({
                     {l.appointment ? (
                       <div className="mt-1 text-xs font-medium text-blue-700">
                         {formatAppt(new Date(l.appointment.startsAt))} Uhr ·{" "}
-                        {l.appointment.mode === "video" ? "Video" : "Telefon"}
+                        {terminArtKurz(l.appointment.mode)}
                       </div>
                     ) : l.followUpAt ? (
                       <div className="mt-1 text-xs font-medium text-violet-700">{followUpText(l.followUpAt)}</div>
@@ -209,7 +211,7 @@ export function BuyerLeadsTable({
                         {l.appointment ? (
                           <span className="text-xs text-blue-700">
                             {formatAppt(new Date(l.appointment.startsAt))} Uhr ·{" "}
-                            {l.appointment.mode === "video" ? "Video" : "Telefon"}
+                            {terminArtKurz(l.appointment.mode)}
                           </span>
                         ) : l.followUpAt ? (
                           <span className="text-xs font-medium text-violet-700">{followUpText(l.followUpAt)}</span>

@@ -119,13 +119,24 @@ Seiten aus der Liste „Seiten“ unten.
 - Oben die Phasen-Leiste: antippen, um die Phase zu ändern. Knöpfe **Gewonnen** und **Verloren**
   (bei Verloren fragt die App nach dem Grund, siehe „Verloren und nicht erreicht“).
 - Hat der Lead keinen nächsten Schritt, steht oben ein Hinweis mit dem Knopf **Nächster Schritt**.
-- Aktionen: **Anrufen**, **Chat** (WhatsApp), **Termin** (öffnet die Buchungsseite mit vorausgefüllten Daten), **Mehr**.
+- Aktionen: **Anrufen**, **Chat** (WhatsApp), **Termin**, **Mehr**.
+- **Termin:** Mit verbundenem Kalender öffnet „Termin in Ihrem Kalender buchen“ die Buchungsseite mit vorausgefüllten Daten.
+  Darunter (auch ohne Kalender) **Termin von Hand eintragen**: Datum, Uhrzeit, Art (Telefon, Video, Vor Ort) und Notiz.
+  Der Termin steht dann auf „Heute“ und im Kontakt, die Phase wird „Termin vereinbart“. Er wird nicht in den Kalender
+  übertragen, und der Lead bekommt keine automatische Erinnerung.
+- **Chat ohne bisherigen Verlauf:** Tippen öffnet „WhatsApp-Gespräch starten“. Die App sendet die freigegebene
+  Erstnachricht (Du oder Sie, mit oder ohne Namen, je nach Einstellung). Das geht nur, wenn der Lead selbst über ein
+  Formular angefragt hat, WhatsApp verbunden ist und eine Mobilnummer da ist. Fehlt etwas, steht dort, was zu tun ist.
+- **Knöpfe, bei denen etwas fehlt** (zum Beispiel Anrufen ohne Nummer oder E-Mail ohne Adresse), sind blasser. Antippen
+  erklärt, was fehlt, mit dem passenden Knopf (zum Beispiel **Angaben ändern**).
 - Eigene Kacheln für **E-Mail** und **Wiedervorlage**. Unter „Mehr“ nur noch, was nicht als Kachel da ist:
   **Postfach verbinden** (ohne verbundenes Postfach), **Stornieren/Reklamieren** (bei gekauften Leads),
   **Daten löschen (DSGVO)** (nur Inhaber).
 - Karte zum nächsten Termin (Videocall, Verschieben oder absagen im Fenster) und die Zusammenfassung des Assistenten.
 - Inhaber können unter **Zuständig** den Lead einem Berater geben – der bekommt eine Push-Nachricht.
-- „Angaben zum Lead“: alle Antworten aus dem Formular. Darunter Notizen (speichern sich von selbst).
+- „Angaben zum Lead“: alle Antworten aus dem Formular. Mit **Bearbeiten** (Stift) korrigieren Sie Anrede, Name,
+  Telefon, E-Mail und Adresse, zum Beispiel Tippfehler. Die Änderung steht im Verlauf, WhatsApp läuft danach über die
+  neue Nummer, die ursprünglichen Formularantworten bleiben erhalten. Darunter Notizen (speichern sich von selbst).
 - **Diktieren:** Auf dem Handy bei „Notizen“ auf „Diktieren“ tippen, dann unten in der Tastatur auf das Mikrofon und sprechen. Die Spracherkennung macht das Handy selbst, die App schickt keine Aufnahmen an Dritte.
 
 ## Pipeline

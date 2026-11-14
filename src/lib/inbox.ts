@@ -2,6 +2,7 @@
 // Termine heute/morgen, Termine ohne Ergebnis, Chats die den Berater
 // brauchen, Rückrufe. Alles serialisierbar für die Client-Komponente.
 
+import { terminArtKurz, terminArtLabel } from "@/lib/termin-art";
 import { POLICY_TODO } from "@/lib/lead-followup";
 import { CROSS_SELL_TODO, POLICE_TODO } from "@/lib/vertraege-shared";
 import { prisma } from "@/lib/prisma";
@@ -195,7 +196,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
         kind: "termin" as const,
         leadId: a.leadId,
         name: a.lead?.name ?? "Termin",
-        note: a.mode === "video" ? "Videocall" : "Telefonat",
+        note: terminArtLabel(a.mode),
         at: a.startsAt.toISOString(),
       })),
     ].sort((x, y) => x.at.localeCompare(y.at)),

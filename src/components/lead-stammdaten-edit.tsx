@@ -3,7 +3,7 @@
 // „Angaben zum Lead“ korrigieren (Ole, 14.11.2026): Stift im Kartenkopf öffnet ein Fenster
 // (Handy: von unten) mit Anrede, Name, Telefon, E-Mail und Adresse.
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui";
@@ -35,6 +35,12 @@ export function LeadStammdatenEdit({ leadId, initial }: { leadId: string; initia
     setError(null);
     setOpen(true);
   };
+  // „Angaben ändern“ aus den Erklärungen der Aktionsknöpfe (components/lead-actions.tsx)
+  useEffect(() => {
+    const h = () => openSheet();
+    window.addEventListener("pg:stammdaten-open", h);
+    return () => window.removeEventListener("pg:stammdaten-open", h);
+  });
   const set = (k: keyof StammdatenInput, v: string) => setValues((p) => ({ ...p, [k]: v }));
   const save = () =>
     start(async () => {

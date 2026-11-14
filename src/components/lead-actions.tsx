@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { eraseLeadAction, setLeadStatusAction, updateLeadDetailsAction } from "@/app/buyer/actions";
+import { manualAppointmentAction, startLeadChatAction } from "@/app/buyer/lead-manual-actions";
 import { clearFollowUpResult, setFollowUpResult, undoInboxAction } from "@/app/buyer/inbox-actions";
 import { Button, Card } from "@/components/ui";
 import { ActionSheet, Sheet, type SheetAction } from "@/components/ui/sheet";
@@ -60,7 +61,13 @@ type Props = {
   askAfterCall?: boolean;
   /** Produkt (Lead.source): Beitrag beim Abschluss (Monats-/Jahresbeitrag) bzw. kein Feld bei festem Satz. */
   source?: string | null;
+  /** WhatsApp im Konto verbunden (für „WhatsApp-Gespräch starten“). */
+  whatsappConnected?: boolean;
 };
+
+/** Öffnet „Angaben bearbeiten“ im Kontakt (components/lead-stammdaten-edit.tsx). */
+export const STAMMDATEN_OPEN_EVENT = "pg:stammdaten-open";
+const openStammdaten = () => window.dispatchEvent(new Event(STAMMDATEN_OPEN_EVENT));
 
 const QUICK = [
   { label: "Morgen", days: 1 },
@@ -73,7 +80,7 @@ export function LeadHeaderActions(p: Props) {
   const router = useRouter();
   const toast = useToast();
   const [, start] = useTransition();
-  const [open, setOpen] = useState<"phase" | "more" | "followup" | "win" | "storno" | "erase" | "lost" | null>(null);
+  const [open, setOpen] = useState<"phase" | "more" | "followup" | "win" | "storno" | "erase" | "lost" | "termin" | "chat" | null>(null);
   const { done: stepDone } = useStepDone();
   const [erasing, setErasing] = useState(false);
   const [note, setNote] = useState(p.followUpNote ?? "");
@@ -258,25 +265,38 @@ export function LeadHeaderActions(p: Props) {
         </div>
 
         <div className="mt-4 grid grid-cols-3 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
+          {/* Grundsatz (Ole, 14.11.2026): Kein Knopf ist grau ohne Erklärung. Fehlt etwas, sagt das Antippen, was und wie es weitergeht. */}
           <ActionTile
             icon={Phone}
             label="Anrufen"
             href={p.phone ? `tel:+${p.phone}` : undefined}
-            onClick={p.askAfterCall ? () => markCall(p.leadId) : undefined}
+            onClick={p.phone && p.askAfterCall ? () => markCall(p.leadId) : undefined}
             primary
             title={p.phone ? formatPhone(p.phone) : undefined}
+            explain={{ title: "Keine Telefonnummer hinterlegt", text: "Tragen Sie die Nummer bei den Angaben zum Lead ein, dann können Sie direkt anrufen.", actions: [{ label: "Angaben ändern", onClick: openStammdaten }] }}
           />
-          <ActionTile icon={MessageCircle} label="Chat" href={p.conversationId ? `/buyer/chats?c=${p.conversationId}` : undefined} />
+          <ActionTile
+            icon={MessageCircle}
+            label="Chat"
+            href={p.conversationId ? `/buyer/chats?c=${p.conversationId}` : undefined}
+            onClick={p.conversationId ? undefined : () => setOpen("chat")}
+          />
           {/* E-Mail direkt sichtbar (Ole, 14.11.2026: war unter „Mehr“ versteckt). Mit Postfach aus der App, sonst Mailprogramm. */}
           <ActionTile
             icon={Mail}
             label="E-Mail"
             href={!p.mailReady && p.email ? `mailto:${p.email}` : undefined}
-            onClick={p.mailReady ? () => window.dispatchEvent(new Event(LEAD_MAIL_EVENT)) : undefined}
+            onClick={p.mailReady && p.email ? () => window.dispatchEvent(new Event(LEAD_MAIL_EVENT)) : undefined}
+            explain={{ title: "Keine E-Mail-Adresse hinterlegt", text: "Tragen Sie die Adresse bei den Angaben zum Lead ein, dann können Sie direkt schreiben.", actions: [{ label: "Angaben ändern", onClick: openStammdaten }] }}
           />
-          <ActionTile icon={CalendarPlus} label="Termin" href={p.bookingSlug ? `/book/${p.bookingSlug}?lead=${p.leadId}` : undefined} external />
+          <ActionTile icon={CalendarPlus} label="Termin" onClick={() => setOpen("termin")} />
           {/* Wiedervorlage direkt neben Anrufen/Chat/Termin (Ole, 13.11.2026: war zu versteckt) */}
-          <ActionTile icon={BellRing} label="Wiedervorlage" onClick={!p.storniert ? () => setOpen("followup") : undefined} />
+          <ActionTile
+            icon={BellRing}
+            label="Wiedervorlage"
+            onClick={!p.storniert ? () => setOpen("followup") : undefined}
+            explain={{ title: "Lead ist storniert", text: "Für stornierte Leads gibt es keine Wiedervorlage mehr. Ist die Stornierung abgelehnt worden, ändern Sie zuerst den Status." }}
+          />
           <ActionTile icon={MoreHorizontal} label="Mehr" onClick={() => setOpen("more")} />
         </div>
 
@@ -329,6 +349,23 @@ export function LeadHeaderActions(p: Props) {
           setStatus("Abschluss" as LeadStatus, "Abschluss", v, undefined, sp);
         }}
       />
+
+      {open === "termin" ? (
+        <TerminSheet leadId={p.leadId} bookingSlug={p.bookingSlug} onClose={() => setOpen(null)} onSaved={() => { setOpen(null); router.refresh(); emitLeadAction(p.leadId); }} />
+      ) : null}
+      {open === "chat" ? (
+        <ChatStartSheet
+          leadId={p.leadId}
+          name={p.name}
+          phone={p.phone}
+          whatsappConnected={!!p.whatsappConnected}
+          onClose={() => setOpen(null)}
+          onStarted={(conversationId) => {
+            setOpen(null);
+            router.push(`/buyer/chats?c=${conversationId}`);
+          }}
+        />
+      ) : null}
 
       <Sheet open={open === "followup"} onClose={() => setOpen(null)} title="Wiedervorlage" message="Erscheint am Tag auf „Heute“.">
         <div className="space-y-3 p-5">
@@ -415,6 +452,8 @@ export function LeadHeaderActions(p: Props) {
   );
 }
 
+type Explain = { title: string; text: string; actions?: { label: string; href?: string; onClick?: () => void }[] };
+
 function ActionTile({
   icon: Icon,
   label,
@@ -423,6 +462,7 @@ function ActionTile({
   primary,
   external,
   title,
+  explain,
 }: {
   icon: typeof Phone;
   label: string;
@@ -431,14 +471,17 @@ function ActionTile({
   primary?: boolean;
   external?: boolean;
   title?: string;
+  /** Fehlt etwas (kein href/onClick): Antippen erklärt, was fehlt und was man tun kann. */
+  explain?: Explain;
 }) {
+  const [why, setWhy] = useState(false);
   const disabled = !href && !onClick;
   const cls = cn(
     "flex min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-md)] px-1.5 py-2.5 text-center text-[11px] font-semibold leading-tight transition sm:flex-row sm:gap-2 sm:px-4 sm:text-sm",
     primary
       ? "bg-[color:var(--brand)] text-white hover:bg-[color:var(--brand-dark)]"
       : "border border-[color:var(--border)] bg-white text-[color:var(--foreground)] shadow-[var(--shadow-sm)] hover:border-[color:var(--border-strong)]",
-    disabled && "pointer-events-none opacity-40",
+    disabled && (explain ? "opacity-50" : "pointer-events-none opacity-40"),
   );
   const inner = (
     <>
@@ -453,10 +496,185 @@ function ActionTile({
       </a>
     );
   }
+  if (disabled && explain) {
+    return (
+      <>
+        <button type="button" onClick={() => setWhy(true)} className={cls} aria-label={`${label}: ${explain.title}`} data-action-explain>
+          {inner}
+        </button>
+        <Sheet open={why} onClose={() => setWhy(false)} title={explain.title}>
+          <div className="space-y-3 p-5 text-sm">
+            <p className="text-[color:var(--muted)]">{explain.text}</p>
+            {explain.actions?.length ? (
+              <div className="flex flex-wrap gap-2">
+                {explain.actions.map((a) =>
+                  a.href ? (
+                    <a key={a.label} href={a.href} className="inline-flex items-center rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-4 py-2 font-semibold text-white">
+                      {a.label}
+                    </a>
+                  ) : (
+                    <Button
+                      key={a.label}
+                      variant="primary"
+                      size="md"
+                      onClick={() => {
+                        setWhy(false);
+                        a.onClick?.();
+                      }}
+                    >
+                      {a.label}
+                    </Button>
+                  ),
+                )}
+              </div>
+            ) : null}
+          </div>
+        </Sheet>
+      </>
+    );
+  }
   return (
     <button type="button" onClick={onClick} disabled={disabled} className={cls}>
       {inner}
     </button>
+  );
+}
+
+/** „Termin“: über die Buchungsseite (mit Kalender) oder von Hand eintragen (Ole, 14.11.2026). */
+function TerminSheet({ leadId, bookingSlug, onClose, onSaved }: { leadId: string; bookingSlug: string | null; onClose: () => void; onSaved: () => void }) {
+  const toast = useToast();
+  const [pending, start] = useTransition();
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("10:00");
+  const [mode, setMode] = useState("phone");
+  const [note, setNote] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const save = () =>
+    start(async () => {
+      setError(null);
+      const r = await manualAppointmentAction(leadId, { date, time, mode, note });
+      if (!r.ok) return setError(r.error);
+      toast.show({ message: "Termin eingetragen" });
+      onSaved();
+    });
+  return (
+    <Sheet open onClose={onClose} title="Termin">
+      <div className="max-h-[75vh] space-y-4 overflow-y-auto p-5 text-sm" data-termin-sheet>
+        {bookingSlug ? (
+          <a
+            href={`/book/${bookingSlug}?lead=${leadId}`}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-4 py-2.5 font-semibold text-white"
+          >
+            <CalendarPlus className="h-4 w-4" /> Termin in Ihrem Kalender buchen
+          </a>
+        ) : (
+          <div className="space-y-2 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950" data-termin-ohne-kalender>
+            <p>Für Terminbuchungen verbinden Sie Ihren Kalender. Dann sieht der Lead nur Ihre freien Zeiten, und der Termin landet direkt in Ihrem Kalender.</p>
+            <a href="/buyer/kalender" className="inline-flex rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-4 py-2 font-semibold text-white">
+              Kalender verbinden
+            </a>
+          </div>
+        )}
+        <div className="space-y-3" data-termin-manuell>
+          <p className="font-semibold">Termin von Hand eintragen</p>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block">
+              <span className="mb-1 block text-[color:var(--muted)]">Datum</span>
+              <input type="date" className="input w-full" value={date} onChange={(e) => setDate(e.target.value)} />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-[color:var(--muted)]">Uhrzeit</span>
+              <input type="time" step={300} className="input w-full" value={time} onChange={(e) => setTime(e.target.value)} />
+            </label>
+          </div>
+          <label className="block">
+            <span className="mb-1 block text-[color:var(--muted)]">Art</span>
+            <select className="input w-full" value={mode} onChange={(e) => setMode(e.target.value)}>
+              <option value="phone">Telefon</option>
+              <option value="video">Video</option>
+              <option value="onsite">Vor Ort</option>
+            </select>
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-[color:var(--muted)]">Notiz (optional)</span>
+            <textarea className="input w-full" rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
+          </label>
+          <p className="text-xs text-[color:var(--muted)]">Der Termin steht auf „Heute“ und im Kontakt. In Ihren Kalender wird er nicht übertragen, der Lead bekommt keine automatische Erinnerung.</p>
+          {error ? <p className="rounded-[var(--radius-sm)] bg-rose-50 px-3 py-2 text-rose-800">{error}</p> : null}
+          <Button variant="primary" size="md" className="w-full" disabled={pending || !date || !time} onClick={save}>
+            {pending ? "Wird gespeichert …" : "Termin eintragen"}
+          </Button>
+        </div>
+      </div>
+    </Sheet>
+  );
+}
+
+/** „Chat“ ohne Verlauf: WhatsApp-Gespräch mit freigegebener Vorlage starten oder erklären, was fehlt. */
+function ChatStartSheet({
+  leadId,
+  name,
+  phone,
+  whatsappConnected,
+  onClose,
+  onStarted,
+}: {
+  leadId: string;
+  name: string | null;
+  phone: string | null;
+  whatsappConnected: boolean;
+  onClose: () => void;
+  onStarted: (conversationId: string) => void;
+}) {
+  const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const go = () =>
+    start(async () => {
+      setError(null);
+      const r = await startLeadChatAction(leadId);
+      if (r.ok) return onStarted(r.conversationId);
+      if (r.reason === "exists" && r.conversationId) return onStarted(r.conversationId);
+      setError(r.error);
+    });
+  return (
+    <Sheet open onClose={onClose} title="WhatsApp-Gespräch starten">
+      <div className="space-y-3 p-5 text-sm" data-chat-start>
+        {!whatsappConnected ? (
+          <>
+            <p className="text-[color:var(--muted)]">WhatsApp ist in Ihrem Konto noch nicht verbunden. Danach schreibt Ihr Assistent neue Leads automatisch an.</p>
+            <a href="/buyer/einrichtung#whatsapp" className="inline-flex rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-4 py-2 font-semibold text-white">
+              WhatsApp verbinden
+            </a>
+          </>
+        ) : !phone ? (
+          <>
+            <p className="text-[color:var(--muted)]">Keine Mobilnummer hinterlegt. Tragen Sie die Nummer bei den Angaben zum Lead ein.</p>
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => {
+                onClose();
+                openStammdaten();
+              }}
+            >
+              Angaben ändern
+            </Button>
+          </>
+        ) : (
+          <>
+            <p className="text-[color:var(--muted)]">
+              Mit {name ?? "diesem Lead"} gibt es noch keinen Chat. Wir senden die freigegebene Erstnachricht (passend zur Ansprache) an +{phone}. Antwortet der Lead, geht es im Chat weiter.
+            </p>
+            {error ? <p className="rounded-[var(--radius-sm)] bg-rose-50 px-3 py-2 text-rose-800">{error}</p> : null}
+            <Button variant="primary" size="md" icon={MessageCircle} className="w-full" disabled={pending} onClick={go}>
+              {pending ? "Wird gesendet …" : "Erstnachricht senden"}
+            </Button>
+          </>
+        )}
+      </div>
+    </Sheet>
   );
 }
 

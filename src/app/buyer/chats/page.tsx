@@ -263,7 +263,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                 <CalendarClock className="h-4 w-4" /> {formatAppt(a.startsAt)} Uhr
               </div>
               <div className="mt-0.5 text-xs text-blue-800">
-                {a.mode === "video" ? "Videocall" : "Telefonat, du rufst an"}
+                {a.mode === "video" ? "Videocall" : a.mode === "onsite" ? "Vor Ort" : "Telefonat, du rufst an"}
               </div>
               <div className="mt-2 flex flex-wrap gap-3 text-xs">
                 {a.meetUrl ? (

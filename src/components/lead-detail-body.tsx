@@ -1,3 +1,4 @@
+import { terminArtKurz, terminArtLabel } from "@/lib/termin-art";
 import { AlertTriangle, CalendarClock, ClipboardList, MessageCircle } from "lucide-react";
 import { NextStepButton, NextStepPrompt } from "@/components/next-step";
 import { NEXT_STEP_LABEL, pastOpenAppointmentWhere } from "@/lib/lead-next-step";
@@ -208,6 +209,7 @@ export async function LeadDetailBody({
   };
 
   const whatsapp = await hasWhatsAppInbox(customerId);
+  const waConnected = (await prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { status: true } }))?.status === "connected";
   let stornoOptionsMap: LeadStornogrundOptions = new Map();
   try {
     stornoOptionsMap = await getStornogruendePerLead([lead.id]);
@@ -326,6 +328,7 @@ export async function LeadDetailBody({
         daysInPhase={Math.max(0, Math.floor((nowMs() - lead.statusChangedAt.getTime()) / 86_400_000))}
         askAfterCall={newUi}
         mailReady={!!postfach}
+        whatsappConnected={waConnected}
       />
       {stepState === "missing" || stepState === "result_missing" ? (
         <div className="mb-5 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900" data-next-step-hint>
@@ -412,7 +415,7 @@ export async function LeadDetailBody({
               <CalendarClock className="h-5 w-5 shrink-0 text-[color:var(--brand)]" />
               <div className="min-w-0 flex-1">
                 <div className="font-semibold">{apptFmt(nextAppt.startsAt)} Uhr</div>
-                <div className="text-xs text-[color:var(--muted)]">{nextAppt.mode === "video" ? "Videocall" : "Telefonat"}</div>
+                <div className="text-xs text-[color:var(--muted)]">{terminArtLabel(nextAppt.mode)}</div>
               </div>
               {nextAppt.mode === "video" && nextAppt.meetUrl ? (
                 <ButtonLink href={nextAppt.meetUrl} variant="primary" external>

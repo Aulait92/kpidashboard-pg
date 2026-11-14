@@ -1,5 +1,7 @@
 "use client";
 
+import { terminArtKurz, terminArtLabel } from "@/lib/termin-art";
+
 import { useProvisionRates } from "@/components/provision-context";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -645,7 +647,7 @@ function KanbanCard({
             hour: "2-digit",
             minute: "2-digit",
           }).format(new Date(lead.appointment.startsAt))}{" "}
-          · {lead.appointment.mode === "video" ? "Video" : "Telefon"}
+          · {terminArtKurz(lead.appointment.mode)}
         </div>
       ) : null}
       {lead.followUpAt && !lead.appointment ? (

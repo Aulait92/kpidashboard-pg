@@ -6,6 +6,7 @@
 // Default-Modell: claude-opus-5-5 (per ANTHROPIC_MODEL überschreibbar — bei
 // hohem Volumen ist claude-sonnet-5-5 / claude-haiku-5-5 die günstigere Wahl).
 
+import { terminArtKurz, terminArtLabel } from "@/lib/termin-art";
 import { advisorDisplayName } from "@/lib/advisor-name";
 import { anredeName, anredeZeile, asAnsprache, kontaktParts, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
 import { ansprechpartner } from "@/lib/lead-anrede";
@@ -203,7 +204,7 @@ export function buildSystemPrompt(
   const nowText = formatNowDE(state.now ?? new Date());
   const booked = state.upcoming
     ? [
-        `BEREITS GEBUCHTER TERMIN: ${formatSlotDE(state.upcoming.startsAt.toISOString())} Uhr (${state.upcoming.mode === "video" ? "Videocall" : "Telefonat"})${state.upcoming.meetUrl ? `, Video-Link: ${state.upcoming.meetUrl}` : ""}.`,
+        `BEREITS GEBUCHTER TERMIN: ${formatSlotDE(state.upcoming.startsAt.toISOString())} Uhr (${terminArtLabel(state.upcoming.mode)})${state.upcoming.meetUrl ? `, Video-Link: ${state.upcoming.meetUrl}` : ""}.`,
         "Dieser Lead hat schon einen Termin. Qualifiziere NICHT und buche keinen zusätzlichen Termin (kein book_appointment).",
         "Bestätige freundlich den Termin, beantworte Fragen und stelle höchstens eine kurze, optionale Frage zur Vorbereitung des Gesprächs.",
         "Möchte der Lead VERSCHIEBEN: hole mit get_available_slots freie Zeiten, biete 2-3 an und nutze nach seiner Wahl reschedule_appointment. Bestätige danach die neue Zeit.",
