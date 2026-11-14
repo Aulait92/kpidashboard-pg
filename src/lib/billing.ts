@@ -965,7 +965,7 @@ export async function syncSeatBilling(customerId: string, opts: { force?: boolea
       note = `Ohne Stripe: Aufgabe „${MANUAL_SEAT_TASK}“ ist angelegt.`;
     }
     await prisma.customer.update({ where: { id: customerId }, data: { seatsBilled: want } });
-    await audit("billing.seats", { entity: "Customer", entityId: customerId, customerId, details: { from: c.seatsBilled, to: want, logins: usage.logins, active: usage.active } });
+    await audit("billing.seats", { entity: "Customer", entityId: customerId, customerId, details: { from: c.seatsBilled, to: want, logins: usage.logins, active: usage.active, price } });
     return { ok: true, changed: true, ...(note ? { note } : {}) };
   } catch (err) {
     reportError(err, "billing-seats", { customer: customerId });
@@ -1017,7 +1017,8 @@ export async function setBestandModule(
             ? { existingCustomersEnabled: true, bestandMonthly: null, bestandGrandfathered: true, bestandRequestedAt: null, bestandCancelAt: null }
             : { existingCustomersEnabled: false, bestandMonthly: null, bestandGrandfathered: false, bestandCancelAt: null },
     });
-    await audit("billing.bestand", { entity: "Customer", entityId: customerId, customerId, details: { mode, price }, ...(opts.actor ? { actor: opts.actor } : {}) });
+    // from = Monatspreis vorher (Admin → Zahlen → Buchungen)
+    await audit("billing.bestand", { entity: "Customer", entityId: customerId, customerId, details: { mode, price, from: c.bestandMonthly != null ? Number(c.bestandMonthly) : null }, ...(opts.actor ? { actor: opts.actor } : {}) });
     return { ok: true, changed: true, ...(note ? { note } : {}) };
   } catch (err) {
     reportError(err, "billing-bestand", { customer: customerId });
@@ -1111,7 +1112,7 @@ export async function scheduleBestandCancel(
       entity: "Customer",
       entityId: customerId,
       customerId,
-      details: { mode: "cancel_at_period_end", until: until.toISOString() },
+      details: { mode: "cancel_at_period_end", until: until.toISOString(), price: Number(c.bestandMonthly) },
       ...(actor ? { actor } : {}),
     });
     return { ok: true, until, ...(note ? { note } : {}) };
@@ -1177,7 +1178,7 @@ export async function setEmpfehlungModule(customerId: string, mode: "book" | "fr
             ? { empfehlungEnabled: true, empfehlungMonthly: null, empfehlungFree: true, empfehlungCancelAt: null, empfehlungSince: since }
             : { empfehlungEnabled: false, empfehlungMonthly: null, empfehlungFree: false, empfehlungCancelAt: null },
     });
-    await audit("billing.empfehlung", { entity: "Customer", entityId: customerId, customerId, details: { mode, price }, ...(opts.actor ? { actor: opts.actor } : {}) });
+    await audit("billing.empfehlung", { entity: "Customer", entityId: customerId, customerId, details: { mode, price, from: c.empfehlungMonthly != null ? Number(c.empfehlungMonthly) : null }, ...(opts.actor ? { actor: opts.actor } : {}) });
     return { ok: true, changed: true, ...(r.note && mode === "book" ? { note: r.note } : {}) };
   } catch (err) {
     reportError(err, "billing-empfehlung-admin", { customer: customerId });
@@ -1224,7 +1225,7 @@ export async function scheduleEmpfehlungCancel(
     }
     if (!until) until = endOfBerlinMonth(now);
     await prisma.customer.update({ where: { id: customerId }, data: { empfehlungCancelAt: until } });
-    await audit("billing.empfehlung", { entity: "Customer", entityId: customerId, customerId, details: { mode: "cancel_at_period_end", until: until.toISOString() } });
+    await audit("billing.empfehlung", { entity: "Customer", entityId: customerId, customerId, details: { mode: "cancel_at_period_end", until: until.toISOString(), price: c.empfehlungMonthly != null ? Number(c.empfehlungMonthly) : 0 } });
     return { ok: true, until, ...(note ? { note } : {}) };
   } catch (err) {
     reportError(err, "billing-empfehlung-cancel", { customer: customerId });

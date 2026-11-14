@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, Bot, Calculator, Clock, FileBarChart, Layers, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, Megaphone, MessageCircle, Receipt, Rocket, ShieldCheck, TrendingUp, Wallet, Workflow } from "lucide-react";
+import { Activity, Bot, Calculator, ClipboardList, Clock, FileBarChart, Layers, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, Megaphone, MessageCircle, Receipt, Rocket, ShieldCheck, TrendingUp, Wallet, Workflow } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { supportConfig } from "@/lib/support";
 import { loadTaxNumber, taxNumberWarning } from "@/lib/invoice-footer";
@@ -47,6 +47,7 @@ const GROUPS = [
     title: "Finanzen",
     text: "Kosten und Konten",
     items: [
+      { href: "/admin/zahlen/buchungen", icon: ClipboardList, color: "bg-blue-500", title: "Buchungen", text: "Alle Buchungen und Änderungen aller Kunden: Angebote, Produkte, Module, Budget, Pausen, Kündigungen" },
       { href: "/admin/einstellungen/kosten", icon: Wallet, color: "bg-emerald-600", title: "Laufende Kosten", text: "Tools und eigene Werbung für Marge und Kundengewinnung" },
       { href: "/admin/einstellungen/bank", icon: Landmark, color: "bg-teal-600", title: "Bank & Karten", text: "Commerzbank und Amex: Ausgaben holen und als Kosten zuordnen" },
       { href: "/admin/einstellungen/rechnungsangaben", icon: Receipt, color: "bg-slate-500", title: "Rechnungsangaben", text: "Steuernummer und Pflichtangaben auf Stripe-Rechnungen, Prüfung des Stripe-Kontos" },
