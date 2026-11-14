@@ -257,10 +257,20 @@ export function PhotoUpload() {
   const [res, action, pending] = useActionState(uploadPhotosAction, {});
   return (
     <form action={action} className="flex flex-wrap items-center gap-3">
-      <input type="file" name="photos" accept="image/jpeg,image/png,image/webp,image/gif" multiple className="text-sm" />
-      <Button type="submit" size="md" icon={pending ? Loader2 : Upload} disabled={pending}>
-        {pending ? "Lade hoch und beschreibe …" : "Hochladen"}
-      </Button>
+      {/* Ein Knopf: Auswahl öffnet sich, nach der Auswahl wird sofort hochgeladen */}
+      <label className={cn("inline-flex h-10 cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-4 text-sm font-semibold text-white", pending && "pointer-events-none opacity-60")}>
+        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+        {pending ? "Lade hoch und beschreibe …" : "Fotos hochladen"}
+        <input
+          type="file"
+          name="photos"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          multiple
+          className="sr-only"
+          onChange={(e) => e.currentTarget.files?.length && e.currentTarget.form?.requestSubmit()}
+        />
+      </label>
+      <span className="text-xs text-[color:var(--muted)]">Mehrere auf einmal möglich (JPG, PNG, WebP).</span>
       <Note res={res} />
     </form>
   );
@@ -309,10 +319,19 @@ export function ImportForm() {
   const [res, action, pending] = useActionState(importAction, {});
   return (
     <form action={action} className="flex flex-wrap items-center gap-3">
-      <input type="file" name="file" accept=".xlsx,.csv" className="text-sm" />
-      <Button type="submit" size="md" icon={pending ? Loader2 : Upload} disabled={pending}>
-        Statistik hochladen
-      </Button>
+      {/* Ein Knopf: Auswahl öffnet sich, nach der Auswahl wird die Datei sofort eingelesen */}
+      <label className={cn("inline-flex h-10 cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-4 text-sm font-semibold text-white", pending && "pointer-events-none opacity-60")}>
+        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+        {pending ? "Lese Datei …" : "Export-Datei hochladen"}
+        <input
+          type="file"
+          name="file"
+          accept=".xlsx,.csv"
+          className="sr-only"
+          onChange={(e) => e.currentTarget.files?.length && e.currentTarget.form?.requestSubmit()}
+        />
+      </label>
+      <span className="text-xs text-[color:var(--muted)]">Excel-Datei (.xlsx) aus LinkedIn, wie sie heruntergeladen wurde.</span>
       <Note res={res} />
     </form>
   );
