@@ -79,7 +79,7 @@ Seiten aus der Liste „Seiten“ unten.
   Kein Interesse, Disqualifiziert.
 - Am Rechner Karten mit der Maus in eine andere Spalte ziehen. Auf dem Handy die Karte antippen und die Phase wählen.
 - In „Abschluss“ fragt die App nach dem Beitrag (siehe „Abschluss und Provision“). Die Spalte „Abschluss“ zeigt
-  die geschätzte Provision, jede Karte „Beitrag … · Provision ≈ …“.
+  die geschätzte Provision über alle Verträge, jede Karte „Sparte · Beitrag … · Provision ≈ …“ bzw. „2 Verträge · …“.
 - Karten zeigen, wie lange der Lead schon in der Phase ist, und warnen bei „Kein nächster Schritt“.
 
 ## Chats (WhatsApp)
@@ -235,34 +235,84 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Zahlen
 
-- Zeitraum wählen. Funnel: Leads → Erreicht → Termin → Abschluss.
-- Kosten & Ertrag: Lead-Kosten, Provision (geschätzt), Gewinn (Provision minus Lead-Kosten), Kosten pro Abschluss
-  bzw. pro Termin, mit Vergleich zum Vorzeitraum. Auch die Hochrechnung und die Team-Tabelle zeigen die
-  geschätzte Provision.
+- Zeitraum wählen. Funnel: Leads → Erreicht → Termin → Abschluss. Trichter, Quoten und Kosten pro Lead, Termin
+  und Abschluss zählen **nur bezahlte Leads** (Werbung wie Meta oder Outbrain), damit die Quoten stimmen. Abschlüsse
+  aus Empfehlungen und Bestandskampagnen stehen darunter extra, z. B. „+ 3 Abschlüsse aus Empfehlungen“.
+- **Kosten & Ertrag:**
+  - **Lead-Kosten:** was die bezahlten Leads gekostet haben (bei eigenem Werbekonto: Werbebudget plus Retainer).
+  - **Abschlussprovision (geschätzt):** die einmalige Provision aus den Abschlüssen im Zeitraum („aus 4 Abschlüssen,
+    einmalig“). Bei Maklern heißt die Karte **Courtage 1. Jahr** (Sach ohne Abschlussprovision, dafür die Courtage des
+    1. Jahres). Darunter: „davon Cross-Selling“ (weitere Verträge bei Kunden mit Abschluss), „davon aus Empfehlungen“,
+    „aus Bestandskampagnen“ und „Verträge pro Kunde“. Empfehlungen und Bestandskampagnen zählen voll mit, weil sie
+    aus Ihren Leads entstehen.
+  - **Bestandsprovision** (Makler: **Bestandscourtage**): laufend pro Jahr aus allen Verträgen seit Start, z. B.
+    „+ 140 € pro Jahr, aus 12 Verträgen, ab dem 2. Jahr“ (Vertreter bekommen Bestand ab dem 2. Vertragsjahr, Makler
+    ab sofort). Darunter „in 5 Jahren: …“: so viel bringen die bisherigen Verträge in den nächsten 5 Jahren, wenn jedes
+    Jahr 10 % der Verträge wegfallen. „+ … pro Jahr aus diesem Zeitraum“ zeigt, was die Abschlüsse im gewählten
+    Zeitraum dazulegen. „So rechnen wir“ antippen für Satz, Storno und Annahmen.
+  - **Gewinn:** Abschlussprovision (bzw. Courtage 1. Jahr) minus Lead-Kosten minus Betreuung, also ehrlich ohne
+    künftige Bestandsprovision. „Aufschlüsselung“ antippen (am Rechner: mit der Maus darüber) zeigt Provision,
+    Lead-Kosten, Betreuung & Software und weitere Posten. Darunter „plus Bestand: … in 5 Jahren“.
+  - **Kosten pro Abschluss** bzw. pro Termin: alle Kosten (Lead-Kosten plus Betreuung) geteilt durch die Abschlüsse
+    bzw. Termine aus bezahlten Leads, passend zum Gewinn.
+- **Betreuung in den Zahlen:** Betreuung & Software (Monatspreis laut Ihrem Vertrag), weitere Verkäufer bzw. Logins,
+  Zusatzmodule (Bestand, Empfehlungen), WhatsApp-Gebühren, falls berechnet, und die Einrichtung. Monatsbeträge zählen
+  tagesgenau im gewählten Zeitraum, die Einrichtung verteilen wir über die Mindestlaufzeit (12 bzw. 3 Monate, ohne
+  Laufzeit über 12 Monate), damit der erste Monat nicht verzerrt. Alle Beträge **inklusive USt.**, weil
+  Versicherungsvermittler meist umsatzsteuerbefreit sind und die Vorsteuer nicht ziehen. Mit eigenem Werbekonto steckt
+  der Retainer schon in den Lead-Kosten und wird nicht doppelt abgezogen. Eine Prämie für Kollegen-Empfehlungen
+  (Gutschrift auf der Rechnung) mindert die Kosten im Monat der Gutschrift („Gutschrift Empfehlung“).
+- **So holen Sie mehr raus:** Ist der Gewinn im Zeitraum oder in der Hochrechnung im Minus, zeigt die App bis zu
+  3 Tipps, sortiert nach Wirkung, z. B. Empfehlungen anschalten, Kunden ein weiteres Produkt anbieten, Abschlüsse
+  vollständig eintragen oder Leads schneller anrufen (verglichen mit dem Schnitt aller Kunden, anonym). Jeder Tipp
+  hat einen Knopf direkt zur Stelle. Mit dem Kreuz blenden Sie einen Tipp für 30 Tage aus; erledigte Tipps
+  verschwinden von selbst. In den ersten Monaten ist ein Minus normal, die Bestandsprovision wächst mit.
+- **Hochrechnung für diesen Monat** zum Aufklappen: Leads, Termine, Abschlüsse (bezahlte Leads), Abschlussprovision,
+  Lead-Kosten, Betreuung & Software und Gewinn, hochgerechnet auf den Monat.
+- **So wächst Ihr Bestand** zum Aufklappen: Bestandsprovision pro Jahr über 5 Jahre, wenn Sie im Tempo der letzten
+  3 Monate weiter abschließen (10 % Storno pro Jahr).
+- Bei Teams eine Tabelle pro Person: bezahlte Leads, Erreicht, Termine, Abschlüsse, Quote, Abschlussprovision und
+  Bestand pro Jahr (inklusive Empfehlungen und Cross-Selling).
 
 ## Monatsberichte
 
-- Jeden Monat bekommen Sie von uns einen kurzen Rückblick per E-Mail: Leads, Termine und – wenn eingetragen – Abschlüsse
-  und Provision im Vergleich zum Vormonat, was wir für Sie optimiert haben, unsere nächsten Schritte und 1–2 Tipps.
+- Jeden Monat bekommen Sie von uns einen kurzen Rückblick per E-Mail: Leads (bezahlte Leads), Termine und, wenn
+  eingetragen, Abschlüsse, Abschlussprovision (Makler: Courtage 1. Jahr) und neue Bestandsprovision im Vergleich zum
+  Vormonat, was wir für Sie optimiert haben, unsere nächsten Schritte und 1–2 Tipps.
 - Alle bisherigen Berichte finden Sie unter „Zahlen“ ganz unten im Abschnitt „Monatsberichte“.
 - Je mehr Ergebnisse Sie bei Ihren Leads eintragen, desto genauer werden die Zahlen im Bericht.
 - Manchmal melden wir uns statt eines Berichts lieber persönlich – dann besprechen wir den Monat im Gespräch.
 
 ## Abschluss und Provision
 - Beim Abschluss fragt die App je nach Produkt nach einem Beitrag, alles freiwillig:
-  - Privatschutz und TKV: „Jahresbeitrag netto“. Vertreter: Provision ≈ 55 % davon (Abschlussprovision).
-    Makler: keine Abschlussprovision, sondern Bestandsprovision ≈ 22,5 % pro Jahr. Ohne Angabe rechnet die App
-    mit einem Beitrag von 600 € (Privatschutz) bzw. 350 € (TKV).
+  - Privatschutz und TKV (Katze, Hund, Pferd): „Jahresbeitrag netto“. Vertreter: Provision ≈ 55 % davon
+    (Abschlussprovision), dazu ab dem 2. Jahr 10 % Bestandsprovision pro Jahr. Makler: keine Abschlussprovision,
+    sondern Bestandscourtage ≈ 22,5 % pro Jahr. Ohne Angabe rechnet die App mit einem Beitrag von 600 € (Privatschutz)
+    bzw. 350 € (TKV).
   - PKV-Tarifoptimierung (nur Makler): „Monatsbeitrag netto“. Provision ≈ 10 Monatsbeiträge; ohne Angabe 2.500 €.
-  - Andere Produkte: „Wert des Abschlusses“, zählt direkt als Provision.
-- „Provision (geschätzt)“ enthält bei Bestandsprovision den Betrag des 1. Jahres.
+  - **Empfehlungen, Bestandskunden und unbekannte Produkte:** Die App fragt zuerst die **Sparte** (z. B. Katze,
+    Privatschutz/Haftpflicht, Hausrat) und rechnet dann mit dem Satz dieser Sparte.
 - Es ist eine Schätzung für die eigenen Zahlen, keine Abrechnung. Wer den Beitrag einträgt, bekommt genauere Werte.
+- **Mehrere Verträge pro Kunde (Cross-Selling):** Im Kontakt mit Abschluss steht unter „Verträge“ der erste Abschluss.
+  Mit **Weiteren Abschluss eintragen** kommen weitere Verträge dazu: Sparte (Katze, Hund, Pferd,
+  Privatschutz/Haftpflicht, Unfall, Hausrat, Wohngebäude, Rechtsschutz, Kindersparplan, KFZ, Leben/BU, PKV, Sonstiges),
+  Beitrag, Datum, optional Versicherer, Vertragsnummer und die Police als Dokument. Jeder Vertrag rechnet mit dem Satz
+  seiner Sparte. **Bearbeiten**, **Storno** (zählt dann nicht mehr) und **Löschen** (nur weitere Verträge) gehen
+  direkt in der Liste; jeder Schritt steht im Verlauf. Abschlüsse und Abschlussquote zählen weiter Kunden, nicht
+  Verträge.
+- **Erinnerung „Weiteres Produkt anbieten?“:** 3 Wochen nach dem ersten Abschluss erscheint die Aufgabe auf „Heute“,
+  mit naheliegenden Sparten (z. B. zur Katze: Haftpflicht, Unfall). Nicht, wenn schon ein weiterer Vertrag eingetragen
+  ist oder der Kontakt nicht mehr im Abschluss steht, und nur einmal je Kunde. Abschalten unter **Meine Provisionen**.
+- **Bestand:** Kunden mit Abschluss kommen mit allen Verträgen automatisch in den Bestand, damit Bestandskampagnen
+  wissen, was der Kunde schon hat. Importieren Sie den Kunden später selbst (gleiche Handynummer oder E-Mail), führt die
+  App beide zusammen; Verträge mit gleicher Vertragsnummer gibt es nur einmal.
+- Pro Kunde gibt es weiterhin nur eine Nachfrage nach Bewertung und Empfehlung, auch bei mehreren Verträgen.
 - **Meine Provisionen** (Profilmenü, auch unter Konto und in der Einrichtung): „Ich arbeite als Vertreter / Makler“
-  wählen und je Produkt die eigenen Sätze eintragen: Abschlussprovision in %, Bestandsprovision in % pro Jahr;
-  bei PKV die Monatsbeiträge. Es erscheinen nur die Produkte, die man bei uns gebucht hat (sonst ein Hinweis).
-  Ohne eingetragenen Beitrag rechnet die App mit einem Durchschnittsbeitrag. Vorausgefüllt mit üblichen Werten, „Auf Standard“ setzt
-  zurück. Nur der Inhaber kann speichern, Berater sehen die Sätze. Alle Zahlen rechnen danach mit den eigenen Sätzen.
-- „Hochrechnung für diesen Monat“ zum Aufklappen. Bei Teams eine Tabelle pro Person.
+  wählen und je Produkt die eigenen Sätze eintragen: Abschlussprovision in %, Bestandsprovision in % pro Jahr,
+  typischer Jahresbeitrag; bei PKV die Monatsbeiträge. Oben stehen die Produkte, die Sie bei uns gebucht haben bzw.
+  in Verträgen nutzen, darunter aufklappbar **Weitere Sparten (Cross-Selling)**, vorausgefüllt mit dem üblichen Satz
+  für Sach. Ohne eingetragenen Beitrag rechnet die App mit dem typischen Beitrag. „Auf Standard“ setzt zurück. Nur der
+  Inhaber kann speichern, Berater sehen die Sätze. Alle Zahlen rechnen danach mit den eigenen Sätzen.
 
 ## Garantien (Katzenversicherung)
 - **Lead-Garantie:** Bei mindestens 20 € Werbebudget pro Tag gibt es in den ersten 30 Tagen nach Kampagnenstart mindestens
