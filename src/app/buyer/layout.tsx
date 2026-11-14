@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { BuyerShell } from "@/components/buyer-shell";
+import { hilfeGruss } from "@/lib/hilfe-gruss";
 import { InhaberHinweis } from "@/components/inhaber-hinweis";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
@@ -52,6 +53,12 @@ export default async function BuyerLayout({
         })
       )?.name ?? "Kunde")
     : null;
+  // KI-Hilfe: Inhaber mit Anrede und Nachname aus dem Vertriebskontakt, Berater neutral (lib/hilfe-gruss)
+  const gruss = hilfeGruss(
+    ctx && ctx.teamRole === "owner"
+      ? await prisma.salesContact.findUnique({ where: { customerId: ctx.customerId }, select: { salutation: true, lastName: true } }).catch(() => null)
+      : null,
+  );
   const previewName = ctx?.preview ? customerName : null;
   const newUi = ctx ? await isNewUi(ctx.customerId) : false;
   const advisor = ctx?.teamRole === "advisor";
@@ -112,7 +119,7 @@ export default async function BuyerLayout({
       ) : null}
       {ctx ? (
         <ProvisionRatesProvider rates={provision?.rates ?? {}} products={provision?.products ?? []}>
-          <BuyerShell newUi={newUi} displayName={displayName} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen} teamRole={ctx.teamRole} hasTeam={logins > 1} showOrders={pplSubs > 0} showBestand={bestand} absence={absence} updatesUnread={updatesUnread} noStepBadge={noStepBadge}>
+          <BuyerShell newUi={newUi} displayName={displayName} hilfeGruss={gruss} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen} teamRole={ctx.teamRole} hasTeam={logins > 1} showOrders={pplSubs > 0} showBestand={bestand} absence={absence} updatesUnread={updatesUnread} noStepBadge={noStepBadge}>
             {ctx.teamRole === "advisor" ? (
               <Suspense fallback={null}>
                 <div className="px-4 sm:px-6 lg:px-8">

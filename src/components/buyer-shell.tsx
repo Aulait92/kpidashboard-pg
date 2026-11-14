@@ -46,6 +46,7 @@ type NavItem = {
 };
 
 export function BuyerShell({
+  hilfeGruss = "Hallo!",
   displayName,
   showChats,
   chatBadge,
@@ -75,6 +76,8 @@ export function BuyerShell({
   /** Mehrere Logins → „Mein Kalender" im Profilmenü. */
   hasTeam?: boolean;
   displayName: string;
+  /** Begrüßung in der KI-Hilfe (lib/hilfe-gruss), nie Firmenname */
+  hilfeGruss?: string;
   /** owner = Inhaber (Konto, Team), advisor = Berater (nur eigene Leads). */
   teamRole?: "owner" | "advisor";
   showChats: boolean;
@@ -93,6 +96,7 @@ export function BuyerShell({
       <BuyerShellA
         pathname={pathname}
         displayName={displayName}
+        hilfeGruss={hilfeGruss}
         showChats={showChats}
         chatBadge={chatBadge}
         setupOpen={setupOpen}
@@ -170,7 +174,7 @@ export function BuyerShell({
           <div className="ml-auto flex items-center gap-2">
             <BuyerSearchButton variant="field" className="hidden w-52 lg:flex" />
             <BuyerSearchButton variant="icon" className="lg:hidden" />
-            <HilfeChat firstName={displayName.replace(/^Allianz\s+/i, "").split(/\s+/)[0] ?? ""} owner={teamRole === "owner"} />
+            <HilfeChat greeting={hilfeGruss} owner={teamRole === "owner"} />
             <ProfileMenu name={displayName} owner={teamRole === "owner"} hasTeam={hasTeam} absence={absence} updatesUnread={updatesUnread} showBestand={showBestand} />
           </div>
         </div>
@@ -436,6 +440,7 @@ function ProfileMenu({
 function BuyerShellA({
   pathname,
   displayName,
+  hilfeGruss,
   showChats,
   chatBadge,
   setupOpen,
@@ -451,6 +456,7 @@ function BuyerShellA({
   noStepBadge: number;
   pathname: string;
   displayName: string;
+  hilfeGruss: string;
   showChats: boolean;
   chatBadge: number;
   setupOpen: number;
@@ -469,7 +475,6 @@ function BuyerShellA({
       ? [{ href: "/buyer/wachstum", label: "Wachstum", icon: TrendingUp, match: (p: string) => /^\/buyer\/(wachstum|zahlen|bestellen|bestand|empfehlungen)/.test(p) }]
       : []),
   ];
-  const firstName = displayName.replace(/^Allianz\s+/i, "").split(/\s+/)[0] ?? "";
 
   return (
     <ToastProvider>
@@ -525,7 +530,7 @@ function BuyerShellA({
             ) : null}
           </nav>
           <div className="mt-auto space-y-2 border-t border-[color:var(--border)] pt-3">
-            <HilfeChat firstName={firstName} owner={owner} variant="nav" />
+            <HilfeChat greeting={hilfeGruss} owner={owner} variant="nav" />
             <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} variant="sidebar" absence={absence} updatesUnread={updatesUnread} />
           </div>
         </aside>
@@ -540,7 +545,7 @@ function BuyerShellA({
             </Link>
             <div className="ml-auto flex items-center gap-2">
               <BuyerSearchButton variant="icon" />
-              <HilfeChat firstName={firstName} owner={owner} />
+              <HilfeChat greeting={hilfeGruss} owner={owner} />
               <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} absence={absence} updatesUnread={updatesUnread} />
             </div>
           </div>

@@ -458,7 +458,7 @@ export async function sendCustomerMail(opts: CustomerMailOpts): Promise<SendResu
 }
 
 /** Reine Text-Mail ohne HTML (für Empfänger, deren System die Mail ausliest). */
-export async function sendPlainMail(opts: { to: string | string[]; subject: string; text: string }): Promise<SendResult> {
+export async function sendPlainMail(opts: { to: string | string[]; subject: string; text: string; replyTo?: string | null }): Promise<SendResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.LEAD_EMAIL_FROM ?? process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>";
   if (!apiKey) {
@@ -466,7 +466,7 @@ export async function sendPlainMail(opts: { to: string | string[]; subject: stri
     return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
   }
   try {
-    const { error } = await mailClient(apiKey).emails.send({ from, to: opts.to, subject: opts.subject, text: opts.text });
+    const { error } = await mailClient(apiKey).emails.send({ from, to: opts.to, subject: opts.subject, text: opts.text, ...(opts.replyTo ? { replyTo: opts.replyTo } : {}) });
     return error ? { ok: false, error: error.message } : { ok: true };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };

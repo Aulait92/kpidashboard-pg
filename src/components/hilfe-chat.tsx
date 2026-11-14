@@ -23,6 +23,8 @@ type Escalation = {
   responseTime: string;
   whatsappUrl: string | null;
   mailtoUrl: string | null;
+  canSend?: boolean;
+  messageText?: string;
 };
 
 type Msg =
@@ -54,11 +56,12 @@ function suggestionsFor(path: string, owner: boolean): string[] {
 }
 
 export function HilfeChat({
-  firstName,
+  greeting,
   owner,
   variant = "pill",
 }: {
-  firstName: string;
+  /** Begrüßung (lib/hilfe-gruss): „Guten Tag Herr Müller!“ oder „Hallo!“ */
+  greeting: string;
   owner: boolean;
   /** „nav“: als Zeile in der Seitenleiste der neuen Oberfläche. */
   variant?: "pill" | "nav";
@@ -205,16 +208,19 @@ export function HilfeChat({
                 <Sparkles className="h-5 w-5" />
               </span>
               <div className="min-w-0 flex-1">
-                <div className="font-semibold">KI-Hilfe</div>
+                <div className="whitespace-nowrap font-semibold">KI-Hilfe</div>
                 <div className="truncate text-xs text-[color:var(--muted)]">Antwortet sofort · kennt die App</div>
               </div>
               <button
                 type="button"
                 onClick={() => void human()}
                 disabled={busy}
-                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-[color:var(--border)] px-3 text-[13px] font-semibold text-[color:var(--foreground)] hover:border-[color:var(--brand)] disabled:opacity-50"
+                aria-label="Mit Mensch sprechen"
+                data-mit-mensch
+                className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[color:var(--border)] px-2.5 text-[13px] font-semibold text-[color:var(--foreground)] hover:border-[color:var(--brand)] disabled:opacity-50 sm:px-3"
               >
-                <UserRound className="h-4 w-4" /> <span>Mit Mensch sprechen</span>
+                <UserRound className="h-4 w-4" /> <span className="sm:hidden">Mensch</span>
+                <span className="hidden sm:inline">Mit Mensch sprechen</span>
               </button>
               <button type="button" onClick={() => setOpen(false)} className="rounded-full p-2 text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)]" aria-label="Hilfe schließen">
                 <X className="h-5 w-5" />
@@ -222,7 +228,7 @@ export function HilfeChat({
             </header>
 
             <div ref={bodyRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
-              <AiBubble text={`Hallo${firstName ? ` ${firstName}` : ""}! Ich bin die KI-Hilfe. Fragen Sie mich alles zur App, zum Beispiel, wie Sie einen Lead reklamieren oder einen Termin verschieben.`} />
+              <AiBubble text={`${greeting} Ich bin die KI-Hilfe. Fragen Sie mich alles zur App, zum Beispiel, wie Sie einen Lead reklamieren oder einen Termin verschieben.`} />
               {msgs.map((m, i) =>
                 m.who === "me" ? (
                   <div key={i} className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-tr-md bg-[color:var(--brand)] px-3 py-2 text-[14.5px] text-white">
@@ -327,9 +333,16 @@ function AiBubble({ text, error, children }: { text: string; error?: boolean; ch
   );
 }
 
-/** Kontakt zu unserem Team: WhatsApp und E-Mail, falls eingerichtet; sonst „An unser Team weitergeben“. */
+/**
+ * Kontakt zu unserem Team: direkt in der App schreiben (Text mit Zusammenfassung und Referenz vorbefüllt),
+ * dazu WhatsApp, falls eingerichtet; ohne Support-Adresse „An unser Team weitergeben“.
+ * Das Mailprogramm (mailto) nur noch als Notlösung, wenn das Senden scheitert.
+ */
 function EscalationCard({ e }: { e: Escalation }) {
   const [done, setDone] = useState<"whatsapp" | "email" | "team" | null>(null);
+  const [text, setText] = useState(e.messageText ?? "");
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const contact = (channel: "whatsapp" | "email" | "team") => {
     haptic("success");
     setDone(channel);
@@ -341,18 +354,72 @@ function EscalationCard({ e }: { e: Escalation }) {
       keepalive: true,
     }).catch(() => {});
   };
+  const send = async () => {
+    setSending(true);
+    setSendError(null);
+    try {
+      const res = await fetch("/api/hilfe/escalate/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: e.id, text }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setSendError(data.error ?? "Senden hat nicht geklappt.");
+        return;
+      }
+      haptic("success");
+      setDone("email");
+    } catch {
+      setSendError("Keine Verbindung. Bitte noch einmal versuchen.");
+    } finally {
+      setSending(false);
+    }
+  };
   const btn = "flex h-11 w-full items-center justify-center gap-2 rounded-xl px-3 text-[14.5px] font-semibold transition active:scale-[0.98]";
   return (
-    <div className="mt-2 rounded-2xl border border-[color:var(--border)] bg-white p-3">
+    <div className="mt-2 rounded-2xl border border-[color:var(--border)] bg-white p-3" data-hilfe-team>
       <p className="text-[13.5px] font-semibold">Das klärt unser Team gern persönlich.</p>
       <p className="mt-0.5 text-xs text-[color:var(--muted)]">{e.responseTime}</p>
+      {e.canSend && done !== "email" ? (
+        <div className="mt-2.5 space-y-2">
+          <label className="block text-xs text-[color:var(--muted)]" htmlFor={`hilfe-text-${e.id}`}>
+            Ihre Nachricht an unser Team
+          </label>
+          <textarea
+            id={`hilfe-text-${e.id}`}
+            value={text}
+            onChange={(ev) => setText(ev.target.value)}
+            rows={5}
+            maxLength={4000}
+            className="input w-full resize-y text-[14px]"
+            data-hilfe-text
+          />
+          <button type="button" disabled={sending || text.trim().length < 5} onClick={() => void send()} className={cn(btn, "bg-[color:var(--brand)] text-white disabled:opacity-60")} data-hilfe-senden>
+            <SendHorizontal className="h-5 w-5" /> {sending ? "Wird gesendet…" : "Senden"}
+          </button>
+          {sendError ? (
+            <p className="text-xs text-rose-700" role="alert">
+              {sendError}
+              {e.mailtoUrl ? (
+                <>
+                  {" "}
+                  <a href={e.mailtoUrl} onClick={() => contact("email")} className="font-semibold underline">
+                    Stattdessen im Mailprogramm öffnen
+                  </a>
+                </>
+              ) : null}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
       <div className="mt-2.5 space-y-2">
         {e.whatsappUrl ? (
           <a href={e.whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={() => contact("whatsapp")} className={cn(btn, "bg-[#25D366] text-white")}>
             <MessageCircle className="h-5 w-5" /> Per WhatsApp an unser Team
           </a>
         ) : null}
-        {e.mailtoUrl ? (
+        {!e.canSend && e.mailtoUrl ? (
           <a href={e.mailtoUrl} onClick={() => contact("email")} className={cn(btn, "border border-[color:var(--border-strong)] bg-white text-[color:var(--foreground)]")}>
             <Mail className="h-5 w-5" /> Per E-Mail
           </a>
@@ -364,9 +431,11 @@ function EscalationCard({ e }: { e: Escalation }) {
         ) : null}
       </div>
       {done ? (
-        <p className="mt-2 flex items-start gap-1.5 text-xs text-emerald-700">
+        <p className="mt-2 flex items-start gap-1.5 text-xs text-emerald-700" data-hilfe-gesendet>
           <Check className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          {done === "team" ? "Weitergegeben. Wir melden uns bei Ihnen." : "Unser Team ist informiert. Schicken Sie die Nachricht einfach ab."} Referenz {e.ref}
+          {done === "email" && e.canSend
+            ? `Gesendet, Referenz ${e.ref}. Wir antworten Ihnen per E-Mail.`
+            : `${done === "team" ? "Weitergegeben. Wir melden uns bei Ihnen." : "Unser Team ist informiert. Schicken Sie die Nachricht einfach ab."} Referenz ${e.ref}`}
         </p>
       ) : (
         <p className="mt-2 text-[11px] text-[color:var(--muted)]">

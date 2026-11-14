@@ -7,6 +7,8 @@ import type { BuyerContext } from "@/lib/buyer-context";
 import { audit } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { sendToAdmins } from "@/lib/push";
+import { sendPlainMail } from "@/lib/email";
+import { sendViaPostfach } from "@/lib/mail/postfach";
 import {
   REASON_LABEL,
   mailtoUrl,
@@ -29,6 +31,9 @@ export type Escalation = {
   responseTime: string;
   whatsappUrl: string | null;
   mailtoUrl: string | null;
+  /** Direkt in der App schreiben (Support-Adresse hinterlegt): vorbefüllter Text mit Zusammenfassung und Referenz */
+  canSend: boolean;
+  messageText: string;
 };
 
 type SupportMeta = { ref: string; reason: EscalationReason; summary: string; source: "ai" | "rule" | "user"; channel?: SupportChannel; contactedAt?: string };
@@ -64,7 +69,47 @@ export async function offerEscalation(
     responseTime: cfg.responseTime,
     whatsappUrl: cfg.whatsapp ? whatsappUrl(cfg.whatsapp, text) : null,
     mailtoUrl: cfg.email ? mailtoUrl(cfg.email, { ref, text }) : null,
+    canSend: !!cfg.email,
+    messageText: text,
   };
+}
+
+export const SUPPORT_TEXT_MIN = 5;
+export const SUPPORT_TEXT_MAX = 4000;
+
+/**
+ * Nachricht aus der KI-Hilfe direkt an den Support senden (Ole, 14.11.2026): mit verbundenem Postfach über das
+ * eigene Postfach (Antworten landen dort), sonst über unseren Versand mit Antwort an die E-Mail des Logins.
+ * Danach wie bisher als Anfrage im Admin (contactEscalation, Kanal E-Mail). In der Admin-Vorschau wird nichts gesendet.
+ */
+export async function sendSupportMail(
+  ctx: BuyerContext,
+  id: string,
+  rawText: string,
+): Promise<{ ok: true; ref: string; via: "postfach" | "app" } | { ok: false; error: string }> {
+  const cfg = supportConfig();
+  if (!cfg.email) return { ok: false, error: "Senden aus der App ist gerade nicht möglich." };
+  const text = String(rawText ?? "").trim().slice(0, SUPPORT_TEXT_MAX);
+  if (text.length < SUPPORT_TEXT_MIN) return { ok: false, error: "Bitte schreiben Sie kurz, worum es geht." };
+  const ev = await prisma.usageEvent.findFirst({ where: { id, customerId: ctx.customerId, type: "support" }, select: { meta: true } });
+  if (!ev) return { ok: false, error: "Anfrage nicht gefunden. Bitte noch einmal „Mit Mensch sprechen“ tippen." };
+  const meta = (ev.meta ?? {}) as unknown as SupportMeta;
+  if (ctx.preview) return { ok: false, error: "In der Vorschau wird nichts gesendet." };
+  const customer = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true } });
+  const subject = `Hilfe-Anfrage ${meta.ref}`;
+  const body = [text, "", "---", `Referenz: ${meta.ref}`, `Kunde: ${customer?.name ?? ctx.customerId}`, `Login: ${ctx.email}`].join("\n");
+  let via: "postfach" | "app" | null = null;
+  if (ctx.userId && (await prisma.mailConnection.findUnique({ where: { userId: ctx.userId }, select: { id: true } }))) {
+    const r = await sendViaPostfach(ctx.userId, { to: cfg.email, subject, text: body });
+    if (r.ok) via = "postfach";
+  }
+  if (!via) {
+    const r = await sendPlainMail({ to: cfg.email, subject, text: body, replyTo: ctx.email });
+    if (!r.ok) return { ok: false, error: "Senden hat nicht geklappt." };
+    via = "app";
+  }
+  await contactEscalation(ctx, id, "email");
+  return { ok: true, ref: meta.ref, via };
 }
 
 /** Kunde hat einen Kontaktweg gewählt: festhalten und Admins benachrichtigen (nicht in der Admin-Vorschau). */

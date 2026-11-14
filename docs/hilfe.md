@@ -955,7 +955,11 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
   fehlende Leads oder Daten, oder hilft die Antwort nicht weiter, bietet die KI-Hilfe den Kontakt zu
   unserem Team an. Jederzeit möglich: oben im Hilfe-Fenster „Mit Mensch sprechen“.
 - „Per WhatsApp an unser Team“ öffnet WhatsApp mit einer fertigen Nachricht (Name, Anliegen, Referenz
-  wie PG-AB12CD). Nur noch abschicken. „Per E-Mail“ öffnet eine vorbereitete E-Mail.
+  wie PG-AB12CD). Nur noch abschicken.
+- Direkt in der App schreiben: Im Feld „Ihre Nachricht an unser Team“ steht schon Ihr Anliegen mit Referenz.
+  Ergänzen Sie, was fehlt, und tippen Sie „Senden“. Ist Ihr E-Mail-Postfach verbunden, geht die Nachricht über
+  Ihr Postfach, sonst über uns. Unsere Antwort kommt in beiden Fällen an Ihre E-Mail-Adresse. Klappt das Senden
+  nicht, können Sie die Nachricht stattdessen im Mailprogramm öffnen.
 - Wir antworten werktags in der Regel innerhalb weniger Stunden. Die Referenz hilft uns, Ihr Anliegen
   schnell zuzuordnen.
 - Bitte keine Daten Ihrer Kunden (Namen, Telefonnummern) in die Nachricht schreiben.
