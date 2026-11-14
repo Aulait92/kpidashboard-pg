@@ -10,7 +10,8 @@ import { a, asAnsprache, type Ansprache } from "@/lib/ansprache";
 
 /** Ansprache des Kunden (Sie/Du) für Texte an Leads. */
 export async function anspracheOf(customerId: string): Promise<Ansprache> {
-  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { leadAddress: true } });
+  // Ohne Datenbank (z. B. Unit-Tests) bzw. bei Fehlern: Standard „Sie“
+  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { leadAddress: true } }).catch(() => null);
   return asAnsprache(c?.leadAddress);
 }
 
