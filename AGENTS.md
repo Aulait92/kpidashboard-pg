@@ -25,10 +25,13 @@ mit `INSERT INTO "ProductUpdate" (...) VALUES (...) ON CONFLICT ("id") DO NOTHIN
 
 ## Webseite mitpflegen (Ole, 14.11.2026)
 
-Die Marketing-Webseite (Lovable-Projekt „Growth Leads Hub“, Seite `/software`) wird immer an den aktuellen
-Stand der App angepasst. Nach jeder Änderung, die Kunden (Vermittler) sehen oder nutzen – also immer dann,
-wenn auch eine Neuigkeit (`ProductUpdate`) entsteht –, die Webseite über die Lovable-Tools aktualisieren
-(`send_message` mit genauen Textänderungen, Ergebnis per `get_message`/`get_diff` prüfen, dann `deploy_project`).
+Die Marketing-Webseite (Lovable-Projekt „Growth Leads Hub“, Seite `/software`) wird an den aktuellen
+Stand der App angepasst, aber **höchstens einmal pro Woche** (Ole, 14.11.2026: „es reicht, wenn wir 1x pro
+woche die webseite updaten“). Nach jeder Änderung, die Kunden (Vermittler) sehen oder nutzen (also immer dann,
+wenn auch eine Neuigkeit `ProductUpdate` entsteht), nur einen Eintrag in `docs/webseite-offen.md` ergänzen
+(gewünschte Textänderung, Datum). Einmal pro Woche (montags) alle offenen Einträge gesammelt über die
+Lovable-Tools umsetzen (`send_message` mit genauen Textänderungen, Ergebnis per `get_message`/`get_diff`
+prüfen, dann `deploy_project`) und die Liste leeren. Nur auf Oles ausdrücklichen Wunsch zwischendurch.
 
 - Du-Form, Nutzen statt Technik, keine Preise (Platzhalter bleibt), keine neuen Garantie- oder Ergebnisversprechen.
 - Nur Verfügbares als verfügbar beschreiben; Angekündigtes als „demnächst“.
