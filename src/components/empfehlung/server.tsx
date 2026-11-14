@@ -165,7 +165,7 @@ export function EmpfehlungStatsGrid({ s }: { s: EmpfehlungStats }) {
   );
 }
 
-/** Trichter: Wo gehen Empfehlungen verloren? Mit einem Hinweis für den auffälligsten Übergang. */
+/** Trichter: Vom Empfehlungslink zum Neukunden. Mit einem Hinweis für den auffälligsten Übergang. */
 export function EmpfehlungFunnel({ s }: { s: EmpfehlungStats }) {
   const f = s.funnel;
   const steps: { k: string; v: number; sub: string }[] = [

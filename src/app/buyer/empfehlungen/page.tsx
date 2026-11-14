@@ -168,7 +168,7 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
         </Card>
 
         <Card>
-          <CardHeader title="Wo gehen Empfehlungen verloren? (letzte 90 Tage)" icon={Filter} />
+          <CardHeader title="Vom Empfehlungslink zum Neukunden (letzte 90 Tage)" icon={Filter} />
           <div className="px-5 pb-5 pt-4">
             <EmpfehlungFunnel s={stats} />
           </div>

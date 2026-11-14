@@ -440,8 +440,8 @@ Seiten aus der Liste „Seiten“ unten.
   als stattgefunden, geht einige Stunden später der Empfehlungslink raus (höchstens alle 180 Tage je Kontakt).
 - **Nachfassen:** Nach „Empfehlungslink senden“ oder „Im Termin zeigen“ legt die App eine Aufgabe in „Heute“ an
   (Standard nach 48 Stunden, einstellbar, 0 = aus), wenn am Kontakt keine andere Wiedervorlage steht.
-- **Wo gehen Empfehlungen verloren?** Der Trichter zeigt: Links ausgegeben, vom Kunden geöffnet, Besucher (je Person
-  einmal gezählt), Empfehlungen, Neukunden – mit einem Hinweis, wo es gerade am meisten hakt.
+- **Vom Empfehlungslink zum Neukunden** (Reiter Übersicht): Links ausgegeben, Kunde hat geöffnet, Bekannte haben
+  geöffnet (je Person einmal gezählt), Empfehlungen, Neukunden – mit einem Tipp, wo gerade das meiste Potenzial steckt.
 - **Empfehlende auf dem Laufenden halten:** Wenn die empfohlene Person auf der Empfehlungsseite zustimmt, bekommt Ihr
   Kunde eine kurze Nachricht, sobald sie sich gemeldet hat und sobald ein Termin steht. Abschaltbar.
 - **Empfehlungen im Gespräch ansprechen (Leitfaden):** 1. Zu Beginn ankündigen, dass Sie am Ende kurz nach der

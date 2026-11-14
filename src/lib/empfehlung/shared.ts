@@ -408,46 +408,46 @@ export type Funnel = { linksSent: number; linksOpened: number; visitors: number;
 export type FunnelHint = { stage: "start" | "oeffnen" | "teilen" | "eintragen" | "abschluss" | "ok"; title: string; text: string };
 
 /**
- * Wo geht am meisten verloren? Erst ab einer Mindestmenge urteilen (sonst Zufall).
+ * Wo steckt das meiste Potenzial? Erst ab einer Mindestmenge urteilen (sonst Zufall).
  * Reihenfolge = Reihenfolge im Trichter; der erste auffällige Übergang gewinnt.
  */
 export function funnelHint(f: Funnel): FunnelHint {
   if (f.linksSent < 5) {
     return {
       stage: "start",
-      title: "Noch zu wenige Links unterwegs",
+      title: "Größter Hebel: öfter fragen",
       text: "Unter 5 Empfehlungslinks in diesem Zeitraum. Der größte Hebel ist, überhaupt zu fragen: nach jedem guten Gespräch den Link senden oder den QR-Code zeigen.",
     };
   }
   if (f.linksOpened / f.linksSent < 0.4) {
     return {
       stage: "oeffnen",
-      title: "Viele Kunden öffnen ihren Link nicht",
+      title: "Tipp: die Seite direkt im Termin zeigen",
       text: "Zeigen Sie die Seite direkt im Termin (QR-Code im Kontakt) und lassen Sie den Kunden gleich dort teilen. Was nicht sofort passiert, passiert meist gar nicht.",
     };
   }
   if (f.linksOpened >= 5 && f.visitors / f.linksOpened < 0.5) {
     return {
       stage: "teilen",
-      title: "Der Link wird geöffnet, aber selten weitergeleitet",
+      title: "Tipp: einen konkreten Anlass zum Weiterleiten nennen",
       text: "Nennen Sie im Gespräch einen konkreten Anlass („Wer aus Ihrem Umfeld hat seine Verträge lange nicht angeschaut?“) und fassen Sie nach zwei Tagen nach.",
     };
   }
   if (f.visitors >= 10 && f.leads / f.visitors < 0.1) {
     return {
       stage: "eintragen",
-      title: "Besucher tragen sich nicht ein",
-      text: "Das Angebot für Empfohlene überzeugt noch nicht. Wählen Sie in den Einstellungen ein konkretes Empfehlungsangebot, z. B. den Kfz-Check oder den Versicherungs-Check.",
+      title: "Tipp: ein klares Angebot für Empfohlene",
+      text: "Mit einem konkreten Angebot melden sich mehr Bekannte. Wählen Sie in den Einstellungen ein konkretes Empfehlungsangebot, z. B. den Kfz-Check oder den Versicherungs-Check.",
     };
   }
   if (f.leads >= 5 && f.closings / f.leads < 0.3) {
     return {
       stage: "abschluss",
-      title: "Aus Empfehlungen werden zu selten Kunden",
-      text: "Empfohlene am selben Tag anrufen und den Namen des Empfehlenden nennen. Prüfen Sie auch, ob das Angebot zu Ihren Sparten passt.",
+      title: "Tipp: Empfohlene am selben Tag anrufen",
+      text: "Rufen Sie zügig an und nennen Sie den Namen des Empfehlenden. Prüfen Sie auch, ob das Angebot zu Ihren Sparten passt.",
     };
   }
-  return { stage: "ok", title: "Der Trichter läuft rund", text: "Kein Übergang fällt auf. Mehr Links ausgeben bringt jetzt am meisten." };
+  return { stage: "ok", title: "Läuft gut", text: "Alle Schritte sehen gut aus. Mehr Links ausgeben bringt jetzt am meisten." };
 }
 
 // ─── Dankeschön für Empfehlende (Tippgeber-Vergütung) ───────────────────────
