@@ -4,13 +4,18 @@ export const PLATZHALTER = ["{vorname}", "{name}", "{produkt}", "{meinname}", "{
 
 export type Werte = { vorname: string; name: string; produkt: string; meinname: string; signatur?: string };
 
+/** Ohne eigene Signatur steht an ihrer Stelle ein schlichter Gruß (Ole, 14.11.2026: Signatur standardmäßig in den Vorlagen). */
+export const GRUSS_OHNE_SIGNATUR = "Viele Grüße\n{meinname}";
+
 export function fuelle(text: string, w: Werte): string {
+  const sig = (w.signatur ?? "").trim();
   return text
+    .replace(/\{signatur\}/g, sig ? "{signatur}" : GRUSS_OHNE_SIGNATUR)
     .replace(/\{vorname\}/g, w.vorname)
     .replace(/\{name\}/g, w.name)
     .replace(/\{produkt\}/g, w.produkt)
     .replace(/\{meinname\}/g, w.meinname)
-    .replace(/\{signatur\}/g, (w.signatur ?? "").trim());
+    .replace(/\{signatur\}/g, () => sig);
 }
 
 /**

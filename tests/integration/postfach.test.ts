@@ -60,6 +60,30 @@ describe("E-Mail-Signatur", () => {
     expect(fuelleMitSignatur("Hallo {vorname},\n{signatur}\n\nPS: Danke", w)).toBe("Hallo Eva,\nJana Becker\nAgentur Becker\nTel. 0201 123456\n\nPS: Danke");
     expect(fuelleMitSignatur("Hallo {vorname}", { ...w, signatur: "  " })).toBe("Hallo Eva");
   });
+
+  it("Standardvorlagen enden mit {signatur}; ohne Signatur steht dort „Viele Grüße“ und der eigene Name", async () => {
+    const { fuelleMitSignatur, werteFuer } = await import("@/lib/mail/platzhalter");
+    const body = STANDARD_VORLAGEN[0].body;
+    expect(body.endsWith("\n\n{signatur}")).toBe(true);
+    const w = werteFuer({ name: "Eva Pohl", source: "TKV" }, "Jana Becker");
+    const mit = fuelleMitSignatur(body, { ...w, signatur: "Herzliche Grüße\nJana Becker\nTel. 0201 123456 $1" });
+    expect(mit.endsWith("\n\nHerzliche Grüße\nJana Becker\nTel. 0201 123456 $1")).toBe(true);
+    expect(mit).not.toContain("Viele Grüße");
+    expect(fuelleMitSignatur(body, w).endsWith("\n\nViele Grüße\nJana Becker")).toBe(true);
+  });
+
+  it("Migration: alte Standardvorlagen bekommen {signatur}, eigene Texte ohne Standard-Gruß bleiben", async () => {
+    const c = await makeCustomer();
+    const alt = await prisma.mailTemplate.create({ data: { customerId: c.id, name: "Alt", subject: "x", body: "Hallo {vorname},\n\nTest.\n\nViele Grüße\n{meinname}" } });
+    const eigen = await prisma.mailTemplate.create({ data: { customerId: c.id, name: "Eigen", subject: "x", body: "Hallo,\n\nBis bald\nJana" } });
+    const fs = await import("node:fs");
+    const sql = fs.readFileSync("prisma/migrations/20261118430000_vorlagen_signatur/migration.sql", "utf8");
+    await prisma.$executeRawUnsafe(sql.split("\n").filter((l) => !l.startsWith("--")).join("\n"));
+    expect((await prisma.mailTemplate.findUniqueOrThrow({ where: { id: alt.id } })).body).toBe("Hallo {vorname},\n\nTest.\n\n{signatur}");
+    expect((await prisma.mailTemplate.findUniqueOrThrow({ where: { id: eigen.id } })).body).toBe("Hallo,\n\nBis bald\nJana");
+    await prisma.mailTemplate.deleteMany({ where: { customerId: c.id } });
+    await cleanupCustomer(c.id);
+  });
 });
 
 describe("Fehlermeldungen beim Senden", () => {

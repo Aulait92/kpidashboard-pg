@@ -7,6 +7,7 @@
 import { useActionState, useState, useTransition } from "react";
 import { CheckCircle2, Copy, Loader2, Plus, Trash2, X } from "lucide-react";
 import { buttonClass } from "@/components/ui";
+import { TimeSelect } from "@/components/time-select";
 import type { SourceResult } from "@/lib/calendar/sources";
 
 type FormAction = (prev: SourceResult, fd: FormData) => Promise<SourceResult>;
@@ -14,8 +15,6 @@ type PlainAction = (fd: FormData) => Promise<void>;
 
 const input =
   "h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-[15px] outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20";
-const inputTime =
-  "h-9 w-32 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20";
 const chip =
   "block min-w-[3.25rem] rounded-full border border-[color:var(--border)] bg-white px-3 py-1.5 text-center text-sm transition peer-checked:border-[color:var(--brand)] peer-checked:bg-[#EFF6FF] peer-checked:font-semibold peer-checked:text-[color:var(--brand)] peer-focus-visible:ring-2 peer-focus-visible:ring-[color:var(--brand)]/30";
 
@@ -232,15 +231,15 @@ export function LeadTimesForm({
                   ) : (
                     ranges.map((r, i) => (
                       <div key={i} className="flex flex-wrap items-center gap-1.5">
-                        <input type="time" step={300} value={r[0]} onChange={(e) => update(d, i, 0, e.target.value)} aria-label={`${label} von`} className={`${inputTime} w-[7.5rem]`} disabled={readOnly} />
+                        <TimeSelect value={r[0]} onChange={(v) => update(d, i, 0, v)} max="23:45" ariaLabel={`${label} von`} className="w-[7.25rem]" disabled={readOnly} />
                         <span className="text-[color:var(--muted)]">–</span>
-                        <input
-                          type="time"
-                          step={300}
-                          value={r[1] === "24:00" ? "23:59" : r[1]}
-                          onChange={(e) => update(d, i, 1, e.target.value)}
-                          aria-label={`${label} bis`}
-                          className={`${inputTime} w-[7.5rem]`}
+                        <TimeSelect
+                          value={r[1]}
+                          onChange={(v) => update(d, i, 1, v)}
+                          min={fromMin(Math.min(toMin(r[0]) + 15, 1440))}
+                          max="24:00"
+                          ariaLabel={`${label} bis`}
+                          className="w-[7.25rem]"
                           disabled={readOnly}
                         />
                         <IconButton label={`Zeitraum bei ${label} entfernen`} onClick={() => setDay(d, ranges.filter((_, k) => k !== i))} disabled={readOnly}>
@@ -311,6 +310,8 @@ export function BlockTimes({
   hidden?: Record<string, string>;
 }) {
   const [state, formAction, pending] = useActionState<SourceResult, FormData>(addAction, {});
+  const [blockFrom, setBlockFrom] = useState("09:00");
+  const [blockTo, setBlockTo] = useState("17:00");
   const hiddenInputs = hidden ? Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />) : null;
   return (
     <div className="space-y-4">
@@ -321,14 +322,14 @@ export function BlockTimes({
             Datum
             <input name="date" type="date" required className={`${input} mt-1`} />
           </label>
-          <label className="text-sm font-medium">
+          <div className="text-sm font-medium">
             von
-            <input name="from" type="time" required step={300} className={`${input} mt-1`} />
-          </label>
-          <label className="text-sm font-medium">
+            <TimeSelect name="from" value={blockFrom} onChange={setBlockFrom} max="23:45" ariaLabel="Blockieren von" className="mt-1 block w-full" />
+          </div>
+          <div className="text-sm font-medium">
             bis
-            <input name="to" type="time" required step={300} className={`${input} mt-1`} />
-          </label>
+            <TimeSelect name="to" value={blockTo} onChange={setBlockTo} min={fromMin(Math.min(toMin(blockFrom) + 15, 1440))} max="24:00" ariaLabel="Blockieren bis" className="mt-1 block w-full" />
+          </div>
         </div>
         <input name="note" placeholder="Notiz (optional), z. B. Arzttermin" maxLength={120} className={input} />
         <div className="flex flex-wrap items-center gap-3">
