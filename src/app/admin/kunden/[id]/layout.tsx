@@ -86,6 +86,8 @@ export default async function KundenakteLayout({ children, params }: { children:
             { href: base, label: "Übersicht", exact: true },
             { href: `${base}/leads`, label: "Leads & Formulare" },
             { href: `${base}/kampagne`, label: "Kampagne (KI)" },
+            // Optimierung je Werbekonto (lib/optimierung): Protokoll, Freigabe, Maßnahme eintragen
+            { href: `${base}/optimierung`, label: "Optimierung" },
             ...(c.plan !== "service" ? [{ href: `${base}/whatsapp`, label: "WhatsApp-Assistent" }] : []),
             { href: `${base}/logins`, label: "Logins & Team" },
             { href: `${base}/abrechnung`, label: "Abrechnung & Pause" },

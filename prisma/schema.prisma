@@ -232,6 +232,9 @@ model Customer {
   campaignWishes           CampaignWish[]
   campaignHealth           CampaignHealth[]
   mailTemplates            MailTemplate[]
+  // Automatische Optimierung je Werbekonto (lib/optimierung, seit 18.11.2026)
+  optimizationAccount      OptimizationAccount?
+  optimizationMeasures     OptimizationMeasure[]
 }
 
 // Tagesbudget je Produkt (Kundenbereich → Konto → Werbebudget). Ohne Eintrag gilt das
@@ -3070,4 +3073,120 @@ model LinkedInPhoto {
   generated   Boolean        @default(false)
   createdAt   DateTime       @default(now())
   posts       LinkedInPost[]
+}
+
+// ─── Automatische Optimierung je Werbekonto (Ole, 18.11.2026; lib/optimierung) ───
+// Ein Eintrag je optimiertem Werbekonto: eigenes Meta-Konto eines Kunden (kind „kunde“)
+// oder ein Pay-per-Lead-Pool (kind „pool“: Kampagnen eines Produkts im Agenturkonto).
+model OptimizationAccount {
+  id                 String                @id @default(cuid())
+  // kunde | pool
+  kind               String
+  customerId         String?               @unique
+  customer           Customer?             @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  // Pool: Produkt wie Lead.source bzw. LeadSubscription.productKey (kanonisch)
+  poolProduct        String?               @unique
+  label              String
+  // Meta-Werbekonto ohne „act_“ (Pool: leer = Agenturkonten aus META_AD_ACCOUNT_IDS)
+  adAccountId        String?
+  // null = globale Einstellung, true = Autopilot, false = Vorschlag
+  autopilot          Boolean?
+  // Ziel-Leadpreis (€); leer = Kunde: Rechner bzw. eigener Schnitt, Pool: Kampagnenschnitt
+  targetCpl          Decimal?              @db.Decimal(10, 2)
+  // Vereinbartes Tagesbudget gesamt (€) als Obergrenze; Kunde: zusätzlich Werbebudget aus dem Vertrag
+  agreedDailyBudget  Decimal?              @db.Decimal(10, 2)
+  // Nur Kampagnen, deren Name dieses Stichwort enthält (leer = Kunde: alle aktiven, Pool: Produktname)
+  campaignKeyword    String?
+  active             Boolean               @default(true)
+  lastRunAt          DateTime?
+  // Ergebnis bzw. Problem des letzten Laufs (z. B. kein Zugriff)
+  lastRunNote        String?
+  // Laufende Anzeigen beim letzten Lauf (0 = nichts aktiv, z. B. pausiert: keine Frühwarnung)
+  lastRunAds         Int?
+  activitiesSyncedAt DateTime?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  measures           OptimizationMeasure[]
+
+  @@index([kind, active])
+}
+
+// Protokoll der Maßnahmen (automatisch geplant oder von Hand eingetragen). Quelle für den Monatsbericht.
+model OptimizationMeasure {
+  id            String               @id @default(cuid())
+  accountId     String?
+  account       OptimizationAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  // Kunde (bei Pool-Konten leer; dann über das Pool-Produkt zuordnen)
+  customerId    String?
+  customer      Customer?            @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  // geplant | freigegeben | abgelehnt | ausgefuehrt | fehlgeschlagen
+  status        String               @default("geplant")
+  // motiv_erneuern | anzeige_pausieren | budget_umschichten | formular_vorschlag | zielgruppe_vorschlag | motiv_vorschlag | manuell
+  kind          String
+  // automatik | manuell
+  source        String               @default("automatik")
+  // ad | adset | campaign | account
+  targetType    String               @default("account")
+  targetId      String?
+  targetName    String?
+  title         String
+  // Begründung mit Datenpunkten (intern, für Ole)
+  reason        String
+  // Kennzahlen zum Zeitpunkt der Planung
+  data          Json?
+  // Ausführungsparameter (z. B. Budgets vorher/nachher)
+  params        Json?
+  // größere Änderung (zählt für „höchstens 1 je Anzeigengruppe und Woche“)
+  major         Boolean              @default(false)
+  // Schutz vor Doppelplanung: Konto|Woche|Art|Ziel (manuell: leer)
+  dedupeKey     String?              @unique
+  plannedAt     DateTime             @default(now())
+  decidedAt     DateTime?
+  // wer freigegeben bzw. abgelehnt hat (E-Mail, „Autopilot“)
+  decidedBy     String?
+  executedAt    DateTime?
+  // Ergebnis bzw. Fehler der Ausführung
+  result        String?
+  // Motiv-Erneuerung: Auffrischungs-Lauf der Kampagnen-Agenten
+  campaignRunId String?
+  createdBy     String?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@index([customerId, executedAt])
+  @@index([accountId, status])
+  @@index([status, executedAt])
+}
+
+// Meta-Änderungsprotokoll (Ad Account activities) je Werbekonto, Quelle für den Monatsbericht.
+model MetaAdActivity {
+  id                  String   @id @default(cuid())
+  adAccountId         String
+  // Kundenkonto: Kunde; Agenturkonto: leer
+  customerId          String?
+  eventTime           DateTime
+  eventType           String
+  translatedEventType String?
+  objectId            String?
+  objectName          String?
+  objectType          String?
+  actorName           String?
+  applicationName     String?
+  extraData           String?
+  // Konto|Zeit|Art|Objekt
+  dedupeKey           String   @unique
+  createdAt           DateTime @default(now())
+
+  @@index([customerId, eventTime])
+  @@index([adAccountId, eventTime])
+}
+
+// Einstellungen der Optimierung (eine Zeile, id „default“).
+model OptimizationSettings {
+  id        String   @id @default("default")
+  // Wöchentlicher Lauf an (plant Maßnahmen; ausgeführt wird nur nach Freigabe bzw. im Autopilot)
+  enabled   Boolean  @default(true)
+  // Globaler Modus: false = Vorschlag (Standard), true = Autopilot
+  autopilot Boolean  @default(false)
+  updatedAt DateTime @updatedAt
 }
