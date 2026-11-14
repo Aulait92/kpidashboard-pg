@@ -38,7 +38,7 @@ export const BUDGET_MAX = 150;
 /** Eintippen geht höher als der Regler (Ole, 13.11.2026: mehr Budget durchrechnen). */
 export const BUDGET_MAX_EINGABE = 1000;
 
-// Berater-Plätze und Jahreszahlung – aus der Preisliste des Angebots.
+// Plätze (aktive Verkäufer, Mitglieder ohne Leads kostenlos, lib/seats.ts) und Jahreszahlung – aus der Preisliste des Angebots.
 export const SEATS_INCLUDED = PRICE_LIST.seatsIncluded;
 export const SEAT_MONTHLY = PRICE_LIST.seatMonthly;
 export const ANNUAL_PAID_MONTHS = 12 - PRICE_LIST.annualFreeMonths;
@@ -65,8 +65,10 @@ export type RechnerProduct = {
   maklerRate: number;
   maklerTrail: number;
   months: number;
-  /** Erfahrungswert Kosten pro Lead (€), mit Puffer */
+  /** Erfahrungswert Kosten pro Lead (€), mit Puffer; oberer Wert der Spanne, damit wird gerechnet */
   cpl: number;
+  /** Unterer Wert der Spanne „von–bis“ (Ole, 14.11.2026: Anzeige wie in den PDFs); null = Einzelwert */
+  cplFrom: number | null;
   /** Hinweis zum Erfahrungswert, z. B. „real zuletzt ca. 2 €“ */
   cplNote: string;
   /** true = nie echte Daten nehmen, immer den Erfahrungswert */
@@ -169,7 +171,7 @@ export const DEFAULT_PRODUCTS: RechnerProduct[] = [
   {
     key: "tkv", name: "Katzenversicherung (TKV)", active: true, maklerOnly: false, match: "tkv",
     provisionKey: "tkv", kind: "percent", vertreterRate: 0.55, vertreterTrail: 0, maklerRate: 0, maklerTrail: 0.225, months: 0,
-    cpl: 6, cplNote: "mit Sicherheitspuffer gerechnet, real zuletzt ca. 2 €", cplOverride: false,
+    cpl: 6, cplFrom: 3, cplNote: "mit Sicherheitspuffer gerechnet, real zuletzt ca. 2 €", cplOverride: false,
     cplMakler: 4, cplMaklerNote: "reales Ergebnis",
     customerRate: 0.09, contractsPerCustomer: 4 / 3, terminRate: 0, premium: 350, minLeads30: 100,
     crossSell: CROSS_SELL_STANDARD,
@@ -177,14 +179,33 @@ export const DEFAULT_PRODUCTS: RechnerProduct[] = [
   {
     key: "privatschutz", name: "Privatschutz", active: false, maklerOnly: false, match: "privatschutz",
     provisionKey: "privatschutz", kind: "percent", vertreterRate: 0.55, vertreterTrail: 0, maklerRate: 0, maklerTrail: 0.225, months: 0,
-    cpl: 12, cplNote: "Annahme", cplOverride: false, cplMakler: null, cplMaklerNote: "",
+    cpl: 25, cplFrom: 20, cplNote: "Erfahrungswert", cplOverride: false, cplMakler: null, cplMaklerNote: "",
     customerRate: 0.1, contractsPerCustomer: 1, terminRate: 0.3, premium: 600, minLeads30: null, crossSell: null,
   },
   {
     key: "pkv", name: "PKV-Tarifoptimierung", active: false, maklerOnly: true, match: "pkv",
     provisionKey: "pkv", kind: "monthly", vertreterRate: 0, vertreterTrail: 0, maklerRate: 0, maklerTrail: 0, months: 10,
-    cpl: 25, cplNote: "Annahme", cplOverride: false, cplMakler: null, cplMaklerNote: "",
+    cpl: 25, cplFrom: null, cplNote: "Annahme", cplOverride: false, cplMakler: null, cplMaklerNote: "",
     customerRate: 0.075, contractsPerCustomer: 1, terminRate: 0.25, premium: 250, minLeads30: null, crossSell: null,
+  },
+  // Leadpreis-Spannen (Ole, 14.11.2026); inaktiv, Provision und Quoten sind Annahmen bis zur Freigabe
+  {
+    key: "hund", name: "Hundekrankenversicherung", active: false, maklerOnly: false, match: "hund",
+    provisionKey: null, kind: "percent", vertreterRate: 0.55, vertreterTrail: 0, maklerRate: 0, maklerTrail: 0.225, months: 0,
+    cpl: 12, cplFrom: 10, cplNote: "Erfahrungswert", cplOverride: false, cplMakler: null, cplMaklerNote: "",
+    customerRate: 0.09, contractsPerCustomer: 1, terminRate: 0, premium: 500, minLeads30: null, crossSell: null,
+  },
+  {
+    key: "pferd", name: "Pferdeversicherung", active: false, maklerOnly: false, match: "pferd",
+    provisionKey: null, kind: "percent", vertreterRate: 0.55, vertreterTrail: 0, maklerRate: 0, maklerTrail: 0.225, months: 0,
+    cpl: 13, cplFrom: 11, cplNote: "Erfahrungswert", cplOverride: false, cplMakler: null, cplMaklerNote: "",
+    customerRate: 0.09, contractsPerCustomer: 1, terminRate: 0, premium: 600, minLeads30: null, crossSell: null,
+  },
+  {
+    key: "kindersparplan", name: "Kindersparplan", active: false, maklerOnly: false, match: "kinderspar",
+    provisionKey: null, kind: "percent", vertreterRate: 0.55, vertreterTrail: 0, maklerRate: 0, maklerTrail: 0.225, months: 0,
+    cpl: 20, cplFrom: 15, cplNote: "Erfahrungswert", cplOverride: false, cplMakler: null, cplMaklerNote: "",
+    customerRate: 0.08, contractsPerCustomer: 1, terminRate: 0, premium: 600, minLeads30: null, crossSell: null,
   },
 ];
 
@@ -282,6 +303,8 @@ export function parseRechnerConfig(raw: unknown): { config: RechnerConfig; error
       maklerTrail: get("maklerTrail", 0, 1, 0.225, "Bestandsprovision Makler 0–100 %"),
       months: get("months", 0, 24, 10, "Monatsbeiträge 0–24"),
       cpl: get("cpl", 0.5, 1000, base?.cpl ?? 10, "Kosten pro Lead 0,50–1.000 €"),
+      // fehlt das Feld (ältere gespeicherte Konfiguration) → Standard des Produkts; leer = Einzelwert
+      cplFrom: p.cplFrom === undefined ? (base?.cplFrom ?? null) : p.cplFrom === null || p.cplFrom === "" ? null : get("cplFrom", 0.5, 1000, base?.cplFrom ?? 1, "Kosten pro Lead „von“ 0,50–1.000 €"),
       cplNote: str(p.cplNote, 120, base?.cplNote ?? ""),
       cplOverride: bool(p.cplOverride, false),
       // fehlt das Feld (ältere gespeicherte Konfiguration) → Standard des Produkts; leer = wie cpl
@@ -294,6 +317,13 @@ export function parseRechnerConfig(raw: unknown): { config: RechnerConfig; error
       minLeads30: minLeads != null ? Math.round(minLeads) : null,
       crossSell,
     });
+  }
+  for (const p of products) {
+    // Spanne „von–bis“: unterer Wert höchstens der obere (gerechnet wird mit dem oberen)
+    if (p.cplFrom != null && p.cplFrom > p.cpl) {
+      errors.push(`${p.name}: Kosten pro Lead „von“ höchstens wie der obere Wert`);
+      p.cplFrom = null;
+    }
   }
   if (!products.some((p) => p.active)) errors.push("Mindestens ein Produkt muss aktiv sein.");
   const g = (r.guarantees && typeof r.guarantees === "object" ? r.guarantees : {}) as Record<string, Record<string, unknown> | undefined>;
@@ -550,6 +580,8 @@ export function inputToParams(config: RechnerConfig, i: RechnerInput): URLSearch
 export type CplData = { cpl: number; leads: number } | null;
 export type CplInfo = {
   cpl: number;
+  /** Unterer Wert der Spanne (nur Erfahrungswert mit „von“); gerechnet wird mit `cpl` */
+  from?: number;
   source: "daten" | "erfahrungswert";
   note: string;
   /** Wert für den Makler-Modus (nur gesetzt, wenn das Produkt einen eigenen Makler-Wert hat) */
@@ -562,7 +594,25 @@ export type CplInfo = {
  */
 export function resolveCpl(p: RechnerProduct, data: CplData): CplInfo {
   const base = resolveCplFor(p, p.cpl, p.cplNote, data);
-  return p.cplMakler != null ? { ...base, makler: resolveCplFor(p, p.cplMakler, p.cplMaklerNote, data) } : base;
+  // Spanne nur für den Erfahrungswert (echte, höhere Daten ersetzen ihn als Einzelwert); Makler-Wert bleibt Einzelwert
+  const withRange = base.source === "erfahrungswert" && p.cplFrom != null && p.cplFrom < base.cpl ? { ...base, from: p.cplFrom } : base;
+  return p.cplMakler != null ? { ...withRange, makler: resolveCplFor(p, p.cplMakler, p.cplMaklerNote, data) } : withRange;
+}
+
+const zahlDe = (n: number) => n.toLocaleString("de-DE", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+
+/** Leadpreis als Text: Spanne „20–25 €“ bzw. Einzelwert „6 €“. Gerechnet wird immer mit dem oberen Wert. */
+export function cplSpanne(cpl: number, from?: number | null): string {
+  return from != null && from > 0 && from < cpl ? `${zahlDe(from)}–${zahlDe(cpl)} €` : `${zahlDe(cpl)} €`;
+}
+
+/** „Erfahrungswert: ca. 20–25 € pro Lead · bei 30 €/Tag ca. 36 bis 45 Leads im Monat“ */
+export function erfahrungswertText(cpl: number, from: number | null | undefined, dailyBudget: number): string {
+  const month = dailyBudget * DAYS_PER_MONTH;
+  const leadsHigh = Math.round(month / cpl);
+  const range = from != null && from > 0 && from < cpl;
+  const leads = range ? `${leadsHigh} bis ${Math.round(month / from)}` : String(leadsHigh);
+  return `Erfahrungswert: ca. ${cplSpanne(cpl, from)} pro Lead · bei ${zahlDe(dailyBudget)} €/Tag ca. ${leads} Leads im Monat`;
 }
 
 function resolveCplFor(p: RechnerProduct, wert: number, hinweis: string, data: CplData): CplInfo {

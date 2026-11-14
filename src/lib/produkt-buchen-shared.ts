@@ -12,7 +12,7 @@ export type CatalogItem = {
   name: string;
   /** Ein Satz Nutzen für den Kunden. */
   benefit: string;
-  /** „Bewährt“ (echte Ergebnisse) oder „Testprodukt“. */
+  /** „Bewährt“ (echte Ergebnisse, Leadpreis aus dem Rechner) oder „Neu“ (Erfahrungswerte werden gesammelt). */
   proven: boolean;
   /** Buchbar im Kundenbereich. */
   enabled: boolean;
@@ -24,7 +24,7 @@ export type CatalogItem = {
 };
 
 /** Standardkatalog (Ole, 12.11.2026): buchbar Katze (bewährt), Hund, Pferd, Privatschutz, Sterbegeld,
- *  Kindersparplan (Test); Unfall, Zahn- und Krankenhauszusatz nur auf Anfrage. */
+ *  Kindersparplan (Abzeichen „Neu“); Unfall, Zahn- und Krankenhauszusatz nur auf Anfrage. */
 export const DEFAULT_CATALOG: CatalogItem[] = [
   {
     key: "tkv-katze",
@@ -44,7 +44,7 @@ export const DEFAULT_CATALOG: CatalogItem[] = [
     enabled: true,
     sort: 20,
     match: "hund",
-    rechnerKey: null,
+    rechnerKey: "hund",
   },
   {
     key: "tkv-pferd",
@@ -54,7 +54,7 @@ export const DEFAULT_CATALOG: CatalogItem[] = [
     enabled: true,
     sort: 25,
     match: "pferd",
-    rechnerKey: null,
+    rechnerKey: "pferd",
   },
   {
     key: "privatschutz",
@@ -84,7 +84,7 @@ export const DEFAULT_CATALOG: CatalogItem[] = [
     enabled: true,
     sort: 38,
     match: "kinderspar|sparplan",
-    rechnerKey: null,
+    rechnerKey: "kindersparplan",
   },
   {
     key: "unfall",
@@ -117,6 +117,10 @@ export const DEFAULT_CATALOG: CatalogItem[] = [
     rechnerKey: null,
   },
 ];
+
+/** Abzeichen und Hinweis für Produkte ohne „bewährt“ (Ole, 14.11.2026: „Neu“ statt „Testprodukt“). */
+export const NEU_BADGE = "Neu";
+export const NEU_HINWEIS = "Neues Produkt: Wir sammeln gerade Erfahrungswerte. Den Leadpreis sehen Sie nach den ersten Wochen in Ihren Zahlen.";
 
 export const findCatalogItem = (catalog: CatalogItem[], key: string) => catalog.find((c) => c.key === key) ?? null;
 

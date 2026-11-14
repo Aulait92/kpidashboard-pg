@@ -45,7 +45,7 @@ export async function canAccessLead(ctx: TeamCtx, leadId: string): Promise<boole
 export async function teamMembers(customerId: string) {
   return prisma.user.findMany({
     where: { customerId, role: "BUYER" },
-    select: { id: true, email: true, displayName: true, teamRole: true, receivesLeads: true, lastLoginAt: true, totpEnabledAt: true, createdAt: true, advisorCalendar: { select: { status: true, accountEmail: true } } },
+    select: { id: true, email: true, displayName: true, teamRole: true, receivesLeads: true, leadReceivedAt: true, lastLoginAt: true, totpEnabledAt: true, createdAt: true, advisorCalendar: { select: { status: true, accountEmail: true } } },
     orderBy: [{ teamRole: "desc" }, { createdAt: "asc" }],
   });
 }
@@ -77,7 +77,8 @@ export async function assignLead(leadId: string): Promise<string | null> {
   const now = new Date();
   await prisma.$transaction([
     prisma.lead.updateMany({ where: { id: leadId, assignedUserId: null }, data: { assignedUserId: pick.id } }),
-    prisma.user.update({ where: { id: pick.id }, data: { lastLeadAssignedAt: now } }),
+    // leadReceivedAt: zählt heute als aktiver Verkäufer (Platz-Abrechnung, lib/seats.ts)
+    prisma.user.update({ where: { id: pick.id }, data: { lastLeadAssignedAt: now, leadReceivedAt: now } }),
   ]);
   return pick.id;
 }

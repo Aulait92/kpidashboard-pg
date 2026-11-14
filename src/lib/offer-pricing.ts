@@ -25,11 +25,11 @@ export const PRICE_LIST = {
   individualFrom: 10000,
   daysPerMonth: 30,
   // ─── Zusätze (Ole, 11.11.2026) ───
-  /** Logins inklusive (Inhaber + 2 Berater), nur Paket Betreuung + Software. */
+  /** Aktive Verkäufer inklusive (bekommen Leads; Mitglieder ohne Leads kostenlos, lib/seats.ts), nur Paket Betreuung + Software. */
   seatsIncluded: 3,
-  /** Jeder weitere Login je Monat (netto). */
+  /** Jeder weitere aktive Verkäufer je Monat (netto). */
   seatMonthly: 49,
-  /** Ab so vielen Logins individuell (Preis per Sonderkondition). */
+  /** Ab so vielen aktiven Verkäufern individuell (Preis per Sonderkondition). */
   seatIndividualFrom: 10,
   /** Jährlich im Voraus: so viele Monate geschenkt (nur mit 12 Monaten Laufzeit). */
   annualFreeMonths: 2,
@@ -70,7 +70,7 @@ export type OfferInput = {
   setupOverride?: number | null;
   /** Überschreibt die berechnete Monatsgebühr (Sonderkondition / individuell). */
   monthlyOverride?: number | null;
-  /** Logins gesamt (Inhaber + Berater); Standard = inklusive Anzahl. */
+  /** Aktive Verkäufer gesamt (bekommen Leads); Standard = inklusive Anzahl. */
   seats?: number | null;
   /** Jährlich im Voraus zahlen (nur mit 12 Monaten Laufzeit). */
   annual?: boolean;
@@ -91,20 +91,20 @@ export type OfferPrice = {
   setupFee: number;
   monthlyFee: number | null;
   softwareFee: number;
-  /** Logins gesamt, davon inklusive, weitere (berechnet). */
+  /** Aktive Verkäufer gesamt, davon inklusive, weitere (berechnet). */
   seats: number;
   seatsIncluded: number;
   extraSeats: number;
-  /** Monatlich für weitere Logins (0 = keine / im individuellen Preis enthalten). */
+  /** Monatlich für weitere aktive Verkäufer (0 = keine / im individuellen Preis enthalten). */
   seatsFee: number;
-  /** Ab {@link PRICE_LIST.seatIndividualFrom} Logins individuell. */
+  /** Ab {@link PRICE_LIST.seatIndividualFrom} aktiven Verkäufern individuell. */
   seatsIndividual: boolean;
   bestandFee: number;
   /** Modul Teil des Angebots. */
   bestandActive: boolean;
   empfehlungFee: number;
   empfehlungActive: boolean;
-  /** Monatlich gesamt (Paket + Logins + Module); null = individuell offen. */
+  /** Monatlich gesamt (Paket + weitere Verkäufer + Module); null = individuell offen. */
   monthlyTotal: number | null;
   annual: boolean;
   /** Jahresbetrag bei jährlicher Vorauszahlung; null ohne Jahreszahlung. */
@@ -133,7 +133,7 @@ export function computeOfferPrice(input: OfferInput): OfferPrice {
   const base = serviceOnly ? PRICE_LIST.serviceOnlyMonthly : (tier?.monthly ?? null);
   const listMonthly = base == null ? null : base + extraProducts * PRICE_LIST.extraProductMonthly;
 
-  // Logins: nur im Paket mit Software; ab seatIndividualFrom individuell (Preis per Sonderkondition).
+  // Aktive Verkäufer: nur im Paket mit Software; ab seatIndividualFrom individuell (Preis per Sonderkondition).
   const seatsIncluded = serviceOnly ? 0 : PRICE_LIST.seatsIncluded;
   const seats = serviceOnly ? 0 : Math.max(1, Math.round(Number(input.seats ?? seatsIncluded) || seatsIncluded));
   const seatsIndividual = !serviceOnly && seats >= PRICE_LIST.seatIndividualFrom;

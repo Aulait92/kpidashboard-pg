@@ -14,7 +14,8 @@ export function LeadAssignee({
 }: {
   leadId: string;
   current: string | null;
-  members: { id: string; name: string }[];
+  /** costHint: Hinweis, falls das Zuteilen einen weiteren aktiven Verkäufer kostet (lib/seats.ts) */
+  members: { id: string; name: string; costHint?: string | null }[];
   readOnly: boolean;
 }) {
   const [value, setValue] = useState(current ?? "");
@@ -30,6 +31,8 @@ export function LeadAssignee({
         onChange={(e) => {
           const next = e.target.value;
           const prev = value;
+          const hint = members.find((m) => m.id === next)?.costHint;
+          if (hint && !window.confirm(hint)) return;
           setValue(next);
           start(async () => {
             const res = await reassignLeadAction(leadId, next || null);

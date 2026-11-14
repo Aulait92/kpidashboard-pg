@@ -7,12 +7,12 @@ import { Sheet } from "@/components/ui/sheet";
 import { success as hapticSuccess, selection } from "@/lib/haptics";
 import { PRICE_LIST } from "@/lib/offer-pricing";
 import { BUDGET_MAX_DAILY, BUDGET_MIN_DAILY, BUDGET_STEP, LEAD_GUARANTEE_MIN_DAILY, type BudgetContext, type BudgetLine } from "@/lib/budget-shared";
-import { bookingSentence, previewBooking, STATUS_LABEL } from "@/lib/produkt-buchen-shared";
+import { bookingSentence, NEU_BADGE, NEU_HINWEIS, previewBooking, STATUS_LABEL } from "@/lib/produkt-buchen-shared";
+import { erfahrungswertText } from "@/lib/rechner";
 import type { BookableProduct, BookedProduct } from "@/lib/produkt-buchen";
 import { bookProductAction, requestOtherProductAction, requestProductEndAction, type ProductFormState } from "./actions";
 
 const eur0 = (n: number) => `${Math.round(n).toLocaleString("de-DE")} €`;
-const eur2 = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 const d = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(iso));
 const clamp = (n: number) => Math.min(BUDGET_MAX_DAILY, Math.max(BUDGET_MIN_DAILY, Math.round(n / BUDGET_STEP) * BUDGET_STEP));
 /** Standard-Tagesbudget für ein neues Produkt (Lead-Garantie-Grenze bzw. Makler-Empfehlung). */
@@ -54,14 +54,13 @@ export function ProductsCard({ booked, bookable, lines, ctx, today, readOnly }: 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-semibold">{p.name}</span>
-                      {p.proven ? <Badge tone="success">Bewährt</Badge> : <Badge tone="info">Testprodukt</Badge>}
+                      {p.proven ? <Badge tone="success">Bewährt</Badge> : <Badge tone="info">{NEU_BADGE}</Badge>}
                       {p.guarantee ? <Badge tone="neutral">mit Garantie</Badge> : null}
                     </div>
                     <p className="mt-1 text-sm text-[color:var(--muted)]">{p.benefit}</p>
                     <p className="mt-1 text-sm text-[color:var(--muted)]">
-                      {p.cpl
-                        ? `Erfahrungswert: ca. ${eur2(p.cpl)} pro Lead · bei ${eur0(DEFAULT_DAILY)}/Tag ca. ${Math.round((DEFAULT_DAILY * PRICE_LIST.daysPerMonth) / p.cpl)} Leads im Monat`
-                        : "Erfahrungswert folgt – wir testen gemeinsam mit Ihnen."}
+                      {/* Spanne wie in Oles PDFs; gerechnet wird mit dem oberen Wert */}
+                      {p.cpl ? erfahrungswertText(p.cpl, p.cplFrom, DEFAULT_DAILY) : NEU_HINWEIS}
                     </p>
                   </div>
                   <button
@@ -251,7 +250,7 @@ function BookSheet({ product, lines, ctx, today, onClose }: { product: BookableP
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
             {p.guarantee
               ? "Für dieses Produkt gelten unsere Garantien (Lead-Garantie ab 20 € pro Tag), ab dem Start der Kampagne."
-              : "Für dieses Produkt gelten keine Garantien – es ist ein Testprodukt, wir optimieren gemeinsam mit Ihnen."}
+              : "Für dieses Produkt gelten keine Garantien. Es ist ein neues Produkt, wir optimieren gemeinsam mit Ihnen."}
           </p>
 
           {!p.overIndividual ? (

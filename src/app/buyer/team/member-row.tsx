@@ -25,6 +25,8 @@ export type MemberView = {
   twoFactor?: boolean;
   /** Laufende oder kommende Abwesenheit */
   absence: AbsenceView | null;
+  /** Kostenhinweis, falls „bekommt Leads“ an einen weiteren aktiven Verkäufer über den inklusiven bedeutet */
+  enableCostHint?: string | null;
 };
 
 const fd = (o: Record<string, string>) => {
@@ -37,7 +39,7 @@ export function MemberRow({ m, readOnly, colleagues, today }: { m: MemberView; r
   const router = useRouter();
   const toast = useToast();
   const [pending, start] = useTransition();
-  const [open, setOpen] = useState<"menu" | "rename" | "remove" | "absence" | null>(null);
+  const [open, setOpen] = useState<"menu" | "rename" | "remove" | "absence" | "cost" | null>(null);
   const [name, setName] = useState(m.displayName ?? "");
 
   const run = (fn: () => Promise<void>, message: string) =>
@@ -94,7 +96,10 @@ export function MemberRow({ m, readOnly, colleagues, today }: { m: MemberView; r
           aria-label="Bekommt neue Leads"
           disabled={pending || readOnly}
           onClick={() =>
-            run(() => toggleReceivesLeadsAction(fd({ userId: m.id })), m.receivesLeads ? `${m.name}: keine neuen Leads` : `${m.name}: bekommt wieder Leads`)
+            // Hinweis vor dem Einschalten, wenn dadurch ein weiterer aktiver Verkäufer berechnet wird
+            !m.receivesLeads && m.enableCostHint
+              ? setOpen("cost")
+              : run(() => toggleReceivesLeadsAction(fd({ userId: m.id })), m.receivesLeads ? `${m.name}: keine neuen Leads` : `${m.name}: bekommt wieder Leads`)
           }
           className={`relative h-7 w-12 rounded-full transition ${m.receivesLeads ? "bg-[color:var(--brand)]" : "bg-slate-300"} disabled:opacity-60`}
         >
@@ -133,6 +138,24 @@ export function MemberRow({ m, readOnly, colleagues, today }: { m: MemberView; r
             Speichern
           </Button>
         </form>
+      </Sheet>
+      <Sheet open={open === "cost"} onClose={() => setOpen(null)} title={`${m.name} bekommt Leads?`} message={m.enableCostHint ?? undefined}>
+        <div className="space-y-2 p-5" data-seat-confirm>
+          <Button
+            variant="primary"
+            size="md"
+            className="w-full"
+            onClick={() => {
+              setOpen(null);
+              run(() => toggleReceivesLeadsAction(fd({ userId: m.id })), `${m.name}: bekommt wieder Leads`);
+            }}
+          >
+            Einschalten
+          </Button>
+          <Button variant="secondary" size="md" className="w-full" onClick={() => setOpen(null)}>
+            Abbrechen
+          </Button>
+        </div>
       </Sheet>
       <Sheet open={open === "remove"} onClose={() => setOpen(null)} title={`${m.name} entfernen?`} message="Offene Leads gehen an Sie zurück.">
         <div className="p-5">

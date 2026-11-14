@@ -709,6 +709,9 @@ model User {
   // Bekommt bei der Verteilung neue Leads
   receivesLeads      Boolean          @default(true)
   lastLeadAssignedAt DateTime?
+  // Zuletzt einen Lead zugewiesen bekommen (Verteilung, Zuteilen, Terminbuchung).
+  // Platz-Abrechnung (lib/seats.ts): wer heute Leads bekam, zählt heute als aktiver Verkäufer.
+  leadReceivedAt     DateTime?
   // Admins: neue Oberfläche (Admin-A) testen; Standard aus
   adminNewUi         Boolean          @default(true)
   adminDismissals    AdminDismissal[]

@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import type { CatalogItem } from "@/lib/produkt-buchen-shared";
 import { saveCatalogItemAction, type CatalogState } from "./actions";
 
-/** Eine Zeile im Katalog: an/aus, Bewährt/Test, Nutzen-Text. */
+/** Eine Zeile im Katalog: an/aus, Bewährt/Neu, Nutzen-Text. */
 export function CatalogItemForm({ item }: { item: CatalogItem }) {
   const [state, action, pending] = useActionState<CatalogState, FormData>(saveCatalogItemAction, {});
   return (

@@ -51,7 +51,7 @@ function fromRow(r: Row): Record<string, unknown> {
 const NEW_PRODUCT: RechnerProduct = {
   key: "", name: "", active: false, maklerOnly: false, match: "", provisionKey: null, kind: "percent",
   vertreterRate: 0.5, vertreterTrail: 0, maklerRate: 0, maklerTrail: 0.225, months: 10,
-  cpl: 10, cplNote: "Annahme", cplOverride: false, cplMakler: null, cplMaklerNote: "", customerRate: 0.1, contractsPerCustomer: 1, terminRate: 0, premium: 500, minLeads30: null,
+  cpl: 10, cplFrom: null, cplNote: "Annahme", cplOverride: false, cplMakler: null, cplMaklerNote: "", customerRate: 0.1, contractsPerCustomer: 1, terminRate: 0, premium: 500, minLeads30: null,
   crossSell: null,
 };
 
@@ -127,7 +127,10 @@ export function RechnerForm({ config, dataInfo }: { config: RechnerConfig; dataI
                   <F label="Leads, die Kunde werden %"><input className={inp} value={String(r.customerRate)} onChange={(e) => upd(i, { customerRate: e.target.value })} /></F>
                   <F label="Verträge pro Kunde"><input className={inp} value={String(r.contractsPerCustomer)} onChange={(e) => upd(i, { contractsPerCustomer: e.target.value })} /></F>
                   <F label="Leads mit Termin % (nur Info, 0 = aus)"><input className={inp} value={String(r.terminRate)} onChange={(e) => upd(i, { terminRate: e.target.value })} /></F>
-                  <F label="Kosten pro Lead € (Erfahrungswert mit Puffer)"><input className={inp} value={String(r.cpl)} onChange={(e) => upd(i, { cpl: e.target.value })} /></F>
+                  <div className="grid grid-cols-[1fr_2fr] gap-2">
+                    <F label="von €"><input className={inp} value={String(r.cplFrom)} onChange={(e) => upd(i, { cplFrom: e.target.value })} placeholder="leer = Einzelwert" data-cpl-from /></F>
+                    <F label="Kosten pro Lead € (bis, damit wird gerechnet)"><input className={inp} value={String(r.cpl)} onChange={(e) => upd(i, { cpl: e.target.value })} /></F>
+                  </div>
                   <F label="Hinweis zu den Kosten"><input className={inp} value={String(r.cplNote)} onChange={(e) => upd(i, { cplNote: e.target.value })} placeholder="z. B. real zuletzt ca. 2 €" /></F>
                   <F label="Kosten pro Lead € im Makler-Modus (leer = wie oben)"><input className={inp} value={String(r.cplMakler)} onChange={(e) => upd(i, { cplMakler: e.target.value })} placeholder="z. B. 4" /></F>
                   <F label="Hinweis zum Makler-Wert"><input className={inp} value={String(r.cplMaklerNote)} onChange={(e) => upd(i, { cplMaklerNote: e.target.value })} placeholder="z. B. reales Ergebnis" /></F>

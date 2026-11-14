@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Loader2, UserPlus } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui";
 import { inviteMemberAction, type TeamFormState } from "./actions";
@@ -10,16 +10,26 @@ const input =
 
 export function InviteForm({ readOnly, costHint = null }: { readOnly: boolean; costHint?: string | null }) {
   const [state, action, pending] = useActionState<TeamFormState, FormData>(inviteMemberAction, {});
+  // „bekommt Leads“ beim Einladen wählbar: nur aktive Verkäufer kosten (Assistenz ohne Leads kostenlos)
+  const [receivesLeads, setReceivesLeads] = useState(true);
   return (
     <Card>
-      <CardHeader title="Berater einladen" icon={UserPlus} />
+      <CardHeader title="Mitglied einladen" icon={UserPlus} />
       <form action={action} className="space-y-3 p-5">
         <div className="grid gap-3 sm:grid-cols-2">
           <input name="name" required placeholder="Vor- und Nachname" className={input} />
           <input name="email" type="email" required placeholder="E-Mail-Adresse" className={input} />
         </div>
+        <input type="hidden" name="receivesLeads" value={receivesLeads ? "on" : "off"} />
+        <label className="flex items-start gap-2.5 text-[15px]">
+          <input type="checkbox" checked={receivesLeads} onChange={(e) => setReceivesLeads(e.target.checked)} className="mt-1 h-4 w-4" data-invite-receives-leads />
+          <span>
+            <span className="font-medium">Bekommt Leads</span>
+            <span className="block text-sm text-[color:var(--muted)]">Aus für Mitglieder, die nicht verkaufen (z. B. Assistenz). Mitglieder ohne Leads sind kostenlos.</span>
+          </span>
+        </label>
         <p className="text-sm text-[color:var(--muted)]">Die Person bekommt per E-Mail einen Link zum Passwort-Festlegen.</p>
-        {costHint ? (
+        {costHint && receivesLeads ? (
           <p className="rounded-[var(--radius-sm)] bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 ring-1 ring-amber-200" data-seat-cost>
             + {costHint}
           </p>

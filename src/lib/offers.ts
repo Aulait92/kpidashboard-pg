@@ -42,7 +42,7 @@ export type OfferFormInput = {
   specialTerms?: string | null;
   startDate?: string | null; // YYYY-MM-DD
   validDays?: number;
-  /** Logins gesamt (Inhaber + Berater); 3 inklusive. */
+  /** Aktive Verkäufer gesamt (bekommen Leads); 3 inklusive, Mitglieder ohne Leads kostenlos. */
   seats?: number | null;
   /** Jährlich im Voraus (nur 12 Monate Laufzeit, nicht mit Startpreis). */
   annual?: boolean;
@@ -127,7 +127,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
   if (price.monthlyFee == null) {
     throw new Error(
       price.seatsIndividual
-        ? `Ab ${PRICE_LIST.seatIndividualFrom} Logins gibt es keinen Listenpreis – bitte die Monatsgebühr individuell eintragen (inklusive aller Logins).`
+        ? `Ab ${PRICE_LIST.seatIndividualFrom} aktiven Verkäufern gibt es keinen Listenpreis. Bitte die Monatsgebühr individuell eintragen (inklusive aller Verkäufer).`
         : "Ab 10.000 € Werbebudget gibt es keinen Listenpreis – bitte die Monatsgebühr individuell eintragen.",
     );
   }

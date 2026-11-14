@@ -21,6 +21,7 @@ import { ProductsCard } from "./produkte-card";
 import { productOverview } from "@/lib/produkt-buchen";
 import { EmpfehlungBookButton, EmpfehlungCancelButton } from "@/components/empfehlung/client";
 import { moduleState, showNewBadge, trialAvailable } from "@/lib/empfehlung/shared";
+import { includedPhrase } from "@/lib/seats";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Konto & Rechnungen | performancegrowth" };
@@ -97,7 +98,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const startYmd = customer.retainerStart ? new Intl.DateTimeFormat("sv-SE", { timeZone: TZ }).format(customer.retainerStart) : today;
   const softwareFee = offer ? Number(offer.softwareFee) : customer.plan === "service" ? 0 : 349;
   const service = customer.plan === "service";
-  // Zusätze (weitere Logins, Bestandskunden-Modul) und Zahlweise
+  // Zusätze (weitere aktive Verkäufer, Bestandskunden-Modul) und Zahlweise
   const seatMonthly = customer.seatMonthly != null ? Number(customer.seatMonthly) : null;
   const seatsFee = seatMonthly ? customer.seatsBilled * seatMonthly : 0;
   const bestandFee = customer.bestandMonthly != null ? Number(customer.bestandMonthly) : 0;
@@ -129,10 +130,10 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             ) : null}
             {customer.seatsIncluded != null ? (
               <>
-                <dt className="text-[color:var(--muted)]">Logins</dt>
+                <dt className="text-[color:var(--muted)]">Verkäufer</dt>
                 <dd data-konto-seats>
-                  {customer.seatsIncluded} inklusive
-                  {seatMonthly && customer.seatsBilled > 0 ? `, ${customer.seatsBilled} weitere je ${eur(seatMonthly)} = ${eur(seatsFee)} im Monat` : ""}
+                  {includedPhrase(customer.seatsIncluded)}
+                  {seatMonthly && customer.seatsBilled > 0 ? `, ${customer.seatsBilled} ${customer.seatsBilled === 1 ? "weiterer" : "weitere"} je ${eur(seatMonthly)} = ${eur(seatsFee)} im Monat` : ""}
                   {seatMonthly === 0 ? " · weitere nach Sondervereinbarung" : ""}
                 </dd>
               </>
@@ -311,13 +312,14 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 <li className="space-y-2 px-5 py-4" data-konto-seats-module>
                   <div className="flex flex-wrap items-center gap-2">
                     <UserPlus className="h-4 w-4 text-[color:var(--brand)]" />
-                    <span className="font-semibold">Weitere Berater-Logins</span>
+                    <span className="font-semibold">Weitere Verkäufer</span>
                     <span className="ml-auto text-[color:var(--muted)]">
-                      {seatMonthly ? `${eur(seatMonthly)} netto/Monat je Login` : "nach Sondervereinbarung"}
+                      {seatMonthly ? `${eur(seatMonthly)} netto/Monat je weiterem Verkäufer` : "nach Sondervereinbarung"}
                     </span>
                   </div>
                   <p className="text-[color:var(--muted)]">
-                    {customer.seatsIncluded} Logins inklusive. Weitere legen Sie selbst im Team an, sie werden tagesgenau berechnet.
+                    {includedPhrase(customer.seatsIncluded)}. Aktiv ist, wer Leads bekommt. Mitglieder ohne Leads (z. B. Inhaber, der nur steuert) sind kostenlos.
+                    Weitere Verkäufer legen Sie selbst im Team an, sie werden tagesgenau berechnet.
                   </p>
                   <Link href="/buyer/team" className={buttonClass("secondary", "sm")}>
                     Zum Team

@@ -26,8 +26,8 @@ Konfiguration, URL), `src/lib/rechner-server.ts` (DB, echte Kosten pro Lead),
 
 Provision ist umsatzsteuerfrei; Kosten werden für Vertreter standardmäßig inkl. 19 % USt.
 gerechnet (Vorsteuer meist nicht abziehbar). Termine sind nur Info, nicht Teil der Rechnung.
-Berater 3 inklusive, jeder weitere 49 €; nach Merge der Preis-Erweiterungen auf
-`PRICE_LIST` umstellen (Konstanten oben in `rechner.ts`).
+Aktive Verkäufer (bekommen Leads): 3 inklusive, jeder weitere 49 €, Mitglieder ohne Leads kostenlos
+(`PRICE_LIST`, Konstanten oben in `rechner.ts`, Regel in `lib/seats.ts`).
 
 ## Standardwerte (Ole, 11.11.)
 
@@ -46,9 +46,21 @@ Berater 3 inklusive, jeder weitere 49 €; nach Merge der Preis-Erweiterungen au
     (Unit-Test „Kontrolle Präsentation“). Mit dem Standardbeitrag 350 €: Faktor 4,4.
   - 9 % der Leads werden Kunden, 1,33 Verträge pro Kunde (= 12 % Verträge je Lead).
   - Ø Jahresbeitrag 350 €, Vertreter 55 % Abschlussprovision, Makler 22,5 % Bestand p. a.
-- Privatschutz (12 €/Lead, 10 % Kunden, 600 €) und PKV-Tarifoptimierung (nur Makler,
+- Privatschutz (20–25 €/Lead, 10 % Kunden, 600 €) und PKV-Tarifoptimierung (nur Makler,
   25 €/Lead, 7,5 %, 250 €/Monat, 10 Monatsbeiträge) sind angelegt, aber **aus** –
-  alle Werte dort sind Annahmen.
+  alle Werte dort sind Annahmen. Hund (10–12 €), Pferd (11–13 €) und Kindersparplan
+  (15–20 €) sind seit 14.11.2026 ebenfalls angelegt und aus (Provision und Quoten Annahmen).
+
+### Leadpreis als Spanne (Ole, 14.11.2026)
+
+- Feld „von €“ neben „Kosten pro Lead €“ (`cplFrom`, unterer Wert). Angezeigt wird die Spanne,
+  z. B. „Erfahrungswert: ca. 20–25 € pro Lead · bei 30 €/Tag ca. 36 bis 45 Leads im Monat“
+  (Konto → Produkte bei bewährten Produkten, Rechner unter „Kosten pro Lead“).
+- Gerechnet wird immer mit dem **oberen** Wert (`cpl`, Puffer). Leer = Einzelwert wie bisher.
+  Echte, höhere Daten ersetzen den Erfahrungswert als Einzelwert; der Makler-Wert bleibt Einzelwert.
+- Startwerte per Migration `20261118511000_leadpreis_spanne`: Katze 3–5, Hund 10–12, Pferd 11–13,
+  Kindersparplan 15–20, Privatschutz 20–25. Der obere Wert wird nur angehoben, wenn er bisher
+  niedriger war (Katze bleibt bei 6 €, also 3–6 €). Makler-Werte bleiben unverändert.
 
 **Prüfung gegen die Präsentation:** 800 € Werbung bei 4 € = 200 Leads → 18 Kunden →
 24 Verträge → 24 × 358 € = 8.592 € Beitrag → × 58 % ≈ 4.983 € Provision (Folie: 5.000 €);

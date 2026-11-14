@@ -19,6 +19,8 @@ import { reportError } from "@/lib/monitoring";
 import { offerProducts } from "@/components/offer-document";
 import { annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
 import { audit, type AuditActor } from "@/lib/audit";
+import { seatsToBill } from "@/lib/seats";
+import { MANUAL_SEAT_TASK, manualSeatTask, seatUsage } from "@/lib/seats-server";
 
 let client: Stripe | null = null;
 
@@ -57,8 +59,8 @@ const PRODUCT_DEFAULTS: Record<ProductKey, { name: string; description: string }
     description: "Exklusive Leads je Bestellung, im Voraus berechnet.",
   },
   seat: {
-    name: "Weiterer Berater-Login",
-    description: "Zusätzlicher Zugang zur performancegrowth-Software je Berater (über die inklusiven Logins hinaus).",
+    name: "Weiterer aktiver Verkäufer",
+    description: "Weiterer Verkäufer, der Leads bekommt, über die inklusiven aktiven Verkäufer hinaus (tagesgenau).",
   },
   bestand: {
     name: "Bestandskunden-Modul",
@@ -710,11 +712,11 @@ const intervalOf = (sub: Stripe.Subscription): "month" | "year" =>
 /** Laufendes Abo für Änderungen vorbereiten (Zeitplan lösen); null = noch nicht möglich. */
 async function editableSubscription(stripe: Stripe, stripeCustomerId: string): Promise<{ sub: Stripe.Subscription } | { note: string }> {
   const sub = await activeSubscription(stripe, stripeCustomerId);
-  if (!sub) return { note: "Abo läuft noch nicht – wird beim Start abgeglichen." };
+  if (!sub) return { note: "Abo läuft noch nicht, wird beim Start abgeglichen." };
   try {
     await detachSchedule(stripe, sub);
   } catch (err) {
-    if (err instanceof IntroPhaseError) return { note: "Startpreis-Phase läuft – wird danach automatisch abgeglichen." };
+    if (err instanceof IntroPhaseError) return { note: "Startpreis-Phase läuft, wird danach automatisch abgeglichen." };
     throw err;
   }
   return { sub };
@@ -817,8 +819,13 @@ async function setItemQuantity(
   });
 }
 
-/** Weitere Logins im Abo an die tatsächliche Zahl der Logins anpassen (Inhaber + Berater). */
-export async function syncSeatBilling(customerId: string, opts: { force?: boolean } = {}): Promise<AddOnResult> {
+/**
+ * Weitere aktive Verkäufer im Abo abrechnen (Ole, 14.11.2026: „3 aktive Verkäufer inklusive“,
+ * siehe lib/seats.ts). Tagesgenau über Stripe-Prorations; vor dem Abo-Start in den geplanten
+ * Start übernommen (wie Zusatzmodule). Geht das nicht automatisch (kein Stripe-Kunde, kein Abo,
+ * Startpreis-Phase), entsteht eine Admin-Aufgabe „Platz von Hand abrechnen“ statt still nichts.
+ */
+export async function syncSeatBilling(customerId: string, opts: { force?: boolean; now?: Date } = {}): Promise<AddOnResult> {
   try {
     const c = await prisma.customer.findUnique({
       where: { id: customerId },
@@ -829,21 +836,40 @@ export async function syncSeatBilling(customerId: string, opts: { force?: boolea
     // Ohne Preis (individuelle Sonderkondition) wird nichts automatisch berechnet;
     // eine vorher berechnete Menge wird dann auf 0 gesetzt.
     if (c.seatsIncluded == null || (!(price > 0) && c.seatsBilled === 0)) return { ok: true, changed: false, note: "Keine Platz-Abrechnung vereinbart." };
-    const logins = await prisma.user.count({ where: { customerId, role: "BUYER" } });
-    const want = price > 0 ? Math.max(0, logins - c.seatsIncluded) : 0;
+    const usage = await seatUsage(customerId, opts.now);
+    // Nie mehr als nach der bisherigen Regel (alle Logins), siehe seatsToBill()
+    const want = seatsToBill({ ...usage, included: c.seatsIncluded, price });
     if (want === c.seatsBilled && !opts.force) return { ok: true, changed: false };
     const stripe = stripeClient();
+    let note: string | undefined;
     if (stripe && c.stripeCustomerId) {
       const ed = await editableSubscription(stripe, c.stripeCustomerId);
-      if ("note" in ed) return { ok: true, changed: false, note: ed.note };
-      await setItemQuantity(stripe, ed.sub, "seat", want, price);
+      if ("note" in ed) {
+        // Abo startet erst noch: Plätze in den geplanten Start aufnehmen (berechnet ab Abo-Beginn)
+        const planned = await setScheduleItem(stripe, c.stripeCustomerId, "seat", want, price);
+        if (!planned) {
+          // Kein Abo und kein geplanter Start bzw. Startpreis-Phase: Menge bleibt offen (der tägliche
+          // Abgleich versucht es weiter), bis dahin von Hand abrechnen.
+          if (want !== c.seatsBilled) await manualSeatTask(customerId, { from: c.seatsBilled, to: want, price, reason: ed.note });
+          return { ok: true, changed: false, note: `${ed.note} Aufgabe „${MANUAL_SEAT_TASK}“ ist angelegt.` };
+        }
+        if (want > 0) note = `Berechnet ab Abo-Start am ${fmtDay(planned.startsAt)}.`;
+      } else await setItemQuantity(stripe, ed.sub, "seat", want, price);
+    } else {
+      await manualSeatTask(customerId, {
+        from: c.seatsBilled,
+        to: want,
+        price,
+        reason: stripe ? "Für den Kunden ist kein Stripe-Kunde hinterlegt." : "Stripe ist nicht eingerichtet.",
+      });
+      note = `Ohne Stripe: Aufgabe „${MANUAL_SEAT_TASK}“ ist angelegt.`;
     }
     await prisma.customer.update({ where: { id: customerId }, data: { seatsBilled: want } });
-    await audit("billing.seats", { entity: "Customer", entityId: customerId, customerId, details: { from: c.seatsBilled, to: want, logins } });
-    return { ok: true, changed: true, ...(stripe && c.stripeCustomerId ? {} : { note: "Ohne Stripe – bitte von Hand abrechnen." }) };
+    await audit("billing.seats", { entity: "Customer", entityId: customerId, customerId, details: { from: c.seatsBilled, to: want, logins: usage.logins, active: usage.active } });
+    return { ok: true, changed: true, ...(note ? { note } : {}) };
   } catch (err) {
     reportError(err, "billing-seats", { customer: customerId });
-    return { ok: false, error: "Die Abrechnung der Logins konnte nicht angepasst werden." };
+    return { ok: false, error: "Die Abrechnung der Verkäufer-Plätze konnte nicht angepasst werden." };
   }
 }
 
@@ -1241,13 +1267,17 @@ export async function changeMonthlyFee(
   }
 }
 
-/** Täglicher Abgleich: Logins aller Kunden mit Platz-Abrechnung (holt verschobene Änderungen nach). */
-export async function reconcileSeatBilling(): Promise<{ changed: number; errors: number }> {
+/**
+ * Täglicher Abgleich (03 Uhr UTC): aktive Verkäufer aller Kunden mit Platz-Abrechnung. Holt
+ * verschobene Änderungen nach und senkt die Menge, sobald jemand ohne Leads ist und heute keinen
+ * Lead bekommen hat. Erhöht nie über die bisherige Regel (alle Logins), siehe seatsToBill().
+ */
+export async function reconcileSeatBilling(now = new Date()): Promise<{ changed: number; errors: number }> {
   const customers = await prisma.customer.findMany({ where: { seatsIncluded: { not: null }, archived: false }, select: { id: true } });
   let changed = 0;
   let errors = 0;
   for (const c of customers) {
-    const r = await syncSeatBilling(c.id);
+    const r = await syncSeatBilling(c.id, { now });
     if (!r.ok) errors++;
     else if (r.changed) changed++;
   }

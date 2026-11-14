@@ -286,10 +286,15 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Team (nur Inhaber)
 
-- „Team“ im Profilmenü: Berater mit Name und E-Mail einladen (Link per Mail), höchstens 10 Zugänge.
-- Im Paket mit Software sind 3 Logins inklusive (Inhaber + 2 Berater). Jeder weitere Login kostet 49 € netto im
-  Monat, anteilig ab dem Tag der Einladung bis zum Entfernen. Der Einladen-Dialog zeigt den Aufpreis vorher an.
-  Ab 10 Logins gibt es ein individuelles Angebot (bitte bei uns melden).
+- „Team“ im Profilmenü: Mitglieder mit Name und E-Mail einladen (Link per Mail), höchstens 10 Zugänge. Beim Einladen
+  wählen Sie, ob die Person Leads bekommt („Bekommt Leads“, Standard an; aus z. B. für eine Assistenz).
+- Im Paket mit Software sind **3 aktive Verkäufer inklusive**. Aktiv ist, wer Leads bekommt (Schalter „bekommt Leads“ an).
+  Mitglieder ohne Leads (z. B. Inhaber, der nur steuert, oder Assistenz) sind kostenlos. Jeder weitere aktive Verkäufer
+  kostet 49 € netto im Monat, tagesgenau ab dem Einschalten bis zum Ausschalten oder Entfernen.
+- Wer an einem Tag Leads zugewiesen bekommt (auch von Hand über „Zuständig“), zählt für diesen Tag als aktiver Verkäufer,
+  auch wenn „bekommt Leads“ aus ist.
+- Entsteht durch Einladen, Einschalten oder Zuteilen ein Aufpreis, zeigt die App ihn vorher an. Auf der Team-Seite steht,
+  wie viele aktive Verkäufer Sie gerade haben. Ab 10 Zugängen gibt es ein individuelles Angebot (bitte bei uns melden).
 - Neue Leads werden reihum verteilt. Schalter „Bekommt neue Leads“ pro Person (dauerhaft aus). Für Urlaub
   oder Krankheit besser „Abwesenheit eintragen“ (Person antippen), dann geht alles danach von selbst wieder an.
 - In der Liste steht bei abwesenden Personen „abwesend bis …“.
@@ -320,7 +325,7 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Konto & Rechnungen (nur Inhaber)
 
-- Vertrag (Paket, Monatsbetrag, weitere Logins, Bestandskunden-Modul, Monatlich gesamt, Zahlweise, Laufzeit, Start),
+- Vertrag (Paket, Monatsbetrag, weitere Verkäufer, Bestandskunden-Modul, Monatlich gesamt, Zahlweise, Laufzeit, Start),
   Rechnungen mit Status und „Jetzt bezahlen“ bei offenen Rechnungen.
 - Laufzeit: ohne Laufzeit (Setup 2.490 €), 3 Monate (Setup 1.990 €) oder 12 Monate (Setup 990 €), jeweils netto;
   nach der Mindestlaufzeit monatlich kündbar.
@@ -364,7 +369,9 @@ Seiten aus der Liste „Seiten“ unten.
 - **Wo:** Konto & Rechnungen → Karte „Produkte“ (auch über Wachstum → „Weitere Sparte dazubuchen“). Dort stehen die gebuchten
   Produkte mit Tagesbudget und Status („Läuft“, „In Einrichtung“, „Anfrage offen“) und darunter die Sparten, die man dazubuchen kann
   (z. B. Katzenversicherung; weitere wie Hund, Privatschutz, Unfall, Zahnzusatz oder Krankenhauszusatz, sobald wir sie freigeben).
-  „Bewährt“ heißt: mit Erfahrungswert (Leadpreis); „Testprodukt“: Erfahrungswert folgt, wir testen gemeinsam.
+  „Bewährt“ heißt: mit Erfahrungswert, angezeigt als Spanne, z. B. „ca. 20–25 € pro Lead · bei 30 €/Tag ca. 36 bis 45 Leads
+  im Monat“. „Neu“ heißt: Neues Produkt, wir sammeln gerade Erfahrungswerte. Den Leadpreis sehen Sie nach den ersten Wochen
+  in Ihren Zahlen.
 - **Buchen:** „Produkt buchen“ → Tagesbudget wählen (Plus/Minus oder Regler), Start „so bald wie möglich“ oder ab Datum, Häkchen
   setzen, „Jetzt kostenpflichtig buchen“. Die Vorschau zeigt: einmalig 990 € Einrichtung, monatlich 350 € mehr (netto, ab Start), das
   neue Werbebudget gesamt pro Monat und – sehr deutlich – wenn dadurch eine andere Betreuungsstufe gilt (wie bei „Budget ändern“).
@@ -534,7 +541,8 @@ Seiten aus der Liste „Seiten“ unten.
 ## Zusatzmodule buchen
 
 - Konto & Rechnungen → **Zusatzmodule** (nur Inhaber): Empfehlungen & Bewertungen (59 €, 30 Tage kostenlos testen),
-  Bestandskunden-Modul (149 €, siehe „Bestand“) und weitere Berater-Logins (49 € je Login, im Team anlegen).
+  Bestandskunden-Modul (149 €, siehe „Bestand“) und weitere Verkäufer (3 aktive Verkäufer inklusive, jeder weitere 49 €,
+  im Team anlegen; Mitglieder ohne Leads kostenlos).
   Buchen und Kündigen geht dort selbst; wir bekommen automatisch Bescheid.
 
 ## Einrichtung

@@ -6,6 +6,7 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { memberName, teamMembers } from "@/lib/team";
 import { berlinYmd, teamAbsences } from "@/lib/absence";
+import { addSeatCostHint, addsSeatCost, berlinDayStart, isActiveSeller, seatSummary } from "@/lib/seats";
 import { InviteForm } from "./invite-form";
 import { MemberRow } from "./member-row";
 
@@ -32,8 +33,13 @@ export default async function TeamPage() {
   const today = berlinYmd(new Date());
   const billing = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { seatsIncluded: true, seatMonthly: true } });
   const seatPrice = Number(billing?.seatMonthly ?? 0);
-  // Platz-Abrechnung nur bei Verträgen mit Logins (seit 11.11.2026); Alt-Verträge unverändert
-  const seats = billing?.seatsIncluded != null && seatPrice > 0 ? { included: billing.seatsIncluded, price: seatPrice, used: members.length } : null;
+  // Platz-Abrechnung nur bei Verträgen mit Plätzen (seit 11.11.2026); Alt-Verträge unverändert.
+  // Seit 14.11.2026 zählen nur aktive Verkäufer (bekommt Leads an oder heute Leads bekommen), lib/seats.ts.
+  const dayStart = berlinDayStart(new Date());
+  const activeToday = new Set(members.filter((m) => isActiveSeller(m, dayStart)).map((m) => m.id));
+  const seats = billing?.seatsIncluded != null && seatPrice > 0 ? { included: billing.seatsIncluded, price: seatPrice, active: activeToday.size } : null;
+  // Kostenhinweis vor dem Einschalten: nur, wenn das Mitglied dadurch neu als aktiver Verkäufer zählt
+  const enableCost = seats && addsSeatCost(seats) ? addSeatCostHint(seats.price, "Ein weiterer aktiver Verkäufer") : null;
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -65,6 +71,7 @@ export default async function TeamPage() {
                   loggedIn: !!m.lastLoginAt,
                   twoFactor: !!m.totpEnabledAt,
                   absence: absences.get(m.id) ?? null,
+                  enableCostHint: !m.receivesLeads && !activeToday.has(m.id) ? enableCost : null,
                 }}
                 colleagues={members.filter((o) => o.id !== m.id).map((o) => ({ id: o.id, name: memberName(o) }))}
                 today={today}
@@ -74,22 +81,15 @@ export default async function TeamPage() {
         </Card>
 
         {seats ? (
-          <p className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-4 py-3 text-sm text-[color:var(--muted)]">
-            {seats.included} Logins sind inklusive, Sie nutzen {seats.used}.{" "}
-            {seats.used > seats.included
-              ? `${seats.used - seats.included} weitere ${seats.used - seats.included === 1 ? "Login kostet" : "Logins kosten"} je ${fmtSeat(seats.price)} im Monat.`
-              : `Jeder weitere Login kostet ${fmtSeat(seats.price)} im Monat.`}
+          <p className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-4 py-3 text-sm text-[color:var(--muted)]" data-seat-summary>
+            {seatSummary(seats)}
           </p>
         ) : null}
 
-        <InviteForm readOnly={readOnly} costHint={seats && seats.used >= seats.included ? `Dieser Login kostet zusätzlich ${fmtSeat(seats.price)} im Monat, tagesgenau abgerechnet.` : null} />
+        <InviteForm readOnly={readOnly} costHint={seats && addsSeatCost(seats) ? addSeatCostHint(seats.price) : null} />
       </div>
     </main>
   );
-}
-
-function fmtSeat(n: number): string {
-  return `${n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: n % 1 ? 2 : 0 })} netto`;
 }
 
 function daysAgo(n: number): Date {

@@ -34,7 +34,7 @@ import {
   type RechnerResult,
   type StaffelStufe,
 } from "@/lib/rechner";
-import type { CplInfo } from "@/lib/rechner";
+import { cplSpanne, type CplInfo } from "@/lib/rechner";
 import { PRICE_LIST, TERM_MONTHS, type OfferTerm } from "@/lib/offer-pricing";
 import type { VermittlerTyp } from "@/lib/provision";
 
@@ -160,6 +160,11 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
                   max={CPL_MAX}
                   onChange={(v) => set({ cpl: Math.abs(v - cplInfo.cpl) < 0.005 ? null : v })}
                 />
+                {input.cpl == null && cplInfo.from != null ? (
+                  <p className="mt-1 text-xs text-[color:var(--muted)]" data-cpl-spanne>
+                    Erfahrungswert: ca. {cplSpanne(cplInfo.cpl, cplInfo.from)} pro Lead. Gerechnet wird mit dem oberen Wert (Puffer).
+                  </p>
+                ) : null}
                 <p className="mt-1 text-xs text-[color:var(--muted)]">
                   ≈ <b className="tabular-nums text-[color:var(--foreground)]">{Math.round(r.leads).toLocaleString("de-DE")}</b> Leads im Monat
                   {input.cpl != null ? (
@@ -301,7 +306,7 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
                 </div>
               ) : null}
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <NumField key={`ber-${version}`} label="Berater im Team" hint={`${SEATS_INCLUDED} inklusive, jeder weitere ${SEAT_MONTHLY} €`} value={input.berater} min={1} max={99} step={1} onChange={(v) => set({ berater: Math.round(v) })} />
+                <NumField key={`ber-${version}`} label="Aktive Verkäufer im Team" hint={`bekommen Leads · ${SEATS_INCLUDED} inklusive, jeder weitere ${SEAT_MONTHLY} €, ohne Leads kostenlos`} value={input.berater} min={1} max={99} step={1} onChange={(v) => set({ berater: Math.round(v) })} />
               </div>
               <label className="mt-3 flex items-start gap-2 text-sm">
                 <input type="checkbox" className="mt-0.5 h-4 w-4" checked={input.ust} onChange={(e) => set({ ust: e.target.checked })} />
