@@ -1,6 +1,7 @@
 "use server";
 
 import { disqualifyLabel, isDisqualifyReason } from "@/lib/lead-quality";
+import { isLostStatus, lostReasonOf } from "@/lib/lead-lost";
 import { abschlussText, logLeadHistory } from "@/lib/lead-history";
 import { revalidatePath } from "next/cache";
 import {
@@ -255,6 +256,12 @@ export async function setLeadStatusAction(
         : {}),
       // Grund nur bei „Disqualifiziert“, sonst zurücksetzen
       disqualifyReason: status === "Disqualifiziert" && isDisqualifyReason(opts?.disqualifyReason) ? opts!.disqualifyReason : null,
+      // Verloren-Grund (lib/lead-lost.ts): verlässt der Lead „verloren“, entfällt er; sonst aus dem alten Grund ableiten
+      ...(isLostStatus(status)
+        ? lead.status !== status
+          ? { lostReason: lostReasonOf({ status, disqualifyReason: opts?.disqualifyReason ?? null }), lostNote: null, lostAt: new Date(), lostEarly: false }
+          : {}
+        : { lostReason: null, lostNote: null, lostAt: null, lostEarly: false }),
     },
   });
 

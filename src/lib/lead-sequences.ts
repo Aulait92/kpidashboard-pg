@@ -1,3 +1,6 @@
+// Nicht erreicht (Ole, 14.11.2026): die Anrufe plant der Anrufplan (6 Versuche, lib/call-plan.ts); diese
+// Abfolge schickt dazwischen die WhatsApp. Ihr Anruf-Schritt legt keine zweite Aufgabe an, solange der Plan läuft.
+//
 // Nachfass-Abfolgen: nach „Nicht erreicht“, „Angebot gesendet“ und „Nicht
 // erschienen“ fasst die App in festen Schritten nach (WhatsApp bzw.
 // Anruf-Aufgabe auf „Heute“). Abgearbeitet vom 5-Minuten-Cron (runSequences).
@@ -19,6 +22,7 @@ import { firstNameOf, NoTemplateError, sendWhatsAppNotice, type NoticePurpose } 
 import { a, anredeZeile, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
 import { anspracheOf } from "@/lib/whatsapp/reminders";
 import { ansprechpartner } from "@/lib/lead-anrede";
+import { isCallPlanNote } from "@/lib/call-plan";
 
 export type SequenceKind = "not_reached" | "offer" | "no_show";
 
@@ -214,10 +218,14 @@ export async function stopReasonFor(seq: { leadId: string; customerId: string; s
   return null;
 }
 
-/** Anruf-Aufgabe: Wiedervorlage für heute – eine eigene, spätere Wiedervorlage bleibt bestehen. */
+/**
+ * Anruf-Aufgabe: Wiedervorlage für heute – eine eigene, spätere Wiedervorlage bleibt bestehen.
+ * Läuft der Anrufplan (lib/call-plan.ts, „Anrufversuch X von 6“), plant er die Anrufe: keine zweite Aufgabe.
+ */
 async function createCallTask(leadId: string, note: string, now: Date): Promise<"call_task" | "kept_followup"> {
-  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { followUpAt: true } });
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { followUpAt: true, followUpNote: true } });
   if (lead?.followUpAt && lead.followUpAt.getTime() > now.getTime()) return "kept_followup";
+  if (lead?.followUpAt && isCallPlanNote(lead.followUpNote)) return "kept_followup";
   await prisma.lead.update({ where: { id: leadId }, data: { followUpAt: now, followUpNote: note, callbackSnoozedUntil: null } });
   return "call_task";
 }

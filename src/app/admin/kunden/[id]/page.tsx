@@ -10,6 +10,7 @@ import { GarantienCard } from "@/components/admin/garantien-card";
 import { SetupCard } from "@/components/admin/setup-card";
 import { TestdatenCard } from "@/components/admin/testdaten-card";
 import { LeadQualitaetCard } from "@/components/admin/lead-qualitaet-card";
+import { NaechsterSchrittCard } from "@/components/admin/naechster-schritt-card";
 import type { ImpressumInfo } from "@/lib/impressum";
 
 // Übersicht der Kundenakte: mit Vertriebskontakt die volle Kontaktseite
@@ -32,6 +33,7 @@ export default async function KundenakteUebersicht({ params, searchParams }: { p
         <SetupCard customerId={id} notice={notice} />
         <TestdatenCard customerId={id} />
         <LeadQualitaetCard customerId={id} />
+        <NaechsterSchrittCard customerId={id} />
         <ContactPage params={Promise.resolve({ id: customer.salesContact.id })} searchParams={Promise.resolve({ embedded: "1" })} />
       </div>
     );
@@ -45,6 +47,7 @@ export default async function KundenakteUebersicht({ params, searchParams }: { p
         <GarantienCard customerId={id} />
         <SetupCard customerId={id} notice={notice} />
         <TestdatenCard customerId={id} />
+        <NaechsterSchrittCard customerId={id} />
     <div className="grid gap-5 lg:grid-cols-[3fr_2fr]">
       <section className="card p-4 text-sm">
         <h2 className="mb-3 font-medium">Grunddaten</h2>

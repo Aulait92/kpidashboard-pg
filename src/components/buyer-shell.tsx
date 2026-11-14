@@ -31,6 +31,7 @@ import { AbsenceControl, dayShort, type ShellAbsence } from "@/components/absenc
 import { normalizePath, sendUsage } from "@/lib/usage-client";
 import { cn } from "@/lib/utils";
 import { showNewBadge } from "@/lib/empfehlung/shared";
+import { NotReachedOfferHost } from "@/components/next-step";
 
 // App-Shell des Kundenbereichs: eine Kopfzeile mit Navigation und Profil-
 // menü (Desktop), unten eine Tab-Leiste (Handy). Alle Seiten teilen sich
@@ -56,8 +57,11 @@ export function BuyerShell({
   newUi = false,
   absence = null,
   updatesUnread = 0,
+  noStepBadge = 0,
   children,
 }: {
+  /** Leads ohne nächsten Schritt (Zähler an „Kontakte“ bzw. „Leads“, lib/lead-next-step.ts). */
+  noStepBadge?: number;
   /** Ungelesene Neuigkeiten des Logins (Profilmenü). */
   updatesUnread?: number;
   /** Neue Oberfläche (Vertreter-A), pro Kunde im Admin einschaltbar. */
@@ -96,6 +100,7 @@ export function BuyerShell({
         hasTeam={hasTeam}
         absence={absence}
         updatesUnread={updatesUnread}
+        noStepBadge={noStepBadge}
       >
         {children}
       </BuyerShellA>
@@ -105,7 +110,7 @@ export function BuyerShell({
   // Reiter, Chats nur mit WhatsApp. Bestandskunden liegen im Profilmenü (Ole, 13.11.2026).
   const items: NavItem[] = [
     { href: "/buyer", label: "Heute", icon: Sun, match: (p) => p === "/buyer" },
-    { href: "/buyer/leads", label: "Leads", icon: Users, match: (p) => p.startsWith("/buyer/leads") },
+    { href: "/buyer/leads", label: "Leads", icon: Users, match: (p) => p.startsWith("/buyer/leads"), badge: noStepBadge },
     { href: "/buyer/kanban", label: "Pipeline", icon: Columns3, match: (p) => p.startsWith("/buyer/kanban") },
     ...(showChats
       ? [{ href: "/buyer/chats", label: "Chats", icon: MessageCircle, match: (p: string) => p.startsWith("/buyer/chats"), badge: chatBadge }]
@@ -210,6 +215,7 @@ export function BuyerShell({
         </ul>
       </nav>
     </div>
+    <NotReachedOfferHost />
     </ToastProvider>
   );
 }
@@ -437,10 +443,12 @@ function BuyerShellA({
   hasTeam,
   absence,
   updatesUnread,
+  noStepBadge,
   children,
 }: {
   absence: ShellAbsence | null;
   updatesUnread: number;
+  noStepBadge: number;
   pathname: string;
   displayName: string;
   showChats: boolean;
@@ -453,7 +461,7 @@ function BuyerShellA({
   const owner = teamRole === "owner";
   const items: NavItem[] = [
     { href: "/buyer", label: "Heute", icon: Sun, match: (p: string) => p === "/buyer" },
-    { href: "/buyer/kontakte", label: "Kontakte", icon: Users, match: (p: string) => /^\/buyer\/(kontakte|leads|kanban)/.test(p) },
+    { href: "/buyer/kontakte", label: "Kontakte", icon: Users, match: (p: string) => /^\/buyer\/(kontakte|leads|kanban)/.test(p), badge: noStepBadge },
     ...(showChats
       ? [{ href: "/buyer/chats", label: "Nachrichten", icon: MessageCircle, match: (p: string) => p.startsWith("/buyer/chats"), badge: chatBadge }]
       : []),
@@ -575,6 +583,7 @@ function BuyerShellA({
           </ul>
         </nav>
       </div>
+      <NotReachedOfferHost />
     </ToastProvider>
   );
 }

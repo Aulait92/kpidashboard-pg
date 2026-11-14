@@ -3,6 +3,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { DISQUALIFY_REASONS } from "@/lib/lead-quality";
+import { LOST_REASONS } from "@/lib/lead-lost";
 import { nowMs } from "@/lib/now";
 
 export async function LeadQualitaetCard({ customerId }: { customerId: string }) {
@@ -25,6 +26,8 @@ export async function LeadQualitaetCard({ customerId }: { customerId: string }) 
   }
   const rows = [
     ...DISQUALIFY_REASONS.map((r) => ({ label: r.label, n: byReason.get(r.key) ?? 0 })),
+    // Verloren-Gründe seit 14.11.2026 (lib/lead-lost.ts)
+    ...LOST_REASONS.filter((r) => r.status === "Disqualifiziert").map((r) => ({ label: r.label, n: byReason.get(r.key) ?? 0 })),
     { label: "ohne Grund (vor dem 13.11. oder per Ziehen ohne Auswahl)", n: byReason.get("ohne") ?? 0 },
   ].filter((r) => r.n > 0);
   return (

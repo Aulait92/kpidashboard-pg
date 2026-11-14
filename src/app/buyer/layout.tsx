@@ -12,7 +12,8 @@ import { loadCustomerProvision } from "@/lib/provision-server";
 import { ProvisionRatesProvider } from "@/components/provision-context";
 import type { ShellAbsence } from "@/components/absence-sheet";
 import { berlinYmd, currentOrNextAbsence, toAbsenceView } from "@/lib/absence";
-import { memberName } from "@/lib/team";
+import { leadScope, memberName } from "@/lib/team";
+import { countWithoutNextStep } from "@/lib/lead-next-step-server";
 import { unreadUpdateCount } from "@/lib/neuigkeiten";
 
 // Gemeinsames Layout für den Buyer-Bereich. Hält den @modal-Parallel-Slot,
@@ -87,6 +88,8 @@ export default async function BuyerLayout({
 
   // Neuigkeiten: ungelesene Einträge des Logins (Vorschau: keine Markierung)
   const updatesUnread = ctx?.userId && !ctx.preview ? await unreadUpdateCount(ctx.userId, ctx.customerId).catch(() => 0) : 0;
+  // Leads ohne nächsten Schritt im eigenen Sichtbereich (Zähler an „Kontakte“)
+  const noStepBadge = ctx ? await countWithoutNextStep(leadScope(ctx)).catch(() => 0) : 0;
 
   return (
     <>
@@ -108,7 +111,7 @@ export default async function BuyerLayout({
       ) : null}
       {ctx ? (
         <ProvisionRatesProvider rates={provision?.rates ?? {}}>
-          <BuyerShell newUi={newUi} displayName={displayName} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen} teamRole={ctx.teamRole} hasTeam={logins > 1} showOrders={pplSubs > 0} showBestand={bestand} absence={absence} updatesUnread={updatesUnread}>
+          <BuyerShell newUi={newUi} displayName={displayName} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen} teamRole={ctx.teamRole} hasTeam={logins > 1} showOrders={pplSubs > 0} showBestand={bestand} absence={absence} updatesUnread={updatesUnread} noStepBadge={noStepBadge}>
             {ctx.teamRole === "advisor" ? (
               <Suspense fallback={null}>
                 <div className="px-4 sm:px-6 lg:px-8">

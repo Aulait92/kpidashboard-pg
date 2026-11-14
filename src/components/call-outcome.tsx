@@ -16,6 +16,7 @@ import {
 import { ActionSheet, type SheetAction } from "@/components/ui/sheet";
 import { AbschlussSheet, asksCloseValue } from "@/components/abschluss-sheet";
 import { fmtDay, LaterDateSheet } from "@/components/later-date-sheet";
+import { LostSheet } from "@/components/next-step";
 
 /** Rückkehr erst nach mind. 3 s zählt (kein Fehlalarm), höchstens 10 Min. */
 const MIN_MS = 3_000;
@@ -97,7 +98,7 @@ export function CallOutcomeSheet({
   onClose: () => void;
   onPick: (message: string, action: () => Promise<InboxResult>) => void;
 }) {
-  const [step, setStep] = useState<"pick" | "win" | "later" | "date">("pick");
+  const [step, setStep] = useState<"pick" | "win" | "later" | "date" | "lost">("pick");
   const provisionRates = useProvisionRates();
   const close = () => {
     setStep("pick");
@@ -123,8 +124,23 @@ export function CallOutcomeSheet({
       ? { label: "Abschluss", icon: Trophy, keepOpen: true, onSelect: () => setStep("win") }
       : { label: "Abschluss", icon: Trophy, onSelect: () => pick(`${t.name}: Abschluss`, () => callbackOutcomeResult(t.leadId, "won", null)) },
     { label: "Später nochmal", icon: Clock, keepOpen: true, onSelect: () => setStep("later") },
-    { label: "Kein Interesse", icon: ThumbsDown, tone: "danger", onSelect: () => pick(`${t.name}: kein Interesse`, () => callbackOutcomeResult(t.leadId, "lost")) },
+    // Verloren mit Grund; nie erreicht und unter 6 Versuchen: Warnung (Ole, 14.11.2026)
+    { label: "Verloren", icon: ThumbsDown, tone: "danger", keepOpen: true, onSelect: () => setStep("lost") },
   );
+
+  if (step === "lost") {
+    return (
+      <LostSheet
+        leadId={t.leadId}
+        name={t.name}
+        onClose={close}
+        onDone={(res, message) => {
+          close();
+          onPick(message, async () => res);
+        }}
+      />
+    );
+  }
 
   if (step === "later") {
     return (

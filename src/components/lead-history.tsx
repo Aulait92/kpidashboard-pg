@@ -12,6 +12,7 @@ import { addLeadNoteAction, deleteLeadNoteAction, setPolicyDoneAction } from "@/
 import type { LeadHistoryEntry, LeadHistoryKind } from "@/lib/lead-history";
 import { cn } from "@/lib/utils";
 import { oeffneLeadMail } from "@/components/lead-mail";
+import { emitLeadAction } from "@/components/next-step";
 
 const ICON: Record<LeadHistoryKind, typeof Phone> = {
   notiz: StickyNote,
@@ -68,6 +69,7 @@ export function LeadHistory({
       setText("");
       setDictateHint(false);
       toast.show({ message: "Notiz gespeichert" });
+      emitLeadAction(leadId);
     });
   const remove = (id: string) =>
     start(async () => {

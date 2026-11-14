@@ -21,13 +21,14 @@ import {
   toggleBotBuyerAction,
 } from "../chat-actions";
 import { nowMs } from "@/lib/now";
+import { NextStepPrompt } from "@/components/next-step";
 
 // WhatsApp-Chats im Kunden-CRM. Nur für Kunden mit WhatsApp-Assistent.
 // Strikte Mandantentrennung: alle Abfragen mit customerId des Buyers.
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Chats | performancegrowth" };
 
-type SearchParams = Promise<{ c?: string; err?: string; f?: string; q?: string }>;
+type SearchParams = Promise<{ c?: string; err?: string; f?: string; q?: string; schritt?: string }>;
 
 const ERRORS: Record<string, string> = {
   window:
@@ -307,6 +308,10 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
   return (
     <main className="mx-auto w-full max-w-7xl flex-1 px-0 py-0 sm:px-6 sm:py-6 lg:px-8">
       <LiveRefresh />
+      {/* Chat übernommen bzw. selbst geantwortet: fragen, wie es mit dem Lead weitergeht (falls kein Schritt) */}
+      {sp.schritt === "1" && active?.lead ? (
+        <NextStepPrompt leadId={active.lead.id} name={active.contactName ?? "Lead"} source={active.lead.source} autoOpen />
+      ) : null}
       <div className="hidden sm:block">
         <PageHeader
           title="Chats"

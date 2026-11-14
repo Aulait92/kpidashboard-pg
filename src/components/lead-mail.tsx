@@ -261,6 +261,8 @@ export function LeadMailComposer({
       setDirty(false);
       setVeraltet(false);
       router.refresh();
+      // Nächster Schritt: fragen, wie es weitergeht (components/next-step.tsx)
+      window.dispatchEvent(new CustomEvent("pg-lead-action", { detail: { leadId } }));
     });
 
   const chip = (v: Vorlage, hervor: boolean) => (

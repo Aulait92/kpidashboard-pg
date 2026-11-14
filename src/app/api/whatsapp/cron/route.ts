@@ -30,6 +30,7 @@ import { syncTemplates } from "@/lib/whatsapp/template-submit";
 //   2. Termin-Erinnerungen ~24 h vorher
 //   3. Onboarding-Automatik (siehe lib/onboarding-cron.ts)
 //   4. Nachfass-Abfolgen (siehe lib/lead-sequences.ts)
+//   5. Erinnerung „Leads ohne nächsten Schritt“ um 8 Uhr (siehe lib/next-step-reminder.ts)
 // Per WHATSAPP_WEBHOOK_SECRET gesichert: Header „Authorization: Bearer …“ oder
 // x-cron-token (x-webhook-secret und ?token= nur noch im Übergang, lib/cron-auth.ts).
 export const dynamic = "force-dynamic";
@@ -129,6 +130,11 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-sequences");
     return { error: e instanceof Error ? e.message : String(e) };
   });
+  // Nächster Schritt: tägliche Erinnerung ab 8 Uhr Berlin an den zuständigen Berater (Sperre je Tag und Login)
+  const naechsterSchritt = await import("@/lib/next-step-reminder").then((m) => m.runNextStepReminders(now)).catch((e: unknown) => {
+    reportError(e, "cron-next-step-reminder");
+    return null;
+  });
   // Cross-Selling: „Weiteres Produkt anbieten?“ 3 Wochen nach dem Abschluss, Abschlüsse in den Bestand
   const vertraege = {
     crossSell: await import("@/lib/vertraege").then((m) => m.runCrossSellReminders(now)).catch((e: unknown) => {
@@ -216,7 +222,7 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-templates");
     return null;
   });
-  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, vertraege, terminNachfragen, whatsappConnect, templates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, naechsterSchritt, vertraege, terminNachfragen, whatsappConnect, templates, status });
 }
 
 export const GET = handle;

@@ -10,7 +10,8 @@ import { loadRetainerConfig } from "@/lib/customer-spend";
 import { prisma } from "@/lib/prisma";
 import { findPhaseIn, pipelinePhasesFor, WHATSAPP_STATUS_LABELS } from "@/lib/products";
 import { FilterChips } from "@/components/ui/filter-chips";
-import { needsNextStep } from "@/lib/lead-next-step";
+import { pastOpenAppointmentWhere, upcomingAppointmentWhere, withoutNextStepWhere, type NextStepState } from "@/lib/lead-next-step";
+import { countWithoutNextStep, loadNextStepFlags, stateFor } from "@/lib/lead-next-step-server";
 import { getCallbackLeads } from "@/lib/whatsapp/outreach";
 import { nowMs } from "@/lib/now";
 
@@ -40,11 +41,18 @@ export async function BuyerLeadsBody({
   params: Record<string, string | undefined>;
 }) {
   const qDigits = q.replace(/\D/g, "");
+  const now = new Date(nowMs());
+  // „Ohne nächsten Schritt“ zeigt alle offenen Leads ohne Schritt, unabhängig vom Zeitraum
+  // (gleiche Regel wie Zähler in der Navigation und „Heute“, lib/lead-next-step.ts).
+  const noStepView = view === "ohne-schritt" && !q;
   const leadRows = await prisma.lead.findMany({
     where: {
       ...leadScope(team),
+      ...(noStepView ? withoutNextStepWhere(now) : {}),
       // Bei einer Suche über alle Zeiträume (Rückrufer sind oft älter).
-      ...(q
+      ...(noStepView
+        ? {}
+        : q
         ? {
             OR: [
               { name: { contains: q, mode: "insensitive" as const } },
@@ -66,6 +74,7 @@ export async function BuyerLeadsBody({
       reached: true,
       closedAt: true,
       erasedAt: true,
+      stornoState: true,
       revenues: { select: { amount: true }, take: 1 },
     },
   });
@@ -82,24 +91,31 @@ export async function BuyerLeadsBody({
   const whatsapp = await hasWhatsAppInbox(customerId);
   const callbacks = whatsapp ? await getCallbackLeads(customerId, isAdvisor(team) ? leadScope(team) : undefined) : [];
   const callbackIds = new Set(callbacks.map((c) => c.id));
-  const appointments = whatsapp
-    ? await prisma.appointment.findMany({
-        where: {
-          customerId,
-          status: "booked",
-          startsAt: { gt: new Date(nowMs() - 2 * 60 * 60 * 1000) },
-          leadId: { in: leadRows.map((l) => l.id) },
-        },
-        orderBy: { startsAt: "asc" },
-        select: { leadId: true, startsAt: true, mode: true },
-      })
-    : [];
+  // Termine für alle Kunden (nicht nur mit WhatsApp-Assistent): ohne sie zeigte die Liste bei
+  // „Termin vereinbart“ mit künftigem Termin fälschlich „Kein nächster Schritt“.
+  const leadIds = leadRows.map((l) => l.id);
+  const [appointments, flags, pastAppts] = await Promise.all([
+    prisma.appointment.findMany({
+      where: { customerId, leadId: { in: leadIds }, ...upcomingAppointmentWhere(now) },
+      orderBy: { startsAt: "asc" },
+      select: { leadId: true, startsAt: true, mode: true },
+    }),
+    loadNextStepFlags(leadIds, now),
+    prisma.appointment.findMany({
+      where: { customerId, leadId: { in: leadIds }, ...pastOpenAppointmentWhere(now) },
+      orderBy: { startsAt: "desc" },
+      select: { id: true, leadId: true },
+    }),
+  ]);
   const apptByLead = new Map<string, { startsAt: Date; mode: string }>();
   for (const a of appointments) {
     if (a.leadId && !apptByLead.has(a.leadId)) {
       apptByLead.set(a.leadId, { startsAt: a.startsAt, mode: a.mode });
     }
   }
+  const noStepTotal = await countWithoutNextStep(leadScope(team), now);
+  const pastByLead = new Map<string, string>();
+  for (const a of pastAppts) if (a.leadId && !pastByLead.has(a.leadId)) pastByLead.set(a.leadId, a.id);
 
   const leads: BuyerLeadRow[] = leadRows.map((l) => ({
     id: l.id,
@@ -115,7 +131,7 @@ export async function BuyerLeadsBody({
     appointment: apptByLead.get(l.id) ?? null,
     callback: callbackIds.has(l.id),
     followUpAt: l.followUpAt ? l.followUpAt.toISOString() : null,
-    noNextStep: needsNextStep({ status: l.status, closedAt: l.closedAt, erasedAt: l.erasedAt, followUpAt: l.followUpAt, hasUpcomingAppointment: apptByLead.has(l.id) }),
+    ...nextStepFields(stateFor(l, flags), pastByLead.get(l.id) ?? null),
   }));
 
   // Ansichten (wie gespeicherte Filter in Pipedrive) und Phase.
@@ -148,7 +164,8 @@ export async function BuyerLeadsBody({
       />
       <nav className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1" aria-label="Ansichten">
         {VIEWS.map((v) => {
-          const n = byPhase.filter(v.match).length;
+          // „Ohne nächsten Schritt“ zählt über alle Zeiträume (wie der Zähler an „Kontakte“).
+          const n = v.key === "ohne-schritt" ? noStepTotal : noStepView ? null : byPhase.filter(v.match).length;
           const active = v.key === activeView.key;
           return (
             <Link
@@ -160,7 +177,7 @@ export async function BuyerLeadsBody({
               }`}
             >
               {v.label}
-              <span className={`tabular-nums text-xs ${active ? "text-white/70" : ""}`}>{n}</span>
+              {n != null ? <span className={`tabular-nums text-xs ${active ? "text-white/70" : ""}`}>{n}</span> : null}
             </Link>
           );
         })}
@@ -175,4 +192,9 @@ export async function BuyerLeadsBody({
       />
     </div>
   );
+}
+
+function nextStepFields(state: NextStepState, pastAppointmentId: string | null): Pick<BuyerLeadRow, "noNextStep" | "resultMissing" | "pastAppointmentId"> {
+  const missing = state === "missing" || state === "result_missing";
+  return { noNextStep: missing, resultMissing: state === "result_missing", pastAppointmentId: state === "result_missing" ? pastAppointmentId : null };
 }

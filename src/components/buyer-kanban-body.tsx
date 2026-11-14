@@ -5,7 +5,7 @@ import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { KanbanBoard, type KanbanLead } from "@/components/kanban-board";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { needsNextStep } from "@/lib/lead-next-step";
+import { loadNextStepFlags, stateFor } from "@/lib/lead-next-step-server";
 import { pipelinePhasesFor } from "@/lib/products";
 import { nowMs } from "@/lib/now";
 import { formatEUR } from "@/lib/format";
@@ -62,6 +62,7 @@ export async function BuyerKanbanBody({
       statusChangedAt: true,
       closedAt: true,
       erasedAt: true,
+      stornoState: true,
       contracts: { where: { status: "aktiv" }, select: { sparte: true, premium: true, provisionValue: true } },
       appointments: {
         where: { status: "booked", startsAt: { gt: new Date() } },
@@ -71,6 +72,9 @@ export async function BuyerKanbanBody({
       },
     },
   });
+
+  // Nächster Schritt: gleiche Regel wie Liste und „Heute“ (Termin, Wiedervorlage, Bot-Gespräch)
+  const flags = await loadNextStepFlags(leadRows.map((l) => l.id));
 
   // Storno-Leads werden im Pipeline-Board nicht angezeigt — der Storno
   // läuft über den dedizierten StornoDialog im Leads-Tab oder Lead-Detail.
@@ -90,7 +94,8 @@ export async function BuyerKanbanBody({
         ? { startsAt: l.appointments[0].startsAt.toISOString(), mode: l.appointments[0].mode }
         : null,
       daysInPhase: Math.floor((nowMs() - l.statusChangedAt.getTime()) / 86_400_000),
-      noNextStep: needsNextStep({ status: l.status, closedAt: l.closedAt, erasedAt: l.erasedAt, followUpAt: l.followUpAt, hasUpcomingAppointment: l.appointments.length > 0 }),
+      noNextStep: ["missing", "result_missing"].includes(stateFor(l, flags)),
+      resultMissing: stateFor(l, flags) === "result_missing",
       ...contractInfo(l.contracts),
     }));
 

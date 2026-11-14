@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { onboardingProgressFor } from "@/lib/onboarding";
 import { CUSTOMER_COLOR, CUSTOMER_LABEL } from "@/lib/vertrieb/crm";
 import { cn } from "@/lib/utils";
+import { nextStepRatesByCustomer, type NextStepRate } from "@/lib/lead-next-step-server";
+import { NEXT_STEP_WARN_BELOW } from "@/lib/lead-next-step";
 
 export const metadata = { title: "Kunden | performancegrowth Admin" };
 
@@ -40,7 +42,11 @@ export default async function KundenUebersicht({ searchParams }: { searchParams:
       _count: { select: { leads: { where: { createdAt: { gte: since } } }, users: { where: { role: "BUYER" } } } },
     },
   });
-  const progress = await onboardingProgressFor(customers.filter((c) => c.onboarding).map((c) => c.id));
+  const [progress, steps] = await Promise.all([
+    onboardingProgressFor(customers.filter((c) => c.onboarding).map((c) => c.id)),
+    // Kundenerfolg: Leads mit nächstem Schritt je Kunde, Warnung unter 80 % (lib/lead-next-step.ts)
+    nextStepRatesByCustomer(customers.map((c) => c.id)).catch(() => new Map<string, NextStepRate>()),
+  ]);
   const matches = (c: (typeof customers)[number], key: string) => {
     const ob = progress.get(c.id);
     if (key === "warnung") return !!c.paymentOverdueSince;
@@ -94,6 +100,12 @@ export default async function KundenUebersicht({ searchParams }: { searchParams:
                       {stage ? <span className={`badge ${CUSTOMER_COLOR[stage]}`}>{CUSTOMER_LABEL[stage]}</span> : <Badge>Leads (Airtable)</Badge>}
                       {c.paymentOverdueSince ? <Badge tone="danger">Zahlung offen</Badge> : null}
                       {pause ? <Badge tone="warning">{pause.kind === "dunning" ? "pausiert (Zahlung)" : "pausiert"}</Badge> : null}
+                      {(() => {
+                        const st = steps.get(c.id);
+                        return st?.rate != null && st.open >= 5 && st.rate < NEXT_STEP_WARN_BELOW ? (
+                          <Badge tone="danger">Nächster Schritt {Math.round(st.rate * 100)} %</Badge>
+                        ) : null;
+                      })()}
                     </div>
                     <div className="mt-0.5 text-xs text-[color:var(--muted)]">
                       {packageLabel(c)}
