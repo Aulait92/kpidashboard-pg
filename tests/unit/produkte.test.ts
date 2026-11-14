@@ -65,9 +65,9 @@ describe("Produkte: Aggregation über alle Vertreter", () => {
     expect(ps.premiumsReported).toBe(1);
     expect(ps.premiumSum).toBe(800);
     expect(ps.provision).toBe(800 * 0.55 + 600 * 0.55 * 2);
-    // PKV: 300 €/Monat → 3.600 € im Jahr, Provision 10 Monatsbeiträge
-    expect(pkv.premiumSum).toBe(3600);
-    expect(pkv.provision).toBe(3000);
+    // PKV-Wechsel = Tarifoptimierung: closeValue ist die monatliche Ersparnis (kein Beitrag), Honorar 6 × 300 €
+    expect(pkv.premiumSum).toBe(0);
+    expect(pkv.provision).toBe(1800);
     expect(pkv.pplRevenue).toBe(50);
     expect(ps.pplRevenue).toBe(40);
     expect(r.products.find((p) => p.key === "Ohne Produkt")!.pplRevenue).toBe(10);

@@ -40,8 +40,9 @@ const rate = (a: number, b: number) => (b > 0 ? a / b : null);
 function annualPremium(source: string | null, closeValue: number | null, overrides?: ProvisionOverrides): number | null {
   if (!(closeValue != null && closeValue > 0)) return null;
   const r = ruleFor(source, overrides);
-  if (r.kind === "percent") return closeValue;
+  if (r.kind === "percent" || r.kind === "beitragssumme") return closeValue;
   if (r.kind === "monthly") return closeValue * 12;
+  // Tarifoptimierung: closeValue ist die monatliche Ersparnis, kein Beitrag
   return null;
 }
 
