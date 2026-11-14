@@ -10,6 +10,8 @@ import {
 import { formatDate, formatEUR } from "@/lib/format";
 import { displayProduct, statusToneClass } from "@/lib/products";
 import { cn } from "@/lib/utils";
+import { NextStepButton } from "@/components/next-step";
+import { NEXT_STEP_LABEL } from "@/lib/lead-next-step";
 
 export type { StornogrundOption };
 
@@ -29,8 +31,11 @@ export type BuyerLeadRow = {
   callback?: boolean;
   /** Wiedervorlage (ISO), falls gesetzt. */
   followUpAt?: string | null;
-  /** Offen, aber weder Wiedervorlage noch Termin (Warnzeichen). */
+  /** Offen, aber kein nächster Schritt (lib/lead-next-step.ts). */
   noNextStep?: boolean;
+  /** Termin vorbei, Ergebnis fehlt (statt „Kein nächster Schritt“) und der Termin dazu. */
+  resultMissing?: boolean;
+  pastAppointmentId?: string | null;
 };
 
 function formatAppt(d: Date): string {
@@ -132,13 +137,18 @@ export function BuyerLeadsTable({
                     ) : l.callback ? (
                       <div className="mt-1 text-xs font-medium text-amber-700">Rückruf nötig</div>
                     ) : l.noNextStep ? (
-                      <div className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-amber-700"><AlertTriangle className="h-3.5 w-3.5" />Kein nächster Schritt</div>
+                      <div className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-amber-700"><AlertTriangle className="h-3.5 w-3.5" />{NEXT_STEP_LABEL[l.resultMissing ? "result_missing" : "missing"]}</div>
                     ) : null}
                   </div>
                   <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset", statusToneClass(cancelled ? "Storno" : l.status))}>
                     {label}
                   </span>
                 </button>
+                {l.noNextStep ? (
+                  <div className="-mt-1 px-4 pb-3">
+                    <NextStepButton leadId={l.id} name={l.name ?? "Lead"} source={l.source} resultMissing={!!l.resultMissing} appointmentId={l.pastAppointmentId ?? null} />
+                  </div>
+                ) : null}
               </li>
             );
           })}
@@ -206,7 +216,10 @@ export function BuyerLeadsTable({
                         ) : l.callback ? (
                           <span className="text-xs font-medium text-amber-700">Rückruf nötig</span>
                         ) : l.noNextStep ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700"><AlertTriangle className="h-3.5 w-3.5" />Kein nächster Schritt</span>
+                          <>
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700"><AlertTriangle className="h-3.5 w-3.5" />{NEXT_STEP_LABEL[l.resultMissing ? "result_missing" : "missing"]}</span>
+                            <NextStepButton leadId={l.id} name={l.name ?? "Lead"} source={l.source} resultMissing={!!l.resultMissing} appointmentId={l.pastAppointmentId ?? null} />
+                          </>
                         ) : null}
                       </div>
                     </td>

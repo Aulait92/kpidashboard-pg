@@ -35,6 +35,8 @@ export type KanbanLead = {
   daysInPhase?: number;
   /** Offen, aber weder Wiedervorlage noch Termin. */
   noNextStep?: boolean;
+  /** Termin vorbei, Ergebnis fehlt */
+  resultMissing?: boolean;
   /** Verträge (Cross-Selling): geschätzte Provision 1. Jahr und Kurztext, auf dem Server berechnet. */
   contractProvision?: number | null;
   contractLabel?: string | null;
@@ -599,7 +601,7 @@ function KanbanCard({
           )}
         </div>
         {lead.noNextStep ? (
-          <span title="Kein nächster Schritt: Wiedervorlage oder Termin setzen" className="shrink-0 text-amber-500">
+          <span title={lead.resultMissing ? "Ergebnis fehlt: Termin vorbei, bitte Ergebnis eintragen" : "Kein nächster Schritt: Wiedervorlage, Termin, Gewonnen oder Verloren"} className="shrink-0 text-amber-500">
             <AlertTriangle className="h-4 w-4" />
           </span>
         ) : null}

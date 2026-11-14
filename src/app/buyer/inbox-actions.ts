@@ -16,6 +16,8 @@ import { recordUsage } from "@/lib/usage";
 import { abschlussText, fmtDayShort, logLeadHistory, POLICY_TODO } from "@/lib/lead-history";
 import { syncPrimaryContract } from "@/lib/vertraege";
 import { startSequence, stopSequences } from "@/lib/lead-sequences";
+import { registerCallAttempt, type CallAttemptResult } from "@/lib/call-attempts";
+import { fmtAttemptAt } from "@/lib/call-plan";
 
 type LeadPrev = {
   status: string | null;
@@ -26,6 +28,11 @@ type LeadPrev = {
   closeValue: number | null;
   followUpAt?: string | null;
   followUpNote?: string | null;
+  /** Dokumentierte Anrufversuche (lib/call-attempts.ts) */
+  callAttempts?: number;
+  lastCallAttemptAt?: string | null;
+  /** Verloren-Grund (lib/lead-lost.ts) */
+  lost?: { reason: string | null; note: string | null; at: string | null; early: boolean; disqualifyReason: string | null };
 };
 
 export type UndoSnapshot =
@@ -41,7 +48,7 @@ export type UndoSnapshot =
       prev: { needsAttention: boolean; attentionReason: string | null; attentionAt: string | null };
     };
 
-export type InboxResult = { ok: true; undo?: UndoSnapshot } | { ok: false; error: string };
+export type InboxResult = { ok: true; undo?: UndoSnapshot; attempt?: CallAttemptResult & { nextLabel: string | null } } | { ok: false; error: string };
 
 const leadSelect = {
   id: true,
@@ -57,6 +64,8 @@ const leadSelect = {
   followUpNote: true,
   source: true,
   policyDoneAt: true,
+  callAttempts: true,
+  lastCallAttemptAt: true,
 } as const;
 
 function snapshot(l: {
@@ -68,8 +77,11 @@ function snapshot(l: {
   closeValue: unknown;
   followUpAt?: Date | null;
   followUpNote?: string | null;
+  callAttempts?: number;
+  lastCallAttemptAt?: Date | null;
 }): LeadPrev {
   return {
+    ...(l.callAttempts !== undefined ? { callAttempts: l.callAttempts, lastCallAttemptAt: l.lastCallAttemptAt?.toISOString() ?? null } : {}),
     followUpAt: l.followUpAt?.toISOString() ?? null,
     followUpNote: l.followUpNote ?? null,
     status: l.status,
@@ -104,28 +116,11 @@ export async function callbackOutcomeResult(
   const now = new Date();
 
   if (outcome === "not_reached") {
-    const attempts = lead.contactAttempts + 1;
-    const s = (lead.status ?? "").trim().toLowerCase();
-    const nextStatus = s === "" || s === "neuer lead" ? "Nicht erreicht" : null;
-    if (lead.airtableId) {
-      await updateLeadEditableFields({
-        airtableId: lead.airtableId,
-        kontaktversuche: attempts,
-        ...(nextStatus ? { bearbeitungsstatus: nextStatus } : {}),
-        ...(!lead.firstContactAt ? { ersterKontaktversuch: now.toISOString() } : {}),
-      }).catch((e) => console.error("[inbox callback]", e));
-    }
-    await prisma.lead.update({
-      where: { id: lead.id },
-      data: {
-        contactAttempts: attempts,
-        callbackSnoozedUntil: new Date(now.getTime() + 20 * 60 * 60 * 1000),
-        ...(nextStatus ? { status: nextStatus, reached: false } : {}),
-        ...(!lead.firstContactAt ? { firstContactAt: now } : {}),
-      },
-    });
-    await startSequence(lead.id, "not_reached", now).catch((e) => console.error("[lead-sequences]", e));
-    await logLeadHistory(lead.id, "anruf", `Anruf: nicht erreicht (${attempts}. Versuch)`, { customerId });
+    // Anrufversuch zählen (30-Minuten-Sperre), nächsten Versuch nach Plan, Nicht-erreicht-Abfolge, Verlauf
+    const r = await registerCallAttempt(lead.id, { customerId, now });
+    await recordUsage("action", "callback.not_reached");
+    refresh();
+    return { ok: true, ...(r?.counted ? { undo: { kind: "lead" as const, leadId, prev } } : {}), ...(r ? { attempt: { ...r, nextLabel: r.nextAt ? fmtAttemptAt(new Date(r.nextAt), now) : null } } : {}) };
   } else if (outcome === "offer" || outcome === "won") {
     // Am Telefon direkt Angebot geschickt bzw. abgeschlossen.
     const status = outcome === "won" ? "Abschluss" : "Angebot gesendet";
@@ -325,6 +320,12 @@ export async function undoInboxAction(undo: UndoSnapshot): Promise<InboxResult> 
       closeValue: p.closeValue,
       ...(p.followUpAt !== undefined
         ? { followUpAt: p.followUpAt ? new Date(p.followUpAt) : null, followUpNote: p.followUpNote ?? null }
+        : {}),
+      ...(p.callAttempts !== undefined
+        ? { callAttempts: p.callAttempts, lastCallAttemptAt: p.lastCallAttemptAt ? new Date(p.lastCallAttemptAt) : null }
+        : {}),
+      ...(p.lost
+        ? { lostReason: p.lost.reason, lostNote: p.lost.note, lostAt: p.lost.at ? new Date(p.lost.at) : null, lostEarly: p.lost.early, disqualifyReason: p.lost.disqualifyReason }
         : {}),
     },
   });

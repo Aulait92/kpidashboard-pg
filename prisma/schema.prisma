@@ -567,6 +567,16 @@ model Lead {
   stornoReason         String?
   // Grund bei „Disqualifiziert“ (lib/lead-quality.ts), z. B. falsche_nummer
   disqualifyReason     String?
+  // Verloren mit Grund (lib/lead-lost.ts, Ole 14.11.2026): Grund, Begründung, Zeitpunkt und ob der Lead
+  // vorzeitig aufgegeben wurde (nie erreicht, unter 6 Anrufversuchen, Warnung übergangen)
+  lostReason           String?
+  lostNote             String?
+  lostAt               DateTime?
+  lostEarly            Boolean           @default(false)
+  // Dokumentierte Anrufversuche „nicht erreicht“ (je 30 Minuten einer, lib/call-attempts.ts) und Anrufplan
+  callAttempts         Int               @default(0)
+  lastCallAttemptAt    DateTime?
+  callPlanStartedAt    DateTime?
   stornoNote           String?
   stornoRequestedAt    DateTime?
   stornoDecidedAt      DateTime?
@@ -740,6 +750,9 @@ model User {
   mailConnection     MailConnection?
   // E-Mail-Signatur (Ole, 14.11.2026): kommt automatisch unter E-Mails an Leads
   mailSignature      String?
+  // Tägliche Erinnerung um 8 Uhr: Leads ohne nächsten Schritt (lib/next-step-reminder.ts); Tag des letzten Laufs (Berlin)
+  nextStepReminder    Boolean          @default(true)
+  nextStepReminderDay String?
   linkedInConnection LinkedInConnection?
 
   customer       Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull)
