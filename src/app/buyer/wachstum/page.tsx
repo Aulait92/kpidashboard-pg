@@ -25,7 +25,7 @@ export default async function WachstumPage() {
 
   const { range } = parseRangeFromSearchParams({ range: "thisMonth" });
   const [kpis, forecast, ppl, customer, pause] = await Promise.all([
-    computeKpis({ range, customerId: ctx.customerId, product: null }),
+    computeKpis({ range, customerId: ctx.customerId, product: null, origin: "paid" }),
     computeMonthlyForecast({ customerId: ctx.customerId, includeCloseValue: true }).catch(() => null),
     prisma.leadSubscription.count({ where: { customerId: ctx.customerId, active: true, delivery: "app" } }),
     prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { existingCustomersEnabled: true } }),

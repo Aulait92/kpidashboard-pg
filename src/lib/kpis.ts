@@ -20,6 +20,7 @@ import type { DateRange } from "@/lib/date-ranges";
 import { previousRange } from "@/lib/date-ranges";
 
 import { PIPELINE_PHASES } from "@/lib/products";
+import { originWhere, type LeadOrigin } from "@/lib/lead-herkunft";
 
 export { PRODUCTS, type Product } from "@/lib/products";
 
@@ -27,6 +28,9 @@ export type KpiFilters = {
   range: DateRange;
   customerId?: string | null;
   product?: string | null;
+  // Nur Leads dieser Herkunft zählen (lib/lead-herkunft). Kunden-Dashboard: „paid“ für Trichter
+  // und Quoten (Empfehlungen/Bestand separat). Ohne Angabe: alle (Admin unverändert).
+  origin?: LeadOrigin | null;
 };
 
 export type Kpis = {
@@ -220,7 +224,10 @@ async function computeLeadCosts(params: {
 export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
   const { range, customerId, product } = filters;
   const customerClause = customerId ? { customerId } : {};
-  const productLeadClause = product ? { source: product } : {};
+  const productLeadClause = {
+    ...(product ? { source: product } : {}),
+    ...(filters.origin ? originWhere(filters.origin) : {}),
+  };
   const productRevenueClause = product
     ? { lead: { is: { source: product } } }
     : {};

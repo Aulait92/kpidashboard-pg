@@ -88,7 +88,7 @@ export function LeadHeaderActions(p: Props) {
     else setStatus("Abschluss" as LeadStatus, "Abschluss", null);
   }
 
-  function setStatus(status: LeadStatus, label: string, closeValue?: number | null, disqualifyReason?: string) {
+  function setStatus(status: LeadStatus, label: string, closeValue?: number | null, disqualifyReason?: string, sparte?: string | null) {
     // „Disqualifiziert“ fragt erst nach dem Grund (Ole, 13.11.2026)
     if (status === "Disqualifiziert" && !disqualifyReason) {
       setTimeout(() => setOpen("disq"), 0);
@@ -98,6 +98,7 @@ export function LeadHeaderActions(p: Props) {
       const res = await setLeadStatusAction(p.leadId, status, {
         ...(closeValue !== undefined ? { closeValue } : {}),
         ...(disqualifyReason ? { disqualifyReason } : {}),
+        ...(sparte ? { sparte } : {}),
       });
       if (!res.ok) return toast.show({ message: res.error, tone: "error" });
       toast.show({ message: `Status: ${label}` });
@@ -321,9 +322,9 @@ export function LeadHeaderActions(p: Props) {
         title="Abschluss"
         source={p.source}
         onClose={() => setOpen(null)}
-        onSave={(v) => {
+        onSave={(v, sp) => {
           setOpen(null);
-          setStatus("Abschluss" as LeadStatus, "Abschluss", v);
+          setStatus("Abschluss" as LeadStatus, "Abschluss", v, undefined, sp);
         }}
       />
 

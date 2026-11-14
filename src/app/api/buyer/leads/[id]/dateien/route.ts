@@ -27,5 +27,5 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const fileName = decodeURIComponent(req.headers.get("x-file-name") ?? "dokument.pdf");
   const data = new Uint8Array(await req.arrayBuffer());
   const res = await saveLeadFile({ leadId: lead.id, customerId, kind, fileName, data, userId: ctx.userId });
-  return res.ok ? Response.json({ ok: true }) : Response.json({ error: res.error }, { status: 400 });
+  return res.ok ? Response.json({ ok: true, id: res.id }) : Response.json({ error: res.error }, { status: 400 });
 }

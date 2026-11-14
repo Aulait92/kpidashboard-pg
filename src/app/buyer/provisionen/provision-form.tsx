@@ -56,7 +56,8 @@ function example(r: Row, typ: VermittlerTyp): string {
     return `Bei ${eur(beitrag)} Monatsbeitrag: ≈ ${eur(beitrag * s.months)} Provision · ohne Angabe ${eur(s.fallbackAmount)}`;
   }
   if (s.kind === "percent") {
-    const p = s.defaultPremium;
+    // Ohne typischen Beitrag mit 400 € als Beispiel rechnen
+    const p = s.defaultPremium > 0 ? s.defaultPremium : 400;
     const abschluss = p * s.rate, bestand = p * (s.trail ?? 0);
     if (abschluss === 0 && bestand > 0) return `Bei ${eur(p)} Beitrag: ≈ ${eur(bestand)} Bestandsprovision pro Jahr`;
     // Vertreter: Bestand erst ab dem 2. Jahr
@@ -96,6 +97,8 @@ export function ProvisionForm({
     // Nur Produkte, die der Kunde bei uns gewählt hat (leer = Hinweis statt Formular)
     return allowed.filter((p) => known.includes(p.key));
   }, [typ, known]);
+  // Weitere Sparten (Cross-Selling, Ole 14.11.2026): alle übrigen, eingeklappt
+  const more = useMemo(() => PROVISION_PRODUCTS.filter((p) => !known.includes(p.key) && (typ === "makler" || p.key !== "pkv" || !!own.pkv)), [typ, known, own]);
 
   const rowFor = (k: ProductKey): Row => own[k] ?? toRow(standardRate(k, typ));
   const isOwn = (k: ProductKey) => !!own[k] && !same(own[k]!, toRow(standardRate(k, typ)));
@@ -118,6 +121,44 @@ export function ProvisionForm({
     ),
   });
   const disabled = !canEdit;
+
+  function renderRow(p: (typeof PROVISION_PRODUCTS)[number]) {
+        const r = rowFor(p.key);
+        const ownVal = isOwn(p.key);
+        return (
+          <Card key={p.key}>
+            <div className="p-5">
+            <fieldset className="min-w-0" disabled={disabled}>
+              <legend className="sr-only">{p.label}</legend>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-[15px] font-semibold">{p.label}</h2>
+                <div className="flex items-center gap-2">
+                  <Badge tone={ownVal ? "info" : "neutral"}>{ownVal ? "Eigener Wert" : "Standard"}</Badge>
+                  {ownVal && canEdit ? (
+                    <button type="button" onClick={() => reset(p.key)} className="inline-flex items-center gap-1 text-sm font-medium text-[color:var(--brand)]">
+                      <RotateCcw className="h-3.5 w-3.5" /> Auf Standard
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+              {r.kind === "monthly" ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Monatsbeiträge Provision" suffix="×" value={r.months} onChange={(v) => update(p.key, { months: v })} />
+                  <Field label="Ohne Beitragsangabe" suffix="€" value={r.fallbackAmount} onChange={(v) => update(p.key, { fallbackAmount: v })} />
+                </div>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Abschlussprovision" suffix="%" value={r.rate} onChange={(v) => update(p.key, { rate: v })} />
+                  <Field label={typ === "vertreter" ? "Bestandsprovision pro Jahr (ab 2. Jahr)" : "Bestandsprovision pro Jahr"} suffix="%" value={r.trail} onChange={(v) => update(p.key, { trail: v })} />
+                  <Field label="Typischer Jahresbeitrag (wenn keiner eingetragen ist)" suffix="€" value={r.defaultPremium} onChange={(v) => update(p.key, { defaultPremium: v })} />
+                </div>
+              )}
+              <p className="mt-3 text-sm text-[color:var(--muted)]">{example(r, typ)}</p>
+            </fieldset>
+            </div>
+          </Card>
+        );
+        }
 
   return (
     <form action={action} className="space-y-5">
@@ -173,42 +214,20 @@ export function ProvisionForm({
           </div>
         </Card>
       ) : null}
-      {visible.map((p) => {
-        const r = rowFor(p.key);
-        const ownVal = isOwn(p.key);
-        return (
-          <Card key={p.key}>
-            <div className="p-5">
-            <fieldset className="min-w-0" disabled={disabled}>
-              <legend className="sr-only">{p.label}</legend>
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-[15px] font-semibold">{p.label}</h2>
-                <div className="flex items-center gap-2">
-                  <Badge tone={ownVal ? "info" : "neutral"}>{ownVal ? "Eigener Wert" : "Standard"}</Badge>
-                  {ownVal && canEdit ? (
-                    <button type="button" onClick={() => reset(p.key)} className="inline-flex items-center gap-1 text-sm font-medium text-[color:var(--brand)]">
-                      <RotateCcw className="h-3.5 w-3.5" /> Auf Standard
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-              {r.kind === "monthly" ? (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Field label="Monatsbeiträge Provision" suffix="×" value={r.months} onChange={(v) => update(p.key, { months: v })} />
-                  <Field label="Ohne Beitragsangabe" suffix="€" value={r.fallbackAmount} onChange={(v) => update(p.key, { fallbackAmount: v })} />
-                </div>
-              ) : (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Field label="Abschlussprovision" suffix="%" value={r.rate} onChange={(v) => update(p.key, { rate: v })} />
-                  <Field label={typ === "vertreter" ? "Bestandsprovision pro Jahr (ab 2. Jahr)" : "Bestandsprovision pro Jahr"} suffix="%" value={r.trail} onChange={(v) => update(p.key, { trail: v })} />
-                </div>
-              )}
-              <p className="mt-3 text-sm text-[color:var(--muted)]">{example(r, typ)}</p>
-            </fieldset>
-            </div>
-          </Card>
-        );
-      })}
+      {visible.map((p) => renderRow(p))}
+
+      {more.length ? (
+        <details className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white" open={more.some((p) => isOwn(p.key))} data-weitere-sparten>
+          <summary className="cursor-pointer px-5 py-4 text-[15px] font-semibold">Weitere Sparten (Cross-Selling)</summary>
+          <div className="space-y-4 border-t border-[color:var(--border)] p-4">
+            <p className="text-sm text-[color:var(--muted)]">
+              Für weitere Abschlüsse bei Ihren Kunden, z. B. Haftpflicht zum Tierschutz. Vorausgefüllt mit dem üblichen Satz für Sach. Tragen Sie Ihren Satz
+              und einen typischen Jahresbeitrag ein, damit die Schätzung passt.
+            </p>
+            {more.map((p) => renderRow(p))}
+          </div>
+        </details>
+      ) : null}
 
       {canEdit ? (
         <div className="flex flex-wrap items-center gap-3">

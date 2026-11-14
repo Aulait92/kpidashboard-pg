@@ -3,6 +3,7 @@
 // Abrechnung und Kennzahlen stimmen. Chats, Termine und Einwilligungen werden
 // gelöscht. Der Airtable-Sync überspringt gelöschte Leads (erasedAt).
 
+import { BESTAND_FROM_LEAD_NOTE } from "@/lib/vertraege-shared";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { audit, type AuditActor } from "@/lib/audit";
@@ -93,6 +94,12 @@ async function eraseLeads(customerId: string, leads: LeadRef[]): Promise<EraseRe
     prisma.reviewRequest.deleteMany({ where: { leadId: { in: ids } } }),
     prisma.referralLink.deleteMany({ where: { leadId: { in: ids } } }),
     prisma.googleReview.updateMany({ where: { leadId: { in: ids } }, data: { leadId: null } }),
+    // Verträge (Cross-Selling): Zahlen bleiben, Vertragsnummer/Versicherer gehen; Spiegel im Bestand
+    // (aus der App angelegt) wird gelöscht, ein vom Import übernommener Kunde nur entkoppelt.
+    prisma.existingContract.deleteMany({ where: { leadContract: { leadId: { in: ids } } } }),
+    prisma.existingCustomer.deleteMany({ where: { leadId: { in: ids }, consentNote: BESTAND_FROM_LEAD_NOTE } }),
+    prisma.existingCustomer.updateMany({ where: { leadId: { in: ids } }, data: { leadId: null } }),
+    prisma.leadContract.updateMany({ where: { leadId: { in: ids } }, data: { contractNo: null, insurer: null } }),
     prisma.lead.updateMany({
       where: { id: { in: ids } },
       data: {

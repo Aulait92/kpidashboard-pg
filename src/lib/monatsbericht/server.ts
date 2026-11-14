@@ -8,7 +8,9 @@ import { prisma } from "@/lib/prisma";
 import { audit, type AuditActor } from "@/lib/audit";
 import { reportError } from "@/lib/monitoring";
 import { CLOSED_STATUS } from "@/lib/products";
-import { estimatedProvision } from "@/lib/provision";
+import { contractProvision } from "@/lib/provision";
+import { loadErtragData, type ErtragData } from "@/lib/ertrag";
+import { PAID_LEAD_WHERE } from "@/lib/lead-herkunft";
 import { loadCustomerProvision } from "@/lib/provision-server";
 import { loadRechnerConfig } from "@/lib/rechner-server";
 import { ergebnisQuote } from "@/lib/garantien";
@@ -89,25 +91,30 @@ const clampInt = (n: number, min: number, max: number) => Math.min(max, Math.max
 
 // ─── Kennzahlen ──────────────────────────────────────────────────────────
 
-async function monthMetrics(customerId: string, month: string, rates: Awaited<ReturnType<typeof loadCustomerProvision>>["rates"]): Promise<MonthMetrics> {
+async function monthMetrics(customerId: string, month: string, data: ErtragData): Promise<MonthMetrics> {
   const { from, to } = monthBounds(month);
+  // Leads, Leadpreis und Ergebnis-Quote nur aus bezahlten Leads; Abschlüsse und Provision wie auf
+  // /buyer/zahlen über alle Verträge (lib/ertrag), Datum des Abschlusses im Monat.
   const [leads, spendRows, termine, closed] = await Promise.all([
-    prisma.lead.findMany({ where: { customerId, createdAt: { gte: from, lt: to }, ...NOT_STORNO }, select: { createdAt: true, status: true, source: true } }),
+    prisma.lead.findMany({ where: { customerId, createdAt: { gte: from, lt: to }, ...NOT_STORNO, ...PAID_LEAD_WHERE }, select: { createdAt: true, status: true, source: true } }),
     prisma.customerAdSpend.findMany({ where: { customerId, date: { gte: from, lt: to } }, select: { date: true, amount: true } }),
     prisma.appointment.count({ where: { customerId, startsAt: { gte: from, lt: to }, status: { not: "cancelled" } } }),
-    prisma.lead.findMany({ where: { customerId, status: CLOSED_STATUS, closedAt: { gte: from, lt: to }, ...NOT_STORNO }, select: { source: true, closeValue: true } }),
+    prisma.lead.findMany({ where: { customerId, status: CLOSED_STATUS, closedAt: { gte: from, lt: to }, ...NOT_STORNO }, select: { id: true } }),
   ]);
   const spend = spendRows.reduce((s, r) => s + Number(r.amount), 0);
   const activeDays = new Set(spendRows.filter((r) => Number(r.amount) > 0).map((r) => r.date.toISOString().slice(0, 10))).size;
-  const prov = closed.map((l) => estimatedProvision(l.source, l.closeValue, rates));
-  const provKnown = prov.filter((p): p is number => p != null);
+  const inMonth = data.contracts.filter((c) => c.signedAt >= from && c.signedAt < to);
+  const provKnown = inMonth.map((c) => contractProvision(c, data.rates));
+  const bestandProJahr = provKnown.reduce((s, p) => s + p.trailPerYear, 0);
   return {
     leads: leads.length,
     spend: Math.round(spend * 100) / 100,
     cpl: leads.length ? Math.round((spend / leads.length) * 100) / 100 : null,
     termine,
     abschluesse: closed.length,
-    provision: provKnown.length ? provKnown.reduce((s, p) => s + p, 0) : null,
+    provision: provKnown.length ? provKnown.reduce((s, p) => s + p.firstYear, 0) : null,
+    bestandProJahr: bestandProJahr > 0 ? Math.round(bestandProJahr) : null,
+    provisionLabel: data.typ === "makler" ? "Courtage 1. Jahr (geschätzt)" : "Abschlussprovision (geschätzt)",
     ergebnisQuote: ergebnisQuote(leads.map((l) => ({ createdAt: l.createdAt, status: l.status, source: l.source })), to).quote,
     activeDays,
   };
@@ -134,10 +141,10 @@ async function targetCplFor(customerId: string, settings: ReportSettingsView): P
 }
 
 export async function collectMetrics(customerId: string, month: string, settings: ReportSettingsView): Promise<ReportMetrics> {
-  const prov = await loadCustomerProvision(customerId);
+  const data = await loadErtragData(customerId);
   const [current, previous, actions, targetCpl] = await Promise.all([
-    monthMetrics(customerId, month, prov.rates),
-    monthMetrics(customerId, shiftMonth(month, -1), prov.rates),
+    monthMetrics(customerId, month, data),
+    monthMetrics(customerId, shiftMonth(month, -1), data),
     monthActions(customerId, month),
     targetCplFor(customerId, settings),
   ]);

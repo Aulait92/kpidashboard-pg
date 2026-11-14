@@ -40,10 +40,18 @@ export async function loadLeadHistory(leadId: string, viewerUserId: string | nul
 export const fmtDayShort = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "2-digit", month: "2-digit" }).format(d);
 
-/** „Abschluss · Beitrag 350 € · Provision ≈ 193 €“ mit den Provisionssätzen des Kunden. */
-export async function abschlussText(customerId: string, source: string | null, closeValue: number | null): Promise<string> {
+/**
+ * „Abschluss · Beitrag 350 € · Provision ≈ 193 €“ mit den Provisionssätzen des Kunden. Mit leadId und
+ * gespeichertem ersten Vertrag: mit Sparte („Abschluss · Katze · Beitrag 350 € · …“).
+ */
+export async function abschlussText(customerId: string, source: string | null, closeValue: number | null, leadId?: string): Promise<string> {
   const [{ loadCustomerProvision }, { closeValueLabel }] = await Promise.all([import("@/lib/provision-server"), import("@/lib/provision")]);
   const rates = (await loadCustomerProvision(customerId)).rates;
+  const primary = leadId ? await prisma.leadContract.findUnique({ where: { primaryLeadId: leadId }, select: { sparte: true, premium: true, provisionValue: true } }).catch(() => null) : null;
+  if (primary) {
+    const { contractSummary } = await import("@/lib/vertraege");
+    return `Abschluss · ${contractSummary(primary, rates)}`;
+  }
   const label = closeValueLabel(source, closeValue, rates);
   return `Abschluss${label ? ` · ${label}` : ""}`;
 }

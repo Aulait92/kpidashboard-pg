@@ -4,7 +4,7 @@
 
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { effectiveRates, estimatedProvision } from "@/lib/provision";
+import { provisionForCustomers } from "@/lib/ertrag";
 import { annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
 import { monthlyBankCosts } from "@/lib/bank/server";
 import { monthlyFeeCosts } from "@/lib/whatsapp/fees";
@@ -529,13 +529,11 @@ export async function loadZahlen(now = new Date(), sicht: Sicht = "gesamt"): Pro
     leadsTotal += g._count._all;
   }
   const qualifying = [...perCustomer.entries()].filter(([, c]) => c.total >= 5 && c.withResult / c.total >= 0.8).map(([id]) => id);
-  const rateRows = qualifying.length
-    ? await prisma.customer.findMany({ where: { id: { in: qualifying } }, select: { id: true, vermittlerTyp: true, provisionRates: true } })
-    : [];
-  const ratesOf = new Map(rateRows.map((c) => [c.id, effectiveRates(c.vermittlerTyp, c.provisionRates)]));
   const qSet = new Set(qualifying);
+  // Kundenerfolg: Provision wie im Kunden-Dashboard (lib/ertrag) über alle Verträge (Cross-Selling,
+  // Empfehlungen) mit der Rate ihrer Sparte; unser Ertrag (qRevenue) bleibt unverändert.
   const qClosed = closedLeads.filter((l) => qSet.has(l.customerId));
-  const provision = qClosed.reduce((s, l) => s + (estimatedProvision(l.source, l.closeValue, ratesOf.get(l.customerId)) ?? 0), 0);
+  const provision = await provisionForCustomers(qualifying, { from: wFrom, to: new Date(wTo.getTime() - 1) });
   const qRevenue = rows.filter((r) => r.recurring && qSet.has(r.customerId) && window.includes(r.month)).reduce((s, r) => s + r.amount, 0);
   const waSet = new Set(waCustomers.map((w) => w.customerId));
   const waLeads = [...perCustomer.entries()].filter(([id]) => waSet.has(id)).reduce((s, [, c]) => s + c.total, 0);

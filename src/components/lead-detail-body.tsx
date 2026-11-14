@@ -28,7 +28,9 @@ import { asAnsprache } from "@/lib/ansprache";
 import { appUrl } from "@/lib/whatsapp/event-text";
 import { LeadFiles } from "@/components/lead-files";
 import { loadCustomerProvision } from "@/lib/provision-server";
-import { estimatedProvision, ruleFor } from "@/lib/provision";
+import { contractProvision, sparteInfo } from "@/lib/provision";
+import { listLeadContracts, syncPrimaryContract } from "@/lib/vertraege";
+import { LeadContracts } from "@/components/lead-contracts";
 import { LeadSequenceCard } from "@/components/lead-sequence-card";
 import {
   ALL_GROUP_KEYS,
@@ -229,15 +231,23 @@ export async function LeadDetailBody({
   const terminlink = postfach && !nextAppt && cal?.status === "connected" && cal.bookingSlug && base ? `${base}/book/${cal.bookingSlug}?lead=${lead.id}` : null;
   let beitrag: string | null = null;
   let provision: string | null = null;
+  // Verträge (Cross-Selling): der erste aus dem Abschluss, weitere im Kontakt eingetragen
+  let contracts = won && rates ? await listLeadContracts(lead.id, rates) : [];
+  if (won && rates && !contracts.some((c) => c.primary)) {
+    // Abschluss ohne gespeicherten ersten Vertrag (z. B. aus dem Airtable-Abgleich): jetzt anlegen
+    await syncPrimaryContract(lead.id).catch(() => null);
+    contracts = await listLeadContracts(lead.id, rates);
+  }
   if (won && rates) {
-    const v = lead.closeValue == null ? null : Number(lead.closeValue);
-    const rule = ruleFor(lead.source, rates);
-    if (v != null && v > 0) beitrag = rule.kind === "monthly" ? `${formatEUR(v)} im Monat` : rule.kind === "percent" ? `${formatEUR(v)} im Jahr` : formatEUR(v);
-    const p = estimatedProvision(lead.source, v, rates);
-    if (p != null) {
-      const trailYear2 = rule.kind === "percent" && rule.trailFromYear2 && (rule.trail ?? 0) > 0 ? (v ?? rule.defaultPremium) * (rule.trail ?? 0) : 0;
-      provision = `≈ ${formatEUR(p)}${trailYear2 > 0 ? `, ab dem 2. Jahr ≈ ${formatEUR(trailYear2)} Bestand pro Jahr` : ""}${v == null ? " (Standardbeitrag)" : ""}`;
-    }
+    const active = contracts.filter((c) => c.status === "aktiv");
+    const sum = active.map((c) => contractProvision(c, rates));
+    const premiums = active.map((c) => ({ v: c.premium, monthly: sparteInfo(c.sparte).rateKey === "pkv" })).filter((x) => x.v != null);
+    if (premiums.length === 1) beitrag = `${formatEUR(premiums[0].v!)} ${premiums[0].monthly ? "im Monat" : "im Jahr"}`;
+    else if (premiums.length > 1) beitrag = `${formatEUR(premiums.reduce((n, x) => n + x.v! * (x.monthly ? 12 : 1), 0))} im Jahr (${premiums.length} Verträge)`;
+    const first = sum.reduce((s, p) => s + p.firstYear, 0);
+    const trail = sum.filter((p) => p.trailFromYear2).reduce((s, p) => s + p.trailPerYear, 0);
+    const missing = active.some((c) => c.premium == null && c.provisionValue == null);
+    if (active.length) provision = `≈ ${formatEUR(first)}${trail > 0 ? `, ab dem 2. Jahr ≈ ${formatEUR(trail)} Bestand pro Jahr` : ""}${missing ? " (Standardbeitrag)" : ""}`;
   }
   const label = WHATSAPP_STATUS_LABELS[lead.status ?? ""] ?? lead.status ?? "Neuer Lead";
   const apptFmt = (d: Date) =>
@@ -288,7 +298,9 @@ export async function LeadDetailBody({
           beitrag={beitrag}
           provision={provision}
           policyDoneAt={lead.policyDoneAt?.toISOString() ?? null}
-        />
+        >
+          <LeadContracts leadId={lead.id} contracts={contracts} readOnly={!team.userId} />
+        </AbschlussCard>
       ) : null}
 
       {lead.stornoState === "review" || lead.stornoState === "rejected" ? (

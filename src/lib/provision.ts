@@ -21,7 +21,22 @@
 // Customer.provisionRates; effectiveRates() setzt Typ-Standard + eigene Sätze
 // zusammen, das Ergebnis wird als `overrides` übergeben.
 
-export type ProductKey = "pkv" | "privatschutz" | "tkv";
+// Cross-Selling (Ole, 14.11.2026): Sätze je Sparte. Katze/Hund/Pferd rechnen mit dem TKV-Satz,
+// Privatschutz/Haftpflicht mit dem Privatschutz-Satz, PKV wie bisher. Die übrigen Sparten haben
+// vorläufig den Sach-Standard (Vertreter 55 % Abschluss + 10 % Bestand ab dem 2. Jahr, Makler
+// 22,5 % Bestand) und keinen Standardbeitrag; änderbar in „Konto → Meine Provisionen“.
+export type ProductKey =
+  | "pkv"
+  | "privatschutz"
+  | "tkv"
+  | "unfall"
+  | "hausrat"
+  | "wohngebaeude"
+  | "rechtsschutz"
+  | "kindersparplan"
+  | "kfz"
+  | "leben_bu"
+  | "sonstiges";
 
 export type RateSpec =
   | { kind: "fixed"; amount: number }
@@ -43,12 +58,104 @@ export const PROVISION_PRODUCTS: readonly { key: ProductKey; label: string; matc
   // Vertreter: 10 % Bestandsprovision, gezahlt ab dem 2. Jahr (Ole, 13.11.2026 – wie im Rechner)
   { key: "privatschutz", label: "Privatschutz", match: /privatschutz/i, standard: { kind: "percent", rate: 0.55, trail: 0.1, trailFromYear2: true, defaultPremium: 600 } },
   { key: "tkv", label: "TKV", match: /\btkv\b|tierkranken/i, standard: { kind: "percent", rate: 0.55, trail: 0.1, trailFromYear2: true, defaultPremium: 350 } },
+  // Weitere Sparten (Cross-Selling): vorläufig Sach-Standard, ohne Standardbeitrag (Ole fragen)
+  { key: "unfall", label: "Unfall", match: /unfall/i, standard: sachStandard() },
+  { key: "hausrat", label: "Hausrat", match: /hausrat/i, standard: sachStandard() },
+  { key: "wohngebaeude", label: "Wohngebäude", match: /geb(ä|a)ude/i, standard: sachStandard() },
+  { key: "rechtsschutz", label: "Rechtsschutz", match: /rechtsschutz/i, standard: sachStandard() },
+  { key: "kindersparplan", label: "Kindersparplan", match: /sparplan/i, standard: sachStandard() },
+  { key: "kfz", label: "KFZ", match: /\bkfz\b|kraftfahrt|\bauto/i, standard: sachStandard() },
+  { key: "leben_bu", label: "Leben/BU", match: /leben|\bbu\b|berufsunf/i, standard: sachStandard() },
+  { key: "sonstiges", label: "Sonstiges", match: /^$/, standard: sachStandard() },
 ];
+
+/** Sach-Standard für Sparten ohne eigenen Satz (Vertreter); Makler siehe MAKLER_STANDARD. */
+function sachStandard(): RateSpec {
+  return { kind: "percent", rate: 0.55, trail: 0.1, trailFromYear2: true, defaultPremium: 0 };
+}
+
+// ─── Sparten (Verträge je Lead, Cross-Selling) ─────────────────────────────
+
+export type SparteKey =
+  | "katze"
+  | "hund"
+  | "pferd"
+  | "privatschutz"
+  | "unfall"
+  | "hausrat"
+  | "wohngebaeude"
+  | "rechtsschutz"
+  | "kindersparplan"
+  | "kfz"
+  | "leben_bu"
+  | "pkv"
+  | "sonstiges";
+
+export type Sparte = {
+  key: SparteKey;
+  label: string;
+  /** Satz aus „Meine Provisionen“, mit dem die Sparte rechnet. */
+  rateKey: ProductKey;
+  /** Sparte im Bestand (ExistingContract.line, wie lib/bestand/rows.normalizeLine). */
+  bestandLine: string;
+  /** Naheliegende weitere Sparten (Hinweis „Weiteres Produkt anbieten?“). */
+  related: SparteKey[];
+};
+
+/** Auswahl beim Eintragen eines Abschlusses (Reihenfolge = Anzeige). */
+export const SPARTEN: readonly Sparte[] = [
+  { key: "katze", label: "Katze", rateKey: "tkv", bestandLine: "Tier", related: ["privatschutz", "unfall"] },
+  { key: "hund", label: "Hund", rateKey: "tkv", bestandLine: "Tier", related: ["privatschutz", "unfall"] },
+  { key: "pferd", label: "Pferd", rateKey: "tkv", bestandLine: "Tier", related: ["privatschutz", "unfall"] },
+  { key: "privatschutz", label: "Privatschutz/Haftpflicht", rateKey: "privatschutz", bestandLine: "Haftpflicht", related: ["hausrat", "unfall", "rechtsschutz"] },
+  { key: "unfall", label: "Unfall", rateKey: "unfall", bestandLine: "Unfall", related: ["privatschutz", "leben_bu"] },
+  { key: "hausrat", label: "Hausrat", rateKey: "hausrat", bestandLine: "Hausrat", related: ["privatschutz", "wohngebaeude"] },
+  { key: "wohngebaeude", label: "Wohngebäude", rateKey: "wohngebaeude", bestandLine: "Wohngebäude", related: ["hausrat", "privatschutz"] },
+  { key: "rechtsschutz", label: "Rechtsschutz", rateKey: "rechtsschutz", bestandLine: "Rechtsschutz", related: ["privatschutz", "unfall"] },
+  { key: "kindersparplan", label: "Kindersparplan", rateKey: "kindersparplan", bestandLine: "Vorsorge", related: ["unfall", "privatschutz"] },
+  { key: "kfz", label: "KFZ", rateKey: "kfz", bestandLine: "KFZ", related: ["rechtsschutz", "privatschutz"] },
+  { key: "leben_bu", label: "Leben/BU", rateKey: "leben_bu", bestandLine: "Vorsorge", related: ["unfall", "privatschutz"] },
+  { key: "pkv", label: "PKV", rateKey: "pkv", bestandLine: "Kranken", related: ["leben_bu", "unfall"] },
+  { key: "sonstiges", label: "Sonstiges", rateKey: "sonstiges", bestandLine: "Sonstiges", related: ["privatschutz", "unfall"] },
+];
+
+const SPARTE_RULES: [RegExp, SparteKey][] = [
+  [/pkv/i, "pkv"],
+  [/privatschutz|haftpflicht|\bphv\b/i, "privatschutz"],
+  [/katze/i, "katze"],
+  [/hund/i, "hund"],
+  [/pferd/i, "pferd"],
+  [/\btkv\b|tierkranken|tierversicherung/i, "katze"],
+  [/unfall/i, "unfall"],
+  [/hausrat/i, "hausrat"],
+  [/geb(ä|a)ude/i, "wohngebaeude"],
+  [/rechtsschutz/i, "rechtsschutz"],
+  [/sparplan/i, "kindersparplan"],
+  [/\bkfz\b|kraftfahrt|\bauto/i, "kfz"],
+  [/leben|\bbu\b|berufsunf/i, "leben_bu"],
+];
+
+/** Sparte zu einer Lead-Quelle bzw. einem Produktnamen (null = unbekannt, z. B. „Empfehlung“). Gleiche Regeln wie die Migration 20261118530000. */
+export function sparteForSource(source: string | null | undefined): SparteKey | null {
+  const s = (source ?? "").trim();
+  if (!s) return null;
+  return SPARTE_RULES.find(([re]) => re.test(s))?.[1] ?? null;
+}
+
+export function asSparte(v: unknown): SparteKey {
+  return SPARTEN.some((x) => x.key === v) ? (v as SparteKey) : "sonstiges";
+}
+
+export function sparteInfo(key: string | null | undefined): Sparte {
+  return SPARTEN.find((x) => x.key === key) ?? SPARTEN.find((x) => x.key === "sonstiges")!;
+}
+
+export const sparteLabel = (key: string | null | undefined) => sparteInfo(key).label;
 
 /** Produktschlüssel zu einer Lead-Quelle (null = unbekanntes Produkt). */
 export function productKeyFor(source: string | null | undefined): ProductKey | null {
-  const s = source ?? "";
-  return PROVISION_PRODUCTS.find((p) => p.match.test(s))?.key ?? null;
+  const sp = sparteForSource(source);
+  return sp ? sparteInfo(sp).rateKey : null;
 }
 
 export function ruleFor(source: string | null | undefined, overrides?: ProvisionOverrides): ProvisionRule {
@@ -156,6 +263,15 @@ export const VERMITTLER_TYPEN: readonly { key: VermittlerTyp; label: string }[] 
 const MAKLER_STANDARD: ProvisionOverrides = {
   privatschutz: { kind: "percent", rate: 0, trail: 0.225, defaultPremium: 600 },
   tkv: { kind: "percent", rate: 0, trail: 0.225, defaultPremium: 350 },
+  // Weitere Sparten: vorläufig Sach-Standard für Makler (Ole fragen)
+  unfall: { kind: "percent", rate: 0, trail: 0.225, defaultPremium: 0 },
+  hausrat: { kind: "percent", rate: 0, trail: 0.225, defaultPremium: 0 },
+  wohngebaeude: { kind: "percent", rate: 0, trail: 0.225, defaultPremium: 0 },
+  rechtsschutz: { kind: "percent", rate: 0, trail: 0.225, defaultPremium: 0 },
+  kindersparplan: { kind: "percent", rate: 0, trail: 0.225, defaultPremium: 0 },
+  kfz: { kind: "percent", rate: 0, trail: 0.225, defaultPremium: 0 },
+  leben_bu: { kind: "percent", rate: 0, trail: 0.225, defaultPremium: 0 },
+  sonstiges: { kind: "percent", rate: 0, trail: 0.225, defaultPremium: 0 },
 };
 
 export function asVermittlerTyp(v: unknown): VermittlerTyp {
@@ -241,4 +357,147 @@ export function includesTrail(overrides?: ProvisionOverrides): boolean {
 /** Produkte, die ein Vermittlertyp überhaupt anbieten kann (PKV nur Makler). */
 export function productsForTyp(typ: VermittlerTyp) {
   return PROVISION_PRODUCTS.filter((p) => typ === "makler" || p.key !== "pkv");
+}
+
+// ─── Provision je Vertrag (Cross-Selling, Bestandsprovision) ───────────────
+// Reine Funktionen ohne Datenbank, wiederverwendbar (Zahlen, Berichte, Kampagnen-Statistik).
+// Ein Vertrag rechnet mit dem Satz seiner Sparte (SPARTEN → rateKey) aus den wirksamen Sätzen
+// des Kunden (effectiveRates bzw. loadCustomerProvision().rates).
+
+/** Storno je Jahr für Bestandsprovision in der Zukunft (wie in der Präsentation). */
+export const STORNO_PRO_JAHR = 0.1;
+/** Zeitraum der Bestandshochrechnung „in 5 Jahren“. */
+export const BESTAND_JAHRE = 5;
+
+export type ContractLike = {
+  sparte: string;
+  /** Jahresbeitrag netto (PKV: Monatsbeitrag); null = nicht eingetragen. */
+  premium: unknown;
+  /** Fester Provisionswert (Altbestand ohne Beitrag); gilt nur ohne Beitrag. */
+  provisionValue?: unknown;
+  /** aktiv | storniert (storniert = 0). */
+  status?: string | null;
+};
+
+export type ContractProvision = {
+  sparte: SparteKey;
+  rateKey: ProductKey;
+  /** Beitrag, mit dem gerechnet wurde (eingetragen oder Standard), null bei festem Wert. */
+  premiumUsed: number | null;
+  /** Kein Beitrag eingetragen (Tipp „Abschlüsse vollständig eintragen“). */
+  premiumMissing: boolean;
+  /** Einmalige Abschlussprovision. */
+  abschluss: number;
+  /** Laufende Bestandsprovision pro Jahr. */
+  trailPerYear: number;
+  /** Bestand erst ab dem 2. Jahr (Vertreter). */
+  trailFromYear2: boolean;
+  /** Im 1. Jahr verdient: Abschluss + (Makler) Bestand 1. Jahr. Basis für Gewinn und „Courtage 1. Jahr“. */
+  firstYear: number;
+};
+
+const r2 = (n: number) => Math.round(n * 100) / 100;
+
+/** Geschätzte Provision eines Vertrags mit dem Satz seiner Sparte. */
+export function contractProvision(c: ContractLike, rates?: ProvisionOverrides): ContractProvision {
+  const sparte = asSparte(c.sparte);
+  const rateKey = sparteInfo(sparte).rateKey;
+  const spec: RateSpec = rates?.[rateKey] ?? PROVISION_PRODUCTS.find((p) => p.key === rateKey)!.standard;
+  const premium = asNumber(c.premium);
+  const zero: ContractProvision = { sparte, rateKey, premiumUsed: null, premiumMissing: premium == null, abschluss: 0, trailPerYear: 0, trailFromYear2: false, firstYear: 0 };
+  if (c.status === "storniert") return zero;
+  const fixedValue = asNumber(c.provisionValue);
+  if (premium == null && fixedValue != null) return { ...zero, abschluss: r2(fixedValue), firstYear: r2(fixedValue) };
+  if (spec.kind === "fixed") return { ...zero, abschluss: spec.amount, firstYear: spec.amount };
+  if (spec.kind === "monthly") {
+    const a = premium ? r2(premium * spec.months) : spec.fallbackAmount;
+    return { ...zero, premiumUsed: premium, abschluss: a, firstYear: a };
+  }
+  const p = premium ?? spec.defaultPremium;
+  const abschluss = r2(p * spec.rate);
+  const trailPerYear = r2(p * (spec.trail ?? 0));
+  const fromYear2 = !!spec.trailFromYear2 && trailPerYear > 0;
+  return { ...zero, premiumUsed: p, abschluss, trailPerYear, trailFromYear2: fromYear2, firstYear: r2(abschluss + (fromYear2 ? 0 : trailPerYear)) };
+}
+
+/** Eingabefeld „Beitrag“ für eine Sparte (Monatsbeitrag bei PKV). */
+export function premiumFieldForSparte(sparte: string, rates?: ProvisionOverrides): { label: string; hint: string; placeholder: string; monthly: boolean } {
+  const info = sparteInfo(sparte);
+  const spec = rates?.[info.rateKey] ?? PROVISION_PRODUCTS.find((p) => p.key === info.rateKey)!.standard;
+  if (spec.kind === "monthly") {
+    return { label: "Monatsbeitrag netto", placeholder: "z. B. 300", monthly: true, hint: `Provision: ${spec.months.toLocaleString("de-DE")} Monatsbeiträge.` };
+  }
+  if (spec.kind === "percent") {
+    const trail = spec.trail ?? 0;
+    const parts = [
+      spec.rate > 0 ? `${pctText(spec.rate)} Abschluss` : null,
+      trail > 0 ? `${pctText(trail)} Bestand pro Jahr${spec.trailFromYear2 ? " ab dem 2. Jahr" : ""}` : null,
+    ].filter(Boolean);
+    return {
+      label: "Jahresbeitrag netto",
+      placeholder: spec.defaultPremium > 0 ? `z. B. ${spec.defaultPremium.toLocaleString("de-DE")}` : "z. B. 400",
+      monthly: false,
+      hint: parts.length ? `Satz für ${info.label}: ${parts.join(", ")}.` : "",
+    };
+  }
+  return { label: "Jahresbeitrag netto", placeholder: "z. B. 400", monthly: false, hint: "" };
+}
+
+/** Bezahlter Anteil eines Jahres [age, age+1] bei Bestand ab Jahr 1 bzw. 2 (age in Jahren seit Abschluss). */
+function payingShare(ageStart: number, fromYear2: boolean): number {
+  const from = Math.max(ageStart, fromYear2 ? 1 : 0, 0);
+  return Math.min(1, Math.max(0, ageStart + 1 - from));
+}
+
+const YEAR_MS = 365.25 * 24 * 60 * 60 * 1000;
+
+export type TrailContract = { trailPerYear: number; trailFromYear2: boolean; signedAt: Date };
+
+/**
+ * Bestandsprovision eines Vertrags in den nächsten `years` Jahren ab `now` (je Jahr ein Betrag),
+ * mit Storno pro Jahr. Vertreter (trailFromYear2): erst ab dem ersten Jahrestag.
+ */
+export function trailNextYears(c: TrailContract, now: Date, years = BESTAND_JAHRE, storno = STORNO_PRO_JAHR): number[] {
+  const age0 = (now.getTime() - c.signedAt.getTime()) / YEAR_MS;
+  const out: number[] = [];
+  for (let j = 0; j < years; j++) {
+    const a = age0 + j;
+    const share = payingShare(a, c.trailFromYear2);
+    const survive = Math.pow(1 - storno, Math.max(0, a + 0.5));
+    out.push(c.trailPerYear * share * survive);
+  }
+  return out;
+}
+
+/** Summe der Bestandsprovision aller Verträge in den nächsten 5 Jahren („in 5 Jahren: Y €“). */
+export function bestandInYears(contracts: TrailContract[], now: Date, years = BESTAND_JAHRE, storno = STORNO_PRO_JAHR): number {
+  return r2(contracts.reduce((s, c) => s + trailNextYears(c, now, years, storno).reduce((a, b) => a + b, 0), 0));
+}
+
+/**
+ * „So wächst dein Bestand“: Bestandsprovision je Jahr über `years` Jahre, wenn im aktuellen Tempo
+ * weiter abgeschlossen wird (newPerMonth Verträge mit je avgTrail Bestand pro Jahr), Storno pro Jahr.
+ * Gleiche Logik wie die Bestandsfolie der Präsentation.
+ */
+export function bestandGrowth(input: {
+  existing: TrailContract[];
+  newPerMonth: number;
+  avgTrail: number;
+  fromYear2: boolean;
+  now: Date;
+  years?: number;
+  storno?: number;
+}): { year: number; existing: number; added: number; total: number }[] {
+  const years = input.years ?? BESTAND_JAHRE;
+  const storno = input.storno ?? STORNO_PRO_JAHR;
+  const base = new Array<number>(years).fill(0);
+  for (const c of input.existing) trailNextYears(c, input.now, years, storno).forEach((v, j) => (base[j] += v));
+  const added = new Array<number>(years).fill(0);
+  if (input.newPerMonth > 0 && input.avgTrail > 0) {
+    for (let m = 0; m < years * 12; m++) {
+      const signedAt = new Date(input.now.getTime() + ((m + 0.5) / 12) * YEAR_MS);
+      trailNextYears({ trailPerYear: input.avgTrail * input.newPerMonth, trailFromYear2: input.fromYear2, signedAt }, input.now, years, storno).forEach((v, j) => (added[j] += v));
+    }
+  }
+  return base.map((b, j) => ({ year: j + 1, existing: Math.round(b), added: Math.round(added[j]), total: Math.round(b + added[j]) }));
 }

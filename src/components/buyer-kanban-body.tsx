@@ -8,6 +8,10 @@ import { prisma } from "@/lib/prisma";
 import { needsNextStep } from "@/lib/lead-next-step";
 import { pipelinePhasesFor } from "@/lib/products";
 import { nowMs } from "@/lib/now";
+import { formatEUR } from "@/lib/format";
+import { contractProvision } from "@/lib/provision";
+import { loadCustomerProvision } from "@/lib/provision-server";
+import { contractSummary } from "@/lib/vertraege";
 
 export async function BuyerKanbanBody({
   customerId,
@@ -31,6 +35,15 @@ export async function BuyerKanbanBody({
   // gemountet und der lokale State zeigt veraltete Leads.
   rangeKey: string;
 }) {
+  const { rates } = await loadCustomerProvision(customerId);
+  // Abschluss-Karten: Provision über alle aktiven Verträge (Cross-Selling) mit der Rate ihrer Sparte
+  const contractInfo = (cs: { sparte: string; premium: unknown; provisionValue: unknown }[]) => {
+    if (!cs.length) return {};
+    const ps = cs.map((c) => contractProvision(c, rates));
+    const sum = ps.reduce((n, p) => n + p.firstYear, 0);
+    const label = cs.length === 1 ? contractSummary(cs[0], rates) : `${cs.length} Verträge · Provision ≈ ${formatEUR(sum)}`;
+    return { contractProvision: sum, contractLabel: label };
+  };
   const leadRows = await prisma.lead.findMany({
     where: {
       ...scope,
@@ -49,6 +62,7 @@ export async function BuyerKanbanBody({
       statusChangedAt: true,
       closedAt: true,
       erasedAt: true,
+      contracts: { where: { status: "aktiv" }, select: { sparte: true, premium: true, provisionValue: true } },
       appointments: {
         where: { status: "booked", startsAt: { gt: new Date() } },
         orderBy: { startsAt: "asc" },
@@ -77,6 +91,7 @@ export async function BuyerKanbanBody({
         : null,
       daysInPhase: Math.floor((nowMs() - l.statusChangedAt.getTime()) / 86_400_000),
       noNextStep: needsNextStep({ status: l.status, closedAt: l.closedAt, erasedAt: l.erasedAt, followUpAt: l.followUpAt, hasUpcomingAppointment: l.appointments.length > 0 }),
+      ...contractInfo(l.contracts),
     }));
 
   return (

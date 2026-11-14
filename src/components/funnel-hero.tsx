@@ -61,7 +61,7 @@ function Connector({ rate }: { rate: number | null }) {
   );
 }
 
-export function FunnelHero({ kpis }: { kpis: Kpis }) {
+export function FunnelHero({ kpis, footer }: { kpis: Kpis; /** Zeile unter dem Trichter (z. B. Abschlüsse aus Empfehlungen). */ footer?: React.ReactNode }) {
   const max = kpis.nettoLeads;
   const ratio = (n: number) => (max > 0 ? n / max : 0);
 
@@ -127,6 +127,7 @@ export function FunnelHero({ kpis }: { kpis: Kpis }) {
           emphasis
         />
       </div>
+      {footer ? <div className="mt-3 text-xs text-[color:var(--muted)]">{footer}</div> : null}
     </section>
   );
 }

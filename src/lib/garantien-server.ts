@@ -8,7 +8,9 @@ import { audit, type AuditActor } from "@/lib/audit";
 import { addGarantieGutschrift } from "@/lib/billing";
 import { reportError } from "@/lib/monitoring";
 import { CLOSED_STATUS } from "@/lib/products";
-import { estimatedProvision } from "@/lib/provision";
+import { contractProvision } from "@/lib/provision";
+import { PAID_LEAD_WHERE } from "@/lib/lead-herkunft";
+import { loadCustomerContracts } from "@/lib/vertraege";
 import { loadCustomerProvision } from "@/lib/provision-server";
 import { loadRechnerConfig } from "@/lib/rechner-server";
 import { breakEvenTageFuer } from "@/lib/rechner";
@@ -106,8 +108,9 @@ export async function ladeGarantieInput(customerId: string, offerId: string, now
   const [leads, termine] = start
     ? await Promise.all([
         prisma.lead.findMany({
-          where: { customerId, createdAt: { gte: new Date(start.getTime() - DAY), lte: now }, ...NOT_STORNO },
-          select: { createdAt: true, source: true, status: true, closeValue: true, closedAt: true, statusChangedAt: true },
+          // Garantien nur aus bezahlten Leads (Ole, 14.11.2026): Empfehlungen und Bestandskunden zählen nicht
+          where: { customerId, createdAt: { gte: new Date(start.getTime() - DAY), lte: now }, ...NOT_STORNO, ...PAID_LEAD_WHERE },
+          select: { id: true, createdAt: true, source: true, status: true, closeValue: true, closedAt: true, statusChangedAt: true },
         }),
         prisma.appointment.findMany({
           where: { customerId, startsAt: { gte: new Date(start.getTime() - DAY), lte: now }, status: { not: "cancelled" } },
@@ -116,6 +119,10 @@ export async function ladeGarantieInput(customerId: string, offerId: string, now
       ])
     : [[], []];
   const end = offer.subscriptionStatus === "canceled" ? offer.updatedAt : null;
+  const paidClosed = new Set(leads.filter((l) => l.status === CLOSED_STATUS).map((l) => l.id));
+  const contractsOfPaid = paidClosed.size
+    ? (await loadCustomerContracts(customerId, { leadWhere: { id: { in: [...paidClosed] } } }).catch(() => []))
+    : [];
   return {
     now,
     start,
@@ -128,9 +135,8 @@ export async function ladeGarantieInput(customerId: string, offerId: string, now
     })),
     offeneRechnung: customer.paymentOverdueSince != null || pausen.some((p) => p.kind === "dunning" && p.status === "active"),
     leads: leads.map((l) => ({ createdAt: l.createdAt, source: l.source, status: l.status })),
-    abschluesse: leads
-      .filter((l) => l.status === CLOSED_STATUS)
-      .map((l) => ({ at: l.closedAt ?? l.statusChangedAt, provision: estimatedProvision(l.source, l.closeValue, provision.rates) ?? 0 })),
+    // Provision je Vertrag mit der Rate seiner Sparte (Cross-Selling bei bezahlten Leads zählt mit)
+    abschluesse: contractsOfPaid.map((c) => ({ at: c.signedAt, provision: contractProvision(c, provision.rates).firstYear })),
     termine,
     provisionssaetze: provision.hasCustom,
     vermittlerTyp: provision.typ,

@@ -26,7 +26,7 @@ describe("Lead: Verlauf, Police, Dokumente", () => {
     ids.push(c.id);
     const lead = await prisma.lead.create({ data: { customerId: c.id, name: "Test Lead", status: "Angebot gesendet" } });
     await logLeadHistory(lead.id, "notiz", "Hat Interesse, muss sich mit Mann besprechen.", { customerId: c.id, userId: null });
-    expect(await saveLeadFile({ leadId: lead.id, customerId: c.id, kind: "angebot", fileName: "Angebot.pdf", data: PDF, userId: null })).toEqual({ ok: true });
+    expect(await saveLeadFile({ leadId: lead.id, customerId: c.id, kind: "angebot", fileName: "Angebot.pdf", data: PDF, userId: null })).toEqual({ ok: true, id: expect.any(String) });
     expect(await saveLeadFile({ leadId: lead.id, customerId: c.id, kind: "angebot", fileName: "x.pdf", data: new Uint8Array([9, 9, 9, 9]), userId: null })).toMatchObject({ ok: false });
     const files = await listLeadFiles(lead.id);
     expect(files).toHaveLength(1);
