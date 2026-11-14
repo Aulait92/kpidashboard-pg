@@ -11,6 +11,7 @@ import { shortName, isTerminReview } from "@/lib/vertrieb/crm";
 import { dayBounds, openTasks } from "@/lib/vertrieb/queries";
 import { offeneGarantieFaelle } from "@/lib/garantien-server";
 import { GARANTIE_LABEL, heuteTitel, monatName, type Kennzahlen } from "@/lib/garantien";
+import { loadTaxNumber, taxNumberWarning } from "@/lib/invoice-footer";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -562,8 +563,27 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
     });
   }
 
+  // ── Rechnungen ohne Steuernummer (Pflichtangabe § 14 Abs. 4 UStG) ──
+  const taxItem = rechnungItem(await loadTaxNumber());
+  if (taxItem) items.push(taxItem);
+
   const dismissed = userId ? await activeDismissals(userId, now) : [];
   return { items: rankItems(withoutDismissed(items, dismissed)), auto: await loadAuto(now) };
+}
+
+/** Punkt „Rechnungen ohne Steuernummer“, solange das Feld in den Rechnungsangaben leer ist. */
+export function rechnungItem(taxNumber: string | null): HeuteItem | null {
+  if (!taxNumberWarning(taxNumber)) return null;
+  return {
+    key: "rechnung:steuernummer",
+    area: "System",
+    tone: "warn",
+    icon: "alert",
+    title: "Rechnungen ohne Steuernummer",
+    detail: "Auf Stripe-Rechnungen fehlt die USt-IdNr. bzw. Steuernummer. Einmal eintragen, dann steht sie auf jeder Rechnung.",
+    action: { label: "Eintragen", href: "/admin/einstellungen/rechnungsangaben" },
+    later: TOMORROW,
+  };
 }
 
 /** Schlüssel, die dieser Admin gerade ausgeblendet hat. */

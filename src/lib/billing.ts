@@ -21,6 +21,7 @@ import { annualMultiplier, offerSetupDiscount, PRICE_LIST } from "@/lib/offer-pr
 import { audit, type AuditActor } from "@/lib/audit";
 import { seatsToBill } from "@/lib/seats";
 import { MANUAL_SEAT_TASK, manualSeatTask, seatUsage } from "@/lib/seats-server";
+import { customerInvoiceSettingsCreate, customerInvoiceSettingsUpdate, invoiceFooterParams, loadInvoiceDefaults } from "@/lib/invoice-footer";
 
 let client: Stripe | null = null;
 
@@ -133,6 +134,8 @@ async function ensureCustomer(stripe: Stripe, offer: OfferRow): Promise<string> 
       name: offer.company || offer.contactName,
       email: offer.email ?? undefined,
       preferred_locales: ["de"],
+      // Pflichtangaben (Footer) als Standard für alle Rechnungen dieses Kunden
+      invoice_settings: customerInvoiceSettingsCreate(await loadInvoiceDefaults()),
       ...(offer.street && offer.zip && offer.city
         ? { address: { line1: offer.street, postal_code: offer.zip, city: offer.city, country: "DE" } }
         : {}),
@@ -171,9 +174,10 @@ export async function createCheckoutForOffer(offerId: string): Promise<{ url: st
   }
 
   try {
-    const [setup, tax] = await Promise.all([
+    const [setup, tax, invoiceDefaults] = await Promise.all([
       productId(stripe, offer.package === "service" ? "setup_service" : "setup"),
       resolveTax(stripe),
+      loadInvoiceDefaults(),
     ]);
     const customerId = await ensureCustomer(stripe, offer);
     const products = offerProducts(offer.products).map((p) => p.name).join(", ");
@@ -241,6 +245,7 @@ export async function createCheckoutForOffer(offerId: string): Promise<{ url: st
               invoice_data: {
                 description: `Setup ${packageName(offer)} (${products}), Angebot ${offer.number}`,
                 metadata: meta,
+                ...invoiceFooterParams(invoiceDefaults),
               },
             },
           })
@@ -300,7 +305,9 @@ export async function createScheduleForOffer(offerId: string, session: Stripe.Ch
     paymentMethodOf(stripe, session),
   ]);
   if (pm) {
-    await stripe.customers.update(customerId, { invoice_settings: { default_payment_method: pm } });
+    // Pflichtangaben mitsetzen (Kunden aus der Zeit vor dem Footer)
+    const d = await loadInvoiceDefaults();
+    await stripe.customers.update(customerId, { invoice_settings: { default_payment_method: pm, ...customerInvoiceSettingsUpdate(d) } });
   }
 
   const monthly = Number(offer.monthlyFee);
@@ -625,7 +632,13 @@ export async function ensureStripeCustomerFor(customerId: string): Promise<strin
   });
   if (c.stripeCustomerId) return c.stripeCustomerId;
   const created = await stripe.customers.create(
-    { name: c.name, email: c.users[0]?.email, preferred_locales: ["de"], metadata: { customer_id: customerId } },
+    {
+      name: c.name,
+      email: c.users[0]?.email,
+      preferred_locales: ["de"],
+      invoice_settings: customerInvoiceSettingsCreate(await loadInvoiceDefaults()),
+      metadata: { customer_id: customerId },
+    },
     { idempotencyKey: `customer-${customerId}` },
   );
   await prisma.customer.update({ where: { id: customerId }, data: { stripeCustomerId: created.id } });
@@ -657,7 +670,10 @@ export async function savePaymentSetup(session: Stripe.Checkout.Session): Promis
   if (!stripe) return;
   const pm = await paymentMethodOf(stripe, session);
   const customer = typeof session.customer === "string" ? session.customer : session.customer?.id;
-  if (pm && customer) await stripe.customers.update(customer, { invoice_settings: { default_payment_method: pm } });
+  if (pm && customer) {
+    const d = await loadInvoiceDefaults();
+    await stripe.customers.update(customer, { invoice_settings: { default_payment_method: pm, ...customerInvoiceSettingsUpdate(d) } });
+  }
 }
 
 export async function hasPaymentMethod(stripeCustomerId: string | null): Promise<boolean> {
@@ -683,7 +699,7 @@ export async function chargeNow(opts: {
 }): Promise<{ invoiceId: string; status: "paid" | "processing" | "open" | "failed" }> {
   const stripe = stripeClient();
   if (!stripe) throw new Error("Stripe ist nicht eingerichtet.");
-  const [product, tax] = await Promise.all([productId(stripe, opts.productKey ?? "leads"), resolveTax(stripe)]);
+  const [product, tax, invoiceDefaults] = await Promise.all([productId(stripe, opts.productKey ?? "leads"), resolveTax(stripe), loadInvoiceDefaults()]);
   const invoice = await stripe.invoices.create(
     {
       customer: opts.stripeCustomerId,
@@ -692,6 +708,7 @@ export async function chargeNow(opts: {
       pending_invoice_items_behavior: "exclude",
       description: opts.description,
       metadata: opts.metadata,
+      ...invoiceFooterParams(invoiceDefaults),
       ...(tax.automatic ? { automatic_tax: { enabled: true } } : {}),
     },
     { idempotencyKey: `${opts.idempotencyKey}-inv` },
