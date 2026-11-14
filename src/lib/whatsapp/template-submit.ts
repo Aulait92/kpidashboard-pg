@@ -6,6 +6,7 @@
 // Freigegeben → status „approved“ (genau das Feld, das der Admin bisher von Hand
 // setzte). Abgelehnt → Admin-Aufgabe + Push mit Grund.
 
+import { SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
 import { decryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
@@ -214,6 +215,7 @@ export async function submitTemplatesAfterModule(customerId: string, now = new D
 export async function syncTemplates(now = new Date(), opts: { force?: boolean; limit?: number } = {}): Promise<{ checked: number; submitted: number; rejected: number }> {
   const accounts = await prisma.whatsAppAccount.findMany({
     where: {
+      customerId: { not: SUPPORT_CUSTOMER_ID },
       status: "connected",
       apiKeyEnc: { not: null },
       ...(opts.force ? {} : { OR: [{ templatesCheckedAt: null }, { templatesCheckedAt: { lt: new Date(now.getTime() - CHECK_INTERVAL_PENDING_MS) } }] }),

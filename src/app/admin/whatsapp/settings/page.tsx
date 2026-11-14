@@ -20,6 +20,8 @@ import {
   deleteTemplateAction,
 } from "./actions";
 import { CalendarCard } from "./calendar-card";
+import { SupportInboxCard } from "./support-card";
+import { SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
 import { AgentSettings, ResubmitTemplateButton, SubmitTemplatesButton, TemplateApproved, TemplateAutoStatus, TemplateEditor } from "./controls";
 
 export const dynamic = "force-dynamic";
@@ -43,7 +45,7 @@ const WA_MESSAGES: Record<string, { ok: boolean; text: string }> = {
 export default async function WhatsAppSettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ wa?: string; c?: string; kunde?: string }>;
+  searchParams: Promise<{ wa?: string; c?: string; kunde?: string; support?: string }>;
 }) {
   const sp = await searchParams;
   // kunde = eingebettet in die Kundenakte (nur dieser Kunde, ohne Seitenkopf).
@@ -56,6 +58,7 @@ export default async function WhatsAppSettingsPage({
     where: only
       ? { id: only, OR: [{ whatsAppAccount: { isNot: null } }, { agentConfig: { isNot: null } }] }
       : {
+          id: { not: SUPPORT_CUSTOMER_ID },
           OR: [{ whatsAppAccount: { isNot: null } }, { agentConfig: { isNot: null } }],
         },
     orderBy: { name: "asc" },
@@ -120,6 +123,8 @@ export default async function WhatsAppSettingsPage({
         </Link>
       </div>
 
+
+      <SupportInboxCard status={sp.support ?? null} />
 
       <form
         action={addCustomerAction}

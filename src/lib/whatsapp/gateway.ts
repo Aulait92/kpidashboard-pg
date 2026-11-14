@@ -3,6 +3,7 @@
 // läuft über die phone_number_id → WhatsAppAccount → Kunde. Strikt pro Kunde
 // isoliert; nichts verlässt den Kunden-Scope.
 
+import { isSupportCustomer } from "@/lib/whatsapp/support-inbox";
 import { decryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
 import { sendText, type SendResult } from "@/lib/whatsapp/dialog360";
@@ -174,6 +175,8 @@ async function persistInbound(
 
   const now = new Date();
   const windowExpiresAt = new Date(now.getTime() + WINDOW_MS);
+  // Support-Postfach von performancegrowth: ohne Assistent und ohne Lead-Logik (lib/whatsapp/support-inbox.ts)
+  const support = isSupportCustomer(customerId);
 
   const conversation = await prisma.conversation.upsert({
     where: { customerId_contactPhone: { customerId, contactPhone: from } },
@@ -182,7 +185,7 @@ async function persistInbound(
       whatsAppAccountId,
       contactPhone: from,
       contactName,
-      botActive: true,
+      botActive: !support,
       status: "open",
       lastMessageAt: now,
       windowExpiresAt,
@@ -196,7 +199,7 @@ async function persistInbound(
   });
 
   // Mit dem Lead aus Airtable verknüpfen (Formularangaben für den Bot).
-  if (!conversation.leadId) {
+  if (!conversation.leadId && !support) {
     await linkLeadToConversation(conversation.id).catch((e) =>
       console.error("[whatsapp lead-link]", e),
     );
@@ -214,6 +217,22 @@ async function persistInbound(
       waMessageId: m.id ?? null,
     },
   });
+
+  // Support-Postfach: Push an die Admins, Chat unter Admin → WhatsApp, sonst nichts
+  if (support) {
+    await prisma.conversation.update({
+      where: { id: conversation.id },
+      data: { needsAttention: true, attentionReason: (body ? `Support: ${body}` : "Support-Nachricht").slice(0, 200), attentionAt: now },
+    });
+    const { sendToAdmins } = await import("@/lib/push");
+    await sendToAdmins({
+      title: `🛟 Support-WhatsApp: ${contactName ?? `+${from}`}`,
+      body: (body ?? "Neue Nachricht").slice(0, 140),
+      url: `/admin/whatsapp?c=${conversation.id}`,
+      tag: `support-wa:${conversation.id}`,
+    }).catch((e) => console.error("[whatsapp support push]", e));
+    return;
+  }
 
   // Empfehlungen: Anfrage über den WhatsApp-Knopf der Empfehlungsseite (Code im Text) → Lead „Empfehlung“
   if (!conversation.leadId && body && body.includes("(Ref ")) {

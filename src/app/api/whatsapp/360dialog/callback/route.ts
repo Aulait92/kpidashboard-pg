@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { reportError } from "@/lib/monitoring";
 import { parseChannels, partnerConfig, verifyState } from "@/lib/whatsapp/dialog360-partner";
 import { completeSelfConnect } from "@/lib/whatsapp/self-connect";
+import { isSupportCustomer } from "@/lib/whatsapp/support-inbox";
 
 // Rückkehr vom 360dialog-Onboarding: ?client=<id>&channels=[<id>,…]&state=<signiert>.
 // Öffentlich erreichbar (unter /api/whatsapp), geschützt durch den signierten,
@@ -23,7 +24,9 @@ export async function GET(req: Request): Promise<Response> {
       clientId,
       channels: parseChannels(url.searchParams.get("channels")),
     });
-    return back(res.status === "connected" ? "ok" : res.status === "pending" ? "pending" : "error");
+    const wa = res.status === "connected" ? "ok" : res.status === "pending" ? "pending" : "error";
+    if (isSupportCustomer(state.customerId)) return NextResponse.redirect(new URL(`/admin/whatsapp/settings?support=${wa}#support`, req.url));
+    return back(wa);
   } catch (err) {
     reportError(err, "d360-callback");
     return back("error");

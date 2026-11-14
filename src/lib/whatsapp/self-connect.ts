@@ -10,6 +10,7 @@ import { sendToAdmins } from "@/lib/push";
 import { saveWhatsAppKey } from "@/lib/whatsapp/connect";
 import { channelInfo, createChannelApiKey, partnerConfig } from "@/lib/whatsapp/dialog360-partner";
 import { submitTemplatesForCustomer } from "@/lib/whatsapp/template-submit";
+import { isSupportCustomer } from "@/lib/whatsapp/support-inbox";
 
 export type SelfConnectStatus = "connected" | "pending" | "error";
 export type SelfConnectResult = { status: SelfConnectStatus; phone?: string | null; reason?: string };
@@ -57,6 +58,10 @@ async function finishChannel(customerId: string, channelId: string, clientId: st
 async function onConnected(customerId: string, phone: string | null | undefined): Promise<void> {
   const name = await customerName(customerId);
   // Vorlagen sofort bei Meta einreichen (Freigabe dauert Minuten bis Stunden).
+  if (isSupportCustomer(customerId)) {
+    await sendToAdmins({ title: "Support-WhatsApp verbunden", body: phone ? `Nummer +${phone.replace(/^\+/, "")} läuft jetzt unter Admin → WhatsApp.` : "Läuft jetzt unter Admin → WhatsApp.", url: "/admin/whatsapp", tag: "d360:support" }).catch(() => {});
+    return;
+  }
   await submitTemplatesForCustomer(customerId).catch((err) => reportError(err, "templates-after-connect"));
   await sendToAdmins({
     title: `WhatsApp verbunden: ${name}`,
