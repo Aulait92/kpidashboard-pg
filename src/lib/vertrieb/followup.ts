@@ -256,10 +256,10 @@ export function templateTexts(c: Ctx): { body1: string; body2: string } {
     ? `Sie hatten mir ${c.replyMonth} geschrieben, dass ${clause}. Deshalb melde ich mich wie versprochen noch einmal.`
     : `Wir hatten ${c.replyMonth} Kontakt, und Sie meinten, dass ${clause}. Deshalb melde ich mich wie versprochen noch einmal.`;
   const ask1 = c.bookingUrl
-    ? `Hätten Sie in den nächsten Tagen Zeit für ein kurzes Gespräch von 15 Minuten? Hier können Sie sich direkt einen passenden Termin aussuchen: ${c.bookingUrl}`
+    ? `Hätten Sie in den nächsten Tagen Zeit für ein kurzes Gespräch von 15 Minuten?\n\nHier können Sie sich direkt einen passenden Termin aussuchen:\n${c.bookingUrl}`
     : "Hätten Sie in den nächsten Tagen Zeit für ein kurzes Gespräch von 15 Minuten? Sagen Sie mir gern, wann es Ihnen passt.";
   const ask2 = c.bookingUrl
-    ? `Kurz nachgehakt: Passt Ihnen in den nächsten Tagen ein kurzes Gespräch von 15 Minuten? Hier geht es direkt zur Terminauswahl: ${c.bookingUrl}`
+    ? `Kurz nachgehakt: Passt Ihnen in den nächsten Tagen ein kurzes Gespräch von 15 Minuten?\n\nHier geht es direkt zur Terminauswahl:\n${c.bookingUrl}`
     : "Kurz nachgehakt: Passt Ihnen in den nächsten Tagen ein kurzes Gespräch von 15 Minuten?";
   return { body1: [c.greeting, opener, c.pitch, ask1].join("\n\n"), body2: [c.greeting, ask2].join("\n\n") };
 }
@@ -267,9 +267,59 @@ export function templateTexts(c: Ctx): { body1: string; body2: string } {
 const DASH = /[–—]/;
 const DU = /\b(du|dich|dir|dein\w*|euch|euer\w*)\b/i;
 
-/** Gedankenstriche raus (Ole: nie – oder —), Leerraum aufräumen */
+/** Gedankenstriche raus (Ole: nie – oder —), Leerraum aufräumen, kurze Absätze */
 export function cleanText(s: string): string {
-  return s.replace(/\s*[–—]\s*/g, ", ").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  return paragraphize(s.replace(/\s*[–—]\s*/g, ", ").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim());
+}
+
+/** Höchstens etwa 3 Zeilen ohne Absatz (Ole, 14.11.2026) */
+const PARA_MAX = 220;
+const URL_RE = /https?:\/\/\S+/;
+
+/** Einen Absatz ohne Zeilenumbruch an Satzgrenzen in Stücke ≤ PARA_MAX teilen */
+function splitLong(p: string): string[] {
+  if (!p) return [];
+  if (p.length <= PARA_MAX) return [p];
+  const sentences = p.match(/[^.!?]+[.!?]+["“”]?(\s+|$)|[^.!?]+$/g)?.map((x) => x.trim()).filter(Boolean) ?? [p];
+  const res: string[] = [];
+  let cur = "";
+  for (const sen of sentences) {
+    if (cur && (cur + " " + sen).length > PARA_MAX) {
+      res.push(cur);
+      cur = sen;
+    } else cur = cur ? `${cur} ${sen}` : sen;
+  }
+  if (cur) res.push(cur);
+  return res;
+}
+
+/**
+ * Lange Absätze an Satzgrenzen teilen (je Absatz höchstens ~220 Zeichen), Links in eine eigene Zeile,
+ * Anrede („Guten Tag …,“) als eigener Absatz. Vorhandene Absätze und Zeilenumbrüche bleiben.
+ */
+export function paragraphize(text: string): string {
+  const paras = text.replace(/\r/g, "").split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+  const out: string[] = [];
+  for (let p of paras) {
+    // Anrede in der ersten Zeile abtrennen
+    const greet = p.match(/^((?:Guten Tag|Hallo|Liebe[rs]?|Sehr geehrte[rs]?)[^\n,]{0,60},)\s+(\S[\s\S]*)$/);
+    if (greet && !p.startsWith(greet[1] + "\n")) {
+      out.push(greet[1]);
+      p = greet[2];
+    }
+    // Link in eigene Zeile, Satz davor bleibt im Absatz
+    const url = p.match(URL_RE)?.[0];
+    if (url && p.trim() !== url && !p.includes("\n" + url)) {
+      const before = splitLong(p.slice(0, p.indexOf(url)).trimEnd());
+      const after = p.slice(p.indexOf(url) + url.length).trim();
+      if (before.length) before[before.length - 1] += `\n${url}`;
+      else before.push(url);
+      out.push(...before, ...(after ? splitLong(after) : []));
+      continue;
+    }
+    out.push(...(p.includes("\n") ? [p] : splitLong(p)));
+  }
+  return out.join("\n\n");
 }
 
 function validateTexts(c: Ctx) {
@@ -306,6 +356,7 @@ Mail 2: Kommt einige Werktage später, falls keine Antwort kam. Sehr kurz, zum B
 
 Regeln:
 - Sie-Form, freundlich, natürlich, wie von einem Menschen geschrieben. Mail 1 höchstens 90 Wörter, Mail 2 höchstens 40 Wörter.
+- Kurze Absätze: nach der Anrede eine Leerzeile, danach höchstens zwei Sätze (etwa drei Zeilen) je Absatz, Absätze durch eine Leerzeile getrennt. Den Buchungslink in eine eigene Zeile.
 - Keine Gedankenstriche (weder – noch —), keine Aufzählungen, kein Betreff.
 - Beginne mit der Anrede "${c.greeting}". Kein Gruß und keine Signatur am Ende, die werden automatisch angehängt.
 - Keine Versprechen zu Ergebnissen, nie das Wort "Garantie", keine erfundenen Fakten, keine Platzhalter.
@@ -359,6 +410,9 @@ function quoteBlock(header: string, inner: string) {
 }
 
 async function signatureHtml(eaccount: string): Promise<string> {
+  // Eigene Signatur aus den Einstellungen hat Vorrang (Instantly liefert die Postfach-Signatur nicht über die API)
+  const own = (await loadFollowupSettings()).signature?.trim();
+  if (own) return [/gr(ü|ue)(ß|ss)e|gru(ß|ss)|regards/i.test(own) ? "" : "Viele Grüße", textToHtml(own)].filter(Boolean).join("<br/>");
   const a = await accountSignature(eaccount).catch(() => ({ signature: null, name: null }));
   const sig = a.signature ? (/<[a-z][\s\S]*>/i.test(a.signature) ? a.signature : textToHtml(a.signature)) : a.name ? esc(a.name) : "";
   const hasGreeting = /gr(ü|ue)(ß|ss)e|gru(ß|ss)|regards/i.test(a.signature ?? "");
@@ -426,7 +480,7 @@ export async function sendFollowupStep(id: string, opts: { now?: Date; manual?: 
     }
 
     const step = (f.step + 1) as 1 | 2;
-    const body = step === 1 ? f.body1! : f.body2!;
+    const body = paragraphize(step === 1 ? f.body1! : f.body2!);
     let quoted = "";
     if (step === 1 && reply) {
       quoted = quoteBlock(`Am ${fmtDateTime(reply.sentAt)} schrieb ${reply.fromEmail ?? f.contact.email}:`, reply.html ?? textToHtml(reply.text ?? ""));

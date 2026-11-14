@@ -94,6 +94,7 @@ export async function saveFollowupSettingsAction(fd: FormData) {
     perDay,
     bookingUrl: url && /^https?:\/\//i.test(url) ? url : null,
     pitch: (s(fd, "pitch") ?? "").replace(/\s*[–—]\s*/g, ", ") || undefined,
+    signature: (typeof fd.get("signature") === "string" ? String(fd.get("signature")).replace(/\r/g, "").trim() : "") || null,
   };
   await prisma.salesFollowupSettings.upsert({ where: { id: "default" }, create: { id: "default", ...data }, update: data });
   refresh();

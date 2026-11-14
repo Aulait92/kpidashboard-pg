@@ -116,6 +116,10 @@ export default async function FollowupsPage() {
             <input name="bookingUrl" type="url" defaultValue={settings.bookingUrl ?? ""} placeholder="https://calendly.com/…" className="input" />
           </label>
           <label className="block text-sm sm:col-span-2">
+            <span className="label">Signatur unter jeder Follow-up-Mail (Name, Funktion, Firma, Telefon, Website). Leer = „Viele Grüße“ und der Name des Postfachs</span>
+            <textarea name="signature" rows={5} defaultValue={settings.signature ?? ""} placeholder={"Viele Grüße\nOle Kannapinn\nGeschäftsführer, performancegrowth\nTel. …\nperformancegrowth.de"} className="input" />
+          </label>
+          <label className="block text-sm sm:col-span-2">
             <span className="label">Unser Angebot in ein bis zwei Sätzen (für KI und Vorlage, ohne Gedankenstriche)</span>
             <textarea name="pitch" rows={3} defaultValue={settings.pitch} className="input" />
           </label>

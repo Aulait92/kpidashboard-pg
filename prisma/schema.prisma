@@ -1535,6 +1535,8 @@ model SalesFollowupSettings {
   pitch      String   @default("Wir sorgen über Meta-Werbung für planbare Kundenanfragen in Ihrer Region. Ein WhatsApp-Assistent meldet sich sofort bei jeder Anfrage und vereinbart Termine für Sie.")
   /// Bestehende Später-Kontakte einmalig eingeplant (wartet auf Freigabe)
   backfillAt DateTime?
+  /// Signatur unter jeder Follow-up-Mail (Instantly gibt die Postfach-Signatur nicht heraus); leer = Gruß und Name
+  signature  String?
   updatedAt  DateTime @updatedAt
 }
 
