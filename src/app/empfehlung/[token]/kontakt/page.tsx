@@ -1,15 +1,29 @@
-import { CheckCircle2, UserRound } from "lucide-react";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { CheckCircle2, ClipboardCheck, MessageCircle, UserRound } from "lucide-react";
 import { buttonClass } from "@/components/ui";
 import { PhoneField } from "@/components/phone-field";
 import { SubmitButton } from "@/components/submit-button";
-import { loadReferralPage } from "@/lib/empfehlung/requests";
+import { countReferralVisit, loadReferralPage } from "@/lib/empfehlung/requests";
+import { statusConsentText } from "@/lib/empfehlung/shared";
+import { requestIp } from "@/lib/rate-limit";
 import { nowMs } from "@/lib/now";
 import { submitReferralAction } from "./actions";
 
 // Empfohlene Person: trägt sich selbst ein (mit Einwilligung). Daraus wird ein
 // normaler Lead beim Vertreter mit Quelle „Empfehlung“.
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Kontakt aufnehmen", robots: { index: false, follow: false } };
+
+// Link-Vorschau (WhatsApp & Co.): Angebot und Vertreter statt eines nackten Links
+export async function generateMetadata({ params }: { params: Promise<{ token: string }> }): Promise<Metadata> {
+  const { token } = await params;
+  const page = /^[\w-]{10,64}$/.test(token) ? await loadReferralPage(token).catch(() => null) : null;
+  const robots = { index: false, follow: false };
+  if (!page) return { title: "Kontakt aufnehmen", robots };
+  const title = page.offer ? `${page.offer.headline} bei ${page.vertreter}` : `Kontakt zu ${page.vertreter}`;
+  const description = page.offer ? "Kostenlos und unverbindlich. Einfach Nummer hinterlassen." : `${page.vertreter} meldet sich persönlich bei Ihnen – unverbindlich und kostenlos.`;
+  return { title, description, robots, openGraph: { title, description, type: "website" } };
+}
 
 const ERRORS: Record<string, string> = {
   name: "Bitte geben Sie Ihren Namen an.",
@@ -44,20 +58,52 @@ export default async function ReferralContactPage({ params, searchParams }: { pa
       </Shell>
     );
   }
+  // Einzelne Besucher zählen (nur beim ersten Aufruf, nicht nach Fehlern)
+  if (!sp.err) {
+    const h = await headers();
+    await countReferralVisit(page, { ip: await requestIp(), userAgent: h.get("user-agent") }).catch(() => {});
+  }
   const action = submitReferralAction.bind(null, token);
+  const offer = page.offer;
   const renderedAt = nowMs();
   return (
     <Shell>
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)]/10 text-[color:var(--brand)]">
-        <UserRound className="h-6 w-6" />
+        {offer ? <ClipboardCheck className="h-6 w-6" /> : <UserRound className="h-6 w-6" />}
       </div>
-      <h1 className="mt-4 text-2xl font-bold tracking-tight">Kontakt zu {page.vertreter}</h1>
-      <p className="mt-2 text-[15px] leading-relaxed text-[color:var(--muted)]">
-        {page.recommender ? `${page.recommender} hat Ihnen ${page.vertreter} empfohlen. ` : ""}Hinterlassen Sie Ihre Nummer, dann meldet sich {page.vertreter}{" "}
-        persönlich – unverbindlich und kostenlos.
-      </p>
+      {page.recommender ? (
+        <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-[color:var(--brand)]" data-referral-from>
+          Auf Empfehlung von {page.recommender}
+        </p>
+      ) : null}
+      <h1 className={`${page.recommender ? "mt-1" : "mt-4"} text-2xl font-bold tracking-tight`}>{offer ? offer.headline : `Kontakt zu ${page.vertreter}`}</h1>
+      {offer ? (
+        <p className="mt-2 text-[15px] leading-relaxed text-[color:var(--muted)]" data-referral-offer>
+          {offer.text} Hinterlassen Sie Ihre Nummer, dann meldet sich {page.vertreter} persönlich.
+        </p>
+      ) : (
+        <p className="mt-2 text-[15px] leading-relaxed text-[color:var(--muted)]">
+          {page.recommender ? `${page.recommender} hat Ihnen ${page.vertreter} empfohlen. ` : ""}Hinterlassen Sie Ihre Nummer, dann meldet sich {page.vertreter}{" "}
+          persönlich – unverbindlich und kostenlos.
+        </p>
+      )}
       {sp.err && ERRORS[sp.err] ? <p className="mt-4 rounded-[var(--radius-sm)] bg-rose-50 px-3 py-2 text-sm font-medium text-rose-800">{ERRORS[sp.err]}</p> : null}
-      <form action={action} className="mt-5 space-y-3">
+      {page.whatsappUrl ? (
+        <div className="mt-5" data-referral-whatsapp>
+          <a href={page.whatsappUrl} target="_blank" rel="noopener noreferrer" className={buttonClass("primary", "md", "h-12 w-full text-base")}>
+            <MessageCircle className="h-4 w-4" /> Per WhatsApp anfragen
+          </a>
+          <p className="mt-2 text-xs leading-relaxed text-[color:var(--muted)]">
+            Die Nachricht ist schon vorgeschrieben, Sie müssen nur noch auf Senden tippen. Damit nehmen Sie selbst Kontakt zu {page.vertreter} auf. Hinweise in der{" "}
+            <a href={page.privacyUrl} target="_blank" rel="noopener noreferrer" className="underline">
+              Datenschutzerklärung
+            </a>
+            .
+          </p>
+          <p className="mt-4 text-center text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">oder Rückruf anfragen</p>
+        </div>
+      ) : null}
+      <form action={action} className={page.whatsappUrl ? "mt-3 space-y-3" : "mt-5 space-y-3"}>
         <Field name="name" label="Vor- und Nachname" autoComplete="name" required />
         <PhoneField name="phone" label="Handynummer (für Anruf oder WhatsApp)" />
         <Field name="email" label="E-Mail-Adresse (optional)" type="email" autoComplete="email" />
@@ -102,8 +148,14 @@ export default async function ReferralContactPage({ params, searchParams }: { pa
             .
           </span>
         </label>
-        <SubmitButton pendingLabel="Wird gesendet …" className={buttonClass("primary", "md", "h-12 w-full text-base")}>
-          Kontakt anfragen
+        {page.statusUpdates ? (
+          <label className="flex items-start gap-2 text-xs leading-relaxed text-[color:var(--muted)]">
+            <input type="checkbox" name="statusConsent" className="mt-0.5" />
+            <span>{statusConsentText(page.recommender, page.vertreter)}</span>
+          </label>
+        ) : null}
+        <SubmitButton pendingLabel="Wird gesendet …" className={buttonClass(page.whatsappUrl ? "secondary" : "primary", "md", "h-12 w-full text-base")}>
+          {offer ? offer.cta : "Kontakt anfragen"}
         </SubmitButton>
       </form>
     </Shell>

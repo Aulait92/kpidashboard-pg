@@ -30,7 +30,8 @@ export type NoticePurpose =
   | "campaign_renewal"
   | "review_request"
   | "referral_request"
-  | "referral_thanks";
+  | "referral_thanks"
+  | "referral_update";
 
 export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   outreach: "Erstanschreiben",
@@ -48,6 +49,7 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   review_request: "Empfehlungen: Nachfrage + Google-Bewertung",
   referral_request: "Empfehlungen: Bitte um Empfehlung",
   referral_thanks: "Empfehlungen: Dank an den Empfehlenden",
+  referral_update: "Empfehlungen: Rückmeldung an den Empfehlenden",
 };
 
 export const PURPOSE_PARAMS: Record<NoticePurpose, string[]> = {
@@ -66,6 +68,7 @@ export const PURPOSE_PARAMS: Record<NoticePurpose, string[]> = {
   review_request: ["Vorname", "Google-Link"],
   referral_request: ["Vorname", "Empfehlungslink"],
   referral_thanks: ["Vorname"],
+  referral_update: ["Vorname", "Stand der Empfehlung"],
 };
 
 /** Vorschläge für die bei Meta einzureichenden Texte ([Berater] = Name). */
@@ -101,6 +104,9 @@ export const SUGGESTED_TEMPLATE_TEXT: Record<NoticePurpose, string> = {
     "Hallo {{1}}, hier ist [Berater]. Kennen Sie jemanden, dem ich genauso weiterhelfen kann? Über Ihren persönlichen Link kann die Person ganz einfach selbst Kontakt mit mir aufnehmen: {{2}} Vielen Dank für Ihr Vertrauen!",
   referral_thanks:
     "Hallo {{1}}, ich wollte mich noch einmal herzlich für Ihre Empfehlung bedanken. Ich konnte weiterhelfen. Das ist das schönste Lob für meine Arbeit! Herzliche Grüße, [Berater]",
+  // Nur mit Einwilligung der empfohlenen Person (Empfehlungsseite). {{2}} = ein Satz zum Stand.
+  referral_update:
+    "Hallo {{1}}, kurze Rückmeldung zu Ihrer Empfehlung: {{2}} Vielen Dank, dass Sie an mich gedacht haben! Herzliche Grüße, [Berater]",
 };
 
 /**

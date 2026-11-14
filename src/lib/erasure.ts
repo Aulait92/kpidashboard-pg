@@ -139,6 +139,8 @@ export async function pruneTransient(now = new Date()) {
     prisma.passwordResetToken.deleteMany({ where: { expiresAt: { lt: new Date(now.getTime() - 7 * DAY_MS) } } }),
     prisma.userAbsence.deleteMany({ where: { OR: [{ endsAt: { lt: absenceCutoff } }, { endedAt: { lt: absenceCutoff } }] } }),
     prisma.reviewRequest.deleteMany({ where: { createdAt: { lt: new Date(now.getTime() - 730 * DAY_MS) } } }),
+    // Besucher der Empfehlungsseiten (nur Hash): 12 Monate
+    prisma.referralVisit.deleteMany({ where: { createdAt: { lt: new Date(now.getTime() - 365 * DAY_MS) } } }),
   ]);
   return { unassigned: unassigned.count, resetTokens: resetTokens.count, absences: absences.count, reviewRequests: reviewRequests.count };
 }

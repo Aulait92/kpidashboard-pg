@@ -2,7 +2,7 @@
 // Hinweise auf das Modul: nur für Inhaber, nur ohne aktives Modul, je Stelle einmal wegklickbar.
 
 import Link from "next/link";
-import { Lock, MessageSquareHeart, Star } from "lucide-react";
+import { Lightbulb, Lock, MessageSquareHeart, Star } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { nowMs } from "@/lib/now";
@@ -10,7 +10,7 @@ import type { TeamCtx } from "@/lib/team";
 import { moduleInfo, recentClosings } from "@/lib/empfehlung/module";
 import { loadEmpfehlungStats, type EmpfehlungStats } from "@/lib/empfehlung/requests";
 import { BAD_REVIEW_TASK } from "@/lib/empfehlung/google-business";
-import { ANNOUNCEMENT_KEY, CANDIDATE_MIN_CLOSINGS, DAY_MS, HINTS, fmtDate, isUnhappyTask } from "@/lib/empfehlung/shared";
+import { ANNOUNCEMENT_KEY, CANDIDATE_MIN_CLOSINGS, DAY_MS, HINTS, LEITFADEN, LEITFADEN_KURZ, fmtDate, isUnhappyTask } from "@/lib/empfehlung/shared";
 import { ModuleHint, OptOutToggle, ReferralLinkButton } from "@/components/empfehlung/client";
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -161,6 +161,65 @@ export function EmpfehlungStatsGrid({ s }: { s: EmpfehlungStats }) {
           {t.sub ? <div className="text-[11px] text-[color:var(--muted)]">{t.sub}</div> : null}
         </div>
       ))}
+    </div>
+  );
+}
+
+/** Trichter: Wo gehen Empfehlungen verloren? Mit einem Hinweis für den auffälligsten Übergang. */
+export function EmpfehlungFunnel({ s }: { s: EmpfehlungStats }) {
+  const f = s.funnel;
+  const steps: { k: string; v: number; sub: string }[] = [
+    { k: "Links ausgegeben", v: f.linksSent, sub: "gesendet oder im Termin gezeigt" },
+    { k: "vom Kunden geöffnet", v: f.linksOpened, sub: "Kunden, die ihre Seite angesehen haben" },
+    { k: "Besucher", v: f.visitors, sub: "einzelne Personen auf der Empfehlungsseite" },
+    { k: "Empfehlungen", v: f.leads, sub: "haben sich eingetragen" },
+    { k: "Neukunden", v: f.closings, sub: "Abschlüsse aus Empfehlungen" },
+  ];
+  const max = Math.max(1, ...steps.map((x) => x.v));
+  return (
+    <div className="space-y-3" data-empfehlung-funnel>
+      <ol className="space-y-1.5">
+        {steps.map((x) => (
+          <li key={x.k} className="grid grid-cols-[2.5rem_1fr] items-center gap-3 text-sm sm:grid-cols-[2.5rem_11rem_1fr]">
+            <span className="text-right text-lg font-semibold tabular-nums">{x.v}</span>
+            <span>
+              <span className="font-medium">{x.k}</span>
+              <span className="block text-[11px] text-[color:var(--muted)]">{x.sub}</span>
+            </span>
+            <span className="col-span-2 h-2 rounded-full bg-[color:var(--surface-sunken)] sm:col-span-1" aria-hidden="true">
+              <span className="block h-2 rounded-full bg-emerald-500" style={{ width: `${Math.round((x.v / max) * 100)}%` }} />
+            </span>
+          </li>
+        ))}
+      </ol>
+      <div className={`flex items-start gap-2 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${s.hint.stage === "ok" ? "border-emerald-200 bg-emerald-50/60" : "border-amber-200 bg-amber-50"}`} data-empfehlung-funnel-hint={s.hint.stage}>
+        <Lightbulb className="mt-0.5 h-4 w-4 shrink-0" />
+        <span>
+          <b>{s.hint.title}.</b> {s.hint.text}
+        </span>
+      </div>
+      <p className="text-[11px] text-[color:var(--muted)]">Besucher werden je Person einmal gezählt, Link-Vorschauen zählen nicht. Empfehlungen über Aufsteller und Signatur zählen bei Besuchern, Empfehlungen und Neukunden mit.</p>
+    </div>
+  );
+}
+
+/** Gesprächsleitfaden: vier Schritte, die die Empfehlung zum roten Faden im Gespräch machen. */
+export function Leitfaden() {
+  return (
+    <div className="space-y-3 text-sm" data-empfehlung-leitfaden>
+      <p className="text-[color:var(--muted)]">
+        Wer aktiv fragt, bekommt ein Vielfaches an Empfehlungen. Entscheidend ist, dass die Frage nicht erst am Ende vom Himmel fällt.
+      </p>
+      {LEITFADEN.map((x) => (
+        <details key={x.title} className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3">
+          <summary className="cursor-pointer font-semibold">
+            {x.title} <span className="font-normal text-[color:var(--muted)]">· {x.when}</span>
+          </summary>
+          <p className="mt-2 leading-relaxed">{x.say}</p>
+          <p className="mt-2 text-xs text-[color:var(--muted)]">Warum: {x.why}</p>
+        </details>
+      ))}
+      <p className="text-xs text-[color:var(--muted)]">{LEITFADEN_KURZ}</p>
     </div>
   );
 }

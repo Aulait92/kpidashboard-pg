@@ -5,7 +5,7 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useState, useTransition } from "react";
-import { Check, Copy, Gift, Loader2, MessageCircle, Send, Share2, Sparkles, Star, X } from "lucide-react";
+import { Check, Copy, Gift, Loader2, MessageCircle, QrCode, Send, Share2, Sparkles, Star, X } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { Button, buttonClass } from "@/components/ui";
 import { haptic } from "@/lib/haptics";
@@ -14,19 +14,22 @@ import {
   cancelEmpfehlungAction,
   chooseLocationAction,
   publishReplyAction,
+  referralQrAction,
   type GbpState,
+  type QrState,
   dismissHintAction,
   markResolvedAction,
   saveSettingsAction,
   sendReferralLinkAction,
   sendTestAction,
   setOptOutAction,
+  settleRewardAction,
   type ModuleActionState,
   type SettingsState,
   type ShareState,
   type TestState,
 } from "@/app/buyer/empfehlungen/actions";
-import { DEFAULT_TEXTS, TEXT_LABELS, bookingTerms, renderText, type TextKey } from "@/lib/empfehlung/shared";
+import { DEFAULT_TEXTS, FOLLOWUP_LIMITS, OCCASIONS, OFFER_LIMITS, OFFER_PRESETS, REWARD_LIMITS, REWARD_SAFE_LIMIT, REWARD_WAIT_DAYS, TEXT_LABELS, bookingTerms, offerWarning, renderText, rewardWarning, type Occasion, type OfferKind, type TextKey } from "@/lib/empfehlung/shared";
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 const fmtDate = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(iso));
@@ -256,19 +259,56 @@ export function ResolveButton({ requestId, readOnly }: { requestId: string; read
 export function ReferralLinkButton({ leadId, existingCustomerId, readOnly }: { leadId?: string; existingCustomerId?: string; readOnly: boolean }) {
   const [state, action, pending] = useActionState<ShareState, FormData>(sendReferralLinkAction, {});
   const [copied, setCopied] = useState(false);
+  const [qr, setQr] = useState<QrState | null>(null);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [qrPending, startQr] = useTransition();
   useEffect(() => {
     if (state.ok) haptic("success");
   }, [state]);
+  const showQr = () => {
+    setQrOpen(true);
+    if (qr?.ok) return;
+    startQr(async () => {
+      setQr(await referralQrAction(leadId ? { leadId } : { existingCustomerId }));
+    });
+  };
   return (
     <div className="space-y-2">
       <form action={action} className="flex flex-wrap items-center gap-2">
         {leadId ? <input type="hidden" name="leadId" value={leadId} /> : null}
         {existingCustomerId ? <input type="hidden" name="existingCustomerId" value={existingCustomerId} /> : null}
+        <select name="occasion" defaultValue="" aria-label="Anlass" className="h-9 max-w-[13rem] rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-xs" data-referral-occasion>
+          <option value="">Ohne Anlass</option>
+          {(Object.keys(OCCASIONS) as Occasion[]).map((o) => (
+            <option key={o} value={o}>
+              {OCCASIONS[o].label}
+            </option>
+          ))}
+        </select>
         <Button type="submit" icon={Send} disabled={readOnly || pending} data-referral-send>
           {pending ? "Wird gesendet …" : "Empfehlungslink senden"}
         </Button>
+        <Button type="button" icon={QrCode} disabled={readOnly} onClick={showQr} data-referral-qr>
+          Im Termin zeigen
+        </Button>
         {state.ok ? <span className="text-xs font-medium text-emerald-700">{state.message}</span> : null}
       </form>
+      <Sheet open={qrOpen} onClose={() => setQrOpen(false)} title="Empfehlung im Termin" message="Ihr Kunde scannt den Code und leitet die Empfehlung gleich weiter.">
+        <div className="space-y-3 px-5 py-4 text-center text-sm" data-referral-qr-sheet>
+          {qrPending || !qr ? (
+            <Loader2 className="mx-auto h-6 w-6 animate-spin text-[color:var(--muted)]" />
+          ) : qr.ok && qr.qr ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={qr.qr} alt="QR-Code zum persönlichen Empfehlungslink" className="mx-auto h-60 w-60 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-2" />
+              <p className="text-[color:var(--muted)]">Am besten gleich am Tisch teilen lassen: Was nicht sofort passiert, passiert meist gar nicht.</p>
+              {qr.followUp ? <p className="text-xs font-medium text-emerald-700">Aufgabe zum Nachfassen ist angelegt.</p> : null}
+            </>
+          ) : (
+            <p className="font-medium text-rose-700">{qr.error ?? "Der QR-Code konnte nicht erstellt werden."}</p>
+          )}
+        </div>
+      </Sheet>
       {state.error ? (
         <div className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] p-3 text-xs">
           <p className="font-medium">{state.error}</p>
@@ -300,17 +340,68 @@ export function ReferralLinkButton({ leadId, existingCustomerId, readOnly }: { l
   );
 }
 
+/** Text kopieren (Signatur-Zeile, allgemeiner Link). */
+export function CopyText({ text, label = "Kopieren" }: { text: string; label?: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <Button
+      type="button"
+      icon={copied ? Check : Copy}
+      onClick={async () => {
+        await navigator.clipboard?.writeText(text).catch(() => {});
+        setCopied(true);
+        haptic("success");
+      }}
+    >
+      {copied ? "Kopiert" : label}
+    </Button>
+  );
+}
+
+/** Aufsteller drucken. */
+export function PrintButton() {
+  return (
+    <Button type="button" variant="primary" size="md" onClick={() => window.print()}>
+      Drucken
+    </Button>
+  );
+}
+
 // ─── Einstellungen mit Handy-Vorschau ──────────────────────────────────────
 
 export function SettingsForm({
   initial,
   vertreter,
   readOnly,
+  vermittlerTyp,
 }: {
-  initial: { active: boolean; googleReviewUrl: string; reviewDelayDays: number; referralDelayDays: number; custom: Partial<Record<TextKey, string>> };
+  initial: {
+    active: boolean;
+    googleReviewUrl: string;
+    reviewDelayDays: number;
+    referralDelayDays: number;
+    custom: Partial<Record<TextKey, string>>;
+    offerKind: OfferKind;
+    offerHeadline: string;
+    offerText: string;
+    referralOnPraise: boolean;
+    statusUpdates: boolean;
+    followUpHours: number;
+    referralAfterAppointment: boolean;
+    reward: { kind: string; amount: number | null; note: string | null; trigger: string; confirmed: boolean };
+  };
   vertreter: string;
   readOnly: boolean;
+  vermittlerTyp?: string | null;
 }) {
+  const [offerKind, setOfferKind] = useState<OfferKind>(initial.offerKind);
+  const [offerHeadline, setOfferHeadline] = useState(initial.offerHeadline);
+  const [offerText, setOfferText] = useState(initial.offerText);
+  const preset = offerKind !== "none" && offerKind !== "custom" ? OFFER_PRESETS[offerKind] : null;
+  const warn = offerKind === "custom" ? offerWarning(offerHeadline, offerText, vermittlerTyp) : null;
+  const [rewardKind, setRewardKind] = useState(initial.reward.kind);
+  const [rewardAmount, setRewardAmount] = useState(initial.reward.amount != null ? String(initial.reward.amount) : String(REWARD_SAFE_LIMIT));
+  const rewardWarn = rewardWarning(rewardKind, rewardAmount);
   const [state, action, pending] = useActionState<SettingsState, FormData>(saveSettingsAction, {});
   const [texts, setTexts] = useState<Record<TextKey, string>>(() => {
     const t = {} as Record<TextKey, string>;
@@ -364,6 +455,176 @@ export function SettingsForm({
           </span>
         </label>
       </div>
+
+      <fieldset className="space-y-3 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4" data-empfehlung-offer>
+        <legend className="px-1 font-semibold">Empfehlungsangebot</legend>
+        <p className="text-xs text-[color:var(--muted)]">
+          Was bekommt die empfohlene Person? Ein konkreter, kostenloser Check wird deutlich lieber weitergegeben als „melde dich mal bei meinem Berater“.
+          Das Angebot steht auf der Empfehlungsseite und im Text, den Ihr Kunde weiterleitet.
+        </p>
+        <label className="block">
+          <span className="font-medium">Angebot</span>
+          <select
+            name="offerKind"
+            value={offerKind}
+            onChange={(e) => setOfferKind(e.target.value as OfferKind)}
+            className="mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3"
+          >
+            <option value="none">Kein Angebot (nur „Kontakt aufnehmen“)</option>
+            {(Object.keys(OFFER_PRESETS) as (keyof typeof OFFER_PRESETS)[]).map((k) => (
+              <option key={k} value={k}>
+                {OFFER_PRESETS[k].label}
+              </option>
+            ))}
+            <option value="custom">Eigenes Angebot</option>
+          </select>
+        </label>
+        {preset ? (
+          <div className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] p-3">
+            <div className="font-semibold">{preset.headline}</div>
+            <p className="mt-1 text-xs text-[color:var(--muted)]">{preset.text.split("{Vertreter}").join(vertreter)}</p>
+          </div>
+        ) : null}
+        {offerKind === "custom" ? (
+          <div className="space-y-3">
+            <label className="block">
+              <span className="font-medium">Überschrift</span>
+              <input
+                name="offerHeadline"
+                value={offerHeadline}
+                maxLength={OFFER_LIMITS.headline}
+                onChange={(e) => setOfferHeadline(e.target.value)}
+                placeholder="Kostenloser Wohngebäude-Check"
+                className="mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3"
+              />
+            </label>
+            <label className="block">
+              <span className="font-medium">Text</span>
+              <textarea
+                name="offerText"
+                rows={3}
+                value={offerText}
+                maxLength={OFFER_LIMITS.text}
+                onChange={(e) => setOfferText(e.target.value)}
+                placeholder="Was genau prüfen Sie, und was hat die Person davon? Kostenlos und unverbindlich."
+                className="mt-1 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2 text-sm"
+              />
+            </label>
+            <p className="text-xs text-[color:var(--muted)]">Ein Satz, den Ihr Kunde beim Grillabend weitererzählen kann. Keine Prämien, Gutscheine, Geldbeträge oder Garantien.</p>
+            {warn ? <p className="text-xs font-medium text-amber-700">{warn}</p> : null}
+          </div>
+        ) : null}
+      </fieldset>
+
+      <fieldset className="space-y-3 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4" data-empfehlung-moments>
+        <legend className="px-1 font-semibold">Der richtige Moment</legend>
+        <label className="flex items-start gap-2">
+          <input type="checkbox" name="referralOnPraise" defaultChecked={initial.referralOnPraise} className="mt-0.5 h-4 w-4" />
+          <span>
+            <span className="font-medium">Bei Lob direkt um Empfehlung bitten</span>
+            <span className="block text-xs text-[color:var(--muted)]">
+              Antwortet Ihr Kunde positiv auf die Nachfrage, bekommt er den Dank gleich mit seinem persönlichen Link. Die spätere Bitte entfällt dann.
+            </span>
+          </span>
+        </label>
+        <label className="flex items-start gap-2">
+          <input type="checkbox" name="statusUpdates" defaultChecked={initial.statusUpdates} className="mt-0.5 h-4 w-4" />
+          <span>
+            <span className="font-medium">Empfehlende auf dem Laufenden halten</span>
+            <span className="block text-xs text-[color:var(--muted)]">
+              Kurze Nachricht, wenn sich jemand gemeldet hat und wenn ein Termin steht. Nur, wenn die empfohlene Person dem auf der Empfehlungsseite zugestimmt hat.
+            </span>
+          </span>
+        </label>
+        <label className="flex items-start gap-2">
+          <input type="checkbox" name="referralAfterAppointment" defaultChecked={initial.referralAfterAppointment} className="mt-0.5 h-4 w-4" />
+          <span>
+            <span className="font-medium">Nach jedem stattgefundenen Termin mit einem Kunden</span>
+            <span className="block text-xs text-[color:var(--muted)]">
+              Markieren Sie einen Termin mit einem Kunden (Abschluss oder Bestandskunde) als stattgefunden, geht einige Stunden später der Empfehlungslink raus.
+              Höchstens alle 180 Tage je Kontakt, nicht bei Kritik. Standardmäßig aus.
+            </span>
+          </span>
+        </label>
+        <label className="block">
+          <span className="font-medium">Nachfassen nach</span>
+          <span className="mt-1 flex items-center gap-2">
+            <input name="followUpHours" type="number" min={FOLLOWUP_LIMITS.min} max={FOLLOWUP_LIMITS.max} defaultValue={initial.followUpHours} className="h-10 w-20 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 tabular-nums" />
+            Stunden (0 = aus)
+          </span>
+          <span className="mt-1 block text-xs text-[color:var(--muted)]">
+            Nach „Empfehlungslink senden“ oder „Im Termin zeigen“ legt die App eine Aufgabe in „Heute“ an: kurz nachfragen, ob der Link weitergeleitet wurde.
+          </span>
+        </label>
+      </fieldset>
+
+      <fieldset className="space-y-3 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4" data-empfehlung-reward>
+        <legend className="px-1 font-semibold">Dankeschön für Empfehlende (optional)</legend>
+        <p className="text-xs text-[color:var(--muted)]">
+          Ein vorher angekündigtes Dankeschön erhöht die Bereitschaft zu empfehlen. Es geht immer an den Empfehlenden, nie an die empfohlene Person und nie
+          für einen eigenen Vertrag. Ihr Kunde sieht es auf seiner Empfehlungsseite. Sie übergeben es selbst, die App erinnert Sie daran.
+        </p>
+        <div className="flex flex-wrap gap-4">
+          <label className="block">
+            <span className="font-medium">Art</span>
+            <select name="rewardKind" value={rewardKind} onChange={(e) => setRewardKind(e.target.value)} className="mt-1 h-10 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3">
+              <option value="none">Kein Dankeschön</option>
+              <option value="gutschein">Gutschein</option>
+              <option value="spende">Spende in seinem Namen</option>
+            </select>
+          </label>
+          {rewardKind !== "none" ? (
+            <>
+              <label className="block">
+                <span className="font-medium">Wert</span>
+                <span className="mt-1 flex items-center gap-2">
+                  <input
+                    name="rewardAmount"
+                    type="number"
+                    min={REWARD_LIMITS.min}
+                    max={REWARD_LIMITS.max}
+                    value={rewardAmount}
+                    onChange={(e) => setRewardAmount(e.target.value)}
+                    className="h-10 w-24 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 tabular-nums"
+                  />
+                  €
+                </span>
+              </label>
+              <label className="block min-w-[12rem] flex-1">
+                <span className="font-medium">{rewardKind === "spende" ? "Spende geht an" : "Art des Gutscheins (optional)"}</span>
+                <input
+                  name="rewardNote"
+                  defaultValue={initial.reward.note ?? ""}
+                  maxLength={REWARD_LIMITS.note}
+                  placeholder={rewardKind === "spende" ? "z. B. die Kinderkrebshilfe vor Ort" : "z. B. Wunschgutschein"}
+                  className="mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3"
+                />
+              </label>
+              <label className="block">
+                <span className="font-medium">Fällig, wenn</span>
+                <select name="rewardTrigger" defaultValue={initial.reward.trigger} className="mt-1 h-10 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3">
+                  <option value="termin">ein Gespräch stattgefunden hat</option>
+                  <option value="abschluss">ein Abschluss zustande kam ({REWARD_WAIT_DAYS} Tage danach)</option>
+                </select>
+              </label>
+            </>
+          ) : null}
+        </div>
+        {rewardKind !== "none" ? (
+          <>
+            {rewardWarn ? <p className="rounded-[var(--radius-sm)] bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">{rewardWarn}</p> : null}
+            <p className="text-xs text-[color:var(--muted)]">
+              Rechtlicher Rahmen: Zuwendungen an Versicherungsnehmer sind nach § 48b VAG nur bis {REWARD_SAFE_LIMIT} € je Vertrag und Jahr unkritisch. Eine Vergütung
+              für den reinen Tipp ist davon im Regelfall nicht erfasst, bei eigenen Kunden aber im Einzelfall zu prüfen. Wer sich selbst empfiehlt, bekommt kein
+              Dankeschön. Beachten Sie auch die Vorgaben Ihres Versicherers. Das ist keine Rechtsberatung.
+            </p>
+            <label className="flex items-start gap-2">
+              <input type="checkbox" name="rewardConfirmed" defaultChecked={initial.reward.confirmed} required className="mt-0.5 h-4 w-4" />
+              <span className="font-medium">Ich habe geprüft, dass dieses Dankeschön für mich zulässig ist.</span>
+            </label>
+          </>
+        ) : null}
+      </fieldset>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
         <div className="space-y-4">
@@ -496,5 +757,21 @@ export function ReplyEditor({ reviewId, suggestion, readOnly }: { reviewId: stri
         {pending ? "Veröffentlicht …" : "Antwort auf Google veröffentlichen"}
       </Button>
     </form>
+  );
+}
+
+
+/** Offenes Dankeschön: übergeben oder entfällt. */
+export function RewardButtons({ leadId, readOnly }: { leadId: string; readOnly: boolean }) {
+  const [pending, start] = useTransition();
+  return (
+    <span className="flex flex-wrap gap-2">
+      <Button type="button" icon={Gift} disabled={readOnly || pending} onClick={() => start(() => settleRewardAction(leadId, "erledigt"))} data-reward-done>
+        Übergeben
+      </Button>
+      <Button type="button" icon={X} disabled={readOnly || pending} onClick={() => start(() => settleRewardAction(leadId, "entfaellt"))}>
+        Entfällt
+      </Button>
+    </span>
   );
 }

@@ -215,6 +215,16 @@ async function persistInbound(
     },
   });
 
+  // Empfehlungen: Anfrage über den WhatsApp-Knopf der Empfehlungsseite (Code im Text) → Lead „Empfehlung“
+  if (!conversation.leadId && body && body.includes("(Ref ")) {
+    try {
+      const { handleReferralInbound } = await import("@/lib/empfehlung/requests");
+      await handleReferralInbound(conversation.id, from, body, contactName);
+    } catch (e) {
+      console.error("[whatsapp referral-inbound]", e);
+    }
+  }
+
   // Empfehlungen & Bewertungen: Antwort auf die Nachfrage nach dem Abschluss → KI wertet aus
   // (Kritik → Aufgabe „Kunde unzufrieden“), Assistent antwortet dann nicht.
   try {

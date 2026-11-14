@@ -10,8 +10,8 @@ import { audit } from "@/lib/audit";
 import { canAccessLead } from "@/lib/team";
 import { normalizePhone } from "@/lib/whatsapp/phone";
 import { bookEmpfehlung, cancelEmpfehlung, dismissHint } from "@/lib/empfehlung/module";
-import { markResolved, sendReferralLinkNow, sendTestMessage, setReviewOptOut } from "@/lib/empfehlung/requests";
-import { TEXT_LABELS, clampDelay, DEFAULT_DELAYS, normalizeGoogleUrl, validateText, type TextKey } from "@/lib/empfehlung/shared";
+import { canSendReferral, loadSettings, markResolved, settleReward, planReferralFollowUp, referralLinkFor, referralLinkOf, sendReferralLinkNow, sendTestMessage, setReviewOptOut } from "@/lib/empfehlung/requests";
+import { TEXT_LABELS, clampDelay, clampFollowUp, DEFAULT_DELAYS, isOccasion, normalizeGoogleUrl, validateOffer, validateReward, validateText, type TextKey } from "@/lib/empfehlung/shared";
 
 async function ownerCtx() {
   const ctx = await getBuyerContext();
@@ -62,15 +62,37 @@ export async function saveSettingsAction(_prev: SettingsState, fd: FormData): Pr
   const rawUrl = String(fd.get("googleReviewUrl") ?? "").trim();
   const googleReviewUrl = normalizeGoogleUrl(rawUrl);
   if (rawUrl && !googleReviewUrl) return { error: "Bitte einen vollständigen Link mit https:// eingeben." };
+  const rewardKind = String(fd.get("rewardKind") ?? "none");
+  const rewardNote = String(fd.get("rewardNote") ?? "").trim();
+  const rewardErr = validateReward(rewardKind, fd.get("rewardAmount"), rewardNote, fd.get("rewardConfirmed") === "on");
+  if (rewardErr) return { error: `Dankeschön für Empfehlende: ${rewardErr}` };
+  const rewardActive = rewardKind !== "none";
   const texts: Partial<Record<TextKey, string | null>> = {};
   for (const key of Object.keys(TEXT_LABELS) as TextKey[]) {
     const v = String(fd.get(`text_${key}`) ?? "").trim();
-    const err = validateText(key, v);
+    const err = validateText(key, v, { rewardActive });
     if (err) return { error: `${TEXT_LABELS[key].title}: ${err}` };
     texts[key] = v || null;
   }
+  const offerKind = String(fd.get("offerKind") ?? "none");
+  const offerHeadline = String(fd.get("offerHeadline") ?? "").trim();
+  const offerText = String(fd.get("offerText") ?? "").trim();
+  const offerErr = validateOffer(offerKind, offerHeadline, offerText);
+  if (offerErr) return { error: `Empfehlungsangebot: ${offerErr}` };
   const data = {
     active: fd.get("active") === "on",
+    offerKind,
+    offerHeadline: offerKind === "custom" ? offerHeadline : null,
+    offerText: offerKind === "custom" ? offerText : null,
+    referralOnPraise: fd.get("referralOnPraise") === "on",
+    statusUpdates: fd.get("statusUpdates") === "on",
+    followUpHours: clampFollowUp(fd.get("followUpHours")),
+    referralAfterAppointment: fd.get("referralAfterAppointment") === "on",
+    praiseReferralText: texts.praiseReferral ?? null,
+    rewardKind,
+    rewardAmount: rewardActive ? Math.round(Number(fd.get("rewardAmount"))) : null,
+    rewardNote: rewardActive ? rewardNote || null : null,
+    rewardTrigger: fd.get("rewardTrigger") === "abschluss" ? "abschluss" : "termin",
     googleReviewUrl,
     reviewDelayDays: clampDelay(fd.get("reviewDelayDays"), DEFAULT_DELAYS.review),
     referralDelayDays: clampDelay(fd.get("referralDelayDays"), DEFAULT_DELAYS.referral),
@@ -81,8 +103,11 @@ export async function saveSettingsAction(_prev: SettingsState, fd: FormData): Pr
     referralThanksText: texts.referralThanks ?? null,
   };
   if (data.referralDelayDays <= data.reviewDelayDays) return { error: "Die Bitte um Empfehlung sollte nach der Nachfrage kommen (mehr Tage)." };
-  await prisma.reviewSettings.upsert({ where: { customerId: ctx.customerId }, create: { customerId: ctx.customerId, ...data }, update: data });
-  await audit("empfehlung.settings", { entity: "ReviewSettings", entityId: ctx.customerId, customerId: ctx.customerId, details: { active: data.active, google: !!googleReviewUrl, review: data.reviewDelayDays, referral: data.referralDelayDays } });
+  // Bestätigung der rechtlichen Prüfung: Zeitpunkt des ersten Einschaltens merken, beim Ausschalten löschen
+  const before = await prisma.reviewSettings.findUnique({ where: { customerId: ctx.customerId }, select: { rewardConfirmedAt: true, rewardKind: true } });
+  const rewardConfirmedAt = rewardActive ? (before?.rewardKind !== "none" && before?.rewardConfirmedAt ? before.rewardConfirmedAt : new Date()) : null;
+  await prisma.reviewSettings.upsert({ where: { customerId: ctx.customerId }, create: { customerId: ctx.customerId, ...data, rewardConfirmedAt }, update: { ...data, rewardConfirmedAt } });
+  await audit("empfehlung.settings", { entity: "ReviewSettings", entityId: ctx.customerId, customerId: ctx.customerId, details: { active: data.active, google: !!googleReviewUrl, review: data.reviewDelayDays, referral: data.referralDelayDays, offer: data.offerKind, praise: data.referralOnPraise, updates: data.statusUpdates, followUp: data.followUpHours, reward: rewardActive ? `${rewardKind}:${data.rewardAmount}:${data.rewardTrigger}` : null } });
   refresh();
   return { ok: true };
 }
@@ -126,10 +151,46 @@ export async function sendReferralLinkAction(_prev: ShareState, fd: FormData): P
   const existingCustomerId = String(fd.get("existingCustomerId") ?? "") || undefined;
   if (leadId && !(await canAccessLead(ctx, leadId))) return { error: "Kein Zugriff." };
   if (!leadId && !existingCustomerId) return { error: "Kein Kontakt." };
-  const r = await sendReferralLinkNow(ctx.customerId, leadId ? { leadId } : { existingCustomerId }, { id: ctx.userId, email: ctx.email, role: "BUYER" });
-  if (r.ok) return { ok: true, message: "Empfehlungslink per WhatsApp verschickt." };
+  const occasionRaw = fd.get("occasion");
+  const occasion = isOccasion(occasionRaw) ? occasionRaw : null;
+  const r = await sendReferralLinkNow(ctx.customerId, leadId ? { leadId } : { existingCustomerId }, { id: ctx.userId, email: ctx.email, role: "BUYER" }, occasion);
+  if (r.ok) {
+    if (r.followUp) refresh();
+    return { ok: true, message: r.followUp ? "Empfehlungslink per WhatsApp verschickt. Aufgabe zum Nachfassen ist angelegt." : "Empfehlungslink per WhatsApp verschickt." };
+  }
   return { error: r.error, link: r.link, text: r.text };
 }
+
+export type QrState = { ok?: boolean; error?: string; url?: string; qr?: string; followUp?: boolean };
+
+/**
+ * „Im Termin zeigen“: QR-Code zum persönlichen Link des Kontakts. Der Kunde scannt ihn und teilt
+ * die Empfehlung gleich am Tisch. Zählt als ausgegebener Link und legt die Aufgabe zum Nachfassen an.
+ */
+export async function referralQrAction(target: { leadId?: string; existingCustomerId?: string }): Promise<QrState> {
+  const ctx = await getBuyerContext();
+  if (!ctx || ctx.preview) return { error: "In der Vorschau nicht möglich." };
+  const m = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { empfehlungEnabled: true } });
+  if (!m?.empfehlungEnabled) return { error: "Dafür braucht es das Modul „Empfehlungen & Bewertungen“." };
+  if (target.leadId) {
+    if (!(await canAccessLead(ctx, target.leadId))) return { error: "Kein Zugriff." };
+    if (!(await canSendReferral(ctx.customerId, target.leadId))) return { error: "Empfehlungslinks gibt es für Kontakte mit Abschluss und Bestandskunden." };
+  } else if (target.existingCustomerId) {
+    const e = await prisma.existingCustomer.findFirst({ where: { id: target.existingCustomerId, customerId: ctx.customerId }, select: { id: true } });
+    if (!e) return { error: "Kontakt nicht gefunden." };
+  } else return { error: "Kein Kontakt." };
+  const link = await referralLinkOf({ customerId: ctx.customerId, leadId: target.leadId, existingCustomerId: target.leadId ? undefined : target.existingCustomerId });
+  const url = referralLinkFor(link.token);
+  const QRCode = (await import("qrcode")).default;
+  const qr = await QRCode.toDataURL(url, { margin: 1, width: 480 });
+  await prisma.referralLink.update({ where: { id: link.id }, data: { lastSentAt: new Date(), lastOccasion: "termin" } });
+  const settings = await loadSettings(ctx.customerId);
+  const followUp = await planReferralFollowUp(ctx.customerId, target.leadId, settings.followUpHours).catch(() => false);
+  await audit("empfehlung.qr_shown", { entity: "ReferralLink", entityId: link.id, customerId: ctx.customerId, actor: { id: ctx.userId, email: ctx.email, role: "BUYER" } });
+  if (followUp) refresh();
+  return { ok: true, url, qr, followUp };
+}
+
 
 
 // ─── Bewertungs-Wächter ─────────────────────────────────────────────────────
@@ -167,4 +228,15 @@ export async function publishReplyAction(_prev: GbpState, fd: FormData): Promise
   const r = await publishReply(ctx.customerId, String(fd.get("reviewId") ?? ""), String(fd.get("reply") ?? ""));
   refresh();
   return r.ok ? { ok: true } : { error: r.error, noAccess: r.noAccess };
+}
+
+
+/** Dankeschön übergeben bzw. entfällt (z. B. Vertrag widerrufen). */
+export async function settleRewardAction(leadId: string, outcome: "erledigt" | "entfaellt"): Promise<void> {
+  const ctx = await ownerCtx();
+  if (!ctx) return;
+  if (await settleReward(ctx.customerId, leadId, outcome)) {
+    await audit("empfehlung.reward", { entity: "Lead", entityId: leadId, customerId: ctx.customerId, details: { outcome }, actor: { id: ctx.userId, email: ctx.email, role: "BUYER" } });
+  }
+  refresh();
 }
