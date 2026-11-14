@@ -65,6 +65,14 @@ export function verifyState(state: string, now = Date.now()): string | null {
   return a.length === b.length && crypto.timingSafeEqual(a, b) ? customerId : null;
 }
 
+/**
+ * Verbinden erst anbieten, wenn Google die Business-Profile-Schnittstelle freigegeben hat und business.manage
+ * in der OAuth-Prüfung steht (Ole, 14.11.2026: Bereiche der App müssen genau zur Google-Console passen).
+ */
+export function gbpConnectEnabled(): boolean {
+  return process.env.GOOGLE_BUSINESS_ENABLED === "1";
+}
+
 export function gbpAuthUrl(customerId: string): string {
   const { clientId, redirectUri } = oauthConfig();
   const p = new URLSearchParams({

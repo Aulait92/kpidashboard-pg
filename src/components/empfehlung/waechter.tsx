@@ -5,7 +5,7 @@ import Link from "next/link";
 import { AlertTriangle, ExternalLink, ShieldCheck } from "lucide-react";
 import { Card, CardHeader, buttonClass } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
-import { REPORT_HELP_URL, fallbackReply, listLocations, waechterStats } from "@/lib/empfehlung/google-business";
+import { REPORT_HELP_URL, fallbackReply, gbpConnectEnabled, listLocations, waechterStats } from "@/lib/empfehlung/google-business";
 import { advisorDisplayName } from "@/lib/whatsapp/template-plan";
 import { fmtDate } from "@/lib/empfehlung/shared";
 import { disconnectGbpAction } from "@/app/buyer/empfehlungen/actions";
@@ -49,7 +49,11 @@ export async function WaechterSection({ customerId, readOnly, flash }: { custome
           Die KI schlägt eine sachliche Antwort vor, die Sie bearbeiten und mit einem Klick veröffentlichen. Nichts geht automatisch raus.
         </p>
         {flash === "fehler" || flash === "abgelehnt" ? <p className="font-medium text-rose-700">Die Verbindung hat nicht geklappt. Bitte noch einmal versuchen und den Zugriff erlauben.</p> : null}
-        {readOnly ? null : (
+        {!gbpConnectEnabled() ? (
+          <p className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-4 py-3 text-[color:var(--muted)]" data-gbp-soon>
+            Demnächst: Die Verbindung zum Google-Unternehmensprofil schalten wir frei, sobald Google die Schnittstelle für uns freigegeben hat.
+          </p>
+        ) : readOnly ? null : (
           <a href="/api/google/business/connect" className={buttonClass("primary", "md")} data-gbp-connect>
             Google-Unternehmensprofil verbinden
           </a>

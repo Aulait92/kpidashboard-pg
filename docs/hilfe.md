@@ -500,6 +500,8 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Bewertungs-Wächter (Teil von Empfehlungen & Bewertungen)
 
+- **Stand 14.11.2026: noch nicht freigeschaltet.** Unter „Teilen & Google“ steht „Demnächst“. Wir schalten die
+  Verbindung frei, sobald Google die Schnittstelle für Unternehmensprofile für uns freigegeben hat.
 - Unter „Empfehlungen & Bewertungen“ → „Google-Unternehmensprofil verbinden“ (nur Inhaber): mit dem Google-Konto
   anmelden, das Ihr Profil verwaltet, Zugriff erlauben, Standort wählen.
 - Jede neue Google-Bewertung kommt als Push. Bei 1–3 Sternen dringend, mit der Aufgabe „Schlechte Google-Bewertung –
