@@ -51,59 +51,189 @@ export function referralStage(r: {
 }
 
 // ─── Prämie ────────────────────────────────────────────────────────────
-export type RewardKind = "month" | "fixed";
-export type BenefitKind = "none" | "setup_free" | "custom";
+/** month = 1 Monat Betreuung gratis, fixed = fester Betrag, bestand = Bestandskunden-Modul N Monate gratis. */
+export type RewardKind = "month" | "fixed" | "bestand";
+export const REWARD_KINDS: readonly RewardKind[] = ["bestand", "month", "fixed"];
+export const normalizeRewardKind = (k: unknown): RewardKind => (REWARD_KINDS.includes(k as RewardKind) ? (k as RewardKind) : "month");
+export type BenefitKind = "none" | "setup_free" | "setup_discount" | "custom";
+export const BENEFIT_KINDS: readonly BenefitKind[] = ["none", "setup_free", "setup_discount", "custom"];
+export const normalizeBenefitKind = (k: unknown): BenefitKind => (BENEFIT_KINDS.includes(k as BenefitKind) ? (k as BenefitKind) : "none");
+
+/** Standardbetrag „Rabatt auf die Einrichtung“ (netto, EUR), Ole 14.11.2026. */
+export const DEFAULT_SETUP_DISCOUNT = 300;
+/** Obergrenze im Formular (Schutz vor Tippfehlern). */
+export const MAX_SETUP_DISCOUNT = 10000;
+/** Standard: so viele Monate Bestandskunden-Modul gratis als Prämie (Ole, 14.11.2026). */
+export const DEFAULT_REWARD_MONTHS = 3;
+export const MAX_REWARD_MONTHS = 24;
 
 export type ReferralSettingsLike = {
   enabled: boolean;
   rewardKind: string;
   rewardFixed: number | null;
+  /** Monate Bestandskunden-Modul gratis bei rewardKind „bestand“ (Standard 3). */
+  rewardMonths?: number | null;
   benefitKind: string;
   benefitText: string | null;
+  /** Rabatt auf die Einrichtung (netto) bei benefitKind „setup_discount“. */
+  benefitAmount?: number | null;
+  /** Hinweise „Kollegen empfehlen“ im Kundenbereich zeigen (Standard aus: nicht aktiv bewerben). */
+  nudgesEnabled?: boolean;
 };
 
 export const DEFAULT_SETTINGS: ReferralSettingsLike = {
   enabled: true,
-  rewardKind: "month",
+  rewardKind: "bestand",
   rewardFixed: null,
+  rewardMonths: DEFAULT_REWARD_MONTHS,
   benefitKind: "none",
   benefitText: null,
+  benefitAmount: null,
+  nudgesEnabled: false,
 };
 
-/** Betrag der Prämie (netto, EUR) – null = nicht automatisch bestimmbar. */
-export function rewardAmount(settings: ReferralSettingsLike, referrerMonthly: number | null): number | null {
+/** Monate Modul gratis (nur rewardKind „bestand“). */
+export function rewardMonthsOf(settings: ReferralSettingsLike): number {
+  const n = Math.round(Number(settings.rewardMonths ?? DEFAULT_REWARD_MONTHS));
+  return Number.isFinite(n) && n >= 1 ? Math.min(n, MAX_REWARD_MONTHS) : DEFAULT_REWARD_MONTHS;
+}
+
+/**
+ * Betrag der Prämie (netto, EUR), null = nicht automatisch bestimmbar.
+ * month: Monatspreis des Empfehlers; fixed: fester Betrag; bestand: N × Monatspreis des Moduls.
+ */
+export function rewardAmount(settings: ReferralSettingsLike, referrerMonthly: number | null, bestandMonthly: number | null = null): number | null {
   if (settings.rewardKind === "fixed") return settings.rewardFixed != null && settings.rewardFixed > 0 ? round2(settings.rewardFixed) : null;
+  if (settings.rewardKind === "bestand") return bestandMonthly != null && bestandMonthly > 0 ? round2(rewardMonthsOf(settings) * bestandMonthly) : null;
   return referrerMonthly != null && referrerMonthly > 0 ? round2(referrerMonthly) : null;
 }
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: n % 1 ? 2 : 0 }).format(n);
+const months = (n: number) => (n === 1 ? "1 Monat" : `${n} Monate`);
 
 /** Prämie in klaren Worten (für Kundenbereich, Mails, KI-Hilfe). */
 export function rewardSentence(settings: ReferralSettingsLike, referrerMonthly: number | null): string {
   if (settings.rewardKind === "fixed" && settings.rewardFixed) {
     return `Wird ein empfohlener Kollege Kunde, schreiben wir Ihnen ${eur(settings.rewardFixed)} netto auf Ihre nächste Rechnung gut.`;
   }
+  if (settings.rewardKind === "bestand") {
+    const n = rewardMonthsOf(settings);
+    return `Wird ein empfohlener Kollege Kunde, bekommen Sie ${months(n)} das Bestandskunden-Modul gratis. Haben Sie das Modul schon, schreiben wir Ihnen ${n === 1 ? "einen Monatsbeitrag" : `${n} Monatsbeiträge`} auf Ihre nächste Rechnung gut. Jede weitere Empfehlung zählt zusätzlich.`;
+  }
   const amount = referrerMonthly != null && referrerMonthly > 0 ? ` (derzeit ${eur(referrerMonthly)} netto)` : "";
   return `Wird ein empfohlener Kollege Kunde, schenken wir Ihnen einen Monat Betreuung${amount} als Gutschrift auf Ihrer nächsten Rechnung.`;
 }
 
-/** Vorteil für den Neukunden (Landingpage, Angebot) – null = kein Vorteil. */
-export function benefitSentence(settings: ReferralSettingsLike): string | null {
-  if (settings.benefitKind === "setup_free") return "Als empfohlener Kollege richten wir Ihnen alles ohne Einrichtungsgebühr ein.";
+/** Rabatt auf die Einrichtung (netto) laut Einstellung, null = keiner. */
+export function setupDiscountAmount(settings: ReferralSettingsLike): number | null {
+  if (settings.benefitKind !== "setup_discount") return null;
+  const n = Number(settings.benefitAmount ?? DEFAULT_SETUP_DISCOUNT);
+  return Number.isFinite(n) && n > 0 ? round2(n) : null;
+}
+
+/**
+ * Vorteil für den Neukunden (Landingpage, Mails, Angebot) in Sie-Form, null = kein Vorteil.
+ * Mit Namen des Empfehlers: „Als Empfehlung von Max Muster sparen Sie 300 € bei der Einrichtung.“
+ */
+export function benefitSentence(settings: ReferralSettingsLike, referrerName?: string | null): string | null {
+  const von = referrerName?.trim() ? ` von ${referrerName.trim()}` : "";
+  if (settings.benefitKind === "setup_free") return `Als Empfehlung${von} richten wir Ihnen alles ohne Einrichtungsgebühr ein.`;
+  const discount = setupDiscountAmount(settings);
+  if (discount != null) return `Als Empfehlung${von} sparen Sie ${eur(discount)} bei der Einrichtung.`;
   if (settings.benefitKind === "custom" && settings.benefitText?.trim()) return settings.benefitText.trim();
   return null;
 }
 
+/** Prämie für den Empfehler, kurz: „3 Monate Bestandskunden-Modul gratis“, „1 Monat gratis“ bzw. „150 € Gutschrift“. */
+export function rewardShort(settings: ReferralSettingsLike): string {
+  if (settings.rewardKind === "fixed" && settings.rewardFixed != null && settings.rewardFixed > 0) return `${eur(round2(settings.rewardFixed))} Gutschrift`;
+  if (settings.rewardKind === "bestand") return `${months(rewardMonthsOf(settings))} Bestandskunden-Modul gratis`;
+  return "1 Monat gratis";
+}
+
+/** Prämie im Satz: „3 Monate das Bestandskunden-Modul gratis“, „einen Monat Betreuung gratis“, „150 € Gutschrift“. */
+function rewardPhrase(settings: ReferralSettingsLike): string {
+  if (settings.rewardKind === "fixed" && settings.rewardFixed != null && settings.rewardFixed > 0) return `${eur(round2(settings.rewardFixed))} Gutschrift`;
+  if (settings.rewardKind === "bestand") return `${months(rewardMonthsOf(settings))} das Bestandskunden-Modul gratis`;
+  return "einen Monat Betreuung gratis";
+}
+
+/** Vorteil für den Kollegen, kurz: „300 € weniger Einrichtung“, „Einrichtung gratis“, eigener Text oder null. */
+export function benefitShort(settings: ReferralSettingsLike): string | null {
+  if (settings.benefitKind === "setup_free") return "Einrichtung gratis";
+  const discount = setupDiscountAmount(settings);
+  if (discount != null) return `${eur(discount)} weniger Einrichtung`;
+  if (settings.benefitKind === "custom" && settings.benefitText?.trim()) return settings.benefitText.trim();
+  return null;
+}
+
+/**
+ * Beide Kurztexte für Kacheln/Infokarten (z. B. /buyer/empfehlen, Login-Infokarte):
+ * kollege = Vorteil des Empfohlenen (null = keiner), sie = Prämie des Empfehlers.
+ * Mit Oles Einstellung: { kollege: "300 € weniger Einrichtung", sie: "3 Monate Bestandskunden-Modul gratis" }.
+ */
+export function referralOfferLines(settings: ReferralSettingsLike): { kollege: string | null; sie: string } {
+  return { kollege: benefitShort(settings), sie: rewardShort(settings) };
+}
+
+/**
+ * Satz für Hinweise, Mails und KI-Hilfe (an den Empfehler), z. B.
+ * „Ihr Kollege spart 300 € bei der Einrichtung. Sie bekommen 3 Monate das Bestandskunden-Modul gratis.“
+ */
+export function referralIncentiveSentence(settings: ReferralSettingsLike): string {
+  const sie = `Sie bekommen ${rewardPhrase(settings)}.`;
+  const discount = setupDiscountAmount(settings);
+  if (discount != null) return `Ihr Kollege spart ${eur(discount)} bei der Einrichtung. ${sie}`;
+  if (settings.benefitKind === "setup_free") return `Ihr Kollege bekommt die Einrichtung gratis. ${sie}`;
+  return `Sie bekommen ${rewardPhrase(settings)}, sobald Ihr Kollege Kunde wird.`;
+}
+
+// ─── Empfehlungsrabatt im Angebot ──────────────────────────────────────
+/** Gilt nur innerhalb von 12 Monaten nach der Empfehlung (wie die Löschfrist). */
+export const SETUP_DISCOUNT_VALID_DAYS = 365;
+
+export type SetupDiscountCheck = {
+  /** Rabatt laut Einstellung (null = Option nicht aktiv). */
+  amount: number | null;
+  referral: { status: string; existingContact: boolean; createdAt: Date };
+  /** Vertriebskontakt ist schon Kunde (Kundenakte verknüpft). */
+  contactIsCustomer: boolean;
+  /** Empfehlung an sich selbst bzw. die eigene Agentur. */
+  selfReferral: boolean;
+  /** Vor der Empfehlung gab es schon ein Angebot an den Kontakt. */
+  offerBefore: boolean;
+  now: Date;
+};
+
+/** Bekommt ein empfohlener Kontakt den Einrichtungsrabatt automatisch? Mit Grund, wenn nicht. */
+export function setupDiscountDecision(c: SetupDiscountCheck): { ok: true; amount: number } | { ok: false; reason: string } {
+  if (c.amount == null) return { ok: false, reason: "Kein Einrichtungsrabatt eingestellt" };
+  if (c.referral.status !== "open") return { ok: false, reason: "Empfehlung nicht berücksichtigt" };
+  if (c.selfReferral) return { ok: false, reason: "Selbstempfehlung" };
+  if (c.contactIsCustomer) return { ok: false, reason: "Kontakt ist schon Kunde" };
+  if (c.referral.existingContact) return { ok: false, reason: "Kontakt war vor der Empfehlung schon im Vertrieb" };
+  if (c.offerBefore) return { ok: false, reason: "Kontakt hatte vor der Empfehlung schon ein Angebot" };
+  if (c.now.getTime() - c.referral.createdAt.getTime() > SETUP_DISCOUNT_VALID_DAYS * DAY_MS) return { ok: false, reason: "Empfehlung ist älter als 12 Monate" };
+  return { ok: true, amount: c.amount };
+}
+
+/** Zeile im Angebot: mit Namen nur, wenn der Empfohlene ihn auf der Landingpage gesehen und eingewilligt hat. */
+export function setupDiscountLabel(referrerName: string | null): string {
+  return referrerName?.trim() ? `Empfehlungsrabatt (empfohlen von ${referrerName.trim()})` : "Empfehlungsrabatt";
+}
+
 // ─── Teilen ────────────────────────────────────────────────────────────
 /** Vorbefüllter Text, ohne Du/Sie (Kollegen sprechen sich unterschiedlich an). */
-export function defaultShareText(referrerName: string, url: string): string {
+export function defaultShareText(referrerName: string, url: string, settings?: ReferralSettingsLike): string {
+  const discount = settings ? setupDiscountAmount(settings) : null;
+  const perk = discount != null ? ` Über diesen Link gibt es ${eur(discount)} Rabatt auf die Einrichtung.` : settings?.benefitKind === "setup_free" ? " Über diesen Link ist die Einrichtung gratis." : "";
   return [
     "Hallo,",
     "",
     "für die Gewinnung neuer Kunden arbeite ich mit performancegrowth zusammen: Werbung bei Meta, Leads direkt aufs Handy und eine App, mit der ich jeden Kontakt nachverfolge.",
     "",
-    "Falls das auch für deine/Ihre Agentur interessant ist: Hier kann man sich unverbindlich ein Erstgespräch holen.",
+    `Falls das auch für deine/Ihre Agentur interessant ist: Hier kann man sich unverbindlich ein Erstgespräch holen.${perk}`,
     url,
     "",
     "Viele Grüße",

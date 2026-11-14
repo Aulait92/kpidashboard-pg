@@ -174,6 +174,9 @@ model Customer {
   bestandCancelAt          DateTime?
   // Kampagnen-Nachrichten je Monat inklusive; null = Standard aus der Preisliste
   bestandMessageQuota      Int?
+  // Bestandskunden-Modul gratis bis (Empfehlungsprämie); Hinweis 2 Wochen vorher (bestandFreeReminded)
+  bestandFreeUntil         DateTime?
+  bestandFreeReminded      DateTime?
   // ─── Zusatzmodul „Empfehlungen & Bewertungen“ (seit 12.11.2026) ───
   // Freigeschaltet (Zugang); Abrechnung über empfehlungMonthly bzw. Testphase
   empfehlungEnabled        Boolean                   @default(false)
@@ -1149,6 +1152,16 @@ model Offer {
   // Jährlich im Voraus: Jahresbetrag = (12 − annualFreeMonths) × Monatspreis inkl. Zusätze
   annualPrepay            Boolean       @default(false)
   annualFreeMonths        Int?
+  // Empfehlungsrabatt auf die Einrichtung (Kollegen empfehlen, seit 14.11.2026):
+  // setupListFee = Listenpreis der Einrichtung vor Rabatt (für die gewählte Laufzeit),
+  // setupDiscount = vereinbarter Rabatt (netto, wird bei der Laufzeitwahl neu angewendet),
+  // setupFee bleibt der zu zahlende Betrag (Listenpreis minus Rabatt, nie unter 0).
+  setupListFee            Decimal?      @db.Decimal(10, 2)
+  setupDiscount           Decimal?      @db.Decimal(10, 2)
+  // Zeile im Angebot, z. B. „Empfehlungsrabatt (empfohlen von Max Muster)“
+  setupDiscountLabel      String?
+  // ColleagueReferral, aus der der Rabatt stammt
+  referralId              String?
   // Zahlung (Stripe)
   stripeCustomerId        String?
   stripeCheckoutSessionId String?
@@ -2425,11 +2438,18 @@ model ReferralSettings {
   id          String   @id @default("default")
   enabled     Boolean  @default(true)
   // month = 1 Monat Betreuung (aktueller Monatspreis des Empfehlers) | fixed = fester Betrag
+  // | bestand = Bestandskunden-Modul gratis für rewardMonths Monate (Standard seit 14.11.2026, im Code)
   rewardKind  String   @default("month")
   rewardFixed Decimal? @db.Decimal(10, 2)
-  // none | setup_free (Einrichtung gratis) | custom (eigener Text)
+  // Monate Bestandskunden-Modul gratis bei rewardKind bestand (Standard 3)
+  rewardMonths Int?
+  // Hinweise „Kollegen empfehlen“ im Kundenbereich (nach Abschlüssen/Feedback); Standard aus (Ole, 14.11.2026)
+  nudgesEnabled Boolean @default(false)
+  // none | setup_free (Einrichtung gratis) | setup_discount (Rabatt auf die Einrichtung, Betrag netto) | custom (eigener Text)
   benefitKind String   @default("none")
   benefitText String?
+  // Betrag des Einrichtungsrabatts (netto) bei benefitKind setup_discount (Standard 500)
+  benefitAmount Decimal? @db.Decimal(10, 2)
   updatedAt   DateTime @updatedAt
 }
 

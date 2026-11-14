@@ -7,7 +7,7 @@ import { ReferralShare } from "@/components/kollegen";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { ensureReferralCode, loadReferralSettings, referralsForCustomer, referralUrl, referrerByCode } from "@/lib/kollegen";
-import { STAGE_LABEL, benefitSentence, defaultShareText, rewardSentence, type ReferralStage } from "@/lib/kollegen-shared";
+import { STAGE_LABEL, benefitSentence, defaultShareText, referralIncentiveSentence, referralOfferLines, rewardSentence, type ReferralStage } from "@/lib/kollegen-shared";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Kollegen empfehlen | performancegrowth" };
@@ -44,17 +44,34 @@ export default async function KollegenEmpfehlenPage() {
   const qr = url ? await QRCode.toDataURL(url, { margin: 1, width: 360 }) : null;
   const rows = await referralsForCustomer(ctx.customerId);
   const benefit = benefitSentence(settings);
+  const lines = referralOfferLines(settings);
   const won = rows.filter((r) => r.stage === "kunde" || r.stage === "praemie").length;
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader title="Kollegen empfehlen" subtitle="Kennen Sie Vermittler, denen neue Kunden helfen würden?" />
       <div className="space-y-5">
+        {/* Ganz oben: was beide Seiten konkret bekommen (aus den Einstellungen) */}
+        <div className={`grid gap-3 ${lines.kollege ? "sm:grid-cols-2" : ""}`} data-kollegen-kacheln>
+          {lines.kollege ? (
+            <div className="rounded-[var(--radius-lg)] border border-emerald-200 bg-emerald-50 p-4" data-kollegen-kachel="kollege">
+              <div className="text-sm font-medium text-emerald-800">Ihr Kollege</div>
+              <div className="mt-1 text-xl font-semibold tracking-tight text-emerald-950">{lines.kollege}</div>
+            </div>
+          ) : null}
+          <div className="rounded-[var(--radius-lg)] border border-[color:var(--brand)]/30 bg-[color:var(--brand-soft,#EFF6FF)] p-4" data-kollegen-kachel="sie">
+            <div className="text-sm font-medium text-[color:var(--brand)]">Sie</div>
+            <div className="mt-1 text-xl font-semibold tracking-tight">{lines.sie}</div>
+            <div className="mt-0.5 text-xs text-[color:var(--muted)]">wird mit Ihrer Rechnung verrechnet, sobald Ihr Kollege Kunde ist</div>
+          </div>
+        </div>
+
         <Card>
           <CardHeader title="Ihr Dankeschön" icon={Gift} />
           <div className="space-y-2 p-5 text-[15px]" data-kollegen-praemie>
-            <p className="font-medium">{rewardSentence(settings, monthly)}</p>
-            {benefit ? <p className="text-[color:var(--muted)]">Ihr Kollege bekommt ebenfalls einen Vorteil: {benefit}</p> : null}
+            <p className="font-medium">{referralIncentiveSentence(settings)}</p>
+            <p className="text-[color:var(--muted)]">{rewardSentence(settings, monthly)}</p>
+            {benefit ? <p className="text-[color:var(--muted)]">Auf der Seite Ihres Kollegen steht: „{benefit}“</p> : null}
             <p className="text-sm text-[color:var(--muted)]">
               So geht&apos;s: Link teilen → Ihr Kollege fragt ein Erstgespräch an → wird er Kunde und ist seine erste Zahlung da, schreiben wir Ihnen die Prämie automatisch gut.
             </p>
@@ -66,7 +83,7 @@ export default async function KollegenEmpfehlenPage() {
           <CardHeader title="Link teilen" icon={Users} />
           <div className="p-5">
             {url ? (
-              <ReferralShare url={url} defaultText={defaultShareText(ref?.person ?? "", url)} readOnly={ctx.preview} />
+              <ReferralShare url={url} defaultText={defaultShareText(ref?.person ?? "", url, settings)} readOnly={ctx.preview} />
             ) : (
               <p className="text-sm text-[color:var(--muted)]">In der Vorschau wird kein Empfehlungslink angelegt.</p>
             )}

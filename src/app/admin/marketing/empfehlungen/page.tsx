@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Settings } from "lucide-react";
 import { Badge } from "@/components/ui";
-import { adminReferralOverview } from "@/lib/kollegen";
+import { adminReferralOverview, backfillReferralDiscounts } from "@/lib/kollegen";
 import { REWARD_STATUS_LABEL, STAGE_LABEL, type ReferralStage } from "@/lib/kollegen-shared";
 import { requireAuth } from "@/lib/vertrieb/auth";
-import { markRewardDoneAction } from "./actions";
+import { applyReferralDiscountsAction, markRewardDoneAction } from "./actions";
 
 export const metadata = { title: "Empfehlungen | Vertrieb" };
 export const dynamic = "force-dynamic";
@@ -17,6 +17,9 @@ const TONE: Record<ReferralStage, "neutral" | "brand" | "success" | "info"> = { 
 export default async function EmpfehlungenPage() {
   await requireAuth();
   const { list, top, totals } = await adminReferralOverview();
+  // Trockenlauf: offene Angebote an Empfohlene ohne Empfehlungsrabatt (Knopf übernimmt)
+  const backfill = await backfillReferralDiscounts({ apply: false });
+  const toApply = backfill.filter((r) => r.skip == null);
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -29,12 +32,13 @@ export default async function EmpfehlungenPage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {[
           { l: "Empfehlungen", v: String(totals.referrals) },
           { l: "Kunden geworden", v: String(totals.won) },
           { l: "Neuer Monatsumsatz", v: eur(totals.newMrr) },
           { l: "Prämien gutgeschrieben", v: eur(totals.rewards) },
+          { l: "Setup-Rabatte (Minderung)", v: eur(totals.setupDiscounts) },
         ].map((k) => (
           <div key={k.l} className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4">
             <div className="text-sm text-[color:var(--muted)]">{k.l}</div>
@@ -46,6 +50,45 @@ export default async function EmpfehlungenPage() {
         <p className="rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           {totals.openManual} Prämie{totals.openManual === 1 ? "" : "n"} von Hand gutschreiben (siehe unten, danach „Gutgeschrieben“ klicken).
         </p>
+      ) : null}
+
+      {backfill.length ? (
+        <section className="card overflow-x-auto" data-admin-rabatt-nachziehen>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[color:var(--border)] px-4 py-3">
+            <h2 className="font-medium">Offene Angebote an Empfohlene ohne Empfehlungsrabatt</h2>
+            {toApply.length ? (
+              <form action={applyReferralDiscountsAction}>
+                <button className="btn-primary h-9 text-sm">Rabatt in {toApply.length} Angebot{toApply.length === 1 ? "" : "e"} übernehmen</button>
+              </form>
+            ) : null}
+          </div>
+          <table className="w-full text-sm">
+            <thead className="text-left text-xs text-[color:var(--muted)]">
+              <tr>
+                <th className="px-4 py-2">Angebot</th>
+                <th className="px-4 py-2">Kontakt</th>
+                <th className="px-4 py-2 text-right">Setup bisher</th>
+                <th className="px-4 py-2 text-right">Setup neu</th>
+                <th className="px-4 py-2">Hinweis</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[color:var(--border)]">
+              {backfill.map((r) => (
+                <tr key={r.offerId}>
+                  <td className="px-4 py-2 tabular-nums">{r.number}</td>
+                  <td className="px-4 py-2">
+                    <Link href={`/admin/vertrieb/kontakte/${r.contactId}`} className="hover:underline">
+                      {r.company}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-2 text-right tabular-nums">{eur(r.oldSetup)}</td>
+                  <td className="px-4 py-2 text-right tabular-nums">{r.newSetup != null ? eur(r.newSetup) : "unverändert"}</td>
+                  <td className="px-4 py-2 text-[color:var(--muted)]">{r.skip ?? `${r.label}: ${eur(r.discount ?? 0)}`}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
       ) : null}
 
       <section className="card overflow-x-auto">

@@ -6,6 +6,7 @@ import {
   eur,
   normalizeTerm,
   offerAddOns,
+  offerSetupDiscount,
   PRICE_LIST,
   setupForChoice,
   vatOf,
@@ -60,9 +61,15 @@ export type OfferDoc = {
   /** Kunde wählt Laufzeit bzw. Startdatum bei der Annahme (vorher = Vorschlag). */
   customerChoosesTerm?: boolean;
   customerChoosesStart?: boolean;
+  /** Empfehlungsrabatt: Listenpreis der Einrichtung, vereinbarter Rabatt, Zeile im Angebot. */
+  setupListFee?: number | null;
+  setupDiscount?: number | null;
+  setupDiscountLabel?: string | null;
 };
 
-type OfferRow = Omit<OfferDoc, "setupFee" | "monthlyFee" | "softwareFee" | "introMonthlyFee" | "seatMonthly" | "bestandMonthly" | "empfehlungMonthly" | "seats" | "seatsIncluded" | "annualPrepay" | "annualFreeMonths" | "vermittlerTyp"> & {
+type OfferRow = Omit<OfferDoc, "setupFee" | "monthlyFee" | "softwareFee" | "introMonthlyFee" | "seatMonthly" | "bestandMonthly" | "empfehlungMonthly" | "seats" | "seatsIncluded" | "annualPrepay" | "annualFreeMonths" | "vermittlerTyp" | "setupListFee" | "setupDiscount"> & {
+  setupListFee?: unknown;
+  setupDiscount?: unknown;
   vermittlerTyp?: string | null;
   setupFee: unknown;
   monthlyFee: unknown;
@@ -93,6 +100,9 @@ export function toOfferDoc(o: OfferRow): OfferDoc {
     empfehlungMonthly: o.empfehlungMonthly == null ? null : Number(o.empfehlungMonthly),
     annualPrepay: !!o.annualPrepay,
     annualFreeMonths: o.annualFreeMonths ?? null,
+    setupListFee: o.setupListFee == null ? null : Number(o.setupListFee),
+    setupDiscount: o.setupDiscount == null ? null : Number(o.setupDiscount),
+    setupDiscountLabel: o.setupDiscountLabel ?? null,
   };
 }
 
@@ -193,7 +203,11 @@ export function OfferDocument({
   const serviceOnly = offer.package === "service";
   const list = computeOfferPrice({ package: serviceOnly ? "service" : "software", term, products });
   const extra = Math.max(0, products.length - 1);
-  const setupIsList = Math.abs(list.setupFee - offer.setupFee) < 0.01;
+  // Empfehlungsrabatt: Listenpreis durchgestrichen, eigene Zeile „Empfehlungsrabatt (empfohlen von …)“
+  const disc = offerSetupDiscount(offer);
+  const discLabel = offer.setupDiscountLabel || "Empfehlungsrabatt";
+  const setupIsList = disc != null || Math.abs(list.setupFee - offer.setupFee) < 0.01;
+  const choiceDiscount = offer.setupDiscount ?? null;
   const monthlyIsList = list.monthlyFee != null && Math.abs(list.monthlyFee - offer.monthlyFee) < 0.01;
   const add = offerAddOns(offer);
   // Vor der Annahme: Laufzeit/Start wählt der Kunde unten selbst (Werte hier = Vorschlag).
@@ -248,7 +262,11 @@ export function OfferDocument({
           </div>
 
           <div className="mt-12 grid grid-cols-1 gap-6 border-y border-white/15 py-6 sm:grid-cols-3 print:grid-cols-3">
-            <Stat k="Setup" v={eur(offer.setupFee)} sub="einmalig, netto zzgl. 19 % USt." />
+            <Stat
+              k="Setup"
+              v={eur(offer.setupFee)}
+              sub={disc ? `einmalig, netto zzgl. 19 % USt. · statt ${eur(disc.list)} (${discLabel})` : "einmalig, netto zzgl. 19 % USt."}
+            />
             {add.annualTotal != null ? (
               <Stat
                 k="Jährlich im Voraus"
@@ -368,6 +386,13 @@ export function OfferDocument({
         <H2 className="mt-12">2. Preise und Zahlungsbedingungen</H2>
         <Table>
           <Tr k="Setup (einmalig)">
+            {disc ? (
+              <>
+                <s className="mr-2 text-[#6B7280]" data-offer-setup-list>
+                  {eur2(disc.list)}
+                </s>{" "}
+              </>
+            ) : null}
             <b className="text-[#111827]">{eur2(offer.setupFee)}</b> netto zzgl. 19 % USt.
             <Note>
               {setupIsList
@@ -375,6 +400,15 @@ export function OfferDocument({
                 : "Sonderkondition"}
             </Note>
           </Tr>
+          {disc ? (
+            <Tr k={discLabel}>
+              <b className="text-[#047857]" data-offer-setup-discount>
+                − {eur2(disc.discount)}
+              </b>{" "}
+              netto auf die Einrichtung
+              <Note>Listenpreis {eur2(disc.list)}, Sie zahlen {eur2(offer.setupFee)} netto.</Note>
+            </Tr>
+          ) : null}
           {hasIntro ? (
             <Tr k={`Startpreis Monat 1–${offer.introMonths}`}>
               <b className="text-[#111827]">{eur2(offer.introMonthlyFee!)}</b> netto pro Monat zzgl. 19 % USt.
@@ -451,8 +485,9 @@ export function OfferDocument({
                   : "Keine Mindestlaufzeit, kündbar zum Ende des jeweiligen Abrechnungsmonats."}
             {termOpen ? (
               <Note>
-                Laufzeit wählen Sie unten bei der Annahme: 12 Monate (Setup {eur(setupForChoice("12m", products.length || 1))}), 3 Monate (
-                {eur(setupForChoice("3m", products.length || 1))}) oder ohne Laufzeit ({eur(setupForChoice("none", products.length || 1))}), jeweils netto.
+                Laufzeit wählen Sie unten bei der Annahme: 12 Monate (Setup {eur(setupForChoice("12m", products.length || 1, choiceDiscount))}), 3 Monate (
+                {eur(setupForChoice("3m", products.length || 1, choiceDiscount))}) oder ohne Laufzeit ({eur(setupForChoice("none", products.length || 1, choiceDiscount))}),
+                jeweils netto{choiceDiscount ? `, ${discLabel} schon abgezogen` : ""}.
               </Note>
             ) : null}
           </Tr>

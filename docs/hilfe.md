@@ -380,23 +380,27 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Kollegen empfehlen (nur Inhaber)
 
-- Wo: Profilmenü → „Kollegen empfehlen“ oder Konto & Rechnungen → Karte „Kollegen empfehlen“. Nach schönen
-  Momenten (5. bzw. 10. Abschluss, gute Bewertung im Feedback nach 30/90 Tagen) erscheint in
-  „Heute“ einmalig ein Hinweis; jeder Hinweis kommt höchstens einmal, mit mindestens 30 Tagen Abstand, und lässt
-  sich wegklicken.
+- Wo: Profilmenü → „Kollegen empfehlen“ oder Konto & Rechnungen → Karte „Kollegen empfehlen“. Ganz oben stehen
+  zwei Kacheln: was Ihr Kollege bekommt und was Sie bekommen. Die genauen Beträge kommen immer aus unseren aktuellen
+  Konditionen (die KI-Hilfe bekommt sie mitgeliefert).
 - Ihr persönlicher Link (`/empfehlen/…`) bleibt immer gleich. Teilen per „Teilen“ (Handy), WhatsApp oder E-Mail mit
   vorbefülltem Text, den Sie anpassen können; dazu ein QR-Code zum Herunterladen.
 - Ihr Kollege sieht eine Seite „<Ihr Name> von <Agentur> empfiehlt Ihnen performancegrowth“ und fragt dort selbst ein
   unverbindliches Erstgespräch an (Name, Agentur, E-Mail, Telefon, Einwilligung). Sie tragen keine Daten Ihrer
-  Kollegen ein. Ole Kannapinn meldet sich dann persönlich.
-- Prämie: Standard ist **ein Monat Betreuung gratis** (Gutschrift in Höhe Ihres aktuellen Monatspreises, netto)
-  oder ein fester Betrag, wie auf der Seite angegeben. Sie gilt, sobald der Kollege sein Angebot angenommen und
-  die erste Zahlung geleistet hat, und wird mit Ihrer nächsten Rechnung verrechnet. Sie bekommen dazu eine
-  Push-Nachricht und eine E-Mail. Eine Empfehlung an sich selbst oder die eigene Agentur zählt nicht; ist der
-  Kollege schon Kunde, gibt es keine Prämie.
+  Kollegen ein. Ihr Kollege bekommt eine Bestätigung per E-Mail, Ole Kannapinn meldet sich dann persönlich.
+- Vorteil für Ihren Kollegen: derzeit **300 € Rabatt auf die Einrichtung** (netto), bei jeder Laufzeit
+  (2.490 € → 2.190 €, 1.990 € → 1.690 €, 990 € → 690 €). Der Rabatt steht als eigene Zeile „Empfehlungsrabatt“
+  im Angebot und auf der Rechnung. Er gilt für neue Kontakte innerhalb von 12 Monaten nach der Empfehlung, nicht
+  für Selbstempfehlungen, bestehende Kunden oder Kontakte, die schon vorher ein Angebot von uns hatten.
+- Ihr Dankeschön: derzeit **3 Monate das Bestandskunden-Modul gratis**. Haben Sie das Modul noch nicht, schalten
+  wir es frei; die 3 Monatsbeiträge schreiben wir Ihnen gut (verrechnet mit Ihren nächsten Rechnungen). 2 Wochen
+  vor Ende der Gratiszeit bekommen Sie einen Hinweis; danach läuft das Modul zum normalen Preis weiter, abbestellen
+  können Sie es jederzeit unter Konto & Rechnungen. Haben Sie das Modul schon, schreiben wir Ihnen 3 Monatsbeiträge
+  gut. Jede weitere Empfehlung zählt zusätzlich (je 3 Monate).
+- Das Dankeschön gilt, sobald der Kollege sein Angebot angenommen und die erste Zahlung geleistet hat. Sie bekommen
+  dazu eine Push-Nachricht und eine E-Mail. Eine Empfehlung an sich selbst oder die eigene Agentur zählt nicht; ist
+  der Kollege schon Kunde, gibt es keine Prämie.
 - Stand Ihrer Empfehlungen: Eingegangen → Termin → Kunde geworden → Prämie gutgeschrieben.
-- Eventuell bekommt auch Ihr Kollege einen Vorteil (z. B. Einrichtung gratis), wenn das gerade angeboten wird – das
-  steht dann auf der Seite.
 - Die Prämie ist eine Gutschrift zwischen uns und Ihnen als Geschäftskunde, keine Provision an
   Versicherungsnehmer (Provisionsabgabeverbot nicht berührt).
 

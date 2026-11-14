@@ -10,8 +10,8 @@ export type OfferChoiceProps = {
   choosesTerm: boolean;
   choosesStart: boolean;
   initialTerm: OfferTerm;
-  /** Setup je Laufzeit (netto). */
-  options: { term: OfferTerm; label: string; setup: number }[];
+  /** Setup je Laufzeit (netto); list = Listenpreis vor Empfehlungsrabatt (nur wenn abweichend). */
+  options: { term: OfferTerm; label: string; setup: number; list?: number | null }[];
   /** Monatlich gesamt inkl. Zusätze (netto). */
   monthlyTotal: number;
   /** Jahreszahlung im Angebot vereinbart (gilt nur mit 12 Monaten). */
@@ -162,7 +162,10 @@ function ChoiceFields({
                 />
                 <span className="min-w-0">
                   <span className="block font-semibold">{o.label}</span>
-                  <span className="block text-xs text-[color:var(--muted)]">Setup {eur(o.setup)} netto</span>
+                  <span className="block text-xs text-[color:var(--muted)]">
+                    Setup {o.list != null && o.list > o.setup ? <s className="mr-1">{eur(o.list)}</s> : null}
+                    {eur(o.setup)} netto
+                  </span>
                 </span>
               </label>
             ))}
@@ -194,6 +197,7 @@ function ChoiceFields({
       <div className="grid gap-2 border-t border-[#e5e7eb] pt-3 text-sm sm:grid-cols-2" aria-live="polite">
         <div>
           <span className="text-[color:var(--muted)]">Jetzt fällig (Setup): </span>
+          {opt.list != null && opt.list > opt.setup ? <s className="mr-1 text-[color:var(--muted)]">{eur(opt.list)}</s> : null}
           <b data-testid="choice-setup">{eur(opt.setup)} netto</b>
           <span className="text-[color:var(--muted)]"> · {eur(withVat(opt.setup))} brutto</span>
         </div>

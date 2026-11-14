@@ -35,7 +35,7 @@ describe("Kundenwahl: Preise je Laufzeit", () => {
 
   it("Wahl 3 Monate → Setup 1.990 €, Start übernommen", () => {
     const r = resolveOfferChoice(snap(), { term: "3m", startDate: "2026-12-15" }, TODAY);
-    expect(r).toEqual({ ok: true, term: "3m", setupFee: 1990, startIso: "2026-12-15", annualPrepay: false, annualFreeMonths: null });
+    expect(r).toEqual({ ok: true, term: "3m", setupFee: 1990, setupListFee: null, startIso: "2026-12-15", annualPrepay: false, annualFreeMonths: null });
   });
 
   it("Ohne Wahl bleibt der Vorschlag (Setup neu aus der Liste)", () => {

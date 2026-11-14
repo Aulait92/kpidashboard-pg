@@ -26,8 +26,9 @@ import type { ImpressumInfo } from "@/lib/impressum";
 import { BackToList } from "@/components/admin/list-memory";
 import { isAdminNewUi } from "@/lib/admin-ui";
 import { VERTRIEB_LISTS } from "@/lib/admin-lists";
-import { loadReferralSettings, referralForContact } from "@/lib/kollegen";
+import { loadReferralSettings, referralForContact, referralSetupDiscount } from "@/lib/kollegen";
 import { benefitSentence } from "@/lib/kollegen-shared";
+import { eur as eurOffer } from "@/lib/offer-pricing";
 import { CloseDetailsForm } from "@/components/ui/close-details-on-submit";
 import { audienceForContact, listPresentations } from "@/lib/vertrieb/praesentationen";
 import { FollowupBadge, FollowupCard } from "@/components/vertrieb/followup-card";
@@ -75,6 +76,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
   // „Kollegen empfehlen“: von einem Kunden empfohlen → Hinweis mit Neukunden-Vorteil
   const referral = await referralForContact(c.id);
   const referralBenefit = referral ? benefitSentence(await loadReferralSettings()) : null;
+  const referralDiscount = referral ? await referralSetupDiscount(c.id) : null;
   // Präsentationen (PDF) für die Angebotsmail
   const pdfs = new Set((await listPresentations()).filter((p) => p.format === "pdf").map((p) => p.audience));
   let appUrl = "";
@@ -148,6 +150,17 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
       <DuplicateHint contactId={c.id} contactName={shortName(c.name)} duplicates={duplicates} />
       {referral ? (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" data-kontakt-empfehlung>
+          <span
+            className="mb-1.5 mr-2 inline-flex items-center rounded-full bg-emerald-600 px-2.5 py-0.5 text-xs font-semibold text-white"
+            data-kontakt-empfehlung-badge
+          >
+            Empfehlung von {referral.referrer.name}
+            {referralDiscount?.eligible ? `, ${eurOffer(referralDiscount.amount)} Setup-Rabatt` : ""}
+          </span>
+          {referralDiscount && !referralDiscount.eligible && referralDiscount.settingAmount != null ? (
+            <span className="mb-1.5 inline-block text-xs text-amber-800">Kein automatischer Setup-Rabatt: {referralDiscount.reason}.</span>
+          ) : null}
+          <br />
           <span className="font-medium">Empfohlen von </span>
           <Link href={`/admin/kunden/${referral.referrer.id}`} className="font-medium underline">
             {referral.referrer.name}

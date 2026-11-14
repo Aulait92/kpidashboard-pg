@@ -78,6 +78,11 @@ export type OfferInput = {
   bestandModule?: boolean;
   /** Modul „Empfehlungen & Bewertungen“ dazubuchen (nur Betreuung + Software). */
   empfehlungModule?: boolean;
+  /**
+   * Empfehlungsrabatt auf die Einrichtung (netto). Gilt für jede Laufzeit, nie unter 0.
+   * Nicht mit „Setup abweichend“ addieren: es gilt der günstigere Betrag.
+   */
+  setupDiscount?: number | null;
 };
 
 export type OfferPrice = {
@@ -89,6 +94,8 @@ export type OfferPrice = {
   listSetup: number;
   listMonthly: number | null;
   setupFee: number;
+  /** Tatsächlich abgezogener Empfehlungsrabatt (0 = keiner bzw. Sonderkondition günstiger). */
+  setupDiscount: number;
   monthlyFee: number | null;
   softwareFee: number;
   /** Logins gesamt, davon inklusive, weitere (berechnet). */
@@ -145,7 +152,8 @@ export function computeOfferPrice(input: OfferInput): OfferPrice {
   const empfehlungFee = empfehlungActive ? PRICE_LIST.empfehlungModuleMonthly : 0;
   const listBase = seatsIndividual ? null : listMonthly;
 
-  const setupFee = input.setupOverride != null && input.setupOverride >= 0 ? input.setupOverride : listSetup;
+  const setup = applySetupDiscount(listSetup, input.setupOverride, input.setupDiscount);
+  const setupFee = setup.fee;
   const monthlyFee =
     input.monthlyOverride != null && input.monthlyOverride >= 0 ? input.monthlyOverride : listBase;
   const monthlyTotal = monthlyFee == null ? null : round2(monthlyFee + seatsFee + bestandFee + empfehlungFee);
@@ -165,6 +173,7 @@ export function computeOfferPrice(input: OfferInput): OfferPrice {
     listSetup,
     listMonthly: listBase,
     setupFee: round2(setupFee),
+    setupDiscount: setup.discount,
     monthlyFee: monthlyFee == null ? null : round2(monthlyFee),
     softwareFee: serviceOnly ? 0 : PRICE_LIST.softwareFee,
     seats,
@@ -181,6 +190,31 @@ export function computeOfferPrice(input: OfferInput): OfferPrice {
     annualTotal,
     annualSavings: annualTotal != null && monthlyTotal != null ? round2(monthlyTotal * 12 - annualTotal) : 0,
   };
+}
+
+/**
+ * Einrichtung nach Sonderkondition und Empfehlungsrabatt: Rabatt = Listenpreis minus Betrag,
+ * nie unter 0. Ist „Setup abweichend“ günstiger, gilt dieser (kein Rabatt obendrauf).
+ */
+export function applySetupDiscount(
+  listSetup: number,
+  override: number | null | undefined,
+  discount: number | null | undefined,
+): { fee: number; discount: number } {
+  const manual = override != null && Number.isFinite(override) && override >= 0 ? round2(override) : null;
+  const want = discount != null && Number.isFinite(discount) && discount > 0 ? round2(discount) : 0;
+  if (want <= 0) return { fee: manual ?? listSetup, discount: 0 };
+  const discounted = round2(Math.max(0, listSetup - want));
+  if (manual != null && manual <= discounted) return { fee: manual, discount: 0 };
+  return { fee: discounted, discount: round2(listSetup - discounted) };
+}
+
+/** Rabattzeile eines gespeicherten Angebots (Listenpreis und abgezogener Betrag) oder null. */
+export function offerSetupDiscount(o: { setupFee: unknown; setupListFee?: unknown; setupDiscount?: unknown }): { list: number; discount: number } | null {
+  if (o.setupListFee == null || o.setupDiscount == null) return null;
+  const list = Number(o.setupListFee);
+  const discount = round2(list - Number(o.setupFee));
+  return discount > 0.005 ? { list, discount } : null;
 }
 
 /** Gespeicherte Zusätze eines Angebots (Snapshot) → Beträge für Anzeige und Abrechnung. */
@@ -318,9 +352,10 @@ export function startDateBounds(todayIso: string, presetIso: string | null): { m
   return { min, max, preset };
 }
 
-/** Listen-Setup je Laufzeit inkl. weiterer Produkte. */
-export function setupForChoice(term: OfferTerm, productCount: number): number {
-  return setupForTerm(term) + Math.max(0, productCount - 1) * PRICE_LIST.extraProductSetup;
+/** Listen-Setup je Laufzeit inkl. weiterer Produkte, optional nach Empfehlungsrabatt (nie unter 0). */
+export function setupForChoice(term: OfferTerm, productCount: number, discount: number | null = null): number {
+  const list = setupForTerm(term) + Math.max(0, productCount - 1) * PRICE_LIST.extraProductSetup;
+  return applySetupDiscount(list, null, discount).fee;
 }
 
 export const TERM_OPTIONS: readonly OfferTerm[] = ["12m", "3m", "none"];
@@ -336,10 +371,22 @@ export type OfferChoiceSnapshot = {
   annualFreeMonths: number | null;
   choosesTerm: boolean;
   choosesStart: boolean;
+  /** Vereinbarter Empfehlungsrabatt (netto) und Listenpreis vor Rabatt; fehlt = keiner. */
+  setupDiscount?: number | null;
+  setupListFee?: number | null;
 };
 
 export type OfferChoiceResult =
-  | { ok: true; term: OfferTerm; setupFee: number; startIso: string | null; annualPrepay: boolean; annualFreeMonths: number | null }
+  | {
+      ok: true;
+      term: OfferTerm;
+      setupFee: number;
+      /** Listenpreis vor Empfehlungsrabatt (null = kein Rabatt vereinbart). */
+      setupListFee: number | null;
+      startIso: string | null;
+      annualPrepay: boolean;
+      annualFreeMonths: number | null;
+    }
   | { ok: false; error: string };
 
 /**
@@ -354,13 +401,17 @@ export function resolveOfferChoice(
   const fixedTerm = normalizeTerm(snap.term);
   let term: OfferTerm = fixedTerm;
   let setupFee = snap.setupFee;
+  const hasDiscount = snap.setupDiscount != null && snap.setupDiscount > 0;
+  let setupListFee = hasDiscount ? (snap.setupListFee ?? null) : null;
   const wantedTerm = input.term?.trim() || null;
   if (snap.choosesTerm) {
     if (wantedTerm != null) {
       if (!(TERM_OPTIONS as readonly string[]).includes(wantedTerm)) return { ok: false, error: "Bitte eine gültige Laufzeit wählen." };
       term = wantedTerm as OfferTerm;
     }
-    setupFee = setupForChoice(term, snap.productCount);
+    // Empfehlungsrabatt gilt für jede Laufzeit
+    setupFee = setupForChoice(term, snap.productCount, hasDiscount ? snap.setupDiscount : null);
+    if (hasDiscount) setupListFee = setupForChoice(term, snap.productCount);
   } else if (wantedTerm != null && wantedTerm !== fixedTerm) {
     return { ok: false, error: "Die Laufzeit ist in diesem Angebot fest vereinbart." };
   }
@@ -387,6 +438,7 @@ export function resolveOfferChoice(
     ok: true,
     term,
     setupFee: Math.round(setupFee * 100) / 100,
+    setupListFee,
     startIso,
     annualPrepay,
     annualFreeMonths: annualPrepay ? (snap.annualFreeMonths ?? PRICE_LIST.annualFreeMonths) : null,

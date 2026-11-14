@@ -107,6 +107,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "kampagne.automatik": "Kampagnen-Automatik-Einstellungen geändert",
   "referral.reward": "Empfehlungsprämie gutgeschrieben",
   "referral.settings": "Empfehlungsprogramm-Einstellungen geändert",
+  "offer.referral_discount": "Empfehlungsrabatt in offenes Angebot übernommen",
   "billing.empfehlung": "Modul Empfehlungen & Bewertungen geändert",
   "empfehlung.book": "Modul Empfehlungen & Bewertungen gebucht (Kunde)",
   "empfehlung.cancel": "Modul Empfehlungen & Bewertungen gekündigt (Kunde)",

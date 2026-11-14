@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentSession } from "@/lib/auth";
 import { getAppUrl, sendOfferEmail } from "@/lib/email";
 import { createOffer, type OfferFormInput } from "@/lib/offers";
+import { offerSetupDiscount } from "@/lib/offer-pricing";
 import { prisma } from "@/lib/prisma";
 import { customerGreeting, logOfferActivity, offerAdminHref, type OfferTarget } from "@/lib/offer-links";
 import { AUDIENCE_LABEL, getPresentation, isAudience, rechnerUrl, type Audience } from "@/lib/vertrieb/praesentationen";
@@ -32,7 +33,7 @@ export async function createOfferAction(
     await logOfferActivity(
       offer,
       `Angebot ${offer.number} erstellt`,
-      `${Number(offer.setupFee).toLocaleString("de-DE")} € Setup · ${Number(offer.monthlyFee).toLocaleString("de-DE")} € / Monat (netto)`,
+      `${Number(offer.setupFee).toLocaleString("de-DE")} € Setup${offer.setupDiscount != null ? ` (nach ${offer.setupDiscountLabel ?? "Empfehlungsrabatt"})` : ""} · ${Number(offer.monthlyFee).toLocaleString("de-DE")} € / Monat (netto)`,
       session.userId,
     );
     revalidatePath(offerAdminHref(offer));
@@ -93,7 +94,11 @@ export async function sendOfferEmailAction(
     attachment = { filename: file.fileName.toLowerCase().endsWith(".pdf") ? file.fileName : `${file.fileName}.pdf`, content: Buffer.from(file.data) };
   }
   const rechner = extras.rechner ? rechnerUrl(getAppUrl(), audience, offer.products) : null;
+  const disc = offerSetupDiscount(offer);
   const res = await sendOfferEmail({
+    discount: disc
+      ? { label: offer.setupDiscountLabel || "Empfehlungsrabatt", discount: disc.discount, list: disc.list, fee: Number(offer.setupFee), anyTerm: offer.customerChoosesTerm }
+      : null,
     rechnerUrl: rechner,
     attachment,
     to: offer.email,
