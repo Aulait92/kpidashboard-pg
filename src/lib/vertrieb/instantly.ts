@@ -191,8 +191,9 @@ export async function syncInstantly(): Promise<SyncStats> {
   return stats;
 }
 
-type ApiEmail = {
+export type ApiEmail = {
   id: string;
+  eaccount?: string | null;
   timestamp_email: string;
   timestamp_created: string;
   subject: string;
@@ -241,6 +242,7 @@ export async function syncReplies(full = false): Promise<number> {
         html: e.body?.html ?? null,
         fromEmail: e.from_address_email,
         threadId: e.thread_id,
+        eaccount: e.eaccount ?? null,
         isAutoReply: e.is_auto_reply === 1,
         sentAt: new Date(e.timestamp_email || e.timestamp_created),
         campaign: e.campaign_id ? campaignNames.get(e.campaign_id) ?? null : null,
@@ -259,6 +261,7 @@ type Reply = {
   html?: string | null;
   fromEmail?: string | null;
   threadId?: string | null;
+  eaccount?: string | null; // unser Postfach, das die Antwort empfangen hat
   isAutoReply: boolean;
   sentAt: Date;
   campaign?: string | null;
@@ -284,7 +287,13 @@ export async function recordReply(contactId: string, r: Reply): Promise<boolean>
   if (dup) {
     await prisma.salesEmail.update({
       where: { id: dup.id },
-      data: { instantlyId: dup.instantlyId ?? r.instantlyId ?? null, text: dup.text ?? r.text, html: dup.html ?? r.html },
+      data: {
+        instantlyId: dup.instantlyId ?? r.instantlyId ?? null,
+        text: dup.text ?? r.text,
+        html: dup.html ?? r.html,
+        threadId: dup.threadId ?? r.threadId ?? null,
+        eaccount: dup.eaccount ?? r.eaccount ?? null,
+      },
     });
     return false;
   }
@@ -292,9 +301,14 @@ export async function recordReply(contactId: string, r: Reply): Promise<boolean>
   const instantlyPositive = sentimentFromInstantly(r.interest) === "POSITIV";
   r.isAutoReply = r.isAutoReply || (!instantlyPositive && isAutoReplyText(r.subject, stripQuoted(r.text ?? "")));
   // Klare Absage im Text hat Vorrang vor Instantlys Einstufung (deren KI markiert Absagen teils als „interessiert“).
-  const textSentiment = classifyReply(stripQuoted(r.text ?? ""), r.subject?.replace(/^(re|aw|antw|fwd?|wg):\s*/i, ""));
-  const sentiment: Sentiment = r.isAutoReply ? "NEUTRAL" : textSentiment === "NEGATIV" ? "NEGATIV" : (sentimentFromInstantly(r.interest) ?? textSentiment);
-  await prisma.salesEmail.create({
+  // Ebenso Später-Interesse („aktuell nicht, aber ab März“): weder Absage noch sofortige Aufgabe, sondern Follow-up.
+  const textSentiment = classifyReply(stripQuoted(r.text ?? ""), r.subject?.replace(/^(re|aw|antw|fwd?|wg):\s*/i, ""), r.sentAt);
+  const sentiment: Sentiment = r.isAutoReply
+    ? "NEUTRAL"
+    : textSentiment === "NEGATIV" || textSentiment === "SPAETER"
+      ? textSentiment
+      : (sentimentFromInstantly(r.interest) ?? textSentiment);
+  const saved = await prisma.salesEmail.create({
     data: {
       sentiment,
       contactId,
@@ -306,9 +320,11 @@ export async function recordReply(contactId: string, r: Reply): Promise<boolean>
       html: r.html ?? null,
       fromEmail: r.fromEmail ?? null,
       threadId: r.threadId ?? null,
+      eaccount: r.eaccount ?? null,
       isAutoReply: r.isAutoReply,
       sentAt: r.sentAt,
     },
+    select: { id: true },
   });
 
   // Leere Telefonnummer aus der Signatur ergänzen (nicht aus Abwesenheitsnotizen)
@@ -316,7 +332,7 @@ export async function recordReply(contactId: string, r: Reply): Promise<boolean>
   const snippet = stripQuoted(r.text ?? "").slice(0, 600) || r.subject || "";
   const label = r.isAutoReply
     ? "Automatische Antwort"
-    : `Antwort erhalten (${sentiment === "POSITIV" ? "positiv" : sentiment === "NEGATIV" ? "negativ" : "neutral"})`;
+    : `Antwort erhalten (${sentiment === "POSITIV" ? "positiv" : sentiment === "NEGATIV" ? "negativ" : sentiment === "SPAETER" ? "später wieder" : "neutral"})`;
   // Platzhalter aus einem früheren Abgleich (nur Zähler, ohne Text) ergänzen statt doppelt anlegen
   const placeholder = await prisma.salesActivity.findFirst({
     where: {
@@ -337,6 +353,10 @@ export async function recordReply(contactId: string, r: Reply): Promise<boolean>
   // Aufgabe nur bei positiver Antwort; Absage räumt offene Antwort-Aufgaben weg
   if (sentiment === "POSITIV") await ensureReplyTask(contactId, snippet.slice(0, 300));
   if (sentiment === "NEGATIV") await onDecline(contactId);
+  // Später-Follow-up: Später-Antwort plant ein, jede andere echte Antwort stoppt, Abwesenheitsnotiz verschiebt Mail 2
+  await import("@/lib/vertrieb/followup")
+    .then((m) => m.onIncomingReply(contactId, { emailId: saved.id, sentiment, isAutoReply: r.isAutoReply, text: stripQuoted(r.text ?? ""), sentAt: r.sentAt }))
+    .catch((e) => reportError(e, "followup-reply"));
   return true;
 }
 
@@ -347,6 +367,7 @@ export async function onDecline(contactId: string, lossReason: "KEIN_INTERESSE" 
   if (c && ["NEU", "NICHT_ERREICHT", "WIEDERVORLAGE", "SPAETER"].includes(c.stage)) {
     await prisma.salesContact.update({ where: { id: contactId }, data: { stage: "VERLOREN", lossReason } });
     await prisma.salesActivity.create({ data: { contactId, type: "NOTIZ", outcome: source, note: "Automatisch auf „Verloren“ gesetzt, offene Antwort-Aufgabe entfernt.", occurredAt: new Date() } });
+    await import("@/lib/vertrieb/followup").then((m) => m.stopFollowup(contactId, source)).catch((e) => reportError(e, "followup-stop"));
   }
 }
 
@@ -354,7 +375,9 @@ const DECLINED = ["Kein Interesse", "Falsche Person", "Verloren"];
 
 /** Instantly-Status „abgelehnt“: letzte Antwort als negativ einstufen und wie eine Absage behandeln. */
 export async function markDeclined(contactId: string, why: string) {
-  const last = await prisma.salesEmail.findFirst({ where: { contactId, direction: "IN", isAutoReply: false }, orderBy: { sentAt: "desc" }, select: { id: true } });
+  const last = await prisma.salesEmail.findFirst({ where: { contactId, direction: "IN", isAutoReply: false }, orderBy: { sentAt: "desc" }, select: { id: true, sentiment: true } });
+  // „Aktuell nicht, aber ab März“ markiert Instantly gern als „kein Interesse“: Später-Antwort bleibt Später
+  if (last?.sentiment === "SPAETER" && why === "Kein Interesse") return;
   if (last) await prisma.salesEmail.update({ where: { id: last.id }, data: { sentiment: "NEGATIV" } });
   await onDecline(contactId, why === "Falsche Person" ? "SONSTIGES" : "KEIN_INTERESSE", `Instantly: ${why}`);
 }
@@ -367,6 +390,8 @@ async function lastReplyDeclined(contactId: string): Promise<boolean> {
     select: { sentiment: true, text: true, subject: true },
   });
   if (!last) return false;
+  // Später-Interesse: keine sofortige Anruf-Aufgabe, das Follow-up meldet sich zum Zeitpunkt
+  if (last.sentiment === "SPAETER") return true;
   return last.sentiment === "NEGATIV" || classifyReply(stripQuoted(last.text ?? ""), last.subject) === "NEGATIV";
 }
 
@@ -461,6 +486,9 @@ async function saveLead(contactId: string, campaignId: string, d: LeadData, camp
     create: { contactId, campaignId, ...d },
     update: d,
   });
+  if (d.unsubscribed && !prev?.unsubscribed) {
+    await import("@/lib/vertrieb/followup").then((m) => m.stopFollowup(contactId, "Abgemeldet")).catch((e) => reportError(e, "followup-stop"));
+  }
   if (d.sentAt && !prev?.sentAt) {
     await prisma.salesActivity.create({
       data: { contactId, type: "COLD_MAIL", outcome: "Gesendet", note: `Kampagne: ${campaignName}`, occurredAt: d.sentAt },
@@ -598,6 +626,7 @@ export async function handleWebhook(p: Record<string, unknown>) {
         text: str(p.reply_text) ?? str(p.reply_text_snippet),
         html: str(p.reply_html),
         fromEmail: email,
+        eaccount: str(p.email_account),
         isAutoReply: auto,
         sentAt: at,
         campaign: name,
@@ -616,6 +645,7 @@ export async function handleWebhook(p: Record<string, unknown>) {
       break;
     case "lead_unsubscribed":
       await prisma.salesCampaignLead.upsert({ where: key, create: { ...base, unsubscribed: true, status: "Abgemeldet" }, update: { unsubscribed: true, status: "Abgemeldet" } });
+      await import("@/lib/vertrieb/followup").then((m) => m.stopFollowup(contact.id, "Abgemeldet")).catch((e) => reportError(e, "followup-stop"));
       break;
     case "lead_interested":
     case "lead_meeting_booked":
@@ -663,6 +693,42 @@ export async function cleanupAutoReplies() {
     fixed++;
   }
   return fixed;
+}
+
+// ─── Antworten im selben Thread (Später-Follow-up, lib/vertrieb/followup.ts) ────
+// POST /api/v2/emails/reply: `reply_to_uuid` = ID der empfangenen Mail, `eaccount` = unser Postfach,
+// das sie empfangen hat. Empfänger ist automatisch der Absender dieser Mail (der Kontakt).
+// Den Verlauf zitiert Instantly nicht selbst: der zitierte Teil steht im `html`.
+
+export type InstantlyReply = { eaccount: string; replyToUuid: string; subject: string; html: string; text?: string };
+
+/** Antwortet auf eine empfangene Mail im selben Thread aus demselben Postfach. */
+export async function replyInThread(r: InstantlyReply): Promise<{ id: string | null; threadId: string | null }> {
+  const res = await api<{ id?: string; thread_id?: string | null }>("/emails/reply", {
+    method: "POST",
+    body: JSON.stringify({ eaccount: r.eaccount, reply_to_uuid: r.replyToUuid, subject: r.subject, body: { html: r.html, ...(r.text ? { text: r.text } : {}) } }),
+  });
+  return { id: res?.id ?? null, threadId: res?.thread_id ?? null };
+}
+
+/** Letzte empfangene (keine automatische) Mail eines Kontakts in Instantly: Ziel für die Antwort. */
+export async function latestReceivedFrom(leadEmail: string): Promise<ApiEmail | null> {
+  const q = new URLSearchParams({ lead: leadEmail, email_type: "received", limit: "20", sort_order: "desc" });
+  const page = await api<{ items: ApiEmail[] }>(`/emails?${q}`);
+  return page.items.find((e) => e.is_auto_reply !== 1 && (e.ue_type == null || e.ue_type === 2)) ?? null;
+}
+
+/** Alle Mails eines Threads (für den Bezug auf unsere ursprüngliche Mail). */
+export async function threadEmails(threadId: string): Promise<ApiEmail[]> {
+  const q = new URLSearchParams({ search: `thread:${threadId}`, limit: "20", sort_order: "asc" });
+  return (await api<{ items: ApiEmail[] }>(`/emails?${q}`)).items;
+}
+
+/** Signatur und Name des Postfachs (Instantly → Accounts). */
+export async function accountSignature(eaccount: string): Promise<{ signature: string | null; name: string | null }> {
+  const a = await api<{ signature?: string | null; first_name?: string | null; last_name?: string | null }>(`/accounts/${encodeURIComponent(eaccount)}`).catch(() => null);
+  const name = [a?.first_name, a?.last_name].filter(Boolean).join(" ").trim() || null;
+  return { signature: a?.signature?.trim() || null, name };
 }
 
 /** Entfernt die offene Antwort-Aufgabe, wenn der Kontakt keine positive Antwort mehr hat. */

@@ -30,6 +30,7 @@ import { loadReferralSettings, referralForContact } from "@/lib/kollegen";
 import { benefitSentence } from "@/lib/kollegen-shared";
 import { CloseDetailsForm } from "@/components/ui/close-details-on-submit";
 import { audienceForContact, listPresentations } from "@/lib/vertrieb/praesentationen";
+import { FollowupBadge, FollowupCard } from "@/components/vertrieb/followup-card";
 
 export default async function ContactPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ embedded?: string }> }) {
   const { id } = await params;
@@ -44,12 +45,17 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
       emails: { orderBy: { sentAt: "desc" } },
       meetings: { orderBy: { startAt: "desc" } },
       offers: { orderBy: { createdAt: "desc" } },
+      followups: { orderBy: { createdAt: "desc" }, take: 5 },
     },
   });
   if (!c) notFound();
   // Kunden haben eine eigene Akte mit allen Reitern.
   if (c.customerId && !embedded) redirect(`/admin/kunden/${c.customerId}`);
   const open = c.tasks.filter((t) => !t.doneAt);
+  // Später-Follow-up: nur mit einer Mail aus Instantly (Antwort im selben Thread, gleiches Postfach)
+  const activeFollowup = c.followups.find((f) => f.activeFor) ?? null;
+  const threadMail = c.emails.find((e) => e.direction === "IN" && (e.instantlyId || (e.campaign && e.campaign !== "manuell")));
+  const followupMail = (activeFollowup?.replyEmailId && c.emails.find((e) => e.id === activeFollowup.replyEmailId)) || threadMail;
   const suggested = c.customerSource ? null : await guessSource(c.id);
   const done = c.tasks.filter((t) => t.doneAt).slice(0, 10);
   const onboarding = c.customerId ? await loadOnboarding({ customerId: c.customerId }) : null;
@@ -102,6 +108,11 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
           )}
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600">
             <StagePicker contactId={c.id} stage={c.stage} competitor={c.competitor} />
+            {activeFollowup ? (
+              <a href="#follow-up">
+                <FollowupBadge f={activeFollowup} />
+              </a>
+            ) : null}
             {c.customerStage && <span className={`badge ${CUSTOMER_COLOR[c.customerStage]}`}>Kunde: {CUSTOMER_LABEL[c.customerStage]}</span>}
             {c.customerSource && <span className={`badge ${SOURCE_COLOR[c.customerSource]}`}>über {SOURCE_LABEL[c.customerSource]}</span>}
             {c.lossReason && <span className="badge bg-rose-50 text-rose-700">{LOSS_LABEL[c.lossReason]}</span>}
@@ -180,12 +191,12 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
                   return (
                     <li key={e.id} className="px-4 py-3 text-sm">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className={`badge ${e.isAutoReply ? "bg-slate-100 text-slate-600" : "bg-emerald-100 text-emerald-800"}`}>
-                          {e.isAutoReply ? "Auto-Reply" : "Antwort"}
+                        <span className={`badge ${e.direction === "OUT" ? "bg-sky-100 text-sky-800" : e.isAutoReply ? "bg-slate-100 text-slate-600" : "bg-emerald-100 text-emerald-800"}`}>
+                          {e.direction === "OUT" ? "Gesendet" : e.isAutoReply ? "Auto-Reply" : "Antwort"}
                         </span>
-                        {!e.isAutoReply && e.sentiment && (
-                          <span className={`badge ${e.sentiment === "POSITIV" ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : e.sentiment === "NEGATIV" ? "bg-rose-50 text-rose-700 ring-1 ring-rose-200" : "bg-slate-50 text-slate-500 ring-1 ring-slate-200"}`}>
-                            {e.sentiment === "POSITIV" ? "positiv" : e.sentiment === "NEGATIV" ? "negativ" : "neutral"}
+                        {e.direction === "IN" && !e.isAutoReply && e.sentiment && (
+                          <span className={`badge ${e.sentiment === "POSITIV" ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : e.sentiment === "NEGATIV" ? "bg-rose-50 text-rose-700 ring-1 ring-rose-200" : e.sentiment === "SPAETER" ? "bg-teal-50 text-teal-700 ring-1 ring-teal-200" : "bg-slate-50 text-slate-500 ring-1 ring-slate-200"}`}>
+                            {e.sentiment === "POSITIV" ? "positiv" : e.sentiment === "NEGATIV" ? "negativ" : e.sentiment === "SPAETER" ? "später" : "neutral"}
                           </span>
                         )}
                         <span className="font-medium">{e.subject || "(ohne Betreff)"}</span>
@@ -195,20 +206,20 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
                         {e.fromEmail}{e.campaign ? ` · Kampagne: ${e.campaign}` : ""}
                       </div>
                       <p className="mt-2 whitespace-pre-wrap text-slate-700">{main || "(kein Text)"}</p>
-                      <div className="mt-2 flex flex-wrap items-center gap-1 text-xs text-slate-400">
+                      {e.direction === "IN" && <div className="mt-2 flex flex-wrap items-center gap-1 text-xs text-slate-400">
                         Einordnung ändern:
-                        {(["POSITIV", "NEUTRAL", "NEGATIV", "AUTO"] as const)
+                        {(["POSITIV", "SPAETER", "NEUTRAL", "NEGATIV", "AUTO"] as const)
                           .filter((x) => (x === "AUTO" ? !e.isAutoReply : e.isAutoReply || x !== e.sentiment))
                           .map((x) => (
                             <form key={x} action={setReplySentiment}>
                               <input type="hidden" name="id" value={e.id} />
                               <input type="hidden" name="sentiment" value={x} />
                               <button className="btn-ghost px-2 py-0.5 text-xs">
-                                {x === "POSITIV" ? "👍 positiv" : x === "NEGATIV" ? "👎 negativ" : x === "AUTO" ? "🤖 automatische Antwort" : "neutral"}
+                                {x === "POSITIV" ? "👍 positiv" : x === "NEGATIV" ? "👎 negativ" : x === "AUTO" ? "🤖 automatische Antwort" : x === "SPAETER" ? "⏰ später (Follow-up)" : "neutral"}
                               </button>
                             </form>
                           ))}
-                      </div>
+                      </div>}
                       {quoted && (
                         <details className="mt-1">
                           <summary className="cursor-pointer text-xs text-slate-400">Zitierten Verlauf anzeigen</summary>
@@ -323,6 +334,10 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
               </ul>
             </section>
           )}
+
+          {activeFollowup || c.followups.length || c.stage === "SPAETER" || c.emails.some((e) => e.sentiment === "SPAETER") ? (
+            <FollowupCard contactId={c.id} followups={c.followups} plannable={!!threadMail} eaccount={followupMail?.eaccount ?? null} />
+          ) : null}
 
           <section className="card">
             <h2 className="border-b border-slate-100 px-4 py-3 font-medium">Aufgaben</h2>

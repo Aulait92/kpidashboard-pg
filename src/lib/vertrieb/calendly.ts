@@ -136,6 +136,8 @@ export async function recordBooking(inv: Invitee, ev: ScheduledEvent, matcher?: 
   if (c.stage !== "GEWONNEN" && c.stage !== "TERMIN") {
     await prisma.salesContact.update({ where: { id: contactId }, data: { stage: "TERMIN" as Stage, lossReason: null } });
   }
+  // Termin gebucht: Später-Follow-up beenden
+  await import("@/lib/vertrieb/followup").then((m) => m.stopFollowup(contactId, "Termin gebucht")).catch(() => {});
   return "new";
 }
 

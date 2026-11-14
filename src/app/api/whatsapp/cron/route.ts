@@ -147,6 +147,9 @@ async function handle(req: Request): Promise<Response> {
       }
     });
   }
+  // Vertrieb: Später-Follow-ups (Antwort im Instantly-Thread, werktags 8–17 Uhr, je Postfach begrenzt;
+  // gesendet wird nur mit INSTANTLY_AUTO_SYNC=1, siehe docs/vertrieb-spaeter-followup.md)
+  after(() => import("@/lib/vertrieb/followup").then((m) => m.runFollowups(now)).catch((e: unknown) => reportError(e, "cron-followups")));
   // Kampagnen-Agenten: liegengebliebene Läufe fortsetzen (z. B. nach Neustart)
   after(async () => {
     try {

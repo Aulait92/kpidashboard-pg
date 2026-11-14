@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, Bot, Calculator, FileBarChart, Layers, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, Megaphone, MessageCircle, Rocket, ShieldCheck, Wallet, Workflow } from "lucide-react";
+import { Activity, Bot, Calculator, Clock, FileBarChart, Layers, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, Megaphone, MessageCircle, Rocket, ShieldCheck, Wallet, Workflow } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { supportConfig } from "@/lib/support";
 import { requireAuth } from "@/lib/vertrieb/auth";
@@ -35,6 +35,7 @@ const GROUPS = [
     text: "Neue Kunden gewinnen",
     items: [
       { href: "/admin/vertrieb/import", icon: FileUp, color: "bg-violet-500", title: "Anbindungen", text: "Instantly, Calendly, Formulare, Import" },
+      { href: "/admin/vertrieb/follow-ups#einstellungen", icon: Clock, color: "bg-teal-500", title: "Später-Follow-ups", text: "Automatik ein/aus, Tageslimit je Postfach, Buchungslink, KI-Texte" },
       { href: "/admin/einstellungen/rechner", icon: Calculator, color: "bg-sky-500", title: "Rechner", text: "Break-even-Rechner für Interessenten: Produkte, Quoten, Garantien" },
       { href: "/admin/einstellungen/empfehlungen", icon: Gift, color: "bg-emerald-600", title: "Kollegen empfehlen", text: "Empfehlungsprogramm: Prämie für Empfehler, Vorteil für Neukunden" },
     ],

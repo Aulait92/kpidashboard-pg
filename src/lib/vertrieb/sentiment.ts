@@ -1,7 +1,10 @@
 // Grobe Einordnung einer Cold-Mail-Antwort. Instantly-Interessenstatus hat Vorrang,
 // das hier ist der Fallback, wenn Instantly (noch) nichts gesetzt hat.
 
-export type Sentiment = "POSITIV" | "NEGATIV" | "NEUTRAL";
+import { isLaterInterest } from "@/lib/vertrieb/spaeter";
+
+/** SPAETER = Später-Interesse („aktuell nicht, aber ab März“): keine Absage, sondern Follow-up (lib/vertrieb/followup.ts). */
+export type Sentiment = "POSITIV" | "NEGATIV" | "NEUTRAL" | "SPAETER";
 
 const NEGATIVE = [
   /kein(en)? interesse/, /nicht interessiert/, /kein(en)? bedarf/, /nein,? danke/, /keine werbung/,
@@ -23,7 +26,8 @@ const POSITIVE = [
   /melden sie sich/, /lassen sie uns/, /gespräch/, /rückruf/, /call\b/, /meeting/,
 ];
 
-export function classifyReply(text: string | null | undefined, subject?: string | null): Sentiment {
+export function classifyReply(text: string | null | undefined, subject?: string | null, at?: Date): Sentiment {
+  if (isLaterInterest(text, at)) return "SPAETER";
   const t = `${subject ?? ""}\n${text ?? ""}`.toLowerCase();
   if (NEGATIVE.some((r) => r.test(t)) || NEGATED_POSITIVE.test(t)) return "NEGATIV";
   if (POSITIVE.some((r) => r.test(t))) return "POSITIV";

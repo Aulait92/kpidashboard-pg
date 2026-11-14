@@ -17,6 +17,7 @@ import { importFromColdCrm, replaceFromColdCrm } from "@/lib/vertrieb/cold-crm-i
 import { LI_LABEL, importWaalaxyCsv } from "@/lib/vertrieb/linkedin";
 import { ensureReplyTask, importInstantlyCsv, recordReply, removeReplyTaskIfNoPositive, syncInstantly } from "@/lib/vertrieb/instantly";
 import { audit } from "@/lib/audit";
+import { planFollowup, planFromOutcome, stopFollowup, stopFollowupOnStage } from "@/lib/vertrieb/followup";
 import { addContactEmail, makePrimaryEmail, mergeContacts, removeContactEmail, searchMergeCandidates, updatePrimaryEmail } from "@/lib/vertrieb/contact-merge";
 
 const s = (fd: FormData, k: string) => {
@@ -77,6 +78,12 @@ export async function logActivity(fd: FormData) {
     }
   });
   if (stage === "GEWONNEN") await ensureSource(contactId);
+  if (stage) await stopFollowupOnStage(contactId, stage);
+  // „Später wieder“: Follow-up per Mail im Instantly-Thread statt nur Aufgabe (ersetzt die 60-Tage-Aufgabe)
+  if (outcome.id === "spaeter") {
+    const due = s(fd, "taskDue");
+    await planFromOutcome(contactId, note, fd.get("createTask") === "on" && due ? fromDayKey(due) : null);
+  }
   refresh(contactId);
 }
 
@@ -102,6 +109,7 @@ export async function setStage(fd: FormData) {
     });
   }
   if (stage === "GEWONNEN") await ensureSource(contactId);
+  await stopFollowupOnStage(contactId, stage);
   refresh(contactId);
 }
 
@@ -335,6 +343,7 @@ export async function dragStage(contactId: string, stage: string, lossReason?: s
     await prisma.salesTask.updateMany({ where: { contactId, doneAt: null }, data: { doneAt: new Date() } });
   }
   if (to === "GEWONNEN") await ensureSource(contactId);
+  await stopFollowupOnStage(contactId, to);
   refresh(contactId);
 }
 
@@ -350,13 +359,25 @@ export async function setReplySentiment(fd: FormData) {
   await requireAuth();
   const id = s(fd, "id")!;
   const choice = s(fd, "sentiment");
-  if (!choice || !["POSITIV", "NEGATIV", "NEUTRAL", "AUTO"].includes(choice)) return;
+  if (!choice || !["POSITIV", "NEGATIV", "NEUTRAL", "AUTO", "SPAETER"].includes(choice)) return;
+  const before = await prisma.salesEmail.findUniqueOrThrow({ where: { id }, select: { sentiment: true } });
   const e = await prisma.salesEmail.update({
     where: { id },
     data: choice === "AUTO" ? { isAutoReply: true, sentiment: "NEUTRAL" } : { isAutoReply: false, sentiment: choice },
   });
   if (choice === "POSITIV") await ensureReplyTask(e.contactId, (e.text ?? e.subject ?? "").slice(0, 300));
   else await removeReplyTaskIfNoPositive(e.contactId);
+  if (choice === "SPAETER") {
+    // „Später“: Stufe Später + Follow-up im Thread dieser Antwort
+    const c = await prisma.salesContact.findUniqueOrThrow({ where: { id: e.contactId }, select: { stage: true } });
+    if (c.stage !== "SPAETER" && !["TERMIN", "GEWONNEN"].includes(c.stage)) {
+      await prisma.salesContact.update({ where: { id: e.contactId }, data: { stage: "SPAETER", lossReason: null } });
+      await prisma.salesActivity.create({ data: { contactId: e.contactId, type: "STATUS", outcome: `${STAGE_LABEL[c.stage]} → ${STAGE_LABEL.SPAETER}`, note: "Antwort als „später“ eingeordnet" } });
+    }
+    await planFollowup(e.contactId, { source: "ANTWORT", replyEmailId: e.id });
+  } else if (before.sentiment === "SPAETER") {
+    await stopFollowup(e.contactId, "Antwort anders eingeordnet");
+  }
   refresh(e.contactId);
 }
 
