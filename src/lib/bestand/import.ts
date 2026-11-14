@@ -62,13 +62,22 @@ export type ImportResult = {
   premiumTotal: number;
   skipped: number;
   withPhone: number;
+  /** Auf Kunden der Sperrliste übertragene Abmeldungen (Abmeldung gilt auch nach erneutem Import) */
+  suppressed: number;
 };
+
+/**
+ * Einwilligungen beim Import: Werte aus der Datei (Spalten E-Mail- bzw. WhatsApp-Einwilligung) gelten immer.
+ * Ohne Wert bleibt der bisherige Stand, außer der Vermittler bestätigt ausdrücklich „alle Kunden dieser Liste
+ * haben eingewilligt“ (je Kanal, z. B. laut Versicherer). Ein „nein“ wird dadurch nie überschrieben.
+ */
+export type BulkConsent = { email?: boolean; whatsapp?: boolean };
 
 /**
  * Zeilen übernehmen. Eine Zeile je Kunde oder je Vertrag – Kunden werden zusammengeführt.
  * importId: Import-Lauf (ExistingCustomerImport), wird nur bei neu angelegten Kunden gesetzt.
  */
-export async function importRows(customerId: string, rows: Row[], m: Mapping, now = new Date(), opts: { importId?: string } = {}): Promise<ImportResult> {
+export async function importRows(customerId: string, rows: Row[], m: Mapping, now = new Date(), opts: { importId?: string; consent?: BulkConsent; actorUserId?: string | null } = {}): Promise<ImportResult> {
   // Offensichtlich falsche Zuordnung (z. B. E-Mail-Spalte als Telefon) nie übernehmen
   const blocker = mappingBlocker(rows, m);
   if (blocker) throw new Error(blocker);
@@ -84,8 +93,12 @@ export async function importRows(customerId: string, rows: Row[], m: Mapping, no
     premiumTotal: g.premiumTotal,
     skipped: g.skipped,
     withPhone: 0,
+    suppressed: 0,
   };
+  const bulk = opts.consent ?? {};
   const consentNote = `Einwilligung laut Versicherer (Import ${now.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })})`;
+  const savedIds: string[] = [];
+  const bulkCount = { email: 0, whatsapp: 0 };
   for (const a of g.groups.values()) {
     // Stornierte und ruhende Verträge zählen nicht für Sparten (Lücken), Ablauf und Beitragsvolumen
     const active = a.contracts.filter((c) => isActiveContract(c.status));
@@ -104,13 +117,33 @@ export async function importRows(customerId: string, rows: Row[], m: Mapping, no
     const existing = a.externalNo
       ? ((await prisma.existingCustomer.findUnique({ where: { customerId_externalNo: { customerId, externalNo: a.externalNo } }, select: { id: true } })) ?? (await byContact()))
       : await byContact();
+    const before = existing
+      ? await prisma.existingCustomer.findUnique({ where: { id: existing.id }, select: { emailConsent: true, whatsappConsent: true } })
+      : null;
+    const consentData: Prisma.ExistingCustomerUpdateInput = {};
+    for (const ch of ["email", "whatsapp"] as const) {
+      const fileValue = ch === "email" ? a.emailConsent : a.whatsappConsent;
+      const fileAt = ch === "email" ? a.emailConsentAt : a.whatsappConsentAt;
+      const current = ch === "email" ? before?.emailConsent : before?.whatsappConsent;
+      const set = (value: "ja" | "nein", at: Date | null, source: string) =>
+        Object.assign(consentData, ch === "email" ? { emailConsent: value, emailConsentAt: at, emailConsentSource: source } : { whatsappConsent: value, whatsappConsentAt: at, whatsappConsentSource: source });
+      if (fileValue) set(fileValue, fileValue === "ja" ? (fileAt ?? now) : now, "import");
+      else if (bulk[ch] && current !== "nein" && current !== "ja") {
+        set("ja", now, "versicherer_pauschal");
+        bulkCount[ch]++;
+      }
+    }
     const data = {
       externalNo: a.externalNo, salutation: a.salutation, firstName: a.firstName, lastName: a.lastName, company: a.company, phone: a.phone, email: a.email,
-      birthday: a.birthday, street: a.street, zip: a.zip, city: a.city, lines, nextRenewal: upcoming, premiumTotal, consentAt: now, consentNote,
+      birthday: a.birthday, street: a.street, zip: a.zip, city: a.city, lines, nextRenewal: upcoming, premiumTotal,
+      // Altangabe consentAt nur noch bei ausdrücklicher Bestätigung (maßgeblich sind die Felder je Kanal)
+      ...(bulk.email || bulk.whatsapp ? { consentAt: now, consentNote } : {}),
+      ...consentData,
     };
     const saved = existing
       ? await prisma.existingCustomer.update({ where: { id: existing.id }, data })
-      : await prisma.existingCustomer.create({ data: { ...data, customerId, importId: opts.importId ?? null } });
+      : await prisma.existingCustomer.create({ data: { ...(data as Prisma.ExistingCustomerUncheckedCreateInput), customerId, importId: opts.importId ?? null } });
+    savedIds.push(saved.id);
     if (existing) res.updated++;
     else res.created++;
     if (a.phone) res.withPhone++;
@@ -137,6 +170,23 @@ export async function importRows(customerId: string, rows: Row[], m: Mapping, no
       res.contracts += a.contracts.length;
       if (await prisma.existingContract.count({ where: { existingCustomerId: saved.id, leadContractId: { not: null } } })) await refreshBestandSummary(saved.id);
     }
+  }
+  // Abmeldungen gelten dauerhaft: Sperrliste auf alle übernommenen Kunden anwenden (auch neu angelegte Doppel)
+  const { applySuppression, logConsent } = await import("@/lib/bestand/einwilligung-server");
+  res.suppressed = await applySuppression(customerId, savedIds, now);
+  // Pauschale Bestätigung einmal je Kanal protokollieren (Zeitpunkt, Text, Anzahl)
+  for (const ch of ["email", "whatsapp"] as const) {
+    if (!bulk[ch]) continue;
+    await logConsent({
+      customerId,
+      existingCustomerId: null,
+      channel: ch,
+      action: "gesetzt",
+      source: "import",
+      text: `Vermittler bestätigt beim Import: Für alle Kunden dieser Liste liegt eine Einwilligung in Werbung per ${ch === "email" ? "E-Mail" : "WhatsApp"} vor (laut Versicherer). Übernommen für ${bulkCount[ch]} Kunden ohne eigene Angabe.`,
+      actorUserId: opts.actorUserId ?? null,
+      at: now,
+    });
   }
   return res;
 }

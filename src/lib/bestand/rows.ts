@@ -4,6 +4,7 @@
 // Übernommen werden nur bekannte Felder; alle anderen Spalten (auch Gesundheitsangaben) verfallen.
 
 import { normalizePhone } from "@/lib/whatsapp/phone";
+import { parseConsent } from "@/lib/bestand/einwilligung";
 
 export const FIELDS = {
   externalNo: "Kundennummer",
@@ -18,6 +19,8 @@ export const FIELDS = {
   street: "Straße",
   zip: "PLZ",
   city: "Ort",
+  emailConsent: "E-Mail-Einwilligung",
+  whatsappConsent: "WhatsApp-Einwilligung",
   line: "Sparte/Produkt",
   contractNo: "Vertragsnummer",
   insurer: "Versicherer",
@@ -49,6 +52,8 @@ export const FIELD_GROUPS: { title: string; hint: string; fields: { key: FieldKe
       { key: "street", label: "Straße" },
       { key: "zip", label: "PLZ" },
       { key: "city", label: "Ort" },
+      { key: "emailConsent", label: "E-Mail-Einwilligung", hint: "ja, nein oder Datum; leer = unbekannt" },
+      { key: "whatsappConsent", label: "WhatsApp-Einwilligung", hint: "ja, nein oder Datum; ohne sie keine WhatsApp-Kampagne" },
     ],
   },
   {
@@ -81,6 +86,8 @@ const SYNONYMS: Record<FieldKey, string[]> = {
   street: ["strasse", "strase", "strassehausnr", "adresse", "anschrift"],
   zip: ["plz", "postleitzahl"],
   city: ["ort", "wohnort", "stadt"],
+  emailConsent: ["emaileinwilligung", "einwilligungemail", "mailwerbung", "emailwerbung", "werbeeinwilligungemail", "optinemail", "emailoptin"],
+  whatsappConsent: ["whatsappeinwilligung", "einwilligungwhatsapp", "whatsappwerbung", "optinwhatsapp", "whatsappoptin", "messengereinwilligung"],
   line: ["sparte", "produkt", "vertrag", "tarif", "produktname", "sparten", "vertragsart"],
   contractNo: ["vertragsnummer", "vertragsnr", "versicherungsscheinnummer", "versicherungsscheinnr", "vsnr", "policennummer", "policennr", "polizzennummer", "scheinnummer"],
   insurer: ["versicherer", "gesellschaft", "versicherungsgesellschaft", "risikotrager", "anbieter"],
@@ -103,6 +110,7 @@ export function detectMapping(headers: string[]): Mapping {
   const used = new Set<string>();
   // Genauere Felder zuerst (Vertragsnummer vor Kundennummer-Teiltreffern, Jahresbeitrag vor „Beitrag“)
   const order: FieldKey[] = [
+    "emailConsent", "whatsappConsent",
     "contractNo", "externalNo", "salutation", "firstName", "fullName", "lastName", "company", "phone", "email", "birthday", "street", "zip", "city",
     "insurer", "annualPremium", "contractStatus", "startDate", "renewalDate", "line",
   ];
@@ -236,6 +244,11 @@ export type GroupedCustomer = {
   street: string | null;
   zip: string | null;
   city: string | null;
+  /** Einwilligung je Kanal aus der Datei: ja | nein | null (unbekannt bzw. nicht geliefert), mit Datum falls angegeben */
+  emailConsent: "ja" | "nein" | null;
+  emailConsentAt: Date | null;
+  whatsappConsent: "ja" | "nein" | null;
+  whatsappConsentAt: Date | null;
   contracts: GroupedContract[];
 };
 
@@ -251,7 +264,15 @@ export type GroupResult = {
   withPhone: number;
   /** Kunden ohne Vor- und Nachnamen (werden in Nachrichten neutral angesprochen). */
   withoutName: number;
+  withEmail: number;
+  /** Einwilligungen aus der Datei je Kanal */
+  consent: { emailJa: number; emailNein: number; whatsappJa: number; whatsappNein: number };
+  /** Kunden mit Personenversicherung (Kranken, BU, Leben/Vorsorge, Unfall, Pflege): Hinweis § 203 StGB */
+  withPersonLines: number;
 };
+
+/** Personenversicherungs-Sparten (schon die Tatsache des Vertrags ist geschützt, § 203 StGB). */
+export const PERSON_LINES: readonly string[] = ["Kranken", "BU", "Vorsorge", "Unfall", "Pflege"];
 
 /**
  * Anzeigename eines Bestandskunden: Vor- und Nachname, sonst Firma, sonst E-Mail.
@@ -303,8 +324,23 @@ export function groupRows(rows: Row[], m: Mapping): GroupResult {
       street: get(r, "street") || null,
       zip: get(r, "zip").replace(/\D/g, "").slice(0, 5) || null,
       city: get(r, "city") || null,
+      emailConsent: null,
+      emailConsentAt: null,
+      whatsappConsent: null,
+      whatsappConsentAt: null,
       contracts: [],
     };
+    // Einwilligung je Kanal (erste Angabe je Kunde gilt; „nein“ geht vor)
+    for (const ch of ["email", "whatsapp"] as const) {
+      const raw = get(r, ch === "email" ? "emailConsent" : "whatsappConsent");
+      const v = parseConsent(raw);
+      if (!v) continue;
+      const key = ch === "email" ? "emailConsent" : "whatsappConsent";
+      if (acc[key] === "nein") continue;
+      acc[key] = v;
+      if (v === "ja") acc[ch === "email" ? "emailConsentAt" : "whatsappConsentAt"] ??= parseDate(raw);
+      else acc[ch === "email" ? "emailConsentAt" : "whatsappConsentAt"] = null;
+    }
     acc.phone ??= phone;
     acc.email ??= email;
     acc.firstName ??= first;
@@ -337,16 +373,25 @@ export function groupRows(rows: Row[], m: Mapping): GroupResult {
   let premiumTotal = 0;
   let withPhone = 0;
   let withoutName = 0;
+  let withEmail = 0;
+  let withPersonLines = 0;
+  const consent = { emailJa: 0, emailNein: 0, whatsappJa: 0, whatsappNein: 0 };
   for (const g of groups.values()) {
     contracts += g.contracts.length;
     if (!g.firstName && !g.lastName) withoutName++;
+    if (g.email) withEmail++;
+    if (g.contracts.some((c) => PERSON_LINES.includes(c.line))) withPersonLines++;
+    if (g.emailConsent === "ja") consent.emailJa++;
+    if (g.emailConsent === "nein") consent.emailNein++;
+    if (g.whatsappConsent === "ja") consent.whatsappJa++;
+    if (g.whatsappConsent === "nein") consent.whatsappNein++;
     for (const c of g.contracts) {
       if (!isActiveContract(c.status)) inactiveContracts++;
       else if (c.annualPremium != null) premiumTotal += c.annualPremium;
     }
     if (g.phone) withPhone++;
   }
-  return { groups, rows: rows.length, skipped, skipReasons, contracts, inactiveContracts, premiumTotal: Math.round(premiumTotal * 100) / 100, withPhone, withoutName };
+  return { groups, rows: rows.length, skipped, skipReasons, contracts, inactiveContracts, premiumTotal: Math.round(premiumTotal * 100) / 100, withPhone, withoutName, withEmail, consent, withPersonLines };
 }
 
 /** Warnung vor dem Übernehmen, wenn fast nichts übernommen würde (null = alles gut). */

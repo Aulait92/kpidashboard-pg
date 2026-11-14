@@ -271,6 +271,8 @@ describe("Bestandskunden-Modul: Sperre, Bestandsschutz, Kontingent", () => {
   beforeAll(async () => {
     requireTestDb();
     customerId = (await makeCustomer({ existingCustomersEnabled: true, bestandGrandfathered: true, bestandMessageQuota: 2 })).id;
+    // WhatsApp verbunden (Kampagnen per WhatsApp nur mit Opt-in, siehe lib/bestand/einwilligung)
+    await prisma.whatsAppAccount.create({ data: { customerId, status: "connected" } });
   });
   afterAll(() => cleanupCustomer(customerId));
 
@@ -284,11 +286,11 @@ describe("Bestandskunden-Modul: Sperre, Bestandsschutz, Kontingent", () => {
 
   it("Kontingent erreicht → neue Kampagne wird vor dem Start gesperrt", async () => {
     const now = new Date();
-    const ec = await prisma.existingCustomer.create({ data: { customerId, firstName: "Erika", lastName: "Muster", phone: "4915100000001", lines: ["KFZ"] } });
+    const ec = await prisma.existingCustomer.create({ data: { customerId, firstName: "Erika", lastName: "Muster", phone: "4915100000001", lines: ["KFZ"], whatsappConsent: "ja" } });
     const first = await createCampaign({ customerId, occasion: "review", segment: {}, topic: null, dailyLimit: 50, now });
     const rec = await prisma.campaignRecipient.findFirstOrThrow({ where: { campaignId: first.id } });
     await prisma.campaignRecipient.update({ where: { id: rec.id }, data: { status: "sent", sentAt: now } });
-    const ec2 = await prisma.existingCustomer.create({ data: { customerId, firstName: "Max", lastName: "Probe", phone: "4915100000002", lines: ["KFZ"] } });
+    const ec2 = await prisma.existingCustomer.create({ data: { customerId, firstName: "Max", lastName: "Probe", phone: "4915100000002", lines: ["KFZ"], whatsappConsent: "ja" } });
     await prisma.campaignRecipient.create({ data: { campaignId: first.id, existingCustomerId: ec2.id, status: "sent", sentAt: now } });
     expect(await bestandQuota(customerId, now)).toMatchObject({ limit: 2, used: 2, remaining: 0, packs: [], low: true });
     await expect(createCampaign({ customerId, occasion: "review", segment: {}, topic: null, dailyLimit: 50, now })).rejects.toThrow(QUOTA_REACHED);

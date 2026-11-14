@@ -23,6 +23,9 @@ const PUBLIC_PREFIXES = [
   "/status", // Statusseite (öffentlich, ohne interne Details)
   "/empfehlen", // „Kollegen empfehlen“: Landingpage je Empfehlungscode (Formular mit Einwilligung)
   "/empfehlung", // Empfehlungsseite + Google-Link (geheimer Token je Kontakt, Modul Empfehlungen & Bewertungen)
+  "/abmelden", // Abmeldelink in Kampagnen-Mails (signierter Token, ein Klick ohne Login)
+  "/api/abmelden", // List-Unsubscribe One-Click (POST, signierter Token)
+  "/einwilligung", // Einwilligungs-Abfrage für Bestandskunden mit Double-Opt-in (signierter Token)
   "/api/login-info", // Bilder und Klick-Zählung der Infokarten auf der Login-Seite (öffentlich, keine Personendaten)
   "/login-karten", // Bilder der Infokarten auf der Login-Seite (public/login-karten)
   "/api/ops", // Betriebs-API (Buyer-Accounts anlegen), per ADMIN_API_TOKEN (Bearer) gesichert
@@ -82,7 +85,13 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   // Seiten für Endkunden der Vermittler (Terminbuchung, Empfehlung): ohne performancegrowth-Kopfzeile
   // und mit neutralem Footer – die Seite gehört dem Vermittler (Ole, 14.11.2026).
-  if (pathname === "/book" || pathname.startsWith("/book/") || pathname.startsWith("/empfehlung/")) {
+  if (
+    pathname === "/book" ||
+    pathname.startsWith("/book/") ||
+    pathname.startsWith("/empfehlung/") ||
+    pathname.startsWith("/abmelden/") ||
+    pathname.startsWith("/einwilligung/")
+  ) {
     const headers = new Headers(req.headers);
     headers.set("x-bare-layout", "lead");
     return NextResponse.next({ request: { headers } });

@@ -372,7 +372,7 @@ export async function sendWhatsAppNotice(opts: {
   contactName?: string | null;
   /** Name und Anrede des Kontakts (sonst nur contactName, Anrede unbekannt). */
   anrede?: AnredeKontakt | null;
-}): Promise<{ mode: "text" | "template"; conversationId: string }> {
+}): Promise<{ mode: "text" | "template"; conversationId: string; messageId?: string | null }> {
   const account = await prisma.whatsAppAccount.findUnique({
     where: { customerId: opts.customerId },
   });
@@ -462,5 +462,6 @@ export async function sendWhatsAppNotice(opts: {
     },
   });
 
-  return { mode, conversationId: conversation.id };
+  // messageId: für den Zustellstatus am Kampagnen-Empfänger (delivered/read aus dem Webhook)
+  return { mode, conversationId: conversation.id, messageId };
 }

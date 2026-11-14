@@ -333,6 +333,9 @@ async function applyStatus(s: StatusUpdate): Promise<void> {
     where: { waMessageId: s.id },
     data: { status: s.status, ...pricing },
   });
+  // Bestandskampagnen: Zustellung und Lesebestätigung am Empfänger (Statistik je Kampagne)
+  const { applyCampaignStatus } = await import("@/lib/bestand/campaigns");
+  await applyCampaignStatus(s.id, s.status);
 }
 
 /**

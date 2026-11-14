@@ -1019,6 +1019,11 @@ export async function setBestandModule(
     });
     // from = Monatspreis vorher (Admin → Zahlen → Buchungen)
     await audit("billing.bestand", { entity: "Customer", entityId: customerId, customerId, details: { mode, price, from: c.bestandMonthly != null ? Number(c.bestandMonthly) : null }, ...(opts.actor ? { actor: opts.actor } : {}) });
+    // Kampagnen-Vorlagen gleich bei Meta einreichen (Selbstbuchung und Admin-Freischaltung laufen hier durch)
+    if (mode !== "cancel") {
+      const { submitTemplatesAfterModule } = await import("@/lib/whatsapp/template-submit");
+      await submitTemplatesAfterModule(customerId);
+    }
     return { ok: true, changed: true, ...(note ? { note } : {}) };
   } catch (err) {
     reportError(err, "billing-bestand", { customer: customerId });
@@ -1179,6 +1184,11 @@ export async function setEmpfehlungModule(customerId: string, mode: "book" | "fr
             : { empfehlungEnabled: false, empfehlungMonthly: null, empfehlungFree: false, empfehlungCancelAt: null },
     });
     await audit("billing.empfehlung", { entity: "Customer", entityId: customerId, customerId, details: { mode, price, from: c.empfehlungMonthly != null ? Number(c.empfehlungMonthly) : null }, ...(opts.actor ? { actor: opts.actor } : {}) });
+    // Empfehlungs-Vorlagen gleich bei Meta einreichen (Admin-Freischaltung)
+    if (mode !== "cancel") {
+      const { submitTemplatesAfterModule } = await import("@/lib/whatsapp/template-submit");
+      await submitTemplatesAfterModule(customerId);
+    }
     return { ok: true, changed: true, ...(r.note && mode === "book" ? { note: r.note } : {}) };
   } catch (err) {
     reportError(err, "billing-empfehlung-admin", { customer: customerId });

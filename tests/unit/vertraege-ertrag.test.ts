@@ -101,6 +101,7 @@ const contract = (over: Partial<CustomerContract>): CustomerContract => ({
   signedAt: D("2026-11-05"),
   periodAt: D("2026-11-01"),
   origin: "paid",
+  campaignId: null,
   assignedUserId: null,
   leadCreatedAt: D("2026-11-01"),
   ...over,

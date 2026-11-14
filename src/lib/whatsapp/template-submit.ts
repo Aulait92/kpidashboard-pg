@@ -192,6 +192,22 @@ export async function submitTemplatesForCustomer(customerId: string, now = new D
 }
 
 /**
+ * Nach dem Buchen bzw. Freischalten eines Moduls (Bestandskunden, Empfehlungen): dessen Vorlagen sofort
+ * einreichen, nicht auf den Cron warten (Ole, 14.11.2026). Ohne verbundene Nummer passiert nichts; das
+ * Verbinden reicht dann alles ein. Fehler sind still (der Cron reicht nach).
+ */
+export async function submitTemplatesAfterModule(customerId: string, now = new Date()): Promise<SubmitSummary | null> {
+  try {
+    const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { status: true, apiKeyEnc: true } });
+    if (acc?.status !== "connected" || !acc.apiKeyEnc) return null;
+    return await submitTemplatesForCustomer(customerId, now);
+  } catch (err) {
+    reportError(err, "templates-after-module", { customer: customerId });
+    return null;
+  }
+}
+
+/**
  * Im WhatsApp-Cron: verbundene Konten abgleichen. Offene Prüfungen bzw. fehlende
  * Vorlagen alle 30 Minuten, sonst alle 6 Stunden (pausierte/deaktivierte erkennen).
  */

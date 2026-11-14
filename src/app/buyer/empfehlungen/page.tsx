@@ -17,6 +17,8 @@ import { WaechterSection } from "@/components/empfehlung/waechter";
 import { CopyText, EmpfehlungBookButton, GoogleUrlQuickForm, ResolveButton, RewardButtons, SettingsForm, TestSendForm } from "@/components/empfehlung/client";
 import { buttonClass } from "@/components/ui";
 import { resumeAction } from "./actions";
+import { after } from "next/server";
+import { needsSubmit, templateNotice } from "@/lib/whatsapp/vorlagen-hinweis";
 
 // Modul „Empfehlungen & Bewertungen“: Einstellungen, Test, Auswertung, letzte Anfragen.
 export const dynamic = "force-dynamic";
@@ -80,7 +82,16 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
   const generalUrl = general ? referralLinkFor(general.token) : null;
   const offer = resolveOffer(settings, vertreter);
   const rewards = await openRewards(ctx.customerId);
-  const approved = (p: string) => templates.some((t) => t.purpose === p && t.status === "approved");
+  const waConnected = customer?.whatsAppAccount?.status === "connected";
+  const tplPurposes = ["review_request", "referral_request"];
+  const tplNotice = templateNotice(waConnected, templates, tplPurposes, "empfehlung");
+  // Fehlt eine Vorlage, obwohl die Nummer verbunden ist: gleich einreichen statt Hinweis
+  if (needsSubmit(waConnected, templates, tplPurposes) && !ctx.preview) {
+    after(async () => {
+      const { submitTemplatesAfterModule } = await import("@/lib/whatsapp/template-submit");
+      await submitTemplatesAfterModule(ctx.customerId);
+    });
+  }
   // Hinweise mit Knopf, der das Problem direkt löst (Ole, 14.11.2026)
   type Warning = { key: string; text: string; fix?: React.ReactNode };
   const fixLink = (href: string, label: string) => (
@@ -92,12 +103,12 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
     !settings.googleReviewUrl
       ? { key: "google", text: "Bitte Ihren Google-Bewertungslink hinterlegen – ohne ihn geht keine Nachfrage raus.", fix: <GoogleUrlQuickForm readOnly={ctx.preview} /> }
       : null,
-    customer?.whatsAppAccount?.status !== "connected"
-      ? { key: "wa", text: "WhatsApp ist noch nicht verbunden. Die Nachrichten gehen über Ihre WhatsApp-Nummer raus.", fix: fixLink("/buyer/einrichtung#whatsapp", "WhatsApp verbinden") }
-      : null,
-    customer?.whatsAppAccount?.status === "connected" && (!approved("review_request") || !approved("referral_request"))
-      ? { key: "tpl", text: "Die WhatsApp-Vorlagen des Moduls sind bei Meta eingereicht und noch nicht freigegeben (meist wenige Stunden bis zwei Tage). Bis dahin warten die Nachfragen." }
-      : null,
+    // Vorlagen-Hinweis wie auf der Kampagnenseite (lib/whatsapp/vorlagen-hinweis): genau ein Hinweis, nie „melden Sie sich“
+    tplNotice?.kind === "connect"
+      ? { key: "wa", text: tplNotice.text, fix: fixLink(tplNotice.href, "WhatsApp verbinden") }
+      : tplNotice
+        ? { key: "tpl", text: tplNotice.text }
+        : null,
     !settings.active
       ? {
           key: "paused",

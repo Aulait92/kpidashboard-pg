@@ -187,7 +187,8 @@ async function BuyerDashboardBody({
   const [empfClosed, bestandClosed] = extraClosed;
   const extras = [
     empfClosed > 0 ? `+ ${formatNumber(empfClosed)} ${empfClosed === 1 ? "Abschluss" : "Abschlüsse"} aus Empfehlungen` : null,
-    bestandClosed > 0 ? `+ ${formatNumber(bestandClosed)} aus Bestandskampagnen` : null,
+    // Bestandskampagnen: Abschlüsse je Vertrag (60 Tage nach dem Anschreiben, letzte Kampagne zählt), wie in „Kosten & Ertrag“
+    prov.byOrigin.bestand.contracts > 0 ? `+ ${formatNumber(prov.byOrigin.bestand.contracts)} aus Bestandskampagnen` : bestandClosed > 0 ? `+ ${formatNumber(bestandClosed)} aus Bestandskampagnen` : null,
   ].filter(Boolean);
   const breakdown: [string, number][] = [
     [makler ? "Courtage 1. Jahr" : "Abschlussprovision", prov.firstYear],
@@ -206,7 +207,7 @@ async function BuyerDashboardBody({
       : null,
     prov.byOrigin.empfehlung.amount > 0 ? `davon aus Empfehlungen: ${formatEUR(prov.byOrigin.empfehlung.amount)}` : null,
     prov.byOrigin.bestand.contracts > 0
-      ? `aus Bestandskampagnen: ${formatNumber(prov.byOrigin.bestand.leads)} ${prov.byOrigin.bestand.leads === 1 ? "Abschluss" : "Abschlüsse"}, ${formatEUR(prov.byOrigin.bestand.amount)}`
+      ? `aus Bestandskampagnen: ${formatNumber(prov.byOrigin.bestand.contracts)} ${prov.byOrigin.bestand.contracts === 1 ? "Abschluss" : "Abschlüsse"}, ${formatEUR(prov.byOrigin.bestand.amount)}`
       : null,
     perCustomer != null && perCustomer > 1 ? `Verträge pro Kunde: ${perCustomer.toLocaleString("de-DE")}` : null,
   ].filter((x): x is string => !!x);

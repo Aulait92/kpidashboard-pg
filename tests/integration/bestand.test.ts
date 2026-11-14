@@ -17,12 +17,14 @@ describe("Bestandskunden: Import, Segmente, Kampagne, Antwort", () => {
   beforeAll(async () => {
     requireTestDb();
     customerId = (await makeCustomer({ existingCustomersEnabled: true })).id;
+    await prisma.whatsAppAccount.create({ data: { customerId, status: "connected" } });
   });
   afterAll(() => cleanupCustomer(customerId));
 
   it("importiert (eine Zeile je Vertrag), führt Kunden zusammen, speichert keine Gesundheitsangaben", async () => {
     const { headers, rows } = await parseFile(Buffer.from(CSV), "bestand.csv");
-    const r = await importRows(customerId, rows, detectMapping(headers));
+    // Vermittler bestätigt beim Import: alle haben in WhatsApp und E-Mail eingewilligt (laut Versicherer)
+    const r = await importRows(customerId, rows, detectMapping(headers), new Date(), { consent: { whatsapp: true, email: true } });
     expect(r).toMatchObject({ customers: 3, created: 3, contracts: 4, withPhone: 2 });
     const erika = await prisma.existingCustomer.findFirstOrThrow({ where: { customerId, externalNo: "1001" } });
     expect(erika.lines).toEqual(["Haftpflicht", "KFZ"]);
@@ -73,7 +75,7 @@ describe("Bestandskunden: Import, Segmente, Kampagne, Antwort", () => {
   });
 
   it("Antwort auf die Kampagne wird zum Lead, „Stopp“ sperrt", async () => {
-    const campaign = await createCampaign({ customerId, occasion: "review", segment: {}, topic: null, dailyLimit: 50 });
+    const campaign = await createCampaign({ customerId, occasion: "review", segment: {}, topic: null, dailyLimit: 50, channelMode: "whatsapp" });
     const recipients = await prisma.campaignRecipient.findMany({ where: { campaignId: campaign.id }, include: { existingCustomer: true } });
     expect(recipients).toHaveLength(2);
     const [a, b] = recipients;

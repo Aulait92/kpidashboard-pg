@@ -36,7 +36,7 @@ const ERRORS: Record<string, string> = {
   send: "Nachricht konnte nicht gesendet werden. Bitte später erneut versuchen.",
   preview: "In der Vorschau sind Änderungen deaktiviert.",
   template:
-    "Für diese Nachfass-Situation ist noch keine freigegebene WhatsApp-Vorlage hinterlegt.",
+    "Die WhatsApp-Vorlage für diese Nachfass-Situation ist noch nicht von Meta freigegeben. Wir reichen sie automatisch ein, bis dahin bitte anrufen.",
   followup_blocked: "Nachfassen ist in dieser Situation nicht sinnvoll, siehe Hinweis unten.",
 };
 
