@@ -68,8 +68,29 @@ export function emitLeadAction(leadId: string) {
   if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(LEAD_ACTION_EVENT, { detail: { leadId } }));
 }
 
-/** Ergebnis an den Aufrufer (Toast, Rückgängig, Zeile ausblenden macht er). */
-export type StepDone = (res: InboxResult, message: string) => void;
+/** Ergebnis an den Aufrufer (Toast, Rückgängig, Zeile ausblenden macht er); status = neuer Status bei Verloren. */
+export type StepDone = (res: InboxResult, message: string, status?: string) => void;
+
+/** Nach „nicht erreicht“ (Anrufliste, Heute, Kontakt): Nachricht „Nicht erreicht“ anbieten (NotReachedOfferHost). */
+export const NOT_REACHED_OFFER_EVENT = "pg-not-reached-offer";
+export function emitNotReachedOffer(leadId: string, name: string, attempt: Attempt) {
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(NOT_REACHED_OFFER_EVENT, { detail: { leadId, name, attempt } }));
+}
+
+/** Einmal in der Shell: zeigt nach „nicht erreicht“ das Angebot „Nicht erreicht“ per WhatsApp bzw. E-Mail. */
+export function NotReachedOfferHost() {
+  const [offer, setOffer] = useState<{ leadId: string; name: string; attempt: Attempt } | null>(null);
+  useEffect(() => {
+    const on = (e: Event) => {
+      const d = (e as CustomEvent<{ leadId: string; name: string; attempt: Attempt }>).detail;
+      if (d?.leadId && d.attempt) setOffer(d);
+    };
+    window.addEventListener(NOT_REACHED_OFFER_EVENT, on);
+    return () => window.removeEventListener(NOT_REACHED_OFFER_EVENT, on);
+  }, []);
+  if (!offer) return null;
+  return <NotReachedSheet key={offer.leadId} leadId={offer.leadId} name={offer.name} attempt={offer.attempt} onClose={() => setOffer(null)} />;
+}
 
 type Attempt = NonNullable<Extract<InboxResult, { ok: true }>["attempt"]>;
 
@@ -94,6 +115,11 @@ export function useStepDone(): { done: StepDone } {
     [router, toast],
   );
   return { done };
+}
+
+/** Ergebnis nach angezeigtem Angebot markieren, damit der Aufrufer es nicht noch einmal anbietet. */
+function offered(res: InboxResult): InboxResult {
+  return res.ok && res.attempt ? { ...res, attempt: { ...res.attempt, offered: true } } : res;
 }
 
 /** Toast nach „nicht erreicht“: „Lisa: Versuch 2 von 6 eingetragen, nächster Versuch heute 16:30 Uhr“. */
@@ -169,8 +195,8 @@ export function LostSheet({
         return;
       }
       if (!res.ok) return toast.show({ message: res.error, tone: "error" });
-      const label = LOST_REASONS.find((r) => r.key === key)?.label ?? "Verloren";
-      onDone(res, `${name}: verloren (${label})`);
+      const r = LOST_REASONS.find((x) => x.key === key);
+      onDone(res, `${name}: verloren (${r?.label ?? "Grund"})`, r?.status);
       onClose();
     });
 
@@ -215,7 +241,7 @@ export function LostSheet({
         name={name}
         attempt={offer.attempt}
         onClose={() => {
-          onDone(offer.res, `${name}: nicht erreicht`);
+          onDone(offered(offer.res), `${name}: nicht erreicht`);
           onClose();
         }}
       />
@@ -516,7 +542,7 @@ export function NextStepSheet({
         name={name}
         attempt={offer.attempt}
         onClose={() => {
-          onDone(offer.res, `${name}: nicht erreicht`);
+          onDone(offered(offer.res), `${name}: nicht erreicht`);
           onClose();
         }}
       />
@@ -532,9 +558,9 @@ export function NextStepSheet({
           if (!chosen.current) setStep("pick");
           else onClose();
         }}
-        onDone={(res, msg) => {
+        onDone={(res, msg, status) => {
           chosen.current = true;
-          onDone(res, msg);
+          onDone(res, msg, status);
         }}
       />
     );

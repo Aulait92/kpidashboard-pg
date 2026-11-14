@@ -94,6 +94,8 @@ export function LeadMailComposer({
       setText(leer);
       setFiles(new Set());
       router.refresh();
+      // Nächster Schritt: fragen, wie es weitergeht (components/next-step.tsx)
+      window.dispatchEvent(new CustomEvent("pg-lead-action", { detail: { leadId } }));
     });
 
   return (

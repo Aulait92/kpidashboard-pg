@@ -8,6 +8,8 @@ import { prisma } from "@/lib/prisma";
 import { getCallbackLeads } from "@/lib/whatsapp/outreach";
 import { getOrCreateBookingSlug } from "@/lib/calendar";
 import { appointmentScope, conversationScope, isAdvisor, leadScope, type TeamCtx } from "@/lib/team";
+import { listWithoutNextStep, type NoStepLead } from "@/lib/lead-next-step-server";
+import { APPOINTMENT_RESULT_AFTER_MS } from "@/lib/lead-next-step";
 
 const TZ = "Europe/Berlin";
 const DAY = 24 * 60 * 60 * 1000;
@@ -66,6 +68,8 @@ export type InboxData = {
   chats: InboxChat[];
   callbacks: InboxCallback[];
   bookingSlug: string | null;
+  /** Offene Leads ohne nächsten Schritt (lib/lead-next-step.ts), älteste zuerst; total = alle. */
+  noNextStep: { total: number; leads: NoStepLead[] };
 };
 
 export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
@@ -121,7 +125,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
         ...apptScope,
         status: "booked",
         leadId: { not: null },
-        startsAt: { lt: new Date(now.getTime() - 30 * 60 * 1000), gt: new Date(now.getTime() - 30 * DAY) },
+        startsAt: { lte: new Date(now.getTime() - APPOINTMENT_RESULT_AFTER_MS), gt: new Date(now.getTime() - 30 * DAY) },
       },
       orderBy: { startsAt: "desc" },
       take: 20,
@@ -160,6 +164,9 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
     }),
   ]);
   const followUpIds = new Set(followUps.map((f) => f.id));
+  // „X Leads ohne nächsten Schritt“: Termine ohne Ergebnis, die schon unter „Wie lief's?“ stehen, nicht doppelt
+  const noStep = await listWithoutNextStep(leadScope(ctx), { now, take: 30 });
+  const outcomeLeadIds = new Set(past.filter((a) => !POST_STATUSES.includes(a.lead?.status ?? "")).map((a) => a.leadId));
 
   const convIds = upcoming.map((a) => a.conversationId).filter((x): x is string => !!x);
   const convs = convIds.length
@@ -241,5 +248,6 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
       conversationId: c.conversationId,
     })),
     bookingSlug: cal?.status === "connected" ? await getOrCreateBookingSlug(customerId) : null,
+    noNextStep: { total: noStep.total, leads: noStep.leads.filter((l) => !outcomeLeadIds.has(l.leadId)) },
   };
 }

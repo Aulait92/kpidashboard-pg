@@ -1,6 +1,5 @@
 "use client";
 
-import { DISQUALIFY_REASONS } from "@/lib/lead-quality";
 import { LEAD_MAIL_EVENT } from "@/components/lead-mail";
 import { useProvisionRates } from "@/components/provision-context";
 import { useRouter } from "next/navigation";
@@ -32,6 +31,7 @@ import { formatPhone } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { CallOutcomeSheet, useCallReturn } from "@/components/call-outcome";
 import { AbschlussSheet, asksCloseValue } from "@/components/abschluss-sheet";
+import { attemptMessage, emitLeadAction, emitNotReachedOffer, LostSheet, useStepDone } from "@/components/next-step";
 
 // Kopf des Lead-Details: Status antippen → Phase wählen; darunter eine Reihe
 // mit den Aktionen. Alles Seltene steckt unter „Mehr".
@@ -73,7 +73,8 @@ export function LeadHeaderActions(p: Props) {
   const router = useRouter();
   const toast = useToast();
   const [, start] = useTransition();
-  const [open, setOpen] = useState<"phase" | "more" | "followup" | "win" | "storno" | "erase" | "lost" | "disq" | null>(null);
+  const [open, setOpen] = useState<"phase" | "more" | "followup" | "win" | "storno" | "erase" | "lost" | null>(null);
+  const { done: stepDone } = useStepDone();
   const [erasing, setErasing] = useState(false);
   const [note, setNote] = useState(p.followUpNote ?? "");
   const [date, setDate] = useState("");
@@ -89,9 +90,9 @@ export function LeadHeaderActions(p: Props) {
   }
 
   function setStatus(status: LeadStatus, label: string, closeValue?: number | null, disqualifyReason?: string, sparte?: string | null) {
-    // „Disqualifiziert“ fragt erst nach dem Grund (Ole, 13.11.2026)
-    if (status === "Disqualifiziert" && !disqualifyReason) {
-      setTimeout(() => setOpen("disq"), 0);
+    // Verloren (Kein Interesse, Disqualifiziert): Grund wählen, Warnung unter 6 Anrufversuchen (Ole, 14.11.2026)
+    if ((status === "Disqualifiziert" || status === "Kein Interesse") && !disqualifyReason) {
+      setTimeout(() => setOpen("lost"), 0);
       return;
     }
     start(async () => {
@@ -103,6 +104,7 @@ export function LeadHeaderActions(p: Props) {
       if (!res.ok) return toast.show({ message: res.error, tone: "error" });
       toast.show({ message: `Status: ${label}` });
       router.refresh();
+      emitLeadAction(p.leadId);
     });
   }
 
@@ -112,12 +114,15 @@ export function LeadHeaderActions(p: Props) {
       if (!res.ok) return toast.show({ message: res.error, tone: "error" });
       const undo = res.undo;
       toast.show({
-        message,
+        message: res.attempt ? attemptMessage(message, res.attempt) : message,
         ...(undo
           ? { actionLabel: "Rückgängig", onAction: () => start(async () => { await undoInboxAction(undo); router.refresh(); }) }
           : {}),
       });
       router.refresh();
+      // Nach „nicht erreicht“: Nachricht anbieten; sonst prüfen, ob es einen nächsten Schritt gibt
+      if (res.attempt && !res.attempt.offered) emitNotReachedOffer(p.leadId, p.name ?? "Lead", res.attempt);
+      else if (!res.attempt) emitLeadAction(p.leadId);
     });
   }
 
@@ -159,12 +164,6 @@ export function LeadHeaderActions(p: Props) {
   const stepPhases = p.phases.filter((ph) => !LOST_KEYS.has(ph.key) && ph.key !== "abschluss");
   const currentIdx = stepPhases.findIndex((ph) => ph.key === phase?.key);
   const days = p.daysInPhase ?? null;
-  const lostActions: SheetAction[] = [
-    ...p.phases.filter((ph) => LOST_KEYS.has(ph.key)).map((ph) => ({ label: ph.label, onSelect: () => setStatus(ph.defaultStatus, ph.label) })),
-    ...(!p.storniert && p.stornoOptions.length > 0
-      ? [{ label: "Stornieren (Lead reklamieren)", icon: Ban, tone: "danger" as const, onSelect: () => setTimeout(() => setOpen("storno"), 0) }]
-      : []),
-  ];
   const won = phase?.key === "abschluss";
   const lost = !!phase && LOST_KEYS.has(phase.key);
   const showBar = !p.storniert && !won && !lost && stepPhases.length > 1;
@@ -308,14 +307,17 @@ export function LeadHeaderActions(p: Props) {
       ) : null}
       <ActionSheet open={open === "phase"} onClose={() => setOpen(null)} title="Status ändern" actions={phaseActions} />
       <ActionSheet open={open === "more"} onClose={() => setOpen(null)} title={p.name ?? "Lead"} actions={moreActions} />
-      <ActionSheet open={open === "lost"} onClose={() => setOpen(null)} title="Warum verloren?" actions={lostActions} />
-      <ActionSheet
-        open={open === "disq"}
-        onClose={() => setOpen(null)}
-        title="Warum disqualifiziert?"
-        message="Hilft uns, Formular und Zielgruppe zu verbessern."
-        actions={DISQUALIFY_REASONS.map((r) => ({ label: r.label, onSelect: () => setStatus("Disqualifiziert" as LeadStatus, "Disqualifiziert", undefined, r.key) }))}
-      />
+      {open === "lost" ? (
+        <LostSheet
+          leadId={p.leadId}
+          name={p.name ?? "Lead"}
+          onClose={() => setOpen(null)}
+          onDone={(res, message) => {
+            stepDone(res, message);
+            emitLeadAction(p.leadId);
+          }}
+        />
+      ) : null}
 
       <AbschlussSheet
         open={open === "win"}

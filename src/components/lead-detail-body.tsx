@@ -1,4 +1,7 @@
-import { CalendarClock, ClipboardList, MessageCircle } from "lucide-react";
+import { AlertTriangle, CalendarClock, ClipboardList, MessageCircle } from "lucide-react";
+import { NextStepButton, NextStepPrompt } from "@/components/next-step";
+import { NEXT_STEP_LABEL, pastOpenAppointmentWhere } from "@/lib/lead-next-step";
+import { nextStepStateOf } from "@/lib/lead-next-step-server";
 import { EmpfehlungLeadCard } from "@/components/empfehlung/server";
 import { ButtonLink, buttonClass, Card, CardHeader } from "@/components/ui";
 import { RescheduleButton } from "@/components/reschedule-dialog";
@@ -198,7 +201,7 @@ export async function LeadDetailBody({
   // Löschen (Datenschutz): Inhaber oder Admin in der Kundenansicht.
   const canErase = !isAdvisor(team);
 
-  const [conv, nextAppt, cal] = await Promise.all([
+  const [conv, nextAppt, cal, stepState, pastAppt] = await Promise.all([
     prisma.conversation.findFirst({
       where: { leadId: lead.id },
       orderBy: { lastMessageAt: "desc" },
@@ -210,7 +213,11 @@ export async function LeadDetailBody({
       select: { id: true, startsAt: true, mode: true, meetUrl: true },
     }),
     prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true, bookingSlug: true } }),
+    // Nächster Schritt (lib/lead-next-step.ts): Hinweis im Kontakt und Dialog nach jeder Aktion
+    nextStepStateOf(lead.id),
+    prisma.appointment.findFirst({ where: { leadId: lead.id, ...pastOpenAppointmentWhere(new Date(nowMs())) }, orderBy: { startsAt: "desc" }, select: { id: true } }),
   ]);
+  const resultMissingAppt = stepState === "result_missing" ? (pastAppt?.id ?? null) : null;
   const storniert = !!lead.status?.toLowerCase().startsWith("storno");
   // Abschluss (Ole, 13.11.2026): Beitrag, geschätzte Provision und Police im Kontakt sehen
   const won = (lead.status ?? "").trim().toLowerCase() === "abschluss";
@@ -276,6 +283,16 @@ export async function LeadDetailBody({
         askAfterCall={newUi}
         mailReady={!!postfach}
       />
+      {stepState === "missing" || stepState === "result_missing" ? (
+        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900" data-next-step-hint>
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span className="min-w-0 flex-1">
+            <b>{NEXT_STEP_LABEL[stepState]}.</b> {stepState === "result_missing" ? "Der Termin ist vorbei. Wie ist er gelaufen?" : "Legen Sie fest, wie es weitergeht."}
+          </span>
+          {team.userId ? <NextStepButton leadId={lead.id} name={lead.name ?? "Lead"} source={lead.source} appointmentId={resultMissingAppt} resultMissing={stepState === "result_missing"} /> : null}
+        </div>
+      ) : null}
+      {team.userId ? <NextStepPrompt leadId={lead.id} name={lead.name ?? "Lead"} source={lead.source} resultMissingAppointmentId={resultMissingAppt} /> : null}
       {postfach ? (
         <LeadMailComposer
           leadId={lead.id}

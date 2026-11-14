@@ -5,6 +5,7 @@ import { useProvisionRates } from "@/components/provision-context";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import {
+  AlertTriangle,
   BellRing,
   CalendarDays,
   CalendarClock,
@@ -42,6 +43,8 @@ import type { InboxData } from "@/lib/inbox";
 import { CallOutcomeSheet, useCallReturn, type CallOutcomeTarget } from "@/components/call-outcome";
 import { AbschlussSheet, asksCloseValue } from "@/components/abschluss-sheet";
 import { RescheduleDialog } from "@/components/reschedule-dialog";
+import { attemptMessage, emitNotReachedOffer, LostSheet, NextStepSheet } from "@/components/next-step";
+import { NEXT_STEP_LABEL } from "@/lib/lead-next-step";
 
 // Startseite „Heute": vier Listen, die man leer arbeitet. Jede Zeile hat eine
 // sichtbare Aktion (Anrufen/Antworten); alles Weitere per Antippen im
@@ -55,6 +58,11 @@ const day = (iso: string) =>
 const ago = (iso: string) => {
   const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
   return d <= 0 ? "heute" : d === 1 ? "gestern" : `vor ${d} Tagen`;
+};
+
+const since = (iso: string) => {
+  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  return d <= 0 ? "seit heute" : d === 1 ? "seit gestern" : `seit ${d} Tagen`;
 };
 
 type CallItem = {
@@ -74,6 +82,8 @@ type SheetState =
   | { kind: "win"; name: string; source: string | null; save: (value: number | null, sparte: string | null) => void }
   | { kind: "date"; title: string; save: (date: string) => void }
   | { kind: "reschedule"; appointmentId: string }
+  | { kind: "lost"; key: string; leadId: string; name: string; appointmentId?: string | null }
+  | { kind: "step"; key: string; leadId: string; name: string; source: string | null; appointmentId: string | null }
   | null;
 
 export function TodayInbox({
@@ -124,7 +134,7 @@ export function TodayInbox({
       return n;
     });
 
-  function run(key: string, message: string, action: () => Promise<InboxResult>) {
+  function run(key: string, message: string, action: () => Promise<InboxResult>, who?: { leadId: string; name: string }) {
     hide(key);
     startTransition(async () => {
       const res = await action();
@@ -133,9 +143,11 @@ export function TodayInbox({
         toast.show({ message: res.error, tone: "error" });
         return;
       }
+      // Nach „nicht erreicht“: Versuch X von 6, nächster Versuch, Nachricht „Nicht erreicht“ anbieten
+      if (res.attempt && who && !res.attempt.offered) emitNotReachedOffer(who.leadId, who.name, res.attempt);
       const undo = res.undo;
       toast.show({
-        message,
+        message: res.attempt ? attemptMessage(message, res.attempt) : message,
         ...(undo
           ? {
               actionLabel: "Rückgängig",
@@ -197,7 +209,10 @@ export function TodayInbox({
       }
       return { ...m, i: m.i + 1 };
     });
-  const nothing = appointments.length + outcomes.length + chats.length + calls.length === 0;
+  const noStep = data.noNextStep.leads.filter((l) => !hidden.has(`n:${l.leadId}`));
+  const noStepTotal = Math.max(noStep.length, data.noNextStep.total - (data.noNextStep.leads.length - noStep.length));
+  const nothing = appointments.length + outcomes.length + chats.length + calls.length + noStep.length === 0;
+  const noStepHref = leadHref.startsWith("/buyer?") ? "/buyer/kontakte?ansicht=ohne-schritt" : "/buyer/leads?ansicht=ohne-schritt";
 
   const laterSheet = (c: CallItem) =>
     setSheet({
@@ -235,7 +250,7 @@ export function TodayInbox({
       actions.push({
         label: "Nicht erreicht",
         icon: PhoneMissed,
-        onSelect: () => run(c.key, `${c.name}: morgen wieder in der Liste`, () => callbackOutcomeResult(c.leadId, "not_reached")),
+        onSelect: () => run(c.key, `${c.name}: nicht erreicht`, () => callbackOutcomeResult(c.leadId, "not_reached"), { leadId: c.leadId, name: c.name }),
       });
     } else {
       actions.push({ label: "Erledigt", icon: Check, onSelect: () => run(c.key, `${c.name}: erledigt`, () => clearFollowUpResult(c.leadId)) });
@@ -256,7 +271,7 @@ export function TodayInbox({
           setTimeout(() => askWin(c.name, c.source, (v, sp) => run(c.key, `${c.name}: Abschluss`, () => callbackOutcomeResult(c.leadId, "won", v, sp))), 0),
       },
       { label: "Lead öffnen", icon: UserRound, href: leadUrl(c.leadId) },
-      { label: "Kein Interesse", icon: ThumbsDown, tone: "danger", onSelect: () => run(c.key, `${c.name}: kein Interesse`, () => callbackOutcomeResult(c.leadId, "lost")) },
+      { label: "Verloren", icon: ThumbsDown, tone: "danger", onSelect: () => setTimeout(() => setSheet({ kind: "lost", key: c.key, leadId: c.leadId, name: c.name }), 0) },
     );
     setSheet({ kind: "actions", title: c.name, message: c.reason, actions });
   };
@@ -269,6 +284,77 @@ export function TodayInbox({
 
   return (
     <div className="space-y-6">
+      {noStep.length > 0 ? (
+        <Card className="border-amber-200" data-no-next-step>
+          <div id="ohne-schritt" className="scroll-mt-20" />
+          <CardHeader
+            icon={AlertTriangle}
+            title={`${noStepTotal} ${noStepTotal === 1 ? "Lead" : "Leads"} ohne nächsten Schritt`}
+            actions={
+              <ButtonLink href={noStepHref} variant="ghost">
+                Alle ansehen
+              </ButtonLink>
+            }
+          />
+          <p className="border-b border-[color:var(--border)] px-5 pb-3 text-sm text-[color:var(--muted)]">
+            Jeder Lead braucht eine Wiedervorlage, einen Termin oder ein Ergebnis: Gewonnen oder Verloren.
+          </p>
+          <ul className="divide-y divide-[color:var(--border)]">
+            {(showAll ? noStep : noStep.slice(0, 5)).map((l) => {
+              const key = `n:${l.leadId}`;
+              const openStep = () => setSheet({ kind: "step", key, leadId: l.leadId, name: l.name, source: l.source, appointmentId: l.appointmentId });
+              return (
+                <TapRow key={l.leadId} className={sel(l.leadId)} onTap={() => openDetailOnDesktop(l.leadId) || openStep()}>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">{l.name}</div>
+                    <p className="truncate text-xs text-[color:var(--muted)]">
+                      <span className="font-medium text-amber-700">{NEXT_STEP_LABEL[l.resultMissing ? "result_missing" : "missing"]}</span>
+                      {` · ${l.status ?? "Offen"}, ${since(l.statusChangedAt)}`}
+                    </p>
+                    <span className="mt-1.5 flex flex-wrap gap-1" onClick={stop} data-no-step-actions>
+                      {[
+                        { days: 1, label: "Morgen", msg: "morgen" },
+                        { days: 3, label: "In 3 Tagen", msg: "in 3 Tagen" },
+                      ].map((b) => (
+                        <button
+                          key={b.days}
+                          type="button"
+                          onClick={() => run(key, `${l.name}: ${b.msg} wieder`, () => setFollowUpResult(l.leadId, { days: b.days }))}
+                          className="rounded-full border border-[color:var(--border)] px-2.5 py-0.5 text-xs font-semibold text-[color:var(--muted)] hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
+                        >
+                          {b.label}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setSheet({ kind: "lost", key, leadId: l.leadId, name: l.name, appointmentId: l.appointmentId })}
+                        className="rounded-full border border-rose-200 px-2.5 py-0.5 text-xs font-semibold text-rose-700 hover:bg-rose-50"
+                      >
+                        Verloren
+                      </button>
+                    </span>
+                  </div>
+                  <span onClick={stop}>
+                    <Button variant="primary" icon={ChevronRight} onClick={openStep}>
+                      {l.resultMissing ? "Ergebnis" : "Weiter"}
+                    </Button>
+                  </span>
+                  {more}
+                </TapRow>
+              );
+            })}
+          </ul>
+          {noStep.length > 5 && !showAll ? (
+            <button
+              type="button"
+              onClick={() => setShowAll(true)}
+              className="w-full border-t border-[color:var(--border)] py-2.5 text-xs font-semibold text-[color:var(--brand)] hover:bg-[color:var(--surface-sunken)]"
+            >
+              Alle {noStep.length} anzeigen
+            </button>
+          ) : null}
+        </Card>
+      ) : null}
       {nothing ? (
         <Card>
           <EmptyState icon={Check} title="Alles erledigt" text="Neue Aufgaben erscheinen hier von selbst." />
@@ -389,7 +475,7 @@ export function TodayInbox({
                         setTimeout(() => askWin(o.name, o.source, (v, sp) => run(key, `${o.name}: Abschluss`, () => appointmentOutcomeResult(o.id, "closed", v, sp))), 0),
                     },
                     { label: "Nicht erschienen", icon: UserX, onSelect: () => run(key, `${o.name}: steht jetzt bei Anrufen`, () => appointmentOutcomeResult(o.id, "no_show", null)) },
-                    { label: "Kein Interesse", icon: ThumbsDown, tone: "danger", onSelect: () => run(key, `${o.name}: kein Interesse`, () => appointmentOutcomeResult(o.id, "lost", null)) },
+                    { label: "Verloren", icon: ThumbsDown, tone: "danger", onSelect: () => setTimeout(() => setSheet({ kind: "lost", key, leadId: o.leadId, name: o.name, appointmentId: o.id }), 0) },
                   ],
                 });
               return (
@@ -518,10 +604,30 @@ export function TodayInbox({
         onClose={() => setOutcome(null)}
         onPick={(message, action) => {
           const key = outcome?.key;
-          if (key) run(key, message, action);
+          if (key) run(key, message, action, outcome ? { leadId: outcome.leadId, name: outcome.name } : undefined);
           if (callMode && key && callMode.queue[callMode.i]?.key === key) advance();
         }}
       />
+      {sheet?.kind === "lost" ? (
+        <LostSheet
+          leadId={sheet.leadId}
+          name={sheet.name}
+          appointmentId={sheet.appointmentId ?? null}
+          onClose={() => setSheet(null)}
+          onDone={(res, message) => run(sheet.key, message, async () => res, { leadId: sheet.leadId, name: sheet.name })}
+        />
+      ) : null}
+      {sheet?.kind === "step" ? (
+        <NextStepSheet
+          leadId={sheet.leadId}
+          name={sheet.name}
+          source={sheet.source}
+          appointmentId={sheet.appointmentId}
+          fallbackOnClose={false}
+          onClose={() => setSheet(null)}
+          onDone={(res, message) => run(sheet.key, message, async () => res, { leadId: sheet.leadId, name: sheet.name })}
+        />
+      ) : null}
       <ActionSheet
         open={sheet?.kind === "actions"}
         onClose={() => setSheet(null)}

@@ -18,7 +18,8 @@ import { formatDate, formatEUR } from "@/lib/format";
 import { closeValueField, closeValueLabel, sumProvision } from "@/lib/provision";
 import { asksCloseValue } from "@/components/abschluss-sheet";
 import { cn } from "@/lib/utils";
-import { DISQUALIFY_REASONS } from "@/lib/lead-quality";
+import { isLostStatus } from "@/lib/lead-lost";
+import { LostSheet, useStepDone } from "@/components/next-step";
 
 export type KanbanLead = {
   id: string;
@@ -124,7 +125,9 @@ export function KanbanBoard({
   const [dragLeadId, setDragLeadId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const [mobilePhase, setMobilePhase] = useState<string | null>(null);
-  const [disqLead, setDisqLead] = useState<{ id: string; name: string | null } | null>(null);
+  // Verloren (Kein Interesse, Disqualifiziert): Grund wählen, unter 6 Anrufversuchen warnen (lib/lead-lost.ts)
+  const [lostLead, setLostLead] = useState<{ id: string; name: string | null } | null>(null);
+  const { done: stepDone } = useStepDone();
   const [closeDialog, setCloseDialog] = useState<{
     leadId: string;
     leadName: string | null;
@@ -207,9 +210,9 @@ export function KanbanBoard({
       return;
     }
 
-    // „Disqualifiziert“: erst nach dem Grund fragen (Ole, 13.11.2026)
-    if (nextStatus === "Disqualifiziert") {
-      setDisqLead({ id: leadId, name: lead.name });
+    // Verloren (Kein Interesse, Disqualifiziert): erst nach dem Grund fragen, Warnung unter 6 Versuchen
+    if (isLostStatus(nextStatus)) {
+      setLostLead({ id: leadId, name: lead.name });
       return;
     }
 
@@ -375,20 +378,17 @@ export function KanbanBoard({
         ) : null}
       </div>
     </div>
-      <ActionSheet
-        open={!!disqLead}
-        onClose={() => setDisqLead(null)}
-        title={`Warum ist ${disqLead?.name ?? "der Lead"} disqualifiziert?`}
-        message="Hilft uns, Formular und Zielgruppe zu verbessern."
-        actions={DISQUALIFY_REASONS.map((r) => ({
-          label: r.label,
-          onSelect: () => {
-            const d = disqLead;
-            setDisqLead(null);
-            if (d) commitStatus(d.id, "Disqualifiziert" as LeadStatus, undefined, r.key);
-          },
-        }))}
-      />
+      {lostLead ? (
+        <LostSheet
+          leadId={lostLead.id}
+          name={lostLead.name ?? "Lead"}
+          onClose={() => setLostLead(null)}
+          onDone={(res, message, status) => {
+            if (res.ok && status) setLeads((prev) => prev.map((l) => (l.id === lostLead.id ? { ...l, status, noNextStep: false } : l)));
+            stepDone(res, message);
+          }}
+        />
+      ) : null}
       {closeDialog ? (
         <CloseValueDialog
           leadName={closeDialog.leadName}

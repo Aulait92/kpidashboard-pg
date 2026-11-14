@@ -23,6 +23,8 @@ export type CallAttemptResult = {
   keptFollowUp: boolean;
   /** Nicht-erreicht-Abfolge schickt automatisch eine WhatsApp */
   auto: boolean;
+  /** Nur im Browser: Nachricht „Nicht erreicht“ wurde schon angeboten (kein zweites Angebot) */
+  offered?: boolean;
 };
 
 /**

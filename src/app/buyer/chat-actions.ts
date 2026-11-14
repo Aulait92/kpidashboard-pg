@@ -19,9 +19,11 @@ async function requireBuyer() {
   return { ...ctx, userId: ctx.userId, conv: conversationScope(ctx) };
 }
 
-function chatUrl(conversationId: string, err?: string) {
+function chatUrl(conversationId: string, err?: string, askNextStep = false) {
   const p = new URLSearchParams({ c: conversationId });
   if (err) p.set("err", err);
+  // Chat übernommen: im Chat nach dem nächsten Schritt fragen (components/next-step.tsx)
+  if (askNextStep) p.set("schritt", "1");
   return `/buyer/chats?${p.toString()}`;
 }
 
@@ -41,7 +43,7 @@ export async function toggleBotBuyerAction(formData: FormData): Promise<void> {
   });
   await recordUsage("action", conv.botActive ? "chat.takeover" : "chat.bot_on");
   revalidatePath("/buyer/chats");
-  redirect(chatUrl(conv.id));
+  redirect(chatUrl(conv.id, undefined, conv.botActive));
 }
 
 /**
@@ -82,7 +84,7 @@ export async function sendReplyBuyerAction(formData: FormData): Promise<void> {
     failed = true;
   }
   revalidatePath("/buyer/chats");
-  redirect(chatUrl(conv.id, failed ? "send" : undefined));
+  redirect(chatUrl(conv.id, failed ? "send" : undefined, !failed));
 }
 
 /** „Braucht dich" als erledigt markieren (z. B. nach einem Anruf). */
