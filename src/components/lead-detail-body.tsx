@@ -1,6 +1,7 @@
 import { CalendarClock, ClipboardList, MessageCircle } from "lucide-react";
 import { EmpfehlungLeadCard } from "@/components/empfehlung/server";
-import { ButtonLink, Card, CardHeader } from "@/components/ui";
+import { ButtonLink, buttonClass, Card, CardHeader } from "@/components/ui";
+import { RescheduleButton } from "@/components/reschedule-dialog";
 import { formatPhone } from "@/lib/format";
 import { pipelinePhasesFor, WHATSAPP_STATUS_LABELS } from "@/lib/products";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
@@ -201,7 +202,7 @@ export async function LeadDetailBody({
     prisma.appointment.findFirst({
       where: { leadId: lead.id, status: "booked", startsAt: { gt: twoHoursAgo() } },
       orderBy: { startsAt: "asc" },
-      select: { startsAt: true, mode: true, meetUrl: true, manageToken: true },
+      select: { id: true, startsAt: true, mode: true, meetUrl: true },
     }),
     prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true, bookingSlug: true } }),
   ]);
@@ -335,10 +336,10 @@ export async function LeadDetailBody({
                   Videocall
                 </ButtonLink>
               ) : null}
-              {nextAppt.manageToken ? (
-                <ButtonLink href={`/book/manage/${nextAppt.manageToken}`} external>
+              {nextAppt.startsAt.getTime() > nowMs() ? (
+                <RescheduleButton appointmentId={nextAppt.id} className={buttonClass("secondary", "sm")}>
                   Verschieben
-                </ButtonLink>
+                </RescheduleButton>
               ) : null}
             </div>
           ) : null}

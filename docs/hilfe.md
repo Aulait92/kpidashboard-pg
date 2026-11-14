@@ -44,7 +44,7 @@ Seiten aus der Liste „Seiten“ unten.
 
 - Oben vier Kacheln: Chats, Termine, Wie lief's?, Anrufen. Antippen springt zum Abschnitt.
 - **Braucht dich (Chats):** Leads, die geantwortet haben und auf Sie warten. „Antworten“ oder „Erledigt“.
-- **Termine:** Videocall starten, Anrufen, Chat öffnen, Lead öffnen, Verschieben/absagen.
+- **Termine:** Videocall starten, Anrufen, Chat öffnen, Lead öffnen, Verschieben oder absagen (öffnet ein Fenster direkt in der App, siehe „Termine“).
 - **Wie lief's?:** Nach einem Termin tragen Sie das Ergebnis ein: Angebot gesendet, Abschluss (mit Beitrag, siehe unten „Abschluss und Provision“),
   Nicht erschienen (kommt auf die Anrufliste) oder Kein Interesse. Den Rest (Phase, Wiedervorlage) erledigt die App.
 - **Anrufliste:** Rückrufe und fällige Wiedervorlagen, „Überfällig“ markiert. Aktionen: Anrufen, Nicht erreicht,
@@ -68,7 +68,7 @@ Seiten aus der Liste „Seiten“ unten.
 - Eigene Kacheln für **E-Mail** und **Wiedervorlage**. Unter „Mehr“ nur noch, was nicht als Kachel da ist:
   **Postfach verbinden** (ohne verbundenes Postfach), **Stornieren/Reklamieren** (bei gekauften Leads),
   **Daten löschen (DSGVO)** (nur Inhaber).
-- Karte zum nächsten Termin (Videocall, Verschieben) und die Zusammenfassung des Assistenten.
+- Karte zum nächsten Termin (Videocall, Verschieben oder absagen im Fenster) und die Zusammenfassung des Assistenten.
 - Inhaber können unter **Zuständig** den Lead einem Berater geben – der bekommt eine Push-Nachricht.
 - „Angaben zum Lead“: alle Antworten aus dem Formular. Darunter Notizen (speichern sich von selbst).
 - **Diktieren:** Auf dem Handy bei „Notizen“ auf „Diktieren“ tippen, dann unten in der Tastatur auf das Mikrofon und sprechen. Die Spracherkennung macht das Handy selbst, die App schickt keine Aufnahmen an Dritte.
@@ -91,7 +91,7 @@ Seiten aus der Liste „Seiten“ unten.
   freigegebene Vorlagen raus. Dann erscheint „Nachfassen senden“ statt des Textfelds. Antwortet der Kunde,
   können Sie wieder frei schreiben.
 - „Erledigt“ entfernt den Chat aus „Braucht dich“.
-- Bei Terminen im Chat: Video-Link, Verschieben, Absagen.
+- Bei Terminen im Chat: Video-Link, Verschieben, Termin absagen (beides im Fenster, Absagen mit Rückfrage).
 - Rechts bzw. oben: Kontakt, Angaben aus dem Formular, „Lead öffnen“.
 
 ## Der WhatsApp-Assistent
@@ -144,7 +144,15 @@ Seiten aus der Liste „Seiten“ unten.
 - Buchung über „Termin“ beim Lead: Die Buchungsseite zeigt nur Ihre Lead-Zeiten (unter „Mein Kalender“),
   die in Ihrem Kalender noch frei sind, Telefon oder Video. Das gilt auch, wenn ein Lead selbst bucht
   oder verschiebt.
-- Verschieben/Absagen: auf „Heute“ oder beim Lead an der Termin-Karte. Der Kunde bekommt die Änderung automatisch.
+- **Verschieben oder absagen:** auf „Heute“ (Termin antippen → **Verschieben oder absagen**), beim Lead an der
+  Termin-Karte (**Verschieben**) oder im Chat. Es öffnet sich ein Fenster direkt in der App (auf dem Handy von unten):
+  - Oben steht der aktuelle Termin (Tag, Uhrzeit, Telefonat oder Videocall, Dauer).
+  - Darunter die freien Zeiten: nur Ihre Lead-Zeiten, die im Kalender noch frei sind (wie bei der Buchung, mit
+    Abwesenheiten und Team). Mit den Pfeilen blättern Sie durch die Tage, dann eine Uhrzeit antippen.
+  - **Verschieben** gilt sofort, unten erscheint eine kurze Bestätigung. Der Termin behält seine Dauer, der
+    Kalendereintrag wird aktualisiert, der Kontakt bekommt die neue Zeit per WhatsApp und E-Mail (soweit vorhanden).
+  - **Termin absagen** fragt einmal nach. Danach wird der Kalendereintrag gelöscht und der Kontakt bekommt eine Absage per E-Mail.
+  - Berater sehen und ändern nur Termine ihrer eigenen Leads.
 - Leads können über ihren Link selbst verschieben oder absagen.
 - **Ein Kalender je Person:** Unter „Mein Kalender“ → „Ihr Kalender“ verbinden Sie Google oder Outlook. Der
   Inhaber verbindet den Kalender der Agentur, jeder Berater im Team seinen eigenen. Die Agentur ist für Termine

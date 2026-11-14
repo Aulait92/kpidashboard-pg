@@ -13,8 +13,8 @@ import { prisma } from "@/lib/prisma";
 import { displayProduct, statusLabel, statusToneClass } from "@/lib/products";
 import { hasWhatsAppInbox, showChatsTeaser } from "@/lib/whatsapp/access";
 import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
+import { RescheduleButton } from "@/components/reschedule-dialog";
 import {
-  cancelAppointmentBuyerAction,
   followupBuyerAction,
   markChatDoneBuyerAction,
   sendReplyBuyerAction,
@@ -211,7 +211,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
           ],
         },
         orderBy: { startsAt: "asc" },
-        select: { id: true, startsAt: true, mode: true, meetUrl: true, manageToken: true },
+        select: { id: true, startsAt: true, mode: true, meetUrl: true },
       })
     : [];
   const formAnswers = parseFormAnswers(active?.lead?.formData);
@@ -270,23 +270,16 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                     Video-Link
                   </a>
                 ) : null}
-                {a.manageToken ? (
-                  <a
-                    href={`/book/manage/${a.manageToken}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-semibold text-blue-700 underline"
-                  >
-                    Verschieben
-                  </a>
+                {a.startsAt.getTime() > nowMs() ? (
+                  <>
+                    <RescheduleButton appointmentId={a.id} className="font-semibold text-blue-700 underline">
+                      Verschieben
+                    </RescheduleButton>
+                    <RescheduleButton appointmentId={a.id} initialStep="cancel" className="font-medium text-rose-700 hover:underline">
+                      Termin absagen
+                    </RescheduleButton>
+                  </>
                 ) : null}
-                <form action={cancelAppointmentBuyerAction}>
-                  <input type="hidden" name="appointmentId" value={a.id} />
-                  <input type="hidden" name="conversationId" value={active.id} />
-                  <SubmitButton pendingLabel="sagt ab …" className="font-medium text-rose-700 hover:underline">
-                    Termin absagen
-                  </SubmitButton>
-                </form>
               </div>
             </div>
           ))

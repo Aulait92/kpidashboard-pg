@@ -27,7 +27,6 @@ export type InboxAppointment = {
   isToday: boolean;
   mode: string;
   meetUrl: string | null;
-  manageToken: string | null;
   leadId: string | null;
   conversationId: string | null;
   name: string;
@@ -109,7 +108,6 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
         startsAt: true,
         mode: true,
         meetUrl: true,
-        manageToken: true,
         leadId: true,
         conversationId: true,
         lead: { select: { name: true, phone: true } },
@@ -206,7 +204,6 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
         isToday: a.startsAt.getTime() < todayStart.getTime() + DAY,
         mode: a.mode,
         meetUrl: a.meetUrl,
-        manageToken: a.manageToken,
         leadId: a.leadId,
         conversationId: a.conversationId,
         name: a.lead?.name ?? conv?.contactName ?? "Lead",
