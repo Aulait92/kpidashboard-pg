@@ -32,14 +32,19 @@ export default async function LinkedInPage({ searchParams }: { searchParams: Pro
   const [settings, conn, drafts, planned, results, photos] = await Promise.all([
     getSettings(),
     prisma.linkedInConnection.findFirst({ orderBy: { updatedAt: "desc" }, select: { name: true, expiresAt: true, scopes: true, status: true, lastError: true } }),
-    prisma.linkedInPost.findMany({ where: { status: { in: ["entwurf", "fehler"] } }, orderBy: [{ scheduledAt: "asc" }, { createdAt: "asc" }], take: 30 }),
+    prisma.linkedInPost.findMany({
+      where: { status: { in: ["entwurf", "fehler"] } },
+      orderBy: [{ scheduledAt: "asc" }, { createdAt: "asc" }],
+      take: 30,
+      include: { photo: { select: { generated: true } } },
+    }),
     prisma.linkedInPost.findMany({ where: { status: { in: ["freigegeben", "sendet"] } }, orderBy: { scheduledAt: "asc" }, take: 30 }),
     prisma.linkedInPost.findMany({
       where: { status: { in: ["veroeffentlicht", "importiert"] }, publishedAt: { gte: new Date(now.getTime() - 120 * DAY) } },
       orderBy: { publishedAt: "desc" },
       take: 150,
     }),
-    prisma.linkedInPhoto.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, description: true, _count: { select: { posts: true } } } }),
+    prisma.linkedInPhoto.findMany({ where: { generated: false }, orderBy: { createdAt: "desc" }, select: { id: true, description: true, _count: { select: { posts: true } } } }),
   ]);
   const connected = !!conn && conn.expiresAt > now && conn.status === "ok";
   const share = settings.accountIcpShare;
@@ -51,7 +56,7 @@ export default async function LinkedInPage({ searchParams }: { searchParams: Pro
   const steps = [
     { done: connected, text: "LinkedIn verbinden" },
     { done: !!settings.about.trim(), text: "„Über mich“ ausfüllen (Einstellungen unten)" },
-    { done: photos.length > 0, text: "Fotos hochladen" },
+    { done: photos.length > 0, text: "Fotos hochladen (von dir oder Beweis-Screenshots, z. B. WhatsApp eines Kunden; ohne Fotos nimmt die KI KI-Bilder oder Grafiken)" },
     { done: !!settings.lastImportAt || (!!conn && hasAnalyticsScope(conn.scopes)), text: "Statistik hochladen (damit die KI weiß, was in der Zielgruppe ankommt)" },
   ];
   const banner = li ? BANNER[li] : null;
@@ -114,7 +119,9 @@ export default async function LinkedInPage({ searchParams }: { searchParams: Pro
               key={d.id}
               id={d.id}
               text={d.text}
-              photoId={d.photoId}
+              image={d.photoId ?? (d.useGraphic ? "grafik" : "keins")}
+              aiPhotoId={d.photo?.generated ? d.photoId : null}
+              graphic={d.graphic}
               photos={photoOptions}
               connected={connected}
               slot={fmt(d.scheduledAt)}
@@ -136,7 +143,7 @@ export default async function LinkedInPage({ searchParams }: { searchParams: Pro
               <li key={p.id} className="flex items-center gap-3 px-4 py-3 text-sm">
                 <span className="w-32 shrink-0 font-semibold">{fmt(p.scheduledAt)}</span>
                 <span className="min-w-0 flex-1 truncate">{p.text.split("\n")[0]}</span>
-                {p.photoId ? <span className="text-xs text-[color:var(--muted)]">mit Foto</span> : null}
+                {p.photoId ? <span className="text-xs text-[color:var(--muted)]">mit Bild</span> : p.useGraphic ? <span className="text-xs text-[color:var(--muted)]">mit Grafik</span> : null}
                 {p.status === "freigegeben" ? <UnapproveButton id={p.id} /> : <span className="text-xs">wird gesendet …</span>}
               </li>
             ))}
@@ -209,7 +216,9 @@ export default async function LinkedInPage({ searchParams }: { searchParams: Pro
 
       <section className="space-y-3 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5">
         <h2 className="text-lg font-semibold">Fotos von dir</h2>
-        <p className="text-sm text-[color:var(--muted)]">Die KI wählt je Post ein passendes Foto (oder keins). Beschreibungen schreibt sie beim Hochladen selbst – bei Bedarf anpassen, z. B. „auf der DKM am Stand“.</p>
+        <p className="text-sm text-[color:var(--muted)]">
+          Fotos von dir und Beweis-Screenshots (z. B. WhatsApp eines Kunden mit Ergebnis, Namen geschwärzt). Die KI wählt je Post ein passendes Bild. Passt keins, erzeugt sie ein fotorealistisches KI-Bild oder eine Text-Grafik. Beschreibungen schreibt sie beim Hochladen selbst; bei Bedarf anpassen.
+        </p>
         <PhotoUpload />
         {photos.length ? (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
@@ -232,6 +241,7 @@ export default async function LinkedInPage({ searchParams }: { searchParams: Pro
             about={settings.about}
             icp={settings.icp}
             icpKeywords={settings.icpKeywords}
+            trustNotes={settings.trustNotes}
           />
         </div>
       </details>

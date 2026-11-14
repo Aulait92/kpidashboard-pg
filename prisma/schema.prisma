@@ -2826,6 +2826,8 @@ model LinkedInSettings {
   icpKeywords String   @default("versicherung, insurance, makler, broker, vermittler, agentur, generalvertret, hauptvertret, finanzberat, financial advisor, allianz, ergo, axa, signal iduna, debeka, hallesche, gothaer")
   // Anteil der Zielgruppe an allen Zuschauern (aus dem Profil-Export), Ersatz, wenn je Post nichts vorliegt
   accountIcpShare Float?
+  // Trust-Material von Ole (z. B. freigegebene Kundenstimmen, Erfolge) – nur das darf als Fakt/Zitat in Posts
+  trustNotes  String   @default("")
   // Uhrzeit (deutsche Zeit), ab der die Entwürfe für den nächsten Tag geschrieben werden
   draftHour   Int      @default(17)
   lastImportAt DateTime?
@@ -2860,7 +2862,10 @@ model LinkedInPost {
   metricsSource  String?
   // Anteil der Zielgruppe an den Zuschauern dieses Posts (0–1, aus dem Post-Export)
   icpShare       Float?
-  // Foto aus der Fotoablage (optional); bei Löschung des Fotos bleibt der Post ohne Bild
+  // Text-Grafik (Kernaussage groß auf Blau, ohne Illustration), wenn kein Foto/KI-Bild
+  graphic        String?
+  useGraphic     Boolean   @default(false)
+  // Foto aus der Fotoablage oder KI-Bild (optional); bei Löschung bleibt der Post ohne Bild
   photoId        String?
   photo          LinkedInPhoto? @relation(fields: [photoId], references: [id], onDelete: SetNull)
   lastError      String?
@@ -2879,6 +2884,8 @@ model LinkedInPhoto {
   size        Int
   data        Bytes
   description String         @default("")
+  // true = KI-Bild zu einem Entwurf (nicht in der Fotoablage gezeigt)
+  generated   Boolean        @default(false)
   createdAt   DateTime       @default(now())
   posts       LinkedInPost[]
 }

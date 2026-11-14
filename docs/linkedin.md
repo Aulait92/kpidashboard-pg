@@ -1,6 +1,6 @@
 # LinkedIn: Posts fürs persönliche Profil (Ole, 14.11.2026)
 
-Admin → Vertrieb → **LinkedIn** (`/admin/vertrieb/linkedin`).
+Admin → Marketing → **LinkedIn** (`/admin/marketing/linkedin`).
 
 ## Was passiert
 1. Täglich ab 17 Uhr (einstellbar) schreibt die KI die Entwürfe für den nächsten Posting-Tag
@@ -12,6 +12,18 @@ Admin → Vertrieb → **LinkedIn** (`/admin/vertrieb/linkedin`).
    automatisch nach 1, 3, 7 und 14 Tagen.
 5. Die KI lernt daraus: bester Post = höchste **Zielgruppen-Reichweite** (Impressionen × Anteil
    Versicherungsvermittler unter den Zuschauern), jeder Entwurf testet genau eine Veränderung (Hypothese).
+
+Texte immer ohne Gedankenstriche und ohne Hashtags (Regel für die KI + Bereinigung vor dem Speichern/Freigeben).
+Stil wie Oles beste Posts: kurze Ein-Satz-Absätze, konkrete Zahlen/Fälle, Pfeile (→) für Rechnungen, Schluss-Frage + „Schreib mir eine DM“.
+
+**Bilder** je Post: eigenes Foto/Beweis-Screenshot aus der Fotoablage → sonst fotorealistisches KI-Bild
+(gpt-image-1, keine Illustrationen, kein Text im Bild, keine echten Personen/Marken) → sonst Text-Grafik
+(Kernaussage auf Blau mit Logo, nur Typografie). Beim Freigeben wählbar: Foto, KI-Bild, Grafik oder keins.
+
+**Trust-Posts**: Die KI bekommt echte, zusammengefasste Zahlen aus der Software (Leads und Termine der letzten
+30 Tage, Reaktionszeit des Assistenten, NPS, Neuigkeiten; ohne Kundennamen) und Oles „Trust-Material“
+(Einstellungen). Kunden-Cases/Zitate nur aus dem Trust-Material, Namen nur mit ausdrücklicher Freigabe.
+Bei mehreren Posts am Tag ist mindestens einer ein Trust-Post.
 
 Ziel ist Reichweite bei Versicherungsvermittlern, nicht Reichweite insgesamt. Zielgruppe und
 Erkennungsbegriffe (Branche/Beruf) stehen in den Einstellungen.

@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
   experimental: { serverActions: { bodySizeLimit: "16mb" } },
   // Kein „X-Powered-By: Next.js“ (verrät unnötig den Technik-Stack)
   poweredByHeader: false,
+  // Marketing hat eigene Seiten (Ole, 14.11.2026): alte Vertriebs-Adressen weiterleiten (Push-Links, Lesezeichen)
+  async redirects() {
+    return ["linkedin", "empfehlungen", "unterlagen"].map((p) => ({
+      source: `/admin/vertrieb/${p}/:rest*`,
+      destination: `/admin/marketing/${p}/:rest*`,
+      permanent: false,
+    }));
+  },
   // Sicherheits-Header für alle Antworten (src/lib/security-headers.ts).
   // CSP zunächst nur „Report-Only“; erzwingen mit CSP_ENFORCE=on (zur Build-Zeit).
   async headers() {

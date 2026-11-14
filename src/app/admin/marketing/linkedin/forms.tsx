@@ -31,11 +31,15 @@ function Note({ res }: { res: LiResult | null | undefined }) {
 
 const COUNT_LIMIT = 3000;
 
-/** Entwurf: Text bearbeiten, Foto wählen, freigeben (zur Uhrzeit oder sofort) oder verwerfen. */
+/** Entwurf: Text bearbeiten, Bild wählen (Foto, KI-Bild, Grafik, keins), freigeben oder verwerfen. */
 export function DraftCard(props: {
   id: string;
   text: string;
-  photoId: string | null;
+  /** aktuelle Bildwahl: "keins" | "grafik" | Foto-ID */
+  image: string;
+  /** KI-Bild dieses Entwurfs (falls erzeugt) */
+  aiPhotoId: string | null;
+  graphic: string | null;
   photos: PhotoOption[];
   connected: boolean;
   slot: string;
@@ -45,7 +49,8 @@ export function DraftCard(props: {
 }) {
   const router = useRouter();
   const [text, setText] = useState(props.text);
-  const [photoId, setPhotoId] = useState<string | null>(props.photoId);
+  const [image, setImage] = useState<string>(props.image);
+  const [graphic, setGraphic] = useState(props.graphic ?? "");
   const [res, setRes] = useState<LiResult | null>(null);
   const [pending, start] = useTransition();
   const run = (fn: () => Promise<LiResult>) =>
@@ -55,6 +60,13 @@ export function DraftCard(props: {
       router.refresh();
     });
   const lines = text.split("\n");
+  const tile = (active: boolean) =>
+    cn("h-20 w-20 shrink-0 overflow-hidden rounded-[var(--radius-md)] border", active ? "border-[color:var(--brand)] ring-2 ring-[color:var(--brand)]" : "border-[color:var(--border)]");
+  const graphicSrc = `/api/linkedin/grafik/${props.id}?t=${encodeURIComponent(graphic)}`;
+  // Vorher speichern, damit eine geänderte Grafik-Aussage beim Freigeben gilt
+  const saveFirst = async () => {
+    if (graphic !== (props.graphic ?? "")) await saveDraftAction(props.id, text, image, graphic);
+  };
   return (
     <article className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 shadow-[var(--shadow-sm)]" data-li-draft={props.id}>
       <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
@@ -77,40 +89,47 @@ export function DraftCard(props: {
       <p className={cn("mt-1 text-right text-xs", text.length > COUNT_LIMIT ? "text-rose-700" : "text-[color:var(--muted)]")}>
         {text.length} / {COUNT_LIMIT} Zeichen · vor „mehr anzeigen“: {lines.slice(0, 2).join(" ").slice(0, 60)}…
       </p>
-      {props.photos.length ? (
-        <div className="mt-3">
-          <p className="mb-1.5 text-xs font-semibold text-[color:var(--muted)]">Foto</p>
-          <div className="flex gap-2 overflow-x-auto pb-1" role="radiogroup" aria-label="Foto">
-            <button
-              type="button"
-              onClick={() => setPhotoId(null)}
-              className={cn(
-                "flex h-16 w-16 shrink-0 items-center justify-center rounded-[var(--radius-md)] border text-[color:var(--muted)]",
-                !photoId ? "border-[color:var(--brand)] ring-2 ring-[color:var(--brand)]" : "border-[color:var(--border)]",
-              )}
-              aria-pressed={!photoId}
-              title="Ohne Foto"
-            >
-              <ImageOff className="h-5 w-5" />
+      <div className="mt-3">
+        <p className="mb-1.5 text-xs font-semibold text-[color:var(--muted)]">Bild</p>
+        <div className="flex gap-2 overflow-x-auto pb-1" role="radiogroup" aria-label="Bild">
+          <button type="button" onClick={() => setImage("keins")} className={cn(tile(image === "keins"), "flex items-center justify-center text-[color:var(--muted)]")} aria-pressed={image === "keins"} title="Ohne Bild">
+            <ImageOff className="h-5 w-5" />
+          </button>
+          {graphic.trim() ? (
+            <button type="button" onClick={() => setImage("grafik")} className={tile(image === "grafik")} aria-pressed={image === "grafik"} title="Text-Grafik">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={graphicSrc} alt="Text-Grafik" className="h-full w-full object-cover" loading="lazy" />
             </button>
-            {props.photos.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => setPhotoId(f.id)}
-                className={cn("h-16 w-16 shrink-0 overflow-hidden rounded-[var(--radius-md)] border", photoId === f.id ? "border-[color:var(--brand)] ring-2 ring-[color:var(--brand)]" : "border-[color:var(--border)]")}
-                aria-pressed={photoId === f.id}
-                title={f.description}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/api/linkedin/foto/${f.id}`} alt={f.description} className="h-full w-full object-cover" loading="lazy" />
-              </button>
-            ))}
-          </div>
+          ) : null}
+          {props.aiPhotoId ? (
+            <button type="button" onClick={() => setImage(props.aiPhotoId!)} className={cn(tile(image === props.aiPhotoId), "relative")} aria-pressed={image === props.aiPhotoId} title="KI-Bild">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/api/linkedin/foto/${props.aiPhotoId}`} alt="KI-Bild" className="h-full w-full object-cover" loading="lazy" />
+              <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 text-[10px] font-semibold text-white">KI</span>
+            </button>
+          ) : null}
+          {props.photos.map((f) => (
+            <button key={f.id} type="button" onClick={() => setImage(f.id)} className={tile(image === f.id)} aria-pressed={image === f.id} title={f.description}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/api/linkedin/foto/${f.id}`} alt={f.description} className="h-full w-full object-cover" loading="lazy" />
+            </button>
+          ))}
         </div>
-      ) : null}
+        {image === "grafik" || !graphic.trim() ? (
+          <label className="mt-2 block text-xs text-[color:var(--muted)]">
+            Aussage der Grafik
+            <input value={graphic} onChange={(e) => setGraphic(e.target.value.slice(0, 120))} className="mt-1 w-full rounded border border-[color:var(--border)] px-2 py-1.5 text-sm text-[color:var(--foreground)]" placeholder="z. B. 100 Leads → 12 Abschlüsse" />
+          </label>
+        ) : null}
+      </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <Button variant="primary" size="md" icon={pending ? Loader2 : Check} disabled={pending} onClick={() => run(() => approveAction(props.id, text, photoId))} data-li-approve>
+        <Button variant="primary" size="md" icon={pending ? Loader2 : Check} disabled={pending} onClick={() =>
+            run(async () => {
+              await saveFirst();
+              return approveAction(props.id, text, image);
+            })
+          }
+          data-li-approve>
           Freigeben
         </Button>
         <Button
@@ -119,12 +138,16 @@ export function DraftCard(props: {
           disabled={pending || !props.connected}
           title={props.connected ? undefined : "Erst LinkedIn verbinden"}
           onClick={() => {
-            if (confirm("Jetzt sofort auf LinkedIn veröffentlichen?")) run(() => approveAction(props.id, text, photoId, true));
+            if (confirm("Jetzt sofort auf LinkedIn veröffentlichen?"))
+              run(async () => {
+                await saveFirst();
+                return approveAction(props.id, text, image, true);
+              });
           }}
         >
           Jetzt posten
         </Button>
-        <Button size="md" variant="ghost" disabled={pending} onClick={() => run(() => saveDraftAction(props.id, text, photoId))}>
+        <Button size="md" variant="ghost" disabled={pending} onClick={() => run(() => saveDraftAction(props.id, text, image, graphic))}>
           Speichern
         </Button>
         <Button size="md" variant="ghost" icon={Trash2} disabled={pending} onClick={() => run(() => discardAction(props.id))}>
@@ -194,6 +217,7 @@ export function SettingsForm(props: {
   about: string;
   icp: string;
   icpKeywords: string;
+  trustNotes: string;
 }) {
   const [res, action, pending] = useActionState(saveSettingsAction, {});
   return (
@@ -206,6 +230,13 @@ export function SettingsForm(props: {
         <span className="text-sm font-semibold">Über mich</span>
         <span className="block text-xs text-[color:var(--muted)]">Wer du bist, was du erlebt hast, deine Haltung, Tonfall (Du/Sie). Nur was hier steht, darf die KI als Fakt verwenden.</span>
         <textarea name="about" defaultValue={props.about} rows={6} className="mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--border)] p-3 text-sm" placeholder="z. B. Gründer von performancegrowth, vorher … Ich schreibe per Du, direkt, ohne Floskeln …" />
+      </label>
+      <label className="block">
+        <span className="text-sm font-semibold">Trust-Material</span>
+        <span className="block text-xs text-[color:var(--muted)]">
+          Echte Kunden-Cases, Ergebnisse, Kundenstimmen. Nur was hier steht, darf die KI als Case oder Zitat verwenden. Namen nur, wenn du sie ausdrücklich freigibst (z. B. „Name darf genannt werden“). Zahlen aus der Software (Leads, Termine, Reaktionszeit, NPS) kommen automatisch dazu.
+        </span>
+        <textarea name="trustNotes" defaultValue={props.trustNotes} rows={6} className="mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--border)] p-3 text-sm" placeholder="z. B. Allianz-Agentur, Tierkrankenversicherung Katze: 100 Leads → 12 Abschlüsse → 4.300 € Nettoprämie, Provision knapp 2.500 € (WhatsApp vom Kunden liegt als Screenshot in den Fotos)." />
       </label>
       <label className="block">
         <span className="text-sm font-semibold">Zielgruppe erkennen an (Branche/Beruf in den LinkedIn-Zuschauerdaten)</span>

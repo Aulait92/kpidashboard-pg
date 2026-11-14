@@ -15,7 +15,7 @@ export async function runLinkedIn(now = new Date()) {
     return null;
   });
   if (published?.failed) {
-    await sendToAdmins({ title: "LinkedIn: Post nicht veröffentlicht", body: "Bitte in Vertrieb → LinkedIn ansehen.", url: "/admin/vertrieb/linkedin", tag: "linkedin-error" }).catch(() => null);
+    await sendToAdmins({ title: "LinkedIn: Post nicht veröffentlicht", body: "Bitte in Marketing → LinkedIn ansehen.", url: "/admin/marketing/linkedin", tag: "linkedin-error" }).catch(() => null);
   }
   const metrics = await refreshMetrics(now).catch((e: unknown) => {
     reportError(e, "linkedin-metrics");
@@ -25,7 +25,7 @@ export async function runLinkedIn(now = new Date()) {
   const conn = await prisma.linkedInConnection.findFirst({ where: { remindedAt: null, expiresAt: { lt: new Date(now.getTime() + 7 * DAY) } } });
   if (conn) {
     await prisma.linkedInConnection.update({ where: { id: conn.id }, data: { remindedAt: now } });
-    await sendToAdmins({ title: "LinkedIn bald neu verbinden", body: "Der Zugang läuft in wenigen Tagen ab – ein Klick genügt.", url: "/admin/vertrieb/linkedin", tag: "linkedin-reconnect" }).catch(() => null);
+    await sendToAdmins({ title: "LinkedIn bald neu verbinden", body: "Der Zugang läuft in wenigen Tagen ab – ein Klick genügt.", url: "/admin/marketing/linkedin", tag: "linkedin-reconnect" }).catch(() => null);
   }
   const drafts = await maybeGenerateDrafts(now).catch((e: unknown) => {
     reportError(e, "linkedin-drafts");

@@ -8,10 +8,15 @@ import type { Valid } from "@/lib/kampagnen/types";
 import { sendToAdmins } from "@/lib/push";
 import { getSettings, liftLabel, liftOf, nextPostingDay, scoreOf, slotTimes, type Scored } from "@/lib/linkedin/posts";
 import type { LinkedInPost } from "@/generated/prisma/client";
+import { postText } from "@/lib/linkedin/text";
+import { loadTrustFacts } from "@/lib/linkedin/trust";
+import { createAiImage, type ImageGenerator } from "@/lib/linkedin/ai-image";
 
 const DAY = 86_400_000;
 
-export type Draft = { idea: string; hypothesis: string; text: string; photoId: string | null };
+/** Bild zum Post: eigenes Foto, KI-Foto (fotorealistisch), Text-Grafik oder keins. */
+export type ImageKind = "foto" | "ki" | "grafik" | "keins";
+export type Draft = { idea: string; hypothesis: string; text: string; image: ImageKind; photoId: string | null; imagePrompt: string; graphic: string };
 export type PhotoInfo = { id: string; description: string; lastUsed: Date | null };
 
 export const DRAFT_SCHEMA = {
@@ -24,12 +29,15 @@ export const DRAFT_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["idea", "hypothesis", "text", "photoId"],
+        required: ["idea", "hypothesis", "text", "image", "photoId", "imagePrompt", "graphic"],
         properties: {
           idea: { type: "string", description: "Thema in wenigen Worten" },
-          hypothesis: { type: "string", description: "Was dieser Post gegenüber dem bisher besten anders macht und warum das mehr Reichweite bringen soll (ein Satz)" },
+          hypothesis: { type: "string", description: "Was dieser Post gegenüber dem bisher besten anders macht und warum das mehr Zielgruppen-Reichweite bringen soll (ein Satz)" },
           text: { type: "string", description: "Fertiger Post-Text, genau so wie er auf LinkedIn erscheinen soll" },
-          photoId: { type: "string", description: "ID eines Fotos aus der Fotoablage, das zum Post passt, oder leer für einen Post ohne Foto" },
+          image: { type: "string", enum: ["foto", "ki", "grafik", "keins"], description: "foto = Foto aus der Fotoablage, ki = fotorealistisches KI-Bild, grafik = Text-Grafik mit Kernaussage, keins = ohne Bild" },
+          photoId: { type: "string", description: "Bei image=foto: ID aus der Fotoablage, sonst leer" },
+          imagePrompt: { type: "string", description: "Bei image=ki: englische Bildbeschreibung einer fotorealistischen, emotionalen Szene passend zum Post (Personen, Ort, Licht, Stimmung), sonst leer" },
+          graphic: { type: "string", description: "Kernaussage für eine Text-Grafik (max. 90 Zeichen, ohne Gedankenstriche); bei image=grafik Pflicht, sonst als Ersatz trotzdem ausfüllen" },
         },
       },
     },
@@ -41,17 +49,24 @@ export function validateDrafts(x: unknown, n: number, photoIds: string[] = []): 
   if (!Array.isArray(posts)) return { ok: false, errors: ["posts fehlt"] };
   const errors: string[] = [];
   const out: Draft[] = [];
+  const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
   for (const [i, p] of posts.entries()) {
-    const d = p as Partial<Omit<Draft, "photoId">> & { photoId?: unknown };
-    const photoId = typeof d.photoId === "string" && d.photoId.trim() ? d.photoId.trim() : null;
-    if (photoId && !photoIds.includes(photoId)) errors.push(`Post ${i + 1}: Foto-ID ${photoId} gibt es nicht (leer lassen oder eine ID aus der Fotoablage)`);
-    const text = typeof d.text === "string" ? d.text.trim() : "";
-    const hypothesis = typeof d.hypothesis === "string" ? d.hypothesis.trim() : "";
-    const idea = typeof d.idea === "string" ? d.idea.trim() : "";
+    const d = p as Record<string, unknown>;
+    let image = (["foto", "ki", "grafik", "keins"].includes(str(d.image)) ? str(d.image) : "keins") as ImageKind;
+    const photoId = str(d.photoId) || null;
+    if (image === "foto" && (!photoId || !photoIds.includes(photoId))) errors.push(`Post ${i + 1}: Foto-ID ${photoId ?? "(leer)"} gibt es nicht. Eine ID aus der Fotoablage nehmen oder image=ki/grafik/keins.`);
+    const text = postText(str(d.text));
+    const hypothesis = str(d.hypothesis);
+    const idea = str(d.idea);
+    const imagePrompt = str(d.imagePrompt).slice(0, 800);
+    const graphic = postText(str(d.graphic)).slice(0, 120);
+    if (image === "ki" && imagePrompt.length < 20) errors.push(`Post ${i + 1}: imagePrompt für das KI-Bild fehlt`);
+    if (image === "grafik" && !graphic) errors.push(`Post ${i + 1}: graphic (Kernaussage) fehlt`);
     if (text.length < 150) errors.push(`Post ${i + 1}: Text zu kurz (mind. 150 Zeichen)`);
     if (text.length > 2900) errors.push(`Post ${i + 1}: Text zu lang (höchstens 2.900 Zeichen)`);
     if (!hypothesis) errors.push(`Post ${i + 1}: Hypothese fehlt`);
-    out.push({ idea: idea.slice(0, 120), hypothesis: hypothesis.slice(0, 300), text, photoId });
+    if (image !== "foto" && image !== "ki" && image !== "grafik") image = "keins";
+    out.push({ idea: idea.slice(0, 120), hypothesis: hypothesis.slice(0, 300), text, image, photoId: image === "foto" ? photoId : null, imagePrompt, graphic });
   }
   if (out.length !== n) errors.push(`Genau ${n} Posts schreiben (geliefert: ${out.length})`);
   const firsts = out.map((d) => d.text.slice(0, 60).toLowerCase());
@@ -95,6 +110,10 @@ export type PromptInput = {
   posts: PostRow[];
   recent: string[];
   photos?: PhotoInfo[];
+  /** Echte Zahlen aus der Software (ohne Namen) */
+  trustFacts?: string[];
+  /** Trust-Material von Ole (Kundenstimmen mit Freigabe, Erfolge) */
+  trustNotes?: string;
 };
 
 /** Prompt aus den bisherigen Posts (exportiert für Tests). */
@@ -118,10 +137,12 @@ export function buildDraftPrompt(input: PromptInput): { system: string; user: st
     "Ein Post mit 30.000 Impressionen bei Coaches und Recruitern ist schlechter als einer mit 3.000 Impressionen bei Versicherungsvermittlern. Schreibe deshalb keine allgemeinen Motivations-, Karriere- oder Gründer-Posts ohne klaren Bezug zum Arbeitsalltag der Zielgruppe (Neukunden, Leads, Termine, Abschlussquote, Vertrieb, Digitalisierung im Vertrieb, Zeit für Beratung).",
     "Arbeitsweise: Lies, was bei ihm in der Zielgruppe funktioniert hat und was nicht. Jeder neue Post nimmt das Erfolgsrezept des besten Posts und verändert genau EINE Sache (z. B. Einstieg, Länge, Format, Thema, Perspektive, Schluss-Frage). Diese Veränderung ist die Hypothese.",
     "Die Posts eines Tages testen verschiedene Hypothesen. Was in früheren Tests verloren hat, nicht wiederholen; was gewonnen hat, weiter ausbauen.",
-    "LinkedIn-Handwerk: Die ersten zwei Zeilen entscheiden (vor „mehr anzeigen“) und sollen sofort zeigen, dass der Post für Versicherungsvermittler ist. Kurze Absätze, Leerzeilen, keine Links im Text (kosten Reichweite), höchstens 3 Hashtags am Ende, keine Emoji-Flut.",
+    "LinkedIn-Handwerk (so schreibt er in seinen besten Posts): Die ersten zwei Zeilen entscheiden (vor „mehr anzeigen“) und zeigen sofort, dass es um Versicherungsvermittler geht. Sehr kurze Absätze, oft nur ein Satz, mit Leerzeile dazwischen. Konkrete Zahlen und Fälle statt Allgemeinplätzen. Rechnungen gern mit Pfeilen (100 Leads → 12 Abschlüsse → 4.300 € Nettoprämie). Am Ende eine echte Frage an die Vermittler und oft eine Einladung zur Direktnachricht („Schreib mir eine DM.“). Höchstens 1 bis 2 Emojis, keine Links im Text.",
+    "Verboten: Gedankenstriche (– oder —); stattdessen Punkt, Komma, Doppelpunkt oder neuer Absatz. Keine Hashtags.",
+    "Formate, die bei ihm funktionieren: (1) Trust-Post mit echtem Kunden-Case und Zahlen (sein bester Post), (2) „Stell dir vor:“-Geschichte aus dem Alltag eines Vermittlers oder seiner Kunden mit emotionaler Wendung und Schluss-Frage. Trust-Posts nur mit Fakten aus „Trust-Fakten“ oder „Trust-Material“.",
     "Wahrheit: Erfinde keine Zahlen, Kundennamen, Zitate, Erlebnisse oder Ergebnisse. Nutze nur, was in „Über mich“, „Zielgruppe“ oder seinen bisherigen Posts steht. Wo eine konkrete Zahl fehlt, formuliere ohne Zahl.",
     "Keine Versprechen über Ergebnisse für Kunden, keine Aussagen über Mitbewerber oder einzelne Versicherer.",
-    "Fotos: Gibt es eine Fotoablage, wähle je Post das Foto, das inhaltlich am besten passt (photoId), oder bewusst keins. Kein Foto zweimal am selben Tag, kürzlich genutzte Fotos meiden. Der Text darf das Foto nur so beschreiben, wie es in der Beschreibung steht.",
+    "Bilder (image): Jeder Post bekommt ein Bild. Passt ein Foto aus der Fotoablage (Fotos von ihm oder Beweis-Screenshots), nimm es (image=foto, kein Foto zweimal am selben Tag, kürzlich genutzte meiden; der Text darf das Foto nur so beschreiben, wie es in der Beschreibung steht). Sonst image=ki mit einer fotorealistischen, emotionalen Szene passend zur Geschichte (z. B. Vater mit Sohn am Krankenbett): keine Zeichnungen oder Illustrationen, kein Text im Bild, keine echten Personen, Marken oder Logos. Für Zahlen-Aussagen ohne passendes Foto geht image=grafik (Kernaussage groß als Text). Fülle graphic immer als Ersatz aus.",
     "Antworte nur mit JSON im vorgegebenen Format.",
   ].join("\n");
 
@@ -136,8 +157,12 @@ export function buildDraftPrompt(input: PromptInput): { system: string; user: st
     flop.length ? `## Schwache Posts (daraus lernen)\n${flop.map((p) => block(p, scored, share)).join("\n\n")}` : "",
     tests.length ? `## Bisherige Tests (Hypothese → Ergebnis gegenüber üblicher Zielgruppen-Reichweite)\n${tests.join("\n")}` : "",
     input.recent.length ? `## Zuletzt geschrieben (nicht wiederholen)\n${input.recent.map((t) => `- ${t.replace(/\s+/g, " ").slice(0, 160)}`).join("\n")}` : "",
+    input.trustFacts?.length ? `## Trust-Fakten aus der Software (echt, zusammengefasst, ohne Kundennamen)\n${input.trustFacts.map((f) => `- ${f}`).join("\n")}` : "",
+    input.trustNotes?.trim()
+      ? `## Trust-Material von ihm (nur das darf als Kunden-Case, Zitat oder Erfolg verwendet werden; Namen nur, wenn hier ausdrücklich freigegeben)\n${input.trustNotes.trim()}`
+      : "",
     photoBlock(input.photos ?? [], scored, share),
-    `## Aufgabe\nSchreibe genau ${input.n} Posts für ${input.slots.map((s) => when(s)).join(", ")} (in dieser Reihenfolge). Jeder mit eigener Hypothese.`,
+    `## Aufgabe\nSchreibe genau ${input.n} Posts für ${input.slots.map((s) => when(s)).join(", ")} (in dieser Reihenfolge). Jeder mit eigener Hypothese.${input.n >= 2 && (input.trustFacts?.length || input.trustNotes?.trim()) ? " Mindestens einer davon ist ein Trust-Post." : ""}`,
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -148,7 +173,7 @@ export function buildDraftPrompt(input: PromptInput): { system: string; user: st
  * Entwürfe für einen Tag schreiben (fehlende Uhrzeiten auffüllen). Idempotent je Tag.
  * Gibt die Zahl neuer Entwürfe zurück.
  */
-export async function generateDrafts(day: string, opts: { llm?: LlmCall; now?: Date; push?: boolean } = {}): Promise<number> {
+export async function generateDrafts(day: string, opts: { llm?: LlmCall; now?: Date; push?: boolean; imageGen?: ImageGenerator } = {}): Promise<number> {
   const now = opts.now ?? new Date();
   const settings = await getSettings();
   const slots = slotTimes(settings, day);
@@ -172,24 +197,56 @@ export async function generateDrafts(day: string, opts: { llm?: LlmCall; now?: D
   ).map((r) => r.text);
 
   const photoRows = await prisma.linkedInPhoto.findMany({
+    where: { generated: false },
     orderBy: { createdAt: "asc" },
     take: 60,
     select: { id: true, description: true, posts: { orderBy: { scheduledAt: "desc" }, take: 1, select: { scheduledAt: true } } },
   });
   const photos: PhotoInfo[] = photoRows.map((f) => ({ id: f.id, description: f.description, lastUsed: f.posts[0]?.scheduledAt ?? null }));
-  const { system, user } = buildDraftPrompt({ about: settings.about, icp: settings.icp, accountIcpShare: settings.accountIcpShare, n: free.length, slots: free, posts, recent, photos });
+  const trustFacts = await loadTrustFacts(now).catch(() => []);
+  const { system, user } = buildDraftPrompt({
+    about: settings.about,
+    icp: settings.icp,
+    accountIcpShare: settings.accountIcpShare,
+    n: free.length,
+    slots: free,
+    posts,
+    recent,
+    photos,
+    trustFacts,
+    trustNotes: settings.trustNotes,
+  });
   const { value } = await runAgent(opts.llm ?? claudeCall, { agent: "linkedin", system, user, schema: DRAFT_SCHEMA as unknown as Record<string, unknown>, maxTokens: 24000 }, (x) =>
     validateDrafts(x, free.length, photos.map((f) => f.id)),
   );
-  await prisma.linkedInPost.createMany({
-    data: value.map((d, i) => ({ status: "entwurf", text: d.text, idea: d.idea || null, hypothesis: d.hypothesis, draftDate: day, scheduledAt: free[i], photoId: d.photoId })),
-  });
+  // KI-Bilder erzeugen (nacheinander); klappt das nicht, wird die Text-Grafik genommen
+  for (const [i, d] of value.entries()) {
+    let photoId = d.photoId;
+    let useGraphic = d.image === "grafik";
+    if (d.image === "ki") {
+      photoId = await createAiImage(d.imagePrompt, opts.imageGen).catch(() => null);
+      if (!photoId) useGraphic = !!d.graphic;
+    }
+    await prisma.linkedInPost.create({
+      data: {
+        status: "entwurf",
+        text: d.text,
+        idea: d.idea || null,
+        hypothesis: d.hypothesis,
+        draftDate: day,
+        scheduledAt: free[i],
+        photoId,
+        graphic: d.graphic || null,
+        useGraphic: useGraphic && !photoId,
+      },
+    });
+  }
   if (opts.push !== false) {
     const label = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long" }).format(free[0]);
     await sendToAdmins({
       title: `LinkedIn: ${value.length} Entwürfe für ${label}`,
       body: "Antippen, lesen und mit einem Klick freigeben.",
-      url: "/admin/vertrieb/linkedin",
+      url: "/admin/marketing/linkedin",
       tag: "linkedin-drafts",
     }).catch(() => null);
   }

@@ -96,10 +96,23 @@ describe("LinkedIn – reine Funktionen", () => {
   });
 
   it("Entwürfe prüfen: Anzahl, Länge, Foto-IDs", () => {
-    const ok = validateDrafts({ posts: [{ idea: "a", hypothesis: "h", text: TEXT(1), photoId: "f1" }, { idea: "b", hypothesis: "h2", text: TEXT(2), photoId: "" }] }, 2, ["f1"]);
+    const ok = validateDrafts(
+      {
+        posts: [
+          { idea: "a", hypothesis: "h", text: TEXT(1) + "\n\nMehr dazu – bald. #Versicherung", image: "foto", photoId: "f1", imagePrompt: "", graphic: "100 Leads – 12 Abschlüsse" },
+          { idea: "b", hypothesis: "h2", text: TEXT(2), image: "ki", photoId: "", imagePrompt: "a father at a hospital bed with his son, warm evening light", graphic: "x" },
+        ],
+      },
+      2,
+      ["f1"],
+    );
     expect(ok.ok).toBe(true);
-    if (ok.ok) expect(ok.value.map((d) => d.photoId)).toEqual(["f1", null]);
-    const bad = validateDrafts({ posts: [{ idea: "a", hypothesis: "", text: "kurz", photoId: "gibtsnicht" }] }, 2, ["f1"]);
+    if (ok.ok) {
+      expect(ok.value.map((d) => [d.image, d.photoId])).toEqual([["foto", "f1"], ["ki", null]]);
+      expect(ok.value[0].text).not.toMatch(/[–—#]/);
+      expect(ok.value[0].graphic).toBe("100 Leads, 12 Abschlüsse");
+    }
+    const bad = validateDrafts({ posts: [{ idea: "a", hypothesis: "", text: "kurz", image: "foto", photoId: "gibtsnicht", imagePrompt: "", graphic: "" }] }, 2, ["f1"]);
     expect(bad.ok).toBe(false);
     if (!bad.ok) for (const m of [/zu kurz/, /Hypothese/, /Foto-ID/, /Genau 2/]) expect(bad.errors.join(" ")).toMatch(m);
   });
@@ -191,7 +204,17 @@ describe("LinkedIn – Datenbank", () => {
     async (req) => {
       const n = Number(/genau (\d+) Posts/.exec(req.user)?.[1] ?? 1);
       return {
-        text: JSON.stringify({ posts: Array.from({ length: n }, (_, i) => ({ idea: `Thema ${i}`, hypothesis: `Test ${i}`, text: TEXT(i), photoId: i === 0 ? photoId : "" })) }),
+        text: JSON.stringify({
+          posts: Array.from({ length: n }, (_, i) => ({
+            idea: `Thema ${i}`,
+            hypothesis: `Test ${i}`,
+            text: TEXT(i),
+            image: i === 0 && photoId ? "foto" : i === 1 ? "ki" : "grafik",
+            photoId: i === 0 ? photoId : "",
+            imagePrompt: i === 1 ? "an insurance agent at a desk talking on the phone, natural light" : "",
+            graphic: `Kernaussage ${i}`,
+          })),
+        }),
         usage: { tokensIn: 1, tokensOut: 1, costCents: 0 },
       };
     };
@@ -201,14 +224,20 @@ describe("LinkedIn – Datenbank", () => {
     const photo = await addPhoto({ name: "ole.jpg", type: "image/jpeg", data: Buffer.from("jpg") }, { description: "Ole auf der Bühne", describe: null });
     expect(photo.ok).toBe(true);
     const photoId = photo.ok ? photo.id : "";
-    const n = await generateDrafts("2026-11-16", { llm: fakeLlm(photoId) });
+    const prompts: string[] = [];
+    const imageGen = async (prompt: string) => (prompts.push(prompt), Buffer.from("png"));
+    const n = await generateDrafts("2026-11-16", { llm: fakeLlm(photoId), imageGen });
     expect(n).toBe(3);
-    const drafts = await prisma.linkedInPost.findMany({ where: { draftDate: "2026-11-16" }, orderBy: { scheduledAt: "asc" } });
+    const drafts = await prisma.linkedInPost.findMany({ where: { draftDate: "2026-11-16" }, orderBy: { scheduledAt: "asc" }, include: { photo: true } });
     expect(drafts.map((d) => d.status)).toEqual(["entwurf", "entwurf", "entwurf"]);
     expect(drafts[0].photoId).toBe(photoId);
+    // KI-Bild erzeugt und als „generated“ abgelegt; dritter Post: Text-Grafik
+    expect(prompts).toEqual(["an insurance agent at a desk talking on the phone, natural light"]);
+    expect(drafts[1].photo?.generated).toBe(true);
+    expect([drafts[2].photoId, drafts[2].useGraphic, drafts[2].graphic]).toEqual([null, true, "Kernaussage 2"]);
     expect(drafts[0].scheduledAt?.toISOString()).toBe("2026-11-16T06:30:00.000Z");
     expect(pushes[0].title).toMatch(/3 Entwürfe für Montag/);
-    expect(await generateDrafts("2026-11-16", { llm: fakeLlm() })).toBe(0);
+    expect(await generateDrafts("2026-11-16", { llm: fakeLlm(), imageGen })).toBe(0);
   });
 
   it("Automatik erst ab der eingestellten Uhrzeit und nur mit „Über mich“", async () => {
@@ -218,7 +247,7 @@ describe("LinkedIn – Datenbank", () => {
     expect(await maybeGenerateDrafts(evening, fakeLlm())).toBe(0);
     await prisma.linkedInSettings.update({ where: { id: "default" }, data: { about: "Gründer" } });
     expect(await maybeGenerateDrafts(new Date("2026-11-16T10:00:00Z"), fakeLlm())).toBe(0);
-    expect(await maybeGenerateDrafts(evening, fakeLlm())).toBe(1);
+    expect(await maybeGenerateDrafts(evening, fakeLlm())).toBe(1); // KI-Bild ohne OPENAI_API_KEY → Grafik
     expect(await prisma.linkedInPost.count({ where: { draftDate: "2026-11-17" } })).toBe(1);
     expect((await getSettings()).draftingAt).toBeNull();
   });
@@ -229,7 +258,7 @@ describe("LinkedIn – Datenbank", () => {
     await saveConnection(userId, { personUrn: "urn:li:person:abc", name: "Ole", accessToken: "tok", expiresAt: new Date("2027-01-01"), scopes: "openid profile w_member_social" });
     const photo = await addPhoto({ name: "ole.png", type: "image/png", data: Buffer.from("png") }, { description: "Ole", describe: null });
     const p = await prisma.linkedInPost.create({ data: { status: "entwurf", text: TEXT(1), scheduledAt: new Date("2026-11-16T06:30:00Z"), draftDate: "2026-11-16" } });
-    const res = await approvePost(p.id, TEXT(1) + " ergänzt", now, photo.ok ? photo.id : null);
+    const res = await approvePost(p.id, TEXT(1) + " ergänzt", now, photo.ok ? photo.id : "keins");
     expect(res.ok && res.scheduledAt.toISOString()).toBe("2026-11-16T06:30:00.000Z");
 
     const calls: { text: string; image: boolean }[] = [];
@@ -271,5 +300,45 @@ describe("LinkedIn – Datenbank", () => {
     // Zweiter Import aktualisiert, legt nichts doppelt an
     const again = await importExport([{ url: "https://www.linkedin.com/feed/update/urn:li:activity:6000/", urn: "urn:li:activity:6000", date: null, impressions: 950 }]);
     expect(again).toMatchObject({ matched: 1, created: 0 });
+  });
+
+  it("Text-Grafik wird gerendert und beim Posten statt Foto mitgeschickt", async () => {
+    const { renderGraphic } = await import("@/lib/linkedin/graphic");
+    const png = await renderGraphic("100 Leads → 12 Abschlüsse → 4.300 € Nettoprämie");
+    expect(png.subarray(1, 4).toString()).toBe("PNG");
+    await prisma.linkedInSettings.create({ data: { id: "default", postsPerDay: 1, about: "x" } });
+    await saveConnection(userId, { personUrn: "urn:li:person:abc", name: "Ole", accessToken: "tok", expiresAt: new Date("2027-01-01"), scopes: "openid profile w_member_social" });
+    const p = await prisma.linkedInPost.create({ data: { status: "freigegeben", text: TEXT(1), scheduledAt: new Date("2026-11-16T06:30:00Z"), graphic: "Kernaussage", useGraphic: true } });
+    let sent: { contentType: string } | null | undefined;
+    await publishDue(new Date("2026-11-16T06:31:00Z"), async (_t, _a, _x, image) => ((sent = image), "urn:li:share:1"));
+    expect(sent?.contentType).toBe("image/png");
+    expect((await prisma.linkedInPost.findUniqueOrThrow({ where: { id: p.id } })).status).toBe("veroeffentlicht");
+  });
+
+  it("Freigeben entfernt Gedankenstriche und Hashtags, Bildwahl „grafik“/„keins“", async () => {
+    await prisma.linkedInSettings.create({ data: { id: "default", postsPerDay: 2, about: "x" } });
+    const p = await prisma.linkedInPost.create({ data: { status: "entwurf", text: TEXT(1), graphic: "Aussage", scheduledAt: new Date("2026-11-16T06:30:00Z") } });
+    await approvePost(p.id, TEXT(1) + "\n\nDas ist wichtig – sehr.\n\n#Versicherung #Leads", new Date("2026-11-16T05:00:00Z"), "grafik");
+    const after = await prisma.linkedInPost.findUniqueOrThrow({ where: { id: p.id } });
+    expect(after.text).toMatch(/Das ist wichtig, sehr\.$/);
+    expect(after.useGraphic).toBe(true);
+  });
+
+  it("Trust-Fakten laufen ohne Fehler", async () => {
+    const { loadTrustFacts } = await import("@/lib/linkedin/trust");
+    expect(Array.isArray(await loadTrustFacts(new Date()))).toBe(true);
+  });
+});
+
+describe("LinkedIn-Text: ohne Gedankenstriche und Hashtags", () => {
+  it("bereinigt", async () => {
+    const { ohneGedankenstriche, ohneHashtags, postText } = await import("@/lib/linkedin/text");
+    expect(ohneGedankenstriche("Leads – aber richtig.")).toBe("Leads, aber richtig.");
+    expect(ohneGedankenstriche("3–5 Termine")).toBe("3-5 Termine");
+    expect(ohneGedankenstriche("Punkte:\n– eins\n— zwei")).toBe("Punkte:\n• eins\n• zwei");
+    expect(ohneGedankenstriche("Ende —.")).toBe("Ende.");
+    expect(ohneHashtags("Text mit #Leads drin.\n\n#Versicherung #Vertrieb")).toBe("Text mit Leads drin.");
+    expect(postText("A – B\n#x")).toBe("A, B");
+    expect(ohneHashtags("Nr. 1 & #2 bleibt")).toBe("Nr. 1 & #2 bleibt");
   });
 });

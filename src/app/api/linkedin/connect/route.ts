@@ -9,6 +9,6 @@ export async function GET(req: Request): Promise<Response> {
   const session = await getCurrentSession();
   const origin = publicOrigin(req);
   if (!session || session.role !== "ADMIN") return Response.redirect(new URL("/login", origin), 302);
-  if (!linkedInAvailable()) return Response.redirect(new URL("/admin/vertrieb/linkedin?li=config", origin), 302);
+  if (!linkedInAvailable()) return Response.redirect(new URL("/admin/marketing/linkedin?li=config", origin), 302);
   return Response.redirect(linkedInAuthUrl(session.userId, origin), 302);
 }

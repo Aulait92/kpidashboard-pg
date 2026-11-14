@@ -222,7 +222,7 @@ export function DealOffersCard({
                     <option value="makler">Makler</option>
                   </select>
                   {!pdfDa ? (
-                    <Link href="/admin/vertrieb/unterlagen" className="text-xs text-[color:var(--brand)] underline">
+                    <Link href="/admin/marketing/unterlagen" className="text-xs text-[color:var(--brand)] underline">
                       PDF unter Unterlagen hochladen
                     </Link>
                   ) : null}

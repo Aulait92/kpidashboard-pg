@@ -184,7 +184,7 @@ export async function submitReferral(input: SubmitInput, now = new Date()): Prom
     await sendToAdmins({
       title: `🤝 Empfehlung von ${ref.person}`,
       body: `${name}${company ? ` · ${company}` : ""} – bitte heute anrufen`,
-      url: contactId ? `/admin/vertrieb/kontakte/${contactId}` : "/admin/vertrieb/empfehlungen",
+      url: contactId ? `/admin/vertrieb/kontakte/${contactId}` : "/admin/marketing/empfehlungen",
       tag: `referral:${referral.id}`,
     });
   } catch (err) {
@@ -385,7 +385,7 @@ export async function rewardReferralForOffer(offerId: string, now = new Date()):
   const { sendToAdmins } = await import("@/lib/push");
   if (outcome === "credited") {
     await thankReferrer(referrer.id, referredLabel, amount);
-    await sendToAdmins({ title: `🎁 Empfehlungsprämie gutgeschrieben: ${referrer.name}`, body: `${referredLabel} ist Kunde · ${eur(amount!)} netto`, url: "/admin/vertrieb/empfehlungen" }).catch(() => {});
+    await sendToAdmins({ title: `🎁 Empfehlungsprämie gutgeschrieben: ${referrer.name}`, body: `${referredLabel} ist Kunde · ${eur(amount!)} netto`, url: "/admin/marketing/empfehlungen" }).catch(() => {});
   } else {
     await prisma.salesTask
       .create({
@@ -398,7 +398,7 @@ export async function rewardReferralForOffer(offerId: string, now = new Date()):
         },
       })
       .catch((err) => reportError(err, "referral-task"));
-    await sendToAdmins({ title: `🎁 Empfehlungsprämie von Hand: ${referrer.name}`, body: `${referredLabel} ist Kunde – ${note ?? "bitte gutschreiben"}`, url: "/admin/vertrieb/empfehlungen" }).catch(() => {});
+    await sendToAdmins({ title: `🎁 Empfehlungsprämie von Hand: ${referrer.name}`, body: `${referredLabel} ist Kunde – ${note ?? "bitte gutschreiben"}`, url: "/admin/marketing/empfehlungen" }).catch(() => {});
   }
   return outcome;
 }

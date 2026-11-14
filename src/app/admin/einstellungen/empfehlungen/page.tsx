@@ -16,7 +16,7 @@ export default async function ReferralSettingsPage() {
       <h1 className="mb-1 mt-1 text-2xl font-semibold tracking-tight">Kollegen empfehlen</h1>
       <p className="mb-6 text-sm text-[color:var(--muted)]">
         Kunden empfehlen uns an Kollegen weiter (persönlicher Link im Kundenbereich). Übersicht und offene Prämien:{" "}
-        <Link href="/admin/vertrieb/empfehlungen" className="text-[color:var(--brand)] underline">
+        <Link href="/admin/marketing/empfehlungen" className="text-[color:var(--brand)] underline">
           Vertrieb → Empfehlungen
         </Link>
         .

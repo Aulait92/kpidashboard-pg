@@ -1,25 +1,26 @@
 "use server";
 
-// LinkedIn (Admin → Vertrieb → LinkedIn): Entwürfe freigeben, Einstellungen, Fotos, Statistik-Import.
+// LinkedIn (Admin → Marketing → LinkedIn): Entwürfe freigeben, Einstellungen, Fotos, Statistik-Import.
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { audit } from "@/lib/audit";
-import { approveNow, approvePost, getSettings, icpTerms, MAX_POSTS_PER_DAY, nextPostingDay, parseSlots } from "@/lib/linkedin/posts";
+import { approveNow, approvePost, getSettings, icpTerms, imageFields, MAX_POSTS_PER_DAY, nextPostingDay, parseSlots } from "@/lib/linkedin/posts";
 import { generateDrafts } from "@/lib/linkedin/drafts";
 import { addPhoto } from "@/lib/linkedin/photos";
 import { importFile } from "@/lib/linkedin/import";
 
-const PATH = "/admin/vertrieb/linkedin";
+const PATH = "/admin/marketing/linkedin";
 export type LiResult = { ok?: boolean; error?: string; info?: string };
 const fmt = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(d);
 const msg = (e: unknown) => (e instanceof Error ? e.message : "Nicht möglich.");
 
-export async function approveAction(id: string, text: string, photoId: string | null, now = false): Promise<LiResult> {
+/** image: "keins" | "grafik" | Foto-ID */
+export async function approveAction(id: string, text: string, image: string, now = false): Promise<LiResult> {
   await requireAuth();
   try {
-    const res = now ? await approveNow(id, text, new Date(), photoId) : await approvePost(id, text, new Date(), photoId);
+    const res = now ? await approveNow(id, text, new Date(), image) : await approvePost(id, text, new Date(), image);
     revalidatePath(PATH);
     if (!res.ok) return { error: res.error };
     return { ok: true, info: now ? "Veröffentlicht." : `Freigegeben für ${fmt(res.scheduledAt)}.` };
@@ -28,16 +29,15 @@ export async function approveAction(id: string, text: string, photoId: string | 
   }
 }
 
-/** Text/Foto eines Entwurfs speichern, ohne freizugeben. */
-export async function saveDraftAction(id: string, text: string, photoId: string | null): Promise<LiResult> {
+/** Text/Bild eines Entwurfs speichern, ohne freizugeben. image: "keins" | "grafik" | Foto-ID */
+export async function saveDraftAction(id: string, text: string, image: string, graphic?: string): Promise<LiResult> {
   await requireAuth();
-  const photo = photoId ? await prisma.linkedInPhoto.count({ where: { id: photoId } }) : 0;
-  const r = await prisma.linkedInPost.updateMany({
-    where: { id, status: { in: ["entwurf", "fehler"] } },
-    data: { text: text.trim().slice(0, 3000), photoId: photo ? photoId : null },
-  });
+  const post = await prisma.linkedInPost.findFirst({ where: { id, status: { in: ["entwurf", "fehler"] } }, select: { graphic: true } });
+  if (!post) return { error: "Entwurf nicht gefunden." };
+  const g = graphic !== undefined ? graphic.trim().slice(0, 120) || null : post.graphic;
+  await prisma.linkedInPost.update({ where: { id }, data: { text: text.trim().slice(0, 3000), graphic: g, ...(await imageFields(image, g)) } });
   revalidatePath(PATH);
-  return r.count ? { ok: true, info: "Gespeichert." } : { error: "Entwurf nicht gefunden." };
+  return { ok: true, info: "Gespeichert." };
 }
 
 export async function discardAction(id: string): Promise<LiResult> {
@@ -90,6 +90,7 @@ export async function saveSettingsAction(_prev: LiResult, fd: FormData): Promise
       about: String(fd.get("about") ?? "").slice(0, 4000),
       icp: String(fd.get("icp") ?? "").slice(0, 4000),
       icpKeywords,
+      trustNotes: String(fd.get("trustNotes") ?? "").slice(0, 6000),
     },
   });
   revalidatePath(PATH);

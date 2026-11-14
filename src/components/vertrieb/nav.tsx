@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import clsx from "clsx";
 
 const BASE = "/admin/vertrieb";
-// Heute, Kunden und Import liegen im Hauptmenü bzw. in den Einstellungen.
+// Heute, Kunden und Import liegen im Hauptmenü bzw. in den Einstellungen;
+// LinkedIn, Empfehlungen, Unterlagen und Rechner unter „Marketing“ (Ole, 14.11.2026).
 const LINKS = [
   { href: `${BASE}/kontakte`, label: "Kontakte" },
   { href: `${BASE}/pipeline`, label: "Akquise-Pipeline" },
@@ -43,9 +44,6 @@ export function VertriebNav({ dueCount }: { dueCount: number }) {
             </Link>
           );
         })}
-        <a href="/rechner" target="_blank" rel="noopener" className="ml-auto whitespace-nowrap px-3 py-1.5 text-sm font-medium text-[color:var(--brand)] hover:underline">
-          Rechner öffnen ↗
-        </a>
       </div>
     </nav>
   );

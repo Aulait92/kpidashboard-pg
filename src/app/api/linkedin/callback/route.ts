@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const origin = publicOrigin(req);
-  const back = (status: string) => Response.redirect(new URL(`/admin/vertrieb/linkedin?li=${status}`, origin), 302);
+  const back = (status: string) => Response.redirect(new URL(`/admin/marketing/linkedin?li=${status}`, origin), 302);
   const session = await getCurrentSession();
   const userId = userFromLinkedInState(url.searchParams.get("state") ?? "");
   // Nur der Login, der die Anmeldung gestartet hat

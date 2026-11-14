@@ -7,6 +7,10 @@ import { decryptSecret, encryptSecret } from "@/lib/encryption";
 import { dayKey, fromDayKey, addDays } from "@/lib/vertrieb/dates";
 import { fetchPostMetrics, postUrl, publishTextPost, type PostImage } from "@/lib/linkedin/api";
 import type { LinkedInPost, LinkedInSettings } from "@/generated/prisma/client";
+import { postText } from "@/lib/linkedin/text";
+
+/** Bildwahl beim Freigeben: "keins", "grafik" oder eine Foto-ID (eigenes Foto oder KI-Bild). */
+export type ImageChoice = string;
 
 export const MAX_POSTS_PER_DAY = 5;
 const DAY = 86_400_000;
@@ -95,10 +99,20 @@ export async function activeConnection(now = new Date()) {
 export const hasAnalyticsScope = (scopes: string) => scopes.split(/[\s,]+/).includes("r_member_postAnalytics");
 
 // ─── Freigabe ───────────────────────────────────────────────────────────
-export async function approvePost(id: string, text: string, now = new Date(), photoId?: string | null): Promise<{ ok: true; scheduledAt: Date } | { ok: false; error: string }> {
+/** Bildwahl in Felder übersetzen (unbekannte Foto-ID → ohne Bild). */
+export async function imageFields(choice: ImageChoice | undefined, graphic: string | null): Promise<{ photoId?: string | null; useGraphic?: boolean }> {
+  if (choice === undefined) return {};
+  if (choice === "keins") return { photoId: null, useGraphic: false };
+  if (choice === "grafik") return { photoId: null, useGraphic: !!graphic };
+  const exists = await prisma.linkedInPhoto.count({ where: { id: choice } });
+  return exists ? { photoId: choice, useGraphic: false } : { photoId: null, useGraphic: false };
+}
+
+export async function approvePost(id: string, text: string, now = new Date(), choice?: ImageChoice): Promise<{ ok: true; scheduledAt: Date } | { ok: false; error: string }> {
   const post = await prisma.linkedInPost.findUnique({ where: { id } });
   if (!post || !["entwurf", "fehler"].includes(post.status)) return { ok: false, error: "Entwurf nicht gefunden oder schon freigegeben." };
-  const clean = text.trim();
+  // Immer ohne Gedankenstriche und Hashtags (Ole, 14.11.2026)
+  const clean = postText(text);
   if (clean.length < 20) return { ok: false, error: "Der Text ist zu kurz." };
   if (clean.length > 3000) return { ok: false, error: "LinkedIn erlaubt höchstens 3.000 Zeichen." };
   // Geplante Uhrzeit behalten, wenn sie noch frei und in der Zukunft ist – sonst nächste freie
@@ -109,14 +123,14 @@ export async function approvePost(id: string, text: string, now = new Date(), ph
   } else at = null;
   at ??= await nextFreeSlot(now, id);
   if (!at) return { ok: false, error: "Keine freie Uhrzeit in den nächsten 14 Tagen. Bitte Uhrzeiten in den Einstellungen ergänzen." };
-  const photo = photoId === undefined ? {} : { photoId: photoId && (await prisma.linkedInPhoto.count({ where: { id: photoId } })) ? photoId : null };
-  await prisma.linkedInPost.update({ where: { id }, data: { status: "freigegeben", text: clean, scheduledAt: at, lastError: null, ...photo } });
+  const image = await imageFields(choice, post.graphic);
+  await prisma.linkedInPost.update({ where: { id }, data: { status: "freigegeben", text: clean, scheduledAt: at, lastError: null, ...image } });
   return { ok: true, scheduledAt: at };
 }
 
 /** Sofort posten (statt zur geplanten Uhrzeit). */
-export async function approveNow(id: string, text: string, now = new Date(), photoId?: string | null) {
-  const res = await approvePost(id, text, now, photoId);
+export async function approveNow(id: string, text: string, now = new Date(), choice?: ImageChoice) {
+  const res = await approvePost(id, text, now, choice);
   if (!res.ok) return res;
   await prisma.linkedInPost.update({ where: { id }, data: { scheduledAt: now } });
   await publishDue(now);
@@ -147,8 +161,12 @@ export async function publishDue(now = new Date(), publish: Publisher = publishT
       continue;
     }
     try {
-      const photo = p.photoId ? await prisma.linkedInPhoto.findUnique({ where: { id: p.photoId }, select: { data: true, contentType: true, description: true } }) : null;
-      const image = photo ? { data: Buffer.from(photo.data), contentType: photo.contentType, alt: photo.description } : null;
+      const photo = p.photoId ? await prisma.linkedInPhoto.findUnique({ where: { id: p.photoId }, select: { data: true, contentType: true, description: true, generated: true } }) : null;
+      let image: PostImage | null = photo ? { data: Buffer.from(photo.data), contentType: photo.contentType, alt: photo.generated ? "" : photo.description } : null;
+      if (!image && p.useGraphic && p.graphic) {
+        const { renderGraphic } = await import("@/lib/linkedin/graphic");
+        image = { data: await renderGraphic(p.graphic), contentType: "image/png", alt: p.graphic };
+      }
       const urn = await publish(conn.accessToken, conn.personUrn, p.text, image);
       await prisma.linkedInPost.update({ where: { id: p.id }, data: { status: "veroeffentlicht", publishedAt: now, postUrn: urn, url: postUrl(urn), lastError: null } });
       published++;

@@ -18,6 +18,7 @@ const TABS = [
     match: (p: string) => p.startsWith("/admin/vertrieb/") && !isSettings(p),
   },
   { href: "/admin/kunden", label: "Kunden", match: (p: string) => p.startsWith("/admin/kunden") },
+  { href: "/admin/marketing", label: "Marketing", match: (p: string) => p.startsWith("/admin/marketing") },
   {
     href: "/admin/leads",
     label: "Leads",

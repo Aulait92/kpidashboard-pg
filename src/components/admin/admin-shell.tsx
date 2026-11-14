@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Briefcase, Building2, Inbox, Settings, Sun, TrendingUp, type LucideIcon } from "lucide-react";
+import { BarChart3, Briefcase, Building2, Inbox, Megaphone, Settings, Sun, TrendingUp, type LucideIcon } from "lucide-react";
 import { CommandPalette } from "@/components/command-palette";
 import { AdminProfileMenu } from "@/components/admin/admin-profile-menu";
 import { cn } from "@/lib/utils";
@@ -15,7 +15,7 @@ import { NotificationsButton } from "@/components/notifications-button";
 const SETTINGS = ["/admin/einstellungen", "/admin/lead-eingang", "/admin/whatsapp/settings", "/admin/vertrieb/import", "/admin/buyers", "/admin/media-buyer"];
 const isSettings = (p: string) => SETTINGS.some((s) => p.startsWith(s));
 
-type Item = { href: string; label: string; icon: LucideIcon; match: (p: string) => boolean; badge?: number };
+type Item = { href: string; label: string; icon: LucideIcon; match: (p: string) => boolean; badge?: number; /** nicht in der Leiste unten am Handy (dort im Profilmenü) */ desktopOnly?: boolean };
 
 export function adminAreas(counts: { heute: number; vertrieb: number }): Item[] {
   return [
@@ -34,6 +34,7 @@ export function adminAreas(counts: { heute: number; vertrieb: number }): Item[] 
       icon: Inbox,
       match: (p) => p.startsWith("/admin/leads") || p.startsWith("/admin/ppl") || (p.startsWith("/admin/whatsapp") && !isSettings(p)),
     },
+    { href: "/admin/marketing", label: "Marketing", icon: Megaphone, match: (p) => p.startsWith("/admin/marketing"), desktopOnly: true },
     {
       href: "/admin/zahlen",
       label: "Zahlen",
@@ -144,7 +145,7 @@ export function AdminShell({ email, counts }: { email: string; counts: { heute: 
         aria-label="Bereiche"
       >
         <ul className="mx-auto flex max-w-lg">
-          {items.map((it) => {
+          {items.filter((it) => !it.desktopOnly).map((it) => {
             const active = it.match(pathname);
             const Icon = it.icon;
             return (

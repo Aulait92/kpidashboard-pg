@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, LogOut, Settings, ShieldCheck, Sparkles, Undo2 } from "lucide-react";
+import { ChevronDown, LogOut, Megaphone, Settings, ShieldCheck, Sparkles, Undo2 } from "lucide-react";
 import { toggleAdminNewUiAction } from "@/app/admin/ui-actions";
 import { cn } from "@/lib/utils";
 
@@ -79,6 +79,9 @@ export function AdminProfileMenu({ email, newUi, variant = "header" }: { email: 
               {newUi ? "Zur alten Oberfläche" : "Neue Oberfläche testen"}
             </button>
           </form>
+          <Link href="/admin/marketing" onClick={() => setOpen(false)} className={itemCls}>
+            <Megaphone className="h-4 w-4" /> Marketing (LinkedIn, Empfehlungen)
+          </Link>
           <Link href="/admin/einstellungen" onClick={() => setOpen(false)} className={itemCls}>
             <Settings className="h-4 w-4" /> Einstellungen
           </Link>

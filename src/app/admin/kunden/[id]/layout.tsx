@@ -69,7 +69,7 @@ export default async function KundenakteLayout({ children, params }: { children:
         {c.paymentOverdueSince ? <Badge tone="danger">Zahlung offen</Badge> : null}
         {c.pauses.length ? <Badge tone="warning">pausiert</Badge> : null}
         {referred ? (
-          <Link href="/admin/vertrieb/empfehlungen" title="Über „Kollegen empfehlen“">
+          <Link href="/admin/marketing/empfehlungen" title="Über „Kollegen empfehlen“">
             <Badge tone="success">hat {referred} Kunden geworben</Badge>
           </Link>
         ) : null}

@@ -535,7 +535,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "check",
       title: `LinkedIn: ${plural(liDrafts.length, "Entwurf", "Entwürfe")} freigeben`,
       detail: `Erster Post ${liDrafts[0].scheduledAt ? liDrafts[0].scheduledAt.toLocaleString("de-DE", { timeZone: "Europe/Berlin", weekday: "short", hour: "2-digit", minute: "2-digit" }) : ""} · ohne Freigabe geht nichts raus`,
-      action: { label: "Ansehen", href: "/admin/vertrieb/linkedin" },
+      action: { label: "Ansehen", href: "/admin/marketing/linkedin" },
       later: { label: "Morgen", days: 1 },
     });
   }
@@ -547,7 +547,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "alert",
       title: `LinkedIn: ${plural(liFailed, "Post", "Posts")} nicht veröffentlicht`,
       detail: "Fehler ansehen und neu freigeben",
-      action: { label: "Ansehen", href: "/admin/vertrieb/linkedin" },
+      action: { label: "Ansehen", href: "/admin/marketing/linkedin" },
     });
   }
   if (liConn && (liConn.status !== "ok" || liConn.expiresAt.getTime() < now.getTime() + 7 * DAY)) {
