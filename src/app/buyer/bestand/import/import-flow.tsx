@@ -14,6 +14,7 @@ export function ImportFlow() {
   const [analysis, analyze, analyzing] = useActionState<AnalyzeState, FormData>(analyzeImportAction, {});
   const [result, runImport, importing] = useActionState<ImportState, FormData>(runImportAction, {});
   const fileRef = useRef<HTMLInputElement>(null);
+  const [bulk, setBulk] = useState({ email: false, whatsapp: false });
   const [file, setFile] = useState<File | null>(null);
   // Zuordnung je Datei (neu erkannt, sobald eine andere Datei geprüft wurde)
   const [edits, setEdits] = useState<{ key: AnalyzeState; mapping: Mapping } | null>(null);
@@ -152,11 +153,17 @@ export function ImportFlow() {
                     {de(live.rows)} Zeilen → {de(live.groups.size)} Kunden mit {de(live.contracts)} Verträgen
                   </p>
                   <p className="mt-1 text-[color:var(--muted)]">
-                    {de(live.withPhone)} mit Mobilnummer
+                    {de(live.withPhone)} mit Mobilnummer · {de(live.withEmail)} mit E-Mail
                     {live.premiumTotal > 0 ? ` · Beitragsvolumen ${eur(live.premiumTotal)} pro Jahr (aktive Verträge)` : ""}
                     {live.inactiveContracts ? ` · ${de(live.inactiveContracts)} Verträge storniert oder ruhend (zählen nicht für Chancen)` : ""}
                     {live.skipped ? ` · ${de(live.skipped)} Zeilen werden übersprungen` : ""}
                   </p>
+                  {live.consent.emailJa + live.consent.emailNein + live.consent.whatsappJa + live.consent.whatsappNein ? (
+                    <p className="mt-1 text-[color:var(--muted)]" data-import-consent-counts>
+                      Einwilligung laut Datei: E-Mail {de(live.consent.emailJa)} ja, {de(live.consent.emailNein)} nein · WhatsApp {de(live.consent.whatsappJa)} ja,{" "}
+                      {de(live.consent.whatsappNein)} nein
+                    </p>
+                  ) : null}
                   {live.withoutName ? (
                     <p className="mt-1 text-[color:var(--muted)]" data-import-nameless>
                       {de(live.withoutName)} Kunden ohne Namen, werden neutral angesprochen.
@@ -190,11 +197,42 @@ export function ImportFlow() {
                   {warning.text}
                 </p>
               ) : null}
+              <fieldset className="space-y-2 rounded-[var(--radius-md)] border border-[color:var(--border)] px-4 py-3" data-import-consent>
+                <legend className="px-1 font-semibold">Einwilligung in Werbung</legend>
+                <p className="text-[color:var(--muted)]">
+                  Angaben aus der Datei (Spalten E-Mail- bzw. WhatsApp-Einwilligung) gelten immer. Ohne Angabe bleibt die Einwilligung „unbekannt“: Dann geht keine
+                  WhatsApp-Kampagne raus, E-Mails nur zum selben Vertrag nach § 7 Abs. 3 UWG.
+                </p>
+                <label className="flex items-start gap-2">
+                  <input type="checkbox" name="bulk_email" className="mt-0.5 h-4 w-4" checked={bulk.email} onChange={(e) => setBulk({ ...bulk, email: e.target.checked })} />
+                  <span>Alle Kunden dieser Liste haben in Werbung per E-Mail eingewilligt</span>
+                </label>
+                <label className="flex items-start gap-2">
+                  <input type="checkbox" name="bulk_whatsapp" className="mt-0.5 h-4 w-4" checked={bulk.whatsapp} onChange={(e) => setBulk({ ...bulk, whatsapp: e.target.checked })} />
+                  <span>Alle Kunden dieser Liste haben in Werbung per WhatsApp eingewilligt</span>
+                </label>
+                {bulk.email || bulk.whatsapp ? (
+                  <label className="flex items-start gap-2 rounded-[var(--radius-sm)] bg-amber-50 px-3 py-2 text-amber-900">
+                    <input type="checkbox" name="bulk_confirm" className="mt-0.5 h-4 w-4" />
+                    <span>
+                      Ich bestätige ausdrücklich, dass diese Einwilligungen für alle Kunden der Liste vorliegen (z. B. laut Versicherer) und ich sie auf Anfrage nachweisen
+                      kann. Ein „nein“ aus der Datei oder eine Abmeldung bleibt bestehen.
+                    </span>
+                  </label>
+                ) : null}
+              </fieldset>
+              {live?.withPersonLines ? (
+                <p className="flex items-start gap-2 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900" data-import-person-lines>
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                  {de(live.withPersonLines)} Kunden haben Personenversicherungen (Kranken, Leben, BU, Unfall, Pflege). Hier ist schon die Tatsache des Vertrags besonders
+                  geschützt: Importieren Sie diese Daten nur im Rahmen Ihrer Befugnisse.
+                </p>
+              ) : null}
               <label className="flex items-start gap-2">
-                <input type="checkbox" name="consent" className="mt-0.5 h-4 w-4" />
+                <input type="checkbox" name="befugnis" className="mt-0.5 h-4 w-4" data-import-befugnis />
                 <span>
-                  Für diese Kunden liegt die Einwilligung zur Kontaktaufnahme per WhatsApp/E-Mail vor (laut Versicherer). Wer „Stopp“ antwortet, wird
-                  automatisch gesperrt.
+                  Ich darf diese Kundendaten nutzen (im Rahmen meines Vertretervertrags bzw. meiner Befugnisse). Wer „Stopp“ antwortet oder sich abmeldet, wird
+                  automatisch und dauerhaft gesperrt.
                 </span>
               </label>
               {result.error ? <p className="text-rose-700">{result.error}</p> : null}

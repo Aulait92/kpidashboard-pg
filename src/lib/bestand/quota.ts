@@ -7,6 +7,9 @@
 // vor dem Start gesperrt und laufende pausieren mit Hinweis (pausedReason „kontingent“).
 // Der Admin kann das Monatskontingent je Kunde erhöhen (Customer.bestandMessageQuota).
 // Normale Lead-Kommunikation (Erstkontakt, Erinnerungen, Nachfassen) zählt nicht.
+// E-Mails (seit 14.11.2026) haben ein eigenes Kontingent je Monat (PRICE_LIST.bestandIncludedEmails, ohne
+// Pakete, kein Aufpreis vorerst): bestandMailQuota. Ist es aufgebraucht, warten die E-Mail-Empfänger bis zum
+// nächsten Monat; WhatsApp läuft weiter.
 
 import { prisma } from "@/lib/prisma";
 import { PRICE_LIST } from "@/lib/offer-pricing";
@@ -73,8 +76,9 @@ export async function bestandQuota(customerId: string, now = new Date()): Promis
   const monthStart = berlinMonthStart(now);
   const [c, used, sentThisMonth, rows] = await Promise.all([
     prisma.customer.findUnique({ where: { id: customerId }, select: { bestandMessageQuota: true } }),
-    prisma.campaignRecipient.count({ where: { campaign: { customerId }, sentAt: { gte: monthStart }, packId: null } }),
-    prisma.campaignRecipient.count({ where: { campaign: { customerId }, sentAt: { gte: monthStart } } }),
+    // Nur WhatsApp: E-Mails haben ein eigenes Kontingent (bestandMailQuota)
+    prisma.campaignRecipient.count({ where: { campaign: { customerId }, channel: "whatsapp", sentAt: { gte: monthStart }, packId: null } }),
+    prisma.campaignRecipient.count({ where: { campaign: { customerId }, channel: "whatsapp", sentAt: { gte: monthStart } } }),
     prisma.bestandMessagePack.findMany({
       where: { customerId, purchasedAt: { lte: now }, expiresAt: { gt: now } },
       orderBy: [{ purchasedAt: "asc" }, { id: "asc" }],
@@ -123,4 +127,15 @@ export function consume(q: BestandQuota, funding: string | null): void {
   q.remaining = Math.max(0, q.remaining - 1);
   q.sentThisMonth++;
   q.low = isLow(q.remaining, q.sentThisMonth);
+}
+
+export const MAIL_QUOTA_REACHED = "Das E-Mail-Kontingent für diesen Monat ist aufgebraucht. Ab dem 1. geht es weiter.";
+
+export type MailQuota = { limit: number; used: number; remaining: number };
+
+/** E-Mail-Kontingent im laufenden Monat (Berliner Zeit), getrennt vom WhatsApp-Kontingent. */
+export async function bestandMailQuota(customerId: string, now = new Date()): Promise<MailQuota> {
+  const used = await prisma.campaignRecipient.count({ where: { campaign: { customerId }, channel: "email", sentAt: { gte: berlinMonthStart(now) } } });
+  const limit = PRICE_LIST.bestandIncludedEmails;
+  return { limit, used, remaining: Math.max(0, limit - used) };
 }

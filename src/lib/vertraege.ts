@@ -10,7 +10,7 @@
 import { prisma } from "@/lib/prisma";
 import { CLOSED_STATUS } from "@/lib/products";
 import { asSparte, contractProvision, sparteForSource, sparteInfo, SPARTEN, type ProvisionOverrides, type SparteKey } from "@/lib/provision";
-import { leadOrigin, LEAD_ORIGIN_SELECT, type LeadOrigin } from "@/lib/lead-herkunft";
+import { attributeContract, leadOrigin, LEAD_ORIGIN_SELECT, type CampaignSend, type LeadOrigin } from "@/lib/lead-herkunft";
 import { formatEUR } from "@/lib/format";
 import { BESTAND_FROM_LEAD_NOTE, CROSS_SELL_TODO } from "@/lib/vertraege-shared";
 
@@ -154,10 +154,44 @@ export type CustomerContract = {
   signedAt: Date;
   /** Datum für die Zuordnung zum Zeitraum (erster Vertrag: Lead-Eingang, weitere: Abschlussdatum). */
   periodAt: Date;
+  /** Herkunft des Vertrags (Lead-Herkunft, bzw. „bestand“, wenn einer Bestandskampagne zugeordnet). */
   origin: LeadOrigin;
+  /** Bestandskampagne, der der Abschluss zugeordnet ist (60 Tage, letzte Kampagne zählt), sonst null. */
+  campaignId: string | null;
+  /** Kanal des zugeordneten Anschreibens (whatsapp | email) */
+  campaignChannel?: string | null;
   assignedUserId: string | null;
   leadCreatedAt: Date;
 };
+
+/**
+ * Versand von Bestandskampagnen je Lead: Antworten (CampaignRecipient.leadId) und derselbe Bestandskunde
+ * (ExistingCustomer.leadId, Kunde aus einem Abschluss in der App). Grundlage für attributeContract.
+ */
+export async function campaignSendsByLead(customerId: string): Promise<Map<string, CampaignSend[]>> {
+  const rows = await prisma.campaignRecipient.findMany({
+    where: { campaign: { customerId }, sentAt: { not: null } },
+    select: { campaignId: true, sentAt: true, channel: true, existingCustomerId: true, leadId: true, existingCustomer: { select: { leadId: true } } },
+  });
+  const sendsByEc = new Map<string, CampaignSend[]>();
+  const ecsByLead = new Map<string, Set<string>>();
+  const link = (leadId: string | null, ecId: string) => {
+    if (!leadId) return;
+    const set = ecsByLead.get(leadId) ?? new Set<string>();
+    set.add(ecId);
+    ecsByLead.set(leadId, set);
+  };
+  for (const r of rows) {
+    const list = sendsByEc.get(r.existingCustomerId) ?? [];
+    list.push({ campaignId: r.campaignId, sentAt: r.sentAt!, channel: r.channel });
+    sendsByEc.set(r.existingCustomerId, list);
+    link(r.leadId, r.existingCustomerId);
+    link(r.existingCustomer.leadId, r.existingCustomerId);
+  }
+  const out = new Map<string, CampaignSend[]>();
+  for (const [leadId, ecs] of ecsByLead) out.set(leadId, [...ecs].flatMap((id) => sendsByEc.get(id) ?? []));
+  return out;
+}
 
 const num = (v: unknown) => (v == null ? null : Number(v));
 
@@ -181,20 +215,24 @@ export async function loadCustomerContracts(customerId: string, opts: { leadWher
     },
   });
   const out: CustomerContract[] = [];
+  // Bestandskampagnen: Zuordnung je Vertrag (60 Tage, letzte Kampagne zählt; lib/lead-herkunft)
+  const sendsByLead = leads.length ? await campaignSendsByLead(customerId).catch(() => new Map<string, CampaignSend[]>()) : new Map<string, CampaignSend[]>();
   for (const l of leads) {
     const origin = leadOrigin(l);
-    const base = { leadId: l.id, origin, assignedUserId: l.assignedUserId, leadCreatedAt: l.createdAt };
+    const sends = sendsByLead.get(l.id) ?? [];
+    const base = { leadId: l.id, assignedUserId: l.assignedUserId, leadCreatedAt: l.createdAt };
     // Erster Vertrag nicht gespeichert (z. B. Abschluss aus dem Airtable-Abgleich): aus dem Lead ableiten
     if (!l.contracts.some((c) => c.primaryLeadId)) {
       const sparte = origin === "paid" ? (sparteForSource(l.source) ?? "sonstiges") : await derivedSparte(l);
       const signedAt = l.closedAt ?? l.statusChangedAt;
-      out.push({ ...base, id: `virtual:${l.id}`, primary: true, sparte, premium: num(l.closeValue), provisionValue: null, signedAt, periodAt: l.createdAt });
+      out.push({ ...base, ...attributeContract(origin, { primary: true, signedAt }, sends), id: `virtual:${l.id}`, primary: true, sparte, premium: num(l.closeValue), provisionValue: null, signedAt, periodAt: l.createdAt });
     }
     for (const c of l.contracts) {
       if (c.status === "storniert") continue;
       const primary = !!c.primaryLeadId;
       out.push({
         ...base,
+        ...attributeContract(origin, { primary, signedAt: c.signedAt }, sends),
         id: c.id,
         primary,
         sparte: asSparte(c.sparte),

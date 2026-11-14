@@ -97,9 +97,12 @@ describe("Zusatzpakete und Kontingent", () => {
     const c = await makeCustomer({ existingCustomersEnabled: true, stripeCustomerId: `cus_${uid()}`, plan: "software", ...extra });
     customers.push(c.id);
     const owner = await makeBuyer(c.id, "owner");
+    // WhatsApp verbunden, Vorlage freigegeben, Empfänger mit WhatsApp-Einwilligung (ohne Opt-in geht nichts raus)
+    await prisma.whatsAppAccount.create({ data: { customerId: c.id, status: "connected" } });
+    await prisma.messageTemplate.create({ data: { customerId: c.id, name: `pg_campaign_review_${uid()}`, purpose: "campaign_review", category: "marketing", status: "approved", body: "x" } });
     const campaign = await prisma.customerCampaign.create({ data: { customerId: c.id, name: "Jahresgespräch", occasion: "review", segment: {}, status: "running", dailyLimit: 50, startedAt: NOW } });
     for (let i = 0; i < recipients; i++) {
-      const ec = await prisma.existingCustomer.create({ data: { customerId: c.id, firstName: i === 0 ? null : `Kunde${i}`, company: i === 0 ? "Ohne Name GmbH" : null, phone: NUM(), lines: ["KFZ"] } });
+      const ec = await prisma.existingCustomer.create({ data: { customerId: c.id, firstName: i === 0 ? null : `Kunde${i}`, company: i === 0 ? "Ohne Name GmbH" : null, phone: NUM(), lines: ["KFZ"], whatsappConsent: "ja" } });
       await prisma.customerCampaign.update({ where: { id: campaign.id }, data: { recipients: { create: { existingCustomerId: ec.id } } } });
     }
     return { c, owner, campaign };
@@ -255,7 +258,7 @@ describe("Import: Prüfung und „Letzten Import rückgängig machen“", () => 
     bad.set("map_firstName", "Email");
     bad.set("map_phone", "Email");
     bad.set("map_email", "Email");
-    bad.set("consent", "on");
+    bad.set("befugnis", "on");
     expect((await runImportAction({}, bad)).error).toMatch(/^Vorname: .*E-Mail-Adressen/);
     expect(await prisma.existingCustomer.count({ where: { customerId } })).toBe(0);
     expect(await prisma.existingCustomerImport.count({ where: { customerId } })).toBe(0);
@@ -265,7 +268,7 @@ describe("Import: Prüfung und „Letzten Import rückgängig machen“", () => 
     ok.set("map_company", "Firma");
     ok.set("map_city", "Ort");
     ok.set("map_email", "Email");
-    ok.set("consent", "on");
+    ok.set("befugnis", "on");
     const r = await runImportAction({}, ok);
     expect(r.message).toMatch(/^2 Kunden übernommen \(2 neu/);
     const saved = await prisma.existingCustomer.findMany({ where: { customerId }, orderBy: { company: "asc" } });

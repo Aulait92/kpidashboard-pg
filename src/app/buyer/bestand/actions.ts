@@ -6,8 +6,10 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { FIELDS, detectMapping, importRows, isBlockedColumn, mappingBlocker, parseFile, undoLastImport, type Mapping } from "@/lib/bestand/import";
-import { createCampaign, OCCASIONS, type Occasion, type Segment } from "@/lib/bestand/campaigns";
-import { bestandQuota } from "@/lib/bestand/quota";
+import { createCampaign, OCCASIONS, recordEmailReply, type EmailReplyKind, type Occasion, type Segment } from "@/lib/bestand/campaigns";
+import { QUOTA_REACHED } from "@/lib/bestand/quota";
+import { asChannelMode } from "@/lib/bestand/einwilligung";
+import { requestConsent, setConsent } from "@/lib/bestand/einwilligung-server";
 import { PRICE_LIST } from "@/lib/offer-pricing";
 import { PROVIDER } from "@/lib/legal-texts";
 import { sendCustomerMail } from "@/lib/email";
@@ -87,12 +89,15 @@ export async function runImportAction(_prev: ImportState, fd: FormData): Promise
     if (!mapping.phone && !mapping.email && !mapping.externalNo) return { error: "Bitte mindestens Telefon/Mobil, E-Mail oder Kundennummer zuordnen." };
     const blocker = mappingBlocker(rows, mapping);
     if (blocker) return { error: blocker };
-    if (fd.get("consent") !== "on") return { error: "Bitte bestätigen, dass die Einwilligungen vorliegen." };
+    if (fd.get("befugnis") !== "on") return { error: "Bitte bestätigen, dass Sie diese Kundendaten nutzen dürfen." };
+    // „Alle Kunden dieser Liste haben eingewilligt“ je Kanal nur mit ausdrücklicher Bestätigung
+    const consent = { email: fd.get("bulk_email") === "on", whatsapp: fd.get("bulk_whatsapp") === "on" };
+    if ((consent.email || consent.whatsapp) && fd.get("bulk_confirm") !== "on") return { error: "Bitte bestätigen Sie die Einwilligungen ausdrücklich oder lassen Sie sie auf „unbekannt“." };
     // Import-Lauf festhalten: neu angelegte Kunden tragen seine ID (für „Letzten Import rückgängig machen“)
     const run = await prisma.existingCustomerImport.create({ data: { customerId: ctx.customerId, createdById: ctx.userId, fileName, rows: rows.length } });
     let r;
     try {
-      r = await importRows(ctx.customerId, rows, mapping, new Date(), { importId: run.id });
+      r = await importRows(ctx.customerId, rows, mapping, new Date(), { importId: run.id, consent, actorUserId: ctx.userId });
     } catch (err) {
       // Nichts angelegt → Lauf wieder weg; teilweise angelegt → Lauf bleibt (lässt sich rückgängig machen)
       if (!(await prisma.existingCustomer.count({ where: { customerId: ctx.customerId, importId: run.id } }))) {
@@ -108,7 +113,8 @@ export async function runImportAction(_prev: ImportState, fd: FormData): Promise
       message:
         `${de(r.customers)} Kunden übernommen (${de(r.created)} neu, ${de(r.updated)} aktualisiert) mit ${de(r.contracts)} Verträgen, ${de(r.withPhone)} mit Mobilnummer.` +
         (r.inactiveContracts ? ` ${de(r.inactiveContracts)} Verträge sind storniert oder ruhend und zählen nicht für Chancen.` : "") +
-        (r.skipped ? ` ${de(r.skipped)} Zeilen ohne Kundennummer, Telefon und E-Mail übersprungen.` : ""),
+        (r.skipped ? ` ${de(r.skipped)} Zeilen ohne Kundennummer, Telefon und E-Mail übersprungen.` : "") +
+        (r.suppressed ? ` ${de(r.suppressed)} Kunden hatten sich früher abgemeldet und bleiben gesperrt.` : ""),
     };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Import fehlgeschlagen." };
@@ -147,19 +153,207 @@ export async function startCampaignAction(fd: FormData): Promise<void> {
     if (!m?.empfehlungEnabled) redirect("/buyer/konto?modul=empfehlung#zusatzmodule");
   }
   const segment = JSON.parse(String(fd.get("segment") ?? "{}")) as Segment;
-  const quota = await bestandQuota(ctx.customerId);
-  if (quota.remaining <= 0) redirect("/buyer/bestand?kontingent=1");
-  const campaign = await createCampaign({
-    customerId: ctx.customerId,
-    occasion,
-    segment,
-    topic: String(fd.get("topic") ?? "").trim() || null,
-    dailyLimit: Number(fd.get("dailyLimit")) || 150,
-    createdById: ctx.userId,
-  });
-  await audit("bestand.campaign", { entity: "CustomerCampaign", entityId: campaign.id, customerId: ctx.customerId, details: { occasion, segment } });
+  const channelMode = asChannelMode(fd.get("channelMode"));
+  const back = (err: string): never =>
+    redirect(`/buyer/bestand/kampagne?${new URLSearchParams({ anlass: occasion, segment: JSON.stringify(segment), kanal: channelMode, fehler: err })}`);
+  // Ausschließlichkeitsvertreter: Bestätigung beim ersten Kampagnenstart (Daten gehören oft dem Versicherer)
+  const cust = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { bestandAgentConfirmedAt: true } });
+  if (!cust?.bestandAgentConfirmedAt) {
+    if (fd.get("agentConfirm") !== "on") back("Bitte bestätigen Sie, dass Sie die Kundendaten für diese Ansprache nutzen dürfen.");
+    await prisma.customer.update({ where: { id: ctx.customerId }, data: { bestandAgentConfirmedAt: new Date(), bestandAgentConfirmedById: ctx.userId } });
+    await audit("bestand.agent_confirm", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId });
+  }
+  let campaignId: string | null = null;
+  let failure: string | null = null;
+  try {
+    const campaign = await createCampaign({
+      customerId: ctx.customerId,
+      occasion,
+      segment,
+      topic: String(fd.get("topic") ?? "").trim() || null,
+      dailyLimit: Number(fd.get("dailyLimit")) || 150,
+      createdById: ctx.userId,
+      channelMode,
+      mailSubject: String(fd.get("mailSubject") ?? ""),
+      mailBody: String(fd.get("mailBody") ?? ""),
+    });
+    campaignId = campaign.id;
+  } catch (err) {
+    failure = err instanceof Error ? err.message : "Die Kampagne konnte nicht gestartet werden.";
+  }
+  if (failure === QUOTA_REACHED) redirect("/buyer/bestand?kontingent=1");
+  if (!campaignId) back(failure ?? "Die Kampagne konnte nicht gestartet werden.");
+  await audit("bestand.campaign", { entity: "CustomerCampaign", entityId: campaignId, customerId: ctx.customerId, details: { occasion, segment, channelMode } });
   revalidatePath("/buyer/bestand");
-  redirect("/buyer/bestand?gestartet=1");
+  redirect(`/buyer/bestand/kampagnen/${campaignId}?gestartet=1`);
+}
+
+// ─── Einwilligungen & Versand (Ole, 14.11.2026) ─────────────────────────
+
+export type SettingsState = { ok?: boolean; error?: string; message?: string };
+
+/** Bestätigung zu § 7 Abs. 3 UWG setzen bzw. zurücknehmen, Pflichtangaben speichern. */
+export async function saveBestandRechtAction(_prev: SettingsState, fd: FormData): Promise<SettingsState> {
+  try {
+    const ctx = await ownerCtx();
+    const uwg = fd.get("uwg") === "on";
+    const imprint = String(fd.get("imprint") ?? "").trim().slice(0, 2000) || null;
+    const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { bestandUwgConfirmedAt: true } });
+    await prisma.customer.update({
+      where: { id: ctx.customerId },
+      data: {
+        bestandMailImprint: imprint,
+        ...(uwg && !c?.bestandUwgConfirmedAt ? { bestandUwgConfirmedAt: new Date(), bestandUwgConfirmedById: ctx.userId } : {}),
+        ...(!uwg && c?.bestandUwgConfirmedAt ? { bestandUwgConfirmedAt: null, bestandUwgConfirmedById: null } : {}),
+      },
+    });
+    await audit("bestand.recht", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId, details: { uwg, imprint: !!imprint } });
+    revalidatePath("/buyer/bestand");
+    revalidatePath("/buyer/bestand/einwilligungen");
+    return { ok: true, message: "Gespeichert." };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Speichern fehlgeschlagen." };
+  }
+}
+
+/**
+ * Altdaten (pauschale Import-Bestätigung „laut Versicherer“): „passt so“ bestätigt den Hinweis, zurücksetzen
+ * stellt diese Einwilligungen auf „unbekannt“ (nur Quelle versicherer_pauschal).
+ */
+export async function legacyConsentAction(_prev: SettingsState, fd: FormData): Promise<SettingsState> {
+  try {
+    const ctx = await ownerCtx();
+    const choice = String(fd.get("choice") ?? "");
+    if (choice === "ok") {
+      await prisma.customer.update({ where: { id: ctx.customerId }, data: { bestandLegacyConsentReviewedAt: new Date() } });
+      await audit("bestand.altdaten_ok", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId });
+      revalidatePath("/buyer/bestand");
+      revalidatePath("/buyer/bestand/einwilligungen");
+      return { ok: true, message: "Danke, die Einwilligungen bleiben so." };
+    }
+    if (choice !== "reset_whatsapp" && choice !== "reset_all") return { error: "Bitte eine Auswahl treffen." };
+    if (fd.get("confirm") !== "on") return { error: "Bitte bestätigen Sie das Zurücksetzen." };
+    const base = { customerId: ctx.customerId };
+    const wa = await prisma.existingCustomer.updateMany({
+      where: { ...base, whatsappConsentSource: "versicherer_pauschal" },
+      data: { whatsappConsent: null, whatsappConsentAt: null, whatsappConsentSource: null },
+    });
+    const mail =
+      choice === "reset_all"
+        ? await prisma.existingCustomer.updateMany({ where: { ...base, emailConsentSource: "versicherer_pauschal" }, data: { emailConsent: null, emailConsentAt: null, emailConsentSource: null } })
+        : { count: 0 };
+    await prisma.customer.update({ where: { id: ctx.customerId }, data: { bestandLegacyConsentReviewedAt: new Date() } });
+    await prisma.bestandConsentLog.create({
+      data: { customerId: ctx.customerId, channel: "whatsapp", action: "gesetzt", source: "vermittler", actorUserId: ctx.userId, text: `Pauschale Einwilligungen auf unbekannt gesetzt: WhatsApp ${wa.count}, E-Mail ${mail.count}` },
+    });
+    await audit("bestand.altdaten_reset", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId, details: { whatsapp: wa.count, email: mail.count } });
+    revalidatePath("/buyer/bestand");
+    revalidatePath("/buyer/bestand/einwilligungen");
+    const de = (n: number) => n.toLocaleString("de-DE");
+    return { ok: true, message: choice === "reset_all" ? `Zurückgesetzt: ${de(wa.count)} WhatsApp- und ${de(mail.count)} E-Mail-Einwilligungen stehen jetzt auf „unbekannt“.` : `Zurückgesetzt: ${de(wa.count)} WhatsApp-Einwilligungen stehen jetzt auf „unbekannt“.` };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Speichern fehlgeschlagen." };
+  }
+}
+
+/** Massenänderung „alle haben eingewilligt“ je Kanal, nur mit ausdrücklicher Bestätigung (überschreibt kein „nein“). */
+export async function bulkConsentAction(_prev: SettingsState, fd: FormData): Promise<SettingsState> {
+  try {
+    const ctx = await ownerCtx();
+    const channel = fd.get("channel") === "whatsapp" ? "whatsapp" : fd.get("channel") === "email" ? "email" : null;
+    if (!channel) return { error: "Bitte den Kanal wählen." };
+    if (fd.get("confirm") !== "on") return { error: "Bitte bestätigen Sie die Einwilligungen ausdrücklich." };
+    const now = new Date();
+    const where = { customerId: ctx.customerId, ...(channel === "email" ? { emailConsent: null, email: { not: null } } : { whatsappConsent: null, phone: { not: null } }) };
+    const r = await prisma.existingCustomer.updateMany({
+      where,
+      data: channel === "email" ? { emailConsent: "ja", emailConsentAt: now, emailConsentSource: "vermittler" } : { whatsappConsent: "ja", whatsappConsentAt: now, whatsappConsentSource: "vermittler" },
+    });
+    await prisma.bestandConsentLog.create({
+      data: {
+        customerId: ctx.customerId,
+        channel,
+        action: "gesetzt",
+        source: "vermittler",
+        actorUserId: ctx.userId,
+        text: `Vermittler bestätigt: Für alle ${r.count} Kunden mit bisher unbekannter Einwilligung liegt eine Einwilligung in Werbung per ${channel === "email" ? "E-Mail" : "WhatsApp"} vor.`,
+      },
+    });
+    await audit("bestand.einwilligung_alle", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId, details: { channel, count: r.count } });
+    revalidatePath("/buyer/bestand");
+    revalidatePath("/buyer/bestand/einwilligungen");
+    return { ok: true, message: `${r.count.toLocaleString("de-DE")} Kunden auf „Einwilligung: ja“ gesetzt.` };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Speichern fehlgeschlagen." };
+  }
+}
+
+const ISO_DAY = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/;
+
+/** Einwilligung eines Kunden je Kanal setzen (ja, nein, unbekannt) mit optionalem Datum. */
+export async function setConsentAction(_prev: SettingsState, fd: FormData): Promise<SettingsState> {
+  try {
+    const ctx = await ownerCtx();
+    const id = String(fd.get("id") ?? "");
+    for (const channel of ["email", "whatsapp"] as const) {
+      const raw = String(fd.get(channel) ?? "keep");
+      if (raw === "keep") continue;
+      const value = raw === "ja" ? "ja" : raw === "nein" ? "nein" : null;
+      const dateRaw = String(fd.get(`${channel}At`) ?? "");
+      const at = ISO_DAY.test(dateRaw) ? new Date(`${dateRaw}T12:00:00Z`) : null;
+      await setConsent(id, channel, value, { source: "vermittler", at, actorUserId: ctx.userId, customerId: ctx.customerId });
+    }
+    revalidatePath("/buyer/bestand");
+    return { ok: true, message: "Gespeichert." };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Speichern fehlgeschlagen." };
+  }
+}
+
+export type ConsentLinkState = { ok?: boolean; error?: string; url?: string; text?: string; mailed?: boolean };
+
+/** Einwilligung einholen: Link und Text zum Kopieren, oder per E-Mail (nur wenn ein anderer Weg zulässig ist). */
+export async function requestConsentAction(existingCustomerId: string, byMail: boolean): Promise<ConsentLinkState> {
+  try {
+    const ctx = await ownerCtx();
+    const r = await requestConsent(existingCustomerId, ctx.customerId, { byMail, actorUserId: ctx.userId });
+    if (!r.ok) return { error: r.error };
+    return { ok: true, url: r.url, text: r.text, mailed: r.mailed };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Das hat nicht geklappt." };
+  }
+}
+
+export type ReplyState = { ok?: boolean; error?: string; message?: string; leadId?: string | null };
+
+const REPLY_TEXT: Record<EmailReplyKind, string> = {
+  interesse: "Als Interesse erkannt: Der Kontakt ist jetzt ein Lead in Ihrer Pipeline.",
+  negativ: "Als Absage erkannt: Kein Lead angelegt, der Kunde zählt als „geantwortet“.",
+  stop: "Als Abmeldung erkannt: Der Kunde bekommt keine Kampagnen-Mails mehr.",
+  auto: "Automatische Antwort (z. B. Abwesenheit): nichts zu tun.",
+  bounce: "Unzustellbar: Die Adresse ist vermerkt, der Versand wird bei vielen Fehlern gedrosselt.",
+};
+
+/** Antwort auf eine Kampagnen-Mail zuordnen (Absender und Text aus dem eigenen Postfach einfügen). */
+export async function recordReplyAction(_prev: ReplyState, fd: FormData): Promise<ReplyState> {
+  try {
+    const ctx = await ownerCtx();
+    const kindRaw = String(fd.get("kind") ?? "");
+    const kind = (["interesse", "negativ", "stop", "auto", "bounce"] as const).find((k) => k === kindRaw) ?? null;
+    const r = await recordEmailReply(ctx.customerId, {
+      recipientId: String(fd.get("recipientId") ?? "") || null,
+      fromEmail: String(fd.get("fromEmail") ?? "") || null,
+      subject: String(fd.get("subject") ?? "") || null,
+      text: String(fd.get("text") ?? "").slice(0, 5000) || null,
+      kind,
+    });
+    if (!r.ok) return { error: r.error };
+    await audit("bestand.antwort", { entity: "CampaignRecipient", customerId: ctx.customerId, details: { kind: r.kind } });
+    revalidatePath("/buyer/bestand");
+    return { ok: true, message: `${r.name}: ${REPLY_TEXT[r.kind]}`, leadId: r.leadId };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Das hat nicht geklappt." };
+  }
 }
 
 export async function toggleCampaignAction(fd: FormData): Promise<void> {
@@ -168,6 +362,7 @@ export async function toggleCampaignAction(fd: FormData): Promise<void> {
   if (!c || c.status === "done") return;
   await prisma.customerCampaign.update({ where: { id: c.id }, data: { status: c.status === "running" ? "paused" : "running", pausedReason: null } });
   revalidatePath("/buyer/bestand");
+  revalidatePath(`/buyer/bestand/kampagnen/${c.id}`);
 }
 
 export type BookState = { ok?: boolean; error?: string; fallback?: boolean; until?: string };

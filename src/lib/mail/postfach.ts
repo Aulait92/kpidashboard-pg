@@ -7,6 +7,7 @@ import crypto from "node:crypto";
 import nodemailer from "nodemailer";
 import { prisma } from "@/lib/prisma";
 import { decryptNullable, encryptNullable } from "@/lib/encryption";
+import { isBounceError } from "@/lib/bestand/mail-drossel";
 
 export type MailProvider = "google" | "microsoft" | "smtp";
 export const PROVIDER_LABEL: Record<MailProvider, string> = { google: "Google (Gmail)", microsoft: "Microsoft (Outlook)", smtp: "SMTP" };
@@ -209,7 +210,18 @@ export async function saveSmtp(userId: string, input: SmtpInput): Promise<{ ok: 
 // ─── Senden ─────────────────────────────────────────────────────────────
 
 export type MailAttachment = { fileName: string; contentType: string; data: Buffer };
-export type OutgoingMail = { to: string; subject: string; text: string; attachments?: MailAttachment[] };
+export type OutgoingMail = {
+  to: string;
+  subject: string;
+  text: string;
+  attachments?: MailAttachment[];
+  /** Schlichtes HTML zusätzlich zum Text (Bestandskampagnen, ohne Tracking-Pixel). */
+  html?: string;
+  /** Zusätzliche Kopfzeilen, z. B. List-Unsubscribe (Outlook über Graph: nur x-Kopfzeilen möglich, dort entfallen sie). */
+  headers?: Record<string, string>;
+  /** Eigene Message-ID (ohne spitze Klammern), um Antworten der Kampagne zuzuordnen. */
+  messageId?: string;
+};
 
 type Conn = NonNullable<Awaited<ReturnType<typeof prisma.mailConnection.findUnique>>>;
 
@@ -246,8 +258,32 @@ const wrap = (s: string) => s.replace(/.{1,76}/g, "$&\r\n").trimEnd();
 /** RFC-822-Nachricht (für Gmail): Text als UTF-8, Anhänge als multipart/mixed. */
 export function buildMime(from: { email: string; name: string | null }, m: OutgoingMail): string {
   const fromHeader = from.name ? `${encWord(from.name.replace(/"/g, ""))} <${from.email}>` : from.email;
-  const head = [`From: ${fromHeader}`, `To: ${m.to}`, `Subject: ${encWord(m.subject)}`, "MIME-Version: 1.0"];
-  const textPart = ["Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: base64", "", wrap(b64(m.text))];
+  const extra = Object.entries(m.headers ?? {}).filter(([k, v]) => /^[A-Za-z0-9-]+$/.test(k) && !/[\r\n]/.test(v)).map(([k, v]) => `${k}: ${v}`);
+  const head = [
+    `From: ${fromHeader}`,
+    `To: ${m.to}`,
+    `Subject: ${encWord(m.subject)}`,
+    ...(m.messageId ? [`Message-ID: <${m.messageId}>`] : []),
+    ...extra,
+    "MIME-Version: 1.0",
+  ];
+  const plain = ["Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: base64", "", wrap(b64(m.text))];
+  // Mit HTML: multipart/alternative (Text + HTML)
+  const alt = `pga_${crypto.randomBytes(12).toString("hex")}`;
+  const textPart = m.html
+    ? [
+        `Content-Type: multipart/alternative; boundary="${alt}"`,
+        "",
+        `--${alt}`,
+        ...plain,
+        `--${alt}`,
+        "Content-Type: text/html; charset=UTF-8",
+        "Content-Transfer-Encoding: base64",
+        "",
+        wrap(b64(m.html)),
+        `--${alt}--`,
+      ]
+    : plain;
   if (!m.attachments?.length) return [...head, ...textPart].join("\r\n");
   const boundary = `pg_${crypto.randomBytes(12).toString("hex")}`;
   const parts = [
@@ -267,7 +303,7 @@ export function buildMime(from: { email: string; name: string | null }, m: Outgo
 }
 
 /** Über das Postfach des Logins senden. Fehler werden am Postfach vermerkt. */
-export async function sendViaPostfach(userId: string, m: OutgoingMail): Promise<{ ok: true; from: string } | { ok: false; error: string }> {
+export async function sendViaPostfach(userId: string, m: OutgoingMail): Promise<{ ok: true; from: string } | { ok: false; error: string; raw?: string }> {
   const c = await prisma.mailConnection.findUnique({ where: { userId } });
   if (!c) return { ok: false, error: "Noch kein Postfach verbunden." };
   try {
@@ -277,6 +313,9 @@ export async function sendViaPostfach(userId: string, m: OutgoingMail): Promise<
         to: m.to,
         subject: m.subject,
         text: m.text,
+        ...(m.html ? { html: m.html } : {}),
+        ...(m.headers ? { headers: m.headers } : {}),
+        ...(m.messageId ? { messageId: `<${m.messageId}>` } : {}),
         attachments: m.attachments?.map((a) => ({ filename: a.fileName, content: a.data, contentType: a.contentType })),
       });
     } else if (c.provider === "google") {
@@ -296,7 +335,7 @@ export async function sendViaPostfach(userId: string, m: OutgoingMail): Promise<
         body: JSON.stringify({
           message: {
             subject: m.subject,
-            body: { contentType: "Text", content: m.text },
+            body: m.html ? { contentType: "HTML", content: m.html } : { contentType: "Text", content: m.text },
             toRecipients: [{ emailAddress: { address: m.to } }],
             attachments: (m.attachments ?? []).map((a) => ({
               "@odata.type": "#microsoft.graph.fileAttachment",
@@ -314,8 +353,9 @@ export async function sendViaPostfach(userId: string, m: OutgoingMail): Promise<
     return { ok: true, from: c.email };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Senden fehlgeschlagen.";
-    await prisma.mailConnection.update({ where: { id: c.id }, data: { status: "error", lastError: msg.slice(0, 300) } }).catch(() => {});
-    return { ok: false, error: `Senden hat nicht geklappt: ${friendlySendError(msg)}` };
+    // Unzustellbare Adresse (Bounce) ist kein Fehler des Postfachs
+    if (!isBounceError(msg)) await prisma.mailConnection.update({ where: { id: c.id }, data: { status: "error", lastError: msg.slice(0, 300) } }).catch(() => {});
+    return { ok: false, error: `Senden hat nicht geklappt: ${friendlySendError(msg)}`, raw: msg };
   }
 }
 

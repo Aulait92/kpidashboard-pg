@@ -52,3 +52,49 @@ export function originWhere(origin: LeadOrigin) {
 
 /** Bezahlte Leads (Quoten, Kosten pro Lead, Funnel, Garantien). */
 export const PAID_LEAD_WHERE = originWhere("paid");
+
+// ─── Bestandskampagnen: Zuordnung von Abschlüssen (Ole, 14.11.2026) ─────────
+// Ein Abschluss (Vertrag mit Abschlussdatum) zählt für eine Bestandskampagne, wenn er innerhalb von 60 Tagen
+// nach dem Anschreiben kommt und der Lead aus der Kampagne stammt oder es derselbe Bestandskunde ist.
+// Mehrere Kampagnen beim selben Kunden: die letzte vor dem Abschluss zählt. Empfehlungen bleiben Empfehlungen
+// (keine Doppelzählung), und der erste Vertrag eines bezahlten Leads bleibt beim bezahlten Lead (Lead-Kosten).
+// Zahlen und Gewinn nutzen die Herkunft je Vertrag (lib/vertraege → CustomerContract.origin/campaignId).
+
+export const CAMPAIGN_ATTRIBUTION_DAYS = 60;
+
+export type CampaignSend = { campaignId: string; sentAt: Date; channel?: string | null };
+
+/** Versand, dem ein Abschluss zugeordnet wird (letzte Kampagne in den 60 Tagen davor), sonst null. */
+export function attributedSend(signedAt: Date, sends: CampaignSend[], days = CAMPAIGN_ATTRIBUTION_DAYS): CampaignSend | null {
+  let best: CampaignSend | null = null;
+  for (const s of sends) {
+    if (s.sentAt > signedAt) continue;
+    if (signedAt.getTime() - s.sentAt.getTime() > days * 86_400_000) continue;
+    if (!best || s.sentAt > best.sentAt) best = s;
+  }
+  return best;
+}
+
+/** Kampagne, der ein Abschluss zugeordnet wird (letzte Kampagne in den 60 Tagen davor), sonst null. */
+export function attributeToCampaign(signedAt: Date, sends: CampaignSend[], days = CAMPAIGN_ATTRIBUTION_DAYS): string | null {
+  return attributedSend(signedAt, sends, days)?.campaignId ?? null;
+}
+
+/** Herkunft eines Vertrags: Empfehlung bleibt Empfehlung, sonst zählt die Kampagne (außer erster Vertrag eines bezahlten Leads). */
+export function contractOrigin(lead: LeadOrigin, c: { primary: boolean; campaignId: string | null }): LeadOrigin {
+  if (lead === "empfehlung") return "empfehlung";
+  if (c.campaignId && !(lead === "paid" && c.primary)) return "bestand";
+  return lead;
+}
+
+/** Zuordnung für einen Vertrag: Kampagne (oder null), ihr Kanal und die Herkunft in einem Schritt. */
+export function attributeContract(
+  lead: LeadOrigin,
+  c: { primary: boolean; signedAt: Date },
+  sends: CampaignSend[],
+): { campaignId: string | null; campaignChannel: string | null; origin: LeadOrigin } {
+  if (lead === "empfehlung" || (lead === "paid" && c.primary)) return { campaignId: null, campaignChannel: null, origin: lead };
+  const send = attributedSend(c.signedAt, sends);
+  const campaignId = send?.campaignId ?? null;
+  return { campaignId, campaignChannel: send?.channel ?? null, origin: contractOrigin(lead, { primary: c.primary, campaignId }) };
+}

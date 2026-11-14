@@ -37,6 +37,8 @@ export const PRICE_LIST = {
   bestandModuleMonthly: 149,
   /** Kampagnen-Nachrichten im Bestandskunden-Modul je Kalendermonat inklusive. */
   bestandIncludedMessages: 500,
+  /** Kampagnen-E-Mails im Bestandskunden-Modul je Kalendermonat inklusive (eigenes Kontingent, ohne Aufpreis; Ole 14.11.2026). */
+  bestandIncludedEmails: 2000,
   /**
    * Zusatzpakete Kampagnen-Nachrichten (Ole, 14.11.2026): netto, Einmalposten im laufenden Monat,
    * sofort freigeschaltet, gültig bestandPackMonths Monate. Verbrauch: erst Monatskontingent, dann ältestes Paket.
