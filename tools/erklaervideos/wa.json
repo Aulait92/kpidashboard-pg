@@ -1,0 +1,93 @@
+[
+ {
+  "act": "card_intro",
+  "cap": "",
+  "text": "In diesem Video zeigen wir Ihnen, wie Sie Ihre WhatsApp-Nummer mit Performance Growth verbinden. Das machen Sie nur einmal, und es dauert etwa zehn Minuten.",
+  "wav": "/var/tmp/ev/wa_00.wav",
+  "dur": 10.5
+ },
+ {
+  "act": "bereit",
+  "cap": "Vorher bereitlegen",
+  "text": "Legen Sie vorher drei Dinge bereit: Ihren Facebook-Login mit Admin-Rechten im Unternehmensportfolio, also dort, wo auch Ihr Werbekonto liegt. Ihr Handy mit der WhatsApp Business App. Und einen Computer, auf dem Pop-up-Fenster erlaubt sind.",
+  "wav": "/var/tmp/ev/wa_01.wav",
+  "dur": 18.4
+ },
+ {
+  "act": "app_open",
+  "cap": "1. In der Software: Nummer wählen",
+  "text": "Öffnen Sie in der Software die Einrichtung und dort den Schritt „WhatsApp verbinden“. Zuerst wählen Sie, welche Nummer Ihr Assistent nutzen soll.",
+  "wav": "/var/tmp/ev/wa_02.wav",
+  "dur": 10.6
+ },
+ {
+  "act": "app_business",
+  "cap": "Ihre Nummer aus der WhatsApp Business App",
+  "text": "Am häufigsten ist es Ihre Nummer aus der WhatsApp Business App. Leads und Kunden kennen sie schon, und Sie schreiben in der App einfach weiter.",
+  "wav": "/var/tmp/ev/wa_03.wav",
+  "dur": 10.05
+ },
+ {
+  "act": "app_anbieter",
+  "cap": "„Jetzt WhatsApp verbinden“",
+  "text": "Ist die Nummer nicht bei einem anderen WhatsApp-Anbieter verbunden, wählen Sie „Nein“. Dann klicken Sie auf „Jetzt WhatsApp verbinden“.",
+  "wav": "/var/tmp/ev/wa_04.wav",
+  "dur": 10.55
+ },
+ {
+  "act": "s360",
+  "cap": "2. Konto bei 360dialog anlegen",
+  "text": "Es öffnet sich die Seite von 360dialog, unserem WhatsApp-Anbieter. Dort legen Sie kostenlos ein Konto mit E-Mail und Passwort an. Die Nummer bleibt Ihre.",
+  "wav": "/var/tmp/ev/wa_05.wav",
+  "dur": 12.15
+ },
+ {
+  "act": "mlogin",
+  "cap": "3. Mit Facebook anmelden",
+  "text": "Danach öffnet sich ein Fenster von Meta. Sie melden sich mit Facebook an und klicken auf „Weiter“. Sehen Sie kein Fenster? Dann erlauben Sie Pop-ups im Browser und klicken noch einmal.",
+  "wav": "/var/tmp/ev/wa_06.wav",
+  "dur": 13.2
+ },
+ {
+  "act": "mport",
+  "cap": "4. Unternehmensportfolio wählen",
+  "text": "Wählen Sie Ihr Unternehmensportfolio, meist dasselbe wie für Ihr Werbekonto. Diese Auswahl lässt sich später nicht mehr ändern.",
+  "wav": "/var/tmp/ev/wa_07.wav",
+  "dur": 8.9
+ },
+ {
+  "act": "mbiz",
+  "cap": "5. „Mit der WhatsApp Business App verbunden“",
+  "text": "Meta fragt, ob die Nummer schon in WhatsApp läuft. Wählen Sie: „Ja, diese Nummer ist mit der WhatsApp Business App verbunden“.",
+  "wav": "/var/tmp/ev/wa_08.wav",
+  "dur": 9.2
+ },
+ {
+  "act": "qr",
+  "cap": "6. QR-Code mit dem Handy scannen",
+  "text": "Auf Ihrem Handy kommt eine Nachricht in der WhatsApp Business App. Tippen Sie darauf und scannen Sie den QR-Code auf dem Bildschirm. Chatverlauf und Kontakte können Sie dabei übernehmen.",
+  "wav": "/var/tmp/ev/wa_09.wav",
+  "dur": 12.0
+ },
+ {
+  "act": "done",
+  "cap": "Fertig: verbunden",
+  "text": "Fertig. Das Fenster schließt sich, und in der Software steht „Verbunden“. Steht dort „wird eingerichtet“, ist das normal. Es dauert meist nur wenige Minuten.",
+  "wav": "/var/tmp/ev/wa_10.wav",
+  "dur": 12.25
+ },
+ {
+  "act": "wege",
+  "cap": "Andere Nummer?",
+  "text": "Sie nutzen eine neue Nummer oder Festnetz? Dann bestätigen Sie die Nummer mit einem Code per SMS oder Anruf. Eine private WhatsApp-Nummer stellen Sie vorher kostenlos auf WhatsApp Business um.",
+  "wav": "/var/tmp/ev/wa_11.wav",
+  "dur": 13.85
+ },
+ {
+  "act": "card_outro",
+  "cap": "",
+  "text": "Hakt es irgendwo? Buchen Sie in der Einrichtung einfach den Fünfzehn-Minuten-Hilfetermin. Dann verbinden wir WhatsApp gemeinsam.",
+  "wav": "/var/tmp/ev/wa_12.wav",
+  "dur": 8.4
+ }
+]
