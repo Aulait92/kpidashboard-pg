@@ -5,4 +5,5 @@ Letzte Aktualisierung der Webseite: 14.11.2026 (Zahlen, mehrere Verträge, Schne
 
 ## Offen
 
-- (noch nichts)
+- 14.11.: Zahlungsart selbst hinterlegen, Lastschrift (SEPA) als einfachste Wahl (Konto & Rechnungen). Kurz unter „Einfach starten“ ergänzen.
+- 14.11.: Monatsbericht neu: Ergebnis als Rechnung, Bestand wächst (5 Jahre), was wir im Monat für dich getan haben, Tipps. Punkt bei „Zahlen & Wachstum“ ergänzen.
