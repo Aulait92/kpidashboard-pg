@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AlertTriangle, BarChart3, Filter, Gift, ListChecks, QrCode, Settings2, Star } from "lucide-react";
+import { AlertTriangle, BarChart3, Filter, Gift, ListChecks, QrCode, Star } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { Badge, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
@@ -29,7 +29,9 @@ const STATUS: Record<string, string> = {
   off: "nicht anfragen",
 };
 
-export default async function EmpfehlungenPage({ searchParams }: { searchParams: Promise<{ google?: string }> }) {
+export default async function EmpfehlungenPage({ searchParams }: { searchParams: Promise<{ google?: string; tab?: string }> }) {
+  const sp = await searchParams;
+  const tab = sp.tab === "einstellungen" || sp.tab === "teilen" ? sp.tab : sp.google ? "teilen" : "uebersicht";
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   if (ctx.teamRole !== "owner") redirect("/buyer");
@@ -85,12 +87,37 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
     !settings.active ? "Automatisches Nachfragen ist pausiert." : null,
   ].filter((w): w is string => !!w);
 
+  const tabs = [
+    { id: "uebersicht", label: "Übersicht" },
+    { id: "einstellungen", label: "Einstellungen" },
+    { id: "teilen", label: "Teilen & Google" },
+  ] as const;
+
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader
         title="Empfehlungen & Bewertungen"
         subtitle={info.state === "trial" && info.trialEndsAt ? `Testphase bis ${fmtDate(info.trialEndsAt)}` : "Nach jedem Abschluss: Nachfrage mit Google-Link, später Bitte um Empfehlung."}
       />
+      {/* Reiter statt einer langen Seite (Ole, 14.11.2026) */}
+      <nav className="mb-5 border-b border-[color:var(--border)]" aria-label="Bereiche" data-empfehlung-tabs>
+        <ul className="-mb-px flex gap-1 overflow-x-auto">
+          {tabs.map((t) => (
+            <li key={t.id}>
+              <Link
+                href={t.id === "uebersicht" ? "/buyer/empfehlungen" : `/buyer/empfehlungen?tab=${t.id}`}
+                aria-current={tab === t.id ? "page" : undefined}
+                className={`inline-flex items-center whitespace-nowrap border-b-2 px-4 py-2.5 text-[15px] font-semibold transition ${
+                  tab === t.id ? "border-[color:var(--brand)] text-[color:var(--brand)]" : "border-transparent text-[color:var(--muted)] hover:text-[color:var(--foreground)]"
+                }`}
+              >
+                {t.label}
+                {t.id === "uebersicht" && rewards.length ? <span className="ml-1.5 rounded-full bg-rose-600 px-1.5 py-0.5 text-[11px] font-bold text-white">{rewards.length}</span> : null}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
       <div className="space-y-5">
         {warnings.length ? (
           <div className="space-y-2" data-empfehlung-warnings>
@@ -103,13 +130,9 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
           </div>
         ) : null}
 
-        <Card>
-          <CardHeader title="Auswertung (letzte 90 Tage)" icon={BarChart3} />
-          <div className="px-5 pb-5 pt-4">
-            <EmpfehlungStatsGrid s={stats} />
-          </div>
-        </Card>
 
+        {tab === "uebersicht" ? (
+          <>
         {rewards.length ? (
           <Card>
             <CardHeader title="Offene Dankeschöns" icon={Gift} count={rewards.length} />
@@ -138,63 +161,16 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
         ) : null}
 
         <Card>
+          <CardHeader title="Auswertung (letzte 90 Tage)" icon={BarChart3} />
+          <div className="px-5 pb-5 pt-4">
+            <EmpfehlungStatsGrid s={stats} />
+          </div>
+        </Card>
+
+        <Card>
           <CardHeader title="Wo gehen Empfehlungen verloren? (letzte 90 Tage)" icon={Filter} />
           <div className="px-5 pb-5 pt-4">
             <EmpfehlungFunnel s={stats} />
-          </div>
-        </Card>
-
-        <Card>
-          <CardHeader title="Im Gespräch und per E-Mail" icon={QrCode} />
-          <div className="space-y-3 px-5 pb-5 pt-4 text-sm" data-empfehlung-gespraech>
-            <p>
-              <b>Im Termin:</b> Öffnen Sie den Kontakt und tippen Sie auf „Im Termin zeigen“. Ihr Kunde scannt seinen persönlichen QR-Code von Ihrem Bildschirm und
-              teilt die Empfehlung gleich im Gespräch, auch in der Online-Beratung. So wissen Sie später, von wem eine Empfehlung kam.
-            </p>
-            {generalUrl ? (
-              <div className="space-y-2">
-                <p>
-                  <b>E-Mail-Signatur:</b> Diese Zeile unter Ihre Mails setzen.
-                </p>
-                <p className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] p-3 text-xs">{signatureLine(generalUrl, offer)}</p>
-                <CopyText text={signatureLine(generalUrl, offer)} label="Zeile kopieren" />
-                <p className="text-sm text-[color:var(--muted)]">
-                  Die Signatur nutzt einen allgemeinen Link. Ihr Kunde kann dort seine Handynummer angeben und bekommt seinen persönlichen Link; sonst kommt die
-                  Empfehlung als Lead an, lässt sich aber keinem einzelnen Kunden zuordnen.
-                </p>
-              </div>
-            ) : null}
-          </div>
-        </Card>
-
-        <WaechterSection customerId={ctx.customerId} readOnly={ctx.preview} flash={(await searchParams).google ?? null} />
-
-        <Card>
-          <CardHeader title="Einstellungen" icon={Settings2} />
-          <div className="space-y-5 px-5 pb-5 pt-4">
-            <SettingsForm
-              initial={{
-                active: settings.active,
-                googleReviewUrl: settings.googleReviewUrl ?? "",
-                reviewDelayDays: settings.reviewDelayDays,
-                referralDelayDays: settings.referralDelayDays,
-                custom: settings.custom,
-                offerKind: settings.offerKind,
-                offerHeadline: settings.offerHeadline ?? "",
-                offerText: settings.offerText ?? "",
-                referralOnPraise: settings.referralOnPraise,
-                statusUpdates: settings.statusUpdates,
-                followUpHours: settings.followUpHours,
-                referralAfterAppointment: settings.referralAfterAppointment,
-                reward: { kind: settings.rewardRaw.kind, amount: settings.rewardRaw.amount, note: settings.rewardRaw.note, trigger: settings.rewardRaw.trigger, confirmed: !!settings.rewardRaw.confirmedAt },
-              }}
-              vermittlerTyp={customer?.vermittlerTyp ?? null}
-              vertreter={vertreter}
-              readOnly={ctx.preview}
-            />
-            <div className="border-t border-[color:var(--border)] pt-4">
-              <TestSendForm readOnly={ctx.preview} />
-            </div>
           </div>
         </Card>
 
@@ -240,6 +216,71 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
             : "Empfehlende bekommen ohne eingestelltes Dankeschön keine Prämie; der Dank geht automatisch raus, sobald aus einer Empfehlung ein Abschluss wird."}
           Rückmeldungen an Empfehlende gibt es nur, wenn die empfohlene Person zugestimmt hat.
         </p>
+          </>
+        ) : null}
+
+        {tab === "einstellungen" ? (
+          <>
+        <Card>
+          <div className="space-y-5 p-5">
+            <SettingsForm
+              initial={{
+                active: settings.active,
+                googleReviewUrl: settings.googleReviewUrl ?? "",
+                reviewDelayDays: settings.reviewDelayDays,
+                referralDelayDays: settings.referralDelayDays,
+                custom: settings.custom,
+                offerKind: settings.offerKind,
+                offerHeadline: settings.offerHeadline ?? "",
+                offerText: settings.offerText ?? "",
+                referralOnPraise: settings.referralOnPraise,
+                statusUpdates: settings.statusUpdates,
+                followUpHours: settings.followUpHours,
+                referralAfterAppointment: settings.referralAfterAppointment,
+                reward: { kind: settings.rewardRaw.kind, amount: settings.rewardRaw.amount, note: settings.rewardRaw.note, trigger: settings.rewardRaw.trigger, confirmed: !!settings.rewardRaw.confirmedAt },
+              }}
+              vermittlerTyp={customer?.vermittlerTyp ?? null}
+              vertreter={vertreter}
+              readOnly={ctx.preview}
+            />
+            <div className="border-t border-[color:var(--border)] pt-4">
+              <TestSendForm readOnly={ctx.preview} />
+            </div>
+          </div>
+        </Card>
+
+          </>
+        ) : null}
+
+        {tab === "teilen" ? (
+          <>
+        <Card>
+          <CardHeader title="Im Gespräch und per E-Mail" icon={QrCode} />
+          <div className="space-y-3 px-5 pb-5 pt-4 text-sm" data-empfehlung-gespraech>
+            <p>
+              <b>Im Termin:</b> Öffnen Sie den Kontakt und tippen Sie auf „Im Termin zeigen“. Ihr Kunde scannt seinen persönlichen QR-Code von Ihrem Bildschirm und
+              teilt die Empfehlung gleich im Gespräch, auch in der Online-Beratung. So wissen Sie später, von wem eine Empfehlung kam.
+            </p>
+            {generalUrl ? (
+              <div className="space-y-2">
+                <p>
+                  <b>E-Mail-Signatur:</b> Diese Zeile unter Ihre Mails setzen.
+                </p>
+                <p className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] p-3 text-xs">{signatureLine(generalUrl, offer)}</p>
+                <CopyText text={signatureLine(generalUrl, offer)} label="Zeile kopieren" />
+                <p className="text-sm text-[color:var(--muted)]">
+                  Die Signatur nutzt einen allgemeinen Link. Ihr Kunde kann dort seine Handynummer angeben und bekommt seinen persönlichen Link; sonst kommt die
+                  Empfehlung als Lead an, lässt sich aber keinem einzelnen Kunden zuordnen.
+                </p>
+              </div>
+            ) : null}
+          </div>
+        </Card>
+
+        <WaechterSection customerId={ctx.customerId} readOnly={ctx.preview} flash={sp.google ?? null} />
+
+          </>
+        ) : null}
       </div>
     </main>
   );

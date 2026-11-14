@@ -5,7 +5,7 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useState, useTransition } from "react";
-import { Check, Copy, Gift, Loader2, MessageCircle, QrCode, Send, Share2, Sparkles, Star, X } from "lucide-react";
+import { Check, ChevronDown, Copy, Gift, Loader2, MessageCircle, QrCode, Send, Share2, Sparkles, Star, X } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { Button, buttonClass } from "@/components/ui";
 import { haptic } from "@/lib/haptics";
@@ -360,6 +360,22 @@ export function CopyText({ text, label = "Kopieren" }: { text: string; label?: s
 
 // ─── Einstellungen mit Handy-Vorschau ──────────────────────────────────────
 
+/** Aufklappbarer Abschnitt mit Zusammenfassung (Ole, 14.11.2026: Einstellungen waren zu lang). Felder bleiben im Formular, auch zugeklappt. */
+function Section({ title, summary, defaultOpen, children, ...rest }: { title: string; summary?: string; defaultOpen?: boolean; children: React.ReactNode } & Record<`data-${string}`, boolean>) {
+  return (
+    <details open={defaultOpen} className="group rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white" {...rest}>
+      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-[var(--radius-md)] px-4 py-3 hover:bg-[color:var(--surface-sunken)] [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0 flex-1">
+          <span className="block text-base font-semibold">{title}</span>
+          {summary ? <span className="block truncate text-sm text-[color:var(--muted)]">{summary}</span> : null}
+        </span>
+        <ChevronDown className="h-5 w-5 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+      </summary>
+      <div className="space-y-3 border-t border-[color:var(--border)] px-4 pb-4 pt-3">{children}</div>
+    </details>
+  );
+}
+
 export function SettingsForm({
   initial,
   vertreter,
@@ -410,7 +426,13 @@ export function SettingsForm({
     vertreter,
   });
   return (
-    <form action={action} className="space-y-5 text-sm" data-empfehlung-settings>
+    <form action={action} className="space-y-3 text-sm" data-empfehlung-settings>
+      <Section
+        title="Grundeinstellungen"
+        summary={`${initial.active ? "Aktiv" : "Pausiert"} · Nachfrage ${initial.reviewDelayDays} Tage nach Abschluss · Bitte um Empfehlung nach ${initial.referralDelayDays} Tagen`}
+        defaultOpen={!initial.googleReviewUrl}
+        data-empfehlung-basics
+      >
       <label className="flex items-center gap-2 font-medium">
         <input type="checkbox" name="active" defaultChecked={initial.active} className="h-4 w-4" />
         Automatisch nachfragen (aus = pausiert, ohne zu kündigen)
@@ -447,8 +469,9 @@ export function SettingsForm({
         </label>
       </div>
 
-      <fieldset className="space-y-3 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4" data-empfehlung-offer>
-        <legend className="text-base px-1 font-semibold">Empfehlungsangebot</legend>
+      </Section>
+
+      <Section title="Empfehlungsangebot" summary={offerKind === "none" ? "Kein Angebot" : offerKind === "custom" ? `Eigenes Angebot${offerHeadline ? `: ${offerHeadline}` : ""}` : OFFER_PRESETS[offerKind].label} data-empfehlung-offer>
         <p className="text-sm text-[color:var(--muted)]">
           Was bekommt die empfohlene Person? Ein konkreter, kostenloser Check wird deutlich lieber weitergegeben als „melde dich mal bei meinem Berater“.
           Das Angebot steht auf der Empfehlungsseite und im Text, den Ihr Kunde weiterleitet.
@@ -505,10 +528,13 @@ export function SettingsForm({
             {warn ? <p className="text-xs font-medium text-amber-700">{warn}</p> : null}
           </div>
         ) : null}
-      </fieldset>
+      </Section>
 
-      <fieldset className="space-y-3 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4" data-empfehlung-moments>
-        <legend className="text-base px-1 font-semibold">Der richtige Moment</legend>
+      <Section
+        title="Der richtige Moment"
+        summary={[initial.referralOnPraise ? "Bei Lob direkt" : null, initial.referralAfterAppointment ? "nach Terminen" : null, initial.followUpHours ? `Nachfassen nach ${initial.followUpHours} Std.` : "kein Nachfassen"].filter(Boolean).join(" · ")}
+        data-empfehlung-moments
+      >
         <label className="flex items-start gap-2">
           <input type="checkbox" name="referralOnPraise" defaultChecked={initial.referralOnPraise} className="mt-0.5 h-4 w-4" />
           <span>
@@ -547,10 +573,13 @@ export function SettingsForm({
             Nach „Empfehlungslink senden“ oder „Im Termin zeigen“ legt die App eine Aufgabe in „Heute“ an: kurz nachfragen, ob der Link weitergeleitet wurde.
           </span>
         </label>
-      </fieldset>
+      </Section>
 
-      <fieldset className="space-y-3 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4" data-empfehlung-reward>
-        <legend className="text-base px-1 font-semibold">Dankeschön für Empfehlende (optional)</legend>
+      <Section
+        title="Dankeschön für Empfehlende"
+        summary={rewardKind === "none" ? "Kein Dankeschön (optional)" : `${rewardKind === "spende" ? "Spende" : "Gutschein"}${rewardAmount ? ` über ${rewardAmount} €` : ""}`}
+        data-empfehlung-reward
+      >
         <p className="text-sm text-[color:var(--muted)]">
           Ein vorher angekündigtes Dankeschön erhöht die Bereitschaft zu empfehlen. Es geht immer an den Empfehlenden, nie an die empfohlene Person und nie
           für einen eigenen Vertrag. Ihr Kunde sieht es auf seiner Empfehlungsseite. Sie übergeben es selbst, die App erinnert Sie daran.
@@ -615,8 +644,16 @@ export function SettingsForm({
             </label>
           </>
         ) : null}
-      </fieldset>
+      </Section>
 
+      <Section
+        title="Nachrichtentexte"
+        summary={(() => {
+          const n = (Object.keys(TEXT_LABELS) as TextKey[]).filter((k) => texts[k].trim()).length;
+          return n ? `${n} eigene ${n === 1 ? "Text" : "Texte"}, sonst Standard` : "Standardtexte (mit Handy-Vorschau)";
+        })()}
+        data-empfehlung-texts
+      >
       <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
         <div className="space-y-4">
           {(Object.keys(TEXT_LABELS) as TextKey[]).map((k) => (
@@ -648,11 +685,14 @@ export function SettingsForm({
           </div>
         </div>
       </div>
-      {state.error ? <p className="font-medium text-rose-700">{state.error}</p> : null}
-      {state.ok ? <p className="font-medium text-emerald-700">Gespeichert.</p> : null}
-      <Button type="submit" variant="primary" size="md" disabled={readOnly || pending}>
-        {pending ? "Speichert …" : "Speichern"}
-      </Button>
+      </Section>
+      <div className="sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center gap-3 bg-white/95 px-1 py-3 backdrop-blur">
+        <Button type="submit" variant="primary" size="md" disabled={readOnly || pending}>
+          {pending ? "Speichert …" : "Speichern"}
+        </Button>
+        {state.error ? <p className="font-medium text-rose-700">{state.error}</p> : null}
+        {state.ok ? <p className="font-medium text-emerald-700">Gespeichert.</p> : null}
+      </div>
     </form>
   );
 }

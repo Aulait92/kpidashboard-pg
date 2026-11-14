@@ -170,8 +170,8 @@ export function EmpfehlungFunnel({ s }: { s: EmpfehlungStats }) {
   const f = s.funnel;
   const steps: { k: string; v: number; sub: string }[] = [
     { k: "Links ausgegeben", v: f.linksSent, sub: "gesendet oder im Termin gezeigt" },
-    { k: "vom Kunden geöffnet", v: f.linksOpened, sub: "Kunden, die ihre Seite angesehen haben" },
-    { k: "Besucher", v: f.visitors, sub: "einzelne Personen auf der Empfehlungsseite" },
+    { k: "Kunde hat geöffnet", v: f.linksOpened, sub: "Ihre Kunden, die ihren Empfehlungslink geöffnet haben" },
+    { k: "Bekannte haben geöffnet", v: f.visitors, sub: "Personen, die den weitergeleiteten Link geöffnet haben" },
     { k: "Empfehlungen", v: f.leads, sub: "haben sich eingetragen" },
     { k: "Neukunden", v: f.closings, sub: "Abschlüsse aus Empfehlungen" },
   ];
@@ -198,7 +198,7 @@ export function EmpfehlungFunnel({ s }: { s: EmpfehlungStats }) {
           <b>{s.hint.title}.</b> {s.hint.text}
         </span>
       </div>
-      <p className="text-xs text-[color:var(--muted)]">Besucher werden je Person einmal gezählt, Link-Vorschauen zählen nicht. Empfehlungen über den Link in der E-Mail-Signatur zählen bei Besuchern, Empfehlungen und Neukunden mit.</p>
+      <p className="text-xs text-[color:var(--muted)]">Bekannte werden je Person einmal gezählt, Link-Vorschauen zählen nicht. Empfehlungen über den Link in der E-Mail-Signatur zählen bei Bekannten, Empfehlungen und Neukunden mit.</p>
     </div>
   );
 }
