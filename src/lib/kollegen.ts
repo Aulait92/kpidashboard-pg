@@ -7,6 +7,7 @@
 //    → Gutschrift beim Empfehler (idempotent), sonst Admin-Aufgabe
 //  - Hinweise im Kundenbereich nach positiven Momenten (je Anlass einmal)
 
+import { FREE_PERIOD_REMINDER_DAYS } from "@/lib/free-periods";
 import { NPS_PROMOTER } from "@/lib/nps";
 import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
@@ -53,7 +54,8 @@ export const MAX_GLOBAL_PER_10_MIN = 30;
 /** Löschfrist: Angaben von Empfohlenen ohne Abschluss nach 12 Monaten entfernen. */
 export const RETENTION_DAYS = 365;
 /** Hinweis so viele Tage vor Ende der Gratiszeit „Bestandskunden-Modul“ (Empfehlungsprämie). */
-export const BESTAND_FREE_REMINDER_DAYS = 14;
+/** Hinweis vor Ende der Gratiszeit: einheitlich 7 Tage (AGB „Testphasen und kostenlose Zeiträume“) */
+export const BESTAND_FREE_REMINDER_DAYS = FREE_PERIOD_REMINDER_DAYS;
 
 // ─── Einstellungen ─────────────────────────────────────────────────────
 export async function loadReferralSettings(): Promise<ReferralSettingsLike> {
@@ -360,7 +362,7 @@ async function ownersOf(customerId: string) {
   return prisma.user.findMany({ where: { customerId, role: "BUYER", teamRole: "owner" }, select: { id: true, email: true } });
 }
 
-async function thankReferrer(customerId: string, referredLabel: string, amount: number | null, gift: string | null = null) {
+async function thankReferrer(customerId: string, referredLabel: string, amount: number | null, gift: string | null = null, giftTerms: string | null = null) {
   const owners = await ownersOf(customerId);
   const short = gift ?? (amount != null ? `${eur(amount)} netto als Gutschrift auf Ihrer nächsten Rechnung` : "Ihre Prämie");
   try {
@@ -383,6 +385,7 @@ async function thankReferrer(customerId: string, referredLabel: string, amount: 
         : amount != null
           ? `Als Dankeschön schreiben wir Ihnen ${eur(amount)} netto gut. Die Gutschrift wird mit Ihrer nächsten Rechnung verrechnet.`
           : "Als Dankeschön schreiben wir Ihnen Ihre Prämie gut.",
+      ...(giftTerms ? [giftTerms] : []),
       "Kennen Sie noch weitere Kollegen? Ihr persönlicher Link bleibt gültig.",
     ],
     ...(appLink("/buyer/empfehlen") ? { button: { label: "Zu „Kollegen empfehlen“", url: appLink("/buyer/empfehlen")! } } : {}),
@@ -400,7 +403,7 @@ export function addMonths(d: Date, n: number): Date {
   return r;
 }
 
-type RewardResult = { outcome: "credited" | "manual"; amount: number | null; ref: string | null; note: string | null; gift: string | null; task: string | null };
+type RewardResult = { outcome: "credited" | "manual"; amount: number | null; ref: string | null; note: string | null; gift: string | null; task: string | null; giftTerms?: string | null };
 
 /**
  * Prämie „Bestandskunden-Modul N Monate gratis“:
@@ -459,7 +462,7 @@ async function grantBestandReward(customerId: string, settings: ReferralSettings
       amount,
     };
   }
-  // Gratiszeit: neu gebucht oder noch laufend → (weiter) bis +N Monate, Hinweis 2 Wochen vorher
+  // Gratiszeit: neu gebucht oder noch laufend → (weiter) bis +N Monate, Hinweis 7 Tage vorher
   const running = c.bestandFreeUntil != null && c.bestandFreeUntil > now;
   let until: Date | null = null;
   if (!booked || running) {
@@ -469,7 +472,11 @@ async function grantBestandReward(customerId: string, settings: ReferralSettings
   const gift = until
     ? `${nText} das Bestandskunden-Modul gratis (bis ${fmtDay(until)}, als Gutschrift über ${eur(amount)} netto mit Ihren nächsten Rechnungen verrechnet)`
     : `${nText} das Bestandskunden-Modul gratis: Wir schreiben Ihnen ${eur(amount)} netto gut, verrechnet mit Ihrer nächsten Rechnung`;
-  return { outcome: "credited", amount, ref, note: until ? `Modul gratis bis ${fmtDay(until)}` : null, gift, task: null };
+  // Bedingungen der Gratiszeit (AGB „Testphasen und kostenlose Zeiträume“): Dauer, Preis danach, jederzeit beendbar
+  const giftTerms = until
+    ? `Nach dem ${fmtDay(until)} läuft das Modul automatisch für ${eur(price)} netto im Monat weiter. Bis dahin können Sie es jederzeit unter „Konto & Rechnungen“ kostenlos beenden, wir erinnern Sie ${FREE_PERIOD_REMINDER_DAYS} Tage vorher. Es gelten unsere AGB (Abschnitt „Testphasen und kostenlose Zeiträume“).`
+    : null;
+  return { outcome: "credited", amount, ref, note: until ? `Modul gratis bis ${fmtDay(until)}` : null, gift, task: null, giftTerms };
 }
 
 const fmtDay = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
@@ -558,7 +565,7 @@ export async function rewardReferralForOffer(offerId: string, now = new Date()):
   });
   const { sendToAdmins } = await import("@/lib/push");
   if (outcome === "credited") {
-    await thankReferrer(referrer.id, referredLabel, amount, res.gift);
+    await thankReferrer(referrer.id, referredLabel, amount, res.gift, res.giftTerms ?? null);
     await sendToAdmins({ title: `🎁 Empfehlungsprämie gutgeschrieben: ${referrer.name}`, body: `${referredLabel} ist Kunde · ${res.gift ? rewardShort(settings) : eur(amount!) + " netto"}`, url: "/admin/marketing/empfehlungen" }).catch(() => {});
   } else {
     await prisma.salesTask
@@ -578,7 +585,7 @@ export async function rewardReferralForOffer(offerId: string, now = new Date()):
 }
 
 /**
- * Gratiszeit „Bestandskunden-Modul“ (Empfehlungsprämie) endet in 2 Wochen: einmal Hinweis
+ * Gratiszeit „Bestandskunden-Modul“ (Empfehlungsprämie) endet in 7 Tagen: einmal Hinweis
  * per Push und E-Mail an den Inhaber, mit Weg zum Abbestellen (täglicher Cron).
  */
 export async function remindBestandFreeEnd(now = new Date()): Promise<number> {
@@ -617,7 +624,7 @@ export async function remindBestandFreeEnd(now = new Date()): Promise<number> {
         greeting: "Guten Tag,",
         paragraphs: [
           `als Dankeschön für Ihre Empfehlung nutzen Sie das Bestandskunden-Modul bis ${until} gratis. Danach läuft es automatisch weiter für ${price} netto im Monat, tagesgenau anteilig mit Ihrer Rechnung.`,
-          "Wenn Sie das Modul nicht behalten möchten, bestellen Sie es einfach vorher unter „Konto & Rechnungen“ ab. Ihre Kundenliste bleibt gespeichert.",
+          "Wenn Sie das Modul nicht behalten möchten, beenden Sie es einfach vorher unter „Konto & Rechnungen“, dann entstehen keine Kosten. Ihre Kundenliste bleibt gespeichert.",
         ],
         ...(appLink("/buyer/konto") ? { button: { label: "Zu Konto & Rechnungen", url: appLink("/buyer/konto")! } } : {}),
       }).catch((err) => reportError(err, "bestand-free-mail"));

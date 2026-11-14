@@ -1,7 +1,7 @@
 // Prämie „Bestandskunden-Modul N Monate gratis“ (Kollegen empfehlen, Ole 14.11.2026):
 // Modul nicht gebucht → buchen + N Monatsbeiträge gutschreiben, gratis bis +N Monate;
 // schon gebucht → gutschreiben; kostenlos (Makler/Bestandsschutz) → Admin-Aufgabe;
-// mehrere Empfehlungen addieren sich; Hinweis 2 Wochen vor Ende genau einmal.
+// mehrere Empfehlungen addieren sich; Hinweis 7 Tage vor Ende genau einmal (AGB, 14.11.2026).
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const billing = vi.hoisted(() => ({ credits: [] as { stripeCustomerId: string; amountEur: number; fallId: string }[], booked: [] as string[] }));
@@ -114,10 +114,10 @@ describe("Empfehlungsprämie: Bestandskunden-Modul gratis", () => {
     expect(tasks).toBeGreaterThanOrEqual(2);
   });
 
-  it("Hinweis 2 Wochen vor Ende der Gratiszeit genau einmal", async () => {
+  it("Hinweis 7 Tage vor Ende der Gratiszeit genau einmal", async () => {
     const now = new Date();
-    const soon = await referrer({ existingCustomersEnabled: true, bestandMonthly: 149, bestandFreeUntil: new Date(now.getTime() + 10 * DAY) });
-    const later = await referrer({ existingCustomersEnabled: true, bestandMonthly: 149, bestandFreeUntil: new Date(now.getTime() + 40 * DAY) });
+    const soon = await referrer({ existingCustomersEnabled: true, bestandMonthly: 149, bestandFreeUntil: new Date(now.getTime() + 6 * DAY) });
+    const later = await referrer({ existingCustomersEnabled: true, bestandMonthly: 149, bestandFreeUntil: new Date(now.getTime() + 10 * DAY) });
     expect(await remindBestandFreeEnd(now)).toBeGreaterThanOrEqual(1);
     expect((await prisma.customer.findUniqueOrThrow({ where: { id: soon.id } })).bestandFreeReminded).not.toBeNull();
     expect((await prisma.customer.findUniqueOrThrow({ where: { id: later.id } })).bestandFreeReminded).toBeNull();

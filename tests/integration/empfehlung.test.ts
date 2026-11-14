@@ -180,11 +180,14 @@ describe("Empfehlungen & Bewertungen", () => {
     expect(await bookEmpfehlung(service, { acknowledged: true, now: NOW })).toMatchObject({ ok: false });
   });
 
-  it("Erinnerung 3 Tage vor Ende (einmal), danach automatisch kostenpflichtig (anteilig, einmal)", async () => {
+  it("Erinnerung 7 Tage vor Ende (einmal), danach automatisch kostenpflichtig (anteilig, einmal)", async () => {
     const id = await customer();
     await bookEmpfehlung(id, { acknowledged: true, now: NOW });
     const end = NOW.getTime() + PRICE_LIST.empfehlungTrialDays * DAY_MS;
-    expect((await processEmpfehlungBilling(new Date(end - 2 * DAY_MS))).reminded).toBeGreaterThanOrEqual(1);
+    // 8 Tage vorher noch nicht, 7 Tage vorher genau einmal (AGB „Testphasen und kostenlose Zeiträume“)
+    await processEmpfehlungBilling(new Date(end - 8 * DAY_MS));
+    expect((await prisma.customer.findUniqueOrThrow({ where: { id } })).empfehlungTrialReminded).toBeNull();
+    expect((await processEmpfehlungBilling(new Date(end - 7 * DAY_MS + 3600_000))).reminded).toBeGreaterThanOrEqual(1);
     const before = state.pushes.length;
     await processEmpfehlungBilling(new Date(end - DAY_MS));
     expect(state.pushes.filter((p, i) => i >= before && p.title.includes("Testphase"))).toHaveLength(0);

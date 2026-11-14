@@ -97,7 +97,7 @@ export function EmpfehlungBookButton({
             <a href="/rechtliches/agb" target="_blank" rel="noreferrer" className="underline">
               AGB
             </a>{" "}
-            (Zusatzmodule).
+            ({trial ? "Testphasen und kostenlose Zeiträume" : "Zusatzmodule"}).
           </p>
           <label className="flex items-start gap-2">
             <input type="checkbox" name="confirm" required className="mt-0.5 h-4 w-4" />

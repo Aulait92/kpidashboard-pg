@@ -77,7 +77,7 @@ async function handle(req: Request): Promise<Response> {
           audit: await pruneAudit(now).catch(() => null),
           // „Kollegen empfehlen“: Angaben von Empfohlenen ohne Abschluss nach 12 Monaten entfernen
           referrals: await import("@/lib/kollegen").then((m) => m.pruneReferrals(now)).catch(() => null),
-          // Empfehlungsprämie „Bestandskunden-Modul gratis“: Hinweis 2 Wochen vor Ende
+          // Empfehlungsprämie „Bestandskunden-Modul gratis“: Hinweis 7 Tage vor Ende (AGB)
           bestandFree: await import("@/lib/kollegen").then((m) => m.remindBestandFreeEnd(now)).catch((e: unknown) => {
             reportError(e, "cron-bestand-free");
             return null;

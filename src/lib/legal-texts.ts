@@ -9,10 +9,11 @@
 // des bezahlten Jahres, keine anteilige Erstattung (wie die Stripe-Abrechnung).
 // 14.11.2026: Statt Logins zählen aktive Verkäufer (bekommen Leads); Mitglieder ohne Leads kostenlos.
 // 14.11.2026: AVV: Verschwiegenheit nach § 203 StGB, E-Mail-Kampagnen im Bestandskunden-Modul.
+// 14.11.2026 (Fassung 2): Abschnitt „Testphasen und kostenlose Zeiträume“ (Ole).
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
-export const LEGAL_VERSION = "14.11.2026";
+export const LEGAL_VERSION = "14.11.2026 (Fassung 2)";
 
 export const PROVIDER = {
   name: "Ole Kannapinn UG (haftungsbeschränkt)",
@@ -99,6 +100,18 @@ export const AGB: LegalSection[] = [
       "Eine Pause verlängert eine vereinbarte Mindestlaufzeit nicht.",
       // Prüfen: Pause bei Jahreszahlung
       "Bei jährlicher Vorauszahlung können die Kampagnen ebenfalls pausiert werden; eine Gutschrift oder Verlängerung des Zahlungsjahres erfolgt dafür nicht.",
+    ],
+  },
+  {
+    // Prüfen: Testphasen und kostenlose Zeiträume (Ole, 14.11.2026)
+    title: "Testphasen und kostenlose Zeiträume",
+    items: [
+      "Bietet der Anbieter ein Zusatzmodul oder eine Leistung für einen bestimmten Zeitraum kostenlos an (Testphase, Prämie oder Aktion), nennt er die Dauer und den anschließenden Preis bei der Buchung bzw. im Angebot.",
+      "Nach Ende des kostenlosen Zeitraums wird die Leistung automatisch zu dem bei der Buchung genannten Preis fortgeführt und berechnet, sofern der Kunde sie nicht vorher beendet.",
+      "Der Kunde kann die Leistung während des kostenlosen Zeitraums jederzeit im Kundenbereich oder in Textform beenden. Es entstehen dann keine Kosten.",
+      "Der Anbieter weist den Kunden spätestens 7 Tage vor Ende des kostenlosen Zeitraums per E-Mail und im Kundenbereich auf das Ende und den folgenden Preis hin.",
+      "Nach dem Übergang in die kostenpflichtige Phase kann die Leistung monatlich zum Ende des Abrechnungsmonats gekündigt werden, soweit im Angebot nichts anderes vereinbart ist.",
+      "Je Leistung und Kunde wird ein kostenloser Zeitraum gewährt. Ein Anspruch auf kostenlose Zeiträume besteht nicht.",
     ],
   },
   {

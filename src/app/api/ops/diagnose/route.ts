@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 // damit Claude Zustände prüfen kann, ohne Datenbank-Zugang. Kein freies SQL, keine Geheimnisse,
 // Lead-Daten nur so weit nötig (Name statt Telefon/E-Mail).
 // Absicherung: eigener Lese-Schlüssel OPS_READ_TOKEN (≥ 32 Zeichen) als Bearer-Token.
-//   GET /api/ops/diagnose?q=uebersicht|stripe|followups|vorlagen|demo|kunden
+//   GET /api/ops/diagnose?q=uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp
 export const dynamic = "force-dynamic";
 
 function authorized(req: Request): boolean {
@@ -77,6 +77,25 @@ async function demo() {
   return { login: u, kunde: c, leads, kalender };
 }
 
+/** WhatsApp-Nummern und wo sie angebunden sind (ohne Schlüssel) */
+async function whatsapp() {
+  const rows = await prisma.whatsAppAccount.findMany({
+    orderBy: { createdAt: "asc" },
+    select: {
+      phoneNumber: true,
+      displayName: true,
+      provider: true,
+      status: true,
+      phoneNumberId: true,
+      updatedAt: true,
+      customer: { select: { id: true, name: true } },
+      _count: { select: { conversations: true } },
+    },
+  });
+  const last = await prisma.conversation.groupBy({ by: ["whatsAppAccountId"], _max: { lastMessageAt: true } });
+  return { anzahl: rows.length, rows, letzteNachricht: last };
+}
+
 async function kunden() {
   return prisma.customer.findMany({
     where: { archived: false },
@@ -109,7 +128,7 @@ async function uebersicht() {
   return { kunden: kundenAnz, leads, vertraege, logins, followups: followupsAnz, vorlagen: vorlagenAnz, abfragen: Object.keys(QUERIES) };
 }
 
-const QUERIES: Record<string, () => Promise<unknown>> = { uebersicht, stripe, followups, vorlagen, demo, kunden };
+const QUERIES: Record<string, () => Promise<unknown>> = { uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp };
 
 export async function GET(req: Request): Promise<Response> {
   if (!authorized(req)) return Response.json({ error: "Unauthorized" }, { status: 401 });

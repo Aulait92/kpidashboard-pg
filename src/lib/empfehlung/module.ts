@@ -214,7 +214,7 @@ export async function processEmpfehlungBilling(now = new Date()): Promise<{ remi
   let billed = 0;
   let expired = 0;
 
-  // 1. Erinnerung 3 Tage vor Ende der Testphase
+  // 1. Erinnerung 7 Tage vor Ende der Testphase (TRIAL_REMINDER_DAYS, einheitlich laut AGB)
   const remind = await prisma.customer.findMany({
     where: {
       empfehlungEnabled: true,
@@ -239,7 +239,7 @@ export async function processEmpfehlungBilling(now = new Date()): Promise<{ remi
     }).catch(() => {});
     await mailCustomer(c.id, `Ihre Testphase „${MODULE}“ endet am ${until}`, [
       `Ihre kostenlose Testphase endet am ${until}. Danach läuft das Modul automatisch weiter für ${eurNet(PRICE_LIST.empfehlungModuleMonthly)} im Monat, tagesgenau anteilig mit Ihrer nächsten Rechnung.`,
-      "Wenn Sie das Modul nicht behalten möchten, kündigen Sie einfach vorher unter „Konto & Rechnungen“, dann entstehen keine Kosten.",
+      "Wenn Sie das Modul nicht behalten möchten, beenden Sie es einfach vorher unter „Konto & Rechnungen“, dann entstehen keine Kosten.",
     ]);
     reminded++;
   }

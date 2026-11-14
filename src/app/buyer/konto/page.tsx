@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Bell, CreditCard, FileText, Gift, Package, Percent, Puzzle, Star, UserPlus, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
+import { FreePeriodNotices } from "@/components/free-period-notices";
 import { Badge, Card, CardHeader, buttonClass } from "@/components/ui";
 import { loadCustomerProvision } from "@/lib/provision-server";
 import { getBuyerContext } from "@/lib/buyer-context";
@@ -119,6 +120,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader title="Konto & Rechnungen" subtitle={customer.name} />
+      <FreePeriodNotices customerId={ctx.customerId} readOnly={ctx.preview} />
       <div className="space-y-5">
         <Card>
           <CardHeader title="Ihr Vertrag" icon={Package} />

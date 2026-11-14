@@ -12,6 +12,7 @@
 //  4. „Nicht anfragen“ je Kontakt schaltet der Vertreter selbst – nie automatisch.
 
 import { PRICE_LIST } from "@/lib/offer-pricing";
+import { FREE_PERIOD_REMINDER_DAYS } from "@/lib/free-periods";
 import { anredeName, anredeZeile, type AnredeKontakt } from "@/lib/ansprache";
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
@@ -200,8 +201,8 @@ export const trialAvailable = (c: Pick<ModuleCustomer, "empfehlungTrialEndsAt" |
 
 export const trialEndFrom = (now: Date, days: number = PRICE_LIST.empfehlungTrialDays) => new Date(now.getTime() + days * DAY_MS);
 
-/** Erinnerung so viele Tage vor Ende der Testphase. */
-export const TRIAL_REMINDER_DAYS = 3;
+/** Erinnerung so viele Tage vor Ende der Testphase (einheitlich für alle kostenlosen Zeiträume, AGB). */
+export const TRIAL_REMINDER_DAYS = FREE_PERIOD_REMINDER_DAYS;
 
 export const fmtDate = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
 export const eurNet = (n: number) => `${new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: n % 1 ? 2 : 0 }).format(n)} netto`;
@@ -213,7 +214,8 @@ export function bookingTerms(opts: { trial: boolean; annual: boolean; now?: Date
   const lines: string[] = [];
   if (opts.trial) {
     lines.push(`${PRICE_LIST.empfehlungTrialDays} Tage kostenlos testen, bis zum ${fmtDate(trialEndFrom(now))}.`);
-    lines.push(`Danach automatisch ${eurNet(price)} im Monat, außer Sie kündigen vorher. Wir erinnern Sie ${TRIAL_REMINDER_DAYS} Tage vor Ende der Testphase.`);
+    lines.push(`Danach automatisch ${eurNet(price)} im Monat, außer Sie beenden das Modul vorher. Während der Testphase jederzeit kostenlos beendbar.`);
+    lines.push(`Wir erinnern Sie ${FREE_PERIOD_REMINDER_DAYS} Tage vor Ende der Testphase per E-Mail und im Kundenbereich.`);
   } else {
     lines.push(`${eurNet(price)} im Monat, ab heute tagesgenau anteilig mit Ihrer nächsten Rechnung.`);
   }

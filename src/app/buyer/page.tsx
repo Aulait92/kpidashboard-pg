@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft, MousePointerClick } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
+import { FreePeriodNotices } from "@/components/free-period-notices";
 import { TodayInbox } from "@/components/today-inbox";
 import { FirstDay } from "@/components/first-day";
 import { IntroVideoCard } from "@/components/intro-video";
@@ -86,6 +87,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
             {introCard}
             {updatesCard}
             {nudgeCard}
+            <FreePeriodNotices customerId={ctx.customerId} readOnly={ctx.preview} />
             <EmpfehlungHeuteHint ctx={ctx} />
             <TodayInbox data={data} newUi leadHref="/buyer?lead={id}" selectedLeadId={selected} />
           </section>
@@ -128,7 +130,8 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
       <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
       {updatesCard}
       {nudgeCard}
-      <EmpfehlungHeuteHint ctx={ctx} />
+      <FreePeriodNotices customerId={ctx.customerId} readOnly={ctx.preview} />
+            <EmpfehlungHeuteHint ctx={ctx} />
       <TodayInbox data={data} />
     </main>
   );

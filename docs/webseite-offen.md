@@ -13,3 +13,4 @@ Letzte Aktualisierung der Webseite: 14.11.2026 (Zahlen, mehrere Verträge, Schne
 - 14.11.: Provision: Leben/BU nach Beitragssumme, eigene Stornoquote, gekündigte Verträge eintragen, Gewinn wahlweise mit künftigem Bestand.
 - 14.11.: Mein Kalender: eigene Buchungsseite mit Link zum Kopieren.
 - 14.11.: Kontakt: Angaben zum Lead (Name, Nummer, E-Mail, Adresse) selbst korrigieren, Änderung steht im Verlauf.
+- 14.11.: Testphasen und Gratiszeiten: Erinnerung 7 Tage vor Ende, bis zum Ende kostenlos beendbar. Ggf. in FAQ zu Zusatzmodulen erwähnen.
