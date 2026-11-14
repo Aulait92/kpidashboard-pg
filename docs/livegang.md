@@ -109,7 +109,9 @@ KI-Hilfe, die brauchen keine Migration).
       (der alte Produktions-Code hat `/api/health` noch nicht). Schlägt die Migration
       beim Livegang fehl, bleibt die alte Version online.
       **Nach dem Livegang** auf `/api/health` umstellen (prüft auch die Datenbank).
-- [ ] **Variablen** im Service `kpidashboard-pg` ergänzen (Werte nicht aus der
+      Stand 14.11.: umgestellt, `/api/health` antwortet 200.
+- [x] **Variablen** im Service `kpidashboard-pg` ergänzen (14.11. geprüft: alle Namen gesetzt; Werte nicht einsehbar.
+      Neu dazu, noch offen: `SUPPORT_EMAIL`, `SUPPORT_WHATSAPP_NUMBER`, optional `SUPPORT_RESPONSE_TIME`) (Werte nicht aus der
       Sandbox kopieren, wo „neu“ steht):
 
 | Variable | Wert |
@@ -158,7 +160,8 @@ KI-Hilfe, die brauchen keine Migration).
       prüfen, dass beide Produkte im Live-Modus da sind (nach dem ersten Abo mit Zusatz).
       WhatsApp-Gebühren werden nicht mehr weiterberechnet (`PRICE_LIST.whatsappIncluded`).
 
-- [ ] **Neue Adressen** (Produktion `app.performancegrowth.de`, Testumgebung
+- [x] **Neue Adressen** (14.11. geprüft: `kpi.` leitet auf `app.` um, Login-Weiterleitung nutzt `app.…/api/auth/…/callback`,
+      Microsoft mit `common`) (Produktion `app.performancegrowth.de`, Testumgebung
       `staging.performancegrowth.de`): DNS beim Domain-Anbieter (CNAME laut Railway),
       in Railway je Service die Custom Domain hinzufügen (alte Domains bleiben vorerst dran).
       Variablen: `APP_URL` = neue Adresse, `LEGACY_HOSTS` = `kpi.performancegrowth.de` bzw.
