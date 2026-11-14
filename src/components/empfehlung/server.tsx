@@ -49,7 +49,7 @@ export async function EmpfehlungLeadCard({ leadId, team, readOnly }: { leadId: s
     : !r
       ? lead.phone
         ? "Nachfrage wird automatisch eingeplant."
-        : "Keine Handynummer – keine automatische Nachfrage."
+        : "Keine Handynummer, keine automatische Nachfrage."
       : r.status === "off"
         ? "Nicht anfragen (von Ihnen gewählt)."
         : r.status === "scheduled" || r.status === "sending"
@@ -227,7 +227,7 @@ export async function EmpfehlungGrowthRow({ ctx }: { ctx: { customerId: string; 
       <Lock className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
       <div className="min-w-0 flex-1">
         <span className="font-semibold">Empfehlungen</span>
-        <span className="text-[color:var(--muted)]"> – Leads, Termine, Abschlüsse und Provision aus Empfehlungen Ihrer Kunden.</span>
+        <span className="text-[color:var(--muted)]">, Leads, Termine, Abschlüsse und Provision aus Empfehlungen Ihrer Kunden.</span>
       </div>
       <Link href="/buyer/konto?modul=empfehlung#zusatzmodule" className="shrink-0 font-semibold text-[color:var(--brand)] hover:underline">
         Freischalten

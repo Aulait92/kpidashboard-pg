@@ -43,6 +43,10 @@ prüfen, dann `deploy_project`) und die Liste leeren. Nur auf Oles ausdrücklich
 - Keine Gedankenstriche (– oder —) in Texten, die an Leads, Bestandskunden oder unsere Kunden rausgehen
   (WhatsApp, E-Mails, Vorlagen, öffentliche Seiten wie /book, /empfehlung, /angebot). Komma, Doppelpunkt oder neuer Satz.
   Bis-Striche in Zahlenbereichen („1–3 Tage“) sind ok. Code-Kommentare sind egal.
+  Sicherheitsnetz (14.11.2026): `ohneGedankenstriche` aus `src/lib/gedankenstriche.ts` greift beim Versand
+  (WhatsApp, Kunden- und Postfach-Mails), bei allen KI-Antworten (`runAgent`) und beim Speichern von Kundentexten.
+  Der Test `tests/unit/gedankenstriche.test.ts` schlägt bei neuen Gedankenstrichen in festen Texten außerhalb
+  des Admin-Bereichs an.
 - Ansprache von Leads/Kunden folgt `Customer.leadAddress` (Standard „sie“, Helfer in `src/lib/ansprache.ts`).
   Neue Texte an Leads immer in beiden Fassungen (`a(an, du, sie)`); die Oberfläche für Vermittler bleibt Sie-Form.
 

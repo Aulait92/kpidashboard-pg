@@ -118,7 +118,7 @@ describe("Garantien: Cron → Fall → Gewähren/Ablehnen", () => {
     // Admin „Heute“ zeigt den Fall mit Gewähren/Ablehnen
     const heute = await loadAdminHeute(D("2027-01-01"));
     const item = heute.items.find((i) => i.key === `garantie:${fall.id}`);
-    expect(item?.title).toMatch(/^Garantiefall: Test \w+ – Lead-Garantie \(82 von 100 Leads\) → Betreuung \+ Software im Januar 2027 kostenlos$/);
+    expect(item?.title).toMatch(/^Garantiefall: Test \w+, Lead-Garantie \(82 von 100 Leads\) → Betreuung \+ Software im Januar 2027 kostenlos$/);
     expect(item?.quick).toEqual({ kind: "garantie", fallId: fall.id, grundVorschlag: "" });
 
     // Gewähren → Stripe-Gutschrift (negativer Posten) + Protokoll

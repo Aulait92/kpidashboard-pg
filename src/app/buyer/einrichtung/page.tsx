@@ -239,7 +239,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-[color:var(--muted)]">
               <span>Schnelle Frage zwischendurch?</span>
               <HilfeChatButton className="inline-flex items-center gap-1.5 font-semibold text-[color:var(--brand)]" />
-              <span>– antwortet sofort, auch abends.</span>
+              <span>Sie antwortet sofort, auch abends.</span>
             </div>
           </div>
         </Step>
@@ -299,7 +299,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           <InstallApp appUrl={appHost()} />
           {!appDone ? (
             <div className="mt-4">
-              <SkipButton kind="app" readOnly={readOnly} label="Ich nutze die App ohne Handy – Schritt überspringen" />
+              <SkipButton kind="app" readOnly={readOnly} label="Ich nutze die App ohne Handy, Schritt überspringen" />
             </div>
           ) : null}
         </Step>

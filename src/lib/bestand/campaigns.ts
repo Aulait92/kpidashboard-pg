@@ -31,7 +31,7 @@ export const OCCASIONS: Record<Occasion, { label: string; hint: string; purpose:
   birthday: { label: "Geburtstag", hint: "Gruß zum Geburtstag mit Gesprächsangebot", purpose: "campaign_birthday" },
   renewal: { label: "Ablauf / Wechsel", hint: "Verträge mit Ablauf oder Wechseltermin in Kürze", purpose: "campaign_renewal" },
   // Nur mit Modul „Empfehlungen & Bewertungen“: persönlicher Empfehlungslink je Kunde ({empfehlungslink})
-  empfehlung: { label: "Jährliche Empfehlungsbitte", hint: "Zufriedene Bestandskunden um eine Empfehlung bitten – mit persönlichem Link", purpose: "referral_request" },
+  empfehlung: { label: "Jährliche Empfehlungsbitte", hint: "Zufriedene Bestandskunden um eine Empfehlung bitten, mit persönlichem Link", purpose: "referral_request" },
 };
 
 /** Anlässe, die das Modul „Empfehlungen & Bewertungen“ brauchen. */

@@ -1006,7 +1006,7 @@ export async function setBestandModule(
         }
       } else await setItemQuantity(stripe, ed.sub, "bestand", mode === "book" && price > 0 ? 1 : 0, price, opts.proration);
     } else if (mode === "book" && price > 0) {
-      note = "Ohne Stripe – bitte von Hand abrechnen.";
+      note = "Ohne Stripe, bitte von Hand abrechnen.";
     }
     await prisma.customer.update({
       where: { id: customerId },
@@ -1109,7 +1109,7 @@ export async function scheduleBestandCancel(
       until = periodEndOf(ed.sub, item);
       if (item) await stripe.subscriptionItems.del(item.id, { proration_behavior: "none" });
     } else {
-      note = "Ohne Stripe – Abrechnung bitte von Hand beenden.";
+      note = "Ohne Stripe, Abrechnung bitte von Hand beenden.";
     }
     if (!until) until = endOfBerlinMonth();
     await prisma.customer.update({ where: { id: customerId }, data: { bestandCancelAt: until } });
@@ -1146,7 +1146,7 @@ export async function addEmpfehlungToSubscription(
     const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { stripeCustomerId: true } });
     if (!c) return { ok: false, error: "Kunde nicht gefunden." };
     const stripe = stripeClient();
-    if (!stripe || !c.stripeCustomerId) return { ok: true, changed: false, note: "Ohne Stripe – bitte von Hand abrechnen." };
+    if (!stripe || !c.stripeCustomerId) return { ok: true, changed: false, note: "Ohne Stripe, bitte von Hand abrechnen." };
     const ed = await editableSubscription(stripe, c.stripeCustomerId);
     if ("note" in ed) {
       // Abo startet erst noch: Modul in den geplanten Start aufnehmen (berechnet ab Abo-Beginn)
@@ -1211,7 +1211,7 @@ export async function scheduleEmpfehlungCancel(
     });
     if (!c) return { ok: false, error: "Kunde nicht gefunden." };
     if (!c.empfehlungEnabled) return { ok: false, error: "Das Modul ist nicht gebucht." };
-    if (c.empfehlungFree) return { ok: false, error: "Das Modul ist für Sie kostenlos freigeschaltet – bitte bei uns melden." };
+    if (c.empfehlungFree) return { ok: false, error: "Das Modul ist für Sie kostenlos freigeschaltet, bitte bei uns melden." };
     if (c.empfehlungCancelAt) return { ok: true, until: c.empfehlungCancelAt };
     let until: Date | null = null;
     let note: string | undefined;
@@ -1230,7 +1230,7 @@ export async function scheduleEmpfehlungCancel(
           if (item) await stripe.subscriptionItems.del(item.id, { proration_behavior: "none" });
         }
       } else {
-        note = "Ohne Stripe – Abrechnung bitte von Hand beenden.";
+        note = "Ohne Stripe, Abrechnung bitte von Hand beenden.";
       }
     }
     if (!until) until = endOfBerlinMonth(now);
@@ -1303,7 +1303,7 @@ export async function changeBillingInterval(customerId: string, interval: "month
         ],
       });
     } else {
-      note = "Ohne Stripe – bitte von Hand abrechnen.";
+      note = "Ohne Stripe, bitte von Hand abrechnen.";
     }
     await prisma.customer.update({ where: { id: customerId }, data: { billingInterval: interval } });
     await audit("billing.interval", { entity: "Customer", entityId: customerId, customerId, details: { from: c.billingInterval, to: interval } });
@@ -1330,7 +1330,7 @@ export async function changeMonthlyFee(
     const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { stripeCustomerId: true } });
     if (!c) return { ok: false, error: "Kunde nicht gefunden." };
     const stripe = stripeClient();
-    if (!stripe || !c.stripeCustomerId) return { ok: true, changed: false, note: "Ohne Stripe-Abo – Preis bitte von Hand anpassen." };
+    if (!stripe || !c.stripeCustomerId) return { ok: true, changed: false, note: "Ohne Stripe-Abo, Preis bitte von Hand anpassen." };
     const ed = await editableSubscription(stripe, c.stripeCustomerId);
     if ("note" in ed) return { ok: true, changed: false, note: ed.note };
     const sub = ed.sub;

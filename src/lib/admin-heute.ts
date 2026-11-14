@@ -335,7 +335,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       tone: "warn",
       icon: "alert",
       title: `Einrichtung hängt: ${name(st.name)} (seit ${st.days} Tagen)`,
-      detail: `Offen beim Kunden: ${st.open.join(", ")} · Erinnerungen Tag 1/3/7 sind raus – kurz anrufen oder Hilfetermin anbieten`,
+      detail: `Offen beim Kunden: ${st.open.join(", ")} · Erinnerungen Tag 1/3/7 sind raus, kurz anrufen oder Hilfetermin anbieten`,
       action: { label: "Einrichtung ansehen", href: `/admin/kunden/${st.customerId}` },
       since: null,
       later: TOMORROW,
@@ -558,7 +558,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       tone: liConn.expiresAt <= now || liConn.status !== "ok" ? "warn" : "info",
       icon: "alert",
       title: liConn.expiresAt <= now ? "LinkedIn-Zugang abgelaufen" : "LinkedIn bald neu verbinden",
-      detail: "LinkedIn verlangt alle 60 Tage eine neue Anmeldung – ein Klick genügt",
+      detail: "LinkedIn verlangt alle 60 Tage eine neue Anmeldung, ein Klick genügt",
       action: { label: "Neu verbinden", href: "/api/linkedin/connect" },
     });
   }

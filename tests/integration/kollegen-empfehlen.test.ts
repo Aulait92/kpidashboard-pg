@@ -71,7 +71,7 @@ describe("Kollegen empfehlen", () => {
     const contact = await prisma.salesContact.findUniqueOrThrow({ where: { id: contactId }, include: { tasks: true } });
     expect(contact.customerSource).toBe("EMPFEHLUNG");
     expect(contact.customerSourceNote).toContain("Empfehlung von");
-    expect(contact.tasks.some((t) => t.title === "Empfehlung – heute anrufen" && !t.doneAt)).toBe(true);
+    expect(contact.tasks.some((t) => t.title === "Empfehlung, heute anrufen" && !t.doneAt)).toBe(true);
     const ref = await prisma.colleagueReferral.findFirstOrThrow({ where: { contactId } });
     expect(ref.referrerId).toBe(referrerId);
     expect(ref.consentText).toContain("einverstanden");

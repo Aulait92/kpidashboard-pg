@@ -249,7 +249,7 @@ describe("Später-Follow-up", () => {
     expect(ok.status).toBe("GEPLANT");
   });
 
-  it("KI-Texte: Gedankenstrich wird abgelehnt und neu geschrieben, sonst Vorlage", async () => {
+  it("KI-Texte: Gedankenstrich wird ersetzt (kein zweiter Versuch nötig), ungültige Texte → Vorlage", async () => {
     await prisma.salesFollowupSettings.update({ where: { id: "default" }, data: { useAi: true } });
     try {
       const c = await makeContact();
@@ -267,7 +267,7 @@ describe("Später-Follow-up", () => {
         };
       };
       const d = await draftFollowup(f!.id, { llm, force: true });
-      expect(turn).toBe(2);
+      expect(turn).toBe(1);
       expect(d.textSource).toBe("KI");
       expect(d.body1).not.toMatch(/[–—]/);
 

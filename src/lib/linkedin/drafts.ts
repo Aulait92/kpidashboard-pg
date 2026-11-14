@@ -94,7 +94,7 @@ function block(p: PostRow, all: Scored[], share: number | null): string {
 }
 
 function photoBlock(photos: PhotoInfo[], scored: PostRow[], share: number | null): string {
-  if (!photos.length) return "## Fotoablage\n(keine Fotos – photoId leer lassen)";
+  if (!photos.length) return "## Fotoablage\n(keine Fotos, photoId leer lassen)";
   const app = scored.filter((p) => p.status === "veroeffentlicht" && p.impressions != null);
   const avg = (xs: PostRow[]) => (xs.length ? Math.round(xs.reduce((a, p) => a + scoreOf(p, share)!, 0) / xs.length) : null);
   const withPhoto = avg(app.filter((p) => p.photoId));

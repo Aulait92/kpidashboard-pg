@@ -1,3 +1,4 @@
+import { ohneGedankenstriche } from "@/lib/gedankenstriche";
 import { MAIL_BLOCKED_TEXT, mailClient, wasBlocked } from "@/lib/mail-guard";
 import { PROVIDER } from "@/lib/legal-texts";
 
@@ -11,7 +12,7 @@ export function getAppUrl(): string {
   const railway = process.env.RAILWAY_PUBLIC_DOMAIN;
   if (railway) return `https://${railway.replace(/\/$/, "")}`;
   throw new Error(
-    "APP_URL ist nicht gesetzt — wird für Reset-Links in Mails benötigt.",
+    "APP_URL ist nicht gesetzt, wird für Reset-Links in Mails benötigt.",
   );
 }
 
@@ -32,7 +33,7 @@ export async function sendPasswordResetEmail(opts: {
     // er nicht verloren geht; UI zeigt "Mail unterwegs" damit Account-
     // Existenz nicht verraten wird.
     console.warn(
-      `[email] RESEND_API_KEY fehlt — Reset-URL für ${opts.to}: ${opts.resetUrl}`,
+      `[email] RESEND_API_KEY fehlt, Reset-URL für ${opts.to}: ${opts.resetUrl}`,
     );
     return { ok: false, error: "Email-Service nicht konfiguriert." };
   }
@@ -92,7 +93,7 @@ export async function sendBuyerInviteEmail(opts: {
     process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>";
   if (!apiKey) {
     console.warn(
-      `[email] RESEND_API_KEY fehlt — Einladungs-URL für ${opts.to}: ${opts.setPasswordUrl}`,
+      `[email] RESEND_API_KEY fehlt, Einladungs-URL für ${opts.to}: ${opts.setPasswordUrl}`,
     );
     return { ok: false, error: "Email-Service nicht konfiguriert." };
   }
@@ -424,6 +425,15 @@ export function customerMailHtml(opts: MailBody): string {
  * Absätze werden escaped; `html`-Blöcke (z. B. Smiley-Leiste) gehen roh durch.
  */
 export async function sendCustomerMail(opts: CustomerMailOpts): Promise<SendResult> {
+  // Keine Gedankenstriche in Mails an Kunden (Bis-Striche zwischen Zahlen bleiben)
+  opts = {
+    ...opts,
+    subject: ohneGedankenstriche(opts.subject),
+    greeting: ohneGedankenstriche(opts.greeting),
+    paragraphs: opts.paragraphs.map((p) => ohneGedankenstriche(p)),
+    ...(opts.list ? { list: opts.list.map((l) => ohneGedankenstriche(l)) } : {}),
+    ...(opts.textBlocks ? { textBlocks: opts.textBlocks.map((l) => ohneGedankenstriche(l)) } : {}),
+  };
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>";
   if (!apiKey) {

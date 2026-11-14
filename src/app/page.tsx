@@ -94,7 +94,7 @@ export default async function DashboardPage({
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
             <p className="mt-1 text-sm text-[color:var(--muted)]">
-              {formatDate(range.from)} – {formatDate(range.to)} · aktualisiert{" "}
+              {formatDate(range.from)} bis {formatDate(range.to)} · aktualisiert{" "}
               <LiveUpdated since={renderedAt} />
             </p>
           </div>

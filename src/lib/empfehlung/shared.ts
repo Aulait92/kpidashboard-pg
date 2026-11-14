@@ -42,7 +42,7 @@ export const CANDIDATE_WINDOW_DAYS = 60;
 export const ANNOUNCEMENT_KEY = "empfehlung-launch";
 
 /** Aufgabe in „Heute“ bei Kritik (Wiedervorlage am Lead). */
-export const UNHAPPY_TASK = "Kunde unzufrieden – bitte heute anrufen";
+export const UNHAPPY_TASK = "Kunde unzufrieden, bitte heute anrufen";
 export const isUnhappyTask = (note: string | null | undefined) => !!note && note.startsWith(UNHAPPY_TASK);
 
 export const DEFAULT_DELAYS = { review: 7, referral: 21 } as const;
@@ -75,10 +75,10 @@ export type TextKey = keyof typeof DEFAULT_TEXTS;
 export const TEXT_LABELS: Record<TextKey, { title: string; hint: string; needsLink: boolean }> = {
   review: {
     title: "Nachfrage nach dem Abschluss",
-    hint: "Empfehlung: erst der direkte Draht zu Ihnen, dann der Google-Link. So landet Kritik bei Ihnen statt bei Google – und alle bekommen denselben Link.",
+    hint: "Empfehlung: erst der direkte Draht zu Ihnen, dann der Google-Link. So landet Kritik bei Ihnen statt bei Google, und alle bekommen denselben Link.",
     needsLink: true,
   },
-  thanks: { title: "Dank bei positiver Antwort", hint: "Ohne Link – der Google-Link stand schon in der ersten Nachricht.", needsLink: false },
+  thanks: { title: "Dank bei positiver Antwort", hint: "Ohne Link, der Google-Link stand schon in der ersten Nachricht.", needsLink: false },
   praiseReferral: {
     title: "Dank bei Lob mit Empfehlungslink",
     hint: "Geht statt des einfachen Danks raus, wenn „bei Lob direkt um Empfehlung bitten“ an ist. Die spätere Bitte um Empfehlung entfällt dann.",

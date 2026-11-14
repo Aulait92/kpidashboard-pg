@@ -116,7 +116,7 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
           await createScheduleForOffer(offer.id, session);
         } catch (err) {
           reportError(err, "billing-schedule", { offer: offer.number });
-          await notify(`⚠️ Abo konnte nicht angelegt werden: ${offer.company ?? offer.contactName}`, `${offer.number} – bitte im Stripe-Dashboard prüfen.`, offerAdminHref(offer));
+          await notify(`⚠️ Abo konnte nicht angelegt werden: ${offer.company ?? offer.contactName}`, `${offer.number}, bitte im Stripe-Dashboard prüfen.`, offerAdminHref(offer));
         }
       }
       if (failed) await cancelScheduleForOffer(offer.id).catch((err) => reportError(err, "billing-schedule-cancel"));
@@ -216,7 +216,7 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       const obj = event.data.object as { id: string; amount?: number };
       const what =
         event.type === "charge.refunded" ? "Erstattung" : event.type === "charge.dispute.created" ? "Rückbuchung/Widerspruch" : "Betrugswarnung";
-      await notify(`⚠️ Stripe: ${what}`, `${obj.id}${obj.amount != null ? ` · ${eur(obj.amount)}` : ""} – bitte im Stripe-Dashboard prüfen.`);
+      await notify(`⚠️ Stripe: ${what}`, `${obj.id}${obj.amount != null ? ` · ${eur(obj.amount)}` : ""}, bitte im Stripe-Dashboard prüfen.`);
       return;
     }
     default:

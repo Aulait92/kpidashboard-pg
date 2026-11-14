@@ -235,7 +235,7 @@ export async function submitReferral(input: SubmitInput, now = new Date()): Prom
     const { sendToAdmins } = await import("@/lib/push");
     await sendToAdmins({
       title: `🤝 Empfehlung von ${ref.person}`,
-      body: `${name}${company ? ` · ${company}` : ""} – bitte heute anrufen`,
+      body: `${name}${company ? ` · ${company}` : ""}, bitte heute anrufen`,
       url: contactId ? `/admin/vertrieb/kontakte/${contactId}` : "/admin/marketing/empfehlungen",
       tag: `referral:${referral.id}`,
     });
@@ -319,7 +319,7 @@ async function upsertReferralContact(r: { existingId: string | null; name: strin
   await prisma.salesActivity.create({
     data: { contactId, type: "NOTIZ", outcome: `${r.label} über „Kollegen empfehlen“ eingetragen${r.existingId ? "" : " (neuer Kontakt)"}`, note: info },
   });
-  await prisma.salesTask.create({ data: { contactId, title: "Empfehlung – heute anrufen", type: "ANRUF", dueAt: new Date(), note: `${r.label}\n${info}` } });
+  await prisma.salesTask.create({ data: { contactId, title: "Empfehlung, heute anrufen", type: "ANRUF", dueAt: new Date(), note: `${r.label}\n${info}` } });
   return contactId;
 }
 

@@ -59,7 +59,7 @@ export const DEFAULT_CATALOG: CatalogItem[] = [
   {
     key: "privatschutz",
     name: "Privatschutz",
-    benefit: "Haftpflicht, Hausrat und Rechtsschutz in einem Gespräch – ideal für Cross-Selling.",
+    benefit: "Haftpflicht, Hausrat und Rechtsschutz in einem Gespräch, ideal für Cross-Selling.",
     proven: false,
     enabled: true,
     sort: 30,
@@ -99,7 +99,7 @@ export const DEFAULT_CATALOG: CatalogItem[] = [
   {
     key: "zahnzusatz",
     name: "Zahnzusatz",
-    benefit: "Interessenten für Zahnersatz und Zahnbehandlung – ein guter Einstieg in die Krankenzusatz.",
+    benefit: "Interessenten für Zahnersatz und Zahnbehandlung, ein guter Einstieg in die Krankenzusatz.",
     proven: false,
     enabled: false,
     sort: 50,

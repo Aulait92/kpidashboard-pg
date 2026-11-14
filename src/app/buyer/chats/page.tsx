@@ -102,7 +102,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
           <h2 className="mt-3 text-base font-semibold">WhatsApp ist noch nicht verbunden</h2>
           <p className="mx-auto mt-1 max-w-md text-sm text-[color:var(--muted)]">
             Sobald Ihre Nummer verbunden ist, schreibt Ihr Assistent jeden neuen Lead in wenigen Minuten an. Alle Gespräche
-            sehen Sie hier – und können jederzeit selbst antworten.
+            sehen Sie hier, und können jederzeit selbst antworten.
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             {selfConnect ? (

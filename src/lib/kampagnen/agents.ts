@@ -28,7 +28,7 @@ const PATTERNS: [RegExp, string][] = [
   [
     /katze|tkv(?!.*hund)|tierkranken/i,
     `Katzenversicherung (unser bestes Produkt, viele Leads zu niedrigem Preis):
-- Tierarztkosten sind seit der neuen Gebührenordnung für Tierärzte (GOT, Ende 2022) deutlich gestiegen – Behandlungen kosten oft das Mehrfache.
+- Tierarztkosten sind seit der neuen Gebührenordnung für Tierärzte (GOT, Ende 2022) deutlich gestiegen, Behandlungen kosten oft das Mehrfache.
 - Eine OP (z. B. nach Unfall beim Freigang, Zahnbehandlung, Fremdkörper) kann schnell vierstellig werden.
 - Hook-Formen, die funktionieren: Frage nach der letzten Tierarztrechnung, „Was viele Katzenhalter nicht wissen …“, Vergleich OP-Kosten vs. Monatsbeitrag (ohne konkrete Beitragszahlen), Wohnungskatze vs. Freigänger.
 - Persönlich und regional: „Ihr Versicherungsberater in <Ort>“ wirkt besser als Konzernsprache.`,
@@ -71,9 +71,9 @@ ${c.patterns}${
     c.libraryWinners
       ? `
 
-GEWINNER AUS DER META-WERBEBIBLIOTHEK (Anzeigen anderer, die in Deutschland seit mindestens 30 Tagen laufen – lange Laufzeit heißt meist: sie rechnen sich):
+GEWINNER AUS DER META-WERBEBIBLIOTHEK (Anzeigen anderer, die in Deutschland seit mindestens 30 Tagen laufen, lange Laufzeit heißt meist: sie rechnen sich):
 ${c.libraryWinners}
-So nutzen: Hook, Aufbau, Tonfall und Winkel dieser Gewinner als Vorlage nehmen und leicht abwandeln – auf den Vermittler, seinen Ort und die Anrede zuschneiden. Nie wörtlich übernehmen, keine fremden Firmen-, Marken- oder Personennamen, keine Preise oder Versprechen daraus übernehmen.`
+So nutzen: Hook, Aufbau, Tonfall und Winkel dieser Gewinner als Vorlage nehmen und leicht abwandeln, auf den Vermittler, seinen Ort und die Anrede zuschneiden. Nie wörtlich übernehmen, keine fremden Firmen-, Marken- oder Personennamen, keine Preise oder Versprechen daraus übernehmen.`
       : ""
   }`;
 }
@@ -119,7 +119,7 @@ export async function strategist(llm: LlmCall, c: CampaignContext, name: string)
 AUFGABE: Plane die Kampagne (Ziel: Leads über ein Meta-Sofortformular, eine Kampagne mit Kampagnenbudget).
 - Tagesbudget: übernimm das Vertragsbudget (${c.dailyBudgetEur} €), außer der Zusatzwunsch sagt etwas anderes; Spanne ${LIMITS.dailyBudgetMin}–${LIMITS.dailyBudgetMax} €.
 - 1 Anzeigengruppe (Standard). 2 nur, wenn es einen klaren Grund gibt (z. B. zwei sehr unterschiedliche Zielgruppen) und das Budget mindestens 40 €/Tag beträgt.
-- Je Anzeigengruppe: Alter (18–65), Umkreis um den Ort in km (17–80; ländlich größer, Großstadt kleiner), Advantage+ Zielgruppe ja/nein (Standard ja – Meta erweitert dann vorsichtig über die Vorgaben hinaus).
+- Je Anzeigengruppe: Alter (18–65), Umkreis um den Ort in km (17–80; ländlich größer, Großstadt kleiner), Advantage+ Zielgruppe ja/nein (Standard ja, Meta erweitert dann vorsichtig über die Vorgaben hinaus).
 - adsPerAdSet: 3–5 Anzeigen (unterschiedliche Winkel).
 - zielgruppe: 1–2 Sätze, wen wir erreichen wollen. begruendung: kurz, warum dieser Aufbau.`,
       schema: PLAN_SCHEMA,
@@ -211,7 +211,7 @@ const COPIES_SCHEMA = {
 
 const COPY_SPEC = `Je Anzeige:
 - angleKey: Schlüssel des Winkels
-- primaryText: Primärtext über dem Bild (80–${LIMITS.primaryText} Zeichen; erste Zeile = Hook; Absätze erlaubt; endet mit klarer Aufforderung zum Formular, z. B. „Jetzt kurz Ihre Angaben eintragen – ich melde mich persönlich.“)
+- primaryText: Primärtext über dem Bild (80–${LIMITS.primaryText} Zeichen; erste Zeile = Hook; Absätze erlaubt; endet mit klarer Aufforderung zum Formular, z. B. „Jetzt kurz Ihre Angaben eintragen, ich melde mich persönlich.“)
 - headline: Überschrift unter dem Bild (höchstens ${LIMITS.headline} Zeichen)
 - description: kurzer Zusatz (höchstens ${LIMITS.description} Zeichen)
 - imageHeadline: große Zeile IM Bild (höchstens ${LIMITS.imageHeadline} Zeichen)
@@ -223,11 +223,11 @@ export async function copywriter(llm: LlmCall, c: CampaignContext, plan: Campaig
     llm,
     {
       agent: "Texter",
-      system: `Du bist Werbetexter für Versicherungsvermittler. Du schreibst im Namen des Vermittlers, persönlich, regional, klar – nie marktschreierisch.\n\n${RULES}`,
+      system: `Du bist Werbetexter für Versicherungsvermittler. Du schreibst im Namen des Vermittlers, persönlich, regional, klar, nie marktschreierisch.\n\n${RULES}`,
       user: `${contextBlock(c)}
 
 WINKEL:
-${angles.map((a) => `- ${a.key}: ${a.title} – Hook: ${a.hook} (${a.insight})`).join("\n")}
+${angles.map((a) => `- ${a.key}: ${a.title}, Hook: ${a.hook} (${a.insight})`).join("\n")}
 
 AUFGABE: Schreibe genau eine Anzeige je Winkel (${angles.length} Anzeigen), Anrede „${c.anrede}“.
 ${COPY_SPEC}`,
@@ -287,7 +287,7 @@ const FORM_SCHEMA = {
 
 const FORM_SPEC = `- formName: interner Name, z. B. „${"PG | <Kunde> | <Produkt> | Formular"}“
 - introTitle (höchstens ${LIMITS.introTitle} Zeichen) und introParagraphs (1–3 kurze Sätze: was passiert nach dem Absenden, wer meldet sich)
-- questions: 2–4 Qualifizierungsfragen (key in snake_case, label höchstens ${LIMITS.questionLabel} Zeichen, options = 2–6 Antwortmöglichkeiten; Multiple Choice bevorzugt, damit es schnell geht). Name, Telefon und E-Mail fragt das Formular automatisch ab – NICHT als Frage aufnehmen.
+- questions: 2–4 Qualifizierungsfragen (key in snake_case, label höchstens ${LIMITS.questionLabel} Zeichen, options = 2–6 Antwortmöglichkeiten; Multiple Choice bevorzugt, damit es schnell geht). Name, Telefon und E-Mail fragt das Formular automatisch ab, NICHT als Frage aufnehmen.
 - thankYouTitle (höchstens ${LIMITS.thankYouTitle} Zeichen), thankYouBody: was jetzt passiert (z. B. „Ich melde mich in Kürze per WhatsApp oder Telefon.“)
 - consentText: Einwilligung zur Kontaktaufnahme durch den Vermittler per Telefon, E-Mail und WhatsApp zu dieser Anfrage, jederzeit widerrufbar (mit Name des Vermittlers bzw. der Agentur).`;
 
@@ -407,7 +407,7 @@ Gib status, summary (1–3 Sätze) und findings zurück (index = Anzeige ab 0 bz
 export function staticChecks(c: CampaignContext, input: { plan: CampaignPlan; copies: AdCopy[]; form: LeadFormDraft; images: CreativeImage[] }): Finding[] {
   const out: Finding[] = [];
   if (!c.privacyUrl) out.push({ severity: "rot", area: "formular", index: null, issue: "Keine Datenschutz-URL des Kunden.", fix: "Datenschutz-URL in der Kampagnen-Karte eintragen." });
-  if (!c.city && !c.zip && !c.region) out.push({ severity: "gelb", area: "plan", index: null, issue: "Kein Ort in der Kundenakte – Kampagne läuft deutschlandweit.", fix: "Ort/PLZ im Vertriebskontakt ergänzen." });
+  if (!c.city && !c.zip && !c.region) out.push({ severity: "gelb", area: "plan", index: null, issue: "Kein Ort in der Kundenakte, Kampagne läuft deutschlandweit.", fix: "Ort/PLZ im Vertriebskontakt ergänzen." });
   if (Math.abs(input.plan.dailyBudgetEur - c.dailyBudgetEur) > 0.5) {
     out.push({ severity: "gelb", area: "plan", index: null, issue: `Tagesbudget ${input.plan.dailyBudgetEur} € weicht vom Vertrag (${c.dailyBudgetEur} €) ab.`, fix: "Bewusst so gewollt? Sonst Budget anpassen." });
   }

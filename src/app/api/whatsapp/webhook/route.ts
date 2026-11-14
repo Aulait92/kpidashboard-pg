@@ -15,7 +15,7 @@ function isAuthorized(req: Request): boolean {
   const expected = process.env.WHATSAPP_WEBHOOK_SECRET;
   if (!expected) {
     console.warn(
-      "[whatsapp webhook] WHATSAPP_WEBHOOK_SECRET nicht gesetzt — Endpoint offen.",
+      "[whatsapp webhook] WHATSAPP_WEBHOOK_SECRET nicht gesetzt, Endpoint offen.",
     );
     return true;
   }

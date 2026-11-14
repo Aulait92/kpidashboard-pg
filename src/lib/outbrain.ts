@@ -83,7 +83,7 @@ async function fetchWithRetry(
     if (res.status !== 429) return { res, text };
     if (attempt === MAX_429_RETRIES) {
       lastErr = new Error(
-        `HTTP 429 nach ${MAX_429_RETRIES + 1} Versuchen — Outbrain rate-limited.`,
+        `HTTP 429 nach ${MAX_429_RETRIES + 1} Versuchen, Outbrain rate-limited.`,
       );
       break;
     }

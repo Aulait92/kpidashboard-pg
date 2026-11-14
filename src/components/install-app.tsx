@@ -99,7 +99,7 @@ export function InstallApp({ appUrl }: { appUrl: string }) {
   if (env.device === "android") {
     return (
       <div className="text-sm">
-        <p className="text-[color:var(--muted)]">Legen Sie die App auf Ihren Startbildschirm – dann ist sie wie eine normale App mit einem Tipp da.</p>
+        <p className="text-[color:var(--muted)]">Legen Sie die App auf Ihren Startbildschirm, dann ist sie wie eine normale App mit einem Tipp da.</p>
         {prompt ? (
           <div className="mt-4">
             <Button

@@ -489,7 +489,7 @@ export function fortschritt(e: GarantieErgebnis): string {
 /** Titel für Admin „Heute“, z. B. „Garantiefall: Muster – Lead-Garantie (82 von 100 Leads) → Betreuung im Dezember 2026 kostenlos“. */
 export function heuteTitel(kunde: string, art: GarantieArt, k: Kennzahlen): string {
   const monat = k.monat ? monatName(k.monat) : "";
-  if (art === "lead") return `Garantiefall: ${kunde} – Lead-Garantie (${k.leads ?? 0} von ${k.minLeads} Leads) → Betreuung + Software im ${monat} kostenlos`;
-  if (art === "vertrag") return `Garantiefall: ${kunde} – Vertrags-Garantie (${k.vertraege ?? 0} von ${k.minVertraege} Verträgen) → Betreuung + Software im ${monat} kostenlos`;
-  return `Garantiefall: ${kunde} – Break-even-Garantie (Provision ${eur0(k.provision ?? 0)} / Kosten ${eur0(k.kosten ?? 0)}) → Betreuung im ${monat} kostenlos`;
+  if (art === "lead") return `Garantiefall: ${kunde}, Lead-Garantie (${k.leads ?? 0} von ${k.minLeads} Leads) → Betreuung + Software im ${monat} kostenlos`;
+  if (art === "vertrag") return `Garantiefall: ${kunde}, Vertrags-Garantie (${k.vertraege ?? 0} von ${k.minVertraege} Verträgen) → Betreuung + Software im ${monat} kostenlos`;
+  return `Garantiefall: ${kunde}, Break-even-Garantie (Provision ${eur0(k.provision ?? 0)} / Kosten ${eur0(k.kosten ?? 0)}) → Betreuung im ${monat} kostenlos`;
 }

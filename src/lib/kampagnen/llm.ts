@@ -3,6 +3,7 @@
 // versuch mit den Fehlern als Hinweis, danach Fehler. Kosten werden grob
 // protokolliert (Preise je Mio. Tokens per Env einstellbar).
 
+import { ohneGedankenstriche } from "@/lib/gedankenstriche";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Valid } from "@/lib/kampagnen/types";
 
@@ -66,6 +67,14 @@ export function parseJson(text: string): unknown {
 }
 
 /** Agent aufrufen, Antwort prüfen; bei ungültiger Antwort genau ein zweiter Versuch. */
+/** Alle Texte in einer KI-Antwort (JSON) ohne Gedankenstriche; Links und Schlüssel bleiben unverändert. */
+export function ohneGedankenstricheTief(x: unknown): unknown {
+  if (typeof x === "string") return /^https?:\/\//.test(x) ? x : ohneGedankenstriche(x);
+  if (Array.isArray(x)) return x.map(ohneGedankenstricheTief);
+  if (x && typeof x === "object") return Object.fromEntries(Object.entries(x as Record<string, unknown>).map(([k, v]) => [k, ohneGedankenstricheTief(v)]));
+  return x;
+}
+
 export async function runAgent<T>(call: LlmCall, req: LlmRequest, validate: (x: unknown) => Valid<T>): Promise<{ value: T; usage: AgentUsage }> {
   let usage: AgentUsage = { tokensIn: 0, tokensOut: 0, costCents: 0 };
   let feedback = "";
@@ -81,7 +90,8 @@ export async function runAgent<T>(call: LlmCall, req: LlmRequest, validate: (x: 
       feedback = "Die Antwort war kein gültiges JSON. Antworte ausschließlich mit dem JSON-Objekt laut Schema.";
       continue;
     }
-    const v = validate(parsed);
+    // Keine Gedankenstriche in KI-Texten (Werbung, Monatsbericht, Neuigkeiten, Follow-ups …), lib/gedankenstriche.ts
+    const v = validate(ohneGedankenstricheTief(parsed));
     if (v.ok) return { value: v.value, usage };
     feedback = v.errors.slice(0, 12).join("\n- ");
   }

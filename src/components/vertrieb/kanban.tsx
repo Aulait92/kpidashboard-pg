@@ -81,7 +81,7 @@ export function Kanban({ columns, cards, move, reasonColumn, reasons, showValue,
           else delete next[id];
           return next;
         });
-        setError("Verschieben hat nicht geklappt – bitte nochmal versuchen.");
+        setError("Verschieben hat nicht geklappt, bitte nochmal versuchen.");
       }
     });
   }

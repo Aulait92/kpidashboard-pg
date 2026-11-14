@@ -248,7 +248,7 @@ function PeriodChip({
   const valueLabel = month
     ? (field.months.find((m) => m.value === month)?.label ?? month)
     : from || to
-      ? `${from ? deDate(from) : "…"} – ${to ? deDate(to) : "heute"}`
+      ? `${from ? deDate(from) : "…"} bis ${to ? deDate(to) : "heute"}`
       : null;
   const daysBack = (n: number) => {
     const d = new Date();

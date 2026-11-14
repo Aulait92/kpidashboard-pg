@@ -117,7 +117,7 @@ export async function listAdspendAttribution(
     const product = c.product;
     if (!product) continue;
     const parsed = parseNote(c.note);
-    const channel = parsed?.channel ?? "—";
+    const channel = parsed?.channel ?? "–";
     const campaign = parsed?.campaign ?? c.note ?? "(unbekannt)";
     const amount = decToNumber(c.amount);
     matchedTotal += amount;

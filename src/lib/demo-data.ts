@@ -266,7 +266,7 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
         ? ["Wohnst du zur Miete oder im Eigentum? Das ist für die Hausrat wichtig.", "Zur Miete, 2-Zimmer-Wohnung"]
         : ["Gibt es einen konkreten Anlass, z. B. ein Umzug oder ein Schaden?", "Bin gerade umgezogen und will das mal sauber haben"],
       "Paar ohne Kinder": ["Soll der Schutz auch für deinen Partner bzw. deine Partnerin gelten?", "Ja, für uns beide"],
-      "Familie mit Kindern": ["Soll der Schutz für die ganze Familie gelten? Wie alt sind die Kinder ungefähr?", "Ja, für alle – die Kinder sind 4 und 7"],
+      "Familie mit Kindern": ["Soll der Schutz für die ganze Familie gelten? Wie alt sind die Kinder ungefähr?", "Ja, für alle, die Kinder sind 4 und 7"],
       Alleinerziehend: ["Sollen deine Kinder mitversichert sein?", "Ja, mein Sohn ist 9"],
       "Paar, Kinder aus dem Haus": ["Soll der Schutz für euch beide gelten?", "Ja, für uns beide"],
     };
@@ -325,7 +325,7 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
           {
             dir: "outbound",
             by: "bot",
-            body: `Gute Frage! Der Beitrag hängt von ein paar Details ab – das rechnet ${advisorFirst} dir am besten genau aus. Ich gebe ihm Bescheid, er meldet sich persönlich bei dir.`,
+            body: `Gute Frage! Der Beitrag hängt von ein paar Details ab, das rechnet ${advisorFirst} dir am besten genau aus. Ich gebe ihm Bescheid, er meldet sich persönlich bei dir.`,
           },
         );
       } else if (scenario === "new_replied") {
@@ -375,7 +375,7 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
               dir: "inbound",
               by: null,
               at: new Date(after.getTime() + DAY),
-              body: "Danke, passt alles – ich hab unterschrieben 👍",
+              body: "Danke, passt alles, ich hab unterschrieben 👍",
             });
           }
         }

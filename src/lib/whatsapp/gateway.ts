@@ -3,6 +3,7 @@
 // läuft über die phone_number_id → WhatsAppAccount → Kunde. Strikt pro Kunde
 // isoliert; nichts verlässt den Kunden-Scope.
 
+import { ohneGedankenstriche } from "@/lib/gedankenstriche";
 import { isSupportCustomer } from "@/lib/whatsapp/support-inbox";
 import { decryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
@@ -377,6 +378,8 @@ export async function sendWhatsAppMessage(opts: {
   }
 
   const apiKey = decryptSecret(account.apiKeyEnc);
+  // Keine Gedankenstriche an Leads (auch KI-Antworten des Assistenten)
+  opts = { ...opts, body: ohneGedankenstriche(opts.body) };
   const result = await sendText(apiKey, opts.to, opts.body);
 
   const now = new Date();

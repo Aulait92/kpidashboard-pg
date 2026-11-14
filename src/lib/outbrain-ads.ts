@@ -221,7 +221,7 @@ export async function setCampaignDailyBudget(
 ): Promise<void> {
   if (!campaign.budgetId) {
     throw new Error(
-      `Outbrain-Kampagne ${campaign.name} hat keine budget.id — vermutlich Shared/Lifetime-Budget. Steuerung übersprungen.`,
+      `Outbrain-Kampagne ${campaign.name} hat keine budget.id, vermutlich Shared/Lifetime-Budget. Steuerung übersprungen.`,
     );
   }
   const rounded = Math.max(0, Math.round(newAmountEur * 100) / 100);

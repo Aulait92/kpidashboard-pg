@@ -259,7 +259,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                 <li className="flex items-center gap-3 rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-strong)] p-4 sm:col-span-2" data-bestand-empfehlung-locked>
                   <div className="min-w-0 flex-1 text-sm">
                     <div className="font-semibold">Jährliche Empfehlungsbitte</div>
-                    <div className="text-[color:var(--muted)]">Zufriedene Bestandskunden mit persönlichem Link um eine Empfehlung bitten – mit dem Modul „Empfehlungen &amp; Bewertungen“.</div>
+                    <div className="text-[color:var(--muted)]">Zufriedene Bestandskunden mit persönlichem Link um eine Empfehlung bitten, mit dem Modul „Empfehlungen &amp; Bewertungen“.</div>
                   </div>
                   <ButtonLink href="/buyer/konto?modul=empfehlung#zusatzmodule">Modul ansehen</ButtonLink>
                 </li>
@@ -534,7 +534,7 @@ function LockedBestand({ requestedAt, readOnly, canBook, reason, annual }: { req
             <li>Gesundheitsdaten werden nie übernommen</li>
           </ul>
           {canBook ? (
-            <p className="text-sm text-[color:var(--muted)]">Sofort nutzbar – Sie buchen es hier selbst, anteilig ab heute.</p>
+            <p className="text-sm text-[color:var(--muted)]">Sofort nutzbar, Sie buchen es hier selbst, anteilig ab heute.</p>
           ) : null}
           <ModuleBookButton
             monthlyNet={PRICE_LIST.bestandModuleMonthly}

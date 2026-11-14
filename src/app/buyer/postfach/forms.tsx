@@ -89,7 +89,7 @@ export function SignaturForm({ signatur, readOnly }: { signatur: string; readOnl
         defaultValue={signatur}
         rows={6}
         disabled={readOnly}
-        placeholder={"Jana Becker\nAgentur Becker – Ihre Versicherungsagentur\nTel. 0201 123456 · www.agentur-becker.de\nMusterstraße 1, 45127 Essen"}
+        placeholder={"Jana Becker\nAgentur Becker, Ihre Versicherungsagentur\nTel. 0201 123456 · www.agentur-becker.de\nMusterstraße 1, 45127 Essen"}
         className="w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2 text-[15px] outline-none focus:border-[color:var(--brand)]"
         aria-label="Signatur"
       />

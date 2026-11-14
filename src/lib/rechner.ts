@@ -213,7 +213,7 @@ export const DEFAULT_PRODUCTS: RechnerProduct[] = [
 export const DEFAULT_CONFIG: RechnerConfig = {
   products: DEFAULT_PRODUCTS,
   headline: "Rechnet sich das für Sie?",
-  intro: "Geben Sie Ihr Werbebudget und Ihre Provision ein – der Rechner zeigt, ab wann Sie Geld verdienen.",
+  intro: "Geben Sie Ihr Werbebudget und Ihre Provision ein, der Rechner zeigt, ab wann Sie Geld verdienen.",
   footer: "Beispielrechnung auf Basis Ihrer Eingaben und unserer Erfahrungswerte, keine Zusage.",
   contactUrl: "mailto:ole.kannapinn@performancegrowth.de?subject=Termin%20zum%20Rechner",
   contactLabel: "Termin vereinbaren",
@@ -227,13 +227,13 @@ export const DEFAULT_CONFIG: RechnerConfig = {
     leads: {
       enabled: true,
       title: "Lead-Garantie",
-      text: "Bei mindestens 20 € Werbebudget pro Tag bekommen Sie in den ersten 30 Tagen nach Kampagnenstart mindestens 100 Leads – sonst sind Betreuung und Software im Folgemonat kostenlos.",
+      text: "Bei mindestens 20 € Werbebudget pro Tag bekommen Sie in den ersten 30 Tagen nach Kampagnenstart mindestens 100 Leads, sonst sind Betreuung und Software im Folgemonat kostenlos.",
       minBudgetPerDay: 20,
     },
     breakEven: {
       enabled: true,
       title: "Break-even-Garantie",
-      text: "Spätestens ab dem 5. Monat profitabel: Liegt Ihre Provision nach 4 Monaten unter Ihren Kosten für Werbung und Betreuung, betreuen wir Sie ohne Betreuungsgebühr weiter – auf Wunsch mit einem anderen Produkt –, bis es sich rechnet (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten Termine wahrgenommen und Ergebnisse in der App eingetragen.",
+      text: "Spätestens ab dem 5. Monat profitabel: Liegt Ihre Provision nach 4 Monaten unter Ihren Kosten für Werbung und Betreuung, betreuen wir Sie ohne Betreuungsgebühr weiter, auf Wunsch mit einem anderen Produkt, bis es sich rechnet (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten Termine wahrgenommen und Ergebnisse in der App eingetragen.",
     },
   },
   termsUrl: "/rechtliches/agb",

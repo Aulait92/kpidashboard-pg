@@ -15,7 +15,7 @@ export default async function EinfuehrungPage() {
   const owner = ctx.teamRole !== "advisor";
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 space-y-5 px-4 py-6 sm:px-6 lg:px-8">
-      <PageHeader title="Einführung" subtitle="Rundgang durch Ihre Software – funktioniert auch ohne Ton." />
+      <PageHeader title="Einführung" subtitle="Rundgang durch Ihre Software, funktioniert auch ohne Ton." />
       <Card>
         <div className="p-5">
           <h2 className="mb-3 text-[15px] font-semibold">{VIDEOS.kurz.title}</h2>
@@ -35,7 +35,7 @@ export default async function EinfuehrungPage() {
         <Card>
           <div className="p-5">
             <h2 className="mb-1 text-[15px] font-semibold">{VIDEOS.whatsapp.title}</h2>
-            <p className="mb-3 text-sm text-[color:var(--muted)]">Ihre WhatsApp-Nummer Schritt für Schritt anbinden – mit Nummer aus der WhatsApp Business App oder einer neuen Nummer.</p>
+            <p className="mb-3 text-sm text-[color:var(--muted)]">Ihre WhatsApp-Nummer Schritt für Schritt anbinden, mit Nummer aus der WhatsApp Business App oder einer neuen Nummer.</p>
             <IntroVideo kind="whatsapp" />
           </div>
         </Card>

@@ -50,10 +50,10 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
         <PageHeader title="Empfehlungen & Bewertungen" subtitle="Zusatzmodul" />
         <Card>
-          <CardHeader title="Mehr Google-Bewertungen und Empfehlungen – automatisch" icon={Star} />
+          <CardHeader title="Mehr Google-Bewertungen und Empfehlungen, automatisch" icon={Star} />
           <div className="space-y-4 px-5 pb-5 pt-4 text-sm">
             <ul className="list-disc space-y-1 pl-5">
-              <li>Einige Tage nach jedem Abschluss fragt die App Ihren Kunden in Ihrem Namen, ob alles gepasst hat – mit direktem Draht zu Ihnen – und bittet um eine Google-Bewertung.</li>
+              <li>Einige Tage nach jedem Abschluss fragt die App Ihren Kunden in Ihrem Namen, ob alles gepasst hat, mit direktem Draht zu Ihnen, und bittet um eine Google-Bewertung.</li>
               <li>Kritik landet sofort als Aufgabe bei Ihnen, damit Sie sie persönlich klären können.</li>
               <li>Einige Wochen später die Bitte um Empfehlung: Die empfohlene Person trägt sich selbst ein und landet als Lead bei Ihnen.</li>
               <li>Auswertung: Empfehlungs-Leads, Termine, Abschlüsse und geschätzte Provision.</li>
@@ -101,7 +101,7 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
   );
   const warnings = ([
     !settings.googleReviewUrl
-      ? { key: "google", text: "Bitte Ihren Google-Bewertungslink hinterlegen – ohne ihn geht keine Nachfrage raus.", fix: <GoogleUrlQuickForm readOnly={ctx.preview} /> }
+      ? { key: "google", text: "Bitte Ihren Google-Bewertungslink hinterlegen, ohne ihn geht keine Nachfrage raus.", fix: <GoogleUrlQuickForm readOnly={ctx.preview} /> }
       : null,
     // Vorlagen-Hinweis wie auf der Kampagnenseite (lib/whatsapp/vorlagen-hinweis): genau ein Hinweis, nie „melden Sie sich“
     tplNotice?.kind === "connect"
@@ -248,7 +248,7 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
         </Card>
 
         <p className="text-sm text-[color:var(--muted)]">
-          Alle angeschriebenen Kunden bekommen dieselbe Nachricht mit demselben Google-Link – unabhängig davon, wie zufrieden sie sind (Google-Richtlinien).{" "}
+          Alle angeschriebenen Kunden bekommen dieselbe Nachricht mit demselben Google-Link, unabhängig davon, wie zufrieden sie sind (Google-Richtlinien).{" "}
           {settings.reward
             ? "Das Dankeschön geht nur an Empfehlende, nie an die empfohlene Person. Der Dank per WhatsApp geht automatisch raus, sobald aus einer Empfehlung ein Abschluss wird."
             : "Empfehlende bekommen ohne eingestelltes Dankeschön keine Prämie; der Dank geht automatisch raus, sobald aus einer Empfehlung ein Abschluss wird."}{" "}

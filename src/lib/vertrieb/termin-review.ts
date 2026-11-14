@@ -42,7 +42,7 @@ export async function createMeetingReviews(now = new Date()): Promise<number> {
         title: reviewTitle(m.contact.name),
         type: "TERMIN",
         dueAt: now,
-        note: `${m.title} am ${fmtDateTime(m.startAt)} – Ergebnis mit einem Klick eintragen.`,
+        note: `${m.title} am ${fmtDateTime(m.startAt)}, Ergebnis mit einem Klick eintragen.`,
       },
     });
     // Nur setzen, wenn noch frei (paralleler Lauf legt keine zweite Aufgabe an)
@@ -81,7 +81,7 @@ export async function createMeetingReviews(now = new Date()): Promise<number> {
         title: reviewTitle(t.contact?.name),
         type: "TERMIN",
         dueAt: now,
-        note: `Termin am ${fmtDateTime(t.dueAt)} – Ergebnis mit einem Klick eintragen.`,
+        note: `Termin am ${fmtDateTime(t.dueAt)}, Ergebnis mit einem Klick eintragen.`,
       },
     });
     created++;
@@ -93,7 +93,7 @@ export async function createMeetingReviews(now = new Date()): Promise<number> {
 async function push(contactId: string | null, name: string | null, title: string) {
   await sendToAdmins({
     title: `🗓️ ${reviewTitle(name)}`,
-    body: `${title} ist vorbei – Ergebnis mit einem Klick eintragen.`,
+    body: `${title} ist vorbei, Ergebnis mit einem Klick eintragen.`,
     url: contactId ? `/admin/vertrieb/kontakte/${contactId}` : "/admin/vertrieb/aufgaben",
     tag: `termin-review:${contactId}`,
   }).catch((e) => reportError(e, "termin-review-push"));

@@ -58,7 +58,7 @@ export function PushHint() {
             </p>
           ) : (
             <p className="text-[color:var(--muted)]">
-              Dann erfahren Sie sofort von neuen Leads, Antworten und Terminen – auch wenn die App zu ist.
+              Dann erfahren Sie sofort von neuen Leads, Antworten und Terminen, auch wenn die App zu ist.
             </p>
           )}
           {message ? <p className="mt-1 text-xs text-[color:var(--muted)]">{message}</p> : null}

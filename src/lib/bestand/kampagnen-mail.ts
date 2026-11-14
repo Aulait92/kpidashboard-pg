@@ -131,6 +131,4 @@ export function imprintFromWebsiteInfo(info: unknown): string | null {
 }
 
 /** Gedankenstriche (– und —) in Texten an Kunden vermeiden: durch Komma ersetzen (Bis-Striche zwischen Zahlen bleiben). */
-export function ohneGedankenstriche(s: string): string {
-  return s.replace(/(\d)\s*[–—]\s*(\d)/g, "$1–$2").replace(/\s+[–—]\s+/g, ", ").replace(/[—]/g, ",");
-}
+export { ohneGedankenstriche } from "@/lib/gedankenstriche";

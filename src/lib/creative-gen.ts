@@ -1,3 +1,4 @@
+import { ohneGedankenstriche } from "@/lib/gedankenstriche";
 import { generateVideo, type VideoProgress } from "@/lib/google-veo";
 import { uploadImageToR2 } from "@/lib/r2";
 import { burnGermanSubtitles, concatVideos } from "@/lib/video-subtitles";
@@ -61,6 +62,7 @@ ZIEL: PKV-Beratungs-Termin buchen.
 - CTA max 18 Zeichen, handlungsorientiert
 - VERBOTEN: "Jetzt sparen", "Top-Tarif", "Kostenlos", "Spitzenmäßig"
 - Native-Feeling, kein Werbe-Sprech
+- KEINE Gedankenstriche (– oder —): Komma, Doppelpunkt oder neuer Satz. Bis-Striche bei Zahlen ("2–3") sind ok.
 
 ═══ PKV-ANCHOR (PFLICHT, PROMINENT — sonst wird's geclickt aber falsch verstanden) ═══
 Jedes Creative MUSS in <1 Sekunde signalisieren, dass es um PKV (Private
@@ -106,7 +108,7 @@ unter dem Bild — sichtbar im Feed neben dem CTA-Button.
 - Snappy, konkret, ein Versprechen oder eine Frage
 - KEINE Wiederholung der visuellen Headline aus dem Bild — sie ergänzt
 - Beispiele:
-  - Bild-Headline: "STOPP." → fb_headline: "PKV-Beitrag halbieren — in 2 Min."
+  - Bild-Headline: "STOPP." → fb_headline: "PKV-Beitrag halbieren, in 2 Min."
   - Bild-Headline: "−38%" → fb_headline: "Dein PKV-Beitrag, neu gerechnet"
   - Bild-Headline: "Anbieter bleibt. Tarif wechselt." → fb_headline: "Bis 50% PKV-Beitrag sparen"
 
@@ -1103,8 +1105,8 @@ async function verifyClarity(
     };
     return {
       imageClear: obj.imageClear !== false,
-      headline: obj.headline?.trim() || headline,
-      adText: obj.adText?.trim() || adText,
+      headline: ohneGedankenstriche(obj.headline?.trim() || headline),
+      adText: ohneGedankenstriche(obj.adText?.trim() || adText),
     };
   } catch {
     return fallback;
@@ -1162,11 +1164,11 @@ async function generateDirectImageCreatives(
 
       const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0}html,body{width:1080px;height:1080px}img{width:1080px;height:1080px;object-fit:cover;display:block}</style></head><body><img src="${dataUrl}"></body></html>`;
       return {
-        headline: fbHeadline || cfg.fallbackFbHeadline || brief.campaignKey,
+        headline: ohneGedankenstriche(fbHeadline || cfg.fallbackFbHeadline || brief.campaignKey),
         body: "",
         cta: cfg.cta || "Mehr erfahren",
-        adText,
-        fbHeadline,
+        adText: ohneGedankenstriche(adText),
+        fbHeadline: ohneGedankenstriche(fbHeadline),
         html,
         mechanic: "direct-image",
         concept,
@@ -1266,7 +1268,16 @@ function parseVariantBlocks(text: string): CreativeVariant[] {
     const fbHeadline = extractTag(inner, "fb_headline") ?? "";
     const html = extractTag(inner, "creative_html");
     if (!headline || !body || !cta || !html) continue;
-    blocks.push({ headline, body, cta, adText, fbHeadline, html, mechanic: "" });
+    // Sicherheitsnetz: keine Gedankenstriche in Werbetexten (lib/gedankenstriche.ts)
+    blocks.push({
+      headline: ohneGedankenstriche(headline),
+      body: ohneGedankenstriche(body),
+      cta: ohneGedankenstriche(cta),
+      adText: ohneGedankenstriche(adText),
+      fbHeadline: ohneGedankenstriche(fbHeadline),
+      html: ohneGedankenstriche(html),
+      mechanic: "",
+    });
   }
   return blocks;
 }

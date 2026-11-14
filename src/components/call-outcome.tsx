@@ -113,7 +113,7 @@ export function CallOutcomeSheet({
 
   const actions: SheetAction[] = [];
   if (t.kind === "followup") {
-    actions.push({ label: "Gesprochen – erledigt", icon: Check, tone: "primary", onSelect: () => pick(`${t.name}: erledigt`, () => clearFollowUpResult(t.leadId)) });
+    actions.push({ label: "Gesprochen, erledigt", icon: Check, tone: "primary", onSelect: () => pick(`${t.name}: erledigt`, () => clearFollowUpResult(t.leadId)) });
   }
   actions.push({ label: "Nicht erreicht", icon: PhoneMissed, onSelect: () => pick(`${t.name}: morgen wieder in der Liste`, () => callbackOutcomeResult(t.leadId, "not_reached")) });
   if (bookingSlug) actions.push({ label: "Termin vereinbart", icon: CalendarPlus, href: `/book/${bookingSlug}?lead=${t.leadId}` });
@@ -179,5 +179,5 @@ export function CallOutcomeSheet({
       />
     );
   }
-  return <ActionSheet open onClose={close} title={`Wie lief's mit ${t.name}?`} message="Ein Tipp – den Rest trägt die App ein." actions={actions} />;
+  return <ActionSheet open onClose={close} title={`Wie lief's mit ${t.name}?`} message="Ein Tipp, den Rest trägt die App ein." actions={actions} />;
 }

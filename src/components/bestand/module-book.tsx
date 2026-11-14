@@ -59,14 +59,14 @@ export function ModuleBookButton({
   if (state.ok) {
     return (
       <p className="rounded-[var(--radius-md)] bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 ring-1 ring-emerald-200" data-module-booked>
-        Gebucht – das Modul ist freigeschaltet. Eine Bestätigung kommt per E-Mail.
+        Gebucht, das Modul ist freigeschaltet. Eine Bestätigung kommt per E-Mail.
       </p>
     );
   }
   return (
     <>
       <button type="button" className={primary} disabled={readOnly} onClick={() => setOpen(true)} data-module-book>
-        Jetzt buchen – {eur(monthlyNet)} netto im Monat
+        Jetzt buchen, {eur(monthlyNet)} netto im Monat
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title="Bestandskunden-Modul buchen">
         <form action={action} className="max-h-[65dvh] space-y-4 overflow-y-auto px-5 py-4 text-sm" data-module-book-dialog>
@@ -114,7 +114,7 @@ export function ModuleCancelButton({ cancelAt, readOnly, annual = false }: { can
   if (until) {
     return (
       <form action={bookAction} className="flex flex-wrap items-center gap-3" data-module-cancelled>
-        <span className="text-sm">Gekündigt zum {fmtDate(until)} – bis dahin nutzbar.</span>
+        <span className="text-sm">Gekündigt zum {fmtDate(until)}, bis dahin nutzbar.</span>
         <input type="hidden" name="confirm" value="on" />
         <button type="submit" className={secondary} disabled={readOnly || booking}>
           {booking ? <Loader2 className="h-4 w-4 animate-spin" /> : null}

@@ -124,7 +124,7 @@ describe("Lead-Garantie", () => {
     expect(e.kennzahlen.betrag).toBe(1000);
     expect(e.fehlend).toEqual([]);
     expect(heuteTitel("Muster", "lead", e.kennzahlen)).toBe(
-      "Garantiefall: Muster – Lead-Garantie (99 von 100 Leads) → Betreuung + Software im Januar 2027 kostenlos",
+      "Garantiefall: Muster, Lead-Garantie (99 von 100 Leads) → Betreuung + Software im Januar 2027 kostenlos",
     );
   });
   it("Leads außerhalb des Zeitraums und andere Produkte zählen nicht", () => {
@@ -196,7 +196,7 @@ describe("Break-even-Garantie (Bestandsverträge: 90 Tage)", () => {
     expect(e.kennzahlen.betreuung).toBeCloseTo(3032.26, 2); // Dez–Feb + 1 Tag März
     expect(e.kennzahlen.betrag).toBe(700); // nur Betreuung (1.000 − 300 Software)
     expect(heuteTitel("Muster", "breakeven", e.kennzahlen)).toBe(
-      "Garantiefall: Muster – Break-even-Garantie (Provision 1.240 € / Kosten 5.307 €) → Betreuung im März 2027 kostenlos",
+      "Garantiefall: Muster, Break-even-Garantie (Provision 1.240 € / Kosten 5.307 €) → Betreuung im März 2027 kostenlos",
     );
   });
   it("Break-even erreicht → erfüllt", () => {
@@ -300,7 +300,7 @@ describe("Vertrags-Garantie (Makler)", () => {
     expect(e.kennzahlen.betrag).toBe(1000); // Betreuung + Software
     expect(e.bedingungen.map((b) => b.key)).toEqual(["budget", "termine", "ergebnisse", "rechnung"]);
     expect(heuteTitel("Muster", "vertrag", e.kennzahlen)).toBe(
-      "Garantiefall: Muster – Vertrags-Garantie (14 von 15 Verträgen) → Betreuung + Software im März 2027 kostenlos",
+      "Garantiefall: Muster, Vertrags-Garantie (14 von 15 Verträgen) → Betreuung + Software im März 2027 kostenlos",
     );
   });
   it("15 Verträge = erfüllt, auch schon vor Tag 90", () => {

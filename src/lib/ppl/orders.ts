@@ -115,7 +115,7 @@ export async function orderInvoiceEvent(orderId: string, paid: boolean) {
   } else {
     await sendToAdmins({
       title: `⚠️ Lead-Bestellung nicht bezahlt: ${order.subscription.customer.name}`,
-      body: `${order.quantity} Leads, ${fmtWeek(order.periodStart)} – Lieferung gestoppt.`,
+      body: `${order.quantity} Leads, ${fmtWeek(order.periodStart)}, Lieferung gestoppt.`,
       url: "/admin/ppl",
     }).catch(() => {});
   }

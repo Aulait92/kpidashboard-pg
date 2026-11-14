@@ -14,10 +14,10 @@ function satz(e: GarantieErgebnis, fall: GarantieFallRow | undefined): string {
   if (e.status === "nicht_anwendbar") return e.art === "vertrag" ? "Für Vertreter gilt die Break-even-Garantie." : "Für Makler gilt die Vertrags-Garantie.";
   if (e.status === "nicht_gestartet") return "Startet, sobald deine Anzeigen das erste Mal ausgeliefert werden.";
   if (e.art === "lead") {
-    if (e.status === "laeuft") return `Mindestens ${k.minLeads} Leads in deinen ersten ${k.tage} aktiven Tagen – sonst sind Betreuung und Software im Folgemonat kostenlos.`;
+    if (e.status === "laeuft") return `Mindestens ${k.minLeads} Leads in deinen ersten ${k.tage} aktiven Tagen, sonst sind Betreuung und Software im Folgemonat kostenlos.`;
     if (e.status === "erfuellt") return `Geschafft: ${k.leads} Leads in ${k.tage} Tagen.`;
   } else if (e.art === "vertrag") {
-    if (e.status === "laeuft") return `Mindestens ${k.minVertraege} Verträge nach ${k.tage} aktiven Tagen – sonst sind Betreuung und Software kostenlos, bis du sie hast (längstens 6 Monate).`;
+    if (e.status === "laeuft") return `Mindestens ${k.minVertraege} Verträge nach ${k.tage} aktiven Tagen, sonst sind Betreuung und Software kostenlos, bis du sie hast (längstens 6 Monate).`;
     if (e.status === "erfuellt") return `Geschafft: ${k.vertraege} Verträge seit Kampagnenstart.`;
     if (e.status === "abgelaufen") return "Der Garantiezeitraum von 6 Monaten ist vorbei.";
   } else {

@@ -411,8 +411,8 @@ export function provisionSetupHint(typ: VermittlerTyp, known: boolean): string {
     return "Damit die App Ihre Provision je Abschluss richtig schätzt: kurz angeben, ob Sie als Vertreter oder Makler arbeiten, und die Sätze prüfen. Vorausgefüllt mit üblichen Werten.";
   }
   return typ === "makler"
-    ? "Sie arbeiten als Makler – Ihre Sätze sind mit üblichen Werten für Makler vorausgefüllt (bei Sach z. B. 22,5 % Bestandscourtage pro Jahr statt Abschlussprovision). Kurz prüfen und bei Bedarf anpassen, damit die App Ihre Courtage je Abschluss richtig schätzt."
-    : "Sie arbeiten als Vertreter – Ihre Sätze sind mit üblichen Abschlussprovisionen vorausgefüllt (z. B. 55 % vom Jahresbeitrag bei Tierkranken und Privatschutz). Kurz prüfen und bei Bedarf anpassen, damit die App Ihre Provision je Abschluss richtig schätzt.";
+    ? "Sie arbeiten als Makler, Ihre Sätze sind mit üblichen Werten für Makler vorausgefüllt (bei Sach z. B. 22,5 % Bestandscourtage pro Jahr statt Abschlussprovision). Kurz prüfen und bei Bedarf anpassen, damit die App Ihre Courtage je Abschluss richtig schätzt."
+    : "Sie arbeiten als Vertreter, Ihre Sätze sind mit üblichen Abschlussprovisionen vorausgefüllt (z. B. 55 % vom Jahresbeitrag bei Tierkranken und Privatschutz). Kurz prüfen und bei Bedarf anpassen, damit die App Ihre Provision je Abschluss richtig schätzt.";
 }
 
 /** Standard-Satz eines Produkts je Vermittlertyp. */

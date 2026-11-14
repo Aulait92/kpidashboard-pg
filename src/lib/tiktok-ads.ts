@@ -217,7 +217,7 @@ export async function setCampaignDailyBudget(
 ): Promise<void> {
   if (!campaign.hasDailyBudget) {
     throw new Error(
-      `TikTok-Kampagne ${campaign.name} ist nicht BUDGET_MODE_DAY — nicht steuerbar.`,
+      `TikTok-Kampagne ${campaign.name} ist nicht BUDGET_MODE_DAY, nicht steuerbar.`,
     );
   }
   const rounded = Math.max(0, Math.round(newAmountEur * 100) / 100);

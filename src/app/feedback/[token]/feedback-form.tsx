@@ -23,7 +23,7 @@ export function FeedbackForm({ token, initialScore, nps = false }: { token: stri
             <div className="mt-3 border-t border-emerald-200 pt-3 text-sm" data-feedback-empfehlen>
               <p>Kennen Sie Kollegen, denen wir genauso helfen können? Wird ein empfohlener Kollege Kunde, bedanken wir uns mit einer Prämie.</p>
               <a
-                href={`https://wa.me/?text=${encodeURIComponent(`Tipp für neue Kunden: performancegrowth – hier kann man sich unverbindlich ein Erstgespräch holen: ${state.referralUrl}`)}`}
+                href={`https://wa.me/?text=${encodeURIComponent(`Tipp für neue Kunden: performancegrowth, hier kann man sich unverbindlich ein Erstgespräch holen: ${state.referralUrl}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-2 inline-flex min-h-10 items-center rounded-[var(--radius-sm)] bg-emerald-700 px-4 font-semibold text-white"

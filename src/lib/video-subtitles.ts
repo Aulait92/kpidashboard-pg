@@ -382,7 +382,7 @@ export async function burnGermanSubtitles(
       return {
         buffer: videoBuffer,
         burned: false,
-        note: "Whisper lieferte kein Transkript — Untertitel übersprungen.",
+        note: "Whisper lieferte kein Transkript, Untertitel übersprungen.",
       };
     }
     // Lange Segmente in 2-Zeilen-Häppchen splitten, damit kein einzelner
@@ -405,7 +405,7 @@ export async function burnGermanSubtitles(
       return {
         buffer: videoBuffer,
         burned: false,
-        note: "Keine renderbaren Segmente — Untertitel übersprungen.",
+        note: "Keine renderbaren Segmente, Untertitel übersprungen.",
       };
     }
     for (const f of textFiles) {

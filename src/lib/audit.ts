@@ -27,7 +27,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "lead.storno": "Lead storniert",
   "vertrieb.neuimport": "Vertrieb neu übernommen (Cold CRM bzw. Testumgebung)",
   "vertrieb.verknuepft": "Vertriebskontakt mit Kundenakte verknüpft",
-  "vertrieb.verknuepfung_geloest": "Verknüpfung Vertriebskontakt – Kundenakte gelöst",
+  "vertrieb.verknuepfung_geloest": "Verknüpfung von Vertriebskontakt und Kundenakte gelöst",
   "kpi.kosten": "Laufende Kosten geändert",
   "kpi.einstellungen": "Einstellungen der Zahlen-Seite geändert",
   "kpi.nachtrag": "Einmal-Umsatz nachgetragen/gelöscht",

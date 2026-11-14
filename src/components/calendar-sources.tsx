@@ -262,7 +262,7 @@ export function LeadTimesForm({
                     <p className={`text-xs ${all.length ? "text-[color:var(--muted)]" : "font-medium text-rose-700"}`}>
                       {all.length
                         ? `${all.length} ${all.length === 1 ? "Startzeit" : "Startzeiten"}: ${all.length > 6 ? `${hm(all[0])}, ${hm(all[1])} … ${hm(all[all.length - 1])}` : all.map(hm).join(", ")} Uhr`
-                        : "Zeitraum kürzer als ein Termin – hier wird nichts angeboten."}
+                        : "Zeitraum kürzer als ein Termin, hier wird nichts angeboten."}
                     </p>
                   ) : null}
                 </div>

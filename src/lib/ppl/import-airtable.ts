@@ -51,7 +51,7 @@ export async function importSubscriptions(opts: { dryRun: boolean }): Promise<Im
     const produkt = P.get(ids(f["Produkt"])[0] ?? "");
     const customerName = s(kunde?.["Name"]);
     const productKey = s(produkt?.["Name"]);
-    const bezugName = s(f["Bezug"]) || `${customerName} – ${productKey}`;
+    const bezugName = s(f["Bezug"]) || `${customerName}, ${productKey}`;
     if (!kunde || !produkt || !customerName || !productKey) {
       out.push({ airtableId: b.id, bezug: bezugName, customer: customerName, customerFound: false, productKey, active: false, period: "-", goal: null, price: 0, delivery: "-", filters: "", stornoDays: null, action: "übersprungen", note: "Kunde oder Produkt fehlt" });
       continue;

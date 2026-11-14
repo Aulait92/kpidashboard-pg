@@ -23,7 +23,7 @@ import { absenceEffect } from "@/components/absence-sheet";
 describe("Ich bin abwesend: Texte und Pause-Angebot", () => {
   it("Einzel-Vertreter: Leads kommen weiter, Termine ab Rückkehr (Sie-Form)", () => {
     const t = absenceEffect(true, true, "Max", "Fr., 13.11.");
-    expect(t).toBe("Neue Leads kommen weiter rein – Ihr Assistent schreibt sie an und bietet Termine ab Fr., 13.11. an.");
+    expect(t).toBe("Neue Leads kommen weiter rein, Ihr Assistent schreibt sie an und bietet Termine ab Fr., 13.11. an.");
     expect(t).not.toMatch(/keine neuen Leads/);
   });
   it("Team: keine neuen Leads, sie gehen ans Team", () => {

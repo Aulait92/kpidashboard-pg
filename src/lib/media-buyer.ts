@@ -212,7 +212,7 @@ export function decideBudget(params: {
   if (!goal || goal <= 0) {
     return {
       action: "none",
-      reason: "Kein Lead-Ziel gesetzt — keine Budget-Steuerung (nur Monitoring).",
+      reason: "Kein Lead-Ziel gesetzt, keine Budget-Steuerung (nur Monitoring).",
       targetBudget: null,
       setStatus: null,
     };
@@ -266,14 +266,14 @@ export function decideBudget(params: {
     if (anyPaused) {
       return {
         action: "activate",
-        reason: `Noch keine Meta-Lead-Kosten messbar, aber Meta-Kampagnen pausiert und ${remaining} Leads offen — reaktivieren.`,
+        reason: `Noch keine Meta-Lead-Kosten messbar, aber Meta-Kampagnen pausiert und ${remaining} Leads offen, reaktivieren.`,
         targetBudget: currentBudget > 0 ? currentBudget : effMinBudget,
         setStatus: "ACTIVE",
       };
     }
     return {
       action: "none",
-      reason: `Noch keine Meta-Cost-per-Lead messbar — Meta-Budget unverändert (${remaining} Leads offen).`,
+      reason: `Noch keine Meta-Cost-per-Lead messbar, Meta-Budget unverändert (${remaining} Leads offen).`,
       targetBudget: null,
       setStatus: null,
     };
@@ -1142,7 +1142,7 @@ async function processPool(
       !tiktokSteerable &&
       !googleSteerable
     ) {
-      base.reason = `Keine steuerbaren Kampagnen für Pool "${def.label}" — weder Meta, Outbrain, TikTok noch Google matched/steuerbar.`;
+      base.reason = `Keine steuerbaren Kampagnen für Pool "${def.label}", weder Meta, Outbrain, TikTok noch Google matched/steuerbar.`;
       base.error = base.reason;
       return base;
     }
@@ -1630,7 +1630,7 @@ export async function runMediaBuyer(params: {
     ]);
   } catch (err) {
     console.warn(
-      "[media-buyer] Outbrain nicht erreichbar — Channel-Sicht fällt aus:",
+      "[media-buyer] Outbrain nicht erreichbar, Channel-Sicht fällt aus:",
       err instanceof Error ? err.message : err,
     );
   }
@@ -1650,7 +1650,7 @@ export async function runMediaBuyer(params: {
     ]);
   } catch (err) {
     console.warn(
-      "[media-buyer] TikTok nicht erreichbar — Channel-Sicht fällt aus:",
+      "[media-buyer] TikTok nicht erreichbar, Channel-Sicht fällt aus:",
       err instanceof Error ? err.message : err,
     );
   }
@@ -1670,7 +1670,7 @@ export async function runMediaBuyer(params: {
     ]);
   } catch (err) {
     console.warn(
-      "[media-buyer] Google Ads nicht erreichbar — Channel-Sicht fällt aus:",
+      "[media-buyer] Google Ads nicht erreichbar, Channel-Sicht fällt aus:",
       err instanceof Error ? err.message : err,
     );
   }

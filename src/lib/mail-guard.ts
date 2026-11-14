@@ -55,5 +55,5 @@ export function mailClient(apiKey: string) {
 
 /** Hinweis, wenn die Testumgebung eine Mail komplett gesperrt hat (MAIL_NUR_AN). */
 export const MAIL_BLOCKED_TEXT =
-  "Testumgebung: Mails gehen nur an freigegebene Adressen (MAIL_NUR_AN), diese Adresse ist nicht freigegeben – nichts verschickt.";
+  "Testumgebung: Mails gehen nur an freigegebene Adressen (MAIL_NUR_AN), diese Adresse ist nicht freigegeben, nichts verschickt.";
 export const wasBlocked = (res: unknown) => !!(res && typeof res === "object" && (res as { blocked?: boolean }).blocked);

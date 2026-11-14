@@ -3,6 +3,7 @@
 // Gesendet-Ordner des Vermittlers. Die Anmeldung nutzt die Rücksprung-Adressen der
 // Kalender-Anbindung (state „mail:…“ unterscheidet), damit keine neue Adresse nötig ist.
 
+import { ohneGedankenstriche } from "@/lib/gedankenstriche";
 import crypto from "node:crypto";
 import nodemailer from "nodemailer";
 import { prisma } from "@/lib/prisma";
@@ -304,6 +305,8 @@ export function buildMime(from: { email: string; name: string | null }, m: Outgo
 
 /** Über das Postfach des Logins senden. Fehler werden am Postfach vermerkt. */
 export async function sendViaPostfach(userId: string, m: OutgoingMail): Promise<{ ok: true; from: string } | { ok: false; error: string; raw?: string }> {
+  // Keine Gedankenstriche in Mails an Leads und Bestandskunden (Bis-Striche zwischen Zahlen bleiben)
+  m = { ...m, subject: ohneGedankenstriche(m.subject), text: ohneGedankenstriche(m.text), ...(m.html ? { html: ohneGedankenstriche(m.html) } : {}) };
   const c = await prisma.mailConnection.findUnique({ where: { userId } });
   if (!c) return { ok: false, error: "Noch kein Postfach verbunden." };
   try {

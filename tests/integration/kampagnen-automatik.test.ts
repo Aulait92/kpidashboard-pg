@@ -268,7 +268,7 @@ describe("Kampagnen-Automatik", () => {
     // keine Kampagne/Anzeigengruppe/Formular neu, alte Anzeigen unangetastet
     expect(posts.some((p) => /\/(campaigns|adsets|leadgen_forms)$/.test(p.path))).toBe(false);
     expect(posts.some((p) => oldAds.includes(p.path))).toBe(false);
-    expect(tasksCreated[0]).toMatch(/^Neue Anzeigen für .* bereit \(pausiert\) – müde Anzeigen: Alt o1/);
+    expect(tasksCreated[0]).toMatch(/^Neue Anzeigen für .* bereit \(pausiert\), müde Anzeigen: Alt o1/);
 
     const runs = await prisma.campaignRun.findMany({ where: { customerId: c.id, kind: "auffrischung" } });
     expect(runs).toHaveLength(1);

@@ -77,7 +77,7 @@ export async function selfBookBestand(customerId: string, actor: AuditActor & { 
 export async function selfCancelBestand(customerId: string, actor: AuditActor & { email?: string | null }): Promise<{ ok: true; until: Date } | { ok: false; error: string }> {
   const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { name: true, bestandCancelAt: true, bestandMonthly: true, existingCustomersEnabled: true } });
   if (!c) return { ok: false, error: "Konto nicht gefunden." };
-  if (!c.existingCustomersEnabled || c.bestandMonthly == null) return { ok: false, error: "Das Modul ist nicht gebucht – bitte bei uns melden." };
+  if (!c.existingCustomersEnabled || c.bestandMonthly == null) return { ok: false, error: "Das Modul ist nicht gebucht, bitte bei uns melden." };
   if (c.bestandCancelAt) return { ok: true, until: c.bestandCancelAt };
   const res = await scheduleBestandCancel(customerId, actor);
   if (!res.ok) return res;
@@ -113,7 +113,7 @@ async function notify(o: {
     to: adminMail,
     subject: o.adminTitle,
     greeting: "Hallo,",
-    paragraphs: [`${o.name}${o.email ? ` (${o.email})` : ""}: ${o.adminBody}.`, "Selbst im Kundenbereich ausgelöst – nichts weiter zu tun."],
+    paragraphs: [`${o.name}${o.email ? ` (${o.email})` : ""}: ${o.adminBody}.`, "Selbst im Kundenbereich ausgelöst, nichts weiter zu tun."],
     signature: PROVIDER.brand,
     replyTo: o.email,
   }).catch((err) => reportError(err, "bestand-self-admin-mail"));

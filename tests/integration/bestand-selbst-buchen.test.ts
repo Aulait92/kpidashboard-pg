@@ -221,8 +221,8 @@ describe("Bestandskunden-Modul selbst buchen/kündigen", () => {
       return fd;
     };
     ctxState.ctx = { customerId: c.id, email: "berater@example.de", preview: false, userId: advisor.id, teamRole: "advisor" };
-    expect(await bookBestandModuleAction({}, confirmed())).toEqual({ error: "Bitte den Inhaber fragen – nur er kann Module buchen." });
-    expect(await cancelBestandModuleAction({}, confirmed())).toEqual({ error: "Bitte den Inhaber fragen – nur er kann Module kündigen." });
+    expect(await bookBestandModuleAction({}, confirmed())).toEqual({ error: "Bitte den Inhaber fragen, nur er kann Module buchen." });
+    expect(await cancelBestandModuleAction({}, confirmed())).toEqual({ error: "Bitte den Inhaber fragen, nur er kann Module kündigen." });
     ctxState.ctx = { customerId: c.id, email: "admin@example.de", preview: true, userId: null, teamRole: "owner" };
     expect(await bookBestandModuleAction({}, confirmed())).toEqual({ error: "In der Vorschau nicht möglich." });
     ctxState.ctx = { customerId: c.id, email: "inhaber@example.de", preview: false, userId: owner.id, teamRole: "owner" };
@@ -237,6 +237,6 @@ describe("Bestandskunden-Modul selbst buchen/kündigen", () => {
 
   it("Kündigen ohne gebuchtes Modul (z. B. Bestandsschutz) geht nicht", async () => {
     const { c, owner } = await customer({ existingCustomersEnabled: true, bestandGrandfathered: true });
-    expect(await selfCancelBestand(c.id, { id: owner.id, role: "kunde" })).toEqual({ ok: false, error: "Das Modul ist nicht gebucht – bitte bei uns melden." });
+    expect(await selfCancelBestand(c.id, { id: owner.id, role: "kunde" })).toEqual({ ok: false, error: "Das Modul ist nicht gebucht, bitte bei uns melden." });
   });
 });

@@ -77,7 +77,7 @@ export function EmpfehlungBookButton({
   return (
     <>
       <Button variant="primary" size="md" icon={Sparkles} disabled={readOnly} onClick={() => setOpen(true)} data-empfehlung-book>
-        {label ?? (trial ? "30 Tage kostenlos testen" : `Buchen – ${eur(monthly)} netto im Monat`)}
+        {label ?? (trial ? "30 Tage kostenlos testen" : `Buchen, ${eur(monthly)} netto im Monat`)}
       </Button>
       <Sheet open={open} onClose={() => setOpen(false)} title="Empfehlungen & Bewertungen buchen" message={terms.headline}>
         <form action={action} className="max-h-[65dvh] space-y-4 overflow-y-auto px-5 py-4 text-sm" data-empfehlung-book-dialog>
@@ -126,7 +126,7 @@ export function EmpfehlungCancelButton({ cancelAt, trialEndsAt, readOnly, annual
   if (until) {
     return (
       <form action={bookAction} className="flex flex-wrap items-center gap-3" data-empfehlung-cancelled>
-        <span className="text-sm">Gekündigt zum {fmtDate(until)} – bis dahin nutzbar.</span>
+        <span className="text-sm">Gekündigt zum {fmtDate(until)}, bis dahin nutzbar.</span>
         <input type="hidden" name="confirm" value="on" />
         <Button type="submit" disabled={readOnly || booking}>
           {booking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}

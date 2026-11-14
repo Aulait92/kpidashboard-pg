@@ -288,7 +288,7 @@ function buildVariantCaption(opts: {
   index?: number;
   mechanic?: string;
 }): string {
-  const mechanicTag = opts.mechanic ? ` — <i>${escapeHtml(opts.mechanic)}</i>` : "";
+  const mechanicTag = opts.mechanic ? `: <i>${escapeHtml(opts.mechanic)}</i>` : "";
   const prefix = opts.index ? `<b>Variante #${opts.index}</b>${mechanicTag}\n\n` : "";
   const headlineBlock = opts.fbHeadline
     ? `<b>Facebook-Headline:</b>\n${escapeHtml(opts.fbHeadline)}\n\n`

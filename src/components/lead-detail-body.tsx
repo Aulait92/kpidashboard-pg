@@ -376,7 +376,7 @@ export async function LeadDetailBody({
           className={`mb-5 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${lead.stornoState === "review" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-rose-200 bg-rose-50 text-rose-900"}`}
         >
           {lead.stornoState === "review"
-            ? `Storno eingereicht (${lead.stornoReason ?? "Grund"}) – wird geprüft.`
+            ? `Storno eingereicht (${lead.stornoReason ?? "Grund"}), wird geprüft.`
             : `Storno abgelehnt (${lead.stornoReason ?? "Grund"}). Bei Fragen melden Sie sich gern.`}
         </div>
       ) : null}

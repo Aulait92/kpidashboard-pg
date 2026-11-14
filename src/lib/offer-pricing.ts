@@ -18,8 +18,8 @@ export const PRICE_LIST = {
   /** Monatliche Betreuung + Software nach Gesamt-Werbebudget pro Monat. */
   tiers: [
     { maxBudget: 3000, monthly: 1000, label: "bis 3.000 €" },
-    { maxBudget: 6000, monthly: 1400, label: "3.000 – 6.000 €" },
-    { maxBudget: 10000, monthly: 1800, label: "6.000 – 10.000 €" },
+    { maxBudget: 6000, monthly: 1400, label: "3.000–6.000 €" },
+    { maxBudget: 10000, monthly: 1800, label: "6.000–10.000 €" },
   ],
   /** Ab hier gibt es kein Listenpreis mehr → individuell. */
   individualFrom: 10000,

@@ -82,7 +82,7 @@ export async function findCampaignForProduct(
     found = (r.data ?? []).filter((c) => norm(c.name).startsWith(prefix) && !GONE.has(c.effective_status ?? c.status ?? ""));
   }
   if (found.length === 0) return { ok: false, reason: `keine Kampagne „PG | ${input.customerName} | ${input.product} | …“ gefunden` };
-  if (found.length > 1) return { ok: false, reason: `${found.length} passende Kampagnen (${found.map((c) => c.name).join(", ").slice(0, 200)}) – nicht eindeutig` };
+  if (found.length > 1) return { ok: false, reason: `${found.length} passende Kampagnen (${found.map((c) => c.name).join(", ").slice(0, 200)}), nicht eindeutig` };
   if (!found[0].daily_budget) return { ok: false, reason: `Kampagne „${found[0].name}“ hat kein Kampagnenbudget (Budget auf Anzeigengruppen-Ebene)` };
   return { ok: true, campaign: found[0] };
 }

@@ -80,7 +80,7 @@ export function UpdatesHeuteCard({ title, more, dismiss }: { title: string; more
       </span>
       <Link href="/buyer/neuigkeiten" className="min-w-0 flex-1">
         <span className="block truncate text-[15px] font-semibold">Neu: {title}</span>
-        <span className="block text-sm text-[color:var(--muted)]">{more > 0 ? `und ${more} weitere Neuigkeit${more === 1 ? "" : "en"} – ansehen` : "Was wir verbessert haben – ansehen"}</span>
+        <span className="block text-sm text-[color:var(--muted)]">{more > 0 ? `und ${more} weitere Neuigkeit${more === 1 ? "" : "en"}, ansehen` : "Was wir verbessert haben, ansehen"}</span>
       </Link>
       <button
         type="button"

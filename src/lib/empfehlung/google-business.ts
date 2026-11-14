@@ -29,7 +29,7 @@ export const REPORT_HELP_URL = "https://support.google.com/business/answer/45967
 export const SYNC_EVERY_MS = 45 * 60_000;
 /** Bewertungen nach so vielen Tagen löschen (Löschfrist). */
 export const REVIEW_RETENTION_DAYS = 730;
-export const BAD_REVIEW_TASK = "Schlechte Google-Bewertung – bitte antworten";
+export const BAD_REVIEW_TASK = "Schlechte Google-Bewertung, bitte antworten";
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
 
 /** Google-API noch nicht freigeschaltet (Kontingent 0) oder Zugriff verweigert. */
@@ -282,7 +282,7 @@ export async function notifyNewReviews(customerId: string, now = new Date()): Pr
     const bad = r.stars <= 3;
     const quote = r.text ? `„${r.text.length > 100 ? `${r.text.slice(0, 97)}…` : r.text}“` : "ohne Text";
     await sendToBuyersOfCustomer(customerId, {
-      title: bad ? `⚠️ ${r.stars} ${r.stars === 1 ? "Stern" : "Sterne"} auf Google – bitte antworten` : `⭐ Neue Google-Bewertung: ${r.stars} Sterne`,
+      title: bad ? `⚠️ ${r.stars} ${r.stars === 1 ? "Stern" : "Sterne"} auf Google, bitte antworten` : `⭐ Neue Google-Bewertung: ${r.stars} Sterne`,
       body: `${r.reviewerName ?? "Jemand"}: ${quote}`,
       url: "/buyer/empfehlungen#bewertungen",
       tag: `gbp-review:${r.id}`,
@@ -342,7 +342,7 @@ export async function suggestReply(customerId: string, r: { stars: number; text:
       model: MODEL,
       max_tokens: 400,
       system:
-        "Du schreibst einen Antwortvorschlag auf eine öffentliche Google-Bewertung für einen Versicherungsvertreter in Deutschland (Sie-Form, 2–4 Sätze). Regeln: professionell, sachlich, freundlich. Nenne KEINE Namen, keine Versicherungs-, Vertrags-, Tarif- oder Schadendetails und keine sonstigen personenbezogenen Daten – auch nicht, ob die Person Kunde ist (Datenschutz). Bei Kritik: Bedauern ausdrücken, nichts zugeben oder bestreiten, das Gespräch offline anbieten („melden Sie sich gern direkt bei mir“). Bei Lob: kurz danken. Keine Werbung, keine Rabatte. Unterschreibe mit dem Namen des Vertreters. Gib nur den Antworttext aus.",
+        "Du schreibst einen Antwortvorschlag auf eine öffentliche Google-Bewertung für einen Versicherungsvertreter in Deutschland (Sie-Form, 2–4 Sätze). Regeln: professionell, sachlich, freundlich. Nenne KEINE Namen, keine Versicherungs-, Vertrags-, Tarif- oder Schadendetails und keine sonstigen personenbezogenen Daten, auch nicht, ob die Person Kunde ist (Datenschutz). Bei Kritik: Bedauern ausdrücken, nichts zugeben oder bestreiten, das Gespräch offline anbieten („melden Sie sich gern direkt bei mir“). Bei Lob: kurz danken. Keine Werbung, keine Rabatte. Unterschreibe mit dem Namen des Vertreters. Gib nur den Antworttext aus.",
       messages: [{ role: "user", content: `Vertreter: ${vertreter}\nSterne: ${r.stars}\nBewertungstext: ${(r.text ?? "(ohne Text)").slice(0, 2000)}` }],
     });
     const text = resp.content
@@ -369,7 +369,7 @@ export async function publishReply(customerId: string, reviewId: string, comment
   } catch (err) {
     if (err instanceof GbpAccessError) {
       await markNoAccess(customerId, err);
-      return { ok: false, noAccess: true, error: "Der Bewertungs-Wächter wird gerade freigeschaltet – bitte vorerst direkt in Google antworten." };
+      return { ok: false, noAccess: true, error: "Der Bewertungs-Wächter wird gerade freigeschaltet, bitte vorerst direkt in Google antworten." };
     }
     reportError(err, "gbp-reply", { customer: customerId });
     return { ok: false, error: "Die Antwort konnte nicht veröffentlicht werden." };

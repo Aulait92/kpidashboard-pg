@@ -2,6 +2,7 @@
 
 // Eigenes Postfach und Vorlagen (Kundenbereich) + E-Mail an einen Lead senden.
 
+import { ohneGedankenstriche } from "@/lib/gedankenstriche";
 import { revalidatePath } from "next/cache";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { writableCustomerId } from "@/lib/buyer-write";
@@ -75,8 +76,9 @@ export async function saveVorlageAction(_prev: PostfachResult, fd: FormData): Pr
     const ctx = await ctxWrite();
     const id = String(fd.get("id") ?? "");
     const name = String(fd.get("name") ?? "").trim().slice(0, 80);
-    const subject = String(fd.get("subject") ?? "").trim().slice(0, 200);
-    const body = String(fd.get("body") ?? "").trim().slice(0, 8000);
+    // Keine Gedankenstriche in Mails an Leads: beim Speichern durch Komma ersetzen (Bis-Striche bleiben)
+    const subject = ohneGedankenstriche(String(fd.get("subject") ?? "").trim().slice(0, 200));
+    const body = ohneGedankenstriche(String(fd.get("body") ?? "").trim().slice(0, 8000));
     if (!name || !subject || !body) return { error: "Name, Betreff und Text ausfüllen." };
     if (id) {
       const r = await prisma.mailTemplate.updateMany({ where: { id, customerId: ctx.customerId }, data: { name, subject, body } });
@@ -95,7 +97,7 @@ export async function saveVorlageAction(_prev: PostfachResult, fd: FormData): Pr
 export async function saveSignaturAction(_prev: PostfachResult, fd: FormData): Promise<PostfachResult> {
   try {
     const ctx = await ctxWrite();
-    const sig = String(fd.get("signatur") ?? "").replace(/\r\n/g, "\n").trim().slice(0, 2000);
+    const sig = ohneGedankenstriche(String(fd.get("signatur") ?? "").replace(/\r\n/g, "\n").trim().slice(0, 2000));
     await prisma.user.update({ where: { id: ctx.userId }, data: { mailSignature: sig || null } });
     revalidatePath("/buyer/postfach");
     return { ok: true, info: sig ? "Signatur gespeichert." : "Signatur entfernt." };

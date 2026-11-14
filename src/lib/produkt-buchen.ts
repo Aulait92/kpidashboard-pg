@@ -216,7 +216,7 @@ export async function bookProduct(input: BookInput, now = new Date()): Promise<B
 
   if (requested) {
     await adminTask(info.contactId, `Produkt-Anfrage ${info.name}: ${item.name}, ${eur(preview.monthlyTo)}/Monat, individuelles Angebot`, [...lines, "Übernehmen oder ablehnen in der Kundenakte → Abrechnung."].join("\n"), now);
-    await notifyAdmins(`Produkt-Anfrage: ${info.name}`, `${item.name} mit ${eurDay(daily)} – Gesamtbudget ${eur(preview.monthlyTo)}/Monat, bitte individuelles Angebot.`, info.contactId, input.customerId);
+    await notifyAdmins(`Produkt-Anfrage: ${info.name}`, `${item.name} mit ${eurDay(daily)}, Gesamtbudget ${eur(preview.monthlyTo)}/Monat, bitte individuelles Angebot.`, info.contactId, input.customerId);
     await mailCustomer(info, {
       subject: `Ihre Anfrage: ${item.name}`,
       paragraphs: [
@@ -276,7 +276,7 @@ async function addSetupItem(bookingId: string, customerId: string, product: stri
   if (amount <= 0) return "added"; // Einrichtung kostenlos: nichts zu berechnen
   const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { stripeCustomerId: true } });
   if (!auto || !billingEnabled() || !c?.stripeCustomerId) {
-    await prisma.productBooking.update({ where: { id: bookingId }, data: { setupStatus: "manual", stripeNote: auto ? "Ohne Stripe – Einrichtung bitte von Hand berechnen." : null } });
+    await prisma.productBooking.update({ where: { id: bookingId }, data: { setupStatus: "manual", stripeNote: auto ? "Ohne Stripe, Einrichtung bitte von Hand berechnen." : null } });
     return "manual";
   }
   try {
@@ -358,7 +358,7 @@ export async function startProduct(bookingId: string, actor?: AuditActor, now = 
     if (feeTo == null) {
       await prisma.productBooking.update({ where: { id: bookingId }, data: { feeStatus: "manual", stripeNote: "Kein Listenpreis beim Start" } });
       note = "Monatspreis bitte von Hand anpassen (Aufgabe in Heute).";
-      await adminTask(info.contactId, `Preis anpassen ${info.name}: ${before.product} gestartet`, "Kein Listenpreis – bitte Monatspreis festlegen und in Stripe anpassen.", now);
+      await adminTask(info.contactId, `Preis anpassen ${info.name}: ${before.product} gestartet`, "Kein Listenpreis, bitte Monatspreis festlegen und in Stripe anpassen.", now);
     } else {
       const r = await changeMonthlyFee(before.customerId, feeTo, { idempotencyKey: `produkt-${bookingId}`, ...(actor ? { actor } : {}) });
       if (!r.ok || r.note) {
@@ -399,15 +399,15 @@ export async function rejectProduct(bookingId: string, note: string | null, acto
       if (r === "removed") {
         await prisma.productBooking.update({ where: { id: b.id }, data: { setupStatus: "removed" } });
       } else {
-        await prisma.productBooking.update({ where: { id: b.id }, data: { setupStatus: "manual", stripeNote: "Einrichtung schon berechnet – bitte gutschreiben." } });
+        await prisma.productBooking.update({ where: { id: b.id }, data: { setupStatus: "manual", stripeNote: "Einrichtung schon berechnet, bitte gutschreiben." } });
         await adminTask(info.contactId, `Gutschrift ${info.name}: Einrichtung ${b.product} (${eur(Number(b.setupFee))} netto)`, "Buchung abgelehnt, die Einrichtung stand schon auf einer Rechnung.", now);
-        msg = "Einrichtung war schon berechnet – Aufgabe „Gutschrift“ angelegt.";
+        msg = "Einrichtung war schon berechnet, Aufgabe „Gutschrift“ angelegt.";
       }
     } catch (err) {
       reportError(err, "produkt-setup-remove", { customer: b.customerId });
       await prisma.productBooking.update({ where: { id: b.id }, data: { setupStatus: "error", stripeNote: "Einrichtung konnte nicht entfernt werden." } });
-      await adminTask(info.contactId, `Einrichtung entfernen ${info.name}: ${b.product}`, "Automatisch nicht möglich – bitte in Stripe die offene Position löschen.", now);
-      msg = "Einrichtung konnte nicht entfernt werden – Aufgabe angelegt.";
+      await adminTask(info.contactId, `Einrichtung entfernen ${info.name}: ${b.product}`, "Automatisch nicht möglich, bitte in Stripe die offene Position löschen.", now);
+      msg = "Einrichtung konnte nicht entfernt werden, Aufgabe angelegt.";
     }
   }
   // Monatspreis kommt erst beim Start ins Abo – nichts zurückzunehmen
@@ -470,7 +470,7 @@ export async function requestProductEnd(
     `Kunde möchte ${product} beenden. Laufzeit: ${term}${c?.retainerStart ? ` ab ${fmtDate(c.retainerStart)}` : ""}. Bitte Laufzeit prüfen, Termin mit dem Kunden abstimmen, Kampagne stoppen, Budget und Monatspreis anpassen.`,
     now,
   );
-  await notifyAdmins(`Produkt beenden: ${info.name}`, `${product} – bitte Laufzeit prüfen und Kunde kontaktieren.`, info.contactId, customerId);
+  await notifyAdmins(`Produkt beenden: ${info.name}`, `${product}, bitte Laufzeit prüfen und Kunde kontaktieren.`, info.contactId, customerId);
   await mailCustomer(info, {
     subject: `Ihre Anfrage: ${product} beenden`,
     paragraphs: [`Ihre Anfrage, ${product} zu beenden, ist bei uns eingegangen. Wir prüfen Ihre Vertragslaufzeit und melden uns kurzfristig mit dem möglichen Enddatum. Bis dahin läuft das Produkt unverändert weiter.`],

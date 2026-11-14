@@ -306,7 +306,7 @@ export function OfferForm({
                 <span className="block font-semibold">Kunde darf Laufzeit und Startdatum selbst wählen</span>
                 <span className="block text-xs text-[color:var(--muted)]">
                   {num(setupOverride) != null || num(monthlyOverride) != null
-                    ? "Mit Sonderpreis nur das Startdatum – die Laufzeit bleibt wie hier gewählt."
+                    ? "Mit Sonderpreis nur das Startdatum, die Laufzeit bleibt wie hier gewählt."
                     : "Ihre Auswahl hier ist der Vorschlag. Start frühestens in 7 Tagen, spätestens in 90 Tagen."}
                 </span>
               </span>

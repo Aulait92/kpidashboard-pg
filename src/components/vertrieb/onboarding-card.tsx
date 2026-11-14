@@ -150,7 +150,7 @@ export function StartOnboardingCard({
     <section className="card p-4">
       <h2 className="font-medium">Onboarding</h2>
       <p className="mt-1 text-sm text-slate-600">
-        Angebot {offerNumber} ist angenommen. Das Onboarding startet automatisch, sobald die Zahlung eingerichtet ist –
+        Angebot {offerNumber} ist angenommen. Das Onboarding startet automatisch, sobald die Zahlung eingerichtet ist,
         oder hier von Hand (z. B. für Bestandskunden).
       </p>
       <form action={startOnboardingAction} className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">

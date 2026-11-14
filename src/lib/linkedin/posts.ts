@@ -196,7 +196,7 @@ export async function publishDue(now = new Date(), publish: Publisher = publishT
       const msg = e instanceof Error ? e.message : String(e);
       const status = (e as { status?: number }).status;
       await prisma.linkedInPost.update({ where: { id: p.id }, data: { status: "fehler", lastError: msg.slice(0, 500) } });
-      if (status === 401) await prisma.linkedInConnection.update({ where: { id: conn.id }, data: { status: "error", lastError: "Zugang abgelaufen – bitte neu verbinden." } });
+      if (status === 401) await prisma.linkedInConnection.update({ where: { id: conn.id }, data: { status: "error", lastError: "Zugang abgelaufen, bitte neu verbinden." } });
       failed++;
     }
   }

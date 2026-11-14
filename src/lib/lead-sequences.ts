@@ -332,7 +332,7 @@ async function sendStep(
   } catch (err) {
     if (err instanceof NoTemplateError) {
       const r = await createCallTask(seq.leadId, step.fallbackNote, now);
-      return { ...base, result: r, detail: "Keine freigegebene Vorlage – Anruf-Aufgabe statt WhatsApp" };
+      return { ...base, result: r, detail: "Keine freigegebene Vorlage, Anruf-Aufgabe statt WhatsApp" };
     }
     return { ...base, result: "failed", detail: (err instanceof Error ? err.message : String(err)).slice(0, 160) };
   }
@@ -361,7 +361,7 @@ export async function loadLeadSequences(leadId: string) {
 export function describe(e: SequenceLogEntry, total: number): string {
   const n = `(Schritt ${e.step + 1} von ${total})`;
   if (e.action === "stop") return `Abfolge beendet: ${e.detail ?? "gestoppt"}`;
-  if (e.action === "call") return e.result === "kept_followup" ? `Anruf fällig – Ihre eigene Wiedervorlage bleibt ${n}` : `Anruf-Aufgabe auf „Heute“ angelegt ${n}`;
+  if (e.action === "call") return e.result === "kept_followup" ? `Anruf fällig, Ihre eigene Wiedervorlage bleibt ${n}` : `Anruf-Aufgabe auf „Heute“ angelegt ${n}`;
   switch (e.result) {
     case "sent":
     case "template":
@@ -369,7 +369,7 @@ export function describe(e: SequenceLogEntry, total: number): string {
     case "call_task":
       return `WhatsApp nicht möglich${e.detail ? ` (${e.detail.replace(/ – .*$/, "")})` : ""} – Anruf-Aufgabe angelegt ${n}`;
     case "kept_followup":
-      return `WhatsApp nicht möglich – Ihre Wiedervorlage bleibt ${n}`;
+      return `WhatsApp nicht möglich, Ihre Wiedervorlage bleibt ${n}`;
     default:
       return `WhatsApp konnte nicht gesendet werden ${n}`;
   }

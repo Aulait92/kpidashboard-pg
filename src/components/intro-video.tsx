@@ -43,7 +43,7 @@ export function IntroVideoCard() {
           <h2 className="flex items-center gap-2 text-[15px] font-semibold">
             <PlayCircle className="h-5 w-5 text-[color:var(--brand)]" /> Willkommen! Ihre Software in 1 Minute
           </h2>
-          <p className="mt-0.5 text-sm text-[color:var(--muted)]">Ein kurzer Rundgang – funktioniert auch ohne Ton.</p>
+          <p className="mt-0.5 text-sm text-[color:var(--muted)]">Ein kurzer Rundgang, funktioniert auch ohne Ton.</p>
         </div>
         <button type="button" onClick={done} aria-label="Video ausblenden" className="rounded-full p-1.5 text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken,#f1f5f9)]">
           <X className="h-4 w-4" />

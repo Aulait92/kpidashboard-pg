@@ -91,7 +91,7 @@ export default async function WhatsAppHelpPage({ searchParams }: { searchParams:
 
       <section className="mb-8">
         <h2 className="mb-1 text-lg font-semibold tracking-tight">{VIDEOS.whatsapp.title}</h2>
-        <p className="mb-3 text-sm text-[color:var(--muted)]">Der ganze Ablauf einmal vorgemacht – funktioniert auch ohne Ton.</p>
+        <p className="mb-3 text-sm text-[color:var(--muted)]">Der ganze Ablauf einmal vorgemacht, funktioniert auch ohne Ton.</p>
         <IntroVideo kind="whatsapp" />
       </section>
 

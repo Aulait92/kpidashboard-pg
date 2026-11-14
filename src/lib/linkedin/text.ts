@@ -1,14 +1,12 @@
 // Text-Regeln für LinkedIn-Posts (Ole, 14.11.2026): keine Gedankenstriche, keine Hashtags.
 // Die KI bekommt die Regeln im Prompt; das hier ist das Sicherheitsnetz vor dem Speichern.
 
+import { ohneGedankenstriche as zentral } from "@/lib/gedankenstriche";
+
 /** Gedankenstriche (– —) entfernen: Spannen „3–5“ → „3-5“, Aufzählungsstriche → „•“, sonst Komma. */
 export function ohneGedankenstriche(t: string): string {
-  return t
-    .replace(/^([ \t]*)[–—][ \t]+/gm, "$1• ")
-    .replace(/(\d)[ \t]*[–—][ \t]*(\d)/g, "$1-$2")
-    .replace(/[ \t]+[–—][ \t]+/g, ", ")
-    .replace(/[ \t]*[–—][ \t]*/g, ", ")
-    .replace(/,\s*([.!?:])/g, "$1");
+  // LinkedIn: Spannen „3–5“ als „3-5“, sonst wie überall (lib/gedankenstriche.ts)
+  return zentral(t.replace(/(\d)[ \t]*[–—][ \t]*(\d)/g, "$1-$2"));
 }
 
 /** Hashtags entfernen: reine Hashtag-Zeilen fallen weg, „#Wort“ im Satz wird zu „Wort“. */

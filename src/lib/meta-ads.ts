@@ -448,7 +448,7 @@ export async function publishVariantToCampaign(opts: {
   const adSet = await getFirstAdSetForCampaign(campaign.id);
   if (!adSet) {
     throw new Error(
-      `Kampagne "${campaign.name}" hat kein aktives AdSet — bitte zuerst eines anlegen.`,
+      `Kampagne "${campaign.name}" hat kein aktives AdSet, bitte zuerst eines anlegen.`,
     );
   }
 

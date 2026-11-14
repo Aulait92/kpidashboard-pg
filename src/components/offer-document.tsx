@@ -156,7 +156,7 @@ function MonthlyOverview({
         <div className={row}>
           <span className="col-span-2 sm:col-span-1">
             {serviceOnly ? "Betreuung" : "Betreuung + Software"}{" "}
-            <span className="text-[#6B7280]">(an performancegrowth{annual ? ", jährlich im Voraus – je Monat umgerechnet" : ""})</span>
+            <span className="text-[#6B7280]">(an performancegrowth{annual ? ", jährlich im Voraus, je Monat umgerechnet" : ""})</span>
           </span>
           {cell("netto", eur2(feeNet))}
           {cell("brutto", eur2(withVat(feeNet)))}
@@ -290,7 +290,7 @@ export function OfferDocument({
             <Stat
               k="Laufzeit"
               v={term === "12m" ? "12 Monate" : term === "3m" ? "3 Monate" : "Monatlich kündbar"}
-              sub={termOpen ? "Vorschlag – Laufzeit wählen Sie unten bei der Annahme" : "Pause jederzeit möglich"}
+              sub={termOpen ? "Vorschlag, Laufzeit wählen Sie unten bei der Annahme" : "Pause jederzeit möglich"}
             />
           </div>
 
@@ -381,7 +381,7 @@ export function OfferDocument({
           {offer.startDate ? (
             <Tr k="Start">
               {date(offer.startDate)}. Ab diesem Tag läuft die monatliche Vergütung.
-              {startOpen ? <Note>Vorschlag – das Startdatum wählen Sie unten bei der Annahme.</Note> : null}
+              {startOpen ? <Note>Vorschlag, das Startdatum wählen Sie unten bei der Annahme.</Note> : null}
             </Tr>
           ) : null}
         </Table>
@@ -561,8 +561,8 @@ export function OfferDocument({
             {makler ? (
             <p className="mt-2 text-[#374151]">
               <strong>Vertrags-Garantie (für Makler):</strong> Haben Sie nach 90 aktiven Tagen weniger als{" "}
-              {VERTRAGS_GARANTIE_MIN_VERTRAEGE} Verträge abgeschlossen, betreuen wir Sie ohne Gebühr für Betreuung und Software weiter – auf Wunsch
-              mit einem anderen Produkt ohne Setupgebühr –, bis Sie sie haben (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten Termine
+              {VERTRAGS_GARANTIE_MIN_VERTRAEGE} Verträge abgeschlossen, betreuen wir Sie ohne Gebühr für Betreuung und Software weiter, auf Wunsch
+              mit einem anderen Produkt ohne Setupgebühr, bis Sie sie haben (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten Termine
               wahrgenommen und Ergebnisse in der App eingetragen. Details in den AGB (Abschnitt „Garantien“).
             </p>
             ) : (

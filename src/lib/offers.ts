@@ -150,7 +150,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
     throw new Error(
       price.seatsIndividual
         ? `Ab ${PRICE_LIST.seatIndividualFrom} aktiven Verkäufern gibt es keinen Listenpreis. Bitte die Monatsgebühr individuell eintragen (inklusive aller Verkäufer).`
-        : "Ab 10.000 € Werbebudget gibt es keinen Listenpreis – bitte die Monatsgebühr individuell eintragen.",
+        : "Ab 10.000 € Werbebudget gibt es keinen Listenpreis, bitte die Monatsgebühr individuell eintragen.",
     );
   }
   if (input.annual && term !== "12m") throw new Error("Jährliche Vorauszahlung geht nur mit 12 Monaten Laufzeit.");

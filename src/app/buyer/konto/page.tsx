@@ -252,7 +252,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                   <span className="ml-auto text-[color:var(--muted)]">{eur(PRICE_LIST.empfehlungModuleMonthly)} netto/Monat</span>
                 </div>
                 <p className="text-[color:var(--muted)]">
-                  Nach jedem Abschluss automatisch um eine Google-Bewertung und später um eine Empfehlung bitten – Kritik landet zuerst bei Ihnen. Mit
+                  Nach jedem Abschluss automatisch um eine Google-Bewertung und später um eine Empfehlung bitten, Kritik landet zuerst bei Ihnen. Mit
                   Auswertung: Empfehlungs-Leads, Abschlüsse und Provision.
                 </p>
                 {empfehlungState === "inactive" ? (

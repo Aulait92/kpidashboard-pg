@@ -112,7 +112,7 @@ export function AbsenceSheet({
       setDone(next);
       toast.show({
         message: res.data.failed.length
-          ? `${res.data.moved.length} verschoben, ${res.data.failed.length} ohne freie Zeit – bitte einzeln klären`
+          ? `${res.data.moved.length} verschoben, ${res.data.failed.length} ohne freie Zeit, bitte einzeln klären`
           : `${res.data.moved.length === 1 ? "Termin" : `${res.data.moved.length} Termine`} verschoben, Kontakte sind informiert`,
         tone: res.data.failed.length ? "error" : undefined,
       });
@@ -439,7 +439,7 @@ export function AbsenceControl({ data }: { data: ShellAbsence }) {
 
 /** Was die Abwesenheit bewirkt – Einzel-Vertreter: Leads kommen weiter, Termine erst ab Rückkehr. */
 export function absenceEffect(solo: boolean, isMe: boolean, name: string, returnDay: string): string {
-  if (solo) return `Neue Leads kommen weiter rein – Ihr Assistent schreibt sie an und bietet Termine ab ${returnDay} an.`;
+  if (solo) return `Neue Leads kommen weiter rein, Ihr Assistent schreibt sie an und bietet Termine ab ${returnDay} an.`;
   const end = returnDay.endsWith(".") ? "" : ".";
   return isMe
     ? `In der Zeit bekommen Sie keine neuen Leads; sie gehen an Ihr Team. Termine erst ab ${returnDay}${end}`

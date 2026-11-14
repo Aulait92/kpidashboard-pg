@@ -236,7 +236,7 @@ async function upgradeExistingCustomer(
   await logOfferActivity(offer, `Paketwechsel angenommen (${pkg === "service" ? "Nur Betreuung" : "Betreuung + Software"})`, `Kundenkonto: ${customer.name}`);
   await sendToAdmins({
     title: `⬆️ Paketwechsel: ${customer.name}`,
-    body: pkg === "software" ? "Jetzt Betreuung + Software – Einrichtung starten" : "Jetzt Nur Betreuung",
+    body: pkg === "software" ? "Jetzt Betreuung + Software, Einrichtung starten" : "Jetzt Nur Betreuung",
     url: offerAdminHref(offer),
     tag: `upgrade:${customerId}`,
   }).catch((err) => reportError(err, "upgrade-push"));

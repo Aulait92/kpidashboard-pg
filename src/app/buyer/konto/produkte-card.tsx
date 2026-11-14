@@ -99,7 +99,7 @@ function OtherProductRequest() {
     <div className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--border)] p-4" data-produkt-anfrage>
       {!open ? (
         <button type="button" onClick={() => setOpen(true)} className="text-sm font-semibold text-[color:var(--brand)] hover:underline">
-          Weitere Produkte auf Anfrage – Wunsch senden
+          Weitere Produkte auf Anfrage, Wunsch senden
         </button>
       ) : (
         <form action={action} className="space-y-2">
@@ -132,7 +132,7 @@ function BookedRow({ b, readOnly }: { b: BookedProduct; readOnly: boolean }) {
         ) : null}
       </div>
       {b.status === "setup" ? (
-        <p className="mt-1 text-sm text-[color:var(--muted)]">Wir richten Kampagne, Formular und Assistent ein{b.startWish ? ` – gewünschter Start ${d(b.startWish)}` : ""}. Sie bekommen Bescheid, sobald es läuft.</p>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">Wir richten Kampagne, Formular und Assistent ein{b.startWish ? `, gewünschter Start ${d(b.startWish)}` : ""}. Sie bekommen Bescheid, sobald es läuft.</p>
       ) : b.status === "requested" ? (
         <p className="mt-1 text-sm text-[color:var(--muted)]">Ihre Anfrage liegt uns vor. Wir melden uns mit einem individuellen Angebot.</p>
       ) : b.endRequestedAt ? (

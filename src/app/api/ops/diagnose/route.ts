@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 // damit Claude Zustände prüfen kann, ohne Datenbank-Zugang. Kein freies SQL, keine Geheimnisse,
 // Lead-Daten nur so weit nötig (Name statt Telefon/E-Mail).
 // Absicherung: eigener Lese-Schlüssel OPS_READ_TOKEN (≥ 32 Zeichen) als Bearer-Token.
-//   GET /api/ops/diagnose?q=uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp
+//   GET /api/ops/diagnose?q=uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|gedankenstriche
 export const dynamic = "force-dynamic";
 
 function authorized(req: Request): boolean {
@@ -96,6 +96,19 @@ async function whatsapp() {
   return { anzahl: rows.length, rows, letzteNachricht: last };
 }
 
+/** Gespeicherte Texte mit Gedankenstrichen (Regel AGENTS.md): nur Anzahlen und Namen, keine Inhalte */
+async function gedankenstriche() {
+  const has = { contains: "–" } as const;
+  const has2 = { contains: "—" } as const;
+  const [neuigkeiten, vorlagen, signaturen, whatsapp] = await Promise.all([
+    prisma.productUpdate.count({ where: { OR: [{ title: has }, { body: has }, { title: has2 }, { body: has2 }] } }),
+    prisma.mailTemplate.count({ where: { OR: [{ subject: has }, { body: has }, { subject: has2 }, { body: has2 }] } }),
+    prisma.user.count({ where: { OR: [{ mailSignature: has }, { mailSignature: has2 }] } }),
+    prisma.messageTemplate.findMany({ where: { OR: [{ body: has }, { body: has2 }] }, select: { name: true, status: true, customer: { select: { name: true } } } }),
+  ]);
+  return { neuigkeiten, vorlagen, signaturen, whatsappVorlagen: whatsapp };
+}
+
 async function kunden() {
   return prisma.customer.findMany({
     where: { archived: false },
@@ -128,7 +141,7 @@ async function uebersicht() {
   return { kunden: kundenAnz, leads, vertraege, logins, followups: followupsAnz, vorlagen: vorlagenAnz, abfragen: Object.keys(QUERIES) };
 }
 
-const QUERIES: Record<string, () => Promise<unknown>> = { uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp };
+const QUERIES: Record<string, () => Promise<unknown>> = { uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, gedankenstriche };
 
 export async function GET(req: Request): Promise<Response> {
   if (!authorized(req)) return Response.json({ error: "Unauthorized" }, { status: 401 });

@@ -38,7 +38,7 @@ export async function FirstDay({
   }
 
   const status = live
-    ? "Ihre Anzeigen laufen. Der erste Lead kommt meist innerhalb von 48 Stunden – Sie bekommen sofort Bescheid."
+    ? "Ihre Anzeigen laufen. Der erste Lead kommt meist innerhalb von 48 Stunden, Sie bekommen sofort Bescheid."
     : ob?.startDate
       ? `Start am ${dateFmt(ob.startDate)}. Bis dahin richten wir alles gemeinsam ein.`
       : "Wir richten gerade alles für Sie ein. Sobald die Anzeigen laufen, kommen hier Ihre Leads an.";
@@ -48,7 +48,7 @@ export async function FirstDay({
     whatsapp
       ? { icon: MessageCircle, title: "Der Assistent meldet sich per WhatsApp", text: "Innerhalb weniger Minuten, stellt die wichtigsten Fragen und bucht einen Termin in Ihren Kalender." }
       : { icon: MessageCircle, title: "Der Lead kommt per E-Mail und hier in die App", text: "Mit allen Angaben aus dem Formular." },
-    { icon: Phone, title: "Hier auf „Heute“ steht, was zu tun ist", text: "Anrufen, antworten, eintragen wie es lief – die App plant den nächsten Schritt." },
+    { icon: Phone, title: "Hier auf „Heute“ steht, was zu tun ist", text: "Anrufen, antworten, eintragen wie es lief, die App plant den nächsten Schritt." },
   ];
 
   const todo = [
@@ -68,7 +68,7 @@ export async function FirstDay({
               <Rocket className="h-5 w-5" />
             </span>
             <div>
-              <h2 className="text-lg font-semibold tracking-tight">Noch keine Leads – so geht es los</h2>
+              <h2 className="text-lg font-semibold tracking-tight">Noch keine Leads, so geht es los</h2>
               <p className="mt-1 text-sm text-[color:var(--muted)]">{status}</p>
             </div>
           </div>
@@ -192,7 +192,7 @@ function BeforeStart({
               <div className="mt-5 flex items-start gap-2.5 rounded-[var(--radius-md)] bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
                 <span>
-                  <b>Alles eingerichtet</b> – wir bereiten Ihre Kampagne vor{short ? `, Start am ${short}` : ""}.
+                  <b>Alles eingerichtet</b>, wir bereiten Ihre Kampagne vor{short ? `, Start am ${short}` : ""}.
                 </span>
               </div>
             ) : (
@@ -269,12 +269,12 @@ function BeforeStart({
               whatsapp
                 ? { title: "Der Assistent meldet sich per WhatsApp", text: "In wenigen Minuten, stellt die wichtigsten Fragen und bucht einen Termin in Ihren Kalender." }
                 : { title: "Der Lead kommt per E-Mail und hier in die App", text: "Mit allen Angaben aus dem Formular." },
-              { title: "Auf „Heute“ steht, was zu tun ist", text: "Anrufen, antworten, eintragen wie es lief – die App plant den nächsten Schritt." },
+              { title: "Auf „Heute“ steht, was zu tun ist", text: "Anrufen, antworten, eintragen wie es lief, die App plant den nächsten Schritt." },
             ].map((s, i) => (
               <li key={s.title} className="flex gap-3">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[color:var(--surface-sunken)] text-xs font-bold text-[color:var(--muted)]">{i + 1}</span>
                 <div className="text-sm">
-                  <span className="font-semibold">{s.title}</span> <span className="text-[color:var(--muted)]">– {s.text}</span>
+                  <span className="font-semibold">{s.title}:</span> <span className="text-[color:var(--muted)]">{s.text}</span>
                 </div>
               </li>
             ))}

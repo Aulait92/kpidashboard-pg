@@ -222,7 +222,7 @@ export function HilfeChat({
             </header>
 
             <div ref={bodyRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
-              <AiBubble text={`Hallo${firstName ? ` ${firstName}` : ""}! Ich bin die KI-Hilfe. Fragen Sie mich alles zur App – zum Beispiel, wie Sie einen Lead reklamieren oder einen Termin verschieben.`} />
+              <AiBubble text={`Hallo${firstName ? ` ${firstName}` : ""}! Ich bin die KI-Hilfe. Fragen Sie mich alles zur App, zum Beispiel, wie Sie einen Lead reklamieren oder einen Termin verschieben.`} />
               {msgs.map((m, i) =>
                 m.who === "me" ? (
                   <div key={i} className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-tr-md bg-[color:var(--brand)] px-3 py-2 text-[14.5px] text-white">

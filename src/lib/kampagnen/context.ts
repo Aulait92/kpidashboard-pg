@@ -104,8 +104,8 @@ export type PrerequisiteDeps = {
 export async function checkPrerequisites(ctx: CampaignContext, deps: PrerequisiteDeps): Promise<Problem[]> {
   const out: Problem[] = [];
   const env = deps.env();
-  if (!env.anthropic) out.push({ key: "anthropic", message: "ANTHROPIC_API_KEY fehlt in Railway – die KI-Agenten können nicht arbeiten." });
-  if (!env.r2) out.push({ key: "r2", message: "Bildspeicher (R2_BUCKET/R2_PUBLIC_URL) fehlt in Railway – Bilder können nicht erzeugt werden." });
+  if (!env.anthropic) out.push({ key: "anthropic", message: "ANTHROPIC_API_KEY fehlt in Railway, die KI-Agenten können nicht arbeiten." });
+  if (!env.r2) out.push({ key: "r2", message: "Bildspeicher (R2_BUCKET/R2_PUBLIC_URL) fehlt in Railway, Bilder können nicht erzeugt werden." });
   if (!env.meta) out.push({ key: "meta", message: "META_ACCESS_TOKEN fehlt in Railway." });
   if (ctx.dailyBudgetEur <= 0) {
     out.push({ key: "budget", message: `Für „${ctx.product}“ ist kein Werbebudget hinterlegt (Angebot bzw. Konto → Werbebudget).` });
@@ -126,7 +126,7 @@ export async function checkPrerequisites(ctx: CampaignContext, deps: Prerequisit
     if (!r.ok) {
       out.push({
         key: "adAccount",
-        message: `Kein Zugriff auf das Werbekonto act_${ctx.adAccountId}: ${r.error} – Der Kunde muss unserem Business Manager Partnerzugriff auf das Werbekonto mit „Kampagnen verwalten“ (ads_management) geben, und Ole muss das Konto dem Systemnutzer zuweisen.`,
+        message: `Kein Zugriff auf das Werbekonto act_${ctx.adAccountId}: ${r.error}, Der Kunde muss unserem Business Manager Partnerzugriff auf das Werbekonto mit „Kampagnen verwalten“ (ads_management) geben, und Ole muss das Konto dem Systemnutzer zuweisen.`,
       });
     }
   }

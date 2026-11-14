@@ -104,7 +104,7 @@ export async function fetchStockUrl(query: string): Promise<string> {
   const sources = getAvailableSources();
   if (sources.length === 0) {
     console.warn(
-      "[stock-photo] weder UNSPLASH_ACCESS_KEY noch PEXELS_API_KEY gesetzt — Fallback-Grau.",
+      "[stock-photo] weder UNSPLASH_ACCESS_KEY noch PEXELS_API_KEY gesetzt, Fallback-Grau.",
     );
     return FALLBACK_DATA_URL;
   }

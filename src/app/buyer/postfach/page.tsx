@@ -43,7 +43,7 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
   const showGoogle = googleMailAvailable() && (process.env.GOOGLE_MAIL_VERIFIED === "1" || sp.google === "1");
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 space-y-5 px-4 py-6 sm:px-6 lg:px-8">
-      <PageHeader title="E-Mail-Postfach" subtitle="E-Mails an Leads direkt aus der App senden – aus Ihrem eigenen Postfach, mit Vorlagen." />
+      <PageHeader title="E-Mail-Postfach" subtitle="E-Mails an Leads direkt aus der App senden, aus Ihrem eigenen Postfach, mit Vorlagen." />
       {status ? (
         <p className={`flex items-center gap-2 rounded-[var(--radius-md)] px-4 py-3 text-sm ${status.ok ? "bg-emerald-50 text-emerald-900" : "bg-amber-50 text-amber-900"}`}>
           {status.ok ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <TriangleAlert className="h-4 w-4 shrink-0" />} {status.text}

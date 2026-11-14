@@ -292,7 +292,7 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
                       options={KAMPAGNE_OPTIONEN.map((k) => ({ value: String(k), label: k % 12 === 0 ? `${k / 12} J.` : `${k} Mon.` }))}
                       onChange={(v) => set({ kampagne: Number(v) as Kampagne })}
                     />
-                    <span className="mt-1 block text-xs text-[color:var(--muted)]">Nur für die Rechnung – die Kampagne läuft, solange Sie möchten.</span>
+                    <span className="mt-1 block text-xs text-[color:var(--muted)]">Nur für die Rechnung, die Kampagne läuft, solange Sie möchten.</span>
                   </div>
                   <div>
                     <Label>Courtage zählen bis</Label>
@@ -389,7 +389,7 @@ function Ergebnis({ r, bestand, storno }: { r: RechnerResult; bestand: BestandRe
         {r.breakEvenVertraege != null ? (
           <p className="text-base" data-breakeven>
             Ab <b className="text-[color:var(--brand)]">{zahl(r.breakEvenVertraege)} Verträgen</b> im Monat verdienen Sie Geld
-            {r.breakEvenAnteilLeads != null ? <> – das sind <b>{zahl(r.breakEvenAnteilLeads * 100, 1)} von 100 Leads</b></> : null}.
+            {r.breakEvenAnteilLeads != null ? <>, das sind <b>{zahl(r.breakEvenAnteilLeads * 100, 1)} von 100 Leads</b></> : null}.
             <span className="text-[color:var(--muted)]"> Mit Ihren Werten erwarten Sie {zahl(r.vertraege, 1)}.</span>
           </p>
         ) : (
@@ -504,7 +504,7 @@ function MaklerErgebnis({
           <div>
             <p className="font-medium" data-kosten-je-vertrag>Mehr Budget, günstigere Verträge</p>
             <p className="mt-1 text-[color:var(--muted)]" data-budget-hinweis>
-              Die Betreuung kostet bis {eur(PRICE_LIST.tiers[0].maxBudget)} Werbebudget im Monat immer gleich viel – mehr Budget macht jeden Vertrag günstiger.
+              Die Betreuung kostet bis {eur(PRICE_LIST.tiers[0].maxBudget)} Werbebudget im Monat immer gleich viel, mehr Budget macht jeden Vertrag günstiger.
             </p>
             <div className="mt-2 overflow-hidden rounded-[var(--radius-sm)] border border-[color:var(--border)]">
               <table className="w-full text-sm tabular-nums" data-budget-vergleich>
@@ -541,12 +541,12 @@ function MaklerErgebnis({
             Ehrlich gerechnet: Courtage nicht abgezinst. Annahmen: {zahl(input.storno * 100, 1)} % Storno pro Jahr (monatlich gleichmäßig),
             Ø Jahresbeitrag {eur(input.beitrag)}, {zahl(input.trail * 100, 1)} % Bestandscourtage pro Jahr
             {input.rate > 0 ? `, ${zahl(input.rate * 100, 1)} % Abschluss` : ""}, Beitrag und Satz bleiben gleich. Gerechnet wird mit {b.kampagne} Monaten
-            Kampagne und danach ohne Kosten – die Kampagne läuft in Wirklichkeit, solange Sie möchten
+            Kampagne und danach ohne Kosten, die Kampagne läuft in Wirklichkeit, solange Sie möchten
             {TERM_MONTHS[input.laufzeit] > b.kampagne ? ` (Betreuung mindestens bis Vertragsende nach ${TERM_MONTHS[input.laufzeit]} Monaten)` : ""}.
             „Je Vertrag“ = Jahrescourtage ÷ Storno (Faustformel{b.crossSell ? ", Ø über Verträge und Zusatzverträge" : ""}).
             {b.crossSell ? (
               <>
-                {" "}Cross-Selling: Erfahrungswert eines großen Versicherers – {zahl(input.xRate, Number.isInteger(input.xRate) ? 0 : 1)} {input.xRate === 1 ? "Zusatzvertrag" : "Zusatzverträge"} je Kunde,
+                {" "}Cross-Selling: Erfahrungswert eines großen Versicherers, {zahl(input.xRate, Number.isInteger(input.xRate) ? 0 : 1)} {input.xRate === 1 ? "Zusatzvertrag" : "Zusatzverträge"} je Kunde,
                 {CROSS_SELL_VERZOEGERUNG === 0 ? " direkt beim Abschluss" : ` ${CROSS_SELL_VERZOEGERUNG} Monate später`}; Ø Jahresbeitrag {eur(input.xBeitrag)},
                 {" "}{zahl(input.xTrail * 100, 1)} % Bestandscourtage, gleicher Storno.
               </>
@@ -759,7 +759,7 @@ function Staffel({ kind, value, onChange }: { kind: "percent" | "monthly"; value
   return (
     <details className="mt-3" open={rows.length > 0}>
       <summary className="cursor-pointer text-sm font-medium text-[color:var(--brand)]">Provisionsstaffel (optional)</summary>
-      <p className="mt-1 text-xs text-[color:var(--muted)]">Ab einer Zahl Verträge im Monat gilt ein höherer Satz – für alle Verträge des Monats.</p>
+      <p className="mt-1 text-xs text-[color:var(--muted)]">Ab einer Zahl Verträge im Monat gilt ein höherer Satz, für alle Verträge des Monats.</p>
       <div className="mt-2 space-y-2">
         {rows.map((r, i) => (
           <div key={i} className="flex flex-wrap items-center gap-2 text-sm">

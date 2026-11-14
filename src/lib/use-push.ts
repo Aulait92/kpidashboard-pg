@@ -161,7 +161,7 @@ export function usePush() {
       const res = await fetch("/api/push/test", { method: "POST" });
       const data = (await res.json()) as { sent?: number; errors?: string[] };
       if (data.errors && data.errors.length > 0) setMessage(`Fehler: ${data.errors.join(", ")}`);
-      else setMessage(data.sent ? "Test gesendet – kommt gleich an." : "Kein Gerät angemeldet.");
+      else setMessage(data.sent ? "Test gesendet, kommt gleich an." : "Kein Gerät angemeldet.");
     } catch (err) {
       setMessage(err instanceof Error ? err.message : String(err));
     } finally {

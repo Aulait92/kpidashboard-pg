@@ -26,9 +26,9 @@ export type SpeedToLeadAnalysis = {
 
 const BUCKETS: { key: string; label: string; lowerHours: number; upperHours: number | null }[] = [
   { key: "lt1h", label: "Innerhalb 1 h", lowerHours: 0, upperHours: 1 },
-  { key: "lt4h", label: "1 – 4 h", lowerHours: 1, upperHours: 4 },
-  { key: "lt24h", label: "4 – 24 h", lowerHours: 4, upperHours: 24 },
-  { key: "lt72h", label: "1 – 3 Tage", lowerHours: 24, upperHours: 72 },
+  { key: "lt4h", label: "1–4 h", lowerHours: 1, upperHours: 4 },
+  { key: "lt24h", label: "4–24 h", lowerHours: 4, upperHours: 24 },
+  { key: "lt72h", label: "1–3 Tage", lowerHours: 24, upperHours: 72 },
   { key: "gt72h", label: "> 3 Tage", lowerHours: 72, upperHours: null },
 ];
 

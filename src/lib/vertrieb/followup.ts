@@ -357,7 +357,7 @@ Mail 2: Kommt einige Werktage später, falls keine Antwort kam. Sehr kurz, zum B
 Regeln:
 - Sie-Form, freundlich, natürlich, wie von einem Menschen geschrieben. Mail 1 höchstens 90 Wörter, Mail 2 höchstens 40 Wörter.
 - Kurze Absätze: nach der Anrede eine Leerzeile, danach höchstens zwei Sätze (etwa drei Zeilen) je Absatz, Absätze durch eine Leerzeile getrennt. Den Buchungslink in eine eigene Zeile.
-- Keine Gedankenstriche (weder – noch —), keine Aufzählungen, kein Betreff.
+- Keine Gedankenstriche (weder „–“ noch „—“), keine Aufzählungen, kein Betreff.
 - Beginne mit der Anrede "${c.greeting}". Kein Gruß und keine Signatur am Ende, die werden automatisch angehängt.
 - Keine Versprechen zu Ergebnissen, nie das Wort "Garantie", keine erfundenen Fakten, keine Platzhalter.
 - Zitiere den Vermittler nicht wörtlich, sondern nimm sinngemäß Bezug.

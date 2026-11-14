@@ -371,7 +371,7 @@ export type BookState = { ok?: boolean; error?: string; fallback?: boolean; unti
 export async function bookBestandModuleAction(_prev: BookState, fd: FormData): Promise<BookState> {
   const ctx = await getBuyerContext();
   if (!ctx || ctx.preview || !ctx.userId) return { error: "In der Vorschau nicht möglich." };
-  if (ctx.teamRole !== "owner") return { error: "Bitte den Inhaber fragen – nur er kann Module buchen." };
+  if (ctx.teamRole !== "owner") return { error: "Bitte den Inhaber fragen, nur er kann Module buchen." };
   if (fd.get("confirm") !== "on") return { error: "Bitte bestätigen Sie die kostenpflichtige Buchung." };
   const res = await selfBookBestand(ctx.customerId, { id: ctx.userId, email: ctx.email ?? null, role: "kunde" });
   revalidatePath("/buyer/bestand");
@@ -384,7 +384,7 @@ export async function bookBestandModuleAction(_prev: BookState, fd: FormData): P
 export async function cancelBestandModuleAction(_prev: BookState, fd: FormData): Promise<BookState> {
   const ctx = await getBuyerContext();
   if (!ctx || ctx.preview || !ctx.userId) return { error: "In der Vorschau nicht möglich." };
-  if (ctx.teamRole !== "owner") return { error: "Bitte den Inhaber fragen – nur er kann Module kündigen." };
+  if (ctx.teamRole !== "owner") return { error: "Bitte den Inhaber fragen, nur er kann Module kündigen." };
   if (fd.get("confirm") !== "on") return { error: "Bitte bestätigen Sie die Kündigung." };
   const res = await selfCancelBestand(ctx.customerId, { id: ctx.userId, email: ctx.email ?? null, role: "kunde" });
   revalidatePath("/buyer/bestand");

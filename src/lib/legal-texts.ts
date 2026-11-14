@@ -136,7 +136,7 @@ export const AGB: LegalSection[] = [
       // Prüfen: Vertrags-Garantie für Makler inkl. Produktwechsel ohne Setupgebühr (Ole, 11.11.2026)
       { sub: "Vertrags-Garantie (für Makler)", text: "Gilt für Kunden, die als Versicherungsmakler tätig sind, anstelle der Break-even-Garantie. Hat der Kunde nach 90 aktiven Tagen weniger als 15 Verträge aus den über den Anbieter gewonnenen Leads abgeschlossen, betreut der Anbieter den Kunden ohne Vergütung für Betreuung und Software weiter, auf Wunsch mit einem anderen Produkt ohne Setupgebühr, bis 15 Verträge erreicht sind, längstens jedoch 6 Monate. Als Vertrag zählt jeder Lead, für den in der Software ein Abschluss eingetragen ist. Voraussetzungen: Werbebudget an den aktiven Tagen mindestens 20 € pro Tag und Produkt; mindestens 80 % der über die Software gebuchten Termine wahrgenommen; für mindestens 80 % der Leads das Ergebnis in der Software eingetragen. Im Garantiefall kann der Anbieter als Nachweis eine Courtage- bzw. Provisionsabrechnung des Versicherers anfordern; verschweigt der Kunde Abschlüsse, entfällt der Anspruch." },
       "Pausen (z. B. Urlaub oder Krankheit) verlängern den jeweiligen Prüfzeitraum um ihre Dauer; maßgeblich sind die aktiven Tage. Besteht zum Zeitpunkt der Prüfung ein Zahlungsverzug, ruht der Anspruch bis zum Ausgleich. Das gilt für alle Garantien.",
-      "Weitergehende Ansprüche, insbesondere auf eine bestimmte Provision oder – über die Vertrags-Garantie hinaus – auf eine bestimmte Zahl von Verträgen, bestehen nicht.",
+      "Weitergehende Ansprüche, insbesondere auf eine bestimmte Provision oder, über die Vertrags-Garantie hinaus, auf eine bestimmte Zahl von Verträgen, bestehen nicht.",
     ],
   },
   {

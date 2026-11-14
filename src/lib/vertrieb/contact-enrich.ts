@@ -534,7 +534,7 @@ export async function enrichContact(contactId: string, opts: { force?: boolean; 
   if (web.fields.length) notes.push(`${web.fields.map((f) => LABEL[f] ?? f).join(", ")} (Website${log.website?.url ? `: ${log.website.url}` : ""})`);
   if (g.fields.length) notes.push(`${g.fields.map((f) => LABEL[f] ?? f).join(", ")} (Google)`);
   if (notes.length) await prisma.salesActivity.create({ data: { contactId: c.id, type: "NOTIZ", note: `Automatisch ergänzt: ${notes.join("; ")}.` } });
-  if (g.closed) await prisma.salesActivity.create({ data: { contactId: c.id, type: "NOTIZ", note: "Google: Betrieb laut Google-Eintrag dauerhaft geschlossen – bitte prüfen." } });
+  if (g.closed) await prisma.salesActivity.create({ data: { contactId: c.id, type: "NOTIZ", note: "Google: Betrieb laut Google-Eintrag dauerhaft geschlossen, bitte prüfen." } });
   return { web: web.status, google: g.status, fields };
 }
 

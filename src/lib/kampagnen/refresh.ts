@@ -343,7 +343,7 @@ export async function processRefreshRun(id: string, deps: CampaignDeps | Refresh
     const contactId = row.customer.salesContact?.id ?? row.customer.onboarding?.salesContactId ?? null;
     const taskFn = "task" in deps ? deps.task : defaultRefreshDeps().task;
     if (review.status === "rot") {
-      await saveRunStep(state, "anlegen", { status: "uebersprungen", note: "Prüfung rot – nichts bei Meta angelegt" });
+      await saveRunStep(state, "anlegen", { status: "uebersprungen", note: "Prüfung rot, nichts bei Meta angelegt" });
       await prisma.campaignRun.update({ where: { id }, data: { status: "blocked", finishedAt: new Date(), error: `Prüfung rot: ${review.summary}`.slice(0, 1000) } });
       await taskFn(contactId, `Auffrischung ${row.customer.name}: Prüfung rot`, `Neue Anzeigen wurden nicht angelegt: ${review.summary}\nKundenakte → Kampagne (KI): /admin/kunden/${row.customerId}/kampagne`, new Date());
       return "blocked";
@@ -374,7 +374,7 @@ export async function processRefreshRun(id: string, deps: CampaignDeps | Refresh
     await deps.notify(`Neue Anzeigen für ${row.customer.name} bereit (pausiert)`, `Müde Anzeigen: ${names}`.slice(0, 180), link);
     await taskFn(
       contactId,
-      `Neue Anzeigen für ${row.customer.name} bereit (pausiert) – müde Anzeigen: ${names}`.slice(0, 250),
+      `Neue Anzeigen für ${row.customer.name} bereit (pausiert), müde Anzeigen: ${names}`.slice(0, 250),
       [
         `${built.adIds.length} neue Anzeigen liegen pausiert in derselben Anzeigengruppe. Bitte prüfen und aktivieren.`,
         "Vorschlag: diese Anzeigen pausieren:",

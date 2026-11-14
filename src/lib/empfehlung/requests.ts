@@ -858,7 +858,7 @@ export async function handleReviewReply(conversationId: string, from: string, bo
     // Aufgabe in „Heute“ (Wiedervorlage am Lead) + dringender Push + „Braucht dich“ im Chat
     await prisma.lead.update({ where: { id: r.leadId }, data: { followUpAt: now, followUpNote: `${UNHAPPY_TASK}: „${quote}“` } });
     const { notifyLeadPush } = await import("@/lib/team");
-    await notifyLeadPush(r.leadId, { title: `⚠️ Kunde unzufrieden: ${r.lead.name ?? "Kunde"}`, body: `„${quote}“ – bitte heute anrufen.`, tag: `empfehlung-unhappy:${r.leadId}`, url: `/buyer/leads/${r.leadId}` }).catch(() => {});
+    await notifyLeadPush(r.leadId, { title: `⚠️ Kunde unzufrieden: ${r.lead.name ?? "Kunde"}`, body: `„${quote}“, bitte heute anrufen.`, tag: `empfehlung-unhappy:${r.leadId}`, url: `/buyer/leads/${r.leadId}` }).catch(() => {});
     const { flagAttention } = await import("@/lib/whatsapp/attention");
     await flagAttention(conversationId, `Kritik nach dem Abschluss: „${quote}“`).catch(() => {});
     await sendWhatsAppMessage({ customerId: r.customerId, to: from, body: renderText(settings.texts.unhappy, { vorname, vertreter, anrede }), sentBy: "system" }).catch((err) => reportError(err, "empfehlung-unhappy-reply"));

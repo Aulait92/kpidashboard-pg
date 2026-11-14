@@ -234,7 +234,7 @@ export async function generateVideo(
   }
   if (op.error) {
     throw new Error(
-      `Veo-Operation failte: ${op.error.message ?? "unbekannt"} (code=${op.error.code ?? "—"})`,
+      `Veo-Operation failte: ${op.error.message ?? "unbekannt"} (code=${op.error.code ?? "–"})`,
     );
   }
 

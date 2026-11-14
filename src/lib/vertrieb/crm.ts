@@ -62,11 +62,11 @@ export const OUTCOMES: Outcome[] = [
   { id: "nicht_erreicht", label: "Nicht erreicht (Mailbox etc.)", stage: "NICHT_ERREICHT", task: { title: "Erneut anrufen", type: "ANRUF", workdays: 1 } },
   { id: "rueckruf", label: "Rückruf / Wiedervorlage", stage: "WIEDERVORLAGE", task: { title: "Nochmal anrufen", type: "ANRUF", workdays: 1 } },
   { id: "unterlagen", label: "Unterlagen gesendet (Einseiter / Präsentation)", stage: "INTERESSE", task: { title: "Nachfassen: Unterlagen gesendet", type: "NACHFASSEN", workdays: 3 } },
-  { id: "unterlagen_senden", label: "Will Unterlagen – noch senden", stage: "INTERESSE", task: { title: "Unterlagen senden", type: "UNTERLAGEN", workdays: 0 } },
+  { id: "unterlagen_senden", label: "Will Unterlagen, noch senden", stage: "INTERESSE", task: { title: "Unterlagen senden", type: "UNTERLAGEN", workdays: 0 } },
   { id: "termin", label: "Termin vereinbart", stage: "TERMIN", task: { title: "Termin", type: "TERMIN", workdays: 2 } },
   // Nach dem Termin (Aufgabe „Wie lief der Termin?“)
-  { id: "angebot_gesendet", label: "Termin gehabt – Angebot geschickt", stage: null, task: { title: "Nachfassen: Angebot", type: "NACHFASSEN", workdays: 3 } },
-  { id: "bedenkzeit", label: "Termin gehabt – Bedenkzeit", stage: null, task: { title: "Nach dem Termin nachfassen", type: "ANRUF", workdays: 2 } },
+  { id: "angebot_gesendet", label: "Termin gehabt, Angebot geschickt", stage: null, task: { title: "Nachfassen: Angebot", type: "NACHFASSEN", workdays: 3 } },
+  { id: "bedenkzeit", label: "Termin gehabt, Bedenkzeit", stage: null, task: { title: "Nach dem Termin nachfassen", type: "ANRUF", workdays: 2 } },
   { id: "nicht_erschienen", label: "Termin: nicht erschienen", stage: null, task: { title: "Neuen Termin vereinbaren", type: "ANRUF", workdays: 0 } },
   { id: "gewonnen", label: "Gewonnen / Zusage", stage: "GEWONNEN", task: { title: "Vertrag senden", type: "SONSTIGES", workdays: 0 } },
   { id: "spaeter", label: "Später wieder (Monate)", stage: "SPAETER", task: { title: "Wieder melden", type: "ANRUF", workdays: 60 } },
@@ -107,7 +107,7 @@ export function shortName(name: string): string {
 // ─── Kunden-Pipeline (nach der Zusage) ──────────────────────────────────
 export const CUSTOMER_STAGES: { id: CustomerStage; label: string; color: string; hint: string }[] = [
   { id: "VERTRAG", label: "Vertrag versendet", color: "bg-amber-100 text-amber-800", hint: "Zusage da, Vertrag noch nicht unterschrieben" },
-  { id: "ONBOARDING", label: "Onboarding", color: "bg-sky-100 text-sky-800", hint: "Unterschrieben – Produkte, Gebiet, Kampagnen aufsetzen" },
+  { id: "ONBOARDING", label: "Onboarding", color: "bg-sky-100 text-sky-800", hint: "Unterschrieben, Produkte, Gebiet, Kampagnen aufsetzen" },
   { id: "TEST", label: "Testphase", color: "bg-violet-100 text-violet-800", hint: "Erste Leads / Testpaket läuft" },
   { id: "AKTIV", label: "Aktiv", color: "bg-emerald-100 text-emerald-800", hint: "Laufender Kunde, Leads werden geliefert" },
   { id: "PAUSIERT", label: "Pausiert", color: "bg-slate-200 text-slate-700", hint: "Lieferung pausiert (Budget, Urlaub, Auslastung)" },

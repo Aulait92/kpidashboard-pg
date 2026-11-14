@@ -60,7 +60,7 @@ async function notifyRejected(customerId: string, customerName: string, purposeL
     .catch((err) => reportError(err, "template-rejected-task"));
   await sendToAdmins({
     title: `WhatsApp-Vorlage abgelehnt: ${customerName}`,
-    body: `${purposeLabel}${reason ? ` – ${reason}` : ""}`.slice(0, 120),
+    body: `${purposeLabel}${reason ? `, ${reason}` : ""}`.slice(0, 120),
     url: "/admin/whatsapp/settings",
     tag: `tpl:${customerId}:${name}`,
   }).catch(() => {});

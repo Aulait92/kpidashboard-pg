@@ -32,7 +32,7 @@ export async function WaechterSection({ customerId, readOnly, flash }: { custome
         <li>Melden Sie nur Bewertungen, die gegen Googles Richtlinien verstoßen (z. B. Spam, Beleidigung, Interessenkonflikt, nie Kunde gewesen). Kritik allein ist kein Grund.</li>
         <li>Im Google-Unternehmensprofil „Rezensionen lesen“ öffnen, bei der Bewertung „Melden“ wählen und den Grund angeben.</li>
         <li>Den Stand sehen Sie im Tool zur Rezensionsverwaltung von Google; wird nicht gelöscht, ist einmal ein Einspruch möglich.</li>
-        <li>Antworten Sie trotzdem sachlich und ohne Vertragsdetails – das lesen auch künftige Kunden.</li>
+        <li>Antworten Sie trotzdem sachlich und ohne Vertragsdetails, das lesen auch künftige Kunden.</li>
       </ol>
       <a href={REPORT_HELP_URL} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 font-semibold text-[color:var(--brand)] hover:underline">
         Offizielle Google-Hilfe: Unangemessene Rezensionen melden <ExternalLink className="h-3.5 w-3.5" />
@@ -61,7 +61,7 @@ export async function WaechterSection({ customerId, readOnly, flash }: { custome
       </div>
     );
   } else if (conn.status === "no_access") {
-    body = <Pending text="Bewertungs-Wächter wird freigeschaltet: Die Google-Schnittstelle für Unternehmensprofile ist für uns noch nicht freigegeben. Sobald Google zustimmt, startet der Abgleich automatisch – Sie müssen nichts tun." />;
+    body = <Pending text="Bewertungs-Wächter wird freigeschaltet: Die Google-Schnittstelle für Unternehmensprofile ist für uns noch nicht freigegeben. Sobald Google zustimmt, startet der Abgleich automatisch, Sie müssen nichts tun." />;
   } else if (conn.status === "pending_location" || !conn.locationName) {
     const r = await listLocations(customerId);
     body = r.ok ? (

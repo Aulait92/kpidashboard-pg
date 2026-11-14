@@ -3,6 +3,7 @@
 // Modul „Empfehlungen & Bewertungen“ im Kundenbereich: buchen/kündigen (Inhaber),
 // Einstellungen, Test, „Nicht anfragen“, „Geklärt“, Empfehlungslink senden, Hinweise.
 
+import { ohneGedankenstriche } from "@/lib/gedankenstriche";
 import { revalidatePath } from "next/cache";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
@@ -34,7 +35,7 @@ export async function bookEmpfehlungAction(_prev: ModuleActionState, fd: FormDat
   return {
     ok: true,
     trialEndsAt: r.trialEndsAt?.toISOString() ?? null,
-    message: r.state === "trial" ? "Freigeschaltet – Ihre Testphase läuft." : "Gebucht – das Modul ist freigeschaltet.",
+    message: r.state === "trial" ? "Freigeschaltet, Ihre Testphase läuft." : "Gebucht, das Modul ist freigeschaltet.",
   };
 }
 
@@ -69,14 +70,14 @@ export async function saveSettingsAction(_prev: SettingsState, fd: FormData): Pr
   const rewardActive = rewardKind !== "none";
   const texts: Partial<Record<TextKey, string | null>> = {};
   for (const key of Object.keys(TEXT_LABELS) as TextKey[]) {
-    const v = String(fd.get(`text_${key}`) ?? "").trim();
+    const v = ohneGedankenstriche(String(fd.get(`text_${key}`) ?? "").trim());
     const err = validateText(key, v, { rewardActive });
     if (err) return { error: `${TEXT_LABELS[key].title}: ${err}` };
     texts[key] = v || null;
   }
   const offerKind = String(fd.get("offerKind") ?? DEFAULT_OFFER_KIND);
-  const offerHeadline = String(fd.get("offerHeadline") ?? "").trim();
-  const offerText = String(fd.get("offerText") ?? "").trim();
+  const offerHeadline = ohneGedankenstriche(String(fd.get("offerHeadline") ?? "").trim());
+  const offerText = ohneGedankenstriche(String(fd.get("offerText") ?? "").trim());
   const offerErr = validateOffer(offerKind, offerHeadline, offerText);
   if (offerErr) return { error: `Empfehlungsangebot: ${offerErr}` };
   const data = {
