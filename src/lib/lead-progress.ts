@@ -8,6 +8,9 @@
 // - Absage: „In Beratung" → „Im Gespräch", wenn kein Termin mehr gebucht ist.
 // - Status wird nur „hochgestuft" (Neuer Lead / Nicht erreicht / leer →
 //   In Beratung), nie zurückgesetzt — Angebot/Abschluss bleiben unangetastet.
+// - Ausnahme: Ein neu gebuchter Termin holt einen Lead aus „Kein Interesse“
+//   zurück (er hat sich ja doch gemeldet und gebucht). Sonst blieb er als
+//   „Kein Interesse“ stehen, obwohl Chat qualifiziert und Termin gebucht war.
 // - „Erster Kontaktversuch" wird nur gesetzt, wenn er noch leer ist.
 // Fehler werden geloggt, brechen den aufrufenden Flow aber nie ab.
 
@@ -19,6 +22,8 @@ const BOOKED_STATUS = "In Beratung";
 // Nach Absage: Lead war schon im Kontakt → „Im Gespräch" (WhatsApp-Pipeline).
 const RESET_STATUS = "Im Gespräch";
 const REPLIED_STATUS = "Im Gespräch";
+// Nur durch eine neue Buchung aufhebbar (nicht durch eine bloße Antwort im Chat).
+const REOPEN_ON_BOOKING = new Set(["kein interesse"]);
 
 export async function recordLeadProgress(
   leadId: string | null | undefined,
@@ -72,7 +77,8 @@ export async function recordLeadProgress(
     // im Chat geantwortet ⇒ Im Gespräch (= erreicht, noch kein Termin).
     const current = (lead.status ?? "").trim().toLowerCase();
     const upgradeTo =
-      event === "booked" && (UPGRADABLE.has(current) || current === REPLIED_STATUS.toLowerCase())
+      event === "booked" &&
+      (UPGRADABLE.has(current) || current === REPLIED_STATUS.toLowerCase() || REOPEN_ON_BOOKING.has(current))
         ? BOOKED_STATUS
         : event === "replied" && UPGRADABLE.has(current)
           ? REPLIED_STATUS

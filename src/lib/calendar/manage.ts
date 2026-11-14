@@ -122,6 +122,70 @@ export async function rescheduleOpenAppointment(
   return { appointmentId: res.appointmentId, start: res.start, manageToken: fresh?.manageToken ?? null, mode: fresh?.mode ?? appt.mode };
 }
 
+// ─── Dialog „Verschieben“ (Kundenbereich und Admin) ────────────────────────
+// Die Aktionen prüfen jeweils selbst, wer den Termin sehen und ändern darf
+// (app/buyer/appointment-actions.ts bzw. app/admin/whatsapp/appointment-actions.ts),
+// die Daten für den Dialog entstehen hier für beide gleich.
+
+export type RescheduleDialogData = {
+  id: string;
+  startsAt: string;
+  mode: "phone" | "video";
+  durationMin: number;
+  name: string | null;
+  /** false = Vorschau: nur ansehen. */
+  canEdit: boolean;
+  /** Wie der Kontakt von der Änderung erfährt (WhatsApp nur beim Verschieben). */
+  notify: { whatsapp: boolean; email: boolean };
+  slots: Slot[];
+  /** Freie Zeiten konnten nicht geladen werden (z. B. Kalender getrennt). */
+  slotsError: boolean;
+};
+
+export type RescheduleLoadResult = { ok: true; data: RescheduleDialogData } | { ok: false; error: string };
+export type AppointmentChangeResult =
+  | { ok: true; start?: string }
+  | { ok: false; error: string; code?: "taken" | "closed" | "preview" | "notfound" | "error" };
+
+/** Freie Zeiten für das Blättern im Dialog (ganze zwei Wochen, nicht nur die ersten). */
+const DIALOG_SLOTS = 300;
+const DIALOG_DAYS = 14;
+
+/** Dialog-Daten für einen offenen Termin: aktueller Termin, Benachrichtigungswege, freie Zeiten. */
+export async function rescheduleDialogData(
+  appt: ManageAppointment & { lead?: { name: string | null } | null },
+  canEdit: boolean,
+  logTag = "reschedule",
+): Promise<RescheduleDialogData> {
+  const conv = appt.conversationId
+    ? await prisma.conversation.findUnique({
+        where: { id: appt.conversationId },
+        select: { contactName: true, contactEmail: true },
+      })
+    : null;
+  let slots: Slot[] = [];
+  let slotsError = false;
+  try {
+    // Die bisherige Uhrzeit selbst ist keine neue Zeit.
+    const current = appt.startsAt.toISOString();
+    slots = (await rescheduleSlots(appt, DIALOG_SLOTS, DIALOG_DAYS)).filter((s) => s.start !== current);
+  } catch (err) {
+    console.error(`[${logTag}] slots`, err);
+    slotsError = true;
+  }
+  return {
+    id: appt.id,
+    startsAt: appt.startsAt.toISOString(),
+    mode: appt.mode === "video" ? "video" : "phone",
+    durationMin: await rescheduleDurationMin(appt),
+    name: appt.lead?.name?.trim() || conv?.contactName?.trim() || null,
+    canEdit,
+    notify: { whatsapp: !!conv, email: !!conv?.contactEmail?.trim() },
+    slots,
+    slotsError,
+  };
+}
+
 /** Absagen: Kalendereintrag löschen, Lead per Mail informieren, im Chat vermerken. */
 export async function cancelOpenAppointment(appt: ManageAppointment, actor: ManageActor, via: string): Promise<void> {
   await cancelAppointment(appt.id, appt.customerId, actor.by);
