@@ -264,16 +264,29 @@ Seiten aus der Liste „Seiten“ unten.
   - **Abschlussprovision (geschätzt):** die einmalige Provision aus den Abschlüssen im Zeitraum („aus 4 Abschlüssen,
     einmalig“). Bei Maklern heißt die Karte **Courtage 1. Jahr** (Sach ohne Abschlussprovision, dafür die Courtage des
     1. Jahres). Darunter: „davon Cross-Selling“ (weitere Verträge bei Kunden mit Abschluss), „davon aus Empfehlungen“,
-    „aus Bestandskampagnen“ und „Verträge pro Kunde“. Empfehlungen und Bestandskampagnen zählen voll mit, weil sie
-    aus Ihren Leads entstehen.
+    „aus Bestandskampagnen“, „Verträge pro Kunde“, „davon Honorar (vom Kunden)“ (PKV-Tarifoptimierung) und
+    „abzüglich Rückbelastung“ (gekündigte Verträge, gebucht im Monat der Kündigung). Empfehlungen und
+    Bestandskampagnen zählen voll mit, weil sie aus Ihren Leads entstehen.
   - **Bestandsprovision** (Makler: **Bestandscourtage**): laufend pro Jahr aus allen Verträgen seit Start, z. B.
     „+ 140 € pro Jahr, aus 12 Verträgen, ab dem 2. Jahr“ (Vertreter bekommen Bestand ab dem 2. Vertragsjahr, Makler
-    ab sofort). Darunter „in 5 Jahren: …“: so viel bringen die bisherigen Verträge in den nächsten 5 Jahren, wenn jedes
-    Jahr 10 % der Verträge wegfallen. „+ … pro Jahr aus diesem Zeitraum“ zeigt, was die Abschlüsse im gewählten
-    Zeitraum dazulegen. „So rechnen wir“ antippen für Satz, Storno und Annahmen.
-  - **Gewinn:** Abschlussprovision (bzw. Courtage 1. Jahr) minus Lead-Kosten minus Betreuung, also ehrlich ohne
-    künftige Bestandsprovision. „Aufschlüsselung“ antippen (am Rechner: mit der Maus darüber) zeigt Provision,
-    Lead-Kosten, Betreuung & Software und weitere Posten. Darunter „plus Bestand: … in 5 Jahren“.
+    ab sofort; bei KFZ und Leben/BU ab dem 1. Jahr). Darunter „in 5 Jahren: …“: so viel bringen die laufenden Verträge
+    in den nächsten 5 Jahren mit Ihrer **Stornoquote** (Standard 10 % pro Jahr, änderbar unter **Meine Provisionen**).
+    Gekündigte bzw. stornierte Verträge zählen ab dem Kündigungsdatum nicht mehr. „+ … pro Jahr aus diesem Zeitraum“
+    zeigt, was die Abschlüsse im gewählten Zeitraum dazulegen. Darunter die **tatsächliche Stornoquote** (gekündigte
+    Verträge der letzten 12 Monate geteilt durch den Bestand im Jahresmittel), ab 20 Verträgen, vorher „zu wenig
+    Daten“. „So rechnen wir“ antippen für Satz, Stornoquote (mit Link zum Ändern) und Annahmen.
+  - **Gewinn:** Abschlussprovision (bzw. Courtage 1. Jahr) minus Rückbelastungen minus Lead-Kosten minus Betreuung.
+    Mit dem Umschalter in der Karte wählen Sie:
+    - **Nur jetzt** (Standard): ehrlich ohne künftige Bestandsprovision, nur was im Zeitraum verdient ist.
+    - **Inkl. Bestand** (Etikett „mit künftigem Bestand“): dazu die künftige Bestandsprovision der Verträge, die im
+      **gewählten Zeitraum** abgeschlossen wurden (nicht Ihr ganzer Bestand), über ihre ersten 5 Jahre. Vertreter bei
+      Sach ab dem 2. Jahr, Makler, KFZ und Leben/BU ab dem 1. Jahr (das 1. Jahr steckt dann schon in „Nur jetzt“).
+      Gerechnet mit Ihrer Stornoquote, ohne Abzinsung, gekündigte Verträge nur bis zum Kündigungsdatum. Darunter
+      „davon künftige Bestandsprovision: … (5 Jahre)“. Das ist eine **Prognose**, kein schon verdientes Geld. Der
+      Vergleich mit dem Vorzeitraum rechnet genauso.
+    Die Wahl merkt sich die App je Login. „Aufschlüsselung“ antippen (am Rechner: mit der Maus darüber) zeigt Provision,
+    Rückbelastung, Lead-Kosten, Betreuung & Software, weitere Posten und bei „Inkl. Bestand“ die künftige
+    Bestandsprovision. Kosten pro Abschluss und die Tipps richten sich immer nach „Nur jetzt“.
   - **Kosten pro Abschluss** bzw. pro Termin: alle Kosten (Lead-Kosten plus Betreuung) geteilt durch die Abschlüsse
     bzw. Termine aus bezahlten Leads, passend zum Gewinn.
 - **Betreuung in den Zahlen:** Betreuung & Software (Monatspreis laut Ihrem Vertrag), weitere Verkäufer bzw. Logins,
@@ -291,9 +304,10 @@ Seiten aus der Liste „Seiten“ unten.
 - **Hochrechnung für diesen Monat** zum Aufklappen: Leads, Termine, Abschlüsse (bezahlte Leads), Abschlussprovision,
   Lead-Kosten, Betreuung & Software und Gewinn, hochgerechnet auf den Monat.
 - **So wächst Ihr Bestand** zum Aufklappen: Bestandsprovision pro Jahr über 5 Jahre, wenn Sie im Tempo der letzten
-  3 Monate weiter abschließen (10 % Storno pro Jahr).
+  3 Monate weiter abschließen (mit Ihrer Stornoquote, Standard 10 % pro Jahr).
 - Bei Teams eine Tabelle pro Person: bezahlte Leads, Erreicht, Termine, Abschlüsse, Quote, Abschlussprovision und
-  Bestand pro Jahr (inklusive Empfehlungen und Cross-Selling).
+  Bestand pro Jahr (inklusive Empfehlungen und Cross-Selling); bei „Inkl. Bestand“ zusätzlich „mit künftigem
+  Bestand“.
 
 ## Monatsberichte
 
@@ -304,10 +318,13 @@ Seiten aus der Liste „Seiten“ unten.
   - **Ihr Vertriebstrichter:** Leads, Erreicht, Termine und Abschlüsse mit Quote und Vormonat (nur bezahlte Leads,
     damit die Quoten stimmen),
   - **Ihr Ergebnis im Monat** als Rechnung: Abschlussprovision aus Leads (Makler: Courtage 1. Jahr), aus Empfehlungen
-    und aus Bestandskampagnen, minus Lead-Kosten, minus Betreuung & Software (inklusive USt., Gutschriften
-    abgezogen), ergibt den Gewinn. Es sind dieselben Zahlen wie unter „Zahlen“ für diesen Monat,
-  - **Ihr Bestand wächst:** Bestandsprovision pro Jahr aus allen bisherigen Verträgen und ein kleines Balkendiagramm
-    für die nächsten 5 Jahre, wenn Sie im gleichen Tempo weitermachen (10 % Storno pro Jahr),
+    und aus Bestandskampagnen, minus Rückbelastungen, minus Lead-Kosten, minus Betreuung & Software (inklusive USt.,
+    Gutschriften abgezogen), ergibt den Gewinn. Immer mit beiden Zahlen, z. B. „Gewinn: 490 €, mit künftigem
+    Bestand: 2.590 €“ (wie „Inkl. Bestand“ unter „Zahlen“, eine Prognose). Es sind dieselben Zahlen wie unter „Zahlen“
+    für diesen Monat,
+  - **Ihr Bestand wächst:** Bestandsprovision pro Jahr aus allen laufenden Verträgen und ein kleines Balkendiagramm
+    für die nächsten 5 Jahre, wenn Sie im gleichen Tempo weitermachen (mit Ihrer Stornoquote), dazu Ihre tatsächliche
+    Stornoquote (ab 20 Verträgen),
   - **Empfehlungen** (Kunden gefragt, Empfehlungen, Abschlüsse, Provision) und **Bestandskampagnen**, sobald es dort
     etwas gibt,
   - **Was wir für Sie getan haben:** die echten Maßnahmen des Monats in Ihrem Werbekonto bzw. Ihrer Kampagne, z. B.
@@ -325,17 +342,40 @@ Seiten aus der Liste „Seiten“ unten.
     (Abschlussprovision), dazu ab dem 2. Jahr 10 % Bestandsprovision pro Jahr. Makler: keine Abschlussprovision,
     sondern Bestandscourtage ≈ 22,5 % pro Jahr. Ohne Angabe rechnet die App mit einem Beitrag von 600 € (Privatschutz)
     bzw. 350 € (TKV).
-  - PKV-Tarifoptimierung (nur Makler): „Monatsbeitrag netto“. Provision ≈ 10 Monatsbeiträge; ohne Angabe 2.500 €.
+  - Weitere Sach-Sparten (Unfall, Hausrat, Wohngebäude, Rechtsschutz, Sonstiges) wie Privatschutz, mit typischem
+    Jahresbeitrag je Sparte (Unfall 180 €, Hausrat 120 €, Wohngebäude 500 €, Rechtsschutz 300 €, Sonstiges 300 €).
+  - KFZ: „Jahresbeitrag netto“. Keine Abschlussprovision, 5 % laufend pro Jahr ab dem 1. Jahr; ohne Angabe 600 €.
+  - **Leben, Rente, BU und Kindersparplan:** „Monatsbeitrag“. Die App rechnet mit der **Beitragssumme** =
+    Monatsbeitrag × 12 × Laufzeit: Abschlussprovision 25 ‰ davon (Makler 35 ‰), dazu 1,5 % des Jahresbeitrags als
+    Bestands- bzw. Betreuungsprovision ab dem 1. Jahr. Beispiel: bei 80 € im Monat und 30 Jahren (28.800 €
+    Beitragssumme) ≈ 720 € Abschlussprovision und ≈ 14 € Bestand pro Jahr. Laufzeit, Alter und Endalter oder die
+    Beitragssumme direkt tragen Sie am Vertrag ein; ohne Angabe: BU bis Alter 67 (ohne Alter 30 Jahre) und 80 € im
+    Monat, Kindersparplan 18 Jahre und 50 €, Leben bzw. Rente 30 Jahre und 100 €.
+  - PKV-Neugeschäft: „Monatsbeitrag netto“. Provision ≈ 9 Monatsbeiträge (höchstens 9,9 nach § 50 VAG: 3,3 % der
+    Bruttobeitragssumme über 25 Jahre); ohne Angabe 2.500 €.
+  - **PKV-Tarifoptimierung (§ 204 VVG):** „Monatliche Ersparnis des Kunden“. Statt Abschlussprovision ein **Honorar
+    (vom Kunden)** = Ersparnis × 6 Monate (änderbar) oder ein fester Betrag; ohne Angabe 100 € Ersparnis. Keine
+    Bestandsprovision. Das Honorar zählt im Gewinn als Ertrag. Bitte mit Ihrer Honorarvereinbarung abgleichen.
   - **Empfehlungen, Bestandskunden und unbekannte Produkte:** Die App fragt zuerst die **Sparte** (z. B. Katze,
     Privatschutz/Haftpflicht, Hausrat) und rechnet dann mit dem Satz dieser Sparte.
 - Es ist eine Schätzung für die eigenen Zahlen, keine Abrechnung. Wer den Beitrag einträgt, bekommt genauere Werte.
 - **Mehrere Verträge pro Kunde (Cross-Selling):** Im Kontakt mit Abschluss steht unter „Verträge“ der erste Abschluss.
   Mit **Weiteren Abschluss eintragen** kommen weitere Verträge dazu: Sparte (Katze, Hund, Pferd,
-  Privatschutz/Haftpflicht, Unfall, Hausrat, Wohngebäude, Rechtsschutz, Kindersparplan, KFZ, Leben/BU, PKV, Sonstiges),
-  Beitrag, Datum, optional Versicherer, Vertragsnummer und die Police als Dokument. Jeder Vertrag rechnet mit dem Satz
-  seiner Sparte. **Bearbeiten**, **Storno** (zählt dann nicht mehr) und **Löschen** (nur weitere Verträge) gehen
-  direkt in der Liste; jeder Schritt steht im Verlauf. Abschlüsse und Abschlussquote zählen weiter Kunden, nicht
-  Verträge.
+  Privatschutz/Haftpflicht, Unfall, Hausrat, Wohngebäude, Rechtsschutz, Kindersparplan, KFZ, Leben/Rente, BU,
+  PKV-Neugeschäft, PKV-Tarifoptimierung, Sonstiges), Beitrag, Datum, optional Versicherer, Vertragsnummer und die
+  Police als Dokument; bei Leben/BU auch Laufzeit bzw. Alter und Endalter oder die Beitragssumme. Jeder Vertrag rechnet
+  mit dem Satz seiner Sparte. **Bearbeiten** und **Löschen** (nur weitere Verträge) gehen direkt in der Liste; jeder
+  Schritt steht im Verlauf. Abschlüsse und Abschlussquote zählen weiter Kunden, nicht Verträge.
+- **Vertrag gekündigt bzw. storniert:** am Vertrag (im Kontakt und beim Lead) mit Datum, Grund (vom Kunden gekündigt,
+  Widerruf, Nichtzahlung, vom Versicherer gekündigt, Sonstiges) und optional der **Rückbelastung** der
+  Abschlussprovision. Die App schlägt sie vor: bei Widerruf die volle Abschlussprovision, bei Leben/BU innerhalb der
+  Stornohaftungszeit (Standard 60 Monate) anteilig, also verbleibende Monate geteilt durch 60. Ab dem Datum zählt der
+  Vertrag nicht mehr für die Bestandsprovision; die Abschlussprovision bleibt im Monat des Abschlusses, die
+  Rückbelastung mindert Provision und Gewinn im Monat der Kündigung. Steht im Verlauf; **Kündigung zurücknehmen**
+  macht alles rückgängig. (Nicht zu verwechseln mit der Reklamation eines Leads bei Pay-per-Lead.)
+- **Aufgabe „Police da und erste Zahlung erfolgt?“:** 2 Wochen nach dem ersten Abschluss auf „Heute“, nur einmal je
+  Kunde, nicht wenn die Police schon am Vertrag hängt oder noch eine andere Wiedervorlage offen ist (z. B. „Police
+  fertig machen“). Abschalten unter **Meine Provisionen**.
 - **Erinnerung „Weiteres Produkt anbieten?“:** 3 Wochen nach dem ersten Abschluss erscheint die Aufgabe auf „Heute“,
   mit naheliegenden Sparten (z. B. zur Katze: Haftpflicht, Unfall). Nicht, wenn schon ein weiterer Vertrag eingetragen
   ist oder der Kontakt nicht mehr im Abschluss steht, und nur einmal je Kunde. Abschalten unter **Meine Provisionen**.
@@ -344,11 +384,19 @@ Seiten aus der Liste „Seiten“ unten.
   App beide zusammen; Verträge mit gleicher Vertragsnummer gibt es nur einmal.
 - Pro Kunde gibt es weiterhin nur eine Nachfrage nach Bewertung und Empfehlung, auch bei mehreren Verträgen.
 - **Meine Provisionen** (Profilmenü, auch unter Konto und in der Einrichtung): „Ich arbeite als Vertreter / Makler“
-  wählen und je Produkt die eigenen Sätze eintragen: Abschlussprovision in %, Bestandsprovision in % pro Jahr,
-  typischer Jahresbeitrag; bei PKV die Monatsbeiträge. Oben stehen die Produkte, die Sie bei uns gebucht haben bzw.
-  in Verträgen nutzen, darunter aufklappbar **Weitere Sparten (Cross-Selling)**, vorausgefüllt mit dem üblichen Satz
-  für Sach. Ohne eingetragenen Beitrag rechnet die App mit dem typischen Beitrag. „Auf Standard“ setzt zurück. Nur der
-  Inhaber kann speichern, Berater sehen die Sätze. Alle Zahlen rechnen danach mit den eigenen Sätzen.
+  wählen und je Produkt die eigenen Sätze eintragen. Standardwerte sind Erfahrungswerte, bitte mit Ihrer
+  Provisionsliste abgleichen. Je nach Rechenart:
+  - Sach und KFZ: Abschlussprovision in %, Bestandsprovision in % pro Jahr, typischer Jahresbeitrag (über 0 €).
+  - Leben/Rente, BU, Kindersparplan: Abschlussprovision in ‰ der Beitragssumme, Bestandsprovision in % vom
+    Jahresbeitrag, typischer Monatsbeitrag, Laufzeit, Endalter (optional) und Stornohaftungszeit in Monaten.
+  - PKV-Neugeschäft: Monatsbeiträge (höchstens 9,9, § 50 VAG) und Betrag ohne Beitragsangabe.
+  - PKV-Tarifoptimierung: Honorar als Monate Ersparnis oder fester Betrag, Ersparnis ohne Angabe.
+  - **Stornoquote pro Jahr** (0 bis 50 %, Standard 10 %), optional je Sparte. Damit rechnen alle Prognosen: Bestand in
+    5 Jahren, „So wächst Ihr Bestand“, Gewinn „Inkl. Bestand“ und der Monatsbericht. Sobald Sie 20 Verträge haben,
+    steht darunter „Ihre tatsächliche Quote: … Übernehmen?“.
+  Oben stehen die Produkte, die Sie bei uns gebucht haben bzw. in Verträgen nutzen, darunter aufklappbar **Weitere
+  Sparten (Cross-Selling)**. Ohne eingetragenen Beitrag rechnet die App mit dem typischen Beitrag. „Auf Standard“ setzt
+  zurück. Nur der Inhaber kann speichern, Berater sehen die Sätze. Alle Zahlen rechnen danach mit den eigenen Sätzen.
 
 ## Garantien (Katzenversicherung)
 - **Lead-Garantie:** Bei mindestens 20 € Werbebudget pro Tag gibt es in den ersten 30 Tagen nach Kampagnenstart mindestens
