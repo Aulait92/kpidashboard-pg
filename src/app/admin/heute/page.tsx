@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { CheckCircle2, ChevronRight, TrendingUp } from "lucide-react";
+import { CheckCircle2, ChevronRight, ClipboardList, TrendingUp } from "lucide-react";
+import { countNeueBuchungen } from "@/lib/admin-buchungen-neu";
 import { greeting, loadAdminHeute, summary, type HeuteArea } from "@/lib/admin-heute";
 import { computeMonthlyForecast } from "@/lib/forecast";
 import { reportError } from "@/lib/monitoring";
@@ -29,11 +30,15 @@ export default async function AdminHeutePage({ searchParams }: { searchParams: P
   const session = await requireAuth();
   const { bereich = "" } = await searchParams;
   const now = new Date();
-  const [{ items, auto }, forecast] = await Promise.all([
+  const [{ items, auto }, forecast, neueBuchungen] = await Promise.all([
     loadAdminHeute(now, session.userId),
     computeMonthlyForecast({ customerId: null, revenueLabel: "Umsatz" }).catch((err) => {
       reportError(err, "admin-heute-forecast");
       return null;
+    }),
+    countNeueBuchungen(session.userId, now).catch((err) => {
+      reportError(err, "admin-neue-buchungen");
+      return 0;
     }),
   ]);
   const filter = FILTERS.find((f) => f.key === bereich) ?? FILTERS[0];
@@ -91,6 +96,24 @@ export default async function AdminHeutePage({ searchParams }: { searchParams: P
         </section>
 
         <div className="space-y-6">
+          {neueBuchungen > 0 ? (
+            <Link
+              href="/admin/zahlen/buchungen"
+              className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-blue-200 bg-blue-50 px-4 py-3 shadow-[var(--shadow-sm)] transition hover:border-blue-300"
+              data-neue-buchungen={neueBuchungen}
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[color:var(--brand)]">
+                <ClipboardList className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium">
+                  {neueBuchungen === 1 ? "1 neue Buchung" : `${neueBuchungen} neue Buchungen`} seit Ihrem letzten Besuch
+                </span>
+                <span className="block text-xs text-[color:var(--muted)]">Angebote, Produkte, Module, Budget, Pausen, Kündigungen</span>
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
+            </Link>
+          ) : null}
           <section>
             <h2 className="mb-1 text-base font-semibold">Läuft von allein</h2>
             <p className="mb-3 text-sm text-[color:var(--muted)]">Das hat die App in den letzten 7 Tagen erledigt, ohne Sie zu fragen.</p>

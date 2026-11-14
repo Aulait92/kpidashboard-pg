@@ -390,7 +390,10 @@ Seiten aus der Liste „Seiten“ unten.
     neue Motive, pausierte schwache Anzeigen oder ein angepasstes Budget,
   - **Unsere Tipps für den nächsten Monat:** 1 bis 2 Tipps wie auf der Karte „So holen Sie mehr raus“,
   - die Knöpfe „Alle Zahlen ansehen“ (öffnet „Zahlen“ für genau diesen Monat) und „Gespräch vereinbaren“.
-- Alle bisherigen Berichte finden Sie unter „Zahlen“ ganz unten im Abschnitt „Monatsberichte“.
+- Alle bisherigen Berichte finden Sie unter „Zahlen“ ganz unten im Abschnitt „Monatsberichte“. Oben auf der Seite führt
+  „Zu Ihren Monatsberichten“ direkt dorthin, ebenso der Link „Alle Berichte ansehen“ in jeder Bericht-E-Mail.
+- Jeden Bericht können Sie mit „PDF“ herunterladen (Dateiname monatsbericht-JJJJ-MM.pdf), etwa zum Ablegen oder Weitergeben.
+- Solange noch kein Bericht da ist, steht dort, wann der erste voraussichtlich kommt (Anfang des nächsten Monats).
 - Je mehr Ergebnisse Sie bei Ihren Leads eintragen, desto genauer werden die Zahlen im Bericht.
 - Wir prüfen jeden Bericht vor dem Versand. Manchmal melden wir uns statt eines Berichts lieber persönlich, dann
   besprechen wir den Monat im Gespräch.

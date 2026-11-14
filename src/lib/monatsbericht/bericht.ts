@@ -106,6 +106,9 @@ export const SECTION_TITLES = {
 
 export const FUNNEL_NOTE = "Nur bezahlte Leads, damit die Quoten stimmen.";
 export const BUTTON_ZAHLEN = "Alle Zahlen ansehen";
+export const LINK_BERICHTE = "Alle Berichte ansehen";
+/** Liste aller Monatsberichte im Kundenbereich (Zahlen, Abschnitt „Monatsberichte“). */
+export const berichteUrl = (zahlenUrl: string) => `${zahlenUrl.replace(/#.*$/, "")}#monatsberichte`;
 
 export function bestandIntro(b: ReportBestand): string {
   return `${b.label} pro Jahr aus allen bisherigen Verträgen: + ${formatEUR(b.perYear)} pro Jahr (aus ${plural(b.contracts, "Vertrag", "Verträgen")}, ${b.fromYear2 ? "ab dem 2. Jahr" : "ab sofort"}).`;
@@ -245,7 +248,8 @@ function tipsHtml(tips: ReportTip[], appUrl: string): string {
 
 function buttonsHtml(links: ReportModel["links"]): string {
   const primary = `<td style="padding:0 8px 8px 0"><a href="${esc(links.zahlen)}" style="display:inline-block;background:${C.brand};color:#ffffff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;border:1px solid ${C.brand}">${BUTTON_ZAHLEN}</a></td>`;
-  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0 8px"><tr>${primary}</tr></table>`;
+  const secondary = `<td style="padding:0 0 8px 4px"><a href="${esc(berichteUrl(links.zahlen))}" style="color:${C.brand};font-size:15px;font-weight:600;text-decoration:underline">${LINK_BERICHTE}</a></td>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0 8px"><tr>${primary}${secondary}</tr></table>`;
 }
 
 const absolute = (href: string, appUrl: string) => (/^https?:\/\//.test(href) ? href : `${appUrl}${href.startsWith("/") ? "" : "/"}${href}`);
@@ -264,10 +268,14 @@ export function reportSectionsHtml(m: ReportModel, appUrl: string): string {
   return `<div data-monatsbericht="2">${parts.join("\n")}</div>`;
 }
 
-/** Textfassung derselben Abschnitte (für E-Mail-Programme ohne HTML). */
-export function reportSectionsText(m: ReportModel, appUrl: string): string[] {
-  const out: string[] = [];
-  const head = (t: string) => out.push("", t.toUpperCase());
+/** Abschnitte als Überschrift + Zeilen (Grundlage für Textfassung der Mail und PDF). */
+export function reportSectionBlocks(m: ReportModel, appUrl: string): { title: string; lines: string[] }[] {
+  const blocks: { title: string; lines: string[] }[] = [];
+  let out: string[] = [];
+  const head = (t: string) => {
+    out = [];
+    blocks.push({ title: t, lines: out });
+  };
   if (m.funnel) {
     head(SECTION_TITLES.funnel);
     for (const s of m.funnel.steps) out.push(`${s.label}: ${formatNumber(s.value)}${rateText(s) ? ` (${rateText(s)})` : ""}${s.previous != null ? `, Vormonat ${formatNumber(s.previous)}` : ""}`);
@@ -306,7 +314,14 @@ export function reportSectionsText(m: ReportModel, appUrl: string): string[] {
     head(SECTION_TITLES.tips);
     for (const t of m.tips) out.push(`• ${t.title}. ${t.text} ${absolute(t.href, appUrl)}`);
   }
-  out.push("", `${BUTTON_ZAHLEN}: ${m.links.zahlen}`);
+  return blocks;
+}
+
+/** Textfassung derselben Abschnitte (für E-Mail-Programme ohne HTML). */
+export function reportSectionsText(m: ReportModel, appUrl: string): string[] {
+  const out: string[] = [];
+  for (const b of reportSectionBlocks(m, appUrl)) out.push("", b.title.toUpperCase(), ...b.lines);
+  out.push("", `${BUTTON_ZAHLEN}: ${m.links.zahlen}`, `${LINK_BERICHTE}: ${berichteUrl(m.links.zahlen)}`);
   return out;
 }
 

@@ -761,6 +761,8 @@ model User {
   sessionVersion     Int              @default(0)
   // Neuigkeiten (Kundenbereich): zuletzt gelesen – Einträge danach zählen als ungelesen
   updatesSeenAt      DateTime?
+  // Admin → Zahlen → Buchungen zuletzt geöffnet (Hinweis „neue Buchungen“ auf Heute)
+  buchungenSeenAt    DateTime?
   // Team (Großkunden): owner = Inhaber (sieht alles), advisor = Berater (nur eigene Leads)
   teamRole           String           @default("owner")
   displayName        String?

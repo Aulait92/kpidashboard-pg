@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { ArrowLeft, Download } from "lucide-react";
+import { Download } from "lucide-react";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { ART_LABEL, BUCHUNG_ARTEN, berlinMonth, BUCHUNG_STATUS, loadBuchungen, STATUS_LABEL, type BuchungFilter } from "@/lib/admin-buchungen";
 import { FilterChips } from "@/components/ui/filter-chips";
 import { Card } from "@/components/ui";
 import { BuchungenListe } from "@/components/admin/buchungen-liste";
+import { ZahlenTabs } from "@/components/admin/zahlen-tabs";
+import { markBuchungenGesehen } from "@/lib/admin-buchungen-neu";
 
 export const metadata = { title: "Buchungen | performancegrowth Admin" };
 
@@ -18,11 +20,13 @@ const dayLabel = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Euro
 
 export default async function BuchungenPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await connection();
-  await requireAuth();
+  const session = await requireAuth();
   const sp = await searchParams;
   const f: BuchungFilter = { monat: sp.monat, von: sp.von, bis: sp.bis, art: sp.art, status: sp.status, kunde: sp.kunde, q: sp.q };
   const now = new Date();
   const { rows, sums, range, customers } = await loadBuchungen(f, now);
+  // Hinweis „neue Buchungen“ auf Heute zurücksetzen (je Admin-Login)
+  await markBuchungenGesehen(session.userId, now);
 
   const qs = new URLSearchParams(Object.entries(f).filter(([, v]) => v) as [string, string][]);
   const openQs = new URLSearchParams(qs);
@@ -44,9 +48,7 @@ export default async function BuchungenPage({ searchParams }: { searchParams: Pr
 
   return (
     <main className="mx-auto w-full max-w-[1360px] flex-1 space-y-5 px-4 py-6 sm:px-6 lg:px-8">
-      <Link href="/admin/zahlen" className="inline-flex items-center gap-1 text-sm text-[color:var(--muted)] hover:underline">
-        <ArrowLeft className="h-3.5 w-3.5" /> Zahlen
-      </Link>
+      <ZahlenTabs />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Buchungen</h1>

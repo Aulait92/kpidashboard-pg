@@ -60,9 +60,14 @@ export async function StornoQuoteKunde({ customerId }: { customerId: string }) {
 }
 
 /** Admin-Zahlen: über alle Kunden je Sparte und je Kunde. */
-export async function StornoQuoteUebersicht() {
+export async function StornoQuoteUebersicht({ leerHinweis = false }: { leerHinweis?: boolean } = {}) {
   const s = await allStornoStats();
-  if (s.overall.contracts === 0) return null;
+  if (s.overall.contracts === 0)
+    return leerHinweis ? (
+      <p className="rounded-[var(--radius-lg)] border border-dashed border-[color:var(--border)] px-4 py-8 text-center text-sm text-[color:var(--muted)]" data-admin-storno-leer>
+        Noch keine Verträge erfasst. Sobald Kunden Abschlüsse eintragen, steht hier die Stornoquote je Sparte und Kunde.
+      </p>
+    ) : null;
   return (
     <section className="mt-6 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 shadow-[var(--shadow-sm)]" data-admin-storno-alle>
       <h2 className="text-[15px] font-semibold">Stornoquote der Verträge (alle Kunden)</h2>

@@ -94,6 +94,12 @@ export default async function BuyerPage({
           }
         />
 
+        <p className="-mt-2 mb-4 text-sm">
+          <a href="#monatsberichte" className="inline-flex items-center gap-1 font-medium text-[color:var(--brand)] hover:underline" data-sprung-monatsberichte>
+            Zu Ihren Monatsberichten ↓
+          </a>
+        </p>
+
         <EmpfehlungGrowthRow ctx={{ customerId: session.customerId, teamRole: session.teamRole }} />
 
         <Suspense
