@@ -825,7 +825,7 @@ async function setItemQuantity(
  * Start übernommen (wie Zusatzmodule). Geht das nicht automatisch (kein Stripe-Kunde, kein Abo,
  * Startpreis-Phase), entsteht eine Admin-Aufgabe „Platz von Hand abrechnen“ statt still nichts.
  */
-export async function syncSeatBilling(customerId: string, opts: { force?: boolean; now?: Date } = {}): Promise<AddOnResult> {
+export async function syncSeatBilling(customerId: string, opts: { force?: boolean; now?: Date; decreaseOnly?: boolean } = {}): Promise<AddOnResult> {
   try {
     const c = await prisma.customer.findUnique({
       where: { id: customerId },
@@ -840,6 +840,9 @@ export async function syncSeatBilling(customerId: string, opts: { force?: boolea
     // Nie mehr als nach der bisherigen Regel (alle Logins), siehe seatsToBill()
     const want = seatsToBill({ ...usage, included: c.seatsIncluded, price });
     if (want === c.seatsBilled && !opts.force) return { ok: true, changed: false };
+    // Täglicher Abgleich senkt nur: Erhöhungen entstehen nur durch eine Aktion im Team
+    // (Einladen, „bekommt Leads“, Zuteilen). So zahlt durch die Umstellung niemand mehr (Ole, 14.11.2026).
+    if (opts.decreaseOnly && want > c.seatsBilled) return { ok: true, changed: false, note: "Erhöhung nur bei Änderung im Team." };
     const stripe = stripeClient();
     let note: string | undefined;
     if (stripe && c.stripeCustomerId) {
@@ -1277,7 +1280,7 @@ export async function reconcileSeatBilling(now = new Date()): Promise<{ changed:
   let changed = 0;
   let errors = 0;
   for (const c of customers) {
-    const r = await syncSeatBilling(c.id, { now });
+    const r = await syncSeatBilling(c.id, { now, decreaseOnly: process.env.SEATS_RECONCILE_INCREASE !== "1" });
     if (!r.ok) errors++;
     else if (r.changed) changed++;
   }

@@ -216,4 +216,14 @@ describe("Plätze: 3 aktive Verkäufer inklusive", () => {
     const log = await prisma.auditLog.findFirst({ where: { customerId: c.id, action: "billing.seats" }, orderBy: { at: "desc" } });
     expect(log?.details).toMatchObject({ from: 2, to: 0, logins: 5, active: 3 });
   });
+
+  it("Täglicher Abgleich (decreaseOnly) zieht zu wenig berechnete Plätze nicht nach", async () => {
+    const c = await customer({ seatsBilled: 0 });
+    stripeState.sub = activeSub();
+    await makeBuyer(c.id, "owner");
+    for (let i = 0; i < 4; i++) await makeBuyer(c.id, "advisor");
+    const r = await syncSeatBilling(c.id, { decreaseOnly: true });
+    expect(r).toMatchObject({ ok: true, changed: false });
+    expect((await prisma.customer.findUniqueOrThrow({ where: { id: c.id } })).seatsBilled).toBe(0);
+  });
 });
