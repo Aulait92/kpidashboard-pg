@@ -238,6 +238,9 @@ describe("LinkedIn – Datenbank", () => {
     expect(drafts[0].scheduledAt?.toISOString()).toBe("2026-11-16T06:30:00.000Z");
     expect(pushes[0].title).toMatch(/3 Entwürfe für Montag/);
     expect(await generateDrafts("2026-11-16", { llm: fakeLlm(), imageGen })).toBe(0);
+    // Verworfene Entwürfe geben ihre Uhrzeit frei
+    await prisma.linkedInPost.updateMany({ where: { id: drafts[0].id }, data: { status: "verworfen" } });
+    expect(await generateDrafts("2026-11-16", { llm: fakeLlm(), imageGen })).toBe(1);
   });
 
   it("Automatik erst ab der eingestellten Uhrzeit und nur mit „Über mich“", async () => {

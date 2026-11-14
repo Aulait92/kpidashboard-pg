@@ -178,7 +178,8 @@ export async function generateDrafts(day: string, opts: { llm?: LlmCall; now?: D
   const settings = await getSettings();
   const slots = slotTimes(settings, day);
   if (!slots.length) return 0;
-  const existing = await prisma.linkedInPost.findMany({ where: { draftDate: day }, select: { scheduledAt: true } });
+  // Verworfene Entwürfe geben ihre Uhrzeit frei (Ole hatte gelöscht → „alle Uhrzeiten belegt“)
+  const existing = await prisma.linkedInPost.findMany({ where: { draftDate: day, status: { not: "verworfen" } }, select: { scheduledAt: true } });
   const usedMs = new Set(existing.map((e) => e.scheduledAt?.getTime()));
   const free = slots.filter((s) => !usedMs.has(s.getTime()));
   if (!free.length) return 0;
