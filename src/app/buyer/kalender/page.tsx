@@ -3,7 +3,9 @@ import { Ban, CalendarDays, CheckCircle2, Clock, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { buttonClass, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
-import { PROVIDER_LABELS } from "@/lib/calendar";
+import { getOrCreateBookingSlug, PROVIDER_LABELS } from "@/lib/calendar";
+import { BookingLinkCard } from "@/components/booking-link-card";
+import { appUrl } from "@/lib/whatsapp/event-text";
 import { prisma } from "@/lib/prisma";
 import { disconnectOwnCalendarAction } from "./actions";
 import { BlockTimes, LeadTimesForm, RemindButton, SourcePicker } from "@/components/calendar-sources";
@@ -48,6 +50,9 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
   const key = owner ? ctx.customerId : ownConnected ? userCalendarKey(ctx.userId!) : null;
   const setup = key ? await loadCalendarSetup(ctx.customerId, key) : null;
   const mainConnected = !!setup?.status.native.connected;
+  // Buchungsseite des Kundenkontos (Slug entsteht mit der Kalender-Verbindung des Kontos)
+  const hasConnection = !!(await prisma.calendarConnection.findUnique({ where: { customerId: ctx.customerId }, select: { id: true } }));
+  const bookingUrl = hasConnection ? `${appUrl() ?? ""}/book/${await getOrCreateBookingSlug(ctx.customerId)}` : null;
   const gcalNote =
     gcal === "connected" ? (
       <p className="mb-4 font-medium text-emerald-700">Kalender verbunden.</p>
@@ -63,6 +68,8 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader title="Mein Kalender" subtitle="Termine für Ihre Leads direkt in Ihrem Kalender" />
       {gcalNote}
+
+      <BookingLinkCard url={bookingUrl} calendarConnected={mainConnected || ownConnected} />
 
       <Card>
         <CardHeader title="Ihr Kalender" icon={CalendarDays} />
