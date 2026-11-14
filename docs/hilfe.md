@@ -40,6 +40,18 @@ Seiten aus der Liste „Seiten“ unten.
 - Rollen: **Inhaber** sieht alles. **Berater** sehen nur ihre eigenen Leads, keine Zahlen, kein Konto, kein Team.
 - Fast jede Aktion zeigt unten kurz eine Meldung mit „Rückgängig“.
 
+## Schnellsuche (Kontakt suchen)
+
+- Öffnen: am Rechner links oben in der Seitenleiste **„Kontakt suchen“** anklicken (in der bisherigen Oberfläche oben
+  rechts) oder überall in der App **Strg K** drücken (Mac: **⌘K**). Auf dem Handy die **Lupe** oben in der Kopfzeile
+  antippen, die Suche öffnet sich dann über den ganzen Bildschirm.
+- Ab 2 Zeichen erscheinen sofort Treffer: Kontakte (Leads) nach Name, Telefonnummer oder E-Mail. Die Telefonnummer
+  finden Sie in jeder Schreibweise, mit oder ohne Leerzeichen, mit 0 oder +49 (z. B. „0151 1234“ oder „+49151 1234“).
+- Inhaber mit dem Zusatzmodul Bestand finden dort auch Bestandskunden; mit WhatsApp erscheinen zusätzlich passende Chats.
+- Bedienung mit der Tastatur: Pfeiltasten wählen, Enter öffnet, Esc schließt.
+- Ist das Feld leer, zeigt die Suche die zuletzt darüber geöffneten Kontakte (nur auf diesem Gerät gespeichert).
+- Berater finden nur ihre eigenen Kontakte und Chats, genau wie in der Kontaktliste.
+
 ## Heute
 
 - Oben vier Kacheln: Chats, Termine, Wie lief's?, Anrufen. Antippen springt zum Abschnitt.

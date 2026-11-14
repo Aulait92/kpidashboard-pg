@@ -16,7 +16,6 @@ import {
   MessageCircle,
   MessageSquareText,
   Plane,
-  Search,
   ShoppingCart,
   Sparkles,
   Sun,
@@ -27,6 +26,7 @@ import {
 import { ToastProvider, useToast } from "@/components/ui/toast";
 import { PushHint, PushMenuItem } from "@/components/push-prompt";
 import { HilfeChat } from "@/components/hilfe-chat";
+import { BuyerSearch, BuyerSearchButton } from "@/components/buyer-search";
 import { AbsenceControl, dayShort, type ShellAbsence } from "@/components/absence-sheet";
 import { normalizePath, sendUsage } from "@/lib/usage-client";
 import { cn } from "@/lib/utils";
@@ -163,6 +163,8 @@ export function BuyerShell({
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
+            <BuyerSearchButton variant="field" className="hidden w-52 lg:flex" />
+            <BuyerSearchButton variant="icon" className="lg:hidden" />
             <HilfeChat firstName={displayName.replace(/^Allianz\s+/i, "").split(/\s+/)[0] ?? ""} owner={teamRole === "owner"} />
             <ProfileMenu name={displayName} owner={teamRole === "owner"} hasTeam={hasTeam} absence={absence} updatesUnread={updatesUnread} showBestand={showBestand} />
           </div>
@@ -174,6 +176,7 @@ export function BuyerShell({
         <PushHint />
         {children}
       </div>
+      <BuyerSearch storageKey={displayName} />
 
       {/* Handy: Tab-Leiste unten wie in einer nativen App */}
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[color:var(--border)] bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
@@ -473,12 +476,7 @@ function BuyerShellA({
               performance<span className="text-[color:var(--brand)]">growth</span>
             </span>
           </Link>
-          <Link
-            href="/buyer/kontakte"
-            className="mb-4 flex h-10 items-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken)] px-3 text-sm text-[color:var(--muted)] hover:border-[color:var(--border-strong)]"
-          >
-            <Search className="h-4 w-4" /> Kontakt suchen
-          </Link>
+          <BuyerSearchButton variant="field" className="mb-4" />
           <nav className="space-y-1" aria-label="Bereiche">
             {items.map((it) => {
               const active = it.match(pathname);
@@ -533,6 +531,7 @@ function BuyerShellA({
               </span>
             </Link>
             <div className="ml-auto flex items-center gap-2">
+              <BuyerSearchButton variant="icon" />
               <HilfeChat firstName={firstName} owner={owner} />
               <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} absence={absence} updatesUnread={updatesUnread} />
             </div>
@@ -544,6 +543,7 @@ function BuyerShellA({
           <PushHint />
           {children}
         </div>
+        <BuyerSearch storageKey={displayName} />
 
         {/* Handy: vier Bereiche unten */}
         <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[color:var(--border)] bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden" aria-label="Bereiche">
