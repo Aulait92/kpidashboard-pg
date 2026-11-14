@@ -348,6 +348,9 @@ export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData
             <Link href="/admin/einstellungen/kosten" className="shrink-0 whitespace-nowrap rounded-full border border-dashed border-[color:var(--border)] px-3.5 py-1.5 text-sm text-[color:var(--muted)]">
               Laufende Kosten →
             </Link>
+            <Link href="/admin/nutzung" className="shrink-0 whitespace-nowrap rounded-full border border-dashed border-[color:var(--border)] px-3.5 py-1.5 text-sm text-[color:var(--muted)]">
+              Nutzung →
+            </Link>
           </>
         ) : null}
       </div>

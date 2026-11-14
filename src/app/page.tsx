@@ -1,4 +1,4 @@
-import { SubTabs } from "@/components/admin-tabs";
+import { SubTabs } from "@/components/admin/sub-tabs";
 import { ChevronDown } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";

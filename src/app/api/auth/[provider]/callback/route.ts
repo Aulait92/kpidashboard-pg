@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { loginWithVerifiedEmail, takeSsoState, type LoginResult } from "@/lib/auth";
 import { publicOrigin } from "@/lib/calendar/oauth-routes";
+import { loginTargetFor } from "@/lib/login-ziel-server";
 import { reportError } from "@/lib/monitoring";
 import { exchangeCode, providerErrorCode, type SsoProvider } from "@/lib/sso";
 
@@ -39,5 +40,5 @@ export async function GET(req: Request, { params }: { params: Promise<{ provider
     if (result.needsTotp) redirect(`/login?schritt=code${saved!.next ? `&next=${encodeURIComponent(saved!.next)}` : ""}`);
     return fail("kein-konto");
   }
-  redirect(saved!.next || (result.payload.role === "BUYER" ? "/buyer" : "/"));
+  redirect(await loginTargetFor(result.payload, saved!.next));
 }

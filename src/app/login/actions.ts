@@ -1,8 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { completeTotpLogin, login, logout, type LoginResult, type SessionPayload } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { completeTotpLogin, login, logout, type LoginResult } from "@/lib/auth";
+import { loginTargetFor } from "@/lib/login-ziel-server";
 import { checkLimit, requestIp } from "@/lib/rate-limit";
 
 export type LoginActionState = {
@@ -45,8 +45,8 @@ export async function loginAction(
     return result.needsTotp ? { needsTotp: true } : { error: result.error };
   }
 
-  // Rolle bestimmt das Default-Ziel.
-  return { redirectTo: safeNext(next) ?? (await homeFor(result.payload)) };
+  // Gewünschte Seite (nur intern und nur, wenn sichtbar), sonst Startseite der Rolle.
+  return { redirectTo: await loginTargetFor(result.payload, next) };
 }
 
 export async function totpAction(_prev: LoginActionState, formData: FormData): Promise<LoginActionState> {
@@ -63,19 +63,7 @@ export async function totpAction(_prev: LoginActionState, formData: FormData): P
   if (!result.ok) {
     return result.needsTotp ? { needsTotp: true, error: "Code stimmt nicht. Bitte den aktuellen Code eingeben." } : { error: result.error };
   }
-  return { redirectTo: safeNext(next) ?? (await homeFor(result.payload)) };
-}
-
-/** Nur interne Pfade („/…“, nicht „//host“) als Ziel zulassen. */
-function safeNext(next: string): string | null {
-  return next.startsWith("/") && !next.startsWith("//") ? next : null;
-}
-
-/** Startseite nach dem Login: Kundenbereich bzw. Admin (neue Oberfläche startet bei „Heute“). */
-async function homeFor(p: SessionPayload): Promise<string> {
-  if (p.role === "BUYER") return "/buyer";
-  const u = await prisma.user.findUnique({ where: { id: p.userId }, select: { adminNewUi: true } }).catch(() => null);
-  return u?.adminNewUi ? "/admin/heute" : "/";
+  return { redirectTo: await loginTargetFor(result.payload, next) };
 }
 
 export async function logoutAction() {

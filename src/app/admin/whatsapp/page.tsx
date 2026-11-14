@@ -1,4 +1,4 @@
-import { SubTabs } from "@/components/admin-tabs";
+import { SubTabs } from "@/components/admin/sub-tabs";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";

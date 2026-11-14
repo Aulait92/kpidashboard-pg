@@ -9,15 +9,20 @@ type Hit = { kind: "kunde" | "kontakt" | "lead" | "seite"; id: string; title: st
 
 // Seiten und Schnellaktionen, die ohne Server gefunden werden.
 const PAGES: Hit[] = [
-  ["Heute", "/admin/vertrieb", "Vertrieb"],
+  ["Heute", "/admin/heute", "Start"],
+  ["Vertrieb: Übersicht", "/admin/vertrieb", "Vertrieb"],
   ["Neuer Kontakt", "/admin/vertrieb/kontakte/neu", "Vertrieb · anlegen"],
   ["Kontakte", "/admin/vertrieb/kontakte", "Vertrieb"],
   ["Akquise-Pipeline", "/admin/vertrieb/pipeline", "Vertrieb"],
   ["Aufgaben", "/admin/vertrieb/aufgaben", "Vertrieb"],
+  ["Follow-ups", "/admin/vertrieb/follow-ups", "Vertrieb"],
+  ["Angebote", "/admin/vertrieb/angebote", "Vertrieb"],
   ["Kunden", "/admin/kunden", "Kunden"],
   ["Kunden-Pipeline", "/admin/kunden/pipeline", "Kunden"],
   ["Leads", "/admin/leads", "Leads"],
   ["WhatsApp-Chats", "/admin/whatsapp", "Leads"],
+  ["Pay-per-Lead", "/admin/ppl", "Leads"],
+  ["Marketing", "/admin/marketing", "Marketing"],
   ["Zahlen (Investoren)", "/admin/zahlen", "Zahlen"],
   ["Dashboard Pay-per-Lead", "/", "Zahlen"],
   ["Laufende Kosten", "/admin/einstellungen/kosten", "Einstellungen"],

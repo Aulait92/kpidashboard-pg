@@ -2,20 +2,21 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Briefcase, Building2, Inbox, Megaphone, Settings, Sun, TrendingUp, type LucideIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { BarChart3, Briefcase, Building2, Inbox, Megaphone, MoreHorizontal, Settings, Sun, TrendingUp, type LucideIcon } from "lucide-react";
 import { CommandPalette } from "@/components/command-palette";
 import { AdminProfileMenu } from "@/components/admin/admin-profile-menu";
 import { cn } from "@/lib/utils";
 import { NotificationsButton } from "@/components/notifications-button";
 
-// Neue Admin-Oberfläche (Admin-A): Seitenleiste am Rechner, unten fünf
-// Bereiche am Handy. Die Seiten selbst bleiben dieselben wie bisher.
+// Admin-Oberfläche: Seitenleiste am Rechner, am Handy unten vier Bereiche
+// und „Mehr“ (Zahlen, Marketing, Einstellungen).
 // Platz für Seitenleiste/Leiste unten schafft globals.css über [data-admin-shell].
 
 const SETTINGS = ["/admin/einstellungen", "/admin/lead-eingang", "/admin/whatsapp/settings", "/admin/vertrieb/import", "/admin/buyers", "/admin/media-buyer"];
 const isSettings = (p: string) => SETTINGS.some((s) => p.startsWith(s));
 
-type Item = { href: string; label: string; icon: LucideIcon; match: (p: string) => boolean; badge?: number; /** nicht in der Leiste unten am Handy (dort im Profilmenü) */ desktopOnly?: boolean };
+type Item = { href: string; label: string; icon: LucideIcon; match: (p: string) => boolean; badge?: number; /** am Handy unter „Mehr“ statt in der Leiste unten */ more?: boolean };
 
 export function adminAreas(counts: { heute: number; vertrieb: number }): Item[] {
   return [
@@ -34,12 +35,13 @@ export function adminAreas(counts: { heute: number; vertrieb: number }): Item[] 
       icon: Inbox,
       match: (p) => p.startsWith("/admin/leads") || p.startsWith("/admin/ppl") || (p.startsWith("/admin/whatsapp") && !isSettings(p)),
     },
-    { href: "/admin/marketing", label: "Marketing", icon: Megaphone, match: (p) => p.startsWith("/admin/marketing"), desktopOnly: true },
+    { href: "/admin/marketing", label: "Marketing", icon: Megaphone, match: (p) => p.startsWith("/admin/marketing"), more: true },
     {
       href: "/admin/zahlen",
       label: "Zahlen",
       icon: BarChart3,
       match: (p) => p === "/" || p.startsWith("/admin/zahlen") || p.startsWith("/admin/nutzung") || p.startsWith("/admin/einstellungen/kosten"),
+      more: true,
     },
   ];
 }
@@ -122,7 +124,7 @@ export function AdminShell({ email, counts }: { email: string; counts: { heute: 
           <div className="px-1 pb-1 [&>div>button]:w-full">
             <NotificationsButton />
           </div>
-          <AdminProfileMenu email={email} newUi variant="sidebar" />
+          <AdminProfileMenu email={email} variant="sidebar" />
         </div>
       </aside>
 
@@ -134,42 +136,100 @@ export function AdminShell({ email, counts }: { email: string; counts: { heute: 
           <div className="ml-auto flex items-center gap-2">
             <CommandPalette />
             <NotificationsButton />
-            <AdminProfileMenu email={email} newUi />
+            <AdminProfileMenu email={email} />
           </div>
         </div>
       </header>
 
-      {/* Handy: fünf Bereiche unten */}
-      <nav
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-[color:var(--border)] bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
-        aria-label="Bereiche"
-      >
-        <ul className="mx-auto flex max-w-lg">
-          {items.filter((it) => !it.desktopOnly).map((it) => {
-            const active = it.match(pathname);
+      {/* Handy: vier Bereiche unten und „Mehr“ */}
+      <MobileNav items={items} pathname={pathname} settingsActive={settingsActive} />
+    </div>
+  );
+}
+
+/** Leiste unten am Handy: Hauptbereiche direkt, der Rest unter „Mehr“. */
+function MobileNav({ items, pathname, settingsActive }: { items: Item[]; pathname: string; settingsActive: boolean }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLElement>(null);
+  const main = items.filter((it) => !it.more);
+  const more = items.filter((it) => it.more);
+  const moreActive = settingsActive || more.some((it) => it.match(pathname));
+
+  // Außerhalb tippen oder Escape schließt (Links schließen beim Antippen selbst).
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent | TouchEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("touchstart", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("touchstart", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const tab = (active: boolean) => cn("flex w-full flex-col items-center gap-0.5 py-2 text-[12px] font-medium", active ? "text-[color:var(--brand)]" : "text-[color:var(--muted)]");
+  const sheetItem = (active: boolean) =>
+    cn(
+      "flex h-12 items-center gap-3 rounded-[var(--radius-md)] px-3 text-[15px] font-medium",
+      active ? "bg-[color:var(--brand-soft)] text-[color:var(--brand-dark)]" : "text-[color:var(--foreground)] hover:bg-[color:var(--surface-sunken)]",
+    );
+
+  return (
+    <nav
+      ref={ref}
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-[color:var(--border)] bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+      aria-label="Bereiche"
+    >
+      {open ? (
+        <div id="admin-mehr" className="absolute inset-x-2 bottom-full mb-2 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-2 shadow-[var(--shadow-lg)]">
+          {more.map((it) => {
             const Icon = it.icon;
+            const active = it.match(pathname);
             return (
-              <li key={it.href} className="flex-1">
-                <Link
-                  href={it.href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn("flex flex-col items-center gap-0.5 py-2 text-[12px] font-medium", active ? "text-[color:var(--brand)]" : "text-[color:var(--muted)]")}
-                >
-                  <span className="relative">
-                    <Icon className="h-6 w-6" strokeWidth={active ? 2.4 : 1.9} />
-                    {it.badge ? (
-                      <span className="absolute -right-2.5 -top-1.5">
-                        <Count n={it.badge} />
-                      </span>
-                    ) : null}
-                  </span>
-                  {it.label}
-                </Link>
-              </li>
+              <Link key={it.href} href={it.href} aria-current={active ? "page" : undefined} onClick={() => setOpen(false)} className={sheetItem(active)}>
+                <Icon className="h-5 w-5" strokeWidth={active ? 2.4 : 1.9} />
+                {it.label}
+              </Link>
             );
           })}
-        </ul>
-      </nav>
-    </div>
+          <Link href="/admin/einstellungen" aria-current={settingsActive ? "page" : undefined} onClick={() => setOpen(false)} className={sheetItem(settingsActive)}>
+            <Settings className="h-5 w-5" strokeWidth={settingsActive ? 2.4 : 1.9} />
+            Einstellungen
+          </Link>
+        </div>
+      ) : null}
+      <ul className="mx-auto flex max-w-lg">
+        {main.map((it) => {
+          const active = it.match(pathname);
+          const Icon = it.icon;
+          return (
+            <li key={it.href} className="flex-1">
+              <Link href={it.href} aria-current={active ? "page" : undefined} className={tab(active)}>
+                <span className="relative">
+                  <Icon className="h-6 w-6" strokeWidth={active ? 2.4 : 1.9} />
+                  {it.badge ? (
+                    <span className="absolute -right-2.5 -top-1.5">
+                      <Count n={it.badge} />
+                    </span>
+                  ) : null}
+                </span>
+                {it.label}
+              </Link>
+            </li>
+          );
+        })}
+        <li className="flex-1">
+          <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="admin-mehr" className={tab(moreActive || open)}>
+            <MoreHorizontal className="h-6 w-6" strokeWidth={moreActive || open ? 2.4 : 1.9} />
+            Mehr
+          </button>
+        </li>
+      </ul>
+    </nav>
   );
 }

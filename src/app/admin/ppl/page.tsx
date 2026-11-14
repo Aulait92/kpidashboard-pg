@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AlertTriangle, Plus } from "lucide-react";
-import { SubTabs } from "@/components/admin-tabs";
+import { SubTabs } from "@/components/admin/sub-tabs";
 import { Badge, Card, CardHeader } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";

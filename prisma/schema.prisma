@@ -709,7 +709,7 @@ model User {
   // Bekommt bei der Verteilung neue Leads
   receivesLeads      Boolean          @default(true)
   lastLeadAssignedAt DateTime?
-  // Admins: neue Oberfläche (Admin-A) testen; Standard aus
+  // Früher: neue Admin-Oberfläche an/aus. Nicht mehr genutzt (alle Admins fest auf der neuen, 18.11.)
   adminNewUi         Boolean          @default(true)
   adminDismissals    AdminDismissal[]
   assignedLeads      Lead[]           @relation("LeadAssignee")
@@ -2141,9 +2141,8 @@ model RechnerConfig {
   updatedAt DateTime @updatedAt
 }
 
-// Infokarte auf der Login-Seite (eine Zeile, id „default“). Vom Admin unter
-// Einstellungen → Login-Seite gepflegt; ohne Eintrag zeigt die Seite eine
-// Standard-Karte. Das Bild liegt klein in der DB und wird öffentlich unter
+// Infokarte auf der Login-Seite (eine Zeile, id „default“). Abgelöst durch
+// LoginCard (mehrere Karten, 18.11.); bleibt nur als Altbestand stehen. Das Bild liegt klein in der DB und wird öffentlich unter
 // /api/login-info/image ausgeliefert (keine personenbezogenen Daten).
 model LoginInfo {
   id        String   @id @default("default")
@@ -2156,6 +2155,33 @@ model LoginInfo {
   image     Bytes?
   imageType String?
   updatedAt DateTime @updatedAt
+}
+
+// Infokarten auf der Login-Seite (Admin → Einstellungen → Login): mehrere
+// Karten, an/aus und Reihenfolge (position). Bei jedem Aufruf der Login-Seite
+// zeigt die Seite die nächste aktive Karte (Zähler im Cookie, lib/login-karten.ts).
+// Bild: hochgeladen (image, öffentlich unter /api/login-info/image?id=…) oder
+// eine Datei aus /public (imagePath, z. B. /login-karten/kollegen.webp).
+model LoginCard {
+  id        String   @id @default(cuid())
+  // Fester Schlüssel für Karten, deren Text später aus Einstellungen kommen kann (z. B. „kollegen“)
+  key       String?  @unique
+  position  Int      @default(0)
+  enabled   Boolean  @default(true)
+  badge     String?
+  title     String
+  text      String?
+  linkText  String?
+  linkUrl   String?
+  image     Bytes?
+  imageType String?
+  imagePath String?
+  // Klicks auf den Link der Karte (über /api/login-info/klick)
+  clicks    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([enabled, position])
 }
 
 // Garantiefälle (Lead-Garantie, Break-even-Garantie; AGB „Garantien“).
