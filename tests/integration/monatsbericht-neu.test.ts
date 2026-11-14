@@ -200,7 +200,7 @@ describe("Monatsbericht neu", () => {
     expect(m.paragraphs).toEqual([DEFAULT_INTRO]);
     for (const t of Object.values(SECTION_TITLES)) expect(m.html).toContain(t.replace("&", "&amp;"));
     expect(m.html).toContain("Zwei neue Motive für die Katzenkampagne");
-    expect(m.html).toContain("https://cal.test/ole");
+    expect(m.html).not.toContain("Gespräch vereinbaren"); // kein Gesprächs-Knopf (Ole, 14.11.2026)
     expect(m.html).toContain("/buyer/zahlen?range=custom&amp;from=2026-10-01&amp;to=2026-10-31");
     expect(m.textBlocks!.join("\n")).toContain("Alle Zahlen ansehen: ");
     const out = process.env.MONATSBERICHT_HTML;
