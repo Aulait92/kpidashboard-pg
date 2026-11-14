@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { AdvisorHeader } from "@/components/empfehlung/advisor-header";
 import { HeartHandshake } from "lucide-react";
 import { loadReferralPage, contactLinkFor } from "@/lib/empfehlung/requests";
 import { shareText } from "@/lib/empfehlung/shared";
@@ -28,7 +29,7 @@ export default async function ReferralSharePage({ params, searchParams }: { para
   }
   const text = shareText(page.vertreter, contactLinkFor(token), page.offer);
   return (
-    <Shell>
+    <Shell advisor={page.vertreter} label="Ihr Berater">
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200">
         <HeartHandshake className="h-6 w-6" />
       </div>
@@ -71,9 +72,10 @@ export default async function ReferralSharePage({ params, searchParams }: { para
   );
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ children, advisor, label }: { children: React.ReactNode; advisor?: string; label?: string }) {
   return (
     <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6 sm:py-10">
+      {advisor ? <AdvisorHeader name={advisor} label={label} /> : null}
       <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-md)] sm:p-7">{children}</div>
     </main>
   );

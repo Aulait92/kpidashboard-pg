@@ -680,7 +680,7 @@ export function ShareReferral({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <div className="space-y-3">
-      <div className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] p-4 text-[15px] leading-relaxed">{text}</div>
+      <div className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] p-4 text-[15px] leading-relaxed [overflow-wrap:anywhere]">{text}</div>
       <div className="grid gap-2 sm:grid-cols-2">
         <a href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer" className={buttonClass("primary", "md", "h-12 text-base")} onClick={() => haptic("light")}>
           <MessageCircle className="h-4 w-4" /> Per WhatsApp teilen

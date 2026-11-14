@@ -10,6 +10,21 @@ export async function SiteFooter() {
   if (h.get("x-app-area") === "buyer") return null;
   // Login-Seite bringt ihren eigenen, dezenten Footer mit.
   if (h.get("x-bare-layout") === "login") return null;
+  // Seiten für Endkunden der Vermittler: nur Pflicht-Links, kein performancegrowth-Name (Ole, 14.11.2026).
+  if (h.get("x-bare-layout") === "lead") {
+    return (
+      <footer className="mt-8 px-4 py-4 text-center text-xs text-[color:var(--muted)] print:hidden">
+        <div className="flex items-center justify-center gap-4">
+          <a href="https://performancegrowth.de/impressum" target="_blank" rel="noopener noreferrer" className="hover:underline">
+            Impressum
+          </a>
+          <a href="https://performancegrowth.de/datenschutz" target="_blank" rel="noopener noreferrer" className="hover:underline">
+            Datenschutz
+          </a>
+        </div>
+      </footer>
+    );
+  }
   return (
     <footer className="mt-12 border-t print:hidden border-[color:var(--border)] px-4 py-4 text-center text-xs text-[color:var(--muted)] sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-[1600px] flex-col items-center justify-center gap-x-4 gap-y-1 sm:flex-row">

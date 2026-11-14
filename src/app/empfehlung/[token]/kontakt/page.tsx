@@ -1,3 +1,4 @@
+import { AdvisorHeader } from "@/components/empfehlung/advisor-header";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { CheckCircle2, ClipboardCheck, MessageCircle, UserRound } from "lucide-react";
@@ -49,7 +50,7 @@ export default async function ReferralContactPage({ params, searchParams }: { pa
   }
   if (sp.ok) {
     return (
-      <Shell>
+      <Shell advisor={page.vertreter}>
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200">
           <CheckCircle2 className="h-6 w-6" />
         </div>
@@ -67,7 +68,7 @@ export default async function ReferralContactPage({ params, searchParams }: { pa
   const offer = page.offer;
   const renderedAt = nowMs();
   return (
-    <Shell>
+    <Shell advisor={page.vertreter}>
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)]/10 text-[color:var(--brand)]">
         {offer ? <ClipboardCheck className="h-6 w-6" /> : <UserRound className="h-6 w-6" />}
       </div>
@@ -162,9 +163,10 @@ export default async function ReferralContactPage({ params, searchParams }: { pa
   );
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ children, advisor, label }: { children: React.ReactNode; advisor?: string; label?: string }) {
   return (
     <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6 sm:py-10">
+      {advisor ? <AdvisorHeader name={advisor} label={label} /> : null}
       <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-md)] sm:p-7">{children}</div>
     </main>
   );

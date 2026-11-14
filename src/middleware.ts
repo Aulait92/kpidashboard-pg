@@ -78,10 +78,15 @@ export async function middleware(req: NextRequest) {
   const moved = legacyRedirect(req);
   if (moved) return moved;
   const { pathname } = req.nextUrl;
+  // Seiten für Endkunden der Vermittler (Terminbuchung, Empfehlung): ohne performancegrowth-Kopfzeile
+  // und mit neutralem Footer – die Seite gehört dem Vermittler (Ole, 14.11.2026).
+  if (pathname === "/book" || pathname.startsWith("/book/") || pathname.startsWith("/empfehlung/")) {
+    const headers = new Headers(req.headers);
+    headers.set("x-bare-layout", "lead");
+    return NextResponse.next({ request: { headers } });
+  }
   // Lead-Seiten ohne Dashboard-Header rendern (SiteHeader liest das Flag).
   if (
-    pathname === "/book" ||
-    pathname.startsWith("/book/") ||
     pathname.startsWith("/angebot/") ||
     pathname.startsWith("/rechtliches/") ||
     pathname === "/rechner" ||
