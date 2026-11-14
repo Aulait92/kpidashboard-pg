@@ -420,10 +420,11 @@ function CloseValueDialog({
   onConfirm: (value: number | null) => void;
 }) {
   const provisionRates = useProvisionRates();
-  const field = closeValueField(source, provisionRates) ?? { label: "Wert des Abschlusses (optional)", hint: "", placeholder: "z. B. 1.200" };
+  const field = closeValueField(source, provisionRates) ?? { label: "Wert des Abschlusses (optional)", hint: "", placeholder: "z. B. 1.200", factor: 1 };
   const dialogRef = useRef<HTMLDialogElement>(null);
+  // Leben/BU: Eingabe als Monatsbeitrag, gespeichert als Jahresbeitrag (factor 12)
   const [value, setValue] = useState<string>(
-    currentValue != null ? String(currentValue) : "",
+    currentValue != null ? String(Math.round((currentValue / field.factor) * 100) / 100).replace(".", ",") : "",
   );
   useEffect(() => {
     const d = dialogRef.current;
@@ -447,7 +448,7 @@ function CloseValueDialog({
         onSubmit={(e) => {
           e.preventDefault();
           if (!valid) return;
-          onConfirm(parsed);
+          onConfirm(parsed == null ? null : Math.round(parsed * field.factor * 100) / 100);
         }}
         className="flex flex-col"
       >

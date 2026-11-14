@@ -18,7 +18,8 @@ export function asksSparteFor(source: string | null | undefined): boolean {
 }
 
 /**
- * Abschluss speichern, je nach Produkt mit Monatsbeitrag (PKV) oder Jahresbeitrag. Bei Empfehlungen,
+ * Abschluss speichern, je nach Produkt mit Monatsbeitrag (PKV, Leben/BU), monatlicher Ersparnis
+ * (PKV-Tarifoptimierung) oder Jahresbeitrag. Bei Empfehlungen,
  * Bestandskunden und unbekannten Produkten zuerst die Sparte wählen (Ole, 14.11.2026): dann rechnet
  * die App mit dem Satz dieser Sparte. Bei festem Satz gar nicht öffnen (asksCloseValue).
  */
@@ -42,8 +43,8 @@ export function AbschlussSheet({
   const field = needsSparte
     ? sparte
       ? premiumFieldForSparte(sparte, rates)
-      : { label: "Beitrag netto (optional)", hint: "Bitte zuerst die Sparte wählen.", placeholder: "z. B. 400" }
-    : (closeValueField(source, rates) ?? { label: "Wert des Abschlusses (optional)", hint: "", placeholder: "z. B. 1.200" });
+      : { label: "Beitrag netto (optional)", hint: "Bitte zuerst die Sparte wählen.", placeholder: "z. B. 400", factor: 1 }
+    : (closeValueField(source, rates) ?? { label: "Wert des Abschlusses (optional)", hint: "", placeholder: "z. B. 1.200", factor: 1 });
   const label = needsSparte && sparte ? `${field.label} (optional)` : field.label;
   const reset = () => {
     setValue("");
@@ -67,7 +68,8 @@ export function AbschlussSheet({
           const n = Number.parseFloat(value.replace(/\./g, "").replace(",", "."));
           const chosen = needsSparte && sparte ? sparte : null;
           reset();
-          onSave(Number.isFinite(n) && n > 0 ? n : null, chosen);
+          // Leben/BU: Monatsbeitrag eingegeben, gespeichert wird der Jahresbeitrag (factor 12)
+          onSave(Number.isFinite(n) && n > 0 ? Math.round(n * field.factor * 100) / 100 : null, chosen);
         }}
       >
         {needsSparte ? (

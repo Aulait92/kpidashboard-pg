@@ -76,8 +76,9 @@ describe("Break-even-Rechner", () => {
     expect(productsFor(cfg, "vertreter").map((p) => p.key)).not.toContain("pkv");
     expect(productsFor(cfg, "makler").map((p) => p.key)).toContain("pkv");
     const i = base({}, pkv, "makler");
-    expect(i.months).toBe(10);
-    expect(provisionPerVertrag("monthly", i, 3)).toBe(2500); // 250 € × 10
+    // Standard aus lib/provision (PKV: 9 Monatsbeiträge, § 50 VAG höchstens 9,9)
+    expect(i.months).toBe(9);
+    expect(provisionPerVertrag("monthly", i, 3)).toBe(2250); // 250 € × 9
   });
 
   it("Staffel: höchste erreichte Stufe gilt für alle Verträge", () => {

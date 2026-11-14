@@ -6,6 +6,7 @@ import { loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
 import { OnboardingCard } from "@/components/vertrieb/onboarding-card";
 import { NewUiCard } from "@/components/admin/new-ui-card";
 import { VermittlerCard } from "@/components/admin/vermittler-card";
+import { StornoQuoteKunde } from "@/components/admin/storno-quote";
 import { GarantienCard } from "@/components/admin/garantien-card";
 import { SetupCard } from "@/components/admin/setup-card";
 import { TestdatenCard } from "@/components/admin/testdaten-card";
@@ -29,6 +30,7 @@ export default async function KundenakteUebersicht({ params, searchParams }: { p
       <div className="space-y-5">
         <NewUiCard customerId={id} />
         <VermittlerCard customerId={id} />
+        <StornoQuoteKunde customerId={id} />
         <GarantienCard customerId={id} />
         <SetupCard customerId={id} notice={notice} />
         <TestdatenCard customerId={id} />
@@ -44,6 +46,7 @@ export default async function KundenakteUebersicht({ params, searchParams }: { p
     <div className="space-y-5">
     <NewUiCard customerId={id} />
     <VermittlerCard customerId={id} />
+    <StornoQuoteKunde customerId={id} />
         <GarantienCard customerId={id} />
         <SetupCard customerId={id} notice={notice} />
         <TestdatenCard customerId={id} />

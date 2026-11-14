@@ -28,7 +28,15 @@ describe("Sparten und Provision je Vertrag", () => {
     expect(sparteForSource("Pferd OP")).toBe("pferd");
     expect(sparteForSource("Hundehaftpflicht")).toBe("privatschutz");
     expect(sparteForSource("Allianz Privatschutz")).toBe("privatschutz");
-    expect(sparteForSource("PKV-Tarifoptimierung")).toBe("pkv");
+    expect(sparteForSource("PKV-Tarifoptimierung")).toBe("pkv_tarif");
+    expect(sparteForSource("Wechsel")).toBe("pkv_tarif");
+    expect(sparteForSource("PKV-Wechsel")).toBe("pkv_tarif");
+    expect(sparteForSource("PKV-Neugeschäft")).toBe("pkv");
+    expect(sparteForSource("Neugeschäft")).toBe("pkv");
+    expect(sparteForSource("BU-Absicherung")).toBe("bu");
+    expect(sparteForSource("Berufsunfähigkeit")).toBe("bu");
+    expect(sparteForSource("Private Rente")).toBe("leben_bu");
+    expect(sparteForSource("Risikoleben")).toBe("leben_bu");
     expect(sparteForSource("Kindersparplan")).toBe("kindersparplan");
     expect(sparteForSource("Empfehlung")).toBeNull();
     expect(sparteForSource(null)).toBeNull();
@@ -39,17 +47,17 @@ describe("Sparten und Provision je Vertrag", () => {
     expect(p).toMatchObject({ abschluss: 220, trailPerYear: 40, trailFromYear2: true, firstYear: 220, premiumMissing: false });
     // Neue Sparte ohne eigenen Satz: Sach-Standard
     expect(contractProvision({ sparte: "hausrat", premium: 300 }, vertreter)).toMatchObject({ abschluss: 165, trailPerYear: 30, firstYear: 165 });
-    // Ohne Beitrag: Standardbeitrag der Sparte (TKV 350 €), neue Sparten 0 €
+    // Ohne Beitrag: Standardbeitrag der Sparte (TKV 350 €, Hausrat 120 €; 0 € gibt es nicht mehr)
     expect(contractProvision({ sparte: "hund", premium: null }, vertreter)).toMatchObject({ abschluss: 192.5, premiumMissing: true });
-    expect(contractProvision({ sparte: "kfz", premium: null }, vertreter).firstYear).toBe(0);
+    expect(contractProvision({ sparte: "hausrat", premium: null }, vertreter)).toMatchObject({ abschluss: 66, premiumUsed: 120 });
   });
 
   it("Makler: keine Abschlussprovision bei Sach, Courtage 1. Jahr = 22,5 % Bestand", () => {
     const p = contractProvision({ sparte: "privatschutz", premium: 600 }, makler);
     expect(p).toMatchObject({ abschluss: 0, trailPerYear: 135, trailFromYear2: false, firstYear: 135 });
     expect(contractProvision({ sparte: "unfall", premium: 200 }, makler).firstYear).toBe(45);
-    // PKV: Monatsbeiträge
-    expect(contractProvision({ sparte: "pkv", premium: 300 }, makler)).toMatchObject({ abschluss: 3000, trailPerYear: 0, firstYear: 3000 });
+    // PKV-Neugeschäft: 9 Monatsbeiträge
+    expect(contractProvision({ sparte: "pkv", premium: 300 }, makler)).toMatchObject({ abschluss: 2700, trailPerYear: 0, firstYear: 2700 });
   });
 
   it("eigene Sätze je Sparte, Storno = 0, fester Altwert ohne Beitrag", () => {
@@ -233,7 +241,10 @@ describe("Eingabe und Erinnerung", () => {
   it("prüft Sparte, Beitrag und Datum", () => {
     const now = D("2026-11-14");
     const ok = parseContractInput({ sparte: "hausrat", premium: "1.234,50", signedAt: "2026-11-01", insurer: " Allianz ", contractNo: "" }, now);
-    expect(ok).toEqual({ ok: true, value: { sparte: "hausrat", premium: 1234.5, signedAt: D("2026-11-01"), insurer: "Allianz", contractNo: null, fileId: null } });
+    expect(ok).toEqual({
+      ok: true,
+      value: { sparte: "hausrat", premium: 1234.5, signedAt: D("2026-11-01"), insurer: "Allianz", contractNo: null, fileId: null, termYears: null, customerAge: null, endAge: null, beitragssumme: null },
+    });
     expect(parseContractInput({ sparte: "quatsch" }, now).ok).toBe(false);
     expect(parseContractInput({ sparte: "kfz", premium: "-5" }, now).ok).toBe(false);
     expect(parseContractInput({ sparte: "kfz", signedAt: "2027-01-01" }, now).ok).toBe(false);

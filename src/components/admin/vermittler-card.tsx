@@ -23,7 +23,7 @@ export async function VermittlerCard({ customerId }: { customerId: string }) {
           </span>
         </div>
         <p className="text-[color:var(--muted)]">
-          Bestimmt die Provisionsschätzung je Abschluss. Makler: Sach als Bestandsprovision, PKV-Tarifoptimierung in Monatsbeiträgen.
+          Bestimmt die Provisionsschätzung je Abschluss. Makler: Sach als Bestandscourtage, Leben/BU in Promille der Beitragssumme, PKV-Tarifoptimierung als Honorar.
         </p>
       </div>
       <form action={setVermittlerTypAction} className="flex gap-1.5">

@@ -2,8 +2,8 @@ import { UsersRound } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui";
 import { formatEUR, formatNumber } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
-import { contractProvision } from "@/lib/provision";
-import { loadErtragData } from "@/lib/ertrag";
+import { BESTAND_JAHRE, cohortFutureTrail, contractProvision, STORNO_PRO_JAHR } from "@/lib/provision";
+import { loadErtragData, trailContractOf } from "@/lib/ertrag";
 import { leadOrigin, LEAD_ORIGIN_SELECT } from "@/lib/lead-herkunft";
 import { memberName, teamMembers } from "@/lib/team";
 import { nextStepRatesByAdvisor } from "@/lib/lead-next-step-server";
@@ -11,8 +11,9 @@ import { NEXT_STEP_WARN_BELOW } from "@/lib/lead-next-step";
 
 // Auswertung je Team-Mitglied (nur Inhaber, nur wenn es ein Team gibt). Gleiche Logik wie die Karten
 // (Ole, 14.11.2026): Leads und Quoten nur aus bezahlten Leads, Provision über alle Verträge
-// (Empfehlungen, Cross-Selling) mit der Rate ihrer Sparte.
-export async function TeamStats({ customerId, range }: { customerId: string; range: { from: Date; to: Date } }) {
+// (Empfehlungen, Cross-Selling) mit der Rate ihrer Sparte. mitBestand: gleicher Schalter wie die Karte
+// Gewinn („Inkl. Bestand“), dann mit künftiger Bestandsprovision der Verträge dieses Zeitraums (5 Jahre).
+export async function TeamStats({ customerId, range, mitBestand = false }: { customerId: string; range: { from: Date; to: Date }; mitBestand?: boolean }) {
   const members = await teamMembers(customerId);
   if (members.length < 2) return null;
   const [data, leads, steps] = await Promise.all([
@@ -30,8 +31,10 @@ export async function TeamStats({ customerId, range }: { customerId: string; ran
     // Nächster Schritt je Berater (Stand jetzt, Ziel 100 %)
     nextStepRatesByAdvisor(customerId),
   ]);
-  type Row = { leads: number; reached: number; termine: number; closed: number; umsatz: number; bestand: number };
-  const empty = (): Row => ({ leads: 0, reached: 0, termine: 0, closed: 0, umsatz: 0, bestand: 0 });
+  type Row = { leads: number; reached: number; termine: number; closed: number; umsatz: number; bestand: number; future: number };
+  const empty = (): Row => ({ leads: 0, reached: 0, termine: 0, closed: 0, umsatz: 0, bestand: 0, future: 0 });
+  const now = new Date();
+  const storno = data.storno ?? STORNO_PRO_JAHR;
   const rows = new Map<string | null, Row>();
   for (const l of leads) {
     if (l.status?.toLowerCase().startsWith("storno")) continue;
@@ -44,11 +47,19 @@ export async function TeamStats({ customerId, range }: { customerId: string; ran
     rows.set(l.assignedUserId, r);
   }
   for (const c of data.contracts) {
+    // Rückbelastung im Monat der Kündigung (wie die Karten)
+    if (c.status === "storniert" && c.cancelledAt && c.cancelledAt >= range.from && c.cancelledAt <= range.to && (c.chargeback ?? 0) > 0) {
+      const r = rows.get(c.assignedUserId) ?? empty();
+      r.umsatz -= c.chargeback!;
+      rows.set(c.assignedUserId, r);
+    }
     if (c.periodAt < range.from || c.periodAt > range.to) continue;
-    const p = contractProvision(c, data.rates);
+    // Gekündigte Verträge: Abschlussprovision zählt (wie auf den Karten), Bestand nur bis zur Kündigung
+    const p = contractProvision({ ...c, status: "aktiv" }, data.rates);
     const r = rows.get(c.assignedUserId) ?? empty();
     r.umsatz += p.firstYear;
-    r.bestand += p.trailPerYear;
+    if (!(c.status === "storniert" && c.cancelledAt && c.cancelledAt <= now)) r.bestand += p.trailPerYear;
+    r.future += cohortFutureTrail(trailContractOf(c, data.rates, storno), now, BESTAND_JAHRE, storno);
     rows.set(c.assignedUserId, r);
   }
   const list = [
@@ -77,9 +88,14 @@ export async function TeamStats({ customerId, range }: { customerId: string; ran
               <th className="px-3 py-2.5 text-right" title="Geschätzt aus Sparte und Beitrag, inklusive Empfehlungen und Cross-Selling">
                 {makler ? "Courtage 1. Jahr" : "Abschlussprovision"}
               </th>
-              <th className="px-5 py-2.5 text-right" title="Laufend pro Jahr aus den Verträgen dieses Zeitraums">
+              <th className={`${mitBestand ? "px-3" : "px-5"} py-2.5 text-right`} title="Laufend pro Jahr aus den Verträgen dieses Zeitraums">
                 Bestand pro Jahr
               </th>
+              {mitBestand ? (
+                <th className="px-5 py-2.5 text-right" title="Provision plus künftige Bestandsprovision dieser Verträge über 5 Jahre (Prognose mit Ihrer Stornoquote)">
+                  mit künftigem Bestand
+                </th>
+              ) : null}
             </tr>
           </thead>
           <tbody className="divide-y divide-[color:var(--border)] tabular-nums">
@@ -101,7 +117,8 @@ export async function TeamStats({ customerId, range }: { customerId: string; ran
                     {st && st.withoutNextStep > 0 ? <span className="block text-xs font-normal text-[color:var(--muted)]">{st.withoutNextStep} ohne</span> : null}
                   </td>
                   <td className="px-3 py-2.5 text-right">{formatEUR(r.umsatz)}</td>
-                  <td className="px-5 py-2.5 text-right">{formatEUR(r.bestand)}</td>
+                  <td className={`${mitBestand ? "px-3" : "px-5"} py-2.5 text-right`}>{formatEUR(r.bestand)}</td>
+                  {mitBestand ? <td className="px-5 py-2.5 text-right">{formatEUR(r.umsatz + r.future)}</td> : null}
                 </tr>
               );
             })}

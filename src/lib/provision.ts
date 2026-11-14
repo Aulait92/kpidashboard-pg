@@ -22,11 +22,24 @@
 // zusammen, das Ergebnis wird als `overrides` übergeben.
 
 // Cross-Selling (Ole, 14.11.2026): Sätze je Sparte. Katze/Hund/Pferd rechnen mit dem TKV-Satz,
-// Privatschutz/Haftpflicht mit dem Privatschutz-Satz, PKV wie bisher. Die übrigen Sparten haben
-// vorläufig den Sach-Standard (Vertreter 55 % Abschluss + 10 % Bestand ab dem 2. Jahr, Makler
-// 22,5 % Bestand) und keinen Standardbeitrag; änderbar in „Konto → Meine Provisionen“.
+// Privatschutz/Haftpflicht mit dem Privatschutz-Satz.
+//
+// Rechenarten je Sparte (Ole, 14.11.2026, „lebenprodukte werden anders berechnet“). Alle Standardwerte
+// sind Erfahrungswerte und in „Konto → Meine Provisionen“ änderbar:
+//
+// | Rechenart      | Sparten                                   | Grundlage                                        |
+// |----------------|-------------------------------------------|--------------------------------------------------|
+// | percent        | Sach (TKV, Privatschutz, Hausrat, …), KFZ | % vom Jahresbeitrag (+ laufender Bestand)        |
+// | beitragssumme  | Leben/Rente, BU, Kindersparplan           | ‰ der Beitragssumme (Monatsbeitrag × 12 × Jahre) |
+// |                |                                           | + 1,5 % Bestand vom Jahresbeitrag ab dem 1. Jahr |
+// | monthly        | PKV-Neugeschäft                           | Monatsbeiträge, höchstens 9,9 (§ 50 VAG)         |
+// | honorar        | PKV-Tarifoptimierung (§ 204 VVG)          | Ersparnis × Monate oder fester Betrag (vom Kunden)|
+//
+// Bei beitragssumme ist LeadContract.premium der Jahresbeitrag (Eingabe als Monatsbeitrag × 12), bei
+// PKV der Monatsbeitrag, bei der Tarifoptimierung die monatliche Ersparnis des Kunden.
 export type ProductKey =
   | "pkv"
+  | "pkv_tarif"
   | "privatschutz"
   | "tkv"
   | "unfall"
@@ -36,42 +49,90 @@ export type ProductKey =
   | "kindersparplan"
   | "kfz"
   | "leben_bu"
+  | "bu"
   | "sonstiges";
 
-export type RateSpec =
+/** Eigene Stornoquote pro Jahr für dieses Produkt (Anteil, 0,1 = 10 %); ohne Angabe gilt die allgemeine. */
+type WithStorno = { storno?: number };
+
+export type RateSpec = (
   | { kind: "fixed"; amount: number }
   // rate = Abschlussprovision vom Jahresbeitrag (darf 0 sein),
   // trail = laufende Bestandsprovision pro Jahr vom Jahresbeitrag
   | { kind: "percent"; rate: number; defaultPremium: number; trail?: number; trailFromYear2?: boolean }
-  | { kind: "monthly"; months: number; fallbackAmount: number };
+  | { kind: "monthly"; months: number; fallbackAmount: number }
+  // Leben/BU/Rente/Kindersparplan: promille = Abschlussprovision in ‰ der Beitragssumme, trail = Bestand
+  // pro Jahr vom Jahresbeitrag (ab dem 1. Jahr), haftungMonate = Stornohaftungszeit
+  | {
+      kind: "beitragssumme";
+      promille: number;
+      trail: number;
+      defaultMonthly: number;
+      defaultYears: number;
+      /** Laufzeit bis zu diesem Alter, wenn das Alter des Kunden bekannt ist (BU: 67). */
+      defaultEndAge?: number | null;
+      haftungMonate: number;
+    }
+  // PKV-Tarifoptimierung: Honorar vom Kunden = Ersparnis × Monate oder fester Betrag (> 0), kein Bestand
+  | { kind: "honorar"; months: number; fixedAmount?: number | null; defaultSavings: number }
+) &
+  WithStorno;
+
+export type RateKind = RateSpec["kind"];
 
 export type ProvisionRule = (RateSpec & { key: ProductKey; product: string }) | { kind: "value" };
 
 /** Kundenspezifische Sätze je Produkt; gelten vor den Standardregeln. */
 export type ProvisionOverrides = Partial<Record<ProductKey, RateSpec>>;
 
+/** § 50 VAG: Abschlussprovision PKV höchstens 3,3 % der Bruttobeitragssumme über 25 Jahre = 9,9 Monatsbeiträge. */
+export const PKV_MAX_MONTHS = 9.9;
+/** Stornohaftungszeit Leben/BU in Monaten (Standard). */
+export const HAFTUNG_MONATE = 60;
+
+const sach = (defaultPremium: number): RateSpec => ({ kind: "percent", rate: 0.55, trail: 0.1, trailFromYear2: true, defaultPremium });
+const leben = (defaultMonthly: number, defaultYears: number, defaultEndAge: number | null = null): RateSpec => ({
+  kind: "beitragssumme",
+  promille: 25,
+  trail: 0.015,
+  defaultMonthly,
+  defaultYears,
+  ...(defaultEndAge ? { defaultEndAge } : {}),
+  haftungMonate: HAFTUNG_MONATE,
+});
+
 /** Standardregeln mit stabilem Schlüssel und Anzeigenamen (für Einstellungen). */
 export const PROVISION_PRODUCTS: readonly { key: ProductKey; label: string; match: RegExp; standard: RateSpec }[] = [
-  // PKV: nur Makler (8–12 Monatsbeiträge Abschlussprovision, Standard 10). Hat ein
-  // Vertreter trotzdem einen PKV-Lead, gilt derselbe Standard.
-  { key: "pkv", label: "PKV-Tarifoptimierung", match: /pkv/i, standard: { kind: "monthly", months: 10, fallbackAmount: 2500 } },
+  // PKV-Neugeschäft: Monatsbeiträge (Standard 9, höchstens 9,9 nach § 50 VAG)
+  { key: "pkv", label: "PKV-Neugeschäft", match: /pkv|neugesch/i, standard: { kind: "monthly", months: 9, fallbackAmount: 2500 } },
+  // PKV-Tarifoptimierung nach § 204 VVG: Honorar vom Kunden (Ersparnis × 6 Monate), kein Bestand
+  { key: "pkv_tarif", label: "PKV-Tarifoptimierung (§ 204 VVG)", match: /tarif-?optim|204/i, standard: { kind: "honorar", months: 6, defaultSavings: 100 } },
   // Vertreter: 10 % Bestandsprovision, gezahlt ab dem 2. Jahr (Ole, 13.11.2026 – wie im Rechner)
-  { key: "privatschutz", label: "Privatschutz", match: /privatschutz/i, standard: { kind: "percent", rate: 0.55, trail: 0.1, trailFromYear2: true, defaultPremium: 600 } },
-  { key: "tkv", label: "TKV", match: /\btkv\b|tierkranken/i, standard: { kind: "percent", rate: 0.55, trail: 0.1, trailFromYear2: true, defaultPremium: 350 } },
-  // Weitere Sparten (Cross-Selling): vorläufig Sach-Standard, ohne Standardbeitrag (Ole fragen)
-  { key: "unfall", label: "Unfall", match: /unfall/i, standard: sachStandard() },
-  { key: "hausrat", label: "Hausrat", match: /hausrat/i, standard: sachStandard() },
-  { key: "wohngebaeude", label: "Wohngebäude", match: /geb(ä|a)ude/i, standard: sachStandard() },
-  { key: "rechtsschutz", label: "Rechtsschutz", match: /rechtsschutz/i, standard: sachStandard() },
-  { key: "kindersparplan", label: "Kindersparplan", match: /sparplan/i, standard: sachStandard() },
-  { key: "kfz", label: "KFZ", match: /\bkfz\b|kraftfahrt|\bauto/i, standard: sachStandard() },
-  { key: "leben_bu", label: "Leben/BU", match: /leben|\bbu\b|berufsunf/i, standard: sachStandard() },
-  { key: "sonstiges", label: "Sonstiges", match: /^$/, standard: sachStandard() },
+  { key: "privatschutz", label: "Privatschutz", match: /privatschutz/i, standard: sach(600) },
+  { key: "tkv", label: "TKV", match: /\btkv\b|tierkranken/i, standard: sach(350) },
+  // Weitere Sach-Sparten: Sach-Standard mit typischem Jahresbeitrag (0 € ist nicht zulässig)
+  { key: "unfall", label: "Unfall", match: /unfall/i, standard: sach(180) },
+  { key: "hausrat", label: "Hausrat", match: /hausrat/i, standard: sach(120) },
+  { key: "wohngebaeude", label: "Wohngebäude", match: /geb(ä|a)ude/i, standard: sach(500) },
+  { key: "rechtsschutz", label: "Rechtsschutz", match: /rechtsschutz/i, standard: sach(300) },
+  // KFZ: keine Abschlussprovision, 5 % laufend vom Jahresbeitrag ab dem 1. Jahr
+  { key: "kfz", label: "KFZ", match: /\bkfz\b|kraftfahrt|\bauto/i, standard: { kind: "percent", rate: 0, trail: 0.05, defaultPremium: 600 } },
+  // Leben, Rente, BU, Kindersparplan: ‰ der Beitragssumme
+  { key: "leben_bu", label: "Leben/Rente", match: /leben|rente/i, standard: leben(100, 30) },
+  { key: "bu", label: "BU", match: /\bbu\b|berufsunf/i, standard: leben(80, 30, 67) },
+  { key: "kindersparplan", label: "Kindersparplan", match: /sparplan/i, standard: leben(50, 18) },
+  { key: "sonstiges", label: "Sonstiges", match: /^$/, standard: sach(300) },
 ];
 
-/** Sach-Standard für Sparten ohne eigenen Satz (Vertreter); Makler siehe MAKLER_STANDARD. */
-function sachStandard(): RateSpec {
-  return { kind: "percent", rate: 0.55, trail: 0.1, trailFromYear2: true, defaultPremium: 0 };
+/** Rechenart je Produkt (fest; eigene Sätze ändern nur die Werte). */
+export function rateKindFor(key: ProductKey): RateKind {
+  return PROVISION_PRODUCTS.find((p) => p.key === key)!.standard.kind;
+}
+
+/** Zulässige Rechenarten eines Produkts (fester Betrag nur bei Beitrags-Produkten, Altbestand). */
+function allowedKinds(key: ProductKey): RateKind[] {
+  const k = rateKindFor(key);
+  return k === "percent" || k === "monthly" ? [k, "fixed"] : [k];
 }
 
 // ─── Sparten (Verträge je Lead, Cross-Selling) ─────────────────────────────
@@ -88,7 +149,9 @@ export type SparteKey =
   | "kindersparplan"
   | "kfz"
   | "leben_bu"
+  | "bu"
   | "pkv"
+  | "pkv_tarif"
   | "sonstiges";
 
 export type Sparte = {
@@ -114,13 +177,18 @@ export const SPARTEN: readonly Sparte[] = [
   { key: "rechtsschutz", label: "Rechtsschutz", rateKey: "rechtsschutz", bestandLine: "Rechtsschutz", related: ["privatschutz", "unfall"] },
   { key: "kindersparplan", label: "Kindersparplan", rateKey: "kindersparplan", bestandLine: "Vorsorge", related: ["unfall", "privatschutz"] },
   { key: "kfz", label: "KFZ", rateKey: "kfz", bestandLine: "KFZ", related: ["rechtsschutz", "privatschutz"] },
-  { key: "leben_bu", label: "Leben/BU", rateKey: "leben_bu", bestandLine: "Vorsorge", related: ["unfall", "privatschutz"] },
-  { key: "pkv", label: "PKV", rateKey: "pkv", bestandLine: "Kranken", related: ["leben_bu", "unfall"] },
+  { key: "leben_bu", label: "Leben/Rente", rateKey: "leben_bu", bestandLine: "Vorsorge", related: ["bu", "unfall"] },
+  { key: "bu", label: "BU", rateKey: "bu", bestandLine: "BU", related: ["leben_bu", "unfall"] },
+  { key: "pkv", label: "PKV-Neugeschäft", rateKey: "pkv", bestandLine: "Kranken", related: ["bu", "unfall"] },
+  { key: "pkv_tarif", label: "PKV-Tarifoptimierung (§ 204 VVG)", rateKey: "pkv_tarif", bestandLine: "Kranken", related: ["bu", "unfall"] },
   { key: "sonstiges", label: "Sonstiges", rateKey: "sonstiges", bestandLine: "Sonstiges", related: ["privatschutz", "unfall"] },
 ];
 
+// Tarifoptimierung zuerst: Lead.source „Wechsel“ (intern) bzw. „PKV-Wechsel“ heißt nach außen
+// „PKV-Tarifoptimierung“ (lib/products.displayProduct). „Neugeschäft“ ist das PKV-Neugeschäft.
 const SPARTE_RULES: [RegExp, SparteKey][] = [
-  [/pkv/i, "pkv"],
+  [/tarif-?optim|§\s*204|^\s*(pkv[\s-]*)?wechsel/i, "pkv_tarif"],
+  [/pkv|^\s*neugesch/i, "pkv"],
   [/privatschutz|haftpflicht|\bphv\b/i, "privatschutz"],
   [/katze/i, "katze"],
   [/hund/i, "hund"],
@@ -132,10 +200,11 @@ const SPARTE_RULES: [RegExp, SparteKey][] = [
   [/rechtsschutz/i, "rechtsschutz"],
   [/sparplan/i, "kindersparplan"],
   [/\bkfz\b|kraftfahrt|\bauto/i, "kfz"],
-  [/leben|\bbu\b|berufsunf/i, "leben_bu"],
+  [/\bbu\b|berufsunf/i, "bu"],
+  [/leben|rente|altersvorsorge/i, "leben_bu"],
 ];
 
-/** Sparte zu einer Lead-Quelle bzw. einem Produktnamen (null = unbekannt, z. B. „Empfehlung“). Gleiche Regeln wie die Migration 20261118530000. */
+/** Sparte zu einer Lead-Quelle bzw. einem Produktnamen (null = unbekannt, z. B. „Empfehlung“). Gleiche Regeln wie die Migrationen 20261118530000 und 20261118670000. */
 export function sparteForSource(source: string | null | undefined): SparteKey | null {
   const s = (source ?? "").trim();
   if (!s) return null;
@@ -165,18 +234,61 @@ export function ruleFor(source: string | null | undefined, overrides?: Provision
   return { ...(overrides?.[key] ?? p.standard), key, product: p.label };
 }
 
+export type ValueField = {
+  label: string;
+  hint: string;
+  placeholder: string;
+  /** Eingabe × factor = gespeicherter Wert (Leben/BU: Monatsbeitrag × 12 = Jahresbeitrag). */
+  factor: number;
+};
+
+const eur0 = (n: number) => `${Math.round(n).toLocaleString("de-DE")} €`;
+const num0 = (n: number) => n.toLocaleString("de-DE", { maximumFractionDigits: 1 });
+
+/** Laufzeit-Text einer Beitragssummen-Regel: „30 Jahre“ bzw. „bis Alter 67, ohne Alter 30 Jahre“. */
+function termText(r: Extract<RateSpec, { kind: "beitragssumme" }>): string {
+  return r.defaultEndAge ? `bis Alter ${r.defaultEndAge}, ohne Alter ${r.defaultYears} Jahre` : `${r.defaultYears} Jahre`;
+}
+
+/**
+ * Beispiel unter den Feldern einer Beitragssummen-Regel:
+ * „Bei 80 € im Monat und 30 Jahren (28.800 € Beitragssumme): ≈ 720 € Abschlussprovision, ≈ 14 € Bestand pro Jahr“.
+ */
+export function beitragssummeExample(r: Extract<RateSpec, { kind: "beitragssumme" }>, typ: VermittlerTyp = "vertreter"): string {
+  const summe = r.defaultMonthly * 12 * r.defaultYears;
+  const ab = (summe * r.promille) / 1000;
+  const trail = r.defaultMonthly * 12 * r.trail;
+  const word = typ === "makler" ? "Abschlusscourtage" : "Abschlussprovision";
+  return `Bei ${eur0(r.defaultMonthly)} im Monat und ${r.defaultYears} Jahren (${eur0(summe)} Beitragssumme): ≈ ${eur0(ab)} ${word}, ≈ ${eur0(trail)} Bestand pro Jahr`;
+}
+
 /** Eingabefeld beim Abschluss – null = ausblenden (Abschluss direkt speichern). */
-export function closeValueField(
-  source: string | null | undefined,
-  overrides?: ProvisionOverrides,
-): { label: string; hint: string; placeholder: string } | null {
+export function closeValueField(source: string | null | undefined, overrides?: ProvisionOverrides): ValueField | null {
   const r = ruleFor(source, overrides);
   if (r.kind === "fixed") return null;
+  if (r.kind === "honorar") {
+    if ((r.fixedAmount ?? 0) > 0) return null;
+    return {
+      label: "Monatliche Ersparnis des Kunden (optional)",
+      placeholder: `z. B. ${num0(r.defaultSavings)}`,
+      factor: 1,
+      hint: `Daraus schätzen wir Ihr Honorar vom Kunden (${num0(r.months)} × Ersparnis). Ohne Angabe rechnen wir mit ${eur0(r.defaultSavings)} Ersparnis. Bitte mit Ihrer Honorarvereinbarung abgleichen.`,
+    };
+  }
+  if (r.kind === "beitragssumme") {
+    return {
+      label: "Monatsbeitrag (optional)",
+      placeholder: `z. B. ${num0(r.defaultMonthly)}`,
+      factor: 12,
+      hint: `Daraus schätzen wir Ihre Provision (${num0(r.promille)} ‰ der Beitragssumme, Laufzeit ${termText(r)}). Laufzeit und Beitragssumme können Sie am Vertrag ergänzen. Ohne Angabe rechnen wir mit ${eur0(r.defaultMonthly)} im Monat.`,
+    };
+  }
   if (r.kind === "monthly") {
     return {
       label: "Monatsbeitrag netto (optional)",
       placeholder: "z. B. 300",
-      hint: `Daraus schätzen wir deine Provision (${r.months.toLocaleString("de-DE")} Monatsbeiträge). Ohne Angabe rechnen wir mit ${r.fallbackAmount.toLocaleString("de-DE")} €.`,
+      factor: 1,
+      hint: `Daraus schätzen wir Ihre Provision (${num0(r.months)} Monatsbeiträge). Ohne Angabe rechnen wir mit ${r.fallbackAmount.toLocaleString("de-DE")} €.`,
     };
   }
   if (r.kind === "percent") {
@@ -184,19 +296,20 @@ export function closeValueField(
     const trail = r.trail ?? 0;
     const what =
       r.trailFromYear2 && trail > 0
-        ? `deine Provision (${pctText(r.rate)} Abschluss; ab dem 2. Jahr ${pctText(trail)} Bestand pro Jahr)`
+        ? `Ihre Provision (${pctText(r.rate)} Abschluss; ab dem 2. Jahr ${pctText(trail)} Bestand pro Jahr)`
         : r.rate > 0 && trail > 0
-        ? `deine Provision (${pctText(r.rate)} Abschluss + ${pctText(trail)} Bestand im 1. Jahr)`
+        ? `Ihre Provision (${pctText(r.rate)} Abschluss + ${pctText(trail)} Bestand im 1. Jahr)`
         : trail > 0
-          ? `deine Bestandsprovision (${pctText(trail)} pro Jahr)`
-          : `deine Provision (${pctText(r.rate)})`;
+          ? `Ihre Bestandsprovision (${pctText(trail)} pro Jahr)`
+          : `Ihre Provision (${pctText(r.rate)})`;
     return {
       label: "Jahresbeitrag netto (optional)",
       placeholder: `z. B. ${r.defaultPremium.toLocaleString("de-DE")}`,
+      factor: 1,
       hint: `Daraus schätzen wir ${what}. ${fallback}`,
     };
   }
-  return { label: "Wert des Abschlusses (optional)", hint: "Fließt als Provision in deine Zahlen.", placeholder: "z. B. 1.200" };
+  return { label: "Wert des Abschlusses (optional)", hint: "Fließt als Provision in Ihre Zahlen.", placeholder: "z. B. 1.200", factor: 1 };
 }
 
 const pctText = (r: number) => `${(Math.round(r * 1000) / 10).toLocaleString("de-DE")} %`;
@@ -207,19 +320,16 @@ function asNumber(v: unknown): number | null {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-/** Geschätzte Provision eines Abschlusses (null = nichts bekannt). */
+/** Geschätzte Provision eines Abschlusses (null = nichts bekannt). Gleiche Rechnung wie contractProvision. */
 export function estimatedProvision(
   source: string | null | undefined,
   closeValue: unknown,
   overrides?: ProvisionOverrides,
 ): number | null {
   const r = ruleFor(source, overrides);
-  const v = asNumber(closeValue);
-  if (r.kind === "fixed") return r.amount;
-  if (r.kind === "monthly") return v ? Math.round(v * r.months * 100) / 100 : r.fallbackAmount;
-  // Provision im 1. Jahr: Abschluss + Bestand, außer der Bestand kommt erst ab dem 2. Jahr (Vertreter)
-  if (r.kind === "percent") return Math.round((v ?? r.defaultPremium) * (r.rate + (r.trailFromYear2 ? 0 : (r.trail ?? 0))) * 100) / 100;
-  return v;
+  if (r.kind === "value") return asNumber(closeValue);
+  const sp = sparteForSource(source) ?? "sonstiges";
+  return contractProvision({ sparte: sp, premium: closeValue }, { ...overrides, [r.key]: r }).firstYear;
 }
 
 /** Summe der geschätzten Provision über abgeschlossene Leads. */
@@ -239,13 +349,16 @@ export function closeValueLabel(
   const r = ruleFor(source, overrides);
   const v = asNumber(closeValue);
   const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+  const est = () => eur(estimatedProvision(source, v, overrides) ?? 0);
   if (r.kind === "fixed") return `Provision ≈ ${eur(r.amount)}`;
-  if (r.kind === "monthly") return `${v ? `Beitrag ${eur(v)}/Monat · ` : ""}Provision ≈ ${eur(estimatedProvision(source, v, overrides) ?? 0)}`;
+  if (r.kind === "honorar") return `${v ? `Ersparnis ${eur(v)}/Monat · ` : ""}Honorar ≈ ${est()}`;
+  if (r.kind === "monthly") return `${v ? `Beitrag ${eur(v)}/Monat · ` : ""}Provision ≈ ${est()}`;
+  if (r.kind === "beitragssumme") return `${v ? `Beitrag ${eur(v / 12)}/Monat · ` : ""}Provision ≈ ${est()}`;
   if (r.kind === "percent") {
     const prefix = v ? `Beitrag ${eur(v)} · ` : "";
     // Nur Bestand (Makler): jährlicher Betrag statt Einmal-Provision
-    if (r.rate === 0 && (r.trail ?? 0) > 0) return `${prefix}Bestand ≈ ${eur(estimatedProvision(source, v, overrides) ?? 0)}/Jahr`;
-    return `${prefix}Provision ≈ ${eur(estimatedProvision(source, v, overrides) ?? 0)}`;
+    if (r.rate === 0 && (r.trail ?? 0) > 0) return `${prefix}Bestand ≈ ${est()}/Jahr`;
+    return `${prefix}Provision ≈ ${est()}`;
   }
   return v ? `Provision ${eur(v)}` : null;
 }
@@ -259,19 +372,30 @@ export const VERMITTLER_TYPEN: readonly { key: VermittlerTyp; label: string }[] 
   { key: "makler", label: "Makler" },
 ];
 
-/** Makler: Sach ohne Abschlussprovision, 22,5 % Bestand p. a.; PKV = Produkt-Standard. */
+/**
+ * Makler: Sach ohne Abschlussprovision, 22,5 % Bestandscourtage p. a. (typischer Beitrag wie beim
+ * Vertreter); KFZ wie beim Vertreter 5 % laufend; Leben/BU/Kindersparplan 35 ‰ der Beitragssumme plus
+ * kleine Bestandscourtage (1,5 %); PKV und Tarifoptimierung = Produkt-Standard.
+ */
+const maklerSach = (key: ProductKey): RateSpec => {
+  const std = PROVISION_PRODUCTS.find((p) => p.key === key)!.standard;
+  return { kind: "percent", rate: 0, trail: 0.225, defaultPremium: std.kind === "percent" ? std.defaultPremium : 300 };
+};
+const maklerLeben = (key: ProductKey): RateSpec => {
+  const std = PROVISION_PRODUCTS.find((p) => p.key === key)!.standard;
+  return std.kind === "beitragssumme" ? { ...std, promille: 35 } : std;
+};
 const MAKLER_STANDARD: ProvisionOverrides = {
-  privatschutz: { kind: "percent", rate: 0, trail: 0.225, defaultPremium: 600 },
-  tkv: { kind: "percent", rate: 0, trail: 0.225, defaultPremium: 350 },
-  // Weitere Sparten: vorläufig Sach-Standard für Makler (Ole fragen)
-  unfall: { kind: "percent", rate: 0, trail: 0.225, defaultPremium: 0 },
-  hausrat: { kind: "percent", rate: 0, trail: 0.225, defaultPremium: 0 },
-  wohngebaeude: { kind: "percent", rate: 0, trail: 0.225, defaultPremium: 0 },
-  rechtsschutz: { kind: "percent", rate: 0, trail: 0.225, defaultPremium: 0 },
-  kindersparplan: { kind: "percent", rate: 0, trail: 0.225, defaultPremium: 0 },
-  kfz: { kind: "percent", rate: 0, trail: 0.225, defaultPremium: 0 },
-  leben_bu: { kind: "percent", rate: 0, trail: 0.225, defaultPremium: 0 },
-  sonstiges: { kind: "percent", rate: 0, trail: 0.225, defaultPremium: 0 },
+  privatschutz: maklerSach("privatschutz"),
+  tkv: maklerSach("tkv"),
+  unfall: maklerSach("unfall"),
+  hausrat: maklerSach("hausrat"),
+  wohngebaeude: maklerSach("wohngebaeude"),
+  rechtsschutz: maklerSach("rechtsschutz"),
+  sonstiges: maklerSach("sonstiges"),
+  leben_bu: maklerLeben("leben_bu"),
+  bu: maklerLeben("bu"),
+  kindersparplan: maklerLeben("kindersparplan"),
 };
 
 export function asVermittlerTyp(v: unknown): VermittlerTyp {
@@ -301,9 +425,24 @@ const num = (v: unknown, min: number, max: number): number | null => {
   return Number.isFinite(n) && n >= min && n <= max ? n : null;
 };
 
+/** Stornoquote pro Jahr: erlaubter Bereich 0 bis 50 % (Anteil). */
+export const STORNO_MAX = 0.5;
+
+/** Stornoquote prüfen (Anteil 0 bis 0,5); leer = keine eigene. */
+export function parseStorno(v: unknown): { ok: true; value: number | null } | { ok: false } {
+  if (v == null || v === "") return { ok: true, value: null };
+  const n = num(v, 0, STORNO_MAX);
+  return n == null ? { ok: false } : { ok: true, value: Math.round(n * 10000) / 10000 };
+}
+
 /**
  * Eigene Sätze prüfen (Daten aus Formular oder Customer.provisionRates).
  * Prozentwerte als Anteil (0,55 = 55 %). Ungültige Einträge → Fehlertext.
+ *
+ * Nachsichtig beim Laden: PKV über 9,9 Monatsbeiträge wird auf 9,9 begrenzt, ein typischer Beitrag von
+ * 0 € durch den Standard ersetzt (beides mit Fehlertext, Speichern lehnt ab). Eigene Werte einer
+ * anderen Rechenart als der des Produkts (z. B. Prozent bei Leben/BU aus der Zeit vor den
+ * Rechenarten) werden ignoriert.
  */
 export function parseCustomRates(raw: unknown): { rates: ProvisionOverrides; errors: string[] } {
   const rates: ProvisionOverrides = {};
@@ -313,50 +452,106 @@ export function parseCustomRates(raw: unknown): { rates: ProvisionOverrides; err
     const r = (raw as Record<string, unknown>)[p.key];
     if (!r || typeof r !== "object") continue;
     const o = r as Record<string, unknown>;
+    if (!allowedKinds(p.key).includes(o.kind as RateKind)) continue;
+    let storno: number | undefined;
+    if (o.storno != null && o.storno !== "") {
+      const s = parseStorno(o.storno);
+      if (!s.ok) errors.push(`${p.label}: Stornoquote zwischen 0 und 50 %`);
+      else if (s.value != null) storno = s.value;
+    }
+    const withStorno = <T extends RateSpec>(x: T): T => (storno != null ? { ...x, storno } : x);
+    const std = p.standard;
     if (o.kind === "monthly") {
-      const months = num(o.months, 0, 24);
+      const max = p.key === "pkv" ? PKV_MAX_MONTHS : 24;
+      let months = num(o.months, 0, max);
       const fallbackAmount = num(o.fallbackAmount, 0, 1_000_000);
-      if (months == null) errors.push(`${p.label}: Monatsbeiträge zwischen 0 und 24`);
+      if (months == null) {
+        const n = num(o.months, 0, 1000);
+        errors.push(p.key === "pkv" ? `${p.label}: höchstens ${num0(PKV_MAX_MONTHS)} Monatsbeiträge (§ 50 VAG)` : `${p.label}: Monatsbeiträge zwischen 0 und 24`);
+        if (n != null && n > max) months = max;
+      }
       if (fallbackAmount == null) errors.push(`${p.label}: Betrag ohne Beitragsangabe ab 0 €`);
-      if (months != null && fallbackAmount != null) rates[p.key] = { kind: "monthly", months, fallbackAmount };
+      if (months != null && fallbackAmount != null) rates[p.key] = withStorno({ kind: "monthly", months, fallbackAmount });
     } else if (o.kind === "percent") {
       const rate = num(o.rate, 0, 1);
       const trail = o.trail == null || o.trail === "" ? 0 : num(o.trail, 0, 1);
-      const defaultPremium = num(o.defaultPremium, 0, 1_000_000);
+      let defaultPremium = num(o.defaultPremium, 0, 1_000_000);
       if (rate == null) errors.push(`${p.label}: Abschlussprovision zwischen 0 und 100 %`);
       if (trail == null) errors.push(`${p.label}: Bestandsprovision zwischen 0 und 100 %`);
-      if (defaultPremium == null) errors.push(`${p.label}: typischer Jahresbeitrag ab 0 €`);
-      if (rate != null && trail != null && defaultPremium != null) rates[p.key] = { kind: "percent", rate, trail, defaultPremium };
+      if (defaultPremium == null || defaultPremium === 0) {
+        errors.push(`${p.label}: typischer Jahresbeitrag über 0 €`);
+        if (defaultPremium === 0 && std.kind === "percent") defaultPremium = std.defaultPremium;
+      }
+      if (rate != null && trail != null && defaultPremium != null) rates[p.key] = withStorno({ kind: "percent", rate, trail, defaultPremium });
+    } else if (o.kind === "beitragssumme") {
+      const promille = num(o.promille, 0, 100);
+      const trail = o.trail == null || o.trail === "" ? 0 : num(o.trail, 0, 0.2);
+      const defaultMonthly = num(o.defaultMonthly, 0.01, 100_000);
+      const defaultYears = num(o.defaultYears, 1, 60);
+      const defaultEndAge = o.defaultEndAge == null || o.defaultEndAge === "" || o.defaultEndAge === 0 ? null : num(o.defaultEndAge, 30, 90);
+      const haftungMonate = num(o.haftungMonate, 0, 120);
+      if (promille == null) errors.push(`${p.label}: Abschlussprovision zwischen 0 und 100 ‰`);
+      if (trail == null) errors.push(`${p.label}: Bestandsprovision zwischen 0 und 20 %`);
+      if (defaultMonthly == null) errors.push(`${p.label}: typischer Monatsbeitrag über 0 €`);
+      if (defaultYears == null) errors.push(`${p.label}: Laufzeit zwischen 1 und 60 Jahren`);
+      if (o.defaultEndAge != null && o.defaultEndAge !== "" && o.defaultEndAge !== 0 && defaultEndAge == null) errors.push(`${p.label}: Endalter zwischen 30 und 90`);
+      if (haftungMonate == null) errors.push(`${p.label}: Stornohaftung zwischen 0 und 120 Monaten`);
+      if (promille != null && trail != null && defaultMonthly != null && defaultYears != null && haftungMonate != null) {
+        rates[p.key] = withStorno({
+          kind: "beitragssumme",
+          promille,
+          trail,
+          defaultMonthly,
+          defaultYears: Math.round(defaultYears),
+          ...(defaultEndAge ? { defaultEndAge: Math.round(defaultEndAge) } : {}),
+          haftungMonate: Math.round(haftungMonate),
+        });
+      }
+    } else if (o.kind === "honorar") {
+      const months = num(o.months, 0, 24);
+      const fixedAmount = o.fixedAmount == null || o.fixedAmount === "" ? 0 : num(o.fixedAmount, 0, 1_000_000);
+      const defaultSavings = num(o.defaultSavings, 0.01, 100_000);
+      if (months == null) errors.push(`${p.label}: Monate zwischen 0 und 24`);
+      if (fixedAmount == null) errors.push(`${p.label}: fester Betrag ab 0 €`);
+      if (defaultSavings == null) errors.push(`${p.label}: Ersparnis ohne Angabe über 0 €`);
+      if (months != null && fixedAmount != null && defaultSavings != null) {
+        rates[p.key] = withStorno({ kind: "honorar", months, defaultSavings, ...(fixedAmount > 0 ? { fixedAmount } : {}) });
+      }
     } else if (o.kind === "fixed") {
       const amount = num(o.amount, 0, 1_000_000);
       if (amount == null) errors.push(`${p.label}: fester Betrag ab 0 €`);
-      else rates[p.key] = { kind: "fixed", amount };
+      else rates[p.key] = withStorno({ kind: "fixed", amount });
     }
   }
   return { rates, errors };
 }
 
-/** Wirksame Sätze eines Kunden: Standard je Typ, eigene Sätze darüber. */
+/**
+ * Wirksame Sätze eines Kunden: Standard je Typ, eigene Sätze darüber. Vertreter bekommen bei Sach die
+ * Bestandsprovision erst ab dem 2. Jahr (im 1. Jahr fließt die Abschlussprovision). Ohne
+ * Abschlussprovision (KFZ) und bei Leben/BU (beitragssumme) gibt es Bestand ab dem 1. Jahr.
+ */
 export function effectiveRates(typ: unknown, custom?: unknown): ProvisionOverrides {
   const t = asVermittlerTyp(typ);
   const own = parseCustomRates(custom).rates;
   const out: ProvisionOverrides = {};
   for (const p of PROVISION_PRODUCTS) {
     const spec = own[p.key] ?? standardRate(p.key, t);
-    // Vertreter bekommen Bestandsprovision erst ab dem 2. Jahr (auch bei eigenen Sätzen)
-    out[p.key] = spec.kind === "percent" && t === "vertreter" && (spec.trail ?? 0) > 0 ? { ...spec, trailFromYear2: true } : spec;
+    out[p.key] = spec.kind === "percent" && t === "vertreter" && spec.rate > 0 && (spec.trail ?? 0) > 0 ? { ...spec, trailFromYear2: true } : spec;
   }
   return out;
 }
 
 /** Enthält die Schätzung Bestandsprovision? (für den Hinweis „inkl. Bestand 1. Jahr“) */
 export function includesTrail(overrides?: ProvisionOverrides): boolean {
-  return Object.values(overrides ?? {}).some((r) => r?.kind === "percent" && (r.trail ?? 0) > 0 && !r.trailFromYear2);
+  return Object.values(overrides ?? {}).some(
+    (r) => (r?.kind === "percent" && (r.trail ?? 0) > 0 && !r.trailFromYear2) || (r?.kind === "beitragssumme" && r.trail > 0),
+  );
 }
 
-/** Produkte, die ein Vermittlertyp überhaupt anbieten kann (PKV nur Makler). */
+/** Produkte, die ein Vermittlertyp überhaupt anbieten kann (PKV-Tarifoptimierung nur Makler). */
 export function productsForTyp(typ: VermittlerTyp) {
-  return PROVISION_PRODUCTS.filter((p) => typ === "makler" || p.key !== "pkv");
+  return PROVISION_PRODUCTS.filter((p) => typ === "makler" || p.key !== "pkv_tarif");
 }
 
 // ─── Provision je Vertrag (Cross-Selling, Bestandsprovision) ───────────────
@@ -364,20 +559,39 @@ export function productsForTyp(typ: VermittlerTyp) {
 // Ein Vertrag rechnet mit dem Satz seiner Sparte (SPARTEN → rateKey) aus den wirksamen Sätzen
 // des Kunden (effectiveRates bzw. loadCustomerProvision().rates).
 
-/** Storno je Jahr für Bestandsprovision in der Zukunft (wie in der Präsentation). */
+/**
+ * Standard-Stornoquote pro Jahr für Bestandsprovision in der Zukunft (wie in der Präsentation). Gilt nur,
+ * solange der Kunde in „Meine Provisionen“ keine eigene Quote eingetragen hat (Customer.stornoQuote,
+ * je Produkt RateSpec.storno); alle Prognosen bekommen die wirksame Quote übergeben.
+ */
 export const STORNO_PRO_JAHR = 0.1;
 /** Zeitraum der Bestandshochrechnung „in 5 Jahren“. */
 export const BESTAND_JAHRE = 5;
 
+/** Wirksame Stornoquote einer Sparte: eigene des Produkts, sonst die allgemeine des Kunden, sonst Standard. */
+export function stornoFor(sparte: string, rates?: ProvisionOverrides, general: number = STORNO_PRO_JAHR): number {
+  return rates?.[sparteInfo(sparte).rateKey]?.storno ?? general;
+}
+
 export type ContractLike = {
   sparte: string;
-  /** Jahresbeitrag netto (PKV: Monatsbeitrag); null = nicht eingetragen. */
+  /** Jahresbeitrag netto (PKV: Monatsbeitrag; Tarifoptimierung: monatliche Ersparnis); null = nicht eingetragen. */
   premium: unknown;
   /** Fester Provisionswert (Altbestand ohne Beitrag); gilt nur ohne Beitrag. */
   provisionValue?: unknown;
   /** aktiv | storniert (storniert = 0). */
   status?: string | null;
+  /** Leben/BU: Laufzeit in Jahren (geht vor Endalter). */
+  termYears?: unknown;
+  /** Leben/BU: Endalter (mit Alter des Kunden → Laufzeit). */
+  endAge?: unknown;
+  /** Alter des Kunden bei Abschluss. */
+  customerAge?: unknown;
+  /** Leben/BU: Beitragssumme direkt eingetragen (geht vor Monatsbeitrag × 12 × Laufzeit). */
+  beitragssumme?: unknown;
 };
+
+export type ContractBasis = "beitrag" | "beitragssumme" | "monatsbeitraege" | "honorar" | "fest";
 
 export type ContractProvision = {
   sparte: SparteKey;
@@ -386,7 +600,7 @@ export type ContractProvision = {
   premiumUsed: number | null;
   /** Kein Beitrag eingetragen (Tipp „Abschlüsse vollständig eintragen“). */
   premiumMissing: boolean;
-  /** Einmalige Abschlussprovision. */
+  /** Einmalige Abschlussprovision (Tarifoptimierung: Honorar vom Kunden). */
   abschluss: number;
   /** Laufende Bestandsprovision pro Jahr. */
   trailPerYear: number;
@@ -394,9 +608,35 @@ export type ContractProvision = {
   trailFromYear2: boolean;
   /** Im 1. Jahr verdient: Abschluss + (Makler) Bestand 1. Jahr. Basis für Gewinn und „Courtage 1. Jahr“. */
   firstYear: number;
+  /** Rechengrundlage (für Texte). Optional, damit ältere Aufrufer kompatibel bleiben. */
+  basis?: ContractBasis;
+  /** Leben/BU: Beitragssumme, Laufzeit und Monatsbeitrag, mit denen gerechnet wurde. */
+  beitragssumme?: number | null;
+  termYears?: number | null;
+  monthlyPremium?: number | null;
+  /** Leben/BU: Stornohaftungszeit in Monaten (anteilige Rückbelastung). */
+  haftungMonate?: number | null;
+  /** Abschluss ist ein Honorar vom Kunden (Tarifoptimierung). */
+  honorar?: boolean;
+  /** Eigene Stornoquote des Produkts (null = allgemeine). */
+  storno?: number | null;
 };
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
+const int = (v: unknown, min: number, max: number) => {
+  const n = asNumber(v);
+  return n != null && n >= min && n <= max ? Math.round(n) : null;
+};
+
+/** Laufzeit eines Leben/BU-Vertrags: eingetragen, sonst Endalter − Alter, sonst Standard. */
+export function resolveTermYears(c: Pick<ContractLike, "termYears" | "endAge" | "customerAge">, spec: Extract<RateSpec, { kind: "beitragssumme" }>): number {
+  const t = int(c.termYears, 1, 80);
+  if (t) return t;
+  const age = int(c.customerAge, 1, 100);
+  const end = int(c.endAge, 1, 120) ?? spec.defaultEndAge ?? null;
+  if (age != null && end != null && end > age) return end - age;
+  return spec.defaultYears;
+}
 
 /** Geschätzte Provision eines Vertrags mit dem Satz seiner Sparte. */
 export function contractProvision(c: ContractLike, rates?: ProvisionOverrides): ContractProvision {
@@ -404,14 +644,58 @@ export function contractProvision(c: ContractLike, rates?: ProvisionOverrides): 
   const rateKey = sparteInfo(sparte).rateKey;
   const spec: RateSpec = rates?.[rateKey] ?? PROVISION_PRODUCTS.find((p) => p.key === rateKey)!.standard;
   const premium = asNumber(c.premium);
-  const zero: ContractProvision = { sparte, rateKey, premiumUsed: null, premiumMissing: premium == null, abschluss: 0, trailPerYear: 0, trailFromYear2: false, firstYear: 0 };
+  const zero: ContractProvision = {
+    sparte,
+    rateKey,
+    premiumUsed: null,
+    premiumMissing: premium == null,
+    abschluss: 0,
+    trailPerYear: 0,
+    trailFromYear2: false,
+    firstYear: 0,
+    basis: "beitrag",
+    beitragssumme: null,
+    termYears: null,
+    monthlyPremium: null,
+    haftungMonate: null,
+    honorar: spec.kind === "honorar",
+    storno: spec.storno ?? null,
+  };
   if (c.status === "storniert") return zero;
   const fixedValue = asNumber(c.provisionValue);
-  if (premium == null && fixedValue != null) return { ...zero, abschluss: r2(fixedValue), firstYear: r2(fixedValue) };
-  if (spec.kind === "fixed") return { ...zero, abschluss: spec.amount, firstYear: spec.amount };
+  const summeIn = spec.kind === "beitragssumme" ? asNumber(c.beitragssumme) : null;
+  if (premium == null && summeIn == null && fixedValue != null) return { ...zero, basis: "fest", abschluss: r2(fixedValue), firstYear: r2(fixedValue) };
+  if (spec.kind === "fixed") return { ...zero, basis: "fest", abschluss: spec.amount, firstYear: spec.amount };
+  if (spec.kind === "honorar") {
+    const fixed = spec.fixedAmount ?? 0;
+    const a = fixed > 0 ? r2(fixed) : r2((premium ?? spec.defaultSavings) * spec.months);
+    return { ...zero, basis: "honorar", premiumUsed: fixed > 0 ? null : (premium ?? spec.defaultSavings), premiumMissing: fixed > 0 ? false : premium == null, abschluss: a, firstYear: a };
+  }
   if (spec.kind === "monthly") {
     const a = premium ? r2(premium * spec.months) : spec.fallbackAmount;
-    return { ...zero, premiumUsed: premium, abschluss: a, firstYear: a };
+    return { ...zero, basis: "monatsbeitraege", premiumUsed: premium, abschluss: a, firstYear: a };
+  }
+  if (spec.kind === "beitragssumme") {
+    const term = resolveTermYears(c, spec);
+    // Monatsbeitrag: aus dem Jahresbeitrag, sonst aus der eingetragenen Beitragssumme, sonst Standard
+    const monthly = premium != null ? premium / 12 : summeIn != null ? summeIn / (12 * term) : spec.defaultMonthly;
+    const summe = summeIn ?? monthly * 12 * term;
+    const abschluss = r2((summe * spec.promille) / 1000);
+    const trailPerYear = r2(monthly * 12 * spec.trail);
+    return {
+      ...zero,
+      basis: "beitragssumme",
+      premiumUsed: r2(monthly * 12),
+      premiumMissing: premium == null && summeIn == null,
+      abschluss,
+      trailPerYear,
+      trailFromYear2: false,
+      firstYear: r2(abschluss + trailPerYear),
+      beitragssumme: r2(summe),
+      termYears: term,
+      monthlyPremium: r2(monthly),
+      haftungMonate: spec.haftungMonate,
+    };
   }
   const p = premium ?? spec.defaultPremium;
   const abschluss = r2(p * spec.rate);
@@ -420,12 +704,43 @@ export function contractProvision(c: ContractLike, rates?: ProvisionOverrides): 
   return { ...zero, premiumUsed: p, abschluss, trailPerYear, trailFromYear2: fromYear2, firstYear: r2(abschluss + (fromYear2 ? 0 : trailPerYear)) };
 }
 
-/** Eingabefeld „Beitrag“ für eine Sparte (Monatsbeitrag bei PKV). */
-export function premiumFieldForSparte(sparte: string, rates?: ProvisionOverrides): { label: string; hint: string; placeholder: string; monthly: boolean } {
+/** Rechenart einer Sparte (für Eingabefelder). */
+export function sparteKind(sparte: string): RateKind {
+  return rateKindFor(sparteInfo(sparte).rateKey);
+}
+
+/** Eingabe × Faktor = gespeicherter Beitrag (Leben/BU: Monatsbeitrag × 12 = Jahresbeitrag). */
+export function premiumFactor(sparte: string): number {
+  return sparteKind(sparte) === "beitragssumme" ? 12 : 1;
+}
+
+/** Eingabefeld „Beitrag“ für eine Sparte (Monatsbeitrag bei PKV und Leben/BU, Ersparnis bei der Tarifoptimierung). */
+export function premiumFieldForSparte(sparte: string, rates?: ProvisionOverrides): { label: string; hint: string; placeholder: string; monthly: boolean; factor: number } {
   const info = sparteInfo(sparte);
   const spec = rates?.[info.rateKey] ?? PROVISION_PRODUCTS.find((p) => p.key === info.rateKey)!.standard;
+  if (spec.kind === "honorar") {
+    const fixed = (spec.fixedAmount ?? 0) > 0;
+    return {
+      label: "Monatliche Ersparnis des Kunden",
+      placeholder: `z. B. ${num0(spec.defaultSavings)}`,
+      monthly: true,
+      factor: 1,
+      hint: fixed
+        ? `Honorar (vom Kunden): fest ${eur0(spec.fixedAmount ?? 0)}. Bitte mit Ihrer Honorarvereinbarung abgleichen.`
+        : `Honorar (vom Kunden): ${num0(spec.months)} × monatliche Ersparnis, ohne Angabe ${eur0(spec.defaultSavings)}. Bitte mit Ihrer Honorarvereinbarung abgleichen.`,
+    };
+  }
+  if (spec.kind === "beitragssumme") {
+    return {
+      label: "Monatsbeitrag",
+      placeholder: `z. B. ${num0(spec.defaultMonthly)}`,
+      monthly: true,
+      factor: 12,
+      hint: `Satz für ${info.label}: ${num0(spec.promille)} ‰ der Beitragssumme, ${pctText(spec.trail)} Bestand pro Jahr ab dem 1. Jahr. Laufzeit ohne Angabe: ${termText(spec)}.`,
+    };
+  }
   if (spec.kind === "monthly") {
-    return { label: "Monatsbeitrag netto", placeholder: "z. B. 300", monthly: true, hint: `Provision: ${spec.months.toLocaleString("de-DE")} Monatsbeiträge.` };
+    return { label: "Monatsbeitrag netto", placeholder: "z. B. 300", monthly: true, factor: 1, hint: `Provision: ${num0(spec.months)} Monatsbeiträge.` };
   }
   if (spec.kind === "percent") {
     const trail = spec.trail ?? 0;
@@ -437,33 +752,89 @@ export function premiumFieldForSparte(sparte: string, rates?: ProvisionOverrides
       label: "Jahresbeitrag netto",
       placeholder: spec.defaultPremium > 0 ? `z. B. ${spec.defaultPremium.toLocaleString("de-DE")}` : "z. B. 400",
       monthly: false,
+      factor: 1,
       hint: parts.length ? `Satz für ${info.label}: ${parts.join(", ")}.` : "",
     };
   }
-  return { label: "Jahresbeitrag netto", placeholder: "z. B. 400", monthly: false, hint: "" };
+  return { label: "Jahresbeitrag netto", placeholder: "z. B. 400", monthly: false, factor: 1, hint: "" };
 }
 
-/** Bezahlter Anteil eines Jahres [age, age+1] bei Bestand ab Jahr 1 bzw. 2 (age in Jahren seit Abschluss). */
-function payingShare(ageStart: number, fromYear2: boolean): number {
+// ─── Vertrag gekündigt bzw. storniert: Rückbelastung ──────────────────────
+
+export const CANCEL_REASONS = [
+  { key: "kunde", label: "vom Kunden gekündigt" },
+  { key: "widerruf", label: "Widerruf" },
+  { key: "nichtzahlung", label: "Nichtzahlung" },
+  { key: "versicherer", label: "vom Versicherer gekündigt" },
+  { key: "sonstiges", label: "Sonstiges" },
+] as const;
+export type CancelReason = (typeof CANCEL_REASONS)[number]["key"];
+
+export const isCancelReason = (v: unknown): v is CancelReason => CANCEL_REASONS.some((r) => r.key === v);
+export const cancelReasonLabel = (key: string | null | undefined) => CANCEL_REASONS.find((r) => r.key === key)?.label ?? "Sonstiges";
+
+/** Volle Monate zwischen zwei Daten (Kalendermonate, angefangene zählen nicht). */
+export function monthsBetween(from: Date, to: Date): number {
+  let m = (to.getUTCFullYear() - from.getUTCFullYear()) * 12 + (to.getUTCMonth() - from.getUTCMonth());
+  if (to.getUTCDate() < from.getUTCDate()) m--;
+  return Math.max(0, m);
+}
+
+/**
+ * Vorschlag für die Rückbelastung der Abschlussprovision bei Kündigung (null = kein Vorschlag):
+ * Widerruf = volle Abschlussprovision; Leben/BU (beitragssumme) innerhalb der Stornohaftungszeit
+ * anteilig (verbleibende Monate / Haftungszeit), danach 0; sonst kein Vorschlag.
+ */
+export function suggestedChargeback(
+  c: ContractLike & { signedAt: Date },
+  cancelledAt: Date,
+  reason: string | null | undefined,
+  rates?: ProvisionOverrides,
+): number | null {
+  const p = contractProvision({ ...c, status: "aktiv" }, rates);
+  if (p.abschluss <= 0) return null;
+  if (reason === "widerruf") return p.abschluss;
+  if (p.basis !== "beitragssumme" || !p.haftungMonate) return null;
+  const left = p.haftungMonate - monthsBetween(c.signedAt, cancelledAt);
+  if (left <= 0) return 0;
+  return r2((p.abschluss * Math.min(left, p.haftungMonate)) / p.haftungMonate);
+}
+
+// ─── Bestandsprovision in der Zukunft ─────────────────────────────────────
+
+/** Bezahlter Anteil eines Jahres [age, age+1] bei Bestand ab Jahr 1 bzw. 2 (age in Jahren seit Abschluss), höchstens bis ageEnd. */
+function payingShare(ageStart: number, fromYear2: boolean, ageEnd = Infinity): number {
   const from = Math.max(ageStart, fromYear2 ? 1 : 0, 0);
-  return Math.min(1, Math.max(0, ageStart + 1 - from));
+  const to = Math.min(ageStart + 1, ageEnd);
+  return Math.min(1, Math.max(0, to - from));
 }
 
 const YEAR_MS = 365.25 * 24 * 60 * 60 * 1000;
 
-export type TrailContract = { trailPerYear: number; trailFromYear2: boolean; signedAt: Date };
+export type TrailContract = {
+  trailPerYear: number;
+  trailFromYear2: boolean;
+  signedAt: Date;
+  /** Eigene Stornoquote (Sparte); sonst die übergebene. */
+  storno?: number;
+  /** Gekündigt bzw. storniert zum: ab hier keine Bestandsprovision mehr. */
+  endsAt?: Date | null;
+};
 
 /**
  * Bestandsprovision eines Vertrags in den nächsten `years` Jahren ab `now` (je Jahr ein Betrag),
- * mit Storno pro Jahr. Vertreter (trailFromYear2): erst ab dem ersten Jahrestag.
+ * mit Storno pro Jahr. Vertreter (trailFromYear2): erst ab dem ersten Jahrestag. Gekündigte Verträge
+ * nur bis zum Kündigungsdatum (ohne Storno-Annahme, das Ende ist ja bekannt).
  */
 export function trailNextYears(c: TrailContract, now: Date, years = BESTAND_JAHRE, storno = STORNO_PRO_JAHR): number[] {
+  const q = c.storno ?? storno;
   const age0 = (now.getTime() - c.signedAt.getTime()) / YEAR_MS;
+  const ageEnd = c.endsAt ? (c.endsAt.getTime() - c.signedAt.getTime()) / YEAR_MS : Infinity;
   const out: number[] = [];
   for (let j = 0; j < years; j++) {
     const a = age0 + j;
-    const share = payingShare(a, c.trailFromYear2);
-    const survive = Math.pow(1 - storno, Math.max(0, a + 0.5));
+    const share = payingShare(a, c.trailFromYear2, ageEnd);
+    const survive = c.endsAt ? 1 : Math.pow(1 - q, Math.max(0, a + 0.5));
     out.push(c.trailPerYear * share * survive);
   }
   return out;
@@ -472,6 +843,31 @@ export function trailNextYears(c: TrailContract, now: Date, years = BESTAND_JAHR
 /** Summe der Bestandsprovision aller Verträge in den nächsten 5 Jahren („in 5 Jahren: Y €“). */
 export function bestandInYears(contracts: TrailContract[], now: Date, years = BESTAND_JAHRE, storno = STORNO_PRO_JAHR): number {
   return r2(contracts.reduce((s, c) => s + trailNextYears(c, now, years, storno).reduce((a, b) => a + b, 0), 0));
+}
+
+/**
+ * Gewinn „Inkl. Bestand“ (Kohorte): künftige Bestandsprovision eines Vertrags in seinen ersten `years`
+ * Vertragsjahren, soweit sie nicht schon in „Nur jetzt“ steckt. Das 1. Vertragsjahr zählt bei Bestand ab
+ * dem 1. Jahr (Makler, KFZ, Leben/BU) schon in firstYear, beim Vertreter (ab dem 2. Jahr) gibt es im
+ * 1. Jahr keinen Bestand; hier also die Vertragsjahre 2 bis `years`. Storno pro Jahr ab heute (bis heute
+ * ist der Vertrag ja da), keine Abzinsung, gekündigte Verträge nur bis zum Kündigungsdatum.
+ */
+export function cohortFutureTrail(c: TrailContract, now: Date, years = BESTAND_JAHRE, storno = STORNO_PRO_JAHR): number {
+  if (c.trailPerYear <= 0) return 0;
+  const q = c.storno ?? storno;
+  const t0 = c.signedAt.getTime();
+  const base = Math.max(now.getTime(), t0);
+  let sum = 0;
+  for (let j = 1; j < years; j++) {
+    const start = t0 + j * YEAR_MS;
+    const end = Math.min(t0 + (j + 1) * YEAR_MS, c.endsAt ? c.endsAt.getTime() : Infinity);
+    if (end <= start) continue;
+    const share = (end - start) / YEAR_MS;
+    const mid = (start + end) / 2;
+    const survive = c.endsAt ? 1 : Math.pow(1 - q, Math.max(0, (mid - base) / YEAR_MS));
+    sum += c.trailPerYear * share * survive;
+  }
+  return r2(sum);
 }
 
 /**
@@ -500,4 +896,42 @@ export function bestandGrowth(input: {
     }
   }
   return base.map((b, j) => ({ year: j + 1, existing: Math.round(b), added: Math.round(added[j]), total: Math.round(b + added[j]) }));
+}
+
+// ─── Tatsächliche Stornoquote ─────────────────────────────────────────────
+
+/** Ab so vielen Verträgen zeigen wir die tatsächliche Stornoquote (sonst „zu wenig Daten“). */
+export const STORNO_MIN_VERTRAEGE = 20;
+
+export type StornoContract = { signedAt: Date; cancelledAt?: Date | null };
+
+export type RealStorno = {
+  /** Gekündigte Verträge pro Jahr / Bestand im Jahresmittel (null = zu wenig Daten). */
+  quote: number | null;
+  /** Gekündigt in den letzten 12 Monaten. */
+  cancelled: number;
+  /** Bestand im Mittel der letzten 12 Monate (Monatsenden). */
+  avgBestand: number;
+  /** Verträge insgesamt (bis heute abgeschlossen). */
+  contracts: number;
+  enough: boolean;
+};
+
+/**
+ * Tatsächliche Stornoquote der letzten 12 Monate: gekündigte Verträge / Bestand im Jahresmittel
+ * (Mittel über 12 Monatsstichtage; Monate vor dem Start zählen mit 0, das ergibt Kündigungen je
+ * Vertragsjahr). Erst ab STORNO_MIN_VERTRAEGE Verträgen.
+ */
+export function realStornoQuote(contracts: StornoContract[], now: Date, minContracts = STORNO_MIN_VERTRAEGE): RealStorno {
+  const all = contracts.filter((c) => c.signedAt <= now);
+  const from = new Date(now.getTime() - YEAR_MS);
+  const cancelled = all.filter((c) => c.cancelledAt && c.cancelledAt > from && c.cancelledAt <= now).length;
+  let sum = 0;
+  for (let i = 0; i < 12; i++) {
+    const t = new Date(now.getTime() - (i * YEAR_MS) / 12);
+    sum += all.filter((c) => c.signedAt <= t && (!c.cancelledAt || c.cancelledAt > t)).length;
+  }
+  const avg = sum / 12;
+  const enough = all.length >= minContracts && avg > 0;
+  return { quote: enough ? Math.round((cancelled / avg) * 1000) / 1000 : null, cancelled, avgBestand: Math.round(avg * 10) / 10, contracts: all.length, enough };
 }

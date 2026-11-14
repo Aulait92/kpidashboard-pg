@@ -6,6 +6,7 @@ import { loadProdukte } from "@/lib/produkte";
 import { loadVertriebZahlen } from "@/lib/vertrieb-zahlen";
 import { loadBwa } from "@/lib/bwa";
 import { ZahlenView } from "@/components/admin/zahlen-view";
+import { StornoQuoteUebersicht } from "@/components/admin/storno-quote";
 
 export const metadata = { title: "Zahlen | performancegrowth Admin" };
 
@@ -20,6 +21,8 @@ export default async function AdminZahlenPage({ searchParams }: { searchParams: 
   return (
     <main className="mx-auto w-full max-w-[1360px] flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <ZahlenView data={data} produkte={produkte} vertrieb={vertrieb} bwa={bwa} />
+      {/* Tatsächliche Stornoquote der Verträge je Sparte und Kunde (lib/storno-quote) */}
+      <StornoQuoteUebersicht />
     </main>
   );
 }

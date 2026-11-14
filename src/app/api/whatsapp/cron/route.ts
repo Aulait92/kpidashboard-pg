@@ -135,8 +135,14 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-next-step-reminder");
     return null;
   });
-  // Cross-Selling: „Weiteres Produkt anbieten?“ 3 Wochen nach dem Abschluss, Abschlüsse in den Bestand
+  // Cross-Selling: „Weiteres Produkt anbieten?“ 3 Wochen nach dem Abschluss, Abschlüsse in den Bestand,
+  // vorher die Kontrolle „Police da?“ nach 2 Wochen
   const vertraege = {
+    // „Police da und erste Zahlung erfolgt?“ 2 Wochen nach dem Abschluss (abschaltbar, einmal je Lead)
+    police: await import("@/lib/vertraege").then((m) => m.runPoliceReminders(now)).catch((e: unknown) => {
+      reportError(e, "cron-police");
+      return null;
+    }),
     crossSell: await import("@/lib/vertraege").then((m) => m.runCrossSellReminders(now)).catch((e: unknown) => {
       reportError(e, "cron-cross-sell");
       return null;

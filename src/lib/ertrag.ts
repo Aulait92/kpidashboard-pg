@@ -1,21 +1,29 @@
 // Kosten & Ertrag aus Kundensicht (Ole, 14.11.2026), eine Rechnung für alle Stellen: /buyer/zahlen,
 // Hochrechnung, Team-Ansicht, Monatsbericht, Empfehlungs-Modul und Admin-Kundenerfolg.
 //
-// Gewinn = Abschlussprovision (Makler: Courtage 1. Jahr) − Lead-Kosten − Agenturkosten im Zeitraum,
-// ehrlich ohne künftige Bestandsprovision. Provision je Vertrag mit der Rate seiner Sparte
+// Gewinn = Abschlussprovision (Makler: Courtage 1. Jahr) − Rückbelastungen − Lead-Kosten − Agenturkosten im
+// Zeitraum, ehrlich ohne künftige Bestandsprovision („Nur jetzt“). „Inkl. Bestand“ (gewinnMitBestand) legt
+// die künftige Bestandsprovision der Verträge dieses Zeitraums (Kohorte) über 5 Jahre dazu, mit der
+// Stornoquote des Kunden, ohne Abzinsung (Prognose). Provision je Vertrag mit der Rate seiner Sparte
 // (lib/provision.contractProvision), Verträge aus lib/vertraege, Herkunft aus lib/lead-herkunft.
-// summarizeErtrag ist rein (getestet), computeErtrag lädt die Daten.
+// summarizeProvision/summarizeBestand sind rein (getestet), loadErtragData lädt die Daten.
 
 import { prisma } from "@/lib/prisma";
 import { agencyCostsForRange, loadAgencyCostConfig, type AgencyCostConfig, type AgencyCosts } from "@/lib/agenturkosten";
 import { computeCustomerSpend, loadRetainerConfig } from "@/lib/customer-spend";
 import { LEAD_ORIGINS, type LeadOrigin } from "@/lib/lead-herkunft";
 import {
+  BESTAND_JAHRE,
   bestandGrowth,
   bestandInYears,
+  cohortFutureTrail,
   contractProvision,
+  realStornoQuote,
   STORNO_PRO_JAHR,
+  stornoFor,
   type ProvisionOverrides,
+  type RealStorno,
+  type TrailContract,
   type VermittlerTyp,
 } from "@/lib/provision";
 import { loadCustomerProvision } from "@/lib/provision-server";
@@ -26,17 +34,27 @@ export type Range = { from: Date; to: Date };
 export type OriginSum = { amount: number; contracts: number; leads: number };
 
 export type ProvisionSummary = {
-  /** Basis für Gewinn: Abschluss + (Makler) Bestand 1. Jahr. */
+  /** Basis für Gewinn: Abschluss + (Makler) Bestand 1. Jahr, abzüglich Rückbelastungen im Zeitraum. */
   firstYear: number;
-  /** Nur einmalige Abschlussprovision. */
+  /** Nur einmalige Abschlussprovision (abzüglich Rückbelastungen). */
   abschluss: number;
+  /** Rückbelastungen gekündigter Verträge, gebucht im Zeitraum (Kündigungsdatum). */
+  chargeback: number;
+  chargebackContracts: number;
+  /** Davon Honorar vom Kunden (PKV-Tarifoptimierung). */
+  honorar: number;
+  /**
+   * Künftige Bestandsprovision der Verträge dieses Zeitraums (Kohorte) über 5 Jahre, soweit nicht schon in
+   * firstYear: Stornoquote des Kunden, ohne Abzinsung, gekündigte nur bis zum Kündigungsdatum.
+   */
+  futureTrail: number;
   contracts: number;
   /** Leads mit Abschluss, deren Verträge im Zeitraum zählen. */
   leads: number;
   byOrigin: Record<LeadOrigin, OriginSum>;
   /** Weitere Verträge (nicht der erste Abschluss eines Leads). */
   crossSell: { contracts: number; amount: number };
-  /** Bestandsprovision pro Jahr aus Verträgen dieses Zeitraums. */
+  /** Bestandsprovision pro Jahr aus (laufenden) Verträgen dieses Zeitraums. */
   trailPerYear: number;
 };
 
@@ -48,7 +66,12 @@ export type BestandSummary = {
   fromYear2: boolean;
   /** Summe der nächsten 5 Jahre mit Storno. */
   inYears: number;
+  /** Verwendete Stornoquote pro Jahr (eigene oder Standard). */
   storno: number;
+  /** Eigene Quote aus „Meine Provisionen“ (sonst Standard). */
+  stornoCustom: boolean;
+  /** Tatsächliche Stornoquote aus gekündigten Verträgen (erst ab 20 Verträgen). */
+  real: RealStorno;
   /** „So wächst dein Bestand“: je Jahr bei gleichem Tempo. */
   growth: { year: number; existing: number; added: number; total: number }[];
   /** Verträge pro Monat (Tempo der letzten 3 Monate). */
@@ -62,28 +85,67 @@ export type ErtragPeriod = {
   agency: AgencyCosts;
   /** Lead-Kosten + Agenturkosten. */
   costs: number;
+  /** „Nur jetzt“. */
   gewinn: number;
+  /** „Inkl. Bestand“: gewinn + künftige Bestandsprovision der Kohorte (provision.futureTrail). */
+  gewinnMitBestand: number;
 };
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 const inRange = (d: Date, r: Range) => d >= r.from && d <= r.to;
 
-/** Provision der Verträge im Zeitraum (rein). */
-export function summarizeProvision(contracts: CustomerContract[], rates: ProvisionOverrides | undefined, range: Range): ProvisionSummary {
+const cancelledBy = (c: CustomerContract, at: Date) => c.status === "storniert" && !!c.cancelledAt && c.cancelledAt <= at;
+
+/** Vertrag für die Bestandsrechnung (Sparten-Storno, Ende bei Kündigung). */
+export function trailContractOf(c: CustomerContract, rates: ProvisionOverrides | undefined, storno: number): TrailContract & { contract: CustomerContract } {
+  const p = contractProvision({ ...c, status: "aktiv" }, rates);
+  return {
+    trailPerYear: p.trailPerYear,
+    trailFromYear2: p.trailFromYear2,
+    signedAt: c.signedAt,
+    storno: stornoFor(c.sparte, rates, storno),
+    endsAt: c.status === "storniert" ? (c.cancelledAt ?? c.signedAt) : null,
+    contract: c,
+  };
+}
+
+/**
+ * Provision der Verträge im Zeitraum (rein). Gekündigte Verträge zählen mit ihrer Abschlussprovision im
+ * Zeitraum des Abschlusses; ihre Rückbelastung mindert Provision und Gewinn im Zeitraum des
+ * Kündigungsdatums. opts.now/opts.storno für die künftige Bestandsprovision der Kohorte (futureTrail).
+ */
+export function summarizeProvision(
+  contracts: CustomerContract[],
+  rates: ProvisionOverrides | undefined,
+  range: Range,
+  opts: { now?: Date; storno?: number } = {},
+): ProvisionSummary {
+  const now = opts.now ?? new Date();
+  const storno = opts.storno ?? STORNO_PRO_JAHR;
   const byOrigin = Object.fromEntries(LEAD_ORIGINS.map((o) => [o.key, { amount: 0, contracts: 0, leads: 0 }])) as Record<LeadOrigin, OriginSum>;
   const leadsOf = new Map<LeadOrigin, Set<string>>();
   const leads = new Set<string>();
   let firstYear = 0;
   let abschluss = 0;
   let trail = 0;
+  let honorar = 0;
+  let future = 0;
+  let chargeback = 0;
+  let chargebackContracts = 0;
   let n = 0;
   const cross = { contracts: 0, amount: 0 };
   for (const c of contracts) {
+    if (c.status === "storniert" && c.cancelledAt && inRange(c.cancelledAt, range) && (c.chargeback ?? 0) > 0) {
+      chargeback += c.chargeback!;
+      chargebackContracts++;
+    }
     if (!inRange(c.periodAt, range)) continue;
-    const p = contractProvision(c, rates);
+    const p = contractProvision({ ...c, status: "aktiv" }, rates);
     firstYear += p.firstYear;
     abschluss += p.abschluss;
-    trail += p.trailPerYear;
+    if (p.honorar) honorar += p.abschluss;
+    if (!cancelledBy(c, now)) trail += p.trailPerYear;
+    future += cohortFutureTrail(trailContractOf(c, rates, storno), now, BESTAND_JAHRE, storno);
     n++;
     leads.add(c.leadId);
     const o = byOrigin[c.origin];
@@ -99,19 +161,38 @@ export function summarizeProvision(contracts: CustomerContract[], rates: Provisi
   }
   for (const [k, set] of leadsOf) byOrigin[k].leads = set.size;
   for (const k of Object.keys(byOrigin) as LeadOrigin[]) byOrigin[k].amount = r2(byOrigin[k].amount);
-  return { firstYear: r2(firstYear), abschluss: r2(abschluss), contracts: n, leads: leads.size, byOrigin, crossSell: { contracts: cross.contracts, amount: r2(cross.amount) }, trailPerYear: r2(trail) };
+  return {
+    firstYear: r2(firstYear - chargeback),
+    abschluss: r2(abschluss - chargeback),
+    chargeback: r2(chargeback),
+    chargebackContracts,
+    honorar: r2(honorar),
+    futureTrail: Math.round(future),
+    contracts: n,
+    leads: leads.size,
+    byOrigin,
+    crossSell: { contracts: cross.contracts, amount: r2(cross.amount) },
+    trailPerYear: r2(trail),
+  };
 }
 
-/** Bestandsprovision aus allen bisherigen Verträgen und Wachstum bei gleichem Tempo (rein). */
-export function summarizeBestand(contracts: CustomerContract[], rates: ProvisionOverrides | undefined, typ: VermittlerTyp, now: Date): BestandSummary {
-  const trailContracts = contracts
-    .filter((c) => c.signedAt <= now)
-    .map((c) => {
-      const p = contractProvision(c, rates);
-      return { trailPerYear: p.trailPerYear, trailFromYear2: p.trailFromYear2, signedAt: c.signedAt };
-    });
+/**
+ * Bestandsprovision aus allen bisherigen Verträgen und Wachstum bei gleichem Tempo (rein). storno = Quote des
+ * Kunden (Standard 10 %), je Sparte ggf. eigene; gekündigte Verträge ab dem Kündigungsdatum raus.
+ */
+export function summarizeBestand(
+  contracts: CustomerContract[],
+  rates: ProvisionOverrides | undefined,
+  typ: VermittlerTyp,
+  now: Date,
+  storno: number = STORNO_PRO_JAHR,
+  stornoCustom = false,
+): BestandSummary {
+  const signed = contracts.filter((c) => c.signedAt <= now);
+  const trailContracts = signed.map((c) => trailContractOf(c, rates, storno));
   const withTrail = trailContracts.filter((c) => c.trailPerYear > 0);
-  const perYear = r2(withTrail.reduce((s, c) => s + c.trailPerYear, 0));
+  const running = withTrail.filter((c) => !cancelledBy(c.contract, now));
+  const perYear = r2(running.reduce((s, c) => s + c.trailPerYear, 0));
   // Tempo: Verträge der letzten 3 Monate, Bestand je Vertrag aus diesen (sonst aus allen)
   const since = new Date(now.getTime() - 91 * 86_400_000);
   const recent = trailContracts.filter((c) => c.signedAt >= since);
@@ -121,11 +202,13 @@ export function summarizeBestand(contracts: CustomerContract[], rates: Provision
   const fromYear2 = typ === "vertreter";
   return {
     perYear,
-    contracts: withTrail.length,
+    contracts: running.length,
     fromYear2,
-    inYears: Math.round(bestandInYears(withTrail, now)),
-    storno: STORNO_PRO_JAHR,
-    growth: bestandGrowth({ existing: withTrail, newPerMonth: perMonth, avgTrail, fromYear2, now }),
+    inYears: Math.round(bestandInYears(withTrail, now, BESTAND_JAHRE, storno)),
+    storno,
+    stornoCustom,
+    real: realStornoQuote(signed.map((c) => ({ signedAt: c.signedAt, cancelledAt: c.status === "storniert" ? c.cancelledAt : null })), now),
+    growth: bestandGrowth({ existing: withTrail, newPerMonth: perMonth, avgTrail, fromYear2, now, storno }),
     perMonth: Math.round(perMonth * 10) / 10,
   };
 }
@@ -140,6 +223,9 @@ export type ErtragData = {
   rates: ProvisionOverrides;
   contracts: CustomerContract[];
   agencyCfg: AgencyCostConfig | null;
+  /** Stornoquote pro Jahr des Kunden (eigene oder Standard); optional für ältere Aufrufer. */
+  storno?: number;
+  stornoCustom?: boolean;
 };
 
 /** Daten einmal laden, dann für mehrere Zeiträume rechnen. */
@@ -149,7 +235,12 @@ export async function loadErtragData(customerId: string, opts: { leadWhere?: Rec
     loadCustomerContracts(customerId, opts).catch(() => [] as CustomerContract[]),
     loadAgencyCostConfig(customerId).catch(() => null),
   ]);
-  return { typ: prov.typ, rates: prov.rates, contracts, agencyCfg };
+  return { typ: prov.typ, rates: prov.rates, contracts, agencyCfg, storno: prov.storno, stornoCustom: prov.stornoCustom };
+}
+
+/** Bestand mit der Stornoquote des Kunden (Kurzform für summarizeBestand). */
+export function bestandOf(data: ErtragData, now: Date): BestandSummary {
+  return summarizeBestand(data.contracts, data.rates, data.typ, now, data.storno ?? STORNO_PRO_JAHR, !!data.stornoCustom);
 }
 
 const NO_AGENCY: AgencyCosts = { betreuung: 0, logins: 0, module: 0, whatsapp: 0, setup: 0, gutschrift: 0, total: 0, baseInLeadCosts: false };
@@ -167,10 +258,11 @@ export async function customerLeadCosts(customerId: string, range: Range): Promi
 
 /** Kosten & Ertrag eines Zeitraums (mit vorgeladenen Daten). leadCosts optional vorgegeben. */
 export async function ertragForRange(customerId: string, data: ErtragData, range: Range, now = new Date(), leadCosts?: number): Promise<ErtragPeriod> {
-  const provision = summarizeProvision(data.contracts, data.rates, range);
+  const provision = summarizeProvision(data.contracts, data.rates, range, { now, storno: data.storno });
   const lc = leadCosts ?? (await customerLeadCosts(customerId, range)).total;
   const agency = data.agencyCfg ? agencyCostsForRange(data.agencyCfg, range, now) : NO_AGENCY;
-  return { provision, leadCosts: r2(lc), leadCostHint: null, agency, costs: r2(lc + agency.total), gewinn: gewinnOf(provision.firstYear, lc, agency.total) };
+  const gewinn = gewinnOf(provision.firstYear, lc, agency.total);
+  return { provision, leadCosts: r2(lc), leadCostHint: null, agency, costs: r2(lc + agency.total), gewinn, gewinnMitBestand: r2(gewinn + provision.futureTrail) };
 }
 
 /** Summe der Provision (Basis Gewinn) mehrerer Kunden im Zeitraum, z. B. Admin-Kundenerfolg. */
@@ -183,8 +275,9 @@ export async function provisionForCustomers(customerIds: string[], range: Range)
   return r2(sum);
 }
 
-/** Verträge pro Kunde (aktive Verträge / Leads mit Abschluss, seit Start); null ohne Abschluss. */
-export function contractsPerCustomer(contracts: CustomerContract[]): number | null {
-  const leads = new Set(contracts.map((c) => c.leadId));
-  return leads.size ? Math.round((contracts.length / leads.size) * 10) / 10 : null;
+/** Verträge pro Kunde (laufende Verträge / Leads mit Abschluss, seit Start); null ohne Abschluss. */
+export function contractsPerCustomer(contracts: CustomerContract[], now = new Date()): number | null {
+  const active = contracts.filter((c) => !cancelledBy(c, now));
+  const leads = new Set(active.map((c) => c.leadId));
+  return leads.size ? Math.round((active.length / leads.size) * 10) / 10 : null;
 }

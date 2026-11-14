@@ -267,7 +267,7 @@ export async function setLeadStatusAction(
 
   await syncFollowUpWithStatus(lead.id, status);
   // Erster Vertrag (Cross-Selling): Abschluss am Lead → Vertrag mit Sparte und Beitrag
-  if (isClosed) await syncPrimaryContract(lead.id, { sparte: opts?.sparte, reopen: lead.status !== status }).catch((e) => console.error("[vertraege]", e));
+  if (isClosed) await syncPrimaryContract(lead.id, { sparte: opts?.sparte, reopen: lead.status !== status, takeValue: closeValue !== undefined }).catch((e) => console.error("[vertraege]", e));
   if (lead.status !== status) {
     await logLeadHistory(
       lead.id,

@@ -105,6 +105,9 @@ model Customer {
   // Eigene Provisionssätze je Produkt (Kundenbereich → Konto → Meine Provisionen),
   // geprüft über lib/provision.parseCustomRates; null = Standard
   provisionRates      Json?
+  // Eigene Stornoquote pro Jahr für alle Prognosen (Anteil 0–0,5; null = Standard 10 %, lib/provision.STORNO_PRO_JAHR).
+  // Je Produkt optional in provisionRates (storno).
+  stornoQuote         Decimal?  @db.Decimal(5, 4)
   // Kunde hat seine Provisionen geprüft (auch ohne Abweichung vom Standard) – Einrichtungsschritt erledigt
   provisionCheckedAt  DateTime?
   // Kein aktueller Bezug mehr (aus Airtable) → in Listen ausgeblendet, Historie bleibt
@@ -212,6 +215,8 @@ model Customer {
   moduleHintsDismissed     String[]                  @default([])
   // Erinnerung „Weiteres Produkt anbieten?“ 3 Wochen nach dem ersten Abschluss (Cross-Selling, Standard an)
   crossSellReminder        Boolean                   @default(true)
+  // Aufgabe „Police da und erste Zahlung erfolgt?“ 2 Wochen nach dem ersten Abschluss (Standard an)
+  policeReminder           Boolean                   @default(true)
   // Weggeklickte Tipps der Karte „So holen Sie mehr raus“ (/buyer/zahlen): { tippSchlüssel: ISO-Datum }, je 30 Tage
   zahlenTipsDismissed      Json?
   // Neue Oberfläche des Kundenbereichs (Vertreter-A); pro Kunde im Admin einschaltbar.
@@ -615,6 +620,8 @@ model Lead {
   contracts     LeadContract[]
   // Erinnerung „Weiteres Produkt anbieten?“ angelegt (einmal je Lead)
   crossSellRemindedAt DateTime?
+  // Aufgabe „Police da und erste Zahlung erfolgt?“ gestellt (einmal je Lead)
+  policeRemindedAt    DateTime?
   // Kunde mit Abschluss im Bestand (ExistingCustomer.leadId)
   bestandKunde  ExistingCustomer? @relation("BestandAusLead")
 
@@ -759,6 +766,8 @@ model User {
   leadReceivedAt     DateTime?
   // Früher: neue Admin-Oberfläche an/aus. Nicht mehr genutzt (alle Admins fest auf der neuen, 18.11.)
   adminNewUi         Boolean          @default(true)
+  // /buyer/zahlen, Karte Gewinn: „Inkl. Bestand“ statt „Nur jetzt“ (Wahl je Login)
+  gewinnMitBestand   Boolean          @default(false)
   adminDismissals    AdminDismissal[]
   assignedLeads      Lead[]           @relation("LeadAssignee")
   advisorCalendar    AdvisorCalendar?
@@ -3135,8 +3144,15 @@ model LeadContract {
   // Sparte (lib/provision SPARTEN): katze | hund | pferd | privatschutz | unfall | hausrat | wohngebaeude |
   // rechtsschutz | kindersparplan | kfz | leben_bu | pkv | sonstiges
   sparte         String
-  // Jahresbeitrag netto; bei PKV der Monatsbeitrag. null = nicht eingetragen (Standardbeitrag der Sparte)
+  // Jahresbeitrag netto (Leben/BU/Kindersparplan: eingegebener Monatsbeitrag × 12); bei PKV der Monatsbeitrag,
+  // bei der PKV-Tarifoptimierung die monatliche Ersparnis des Kunden. null = nicht eingetragen (Standard der Sparte)
   premium        Decimal?  @db.Decimal(12, 2)
+  // Leben/BU/Rente/Kindersparplan (Rechenart beitragssumme): Laufzeit in Jahren oder Alter + Endalter,
+  // optional die Beitragssumme direkt (geht vor Monatsbeitrag × 12 × Laufzeit)
+  termYears      Int?
+  customerAge    Int?
+  endAge         Int?
+  beitragssumme  Decimal?  @db.Decimal(14, 2)
   // Fester Provisionswert aus der Zeit vor den Verträgen (frei eingegebener Abschlusswert); gilt, solange kein Beitrag eingetragen ist
   provisionValue Decimal?  @db.Decimal(12, 2)
   signedAt       DateTime
@@ -3147,7 +3163,13 @@ model LeadContract {
   file           LeadFile? @relation(fields: [fileId], references: [id], onDelete: SetNull)
   // aktiv | storniert
   status         String    @default("aktiv")
+  // Vertrag gekündigt bzw. storniert zum (ab hier kein Bestand mehr); Rückbelastung wird in diesem Monat gebucht
   cancelledAt    DateTime?
+  // Grund (lib/provision CANCEL_REASONS): kunde | widerruf | nichtzahlung | versicherer | sonstiges.
+  // null bei storniert = Altfall vor dem 14.11.2026, zählt wie bisher gar nicht
+  cancelReason   String?
+  // Rückbelastung der Abschlussprovision (€), mindert Provision und Gewinn im Monat von cancelledAt
+  chargeback     Decimal?  @db.Decimal(12, 2)
   createdById    String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt

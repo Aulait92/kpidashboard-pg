@@ -6,7 +6,9 @@ import {
   asVermittlerTyp,
   effectiveRates,
   parseCustomRates,
+  parseStorno,
   productKeyFor,
+  STORNO_PRO_JAHR,
   type ProductKey,
   type ProvisionOverrides,
   type VermittlerTyp,
@@ -19,16 +21,29 @@ export type CustomerProvision = {
   hasCustom: boolean;
   /** Einrichtungsschritt erledigt: eigene Sätze oder Standard bestätigt. */
   confirmed: boolean;
+  /** Stornoquote pro Jahr für alle Prognosen: eigene (Customer.stornoQuote) oder Standard 10 %. */
+  storno: number;
+  stornoCustom: boolean;
 };
 
 export async function loadCustomerProvision(customerId: string | null | undefined): Promise<CustomerProvision> {
   const c = customerId
-    ? await prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerTyp: true, provisionRates: true, provisionCheckedAt: true } }).catch(() => null)
+    ? await prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerTyp: true, provisionRates: true, provisionCheckedAt: true, stornoQuote: true } }).catch(() => null)
     : null;
   const typ = asVermittlerTyp(c?.vermittlerTyp);
   const custom = parseCustomRates(c?.provisionRates).rates;
   const hasCustom = Object.keys(custom).length > 0;
-  return { typ, rates: effectiveRates(typ, custom), custom, hasCustom, confirmed: hasCustom || !!c?.provisionCheckedAt };
+  const own = c?.stornoQuote != null ? parseStorno(Number(c.stornoQuote)) : null;
+  const stornoCustom = !!own?.ok && own.value != null;
+  return {
+    typ,
+    rates: effectiveRates(typ, custom),
+    custom,
+    hasCustom,
+    confirmed: hasCustom || !!c?.provisionCheckedAt,
+    storno: stornoCustom && own?.ok && own.value != null ? own.value : STORNO_PRO_JAHR,
+    stornoCustom,
+  };
 }
 
 /**
@@ -79,18 +94,31 @@ export function canEditProvision(ctx: { preview: boolean; teamRole: "owner" | "a
  */
 export async function saveCustomerProvision(
   customerId: string,
-  input: { typ: unknown; rates: unknown },
+  input: { typ: unknown; rates: unknown; storno?: unknown },
 ): Promise<{ ok: true; changed: string[] } | { ok: false; error: string }> {
   if (input.typ !== "vertreter" && input.typ !== "makler") return { ok: false, error: "Bitte Vertreter oder Makler wählen." };
   const { rates, errors } = parseCustomRates(input.rates);
+  const storno = parseStorno(input.storno);
+  if (!storno.ok) errors.push("Stornoquote pro Jahr zwischen 0 und 50 %");
   if (errors.length) return { ok: false, error: errors.join(" · ") };
   await prisma.customer.update({
     where: { id: customerId },
     data: {
       vermittlerTyp: input.typ,
       provisionRates: Object.keys(rates).length ? (rates as Prisma.InputJsonValue) : Prisma.DbNull,
+      // Standard (10 %) wird nicht gespeichert, damit eine spätere Änderung des Standards wirkt
+      ...(input.storno !== undefined ? { stornoQuote: storno.ok && storno.value != null && storno.value !== STORNO_PRO_JAHR ? storno.value : null } : {}),
       provisionCheckedAt: new Date(),
     },
   });
   return { ok: true, changed: Object.keys(rates) };
+}
+
+/** Nur die Stornoquote setzen (z. B. „Ihre tatsächliche Quote übernehmen“); null = Standard. */
+export async function saveStornoQuote(customerId: string, value: unknown): Promise<{ ok: true; value: number | null } | { ok: false; error: string }> {
+  const s = parseStorno(value);
+  if (!s.ok) return { ok: false, error: "Stornoquote pro Jahr zwischen 0 und 50 %." };
+  const v = s.value != null && s.value !== STORNO_PRO_JAHR ? s.value : null;
+  await prisma.customer.update({ where: { id: customerId }, data: { stornoQuote: v } });
+  return { ok: true, value: v };
 }

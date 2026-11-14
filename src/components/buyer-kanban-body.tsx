@@ -37,7 +37,7 @@ export async function BuyerKanbanBody({
 }) {
   const { rates } = await loadCustomerProvision(customerId);
   // Abschluss-Karten: Provision über alle aktiven Verträge (Cross-Selling) mit der Rate ihrer Sparte
-  const contractInfo = (cs: { sparte: string; premium: unknown; provisionValue: unknown }[]) => {
+  const contractInfo = (cs: { sparte: string; premium: unknown; provisionValue: unknown; termYears?: unknown; customerAge?: unknown; endAge?: unknown; beitragssumme?: unknown }[]) => {
     if (!cs.length) return {};
     const ps = cs.map((c) => contractProvision(c, rates));
     const sum = ps.reduce((n, p) => n + p.firstYear, 0);
@@ -63,7 +63,7 @@ export async function BuyerKanbanBody({
       closedAt: true,
       erasedAt: true,
       stornoState: true,
-      contracts: { where: { status: "aktiv" }, select: { sparte: true, premium: true, provisionValue: true } },
+      contracts: { where: { status: "aktiv" }, select: { sparte: true, premium: true, provisionValue: true, termYears: true, customerAge: true, endAge: true, beitragssumme: true } },
       appointments: {
         where: { status: "booked", startsAt: { gt: new Date() } },
         orderBy: { startsAt: "asc" },

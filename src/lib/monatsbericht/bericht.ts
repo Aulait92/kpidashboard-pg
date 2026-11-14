@@ -19,7 +19,13 @@ export type FunnelStep = {
   previous: number | null;
 };
 
-export type ResultLine = { key: "paid" | "empfehlung" | "bestand" | "leadkosten" | "betreuung"; label: string; amount: number; sign: "+" | "-" };
+export type ResultLine = { key: "paid" | "empfehlung" | "bestand" | "rueckbelastung" | "leadkosten" | "betreuung"; label: string; amount: number; sign: "+" | "-" };
+
+/**
+ * Ergebnis im Monat: Gewinn „Nur jetzt“ und immer auch mit künftigem Bestand (künftige Bestandsprovision der
+ * Verträge dieses Monats über 5 Jahre, Prognose). Ältere gespeicherte Berichte haben nur gewinn.
+ */
+export type ReportResult = { lines: ResultLine[]; gewinn: number; gewinnMitBestand?: number; kuenftigerBestand?: number };
 
 export type ReportBestand = {
   label: string;
@@ -28,6 +34,8 @@ export type ReportBestand = {
   fromYear2: boolean;
   inYears: number;
   storno: number;
+  /** Tatsächliche Stornoquote (erst ab 20 Verträgen, sonst null = zu wenig Daten). Fehlt in älteren Berichten. */
+  stornoReal?: number | null;
   perMonth: number;
   years: { year: number; existing: number; added: number; total: number }[];
 };
@@ -46,7 +54,7 @@ export type ReportModel = {
   /** Abschlüsse im Monat (Leads mit Vertrag im Monat, alle Herkünfte), wie „aus N Abschlüssen“ auf /buyer/zahlen */
   closings: number;
   funnel: { steps: FunnelStep[] } | null;
-  result: { lines: ResultLine[]; gewinn: number } | null;
+  result: ReportResult | null;
   bestand: ReportBestand | null;
   empfehlungen: ReportEmpfehlungen | null;
   bestandskampagnen: ReportBestandskampagnen | null;
@@ -103,9 +111,21 @@ export function bestandIntro(b: ReportBestand): string {
   return `${b.label} pro Jahr aus allen bisherigen Verträgen: + ${formatEUR(b.perYear)} pro Jahr (aus ${plural(b.contracts, "Vertrag", "Verträgen")}, ${b.fromYear2 ? "ab dem 2. Jahr" : "ab sofort"}).`;
 }
 
+const pct1 = (r: number) => `${(Math.round(r * 1000) / 10).toLocaleString("de-DE")} %`;
+
 export function bestandForecastNote(b: ReportBestand): string {
-  return `Prognose für 5 Jahre bei gleichem Tempo: ${b.perMonth.toLocaleString("de-DE")} ${b.perMonth === 1 ? "Vertrag" : "Verträge"} pro Monat wie in den letzten 3 Monaten, ${Math.round(b.storno * 100)} % Storno pro Jahr.`;
+  const real =
+    b.stornoReal === undefined ? "" : b.stornoReal != null ? ` Ihre tatsächliche Stornoquote: ${pct1(b.stornoReal)} pro Jahr.` : " Ihre tatsächliche Stornoquote: zu wenig Daten.";
+  return `Prognose für 5 Jahre bei gleichem Tempo: ${b.perMonth.toLocaleString("de-DE")} ${b.perMonth === 1 ? "Vertrag" : "Verträge"} pro Monat wie in den letzten 3 Monaten, ${pct1(b.storno)} Storno pro Jahr.${real}`;
 }
+
+/** „Gewinn: 490 €, mit künftigem Bestand: 2.590 €“ (beide Zahlen, sobald der Bericht sie hat). */
+export function gewinnPairText(r: ReportResult): string {
+  return r.gewinnMitBestand != null ? `Gewinn: ${eur0(r.gewinn)}, mit künftigem Bestand: ${eur0(r.gewinnMitBestand)}` : `Gewinn: ${eur0(r.gewinn)}`;
+}
+
+export const KUENFTIG_NOTE =
+  "Mit künftigem Bestand: plus die künftige Bestandsprovision der Verträge aus diesem Monat über 5 Jahre. Eine Prognose mit Ihrer Stornoquote, ohne Abzinsung.";
 
 export const empfehlungCells = (e: ReportEmpfehlungen) => [
   { label: "Kunden gefragt", value: formatNumber(e.asked) },
@@ -180,7 +200,12 @@ function resultHtml(r: NonNullable<ReportModel["result"]>): string {
     `<tr><td style="padding:7px 0;font-size:14px;line-height:1.4;color:${C.text};${strong ? "font-weight:700;" : ""}${top ? `border-top:2px solid ${C.text};` : `border-bottom:1px solid ${C.border};`}">${esc(label)}</td><td align="right" style="padding:7px 0 7px 12px;font-size:14px;line-height:1.4;white-space:nowrap;color:${color};${strong ? "font-weight:700;" : ""}${top ? `border-top:2px solid ${C.text};` : `border-bottom:1px solid ${C.border};`}">${esc(value)}</td></tr>`;
   const lines = r.lines.map((l) => row(l.label, signedEur(l.amount, l.sign), l.sign === "+" ? C.plus : C.text)).join("");
   const total = row("= Gewinn", formatEUR(r.gewinn), r.gewinn >= 0 ? C.plus : C.minus, true, true);
-  return `${h2(SECTION_TITLES.result)}<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${lines}${total}</table>${small("Gleiche Rechnung wie in Ihren Zahlen. Betreuung & Software inklusive USt., Gutschriften sind abgezogen, die Einrichtung ist über die Mindestlaufzeit verteilt.")}`;
+  const mit =
+    r.gewinnMitBestand != null
+      ? row(`+ künftige Bestandsprovision (5 Jahre)`, signedEur(r.kuenftigerBestand ?? 0, "+"), C.plus) +
+        row("= Gewinn mit künftigem Bestand", formatEUR(r.gewinnMitBestand), r.gewinnMitBestand >= 0 ? C.plus : C.minus, true, true)
+      : "";
+  return `${h2(SECTION_TITLES.result)}<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${lines}${total}${mit}</table>${small(`Gleiche Rechnung wie in Ihren Zahlen. Betreuung & Software inklusive USt., Gutschriften sind abgezogen, die Einrichtung ist über die Mindestlaufzeit verteilt.${r.gewinnMitBestand != null ? ` ${KUENFTIG_NOTE}` : ""}`)}`;
 }
 
 function bestandHtml(b: ReportBestand): string {
@@ -252,6 +277,12 @@ export function reportSectionsText(m: ReportModel, appUrl: string): string[] {
     head(SECTION_TITLES.result);
     for (const l of m.result.lines) out.push(`${signedEur(l.amount, l.sign)}  ${l.label}`);
     out.push(`= ${formatEUR(m.result.gewinn)}  Gewinn`);
+    if (m.result.gewinnMitBestand != null) {
+      out.push(`${signedEur(m.result.kuenftigerBestand ?? 0, "+")}  künftige Bestandsprovision (5 Jahre)`);
+      out.push(`= ${formatEUR(m.result.gewinnMitBestand)}  Gewinn mit künftigem Bestand`);
+      out.push(gewinnPairText(m.result));
+      out.push(KUENFTIG_NOTE);
+    }
   }
   if (m.bestand) {
     head(SECTION_TITLES.bestand);
@@ -305,9 +336,12 @@ export function reportNumbers(m: ReportModel): Set<string> {
   }
   for (const l of m.result?.lines ?? []) add(l.amount);
   add(m.result?.gewinn);
+  add(m.result?.gewinnMitBestand);
+  add(m.result?.kuenftigerBestand);
   if (m.bestand) {
     const b = m.bestand;
     for (const n of [b.perYear, b.contracts, b.inYears, b.storno * 100, b.perMonth]) add(n);
+    if (b.stornoReal != null) add(b.stornoReal * 100);
     for (const y of b.years) for (const n of [y.year, y.total, y.existing, y.added]) add(n);
   }
   for (const n of Object.values(m.empfehlungen ?? {})) add(n);
@@ -318,4 +352,23 @@ export function reportNumbers(m: ReportModel): Set<string> {
   // feste Werte für Einstieg/Abschluss („in 5 Jahren“, „15 Minuten“)
   for (const n of [1, 2, 3, 5, 15]) add(n);
   return out;
+}
+
+const eurPattern = (n: number) => {
+  const r = Math.round(n);
+  const plain = Math.abs(r).toLocaleString("de-DE");
+  return [plain, plain.replace(/\./g, ""), formatEUR(Math.abs(n)).replace(/\s*€$/, "").replace(/\u00a0/g, " ").trim()];
+};
+
+/**
+ * Nennt der Text den Gewinn, dann immer beide Zahlen (Ole, 14.11.2026): „Gewinn: 490 €, mit künftigem
+ * Bestand: 2.590 €“. Gibt eine Beanstandung zurück oder null.
+ */
+export function checkGewinnPair(text: string, r: ReportResult | null): string | null {
+  if (!r || r.gewinnMitBestand == null || !/gewinn/i.test(text)) return null;
+  const has = (n: number) => eurPattern(n).some((p) => p && text.includes(p));
+  const nowShown = has(r.gewinn);
+  const mitShown = has(r.gewinnMitBestand);
+  if (nowShown === mitShown) return null;
+  return `Gewinn bitte immer mit beiden Zahlen nennen: ${gewinnPairText(r)}.`;
 }
