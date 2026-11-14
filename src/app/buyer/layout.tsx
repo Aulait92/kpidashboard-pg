@@ -110,7 +110,7 @@ export default async function BuyerLayout({
         </div>
       ) : null}
       {ctx ? (
-        <ProvisionRatesProvider rates={provision?.rates ?? {}}>
+        <ProvisionRatesProvider rates={provision?.rates ?? {}} products={provision?.products ?? []}>
           <BuyerShell newUi={newUi} displayName={displayName} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen} teamRole={ctx.teamRole} hasTeam={logins > 1} showOrders={pplSubs > 0} showBestand={bestand} absence={absence} updatesUnread={updatesUnread} noStepBadge={noStepBadge}>
             {ctx.teamRole === "advisor" ? (
               <Suspense fallback={null}>

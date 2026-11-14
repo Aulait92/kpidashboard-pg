@@ -5,18 +5,18 @@
 
 import { prisma } from "@/lib/prisma";
 import { CLOSED_STATUS } from "@/lib/products";
-import { realStornoQuote, sparteInfo, type RealStorno, type StornoContract } from "@/lib/provision";
+import { contractLabel, realStornoQuote, type RealStorno, type StornoContract } from "@/lib/provision";
 
 export type StornoRow = { key: string; label: string; real: RealStorno };
 export type StornoStats = { overall: RealStorno; bySparte: StornoRow[] };
 
-type Row = StornoContract & { sparte: string; customerId: string };
+type Row = StornoContract & { sparte: string; productName?: string | null; customerId: string };
 
 /** Quote gesamt und je Sparte (Sparten nach Anzahl Verträge). */
 export function stornoStatsOf(rows: Row[], now: Date): StornoStats {
   const groups = new Map<string, Row[]>();
   for (const r of rows) {
-    const label = sparteInfo(r.sparte).label;
+    const label = contractLabel(r);
     groups.set(label, [...(groups.get(label) ?? []), r]);
   }
   const bySparte = [...groups.entries()]
@@ -28,11 +28,11 @@ export function stornoStatsOf(rows: Row[], now: Date): StornoStats {
 async function loadRows(where: { customerId?: string }): Promise<Row[]> {
   const rows = await prisma.leadContract.findMany({
     where: { ...where, lead: { status: CLOSED_STATUS } },
-    select: { customerId: true, sparte: true, signedAt: true, status: true, cancelledAt: true, cancelReason: true },
+    select: { customerId: true, sparte: true, productName: true, signedAt: true, status: true, cancelledAt: true, cancelReason: true },
   });
   return rows
     .filter((r) => !(r.status === "storniert" && !r.cancelReason))
-    .map((r) => ({ customerId: r.customerId, sparte: r.sparte, signedAt: r.signedAt, cancelledAt: r.status === "storniert" ? (r.cancelledAt ?? r.signedAt) : null }));
+    .map((r) => ({ customerId: r.customerId, sparte: r.sparte, productName: r.productName, signedAt: r.signedAt, cancelledAt: r.status === "storniert" ? (r.cancelledAt ?? r.signedAt) : null }));
 }
 
 /** Stornoquote eines Kunden (Kundenakte im Admin). */

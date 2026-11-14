@@ -7,6 +7,7 @@
 // Zeitraum: der erste Vertrag zählt wie bisher im Zeitraum, in dem der Lead eingegangen ist
 // (passend zu den Lead-Kosten), weitere Verträge an ihrem Abschlussdatum.
 
+import { asEigeneProdukte, decodeSparte, mitProdukt, normName, prozentAnteil } from "@/lib/eigene-produkte";
 import { prisma } from "@/lib/prisma";
 import { CLOSED_STATUS } from "@/lib/products";
 import {
@@ -17,6 +18,7 @@ import {
   premiumFactor,
   sparteForSource,
   sparteInfo,
+  contractLabel,
   SPARTEN,
   type CancelReason,
   type ProvisionOverrides,
@@ -46,6 +48,10 @@ export type ContractInput = {
   customerAge?: number | null;
   endAge?: number | null;
   beitragssumme?: number | null;
+  /** Sparte „Sonstiges“: eigenes Produkt (Pflicht) mit Sätzen als Anteil (Abschluss, Bestand pro Jahr ab dem 2. Jahr). */
+  productName?: string | null;
+  rateAbschluss?: number | null;
+  rateBestand?: number | null;
 };
 
 const text = (v: unknown, max: number) => {
@@ -85,6 +91,19 @@ export function parseContractInput(raw: Record<string, unknown>, now = new Date(
   if (customerAge === "invalid" || endAge === "invalid") return { ok: false, error: "Bitte ein gültiges Alter eintragen." };
   if (customerAge != null && endAge != null && endAge <= customerAge) return { ok: false, error: "Das Endalter muss über dem Alter liegen." };
   if (beitragssumme === "invalid") return { ok: false, error: "Bitte eine gültige Beitragssumme eintragen." };
+  // Eigenes Produkt bei „Sonstiges“ (Ole, 14.11.2026): Name Pflicht, Sätze in Prozent
+  let productName: string | null = null;
+  let rateAbschluss: number | null = null;
+  let rateBestand: number | null = null;
+  if (raw.sparte === "sonstiges") {
+    productName = normName(String(raw.productName ?? ""));
+    if (productName.length < 2) return { ok: false, error: "Bitte das Produkt angeben, zum Beispiel Hausrat, Kfz oder Rechtsschutz Gewerbe." };
+    const a = prozentAnteil(raw.rateAbschluss, 200);
+    const b = prozentAnteil(raw.rateBestand, 100);
+    if (a === "invalid" || b === "invalid") return { ok: false, error: "Bitte gültige Provisionssätze in Prozent eintragen." };
+    rateAbschluss = a;
+    rateBestand = b;
+  }
   let signedAt = now;
   if (raw.signedAt != null && String(raw.signedAt).trim() !== "") {
     const s = String(raw.signedAt).trim();
@@ -107,6 +126,9 @@ export function parseContractInput(raw: Record<string, unknown>, now = new Date(
       customerAge,
       endAge,
       beitragssumme,
+      productName,
+      rateAbschluss,
+      rateBestand,
     },
   };
 }
@@ -118,11 +140,25 @@ function basisData(input: ContractInput) {
     customerAge: input.customerAge ?? null,
     endAge: input.endAge ?? null,
     beitragssumme: input.beitragssumme ?? null,
+    productName: input.sparte === "sonstiges" ? (input.productName ?? null) : null,
+    rateAbschluss: input.sparte === "sonstiges" ? (input.rateAbschluss ?? null) : null,
+    rateBestand: input.sparte === "sonstiges" ? (input.rateBestand ?? null) : null,
   };
+}
+
+/** Eigenes Produkt beim Kunden merken (Vorschlag und Vorbelegung beim nächsten Abschluss). */
+export async function rememberEigenesProdukt(customerId: string, input: Pick<ContractInput, "sparte" | "productName" | "rateAbschluss" | "rateBestand">): Promise<void> {
+  if (input.sparte !== "sonstiges" || !input.productName) return;
+  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { customProducts: true } });
+  const list = mitProdukt(asEigeneProdukte(c?.customProducts), { name: input.productName, rateAbschluss: input.rateAbschluss ?? 0, rateBestand: input.rateBestand ?? 0 });
+  await prisma.customer.update({ where: { id: customerId }, data: { customProducts: list } });
 }
 
 type SummaryInput = {
   sparte: string;
+  productName?: string | null;
+  rateAbschluss?: unknown;
+  rateBestand?: unknown;
   premium: unknown;
   provisionValue?: unknown;
   termYears?: unknown;
@@ -139,7 +175,7 @@ type SummaryInput = {
 export function contractSummary(c: SummaryInput, rates?: ProvisionOverrides): string {
   const p = contractProvision({ ...c, status: "aktiv" }, rates);
   const premium = c.premium != null && Number(c.premium) > 0 ? Number(c.premium) : null;
-  const parts = [sparteInfo(c.sparte).label];
+  const parts = [contractLabel(c)];
   if (p.basis === "honorar") {
     if (premium != null) parts.push(`Ersparnis ${formatEUR(premium)}/Monat`);
   } else if (p.basis === "beitragssumme") {
@@ -154,9 +190,9 @@ export function contractSummary(c: SummaryInput, rates?: ProvisionOverrides): st
 }
 
 /** Text im Verlauf bei Kündigung: „Vertrag gekündigt bzw. storniert · Hausrat · zum 12.11.2026 · Widerruf · Rückbelastung 165 €“. */
-export function cancelSummary(c: { sparte: string; cancelledAt: Date; cancelReason: string | null; chargeback: number | null }): string {
+export function cancelSummary(c: { sparte: string; productName?: string | null; cancelledAt: Date; cancelReason: string | null; chargeback: number | null }): string {
   const day = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(c.cancelledAt);
-  const parts = ["Vertrag gekündigt bzw. storniert", sparteInfo(c.sparte).label, `zum ${day}`, cancelReasonLabel(c.cancelReason)];
+  const parts = ["Vertrag gekündigt bzw. storniert", contractLabel(c), `zum ${day}`, cancelReasonLabel(c.cancelReason)];
   if (c.chargeback != null && c.chargeback > 0) parts.push(`Rückbelastung ${formatEUR(c.chargeback)}`);
   return parts.join(" · ");
 }
@@ -205,14 +241,21 @@ export async function syncPrimaryContract(
   if (!lead || !isClosed(lead.status)) return;
   const premium = lead.closeValue != null && Number(lead.closeValue) > 0 ? lead.closeValue : null;
   const existing = await prisma.leadContract.findUnique({ where: { primaryLeadId: lead.id }, select: { id: true, sparte: true } });
-  const chosen = opts.sparte && SPARTEN.some((s) => s.key === opts.sparte) ? asSparte(opts.sparte) : null;
+  // „Sonstiges“ mit eigenem Produkt kommt als ein Wert aus dem Abschluss-Dialog (lib/eigene-produkte.encodeSparte)
+  const decoded = decodeSparte(opts.sparte);
+  const chosen = decoded.sparte && SPARTEN.some((s) => s.key === decoded.sparte) ? asSparte(decoded.sparte) : null;
+  const productData = chosen
+    ? chosen === "sonstiges" && decoded.product
+      ? { productName: decoded.product.name, rateAbschluss: decoded.product.rateAbschluss, rateBestand: decoded.product.rateBestand }
+      : { productName: null, rateAbschluss: null, rateBestand: null }
+    : {};
   if (existing) {
     const takeValue = !!(opts.takeValue || opts.reopen);
     await prisma.leadContract.update({
       where: { id: existing.id },
       data: {
         ...(takeValue ? { premium, ...(premium != null ? { provisionValue: null } : {}) } : {}),
-        ...(chosen ? { sparte: chosen } : {}),
+        ...(chosen ? { sparte: chosen, ...productData } : {}),
         ...(opts.reopen ? { status: "aktiv", cancelledAt: null, cancelReason: null, chargeback: null, signedAt: lead.closedAt ?? new Date() } : {}),
       },
     });
@@ -226,11 +269,17 @@ export async function syncPrimaryContract(
         primaryLeadId: lead.id,
         sparte,
         premium,
+        ...productData,
         signedAt: lead.closedAt ?? new Date(),
         createdById: opts.userId ?? null,
       },
       update: {},
     });
+  }
+  if (decoded.product) {
+    await rememberEigenesProdukt(lead.customerId, { sparte: "sonstiges", productName: decoded.product.name, rateAbschluss: decoded.product.rateAbschluss, rateBestand: decoded.product.rateBestand }).catch((err) =>
+      console.error("[vertraege] eigenes produkt", err),
+    );
   }
   await syncLeadToBestand(lead.id).catch((err) => console.error("[vertraege] bestand", err));
 }
@@ -249,6 +298,10 @@ export type CustomerContract = {
   customerAge?: number | null;
   endAge?: number | null;
   beitragssumme?: number | null;
+  /** Eigenes Produkt (Sparte „Sonstiges“) mit Sätzen. */
+  productName?: string | null;
+  rateAbschluss?: number | null;
+  rateBestand?: number | null;
   /**
    * aktiv bzw. storniert (gekündigt mit Grund). Gekündigte Verträge zählen mit ihrer Abschlussprovision im
    * Zeitraum des Abschlusses, die Rückbelastung im Monat der Kündigung, Bestand nur bis zum Kündigungsdatum.
@@ -335,6 +388,9 @@ export async function loadCustomerContracts(customerId: string, opts: { leadWher
           customerAge: true,
           endAge: true,
           beitragssumme: true,
+          productName: true,
+          rateAbschluss: true,
+          rateBestand: true,
         },
       },
     },
@@ -369,6 +425,9 @@ export async function loadCustomerContracts(customerId: string, opts: { leadWher
         customerAge: c.customerAge,
         endAge: c.endAge,
         beitragssumme: num(c.beitragssumme),
+        productName: c.productName,
+        rateAbschluss: num(c.rateAbschluss),
+        rateBestand: num(c.rateBestand),
         status: cancelled ? "storniert" : "aktiv",
         cancelledAt: cancelled ? (c.cancelledAt ?? c.signedAt) : null,
         cancelReason: cancelled ? c.cancelReason : null,
@@ -403,6 +462,9 @@ export type LeadContractView = {
   customerAge: number | null;
   endAge: number | null;
   beitragssumme: number | null;
+  productName: string | null;
+  rateAbschluss: number | null;
+  rateBestand: number | null;
   cancelledAt: string | null;
   cancelReason: string | null;
   chargeback: number | null;
@@ -437,6 +499,9 @@ export async function listLeadContracts(leadId: string, rates?: ProvisionOverrid
       customerAge: true,
       endAge: true,
       beitragssumme: true,
+      productName: true,
+      rateAbschluss: true,
+      rateBestand: true,
       file: { select: { fileName: true } },
     },
   });
@@ -444,13 +509,16 @@ export async function listLeadContracts(leadId: string, rates?: ProvisionOverrid
     id: r.id,
     primary: !!r.primaryLeadId,
     sparte: asSparte(r.sparte),
-    sparteLabel: sparteInfo(r.sparte).label,
+    sparteLabel: contractLabel(r),
     premium: num(r.premium),
     provisionValue: num(r.provisionValue),
     termYears: r.termYears,
     customerAge: r.customerAge,
     endAge: r.endAge,
     beitragssumme: num(r.beitragssumme),
+    productName: r.productName,
+    rateAbschluss: num(r.rateAbschluss),
+    rateBestand: num(r.rateBestand),
     cancelledAt: r.status === "storniert" && r.cancelledAt ? r.cancelledAt.toISOString() : null,
     cancelReason: r.status === "storniert" ? r.cancelReason : null,
     chargeback: r.status === "storniert" ? num(r.chargeback) : null,
@@ -487,6 +555,7 @@ export async function addLeadContract(leadId: string, customerId: string, input:
     },
     select: { id: true },
   });
+  await rememberEigenesProdukt(customerId, input).catch((err) => console.error("[vertraege] eigenes produkt", err));
   // Erinnerung „Weiteres Produkt anbieten?“ ist damit erledigt (und kommt nicht mehr)
   await prisma.lead.updateMany({ where: { id: lead.id, followUpNote: { startsWith: CROSS_SELL_TODO } }, data: { followUpAt: null, followUpNote: null } });
   await prisma.lead.updateMany({ where: { id: lead.id, crossSellRemindedAt: null }, data: { crossSellRemindedAt: new Date() } });
@@ -519,6 +588,7 @@ export async function updateLeadContract(contractId: string, customerId: string,
     },
   });
   if (c.primaryLeadId) await prisma.lead.update({ where: { id: c.leadId }, data: { closeValue: input.premium } });
+  await rememberEigenesProdukt(customerId, input).catch((err) => console.error("[vertraege] eigenes produkt", err));
   await syncLeadToBestand(c.leadId).catch((err) => console.error("[vertraege] bestand", err));
   return { ok: true, leadId: c.leadId };
 }
@@ -527,8 +597,8 @@ export async function updateLeadContract(contractId: string, customerId: string,
  * Wieder aktiv bzw. löschen (nur weitere, nicht der erste Vertrag). „storniert“ ohne Grund ist der alte
  * Weg (zählt gar nicht mehr); in der Oberfläche läuft die Kündigung über cancelLeadContract.
  */
-export async function setLeadContractStatus(contractId: string, customerId: string, status: ContractStatus | "geloescht", now = new Date()): Promise<{ ok: true; leadId: string; sparte: string } | { ok: false; error: string }> {
-  const c = await prisma.leadContract.findFirst({ where: { id: contractId, customerId }, select: { id: true, leadId: true, primaryLeadId: true, sparte: true } });
+export async function setLeadContractStatus(contractId: string, customerId: string, status: ContractStatus | "geloescht", now = new Date()): Promise<{ ok: true; leadId: string; sparte: string; productName?: string | null } | { ok: false; error: string }> {
+  const c = await prisma.leadContract.findFirst({ where: { id: contractId, customerId }, select: { id: true, leadId: true, primaryLeadId: true, sparte: true, productName: true } });
   if (!c) return { ok: false, error: "Vertrag nicht gefunden." };
   if (status === "geloescht") {
     if (c.primaryLeadId) return { ok: false, error: "Den ersten Abschluss bitte stornieren oder den Status des Kontakts ändern." };
@@ -564,15 +634,15 @@ export function parseCancelInput(raw: Record<string, unknown>, signedAt: Date | 
  * „Vertrag gekündigt bzw. storniert“: ab dem Datum kein Bestand mehr, eine Rückbelastung mindert
  * Provision und Gewinn im Monat des Datums. Rückgängig mit setLeadContractStatus(…, "aktiv").
  */
-export async function cancelLeadContract(contractId: string, customerId: string, input: CancelInput): Promise<{ ok: true; leadId: string; sparte: string } | { ok: false; error: string }> {
-  const c = await prisma.leadContract.findFirst({ where: { id: contractId, customerId }, select: { id: true, leadId: true, sparte: true } });
+export async function cancelLeadContract(contractId: string, customerId: string, input: CancelInput): Promise<{ ok: true; leadId: string; sparte: string; productName?: string | null } | { ok: false; error: string }> {
+  const c = await prisma.leadContract.findFirst({ where: { id: contractId, customerId }, select: { id: true, leadId: true, sparte: true, productName: true } });
   if (!c) return { ok: false, error: "Vertrag nicht gefunden." };
   await prisma.leadContract.update({
     where: { id: c.id },
     data: { status: "storniert", cancelledAt: input.cancelledAt, cancelReason: input.reason, chargeback: input.chargeback },
   });
   await syncLeadToBestand(c.leadId).catch((err) => console.error("[vertraege] bestand", err));
-  return { ok: true, leadId: c.leadId, sparte: c.sparte };
+  return { ok: true, leadId: c.leadId, sparte: c.sparte, productName: c.productName };
 }
 
 // ─── Bestand (ExistingCustomer/ExistingContract) ─────────────────────────
@@ -586,7 +656,7 @@ export async function cancelLeadContract(contractId: string, customerId: string,
 export async function syncLeadToBestand(leadId: string, now = new Date()): Promise<{ existingCustomerId: string } | null> {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: { id: true, customerId: true, name: true, phone: true, email: true, status: true, erasedAt: true, closedAt: true, contracts: { select: { id: true, sparte: true, premium: true, signedAt: true, insurer: true, contractNo: true, status: true } } },
+    select: { id: true, customerId: true, name: true, phone: true, email: true, status: true, erasedAt: true, closedAt: true, contracts: { select: { id: true, sparte: true, productName: true, premium: true, signedAt: true, insurer: true, contractNo: true, status: true } } },
   });
   if (!lead || lead.erasedAt || !isClosed(lead.status) || !lead.contracts.length) return null;
   let ec = await prisma.existingCustomer.findUnique({ where: { leadId: lead.id }, select: { id: true } });
@@ -620,7 +690,7 @@ export async function syncLeadToBestand(leadId: string, now = new Date()): Promi
   for (const c of lead.contracts) {
     const data = {
       line: sparteInfo(c.sparte).bestandLine,
-      product: sparteInfo(c.sparte).label,
+      product: contractLabel(c),
       startDate: c.signedAt,
       // Jahresbeitrag: PKV-Monatsbeitrag × 12; Tarifoptimierung hat keinen (premium = Ersparnis)
       annualPremium:

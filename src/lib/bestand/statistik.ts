@@ -9,7 +9,7 @@
 // Nur Daten des eigenen Kunden. funnelOf und Ertrag sind rein (getestet).
 
 import { prisma } from "@/lib/prisma";
-import { contractProvision, sparteLabel, type ProvisionOverrides } from "@/lib/provision";
+import { contractLabel, contractProvision, type ProvisionOverrides } from "@/lib/provision";
 import type { Channel } from "@/lib/bestand/einwilligung";
 import type { CustomerContract } from "@/lib/vertraege";
 
@@ -74,7 +74,7 @@ export type Funnel = { whatsapp: ChannelFunnel; email: ChannelFunnel; gesamt: Ch
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
 /** Trichter je Kanal aus Empfängern und zugeordneten Abschlüssen (rein). */
-export function funnelOf(recipients: FunnelRecipient[], closings: Pick<CustomerContract, "sparte" | "premium" | "provisionValue" | "campaignChannel">[], rates?: ProvisionOverrides): Funnel {
+export function funnelOf(recipients: FunnelRecipient[], closings: Pick<CustomerContract, "sparte" | "premium" | "provisionValue" | "campaignChannel" | "productName" | "rateAbschluss" | "rateBestand">[], rates?: ProvisionOverrides): Funnel {
   const out: Funnel = { whatsapp: empty("whatsapp"), email: empty("email"), gesamt: empty("gesamt") };
   const add = (f: ChannelFunnel, r: FunnelRecipient) => {
     const sent = !!r.sentAt;
@@ -103,7 +103,7 @@ export function funnelOf(recipients: FunnelRecipient[], closings: Pick<CustomerC
     const p = contractProvision(c, rates);
     for (const f of [c.campaignChannel === "email" ? out.email : out.whatsapp, out.gesamt]) {
       f.abschluss++;
-      const label = sparteLabel(c.sparte);
+      const label = contractLabel(c);
       f.sparten[label] = (f.sparten[label] ?? 0) + 1;
       f.provision = r2(f.provision + p.firstYear);
       f.bestandProJahr = r2(f.bestandProJahr + p.trailPerYear);

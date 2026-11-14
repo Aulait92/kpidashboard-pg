@@ -414,6 +414,13 @@ Seiten aus der Liste „Seiten“ unten.
     Bestandsprovision. Das Honorar zählt im Gewinn als Ertrag. Bitte mit Ihrer Honorarvereinbarung abgleichen.
   - **Empfehlungen, Bestandskunden und unbekannte Produkte:** Die App fragt zuerst die **Sparte** (z. B. Katze,
     Privatschutz/Haftpflicht, Hausrat) und rechnet dann mit dem Satz dieser Sparte.
+  - **Eigenes Produkt (Sparte „Sonstiges“):** Wählen Sie „Sonstiges (eigenes Produkt)“, tragen Sie das **Produkt** ein
+    (z. B. Hausrat Plus, Kfz Flotte, Rechtsschutz Gewerbe) und die Sätze: **Abschluss in %** und **Bestand in % pro
+    Jahr** (ab dem 2. Jahr), jeweils vom Jahresbeitrag. Die Vorschau rechnet sofort mit („≈ … € Abschlussprovision,
+    ≈ … € Bestand pro Jahr“). Das Produkt wird gespeichert und steht beim nächsten Abschluss unter „Ihre Produkte“
+    zur Auswahl, mit den Sätzen vorbelegt. In Zahlen, Bestand, Stornoquote und Verlauf steht der Produktname statt
+    „Sonstiges“. Ändern oder entfernen unter **Einstellungen → Meine Provisionen → Ihre eigenen Produkte**; das gilt
+    für künftige Abschlüsse, eingetragene Verträge behalten ihre Sätze.
 - Es ist eine Schätzung für die eigenen Zahlen, keine Abrechnung. Wer den Beitrag einträgt, bekommt genauere Werte.
 - **Mehrere Verträge pro Kunde (Cross-Selling):** Im Kontakt mit Abschluss steht unter „Verträge“ der erste Abschluss.
   Mit **Weiteren Abschluss eintragen** kommen weitere Verträge dazu: Sparte (Katze, Hund, Pferd,

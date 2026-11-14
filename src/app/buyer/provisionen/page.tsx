@@ -4,6 +4,7 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { canEditProvision, customerProductKeys, loadCustomerProvision } from "@/lib/provision-server";
 import { ProvisionForm } from "./provision-form";
+import { EigeneProdukte } from "./eigene-produkte";
 import { CrossSellReminderToggle, PoliceReminderToggle } from "./cross-sell-toggle";
 import { realStornoQuote, sparteInfo } from "@/lib/provision";
 import { loadCustomerContracts } from "@/lib/vertraege";
@@ -54,6 +55,7 @@ export default async function ProvisionenPage() {
         storno={provision.stornoCustom ? provision.storno : null}
         real={{ quote: real.quote, contracts: real.contracts, cancelled: real.cancelled }}
       />
+      <EigeneProdukte products={provision.products} canEdit={canEdit} />
       <CrossSellReminderToggle on={customer?.crossSellReminder ?? true} canEdit={canEdit} />
       <PoliceReminderToggle on={customer?.policeReminder ?? true} canEdit={canEdit} />
     </main>

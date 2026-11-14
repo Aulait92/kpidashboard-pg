@@ -11,7 +11,8 @@ import { Ban, FileText, Loader2, Pencil, Plus, RotateCcw, Trash2 } from "lucide-
 import { Badge, Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
-import { useProvisionRates } from "@/components/provision-context";
+import { useEigeneProdukte, useProvisionRates } from "@/components/provision-context";
+import { anteil, EigenesProduktFelder, produktEingabe, sonstigesStandard, type ProduktEingabe } from "@/components/eigenes-produkt-felder";
 import { addContractAction, cancelContractAction, setContractStatusAction, updateContractAction } from "@/app/buyer/vertrag-actions";
 import {
   CANCEL_REASONS,
@@ -49,7 +50,9 @@ type Draft = {
   customerAge: string;
   endAge: string;
   beitragssumme: string;
-};
+} & ProduktEingabe;
+
+const leerProdukt: ProduktEingabe = { productName: "", rateAbschluss: "", rateBestand: "" };
 
 export function LeadContracts({ leadId, contracts, readOnly = false }: { leadId: string; contracts: LeadContractView[]; readOnly?: boolean }) {
   const router = useRouter();
@@ -62,7 +65,7 @@ export function LeadContracts({ leadId, contracts, readOnly = false }: { leadId:
   const openNew = () =>
     setEdit({
       id: null,
-      draft: { sparte: "", premium: "", signedAt: new Date().toISOString().slice(0, 10), insurer: "", contractNo: "", fileId: null, fileName: null, termYears: "", customerAge: "", endAge: "", beitragssumme: "" },
+      draft: { sparte: "", premium: "", signedAt: new Date().toISOString().slice(0, 10), insurer: "", contractNo: "", fileId: null, fileName: null, termYears: "", customerAge: "", endAge: "", beitragssumme: "", ...leerProdukt },
     });
   const openEdit = (c: LeadContractView) =>
     setEdit({
@@ -79,6 +82,9 @@ export function LeadContracts({ leadId, contracts, readOnly = false }: { leadId:
         customerAge: c.customerAge != null ? String(c.customerAge) : "",
         endAge: c.endAge != null ? String(c.endAge) : "",
         beitragssumme: fmtNum(c.beitragssumme),
+        productName: c.productName ?? "",
+        rateAbschluss: c.rateAbschluss != null ? fmtNum(c.rateAbschluss * 100) : "",
+        rateBestand: c.rateBestand != null ? fmtNum(c.rateBestand * 100) : "",
       },
     });
 
@@ -254,7 +260,19 @@ function ContractSheet({ leadId, id, initial, onClose }: { leadId: string; id: s
   const router = useRouter();
   const toast = useToast();
   const rates = useProvisionRates();
+  const products = useEigeneProdukte();
   const [d, setD] = useState<Draft>(initial);
+  const eigen = d.sparte === "sonstiges";
+  const known = eigen ? products.find((p) => p.name.toLowerCase() === d.productName.trim().toLowerCase()) : undefined;
+  const selectValue = known ? `eigen:${known.name}` : d.sparte;
+  const chooseSparte = (v: string) => {
+    if (v.startsWith("eigen:")) {
+      const p = products.find((x) => x.name === v.slice(6));
+      if (p) return setD({ ...d, sparte: "sonstiges", ...produktEingabe(p) });
+    }
+    if (v === "sonstiges") return setD({ ...d, sparte: "sonstiges", ...sonstigesStandard(rates) });
+    setD({ ...d, sparte: v as SparteKey, ...leerProdukt });
+  };
   const [pending, start] = useTransition();
   const [uploading, setUploading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -272,6 +290,7 @@ function ContractSheet({ leadId, id, initial, onClose }: { leadId: string; id: s
         customerAge: parseNum(d.customerAge),
         endAge: parseNum(d.endAge),
         beitragssumme: parseNum(d.beitragssumme),
+        ...(eigen ? { productName: d.productName, rateAbschluss: anteil(d.rateAbschluss), rateBestand: anteil(d.rateBestand) } : {}),
       },
       rates,
     );
@@ -314,6 +333,9 @@ function ContractSheet({ leadId, id, initial, onClose }: { leadId: string; id: s
         customerAge: d.customerAge,
         endAge: d.endAge,
         beitragssumme: d.beitragssumme,
+        productName: d.productName,
+        rateAbschluss: d.rateAbschluss,
+        rateBestand: d.rateBestand,
       };
       const res = id ? await updateContractAction(id, raw) : await addContractAction(leadId, raw);
       if (!res.ok) return toast.show({ message: res.error, tone: "error" });
@@ -333,15 +355,27 @@ function ContractSheet({ leadId, id, initial, onClose }: { leadId: string; id: s
       >
         <label className="block">
           <span className="text-sm text-[color:var(--muted)]">Sparte</span>
-          <select required value={d.sparte} onChange={(e) => setD({ ...d, sparte: e.target.value as SparteKey })} className={inputCls} data-contract-sparte>
+          <select required value={selectValue} onChange={(e) => chooseSparte(e.target.value)} className={inputCls} data-contract-sparte>
             <option value="">Bitte wählen</option>
             {SPARTEN.map((s) => (
               <option key={s.key} value={s.key}>
-                {s.label}
+                {s.key === "sonstiges" ? "Sonstiges (eigenes Produkt)" : s.label}
               </option>
             ))}
+            {products.length ? (
+              <optgroup label="Ihre Produkte">
+                {products.map((p) => (
+                  <option key={p.name} value={`eigen:${p.name}`}>
+                    {p.name}
+                  </option>
+                ))}
+              </optgroup>
+            ) : null}
           </select>
         </label>
+        {eigen ? (
+          <EigenesProduktFelder value={{ productName: d.productName, rateAbschluss: d.rateAbschluss, rateBestand: d.rateBestand }} onChange={(v) => setD({ ...d, ...v })} inputCls={inputCls} />
+        ) : null}
         <label className="block">
           <span className="text-sm text-[color:var(--muted)]">{field ? field.label : "Beitrag netto"}</span>
           <span className="mt-1 flex items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 focus-within:border-[color:var(--brand)]">

@@ -1,5 +1,6 @@
 // Serverseitig: wirksame Provisionssätze eines Kunden laden und speichern
 // (Vermittlertyp + eigene Sätze aus „Meine Provisionen“). Ohne Kunde: Vertreter-Standard.
+import { asEigeneProdukte, type EigenesProdukt } from "@/lib/eigene-produkte";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
@@ -24,11 +25,13 @@ export type CustomerProvision = {
   /** Stornoquote pro Jahr für alle Prognosen: eigene (Customer.stornoQuote) oder Standard 10 %. */
   storno: number;
   stornoCustom: boolean;
+  /** Eigene Produkte (Sparte „Sonstiges“) mit Standardsätzen (lib/eigene-produkte.ts). */
+  products: EigenesProdukt[];
 };
 
 export async function loadCustomerProvision(customerId: string | null | undefined): Promise<CustomerProvision> {
   const c = customerId
-    ? await prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerTyp: true, provisionRates: true, provisionCheckedAt: true, stornoQuote: true } }).catch(() => null)
+    ? await prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerTyp: true, provisionRates: true, provisionCheckedAt: true, stornoQuote: true, customProducts: true } }).catch(() => null)
     : null;
   const typ = asVermittlerTyp(c?.vermittlerTyp);
   const custom = parseCustomRates(c?.provisionRates).rates;
@@ -43,6 +46,7 @@ export async function loadCustomerProvision(customerId: string | null | undefine
     confirmed: hasCustom || !!c?.provisionCheckedAt,
     storno: stornoCustom && own?.ok && own.value != null ? own.value : STORNO_PRO_JAHR,
     stornoCustom,
+    products: asEigeneProdukte(c?.customProducts),
   };
 }
 

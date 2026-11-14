@@ -589,7 +589,17 @@ export type ContractLike = {
   customerAge?: unknown;
   /** Leben/BU: Beitragssumme direkt eingetragen (geht vor Monatsbeitrag × 12 × Laufzeit). */
   beitragssumme?: unknown;
+  /** Sparte „Sonstiges“: eigenes Produkt mit eigenen Sätzen (Anteile; Bestand pro Jahr ab dem 2. Jahr). */
+  productName?: string | null;
+  rateAbschluss?: unknown;
+  rateBestand?: unknown;
 };
+
+/** Anzeigename eines Vertrags: eigenes Produkt (z. B. „Rechtsschutz Gewerbe“) statt „Sonstiges“. */
+export function contractLabel(c: { sparte: string; productName?: string | null }): string {
+  const name = (c.productName ?? "").trim();
+  return asSparte(c.sparte) === "sonstiges" && name ? name : sparteInfo(c.sparte).label;
+}
 
 export type ContractBasis = "beitrag" | "beitragssumme" | "monatsbeitraege" | "honorar" | "fest";
 
@@ -642,7 +652,14 @@ export function resolveTermYears(c: Pick<ContractLike, "termYears" | "endAge" | 
 export function contractProvision(c: ContractLike, rates?: ProvisionOverrides): ContractProvision {
   const sparte = asSparte(c.sparte);
   const rateKey = sparteInfo(sparte).rateKey;
-  const spec: RateSpec = rates?.[rateKey] ?? PROVISION_PRODUCTS.find((p) => p.key === rateKey)!.standard;
+  const base: RateSpec = rates?.[rateKey] ?? PROVISION_PRODUCTS.find((p) => p.key === rateKey)!.standard;
+  // Eigenes Produkt (Sparte „Sonstiges“): Sätze am Vertrag, Bestand ab dem 2. Jahr (Ole, 14.11.2026)
+  const ownA = sparte === "sonstiges" ? asNumber(c.rateAbschluss) : null;
+  const ownB = sparte === "sonstiges" ? asNumber(c.rateBestand) : null;
+  const spec: RateSpec =
+    ownA != null || ownB != null
+      ? { kind: "percent", rate: ownA ?? 0, trail: ownB ?? 0, trailFromYear2: true, defaultPremium: base.kind === "percent" ? base.defaultPremium : 300, ...(base.storno != null ? { storno: base.storno } : {}) }
+      : base;
   const premium = asNumber(c.premium);
   const zero: ContractProvision = {
     sparte,

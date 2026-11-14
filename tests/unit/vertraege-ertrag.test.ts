@@ -243,7 +243,7 @@ describe("Eingabe und Erinnerung", () => {
     const ok = parseContractInput({ sparte: "hausrat", premium: "1.234,50", signedAt: "2026-11-01", insurer: " Allianz ", contractNo: "" }, now);
     expect(ok).toEqual({
       ok: true,
-      value: { sparte: "hausrat", premium: 1234.5, signedAt: D("2026-11-01"), insurer: "Allianz", contractNo: null, fileId: null, termYears: null, customerAge: null, endAge: null, beitragssumme: null },
+      value: { sparte: "hausrat", premium: 1234.5, signedAt: D("2026-11-01"), insurer: "Allianz", contractNo: null, fileId: null, termYears: null, customerAge: null, endAge: null, beitragssumme: null, productName: null, rateAbschluss: null, rateBestand: null },
     });
     expect(parseContractInput({ sparte: "quatsch" }, now).ok).toBe(false);
     expect(parseContractInput({ sparte: "kfz", premium: "-5" }, now).ok).toBe(false);

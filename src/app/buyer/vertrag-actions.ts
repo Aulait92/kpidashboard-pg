@@ -4,6 +4,7 @@
 // „Vertrag gekündigt bzw. storniert“ (mit Datum, Grund, Rückbelastung) und zurücknehmen bzw. löschen.
 // Jeder Schritt steht im Verlauf des Kontakts.
 
+import { contractLabel } from "@/lib/provision";
 import { revalidatePath } from "next/cache";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { writableCustomerId } from "@/lib/buyer-write";
@@ -83,7 +84,7 @@ export async function cancelContractAction(contractId: string, raw: Record<strin
   if (!parsed.ok) return parsed;
   const res = await cancelLeadContract(contractId, acc.customerId, parsed.value);
   if (!res.ok) return res;
-  const text = cancelSummary({ sparte: res.sparte, cancelledAt: parsed.value.cancelledAt, cancelReason: parsed.value.reason, chargeback: parsed.value.chargeback });
+  const text = cancelSummary({ sparte: res.sparte, productName: res.productName, cancelledAt: parsed.value.cancelledAt, cancelReason: parsed.value.reason, chargeback: parsed.value.chargeback });
   await logLeadHistory(acc.leadId, "abschluss", text, { customerId: acc.customerId });
   await recordUsage("action", "vertrag.cancel", { meta: { sparte: res.sparte, grund: parsed.value.reason } });
   refresh(acc.leadId);
@@ -97,7 +98,7 @@ export async function setContractStatusAction(contractId: string, status: "aktiv
   if (!acc) return { ok: false, error: NO_WRITE };
   const res = await setLeadContractStatus(contractId, acc.customerId, status);
   if (!res.ok) return res;
-  const label = sparteInfo(res.sparte).label;
+  const label = contractLabel({ sparte: res.sparte, productName: res.productName });
   const text = status === "aktiv" ? `Kündigung zurückgenommen, Vertrag wieder aktiv · ${label}` : `Vertrag gelöscht · ${label}`;
   await logLeadHistory(acc.leadId, "abschluss", text, { customerId: acc.customerId });
   refresh(acc.leadId);
