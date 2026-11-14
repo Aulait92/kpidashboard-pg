@@ -12,20 +12,22 @@ import { reportError } from "@/lib/monitoring";
 import { sendToAdmins } from "@/lib/push";
 import { createTemplate, listTemplates, type RemoteTemplate } from "@/lib/whatsapp/dialog360";
 import {
-  advisorDisplayName,
   buildTemplateRequest,
   findRemote,
   mapRemoteStatus,
+  plannedTemplates,
   purposesFor,
   templateBodyFor,
   templateNameFor,
   isTemplateRevisionOf,
   TEMPLATE_LANGUAGE,
   TEMPLATE_VERSION,
+  templateNamesOf,
   type LocalStatus,
 } from "@/lib/whatsapp/template-plan";
-import { PURPOSE_LABELS, type NoticePurpose } from "@/lib/whatsapp/templates";
-import { asAnsprache } from "@/lib/ansprache";
+
+export { templateNamesOf };
+import { PURPOSE_LABELS, type NoticePurpose, type TemplateForm } from "@/lib/whatsapp/templates";
 
 export type SubmitSummary = {
   ok: boolean;
@@ -116,7 +118,7 @@ export async function submitTemplatesForCustomer(customerId: string, now = new D
     prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { id: true, status: true, apiKeyEnc: true } }),
     prisma.customer.findUnique({
       where: { id: customerId },
-      select: { id: true, name: true, leadAddress: true, existingCustomersEnabled: true, empfehlungEnabled: true, messageTemplates: { select: { name: true, purpose: true, status: true, auto: true } } },
+      select: { id: true, name: true, existingCustomersEnabled: true, empfehlungEnabled: true, messageTemplates: { select: { name: true, purpose: true, status: true, auto: true } } },
     }),
   ]);
   if (!customer) return { ...summary, ok: false, error: "Kunde nicht gefunden" };
@@ -137,19 +139,20 @@ export async function submitTemplatesForCustomer(customerId: string, now = new D
     return { ...summary, ok: false, error: msg };
   }
 
-  const advisor = advisorDisplayName(customer.name);
-  const ansprache = asAnsprache(customer.leadAddress);
+  const names = templateNamesOf(customer.name);
   const purposes = purposesFor({ bestand: customer.existingCustomersEnabled, empfehlung: customer.empfehlungEnabled });
-  for (const purpose of purposes) {
+  // Je Zweck alle Fassungen (Du, Sie, Sie ohne Namen) – unabhängig von der gewählten Ansprache, damit ein
+  // Wechsel sofort greift. Bis eine neue Fassung freigegeben ist, sendet die App die bisherige freigegebene.
+  const planned = plannedTemplates(purposes);
+  for (const { purpose, form } of planned) {
     const manual = customer.messageTemplates.find((t) => !t.auto && t.purpose === purpose && (t.status === "approved" || t.status === "pending"));
     if (manual) {
-      summary.skipped.push(purpose);
+      if (!summary.skipped.includes(purpose)) summary.skipped.push(purpose);
       continue;
     }
-    // Fassung passend zur Ansprache; bis die Sie-Fassung freigegeben ist, sendet die App die freigegebene Du-Fassung
-    const name = templateNameFor(purpose, TEMPLATE_VERSION, ansprache);
-    const req = buildTemplateRequest(purpose, advisor, TEMPLATE_VERSION, ansprache);
-    const body = templateBodyFor(purpose, advisor, ansprache);
+    const name = templateNameFor(purpose, TEMPLATE_VERSION, form);
+    const req = buildTemplateRequest(purpose, names, TEMPLATE_VERSION, form);
+    const body = templateBodyFor(purpose, names, form);
     let hit = findRemote(remote, name);
     let submittedAt: Date | undefined;
     if (!hit) {
@@ -171,8 +174,8 @@ export async function submitTemplatesForCustomer(customerId: string, now = new D
     else summary.pending.push(name);
   }
 
-  // Ältere automatisch eingereichte Versionen (andere Namen) ebenfalls nachziehen.
-  const current = new Set(purposes.map((p) => templateNameFor(p, TEMPLATE_VERSION, ansprache)));
+  // Ältere automatisch eingereichte Versionen (andere Namen, z. B. v1) ebenfalls nachziehen.
+  const current = new Set(planned.map((t) => templateNameFor(t.purpose, TEMPLATE_VERSION, t.form)));
   for (const t of customer.messageTemplates.filter((x) => x.auto && !current.has(x.name))) {
     const hit = findRemote(remote, t.name);
     if (!hit) continue;
@@ -202,7 +205,7 @@ export async function syncTemplates(now = new Date(), opts: { force?: boolean; l
     select: {
       customerId: true,
       templatesCheckedAt: true,
-      customer: { select: { leadAddress: true, existingCustomersEnabled: true, empfehlungEnabled: true, messageTemplates: { select: { name: true, purpose: true, status: true, auto: true } } } },
+      customer: { select: { existingCustomersEnabled: true, empfehlungEnabled: true, messageTemplates: { select: { name: true, purpose: true, status: true, auto: true } } } },
     },
     orderBy: { templatesCheckedAt: { sort: "asc", nulls: "first" } },
     take: opts.limit ?? 10,
@@ -213,10 +216,9 @@ export async function syncTemplates(now = new Date(), opts: { force?: boolean; l
   for (const acc of accounts) {
     const tpls = acc.customer.messageTemplates;
     const purposes = purposesFor({ bestand: acc.customer.existingCustomersEnabled, empfehlung: acc.customer.empfehlungEnabled });
-    const ansprache = asAnsprache(acc.customer.leadAddress);
-    // Erledigt, wenn je Zweck die Fassung zur Ansprache freigegeben ist (oder der Admin eine eigene angelegt hat)
-    const settled = purposes.every((p) => {
-      const wanted = templateNameFor(p, TEMPLATE_VERSION, ansprache);
+    // Erledigt, wenn je Zweck jede Fassung freigegeben ist (oder der Admin eine eigene angelegt hat)
+    const settled = plannedTemplates(purposes).every(({ purpose: p, form }) => {
+      const wanted = templateNameFor(p, TEMPLATE_VERSION, form);
       return tpls.some((t) => t.purpose === p && ((t.auto && isTemplateRevisionOf(t.name, wanted) && t.status === "approved") || (!t.auto && (t.status === "approved" || t.status === "pending"))));
     });
     const recent = acc.templatesCheckedAt && now.getTime() - acc.templatesCheckedAt.getTime() < CHECK_INTERVAL_IDLE_MS;
@@ -234,28 +236,41 @@ export async function syncTemplates(now = new Date(), opts: { force?: boolean; l
 }
 
 /**
- * Abgelehnte Vorlage neu einreichen (aktueller Text aus SUGGESTED_TEMPLATE_TEXT).
- * Meta erlaubt einen Namen nur einmal, daher als Revision: pg_<zweck>_v1_r2, _r3 …
+ * Abgelehnte Vorlage neu einreichen (aktueller Text aus TEMPLATE_BODY). Meta erlaubt einen Namen nur
+ * einmal, daher als Revision: pg_<zweck>_v2_r2, _r3 … Ohne Fassung: alle abgelehnten bzw. fehlenden
+ * Fassungen des Zwecks (bei „Du“ zuerst die Du-Fassung).
  */
-export async function resubmitTemplate(customerId: string, purpose: NoticePurpose, now = new Date()): Promise<{ ok: boolean; name?: string; error?: string }> {
+export async function resubmitTemplate(customerId: string, purpose: NoticePurpose, now = new Date(), form?: TemplateForm): Promise<{ ok: boolean; name?: string; error?: string }> {
   const [account, customer] = await Promise.all([
     prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { status: true, apiKeyEnc: true } }),
-    prisma.customer.findUnique({ where: { id: customerId }, select: { id: true, name: true, leadAddress: true } }),
+    prisma.customer.findUnique({ where: { id: customerId }, select: { id: true, name: true, messageTemplates: { where: { purpose }, select: { name: true, status: true } } } }),
   ]);
   if (!customer || !account || account.status !== "connected" || !account.apiKeyEnc) return { ok: false, error: "WhatsApp ist nicht verbunden" };
-  const ansprache = asAnsprache(customer.leadAddress);
-  const base = templateNameFor(purpose, TEMPLATE_VERSION, ansprache);
-  const existing = await prisma.messageTemplate.count({ where: { customerId, name: { startsWith: `${base}_r` } } });
+  const names = templateNamesOf(customer.name);
+  const forms = form ? [form] : plannedTemplates([purpose]).map((t) => t.form);
+  // Fassungen, deren letzte Revision abgelehnt bzw. pausiert ist (ohne Angabe: sonst die erste)
+  const latest = (base: string) => customer.messageTemplates.filter((t) => isTemplateRevisionOf(t.name, base)).sort((x, y) => revisionNo(y.name) - revisionNo(x.name))[0];
+  const todo = forms.filter((f) => {
+    const l = latest(templateNameFor(purpose, TEMPLATE_VERSION, f));
+    return !!form || !l || l.status === "rejected" || l.status === "paused";
+  });
+  const chosen = todo[0] ?? forms[0];
+  const base = templateNameFor(purpose, TEMPLATE_VERSION, chosen);
+  const existing = customer.messageTemplates.filter((t) => t.name.startsWith(`${base}_r`) && isTemplateRevisionOf(t.name, base)).length;
   const name = `${base}_r${existing + 2}`;
-  const advisor = advisorDisplayName(customer.name);
-  const req = { ...buildTemplateRequest(purpose, advisor, TEMPLATE_VERSION, ansprache), name };
+  const req = { ...buildTemplateRequest(purpose, names, TEMPLATE_VERSION, chosen), name };
   try {
     const hit = await createTemplate(decryptSecret(account.apiKeyEnc), req);
-    await applyRemote(customer, purpose, name, templateBodyFor(purpose, advisor, ansprache), req.category, { ...hit, name }, { submittedAt: now });
+    await applyRemote(customer, purpose, name, templateBodyFor(purpose, names, chosen), req.category, { ...hit, name }, { submittedAt: now });
     return { ok: true, name };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message.slice(0, 200) : "Einreichen fehlgeschlagen" };
   }
+}
+
+function revisionNo(name: string): number {
+  const m = /_r(\d+)$/.exec(name);
+  return m ? Number(m[1]) : 1;
 }
 
 /** Kurzfassung für Admin-Meldungen. */

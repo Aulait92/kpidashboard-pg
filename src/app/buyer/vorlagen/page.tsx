@@ -3,10 +3,10 @@ import { CheckCircle2, Clock, Info, MessageCircle, TriangleAlert } from "lucide-
 import { PageHeader } from "@/components/buyer-shell";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
-import { advisorDisplayName, CUSTOMER_TITLES, exampleValuesFor, previewBodyFor, purposesFor, templateNameFor, TEMPLATE_VERSION, isTemplateRevisionOf } from "@/lib/whatsapp/template-plan";
+import { CUSTOMER_TITLES, exampleRestFor, exampleValuesFor, formOf, previewBodyFor, purposesFor, templateNameFor, templateNamesOf, TEMPLATE_VERSION, isTemplateRevisionOf } from "@/lib/whatsapp/template-plan";
 import { AnspracheForm } from "@/components/ansprache-form";
 import { asAnsprache } from "@/lib/ansprache";
-import { hasSieVariant, renderTemplate, TEMPLATE_BUTTONS, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { rankTemplates, renderTemplate, TEMPLATE_BUTTONS, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -43,23 +43,26 @@ export default async function VorlagenPage() {
   });
   if (!customer) redirect("/buyer");
   const connected = customer.whatsAppAccount?.status === "connected";
-  const advisor = advisorDisplayName(customer.name);
+  const names = templateNamesOf(customer.name);
   const purposes = purposesFor({ bestand: customer.existingCustomersEnabled, empfehlung: customer.empfehlungEnabled });
 
+  // Gespeicherte Ansprache (Sie/Du) bestimmt Fassung und Vorschau; Beispielkontakt: Julia Schneider, Anrede „Frau“
   const an = asAnsprache(customer.leadAddress);
+  const beispiel = { firstName: "Julia", lastName: "Schneider", salutation: "Frau" };
   const rows = purposes.map((purpose) => {
     const list = customer.messageTemplates.filter((t) => t.purpose === purpose);
-    // Fassung zur gewählten Ansprache (Sie-Fassung: eigener Name bei Meta)
-    const wanted = templateNameFor(purpose, TEMPLATE_VERSION, an);
+    const form = formOf(purpose, an);
+    const wanted = templateNameFor(purpose, TEMPLATE_VERSION, form);
     const own = list.filter((t) => isTemplateRevisionOf(t.name, wanted));
     const tpl = own.find((t) => t.status === "approved") ?? own[0] ?? null;
-    const fallback = !tpl || tpl.status !== "approved" ? list.find((t) => t.status === "approved" && !isTemplateRevisionOf(t.name, wanted)) : null;
-    const text = tpl ? renderTemplate(tpl.body, exampleValuesFor(purpose, an)) : previewBodyFor(purpose, advisor, an);
+    const text = tpl ? renderTemplate(tpl.body, exampleValuesFor(purpose, form)) : previewBodyFor(purpose, names, form);
+    // Was bis zur Freigabe tatsächlich rausgeht (bisherige freigegebene Fassung)
+    const sending = tpl?.status === "approved" ? null : rankTemplates(list.filter((t) => t.status === "approved"), purpose, an, beispiel);
+    const fallbackText = sending ? renderTemplate(sending.tpl.body, sending.params(exampleRestFor(purpose, an))) : null;
+    const failed = tpl?.status === "rejected" || tpl?.status === "paused";
     const badge: Badge =
-      fallback && an === "sie" && hasSieVariant(purpose)
-        ? { label: "Sie-Fassung in Prüfung bei Meta", hint: "Bis zur Freigabe geht die bisherige Du-Fassung raus.", cls: "bg-amber-50 text-amber-700", icon: Clock }
-        : badgeFor(tpl?.status ?? null, connected);
-    return { purpose, tpl, text, badge, buttons: TEMPLATE_BUTTONS[purpose as NoticePurpose] ?? [] };
+      sending && !failed ? { label: tpl ? "Neue Fassung in Prüfung bei Meta" : "Neue Fassung wird eingereicht", cls: "bg-amber-50 text-amber-700", icon: Clock } : badgeFor(tpl?.status ?? null, connected);
+    return { purpose, tpl, text, badge, fallbackText, sie: form !== "du", buttons: TEMPLATE_BUTTONS[purpose as NoticePurpose] ?? [] };
   });
 
   return (
@@ -78,7 +81,7 @@ export default async function VorlagenPage() {
             <p className="text-[color:var(--muted)]">
               WhatsApp erlaubt die erste Nachricht an einen Kontakt nur mit einem Text, den Meta vorher geprüft hat. Das gilt auch, wenn jemand länger als
               24 Stunden nicht geantwortet hat. Deshalb reichen wir diese Vorlagen für Ihre Nummer bei Meta ein. Antwortet ein Lead, schreibt Ihr Assistent
-              frei weiter. Namen und Termine werden beim Senden passend eingesetzt; unten sehen Sie Beispiele.
+              frei weiter. Anrede, Namen und Termine werden beim Senden passend eingesetzt; unten sehen Sie Beispiele.
             </p>
           </div>
 
@@ -101,7 +104,7 @@ export default async function VorlagenPage() {
                   <div className="mt-3 rounded-[var(--radius-md,12px)] bg-[#efeae2] p-3">
                     <div className="max-w-md rounded-lg rounded-tl-none bg-white px-3 py-2 text-sm leading-relaxed text-slate-900 shadow-sm">
                       <div className="mb-1 flex items-center gap-1 text-[11px] font-semibold text-emerald-700">
-                        <MessageCircle className="h-3 w-3" /> {advisor}
+                        <MessageCircle className="h-3 w-3" /> {names.firm}
                       </div>
                       {r.text}
                     </div>
@@ -116,6 +119,17 @@ export default async function VorlagenPage() {
                     ) : null}
                   </div>
                   {r.badge.hint ? <p className="mt-2 text-xs text-[color:var(--muted)]">{r.badge.hint}</p> : null}
+                  {r.fallbackText ? (
+                    <p className="mt-2 text-xs text-[color:var(--muted)]">
+                      Bis zur Freigabe geht die bisherige Fassung raus: <span className="italic">„{r.fallbackText}“</span>
+                    </p>
+                  ) : null}
+                  {r.sie ? (
+                    <p className="mt-2 text-xs text-[color:var(--muted)]">
+                      Mit Anrede aus dem Formular: „Guten Tag Frau Schneider“, sonst mit vollem Namen. Ist kein Nachname bekannt, beginnt die Nachricht mit
+                      „Guten Tag,“.
+                    </p>
+                  ) : null}
                 </li>
               );
             })}

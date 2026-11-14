@@ -49,8 +49,10 @@ describe("Empfehlungen & Bewertungen – Regeln", () => {
   });
 
   it("Nachfrage: erst direkter Draht, dann Google-Link – in Standardtext und Vorlage", () => {
-    const t = renderText(DEFAULT_TEXTS.review, { vorname: "Julia", link: "LINK", vertreter: "Max Muster" });
-    expect(t.startsWith("Hallo Julia")).toBe(true);
+    const t = renderText(DEFAULT_TEXTS.review, { vorname: "Julia", link: "LINK", vertreter: "Max Muster", anrede: { fullName: "Julia Schneider", salutation: "w" } });
+    expect(t.startsWith("Guten Tag Frau Schneider, ich hoffe")).toBe(true);
+    // Ohne Nachnamen: „Guten Tag,“ (nie „Hallo Julia“ zusammen mit Sie)
+    expect(renderText(DEFAULT_TEXTS.review, { vorname: "Julia", link: "LINK", vertreter: "X" }).startsWith("Guten Tag, ich hoffe")).toBe(true);
     expect(t.indexOf("antworten Sie mir einfach direkt hier")).toBeLessThan(t.indexOf("LINK"));
     expect(t).toContain("Max Muster");
     const tpl = templateBodyFor("review_request", "Max Muster");
@@ -186,9 +188,10 @@ describe("Empfehlungen – Angebot, Anlässe, Trichter, Dankeschön (14.11.2026)
     expect(validateText("praiseReferral", "Danke!")).toMatch(/Link/);
   });
 
-  it("Anlässe haben Vorname, Link und Vertreter und versprechen nichts", () => {
+  it("Anlässe haben Anrede, Link und Vertreter und versprechen nichts", () => {
     for (const o of Object.values(OCCASIONS)) {
-      expect(o.text).toContain("{Vorname}");
+      expect(o.text.startsWith("{Anrede}, ")).toBe(true);
+      expect(o.text).not.toContain("Hallo {Vorname}");
       expect(o.text).toContain("{Link}");
       expect(o.text).toContain("{Vertreter}");
       expect(o.text).not.toMatch(/gutschein|prämie|€/i);
@@ -204,8 +207,8 @@ describe("Empfehlungen – Angebot, Anlässe, Trichter, Dankeschön (14.11.2026)
   it("Rückmeldung an Empfehlende: mit Vornamen nur, wenn vorhanden; ohne Details", () => {
     expect(statusUpdateLine("gemeldet", "Tom")).toBe("Tom hat sich über Ihren Link bei mir gemeldet.");
     expect(statusUpdateLine("termin", null)).toMatch(/Termin vereinbart/);
-    const t = statusUpdateText("termin", { vorname: "Julia", referred: "Tom", vertreter: "Max Muster" });
-    expect(t.startsWith("Hallo Julia")).toBe(true);
+    const t = statusUpdateText("termin", { vorname: "Julia", referred: "Tom", vertreter: "Max Muster", anrede: { firstName: "Julia", lastName: "Schneider" } });
+    expect(t.startsWith("Guten Tag Julia Schneider, kurze Rückmeldung")).toBe(true);
     expect(t).toContain("Max Muster");
     const tpl = templateBodyFor("referral_update", "Max Muster");
     expect(tpl).toContain("{{2}}");

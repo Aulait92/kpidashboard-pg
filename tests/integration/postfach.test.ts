@@ -46,7 +46,7 @@ describe("Postfach", () => {
     expect((await loadVorlagen(c.id)).length).toBe(STANDARD_VORLAGEN.length); // nicht doppelt
     const w = werteFuer({ name: "Anna Schmitt", source: "TKV-Katze" }, "Susanne Meier");
     // Standard „Sie“: voller Name in der Anrede, ohne Terminlink fällt der Satz weg, keine Gedankenstriche
-    expect(fuelle(v[0].body, w)).toContain("Hallo Anna Schmitt,");
+    expect(fuelle(v[0].body, w)).toContain("Guten Tag Anna Schmitt,");
     expect(fuelle(v[0].body, w)).not.toContain("{terminlink}");
     expect(fuelle(v[0].body, w)).not.toMatch(/[\u2013\u2014]/);
     expect(fuelle(v[0].body, w)).toContain("Susanne Meier");
@@ -104,7 +104,10 @@ describe("Ansprache, Terminlink und Erinnerung (14.11.2026)", () => {
     const { STANDARD_VORLAGEN_JE } = await import("@/lib/mail/vorlagen");
     const link = "https://app.example/book/abc?lead=l1";
     const sie = fuelle(STANDARD_VORLAGEN_JE.sie[0].body, werteFuer({ name: "Eva Pohl", source: "TKV" }, "Jana", { ansprache: "sie", terminlink: link }));
-    expect(sie.startsWith("Hallo Eva Pohl,")).toBe(true);
+    expect(sie.startsWith("Guten Tag Eva Pohl,")).toBe(true);
+    // Anrede aus dem Formular: „Guten Tag Frau Pohl,“
+    const mitAnrede = fuelle(STANDARD_VORLAGEN_JE.sie[0].body, werteFuer({ name: "Eva Pohl", source: "TKV", salutation: "Frau" }, "Jana", { ansprache: "sie" }));
+    expect(mitAnrede.startsWith("Guten Tag Frau Pohl,")).toBe(true);
     expect(sie).toContain(`Termin aussuchen: ${link}`);
     const ohneNachname = fuelle(STANDARD_VORLAGEN_JE.sie[0].body, werteFuer({ name: "Eva", source: "TKV" }, "Jana", { ansprache: "sie" }));
     expect(ohneNachname.startsWith("Guten Tag,")).toBe(true);

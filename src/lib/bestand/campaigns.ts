@@ -6,6 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
 import { sendToAdmins } from "@/lib/push";
 import { bestandQuota, QUOTA_REACHED } from "@/lib/bestand/quota";
+import { anredeZeile, type AnredeKontakt } from "@/lib/ansprache";
+import { kontaktFromExisting } from "@/lib/lead-anrede";
 
 export type Occasion = "cross_sell" | "review" | "birthday" | "renewal" | "empfehlung";
 export type Segment = { has?: string[]; lacks?: string[]; birthdayDays?: number; renewalDays?: number };
@@ -193,16 +195,19 @@ export async function runCampaigns(now = new Date()): Promise<{ sent: number; fa
         continue;
       }
       const first = ec.firstName?.split(/\s+/)[0] || "";
+      // Anrede aus dem Bestand (Herr/Frau, Nachname): „Guten Tag Frau Schneider,“
+      const kontakt = kontaktFromExisting(ec);
       try {
         // {empfehlungslink}: persönlicher Link je Bestandskunde
-        const referral = c.occasion === "empfehlung" ? await referralCampaignParts(c.customerId, ec.id, first) : null;
+        const referral = c.occasion === "empfehlung" ? await referralCampaignParts(c.customerId, ec.id, first, kontakt) : null;
         const res = await sendWhatsAppNotice({
           customerId: c.customerId,
           to: ec.phone,
           purpose: OCCASIONS[c.occasion as Occasion].purpose as Parameters<typeof sendWhatsAppNotice>[0]["purpose"],
           params: referral ? [first || "Hallo", referral.url] : [first || "Hallo", c.topic ?? ""],
-          text: referral ? referral.text : campaignText(c.occasion as Occasion, first, c.topic),
+          text: referral ? referral.text : campaignText(c.occasion as Occasion, kontakt, c.topic),
           contactName: [ec.firstName, ec.lastName].filter(Boolean).join(" ") || null,
+          anrede: kontakt,
         });
         await prisma.$transaction([
           prisma.campaignRecipient.update({ where: { id: r.id }, data: { status: "sent", sentAt: now, conversationId: res.conversationId } }),
@@ -226,19 +231,22 @@ export async function runCampaigns(now = new Date()): Promise<{ sent: number; fa
 }
 
 /** Empfehlungsbitte: persönlicher Link und Text (eigener Text des Vertreters, {empfehlungslink}). */
-async function referralCampaignParts(customerId: string, existingCustomerId: string, first: string) {
+async function referralCampaignParts(customerId: string, existingCustomerId: string, first: string, anrede: AnredeKontakt) {
   const { referralLinkOf, referralLinkFor, loadSettings } = await import("@/lib/empfehlung/requests");
   const { renderText } = await import("@/lib/empfehlung/shared");
-  const { advisorDisplayName } = await import("@/lib/whatsapp/template-plan");
+  const { personFromCustomerName } = await import("@/lib/advisor-name");
   const link = await referralLinkOf({ customerId, existingCustomerId });
   const url = referralLinkFor(link.token);
   const [settings, cust] = await Promise.all([loadSettings(customerId), prisma.customer.findUnique({ where: { id: customerId }, select: { name: true } })]);
-  return { linkId: link.id, url, text: renderText(settings.texts.referral, { vorname: first, link: url, vertreter: advisorDisplayName(cust?.name ?? "") }) };
+  return { linkId: link.id, url, text: renderText(settings.texts.referral, { vorname: first, link: url, vertreter: personFromCustomerName(cust?.name ?? ""), anrede }) };
 }
 
-/** Text im offenen 24-h-Fenster (sonst gilt die freigegebene Vorlage). */
-export function campaignText(o: Occasion, first: string, topic: string | null): string {
-  const hi = first ? `Hallo ${first}` : "Hallo";
+/**
+ * Text im offenen 24-h-Fenster (sonst gilt die freigegebene Vorlage). Bestandskunden werden gesiezt:
+ * „Guten Tag Frau Schneider,“ bzw. „Guten Tag Erika Schneider,“ / „Guten Tag,“ (lib/ansprache.ts).
+ */
+export function campaignText(o: Occasion, kontakt: AnredeKontakt | string, topic: string | null): string {
+  const hi = anredeZeile("sie", typeof kontakt === "string" ? { firstName: kontakt } : kontakt).replace(/,$/, "");
   switch (o) {
     case "cross_sell":
       return `${hi}, eine kurze Frage: Sind Sie beim Thema ${topic ?? "Absicherung"} schon gut versorgt? Wenn Sie möchten, schaue ich mir das gern einmal mit Ihnen an. Antworten Sie einfach hier.`;
@@ -301,6 +309,8 @@ export async function handleCampaignReply(conversationId: string, from: string, 
         formData: [
           { label: "Kontext", value: `Bestandskunde des Beraters, angeschrieben wegen: ${occasion}${recipient.campaign.topic ? ` (${recipient.campaign.topic})` : ""}` },
           { label: "Bestehende Verträge (Sparten)", value: ec.lines.join(", ") || "unbekannt" },
+          // Anrede für den Assistenten („Guten Tag Frau Schneider“), nur wenn im Bestand hinterlegt
+          ...(ec.salutation?.trim() ? [{ label: "Anrede", value: ec.salutation.trim() }] : []),
           ...(ec.externalNo ? [{ label: "Kundennummer", value: ec.externalNo }] : []),
         ],
       },

@@ -85,21 +85,23 @@ afterAll(() => {
 });
 
 describe("WhatsApp-Vorlagen automatisch einreichen", () => {
-  it("nach dem Selbst-Verbinden: 8 Vorlagen eingereicht, lokal „in Prüfung“, Beratername eingesetzt", async () => {
+  it("nach dem Selbst-Verbinden: 8 Zwecke in je 3 Fassungen eingereicht, lokal „in Prüfung“, Beratername eingesetzt", async () => {
     const res = await completeSelfConnect({ customerId, userId: null, clientId: "cl1", channels: ["chV1"] });
     expect(res.status).toBe("connected");
-    expect(created.map((c) => c.name).sort()).toEqual(
-      ["outreach", "booking_confirmation", "reminder", "reschedule", "followup", "followup_offer", "followup_noshow", "followup_last"].map((p) => `pg_${p}_v1`).sort(),
-    );
-    const outreach = created.find((c) => c.name === "pg_outreach_v1")!;
+    const purposes = ["outreach", "booking_confirmation", "reminder", "reschedule", "followup", "followup_offer", "followup_noshow", "followup_last"];
+    expect(created.map((c) => c.name).sort()).toEqual(purposes.flatMap((p) => [`pg_${p}_v2`, `pg_${p}_v2_sie`, `pg_${p}_v2_sie_ohne_name`]).sort());
+    const outreach = created.find((c) => c.name === "pg_outreach_v2")!;
     expect(outreach.category).toBe("MARKETING");
     expect(outreach.components[0].text).toContain("Anid Brand");
     expect(outreach.components[0].text).not.toContain("[Berater]");
-    expect(created.find((c) => c.name === "pg_reminder_v1")!.category).toBe("UTILITY");
-    expect(created.find((c) => c.name === "pg_reschedule_v1")!.category).toBe("UTILITY");
+    expect(outreach.components[0].text).not.toContain("[Firma]");
+    expect(created.find((c) => c.name === "pg_outreach_v2_sie")!.components[0].text).toMatch(/^Guten Tag \{\{1\}\}, vielen Dank für Ihre Anfrage!/);
+    expect(created.find((c) => c.name === "pg_outreach_v2_sie_ohne_name")!.components[0].text).toMatch(/^Guten Tag, vielen Dank für Ihre Anfrage!/);
+    expect(created.find((c) => c.name === "pg_reminder_v2")!.category).toBe("UTILITY");
+    expect(created.find((c) => c.name === "pg_reschedule_v2_sie")!.category).toBe("UTILITY");
 
     const local = await prisma.messageTemplate.findMany({ where: { customerId } });
-    expect(local).toHaveLength(8);
+    expect(local).toHaveLength(24);
     expect(local.every((t) => t.auto && t.status === "pending" && t.submittedAt && t.language === "de")).toBe(true);
     const acc = await prisma.whatsAppAccount.findUniqueOrThrow({ where: { customerId } });
     expect(acc.templatesCheckedAt).not.toBeNull();
@@ -111,29 +113,33 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     await prisma.customer.update({ where: { id: customerId }, data: { existingCustomersEnabled: true } });
     await connect();
     const s = await submitTemplatesForCustomer(customerId);
-    expect(s.submitted).toHaveLength(12);
-    const camp = created.find((c) => c.name === "pg_campaign_review_v1")!;
+    // 8 Zwecke × 3 Fassungen + 4 Kampagnen × 2 (nur gesiezt)
+    expect(s.submitted).toHaveLength(32);
+    const camp = created.find((c) => c.name === "pg_campaign_review_v2_sie")!;
     expect(camp.components[0].text).toContain("Ihr Versicherungsberater");
+    expect(camp.components[0].text).toMatch(/^Guten Tag \{\{1\}\}, hier ist Anid Brand/);
     expect(camp.components[0].text).not.toContain("STOPP");
     expect(camp.components[1]).toEqual({ type: "BUTTONS", buttons: [{ type: "QUICK_REPLY", text: "Keine Nachrichten mehr" }] });
-    expect(created.find((c) => c.name === "pg_outreach_v1")!.components).toHaveLength(1);
+    expect(created.find((c) => c.name === "pg_campaign_review_v2_sie_ohne_name")!.components[1]).toEqual(camp.components[1]);
+    expect(created.some((c) => c.name === "pg_campaign_review_v2")).toBe(false);
+    expect(created.find((c) => c.name === "pg_outreach_v2")!.components).toHaveLength(1);
   });
 
   it("zweiter Lauf reicht nichts doppelt ein; Freigabe → approved, Ablehnung → Aufgabe + Push", async () => {
     await connect();
     await submitTemplatesForCustomer(customerId);
-    expect(created).toHaveLength(8);
+    expect(created).toHaveLength(24);
 
-    remote.find((t) => t.name === "pg_outreach_v1")!.status = "APPROVED";
-    Object.assign(remote.find((t) => t.name === "pg_reminder_v1")!, { status: "REJECTED", rejected_reason: "INVALID_FORMAT" });
+    remote.find((t) => t.name === "pg_outreach_v2")!.status = "APPROVED";
+    Object.assign(remote.find((t) => t.name === "pg_reminder_v2")!, { status: "REJECTED", rejected_reason: "INVALID_FORMAT" });
     const s = await submitTemplatesForCustomer(customerId);
-    expect(created).toHaveLength(8);
-    expect(s.approved).toEqual(["pg_outreach_v1"]);
-    expect(s.rejected).toEqual(["pg_reminder_v1"]);
+    expect(created).toHaveLength(24);
+    expect(s.approved).toEqual(["pg_outreach_v2"]);
+    expect(s.rejected).toEqual(["pg_reminder_v2"]);
 
-    const outreach = await prisma.messageTemplate.findFirstOrThrow({ where: { customerId, name: "pg_outreach_v1" } });
+    const outreach = await prisma.messageTemplate.findFirstOrThrow({ where: { customerId, name: "pg_outreach_v2" } });
     expect(outreach.status).toBe("approved");
-    const reminder = await prisma.messageTemplate.findFirstOrThrow({ where: { customerId, name: "pg_reminder_v1" } });
+    const reminder = await prisma.messageTemplate.findFirstOrThrow({ where: { customerId, name: "pg_reminder_v2" } });
     expect(reminder.status).toBe("rejected");
     expect(reminder.rejectionReason).toBe("INVALID_FORMAT");
     const task = await prisma.salesTask.findFirst({ where: { title: "WhatsApp-Vorlage abgelehnt: Allianz Anid Brand" } });
@@ -148,8 +154,10 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
 
     // Neu einreichen → Revision mit neuem Namen
     const r = await resubmitTemplate(customerId, "reminder");
-    expect(r).toMatchObject({ ok: true, name: "pg_reminder_v1_r2" });
-    expect((await prisma.messageTemplate.findFirstOrThrow({ where: { customerId, name: "pg_reminder_v1_r2" } })).status).toBe("pending");
+    expect(r).toMatchObject({ ok: true, name: "pg_reminder_v2_r2" });
+    expect((await prisma.messageTemplate.findFirstOrThrow({ where: { customerId, name: "pg_reminder_v2_r2" } })).status).toBe("pending");
+    // Einzelne Fassung gezielt neu einreichen
+    expect(await resubmitTemplate(customerId, "reminder", new Date(), "sie")).toMatchObject({ ok: true, name: "pg_reminder_v2_sie_r2" });
   });
 
   it("vom Admin von Hand angelegte Vorlage bleibt unberührt", async () => {
@@ -159,8 +167,8 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     });
     const s = await submitTemplatesForCustomer(customerId);
     expect(s.skipped).toEqual(["outreach"]);
-    expect(created.map((c) => c.name)).not.toContain("pg_outreach_v1");
-    expect(created).toHaveLength(7);
+    expect(created.map((c) => c.name).filter((n) => n.startsWith("pg_outreach_"))).toEqual([]);
+    expect(created).toHaveLength(21);
   });
 
   it("Cron: gedrosselt, Liste nicht abrufbar → Fehler nur gemeldet", async () => {
@@ -188,30 +196,54 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     const item = async () => onboardingChecklist((await loadOnboarding({ customerId }))!, null).find((i) => i.key === "templates");
     expect((await item())?.done).toBe(false);
     expect((await item())?.label).toContain("noch nicht freigegeben");
-    remote.find((t) => t.name === "pg_outreach_v1")!.status = "APPROVED";
+    remote.find((t) => t.name === "pg_outreach_v2")!.status = "APPROVED";
     await submitTemplatesForCustomer(customerId);
     expect((await item())?.done).toBe(true);
   });
 
-  it("Ansprache „Sie“: Sie-Fassungen eingereicht (_sie), bis zur Freigabe sendet die App die freigegebene Du-Fassung", async () => {
+  it("Ansprache „Sie“: alle Fassungen eingereicht; Wahl je Kontakt, bis zur Freigabe die bisherige", async () => {
     await prisma.customer.update({ where: { id: customerId }, data: { leadAddress: "sie" } });
     await connect();
     await submitTemplatesForCustomer(customerId);
-    const names = created.map((c) => c.name).sort();
-    expect(names).toContain("pg_outreach_v1_sie");
-    expect(names).not.toContain("pg_outreach_v1");
-    const sie = created.find((c) => c.name === "pg_outreach_v1_sie")!;
-    expect(JSON.stringify(sie.components)).toContain("Ihre Anfrage");
-    // Du-Fassung war schon freigegeben, Sie-Fassung noch in Prüfung → Du-Fassung
+    const names = created.map((c) => c.name);
+    // Beide Fassungen für jeden Kunden, damit ein Wechsel Sie/Du sofort greift
+    expect(names).toContain("pg_outreach_v2");
+    expect(names).toContain("pg_outreach_v2_sie");
+    expect(names).toContain("pg_outreach_v2_sie_ohne_name");
+    const sie = created.find((c) => c.name === "pg_outreach_v2_sie")!;
+    expect(JSON.stringify(sie.components)).toContain("Guten Tag {{1}}, vielen Dank für Ihre Anfrage");
+    expect(JSON.stringify(sie.components)).toContain("Frau Schneider");
+
+    const { pickApprovedTemplate, sendWhatsAppNotice } = await import("@/lib/whatsapp/templates");
+    const FRAU = { fullName: "Julia Schneider", salutation: "Frau" };
+    const NUR_VORNAME = { fullName: "Julia" };
+    // Nur die alte Du-Fassung freigegeben → sie geht weiter raus
     await prisma.messageTemplate.create({ data: { customerId, name: "pg_outreach_v1", language: "de", purpose: "outreach", category: "marketing", status: "approved", body: "Hallo {{1}}, du", auto: true } });
-    const { pickApprovedTemplate } = await import("@/lib/whatsapp/templates");
-    expect((await pickApprovedTemplate(customerId, "outreach"))?.name).toBe("pg_outreach_v1");
-    // Sie-Fassung freigegeben → Sie-Fassung
-    await prisma.messageTemplate.updateMany({ where: { customerId, name: "pg_outreach_v1_sie" }, data: { status: "approved" } });
-    expect((await pickApprovedTemplate(customerId, "outreach"))?.name).toBe("pg_outreach_v1_sie");
-    // Wieder „Du“ → Du-Fassung
+    expect((await pickApprovedTemplate(customerId, "outreach", FRAU))?.name).toBe("pg_outreach_v1");
+    // Sie-Fassung mit Namen freigegeben → mit Nachnamen diese, ohne Nachnamen weiter die bisherige
+    await prisma.messageTemplate.updateMany({ where: { customerId, name: "pg_outreach_v2_sie" }, data: { status: "approved" } });
+    expect((await pickApprovedTemplate(customerId, "outreach", FRAU))?.name).toBe("pg_outreach_v2_sie");
+    expect((await pickApprovedTemplate(customerId, "outreach", NUR_VORNAME))?.name).toBe("pg_outreach_v1");
+    await prisma.messageTemplate.updateMany({ where: { customerId, name: "pg_outreach_v2_sie_ohne_name" }, data: { status: "approved" } });
+    expect((await pickApprovedTemplate(customerId, "outreach", NUR_VORNAME))?.name).toBe("pg_outreach_v2_sie_ohne_name");
+
+    // Senden außerhalb des 24-h-Fensters: Vorlage mit „Frau Schneider“ bzw. ohne Namensparameter
+    await sendWhatsAppNotice({ customerId, to: "4917600000011", purpose: "outreach", params: ["Julia"], text: "x", contactName: "Julia Schneider", anrede: FRAU });
+    await sendWhatsAppNotice({ customerId, to: "4917600000012", purpose: "outreach", params: ["Julia"], text: "x", contactName: "Julia" });
+    const tpl = (i: number) => (sent[i] as { template: { name: string; components?: { parameters: { text: string }[] }[] } }).template;
+    expect(tpl(0).name).toBe("pg_outreach_v2_sie");
+    expect(tpl(0).components?.[0].parameters.map((p) => p.text)).toEqual(["Frau Schneider"]);
+    expect(tpl(1).name).toBe("pg_outreach_v2_sie_ohne_name");
+    expect(tpl(1).components ?? []).toEqual([]);
+    const bodies = await prisma.message.findMany({ where: { conversation: { customerId } }, orderBy: { createdAt: "asc" }, select: { body: true } });
+    expect(bodies[0].body?.startsWith("Guten Tag Frau Schneider, vielen Dank für Ihre Anfrage!")).toBe(true);
+    expect(bodies[1].body?.startsWith("Guten Tag, vielen Dank für Ihre Anfrage!")).toBe(true);
+
+    // Wieder „Du“ → Du-Fassung (bisherige, bis v2 freigegeben ist)
     await prisma.customer.update({ where: { id: customerId }, data: { leadAddress: "du" } });
-    expect((await pickApprovedTemplate(customerId, "outreach"))?.name).toBe("pg_outreach_v1");
+    expect((await pickApprovedTemplate(customerId, "outreach", FRAU))?.name).toBe("pg_outreach_v1");
+    await prisma.messageTemplate.updateMany({ where: { customerId, name: "pg_outreach_v2" }, data: { status: "approved" } });
+    expect((await pickApprovedTemplate(customerId, "outreach", FRAU))?.name).toBe("pg_outreach_v2");
   });
 
   it("nicht verbunden → nichts eingereicht", async () => {

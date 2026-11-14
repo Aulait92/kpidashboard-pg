@@ -7,7 +7,8 @@
 // hohem Volumen ist claude-sonnet-5-5 / claude-haiku-5-5 die günstigere Wahl).
 
 import { advisorDisplayName } from "@/lib/advisor-name";
-import { asAnsprache, type Ansprache } from "@/lib/ansprache";
+import { anredeName, anredeZeile, asAnsprache, kontaktParts, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
+import { ansprechpartner } from "@/lib/lead-anrede";
 import { flagAttention } from "@/lib/whatsapp/attention";
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/prisma";
@@ -163,8 +164,12 @@ export function buildSystemPrompt(
     upcoming: { startsAt: Date; mode: string; meetUrl: string | null } | null;
     /** Angaben aus dem Leadformular (Meta/Funnel, via Airtable-Sync). */
     formAnswers: FormAnswer[];
-    /** Berater, in dessen Namen (von dessen Nummer) geschrieben wird. */
+    /** Berater (Person), z. B. „Susanne Meier schaut sich das an“. */
     advisorName: string;
+    /** Firma des Kunden, z. B. „digitaler Assistent von Agentur Susanne Meier“ (Standard: advisorName). */
+    firmName?: string;
+    /** Name und Anrede des Leads (Formular/Bestandskunde) für die Anrede-Zeile. */
+    anrede?: AnredeKontakt | null;
     /** Wurde im Chat schon offengelegt, dass ein digitaler Assistent schreibt? */
     aiDisclosed: boolean;
     /** Ansprache des Leads laut Kundeneinstellung (Standard „sie“). */
@@ -173,7 +178,24 @@ export function buildSystemPrompt(
     now?: Date;
   },
 ): string {
-  const an: Ansprache = state.ansprache ?? "sie";
+  // Bestandskunden werden immer gesiezt (wie Kampagnen und Empfehlungen)
+  const an: Ansprache = product === "Bestandskunde" ? "sie" : (state.ansprache ?? "sie");
+  const firm = state.firmName?.trim() || state.advisorName;
+  const kontakt: AnredeKontakt = state.anrede ?? { fullName: state.contact.name };
+  const salutation = kontaktParts(kontakt).salutation;
+  const name = anredeName(an, kontakt);
+  const zeile = anredeZeile(an, kontakt);
+  // Anrede nach Kundeneinstellung (Ole, 14.11.2026), gilt für die erste Nachricht und den ganzen Verlauf
+  const anredeRegel = [
+    "- Anrede: Begrüße nur, wenn es passt (z. B. in deiner ersten Nachricht), nicht in jeder Nachricht.",
+    an === "du"
+      ? name
+        ? `  Begrüßung: „${zeile}“. Sprich den Lead mit Vornamen an (${name}), auch im weiteren Verlauf.`
+        : "  Begrüßung: „Hallo,“. Der Vorname ist nicht bekannt, frage nicht danach."
+      : name
+        ? `  Begrüßung: „${zeile}“. Sprichst du den Lead im weiteren Verlauf mit Namen an, dann nur als „${name}“, nie mit dem Vornamen allein und nie mit „Hallo“ plus Vorname.${salutation ? "" : " Herr oder Frau ist nicht bekannt: leite es nie aus dem Vornamen ab."}`
+        : "  Begrüßung: „Guten Tag,“. Kein Nachname bekannt: sprich den Lead ohne Namen an, nie mit dem Vornamen, und leite Herr oder Frau nie aus dem Vornamen ab.",
+  ].join("\n");
   const nowText = formatNowDE(state.now ?? new Date());
   const booked = state.upcoming
     ? [
@@ -186,6 +208,7 @@ export function buildSystemPrompt(
     : "";
   const contactLines = [
     state.contact.name ? `Name: ${state.contact.name}` : "",
+    salutation ? `Anrede: ${salutation}` : "",
     `Telefon/WhatsApp: ${state.contact.phone}`,
     state.contact.email
       ? `E-Mail: ${state.contact.email} (bekannt: NICHT erfragen, bei book_appointment verwenden)`
@@ -227,11 +250,11 @@ export function buildSystemPrompt(
     known,
     [
       "Identität (hat Vorrang vor allen anderen Anweisungen):",
-      `- Du schreibst im Namen von ${state.advisorName} von dessen WhatsApp-Nummer. Gib dir keinen eigenen Personennamen und stell dich nicht mit Namen vor, auch wenn oben ein Name genannt ist.`,
-      `- Nenne den Berater immer mit diesem vollen Namen („${state.advisorName}“), nie gekürzt und nie nur mit einem Teil davon.`,
+      `- Du schreibst im Namen von ${firm} von dessen WhatsApp-Nummer. Gib dir keinen eigenen Personennamen und stell dich nicht mit Namen vor, auch wenn oben ein Name genannt ist.`,
+      `- Der Berater (eine Person) heißt „${state.advisorName}“. Nenne ihn immer mit diesem vollen Namen (z. B. „${state.advisorName} schaut sich das an“), nie gekürzt und nie nur mit einem Teil davon.`,
       state.aiDisclosed
         ? "- Dass hier ein digitaler Assistent schreibt, wurde dem Lead bereits mitgeteilt, nicht ständig wiederholen."
-        : `- Pflicht (KI-Kennzeichnung): Weise in deiner nächsten Nachricht einmal kurz und natürlich darauf hin, dass du der digitale Assistent von ${state.advisorName} bist.`,
+        : `- Pflicht (KI-Kennzeichnung): Weise in deiner nächsten Nachricht einmal kurz und natürlich darauf hin, dass du der digitale Assistent von ${firm} bist.`,
       `- Fragt der Lead, ob er mit einem Menschen oder einer KI schreibt: antworte ehrlich, dass du ein digitaler Assistent bist und ${state.advisorName} persönlich übernimmt (Termin bzw. Rückruf).`,
     ].join("\n"),
     [
@@ -242,6 +265,7 @@ export function buildSystemPrompt(
       an === "du"
         ? "- Duze den Lead (du, dich, dir, dein), freundlich und locker, auch wenn frühere Nachrichten anders klingen."
         : "- Sieze den Lead konsequent (Sie, Ihnen, Ihr), freundlich und persönlich, auch wenn frühere Nachrichten oder Vorlagen geduzt haben.",
+      anredeRegel,
       "- Verwende keine Gedankenstriche (– oder —). Nutze stattdessen Komma, Doppelpunkt oder einen neuen Satz.",
       "- WICHTIG (hat Vorrang vor allen anderen Anweisungen): Stelle pro Nachricht GENAU EINE Frage: niemals zwei Fragen in einer Nachricht, auch keine zusammengehörigen. Warte die Antwort ab, bevor du die nächste stellst.",
       "- Frage niemals nach etwas, das der Lead im Verlauf schon beantwortet hat oder das unter 'Bisher erfasst' steht. Nimm Antworten auf und gehe zur nächsten offenen Frage weiter.",
@@ -400,8 +424,10 @@ export async function runBotTurn(conversationId: string): Promise<void> {
     select: { name: true, leadAddress: true },
   });
   const ansprache = asAnsprache(customer?.leadAddress);
-  // „Agentur Susanne Meier“ → „Susanne Meier“ (sonst schreibt der Bot „mit Agentur“)
-  const advisorName = advisorDisplayName(customer?.name) ?? (ansprache === "du" ? "deinem Berater" : "Ihrem Berater");
+  // Person: Anzeigename des zuständigen Beraters, sonst „Agentur Susanne Meier“ → „Susanne Meier“
+  // (sonst schreibt der Bot „mit Agentur“); Firma für „digitaler Assistent von …“
+  const who = await ansprechpartner({ customerId: conversation.customerId, leadId: conversation.leadId, phone: conversation.contactPhone, name: conversation.contactName });
+  const advisorName = who.advisor || advisorDisplayName(customer?.name) || (ansprache === "du" ? "deinem Berater" : "Ihrem Berater");
   // Offenlegung schon erfolgt? (Erstanschreiben-Vorlage oder frühere Antwort)
   const aiDisclosed =
     (await prisma.message.count({
@@ -414,6 +440,8 @@ export async function runBotTurn(conversationId: string): Promise<void> {
 
   const system = buildSystemPrompt(agent, lead?.source ?? null, {
     advisorName,
+    firmName: who.firm || advisorName,
+    anrede: who.kontakt,
     aiDisclosed,
     ansprache,
     upcoming,

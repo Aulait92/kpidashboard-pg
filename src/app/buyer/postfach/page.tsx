@@ -125,8 +125,8 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
         <CardHeader title="Vorlagen" icon={Mail} />
         <div className="p-5">
           <p className="mb-3 text-sm text-[color:var(--muted)]">
-            Platzhalter werden beim Schreiben ersetzt: {PLATZHALTER.join(", ")}. {"{anrede}"} wird je nach Ansprache zu „Hallo Anna Beispiel“
-            (Sie, ohne Nachname „Guten Tag“) oder „Hallo Anna“ (Du). {"{terminlink}"} ist der persönliche Buchungslink des Kontakts; steht schon ein
+            Platzhalter werden beim Schreiben ersetzt: {PLATZHALTER.join(", ")}. {"{anrede}"} wird je nach Ansprache zu „Guten Tag Frau Beispiel“
+            (Sie; ohne bekannte Anrede „Guten Tag Anna Beispiel“, ohne Nachname „Guten Tag“) oder „Hallo Anna“ (Du). {"{terminlink}"} ist der persönliche Buchungslink des Kontakts; steht schon ein
             Termin an, fällt der Satz weg.
           </p>
           {ctx.teamRole === "owner" ? (

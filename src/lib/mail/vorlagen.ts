@@ -7,7 +7,7 @@ import { asAnsprache, type Ansprache } from "@/lib/ansprache";
 export { PLATZHALTER, fuelle, fuelleMitSignatur, werteFuer, type Werte } from "@/lib/mail/platzhalter";
 
 // Standardvorlagen je Ansprache (Ole, 14.11.2026): Sie ist Standard. Ohne Gedankenstriche.
-// {anrede} = „Hallo Anna Beispiel“ bzw. „Guten Tag“ (Sie) oder „Hallo Anna“ (Du).
+// {anrede} = „Guten Tag Frau Beispiel“ bzw. „Guten Tag Anna Beispiel“ / „Guten Tag“ (Sie) oder „Hallo Anna“ (Du), siehe lib/ansprache.ts.
 // {terminlink} = persönlicher Buchungslink; ohne Link (Termin steht schon) entfällt der Satz.
 export const STANDARD_VORLAGEN_JE: Record<Ansprache, { name: string; subject: string; body: string }[]> = {
   sie: [

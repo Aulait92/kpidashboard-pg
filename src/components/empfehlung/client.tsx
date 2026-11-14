@@ -423,6 +423,8 @@ export function SettingsForm({
   }, [state]);
   const preview = renderText(texts[focus] || DEFAULT_TEXTS[focus], {
     vorname: "Julia",
+    // Beispiel mit Anrede aus den Kundendaten: „Guten Tag Frau Schneider“
+    anrede: { firstName: "Julia", lastName: "Schneider", salutation: "Frau" },
     link: focus === "review" ? "https://g.page/r/…/review" : "https://app.performancegrowth.de/empfehlung/…",
     vertreter,
   });
@@ -673,7 +675,7 @@ export function SettingsForm({
             </label>
           ))}
           <p className="text-sm text-[color:var(--muted)]">
-            Platzhalter: {"{Vorname}"}, {"{Link}"}, {"{Vertreter}"}. Leer = Standardtext. Ihr Text geht raus, wenn der WhatsApp-Chat offen ist; sonst
+            Platzhalter: {"{Anrede}"} („Guten Tag Frau Schneider“, ohne Nachnamen „Guten Tag“), {"{Vorname}"}, {"{Link}"}, {"{Vertreter}"}. Leer = Standardtext. Ihr Text geht raus, wenn der WhatsApp-Chat offen ist; sonst
             sendet die App die von Meta freigegebene Standardvorlage mit demselben Inhalt.
           </p>
         </div>

@@ -35,7 +35,7 @@ export async function setAnspracheAction(_prev: AnspracheState, fd: FormData): P
   return {
     ok: true,
     message: wa
-      ? "Gespeichert. Die WhatsApp-Vorlagen in dieser Ansprache reichen wir jetzt bei Meta ein; bis zur Freigabe gehen die bisherigen raus."
+      ? "Gespeichert. Fehlende WhatsApp-Vorlagen in dieser Ansprache reichen wir jetzt bei Meta ein; bis zur Freigabe gehen die bisherigen raus."
       : "Gespeichert.",
   };
 }

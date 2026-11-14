@@ -29,9 +29,12 @@ describe("Vorlagen-Plan", () => {
     expect(purposesFor({ bestand: true })).toHaveLength(12);
   });
 
-  it("Name: pg_<zweck>_v1, nur Kleinbuchstaben/Ziffern/Unterstrich", () => {
-    expect(templateNameFor("outreach")).toBe("pg_outreach_v1");
-    expect(templateNameFor("campaign_cross_sell", "v2")).toBe("pg_campaign_cross_sell_v2");
+  it("Name: pg_<zweck>_v2[_sie|_sie_ohne_name], nur Kleinbuchstaben/Ziffern/Unterstrich", () => {
+    expect(templateNameFor("outreach")).toBe("pg_outreach_v2");
+    expect(templateNameFor("outreach", "v2", "sie")).toBe("pg_outreach_v2_sie");
+    expect(templateNameFor("outreach", "v2", "sie_ohne_name")).toBe("pg_outreach_v2_sie_ohne_name");
+    // Kampagnen gibt es nur gesiezt
+    expect(templateNameFor("campaign_cross_sell", "v2")).toBe("pg_campaign_cross_sell_v2_sie");
     for (const p of ALL) expect(templateNameFor(p)).toMatch(/^[a-z0-9_]+$/);
   });
 
@@ -80,7 +83,7 @@ describe("Vorlagen-Plan", () => {
     }
     for (const p of ["campaign_cross_sell", "campaign_review", "campaign_renewal"] as const) expect(SUGGESTED_TEMPLATE_TEXT[p]).toContain("Ihr Versicherungsberater");
     expect(SUGGESTED_TEMPLATE_TEXT.followup_noshow).toBe(
-      "Hallo {{1}}, schade, dass es mit unserem Termin nicht geklappt hat. Hier ist der digitale Assistent von [Berater]. Sollen wir einen neuen Termin finden? Antworte einfach hier.",
+      "Hallo {{1}}, schade, dass es mit unserem Termin nicht geklappt hat. Hier ist der digitale Assistent von [Firma]. Sollen wir einen neuen Termin finden? Antworte einfach hier.",
     );
     expect(SUGGESTED_TEMPLATE_TEXT.followup_last).toContain("Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.");
     // Widerspruchs-Knopf nur bei Werbung: Bestandskunden-Kampagnen und Bitte um Empfehlung

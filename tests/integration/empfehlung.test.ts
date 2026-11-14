@@ -294,7 +294,8 @@ describe("Empfehlungen & Bewertungen", () => {
     const r2 = await handleReviewReply(convHappy.id, happy.phone!, "Alles super, danke!", new Date(NOW.getTime() + 3600_000));
     expect(r2).toMatchObject({ handled: true, sentiment: "positive" });
     const thanks = state.messages.find((m) => m.to === happy.phone);
-    expect(thanks?.body).toContain("Vielen Dank");
+    expect(thanks?.body).toContain("vielen Dank");
+    expect(thanks?.body).not.toMatch(/^Hallo/);
     expect(thanks?.body).not.toContain("/empfehlung/g/");
     // Der beste Moment ist das Lob: der persönliche Empfehlungslink geht gleich mit
     expect(thanks?.body).toMatch(/\/empfehlung\/[\w-]+ /);

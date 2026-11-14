@@ -9,6 +9,7 @@ import { nowMs } from "@/lib/now";
 import { moduleInfo } from "@/lib/empfehlung/module";
 import { generalLinkOf, loadEmpfehlungStats, loadSettings, openRewards, recentRequests, referralLinkFor } from "@/lib/empfehlung/requests";
 import { advisorDisplayName } from "@/lib/whatsapp/template-plan";
+import { personFromCustomerName } from "@/lib/advisor-name";
 import { fmtDate, resolveOffer, signatureLine } from "@/lib/empfehlung/shared";
 import { PRICE_LIST } from "@/lib/offer-pricing";
 import { EmpfehlungFunnel, EmpfehlungStatsGrid } from "@/components/empfehlung/server";
@@ -266,7 +267,7 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
                 reward: { kind: settings.rewardRaw.kind, amount: settings.rewardRaw.amount, note: settings.rewardRaw.note, trigger: settings.rewardRaw.trigger, confirmed: !!settings.rewardRaw.confirmedAt },
               }}
               vermittlerTyp={customer?.vermittlerTyp ?? null}
-              vertreter={vertreter}
+              vertreter={personFromCustomerName(customer?.name ?? "") || vertreter}
               readOnly={ctx.preview}
             />
             <div className="border-t border-[color:var(--border)] pt-4">

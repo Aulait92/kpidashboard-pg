@@ -6,7 +6,8 @@ import { Button, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { NEEDS_EMPFEHLUNG, OCCASIONS, segmentIds, TOPIC_LABEL, type Occasion, type Segment } from "@/lib/bestand/campaigns";
-import { renderTemplate, SUGGESTED_TEMPLATE_TEXT, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { rankTemplates, renderTemplate, templateTextFor, fillNames, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { templateNamesOf } from "@/lib/whatsapp/template-plan";
 import { startCampaignAction } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -29,9 +30,9 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   }
   const topic = sp.thema ?? (segment.lacks?.[0] ? (TOPIC_LABEL[segment.lacks[0]] ?? segment.lacks[0]) : null);
   const purpose = OCCASIONS[occasion].purpose as NoticePurpose;
-  const [ids, template, wa] = await Promise.all([
+  const [ids, templates, wa] = await Promise.all([
     segmentIds(ctx.customerId, occasion, segment),
-    prisma.messageTemplate.findFirst({ where: { customerId: ctx.customerId, purpose, status: "approved" }, orderBy: { updatedAt: "desc" } }),
+    prisma.messageTemplate.findMany({ where: { customerId: ctx.customerId, purpose, status: "approved" }, orderBy: { updatedAt: "desc" } }),
     prisma.whatsAppAccount.findUnique({ where: { customerId: ctx.customerId }, select: { status: true } }),
   ]);
   // Zielgruppe nach Wert: Summe der Jahresbeiträge und die wertvollsten Empfänger (werden zuerst angeschrieben)
@@ -48,10 +49,13 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
     : [null, []];
   const valueSum = Number(value?._sum.premiumTotal ?? 0);
   const eurRound = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
-  const advisor = c.name.replace(/^Allianz\s+/i, "");
-  const body = template?.body ?? SUGGESTED_TEMPLATE_TEXT[purpose].replace(/\[Berater\]/g, advisor);
-  const preview = renderTemplate(body, ["Erika", occasion === "empfehlung" ? "https://app.performancegrowth.de/empfehlung/…" : (topic ?? "")]);
-  const ready = !locked && !!template && wa?.status === "connected" && ids.length > 0;
+  // Vorschau wie beim Versand: Bestandskunden werden gesiezt, „Guten Tag Frau Muster,“ (Anrede aus dem Bestand)
+  const rest = [occasion === "empfehlung" ? "https://app.performancegrowth.de/empfehlung/…" : (topic ?? "")];
+  const pick = rankTemplates(templates, purpose, "sie", { firstName: "Erika", lastName: "Muster", salutation: "Frau" });
+  const preview = pick
+    ? renderTemplate(pick.tpl.body, pick.params(rest))
+    : renderTemplate(fillNames(templateTextFor(purpose, "sie"), templateNamesOf(c.name)), ["Frau Muster", ...rest]);
+  const ready = !locked && !!pick && wa?.status === "connected" && ids.length > 0;
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -118,7 +122,7 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
             </Link>
           </p>
         ) : null}
-        {!template && !locked ? (
+        {!pick && !locked ? (
           <p className="rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             Für diesen Anlass ist noch keine WhatsApp-Vorlage von Meta freigegeben. Wir reichen sie für Sie ein, das dauert meist 1–2 Tage. Melden Sie sich
             kurz bei uns.

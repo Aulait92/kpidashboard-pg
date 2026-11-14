@@ -24,7 +24,7 @@ import { listLeadFiles } from "@/lib/lead-files";
 import { postfachOf } from "@/lib/mail/postfach";
 import { loadVorlagen } from "@/lib/mail/vorlagen";
 import { LeadMailComposer } from "@/components/lead-mail";
-import { asAnsprache } from "@/lib/ansprache";
+import { asAnsprache, namePartsFromForm, salutationFromForm } from "@/lib/ansprache";
 import { appUrl } from "@/lib/whatsapp/event-text";
 import { LeadFiles } from "@/components/lead-files";
 import { loadCustomerProvision } from "@/lib/provision-server";
@@ -269,7 +269,7 @@ export async function LeadDetailBody({
       {postfach ? (
         <LeadMailComposer
           leadId={lead.id}
-          lead={{ name: lead.name, source: lead.source }}
+          lead={{ name: lead.name, source: lead.source, salutation: salutationFromForm(lead.formData), ...namePartsFromForm(lead.formData) }}
           to={lead.email}
           from={postfach.email}
           meinname={postfach.fromName ?? me?.displayName ?? ""}
