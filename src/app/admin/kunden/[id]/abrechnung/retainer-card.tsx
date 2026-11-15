@@ -3,13 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { saveRetainerAction } from "./retainer-actions";
 
 const input = "h-9 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm tabular-nums";
+const dmy = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
 const ymd = (d: Date | null | undefined) => (d ? new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(d) : "");
 
 /** Betreuungsgebühr (Retainer) von Hand: Monatsbetrag netto, Start, optional Ende. */
 export async function RetainerCard({ customerId, message, failed }: { customerId: string; message: string | null; failed: boolean }) {
   const c = await prisma.customer.findUnique({
     where: { id: customerId },
-    select: { retainerMonthly: true, retainerStart: true, retainerEnd: true, onboarding: { select: { offerId: true } } },
+    select: { retainerMonthly: true, retainerStart: true, retainerEnd: true, cancelRequestedAt: true, cancelEffectiveAt: true, cancelRequestedBy: true, cancelReason: true, onboarding: { select: { offerId: true } } },
   });
   if (!c) return null;
   const offer = c.onboarding?.offerId ? await prisma.offer.findFirst({ where: { id: c.onboarding.offerId, status: "accepted" }, select: { number: true } }) : null;
@@ -20,6 +21,12 @@ export async function RetainerCard({ customerId, message, failed }: { customerId
       <div className="space-y-3 px-5 pb-5 pt-4 text-sm" id="betreuungsgebuehr" data-admin-retainer>
         {message ? (
           <p className={`rounded-[var(--radius-sm)] px-3 py-2 font-medium ${failed ? "bg-rose-50 text-rose-800" : "bg-emerald-50 text-emerald-900"}`}>{message}</p>
+        ) : null}
+        {c.cancelRequestedAt && c.cancelEffectiveAt ? (
+          <p className="rounded-[var(--radius-sm)] bg-amber-50 px-3 py-2 text-amber-900" data-admin-kuendigung>
+            <b>Vom Kunden gekündigt</b> am {dmy(c.cancelRequestedAt)} ({c.cancelRequestedBy ?? "unbekannt"}) zum <b>{dmy(c.cancelEffectiveAt)}</b>
+            {c.cancelReason ? `. Grund: ${c.cancelReason}` : ""}. Ende unten eintragen und Stripe-Abo zum Termin beenden.
+          </p>
         ) : null}
         <p className="text-[color:var(--muted)]">
           {offer
@@ -38,7 +45,7 @@ export async function RetainerCard({ customerId, message, failed }: { customerId
           </label>
           <label className="grid gap-1 text-xs text-[color:var(--muted)]">
             Ende (optional)
-            <input name="end" type="date" defaultValue={ymd(c.retainerEnd)} className={input} />
+            <input name="end" type="date" defaultValue={ymd(c.retainerEnd ?? c.cancelEffectiveAt)} className={input} />
           </label>
           <button className="h-9 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-3 text-sm font-semibold text-white">Speichern</button>
         </form>

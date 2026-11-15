@@ -26,6 +26,8 @@ import { moduleState, showNewBadge, trialAvailable } from "@/lib/empfehlung/shar
 import { includedPhrase } from "@/lib/seats";
 import { loadReferralSettings } from "@/lib/kollegen";
 import { referralIncentiveSentence } from "@/lib/kollegen-shared";
+import { contractCancelInfo } from "@/lib/vertrag-kuendigung";
+import { VertragKuendigen } from "./vertrag-kuendigen";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Konto & Rechnungen | performancegrowth" };
@@ -99,6 +101,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const budget = await budgetState(ctx.customerId);
   const products = await productOverview(ctx.customerId);
   const provision = await loadCustomerProvision(ctx.customerId);
+  // „Vertrag hier kündigen“: für alle Kunden mit Vertrag (Angebot oder Betreuung), nicht intern
+  const cancelInfo = customer.plan !== "internal" && (offer || customer.retainerStart) ? await contractCancelInfo(ctx.customerId) : null;
   const today = todayBerlin();
   const startYmd = customer.retainerStart ? new Intl.DateTimeFormat("sv-SE", { timeZone: TZ }).format(customer.retainerStart) : today;
   const softwareFee = offer ? Number(offer.softwareFee) : customer.plan === "service" ? 0 : 349;
@@ -217,6 +221,17 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
               </>
             ) : null}
           </dl>
+          {cancelInfo && !cancelInfo.ended ? (
+            <div className="border-t border-[color:var(--border)] px-5 py-4" id="kuendigen" data-konto-kuendigen>
+              <VertragKuendigen
+                requested={cancelInfo.requested ? { atIso: cancelInfo.requested.atIso, effectiveIso: cancelInfo.requested.effectiveIso } : null}
+                nextText={cancelInfo.nextText}
+                customerName={customer.name}
+                email={ctx.email}
+                readOnly={ctx.preview}
+              />
+            </div>
+          ) : null}
         </Card>
 
         <BudgetCard

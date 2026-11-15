@@ -182,3 +182,22 @@ export async function requestOtherProductAction(_prev: ProductFormState, fd: For
     return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
   }
 }
+
+export type CancelContractState = { ok?: boolean; error?: string; effectiveIso?: string; already?: boolean };
+
+/** „Vertrag hier kündigen“ → „Jetzt kündigen“ (nur Inhaber, nicht in der Vorschau). Den Termin rechnet der Server. */
+export async function cancelContractAction(_prev: CancelContractState, fd: FormData): Promise<CancelContractState> {
+  try {
+    const ctx = await customerOnly();
+    const { cancelContract } = await import("@/lib/vertrag-kuendigung");
+    const res = await cancelContract(ctx.customerId, {
+      actor: { id: ctx.userId, email: ctx.email, role: "BUYER" },
+      reason: String(fd.get("reason") ?? ""),
+    });
+    if (!res.ok) return { error: res.error };
+    revalidatePath("/buyer/konto");
+    return { ok: true, effectiveIso: res.effectiveIso, already: res.already };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
+  }
+}

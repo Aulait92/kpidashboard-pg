@@ -18,7 +18,8 @@
 // Löschung spätestens 30 Tage nach Ende), AVV „Pflichten des Auftraggebers“, KI-Kennzeichnung (Art. 50 KI-VO) und
 // „keine Beratung“ in AGB und AVV.
 // Außerdem: Annahme mit Firma, USt-IdNr. und Bestätigung „Unternehmer (§ 14 BGB)“, Konditionen direkt am Knopf und
-// Auftragsbestätigung; Startpreis und Testphasen mit gesonderter Bestätigung.
+// Auftragsbestätigung; Startpreis und Testphasen mit gesonderter Bestätigung. „Laufzeit und Kündigung“: Fristen mit
+// Beispielen (eindeutiger Kündigungstermin) und Kündigung im Kundenbereich („Vertrag hier kündigen“).
 // Bestehende Kunden werden NICHT automatisch zur Zustimmung aufgefordert (kein Banner); Änderungen gelten für sie
 // erst nach Mitteilung in Textform mit 6 Wochen Widerspruchsfrist (AGB „Änderungen dieser AGB“), siehe docs/datenschutz.md.
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
@@ -141,6 +142,9 @@ export const AGB: LegalSection[] = [
       { sub: "Mit 12 Monaten Laufzeit", text: "Der Vertrag hat eine Mindestlaufzeit von 12 Monaten ab Start. Danach läuft er unbefristet weiter und kann zum Ende des jeweiligen Abrechnungsmonats gekündigt werden." },
       // Prüfen: Verlängerung bei Jahreszahlung
       { sub: "Mit jährlicher Vorauszahlung", text: "Der Vertrag hat eine Laufzeit von 12 Monaten ab Start und verlängert sich jeweils um weitere 12 Monate, wenn er nicht mit einer Frist von einem Monat zum Ende des Zahlungsjahres in Textform gekündigt wird. Der Kunde kann vor Ablauf des Zahlungsjahres in Textform auf monatliche Zahlung umstellen; dann gilt ab dem folgenden Zahlungszeitraum die Regel „Mit 12 Monaten Laufzeit“." },
+      // Prüfen: eindeutiger Kündigungstermin und Kündigung im Kundenbereich (Anwalts-Memo, Ole 15.11.2026)
+      { sub: "Fristen", text: "Start ist das im Angebot genannte oder bei der Annahme gewählte Startdatum. Ein Abrechnungsmonat beginnt am Starttag bzw. an demselben Kalendertag der Folgemonate und endet mit dem Tag davor; fehlt dieser Tag in einem Monat, endet er mit dem Monatsletzten (Beispiel: Start am 15.03., Abrechnungsmonate 15.03. bis 14.04., 15.04. bis 14.05. usw.). Eine Mindestlaufzeit von 3 bzw. 12 Monaten endet entsprechend (Beispiel: Start am 15.03.2027, 3 Monate bis 14.06.2027). Eine Kündigung während der Mindestlaufzeit wirkt zu deren Ende, danach zum Ende des Abrechnungsmonats, in dem sie zugeht. Bei jährlicher Vorauszahlung muss die Kündigung spätestens einen Monat vor Ende des Zahlungsjahres zugehen (Beispiel: Zahlungsjahr bis 14.03.2028, Kündigung bis 14.02.2028), sonst wirkt sie zum Ende des folgenden Zahlungsjahres." },
+      { sub: "Form der Kündigung", text: "Die Kündigung erfolgt in Textform (z. B. E-Mail) oder im Kundenbereich unter „Konto & Rechnungen“ über „Vertrag hier kündigen“. Dort sieht der Kunde vor dem Absenden den Termin, zu dem der Vertrag endet. Der Anbieter bestätigt den Eingang der Kündigung und das Vertragsende unverzüglich per E-Mail." },
       "Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt unberührt. Die Setupgebühr wird bei Vertragsende nicht erstattet.",
     ],
   },
