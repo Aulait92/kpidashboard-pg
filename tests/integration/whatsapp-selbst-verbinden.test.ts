@@ -18,7 +18,7 @@ import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
 const ENV = { ...process.env };
 
 /** 360dialog nachgebildet: Partner-API (Key, Channel-Info) und Messaging-API (Webhook). */
-type Plan = { key: "ok" | "409" | "403"; webhook?: "ok" | "fail" };
+type Plan = { key: "ok" | "409" | "403"; webhook?: "ok" | "fail" | "404" };
 let plan: Plan = { key: "ok" };
 const calls: string[] = [];
 function fake360(input: string | URL | Request, init?: RequestInit): Promise<Response> {
@@ -33,8 +33,10 @@ function fake360(input: string | URL | Request, init?: RequestInit): Promise<Res
     return Promise.resolve(new Response(JSON.stringify({ partner_channels: [{ id: "chAAA1", setup_info: { phone_number: "4915112345678", phone_name: "Agentur Test" } }] }), { status: 200 }));
   }
   if (url.includes("/v1/configs/webhook")) {
+    if (plan.webhook === "404") return Promise.resolve(new Response(JSON.stringify({ detail: "Not Found" }), { status: 404 }));
     return Promise.resolve(new Response("{}", { status: plan.webhook === "fail" ? 400 : 200 }));
   }
+  if (url.endsWith("/waba_webhook")) return Promise.resolve(new Response("{}", { status: 200 }));
   return Promise.resolve(new Response("not found", { status: 404 }));
 }
 
@@ -153,6 +155,13 @@ describe("WhatsApp selbst verbinden (360dialog Integrated Onboarding)", () => {
     expect(acc.status).toBe("connected");
     expect(calls.some((c) => c.includes("/api_keys"))).toBe(false);
     expect(vi.mocked(sendToAdmins).mock.calls.some((c) => c[0].title.includes("WhatsApp verbunden"))).toBe(true);
+  });
+
+  it("Nummern-Webhook 404 → Webhook auf Konto-Ebene (waba_webhook), verbunden", async () => {
+    plan = { key: "ok", webhook: "404" };
+    const res = await completeSelfConnect({ customerId, userId: null, clientId: "cl1", channels: ["chAAA1"] });
+    expect(res.status).toBe("connected");
+    expect(calls.some((c) => c === "POST https://waba-v2.360dialog.io/waba_webhook")).toBe(true);
   });
 
   it("Partner-Webhook channel_running holt den Key sofort (nur mit Token)", async () => {

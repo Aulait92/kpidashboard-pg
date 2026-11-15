@@ -48,6 +48,8 @@ export async function finishChannel(customerId: string, channelId: string, clien
   const key = await createChannelApiKey(cfg, channelId);
   if (key.kind === "retry") return { status: "pending" };
   if (key.kind === "error") return { status: "error", reason: `360dialog ${key.status || ""} ${key.message}`.trim() };
+  // Host, den 360dialog für diesen Key nennt (Diagnose, ohne Key): weicht er von waba-v2 ab, schlagen Webhook und Versand fehl.
+  if (key.address) console.info("[whatsapp connect] Key-Adresse:", key.address.replace(/[?#].*$/, "").slice(0, 80));
   const info = await channelInfo(cfg, channelId);
   const saved = await saveWhatsAppKey(customerId, key.apiKey, { phone: info.phone, dialog360ChannelId: channelId, dialog360ClientId: clientId });
   if (!saved.ok && saved.reason === "noconfig") return { status: "error", reason: "APP_URL/WHATSAPP_WEBHOOK_SECRET fehlt" };
