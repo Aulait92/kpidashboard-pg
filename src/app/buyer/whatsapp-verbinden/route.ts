@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { reportError } from "@/lib/monitoring";
 import { createPartnerClient, onboardingLink, partnerConfig, signState } from "@/lib/whatsapp/dialog360-partner";
+import { parseConnectPath } from "@/lib/whatsapp/connect-guide";
 
 // Kunde (Inhaber) verbindet seine WhatsApp-Nummer über 360dialog.
 // Ole, 15.11.2026: Die Registrierung auf der 360dialog-Seite verliert den Partner (Kunde landet direkt bei
@@ -59,5 +60,7 @@ export async function GET(req: Request): Promise<Response> {
     create: { customerId: ctx.customerId, provider: "360dialog", status: "invited", dialog360ClientId: created.clientId },
     update: { status: "invited", dialog360ClientId: created.clientId },
   });
-  return back("invited");
+  // Gewählten Weg mitgeben, damit die Einladungsansicht die passenden nächsten Schritte zeigt
+  const weg = parseConnectPath(url.searchParams.get("weg"));
+  return appRedirect(`/buyer/einrichtung?wa=invited${weg ? `&weg=${weg}` : ""}#whatsapp`, req);
 }

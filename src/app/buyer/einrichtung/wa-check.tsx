@@ -2,7 +2,8 @@
 
 // „Verbindung prüfen“: wenn das Verbinden bei 360dialog fertig war, hier aber nichts ankam.
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2, RefreshCw } from "lucide-react";
 import { buttonClass } from "@/components/ui";
 import { checkWhatsAppConnectionAction, resetWhatsAppAction, type WaCheckState } from "./actions";
@@ -43,4 +44,19 @@ export function WaResetButton({ readOnly }: { readOnly: boolean }) {
       {state.error ? <p className="mt-2 font-medium text-rose-700">{state.error}</p> : null}
     </form>
   );
+}
+
+/** „Fast geschafft“: Seite lädt sich von selbst neu, bis „Verbunden“ dasteht (alle 30 s, höchstens 20 Minuten). */
+export function WaPendingRefresh() {
+  const router = useRouter();
+  useEffect(() => {
+    let n = 0;
+    const t = setInterval(() => {
+      n += 1;
+      if (n > 40) return clearInterval(t);
+      router.refresh();
+    }, 30_000);
+    return () => clearInterval(t);
+  }, [router]);
+  return null;
 }

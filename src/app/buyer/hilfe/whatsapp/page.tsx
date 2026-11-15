@@ -21,45 +21,101 @@ const SCREENS: { where: string; tone: string; title: string; lines: string[]; ac
     action: "Jetzt WhatsApp verbinden",
   },
   {
+    where: "Ihr E-Mail-Postfach",
+    tone: "border-t-amber-500",
+    title: "Join [Ihr Firmenname] on the 360Dialog Hub",
+    lines: ["Von: 360Dialog <no-reply@360dialog.com>", "Knopf antippen und Passwort festlegen."],
+    action: "Join 360Dialog Hub",
+  },
+  {
+    where: "Bei uns: Einrichtung",
+    tone: "border-t-blue-600",
+    title: "Schritt 1 erledigt",
+    lines: ["☑ Erledigt, ich habe mein Passwort festgelegt"],
+    action: "Weiter: WhatsApp verbinden",
+  },
+  {
     where: "360dialog (unser WhatsApp-Anbieter)",
     tone: "border-t-teal-600",
-    title: "Konto anlegen",
-    lines: ["E-Mail: ihre@agentur.de", "Passwort: ••••••••", "☑ Nutzungsbedingungen akzeptiert"],
-    action: "Weiter",
+    title: "Log in, dann „Verify it's you“",
+    lines: ["E-Mail und neues Passwort eintragen.", "Code aus der zweiten E-Mail eintragen."],
+    action: "Log in · Continue",
+  },
+  {
+    where: "360dialog (unser WhatsApp-Anbieter)",
+    tone: "border-t-teal-600",
+    title: "Enter phone number",
+    lines: ["Land von USA (+1) auf Deutschland (+49) umstellen", "Nummer ohne 0: 151 23456789"],
+    action: "Next",
+  },
+  {
+    where: "360dialog (unser WhatsApp-Anbieter)",
+    tone: "border-t-teal-600",
+    title: "Is +49 151 23456789 already on WhatsApp?",
+    lines: ["Neue Nummer: „No, It's not connected“", "Business App: „Yes, Business app“"],
+    action: "Auswahl antippen",
+  },
+  {
+    where: "360dialog (unser WhatsApp-Anbieter)",
+    tone: "border-t-teal-600",
+    title: "Verify your phone number",
+    lines: ["◉ Text message (SMS)   ○ Voice call", "Code: 4 8 1 9 0 2"],
+    action: "Verify",
+  },
+  {
+    where: "360dialog (unser WhatsApp-Anbieter)",
+    tone: "border-t-teal-600",
+    title: "Meta Business Signup",
+    lines: ["Pop-ups im Browser erlauben.", "Knopf unten rechts."],
+    action: "Embedded Signup",
   },
   {
     where: "Fenster von Meta (Facebook)",
     tone: "border-t-indigo-600",
-    title: "Mit Facebook fortfahren",
-    lines: ["360dialog möchte ein WhatsApp-Konto für Sie einrichten."],
-    action: "Weiter",
+    title: "Seamlessly connect your account to 360Dialog",
+    lines: ["Facebook Login for Business"],
+    action: "Continue",
   },
   {
     where: "Fenster von Meta (Facebook)",
     tone: "border-t-indigo-600",
-    title: "Unternehmensportfolio auswählen",
-    lines: ["◉ Ihr Unternehmensportfolio", "○ Neues Portfolio erstellen"],
-    action: "Weiter",
+    title: "Add your WhatsApp phone number",
+    lines: ["Ihre Nummer ist schon ausgewählt."],
+    action: "Next",
   },
   {
     where: "Fenster von Meta (Facebook)",
     tone: "border-t-indigo-600",
-    title: "WhatsApp-Profil",
-    lines: ["Anzeigename: Max Mustermann Versicherungsmakler", "Kategorie: Finanzdienstleistungen"],
-    action: "Weiter",
+    title: "Select the business assets",
+    lines: ["Business portfolio: Ihr eigenes Portfolio", "WhatsApp account: Create a WhatsApp account"],
+    action: "Next",
   },
   {
     where: "Fenster von Meta (Facebook)",
     tone: "border-t-indigo-600",
-    title: "Nummer bestätigen",
-    lines: ["Nummer: +49 30 1234567", "○ Code per SMS   ◉ Code per Anruf", "Code: 4 8 1 9 0 2"],
-    action: "Bestätigen",
+    title: "Enter business information",
+    lines: ["Name wie im Impressum, Land Germany", "Time zone: Europe/Berlin"],
+    action: "Next",
+  },
+  {
+    where: "Fenster von Meta (Facebook)",
+    tone: "border-t-indigo-600",
+    title: "Review what you'll share with 360dialog",
+    lines: ["Unternehmen, WhatsApp-Konto, Nachrichtenkonto", "Überall Ihr eigener Firmenname"],
+    action: "Confirm",
+  },
+  {
+    where: "Fenster von Meta (Facebook)",
+    tone: "border-t-indigo-600",
+    title: "Your account is connected to 360Dialog",
+    lines: ["☐ Instruct Meta to automatically identify order and lead events", "☐ Share Cloud API events", "Beide Häkchen entfernen."],
+    action: "Finish",
   },
   {
     where: "Bei uns: Einrichtung",
     tone: "border-t-emerald-600",
-    title: "Verbunden: +49 30 1234567",
-    lines: ["Ihr Assistent schreibt neue Leads ab dem Start über diese Nummer an."],
+    title: "Fast geschafft",
+    lines: ["Ihre Nummer wird bei WhatsApp noch eingerichtet.", "Nach wenigen Minuten steht hier „Verbunden“."],
     action: "Fertig",
   },
 ];
@@ -98,9 +154,9 @@ export default async function WhatsAppHelpPage({ searchParams }: { searchParams:
       <section>
         <h2 className="mb-1 text-lg font-semibold tracking-tight">So sieht es aus</h2>
         <p className="mb-4 text-sm text-[color:var(--muted)]">
-          Die Kästen zeigen den Ablauf vereinfacht. Texte und Aussehen bei 360dialog und Meta können etwas abweichen, die Reihenfolge stimmt. Mit einer Nummer
-          aus der WhatsApp Business App kommt nach dem Portfolio die Frage, ob die Nummer schon in WhatsApp läuft. Danach scannen Sie einen QR-Code in der App,
-          statt einen Code per SMS einzugeben.
+          Die Kästen zeigen den Ablauf mit einer neuen Nummer vereinfacht. Texte und Aussehen bei 360dialog und Meta können etwas abweichen, die
+          Reihenfolge stimmt. Mit einer Nummer aus der WhatsApp Business App wählen Sie bei der Frage „Yes, Business app“ und scannen später einen
+          QR-Code in der App, statt einen Code per SMS einzugeben.
         </p>
         <ol className="grid gap-4 sm:grid-cols-2">
           {SCREENS.map((s, i) => (

@@ -24,6 +24,7 @@ import {
 
 const WHERE_LABEL: Record<GuideStep["where"], string> = {
   app: "Bei uns",
+  mail: "Ihr E-Mail-Postfach",
   "360dialog": "360dialog",
   meta: "Fenster von Meta",
   whatsapp: "WhatsApp Business App",
@@ -31,6 +32,7 @@ const WHERE_LABEL: Record<GuideStep["where"], string> = {
 
 const WHERE_CLASS: Record<GuideStep["where"], string> = {
   app: "bg-blue-50 text-blue-700",
+  mail: "bg-amber-50 text-amber-800",
   "360dialog": "bg-teal-50 text-teal-700",
   meta: "bg-indigo-50 text-indigo-700",
   whatsapp: "bg-emerald-50 text-emerald-700",
@@ -213,7 +215,7 @@ export function WhatsAppGuide({
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
             {canStart ? (
               <a
-                href={connectHref}
+                href={path ? `${connectHref}?weg=${path}` : connectHref}
                 className={buttonClass("primary", "md", cn("justify-center", readOnly && "pointer-events-none opacity-60"))}
                 aria-disabled={readOnly || undefined}
               >
@@ -288,7 +290,7 @@ function Choice<T extends string>({
 }
 
 /** Ein Schritt der Anleitung, mit Bildschirmfoto zum Vergrößern (Ole, 15.11.2026). */
-function GuideStepItem({ step: s, n }: { step: GuideStep; n: number }) {
+export function GuideStepItem({ step: s, n }: { step: GuideStep; n: number }) {
   return (
     <li className="flex gap-3">
       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[color:var(--surface-sunken,#f1f5f9)] text-xs font-semibold tabular-nums">{n}</span>
