@@ -58,8 +58,8 @@ export function normalizeErstinfoUrl(raw: string | null | undefined): string | n
 }
 
 export type ErstinfoStand = {
-  /** Status in der Einrichtung bestätigt */
-  status: boolean;
+  /** Status in der Einrichtung bestätigt (nicht mehr nötig, Status kommt aus dem Angebot) */
+  status?: boolean;
   registerNummer: boolean;
   /** Eigenes PDF hochgeladen oder Link hinterlegt (freiwillig) */
   dokument: boolean;
@@ -68,13 +68,13 @@ export type ErstinfoStand = {
 };
 
 /**
- * Was fehlt noch? Leer = vollständig. Ole (15.11.2026): Die Angaben kommen aus dem Impressum, der Vermittler
- * prüft sie nur. Ein eigenes PDF bzw. ein Link ist freiwillig; ohne beides erzeugen wir die Erstinformation aus
+ * Was fehlt noch? Leer = vollständig. Ole (15.11.2026): Status aus dem Angebot, Registernummer und Anschrift aus
+ * dem Impressum; der Schritt erledigt sich damit von selbst. Ein eigenes PDF bzw. ein Link ist freiwillig; ohne beides erzeugen wir die Erstinformation aus
  * den Impressumsangaben (dann muss die Anschrift bekannt sein).
  */
 export function erstinfoFehlt(s: ErstinfoStand): string[] {
+  // Status steht aus dem Angebot fest (Customer.vermittlerTyp, Makler oder Vertreter), muss nicht bestätigt werden
   const out: string[] = [];
-  if (!s.status) out.push("Status (Makler, Mehrfachvertreter oder Ausschließlichkeitsvertreter)");
   if (!s.registerNummer) out.push("Registernummer");
   if (!s.dokument && !s.anschrift) out.push("Anschrift (aus dem Impressum) oder eigene Erstinformation");
   return out;
@@ -95,4 +95,10 @@ export const ERSTINFO_MAX_BYTES = 5 * 1024 * 1024;
 /** PDF am Inhalt erkennen (%PDF). */
 export function isPdf(data: Uint8Array): boolean {
   return data.length > 4 && data[0] === 0x25 && data[1] === 0x50 && data[2] === 0x44 && data[3] === 0x46;
+}
+
+/** Ist die Erstinformation vollständig? (gemeinsam für Einrichtung, Checkliste, Heute) */
+export function erstinfoVollstaendig(e: { registerNummer?: string | null; url?: string | null; fileName?: string | null } | null | undefined, web: { registerNumber?: string | null; address?: string | null } | null | undefined): boolean {
+  const reg = !!(e?.registerNummer || normalizeRegisterNummer(web?.registerNumber));
+  return erstinfoFehlt({ registerNummer: reg, dokument: !!(e?.url || e?.fileName), anschrift: !!web?.address?.trim() }).length === 0;
 }

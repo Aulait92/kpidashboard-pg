@@ -13,6 +13,7 @@ import { prisma } from "@/lib/prisma";
 import { HelpCallPicker, MetaAccessForm, QuestionnaireForm, SkipButton, StepExits } from "./forms";
 import { ErstinfoForm } from "./erstinfo-form";
 import { loadErstinfo } from "@/lib/erstinformation";
+import { vermittlerStatusLabel } from "@/lib/erstinformation-shared";
 import { SmtpForm } from "@/app/buyer/postfach/forms";
 import { googleMailAvailable, microsoftMailAvailable } from "@/lib/mail/postfach";
 import { appInstalled, loadSetupSettings, setupSteps, videoEmbedUrl, type MetaCheck, type SetupStepKey } from "@/lib/selbst-einrichtung";
@@ -311,17 +312,37 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               Als Versicherungsvermittler müssen Sie Ihren Kunden beim ersten Kontakt die Erstinformation geben (§ 15 VersVermV). Wir erstellen sie aus Ihrem
               Impressum, Ihr Assistent schickt den Link in seiner ersten Nachricht an jeden neuen Lead. Bitte prüfen Sie die Angaben einmal kurz.
             </p>
-            {!erstinfo.vollstaendig ? (
+            {erstinfo.vollstaendig ? (
+              <div className="mb-3 rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" data-erstinfo-fertig>
+                Ihre Erstinformation ist fertig: {vermittlerStatusLabel(erstinfo.status)} (aus Ihrem Angebot)
+                {erstinfo.registerNummer ? `, Registernummer ${erstinfo.registerNummer}` : ""}
+                {erstinfo.url || erstinfo.fileName ? ", eigene Erstinformation hinterlegt" : ", Anschrift aus Ihrem Impressum"}. Sie müssen nichts tun.
+              </div>
+            ) : (
               <p className="mb-4 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-erstinfo-warnung>
                 Es fehlt noch: {erstinfo.fehlt.join(", ")}.
               </p>
-            ) : null}
-            <ErstinfoForm
-              initial={{ status: erstinfo.statusAt ? erstinfo.status : null, registerNummer: erstinfo.registerNummer, url: erstinfo.url, fileName: erstinfo.fileName }}
-              impressum={erstinfo.impressum}
-              confirmed={!!erstinfo.statusAt}
-              readOnly={readOnly}
-            />
+            )}
+            {erstinfo.vollstaendig ? (
+              <details className="text-sm">
+                <summary className="cursor-pointer font-medium text-[color:var(--brand)]">Angaben ändern</summary>
+                <div className="mt-3">
+                  <ErstinfoForm
+                    initial={{ status: erstinfo.status, registerNummer: erstinfo.registerNummer, url: erstinfo.url, fileName: erstinfo.fileName }}
+                    impressum={erstinfo.impressum}
+                    confirmed
+                    readOnly={readOnly}
+                  />
+                </div>
+              </details>
+            ) : (
+              <ErstinfoForm
+                initial={{ status: erstinfo.status, registerNummer: erstinfo.registerNummer, url: erstinfo.url, fileName: erstinfo.fileName }}
+                impressum={erstinfo.impressum}
+                confirmed={!!erstinfo.statusAt}
+                readOnly={readOnly}
+              />
+            )}
             {erstinfo.token ? (
               <p className="mt-4 text-sm text-[color:var(--muted)]">
                 So sehen Ihre Leads sie:{" "}

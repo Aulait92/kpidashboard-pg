@@ -116,7 +116,7 @@ describe("Erstinformation: Status, Registernummer, Link", () => {
     expect(vermittlerStatusLabel("irgendwas")).toBe("Ausschließlichkeitsvertreter");
     expect(statusRegisterText("makler")).toContain("§ 34d Abs. 1 GewO");
     expect(erstinfoFehlt({ status: true, registerNummer: true, dokument: true })).toEqual([]);
-    expect(erstinfoFehlt({ status: false, registerNummer: false, dokument: false })).toHaveLength(3);
+    expect(erstinfoFehlt({ status: false, registerNummer: false, dokument: false })).toHaveLength(2);
     // Ohne eigenes Dokument reicht die Anschrift aus dem Impressum (Ole, 15.11.2026)
     expect(erstinfoFehlt({ status: true, registerNummer: true, dokument: false, anschrift: true })).toEqual([]);
     expect(statusFromImpressum("Gebundener Versicherungsvertreter nach § 34d Abs. 7 GewO")).toBe("vertreter");
