@@ -67,7 +67,8 @@ describe("Terminvorbereitung", () => {
     p = await loadPraesentation(appt.id, ctx);
     expect(p?.angeboteBestaetigt).toBe(true);
     expect(p?.marke.gesellschaft).toBe("Allianz");
-    expect(p?.folien.find((f) => f.id === "empfehlung")?.html).toContain("8,20");
+    expect(p?.folien.find((f) => f.id === "beitrag")?.html).toContain("8,20");
+    expect(p?.folien.find((f) => f.id === "empfehlung")?.html).not.toContain("8,20");
     expect(await loadPraesentation(appt.id, { customerId: otherId, userId: null, teamRole: "owner" })).toBeNull();
   });
 });
