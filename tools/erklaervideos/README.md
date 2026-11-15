@@ -37,6 +37,17 @@ Arbeitsverzeichnis für Ton, Rohvideo und Logs: `EV_DIR` (Standard `/var/tmp/ev`
 - Aufnahme: `APP=http://localhost:3123 DATABASE_URL=… node wa_rec.js`. Fehlt Playwrights Chromium, `PW_CHROME=/usr/bin/google-chrome`; fehlt Playwrights ffmpeg für die Aufnahme, `PLAYWRIGHT_BROWSERS_PATH=<eigener Ordner> npx playwright install ffmpeg` und denselben `PLAYWRIGHT_BROWSERS_PATH` beim Aufnehmen setzen.
 - Einzelne Szenen neu vertonen: `python3 wa_scenes.py 3 7` (Rest bleibt). `wa_rec.js` meldet Szenen, deren Bild länger braucht als der Ton („lang …“).
 
+## Was jedes Video zeigt (für die Prüfung, Stand 15.11.2026)
+
+Ändert sich eine dieser Seiten oder einer dieser Begriffe sichtbar, Video prüfen (siehe AGENTS.md „Erklärvideos aktuell halten“).
+`python3 tools/erklaervideos/betroffen.py` vergleicht geänderte Dateien mit dieser Liste.
+
+| Video | Seiten (Routen) | Begriffe und Knöpfe im Sprechertext |
+|---|---|---|
+| Kurz (`kurz.json`, `public/videos/einfuehrung-kurz*`) | /buyer (Heute), Termin im Kontakt, /buyer/chats, /buyer/kontakte, /buyer/wachstum | Heute, Termin, Assistent, Kontakte (Liste, Pipeline), Wachstum, KI-Hilfe |
+| Ausführlich (`lang.json`, `public/videos/einfuehrung-lang*`) | /buyer, Kontakt (Fenster und Seite), Terminvorbereitung, Anrufliste, /buyer/chats, /buyer/kontakte (Liste, Pipeline), /buyer/wachstum, /buyer/zahlen, /buyer/kalender, /buyer/team | Heute, Kontakte, Nachrichten, Wachstum, „Braucht dich“, Phase, Gewonnen, Verloren, Angaben, Notizen, Anrufliste, Wiedervorlagen, Pipeline, Vertriebstrichter, Mein Kalender, Team, KI-Hilfe |
+| WhatsApp verbinden (`wa.json`, `public/videos/whatsapp-verbinden*`) | /buyer/einrichtung (Schritt WhatsApp), /buyer/whatsapp-verbinden, Seiten von 360dialog und Meta | „WhatsApp verbinden“, „Jetzt WhatsApp verbinden“, „Erledigt“, „Fast geschafft“, Fünfzehn-Minuten-Termin |
+
 ## 2. Prüfen, ob sich etwas Grundlegendes geändert hat
 
 Neu aufnehmen nur, wenn sich in der letzten Woche etwas geändert hat, das in einem Video zu sehen oder zu hören ist:
