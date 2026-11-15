@@ -124,7 +124,7 @@ export function LeadFiles({
           {praesentationTermin ? (
             <>
               <span>Angebote für die Beratungspräsentation laden Sie am besten direkt in der Terminvorbereitung hoch, dort liest die App sie aus.</span>
-              <Link href={`/buyer/termine/${praesentationTermin}/vorbereitung#angebote`} className="font-medium text-[color:var(--brand)] underline">
+              <Link href={`/buyer/termine/${praesentationTermin}/vorbereitung?von=kontakt#angebote`} className="font-medium text-[color:var(--brand)] underline">
                 Terminvorbereitung und Präsentation öffnen
               </Link>
             </>

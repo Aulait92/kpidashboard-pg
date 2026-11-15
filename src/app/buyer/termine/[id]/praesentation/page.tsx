@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, FileDown } from "lucide-react";
+import { FileDown } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
+import { ZurueckLink } from "@/components/zurueck-link";
 import { ButtonLink } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { kundenlinkStand, loadPraesentation } from "@/lib/termin-vorbereitung-server";
@@ -13,10 +14,11 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Präsentation | performancegrowth" };
 
 // Beratungsstrecke je Termin (Ole, 15.11.2026): Folien aus Angaben und bestätigten Angeboten (ohne Sprechzettel).
-export default async function PraesentationPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PraesentationPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ von?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   const { id } = await params;
+  const { von } = await searchParams;
   const p = await loadPraesentation(id, ctx);
   if (!p) notFound();
   const link = await kundenlinkStand(id, ctx);
@@ -25,9 +27,9 @@ export default async function PraesentationPage({ params }: { params: Promise<{ 
     : null;
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <Link href={`/buyer/termine/${id}/vorbereitung`} className="mb-3 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-[color:var(--brand)] hover:underline">
-        <ArrowLeft className="h-4 w-4" /> Zur Terminvorbereitung
-      </Link>
+      <ZurueckLink href={`/buyer/termine/${id}/vorbereitung`} back={von === "vorbereitung"}>
+        Zur Terminvorbereitung
+      </ZurueckLink>
       <PageHeader
         title={`Präsentation: ${p.d.lead.name}`}
         subtitle={p.angeboteBestaetigt ? "Im Videocall den Bildschirm teilen und auf Vollbild gehen." : "Noch ohne Angebote: Bestätigen Sie Ihre Angebote in der Terminvorbereitung, dann erscheinen sie hier."}

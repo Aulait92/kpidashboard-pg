@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, ClipboardCheck, FileDown, ListChecks, Presentation, Receipt, TriangleAlert } from "lucide-react";
+import { ClipboardCheck, FileDown, ListChecks, Presentation, Receipt, TriangleAlert } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
+import { ZurueckLink } from "@/components/zurueck-link";
 import { ButtonLink, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { isNewUi } from "@/lib/new-ui";
@@ -18,10 +18,11 @@ const when = (d: Date) =>
 
 // Terminvorbereitung (Ole, 15.11.2026): Angaben in der Reihenfolge des Allianz-Rechners, offene Punkte,
 // PDF im PG-Design (Gesprächsleitfaden entfernt, Ole 15.11.2026). Aufgabe dazu auf „Heute“ bis „Vorbereitet“.
-export default async function TerminVorbereitungPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function TerminVorbereitungPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ von?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   const { id } = await params;
+  const { von } = await searchParams;
   const d = await loadVorbereitung(id, ctx);
   if (!d) notFound();
   const ab = abschnitte(d);
@@ -31,9 +32,9 @@ export default async function TerminVorbereitungPage({ params }: { params: Promi
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       {d.leadId ? (
-        <Link href={`/buyer/leads/${d.leadId}`} className="mb-3 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-[color:var(--brand)] hover:underline">
-          <ArrowLeft className="h-4 w-4" /> Zum Kontakt
-        </Link>
+        <ZurueckLink href={`/buyer/leads/${d.leadId}`} back={von === "kontakt"}>
+          Zum Kontakt
+        </ZurueckLink>
       ) : null}
       <PageHeader title={`Termin vorbereiten: ${d.lead.name}`} subtitle={`${d.lead.produkt} · ${when(d.termin.startsAt)} Uhr · ${d.termin.mode === "video" ? "Videocall" : "Telefonat"}`} />
       <div className="mb-5 flex flex-wrap items-center gap-3">
@@ -41,7 +42,7 @@ export default async function TerminVorbereitungPage({ params }: { params: Promi
         <ButtonLink href={`/api/buyer/termine/${d.id}/vorbereitung`} external variant="secondary" size="md" icon={FileDown}>
           Als PDF
         </ButtonLink>
-        <ButtonLink href={`/buyer/termine/${d.id}/praesentation`} variant="secondary" size="md" icon={Presentation}>
+        <ButtonLink href={`/buyer/termine/${d.id}/praesentation?von=vorbereitung`} variant="secondary" size="md" icon={Presentation}>
           Präsentation
         </ButtonLink>
         <span className="text-sm text-[color:var(--muted)]">Rechnen Sie das Angebot mit diesen Angaben vor dem Termin.</span>
