@@ -22,6 +22,8 @@ import {
   SIE_TEMPLATE_TEXT,
   SUGGESTED_TEMPLATE_TEXT,
   TEMPLATE_BODY,
+  TEMPLATE_BODY_B,
+  rolleText,
   templateParams,
   templateTextFor,
   type NoticePurpose,
@@ -98,8 +100,10 @@ describe("Meta-Vorlagen: Fassungen, Namen, Regeln", () => {
   it("je Zweck alle Fassungen: Du, Sie, Sie ohne Namen (Kampagnen/Empfehlungen nur Sie)", () => {
     expect(formsFor("outreach")).toEqual(["du", "sie", "sie_ohne_name"]);
     expect(formsFor("campaign_review")).toEqual(["sie", "sie_ohne_name"]);
-    const names = plannedTemplates(purposesFor({ bestand: false })).map((t) => templateNameFor(t.purpose, "v2", t.form));
-    expect(names).toHaveLength(30);
+    const names = plannedTemplates(purposesFor({ bestand: false })).map((t) => templateNameFor(t.purpose, "v2", t.form, t.variant));
+    // 14 Zwecke je 3 Fassungen, dazu A/B-Fassung b für outreach_tkv und followup_last
+    expect(names).toHaveLength(48);
+    expect(names).toContain("pg_outreach_tkv_v2_b_sie");
     expect(names).toContain("pg_outreach_v2");
     expect(names).toContain("pg_outreach_v2_sie");
     expect(names).toContain("pg_outreach_v2_sie_ohne_name");
@@ -107,22 +111,26 @@ describe("Meta-Vorlagen: Fassungen, Namen, Regeln", () => {
   });
 
   it("Texte: Du „Hallo {{1}},“, Sie „Guten Tag {{1}},“, ohne Namen „Guten Tag,“ mit nachgerückten Platzhaltern", () => {
-    expect(templateTextFor("booking_confirmation", "du")).toMatch(/^Hallo \{\{1\}\}, vielen Dank für deine Buchung bei \[Firma\]\. Dein Termin ist bestätigt: \{\{2\}\} \(\{\{3\}\}\)\. \{\{4\}\}/);
-    expect(templateTextFor("booking_confirmation", "sie")).toMatch(/^Guten Tag \{\{1\}\}, vielen Dank für Ihre Buchung bei \[Firma\]\. Ihr Termin ist bestätigt: \{\{2\}\}/);
-    expect(templateTextFor("booking_confirmation", "sie_ohne_name")).toMatch(/^Guten Tag, vielen Dank für Ihre Buchung bei \[Firma\]\. Ihr Termin ist bestätigt: \{\{1\}\} \(\{\{2\}\}\)\. \{\{3\}\}/);
-    // Erstanschreiben: KI-Hinweis und Link zur Erstinformation ({{2}} bzw. ohne Namen {{1}})
-    expect(templateTextFor("outreach", "sie_ohne_name")).toMatch(/^Guten Tag, vielen Dank für Ihre Anfrage! Hier schreibt der digitale KI-Assistent von \[Firma\]\. Ich bin kein Mensch.*Versicherungsvermittler: \{\{1\}\} Haben Sie/);
-    expect(templateTextFor("outreach", "du")).toMatch(/schreib ‚Mensch‘\. Erstinformation zu \[Berater\] als Versicherungsvermittler: \{\{2\}\} Hast du/);
+    expect(templateTextFor("booking_confirmation", "du")).toMatch(/^Hallo \{\{1\}\}, dein Termin bei \[Firma\] ist bestätigt: \{\{2\}\} \(\{\{3\}\}\)\. \{\{4\}\}/);
+    expect(templateTextFor("booking_confirmation", "sie")).toMatch(/^Guten Tag \{\{1\}\}, Ihr Termin bei \[Firma\] ist bestätigt: \{\{2\}\}/);
+    expect(templateTextFor("booking_confirmation", "sie_ohne_name")).toMatch(/^Guten Tag, Ihr Termin bei \[Firma\] ist bestätigt: \{\{1\}\} \(\{\{2\}\}\)\. \{\{3\}\}/);
+    // Erstanschreiben v4: kurzer KI-Hinweis und direkt die erste Frage; Produkt als {{2}} (ohne Namen {{1}})
+    expect(templateTextFor("outreach_tkv", "sie_ohne_name")).toBe(
+      "Guten Tag, vielen Dank für Ihre Anfrage zur {{1}}! Ich bin der digitale KI-Assistent von [Berater], kein Mensch, und stelle Ihnen zwei kurze Fragen, damit Sie ein passendes Angebot bekommen. Für welches Tier suchen Sie den Schutz?",
+    );
+    expect(templateTextFor("outreach_tkv", "du")).toMatch(/^Hallo \{\{1\}\}, danke für deine Anfrage zur \{\{2\}\}!.*Für welches Tier suchst du den Schutz\?$/);
+    expect(templateTextFor("outreach", "sie")).toMatch(/Wann erreicht \[Berater\] Sie am besten für ein kurzes Telefonat\?$/);
+    expect(templateTextFor("outreach", "sie")).not.toMatch(/Erstinformation|Später|kurz Zeit/);
     expect(SIE_TEMPLATE_TEXT.outreach).toBe(templateTextFor("outreach", "sie"));
   });
 
   it("alle Fassungen erfüllen Metas Regeln (kein Platzhalter am Anfang/Ende, keine leeren Beispiele, fortlaufend)", () => {
-    for (const { purpose, form } of plannedTemplates(ALL)) {
-      const req = buildTemplateRequest(purpose, templateNamesOf("Agentur Susanne Meier"), "v2", form);
+    for (const { purpose, form, variant } of plannedTemplates(ALL)) {
+      const req = buildTemplateRequest(purpose, templateNamesOf("Agentur Susanne Meier"), "v2", form, { variant });
       const body = req.components[0] as { text: string; example?: { body_text: string[][] } };
       const examples = body.example?.body_text[0] ?? [];
       expect(metaTemplateProblems(body.text, examples), `${req.name}: ${body.text}`).toEqual([]);
-      expect(body.text).not.toMatch(/\[(Firma|Berater)\]/);
+      expect(body.text).not.toMatch(/\[(Firma|Berater|Rolle)\]/);
       expect(req.name).toMatch(/^[a-z0-9_]+$/);
     }
     // Die Prüfung selbst schlägt an
@@ -133,10 +141,13 @@ describe("Meta-Vorlagen: Fassungen, Namen, Regeln", () => {
   });
 
   it("Sie-Fassungen siezen, Du-Fassungen duzen; keine Gedankenstriche", () => {
-    for (const p of Object.keys(TEMPLATE_BODY) as NoticePurpose[]) {
-      expect(TEMPLATE_BODY[p].sie, p).not.toMatch(/\b(du|dich|dir|dein|deine|deinen)\b/i);
-      expect(TEMPLATE_BODY[p].sie, p).not.toMatch(/[–—]/);
-      if (TEMPLATE_BODY[p].du) expect(TEMPLATE_BODY[p].du, p).not.toMatch(/\b(Sie|Ihnen|Ihr|Ihre)\b/);
+    for (const set of [TEMPLATE_BODY, TEMPLATE_BODY_B]) {
+      for (const [p, b] of Object.entries(set) as [NoticePurpose, { du?: string; sie: string }][]) {
+        expect(b.sie, p).not.toMatch(/\b(du|dich|dir|dein|deine|deinen)\b/i);
+        expect(b.sie, p).not.toMatch(/[–—]/);
+        if (b.du) expect(b.du, p).not.toMatch(/\b(Sie|Ihnen|Ihr|Ihre)\b/);
+        if (b.du) expect(b.du, p).not.toMatch(/[–—]/);
+      }
     }
     for (const t of Object.values(SUGGESTED_TEMPLATE_TEXT)) expect(t).not.toMatch(/[–—]/);
   });
@@ -144,10 +155,13 @@ describe("Meta-Vorlagen: Fassungen, Namen, Regeln", () => {
   it("Firma und Berater getrennt: „Buchung bei Agentur Susanne Meier“, „hier ist Susanne Meier“", () => {
     const names = templateNamesOf("Agentur Susanne Meier");
     expect(names).toEqual({ firm: "Agentur Susanne Meier", advisor: "Susanne Meier" });
-    expect(templateBodyFor("booking_confirmation", names, "sie")).toContain("Buchung bei Agentur Susanne Meier");
-    expect(templateBodyFor("outreach", names, "du")).toContain("digitale KI-Assistent von Agentur Susanne Meier");
-    expect(templateBodyFor("outreach", names, "du")).toContain("Termin mit Susanne Meier zu vereinbaren");
-    expect(templateBodyFor("campaign_review", names, "sie")).toContain("hier ist Susanne Meier, Ihr Versicherungsberater");
+    expect(templateBodyFor("booking_confirmation", names, "sie")).toContain("Ihr Termin bei Agentur Susanne Meier ist bestätigt");
+    expect(templateBodyFor("followup_nudge", names, "du")).toContain("digitale KI-Assistent von Agentur Susanne Meier");
+    expect(templateBodyFor("outreach", names, "du")).toContain("digitale KI-Assistent von Susanne Meier, kein Mensch");
+    // Ohne Status neutral, sonst nach Erstinformation (rolleText)
+    expect(templateBodyFor("campaign_review", names, "sie")).toContain("hier ist Susanne Meier, Ihr Versicherungsvermittler.");
+    expect(templateBodyFor("campaign_review", templateNamesOf("Agentur Susanne Meier", rolleText("vertreter", ["Allianz"])), "sie")).toContain("hier ist Susanne Meier von der Allianz.");
+    expect(templateBodyFor("campaign_review", names, "sie")).not.toContain("Versicherungsberater");
     expect(templateNamesOf("Allianz Anid Brand")).toEqual({ firm: "Anid Brand", advisor: "Anid Brand" });
     expect(personFromCustomerName("Allianz Generalvertretung Meier")).toBe("Generalvertretung Meier");
     expect(advisorPerson("Agentur Susanne Meier", "Tom Berater")).toBe("Tom Berater");
@@ -172,15 +186,16 @@ describe("Vorschau auf der Seite WhatsApp-Vorlagen", () => {
     const t = previewBodyFor("outreach", names, "sie");
     expect(t.startsWith("Guten Tag Frau Schneider, vielen Dank für Ihre Anfrage!")).toBe(true);
     expect(t).not.toContain("Hallo");
-    expect(previewBodyFor("booking_confirmation", names, "sie")).toContain("Guten Tag Frau Schneider, vielen Dank für Ihre Buchung bei Agentur Susanne Meier.");
+    expect(previewBodyFor("booking_confirmation", names, "sie")).toContain("Guten Tag Frau Schneider, Ihr Termin bei Agentur Susanne Meier ist bestätigt");
     expect(previewBodyFor("booking_confirmation", names, "sie")).toContain("Wir rufen Sie unter Ihrer Nummer an.");
   });
   it("Du: „Hallo Julia, danke für deine Anfrage!“", () => {
     expect(previewBodyFor("outreach", names, "du").startsWith("Hallo Julia, danke für deine Anfrage!")).toBe(true);
     // Kampagnen siezen immer, auch bei „Du“
     expect(previewBodyFor("campaign_review", names, "du").startsWith("Guten Tag Frau Schneider, hier ist Susanne Meier")).toBe(true);
-    expect(exampleValuesFor("outreach", "sie")).toEqual(["Frau Schneider", "https://app.performancegrowth.de/erstinformation/abc123"]);
-    expect(exampleValuesFor("outreach", "sie_ohne_name")).toEqual(["https://app.performancegrowth.de/erstinformation/abc123"]);
+    expect(exampleValuesFor("outreach", "sie")).toEqual(["Frau Schneider"]);
+    expect(exampleValuesFor("outreach_tkv", "sie")).toEqual(["Frau Schneider", "Tierkrankenversicherung"]);
+    expect(exampleValuesFor("outreach_pkv", "sie_ohne_name")).toEqual(["privaten Krankenversicherung"]);
   });
 });
 
@@ -199,7 +214,7 @@ describe("Vorlage wählen und Parameter setzen", () => {
   it("Sie-Kunde mit Anrede und Nachnamen → „Guten Tag Frau Schneider“", () => {
     const r = send([v1du, v1sie, v2du, v2sie, v2ohne], "sie", FRAU)!;
     expect(r.name).toBe("pg_booking_confirmation_v2_sie");
-    expect(r.text.startsWith("Guten Tag Frau Schneider, vielen Dank für Ihre Buchung")).toBe(true);
+    expect(r.text.startsWith("Guten Tag Frau Schneider, Ihr Termin bei X ist bestätigt")).toBe(true);
   });
   it("Sie-Kunde ohne Anrede → voller Name", () => {
     expect(send([v2sie, v2ohne], "sie", OHNE_ANREDE)!.text.startsWith("Guten Tag Julia Schneider,")).toBe(true);
@@ -208,7 +223,7 @@ describe("Vorlage wählen und Parameter setzen", () => {
     for (const k of [NUR_VORNAME, NUR_VORNAME_FRAU]) {
       const r = send([v2sie, v2ohne, v1sie], "sie", k)!;
       expect(r.name).toBe("pg_booking_confirmation_v2_sie_ohne_name");
-      expect(r.text).toBe(`Guten Tag, vielen Dank für Ihre Buchung bei X. Ihr Termin ist bestätigt: ${rest[0]} (${rest[1]}). ${rest[2]} Wir freuen uns auf das Gespräch!`);
+      expect(r.text).toBe(`Guten Tag, Ihr Termin bei X ist bestätigt: ${rest[0]} (${rest[1]}). ${rest[2]} Zur Vorbereitung: Legen Sie sich gern Ihre bisherigen Unterlagen zum Thema bereit, falls vorhanden.`);
     }
     // Nur die Fassung mit Namen freigegeben → nie mit leerem Namen, sondern die bisherige
     expect(send([v2sie, v1sie], "sie", NUR_VORNAME)!.name).toBe("pg_booking_confirmation_v1_sie");
@@ -223,7 +238,7 @@ describe("Vorlage wählen und Parameter setzen", () => {
     for (const k of [FRAU, OHNE_ANREDE, NUR_VORNAME_FRAU, NUR_VORNAME]) {
       const r = send([v1du, v1sie, v2du, v2sie, v2ohne], "du", k)!;
       expect(r.name).toBe("pg_booking_confirmation_v2");
-      expect(r.text.startsWith("Hallo Julia, vielen Dank für deine Buchung")).toBe(true);
+      expect(r.text.startsWith("Hallo Julia, dein Termin bei X ist bestätigt")).toBe(true);
     }
   });
   it("Namensplatzhalter am Text erkannt, auch bei von Hand angelegten Vorlagen", () => {
@@ -235,13 +250,13 @@ describe("Vorlage wählen und Parameter setzen", () => {
   });
   it("Freitext im offenen Fenster: gleiche Anrede-Regel", () => {
     const names = { firm: "Agentur Susanne Meier", advisor: "Susanne Meier" };
-    const link = "https://app.example.de/erstinformation/abc123";
-    expect(noticeText("outreach", "sie", names, FRAU, [link])).toBe(
-      `Guten Tag Frau Schneider, vielen Dank für Ihre Anfrage! Hier schreibt der digitale KI-Assistent von Agentur Susanne Meier. Ich bin kein Mensch und berate nicht zu Tarifen. Ich helfe Ihnen, einen Termin mit Susanne Meier zu vereinbaren. Wenn Sie direkt mit Susanne Meier sprechen möchten, schreiben Sie ‚Mensch‘. Erstinformation zu Susanne Meier als Versicherungsvermittler: ${link} Haben Sie kurz Zeit für zwei Fragen?`,
+    expect(noticeText("outreach_tkv", "sie", names, FRAU, ["Katzenversicherung"])).toBe(
+      "Guten Tag Frau Schneider, vielen Dank für Ihre Anfrage zur Katzenversicherung! Ich bin der digitale KI-Assistent von Susanne Meier, kein Mensch, und stelle Ihnen zwei kurze Fragen, damit Sie ein passendes Angebot bekommen. Für welches Tier suchen Sie den Schutz?",
     );
-    expect(noticeText("outreach", "sie", names, NUR_VORNAME, [link]).startsWith("Guten Tag, vielen Dank")).toBe(true);
-    expect(noticeText("outreach", "du", names, FRAU, [link]).startsWith("Hallo Julia, danke für deine Anfrage! Hier schreibt der digitale KI-Assistent")).toBe(true);
-    expect(noticeText("outreach", "du", names, FRAU, [link])).toContain("Wenn du direkt mit Susanne Meier sprechen möchtest, schreib ‚Mensch‘.");
+    expect(noticeText("outreach", "sie", names, NUR_VORNAME, []).startsWith("Guten Tag, vielen Dank")).toBe(true);
+    expect(noticeText("outreach", "du", names, FRAU, []).startsWith("Hallo Julia, danke für deine Anfrage! Ich bin der digitale KI-Assistent von Susanne Meier, kein Mensch")).toBe(true);
+    // A/B-Fassung b
+    expect(noticeText("outreach_tkv", "sie", names, FRAU, ["Katzenversicherung"], "b")).toContain("Erste Frage: Für welches Tier suchen Sie den Schutz?");
     expect(noticeText("followup_offer", "sie", names, OHNE_ANREDE, ["Hausrat"])).toContain("Guten Tag Julia Schneider, hier ist der digitale KI-Assistent von Agentur Susanne Meier. Konnten Sie sich das Angebot zu Hausrat");
   });
 });
@@ -298,7 +313,7 @@ describe("Weitere Texte an Leads und Kunden", () => {
   it("Bestandskampagnen: Sie mit Anrede aus dem Bestand", () => {
     expect(campaignText("review", { firstName: "Erika", lastName: "Muster", salutation: "Frau" }, null)).toMatch(/^Guten Tag Frau Muster, es ist Zeit/);
     expect(campaignText("birthday", { firstName: "Erika", lastName: "Muster" }, null)).toMatch(/^Guten Tag Erika Muster, herzlichen Glückwunsch/);
-    expect(campaignText("cross_sell", "Erika", "Hausrat")).toMatch(/^Guten Tag, eine kurze Frage/);
+    expect(campaignText("cross_sell", "Erika", "Hausrat")).toMatch(/^Guten Tag, viele meiner Kunden haben beim Thema Hausrat eine Lücke/);
   });
 
   it("Empfehlungs-Anlässe: „Guten Tag Frau Schneider“ statt „Hallo Julia“ mit Sie; alte eigene Texte auch", () => {

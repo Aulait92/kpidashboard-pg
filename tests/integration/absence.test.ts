@@ -171,7 +171,9 @@ describe("Abwesenheit: Einzel-Vertreter, Termine", () => {
     expect(text).toMatch(/verschieben/);
     // Verschieben per Chat statt Link (Ole, 15.11.2026)
     expect(text).not.toMatch(/\/book\/manage\//);
-    expect(text).toMatch(/antworten Sie einfach hier/i);
+    // v4: Frage mit Knöpfen „Ja, passt“/„Bitte verschieben“; ältere Vorlage bekommt den Satz im Parameter
+    expect(text).toMatch(/Passt Ihnen die neue Zeit\?/);
+    expect(vi.mocked(sendWhatsAppNotice).mock.calls[0][0].legacyParams?.[3]).toMatch(/antworten Sie einfach hier/i);
     expect(text).not.toMatch(/Urlaub|krank/i);
 
     // Aufgaben-Verschiebung rückgängig

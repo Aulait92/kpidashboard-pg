@@ -23,6 +23,7 @@ import {
   whatsappLink,
   whatsappRequestText,
   DEFAULT_TEXTS,
+  empfehlungsThema,
   OCCASIONS,
   UNHAPPY_TASK,
   classifyHeuristic,
@@ -195,16 +196,19 @@ export async function sendReferralLinkNow(
   let name: string | null = null;
   let leadId: string | null = null;
   let kontakt: AnredeKontakt | null = null;
+  let thema = empfehlungsThema(null);
   if (target.leadId) {
     const l = await prisma.lead.findFirst({ where: { id: target.leadId, customerId, erasedAt: null }, select: { id: true, name: true, phone: true, status: true, source: true } });
     if (!l || !(l.status === CLOSED || l.source === "Bestandskunde")) return { ok: false, error: "Empfehlungslinks gibt es für Kontakte mit Abschluss und Bestandskunden." };
     phone = l.phone;
     name = l.name;
     leadId = l.id;
+    thema = empfehlungsThema(l.source);
   } else if (target.existingCustomerId) {
-    const e = await prisma.existingCustomer.findFirst({ where: { id: target.existingCustomerId, customerId }, select: { firstName: true, lastName: true, salutation: true, phone: true, optOutAt: true } });
+    const e = await prisma.existingCustomer.findFirst({ where: { id: target.existingCustomerId, customerId }, select: { firstName: true, lastName: true, salutation: true, phone: true, optOutAt: true, lines: true } });
     if (!e) return { ok: false, error: "Kontakt nicht gefunden." };
     if (e.optOutAt) return { ok: false, error: "Dieser Kunde möchte keine Nachrichten mehr." };
+    thema = empfehlungsThema(e.lines[0]);
     phone = e.phone;
     name = [e.firstName, e.lastName].filter(Boolean).join(" ") || null;
     kontakt = kontaktFromExisting(e);
@@ -218,7 +222,8 @@ export async function sendReferralLinkNow(
   if (!phone) return { ok: false, error: "Keine Handynummer hinterlegt. Text zum Teilen:", link: url, text };
   try {
     const { sendWhatsAppNotice } = await import("@/lib/whatsapp/templates");
-    const r = await sendWhatsAppNotice({ customerId, to: phone, purpose: "referral_request", params: [firstName(name) || "Hallo", url], text, leadId, contactName: name, anrede });
+    // v4 mit Thema ({{2}}) vor dem Link; ältere Fassung nur mit Link
+    const r = await sendWhatsAppNotice({ customerId, to: phone, purpose: "referral_request", params: [firstName(name) || "Hallo", thema, url], legacyParams: [firstName(name) || "Hallo", url], text, leadId, contactName: name, anrede });
     await prisma.referralLink.update({ where: { id: link.id }, data: { lastSentAt: new Date(), lastOccasion: occasion ?? null } });
     await audit("empfehlung.link_sent", { entity: "ReferralLink", entityId: link.id, customerId, details: { mode: r.mode, occasion: occasion ?? null }, ...(actor ? { actor } : {}) });
     const followUp = await planReferralFollowUp(customerId, leadId, settings.followUpHours).catch(() => false);
@@ -357,7 +362,7 @@ export async function sendDueReferrals(now = new Date()): Promise<{ sent: number
   if (!sendingWindow(now)) return out;
   const due = await prisma.reviewRequest.findMany({
     where: { referralStatus: "waiting", referralDueAt: { lte: now }, status: { in: ["sent", "answered", "off", "skipped"] }, customer: { empfehlungEnabled: true } },
-    include: { lead: { select: { id: true, name: true, phone: true, status: true, followUpNote: true, erasedAt: true, feedbackConsentAt: true, feedbackOptOutAt: true } } },
+    include: { lead: { select: { id: true, name: true, phone: true, status: true, source: true, followUpNote: true, erasedAt: true, feedbackConsentAt: true, feedbackOptOutAt: true } } },
     orderBy: { referralDueAt: "asc" },
     take: PER_RUN,
   });
@@ -392,7 +397,8 @@ export async function sendDueReferrals(now = new Date()): Promise<{ sent: number
         customerId: r.customerId,
         to: r.lead.phone!,
         purpose: "referral_request",
-        params: [vorname || "Hallo", url],
+        params: [vorname || "Hallo", empfehlungsThema(r.lead.source), url],
+        legacyParams: [vorname || "Hallo", url],
         text: renderText(settings.texts.referral, { vorname, link: url, vertreter, anrede }),
         leadId: r.leadId,
         contactName: r.lead.name,
@@ -793,7 +799,8 @@ export async function sendAfterAppointmentReferrals(now = new Date()): Promise<{
         customerId: a.customerId,
         to: l.phone!,
         purpose: "referral_request",
-        params: [vorname || "Hallo", url],
+        params: [vorname || "Hallo", empfehlungsThema(l.source), url],
+        legacyParams: [vorname || "Hallo", url],
         text: renderText(OCCASIONS.jahresgespraech.text, { vorname, link: url, vertreter, anrede }),
         leadId: l.id,
         contactName: l.name,

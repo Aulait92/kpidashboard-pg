@@ -8,21 +8,17 @@ import { anspracheOf } from "@/lib/whatsapp/reminders";
 import { displayProduct } from "@/lib/products";
 import { firstNameOf, noticeText, pickTemplate, renderTemplate, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { ansprechpartner } from "@/lib/lead-anrede";
+import { zweiTerminvorschlaege } from "@/lib/whatsapp/termin-vorschlaege";
 import { a, type AnredeKontakt } from "@/lib/ansprache";
 
 export type FollowupChoice =
   | { kind: "blocked"; reason: string }
-  | {
+  | (FollowupSend & {
       kind: "ok";
-      purpose: NoticePurpose;
       label: string;
-      params: string[];
       /** Name und Anrede des Kontakts (für die Wahl der Vorlage beim Senden). */
       anrede: AnredeKontakt;
-      preview: string;
-      /** Gibt es eine freigegebene Vorlage? Sonst kann nicht gesendet werden. */
-      approved: boolean;
-    };
+    });
 
 const DONE = new Set(["abschluss", "kein interesse", "disqualifiziert"]);
 
@@ -100,35 +96,68 @@ export async function chooseFollowup(conversationId: string): Promise<FollowupCh
     purpose = "followup_offer";
     rest = [interestFrom(conv.lead?.formData, conv.lead?.source ?? null, an)];
   }
-  const params = [first, ...rest];
-
-  // Vorlage, die tatsächlich gesendet würde (passend zu Ansprache und Anrede); sonst der aktuelle Text
-  const pick = await pickTemplate(conv.customerId, purpose, who.kontakt);
-  const preview = pick ? renderTemplate(pick.tpl.body, pick.params(rest)) : noticeText(purpose, an, who, who.kontakt, rest);
+  const send = await prepareFollowup({ customerId: conv.customerId, leadId: conv.leadId, purpose, first, rest, an, who });
   const labels: Partial<Record<NoticePurpose, string>> = {
-    followup: "Allgemein nachfassen",
+    followup: "Zwei Terminvorschläge",
+    followup_nudge: "Kurz nachfragen",
     followup_offer: "Angebot nachfassen",
     followup_noshow: "Nach verpasstem Termin",
   };
-  return {
-    kind: "ok",
-    purpose,
-    label: labels[purpose] ?? "Nachfassen",
-    params,
-    anrede: who.kontakt,
-    preview,
-    approved: !!pick,
-  };
+  return { kind: "ok", label: labels[send.purpose] ?? "Nachfassen", anrede: who.kontakt, ...send };
 }
 
-export type FollowupOption = {
+/** Was zum Senden gehört (Zweck, Parameter, Knopf-Payloads, Vorschau) – für Vorschau und Versand gleich. */
+export type FollowupSend = {
   purpose: NoticePurpose;
-  label: string;
   params: string[];
+  /** Für ältere freigegebene Fassungen mit anderer Belegung (z. B. „followup“ v3 ohne Zeiten). */
+  legacyParams?: string[];
+  /** Payloads der Knöpfe „Erste Zeit passt“/„Zweite Zeit passt“ (Startzeiten). */
+  buttonPayloads?: string[];
+  preview: string;
+  /** Gibt es eine freigegebene Vorlage? Sonst kann nicht gesendet werden. */
+  approved: boolean;
+};
+
+/**
+ * Nachfassen vorbereiten. „followup“ bekommt zwei freie Zeiten aus dem Kalender (lib/whatsapp/termin-vorschlaege.ts);
+ * ohne Kalender bzw. freie Zeiten wird daraus die kurze Nachfrage „followup_nudge“.
+ */
+async function prepareFollowup(o: {
+  customerId: string;
+  leadId: string | null;
+  purpose: NoticePurpose;
+  first: string;
+  rest: string[];
+  an: "sie" | "du";
+  who: Awaited<ReturnType<typeof ansprechpartner>>;
+}): Promise<FollowupSend> {
+  let purpose = o.purpose;
+  let rest = o.rest;
+  let extra: Pick<FollowupSend, "legacyParams" | "buttonPayloads"> = {};
+  if (purpose === "followup") {
+    const zeiten = await zweiTerminvorschlaege(o.customerId, o.leadId);
+    if (zeiten) {
+      rest = zeiten.labels;
+      extra = { legacyParams: [o.first], buttonPayloads: zeiten.payloads };
+    } else {
+      purpose = "followup_nudge";
+    }
+  }
+  const params = [o.first, ...rest];
+  // Vorlage, die tatsächlich gesendet würde (passend zu Ansprache und Anrede); sonst der aktuelle Text
+  const pick = await pickTemplate(o.customerId, purpose, o.who.kontakt);
+  const restFor = pick && !pick.current && extra.legacyParams ? extra.legacyParams.slice(1) : rest;
+  const preview = pick ? renderTemplate(pick.tpl.body, pick.params(restFor)) : noticeText(purpose, o.an, o.who, o.who.kontakt, rest);
+  return { purpose, params, ...extra, preview, approved: !!pick };
+}
+
+export type FollowupOption = FollowupSend & {
+  /** Auswahl im Admin-Chat (bleibt „followup“, auch wenn ohne Kalender die kurze Nachfrage gesendet wird). */
+  key: (typeof ADMIN_FOLLOWUP_PURPOSES)[number];
+  label: string;
   /** Name und Anrede des Kontakts (für die Wahl der Vorlage beim Senden). */
   anrede: AnredeKontakt;
-  preview: string;
-  approved: boolean;
 };
 
 /** Nachfass-Vorlagen, die der Admin bei geschlossenem Fenster wählen kann. */
@@ -155,19 +184,17 @@ export async function followupOptions(conversationId: string): Promise<FollowupO
   const an = await anspracheOf(conv.customerId);
   const who = await ansprechpartner({ customerId: conv.customerId, leadId: conv.leadId, phone: conv.contactPhone, name: conv.contactName });
   const labels: Record<(typeof ADMIN_FOLLOWUP_PURPOSES)[number], string> = {
-    followup: "Allgemein nachfassen",
+    followup: "Zwei Terminvorschläge",
     followup_offer: "Angebot nachfassen",
     followup_noshow: "Nach verpasstem Termin",
     followup_last: "Letzte Nachricht",
   };
   return Promise.all(
-    ADMIN_FOLLOWUP_PURPOSES.map(async (purpose) => {
-      const rest = purpose === "followup_offer" ? [interestFrom(conv.lead?.formData, conv.lead?.source ?? null, an)] : [];
-      const params = [first, ...rest];
-      // Vorlage, die tatsächlich gesendet würde (passend zu Ansprache und Anrede); sonst der aktuelle Text
-      const pick = await pickTemplate(conv.customerId, purpose, who.kontakt);
-      const preview = pick ? renderTemplate(pick.tpl.body, pick.params(rest)) : noticeText(purpose, an, who, who.kontakt, rest);
-      return { purpose, label: labels[purpose], params, anrede: who.kontakt, preview, approved: !!pick };
+    ADMIN_FOLLOWUP_PURPOSES.map(async (key) => {
+      const rest = key === "followup_offer" ? [interestFrom(conv.lead?.formData, conv.lead?.source ?? null, an)] : [];
+      const send = await prepareFollowup({ customerId: conv.customerId, leadId: conv.leadId, purpose: key, first, rest, an, who });
+      return { key, label: send.purpose === "followup_nudge" ? "Kurz nachfragen" : labels[key], anrede: who.kontakt, ...send };
     }),
   );
 }
+

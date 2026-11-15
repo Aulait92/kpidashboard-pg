@@ -154,6 +154,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "empfehlung.einwilligung": "Einwilligung in Nachfrage und Bewertungsbitte bestätigt/zurückgenommen",
   "empfehlung.announce": "Ankündigung Zusatzmodul versendet",
   "empfehlung.link_sent": "Empfehlungslink verschickt",
+  "whatsapp.ab_promote": "A/B-Test: bessere WhatsApp-Vorlage als Standard gesetzt",
   "rechnung.steuernummer": "Steuernummer für Rechnungen geändert",
   "rechnung.kunden": "Pflichtangaben bei Stripe-Kunden aktualisiert",
   "customer.logo": "Logo für Präsentationen geändert",

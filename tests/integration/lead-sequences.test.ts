@@ -6,6 +6,9 @@ vi.mock("@/lib/whatsapp/templates", async (orig) => {
   const real = await orig<typeof import("@/lib/whatsapp/templates")>();
   return { ...real, sendWhatsAppNotice: (...a: unknown[]) => send(...a) };
 });
+// Terminvorschläge aus dem Kalender: Standard ohne Kalender (null), einzeln mit zwei freien Zeiten
+const zeiten = vi.fn(async (): Promise<unknown> => null);
+vi.mock("@/lib/whatsapp/termin-vorschlaege", () => ({ zweiTerminvorschlaege: () => zeiten() }));
 
 import { prisma } from "@/lib/prisma";
 import { inSendWindow, restartSilentSequence, runSequences, scheduleBotRecall, startSequence, stopSequences } from "@/lib/lead-sequences";
@@ -36,6 +39,8 @@ describe("Nachfass-Abfolgen", () => {
   beforeEach(() => {
     send.mockReset();
     send.mockResolvedValue({ mode: "template", conversationId: "c" });
+    zeiten.mockReset();
+    zeiten.mockResolvedValue(null);
   });
 
   it("Versandfenster: Mo–Sa 9–19 Uhr Berlin", () => {
@@ -61,7 +66,8 @@ describe("Nachfass-Abfolgen", () => {
 
     await runSequences(T0);
     expect(send).toHaveBeenCalledTimes(1);
-    expect(send.mock.calls[0][0]).toMatchObject({ purpose: "followup", leadId: lead.id, params: ["Lisa"] });
+    // Ohne Kalender keine Terminvorschläge: kurze Nachfrage ohne Knöpfe im Freitext
+    expect(send.mock.calls[0][0]).toMatchObject({ purpose: "followup_nudge", leadId: lead.id, params: ["Lisa"], textButtons: [] });
     await runSequences(T0); // nicht fällig → nichts
     expect(send).toHaveBeenCalledTimes(1);
 
@@ -200,7 +206,7 @@ describe("Nachfass-Abfolgen", () => {
 
     await runSequences(new Date(later.getTime() + 2 * HOUR)); // 13:00
     expect(send).toHaveBeenCalledTimes(1);
-    expect(send.mock.calls[0][0]).toMatchObject({ purpose: "followup", leadId: lead.id });
+    expect(send.mock.calls[0][0]).toMatchObject({ purpose: "followup_nudge", leadId: lead.id });
     await runSequences(new Date(later.getTime() + 8 * HOUR)); // 19:00: außerhalb, wartet
     expect(send).toHaveBeenCalledTimes(1);
     await runSequences(new Date(later.getTime() + 22 * HOUR)); // Mi 09:00
@@ -217,6 +223,26 @@ describe("Nachfass-Abfolgen", () => {
     expect(send.mock.calls[2][0]).toMatchObject({ purpose: "followup_last" });
     const done = await prisma.leadSequence.findUniqueOrThrow({ where: { id: seq!.id } });
     expect(done.stopReason).toBe("Abgeschlossen");
+  });
+
+  it("Nachfassen mit zwei konkreten Zeiten aus dem Kalender und Knöpfen (Payload = Startzeit)", async () => {
+    zeiten.mockResolvedValue({
+      labels: ["Di., 17.11. um 14:00 Uhr", "Mi., 18.11. um 10:00 Uhr"],
+      starts: ["2026-11-17T13:00:00.000Z", "2026-11-18T09:00:00.000Z"],
+      payloads: ["slot:2026-11-17T13:00:00.000Z", "slot:2026-11-18T09:00:00.000Z", "andere_zeit"],
+    });
+    const lead = await newLead();
+    await startSequence(lead.id, "not_reached", T0);
+    await runSequences(T0);
+    const call = send.mock.calls.find((c) => (c[0] as { leadId?: string }).leadId === lead.id)![0] as Record<string, unknown>;
+    expect(call).toMatchObject({
+      purpose: "followup",
+      params: ["Lisa", "Di., 17.11. um 14:00 Uhr", "Mi., 18.11. um 10:00 Uhr"],
+      buttonPayloads: ["slot:2026-11-17T13:00:00.000Z", "slot:2026-11-18T09:00:00.000Z", "andere_zeit"],
+      // ältere freigegebene „followup“-Fassung hat nur den Namen
+      legacyParams: ["Lisa"],
+    });
+    expect(call.text).toBe("Guten Tag Lisa Koch, ich habe gerade versucht, Sie anzurufen. Passt Ihnen für ein kurzes Gespräch Di., 17.11. um 14:00 Uhr oder Mi., 18.11. um 10:00 Uhr?");
   });
 
   it("„Chat ruht“ startet nicht, wenn eine andere Abfolge läuft oder ein Termin ansteht", async () => {
@@ -246,7 +272,7 @@ describe("Nachfass-Abfolgen", () => {
     expect(mine()).toHaveLength(0);
     await runSequences(at);
     expect(mine()).toHaveLength(1);
-    expect(mine()[0][0]).toMatchObject({ purpose: "followup", leadId: lead.id });
+    expect(mine()[0][0]).toMatchObject({ purpose: "followup_nudge", leadId: lead.id });
     expect((mine()[0][0] as { text: string }).text).toContain("wie besprochen melde ich mich wieder zu Hausrat");
     const done = await prisma.leadSequence.findUniqueOrThrow({ where: { id: seq!.id } });
     expect(done.stopReason).toBe("Abgeschlossen");

@@ -18,7 +18,8 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { displayProduct } from "@/lib/products";
-import { firstNameOf, NoTemplateError, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { firstNameOf, NoTemplateError, noticeText, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { zweiTerminvorschlaege } from "@/lib/whatsapp/termin-vorschlaege";
 import { a, anredeZeile, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
 import { anspracheOf } from "@/lib/whatsapp/reminders";
 import { ansprechpartner } from "@/lib/lead-anrede";
@@ -47,6 +48,8 @@ type Step =
       fallbackNote: string;
       /** Nur als Freitext im offenen 24h-Fenster senden, sonst still überspringen (keine Vorlage doppelt). */
       onlyInWindow?: boolean;
+      /** Zweck „followup“ mit zwei Terminvorschlägen: eigener Freitext (sonst der Text der Vorlage). */
+      slotText?: (c: Ctx, zeiten: [string, string]) => string;
     }
   | { day: number; action: "call"; note: string };
 
@@ -61,6 +64,8 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         params: (c) => [c.firstName],
         text: (c) =>
           a(c.an, `${c.hi} ich habe gerade versucht, dich anzurufen. Wann passt es dir am besten? Antworte einfach hier, dann melde ich mich zu deiner Wunschzeit.`, `${c.hi} ich habe gerade versucht, Sie anzurufen. Wann passt es Ihnen am besten? Antworten Sie einfach hier, dann melde ich mich zu Ihrer Wunschzeit.`),
+        slotText: (c, [z1, z2]) =>
+          a(c.an, `${c.hi} ich habe gerade versucht, dich anzurufen. Passt dir für ein kurzes Gespräch ${z1} oder ${z2}?`, `${c.hi} ich habe gerade versucht, Sie anzurufen. Passt Ihnen für ein kurzes Gespräch ${z1} oder ${z2}?`),
         fallbackNote: "Nicht erreicht: nochmal anrufen",
       },
       { day: 2, action: "call", note: "Nachfassen: nochmal anrufen" },
@@ -70,7 +75,7 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         purpose: "followup_last",
         params: (c) => [c.firstName],
         text: (c) =>
-          a(c.an, `${c.hi} ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Dann antworte einfach hier. Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter. Alles Gute!`, `${c.hi} ich melde mich ein letztes Mal: Ist das Thema für Sie noch aktuell? Dann antworten Sie einfach hier. Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter. Alles Gute!`),
+          a(c.an, `${c.hi} ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter. Alles Gute!`, `${c.hi} ich melde mich ein letztes Mal: Ist das Thema für Sie noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter. Alles Gute!`),
         fallbackNote: "Letzter Versuch: anrufen",
       },
     ],
@@ -84,7 +89,7 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         purpose: "followup_offer",
         params: (c) => [c.firstName, c.topic],
         text: (c) =>
-          a(c.an, `${c.hi} konntest du dir das Angebot zu ${c.topic} schon anschauen? Wenn du Fragen hast oder etwas anpassen möchtest, antworte einfach hier.`, `${c.hi} konnten Sie sich das Angebot zu ${c.topic} schon anschauen? Wenn Sie Fragen haben oder etwas anpassen möchten, antworten Sie einfach hier.`),
+          a(c.an, `${c.hi} konntest du dir das Angebot zu ${c.topic} schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?`, `${c.hi} konnten Sie sich das Angebot zu ${c.topic} schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?`),
         fallbackNote: "Angebot nachfassen: anrufen",
       },
       { day: 7, action: "call", note: "Angebot nachfassen: anrufen" },
@@ -99,7 +104,7 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         purpose: "followup_noshow",
         params: (c) => [c.firstName],
         text: (c) =>
-          `${c.hi} schade, dass es mit unserem Termin nicht geklappt hat. Sollen wir einen neuen finden? ${a(c.an, "Antworte einfach hier, dann schlage ich dir Zeiten vor.", "Antworten Sie einfach hier, dann schlage ich Ihnen Zeiten vor.")}`,
+          `${c.hi} kein Problem, so etwas passiert. Sollen wir einen neuen Termin finden?`,
         fallbackNote: "Nicht erschienen: neuen Termin vereinbaren",
       },
       { day: 2, action: "call", note: "Neuen Termin vereinbaren" },
@@ -134,8 +139,8 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         text: (c) =>
           a(
             c.an,
-            `${c.hi} sollen wir mit ${c.topic} weitermachen? Antworte einfach hier, es dauert nur ein paar Minuten.`,
-            `${c.hi} sollen wir mit ${c.topic} weitermachen? Antworten Sie einfach hier, es dauert nur ein paar Minuten.`,
+            `${c.hi} sollen wir mit ${c.topic} weitermachen? Es dauert nur ein paar Minuten.`,
+            `${c.hi} sollen wir mit ${c.topic} weitermachen? Es dauert nur ein paar Minuten.`,
           ),
         fallbackNote: "Keine Reaktion im Chat: anrufen",
       },
@@ -155,7 +160,7 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         purpose: "followup_last",
         params: (c) => [c.firstName],
         text: (c) =>
-          `${c.hi} ${a(c.an, "ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Dann antworte einfach hier.", "ich melde mich ein letztes Mal: Ist das Thema für Sie noch aktuell? Dann antworten Sie einfach hier.")} Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter.`,
+          `${c.hi} ${a(c.an, "ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell?", "ich melde mich ein letztes Mal: Ist das Thema für Sie noch aktuell?")} Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter.`,
         fallbackNote: "Letzter Versuch: anrufen",
       },
     ],
@@ -478,20 +483,36 @@ async function sendStep(
       return { ...base, result: "skipped", detail: "24h-Fenster geschlossen, keine zweite Vorlage" };
     }
   }
-  const params = step.params(ctx);
+  let purpose = step.purpose;
+  let params = step.params(ctx);
   // Freitext (offenes Fenster) = unser Text mit Anrede nach Regel; außerhalb wählt sendWhatsAppNotice
   // die freigegebene Vorlage passend zu Ansprache und Anrede.
-  const text = step.text(ctx);
+  let text = step.text(ctx);
+  let buttons: { buttonPayloads?: string[]; textButtons?: string[]; legacyParams?: string[] } = {};
+  // Nachfassen mit zwei konkreten Zeiten aus dem Kalender (Ole, 15.11.2026); ohne Kalender die kurze Nachfrage
+  if (purpose === "followup") {
+    const zeiten = await zweiTerminvorschlaege(seq.customerId, seq.leadId);
+    if (zeiten) {
+      params = [...params, ...zeiten.labels];
+      text = step.slotText ? step.slotText(ctx, zeiten.labels) : noticeText("followup", ctx.an, who, ctx.kontakt, zeiten.labels);
+      // Ältere freigegebene „followup“-Fassung (nur Name): ohne Zeiten
+      buttons = { buttonPayloads: zeiten.payloads, legacyParams: [ctx.firstName] };
+    } else {
+      purpose = "followup_nudge";
+      buttons = { textButtons: [] };
+    }
+  }
   try {
     const { mode } = await sendWhatsAppNotice({
       customerId: seq.customerId,
       to: lead.phone,
-      purpose: step.purpose,
+      purpose,
       params,
       text,
       leadId: seq.leadId,
       contactName: lead.name,
       anrede: ctx.kontakt,
+      ...buttons,
     });
     return { ...base, result: mode === "template" ? "template" : "sent" };
   } catch (err) {

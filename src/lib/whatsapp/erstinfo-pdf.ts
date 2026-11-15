@@ -12,6 +12,12 @@
 //   - Bucht der Lead über die Buchungsseite, hängt das PDF an der Terminbestätigung per E-Mail
 //     (calendar/lead-email.ts).
 // Das Erstanschreiben (Vorlage) enthält weiter den Link. Nur vollständige Erstinformationen gehen als PDF raus.
+//
+// Seit v4 (Ole, 15.11.2026) trägt das Erstanschreiben das PDF im Kopf der Vorlage (DOCUMENT-Header, beim Senden mit
+// dem PDF-Link des Kunden, siehe templates.ts → TEMPLATE_HEADER). Dann ist das PDF schon beim Lead (gespeichert mit
+// der Markierung ERSTINFO_KOPF) und sendErstinfoPdf meldet „already“. Dieser Versand nach der ersten Antwort bleibt
+// als Rückfall: für ältere Vorlagen ohne Kopf, wenn 360dialog bzw. Meta den Kopf ablehnt (dann wird ohne Kopf
+// eingereicht, template-submit.ts) und wenn die Erstinformation beim Erstanschreiben noch nicht vollständig war.
 
 import { prisma } from "@/lib/prisma";
 import { decryptSecret } from "@/lib/encryption";
@@ -26,7 +32,7 @@ export async function sendErstinfoPdf(opts: { conversationId: string; an: Anspra
   try {
     const conv = await prisma.conversation.findUnique({
       where: { id: opts.conversationId },
-      select: { id: true, customerId: true, contactPhone: true, windowExpiresAt: true, optedOutAt: true, messages: { where: { kind: "document" }, select: { direction: true, kind: true, body: true } } },
+      select: { id: true, customerId: true, contactPhone: true, windowExpiresAt: true, optedOutAt: true, messages: { where: { kind: { in: ["document", "template"] } }, select: { direction: true, kind: true, body: true } } },
     });
     if (!conv || conv.optedOutAt) return "not_possible";
     if (hasErstinfoPdf(conv.messages)) return "already";

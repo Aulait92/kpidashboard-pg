@@ -21,7 +21,7 @@ type InboundMessage = {
   // Antwort per Schnellantwort-Knopf einer Vorlage (z. B. „Keine Nachrichten mehr“)
   button?: { text?: string; payload?: string };
   // Antwort auf interaktive Knöpfe/Listen (freie Nachrichten im 24-h-Fenster)
-  interactive?: { button_reply?: { title?: string }; list_reply?: { title?: string } };
+  interactive?: { button_reply?: { id?: string; title?: string }; list_reply?: { id?: string; title?: string } };
 };
 
 /** Lesbarer Text einer eingehenden Nachricht (Knopf-Antworten als Knopftext). */
@@ -31,6 +31,13 @@ export function inboundBody(m: InboundMessage): string | null {
   if (type === "button") return m.button?.text ?? m.button?.payload ?? "[button]";
   if (type === "interactive") return m.interactive?.button_reply?.title ?? m.interactive?.list_reply?.title ?? "[interactive]";
   return `[${type}]`;
+}
+
+/** Payload eines Knopfs (Vorlage: button.payload, interaktiv: button_reply.id), z. B. „slot:2026-11-17T09:00:00.000Z“. */
+export function inboundPayload(m: InboundMessage): string | null {
+  if (m.type === "button") return m.button?.payload ?? null;
+  if (m.type === "interactive") return m.interactive?.button_reply?.id ?? m.interactive?.list_reply?.id ?? null;
+  return null;
 }
 type StatusUpdate = {
   id?: string;
@@ -283,7 +290,10 @@ async function persistInbound(
   let campaignStop = false;
   try {
     const { handleCampaignReply } = await import("@/lib/bestand/campaigns");
-    campaignStop = (await handleCampaignReply(conversation.id, from, body)).stop;
+    const r = await handleCampaignReply(conversation.id, from, body);
+    campaignStop = r.stop;
+    // „Kein Bedarf“ auf eine Kampagne: beantwortet, kein Assistent
+    if (r.handled && !isStop) return;
   } catch (e) {
     console.error("[whatsapp campaign-reply]", e);
   }
@@ -302,6 +312,20 @@ async function persistInbound(
     await recordLeadProgress(linkedLead.leadId, "replied");
   }
 
+  // Knopf-Antworten (lib/whatsapp/knopf.ts): „Ja, passt“ bestätigt den Termin, „Kein Bedarf mehr“ schließt den Lead
+  // ab (beides ohne Assistent); Terminwahl und Verschieben bekommt der Assistent mit Hinweis.
+  let botHint: string | null = null;
+  if (conversation.botActive && (type === "button" || type === "interactive")) {
+    try {
+      const { handleButtonReply } = await import("@/lib/whatsapp/knopf");
+      const r = await handleButtonReply(conversation.id, { kind: type, text: body, payload: inboundPayload(m) }, now);
+      if (r.handled) return;
+      botHint = r.hint ?? null;
+    } catch (e) {
+      console.error("[whatsapp knopf]", e);
+    }
+  }
+
   // Übernommener Chat (Assistent pausiert): Berater muss antworten.
   if (!conversation.botActive) {
     const { flagAttention } = await import("@/lib/whatsapp/attention");
@@ -313,7 +337,7 @@ async function persistInbound(
   if (conversation.botActive) {
     try {
       const { runBotTurn } = await import("@/lib/whatsapp/bot");
-      await runBotTurn(conversation.id);
+      await runBotTurn(conversation.id, { hint: botHint });
     } catch (e) {
       console.error("[whatsapp bot]", e);
     }

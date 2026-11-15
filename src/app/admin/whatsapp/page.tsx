@@ -528,8 +528,8 @@ async function ActiveChat({ active, now, backHref }: { active: Active; now: numb
         botActive={active.botActive}
         windowExpiresAt={active.windowExpiresAt?.getTime() ?? null}
         snippets={snippets}
-        templates={options.map((o) => ({ purpose: o.purpose, label: o.label, preview: o.preview, approved: o.approved }))}
-        suggestedPurpose={situation?.kind === "ok" ? situation.purpose : null}
+        templates={options.map((o) => ({ purpose: o.key, label: o.label, preview: o.preview, approved: o.approved }))}
+        suggestedPurpose={situation?.kind === "ok" ? (situation.purpose === "followup_nudge" ? "followup" : situation.purpose) : null}
         blockedReason={situation?.kind === "blocked" ? situation.reason : null}
       />
     </>

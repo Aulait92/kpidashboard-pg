@@ -15,6 +15,7 @@ import { bestandMailQuota, bestandQuota, consume, MAIL_QUOTA_REACHED, nextFundin
 import { displayName } from "@/lib/bestand/rows";
 import { anredeZeile, type AnredeKontakt } from "@/lib/ansprache";
 import { kontaktFromExisting } from "@/lib/lead-anrede";
+import { empfehlungsThema } from "@/lib/empfehlung/shared";
 import { BESTAND_SOURCE } from "@/lib/lead-herkunft";
 import { chooseChannel, countAudience, asChannelMode, type AudienceCounts, type Channel, type ChannelMode, type ConsentSettings, type LegalBasis } from "@/lib/bestand/einwilligung";
 import { loadConsentSettings, loadSuppression, optOutExisting, subjectOf, SUBJECT_SELECT, type Suppression } from "@/lib/bestand/einwilligung-server";
@@ -468,7 +469,9 @@ async function sendWhatsAppPart(
         customerId: c.customerId,
         to: ec.phone!,
         purpose: OCCASIONS[c.occasion as Occasion].purpose as Parameters<typeof sendWhatsAppNotice>[0]["purpose"],
-        params: referral ? [first || "Hallo", referral.url] : [first || "Hallo", topic ?? ""],
+        // Empfehlung v4: Thema vor dem Link ({{2}}), ältere Fassung nur mit Link
+        params: referral ? [first || "Hallo", empfehlungsThema(ec.lines[0]), referral.url] : [first || "Hallo", topic ?? ""],
+        ...(referral ? { legacyParams: [first || "Hallo", referral.url] } : {}),
         text: referral ? referral.text : campaignText(c.occasion as Occasion, kontakt, topic),
         contactName: displayName(ec),
         anrede: kontakt,
@@ -698,9 +701,9 @@ export function campaignText(o: Occasion, kontakt: AnredeKontakt | string, topic
   const hi = anredeZeile("sie", typeof kontakt === "string" ? { firstName: kontakt } : kontakt).replace(/,$/, "");
   switch (o) {
     case "cross_sell":
-      return `${hi}, eine kurze Frage: Sind Sie beim Thema ${topic ?? "Absicherung"} schon gut versorgt? Wenn Sie möchten, schaue ich mir das gern einmal mit Ihnen an. Antworten Sie einfach hier.`;
+      return `${hi}, viele meiner Kunden haben beim Thema ${topic ?? "Absicherung"} eine Lücke, die erst im Schadenfall auffällt. Soll ich in 10 Minuten kurz prüfen, ob das bei Ihnen auch so ist? Antworten Sie einfach hier.`;
     case "review":
-      return `${hi}, es ist Zeit für einen kurzen Check Ihrer Verträge: Passt noch alles zu Ihrer aktuellen Situation? Antworten Sie einfach hier, dann finden wir einen Termin.`;
+      return `${hi}, es ist Zeit für Ihren kurzen Jahres-Check: Passt Ihr Schutz noch zu Ihrer aktuellen Situation? Soll ich mir das in 10 Minuten mit Ihnen anschauen? Antworten Sie einfach hier.`;
     case "birthday":
       return `${hi}, herzlichen Glückwunsch zum Geburtstag! Alles Gute für das neue Lebensjahr.`;
     case "empfehlung":
@@ -769,7 +772,7 @@ async function createCampaignLead(customerId: string, recipient: RecipientWithCa
  * Eingehende WhatsApp-Nachricht: Gehört sie zu einer Kampagne? Dann „Stopp“
  * → Sperre (true = Assistent nicht antworten lassen), sonst Lead anlegen.
  */
-export async function handleCampaignReply(conversationId: string, from: string, body: string | null, now = new Date()): Promise<{ stop: boolean }> {
+export async function handleCampaignReply(conversationId: string, from: string, body: string | null, now = new Date()): Promise<{ stop: boolean; handled?: boolean }> {
   const conv = await prisma.conversation.findUnique({ where: { id: conversationId }, select: { customerId: true, leadId: true } });
   if (!conv) return { stop: false };
   const recipient = await prisma.campaignRecipient.findFirst({
@@ -797,6 +800,15 @@ export async function handleCampaignReply(conversationId: string, from: string, 
     return { stop: true };
   }
   if (recipient.status === "replied") return { stop: false };
+
+  // Knopf „Kein Bedarf“ (Cross-Selling, Jahresgespräch, Ablauf): ehrlich beantwortet, kein Lead, kurzer Dank,
+  // keine Sperre (weitere Kampagnen bleiben möglich; abmelden geht über „Keine Nachrichten mehr“).
+  if (body && /^\s*kein bedarf\s*[.!]?\s*$/i.test(body)) {
+    await prisma.campaignRecipient.update({ where: { id: recipient.id }, data: { status: "replied", repliedAt: now, reason: "Kein Bedarf" } });
+    const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
+    await sendWhatsAppMessage({ customerId: conv.customerId, to: from, body: "Alles klar, vielen Dank für Ihre Rückmeldung! Wenn sich etwas ändert, schreiben Sie mir einfach hier.", sentBy: "system" }).catch(() => {});
+    return { stop: false, handled: true };
+  }
 
   let leadId = conv.leadId;
   if (!leadId) {

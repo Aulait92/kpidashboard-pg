@@ -70,6 +70,29 @@ export function sendText(
 }
 
 /**
+ * Text mit bis zu drei Antwort-Knöpfen (interaktive Nachricht, nur im 24-Stunden-Fenster). Die Antwort kommt als
+ * `interactive.button_reply` mit `id` (hier: Payload) und `title` zurück (gateway.ts → inboundBody/inboundPayload).
+ */
+export function sendButtons(
+  apiKey: string,
+  to: string,
+  body: string,
+  buttons: { id: string; title: string }[],
+): Promise<SendResult> {
+  return postMessage(apiKey, {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to,
+    type: "interactive",
+    interactive: {
+      type: "button",
+      body: { text: body.slice(0, 1024) },
+      action: { buttons: buttons.slice(0, 3).map((b) => ({ type: "reply", reply: { id: b.id.slice(0, 256), title: b.title.slice(0, 20) } })) },
+    },
+  });
+}
+
+/**
  * Dokument (z. B. PDF) senden, nur innerhalb des 24-Stunden-Fensters (wie Freitext). Cloud-API-Format
  * `type: "document"` mit öffentlicher HTTPS-Adresse (`link`); Meta lädt die Datei dort selbst.
  */
@@ -119,7 +142,19 @@ export type RemoteTemplate = {
   status: string;
   category: string | null;
   rejectedReason: string | null;
+  /** Aus den Komponenten (nur in der Liste): Kopf-Format (z. B. DOCUMENT) und Knopftexte; undefined = unbekannt. */
+  headerFormat?: string | null;
+  buttons?: string[];
 };
+
+/** Kopf-Format und Knopftexte aus den Komponenten einer Vorlage (GET /v1/configs/templates). */
+export function shapeOfComponents(components: unknown): { headerFormat: string | null; buttons: string[] } | undefined {
+  if (!Array.isArray(components)) return undefined;
+  const list = components as { type?: string; format?: string; buttons?: { text?: string }[] }[];
+  const header = list.find((c) => (c.type ?? "").toUpperCase() === "HEADER");
+  const buttons = list.find((c) => (c.type ?? "").toUpperCase() === "BUTTONS")?.buttons ?? [];
+  return { headerFormat: header?.format ? header.format.toUpperCase() : null, buttons: buttons.map((b) => b.text ?? "").filter(Boolean) };
+}
 
 export type CreateTemplateInput = {
   name: string;
@@ -153,6 +188,7 @@ export async function listTemplates(apiKey: string): Promise<RemoteTemplate[]> {
       status: (str(t.status) ?? "").toUpperCase(),
       category: str(t.category),
       rejectedReason: str(t.rejected_reason),
+      ...(shapeOfComponents(t.components) ?? {}),
     }))
     .filter((t) => t.name);
 }

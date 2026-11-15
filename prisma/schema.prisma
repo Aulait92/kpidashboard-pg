@@ -1141,12 +1141,17 @@ model Message {
   // Beim Senden einer Vorlage vorbelegt mit der Vorlagen-Kategorie.
   pricingCategory String?
   billable        Boolean?
+  // Systemnachricht (sendWhatsAppNotice): Zweck der Vorlage und A/B-Fassung (a | b), nur beim Versand als Vorlage
+  // gesetzt (lib/whatsapp/ab-test.ts misst darüber die Antwortquote je Fassung).
+  purpose         String?
+  variant         String?
   createdAt       DateTime @default(now())
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId, createdAt])
   @@index([billable, createdAt])
+  @@index([purpose, createdAt])
 }
 
 // Gebuchter Termin aus dem Bot-Flow (Telefon oder Videocall).
@@ -1163,6 +1168,8 @@ model Appointment {
   status             String    @default("booked") // booked | cancelled | completed | no_show
   reminderSentAt     DateTime? // gesetzt, sobald die WhatsApp-Erinnerung raus ist
   soonReminderSentAt DateTime? // „Gleich ist es so weit, passt alles?“ etwa 1 Std. vorher (Ole, 15.11.2026)
+  // Lead hat per Knopf „Ja, passt“ bestätigt (Erinnerung am Vortag bzw. kurz vorher)
+  confirmedAt        DateTime?
   // Terminvorbereitung (Angebot gerechnet) vom Berater abgehakt (Ole, 15.11.2026)
   preparedAt         DateTime?
   preparedById       String?
@@ -1209,6 +1216,10 @@ model MessageTemplate {
   submittedAt     DateTime?
   // Ablehnungsgrund von Meta (rejected_reason), z. B. INVALID_FORMAT
   rejectionReason String?
+  // Kopfzeile: „DOCUMENT“ = PDF der Erstinformation im Kopf (beim Senden als Link mitgegeben), null = ohne
+  headerFormat    String?
+  // Schnellantwort-Knöpfe wie eingereicht (Liste der Knopftexte); null = keine bzw. unbekannt (ältere Vorlagen)
+  buttons         Json?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -3722,4 +3733,16 @@ model CustomerLifecycleEvent {
 
   @@index([customerId, at])
   @@index([kind, at])
+}
+
+// A/B-Test je WhatsApp-Vorlage (lib/whatsapp/ab-test.ts): zwei Fassungen (a, b), je Lead fest zugeteilt.
+// Nach genug Volumen wird die bessere automatisch Standard (winner) und im Audit-Log vermerkt.
+model TemplateAbTest {
+  purpose   String    @id
+  winner    String? // a | b
+  decidedAt DateTime?
+  // Kennzahlen zum Zeitpunkt der Entscheidung { a: { sent, replied }, b: …, p }
+  stats     Json?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
