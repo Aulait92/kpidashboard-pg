@@ -1,7 +1,7 @@
 // Terminvorbereitung: Aufgabe auf „Heute“ (36 Std. vorher bis abgehakt), Sichtbereich, Daten aus Lead und Chat.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { angeboteSpeichern, auslesenUndSpeichern, listVorbereitungen, loadAngebote, loadPraesentation, loadVorbereitung, setPrepared } from "@/lib/termin-vorbereitung-server";
+import { angeboteSpeichern, auslesenUndSpeichern, bausteinUmschalten, listVorbereitungen, loadAngebote, loadPraesentation, loadVorbereitung, setPrepared } from "@/lib/termin-vorbereitung-server";
 import { loadLogoStand, logoBestaetigen, logoEntfernen, logoHochladen } from "@/lib/branding-logo-server";
 import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
 
@@ -94,5 +94,20 @@ describe("Terminvorbereitung", () => {
     await logoEntfernen(customerId);
     expect((await loadPraesentation(appt.id, ctx))?.marke.logoUrl).toBeNull();
     expect(await logoBestaetigen(customerId)).toBe(false);
+  });
+
+  it("Bausteine im Termin umschalten: nur bestätigte Angebote, gespeichert, neue Folien", async () => {
+    const lead = await prisma.lead.create({ data: { customerId, name: "Bea Baustein", phone: "4915133330004", source: "Tierkranken" } });
+    const appt = await prisma.appointment.create({ data: { customerId, leadId: lead.id, mode: "video", status: "booked", startsAt: new Date(Date.now() + 10 * HOUR) } });
+    const ctx = { customerId, userId: null, teamRole: "owner" as const };
+    const daten = { items: [{ sparte: "Tierkranken", beitragMonat: 14.2, empfohlen: true, bausteine: [{ name: "Zahnbehandlung", beitrag: 4.1 }] }] };
+    await angeboteSpeichern(appt.id, ctx, daten, false);
+    expect(await bausteinUmschalten(appt.id, ctx, 0, 0, false)).toBeNull();
+    await angeboteSpeichern(appt.id, ctx, daten, true);
+    const p = await bausteinUmschalten(appt.id, ctx, 0, 0, false);
+    expect(p?.folien.find((f) => f.id === "beitrag")?.html).toContain("14,20");
+    expect((await loadAngebote(appt.id, ctx))?.angebote.items[0].bausteine[0].aktiv).toBe(false);
+    expect((await loadAngebote(appt.id, ctx))?.bestaetigt).not.toBeNull();
+    expect(await bausteinUmschalten(appt.id, { customerId: otherId, userId: null, teamRole: "owner" }, 0, 0, true)).toBeNull();
   });
 });

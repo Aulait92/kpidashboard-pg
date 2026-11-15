@@ -1,6 +1,6 @@
 // Beratungsstrecke und Angebote (Ole, 15.11.2026)
 import { describe, expect, it } from "vitest";
-import { cleanAngebote, summeEmpfohlen } from "@/lib/angebote";
+import { bausteinSchalten, beitragEffektiv, cleanAngebote, summeEmpfohlen } from "@/lib/angebote";
 import { folien, markeFuer, praesentationHtml } from "@/lib/praesentation";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
 
@@ -17,7 +17,7 @@ describe("Angebote", () => {
   it("liest Beträge und Listen defensiv", () => {
     const a = cleanAngebote({ items: [{ sparte: "Hausrat", beitragMonat: "8,20 €", leistungen: ["A", "", "B"], empfohlen: true }, { sparte: "" }, "x"] });
     expect(a.items).toHaveLength(1);
-    expect(a.items[0]).toMatchObject({ sparte: "Hausrat", beitragMonat: 8.2, leistungen: ["A", "B"], empfohlen: true, ausschluesse: [] });
+    expect(a.items[0]).toMatchObject({ sparte: "Hausrat", beitragMonat: 8.2, leistungen: ["A", "B"], empfohlen: true, ausschluesse: [], bausteine: [] });
     expect(summeEmpfohlen({ quelle: [], items: [...a.items, { ...a.items[0], beitragMonat: 7.4 }, { ...a.items[0], empfohlen: false, beitragMonat: 99 }] })).toBe(15.6);
     expect(cleanAngebote({ items: [{ sparte: "X", beitragMonat: "1.234,50" }] }).items[0].beitragMonat).toBe(1234.5);
   });
@@ -86,5 +86,32 @@ describe("Präsentation", () => {
     expect(b).toContain("79,30");
     expect(b).toContain("Rechtsschutz 150 € je Fall, Tierkranken 20 %");
     expect(b).toMatch(/Unfall <b>18,60/);
+  });
+
+  it("Bausteine: Preis mit aktiven Bausteinen, Schalter auf den Folien, abgewählt unter „nicht“", () => {
+    const ang = cleanAngebote({ items: [
+      { sparte: "Tierkranken", tarif: "Vollschutz", beitragMonat: 14.2, leistungen: ["OP"], empfohlen: true,
+        bausteine: [{ name: "Zahnbehandlung", beitrag: "4,10" }, { name: "Vorsorge", beitrag: 3.2 }, { name: "Höhere SB", beitrag: "−2,80", aktiv: false }, { name: "", beitrag: 1 }] },
+      { sparte: "Tierkranken", tarif: "OP-Schutz", beitragMonat: 9.9, leistungen: ["OP"] },
+    ] });
+    const t = ang.items[0];
+    expect(t.bausteine).toEqual([
+      { name: "Zahnbehandlung", beitrag: 4.1, aktiv: true },
+      { name: "Vorsorge", beitrag: 3.2, aktiv: true },
+      { name: "Höhere SB", beitrag: -2.8, aktiv: false },
+    ]);
+    expect(beitragEffektiv(t)).toBe(21.5);
+    expect(summeEmpfohlen(ang)).toBe(21.5);
+    const m = markeFuer({ name: "X" });
+    let fs = folien({ ...d, lead: { ...d.lead, produkt: "Tierkranken" } }, ang, m);
+    expect(fs.find((f) => f.id === "beitrag")!.html).toContain("21,50");
+    expect(fs.find((f) => f.id === "beitrag")!.html).toContain('data-baustein="0:0"');
+    expect(fs.find((f) => f.id.startsWith("vergleich-"))!.html).toContain('class="bs an" data-baustein="0:1"');
+    const neu = bausteinSchalten(bausteinSchalten(ang, 0, 0, false)!, 0, 2, true)!;
+    expect(bausteinSchalten(ang, 0, 9, true)).toBeNull();
+    expect(beitragEffektiv(neu.items[0])).toBe(14.6);
+    fs = folien({ ...d, lead: { ...d.lead, produkt: "Tierkranken" } }, neu, m);
+    expect(fs.find((f) => f.id === "beitrag")!.html).toContain("14,60");
+    expect(fs.find((f) => f.id === "leistungen")!.html).toContain("ohne Zahnbehandlung");
   });
 });

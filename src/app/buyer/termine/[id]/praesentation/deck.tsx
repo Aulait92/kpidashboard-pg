@@ -3,14 +3,35 @@
 // Präsentationsmodus (Ole, 15.11.2026): Folie skaliert ins Fenster, ← → bzw. Leertaste, Vollbild zum Teilen im
 // Videocall. Sprechzettel unter der Folie oder als zweites Fenster (blättert über BroadcastChannel mit).
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { ChevronLeft, ChevronRight, Expand, NotebookText } from "lucide-react";
 import { Button } from "@/components/ui";
+import { useToast } from "@/components/ui/toast";
+import { bausteinAction } from "./actions";
 
 type Folie = { id: string; titel: string; html: string; notizen: string[] };
 
-export function Deck({ id, css, folien, nurNotizen }: { id: string; css: string; folien: Folie[]; nurNotizen?: boolean }) {
+export function Deck({ id, css, folien: start, nurNotizen }: { id: string; css: string; folien: Folie[]; nurNotizen?: boolean }) {
+  const [folien, setFolien] = useState(start);
   const [i, setI] = useState(0);
+  const [pending, startT] = useTransition();
+  const toast = useToast();
+  // Bausteine per Klick auf der Folie: sofort umschalten (optimistisch), Server rechnet und speichert
+  const onSlideClick = (ev: React.MouseEvent) => {
+    const btn = (ev.target as HTMLElement).closest<HTMLElement>("[data-baustein]");
+    if (!btn || pending) return;
+    const [item, b] = (btn.dataset.baustein ?? "").split(":").map(Number);
+    const aktiv = !btn.classList.contains("an");
+    btn.classList.toggle("an", aktiv);
+    startT(async () => {
+      const r = await bausteinAction(id, item, b, aktiv);
+      if (r.ok) setFolien(r.folien);
+      else {
+        btn.classList.toggle("an", !aktiv);
+        toast.show({ message: r.error, tone: "error" });
+      }
+    });
+  };
   const [scale, setScale] = useState(0.5);
   const box = useRef<HTMLDivElement>(null);
   const chan = useRef<BroadcastChannel | null>(null);
@@ -72,7 +93,7 @@ export function Deck({ id, css, folien, nurNotizen }: { id: string; css: string;
     <div className="space-y-4">
       <style>{css}</style>
       <div ref={box} className="deck relative w-full overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border)] bg-black/5" style={{ aspectRatio: "16 / 9" }} data-deck>
-        <div style={{ width: 1280, height: 720, transform: `scale(${scale})`, transformOrigin: "top left" }} dangerouslySetInnerHTML={{ __html: f.html }} />
+        <div onClick={onSlideClick} style={{ width: 1280, height: 720, transform: `scale(${scale})`, transformOrigin: "top left" }} dangerouslySetInnerHTML={{ __html: f.html }} />
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <Nav i={i} n={folien.length} go={go} />

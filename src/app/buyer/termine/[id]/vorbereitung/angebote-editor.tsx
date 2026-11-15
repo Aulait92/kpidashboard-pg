@@ -10,7 +10,8 @@ import { useToast } from "@/components/ui/toast";
 import type { AngebotItem } from "@/lib/angebote";
 import { angeboteAuslesenAction, angeboteSpeichernAction } from "./actions";
 
-type Row = { sparte: string; gesellschaft: string; tarif: string; beitragMonat: string; selbstbeteiligung: string; leistungen: string; ausschluesse: string; empfohlen: boolean };
+type BRow = { name: string; beitrag: string; aktiv: boolean };
+type Row = { sparte: string; gesellschaft: string; tarif: string; beitragMonat: string; selbstbeteiligung: string; leistungen: string; ausschluesse: string; empfohlen: boolean; bausteine: BRow[] };
 const toRow = (i: AngebotItem): Row => ({
   sparte: i.sparte,
   gesellschaft: i.gesellschaft ?? "",
@@ -20,6 +21,7 @@ const toRow = (i: AngebotItem): Row => ({
   leistungen: i.leistungen.join("\n"),
   ausschluesse: i.ausschluesse.join("\n"),
   empfohlen: i.empfohlen,
+  bausteine: i.bausteine.map((b) => ({ name: b.name, beitrag: String(b.beitrag).replace(".", ","), aktiv: b.aktiv })),
 });
 const fromRow = (r: Row) => ({
   sparte: r.sparte,
@@ -30,6 +32,7 @@ const fromRow = (r: Row) => ({
   leistungen: r.leistungen.split("\n").map((x) => x.trim()).filter(Boolean),
   ausschluesse: r.ausschluesse.split("\n").map((x) => x.trim()).filter(Boolean),
   empfohlen: r.empfohlen,
+  bausteine: r.bausteine.filter((b) => b.name.trim() && b.beitrag.trim()).map((b) => ({ name: b.name.trim(), beitrag: b.beitrag.replace(",", "."), aktiv: b.aktiv })),
 });
 const input = "h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-sm";
 const area = "min-h-[84px] w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 py-2 text-sm";
@@ -93,12 +96,37 @@ export function AngeboteEditor(p: {
             <label className="block sm:col-span-1"><span className="text-xs text-[color:var(--muted)]">Sparte</span><input className={input} value={r.sparte} disabled={p.readOnly} onChange={(e) => set(i, { sparte: e.target.value })} /></label>
             <label className="block"><span className="text-xs text-[color:var(--muted)]">Gesellschaft</span><input className={input} value={r.gesellschaft} disabled={p.readOnly} onChange={(e) => set(i, { gesellschaft: e.target.value })} /></label>
             <label className="block"><span className="text-xs text-[color:var(--muted)]">Tarif / Stufe</span><input className={input} value={r.tarif} disabled={p.readOnly} onChange={(e) => set(i, { tarif: e.target.value })} /></label>
-            <label className="block"><span className="text-xs text-[color:var(--muted)]">Beitrag pro Monat (€)</span><input className={input} inputMode="decimal" value={r.beitragMonat} disabled={p.readOnly} onChange={(e) => set(i, { beitragMonat: e.target.value })} /></label>
+            <label className="block"><span className="text-xs text-[color:var(--muted)]">{r.bausteine.length ? "Grundbeitrag ohne Bausteine (€)" : "Beitrag pro Monat (€)"}</span><input className={input} inputMode="decimal" value={r.beitragMonat} disabled={p.readOnly} onChange={(e) => set(i, { beitragMonat: e.target.value })} /></label>
           </div>
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <label className="block"><span className="text-xs text-[color:var(--muted)]">Wichtigste Leistungen (je Zeile eine)</span><textarea className={area} value={r.leistungen} disabled={p.readOnly} onChange={(e) => set(i, { leistungen: e.target.value })} /></label>
             <label className="block"><span className="text-xs text-[color:var(--muted)]">Nicht versichert / Wartezeiten</span><textarea className={area} value={r.ausschluesse} disabled={p.readOnly} onChange={(e) => set(i, { ausschluesse: e.target.value })} /></label>
             <label className="block"><span className="text-xs text-[color:var(--muted)]">Selbstbeteiligung</span><input className={input} value={r.selbstbeteiligung} disabled={p.readOnly} onChange={(e) => set(i, { selbstbeteiligung: e.target.value })} /></label>
+          </div>
+          <div className="mt-3" data-bausteine>
+            <div className="text-xs text-[color:var(--muted)]">
+              Bausteine mit eigenem Beitrag aus dem Tarifrechner (z. B. Zahnbehandlung +4,10 oder höhere Selbstbeteiligung −2,80). Im Termin schalten Sie sie per Klick an oder ab.
+            </div>
+            {r.bausteine.map((b, j) => {
+              const setB = (patch: Partial<BRow>) => set(i, { bausteine: r.bausteine.map((x, k) => (k === j ? { ...x, ...patch } : x)) });
+              return (
+                <div key={j} className="mt-2 flex items-center gap-2">
+                  <input type="checkbox" title="Im Angebot enthalten" checked={b.aktiv} disabled={p.readOnly} onChange={(e) => setB({ aktiv: e.target.checked })} />
+                  <input className={`${input} flex-1`} placeholder="Baustein" value={b.name} disabled={p.readOnly} onChange={(e) => setB({ name: e.target.value })} />
+                  <input className={`${input} w-28`} placeholder="€ / Monat" inputMode="decimal" value={b.beitrag} disabled={p.readOnly} onChange={(e) => setB({ beitrag: e.target.value })} />
+                  {!p.readOnly ? (
+                    <button type="button" aria-label="Baustein entfernen" className="rounded p-2 text-[color:var(--muted)] hover:bg-rose-50 hover:text-rose-700" onClick={() => set(i, { bausteine: r.bausteine.filter((_, k) => k !== j) })}>
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  ) : null}
+                </div>
+              );
+            })}
+            {!p.readOnly && r.bausteine.length < 6 ? (
+              <button type="button" className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-[color:var(--brand)]" onClick={() => set(i, { bausteine: [...r.bausteine, { name: "", beitrag: "", aktiv: true }] })}>
+                <Plus className="h-3.5 w-3.5" /> Baustein hinzufügen
+              </button>
+            ) : null}
           </div>
           <div className="mt-3 flex items-center justify-between">
             <label className="inline-flex items-center gap-2 font-medium">
@@ -115,7 +143,7 @@ export function AngeboteEditor(p: {
 
       {!p.readOnly ? (
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="ghost" size="md" icon={Plus} onClick={() => { setRows([...rows, { sparte: "", gesellschaft: "", tarif: "", beitragMonat: "", selbstbeteiligung: "", leistungen: "", ausschluesse: "", empfohlen: false }]); setDirty(true); }}>
+          <Button variant="ghost" size="md" icon={Plus} onClick={() => { setRows([...rows, { sparte: "", gesellschaft: "", tarif: "", beitragMonat: "", selbstbeteiligung: "", leistungen: "", ausschluesse: "", empfohlen: false, bausteine: [] }]); setDirty(true); }}>
             Angebot hinzufügen
           </Button>
           {rows.length ? (

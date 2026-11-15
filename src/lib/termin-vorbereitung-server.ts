@@ -2,7 +2,7 @@
 
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { angeboteAuslesen, cleanAngebote } from "@/lib/angebote";
+import { angeboteAuslesen, bausteinSchalten, cleanAngebote } from "@/lib/angebote";
 import { folien, markeFuer, praesentationCss } from "@/lib/praesentation";
 import { asAnsprache } from "@/lib/ansprache";
 import { logoDataUri } from "@/lib/branding-logo";
@@ -158,4 +158,17 @@ export async function loadPraesentation(appointmentId: string, ctx: TeamCtx) {
   const marke = markeFuer({ name: kunde?.name ?? "Ihre Beratung", vermittlerTyp: kunde?.vermittlerTyp }, logo);
   const fs = folien(d, ang?.bestaetigt ? ang.angebote : null, marke, asAnsprache(kunde?.leadAddress));
   return { d, marke, folien: fs, css: praesentationCss(marke), angeboteBestaetigt: !!ang?.bestaetigt };
+}
+
+/**
+ * Baustein im Termin an- bzw. abschalten (Präsentation). Die Bestätigung bleibt; PDF und Dokumentation zeigen die
+ * gewählte Fassung. Gibt die neuen Folien zurück.
+ */
+export async function bausteinUmschalten(appointmentId: string, ctx: TeamCtx, item: number, baustein: number, aktiv: boolean) {
+  const a = await prisma.appointment.findFirst({ where: { id: appointmentId, ...appointmentScope(ctx) }, select: { offersJson: true, offersConfirmedAt: true } });
+  if (!a?.offersConfirmedAt) return null;
+  const neu = bausteinSchalten(cleanAngebote(a.offersJson), item, baustein, aktiv);
+  if (!neu) return null;
+  await prisma.appointment.update({ where: { id: appointmentId }, data: { offersJson: neu as unknown as Prisma.InputJsonValue } });
+  return loadPraesentation(appointmentId, ctx);
 }

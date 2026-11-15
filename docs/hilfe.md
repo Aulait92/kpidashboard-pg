@@ -189,6 +189,10 @@ Seiten aus der Liste „Seiten“ unten.
   eine bebilderte Beratungsstrecke mit den Angaben Ihres Kunden und Ihren Angeboten, in den Farben Ihrer
   Gesellschaft. Im Videocall den Bildschirm teilen, **Vollbild**, mit den Pfeiltasten weiter. Der **Sprechzettel**
   (nur für Sie) steht unter der Folie oder in einem eigenen Fenster, das mitblättert. **Als PDF** zum Nachschicken.
+- **Bausteine im Termin:** Zu jedem Angebot tragen Sie Bausteine mit ihrem Beitrag aus dem Tarifrechner ein (z. B.
+  Zahnbehandlung +4,10 € oder höhere Selbstbeteiligung −2,80 €; der Haken heißt „im Angebot enthalten“). In der
+  Präsentation tippen Sie einen Baustein auf der Folie an oder ab: Der Beitrag rechnet sich sofort neu, abgewählte
+  Bausteine stehen unter „Das ist drin, und das nicht“. Die gewählte Fassung wird gespeichert und steht auch im PDF.
 - **Logo auf der Präsentation:** Unter **Einstellungen → Logo für Präsentationen** holt die App das Logo von Ihrer
   Webseite (bei einer Agentur meist das Logo Ihrer Gesellschaft) oder Sie laden es hoch (PNG, JPG oder SVG, bis 1 MB).
   Erst nach Ihrer Bestätigung, dass Sie es verwenden dürfen, erscheint es auf der Titelfolie und im Fuß jeder Folie.

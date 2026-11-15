@@ -11,6 +11,12 @@ import { reportError } from "@/lib/monitoring";
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
 const MAX_ITEMS = 9;
 
+/**
+ * Zusatzbaustein mit eigenem Monatsbeitrag aus dem Tarifrechner (Ole, 15.11.2026): Im Termin schaltet der Berater
+ * Bausteine per Klick an oder ab, der Beitrag rechnet sich neu. Negativer Beitrag = Ersparnis (z. B. höhere SB).
+ */
+export type Baustein = { name: string; beitrag: number; aktiv: boolean };
+
 export type AngebotItem = {
   sparte: string;
   gesellschaft: string | null;
@@ -20,6 +26,8 @@ export type AngebotItem = {
   leistungen: string[];
   ausschluesse: string[];
   empfohlen: boolean;
+  /** Beitrag pro Monat = beitragMonat (ohne Bausteine) + aktive Bausteine */
+  bausteine: Baustein[];
 };
 
 export type AngeboteDaten = { items: AngebotItem[]; quelle: string[] };
@@ -31,6 +39,34 @@ const num = (v: unknown): number | null => {
   const n = typeof v === "number" ? v : typeof v === "string" ? Number(v.replace(/[^\d,.-]/g, "").replace(/\.(?=\d{3}\b)/g, "").replace(",", ".")) : NaN;
   return Number.isFinite(n) && n >= 0 && n < 100000 ? Math.round(n * 100) / 100 : null;
 };
+
+const signed = (v: unknown): number | null => {
+  if (typeof v === "string" && /^\s*[-−]/.test(v)) {
+    const n = num(v.replace(/^\s*[-−]/, ""));
+    return n == null ? null : -n;
+  }
+  const n = typeof v === "number" && v < 0 ? num(-v) : null;
+  return n != null ? -n : num(v);
+};
+
+const MAX_BAUSTEINE = 6;
+
+function cleanBausteine(v: unknown): Baustein[] {
+  return (Array.isArray(v) ? v : []).slice(0, MAX_BAUSTEINE).flatMap((x): Baustein[] => {
+    if (!x || typeof x !== "object") return [];
+    const r = x as Record<string, unknown>;
+    const name = str(r.name, 60);
+    const beitrag = signed(r.beitrag);
+    return name && beitrag != null && Math.abs(beitrag) < 10000 ? [{ name, beitrag, aktiv: r.aktiv !== false }] : [];
+  });
+}
+
+/** Beitrag pro Monat mit den aktiven Bausteinen; null ohne Grundbeitrag. */
+export function beitragEffektiv(i: Pick<AngebotItem, "beitragMonat" | "bausteine">): number | null {
+  if (i.beitragMonat == null) return null;
+  const n = i.beitragMonat + i.bausteine.filter((b) => b.aktiv).reduce((s, b) => s + b.beitrag, 0);
+  return Math.max(0, Math.round(n * 100) / 100);
+}
 
 /** Gespeicherte bzw. eingegebene Angebote defensiv lesen. Genau eine Empfehlung je Sparte höchstens. */
 export function cleanAngebote(raw: unknown): AngeboteDaten {
@@ -50,6 +86,7 @@ export function cleanAngebote(raw: unknown): AngeboteDaten {
         leistungen: list(r.leistungen, 6),
         ausschluesse: list(r.ausschluesse, 4),
         empfohlen: r.empfohlen === true,
+        bausteine: cleanBausteine(r.bausteine),
       },
     ];
   });
@@ -60,7 +97,17 @@ export function cleanAngebote(raw: unknown): AngeboteDaten {
 /** Summe der empfohlenen Angebote je Monat (für die Präsentation); null ohne Beiträge. */
 export function summeEmpfohlen(d: AngeboteDaten): number | null {
   const rec = d.items.filter((i) => i.empfohlen && i.beitragMonat != null);
-  return rec.length ? Math.round(rec.reduce((s, i) => s + (i.beitragMonat ?? 0), 0) * 100) / 100 : null;
+  return rec.length ? Math.round(rec.reduce((s, i) => s + (beitragEffektiv(i) ?? 0), 0) * 100) / 100 : null;
+}
+
+/** Baustein an- bzw. abschalten (Index im Angebot und im Baustein); null, wenn es ihn nicht gibt. */
+export function bausteinSchalten(d: AngeboteDaten, item: number, baustein: number, aktiv: boolean): AngeboteDaten | null {
+  const it = d.items[item];
+  if (!it?.bausteine[baustein]) return null;
+  return {
+    ...d,
+    items: d.items.map((x, i) => (i === item ? { ...x, bausteine: x.bausteine.map((b, j) => (j === baustein ? { ...b, aktiv } : b)) } : x)),
+  };
 }
 
 const SCHEMA = {
@@ -75,7 +122,20 @@ const SCHEMA = {
           sparte: { type: "string", description: "z. B. Privathaftpflicht, Hausrat, Rechtsschutz, Wohngebäude, Unfall, Tierkranken, Tierhalterhaftpflicht" },
           gesellschaft: { type: ["string", "null"], description: "Versicherer, z. B. Allianz" },
           tarif: { type: ["string", "null"], description: "Tarif bzw. Stufe, z. B. Komfort, OP-Schutz Plus" },
-          beitragMonat: { type: ["number", "null"], description: "Beitrag pro Monat in Euro inkl. Versicherungsteuer. Steht nur ein Jahresbeitrag da, durch 12 teilen." },
+          beitragMonat: { type: ["number", "null"], description: "Gesamtbeitrag pro Monat in Euro inkl. Versicherungsteuer, wie angeboten. Steht nur ein Jahresbeitrag da, durch 12 teilen." },
+          bausteine: {
+            type: "array",
+            description: "Zusatzbausteine bzw. Optionen mit eigenem Beitrag, z. B. Zahnbehandlung, Fahrraddiebstahl, Glasbruch. Nur wenn das Angebot einen eigenen Beitrag dafür nennt.",
+            items: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+                beitrag: { type: "number", description: "Beitrag pro Monat in Euro; negativ bei einer Ersparnis" },
+                aktiv: { type: "boolean", description: "true, wenn im Gesamtbeitrag enthalten" },
+              },
+              required: ["name", "beitrag", "aktiv"],
+            },
+          },
           selbstbeteiligung: { type: ["string", "null"], description: "z. B. 150 € je Schaden" },
           leistungen: { type: "array", items: { type: "string" }, description: "Die 3 bis 5 wichtigsten Leistungen, kurz, wörtlich aus dem Angebot." },
           ausschluesse: { type: "array", items: { type: "string" }, description: "Ausdrücklich genannte Ausschlüsse oder Wartezeiten, kurz; leer, wenn keine genannt." },
@@ -112,6 +172,11 @@ export async function angeboteAuslesen(files: AngebotDatei[]): Promise<AngeboteD
     });
     const tool = resp.content.find((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
     const out = cleanAngebote({ ...(tool?.input as object), quelle: usable.map((f) => f.fileName) });
+    // Gespeichert wird der Grundbeitrag ohne Bausteine: Gesamtbeitrag minus enthaltene Bausteine
+    out.items = out.items.map((i) => {
+      const drin = i.bausteine.filter((b) => b.aktiv).reduce((s, b) => s + b.beitrag, 0);
+      return i.beitragMonat != null && drin ? { ...i, beitragMonat: Math.max(0, Math.round((i.beitragMonat - drin) * 100) / 100) } : i;
+    });
     if (!out.items.length) return { error: "In den Dokumenten wurde kein Angebot erkannt. Bitte von Hand eintragen." };
     return out;
   } catch (err) {

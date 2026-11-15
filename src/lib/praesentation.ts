@@ -8,7 +8,7 @@
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
 import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
 import { spartenVon, type VorbereitungDaten } from "@/lib/termin-vorbereitung";
-import { summeEmpfohlen, type AngebotItem, type AngeboteDaten } from "@/lib/angebote";
+import { beitragEffektiv, summeEmpfohlen, type AngebotItem, type AngeboteDaten } from "@/lib/angebote";
 import { a, type Ansprache } from "@/lib/ansprache";
 
 export type Marke = { name: string; gesellschaft: string | null; farbe: string; farbeHell: string; akzent: string; logoUrl: string | null };
@@ -121,6 +121,11 @@ export function praesentationCss(m: Marke): string {
 .angebot .wunsch{font-size:17px;color:#4b5568;margin-bottom:6px}
 .teile{display:flex;flex-wrap:wrap;gap:12px;margin:22px 0 6px}.teile span{background:var(--fh);color:#1f2937;border-radius:99px;padding:8px 18px;font-size:20px}.teile b{color:var(--f);margin-left:6px}
 .drin .tarif{font-size:24px;margin-bottom:4px}.drin li{font-size:18px;margin:0 0 6px}.drin .nein{margin-top:6px}
+.bausteine{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.bs{font:inherit;display:inline-flex;align-items:center;gap:8px;border:2px solid #cbd5e1;background:#fff;color:#475569;border-radius:99px;padding:6px 16px 6px 8px;font-size:18px;cursor:pointer}
+.bs .hk{width:22px;height:22px;border-radius:99px;border:2px solid #cbd5e1;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800}
+.bs.an{border-color:var(--f);color:#0b1220}.bs.an .hk{background:var(--f);border-color:var(--f);color:#fff}
+.bs small{color:#66758f;font-size:16px}
 .gross .einheit{font-size:30px;font-weight:600;color:#66758f}
 .entscheidung{display:grid;grid-template-columns:3fr 2fr;gap:24px;margin-bottom:28px}
 .entscheidung>div{border-radius:18px;padding:28px}
@@ -138,6 +143,21 @@ function rahmen(m: Marke, inhalt: string, extraClass = "", frage?: string): stri
   const marke = m.logoUrl ? `<img src="${e(m.logoUrl)}" alt="">` : "";
   return `<section class="slide ${extraClass}"><div class="bar"></div>${inhalt}<div class="foot"><span class="marke">${marke}${e(m.name)}</span>${frage ? `<span class="frage">${e(frage)}</span>` : ""}<span>${m.gesellschaft ? e(m.gesellschaft) : "Ihre Beratung"}</span></div></section>`;
 }
+
+/** Bausteine als Schalter (data-baustein="Angebot:Baustein"); in der Ansicht per Klick, im PDF als Stand. */
+function schalter(items: AngebotItem[], i: AngebotItem, mitSparte = false): string {
+  if (!i.bausteine.length) return "";
+  const idx = items.indexOf(i);
+  const preis = (n: number) => `${n < 0 ? "−" : "+"}${eur(Math.abs(n))}`;
+  return `<div class="bausteine">${i.bausteine
+    .map(
+      (b, j) =>
+        `<button type="button" class="bs${b.aktiv ? " an" : ""}" data-baustein="${idx}:${j}"><span class="hk">${b.aktiv ? "✓" : ""}</span>${mitSparte ? `${e(i.sparte)}: ` : ""}${e(b.name)} <small>${preis(b.beitrag)}</small></button>`,
+    )
+    .join("")}</div>`;
+}
+const drinBausteine = (i: AngebotItem) => i.bausteine.filter((b) => b.aktiv && b.beitrag > 0).map((b) => b.name);
+const ohneBausteine = (i: AngebotItem) => i.bausteine.filter((b) => !b.aktiv && b.beitrag > 0).map((b) => `ohne ${b.name}`);
 
 const punkte = (xs: string[]) => `<ul>${xs.map((x) => `<li><span class="dot"></span><span>${e(x)}</span></li>`).join("")}</ul>`;
 
@@ -281,8 +301,8 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
     ],
   });
 
-  const drin = [...new Set(zeige.flatMap((i) => i.leistungen))].slice(0, 5);
-  const nicht = [...new Set(zeige.flatMap((i) => i.ausschluesse))].slice(0, 3);
+  const drin = [...new Set(zeige.flatMap((i) => [...i.leistungen.slice(0, 5 - Math.min(drinBausteine(i).length, 3)), ...drinBausteine(i).slice(0, 3)]))].slice(0, 6);
+  const nicht = [...new Set(zeige.flatMap((i) => [...ohneBausteine(i), ...i.ausschluesse]))].slice(0, 4);
   // Selbstbeteiligung je Sparte (mehrere Sparten), „keine“ weglassen
   const mitSb = zeige.filter((i) => i.selbstbeteiligung && !/^keine?$/i.test(i.selbstbeteiligung.trim()));
   const mehrere = new Set(zeige.map((i) => i.sparte)).size > 1;
@@ -291,8 +311,8 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
   const jeSparte = zeige
     .slice(0, 4)
     .map((i) => {
-      const neg = [...i.ausschluesse.slice(0, 2), ...(i.selbstbeteiligung && !/^keine?$/i.test(i.selbstbeteiligung.trim()) ? [`Selbstbeteiligung ${i.selbstbeteiligung}`] : [])];
-      return `<div class="angebot"><div class="tarif">${e(i.sparte)}</div><div class="ok"><ul>${i.leistungen.slice(0, 3).map((x) => `<li>${e(x)}</li>`).join("")}</ul></div>${
+      const neg = [...ohneBausteine(i).slice(0, 2), ...i.ausschluesse.slice(0, 2), ...(i.selbstbeteiligung && !/^keine?$/i.test(i.selbstbeteiligung.trim()) ? [`Selbstbeteiligung ${i.selbstbeteiligung}`] : [])];
+      return `<div class="angebot"><div class="tarif">${e(i.sparte)}</div><div class="ok"><ul>${[...i.leistungen.slice(0, 3), ...drinBausteine(i).slice(0, 2)].map((x) => `<li>${e(x)}</li>`).join("")}</ul></div>${
         neg.length ? `<div class="nein"><ul>${neg.map((x) => `<li>${e(x)}</li>`).join("")}</ul></div>` : ""
       }</div>`;
     })
@@ -327,8 +347,8 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
         `<h2>${e(a(an, "Deine Auswahl", "Ihre Auswahl"))}: ${e(sparte)}</h2><div class="angebote" style="grid-template-columns:repeat(${v.length},1fr)">${v
           .map(
             (i) => `<div class="angebot${i.empfohlen ? " empf" : ""}">${i.empfohlen ? `<span class="badge">${e(a(an, "Passt zu dir", "Passt zu Ihnen"))}</span>` : ""}<div class="tarif">${e(i.tarif ?? sparte)}</div>${
-              i.beitragMonat != null ? `<div class="preis">${eur(i.beitragMonat)} <small>im Monat</small></div>` : ""
-            }${punkte(i.leistungen.slice(0, 3))}</div>`,
+              i.beitragMonat != null ? `<div class="preis">${eur(beitragEffektiv(i)!)} <small>im Monat</small></div>` : ""
+            }${punkte(i.leistungen.slice(0, 3))}${schalter(items, i)}</div>`,
           )
           .join("")}</div>`,
       ),
@@ -347,16 +367,17 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
               mehrere
                 ? `<div class="teile">${zeige
                     .filter((i) => i.beitragMonat != null)
-                    .map((i) => `<span>${e(i.sparte)} <b>${eur(i.beitragMonat!)}</b></span>`)
+                    .map((i) => `<span>${e(i.sparte)} <b>${eur(beitragEffektiv(i)!)}</b></span>`)
                     .join("")}</div>`
                 : ""
-            }${sb.length ? `<p class="sub">Selbstbeteiligung: ${e(sb.join(", "))}</p>` : ""}`
+            }${zeige.some((i) => i.bausteine.length) ? zeige.map((i) => schalter(items, i, mehrere)).join("") : ""}${sb.length ? `<p class="sub">Selbstbeteiligung: ${e(sb.join(", "))}</p>` : ""}`
           : `<div class="leer">${e(a(an, "Deinen Beitrag rechnen wir gemeinsam.", "Ihren Beitrag rechnen wir gemeinsam."))}</div>`
       }`,
       a(an, "Passt das für dich?", "Passt das für Sie?"),
     ),
     notizen: [
       "Zahl nennen, dann Pause. Dann: „Passt das in Ihr Budget?“",
+      "Zu teuer? Bausteine antippen: Der Beitrag rechnet sich sofort neu, und auf „Das ist drin“ steht, worauf der Kunde verzichtet.",
       "Einwände: erst eingrenzen („Angenommen, das wäre gelöst …“), dann das Gefühl benennen, dann sachlich antworten. „Zu teuer“: kleinere Stufe oder Selbstbeteiligung, nie Leistungen schönreden.",
     ],
   });
