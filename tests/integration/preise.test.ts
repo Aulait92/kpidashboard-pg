@@ -130,7 +130,7 @@ describe("Preise: Annahme → Abo-Positionen und Kundenkonto", () => {
 
   it("Angebot mit 3 Monaten Laufzeit: Setup 1.990 €, Laufzeit gespeichert, keine Jahreszahlung", async () => {
     const contact = await prisma.salesContact.create({ data: { name: "Laufzeit Test", email: `lz3-${uid()}@example.test` } });
-    const base = { contactName: "Laufzeit Test", term: "3m" as const, products: [{ name: "Katzenversicherung", dailyBudget: 40 }], startDate: "2026-12-01" };
+    const base = { contactName: "Laufzeit Test", email: `lz3-${uid()}@example.test`, term: "3m" as const, products: [{ name: "Katzenversicherung", dailyBudget: 40 }], startDate: "2026-12-01" };
     const offer = await createOffer({ salesContactId: contact.id }, base, null);
     offers.push(offer.id);
     expect(offer.term).toBe("3m");

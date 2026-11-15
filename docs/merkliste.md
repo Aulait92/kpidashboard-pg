@@ -61,3 +61,8 @@ Dinge, die Ole später angehen will. Neue Sitzungen bitte hier nachsehen und Ole
 - 16.11. abends (nach 20 Uhr): Erklärvideos gegen die Änderungen vom 15./16.11. prüfen und bei Bedarf neu aufnehmen
   (Neuigkeiten-Karte weg, Leitfaden und Diktieren weg, Bestandskunden-Modul aus, neue Terminvorbereitung, Kein-WhatsApp-Kennzeichen).
   `python3 tools/erklaervideos/betroffen.py` zeigt Kurz, Ausführlich und WhatsApp verbinden als betroffen.
+
+- 16.11. abends: Kombi-Rabatt (Bündelrabatt) in Terminvorbereitung und Präsentation (Ole). Allianz PrivatSchutz:
+  2+ Produkte Linie Komfort/Premium, 3 Jahre, 5 bis 20 % Staffel nach Anzahl (Beispiel 3 Produkte = 10 %). Rabatt automatisch
+  berechnen, Hinweis „Mit Unfall: 15 %“ bzw. „Basis verhindert den Rabatt“, Beitragsfolie mit Einzelsumme, Rabatt (% und €),
+  Endbeitrag, Staffel-Leiste, Bedingung als Fußnote; Live-Demo ergänzen. Keine neue Karte. Daten: data/tarifkatalog/<ges>/buendel.json.

@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { normalizeLoginEmail } from "@/lib/login-email";
 
 // Diagnose-API (Ole, 14.11.2026): feste, nur lesende Abfragen für die Fehlersuche in Produktion,
 // damit Claude Zustände prüfen kann, ohne Datenbank-Zugang. Kein freies SQL, keine Geheimnisse,
@@ -161,7 +162,8 @@ async function uebersicht() {
  */
 async function login(params: URLSearchParams) {
   const raw = params.get("email") ?? "";
-  const email = raw.trim().toLowerCase();
+  // „+“ unkodiert in der URL kommt als Leerzeichen an: gleiche Normalisierung wie beim Login
+  const email = normalizeLoginEmail(raw);
   if (!email) return { fehler: "email fehlt" };
   const variants = [...new Set([email, email.replace(/\+/g, " "), email.replace(/\+/g, "%2b"), raw])];
   const since15 = new Date(Date.now() - 15 * 60_000);
@@ -198,7 +200,7 @@ async function login(params: URLSearchParams) {
       : [],
   ]);
   return {
-    eingabeNormalisiert: raw !== email ? "Eingabe wurde getrimmt/kleingeschrieben" : "unverändert",
+    eingabeNormalisiert: raw !== email ? "Eingabe wurde normalisiert (getrimmt, kleingeschrieben, Leerzeichen → „+“)" : "unverändert",
     loginsExakt: users.length,
     aehnlicheLogins: similar,
     logins: users.map((u) => ({

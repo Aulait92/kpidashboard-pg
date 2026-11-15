@@ -5,6 +5,7 @@ import { getCurrentSession, hashPassword, invalidateUserSessions, issuePasswordR
 import { buildResetUrl, sendBuyerInviteEmail, sendPasswordResetEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
+import { LOGIN_EMAIL_RE, normalizeLoginEmail } from "@/lib/login-email";
 
 async function requireAdmin() {
   const session = await getCurrentSession();
@@ -26,9 +27,7 @@ export async function createBuyerAccount(
 ): Promise<CreateBuyerState> {
   await requireAdmin();
 
-  const email = String(formData.get("email") ?? "")
-    .trim()
-    .toLowerCase();
+  const email = normalizeLoginEmail(String(formData.get("email") ?? ""));
   const password = String(formData.get("password") ?? "");
   const customerId = String(formData.get("customerId") ?? "");
 
@@ -195,8 +194,8 @@ export async function deleteBuyerAccount(formData: FormData) {
 export async function changeBuyerEmail(_prev: CreateBuyerState, formData: FormData): Promise<CreateBuyerState> {
   await requireAdmin();
   const userId = String(formData.get("userId") ?? "");
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  if (!userId || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Bitte eine gültige E-Mail-Adresse eingeben." };
+  const email = normalizeLoginEmail(String(formData.get("email") ?? ""));
+  if (!userId || !LOGIN_EMAIL_RE.test(email)) return { error: "Bitte eine gültige E-Mail-Adresse eingeben." };
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, email: true, role: true, customerId: true } });
   if (!user || user.role !== "BUYER") return { error: "Kunden-Login nicht gefunden." };
   if (user.email === email) return { ok: true, createdEmail: email };

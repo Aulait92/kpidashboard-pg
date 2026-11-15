@@ -123,7 +123,8 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       // Zahlung eingerichtet (SEPA-Mandat genügt) → Onboarding startet.
       if (!failed) {
         await setContactCustomerStage(offer, "ONBOARDING");
-        const ob = await startOnboarding(offer.id).catch((err) => {
+        // E-Mail aus dem Checkout als Rückfall, falls das Angebot keine hatte (sonst kein Login).
+        const ob = await startOnboarding(offer.id, { checkoutEmail: session.customer_details?.email ?? null }).catch((err) => {
           reportError(err, "onboarding-start", { offer: offer.number });
           return null;
         });

@@ -6,6 +6,7 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { hashPassword, issuePasswordResetToken } from "@/lib/auth";
 import { buildResetUrl, sendCustomerMail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
+import { normalizeLoginEmail } from "@/lib/login-email";
 import { reportError } from "@/lib/monitoring";
 import { memberName } from "@/lib/team";
 import { audit } from "@/lib/audit";
@@ -38,7 +39,7 @@ export async function inviteMemberAction(_prev: TeamFormState, fd: FormData): Pr
   try {
     const ctx = await requireOwner();
     const name = String(fd.get("name") ?? "").trim().slice(0, 80);
-    const email = String(fd.get("email") ?? "").trim().toLowerCase();
+    const email = normalizeLoginEmail(String(fd.get("email") ?? ""));
     // „bekommt Leads“ beim Einladen wählbar (Standard an); nur aktive Verkäufer kosten (lib/seats.ts)
     const receivesLeads = fd.get("receivesLeads") !== "off";
     if (!name) return { error: "Bitte einen Namen eingeben." };

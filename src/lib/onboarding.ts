@@ -19,11 +19,13 @@ import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 import { offerProducts } from "@/components/offer-document";
 import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
+import { validLoginEmail } from "@/lib/login-email";
 
 const DAY = 24 * 60 * 60 * 1000;
 const INVITE_TTL_MS = 7 * DAY;
 
-type StartOpts = { customerId?: string | null; sendWelcome?: boolean };
+/** checkoutEmail: E-Mail aus dem Stripe-Checkout (customer_details.email), Rückfall, falls im Angebot keine steht. */
+type StartOpts = { customerId?: string | null; sendWelcome?: boolean; checkoutEmail?: string | null };
 export type StartResult = { ok: true; onboardingId: string; customerId: string; created: boolean } | { ok: false; error: string };
 
 /** Kundenname ist eindeutig → bei Gleichstand Ort bzw. Zähler anhängen. */
@@ -130,10 +132,21 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
   });
 
   // 2) Login für den Kunden (Passwort setzt er selbst über den Einladungslink).
-  const email = offer.email?.trim().toLowerCase() || contact?.email?.trim().toLowerCase() || null;
+  // Reihenfolge: Angebot, Vertriebskontakt, Stripe-Checkout (Rückfall, falls das Angebot ohne E-Mail war).
+  const clean = (v: string | null | undefined) => {
+    const e = validLoginEmail(v);
+    // Platzhalter wie linkedin-…@ohne-email.invalid (Kontakte ohne E-Mail) taugen nicht für einen Login.
+    return e && !e.endsWith(".invalid") ? e : null;
+  };
+  const email = clean(offer.email) || clean(contact?.email) || clean(opts.checkoutEmail) || null;
+  if (email && !clean(offer.email)) {
+    await prisma.offer.update({ where: { id: offer.id }, data: { email } }).catch((err) => reportError(err, "onboarding-offer-email"));
+  }
   let setPasswordUrl: string | null = null;
+  let loginReady = false;
   if (email) {
     const user = await prisma.user.findUnique({ where: { email }, select: { id: true, role: true, customerId: true } });
+    loginReady = !user || (user.role === "BUYER" && (!user.customerId || user.customerId === customer.id));
     if (!user) {
       await prisma.user.create({
         data: {
@@ -184,12 +197,30 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
   }
   await setContactCustomerStage(offer, "ONBOARDING");
   await logOfferActivity(offer, `Onboarding gestartet (${pkg === "service" ? "Nur Betreuung" : "Betreuung + Software"})`, `Kundenkonto: ${customer.name}`);
-  await sendToAdmins({
-    title: `🚀 Onboarding gestartet: ${customer.name}`,
-    body: offer.startDate ? `Start ${offer.startDate.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}` : offer.number,
-    url: offerAdminHref(offer),
-    tag: `onboarding:${onboarding.id}`,
-  }).catch((err) => reportError(err, "onboarding-push"));
+  if (!loginReady) {
+    // Kein Login möglich (keine E-Mail, oder die Adresse gehört schon einem anderen Konto):
+    // Admin muss es von Hand anlegen, sonst kommt der Kunde nach der Zahlung nicht hinein.
+    const why = email ? `${email} gehört schon zu einem anderen Login` : "Keine E-Mail-Adresse im Angebot, am Kontakt und im Checkout";
+    if (contact) {
+      await prisma.salesTask
+        .create({ data: { contactId: contact.id, type: "SONSTIGES", title: `Kein Login angelegt: ${customer.name}. ${why}, bitte Login anlegen und einladen`, dueAt: dueBefore(null, 0, 0) } })
+        .catch((err) => reportError(err, "onboarding-login-task"));
+    }
+    await logOfferActivity(offer, "Kein Login angelegt", why);
+    await sendToAdmins({
+      title: `⚠️ Kein Login angelegt: ${customer.name}`,
+      body: `${why}. Bitte Login anlegen und einladen.`,
+      url: offerAdminHref(offer),
+      tag: `onboarding:${onboarding.id}`,
+    }).catch((err) => reportError(err, "onboarding-push"));
+  } else {
+    await sendToAdmins({
+      title: `🚀 Onboarding gestartet: ${customer.name}`,
+      body: offer.startDate ? `Start ${offer.startDate.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}` : offer.number,
+      url: offerAdminHref(offer),
+      tag: `onboarding:${onboarding.id}`,
+    }).catch((err) => reportError(err, "onboarding-push"));
+  }
 
   return { ok: true, onboardingId: onboarding.id, customerId: customer.id, created: true };
 }

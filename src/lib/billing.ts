@@ -12,6 +12,7 @@
 // Steuer: Stripe Tax, wenn eine aktive Registrierung existiert; sonst fester
 // Steuersatz „USt. 19 %“, damit nie ohne Umsatzsteuer abgerechnet wird.
 
+import crypto from "node:crypto";
 import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { getAppUrl } from "@/lib/email";
@@ -174,6 +175,38 @@ async function createCheckoutSession(stripe: Stripe, params: Stripe.Checkout.Ses
   }
 }
 
+/** Offene Bezahlseiten mit weniger Restlaufzeit werden nicht mehr wiederverwendet. */
+const CHECKOUT_REUSE_MIN_MS = 15 * 60 * 1000;
+
+/**
+ * Doppelzahlung verhindern (Go-live 15.11.2026): Die zuletzt erzeugte Bezahlseite des Angebots
+ * wiederverwenden, wenn sie noch offen ist, nicht bald abläuft und dieselben Positionen und
+ * dieselbe Zahlart hat (pg_checkout in den Metadaten). Sonst schließen (expire), bevor eine
+ * neue entsteht. „paid“: die alte Seite ist schon bezahlt (Webhook noch nicht da).
+ */
+async function reuseOrExpireCheckout(stripe: Stripe, sessionId: string, fingerprint: string): Promise<{ url: string } | "paid" | null> {
+  let old: Stripe.Checkout.Session;
+  try {
+    old = await stripe.checkout.sessions.retrieve(sessionId);
+  } catch (err) {
+    // Unbekannte Session (z. B. anderes Stripe-Konto): neu anlegen. Sonst lieber abbrechen als doppelt.
+    if ((err as { code?: string })?.code === "resource_missing") return null;
+    throw err;
+  }
+  if (old.status === "complete") return "paid";
+  if (old.status !== "open") return null;
+  const fresh = (old.expires_at ?? 0) * 1000 - Date.now() > CHECKOUT_REUSE_MIN_MS;
+  if (fresh && old.url && old.metadata?.pg_checkout === fingerprint) return { url: old.url };
+  try {
+    await stripe.checkout.sessions.expire(sessionId);
+  } catch (err) {
+    const again = await stripe.checkout.sessions.retrieve(sessionId);
+    if (again.status === "complete") return "paid";
+    if (again.status === "open") throw err;
+  }
+  return null;
+}
+
 /**
  * Erstellt (oder erneuert) die Stripe-Bezahlseite für ein angenommenes
  * Angebot und gibt die URL zurück. Bezahlt wird nur das Setup; die
@@ -204,6 +237,20 @@ export async function createCheckoutForOffer(offerId: string, zahlart?: Zahlart 
     // Empfehlungsrabatt: Listenpreis als Posten, Rabatt als einmaliger Gutschein auf den
     // Setup-Posten. So steht auf der Rechnung „Empfehlungsrabatt“, der Betrag = setupFee.
     const discount = setupFee > 0 ? offerSetupDiscount(offer) : null;
+    // Positionen und Zahlart dieser Bezahlseite: gleich → offene Seite wiederverwenden
+    const fingerprint = crypto
+      .createHash("sha256")
+      .update(JSON.stringify([setupFee > 0 ? "payment" : "setup", offer.package, cents(setupFee), discount ? [cents(discount.list), cents(discount.discount)] : null, zahlart ?? null, customerId, tax.automatic ? "auto" : tax.rateId]))
+      .digest("hex")
+      .slice(0, 24);
+    if (offer.stripeCheckoutSessionId) {
+      const reuse = await reuseOrExpireCheckout(stripe, offer.stripeCheckoutSessionId, fingerprint);
+      if (reuse === "paid") return { error: "Die Zahlung ist bereits eingerichtet." };
+      if (reuse) {
+        if (offer.paymentStatus !== "pending") await prisma.offer.update({ where: { id: offer.id }, data: { paymentStatus: "pending" } });
+        return reuse;
+      }
+    }
     const coupon = discount
       ? await stripe.coupons.create(
           {
@@ -227,7 +274,7 @@ export async function createCheckoutForOffer(offerId: string, zahlart?: Zahlart 
       locale: "de" as const,
       client_reference_id: offer.id,
       integration_identifier: "pg-angebot-qkzvmtrb",
-      metadata: meta,
+      metadata: { ...meta, pg_checkout: fingerprint },
       success_url: `${base}/angebot/${offer.token}?zahlung=ok`,
       cancel_url: `${base}/angebot/${offer.token}?zahlung=abgebrochen`,
     };
