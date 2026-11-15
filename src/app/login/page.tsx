@@ -8,7 +8,7 @@ import { activeLoginCards } from "@/lib/login-karten-server";
 import { LOGIN_CARD_HEADER, cardClickHref, parseCardCounter, pickCard, safeInternalPath } from "@/lib/login-karten";
 import { LoginInfoCard } from "@/components/login-info-card";
 
-type SearchParams = Promise<{ next?: string; fehler?: string; schritt?: string; karte?: string }>;
+type SearchParams = Promise<{ next?: string; fehler?: string; schritt?: string; karte?: string; hinweis?: string }>;
 
 export const metadata = {
   title: "Anmelden | performancegrowth",
@@ -49,6 +49,15 @@ export default async function LoginPage({
           <div className="mb-7 text-center">
             <h1 className="text-[28px] font-bold leading-tight tracking-tight sm:text-3xl">Willkommen zurück</h1>
             <p className="mt-2 text-[15px] text-[color:var(--muted)]">Schön, dass Sie da sind. Melden Sie sich mit Ihrem Zugang an.</p>
+            {sp.hinweis === "email-geaendert" ? (
+              <p className="mt-3 rounded-[var(--radius-md)] bg-emerald-50 px-3 py-2 text-sm text-emerald-900" data-login-hinweis>
+                Ihre neue E-Mail-Adresse ist bestätigt. Bitte melden Sie sich jetzt damit an.
+              </p>
+            ) : sp.hinweis === "email-link-ungueltig" ? (
+              <p className="mt-3 rounded-[var(--radius-md)] bg-amber-50 px-3 py-2 text-sm text-amber-900" data-login-hinweis>
+                Der Bestätigungslink ist ungültig oder abgelaufen. Bitte fordern Sie nach der Anmeldung einen neuen an.
+              </p>
+            ) : null}
             {clicked?.linkText && next ? (
               <p className="mt-3 rounded-[var(--radius-md)] bg-[color:var(--brand-soft)] px-3 py-2 text-sm text-[color:var(--brand-dark)]">
                 Nach der Anmeldung geht es direkt weiter: <b>{clicked.linkText}</b>

@@ -40,3 +40,14 @@ export async function signOutEverywhereBuyerAction(): Promise<{ ok: boolean }> {
   await signOutEverywhere(me.userId, me.email, "BUYER");
   return { ok: true };
 }
+
+export type EmailChangeState = { ok?: boolean; error?: string; to?: string };
+
+/** Neue Login-E-Mail anfragen: Bestätigungslink geht an die neue Adresse. */
+export async function requestEmailChangeAction(_prev: EmailChangeState, fd: FormData): Promise<EmailChangeState> {
+  const me = await self();
+  if (!me) return { error: "In der Vorschau nicht möglich." };
+  const { requestEmailChange } = await import("@/lib/email-aendern");
+  const res = await requestEmailChange(me.userId, { newEmail: String(fd.get("email") ?? ""), password: String(fd.get("password") ?? "") || null });
+  return res.ok ? { ok: true, to: res.to } : { error: res.error };
+}

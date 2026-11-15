@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
-import { LogOut, ShieldCheck } from "lucide-react";
+import { AtSign, LogOut, ShieldCheck } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { Card, CardHeader } from "@/components/ui";
 import { SignOutEverywhereButton } from "@/components/security/sign-out-everywhere";
 import { TotpPanel } from "@/components/security/totp-panel";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
+import { EmailChangeForm } from "./email-form";
 import { confirmBuyerTotpAction, disableBuyerTotpAction, signOutEverywhereBuyerAction, startBuyerTotpAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,16 @@ export default async function BuyerSecurityPage() {
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader title="Anmeldung & Sicherheit" subtitle={ctx.email} />
       <div className="space-y-5">
+        <Card>
+          <CardHeader title="E-Mail-Adresse für die Anmeldung" icon={AtSign} />
+          <div className="px-5 pb-5">
+            <EmailChangeForm
+              current={ctx.email}
+              hasPassword={!!(userId && (await prisma.user.findUnique({ where: { id: userId }, select: { passwordHash: true } }))?.passwordHash)}
+              readOnly={ctx.preview}
+            />
+          </div>
+        </Card>
         <Card>
           <CardHeader title="Zwei-Faktor-Login (empfohlen)" icon={ShieldCheck} />
           <div className="space-y-4 p-5 text-[15px]">

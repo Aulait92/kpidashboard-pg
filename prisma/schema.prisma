@@ -855,6 +855,7 @@ model User {
   appHandoffs   AppHandoff[]
 
   @@index([customerId])
+  emailChangeRequests EmailChangeRequest[]
 }
 
 // Einmalige Tokens für Passwort-Reset. Nur der SHA-256-Hash wird gespeichert
@@ -3632,4 +3633,20 @@ model ChurnIntent {
 
   @@index([customerId, createdAt])
   @@index([outcome, createdAt])
+}
+
+/// Kunde ändert seine Login-E-Mail selbst (Ole, 15.11.2026): Bestätigungslink an die neue Adresse
+/// (lib/email-aendern.ts). Nur der Hash des Tokens wird gespeichert.
+model EmailChangeRequest {
+  id        String    @id @default(cuid())
+  userId    String
+  newEmail  String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
