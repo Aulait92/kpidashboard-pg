@@ -2,8 +2,8 @@
 // „gut wäre es, wenn alle Daten, die es zur Angebotserstellung braucht, vorhanden sind und der Kunde
 // mit allen nötigen Unterlagen zum Termin erscheint“.
 //
-// Privatschutz: nach den Angaben, die die Allianz in ihren Beitragsrechnern abfragt (allianz.de,
-// Stand 15.11.2026): Haftpflicht „Zu versichernde Person(en)“, Geburtsmonat/-jahr, PLZ, „Anzahl der
+// Privatschutz: nach den Angaben, die die Allianz in ihren Online-Tarifrechnern abfragt (Screenshots von Ole,
+// allianz.de, 15.11.2026; Unfall aus der Produktseite): Haftpflicht „Zu versichernde Person(en)“, Geburtsmonat/-jahr, PLZ, „Anzahl der
 // Vorschäden in den letzten 5 Jahren“, Dienst-Haftpflicht für den öffentlichen Dienst; Hausrat
 // Wohnfläche „ständig bewohnt“, PLZ, Fahrradschutz; Rechtsschutz Bereiche Privat/Beruf/Verkehr/Wohnen,
 // kein Rechtsstreit in den letzten 5 Jahren; Unfall Alter und Berufsgruppe; Wohngebäude Haustyp, Baujahr,
@@ -29,31 +29,37 @@ export function produktCheckliste(product: string | null | undefined): ProduktCh
   return {
     key: "privatschutz",
     fragen: [
-      "Pflichtangaben für das Angebot (Privatschutz: Haftpflicht, Hausrat, Rechtsschutz, Wohngebäude, Tierkranken bzw. Tierhalterhaftpflicht, Unfall). Der Berater soll im Termin direkt ein Angebot rechnen können.",
-      "- Kläre vor qualifiziert=true die folgenden Punkte, aber nur, was noch nicht bekannt ist (Leadformular, Verlauf, 'Bisher erfasst'), und nur für die Sparten, für die sich der Lead interessiert. Weiter genau eine kurze Frage pro Nachricht, gern mit kurzer Auswahl (z. B. nur Sie, mit Partner oder die ganze Familie).",
+      "Pflichtangaben für das Angebot (Privatschutz: Haftpflicht, Hausrat, Rechtsschutz, Wohngebäude, Tierkranken bzw. Tierhalterhaftpflicht, Unfall). Es sind die Angaben, die der Allianz-Tarifrechner abfragt, damit der Berater im Termin direkt ein Angebot rechnen kann.",
+      "- Kläre vor qualifiziert=true die folgenden Punkte, aber nur, was noch nicht bekannt ist (Leadformular, Verlauf, 'Bisher erfasst'), und nur für die Sparten, für die sich der Lead interessiert.",
+      "- Weiter genau eine Frage pro Nachricht. Eine Frage darf eine kurze Auswahl oder Liste enthalten (z. B. „Trifft etwas davon zu: Flachdach, Holzbauweise, Reetdach oder Schwimmbad?“). Mehrere Sparten mit derselben Angabe (Adresse, Geburtsdatum, Vorschäden) fragst du nur einmal.",
       "- Für alle Sparten:",
       "  • Wer versichert werden soll: nur der Lead, mit Partner, mit Kind(ern) oder die ganze Familie (angaben.versichern)",
-      "  • Geburtsmonat und -jahr des Leads, bei Partner auch dessen Geburtsjahr (angaben.geburt)",
-      "  • Postleitzahl des Wohnorts (angaben.plz)",
-      "  • Schäden bzw. Rechtsstreitigkeiten in den letzten 5 Jahren, Anzahl reicht (angaben.vorschaeden)",
-      "  • Bestehende Verträge in diesen Sparten: bei welcher Gesellschaft, wann sie ablaufen bzw. ob schon gekündigt (angaben.vorhanden)",
-      "- Nur Haftpflicht: im öffentlichen Dienst bzw. verbeamtet (Dienst-Haftpflicht) (angaben.beruf); Hund im Haushalt (Tierhalterhaftpflicht) (angaben.sonstiges)",
-      "- Nur Hausrat: Wohnfläche in m² und ob die Wohnung ständig bewohnt ist (angaben.wohnflaeche); teure Fahrräder oder E-Bikes (angaben.sonstiges)",
-      "- Nur Rechtsschutz: welche Bereiche gebraucht werden, also angestellt, verbeamtet oder selbstständig (Beruf), Auto vorhanden (Verkehr), Mieter, Eigentümer oder Vermieter (Wohnen) (angaben.bereiche)",
+      "  • Geburtsdatum des Leads (angaben.geburt)",
+      "  • Adresse: kommt normalerweise schon aus dem Leadformular, dann nicht fragen. Fehlt sie: Postleitzahl, bei Hausrat und Wohngebäude mit Straße und Hausnummer (angaben.plz)",
+      "  • Bestehende Verträge in diesen Sparten: bei welcher Gesellschaft, wann sie ablaufen bzw. ob schon gekündigt; bei Wohngebäude auch, ob in den letzten 5 Jahren eine Gebäudeversicherung bestand (angaben.vorhanden)",
+      "  • Was beim Tarif am wichtigsten ist: günstiger Preis, bestes Preis-Leistungs-Verhältnis oder bestmöglicher Schutz (angaben.tarifwunsch)",
+      "- Vorschäden in den letzten 5 Jahren, jeweils mit Anzahl (angaben.vorschaeden):",
+      "  • Haftpflicht: Haftpflichtschäden",
+      "  • Hausrat: Hausratschäden, Fahrraddiebstahl, Naturgefahren (Elementar)",
+      "  • Rechtsschutz: Rechtsstreit oder Rechtsberatung",
+      "  • Wohngebäude: Feuer, Leitungswasser, Sturm oder Hagel, Naturgefahren (Elementar)",
+      "- Nur Hausrat: Wohnfläche in m², ständig bewohnt, im Einfamilien- oder Mehrfamilienhaus (angaben.wohnflaeche)",
+      "- Nur Rechtsschutz: welche Lebensbereiche (Privat, Beruf, Verkehr, Wohnen oder nur ein Teil davon) (angaben.bereiche); ob der Lead oder sein Partner im öffentlichen Dienst, selbstständig oder Geschäftsführer ist (angaben.beruf). Hinweis: eine selbstständige Tätigkeit ist im Privat-Rechtsschutz nicht mitversichert, das klärt der Berater.",
+      "- Nur Wohngebäude (angaben.gebaeude): Wohnfläche und Baujahr; Anzahl Wohneinheiten (eine, zwei, drei oder mehr); Nutzung (selbst bewohnt, ganz oder teilweise vermietet, leerstehend, Ferienhaus); Besonderheiten (Flachdach, Dach aus Naturschiefer, Holz, Reet oder Stroh, Außenwände überwiegend aus Holz, Keller mit oder ohne Wohnfläche, Schwimmbad); Heizung und Haustechnik (Gas, Öl, Fernwärme, Pellets, Wärmepumpe, Solarthermie, Photovoltaik); weitere Gebäude auf dem Grundstück außer Garage oder Carport, mit ungefährer Fläche",
+      "- Nur Tierkranken bzw. Tierhalterhaftpflicht (angaben.tier): Tierart, Name, männlich oder weiblich, Geburtsdatum, Rasse; bei Katzen Wohnungskatze oder Freigänger; Krankheiten, Unfallfolgen, Symptome oder Befunde in den letzten 24 Monaten und welche Bereiche betroffen waren (z. B. Zähne, Haut, Gelenke)",
       "- Nur Unfall: ausgeübter Beruf bzw. Tätigkeit und riskante Sportarten (angaben.beruf)",
-      "- Nur Wohngebäude: Haustyp (Einfamilien-, Zweifamilien- oder Mehrfamilienhaus), Baujahr, Wohnfläche und ob der Keller ausgebaut ist, Heizungsart, Solar- bzw. Photovoltaikanlage (angaben.gebaeude); Schäden durch Hochwasser, Starkregen oder Rückstau in den letzten 5 Jahren (angaben.vorschaeden)",
-      "- Nur Tierkranken bzw. Tierhalterhaftpflicht: Tierart (Hund, Katze, Pferd), Rasse, Alter, Vorerkrankungen bzw. laufende Behandlungen (angaben.tier)",
-      "- Weiß der Lead etwas nicht oder möchte es nicht sagen: nicht nachbohren, als „offen“ festhalten und weitermachen. Insgesamt höchstens 6 Fragen vor dem Terminangebot (mit Wohngebäude höchstens 8); den Rest klärt der Berater im Termin.",
+      "- Haftpflicht: frage zusätzlich, ob ein Hund im Haushalt lebt (Tierhalterhaftpflicht) (angaben.tier)",
+      "- Weiß der Lead etwas nicht oder möchte es nicht sagen: nicht nachbohren, als „offen“ festhalten und weitermachen. Wird es dem Lead zu viel (kurze oder genervte Antworten), biete direkt den Termin an und lass den Rest offen; der Berater klärt ihn im Termin.",
       "- Erst wenn diese Punkte geklärt oder als offen festgehalten sind: qualifiziert=true und Termin anbieten.",
-      "- Tarif, Versicherungssumme, Selbstbeteiligung und Preise fragst du nicht ab und nennst du nicht: das macht der Berater im Termin.",
+      "- Versicherungssumme, Selbstbeteiligung und Preise fragst du nicht ab und nennst du nicht: das macht der Berater im Termin.",
     ].join("\n"),
     unterlagen: [
       "bisherige Police(n) bzw. Versicherungsnummer mit Ablaufdatum, falls vorhanden",
       "Geburtsdaten aller Personen, die mitversichert werden sollen",
       "IBAN für den Beitragseinzug, falls direkt abgeschlossen werden soll",
       "bei Hausrat: Wohnfläche und ungefährer Wert von Fahrrädern bzw. E-Bikes",
-      "bei Wohngebäude: bisherige Gebäudepolice, Baujahr und Wohnfläche (z. B. aus Kaufvertrag oder Bauunterlagen)",
-      "bei Tieren: Tierpass bzw. Chipnummer und Unterlagen zu Vorerkrankungen",
+      "bei Wohngebäude: bisherige Gebäudepolice sowie Baujahr und Wohnfläche (z. B. aus Kaufvertrag oder Bauunterlagen)",
+      "bei Tieren: Tierpass bzw. Chipnummer und Befunde bzw. Rechnungen zu Behandlungen der letzten 24 Monate",
     ],
   };
 }

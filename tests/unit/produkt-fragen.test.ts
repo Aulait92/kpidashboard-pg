@@ -29,7 +29,7 @@ describe("Privatschutz: Angaben fürs Angebot", () => {
   it("deckt alle Sparten aus dem Leadformular ab und nennt Unterlagen", () => {
     const c = produktCheckliste("Privatschutz")!;
     for (const s of ["Haftpflicht", "Hausrat", "Rechtsschutz", "Wohngebäude", "Tierhalterhaftpflicht", "Unfall"]) expect(c.fragen).toContain(s);
-    for (const s of ["Postleitzahl", "Geburtsmonat", "letzten 5 Jahren", "Wohnfläche", "Baujahr", "Tierart"]) expect(c.fragen).toContain(s);
+    for (const s of ["Postleitzahl", "Geburtsdatum", "letzten 5 Jahren", "Fahrraddiebstahl", "Wohneinheiten", "24 Monaten", "Tarif", "Wohnfläche", "Baujahr", "Tierart"]) expect(c.fragen).toContain(s);
     expect(c.unterlagen.join(" ")).toContain("IBAN");
     expect(c.fragen + c.unterlagen.join("")).not.toMatch(/[–—]/);
   });
