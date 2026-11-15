@@ -963,13 +963,14 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
    Rückfragen** (nicht die Nummer, die verbunden wird; Vorwahl +49 einstellen), Währung EUR, Häkchen bei
    Weitergabe der Kontaktdaten und Nutzungsbedingungen, „Continue“. Dann die zu verbindende Nummer eingeben;
    Frage „Is … already on WhatsApp?“: neue Nummer → „No, It's not connected“, WhatsApp Business App →
-   „Yes, Business app“. Dann öffnet sich Meta.
+   „Yes, Business app“. Bei neuer Nummer: „Verify your phone number“, Code per SMS oder „Voice call“
+   eingeben, nicht „Skip verification“. Dann öffnet sich Meta.
 3. Fenster von Meta: mit Facebook anmelden, „Weiter“.
 4. Unternehmensportfolio auswählen oder neu anlegen. Die Auswahl lässt sich später nicht ändern.
 5. WhatsApp-Profil: Anzeigename und Kategorie. Der Name muss zur Firma passen, z. B. „Max Mustermann
    Versicherungsmakler“.
-6. Nummer bestätigen: „Neue Nummer hinzufügen“, Code per SMS oder Anruf eingeben. Kommt keine SMS, „Anruf“
-   wählen; den Code nicht mehrmals kurz hintereinander anfordern (Meta sperrt die Nummer sonst für Stunden). (Bei WhatsApp Business App stattdessen QR-Code
+6. Code (bei neuer Nummer schon in Schritt 2 bei 360dialog): Kommt keine SMS, „Voice call“ wählen; den Code
+   nicht mehrmals kurz hintereinander anfordern (Meta sperrt die Nummer sonst für Stunden). (Bei WhatsApp Business App stattdessen QR-Code
    in der App scannen.)
 7. Automatisch zurück in die App: „Verbunden: +49 …“. Steht dort „wird eingerichtet“, ist nichts zu tun.
 

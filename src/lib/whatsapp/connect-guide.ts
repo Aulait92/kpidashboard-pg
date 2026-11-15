@@ -88,6 +88,14 @@ const numberQuestion = (answer: string, why: string): GuideStep => ({
   pitfall: why,
 });
 
+/** Code-Bestätigung bei 360dialog („Verify your phone number“), vor dem Meta-Fenster. */
+const verifyStep = (extra: string): GuideStep => ({
+  where: "360dialog",
+  title: "Nummer mit Code bestätigen",
+  text: "Unter „Verify your phone number“ wählen Sie „Text message (SMS)“ oder „Voice call“ (Anruf) und tippen den 6-stelligen Code ein. Klicken Sie nicht auf „Skip verification and continue“.",
+  pitfall: `Festnetz oder keine SMS nach 2 Minuten? Wählen Sie „Voice call“, eine Ansage liest den Code vor. Fordern Sie den Code nicht mehrmals kurz hintereinander an, sonst sperrt Meta die Nummer für einige Stunden. ${extra}`,
+});
+
 const META_START: GuideStep[] = [
   {
     where: "meta",
@@ -128,15 +136,9 @@ export const GUIDES: Record<ConnectPath, PathGuide> = {
     steps: [
       ...ACCOUNT_START,
       numberQuestion("No, It's not connected", "Die Nummer läuft doch schon in einer WhatsApp-App? Dann wählen Sie oben in der Software den passenden Weg."),
+      verifyStep("Meldung „Nummer wird bereits verwendet“? Dann läuft die Nummer doch schon in WhatsApp. Wählen Sie oben den passenden Weg."),
       ...META_START,
       PROFILE,
-      {
-        where: "meta",
-        title: "Nummer bestätigen",
-        text: "Sie wählen „Neue Nummer hinzufügen“, geben die Nummer ein und wählen „SMS“ oder „Anruf“. Den 6-stelligen Code tippen Sie ein.",
-        pitfall:
-          "Festnetz oder keine SMS nach 2 Minuten? Wählen Sie „Anruf“, eine Ansage liest den Code vor. Fordern Sie den Code nicht mehrmals kurz hintereinander an, sonst sperrt Meta die Nummer für einige Stunden. Meldung „Nummer wird bereits verwendet“? Dann ist die Nummer doch schon in WhatsApp. Wählen Sie oben den passenden Weg.",
-      },
       BACK,
     ],
   },
@@ -193,14 +195,9 @@ export const GUIDES: Record<ConnectPath, PathGuide> = {
       },
       ...ACCOUNT_START,
       numberQuestion("No, It's not connected", "Das WhatsApp-Konto auf der Nummer muss vorher gelöscht sein, sonst schlägt die Bestätigung fehl."),
+      verifyStep("Meldung „Nummer wird bereits verwendet“? Das WhatsApp-Konto ist noch nicht gelöscht. Etwas warten und erneut versuchen."),
       ...META_START,
       PROFILE,
-      {
-        where: "meta",
-        title: "Nummer bestätigen",
-        text: "Sie geben die Nummer ein und wählen „SMS“ oder „Anruf“. Den 6-stelligen Code tippen Sie ein.",
-        pitfall: "Meldung „Nummer wird bereits verwendet“? Das WhatsApp-Konto ist noch nicht gelöscht. Etwas warten und erneut versuchen.",
-      },
       BACK,
     ],
   },
