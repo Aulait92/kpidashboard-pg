@@ -14,6 +14,8 @@ import {
 } from "@/lib/tarifauswahl-server";
 import { angeboteSpeichern, loadPraesentation, loadVorbereitung } from "@/lib/termin-vorbereitung-server";
 import { demoAngebote } from "@/lib/demo-beratung";
+import { listUpdatesForCustomer } from "@/lib/neuigkeiten";
+import { NEUIGKEIT_TERMINVORBEREITUNG, TERMINVORBEREITUNG_NEU_FUER_ALLE } from "@/lib/terminvorbereitung-neu";
 import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
 
 const k = ladeTarifkatalog(path.join(__dirname, "..", "fixtures", "tarifkatalog"));
@@ -103,6 +105,16 @@ describe("Neue Terminvorbereitung (Datenbank)", () => {
     await angeboteSpeichern(appt.id, ctx, demoAngebote(), true);
     const row = await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id }, select: { tarifauswahl: true } });
     expect(row.tarifauswahl).toBeNull();
+  });
+
+  it("Neuigkeit zur neuen Seite bleibt ausgeblendet, solange der Schalter nicht für alle an ist", async () => {
+    await prisma.productUpdate.upsert({
+      where: { id: NEUIGKEIT_TERMINVORBEREITUNG },
+      create: { id: NEUIGKEIT_TERMINVORBEREITUNG, title: "Terminvorbereitung mit Tarifkatalog", body: "x", kind: "neu", audience: "software", publishedAt: new Date(Date.now() - 60000) },
+      update: {},
+    });
+    const liste = await listUpdatesForCustomer(customerId);
+    expect(liste.some((u) => u.id === NEUIGKEIT_TERMINVORBEREITUNG)).toBe(TERMINVORBEREITUNG_NEU_FUER_ALLE);
   });
 
   it("abgehakte Punkte, eigene Tarife; fremde Termine bleiben unberührt", async () => {
