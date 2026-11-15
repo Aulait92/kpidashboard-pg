@@ -1054,18 +1054,31 @@ das beim Weg „WhatsApp Business App“ nach.
 **Bereithalten:** Facebook-Login mit Admin-Rechten im Meta-Unternehmensportfolio (dort, wo auch das
 Werbekonto liegt), das Telefon zur Nummer (Code) bzw. das Handy mit der WhatsApp Business App (QR-Code),
 einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
+- **Admin prüfen (vor dem Start):** business.facebook.com → Einstellungen → Personen → eigener Name → Rolle
+  „Vollzugriff“ (Admin). Kein Admin: den Inhaber des Portfolios bitten, einen als Admin hinzuzufügen; gibt es
+  kein Portfolio, unter business.facebook.com/overview eines anlegen. Erst dann starten.
+- **Verifizierung (nicht nötig, aber gut zu wissen):** business.facebook.com → Einstellungen → Sicherheitscenter →
+  „Unternehmensverifizierung“. Ohne Verifizierung klappt das Verbinden, Meta setzt aber engere Grenzen (z. B.
+  Anzeigename, Zahl der Nachrichten an neue Kontakte). Verifizierung parallel starten (Handelsregisterauszug
+  bzw. Gewerbeanmeldung, Adresse, Telefon, Website mit Impressum), dauert meist einige Tage. Aktuelle Grenzen
+  stehen in der Doku von Meta.
 
 **Ablauf:**
 1. Einrichtung → Nummer wählen → „Jetzt WhatsApp verbinden“.
-2. 360dialog (unser WhatsApp-Anbieter): Konto mit E-Mail und Passwort anlegen. Kostenlos, die Nummer
-   bleibt Eigentum des Kunden. Danach Seite „About you“: Name bzw. Firmenname, **eigene Handynummer für
+2. 360dialog (unser WhatsApp-Anbieter): Konto mit „Sign up“ per E-Mail und Passwort anlegen (nicht „Continue
+   with Facebook“: das kann in einem alten Konto eines anderen Anbieters wie Superchat landen; dann nicht
+   weitermachen, sondern uns melden). Kostenlos, die Nummer bleibt Eigentum des Kunden. Danach Seite „About you“: Name bzw. Firmenname, **eigene Handynummer für
    Rückfragen** (nicht die Nummer, die verbunden wird; Vorwahl +49 einstellen), Währung EUR, Häkchen bei
-   Weitergabe der Kontaktdaten und Nutzungsbedingungen, „Continue“. Dann die zu verbindende Nummer eingeben;
+   Weitergabe der Kontaktdaten und Nutzungsbedingungen, „Continue“. Fragen „Do you have admin access to the Meta
+   Business Portfolio?“ → „Yes“ (sonst abbrechen und erst Admin werden); „Is your Meta Business Portfolio
+   verified?“ → „Yes“ nur bei abgeschlossener Verifizierung, sonst „No“ (geht trotzdem). Dann die zu verbindende Nummer eingeben;
    Frage „Is … already on WhatsApp?“: neue Nummer → „No, It's not connected“, WhatsApp Business App →
    „Yes, Business app“. Bei neuer Nummer: „Verify your phone number“, Code per SMS oder „Voice call“
    eingeben, nicht „Skip verification“. Dann öffnet sich Meta.
 3. Fenster von Meta: mit Facebook anmelden, „Weiter“.
-4. Unternehmensportfolio auswählen oder neu anlegen. Die Auswahl lässt sich später nicht ändern.
+4. Unternehmensportfolio auswählen oder neu anlegen. Die Auswahl lässt sich später nicht ändern. Bei der
+   Freigabe für 360dialog „Opt in to current Businesses only“ wählen. Bestehende Nummer (WhatsApp Business App)
+   aus der Liste auswählen, nicht neu eintippen.
 5. WhatsApp-Profil: Anzeigename und Kategorie. Der Name muss zur Firma passen, z. B. „Max Mustermann
    Versicherungsmakler“.
 6. Code (bei neuer Nummer schon in Schritt 2 bei 360dialog): Kommt keine SMS, „Voice call“ wählen; den Code

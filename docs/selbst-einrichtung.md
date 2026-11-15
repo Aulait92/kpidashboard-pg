@@ -69,10 +69,14 @@ stimmen.
 1. **Meta freigeben** (wichtigstes Video): Business Manager öffnen → Partner → Hinzufügen → Business-ID einfügen → Werbekonto
    „Kampagnen verwalten“ → Seite „Volle Kontrolle“ → speichern. Und: wo man die Werbekonto-ID findet. Und: wie man eine Anfrage von
    uns bestätigt (Benachrichtigung in Meta).
-2. **WhatsApp verbinden**: der geführte Ablauf mit Nummer und Bestätigungscode.
+2. **WhatsApp verbinden**: der geführte Ablauf mit Nummer und Bestätigungscode. Sprechertext (aus Oles Durchlauf am 15.11.2026):
+   vorher Admin im Meta-Portfolio prüfen (Einstellungen → Personen → Rolle „Vollzugriff“), sonst Inhaber fragen bzw. Portfolio anlegen;
+   bei 360dialog „Sign up“ per E-Mail statt „Continue with Facebook“ (sonst evtl. altes Konto eines anderen Anbieters, dann uns melden);
+   Frage „admin access“ → „Yes“, Frage „verified“ → je nach Sicherheitscenter „Yes“ oder „No“ (geht trotzdem, Verifizierung parallel
+   starten); bei der Freigabe „Opt in to current Businesses only“; bestehende Nummer aus der Liste wählen, nicht eintippen.
 3. **Kalender verbinden**: Google bzw. Microsoft verbinden, freie Zeiten festlegen.
 4. **App aufs Handy**: iPhone „Zum Home-Bildschirm“, Mitteilungen erlauben.
-5. **Einwilligung im Leadformular**: im eigenen Meta-Formular ein Pflicht-Häkchen mit dem Text hinzufügen.
+5. **Einwilligung im Leadformular**: nur intern für uns (wir legen die Formulare an; Kunden sehen den Text nicht mehr, 15.11.2026).
 6. **Provisionen**: Sätze eintragen (optional).
 
 ## Erinnerungen und „Heute“
