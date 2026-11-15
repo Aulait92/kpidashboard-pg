@@ -247,10 +247,10 @@ Seiten aus der Liste „Seiten“ unten.
     zweite Anruf-Aufgabe dazu. Danach ist Schluss.
   - **Angebot gesendet:** nach 3 Tagen eine WhatsApp („Konntest du dir das Angebot anschauen?“),
     nach 7 Tagen eine Anruf-Aufgabe.
-  - **Nicht erschienen:** sofort eine WhatsApp mit Link zum neuen Termin, nach 2 Tagen eine Anruf-Aufgabe.
+  - **Nicht erschienen:** sofort eine WhatsApp, ob ihr einen neuen Termin findet (im Chat, ohne Link), nach 2 Tagen eine Anruf-Aufgabe.
   - **Chat ruht:** Antwortet ein Lead dem Assistenten nicht (auf die erste Nachricht oder mitten im Gespräch),
     fasst der Assistent nach 2 Stunden nach, nach 8 Stunden noch einmal, am nächsten Tag ein drittes Mal (nur solange
-    das 24-Stunden-Fenster offen ist) und nach 3 Tagen ein letztes Mal, auf Wunsch mit Link zur Buchungsseite. Jede neue Nachricht des Assistenten
+    das 24-Stunden-Fenster offen ist) und nach 3 Tagen ein letztes Mal. Einen Termin macht der Lead direkt im Chat aus (kein Link). Jede neue Nachricht des Assistenten
     startet das von vorn; schreiben Sie selbst im Chat oder pausieren den Assistenten, hört es auf.
 - WhatsApp geht nur Mo–Sa zwischen 9 und 19 Uhr raus. Geht keine WhatsApp (z. B. keine Handynummer),
   legt die App stattdessen eine Anruf-Aufgabe an. Eine eigene, spätere Wiedervorlage bleibt bestehen.

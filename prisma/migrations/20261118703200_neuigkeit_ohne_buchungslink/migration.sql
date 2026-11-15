@@ -1,0 +1,3 @@
+-- Neuigkeit „Chat ruht“: kein Buchungslink mehr, Termine nur im Chat (Ole, 15.11.2026)
+UPDATE "ProductUpdate" SET "body" = 'Antwortet ein Lead Ihrem Assistenten nicht, fragt er nach 2 und nach 8 Stunden freundlich nach, am nächsten Tag noch einmal und nach 3 Tagen ein letztes Mal. Den Termin macht der Lead direkt im Chat aus. Schreiben Sie selbst im Chat, hört er auf. Außerdem bestätigt er Termine verbindlicher: Der Lead speichert sich den Termin und meldet sich, wenn etwas dazwischenkommt. Mehr unter **Hilfe → Automatisches Nachfassen**.', "updatedAt" = NOW()
+WHERE "id" = 'upd_2611_chat_ruht';

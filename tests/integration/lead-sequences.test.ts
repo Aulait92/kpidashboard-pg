@@ -261,4 +261,16 @@ describe("Nachfass-Abfolgen", () => {
     expect(running.map((r) => r.kind)).toEqual(["recall"]);
     expect(await restartSilentSequence(lead.id, T0)).toBeNull();
   });
+
+  it("kein Buchungslink in Nachfass-Nachrichten: Termine nur per Chat", async () => {
+    const { SEQUENCES } = await import("@/lib/lead-sequences");
+    const ctx = { firstName: "Lisa", hi: "Guten Tag Frau Koch,", kontakt: { fullName: "Lisa Koch" }, topic: "Hausrat", an: "sie" as const };
+    for (const def of Object.values(SEQUENCES)) {
+      for (const step of def.steps) {
+        if (step.action !== "whatsapp") continue;
+        const text = step.text(ctx);
+        expect(text).not.toMatch(/https?:\/\/|\/book\//);
+      }
+    }
+  });
 });

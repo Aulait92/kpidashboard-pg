@@ -31,7 +31,8 @@ const DONE_STATUSES = new Set(["abschluss", "kein interesse", "disqualifiziert"]
 const STOP_WORDS = /^\s*(stopp?|stop|abmelden|keine (weiteren )?nachrichten|nicht mehr (schreiben|kontaktieren))\b/i;
 
 /** hi = Anrede-Zeile nach Regel („Hallo Julia,“ bzw. „Guten Tag Frau Schneider,“ / „Guten Tag,“). */
-type Ctx = { firstName: string; hi: string; kontakt: AnredeKontakt; topic: string; bookingUrl: string | null; an: Ansprache };
+// Kein Buchungslink in Nachrichten an Leads (Ole, 15.11.2026: „nur per Chat“): Termine bucht der Assistent im Gespräch.
+type Ctx = { firstName: string; hi: string; kontakt: AnredeKontakt; topic: string; an: Ansprache };
 const HOUR = 60 * 60 * 1000;
 /** Mindestabstand zwischen zwei Schritten (z. B. wenn morgens zwei über Nacht fällige Schritte anstehen). */
 const MIN_GAP_MS = 2 * HOUR;
@@ -98,7 +99,7 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         purpose: "followup_noshow",
         params: (c) => [c.firstName],
         text: (c) =>
-          `${c.hi} schade, dass es mit unserem Termin nicht geklappt hat. Sollen wir einen neuen finden?${c.bookingUrl ? a(c.an, ` Hier kannst du dir direkt eine Zeit aussuchen: ${c.bookingUrl}`, ` Hier können Sie sich direkt eine Zeit aussuchen: ${c.bookingUrl}`) : a(c.an, " Antworte einfach hier.", " Antworten Sie einfach hier.")}`,
+          `${c.hi} schade, dass es mit unserem Termin nicht geklappt hat. Sollen wir einen neuen finden? ${a(c.an, "Antworte einfach hier, dann schlage ich dir Zeiten vor.", "Antworten Sie einfach hier, dann schlage ich Ihnen Zeiten vor.")}`,
         fallbackNote: "Nicht erschienen: neuen Termin vereinbaren",
       },
       { day: 2, action: "call", note: "Neuen Termin vereinbaren" },
@@ -145,11 +146,7 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         onlyInWindow: true,
         params: (c) => [c.firstName],
         text: (c) =>
-          `${c.hi} ich wollte mich noch einmal melden. ${
-            c.bookingUrl
-              ? a(c.an, `Wenn es dir lieber ist, such dir hier direkt eine Zeit für das Gespräch aus: ${c.bookingUrl}`, `Wenn es Ihnen lieber ist, suchen Sie sich hier direkt eine Zeit für das Gespräch aus: ${c.bookingUrl}`)
-              : a(c.an, "Wann passt es dir für ein kurzes Gespräch?", "Wann passt es Ihnen für ein kurzes Gespräch?")
-          }`,
+          `${c.hi} ich wollte mich noch einmal melden. ${a(c.an, "Wann passt es dir für ein kurzes Gespräch? Antworte einfach hier, dann schlage ich dir Zeiten vor.", "Wann passt es Ihnen für ein kurzes Gespräch? Antworten Sie einfach hier, dann schlage ich Ihnen Zeiten vor.")}`,
         fallbackNote: "Keine Reaktion im Chat: anrufen",
       },
       {
@@ -158,9 +155,7 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         purpose: "followup_last",
         params: (c) => [c.firstName],
         text: (c) =>
-          `${c.hi} ${a(c.an, "ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell?", "ich melde mich ein letztes Mal: Ist das Thema für Sie noch aktuell?")}${
-            c.bookingUrl ? a(c.an, ` Hier kannst du dir direkt einen Termin aussuchen: ${c.bookingUrl}`, ` Hier können Sie sich direkt einen Termin aussuchen: ${c.bookingUrl}`) : a(c.an, " Dann antworte einfach hier.", " Dann antworten Sie einfach hier.")
-          } Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter.`,
+          `${c.hi} ${a(c.an, "ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Dann antworte einfach hier.", "ich melde mich ein letztes Mal: Ist das Thema für Sie noch aktuell? Dann antworten Sie einfach hier.")} Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter.`,
         fallbackNote: "Letzter Versuch: anrufen",
       },
     ],
@@ -456,16 +451,14 @@ async function sendStep(
   now: Date,
 ): Promise<SequenceLogEntry> {
   const base = { at: now.toISOString(), step: seq.step, action: "whatsapp" as const };
-  const [lead, account, cal] = await Promise.all([
+  const [lead, account] = await Promise.all([
     prisma.lead.findUnique({ where: { id: seq.leadId }, select: { name: true, phone: true, formData: true, source: true, waConsent: true } }),
     prisma.whatsAppAccount.findUnique({ where: { customerId: seq.customerId }, select: { status: true } }),
-    prisma.calendarConnection.findUnique({ where: { customerId: seq.customerId }, select: { status: true, bookingSlug: true } }),
   ]);
   if (!lead?.phone || account?.status !== "connected" || lead.waConsent === "nein") {
     const r = await createCallTask(seq.leadId, step.fallbackNote, now);
     return { ...base, result: r, detail: !lead?.phone ? "Keine Handynummer" : lead.waConsent === "nein" ? "Keine WhatsApp-Einwilligung im Formular" : "WhatsApp nicht verbunden" };
   }
-  const appUrl = (process.env.APP_URL ?? "").replace(/\/$/, "");
   const an = await anspracheOf(seq.customerId);
   const who = await ansprechpartner({ customerId: seq.customerId, leadId: seq.leadId, phone: lead.phone, name: lead.name });
   const ctx: Ctx = {
@@ -473,7 +466,6 @@ async function sendStep(
     hi: anredeZeile(an, who.kontakt),
     kontakt: who.kontakt,
     topic: topicOf(lead.formData, lead.source, an),
-    bookingUrl: cal?.status === "connected" && cal.bookingSlug && appUrl ? `${appUrl}/book/${cal.bookingSlug}` : null,
     an,
   };
   if (step.onlyInWindow) {
