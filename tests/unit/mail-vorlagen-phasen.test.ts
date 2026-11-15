@@ -14,8 +14,12 @@ import {
   werteFuer,
   zusatzIn,
   type Werte,
+  anrufTag,
+  ihrProdukt,
+  rueckrufZeiten,
 } from "@/lib/mail/platzhalter";
-import { fehlendeStandards, STAND_JE_VORLAGE, STANDARD_VORLAGEN_JE, VORLAGEN_STAND } from "@/lib/mail/vorlagen";
+import { fehlendeStandards, neueFassungen, STAND_JE_VORLAGE, STANDARD_VORLAGEN_JE, VORLAGEN_STAND } from "@/lib/mail/vorlagen";
+import { STANDARD_VORLAGEN_STAND2 } from "@/lib/mail/vorlagen-alt";
 import { nachfassenFuer, passendeVorlagen, sortiereVorlagen } from "@/lib/mail/phasen";
 import { beratungsPdfInhalt, pdfDateiname, wuenscheVorschlag } from "@/lib/mail/beratung";
 import { pdfSicher, textPdf, umbrechen } from "@/lib/mail/text-pdf";
@@ -38,6 +42,9 @@ function vollWerte(an: "sie" | "du"): Werte {
     musterkuendigung: musterKuendigung({ name: "Eva Pohl", versicherer: "Beispiel Versicherung AG", vertragsnummer: "123", kuendigungstermin: "31.12.2026" }),
     wuensche: "• Katze absichern",
     rat: "OP-Schutz mit Vorsorge, weil die Katze Freigänger ist",
+    vorteil_1: "OP-Schutz",
+    vorteil_2: "freie Tierarztwahl",
+    vorteil_3: "Vorsorge inklusive",
   };
 }
 
@@ -45,7 +52,9 @@ describe("Standardvorlagen (Sie und Du)", () => {
   it("12 Vorlagen, gleiche Schlüssel und Namen in beiden Fassungen, 8 neue mit Stand 2", () => {
     expect(STANDARD_VORLAGEN_JE.sie).toHaveLength(12);
     expect(STANDARD_VORLAGEN_JE.du.map((v) => [v.key, v.name])).toEqual(STANDARD_VORLAGEN_JE.sie.map((v) => [v.key, v.name]));
-    expect(STANDARD_VORLAGEN_JE.sie.filter((v) => STAND_JE_VORLAGE[v.key] === VORLAGEN_STAND).map((v) => v.key)).toEqual(NEU);
+    expect(STANDARD_VORLAGEN_JE.sie.filter((v) => STAND_JE_VORLAGE[v.key] === 2).map((v) => v.key)).toEqual(NEU);
+    // Stand 3 hebt nur Texte, keine neuen Vorlagen
+    expect(VORLAGEN_STAND).toBe(3);
     // Nicht als freie Vorlage (Werbung, nur über Bestandskampagnen)
     const namen = STANDARD_VORLAGEN_JE.sie.map((v) => v.name.toLowerCase()).join(" ");
     expect(namen).not.toMatch(/jahresgespräch|vertragscheck|empfehlung|geburtstag/);
@@ -72,8 +81,8 @@ describe("Standardvorlagen (Sie und Du)", () => {
       const w = vollWerte(an);
       for (const v of STANDARD_VORLAGEN_JE[an]) {
         const body = fuelleMitSignatur(v.body, w);
-        expect(body, v.name).not.toMatch(/\{[a-z_]+\}/);
-        expect(fuelle(v.subject, w), v.name).not.toMatch(/\{[a-z_]+\}/);
+        expect(body, v.name).not.toMatch(/\{[a-z0-9_]+\}/);
+        expect(fuelle(v.subject, w), v.name).not.toMatch(/\{[a-z0-9_]+\}/);
         expect(body.startsWith(an === "sie" ? "Guten Tag Frau Pohl," : "Hallo Eva,"), v.name).toBe(true);
         expect(body.endsWith("Viele Grüße\nJana Becker"), v.name).toBe(true);
       }
@@ -98,8 +107,8 @@ describe("Zusatz-Platzhalter", () => {
   it("Nicht erschienen: ohne Terminlink entfällt nur der Satz mit dem Link", () => {
     const w = { ...vollWerte("du"), terminlink: null };
     const t = fuelle(tpl("nicht_erschienen", "du").body, w);
-    expect(t).toContain("Das kann immer mal passieren.\n\nDu kannst mir auch kurz");
-    expect(t).not.toContain("such dir");
+    expect(t).toContain("kein Problem, so etwas passiert. Sollen wir einen neuen Termin finden?\n\nViele Grüße");
+    expect(t).not.toContain("such");
   });
 
   it("Musterkündigung wird eingesetzt, ohne dass Text darin noch einmal ersetzt wird", () => {
@@ -237,5 +246,69 @@ describe("Gesprächszusammenfassung und PDF", () => {
     const font = { widthOfTextAtSize: (t: string) => t.length * 10 };
     expect(umbrechen("eins zwei drei\n\nvier", font, 10, 95)).toEqual(["eins zwei", "drei", "", "vier"]);
     expect(umbrechen("abcdefghijkl", font, 10, 50)).toEqual(["abcde", "fghij", "kl"]);
+  });
+});
+
+describe("Stand 3: verkaufsstärkere E-Mails (Ole, 15.11.2026)", () => {
+  // Di 17.11.2026, 10:00 Uhr Berlin
+  const DI = new Date("2026-11-17T09:00:00Z");
+  const lead = { name: "Julia Schneider", source: "Zahnzusatz", salutation: "Frau" };
+  const tpl = (an: "sie" | "du", key: string) => STANDARD_VORLAGEN_JE[an].find((v) => v.key === key)!;
+
+  it("persönlicher Betreff mit Name und Produkt, Du/Sie und ohne Namen", () => {
+    const sie = werteFuer(lead, "Jana Becker", { ansprache: "sie", now: DI });
+    expect(fuelle(tpl("sie", "nicht_erreicht").subject, sie)).toBe("Frau Schneider, kurz zu Ihrer Zahnzusatzversicherung");
+    const du = werteFuer(lead, "Jana Becker", { ansprache: "du", now: DI });
+    expect(fuelle(tpl("du", "nicht_erreicht").subject, du)).toBe("Julia, kurz zu deiner Zahnzusatzversicherung");
+    const ohne = werteFuer({ name: "Julia", source: "Privatschutz" }, "Jana Becker", { ansprache: "sie", now: DI });
+    expect(fuelle(tpl("sie", "nicht_erreicht").subject, ohne)).toBe("Kurz zu Ihrem Privatschutz");
+    expect(fuelle(tpl("sie", "nachfassen_angebot").subject, ohne)).toBe("Kurze Frage zu Ihrem Angebot");
+    expect(fuelle(tpl("sie", "angebot").subject, sie)).toBe("Frau Schneider, Ihr Angebot zu Zahnzusatz");
+  });
+
+  it("„Nicht erreicht“: zwei Rückrufzeiten und Buchungslink", () => {
+    const w = werteFuer(lead, "Jana Becker", { ansprache: "sie", now: DI, terminlink: "https://app.example/book/x" });
+    const t = fuelleMitSignatur(tpl("sie", "nicht_erreicht").body, w);
+    expect(t).toContain("Ich versuche es gern noch einmal heute um 17 Uhr oder morgen um 10 Uhr. Passt Ihnen eine der beiden Zeiten?");
+    expect(t).toContain("https://app.example/book/x");
+    // Freitag 16 Uhr: Montag 10 und 17 Uhr
+    expect(rueckrufZeiten(new Date("2026-11-20T15:00:00Z"))).toEqual(["am Montag um 10 Uhr", "am Montag um 17 Uhr"]);
+    // Freitag 10 Uhr: heute 17 Uhr, Montag 10 Uhr
+    expect(rueckrufZeiten(new Date("2026-11-20T09:00:00Z"))).toEqual(["heute um 17 Uhr", "am Montag um 10 Uhr"]);
+  });
+
+  it("Angebot: drei Vorteile als Liste, fester nächster Schritt", () => {
+    const w = { ...werteFuer(lead, "Jana Becker", { ansprache: "sie", now: DI }), vorteil_1: "A", vorteil_2: "B", vorteil_3: "C" };
+    const t = fuelleMitSignatur(tpl("sie", "angebot").body, w);
+    expect(t).toContain("• A\n• B\n• C");
+    expect(t).toContain("Ich rufe Sie am Donnerstag kurz an, passt das?");
+    expect(anrufTag(new Date("2026-11-20T09:00:00Z"))).toBe("Dienstag");
+    expect(zusatzIn(tpl("sie", "angebot").body)).toEqual(new Set(["vorteil_1", "vorteil_2", "vorteil_3"]));
+  });
+
+  it("Nachfassen Angebot: eine konkrete Frage", () => {
+    expect(tpl("sie", "nachfassen_angebot").body).toContain("Ist für Sie eher der Beitrag oder die Leistung entscheidend?");
+    expect(tpl("du", "nachfassen_angebot").body).toContain("Ist für dich eher der Beitrag oder die Leistung entscheidend?");
+  });
+
+  it("Produkt mit Possessiv", () => {
+    expect(ihrProdukt("Katzenversicherung (TKV)")).toBe("Ihrer Katzenversicherung");
+    expect(ihrProdukt("Privatschutz", "du")).toBe("deinem Privatschutz");
+    expect(ihrProdukt(null)).toBe("Ihrer Anfrage");
+    expect(ihrProdukt("KFZ")).toBe("Ihrer Anfrage zu KFZ");
+  });
+
+  it("unveränderte alte Standardvorlagen werden gehoben, selbst geänderte bleiben", () => {
+    const altSie = STANDARD_VORLAGEN_STAND2.sie.find((v) => v.key === "angebot")!;
+    const altDu = STANDARD_VORLAGEN_STAND2.du.find((v) => v.key === "nicht_erreicht")!;
+    const up = neueFassungen([
+      { id: "1", standardKey: "angebot", subject: altSie.subject, body: altSie.body },
+      { id: "2", standardKey: "nicht_erreicht", subject: altDu.subject, body: altDu.body },
+      { id: "3", standardKey: "angebot", subject: altSie.subject, body: `${altSie.body} (eigener Zusatz)` },
+      { id: "4", standardKey: null, subject: "Eigene", body: "Eigene" },
+    ]);
+    expect(up.map((u) => u.id)).toEqual(["1", "2"]);
+    expect(up[0].body).toBe(tpl("sie", "angebot").body);
+    expect(up[1].body).toBe(tpl("du", "nicht_erreicht").body);
   });
 });

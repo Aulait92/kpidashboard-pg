@@ -58,6 +58,8 @@ type Felder = {
   kuendigungTag: string;
   wuensche: string;
   rat: string;
+  /** Angebot: drei Vorteile in Stichworten (Ole, 15.11.2026) */
+  vorteile: [string, string, string];
 };
 
 const input =
@@ -138,6 +140,7 @@ export function LeadMailComposer({
     kuendigungTag: "",
     wuensche: beratung.wuensche,
     rat: "",
+    vorteile: ["", "", ""],
   }));
   // Erinnern, falls kein Termin gebucht wird (bzw. Nachfass-Aufgabe der Vorlage)
   const [remind, setRemind] = useState(true);
@@ -150,6 +153,7 @@ export function LeadMailComposer({
   const hatMelde = zusatz.has("melde_datum");
   const hatKuendigung = zusatz.has("musterkuendigung") || zusatz.has("versicherer") || zusatz.has("vertragsnummer") || zusatz.has("kuendigungstermin");
   const hatBeratung = zusatz.has("wuensche") || zusatz.has("rat");
+  const hatVorteile = zusatz.has("vorteil_1") || zusatz.has("vorteil_2") || zusatz.has("vorteil_3");
   const { passend, weitere } = useMemo(() => sortiereVorlagen(vorlagen, empfohlen), [vorlagen, empfohlen]);
 
   const werte = (f: Felder): Werte => {
@@ -170,6 +174,9 @@ export function LeadMailComposer({
       musterkuendigung: musterKuendigung({ name: base.name, versicherer: f.versicherer, vertragsnummer: f.vertragsnummer, kuendigungstermin: kTermin }),
       wuensche: f.wuensche,
       rat: f.rat,
+      vorteil_1: f.vorteile[0],
+      vorteil_2: f.vorteile[1],
+      vorteil_3: f.vorteile[2],
     };
   };
 
@@ -231,7 +238,9 @@ export function LeadMailComposer({
       ? "Bitte Wünsche sowie Rat und Gründe ausfüllen."
       : hatMelde && !felder.meldeTag
         ? "Bitte das Datum wählen."
-        : null;
+        : hatVorteile && felder.vorteile.some((v) => !v.trim())
+          ? "Bitte drei Vorteile des Angebots eintragen."
+          : null;
 
   const send = () =>
     start(async () => {
@@ -325,7 +334,7 @@ export function LeadMailComposer({
         </Link>
         <input value={to} onChange={(e) => setTo(e.target.value)} type="email" placeholder="An" aria-label="An" className={`${input} h-11`} />
 
-        {hatTermin || hatUnterlagen || hatMelde || hatKuendigung || hatBeratung ? (
+        {hatTermin || hatUnterlagen || hatMelde || hatKuendigung || hatBeratung || hatVorteile ? (
           <div className="space-y-3 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-[color:var(--surface-sunken)] p-3" data-mail-felder>
             {hatTermin ? (
               <div className="grid grid-cols-2 gap-2" data-feld-termin>
@@ -371,6 +380,28 @@ export function LeadMailComposer({
                   ))}
                 </div>
                 <input value={felder.unterlagenExtra} onChange={(e) => setF({ unterlagenExtra: e.target.value })} placeholder="Weitere Angabe (optional)" aria-label="Weitere Angabe" className={`${input} mt-2 h-10`} />
+              </fieldset>
+            ) : null}
+
+            {hatVorteile ? (
+              <fieldset className="space-y-2" data-feld-vorteile>
+                <legend className={label}>Drei Vorteile des Angebots (kurz, aus Sicht Ihres Kunden)</legend>
+                {([0, 1, 2] as const).map((i) => (
+                  <input
+                    key={i}
+                    value={felder.vorteile[i]}
+                    maxLength={140}
+                    placeholder={["z. B. Operationen bis 5.000 Euro im Jahr abgesichert", "z. B. freie Tierarztwahl", "z. B. monatlich kündbar"][i]}
+                    onChange={(e) => {
+                      const v: [string, string, string] = [...felder.vorteile];
+                      v[i] = e.target.value;
+                      setF({ vorteile: v });
+                    }}
+                    aria-label={`Vorteil ${i + 1}`}
+                    className={`${input} h-10`}
+                  />
+                ))}
+                <span className="block text-xs text-[color:var(--muted)]">Nur, was im Angebot steht. Keine Zusagen darüber hinaus.</span>
               </fieldset>
             ) : null}
 
