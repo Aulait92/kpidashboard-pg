@@ -167,7 +167,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             </ul>
           ) : null}
           <p className="mt-3 text-sm text-[color:var(--muted)]">
-            {progress.complete ? "Den Rest erledigen wir." : "Ca. 5 Minuten für Sie. Den Rest erledigen wir."}
+            {progress.complete ? "Den Rest erledigen wir." : "Ca. 20 bis 30 Minuten für Sie, jederzeit unterbrechbar. Den Rest erledigen wir."}
           </p>
           {!ob.liveAt ? <OurPart ours={progress.ours} startDate={ob.startDate} /> : null}
           {newUi && !readOnly ? (

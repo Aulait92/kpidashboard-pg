@@ -38,6 +38,7 @@ import { loadTipSignals, monthsSinceStart } from "@/lib/zahlen-tipps-server";
 import { ZahlenTippsCard } from "@/components/zahlen-tipps-card";
 import { BestandGrowthSection } from "@/components/bestand-growth-chart";
 import { NextStepKpi } from "@/components/next-step-kpi";
+import { nochOhneLeads, ZahlenNochLeer } from "@/components/zahlen-noch-leer";
 import { KeinWhatsAppKpi } from "@/components/kein-whatsapp-kpi";
 
 type SearchParams = Promise<{
@@ -72,6 +73,16 @@ export default async function BuyerPage({
     where: { id: session.customerId },
     select: { name: true },
   });
+
+  // Vor dem ersten Lead: Hinweis statt Nullen (Ole, 15.11.2026)
+  if (await nochOhneLeads(session.customerId)) {
+    return (
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <PageHeader title="Zahlen" />
+        <ZahlenNochLeer customerId={session.customerId} now={renderedAt} />
+      </main>
+    );
+  }
 
   return (
     <PullToRefresh>

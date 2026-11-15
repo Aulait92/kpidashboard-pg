@@ -71,9 +71,12 @@ export async function listLoginCards(): Promise<LoginCardView[]> {
 }
 
 /** Aktive Karten für die Login-Seite (bei DB-Fehler keine: Login muss immer laden). */
+/** Karten zu Modulen, die für Kunden gerade ausgeblendet sind (Ole, 15.11.2026: Bestandskunden-Modul erst testen). */
+export const AUSGEBLENDETE_KARTEN: ReadonlySet<string> = new Set(["bestand"]);
+
 export async function activeLoginCards(): Promise<LoginCardView[]> {
   const rows = await prisma.loginCard.findMany({ where: { enabled: true }, select: SELECT, orderBy: ORDER }).catch(() => []);
-  return rows.map(toView);
+  return rows.filter((r) => !r.key || !AUSGEBLENDETE_KARTEN.has(r.key)).map(toView);
 }
 
 export async function loadLoginCard(id: string): Promise<LoginCardView | null> {

@@ -339,7 +339,7 @@ export async function sendOnboardingWelcomeEmail(opts: {
     opts.setPasswordUrl
       ? "Zugang einrichten: Über den Button legen Sie Ihr Passwort fest (Link 7 Tage gültig)."
       : `Einloggen unter ${opts.loginUrl} mit ${opts.to}.`,
-    `Einrichtung im Kundenbereich (ca. 5 Minuten): ${setupParts(software, !!opts.whatsappSelfConnect)}. Auf Wunsch machen wir das gemeinsam in einem 15-Minuten-Termin, den Sie direkt in der Einrichtung buchen.`,
+    `Einrichtung im Kundenbereich (ca. 20 bis 30 Minuten, Sie können jederzeit unterbrechen): ${setupParts(software, !!opts.whatsappSelfConnect)}. Auf Wunsch machen wir das gemeinsam in einem 15-Minuten-Termin, den Sie direkt in der Einrichtung buchen.`,
     "Den Rest erledigen wir: Kampagne, Werbemittel und Leadformular. Sie bekommen Bescheid, sobald alles startklar ist.",
     start
       ? `Start am ${start}: Die Kampagne geht live${software ? ", der digitale Assistent schreibt neue Leads an und bucht Termine in Ihren Kalender" : ", jeder neue Lead kommt sofort per E-Mail"}.`

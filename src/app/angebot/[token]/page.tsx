@@ -197,8 +197,8 @@ function PaymentBox({
         <div>
           <div className="font-semibold">Zahlung erhalten, vielen Dank!</div>
           <p className="mt-1 text-sm">
-            Sie bekommen gleich eine E-Mail mit Ihrem Zugang. Die Einrichtung dauert ca. 5 Minuten; auf Wunsch helfen
-            wir Ihnen in einem 15-Minuten-Termin. Ihre Rechnung kommt per E-Mail.
+            Sie bekommen gleich eine E-Mail mit Ihrem Zugang. Die Einrichtung dauert ca. 20 bis 30 Minuten, Sie können
+            jederzeit unterbrechen; auf Wunsch helfen wir Ihnen in einem 15-Minuten-Termin. Ihre Rechnung kommt per E-Mail.
           </p>
         </div>
       </div>
@@ -211,8 +211,8 @@ function PaymentBox({
         <div>
           <div className="font-semibold">Zahlung eingerichtet. Vielen Dank!</div>
           <p className="mt-1 text-sm">
-            Sie bekommen gleich eine E-Mail mit Ihrem Zugang und können direkt mit der Einrichtung (ca. 5 Minuten)
-            beginnen. Bei SEPA-Lastschrift dauert die Bestätigung der Bank ein paar Tage.
+            Sie bekommen gleich eine E-Mail mit Ihrem Zugang und können direkt mit der Einrichtung (ca. 20 bis 30 Minuten,
+            jederzeit unterbrechbar) beginnen. Bei SEPA-Lastschrift dauert die Bestätigung der Bank ein paar Tage.
           </p>
         </div>
       </div>
