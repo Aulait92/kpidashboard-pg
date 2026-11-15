@@ -198,6 +198,9 @@ describe("Auswahl → Angebote (Präsentation)", () => {
     expect(hausrat[2].bausteine).toEqual([{ name: "Elementarschäden", beitrag: 0, aktiv: true }]);
     expect(hausrat[1].leistungen).toContain("Grobe Fahrlässigkeit: voll");
     expect(hausrat[1].leistungen).toContain("Ersatz zum Neuwert");
+    const opt = beispiel();
+    opt.sparten[0].tarife[1].werte.fahrraddiebstahl = "optional";
+    expect(zuAngebote(opt).items[1].leistungen.some((l) => /optional/.test(l))).toBe(false);
     // Selbstbeteiligung aus dem Merkmal (Rechtsschutz)
     expect(d.items.find((i) => i.sparte === "Rechtsschutz")?.selbstbeteiligung).toBe("150 €");
     expect(summeEmpfehlung(beispiel())).toBe(Math.round((11.4 + 2.4 + 31.2) * 100) / 100);

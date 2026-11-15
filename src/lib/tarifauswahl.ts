@@ -325,7 +325,8 @@ function itemFuer(sp: SparteWahl, t: TarifWahl, empfohlen: boolean, merk: string
   };
   const abgeleitet = merk.flatMap((k) => {
     const w = t.werte[k];
-    if (w == null || NEIN.test(w.trim())) return [];
+    // „optional“ = nur gegen Aufpreis wählbar (Katalog), also keine Leistung des Tarifs
+    if (w == null || NEIN.test(w.trim()) || /^optional$/i.test(w.trim())) return [];
     return [JA.test(w.trim()) ? label(sp, k) : `${label(sp, k)}: ${w}`];
   });
   const sbKey = sp.schema.merkmale.find((m) => /selbstbeteiligung/i.test(m.key) || /^selbstbeteiligung$/i.test(m.label))?.key;
