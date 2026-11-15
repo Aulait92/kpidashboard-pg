@@ -126,7 +126,9 @@ describe("Zusatz-Platzhalter", () => {
     expect(produktArt("Hundefutter")).toBe("sonst");
     expect(produktArt("Hausrat")).toBe("sach");
     expect(produktArt("Privatschutz")).toBe("sach");
-    expect(terminUnterlagen("Hausrat", "du")).toBe("• deine bisherige Police, falls vorhanden\n• deine IBAN, falls du direkt abschließen möchtest");
+    expect(terminUnterlagen("Hausrat", "du")).toBe(
+      "• deine bisherige Police mit Ablaufdatum, falls vorhanden\n• Geburtsdaten aller Personen, die mitversichert werden sollen\n• deine IBAN, falls du direkt abschließen möchtest",
+    );
     expect(terminUnterlagen("Zahnzusatz", "sie")).toBe("• Ihre IBAN, falls Sie direkt abschließen möchten");
   });
 

@@ -9,6 +9,7 @@ import { RescheduleButton } from "@/components/reschedule-dialog";
 import { formatPhone } from "@/lib/format";
 import { pipelinePhasesFor, WHATSAPP_STATUS_LABELS } from "@/lib/products";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
+import { qualificationPoints } from "@/lib/whatsapp/qualification";
 import { notFound } from "next/navigation";
 import {
   getStornogruendePerLead,
@@ -240,6 +241,7 @@ export async function LeadDetailBody({
     nextStepStateOf(lead.id),
     prisma.appointment.findFirst({ where: { leadId: lead.id, ...pastOpenAppointmentWhere(new Date(nowMs())) }, orderBy: { startsAt: "desc" }, select: { id: true } }),
   ]);
+  const qPoints = qualificationPoints(conv?.qualificationData);
   const resultMissingAppt = stepState === "result_missing" ? (pastAppt?.id ?? null) : null;
   const storniert = !!lead.status?.toLowerCase().startsWith("storno");
   // Abschluss (Ole, 13.11.2026): Beitrag, geschätzte Provision und Police im Kontakt sehen
@@ -412,7 +414,7 @@ export async function LeadDetailBody({
         />
       ) : null}
 
-      {nextAppt || conv?.qualificationSummary ? (
+      {nextAppt || conv?.qualificationSummary || qPoints.length ? (
         <Card className="mb-6">
           {nextAppt ? (
             <div className="flex flex-wrap items-center gap-3 px-5 py-3.5">
@@ -438,6 +440,17 @@ export async function LeadDetailBody({
               <span className="text-[color:var(--muted)]">Assistent: </span>
               {conv.qualificationSummary}
             </p>
+          ) : null}
+          {/* Einzelne Angaben des Assistenten, z. B. fürs Privatschutz-Angebot (Ole, 15.11.2026) */}
+          {qPoints.length ? (
+            <dl className={`grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 px-5 py-3.5 text-sm ${nextAppt || conv?.qualificationSummary ? "border-t border-[color:var(--border)]" : ""}`} data-lead-angaben>
+              {qPoints.map((q) => (
+                <div key={q.key} className="contents">
+                  <dt className="text-[color:var(--muted)]">{q.label}</dt>
+                  <dd className="min-w-0 break-words">{q.value}</dd>
+                </div>
+              ))}
+            </dl>
           ) : null}
         </Card>
       ) : null}

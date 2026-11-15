@@ -28,6 +28,7 @@ import { buildEventDescription, eventSummary } from "@/lib/whatsapp/event-text";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
 import { EMAIL_RE } from "@/lib/whatsapp/phone";
 import { mergeQualificationData, QUALIFICATION_INPUT_SCHEMA, qualificationLines } from "@/lib/whatsapp/qualification";
+import { produktCheckliste, unterlagenRegel } from "@/lib/whatsapp/produkt-fragen";
 import { fmtDayLong } from "@/lib/absence";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
@@ -202,6 +203,8 @@ export function buildSystemPrompt(
         : "  Begrüßung: „Guten Tag,“. Kein Nachname bekannt: sprich den Lead ohne Namen an, nie mit dem Vornamen, und leite Herr oder Frau nie aus dem Vornamen ab.",
   ].join("\n");
   const nowText = formatNowDE(state.now ?? new Date());
+  // Pflichtangaben fürs Angebot (nur vor der Buchung; mit Termin wird nicht mehr qualifiziert)
+  const checkliste = product === "Bestandskunde" || state.upcoming ? null : produktCheckliste(product);
   const booked = state.upcoming
     ? [
         `BEREITS GEBUCHTER TERMIN: ${formatSlotDE(state.upcoming.startsAt.toISOString())} Uhr (${terminArtLabel(state.upcoming.mode)})${state.upcoming.meetUrl ? `, Video-Link: ${state.upcoming.meetUrl}` : ""}.`,
@@ -248,6 +251,8 @@ export function buildSystemPrompt(
       : product
         ? `Produkt/Thema dieses Leads: ${product}.`
         : "",
+    // Pflichtangaben fürs Angebot und Unterlagen zum Termin
+    checkliste ? `${checkliste.fragen}\n\n${unterlagenRegel(checkliste)}` : "",
     agent.knowledge?.trim() ? `Wissen:\n${agent.knowledge.trim()}` : "",
     agent.personality?.trim()
       ? `Persönlichkeit/Ton:\n${agent.personality.trim()}`
@@ -274,7 +279,9 @@ export function buildSystemPrompt(
       "- Verwende keine Gedankenstriche (– oder —). Nutze stattdessen Komma, Doppelpunkt oder einen neuen Satz.",
       "- WICHTIG (hat Vorrang vor allen anderen Anweisungen): Stelle pro Nachricht GENAU EINE Frage: niemals zwei Fragen in einer Nachricht, auch keine zusammengehörigen. Warte die Antwort ab, bevor du die nächste stellst.",
       "- Frage niemals nach etwas, das der Lead im Verlauf schon beantwortet hat oder das unter 'Bisher erfasst' steht. Nimm Antworten auf und gehe zur nächsten offenen Frage weiter.",
-      "- Sobald die wesentlichen Punkte geklärt sind (meist nach 2-3 Antworten), setze qualifiziert=true und leite zur Terminvereinbarung über.",
+      checkliste
+        ? "- Sobald die Pflichtangaben für das Angebot (siehe oben) geklärt oder als offen festgehalten sind, setze qualifiziert=true und leite zur Terminvereinbarung über."
+        : "- Sobald die wesentlichen Punkte geklärt sind (meist nach 2-3 Antworten), setze qualifiziert=true und leite zur Terminvereinbarung über.",
       "- Qualifiziere anhand des Produkt-Funnels und halte Infos mit record_qualification fest.",
       "- Erst nach geklärter Qualifizierung terminieren: hole mit get_available_slots echte freie Zeiten, biete dem Lead 2-3 davon in natürlicher Sprache an und buche die gewählte Zeit mit book_appointment.",
       "- Erfinde niemals Termine oder Uhrzeiten: nutze ausschließlich die von get_available_slots gelieferten Zeiten. Nur wenn der Kalender nicht verbunden ist, nutze propose_appointment als Fallback.",

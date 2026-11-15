@@ -184,7 +184,11 @@ export function terminUnterlagen(produkt: string | null | undefined, an: Ansprac
   const art = produktArt(produkt);
   const items: string[] = [];
   if (art === "tier") items.push("Tierpass bzw. Chipnummer", "Tierarztrechnungen der letzten Zeit, falls vorhanden");
-  if (art === "sach") items.push(a(an, "deine bisherige Police, falls vorhanden", "Ihre bisherige Police, falls vorhanden"));
+  if (art === "sach")
+    items.push(
+      a(an, "deine bisherige Police mit Ablaufdatum, falls vorhanden", "Ihre bisherige Police mit Ablaufdatum, falls vorhanden"),
+      "Geburtsdaten aller Personen, die mitversichert werden sollen",
+    );
   items.push(a(an, "deine IBAN, falls du direkt abschließen möchtest", "Ihre IBAN, falls Sie direkt abschließen möchten"));
   return liste(items);
 }
