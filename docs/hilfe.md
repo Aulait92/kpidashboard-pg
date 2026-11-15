@@ -416,7 +416,43 @@ Seiten aus der Liste „Seiten“ unten.
     Name → dem Werbekonto zuordnen, dann freigeben). Der Schritt ist auch ohne Datensatz erledigt; die App prüft den Datensatz in den
     ersten Wochen täglich nach und startet die Rückmeldung dann von selbst.
 - **WhatsApp verbinden:** Vorher prüfen: eine Nummer, die nicht in der normalen WhatsApp-App genutzt wird (zweite SIM, Festnetz oder
-  neue Nummer), SMS oder Anruf mit Code kann empfangen werden, Admin im Business Manager. Dann der geführte Ablauf.
+  neue Nummer) bzw. die Nummer aus der WhatsApp Business App, SMS oder Anruf mit Code kann empfangen werden, Admin im Business Manager,
+  Zugang zum E-Mail-Postfach, Computer mit erlaubten Pop-ups. Ausführliche Anleitung mit Bildern und Video: **Hilfe → WhatsApp verbinden**
+  (`/buyer/hilfe/whatsapp`). Ablauf (Stand 15.11.2026, Texte bei 360dialog und Meta auf Englisch):
+  1. Einrichtung → **„WhatsApp verbinden“** → Nummer wählen → **„Jetzt WhatsApp verbinden“**. Die App legt das Konto bei 360dialog
+     (unserem WhatsApp-Anbieter) an, kostenlos.
+  2. In der App steht dann **Schritt 1 „E-Mail von 360dialog öffnen“** (gelb markiert, mit Adresse, Absender, Betreff und Knopf zum
+     Postfach) und **Schritt 2 „WhatsApp-Nummer verbinden“**. Darunter aufklappbar: „So geht es bei 360dialog und Meta weiter (mit Bildern)“.
+  3. E-Mail von „360Dialog“ (no-reply@360dialog.com), Betreff „Join [Firmenname] on the 360Dialog Hub“ → **„Join 360Dialog Hub“** →
+     Passwort festlegen. Keine E-Mail: Spam-Ordner. Nicht selbst über „Sign up“ registrieren.
+  4. In der App Häkchen **„Erledigt, ich habe mein Passwort festgelegt“** → **„Weiter: WhatsApp verbinden“** → bei 360dialog **„Log in“**
+     (nicht mit Facebook oder Google). „Verify it's you“: Code aus einer zweiten E-Mail eintragen, optional „Remember this device for
+     30 days“, **„Continue“**.
+  5. „Onboard new number“ → „Enter phone number“: Land ist auf USA (+1) vorbelegt, auf **Deutschland (+49)** umstellen, Nummer ohne
+     führende 0, **„Next“**. Nicht „Use Meta-provided number“.
+  6. „Is +49 … already on WhatsApp?“: **„No, It's not connected“** (neue Nummer, Festnetz, gelöschte private Nummer),
+     **„Yes, Business app“** (WhatsApp Business App), „Yes, Personal app“ (normale WhatsApp-App, vorher Konto löschen oder auf
+     WhatsApp Business umstellen), „Yes, Business API“ (Nummer bei einem anderen Anbieter).
+  7. Neue Nummer: „Verify your phone number“, Code per **SMS** oder **Voice call** (Festnetz), nicht überspringen, nicht mehrfach
+     kurz hintereinander anfordern (sonst sperrt Meta die Nummer für einige Stunden).
+  8. „Meta Business Signup“ (vier Schritte, Hinweis „make sure not to select Display Name only“) → unten rechts **„Embedded Signup“**.
+     Pop-ups müssen erlaubt sein.
+  9. Fenster von Meta „Facebook Login for Business“, „Seamlessly connect your account to 360Dialog“ → **„Continue“**.
+  10. „Add your WhatsApp phone number“: Nummer ist vorausgewählt → **„Next“**. Business App: hier statt des SMS-Codes per Nachricht in der
+      WhatsApp Business App einen **QR-Code scannen** (Chatverlauf und Kontakte lassen sich übernehmen); die Nummer sollte etwa 7 Tage in
+      der App genutzt worden sein.
+  11. „Select the business assets to share with 360dialog“: eigenes **Business portfolio** (dasselbe wie für das Werbekonto),
+      WhatsApp account **„Create a WhatsApp account“** → „Next“.
+  12. „Enter business information for new assets“: Name wie im Impressum, Kategorie z. B. Professional Services oder Finance, Land
+      Germany, Website freiwillig, Zeitzone **Europe/Berlin** (Meta schlägt oft z. B. Europe/Vienna vor) → „Next“.
+  13. „Review what you'll share with 360dialog“: Unternehmen, WhatsApp-Konto, Nachrichtenkonto prüfen. „Access your Facebook ads and
+      related stats“ steht immer dabei und ändert nichts an den Anzeigen → **„Confirm“**.
+  14. „Your account is connected to 360Dialog“: unter „Improve your experience“ **beide Häkchen entfernen** („Instruct Meta to
+      automatically identify order and lead events“, „Share Cloud API events“) → **„Finish“**.
+  15. Zurück in der App: **„Fast geschafft: Ihre Nummer wird bei WhatsApp noch eingerichtet …“**. Die Seite lädt sich von selbst neu und
+      zeigt nach wenigen Minuten **„Verbunden“**; sonst **„Verbindung prüfen“**. Meta prüft das Konto zusätzlich innerhalb von 24 Stunden.
+  Private WhatsApp-Nummer: vorher das WhatsApp-Konto löschen (Chats weg) oder kostenlos auf WhatsApp Business umstellen und den
+  Business-App-Weg nehmen. Zeigt 360dialog „Choose a plan“ oder „Pending Activation“: nichts kaufen, performancegrowth schaltet frei.
 - **E-Mail-Postfach verbinden:** Google, Microsoft oder anderer Anbieter (SMTP), wie unter **Einstellungen → E-Mail-Postfach**.
   Manche Gesellschaften (z. B. für Ausschließlichkeitsvertreter) erlauben nicht, das dienstliche Postfach mit anderen Programmen zu
   verbinden. Dann **„Meine Gesellschaft erlaubt das nicht“** tippen: Die App blendet E-Mail-Knopf und E-Mail-Fenster im Kontakt,
@@ -1171,7 +1207,7 @@ Bewertung im Einzelfall liegt bei Ihnen.**
 
 ## WhatsApp verbinden: Schritt für Schritt
 
-**Video:** Ein Video (ca. 2:40 Minuten) macht den ganzen Ablauf einmal vor. Es steht oben auf der Seite
+**Video:** Ein Video (ca. 3:20 Minuten) macht den ganzen Ablauf mit einer neuen Nummer einmal vor (und kurz den Weg mit der WhatsApp Business App). Es steht oben auf der Seite
 „Ausführliche Anleitung“ (/buyer/hilfe/whatsapp), aufklappbar direkt über dem Knopf „Jetzt WhatsApp verbinden“
 in der Einrichtung und für Inhaber unter Profilmenü → **Einführung ansehen**.
 
@@ -1179,8 +1215,8 @@ in der Einrichtung und für Inhaber unter Profilmenü → **Einführung ansehen*
 - **Nummer aus der WhatsApp Business App** (häufigster Fall): Leads und Kunden kennen die Nummer schon.
   Der Vermittler schreibt weiter in der App, der Assistent übernimmt neue Leads über dieselbe Nummer.
   Nachrichten aus der App erscheinen auch unter „Chats“, der Assistent hält sich in dem Gespräch dann
-  zurück. Im Fenster von Meta „Ja, diese Nummer ist mit der WhatsApp Business App verbunden“ wählen,
-  danach in der App den QR-Code scannen. Voraussetzungen: aktuelle WhatsApp Business App, die Nummer
+  zurück. Bei 360dialog auf die Frage „Is … already on WhatsApp?“ „Yes, Business app“ wählen,
+  später statt des SMS-Codes in der App den QR-Code scannen. Voraussetzungen: aktuelle WhatsApp Business App, die Nummer
   schon etwa 7 Tage in der App genutzt, die App mindestens alle 13 Tage öffnen (sonst trennt Meta die
   Verbindung). Mit der App verknüpfte Geräte (z. B. WhatsApp Web) werden getrennt und müssen neu
   verbunden werden.
@@ -1204,7 +1240,7 @@ das beim Weg „WhatsApp Business App“ nach.
   15-Minuten-Hilfetermin klären.
 
 **Bereithalten:** Facebook-Login mit Admin-Rechten im Meta-Unternehmensportfolio (dort, wo auch das
-Werbekonto liegt), das Telefon zur Nummer (Code) bzw. das Handy mit der WhatsApp Business App (QR-Code),
+Werbekonto liegt), Zugang zum E-Mail-Postfach (Einladung und Anmeldecode von 360dialog), das Telefon zur Nummer (Code) bzw. das Handy mit der WhatsApp Business App (QR-Code),
 einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
 - **Admin prüfen (vor dem Start):** business.facebook.com → Einstellungen → Personen → eigener Name → Rolle
   „Vollzugriff“ (Admin). Kein Admin: den Inhaber des Portfolios bitten, einen als Admin hinzuzufügen; gibt es
@@ -1215,32 +1251,46 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
   bzw. Gewerbeanmeldung, Adresse, Telefon, Website mit Impressum), dauert meist einige Tage. Aktuelle Grenzen
   stehen in der Doku von Meta.
 
-**Ablauf:**
-1. Einrichtung → Nummer wählen → „Jetzt WhatsApp verbinden“.
-2. 360dialog (unser WhatsApp-Anbieter): Die App legt das Konto unter unserem Partnerkonto an, 360dialog schickt
-   eine Einladung an die Login-Adresse (englisch, Betreff „Join … on the 360Dialog Hub“, Knopf „Join 360Dialog
-   Hub“): Passwort festlegen, in der App „Erledigt“ anhaken und „Weiter: WhatsApp verbinden“. Beim Anmelden
-   („Log in“) fragt 360dialog „Verify it's you“ und schickt eine zweite E-Mail mit Code: eintragen, „Continue“.
-   Nicht mit Facebook oder Google anmelden und kein eigenes Konto über „Sign up“ anlegen (das kann in einem alten
-   Konto eines anderen Anbieters wie Superchat landen; dann nicht weitermachen, sondern uns melden). Halb fertig
-   oder falsche Adresse: „Abbrechen und neu beginnen“ (Inhaber) bzw. Admin „Verbindung zurücksetzen“. Kostenlos, die Nummer bleibt Eigentum des Kunden. Danach Seite „About you“: Name bzw. Firmenname, **eigene Handynummer für
-   Rückfragen** (nicht die Nummer, die verbunden wird; Vorwahl +49 einstellen), Währung EUR, Häkchen bei
-   Weitergabe der Kontaktdaten und Nutzungsbedingungen, „Continue“. Fragen „Do you have admin access to the Meta
-   Business Portfolio?“ → „Yes“ (sonst abbrechen und erst Admin werden); „Is your Meta Business Portfolio
-   verified?“ → „Yes“ nur bei abgeschlossener Verifizierung, sonst „No“ (geht trotzdem). Dann die zu verbindende Nummer eingeben;
-   Frage „Is … already on WhatsApp?“: neue Nummer → „No, It's not connected“, WhatsApp Business App →
-   „Yes, Business app“. Bei neuer Nummer: „Verify your phone number“, Code per SMS oder „Voice call“
-   eingeben, nicht „Skip verification“. Dann öffnet sich Meta.
-3. Fenster von Meta: mit Facebook anmelden, „Weiter“.
-4. Unternehmensportfolio auswählen oder neu anlegen. Die Auswahl lässt sich später nicht ändern. Bei der
-   Freigabe für 360dialog „Opt in to current Businesses only“ wählen. Bestehende Nummer (WhatsApp Business App)
-   aus der Liste auswählen, nicht neu eintippen.
-5. WhatsApp-Profil: Anzeigename und Kategorie. Der Name muss zur Firma passen, z. B. „Max Mustermann
-   Versicherungsmakler“.
-6. Code (bei neuer Nummer schon in Schritt 2 bei 360dialog): Kommt keine SMS, „Voice call“ wählen; den Code
-   nicht mehrmals kurz hintereinander anfordern (Meta sperrt die Nummer sonst für Stunden). (Bei WhatsApp Business App stattdessen QR-Code
-   in der App scannen.)
-7. Automatisch zurück in die App: „Verbunden: +49 …“. Steht dort „wird eingerichtet“, ist nichts zu tun.
+**Ablauf** (Stand 15.11.2026, Texte bei 360dialog und Meta auf Englisch; Kurzfassung auch oben unter „Einrichtung (neue Kunden)“):
+1. Einrichtung → „WhatsApp verbinden“ → Nummer wählen → „Jetzt WhatsApp verbinden“. Die App legt das Konto bei 360dialog
+   (unserem WhatsApp-Anbieter) unter unserem Partnerkonto an. Kostenlos, die Nummer bleibt Eigentum des Kunden.
+2. In der App steht jetzt **Schritt 1 „E-Mail von 360dialog öffnen“** (gelb, mit Adresse, Absender, Betreff, Knopf zum
+   Postfach und Häkchen) und **Schritt 2 „WhatsApp-Nummer verbinden“**; darunter aufklappbar „So geht es bei 360dialog
+   und Meta weiter (mit Bildern)“.
+3. E-Mail von „360Dialog“ (no-reply@360dialog.com), Betreff „Join [Firmenname] on the 360Dialog Hub“ → „Join 360Dialog
+   Hub“ → Passwort festlegen. Keine E-Mail: Spam-Ordner. Hatte die Adresse schon ein 360dialog-Konto, kommt keine
+   Einladung: mit dem bisherigen Passwort anmelden.
+4. In der App „Erledigt, ich habe mein Passwort festgelegt“ anhaken → „Weiter: WhatsApp verbinden“ → bei 360dialog
+   „Log in“. Nicht mit Facebook oder Google anmelden und kein Konto über „Sign up“ anlegen (das kann in einem alten
+   Konto eines anderen Anbieters wie Superchat landen; dann nicht weitermachen, sondern uns melden). „Verify it's you“:
+   Code aus einer zweiten E-Mail eintragen, optional „Remember this device for 30 days“, „Continue“.
+   Halb fertig oder falsche Adresse: „Abbrechen und neu beginnen“ (Inhaber) bzw. Admin „Verbindung zurücksetzen“.
+5. „Onboard new number“ → „Enter phone number“: Land ist auf USA (+1) vorbelegt, auf Deutschland (+49) umstellen,
+   Nummer ohne führende 0, „Next“. Nicht „Use Meta-provided number“.
+6. „Is +49 … already on WhatsApp?“: neue Nummer/Festnetz → „No, It's not connected“; WhatsApp Business App →
+   „Yes, Business app“; normale WhatsApp-App → „Yes, Personal app“ (vorher Konto löschen oder auf Business umstellen);
+   Nummer bei einem anderen Anbieter → „Yes, Business API“.
+7. Neue Nummer: „Verify your phone number“, Code per „Text message (SMS)“ oder „Voice call“, nicht „Skip verification“.
+   Code nicht mehrmals kurz hintereinander anfordern (Meta sperrt die Nummer sonst für Stunden).
+8. „Meta Business Signup“ (vier Schritte, Hinweis „make sure not to select Display Name only“) → unten rechts
+   „Embedded Signup“. Pop-ups müssen erlaubt sein.
+9. Fenster von Meta „Facebook Login for Business“: „Seamlessly connect your account to 360Dialog“ → „Continue“.
+10. „Add your WhatsApp phone number“: Nummer ist vorausgewählt → „Next“ (nicht „Display Name only“). WhatsApp
+    Business App: statt SMS-Code kommt eine Nachricht in der App, QR-Code scannen, Chatverlauf und Kontakte lassen
+    sich übernehmen; die Nummer nicht neu eintippen.
+11. „Select the business assets to share with 360dialog“: eigenes Business portfolio (wie fürs Werbekonto; Meta
+    schlägt manchmal ein fremdes vor, die Auswahl lässt sich später nicht ändern), WhatsApp account „Create a
+    WhatsApp account“ → „Next“.
+12. „Enter business information for new assets“: Name wie im Impressum, Kategorie z. B. Professional Services oder
+    Finance, Land Germany, Website freiwillig, Zeitzone Europe/Berlin (Meta schlägt oft z. B. Europe/Vienna vor) → „Next“.
+13. „Review what you'll share with 360dialog“: Unternehmen, WhatsApp-Konto, Nachrichtenkonto prüfen (eigener
+    Firmenname). „Access your Facebook ads and related stats“ steht immer dabei und ändert nichts an den Anzeigen
+    → „Confirm“.
+14. „Your account is connected to 360Dialog“: unter „Improve your experience“ beide Häkchen entfernen („Instruct Meta
+    to automatically identify order and lead events“, „Share Cloud API events“) → „Finish“.
+15. Automatisch zurück in die App: „Fast geschafft: Ihre Nummer wird bei WhatsApp noch eingerichtet …“. Die Seite lädt
+    sich von selbst neu und zeigt nach wenigen Minuten „Verbunden: +49 …“. Meta prüft das Konto zusätzlich innerhalb
+    von 24 Stunden. Nichts zu tun.
 
 **Wenn es hakt:**
 - Kein Fenster von Meta: Pop-up-Blocker. Pop-ups für die Seite erlauben und erneut verbinden.
@@ -1248,7 +1298,6 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
   neues Portfolio anlegen.
 - „Nummer wird bereits verwendet“: Die Nummer läuft noch in einer WhatsApp-App. Den passenden Weg
   wählen (Business App) oder eine andere Nummer nehmen.
-- Anzeigename abgelehnt: an den Firmennamen (wie im Impressum) anpassen.
 - 360dialog zeigt „Choose a plan“ bzw. „Pending Activation“: nichts kaufen, Fenster schließen, uns schreiben. Der
   Tarif läuft über uns, wir schalten die Nummer frei und verbinden sie.
 - Verbinden bei 360dialog fertig, in der App steht aber nicht „Verbunden“: in der Einrichtung beim Schritt
@@ -1257,10 +1306,9 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
   „360dialog-Nummer zuordnen“ mit Liste freier Nummern.)
 - „This phone number belongs to another business“: Die Nummer hängt in einem anderen Meta-Portfolio. Dort
   entfernen oder eine andere Nummer nehmen.
-- Weitere Hinweise aus dem Ablauf: Land auf +49 stellen, Nummer ohne führende 0, nicht „Display Name only“;
-  eigenes Portfolio wählen (Meta schlägt manchmal ein fremdes vor); neues Portfolio mit Namen wie im
-  Handelsregister, Kategorie „Finance“, Zeitzone Europe/Berlin; auf der letzten Meta-Seite beide Häkchen zur
-  Weitergabe von Ereignisdaten entfernen.
+- Weitere Hinweise aus dem Ablauf: Land von +1 auf +49 stellen, Nummer ohne führende 0, nicht „Display Name only“;
+  eigenes Portfolio wählen (Meta schlägt manchmal ein fremdes vor); Zeitzone Europe/Berlin; auf der letzten
+  Meta-Seite beide Häkchen unter „Improve your experience“ entfernen.
 - Fehler nach der Rückkehr: Wir bekommen automatisch Bescheid und melden uns. Lieber gemeinsam?
   15-Minuten-Hilfetermin in der Einrichtung buchen.
 

@@ -1,0 +1,306 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><link rel="stylesheet" href="../base.css"><style>
+/* Vereinfachte Darstellung der Schritte bei 360dialog und Meta für das Video „WhatsApp verbinden“ (Ablauf Stand 15.11.2026).
+   Texte wie im echten Durchlauf, Aussehen bewusst schlicht. Keine echten Daten, Beispielnummer +49 151 23456789. */
+body{width:1440px;height:810px;overflow:hidden}
+.logo{left:56px;top:40px} .logo .mark{width:40px;height:40px;border-radius:11px} .logo .mark svg{width:22px;height:22px;stroke:#fff;stroke-width:2.5;fill:none;stroke-linecap:round;stroke-linejoin:round} .logo .word{font-size:25px}
+.badge{position:absolute;right:56px;top:46px;font-size:17px;color:var(--muted);background:#fff;border:1.5px solid var(--border);border-radius:99px;padding:7px 16px;z-index:5}
+.scene{position:absolute;inset:0;display:none}
+.scene.on{display:block;animation:fi .45s ease}
+@keyframes fi{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.win{position:absolute;left:150px;right:150px;top:118px;bottom:96px;background:#fff;border:2px solid var(--border);border-radius:22px;overflow:hidden;box-shadow:0 40px 80px -40px rgba(37,99,235,.35)}
+.bar{height:44px;background:#f3f6fc;border-bottom:1.5px solid var(--border);display:flex;align-items:center;gap:9px;padding:0 18px;flex:none}
+.bar i{width:12px;height:12px;border-radius:50%;background:#d5dcea;display:block}
+.url{margin-left:18px;flex:1;max-width:520px;height:28px;border-radius:9px;background:#fff;border:1.5px solid var(--border);font-size:15px;color:var(--muted);display:flex;align-items:center;padding:0 12px}
+.body{position:absolute;top:44px;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:#f6f8fb}
+.who{position:absolute;left:150px;top:84px;font-size:18px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:10px}
+.who b{display:inline-block;width:10px;height:10px;border-radius:50%}
+.form{zoom:1.2;width:520px;background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:28px 32px;box-shadow:0 20px 50px -30px rgba(15,23,42,.35)}
+.form h3{font-size:25px;letter-spacing:-.4px}
+.s{font-size:16px;color:var(--muted);margin-top:6px;line-height:1.45}
+.f{margin-top:14px}.f label{font-size:14px;color:var(--muted);display:block;margin-bottom:5px}
+.in{height:42px;border:1.5px solid #cfd8e6;border-radius:9px;font-size:17px;display:flex;align-items:center;padding:0 13px;background:#fff;gap:8px}
+.in.act{border-color:#0f766e;box-shadow:0 0 0 3px rgba(15,118,110,.15)}
+.btn{margin-top:18px;height:44px;border-radius:9px;background:#0f766e;color:#fff;font-weight:600;font-size:17px;display:flex;align-items:center;justify-content:center;transition:transform .15s;padding:0 22px}
+.btn.meta{background:#0866ff}
+.btn.ghost{background:#fff;color:#334155;border:1.5px solid #cfd8e6}
+.btn.press{transform:scale(.96)}
+.dimmed{opacity:.45}
+.no{display:inline-block;margin-left:10px;font-size:13px;font-weight:700;color:#be123c;background:#fff1f2;border:1.5px solid #fecdd3;border-radius:99px;padding:2px 10px;vertical-align:middle}
+.hint{display:inline-block;font-size:13px;font-weight:700;color:#047857;background:#ecfdf5;border:1.5px solid #a7f3d0;border-radius:99px;padding:2px 10px}
+.chk{display:flex;gap:10px;align-items:center;font-size:15.5px;margin-top:14px;color:var(--text2)}
+.chk i{width:20px;height:20px;border:2px solid #9aa6b8;border-radius:5px;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:13px;color:#fff;flex:none}
+.chk i.on{background:#0866ff;border-color:#0866ff}
+.chk i.t.on{background:#0f766e;border-color:#0f766e}
+.opt{margin-top:10px;border:1.5px solid #dbe2ec;border-radius:12px;padding:12px 16px;display:flex;gap:14px;align-items:center;font-size:16px;line-height:1.3;background:#fff;transition:all .2s}
+.opt .r{width:20px;height:20px;border-radius:50%;border:2px solid #9aa6b8;flex:none}
+.opt.sel{border-color:#0f766e;background:#f0fdfa;box-shadow:0 0 0 2px rgba(15,118,110,.25)}.opt.sel .r{border:6px solid #0f766e}
+.opt.m.sel{border-color:#0866ff;background:#eef4ff;box-shadow:0 0 0 2px rgba(8,102,255,.2)}.opt.m.sel .r{border:6px solid #0866ff}
+.opt b{display:block;font-size:16.5px}.opt small{display:block;font-size:13.5px;color:var(--muted);margin-top:2px}
+.wico{width:34px;height:34px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+.code{display:flex;gap:8px;margin-top:14px}.code span{width:44px;height:50px;border:1.5px solid #cfd8e6;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600}
+.flag{width:24px;height:16px;border-radius:3px;flex:none;display:inline-block;box-shadow:0 0 0 1px rgba(0,0,0,.08)}
+.flag.de{background:linear-gradient(#111 0 33%,#dd0000 33% 66%,#ffce00 66%)}
+.flag.us{background:linear-gradient(90deg,#3c3b6e 0 40%,transparent 40%),repeating-linear-gradient(#b22234 0 2.3px,#fff 2.3px 4.6px)}
+.dd{position:absolute;left:0;top:46px;width:260px;background:#fff;border:1.5px solid #cfd8e6;border-radius:10px;box-shadow:0 20px 40px -20px rgba(15,23,42,.4);padding:6px;display:none;z-index:3}
+.dd.on{display:block}.dd div{padding:9px 10px;border-radius:7px;font-size:15.5px;display:flex;gap:10px;align-items:center}.dd div.hl{background:#f0fdfa}
+/* 360dialog Kopf */
+.h360{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;color:#0f766e;margin-bottom:12px}
+.h360 span{width:28px;height:28px;border-radius:8px;background:#0f766e;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px}
+/* Postfach */
+.mailapp{position:absolute;inset:44px 0 0 0;display:flex;background:#fff}
+.mside{width:210px;background:#f6f8fb;border-right:1.5px solid var(--border);padding:18px 14px;font-size:15px;color:var(--text2)}
+.mside div{padding:8px 12px;border-radius:8px}.mside .a{background:#e5edff;color:#1d4ed8;font-weight:600}
+.mmain{flex:1;padding:26px 36px}
+.msub{font-size:23px;font-weight:700;letter-spacing:-.3px}
+.mfrom{display:flex;gap:12px;align-items:center;margin-top:14px;font-size:15px;color:var(--text2)}
+.mfrom .av{width:38px;height:38px;border-radius:50%;background:#0f766e;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center}
+.mbody{margin-top:22px;border-top:1.5px solid var(--border);padding-top:22px}
+/* Meta Business Signup (360dialog) */
+.sg{position:absolute;inset:44px 0 0 0;background:#fff;padding:18px 26px}
+.sg .top{font-size:18px;font-weight:700}.sg .top small{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted);font-weight:500;margin-top:3px}
+.prog{display:flex;gap:6px;margin:14px 0}.prog i{height:8px;border-radius:9px;background:#5fb7c5;flex:1}.prog i.o{background:#d6eef2}
+.sgbox{border:1.5px solid var(--border);border-radius:14px;padding:14px 18px}
+.sgbox h4{font-size:18px;margin-bottom:10px}
+.sgl{display:flex;gap:16px}
+.steps{width:300px;border:1.5px solid var(--border);border-radius:10px;font-size:14.5px}
+.steps div{padding:9px 12px;border-bottom:1.5px solid var(--border);color:var(--text2)}.steps div:last-child{border:0}
+.warn{margin:6px 0 2px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:8px;padding:7px 9px;font-size:13px;color:#92400e}
+.prev{flex:1;border:1.5px solid var(--border);border-radius:10px;background:#f8fafc;display:flex;align-items:center;justify-content:center}
+.foot{display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:13.5px;color:var(--muted)}
+/* Meta Fenster */
+.shade{position:absolute;inset:0;background:rgba(15,23,42,.38)}
+.pop{position:absolute;left:330px;right:330px;top:116px;bottom:84px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 40px 90px -30px rgba(11,18,32,.6);border:1.5px solid #cbd5e1}
+.ph{display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1.5px solid var(--border);font-size:15px;font-weight:600;color:#1c2b33}
+.ph .m{color:#0866ff;font-weight:800;font-size:17px}
+.pc{zoom:1.08;padding:20px 28px;font-size:15.5px;color:#1c2b33}
+.pc h3{font-size:21px;letter-spacing:-.3px;margin-bottom:8px}
+.pc .s{font-size:14.5px}
+.pf{position:absolute;left:0;right:0;bottom:0;padding:14px 24px;border-top:1.5px solid var(--border);display:flex;justify-content:flex-end;gap:10px;background:#fff}
+.pf .btn{margin:0;height:40px;font-size:16px}
+.hero{height:96px;border-radius:10px;background:linear-gradient(120deg,#c7d8ff,#ffe1c7 60%,#d6f5e8);margin-bottom:16px}
+.selbox{margin-top:6px;height:42px;border:1.5px solid #cfd8e6;border-radius:9px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:15.5px;background:#fff;position:relative}
+.selbox.act{border-color:#0866ff;box-shadow:0 0 0 3px rgba(8,102,255,.15)}
+.selbox:after{content:"▾";color:#64748b}
+.selbox.noarr:after{content:none}
+.lab{font-size:13.5px;font-weight:600;color:#475569;margin-top:12px}
+.rv{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1.5px solid var(--border);font-size:15px}.rv span{color:var(--muted)}
+.perm{font-size:14px;color:var(--text2);padding:4px 0;display:flex;gap:8px;align-items:center}
+.okc{width:54px;height:54px;border-radius:50%;background:#e7f6ec;color:#16a34a;font-size:30px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+/* Bereitlegen */
+.list{position:absolute;left:180px;right:180px;top:130px}
+.list h2{font-size:50px;letter-spacing:-1.6px}
+.li{display:flex;gap:22px;align-items:center;background:#fff;border:2px solid var(--border);border-radius:20px;padding:16px 24px;margin-top:14px;opacity:0;transform:translateY(10px);transition:all .5s}
+.li.on{opacity:1;transform:none}
+.li .ico{width:52px;height:52px;border-radius:15px} .li .ico svg{width:26px;height:26px}
+.li .t{font-size:24px;font-weight:600}.li .b{font-size:18px;color:var(--text2);margin-top:2px}
+/* QR */
+.qrwrap{display:flex;gap:70px;align-items:center}
+.phone{width:240px;height:480px;border-radius:42px;background:#0b1220;padding:10px;box-shadow:0 40px 80px -30px rgba(11,18,32,.5)}
+.phone .scr{width:100%;height:100%;border-radius:33px;background:#f0f2f5;overflow:hidden;position:relative}
+.notif{position:absolute;left:10px;right:10px;top:40px;background:#fff;border-radius:16px;padding:12px 14px;font-size:14px;box-shadow:0 10px 25px -10px rgba(0,0,0,.3);transform:translateY(-120px);transition:transform .6s}
+.notif.on{transform:none}
+.cam{position:absolute;inset:0;background:#111;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .5s}
+.cam.on{opacity:1}
+.cam .frame{width:160px;height:160px;border:3px solid #25d366;border-radius:18px;display:flex;align-items:center;justify-content:center}
+.ok{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#fff;opacity:0;transition:opacity .5s;font-size:17px;font-weight:600;text-align:center;padding:20px}
+.ok.on{opacity:1}
+.ok .c{width:60px;height:60px;border-radius:50%;background:#25d366;color:#fff;font-size:34px;display:flex;align-items:center;justify-content:center}
+.sub2{display:none}.sub2.on{display:block}
+</style></head><body>
+<div class="logo"><span class="mark"><svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span><span class="word">performance<b>growth</b></span></div>
+<div class="badge" id="badge">Vereinfachte Darstellung</div>
+
+<!-- Bereitlegen -->
+<div class="scene" id="bereit"><div class="list">
+ <span class="pill"><span class="dot"></span>Vorher bereitlegen</span>
+ <h2 style="margin-top:12px">Das brauchen Sie</h2>
+ <div class="li"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><div><div class="t">Facebook-Login mit Admin-Rechten</div><div class="b">im Unternehmensportfolio, dort wo auch Ihr Werbekonto liegt</div></div></div>
+ <div class="li"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><div><div class="t">Ihr E-Mail-Postfach</div><div class="b">für die Einladung und einen Anmeldecode von 360dialog</div></div></div>
+ <div class="li"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg></span><div><div class="t">Das Telefon zur Nummer</div><div class="b">für den Bestätigungscode per SMS oder Anruf</div></div></div>
+ <div class="li"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span><div><div class="t">Einen Computer, Pop-ups erlaubt</div><div class="b">und etwa 10 Minuten Zeit</div></div></div>
+</div></div>
+
+<!-- Postfach: Einladung -->
+<div class="scene" id="mail"><div class="who"><b style="background:#d97706"></b>Ihr E-Mail-Postfach</div>
+ <div class="win"><div class="bar"><i></i><i></i><i></i><div class="url" id="mailurl">Posteingang</div></div>
+  <div class="mailapp" id="mailbox">
+   <div class="mside"><div class="a">Posteingang</div><div>Gesendet</div><div>Spam</div></div>
+   <div class="mmain">
+    <div class="msub">Join Max Mustermann Versicherungen on the 360Dialog Hub</div>
+    <div class="mfrom"><span class="av">3</span><div><b>360Dialog</b> &lt;no-reply@360dialog.com&gt;<br><span class="muted">an max.mustermann@gmail.com</span></div></div>
+    <div class="mbody"><div style="font-size:20px;font-weight:700">Join Max Mustermann Versicherungen on the 360Dialog Hub</div>
+     <div style="font-size:17px;margin-top:10px;color:var(--text2)">You have been invited to the 360Dialog Hub, click the button to get started.</div>
+     <div class="btn" id="b_join" style="display:inline-flex;margin-top:20px;height:50px;padding:0 26px;font-size:18px">Join 360Dialog Hub</div></div>
+   </div></div>
+  <div class="body" id="pwpage" style="display:none"><div class="form"><div class="h360"><span>360</span>360dialog</div><h3>Set your password</h3>
+   <div class="f"><label>Password</label><div class="in" id="pw1"></div></div>
+   <div class="f"><label>Repeat password</label><div class="in" id="pw2"></div></div>
+   <div class="btn" id="b_pw">Set password</div></div></div>
+ </div></div>
+
+<!-- 360dialog: Log in -->
+<div class="scene" id="login"><div class="who"><b style="background:#0d9488"></b>360dialog, unser WhatsApp-Anbieter</div>
+ <div class="win"><div class="bar"><i></i><i></i><i></i><div class="url">hub.360dialog.com</div></div><div class="body">
+  <div class="form"><div class="h360"><span>360</span>360dialog</div><h3>Log in</h3>
+   <div class="f"><label>Email</label><div class="in" id="le"></div></div>
+   <div class="f"><label>Password</label><div class="in" id="lp"></div></div>
+   <div class="btn" id="b_login">Log in</div>
+   <div class="dimmed" style="display:flex;gap:10px;margin-top:14px"><div class="btn ghost" style="margin:0;flex:1;font-size:14.5px;height:38px">Continue with Facebook</div><div class="btn ghost" style="margin:0;flex:1;font-size:14.5px;height:38px">Continue with Google</div></div>
+   <div style="margin-top:12px;font-size:14.5px"><span class="dimmed">Don't have an account? Sign up</span><span class="no">nicht nutzen</span></div>
+  </div></div></div></div>
+
+<!-- 360dialog: Verify it's you -->
+<div class="scene" id="verify"><div class="who"><b style="background:#0d9488"></b>360dialog, unser WhatsApp-Anbieter</div>
+ <div class="win"><div class="bar"><i></i><i></i><i></i><div class="url">hub.360dialog.com</div></div><div class="body">
+  <div class="form"><div class="h360"><span>360</span>360dialog</div><h3>Verify it's you</h3>
+   <div class="s">We sent a verification code to max.mustermann@gmail.com</div>
+   <div class="code" id="vcode"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+   <div class="chk"><i class="t" id="c_rem">✓</i>Remember this device for 30 days</div>
+   <div class="btn" id="b_ver">Continue</div>
+  </div></div></div></div>
+
+<!-- 360dialog: Nummer eingeben -->
+<div class="scene" id="number"><div class="who"><b style="background:#0d9488"></b>360dialog, unser WhatsApp-Anbieter</div>
+ <div class="win"><div class="bar"><i></i><i></i><i></i><div class="url">hub.360dialog.com</div></div><div class="body">
+  <div class="form" style="width:600px"><div class="h360"><span>360</span>Onboard new number</div><h3>Enter phone number</h3>
+   <div class="f"><label>Phone number</label><div style="display:flex;gap:10px;position:relative">
+    <div class="in" id="cc" style="width:130px"><span class="flag us" id="ccf"></span><span id="cct">+1</span><span style="margin-left:auto;color:#64748b">▾</span></div>
+    <div class="dd" id="ccdd"><div><span class="flag us"></span>United States +1</div><div id="cc_de"><span class="flag de"></span>Germany +49</div><div><span class="flag" style="background:linear-gradient(#ed2939 0 33%,#fff 33% 66%,#ed2939 66%)"></span>Austria +43</div></div>
+    <div class="in" id="pn" style="flex:1"></div></div></div>
+   <div style="display:flex;gap:10px;align-items:center;margin-top:18px">
+    <div class="btn" id="b_num" style="margin:0;flex:1">Next</div>
+   </div>
+   <div style="margin-top:12px;font-size:15px"><span class="dimmed" style="text-decoration:underline">Use Meta-provided number</span><span class="no">nicht klicken</span></div>
+  </div></div></div></div>
+
+<!-- 360dialog: Schon bei WhatsApp? -->
+<div class="scene" id="question"><div class="who"><b style="background:#0d9488"></b>360dialog, unser WhatsApp-Anbieter</div>
+ <div class="win"><div class="bar"><i></i><i></i><i></i><div class="url">hub.360dialog.com</div></div><div class="body">
+  <div style="width:760px;zoom:1.12"><div style="font-size:21px;font-weight:700;display:flex;gap:10px;align-items:center;margin-bottom:6px">Is <span class="flag de"></span>+49 151 23456789 already on WhatsApp?</div>
+   <div class="opt" id="q_no"><span class="wico" style="background:#eef2f7;color:#0f766e">✕</span><div><b>No, It's not connected</b><small>This is brand new number that is not connected to WhatsApp yet.</small></div></div>
+   <div class="opt"><span class="wico" style="background:#e8f9ee;color:#16a34a">W</span><div><b>Yes, Personal app</b><small>Standard WhatsApp messenger on a phone.</small></div></div>
+   <div class="opt" id="q_biz"><span class="wico" style="background:#e8f9ee;color:#16a34a">B</span><div><b>Yes, Business app</b><small>WhatsApp Business app (WA Business) on a phone.</small></div></div>
+   <div class="opt"><span class="wico" style="background:#e8f9ee;color:#16a34a">⚙</span><div><b>Yes, Business API</b><small>Connected via another provider (BSP) or Cloud API</small></div></div>
+  </div></div></div></div>
+
+<!-- 360dialog: Nummer per SMS bestätigen -->
+<div class="scene" id="sms"><div class="who"><b style="background:#0d9488"></b>360dialog, unser WhatsApp-Anbieter</div>
+ <div class="win"><div class="bar"><i></i><i></i><i></i><div class="url">hub.360dialog.com</div></div><div class="body">
+  <div class="form" style="width:560px"><div class="h360"><span>360</span>Onboard new number</div><h3>Verify your phone number</h3>
+   <div class="s">We will send a code to +49 151 23456789</div>
+   <div style="display:flex;gap:10px"><div class="opt" id="r_sms" style="flex:1"><span class="r"></span>Text message (SMS)</div><div class="opt" style="flex:1"><span class="r"></span>Voice call</div></div>
+   <div class="code" id="scode"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+   <div class="btn" id="b_sms">Verify</div>
+   <div style="margin-top:12px;font-size:14.5px"><span class="dimmed" style="text-decoration:underline">Skip verification and continue</span><span class="no">nicht klicken</span></div>
+  </div></div></div></div>
+
+<!-- 360dialog: Meta Business Signup -->
+<div class="scene" id="signup"><div class="who"><b style="background:#0d9488"></b>360dialog, unser WhatsApp-Anbieter</div>
+ <div class="win"><div class="bar"><i></i><i></i><i></i><div class="url">hub.360dialog.com</div></div>
+  <div class="sg"><div class="top">Max Mustermann Versicherungen<small>Onboard <span class="flag de"></span>+49 151 23456789</small></div>
+   <div class="prog"><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i></div>
+   <div class="sgbox"><h4>Meta Business Signup</h4><div class="sgl">
+    <div class="steps"><div style="font-weight:600;color:#0b1220">1. Continue to connect your account</div><div>2. Add your WhatsApp phone number<div class="warn">When selecting the phone number, make sure <b>not</b> to select <b>Display Name only</b>.</div></div><div>3. Select your business assets</div><div>4. Review what you'll share</div></div>
+    <div class="prev"><div style="width:300px;background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:12px"><div class="hero" style="height:60px;margin-bottom:10px"></div><div style="font-weight:700;font-size:14px">Seamlessly connect your account to 360Dialog</div><div style="display:flex;justify-content:flex-end;margin-top:10px"><span style="background:#0866ff;color:#fff;font-size:12px;border-radius:6px;padding:4px 10px">Continue</span></div></div></div>
+   </div></div>
+   <div class="foot"><span>Meta's Embedded Signup takes place in a pop-up window. Make sure they are allowed before proceeding.</span><div style="display:flex;gap:10px"><div class="btn ghost" style="margin:0">Back</div><div class="btn" id="b_es" style="margin:0;background:#2563eb">Embedded Signup</div></div></div>
+  </div></div></div>
+
+<!-- Fenster von Meta -->
+<div class="scene" id="meta"><div class="who"><b style="background:#4f46e5"></b>Fenster von Meta (Facebook)</div>
+ <div class="win dimmed"><div class="bar"><i></i><i></i><i></i><div class="url">hub.360dialog.com</div></div><div class="sg"><div class="top">Max Mustermann Versicherungen</div><div class="prog"><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i></div></div></div>
+ <div class="pop"><div class="bar"><i></i><i></i><i></i><div class="url">facebook.com</div></div>
+  <div class="ph"><span class="m">Meta</span>Facebook Login for Business</div>
+  <!-- 1 -->
+  <div class="sub2" id="m1"><div class="pc"><div class="hero"></div><h3>Seamlessly connect your account to 360Dialog</h3>
+   <div class="s">This onboarding process will walk you through registering and connecting your business account to your partner.</div>
+   <div style="margin-top:12px;font-weight:600">You'll be able to:</div><div class="perm">💬 Communicate with customers at scale</div><div class="perm">↗ Send messages with optimizations</div></div>
+   <div class="pf"><div class="btn ghost">Cancel</div><div class="btn meta" id="b_m1">Continue</div></div></div>
+  <!-- 2 -->
+  <div class="sub2" id="m2"><div class="pc"><h3>Add your WhatsApp phone number</h3><div class="s">Choose the phone number you want to use.</div>
+   <div class="opt m sel" style="margin-top:16px"><span class="r"></span><div><b>+49 151 23456789</b><small>Max Mustermann Versicherungen</small></div></div>
+   <div class="opt m dimmed"><span class="r"></span><div><b>Display Name only</b></div><span class="no">nicht wählen</span></div></div>
+   <div class="pf"><div class="btn ghost">Back</div><div class="btn meta" id="b_m2">Next</div></div></div>
+  <!-- 3 -->
+  <div class="sub2" id="m3"><div class="pc"><h3>Select the business assets to share with 360dialog</h3>
+   <div class="lab">Business portfolio</div><div class="selbox" id="sel_bp">Max Mustermann Versicherungen</div>
+   <div class="lab">WhatsApp account</div><div class="selbox" id="sel_wa"><span id="sel_wa_t">Select a WhatsApp account</span>
+    <div class="dd" id="wadd" style="width:100%"><div id="wa_create" style="font-weight:600;color:#0866ff">+ Create a WhatsApp account</div></div></div></div>
+   <div class="pf"><div class="btn ghost">Back</div><div class="btn meta" id="b_m3">Next</div></div></div>
+  <!-- 4 -->
+  <div class="sub2" id="m4"><div class="pc" style="padding-top:14px"><h3 style="font-size:19px">Enter business information for new assets</h3>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
+    <div><div class="lab">Name</div><div class="selbox noarr">Max Mustermann Versicherungen</div></div>
+    <div><div class="lab">Category</div><div class="selbox">Professional Services</div></div>
+    <div><div class="lab">Country</div><div class="selbox">Germany</div></div>
+    <div><div class="lab">Website (optional)</div><div class="selbox noarr" style="color:#94a3b8">https://</div></div>
+   </div>
+   <div class="lab">Time zone</div><div class="selbox" id="tz"><span id="tz_t">(GMT+01:00) Europe/Vienna</span>
+    <div class="dd" id="tzdd" style="width:100%;top:-128px"><div>(GMT+01:00) Europe/Amsterdam</div><div id="tz_b">(GMT+01:00) Europe/Berlin</div><div>(GMT+01:00) Europe/Vienna</div></div></div></div>
+   <div class="pf"><div class="btn ghost">Back</div><div class="btn meta" id="b_m4">Next</div></div></div>
+  <!-- 5 -->
+  <div class="sub2" id="m5"><div class="pc" style="padding-top:14px"><h3 style="font-size:19px">Review what you'll share with 360dialog</h3>
+   <div class="rv"><span>Business portfolio</span>Max Mustermann Versicherungen</div>
+   <div class="rv"><span>WhatsApp account</span>Max Mustermann Versicherungen</div>
+   <div class="rv"><span>Messaging account</span>+49 151 23456789</div>
+   <div style="margin-top:10px;font-size:14px;font-weight:600">360dialog will be able to:</div>
+   <div class="perm">✓ Manage your WhatsApp accounts</div>
+   <div class="perm">✓ Access your Facebook ads and related stats <span class="hint">ändert nichts an Ihren Anzeigen</span></div></div>
+   <div class="pf"><div class="btn ghost">Back</div><div class="btn meta" id="b_m5">Confirm</div></div></div>
+  <!-- 6 -->
+  <div class="sub2" id="m6"><div class="pc"><div class="okc">✓</div><h3>Your account is connected to 360Dialog</h3>
+   <div style="margin-top:14px;font-weight:600">Improve your experience</div>
+   <div class="chk"><i class="on" id="c1">✓</i>Instruct Meta to automatically identify order and lead events</div>
+   <div class="chk"><i class="on" id="c2">✓</i>Share Cloud API events</div></div>
+   <div class="pf"><div class="btn meta" id="b_m6">Finish</div></div></div>
+ </div></div>
+
+<!-- WhatsApp Business App: QR-Code -->
+<div class="scene" id="qr"><div class="who"><b style="background:#25d366"></b>Nummer aus der WhatsApp Business App</div>
+ <div class="win" style="display:flex;align-items:center;justify-content:center;background:#f8fafc"><div class="qrwrap" style="margin-top:20px">
+  <div style="text-align:center"><canvas id="qrc" width="220" height="220" style="border:1.5px solid var(--border);border-radius:14px;background:#fff;padding:12px"></canvas>
+   <div style="font-size:19px;font-weight:600;margin-top:14px">Code mit der WhatsApp Business App scannen</div>
+   <div style="font-size:16px;color:var(--muted);margin-top:6px">Chatverlauf und Kontakte lassen sich übernehmen</div></div>
+  <div class="phone"><div class="scr">
+   <div style="padding:52px 14px 0;font-size:15px;color:#54606f;text-align:center">WhatsApp Business</div>
+   <div class="notif" id="nt"><b>WhatsApp Business</b><div style="margin-top:3px;color:#3a4660">Verbindungsanfrage: Tippen, um den QR-Code zu scannen</div></div>
+   <div class="cam" id="cam"><div class="frame"><canvas id="qrs" width="120" height="120"></canvas></div></div>
+   <div class="ok" id="okp"><div class="c">✓</div>Verbunden</div>
+  </div></div>
+ </div></div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const NOBADGE=['bereit'];
+function show(id){document.querySelectorAll('.scene').forEach(s=>s.classList.toggle('on',s.id===id));$('badge').style.display=NOBADGE.includes(id)?'none':'block';}
+async function type(el,txt,ms=70,mask=false){el.classList.add('act');el.textContent='';for(const ch of txt){el.textContent+=mask?'•':ch;await new Promise(r=>setTimeout(r,ms));}el.classList.remove('act');}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function digits(box,d,ms=180){const s=box.querySelectorAll('span');for(let i=0;i<s.length;i++){s[i].textContent=d[i];s[i].style.borderColor='#0f766e';await sleep(ms);}}
+function qr(cv,scale){const c=cv.getContext('2d'),n=25,s=(cv.width-(scale?0:24))/n,o=scale?0:12;let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};c.fillStyle='#fff';c.fillRect(0,0,cv.width,cv.height);c.fillStyle='#0b1220';
+ for(let y=0;y<n;y++)for(let x=0;x<n;x++){const f=(x<7&&y<7)||(x>=n-7&&y<7)||(x<7&&y>=n-7);if(f){const ax=x<7?x:x-(n-7),ay=y<7?y:y-(n-7);const on=ax==0||ax==6||ay==0||ay==6||(ax>=2&&ax<=4&&ay>=2&&ay<=4);if(on)c.fillRect(o+x*s,o+y*s,s,s)}else if(rnd()>.52)c.fillRect(o+x*s,o+y*s,s,s)}}
+qr($('qrc'));qr($('qrs'),true);
+function meta(n){show('meta');document.querySelectorAll('#meta .sub2').forEach(e=>e.classList.toggle('on',e.id==='m'+n));}
+window.S={show,meta,
+ bereit:async()=>{show('bereit');for(const li of document.querySelectorAll('#bereit .li')){await sleep(1100);li.classList.add('on');}},
+ mail:async()=>{show('mail');$('mailurl').textContent='Posteingang';$('mailbox').style.display='flex';$('pwpage').style.display='none';},
+ pw:async()=>{$('mailurl').textContent='hub.360dialog.com';$('mailbox').style.display='none';$('pwpage').style.display='flex';await sleep(500);await type($('pw1'),'geheim2026',55,true);await sleep(200);await type($('pw2'),'geheim2026',55,true);},
+ login:async()=>{show('login');await sleep(600);await type($('le'),'max.mustermann@gmail.com',40);await sleep(200);await type($('lp'),'geheim2026',55,true);},
+ verify:async()=>{show('verify');await sleep(1200);await digits($('vcode'),'583027');},
+ number:async()=>{show('number');},
+ ccopen:()=>{$('ccdd').classList.add('on');$('cc').classList.add('act');},
+ ccde:async()=>{$('cc_de').classList.add('hl');await sleep(250);$('ccdd').classList.remove('on');$('cc').classList.remove('act');$('ccf').className='flag de';$('cct').textContent='+49';await sleep(400);await type($('pn'),'151 23456789',80);},
+ question:async()=>{show('question');document.querySelectorAll('#question .opt').forEach(o=>o.classList.remove('sel'));},
+ sms:async()=>{show('sms');},
+ smscode:async()=>{await sleep(900);await digits($('scode'),'481902');},
+ signup:async()=>{show('signup');},
+ m:n=>meta(n),
+ waopen:()=>{$('wadd').classList.add('on');$('sel_wa').classList.add('act');},
+ wacreate:()=>{$('wadd').classList.remove('on');$('sel_wa').classList.remove('act');$('sel_wa_t').textContent='Create a WhatsApp account';$('sel_wa_t').style.fontWeight='600';},
+ tzopen:()=>{$('tzdd').classList.add('on');$('tz').classList.add('act');},
+ tzb:()=>{$('tz_b').classList.add('hl');setTimeout(()=>{$('tzdd').classList.remove('on');$('tz_t').textContent='(GMT+01:00) Europe/Berlin';$('tz_t').style.fontWeight='700';},250);},
+ uncheck:id=>{$(id).classList.remove('on');$(id).textContent='';},
+ qr:async()=>{show('qr');await sleep(1600);$('nt').classList.add('on');await sleep(2200);$('nt').classList.remove('on');$('cam').classList.add('on');await sleep(2200);$('okp').classList.add('on');},
+ sel:id=>$(id).classList.add('sel'), chk:id=>$(id).classList.add('on'),
+ press:async id=>{$(id).classList.add('press');await sleep(160);$(id).classList.remove('press');}
+};
+</script></body></html>

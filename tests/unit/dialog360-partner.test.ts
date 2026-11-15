@@ -46,7 +46,9 @@ describe("360dialog Partner: signierter state", () => {
     const [payload, sig] = s.split(".");
     const other = Buffer.from(JSON.stringify({ c: "cust2", u: null, e: Date.now() + 60_000 })).toString("base64url");
     expect(verifyState(`${other}.${sig}`)).toBeNull();
-    expect(verifyState(`${payload}.x${sig.slice(1)}`)).toBeNull();
+    // Erstes Zeichen sicher verändern (vorher „x“: schlug fehl, wenn die Signatur schon mit x begann)
+    const flipped = (sig[0] === "x" ? "y" : "x") + sig.slice(1);
+    expect(verifyState(`${payload}.${flipped}`)).toBeNull();
     expect(verifyState("")).toBeNull();
     expect(verifyState("abc")).toBeNull();
     process.env.AUTH_SECRET = "anderes-secret-anderes-secret-anderes-1234";

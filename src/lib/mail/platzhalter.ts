@@ -1,6 +1,6 @@
 // Platzhalter in E-Mail-Vorlagen (rein, auch im Browser nutzbar).
 
-import { a, anredeName, anredeZeile, kontaktParts, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
+import { a, anredeName, anredeZeile, kontaktParts, type AnredeKontakt, type Ansprache, grusswort } from "@/lib/ansprache";
 import { outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
 
 export const PLATZHALTER = [
@@ -197,7 +197,10 @@ export function werteFuer(
   const kontakt: AnredeKontakt = { fullName: name, firstName: lead.firstName, lastName: lead.lastName, salutation: lead.salutation };
   const parts = kontaktParts(kontakt);
   const an = opts.ansprache ?? "sie";
-  const betreffName = anredeName(an, kontakt);
+  // E-Mails (Ole, 15.11.2026): bei Sie nur mit bekannter Anrede „Frau Winter“, sonst neutral („Guten Tag,“ und
+  // Betreff „Kurz zu …“), nie „Nina Winter“. Bei Du der Vorname.
+  const ohneAnrede = an === "sie" && !parts.salutation;
+  const betreffName = ohneAnrede ? null : anredeName(an, kontakt);
   const [r1, r2] = rueckrufZeiten(opts.now);
   return {
     vorname: parts.first,
@@ -205,7 +208,7 @@ export function werteFuer(
     name,
     produkt: (lead.source ?? "").trim() || (opts.ansprache === "du" ? "deine Versicherung" : "Ihre Versicherung"),
     meinname,
-    anrede: anredeZeile(an, kontakt).replace(/,$/, ""),
+    anrede: (ohneAnrede ? `${grusswort(an)},` : anredeZeile(an, kontakt)).replace(/,$/, ""),
     terminlink: opts.terminlink ?? null,
     betreff_name: betreffName ? `${betreffName}, ` : "",
     ihr_produkt: ihrProdukt(lead.source, an),

@@ -27,7 +27,7 @@ import Link from "next/link";
 import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 import { ERROR_HELP, parseConnectPath } from "@/lib/whatsapp/connect-guide";
 import { WhatsAppGuide } from "@/components/whatsapp-guide";
-import { WaCheckButton, WaResetButton } from "./wa-check";
+import { WaCheckButton, WaPendingRefresh, WaResetButton } from "./wa-check";
 import { WaInvited } from "./wa-invited";
 import { LeadTimesForm, SourcePicker } from "@/components/calendar-sources";
 import { loadCalendarSetup } from "@/lib/calendar/setup-view";
@@ -687,13 +687,13 @@ function WhatsAppStep({
         </div>
       ) : invited ? (
         <div>
-          <WaInvited email={email} readOnly={readOnly} />
+          <WaInvited email={email} readOnly={readOnly} path={parseConnectPath(weg)} />
           <WaCheckButton readOnly={readOnly} />
           <WaResetButton readOnly={readOnly} />
         </div>
       ) : msg?.ok ? null : pending ? (
         <p className="text-sm font-medium text-amber-700">
-          Ihre Nummer wird gerade eingerichtet. Das dauert meist nur wenige Minuten. Sie müssen nichts weiter tun, wir melden uns, falls etwas fehlt.
+          Fast geschafft: Ihre Nummer wird bei WhatsApp noch eingerichtet. Das dauert meist nur wenige Minuten, dann steht hier von selbst „Verbunden“. Sie müssen nichts weiter tun, wir melden uns, falls etwas fehlt.
         </p>
       ) : (
         <>
@@ -714,6 +714,7 @@ function WhatsAppStep({
       )}
       {pending ? (
         <>
+          <WaPendingRefresh />
           <WaCheckButton readOnly={readOnly} intro={false} />
           <WaResetButton readOnly={readOnly} />
         </>

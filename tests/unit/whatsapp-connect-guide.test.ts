@@ -11,6 +11,7 @@ import {
   PROVIDER_QUESTION,
   PROVIDER_UNSURE,
   PROVIDER_YES,
+  stepsAfterInvite,
 } from "@/lib/whatsapp/connect-guide";
 
 describe("Anleitung WhatsApp verbinden", () => {
@@ -44,8 +45,55 @@ describe("Anleitung WhatsApp verbinden", () => {
   it("Business-App-Weg: QR-Code und Hinweis auf die Business-App-Auswahl", () => {
     const g = GUIDES.business;
     expect(g.steps.some((s) => /QR-Code/.test(s.title))).toBe(true);
-    expect(g.steps.some((s) => /WhatsApp Business App verbunden/.test(s.title + s.text))).toBe(true);
+    expect(g.steps.some((s) => s.text.includes("Sie wählen: „Yes, Business app“"))).toBe(true);
+    // kein SMS-Code beim Business-App-Weg
+    expect(g.steps.some((s) => /Verify your phone number/.test(s.title))).toBe(false);
     expect(g.checklist.join(" ")).toMatch(/7 Tage/);
+  });
+
+  it("Ablauf wie im echten Durchlauf (Ole, 15.11.2026): Einladung, Log in mit Code, +49, Embedded Signup, Meta, Fast geschafft", () => {
+    for (const p of CONNECT_PATHS) {
+      const all = GUIDES[p].steps.map((s) => `${s.title} ${s.text} ${s.pitfall ?? ""}`);
+      const idx = (re: RegExp) => all.findIndex((t) => re.test(t));
+      const order = [
+        /Jetzt WhatsApp verbinden/,
+        /Join 360Dialog Hub/,
+        /„Log in“/,
+        /Verify it's you/,
+        /USA \(\+1\).*Deutschland \(\+49\)/,
+        /already on WhatsApp/,
+        /Embedded Signup/,
+        /Seamlessly connect your account to 360Dialog/,
+        /Add your WhatsApp phone number/,
+        /Create a WhatsApp account/,
+        /Europe\/Berlin/,
+        /Review what you'll share/,
+        /Share Cloud API events/,
+        /Fast geschafft/,
+      ].map(idx);
+      expect(order.every((i) => i >= 0), `${p}: ${order.join(",")}`).toBe(true);
+      expect([...order].sort((a, b) => a - b)).toEqual(order);
+      expect(all.join(" ")).toMatch(/Instruct Meta to automatically identify order and lead events/);
+      expect(all.join(" ")).toMatch(/Verbindung prüfen/);
+      expect(all.join(" ")).toMatch(/Use Meta-provided number/);
+    }
+    // Neue Nummer: SMS-Code vor dem Meta-Fenster
+    const neu = GUIDES.neu.steps.map((s) => s.title);
+    expect(neu.findIndex((t) => /Verify your phone number/.test(t))).toBeLessThan(neu.findIndex((t) => /Embedded Signup/.test(t)));
+    // Bilder aus dem echten Durchlauf an den passenden Schritten
+    const img = (re: RegExp) => GUIDES.neu.steps.find((s) => re.test(s.title))?.image?.src;
+    expect(img(/E-Mail von 360dialog/)).toMatch(/01-einladung/);
+    expect(img(/already on WhatsApp/)).toMatch(/04-schon-bei-whatsapp/);
+    expect(img(/Embedded Signup/)).toMatch(/06-meta-signup/);
+  });
+
+  it("Einladungsansicht: Schritte beginnen mit der Anmeldung bei 360dialog", () => {
+    for (const p of CONNECT_PATHS) {
+      const rest = stepsAfterInvite(p);
+      expect(rest[0].title).toMatch(/Log in/);
+      expect(rest.some((s) => /Join 360Dialog Hub/.test(s.text))).toBe(false);
+      expect(rest[rest.length - 1].where).toBe("app");
+    }
   });
 
   it("Privat-Weg: Löschen zuerst, Alternative WhatsApp Business genannt", () => {

@@ -17,7 +17,7 @@ import { fmtDayShort, logLeadHistory } from "@/lib/lead-history";
 import { canChooseUnreachable, isLostReason, lostReason, needsLostWarning, CALL_ATTEMPTS_TARGET, type LostReasonKey } from "@/lib/lead-lost";
 import { NEXT_STEP_TASK_NOTE } from "@/lib/lead-next-step";
 import { nextStepStateOf } from "@/lib/lead-next-step-server";
-import { fuelleMitSignatur, werteFuer } from "@/lib/mail/platzhalter";
+import { fuelle, fuelleMitSignatur, werteFuer } from "@/lib/mail/platzhalter";
 import { mailFeaturesOffFor, postfachOf, sendViaPostfach } from "@/lib/mail/postfach";
 import { planTerminErinnerung } from "@/lib/mail/termin-erinnerung";
 import { STANDARD_VORLAGEN_JE } from "@/lib/mail/vorlagen";
@@ -300,7 +300,7 @@ export async function notReachedTextsAction(leadId: string): Promise<{ ok: true;
   ]
     .filter(Boolean)
     .join("\n\n");
-  return { ok: true, whatsapp, subject: fuelleMitSignatur(v.subject, werte).trim(), body: fuelleMitSignatur(v.body, werte) };
+  return { ok: true, whatsapp, subject: fuelle(v.subject, werte).trim(), body: fuelleMitSignatur(v.body, werte) };
 }
 
 // ─── Wie geht es weiter? ───────────────────────────────────────────────────
