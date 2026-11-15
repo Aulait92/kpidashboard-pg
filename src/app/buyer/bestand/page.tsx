@@ -24,6 +24,7 @@ import { groupStats, loadCampaignStats, loadPeriodTiles, quote } from "@/lib/bes
 import { loadConsentSettings, loadSuppression, subjectOf } from "@/lib/bestand/einwilligung-server";
 import { consentRequestByMailAllowed } from "@/lib/bestand/einwilligung";
 import { ConsentBadges, ConsentRowAction } from "@/components/bestand/consent-actions";
+import { isExclusiveAgent } from "@/lib/bestand/befugnis";
 import { loadCustomerContracts } from "@/lib/vertraege";
 
 export const dynamic = "force-dynamic";
@@ -52,7 +53,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
   if (ctx.teamRole !== "owner") redirect("/buyer");
   const c = await prisma.customer.findUnique({
     where: { id: ctx.customerId },
-    select: { existingCustomersEnabled: true, bestandRequestedAt: true, bestandCancelAt: true, billingInterval: true, empfehlungEnabled: true },
+    select: { existingCustomersEnabled: true, bestandRequestedAt: true, bestandCancelAt: true, billingInterval: true, empfehlungEnabled: true, vermittlerTyp: true },
   });
   if (!c) redirect("/buyer");
   // Ohne gebuchtes Modul: freundlicher Hinweis statt Sperre ohne Erklärung
@@ -258,6 +259,14 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                   Gerade keine erreichbaren Kunden (alle kürzlich angeschrieben, ohne Einwilligung oder ohne Kontaktdaten).{" "}
                   <Link href="/buyer/bestand/einwilligungen" className="underline">
                     Einwilligungen &amp; Versand
+                  </Link>
+                </li>
+              ) : null}
+              {isExclusiveAgent(c.vermittlerTyp) ? (
+                <li className="text-xs text-[color:var(--muted)] sm:col-span-2" data-bestand-sparten-hint>
+                  „Lücke schließen“ schlagen wir nur für Sparten vor, die Sie anbieten (als Ausschließlichkeitsvertreter keine Produkte anderer Versicherer).{" "}
+                  <Link href="/buyer/bestand/einwilligungen#sparten" className="underline">
+                    Meine Sparten
                   </Link>
                 </li>
               ) : null}

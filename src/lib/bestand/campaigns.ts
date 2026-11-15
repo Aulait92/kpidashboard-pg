@@ -21,6 +21,7 @@ import { loadConsentSettings, loadSuppression, optOutExisting, subjectOf, SUBJEC
 import { afterSend, bounceCheck, innerGap, isBounceError, mailSlots, providerDailyLimit, type SendOutcome, type ThrottleState } from "@/lib/bestand/mail-drossel";
 import { buildCampaignMail, campaignMailFooter, defaultCampaignMail, fillCampaignMail, imprintFromWebsiteInfo, ohneGedankenstriche } from "@/lib/bestand/kampagnen-mail";
 import { classifyReply, isAutoReplyText } from "@/lib/vertrieb/sentiment";
+import { isExclusiveAgent, mayOffer, offeredLines } from "@/lib/bestand/befugnis";
 
 export type Occasion = "cross_sell" | "review" | "birthday" | "renewal" | "empfehlung";
 export type Segment = { has?: string[]; lacks?: string[]; birthdayDays?: number; renewalDays?: number };
@@ -186,16 +187,30 @@ export const TOPIC_LABEL: Record<string, string> = {
   Rechtsschutz: "Rechtsschutz", Pflege: "Pflegevorsorge",
 };
 
+/**
+ * Sparten, in die Cross-Selling vorgeschlagen werden darf (Ausschließlichkeitsvertreter: Profil, sonst Sparten aus dem
+ * eigenen Bestand; null = keine Einschränkung). So schlägt die App keine Produkte anderer Versicherer vor.
+ */
+export async function offeredFor(customerId: string): Promise<Set<string> | null> {
+  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerTyp: true, bestandSparten: true } });
+  if (!c || !isExclusiveAgent(c.vermittlerTyp)) return null;
+  const lines = c.bestandSparten.length
+    ? []
+    : (await prisma.existingContract.findMany({ where: { existingCustomer: { customerId } }, distinct: ["line"], select: { line: true } })).map((x) => x.line);
+  return offeredLines(c.vermittlerTyp, c.bestandSparten, lines);
+}
+
 export type Opportunity = { occasion: Occasion; segment: Segment; topic: string | null; title: string; count: number; whatsapp: number; email: number; excluded: number };
 
 /** „Chancen“: die größten Lücken und anstehende Anlässe mit der Zahl rechtlich erreichbarer Kunden. */
 export async function opportunities(customerId: string, now = new Date()): Promise<Opportunity[]> {
-  const [cands, settings, sup, wa, c] = await Promise.all([
+  const [cands, settings, sup, wa, c, offered] = await Promise.all([
     loadCandidates(customerId, now),
     loadConsentSettings(customerId),
     loadSuppression(customerId),
     prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { status: true } }),
     prisma.customer.findUnique({ where: { id: customerId }, select: { empfehlungEnabled: true } }),
+    offeredFor(customerId),
   ]);
   const mode = effectiveMode("whatsapp_first", wa?.status === "connected");
   const plan = (o: Occasion, s: Segment) => planFromCandidates(cands, o, s, mode, settings, sup, now);
@@ -205,6 +220,8 @@ export async function opportunities(customerId: string, now = new Date()): Promi
   };
   const out: Opportunity[] = [];
   for (const [has, lacks] of NEXT_BEST) {
+    // Ausschließlichkeitsvertreter: nur Sparten, die er anbietet
+    if (!mayOffer(offered, lacks)) continue;
     const o = opp("cross_sell", { has: [has], lacks: [lacks] }, TOPIC_LABEL[lacks] ?? lacks, `${has} ohne ${lacks}`);
     if (o.count) out.push(o);
   }
@@ -224,16 +241,18 @@ export async function opportunities(customerId: string, now = new Date()): Promi
  * angeschrieben wurden, nur ohne Abmeldung und mit Einwilligung (Cross-Selling geht ohnehin nur mit Einwilligung).
  */
 export async function potentialHint(customerId: string, now = new Date()): Promise<{ title: string; count: number; segment: Segment; topic: string } | null> {
-  const [all, settings, sup, wa] = await Promise.all([
+  const [all, settings, sup, wa, offered] = await Promise.all([
     loadCandidates(customerId, now),
     loadConsentSettings(customerId),
     loadSuppression(customerId),
     prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { status: true } }),
+    offeredFor(customerId),
   ]);
   const never = all.filter((c) => !c.lastCampaignAt);
   const mode = effectiveMode("whatsapp_first", wa?.status === "connected");
   let best: { title: string; count: number; segment: Segment; topic: string } | null = null;
   for (const [has, lacks] of NEXT_BEST) {
+    if (!mayOffer(offered, lacks)) continue;
     const seg = { has: [has], lacks: [lacks] };
     const n = planFromCandidates(never, "cross_sell", seg, mode, settings, sup, now).recipients.filter((r) => r.basis === "einwilligung").length;
     if (n && (!best || n > best.count)) best = { title: `${n.toLocaleString("de-DE")} Kunden ohne ${TOPIC_LABEL[lacks] ?? lacks} noch nicht angeschrieben`, count: n, segment: seg, topic: TOPIC_LABEL[lacks] ?? lacks };

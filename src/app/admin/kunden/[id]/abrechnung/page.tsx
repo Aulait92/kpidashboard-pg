@@ -29,7 +29,7 @@ export default async function KundenAbrechnung({ params, searchParams }: { param
   const { pause: pauseError, zusatz, retainer, budget, produkt, fehler } = await searchParams;
   const c = await prisma.customer.findUnique({
     where: { id },
-    select: { id: true, name: true, stripeCustomerId: true, paymentOverdueSince: true, paymentWarnedAt: true, salesContact: { select: { id: true } } },
+    select: { id: true, name: true, archived: true, stripeCustomerId: true, paymentOverdueSince: true, paymentWarnedAt: true, salesContact: { select: { id: true } } },
   });
   if (!c) notFound();
   let invoices: CustomerInvoice[] = [];
@@ -39,7 +39,12 @@ export default async function KundenAbrechnung({ params, searchParams }: { param
       return [];
     });
   }
-  const [pause, leadCount] = await Promise.all([currentPause(id), prisma.lead.count({ where: { customerId: id, erasedAt: null } })]);
+  const [pause, leadCount, bestandCount, lastExport] = await Promise.all([
+    currentPause(id),
+    prisma.lead.count({ where: { customerId: id, erasedAt: null } }),
+    prisma.existingCustomer.count({ where: { customerId: id } }),
+    prisma.auditLog.findFirst({ where: { customerId: id, action: "customer.export" }, orderBy: { at: "desc" }, select: { at: true } }),
+  ]);
 
   return (
     <div className="grid gap-5 lg:grid-cols-2">
@@ -56,7 +61,14 @@ export default async function KundenAbrechnung({ params, searchParams }: { param
         <ProductBookingsCard customerId={id} message={produkt ?? null} failed={!!fehler && !!produkt} />
         <AddOnsCard customerId={id} message={zusatz ?? null} failed={!!fehler && !!zusatz} />
         <AdminPauseCard customerId={id} contactId={c.salesContact?.id ?? ""} pause={pause} error={pauseError ?? null} today={todayBerlin()} />
-        <EraseCustomerCard customerId={id} customerName={c.name} leadCount={leadCount} />
+        <EraseCustomerCard
+          customerId={id}
+          customerName={c.name}
+          leadCount={leadCount}
+          bestandCount={bestandCount}
+          archived={c.archived}
+          lastExport={lastExport ? fmt(lastExport.at) : null}
+        />
       </div>
 
       <Card>

@@ -210,9 +210,13 @@ model Customer {
   // Bestätigung zu § 7 Abs. 3 UWG: Adressen aus Vertragsabschlüssen, Hinweis auf Widerspruch bei Erhebung. Ohne sie gehen ohne Einwilligung keine Mails raus.
   bestandUwgConfirmedAt          DateTime?
   bestandUwgConfirmedById        String?
-  // Bestätigung beim ersten Kampagnenstart: Nutzung der Kundendaten im Rahmen des Vertretervertrags bzw. der Befugnisse
+  // Bestätigung beim ersten Kampagnenstart: Nutzung der Kundendaten im Rahmen des Vertretervertrags bzw. der Befugnisse.
+  // Seit 15.11.2026 für gebundene Vertreter schon vor dem ersten Import, mit Textversion (lib/bestand/befugnis.ts)
   bestandAgentConfirmedAt        DateTime?
   bestandAgentConfirmedById      String?
+  bestandAgentConfirmedVersion   String?
+  // Sparten, die der Ausschließlichkeitsvertreter anbietet (Vorschläge „Lücke schließen“ nur dafür); leer = aus dem Bestand
+  bestandSparten                 String[]  @default([])
   // Pflichtangaben/Impressum unter jeder Kampagnen-Mail (vorbefüllt aus dem Impressum der Website)
   bestandMailImprint             String?
   // Hinweis „Einwilligungen aus dem pauschalen Import prüfen“ bestätigt

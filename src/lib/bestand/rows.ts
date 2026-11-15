@@ -224,6 +224,9 @@ const LINE_RULES: [RegExp, string][] = [
   [/reise/, "Reise"],
 ];
 
+/** Alle Sparten, die der Import erkennt (plus „Sonstiges“). */
+export const LINE_NAMES: readonly string[] = [...new Set(LINE_RULES.map(([, l]) => l))];
+
 export function normalizeLine(raw: string): string | null {
   const s = raw.toLowerCase();
   if (!s.trim()) return null;

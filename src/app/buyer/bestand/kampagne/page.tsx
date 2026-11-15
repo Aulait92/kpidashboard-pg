@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/buyer-shell";
 import { Button, ButtonLink, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
-import { campaignMailFor, channelAvailability, effectiveMode, NEEDS_EMPFEHLUNG, OCCASIONS, planAudience, TOPIC_LABEL, type Occasion, type Segment } from "@/lib/bestand/campaigns";
+import { campaignMailFor, offeredFor, channelAvailability, effectiveMode, NEEDS_EMPFEHLUNG, OCCASIONS, planAudience, TOPIC_LABEL, type Occasion, type Segment } from "@/lib/bestand/campaigns";
 import { rankTemplates, renderTemplate, templateTextFor, fillNames, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { templateNamesOf } from "@/lib/whatsapp/template-plan";
 import { startCampaignAction } from "../actions";
@@ -20,6 +20,7 @@ import { loadConsentSettings } from "@/lib/bestand/einwilligung-server";
 import { defaultCampaignMail, imprintFromWebsiteInfo } from "@/lib/bestand/kampagnen-mail";
 import { needsSubmit, templateNotice, templateState, TEMPLATE_STATE_LABEL } from "@/lib/whatsapp/vorlagen-hinweis";
 import { advisorPerson } from "@/lib/lead-anrede";
+import { agentConfirmText, isAgencyBound, mayOffer, needsAgentConfirm } from "@/lib/bestand/befugnis";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ const warnBox = `${box} border-amber-200 bg-amber-50 text-amber-900`;
 export default async function CampaignSetup({ searchParams }: { searchParams: Promise<{ anlass?: string; segment?: string; thema?: string; kanal?: string; fehler?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
-  const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { existingCustomersEnabled: true, empfehlungEnabled: true, name: true, bestandAgentConfirmedAt: true, mailFeaturesOff: true } });
+  const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { existingCustomersEnabled: true, empfehlungEnabled: true, name: true, bestandAgentConfirmedAt: true, bestandAgentConfirmedVersion: true, vermittlerTyp: true, bestandSparten: true, mailFeaturesOff: true } });
   if (ctx.teamRole !== "owner") redirect("/buyer");
   if (!c?.existingCustomersEnabled) redirect("/buyer/bestand");
   const sp = await searchParams;
@@ -47,7 +48,7 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   }
   const topic = sp.thema ?? (segment.lacks?.[0] ? (TOPIC_LABEL[segment.lacks[0]] ?? segment.lacks[0]) : null);
   const purpose = OCCASIONS[occasion].purpose as NoticePurpose;
-  const [avail, templates, allTemplates, quota, mailQuota, packBlocker, settings, sender] = await Promise.all([
+  const [avail, templates, allTemplates, quota, mailQuota, packBlocker, settings, sender, offered] = await Promise.all([
     channelAvailability(ctx.customerId, occasion, ctx.userId),
     prisma.messageTemplate.findMany({ where: { customerId: ctx.customerId, purpose, status: "approved" }, orderBy: { updatedAt: "desc" } }),
     prisma.messageTemplate.findMany({ where: { customerId: ctx.customerId, purpose: { startsWith: "campaign_" } }, select: { purpose: true, status: true } }),
@@ -56,7 +57,10 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
     packPurchaseBlocker(ctx.customerId),
     loadConsentSettings(ctx.customerId),
     ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true } }) : null,
+    offeredFor(ctx.customerId),
   ]);
+  // Ausschließlichkeitsvertreter: Cross-Selling in eine Sparte, die er nicht anbietet → deutlicher Hinweis
+  const foreignLines = occasion === "cross_sell" ? (segment.lacks ?? []).filter((l) => !mayOffer(offered, l)) : [];
   const used = effectiveMode(mode, avail.waAvailable);
   const plan = await planAudience(ctx.customerId, occasion, segment, { mode, waAvailable: avail.waAvailable });
   const ids = plan.recipients.map((r) => r.id);
@@ -114,6 +118,15 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
         ← Bestand
       </Link>
       <PageHeader title={`Kampagne: ${OCCASIONS[occasion].label}`} subtitle={OCCASIONS[occasion].hint} />
+      {foreignLines.length ? (
+        <p className={`mb-5 ${warnBox}`} data-campaign-foreign-line>
+          {foreignLines.join(", ")} steht nicht bei den Sparten, die Sie anbieten. Als Ausschließlichkeitsvertreter dürfen Sie in der Regel nur Produkte Ihres
+          Versicherers vermitteln. Bitte prüfen Sie das vor dem Start.{" "}
+          <Link href="/buyer/bestand/einwilligungen#sparten" className="font-semibold underline">
+            Meine Sparten
+          </Link>
+        </p>
+      ) : null}
       {sp.fehler ? (
         <p className={`mb-5 ${box} border-rose-200 bg-rose-50 text-rose-900`} data-campaign-error>
           {sp.fehler}
@@ -353,17 +366,19 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
         ) : null}
         {counts.email > 0 && mailQuota.remaining <= 0 ? <p className={warnBox}>Das E-Mail-Kontingent für diesen Monat ist aufgebraucht ({de(mailQuota.limit)} E-Mails). Ab dem 1. geht es weiter.</p> : null}
 
-        {!c.bestandAgentConfirmedAt ? (
+        {needsAgentConfirm(c) ? (
           <Card>
             <CardHeader title="Vor der ersten Kampagne" icon={Scale} />
             <div className="space-y-3 px-5 pb-5 text-sm">
-              <p className="text-[color:var(--muted)]">
-                Als Ausschließlichkeitsvertreter gehören die Kundendaten oft dem Versicherer. Nutzen Sie sie nur im Rahmen Ihres Vertretervertrags bzw. mit der
-                Einwilligung „laut Versicherer“. Die rechtliche Bewertung liegt bei Ihnen.
-              </p>
+              {isAgencyBound(c.vermittlerTyp) ? (
+                <p className="text-[color:var(--muted)]">
+                  Als Vertreter mit Agenturvertrag gehören die Kundendaten oft dem Versicherer. Nutzen Sie sie nur im Rahmen Ihres Agenturvertrags bzw. mit der
+                  Einwilligung „laut Versicherer“. Die rechtliche Bewertung liegt bei Ihnen.
+                </p>
+              ) : null}
               <label className="flex items-start gap-2">
                 <input type="checkbox" name="agentConfirm" className="mt-0.5 h-4 w-4" data-agent-confirm />
-                <span>Ich darf diese Kundendaten für diese Ansprache nutzen (im Rahmen meines Vertretervertrags bzw. meiner Befugnisse).</span>
+                <span>{agentConfirmText(c.vermittlerTyp)}</span>
               </label>
             </div>
           </Card>

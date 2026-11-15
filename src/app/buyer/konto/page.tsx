@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Bell, CreditCard, FileText, Gift, Package, Percent, Puzzle, Star, UserPlus, Users } from "lucide-react";
+import { Bell, CreditCard, Download, FileText, Gift, Package, Percent, Puzzle, Star, UserPlus, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { FreePeriodNotices } from "@/components/free-period-notices";
 import { Badge, Card, CardHeader, buttonClass } from "@/components/ui";
@@ -447,6 +447,19 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
               })}
             </ul>
           )}
+        </Card>
+
+        <Card>
+          <CardHeader title="Ihre Daten herunterladen" icon={Download} />
+          <div className="space-y-3 px-5 pb-5 text-sm" data-konto-export>
+            <p className="text-[color:var(--muted)]">
+              Alle Ihre Leads, Abschlüsse, Termine, Chats, Bestandskunden mit Verträgen und das Einwilligungsprotokoll als ZIP mit Excel-Dateien (CSV), zum
+              Beispiel für Ihre Unterlagen oder zum Ende der Zusammenarbeit. Nach Vertragsende löschen wir Ihre Daten innerhalb von 30 Tagen.
+            </p>
+            <a href="/buyer/konto/export" className={buttonClass("secondary", "md")} data-konto-export-download>
+              <Download className="h-4 w-4" /> Daten herunterladen (ZIP)
+            </a>
+          </div>
         </Card>
       </div>
     </main>

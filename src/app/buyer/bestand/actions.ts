@@ -11,6 +11,8 @@ import { QUOTA_REACHED } from "@/lib/bestand/quota";
 import { asChannelMode } from "@/lib/bestand/einwilligung";
 import { logConsent, requestConsent, setConsent, setHinweis } from "@/lib/bestand/einwilligung-server";
 import { hinweisStatement } from "@/lib/bestand/import";
+import { agentConfirmText, agentConfirmVersion, needsAgentConfirm } from "@/lib/bestand/befugnis";
+import { LINE_NAMES } from "@/lib/bestand/rows";
 import { PRICE_LIST } from "@/lib/offer-pricing";
 import { PROVIDER } from "@/lib/legal-texts";
 import { sendCustomerMail } from "@/lib/email";
@@ -92,6 +94,9 @@ export async function runImportAction(_prev: ImportState, fd: FormData): Promise
     const blocker = mappingBlocker(rows, mapping);
     if (blocker) return { error: blocker };
     if (fd.get("befugnis") !== "on") return { error: "Bitte bestätigen, dass Sie diese Kundendaten nutzen dürfen." };
+    // Gebundene Vertreter: ausdrückliche Bestätigung vor dem ersten Import (Agenturvertrag und Datenschutz), mit Textversion
+    const agentErr = await confirmAgentIfNeeded(ctx, fd, "import");
+    if (agentErr) return { error: agentErr };
     // „Alle Kunden dieser Liste haben eingewilligt“ je Kanal nur mit ausdrücklicher Bestätigung
     const consent = { email: fd.get("bulk_email") === "on", whatsapp: fd.get("bulk_whatsapp") === "on" };
     if ((consent.email || consent.whatsapp) && fd.get("bulk_confirm") !== "on") return { error: "Bitte bestätigen Sie die Einwilligungen ausdrücklich oder lassen Sie sie auf „unbekannt“." };
@@ -124,6 +129,42 @@ export async function runImportAction(_prev: ImportState, fd: FormData): Promise
     };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Import fehlgeschlagen." };
+  }
+}
+
+/**
+ * Befugnis bestätigen, falls nötig (lib/bestand/befugnis.ts): Kästchen „agentConfirm“, gespeichert mit Login, Zeitpunkt
+ * und Textversion, Wortlaut im Änderungsprotokoll. Gibt eine Fehlermeldung zurück oder null.
+ */
+async function confirmAgentIfNeeded(ctx: { customerId: string; userId: string | null }, fd: FormData, where: "import" | "kampagne"): Promise<string | null> {
+  const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { vermittlerTyp: true, bestandAgentConfirmedAt: true, bestandAgentConfirmedVersion: true } });
+  if (!c || !needsAgentConfirm(c)) return null;
+  if (fd.get("agentConfirm") !== "on") {
+    return where === "import"
+      ? `Bitte bestätigen Sie vor dem ersten Import: „${agentConfirmText(c.vermittlerTyp)}“`
+      : "Bitte bestätigen Sie, dass Sie die Kundendaten für diese Ansprache nutzen dürfen.";
+  }
+  const at = new Date();
+  const text = agentConfirmText(c.vermittlerTyp);
+  const version = agentConfirmVersion(c.vermittlerTyp);
+  await prisma.customer.update({ where: { id: ctx.customerId }, data: { bestandAgentConfirmedAt: at, bestandAgentConfirmedById: ctx.userId, bestandAgentConfirmedVersion: version } });
+  await audit("bestand.agent_confirm", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId, details: { text, version, vermittlerTyp: c.vermittlerTyp, bei: where, userId: ctx.userId, at: at.toISOString() } });
+  return null;
+}
+
+/** Sparten, die ich anbiete (Ausschließlichkeitsvertreter): Vorschläge „Lücke schließen“ nur dafür. */
+export async function saveSpartenAction(_prev: SettingsState, fd: FormData): Promise<SettingsState> {
+  try {
+    const ctx = await ownerCtx();
+    const known = new Set<string>(LINE_NAMES);
+    const lines = [...new Set(fd.getAll("sparte").map(String).filter((l) => known.has(l)))];
+    await prisma.customer.update({ where: { id: ctx.customerId }, data: { bestandSparten: lines } });
+    await audit("bestand.sparten", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId, details: { lines } });
+    revalidatePath("/buyer/bestand");
+    revalidatePath("/buyer/bestand/einwilligungen");
+    return { ok: true, message: lines.length ? "Gespeichert." : "Gespeichert. Vorschläge richten sich jetzt nach den Sparten in Ihrem Bestand." };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Speichern fehlgeschlagen." };
   }
 }
 
@@ -177,13 +218,9 @@ export async function startCampaignAction(fd: FormData): Promise<void> {
   const channelMode = asChannelMode(fd.get("channelMode"));
   const back = (err: string): never =>
     redirect(`/buyer/bestand/kampagne?${new URLSearchParams({ anlass: occasion, segment: JSON.stringify(segment), kanal: channelMode, fehler: err })}`);
-  // Ausschließlichkeitsvertreter: Bestätigung beim ersten Kampagnenstart (Daten gehören oft dem Versicherer)
-  const cust = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { bestandAgentConfirmedAt: true } });
-  if (!cust?.bestandAgentConfirmedAt) {
-    if (fd.get("agentConfirm") !== "on") back("Bitte bestätigen Sie, dass Sie die Kundendaten für diese Ansprache nutzen dürfen.");
-    await prisma.customer.update({ where: { id: ctx.customerId }, data: { bestandAgentConfirmedAt: new Date(), bestandAgentConfirmedById: ctx.userId } });
-    await audit("bestand.agent_confirm", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId });
-  }
+  // Bestätigung der Befugnis vor der ersten Kampagne (gebundene Vertreter: aktuelle Textversion, meist schon beim Import)
+  const agentErr = await confirmAgentIfNeeded(ctx, fd, "kampagne");
+  if (agentErr) back(agentErr);
   let campaignId: string | null = null;
   let failure: string | null = null;
   try {

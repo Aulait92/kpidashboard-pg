@@ -10,7 +10,8 @@ const select = "h-10 w-full rounded-[var(--radius-sm)] border bg-white px-2 text
 const de = (n: number) => n.toLocaleString("de-DE");
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 
-export function ImportFlow() {
+/** agentConfirm: Bestätigung der Befugnis vor dem ersten Import (gebundene Vertreter), null = schon bestätigt. */
+export function ImportFlow({ agentConfirm = null }: { agentConfirm?: { text: string; bound: boolean } | null }) {
   const [analysis, analyze, analyzing] = useActionState<AnalyzeState, FormData>(analyzeImportAction, {});
   const [result, runImport, importing] = useActionState<ImportState, FormData>(runImportAction, {});
   const fileRef = useRef<HTMLInputElement>(null);
@@ -278,6 +279,20 @@ export function ImportFlow() {
                   automatisch und dauerhaft gesperrt.
                 </span>
               </label>
+              {agentConfirm ? (
+                <div className="space-y-2 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900" data-import-agent-confirm>
+                  {agentConfirm.bound ? (
+                    <p>
+                      Als Vertreter mit Agenturvertrag gehören Kundendaten aus Ihrer Vertretertätigkeit oft dem Versicherer. Laden Sie sie nur hoch, wenn Ihr
+                      Agenturvertrag und das Datenschutzrecht das erlauben. Die rechtliche Bewertung liegt bei Ihnen.
+                    </p>
+                  ) : null}
+                  <label className="flex items-start gap-2">
+                    <input type="checkbox" name="agentConfirm" className="mt-0.5 h-4 w-4" data-agent-confirm />
+                    <span className="font-medium">{agentConfirm.text}</span>
+                  </label>
+                </div>
+              ) : null}
               {result.error ? <p className="text-rose-700">{result.error}</p> : null}
               {result.message ? (
                 <p className="text-emerald-700">

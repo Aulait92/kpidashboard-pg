@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Download, History, Mail, Scale, ShieldCheck, Users } from "lucide-react";
+import { Download, History, Layers, Mail, Scale, ShieldCheck, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { ButtonLink, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
@@ -10,7 +10,9 @@ import { loadConsentSettings } from "@/lib/bestand/einwilligung-server";
 import { imprintFromWebsiteInfo } from "@/lib/bestand/kampagnen-mail";
 import { effectiveDailyLimit, providerDailyLimit } from "@/lib/bestand/mail-drossel";
 import { bestandMailQuota } from "@/lib/bestand/quota";
-import { BulkForm, HinweisBulkForm, LegacyForm, RechtForm } from "@/components/bestand/recht-forms";
+import { BulkForm, HinweisBulkForm, LegacyForm, RechtForm, SpartenForm } from "@/components/bestand/recht-forms";
+import { isExclusiveAgent } from "@/lib/bestand/befugnis";
+import { LINE_NAMES } from "@/lib/bestand/rows";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Einwilligungen & Versand | performancegrowth" };
@@ -24,7 +26,7 @@ export default async function EinwilligungenPage() {
   if (!ctx) redirect("/login");
   if (ctx.teamRole !== "owner") redirect("/buyer");
   const customerId = ctx.customerId;
-  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { existingCustomersEnabled: true } });
+  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { existingCustomersEnabled: true, vermittlerTyp: true, bestandSparten: true } });
   if (!c?.existingCustomersEnabled) redirect("/buyer/bestand");
   const [settings, reach, legacy, legacyFirst, unknownEmail, unknownWa, optOuts, emailOptOuts, logs, mailbox, mailQuota, hinweisMissing, hinweisJa] = await Promise.all([
     loadConsentSettings(customerId),
@@ -42,6 +44,10 @@ export default async function EinwilligungenPage() {
     prisma.existingCustomer.count({ where: { customerId, email: { not: null }, widerspruchHinweis: "ja" } }),
   ]);
   const imprint = settings.imprint ?? imprintFromWebsiteInfo(settings.websiteInfo) ?? "";
+  const ao = isExclusiveAgent(c.vermittlerTyp);
+  const bestandLines = ao
+    ? (await prisma.existingContract.findMany({ where: { existingCustomer: { customerId } }, distinct: ["line"], select: { line: true } })).map((x) => x.line).filter((l) => l !== "Sonstiges")
+    : [];
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -189,6 +195,16 @@ export default async function EinwilligungenPage() {
             <BulkForm unknownEmail={unknownEmail} unknownWhatsapp={unknownWa} readOnly={ctx.preview} />
           </div>
         </Card>
+
+        {ao ? (
+          <Card>
+            <div id="sparten" />
+            <CardHeader title="Meine Sparten" icon={Layers} />
+            <div className="px-5 pb-5">
+              <SpartenForm all={LINE_NAMES.filter((l) => l !== "Sonstiges")} selected={c.bestandSparten} fromBestand={bestandLines} readOnly={ctx.preview} />
+            </div>
+          </Card>
+        ) : null}
 
         <Card>
           <CardHeader title="Protokoll" icon={History} />

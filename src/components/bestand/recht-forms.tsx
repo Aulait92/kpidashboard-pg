@@ -4,7 +4,7 @@
 
 import { useActionState } from "react";
 import { Button } from "@/components/ui";
-import { bulkConsentAction, bulkHinweisAction, legacyConsentAction, saveBestandRechtAction, type SettingsState } from "@/app/buyer/bestand/actions";
+import { bulkConsentAction, bulkHinweisAction, legacyConsentAction, saveBestandRechtAction, saveSpartenAction, type SettingsState } from "@/app/buyer/bestand/actions";
 
 const Msg = ({ s }: { s: SettingsState }) => (s.error ? <p className="text-rose-700">{s.error}</p> : s.message ? <p className="text-emerald-700">{s.message}</p> : null);
 
@@ -136,6 +136,32 @@ export function HinweisBulkForm({ missing, readOnly }: { missing: number; readOn
       <Msg s={state} />
       <Button type="submit" size="md" disabled={readOnly || pending || missing === 0}>
         Nachweis speichern
+      </Button>
+    </form>
+  );
+}
+
+/** Sparten, die ein Ausschließlichkeitsvertreter anbietet (Vorschläge „Lücke schließen“ nur dafür). */
+export function SpartenForm({ all, selected, fromBestand, readOnly }: { all: string[]; selected: string[]; fromBestand: string[]; readOnly: boolean }) {
+  const [state, action, pending] = useActionState<SettingsState, FormData>(saveSpartenAction, {});
+  const initial = new Set(selected.length ? selected : fromBestand);
+  return (
+    <form action={action} className="space-y-3 text-sm" data-sparten-form>
+      <p className="text-[color:var(--muted)]">
+        Als Ausschließlichkeitsvertreter vermitteln Sie in der Regel nur Produkte Ihres Versicherers. Die App schlägt Kampagnen „Lücke schließen“ deshalb nur
+        für Sparten vor, die Sie hier anhaken.{selected.length ? "" : " Noch nichts gespeichert: Vorgeschlagen werden die Sparten aus Ihrem Bestand."}
+      </p>
+      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+        {all.map((l) => (
+          <label key={l} className="flex items-center gap-2">
+            <input type="checkbox" name="sparte" value={l} defaultChecked={initial.has(l)} />
+            <span>{l}</span>
+          </label>
+        ))}
+      </div>
+      <Msg s={state} />
+      <Button type="submit" size="md" disabled={readOnly || pending}>
+        Sparten speichern
       </Button>
     </form>
   );

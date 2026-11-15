@@ -31,8 +31,23 @@ export async function eraseLead(leadId: string, actor?: AuditActor): Promise<Era
   return result;
 }
 
-/** Alle Leads eines Kunden anonymisieren (Vertragsende) und Kalender trennen. */
-export async function eraseCustomerData(customerId: string, actor?: AuditActor) {
+/**
+ * Darf der Admin die Daten löschen? (Vertragsende, Anwalts-Memo 15.11.2026) Nur mit genau eingegebenem Kundennamen und
+ * entweder archiviertem Kunden (kein Bezug mehr) oder ausdrücklich bestätigtem Vertragsende mit Grund. Rein, getestet.
+ */
+export function eraseBlocker(c: { name: string; archived: boolean }, input: { confirmName: string; contractEnded: boolean; reason: string }): string | null {
+  if (input.confirmName.trim().toLowerCase() !== c.name.trim().toLowerCase()) return "Zur Bestätigung bitte den Kundennamen genau so eingeben.";
+  if (!c.archived && !input.contractEnded) return "Der Kunde ist nicht archiviert. Bitte bestätigen, dass der Vertrag beendet ist.";
+  if (input.reason.trim().length < 5) return "Bitte einen Grund angeben (z. B. „Vertragsende 31.12., Export am 2.1. übergeben“).";
+  return null;
+}
+
+/**
+ * Alle Leads eines Kunden anonymisieren (Vertragsende), Kalender und Postfach trennen und den Bestand löschen
+ * (Bestandskunden mit Verträgen, Kampagnen, Importe, Einwilligungsprotokoll). Die Sperrliste der Abmeldungen
+ * (nur Hashes) bleibt, damit Abgemeldete auch nach einem erneuten Import nicht angeschrieben werden.
+ */
+export async function eraseCustomerData(customerId: string, actor?: AuditActor, opts: { reason?: string | null } = {}) {
   const leads = await prisma.lead.findMany({
     where: { customerId },
     select: { id: true, customerId: true, phone: true, externalId: true, airtableId: true, erasedAt: true },
@@ -53,14 +68,24 @@ export async function eraseCustomerData(customerId: string, actor?: AuditActor) 
     prisma.googleReview.deleteMany({ where: { customerId } }),
     prisma.googleBusinessConnection.deleteMany({ where: { customerId } }),
   ]);
+  // Bestand: Kampagnen (mit Empfängern), Bestandskunden (mit Verträgen), Importe, Einwilligungsprotokoll, Postfach
+  const [, existing, , consentLogs] = await prisma.$transaction([
+    prisma.customerCampaign.deleteMany({ where: { customerId } }),
+    prisma.existingCustomer.deleteMany({ where: { customerId } }),
+    prisma.existingCustomerImport.deleteMany({ where: { customerId } }),
+    prisma.bestandConsentLog.deleteMany({ where: { customerId } }),
+    prisma.mailConnection.deleteMany({ where: { customerId } }),
+  ]);
   const total = {
     leads: leads.length,
     conversations: result.conversations + conv.count,
     messages: result.messages,
     appointments: result.appointments + appt.count,
     consents: result.consents + consent.count,
+    bestand: existing.count,
+    consentLogs: consentLogs.count,
   };
-  await audit("customer.erase", { entity: "Customer", entityId: customerId, customerId, details: total, actor });
+  await audit("customer.erase", { entity: "Customer", entityId: customerId, customerId, details: { ...total, reason: opts.reason ?? null }, actor });
   return total;
 }
 

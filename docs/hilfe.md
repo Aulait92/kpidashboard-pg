@@ -646,6 +646,11 @@ Seiten aus der Liste „Seiten“ unten.
 - **Pause/Urlaub** selbst eintragen (Start, Ende, Grund): Anzeigen stoppen, reduzierte Gebühr; Pause jederzeit beenden.
   Bei jährlicher Vorauszahlung pausieren nur die Anzeigen, eine Gutschrift gibt es nicht.
 - Kündigung oder Vertragsfragen: bitte direkt bei uns melden.
+- **Ihre Daten herunterladen** (unten auf der Seite, seit 15.11.2026): ein ZIP mit Excel-Dateien (CSV, Semikolon):
+  Leads mit Formularangaben und Notizen, Abschlüsse, Termine, Chats, Bestandskunden mit Verträgen, Einwilligungen und
+  Nachweis zum Widerspruchshinweis, dazu das Einwilligungsprotokoll. Gelöschte Leads sind nicht enthalten. Jeder
+  Download wird protokolliert. Nach Vertragsende löschen wir Ihre Daten innerhalb von 30 Tagen; laden Sie den Export
+  vorher herunter.
 
 ## Weiteres Produkt buchen (nur Inhaber)
 - **Wo:** Konto & Rechnungen → Karte „Produkte“ (auch über Wachstum → „Weitere Sparte dazubuchen“). Dort stehen die gebuchten
@@ -838,8 +843,15 @@ Bewertung im Einzelfall liegt bei Ihnen.**
 - **Abmeldung:** „Stopp“ per WhatsApp sperrt alle Kanäle. Der Abmeldelink in E-Mails meldet von E-Mails ab, optional
   auch von WhatsApp. Abmeldungen wirken sofort und dauerhaft, auch nach einem erneuten Import (die App merkt sich
   E-Mail und Nummer verschlüsselt als Sperrliste).
-- **Vor der ersten Kampagne** bestätigen Sie, dass Sie die Kundendaten nutzen dürfen (als Ausschließlichkeitsvertreter
-  gehören sie oft dem Versicherer). Beim Import weist die App auf Personenversicherungen (Kranken, Leben, BU, Unfall,
+- **Vor dem ersten Import** (Vertreter mit Agenturvertrag, seit 15.11.2026) bzw. vor der ersten Kampagne (Makler)
+  bestätigen Sie, dass Sie die Kundendaten nutzen dürfen. Vertreter bestätigen den Satz „Ich bestätige, dass Upload
+  und Nutzung dieser Kundendaten nach meinem Agenturvertrag und dem Datenschutzrecht zulässig sind.“ (als
+  Ausschließlichkeitsvertreter gehören die Daten oft dem Versicherer). Gespeichert werden Login, Zeitpunkt und
+  Textversion; ändert sich der Text, fragt die App einmal neu.
+- **Meine Sparten** (nur Ausschließlichkeitsvertreter, Bestand → Einwilligungen & Versand): Die App schlägt
+  „Lücke schließen“ nur für Sparten vor, die Sie anbieten, also keine Produkte anderer Versicherer. Ohne Auswahl
+  gelten die Sparten aus Ihrem Bestand. Starten Sie trotzdem eine Kampagne in eine andere Sparte, erscheint ein
+  deutlicher Hinweis. Beim Import weist die App auf Personenversicherungen (Kranken, Leben, BU, Unfall,
   Pflege) hin: Hier ist schon die Tatsache des Vertrags besonders geschützt.
 
 ### Ergebnisse der Kampagnen
