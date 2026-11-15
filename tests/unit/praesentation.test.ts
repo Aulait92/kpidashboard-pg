@@ -1,6 +1,6 @@
 // Beratungsstrecke und Angebote (Ole, 15.11.2026)
 import { describe, expect, it } from "vitest";
-import { bausteinSchalten, beitragEffektiv, cleanAngebote, summeEmpfohlen } from "@/lib/angebote";
+import { bausteinSchalten, beitragEffektiv, cleanAngebote, summeEmpfohlen, tarifWaehlen } from "@/lib/angebote";
 import { folien, markeFuer, praesentationHtml } from "@/lib/praesentation";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
 
@@ -17,8 +17,8 @@ describe("Angebote", () => {
   it("liest Beträge und Listen defensiv", () => {
     const a = cleanAngebote({ items: [{ sparte: "Hausrat", beitragMonat: "8,20 €", leistungen: ["A", "", "B"], empfohlen: true }, { sparte: "" }, "x"] });
     expect(a.items).toHaveLength(1);
-    expect(a.items[0]).toMatchObject({ sparte: "Hausrat", beitragMonat: 8.2, leistungen: ["A", "B"], empfohlen: true, ausschluesse: [], bausteine: [] });
-    expect(summeEmpfohlen({ quelle: [], items: [...a.items, { ...a.items[0], beitragMonat: 7.4 }, { ...a.items[0], empfohlen: false, beitragMonat: 99 }] })).toBe(15.6);
+    expect(a.items[0]).toMatchObject({ sparte: "Hausrat", beitragMonat: 8.2, leistungen: ["A", "B"], empfohlen: true, ausschluesse: [], bausteine: [], gewaehlt: true, merkmale: [] });
+    expect(summeEmpfohlen({ quelle: [], items: [...a.items, { ...a.items[0], beitragMonat: 7.4 }, { ...a.items[0], empfohlen: false, gewaehlt: false, beitragMonat: 99 }] })).toBe(15.6);
     expect(cleanAngebote({ items: [{ sparte: "X", beitragMonat: "1.234,50" }] }).items[0].beitragMonat).toBe(1234.5);
   });
 });
@@ -113,5 +113,39 @@ describe("Präsentation", () => {
     fs = folien({ ...d, lead: { ...d.lead, produkt: "Tierkranken" } }, neu, m);
     expect(fs.find((f) => f.id === "beitrag")!.html).toContain("14,60");
     expect(fs.find((f) => f.id === "leistungen")!.html).toContain("ohne Zahnbehandlung");
+  });
+
+  it("Tarif im Termin wählen: Tabelle wie im Rechner, Empfehlung bleibt, Beitrag folgt der Wahl", () => {
+    const m3 = (summe: string, geliehen: string, neben: string) => [
+      { name: "Versicherungssumme", wert: summe },
+      { name: "Schäden an geliehenen Gegenständen", wert: geliehen },
+      { name: "Nebenberufliche Nutzung", wert: neben },
+      { name: "Mietsachschäden", wert: "ja" },
+    ];
+    const ang = cleanAngebote({ items: [
+      { sparte: "Tierhalterhaftpflicht", tarif: "Smart", beitragMonat: 6.15, merkmale: m3("50 Mio. €", "50.000 €", "nein") },
+      { sparte: "Tierhalterhaftpflicht", tarif: "Komfort", beitragMonat: 8.15, empfohlen: true, merkmale: m3("75 Mio. €", "75.000 €", "ja") },
+      { sparte: "Tierhalterhaftpflicht", tarif: "Premium", beitragMonat: 12.15, merkmale: m3("100 Mio. €", "ja", "ja") },
+    ] });
+    expect(ang.items.map((i) => i.gewaehlt)).toEqual([false, true, false]);
+    const m = markeFuer({ name: "Allianz Agentur Lohmann" });
+    const dt = { ...d, lead: { ...d.lead, produkt: "Tierhalterhaftpflicht" } };
+    let fs = folien(dt, ang, m);
+    const v = fs.find((f) => f.id.startsWith("vergleich-"))!.html;
+    expect(v).toContain('class="vgl"');
+    expect(v).toContain("In allen Tarifen:</b> <span>✓ Mietsachschäden</span>");
+    expect(v).toContain('data-tarif="1">✓ Ausgewählt');
+    expect(v).toContain('class="nein-z"');
+    expect(v.replace(/<style>[\s\S]*?<\/style>/, "")).not.toMatch(/[\u2013\u2014]/);
+    expect(fs.find((f) => f.id === "beitrag")!.html).toContain("8,15");
+    const neu = tarifWaehlen(ang, 0)!;
+    expect(neu.items.map((i) => i.gewaehlt)).toEqual([true, false, false]);
+    expect(summeEmpfohlen(neu)).toBe(6.15);
+    fs = folien(dt, neu, m);
+    expect(fs.find((f) => f.id === "beitrag")!.html).toContain("6,15");
+    expect(fs.find((f) => f.id.startsWith("vergleich-"))!.html).toMatch(/class="gew"><span class="badge">|class="badge">Passt zu Ihnen<\/span><div class="tarif">Komfort/);
+    expect(fs.find((f) => f.id === "empfehlung")!.html).toContain("Komfort");
+    expect(tarifWaehlen(neu, 0)!.items.every((i) => !i.gewaehlt)).toBe(true);
+    expect(tarifWaehlen(ang, 7)).toBeNull();
   });
 });

@@ -26,6 +26,10 @@ export type AngebotItem = {
   leistungen: string[];
   ausschluesse: string[];
   empfohlen: boolean;
+  /** Im Termin gewählte Stufe (Standard: die Empfehlung); Beitrag und Leistungen richten sich danach */
+  gewaehlt: boolean;
+  /** Vergleichsmerkmale je Stufe, z. B. Versicherungssumme: 75 Mio. €; „ja“/„nein“ werden zu ✓/— */
+  merkmale: { name: string; wert: string }[];
   /** Beitrag pro Monat = beitragMonat (ohne Bausteine) + aktive Bausteine */
   bausteine: Baustein[];
 };
@@ -61,6 +65,16 @@ function cleanBausteine(v: unknown): Baustein[] {
   });
 }
 
+function cleanMerkmale(v: unknown): { name: string; wert: string }[] {
+  return (Array.isArray(v) ? v : []).slice(0, 8).flatMap((x) => {
+    if (!x || typeof x !== "object") return [];
+    const r = x as Record<string, unknown>;
+    const name = str(r.name, 60);
+    const wert = str(r.wert, 40) ?? "nein";
+    return name ? [{ name, wert }] : [];
+  });
+}
+
 /** Beitrag pro Monat mit den aktiven Bausteinen; null ohne Grundbeitrag. */
 export function beitragEffektiv(i: Pick<AngebotItem, "beitragMonat" | "bausteine">): number | null {
   if (i.beitragMonat == null) return null;
@@ -86,6 +100,8 @@ export function cleanAngebote(raw: unknown): AngeboteDaten {
         leistungen: list(r.leistungen, 6),
         ausschluesse: list(r.ausschluesse, 4),
         empfohlen: r.empfohlen === true,
+        gewaehlt: typeof r.gewaehlt === "boolean" ? r.gewaehlt : r.empfohlen === true,
+        merkmale: cleanMerkmale(r.merkmale),
         bausteine: cleanBausteine(r.bausteine),
       },
     ];
@@ -94,10 +110,23 @@ export function cleanAngebote(raw: unknown): AngeboteDaten {
   return { items, quelle };
 }
 
-/** Summe der empfohlenen Angebote je Monat (für die Präsentation); null ohne Beiträge. */
+/** Gewählte Angebote: je Sparte die im Termin gewählte Stufe, sonst die Empfehlung. */
+export function gewaehlte(d: AngeboteDaten): AngebotItem[] {
+  return d.items.filter((i) => i.gewaehlt);
+}
+
+/** Summe der gewählten Angebote je Monat (für die Präsentation); null ohne Beiträge. */
 export function summeEmpfohlen(d: AngeboteDaten): number | null {
-  const rec = d.items.filter((i) => i.empfohlen && i.beitragMonat != null);
+  const rec = gewaehlte(d).filter((i) => i.beitragMonat != null);
   return rec.length ? Math.round(rec.reduce((s, i) => s + (beitragEffektiv(i) ?? 0), 0) * 100) / 100 : null;
+}
+
+/** Stufe im Termin wählen: diese an, die anderen derselben Sparte ab; erneuter Klick wählt ab. null, wenn es sie nicht gibt. */
+export function tarifWaehlen(d: AngeboteDaten, item: number): AngeboteDaten | null {
+  const it = d.items[item];
+  if (!it) return null;
+  const an = !it.gewaehlt;
+  return { ...d, items: d.items.map((x, i) => (i === item ? { ...x, gewaehlt: an } : x.sparte === it.sparte && an ? { ...x, gewaehlt: false } : x)) };
 }
 
 /** Baustein an- bzw. abschalten (Index im Angebot und im Baustein); null, wenn es ihn nicht gibt. */
@@ -138,6 +167,12 @@ const SCHEMA = {
           },
           selbstbeteiligung: { type: ["string", "null"], description: "z. B. 150 € je Schaden" },
           leistungen: { type: "array", items: { type: "string" }, description: "Die 3 bis 5 wichtigsten Leistungen, kurz, wörtlich aus dem Angebot." },
+          empfohlen: { type: "boolean", description: "true, wenn das Angebot diese Stufe als Empfehlung bzw. ausgewählt markiert" },
+          merkmale: {
+            type: "array",
+            description: "Vergleichstabelle mehrerer Stufen: je Zeile Merkmal und Wert dieser Stufe (z. B. Versicherungssumme: 75 Mio. €; ja, wenn ein Haken, nein, wenn ein Strich). Höchstens 8, die mit Unterschieden zuerst. Bei nur einer Stufe leer.",
+            items: { type: "object", properties: { name: { type: "string" }, wert: { type: "string" } }, required: ["name", "wert"] },
+          },
           ausschluesse: { type: "array", items: { type: "string" }, description: "Ausdrücklich genannte Ausschlüsse oder Wartezeiten, kurz; leer, wenn keine genannt." },
         },
         required: ["sparte", "gesellschaft", "tarif", "beitragMonat", "selbstbeteiligung", "leistungen", "ausschluesse"],

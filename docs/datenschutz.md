@@ -287,6 +287,12 @@ Interaktion mit Betroffenen“. Falls ja, DSFA je Kunde als Verantwortlicher (Vo
     Beratungsgespräch automatisiert ausgelesen werden können; Rechtsgrundlage Art. 6 Abs. 1 lit. b DSGVO
     (Anbahnung des Versicherungsvertrags) durch den Vermittler als Verantwortlichen.
   - Danach `angeboteAuslesenErlaubt` (lib/termin-vorbereitung-server.ts) für alle freigeben.
+- [ ] **Kundenlink zur Beratungspräsentation (15.11.2026):** Der Vermittler erstellt je Termin einen Link
+  (`/beratung/<token>`, 24 Zufallsbytes, 14 Tage gültig, jederzeit beendbar, `noindex`, `no-referrer`). Die Seite zeigt
+  Name des Kunden, Angaben aus dem Gespräch, Angebote und Beiträge, ohne Sprechzettel, ohne Login. Live, da der Vermittler
+  den Link selbst weitergibt (wie das PDF zum Nachschicken). Vorschlag für den Anwalt: Datenschutzerklärung für Leads um
+  einen Satz ergänzen („Ihr Berater kann Ihnen die Präsentation aus dem Beratungsgespräch über einen persönlichen Link
+  bereitstellen; der Link ist 14 Tage gültig.“); Löschkonzept: Token läuft ab, Termindaten folgen der bisherigen Frist.
 - [ ] AVV/DPA mit jedem Dienst abschließen bzw. Nachweis ablegen (Tabelle Abschnitt 3)
 - [ ] AGB/AVV Stand 15.11.2026 (Anwalts-Memo): Anwalt prüft die „Prüfen:“-Stellen in `src/lib/legal-texts.ts`.
       Eine Mitteilung an Bestandskunden mit 6 Wochen Widerspruchsfrist ist **nicht nötig**: Zum Zeitpunkt der Änderung

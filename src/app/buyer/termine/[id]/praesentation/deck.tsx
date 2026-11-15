@@ -7,27 +7,29 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { ChevronLeft, ChevronRight, Expand, NotebookText } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
-import { bausteinAction } from "./actions";
+import { bausteinAction, tarifAction } from "./actions";
 
 type Folie = { id: string; titel: string; html: string; notizen: string[] };
 
-export function Deck({ id, css, folien: start, nurNotizen }: { id: string; css: string; folien: Folie[]; nurNotizen?: boolean }) {
+export function Deck({ id, css, folien: start, nurNotizen, interaktiv = true }: { id: string; css: string; folien: Folie[]; nurNotizen?: boolean; interaktiv?: boolean }) {
   const [folien, setFolien] = useState(start);
   const [i, setI] = useState(0);
   const [pending, startT] = useTransition();
   const toast = useToast();
   // Bausteine per Klick auf der Folie: sofort umschalten (optimistisch), Server rechnet und speichert
   const onSlideClick = (ev: React.MouseEvent) => {
-    const btn = (ev.target as HTMLElement).closest<HTMLElement>("[data-baustein]");
-    if (!btn || pending) return;
-    const [item, b] = (btn.dataset.baustein ?? "").split(":").map(Number);
-    const aktiv = !btn.classList.contains("an");
-    btn.classList.toggle("an", aktiv);
+    if (!interaktiv || pending) return;
+    const el = (ev.target as HTMLElement).closest<HTMLElement>("[data-baustein],[data-tarif]");
+    if (!el) return;
+    const tarif = el.dataset.tarif;
+    const [item, b] = (el.dataset.baustein ?? "").split(":").map(Number);
+    const aktiv = !el.classList.contains("an");
+    el.classList.toggle("an", aktiv);
     startT(async () => {
-      const r = await bausteinAction(id, item, b, aktiv);
+      const r = tarif != null ? await tarifAction(id, Number(tarif)) : await bausteinAction(id, item, b, aktiv);
       if (r.ok) setFolien(r.folien);
       else {
-        btn.classList.toggle("an", !aktiv);
+        el.classList.toggle("an", !aktiv);
         toast.show({ message: r.error, tone: "error" });
       }
     });

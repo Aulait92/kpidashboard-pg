@@ -30,6 +30,7 @@ const PUBLIC_PREFIXES = [
   "/einwilligung", // Einwilligungs-Abfrage für Bestandskunden mit Double-Opt-in (signierter Token)
   "/email-bestaetigen", // Bestätigung einer neuen Login-E-Mail (Token aus der Mail, lib/email-aendern.ts)
   "/erstinformation", // Erstinformation des Vermittlers (§ 15 VersVermV), Link in der ersten WhatsApp-Nachricht (Token)
+  "/beratung", // Beratungspräsentation zum Nachlesen für den Kunden des Vermittlers (geheimer Link, 14 Tage)
   "/api/login-info", // Bilder und Klick-Zählung der Infokarten auf der Login-Seite (öffentlich, keine Personendaten)
   "/login-karten", // Bilder der Infokarten auf der Login-Seite (public/login-karten)
   "/api/ops", // Betriebs-API (Buyer-Accounts anlegen), per ADMIN_API_TOKEN (Bearer) gesichert
@@ -144,7 +145,8 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/empfehlung/") ||
     pathname.startsWith("/abmelden/") ||
     pathname.startsWith("/einwilligung/") ||
-    pathname.startsWith("/erstinformation/")
+    pathname.startsWith("/erstinformation/") ||
+    pathname.startsWith("/beratung/")
   ) {
     const res = NextResponse.next({ request: { headers: leadHeaders(req) } });
     res.headers.set("X-Robots-Tag", NO_INDEX);

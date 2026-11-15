@@ -4,7 +4,9 @@ import { ArrowLeft, FileDown } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { ButtonLink } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
-import { loadPraesentation } from "@/lib/termin-vorbereitung-server";
+import { kundenlinkStand, loadPraesentation } from "@/lib/termin-vorbereitung-server";
+import { publicUrlOr } from "@/lib/public-url";
+import { Kundenlink } from "./kundenlink";
 import { Deck } from "./deck";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +20,10 @@ export default async function PraesentationPage({ params, searchParams }: { para
   const { notizen } = await searchParams;
   const p = await loadPraesentation(id, ctx);
   if (!p) notFound();
+  const link = await kundenlinkStand(id, ctx);
+  const linkStart = link
+    ? { url: publicUrlOr(`/beratung/${link.token}`), bis: new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "numeric", month: "long" }).format(link.bis) }
+    : null;
   if (notizen) {
     return (
       <main className="mx-auto w-full max-w-xl flex-1 px-4 py-4">
@@ -44,7 +50,10 @@ export default async function PraesentationPage({ params, searchParams }: { para
           </Link>
         ) : null}
       </div>
-      <Deck id={id} css={p.css} folien={p.folien} />
+      <Deck id={id} css={p.css} folien={p.folien} interaktiv={!ctx.preview} />
+      <div className="mt-6">
+        <Kundenlink id={id} start={linkStart} bereit={p.angeboteBestaetigt && !ctx.preview} />
+      </div>
     </main>
   );
 }

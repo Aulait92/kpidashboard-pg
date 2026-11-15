@@ -193,6 +193,13 @@ Seiten aus der Liste „Seiten“ unten.
   Zahnbehandlung +4,10 € oder höhere Selbstbeteiligung −2,80 €; der Haken heißt „im Angebot enthalten“). In der
   Präsentation tippen Sie einen Baustein auf der Folie an oder ab: Der Beitrag rechnet sich sofort neu, abgewählte
   Bausteine stehen unter „Das ist drin, und das nicht“. Die gewählte Fassung wird gespeichert und steht auch im PDF.
+- **Tarif im Termin wählen:** Tragen Sie je Sparte mehrere Stufen ein (z. B. Smart, Komfort, Premium) und unter
+  „Vergleich“ die Merkmale je Stufe („Versicherungssumme: 75 Mio. €“, „Neuwert: ja“). Die Präsentation zeigt dann eine
+  Vergleichstabelle wie im Tarifrechner. Mit **Auswählen** wechseln Sie im Termin die Stufe; Ihre Empfehlung bleibt
+  markiert, Beitrag und Leistungen richten sich nach der Wahl.
+- **Link für Ihren Kunden:** Unter der Präsentation erstellt **Link erstellen** einen persönlichen Link mit dem Stand aus
+  dem Termin, ohne Sprechzettel und ohne Schalter, 14 Tage gültig. Kopieren, per WhatsApp oder E-Mail schicken, bei
+  Bedarf **Link beenden**.
 - **Logo auf der Präsentation:** Unter **Einstellungen → Logo für Präsentationen** holt die App das Logo von Ihrer
   Webseite (bei einer Agentur meist das Logo Ihrer Gesellschaft) oder Sie laden es hoch (PNG, JPG oder SVG, bis 1 MB).
   Erst nach Ihrer Bestätigung, dass Sie es verwenden dürfen, erscheint es auf der Titelfolie und im Fuß jeder Folie.

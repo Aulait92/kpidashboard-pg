@@ -1169,6 +1169,8 @@ model Appointment {
   // Angebote zum Termin (ausgelesen bzw. eingetragen, vom Berater bestätigt), für die Präsentation (Ole, 15.11.2026)
   offersJson         Json?
   offersConfirmedAt  DateTime?
+  shareToken         String?   @unique // Kundenlink zur Präsentation (nur Stand, ohne Sprechzettel), /beratung/<token>
+  shareExpiresAt     DateTime? // Link läuft nach 14 Tagen ab
   // Empfehlungen: nach diesem Termin geprüft, ob der Empfehlungslink rausgeht (einmal je Termin)
   referralAskedAt    DateTime?
   // Getrennte Einladung für den Berater (interne Infos), gleicher Termin.

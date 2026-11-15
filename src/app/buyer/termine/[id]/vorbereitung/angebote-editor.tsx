@@ -11,7 +11,7 @@ import type { AngebotItem } from "@/lib/angebote";
 import { angeboteAuslesenAction, angeboteSpeichernAction } from "./actions";
 
 type BRow = { name: string; beitrag: string; aktiv: boolean };
-type Row = { sparte: string; gesellschaft: string; tarif: string; beitragMonat: string; selbstbeteiligung: string; leistungen: string; ausschluesse: string; empfohlen: boolean; bausteine: BRow[] };
+type Row = { sparte: string; gesellschaft: string; tarif: string; beitragMonat: string; selbstbeteiligung: string; leistungen: string; ausschluesse: string; empfohlen: boolean; bausteine: BRow[]; merkmale: string };
 const toRow = (i: AngebotItem): Row => ({
   sparte: i.sparte,
   gesellschaft: i.gesellschaft ?? "",
@@ -22,6 +22,7 @@ const toRow = (i: AngebotItem): Row => ({
   ausschluesse: i.ausschluesse.join("\n"),
   empfohlen: i.empfohlen,
   bausteine: i.bausteine.map((b) => ({ name: b.name, beitrag: String(b.beitrag).replace(".", ","), aktiv: b.aktiv })),
+  merkmale: i.merkmale.map((m) => `${m.name}: ${m.wert}`).join("\n"),
 });
 const fromRow = (r: Row) => ({
   sparte: r.sparte,
@@ -32,6 +33,11 @@ const fromRow = (r: Row) => ({
   leistungen: r.leistungen.split("\n").map((x) => x.trim()).filter(Boolean),
   ausschluesse: r.ausschluesse.split("\n").map((x) => x.trim()).filter(Boolean),
   empfohlen: r.empfohlen,
+  merkmale: r.merkmale
+    .split("\n")
+    .map((l) => l.split(":"))
+    .filter((x) => x[0]?.trim())
+    .map(([name, ...w]) => ({ name: name.trim(), wert: w.join(":").trim() || "nein" })),
   bausteine: r.bausteine.filter((b) => b.name.trim() && b.beitrag.trim()).map((b) => ({ name: b.name.trim(), beitrag: b.beitrag.replace(",", "."), aktiv: b.aktiv })),
 });
 const input = "h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-sm";
@@ -103,6 +109,10 @@ export function AngeboteEditor(p: {
             <label className="block"><span className="text-xs text-[color:var(--muted)]">Nicht versichert / Wartezeiten</span><textarea className={area} value={r.ausschluesse} disabled={p.readOnly} onChange={(e) => set(i, { ausschluesse: e.target.value })} /></label>
             <label className="block"><span className="text-xs text-[color:var(--muted)]">Selbstbeteiligung</span><input className={input} value={r.selbstbeteiligung} disabled={p.readOnly} onChange={(e) => set(i, { selbstbeteiligung: e.target.value })} /></label>
           </div>
+          <label className="mt-3 block">
+            <span className="text-xs text-[color:var(--muted)]">Vergleich mit anderen Stufen (je Zeile „Merkmal: Wert“, z. B. Versicherungssumme: 75 Mio. € oder Neuwert: ja)</span>
+            <textarea className={area} value={r.merkmale} disabled={p.readOnly} onChange={(e) => set(i, { merkmale: e.target.value })} />
+          </label>
           <div className="mt-3" data-bausteine>
             <div className="text-xs text-[color:var(--muted)]">
               Bausteine mit eigenem Beitrag aus dem Tarifrechner (z. B. Zahnbehandlung +4,10 oder höhere Selbstbeteiligung −2,80). Im Termin schalten Sie sie per Klick an oder ab.
@@ -143,7 +153,7 @@ export function AngeboteEditor(p: {
 
       {!p.readOnly ? (
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="ghost" size="md" icon={Plus} onClick={() => { setRows([...rows, { sparte: "", gesellschaft: "", tarif: "", beitragMonat: "", selbstbeteiligung: "", leistungen: "", ausschluesse: "", empfohlen: false, bausteine: [] }]); setDirty(true); }}>
+          <Button variant="ghost" size="md" icon={Plus} onClick={() => { setRows([...rows, { sparte: "", gesellschaft: "", tarif: "", beitragMonat: "", selbstbeteiligung: "", leistungen: "", ausschluesse: "", empfohlen: false, bausteine: [], merkmale: "" }]); setDirty(true); }}>
             Angebot hinzufügen
           </Button>
           {rows.length ? (

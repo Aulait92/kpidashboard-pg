@@ -1,8 +1,9 @@
 // Terminvorbereitung laden (Datenbank), siehe lib/termin-vorbereitung.ts.
 
+import { randomBytes } from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { angeboteAuslesen, bausteinSchalten, cleanAngebote } from "@/lib/angebote";
+import { angeboteAuslesen, bausteinSchalten, cleanAngebote, tarifWaehlen, type AngeboteDaten } from "@/lib/angebote";
 import { folien, markeFuer, praesentationCss } from "@/lib/praesentation";
 import { asAnsprache } from "@/lib/ansprache";
 import { logoDataUri } from "@/lib/branding-logo";
@@ -161,14 +162,55 @@ export async function loadPraesentation(appointmentId: string, ctx: TeamCtx) {
 }
 
 /**
- * Baustein im Termin an- bzw. abschalten (Präsentation). Die Bestätigung bleibt; PDF und Dokumentation zeigen die
- * gewählte Fassung. Gibt die neuen Folien zurück.
+ * Im Termin umschalten (Präsentation): Baustein an/ab oder Stufe wählen. Die Bestätigung bleibt; PDF, Kundenlink und
+ * Dokumentation zeigen die gewählte Fassung. Gibt die neuen Folien zurück.
  */
-export async function bausteinUmschalten(appointmentId: string, ctx: TeamCtx, item: number, baustein: number, aktiv: boolean) {
+async function auswahlAendern(appointmentId: string, ctx: TeamCtx, fn: (d: AngeboteDaten) => AngeboteDaten | null) {
   const a = await prisma.appointment.findFirst({ where: { id: appointmentId, ...appointmentScope(ctx) }, select: { offersJson: true, offersConfirmedAt: true } });
   if (!a?.offersConfirmedAt) return null;
-  const neu = bausteinSchalten(cleanAngebote(a.offersJson), item, baustein, aktiv);
+  const neu = fn(cleanAngebote(a.offersJson));
   if (!neu) return null;
   await prisma.appointment.update({ where: { id: appointmentId }, data: { offersJson: neu as unknown as Prisma.InputJsonValue } });
   return loadPraesentation(appointmentId, ctx);
+}
+
+export const bausteinUmschalten = (appointmentId: string, ctx: TeamCtx, item: number, baustein: number, aktiv: boolean) =>
+  auswahlAendern(appointmentId, ctx, (d) => bausteinSchalten(d, item, baustein, aktiv));
+
+export const tarifUmschalten = (appointmentId: string, ctx: TeamCtx, item: number) => auswahlAendern(appointmentId, ctx, (d) => tarifWaehlen(d, item));
+
+// ─── Kundenlink (Ole, 15.11.2026): der Stand aus dem Termin zum Nachlesen, ohne Schalter und Sprechzettel ─────
+
+export const KUNDENLINK_TAGE = 14;
+
+/** Link erstellen bzw. verlängern; nur mit bestätigten Angeboten. */
+export async function kundenlinkErstellen(appointmentId: string, ctx: TeamCtx, now = new Date()): Promise<{ token: string; bis: Date } | null> {
+  const a = await prisma.appointment.findFirst({ where: { id: appointmentId, ...appointmentScope(ctx) }, select: { offersConfirmedAt: true, shareToken: true, shareExpiresAt: true } });
+  if (!a?.offersConfirmedAt) return null;
+  const token = a.shareToken && a.shareExpiresAt && a.shareExpiresAt > now ? a.shareToken : randomBytes(24).toString("base64url");
+  const bis = new Date(now.getTime() + KUNDENLINK_TAGE * 24 * 3600_000);
+  await prisma.appointment.update({ where: { id: appointmentId }, data: { shareToken: token, shareExpiresAt: bis } });
+  return { token, bis };
+}
+
+export async function kundenlinkBeenden(appointmentId: string, ctx: TeamCtx): Promise<boolean> {
+  const n = await prisma.appointment.updateMany({ where: { id: appointmentId, ...appointmentScope(ctx) }, data: { shareToken: null, shareExpiresAt: null } });
+  return n.count > 0;
+}
+
+export async function kundenlinkStand(appointmentId: string, ctx: TeamCtx, now = new Date()): Promise<{ token: string; bis: Date } | null> {
+  const a = await prisma.appointment.findFirst({ where: { id: appointmentId, ...appointmentScope(ctx) }, select: { shareToken: true, shareExpiresAt: true } });
+  return a?.shareToken && a.shareExpiresAt && a.shareExpiresAt > now ? { token: a.shareToken, bis: a.shareExpiresAt } : null;
+}
+
+/** Präsentation zum Kundenlink; null, wenn unbekannt, abgelaufen oder die Angebote nicht mehr bestätigt sind. */
+export async function loadKundenPraesentation(token: string, now = new Date()) {
+  if (!/^[A-Za-z0-9_-]{20,64}$/.test(token)) return null;
+  const a = await prisma.appointment.findUnique({ where: { shareToken: token }, select: { id: true, customerId: true, shareExpiresAt: true, offersConfirmedAt: true } });
+  if (!a?.shareExpiresAt || a.shareExpiresAt <= now || !a.offersConfirmedAt) return null;
+  const p = await loadPraesentation(a.id, { customerId: a.customerId, userId: null, teamRole: "owner" });
+  if (!p) return null;
+  // Für den Kunden: keine Sprechzettel, keine Schalter
+  const folien = p.folien.map((f) => ({ id: f.id, titel: f.titel, html: f.html }));
+  return { customerId: a.customerId, name: p.d.lead.name, berater: p.d.termin.berater, marke: p.marke, folien, css: p.css, bis: a.shareExpiresAt };
 }
