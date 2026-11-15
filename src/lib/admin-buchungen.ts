@@ -16,6 +16,8 @@
 //   (produkt.anfrage), große Nachrichtenpakete (bestand.paket_anfrage) und von Hand geänderte
 //   Betreuungsgebühr bzw. Vertragsende (billing.retainer ohne source „budget“).
 //   Alles, was eine Tabelle schon abbildet, steht in AUDIT_COVERED_BY_TABLES und wird übersprungen.
+// - Lebenszyklus (CustomerLifecycleEvent, lib/ruhend.ts): „Reaktiviert“ mit Paket und Monatsbetrag; Vertragsende mit
+//   Ruhephase, wenn die Betreuungsgebühr nach der Reaktivierung ohne Ende weiterläuft (sonst Zeile „Vertrag beendet“).
 // - Offene Aufgabe: Vertriebsaufgabe (SalesTask) am Kontakt des Kunden, die die Aktion angelegt hat
 //   (gleicher Zeitraum, passender Titel).
 //
@@ -161,6 +163,8 @@ export type SrcAudit = { id: string; at: Date; action: string; customerId: strin
 
 export type SrcTask = { id: string; contactId: string | null; title: string; createdAt: Date; doneAt: Date | null };
 
+export type SrcLifecycle = { id: string; customerId: string; kind: string; at: Date; mrr: number | null; details: unknown };
+
 export type BuchungSources = {
   customers: SrcCustomer[];
   offers: SrcOffer[];
@@ -171,6 +175,8 @@ export type BuchungSources = {
   referrals: SrcReferral[];
   audits: SrcAudit[];
   tasks: SrcTask[];
+  /** Reaktivierungen und Vertragsenden aus dem Lebenszyklus */
+  lifecycle?: SrcLifecycle[];
 };
 
 /** Aktionen im Änderungsprotokoll, aus denen Zeilen entstehen. */
@@ -770,8 +776,50 @@ export function buildBuchungen(src: BuchungSources, now: Date = new Date()): Buc
     });
   }
 
+  // ── Lebenszyklus: Reaktivierung, Vertragsende mit Ruhephase (lib/ruhend.ts) ──
+  for (const e of src.lifecycle ?? []) {
+    const d = obj(e.details);
+    if (e.kind === "reactivated") {
+      const days = num(d.dormantDays);
+      const row = add({
+        id: `lifecycle:${e.id}`,
+        source: "lifecycle",
+        sourceId: e.id,
+        at: e.at,
+        customerId: e.customerId,
+        art: "reaktivierung",
+        title: "Konto reaktiviert",
+        detail: join([str(d.package), e.mrr ? `bisher ${eur(e.mrr)} im Monat` : null, days != null ? `ruhte ${days} Tage` : null, "Abrechnung startet Ole neu"]),
+        oneOff: null,
+        monthly: e.mrr ?? null,
+        status: "aktiv",
+      });
+      row.task = findTask(e.customerId, { match: (t) => t.startsWith("Reaktivierung:"), ...around(e.at) });
+    } else if (e.kind === "dormant") {
+      const c = customers.get(e.customerId);
+      const end = str(d.contractEnd);
+      // Steht dasselbe Vertragsende noch als Betreuungsgebühr-Ende da, zeigt es schon die Zeile „Vertrag beendet“
+      if (c?.retainerEnd && end && dayIso(c.retainerEnd) === end) continue;
+      add({
+        id: `lifecycle:${e.id}`,
+        source: "lifecycle",
+        sourceId: e.id,
+        at: e.at,
+        customerId: e.customerId,
+        art: "kuendigung",
+        title: "Vertrag beendet, Konto ruht",
+        detail: end ? `letzter Tag ${fmtDay(date(end)!)}` : null,
+        oneOff: null,
+        monthly: e.mrr ? -e.mrr : null,
+        status: "beendet",
+      });
+    }
+  }
+
   return rows.sort((a, b) => b.at.getTime() - a.at.getTime() || a.id.localeCompare(b.id));
 }
+
+const dayIso = (d: Date) => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(d);
 
 // ─── Filter, Summen, CSV ─────────────────────────────────────────────────
 
@@ -853,7 +901,7 @@ const n = (v: unknown): number | null => (v == null ? null : Number(v));
 /** Alle Quellen aus der Datenbank (Kundenzahl klein: alles laden, dann im Speicher filtern). */
 export async function loadBuchungSources(now: Date = new Date()): Promise<BuchungSources> {
   const since = new Date(now.getTime() - 400 * DAY);
-  const [customers, offers, onboardings, bookings, budgets, pauses, packs, referrals, audits, tasks, cancelActs] = await Promise.all([
+  const [customers, offers, onboardings, bookings, budgets, pauses, packs, referrals, audits, tasks, cancelActs, lifecycle] = await Promise.all([
     prisma.customer.findMany({
       // Testkunden zählen nicht (Ole, 15.11.2026)
       where: { isTest: false },
@@ -915,6 +963,7 @@ export async function loadBuchungSources(now: Date = new Date()): Promise<Buchun
     prisma.auditLog.findMany({ where: { action: { in: [...AUDIT_ACTIONS] } }, select: { id: true, at: true, action: true, customerId: true, actorRole: true, details: true }, orderBy: { at: "asc" } }),
     prisma.salesTask.findMany({ where: { createdAt: { gte: since }, type: "SONSTIGES" }, select: { id: true, contactId: true, title: true, createdAt: true, doneAt: true } }),
     prisma.salesActivity.findMany({ where: { outcome: { startsWith: "Abo zu " } }, select: { outcome: true, occurredAt: true } }),
+    prisma.customerLifecycleEvent.findMany({ where: { kind: { in: ["reactivated", "dormant"] }, customer: { isTest: false } }, select: { id: true, customerId: true, kind: true, at: true, mrr: true, details: true } }),
   ]);
   const customerOfOffer = new Map(onboardings.map((o) => [o.offerId!, o.customerId]));
   const canceledAt = new Map<string, Date>();
@@ -998,6 +1047,7 @@ export async function loadBuchungSources(now: Date = new Date()): Promise<Buchun
     referrals: referrals.map((f) => ({ ...f, rewardAmount: n(f.rewardAmount) })),
     audits,
     tasks,
+    lifecycle: lifecycle.map((e) => ({ ...e, mrr: n(e.mrr) })),
   };
 }
 

@@ -36,6 +36,10 @@
 //   vergangene Tage), Retainer voller Vertragsbetrag; Monat ist als
 //   „hochgerechnet“ markiert. MRR-Brücke, Kündigungen, Kohorten und Bindung
 //   rechnen nur mit abgeschlossenen Monaten.
+// - Ruhende Konten (Vertrag beendet, lib/ruhend.ts): Ruhezeiten aus dem Lebenszyklus (dormant bis reactivated) zählen
+//   keinen Umsatz, auch wenn Ole die Betreuungsgebühr nach einer Reaktivierung ohne Ende weiterführt. In der MRR-Brücke
+//   heißt ein Kunde, der vorher schon Umsatz hatte und wieder zahlt, „Reaktivierung“ (nicht „neu“); neue Kunden
+//   (CAC, Kohorten) zählen nur den ersten Monat mit Umsatz.
 // - Monate nach Europe/Berlin.
 
 export type Stream = "ppl" | "service" | "software" | "setup";
@@ -114,6 +118,8 @@ export type RetainerInput = {
   countFrom?: Date | null;
   /** Per Garantie kostenlose Monate: "all" = Betreuung + Software, "service" = nur Betreuung. */
   freeMonths?: Record<string, "all" | "service">;
+  /** Ruhezeiten nach Vertragsende (Tage inklusive, to null = ruht noch): kein Umsatz. */
+  gaps?: { from: Date; to: Date | null }[];
 };
 
 function dayStart(key: string): number {
@@ -130,6 +136,7 @@ export function retainerRows(r: RetainerInput, months: string[], currentMonth: s
   const fromDay = r.countFrom ? dayStart(dayKey(r.countFrom)) : null;
   const endDay = r.end ? dayStart(dayKey(r.end)) : null;
   const pauses = r.pauses.map((p) => ({ from: dayStart(dayKey(p.from)), to: p.to ? dayStart(dayKey(p.to)) : Infinity }));
+  const gaps = (r.gaps ?? []).map((g) => ({ from: dayStart(dayKey(g.from)), to: g.to ? dayStart(dayKey(g.to)) : Infinity }));
   const introEnd = r.intro && startDay != null ? dayStart(dayKey(new Date(addMonthsDate(startDay, r.intro.months)))) : null;
   const out: LedgerRow[] = [];
   for (const m of months) {
@@ -144,6 +151,7 @@ export function retainerRows(r: RetainerInput, months: string[], currentMonth: s
       if (startDay != null && d < startDay) continue;
       if (fromDay != null && d < fromDay) continue;
       if (endDay != null && d > endDay) continue;
+      if (gaps.some((g) => d >= g.from && d <= g.to)) continue;
       const amount = r.intro && introEnd != null && d < introEnd ? r.intro.amount : r.monthly;
       const swMonth = Math.min(r.softwareShare, amount);
       const paused = pauses.some((p) => d >= p.from && d <= p.to);
@@ -235,28 +243,46 @@ export type Bridge = {
   start: number;
   neu: number;
   ausbau: number;
+  /** Kunden, die vorher schon Umsatz hatten, im Startmonat keinen, jetzt wieder (z. B. nach Ruhephase) */
+  reaktiviert: number;
   verkleinert: number;
   gekuendigt: number;
   end: number;
-  counts: { neu: number; ausbau: number; verkleinert: number; gekuendigt: number };
+  counts: { neu: number; ausbau: number; reaktiviert: number; verkleinert: number; gekuendigt: number };
 };
 
-/** MRR-Brücke zwischen zwei Monaten je Kunde (Reaktivierte zählen als neu). */
+/** MRR-Brücke zwischen zwei Monaten je Kunde: neu, Ausbau, Reaktivierung, Verkleinerung, Kündigung. */
 export function mrrBridge(rows: LedgerRow[], from: string, to: string): Bridge {
   const by = recurringByCustomer(rows);
-  const b: Bridge = { from, to, start: 0, neu: 0, ausbau: 0, verkleinert: 0, gekuendigt: 0, end: 0, counts: { neu: 0, ausbau: 0, verkleinert: 0, gekuendigt: 0 } };
+  const b: Bridge = { from, to, start: 0, neu: 0, ausbau: 0, reaktiviert: 0, verkleinert: 0, gekuendigt: 0, end: 0, counts: { neu: 0, ausbau: 0, reaktiviert: 0, verkleinert: 0, gekuendigt: 0 } };
   for (const m of by.values()) {
     const a = val(m, from);
     const c = val(m, to);
     b.start += a;
     b.end += c;
-    if (a <= 0 && c > 0) { b.neu += c; b.counts.neu++; }
+    if (a <= 0 && c > 0) {
+      const before = [...m.entries()].some(([k, v]) => k < from && v > 0);
+      if (before) { b.reaktiviert += c; b.counts.reaktiviert++; }
+      else { b.neu += c; b.counts.neu++; }
+    }
     else if (a > 0 && c <= 0) { b.gekuendigt -= a; b.counts.gekuendigt++; }
     else if (c > a) { b.ausbau += c - a; b.counts.ausbau++; }
     else if (c < a) { b.verkleinert -= a - c; b.counts.verkleinert++; }
   }
-  for (const k of ["start", "neu", "ausbau", "verkleinert", "gekuendigt", "end"] as const) b[k] = r2(b[k]);
+  for (const k of ["start", "neu", "ausbau", "reaktiviert", "verkleinert", "gekuendigt", "end"] as const) b[k] = r2(b[k]);
   return b;
+}
+
+/** MRR-Bewegung je Monat (Brücke vom Vormonat), für die Tabelle „Neu, Erweiterung, Reaktivierung, …“. */
+export function mrrMovement(rows: LedgerRow[], months: string[]): Bridge[] {
+  return months.slice(1).map((m, i) => mrrBridge(rows, months[i], m));
+}
+
+/** Kunden mit Umsatz im Vormonat und keinem in diesem Monat (Kündigung wirksam). */
+export function churnedCustomers(rows: LedgerRow[], month: string): number {
+  let n = 0;
+  for (const m of recurringByCustomer(rows).values()) if (val(m, addMonths(month, -1)) > 0 && val(m, month) <= 0) n++;
+  return n;
 }
 
 /** Erster Monat mit wiederkehrendem Umsatz je Kunde. */

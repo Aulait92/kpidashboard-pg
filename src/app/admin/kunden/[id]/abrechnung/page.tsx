@@ -11,6 +11,7 @@ import { AddOnsCard } from "./addons-card";
 import { RetainerCard } from "./retainer-card";
 import { BudgetHistoryCard } from "./budget-card";
 import { ProductBookingsCard } from "./produkt-card";
+import { LebenszyklusCard } from "./lebenszyklus-card";
 
 const fmt = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
@@ -56,6 +57,7 @@ export default async function KundenAbrechnung({ params, searchParams }: { param
             Nach 30 Tagen werden die Anzeigen automatisch pausiert.
           </div>
         ) : null}
+        <LebenszyklusCard customerId={id} />
         <RetainerCard customerId={id} message={retainer ?? null} failed={!!fehler && !!retainer} />
         <BudgetHistoryCard customerId={id} message={budget ?? null} failed={!!fehler && !!budget} />
         <ProductBookingsCard customerId={id} message={produkt ?? null} failed={!!fehler && !!produkt} />

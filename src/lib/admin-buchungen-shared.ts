@@ -1,7 +1,7 @@
 // Admin → Zahlen → Buchungen: Typen und Beschriftungen (auch im Browser nutzbar, ohne Datenbank).
 // Die Zeilen baut lib/admin-buchungen.ts.
 
-export const BUCHUNG_ARTEN = ["angebot", "produkt", "produkt_anfrage", "modul", "paket", "plaetze", "budget", "pause", "kuendigung", "rabatt", "preis"] as const;
+export const BUCHUNG_ARTEN = ["angebot", "produkt", "produkt_anfrage", "modul", "paket", "plaetze", "budget", "pause", "kuendigung", "reaktivierung", "rabatt", "preis"] as const;
 export type BuchungArt = (typeof BUCHUNG_ARTEN)[number];
 
 export const ART_LABEL: Record<BuchungArt, string> = {
@@ -14,6 +14,7 @@ export const ART_LABEL: Record<BuchungArt, string> = {
   budget: "Budget",
   pause: "Pause",
   kuendigung: "Kündigung",
+  reaktivierung: "Reaktiviert",
   rabatt: "Rabatt / Gutschrift",
   preis: "Monatspreis (von Hand)",
 };
@@ -44,7 +45,7 @@ export type BuchungRow = {
   /** Eindeutig über alle Quellen, z. B. „offer:abc“, „audit:xyz“ */
   id: string;
   /** Herkunft der Zeile (Tabelle bzw. „audit“) und deren id */
-  source: "offer" | "productBooking" | "budgetChange" | "pause" | "pack" | "referral" | "audit" | "customer";
+  source: "offer" | "productBooking" | "budgetChange" | "pause" | "pack" | "referral" | "audit" | "customer" | "lifecycle";
   sourceId: string;
   at: Date;
   customerId: string | null;
