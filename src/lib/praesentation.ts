@@ -119,7 +119,14 @@ export function praesentationCss(m: Marke): string {
 .beispiel .ohne{background:#fef2f2;color:#7f1d1d}
 .beispiel .mit{background:var(--fh);color:var(--f)}
 .angebot .wunsch{font-size:17px;color:#4b5568;margin-bottom:6px}
-.teile{display:flex;flex-wrap:wrap;gap:12px;margin:22px 0 6px}.teile span{background:var(--fh);color:#1f2937;border-radius:99px;padding:8px 18px;font-size:20px}.teile b{color:var(--f);margin-left:6px}
+.teile{display:flex;flex-wrap:wrap;gap:12px;margin:22px 0 6px}
+.teil{font:inherit;display:inline-flex;align-items:center;gap:8px;background:#fff;color:#66758f;border:2px dashed #cbd5e1;border-radius:99px;padding:6px 18px 6px 8px;font-size:20px;cursor:pointer}
+.teil .hk{width:24px;height:24px;border-radius:99px;border:2px solid #cbd5e1;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800}
+.teil.an{background:var(--fh);color:#1f2937;border:2px solid var(--fh)}.teil.an .hk{background:var(--f);border-color:var(--f);color:#fff}
+.teil b{color:var(--f);margin-left:2px}.teil small{font-size:16px}
+.stufen{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
+.st{font:inherit;border:1.5px solid #cbd5e1;background:#fff;color:#475569;border-radius:8px;padding:3px 10px;font-size:15px;cursor:pointer}
+.st.an{background:var(--f);border-color:var(--f);color:#fff;font-weight:700}
 .drin .tarif{font-size:24px;margin-bottom:4px}.drin li{font-size:18px;margin:0 0 6px}.drin .nein{margin-top:6px}
 .bausteine{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
 .bs{font:inherit;display:inline-flex;align-items:center;gap:8px;border:2px solid #cbd5e1;background:#fff;color:#475569;border-radius:99px;padding:6px 16px 6px 8px;font-size:18px;cursor:pointer}
@@ -134,7 +141,7 @@ export function praesentationCss(m: Marke): string {
 .vgl th,.vgl td{padding:10px 14px;border-bottom:1px solid #e3e9f3;text-align:center;vertical-align:middle}
 .vgl tbody th{text-align:left;font-weight:600;color:#1f2937;width:28%}
 .vgl thead th{position:relative;padding-top:22px;border-bottom:2px solid #e3e9f3}
-.vgl thead .tarif{font-size:24px;font-weight:700}.vgl thead .preis{font-size:30px;font-weight:800;color:var(--f)}.vgl thead .preis small{font-size:15px;font-weight:500;color:#66758f}
+.vgl thead .tarif{font-size:24px;font-weight:700}.vgl thead .preis{font-size:30px;font-weight:800;color:var(--f)}.vgl thead .preis small{display:block;font-size:15px;font-weight:500;color:#66758f;margin-top:-2px}
 .vgl .badge{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--f);color:#fff;font-size:14px;font-weight:700;padding:3px 12px;border-radius:99px;white-space:nowrap}
 .vgl .gew{background:var(--fh)}
 .vgl .ja-z{color:#16a34a;font-weight:800;font-size:22px}.vgl .nein-z{display:inline-block;width:18px;height:2px;background:#94a3b8;vertical-align:middle}
@@ -189,7 +196,7 @@ function vergleichTabelle(
   const alle = gleich
     .filter((n) => !NEIN.test(wert(v[0], n)!.trim()))
     .map((n) => (JA.test(wert(v[0], n)!.trim()) ? n : `${n}: ${wert(v[0], n)}`))
-    .slice(0, 4);
+    .slice(0, 5);
   const col = (i: AngebotItem) => (i.gewaehlt ? ` class="gew"` : "");
   const bs = v.some((i) => i.bausteine.length) ? `<tr><th>Bausteine</th>${v.map((i) => `<td${col(i)}>${f.schalter(i)}</td>`).join("")}</tr>` : "";
   return `${alle.length ? `<div class="alle"><b>In allen Tarifen:</b> ${alle.map((x) => `<span>✓ ${e(x)}</span>`).join("")}</div>` : ""}<table class="vgl"><thead><tr><th></th>${v
@@ -348,11 +355,18 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
   const mehrere = new Set(wahl.map((i) => i.sparte)).size > 1;
   const sb = mehrere ? mitSb.map((i) => `${i.sparte} ${i.selbstbeteiligung}`) : [...new Set(mitSb.map((i) => i.selbstbeteiligung!))];
   // Mehrere Sparten: je Sparte eine Karte statt einer gemischten Liste
+  // Stufen zum Wechseln, wenn der Kunde mit den Leistungen nicht zufrieden ist
+  const stufen = (i: AngebotItem) => {
+    const v = items.filter((x) => x.sparte === i.sparte);
+    return v.length > 1
+      ? `<div class="stufen">${v.slice(0, 4).map((x) => `<button type="button" class="st${x.gewaehlt ? " an" : ""}" data-tarif="${items.indexOf(x)}">${e(x.tarif ?? x.sparte)}</button>`).join("")}</div>`
+      : "";
+  };
   const jeSparte = wahl
     .slice(0, 4)
     .map((i) => {
       const neg = [...ohneBausteine(i).slice(0, 2), ...i.ausschluesse.slice(0, 2), ...(i.selbstbeteiligung && !/^keine?$/i.test(i.selbstbeteiligung.trim()) ? [`Selbstbeteiligung ${i.selbstbeteiligung}`] : [])];
-      return `<div class="angebot"><div class="tarif">${e(i.sparte)}</div><div class="ok"><ul>${[...i.leistungen.slice(0, 3), ...drinBausteine(i).slice(0, 2)].map((x) => `<li>${e(x)}</li>`).join("")}</ul></div>${
+      return `<div class="angebot"><div class="tarif">${e(i.sparte)}</div>${stufen(i)}<div class="ok"><ul>${[...i.leistungen.slice(0, 3), ...drinBausteine(i).slice(0, 2)].map((x) => `<li>${e(x)}</li>`).join("")}</ul></div>${
         neg.length ? `<div class="nein"><ul>${neg.map((x) => `<li>${e(x)}</li>`).join("")}</ul></div>` : ""
       }</div>`;
     })
@@ -365,13 +379,16 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
         mehrere
           ? `<div class="angebote drin" style="grid-template-columns:repeat(${Math.min(wahl.length, 4)},1fr)">${jeSparte}</div>`
           : drin.length || nicht.length
-          ? `<div class="zwei"><div class="ok"><ul>${drin.map((x) => `<li>${e(x)}</li>`).join("")}</ul></div><div class="nein"><ul>${[...nicht, ...(sb.length ? [`Selbstbeteiligung: ${sb.join(", ")}`] : [])]
+          ? `${wahl[0] ? stufen(wahl[0]) : ""}<div class="zwei"><div class="ok"><ul>${drin.map((x) => `<li>${e(x)}</li>`).join("")}</ul></div><div class="nein"><ul>${[...nicht, ...(sb.length ? [`Selbstbeteiligung: ${sb.join(", ")}`] : [])]
               .map((x) => `<li>${e(x)}</li>`)
               .join("")}</ul></div></div>`
           : `<div class="leer">Die Leistungen gehen wir im Gespräch gemeinsam durch.</div>`
       }`,
     ),
-    notizen: [tier ? "Offen sagen: Bekannte Vorerkrankungen sind nicht mitversichert, für bestimmte Leistungen gelten Wartezeiten." : "Ausschlüsse offen ansprechen, das schafft Vertrauen."],
+    notizen: [
+      tier ? "Offen sagen: Bekannte Vorerkrankungen sind nicht mitversichert, für bestimmte Leistungen gelten Wartezeiten." : "Ausschlüsse offen ansprechen, das schafft Vertrauen.",
+      "Fehlt dem Kunden etwas: andere Stufe antippen, Leistungen und Beitrag ändern sich sofort.",
+    ],
   });
 
   // Vergleich je Sparte mit mehreren echten Stufen: Preise erscheinen hier zum ersten Mal
@@ -379,7 +396,7 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
   for (const i of items) nachSparte.set(i.sparte, [...(nachSparte.get(i.sparte) ?? []), i]);
   for (const [sparte, varianten] of nachSparte) {
     if (varianten.length < 2) continue;
-    const v = varianten.slice(0, 3);
+    const v = varianten.slice(0, 4);
     const badge = (i: AngebotItem) => (i.empfohlen ? `<span class="badge">${e(a(an, "Passt zu dir", "Passt zu Ihnen"))}</span>` : "");
     const preis = (i: AngebotItem) => (i.beitragMonat != null ? `<div class="preis">${eur(beitragEffektiv(i)!)} <small>im Monat</small></div>` : "");
     const knopf = (i: AngebotItem) =>
@@ -401,27 +418,32 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
   }
 
   const summe = angebote ? summeEmpfohlen(angebote) : null;
+  // Produkte als Schalter: antippen nimmt eine Sparte heraus bzw. wieder hinein
+  const sparten1 = [...new Map(items.map((i) => [i.sparte, i])).values()];
+  const produkte =
+    sparten1.length > 1
+      ? `<div class="teile">${sparten1
+          .map((first) => {
+            const g = items.find((x) => x.sparte === first.sparte && x.gewaehlt);
+            const p = g ? beitragEffektiv(g) : null;
+            return `<button type="button" class="teil${g ? " an" : ""}" data-sparte="${items.indexOf(first)}"><span class="hk">${g ? "✓" : ""}</span>${e(first.sparte)}${p != null ? ` <b>${eur(p)}</b>` : g ? "" : ` <small>${e(a(an, "nicht gewählt", "nicht gewählt"))}</small>`}</button>`;
+          })
+          .join("")}</div>`
+      : "";
   out.push({
     id: "beitrag",
     titel: "Ihr Beitrag",
     html: R(
       `<h2>${e(a(an, "Dein Beitrag", "Ihr Beitrag"))}</h2>${
         summe != null
-          ? `<div class="gross">${eur(summe)} <span class="einheit">im Monat</span></div><p class="sub">Das sind rund ${eur(summe / 30)} am Tag.</p>${
-              mehrere
-                ? `<div class="teile">${wahl
-                    .filter((i) => i.beitragMonat != null)
-                    .map((i) => `<span>${e(i.sparte)} <b>${eur(beitragEffektiv(i)!)}</b></span>`)
-                    .join("")}</div>`
-                : ""
-            }${wahl.some((i) => i.bausteine.length) ? wahl.map((i) => schalter(items, i, mehrere)).join("") : ""}${sb.length ? `<p class="sub">Selbstbeteiligung: ${e(sb.join(", "))}</p>` : ""}`
-          : `<div class="leer">${e(a(an, "Deinen Beitrag rechnen wir gemeinsam.", "Ihren Beitrag rechnen wir gemeinsam."))}</div>`
+          ? `<div class="gross">${eur(summe)} <span class="einheit">im Monat</span></div><p class="sub">Das sind rund ${eur(summe / 30)} am Tag.</p>${produkte}${wahl.some((i) => i.bausteine.length) ? wahl.map((i) => schalter(items, i, mehrere)).join("") : ""}${sb.length ? `<p class="sub">Selbstbeteiligung: ${e(sb.join(", "))}</p>` : ""}`
+          : `<div class="leer">${e(a(an, "Deinen Beitrag rechnen wir gemeinsam.", "Ihren Beitrag rechnen wir gemeinsam."))}</div>${produkte}`
       }`,
       a(an, "Passt das für dich?", "Passt das für Sie?"),
     ),
     notizen: [
       "Zahl nennen, dann Pause. Dann: „Passt das in Ihr Budget?“",
-      "Zu teuer? Bausteine antippen: Der Beitrag rechnet sich sofort neu, und auf „Das ist drin“ steht, worauf der Kunde verzichtet.",
+      "Zu teuer? Bausteine antippen oder ein Produkt herausnehmen: Der Beitrag rechnet sich sofort neu. Nochmal antippen holt es zurück.",
       "Einwände: erst eingrenzen („Angenommen, das wäre gelöst …“), dann das Gefühl benennen, dann sachlich antworten. „Zu teuer“: kleinere Stufe oder Selbstbeteiligung, nie Leistungen schönreden.",
     ],
   });

@@ -9,7 +9,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { reportError } from "@/lib/monitoring";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
-const MAX_ITEMS = 9;
+const MAX_ITEMS = 20; // z. B. 4 Sparten mit je 4 Stufen (Allianz Basis, Smart, Komfort, Premium)
 
 /**
  * Zusatzbaustein mit eigenem Monatsbeitrag aus dem Tarifrechner (Ole, 15.11.2026): Im Termin schaltet der Berater
@@ -66,7 +66,7 @@ function cleanBausteine(v: unknown): Baustein[] {
 }
 
 function cleanMerkmale(v: unknown): { name: string; wert: string }[] {
-  return (Array.isArray(v) ? v : []).slice(0, 8).flatMap((x) => {
+  return (Array.isArray(v) ? v : []).slice(0, 14).flatMap((x) => {
     if (!x || typeof x !== "object") return [];
     const r = x as Record<string, unknown>;
     const name = str(r.name, 60);
@@ -121,12 +121,21 @@ export function summeEmpfohlen(d: AngeboteDaten): number | null {
   return rec.length ? Math.round(rec.reduce((s, i) => s + (beitragEffektiv(i) ?? 0), 0) * 100) / 100 : null;
 }
 
-/** Stufe im Termin wählen: diese an, die anderen derselben Sparte ab; erneuter Klick wählt ab. null, wenn es sie nicht gibt. */
+/** Stufe im Termin wählen: diese an, die anderen derselben Sparte ab. Herausnehmen geht über sparteSchalten. null, wenn es sie nicht gibt. */
 export function tarifWaehlen(d: AngeboteDaten, item: number): AngeboteDaten | null {
   const it = d.items[item];
   if (!it) return null;
-  const an = !it.gewaehlt;
-  return { ...d, items: d.items.map((x, i) => (i === item ? { ...x, gewaehlt: an } : x.sparte === it.sparte && an ? { ...x, gewaehlt: false } : x)) };
+  return { ...d, items: d.items.map((x, i) => (x.sparte === it.sparte ? { ...x, gewaehlt: i === item } : x)) };
+}
+
+/** Ganze Sparte im Termin ab- bzw. wieder zuwählen (dann mit der Empfehlung, sonst der ersten Stufe). */
+export function sparteSchalten(d: AngeboteDaten, item: number): AngeboteDaten | null {
+  const it = d.items[item];
+  if (!it) return null;
+  const gleiche = d.items.filter((x) => x.sparte === it.sparte);
+  const an = !gleiche.some((x) => x.gewaehlt);
+  const ziel = an ? (gleiche.find((x) => x.empfohlen) ?? gleiche[0]) : null;
+  return { ...d, items: d.items.map((x) => (x.sparte !== it.sparte ? x : { ...x, gewaehlt: x === ziel })) };
 }
 
 /** Baustein an- bzw. abschalten (Index im Angebot und im Baustein); null, wenn es ihn nicht gibt. */
@@ -170,7 +179,7 @@ const SCHEMA = {
           empfohlen: { type: "boolean", description: "true, wenn das Angebot diese Stufe als Empfehlung bzw. ausgewählt markiert" },
           merkmale: {
             type: "array",
-            description: "Vergleichstabelle mehrerer Stufen: je Zeile Merkmal und Wert dieser Stufe (z. B. Versicherungssumme: 75 Mio. €; ja, wenn ein Haken, nein, wenn ein Strich). Höchstens 8, die mit Unterschieden zuerst. Bei nur einer Stufe leer.",
+            description: "Vergleichstabelle mehrerer Stufen: je Zeile Merkmal und Wert dieser Stufe (z. B. Versicherungssumme: 75 Mio. €; ja, wenn ein Haken, nein, wenn ein Strich). Höchstens 14, die mit Unterschieden zuerst. Bei nur einer Stufe leer.",
             items: { type: "object", properties: { name: { type: "string" }, wert: { type: "string" } }, required: ["name", "wert"] },
           },
           ausschluesse: { type: "array", items: { type: "string" }, description: "Ausdrücklich genannte Ausschlüsse oder Wartezeiten, kurz; leer, wenn keine genannt." },

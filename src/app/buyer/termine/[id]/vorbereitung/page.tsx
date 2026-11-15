@@ -29,7 +29,7 @@ export default async function TerminVorbereitungPage({ params }: { params: Promi
   const unterlagen = unterlagenFuer(d.lead.produkt, spartenVon(d));
   const [ang, auslesenErlaubt] = await Promise.all([loadAngebote(id, ctx), angeboteAuslesenErlaubt(ctx.customerId)]);
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       {d.leadId ? (
         <Link href={`/buyer/leads/${d.leadId}`} className="mb-3 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-[color:var(--brand)] hover:underline">
           <ArrowLeft className="h-4 w-4" /> Zum Kontakt
@@ -57,6 +57,7 @@ export default async function TerminVorbereitungPage({ params }: { params: Promi
           <AngeboteEditor
             id={d.id}
             items={ang.angebote.items}
+            quelle={ang.angebote.quelle}
             bestaetigt={!!ang.bestaetigt}
             dateien={ang.dateien}
             auslesenErlaubt={auslesenErlaubt}

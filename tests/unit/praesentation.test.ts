@@ -1,6 +1,6 @@
 // Beratungsstrecke und Angebote (Ole, 15.11.2026)
 import { describe, expect, it } from "vitest";
-import { bausteinSchalten, beitragEffektiv, cleanAngebote, summeEmpfohlen, tarifWaehlen } from "@/lib/angebote";
+import { bausteinSchalten, beitragEffektiv, cleanAngebote, sparteSchalten, summeEmpfohlen, tarifWaehlen } from "@/lib/angebote";
 import { folien, markeFuer, praesentationHtml } from "@/lib/praesentation";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
 
@@ -145,7 +145,44 @@ describe("Präsentation", () => {
     expect(fs.find((f) => f.id === "beitrag")!.html).toContain("6,15");
     expect(fs.find((f) => f.id.startsWith("vergleich-"))!.html).toMatch(/class="gew"><span class="badge">|class="badge">Passt zu Ihnen<\/span><div class="tarif">Komfort/);
     expect(fs.find((f) => f.id === "empfehlung")!.html).toContain("Komfort");
-    expect(tarifWaehlen(neu, 0)!.items.every((i) => !i.gewaehlt)).toBe(true);
+    expect(tarifWaehlen(neu, 0)!.items.map((i) => i.gewaehlt)).toEqual([true, false, false]);
     expect(tarifWaehlen(ang, 7)).toBeNull();
+  });
+
+  it("Allianz-Fall: 4 Sparten mit je 4 Stufen, 4 Spalten im Vergleich, viele Merkmale", () => {
+    const sp = ["Privathaftpflicht", "Rechtsschutz", "Unfall", "Tierkranken"];
+    const stufen = ["Basis", "Smart", "Komfort", "Premium"];
+    const merk = (k: number) => Array.from({ length: 12 }, (_, j) => ({ name: `Merkmal ${j}`, wert: j < 9 ? "ja" : `${k}` }));
+    const ang = cleanAngebote({ items: sp.flatMap((s, a) => stufen.map((t, k) => ({ sparte: s, tarif: t, beitragMonat: 5 + a + k, empfohlen: k === 2, merkmale: merk(k) }))) });
+    expect(ang.items).toHaveLength(16);
+    expect(ang.items[0].merkmale).toHaveLength(12);
+    const fs = folien({ ...d, formular: [] }, ang, markeFuer({ name: "Allianz Agentur Lohmann" }));
+    const vgl = fs.filter((f) => f.id.startsWith("vergleich-"));
+    expect(vgl).toHaveLength(4);
+    expect(vgl[3].html.match(/data-tarif=/g)).toHaveLength(4);
+    expect(vgl[0].html.match(/<span>✓ /g)).toHaveLength(5);
+    expect(summeEmpfohlen(ang)).toBe(7 + 8 + 9 + 10);
+  });
+
+  it("Produkt abwählen und zurückholen (Beitragsfolie), Stufe auf der Leistungsfolie wechseln", () => {
+    const ang = cleanAngebote({ items: [
+      { sparte: "Privathaftpflicht", tarif: "Smart", beitragMonat: 5.7, empfohlen: true, leistungen: ["50 Mio."] },
+      { sparte: "Privathaftpflicht", tarif: "Komfort", beitragMonat: 6.96, leistungen: ["75 Mio."] },
+      { sparte: "Unfall", tarif: "Premium", beitragMonat: 61.83, empfohlen: true, leistungen: ["1 %"] },
+    ] });
+    const m = markeFuer({ name: "Allianz Agentur Lohmann" });
+    let fs = folien({ ...d, formular: [] }, ang, m);
+    const b = fs.find((f) => f.id === "beitrag")!.html;
+    expect(b).toContain('class="teil an" data-sparte="2"');
+    expect(fs.find((f) => f.id === "leistungen")!.html).toContain('class="st an" data-tarif="0">Smart');
+    const ohne = sparteSchalten(ang, 2)!;
+    expect(summeEmpfohlen(ohne)).toBe(5.7);
+    fs = folien({ ...d, formular: [] }, ohne, m);
+    expect(fs.find((f) => f.id === "beitrag")!.html).toContain('class="teil" data-sparte="2"');
+    expect(fs.find((f) => f.id === "beitrag")!.html).toContain("nicht gewählt");
+    const ohneHp = sparteSchalten(ohne, 1)!;
+    expect(ohneHp.items.map((i) => i.gewaehlt)).toEqual([false, false, false]);
+    expect(sparteSchalten(ohneHp, 1)!.items.map((i) => i.gewaehlt)).toEqual([true, false, false]);
+    expect(tarifWaehlen(ohneHp, 1)!.items.map((i) => i.gewaehlt)).toEqual([false, true, false]);
   });
 });

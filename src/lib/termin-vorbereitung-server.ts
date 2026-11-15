@@ -3,7 +3,7 @@
 import { randomBytes } from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { angeboteAuslesen, bausteinSchalten, cleanAngebote, tarifWaehlen, type AngeboteDaten } from "@/lib/angebote";
+import { angeboteAuslesen, bausteinSchalten, cleanAngebote, sparteSchalten, tarifWaehlen, type AngeboteDaten } from "@/lib/angebote";
 import { folien, markeFuer, praesentationCss } from "@/lib/praesentation";
 import { asAnsprache } from "@/lib/ansprache";
 import { logoDataUri } from "@/lib/branding-logo";
@@ -178,6 +178,8 @@ export const bausteinUmschalten = (appointmentId: string, ctx: TeamCtx, item: nu
   auswahlAendern(appointmentId, ctx, (d) => bausteinSchalten(d, item, baustein, aktiv));
 
 export const tarifUmschalten = (appointmentId: string, ctx: TeamCtx, item: number) => auswahlAendern(appointmentId, ctx, (d) => tarifWaehlen(d, item));
+
+export const sparteUmschalten = (appointmentId: string, ctx: TeamCtx, item: number) => auswahlAendern(appointmentId, ctx, (d) => sparteSchalten(d, item));
 
 // ─── Kundenlink (Ole, 15.11.2026): der Stand aus dem Termin zum Nachlesen, ohne Schalter und Sprechzettel ─────
 

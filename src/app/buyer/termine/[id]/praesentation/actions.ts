@@ -3,7 +3,7 @@
 // Bausteine im Termin an- bzw. abschalten (Ole, 15.11.2026): neuer Beitrag sofort auf den Folien.
 
 import { getBuyerContext } from "@/lib/buyer-context";
-import { bausteinUmschalten, kundenlinkBeenden, kundenlinkErstellen, tarifUmschalten } from "@/lib/termin-vorbereitung-server";
+import { bausteinUmschalten, kundenlinkBeenden, kundenlinkErstellen, sparteUmschalten, tarifUmschalten } from "@/lib/termin-vorbereitung-server";
 import { publicUrlOr } from "@/lib/public-url";
 import type { Folie } from "@/lib/praesentation";
 
@@ -16,12 +16,12 @@ export async function bausteinAction(appointmentId: string, item: number, bauste
   return p ? { ok: true, folien: p.folien } : { ok: false, error: "Baustein nicht gefunden. Sind die Angebote bestätigt?" };
 }
 
-export async function tarifAction(appointmentId: string, item: number): Promise<{ ok: true; folien: Folie[] } | { ok: false; error: string }> {
+export async function tarifAction(appointmentId: string, item: number, ganzeSparte = false): Promise<{ ok: true; folien: Folie[] } | { ok: false; error: string }> {
   const ctx = await getBuyerContext();
   if (!ctx) return { ok: false, error: "Bitte neu anmelden." };
   if (ctx.preview) return { ok: false, error: "In der Vorschau nicht möglich." };
   if (!Number.isInteger(item) || item < 0 || item >= 20) return { ok: false, error: "Ungültig." };
-  const p = await tarifUmschalten(appointmentId, ctx, item);
+  const p = ganzeSparte ? await sparteUmschalten(appointmentId, ctx, item) : await tarifUmschalten(appointmentId, ctx, item);
   return p ? { ok: true, folien: p.folien } : { ok: false, error: "Tarif nicht gefunden. Sind die Angebote bestätigt?" };
 }
 

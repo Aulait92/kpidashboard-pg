@@ -193,10 +193,12 @@ Seiten aus der Liste „Seiten“ unten.
   Zahnbehandlung +4,10 € oder höhere Selbstbeteiligung −2,80 €; der Haken heißt „im Angebot enthalten“). In der
   Präsentation tippen Sie einen Baustein auf der Folie an oder ab: Der Beitrag rechnet sich sofort neu, abgewählte
   Bausteine stehen unter „Das ist drin, und das nicht“. Die gewählte Fassung wird gespeichert und steht auch im PDF.
-- **Tarif im Termin wählen:** Tragen Sie je Sparte mehrere Stufen ein (z. B. Smart, Komfort, Premium) und unter
-  „Vergleich“ die Merkmale je Stufe („Versicherungssumme: 75 Mio. €“, „Neuwert: ja“). Die Präsentation zeigt dann eine
+- **Tarif im Termin wählen:** Je Sparte zeigt die Terminvorbereitung eine Tabelle wie im Tarifrechner: Stufen als Spalten
+  (z. B. Basis, Smart, Komfort, Premium), Beitrag, Ihre Empfehlung und Merkmale als Zeilen („75 Mio. €“, „ja“, „nein“). Die Präsentation zeigt dann eine
   Vergleichstabelle wie im Tarifrechner. Mit **Auswählen** wechseln Sie im Termin die Stufe; Ihre Empfehlung bleibt
   markiert, Beitrag und Leistungen richten sich nach der Wahl.
+  Auf „Das ist drin“ wechseln Sie die Stufe ebenfalls. Auf der Beitragsfolie nimmt ein Klick auf ein Produkt es
+  heraus, ein zweiter Klick holt es mit Ihrer Empfehlung zurück.
 - **Link für Ihren Kunden:** Unter der Präsentation erstellt **Link erstellen** einen persönlichen Link mit dem Stand aus
   dem Termin, ohne Sprechzettel und ohne Schalter, 14 Tage gültig. Kopieren, per WhatsApp oder E-Mail schicken, bei
   Bedarf **Link beenden**.

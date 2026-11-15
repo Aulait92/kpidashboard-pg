@@ -20,7 +20,7 @@ export default async function BeratungPage({ params }: { params: Promise<{ token
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6" data-kundenlink>
         <h1 className="text-xl font-bold [text-wrap:balance]">Ihre Beratung, {p.name}</h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">
-          Mit {p.berater}, {p.marke.name}. Dieser Link ist bis zum {datum(p.bis)} erreichbar.
+          {p.marke.name.toLowerCase().includes(p.berater.toLowerCase()) ? p.marke.name : `Mit ${p.berater}, ${p.marke.name}`}. Dieser Link ist bis zum {datum(p.bis)} erreichbar.
         </p>
         <a
           href={`/beratung/${token}/pdf`}

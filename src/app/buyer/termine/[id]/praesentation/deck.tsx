@@ -19,14 +19,14 @@ export function Deck({ id, css, folien: start, nurNotizen, interaktiv = true }: 
   // Bausteine per Klick auf der Folie: sofort umschalten (optimistisch), Server rechnet und speichert
   const onSlideClick = (ev: React.MouseEvent) => {
     if (!interaktiv || pending) return;
-    const el = (ev.target as HTMLElement).closest<HTMLElement>("[data-baustein],[data-tarif]");
+    const el = (ev.target as HTMLElement).closest<HTMLElement>("[data-baustein],[data-tarif],[data-sparte]");
     if (!el) return;
-    const tarif = el.dataset.tarif;
+    const tarif = el.dataset.tarif ?? el.dataset.sparte;
     const [item, b] = (el.dataset.baustein ?? "").split(":").map(Number);
     const aktiv = !el.classList.contains("an");
     el.classList.toggle("an", aktiv);
     startT(async () => {
-      const r = tarif != null ? await tarifAction(id, Number(tarif)) : await bausteinAction(id, item, b, aktiv);
+      const r = tarif != null ? await tarifAction(id, Number(tarif), el.dataset.sparte != null) : await bausteinAction(id, item, b, aktiv);
       if (r.ok) setFolien(r.folien);
       else {
         el.classList.toggle("an", !aktiv);
