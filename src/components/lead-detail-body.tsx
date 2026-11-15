@@ -454,6 +454,9 @@ export async function LeadDetailBody({
                 <div className="font-semibold">{apptFmt(nextAppt.startsAt)} Uhr</div>
                 <div className="text-xs text-[color:var(--muted)]">{terminArtLabel(nextAppt.mode)}</div>
               </div>
+              <ButtonLink href={`/buyer/termine/${nextAppt.id}/vorbereitung`} variant="secondary" data-termin-vorbereiten>
+                Vorbereiten
+              </ButtonLink>
               {nextAppt.mode === "video" && nextAppt.meetUrl ? (
                 <ButtonLink href={nextAppt.meetUrl} variant="primary" external>
                   Videocall

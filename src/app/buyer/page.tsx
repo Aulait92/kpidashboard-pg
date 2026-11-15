@@ -20,6 +20,7 @@ import { UpdatesHeuteCard } from "@/components/neuigkeiten";
 import { unreadUpdates } from "@/lib/neuigkeiten";
 import { dismissUpdatesAction } from "./neuigkeiten/actions";
 import { ErstinfoHeuteHint } from "@/components/erstinformation-hint";
+import { TerminVorbereitungCard } from "@/components/termin-vorbereitung-card";
 
 // Startseite des Kundenbereichs für alle Kunden: „Heute" – eine
 // Aufgabenliste (Termine, Ergebnisse, Chats, Rückrufe), die man leer
@@ -94,6 +95,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
             {nudgeCard}
             <FreePeriodNotices customerId={ctx.customerId} readOnly={ctx.preview} />
             <EmpfehlungHeuteHint ctx={ctx} />
+            <TerminVorbereitungCard ctx={ctx} />
             <TodayInbox data={data} newUi leadHref="/buyer?lead={id}" selectedLeadId={selected} />
           </section>
           <section
@@ -138,6 +140,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
       {nudgeCard}
       <FreePeriodNotices customerId={ctx.customerId} readOnly={ctx.preview} />
             <EmpfehlungHeuteHint ctx={ctx} />
+      <TerminVorbereitungCard ctx={ctx} />
       <TodayInbox data={data} />
     </main>
   );

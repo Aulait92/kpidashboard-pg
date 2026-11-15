@@ -88,3 +88,18 @@ export async function renderUrlToPdf(url: string): Promise<Buffer> {
     await context.close();
   }
 }
+
+/** Rendert fertiges HTML als A4-PDF (Seitenränder aus dem CSS, @page). Für Seiten hinter dem Login (z. B. Terminvorbereitung). */
+export async function renderHtmlToPdf(html: string): Promise<Buffer> {
+  const browser = await getBrowser();
+  const context = await browser.newContext({ viewport: { width: 794, height: 1123 } });
+  const page = await context.newPage();
+  try {
+    await page.setContent(html, { waitUntil: "networkidle", timeout: 20_000 });
+    await page.evaluate(() => document.fonts?.ready);
+    const pdf = await page.pdf({ format: "A4", printBackground: true, preferCSSPageSize: true });
+    return Buffer.from(pdf);
+  } finally {
+    await context.close();
+  }
+}

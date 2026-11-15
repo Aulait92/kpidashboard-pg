@@ -174,6 +174,16 @@ Seiten aus der Liste „Seiten“ unten.
 - Bei Terminen im Chat: Video-Link, Verschieben, Termin absagen (beides im Fenster, Absagen mit Rückfrage).
 - Rechts bzw. oben: Kontakt, Angaben aus dem Formular, „Lead öffnen“.
 
+## Termine vorbereiten
+
+- Auf **Heute** steht ab dem Vortag (bei kurzfristigen Buchungen sofort) die Aufgabe **Termine vorbereiten:
+  Angebot rechnen** mit jedem anstehenden Termin. Ein Klick öffnet die **Terminvorbereitung**.
+- Dort stehen die Angaben in der Reihenfolge des Allianz-Tarifrechners (je Sparte), die **offenen Punkte**, die Sie
+  im Termin klären, alles aus dem Leadformular, ein **Gesprächsleitfaden** und die Unterlagen, um die der Kunde
+  gebeten wurde. **Als PDF** gibt es das Ganze zum Drucken oder für den zweiten Bildschirm.
+- Haben Sie das Angebot gerechnet, tippen Sie **Vorbereitet**; die Aufgabe verschwindet. Auch im Kontakt am Termin:
+  **Vorbereiten**.
+
 ## Der WhatsApp-Assistent
 
 - Schreibt neue Leads in wenigen Minuten an, stellt ein paar Fragen und bucht einen Termin in freie Zeiten

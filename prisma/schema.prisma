@@ -1143,6 +1143,9 @@ model Appointment {
   status          String    @default("booked") // booked | cancelled | completed | no_show
   reminderSentAt  DateTime? // gesetzt, sobald die WhatsApp-Erinnerung raus ist
   soonReminderSentAt DateTime? // „Gleich ist es so weit, passt alles?“ etwa 1 Std. vorher (Ole, 15.11.2026)
+  // Terminvorbereitung (Angebot gerechnet) vom Berater abgehakt (Ole, 15.11.2026)
+  preparedAt      DateTime?
+  preparedById    String?
   // Empfehlungen: nach diesem Termin geprüft, ob der Empfehlungslink rausgeht (einmal je Termin)
   referralAskedAt DateTime?
   // Getrennte Einladung für den Berater (interne Infos), gleicher Termin.
