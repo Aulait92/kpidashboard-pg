@@ -16,6 +16,7 @@ import {
   type UpdateView,
 } from "@/lib/neuigkeiten-shared";
 import { BESTAND_MODULE_AVAILABLE, bestandVisible, isBestandUpdate } from "@/lib/bestand/sichtbar";
+import { neuigkeitVersteckt } from "@/lib/terminvorbereitung-neu";
 
 type Row = { id: string; title: string; body: string; kind: string; audience: string; publishedAt: Date | null };
 const toView = (r: Row): UpdateView => ({
@@ -34,7 +35,8 @@ async function audienceOf(customerId: string): Promise<{ plan: string; bestand: 
 }
 
 /** Einträge zum Bestandskunden-Modul nur für Kunden, die es sehen (nicht gelöscht, nur ausgeblendet). */
-const forAudience = (rows: Row[], a: { bestand: boolean }) => (a.bestand ? rows : rows.filter((r) => !isBestandUpdate(r)));
+// Neuigkeit zur neuen Terminvorbereitung erst, wenn sie für alle an ist (lib/terminvorbereitung-neu.ts)
+const forAudience = (rows: Row[], a: { bestand: boolean }) => rows.filter((r) => (a.bestand || !isBestandUpdate(r)) && !neuigkeitVersteckt(r.id));
 
 /** Veröffentlichte Neuigkeiten für einen Kunden (nach Paket und Modulen gefiltert), neueste zuerst. */
 export async function listUpdatesForCustomer(customerId: string, now = new Date()): Promise<UpdateView[]> {
@@ -119,7 +121,7 @@ export async function deleteUpdate(id: string, actor?: AuditActor): Promise<void
 /** Push an alle Logins mit Push von Kunden der passenden Zielgruppe. Gibt die Zahl der Geräte zurück. */
 export async function pushUpdate(id: string): Promise<number> {
   const row = await prisma.productUpdate.findUnique({ where: { id } });
-  if (!row?.publishedAt || row.pushedAt) return 0;
+  if (!row?.publishedAt || row.pushedAt || neuigkeitVersteckt(row.id)) return 0;
   // Erst markieren (kein doppelter Versand bei Doppelklick)
   const claimed = await prisma.productUpdate.updateMany({ where: { id, pushedAt: null }, data: { pushedAt: new Date() } });
   if (!claimed.count) return 0;

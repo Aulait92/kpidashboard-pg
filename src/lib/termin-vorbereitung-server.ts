@@ -1,7 +1,7 @@
 // Terminvorbereitung laden (Datenbank), siehe lib/termin-vorbereitung.ts.
 
 import { randomBytes } from "node:crypto";
-import type { Prisma } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { angebotOhneGesundheitsdaten, angeboteAuslesen, bausteinSchalten, cleanAngebote, sparteSchalten, tarifWaehlen, type AngeboteDaten } from "@/lib/angebote";
 import { folien, markeFuer, praesentationCss } from "@/lib/praesentation";
@@ -139,7 +139,8 @@ export async function auslesenUndSpeichern(appointmentId: string, ctx: TeamCtx):
   const files = await prisma.leadFile.findMany({ where: { leadId: a.leadId, kind: "angebot" }, orderBy: { createdAt: "desc" }, take: 5, select: { fileName: true, contentType: true, data: true } });
   const res = await angeboteAuslesen(files.map((f) => ({ fileName: f.fileName, contentType: f.contentType, data: new Uint8Array(f.data) })));
   if ("error" in res) return { ok: false, error: res.error };
-  await prisma.appointment.update({ where: { id: appointmentId }, data: { offersJson: res as unknown as Prisma.InputJsonValue, offersConfirmedAt: null } });
+  await prisma.appointment.update({ where: { id: appointmentId }, // Tarifauswahl der neuen Terminvorbereitung gilt dann nicht mehr (ältere Angebote werden wieder gelesen)
+    data: { offersJson: res as unknown as Prisma.InputJsonValue, offersConfirmedAt: null, tarifauswahl: Prisma.DbNull } });
   return { ok: true, anzahl: res.items.length };
 }
 
@@ -148,7 +149,7 @@ export async function angeboteSpeichern(appointmentId: string, ctx: TeamCtx, raw
   const d = cleanAngebote(raw);
   const n = await prisma.appointment.updateMany({
     where: { id: appointmentId, ...appointmentScope(ctx) },
-    data: { offersJson: d as unknown as Prisma.InputJsonValue, offersConfirmedAt: bestaetigen && d.items.length ? new Date() : null },
+    data: { offersJson: d as unknown as Prisma.InputJsonValue, offersConfirmedAt: bestaetigen && d.items.length ? new Date() : null, tarifauswahl: Prisma.DbNull },
   });
   return n.count > 0;
 }

@@ -332,6 +332,11 @@ model Customer {
   optimizationMeasures           OptimizationMeasure[]
   // Erstinformation nach § 15 VersVermV (Registernummer, PDF oder Link, öffentliche Adresse)
   erstinformation                Erstinformation?
+  // Tarifkatalog (Terminvorbereitung, Ole 15.11.2026): Gesellschaft(en) des Vertreters bzw. bevorzugte des Maklers
+  // (Schlüssel wie data/tarifkatalog/<gesellschaft>); leer = aus Erstinformation bzw. Name abgeleitet
+  tarifGesellschaften            String[]                  @default([])
+  eigeneTarife                   EigenerTarif[]
+  beraterMerkmale                BeraterMerkmale[]
 }
 
 // Tagesbudget je Produkt (Kundenbereich → Konto → Werbebudget). Ohne Eintrag gilt das
@@ -1214,6 +1219,11 @@ model Appointment {
   // Angebote zum Termin (ausgelesen bzw. eingetragen, vom Berater bestätigt), für die Präsentation (Ole, 15.11.2026)
   offersJson         Json?
   offersConfirmedAt  DateTime?
+  // Neue Terminvorbereitung (Ole, 15.11.2026): Tarifauswahl je Sparte aus dem Tarifkatalog (lib/tarifauswahl.ts);
+  // daraus entsteht offersJson. null = noch nicht bearbeitet (dann gelten ältere Angebote in offersJson).
+  tarifauswahl       Json?
+  // „Noch klären im Termin“: abgehakte Punkte (Text)
+  klaerenErledigt    String[]  @default([])
   shareToken         String?   @unique // Kundenlink zur Präsentation (nur Stand, ohne Sprechzettel), /beratung/<token>
   shareExpiresAt     DateTime? // Link läuft nach 14 Tagen ab
   // Empfehlungen: nach diesem Termin geprüft, ob der Empfehlungslink rausgeht (einmal je Termin)
@@ -3318,9 +3328,9 @@ model SalesPresentationView {
 // Verlauf eines Leads im Kundenbereich (Ole, 13.11.2026): gepostete Notizen und Ereignisse
 // (Anruf, Status, Wiedervorlage, Abschluss, Police). Gelöscht mit dem Lead (Art. 17).
 model LeadHistory {
-  id         String   @id @default(cuid())
+  id         String       @id @default(cuid())
   leadId     String
-  lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  lead       Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
   customerId String
   // notiz | anruf | status | wiedervorlage | abschluss | police | dokument | email
   kind       String
@@ -3900,4 +3910,37 @@ model TemplateAbTest {
   stats     Json?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+}
+
+/// Eigener Tarif eines Vermittlers (Terminvorbereitung, Ole 15.11.2026): für Sparten oder Gesellschaften, die der
+/// Tarifkatalog nicht hat. Nur für diesen Kunden sichtbar; Ole kann ihn später in den Katalog übernehmen.
+model EigenerTarif {
+  id           String   @id @default(cuid())
+  customerId   String
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  userId       String?
+  sparte       String
+  gesellschaft String
+  name         String
+  kurz         String
+  // { merkmalKey: Wert } nach dem Merkmal-Schema der Sparte
+  werte        Json     @default("{}")
+  createdAt    DateTime @default(now())
+
+  @@index([customerId, sparte])
+}
+
+/// „Meine Merkmale“ (Terminvorbereitung, Ole 15.11.2026): zuletzt gewählte Merkmale und Bausteine je Sparte als
+/// Vorauswahl für den nächsten Termin. userKey = Login-ID bzw. "" für den Inhaber ohne Login-Bezug.
+model BeraterMerkmale {
+  id           String   @id @default(cuid())
+  customerId   String
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  userKey      String   @default("")
+  sparte       String
+  merkmalKeys  String[] @default([])
+  bausteinKeys String[] @default([])
+  updatedAt    DateTime @updatedAt
+
+  @@unique([customerId, userKey, sparte])
 }

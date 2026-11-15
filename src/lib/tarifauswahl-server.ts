@@ -1,0 +1,193 @@
+// Neue Terminvorbereitung (Ole, 15.11.2026): Tarifauswahl laden und speichern (Autosave), Vertreter oder Makler und
+// Gesellschaft, eigene Tarife, „Meine Merkmale“, Preise aus Angebots-PDFs. Reine Funktionen: lib/tarifauswahl.ts.
+
+import { Prisma } from "@/generated/prisma/client";
+import { prisma } from "@/lib/prisma";
+import { appointmentScope, type TeamCtx } from "@/lib/team";
+import { angeboteAuslesen, cleanAngebote } from "@/lib/angebote";
+import { angeboteAuslesenErlaubt } from "@/lib/termin-vorbereitung-server";
+import { ladeTarifkatalog } from "@/lib/tarifkatalog-laden";
+import { gesellschaftAusText, gesellschaftName, sortiereGesellschaften, sparteVon, type Katalog, type Vertrieb } from "@/lib/tarifkatalog";
+import {
+  ausAltenAngeboten,
+  cleanTarifauswahl,
+  kurzName,
+  preiseUebernehmen,
+  startAuswahl,
+  zuAngebote,
+  type EigenerTarifDaten,
+  type MeineAuswahl,
+  type Tarifauswahl,
+} from "@/lib/tarifauswahl";
+import { spartenFuerTermin } from "@/lib/terminvorbereitung-neu";
+import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
+
+/**
+ * Vertreter oder Makler (Customer.vermittlerTyp; Mehrfachvertreter wie Vertreter) und Gesellschaft(en):
+ * einmal gewählt (Customer.tarifGesellschaften), sonst aus der Erstinformation (Versicherer), sonst aus dem Namen
+ * („Allianz Agentur …“). gesellschaftFehlt: Vertreter ohne erkennbare Gesellschaft (einmalige Auswahl).
+ */
+export async function vertriebFuer(customerId: string): Promise<{ vertrieb: Vertrieb; gesellschaftFehlt: boolean }> {
+  const c = await prisma.customer.findUnique({
+    where: { id: customerId },
+    select: { name: true, vermittlerTyp: true, tarifGesellschaften: true, erstinformation: { select: { versicherer: true } } },
+  });
+  const rolle = c?.vermittlerTyp === "makler" ? "makler" : "vertreter";
+  let gesellschaften = c?.tarifGesellschaften ?? [];
+  if (!gesellschaften.length && rolle === "vertreter") {
+    const ausErstinfo = (c?.erstinformation?.versicherer ?? []).map(gesellschaftAusText).filter((g): g is string => !!g);
+    gesellschaften = ausErstinfo.length ? ausErstinfo : [gesellschaftAusText(c?.name)].filter((g): g is string => !!g);
+  }
+  gesellschaften = sortiereGesellschaften(gesellschaften);
+  return { vertrieb: { rolle, gesellschaften }, gesellschaftFehlt: rolle === "vertreter" && !gesellschaften.length };
+}
+
+/** Gesellschaft(en) einmalig wählen (Vertreter) bzw. bevorzugte merken (Makler). */
+export async function gesellschaftenSpeichern(ctx: TeamCtx, keys: string[]): Promise<void> {
+  const clean = sortiereGesellschaften(keys.map((k) => k.trim().toLowerCase()).filter((k) => /^[a-z0-9-]{2,40}$/.test(k))).slice(0, 12);
+  await prisma.customer.update({ where: { id: ctx.customerId }, data: { tarifGesellschaften: clean } });
+}
+
+const userKey = (ctx: TeamCtx) => ctx.userId ?? "";
+
+/** „Meine Merkmale“ je Sparte (eigene Zeile des Logins vor der des Inhabers). */
+export async function meineAuswahl(ctx: TeamCtx): Promise<MeineAuswahl> {
+  const rows = await prisma.beraterMerkmale.findMany({ where: { customerId: ctx.customerId, userKey: { in: [userKey(ctx), ""] } } });
+  const out: MeineAuswahl = {};
+  for (const r of rows.sort((a, b) => (a.userKey === userKey(ctx) ? 1 : 0) - (b.userKey === userKey(ctx) ? 1 : 0)))
+    out[r.sparte] = { merkmale: r.merkmalKeys, bausteine: r.bausteinKeys };
+  return out;
+}
+
+export type EigenerTarifZeile = EigenerTarifDaten & { sparte: string };
+
+export async function eigeneTarife(customerId: string): Promise<EigenerTarifZeile[]> {
+  const rows = await prisma.eigenerTarif.findMany({ where: { customerId }, orderBy: { createdAt: "asc" }, take: 200 });
+  return rows.map((r) => ({
+    id: r.id,
+    sparte: r.sparte,
+    gesellschaft: r.gesellschaft,
+    name: r.name,
+    kurz: r.kurz,
+    werte: (r.werte && typeof r.werte === "object" && !Array.isArray(r.werte) ? r.werte : {}) as Record<string, string | null>,
+  }));
+}
+
+/** Eigenen Tarif anlegen (nur für diesen Kunden sichtbar). Werte nur für Merkmale der Sparte. */
+export async function eigenenTarifAnlegen(
+  ctx: TeamCtx,
+  raw: { sparte: string; gesellschaft: string; name: string; werte?: Record<string, string | null> },
+  k: Katalog = ladeTarifkatalog(),
+): Promise<EigenerTarifZeile | null> {
+  const sparte = String(raw.sparte ?? "").slice(0, 80);
+  const gesellschaft = String(raw.gesellschaft ?? "").replace(/\s+/g, " ").trim().slice(0, 60);
+  const name = String(raw.name ?? "").replace(/\s+/g, " ").trim().slice(0, 120);
+  if (!sparte || !gesellschaft || !name) return null;
+  const s = sparteVon(k, sparte);
+  const erlaubt = new Set(s?.merkmale.map((m) => m.key) ?? Object.keys(raw.werte ?? {}));
+  const werte: Record<string, string> = {};
+  for (const [key, w] of Object.entries(raw.werte ?? {})) {
+    const t = typeof w === "string" ? w.replace(/\s+/g, " ").trim().slice(0, 40) : "";
+    if (t && erlaubt.has(key)) werte[key] = t;
+  }
+  const r = await prisma.eigenerTarif.create({
+    data: { customerId: ctx.customerId, userId: ctx.userId, sparte, gesellschaft, name, kurz: kurzName(name, s?.label), werte },
+  });
+  return { id: r.id, sparte, gesellschaft, name, kurz: r.kurz, werte };
+}
+
+export type TarifVorbereitung = {
+  auswahl: Tarifauswahl;
+  /** gespeichert | angebote (ältere Angebote, noch nicht übernommen) | neu (Vorauswahl, noch nicht gespeichert) */
+  quelle: "gespeichert" | "angebote" | "neu";
+  katalog: Katalog;
+  vertrieb: Vertrieb;
+  gesellschaftFehlt: boolean;
+  /** Gesellschaften im Katalog (Auswahl für Makler bzw. einmalige Auswahl für Vertreter) */
+  gesellschaften: { key: string; name: string }[];
+  eigene: EigenerTarifZeile[];
+  meine: MeineAuswahl;
+  klaerenErledigt: string[];
+};
+
+/** Alles für den Angebote-Teil der Seite; null, wenn der Termin nicht sichtbar ist. */
+export async function ladeTarifvorbereitung(appointmentId: string, ctx: TeamCtx, d: VorbereitungDaten, k: Katalog = ladeTarifkatalog()): Promise<TarifVorbereitung | null> {
+  const appt = await prisma.appointment.findFirst({ where: { id: appointmentId, ...appointmentScope(ctx) }, select: { tarifauswahl: true, offersJson: true, klaerenErledigt: true } });
+  if (!appt) return null;
+  const [{ vertrieb, gesellschaftFehlt }, meine, eigene] = await Promise.all([vertriebFuer(ctx.customerId), meineAuswahl(ctx), eigeneTarife(ctx.customerId)]);
+  let auswahl = cleanTarifauswahl(appt.tarifauswahl);
+  let quelle: TarifVorbereitung["quelle"] = "gespeichert";
+  if (!auswahl) {
+    const alt = cleanAngebote(appt.offersJson);
+    if (alt.items.length) {
+      auswahl = ausAltenAngeboten(alt, k);
+      quelle = "angebote";
+    } else {
+      auswahl = startAuswahl(k, spartenFuerTermin(d), vertrieb, meine);
+      quelle = "neu";
+    }
+  }
+  // Vertreter sehen nur die Tarife ihrer Gesellschaft(en)
+  const tarife = vertrieb.rolle === "vertreter" ? k.tarife.filter((t) => vertrieb.gesellschaften.includes(t.gesellschaft)) : k.tarife;
+  const gesellschaften = sortiereGesellschaften(k.tarife.map((t) => t.gesellschaft)).map((key) => ({ key, name: k.tarife.find((t) => t.gesellschaft === key)?.gesellschaftName ?? gesellschaftName(key) }));
+  return { auswahl, quelle, katalog: { sparten: k.sparten, tarife, buendel: k.buendel }, vertrieb, gesellschaftFehlt, gesellschaften, eigene, meine, klaerenErledigt: appt.klaerenErledigt };
+}
+
+/**
+ * Autosave: Auswahl speichern, daraus die Angebote für die Präsentation (offersJson, gleich freigegeben: kein
+ * Bestätigen-Knopf mehr, die Werte kommen aus dem Katalog) und „Meine Merkmale“ für den nächsten Termin.
+ */
+export async function tarifauswahlSpeichern(appointmentId: string, ctx: TeamCtx, raw: unknown): Promise<{ ok: true; auswahl: Tarifauswahl } | { ok: false; error: string }> {
+  const a = cleanTarifauswahl(raw);
+  if (!a) return { ok: false, error: "Ungültige Daten." };
+  const ang = zuAngebote(a);
+  const n = await prisma.appointment.updateMany({
+    where: { id: appointmentId, ...appointmentScope(ctx) },
+    data: {
+      tarifauswahl: a as unknown as Prisma.InputJsonValue,
+      offersJson: ang as unknown as Prisma.InputJsonValue,
+      offersConfirmedAt: ang.items.length ? new Date() : null,
+    },
+  });
+  if (!n.count) return { ok: false, error: "Termin nicht gefunden." };
+  for (const sp of a.sparten) {
+    if (!sp.merkmale.length && !sp.bausteine.length) continue;
+    await prisma.beraterMerkmale.upsert({
+      where: { customerId_userKey_sparte: { customerId: ctx.customerId, userKey: userKey(ctx), sparte: sp.key } },
+      create: { customerId: ctx.customerId, userKey: userKey(ctx), sparte: sp.key, merkmalKeys: sp.merkmale, bausteinKeys: sp.bausteine },
+      update: { merkmalKeys: sp.merkmale, bausteinKeys: sp.bausteine },
+    });
+  }
+  return { ok: true, auswahl: a };
+}
+
+/** „Noch klären im Termin“: abgehakte Punkte speichern. */
+export async function klaerenSpeichern(appointmentId: string, ctx: TeamCtx, erledigt: string[]): Promise<boolean> {
+  const clean = [...new Set(erledigt.filter((x) => typeof x === "string").map((x) => x.slice(0, 200)))].slice(0, 30);
+  const n = await prisma.appointment.updateMany({ where: { id: appointmentId, ...appointmentScope(ctx) }, data: { klaerenErledigt: clean } });
+  return n.count > 0;
+}
+
+/**
+ * Angebot ablegen: die KI liest die hochgeladenen Angebote des Kontakts (bestehender Weg, lib/angebote.ts) und
+ * übernimmt nur Beiträge und Bausteinpreise in leere Felder der gewählten Tarife; danach wird gespeichert.
+ */
+export async function preiseAuslesen(
+  appointmentId: string,
+  ctx: TeamCtx,
+  raw: unknown,
+): Promise<{ ok: true; auswahl: Tarifauswahl; anzahl: number; sparten: string[] } | { ok: false; error: string }> {
+  const aktuell = cleanTarifauswahl(raw);
+  if (!aktuell) return { ok: false, error: "Ungültige Daten." };
+  const a = await prisma.appointment.findFirst({ where: { id: appointmentId, ...appointmentScope(ctx) }, select: { leadId: true, lead: { select: { source: true } } } });
+  if (!a?.leadId) return { ok: false, error: "Termin nicht gefunden." };
+  if (!(await angeboteAuslesenErlaubt(ctx.customerId, a.lead?.source)))
+    return { ok: false, error: "Gespeichert. Für dieses Produkt lesen wir Angebote nicht automatisch aus, bitte Beiträge eintragen." };
+  const files = await prisma.leadFile.findMany({ where: { leadId: a.leadId, kind: "angebot" }, orderBy: { createdAt: "desc" }, take: 5, select: { fileName: true, contentType: true, data: true } });
+  const res = await angeboteAuslesen(files.map((f) => ({ fileName: f.fileName, contentType: f.contentType, data: new Uint8Array(f.data) })));
+  if ("error" in res) return { ok: false, error: res.error };
+  const r = preiseUebernehmen(aktuell, res.items);
+  const s = await tarifauswahlSpeichern(appointmentId, ctx, r.auswahl);
+  if (!s.ok) return s;
+  return { ok: true, auswahl: s.auswahl, anzahl: r.anzahl, sparten: r.sparten };
+}

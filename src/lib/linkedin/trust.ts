@@ -4,6 +4,7 @@
 import { prisma } from "@/lib/prisma";
 import { npsOf } from "@/lib/nps";
 import { median } from "@/lib/linkedin/posts";
+import { neuigkeitVersteckt } from "@/lib/terminvorbereitung-neu";
 
 const DAY = 86_400_000;
 const REAL_LEAD = { customer: { plan: { not: "internal" } }, NOT: { bezugAirtableId: "demo" } };
@@ -20,7 +21,7 @@ export async function loadTrustFacts(now = new Date()): Promise<string[]> {
       where: { kind: { not: "day7" }, answeredAt: { gte: new Date(now.getTime() - 365 * DAY) }, score: { not: null }, customer: { plan: { not: "internal" } } },
       select: { score: true },
     }),
-    prisma.productUpdate.findMany({ where: { publishedAt: { gte: since, lte: now } }, orderBy: { publishedAt: "desc" }, take: 8, select: { title: true } }),
+    prisma.productUpdate.findMany({ where: { publishedAt: { gte: since, lte: now } }, orderBy: { publishedAt: "desc" }, take: 8, select: { id: true, title: true } }),
     prisma.customer.count({ where: { archived: false, plan: { not: "internal" }, users: { some: { role: "BUYER" } } } }),
   ]);
   const facts: string[] = [];
@@ -32,6 +33,7 @@ export async function loadTrustFacts(now = new Date()): Promise<string[]> {
   const nps = npsOf(feedback.map((f) => f.score!));
   if (nps && nps.total >= 3) facts.push(`Weiterempfehlungs-Wert (NPS) unserer Kunden, letzte 12 Monate: ${nps.nps} (${nps.total} Antworten)`);
   if (customers) facts.push(`Aktive Kunden (Vermittler mit Zugang): ${customers}`);
-  if (updates.length) facts.push(`Neu in der Software (letzte 30 Tage): ${updates.map((u) => u.title).join("; ")}`);
+  const sichtbar = updates.filter((u) => !neuigkeitVersteckt(u.id));
+  if (sichtbar.length) facts.push(`Neu in der Software (letzte 30 Tage): ${sichtbar.map((u) => u.title).join("; ")}`);
   return facts;
 }
