@@ -22,15 +22,18 @@ export type NextStepFlags = { upcoming: boolean; pastOpen: boolean; botActive: b
 export async function loadNextStepFlags(leadIds: string[], now = new Date()): Promise<Map<string, NextStepFlags>> {
   const out = new Map<string, NextStepFlags>();
   if (!leadIds.length) return out;
-  const [upcoming, past, chats] = await Promise.all([
+  const [upcoming, past, chats, recalls] = await Promise.all([
     prisma.appointment.findMany({ where: { leadId: { in: leadIds }, ...upcomingAppointmentWhere(now) }, select: { leadId: true } }),
     prisma.appointment.findMany({ where: { leadId: { in: leadIds }, ...pastOpenAppointmentWhere(now) }, select: { leadId: true } }),
     prisma.conversation.findMany({ where: { leadId: { in: leadIds }, ...activeBotChatWhere(now) }, select: { leadId: true } }),
+    // Wiedervorlage des Assistenten zählt wie ein aktiver Chat
+    prisma.leadSequence.findMany({ where: { leadId: { in: leadIds }, kind: "recall", stoppedAt: null }, select: { leadId: true } }),
   ]);
   const get = (id: string) => out.get(id) ?? { upcoming: false, pastOpen: false, botActive: false };
   for (const a of upcoming) if (a.leadId) out.set(a.leadId, { ...get(a.leadId), upcoming: true });
   for (const a of past) if (a.leadId) out.set(a.leadId, { ...get(a.leadId), pastOpen: true });
   for (const c of chats) if (c.leadId) out.set(c.leadId, { ...get(c.leadId), botActive: true });
+  for (const r of recalls) out.set(r.leadId, { ...get(r.leadId), botActive: true });
   return out;
 }
 

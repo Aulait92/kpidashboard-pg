@@ -207,7 +207,9 @@ describe("Termin verschieben im Kundenbereich: Ablauf", () => {
     expect(sendWhatsAppNotice).toHaveBeenCalledTimes(1);
     const wa = vi.mocked(sendWhatsAppNotice).mock.calls[0][0];
     expect(wa.to).toBe(conv.contactPhone);
-    expect(wa.text).toMatch(new RegExp(`/book/manage/${fresh.manageToken}`));
+    // WhatsApp: Verschieben per Chat statt Link (Ole, 15.11.2026); der Link bleibt in der E-Mail
+    expect(wa.text).not.toMatch(/\/book\/manage\//);
+    expect(wa.text).toMatch(/antworten Sie einfach hier/);
     // Im Chat vermerkt
     const note = await prisma.message.findFirstOrThrow({ where: { conversationId: conv.id, kind: "appointment_rescheduled" } });
     expect(note.sentBy).toBe("team");

@@ -265,6 +265,12 @@ export async function LeadDetailBody({
     prisma.appointment.findFirst({ where: { leadId: lead.id, ...pastOpenAppointmentWhere(new Date(nowMs())) }, orderBy: { startsAt: "desc" }, select: { id: true } }),
   ]);
   const qPoints = qualificationPoints(conv?.qualificationData);
+  // Wiedervorlage des Assistenten (schedule_followup), sichtbar unter den Aktionen
+  const recallSeq = await prisma.leadSequence.findFirst({ where: { leadId: lead.id, kind: "recall", stoppedAt: null }, select: { nextAt: true, log: true } });
+  const recallNote = Array.isArray(recallSeq?.log)
+    ? ((recallSeq.log as { action?: string; detail?: string }[]).find((e) => e?.action === "plan")?.detail?.match(/„(.+)“/)?.[1] ?? null)
+    : null;
+  const botRecall = recallSeq?.nextAt ? { at: recallSeq.nextAt.toISOString(), note: recallNote } : null;
   const resultMissingAppt = stepState === "result_missing" ? (pastAppt?.id ?? null) : null;
   const storniert = !!lead.status?.toLowerCase().startsWith("storno");
   // Abschluss (Ole, 13.11.2026): Beitrag, geschätzte Provision und Police im Kontakt sehen
@@ -350,6 +356,7 @@ export async function LeadDetailBody({
         bookingSlug={cal?.status === "connected" ? (cal.bookingSlug ?? null) : null}
         followUpAt={lead.followUpAt?.toISOString() ?? null}
         followUpNote={lead.followUpNote}
+        botRecall={botRecall}
         stornoOptions={stornoOptions}
         storniert={storniert}
         canErase={canErase}

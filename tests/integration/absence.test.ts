@@ -169,7 +169,9 @@ describe("Abwesenheit: Einzel-Vertreter, Termine", () => {
     expect(sendWhatsAppNotice).toHaveBeenCalledTimes(2);
     const text = vi.mocked(sendWhatsAppNotice).mock.calls[0][0].text;
     expect(text).toMatch(/verschieben/);
-    expect(text).toMatch(/\/book\/manage\//);
+    // Verschieben per Chat statt Link (Ole, 15.11.2026)
+    expect(text).not.toMatch(/\/book\/manage\//);
+    expect(text).toMatch(/antworten Sie einfach hier/i);
     expect(text).not.toMatch(/Urlaub|krank/i);
 
     // Aufgaben-Verschiebung rückgängig

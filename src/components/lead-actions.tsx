@@ -55,6 +55,8 @@ type Props = {
   bookingSlug: string | null;
   followUpAt: string | null;
   followUpNote: string | null;
+  /** Wiedervorlage des Assistenten (Lead bat um später): Zeitpunkt und Anlass. */
+  botRecall?: { at: string; note: string | null } | null;
   stornoOptions: StornogrundOption[];
   storniert: boolean;
   canErase?: boolean;
@@ -304,6 +306,20 @@ export function LeadHeaderActions(p: Props) {
           />
           <ActionTile icon={MoreHorizontal} label="Mehr" onClick={() => setOpen("more")} />
         </div>
+
+        {p.botRecall ? (
+          <div className="mt-4 flex items-center gap-3 rounded-[var(--radius-md)] border border-sky-200 bg-sky-50 px-4 py-2.5 text-sm text-sky-900" data-bot-recall-bar>
+            <BellRing className="h-4 w-4 shrink-0" />
+            <span className="min-w-0 flex-1">
+              <b>
+                Wiedervorlage vom Assistenten{" "}
+                {new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(p.botRecall.at))} Uhr
+              </b>
+              {" · meldet sich per WhatsApp"}
+              {p.botRecall.note ? ` · ${p.botRecall.note}` : ""}
+            </span>
+          </div>
+        ) : null}
 
         {dueLabel ? (
           <div className="mt-4 flex items-center gap-3 rounded-[var(--radius-md)] border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm text-violet-900">

@@ -4,7 +4,6 @@
 
 import { sendLeadEmail } from "@/lib/calendar/lead-email";
 import { prisma } from "@/lib/prisma";
-import { appUrl } from "@/lib/whatsapp/event-text";
 import { firstNameOf, NoTemplateError, sendWhatsAppNotice } from "@/lib/whatsapp/templates";
 import { a, anredeZeile, asAnsprache, type Ansprache } from "@/lib/ansprache";
 import { ansprechpartner } from "@/lib/lead-anrede";
@@ -39,6 +38,11 @@ function terminWort(mode: string, an: Ansprache, akk = false): string {
   return mode === "video" ? `${a(an, akk ? "deinen" : "dein", akk ? "Ihren" : "Ihr")} Videocall` : `${a(an, "dein", "Ihr")} Telefonat`;
 }
 
+/** Verschieben per Chat (statt Link zur Verwaltungsseite). */
+function chatHint(an: Ansprache): string {
+  return a(an, "Falls etwas dazwischenkommt, antworte einfach hier, dann finden wir eine neue Zeit.", "Falls etwas dazwischenkommt, antworten Sie einfach hier, dann finden wir eine neue Zeit.");
+}
+
 function linkOrHint(mode: string, meetUrl: string | null, an: Ansprache = "du"): string {
   return mode === "video" && meetUrl ? meetUrl : a(an, "Wir rufen dich an.", "Wir rufen Sie an.");
 }
@@ -52,12 +56,13 @@ export async function sendBookingConfirmation(opts: {
   startsAt: Date;
   mode: string;
   meetUrl: string | null;
-  /** Link zum Absagen/Verschieben (Self-Service). */
+  /** Link zum Absagen/Verschieben: nur noch für E-Mail/Kalender; per WhatsApp wird im Chat verschoben. */
   manageUrl?: string | null;
 }): Promise<void> {
   const an = await anspracheOf(opts.customerId);
   const who = await ansprechpartner({ customerId: opts.customerId, leadId: opts.leadId, phone: opts.to, name: opts.name });
-  const manage = opts.manageUrl ? ` Absagen oder verschieben: ${opts.manageUrl}` : "";
+  // Verschieben per Chat statt per Link (Ole, 15.11.2026): der Assistent verschiebt direkt im Gespräch
+  const manage = ` ${chatHint(an)}`;
   const params = [
     firstNameOf(opts.name),
     formatWhenDE(opts.startsAt),
@@ -70,7 +75,7 @@ export async function sendBookingConfirmation(opts: {
     (opts.mode === "video" && opts.meetUrl
       ? `Hier der Link zum Videocall: ${opts.meetUrl}`
       : a(an, `${who.advisor} ruft dich zur vereinbarten Zeit an.`, `${who.advisor} ruft Sie zur vereinbarten Zeit an.`)) +
-    (opts.manageUrl ? `\n\nFalls etwas dazwischenkommt: ${opts.manageUrl}` : "") +
+    `\n\n${chatHint(an)}` +
     " Bis dann! 🙂";
   await sendWhatsAppNotice({
     customerId: opts.customerId,
@@ -100,9 +105,7 @@ export async function sendRescheduleNotice(opts: {
 }): Promise<void> {
   const an = await anspracheOf(opts.customerId);
   const who = await ansprechpartner({ customerId: opts.customerId, leadId: opts.leadId, phone: opts.to, name: opts.name });
-  const change = opts.manageUrl
-    ? a(an, `Passt dir die Zeit nicht? Hier wählst du eine andere: ${opts.manageUrl}`, `Passt Ihnen die Zeit nicht? Hier wählen Sie eine andere: ${opts.manageUrl}`)
-    : "";
+  const change = a(an, "Passt dir die Zeit nicht? Antworte einfach hier, dann finden wir eine andere.", "Passt Ihnen die Zeit nicht? Antworten Sie einfach hier, dann finden wir eine andere.");
   const params = [
     firstNameOf(opts.name),
     formatWhenDE(opts.startsAt),
@@ -111,9 +114,7 @@ export async function sendRescheduleNotice(opts: {
   ];
   const text =
     `${anredeZeile(an, who.kontakt)} wir mussten ${a(an, "deinen", "Ihren")} Termin mit ${who.advisor} leider verschieben. Neue Zeit: ${params[1]} (${params[2]}).` +
-    (opts.manageUrl
-      ? `\n\n${a(an, "Passt dir die Zeit nicht? Hier wählst du ganz einfach eine andere", "Passt Ihnen die Zeit nicht? Hier wählen Sie ganz einfach eine andere")}: ${opts.manageUrl}`
-      : "") +
+    `\n\n${change}` +
     `\n\n${a(an, "Danke für dein Verständnis!", "Danke für Ihr Verständnis!")} 🙂`;
   const send = (purpose: "reschedule" | "booking_confirmation") =>
     sendWhatsAppNotice({ customerId: opts.customerId, to: opts.to, purpose, params, text, leadId: opts.leadId ?? null, contactName: opts.name, anrede: who.kontakt });
@@ -160,14 +161,13 @@ export async function runSoonReminders(now = new Date()): Promise<ReminderResult
     if (!conv?.contactPhone || conv.optedOutAt) continue;
     const an = await anspracheOf(appt.customerId);
     const who = await ansprechpartner({ customerId: appt.customerId, leadId: appt.leadId, phone: conv.contactPhone, name: conv.contactName });
-    const manageUrl = appt.manageToken ? `${appUrl() ?? ""}/book/manage/${appt.manageToken}` : null;
     const uhr = `${new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: TZ }).format(appt.startsAt)} Uhr`;
     const params = [firstNameOf(conv.contactName), uhr, modeLabel(appt.mode), linkOrHint(appt.mode, appt.meetUrl, an)];
     const text =
       `${anredeZeile(an, who.kontakt)} gleich ist es so weit: ${terminWort(appt.mode, an)} mit ${who.advisor} ist um ${uhr}.` +
       (appt.mode === "video" && appt.meetUrl ? ` Hier der Link: ${appt.meetUrl}` : ` ${a(an, `${who.advisor} ruft dich an.`, `${who.advisor} ruft Sie an.`)}`) +
       ` ${a(an, "Passt bei dir alles? Falls etwas dazwischengekommen ist, schreib kurz hier, dann finden wir eine neue Zeit.", "Passt bei Ihnen alles? Falls etwas dazwischengekommen ist, schreiben Sie kurz hier, dann finden wir eine neue Zeit.")}` +
-      (manageUrl ? `\n\nOder selbst verschieben: ${manageUrl}` : "");
+      "";
     const send = (purpose: "reminder_soon" | "reminder") =>
       sendWhatsAppNotice({ customerId: appt.customerId, to: conv.contactPhone, purpose, params: purpose === "reminder" ? [params[0], formatWhenDE(appt.startsAt), params[2], params[3]] : params, text, leadId: appt.leadId, contactName: conv.contactName, anrede: who.kontakt });
     try {
@@ -240,14 +240,13 @@ export async function runReminders(): Promise<ReminderResult> {
     });
     if (!conv?.contactPhone) continue;
 
-    const manageUrl = appt.manageToken ? `${appUrl() ?? ""}/book/manage/${appt.manageToken}` : null;
     const an = await anspracheOf(appt.customerId);
     const who = await ansprechpartner({ customerId: appt.customerId, leadId: appt.leadId, phone: conv.contactPhone, name: conv.contactName });
     const params = [
       firstNameOf(conv.contactName),
       formatWhenDE(appt.startsAt),
       modeLabel(appt.mode),
-      `${linkOrHint(appt.mode, appt.meetUrl, an)}${manageUrl ? ` Absagen oder verschieben: ${manageUrl}` : ""}`,
+      `${linkOrHint(appt.mode, appt.meetUrl, an)} ${chatHint(an)}`,
     ];
     // „Guten Tag Frau Schneider, kurze Erinnerung an Ihren Videocall mit Susanne Meier am …“
     const text =
@@ -255,7 +254,7 @@ export async function runReminders(): Promise<ReminderResult> {
       (appt.mode === "video" && appt.meetUrl
         ? ` Hier der Link: ${appt.meetUrl}`
         : ` ${a(an, `${who.advisor} ruft dich an.`, `${who.advisor} ruft Sie an.`)}`) +
-      (manageUrl ? `\n\nPasst es doch nicht? ${manageUrl}` : "") +
+      `\n\n${chatHint(an)}` +
       " Bis dann! 🙂";
     // WhatsApp + E-Mail; als erledigt gilt die Erinnerung, sobald EIN Kanal
     // zugestellt hat (sonst nächster Cron-Lauf erneut — ohne Doppel-Mails).

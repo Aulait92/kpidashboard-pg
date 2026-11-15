@@ -29,7 +29,7 @@ import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
 import { EMAIL_RE } from "@/lib/whatsapp/phone";
 import { mergeQualificationData, QUALIFICATION_INPUT_SCHEMA, qualificationLines } from "@/lib/whatsapp/qualification";
 import { produktCheckliste, unterlagenRegel } from "@/lib/whatsapp/produkt-fragen";
-import { restartSilentSequence } from "@/lib/lead-sequences";
+import { restartSilentSequence, scheduleBotRecall } from "@/lib/lead-sequences";
 import { fmtDayLong } from "@/lib/absence";
 import { BERATUNGS_REGELN, beratungsTreffer, sichereAntwort } from "@/lib/whatsapp/beratungs-sperre";
 import { erstinfoZeile, hasErstinfoLink, humanHandoverReply, kiHinweis, kiHinweisErneut, kiHinweisNoetig, wantsHuman } from "@/lib/whatsapp/ki-hinweis";
@@ -138,6 +138,23 @@ const TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: "schedule_followup",
+    description:
+      "Wiedervorlage für dich selbst: nutzen, wenn der Lead bittet, sich später zu melden (z. B. „Melden Sie sich morgen“, „nächste Woche passt besser“, „heute Abend“). Du meldest dich dann automatisch zur genannten Zeit per WhatsApp. Der Berater sieht die Wiedervorlage im Kontakt.",
+    input_schema: {
+      type: "object",
+      properties: {
+        zeitpunkt: {
+          type: "string",
+          description:
+            "Wann du dich meldest, ISO 8601 mit Zeitzone (deutsche Zeit), z. B. 2026-11-16T10:00:00+01:00. Ohne genaue Uhrzeit: werktags 10:00 Uhr. „Heute Abend“: 18:00 Uhr. Nachrichten gehen nur Mo bis Sa 9 bis 19 Uhr raus.",
+        },
+        anlass: { type: "string", description: "Was der Lead gesagt hat, kurz (für den Berater), z. B. „Morgen nochmal melden, gerade unterwegs“." },
+      },
+      required: ["zeitpunkt"],
+    },
+  },
+  {
     name: "propose_appointment",
     description:
       "FALLBACK, nur wenn der Kalender nicht verbunden ist (get_available_slots meldet das): Terminpräferenz/Wunschzeit festhalten, damit ein Mensch den Termin manuell einträgt. Wenn der Kalender verbunden ist, stattdessen get_available_slots + book_appointment nutzen.",
@@ -190,6 +207,8 @@ export function buildSystemPrompt(
     ansprache?: Ansprache;
     /** Aktueller Zeitpunkt (Tests); sonst jetzt. */
     now?: Date;
+    /** Geplante Wiedervorlage des Assistenten (schedule_followup), falls vorhanden. */
+    recallAt?: Date | null;
   },
 ): string {
   // Bestandskunden werden immer gesiezt (wie Kampagnen und Empfehlungen)
@@ -237,6 +256,9 @@ export function buildSystemPrompt(
   ].filter(Boolean);
   const known = [
     booked,
+    state.recallAt
+      ? `Geplante Wiedervorlage: Du meldest dich ${formatSlotDE(state.recallAt.toISOString())} Uhr (auf Wunsch des Leads). Lege keine zweite an; ändert der Lead die Zeit, nutze schedule_followup erneut. Schreibt er jetzt schon weiter, mach einfach normal weiter.`
+      : "",
     state.formAnswers.length > 0
       ? [
           "Angaben aus dem Leadformular (bereits bekannt: NICHT erneut erfragen):",
@@ -310,6 +332,7 @@ export function buildSystemPrompt(
       "- Lass den Lead die Zeit selbst wählen und frag beim Anbieten, welche Zeit sicher passt (nicht nur, welche irgendwie geht).",
       "- In der Buchungsbestätigung: bitte den Lead, sich den Termin gleich im Kalender zu speichern, und sag, dass er kurz hier schreiben kann, falls etwas dazwischenkommt, dann findet ihr eine neue Zeit. Halte die Bestätigung trotzdem kurz.",
       "- Bei Telefonterminen: sag, dass der Berater ihn auf dieser Nummer anruft, sofern keine andere bekannt ist. Bei Videoterminen: der Link kommt mit der Bestätigung.",
+      "- Bittet der Lead, sich später zu melden (morgen, nächste Woche, heute Abend …), lege mit schedule_followup eine Wiedervorlage für dich an und bestätige ihm kurz, wann du dich meldest. Bedränge ihn nicht weiter.",
       "- Erfinde keine Fakten. Will der Lead den Berater sprechen, hat er Vertragsfragen (Schaden, Kündigung, Änderung), beschwert er sich oder fragt er etwas, das du nicht sicher beantworten kannst: nutze handover_to_advisor (wenn sinnvoll, biete zusätzlich einen Termin an). Fragen zu Preisen, Tarifen und Versicherern beantwortest du nicht selbst: „Das klärt " + state.advisorName + " im Termin.“",
       GESUNDHEITS_REGEL,
     ].join("\n"),
@@ -321,6 +344,25 @@ export function buildSystemPrompt(
 }
 
 const BERLIN_TZ = "Europe/Berlin";
+
+/** ISO-Zeit lesen; ohne Zeitzonenangabe als deutsche Zeit (Europe/Berlin). Ungültig → null. */
+export function parseBerlinTime(s: string): Date | null {
+  const t = s.trim();
+  if (!t) return null;
+  if (/([zZ]|[+-]\d{2}:?\d{2})$/.test(t)) {
+    const d = new Date(t);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  const guess = new Date(`${t.length <= 10 ? `${t}T10:00:00` : t}Z`);
+  if (Number.isNaN(guess.getTime())) return null;
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-GB", { timeZone: BERLIN_TZ, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" })
+      .formatToParts(guess)
+      .map((p) => [p.type, p.value]),
+  );
+  const asBerlin = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute, +parts.second);
+  return new Date(guess.getTime() - (asBerlin - guess.getTime()));
+}
 
 /** Slot-Startzeit für den Bot lesbar machen (deutsche Lokalzeit). */
 function formatSlotDE(iso: string): string {
@@ -511,6 +553,9 @@ export async function runBotTurn(conversationId: string): Promise<void> {
     ansprache,
     upcoming,
     formAnswers: form.normal,
+    recallAt: conversation.leadId
+      ? ((await prisma.leadSequence.findFirst({ where: { leadId: conversation.leadId, kind: "recall", stoppedAt: null }, select: { nextAt: true } }))?.nextAt ?? null)
+      : null,
     qualified: conversation.qualified,
     summary: conversation.qualificationSummary,
     points: qualificationLines(conversation.qualificationData) || undefined,
@@ -745,6 +790,20 @@ export async function runBotTurn(conversationId: string): Promise<void> {
         await flagAttention(conversation.id, grund);
         content =
           "Übergabe erfolgt, der Berater ist benachrichtigt. Sag dem Lead kurz und freundlich, dass sich der Berater persönlich bei ihm meldet. Mach keine Zusagen zu Preisen oder Tarifen.";
+      } else if (tu.name === "schedule_followup") {
+        const input = tu.input as { zeitpunkt?: unknown; anlass?: unknown };
+        const at = typeof input.zeitpunkt === "string" ? parseBerlinTime(input.zeitpunkt) : null;
+        if (!conversation.leadId) {
+          content = "Wiedervorlage nicht möglich (kein Lead verknüpft). Sag dem Lead, dass sich der Berater meldet, und nutze handover_to_advisor.";
+        } else if (!at) {
+          content = "Ungültiger Zeitpunkt. Gib ihn als ISO 8601 mit Zeitzone an, z. B. 2026-11-16T10:00:00+01:00.";
+        } else {
+          const seq = await scheduleBotRecall(conversation.leadId, at, typeof input.anlass === "string" ? input.anlass : null);
+          await persistInternal(conversation.id, "followup_scheduled", { at: seq?.nextAt?.toISOString() ?? null, anlass: input.anlass ?? null });
+          content = seq?.nextAt
+            ? `Wiedervorlage gelegt: Du meldest dich ${formatSlotDE(seq.nextAt.toISOString())} Uhr. Bestätige dem Lead kurz und freundlich, wann du dich meldest. Stell jetzt keine weitere Frage.`
+            : "Wiedervorlage nicht möglich. Sag dem Lead, dass sich der Berater meldet.";
+        }
       } else if (tu.name === "propose_appointment") {
         await persistInternal(conversation.id, "appointment_proposal", tu.input);
       }

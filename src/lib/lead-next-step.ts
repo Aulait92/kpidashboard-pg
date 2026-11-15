@@ -119,6 +119,8 @@ export function withoutNextStepWhere(now: Date): Prisma.LeadWhereInput {
       { followUpAt: null },
       { appointments: { none: upcomingAppointmentWhere(now) } },
       { conversations: { none: activeBotChatWhere(now) } },
+      // Wiedervorlage des Assistenten (schedule_followup) ist ein nächster Schritt
+      { sequences: { none: { kind: "recall", stoppedAt: null } } },
     ],
   };
 }

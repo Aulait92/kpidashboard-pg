@@ -8,7 +8,8 @@ vi.mock("@/lib/whatsapp/templates", async (orig) => {
 });
 
 import { prisma } from "@/lib/prisma";
-import { inSendWindow, restartSilentSequence, runSequences, startSequence, stopSequences } from "@/lib/lead-sequences";
+import { inSendWindow, restartSilentSequence, runSequences, scheduleBotRecall, startSequence, stopSequences } from "@/lib/lead-sequences";
+import { nextStepStateOf } from "@/lib/lead-next-step-server";
 import { syncFollowUpWithStatus } from "@/lib/lead-followup";
 import { NoTemplateError } from "@/lib/whatsapp/templates";
 import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
@@ -225,5 +226,39 @@ describe("Nachfass-Abfolgen", () => {
     const b = await newLead();
     await prisma.appointment.create({ data: { customerId, leadId: b.id, startsAt: new Date(T0.getTime() + DAY), endsAt: new Date(T0.getTime() + DAY + 1800000), status: "booked", mode: "phone" } });
     expect(await restartSilentSequence(b.id, T0)).toBeNull();
+  });
+
+  it("Wiedervorlage vom Assistenten: meldet sich zur Zeit, auch ohne Schalter; kurzes „Danke“ hebt sie nicht auf; zählt als nächster Schritt", async () => {
+    const other = (await makeCustomer()).id;
+    await prisma.agentConfig.create({ data: { customerId: other, active: true, followUpSequencesEnabled: false } });
+    await prisma.whatsAppAccount.create({ data: { customerId: other, status: "connected", apiKeyEnc: "x" } });
+    const lead = await prisma.lead.create({ data: { customerId: other, name: "Lisa Koch", phone: "4915177770001", status: "Im Gespräch", formData: [{ label: "Versicherungsinteresse", value: "Hausrat" }] } });
+    const conv = await prisma.conversation.create({ data: { customerId: other, leadId: lead.id, contactPhone: "4915177770001", lastMessageAt: new Date(T0.getTime() - 3 * DAY) } });
+    const at = new Date(T0.getTime() + DAY); // Mi 10:00
+    const seq = await scheduleBotRecall(lead.id, at, "Morgen nochmal melden, gerade unterwegs", T0);
+    expect(seq?.nextAt?.toISOString()).toBe(at.toISOString());
+    expect(await nextStepStateOf(lead.id, new Date(T0.getTime() + 2 * 60 * 60 * 1000))).toBe("ok");
+    // „Danke, bis morgen“ 5 Minuten später: bleibt bestehen
+    await prisma.message.create({ data: { conversationId: conv.id, direction: "inbound", body: "Danke, bis morgen", createdAt: new Date(T0.getTime() + 5 * 60 * 1000) } });
+    // andere Tests dieser Datei haben eigene Abfolgen: nur die Aufrufe für diesen Lead zählen
+    const mine = () => send.mock.calls.filter((c) => (c[0] as { leadId?: string }).leadId === lead.id);
+    await runSequences(new Date(T0.getTime() + 12 * 60 * 60 * 1000));
+    expect(mine()).toHaveLength(0);
+    await runSequences(at);
+    expect(mine()).toHaveLength(1);
+    expect(mine()[0][0]).toMatchObject({ purpose: "followup", leadId: lead.id });
+    expect((mine()[0][0] as { text: string }).text).toContain("wie besprochen melde ich mich wieder zu Hausrat");
+    const done = await prisma.leadSequence.findUniqueOrThrow({ where: { id: seq!.id } });
+    expect(done.stopReason).toBe("Abgeschlossen");
+    await cleanupCustomer(other);
+  });
+
+  it("Wiedervorlage beendet „Chat ruht“; „Chat ruht“ startet nicht neben ihr", async () => {
+    const lead = await newLead();
+    await restartSilentSequence(lead.id, T0);
+    await scheduleBotRecall(lead.id, new Date(T0.getTime() + 2 * DAY), null, T0);
+    const running = await prisma.leadSequence.findMany({ where: { leadId: lead.id, stoppedAt: null } });
+    expect(running.map((r) => r.kind)).toEqual(["recall"]);
+    expect(await restartSilentSequence(lead.id, T0)).toBeNull();
   });
 });

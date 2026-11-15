@@ -24,7 +24,7 @@ import { anspracheOf } from "@/lib/whatsapp/reminders";
 import { ansprechpartner } from "@/lib/lead-anrede";
 import { isCallPlanNote } from "@/lib/call-plan";
 
-export type SequenceKind = "not_reached" | "offer" | "no_show" | "silent";
+export type SequenceKind = "not_reached" | "offer" | "no_show" | "silent" | "recall";
 
 const DAY = 24 * 60 * 60 * 1000;
 const DONE_STATUSES = new Set(["abschluss", "kein interesse", "disqualifiziert"]);
@@ -165,13 +165,34 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
       },
     ],
   },
+  // Lead bittet um später („melden Sie sich morgen“, Ole 15.11.2026): der Assistent legt sich selbst eine
+  // Wiedervorlage (scheduleBotRecall) und meldet sich zur vereinbarten Zeit. Unabhängig vom Schalter
+  // „Automatisch nachfassen“, weil der Lead ausdrücklich darum gebeten hat.
+  recall: {
+    label: "Assistent meldet sich wieder",
+    steps: [
+      {
+        day: 0,
+        action: "whatsapp",
+        purpose: "followup",
+        params: (c) => [c.firstName],
+        text: (c) =>
+          a(
+            c.an,
+            `${c.hi} wie besprochen melde ich mich wieder zu ${c.topic}. Passt es dir jetzt? Dann machen wir direkt weiter.`,
+            `${c.hi} wie besprochen melde ich mich wieder zu ${c.topic}. Passt es Ihnen jetzt? Dann machen wir direkt weiter.`,
+          ),
+        fallbackNote: "Lead wollte, dass wir uns wieder melden: anrufen",
+      },
+    ],
+  },
 };
 
 export type SequenceLogEntry = {
   at: string;
   step: number;
-  action: "whatsapp" | "call" | "stop";
-  /** sent | template | call_task | kept_followup | skipped | failed | stopped */
+  action: "whatsapp" | "call" | "stop" | "plan";
+  /** sent | template | call_task | kept_followup | skipped | failed | stopped | planned */
   result: string;
   detail?: string;
 };
@@ -242,6 +263,34 @@ export async function restartSilentSequence(leadId: string, now = new Date()) {
   return prisma.leadSequence.create({ data: { leadId, customerId: lead.customerId, kind: "silent", step: 0, startedAt: now, nextAt } });
 }
 
+const fmtWhen = (d: Date) =>
+  new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }).format(d);
+
+/**
+ * Der Lead möchte später kontaktiert werden: Assistent legt sich eine Wiedervorlage (Abfolge „recall“).
+ * Andere laufende Abfolgen enden (auch „Chat ruht“). Zeitpunkt frühestens in 15 Minuten, höchstens 60 Tage.
+ */
+export async function scheduleBotRecall(leadId: string, at: Date, note: string | null, now = new Date()) {
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true, erasedAt: true } });
+  if (!lead || lead.erasedAt) return null;
+  const agent = await prisma.agentConfig.findUnique({ where: { customerId: lead.customerId }, select: { active: true } });
+  if (!agent?.active) return null;
+  const when = new Date(Math.min(Math.max(at.getTime(), now.getTime() + 15 * 60 * 1000), now.getTime() + 60 * DAY));
+  await stopSequences(leadId, "Lead möchte später kontaktiert werden", { now });
+  const detail = `meldet sich ${fmtWhen(when)} Uhr${note ? ` („${note.replace(/\s+/g, " ").trim().slice(0, 80)}“)` : ""}`;
+  return prisma.leadSequence.create({
+    data: {
+      leadId,
+      customerId: lead.customerId,
+      kind: "recall",
+      step: 0,
+      startedAt: now,
+      nextAt: when,
+      log: [{ at: now.toISOString(), step: -1, action: "plan", result: "planned", detail }] as unknown as Prisma.InputJsonValue,
+    },
+  });
+}
+
 /** Laufende Abfolgen eines Leads beenden. Optional nur die seit `since` gestarteten. */
 export async function stopSequences(leadId: string, reason: string, opts: { since?: Date; now?: Date } = {}): Promise<number> {
   const now = opts.now ?? new Date();
@@ -291,14 +340,18 @@ export async function stopReasonFor(seq: { leadId: string; customerId: string; s
   if (lead.stornoState) return "Lead reklamiert";
   const s = (lead.status ?? "").trim().toLowerCase();
   if (DONE_STATUSES.has(s)) return `Phase: ${lead.status}`;
-  if (!(await enabledFor(seq.customerId))) return "Automatisches Nachfassen ausgeschaltet";
+  if (seq.kind === "recall") {
+    const agent = await prisma.agentConfig.findUnique({ where: { customerId: seq.customerId }, select: { active: true } });
+    if (!agent?.active) return "Assistent ausgeschaltet";
+  } else if (!(await enabledFor(seq.customerId))) return "Automatisches Nachfassen ausgeschaltet";
   // Neu gebuchter oder noch bevorstehender Termin → nicht weiter nachfassen.
   const booked = await prisma.appointment.count({ where: { leadId: seq.leadId, status: "booked", OR: [{ createdAt: { gt: seq.startedAt } }, { startsAt: { gt: now } }] } });
   if (booked > 0) return "Termin gebucht";
   const reply = await prisma.message.findFirst({
     where: {
       direction: "inbound",
-      createdAt: { gt: seq.startedAt },
+      // Wiedervorlage: ein kurzes „Danke, bis morgen“ direkt danach hebt sie nicht auf
+      createdAt: { gt: seq.kind === "recall" ? new Date(seq.startedAt.getTime() + 60 * 60 * 1000) : seq.startedAt },
       conversation: { customerId: seq.customerId, OR: [{ leadId: seq.leadId }, ...(lead.phone ? [{ contactPhone: lead.phone }] : [])] },
     },
     orderBy: { createdAt: "desc" },
@@ -467,6 +520,7 @@ export async function loadLeadSequences(leadId: string) {
     const nextStep = def?.steps[s.step];
     return {
       id: s.id,
+      kind: s.kind,
       label: def?.label ?? s.kind,
       active: !s.stoppedAt,
       startedAt: s.startedAt.toISOString(),
@@ -480,6 +534,7 @@ export async function loadLeadSequences(leadId: string) {
 export function describe(e: SequenceLogEntry, total: number): string {
   const n = `(Schritt ${e.step + 1} von ${total})`;
   if (e.action === "stop") return `Abfolge beendet: ${e.detail ?? "gestoppt"}`;
+  if (e.action === "plan") return `Wiedervorlage vom Assistenten: ${e.detail ?? "meldet sich später"}`;
   if (e.action === "call") return e.result === "kept_followup" ? `Anruf fällig, Ihre eigene Wiedervorlage bleibt ${n}` : `Anruf-Aufgabe auf „Heute“ angelegt ${n}`;
   switch (e.result) {
     case "sent":

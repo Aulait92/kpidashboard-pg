@@ -59,3 +59,21 @@ describe("Privatschutz: Angaben fürs Angebot", () => {
     });
   });
 });
+
+describe("Wiedervorlage vom Assistenten", () => {
+  it("Prompt kennt schedule_followup und eine geplante Wiedervorlage", async () => {
+    const p = buildSystemPrompt(agent, "Privatschutz", base);
+    expect(p).toContain("schedule_followup");
+    const r = buildSystemPrompt(agent, "Privatschutz", { ...base, recallAt: new Date("2026-11-18T09:00:00Z") });
+    expect(r).toContain("Geplante Wiedervorlage");
+  });
+
+  it("Zeit ohne Zeitzone gilt als deutsche Zeit", async () => {
+    const { parseBerlinTime } = await import("@/lib/whatsapp/bot");
+    expect(parseBerlinTime("2026-11-16T10:00:00")?.toISOString()).toBe("2026-11-16T09:00:00.000Z");
+    expect(parseBerlinTime("2026-07-16T10:00")?.toISOString()).toBe("2026-07-16T08:00:00.000Z");
+    expect(parseBerlinTime("2026-11-16T10:00:00+01:00")?.toISOString()).toBe("2026-11-16T09:00:00.000Z");
+    expect(parseBerlinTime("2026-11-16")?.toISOString()).toBe("2026-11-16T09:00:00.000Z");
+    expect(parseBerlinTime("morgen")).toBeNull();
+  });
+});
