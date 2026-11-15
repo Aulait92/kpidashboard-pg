@@ -25,6 +25,7 @@ import { firstName, isOccasion as isReferralOccasion, OCCASIONS as REFERRAL_OCCA
 import type { ShareState } from "@/app/buyer/empfehlungen/actions";
 import { advisorDisplayName } from "@/lib/whatsapp/template-plan";
 import { bestandVolumeAdmin } from "@/lib/bestand/volumen";
+import { bestandVisible } from "@/lib/bestand/sichtbar";
 import { bestandMailVerlauf, type KontaktMailEintrag } from "@/lib/mail/kontakt-mail";
 
 const MAX_BYTES = 15 * 1024 * 1024;
@@ -505,9 +506,11 @@ export async function requestBestandModuleAction(_prev?: RequestState, fd?: Form
   const ctx = await getBuyerContext();
   if (!ctx || ctx.preview || !ctx.userId) return { error: "In der Vorschau nicht möglich." };
   if (ctx.teamRole !== "owner") return { error: "Nur der Inhaber kann Module anfragen." };
-  const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, existingCustomersEnabled: true, bestandRequestedAt: true } });
+  const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, existingCustomersEnabled: true, bestandSichtbar: true, bestandRequestedAt: true } });
   if (!c) return { error: "Konto nicht gefunden." };
   if (c.existingCustomersEnabled) return { ok: true };
+  // Modul vorerst nicht für alle anfragbar (lib/bestand/sichtbar.ts)
+  if (!bestandVisible(c)) return { error: "Das Modul ist gerade nicht buchbar." };
   if (!c.bestandRequestedAt) {
     await prisma.customer.update({ where: { id: ctx.customerId }, data: { bestandRequestedAt: new Date() } });
     await audit("bestand.request", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId, ...(volume ? { details: { volume } } : {}) });

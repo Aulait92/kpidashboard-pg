@@ -48,6 +48,8 @@ export type TipSignals = {
   /** Eigener Bestand importiert (nicht nur aus Abschlüssen übernommen). */
   bestandImported: boolean;
   bestandCampaigns: number;
+  /** Bestandskunden-Modul für diesen Kunden sichtbar (lib/bestand/sichtbar.ts); ohne Angabe kein Bestand-Tipp. */
+  bestandVisible?: boolean;
   /** Kunden mit Abschluss seit 3 Wochen ohne weiteren Vertrag. */
   withoutCrossSell: number;
   /** Abschlüsse ohne eingetragenen Beitrag. */
@@ -148,7 +150,7 @@ export function candidateTips(s: TipSignals): Tip[] {
       impact: stale * 0.1 * Math.max(closing, 0.05) * prov,
     });
   }
-  if (!s.bestandImported || s.bestandCampaigns === 0) {
+  if (s.bestandVisible === true && (!s.bestandImported || s.bestandCampaigns === 0)) {
     out.push({
       key: "bestand",
       title: "Bestand nutzen",

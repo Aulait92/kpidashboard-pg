@@ -79,6 +79,8 @@ export type OffersContext = {
   enabled?: Partial<Record<HalteKind | "budget", boolean>>;
   /** Paket „Nur Betreuung“: kein Paket „Nur Bestand“ (ohne Software) */
   service?: boolean;
+  /** Bestandskunden-Modul für den Kunden sichtbar (lib/bestand/sichtbar.ts); false = kein Paket „Nur Bestand“ */
+  bestandVisible?: boolean;
 };
 
 /** Passende Alternativen je Grund (Reihenfolge = Anzeige). Ohne Grund nur der Rückruf. */
@@ -108,7 +110,7 @@ export function offersFor(reason: ChurnReason | null, opts: OffersContext = {}):
       list = pick(on("einrichtung") ? "einrichtung" : "termin", "rueckruf");
       break;
     case "aufhoeren":
-      list = pick(on("nur_bestand") && !opts.service && "nur_bestand", "rueckruf");
+      list = pick(on("nur_bestand") && !opts.service && opts.bestandVisible !== false && "nur_bestand", "rueckruf");
       break;
     default:
       list = ["rueckruf"];

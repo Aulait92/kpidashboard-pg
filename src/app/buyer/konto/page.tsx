@@ -33,6 +33,7 @@ import { Aufbewahrung } from "./aufbewahrung";
 import { loadRetentionView } from "@/lib/ruhend";
 import { loadHalteKonto } from "@/lib/halteangebote-server";
 import { fmtIso } from "@/lib/vertrag-laufzeit";
+import { bestandVisible } from "@/lib/bestand/sichtbar";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Konto & Rechnungen | performancegrowth" };
@@ -75,6 +76,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       billingInterval: true,
       bestandMonthly: true,
       existingCustomersEnabled: true,
+      bestandSichtbar: true,
       bestandRequestedAt: true,
       bestandCancelAt: true,
       paymentOverdueSince: true,
@@ -101,7 +103,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
     });
   }
   const monthly = customer.retainerMonthly != null ? Number(customer.retainerMonthly) : null;
-  const bestandCheck = !customer.existingCustomersEnabled && customer.plan !== "service" ? await canSelfBookBestand(ctx.customerId) : null;
+  // Bestandskunden-Modul vorerst nur für Kunden mit Schalter oder aktivem Modul (lib/bestand/sichtbar.ts)
+  const showBestand = bestandVisible(customer, { admin: ctx.preview });
+  const bestandCheck = showBestand && !customer.existingCustomersEnabled && customer.plan !== "service" ? await canSelfBookBestand(ctx.customerId) : null;
   const pause = await currentPause(ctx.customerId);
   const budget = await budgetState(ctx.customerId);
   const products = await productOverview(ctx.customerId);
@@ -125,6 +129,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const bestandFee = customer.bestandMonthly != null ? Number(customer.bestandMonthly) : 0;
   const empfehlungFee = customer.empfehlungMonthly != null ? Number(customer.empfehlungMonthly) : 0;
   const empfehlungState = moduleState(customer);
+  const showEmpfehlung = empfehlungVisible(empfehlungState !== "inactive");
   const monthlyTotal = monthly != null ? monthly + seatsFee + bestandFee + empfehlungFee : null;
   const annual = customer.billingInterval === "year";
   const yearly = annual && monthlyTotal != null ? monthlyTotal * annualMultiplier(offer?.annualFreeMonths ?? PRICE_LIST.annualFreeMonths) : null;
@@ -289,12 +294,12 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
         {customer.whatsAppAccount && !PRICE_LIST.whatsappIncluded ? <WhatsAppFeesCard customerId={ctx.customerId} /> : null}
 
-        {!service ? (
+        {!service && (showEmpfehlung || showBestand || customer.seatsIncluded != null) ? (
           <Card>
             <div id="zusatzmodule" className="scroll-mt-20" />
             <CardHeader title="Zusatzmodule" icon={Puzzle} />
             <ul className="divide-y divide-[color:var(--border)] text-sm" data-konto-module>
-              {empfehlungVisible(empfehlungState !== "inactive") ? (
+              {showEmpfehlung ? (
               <li className="space-y-3 px-5 py-4" data-konto-empfehlung>
                 <div className="flex flex-wrap items-center gap-2">
                   <Star className="h-4 w-4 text-amber-500" />
@@ -335,6 +340,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 )}
               </li>
               ) : null}
+              {showBestand ? (
               <li className="space-y-3 px-5 py-4" data-konto-bestand>
                 <div className="flex flex-wrap items-center gap-2">
                   <Users className="h-4 w-4 text-[color:var(--brand)]" />
@@ -366,6 +372,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                   />
                 )}
               </li>
+              ) : null}
               {customer.seatsIncluded != null ? (
                 <li className="space-y-2 px-5 py-4" data-konto-seats-module>
                   <div className="flex flex-wrap items-center gap-2">

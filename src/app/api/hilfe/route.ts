@@ -7,6 +7,7 @@ import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { detectEscalation, shortSummary } from "@/lib/support";
 import { offerEscalation } from "@/lib/support-server";
 import { checkLimit, clientIp } from "@/lib/rate-limit";
+import { loadBestandVisible } from "@/lib/bestand/sichtbar-server";
 
 // KI-Hilfe im Kundenbereich. POST {question, history, page} → {id, answer, links}.
 // PATCH {id, rating: "up"|"down"} → Bewertung speichern.
@@ -53,7 +54,9 @@ export async function POST(req: Request): Promise<Response> {
         return settings.enabled ? `${shared.referralIncentiveSentence(settings)} ${shared.rewardSentence(settings, null)}` : "Das Empfehlungsprogramm ist gerade pausiert.";
       })
       .catch(() => null);
-    const res = await askHilfe({ question, history, page, role: ctx.teamRole, whatsapp, referralInfo });
+    // Bestandskunden-Modul vorerst nur mit Schalter oder aktivem Modul: sonst kein Wissen dazu (lib/bestand/sichtbar.ts)
+    const bestand = ctx.teamRole === "owner" && (await loadBestandVisible(ctx.customerId, { preview: ctx.preview }).catch(() => false));
+    const res = await askHilfe({ question, history, page, role: ctx.teamRole, whatsapp, referralInfo, bestand });
     const ev = await prisma.usageEvent
       .create({
         data: {

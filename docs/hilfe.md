@@ -18,8 +18,10 @@ Seiten aus der Liste „Seiten“ unten.
 | /buyer/team | Team | Berater einladen, Leads verteilen (nur Inhaber) |
 | /buyer/kalender | Mein Kalender | „Ihr Kalender“ verbinden (ein Kalender je Person), andere Quelle für freie Zeiten (ICS/Allianz), Team-Übersicht für Inhaber, Lead-Zeiten, Zeit blockieren |
 | /buyer/einrichtung | Einrichtung | Fortschritt „Einrichtung x von y“, Fragebogen, Erstinformation (Pflichtangaben nach § 15 VersVermV prüfen und bestätigen oder eigenes PDF), Meta freigeben (prüfen/anfragen), Kalender, E-Mail-Postfach, WhatsApp, Kundenliste, Bewertungslink, Team, Einwilligung im Leadformular, App aufs Handy, Provisionen, Hilfetermin |
+<!-- bestand-modul -->
 | /buyer/bestand | Bestand | Bestandskunden und Kampagnen (Zusatzmodul; ohne Modul mit Knopf „Jetzt buchen“, sonst „Modul anfragen“) |
 | /buyer/bestand/import | Kundenliste hochladen | Excel/CSV importieren |
+<!-- /bestand-modul -->
 | /buyer/bestellen | Bestellen | Leads für eine Woche bestellen (bei Pay-per-Lead) |
 | /buyer/vorlagen | WhatsApp-Vorlagen | Welche Nachrichten der Assistent schickt und ob Meta sie freigegeben hat (nur lesen) |
 | /buyer/einstellungen/meta | Rückmeldung an Meta | Ergebnisse der Meta-Leads an Meta zurückmelden (an/aus nur Inhaber), Status, Anteile je Stufe, Empfehlung fürs Optimierungsziel |
@@ -35,7 +37,7 @@ Seiten aus der Liste „Seiten“ unten.
 ## Aufbau der App
 
 - Oben bzw. auf dem Handy unten die Bereiche: Heute, Leads, Pipeline, Chats, Zahlen. Je nach Vertrag
-  zusätzlich Einrichtung, Bestand, Bestellen. Kunden ohne WhatsApp-Assistent sehen Übersicht, Leads, Pipeline.
+  zusätzlich Einrichtung, <!-- bestand-modul -->Bestand, <!-- /bestand-modul -->Bestellen. Kunden ohne WhatsApp-Assistent sehen Übersicht, Leads, Pipeline.
 - Rechts oben das Profilmenü (Initialen): Benachrichtigungen, „Etwas unklar? Feedback“, Mein Kalender,
   Team und Konto & Rechnungen (nur Inhaber), Impressum, Datenschutz, Sicherheit & Datenschutz, Abmelden.
 - Rollen: **Inhaber** sieht alles. **Berater** sehen nur ihre eigenen Leads, keine Zahlen, kein Konto, kein Team.
@@ -48,7 +50,9 @@ Seiten aus der Liste „Seiten“ unten.
   antippen, die Suche öffnet sich dann über den ganzen Bildschirm.
 - Ab 2 Zeichen erscheinen sofort Treffer: Kontakte (Leads) nach Name, Telefonnummer oder E-Mail. Die Telefonnummer
   finden Sie in jeder Schreibweise, mit oder ohne Leerzeichen, mit 0 oder +49 (z. B. „0151 1234“ oder „+49151 1234“).
+<!-- bestand-modul -->
 - Inhaber mit dem Zusatzmodul Bestand finden dort auch Bestandskunden; mit WhatsApp erscheinen zusätzlich passende Chats.
+<!-- /bestand-modul -->
 - Bedienung mit der Tastatur: Pfeiltasten wählen, Enter öffnet, Esc schließt.
 - Ist das Feld leer, zeigt die Suche die zuletzt darüber geöffneten Kontakte (nur auf diesem Gerät gespeichert).
 - Berater finden nur ihre eigenen Kontakte und Chats, genau wie in der Kontaktliste.
@@ -261,8 +265,10 @@ Seiten aus der Liste „Seiten“ unten.
     hat. Sie steht im Verlauf des Kontakts.
   - Schreibt der Lead später doch per WhatsApp, gilt der Hinweis nicht mehr und Sie antworten selbst im Chat.
   - Den Anteil sehen Inhaber unter **Zahlen** („Leads ohne WhatsApp“).
+<!-- bestand-modul -->
 - Bestandskunden, deren Kampagnen-Nachricht mit „nicht per WhatsApp erreichbar“ zurückkommt, bekommen künftige
   Kampagnen nur noch per E-Mail, soweit E-Mail für den Anlass erlaubt ist (Einwilligung bzw. § 7 Abs. 3 UWG).
+<!-- /bestand-modul -->
 - **Ansprache (Sie oder Du)**: Standard ist „Sie“. Inhaber stellen das unter **Einstellungen → WhatsApp-Vorlagen**,
   **Einstellungen → E-Mail-Postfach** oder im Einrichtungs-Fragebogen um. Es gilt für den Assistenten,
   WhatsApp-Vorlagen, Termin-Nachrichten, Termin-E-Mails, die Buchungsseite und die E-Mail-Vorlagen.
@@ -322,6 +328,7 @@ Seiten aus der Liste „Seiten“ unten.
   Krankenversicherung, Privatschutz, ohne Produkt) mit der ersten Frage, Knöpfen und der Erstinformation als PDF oben
   in der Nachricht; Knöpfe auch bei Erinnerung, Bestätigung und Nachfassen (siehe Der WhatsApp-Assistent). Die neuen
   Fassungen reichen wir automatisch ein. Bis Meta sie freigibt, geht die bisherige Fassung raus, Sie müssen nichts tun.
+<!-- bestand-modul -->
 - Mit dem Bestandskunden-Modul kommen vier Kampagnen-Vorlagen dazu. Sie haben unten den Knopf
   „Keine Nachrichten mehr“: Wer ihn antippt, bekommt keine Kampagnen mehr (wie bei „STOPP“). „Lücke schließen“ nennt
   einen Grund („Viele meiner Kunden haben beim Thema Hausrat eine Lücke, die erst im Schadenfall auffällt. Soll ich in
@@ -331,6 +338,7 @@ Seiten aus der Liste „Seiten“ unten.
   Ausschließlichkeitsvertreter mit Ihrer Gesellschaft („hier ist Anna Beispiel von der Allianz“), Mehrfachvertreter als
   „Ihr Versicherungsvertreter“, Makler als „Ihr Versicherungsmakler“. „Versicherungsberater“ verwenden wir nicht, das ist
   ein eigener Beruf.
+<!-- /bestand-modul -->
 - **Empfehlung:** Die Bitte um Empfehlung nennt das Thema („für den das Thema Tierversicherung gerade auch wichtig
   ist“) und geht am besten direkt nach einem guten Moment raus, z. B. wenn ein Kunde zufrieden antwortet.
 - **Zwei Fassungen im Test:** Für einzelne Nachrichten testen wir zwei Formulierungen. Jeder Lead bekommt fest eine
@@ -414,7 +422,7 @@ Seiten aus der Liste „Seiten“ unten.
 
 - Oben steht **„Einrichtung: x von y erledigt“** mit allen Schritten: Login, Fragebogen, App aufs Handy und Mitteilungen, Kalender,
   E-Mail-Postfach, Provisionen, Erstinformation, Meta freigeben, WhatsApp verbinden, Einwilligung im Leadformular, Testlead (den macht performancegrowth).
-  Nur mit gebuchtem Modul bzw. Team kommen dazu: **Kundenliste hochladen** (Bestandskunden-Modul), **Google-Bewertungslink hinterlegen**
+  Nur mit gebuchtem Modul bzw. Team kommen dazu: <!-- bestand-modul -->**Kundenliste hochladen** (Bestandskunden-Modul), <!-- /bestand-modul -->**Google-Bewertungslink hinterlegen**
   (Empfehlungen & Bewertungen) und **Team einladen** (weitere Verkäufer gebucht).
   Offene Schritte sind anklickbar. Bei einigen Schritten gibt es ein kurzes Erklärvideo.
 - **Meta freigeben:** Werbekonto-ID (Format act_…, steht im Werbeanzeigenmanager oben links bzw. in der Adresse nach „act=“; der ganze
@@ -558,9 +566,11 @@ Seiten aus der Liste „Seiten“ unten.
     Die Wahl merkt sich die App je Login. „Aufschlüsselung“ antippen (am Rechner: mit der Maus darüber) zeigt Provision,
     Rückbelastung, Lead-Kosten, Betreuung & Software, weitere Posten und bei „Inkl. Bestand“ die künftige
     Bestandsprovision. Kosten pro Abschluss und die Tipps richten sich immer nach „Nur jetzt“.
+<!-- bestand-modul -->
   - **Hochgeladene Bestandsverträge zählen nicht zum Gewinn, nur neue Abschlüsse.** Verträge aus Ihrer Kundenliste
     (Bestand → Kundenliste hochladen) zählen weder in Provision, Gewinn, „Inkl. Bestand“, Bestandsprovision noch in den
     Monatsbericht. Schließt ein Bestandskunde über eine Bestandskampagne neu ab, zählt dieser neue Vertrag voll mit.
+<!-- /bestand-modul -->
   - **Kosten pro Abschluss** bzw. pro Termin: alle Kosten (Lead-Kosten plus Betreuung) geteilt durch die Abschlüsse
     bzw. Termine aus bezahlten Leads, passend zum Gewinn.
 - **Betreuung in den Zahlen:** Betreuung & Software (Monatspreis laut Ihrem Vertrag), weitere Verkäufer bzw. Logins,
@@ -686,9 +696,11 @@ Seiten aus der Liste „Seiten“ unten.
 - **Erinnerung „Weiteres Produkt anbieten?“:** 3 Wochen nach dem ersten Abschluss erscheint die Aufgabe auf „Heute“,
   mit naheliegenden Sparten (z. B. zur Katze: Haftpflicht, Unfall). Nicht, wenn schon ein weiterer Vertrag eingetragen
   ist oder der Kontakt nicht mehr im Abschluss steht, und nur einmal je Kunde. Abschalten unter **Einstellungen → Erinnerungen & Aufgaben**.
+<!-- bestand-modul -->
 - **Bestand:** Kunden mit Abschluss kommen mit allen Verträgen automatisch in den Bestand, damit Bestandskampagnen
   wissen, was der Kunde schon hat. Importieren Sie den Kunden später selbst (gleiche Handynummer oder E-Mail), führt die
   App beide zusammen; Verträge mit gleicher Vertragsnummer gibt es nur einmal.
+<!-- /bestand-modul -->
 - Pro Kunde gibt es weiterhin nur eine Nachfrage nach Bewertung und Empfehlung, auch bei mehreren Verträgen.
 - **Meine Provisionen** (Profilmenü, auch unter Konto und in der Einrichtung): „Ich arbeite als Vertreter / Makler“
   wählen und je Produkt die eigenen Sätze eintragen. Standardwerte sind Erfahrungswerte, bitte mit Ihrer
@@ -774,7 +786,7 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Konto & Rechnungen (nur Inhaber)
 
-- Vertrag (Paket, Monatsbetrag, weitere Verkäufer, Bestandskunden-Modul, Monatlich gesamt, Zahlweise, Laufzeit, Start),
+- Vertrag (Paket, Monatsbetrag, weitere Verkäufer, <!-- bestand-modul -->Bestandskunden-Modul, <!-- /bestand-modul -->Monatlich gesamt, Zahlweise, Laufzeit, Start),
   Rechnungen mit Status und „Jetzt bezahlen“ bei offenen Rechnungen.
 - Laufzeit: ohne Laufzeit (Setup 2.490 €), 3 Monate (Setup 1.990 €) oder 12 Monate (Setup 990 €), jeweils netto;
   nach der Mindestlaufzeit monatlich kündbar.
@@ -791,12 +803,14 @@ Seiten aus der Liste „Seiten“ unten.
   Zusätze, nur mit 12 Monaten Laufzeit). Umstellen: bitte bei uns melden.
 - Zahlungsart, Rechnungsadresse, USt-IdNr.: über das Zahlungsportal (Stripe) auf dieser Seite.
 - WhatsApp-Gebühren von Meta sind im Preis enthalten, es kommt nichts dazu. Für Leads (Erstkontakt, Erinnerungen,
-  Nachfassen) ohne Begrenzung; für Bestandskunden-Kampagnen bis 500 Nachrichten im Monat, mehr mit Zusatzpaketen
-  (+500 für 99 €, +2.000 für 349 €, netto, gültig 3 Monate, siehe „Bestand“). Pakete stehen als eigener Posten auf der Rechnung.
+  Nachfassen) ohne Begrenzung<!-- bestand-modul -->; für Bestandskunden-Kampagnen bis 500 Nachrichten im Monat, mehr mit Zusatzpaketen
+  (+500 für 99 €, +2.000 für 349 €, netto, gültig 3 Monate, siehe „Bestand“). Pakete stehen als eigener Posten auf der Rechnung.<!-- /bestand-modul -->
+<!-- bestand-modul -->
 - Bestandskunden-Modul nicht gebucht: Karte „Bestandskunden-Modul“ mit Knopf „Jetzt buchen – 149 € netto im Monat“
   (Bestätigung mit Häkchen, danach sofort freigeschaltet). Gebucht: „Modul kündigen (zum Ende des
   Abrechnungszeitraums)“; bis dahin nutzbar, die Kündigung lässt sich bis dahin mit „Kündigung zurücknehmen“
   aufheben.
+<!-- /bestand-modul -->
 - **Werbebudget ändern** (Karte „Werbebudget“, auch über Wachstum → „Budget ändern“ und in der Einrichtung beim
   Schritt „Start“): Tagesbudget je Produkt mit Plus/Minus (5-€-Schritte) oder Regler. Die Vorschau zeigt sofort
   das Werbebudget pro Monat (Tagesbudget × 30), die erwarteten Leads pro Monat (mit dem eigenen Leadpreis der
@@ -857,9 +871,11 @@ Seiten aus der Liste „Seiten“ unten.
     automatisch weiter.
   - *App passt nicht:* Wir richten die App mit Ihnen ein, 30 Minuten per Video mit Bildschirmfreigabe (Termin direkt
     wählen).
+<!-- bestand-modul -->
   - *Höre auf / wechsle:* Paket „Nur Bestand“ für 149 € netto im Monat: Ihre Daten und das Bestandskunden-Modul mit
     demselben Kontingent, ohne neue Leads und ohne Betreuung; „Empfehlungen & Bewertungen“ optional für 59 € netto im
     Monat dazu. Dazu der Hinweis „Kollegen empfehlen“ für Ihren Nachfolger.
+<!-- /bestand-modul -->
   Rabatte (Nachlass, kostenloser Betreuungsmonat, Gutschrift, Pause ohne Kosten) gibt es erst ab 3 Monaten
   Vertragsdauer, höchstens einmal in 12 Monaten und nicht bei jährlicher Vorauszahlung; sonst sehen Sie die übrigen
   Möglichkeiten. 30 Tage nach Vertragsende kommt einmal ein Rückkehrangebot per E-Mail: Konto reaktivieren ohne neue
@@ -917,9 +933,11 @@ Seiten aus der Liste „Seiten“ unten.
 - Ihr Dankeschön: derzeit **300 € netto Gutschrift je Kollege, der Kunde wird**. Wir schreiben sie Ihnen auf Ihre
   nächste Rechnung gut. Ist die Rechnung kleiner, verrechnen wir den Rest automatisch mit den folgenden Rechnungen.
   Jede weitere Empfehlung zählt wieder, ohne Obergrenze: 3 Kollegen sind 900 €.
+<!-- bestand-modul -->
 - Haben Sie früher als Dankeschön das Bestandskunden-Modul gratis bekommen, läuft diese Gratiszeit wie zugesagt bis
   zum genannten Tag weiter. Wir erinnern Sie vorher; danach läuft das Modul zum normalen Preis weiter, abbestellen
   können Sie es jederzeit unter **Konto & Rechnungen**.
+<!-- /bestand-modul -->
 - Das Dankeschön gilt, sobald der Kollege sein Angebot angenommen und die erste Zahlung geleistet hat. Sie bekommen
   dazu eine Push-Nachricht und eine E-Mail. Eine Empfehlung an sich selbst oder die eigene Agentur zählt nicht; ist
   der Kollege schon Kunde, gibt es keine Prämie.
@@ -927,6 +945,7 @@ Seiten aus der Liste „Seiten“ unten.
 - Die Prämie ist eine Gutschrift zwischen uns und Ihnen als Geschäftskunde, keine Provision an
   Versicherungsnehmer (Provisionsabgabeverbot nicht berührt).
 
+<!-- bestand-modul -->
 ## Bestand (Bestandskunden, Zusatzmodul)
 
 - Zusatzmodul für 149 € netto im Monat, inklusive WhatsApp-Gebühren für bis zu 500 Kampagnen-Nachrichten im Monat.
@@ -1099,6 +1118,8 @@ Bewertung im Einzelfall liegt bei Ihnen.**
 - **Potenzial:** „312 Kunden ohne Hausrat noch nicht angeschrieben“ mit Knopf „Kampagne starten“ (nur Kunden ohne
   Abmeldung und mit Einwilligung).
 
+<!-- /bestand-modul -->
+
 ## Empfehlungen & Bewertungen (Zusatzmodul)
 
 - **Was es macht:** Einige Tage nach jedem Abschluss (Standard 7) bekommt Ihr Kunde per WhatsApp in Ihrem Namen
@@ -1165,11 +1186,11 @@ Bewertung im Einzelfall liegt bei Ihnen.**
   empfohlene Person meldet sich über den Link bzw. per WhatsApp selbst. Die App schreibt Bekannte nie von sich aus an.
 - **Empfehlungslink senden:** In jedem Kontakt mit Abschluss (und bei Bestandskunden) gibt es den Knopf
   „Empfehlungslink senden“ – jederzeit nutzbar, z. B. nach einem guten Gespräch. Ohne WhatsApp-Verbindung erscheint
-  der Text zum Kopieren oder Teilen. In der Kundenliste unter „Bestand“ öffnet der Knopf ein kleines Fenster:
+  der Text zum Kopieren oder Teilen.<!-- bestand-modul --> In der Kundenliste unter „Bestand“ öffnet der Knopf ein kleines Fenster:
   „Warum melden Sie sich?“ mit den Anlässen als Karten (ohne besonderen Anlass, Schaden geregelt, Beitrag gespart,
   nach dem Jahresgespräch). Der Anlass bestimmt nur den Einstieg der Nachricht; darunter steht die Vorschau des Textes,
-  dann „Senden“. Mit Bestandskunden-Modul gibt es zusätzlich die Kampagne „Jährliche
-  Empfehlungsbitte“ (persönlicher Link je Kunde, höchstens einmal im Jahr).
+  dann „Senden“.<!-- /bestand-modul --><!-- bestand-modul --> Mit Bestandskunden-Modul gibt es zusätzlich die Kampagne „Jährliche
+  Empfehlungsbitte“ (persönlicher Link je Kunde, höchstens einmal im Jahr).<!-- /bestand-modul -->
 - **Nicht anfragen:** Im Kontakt können Sie die Nachfrage für einzelne Kunden abschalten (z. B. wer keine Nachrichten
   möchte). Das ist kein Zufriedenheitsfilter und passiert nie automatisch.
 - **Einrichten:** Wachstum → „Empfehlungen & Bewertungen“ (bzw. Konto & Rechnungen → Zusatzmodule →
@@ -1207,7 +1228,7 @@ Bewertung im Einzelfall liegt bei Ihnen.**
 ## Zusatzmodule buchen
 
 - Konto & Rechnungen → **Zusatzmodule** (nur Inhaber): Empfehlungen & Bewertungen (59 €, 30 Tage kostenlos testen),
-  Bestandskunden-Modul (149 €, siehe „Bestand“) und weitere Verkäufer (3 aktive Verkäufer inklusive, jeder weitere 49 €,
+<!-- bestand-modul -->  Bestandskunden-Modul (149 €, siehe „Bestand“) und <!-- /bestand-modul -->weitere Verkäufer (3 aktive Verkäufer inklusive, jeder weitere 49 €,
   im Team anlegen; Mitglieder ohne Leads kostenlos).
   Buchen und Kündigen geht dort selbst; wir bekommen automatisch Bescheid.
 
@@ -1370,8 +1391,11 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
   (**Text anzeigen**). Status: versendet, zugestellt, nicht zustellbar, abgemeldet; ging eine Mail nicht raus, steht
   „nicht versendet“ mit Grund. „Zugestellt“ kennt die App nur bei Mails über den neutralen Absender (Termin-Mails);
   bei Mails aus Ihrem Postfach bleibt es bei „versendet“, bis eine Unzustellbar-Meldung oder Abmeldung zugeordnet ist.
+<!-- bestand-modul -->
   Bestandskunden ohne Lead: in **Bestand → Kunden** der Knopf mit der Uhr neben dem Kunden (nur, wenn schon E-Mails
-  rausgingen). Der WhatsApp-Assistent kennt die letzten automatischen Mails (14 Tage) und schickt nichts doppelt.
+  rausgingen).
+<!-- /bestand-modul -->
+  Der WhatsApp-Assistent kennt die letzten automatischen Mails (14 Tage) und schickt nichts doppelt.
 
 - **Einstellungen → E-Mail-Postfach**: Postfach verbinden – Microsoft (Outlook/365) per Anmeldung oder jeder andere
   Anbieter per SMTP (z. B. IONOS, Strato, T-Online, GMX; Gmail mit App-Passwort: smtp.gmail.com, Port 587).

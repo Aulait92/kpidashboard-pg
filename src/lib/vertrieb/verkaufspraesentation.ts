@@ -8,6 +8,7 @@
 // Texte gehen an Interessenten: keine Gedankenstriche (Bis-Striche in Zahlenbereichen sind ok), Minus als „−“.
 
 import { normalizeTerm, offerAddOns, PACKAGE_LABEL, PRICE_LIST, setupForChoice, type OfferTerm } from "@/lib/offer-pricing";
+import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 
 export type VerkaufsAudience = "vertreter" | "makler";
 export const VERKAUFS_AUDIENCES: readonly VerkaufsAudience[] = ["vertreter", "makler"];
@@ -393,7 +394,9 @@ export function paketFolie(p: PaketDaten, audience: VerkaufsAudience, nr: number
 <div class="vk-karte"><b>Werbebudget</b><span>${e(budget)}</span></div>
 <div class="vk-karte"><b>Für Ihr ganzes Team</b><span>${e(p.team)}</span></div>
 </div>`;
-  const fuss = `<b style="color:#0b1220">WhatsApp-Gebühren inklusive.</b> Jedes weitere Produkt: ${PRICE_LIST.extraProductMonthly} € monatlich, ohne Setup. <b style="color:#0b1220">Bestandskunden-Modul:</b> ${PRICE_LIST.bestandModuleMonthly} € monatlich. Alle Preise zzgl. 19 % USt.`;
+  // Bestandskunden-Modul nur, solange es für alle verfügbar ist (lib/bestand/sichtbar.ts)
+  const modul = BESTAND_MODULE_AVAILABLE ? ` <b style="color:#0b1220">Bestandskunden-Modul:</b> ${PRICE_LIST.bestandModuleMonthly} € monatlich.` : "";
+  const fuss = `<b style="color:#0b1220">WhatsApp-Gebühren inklusive.</b> Jedes weitere Produkt: ${PRICE_LIST.extraProductMonthly} € monatlich, ohne Setup.${modul} Alle Preise zzgl. 19 % USt.`;
   return rahmen("Ihr Paket", inhalt, nr, gesamt, fuss);
 }
 

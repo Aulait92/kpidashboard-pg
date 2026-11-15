@@ -33,6 +33,16 @@ function loadKnowledge(): string {
   return knowledge;
 }
 
+/**
+ * Anleitung für diese Person: Stellen zum Bestandskunden-Modul stehen in docs/hilfe.md zwischen
+ * `<!-- bestand-modul -->` und `<!-- /bestand-modul -->`. Ohne sichtbares Modul (lib/bestand/sichtbar.ts) fallen sie weg.
+ */
+export function hilfeKnowledge(md: string, opts: { bestand: boolean }): string {
+  return opts.bestand
+    ? md.replace(/<!-- \/?bestand-modul -->\n?/g, "")
+    : md.replace(/<!-- bestand-modul -->[\s\S]*?<!-- \/bestand-modul -->\n?/g, "");
+}
+
 const INSTRUCTIONS = `Du bist die KI-Hilfe in der App von performancegrowth für Versicherungsvertreter.
 Du beantwortest nur Fragen zur Bedienung dieser App, kurz, freundlich, in der Sie-Form, auf Deutsch.
 
@@ -83,7 +93,10 @@ export async function askHilfe(opts: {
   whatsapp: boolean;
   /** Aktuelle Konditionen „Kollegen empfehlen“ (aus den Einstellungen, z. B. Rabatt und Prämie). */
   referralInfo?: string | null;
+  /** Bestandskunden-Modul sichtbar (lib/bestand/sichtbar.ts); ohne Angabe nicht. */
+  bestand?: boolean;
 }): Promise<HilfeAnswer> {
+  const bestand = opts.bestand === true;
   const client = new Anthropic();
   const role =
     opts.role === "advisor"
@@ -91,7 +104,7 @@ export async function askHilfe(opts: {
       : "Inhaber des Kontos (sieht alles)";
   // Stabiler Teil zuerst (wird gecacht), Wechselndes (Seite, Verlauf, Frage) danach.
   const system: Anthropic.Beta.BetaTextBlockParam[] = [
-    { type: "text", text: `${INSTRUCTIONS}\n\n<anleitung>\n${loadKnowledge()}\n</anleitung>`, cache_control: { type: "ephemeral" } },
+    { type: "text", text: `${INSTRUCTIONS}\n\n<anleitung>\n${hilfeKnowledge(loadKnowledge(), { bestand })}\n</anleitung>`, cache_control: { type: "ephemeral" } },
   ];
   const context = `Hinweis: Die Person ist ${role}. ${opts.whatsapp ? "Sie nutzt den WhatsApp-Assistenten." : "Sie nutzt keinen WhatsApp-Assistenten (kein Chats-Bereich)."} Aktuelle Seite: ${opts.page ?? "unbekannt"}.${opts.referralInfo ? ` Aktuelle Konditionen „Kollegen empfehlen“ (gehen der Anleitung vor): ${opts.referralInfo}` : ""}`;
   // Verlauf kürzen; er muss mit einer Nutzerfrage beginnen (API-Regel).
@@ -121,7 +134,7 @@ export async function askHilfe(opts: {
     const answer = typeof parsed.answer === "string" && parsed.answer.trim() ? parsed.answer.trim() : null;
     if (!answer) throw new Error("leere Antwort");
     const links = (Array.isArray(parsed.links) ? parsed.links : [])
-      .filter((h): h is string => typeof h === "string" && h in HILFE_PAGES)
+      .filter((h): h is string => typeof h === "string" && h in HILFE_PAGES && (bestand || !h.startsWith("/buyer/bestand")))
       .slice(0, 2)
       .map((href) => ({ href, label: HILFE_PAGES[href] }));
     const reason = (ESCALATION_REASONS as unknown[]).includes(parsed.reason) ? (parsed.reason as EscalationReason) : "unresolved";

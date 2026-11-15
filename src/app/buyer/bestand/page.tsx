@@ -27,6 +27,7 @@ import { ConsentBadges, ConsentRowAction } from "@/components/bestand/consent-ac
 import { isExclusiveAgent } from "@/lib/bestand/befugnis";
 import { loadCustomerContracts } from "@/lib/vertraege";
 import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
+import { bestandVisible } from "@/lib/bestand/sichtbar";
 import { bestandMitMails } from "@/lib/mail/kontakt-mail";
 import { BestandMailVerlauf } from "@/components/bestand/mail-verlauf";
 
@@ -56,9 +57,11 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
   if (ctx.teamRole !== "owner") redirect("/buyer");
   const c = await prisma.customer.findUnique({
     where: { id: ctx.customerId },
-    select: { existingCustomersEnabled: true, bestandRequestedAt: true, bestandCancelAt: true, billingInterval: true, empfehlungEnabled: true, vermittlerTyp: true },
+    select: { existingCustomersEnabled: true, bestandSichtbar: true, bestandRequestedAt: true, bestandCancelAt: true, billingInterval: true, empfehlungEnabled: true, vermittlerTyp: true },
   });
   if (!c) redirect("/buyer");
+  // Modul vorerst ausgeblendet (lib/bestand/sichtbar.ts): ohne Schalter und ohne aktives Modul zurück zu Heute
+  if (!bestandVisible(c, { admin: ctx.preview })) redirect("/buyer");
   // Ohne gebuchtes Modul: freundlicher Hinweis statt Sperre ohne Erklärung
   if (!c.existingCustomersEnabled) {
     const check = await canSelfBookBestand(ctx.customerId);

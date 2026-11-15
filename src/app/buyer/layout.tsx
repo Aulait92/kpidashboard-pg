@@ -17,6 +17,7 @@ import { berlinYmd, currentOrNextAbsence, toAbsenceView } from "@/lib/absence";
 import { leadScope, memberName } from "@/lib/team";
 import { countWithoutNextStep } from "@/lib/lead-next-step-server";
 import { unreadUpdateCount } from "@/lib/neuigkeiten";
+import { loadBestandVisible } from "@/lib/bestand/sichtbar-server";
 
 // Gemeinsames Layout für den Buyer-Bereich. Hält den @modal-Parallel-Slot,
 // in den der Lead-Detail-Modal von ALLEN Buyer-Tabs (KPIs, Leads, Pipeline)
@@ -71,8 +72,8 @@ export default async function BuyerLayout({
         advisor && ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true, email: true } }) : null,
         prisma.user.count({ where: { customerId: ctx.customerId, role: "BUYER" } }),
         advisor ? 0 : prisma.leadSubscription.count({ where: { customerId: ctx.customerId, active: true, delivery: "app" } }),
-        // Bestand: für Inhaber immer sichtbar – ohne gebuchtes Modul mit Hinweis zum Anfragen
-        !advisor,
+        // Bestand: nur Inhaber, und vorerst nur mit Schalter oder aktivem Modul (lib/bestand/sichtbar.ts)
+        advisor ? false : loadBestandVisible(ctx.customerId, { preview: ctx.preview }),
       ])
     : [false, 0, 0, null, 0, 0, false];
   // Anzeigename ohne Gesellschafts-Präfix („Allianz Anid Schwarzkopf").

@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { DEFAULT_REWARD_FIXED, DEFAULT_REWARD_MONTHS, DEFAULT_SETUP_DISCOUNT, referralIncentiveSentence } from "@/lib/kollegen-shared";
 import { saveReferralSettingsAction, type ReferralSettingsState } from "./actions";
+import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 
 const input =
   "h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-sm outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20";
@@ -59,6 +60,8 @@ export function ReferralSettingsForm({
         {rewardKind === "fixed" ? (
           <input name="rewardFixed" inputMode="decimal" defaultValue={initial.rewardFixed ?? DEFAULT_REWARD_FIXED} placeholder={String(DEFAULT_REWARD_FIXED)} className={`${input} max-w-[200px]`} aria-label="Prämie je Empfehlung in Euro netto" />
         ) : null}
+        {/* Prämie „Modul gratis“ nur, solange das Bestandskunden-Modul für alle verfügbar ist (lib/bestand/sichtbar.ts) */}
+        {BESTAND_MODULE_AVAILABLE || rewardKind === "bestand" ? (
         <label className="flex items-start gap-2 text-[15px]">
           <input type="radio" name="rewardKind" value="bestand" checked={rewardKind === "bestand"} onChange={() => setRewardKind("bestand")} className="mt-1" />
           <span>
@@ -69,6 +72,7 @@ export function ReferralSettingsForm({
             </span>
           </span>
         </label>
+        ) : null}
         {rewardKind === "bestand" ? (
           <input
             name="rewardMonths"
