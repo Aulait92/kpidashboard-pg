@@ -101,7 +101,7 @@ async function remindUser(
   // Gestaltete Mail mit Knopf und unserer Signatur (Ole, 15.11.2026; vorher reiner Text ohne Signatur).
   // Knopf vor dem Abschalt-Hinweis, deshalb beides als eigener HTML-Block.
   const leadsUrl = base ? `${base}${url}` : null;
-  const settingsUrl = base ? `${base}/buyer/einstellungen` : null;
+  const settingsUrl = base ? `${base}/buyer/einstellungen/erinnerungen` : null;
   await sendCustomerMail({
     to: u.email,
     subject: t.title,
@@ -112,12 +112,12 @@ async function remindUser(
         ? `<p style="margin:8px 0 24px"><a href="${leadsUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">Leads ansehen</a></p>`
         : "",
       `<p style="margin:0;font-size:13px;line-height:1.6;color:#66758f">Diese Erinnerung können Sie unter ${
-        settingsUrl ? `<a href="${settingsUrl}" style="color:#66758f">Einstellungen → Benachrichtigungen</a>` : "Einstellungen → Benachrichtigungen"
+        settingsUrl ? `<a href="${settingsUrl}" style="color:#66758f">Einstellungen → Erinnerungen &amp; Aufgaben</a>` : "Einstellungen → Erinnerungen &amp; Aufgaben"
       } abschalten.</p>`,
     ].join(""),
     textBlocks: [
       ...(leadsUrl ? [`Leads ansehen: ${leadsUrl}`, ""] : []),
-      `Diese Erinnerung können Sie unter Einstellungen → Benachrichtigungen abschalten${settingsUrl ? `: ${settingsUrl}` : "."}`,
+      `Diese Erinnerung können Sie unter Einstellungen → Erinnerungen & Aufgaben abschalten${settingsUrl ? `: ${settingsUrl}` : "."}`,
     ],
   }).catch((e) => console.error("[next-step reminder mail]", e));
   return true;
