@@ -61,17 +61,33 @@ export type ErstinfoStand = {
   /** Status in der Einrichtung bestätigt */
   status: boolean;
   registerNummer: boolean;
-  /** PDF hochgeladen oder Link hinterlegt */
+  /** Eigenes PDF hochgeladen oder Link hinterlegt (freiwillig) */
   dokument: boolean;
+  /** Anschrift aus dem Impressum bekannt (dann erzeugen wir die Erstinformation selbst) */
+  anschrift?: boolean;
 };
 
-/** Was fehlt noch? Leer = vollständig. */
+/**
+ * Was fehlt noch? Leer = vollständig. Ole (15.11.2026): Die Angaben kommen aus dem Impressum, der Vermittler
+ * prüft sie nur. Ein eigenes PDF bzw. ein Link ist freiwillig; ohne beides erzeugen wir die Erstinformation aus
+ * den Impressumsangaben (dann muss die Anschrift bekannt sein).
+ */
 export function erstinfoFehlt(s: ErstinfoStand): string[] {
   const out: string[] = [];
   if (!s.status) out.push("Status (Makler, Mehrfachvertreter oder Ausschließlichkeitsvertreter)");
   if (!s.registerNummer) out.push("Registernummer");
-  if (!s.dokument) out.push("Erstinformation (PDF oder Link)");
+  if (!s.dokument && !s.anschrift) out.push("Anschrift (aus dem Impressum) oder eigene Erstinformation");
   return out;
+}
+
+/** Status aus der Angabe im Impressum vorschlagen („gebundener Versicherungsvertreter nach § 34d Abs. 7“ usw.). */
+export function statusFromImpressum(registerType: string | null | undefined): VermittlerStatus | null {
+  const t = (registerType ?? "").toLowerCase();
+  if (!t) return null;
+  if (/makler/.test(t)) return "makler";
+  if (/mehrfach/.test(t)) return "mehrfachvertreter";
+  if (/gebunden|ausschlie|abs\.?\s*7/.test(t)) return "vertreter";
+  return null;
 }
 
 export const ERSTINFO_MAX_BYTES = 5 * 1024 * 1024;

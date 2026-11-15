@@ -11,6 +11,7 @@ import {
   isPdf,
   normalizeErstinfoUrl,
   normalizeRegisterNummer,
+  statusFromImpressum,
   type VermittlerStatus,
 } from "@/lib/erstinformation-shared";
 
@@ -58,28 +59,42 @@ export type ErstinfoView = {
   updatedAt: Date | null;
   fehlt: string[];
   vollstaendig: boolean;
+  /** Angaben aus dem Impressum der Website (zum Gegenprüfen) */
+  impressum: { companyName: string | null; address: string | null; registerType: string | null; registerNumber: string | null; status: VermittlerStatus | null } | null;
 };
 
 export async function loadErstinfo(customerId: string): Promise<ErstinfoView> {
   const [c, e] = await Promise.all([
-    prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerTyp: true } }),
+    prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerTyp: true, onboarding: { select: { websiteInfo: true } } } }),
     prisma.erstinformation.findUnique({
       where: { customerId },
       select: { token: true, statusAt: true, registerNummer: true, url: true, fileName: true, size: true, updatedAt: true },
     }),
   ]);
-  const fehlt = erstinfoFehlt({ status: !!e?.statusAt, registerNummer: !!e?.registerNummer, dokument: !!(e?.url || e?.fileName) });
+  const web = (c?.onboarding?.websiteInfo ?? null) as { companyName?: string | null; address?: string | null; registerType?: string | null; registerNumber?: string | null } | null;
+  const impressum = web
+    ? {
+        companyName: web.companyName?.trim() || null,
+        address: web.address?.trim() || null,
+        registerType: web.registerType?.trim() || null,
+        registerNumber: normalizeRegisterNummer(web.registerNumber),
+        status: statusFromImpressum(web.registerType),
+      }
+    : null;
+  const registerNummer = e?.registerNummer ?? impressum?.registerNumber ?? null;
+  const fehlt = erstinfoFehlt({ status: !!e?.statusAt, registerNummer: !!e?.registerNummer, dokument: !!(e?.url || e?.fileName), anschrift: !!impressum?.address });
   return {
     token: e?.token ?? null,
     status: asVermittlerStatus(c?.vermittlerTyp),
     statusAt: e?.statusAt ?? null,
-    registerNummer: e?.registerNummer ?? null,
+    registerNummer,
     url: e?.url ?? null,
     fileName: e?.fileName ?? null,
     size: e?.size ?? null,
     updatedAt: e?.updatedAt ?? null,
     fehlt,
     vollstaendig: fehlt.length === 0,
+    impressum,
   };
 }
 
@@ -114,7 +129,13 @@ export async function saveErstinfo(customerId: string, input: SaveErstinfoInput)
   const { id } = await getOrCreateErstinfo(customerId);
   const current = await prisma.erstinformation.findUniqueOrThrow({ where: { id }, select: { fileName: true, url: true } });
   const hasDoc = !!(file || url || (current.fileName && !input.removeFile));
-  if (!hasDoc) return { ok: false, error: "Bitte Ihre Erstinformation als PDF hochladen oder den Link zu Ihrer Erstinformation eintragen." };
+  // Eigene Erstinformation ist freiwillig (Ole, 15.11.2026): ohne erstellen wir sie aus dem Impressum, dafür muss die Anschrift bekannt sein
+  if (!hasDoc) {
+    const web = (await prisma.onboarding.findUnique({ where: { customerId }, select: { websiteInfo: true } }))?.websiteInfo as { address?: string | null } | null | undefined;
+    if (!web?.address?.trim()) {
+      return { ok: false, error: "Wir haben Ihre Anschrift noch nicht aus dem Impressum. Bitte laden Sie Ihre Erstinformation als PDF hoch oder tragen Sie den Link dazu ein." };
+    }
+  }
   const status = input.status as VermittlerStatus;
   const before = await prisma.customer.findUnique({ where: { id: customerId }, select: { name: true, vermittlerTyp: true } });
   if (before && before.vermittlerTyp !== status) {

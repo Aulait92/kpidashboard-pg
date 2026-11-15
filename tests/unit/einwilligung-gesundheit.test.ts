@@ -10,7 +10,7 @@ import {
   whatsappErlaubt,
 } from "@/lib/einwilligung-leadformular";
 import { isHealthAnswer, isHealthLabel, splitHealthAnswers } from "@/lib/gesundheitsdaten";
-import { erstinfoFehlt, isPdf, normalizeErstinfoUrl, normalizeRegisterNummer, statusRegisterText, vermittlerStatusLabel } from "@/lib/erstinformation-shared";
+import { erstinfoFehlt, statusFromImpressum, isPdf, normalizeErstinfoUrl, normalizeRegisterNummer, statusRegisterText, vermittlerStatusLabel } from "@/lib/erstinformation-shared";
 import { fromFlatPayload, fromMetaLead } from "@/lib/lead-intake";
 import { leadFormPayload } from "@/lib/kampagnen/builder";
 
@@ -117,5 +117,11 @@ describe("Erstinformation: Status, Registernummer, Link", () => {
     expect(statusRegisterText("makler")).toContain("§ 34d Abs. 1 GewO");
     expect(erstinfoFehlt({ status: true, registerNummer: true, dokument: true })).toEqual([]);
     expect(erstinfoFehlt({ status: false, registerNummer: false, dokument: false })).toHaveLength(3);
+    // Ohne eigenes Dokument reicht die Anschrift aus dem Impressum (Ole, 15.11.2026)
+    expect(erstinfoFehlt({ status: true, registerNummer: true, dokument: false, anschrift: true })).toEqual([]);
+    expect(statusFromImpressum("Gebundener Versicherungsvertreter nach § 34d Abs. 7 GewO")).toBe("vertreter");
+    expect(statusFromImpressum("Versicherungsmakler mit Erlaubnis nach § 34d Abs. 1 GewO")).toBe("makler");
+    expect(statusFromImpressum("Mehrfachvertreter")).toBe("mehrfachvertreter");
+    expect(statusFromImpressum("Versicherungsvertreter")).toBeNull();
   });
 });

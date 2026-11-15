@@ -10,10 +10,9 @@ import { buttonClass, Card } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { customerSetupProgress, loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
-import { CopyText, HelpCallPicker, MetaAccessForm, QuestionnaireForm, SkipButton, StepExits } from "./forms";
+import { HelpCallPicker, MetaAccessForm, QuestionnaireForm, SkipButton, StepExits } from "./forms";
 import { ErstinfoForm } from "./erstinfo-form";
 import { loadErstinfo } from "@/lib/erstinformation";
-import { consentTextFor } from "@/lib/einwilligung-leadformular-server";
 import { SmtpForm } from "@/app/buyer/postfach/forms";
 import { googleMailAvailable, microsoftMailAvailable } from "@/lib/mail/postfach";
 import { appInstalled, loadSetupSettings, setupSteps, videoEmbedUrl, type MetaCheck, type SetupStepKey } from "@/lib/selbst-einrichtung";
@@ -106,7 +105,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const calendar = await loadCalendarSetup(ctx.customerId, ctx.customerId);
   const makler = (await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { vermittlerTyp: true } }))?.vermittlerTyp === "makler";
   // Erstinformation (§ 15 VersVermV) und Einwilligungstext fürs Leadformular
-  const [erstinfo, consent] = software ? await Promise.all([loadErstinfo(ctx.customerId), consentTextFor(ctx.customerId)]) : [null, null];
+  const erstinfo = software ? await loadErstinfo(ctx.customerId) : null;
   const metaInit = {
     adAccount: ob.customer.metaAdAccountId ? `act_${ob.customer.metaAdAccountId}` : "",
     page: ob.customer.metaPageId ?? "",
@@ -308,8 +307,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         {software && erstinfo ? (
           <Step n={nextNo()} title="Erstinformation für Ihre Leads" icon={FileText} done={done("erstinfo")} open={isOpen("erstinfo")} id="erstinfo">
             <p className="mb-3 text-sm text-[color:var(--muted)]">
-              Als Versicherungsvermittler müssen Sie Ihren Kunden beim ersten Kontakt die Erstinformation geben (§ 15 VersVermV). Ihr Assistent schickt den Link
-              dazu in seiner ersten Nachricht an jeden neuen Lead. Ohne Erstinformation fehlt diese Pflichtangabe.
+              Als Versicherungsvermittler müssen Sie Ihren Kunden beim ersten Kontakt die Erstinformation geben (§ 15 VersVermV). Wir erstellen sie aus Ihrem
+              Impressum, Ihr Assistent schickt den Link in seiner ersten Nachricht an jeden neuen Lead. Bitte prüfen Sie die Angaben einmal kurz.
             </p>
             {!erstinfo.vollstaendig ? (
               <p className="mb-4 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-erstinfo-warnung>
@@ -318,6 +317,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             ) : null}
             <ErstinfoForm
               initial={{ status: erstinfo.statusAt ? erstinfo.status : null, registerNummer: erstinfo.registerNummer, url: erstinfo.url, fileName: erstinfo.fileName }}
+              impressum={erstinfo.impressum}
+              confirmed={!!erstinfo.statusAt}
               readOnly={readOnly}
             />
             {erstinfo.token ? (
@@ -327,17 +328,6 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                   Erstinformation öffnen
                 </a>
               </p>
-            ) : null}
-            {consent ? (
-              <details className="mt-5 rounded-[var(--radius-md)] border border-[color:var(--border)] px-4 py-3" data-einwilligung-text>
-                <summary className="cursor-pointer text-[15px] font-medium">Einwilligung im Leadformular (Text zum Kopieren)</summary>
-                <p className="my-2 text-sm text-[color:var(--muted)]">
-                  Unsere Formulare enthalten diesen Text als Pflicht-Häkchen. Nutzen Sie eigene Formulare, übernehmen Sie ihn bitte genauso. Ohne Häkchen schreibt
-                  Ihr Assistent den Lead nicht per WhatsApp an.
-                </p>
-                <CopyText text={consent.text} />
-                {consent.missing.length ? <p className="mt-2 text-xs text-amber-800">Bitte ergänzen: {consent.missing.join(", ")}.</p> : null}
-              </details>
             ) : null}
           </Step>
         ) : null}
