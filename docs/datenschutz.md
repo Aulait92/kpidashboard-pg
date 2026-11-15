@@ -157,7 +157,7 @@ gilt nur für neue Dienste, eine Streichung ist unkritisch, wird aber trotzdem m
 | Passwort-Links | 7 Tage nach Ablauf | automatisch (`pruneTransient`) |
 | Sitzung (Cookie) | 30 Tage | läuft ab; 2FA-Zwischenschritt 10 Minuten |
 | Lead auf Wunsch der betroffenen Person | sofort | Lead öffnen → Mehr → „Daten löschen (Datenschutz)“ (Inhaber oder Admin). Anonymisiert den Lead, löscht Chats, Termine, Einwilligung. Umsatz und Status bleiben ohne Personenbezug |
-| Alle Lead-Daten eines Kunden bei Vertragsende | spätestens 30 Tage nach Ende (AVV) | Admin → Kunden → Kunde → Abrechnung → „Vertragsende: Daten löschen“. Vorher auf Wunsch Leads exportieren. Logins im Reiter „Logins“ löschen |
+| Alle Lead-Daten eines Kunden bei Vertragsende | spätestens 30 Tage nach Ende (AGB „Daten bei Vertragsende“, AVV „Löschung und Rückgabe“, Stand 15.11.2026) | Admin → Kunden → Kunde → Abrechnung → „Vertragsende: Daten löschen“. Vorher exportiert der Kunde selbst (Konto → „Ihre Daten herunterladen“). Ausgenommen: Sperrliste für Widersprüche als Hashwerte (dauerhaft). Logins im Reiter „Logins“ löschen |
 | Leads, Chats, Termine während der Laufzeit | nach Weisung des Kunden | keine automatische Frist (Kunde entscheidet; Vermittler haben eigene Dokumentationspflichten) |
 | Vertriebskontakte ohne Vertrag | **Vorschlag**: 2 Jahre nach letzter Aktivität | noch von Hand (Kontakt → Löschen). Bei Widerspruch sofort |
 | Angebote, Verträge, Rechnungen | 10 Jahre | nicht löschen; Stripe bewahrt Rechnungen auf |
@@ -256,6 +256,14 @@ Interaktion mit Betroffenen“. Falls ja, DSFA je Kunde als Verantwortlicher (Vo
 ## 9. Offene Punkte
 
 - [ ] AVV/DPA mit jedem Dienst abschließen bzw. Nachweis ablegen (Tabelle Abschnitt 3)
+- [ ] AGB/AVV Stand 15.11.2026 (Anwalts-Memo): Anwalt prüft die „Prüfen:“-Stellen in `src/lib/legal-texts.ts`.
+      Eine Mitteilung an Bestandskunden mit 6 Wochen Widerspruchsfrist ist **nicht nötig**: Zum Zeitpunkt der Änderung
+      gab es keine Kunden mit angenommenem Vertrag, nur verschickte Angebote (Ole, 15.11.2026). Offene Angebote verweisen
+      auf /rechtliches/*, dort gilt bei Annahme der neue Stand. `LEGAL_VERSION` löst keine erneute Zustimmung in der App aus;
+      bei späteren Änderungen mit Kunden gilt wieder AGB „Änderungen dieser AGB“.
+- [ ] § 203 StGB (AVV Stand 15.11.2026): Mitarbeiter vor Beginn mit `docs/vorlage-verpflichtung-203-stgb.md` verpflichten
+      und in der Nachweisliste eintragen; je Unterauftragsverarbeiter Verpflichtung in Textform mit Hinweis auf § 203 Abs. 4 StGB
+      ablegen (DPA oder eigene Erklärung). Anwalt: reichen die Standard-DPAs (Anthropic, Meta, 360dialog, Sentry, Railway)?
 - [ ] Aufbewahrung der Railway-Sicherungen ablesen und im Löschkonzept eintragen
 - [ ] Sentry: Aufbewahrung prüfen, Datenregion EU bestätigen
 - [ ] Anwalt: Rolle bei Pay-per-Lead; Kalt-E-Mails an Vermittler; DSFA-Muss-Liste; AGB/AVV-Fassung 10.11.2026

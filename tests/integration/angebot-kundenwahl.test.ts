@@ -34,7 +34,7 @@ import { requireTestDb } from "./db";
 const uid = () => Math.random().toString(36).slice(2, 8);
 const today = berlinTodayIso();
 const accept = (token: string, extra: { term?: string; startDate?: string } = {}) =>
-  acceptOffer(token, { name: "Karl Kunde", ip: "127.0.0.1", agent: "vitest", termsAccepted: true, ...extra });
+  acceptOffer(token, { name: "Karl Kunde", ip: "127.0.0.1", agent: "vitest", termsAccepted: true, business: { company: "Agentur Test", confirmed: true }, ...extra });
 
 describe("Angebot: Kunde wählt Laufzeit und Startdatum", () => {
   const contacts: string[] = [];

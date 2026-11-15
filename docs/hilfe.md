@@ -614,6 +614,11 @@ Seiten aus der Liste „Seiten“ unten.
   „Angebot annehmen“): Setup und Summen passen sich sofort an. Start frühestens 7 Tage, spätestens 90 Tage ab
   heute; ab diesem Tag läuft die Monatsgebühr, die Einrichtung dauert ca. 1–2 Wochen. Bei Sonderpreisen ist die
   Laufzeit fest vereinbart, das Startdatum bleibt wählbar.
+- Bei der Annahme (seit 15.11.2026): Direkt am Knopf steht „Das vereinbaren Sie mit dem Klick“ mit Einrichtung,
+  monatlichem Betrag ab Start, Mindestlaufzeit mit Enddatum und Kündigungsmöglichkeit. Pflicht: Firma, Häkchen
+  „Ich schließe diesen Vertrag als Unternehmer (§ 14 BGB)“; USt-IdNr. freiwillig. Mit Startpreis zusätzlich das Häkchen,
+  dass ab dem genannten Datum automatisch die reguläre Vergütung gilt. Danach kommt eine Auftragsbestätigung per E-Mail
+  mit denselben Angaben (Daten und Beträge), getrennt von der E-Mail mit dem Zugang.
 - Zahlweise: monatlich oder jährlich im Voraus (2 Monate geschenkt: Jahresbetrag = 10 × Monatspreis inkl.
   Zusätze, nur mit 12 Monaten Laufzeit). Umstellen: bitte bei uns melden.
 - Zahlungsart, Rechnungsadresse, USt-IdNr.: über das Zahlungsportal (Stripe) auf dieser Seite.
@@ -651,6 +656,18 @@ Seiten aus der Liste „Seiten“ unten.
   Nachweis zum Widerspruchshinweis, dazu das Einwilligungsprotokoll. Gelöschte Leads sind nicht enthalten. Jeder
   Download wird protokolliert. Nach Vertragsende löschen wir Ihre Daten innerhalb von 30 Tagen; laden Sie den Export
   vorher herunter.
+- **Vertrag kündigen (seit 15.11.2026):** Konto & Rechnungen → Karte „Ihr Vertrag“ → **Vertrag hier kündigen**. Es öffnet
+  sich eine Bestätigungsseite mit Vertrag, Art (ordentliche Kündigung zum nächstmöglichen Termin), Ihrer E-Mail und
+  dem Tag, an dem der Vertrag endet; Grund freiwillig. Mit **Jetzt kündigen** ist die Kündigung abgeschickt, auf der
+  Seite steht dann „Gekündigt zum …“ und sofort kommt eine Bestätigung per E-Mail (Eingang mit Uhrzeit, Vertragsende).
+  Termin: während der Mindestlaufzeit zu deren Ende; ohne bzw. nach der Mindestlaufzeit zum Ende des laufenden
+  Abrechnungsmonats (Abrechnungsmonate laufen ab dem Starttag, z. B. 15. bis 14.); bei jährlicher Vorauszahlung zum
+  Ende des Zahlungsjahres, wenn die Kündigung spätestens einen Monat vorher eingeht, sonst ein Jahr später. Bis zum
+  Ende läuft alles weiter, Zusatzmodule enden mit dem Vertrag, danach wird nichts mehr abgebucht (die Online-Abrechnung
+  endet automatisch zum Vertragsende). Bis dahin können Sie Ihre Daten unter „Ihre Daten herunterladen“ exportieren; spätestens 30 Tage nach
+  Vertragsende werden die Daten der Leads und Kunden gelöscht (Sperrliste für Widersprüche bleibt pseudonymisiert). Nur Inhaber. Zurücknehmen oder anderer Termin (z. B. außerordentlich): bitte bei
+  uns melden.
+- Vertragsfragen: bitte direkt bei uns melden.
 
 ## Weiteres Produkt buchen (nur Inhaber)
 - **Wo:** Konto & Rechnungen → Karte „Produkte“ (auch über Wachstum → „Weitere Sparte dazubuchen“). Dort stehen die gebuchten

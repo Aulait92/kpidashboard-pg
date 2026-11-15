@@ -137,7 +137,7 @@ describe("Bewertungsbitte (Anwalts-Memo 15.11.2026): neutral, eigene Version, al
   it("v3 nur für review_request, Text neutral ohne „5 Sterne“, Abmeldeknopf, Meta-Regeln erfüllt", async () => {
     const { metaTemplateProblems } = await import("@/lib/whatsapp/template-plan");
     const { rankTemplates, templateVersionFor } = await import("@/lib/whatsapp/templates");
-    expect(templateNameFor("review_request", "v2", "sie")).toBe("pg_review_request_v3_sie");
+    expect(templateNameFor("review_request", "v3", "sie")).toBe("pg_review_request_v3_sie");
     expect(templateNameFor("outreach", "v2", "sie")).toBe("pg_outreach_v2_sie");
     expect(templateVersionFor("review_request")).toBe("v3");
     const body = templateBodyFor("review_request", "Max Muster", "sie");
@@ -145,7 +145,7 @@ describe("Bewertungsbitte (Anwalts-Memo 15.11.2026): neutral, eigene Version, al
     expect(body).not.toMatch(/sterne|zufrieden waren/i);
     expect(TEMPLATE_BUTTONS.review_request).toEqual([OPT_OUT_BUTTON]);
     for (const form of ["sie", "sie_ohne_name"] as const) {
-      const req = buildTemplateRequest("review_request", "Max Muster", "v2", form);
+      const req = buildTemplateRequest("review_request", "Max Muster", "v3", form);
       const text = (req.components[0] as { text: string }).text;
       expect(metaTemplateProblems(text, exampleValuesFor("review_request", form)), text).toEqual([]);
     }

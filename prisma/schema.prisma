@@ -147,6 +147,13 @@ model Customer {
   retainerStart   DateTime?
   // Letzter Tag mit Retainer (inklusive), von Hand in Kundenakte → Abrechnung; null = läuft
   retainerEnd     DateTime?
+  // „Vertrag hier kündigen“ im Kundenbereich (Konto & Rechnungen, 15.11.2026): Eingang der Kündigung, letzter
+  // Vertragstag laut AGB (lib/vertrag-laufzeit.cancelDate), wer gekündigt hat und optionaler Grund. Ole setzt danach
+  // retainerEnd und beendet das Stripe-Abo zum Termin (Aufgabe in „Heute“).
+  cancelRequestedAt DateTime?
+  cancelEffectiveAt DateTime?
+  cancelRequestedBy String?
+  cancelReason      String?
   // Eigenes Meta-Werbekonto des Kunden (nur Ziffern, ohne „act_").
   metaAdAccountId String?
   // Facebook-Seite des Kunden für Lead-Ads (Kampagnen-Agenten); sonst aus LeadSource.pageId
@@ -1265,6 +1272,12 @@ model Offer {
   acceptedName            String?
   acceptedIp              String?
   acceptedAgent           String?
+  // Bei der Annahme angegeben (Anwalts-Memo, 15.11.2026): Firma, USt-IdNr. (freiwillig), Bestätigung
+  // „Ich handle als Unternehmer (§ 14 BGB)“ (Pflicht) und, bei Startpreis, das Häkchen zum Übergang in den regulären Preis
+  acceptedCompany         String?
+  acceptedVatId           String?
+  acceptedAsBusiness      Boolean       @default(false)
+  acceptedPriceStep       Boolean       @default(false)
   termsUrl                String?
   dpaUrl                  String?
   // Zusätze (seit 11.11.2026; null = Alt-Angebot ohne Platz-Abrechnung)

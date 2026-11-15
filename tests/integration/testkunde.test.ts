@@ -67,7 +67,7 @@ describe("Testangebot und Testkunde", () => {
     expect(offer.annualPrepay).toBe(false);
     expect(offer.specialTerms).toMatch(/Testangebot/);
 
-    expect(await acceptOffer(offer.token, { name: "Ole Test", ip: null, agent: "vitest", termsAccepted: true })).toEqual({ ok: true });
+    expect(await acceptOffer(offer.token, { name: "Ole Test", ip: null, agent: "vitest", termsAccepted: true, business: { company: "Agentur Test", confirmed: true } })).toEqual({ ok: true });
     expect(stripeState.sessions).toBe(0);
     expect(await createCheckoutForOffer(offer.id)).toEqual({ error: "Testangebote laufen ohne Zahlung." });
 

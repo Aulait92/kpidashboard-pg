@@ -3,7 +3,7 @@
 
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
-import { getAppUrl } from "@/lib/email";
+import { getAppUrl, sendCustomerMail } from "@/lib/email";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 import {
@@ -19,11 +19,13 @@ import {
 } from "@/lib/offer-pricing";
 
 const TERM_SHORT: Record<OfferTerm, string> = { "12m": "12 Monate", "3m": "3 Monate", none: "ohne Laufzeit" };
-import { logOfferActivity, offerAdminHref, setContactCustomerStage, type OfferTarget } from "@/lib/offer-links";
+import { customerGreeting, logOfferActivity, offerAdminHref, setContactCustomerStage, type OfferTarget } from "@/lib/offer-links";
 import { billingEnabled } from "@/lib/billing";
 import { startOnboarding } from "@/lib/onboarding";
 import { audit } from "@/lib/audit";
 import { referralSetupDiscount } from "@/lib/kollegen";
+import { checkBusiness, type BusinessInput } from "@/lib/unternehmer";
+import { contractSummaryLines, hasPriceStep, type ContractSummaryInput } from "@/lib/vertrag-laufzeit";
 
 
 export type OfferFormInput = {
@@ -270,6 +272,10 @@ export async function acceptOffer(
     ip: string | null;
     agent: string | null;
     termsAccepted: boolean;
+    /** Firma, USt-IdNr. (freiwillig) und Bestätigung „Unternehmer nach § 14 BGB“ (Pflicht, gespeichert). */
+    business?: BusinessInput | null;
+    /** Häkchen zum Übergang vom Startpreis in die reguläre Vergütung (Pflicht, wenn das Angebot einen Startpreis hat). */
+    priceStepAck?: boolean;
     /** Wahl des Kunden (nur wenn im Angebot freigegeben; serverseitig geprüft). */
     term?: string | null;
     startDate?: string | null;
@@ -284,6 +290,8 @@ export async function acceptOffer(
   if (!opts.termsAccepted) return { ok: false, error: "Bitte bestätigen Sie AGB und Auftragsverarbeitungsvertrag." };
   const name = opts.name.trim();
   if (name.length < 3) return { ok: false, error: "Bitte geben Sie Ihren vollständigen Namen ein." };
+  const business = checkBusiness(opts.business);
+  if (!business.ok) return { ok: false, error: business.error };
 
   // Laufzeit/Startdatum: Wahl des Kunden prüfen und Preise serverseitig neu berechnen.
   const choice = resolveOfferChoice(
@@ -304,6 +312,10 @@ export async function acceptOffer(
   );
   if (!choice.ok) return { ok: false, error: choice.error };
   const startDate = choice.startIso ? new Date(`${choice.startIso}T12:00:00Z`) : null;
+  // Konditionen wie direkt am Annahme-Knopf (Startpreis mit Übergang braucht ein eigenes Häkchen)
+  const summary = offerSummaryInput(offer, { term: choice.term, startIso: choice.startIso, setup: choice.setupFee, annual: choice.annualPrepay, freeMonths: choice.annualFreeMonths });
+  const priceStep = hasPriceStep(summary);
+  if (priceStep && !opts.priceStepAck) return { ok: false, error: "Bitte bestätigen Sie den Übergang vom Startpreis in die reguläre Vergütung." };
 
   const now = new Date();
   const updated = await prisma.offer.updateMany({
@@ -314,6 +326,12 @@ export async function acceptOffer(
       acceptedName: name.slice(0, 200),
       acceptedIp: opts.ip?.slice(0, 100) ?? null,
       acceptedAgent: opts.agent?.slice(0, 400) ?? null,
+      acceptedCompany: business.company,
+      acceptedVatId: business.vatId,
+      acceptedAsBusiness: true,
+      acceptedPriceStep: priceStep,
+      // Firma fehlte im Angebot: die bei der Annahme angegebene übernehmen (Rechnung, Stripe)
+      ...(offer.company?.trim() ? {} : { company: business.company }),
       term: choice.term,
       setupFee: choice.setupFee,
       ...(offer.setupDiscount != null ? { setupListFee: choice.setupListFee } : {}),
@@ -338,6 +356,10 @@ export async function acceptOffer(
       setupFee: choice.setupFee,
       annualPrepay: choice.annualPrepay,
       chosenByCustomer: offer.customerChoosesTerm || offer.customerChoosesStart,
+      company: business.company,
+      vatId: business.vatId,
+      asBusiness: true,
+      priceStep,
     },
     actor: { email: offer.email ?? null, role: "kunde" },
   });
@@ -371,6 +393,11 @@ export async function acceptOffer(
     await startOnboarding(offer.id).catch((err) => reportError(err, "onboarding-start", { offer: offer.number }));
   }
 
+  // Auftragsbestätigung mit Datum und Betrag (Startpreis, Laufzeit, Kündigung); Testangebote ohne
+  if (!offer.isTest && offer.email) {
+    await sendAcceptanceMail({ ...offer, company: offer.company?.trim() || business.company }, summary).catch((err) => reportError(err, "offer-accept-mail", { offer: offer.number }));
+  }
+
   await sendToAdmins({
     title: `✅ Angebot angenommen: ${offer.company ?? offer.contactName}`,
     body: `${offer.number} · ${name}`,
@@ -379,6 +406,48 @@ export async function acceptOffer(
   }).catch((err) => reportError(err, "offer-accept-push"));
 
   return { ok: true };
+}
+
+type OfferRecord = NonNullable<Awaited<ReturnType<typeof getOfferByToken>>>;
+
+/** Eingaben für {@link contractSummaryLines} aus einem Angebot (Wahl des Kunden geht vor). */
+export function offerSummaryInput(
+  offer: Pick<OfferRecord, "term" | "startDate" | "setupFee" | "introMonthlyFee" | "introMonths" | "annualPrepay" | "annualFreeMonths"> & Parameters<typeof offerAddOnsOf>[0],
+  chosen: Partial<{ term: OfferTerm; startIso: string | null; setup: number; annual: boolean; freeMonths: number | null }> = {},
+): ContractSummaryInput {
+  const add = offerAddOns(offerAddOnsOf(offer));
+  const extras = add.monthlyTotal - Number(offer.monthlyFee);
+  const intro = offer.introMonthlyFee != null && offer.introMonths ? { months: offer.introMonths, monthly: Math.round((Number(offer.introMonthlyFee) + extras) * 100) / 100 } : null;
+  return {
+    term: chosen.term ?? normalizeTerm(offer.term),
+    startIso: chosen.startIso !== undefined ? chosen.startIso : offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null,
+    setup: chosen.setup ?? Number(offer.setupFee),
+    monthlyTotal: add.monthlyTotal,
+    intro,
+    annual: chosen.annual ?? offer.annualPrepay,
+    freeMonths: chosen.freeMonths ?? offer.annualFreeMonths ?? PRICE_LIST.annualFreeMonths,
+  };
+}
+
+async function sendAcceptanceMail(offer: OfferRecord, summary: ContractSummaryInput) {
+  let url: string | null = null;
+  try {
+    url = `${getAppUrl()}/angebot/${offer.token}`;
+  } catch {
+    url = null;
+  }
+  const res = await sendCustomerMail({
+    to: offer.email!,
+    subject: `Ihre Auftragsbestätigung ${offer.number}`,
+    greeting: await customerGreeting({ salesContactId: offer.salesContactId, contactName: offer.contactName }),
+    paragraphs: [
+      `vielen Dank für Ihren Auftrag${offer.company ? ` für ${offer.company}` : ""}. Wir bestätigen die Annahme des Angebots ${offer.number} zu diesen Konditionen:`,
+      "Die AGB und den Auftragsverarbeitungsvertrag in der bei der Annahme gültigen Fassung finden Sie über den Link zum Angebot. Den Zugang zum Kundenbereich bekommen Sie mit einer eigenen E-Mail.",
+    ],
+    list: contractSummaryLines(summary),
+    ...(url ? { button: { label: "Angebot ansehen", url } } : {}),
+  });
+  if (!res.ok) reportError(new Error(res.error), "offer-accept-mail", { offer: offer.number });
 }
 
 export async function markOfferViewed(id: string) {

@@ -70,7 +70,7 @@ export const TEMPLATE_VERSION = "v3";
 /**
  * Eigene Textversion je Zweck, wenn sich nur dieser Text ändert (wird neu eingereicht, ohne alle anderen Vorlagen
  * neu einzureichen). Es gilt die höhere von TEMPLATE_VERSION und diesem Wert.
- *   review_request v3 (15.11.2026): neutrale Bitte um eine ehrliche Bewertung mit Abmeldeknopf.
+ *   review_request v3 (15.11.2026, zugleich allgemeine v3): neutrale Bitte um eine ehrliche Bewertung mit Abmeldeknopf.
  */
 export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = { review_request: "v3" };
 

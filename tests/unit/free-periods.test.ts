@@ -30,7 +30,7 @@ describe("kostenlose Zeiträume", () => {
 
   it("AGB-Abschnitt und Buchungstext ohne Gedankenstriche", () => {
     const sec = AGB.find((s) => s.title === "Testphasen und kostenlose Zeiträume");
-    expect(sec?.items).toHaveLength(6);
+    expect(sec?.items).toHaveLength(8);
     expect(JSON.stringify(sec)).not.toMatch(/[–—]/);
     const t = bookingTerms({ trial: true, annual: false, now });
     expect(t.lines.join(" ")).toMatch(/jederzeit kostenlos beendbar/);

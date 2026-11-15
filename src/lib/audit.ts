@@ -78,6 +78,8 @@ export const AUDIT_LABEL: Record<string, string> = {
   "absence.handover": "Termine an Vertretung übergeben",
   "absence.undo_tasks": "Aufgaben-Verschiebung rückgängig gemacht",
   "offer.accept": "Angebot angenommen",
+  "contract.cancel": "Vertrag gekündigt (Kunde, Kundenbereich)",
+  "contract.cancel_stripe": "Stripe-Abo zum Vertragsende beendet (cancel_at)",
   "contact.delete": "Vertriebskontakt gelöscht",
   "contact.merge": "Vertriebskontakte zusammengeführt",
   "bank.connect": "Bankkonto verbunden",
