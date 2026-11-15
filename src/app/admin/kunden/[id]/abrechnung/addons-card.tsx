@@ -2,8 +2,9 @@ import { Card, CardHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
 import { bestandQuota } from "@/lib/bestand/quota";
-import { billingIntervalAction, bestandModuleAction, empfehlungModuleAction, saveQuotaAction, saveSeatsAction, syncSeatsAction } from "./addon-actions";
+import { billingIntervalAction, bestandModuleAction, bestandSichtbarAction, empfehlungModuleAction, saveQuotaAction, saveSeatsAction, syncSeatsAction } from "./addon-actions";
 import { moduleState } from "@/lib/empfehlung/shared";
+import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 import { seatUsage } from "@/lib/seats-server";
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
@@ -31,6 +32,7 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
         bestandCancelAt: true,
         bestandMessageQuota: true,
         existingCustomersEnabled: true,
+        bestandSichtbar: true,
         empfehlungEnabled: true,
         empfehlungMonthly: true,
         empfehlungTrialEndsAt: true,
@@ -124,6 +126,16 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
               </form>
             ) : null}
           </div>
+          {!BESTAND_MODULE_AVAILABLE ? (
+            <form action={bestandSichtbarAction} className="flex flex-wrap items-center gap-2" data-admin-bestand-sichtbar>
+              {hidden}
+              <input type="hidden" name="on" value={c.bestandSichtbar ? "0" : "1"} />
+              <span className="text-[color:var(--muted)]">
+                Für Kunden vorerst ausgeblendet. {c.existingCustomersEnabled ? "Bei diesem Kunden aktiv, er sieht es." : c.bestandSichtbar ? "Dieser Kunde sieht es (Test)." : "Dieser Kunde sieht es nicht."}
+              </span>
+              <button className={secondary}>{c.bestandSichtbar ? "Wieder ausblenden" : "Für diesen Kunden einblenden"}</button>
+            </form>
+          ) : null}
           <form action={saveQuotaAction} className="flex flex-wrap items-end gap-2">
             {hidden}
             <label className="grid gap-1 text-xs text-[color:var(--muted)]">

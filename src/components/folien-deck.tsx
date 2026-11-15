@@ -5,11 +5,13 @@
 // Vollbild zum Teilen im Videocall (am Handy ohne Vollbild-API: Folie über den ganzen Bildschirm). Keine Sprechzettel
 // (Ole, 15.11.2026). Klicks auf Schalter in der
 // Folie (data-tarif, data-sparte, data-baustein) gehen an onKlick; die Antwort bringt die neuen Folien.
+// Startet immer mit Folie 1 (Ole, 15.11.2026): kein gespeicherter Stand, kein Sprung per Adresse.
 
-import { useCallback, useEffect, useRef, useState, useTransition, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Expand, X } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
+import { folienEinpassen } from "@/lib/folien-einpassen";
 
 export type DeckFolie = { id: string; titel: string; html: string };
 export type DeckKlick = { tarif: number | null; sparte: boolean; item: number; baustein: number; aktiv: boolean };
@@ -24,14 +26,12 @@ const ZURUECK = new Set(["ArrowLeft", "PageUp"]);
 export function FolienDeck({
   css,
   folien: start,
-  startFolie = 0,
   onKlick,
   eingebettet,
   extra,
 }: {
   css: string;
   folien: DeckFolie[];
-  startFolie?: number;
   /** Klick auf einen Schalter in der Folie; ohne: Folien sind nur zum Ansehen. */
   onKlick?: (k: DeckKlick) => Promise<DeckAntwort>;
   /** In einer anderen Folie eingebettet (iframe): knappe Leiste, Pfeiltasten blättern das Deck darüber. */
@@ -40,12 +40,13 @@ export function FolienDeck({
   extra?: ReactNode;
 }) {
   const [folien, setFolien] = useState(start);
-  const [i, setI] = useState(Math.max(0, Math.min(start.length - 1, startFolie)));
+  const [i, setI] = useState(0);
   const [pending, startT] = useTransition();
   const [pseudo, setPseudo] = useState(false);
   const toast = useToast();
   const [scale, setScale] = useState(0.5);
   const box = useRef<HTMLDivElement>(null);
+  const folie = useRef<HTMLDivElement>(null);
   const touch = useRef<{ x: number; y: number } | null>(null);
 
   const onSlideClick = (ev: React.MouseEvent) => {
@@ -120,6 +121,17 @@ export function FolienDeck({
   };
 
   const f = folien[i];
+  // Zu langer Inhalt wird kleiner statt abgeschnitten (gleich wie im PDF)
+  useLayoutEffect(() => {
+    const el = folie.current;
+    if (!el) return;
+    folienEinpassen(el);
+    let aktiv = true;
+    document.fonts?.ready.then(() => aktiv && folienEinpassen(el));
+    return () => {
+      aktiv = false;
+    };
+  }, [f.html]);
   return (
     <div className={eingebettet ? "flex w-full flex-col gap-2" : "space-y-4"}>
       <style>{css}</style>
@@ -143,6 +155,7 @@ export function FolienDeck({
       >
         <div className="relative shrink-0 overflow-hidden" style={{ width: 1280 * scale, height: 720 * scale }}>
           <div
+            ref={folie}
             onClick={onSlideClick}
             className="absolute left-0 top-0"
             style={{ width: 1280, height: 720, transform: `scale(${scale})`, transformOrigin: "top left" }}

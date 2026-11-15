@@ -15,6 +15,7 @@ import {
   type UpdateKind,
   type UpdateView,
 } from "@/lib/neuigkeiten-shared";
+import { BESTAND_MODULE_AVAILABLE, bestandVisible, isBestandUpdate } from "@/lib/bestand/sichtbar";
 
 type Row = { id: string; title: string; body: string; kind: string; audience: string; publishedAt: Date | null };
 const toView = (r: Row): UpdateView => ({
@@ -26,18 +27,24 @@ const toView = (r: Row): UpdateView => ({
   publishedAt: r.publishedAt?.toISOString() ?? null,
 });
 
-async function planOf(customerId: string): Promise<string> {
-  return (await prisma.customer.findUnique({ where: { id: customerId }, select: { plan: true } }))?.plan ?? "software";
+/** Paket und ob Neuigkeiten zum Bestandskunden-Modul passen (Modul vorerst ausgeblendet, lib/bestand/sichtbar.ts). */
+async function audienceOf(customerId: string): Promise<{ plan: string; bestand: boolean }> {
+  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { plan: true, existingCustomersEnabled: true, bestandSichtbar: true } });
+  return { plan: c?.plan ?? "software", bestand: bestandVisible(c) };
 }
 
-/** Veröffentlichte Neuigkeiten für einen Kunden (nach Paket gefiltert), neueste zuerst. */
+/** Einträge zum Bestandskunden-Modul nur für Kunden, die es sehen (nicht gelöscht, nur ausgeblendet). */
+const forAudience = (rows: Row[], a: { bestand: boolean }) => (a.bestand ? rows : rows.filter((r) => !isBestandUpdate(r)));
+
+/** Veröffentlichte Neuigkeiten für einen Kunden (nach Paket und Modulen gefiltert), neueste zuerst. */
 export async function listUpdatesForCustomer(customerId: string, now = new Date()): Promise<UpdateView[]> {
+  const a = await audienceOf(customerId);
   const rows = await prisma.productUpdate.findMany({
-    where: { publishedAt: { not: null, lte: now }, audience: { in: audiencesForPlan(await planOf(customerId)) } },
+    where: { publishedAt: { not: null, lte: now }, audience: { in: audiencesForPlan(a.plan) } },
     orderBy: { publishedAt: "desc" },
     take: 200,
   });
-  return rows.map(toView);
+  return forAudience(rows, a).map(toView);
 }
 
 /** Ungelesene Neuigkeiten eines Logins: veröffentlicht nach `updatesSeenAt`. */
@@ -46,12 +53,13 @@ export async function unreadUpdates(userId: string, customerId: string, now = ne
   if (!u) return [];
   // Neue Logins starten nicht mit der ganzen Historie als „ungelesen“ (höchstens die letzten 14 Tage)
   const since = u.updatesSeenAt ?? new Date(Math.max(u.createdAt.getTime() - 14 * 86400000, 0));
+  const a = await audienceOf(customerId);
   const rows = await prisma.productUpdate.findMany({
-    where: { publishedAt: { gt: since, lte: now }, audience: { in: audiencesForPlan(await planOf(customerId)) } },
+    where: { publishedAt: { gt: since, lte: now }, audience: { in: audiencesForPlan(a.plan) } },
     orderBy: { publishedAt: "desc" },
     take: 50,
   });
-  return rows.map(toView);
+  return forAudience(rows, a).map(toView);
 }
 
 export async function unreadUpdateCount(userId: string, customerId: string, now = new Date()): Promise<number> {
@@ -123,6 +131,8 @@ export async function pushUpdate(id: string): Promise<number> {
       ...(plans ? { plan: { in: plans } } : { plan: { not: "internal" } }),
       archived: false,
       users: { some: { role: "BUYER", id: { in: subUserIds } } },
+      // Neuigkeit zum Bestandskunden-Modul: nur an Kunden, die es sehen (lib/bestand/sichtbar.ts)
+      ...(isBestandUpdate(row) && !BESTAND_MODULE_AVAILABLE ? { OR: [{ existingCustomersEnabled: true }, { bestandSichtbar: true }] } : {}),
     },
     select: { id: true },
   });

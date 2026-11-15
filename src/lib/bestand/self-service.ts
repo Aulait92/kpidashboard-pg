@@ -11,6 +11,7 @@ import { reportError } from "@/lib/monitoring";
 import { scheduleBestandCancel, selfServiceBillingBlocker, setBestandModule } from "@/lib/billing";
 import type { AuditActor } from "@/lib/audit";
 import { bestandTerms } from "@/lib/bestand/terms";
+import { bestandVisible } from "@/lib/bestand/sichtbar";
 
 export type SelfBookCustomer = {
   plan: string | null;
@@ -31,9 +32,11 @@ export function selfBookBlocker(c: SelfBookCustomer): string | null {
 export async function canSelfBookBestand(customerId: string): Promise<{ ok: true } | { ok: false; reason: string }> {
   const c = await prisma.customer.findUnique({
     where: { id: customerId },
-    select: { plan: true, paymentOverdueSince: true, existingCustomersEnabled: true, bestandCancelAt: true, stripeCustomerId: true },
+    select: { plan: true, paymentOverdueSince: true, existingCustomersEnabled: true, bestandCancelAt: true, stripeCustomerId: true, bestandSichtbar: true },
   });
   if (!c) return { ok: false, reason: "Konto nicht gefunden." };
+  // Modul vorerst nicht für alle buchbar (lib/bestand/sichtbar.ts)
+  if (!bestandVisible(c)) return { ok: false, reason: "Das Modul ist gerade nicht buchbar." };
   const local = selfBookBlocker(c);
   if (local) return { ok: false, reason: local };
   const billing = await selfServiceBillingBlocker(c.stripeCustomerId);

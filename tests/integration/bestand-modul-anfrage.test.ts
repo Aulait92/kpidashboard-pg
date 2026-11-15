@@ -23,7 +23,8 @@ describe("Bestandskunden-Modul anfragen", () => {
   let customerId = "";
   beforeAll(async () => {
     requireTestDb();
-    const c = await makeCustomer();
+    // Modul vorerst ausgeblendet (lib/bestand/sichtbar.ts): Testkunde mit Schalter
+    const c = await makeCustomer({ bestandSichtbar: true });
     customerId = c.id;
     st.userId = (await makeBuyer(c.id, "owner")).id;
     st.customerId = c.id;

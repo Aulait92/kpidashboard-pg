@@ -207,7 +207,7 @@ function BeforeStart({
                     <span className="font-medium">
                       Einrichtung: {progress.done} von {progress.total} erledigt
                     </span>
-                    <span className="text-[color:var(--muted)]">noch ca. 5 Minuten</span>
+                    <span className="text-[color:var(--muted)]">jederzeit unterbrechbar</span>
                   </div>
                   <div className="mt-2 h-2 overflow-hidden rounded-full bg-[color:var(--surface-sunken,#f1f5f9)]">
                     <div className="h-full rounded-full bg-[color:var(--brand)]" style={{ width: `${Math.max(progress.percent, 4)}%` }} />

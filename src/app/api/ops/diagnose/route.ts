@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 // damit Claude Zustände prüfen kann, ohne Datenbank-Zugang. Kein freies SQL, keine Geheimnisse,
 // Lead-Daten nur so weit nötig (Name statt Telefon/E-Mail).
 // Absicherung: eigener Lese-Schlüssel OPS_READ_TOKEN (≥ 32 Zeichen) als Bearer-Token.
-//   GET /api/ops/diagnose?q=uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi
+//   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi
 export const dynamic = "force-dynamic";
 
 function authorized(req: Request): boolean {
@@ -325,7 +325,13 @@ async function d360webhook() {
   return { baseUrl: base.replace(/\/\/([^/@]*@)/, "//"), baseAusVariable: raw !== undefined, konten: out };
 }
 
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi };
+/** Pflichtvariablen: nur Status je Name, nie Werte (lib/env-check.ts). */
+async function variablen() {
+  const { pruefeVariablen } = await import("@/lib/env-check");
+  return pruefeVariablen();
+}
+
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi };
 
 export async function GET(req: Request): Promise<Response> {
   if (!authorized(req)) return Response.json({ error: "Unauthorized" }, { status: 401 });

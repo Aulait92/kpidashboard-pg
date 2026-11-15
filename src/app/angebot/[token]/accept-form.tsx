@@ -85,7 +85,7 @@ export function AcceptForm({
         <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
         <div>
           <div className="font-semibold">Vielen Dank, Ihr Auftrag ist bestätigt.</div>
-          <p className="mt-1 text-sm">Sie bekommen gleich eine E-Mail mit Ihrem Zugang. Die Einrichtung dauert ca. 5 Minuten; auf Wunsch helfen wir Ihnen in einem 15-Minuten-Termin.</p>
+          <p className="mt-1 text-sm">Sie bekommen gleich eine E-Mail mit Ihrem Zugang. Die Einrichtung dauert ca. 20 bis 30 Minuten, Sie können jederzeit unterbrechen; auf Wunsch helfen wir Ihnen in einem 15-Minuten-Termin.</p>
         </div>
       </div>
     );

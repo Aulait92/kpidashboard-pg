@@ -6,6 +6,9 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 const h = vi.hoisted(() => ({ mails: [] as Array<{ to: unknown; subject: string; text: string; html: string }> }));
 
 vi.mock("@/lib/mail-guard", () => ({
+  wasBlocked: () => false,
+  mailAllowed: () => true,
+  MAIL_BLOCKED_TEXT: "blockiert",
   mailClient: () => ({
     emails: {
       send: async (args: { to: unknown; subject: string; text: string; html: string }) => {

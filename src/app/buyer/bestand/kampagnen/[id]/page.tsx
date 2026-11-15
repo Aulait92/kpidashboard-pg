@@ -7,6 +7,7 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { OCCASIONS, type Occasion } from "@/lib/bestand/campaigns";
 import { loadCampaignStats } from "@/lib/bestand/statistik";
+import { loadBestandVisible } from "@/lib/bestand/sichtbar-server";
 import { CHANNEL_MODES } from "@/lib/bestand/einwilligung";
 import { FunnelTable } from "@/components/bestand/funnel-table";
 import { ReplyForm } from "@/components/bestand/reply-form";
@@ -27,6 +28,8 @@ export default async function CampaignDetail({ params, searchParams }: { params:
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   if (ctx.teamRole !== "owner") redirect("/buyer");
+  // Modul vorerst ausgeblendet (lib/bestand/sichtbar.ts)
+  if (!(await loadBestandVisible(ctx.customerId, { preview: ctx.preview }))) redirect("/buyer");
   const { id } = await params;
   const { gestartet } = await searchParams;
   // Nur Kampagnen des eigenen Kunden

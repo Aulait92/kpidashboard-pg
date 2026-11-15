@@ -29,7 +29,28 @@ export type AngebotItem = {
 
 export type AngeboteDaten = { items: AngebotItem[]; quelle: string[] };
 
-const str = (v: unknown, max = 120): string | null => (typeof v === "string" && v.trim() ? v.replace(/\s+/g, " ").trim().slice(0, max) : null);
+/**
+ * Text auf höchstens max Zeichen bringen, ohne mitten im Wort oder in einer Klammer zu kappen (UX-Analyse 15.11.2026:
+ * „Versicherungssumme (Neuwert, ohne …“ ohne schließende Klammer): erst Klammerzusätze weglassen, dann an einer
+ * Wortgrenze kürzen; eine offene Klammer (auch aus älteren Daten) wird geschlossen.
+ */
+export function kuerzen(s: string, max: number): string {
+  let t = s.replace(/\s+/g, " ").trim();
+  if (t.length > max) {
+    const ohne = t.replace(/\s*\([^()]*\)/g, "").replace(/\s+/g, " ").trim();
+    if (ohne) t = ohne;
+  }
+  if (t.length > max) {
+    const ende = t.lastIndexOf(" ", max);
+    t = (ende >= max / 2 ? t.slice(0, ende) : t.slice(0, max)).replace(/[\s,;:/(\-\u2013\u2014]+$/, "");
+    const auf = t.lastIndexOf("(");
+    if (auf > t.lastIndexOf(")") && auf >= max / 2) t = t.slice(0, auf).replace(/[\s,;:]+$/, "");
+  }
+  const offen = (t.match(/\(/g)?.length ?? 0) - (t.match(/\)/g)?.length ?? 0);
+  return offen > 0 ? `${t})` : t;
+}
+
+const str = (v: unknown, max = 120): string | null => (typeof v === "string" && v.trim() ? kuerzen(v, max) : null);
 const list = (v: unknown, n: number): string[] =>
   Array.isArray(v) ? v.map((x) => str(x, 160)).filter((x): x is string => !!x).slice(0, n) : [];
 const num = (v: unknown): number | null => {

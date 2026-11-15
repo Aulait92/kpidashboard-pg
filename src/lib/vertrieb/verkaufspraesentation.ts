@@ -8,13 +8,15 @@
 // Texte gehen an Interessenten: keine Gedankenstriche (Bis-Striche in Zahlenbereichen sind ok), Minus als „−“.
 
 import { normalizeTerm, offerAddOns, PACKAGE_LABEL, PRICE_LIST, setupForChoice, type OfferTerm } from "@/lib/offer-pricing";
+import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 
 export type VerkaufsAudience = "vertreter" | "makler";
 export const VERKAUFS_AUDIENCES: readonly VerkaufsAudience[] = ["vertreter", "makler"];
 export const isVerkaufsAudience = (v: unknown): v is VerkaufsAudience => v === "vertreter" || v === "makler";
 
 export const BILD_BASIS = "/praesentation/vertrieb";
-export const DEMO_EINGEBETTET = "/demo/beratung?eingebettet=1&folie=vergleich";
+// Startet mit Folie 1 (Ole, 15.11.2026), nicht mehr auf dem Vergleich
+export const DEMO_EINGEBETTET = "/demo/beratung?eingebettet=1";
 
 type Art = "bild" | "video" | "demo" | "rechnung" | "paket";
 export type VerkaufsFolieDef = { nr: number; titel: string; art: Art };
@@ -392,7 +394,9 @@ export function paketFolie(p: PaketDaten, audience: VerkaufsAudience, nr: number
 <div class="vk-karte"><b>Werbebudget</b><span>${e(budget)}</span></div>
 <div class="vk-karte"><b>Für Ihr ganzes Team</b><span>${e(p.team)}</span></div>
 </div>`;
-  const fuss = `<b style="color:#0b1220">WhatsApp-Gebühren inklusive.</b> Jedes weitere Produkt: ${PRICE_LIST.extraProductMonthly} € monatlich, ohne Setup. <b style="color:#0b1220">Bestandskunden-Modul:</b> ${PRICE_LIST.bestandModuleMonthly} € monatlich. Alle Preise zzgl. 19 % USt.`;
+  // Bestandskunden-Modul nur, solange es für alle verfügbar ist (lib/bestand/sichtbar.ts)
+  const modul = BESTAND_MODULE_AVAILABLE ? ` <b style="color:#0b1220">Bestandskunden-Modul:</b> ${PRICE_LIST.bestandModuleMonthly} € monatlich.` : "";
+  const fuss = `<b style="color:#0b1220">WhatsApp-Gebühren inklusive.</b> Jedes weitere Produkt: ${PRICE_LIST.extraProductMonthly} € monatlich, ohne Setup.${modul} Alle Preise zzgl. 19 % USt.`;
   return rahmen("Ihr Paket", inhalt, nr, gesamt, fuss);
 }
 

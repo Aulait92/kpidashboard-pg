@@ -207,6 +207,9 @@ model Customer {
   leadSubscriptions              LeadSubscription[]
   // Modul „Bestandskunden-Kampagnen“ (Zusatzmodul; Testkunden kostenlos)
   existingCustomersEnabled       Boolean                   @default(false)
+  // Bestandskunden-Modul im Kundenbereich sichtbar, auch ohne Buchung (Ole testet, 15.11.2026; Admin → Abrechnung).
+  // Solange BESTAND_MODULE_AVAILABLE aus ist, sehen das Modul nur Kunden mit diesem Schalter oder aktivem Modul.
+  bestandSichtbar                Boolean                   @default(false)
   // ─── Preise: Berater-Plätze, Zahlweise, Bestandskunden-Modul (seit 11.11.2026) ───
   // Inklusive Logins laut Angebot; null = keine Platz-Abrechnung (Alt-Verträge, individuell)
   seatsIncluded                  Int?

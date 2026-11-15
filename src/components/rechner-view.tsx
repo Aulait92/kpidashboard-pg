@@ -36,6 +36,7 @@ import {
 } from "@/lib/rechner";
 import { cplSpanne, type CplInfo } from "@/lib/rechner";
 import { bestandPacksText, PRICE_LIST, TERM_MONTHS, type OfferTerm } from "@/lib/offer-pricing";
+import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 import type { VermittlerTyp } from "@/lib/provision";
 
 const eur = (n: number, d = 0) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: d, minimumFractionDigits: d });
@@ -308,10 +309,13 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <NumField key={`ber-${version}`} label="Aktive Verkäufer im Team" hint={`bekommen Leads · ${SEATS_INCLUDED} inklusive, jeder weitere ${SEAT_MONTHLY} €, ohne Leads kostenlos`} value={input.berater} min={1} max={99} step={1} onChange={(v) => set({ berater: Math.round(v) })} />
               </div>
-              <p className="mt-3 text-xs text-[color:var(--muted)]" data-rechner-bestand>
-                Nicht eingerechnet, optional: Bestandskunden-Modul {eur(PRICE_LIST.bestandModuleMonthly)} netto im Monat mit {PRICE_LIST.bestandIncludedMessages}{" "}
-                Kampagnen-Nachrichten. Mehr Nachrichten als Zusatzpaket: {bestandPacksText()}.
-              </p>
+              {/* Bestandskunden-Modul nur, solange es für alle verfügbar ist (lib/bestand/sichtbar.ts) */}
+              {BESTAND_MODULE_AVAILABLE ? (
+                <p className="mt-3 text-xs text-[color:var(--muted)]" data-rechner-bestand>
+                  Nicht eingerechnet, optional: Bestandskunden-Modul {eur(PRICE_LIST.bestandModuleMonthly)} netto im Monat mit {PRICE_LIST.bestandIncludedMessages}{" "}
+                  Kampagnen-Nachrichten. Mehr Nachrichten als Zusatzpaket: {bestandPacksText()}.
+                </p>
+              ) : null}
               <label className="mt-3 flex items-start gap-2 text-sm">
                 <input type="checkbox" className="mt-0.5 h-4 w-4" checked={input.ust} onChange={(e) => set({ ust: e.target.checked })} />
                 <span>Kosten inkl. 19 % USt. <span className="text-[color:var(--muted)]">(Vertreter können die Vorsteuer meist nicht abziehen)</span></span>

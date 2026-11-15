@@ -288,6 +288,9 @@ describe("Halteangebote", () => {
 
   it("höre auf: Paket „Nur Bestand“ als Aufgabe „Stripe umstellen“, geretteter Monatsbetrag = Paketpreis", async () => {
     const x = await setup();
+    // Bestandskunden-Modul vorerst ausgeblendet (lib/bestand/sichtbar.ts): ohne Schalter kein „Nur Bestand“
+    expect((await churnOfferViews(x.customerId, "aufhoeren")).offers.map((o) => o.key)).toEqual(["rueckruf"]);
+    await prisma.customer.update({ where: { id: x.customerId }, data: { bestandSichtbar: true } });
     const view = (await churnOfferViews(x.customerId, "aufhoeren")).offers[0];
     expect(view.key).toBe("nur_bestand");
     const intent = await recordChurnIntent(x.customerId, { reason: "aufhoeren", note: null, actor: x.actor });

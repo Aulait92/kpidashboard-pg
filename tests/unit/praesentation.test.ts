@@ -1,7 +1,8 @@
 // Beratungsstrecke und Angebote (Ole, 15.11.2026)
 import { describe, expect, it } from "vitest";
 import { angebotOhneGesundheitsdaten, bausteinSchalten, beitragEffektiv, cleanAngebote, sparteSchalten, summeEmpfohlen, tarifWaehlen } from "@/lib/angebote";
-import { folien, markeFuer, praesentationHtml } from "@/lib/praesentation";
+import { folien, GRENZEN, markeFuer, praesentationHtml, selbstbeteiligung, stufenNamen } from "@/lib/praesentation";
+import { kuerzen } from "@/lib/angebote-daten";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
 
 const d: VorbereitungDaten = {
@@ -80,7 +81,7 @@ describe("Präsentation", () => {
     expect(fs.find((f) => f.id === "risiken")!.html.match(/class="kachel"/g)).toHaveLength(4);
     expect(fs.find((f) => f.id === "empfehlung")!.html.match(/class="angebot empf"/g)).toHaveLength(4);
     const l = fs.find((f) => f.id === "empfehlung")!.html;
-    expect(l).toContain("Selbstbeteiligung 150 € je Fall");
+    expect(l).toContain("Selbstbeteiligung: 150 € je Fall");
     expect(l).not.toContain("Selbstbeteiligung keine");
     const b = fs.find((f) => f.id === "beitrag")!.html;
     expect(b).toContain("79,30");
@@ -160,7 +161,9 @@ describe("Präsentation", () => {
     const vgl = fs.filter((f) => f.id.startsWith("vergleich-"));
     expect(vgl).toHaveLength(4);
     expect(vgl[3].html.match(/data-tarif=/g)).toHaveLength(4);
-    expect(vgl[0].html.match(/<span>✓ /g)).toHaveLength(5);
+    // „In allen Tarifen“ höchstens 3 Punkte, mit 4 Spalten höchstens 5 Merkmalzeilen
+    expect(vgl[0].html.match(/<span>✓ /g)).toHaveLength(3);
+    expect(vgl[0].html.match(/<tr><th>Merkmal/g)?.length).toBeLessThanOrEqual(5);
     expect(summeEmpfohlen(ang)).toBe(7 + 8 + 9 + 10);
   });
 
@@ -191,5 +194,120 @@ describe("Präsentation", () => {
       expect(angebotOhneGesundheitsdaten(p), p).toBe(true);
     for (const p of ["PKV", "Private Krankenversicherung", "Krankenzusatzversicherung", "Zahnzusatzversicherung", "Berufsunfähigkeit", "BU", "Risikolebensversicherung", "Pflegezusatz", "PKV Tarifoptimierung § 204", "Altersvorsorge Rente", "", null])
       expect(angebotOhneGesundheitsdaten(p), String(p)).toBe(false);
+  });
+});
+
+// Fehler aus der Live-Demo (Ole, 15.11.2026): abgeschnittene Stufen, doppelte Selbstbeteiligung, Grenzen je Folie
+describe("Präsentation: nichts abschneiden, nichts doppelt", () => {
+  const m = markeFuer({ name: "Müller Versicherungsmakler" });
+  const dx = { ...d, formular: [] };
+  const empfehlung = (ang: ReturnType<typeof cleanAngebote>) => folien(dx, ang, m).find((f) => f.id === "empfehlung")!.html;
+  const vergleich = (ang: ReturnType<typeof cleanAngebote>) => folien(dx, ang, m).filter((f) => f.id.startsWith("vergleich-")).map((f) => f.html);
+
+  it("Stufennamen: gemeinsamer Anfang bzw. gemeinsames Ende fällt weg, sonst Name aus den Daten ohne Spartenwort", () => {
+    expect(stufenNamen(["Haftpflicht Basis", "Haftpflicht Smart", "Haftpflicht Komfort"])).toEqual(["Basis", "Smart", "Komfort"]);
+    expect(stufenNamen(["Hausrat Smart", "Hausrat Komfort"], "Hausrat")).toEqual(["Smart", "Komfort"]);
+    expect(stufenNamen(["Privathaftpflicht \u2013 Basis", "Privathaftpflicht \u2013 Komfort"])).toEqual(["Basis", "Komfort"]);
+    expect(stufenNamen(["Basis Tierhalterhaftpflicht", "Premium Tierhalterhaftpflicht"])).toEqual(["Basis", "Premium"]);
+    expect(stufenNamen(["Rechtsschutz Smart Privat, Beruf, Verkehr", "Rechtsschutz Komfort Privat, Beruf, Verkehr, Wohnen"])).toEqual([
+      "Smart Privat, Beruf, Verkehr",
+      "Komfort Privat, Beruf, Verkehr, Wohnen",
+    ]);
+    // kein sinnvoller gemeinsamer Teil: Namen bleiben, ein Name darf nie leer werden
+    expect(stufenNamen(["Komfort", "Komfort Plus"])).toEqual(["Komfort", "Komfort Plus"]);
+    expect(stufenNamen(["Smart", "Komfort"])).toEqual(["Smart", "Komfort"]);
+    expect(stufenNamen(["Top", "Top"])).toEqual(["Top", "Top"]);
+    // eine Stufe bzw. ohne Namen
+    expect(stufenNamen(["Rechtsschutz Privat, Beruf, Verkehr, Wohnen"], "Rechtsschutz")).toEqual(["Privat, Beruf, Verkehr, Wohnen"]);
+    expect(stufenNamen(["Rechtsschutz"], "Rechtsschutz")).toEqual(["Rechtsschutz"]);
+    expect(stufenNamen([null, "Komfort"], "Hausrat")).toEqual(["Hausrat", "Komfort"]);
+  });
+
+  it("Umschalter auf der Empfehlung zeigt nur die Stufe, bricht um statt abzuschneiden; eine Stufe als schlichter Untertitel", () => {
+    const lang = "Komfort Plus mit Schlüsselverlust und Forderungsausfall weltweit";
+    const ang = cleanAngebote({ items: [
+      { sparte: "Privathaftpflicht", tarif: "Haftpflicht Basis", beitragMonat: 4.2 },
+      { sparte: "Privathaftpflicht", tarif: "Haftpflicht Smart", beitragMonat: 5.9 },
+      { sparte: "Privathaftpflicht", tarif: `Haftpflicht ${lang}`, beitragMonat: 8.4, empfohlen: true },
+      { sparte: "Privathaftpflicht", tarif: "Haftpflicht Premium", beitragMonat: 11.1 },
+      { sparte: "Rechtsschutz", tarif: "Rechtsschutz Privat, Beruf, Verkehr, Wohnen", beitragMonat: 24.9, empfohlen: true },
+    ] });
+    const html = empfehlung(ang);
+    expect(html).toContain('data-tarif="0">Basis</button>');
+    expect(html).toContain('data-tarif="1">Smart</button>');
+    expect(html).toContain(`data-tarif="2">${lang}<span class="stern"`);
+    expect(html).toContain('data-tarif="3">Premium</button>');
+    expect(html).not.toMatch(/>Haftpflicht (Basis|Smart|Premium)</);
+    expect(html).toContain('<div class="stufe-fest">Privat, Beruf, Verkehr, Wohnen</div>');
+    // Stil: Umschalter darf umbrechen, keine abgeschnittenen Knöpfe
+    const css = praesentationHtml([], m, "x");
+    expect(css).toMatch(/\.stufen\{[^}]*flex-wrap:wrap/);
+    expect(css).toMatch(/\.st\{[^}]*white-space:normal/);
+    expect(css).not.toMatch(/\.st\{[^}]*nowrap/);
+    expect(css).toMatch(/\.slide\{[^}]*line-height:1\.2/);
+    // Vergleich: Kurznamen im Kopf, nie gekürzt
+    const v = vergleich(cleanAngebote({ items: ang.items.slice(0, 4).map((i) => ({ ...i, merkmale: [{ name: "Summe", wert: i.tarif }] })) }))[0];
+    expect(v).toContain(`<div class="tarif lang">${lang}</div>`);
+  });
+
+  it("Selbstbeteiligung einmal und neutral, nie „nicht gewählt“ als Minus-Punkt", () => {
+    const ang = cleanAngebote({ items: [
+      { sparte: "Rechtsschutz", tarif: "Komfort", beitragMonat: 24.9, selbstbeteiligung: "150 €", empfohlen: true, leistungen: ["Privat, Beruf, Verkehr"], bausteine: [{ name: "Ohne Selbstbeteiligung", beitrag: 4.2, aktiv: false }, { name: "Spezial-Straf-Rechtsschutz", beitrag: 2.1, aktiv: false }] },
+    ] });
+    const html = empfehlung(ang);
+    expect(html).not.toContain("nicht gewählt");
+    expect(html).not.toMatch(/<li>[^<]*Selbstbeteiligung/);
+    expect(html.match(/Selbstbeteiligung/g)).toHaveLength(1);
+    expect(html).toContain('<div class="sb">Selbstbeteiligung: 150 €</div>');
+    expect(html).toContain("<li>ohne Spezial-Straf-Rechtsschutz</li>");
+    // „Ohne Selbstbeteiligung“ gewählt: keine Selbstbeteiligung mehr anzeigen, auch nicht auf der Beitragsfolie
+    const ohneSb = bausteinSchalten(ang, 0, 0, true)!;
+    expect(selbstbeteiligung(ohneSb.items[0])).toBeNull();
+    const fs = folien(dx, ohneSb, m);
+    expect(fs.find((f) => f.id === "empfehlung")!.html).not.toContain("Selbstbeteiligung: 150");
+    expect(fs.find((f) => f.id === "empfehlung")!.html.match(/Selbstbeteiligung/g)).toEqual(["Selbstbeteiligung"]);
+    expect(fs.find((f) => f.id === "empfehlung")!.html).toContain('<div class="sb">Selbstbeteiligung: keine</div>');
+    expect(fs.find((f) => f.id === "beitrag")!.html).not.toContain("Selbstbeteiligung: 150");
+    expect(selbstbeteiligung({ selbstbeteiligung: "keine", bausteine: [] })).toBeNull();
+  });
+
+  it("Empfehlung: Merkmale, die andere Stufen haben, stehen unter „nicht drin“; höchstens 3 + 2 Punkte je Karte", () => {
+    const merk = (beruf: string, wohnen: string) => [{ name: "Berufs-Rechtsschutz", wert: beruf }, { name: "Wohnen", wert: wohnen }];
+    const ang = cleanAngebote({ items: [
+      { sparte: "Rechtsschutz", tarif: "Basis", beitragMonat: 24.29, empfohlen: true, leistungen: ["A", "B", "C", "D", "E"], ausschluesse: ["X"], merkmale: merk("nein", "nein") },
+      { sparte: "Rechtsschutz", tarif: "Komfort", beitragMonat: 35.69, merkmale: merk("ja", "ja") },
+      { sparte: "Hausrat", tarif: "Komfort", beitragMonat: 9.8, empfohlen: true, leistungen: ["Neuwert"] },
+    ] });
+    const html = empfehlung(ang);
+    expect(html).toContain('<div class="nein"><ul><li>Berufs-Rechtsschutz</li><li>Wohnen</li></ul></div>');
+    const karte = html.split('<div class="angebot empf">')[1];
+    expect(karte.match(/<li>/g)).toHaveLength(GRENZEN.plus + GRENZEN.minus);
+  });
+
+  it("Vergleich: höchstens 5 Merkmale und 2 Bausteine, „In allen Tarifen“ höchstens 3", () => {
+    const merk = (k: number) => Array.from({ length: 9 }, (_, j) => ({ name: `M${j}`, wert: j < 4 ? "ja" : `${k}${j}` }));
+    const bs = Array.from({ length: 4 }, (_, j) => ({ name: `Baustein ${j}`, beitrag: 1 + j, aktiv: j === 0 }));
+    const drei = cleanAngebote({ items: [0, 1, 2].map((k) => ({ sparte: "Hausrat", tarif: `Hausrat ${["Basis", "Smart", "Komfort"][k]}`, beitragMonat: 5 + k, empfohlen: k === 1, merkmale: merk(k), bausteine: bs })) });
+    const v = vergleich(drei)[0];
+    expect(v.match(/<tr><th>M\d/g)).toHaveLength(5);
+    expect(v.match(/<span>✓ /g)).toHaveLength(3);
+    expect(v.match(/class="bs[^"]*" data-baustein="0:/g)).toHaveLength(2);
+    expect(v).toContain('<div class="tarif">Smart</div>');
+    // 4 Stufen mit Bausteinen: eine Merkmalzeile weniger (gemessen)
+    const vier = cleanAngebote({ items: [0, 1, 2, 3].map((k) => ({ sparte: "Hausrat", tarif: `T${k}`, beitragMonat: 5 + k, empfohlen: k === 1, merkmale: merk(k), bausteine: bs })) });
+    expect(vergleich(vier)[0].match(/<tr><th>M\d/g)).toHaveLength(4);
+    // 5 Stufen, die fünfte gewählt: sie bleibt in der Tabelle
+    const fuenf = cleanAngebote({ items: [0, 1, 2, 3, 4].map((k) => ({ sparte: "Hausrat", tarif: `T${k}`, beitragMonat: 5 + k, empfohlen: k === 4, merkmale: merk(k) })) });
+    expect(vergleich(fuenf)[0].match(/data-tarif=/g)).toHaveLength(4);
+    expect(vergleich(fuenf)[0]).toContain('data-tarif="4">✓ Ausgewählt');
+  });
+
+  it("Texte kürzen nie mitten im Wort oder in einer Klammer", () => {
+    expect(kuerzen("Versicherungssumme (Neuwert, ohne Unterversicherungsverzicht) bei Hausrat", 60)).toBe("Versicherungssumme bei Hausrat");
+    expect(kuerzen("Versicherungssumme (Neuwert, ohne Unterversicherungsverzicht", 60)).toBe("Versicherungssumme (Neuwert, ohne Unterversicherungsverzicht)");
+    expect(kuerzen("Schäden durch Haustiere an gemieteten Sachen innerhalb und außerhalb der Wohnung", 40)).toBe("Schäden durch Haustiere an gemieteten");
+    expect(kuerzen("  kurz  und gut ", 40)).toBe("kurz und gut");
+    const a = cleanAngebote({ items: [{ sparte: "Hausrat", merkmale: [{ name: "Versicherungssumme (Neuwert, ohne Unterversicherungsverzicht): Ausnahme", wert: "65.000 €" }] }] });
+    expect(a.items[0].merkmale[0].name).toBe("Versicherungssumme: Ausnahme");
   });
 });

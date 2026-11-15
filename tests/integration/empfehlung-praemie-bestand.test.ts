@@ -3,6 +3,8 @@
 // schon gebucht → gutschreiben; kostenlos (Makler/Bestandsschutz) → Admin-Aufgabe;
 // mehrere Empfehlungen addieren sich; Hinweis 7 Tage vor Ende genau einmal (AGB, 14.11.2026).
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+// Prämie „Modul gratis“ gibt es nur, solange das Modul für alle verfügbar ist; im Code vorerst aus (Ole, 15.11.2026), hier an.
+vi.mock("@/lib/bestand/sichtbar", async (orig) => ({ ...(await orig<typeof import("@/lib/bestand/sichtbar")>()), BESTAND_MODULE_AVAILABLE: true }));
 
 const billing = vi.hoisted(() => ({ credits: [] as { stripeCustomerId: string; amountEur: number; fallId: string }[], booked: [] as string[] }));
 

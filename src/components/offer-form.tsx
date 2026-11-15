@@ -8,6 +8,7 @@ import { createOfferAction } from "@/app/admin/vertrieb/offer-actions";
 import type { OfferTarget } from "@/lib/offer-links";
 import { bestandPacksText, computeOfferPrice, defaultStartDate, eur, PRICE_LIST, withVat, type OfferPackage, type OfferTerm, type OfferVermittler } from "@/lib/offer-pricing";
 import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
+import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 
 const PRODUCT_SUGGESTIONS = [
   "TKV-Katze",
@@ -355,6 +356,8 @@ export function OfferForm({
                 </span>
               </span>
             </label>
+            {/* Bestandskunden-Modul nur, solange es für alle verfügbar ist (lib/bestand/sichtbar.ts) */}
+            {BESTAND_MODULE_AVAILABLE || bestand ? (
             <label className={`flex items-start gap-3 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${softwarePkg ? "border-[color:var(--border)] bg-white" : "border-[color:var(--border)] bg-[color:var(--surface-sunken)] text-[color:var(--muted)]"}`}>
               <input
                 type="checkbox"
@@ -374,6 +377,7 @@ export function OfferForm({
                 </span>
               </span>
             </label>
+            ) : null}
             {EMPFEHLUNG_MODULE_AVAILABLE || empfehlung ? (
             <label className={`flex items-start gap-3 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${softwarePkg ? "border-[color:var(--border)] bg-white" : "border-[color:var(--border)] bg-[color:var(--surface-sunken)] text-[color:var(--muted)]"}`}>
               <input

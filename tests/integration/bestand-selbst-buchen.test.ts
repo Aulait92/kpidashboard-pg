@@ -84,7 +84,8 @@ describe("Bestandskunden-Modul selbst buchen/kündigen", () => {
   });
 
   async function customer(extra: Record<string, unknown> = {}) {
-    const c = await makeCustomer({ stripeCustomerId: `cus_${uid()}`, plan: "software", ...extra });
+    // Modul vorerst ausgeblendet (lib/bestand/sichtbar.ts): Testkunden mit Schalter
+    const c = await makeCustomer({ stripeCustomerId: `cus_${uid()}`, plan: "software", bestandSichtbar: true, ...extra });
     customers.push(c.id);
     const owner = await makeBuyer(c.id, "owner");
     return { c, owner };

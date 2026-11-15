@@ -9,6 +9,7 @@ import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
 import { spartenVon, type VorbereitungDaten } from "@/lib/termin-vorbereitung";
 import { beitragEffektiv, summeEmpfohlen, type AngebotItem, type AngeboteDaten } from "@/lib/angebote-daten";
 import { a, type Ansprache } from "@/lib/ansprache";
+import { folienEinpassen } from "@/lib/folien-einpassen";
 
 export type Marke = { name: string; gesellschaft: string | null; farbe: string; farbeHell: string; akzent: string; logoUrl: string | null };
 
@@ -63,7 +64,7 @@ function sparteKey(s: string): string {
 export function praesentationCss(m: Marke): string {
   return `
 .deck{--f:${m.farbe};--fh:${m.farbeHell};--a:${m.akzent};font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#0b1220}
-.slide{width:1280px;height:720px;position:relative;overflow:hidden;background:#fff;box-sizing:border-box;padding:64px 80px 80px}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;background:#fff;box-sizing:border-box;padding:64px 80px 80px;line-height:1.2;text-align:left}
 .slide *{box-sizing:border-box}
 .slide .bar{position:absolute;left:0;top:0;bottom:0;width:14px;background:var(--f)}
 .slide .foot{position:absolute;left:80px;right:80px;bottom:28px;display:flex;justify-content:space-between;align-items:center;color:#66758f;font-size:16px}
@@ -123,16 +124,18 @@ export function praesentationCss(m: Marke): string {
 .teil .hk{width:24px;height:24px;border-radius:99px;border:2px solid #cbd5e1;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800}
 .teil.an{background:var(--fh);color:#1f2937;border:2px solid var(--fh)}.teil.an .hk{background:var(--f);border-color:var(--f);color:#fff}
 .teil b{color:var(--f);margin-left:2px}.teil small{font-size:16px}
-.stufen{display:grid;gap:1.5px;width:100%;background:var(--f);border:2px solid var(--f);border-radius:10px;overflow:hidden;margin:8px 0 12px}
-.st{min-width:0;font:inherit;font-size:15px;font-weight:600;padding:7px 4px;border:0;background:#fff;color:var(--f);cursor:pointer;white-space:nowrap}
+.stufen{display:flex;flex-wrap:wrap;gap:2px;width:100%;background:var(--f);border:2px solid var(--f);border-radius:10px;overflow:hidden;margin:8px 0 12px}
+.st{flex:1 1 auto;min-width:0;font:inherit;font-size:15px;font-weight:600;padding:7px 8px;border:0;background:#fff;color:var(--f);cursor:pointer;white-space:normal;overflow-wrap:anywhere;text-align:center}
 .st.an{background:var(--f);color:#fff}
 .st .stern{font-size:11px;margin-left:3px;position:relative;top:-5px}
-.stufe-fest{font-size:18px;font-weight:600;color:var(--f);margin:4px 0 10px}
+.stufe-fest{display:flex;align-items:center;min-height:36px;font-size:17px;font-weight:600;color:#4b5568;margin:8px 0 12px;overflow-wrap:anywhere}
+.angebote.drin{row-gap:0;grid-template-rows:auto auto auto 1fr}
+.drin .angebot{display:grid;grid-row:span 4;grid-template-rows:subgrid;row-gap:0;align-content:start;padding:18px 18px}
 .drin .wunsch{font-size:15px}
-.drin .angebot{padding:18px 18px}
-.angebot.einzeln .listen{display:grid;grid-template-columns:1fr 1fr;gap:24px}
-.drin .nein{margin-top:6px}
-.drin .tarif{font-size:24px;margin-bottom:4px}.drin li{font-size:18px;margin:0 0 6px}.drin .nein{margin-top:6px}
+.angebot.einzeln .listen{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;align-content:start}
+.angebot.einzeln .sb{grid-column:1/-1}
+.drin .tarif{font-size:24px;margin-bottom:0}.drin li{font-size:18px;margin:0 0 6px;overflow-wrap:anywhere}.drin .nein{margin-top:6px}
+.drin .sb{font-size:16px;color:#4b5568;margin-top:8px}
 .slide button{-webkit-appearance:none;appearance:none;margin:0;line-height:1.2}
 .bausteine{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
 .bs{font:inherit;display:inline-flex;align-items:center;gap:8px;border:2px solid #cbd5e1;background:#fff;color:#475569;border-radius:99px;padding:6px 16px 6px 8px;font-size:18px;cursor:pointer}
@@ -142,12 +145,13 @@ export function praesentationCss(m: Marke): string {
 .wahl{font:inherit;margin-top:12px;border:2px solid var(--f);background:#fff;color:var(--f);border-radius:10px;padding:6px 16px;font-size:17px;font-weight:700;cursor:pointer}
 .wahl.an{background:var(--f);color:#fff}
 .angebot.gew{background:var(--fh)}
-.alle{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:18px;color:#334155;margin:-6px 0 14px}.alle b{color:#0b1220}.alle span{color:#334155}
+.alle{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:16px;color:#334155;margin:-6px 0 14px}.alle b{color:#0b1220}.alle span{color:#334155}
 .vgl{width:100%;border-collapse:separate;border-spacing:0;font-size:19px}
 .vgl th,.vgl td{padding:10px 14px;border-bottom:1px solid #e3e9f3;text-align:center;vertical-align:middle}
 .vgl tbody th{text-align:left;font-weight:600;color:#1f2937;width:28%}
 .vgl thead th{position:relative;padding-top:22px;border-bottom:2px solid #e3e9f3}
-.vgl thead .tarif{font-size:24px;font-weight:700}.vgl thead .preis{font-size:30px;font-weight:800;color:var(--f)}.vgl thead .preis small{display:block;font-size:15px;font-weight:500;color:#66758f;margin-top:-2px}
+.vgl th,.vgl td{overflow-wrap:anywhere}
+.vgl thead .tarif{font-size:24px;font-weight:700}.vgl thead .tarif.lang{font-size:20px}.vgl thead .preis{font-size:30px;font-weight:800;color:var(--f)}.vgl thead .preis small{display:block;font-size:15px;font-weight:500;color:#66758f;margin-top:-2px}
 .vgl .badge{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--f);color:#fff;font-size:14px;font-weight:700;padding:3px 12px;border-radius:99px;white-space:nowrap}
 .vgl .gew{background:var(--fh)}
 .vgl .ja-z{color:#16a34a;font-weight:800;font-size:22px}.vgl .nein-z{display:inline-block;width:18px;height:2px;background:#94a3b8;vertical-align:middle}
@@ -167,30 +171,89 @@ export function praesentationCss(m: Marke): string {
 
 function rahmen(m: Marke, inhalt: string, extraClass = "", frage?: string): string {
   const marke = m.logoUrl ? `<img src="${e(m.logoUrl)}" alt="">` : "";
-  return `<section class="slide ${extraClass}"><div class="bar"></div>${inhalt}<div class="foot"><span class="marke">${marke}${e(m.name)}</span>${frage ? `<span class="frage">${e(frage)}</span>` : ""}<span>${m.gesellschaft ? e(m.gesellschaft) : "Ihre Beratung"}</span></div></section>`;
+  return `<section class="slide ${extraClass}"><div class="bar"></div><div class="inhalt">${inhalt}</div><div class="foot"><span class="marke">${marke}${e(m.name)}</span>${frage ? `<span class="frage">${e(frage)}</span>` : ""}<span>${m.gesellschaft ? e(m.gesellschaft) : "Ihre Beratung"}</span></div></section>`;
 }
 
+/**
+ * Grenzen je Folie (UX-Analyse 15.11.2026, gemessen bei 1280×720 mit Zeilenhöhe 1,2): Vergleich mit 5 Merkmalen und
+ * 2 Bausteinen, „In allen Tarifen“ höchstens 3 Punkte; Karte der Empfehlung höchstens 5 Punkte plus 2 Bausteine.
+ * Was trotzdem nicht passt (sehr lange Texte), verkleinert folienEinpassen schrittweise, abgeschnitten wird nie.
+ */
+export const GRENZEN = { merkmale: 5, bausteine: 2, alle: 3, plus: 3, plusEinzeln: 5, minus: 2, kurzname: 18 } as const;
+
 /** Bausteine als Schalter (data-baustein="Angebot:Baustein"); in der Ansicht per Klick, im PDF als Stand. */
-function schalter(items: AngebotItem[], i: AngebotItem, mitSparte = false): string {
+function schalter(items: AngebotItem[], i: AngebotItem, mitSparte = false, max = Infinity): string {
   if (!i.bausteine.length) return "";
   const idx = items.indexOf(i);
   const preis = (n: number) => `${n < 0 ? "−" : "+"}${eur(Math.abs(n))}`;
   return `<div class="bausteine">${i.bausteine
+    .slice(0, max)
     .map(
       (b, j) =>
         `<button type="button" class="bs${b.aktiv ? " an" : ""}" data-baustein="${idx}:${j}"><span class="hk">${b.aktiv ? "✓" : ""}</span>${mitSparte ? `${e(i.sparte)}: ` : ""}${e(b.name)} <small>${preis(b.beitrag)}</small></button>`,
     )
     .join("")}</div>`;
 }
-const drinBausteine = (i: AngebotItem) => i.bausteine.filter((b) => b.aktiv && b.beitrag > 0).map((b) => b.name);
-// „Ohne Selbstbeteiligung“ als Baustein: nicht „ohne Ohne …“
-const ohneBausteine = (i: AngebotItem) =>
-  i.bausteine.filter((b) => !b.aktiv && b.beitrag > 0).map((b) => (/^ohne\s/i.test(b.name) ? `${b.name}: nicht gewählt` : `ohne ${b.name}`));
+
+// Baustein „Ohne Selbstbeteiligung“: gehört zur Selbstbeteiligung, nicht in die Plus- bzw. Minus-Liste
+const OHNE_SB = /^ohne\s+selbstbeteiligung\b/i;
+const drinBausteine = (i: AngebotItem) => i.bausteine.filter((b) => b.aktiv && b.beitrag > 0 && !OHNE_SB.test(b.name)).map((b) => b.name);
+// Abgewählte Bausteine als „ohne …“; Bausteine, die selbst mit „Ohne“ beginnen, nie als ✗-Zeile (Ole, 15.11.2026)
+const ohneBausteine = (i: AngebotItem) => i.bausteine.filter((b) => !b.aktiv && b.beitrag > 0 && !/^ohne\s/i.test(b.name)).map((b) => `ohne ${b.name}`);
+
+/** Selbstbeteiligung zum Anzeigen (neutral, einmal je Sparte): null bei „keine“ bzw. wenn „Ohne Selbstbeteiligung“ gewählt ist. */
+export function selbstbeteiligung(i: Pick<AngebotItem, "selbstbeteiligung" | "bausteine">): string | null {
+  const sb = i.selbstbeteiligung?.trim();
+  if (!sb || /^(keine?|0|0 €|0,00 €)$/i.test(sb)) return null;
+  return i.bausteine.some((b) => b.aktiv && OHNE_SB.test(b.name)) ? null : sb;
+}
 
 const JA = /^(ja|✓|✔|x|enthalten|inklusive|inkl\.?)$/i;
 const NEIN = /^(nein|\u2014|\u2013|-|nicht enthalten|ohne)$/i;
+const istNein = (w: string | undefined) => !w || NEIN.test(w.trim());
 const zelle = (w: string | undefined) =>
-  !w || NEIN.test(w.trim()) ? `<span class="nein-z" title="nicht enthalten"></span>` : JA.test(w.trim()) ? `<span class="ja-z">✓</span>` : e(w);
+  istNein(w) ? `<span class="nein-z" title="nicht enthalten"></span>` : JA.test(w!.trim()) ? `<span class="ja-z">✓</span>` : e(w!);
+
+const klein = (s: string) => s.toLocaleLowerCase("de");
+const RAND = /^[\s\-\u2013\u2014:,;/|·]+|[\s\-\u2013\u2014:,;/|·]+$/g;
+
+/**
+ * Stufennamen für Umschalter und Tabellenkopf (Ole, 15.11.2026): gemeinsamen Anfang bzw. gemeinsames Ende der
+ * Tarifnamen weglassen („Haftpflicht Basis“, „Haftpflicht Smart“ → „Basis“, „Smart“). Gibt es keinen sinnvollen
+ * gemeinsamen Teil, bleibt der Tarifname aus den Daten, ohne vorangestelltes Spartenwort („Hausrat Komfort“ → „Komfort“).
+ * Ohne Tarifnamen: die Sparte.
+ */
+export function stufenNamen(tarife: (string | null | undefined)[], sparte?: string | null): string[] {
+  const roh = tarife.map((t) => (t ?? "").replace(/\s+/g, " ").trim());
+  if (roh.length > 1 && roh.every(Boolean)) {
+    const w = roh.map((t) => t.split(" "));
+    const gleich = (a: string, b: string) => klein(a) === klein(b);
+    let vorne = 0;
+    while (w.every((x) => x.length > vorne + 1 && gleich(x[vorne], w[0][vorne]))) vorne++;
+    let hinten = 0;
+    while (w.every((x) => x.length > vorne + hinten + 1 && gleich(x[x.length - 1 - hinten], w[0][w[0].length - 1 - hinten]))) hinten++;
+    if (vorne || hinten) {
+      const rest = w.map((x) => x.slice(vorne, x.length - hinten).join(" ").replace(RAND, ""));
+      if (rest.every(Boolean) && new Set(rest.map(klein)).size === rest.length) return rest;
+    }
+  }
+  const sw = (sparte ?? "").replace(/\s+/g, " ").trim();
+  return roh.map((t) => {
+    if (!t) return sw;
+    if (sw && klein(t).startsWith(`${klein(sw)} `)) {
+      const rest = t.slice(sw.length).replace(RAND, "");
+      if (rest) return rest;
+    }
+    return t;
+  });
+}
+
+/** Merkmale, die diese Stufe nicht hat, eine andere Stufe derselben Sparte aber schon („das ist nicht drin“). */
+function fehlendeMerkmale(i: AngebotItem, stufen: AngebotItem[]): string[] {
+  return i.merkmale
+    .filter((m) => istNein(m.wert) && stufen.some((x) => x !== i && !istNein(x.merkmale.find((y) => y.name === m.name)?.wert)))
+    .map((m) => m.name);
+}
 
 /** Vergleich als Tabelle wie im Tarifrechner: Stufen als Spalten, Merkmale als Zeilen; Gleiches oben zusammengefasst. */
 function vergleichTabelle(
@@ -199,16 +262,21 @@ function vergleichTabelle(
 ): string {
   const namen = [...new Set(v.flatMap((i) => i.merkmale.map((m) => m.name)))];
   const wert = (i: AngebotItem, n: string) => i.merkmale.find((m) => m.name === n)?.wert;
-  const gleich = namen.filter((n) => v.every((i) => wert(i, n) != null && wert(i, n)!.toLowerCase() === wert(v[0], n)!.toLowerCase()));
-  const anders = namen.filter((n) => !gleich.includes(n)).slice(0, 6);
-  const alle = gleich
-    .filter((n) => !NEIN.test(wert(v[0], n)!.trim()))
-    .map((n) => (JA.test(wert(v[0], n)!.trim()) ? n : `${n}: ${wert(v[0], n)}`))
-    .slice(0, 5);
+  const gleich = namen.filter((n) => v.every((i) => wert(i, n) != null && klein(wert(i, n)!) === klein(wert(v[0], n)!)));
+  const kurz = stufenNamen(v.map((i) => i.tarif), v[0]?.sparte);
+  const lang = kurz.some((k) => k.length > GRENZEN.kurzname);
+  const mitBausteinen = v.some((i) => i.bausteine.length);
+  // gemessen: 4 Spalten mit Bausteinen bzw. lange (zweizeilige) Tarifnamen kosten je eine Merkmalzeile
+  const maxMerkmale = GRENZEN.merkmale - (v.length >= 4 && mitBausteinen ? 1 : 0) - (lang ? 1 : 0);
+  const anders = namen.filter((n) => !gleich.includes(n)).slice(0, maxMerkmale);
+  // „In allen Tarifen“: Leistungen, die jede Stufe hat, dann gleiche Merkmale; eine kurze Zeile
+  const gemeinsam = (v[0]?.leistungen ?? []).filter((l) => v.every((i) => i.leistungen.some((x) => klein(x) === klein(l))));
+  const gleicheMerkmale = gleich.filter((n) => !istNein(wert(v[0], n))).map((n) => (JA.test(wert(v[0], n)!.trim()) ? n : `${n}: ${wert(v[0], n)}`));
+  const alle = [...new Set([...gemeinsam, ...gleicheMerkmale])].slice(0, GRENZEN.alle);
   const col = (i: AngebotItem) => (i.gewaehlt ? ` class="gew"` : "");
-  const bs = v.some((i) => i.bausteine.length) ? `<tr><th>Bausteine</th>${v.map((i) => `<td${col(i)}>${f.schalter(i)}</td>`).join("")}</tr>` : "";
+  const bs = mitBausteinen ? `<tr><th>Bausteine</th>${v.map((i) => `<td${col(i)}>${f.schalter(i)}</td>`).join("")}</tr>` : "";
   return `${alle.length ? `<div class="alle"><b>In allen Tarifen:</b> ${alle.map((x) => `<span>✓ ${e(x)}</span>`).join("")}</div>` : ""}<table class="vgl"><thead><tr><th></th>${v
-    .map((i) => `<th${col(i)}>${f.badge(i)}<div class="tarif">${e(i.tarif ?? i.sparte)}</div>${f.preis(i)}${f.knopf(i)}</th>`)
+    .map((i, k) => `<th${col(i)}>${f.badge(i)}<div class="tarif${lang ? " lang" : ""}">${e(kurz[k])}</div>${f.preis(i)}${f.knopf(i)}</th>`)
     .join("")}</tr></thead><tbody>${anders.map((n) => `<tr><th>${e(n)}</th>${v.map((i) => `<td${col(i)}>${zelle(wert(i, n))}</td>`).join("")}</tr>`).join("")}${bs}</tbody></table>`;
 }
 
@@ -320,35 +388,34 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
     ),
   });
 
-  // Selbstbeteiligung je Sparte (mehrere Sparten), „keine“ weglassen
-  const mitSb = wahl.filter((i) => i.selbstbeteiligung && !/^keine?$/i.test(i.selbstbeteiligung.trim()));
+  // Selbstbeteiligung je Sparte (mehrere Sparten), „keine“ bzw. gewählte „Ohne Selbstbeteiligung“ weglassen
+  const mitSb = wahl.filter((i) => selbstbeteiligung(i));
   const mehrere = new Set(wahl.map((i) => i.sparte)).size > 1;
-  const sb = mehrere ? mitSb.map((i) => `${i.sparte} ${i.selbstbeteiligung}`) : [...new Set(mitSb.map((i) => i.selbstbeteiligung!))];
-  // Stufen als Umschalter (Ole, 15.11.2026): gewählte Stufe gefüllt, Empfehlung mit Stern
+  const sb = mehrere ? mitSb.map((i) => `${i.sparte} ${selbstbeteiligung(i)}`) : [...new Set(mitSb.map((i) => selbstbeteiligung(i)!))];
+  // Stufen als Umschalter (Ole, 15.11.2026): nur der Stufenname (Produkt steht darüber), gewählte Stufe gefüllt,
+  // Empfehlung mit Stern; zu lang bzw. viele Stufen: der Umschalter bricht um, nie abschneiden. Eine Stufe: schlichter
+  // Untertitel an derselben Stelle und in derselben Höhe.
   const stufen = (i: AngebotItem) => {
     const v = items.filter((x) => x.sparte === i.sparte);
-    return v.length > 1
-      ? `<div class="stufen" style="grid-template-columns:repeat(${Math.min(v.length, 4) === 4 ? 2 : Math.min(v.length, 4)},1fr)">${v
-          .slice(0, 4)
-          .map((x) => `<button type="button" class="st${x.gewaehlt ? " an" : ""}" data-tarif="${items.indexOf(x)}">${e(x.tarif ?? x.sparte)}${x.empfohlen ? `<span class="stern" title="Empfehlung">★</span>` : ""}</button>`)
-          .join("")}</div>`
-      : i.tarif
-        ? `<div class="stufe-fest">${e(i.tarif)}</div>`
-        : "";
+    if (v.length < 2) return `<div class="stufe-fest">${i.tarif ? e(stufenNamen([i.tarif], i.sparte)[0]) : ""}</div>`;
+    const kurz = stufenNamen(v.map((x) => x.tarif), i.sparte);
+    return `<div class="stufen">${v
+      .map((x, k) => `<button type="button" class="st${x.gewaehlt ? " an" : ""}" data-tarif="${items.indexOf(x)}">${e(kurz[k])}${x.empfohlen ? `<span class="stern" title="Empfehlung">★</span>` : ""}</button>`)
+      .join("")}</div>`;
   };
-  const negativ = (i: AngebotItem) => [
-    ...ohneBausteine(i).slice(0, 2),
-    ...i.ausschluesse.slice(0, 2),
-    ...(i.selbstbeteiligung && !/^keine?$/i.test(i.selbstbeteiligung.trim()) ? [`Selbstbeteiligung ${i.selbstbeteiligung}`] : []),
-  ];
+  // Was nicht drin ist: abgewählte Bausteine, Merkmale anderer Stufen, Ausschlüsse (die Selbstbeteiligung steht neutral darunter)
+  const negativ = (i: AngebotItem) =>
+    [...ohneBausteine(i), ...fehlendeMerkmale(i, items.filter((x) => x.sparte === i.sparte)), ...i.ausschluesse].slice(0, GRENZEN.minus);
   const liste = (cls: string, xs: string[]) => (xs.length ? `<div class="${cls}"><ul>${xs.map((x) => `<li>${e(x)}</li>`).join("")}</ul></div>` : "");
-  // Empfehlung und „Das ist drin, und das nicht“ auf einer Folie: je Sparte Wunsch, Stufe, Leistungen, Ausschlüsse
+  // Empfehlung und „Das ist drin, und das nicht“ auf einer Folie; jede Karte gleich: Wunsch, Produkt, Stufe bzw. Tarif, Merkmale
   const karten = wahl
     .slice(0, 4)
     .map((i) => {
       const w = WUNSCH[sparteKey(i.sparte)];
-      const plus = [...i.leistungen.slice(0, wahl.length > 1 ? 3 : 5), ...drinBausteine(i).slice(0, 2)];
-      return `<div class="angebot empf${wahl.length === 1 ? " einzeln" : ""}"><div class="wunsch">${e(a(an, "Du wolltest", "Sie wollten"))}: ${e(w ? a(an, w.du, w.sie) : i.sparte)}</div><div class="tarif">${e(i.sparte)}</div>${stufen(i)}<div class="listen">${liste("ok", plus)}${liste("nein", negativ(i))}</div></div>`;
+      const plus = [...i.leistungen.slice(0, wahl.length > 1 ? GRENZEN.plus : GRENZEN.plusEinzeln), ...drinBausteine(i).slice(0, GRENZEN.bausteine)];
+      // gewählter Baustein „Ohne Selbstbeteiligung“: neutral „keine“ statt eines zweiten Punkts
+      const s = i.bausteine.some((x) => x.aktiv && OHNE_SB.test(x.name)) ? "keine" : selbstbeteiligung(i);
+      return `<div class="angebot empf${wahl.length === 1 ? " einzeln" : ""}"><div class="wunsch">${e(a(an, "Du wolltest", "Sie wollten"))}: ${e(w ? a(an, w.du, w.sie) : i.sparte)}</div><div class="tarif">${e(i.sparte)}</div>${stufen(i)}<div class="listen">${liste("ok", plus)}${liste("nein", negativ(i))}${s ? `<div class="sb">Selbstbeteiligung: ${e(s)}</div>` : ""}</div></div>`;
     })
     .join("");
   out.push({
@@ -369,14 +436,18 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
   for (const i of items) nachSparte.set(i.sparte, [...(nachSparte.get(i.sparte) ?? []), i]);
   for (const [sparte, varianten] of nachSparte) {
     if (varianten.length < 2) continue;
-    const v = varianten.slice(0, 4);
+    // höchstens 4 Spalten; die gewählte Stufe ist immer dabei
+    const g = varianten.find((i) => i.gewaehlt);
+    const v = varianten.length <= 4 || !g || varianten.indexOf(g) < 4 ? varianten.slice(0, 4) : [...varianten.slice(0, 3), g];
     const badge = (i: AngebotItem) => (i.empfohlen ? `<span class="badge">${e(a(an, "Passt zu dir", "Passt zu Ihnen"))}</span>` : "");
     const preis = (i: AngebotItem) => (i.beitragMonat != null ? `<div class="preis">${eur(beitragEffektiv(i)!)} <small>im Monat</small></div>` : "");
     const knopf = (i: AngebotItem) =>
       `<button type="button" class="wahl${i.gewaehlt ? " an" : ""}" data-tarif="${items.indexOf(i)}">${i.gewaehlt ? "✓ Ausgewählt" : "Auswählen"}</button>`;
-    const html = v.some((i) => i.merkmale.length) ? vergleichTabelle(v, { badge, preis, knopf, schalter: (i) => schalter(items, i) }) : `<div class="angebote" style="grid-template-columns:repeat(${v.length},1fr)">${v
+    const bs = (i: AngebotItem) => schalter(items, i, false, GRENZEN.bausteine);
+    const kurz = stufenNamen(v.map((i) => i.tarif), sparte);
+    const html = v.some((i) => i.merkmale.length) ? vergleichTabelle(v, { badge, preis, knopf, schalter: bs }) : `<div class="angebote" style="grid-template-columns:repeat(${v.length},minmax(0,1fr))">${v
           .map(
-            (i) => `<div class="angebot${i.empfohlen ? " empf" : ""}${i.gewaehlt ? " gew" : ""}">${badge(i)}<div class="tarif">${e(i.tarif ?? sparte)}</div>${preis(i)}${punkte(i.leistungen.slice(0, 3))}${schalter(items, i)}${knopf(i)}</div>`,
+            (i, k) => `<div class="angebot${i.empfohlen ? " empf" : ""}${i.gewaehlt ? " gew" : ""}">${badge(i)}<div class="tarif">${e(kurz[k])}</div>${preis(i)}${punkte(i.leistungen.slice(0, 3))}${bs(i)}${knopf(i)}</div>`,
           )
           .join("")}</div>`;
     out.push({
@@ -450,7 +521,8 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
   return out;
 }
 
-/** Alle Folien als HTML-Dokument (PDF, Querformat 1280×720 je Seite). */
+/** Alle Folien als HTML-Dokument (PDF, Querformat 1280×720 je Seite); eingepasst wie in der Ansicht. */
 export function praesentationHtml(fs: Folie[], m: Marke, titel: string): string {
-  return `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${e(titel)}</title><style>@page{size:1280px 720px;margin:0}body{margin:0}.slide{break-after:page}${praesentationCss(m)}</style></head><body><div class="deck">${fs.map((f) => f.html).join("")}</div></body></html>`;
+  const einpassen = `<script>(function(){var f=${folienEinpassen.toString()};f(document);if(document.fonts)document.fonts.ready.then(function(){f(document)})})()</script>`;
+  return `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${e(titel)}</title><style>@page{size:1280px 720px;margin:0}body{margin:0}.slide{break-after:page}${praesentationCss(m)}</style></head><body><div class="deck">${fs.map((f) => f.html).join("")}</div>${einpassen}</body></html>`;
 }

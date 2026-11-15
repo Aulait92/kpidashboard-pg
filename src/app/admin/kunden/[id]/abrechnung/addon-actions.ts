@@ -58,6 +58,18 @@ export async function bestandModuleAction(fd: FormData): Promise<void> {
   done(id, await setBestandModule(id, mode));
 }
 
+/** Bestandskunden-Modul im Kundenbereich sichtbar, auch ohne Buchung (Testkunden; lib/bestand/sichtbar.ts). */
+export async function bestandSichtbarAction(fd: FormData): Promise<void> {
+  await requireAdmin();
+  const id = String(fd.get("customerId") ?? "");
+  const on = fd.get("on") === "1";
+  const c = await prisma.customer.findUnique({ where: { id }, select: { bestandSichtbar: true } });
+  if (!c) done(id, { ok: false, error: "Kunde nicht gefunden." });
+  await prisma.customer.update({ where: { id }, data: { bestandSichtbar: on } });
+  await audit("bestand.sichtbar", { entity: "Customer", entityId: id, customerId: id, details: { from: c.bestandSichtbar, to: on } });
+  done(id, { ok: true, changed: true });
+}
+
 export async function empfehlungModuleAction(fd: FormData): Promise<void> {
   await requireAdmin();
   const id = String(fd.get("customerId") ?? "");

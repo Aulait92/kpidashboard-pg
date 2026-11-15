@@ -44,7 +44,31 @@ const hausratBausteine = () => [
   { name: "Elementarschäden", beitrag: 2.9, aktiv: false },
 ];
 
-/** Angebote wie aus dem Tarifrechner: Haftpflicht in 3 Stufen, Hausrat in 2, Rechtsschutz mit Baustein. */
+/**
+ * Rechtsschutz Privat (Kombischutz) in 4 Stufen, Beiträge und Merkmale aus dem Tarifrechner (Ole, 15.11.2026),
+ * Selbstbeteiligung 150 €. Sichtbare Merkmale (Vorauswahl): Versicherungssumme, Beruf, Wohnen, Strafkaution.
+ */
+const rechtsschutz = (tarif: string, beitrag: number, x: { summe: string; bereiche: string; beruf: string; wohnen: string; kaution: string }, empfohlen = false) =>
+  item({
+    sparte: "Rechtsschutz",
+    tarif: `Rechtsschutz ${tarif}`,
+    beitragMonat: beitrag,
+    selbstbeteiligung: "150 €",
+    empfohlen,
+    gewaehlt: empfohlen,
+    leistungen: [
+      x.bereiche,
+      `Versicherungssumme ${x.summe}`,
+      // in allen Tarifen enthalten
+      "Telefonische Rechtsberatung, auch in nicht versicherten Fällen",
+      "Kosten im Rechtsstreit",
+      "Mediation zur Schlichtung",
+    ],
+    ausschluesse: ["Streit, der vor Vertragsbeginn entstanden ist"],
+    merkmale: [m("Versicherungssumme", x.summe), m("Berufs-Rechtsschutz", x.beruf), m("Wohnen", x.wohnen), m("Strafkaution (als Darlehen)", x.kaution)],
+  });
+
+/** Angebote wie aus dem Tarifrechner: Haftpflicht in 3 Stufen, Hausrat in 2, Rechtsschutz in 4. */
 export function demoAngebote(): AngeboteDaten {
   const haftpflicht = (tarif: string, beitrag: number, summe: string, extra: [string, string, string], empfohlen = false) =>
     item({
@@ -90,17 +114,10 @@ export function demoAngebote(): AngeboteDaten {
       haftpflicht("Komfort", 8.4, "50 Mio. €", [ja, ja, ja], true),
       hausrat("Smart", 7.6, "bis 10.000 €", "100 Tage"),
       hausrat("Komfort", 9.8, "bis zur Versicherungssumme", "200 Tage", true),
-      item({
-        sparte: "Rechtsschutz",
-        tarif: "Rechtsschutz Privat, Beruf, Verkehr, Wohnen",
-        beitragMonat: 24.9,
-        selbstbeteiligung: "150 €",
-        empfohlen: true,
-        gewaehlt: true,
-        leistungen: ["Privat, Beruf und Verkehr", "Wohnen als Mieter", "Telefonische Erstberatung durch einen Anwalt"],
-        ausschluesse: ["Streit, der vor Vertragsbeginn entstanden ist"],
-        bausteine: [{ name: "Ohne Selbstbeteiligung", beitrag: 4.2, aktiv: false }],
-      }),
+      rechtsschutz("Basis", 24.29, { summe: "1 Mio. €", bereiche: "Privat und Verkehr", beruf: nein, wohnen: nein, kaution: "100.000 €" }),
+      rechtsschutz("Smart", 29.58, { summe: "3 Mio. €", bereiche: "Privat, Beruf und Verkehr", beruf: ja, wohnen: nein, kaution: "300.000 €" }),
+      rechtsschutz("Komfort", 35.69, { summe: "5 Mio. €", bereiche: "Privat, Beruf, Verkehr und Wohnen", beruf: ja, wohnen: ja, kaution: "500.000 €" }, true),
+      rechtsschutz("Premium", 61.44, { summe: "unbegrenzt", bereiche: "Privat (erweitert), Beruf, Verkehr und Wohnen", beruf: ja, wohnen: ja, kaution: "1 Mio. €" }),
     ],
     quelle: ["Beispieldaten"],
   };
@@ -118,14 +135,5 @@ export function demoKlick(
   d: AngeboteDaten,
   k: { tarif: number | null; sparte: boolean; item: number; baustein: number; aktiv: boolean },
 ): AngeboteDaten | null {
-  const neu = k.tarif != null ? (k.sparte ? sparteSchalten(d, k.tarif) : tarifWaehlen(d, k.tarif)) : bausteinSchalten(d, k.item, k.baustein, k.aktiv);
-  if (!neu) return null;
-  // Rechtsschutz: Baustein „Ohne Selbstbeteiligung“ ändert die angezeigte Selbstbeteiligung
-  return {
-    ...neu,
-    items: neu.items.map((i) => {
-      const sb = i.bausteine.find((b) => /^ohne selbstbeteiligung$/i.test(b.name));
-      return sb ? { ...i, selbstbeteiligung: sb.aktiv ? "keine" : "150 €" } : i;
-    }),
-  };
+  return k.tarif != null ? (k.sparte ? sparteSchalten(d, k.tarif) : tarifWaehlen(d, k.tarif)) : bausteinSchalten(d, k.item, k.baustein, k.aktiv);
 }

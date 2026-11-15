@@ -9,6 +9,7 @@
 
 import { FREE_PERIOD_REMINDER_DAYS } from "@/lib/free-periods";
 import { NPS_PROMOTER } from "@/lib/nps";
+import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
 import { audit, type AuditActor } from "@/lib/audit";
@@ -62,11 +63,14 @@ export const BESTAND_FREE_REMINDER_DAYS = FREE_PERIOD_REMINDER_DAYS;
 export async function loadReferralSettings(): Promise<ReferralSettingsLike> {
   const row = await prisma.referralSettings.findUnique({ where: { id: "default" } });
   if (!row) return DEFAULT_SETTINGS;
+  // Prämie „Bestandskunden-Modul gratis“ nur, solange das Modul für alle verfügbar ist (lib/bestand/sichtbar.ts):
+  // sonst gilt der Standard (fester Betrag), auch für noch offene Empfehlungen
+  const modulPraemieAus = !BESTAND_MODULE_AVAILABLE && normalizeRewardKind(row.rewardKind) === "bestand";
   return {
     enabled: row.enabled,
-    rewardKind: normalizeRewardKind(row.rewardKind),
-    rewardFixed: row.rewardFixed != null ? Number(row.rewardFixed) : null,
-    rewardMonths: row.rewardMonths,
+    rewardKind: modulPraemieAus ? DEFAULT_SETTINGS.rewardKind : normalizeRewardKind(row.rewardKind),
+    rewardFixed: modulPraemieAus ? DEFAULT_SETTINGS.rewardFixed : row.rewardFixed != null ? Number(row.rewardFixed) : null,
+    rewardMonths: modulPraemieAus ? null : row.rewardMonths,
     benefitKind: normalizeBenefitKind(row.benefitKind),
     benefitText: row.benefitText,
     benefitAmount: row.benefitAmount != null ? Number(row.benefitAmount) : null,
@@ -90,6 +94,7 @@ export type SettingsInput = {
 
 export async function saveReferralSettings(input: SettingsInput, actor?: AuditActor): Promise<{ ok: true } | { ok: false; error: string }> {
   const rewardKind = normalizeRewardKind(input.rewardKind);
+  if (rewardKind === "bestand" && !BESTAND_MODULE_AVAILABLE) return { ok: false, error: "Das Bestandskunden-Modul ist gerade nicht buchbar. Bitte eine andere Prämie wählen." };
   if (rewardKind === "fixed" && !(input.rewardFixed != null && input.rewardFixed > 0 && input.rewardFixed <= 10000)) {
     return { ok: false, error: "Bitte einen Betrag zwischen 1 und 10.000 € angeben." };
   }

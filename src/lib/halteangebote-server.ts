@@ -20,6 +20,7 @@ import { customerGreeting } from "@/lib/offer-links";
 import { berlinTodayIso, PRICE_LIST } from "@/lib/offer-pricing";
 import { berlinEndOfDay, fmtIso } from "@/lib/vertrag-laufzeit";
 import { canonicalProductKey, displayProduct } from "@/lib/products";
+import { bestandVisible } from "@/lib/bestand/sichtbar";
 import { CHURN_OFFERS, churnReasonLabel, isChurnReason, offersFor, type ChurnOffer, type ChurnReason, type HalteKind, isHalteKind } from "@/lib/anti-churn";
 import {
   addMonthsIso,
@@ -73,6 +74,7 @@ async function customerFor(customerId: string) {
       cancelRequestedAt: true,
       retentionCommitUntil: true,
       existingCustomersEnabled: true,
+      bestandSichtbar: true,
       empfehlungEnabled: true,
       salesContact: { select: { id: true } },
       onboarding: { select: { offerId: true, salesContactId: true } },
@@ -100,6 +102,8 @@ export type HalteCustomerContext = {
   commitIso: string;
   hasModules: boolean;
   canPause: boolean;
+  /** Bestandskunden-Modul sichtbar (lib/bestand/sichtbar.ts): sonst kein Paket „Nur Bestand“ */
+  bestandVisible: boolean;
 };
 
 export async function halteContext(customerId: string, now = new Date()): Promise<HalteCustomerContext | null> {
@@ -119,6 +123,7 @@ export async function halteContext(customerId: string, now = new Date()): Promis
     commitIso: commitEndIso({ startIso: r.startIso, todayIso, months: s.rabattMonths, commitMonths: s.rabattCommitMonths }),
     hasModules: !!(r.c.existingCustomersEnabled || r.c.empfehlungEnabled),
     canPause: !pause,
+    bestandVisible: bestandVisible(r.c),
   };
 }
 
@@ -128,6 +133,7 @@ const offersCtx = (x: HalteCustomerContext) => ({
   discountOk: x.discount.ok,
   enabled: enabledKinds(x.s),
   service: x.service,
+  bestandVisible: x.bestandVisible,
 });
 
 // ─── Spartenwechsel: Abschlussquote je Sparte über alle Kunden ───────────

@@ -126,7 +126,7 @@ describe("Rechnungen", () => {
     expect(rechnung).toContain("1.248 €"); // 1.049 € × 1,19
     expect(rechnung).toContain("+ 2.800 €");
     expect(fs[19].html).toContain("1.049 € netto");
-    expect(fs[16].html).toContain('src="/demo/beratung?eingebettet=1&amp;folie=vergleich"');
+    expect(fs[16].html).toContain('src="/demo/beratung?eingebettet=1"');
     const m = verkaufsFolien("makler", paketDaten(angebot({ vermittlerTyp: "makler", monthlyFee: 1400, seats: 3 }), "makler"));
     expect(m[18].html).toContain("12 × 1.400 €");
     expect(m[20].html).toContain("1.400 € netto");

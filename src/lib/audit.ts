@@ -58,6 +58,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "billing.retainer": "Betreuungsgebühr (Retainer) geändert",
   "bestand.request": "Bestandskunden-Modul angefragt",
   "bestand.quota": "Kampagnen-Kontingent geändert",
+  "bestand.sichtbar": "Bestandskunden-Modul für den Kunden ein- bzw. ausgeblendet (Test)",
   "bestand.import_undo": "Letzten Bestandskunden-Import rückgängig gemacht",
   "bestand.paket": "Zusatzpaket Kampagnen-Nachrichten gebucht",
   "bestand.paket_anfrage": "Großes Nachrichtenpaket angefragt",
