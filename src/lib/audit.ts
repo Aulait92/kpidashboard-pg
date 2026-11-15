@@ -43,6 +43,8 @@ export const AUDIT_LABEL: Record<string, string> = {
   "garantie.abgelehnt": "Garantie abgelehnt",
   "storno.approve": "Storno genehmigt",
   "storno.reject": "Storno abgelehnt",
+  "storno.admin": "Storno eingetragen (Admin)",
+  "storno.undo": "Storno zurückgenommen",
   "ppl.order": "Leads bestellt",
   "ppl.subscription": "Bezug geändert",
   "bestand.import": "Bestandskunden importiert",
