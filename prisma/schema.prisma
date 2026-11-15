@@ -269,16 +269,13 @@ model Customer {
   // Neue Oberfläche des Kundenbereichs (Vertreter-A); pro Kunde im Admin einschaltbar.
   newUi                          Boolean                   @default(false)
   // Ansprache von Leads und Kunden in allen Texten (E-Mail, WhatsApp-Assistent, Vorlagen, Termin-Nachrichten): "sie" | "du" (Ole, 14.11.2026)
-  leadAddress              String                    @default("sie")
+  leadAddress                    String                    @default("sie")
   // Branding für Präsentationen (Ole, 15.11.2026): Logo von der Agentur-/Makler-Webseite oder hochgeladen,
   // vom Kunden bestätigt („darf ich verwenden“)
-  brandLogo                Bytes?
-  brandLogoType            String?
-  brandLogoSource          String?
-  brandLogoConfirmedAt     DateTime?
-}
-
-  leadAddress                    String                    @default("sie")
+  brandLogo                      Bytes?
+  brandLogoType                  String?
+  brandLogoSource                String?
+  brandLogoConfirmedAt           DateTime?
   // Stand der Standard-E-Mail-Vorlagen (lib/mail/vorlagen.ts VORLAGEN_STAND): neue Standards beim nächsten Laden ergänzen
   mailVorlagenStand              Int                       @default(0)
   existingCustomers              ExistingCustomer[]
