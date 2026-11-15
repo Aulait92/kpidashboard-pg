@@ -8,7 +8,7 @@ import { requireTestDb } from "./db";
 const TOKEN = "test-upload-token-0123456789-0123456789-xyz";
 const PDF = new TextEncoder().encode("%PDF-1.4\n% Testdatei\n%%EOF\n");
 const post = (q: string, body: Uint8Array, headers: Record<string, string> = {}) =>
-  POST(new Request(`https://app.test/api/ops/unterlagen?${q}`, { method: "POST", body, headers: { "x-file-name": "Test-Vertreter.pdf", ...headers } }));
+  POST(new Request(`https://app.test/api/ops/unterlagen?${q}`, { method: "POST", body: new Blob([body as BlobPart]), headers: { "x-file-name": "Test-Vertreter.pdf", ...headers } }));
 
 describe("Ops-Upload Vertriebsunterlagen", () => {
   const before = { up: process.env.OPS_UPLOAD_TOKEN, read: process.env.OPS_READ_TOKEN };
