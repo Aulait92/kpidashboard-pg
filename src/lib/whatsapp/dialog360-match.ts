@@ -107,3 +107,19 @@ export async function autoMatchChannels(): Promise<{ connected: number }> {
   }
   return { connected };
 }
+
+export type ResetResult = { status: "reset" | "none" | "connected" };
+
+/**
+ * Halb fertige Verbindung zurücksetzen (Einladung bzw. Nummer in Einrichtung), Ole 15.11.2026.
+ * Für Admin und Inhaber. Verbundene Konten bleiben unberührt. Das 360dialog-Konto selbst bleibt bestehen,
+ * „WhatsApp verbinden“ führt danach zur Anmeldung bei 360dialog.
+ */
+export async function resetUnfinishedConnection(customerId: string, actor: { id?: string; role: string }): Promise<ResetResult> {
+  const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { id: true, status: true, apiKeyEnc: true, dialog360ClientId: true, dialog360ChannelId: true } });
+  if (!acc) return { status: "none" };
+  if (acc.status === "connected" || acc.apiKeyEnc) return { status: "connected" };
+  await prisma.whatsAppAccount.delete({ where: { id: acc.id } });
+  await audit("whatsapp.reset", { entity: "Customer", entityId: customerId, customerId, details: { status: acc.status, clientId: acc.dialog360ClientId, channelId: acc.dialog360ChannelId }, actor });
+  return { status: "reset" };
+}

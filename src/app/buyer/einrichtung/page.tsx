@@ -27,7 +27,7 @@ import Link from "next/link";
 import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 import { ERROR_HELP, parseConnectPath } from "@/lib/whatsapp/connect-guide";
 import { WhatsAppGuide } from "@/components/whatsapp-guide";
-import { WaCheckButton } from "./wa-check";
+import { WaCheckButton, WaResetButton } from "./wa-check";
 import { LeadTimesForm, SourcePicker } from "@/components/calendar-sources";
 import { loadCalendarSetup } from "@/lib/calendar/setup-view";
 import {
@@ -693,6 +693,7 @@ function WhatsAppStep({
           </a>
           <p className="text-sm text-[color:var(--muted)]">Bitte nicht selbst ein neues Konto bei 360dialog registrieren, Ihr Konto ist schon da.</p>
           <WaCheckButton readOnly={readOnly} />
+          <WaResetButton readOnly={readOnly} />
         </div>
       ) : msg?.ok ? null : pending ? (
         <p className="text-sm font-medium text-amber-700">
@@ -715,7 +716,12 @@ function WhatsAppStep({
           <WaCheckButton readOnly={readOnly} />
         </>
       )}
-      {pending ? <WaCheckButton readOnly={readOnly} intro={false} /> : null}
+      {pending ? (
+        <>
+          <WaCheckButton readOnly={readOnly} intro={false} />
+          <WaResetButton readOnly={readOnly} />
+        </>
+      ) : null}
     </>
   );
 }

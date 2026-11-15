@@ -227,3 +227,16 @@ export async function checkWhatsAppConnectionAction(_prev: WaCheckState, _fd: Fo
     return { error: e instanceof Error ? e.message : "Nicht möglich." };
   }
 }
+
+/** Inhaber: halb fertige WhatsApp-Verbindung (Einladung bzw. Einrichtung) verwerfen und neu beginnen. */
+export async function resetWhatsAppAction(): Promise<WaCheckState> {
+  const ctx = await getBuyerContext();
+  if (!ctx || ctx.preview) return { error: "In der Vorschau nicht möglich." };
+  if (ctx.teamRole !== "owner") return { error: "Nur der Inhaber kann das ändern." };
+  const { resetUnfinishedConnection } = await import("@/lib/whatsapp/dialog360-match");
+  const r = await resetUnfinishedConnection(ctx.customerId, { id: ctx.userId ?? undefined, role: "kunde" });
+  if (r.status === "connected") return { error: "WhatsApp ist schon verbunden." };
+  revalidatePath("/buyer/einrichtung");
+  revalidatePath("/buyer", "layout");
+  return { ok: true, message: "Zurückgesetzt. Sie können jetzt neu beginnen." };
+}
