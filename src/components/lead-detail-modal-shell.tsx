@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { X } from "lucide-react";
 
 // Modal-Wrapper für die Lead-Detail-Body, der im Pipeline-Tab über die
@@ -19,11 +19,17 @@ import { X } from "lucide-react";
 // (eigene Zeile darüber), und der Speichern-Button am Ende der Edit-Form
 // ist immer per Scroll erreichbar (Höhe ist am Dialog gekappt, nicht
 // am inneren Div).
-export function LeadDetailModalShell({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function LeadDetailModalShell({ children }: { children: React.ReactNode }) {
+  // Kontakt-Fenster schließen, sobald man auf eine andere Seite wechselt (Ole, 15.11.2026: aus dem Fenster
+  // „Vorbereiten“ geklickt, das Fenster blieb über der Terminvorbereitung stehen). Bei clientseitiger Navigation
+  // behält der @modal-Slot sonst seinen letzten Inhalt. Eine Auffangroute im Slot ginge auch, würde aber jeden
+  // einfachen <a>-Link unter /buyer für next/no-html-link-for-pages zur „Seite“ machen.
+  const pathname = usePathname();
+  if (!pathname?.startsWith("/buyer/leads/")) return null;
+  return <ModalDialog>{children}</ModalDialog>;
+}
+
+function ModalDialog({ children }: { children: React.ReactNode }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const router = useRouter();
 
