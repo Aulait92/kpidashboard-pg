@@ -10,13 +10,19 @@ export async function CapiCard({ customerId }: { customerId: string }) {
   const o = await loadCapiOverview(customerId);
   if (!o) return null;
   const rec = o.windows.d30.rec;
+  // Letzte Meta-Prüfung der Einrichtung: Datensatz fehlt oder ist nicht für uns freigegeben (nicht, wenn der Admin seither
+  // einen anderen Datensatz eingetragen hat).
+  const dc = o.datasetCheck;
+  const dsProblem = dc && dc.state !== "ok" && !(o.datasetSource === "admin" && dc.id && dc.id !== o.datasetId) ? dc : null;
   const badge = o.isTest
     ? { tone: "neutral" as const, text: "Testkunde, sendet nicht" }
     : !o.enabled
       ? { tone: "neutral" as const, text: "vom Kunden aus" }
-      : o.datasetId
-        ? { tone: "success" as const, text: "aktiv" }
-        : { tone: "warning" as const, text: "Dataset fehlt" };
+      : dsProblem?.state === "found_not_shared"
+        ? { tone: "warning" as const, text: "Dataset nicht freigegeben" }
+        : o.datasetId
+          ? { tone: "success" as const, text: "aktiv" }
+          : { tone: "warning" as const, text: "Dataset fehlt" };
   const counts = (Object.keys(o.counts7d) as CapiStatus[]).filter((k) => o.counts7d[k] > 0).map((k) => `${o.counts7d[k]} ${STATUS_LABEL[k]}`);
   return (
     <Card>
@@ -26,6 +32,18 @@ export async function CapiCard({ customerId }: { customerId: string }) {
           Stufen der Meta-Leads (Lead, Erreicht, Termin vereinbart, Abschluss mit Jahresbeitrag) an das Dataset. Ohne Eingabe nehmen wir das erste
           Dataset des Werbekontos (act_…/adspixels). Der Systemnutzer braucht Zugriff auf das Dataset.
         </p>
+        {dsProblem ? (
+          <p className="rounded-[var(--radius-sm)] border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900" data-capi-dataset-hint={dsProblem.state}>
+            {dsProblem.state === "found_not_shared"
+              ? `Dataset ${dsProblem.name ? `„${dsProblem.name}“ (${dsProblem.id})` : dsProblem.id} ist im Werbekonto, aber nicht für unser Business freigegeben. Kunde bitten: Business-Einstellungen → Partner → unser Business → Datensatz mit voller Kontrolle („Verwalten“) freigeben. Bis dahin schlägt die Rückmeldung voraussichtlich fehl.`
+              : dsProblem.state === "none"
+                ? "Im Werbekonto gibt es kein Dataset. Kunde bitten, im Events Manager einen Datensatz anzulegen, dem Werbekonto zuzuordnen und für unser Business freizugeben (Anleitung in der Einrichtung, Schritt Meta freigeben)."
+                : `Dataset nicht prüfbar: ${shortError(dsProblem.error, 200) ?? "unbekannt"}`}
+            <span className="block text-xs text-amber-800">
+              Stand der Meta-Prüfung {fmt(new Date(dsProblem.at))}. Täglich automatisch nachgeprüft, sonst in der Kundenakte „Meta-Zugriff jetzt prüfen“.
+            </span>
+          </p>
+        ) : null}
         <CapiDatasetForm customerId={customerId} current={o.datasetSource === "admin" ? o.datasetId : null} />
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1" data-capi-admin>
           <dt className="text-[color:var(--muted)]">Dataset</dt>

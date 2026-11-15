@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Circle, XCircle } from "lucide-react";
 import { adminCheckMetaAction, openSetupAction, restartSetupAction, sendSetupReminderAction, toggleOnboardingStepAction } from "@/app/admin/vertrieb/onboarding-actions";
 import { REMINDER_DAYS, loadSetupOverview, type MetaCheck } from "@/lib/selbst-einrichtung";
 
@@ -89,6 +89,25 @@ export async function SetupCard({ customerId, notice }: { customerId: string; no
                 </span>
               </li>
             ))}
+            {meta.dataset ? (
+              <li className="flex gap-1.5" data-setup-dataset={meta.dataset.state}>
+                {meta.dataset.state === "ok" ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                ) : (
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+                )}
+                <span>
+                  <b>Datensatz (für CAPI, nicht nötig für den Schritt):</b>{" "}
+                  {meta.dataset.state === "ok"
+                    ? `${meta.dataset.name ?? ""} (${meta.dataset.id}) freigegeben`
+                    : meta.dataset.state === "found_not_shared"
+                      ? `${meta.dataset.name ?? ""} (${meta.dataset.id}) gefunden, aber nicht für uns freigegeben. Kunde bitten, ihn unter Partner mit voller Kontrolle freizugeben.`
+                      : meta.dataset.state === "none"
+                        ? "keiner im Werbekonto. Kunde bitten, im Events Manager einen anzulegen und freizugeben."
+                        : meta.dataset.error}
+                </span>
+              </li>
+            ) : null}
             <li className="text-slate-500">
               Zuletzt geprüft {fmt(meta.at)}
               {ob.metaRequestedAt ? ` · Anfrage von uns gesendet ${fmt(ob.metaRequestedAt)}` : ""}

@@ -13,6 +13,7 @@ import { cleanToken, redactTokens } from "@/lib/meta-leads";
 import { reportError } from "@/lib/monitoring";
 import { sparteKind } from "@/lib/provision";
 import type { PlannedMeasure } from "@/lib/optimierung/regeln";
+import type { MetaCheck, MetaDatasetCheck } from "@/lib/selbst-einrichtung";
 import {
   annualPremium,
   buildEventsData,
@@ -309,6 +310,8 @@ export type CapiOverview = {
   datasetSource: string | null;
   datasetError: string | null;
   datasetCheckedAt: Date | null;
+  /** Datensatz aus der letzten Meta-Prüfung der Einrichtung (Onboarding.metaCheck), null = nie geprüft. */
+  datasetCheck: (MetaDatasetCheck & { at: string }) | null;
   counts7d: Record<CapiStatus, number>;
   lastSent: { stage: CapiStage; eventTime: Date; sentAt: Date; value: number | null }[];
   lastErrors: { stage: CapiStage; at: Date; status: CapiStatus; error: string | null }[];
@@ -332,7 +335,7 @@ export async function loadCapiOverview(customerId: string, now = new Date()): Pr
   });
   if (!c) return null;
   const since7 = new Date(now.getTime() - 7 * DAY_MS);
-  const [grouped, sent, errors, d30, d90] = await Promise.all([
+  const [grouped, sent, errors, d30, d90, ob] = await Promise.all([
     prisma.capiEvent.groupBy({ by: ["status"], where: { customerId, updatedAt: { gte: since7 } }, _count: { _all: true } }),
     prisma.capiEvent.findMany({ where: { customerId, status: "sent" }, orderBy: { sentAt: "desc" }, take: 10, select: { stage: true, eventTime: true, sentAt: true, value: true } }),
     prisma.capiEvent.findMany({
@@ -343,7 +346,9 @@ export async function loadCapiOverview(customerId: string, now = new Date()): Pr
     }),
     capiWindow(customerId, 30, now),
     capiWindow(customerId, 90, now),
+    prisma.onboarding.findUnique({ where: { customerId }, select: { metaCheck: true } }),
   ]);
+  const metaCheck = (ob?.metaCheck ?? null) as MetaCheck | null;
   const counts7d = Object.fromEntries(CAPI_STATUSES.map((s) => [s, 0])) as Record<CapiStatus, number>;
   for (const g of grouped) if ((CAPI_STATUSES as readonly string[]).includes(g.status)) counts7d[g.status as CapiStatus] = g._count._all;
   return {
@@ -354,6 +359,7 @@ export async function loadCapiOverview(customerId: string, now = new Date()): Pr
     datasetSource: c.metaDatasetSource,
     datasetError: c.metaDatasetError,
     datasetCheckedAt: c.metaDatasetCheckedAt,
+    datasetCheck: metaCheck?.dataset ? { ...metaCheck.dataset, at: metaCheck.at } : null,
     counts7d,
     lastSent: sent.filter((e) => isCapiStage(e.stage) && e.sentAt).map((e) => ({ stage: e.stage as CapiStage, eventTime: e.eventTime, sentAt: e.sentAt!, value: e.value == null ? null : Number(e.value) })),
     lastErrors: errors.filter((e) => isCapiStage(e.stage)).map((e) => ({ stage: e.stage as CapiStage, at: e.updatedAt, status: e.status as CapiStatus, error: e.error })),

@@ -26,11 +26,23 @@ export default async function MetaRueckmeldungPage() {
   if (!o) redirect("/buyer/einstellungen");
   const canEdit = canEditProvision(ctx);
 
+  // Letzte Meta-Prüfung der Einrichtung: Datensatz nicht freigegeben bzw. keiner vorhanden → konkret sagen, was zu tun ist
+  const dc = o.datasetCheck;
+  const dsTodo = dc && (dc.state === "found_not_shared" || dc.state === "none") && !(o.datasetSource === "admin" && dc.id && dc.id !== o.datasetId) ? dc : null;
   const status = o.isTest
     ? { tone: "neutral" as const, label: "Testkonto", text: "Für Testkonten senden wir nichts an Meta." }
     : !o.enabled
       ? { tone: "neutral" as const, label: "Aus", text: "Die Rückmeldung ist ausgeschaltet. Meta erfährt nichts über Ihre Ergebnisse." }
-      : !o.datasetId
+      : dsTodo
+        ? {
+            tone: "warning" as const,
+            label: dsTodo.state === "none" ? "Datensatz fehlt" : "Freigabe fehlt",
+            text:
+              dsTodo.state === "none"
+                ? "In Ihrem Werbekonto gibt es noch keinen Datensatz (Pixel). Bitte einen anlegen und für uns freigeben, die Anleitung steht unter Einrichtung → Meta freigeben."
+                : `Ihr Datensatz${dsTodo.name ? ` „${dsTodo.name}“` : ""} ist noch nicht für uns freigegeben. Bitte im Business Manager unter Partner unserem Business den Datensatz mit voller Kontrolle („Verwalten“) freigeben, die Anleitung steht unter Einrichtung → Meta freigeben.`,
+          }
+        : !o.datasetId
         ? {
             tone: "warning" as const,
             label: "Wird eingerichtet",

@@ -160,13 +160,65 @@ export function parsePageInput(raw: string | null | undefined): { id: string } |
 
 // ─── Meta-Prüfung ───────────────────────────────────────────────────────
 
+/**
+ * Datensatz (Dataset/Pixel) für die Rückmeldung an Meta (lib/capi): ok = für uns freigegeben,
+ * found_not_shared = im Werbekonto vorhanden, aber unser Token darf ihn nicht lesen, none = kein Datensatz im
+ * Werbekonto, error = nicht prüfbar (z. B. Werbekonto noch nicht freigegeben). Nicht blockierend für den Schritt.
+ */
+export type MetaDatasetState = "ok" | "found_not_shared" | "none" | "error";
+export type MetaDatasetCheck = { state: MetaDatasetState; id?: string; name?: string; error?: string };
+
 export type MetaCheck = {
   at: string;
   adAccount: { id: string | null; ok: boolean; name?: string; error?: string };
   page: { id: string | null; ok: boolean; name?: string; error?: string };
   leads: { ok: boolean; error?: string };
+  /** Seit 15.11.2026; ältere gespeicherte Prüfungen haben das Feld nicht. */
+  dataset?: MetaDatasetCheck;
   ok: boolean;
 };
+
+type GraphResult<T> = { ok: true; data: T } | { ok: false; error: string };
+
+/** Höchstens so viele Datensätze eines Werbekontos auf Zugriff prüfen. */
+const MAX_DATASETS = 5;
+
+const DATASET_PERMISSION = /permission|does not exist|unsupported get request|cannot be loaded|not authorized|\(#10\)|\(#200\)/;
+const DATASET_NONE = "Kein Datensatz vorhanden (empfohlen: anlegen und freigeben).";
+const DATASET_WAIT = "Wird geprüft, sobald das Werbekonto freigegeben ist.";
+
+/** Datensätze aus der Antwort von act_<id>/adspixels (nur Ziffern-IDs, Reihenfolge wie Meta, höchstens 5). */
+export function datasetCandidates(
+  list: GraphResult<{ data?: { id?: unknown; name?: unknown }[] }>,
+): { ok: true; items: { id: string; name?: string }[] } | { ok: false; error: string } {
+  if (!list.ok) return { ok: false, error: list.error };
+  const items = (Array.isArray(list.data.data) ? list.data.data : [])
+    .filter((p) => /^\d{5,20}$/.test(String(p?.id ?? "")))
+    .map((p) => ({ id: String(p.id), ...(typeof p.name === "string" && p.name.trim() ? { name: p.name.trim() } : {}) }))
+    .slice(0, MAX_DATASETS);
+  return { ok: true, items };
+}
+
+/** Antwort von GET /{dataset}?fields=id,name einordnen: lesbar = freigegeben, Berechtigungsfehler = nicht freigegeben. */
+export function classifyDatasetAccess(ds: { id: string; name?: string }, access: GraphResult<{ id?: unknown; name?: unknown }>): MetaDatasetCheck {
+  if (access.ok && String(access.data.id ?? "") === ds.id) {
+    const name = typeof access.data.name === "string" && access.data.name.trim() ? access.data.name.trim() : ds.name;
+    return { state: "ok", id: ds.id, ...(name ? { name } : {}) };
+  }
+  const raw = access.ok ? "permission" : access.error;
+  const base = { id: ds.id, ...(ds.name ? { name: ds.name } : {}) };
+  if (DATASET_PERMISSION.test(raw.toLowerCase())) return { state: "found_not_shared", ...base, error: explainMetaError("dataset", raw) };
+  return { state: "error", ...base, error: explainMetaError("dataset", raw) };
+}
+
+/** Ergebnisse mehrerer Datensätze zusammenfassen: erster freigegebener, sonst erster nicht freigegebener, sonst Fehler. */
+export function summarizeDatasets(results: MetaDatasetCheck[]): MetaDatasetCheck {
+  return (
+    results.find((r) => r.state === "ok") ??
+    results.find((r) => r.state === "found_not_shared") ??
+    results.find((r) => r.state === "error") ?? { state: "none", error: DATASET_NONE }
+  );
+}
 
 function token(): string | null {
   return cleanToken(process.env.META_ACCESS_TOKEN) || null;
@@ -200,8 +252,13 @@ export async function checkPageForDiagnose(pageId: string): Promise<{ gefunden: 
 }
 
 /** Verständliche Erklärung zu einer Meta-Fehlermeldung (Kundensicht). */
-export function explainMetaError(kind: "adAccount" | "page" | "leads", raw: string): string {
+export function explainMetaError(kind: "adAccount" | "page" | "leads" | "dataset", raw: string): string {
   const r = raw.toLowerCase();
+  if (kind === "dataset") {
+    if (DATASET_PERMISSION.test(r))
+      return "Der Datensatz ist noch nicht für uns freigegeben. Bitte im Business Manager unter Partner unserem Business auch den Datensatz (Pixel) mit voller Kontrolle („Verwalten“) freigeben.";
+    return `Der Datensatz konnte nicht geprüft werden (${raw.slice(0, 120)}).`;
+  }
   if (kind === "adAccount") {
     if (/does not exist|unsupported get request|cannot be loaded due to missing permissions|not grant|permission|ads_management|ads_read/.test(r))
       return "Wir haben noch keinen Zugriff auf das Werbekonto. Bitte im Business Manager unter Partner unserem Business das Werbekonto mit „Kampagnen verwalten“ freigeben (oder unsere Anfrage bestätigen).";
@@ -224,7 +281,10 @@ export async function checkMetaAccess(
   input: { adAccount?: string | null; page?: string | null } = {},
   opts: { source?: "kunde" | "cron" | "admin" } = {},
 ): Promise<{ ok: true; check: MetaCheck } | { ok: false; error: string; check?: MetaCheck }> {
-  const ob = await prisma.onboarding.findUnique({ where: { customerId }, include: { customer: { select: { name: true, metaAdAccountId: true, metaPageId: true } } } });
+  const ob = await prisma.onboarding.findUnique({
+    where: { customerId },
+    include: { customer: { select: { name: true, metaAdAccountId: true, metaPageId: true, metaDatasetId: true, metaDatasetSource: true, metaDatasetError: true } } },
+  });
   if (!ob) return { ok: false, error: "Kein Onboarding gefunden." };
   const adInput = input.adAccount ?? ob.customer.metaAdAccountId;
   const accountId = parseAdAccountId(adInput);
@@ -270,11 +330,18 @@ export async function checkMetaAccess(
   } else if (!check.page.error) {
     check.page = { id: null, ok: false, error: "Facebook-Seite fehlt." };
   }
+  // Datensatz für die Rückmeldung an Meta: blockiert den Schritt nicht (Ole, 15.11.2026)
+  check.dataset = await checkDataset(ob.customer, accountId, check.adAccount.ok, t);
   check.ok = check.adAccount.ok && check.page.ok && check.leads.ok;
 
   const customerData: Prisma.CustomerUpdateInput = {};
   if (accountId && accountId !== ob.customer.metaAdAccountId) customerData.metaAdAccountId = accountId;
   if (pageId && pageId !== ob.customer.metaPageId) customerData.metaPageId = pageId;
+  // Freigegebener Datensatz → für die Rückmeldung merken (nie über eine Eingabe des Admins hinweg)
+  const ds = check.dataset;
+  if (ds.state === "ok" && ds.id && ob.customer.metaDatasetSource !== "admin" && (ds.id !== ob.customer.metaDatasetId || ob.customer.metaDatasetError)) {
+    Object.assign(customerData, { metaDatasetId: ds.id, metaDatasetSource: "auto", metaDatasetCheckedAt: new Date(), metaDatasetError: null });
+  }
   if (Object.keys(customerData).length) await prisma.customer.update({ where: { id: customerId }, data: customerData });
 
   const becameOk = check.ok && !ob.metaAccessAt;
@@ -292,6 +359,35 @@ export async function checkMetaAccess(
     }).catch((err) => reportError(err, "setup-meta-push"));
   }
   return { ok: true, check };
+}
+
+/**
+ * Datensatz prüfen: vom Admin gesetzter Datensatz direkt, sonst die Datensätze des Werbekontos
+ * (act_<id>/adspixels, der bereits gemerkte zuerst) und je Datensatz GET /{id}?fields=id,name mit unserem Token.
+ * Lesbar = freigegeben. Erster freigegebener gewinnt.
+ */
+async function checkDataset(
+  c: { metaDatasetId: string | null; metaDatasetSource: string | null },
+  accountId: string | null,
+  accountOk: boolean,
+  t: string,
+): Promise<MetaDatasetCheck> {
+  let items: { id: string; name?: string }[];
+  if (c.metaDatasetId && c.metaDatasetSource === "admin") {
+    items = [{ id: c.metaDatasetId }];
+  } else {
+    if (!accountId || !accountOk) return { state: "error", error: DATASET_WAIT };
+    const list = datasetCandidates(await graph<{ data?: { id?: unknown; name?: unknown }[] }>(`act_${accountId}/adspixels`, { fields: "id,name", limit: "25" }, t));
+    if (!list.ok) return { state: "error", error: `Die Datensätze des Werbekontos konnten nicht gelesen werden (${list.error.slice(0, 120)}).` };
+    items = c.metaDatasetId ? [...list.items.filter((i) => i.id === c.metaDatasetId), ...list.items.filter((i) => i.id !== c.metaDatasetId)] : list.items;
+  }
+  const results: MetaDatasetCheck[] = [];
+  for (const ds of items) {
+    const r = classifyDatasetAccess(ds, await graph<{ id?: unknown; name?: unknown }>(ds.id, { fields: "id,name" }, t));
+    results.push(r);
+    if (r.state === "ok") break;
+  }
+  return summarizeDatasets(results);
 }
 
 /** Partnerzugriff von uns aus anfragen – der Kunde bestätigt nur noch in Meta. */
@@ -334,8 +430,8 @@ export async function requestMetaAccess(
   return { ok: true, sent, failed };
 }
 
-/** Täglich: offene Meta-Fälle mit eingetragenen IDs automatisch nachprüfen. */
-export async function recheckOpenMetaAccess(now = new Date()): Promise<{ checked: number; ok: number }> {
+/** Täglich: offene Meta-Fälle mit eingetragenen IDs und noch nicht freigegebene Datensätze automatisch nachprüfen. */
+export async function recheckOpenMetaAccess(now = new Date()): Promise<{ checked: number; ok: number; datasetChecked: number; datasetOk: number }> {
   const due = await prisma.onboarding.findMany({
     where: {
       status: "running",
@@ -351,7 +447,28 @@ export async function recheckOpenMetaAccess(now = new Date()): Promise<{ checked
     const r = await checkMetaAccess(d.customerId, {}, { source: "cron" }).catch(() => null);
     if (r?.ok && r.check.ok) ok++;
   }
-  return { checked: due.length, ok };
+  // Meta-Zugriff schon da, Datensatz noch nicht freigegeben (oder ältere Prüfung ohne Datensatz):
+  // in den ersten 60 Tagen danach ebenfalls täglich nachprüfen, damit die Rückmeldung an Meta von selbst startet.
+  const since = new Date(now.getTime() - 20 * 60 * 60 * 1000);
+  const datasetDue = (
+    await prisma.onboarding.findMany({
+      where: {
+        status: { in: ["running", "live"] },
+        metaAccessAt: { gte: new Date(now.getTime() - 60 * DAY) },
+        OR: [{ metaCheckedAt: null }, { metaCheckedAt: { lt: since } }],
+        customer: { metaAdAccountId: { not: null }, capiEnabled: true, isTest: false, archived: false },
+      },
+      select: { customerId: true, metaCheck: true },
+    })
+  )
+    .filter((d) => (d.metaCheck as MetaCheck | null)?.dataset?.state !== "ok")
+    .slice(0, 50);
+  let datasetOk = 0;
+  for (const d of datasetDue) {
+    const r = await checkMetaAccess(d.customerId, {}, { source: "cron" }).catch(() => null);
+    if (r?.ok && r.check.dataset?.state === "ok") datasetOk++;
+  }
+  return { checked: due.length, ok, datasetChecked: datasetDue.length, datasetOk };
 }
 
 // ─── Schritte und Fortschritt ───────────────────────────────────────────

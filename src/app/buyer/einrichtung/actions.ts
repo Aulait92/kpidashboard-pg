@@ -111,7 +111,14 @@ export async function checkMetaAccessAction(_prev: MetaSetupState, fd: FormData)
     revalidatePath("/buyer", "layout");
     if (!r.ok) return { error: r.error, check: r.check };
     return r.check.ok
-      ? { ok: true, check: r.check, message: "Alles freigegeben, danke! Wir kümmern uns jetzt um die Kampagne." }
+      ? {
+          ok: true,
+          check: r.check,
+          message:
+            r.check.dataset?.state === "ok"
+              ? "Alles freigegeben, danke! Wir kümmern uns jetzt um die Kampagne."
+              : "Werbekonto, Seite und Leads sind freigegeben, danke! Wir kümmern uns jetzt um die Kampagne. Den Datensatz können Sie nachreichen.",
+        }
       : { ok: false, check: r.check };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Nicht möglich." };

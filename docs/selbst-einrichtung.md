@@ -42,6 +42,17 @@ liest ihre Leadformulare. Jedes der drei Ergebnisse steht einzeln mit verständl
 Offene Fälle mit eingetragenen IDs prüft der Cron etwa einmal am Tag selbst nach (bestätigt der Kunde die Anfrage nur in Meta, wird
 der Schritt ohne weiteres Zutun grün).
 
+**Datensatz (Pixel) für die Rückmeldung an Meta (15.11.2026, lib/capi):** Die Klick-Anleitung nennt in Punkt 4 auch den Datensatz
+(volle Kontrolle bzw. „Verwalten“), darunter „Noch keinen Datensatz?“ (Events Manager → Datenquellen verbinden → Web → Name → dem
+Werbekonto zuordnen → freigeben). „Zugriff prüfen“ liest zusätzlich `act_<id>/adspixels` (id,name; ein vom Admin gesetztes Dataset
+direkt, ein schon gemerktes zuerst, höchstens 5) und je Datensatz `GET /{id}?fields=id,name` mit unserem Token. Ergebnis in
+`Onboarding.metaCheck.dataset` (`state`: `ok` | `found_not_shared` | `none` | `error`; ältere Prüfungen haben das Feld nicht).
+Nicht blockierend: der Schritt bleibt mit Werbekonto + Seite + Leads erledigt. Bei `ok` wird `Customer.metaDatasetId` mit Quelle
+`auto` gesetzt (nie über eine Admin-Eingabe hinweg). Hinweise: Kundenbereich (Prüfergebnis, Einstellungen → Rückmeldung an Meta),
+Admin (Kundenakte Selbst-Einrichtung, Leads → CAPI-Karte). Der tägliche Nachlauf prüft zusätzlich Fälle mit Meta-Zugriff (bis 60 Tage
+danach, Rückmeldung an, kein Testkunde), deren Datensatz noch nicht `ok` ist. Offen: Ob ein lesbares `GET /{pixel}` sicher heißt,
+dass Meta Ereignisse von uns annimmt, zeigt erst der echte Versand (Fehler in der CAPI-Karte).
+
 **Wichtig für die Anfrage-Funktion:** Der Systemnutzer braucht die Berechtigung `business_management`, und unsere Business-ID muss
 stimmen.
 

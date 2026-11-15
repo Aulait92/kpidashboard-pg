@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  classifyDatasetAccess,
   consentText,
+  datasetCandidates,
   dueReminder,
   explainMetaError,
   parseAdAccountId,
   parsePageInput,
   setupProgress,
   setupSteps,
+  summarizeDatasets,
   videoEmbedUrl,
 } from "@/lib/selbst-einrichtung";
 import type { ChecklistItem } from "@/lib/onboarding";
@@ -109,5 +112,57 @@ describe("Selbst-Einrichtung: Fortschritt", () => {
   it("WhatsApp ohne Selbst-Verbinden (machen wir) zählt nicht als Kundenschritt", () => {
     const steps = setupSteps({ package: "software" }, items.map((i) => (i.key === "whatsapp" ? { ...i, owner: "du" as const } : i)), { appDone: false, provisionDone: false });
     expect(steps.find((s) => s.key === "whatsapp")?.owner).toBe("wir");
+  });
+});
+
+describe("Selbst-Einrichtung: Datensatz (Pixel) für die Rückmeldung an Meta", () => {
+  const PERM = "Unsupported get request. Object with ID '123456789012' does not exist, cannot be loaded due to missing permissions, or does not support this operation.";
+
+  it("Datensätze aus act_…/adspixels: nur Ziffern-IDs, Namen getrimmt, höchstens 5, Fehler durchgereicht", () => {
+    const r = datasetCandidates({
+      ok: true,
+      data: { data: [{ id: "111111111111", name: " Pixel A " }, { id: "kaputt" }, { id: 222222222222 }, { name: "ohne id" }, { id: "333333333333", name: "" }] },
+    });
+    expect(r).toEqual({ ok: true, items: [{ id: "111111111111", name: "Pixel A" }, { id: "222222222222" }, { id: "333333333333" }] });
+    const many = datasetCandidates({ ok: true, data: { data: Array.from({ length: 8 }, (_, i) => ({ id: String(100000 + i) })) } });
+    expect(many.ok && many.items).toHaveLength(5);
+    expect(datasetCandidates({ ok: true, data: {} })).toEqual({ ok: true, items: [] });
+    expect(datasetCandidates({ ok: false, error: "boom" })).toEqual({ ok: false, error: "boom" });
+  });
+
+  it("Zugriff einordnen: lesbar = ok, Berechtigungsfehler = gefunden, nicht freigegeben, sonst Fehler", () => {
+    const ds = { id: "123456789012", name: "Pixel Agentur" };
+    expect(classifyDatasetAccess(ds, { ok: true, data: { id: "123456789012", name: "Pixel Agentur Muster" } })).toEqual({ state: "ok", id: ds.id, name: "Pixel Agentur Muster" });
+    expect(classifyDatasetAccess({ id: "123456789012" }, { ok: true, data: { id: "123456789012" } })).toEqual({ state: "ok", id: "123456789012" });
+    const ns = classifyDatasetAccess(ds, { ok: false, error: PERM });
+    expect(ns).toMatchObject({ state: "found_not_shared", id: ds.id, name: ds.name });
+    expect(ns.error).toMatch(/Partner.*voller Kontrolle.*Verwalten/);
+    expect(classifyDatasetAccess(ds, { ok: false, error: "(#10) Application does not have permission for this action" }).state).toBe("found_not_shared");
+    expect(classifyDatasetAccess(ds, { ok: false, error: "(#200) Missing Permission" }).state).toBe("found_not_shared");
+    // Antwort ohne passende ID gilt als nicht freigegeben
+    expect(classifyDatasetAccess(ds, { ok: true, data: {} }).state).toBe("found_not_shared");
+    const err = classifyDatasetAccess(ds, { ok: false, error: "The operation was aborted due to timeout" });
+    expect(err).toMatchObject({ state: "error", id: ds.id });
+    expect(err.error).toMatch(/nicht geprüft werden/);
+  });
+
+  it("Zusammenfassung: freigegebener gewinnt, sonst nicht freigegeben, sonst Fehler, leer = keiner", () => {
+    const ok = { state: "ok" as const, id: "2" };
+    const ns = { state: "found_not_shared" as const, id: "1" };
+    const er = { state: "error" as const, id: "3", error: "x" };
+    expect(summarizeDatasets([ns, ok])).toBe(ok);
+    expect(summarizeDatasets([er, ns])).toBe(ns);
+    expect(summarizeDatasets([er])).toBe(er);
+    expect(summarizeDatasets([])).toMatchObject({ state: "none", error: expect.stringMatching(/Kein Datensatz vorhanden/) });
+  });
+
+  it("Erklärung zum Datensatz ohne Gedankenstriche, ohne Garantie", () => {
+    const t = explainMetaError("dataset", PERM);
+    expect(t).toMatch(/noch nicht für uns freigegeben/);
+    expect(explainMetaError("dataset", "HTTP 500")).toMatch(/konnte nicht geprüft werden \(HTTP 500\)/);
+    for (const s of [t, summarizeDatasets([]).error ?? ""]) {
+      expect(s).not.toMatch(/[–—]/);
+      expect(s).not.toMatch(/Garantie/i);
+    }
   });
 });

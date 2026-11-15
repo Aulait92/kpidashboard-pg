@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { CheckCircle2, Copy, Loader2, ShieldCheck, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Copy, Loader2, ShieldCheck, XCircle } from "lucide-react";
 import type { MetaCheck } from "@/lib/selbst-einrichtung";
 import {
   bookHelpCallAction,
@@ -150,7 +150,30 @@ export function MetaCheckResult({ check }: { check: MetaCheck }) {
       <CheckRow label="Werbekonto" ok={check.adAccount.ok} detail={check.adAccount.ok ? check.adAccount.name : check.adAccount.error} />
       <CheckRow label="Facebook-Seite" ok={check.page.ok} detail={check.page.ok ? check.page.name : check.page.error} />
       <CheckRow label="Zugriff auf Leads" ok={check.leads.ok} detail={check.leads.ok ? "Leads kommen direkt bei Ihnen an." : check.leads.error} />
+      {/* Datensatz: nicht nötig für den Schritt, daher Hinweis statt Fehler. Ältere Prüfungen haben das Feld nicht. */}
+      {check.dataset ? <DatasetRow ds={check.dataset} /> : null}
     </ul>
+  );
+}
+
+function DatasetRow({ ds }: { ds: NonNullable<MetaCheck["dataset"]> }) {
+  const named = ds.name ? ` „${ds.name}“` : "";
+  const row =
+    ds.state === "ok"
+      ? { label: "Datensatz freigegeben", detail: ds.name ? `${ds.name} (Rückmeldung an Meta möglich)` : "Rückmeldung an Meta möglich." }
+      : ds.state === "found_not_shared"
+        ? { label: `Datensatz${named} gefunden, aber noch nicht freigegeben`, detail: ds.error }
+        : ds.state === "none"
+          ? { label: "Kein Datensatz vorhanden (empfohlen: anlegen und freigeben)", detail: "Anleitung oben unter „Noch keinen Datensatz?“. Starten können wir auch ohne Datensatz." }
+          : { label: "Datensatz", detail: ds.error };
+  return (
+    <li className="flex items-start gap-2 text-[15px]" data-meta-dataset={ds.state}>
+      {ds.state === "ok" ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /> : <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />}
+      <span>
+        <b>{row.label}</b>
+        {row.detail ? <span className="block text-sm text-[color:var(--muted)]">{row.detail}</span> : null}
+      </span>
+    </li>
   );
 }
 

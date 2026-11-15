@@ -345,10 +345,34 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               Unsere Business-ID eingeben: <b className="select-all">{businessId}</b>
             </li>
             <li>
-              Ihr <b>Werbekonto</b> (Kampagnen verwalten) und Ihre <b>Facebook-Seite</b> mit <b>„Volle Kontrolle“</b> auswählen (nötig, damit
-              Leads direkt bei Ihnen ankommen), ggf. auch Instagram, und speichern.
+              Ihr <b>Werbekonto</b> (Kampagnen verwalten), Ihre <b>Facebook-Seite</b> mit <b>„Volle Kontrolle“</b> (nötig, damit Leads direkt
+              bei Ihnen ankommen) und Ihren <b>Datensatz (Pixel)</b> mit voller Kontrolle bzw. <b>„Verwalten“</b> auswählen, ggf. auch Instagram,
+              und speichern.
             </li>
           </ol>
+          <p className="text-sm text-[color:var(--muted)]">
+            Über den Datensatz erfährt Meta, welche Ihrer Leads zu Terminen und Verträgen werden, und kann die Anzeigen danach ausrichten.
+          </p>
+          <details className="my-4 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3 text-[15px]" data-dataset-help>
+            <summary className="cursor-pointer font-medium">Noch keinen Datensatz? So legen Sie ihn an</summary>
+            <ol className="mt-3 list-decimal space-y-1.5 pl-5">
+              <li>
+                <a href="https://business.facebook.com/events_manager2" target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
+                  Meta Events Manager
+                </a>{" "}
+                öffnen.
+              </li>
+              <li>
+                Links auf <b>Datenquellen verbinden</b> (bzw. <b>„+“ → Neue Datenquelle hinzufügen</b>) tippen und <b>Web</b> wählen.
+              </li>
+              <li>Einen Namen eingeben, z. B. den Namen Ihrer Agentur, und den Datensatz erstellen. Eine Webseite brauchen Sie dafür nicht.</li>
+              <li>
+                Den Datensatz Ihrem <b>Werbekonto</b> zuordnen (in den Einstellungen des Datensatzes oder unter{" "}
+                <b>Business-Einstellungen → Datenquellen → Datensätze → Assets verbinden</b>).
+              </li>
+              <li>Danach wie oben unter Partner für unser Business freigeben (Schritt 4).</li>
+            </ol>
+          </details>
           <div className="my-4">
             <p className="mb-3 text-[15px] font-medium">Dann Werbekonto und Seite eintragen und prüfen</p>
             <MetaAccessForm

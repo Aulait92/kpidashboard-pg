@@ -270,9 +270,15 @@ Seiten aus der Liste „Seiten“ unten.
   Link geht auch) und Facebook-Seite (Adresse facebook.com/… oder Seiten-ID) eintragen. Dann:
   - **„Anfrage von uns senden lassen“**: performancegrowth schickt die Partner-Anfrage, der Kunde bekommt in Meta eine Benachrichtigung
     und bestätigt sie nur noch. Klappt das nicht, die Schritte darunter selbst ausführen (Business-Einstellungen → Partner → Hinzufügen →
-    unsere Business-ID → Werbekonto mit „Kampagnen verwalten“, Seite mit „Volle Kontrolle“).
+    unsere Business-ID → Werbekonto mit „Kampagnen verwalten“, Seite mit „Volle Kontrolle“, Datensatz (Pixel) mit voller Kontrolle
+    bzw. „Verwalten“).
   - **„Zugriff prüfen“**: zeigt für Werbekonto, Seite und Leads einzeln, ob alles da ist und was noch fehlt. Ist alles grün, ist der
     Schritt erledigt. Die App prüft offene Freigaben außerdem täglich selbst nach.
+  - **Datensatz (Pixel):** Darüber erfährt Meta, welche Leads zu Terminen und Verträgen werden (**Einstellungen → Rückmeldung an
+    Meta**). Die Prüfung zeigt „Datensatz freigegeben“, „gefunden, aber noch nicht freigegeben“ (dann unter Partner nachreichen) oder
+    „Kein Datensatz vorhanden“. Anlegen: **„Noch keinen Datensatz?“** in der Anleitung (Events Manager → Datenquellen verbinden → Web →
+    Name → dem Werbekonto zuordnen, dann freigeben). Der Schritt ist auch ohne Datensatz erledigt; die App prüft den Datensatz in den
+    ersten Wochen täglich nach und startet die Rückmeldung dann von selbst.
 - **WhatsApp verbinden:** Vorher prüfen: eine Nummer, die nicht in der normalen WhatsApp-App genutzt wird (zweite SIM, Festnetz oder
   neue Nummer), SMS oder Anruf mit Code kann empfangen werden, Admin im Business Manager. Dann der geführte Ablauf.
 - **E-Mail-Postfach verbinden:** Google, Microsoft oder anderer Anbieter (SMTP), wie unter **Einstellungen → E-Mail-Postfach**.

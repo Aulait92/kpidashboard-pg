@@ -14,15 +14,24 @@ vi.mock("@/lib/push", async (orig) => ({
 }));
 
 import { prisma } from "@/lib/prisma";
-import { checkMetaAccess, runSetupReminders, stuckSetups } from "@/lib/selbst-einrichtung";
+import { checkMetaAccess, recheckOpenMetaAccess, runSetupReminders, stuckSetups } from "@/lib/selbst-einrichtung";
 import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
 
 const DAY = 86400000;
 let graphMode: "ok" | "noAds" = "ok";
+const PIXEL = "998877665544";
+/** Datensatz: freigegeben, im Werbekonto aber nicht freigegeben, keiner vorhanden */
+let datasetMode: "ok" | "notShared" | "none" = "ok";
 
 function fakeGraph(url: string): Response {
   const u = new URL(url);
   const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { "Content-Type": "application/json" } });
+  if (u.pathname.endsWith("/adspixels")) return json({ data: datasetMode === "none" ? [] : [{ id: PIXEL, name: "Pixel Muster" }] });
+  if (u.pathname.endsWith(`/${PIXEL}`)) {
+    return datasetMode === "ok"
+      ? json({ id: PIXEL, name: "Pixel Muster" })
+      : json({ error: { message: `Unsupported get request. Object with ID '${PIXEL}' does not exist, cannot be loaded due to missing permissions, or does not support this operation.`, code: 100 } }, 400);
+  }
   if (u.pathname.includes("/act_")) {
     return graphMode === "ok"
       ? json({ name: "Werbekonto Muster", currency: "EUR", account_status: 1 })
@@ -63,6 +72,7 @@ describe("Selbst-Einrichtung", () => {
     sent.admin = [];
     sent.buyer = [];
     graphMode = "ok";
+    datasetMode = "ok";
   });
 
   it("Zugriff da: grün, Schritt erledigt, IDs in der Kundenakte, Push an Admins", async () => {
@@ -92,6 +102,66 @@ describe("Selbst-Einrichtung", () => {
     expect(ob.metaAccessAt).toBeNull();
     expect(ob.metaCheck).not.toBeNull();
     expect((await prisma.customer.findUniqueOrThrow({ where: { id: customerId } })).metaAdAccountId).toBe("123456789012");
+  });
+
+  it("Datensatz freigegeben: in der Prüfung grün und als Dataset (automatisch) gemerkt", async () => {
+    const { customerId } = await setup(0);
+    const r = await checkMetaAccess(customerId, { adAccount: "act_123456789012", page: "556677889900" });
+    expect(r.ok && r.check.dataset).toEqual({ state: "ok", id: PIXEL, name: "Pixel Muster" });
+    const c = await prisma.customer.findUniqueOrThrow({ where: { id: customerId } });
+    expect(c).toMatchObject({ metaDatasetId: PIXEL, metaDatasetSource: "auto", metaDatasetError: null });
+    const ob = await prisma.onboarding.findUniqueOrThrow({ where: { customerId } });
+    expect((ob.metaCheck as { dataset?: { state: string } }).dataset?.state).toBe("ok");
+  });
+
+  it("Datensatz nicht freigegeben bzw. keiner: Hinweis, Schritt trotzdem erledigt, kein Dataset gemerkt", async () => {
+    datasetMode = "notShared";
+    const a = await setup(0);
+    const r = await checkMetaAccess(a.customerId, { adAccount: "act_123456789012", page: "556677889900" });
+    expect(r.ok && r.check.ok).toBe(true);
+    expect(r.ok && r.check.dataset).toMatchObject({ state: "found_not_shared", id: PIXEL, name: "Pixel Muster" });
+    expect(r.ok && r.check.dataset?.error).toMatch(/voller Kontrolle/);
+    expect((await prisma.onboarding.findUniqueOrThrow({ where: { customerId: a.customerId } })).metaAccessAt).not.toBeNull();
+    expect((await prisma.customer.findUniqueOrThrow({ where: { id: a.customerId } })).metaDatasetId).toBeNull();
+
+    datasetMode = "none";
+    const b = await setup(0);
+    const r2 = await checkMetaAccess(b.customerId, { adAccount: "act_123456789012", page: "556677889900" });
+    expect(r2.ok && r2.check.ok).toBe(true);
+    expect(r2.ok && r2.check.dataset?.state).toBe("none");
+  });
+
+  it("Werbekonto fehlt: Datensatz wird erst danach geprüft", async () => {
+    graphMode = "noAds";
+    const { customerId } = await setup(0);
+    const r = await checkMetaAccess(customerId, { adAccount: "123456789012", page: "556677889900" });
+    expect(r.ok && r.check.dataset).toMatchObject({ state: "error", error: expect.stringMatching(/sobald das Werbekonto freigegeben/) });
+  });
+
+  it("vom Admin gesetztes Dataset wird geprüft, aber nie überschrieben", async () => {
+    const { customerId } = await setup(0);
+    await prisma.customer.update({ where: { id: customerId }, data: { metaDatasetId: "111122223333", metaDatasetSource: "admin" } });
+    const r = await checkMetaAccess(customerId, { adAccount: "act_123456789012", page: "556677889900" });
+    // Fake kennt 111122223333 nicht als Datensatz (liefert die Seite) → nicht freigegeben
+    expect(r.ok && r.check.dataset).toMatchObject({ state: "found_not_shared", id: "111122223333" });
+    expect(await prisma.customer.findUniqueOrThrow({ where: { id: customerId } })).toMatchObject({ metaDatasetId: "111122223333", metaDatasetSource: "admin" });
+  });
+
+  it("täglicher Nachlauf: später freigegebener Datensatz wird gefunden und gemerkt", async () => {
+    datasetMode = "notShared";
+    const { customerId, onboardingId } = await setup(0);
+    await checkMetaAccess(customerId, { adAccount: "act_123456789012", page: "556677889900" });
+    // Prüfung liegt einen Tag zurück, inzwischen hat der Kunde den Datensatz freigegeben
+    await prisma.onboarding.update({ where: { id: onboardingId }, data: { metaCheckedAt: new Date(Date.now() - DAY) } });
+    datasetMode = "ok";
+    const res = await recheckOpenMetaAccess(new Date());
+    expect(res.datasetChecked).toBeGreaterThanOrEqual(1);
+    const ob = await prisma.onboarding.findUniqueOrThrow({ where: { id: onboardingId } });
+    expect((ob.metaCheck as { dataset?: { state: string } }).dataset?.state).toBe("ok");
+    expect((await prisma.customer.findUniqueOrThrow({ where: { id: customerId } })).metaDatasetId).toBe(PIXEL);
+    // frisch geprüft: am selben Tag nicht noch einmal
+    await recheckOpenMetaAccess(new Date());
+    expect((await prisma.onboarding.findUniqueOrThrow({ where: { id: onboardingId } })).metaCheckedAt).toEqual(ob.metaCheckedAt);
   });
 
   it("ungültige Eingabe: klare Meldung, nichts gespeichert", async () => {
