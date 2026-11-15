@@ -56,7 +56,7 @@ export function WaInvited({ email, readOnly }: { email: string; readOnly: boolea
 
       <div className={`rounded-[var(--radius-md)] border px-4 py-4 ${done ? "border-[color:var(--accent,#2563eb)]" : "border-[color:var(--border)] opacity-70"}`}>
         <p className="font-semibold">Schritt 2: WhatsApp-Nummer verbinden</p>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">Sie melden sich mit dem neuen Passwort bei 360dialog an und verbinden Ihre Nummer im Fenster von Meta.</p>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">Sie melden sich mit dem neuen Passwort bei 360dialog an. Zur Sicherheit kommt dabei eine zweite E-Mail mit einem Code („Verify it&apos;s you“): Code eintragen, „Continue“ tippen. Danach verbinden Sie Ihre Nummer im Fenster von Meta.</p>
         {done && !readOnly ? (
           <a href="/buyer/whatsapp-verbinden?weiter=1" className={`${buttonClass("primary", "md")} mt-3`} data-wa-weiter>
             Weiter: WhatsApp verbinden <ArrowRight className="h-4 w-4" />

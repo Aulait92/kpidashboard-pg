@@ -1093,9 +1093,13 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
 
 **Ablauf:**
 1. Einrichtung → Nummer wählen → „Jetzt WhatsApp verbinden“.
-2. 360dialog (unser WhatsApp-Anbieter): Konto mit „Sign up“ per E-Mail und Passwort anlegen (nicht „Continue
-   with Facebook“: das kann in einem alten Konto eines anderen Anbieters wie Superchat landen; dann nicht
-   weitermachen, sondern uns melden). Kostenlos, die Nummer bleibt Eigentum des Kunden. Danach Seite „About you“: Name bzw. Firmenname, **eigene Handynummer für
+2. 360dialog (unser WhatsApp-Anbieter): Die App legt das Konto unter unserem Partnerkonto an, 360dialog schickt
+   eine Einladung an die Login-Adresse (englisch, Betreff „Join … on the 360Dialog Hub“, Knopf „Join 360Dialog
+   Hub“): Passwort festlegen, in der App „Erledigt“ anhaken und „Weiter: WhatsApp verbinden“. Beim Anmelden
+   („Log in“) fragt 360dialog „Verify it's you“ und schickt eine zweite E-Mail mit Code: eintragen, „Continue“.
+   Nicht mit Facebook oder Google anmelden und kein eigenes Konto über „Sign up“ anlegen (das kann in einem alten
+   Konto eines anderen Anbieters wie Superchat landen; dann nicht weitermachen, sondern uns melden). Halb fertig
+   oder falsche Adresse: „Abbrechen und neu beginnen“ (Inhaber) bzw. Admin „Verbindung zurücksetzen“. Kostenlos, die Nummer bleibt Eigentum des Kunden. Danach Seite „About you“: Name bzw. Firmenname, **eigene Handynummer für
    Rückfragen** (nicht die Nummer, die verbunden wird; Vorwahl +49 einstellen), Währung EUR, Häkchen bei
    Weitergabe der Kontaktdaten und Nutzungsbedingungen, „Continue“. Fragen „Do you have admin access to the Meta
    Business Portfolio?“ → „Yes“ (sonst abbrechen und erst Admin werden); „Is your Meta Business Portfolio
