@@ -77,7 +77,15 @@ export default async function OfferPage({
             <Download className="h-4 w-4" /> Als PDF herunterladen
           </a>
         </div>
-        {offer.status === "accepted" ? (
+        {offer.status === "accepted" && offer.isTest ? (
+          <div className="mx-auto mb-6 flex max-w-[880px] items-start gap-3 rounded-[20px] border border-emerald-200 bg-emerald-50 px-6 py-5 text-emerald-900 sm:px-10" data-testangebot-angenommen>
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+            <div>
+              <div className="font-semibold">Testangebot angenommen</div>
+              <p className="mt-1 text-sm">Ohne Zahlung. Sie bekommen gleich eine E-Mail mit Ihrem Zugang und können direkt mit der Einrichtung beginnen.</p>
+            </div>
+          </div>
+        ) : offer.status === "accepted" ? (
           <PaymentBox
             token={token}
             status={offer.paymentStatus}
@@ -106,7 +114,7 @@ export default async function OfferPage({
                     dpaUrl={offer.dpaUrl!}
                     defaultName={offer.contactName}
                     choice={choiceProps(offer)}
-                    payment={billingEnabled()}
+                    payment={billingEnabled() && !offer.isTest}
                   />
                 </div>
               ) : (

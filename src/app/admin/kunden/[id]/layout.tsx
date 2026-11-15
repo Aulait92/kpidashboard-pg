@@ -5,6 +5,7 @@ import { SubTabs } from "@/components/admin/sub-tabs";
 import { BackToList } from "@/components/admin/list-memory";
 import { KUNDEN_LISTS } from "@/lib/admin-lists";
 import { Badge } from "@/components/ui";
+import { TestkundeLoeschen } from "@/components/admin/testkunde-loeschen";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { CUSTOMER_COLOR, CUSTOMER_LABEL } from "@/lib/vertrieb/crm";
@@ -21,6 +22,7 @@ export default async function KundenakteLayout({ children, params }: { children:
     select: {
       id: true,
       name: true,
+      isTest: true,
       plan: true,
       retainerMonthly: true,
       paymentOverdueSince: true,
@@ -28,7 +30,7 @@ export default async function KundenakteLayout({ children, params }: { children:
       pauses: { where: { status: "active" }, select: { id: true }, take: 1 },
       onboarding: { select: { id: true, liveAt: true } },
       agentConfig: { select: { active: true } },
-      whatsAppAccount: { select: { status: true } },
+      whatsAppAccount: { select: { status: true, phoneNumber: true } },
       _count: { select: { leadSources: true, users: { where: { role: "BUYER" } } } },
     },
   });
@@ -51,6 +53,7 @@ export default async function KundenakteLayout({ children, params }: { children:
         <h1 className="text-2xl font-semibold tracking-tight">{c.name.replace(/^Allianz\s+/i, "")}</h1>
         {stage ? <span className={`badge ${CUSTOMER_COLOR[stage]}`}>{CUSTOMER_LABEL[stage]}</span> : <Badge>Leads (Airtable)</Badge>}
         <Badge>{packageLabel(c)}</Badge>
+        {c.isTest ? <TestkundeLoeschen customerId={c.id} name={c.name} whatsapp={c.whatsAppAccount?.phoneNumber ?? null} /> : null}
         {c.onboarding && !c.onboarding.liveAt ? <Badge tone="brand">Onboarding</Badge> : null}
         {c.plan !== "service" ? (
           c.agentConfig?.active && c.whatsAppAccount?.status === "connected" ? (

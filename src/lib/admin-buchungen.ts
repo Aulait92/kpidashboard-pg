@@ -855,6 +855,8 @@ export async function loadBuchungSources(now: Date = new Date()): Promise<Buchun
   const since = new Date(now.getTime() - 400 * DAY);
   const [customers, offers, onboardings, bookings, budgets, pauses, packs, referrals, audits, tasks, cancelActs] = await Promise.all([
     prisma.customer.findMany({
+      // Testkunden zählen nicht (Ole, 15.11.2026)
+      where: { isTest: false },
       select: {
         id: true,
         name: true,
@@ -872,7 +874,7 @@ export async function loadBuchungSources(now: Date = new Date()): Promise<Buchun
       },
     }),
     prisma.offer.findMany({
-      where: { status: "accepted", acceptedAt: { not: null } },
+      where: { status: "accepted", acceptedAt: { not: null }, isTest: false },
       select: {
         id: true,
         number: true,

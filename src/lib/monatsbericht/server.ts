@@ -581,6 +581,7 @@ export async function runMonthlyReports(now = new Date(), opts: RunOptions = {})
   const customers = await prisma.customer.findMany({
     where: {
       archived: false,
+      isTest: false,
       monthlyReportsOff: false,
       plan: { in: ["software", "service"] },
       monthlyReports: { none: { month } },

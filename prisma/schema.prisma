@@ -95,6 +95,9 @@ model Customer {
   id                  String    @id @default(cuid())
   name                String    @unique
   createdAt           DateTime  @default(now())
+  // Testkunde (Ole, 15.11.2026): aus einem Testangebot ohne Zahlung; zählt nicht in Admin-Zahlen,
+  // Buchungen, Stornoquote, Monatsbericht und Platz-Abrechnung, im Admin mit Abzeichen „Test“, löschbar.
+  isTest              Boolean   @default(false)
   // Stripe-Kunde für Abrechnung (Rechnungen, Zahlungsart, Abo)
   stripeCustomerId    String?   @unique
   // Paket: "software" = Betreuung + Software, "service" = nur Betreuung
@@ -1159,6 +1162,8 @@ model UsageEvent {
 // nachträglich ändert. Änderungen = neue Version (altes wird „superseded").
 model Offer {
   id                      String        @id @default(cuid())
+  // Testangebot (Ole, 15.11.2026): 0 €, Annahme ohne Stripe, legt einen Testkunden an
+  isTest                  Boolean       @default(false)
   // Altes Airtable-Deal-Board (wird abgelöst) oder Vertriebskontakt.
   dealId                  String?
   deal                    Deal?         @relation(fields: [dealId], references: [id], onDelete: Cascade)

@@ -80,6 +80,8 @@ export function OfferForm({
   const [empfehlung, setEmpfehlung] = useState(false);
   const [vermittler, setVermittler] = useState<OfferVermittler>("vertreter");
   const [customerChoice, setCustomerChoice] = useState(true);
+  // Testangebot (Ole, 15.11.2026): 0 €, ohne Zahlung, legt einen Testkunden an
+  const [test, setTest] = useState(false);
 
   const parsedProducts = products.map((p) => ({ name: p.name, dailyBudget: num(p.daily) ?? 0 }));
   // Berechnung ist billig – direkt pro Render statt useMemo.
@@ -126,6 +128,7 @@ export function OfferForm({
         empfehlungModule: empfehlung && softwarePkg,
         vermittlerTyp: vermittler,
         customerChoice,
+        test,
       });
       if (!res.ok) {
         setError(res.error);
@@ -308,6 +311,15 @@ export function OfferForm({
                   {num(setupOverride) != null || num(monthlyOverride) != null
                     ? "Mit Sonderpreis nur das Startdatum, die Laufzeit bleibt wie hier gewählt."
                     : "Ihre Auswahl hier ist der Vorschlag. Start frühestens in 7 Tagen, spätestens in 90 Tagen."}
+                </span>
+              </span>
+            </label>
+            <label className={`flex items-start gap-3 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${test ? "border-amber-300 bg-amber-50" : "border-[color:var(--border)] bg-white"}`}>
+              <input type="checkbox" name="test" className="mt-0.5 h-4 w-4" checked={test} onChange={(e) => setTest(e.target.checked)} data-testangebot />
+              <span>
+                <span className="block font-semibold">Testangebot (0 €, ohne Zahlung)</span>
+                <span className="block text-xs text-[color:var(--muted)]">
+                  Alle Beträge 0 €, Annahme ohne Stripe, das Onboarding startet sofort. Der Kunde wird als „Test“ markiert, zählt nicht in Zahlen und Abrechnung und lässt sich in der Kundenakte löschen.
                 </span>
               </span>
             </label>

@@ -30,7 +30,8 @@ export async function acceptOfferAction(token: string, _prev: AcceptState, formD
   // ein clientseitiger Redirect im Formular käme deshalb nicht mehr zum Zug.
   if (billingEnabled()) {
     const offer = await getOfferByToken(token);
-    if (offer) {
+    // Testangebot: keine Zahlung, das Onboarding startet schon mit der Annahme
+    if (offer && !offer.isTest) {
       const checkout = await createCheckoutForOffer(offer.id, parseZahlart(formData.get("zahlart")));
       if ("url" in checkout) redirect(checkout.url);
     }

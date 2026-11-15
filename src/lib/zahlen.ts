@@ -143,9 +143,10 @@ export async function loadLedger(now = new Date()) {
       LEFT JOIN "Customer" c ON c.id = r."customerId"
       WHERE r.cancelled = false AND r."occurredAt" >= ${new Date(from.getTime() - DAY)}
         AND (c.plan IS NULL OR c.plan <> 'internal')
+        AND c."isTest" IS NOT TRUE
       GROUP BY 1, 2`,
     prisma.customer.findMany({
-      where: { retainerMonthly: { not: null }, plan: { not: "internal" } },
+      where: { retainerMonthly: { not: null }, plan: { not: "internal" }, isTest: false },
       select: {
         id: true,
         archived: true,
@@ -591,6 +592,7 @@ export async function loadZahlen(now = new Date(), sicht: Sicht = "gesamt"): Pro
     WHERE r.cancelled = false AND r."occurredAt" >= ${new Date(monthStart(lastComplete).getTime() - DAY)}
     GROUP BY 1, 2, 3`;
   const allCustomers = await prisma.customer.findMany({
+    where: { isTest: false },
     select: {
       id: true,
       name: true,
@@ -652,6 +654,7 @@ export async function loadZahlen(now = new Date(), sicht: Sicht = "gesamt"): Pro
   const missingRows = await prisma.customer.findMany({
     where: {
       archived: false,
+      isTest: false,
       plan: { in: ["software", "service"] },
       retainerMonthly: null,
       OR: [{ onboarding: { liveAt: { not: null } } }, { retainerStart: { lte: now } }],

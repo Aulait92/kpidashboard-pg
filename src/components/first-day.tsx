@@ -27,7 +27,7 @@ export async function FirstDay({
     prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true } }).catch(() => null),
   ]);
   const offer = ob?.offerId
-    ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true } })
+    ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true, isTest: true } })
     : null;
   const progress = ob ? customerSetupProgress(onboardingChecklist(ob, offer), await customerExtras(customerId)) : null;
   const live = !ob || !!ob.liveAt;

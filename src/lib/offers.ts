@@ -54,6 +54,11 @@ export type OfferFormInput = {
   /** Vertreter (Standard) oder Makler: bestimmt die Garantien. */
   vermittlerTyp?: "vertreter" | "makler";
   /**
+   * Testangebot (Ole, 15.11.2026): alles 0 €, Annahme ohne Zahlung, legt einen Testkunden an
+   * (zählt nicht in Admin-Zahlen und Abrechnung, später löschbar).
+   */
+  test?: boolean;
+  /**
    * Empfehlungsrabatt auf die Einrichtung (netto). undefined = automatisch aus der
    * Kollegen-Empfehlung des Kontakts; Zahl = vom Admin übersteuert (0 = kein Rabatt).
    */
@@ -144,6 +149,13 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
     empfehlungModule: input.empfehlungModule,
     setupDiscount: discount?.amount ?? null,
   });
+  const test = input.test === true;
+  if (test) {
+    // Testangebot: alle Beträge 0 €, keine Jahreszahlung, kein Startpreis, kein Empfehlungsrabatt
+    Object.assign(price, { setupFee: 0, monthlyFee: 0, softwareFee: 0, listSetup: 0, setupDiscount: 0, annual: false, bestandFee: 0, empfehlungFee: 0 });
+    input = { ...input, annual: false, introMonthlyFee: null, introMonths: null };
+    discount = null;
+  }
   // Ist „Setup abweichend“ günstiger, gilt nur dieser (Rabatt wird nicht addiert)
   const discountApplied = discount != null && price.setupDiscount > 0;
   if (price.monthlyFee == null) {
@@ -206,7 +218,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             seats: pkg === "software" ? price.seats : null,
             seatsIncluded: pkg === "software" ? price.seatsIncluded : null,
             // Ab seatIndividualFrom sind alle Logins im individuellen Preis enthalten (0 €)
-            seatMonthly: pkg === "software" ? (price.seatsIndividual ? 0 : PRICE_LIST.seatMonthly) : null,
+            seatMonthly: pkg === "software" ? (price.seatsIndividual || test ? 0 : PRICE_LIST.seatMonthly) : null,
             // Modul gebucht: Monatspreis; null = nicht gebucht
             bestandMonthly: price.bestandActive ? price.bestandFee : null,
             empfehlungMonthly: price.empfehlungActive ? price.empfehlungFee : null,
@@ -214,7 +226,8 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             annualFreeMonths: price.annual ? PRICE_LIST.annualFreeMonths : null,
             introMonthlyFee: input.introMonthlyFee ?? null,
             introMonths: input.introMonthlyFee != null ? (input.introMonths ?? null) : null,
-            specialTerms: input.specialTerms?.trim() || null,
+            specialTerms: test ? "Testangebot: kostenlos, ohne Zahlung. Dient nur zum Ausprobieren und wird danach gelöscht." : input.specialTerms?.trim() || null,
+            isTest: test,
             startDate: input.startDate ? new Date(`${input.startDate}T12:00:00Z`) : null,
             customerChoosesTerm: choosesTerm,
             customerChoosesStart: choosesStart,
@@ -353,8 +366,8 @@ export async function acceptOffer(
   }
 
   // Ohne Online-Zahlung startet das Onboarding direkt mit der Annahme
-  // (sonst, sobald die Zahlung eingerichtet ist – siehe Stripe-Webhook).
-  if (!billingEnabled()) {
+  // (sonst, sobald die Zahlung eingerichtet ist – siehe Stripe-Webhook). Testangebote laufen nie über Stripe.
+  if (!billingEnabled() || offer.isTest) {
     await startOnboarding(offer.id).catch((err) => reportError(err, "onboarding-start", { offer: offer.number }));
   }
 

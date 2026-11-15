@@ -33,6 +33,7 @@ export default async function KundenUebersicht({ searchParams }: { searchParams:
     select: {
       id: true,
       name: true,
+      isTest: true,
       plan: true,
       retainerMonthly: true,
       paymentOverdueSince: true,
@@ -97,6 +98,7 @@ export default async function KundenUebersicht({ searchParams }: { searchParams:
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="truncate font-medium">{c.name.replace(/^Allianz\s+/i, "")}</span>
+                      {c.isTest ? <span className="badge bg-amber-100 text-amber-900">Test</span> : null}
                       {stage ? <span className={`badge ${CUSTOMER_COLOR[stage]}`}>{CUSTOMER_LABEL[stage]}</span> : <Badge>Leads (Airtable)</Badge>}
                       {c.paymentOverdueSince ? <Badge tone="danger">Zahlung offen</Badge> : null}
                       {pause ? <Badge tone="warning">{pause.kind === "dunning" ? "pausiert (Zahlung)" : "pausiert"}</Badge> : null}

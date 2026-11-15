@@ -92,6 +92,8 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
         data: {
           name: await uniqueCustomerName((offer.company || offer.contactName).trim(), offer.city),
           plan: pkg,
+          // Testangebot → Testkunde (zählt nicht in Admin-Zahlen und Abrechnung, später löschbar)
+          isTest: offer.isTest,
           // Vertreter oder Makler aus dem Angebot übernehmen (Provisionen, Rechner, Budget-Empfehlung)
           vermittlerTyp: offer.vermittlerTyp === "makler" ? "makler" : "vertreter",
           // Neue Kunden mit Software starten direkt in der neuen Oberfläche (Ole, 11.11.).
@@ -321,12 +323,12 @@ export async function loadOnboarding(where: { customerId: string } | { id: strin
 
 export type OnboardingFull = NonNullable<Awaited<ReturnType<typeof loadOnboarding>>>;
 
-export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: string; paidAt: Date | null } | null): ChecklistItem[] {
+export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: string; paidAt: Date | null; isTest?: boolean } | null): ChecklistItem[] {
   const software = ob.package !== "service";
   const firstLogin = ob.customer.users.map((u) => u.lastLoginAt).filter(Boolean).sort()[0] ?? null;
   const items: ChecklistItem[] = [];
   // Nur mit Online-Zahlung (Stripe) – sonst läuft die Zahlung außerhalb der App.
-  if (offer && billingEnabled()) {
+  if (offer && billingEnabled() && !offer.isTest) {
     items.push({
       key: "payment",
       label: "Zahlung eingerichtet",
@@ -452,7 +454,7 @@ export async function onboardingProgressFor(customerIds: string[]) {
   });
   const offers = await prisma.offer.findMany({
     where: { id: { in: rows.map((r) => r.offerId).filter(Boolean) as string[] } },
-    select: { id: true, paymentStatus: true, paidAt: true },
+    select: { id: true, paymentStatus: true, paidAt: true, isTest: true },
   });
   const map = new Map<string, { percent: number; live: boolean; waitingCustomer: number; waitingYou: number }>();
   for (const r of rows) {
@@ -472,7 +474,7 @@ export async function onboardingProgressFor(customerIds: string[]) {
 export async function customerSetupOpenCount(customerId: string): Promise<number> {
   const ob = await loadOnboarding({ customerId });
   if (!ob || ob.status === "cancelled") return 0;
-  const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true } }) : null;
+  const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true, isTest: true } }) : null;
   const progress = customerSetupProgress(onboardingChecklist(ob, offer), await customerExtras(customerId));
   // Nach dem Livegang zählen nur noch die Software-Schritte (z. B. WhatsApp nach einem Paketwechsel, Ole 13.11.2026);
   // Nur Betreuung: nach dem Livegang nichts mehr offen

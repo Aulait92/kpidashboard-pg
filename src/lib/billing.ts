@@ -185,6 +185,7 @@ export async function createCheckoutForOffer(offerId: string, zahlart?: Zahlart 
   const offer = await prisma.offer.findUnique({ where: { id: offerId } });
   if (!offer) return { error: "Angebot nicht gefunden." };
   if (offer.status !== "accepted") return { error: "Das Angebot ist noch nicht angenommen." };
+  if (offer.isTest) return { error: "Testangebote laufen ohne Zahlung." };
   if (offer.paymentStatus === "paid" || offer.paymentStatus === "processing") {
     return { error: "Die Zahlung ist bereits eingerichtet." };
   }
@@ -1384,7 +1385,7 @@ export async function changeMonthlyFee(
  * Lead bekommen hat. Erhöht nie über die bisherige Regel (alle Logins), siehe seatsToBill().
  */
 export async function reconcileSeatBilling(now = new Date()): Promise<{ changed: number; errors: number }> {
-  const customers = await prisma.customer.findMany({ where: { seatsIncluded: { not: null }, archived: false }, select: { id: true } });
+  const customers = await prisma.customer.findMany({ where: { seatsIncluded: { not: null }, archived: false, isTest: false }, select: { id: true } });
   let changed = 0;
   let errors = 0;
   for (const c of customers) {

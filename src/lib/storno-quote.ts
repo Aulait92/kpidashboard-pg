@@ -25,7 +25,7 @@ export function stornoStatsOf(rows: Row[], now: Date): StornoStats {
   return { overall: realStornoQuote(rows, now), bySparte };
 }
 
-async function loadRows(where: { customerId?: string }): Promise<Row[]> {
+async function loadRows(where: { customerId?: string; customer?: { isTest: boolean } }): Promise<Row[]> {
   const rows = await prisma.leadContract.findMany({
     where: { ...where, lead: { status: CLOSED_STATUS } },
     select: { customerId: true, sparte: true, productName: true, signedAt: true, status: true, cancelledAt: true, cancelReason: true },
@@ -42,7 +42,8 @@ export async function customerStornoStats(customerId: string, now = new Date()):
 
 /** Über alle Kunden: gesamt, je Sparte und je Kunde (nur Kunden mit Verträgen). */
 export async function allStornoStats(now = new Date()): Promise<StornoStats & { byCustomer: StornoRow[] }> {
-  const rows = await loadRows({});
+  // Testkunden zählen nicht (Ole, 15.11.2026)
+  const rows = await loadRows({ customer: { isTest: false } });
   const stats = stornoStatsOf(rows, now);
   const byId = new Map<string, Row[]>();
   for (const r of rows) byId.set(r.customerId, [...(byId.get(r.customerId) ?? []), r]);

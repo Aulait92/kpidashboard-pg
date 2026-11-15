@@ -378,7 +378,7 @@ export async function appInstalled(customerId: string): Promise<boolean> {
 export async function loadSetupOverview(customerId: string) {
   const ob = await loadOnboarding({ customerId });
   if (!ob) return null;
-  const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true } }) : null;
+  const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true, isTest: true } }) : null;
   const items = onboardingChecklist(ob, offer);
   const [appDone, provisionDone] = await Promise.all([appInstalled(customerId), loadCustomerProvision(customerId).then((p) => p.confirmed)]);
   const steps = setupSteps(ob, items, { appDone, provisionDone });
@@ -465,7 +465,7 @@ export async function runSetupReminders(now = new Date()): Promise<{ reminded: n
   for (const { customerId } of running) {
     const ob = await loadOnboarding({ customerId });
     if (!ob) continue;
-    const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true } }) : null;
+    const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true, isTest: true } }) : null;
     const open = openCustomerSteps(onboardingChecklist(ob, offer));
     if (!open.length) continue;
     const sent = (ob.setupReminders && typeof ob.setupReminders === "object" ? ob.setupReminders : {}) as Record<string, string>;
@@ -504,7 +504,7 @@ export async function stuckSetups(now = new Date()): Promise<{ customerId: strin
     if (!ob) continue;
     const days = Math.floor((now.getTime() - setupBase(ob).getTime()) / DAY);
     if (days < STUCK_AFTER_DAYS) continue;
-    const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true } }) : null;
+    const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true, isTest: true } }) : null;
     const open = openCustomerSteps(onboardingChecklist(ob, offer));
     if (open.length) out.push({ customerId, name: ob.customer.name, days, open: open.map((i) => i.label) });
   }
@@ -515,7 +515,7 @@ export async function stuckSetups(now = new Date()): Promise<{ customerId: strin
 export async function sendSetupReminderNow(customerId: string): Promise<{ ok: true } | { ok: false; error: string }> {
   const ob = await loadOnboarding({ customerId });
   if (!ob) return { ok: false, error: "Kein Onboarding gefunden." };
-  const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true } }) : null;
+  const offer = ob.offerId ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true, isTest: true } }) : null;
   const open = openCustomerSteps(onboardingChecklist(ob, offer));
   if (!open.length) return { ok: false, error: "Beim Kunden ist nichts mehr offen." };
   const ok = await sendSetupReminder(ob, open, { force: true });

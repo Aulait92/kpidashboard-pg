@@ -46,7 +46,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   if (!ob) redirect("/buyer");
   const { gcal, wa, schritt, weg } = await searchParams;
   const offer = ob.offerId
-    ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true } })
+    ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true, isTest: true } })
     : null;
   const items = onboardingChecklist(ob, offer);
   const done = (k: string) => items.find((i) => i.key === k)?.done ?? false;
