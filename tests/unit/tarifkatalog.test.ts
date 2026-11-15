@@ -11,6 +11,7 @@ import {
   parseBuendel,
   SPARTEN_STANDARD,
   sparteAusText,
+  spartenAusFormular,
   standardMerkmale,
   tarifeFuer,
   vorauswahl,
@@ -25,6 +26,8 @@ import {
   startAuswahl,
   summeEmpfehlung,
   tarifAusEigenem,
+  tarifAusKatalog,
+  tarifEinfuegen,
   zuAngebote,
   type Tarifauswahl,
 } from "@/lib/tarifauswahl";
@@ -138,8 +141,14 @@ describe("Grenzen und Tausch", () => {
     const a = startAuswahl(k, ["hausrat"], vertreter);
     const sp = a.sparten[0];
     expect(grenzenFuer(sp)).toEqual({ tarife: 4, merkmale: 5, bausteine: 2 });
-    sp.tarife.push({ ...sp.tarife[0], id: "allianz/hausrat/basis", kurz: "Basis" });
+    tarifEinfuegen(sp, tarifAusKatalog(tarifeFuer(k, "hausrat", ["allianz"])[0]));
+    expect(sp.tarife.map((t) => t.kurz)).toEqual(["Basis", "Smart", "Komfort", "Premium"]);
     expect(grenzenFuer(sp).merkmale).toBe(4);
+    // lange Werte (gemessen: Allianz Hausrat) passen nur in 3 Spalten
+    const lang = structuredClone(sp);
+    lang.tarife[0].werte["grobe-fahrlaessigkeit"] = "bis Versicherungssumme";
+    expect(grenzenFuer(lang).tarife).toBe(3);
+    expect(zuAngebote({ v: 1, sparten: [lang] }).items).toHaveLength(3);
     const m = startAuswahl(k, ["hausrat"], makler).sparten[0];
     expect(grenzenFuer(m).tarife).toBe(3);
     m.tarife[0] = { ...m.tarife[0], kurz: "Hausrat Premium Plus Extra" };
@@ -305,5 +314,33 @@ describe("Preise aus dem Angebot (PDF)", () => {
     expect(rs.tarife.map((t) => t.beitrag)).toEqual([null, 31.2, null]);
     // Original unverändert
     expect(a.sparten[0].tarife[1].beitrag).toBeNull();
+  });
+});
+
+describe("Echte Katalogdaten (data/tarifkatalog)", () => {
+  const echt = ladeTarifkatalog(path.join(__dirname, "..", "..", "data", "tarifkatalog"));
+  it("Allianz-Vertreter: je Sparte 3 Stufen um die Empfehlung, Stern auf Komfort; Halterhaftpflicht 3 Stufen", () => {
+    expect(echt.sparten).toHaveLength(11);
+    for (const s of echt.sparten) {
+      const v = vorauswahl(echt, s.key, { rolle: "vertreter", gesellschaften: ["allianz"] });
+      expect(v.tarife.length, s.key).toBe(3);
+      expect(v.tarife.find((t) => t.id === v.empfohlen)?.kurz, s.key).toBe("Komfort");
+      expect(standardMerkmale(s).length, s.key).toBeLessThanOrEqual(5);
+      for (const t of v.tarife) expect(t.kurz.length, t.id).toBeLessThanOrEqual(AUSWAHL_GRENZEN.kurzname);
+    }
+    expect(vorauswahl(echt, "tierhalter-hund", { rolle: "vertreter", gesellschaften: ["allianz"] }).tarife.map((t) => t.kurz)).toEqual(["Smart", "Komfort", "Premium"]);
+  });
+  it("AXA und SIGNAL IDUNA ohne Tierkranken: leere Vorauswahl (eigener Tarif bzw. Angebot); Makler bekommt Allianz-Stufen", () => {
+    expect(vorauswahl(echt, "katze-kranken", { rolle: "vertreter", gesellschaften: ["axa"] }).tarife).toEqual([]);
+    expect(vorauswahl(echt, "katze-op", { rolle: "makler", gesellschaften: [] }).tarife.every((t) => t.gesellschaft === "allianz")).toBe(true);
+    const m = vorauswahl(echt, "hausrat", { rolle: "makler", gesellschaften: [] });
+    expect(m.tarife.map((t) => t.gesellschaft)).toEqual(["allianz", "axa", "signal-iduna"]);
+  });
+  it("Bündelregel Allianz mit Staffel bis „ab 5“; Formularwörter für die Vorauswahl", () => {
+    expect(echt.buendel.allianz?.staffel.at(-1)).toEqual({ anzahl: 5, prozent: 20, abAnzahl: true });
+    expect(echt.buendel.allianz?.linien).toEqual(["Komfort", "Premium"]);
+    expect(spartenAusFormular(echt, "Privathaftpflicht, Hausrat und Rechtsschutz", "privatschutz")).toEqual(["haftpflicht", "hausrat", "rechtsschutz"]);
+    expect(spartenAusFormular(echt, "Tierhalterhaftpflicht, Unfall", "privatschutz")).toEqual(["unfall"]);
+    expect(spartenAusFormular(echt, "Hundehaftpflicht")).toEqual(["tierhalter-hund"]);
   });
 });

@@ -123,7 +123,7 @@ export async function ladeTarifvorbereitung(appointmentId: string, ctx: TeamCtx,
       auswahl = ausAltenAngeboten(alt, k);
       quelle = "angebote";
     } else {
-      auswahl = startAuswahl(k, spartenFuerTermin(d), vertrieb, meine);
+      auswahl = startAuswahl(k, spartenFuerTermin(d, k), vertrieb, meine);
       quelle = "neu";
     }
   }

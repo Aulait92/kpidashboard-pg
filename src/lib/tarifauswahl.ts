@@ -36,6 +36,8 @@ export type TarifWahl = {
   /** Kurzname für die Folie (≤ 18 Zeichen, ohne Spartenwort) */
   kurz: string;
   stand: string | null;
+  /** Stufe im Katalog (1 = kleinste), für die Reihenfolge der Spalten */
+  stufe?: number | null;
   werte: Record<string, string | null>;
   bausteinStatus: Record<string, BausteinStatus>;
   /** Beitrag in der Zahlweise, ohne Bausteine */
@@ -123,6 +125,7 @@ function cleanTarif(v: unknown): TarifWahl | null {
     name,
     kurz: str(r.kurz, 80) ?? name,
     stand: str(r.stand, 20),
+    ...(typeof r.stufe === "number" && Number.isFinite(r.stufe) ? { stufe: r.stufe } : {}),
     werte,
     bausteinStatus,
     beitrag: betrag(r.beitrag),
@@ -182,6 +185,7 @@ export function tarifAusKatalog(t: KatalogTarif): TarifWahl {
     name: t.name,
     kurz: t.kurz,
     stand: t.stand,
+    stufe: t.stufe,
     werte: { ...t.werte },
     bausteinStatus: { ...t.bausteine },
     beitrag: null,
@@ -212,6 +216,14 @@ export function tarifAusEigenem(e: EigenerTarifDaten): TarifWahl {
     bausteine: {},
     inAllen: [],
   };
+}
+
+/** Tarif einfügen: Stufen derselben Gesellschaft bleiben aufsteigend (Basis vor Smart), sonst hinten anfügen. */
+export function tarifEinfuegen(sp: SparteWahl, t: TarifWahl): void {
+  const g = (x: TarifWahl) => (x.gesellschaftKey ?? x.gesellschaft).toLowerCase();
+  const i = t.stufe == null ? -1 : sp.tarife.findIndex((x) => g(x) === g(t) && x.stufe != null && x.stufe > t.stufe!);
+  if (i < 0) sp.tarife.push(t);
+  else sp.tarife.splice(i, 0, t);
 }
 
 /** Kurzname für die Folie: ohne Spartenwort vorn, höchstens 18 Zeichen an einer Wortgrenze. */
@@ -245,6 +257,9 @@ export function startAuswahl(k: Katalog, sparten: string[], v: Vertrieb, meine?:
 
 // ─── Grenzen ────────────────────────────────────────────────────────────────────────────────
 
+/** Längster Wert, mit dem 4 Spalten noch passen */
+export const WERT_KURZ_BEI_VIER = 16;
+
 const gesKey = (t: TarifWahl) => (t.gesellschaftKey ?? t.gesellschaft).toLowerCase();
 
 /** Spaltennamen der Vergleichsfolie (wie lib/praesentation.ts). */
@@ -258,7 +273,10 @@ const sparteLabelFuerFolie = (sp: SparteWahl) => sp.label;
  * oder einem langen (zweizeiligen) Tarifnamen eine Merkmalzeile weniger; 2 Bausteine.
  */
 export function grenzenFuer(sp: SparteWahl): { tarife: number; merkmale: number; bausteine: number } {
-  const eineGesellschaft = new Set(sp.tarife.map(gesKey)).size <= 1;
+  // 4 Spalten nur mit kurzen Werten (gemessen mit dem echten Katalog: Hausrat mit Werten bis 24 Zeichen ragt sonst
+  // über die Fußzeile, mit 3 Spalten passt jede Sparte)
+  const langeWerte = sp.tarife.some((t) => sp.merkmale.some((k) => (t.werte[k] ?? "").length > WERT_KURZ_BEI_VIER));
+  const eineGesellschaft = new Set(sp.tarife.map(gesKey)).size <= 1 && !langeWerte;
   const gezeigt = sp.tarife.filter((t) => t.zeigen);
   const lang = spaltenFuer(sp, gezeigt.slice(0, 4)).some((n) => n.length > AUSWAHL_GRENZEN.kurzname);
   return {

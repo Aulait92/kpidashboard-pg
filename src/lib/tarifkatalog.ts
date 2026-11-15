@@ -12,7 +12,15 @@
 
 export type BausteinStatus = "inklusive" | "optional" | "nein";
 export type SchemaEintrag = { key: string; label: string; kurz: string; standard?: boolean };
-export type KatalogSparte = { key: string; label: string; merkmale: SchemaEintrag[]; bausteine: SchemaEintrag[] };
+export type KatalogSparte = {
+  key: string;
+  label: string;
+  merkmale: SchemaEintrag[];
+  bausteine: SchemaEintrag[];
+  /** Produkt im Lead (katze, hund, pferd, privatschutz) und Wort im Leadformular für die Vorauswahl */
+  produkt?: string | null;
+  formularMatch?: string | null;
+};
 export type KatalogTarif = {
   /** „allianz/hausrat/komfort“ */
   id: string;
@@ -39,7 +47,7 @@ export type KatalogTarif = {
  * PrivatSchutz, ab 2 Produkten der Linien Komfort/Premium mit 3 Jahren Laufzeit 5 bis 20 % auf die Einzelprämien.
  * Datei: data/tarifkatalog/<gesellschaft>/buendel.json.
  */
-export type BuendelRegel = { linien: string[]; mindestLaufzeitJahre: number | null; sparten: string[]; staffel: { anzahl: number; prozent: number }[] };
+export type BuendelRegel = { linien: string[]; mindestLaufzeitJahre: number | null; sparten: string[]; staffel: { anzahl: number; prozent: number; abAnzahl?: boolean }[] };
 export type Katalog = { sparten: KatalogSparte[]; tarife: KatalogTarif[]; buendel: Record<string, BuendelRegel> };
 
 /**
@@ -236,7 +244,7 @@ export function parseSchema(raw: unknown): KatalogSparte[] {
     const key = text(r.key, 60);
     const label = text(r.label, 80);
     if (!key || !label || sparten.some((s) => s.key === key)) continue;
-    sparten.push({ key, label, merkmale: schemaEintraege(r.merkmale, true), bausteine: schemaEintraege(r.bausteine, false) });
+    sparten.push({ key, label, merkmale: schemaEintraege(r.merkmale, true), bausteine: schemaEintraege(r.bausteine, false), produkt: text(r.produkt, 40), formularMatch: text(r.formularMatch, 60) });
   }
   return sparten.length ? sparten : SPARTEN_STANDARD;
 }
@@ -292,7 +300,7 @@ export function parseBuendel(raw: unknown): BuendelRegel | null {
   const staffel = (Array.isArray(r.staffel) ? r.staffel : [])
     .map((x) => obj(x))
     .filter((x) => typeof x.anzahl === "number" && typeof x.prozent === "number" && x.anzahl > 0 && x.prozent > 0 && x.prozent < 100)
-    .map((x) => ({ anzahl: x.anzahl as number, prozent: x.prozent as number }))
+    .map((x) => ({ anzahl: x.anzahl as number, prozent: x.prozent as number, ...(x.abAnzahl === true ? { abAnzahl: true } : {}) }))
     .sort((a, b) => a.anzahl - b.anzahl);
   if (!staffel.length) return null;
   const liste = (v: unknown) => (Array.isArray(v) ? v.map((x) => text(x, 60)).filter((x): x is string => !!x) : []);
@@ -410,4 +418,24 @@ export function sparteAusText(t: string | null | undefined): string | null {
   if (/unfall/.test(s)) return "unfall";
   if (/haftpflicht/.test(s)) return "haftpflicht";
   return null;
+}
+
+/**
+ * Sparten, deren Wort aus dem Leadformular (schema.json formularMatch) im Text vorkommt, z. B. „Hausrat, Rechtsschutz“.
+ * Längere Wörter anderer Sparten zählen nicht mit („Hundehaftpflicht“, „Tierhalterhaftpflicht“ sind keine
+ * Privathaftpflicht). produkt schränkt ein (z. B. privatschutz).
+ */
+export function spartenAusFormular(k: Pick<Katalog, "sparten">, text: string | null | undefined, produkt?: string | null): string[] {
+  const roh = (text ?? "").toLocaleLowerCase("de");
+  if (!roh.trim()) return [];
+  const woerter = k.sparten.map((s) => s.formularMatch?.toLocaleLowerCase("de")).filter((w): w is string => !!w);
+  return k.sparten
+    .filter((s) => (!produkt || !s.produkt || s.produkt === produkt) && s.formularMatch)
+    .filter((s) => {
+      const w = s.formularMatch!.toLocaleLowerCase("de");
+      let t = roh.replace(/tierhalter-?\s*haftpflicht/g, " ");
+      for (const l of woerter) if (l !== w && l.includes(w)) t = t.split(l).join(" ");
+      return t.includes(w);
+    })
+    .map((s) => s.key);
 }

@@ -7,7 +7,7 @@
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
 import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
 import { abschnitte, offenePunkte, spartenAus, tierWunsch, type VorbereitungDaten } from "@/lib/termin-vorbereitung";
-import { sparteAusText } from "@/lib/tarifkatalog";
+import { sparteAusText, spartenAusFormular, type Katalog } from "@/lib/tarifkatalog";
 
 /** Neue Terminvorbereitung für alle Kunden? (Ole, 15.11.2026: erst Admin und Testkunde) */
 export const TERMINVORBEREITUNG_NEU_FUER_ALLE = false;
@@ -31,7 +31,7 @@ const formWert = (d: VorbereitungDaten, re: RegExp) => d.formular.find((f) => re
 const angaben = (d: VorbereitungDaten) => Object.fromEntries(qualificationPoints(d.angaben).map((p) => [p.key, p.value])) as Partial<Record<QualificationKey, string>>;
 
 /** Gefragte Sparten (Schlüssel im Tarifkatalog) aus Produkt, Formular und Angaben des Assistenten. */
-export function spartenFuerTermin(d: VorbereitungDaten): string[] {
+export function spartenFuerTermin(d: VorbereitungDaten, k?: Pick<Katalog, "sparten"> | null): string[] {
   const q = angaben(d);
   const kat = produktCheckliste(d.lead.produkt)?.key ?? null;
   const tierText = [formWert(d, /tierart/i), q.tier, d.lead.produkt].filter(Boolean).join(" ");
@@ -41,8 +41,10 @@ export function spartenFuerTermin(d: VorbereitungDaten): string[] {
   if (kat === "privatschutz") {
     const interesse = [formWert(d, /versicherungsinteresse|interesse/i), q.interesse].filter(Boolean).join(" ");
     const sp = spartenAus(interesse);
+    // Wort aus dem Leadformular je Sparte (schema.json formularMatch), ergänzend zu den festen Mustern
+    const ausKatalog = k ? spartenAusFormular(k, interesse, "privatschutz") : [];
     const out: string[] = [];
-    for (const s of sp.length ? sp : (["haftpflicht", "hausrat"] as const)) {
+    for (const s of sp.length || ausKatalog.length ? sp : (["haftpflicht", "hausrat"] as const)) {
       if (s !== "tier") {
         out.push(s);
         continue;
@@ -52,7 +54,7 @@ export function spartenFuerTermin(d: VorbereitungDaten): string[] {
       if (tw.kranken) out.push(`${/hund/i.test(t) ? "hund" : "katze"}-${op ? "op" : "kranken"}`);
       if (tw.halter) out.push(/pferd/i.test(t) ? "tierhalter-pferd" : "tierhalter-hund");
     }
-    return [...new Set(out)];
+    return [...new Set([...out, ...ausKatalog])];
   }
   const s = sparteAusText(d.lead.produkt);
   return s ? [s] : [];

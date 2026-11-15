@@ -5,7 +5,7 @@ import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Browser } from "playwright";
 import { ladeTarifkatalog } from "@/lib/tarifkatalog-laden";
-import { startAuswahl, zuAngebote, type Tarifauswahl } from "@/lib/tarifauswahl";
+import { startAuswahl, tarifAusKatalog, zuAngebote, type Tarifauswahl } from "@/lib/tarifauswahl";
 import { folien, markeFuer, praesentationHtml } from "@/lib/praesentation";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
 
@@ -94,6 +94,28 @@ describe("Vergleichsfolie passt (Chromium)", () => {
     expect(f.breiter).toBe(false);
     expect(f.zoom).toBe("");
   });
+
+  it("echter Katalog: jede Allianz-Sparte mit allen Stufen, Standard-Merkmalen und 2 Bausteinen passt", async (ctx) => {
+    if (!browser) return ctx.skip();
+    const echt = ladeTarifkatalog(path.join(__dirname, "..", "..", "data", "tarifkatalog"));
+    for (const s of echt.sparten) {
+      const a = startAuswahl(echt, [s.key], { rolle: "vertreter", gesellschaften: ["allianz"] });
+      const sp = a.sparten[0];
+      // alle Stufen (bis 4), längste Merkmal-Kurznamen bevorzugt, 2 Bausteine mit Preis
+      sp.tarife = echt.tarife.filter((t) => t.gesellschaft === "allianz" && t.sparte === s.key).map(tarifAusKatalog);
+      sp.bausteine = s.bausteine.slice(0, 2).map((b) => b.key);
+      sp.tarife.forEach((t, i) => {
+        t.beitrag = 123.45 + i;
+        for (const b of sp.bausteine) {
+          t.bausteinStatus[b] = "optional";
+          t.bausteine[b] = { an: i % 2 === 0, beitrag: 12.34 };
+        }
+      });
+      const [f] = await messen(a);
+      expect(f.unten, `${s.key}: Inhalt ${f.unten} px, Fußzeile ${f.fuss} px`).toBeLessThanOrEqual(f.fuss);
+      expect(f.breiter, s.key).toBe(false);
+    }
+  }, 60_000);
 
   it("4 Stufen: eine Merkmalzeile weniger, nichts unter der Fußzeile", async (ctx) => {
     if (!browser) return ctx.skip();
