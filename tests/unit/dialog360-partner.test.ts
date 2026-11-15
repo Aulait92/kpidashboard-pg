@@ -57,7 +57,8 @@ describe("360dialog Partner: signierter state", () => {
 describe("360dialog Partner: Link und Redirect", () => {
   it("baut den Onboarding-Link mit redirect_url, state und Sprache", () => {
     const link = new URL(onboardingLink(partnerConfig()!, { redirectUrl: "https://app.example.de/api/whatsapp/360dialog/callback", state: "st", email: "a@b.de", name: "Agentur X" }));
-    expect(link.origin + link.pathname).toBe("https://app.360dialog.com/dashboard/app/PaRtNeR1/permissions");
+    expect(link.origin + link.pathname).toBe("https://app.360dialog.com/onboarding/PaRtNeR1");
+    expect(link.searchParams.get("next")).toBe("signup");
     expect(link.searchParams.get("redirect_url")).toBe("https://app.example.de/api/whatsapp/360dialog/callback");
     expect(link.searchParams.get("state")).toBe("st");
     expect(link.searchParams.get("lang")).toBe("de");

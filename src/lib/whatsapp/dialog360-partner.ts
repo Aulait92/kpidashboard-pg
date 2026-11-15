@@ -1,7 +1,10 @@
 // 360dialog Partner-API: Kunden verbinden ihre WhatsApp-Nummer selbst
 // („Integrated Onboarding“). Ablauf laut 360dialog-Doku:
-//  1. Kunde öffnet https://app.360dialog.com/dashboard/app/<PARTNER_ID>/permissions
-//     (mit redirect_url und state) – Konto anlegen, Meta Embedded Signup.
+//  1. Kunde öffnet https://app.360dialog.com/onboarding/<PARTNER_ID> („Direct Link“ für neue Nummern unter
+//     unserem Partner; mit redirect_url, state, partner, next=signup) – Konto anlegen, Meta Embedded Signup.
+//     Bis 15.11.2026 war es …/dashboard/app/<PARTNER_ID>/permissions: Nicht angemeldete Nutzer sahen dort die
+//     Login-Seite, „Sign up“ führte in die allgemeine Registrierung ohne Partner (Kunde direkt bei 360dialog,
+//     Tarifwahl, kein Rücksprung). Per DIALOG360_ONBOARDING_URL weiter umstellbar.
 //  2. 360dialog leitet zurück an redirect_url mit ?client=<id>&channels=[<id>,…]&state=…
 //  3. Backend erzeugt per Partner-API einen API-Key für den Channel:
 //     POST https://hub.360dialog.io/api/v2/partners/<PARTNER_ID>/channels/<CHANNEL_ID>/api_keys
@@ -14,7 +17,7 @@
 import crypto from "node:crypto";
 
 const HUB_DEFAULT = "https://hub.360dialog.io";
-const ONBOARDING_DEFAULT = "https://app.360dialog.com/dashboard/app/{partner_id}/permissions";
+const ONBOARDING_DEFAULT = "https://app.360dialog.com/onboarding/{partner_id}";
 /** Gültigkeit des signierten state (Kunde muss Konto anlegen + Meta-Login – großzügig). */
 export const STATE_TTL_MS = 2 * 60 * 60 * 1000;
 
@@ -73,6 +76,8 @@ export function onboardingLink(cfg: PartnerConfig, opts: { redirectUrl: string; 
   url.searchParams.set("redirect_url", opts.redirectUrl);
   url.searchParams.set("state", opts.state);
   url.searchParams.set("lang", "de");
+  // Nicht angemeldete Nutzer direkt zur Registrierung (statt Login-Seite), im Kontext unseres Partners
+  url.searchParams.set("next", "signup");
   // Kein plan_selection (15.11.2026): wirkt laut Doku nur bei Partnern mit gestaffelten Tarifen, Standard ist ohnehin
   // „regular“; bei Kunden, die selbst zahlen, lässt es sie den Tarif wählen. Partnerbezahlte Kunden sehen keine Tarifwahl.
   // Kunden-ID am 360dialog-Kunden speichern (partner_payload): so finden wir die Nummer auch ohne Rücksprung
