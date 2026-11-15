@@ -5,6 +5,7 @@ import { getCurrentSession } from "@/lib/auth";
 import { checkAdAccountAccess } from "@/lib/meta";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
+import { parseAdAccountId } from "@/lib/selbst-einrichtung";
 
 export type MetaAccountState = { ok?: boolean; error?: string; message?: string };
 
@@ -13,8 +14,10 @@ export async function setMetaAdAccountAction(_prev: MetaAccountState, fd: FormDa
   const session = await getCurrentSession();
   if (!session || session.role !== "ADMIN") return { error: "Nur Admins." };
   const customerId = String(fd.get("customerId") ?? "");
-  const raw = String(fd.get("account") ?? "").trim().replace(/^act_/i, "").replace(/\s/g, "");
-  if (raw && !/^\d{5,25}$/.test(raw)) return { error: "Bitte die Werbekonto-ID eingeben (nur Ziffern, z. B. 1234567890123456)." };
+  // Gleiche Erkennung wie in der Einrichtung: act_…, Link, kopierter Text mit unsichtbaren Zeichen
+  const input = String(fd.get("account") ?? "").trim();
+  const raw = input ? parseAdAccountId(input) : "";
+  if (raw === null) return { error: "Bitte die Werbekonto-ID eingeben (z. B. act_1234567890123456 oder nur die Ziffern)." };
   await prisma.customer.update({ where: { id: customerId }, data: { metaAdAccountId: raw || null } });
   await audit("customer.meta_account", { entity: "Customer", entityId: customerId, customerId, details: { account: raw || null } });
   revalidatePath(`/admin/kunden/${customerId}`, "layout");

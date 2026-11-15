@@ -18,6 +18,17 @@ describe("Selbst-Einrichtung: Eingaben", () => {
     expect(parseAdAccountId("act_123456789012345")).toBe("123456789012345");
     expect(parseAdAccountId(" 1234567890 ")).toBe("1234567890");
     expect(parseAdAccountId("https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=987654321012&nav_entry_point=x")).toBe("987654321012");
+    // Kopiert aus dem Werbeanzeigenmanager (Ole, 15.11.2026): unsichtbare Zeichen, Leerzeichen, Name dahinter
+    expect(parseAdAccountId("\u200eact_1088907616945081\u200f")).toBe("1088907616945081");
+    expect(parseAdAccountId("act_ 1088907616945081")).toBe("1088907616945081");
+    expect(parseAdAccountId("ACT_1088907616945081")).toBe("1088907616945081");
+    expect(parseAdAccountId("act-1088907616945081")).toBe("1088907616945081");
+    expect(parseAdAccountId("\u00a0act_1088907616945081\u00a0")).toBe("1088907616945081");
+    expect(parseAdAccountId("Pferdeversicherung (act_1088907616945081)")).toBe("1088907616945081");
+    expect(parseAdAccountId("1088907616945081 Pferdeversicherung")).toBe("1088907616945081");
+    expect(parseAdAccountId("1 088 907 616 945 081")).toBe("1088907616945081");
+    expect(parseAdAccountId("act_123456789 und 987654321")).toBe("123456789");
+    expect(parseAdAccountId("123456789 oder 987654321")).toBeNull();
     expect(parseAdAccountId("Mein Konto")).toBeNull();
     expect(parseAdAccountId("")).toBeNull();
   });

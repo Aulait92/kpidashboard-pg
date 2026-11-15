@@ -116,14 +116,23 @@ export function consentText(agency: string): string {
 
 // ─── Eingaben ───────────────────────────────────────────────────────────
 
-/** Werbekonto-ID aus „act_123“, „123“ oder einem Werbeanzeigenmanager-Link (…?act=123). */
+/**
+ * Werbekonto-ID aus „act_123“, „123“, einem Werbeanzeigenmanager-Link (…?act=123) oder kopiertem Text
+ * (Ole, 15.11.2026: „act_…“ wurde nicht erkannt). Unsichtbare Zeichen und Leerzeichen aus dem Kopieren werden
+ * ignoriert, „act_“ in jeder Schreibweise (ACT_, act-, act ) erkannt; sonst zählt eine einzelne Ziffernfolge.
+ */
 export function parseAdAccountId(raw: string | null | undefined): string | null {
-  const s = String(raw ?? "").trim();
+  // Unsichtbare Zeichen (Zero-Width, Richtungsmarken, BOM) entfernen
+  const s = String(raw ?? "").replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF\u00AD]/g, "").trim();
   if (!s) return null;
   const fromUrl = s.match(/[?&]act=(\d{6,20})/)?.[1];
   if (fromUrl) return fromUrl;
-  const m = s.replace(/\s+/g, "").match(/^(?:act_)?(\d{6,20})$/i);
-  return m ? m[1] : null;
+  const act = s.match(/act[\s_\-:]*(\d{6,20})(?!\d)/i)?.[1];
+  if (act) return act;
+  const groups = s.match(/\d{6,20}/g) ?? [];
+  const plain = s.replace(/\s+/g, "");
+  if (/^\d{6,20}$/.test(plain)) return plain;
+  return groups.length === 1 && !/\d{21,}/.test(s) ? groups[0] : null;
 }
 
 /** Facebook-Seite: Ziffern-ID, profile.php?id=…, …-123456789 am Ende oder Seitenname aus der URL. */
