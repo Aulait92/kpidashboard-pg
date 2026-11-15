@@ -9,6 +9,8 @@ import { abschnitte, offenePunkte, spartenVon, unterlagenFuer } from "@/lib/term
 import { angeboteAuslesenErlaubt, loadAngebote, loadVorbereitung } from "@/lib/termin-vorbereitung-server";
 import { AngeboteEditor } from "./angebote-editor";
 import { PreparedButton } from "./prepared-button";
+import { NeueVorbereitung } from "./neu-seite";
+import { neueTerminvorbereitung } from "@/lib/terminvorbereitung-neu";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Terminvorbereitung | performancegrowth" };
@@ -25,6 +27,12 @@ export default async function TerminVorbereitungPage({ params, searchParams }: {
   const { von } = await searchParams;
   const d = await loadVorbereitung(id, ctx);
   if (!d) notFound();
+  // Neue Terminvorbereitung mit Tarifkatalog (Ole, 15.11.2026): hinter Schalter, sonst die bisherige Seite unverändert
+  if (neueTerminvorbereitung(ctx)) {
+    const neu = await NeueVorbereitung({ ctx, d, von });
+    if (neu) return neu;
+    notFound();
+  }
   const ab = abschnitte(d);
   const offen = offenePunkte(ab);
   const unterlagen = unterlagenFuer(d.lead.produkt, spartenVon(d));
