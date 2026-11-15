@@ -66,6 +66,8 @@ export const LIMITS = {
   transcribe: { limit: 60, windowMs: HOUR },
   // „Mit Mensch sprechen“ (benachrichtigt das Team per Push)
   supportEscalation: { limit: 10, windowMs: HOUR },
+  // Geschützter Upload der Vertriebsunterlagen (/api/ops/unterlagen)
+  opsUpload: { limit: 20, windowMs: HOUR },
   // Öffentliche Seiten
   publicBooking: { limit: 20, windowMs: 10 * MIN },
   offerAccept: { limit: 10, windowMs: 10 * MIN },

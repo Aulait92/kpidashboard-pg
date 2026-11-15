@@ -122,3 +122,14 @@ ein „2FA“-Abzeichen bei allen, die es nutzen.
 - CI-Schritt `npm audit --omit=dev --audit-level=high`: bricht bei hohen/kritischen
   Lücken in Produktionsabhängigkeiten ab. Stand 12.11.2026: 0 Funde nach Update auf
   Next.js 16.4.6 (u. a. kritische Lücke „Middleware-Umgehung“ behoben) und Prisma 7.10.1.
+
+## Betriebs-Zugänge für Claude (ohne Admin-Login)
+
+| Weg | Schlüssel (Railway-Variable) | Header | Darf |
+|---|---|---|---|
+| `GET /api/ops/diagnose?q=…` | `OPS_READ_TOKEN` (≥ 32 Zeichen) | `Authorization: Bearer …` | nur feste, lesende Abfragen |
+| `GET/POST /api/ops/unterlagen` | `OPS_UPLOAD_TOKEN` (≥ 32 Zeichen) | `X-Ops-Upload-Token: …` | nur die Präsentationen unter Admin → Marketing → Unterlagen ersetzen bzw. auflisten (Name, Größe, Datum) |
+
+- Ohne gesetzte Variable ist der jeweilige Weg aus (403). Der Lese-Schlüssel öffnet den Upload nicht.
+- Jeder Upload steht im Änderungsprotokoll („Präsentation hochgeladen (Upload-Schlüssel)“), höchstens 20 Uploads pro Stunde.
+- Schlüssel wechseln: neuen Wert in Railway und im Netzwerk-Geheimnis der Claude-Umgebung eintragen; abschalten: Variable löschen.

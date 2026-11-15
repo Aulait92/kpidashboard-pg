@@ -8,6 +8,7 @@ import { reportError } from "@/lib/monitoring";
 export type AuditActor = { id?: string | null; email?: string | null; role?: string | null };
 
 export const AUDIT_LABEL: Record<string, string> = {
+  "presentation.upload": "Präsentation hochgeladen (Upload-Schlüssel)",
   login: "Anmeldung",
   "login.2fa": "Anmeldung mit Zwei-Faktor",
   "login.failed": "Anmeldung fehlgeschlagen",
