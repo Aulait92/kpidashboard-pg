@@ -1,6 +1,7 @@
 // Diagnose-API: nur mit eigenem Lese-Schlüssel, nur feste Abfragen (Ole, 14.11.2026).
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { GET } from "@/app/api/ops/diagnose/route";
+import { prisma } from "@/lib/prisma";
 import { requireTestDb } from "./db";
 
 const TOKEN = "test-read-token-0123456789-0123456789-abcdef";
@@ -35,5 +36,27 @@ describe("Diagnose-API", () => {
     const j = (await (await GET(req("stripe", TOKEN))).json()) as { data: Record<string, unknown> };
     expect(j.data.schluessel).toBe("test");
     expect(JSON.stringify(j)).not.toContain("sk_test_abc");
+  });
+
+  it("login: Befund zu einer E-Mail ohne Hash, zählt Fehlversuche auch mit Leerzeichen statt +", async () => {
+    const { makeCustomer, makeBuyer, cleanupCustomer } = await import("./db");
+    const c = await makeCustomer();
+    const u = await makeBuyer(c.id, "owner");
+    const plus = u.email.replace("@", "+1@");
+    await prisma.user.update({ where: { id: u.id }, data: { email: plus } });
+    await prisma.customer.update({ where: { id: c.id }, data: { isTest: true } });
+    await prisma.auditLog.create({ data: { action: "login.failed", actorEmail: plus.replace("+", " ") } });
+    await prisma.auditLog.create({ data: { action: "login.failed", actorEmail: plus } });
+    const r = await GET(req(`login&email=${encodeURIComponent(" " + plus.toUpperCase() + " ")}`, TOKEN));
+    const j = (await r.json()) as { data: { loginsExakt: number; logins: { kundeTest: boolean; role: string; hashArt: string }[]; fehlversuche15Min: Record<string, number> } };
+    expect(j.data.loginsExakt).toBe(1);
+    expect(j.data.logins[0]).toMatchObject({ role: "BUYER", kundeTest: true });
+    expect(j.data.logins[0].hashArt).toBe("x");
+    expect(JSON.stringify(j)).not.toContain("passwordHash");
+    expect(j.data.fehlversuche15Min.exakt).toBe(1);
+    expect(j.data.fehlversuche15Min[JSON.stringify(plus.replace("+", " "))]).toBe(1);
+    await prisma.auditLog.deleteMany({ where: { actorEmail: { in: [plus, plus.replace("+", " ")] } } });
+    await cleanupCustomer(c.id);
+    await prisma.user.deleteMany({ where: { id: u.id } });
   });
 });

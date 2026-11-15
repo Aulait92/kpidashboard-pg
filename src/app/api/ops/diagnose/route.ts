@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 // damit Claude Zustände prüfen kann, ohne Datenbank-Zugang. Kein freies SQL, keine Geheimnisse,
 // Lead-Daten nur so weit nötig (Name statt Telefon/E-Mail).
 // Absicherung: eigener Lese-Schlüssel OPS_READ_TOKEN (≥ 32 Zeichen) als Bearer-Token.
-//   GET /api/ops/diagnose?q=uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|gedankenstriche
+//   GET /api/ops/diagnose?q=uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|gedankenstriche|login&email=…
 export const dynamic = "force-dynamic";
 
 function authorized(req: Request): boolean {
@@ -123,6 +123,7 @@ async function kunden() {
       seatsBilled: true,
       existingCustomersEnabled: true,
       empfehlungEnabled: true,
+      isTest: true,
       createdAt: true,
       _count: { select: { leads: true, users: true } },
     },
@@ -141,15 +142,87 @@ async function uebersicht() {
   return { kunden: kundenAnz, leads, vertraege, logins, followups: followupsAnz, vorlagen: vorlagenAnz, abfragen: Object.keys(QUERIES) };
 }
 
-const QUERIES: Record<string, () => Promise<unknown>> = { uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, gedankenstriche };
+/**
+ * Login einer E-Mail prüfen (Ole, 15.11.2026: Testkunde kommt nicht rein). Nur Befund, keine Hashes,
+ * keine fremden Adressen: Login vorhanden (exakt normalisiert), Rolle, Kunde (Test, archiviert),
+ * Fehlversuche (auch mit Leerzeichen statt „+“, wie bei URL-Kodierung), letztes Passwort-Setzen und letzter Login.
+ */
+async function login(params: URLSearchParams) {
+  const raw = params.get("email") ?? "";
+  const email = raw.trim().toLowerCase();
+  if (!email) return { fehler: "email fehlt" };
+  const variants = [...new Set([email, email.replace(/\+/g, " "), email.replace(/\+/g, "%2b"), raw])];
+  const since15 = new Date(Date.now() - 15 * 60_000);
+  const since24 = new Date(Date.now() - 24 * 60 * 60_000);
+  const [users, similar] = await Promise.all([
+    prisma.user.findMany({
+      where: { email },
+      select: {
+        id: true,
+        role: true,
+        teamRole: true,
+        customerId: true,
+        createdAt: true,
+        lastLoginAt: true,
+        sessionVersion: true,
+        totpEnabledAt: true,
+        passwordHash: true,
+        customer: { select: { id: true, isTest: true, archived: true, plan: true, onboarding: { select: { status: true, liveAt: true } } } },
+      },
+    }),
+    prisma.user.count({ where: { email: { contains: email.split("@")[0].split("+")[0], mode: "insensitive" } } }),
+  ]);
+  const failed = async (since: Date) =>
+    Object.fromEntries(
+      await Promise.all(variants.map(async (v) => [v === email ? "exakt" : JSON.stringify(v), await prisma.auditLog.count({ where: { action: "login.failed", actorEmail: v, at: { gt: since } } })])),
+    );
+  const ids = users.map((u) => u.id);
+  const [f15, f24, lastOk, pwSet] = await Promise.all([
+    failed(since15),
+    failed(since24),
+    ids.length ? prisma.auditLog.findFirst({ where: { action: "login", entityId: { in: ids } }, orderBy: { at: "desc" }, select: { at: true } }) : null,
+    ids.length
+      ? prisma.auditLog.findMany({ where: { action: { in: ["user.password_reset", "user.create", "password.reset_self"] }, entityId: { in: ids } }, orderBy: { at: "desc" }, take: 5, select: { action: true, at: true } })
+      : [],
+  ]);
+  return {
+    eingabeNormalisiert: raw !== email ? "Eingabe wurde getrimmt/kleingeschrieben" : "unverändert",
+    loginsExakt: users.length,
+    aehnlicheLogins: similar,
+    logins: users.map((u) => ({
+      id: u.id,
+      role: u.role,
+      teamRole: u.teamRole,
+      hatKunde: !!u.customerId,
+      kundeGefunden: !!u.customer,
+      kundeTest: u.customer?.isTest ?? null,
+      kundeArchiviert: u.customer?.archived ?? null,
+      plan: u.customer?.plan ?? null,
+      onboarding: u.customer?.onboarding ? { status: u.customer.onboarding.status, live: !!u.customer.onboarding.liveAt } : null,
+      angelegt: u.createdAt,
+      letzterLogin: u.lastLoginAt,
+      sessionVersion: u.sessionVersion,
+      zweiFaktor: !!u.totpEnabledAt,
+      hashArt: u.passwordHash.slice(0, 4),
+    })),
+    fehlversuche15Min: f15,
+    fehlversuche24h: f24,
+    sperreAb: 10,
+    letzterErfolgreicherLogin: lastOk?.at ?? null,
+    passwortEreignisse: pwSet,
+  };
+}
+
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, gedankenstriche, login };
 
 export async function GET(req: Request): Promise<Response> {
   if (!authorized(req)) return Response.json({ error: "Unauthorized" }, { status: 401 });
-  const q = new URL(req.url).searchParams.get("q") ?? "uebersicht";
+  const params = new URL(req.url).searchParams;
+  const q = params.get("q") ?? "uebersicht";
   const fn = QUERIES[q];
   if (!fn) return Response.json({ error: "Unbekannte Abfrage", abfragen: Object.keys(QUERIES) }, { status: 400 });
   try {
-    return Response.json({ q, at: new Date().toISOString(), data: await fn() });
+    return Response.json({ q, at: new Date().toISOString(), data: await fn(params) });
   } catch (e) {
     return Response.json({ error: e instanceof Error ? e.message : "Fehler" }, { status: 500 });
   }
