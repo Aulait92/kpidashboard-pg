@@ -363,6 +363,13 @@ export async function sendViaPostfach(userId: string, m: OutgoingMail): Promise<
 }
 
 /** Technische Fehler der Anbieter in verständliche Sätze übersetzen (Rohtext bleibt in lastError). */
+/** E-Mail-Funktionen beim Kunden ausgeschaltet („Meine Gesellschaft erlaubt das nicht“, Einrichtung). */
+export async function mailFeaturesOffFor(customerId: string | null | undefined): Promise<boolean> {
+  if (!customerId) return false;
+  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { mailFeaturesOff: true } }).catch(() => null);
+  return !!c?.mailFeaturesOff;
+}
+
 export function friendlySendError(msg: string): string {
   if (/has not been used in project|is disabled|SERVICE_DISABLED|accessNotConfigured/i.test(msg))
     return "Der Versand über Gmail ist bei uns gerade noch nicht freigeschaltet. Bitte später erneut versuchen oder das Postfach per SMTP verbinden.";

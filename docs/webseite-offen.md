@@ -17,3 +17,4 @@ Letzte Aktualisierung der Webseite: 14.11.2026 (Zahlen, mehrere Verträge, Schne
 - 14.11.: Kontakt: Termin von Hand eintragen (Telefon, Video, vor Ort, auch ohne Kalender), WhatsApp-Gespräch aus dem Kontakt starten.
 - 14.11.: Abschluss: eigene Produkte mit eigenen Provisionssätzen (Abschluss und Bestand), erscheinen in den Zahlen mit Namen.
 - 14.11.: Monatsberichte: alle Berichte in der App unter Zahlen, jeder auch als PDF zum Herunterladen.
+- 15.11.: Einrichtung: E-Mail-Postfach als eigener Schritt; wer das dienstliche Postfach nicht verbinden darf, arbeitet ohne E-Mail-Funktionen weiter. Ggf. FAQ „Darf ich das als AO-Vertreter nutzen?“ ergänzen.

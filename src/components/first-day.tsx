@@ -4,7 +4,7 @@
 
 import { HilfeChatButton } from "@/components/hilfe-chat";
 import Link from "next/link";
-import { ArrowRight, BellRing, CalendarDays, CheckCircle2, Circle, ClipboardList, KeyRound, LifeBuoy, MessageCircle, Percent, Phone, Rocket, ShieldCheck, Smartphone } from "lucide-react";
+import { ArrowRight, BellRing, CalendarDays, CheckCircle2, Circle, ClipboardList, KeyRound, LifeBuoy, MessageCircle, Percent, Phone, Rocket, ShieldCheck, Smartphone, Mail, Upload, Star, Users } from "lucide-react";
 import { buttonClass, Card } from "@/components/ui";
 import { customerExtras, customerSetupProgress, loadOnboarding, onboardingChecklist, type ChecklistItem } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
@@ -128,6 +128,10 @@ export const STEP_TEXT: Record<string, { label: string; icon: typeof Rocket }> =
   questionnaire: { label: "Kurzen Fragebogen ausfüllen", icon: ClipboardList },
   metaAccess: { label: "Meta-Werbekonto freigeben", icon: KeyRound },
   calendar: { label: "Kalender verbinden", icon: CalendarDays },
+  mailbox: { label: "E-Mail-Postfach verbinden", icon: Mail },
+  bestandImport: { label: "Kundenliste hochladen", icon: Upload },
+  reviewLink: { label: "Google-Bewertungslink hinterlegen", icon: Star },
+  team: { label: "Team einladen", icon: Users },
   whatsapp: { label: "WhatsApp verbinden", icon: MessageCircle },
   app: { label: "App aufs Handy legen und Benachrichtigungen einschalten", icon: Smartphone },
   provision: { label: "Provisionen hinterlegen", icon: Percent },

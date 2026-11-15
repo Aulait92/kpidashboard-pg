@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { Prisma } from "@/generated/prisma/client";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { sendToAdmins } from "@/lib/push";
@@ -8,6 +9,10 @@ import { logOfferActivity } from "@/lib/offer-links";
 import { bookHelpCall } from "@/lib/help-call";
 import { checkMetaAccess, type MetaCheck } from "@/lib/selbst-einrichtung";
 import { asAnsprache } from "@/lib/ansprache";
+import { STEP_SKIP_KEYS } from "@/lib/onboarding";
+
+/** Gründe fürs Überspringen: Gesellschaft erlaubt es nicht, nutze ich nicht, später selbst. */
+const SKIP_REASONS = ["gesellschaft", "nicht_noetig", "spaeter"];
 import { vorlagenAufAnsprache } from "@/lib/mail/vorlagen";
 
 export type SetupState = { ok?: boolean; error?: string };
@@ -144,6 +149,17 @@ export async function skipSetupStepAction(_prev: SetupState, fd: FormData): Prom
     await prisma.onboarding.update({ where: { id: ob.id }, data: { appSkippedAt: new Date() } });
   } else if (kind === "provision") {
     await prisma.customer.update({ where: { id: ob.customerId }, data: { provisionCheckedAt: new Date() } });
+  } else if (kind === "mailbox_off") {
+    // „Meine Gesellschaft erlaubt das nicht“: E-Mail-Funktionen aus, Schritt gilt als erledigt
+    await prisma.customer.update({ where: { id: ob.customerId }, data: { mailFeaturesOff: true } });
+  } else if (kind.startsWith("skip:")) {
+    const [, key, reason] = kind.split(":");
+    if (!(STEP_SKIP_KEYS as readonly string[]).includes(key) || !SKIP_REASONS.includes(reason)) return { error: "Unbekannter Schritt." };
+    const current = (ob.stepSkips && typeof ob.stepSkips === "object" ? ob.stepSkips : {}) as Record<string, unknown>;
+    await prisma.onboarding.update({
+      where: { id: ob.id },
+      data: { stepSkips: { ...current, [key]: { at: new Date().toISOString(), reason } } as Prisma.InputJsonValue },
+    });
   } else {
     return { error: "Unbekannter Schritt." };
   }

@@ -17,7 +17,7 @@ Seiten aus der Liste „Seiten“ unten.
 | /buyer/konto | Konto & Rechnungen | Vertrag, Werbebudget ändern, weiteres Produkt buchen, Rechnungen, Zahlungsart, Pause/Urlaub (nur Inhaber) |
 | /buyer/team | Team | Berater einladen, Leads verteilen (nur Inhaber) |
 | /buyer/kalender | Mein Kalender | „Ihr Kalender“ verbinden (ein Kalender je Person), andere Quelle für freie Zeiten (ICS/Allianz), Team-Übersicht für Inhaber, Lead-Zeiten, Zeit blockieren |
-| /buyer/einrichtung | Einrichtung | Fortschritt „Einrichtung x von y“, Fragebogen, Meta freigeben (prüfen/anfragen), Kalender, WhatsApp, Einwilligung im Leadformular, App aufs Handy, Provisionen, Hilfetermin |
+| /buyer/einrichtung | Einrichtung | Fortschritt „Einrichtung x von y“, Fragebogen, Meta freigeben (prüfen/anfragen), Kalender, E-Mail-Postfach, WhatsApp, Kundenliste, Bewertungslink, Team, Einwilligung im Leadformular, App aufs Handy, Provisionen, Hilfetermin |
 | /buyer/bestand | Bestand | Bestandskunden und Kampagnen (Zusatzmodul; ohne Modul mit Knopf „Jetzt buchen“, sonst „Modul anfragen“) |
 | /buyer/bestand/import | Kundenliste hochladen | Excel/CSV importieren |
 | /buyer/bestellen | Bestellen | Leads für eine Woche bestellen (bei Pay-per-Lead) |
@@ -261,7 +261,9 @@ Seiten aus der Liste „Seiten“ unten.
 ## Einrichtung (neue Kunden)
 
 - Oben steht **„Einrichtung: x von y erledigt“** mit allen Schritten: Login, Fragebogen, App aufs Handy und Mitteilungen, Kalender,
-  Provisionen, Meta freigeben, WhatsApp verbinden, Einwilligung im Leadformular, Testlead (den macht performancegrowth).
+  E-Mail-Postfach, Provisionen, Meta freigeben, WhatsApp verbinden, Einwilligung im Leadformular, Testlead (den macht performancegrowth).
+  Nur mit gebuchtem Modul bzw. Team kommen dazu: **Kundenliste hochladen** (Bestandskunden-Modul), **Google-Bewertungslink hinterlegen**
+  (Empfehlungen & Bewertungen) und **Team einladen** (weitere Verkäufer gebucht).
   Offene Schritte sind anklickbar. Bei einigen Schritten gibt es ein kurzes Erklärvideo.
 - **Meta freigeben:** Werbekonto-ID (Format act_…, steht im Werbeanzeigenmanager oben links bzw. in der Adresse nach „act=“; der ganze
   Link geht auch) und Facebook-Seite (Adresse facebook.com/… oder Seiten-ID) eintragen. Dann:
@@ -272,6 +274,14 @@ Seiten aus der Liste „Seiten“ unten.
     Schritt erledigt. Die App prüft offene Freigaben außerdem täglich selbst nach.
 - **WhatsApp verbinden:** Vorher prüfen: eine Nummer, die nicht in der normalen WhatsApp-App genutzt wird (zweite SIM, Festnetz oder
   neue Nummer), SMS oder Anruf mit Code kann empfangen werden, Admin im Business Manager. Dann der geführte Ablauf.
+- **E-Mail-Postfach verbinden:** Google, Microsoft oder anderer Anbieter (SMTP), wie unter **Einstellungen → E-Mail-Postfach**.
+  Manche Gesellschaften (z. B. für Ausschließlichkeitsvertreter) erlauben nicht, das dienstliche Postfach mit anderen Programmen zu
+  verbinden. Dann **„Meine Gesellschaft erlaubt das nicht“** tippen: Die App blendet E-Mail-Knopf und E-Mail-Fenster im Kontakt,
+  E-Mail-Vorschläge beim nächsten Schritt und den E-Mail-Kanal bei Bestandskampagnen (nur WhatsApp) aus, der Schritt gilt als erledigt.
+  Wieder einschalten unter **Einstellungen → E-Mail-Postfach → „E-Mail-Funktionen nutzen“**. **„Später“** lässt den Schritt offen.
+- **Überspringen mit Grund:** Beim Kalender und bei WhatsApp gibt es **„Meine Gesellschaft erlaubt das nicht“** (WhatsApp auch
+  „Ohne WhatsApp arbeiten“). Der Schritt gilt dann als erledigt. Termine tragen Sie im Kontakt unter **Termin → von Hand eintragen**
+  ein, Knöpfe ohne Kalender oder WhatsApp erklären beim Antippen, was fehlt.
 - **Einwilligung im Leadformular:** Formulare, die performancegrowth anlegt, enthalten sie automatisch. Bei eigenen Formularen den
   angezeigten Text als Pflicht-Häkchen einfügen und „Ist in meinem Formular enthalten“ tippen.
 - **App aufs Handy:** gilt als erledigt, sobald Mitteilungen auf einem Gerät erlaubt sind.

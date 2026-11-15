@@ -25,7 +25,7 @@ import { LeadHeaderActions } from "@/components/lead-actions";
 import { AbschlussCard, LeadHistory } from "@/components/lead-history";
 import { loadLeadHistory } from "@/lib/lead-history";
 import { listLeadFiles } from "@/lib/lead-files";
-import { postfachOf } from "@/lib/mail/postfach";
+import { mailFeaturesOffFor, postfachOf } from "@/lib/mail/postfach";
 import { loadVorlagen } from "@/lib/mail/vorlagen";
 import { passendeVorlagen } from "@/lib/mail/phasen";
 import { istSpaeter } from "@/lib/mail/termin-erinnerung";
@@ -244,13 +244,16 @@ export async function LeadDetailBody({
   const storniert = !!lead.status?.toLowerCase().startsWith("storno");
   // Abschluss (Ole, 13.11.2026): Beitrag, geschätzte Provision und Police im Kontakt sehen
   const won = (lead.status ?? "").trim().toLowerCase() === "abschluss";
-  const [history, rates, files, postfach, me] = await Promise.all([
+  const [history, rates, files, postfachRaw, me, mailOff] = await Promise.all([
     loadLeadHistory(lead.id, team.userId),
     won ? loadCustomerProvision(customerId).then((p) => p.rates) : null,
     listLeadFiles(lead.id),
     postfachOf(team.userId),
     team.userId ? prisma.user.findUnique({ where: { id: team.userId }, select: { displayName: true, mailSignature: true } }) : null,
+    mailFeaturesOffFor(customerId),
   ]);
+  // „Meine Gesellschaft erlaubt das nicht“: E-Mail-Knopf, E-Mail-Fenster und Vorlagen ausblenden (Ole, 15.11.2026)
+  const postfach = mailOff ? null : postfachRaw;
   const vorlagen = postfach ? await loadVorlagen(customerId) : [];
   // Vorlagen nach Phase (Ole, 14.11.2026): letzter vergangener Termin, Notizen für die Gesprächszusammenfassung
   const [lastAppt, notizen] = postfach
@@ -328,6 +331,7 @@ export async function LeadDetailBody({
         daysInPhase={Math.max(0, Math.floor((nowMs() - lead.statusChangedAt.getTime()) / 86_400_000))}
         askAfterCall={newUi}
         mailReady={!!postfach}
+        mailOff={mailOff}
         whatsappConnected={waConnected}
       />
       {stepState === "missing" || stepState === "result_missing" ? (

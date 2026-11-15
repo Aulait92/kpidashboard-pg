@@ -30,12 +30,13 @@ const warnBox = `${box} border-amber-200 bg-amber-50 text-amber-900`;
 export default async function CampaignSetup({ searchParams }: { searchParams: Promise<{ anlass?: string; segment?: string; thema?: string; kanal?: string; fehler?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
-  const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { existingCustomersEnabled: true, empfehlungEnabled: true, name: true, bestandAgentConfirmedAt: true } });
+  const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { existingCustomersEnabled: true, empfehlungEnabled: true, name: true, bestandAgentConfirmedAt: true, mailFeaturesOff: true } });
   if (ctx.teamRole !== "owner") redirect("/buyer");
   if (!c?.existingCustomersEnabled) redirect("/buyer/bestand");
   const sp = await searchParams;
   const occasion = (sp.anlass && sp.anlass in OCCASIONS ? sp.anlass : "review") as Occasion;
-  const mode = asChannelMode(sp.kanal);
+  // E-Mail-Funktionen aus („Meine Gesellschaft erlaubt das nicht“): Kampagnen nur per WhatsApp
+  const mode = c?.mailFeaturesOff ? "whatsapp" : asChannelMode(sp.kanal);
   // Empfehlungsbitte nur mit Modul „Empfehlungen & Bewertungen“ – sonst Hinweis zum Modul
   const locked = NEEDS_EMPFEHLUNG.includes(occasion) && !c.empfehlungEnabled;
   let segment: Segment = {};
@@ -140,7 +141,7 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
           <CardHeader title="Kanal" icon={Send} />
           <div className="space-y-2 px-5 pb-5 text-sm" data-campaign-modes>
             <div className="grid gap-2 sm:grid-cols-3">
-              {CHANNEL_MODES.map((m) => (
+              {CHANNEL_MODES.filter((m) => !c.mailFeaturesOff || m.key === "whatsapp").map((m) => (
                 <Link
                   key={m.key}
                   href={modeHref(m.key)}

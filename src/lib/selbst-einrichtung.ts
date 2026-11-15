@@ -38,9 +38,13 @@ export const SETUP_STEPS = [
   { key: "questionnaire", label: "Fragebogen" },
   { key: "app", label: "App aufs Handy und Mitteilungen" },
   { key: "calendar", label: "Kalender" },
+  { key: "mailbox", label: "E-Mail-Postfach" },
   { key: "provision", label: "Provisionen" },
   { key: "metaAccess", label: "Meta freigeben" },
   { key: "whatsapp", label: "WhatsApp verbinden" },
+  { key: "bestandImport", label: "Kundenliste hochladen" },
+  { key: "reviewLink", label: "Google-Bewertungslink" },
+  { key: "team", label: "Team einladen" },
   { key: "consent", label: "Einwilligung im Leadformular" },
   { key: "testLead", label: "Testlead" },
 ] as const;
@@ -347,7 +351,7 @@ export function setupSteps(
   const item = (k: string) => items.find((i) => i.key === k);
   const steps: SetupStep[] = [];
   for (const s of SETUP_STEPS) {
-    if (!software && (s.key === "calendar" || s.key === "whatsapp" || s.key === "consent")) continue;
+    if (!software && (s.key === "calendar" || s.key === "mailbox" || s.key === "whatsapp" || s.key === "consent")) continue;
     const href = `/buyer/einrichtung?schritt=${s.key}#${s.key}`;
     if (s.key === "app") steps.push({ key: s.key, label: s.label, done: extra.appDone, owner: "kunde", href });
     else if (s.key === "provision") steps.push({ key: s.key, label: s.label, done: extra.provisionDone, owner: "kunde", href: "/buyer/provisionen" });

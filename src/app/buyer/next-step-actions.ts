@@ -18,7 +18,7 @@ import { canChooseUnreachable, isLostReason, lostReason, needsLostWarning, CALL_
 import { NEXT_STEP_TASK_NOTE } from "@/lib/lead-next-step";
 import { nextStepStateOf } from "@/lib/lead-next-step-server";
 import { fuelleMitSignatur, werteFuer } from "@/lib/mail/platzhalter";
-import { postfachOf, sendViaPostfach } from "@/lib/mail/postfach";
+import { mailFeaturesOffFor, postfachOf, sendViaPostfach } from "@/lib/mail/postfach";
 import { planTerminErinnerung } from "@/lib/mail/termin-erinnerung";
 import { STANDARD_VORLAGEN_JE } from "@/lib/mail/vorlagen";
 import { prisma } from "@/lib/prisma";
@@ -129,12 +129,13 @@ export async function leadStepInfoAction(leadId: string): Promise<{ ok: true; in
     select: { id: true, name: true, source: true, phone: true, email: true, reached: true, callAttempts: true, customerId: true },
   });
   if (!lead) return { ok: false, error: "Lead nicht gefunden." };
-  const [an, postfach, link, conv, state] = await Promise.all([
+  const [an, postfach, link, conv, state, mailOff] = await Promise.all([
     anspracheFor(lead.customerId),
     postfachOf(ctx.userId),
     terminlinkFor(lead.customerId, lead.id),
     prisma.conversation.findFirst({ where: { leadId: lead.id }, orderBy: { lastMessageAt: "desc" }, select: { id: true } }),
     nextStepStateOf(lead.id),
+    mailFeaturesOffFor(lead.customerId),
   ]);
   return {
     ok: true,
@@ -143,12 +144,13 @@ export async function leadStepInfoAction(leadId: string): Promise<{ ok: true; in
       name: lead.name ?? "Lead",
       source: lead.source,
       phone: lead.phone,
-      email: lead.email,
+      // E-Mail-Funktionen aus („Meine Gesellschaft erlaubt das nicht“): keine E-Mail-Wege anbieten
+      email: mailOff ? null : lead.email,
       reached: lead.reached,
       callAttempts: lead.callAttempts,
       target: CALL_ATTEMPTS_TARGET,
       ansprache: an,
-      mailReady: !!postfach && !!lead.email,
+      mailReady: !mailOff && !!postfach && !!lead.email,
       terminlink: link,
       conversationId: conv?.id ?? null,
       canUnreachable: canChooseUnreachable(lead),

@@ -11,6 +11,7 @@ import { AnspracheForm } from "@/components/ansprache-form";
 import { asAnsprache } from "@/lib/ansprache";
 import { disconnectPostfachAction } from "./actions";
 import { SignaturForm, SmtpForm, TestButton, VorlagenListe } from "./forms";
+import { MailFeaturesToggle } from "@/components/mail-features-toggle";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -34,7 +35,7 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
     postfachOf(ctx.userId),
     loadVorlagen(ctx.customerId),
     ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { mailSignature: true } }) : null,
-    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { leadAddress: true } }),
+    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { leadAddress: true, mailFeaturesOff: true } }),
   ]);
   const status = sp.postfach ? STATUS_TEXT[sp.postfach] : null;
   const readOnly = ctx.preview;
@@ -50,6 +51,14 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
         </p>
       ) : null}
       {sp.postfach === "consent" && microsoftAdminConsentUrl() ? <MicrosoftAdminConsent url={microsoftAdminConsentUrl()!} /> : null}
+
+      {ctx.teamRole === "owner" ? (
+        <Card>
+          <div className="p-5">
+            <MailFeaturesToggle on={!ansprache?.mailFeaturesOff} readOnly={readOnly} />
+          </div>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader title="Ihr Postfach" icon={Mail} />

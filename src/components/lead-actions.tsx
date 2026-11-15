@@ -41,6 +41,8 @@ import { attemptMessage, emitLeadAction, emitNotReachedOffer, LostSheet, useStep
 type Props = {
   /** Eigenes Postfach verbunden: E-Mail aus der App. */
   mailReady?: boolean;
+  /** E-Mail-Funktionen beim Kunden aus („Meine Gesellschaft erlaubt das nicht“): E-Mail-Knopf und Hinweis ausblenden */
+  mailOff?: boolean;
   leadId: string;
   name: string | null;
   createdAt: string;
@@ -147,7 +149,7 @@ export function LeadHeaderActions(p: Props) {
   // Nur Aktionen, die nicht schon als eigene Kachel sichtbar sind (Ole, 14.11.2026: „Wiedervorlage setzen ist doppelt“).
   // Die Kacheln E-Mail und Wiedervorlage stehen auf jeder Breite (Handy: Raster mit 3 Spalten).
   const moreActions: SheetAction[] = [
-    ...(!p.mailReady && p.email ? [{ label: "E-Mail aus der App: Postfach verbinden", icon: Mail, href: "/buyer/postfach" }] : []),
+    ...(!p.mailReady && !p.mailOff && p.email ? [{ label: "E-Mail aus der App: Postfach verbinden", icon: Mail, href: "/buyer/postfach" }] : []),
     ...(!p.storniert && p.stornoOptions.length > 0
       ? [{ label: "Stornieren", icon: Ban, tone: "danger" as const, onSelect: () => setTimeout(() => setOpen("storno"), 0) }]
       : []),
@@ -283,6 +285,7 @@ export function LeadHeaderActions(p: Props) {
             onClick={p.conversationId ? undefined : () => setOpen("chat")}
           />
           {/* E-Mail direkt sichtbar (Ole, 14.11.2026: war unter „Mehr“ versteckt). Mit Postfach aus der App, sonst Mailprogramm. */}
+          {p.mailOff ? null : (
           <ActionTile
             icon={Mail}
             label="E-Mail"
@@ -290,6 +293,7 @@ export function LeadHeaderActions(p: Props) {
             onClick={p.mailReady && p.email ? () => window.dispatchEvent(new Event(LEAD_MAIL_EVENT)) : undefined}
             explain={{ title: "Keine E-Mail-Adresse hinterlegt", text: "Tragen Sie die Adresse bei den Angaben zum Lead ein, dann können Sie direkt schreiben.", actions: [{ label: "Angaben ändern", onClick: openStammdaten }] }}
           />
+          )}
           <ActionTile icon={CalendarPlus} label="Termin" onClick={() => setOpen("termin")} />
           {/* Wiedervorlage direkt neben Anrufen/Chat/Termin (Ole, 13.11.2026: war zu versteckt) */}
           <ActionTile

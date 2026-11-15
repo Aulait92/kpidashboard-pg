@@ -304,19 +304,22 @@ export const MANUAL_FIELDS = {
   consent: "consentConfirmedAt",
 } as const;
 
+/** Kundendaten für Checkliste und Fortschritt (eine Quelle für Einrichtung, Startseite und Admin). */
+const ONBOARDING_CUSTOMER_INCLUDE = {
+  users: { where: { role: "BUYER" }, select: { email: true, lastLoginAt: true, mailConnection: { select: { id: true } } } },
+  calendarConnection: { select: { status: true } },
+  agentConfig: { select: { availabilityIcsUrlEnc: true, allianzCalendarEnc: true } },
+  whatsAppAccount: { select: { status: true } },
+  messageTemplates: { where: { purpose: "outreach", status: "approved" }, select: { id: true }, take: 1 },
+  reviewSettings: { select: { googleReviewUrl: true } },
+  _count: { select: { existingCustomers: true } },
+} satisfies Prisma.CustomerInclude;
+
 export async function loadOnboarding(where: { customerId: string } | { id: string }) {
   return prisma.onboarding.findUnique({
     where,
     include: {
-      customer: {
-        include: {
-          users: { where: { role: "BUYER" }, select: { email: true, lastLoginAt: true } },
-          calendarConnection: { select: { status: true } },
-          agentConfig: { select: { availabilityIcsUrlEnc: true, allianzCalendarEnc: true } },
-          whatsAppAccount: { select: { status: true } },
-          messageTemplates: { where: { purpose: "outreach", status: "approved" }, select: { id: true }, take: 1 },
-        },
-      },
+      customer: { include: ONBOARDING_CUSTOMER_INCLUDE },
     },
   });
 }
@@ -325,6 +328,7 @@ export type OnboardingFull = NonNullable<Awaited<ReturnType<typeof loadOnboardin
 
 export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: string; paidAt: Date | null; isTest?: boolean } | null): ChecklistItem[] {
   const software = ob.package !== "service";
+  const skip = (k: string) => stepSkipOf(ob.stepSkips, k);
   const firstLogin = ob.customer.users.map((u) => u.lastLoginAt).filter(Boolean).sort()[0] ?? null;
   const items: ChecklistItem[] = [];
   // Nur mit Online-Zahlung (Stripe) – sonst läuft die Zahlung außerhalb der App.
@@ -353,10 +357,25 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
         done:
           ob.customer.calendarConnection?.status === "connected" ||
           !!ob.customer.agentConfig?.availabilityIcsUrlEnc ||
-          !!ob.customer.agentConfig?.allianzCalendarEnc,
+          !!ob.customer.agentConfig?.allianzCalendarEnc ||
+          !!skip("calendar"),
         at: null,
       },
-      { key: "whatsapp", label: "WhatsApp-Nummer verbunden", owner: selfConnectEnabled() ? "kunde" : "du", done: ob.customer.whatsAppAccount?.status === "connected", at: null },
+      {
+        key: "mailbox",
+        label: "E-Mail-Postfach verbunden",
+        owner: "kunde",
+        // Verbunden (ein Login reicht) oder „Meine Gesellschaft erlaubt das nicht“ (E-Mail-Funktionen aus)
+        done: ob.customer.mailFeaturesOff || ob.customer.users.some((u) => !!u.mailConnection),
+        at: null,
+      },
+      {
+        key: "whatsapp",
+        label: "WhatsApp-Nummer verbunden",
+        owner: selfConnectEnabled() ? "kunde" : "du",
+        done: ob.customer.whatsAppAccount?.status === "connected" || !!skip("whatsapp"),
+        at: null,
+      },
       {
         key: "templates",
         // Ohne freigegebene Vorlage darf WhatsApp neue Leads nicht anschreiben.
@@ -380,6 +399,16 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
       },
     );
   }
+  // Schritte nur für gebuchte Module bzw. ein Team (Ole, 15.11.2026)
+  if (ob.customer.existingCustomersEnabled) {
+    items.push({ key: "bestandImport", label: "Kundenliste hochgeladen", owner: "kunde", done: ob.customer._count.existingCustomers > 0 || !!skip("bestandImport"), at: null });
+  }
+  if (ob.customer.empfehlungEnabled) {
+    items.push({ key: "reviewLink", label: "Google-Bewertungslink hinterlegt", owner: "kunde", done: !!ob.customer.reviewSettings?.googleReviewUrl || !!skip("reviewLink"), at: null });
+  }
+  if (ob.customer.seatsBilled > 0) {
+    items.push({ key: "team", label: "Team eingeladen", owner: "kunde", done: ob.customer.users.length > 1 || !!skip("team"), at: null });
+  }
   items.push(
     { key: "website", label: "Pflichtangaben (Impressum) geprüft", owner: "du", done: !!ob.websiteCheckedAt, at: ob.websiteCheckedAt, manual: "website" },
     { key: "campaign", label: "Kampagne und Leadformular angelegt", owner: "du", done: !!ob.campaignReadyAt, at: ob.campaignReadyAt, manual: "campaign" },
@@ -395,7 +424,17 @@ export function checklistProgress(items: ChecklistItem[]) {
 }
 
 /** Schritte, die der Kunde in der Einrichtung selbst erledigt (Reihenfolge wie auf der Einrichtungsseite). */
-export const CUSTOMER_SETUP_KEYS = ["questionnaire", "app", "calendar", "provision", "metaAccess", "whatsapp"] as const;
+export const CUSTOMER_SETUP_KEYS = ["questionnaire", "app", "calendar", "mailbox", "provision", "metaAccess", "whatsapp", "bestandImport", "reviewLink", "team"] as const;
+
+/** Übersprungene Schritte (Onboarding.stepSkips): Grund und Zeitpunkt je Schritt. */
+export type StepSkip = { at: string; reason: string };
+export const STEP_SKIP_KEYS = ["calendar", "whatsapp", "bestandImport", "reviewLink", "team"] as const;
+export type StepSkipKey = (typeof STEP_SKIP_KEYS)[number];
+export function stepSkipOf(raw: unknown, key: string): StepSkip | null {
+  if (!raw || typeof raw !== "object") return null;
+  const v = (raw as Record<string, unknown>)[key];
+  return v && typeof v === "object" && typeof (v as StepSkip).reason === "string" ? (v as StepSkip) : null;
+}
 /** App installiert / Provisionen hinterlegt: keine Checklisten-Punkte, kommen von außen dazu. */
 export type CustomerExtras = { appDone: boolean; provisionDone: boolean };
 /** Unser Teil, dem Kunden nur zur Information gezeigt (nicht im Fortschrittsbalken). */
@@ -441,15 +480,7 @@ export async function onboardingProgressFor(customerIds: string[]) {
   const rows = await prisma.onboarding.findMany({
     where: { customerId: { in: customerIds } },
     include: {
-      customer: {
-        include: {
-          users: { where: { role: "BUYER" }, select: { email: true, lastLoginAt: true } },
-          calendarConnection: { select: { status: true } },
-          agentConfig: { select: { availabilityIcsUrlEnc: true, allianzCalendarEnc: true } },
-          whatsAppAccount: { select: { status: true } },
-          messageTemplates: { where: { purpose: "outreach", status: "approved" }, select: { id: true }, take: 1 },
-        },
-      },
+      customer: { include: ONBOARDING_CUSTOMER_INCLUDE },
     },
   });
   const offers = await prisma.offer.findMany({

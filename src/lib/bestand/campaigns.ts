@@ -111,15 +111,17 @@ export type Availability = {
 
 /** Was steht für den Versand bereit? senderUserId = Login, dessen Postfach genutzt wird. */
 export async function channelAvailability(customerId: string, occasion: Occasion, senderUserId: string | null | undefined): Promise<Availability> {
-  const [wa, tpl, mailbox] = await Promise.all([
+  const [wa, tpl, mailbox, cust] = await Promise.all([
     prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { status: true } }),
     prisma.messageTemplate.count({ where: { customerId, purpose: OCCASIONS[occasion].purpose, status: "approved" } }),
     senderUserId ? prisma.mailConnection.findUnique({ where: { userId: senderUserId }, select: { userId: true, email: true, provider: true, customerId: true } }) : null,
+    prisma.customer.findUnique({ where: { id: customerId }, select: { mailFeaturesOff: true } }),
   ]);
   return {
     waAvailable: wa?.status === "connected",
     waTemplateApproved: tpl > 0,
-    mailbox: mailbox && mailbox.customerId === customerId ? { userId: mailbox.userId, email: mailbox.email, provider: mailbox.provider } : null,
+    // E-Mail-Funktionen aus („Meine Gesellschaft erlaubt das nicht“): nur WhatsApp
+    mailbox: mailbox && mailbox.customerId === customerId && !cust?.mailFeaturesOff ? { userId: mailbox.userId, email: mailbox.email, provider: mailbox.provider } : null,
   };
 }
 

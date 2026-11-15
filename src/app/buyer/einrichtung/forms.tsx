@@ -280,7 +280,7 @@ export function HelpCallPicker({ slots, readOnly }: { slots: { start: string }[]
 }
 
 /** Schritt abhaken ohne Formular: App überspringen, Provisionen „Passt so“. */
-export function SkipButton({ kind, label, readOnly, primary }: { kind: "app" | "provision"; label: string; readOnly: boolean; primary?: boolean }) {
+export function SkipButton({ kind, label, readOnly, primary }: { kind: string; label: string; readOnly: boolean; primary?: boolean }) {
   const [state, action, pending] = useActionState<SetupState, FormData>(skipSetupStepAction, {});
   if (state.ok)
     return (
@@ -305,5 +305,22 @@ export function SkipButton({ kind, label, readOnly, primary }: { kind: "app" | "
       </button>
       {state.error ? <span className="text-sm font-medium text-rose-700">{state.error}</span> : null}
     </form>
+  );
+}
+
+/**
+ * Ausgänge eines Schritts (Ole, 15.11.2026): „Später“ (Schritt bleibt offen) und Überspringen mit Grund
+ * (z. B. „Meine Gesellschaft erlaubt das nicht“). Der Grund wird gespeichert, der Schritt gilt dann als erledigt.
+ */
+export function StepExits({ laterHref, skips, readOnly }: { laterHref: string; skips: { kind: string; label: string }[]; readOnly: boolean }) {
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-[color:var(--border)] pt-4" data-step-exits>
+      <a href={laterHref} className="text-sm font-semibold text-[color:var(--muted)] underline decoration-dotted underline-offset-2 hover:text-[color:var(--brand)]">
+        Später
+      </a>
+      {skips.map((x) => (
+        <SkipButton key={x.kind} kind={x.kind} label={x.label} readOnly={readOnly} />
+      ))}
+    </div>
   );
 }

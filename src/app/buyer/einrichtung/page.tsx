@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { isNewUi } from "@/lib/new-ui";
 import { HilfeChatButton } from "@/components/hilfe-chat";
 import { STEP_TEXT } from "@/components/first-day";
-import { ArrowRight, CalendarDays, CheckCircle2, ChevronDown, Circle, ClipboardList, KeyRound, MessageCircle, Percent, PlayCircle, Rocket, Smartphone } from "lucide-react";
+import { ArrowRight, CalendarDays, CheckCircle2, ChevronDown, Circle, ClipboardList, KeyRound, Mail, MessageCircle, Percent, PlayCircle, Rocket, Smartphone, Star, Upload, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { MicrosoftAdminConsent } from "@/components/microsoft-admin-consent";
 import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
@@ -10,7 +10,9 @@ import { buttonClass, Card } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { customerSetupProgress, loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
-import { HelpCallPicker, MetaAccessForm, QuestionnaireForm, SkipButton } from "./forms";
+import { HelpCallPicker, MetaAccessForm, QuestionnaireForm, SkipButton, StepExits } from "./forms";
+import { SmtpForm } from "@/app/buyer/postfach/forms";
+import { googleMailAvailable, microsoftMailAvailable } from "@/lib/mail/postfach";
 import { appInstalled, loadSetupSettings, setupSteps, videoEmbedUrl, type MetaCheck, type SetupStepKey } from "@/lib/selbst-einrichtung";
 import { helpCallSlots } from "@/lib/help-call";
 import { InstallApp } from "@/components/install-app";
@@ -71,7 +73,20 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const waAccount = waEnabled
     ? await prisma.whatsAppAccount.findUnique({ where: { customerId: ctx.customerId }, select: { status: true, phoneNumber: true, dialog360ChannelId: true } })
     : null;
-  const order = ["questionnaire", "metaAccess", ...(software ? ["calendar"] : []), ...(waEnabled ? ["whatsapp"] : [])];
+  const has = (k: string) => items.some((i) => i.key === k);
+  const order = [
+    "questionnaire",
+    "metaAccess",
+    ...(software ? ["calendar", "mailbox"] : []),
+    ...(waEnabled ? ["whatsapp"] : []),
+    ...["bestandImport", "reviewLink", "team"].filter(has),
+  ];
+  // „Später“: zum nächsten offenen Schritt nach diesem
+  const laterHref = (k: string) => {
+    const next = order.slice(order.indexOf(k) + 1).find((x) => !done(x));
+    return next ? `/buyer/einrichtung?schritt=${next}#${next}` : "/buyer";
+  };
+  const showGoogleMail = googleMailAvailable() && process.env.GOOGLE_MAIL_VERIFIED === "1";
   let stepNo = software ? 3 : 2;
   const nextNo = () => ++stepNo;
   const current = order.find((k) => !done(k)) ?? "start";
@@ -283,6 +298,61 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               </p>
               <LeadTimesForm initial={calendar.leadTimes} action={saveLeadTimesAction} readOnly={readOnly} source={calendar.source} />
             </div>
+            {!done("calendar") ? (
+              <StepExits
+                laterHref={laterHref("calendar")}
+                readOnly={readOnly}
+                skips={[{ kind: "skip:calendar:gesellschaft", label: "Meine Gesellschaft erlaubt das nicht" }]}
+              />
+            ) : null}
+          </Step>
+        ) : null}
+
+        {software ? (
+          <Step n={nextNo()} title="E-Mail-Postfach verbinden" icon={Mail} done={done("mailbox")} open={isOpen("mailbox")} id="mailbox">
+            <p className="mb-3 text-sm text-[color:var(--muted)]">
+              Damit schreiben Sie Leads direkt aus der App an, mit Vorlagen und auf Wunsch mit dem Angebot im Anhang. Die E-Mails gehen über Ihr eigenes Postfach,
+              Antworten landen dort. Wir senden nur E-Mails, die Sie selbst auslösen, und lesen Ihr Postfach nicht.
+            </p>
+            <p className="mb-4 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-postfach-gesellschaft>
+              Manche Gesellschaften (z. B. für Ausschließlichkeitsvertreter) erlauben nicht, das dienstliche Postfach mit anderen Programmen zu verbinden. Klären Sie
+              das im Zweifel vorher. Sie können den Schritt überspringen.
+            </p>
+            {ob.customer.mailFeaturesOff ? (
+              <p className="text-sm text-[color:var(--muted)]">
+                E-Mail-Funktionen sind ausgeschaltet. Wieder einschalten unter{" "}
+                <Link href="/buyer/postfach" className="font-medium text-[color:var(--brand)] underline">
+                  Einstellungen → E-Mail-Postfach
+                </Link>
+                .
+              </p>
+            ) : done("mailbox") ? (
+              <p className="text-sm font-medium text-emerald-700">Postfach verbunden.</p>
+            ) : (
+              <>
+                {!readOnly ? (
+                  <div className="flex flex-wrap gap-2">
+                    {showGoogleMail ? (
+                      <a href="/api/mail/connect?anbieter=google" className={buttonClass("secondary", "md")}>
+                        Mit Google (Gmail) verbinden
+                      </a>
+                    ) : null}
+                    {microsoftMailAvailable() ? (
+                      <a href="/api/mail/connect?anbieter=microsoft" className={buttonClass("secondary", "md")}>
+                        Mit Microsoft (Outlook/365) verbinden
+                      </a>
+                    ) : null}
+                  </div>
+                ) : null}
+                <details className="mt-3 rounded-[var(--radius-md)] border border-[color:var(--border)] px-4 py-3">
+                  <summary className="cursor-pointer text-[15px] font-medium">Anderer Anbieter (SMTP, z. B. IONOS, Strato, T-Online, GMX)</summary>
+                  <div className="mt-3">
+                    <SmtpForm readOnly={readOnly} />
+                  </div>
+                </details>
+                <StepExits laterHref={laterHref("mailbox")} readOnly={readOnly} skips={[{ kind: "mailbox_off", label: "Meine Gesellschaft erlaubt das nicht" }]} />
+              </>
+            )}
           </Step>
         ) : null}
 
@@ -290,6 +360,58 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           <Step n={nextNo()} title="WhatsApp verbinden" icon={MessageCircle} done={done("whatsapp")} open={isOpen("whatsapp") || !!wa || !!weg} id="whatsapp">
             <VideoHint url={video("whatsapp")} />
             <WhatsAppStep wa={wa} weg={weg} account={waAccount} done={done("whatsapp")} readOnly={readOnly} />
+            {!done("whatsapp") ? (
+              <StepExits
+                laterHref={laterHref("whatsapp")}
+                readOnly={readOnly}
+                skips={[
+                  { kind: "skip:whatsapp:gesellschaft", label: "Meine Gesellschaft erlaubt das nicht" },
+                  { kind: "skip:whatsapp:nicht_noetig", label: "Ohne WhatsApp arbeiten" },
+                ]}
+              />
+            ) : null}
+          </Step>
+        ) : null}
+
+        {has("bestandImport") ? (
+          <Step n={nextNo()} title="Kundenliste hochladen" icon={Upload} done={done("bestandImport")} open={isOpen("bestandImport")} id="bestandImport">
+            <p className="text-sm text-[color:var(--muted)]">
+              Für Ihre Bestandskunden-Kampagnen: Laden Sie Ihre Kundenliste als Excel oder CSV hoch. Die App erkennt die Spalten und zeigt vorher eine Vorschau.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Link href="/buyer/bestand/import" className={buttonClass("primary", "md")}>
+                Kundenliste hochladen
+              </Link>
+            </div>
+            {!done("bestandImport") ? <StepExits laterHref={laterHref("bestandImport")} readOnly={readOnly} skips={[{ kind: "skip:bestandImport:spaeter", label: "Mache ich später selbst" }]} /> : null}
+          </Step>
+        ) : null}
+
+        {has("reviewLink") ? (
+          <Step n={nextNo()} title="Google-Bewertungslink hinterlegen" icon={Star} done={done("reviewLink")} open={isOpen("reviewLink")} id="reviewLink">
+            <p className="text-sm text-[color:var(--muted)]">
+              Für Empfehlungen und Bewertungen: Mit Ihrem Link „Bewertung schreiben“ aus dem Google-Unternehmensprofil bittet die App zufriedene Kunden um eine Bewertung.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Link href="/buyer/empfehlungen" className={buttonClass("primary", "md")}>
+                Link hinterlegen
+              </Link>
+            </div>
+            {!done("reviewLink") ? (
+              <StepExits laterHref={laterHref("reviewLink")} readOnly={readOnly} skips={[{ kind: "skip:reviewLink:nicht_noetig", label: "Ich habe kein Google-Profil" }]} />
+            ) : null}
+          </Step>
+        ) : null}
+
+        {has("team") ? (
+          <Step n={nextNo()} title="Team einladen" icon={Users} done={done("team")} open={isOpen("team")} id="team">
+            <p className="text-sm text-[color:var(--muted)]">Laden Sie Ihre Berater ein. Jeder bekommt einen eigenen Login und sieht nur seine Leads.</p>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Link href="/buyer/team" className={buttonClass("primary", "md")}>
+                Berater einladen
+              </Link>
+            </div>
+            {!done("team") ? <StepExits laterHref={laterHref("team")} readOnly={readOnly} skips={[{ kind: "skip:team:spaeter", label: "Mache ich später" }]} /> : null}
           </Step>
         ) : null}
 
@@ -329,6 +451,14 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             <Link href="/buyer/konto#werbebudget" className="font-medium text-[color:var(--brand)] underline">
               Budget ändern
             </Link>
+          </p>
+          <p className="mt-2 text-sm text-[color:var(--muted)]" data-start-monatsbericht>
+            Anfang jedes Monats bekommen Sie Ihren Monatsbericht per E-Mail: Leads, Termine, Abschlüsse und Gewinn im Vergleich zum Vormonat. Alle Berichte finden
+            Sie unter{" "}
+            <Link href="/buyer/zahlen#monatsberichte" className="font-medium text-[color:var(--brand)] underline">
+              Zahlen → Monatsberichte
+            </Link>
+            .
           </p>
         </Step>
       </div>

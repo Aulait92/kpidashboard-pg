@@ -98,6 +98,10 @@ model Customer {
   // Testkunde (Ole, 15.11.2026): aus einem Testangebot ohne Zahlung; zählt nicht in Admin-Zahlen,
   // Buchungen, Stornoquote, Monatsbericht und Platz-Abrechnung, im Admin mit Abzeichen „Test“, löschbar.
   isTest              Boolean   @default(false)
+  // E-Mail-Funktionen aus (Ole, 15.11.2026): „Meine Gesellschaft erlaubt das nicht“ in der Einrichtung.
+  // Blendet E-Mail-Knopf, E-Mail-Fenster, Vorlagen-Hinweise und den E-Mail-Kanal bei Bestandskampagnen aus;
+  // wieder einschaltbar unter Einstellungen → E-Mail-Postfach.
+  mailFeaturesOff     Boolean   @default(false)
   // Stripe-Kunde für Abrechnung (Rechnungen, Zahlungsart, Abo)
   stripeCustomerId    String?   @unique
   // Paket: "software" = Betreuung + Software, "service" = nur Betreuung
@@ -1629,6 +1633,8 @@ model Onboarding {
   id                 String    @id @default(cuid())
   // Kunde nutzt die App ohne Handy/Mitteilungen – Schritt „App aufs Handy“ übersprungen
   appSkippedAt       DateTime?
+  // Übersprungene Schritte mit Grund (Ole, 15.11.2026), z. B. { calendar: { at, reason: "gesellschaft" } }
+  stepSkips          Json?
   customerId         String    @unique
   customer           Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   offerId            String?   @unique

@@ -209,3 +209,17 @@ async function mailPdf(p: MailPdf, o: { customerId: string; userId: string; kund
   });
   return { fileName: pdfDateiname("Beratungsdokumentation", o.kunde), data: await textPdf({ ...inhalt, autor: berater || undefined }) };
 }
+
+
+/**
+ * „E-Mail-Funktionen nutzen“ (Ole, 15.11.2026): aus = „Meine Gesellschaft erlaubt das nicht“ (E-Mail-Knopf, E-Mail-Fenster,
+ * Vorlagen und E-Mail-Kanal bei Bestandskampagnen ausgeblendet). Nur der Inhaber, nicht in der Vorschau.
+ */
+export async function setMailFeaturesAction(on: boolean): Promise<{ ok: boolean; error?: string }> {
+  const ctx = await getBuyerContext();
+  if (!ctx || ctx.preview) return { ok: false, error: "In der Vorschau nicht möglich." };
+  if (ctx.teamRole !== "owner") return { ok: false, error: "Nur der Inhaber kann das ändern." };
+  await prisma.customer.update({ where: { id: ctx.customerId }, data: { mailFeaturesOff: !on } });
+  revalidatePath("/buyer", "layout");
+  return { ok: true };
+}
