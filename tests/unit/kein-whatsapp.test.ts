@@ -1,6 +1,6 @@
 // Leads ohne WhatsApp (Ole, 15.11.2026): Einordnung der Meta-Fehlercodes, E-Mail-Text, Kanalwahl im Bestand.
 import { describe, expect, it } from "vitest";
-import { artOf, isNoWhatsAppCode, zustellfehlerOf } from "@/lib/whatsapp/zustellfehler";
+import { artOf, isNoWhatsAppCode, isWhatsAppOptOutCode, zustellfehlerOf } from "@/lib/whatsapp/zustellfehler";
 import { keinWhatsAppMail } from "@/lib/whatsapp/kein-whatsapp-mail";
 import { chooseChannel, NO_WHATSAPP_REASON, type ConsentSubject } from "@/lib/bestand/einwilligung";
 import { hatGedankenstrich } from "@/lib/gedankenstriche";
@@ -26,6 +26,11 @@ describe("Zustellfehler einordnen", () => {
     expect(artOf(131000)).toBe("meta");
     expect(artOf(null)).toBe("sonstiges");
     expect(isNoWhatsAppCode(null)).toBe(false);
+  });
+
+  it("nur 131050 zählt als Abmeldung von WhatsApp", () => {
+    expect(isWhatsAppOptOutCode(131050)).toBe(true);
+    for (const c of [131026, 131049, 131047, 131042, null, undefined]) expect(isWhatsAppOptOutCode(c), String(c)).toBe(false);
   });
 
   it("liest code und title aus statuses[].errors (auch Code als Text)", () => {

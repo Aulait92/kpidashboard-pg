@@ -13,7 +13,8 @@
 //   1013   User is not valid (On-Premises-API): die Nummer ist kein gültiges WhatsApp-Konto.
 // Bewusst NICHT „kein WhatsApp“ (Empfänger hat WhatsApp, oder der Fehler liegt bei uns bzw. Meta):
 //   131049 Meta stellt Marketing-Nachrichten zum Schutz des Ökosystems nicht zu (später erneut möglich)
-//   131050 Empfänger hat Marketing-Nachrichten dieses Unternehmens abbestellt (hat aber WhatsApp)
+//   131050 Empfänger hat Marketing-Nachrichten dieses Unternehmens abbestellt (hat aber WhatsApp): zählt als
+//          Abmeldung von WhatsApp (isWhatsAppOptOutCode), kein Admin-Alarm
 //   130472 Nummer ist Teil eines Meta-Experiments (Marketing), 131047 24-Stunden-Fenster abgelaufen,
 //   131021 Empfänger = Absender, 131042 Zahlungsproblem, 131031/131037/131045/131057/133010 Konto bzw. Nummer,
 //   132000–132016/132068 Vorlage (Parameter, nicht freigegeben, pausiert, gesperrt), 130429/131048/131056 Limits,
@@ -46,6 +47,16 @@ export function artOf(code: number | null): ZustellfehlerArt {
   if (ACCOUNT_CODES.has(code)) return "zahlung_konto";
   if (META_CODES.has(code)) return "meta";
   return "sonstiges";
+}
+
+/**
+ * 131050: Empfänger hat Marketing-Nachrichten dieses Unternehmens abbestellt. Zählt als Abmeldung von WhatsApp
+ * (Ole, 15.11.2026): Chat gesperrt wie bei „STOPP“, Lead auf die Anrufliste, Bestandskunde künftig nicht per WhatsApp.
+ */
+export const WHATSAPP_OPTOUT_CODE = 131050;
+
+export function isWhatsAppOptOutCode(code: number | null | undefined): boolean {
+  return code === WHATSAPP_OPTOUT_CODE;
 }
 
 /** Ist das der Code für „Nummer nicht per WhatsApp erreichbar“? */
