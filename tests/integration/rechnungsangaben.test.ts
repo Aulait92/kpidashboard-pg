@@ -100,7 +100,7 @@ describe("Rechnungsangaben", () => {
       },
       null,
     );
-    expect(await acceptOffer(offer.token, { name: "Karl Kunde", ip: "127.0.0.1", agent: "vitest", termsAccepted: true })).toEqual({ ok: true });
+    expect(await acceptOffer(offer.token, { name: "Karl Kunde", ip: "127.0.0.1", agent: "vitest", termsAccepted: true, business: { company: "Agentur Test", confirmed: true } })).toEqual({ ok: true });
     expect(await createCheckoutForOffer(offer.id, "sepa")).toEqual({ url: "https://checkout.stripe.test/x" });
 
     const footer = (s.created[0].invoice_settings as { footer: string }).footer;
@@ -129,7 +129,7 @@ describe("Rechnungsangaben", () => {
       { contactName: "Zora Zahl", email: `zora-${uid()}@example.test`, term: "12m", products: [{ name: "Katzenversicherung", dailyBudget: 40 }], startDate: addDaysIso(today, 20) },
       null,
     );
-    await acceptOffer(offer.token, { name: "Zora Zahl", ip: "127.0.0.1", agent: "vitest", termsAccepted: true });
+    await acceptOffer(offer.token, { name: "Zora Zahl", ip: "127.0.0.1", agent: "vitest", termsAccepted: true, business: { company: "Agentur Test", confirmed: true } });
     await createCheckoutForOffer(offer.id);
     expect(s.sessions[0].allowed_payment_method_types).toEqual(["sepa_debit", "card"]);
   });

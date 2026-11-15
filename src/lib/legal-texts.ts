@@ -17,6 +17,8 @@
 // Außerdem: AGB „Kundendaten: Zusicherung und Freistellung“ und „Daten bei Vertragsende“ (Export im Kundenbereich,
 // Löschung spätestens 30 Tage nach Ende), AVV „Pflichten des Auftraggebers“, KI-Kennzeichnung (Art. 50 KI-VO) und
 // „keine Beratung“ in AGB und AVV.
+// Außerdem: Annahme mit Firma, USt-IdNr. und Bestätigung „Unternehmer (§ 14 BGB)“, Konditionen direkt am Knopf und
+// Auftragsbestätigung; Startpreis und Testphasen mit gesonderter Bestätigung.
 // Bestehende Kunden werden NICHT automatisch zur Zustimmung aufgefordert (kein Banner); Änderungen gelten für sie
 // erst nach Mitteilung in Textform mit 6 Wochen Widerspruchsfrist (AGB „Änderungen dieser AGB“), siehe docs/datenschutz.md.
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
@@ -54,6 +56,8 @@ export const AGB: LegalSection[] = [
     title: "Vertragsschluss und Rangfolge",
     items: [
       "Der Vertrag kommt durch die Annahme des Angebots zustande: online über den Angebotslink, per E-Mail oder in sonstiger Textform.",
+      // Prüfen: Unternehmereigenschaft bei der Annahme (Anwalts-Memo, Ole 15.11.2026)
+      "Bei der Online-Annahme gibt der Kunde seine Firma und, soweit vorhanden, seine USt-IdNr. an und bestätigt, dass er den Vertrag als Unternehmer im Sinne von § 14 BGB schließt. Direkt am Knopf zur Annahme stehen Einrichtungsgebühr, laufende Vergütung mit Beginn, gegebenenfalls Startpreis mit dem Datum des Übergangs in die reguläre Vergütung sowie Laufzeit und Kündigungsmöglichkeit. Der Anbieter bestätigt den Vertragsschluss mit diesen Angaben per E-Mail.",
       "Es gelten in dieser Rangfolge: im Angebot vereinbarte Sondervereinbarungen, das Angebot, diese AGB, der Auftragsverarbeitungsvertrag.",
     ],
   },
@@ -123,6 +127,9 @@ export const AGB: LegalSection[] = [
       "Der Anbieter weist den Kunden spätestens 7 Tage vor Ende des kostenlosen Zeitraums per E-Mail und im Kundenbereich auf das Ende und den folgenden Preis hin.",
       "Nach dem Übergang in die kostenpflichtige Phase kann die Leistung monatlich zum Ende des Abrechnungsmonats gekündigt werden, soweit im Angebot nichts anderes vereinbart ist.",
       "Je Leistung und Kunde wird ein kostenloser Zeitraum gewährt. Ein Anspruch auf kostenlose Zeiträume besteht nicht.",
+      // Prüfen: Startpreis mit automatischem Übergang (Anwalts-Memo 15.11.2026, § 305c BGB)
+      "Ist im Angebot ein Startpreis vereinbart, gilt er für die genannte Zahl von Abrechnungsmonaten ab Start. Danach gilt automatisch die im Angebot genannte reguläre Vergütung. Das Datum des Übergangs und der folgende Betrag stehen bei der Annahme direkt am Knopf, der Kunde bestätigt sie dort gesondert, und sie stehen in der Auftragsbestätigung.",
+      "Bei Testphasen, die der Kunde im Kundenbereich bucht, stehen Ende der Testphase und folgender Preis direkt am Knopf zur Buchung und werden dort gesondert bestätigt. Der Anbieter bestätigt Beginn, Ende und folgenden Preis per E-Mail.",
     ],
   },
   {

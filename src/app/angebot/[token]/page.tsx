@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Download } from "lucide-react";
 import { OfferDocument, offerProducts, toOfferDoc } from "@/components/offer-document";
 import { getCurrentSession } from "@/lib/auth";
-import { getOfferByToken, markOfferViewed, offerAddOnsOf } from "@/lib/offers";
+import { getOfferByToken, markOfferViewed, offerAddOnsOf, offerSummaryInput } from "@/lib/offers";
 import {
   berlinTodayIso,
   normalizeTerm,
@@ -113,6 +113,8 @@ export default async function OfferPage({
                     termsUrl={offer.termsUrl!}
                     dpaUrl={offer.dpaUrl!}
                     defaultName={offer.contactName}
+                    defaultCompany={offer.company ?? ""}
+                    pricing={offerSummaryInput(offer)}
                     choice={choiceProps(offer)}
                     payment={billingEnabled() && !offer.isTest}
                   />

@@ -5,6 +5,8 @@ import { CheckCircle2, Loader2 } from "lucide-react";
 import { acceptOfferAction, type AcceptState } from "./actions";
 import { eur, withVat, type OfferTerm } from "@/lib/offer-pricing";
 import { ZahlartAuswahl } from "@/components/zahlart-auswahl";
+import { contractSummaryLines, hasPriceStep, priceStepAckText, type ContractSummaryInput } from "@/lib/vertrag-laufzeit";
+import { BUSINESS_CONFIRM_TEXT } from "@/lib/unternehmer";
 
 /** Wahl von Laufzeit/Startdatum (vom Server vorberechnet; verbindlich rechnet der Server bei Annahme neu). */
 export type OfferChoiceProps = {
@@ -28,6 +30,8 @@ export function AcceptForm({
   termsUrl,
   dpaUrl,
   defaultName,
+  defaultCompany = "",
+  pricing,
   choice,
   payment = false,
 }: {
@@ -35,6 +39,9 @@ export function AcceptForm({
   termsUrl: string;
   dpaUrl: string;
   defaultName: string;
+  defaultCompany?: string;
+  /** Feste Konditionen des Angebots; Laufzeit/Start/Setup aus der Wahl gehen vor (Anzeige direkt am Knopf). */
+  pricing: ContractSummaryInput;
   choice?: OfferChoiceProps | null;
   /** Online-Zahlung eingerichtet: Zahlart vor dem Weiterleiten wählen (Lastschrift vorausgewählt) */
   payment?: boolean;
@@ -45,6 +52,16 @@ export function AcceptForm({
   );
   const [term, setTerm] = useState<OfferTerm>(choice?.initialTerm ?? "12m");
   const [startDate, setStartDate] = useState(choice?.start.preset ?? "");
+  // Konditionen mit der aktuellen Wahl (verbindlich rechnet der Server bei der Annahme)
+  const effTerm = choice?.choosesTerm ? term : pricing.term;
+  const summary: ContractSummaryInput = {
+    ...pricing,
+    term: effTerm,
+    startIso: choice?.choosesStart ? startDate || null : pricing.startIso,
+    setup: choice ? (choice.options.find((o) => o.term === effTerm)?.setup ?? pricing.setup) : pricing.setup,
+    annual: pricing.annual && effTerm === "12m",
+  };
+  const priceStep = hasPriceStep(summary);
 
   useEffect(() => {
     if (state.checkoutUrl) window.location.href = state.checkoutUrl;
@@ -79,6 +96,41 @@ export function AcceptForm({
       {choice && (choice.choosesTerm || choice.choosesStart) ? (
         <ChoiceFields choice={choice} term={term} setTerm={setTerm} startDate={startDate} setStartDate={setStartDate} />
       ) : null}
+      <div className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-4 text-sm sm:p-5" data-accept-summary aria-live="polite">
+        <div className="font-semibold">Das vereinbaren Sie mit dem Klick</div>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-[#374151]">
+          {contractSummaryLines(summary).map((l) => (
+            <li key={l}>{l}</li>
+          ))}
+        </ul>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor="company" className="text-sm font-medium">
+            Firma bzw. Unternehmen
+          </label>
+          <input
+            id="company"
+            name="company"
+            required
+            minLength={2}
+            defaultValue={defaultCompany}
+            autoComplete="organization"
+            className="mt-1 h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-[15px] outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20"
+          />
+        </div>
+        <div>
+          <label htmlFor="vatId" className="text-sm font-medium">
+            USt-IdNr. <span className="font-normal text-[color:var(--muted)]">(falls vorhanden)</span>
+          </label>
+          <input
+            id="vatId"
+            name="vatId"
+            placeholder="DE123456789"
+            className="mt-1 h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-[15px] outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20"
+          />
+        </div>
+      </div>
       <div>
         <label htmlFor="name" className="text-sm font-medium">
           Ihr vollständiger Name
@@ -93,6 +145,16 @@ export function AcceptForm({
           className="mt-1 h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-[15px] outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20"
         />
       </div>
+      <label className="flex items-start gap-3 text-sm">
+        <input type="checkbox" name="business" required className="mt-0.5 h-4 w-4 shrink-0 accent-[color:var(--brand)]" />
+        <span>{BUSINESS_CONFIRM_TEXT}</span>
+      </label>
+      {priceStep ? (
+        <label className="flex items-start gap-3 text-sm" data-accept-price-step>
+          <input type="checkbox" name="priceStep" required className="mt-0.5 h-4 w-4 shrink-0 accent-[color:var(--brand)]" />
+          <span>{priceStepAckText(summary)}</span>
+        </label>
+      ) : null}
       <label className="flex items-start gap-3 text-sm">
         <input type="checkbox" name="terms" required className="mt-0.5 h-4 w-4 shrink-0 accent-[color:var(--brand)]" />
         <span>

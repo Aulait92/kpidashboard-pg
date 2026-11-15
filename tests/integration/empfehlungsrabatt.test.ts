@@ -110,7 +110,7 @@ describe("Empfehlungsrabatt auf die Einrichtung", () => {
     );
 
   const accept = (token: string, term: string) =>
-    acceptOffer(token, { name: "Kai Kollege", ip: "127.0.0.1", agent: "vitest", termsAccepted: true, term, startDate: addDaysIso(today, 20) });
+    acceptOffer(token, { name: "Kai Kollege", ip: "127.0.0.1", agent: "vitest", termsAccepted: true, business: { company: "Agentur Test", confirmed: true }, term, startDate: addDaysIso(today, 20) });
 
   it("neues Angebot an Empfohlenen: Rabatt automatisch, Zeile mit Namen (Einwilligung), Laufzeit bleibt wählbar", async () => {
     const contactId = await referred();

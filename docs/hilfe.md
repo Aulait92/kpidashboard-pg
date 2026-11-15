@@ -614,6 +614,11 @@ Seiten aus der Liste „Seiten“ unten.
   „Angebot annehmen“): Setup und Summen passen sich sofort an. Start frühestens 7 Tage, spätestens 90 Tage ab
   heute; ab diesem Tag läuft die Monatsgebühr, die Einrichtung dauert ca. 1–2 Wochen. Bei Sonderpreisen ist die
   Laufzeit fest vereinbart, das Startdatum bleibt wählbar.
+- Bei der Annahme (seit 15.11.2026): Direkt am Knopf steht „Das vereinbaren Sie mit dem Klick“ mit Einrichtung,
+  monatlichem Betrag ab Start, Mindestlaufzeit mit Enddatum und Kündigungsmöglichkeit. Pflicht: Firma, Häkchen
+  „Ich schließe diesen Vertrag als Unternehmer (§ 14 BGB)“; USt-IdNr. freiwillig. Mit Startpreis zusätzlich das Häkchen,
+  dass ab dem genannten Datum automatisch die reguläre Vergütung gilt. Danach kommt eine Auftragsbestätigung per E-Mail
+  mit denselben Angaben (Daten und Beträge), getrennt von der E-Mail mit dem Zugang.
 - Zahlweise: monatlich oder jährlich im Voraus (2 Monate geschenkt: Jahresbetrag = 10 × Monatspreis inkl.
   Zusätze, nur mit 12 Monaten Laufzeit). Umstellen: bitte bei uns melden.
 - Zahlungsart, Rechnungsadresse, USt-IdNr.: über das Zahlungsportal (Stripe) auf dieser Seite.
