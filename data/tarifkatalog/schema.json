@@ -130,6 +130,8 @@
         { "key": "schluesselBeruf", "label": "Verlust beruflicher Schlüssel", "kurz": "Berufsschlüssel" },
         { "key": "oeltank", "label": "Öltank-Haftpflicht", "kurz": "Öltank" },
         { "key": "wohnung", "label": "Haftpflicht für eine vermietete Wohnung", "kurz": "Vermietete Wohnung" },
+        { "key": "delikt", "label": "Schäden durch deliktunfähige Kinder", "kurz": "Deliktunfähigkeit" },
+        { "key": "hausbesitz", "label": "Selbst genutztes Haus (Haus- und Grundbesitz)", "kurz": "Hausbesitz" },
         { "key": "sb0", "label": "Ohne Selbstbeteiligung", "kurz": "Ohne SB" }
       ]
     },
@@ -160,7 +162,8 @@
         { "key": "elementar", "label": "Elementarschäden", "kurz": "Elementar" },
         { "key": "glas", "label": "Glasbruch", "kurz": "Glas" },
         { "key": "internet", "label": "Internetschutz (Online-Betrug)", "kurz": "Internetschutz" },
-        { "key": "notfall", "label": "Notfall-Service Zuhause", "kurz": "Notfall-Service" }
+        { "key": "notfall", "label": "Notfall-Service Zuhause", "kurz": "Notfall-Service" },
+        { "key": "reise", "label": "Reisegepäck", "kurz": "Reisegepäck" }
       ]
     },
     {
@@ -216,6 +219,7 @@
         { "key": "elementar", "label": "Elementarschäden (Extremwetter)", "kurz": "Elementar" },
         { "key": "glas", "label": "Glasbruch Gebäude", "kurz": "Glas" },
         { "key": "technik", "label": "Haus- und Technikschutz", "kurz": "Haus- und Technik" },
+        { "key": "erneuerbar", "label": "Erneuerbare Energien (Photovoltaik, Wärmepumpe)", "kurz": "Erneuerbare Energien" },
         { "key": "oeltank", "label": "Öltank-Haftpflicht", "kurz": "Öltank" },
         { "key": "hausHaftpflicht", "label": "Haus- und Grundbesitzer-Haftpflicht", "kurz": "Haus-Haftpflicht" },
         { "key": "notfall", "label": "Notfall-Service Zuhause", "kurz": "Notfall-Service" }

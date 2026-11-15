@@ -1,0 +1,41 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Teilnahme an Hundeschulen",
+    "Schäden durch tierische Ausscheidungen",
+    "Mietsachschäden auch in Hotel und Ferienwohnung"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehaftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "60 Mio. €",
+        "sb": "wählbar, z. B. 300 €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "bis 12 Monate",
+        "forderungsausfall": "ja",
+        "ausland": "vorübergehend, weltweit"
+      },
+      "bausteine": {},
+      "quelle": "https://www.axa.de/pk/haftpflicht/p/hundehaftpflicht",
+      "stand": "2026-11-15"
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/haftpflicht/p/hundehaftpflicht",
+    "https://www.axa.de/pk/haftpflicht/p/tierhalter-haftpflicht"
+  ],
+  "offen": [
+    "AXA bietet einen Tarif (keine Stufen).",
+    "Fremde Hüter: laut Produktseite sind Personen versichert, die den Hund beaufsichtigen oder mit ihm spazieren gehen.",
+    "Selbstbeteiligung: Rechenbeispiel mit 300 €; ob ohne SB möglich, nicht belegt.",
+    "Listenhunde nur über eine AXA Agentur."
+  ]
+}

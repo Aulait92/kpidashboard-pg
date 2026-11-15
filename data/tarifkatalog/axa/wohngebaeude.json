@@ -1,0 +1,68 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung (BOXflex)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Feuer, Blitzschlag, Überspannung",
+    "Sturm und Hagel",
+    "Leitungswasser, Rohrbruch, Frost"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude BOXFLEX",
+      "kurz": "Gut versichert",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "bis 10.000 €",
+        "pv": "optional",
+        "kosten": "ja",
+        "ueberspannung": "ja",
+        "vandalismus": "bis 5.000 €"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "erneuerbar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.axa.de/pk/haus-wohnung/p/gebaeudeversicherung",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Wohngebäude BOXFLEX PREMIUM",
+      "kurz": "Top-Schutz",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "bis 20.000 €",
+        "pv": "optional",
+        "kosten": "ja",
+        "ueberspannung": "ja",
+        "vandalismus": "bis 10.000 €"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "erneuerbar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.axa.de/pk/haus-wohnung/p/gebaeudeversicherung",
+      "stand": "2026-11-15"
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/haus-wohnung/p/gebaeudeversicherung"
+  ],
+  "offen": [
+    "AXA bietet zwei Stufen (BOXFLEX, BOXFLEX PREMIUM).",
+    "Bestseller-Markierung sitzt laut Seitenquelltext auf der ersten Spalte (BOXFLEX); bitte auf axa.de gegenprüfen.",
+    "Gleitender Neuwert, Mietausfall, undichte Fugen, Marder und Allgefahren nicht belegt; Höhe der Kosten nach Schaden nicht belegt.",
+    "BOXFLEX PREMIUM zusätzlich: Rohrverstopfung, Gartenanlage bis 10.000 €."
+  ]
+}

@@ -66,17 +66,17 @@ vollständig = alle Standardmerkmale belegt; teilweise = Standardmerkmale fehlen
 
 | Sparte | Allianz | AXA | SIGNAL IDUNA |
 |---|---|---|---|
-| katze-kranken | vollständig (4 Stufen) | fehlt | fehlt |
-| katze-op | vollständig (4 Stufen) | fehlt | fehlt |
-| hund-kranken | vollständig (4 Stufen) | fehlt | fehlt |
-| hund-op | vollständig (4 Stufen) | fehlt | fehlt |
-| haftpflicht | vollständig (4 Stufen) | fehlt | fehlt |
-| hausrat | vollständig (4 Stufen) | fehlt | fehlt |
-| rechtsschutz | vollständig (4 Stufen) | fehlt | fehlt |
-| wohngebaeude | vollständig (4 Stufen) | fehlt | fehlt |
-| tierhalter-hund | vollständig (3 Stufen) | fehlt | fehlt |
-| tierhalter-pferd | vollständig (3 Stufen) | fehlt | fehlt |
-| unfall | vollständig (4 Stufen) | fehlt | fehlt |
+| katze-kranken | vollständig (4 Stufen) | fehlt (kein Produkt auf axa.de) | fehlt |
+| katze-op | vollständig (4 Stufen) | fehlt (kein Produkt auf axa.de) | fehlt |
+| hund-kranken | vollständig (4 Stufen) | fehlt (kein Produkt auf axa.de) | fehlt |
+| hund-op | vollständig (4 Stufen) | fehlt (kein Produkt auf axa.de) | fehlt |
+| haftpflicht | vollständig (4 Stufen) | teilweise (3 Stufen, geliehene Sachen L offen) | fehlt |
+| hausrat | vollständig (4 Stufen) | teilweise (3 Stufen, einfacher Diebstahl offen) | fehlt |
+| rechtsschutz | vollständig (4 Stufen) | teilweise (3 Stufen, Strafkaution offen) | fehlt |
+| wohngebaeude | vollständig (4 Stufen) | vollständig (2 Stufen) | fehlt |
+| tierhalter-hund | vollständig (3 Stufen) | vollständig (1 Tarif) | fehlt |
+| tierhalter-pferd | vollständig (3 Stufen) | teilweise (1 Tarif, nur Summe) | fehlt |
+| unfall | vollständig (4 Stufen) | vollständig (3 Stufen) | fehlt |
 
 ### Allianz
 - Quelle ist jeweils der Tarifvergleich der Produktseite auf allianz.de (Abruf 15.11.2026), dazu der Produktsteckbrief.
@@ -89,9 +89,24 @@ vollständig = alle Standardmerkmale belegt; teilweise = Standardmerkmale fehlen
 - Hausrat: Der ältere Leistungsvergleich 09/2023 weicht vom aktuellen Tarifvergleich ab (z. B. Premium 1.300 statt
   900 €/m²) und wurde nicht verwendet.
 
+### AXA
+- Quelle: Tarifvergleiche der Produktseiten auf axa.de (Abruf 15.11.2026), bei Haftpflicht die Produktübersicht
+  „Leistungen im Überblick“ (PDF ohne Datum; Farbe der Punkte ausgewertet: blau = versichert, schwarz = nicht versichert),
+  bei Unfall die Leistungsübersicht (PDF).
+- Stufen: Haftpflicht, Hausrat, Unfall als Online-Tarife S, M, L (Kurzname „Tarif S“ usw.); Rechtsschutz über den
+  Partner ROLAND als Topschutz-Starter, -Komfort, -Premium; Wohngebäude als BOXFLEX und BOXFLEX PREMIUM (2 Stufen);
+  Hunde- und Pferdehaftpflicht je ein Tarif.
+- **AXA bietet auf axa.de keine Tierkranken- oder Tier-OP-Versicherung an** (nur ein Ratgebersatz ohne Produkt). Die vier
+  Tier-Sparten fehlen deshalb für AXA.
+- BOXflex (das modulare Vertreterprodukt) ist auf axa.de nur für Wohngebäude als Tarifvergleich veröffentlicht.
+- Empfehlung: AXA markiert nur bei Wohngebäude eine Spalte als „Bestseller“ (laut Seitenquelltext BOXFLEX, bitte am
+  Bildschirm gegenprüfen); sonst mittlere Stufe.
+
 ## Offen (wichtigste Lücken)
 - Allianz Hausrat: Überspannung, Hotelkosten, Außenversicherung, Diebstahl aus dem Auto, Selbstbeteiligung stehen nicht
   im aktuellen Tarifvergleich.
 - Allianz Unfall: Ob Invaliditätssumme, Unfallrente und Tagegeld je Stufe fest oder im Rechner wählbar sind, ist nicht belegt.
 - Allianz Pferd: Fohlen, Ausland nicht belegt.
+- AXA: keine Tierkrankenversicherung; Pferdehaftpflicht nur mit Deckungssumme, Fohlen, Forderungsausfall belegt;
+  Rechtsschutz ohne Strafkaution und SB; Haftpflicht L geliehene Sachen widersprüchlich (10.000 € bzw. 20.000 €).
 - Details je Datei unter `offen`.

@@ -1,0 +1,86 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "rechtsschutz",
+  "produkt": "Rechtsschutzversicherung (Partner ROLAND)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Privat, Beruf und Verkehr",
+    "Unbegrenzte Deckungssumme",
+    "Kostenlose Erstberatung, freie Anwaltswahl"
+  ],
+  "tarife": [
+    {
+      "name": "Rechtsschutz Topschutz-Starter",
+      "kurz": "Starter",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "optional",
+        "privat": "ja",
+        "vsWelt": "bis 4.000 €",
+        "wartezeit": "meist 0 bis 6 Monate",
+        "mediation": "ja"
+      },
+      "bausteine": {
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.axa.de/pk/haftpflicht/p/rechtsschutz",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Rechtsschutz Topschutz-Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "optional",
+        "privat": "ja",
+        "wartezeit": "meist 0 bis 6 Monate",
+        "mediation": "ja"
+      },
+      "bausteine": {
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.axa.de/pk/haftpflicht/p/rechtsschutz",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Rechtsschutz Topschutz-Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "optional",
+        "privat": "ja",
+        "wartezeit": "meist 0 bis 3 Monate",
+        "mediation": "ja"
+      },
+      "bausteine": {
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.axa.de/pk/haftpflicht/p/rechtsschutz",
+      "stand": "2026-11-15"
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/haftpflicht/p/rechtsschutz",
+    "https://www.axa.de/site/axa-de/get/documents_E2022553645/axade/medien/privatkunden/haftpflicht-und-recht/rechtsschutz/infoblatt-versicherungsprodukte-rechtsschutz.pdf"
+  ],
+  "offen": [
+    "Versicherer ist ROLAND Rechtsschutz (Partner von AXA).",
+    "Strafkaution, Selbstbeteiligung, Opfer-Rechtsschutz und Telefonberatung nicht belegt.",
+    "Versicherungssumme weltweit nur für Tarif S belegt (bis 4.000 €).",
+    "Wartezeit Arbeitsrecht: 6 Monate (Starter, Komfort), 3 Monate (Premium). Familien- und Erbrecht je nach Tarif bis 1.250 € bzw. 5.000 € je Fall.",
+    "Wohnen (Immobilie) ist gegen Aufpreis zubuchbar.",
+    "AXA kennzeichnet keine Empfehlung; Topschutz-Komfort als mittlere Stufe gesetzt."
+  ]
+}
