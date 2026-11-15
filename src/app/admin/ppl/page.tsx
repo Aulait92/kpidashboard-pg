@@ -10,6 +10,7 @@ import { fmtWeek, weekRange } from "@/lib/ppl/periods";
 import { assignParkedAction, decideStornoAction, discardParkedAction } from "./actions";
 import { loadCustomerOverview, loadPplReport, type Granularity } from "@/lib/ppl/auswertung";
 import { PplOverview, PplReportView } from "@/components/admin/ppl-auswertung";
+import { airtableSyncOff } from "@/lib/airtable-switch";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Pay-per-Lead | performancegrowth Admin" };
@@ -47,7 +48,14 @@ export default async function PplPage({ searchParams }: { searchParams: Promise<
     <main className="mx-auto w-full max-w-7xl flex-1 space-y-5 px-4 py-8 sm:px-6 lg:px-8">
       <SubTabs tabs={[{ href: "/admin/leads", label: "Leads" }, { href: "/admin/ppl", label: "Pay-per-Lead" }, { href: "/admin/whatsapp", label: "WhatsApp-Chats", exact: true }]} />
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Pay-per-Lead</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">Pay-per-Lead</h1>
+          {airtableSyncOff() ? (
+            <Badge tone="warning">Airtable-Abgleich aus (AIRTABLE_SYNC_OFF)</Badge>
+          ) : (
+            <Badge tone="neutral">Airtable-Abgleich an</Badge>
+          )}
+        </div>
         <div className="flex gap-2">
         <Link href="/admin/ppl/import" className="inline-flex h-9 items-center rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-sm font-medium">
           Aus Airtable übernehmen

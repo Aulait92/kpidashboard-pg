@@ -3,7 +3,7 @@ import { reportError } from "@/lib/monitoring";
 import { beat } from "@/lib/heartbeat";
 import { revalidatePath } from "next/cache";
 import { after, NextResponse } from "next/server";
-import { startFullSync, type FullSyncResult } from "@/lib/sync";
+import { startFullSync, syncHeartbeat, type FullSyncResult } from "@/lib/sync";
 import { listProductMatchers } from "@/lib/product-catalog";
 import { listProductGoalBreakdown } from "@/lib/media-buyer";
 
@@ -29,7 +29,8 @@ async function handle(req: Request) {
         try {
           const result = await promise;
           revalidatePath("/");
-          await beat("sync", result.airtable.errors.length === 0, result.airtable.errors.join("; ") || null);
+          const hb = syncHeartbeat(result);
+          await beat("sync", hb.ok, hb.note);
         } catch (err) {
           reportError(err, "sync");
           await beat("sync", false, err instanceof Error ? err.message : String(err));
@@ -50,7 +51,8 @@ async function handle(req: Request) {
 
   try {
     const result: FullSyncResult = await promise;
-    await beat("sync", result.airtable.errors.length === 0, result.airtable.errors.join("; ") || null);
+    const hb = syncHeartbeat(result);
+    await beat("sync", hb.ok, hb.note);
     // Diagnose: welche Produkte + Match-Needles kennt der Matcher nach dem Sync?
     // Fehlt hier ein frisch angelegtes Produkt, ist es nicht in die DB gekommen
     // (Name-Feld leer/anders benannt, falsche Tabelle, o. ä.).
@@ -63,6 +65,7 @@ async function handle(req: Request) {
       productMatchers,
       productGoals,
       airtable: {
+        skipped: result.airtable.skipped ?? false,
         leads: result.airtable.leads,
         revenues: result.airtable.revenues,
         deletedLeads: result.airtable.deletedLeads,

@@ -11,6 +11,7 @@ import { syncGoogleAds, type GoogleSyncResult } from "@/lib/google";
 import { sendToAdmins, sendToBuyersOfCustomer, sendToUser } from "@/lib/push";
 import { assignLead } from "@/lib/team";
 import { prisma } from "@/lib/prisma";
+import { AIRTABLE_SKIPPED_NOTE, airtableSyncOff } from "@/lib/airtable-switch";
 
 export type FullSyncResult = {
   airtable: SyncResult;
@@ -102,9 +103,24 @@ async function timed<T>(label: string, fn: () => Promise<T>): Promise<T> {
   }
 }
 
+/** Leeres Airtable-Ergebnis, wenn der Abgleich per AIRTABLE_SYNC_OFF aus ist. */
+export function skippedAirtableResult(): SyncResult {
+  return { tables: [], customers: 0, leads: 0, revenues: 0, costs: 0, deletedLeads: 0, newSales: [], newLeads: [], newStornos: [], errors: [], skipped: true };
+}
+
+/** Herzschlag des Syncs: grün auch bei übersprungenem Airtable, rot nur bei Airtable-Fehlern. */
+export function syncHeartbeat(result: Pick<FullSyncResult, "airtable">): { ok: boolean; note: string | null } {
+  if (result.airtable.skipped) return { ok: true, note: AIRTABLE_SKIPPED_NOTE };
+  return { ok: result.airtable.errors.length === 0, note: result.airtable.errors.join("; ") || null };
+}
+
 async function doFullSync(): Promise<FullSyncResult> {
   const t0 = Date.now();
-  const airtable = await timed("Airtable", () => syncAirtable());
+  // AIRTABLE_SYNC_OFF=1: nur Airtable (inkl. PplIntake und Löschlauf) auslassen,
+  // die Werbekosten unten laufen weiter.
+  const airtable = airtableSyncOff()
+    ? (console.log(`[sync] ${AIRTABLE_SKIPPED_NOTE}`), skippedAirtableResult())
+    : await timed("Airtable", () => syncAirtable());
 
   // Eigene Werbekonten der Retainer-Kunden (Spend nur für deren Dashboard).
   // Vor dem (langen) Agentur-Meta-Sync, damit er nicht davon blockiert wird.

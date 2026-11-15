@@ -6,6 +6,12 @@
 // Voraussetzung: das im AIRTABLE_TOKEN hinterlegte PAT muss `data.records:write`
 // auf die Leads-Tabelle haben. Bei reinem Read-Only-PAT bekommen wir 403 zurück
 // und die UI gibt den Fehler im Klartext aus.
+//
+// Mit AIRTABLE_SYNC_OFF=1 (nach der Pay-per-Lead-Umstellung) schreiben
+// updateLeadEditableFields und markLeadAsCancelled nichts mehr nach Airtable
+// (No-op, einmal geloggt); die Änderung steht dann nur in der App.
+
+import { skipAirtableWrite } from "@/lib/airtable-switch";
 
 const LEADS_TABLE = process.env.AIRTABLE_TABLE_LEADS ?? "Leads";
 const BEZUG_TABLE =
@@ -169,6 +175,7 @@ export async function updateLeadEditableFields(opts: {
   stornogrundRecordId?: string | null;
   closeValue?: number | null;
 }): Promise<void> {
+  if (skipAirtableWrite("Lead-Felder")) return;
   const { token, baseId } = getEnv();
   const fields: Record<string, unknown> = {};
   if (opts.kontaktversuche !== undefined) {
@@ -225,6 +232,7 @@ export async function markLeadAsCancelled(opts: {
   stornogrundRecordId: string;
   bemerkung: string;
 }): Promise<void> {
+  if (skipAirtableWrite("Storno")) return;
   const { token, baseId } = getEnv();
   const url = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(LEADS_TABLE)}/${opts.airtableId}`;
   const fields: Record<string, unknown> = {
