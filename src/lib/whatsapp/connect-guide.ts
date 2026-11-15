@@ -61,15 +61,20 @@ export type PathGuide = {
   minutes: number;
 };
 
-const FB_LOGIN = "Ihren Facebook-Login. Sie brauchen Admin-Rechte im Meta-Unternehmensportfolio (Business Manager), also dort, wo auch Ihr Werbekonto liegt.";
+const FB_LOGIN =
+  "Ihren Facebook-Login mit Admin-Rechten im Meta-Unternehmensportfolio (Business Manager), also dort, wo auch Ihr Werbekonto liegt. So prüfen Sie es: business.facebook.com → Einstellungen → Personen → Ihr Name → Rolle „Vollzugriff“ (Admin). Kein Admin? Bitten Sie den Inhaber des Portfolios, Sie als Admin hinzuzufügen. Gibt es noch keins, legen Sie es unter business.facebook.com/overview an. Erst dann starten.";
+/** Verifizierung des Portfolios (Ole, 15.11.2026, aus dem Durchlauf): fragt 360dialog ab, ist fürs Verbinden nicht nötig. */
+const VERIFIED =
+  "Wissen, ob Ihr Portfolio verifiziert ist: business.facebook.com → Einstellungen → Sicherheitscenter → „Unternehmensverifizierung“. Zum Verbinden ist das nicht nötig. Ohne Verifizierung gelten bei Meta aber engere Grenzen, zum Beispiel beim Anzeigenamen und bei der Zahl der Nachrichten an neue Kontakte. Starten Sie die Verifizierung am besten parallel (Handelsregisterauszug oder Gewerbeanmeldung, Adresse, Telefon, Website mit Impressum), sie dauert meist einige Tage.";
 const DESKTOP = "Einen Computer statt des Handys. Erlauben Sie Pop-up-Fenster im Browser.";
 
 const ACCOUNT_START: GuideStep[] = [
   {
     where: "360dialog",
     title: "Konto bei 360dialog anlegen",
-    text: "Sie sehen eine Seite von 360dialog, unserem WhatsApp-Anbieter, mit unserem Logo. Sie legen ein Konto mit E-Mail und Passwort an. Das ist kostenlos, die Nummer bleibt Ihre.",
-    pitfall: "Sie haben schon ein Konto bei 360dialog? Dann melden Sie sich einfach an.",
+    text: "Sie sehen eine Seite von 360dialog, unserem WhatsApp-Anbieter, mit unserem Logo. Sie legen ein Konto an, am besten mit „Sign up“ per E-Mail und Passwort. Das ist kostenlos, die Nummer bleibt Ihre.",
+    pitfall:
+      "Nehmen Sie lieber nicht „Continue with Facebook“: Das kann in einem alten Konto eines anderen Anbieters landen (z. B. Superchat). Sehen Sie dort fremde Firmen oder Nummern, machen Sie nicht weiter und melden Sie sich bei uns. Sie haben schon ein eigenes Konto bei 360dialog? Dann melden Sie sich einfach an.",
   },
   {
     where: "360dialog",
@@ -77,6 +82,12 @@ const ACCOUNT_START: GuideStep[] = [
     text: "360dialog fragt nach Ihrem Namen bzw. Firmennamen, Ihrer persönlichen Handynummer und der Währung (EUR). Setzen Sie das Häkchen bei der Weitergabe der Kontaktdaten und bei den Nutzungsbedingungen (Client Terms of Service) und klicken Sie auf „Continue“. Danach öffnet sich das Fenster von Meta.",
     pitfall:
       "Bei „Personal WhatsApp Number“ gehört Ihre eigene Handynummer für Rückfragen hin, nicht die Nummer, die Sie verbinden. Stellen Sie links die Vorwahl auf +49 um.",
+  },
+  {
+    where: "360dialog",
+    title: "Zwei Fragen zu Ihrem Meta-Portfolio",
+    text: "„Do you have admin access to the Meta Business Portfolio?“: Sie wählen „Yes“. „Is your Meta Business Portfolio verified?“: „Yes“, wenn die Unternehmensverifizierung abgeschlossen ist, sonst „No“. Das Verbinden klappt in beiden Fällen.",
+    pitfall: "Sie sind kein Admin? Dann hier abbrechen und erst Admin-Rechte holen (siehe „Was Sie brauchen“), sonst fehlt Ihr Portfolio später in der Liste.",
   },
 ];
 
@@ -110,6 +121,11 @@ const META_START: GuideStep[] = [
     pitfall:
       "Ihr Portfolio fehlt in der Liste? Dann sind Sie dort kein Admin. Lassen Sie sich Admin-Rechte geben oder legen Sie ein neues an. Die Auswahl lässt sich später nicht mehr ändern.",
   },
+  {
+    where: "meta",
+    title: "Freigabe nur für dieses Portfolio",
+    text: "Fragt Meta, für welche Unternehmen 360dialog freigegeben werden soll, wählen Sie „Opt in to current Businesses only“ (nur aktuelle Unternehmen).",
+  },
 ];
 
 const PROFILE: GuideStep = {
@@ -132,7 +148,7 @@ export const GUIDES: Record<ConnectPath, PathGuide> = {
     tone: "ok",
     canStart: true,
     minutes: 10,
-    checklist: [FB_LOGIN, "Das Telefon zur Nummer, für den Bestätigungscode. Bei Festnetz kommt der Code per Anruf.", DESKTOP, "Etwa 10 Minuten Zeit."],
+    checklist: [FB_LOGIN, VERIFIED, "Das Telefon zur Nummer, für den Bestätigungscode. Bei Festnetz kommt der Code per Anruf.", DESKTOP, "Etwa 10 Minuten Zeit."],
     steps: [
       ...ACCOUNT_START,
       numberQuestion("No, It's not connected", "Die Nummer läuft doch schon in einer WhatsApp-App? Dann wählen Sie oben in der Software den passenden Weg."),
@@ -150,6 +166,7 @@ export const GUIDES: Record<ConnectPath, PathGuide> = {
     minutes: 10,
     checklist: [
       FB_LOGIN,
+      VERIFIED,
       "Ihr Handy mit der aktuellen WhatsApp Business App. Sie scannen damit einen QR-Code.",
       "Die Nummer sollte schon mindestens etwa 7 Tage in der WhatsApp Business App genutzt werden.",
       DESKTOP,
@@ -162,8 +179,8 @@ export const GUIDES: Record<ConnectPath, PathGuide> = {
       {
         where: "meta",
         title: "„Mit der WhatsApp Business App verbunden“ wählen",
-        text: "Fragt Meta noch einmal, ob die Nummer schon in WhatsApp läuft, wählen Sie: „Ja, diese Nummer ist mit der WhatsApp Business App verbunden“.",
-        pitfall: "Wählen Sie hier nicht „neue Nummer“. Sonst schlägt die Bestätigung fehl.",
+        text: "Fragt Meta noch einmal, ob die Nummer schon in WhatsApp läuft, wählen Sie: „Ja, diese Nummer ist mit der WhatsApp Business App verbunden“. Steht Ihre Nummer schon in einer Liste, wählen Sie sie dort aus, statt sie einzutippen.",
+        pitfall: "Wählen Sie hier nicht „neue Nummer“ und tippen Sie eine vorhandene Nummer nicht neu ein. Sonst schlägt die Bestätigung fehl.",
       },
       {
         where: "whatsapp",
@@ -183,6 +200,7 @@ export const GUIDES: Record<ConnectPath, PathGuide> = {
     checklist: [
       "Wichtige Chats vorher sichern, falls Sie die Nummer wirklich löschen wollen.",
       FB_LOGIN,
+      VERIFIED,
       "Das Telefon zur Nummer, für den Bestätigungscode.",
       DESKTOP,
     ],
@@ -206,7 +224,8 @@ export const GUIDES: Record<ConnectPath, PathGuide> = {
 /** Text zum Fehlerfall nach der Rückkehr: was tun. */
 export const ERROR_HELP = [
   "Pop-up blockiert: im Browser für diese Seite erlauben und noch einmal verbinden.",
-  "Portfolio nicht sichtbar: Sie brauchen Admin-Rechte im Meta-Unternehmensportfolio.",
+  "Portfolio nicht sichtbar: Sie brauchen Admin-Rechte im Meta-Unternehmensportfolio (prüfen unter business.facebook.com → Einstellungen → Personen).",
+  "Bei 360dialog erscheinen fremde Firmen oder Nummern: Sie sind in einem alten Konto gelandet (z. B. über „Continue with Facebook“). Bitte nicht weitermachen und kurz bei uns melden.",
   "„Nummer wird bereits verwendet“: Die Nummer läuft noch in einer WhatsApp-App. Wählen Sie oben den passenden Weg.",
 ];
 

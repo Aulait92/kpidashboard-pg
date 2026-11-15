@@ -2,6 +2,12 @@
 
 Dinge, die Ole später angehen will. Neue Sitzungen bitte hier nachsehen und Ole daran erinnern.
 
+- 15.11.2026: **Google-Prüfung bestanden** (Projekt performancegrowth-sheets): `calendar.events` und `gmail.send` sind
+  freigegeben, Kunden sehen beim Verbinden von Kalender und Gmail-Postfach keine Warnung „nicht bestätigte App“ mehr.
+  Achtung: Jede Änderung am OAuth-Zustimmungsbildschirm oder ein neuer Bereich (z. B. `business.manage` für den
+  Google-Bewertungs-Wächter, docs/google-bewertungs-waechter.md) braucht eine neue Prüfung. Solche Änderungen
+  bündeln und erst dann einreichen.
+
 - 15.11.2026: **Rückmeldung an Meta (Conversions API für CRM) einrichten.** Die App sendet je Kunde automatisch
   (lib/capi, alle 15 Minuten) an das erste Dataset des Werbekontos. In Meta je Kunde: 1. Partnerzugriff auf das
   Dataset (Pixel) für unseren Business Manager und den Systemnutzer (sonst Fehler „kein Zugriff“, Admin → Kunde →
