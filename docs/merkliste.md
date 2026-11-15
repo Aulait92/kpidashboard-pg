@@ -2,8 +2,12 @@
 
 Dinge, die Ole später angehen will. Neue Sitzungen bitte hier nachsehen und Ole daran erinnern.
 
+- 15.11.2026: **Calendly später durch unser eigenes Buchungssystem ablösen** (Vertrieb). Bis dahin: Handynummer ist im
+  Calendly-Formular Pflicht (für die WhatsApp-Terminbestätigung, lib/vertrieb/termin-whatsapp.ts).
+
 - 15.11.2026: **Google-Prüfung bestanden** (Projekt performancegrowth-sheets): `calendar.events` und `gmail.send` sind
-  freigegeben, Kunden sehen beim Verbinden von Kalender und Gmail-Postfach keine Warnung „nicht bestätigte App“ mehr.
+  freigegeben, `calendar.freebusy` ist laut Console nicht sensibel. `GOOGLE_MAIL_VERIFIED=1` ist in der Produktion gesetzt
+  (Gmail-Knopf im Postfach und in der Einrichtung). Kunden sehen keine Warnung „nicht bestätigte App“ mehr.
   Achtung: Jede Änderung am OAuth-Zustimmungsbildschirm oder ein neuer Bereich (z. B. `business.manage` für den
   Google-Bewertungs-Wächter, docs/google-bewertungs-waechter.md) braucht eine neue Prüfung. Solche Änderungen
   bündeln und erst dann einreichen.
