@@ -50,3 +50,27 @@ prüfen, dann `deploy_project`) und die Liste leeren. Nur auf Oles ausdrücklich
 - Ansprache von Leads/Kunden folgt `Customer.leadAddress` (Standard „sie“, Helfer in `src/lib/ansprache.ts`).
   Neue Texte an Leads immer in beiden Fassungen (`a(an, du, sie)`); die Oberfläche für Vermittler bleibt Sie-Form.
 
+
+## UX-Regel (Ole, 15.11.2026): Jedes Feature wird gestaltet, nicht angehängt
+
+Vor dem Bauen jedes Features, das Nutzer sehen, kurz festhalten (im Commit oder in der Rückmeldung):
+- Wer nutzt es, in welcher Situation, und was ist die eine Aufgabe, die er damit erledigen will?
+- Wo gehört es hin? Erst prüfen, ob es in einen bestehenden Ablauf, eine bestehende Karte oder einen bestehenden
+  Button passt, bevor etwas Neues dazukommt. Lieber erweitern oder ersetzen als stapeln.
+- Was fällt dafür weg oder wird zusammengelegt? Jede Seite hat einen klaren Hauptzweck und höchstens eine
+  Hauptaktion (primärer Button).
+
+Gestaltungsregeln:
+- Weniger ist mehr: keine erklärenden Absätze, wo ein guter Titel oder eine Beschriftung reicht. Hinweistexte höchstens ein Satz.
+- Seltenes und Einstellungen verstecken (aufklappen, Einstellungen, „Mehr“), Häufiges sichtbar und mit einem Klick erreichbar.
+- Sinnvolle Standardwerte statt Pflichtfelder und Entscheidungen. Automatisch, wo möglich.
+- Gleiche Dinge sehen überall gleich aus (bestehende Komponenten, Abstände, Begriffe wiederverwenden). Keine neuen Muster ohne Grund.
+- Handy zuerst: Vermittler nutzen die App unterwegs. Jede Änderung auf 390 px Breite prüfen.
+- Leere Zustände und Fehler mit einer klaren nächsten Handlung, nicht nur Text.
+
+Prüfung vor dem Commit:
+- Screenshot Desktop und Handy (390 px) der betroffenen Seite ansehen und ehrlich fragen: Ist die Seite übersichtlicher
+  oder voller geworden? Würde ein Vermittler ohne Erklärung verstehen, was zu tun ist?
+- Wenn die Seite voller geworden ist: aufräumen, bevor committet wird.
+- In der Rückmeldung an Ole den Screenshot bzw. die UX-Entscheidung in zwei Sätzen nennen.
+- Priorität: Vermittlerbereich (/buyer) zuerst, der Admin-Bereich wird später nachgezogen.
