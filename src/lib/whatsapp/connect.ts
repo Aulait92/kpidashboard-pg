@@ -4,7 +4,7 @@
 // (Integrated Onboarding, Key per Partner-API erzeugt).
 
 import { prisma } from "@/lib/prisma";
-import { encryptSecret } from "@/lib/encryption";
+import { decryptSecret, encryptSecret } from "@/lib/encryption";
 import { setWebhook } from "@/lib/whatsapp/dialog360";
 import { appUrl } from "@/lib/whatsapp/event-text";
 
@@ -45,4 +45,26 @@ export async function saveWhatsAppKey(
   }
   await prisma.whatsAppAccount.update({ where: { id: account.id }, data: { status: ok ? "connected" : "pending" } });
   return ok ? { ok: true, accountId: account.id } : { ok: false, accountId: account.id, reason: "webhook" };
+}
+
+/**
+ * Webhook für ein Konto mit gespeichertem Key erneut setzen (Ole, 15.11.2026): Direkt nach dem Verbinden
+ * antwortet 360dialog bei ganz neuen Nummern zunächst mit 404, solange Meta die Nummer noch freischaltet.
+ * Der WhatsApp-Cron versucht es deshalb weiter. true = gesetzt (Konto ist jetzt verbunden).
+ */
+export async function retryAccountWebhook(accountId: string): Promise<boolean> {
+  const base = appUrl();
+  const secret = process.env.WHATSAPP_WEBHOOK_SECRET;
+  if (!base || !secret) return false;
+  const acc = await prisma.whatsAppAccount.findUnique({ where: { id: accountId }, select: { apiKeyEnc: true } });
+  if (!acc?.apiKeyEnc) return false;
+  try {
+    await setWebhook(decryptSecret(acc.apiKeyEnc), `${base}/api/whatsapp/webhook?token=${encodeURIComponent(secret)}&acc=${accountId}`);
+  } catch (err) {
+    console.error("[whatsapp connect] erneut:", err instanceof Error ? err.message.slice(0, 200) : "Fehler");
+    await prisma.whatsAppAccount.update({ where: { id: accountId }, data: { status: "pending" } });
+    return false;
+  }
+  await prisma.whatsAppAccount.update({ where: { id: accountId }, data: { status: "connected" } });
+  return true;
 }

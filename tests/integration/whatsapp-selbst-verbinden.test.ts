@@ -128,14 +128,31 @@ describe("WhatsApp selbst verbinden (360dialog Integrated Onboarding)", () => {
     expect((await retryPendingSelfConnect(new Date(Date.now() + 60_000))).tried).toBe(0);
   });
 
-  it("Webhook lässt sich nicht setzen → Fehler mit Admin-Aufgabe", async () => {
+  it("Webhook geht direkt nach dem Verbinden noch nicht (neue Nummer) → wartend, der Cron setzt ihn nach", async () => {
+    // Ole, 15.11.2026: 360dialog antwortet bei ganz neuen Nummern zuerst mit 404 auf den Webhook.
     plan = { key: "ok", webhook: "fail" };
     const res = await completeSelfConnect({ customerId, userId: null, clientId: null, channels: ["chAAA1"] });
-    expect(res.status).toBe("error");
+    expect(res.status).toBe("pending");
+    let acc = await prisma.whatsAppAccount.findUniqueOrThrow({ where: { customerId } });
+    expect(acc.status).toBe("pending");
+    expect(decryptSecret(acc.apiKeyEnc!)).toBe("d360-secret-key");
     const customer = await prisma.customer.findUniqueOrThrow({ where: { id: customerId } });
-    const task = await prisma.salesTask.findFirst({ where: { title: `WhatsApp-Verbindung prüfen: ${customer.name}` } });
-    expect(task).not.toBeNull();
-    await prisma.salesTask.deleteMany({ where: { id: task!.id } });
+    expect(await prisma.salesTask.findFirst({ where: { title: `WhatsApp-Verbindung prüfen: ${customer.name}` } })).toBeNull();
+
+    // Cron: noch immer 404 → bleibt wartend
+    await retryPendingSelfConnect(new Date(Date.now() + 61_000));
+    acc = await prisma.whatsAppAccount.findUniqueOrThrow({ where: { customerId } });
+    expect(acc.status).toBe("pending");
+
+    // Später klappt es → verbunden, Admin bekommt „WhatsApp verbunden“
+    plan = { key: "ok", webhook: "ok" };
+    calls.length = 0;
+    const r = await retryPendingSelfConnect(new Date(Date.now() + 61_000));
+    expect(r.connected).toBe(1);
+    acc = await prisma.whatsAppAccount.findUniqueOrThrow({ where: { customerId } });
+    expect(acc.status).toBe("connected");
+    expect(calls.some((c) => c.includes("/api_keys"))).toBe(false);
+    expect(vi.mocked(sendToAdmins).mock.calls.some((c) => c[0].title.includes("WhatsApp verbunden"))).toBe(true);
   });
 
   it("Partner-Webhook channel_running holt den Key sofort (nur mit Token)", async () => {
