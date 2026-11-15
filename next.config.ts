@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
   // proxyClientMaxBodySize: Die Middleware puffert Anfragen; Standard 10 MB schneidet größere Uploads still ab
   // (Ole, 15.11.2026: Präsentationen mit 12 bis 15 MB kamen abgeschnitten an). Passend zu MAX_BYTES (pptx 100 MB).
   experimental: { serverActions: { bodySizeLimit: "16mb" }, proxyClientMaxBodySize: "110mb" },
+  // Versions-Schutz (Go-live 15.11.2026, Sentry KPIDASHBOARD-PG-6): Kennung je Deploy. Alte Tabs laden bei der
+  // nächsten Navigation hart neu statt mit veralteten Server Actions weiterzuarbeiten. Commit-SHA, weil Railway
+  // sie beim Build (ARG im Dockerfile) und zur Laufzeit gleich setzt. Server Actions in alten Tabs fängt
+  // zusätzlich components/neue-version.tsx ab.
+  deploymentId: process.env.RAILWAY_GIT_COMMIT_SHA?.trim() || undefined,
   // Kein „X-Powered-By: Next.js“ (verrät unnötig den Technik-Stack)
   poweredByHeader: false,
   // Marketing hat eigene Seiten (Ole, 14.11.2026): alte Vertriebs-Adressen weiterleiten (Push-Links, Lesezeichen)
