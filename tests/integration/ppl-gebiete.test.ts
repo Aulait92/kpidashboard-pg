@@ -7,8 +7,10 @@ import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
 // Heinrich-Fall: Gebietskunde mit Menge je PLZ-Gebiet bekommt Leads aus seinem
 // Gebiet zuerst (bis 100 % der Gebietsmenge), danach normale Verteilung.
 const product = `PKV-Gebiet-${Math.random().toString(36).slice(2, 7)}`;
+// Zufällige Nummern: Dubletten gelten produktübergreifend (gemeinsame Test-DB)
+const run = String(Math.floor(Math.random() * 1e5)).padStart(5, "0");
 const fields = (n: number, plz: string) => ({
-  vorname: "Test", nachname: `Gebiet${n}`, telefon: `01522${String(n).padStart(6, "0")}`, email: `g${n}-${product}@test.local`, postleitzahl: plz, beitrag: "900 €", situation: "Angestellt",
+  vorname: "Test", nachname: `Gebiet${n}`, telefon: `01522${run}${String(n).padStart(2, "0")}`, email: `g${n}-${product}@test.local`, postleitzahl: plz, beitrag: "900 €", situation: "Angestellt",
 });
 
 describe("Pay-per-Lead: Gebietsvorrang mit Menge je Gebiet", () => {

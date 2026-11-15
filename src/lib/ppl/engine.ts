@@ -11,6 +11,28 @@ import { monthRange, weekRange } from "@/lib/ppl/periods";
 
 const DAY = 86_400_000;
 export const DUPLICATE_DAYS = 30;
+/**
+ * Dubletten über alle Produkte prüfen (wie der alte Verteil-Zap): gleiche
+ * Telefonnummer oder E-Mail in irgendeinem Produkt innerhalb von
+ * DUPLICATE_DAYS ist eine Dublette. false = nur im selben Produkt.
+ */
+export const DUPLICATE_ACROSS_PRODUCTS = true;
+
+/** Bedingung für die Dubletten-Suche (Telefon oder E-Mail, Zeitraum, ggf. Produkt). */
+export function duplicateWhere(
+  input: { productKey: string; phone: string | null; email: string | null },
+  now: Date,
+  acrossProducts = DUPLICATE_ACROSS_PRODUCTS,
+): Prisma.PoolLeadWhereInput | null {
+  const or = [...(input.phone ? [{ phone: input.phone }] : []), ...(input.email ? [{ email: input.email }] : [])];
+  if (!or.length) return null;
+  return {
+    ...(acrossProducts ? {} : { productKey: input.productKey }),
+    createdAt: { gte: new Date(now.getTime() - DUPLICATE_DAYS * DAY) },
+    status: { in: ["delivered", "parked"] },
+    OR: or,
+  };
+}
 
 export type PoolInput = {
   externalId?: string | null;
@@ -122,15 +144,12 @@ export async function ingestPoolLead(input: PoolInput, now = new Date()): Promis
     const p = await save("invalid", "keine Telefonnummer und keine E-Mail");
     return { status: "invalid", poolLeadId: p.id, reason: p.reason ?? undefined };
   }
-  const since = new Date(now.getTime() - DUPLICATE_DAYS * DAY);
-  const dup = await prisma.poolLead.findFirst({
-    // Dublette: gleiche Telefonnummer oder E-Mail im selben Produkt innerhalb von 30 Tagen
-    where: { productKey: input.productKey, createdAt: { gte: since }, status: { in: ["delivered", "parked"] }, OR: [...(phone ? [{ phone }] : []), ...(email ? [{ email }] : [])] },
-    orderBy: { createdAt: "desc" },
-    select: { productKey: true, createdAt: true },
-  });
+  // Dublette: gleiche Telefonnummer oder E-Mail innerhalb von 30 Tagen (alle Produkte, siehe DUPLICATE_ACROSS_PRODUCTS)
+  const dupWhere = duplicateWhere({ productKey: input.productKey, phone, email }, now);
+  const dup = dupWhere ? await prisma.poolLead.findFirst({ where: dupWhere, orderBy: { createdAt: "desc" }, select: { productKey: true, createdAt: true } }) : null;
   if (dup) {
-    const p = await save("duplicate", `schon am ${dup.createdAt.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}`);
+    const day = dup.createdAt.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" });
+    const p = await save("duplicate", `schon am ${day}${dup.productKey !== input.productKey ? ` (${dup.productKey})` : ""}`);
     return { status: "duplicate", poolLeadId: p.id, reason: p.reason ?? undefined };
   }
 

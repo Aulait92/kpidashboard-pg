@@ -1,12 +1,14 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { ingestPoolLead } from "@/lib/ppl/engine";
+import { DUPLICATE_ACROSS_PRODUCTS, ingestPoolLead } from "@/lib/ppl/engine";
 import { weekRange } from "@/lib/ppl/periods";
 import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
 
 const product = `PKV-Test-${Math.random().toString(36).slice(2, 7)}`;
+// Zufällige Nummern: Dubletten gelten produktübergreifend (gemeinsame Test-DB)
+const run = String(Math.floor(Math.random() * 1e5)).padStart(5, "0");
 const fields = (n: number, extra: Record<string, string> = {}) => ({
-  vorname: "Test", nachname: `Person${n}`, telefon: `01511234${String(n).padStart(4, "0")}`, email: `p${n}-${product}@test.local`,
+  vorname: "Test", nachname: `Person${n}`, telefon: `01511${run}${String(n).padStart(2, "0")}`, email: `p${n}-${product}@test.local`,
   postleitzahl: "80331", beitrag: "900 €", situation: "Angestellt", ...extra,
 });
 
@@ -38,14 +40,27 @@ describe("Pay-per-Lead: Eingang, Verteilung, Dubletten", () => {
     expect(Number(rev._sum.amount)).toBe(90);
   });
 
-  it("erkennt Dubletten (Telefon oder E-Mail, 30 Tage, je Produkt) und ungültige Leads", async () => {
-    const dupPhone = await ingestPoolLead({ productKey: product, via: "webhook", fields: { ...fields(1), email: "neu@test.local" } });
+  it("erkennt Dubletten (Telefon oder E-Mail, 30 Tage, über alle Produkte) und ungültige Leads", async () => {
+    const dupPhone = await ingestPoolLead({ productKey: product, via: "webhook", fields: { ...fields(1), email: `neu-${product}@test.local` } });
     expect(dupPhone.status).toBe("duplicate");
-    const dupMail = await ingestPoolLead({ productKey: product, via: "webhook", fields: { ...fields(2), telefon: "01700000000" } });
+    const dupMail = await ingestPoolLead({ productKey: product, via: "webhook", fields: { ...fields(2), telefon: `01702${run}99` } });
     expect(dupMail.status).toBe("duplicate");
-    // anderes Produkt: keine Dublette (nur innerhalb desselben Produkts)
+    // anderes Produkt: auch Dublette (wie der alte Verteil-Zap), Grund nennt das Produkt
+    expect(DUPLICATE_ACROSS_PRODUCTS).toBe(true);
     const other = await ingestPoolLead({ productKey: `${product}-anders`, via: "webhook", fields: fields(3) });
-    expect(other.status).not.toBe("duplicate");
+    expect(other.status).toBe("duplicate");
+    expect(other.reason).toContain(`(${product})`);
+    // über die E-Mail allein ebenfalls
+    const otherMail = await ingestPoolLead({ productKey: `${product}-anders`, via: "webhook", fields: { ...fields(4), telefon: `01703${run}99` } });
+    expect(otherMail.status).toBe("duplicate");
+    // neue Person im anderen Produkt: keine Dublette
+    const fresh = await ingestPoolLead({ productKey: `${product}-anders`, via: "webhook", fields: fields(20) });
+    expect(fresh.status).not.toBe("duplicate");
+    // älter als 30 Tage: keine Dublette mehr
+    await prisma.poolLead.create({ data: { productKey: `${product}-alt`, via: "airtable", phone: `491704${run}55`, status: "delivered", createdAt: new Date(Date.now() - 31 * 86_400_000) } });
+    const old = await ingestPoolLead({ productKey: `${product}-anders`, via: "webhook", fields: { ...fields(21), telefon: `01704${run}55` } });
+    expect(old.status).not.toBe("duplicate");
+    await prisma.poolLead.deleteMany({ where: { productKey: `${product}-alt` } });
     await prisma.poolLead.deleteMany({ where: { productKey: `${product}-anders` } });
     const invalid = await ingestPoolLead({ productKey: product, via: "webhook", fields: { vorname: "Ohne", nachname: "Kontakt" } });
     expect(invalid.status).toBe("invalid");
