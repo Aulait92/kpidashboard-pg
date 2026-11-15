@@ -74,3 +74,13 @@ Prüfung vor dem Commit:
 - Wenn die Seite voller geworden ist: aufräumen, bevor committet wird.
 - In der Rückmeldung an Ole den Screenshot bzw. die UX-Entscheidung in zwei Sätzen nennen.
 - Priorität: Vermittlerbereich (/buyer) zuerst, der Admin-Bereich wird später nachgezogen.
+
+## Erklärvideos aktuell halten (Ole, 15.11.2026)
+
+Ändert ein Commit eine Oberfläche, Navigation, Knopfbeschriftung oder einen Ablauf, der in einem Erklärvideo vorkommt
+(Liste der Seiten und Begriffe je Video in `tools/erklaervideos/README.md`, Abschnitt „Was jedes Video zeigt“), wird im
+selben Arbeitsgang geprüft (README Abschnitt 2) und das betroffene Video neu aufgenommen, vertont und gegengehört
+(`check_oa.py`). Schnellprüfung: `python3 tools/erklaervideos/betroffen.py [git-Bereich]` nennt die Videos, deren Seiten
+sich geändert haben.
+- Ausgeblendete Module (z. B. Bestandskunden-Modul, Empfehlungen & Bewertungen) dürfen in keinem Video vorkommen.
+- Neu aufgenommene Videos nur außerhalb der Hauptzeiten deployen (nicht werktags 8 bis 20 Uhr).

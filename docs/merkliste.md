@@ -57,3 +57,7 @@ Dinge, die Ole später angehen will. Neue Sitzungen bitte hier nachsehen und Ole
   steht am Termin „Vorlage noch nicht freigegeben“. Nummer kommt aus Calendly (SMS-Erinnerungsnummer oder Frage
   „Telefon/Handy/WhatsApp“), sonst vom Kontakt. Im Calendly-Formular eine Pflichtfrage nach der Handynummer mit
   Hinweis „Bestätigung per WhatsApp“ ergänzen.
+
+- 16.11. abends (nach 20 Uhr): Erklärvideos gegen die Änderungen vom 15./16.11. prüfen und bei Bedarf neu aufnehmen
+  (Neuigkeiten-Karte weg, Leitfaden und Diktieren weg, Bestandskunden-Modul aus, neue Terminvorbereitung, Kein-WhatsApp-Kennzeichen).
+  `python3 tools/erklaervideos/betroffen.py` zeigt Kurz, Ausführlich und WhatsApp verbinden als betroffen.
