@@ -150,7 +150,7 @@ export async function runImportAction(_prev: ImportState, fd: FormData): Promise
     const history = fd.get("history") === "on" ? await importDuplicateHistory() : 0;
     await audit("ppl.subscription", { entity: "LeadSubscription", actor: { id: s.userId, email: s.email, role: s.role }, details: { import: rows.length, history } });
     revalidatePath("/admin/ppl", "layout");
-    const done = rows.filter((r) => r.action !== "übersprungen").length;
+    const done = rows.filter((r) => r.action !== "übersprungen" && r.action !== "unverändert").length;
     return { message: `${done} Bezüge übernommen${history ? `, ${history} Leads für den Dubletten-Abgleich` : ""}.` };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Import fehlgeschlagen." };

@@ -1,6 +1,13 @@
 // Einmalige Übernahme der Pay-per-Lead-Bezüge aus Airtable („Kunden-Produkt-
 // Bezug“ + Kunden/Produkte/Stornogründe). Wiederholbar (Abgleich über
-// airtableId); mit dryRun nur Vorschau.
+// airtableId, sonst ein noch nicht verknüpfter Bezug desselben Kunden und
+// Produkts); mit dryRun nur Vorschau inkl. der Feldänderungen.
+//
+// Erneutes Übernehmen aktualisiert Ziel, Preis, Filter, Storno-Fenster/-Gründe,
+// Test und aktiv aus Airtable. Was in der App eingestellt wird, bleibt
+// (KEEP_ON_REIMPORT): Zeitraum (Wochenbestellung), Bezeichnung, Lieferweg mit
+// Adresse/Vorlage/Webhook, „Storno immer anerkennen“. Gebiete
+// (SubscriptionArea) fasst der Import nie an.
 
 import { prisma } from "@/lib/prisma";
 import { encryptSecret } from "@/lib/encryption";
@@ -19,9 +26,86 @@ export type ImportRow = {
   delivery: string;
   filters: string;
   stornoDays: number | null;
-  action: "neu" | "aktualisieren" | "übersprungen";
+  action: "neu" | "aktualisieren" | "verknüpfen" | "unverändert" | "übersprungen";
   note?: string;
+  /** Felder, die das Übernehmen ändern würde („Preis: 40 € → 45 €“) */
+  changes: string[];
+  /** Felder, bei denen Airtable abweicht, die App-Einstellung aber bleibt */
+  kept: string[];
 };
+
+/** In der App gepflegt, beim erneuten Übernehmen nicht überschreiben. */
+export const KEEP_ON_REIMPORT = [
+  "period",
+  "label",
+  "delivery",
+  "deliveryEmail",
+  "emailSubject",
+  "emailTemplate",
+  "webhookUrl",
+  "webhookFormat",
+  "webhookSecretEnc",
+  "stornoAutoApprove",
+] as const;
+
+const FIELD_LABEL: Record<string, string> = {
+  customerId: "Kunde",
+  productKey: "Produkt",
+  active: "aktiv",
+  status: "Status",
+  testQuantity: "Testmenge",
+  testDays: "Testdauer",
+  period: "Zeitraum",
+  goal: "Ziel",
+  startDate: "Start",
+  price: "Preis",
+  plzRanges: "PLZ",
+  acceptWeak: "schwache",
+  weakThreshold: "Grenze schwach",
+  acceptCivilServants: "Beamte",
+  onlyWeak: "nur schwache",
+  scoreFloor: "Score",
+  insurerInclude: "nur Gesellschaften",
+  insurerExclude: "ohne Gesellschaften",
+  excludeRules: "Regeln",
+  stornoDays: "Storno-Fenster",
+  stornoReasons: "Stornogründe",
+  delivery: "Lieferung",
+  deliveryEmail: "Liefer-Adresse",
+  webhookUrl: "Webhook",
+  webhookFormat: "Webhook-Format",
+};
+
+const show = (v: unknown): string => {
+  if (v == null || v === "") return "leer";
+  if (typeof v === "boolean") return v ? "ja" : "nein";
+  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  if (Array.isArray(v)) return v.length ? v.join(", ") : "leer";
+  if (typeof v === "object" && "toNumber" in (v as object)) return String((v as { toNumber(): number }).toNumber());
+  return String(v);
+};
+const same = (a: unknown, b: unknown) => show(a) === show(b);
+
+/**
+ * Was ein erneutes Übernehmen an einem bestehenden Bezug ändert: data enthält
+ * nur die Felder aus Airtable ohne KEEP_ON_REIMPORT; changes/kept für die Vorschau.
+ */
+export function planReimport(existing: Record<string, unknown>, incoming: Record<string, unknown>) {
+  const keep = new Set<string>(KEEP_ON_REIMPORT);
+  const data: Record<string, unknown> = {};
+  const changes: string[] = [];
+  const kept: string[] = [];
+  for (const [k, v] of Object.entries(incoming)) {
+    if (k === "airtableId") continue;
+    if (keep.has(k)) {
+      if (k in existing && !same(existing[k], v) && FIELD_LABEL[k]) kept.push(`${FIELD_LABEL[k]}: bleibt ${show(existing[k])} (Airtable: ${show(v)})`);
+      continue;
+    }
+    data[k] = v;
+    if (!same(existing[k], v)) changes.push(`${FIELD_LABEL[k] ?? k}: ${show(existing[k])} → ${show(v)}`);
+  }
+  return { data, changes, kept };
+}
 
 const s = (v: unknown) => (typeof v === "string" ? v.trim() : Array.isArray(v) && typeof v[0] === "string" ? String(v[0]).trim() : "");
 const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : typeof v === "string" && v.trim() && Number.isFinite(Number(v)) ? Number(v) : null);
@@ -31,6 +115,8 @@ const pipe = (v: unknown) =>
     .split("|")
     .map((x) => x.trim())
     .filter(Boolean);
+
+const deliveryLabel = (d: string, email: string | null) => (d === "email" ? `E-Mail (${email ?? "?"})` : d === "webhook" ? "Webhook" : "Kundenbereich");
 
 export async function importSubscriptions(opts: { dryRun: boolean }): Promise<ImportRow[]> {
   const [bezuege, kunden, produkte, gruende] = await Promise.all([
@@ -53,7 +139,7 @@ export async function importSubscriptions(opts: { dryRun: boolean }): Promise<Im
     const productKey = s(produkt?.["Name"]);
     const bezugName = s(f["Bezug"]) || `${customerName}, ${productKey}`;
     if (!kunde || !produkt || !customerName || !productKey) {
-      out.push({ airtableId: b.id, bezug: bezugName, customer: customerName, customerFound: false, productKey, active: false, period: "-", goal: null, price: 0, delivery: "-", filters: "", stornoDays: null, action: "übersprungen", note: "Kunde oder Produkt fehlt" });
+      out.push({ airtableId: b.id, bezug: bezugName, customer: customerName, customerFound: false, productKey, active: false, period: "-", goal: null, price: 0, delivery: "-", filters: "", stornoDays: null, action: "übersprungen", note: "Kunde oder Produkt fehlt", changes: [], kept: [] });
       continue;
     }
     const customer = await prisma.customer.findUnique({ where: { name: customerName }, select: { id: true, users: { where: { role: "BUYER" }, select: { id: true }, take: 1 } } });
@@ -94,7 +180,12 @@ export async function importSubscriptions(opts: { dryRun: boolean }): Promise<Im
       webhookFormat: /convexa/i.test(method) || /api\.convexa\.app/.test(webhookUrl) ? "convexa" : "standard",
       airtableId: b.id,
     };
-    const existing = await prisma.leadSubscription.findUnique({ where: { airtableId: b.id }, select: { id: true, period: true } });
+    // Schon übernommen (airtableId) oder in der App angelegt (gleicher Kunde + Produkt, noch ohne Airtable-Verknüpfung, genau einer)
+    const linked = await prisma.leadSubscription.findUnique({ where: { airtableId: b.id } });
+    const unlinked = linked || !customer ? [] : await prisma.leadSubscription.findMany({ where: { customerId: customer.id, productKey, airtableId: null }, take: 2 });
+    const existing = linked ?? (unlinked.length === 1 ? unlinked[0] : null);
+    const ambiguous = !existing && unlinked.length > 1;
+    const plan = existing ? planReimport(existing as unknown as Record<string, unknown>, row) : null;
     const filters = [
       row.plzRanges ? "PLZ" : null,
       !row.acceptWeak ? `keine schwachen${row.weakThreshold ? ` (<${row.weakThreshold})` : ""}` : null,
@@ -117,21 +208,29 @@ export async function importSubscriptions(opts: { dryRun: boolean }): Promise<Im
       period: existing?.period ?? row.period,
       goal: row.goal,
       price,
-      delivery: delivery === "email" ? `E-Mail (${receiver})` : delivery === "webhook" ? "Webhook" : "Kundenbereich",
+      // bei bestehendem Bezug gilt der Lieferweg aus der App (bleibt)
+      delivery: deliveryLabel(existing?.delivery ?? delivery, existing ? existing.deliveryEmail : receiver),
       filters,
       stornoDays: row.stornoDays,
-      action: !customer ? "übersprungen" : existing ? "aktualisieren" : "neu",
-      note: !customer ? "Kunde fehlt in der App (erst anlegen)" : undefined,
+      action: !customer || ambiguous ? "übersprungen" : !existing ? "neu" : !linked ? "verknüpfen" : plan?.changes.length ? "aktualisieren" : "unverändert",
+      note: !customer
+        ? "Kunde fehlt in der App (erst anlegen)"
+        : ambiguous
+          ? "mehrere Bezüge für Kunde und Produkt in der App: erst einen löschen oder von Hand zuordnen"
+          : existing && !linked
+            ? "vorhandenen Bezug aus der App verknüpfen"
+            : (existing?.period ?? row.period) !== "week" && customer.users.length
+              ? "Kunde mit Login: für die Abrechnung auf Wochenbestellung stellen"
+              : undefined,
+      changes: plan?.changes ?? [],
+      kept: plan?.kept ?? [],
     });
-    if (opts.dryRun || !customer) continue;
-    const data = { ...row, ...(webhookSecret && delivery === "webhook" ? { webhookSecretEnc: encryptSecret(webhookSecret) } : {}) };
-    if (existing) {
-      // Zeitraum (Wochenbestellung) und Lieferweg, die in der App gesetzt wurden, nicht überschreiben
-      const { period: _p, ...rest } = data;
-      void _p;
-      await prisma.leadSubscription.update({ where: { id: existing.id }, data: rest });
+    if (opts.dryRun || !customer || ambiguous) continue;
+    if (existing && plan) {
+      // Nur Airtable-Felder; Zeitraum, Lieferweg, Vorlage usw. aus der App bleiben (KEEP_ON_REIMPORT)
+      await prisma.leadSubscription.update({ where: { id: existing.id }, data: { ...plan.data, airtableId: b.id } as Parameters<typeof prisma.leadSubscription.update>[0]["data"] });
     } else {
-      await prisma.leadSubscription.create({ data });
+      await prisma.leadSubscription.create({ data: { ...row, ...(webhookSecret && delivery === "webhook" ? { webhookSecretEnc: encryptSecret(webhookSecret) } : {}) } });
     }
   }
   return out;
