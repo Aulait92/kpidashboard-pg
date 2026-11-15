@@ -85,10 +85,10 @@ afterAll(() => {
 });
 
 describe("WhatsApp-Vorlagen automatisch einreichen", () => {
-  it("nach dem Selbst-Verbinden: 8 Zwecke in je 3 Fassungen eingereicht, lokal „in Prüfung“, Beratername eingesetzt", async () => {
+  it("nach dem Selbst-Verbinden: 10 Zwecke in je 3 Fassungen eingereicht, lokal „in Prüfung“, Beratername eingesetzt", async () => {
     const res = await completeSelfConnect({ customerId, userId: null, clientId: "cl1", channels: ["chV1"] });
     expect(res.status).toBe("connected");
-    const purposes = ["outreach", "booking_confirmation", "reminder", "reschedule", "followup", "followup_offer", "followup_noshow", "followup_last"];
+    const purposes = ["outreach", "booking_confirmation", "reminder", "reminder_soon", "reschedule", "followup", "followup_nudge", "followup_offer", "followup_noshow", "followup_last"];
     expect(created.map((c) => c.name).sort()).toEqual(purposes.flatMap((p) => [`pg_${p}_v3`, `pg_${p}_v3_sie`, `pg_${p}_v3_sie_ohne_name`]).sort());
     const outreach = created.find((c) => c.name === "pg_outreach_v3")!;
     expect(outreach.category).toBe("MARKETING");
@@ -99,9 +99,11 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     expect(created.find((c) => c.name === "pg_outreach_v3_sie_ohne_name")!.components[0].text).toMatch(/^Guten Tag, vielen Dank für Ihre Anfrage!/);
     expect(created.find((c) => c.name === "pg_reminder_v3")!.category).toBe("UTILITY");
     expect(created.find((c) => c.name === "pg_reschedule_v3_sie")!.category).toBe("UTILITY");
+    expect(created.find((c) => c.name === "pg_reminder_soon_v3")!.category).toBe("UTILITY");
+    expect(created.find((c) => c.name === "pg_followup_nudge_v3")!.category).toBe("MARKETING");
 
     const local = await prisma.messageTemplate.findMany({ where: { customerId } });
-    expect(local).toHaveLength(24);
+    expect(local).toHaveLength(30);
     expect(local.every((t) => t.auto && t.status === "pending" && t.submittedAt && t.language === "de")).toBe(true);
     const acc = await prisma.whatsAppAccount.findUniqueOrThrow({ where: { customerId } });
     expect(acc.templatesCheckedAt).not.toBeNull();
@@ -113,8 +115,8 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     await prisma.customer.update({ where: { id: customerId }, data: { existingCustomersEnabled: true } });
     await connect();
     const s = await submitTemplatesForCustomer(customerId);
-    // 8 Zwecke × 3 Fassungen + 4 Kampagnen × 2 (nur gesiezt)
-    expect(s.submitted).toHaveLength(32);
+    // 10 Zwecke × 3 Fassungen + 4 Kampagnen × 2 (nur gesiezt)
+    expect(s.submitted).toHaveLength(38);
     const camp = created.find((c) => c.name === "pg_campaign_review_v3_sie")!;
     expect(camp.components[0].text).toContain("Ihr Versicherungsberater");
     expect(camp.components[0].text).toMatch(/^Guten Tag \{\{1\}\}, hier ist Anid Brand/);
@@ -128,12 +130,12 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
   it("zweiter Lauf reicht nichts doppelt ein; Freigabe → approved, Ablehnung → Aufgabe + Push", async () => {
     await connect();
     await submitTemplatesForCustomer(customerId);
-    expect(created).toHaveLength(24);
+    expect(created).toHaveLength(30);
 
     remote.find((t) => t.name === "pg_outreach_v3")!.status = "APPROVED";
     Object.assign(remote.find((t) => t.name === "pg_reminder_v3")!, { status: "REJECTED", rejected_reason: "INVALID_FORMAT" });
     const s = await submitTemplatesForCustomer(customerId);
-    expect(created).toHaveLength(24);
+    expect(created).toHaveLength(30);
     expect(s.approved).toEqual(["pg_outreach_v3"]);
     expect(s.rejected).toEqual(["pg_reminder_v3"]);
 
@@ -168,7 +170,7 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     const s = await submitTemplatesForCustomer(customerId);
     expect(s.skipped).toEqual(["outreach"]);
     expect(created.map((c) => c.name).filter((n) => n.startsWith("pg_outreach_"))).toEqual([]);
-    expect(created).toHaveLength(21);
+    expect(created).toHaveLength(27);
   });
 
   it("Cron: gedrosselt, Liste nicht abrufbar → Fehler nur gemeldet", async () => {

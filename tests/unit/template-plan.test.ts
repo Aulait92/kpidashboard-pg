@@ -23,10 +23,10 @@ const ALL = [...CORE_PURPOSES, ...CAMPAIGN_PURPOSES];
 
 describe("Vorlagen-Plan", () => {
   it("Kampagnen-Vorlagen nur mit Bestandskunden-Modul", () => {
-    expect(purposesFor({ bestand: false })).toHaveLength(8);
+    expect(purposesFor({ bestand: false })).toHaveLength(10);
     expect(purposesFor({ bestand: false })).toContain("reschedule");
     expect(purposesFor({ bestand: false })).not.toContain("campaign_review");
-    expect(purposesFor({ bestand: true })).toHaveLength(12);
+    expect(purposesFor({ bestand: true })).toHaveLength(14);
   });
 
   it("Name: pg_<zweck>_v3[_sie|_sie_ohne_name], nur Kleinbuchstaben/Ziffern/Unterstrich", () => {

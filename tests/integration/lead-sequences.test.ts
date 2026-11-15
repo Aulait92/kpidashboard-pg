@@ -186,28 +186,34 @@ describe("Nachfass-Abfolgen", () => {
     expect(send.mock.calls.some((c) => (c[0] as { leadId: string }).leadId === lead2.id)).toBe(false);
   });
 
-  it("„Chat ruht“: 2 Std., ca. 20 Std. nur im offenen Fenster, Tag 3 letzte; Neustart bei neuer Nachricht des Assistenten", async () => {
+  it("„Chat ruht“: 2 Std., 8 Std., ca. 20 Std. nur im offenen Fenster, Tag 3 letzte; Neustart; Mindestabstand", async () => {
     const HOUR = 60 * 60 * 1000;
     const lead = await newLead();
     const seq = await restartSilentSequence(lead.id, T0);
     expect(seq?.nextAt?.getTime()).toBe(T0.getTime() + 2 * HOUR);
-    // neue Nachricht des Assistenten: dieselbe Abfolge beginnt von vorn
+    // neue Nachricht des Assistenten: dieselbe Abfolge beginnt von vorn (Di 11:00 Berlin)
     const later = new Date(T0.getTime() + HOUR);
     const again = await restartSilentSequence(lead.id, later);
     expect(again?.id).toBe(seq?.id);
     expect(again?.nextAt?.getTime()).toBe(later.getTime() + 2 * HOUR);
 
-    await runSequences(new Date(later.getTime() + 2 * HOUR));
+    await runSequences(new Date(later.getTime() + 2 * HOUR)); // 13:00
     expect(send).toHaveBeenCalledTimes(1);
     expect(send.mock.calls[0][0]).toMatchObject({ purpose: "followup", leadId: lead.id });
-    // ca. 20 Std. (7 Uhr, wartet aufs Versandfenster) bzw. 22 Std. (9 Uhr): kein offenes 24h-Fenster
-    // (keine Konversation) → übersprungen, keine zweite Vorlage
-    await runSequences(new Date(later.getTime() + 20 * HOUR));
-    await runSequences(new Date(later.getTime() + 22 * HOUR));
+    await runSequences(new Date(later.getTime() + 8 * HOUR)); // 19:00: außerhalb, wartet
     expect(send).toHaveBeenCalledTimes(1);
-    await runSequences(new Date(later.getTime() + 3 * DAY));
+    await runSequences(new Date(later.getTime() + 22 * HOUR)); // Mi 09:00
     expect(send).toHaveBeenCalledTimes(2);
-    expect(send.mock.calls[1][0]).toMatchObject({ purpose: "followup_last" });
+    expect(send.mock.calls[1][0]).toMatchObject({ purpose: "followup_nudge" });
+    // nächster Schritt (20 Std. = 07:00, schon fällig) erst nach dem Mindestabstand von 2 Std.
+    const mid = await prisma.leadSequence.findUniqueOrThrow({ where: { id: seq!.id } });
+    expect(mid.nextAt?.getTime()).toBe(later.getTime() + 24 * HOUR);
+    // ohne offenes 24h-Fenster (keine Konversation) → übersprungen, keine Vorlage doppelt
+    await runSequences(new Date(later.getTime() + 24 * HOUR));
+    expect(send).toHaveBeenCalledTimes(2);
+    await runSequences(new Date(later.getTime() + 3 * DAY));
+    expect(send).toHaveBeenCalledTimes(3);
+    expect(send.mock.calls[2][0]).toMatchObject({ purpose: "followup_last" });
     const done = await prisma.leadSequence.findUniqueOrThrow({ where: { id: seq!.id } });
     expect(done.stopReason).toBe("Abgeschlossen");
   });

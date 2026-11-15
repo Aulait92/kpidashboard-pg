@@ -99,7 +99,7 @@ describe("Meta-Vorlagen: Fassungen, Namen, Regeln", () => {
     expect(formsFor("outreach")).toEqual(["du", "sie", "sie_ohne_name"]);
     expect(formsFor("campaign_review")).toEqual(["sie", "sie_ohne_name"]);
     const names = plannedTemplates(purposesFor({ bestand: false })).map((t) => templateNameFor(t.purpose, "v2", t.form));
-    expect(names).toHaveLength(24);
+    expect(names).toHaveLength(30);
     expect(names).toContain("pg_outreach_v2");
     expect(names).toContain("pg_outreach_v2_sie");
     expect(names).toContain("pg_outreach_v2_sie_ohne_name");

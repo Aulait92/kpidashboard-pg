@@ -34,13 +34,18 @@ describe("Privatschutz: Angaben fürs Angebot", () => {
     expect(c.fragen + c.unterlagen.join("")).not.toMatch(/[–—]/);
   });
 
-  it("steht im Prompt, ersetzt die 2-3-Antworten-Regel, nicht bei gebuchtem Termin", () => {
+  it("steht im Prompt, ersetzt die 2-3-Antworten-Regel, nach Buchung weiter abfragen", () => {
     const p = buildSystemPrompt(agent, "Privatschutz", base);
     expect(p).toContain("Pflichtangaben für das Angebot");
     expect(p).toContain("Nach der Buchung");
     expect(p).not.toContain("meist nach 2-3 Antworten");
     const booked = buildSystemPrompt(agent, "Privatschutz", { ...base, upcoming: { startsAt: new Date("2026-11-20T10:00:00Z"), mode: "phone", meetUrl: null } });
-    expect(booked).not.toContain("Pflichtangaben für das Angebot");
+    // nach der Buchung: fehlende Angaben weiter abfragen, keine zweite Buchung, Unterlagen-Regel nicht erneut
+    expect(booked).toContain("Pflichtangaben für das Angebot");
+    expect(booked).toContain("frag sie jetzt weiter ab");
+    expect(booked).not.toContain("Nach der Buchung: Nenne");
+    expect(p).toContain("buche ihn sofort und frag die fehlenden Angaben danach weiter ab");
+    expect(p).toContain("Damit Susanne Meier das Angebot vorbereiten kann");
     const tkv = buildSystemPrompt(agent, "TKV-Katze", base);
     expect(tkv).toContain("meist nach 2-3 Antworten");
   });

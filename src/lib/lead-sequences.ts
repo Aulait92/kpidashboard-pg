@@ -33,6 +33,8 @@ const STOP_WORDS = /^\s*(stopp?|stop|abmelden|keine (weiteren )?nachrichten|nich
 /** hi = Anrede-Zeile nach Regel („Hallo Julia,“ bzw. „Guten Tag Frau Schneider,“ / „Guten Tag,“). */
 type Ctx = { firstName: string; hi: string; kontakt: AnredeKontakt; topic: string; bookingUrl: string | null; an: Ansprache };
 const HOUR = 60 * 60 * 1000;
+/** Mindestabstand zwischen zwei Schritten (z. B. wenn morgens zwei über Nacht fällige Schritte anstehen). */
+const MIN_GAP_MS = 2 * HOUR;
 
 type Step =
   | {
@@ -103,9 +105,10 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
     ],
   },
   // Chat ruht (Ole, 15.11.2026: „schon nach wenigen Stunden … recht aggressiv, der Interessent hat ja
-  // Interesse gezeigt“): startet bei jeder Nachricht des Assistenten neu (restartSilentSequence) und läuft,
-  // solange der Lead nicht antwortet. Außerhalb des 24h-Fensters nur die Vorlagen „followup“ und
-  // „followup_last“ (je einmal), der Schritt dazwischen nur als Freitext im offenen Fenster.
+  // Interesse gezeigt“; „nach 6–10 Stunden nochmal nachhaken“): startet bei jeder Nachricht des Assistenten neu
+  // (restartSilentSequence) und läuft, solange der Lead nicht antwortet: 2 Std., 8 Std., ca. 20 Std. (nur als
+  // Freitext im offenen Fenster), 3 Tage. Außerhalb des Fensters jede Vorlage nur einmal (followup,
+  // followup_nudge, followup_last).
   silent: {
     label: "Chat ruht",
     steps: [
@@ -119,6 +122,19 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
             c.an,
             `${c.hi} kurze Nachfrage zu ${c.topic}: Antworte einfach hier, dann geht es direkt weiter. Es dauert nur noch einen Moment, dann kann ich dir Termine vorschlagen.`,
             `${c.hi} kurze Nachfrage zu ${c.topic}: Antworten Sie einfach hier, dann geht es direkt weiter. Es dauert nur noch einen Moment, dann kann ich Ihnen Termine vorschlagen.`,
+          ),
+        fallbackNote: "Keine Reaktion im Chat: anrufen",
+      },
+      {
+        day: 8 / 24,
+        action: "whatsapp",
+        purpose: "followup_nudge",
+        params: (c) => [c.firstName],
+        text: (c) =>
+          a(
+            c.an,
+            `${c.hi} sollen wir mit ${c.topic} weitermachen? Antworte einfach hier, es dauert nur ein paar Minuten.`,
+            `${c.hi} sollen wir mit ${c.topic} weitermachen? Antworten Sie einfach hier, es dauert nur ein paar Minuten.`,
           ),
         fallbackNote: "Keine Reaktion im Chat: anrufen",
       },
@@ -359,7 +375,7 @@ export async function runSequences(now = new Date()): Promise<SequenceRunResult>
     const claimed = await prisma.leadSequence.updateMany({
       where: { id: seq.id, step: seq.step, stoppedAt: null },
       data: next
-        ? { step: seq.step + 1, nextAt: new Date(seq.startedAt.getTime() + next.day * DAY) }
+        ? { step: seq.step + 1, nextAt: new Date(Math.max(seq.startedAt.getTime() + next.day * DAY, now.getTime() + MIN_GAP_MS)) }
         : { step: seq.step + 1, nextAt: null, stoppedAt: now, stopReason: "Abgeschlossen" },
     });
     if (claimed.count === 0) continue;

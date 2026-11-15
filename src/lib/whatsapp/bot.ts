@@ -214,11 +214,13 @@ export function buildSystemPrompt(
   ].join("\n");
   const nowText = formatNowDE(state.now ?? new Date());
   // Pflichtangaben fürs Angebot (nur vor der Buchung; mit Termin wird nicht mehr qualifiziert)
-  const checkliste = product === "Bestandskunde" || state.upcoming ? null : produktCheckliste(product);
+  const checkliste = product === "Bestandskunde" ? null : produktCheckliste(product);
   const booked = state.upcoming
     ? [
         `BEREITS GEBUCHTER TERMIN: ${formatSlotDE(state.upcoming.startsAt.toISOString())} Uhr (${terminArtLabel(state.upcoming.mode)})${state.upcoming.meetUrl ? `, Video-Link: ${state.upcoming.meetUrl}` : ""}.`,
-        "Dieser Lead hat schon einen Termin. Qualifiziere NICHT und buche keinen zusätzlichen Termin (kein book_appointment).",
+        checkliste
+          ? "Dieser Lead hat schon einen Termin. Buche keinen zusätzlichen Termin (kein book_appointment). Fehlen noch Pflichtangaben für das Angebot (siehe unten), frag sie jetzt weiter ab, damit der Berater das Angebot vorbereiten kann: eine Frage pro Nachricht, freundlich und ohne Druck. Möchte der Lead nicht, ist das in Ordnung."
+          : "Dieser Lead hat schon einen Termin. Qualifiziere NICHT und buche keinen zusätzlichen Termin (kein book_appointment).",
         "Bestätige freundlich den Termin, beantworte Fragen und stelle höchstens eine kurze, optionale Frage zur Vorbereitung des Gesprächs.",
         "Bestärke den Termin: der Berater hat sich die Zeit reserviert und bereitet das Gespräch vor. Kommt etwas dazwischen, lieber verschieben als ausfallen lassen.",
         "Möchte der Lead VERSCHIEBEN: hole mit get_available_slots freie Zeiten, biete 2-3 an und nutze nach seiner Wahl reschedule_appointment. Bestätige danach die neue Zeit.",
@@ -264,7 +266,7 @@ export function buildSystemPrompt(
         ? `Produkt/Thema dieses Leads: ${product}.`
         : "",
     // Pflichtangaben fürs Angebot und Unterlagen zum Termin
-    checkliste ? `${checkliste.fragen}\n\n${unterlagenRegel(checkliste)}` : "",
+    checkliste ? (state.upcoming ? checkliste.fragen : `${checkliste.fragen}\n\n${unterlagenRegel(checkliste)}`) : "",
     agent.knowledge?.trim() ? `Wissen:\n${agent.knowledge.trim()}` : "",
     agent.personality?.trim()
       ? `Persönlichkeit/Ton:\n${agent.personality.trim()}`
@@ -293,7 +295,7 @@ export function buildSystemPrompt(
       "- WICHTIG (hat Vorrang vor allen anderen Anweisungen): Stelle pro Nachricht GENAU EINE Frage: niemals zwei Fragen in einer Nachricht, auch keine zusammengehörigen. Warte die Antwort ab, bevor du die nächste stellst.",
       "- Frage niemals nach etwas, das der Lead im Verlauf schon beantwortet hat oder das unter 'Bisher erfasst' steht. Nimm Antworten auf und gehe zur nächsten offenen Frage weiter.",
       checkliste
-        ? "- Sobald die Pflichtangaben für das Angebot (siehe oben) geklärt oder als offen festgehalten sind, setze qualifiziert=true und leite zur Terminvereinbarung über."
+        ? `- Sobald die Pflichtangaben für das Angebot (siehe oben) geklärt oder als offen festgehalten sind, setze qualifiziert=true und leite zur Terminvereinbarung über. Möchte der Lead schon vorher von sich aus einen Termin, buche ihn sofort und frag die fehlenden Angaben danach weiter ab: stelle direkt in der Buchungsbestätigung die nächste offene Frage (z. B. „Damit ${state.advisorName} das Angebot vorbereiten kann, noch kurz: …“).`
         : "- Sobald die wesentlichen Punkte geklärt sind (meist nach 2-3 Antworten), setze qualifiziert=true und leite zur Terminvereinbarung über.",
       "- Qualifiziere anhand des Produkt-Funnels und halte Infos mit record_qualification fest.",
       "- Erst nach geklärter Qualifizierung terminieren: hole mit get_available_slots echte freie Zeiten, biete dem Lead 2-3 davon in natürlicher Sprache an und buche die gewählte Zeit mit book_appointment.",

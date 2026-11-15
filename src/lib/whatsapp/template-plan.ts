@@ -36,8 +36,10 @@ export const CORE_PURPOSES: NoticePurpose[] = [
   "outreach",
   "booking_confirmation",
   "reminder",
+  "reminder_soon",
   "reschedule",
   "followup",
+  "followup_nudge",
   "followup_offer",
   "followup_noshow",
   "followup_last",
@@ -80,7 +82,7 @@ export function templateNameFor(purpose: NoticePurpose, version = TEMPLATE_VERSI
  * alles andere ist Ansprache (MARKETING). Meta prüft und stuft ggf. selbst um.
  */
 export function categoryFor(purpose: NoticePurpose): "UTILITY" | "MARKETING" {
-  return purpose === "booking_confirmation" || purpose === "reminder" || purpose === "reschedule" ? "UTILITY" : "MARKETING";
+  return purpose === "booking_confirmation" || purpose === "reminder" || purpose === "reminder_soon" || purpose === "reschedule" ? "UTILITY" : "MARKETING";
 }
 
 /** Firmenname, der im Text für „[Firma]“ steht (wie im Admin: ohne vorangestelltes „Allianz“). */
@@ -103,6 +105,7 @@ const EXAMPLES: Record<string, string> = {
   Vorname: "Julia",
   "Anrede und Nachname": "Frau Schneider",
   "Datum/Uhrzeit": "Mo., 14.12., 10:00 Uhr",
+  Uhrzeit: "10:00 Uhr",
   Art: "Telefon",
   "Link/Hinweis": "Wir rufen dich unter deiner Nummer an.",
   "Thema (z. B. Hausrat, Haftpflicht)": "Hausrat",
@@ -177,8 +180,10 @@ export const CUSTOMER_TITLES: Record<NoticePurpose, { title: string; when: strin
   outreach: { title: "Erste Nachricht an neue Leads", when: "Geht wenige Minuten nach dem Formular raus." },
   booking_confirmation: { title: "Terminbestätigung", when: "Sobald ein Lead einen Termin gebucht hat." },
   reminder: { title: "Terminerinnerung", when: "Etwa 24 Stunden vor dem Termin." },
+  reminder_soon: { title: "Kurz vor dem Termin", when: "Etwa eine Stunde vor dem Termin: passt alles?" },
   reschedule: { title: "Termin verschoben", when: "Wenn Ihr Team einen Termin verlegen muss, z. B. wegen Abwesenheit." },
   followup: { title: "Nachfassen, wenn der Chat ruht", when: "Wenn ein Lead länger nicht geantwortet hat." },
+  followup_nudge: { title: "Zweite kurze Nachfrage", when: "Einige Stunden nach der ersten Nachfrage, wenn der Lead noch nicht geantwortet hat." },
   followup_offer: { title: "Nachfassen nach einem Angebot", when: "Einige Tage nach „Angebot gesendet“." },
   followup_noshow: { title: "Nachfassen nach verpasstem Termin", when: "Wenn ein Lead nicht zum Termin erschienen ist." },
   followup_last: { title: "Letzte Nachricht", when: "Zum Abschluss einer Nachfass-Abfolge." },

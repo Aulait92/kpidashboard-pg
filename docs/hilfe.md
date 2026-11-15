@@ -177,7 +177,10 @@ Seiten aus der Liste „Seiten“ unten.
 ## Der WhatsApp-Assistent
 
 - Schreibt neue Leads in wenigen Minuten an, stellt ein paar Fragen und bucht einen Termin in freie Zeiten
-  Ihres Kalenders. Die Bestätigung und eine Erinnerung etwa 24 Stunden vorher gehen per WhatsApp raus.
+  Ihres Kalenders. Die Bestätigung und eine Erinnerung etwa 24 Stunden vorher gehen per WhatsApp raus, etwa eine
+  Stunde vorher fragt er noch kurz, ob alles passt (sonst wird verschoben statt verpasst).
+- Bei Privatschutz fragt er die Angaben fürs Angebot ab. Bucht ein Lead schon vorher einen Termin, fragt der
+  Assistent die fehlenden Angaben nach der Buchung weiter ab.
 - Braucht ein Lead Sie (Frage, die der Assistent nicht beantworten soll), landet der Chat unter „Braucht dich“
   und Sie bekommen eine Push-Nachricht.
 - **Ansprache (Sie oder Du)**: Standard ist „Sie“. Inhaber stellen das unter **Einstellungen → WhatsApp-Vorlagen**,
@@ -241,8 +244,8 @@ Seiten aus der Liste „Seiten“ unten.
     nach 7 Tagen eine Anruf-Aufgabe.
   - **Nicht erschienen:** sofort eine WhatsApp mit Link zum neuen Termin, nach 2 Tagen eine Anruf-Aufgabe.
   - **Chat ruht:** Antwortet ein Lead dem Assistenten nicht (auf die erste Nachricht oder mitten im Gespräch),
-    fasst der Assistent nach 2 Stunden nach, am nächsten Tag noch einmal (nur solange das 24-Stunden-Fenster offen ist)
-    und nach 3 Tagen ein letztes Mal, auf Wunsch mit Link zur Buchungsseite. Jede neue Nachricht des Assistenten
+    fasst der Assistent nach 2 Stunden nach, nach 8 Stunden noch einmal, am nächsten Tag ein drittes Mal (nur solange
+    das 24-Stunden-Fenster offen ist) und nach 3 Tagen ein letztes Mal, auf Wunsch mit Link zur Buchungsseite. Jede neue Nachricht des Assistenten
     startet das von vorn; schreiben Sie selbst im Chat oder pausieren den Assistenten, hört es auf.
 - WhatsApp geht nur Mo–Sa zwischen 9 und 19 Uhr raus. Geht keine WhatsApp (z. B. keine Handynummer),
   legt die App stattdessen eine Anruf-Aufgabe an. Eine eigene, spätere Wiedervorlage bleibt bestehen.

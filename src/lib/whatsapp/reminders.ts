@@ -129,6 +129,66 @@ export async function sendRescheduleNotice(opts: {
 
 export type ReminderResult ={ candidates: number; sent: number; errors: string[] };
 
+/** „Gleich ist es so weit“: etwa so lange vor dem Termin (Ole, 15.11.2026: kurz vorher nachfragen, ob alles passt). */
+export const SOON_MS = 60 * 60 * 1000;
+
+/**
+ * Kurz vor dem Termin fragen, ob alles passt (lieber verschieben als nicht erscheinen). Nur WhatsApp, einmal je Termin.
+ * Nicht, wenn erst kurz vorher gebucht (unter 3 Std.) oder die Erinnerung gerade erst rausging (2-Std.-Fall).
+ */
+export async function runSoonReminders(now = new Date()): Promise<ReminderResult> {
+  const due = await prisma.appointment.findMany({
+    where: {
+      status: "booked",
+      soonReminderSentAt: null,
+      conversationId: { not: null },
+      startsAt: { gt: new Date(now.getTime() + 10 * 60 * 1000), lte: new Date(now.getTime() + SOON_MS) },
+    },
+    select: { id: true, customerId: true, conversationId: true, leadId: true, mode: true, startsAt: true, createdAt: true, meetUrl: true, manageToken: true, reminderSentAt: true },
+    orderBy: { startsAt: "asc" },
+    take: 200,
+  });
+  const result: ReminderResult = { candidates: due.length, sent: 0, errors: [] };
+  for (const appt of due) {
+    const tooFresh = appt.startsAt.getTime() - appt.createdAt.getTime() < 3 * 60 * 60 * 1000;
+    const justReminded = !!appt.reminderSentAt && now.getTime() - appt.reminderSentAt.getTime() < 90 * 60 * 1000;
+    if (tooFresh || justReminded) {
+      await prisma.appointment.update({ where: { id: appt.id }, data: { soonReminderSentAt: now } });
+      continue;
+    }
+    const conv = await prisma.conversation.findUnique({ where: { id: appt.conversationId! }, select: { contactPhone: true, contactName: true, optedOutAt: true } });
+    if (!conv?.contactPhone || conv.optedOutAt) continue;
+    const an = await anspracheOf(appt.customerId);
+    const who = await ansprechpartner({ customerId: appt.customerId, leadId: appt.leadId, phone: conv.contactPhone, name: conv.contactName });
+    const manageUrl = appt.manageToken ? `${appUrl() ?? ""}/book/manage/${appt.manageToken}` : null;
+    const uhr = `${new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: TZ }).format(appt.startsAt)} Uhr`;
+    const params = [firstNameOf(conv.contactName), uhr, modeLabel(appt.mode), linkOrHint(appt.mode, appt.meetUrl, an)];
+    const text =
+      `${anredeZeile(an, who.kontakt)} gleich ist es so weit: ${terminWort(appt.mode, an)} mit ${who.advisor} ist um ${uhr}.` +
+      (appt.mode === "video" && appt.meetUrl ? ` Hier der Link: ${appt.meetUrl}` : ` ${a(an, `${who.advisor} ruft dich an.`, `${who.advisor} ruft Sie an.`)}`) +
+      ` ${a(an, "Passt bei dir alles? Falls etwas dazwischengekommen ist, schreib kurz hier, dann finden wir eine neue Zeit.", "Passt bei Ihnen alles? Falls etwas dazwischengekommen ist, schreiben Sie kurz hier, dann finden wir eine neue Zeit.")}` +
+      (manageUrl ? `\n\nOder selbst verschieben: ${manageUrl}` : "");
+    const send = (purpose: "reminder_soon" | "reminder") =>
+      sendWhatsAppNotice({ customerId: appt.customerId, to: conv.contactPhone, purpose, params: purpose === "reminder" ? [params[0], formatWhenDE(appt.startsAt), params[2], params[3]] : params, text, leadId: appt.leadId, contactName: conv.contactName, anrede: who.kontakt });
+    try {
+      // Solange „Kurz vor dem Termin“ bei Meta nicht freigegeben ist: die normale Erinnerungs-Vorlage
+      try {
+        await send("reminder_soon");
+      } catch (err) {
+        if (!(err instanceof NoTemplateError)) throw err;
+        await send("reminder");
+      }
+      await prisma.appointment.update({ where: { id: appt.id }, data: { soonReminderSentAt: new Date() } });
+      result.sent++;
+    } catch (err) {
+      result.errors.push(`${appt.id} (kurz vorher): ${err instanceof Error ? err.message : String(err)}`);
+      // nicht endlos erneut versuchen
+      await prisma.appointment.update({ where: { id: appt.id }, data: { soonReminderSentAt: new Date() } });
+    }
+  }
+  return result;
+}
+
 /** Kurzfristig gebuchte Termine: Erinnerung erst so kurz vorher. */
 const SHORT_LEAD_MS = 2 * 60 * 60 * 1000;
 

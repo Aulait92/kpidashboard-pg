@@ -24,8 +24,10 @@ export type NoticePurpose =
   | "outreach"
   | "booking_confirmation"
   | "reminder"
+  | "reminder_soon"
   | "reschedule"
   | "followup"
+  | "followup_nudge"
   | "followup_offer"
   | "followup_noshow"
   | "followup_last"
@@ -42,8 +44,10 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   outreach: "Erstanschreiben",
   booking_confirmation: "Buchungsbestätigung",
   reminder: "Termin-Erinnerung",
+  reminder_soon: "Termin gleich: passt alles?",
   reschedule: "Termin verschoben",
   followup: "Nachfassen allgemein (Chat > 24 h still)",
+  followup_nudge: "Nachfassen: zweite kurze Nachfrage (Chat ruht)",
   followup_offer: "Nachfassen nach Angebot",
   followup_noshow: "Nachfassen nach verpasstem Termin",
   followup_last: "Nachfassen: letzte Nachricht (Abfolge)",
@@ -96,8 +100,10 @@ export const REST_PARAMS: Record<NoticePurpose, string[]> = {
   outreach: ["Erstinformation (Link)"],
   booking_confirmation: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
   reminder: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
+  reminder_soon: ["Uhrzeit", "Art", "Link/Hinweis"],
   reschedule: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
   followup: [],
+  followup_nudge: [],
   followup_offer: ["Thema (z. B. Hausrat, Haftpflicht)"],
   followup_noshow: [],
   followup_last: [],
@@ -133,6 +139,11 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
     du: "hier ist eine kurze Erinnerung an deinen Termin bei [Firma]: {{2}} ({{3}}). {{4}} Bis dann!",
     sie: "hier ist eine kurze Erinnerung an Ihren Termin bei [Firma]: {{2}} ({{3}}). {{4}} Bis dann!",
   },
+  // Kurz vor dem Termin (Ole, 15.11.2026): passt alles? Lieber verschieben als nicht erscheinen
+  reminder_soon: {
+    du: "gleich ist es so weit: Dein Termin bei [Firma] ist um {{2}} ({{3}}). {{4}} Passt bei dir alles? Falls etwas dazwischengekommen ist, antworte kurz hier, dann finden wir eine neue Zeit.",
+    sie: "gleich ist es so weit: Ihr Termin bei [Firma] ist um {{2}} ({{3}}). {{4}} Passt bei Ihnen alles? Falls etwas dazwischengekommen ist, antworten Sie kurz hier, dann finden wir eine neue Zeit.",
+  },
   reschedule: {
     du: "dein Termin bei [Firma] musste leider verschoben werden. Die neue Zeit ist {{2}} ({{3}}). {{4}} Vielen Dank für dein Verständnis!",
     sie: "Ihr Termin bei [Firma] musste leider verschoben werden. Die neue Zeit ist {{2}} ({{3}}). {{4}} Vielen Dank für Ihr Verständnis!",
@@ -140,6 +151,11 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
   followup: {
     du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Passt es dir diese Woche noch für ein kurzes Gespräch? Antworte einfach hier, dann schlage ich dir Zeiten vor.",
     sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Passt es Ihnen diese Woche noch für ein kurzes Gespräch? Antworten Sie einfach hier, dann schlage ich Ihnen Zeiten vor.",
+  },
+  // Zweite kurze Nachfrage einige Stunden nach der ersten, wenn der Chat ruht (lib/lead-sequences.ts „silent“)
+  followup_nudge: {
+    du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Sollen wir mit deiner Anfrage weitermachen? Antworte einfach hier, es dauert nur ein paar Minuten.",
+    sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Sollen wir mit Ihrer Anfrage weitermachen? Antworten Sie einfach hier, es dauert nur ein paar Minuten.",
   },
   followup_offer: {
     du: "hier ist der digitale KI-Assistent von [Firma]. Konntest du dir das Angebot zu {{2}} schon anschauen? Wenn du Fragen hast oder etwas anpassen möchtest, antworte einfach hier.",

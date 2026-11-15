@@ -2,7 +2,7 @@ import { isCronAuthorized } from "@/lib/cron-auth";
 import { after } from "next/server";
 import { checkAppointmentResponses } from "@/lib/calendar";
 import { runOutreach } from "@/lib/whatsapp/outreach";
-import { runReminders } from "@/lib/whatsapp/reminders";
+import { runReminders, runSoonReminders } from "@/lib/whatsapp/reminders";
 import { pruneUsage } from "@/lib/usage";
 import { pruneAudit } from "@/lib/audit";
 import { pruneTransient } from "@/lib/erasure";
@@ -56,6 +56,11 @@ async function handle(req: Request): Promise<Response> {
   });
   const reminders = await runReminders().catch((e: unknown) => {
     reportError(e, "cron-reminders");
+    return { error: e instanceof Error ? e.message : String(e) };
+  });
+  // Etwa 1 Std. vor dem Termin: „Gleich ist es so weit, passt alles?“
+  const soonReminders = await runSoonReminders().catch((e: unknown) => {
+    reportError(e, "cron-soon-reminders");
     return { error: e instanceof Error ? e.message : String(e) };
   });
   // Onboarding: Erinnerungen, Leads per E-Mail (Nur Betreuung), Feedback, Tag 90.
@@ -220,7 +225,7 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-d360-connect");
     return null;
   });
-  const failed = Object.entries({ outreach, responses, reminders, onboarding, sequences })
+  const failed = Object.entries({ outreach, responses, reminders, soonReminders, onboarding, sequences })
     .filter(([, r]) => r && typeof r === "object" && "error" in r)
     .map(([k]) => k);
   await beat("cron", failed.length === 0, failed.length ? `Fehler in: ${failed.join(", ")}` : null);
@@ -241,7 +246,7 @@ async function handle(req: Request): Promise<Response> {
       reportError(e, "cron-support-templates");
       return null;
     });
-  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, naechsterSchritt, vertraege, terminNachfragen, whatsappConnect, templates, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, naechsterSchritt, vertraege, terminNachfragen, whatsappConnect, templates, supportTemplates, status });
 }
 
 export const GET = handle;

@@ -44,8 +44,8 @@ den Freigabestatus ab. Code: `src/lib/whatsapp/template-plan.ts` (was, wie), `te
 
 | Zweck | Kategorie beim Einreichen |
 |---|---|
-| outreach, followup, followup_offer, followup_noshow, followup_last | MARKETING |
-| booking_confirmation, reminder | UTILITY |
+| outreach, followup, followup_nudge, followup_offer, followup_noshow, followup_last | MARKETING |
+| booking_confirmation, reminder, reminder_soon, reschedule | UTILITY |
 | campaign_cross_sell, campaign_review, campaign_birthday, campaign_renewal (nur mit Bestandskunden-Modul) | MARKETING, mit Schnellantwort-Knopf „Keine Nachrichten mehr“ |
 
 `[Berater]` wird durch den Kundennamen ersetzt (ohne vorangestelltes „Allianz“). Platzhalter

@@ -189,7 +189,7 @@ export function AgentSettings(p: {
           <div className="text-sm text-[color:var(--muted)]">
             Nicht erreicht: WhatsApp sofort, Anruf-Aufgabe an Tag 2, letzte WhatsApp an Tag 6. Angebot: WhatsApp an Tag 3, Anruf an
             Tag 7. Nicht erschienen: WhatsApp mit Buchungslink sofort, Anruf an Tag 2. Chat ruht (Lead antwortet dem Assistenten nicht):
-            WhatsApp nach 2 Stunden, nach ca. 20 Stunden (nur im offenen Fenster), letzte an Tag 3. Stoppt bei Antwort, Termin, Abschluss,
+            WhatsApp nach 2 und 8 Stunden, nach ca. 20 Stunden (nur im offenen Fenster), letzte an Tag 3. Stoppt bei Antwort, Termin, Abschluss,
             Kein Interesse, Reklamation oder „Stopp“. WhatsApp nur Mo–Sa 9–19 Uhr.
           </div>
         </div>
