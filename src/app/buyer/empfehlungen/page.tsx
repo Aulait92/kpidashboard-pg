@@ -7,6 +7,7 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { nowMs } from "@/lib/now";
 import { moduleInfo } from "@/lib/empfehlung/module";
+import { empfehlungVisible } from "@/lib/empfehlung/shared";
 import { generalLinkOf, loadEmpfehlungStats, loadSettings, openRewards, recentRequests, referralLinkFor } from "@/lib/empfehlung/requests";
 import { advisorDisplayName } from "@/lib/whatsapp/template-plan";
 import { personFromCustomerName } from "@/lib/advisor-name";
@@ -42,6 +43,8 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
   if (ctx.teamRole !== "owner") redirect("/buyer");
   const info = await moduleInfo(ctx.customerId);
   if (!info) redirect("/buyer");
+  // Modul vorerst nicht verfügbar (lib/empfehlung/shared.ts EMPFEHLUNG_MODULE_AVAILABLE)
+  if (!empfehlungVisible(info.active)) redirect("/buyer");
   const customer = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, vermittlerTyp: true, whatsAppAccount: { select: { status: true } } } });
   const vertreter = advisorDisplayName(customer?.name ?? "");
 

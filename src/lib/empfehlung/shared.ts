@@ -17,6 +17,18 @@ import { anredeName, anredeZeile, type AnredeKontakt } from "@/lib/ansprache";
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * Modul „Empfehlungen & Bewertungen“ für Kunden buchbar und sichtbar? (Ole, 15.11.2026: vorerst aus, es fehlen
+ * noch kritische Teile.) Aus heißt: nicht buchbar (Konto, Angebot, Halteangebot), keine Hinweise, Ankündigung,
+ * Tipps oder Links. Kunden, bei denen das Modul schon aktiv ist, behalten es. Wieder an: true setzen.
+ */
+export const EMPFEHLUNG_MODULE_AVAILABLE = false;
+
+/** Darf der Kunde das Modul sehen? (verfügbar oder bei ihm schon aktiv) */
+export function empfehlungVisible(active: boolean): boolean {
+  return EMPFEHLUNG_MODULE_AVAILABLE || active;
+}
+
 /** Livegang des Moduls: „Neu“-Markierung im Menü für 30 Tage. */
 export const EMPFEHLUNG_LAUNCH = new Date("2026-11-12T00:00:00+01:00");
 export const NEW_BADGE_DAYS = 30;

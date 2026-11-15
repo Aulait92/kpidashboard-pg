@@ -5,6 +5,7 @@
 // Vermittler-Oberfläche: Sie-Form. Kein Garantie-Hinweis, keine nicht freigegebenen Funktionen.
 // pickTips ist rein (getestet); Daten lädt lib/zahlen-tipps-server.
 
+import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
 /**
  * Tipp „Kollegen empfehlen“ zeigen? Ole bewirbt das Programm vorerst nicht aktiv (14.11.2026):
  * Standard aus. Gilt auch für den Monatsbericht, sobald er Tipps zeigt.
@@ -83,7 +84,7 @@ export function candidateTips(s: TipSignals): Tip[] {
   const out: Tip[] = [];
   const prov = s.avgProvision > 0 ? s.avgProvision : 150;
   const closing = (s.rates.close.own ?? s.rates.close.avg ?? 0.2) * (s.rates.termin.own ?? s.rates.termin.avg ?? 0.4);
-  if (!s.empfehlungEnabled && s.closedCustomers > 0) {
+  if (EMPFEHLUNG_MODULE_AVAILABLE && !s.empfehlungEnabled && s.closedCustomers > 0) {
     out.push({
       key: "empfehlung_an",
       title: "Empfehlungen anschalten",

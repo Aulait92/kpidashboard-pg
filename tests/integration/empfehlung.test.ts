@@ -3,6 +3,8 @@
 // Gating), Kritik → Aufgabe + keine Empfehlungsanfrage, Empfehlungsseite → Lead,
 // Dank an Empfehlende, Modul aus = nichts passiert.
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+// Diese Tests prüfen die Buchung des Moduls; im Code ist es vorerst aus (Ole, 15.11.2026), hier an.
+vi.mock("@/lib/empfehlung/shared", async (orig) => ({ ...(await orig<typeof import("@/lib/empfehlung/shared")>()), EMPFEHLUNG_MODULE_AVAILABLE: true }));
 
 type Item = { id: string; quantity: number; current_period_end?: number; price: { product: string; unit_amount: number; recurring: { interval: string } } };
 const state = vi.hoisted(() => ({

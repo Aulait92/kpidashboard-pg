@@ -26,6 +26,7 @@ import { consentRequestByMailAllowed } from "@/lib/bestand/einwilligung";
 import { ConsentBadges, ConsentRowAction } from "@/components/bestand/consent-actions";
 import { isExclusiveAgent } from "@/lib/bestand/befugnis";
 import { loadCustomerContracts } from "@/lib/vertraege";
+import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Bestand | performancegrowth" };
@@ -270,7 +271,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                   </Link>
                 </li>
               ) : null}
-              {!c.empfehlungEnabled ? (
+              {!c.empfehlungEnabled && EMPFEHLUNG_MODULE_AVAILABLE ? (
                 <li className="flex items-center gap-3 rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-strong)] p-4 sm:col-span-2" data-bestand-empfehlung-locked>
                   <div className="min-w-0 flex-1 text-sm">
                     <div className="font-semibold">Jährliche Empfehlungsbitte</div>

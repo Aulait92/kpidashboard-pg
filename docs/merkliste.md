@@ -2,6 +2,15 @@
 
 Dinge, die Ole später angehen will. Neue Sitzungen bitte hier nachsehen und Ole daran erinnern.
 
+- 16.11.2026: **End-to-End-Test WhatsApp mit Testlead** (Ole). Testkunde „Ole Agentur“ (Nummer +1 501 430 4325 ist
+  verbunden): Assistent einschalten (Admin → WhatsApp → Einstellungen), Vorlagen-Freigabe prüfen, Testlead mit Oles
+  Handynummer einspielen, Ole testet den Chat bis zur Terminbuchung (Erstnachricht mit Knöpfen, Erstinformation als PDF,
+  Fragen, Termin, Bestätigung).
+
+- 15.11.2026: **Modul „Empfehlungen & Bewertungen“ vorerst aus** (Ole). Schalter `EMPFEHLUNG_MODULE_AVAILABLE` in
+  src/lib/empfehlung/shared.ts. Wieder an, wenn die kritischen Teile fertig sind (u. a. Bewertungs-Wächter:
+  Google-Freigabe, docs/google-bewertungs-waechter.md). Präsentationsfolie „Empfehlungen & Bewertungen (59 €)“ prüfen.
+
 - 15.11.2026: **Calendly später durch unser eigenes Buchungssystem ablösen** (Vertrieb). Bis dahin: Handynummer ist im
   Calendly-Formular Pflicht (für die WhatsApp-Terminbestätigung, lib/vertrieb/termin-whatsapp.ts).
 
