@@ -17,7 +17,7 @@ import {
 } from "@/lib/offer-pricing";
 // Ab wann und für welche Produkte die Garantien gelten (gleiche Regel wie die automatische Prüfung)
 import { GUARANTEES_FROM, isGuaranteeProduct } from "@/lib/garantien";
-import { VERTRAGS_GARANTIE_MIN_VERTRAEGE, breakEvenTageFuer } from "@/lib/rechner";
+import { VERTRAGS_GARANTIE_MIN_VERTRAEGE, breakEvenTageFuer, vertragTageFuer } from "@/lib/rechner";
 
 // Angebot / Auftragsbestätigung im Performancegrowth-Design (dunkles Deckblatt,
 // nummerierte Abschnitte, AGB als Bestandteil). Genutzt auf der öffentlichen
@@ -560,7 +560,8 @@ export function OfferDocument({
             </p>
             {makler ? (
             <p className="mt-2 text-[#374151]">
-              <strong>Vertrags-Garantie (für Makler):</strong> Haben Sie nach 90 aktiven Tagen weniger als{" "}
+              {/* Frist je Angebotsdatum: neue Angebote 120 aktive Tage, ältere behalten 90 (lib/rechner vertragTageFuer) */}
+              <strong>Vertrags-Garantie (für Makler):</strong> Haben Sie nach {vertragTageFuer(offer.createdAt)} aktiven Tagen weniger als{" "}
               {VERTRAGS_GARANTIE_MIN_VERTRAEGE} Verträge abgeschlossen, betreuen wir Sie ohne Gebühr für Betreuung und Software weiter, auf Wunsch
               mit einem anderen Produkt ohne Setupgebühr, bis Sie sie haben (längstens 6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der gebuchten Termine
               wahrgenommen und Ergebnisse in der App eingetragen. Details in den AGB (Abschnitt „Garantien“).

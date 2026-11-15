@@ -39,7 +39,7 @@ selbst unter „Meine Provisionen“.
 |---|---|
 | 100 Leads | Rechner-Konfiguration, Produkt TKV `minLeads30` |
 | 20 € pro Tag | Rechner-Konfiguration, `guarantees.leads.minBudgetPerDay` (gilt für beide Garantien) |
-| 30 Tage (Lead), 120 Tage Break-even (Angebote vor 13.11.2026 19 Uhr: 90), 90 Tage Vertrags-Garantie, 80 %, 6 Monate | `GARANTIE_FRISTEN`, `breakEvenTageFuer()` in `src/lib/rechner.ts` |
+| 30 Tage (Lead), 120 Tage Break-even (Angebote vor 13.11.2026 19 Uhr: 90), 120 Tage Vertrags-Garantie (Angebote vor 15.11.2026 23:45 Uhr: 90), 80 %, 6 Monate | `GARANTIE_FRISTEN`, `breakEvenTageFuer()`, `vertragTageFuer()` in `src/lib/rechner.ts` (Stichtage `BREAK_EVEN_4_MONATE_AB`, `VERTRAGS_GARANTIE_120_AB`) |
 | 15 Verträge (Makler) | `VERTRAGS_GARANTIE_MIN_VERTRAEGE` in `src/lib/rechner.ts` |
 
 ## Kampagnenstart
@@ -83,9 +83,9 @@ Das gilt für jede Art von Pause, auch für Pausen wegen Zahlungsverzug.
 ## Break-even-Garantie
 
 - **Nur für Vertreter** (`Customer.vermittlerTyp = vertreter`). Makler bekommen bei
-  TKV nur Bestandsprovision und lägen nach 90 Tagen immer unter den Kosten; für sie
+  TKV nur Bestandsprovision und lägen nach 120 Tagen immer unter den Kosten; für sie
   gilt stattdessen die Vertrags-Garantie (unten). Die Lead-Garantie gilt für beide.
-- Erste Prüfung am Tag nach dem **120. aktiven Tag** („spätestens ab dem 4. Monat profitabel“, Ole 13.11.2026);
+- Erste Prüfung am Tag nach dem **120. aktiven Tag** („spätestens ab dem 5. Monat profitabel“, Ole 13.11.2026);
   bei Angeboten, die vor dem 13.11.2026, 19 Uhr erstellt wurden, nach dem **90. aktiven Tag**. Danach täglich, je Kalendermonat ein Fall.
 - **Provision seit Start**: Abschlüsse (Status „Abschluss“, Datum `closedAt`) seit Start,
   ohne anerkannte Reklamation, geschätzt mit `estimatedProvision` und den
@@ -116,16 +116,18 @@ Das gilt für jede Art von Pause, auch für Pausen wegen Zahlungsverzug.
 
 ## Vertrags-Garantie (Makler)
 
-Freigegeben von Ole am 11.11.2026, statt Break-even für Makler.
+Freigegeben von Ole am 11.11.2026, statt Break-even für Makler. Seit 15.11.2026 (Ole) wie Break-even nach
+120 statt 90 aktiven Tagen.
 
 - **Nur für Makler** (`Customer.vermittlerTyp = makler`), Vertreter sehen sie nicht.
-- Gleicher Zeitraum wie Break-even: erste Prüfung am Tag nach dem **90. aktiven Tag**
-  (Pausen verlängern), danach täglich, je Kalendermonat ein Fall, **längstens 6 Monate**
+- Gleicher Zeitraum wie Break-even: erste Prüfung am Tag nach dem **120. aktiven Tag**
+  (Pausen verlängern); bei Angeboten, die vor dem 15.11.2026, 23:45 Uhr erstellt wurden
+  (`VERTRAGS_GARANTIE_120_AB`), nach dem **90. aktiven Tag**. Danach täglich, je Kalendermonat ein Fall, **längstens 6 Monate**
   ab dem Monat der ersten Prüfung bzw. 6 gewährte Monate.
 - **Verträge seit Start** = Leads mit Status „Abschluss“ (Datum `closedAt`) seit Start,
   ohne anerkannte Reklamation – **je Lead ein Vertrag** (mehrere Verträge eines Kunden
   kennt die App nicht). So steht es auch in den AGB.
-- Mindestens **15 Verträge** → „Erfüllt“, auch schon vor Tag 90 (offene Fälle des
+- Mindestens **15 Verträge** → „Erfüllt“, auch schon vor Tag 120 bzw. 90 (offene Fälle des
   laufenden Monats werden automatisch geschlossen). Sonst Anspruch bzw. „Bedingungen
   fehlen“ für den **laufenden Monat**: **Betreuung + Software** kostenlos (wie
   Lead-Garantie), so lange, bis 15 erreicht sind. Auf Wunsch mit einem anderen Produkt

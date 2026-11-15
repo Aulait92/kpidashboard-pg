@@ -124,8 +124,10 @@ export const GARANTIE_FRISTEN = {
   breakEvenTage: 120,
   /** Break-even-Garantie für Angebote vor BREAK_EVEN_4_MONATE_AB (alte Zusage) */
   breakEvenTageAlt: 90,
-  /** Vertrags-Garantie (Makler): aktive Tage ab Kampagnenstart */
-  vertragTage: 90,
+  /** Vertrags-Garantie (Makler): aktive Tage ab Kampagnenstart (wie Break-even 120, Ole 15.11.2026) */
+  vertragTage: 120,
+  /** Vertrags-Garantie für Angebote vor VERTRAGS_GARANTIE_120_AB (alte Zusage) */
+  vertragTageAlt: 90,
   /** Mindestquote wahrgenommene Termine bzw. Leads mit Ergebnis */
   quote: 0.8,
   /** Break-even: längstens so viele Monate ohne Betreuungsgebühr */
@@ -142,7 +144,18 @@ export function breakEvenTageFuer(offerCreatedAt: Date): number {
   return offerCreatedAt < BREAK_EVEN_4_MONATE_AB ? GARANTIE_FRISTEN.breakEvenTageAlt : GARANTIE_FRISTEN.breakEvenTage;
 }
 
-/** Vertrags-Garantie (Makler): Mindestzahl Verträge nach den 90 aktiven Tagen. */
+/**
+ * Ab diesem Zeitpunkt erstellte Angebote: Vertrags-Garantie (Makler) nach 120 aktiven Tagen statt 90,
+ * analog zur Break-even-Garantie (Ole, 15.11.2026; Stichtag = Zeitpunkt der Umstellung). Ältere
+ * Angebote behalten ihre Zusage von 90 Tagen.
+ */
+export const VERTRAGS_GARANTIE_120_AB = new Date("2026-11-15T23:45:00+01:00");
+/** Frist der Vertrags-Garantie für ein Angebot (nach Erstellungsdatum, wie im Angebotsdokument). */
+export function vertragTageFuer(offerCreatedAt: Date): number {
+  return offerCreatedAt < VERTRAGS_GARANTIE_120_AB ? GARANTIE_FRISTEN.vertragTageAlt : GARANTIE_FRISTEN.vertragTage;
+}
+
+/** Vertrags-Garantie (Makler): Mindestzahl Verträge nach den 120 (alte Angebote: 90) aktiven Tagen. */
 export const VERTRAGS_GARANTIE_MIN_VERTRAEGE = 15;
 
 export type RechnerConfig = {

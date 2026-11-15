@@ -30,7 +30,8 @@ const D = (s: string) => new Date(`${s}T10:00:00Z`);
 const uid = () => Math.random().toString(36).slice(2, 8);
 const admin = { id: "admin-test", email: "admin@test.local", role: "ADMIN" };
 
-async function garantieKunde(opts: { leads: number; overdue?: boolean; offerProduct?: string; makler?: boolean }) {
+// createdAt des Angebots bestimmt die Frist (vor dem Stichtag 90, danach 120 aktive Tage); fest, damit der Test nicht vom Datum abhängt
+async function garantieKunde(opts: { leads: number; overdue?: boolean; offerProduct?: string; makler?: boolean; offerCreatedAt?: Date }) {
   const n = uid();
   const c = await makeCustomer({
     retainerMonthly: 1000,
@@ -47,6 +48,7 @@ async function garantieKunde(opts: { leads: number; overdue?: boolean; offerProd
       term: "12m",
       products: [{ name: opts.offerProduct ?? "Katzenversicherung (TKV)", dailyBudget: 25 }],
       status: "accepted",
+      createdAt: opts.offerCreatedAt ?? D("2026-11-12"),
       acceptedAt: D("2026-11-20"),
       setupFee: 990,
       monthlyFee: 1000,
@@ -173,8 +175,8 @@ describe("Garantien: Cron → Fall → Gewähren/Ablehnen", () => {
     expect((await prisma.garantieFall.findUniqueOrThrow({ where: { id: fall.id } })).status).toBe("abgelehnt");
   });
 
-  it("Makler: nach Tag 90 Vertrags-Garantie statt Break-even → Fall in „Heute“, Gewähren schreibt Betreuung + Software gut", async () => {
-    const k = await garantieKunde({ leads: 60, makler: true });
+  it("Makler (Angebot vor dem Stichtag): nach Tag 90 Vertrags-Garantie statt Break-even → Fall in „Heute“, Gewähren schreibt Betreuung + Software gut", async () => {
+    const k = await garantieKunde({ leads: 60, makler: true, offerCreatedAt: D("2026-11-12") });
     customers.push(k.customerId);
     offers.push(k.offerId);
     // Werbung bis zur Prüfung weiterlaufen lassen (ab 10.1.), 9 Abschlüsse (unter 15)
@@ -211,6 +213,39 @@ describe("Garantien: Cron → Fall → Gewähren/Ablehnen", () => {
     // Monat komplett aus dem Umsatzbuch
     const { ledger } = await loadLedger(D("2027-03-31"));
     expect(ledger.rows.filter((r) => r.customerId === k.customerId && r.month === "2027-03")).toEqual([]);
+  });
+
+  it("Makler (Angebot ab dem Stichtag): Vertrags-Garantie erst nach 120 aktiven Tagen, „Heute“ mit Fall im März", async () => {
+    const k = await garantieKunde({ leads: 60, makler: true, offerCreatedAt: D("2026-11-17") });
+    customers.push(k.customerId);
+    offers.push(k.offerId);
+    // Werbung bis nach dem 120. aktiven Tag (30.3.) weiterlaufen lassen, 9 Abschlüsse (unter 15)
+    await prisma.customerAdSpend.createMany({
+      data: Array.from({ length: 85 }, (_, i) => ({
+        customerId: k.customerId,
+        accountId: "act_test",
+        date: new Date(Date.parse("2027-01-10T12:00:00Z") + i * DAY),
+        amount: 25,
+      })),
+    });
+    const ls = await prisma.lead.findMany({ where: { customerId: k.customerId }, select: { id: true }, take: 9 });
+    await prisma.lead.updateMany({ where: { id: { in: ls.map((l) => l.id) } }, data: { status: "Abschluss", closedAt: D("2027-01-15"), closeValue: 350 } });
+
+    // 2.3.: bei 90 Tagen wäre geprüft, mit 120 läuft die Garantie noch
+    await runGarantien(D("2027-03-02"));
+    expect((await prisma.garantieFall.findMany({ where: { customerId: k.customerId } })).map((f) => f.art)).toEqual(["lead"]);
+    const lauf = await garantieStatus(k.customerId, D("2027-03-02"));
+    const vg = lauf?.ergebnisse.find((e) => e.art === "vertrag");
+    expect(vg).toMatchObject({ status: "laeuft", kennzahlen: { tage: 120, ende: "2027-03-30" } });
+
+    // 31.3.: Tag nach dem 120. aktiven Tag → Fall für März, Hinweis in „Heute“
+    await runGarantien(D("2027-03-31"));
+    const vertrag = await prisma.garantieFall.findFirstOrThrow({ where: { customerId: k.customerId, art: "vertrag" } });
+    expect(vertrag.monat).toBe("2027-03");
+    expect(vertrag.kennzahlen).toMatchObject({ status: "anspruch", tage: 120, vertraege: 9 });
+    const heute = await loadAdminHeute(D("2027-03-31"));
+    const item = heute.items.find((i) => i.key === `garantie:${vertrag.id}`);
+    expect(item?.title).toContain("Vertrags-Garantie (9 von 15 Verträgen) → Betreuung + Software im März 2027 kostenlos");
   });
 
   it("Angebote ohne Katze/TKV bekommen keine Garantie", async () => {

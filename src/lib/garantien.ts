@@ -1,6 +1,7 @@
 // Garantien (AGB „Garantien“): Lead-Garantie (30 aktive Tage), für Vertreter
 // die Break-even-Garantie und für Makler die Vertrags-Garantie (beide ab
-// 90 aktiven Tagen, monatlich, längstens 6 Monate).
+// 120 aktiven Tagen, bei älteren Angeboten 90, monatlich, längstens 6 Monate).
+// Die Frist je Kunde kommt aus dem Angebotsdatum (breakEvenTageFuer, vertragTageFuer).
 // Reine Bewertung ohne Datenbank – Laden, Cron und Gewähren stehen in
 // lib/garantien-server.ts. Regeln und Annahmen: docs/garantien.md.
 //
@@ -98,6 +99,8 @@ export type GarantieInput = {
   vermittlerTyp: "vertreter" | "makler";
   /** Break-even-Frist dieses Kunden (aktive Tage, je nach Angebotsdatum 90 oder 120); fehlt = Regel */
   breakEvenTage?: number;
+  /** Frist der Vertrags-Garantie dieses Kunden (aktive Tage, je nach Angebotsdatum 90 oder 120); fehlt = Regel */
+  vertragTage?: number;
   /** Betreuung/Software des Kunden (Basis wie im Umsatzbuch); null = keine Vergütung */
   retainer: RetainerInput | null;
   /** Bereits angelegte Fälle des Kunden */
@@ -357,7 +360,7 @@ export function bewerteLeadGarantie(i: GarantieInput, r: GarantieRegeln): Garant
 }
 
 /**
- * Break-even-Garantie: ab dem 90. aktiven Tag monatlich prüfen, ob die
+ * Break-even-Garantie: ab dem 120. (alte Angebote: 90.) aktiven Tag monatlich prüfen, ob die
  * Provision seit Start die Kosten (Meta + Betreuung/Software, netto) erreicht.
  * Wenn nicht und alle Bedingungen erfüllt: Betreuung im laufenden Monat
  * kostenlos – längstens 6 Monate ab dem Monat der ersten Prüfung.
@@ -366,7 +369,7 @@ export function bewerteLeadGarantie(i: GarantieInput, r: GarantieRegeln): Garant
 export function bewerteBreakEven(i: GarantieInput, r: GarantieRegeln): GarantieErgebnis {
   const min = r.minBudgetPerDay;
   const be = { ...r.breakeven, tage: i.breakEvenTage ?? r.breakeven.tage };
-  // Makler bekommen nur Bestandsprovision und lägen nach 90 Tagen immer unter den Kosten
+  // Makler bekommen nur Bestandsprovision und lägen nach 120 Tagen immer unter den Kosten
   if (i.vermittlerTyp === "makler") {
     const e = nichtGestartet("breakeven", be.tage, min);
     return finish("breakeven", "nicht_anwendbar", e.kennzahlen, [], null, null);
@@ -403,7 +406,7 @@ export function bewerteBreakEven(i: GarantieInput, r: GarantieRegeln): GarantieE
   ];
   // Vor Ablauf der Frist (90 bzw. 120 aktive Tage): läuft (Fortschritt), Bedingungen als Vorschau
   if (!b.done) return finish("breakeven", "laeuft", b.kz, bedingungen, von, new Date(b.end));
-  // Erster Garantiemonat = Monat der ersten Prüfung (Tag nach dem 90. aktiven Tag)
+  // Erster Garantiemonat = Monat der ersten Prüfung (Tag nach dem 120. bzw. 90. aktiven Tag)
   const m0 = monthKey(new Date(b.end + DAY + 12 * 3_600_000));
   const last = addMonths(m0, be.maxFreiMonate - 1);
   const mc = monthKey(i.now);
@@ -416,7 +419,7 @@ export function bewerteBreakEven(i: GarantieInput, r: GarantieRegeln): GarantieE
 }
 
 /**
- * Vertrags-Garantie (nur Makler): ab dem 90. aktiven Tag monatlich prüfen,
+ * Vertrags-Garantie (nur Makler): ab dem 120. (alte Angebote: 90.) aktiven Tag monatlich prüfen,
  * ob seit Start mindestens `minVertraege` Verträge eingetragen sind (je Lead
  * mit Abschluss ein Vertrag). Wenn nicht und alle Bedingungen erfüllt:
  * Betreuung + Software im laufenden Monat kostenlos – bis die Zahl erreicht
@@ -424,7 +427,7 @@ export function bewerteBreakEven(i: GarantieInput, r: GarantieRegeln): GarantieE
  */
 export function bewerteVertragsGarantie(i: GarantieInput, r: GarantieRegeln): GarantieErgebnis {
   const min = r.minBudgetPerDay;
-  const vg = r.vertrag;
+  const vg = { ...r.vertrag, tage: i.vertragTage ?? r.vertrag.tage };
   if (i.vermittlerTyp !== "makler") {
     const e = nichtGestartet("vertrag", vg.tage, min);
     return finish("vertrag", "nicht_anwendbar", e.kennzahlen, [], null, null);
@@ -448,7 +451,7 @@ export function bewerteVertragsGarantie(i: GarantieInput, r: GarantieRegeln): Ga
   const bedingungen: Bedingung[] = [budget.b, ...quoten, rechnungBedingung(i.offeneRechnung)];
   if (vertraege >= vg.minVertraege) return finish("vertrag", "erfuellt", b.kz, bedingungen, von, bis);
   if (!b.done) return finish("vertrag", "laeuft", b.kz, bedingungen, von, new Date(b.end));
-  // Erster Garantiemonat = Monat der ersten Prüfung (Tag nach dem 90. aktiven Tag)
+  // Erster Garantiemonat = Monat der ersten Prüfung (Tag nach dem 120. bzw. 90. aktiven Tag)
   const m0 = monthKey(new Date(b.end + DAY + 12 * 3_600_000));
   const last = addMonths(m0, vg.maxFreiMonate - 1);
   const mc = monthKey(i.now);

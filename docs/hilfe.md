@@ -707,12 +707,13 @@ Seiten aus der Liste „Seiten“ unten.
 ## Garantien (Katzenversicherung)
 - **Lead-Garantie:** Bei mindestens 20 € Werbebudget pro Tag gibt es in den ersten 30 Tagen nach Kampagnenstart mindestens
   100 Leads, sonst sind Betreuung und Software im Folgemonat kostenlos.
-- **Break-even-Garantie (nur Vertreter, nicht Makler) – spätestens ab dem 4. Monat profitabel:** Liegt die Provision nach 4 Monaten
+- **Break-even-Garantie (nur Vertreter, nicht Makler), spätestens ab dem 5. Monat profitabel:** Liegt die Provision nach 4 Monaten
   (120 aktiven Tagen; bei Angeboten vor dem 13.11.2026, 19 Uhr: 90 Tage) unter den Kosten für Werbung und Betreuung, betreuen wir ohne
   Betreuungsgebühr weiter (auf Wunsch mit anderem Produkt), bis es sich rechnet, längstens 6 Monate. Voraussetzung:
   mindestens 20 €/Tag an den aktiven Tagen, mindestens 80 % der Termine wahrgenommen, Ergebnisse bei mindestens 80 % der Leads
   eingetragen („Wie lief's?“, Abschluss mit Beitrag) und Provisionssätze unter „Meine Provisionen“ hinterlegt.
-- **Vertrags-Garantie (nur Makler, statt Break-even):** Sind nach 90 aktiven Tagen weniger als 15 Verträge abgeschlossen,
+- **Vertrags-Garantie (nur Makler, statt Break-even):** Sind nach 120 aktiven Tagen (bei Angeboten vor dem 15.11.2026, 23:45 Uhr: 90 Tage)
+  weniger als 15 Verträge abgeschlossen,
   sind Betreuung und Software kostenlos (auf Wunsch mit anderem Produkt, ohne Setupgebühr), bis 15 erreicht sind,
   längstens 6 Monate. Voraussetzung: mindestens 20 €/Tag
   an den aktiven Tagen, mindestens 80 % der Termine wahrgenommen und Ergebnisse bei mindestens 80 % der Leads eingetragen.

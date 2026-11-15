@@ -13,7 +13,7 @@ import { PAID_LEAD_WHERE } from "@/lib/lead-herkunft";
 import { loadCustomerContracts } from "@/lib/vertraege";
 import { loadCustomerProvision } from "@/lib/provision-server";
 import { loadRechnerConfig } from "@/lib/rechner-server";
-import { breakEvenTageFuer } from "@/lib/rechner";
+import { breakEvenTageFuer, vertragTageFuer } from "@/lib/rechner";
 import { monthKey } from "@/lib/revenue-ledger";
 import { RETAINER_CUSTOMER_SELECT, retainerInputFor } from "@/lib/zahlen";
 import {
@@ -141,7 +141,9 @@ export async function ladeGarantieInput(customerId: string, offerId: string, now
     termine,
     provisionssaetze: provision.hasCustom,
     vermittlerTyp: provision.typ,
+    // Fristen je Angebotsdatum (alte Angebote 90, neue 120 aktive Tage)
     breakEvenTage: breakEvenTageFuer(offer.createdAt),
+    vertragTage: vertragTageFuer(offer.createdAt),
     retainer: Number(customer.retainerMonthly ?? 0) > 0 ? retainerInputFor(customer, offer, end) : null,
     faelle: faelle.map((f) => ({ art: f.art as GarantieArt, monat: f.monat, status: f.status as FallStatus })),
   };

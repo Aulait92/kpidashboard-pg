@@ -1,10 +1,20 @@
-# Vertriebsunterlagen (Stand 15.11.2026, abends)
+# Vertriebsunterlagen (Stand 15.11.2026, spätabends: Commit c60ca89)
 
 Aktuelle Präsentationen für Admin → Marketing → Unterlagen (je Zielgruppe PPTX und PDF).
 
 Grundlage: Oles neues Design (Logo, Seitenzahlen). Bestehende Folien unverändert, neu: Terminvorbereitung,
 Beratungspräsentation (mit Tarif- und Bausteinwechsel), Vorbereitung als Übersicht, „Auch an den Alltag gedacht“ entfernt, Zusatzmodul-Folien entfernt (Stand 9e7915b). Vertreter 22 Folien, Makler 23. Die Folien sind Bilder (Text nicht
-durchsuchbar). Vertreter-Garantie in dieser Fassung wie in Oles Datei. Paket-Folie: „Jedes weitere Produkt: 350 € monatlich, ohne Setup“ (hängt an der Preisänderung, die Ole noch bestätigt).
+durchsuchbar). Paket-Folie: „Jedes weitere Produkt: 350 € monatlich, ohne Setup“ (hängt an der Preisänderung, die Ole noch bestätigt).
+
+Fassung c60ca89 (Branch `claude/loving-mendel-j965x3`, nur diese vier Dateien übernommen):
+- Folie 17: aktueller Screenshot aus der Live-Demo und Karte „Live ausprobieren“ mit QR-Code und Link auf
+  https://www.dein-beratungstermin.de/demo (klickbar in PPTX und PDF). In der Web-Präsentation bleibt Folie 17 die
+  eingebettete Live-Demo (das Folienbild liegt nur dahinter, rechts verdeckt).
+- Garantien nach 120 Tagen (Ole, 15.11.2026): Vertreter Folie 21 „Nach 120 Tagen: Break-even-Garantie“,
+  Makler Folie 22 „Nach 120 Tagen: Vertrags-Garantie“ (vorher 90). Gilt für neue Angebote, siehe docs/garantien.md.
+- Paket-Folie (Vertreter 20, Makler 21) ohne „Bestandskunden-Modul: 149 €“ (Modul vorerst ausgeblendet).
+- Folienbilder der Web-Präsentation neu erzeugt (`node scripts/vertrieb-folien.mjs`, geändert: vertreter/17, 20, 21 und makler/17, 21, 22).
+
 In Produktion erst nach Oles OK hochladen.
 
 | Datei | Zielgruppe | Format | Hinweis |

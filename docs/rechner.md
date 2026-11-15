@@ -95,12 +95,14 @@ Courtage ist **nicht abgezinst**; Beitrag und Satz bleiben über die Jahre gleic
 so auch auf der Seite. URL-Parameter: `st` (Storno in %), `km` (Kampagnenmonate), `hz`
 (Horizont in Jahren), nur bei Abweichung vom Standard. Im Makler-Modus zeigt der
 Garantie-Kasten die Lead-Garantie und die **Vertrags-Garantie** (Freigabe Ole, 11.11.):
-„Nach 90 aktiven Tagen mindestens 15 Verträge – sonst sind Betreuung und Software kostenlos,
+„Nach 120 aktiven Tagen mindestens 15 Verträge – sonst sind Betreuung und Software kostenlos,
 bis sie erreicht sind, längstens 6 Monate. Voraussetzung: mindestens 20 € Werbebudget pro
 Tag, 80 % der Termine wahrgenommen, Ergebnisse bei 80 % der Leads eingetragen.“ Die
 Mindestzahl kommt aus `VERTRAGS_GARANTIE_MIN_VERTRAEGE` (rechner.ts), das Mindestbudget aus
-der Lead-Garantie. Die Break-even-Garantie nach 90 Tagen gilt vorerst nur für Vertreter
-(Makler liegen nach 90 Tagen naturgemäß unter den Kosten). Das Bestandskunden-Modul
+der Lead-Garantie. Die Break-even-Garantie nach 120 Tagen gilt vorerst nur für Vertreter
+(Makler liegen nach 120 Tagen naturgemäß unter den Kosten). Seit 15.11.2026 (Ole) gelten beide
+Garantien nach 120 statt 90 aktiven Tagen; ältere Angebote behalten 90 Tage (`breakEvenTageFuer`,
+`vertragTageFuer` in rechner.ts, siehe docs/garantien.md). Das Bestandskunden-Modul
 taucht im Rechner nicht als Kosten auf (für Makler künftig inklusive).
 
 **Budget statt Preis (Ole, 11.11.):** Für Makler empfehlen wir mehr Budget statt eines
@@ -194,7 +196,8 @@ zurück Monat 12, Faktor 8,2, Kosten je Vertrag 36 €.
   Sie in den ersten 30 Tagen nach Kampagnenstart mindestens 100 Leads – sonst sind
   Betreuung und Software im Folgemonat kostenlos.“ Erscheint nur bei Produkten mit „Mindest-Leads
   in 30 Tagen“ (TKV: 100). Unter 20 €/Tag weist der Rechner darauf hin.
-- **Break-even-Garantie – Standard an:** „Liegt Ihre Provision nach 90 Tagen unter
+- **Break-even-Garantie – Standard an:** „Spätestens ab dem 5. Monat profitabel: Liegt Ihre
+  Provision nach 4 Monaten (120 aktiven Tagen; Angebote vor dem 13.11.2026, 19 Uhr: 90 Tage) unter
   Ihren Kosten für Werbung und Betreuung, betreuen wir Sie ohne Betreuungsgebühr
   weiter – auf Wunsch mit einem anderen Produkt –, bis es sich rechnet (längstens
   6 Monate). Voraussetzung: mindestens 20 € Budget pro Tag, mindestens 80 % der

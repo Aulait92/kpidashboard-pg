@@ -1,5 +1,5 @@
-// Garantien (AGB „Garantien“): Lead-Garantie (30 aktive Tage) und
-// Break-even-Garantie (ab 90 aktiven Tagen, monatlich, längstens 6 Monate).
+// Garantien (AGB „Garantien“): Lead-Garantie (30 aktive Tage), Break-even-Garantie (Vertreter) und
+// Vertrags-Garantie (Makler), beide ab 120 aktiven Tagen (ältere Angebote: 90), monatlich, längstens 6 Monate.
 import { describe, expect, it } from "vitest";
 import {
   betreuungKosten,
@@ -19,7 +19,16 @@ import {
   terminQuote,
   type GarantieInput,
 } from "@/lib/garantien";
-import { DEFAULT_CONFIG, GARANTIE_FRISTEN, VERTRAGS_GARANTIE_MIN_VERTRAEGE, breakEvenTageFuer, type RechnerConfig } from "@/lib/rechner";
+import {
+  BREAK_EVEN_4_MONATE_AB,
+  DEFAULT_CONFIG,
+  GARANTIE_FRISTEN,
+  VERTRAGS_GARANTIE_120_AB,
+  VERTRAGS_GARANTIE_MIN_VERTRAEGE,
+  breakEvenTageFuer,
+  vertragTageFuer,
+  type RechnerConfig,
+} from "@/lib/rechner";
 import { retainerRows, type RetainerInput } from "@/lib/revenue-ledger";
 
 const DAY = 86_400_000;
@@ -63,7 +72,7 @@ describe("Regeln aus der Rechner-Konfiguration", () => {
     expect(regeln.lead).toEqual({ aktiv: true, minLeads: 100, tage: 30 });
     expect(regeln.minBudgetPerDay).toBe(20);
     expect(regeln.breakeven).toEqual({ aktiv: true, tage: 120, quote: 0.8, maxFreiMonate: 6 });
-    expect(regeln.vertrag).toEqual({ aktiv: true, tage: 90, minVertraege: 15, quote: 0.8, maxFreiMonate: 6 });
+    expect(regeln.vertrag).toEqual({ aktiv: true, tage: 120, minVertraege: 15, quote: 0.8, maxFreiMonate: 6 });
     expect(VERTRAGS_GARANTIE_MIN_VERTRAEGE).toBe(15);
     expect(GARANTIE_FRISTEN.leadTage).toBe(30);
   });
@@ -280,10 +289,11 @@ describe("Makler", () => {
   });
 });
 
-describe("Vertrags-Garantie (Makler)", () => {
+describe("Vertrags-Garantie (Makler, Bestandsverträge: 90 Tage)", () => {
   // Start 1.12., 90. aktiver Tag = 28.02.2027, erste Prüfung am 1.3.
   const vertraege = (n: number, at = "2027-01-10") => Array.from({ length: n }, () => ({ at: D(at), provision: 80 }));
-  const vg = (over: Partial<GarantieInput> = {}) => bewerteVertragsGarantie(input({ vermittlerTyp: "makler", now: D("2027-03-01"), ...over }), regeln);
+  const vg = (over: Partial<GarantieInput> = {}) =>
+    bewerteVertragsGarantie(input({ vermittlerTyp: "makler", now: D("2027-03-01"), vertragTage: 90, ...over }), regeln);
 
   it("vor Tag 90: läuft mit Fortschritt", () => {
     const e = vg({ now: D("2027-01-10"), abschluesse: vertraege(6, "2026-12-20") });
@@ -381,5 +391,50 @@ describe("Break-even-Garantie ab 13.11.2026: spätestens ab dem 5. Monat profita
     expect(fortschritt(e90)).toMatch(/von 120/);
     const e121 = bewerteBreakEven(input({ now: D("2027-04-01"), abschluesse: [{ at: D("2027-01-10"), provision: 1240 }] }), regeln);
     expect(e121.status).not.toBe("laeuft");
+  });
+});
+
+describe("Vertrags-Garantie ab Stichtag: Prüfung nach 120 statt 90 aktiven Tagen (Ole, 15.11.2026)", () => {
+  const vertraege = (n: number, at = "2027-01-10") => Array.from({ length: n }, () => ({ at: D(at), provision: 80 }));
+  it("Frist je Angebot: vor dem Stichtag 90 Tage, ab dem Stichtag 120", () => {
+    expect(vertragTageFuer(new Date("2026-11-12T10:00:00+01:00"))).toBe(90);
+    expect(vertragTageFuer(new Date("2026-11-15T20:00:00+01:00"))).toBe(90);
+    expect(vertragTageFuer(new Date(VERTRAGS_GARANTIE_120_AB.getTime() - 1))).toBe(90);
+    expect(vertragTageFuer(VERTRAGS_GARANTIE_120_AB)).toBe(120);
+    expect(vertragTageFuer(new Date("2026-11-20T10:00:00+01:00"))).toBe(120);
+  });
+  it("Stichtage: Vertrags-Garantie nach der Break-even-Umstellung, Break-even unverändert", () => {
+    expect(VERTRAGS_GARANTIE_120_AB.getTime()).toBeGreaterThan(BREAK_EVEN_4_MONATE_AB.getTime());
+    expect(breakEvenTageFuer(new Date(BREAK_EVEN_4_MONATE_AB.getTime() - 1))).toBe(90);
+    expect(breakEvenTageFuer(BREAK_EVEN_4_MONATE_AB)).toBe(120);
+    // Angebot zwischen beiden Stichtagen: Break-even schon 120, Vertrags-Garantie noch 90
+    const dazwischen = new Date("2026-11-14T10:00:00+01:00");
+    expect([breakEvenTageFuer(dazwischen), vertragTageFuer(dazwischen)]).toEqual([120, 90]);
+  });
+  it("neue Angebote: nach 90 Tagen läuft sie noch, Anspruch erst nach dem 120. aktiven Tag", () => {
+    const makler = (over: Partial<GarantieInput>) =>
+      bewerteVertragsGarantie(input({ vermittlerTyp: "makler", abschluesse: vertraege(14), leads: leads(50, "2026-12-01"), ...over }), regeln);
+    const e90 = makler({ now: D("2027-03-01") });
+    expect(e90.status).toBe("laeuft");
+    expect(e90.kennzahlen.ende).toBe("2027-03-30"); // Start 1.12. + 120 aktive Tage
+    expect(fortschritt(e90)).toBe("Tag 91 von 120 · 14 von 15 Verträgen"); // bei 90 Tagen wäre hier schon geprüft
+    const e121 = makler({ now: D("2027-03-31") });
+    expect(e121.status).toBe("anspruch");
+    expect(e121.kennzahlen.monat).toBe("2027-03");
+    expect(e121.kennzahlen.freiMonatNr).toBe(1);
+  });
+  it("alte Angebote: Frist aus dem Angebot (90) geht der Regel (120) vor", () => {
+    const e = bewerteVertragsGarantie(
+      input({ vermittlerTyp: "makler", now: D("2027-03-01"), vertragTage: 90, abschluesse: vertraege(14), leads: leads(50, "2026-12-01") }),
+      regeln,
+    );
+    expect(e.status).toBe("anspruch");
+    expect(e.kennzahlen.tage).toBe(90);
+  });
+  it("Vertreter und Makler je mit eigener Frist: bewerteGarantien nimmt die passende", () => {
+    const [, be] = bewerteGarantien(input({ now: D("2027-03-01"), breakEvenTage: 90, vertragTage: 120 }), regeln);
+    expect([be.art, be.kennzahlen.tage]).toEqual(["breakeven", 90]);
+    const [, vg] = bewerteGarantien(input({ vermittlerTyp: "makler", now: D("2027-03-01"), breakEvenTage: 90, vertragTage: 120 }), regeln);
+    expect([vg.art, vg.kennzahlen.tage]).toEqual(["vertrag", 120]);
   });
 });
