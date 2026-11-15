@@ -256,6 +256,11 @@ Interaktion mit Betroffenen“. Falls ja, DSFA je Kunde als Verantwortlicher (Vo
 ## 9. Offene Punkte
 
 - [ ] AVV/DPA mit jedem Dienst abschließen bzw. Nachweis ablegen (Tabelle Abschnitt 3)
+- [ ] AGB/AVV Stand 15.11.2026 (Anwalts-Memo): Anwalt prüft die „Prüfen:“-Stellen in `src/lib/legal-texts.ts`; danach
+      Bestandskunden in Textform informieren (AGB „Änderungen dieser AGB“: 6 Wochen Widerspruchsfrist, Hinweis auf die Folge).
+      `LEGAL_VERSION` löst keine erneute Zustimmung in der App aus, neue Angebote verweisen automatisch auf den neuen Stand.
+      Neu für Kunden: Zusicherung und Freistellung bei Kundendaten, Löschung spätestens 30 Tage nach Vertragsende,
+      § 203 StGB bis zu den Unterauftragsverarbeitern, KI-Kennzeichnung, Fristen und Kündigung im Kundenbereich.
 - [ ] § 203 StGB (AVV Stand 15.11.2026): Mitarbeiter vor Beginn mit `docs/vorlage-verpflichtung-203-stgb.md` verpflichten
       und in der Nachweisliste eintragen; je Unterauftragsverarbeiter Verpflichtung in Textform mit Hinweis auf § 203 Abs. 4 StGB
       ablegen (DPA oder eigene Erklärung). Anwalt: reichen die Standard-DPAs (Anthropic, Meta, 360dialog, Sentry, Railway)?
