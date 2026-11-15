@@ -5,7 +5,8 @@ Aktuelle Präsentationen für Admin → Marketing → Unterlagen (je Zielgruppe 
 Grundlage: Oles neues Design (Logo, Seitenzahlen). Bestehende Folien unverändert, neu: Terminvorbereitung,
 Beratungspräsentation (mit Tarif- und Bausteinwechsel), Vorbereitung als Übersicht, „Auch an den Alltag gedacht“ entfernt, Trennfolie „Optional erweitern“, Bestandskunden-Modul (149 €), Empfehlungen & Bewertungen
 (59 €), Paket-Folie mit Zusatzmodulen. Vertreter 25 Folien, Makler 26. Die Folien sind Bilder (Text nicht
-durchsuchbar). Vertreter-Garantie in dieser Fassung wie in Oles Datei. In Produktion erst nach Oles OK hochladen.
+durchsuchbar). Vertreter-Garantie in dieser Fassung wie in Oles Datei. Paket-Folie: „Jedes weitere Produkt: 350 € monatlich, ohne Setup“ (hängt an der Preisänderung, die Ole noch bestätigt).
+In Produktion erst nach Oles OK hochladen.
 
 | Datei | Zielgruppe | Format | Hinweis |
 |---|---|---|---|
