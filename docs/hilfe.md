@@ -959,12 +959,15 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
 **Ablauf:**
 1. Einrichtung → Nummer wählen → „Jetzt WhatsApp verbinden“.
 2. 360dialog (unser WhatsApp-Anbieter): Konto mit E-Mail und Passwort anlegen. Kostenlos, die Nummer
-   bleibt Eigentum des Kunden.
+   bleibt Eigentum des Kunden. Danach Seite „About you“: Name bzw. Firmenname, **eigene Handynummer für
+   Rückfragen** (nicht die Nummer, die verbunden wird; Vorwahl +49 einstellen), Währung EUR, Häkchen bei
+   Weitergabe der Kontaktdaten und Nutzungsbedingungen, „Continue“. Dann öffnet sich Meta.
 3. Fenster von Meta: mit Facebook anmelden, „Weiter“.
 4. Unternehmensportfolio auswählen oder neu anlegen. Die Auswahl lässt sich später nicht ändern.
 5. WhatsApp-Profil: Anzeigename und Kategorie. Der Name muss zur Firma passen, z. B. „Max Mustermann
    Versicherungsmakler“.
-6. Nummer bestätigen: Code per SMS oder Anruf eingeben. (Bei WhatsApp Business App stattdessen QR-Code
+6. Nummer bestätigen: „Neue Nummer hinzufügen“, Code per SMS oder Anruf eingeben. Kommt keine SMS, „Anruf“
+   wählen; den Code nicht mehrmals kurz hintereinander anfordern (Meta sperrt die Nummer sonst für Stunden). (Bei WhatsApp Business App stattdessen QR-Code
    in der App scannen.)
 7. Automatisch zurück in die App: „Verbunden: +49 …“. Steht dort „wird eingerichtet“, ist nichts zu tun.
 

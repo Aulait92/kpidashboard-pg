@@ -72,6 +72,13 @@ const COMMON_START: GuideStep[] = [
     pitfall: "Sie haben schon ein Konto bei 360dialog? Dann melden Sie sich einfach an.",
   },
   {
+    where: "360dialog",
+    title: "Kurz Angaben zu Ihnen („About you“)",
+    text: "360dialog fragt nach Ihrem Namen bzw. Firmennamen, Ihrer persönlichen Handynummer und der Währung (EUR). Setzen Sie das Häkchen bei der Weitergabe der Kontaktdaten und bei den Nutzungsbedingungen (Client Terms of Service) und klicken Sie auf „Continue“. Danach öffnet sich das Fenster von Meta.",
+    pitfall:
+      "Bei „Personal WhatsApp Number“ gehört Ihre eigene Handynummer für Rückfragen hin, nicht die Nummer, die Sie verbinden. Stellen Sie links die Vorwahl auf +49 um.",
+  },
+  {
     where: "meta",
     title: "Mit Facebook anmelden",
     text: "Es öffnet sich ein Fenster von Meta (Facebook). Sie melden sich an und klicken auf „Weiter“.",
@@ -113,9 +120,9 @@ export const GUIDES: Record<ConnectPath, PathGuide> = {
       {
         where: "meta",
         title: "Nummer bestätigen",
-        text: "Sie geben die Nummer ein und wählen „SMS“ oder „Anruf“. Den 6-stelligen Code tippen Sie ein.",
+        text: "Sie wählen „Neue Nummer hinzufügen“, geben die Nummer ein und wählen „SMS“ oder „Anruf“. Den 6-stelligen Code tippen Sie ein.",
         pitfall:
-          "Festnetz? Wählen Sie „Anruf“. Eine Ansage liest den Code vor. Meldung „Nummer wird bereits verwendet“? Dann ist die Nummer doch schon in WhatsApp. Wählen Sie oben den passenden Weg.",
+          "Festnetz oder keine SMS nach 2 Minuten? Wählen Sie „Anruf“, eine Ansage liest den Code vor. Fordern Sie den Code nicht mehrmals kurz hintereinander an, sonst sperrt Meta die Nummer für einige Stunden. Meldung „Nummer wird bereits verwendet“? Dann ist die Nummer doch schon in WhatsApp. Wählen Sie oben den passenden Weg.",
       },
       BACK,
     ],
