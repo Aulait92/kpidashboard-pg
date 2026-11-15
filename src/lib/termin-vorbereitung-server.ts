@@ -4,6 +4,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { angeboteAuslesen, cleanAngebote } from "@/lib/angebote";
 import { folien, markeFuer, praesentationCss } from "@/lib/praesentation";
+import { asAnsprache } from "@/lib/ansprache";
 import { appointmentScope, type TeamCtx } from "@/lib/team";
 import { displayProduct } from "@/lib/products";
 import { currentStammdaten } from "@/lib/lead-stammdaten";
@@ -150,9 +151,9 @@ export async function loadPraesentation(appointmentId: string, ctx: TeamCtx) {
   if (!d) return null;
   const [ang, kunde] = await Promise.all([
     loadAngebote(appointmentId, ctx),
-    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, vermittlerTyp: true } }),
+    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, vermittlerTyp: true, leadAddress: true } }),
   ]);
   const marke = markeFuer({ name: kunde?.name ?? "Ihre Beratung", vermittlerTyp: kunde?.vermittlerTyp });
-  const fs = folien(d, ang?.bestaetigt ? ang.angebote : null, marke);
+  const fs = folien(d, ang?.bestaetigt ? ang.angebote : null, marke, asAnsprache(kunde?.leadAddress));
   return { d, marke, folien: fs, css: praesentationCss(marke), angeboteBestaetigt: !!ang?.bestaetigt };
 }

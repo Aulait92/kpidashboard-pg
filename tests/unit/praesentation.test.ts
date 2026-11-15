@@ -38,7 +38,7 @@ describe("Präsentation", () => {
     ] });
     const m = markeFuer({ name: "Allianz Agentur Lohmann" });
     const fs = folien(d, ang, m);
-    expect(fs.map((f) => f.id)).toEqual(expect.arrayContaining(["titel", "situation", "risiken", "empfehlung", "leistungen", "beitrag", "weiter", "danke"]));
+    expect(fs.map((f) => f.id)).toEqual(expect.arrayContaining(["titel", "situation", "risiken", "beispiel", "empfehlung", "leistungen", "beitrag", "entscheidung", "weiter", "danke"]));
     expect(fs.some((f) => f.id.startsWith("vergleich-"))).toBe(true);
     expect(fs.find((f) => f.id === "beitrag")!.html).toContain("7,40");
     expect(fs.every((f) => f.notizen.length > 0)).toBe(true);
@@ -53,5 +53,19 @@ describe("Präsentation", () => {
   it("escaped Kundendaten", () => {
     const fs = folien({ ...d, lead: { ...d.lead, name: "<img src=x onerror=1>" } }, null, markeFuer({ name: "X" }));
     expect(fs[0].html).not.toContain("<img src=x");
+  });
+
+  it("Preis erst im Vergleich bzw. Beitrag, Prüffragen, Beginn als Vorschlag, Du-Fassung", () => {
+    const ang = cleanAngebote({ items: [{ sparte: "Hausrat", tarif: "Komfort", beitragMonat: 8.2, leistungen: ["Neuwert"], empfohlen: true }] });
+    const m = markeFuer({ name: "X" });
+    const fs = folien(d, ang, m);
+    expect(fs.find((f) => f.id === "empfehlung")!.html).not.toContain("8,20");
+    expect(fs.find((f) => f.id === "beitrag")!.html).toContain("8,20");
+    expect(fs.find((f) => f.id === "situation")!.html).toContain("Haben wir etwas vergessen?");
+    expect(fs.find((f) => f.id === "entscheidung")!.html).toContain("Schutz ab 1. Dezember");
+    expect(fs.find((f) => f.id === "entscheidung")!.html).toContain("14 Tage Widerrufsrecht");
+    const du = folien(d, ang, m, "du");
+    expect(du[0].html).toContain("Dein Schutz, Julia");
+    expect(du.map((f) => f.html).join(" ")).not.toMatch(/\bSie haben\b|\bIhnen\b/);
   });
 });
