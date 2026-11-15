@@ -13,6 +13,8 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "mobile/**",
+    // Hilfsskripte zum Aufnehmen der Erklärvideos (Node, CommonJS), nicht Teil der App
+    "tools/**",
   ]),
 ]);
 

@@ -10,20 +10,26 @@ const UA = "Mozilla/5.0 (compatible; performancegrowth-branding/1.0)";
 
 const attr = (tag: string, name: string) => tag.match(new RegExp(`\\b${name}\\s*=\\s*("([^"]*)"|'([^']*)'|([^\\s>]+))`, "i"))?.slice(2).find((x) => x != null) ?? null;
 
+/** Kandidat: Adresse zum Laden oder direkt eingebettetes Bild (data:-URI, z. B. Inline-SVG bei Allianz-Agenturseiten). */
+export type LogoKandidat = { url: string; score: number };
+
 /**
- * Logo-Kandidaten aus dem HTML, beste zuerst: Bilder mit „logo“ in src/alt/class/id (im Kopfbereich bevorzugt),
- * dann apple-touch-icon bzw. große Icons, zuletzt og:image.
+ * Logo-Kandidaten aus dem HTML, beste zuerst: Bilder mit „logo“ in src/alt/class/id (im Kopfbereich bevorzugt,
+ * auch als data:-URI), dann apple-touch-icon bzw. große Icons. og:image (meist ein Foto) nur, wenn sonst nichts da ist.
+ * Ole, 15.11.2026: Allianz-Agenturseiten haben die Wortmarke als data:image/svg+xml im Kopf; Desktop-Variante vor Mobil.
  */
 export function logoKandidaten(html: string, base: string): string[] {
   const abs = (u: string | null) => {
-    if (!u || u.startsWith("data:")) return null;
+    if (!u) return null;
+    const t = u.trim();
+    if (t.startsWith("data:")) return /^data:image\/(svg\+xml|png|jpeg|webp)[;,]/i.test(t) ? t : null;
     try {
-      return new URL(u.trim().split(/\s+/)[0], base).toString();
+      return new URL(t.split(/\s+/)[0], base).toString();
     } catch {
       return null;
     }
   };
-  const scored: { url: string; score: number }[] = [];
+  const scored: LogoKandidat[] = [];
   const headerEnd = (() => {
     const m = html.search(/<\/header>/i);
     return m > 0 ? m : Math.min(html.length, 15000);
@@ -32,12 +38,14 @@ export function logoKandidaten(html: string, base: string): string[] {
     const tag = m[0];
     const src = abs(attr(tag, "src") ?? attr(tag, "data-src") ?? attr(tag, "srcset"));
     if (!src) continue;
-    const hay = `${src} ${attr(tag, "alt") ?? ""} ${attr(tag, "class") ?? ""} ${attr(tag, "id") ?? ""}`.toLowerCase();
+    const meta = `${attr(tag, "alt") ?? ""} ${attr(tag, "class") ?? ""} ${attr(tag, "id") ?? ""}`.toLowerCase();
+    const hay = `${src.startsWith("data:") ? "" : src.toLowerCase()} ${meta}`;
     if (!/logo|marke|brand/.test(hay)) continue;
     let score = 50;
     if ((m.index ?? 0) < headerEnd) score += 30;
     if (/allianz|axa|signal|iduna/.test(hay)) score += 10;
-    if (/\.svg(\?|$)/i.test(src)) score += 5;
+    if (/\.svg(\?|$)/i.test(src) || src.startsWith("data:image/svg")) score += 5;
+    if (/mobile|mobil|small|klein/.test(meta)) score -= 15;
     if (/sprite|icon-|social|facebook|instagram|linkedin|xing|whatsapp|google|award|siegel|badge|focus|test/.test(hay)) score -= 40;
     scored.push({ url: src, score });
   }
@@ -50,15 +58,35 @@ export function logoKandidaten(html: string, base: string): string[] {
     const size = Number((attr(tag, "sizes") ?? "").split("x")[0]) || 0;
     if (/apple-touch-icon/.test(rel) || size >= 128) scored.push({ url: href, score: 20 + Math.min(size, 512) / 50 });
   }
-  const og = html.match(/<meta\b[^>]*property\s*=\s*["']og:image["'][^>]*>/i)?.[0];
-  const ogUrl = og ? abs(attr(og, "content")) : null;
-  if (ogUrl) scored.push({ url: ogUrl, score: 5 });
+  // og:image ist meist ein Foto (Bühne, Team): nur als allerletzter Rückfall, wenn es sonst gar keinen Kandidaten gibt
+  if (!scored.length) {
+    const og = html.match(/<meta\b[^>]*property\s*=\s*["']og:image["'][^>]*>/i)?.[0];
+    const ogUrl = og ? abs(attr(og, "content")) : null;
+    if (ogUrl) scored.push({ url: ogUrl, score: 5 });
+  }
   const seen = new Set<string>();
   return scored
     .sort((x, y) => y.score - x.score)
     .map((s) => s.url)
     .filter((u) => (seen.has(u) ? false : (seen.add(u), true)))
     .slice(0, 6);
+}
+
+/** Eingebettetes Bild (data:-URI) dekodieren, gleiche Prüfungen wie beim Laden. */
+export function bildAusDataUri(uri: string): { data: Uint8Array; type: string } | null {
+  const m = /^data:(image\/(?:svg\+xml|png|jpeg|webp))(;base64)?,([\s\S]*)$/i.exec(uri.trim());
+  if (!m) return null;
+  let data: Uint8Array;
+  try {
+    data = m[2] ? new Uint8Array(Buffer.from(m[3], "base64")) : new TextEncoder().encode(decodeURIComponent(m[3]));
+  } catch {
+    return null;
+  }
+  if (data.length > LOGO_MAX_BYTES || data.length < 64) return null;
+  const type = bildTyp(m[1], data);
+  if (!type) return null;
+  if (type === "image/svg+xml") data = new TextEncoder().encode(svgBereinigen(new TextDecoder().decode(data)));
+  return { data, type };
 }
 
 export function bildTyp(contentType: string, data: Uint8Array): (typeof TYPES)[number] | null {
@@ -111,8 +139,8 @@ export async function logoVonWebseite(website: string): Promise<{ data: Uint8Arr
   const html = await fetchHtml(base.toString());
   if (!html) return { error: "Die Webseite ließ sich nicht laden. Bitte prüfen Sie die Adresse oder laden Sie das Logo hoch." };
   for (const url of logoKandidaten(html, base.toString())) {
-    const img = await bildLaden(url);
-    if (img) return { ...img, source: url };
+    const img = url.startsWith("data:") ? bildAusDataUri(url) : await bildLaden(url);
+    if (img) return { ...img, source: url.startsWith("data:") ? `${base.toString()} (eingebettetes Logo)` : url };
   }
   return { error: "Auf der Webseite wurde kein Logo gefunden. Bitte laden Sie es hoch." };
 }
