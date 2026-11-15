@@ -1,8 +1,10 @@
 "use client";
 
-// Folien untereinander, auf die Breite skaliert (Kundenlink, nur lesen).
+// Folien untereinander, auf die Breite skaliert (Kundenlink, nur lesen). Zu langer Inhalt wird kleiner statt
+// abgeschnitten, wie im Deck und im PDF.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { folienEinpassen } from "@/lib/folien-einpassen";
 
 export function FolienListe({ css, folien }: { css: string; folien: { id: string; html: string }[] }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -13,6 +15,16 @@ export function FolienListe({ css, folien }: { css: string; folien: { id: string
     window.addEventListener("resize", fit);
     return () => window.removeEventListener("resize", fit);
   }, []);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    folienEinpassen(el);
+    let aktiv = true;
+    document.fonts?.ready.then(() => aktiv && folienEinpassen(el));
+    return () => {
+      aktiv = false;
+    };
+  }, [folien]);
   return (
     <div ref={ref} className="flex flex-col gap-4" data-kundenfolien>
       <style>{`${css}\n.nurlesen .bs,.nurlesen .wahl,.nurlesen .teil,.nurlesen .st{cursor:default;pointer-events:none}`}</style>

@@ -14,7 +14,8 @@ export const VERKAUFS_AUDIENCES: readonly VerkaufsAudience[] = ["vertreter", "ma
 export const isVerkaufsAudience = (v: unknown): v is VerkaufsAudience => v === "vertreter" || v === "makler";
 
 export const BILD_BASIS = "/praesentation/vertrieb";
-export const DEMO_EINGEBETTET = "/demo/beratung?eingebettet=1&folie=vergleich";
+// Startet mit Folie 1 (Ole, 15.11.2026), nicht mehr auf dem Vergleich
+export const DEMO_EINGEBETTET = "/demo/beratung?eingebettet=1";
 
 type Art = "bild" | "video" | "demo" | "rechnung" | "paket";
 export type VerkaufsFolieDef = { nr: number; titel: string; art: Art };
