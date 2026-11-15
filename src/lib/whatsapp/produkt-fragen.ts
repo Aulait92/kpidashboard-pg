@@ -14,7 +14,9 @@
 export type ProduktCheckliste = {
   /** Für die Anzeige/Tests: welcher Katalog greift. */
   key: "privatschutz" | "tier";
-  /** Block für den System-Prompt: was vor der Qualifizierung geklärt sein muss. */
+  /** Vor der Buchung (Ole, 15.11.2026: erst Termin, dann Fragen): nur das Nötigste, dann Termin anbieten. */
+  vorher: string;
+  /** Angaben fürs Angebot: fragt der Assistent NACH der Buchung ab (oder vorher, wenn der Lead selbst erzählt). */
   fragen: string;
   /** Was der Lead zum Termin bereitlegen soll (Bot nennt es nach der Buchung). */
   unterlagen: string[];
@@ -36,9 +38,11 @@ const TKV = /\btkv\b|tierkranken|tier-?op|katze/i;
 function tierCheckliste(): ProduktCheckliste {
   return {
     key: "tier",
+    vorher:
+      "Vor dem Termin (Tierkrankenversicherung): Das Formular reicht. Frag vorher nichts weiter ab, setze qualifiziert=true und biete direkt Termine an.",
     fragen: [
       "Pflichtangaben für das Angebot (Tierkrankenversicherung). Es sind die Angaben, die der Allianz-Tarifrechner und der Antrag brauchen, damit der Berater im Termin direkt ein Angebot rechnen kann.",
-      "- Kläre vor qualifiziert=true die folgenden Punkte, aber nur, was noch nicht bekannt ist (Leadformular, Verlauf, 'Bisher erfasst'). Tierart, Rasse, Name, Geschlecht, Geburtsmonat und -jahr, Haltung (Wohnungskatze oder Freigänger) und die Adresse kommen aus dem Formular: nicht erneut fragen.",
+      "- Diese Angaben fragst du NACH der Buchung ab, nur was noch nicht bekannt ist (Leadformular, Verlauf, 'Bisher erfasst'). Tierart, Rasse, Name, Geschlecht, Geburtsmonat und -jahr, Haltung (Wohnungskatze oder Freigänger) und die Adresse kommen aus dem Formular: nicht erneut fragen.",
       "- Weiter genau eine Frage pro Nachricht, gern mit kurzer Auswahl.",
       "- Mehrere Katzen: Ob es eine oder mehrere sind, steht im Formular (Anzahl Tiere). Bei mehreren nimmst du jede Katze einzeln auf: Das Formular liefert die Angaben nur für eine, frag für jede weitere Name, männlich oder weiblich, Alter bzw. Geburtsjahr, Rasse und Wohnungskatze oder Freigänger, und die Gesundheitsfrage für jede Katze. Halte jede Katze in angaben.tier fest (z. B. „Katze 1: Bernd, männlich, 2023, Abessinier, Wohnung, gesund; Katze 2: …“).",
       "  • Gesundheit des Tieres: Hatte oder hat es in den letzten 24 Monaten Krankheiten, Unfallfolgen, Symptome, Beeinträchtigungen, Verhaltensauffälligkeiten oder Befunde, die noch keine Behandlung brauchen? Erst ja oder nein fragen; bei ja, welche Bereiche betroffen sind (z. B. Zähne, Haut und Fell, Augen, Ohren, Magen und Darm, Gelenke bzw. Bewegungsapparat, Herz, Harnorgane) (angaben.tier)",
@@ -47,8 +51,7 @@ function tierCheckliste(): ProduktCheckliste {
       "  • Besteht schon eine Tierversicherung, und wenn ja, wann läuft sie ab (angaben.vorhanden)",
       "  • Welcher Schutz gewünscht ist: nur Operationen (OP-Schutz) oder volle Krankenversicherung, also auch Tierarztbehandlungen ohne OP. Neutral fragen, ohne zu empfehlen (angaben.tarifwunsch)",
       "- Gesundheitsangaben zum Tier sachlich und ohne Wertung aufnehmen. Sag nichts dazu, ob oder wie sie den Versicherungsschutz beeinflussen: das klärt der Berater.",
-      "- Weiß der Lead etwas nicht oder möchte es nicht sagen: nicht nachbohren, als „offen“ festhalten und weitermachen. Wird es dem Lead zu viel, biete direkt den Termin an und lass den Rest offen.",
-      "- Erst wenn diese Punkte geklärt oder als offen festgehalten sind: qualifiziert=true und Termin anbieten.",
+      "- Weiß der Lead etwas nicht oder möchte es nicht sagen: nicht nachbohren, als „offen“ festhalten und weitermachen. Wird es dem Lead zu viel, lass den Rest offen: der Berater klärt ihn im Termin.",
       "- Versicherungssumme, Selbstbeteiligung und Preise fragst du nicht ab und nennst du nicht: das macht der Berater im Termin.",
     ].join("\n"),
     unterlagen: [
@@ -66,12 +69,17 @@ export function produktCheckliste(product: string | null | undefined): ProduktCh
   if (!/privatschutz/i.test(p) && (!PRIVATSCHUTZ.test(p) || /tier|hund|katze|pferd/i.test(p))) return null;
   return {
     key: "privatschutz",
+    vorher: [
+      "Vor dem Termin (Privatschutz) klärst du nur das Nötigste, damit der Berater weiß, worum es geht, und bietest dann direkt Termine an:",
+      "  1. Worum es genau geht, falls das Formular es offenlässt. Bei Tieren (Formularauswahl „Tierkrankenversicherung / Tierhalterhaftpflicht“): welche Tiere (Katze, Hund oder Pferd), wie viele und ob Tierkrankenversicherung, Tierhalterhaftpflicht oder beides (angaben.interesse, angaben.tier).",
+      "  2. Wer versichert werden soll: nur der Lead, mit Partner, mit Kind(ern) oder die ganze Familie (angaben.versichern).",
+      "Danach qualifiziert=true und Termine anbieten. Alles Weitere fragst du nach der Buchung ab.",
+    ].join("\n"),
     fragen: [
       "Pflichtangaben für das Angebot (Privatschutz: Haftpflicht, Hausrat, Rechtsschutz, Wohngebäude, Tierkranken bzw. Tierhalterhaftpflicht, Unfall). Es sind die Angaben, die der Allianz-Tarifrechner abfragt, damit der Berater im Termin direkt ein Angebot rechnen kann.",
-      "- Kläre vor qualifiziert=true die folgenden Punkte, aber nur, was noch nicht bekannt ist (Leadformular, Verlauf, 'Bisher erfasst'), und nur für die Sparten, für die sich der Lead interessiert.",
+      "- Diese Angaben fragst du NACH der Buchung ab, nur was noch nicht bekannt ist (Leadformular, Verlauf, 'Bisher erfasst'), und nur für die Sparten, für die sich der Lead interessiert.",
       "- Weiter genau eine Frage pro Nachricht. Eine Frage darf eine kurze Auswahl oder Liste enthalten (z. B. „Trifft etwas davon zu: Flachdach, Holzbauweise, Reetdach oder Schwimmbad?“). Mehrere Sparten mit derselben Angabe (Adresse, Geburtsdatum, Vorschäden) fragst du nur einmal.",
       "- Für alle Sparten:",
-      "  • Wer versichert werden soll: nur der Lead, mit Partner, mit Kind(ern) oder die ganze Familie (angaben.versichern)",
       "  • Geburtsdatum des Leads (angaben.geburt)",
       "  • Adresse und Postleitzahl kommen aus dem Leadformular: nicht fragen.",
       "  • Bestehende Verträge in diesen Sparten: bei welcher Gesellschaft, wann sie ablaufen bzw. ob schon gekündigt; bei Wohngebäude auch, ob in den letzten 5 Jahren eine Gebäudeversicherung bestand (angaben.vorhanden)",
@@ -84,13 +92,12 @@ export function produktCheckliste(product: string | null | undefined): ProduktCh
       "- Nur Hausrat: Wohnfläche in m², ständig bewohnt, im Einfamilien- oder Mehrfamilienhaus (angaben.wohnflaeche)",
       "- Nur Rechtsschutz: welche Lebensbereiche (Privat, Beruf, Verkehr, Wohnen oder nur ein Teil davon) (angaben.bereiche); ob der Lead oder sein Partner im öffentlichen Dienst, selbstständig oder Geschäftsführer ist (angaben.beruf). Hinweis: eine selbstständige Tätigkeit ist im Privat-Rechtsschutz nicht mitversichert, das klärt der Berater.",
       "- Nur Wohngebäude (angaben.gebaeude): Wohnfläche und Baujahr; Anzahl Wohneinheiten (eine, zwei, drei oder mehr); Nutzung (selbst bewohnt, ganz oder teilweise vermietet, leerstehend, Ferienhaus); Besonderheiten (Flachdach, Dach aus Naturschiefer, Holz, Reet oder Stroh, Außenwände überwiegend aus Holz, Keller mit oder ohne Wohnfläche, Schwimmbad); Heizung und Haustechnik (Gas, Öl, Fernwärme, Pellets, Wärmepumpe, Solarthermie, Photovoltaik); weitere Gebäude auf dem Grundstück außer Garage oder Carport, mit ungefährer Fläche",
-      "- Tiere: Das Leadformular hat nur die gemeinsame Auswahl „Tierkrankenversicherung / Tierhalterhaftpflicht“. Hat der Lead sie gewählt, kläre zuerst, welche Tiere es sind (Katze, Hund oder Pferd) und wie viele, und dann, was er möchte: Tierkrankenversicherung, Tierhalterhaftpflicht oder beides (angaben.interesse). Erst danach die passenden Angaben unten. Angaben, die beide brauchen (Tierart, Anzahl, Rasse), fragst du nur einmal.",
-      "- Nur Tierkranken (angaben.tier): Zuerst, welche Tiere es sind (Katze, Hund oder Pferd) und wie viele. Dann nimmst du jedes Tier einzeln auf: Tierart, Name, männlich oder weiblich, Alter bzw. Geburtsjahr (genaues Datum nicht nötig), Rasse; bei Katzen Wohnungskatze oder Freigänger; je Tier Krankheiten, Unfallfolgen, Symptome oder Befunde in den letzten 24 Monaten (erst ja oder nein, bei ja welche Bereiche, z. B. Zähne, Haut, Gelenke); einmal, ob nur OP-Schutz oder volle Krankenversicherung gewünscht ist (angaben.tarifwunsch). Halte jedes Tier in angaben.tier fest (z. B. „Katze 1: Bernd, männlich, 2023, Abessinier, Wohnung, gesund; Katze 2: …“).",
-      "- Nur Tierhalterhaftpflicht (Hund oder Pferd, nach dem Allianz-Tarifrechner) (angaben.tier): ob Hund oder Pferd und wie viele; die Rasse jedes Tieres (bei Mischlingen: klein oder groß, groß heißt Widerristhöhe ab 45 cm); Tierhalter-Haftpflichtschäden in den letzten 5 Jahren mit Anzahl (angaben.vorschaeden). Name, Alter und Gesundheit braucht es dafür nicht. Katzen brauchen keine Tierhalterhaftpflicht (sind über die Privathaftpflicht mitversichert); das sagt der Berater, nicht du.",
+      "- Tiere: Welche Tiere, wie viele und ob Tierkrankenversicherung, Tierhalterhaftpflicht oder beides hast du vor dem Termin geklärt (das Leadformular hat nur die gemeinsame Auswahl „Tierkrankenversicherung / Tierhalterhaftpflicht“: Tierkrankenversicherung, Tierhalterhaftpflicht oder beides). Danach die passenden Angaben unten; Angaben, die beide brauchen (Tierart, Anzahl, Rasse), nur einmal.",
+      "- Nur Tierkranken (angaben.tier): Du nimmst jedes Tier einzeln auf: Tierart, Name, männlich oder weiblich, Alter bzw. Geburtsjahr (genaues Datum nicht nötig), Rasse; bei Katzen Wohnungskatze oder Freigänger; je Tier Krankheiten, Unfallfolgen, Symptome oder Befunde in den letzten 24 Monaten (erst ja oder nein, bei ja welche Bereiche, z. B. Zähne, Haut, Gelenke); einmal, ob nur OP-Schutz oder volle Krankenversicherung gewünscht ist (angaben.tarifwunsch). Halte jedes Tier in angaben.tier fest (z. B. „Katze 1: Bernd, männlich, 2023, Abessinier, Wohnung, gesund; Katze 2: …“).",
+      "- Nur Tierhalterhaftpflicht (Hund oder Pferd, nach dem Allianz-Tarifrechner) (angaben.tier): die Rasse jedes Tieres (bei Mischlingen: klein oder groß, groß heißt Widerristhöhe ab 45 cm); Tierhalter-Haftpflichtschäden in den letzten 5 Jahren mit Anzahl (angaben.vorschaeden). Name, Alter und Gesundheit braucht es dafür nicht. Katzen brauchen keine Tierhalterhaftpflicht (sind über die Privathaftpflicht mitversichert); das sagt der Berater, nicht du.",
       "- Nur Unfall: ausgeübter Beruf bzw. Tätigkeit und riskante Sportarten (angaben.beruf)",
       "- Haftpflicht: frage zusätzlich, ob ein Hund oder Pferd im Haushalt lebt (Tierhalterhaftpflicht) (angaben.tier)",
-      "- Weiß der Lead etwas nicht oder möchte es nicht sagen: nicht nachbohren, als „offen“ festhalten und weitermachen. Wird es dem Lead zu viel (kurze oder genervte Antworten), biete direkt den Termin an und lass den Rest offen; der Berater klärt ihn im Termin.",
-      "- Erst wenn diese Punkte geklärt oder als offen festgehalten sind: qualifiziert=true und Termin anbieten.",
+      "- Weiß der Lead etwas nicht oder möchte es nicht sagen: nicht nachbohren, als „offen“ festhalten und weitermachen. Wird es dem Lead zu viel (kurze oder genervte Antworten), lass den Rest offen: der Berater klärt ihn im Termin.",
       "- Versicherungssumme, Selbstbeteiligung und Preise fragst du nicht ab und nennst du nicht: das macht der Berater im Termin.",
     ].join("\n"),
     unterlagen: [
@@ -104,10 +111,10 @@ export function produktCheckliste(product: string | null | undefined): ProduktCh
   };
 }
 
-/** Prompt-Block für die Zeit nach der Buchung: Unterlagen in der Bestätigung nennen. */
+/** Prompt-Block: Unterlagen nennen, wenn die Angaben nach der Buchung geklärt sind (nicht schon in der Bestätigung). */
 export function unterlagenRegel(c: ProduktCheckliste): string {
   return [
-    "Nach der Buchung: Nenne in der Bestätigung (Datum und Uhrzeit) zusätzlich kurz als Liste, was der Lead zum Termin bereitlegen soll, damit direkt ein Angebot und auf Wunsch der Abschluss möglich ist:",
+    "Unterlagen: Sind die Angaben nach der Buchung geklärt (oder möchte der Lead nicht weiter antworten), nenne zum Abschluss einmal kurz als Liste, was er zum Termin bereitlegen soll, damit direkt ein Angebot und auf Wunsch der Abschluss möglich ist:",
     ...c.unterlagen.map((u) => `• ${u}`),
     "Lass Punkte weg, die nicht passen (z. B. Hausrat, wenn es nur um Haftpflicht geht).",
   ].join("\n");

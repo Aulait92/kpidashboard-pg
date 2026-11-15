@@ -38,14 +38,18 @@ describe("Privatschutz: Angaben fürs Angebot", () => {
   it("steht im Prompt, ersetzt die 2-3-Antworten-Regel, nach Buchung weiter abfragen", () => {
     const p = buildSystemPrompt(agent, "Privatschutz", base);
     expect(p).toContain("Pflichtangaben für das Angebot");
-    expect(p).toContain("Nach der Buchung");
+    // Erst Termin, dann Fragen: vor der Buchung nur „Vor dem Termin“, Angaben danach
+    expect(p).toContain("Vor dem Termin (Privatschutz)");
+    expect(p).toContain("Diese Angaben fragst du NACH der Buchung ab");
+    expect(p).toContain("stelle direkt in der Buchungsbestätigung die erste offene Frage");
     expect(p).not.toContain("meist nach 2-3 Antworten");
     const booked = buildSystemPrompt(agent, "Privatschutz", { ...base, upcoming: { startsAt: new Date("2026-11-20T10:00:00Z"), mode: "phone", meetUrl: null } });
     // nach der Buchung: fehlende Angaben weiter abfragen, keine zweite Buchung, Unterlagen-Regel nicht erneut
     expect(booked).toContain("Pflichtangaben für das Angebot");
     expect(booked).toContain("frag sie jetzt weiter ab");
-    expect(booked).not.toContain("Nach der Buchung: Nenne");
-    expect(p).toContain("buche ihn sofort und frag die fehlenden Angaben danach weiter ab");
+    expect(booked).not.toContain("Vor dem Termin (Privatschutz)");
+    expect(booked).toContain("Unterlagen: Sind die Angaben nach der Buchung geklärt");
+    expect(p).toContain("buche ihn sofort");
     expect(p).toContain("Damit Susanne Meier das Angebot vorbereiten kann");
     const zahn = buildSystemPrompt(agent, "Zahnzusatz", base);
     expect(zahn).toContain("meist nach 2-3 Antworten");
@@ -104,7 +108,9 @@ describe("TKV: Gesundheit per Chat, Geburtsdatum des Halters", () => {
 describe("Tiere: Anzahl und je Tier, kein Tarifwunsch", () => {
   it("Privatschutz fragt Tierart und Anzahl zuerst, dann je Tier; TKV nimmt mehrere Katzen einzeln auf", () => {
     const ps = produktCheckliste("Privatschutz")!;
-    expect(ps.fragen).toContain("welche Tiere es sind (Katze, Hund oder Pferd) und wie viele");
+    expect(ps.vorher).toContain("welche Tiere (Katze, Hund oder Pferd), wie viele und ob Tierkrankenversicherung, Tierhalterhaftpflicht oder beides");
+    expect(ps.vorher).toContain("Wer versichert werden soll");
+    expect(produktCheckliste("TKV-Katze")!.vorher).toContain("Frag vorher nichts weiter ab");
     expect(ps.fragen).toContain("jedes Tier einzeln");
     const tkv = produktCheckliste("TKV-Katze")!;
     expect(tkv.fragen).toContain("Bei mehreren nimmst du jede Katze einzeln auf");

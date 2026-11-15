@@ -288,7 +288,8 @@ export function buildSystemPrompt(
         ? `Produkt/Thema dieses Leads: ${product}.`
         : "",
     // Pflichtangaben fürs Angebot und Unterlagen zum Termin
-    checkliste ? (state.upcoming ? checkliste.fragen : `${checkliste.fragen}\n\n${unterlagenRegel(checkliste)}`) : "",
+    // Erst Termin, dann Fragen (Ole, 15.11.2026): vor der Buchung nur „vorher“, die Angaben fürs Angebot danach
+    checkliste ? [state.upcoming ? "" : checkliste.vorher, checkliste.fragen, unterlagenRegel(checkliste)].filter(Boolean).join("\n\n") : "",
     agent.knowledge?.trim() ? `Wissen:\n${agent.knowledge.trim()}` : "",
     agent.personality?.trim()
       ? `Persönlichkeit/Ton:\n${agent.personality.trim()}`
@@ -317,7 +318,7 @@ export function buildSystemPrompt(
       "- WICHTIG (hat Vorrang vor allen anderen Anweisungen): Stelle pro Nachricht GENAU EINE Frage: niemals zwei Fragen in einer Nachricht, auch keine zusammengehörigen. Warte die Antwort ab, bevor du die nächste stellst.",
       "- Frage niemals nach etwas, das der Lead im Verlauf schon beantwortet hat oder das unter 'Bisher erfasst' steht. Nimm Antworten auf und gehe zur nächsten offenen Frage weiter.",
       checkliste
-        ? `- Sobald die Pflichtangaben für das Angebot (siehe oben) geklärt oder als offen festgehalten sind, setze qualifiziert=true und leite zur Terminvereinbarung über. Möchte der Lead schon vorher von sich aus einen Termin, buche ihn sofort und frag die fehlenden Angaben danach weiter ab: stelle direkt in der Buchungsbestätigung die nächste offene Frage (z. B. „Damit ${state.advisorName} das Angebot vorbereiten kann, noch kurz: …“).`
+        ? `- Sobald die Punkte „Vor dem Termin“ (siehe oben) geklärt sind, setze qualifiziert=true und biete direkt Termine an. Möchte der Lead schon vorher von sich aus einen Termin, buche ihn sofort. Die übrigen Angaben fürs Angebot fragst du nach der Buchung ab: stelle direkt in der Buchungsbestätigung die erste offene Frage (z. B. „Damit ${state.advisorName} das Angebot vorbereiten kann, noch kurz: …“). Erzählt der Lead vorher schon von sich aus etwas davon, halte es fest.`
         : "- Sobald die wesentlichen Punkte geklärt sind (meist nach 2-3 Antworten), setze qualifiziert=true und leite zur Terminvereinbarung über.",
       "- Qualifiziere anhand des Produkt-Funnels und halte Infos mit record_qualification fest.",
       "- Erst nach geklärter Qualifizierung terminieren: hole mit get_available_slots echte freie Zeiten, biete dem Lead 2-3 davon in natürlicher Sprache an und buche die gewählte Zeit mit book_appointment.",

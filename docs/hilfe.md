@@ -184,10 +184,13 @@ Seiten aus der Liste „Seiten“ unten.
 - Bittet ein Lead, sich später zu melden („morgen nochmal“, „nächste Woche“), legt der Assistent sich selbst eine
   **Wiedervorlage** und meldet sich zur vereinbarten Zeit per WhatsApp. Sie sehen sie im Kontakt unter den
   Aktionen („Wiedervorlage vom Assistenten …“); der Lead zählt damit nicht als „ohne nächsten Schritt“.
-- Bei Privatschutz und Tierkrankenversicherung (Gesundheit des Tieres, Geburtsdatum des Halters) fragt er die
-  Angaben fürs Angebot ab. Bucht ein Lead schon vorher einen Termin, fragt der
-  Assistent die fehlenden Angaben nach der Buchung weiter ab. Hat der Lead direkt über das Leadformular bzw. die
-  Buchungsseite gebucht, meldet sich der Assistent trotzdem, bestätigt den Termin und fragt die Angaben ab.
+- Bei Privatschutz und Tierkrankenversicherung gilt: erst der Termin, dann die Fragen. Vor dem Termin klärt der
+  Assistent bei Privatschutz nur, worum es genau geht (bei Tieren: welche, wie viele, Tierkranken oder
+  Tierhalterhaftpflicht) und wer versichert werden soll, bei Tierkrankenversicherung gar nichts. Die Angaben fürs
+  Angebot (z. B. Geburtsdatum, Vorschäden, bestehende Verträge, Wohnfläche, Gesundheit des Tieres) fragt er nach der
+  Buchung ab, die erste Frage gleich in der Bestätigung. Zum Schluss nennt er die Unterlagen für den Termin. Hat der
+  Lead direkt über das Leadformular bzw. die Buchungsseite gebucht, meldet sich der Assistent trotzdem, bestätigt
+  den Termin und fragt die Angaben ab. Was er erfahren hat, steht im Kontakt.
 - Braucht ein Lead Sie (Frage, die der Assistent nicht beantworten soll), landet der Chat unter „Braucht dich“
   und Sie bekommen eine Push-Nachricht.
 - **Ansprache (Sie oder Du)**: Standard ist „Sie“. Inhaber stellen das unter **Einstellungen → WhatsApp-Vorlagen**,
