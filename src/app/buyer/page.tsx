@@ -16,9 +16,6 @@ import { prisma } from "@/lib/prisma";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { ReferralNudgeCard } from "@/components/kollegen";
 import { loadReferralNudge } from "@/lib/kollegen";
-import { UpdatesHeuteCard } from "@/components/neuigkeiten";
-import { unreadUpdates } from "@/lib/neuigkeiten";
-import { dismissUpdatesAction } from "./neuigkeiten/actions";
 import { ErstinfoHeuteHint } from "@/components/erstinformation-hint";
 import { TerminVorbereitungCard } from "@/components/termin-vorbereitung-card";
 
@@ -55,16 +52,13 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
       </main>
     );
   }
-  const [data, customer, me, nudge, updates] = await Promise.all([
+  const [data, customer, me, nudge] = await Promise.all([
     loadInbox(ctx),
     prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true } }),
     ctx.teamRole === "advisor" && ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true } }) : null,
     // „Kollegen empfehlen“ nach positiven Momenten (nur Inhaber, nicht in der Vorschau)
     ctx.teamRole === "owner" && !ctx.preview ? loadReferralNudge(ctx.customerId).catch(() => null) : null,
-    // Neuigkeiten seit dem letzten Besuch (nicht in der Vorschau)
-    ctx.userId && !ctx.preview ? unreadUpdates(ctx.userId, ctx.customerId).catch(() => []) : [],
   ]);
-  const updatesCard = updates.length ? <UpdatesHeuteCard title={updates[0].title} more={updates.length - 1} dismiss={dismissUpdatesAction} /> : null;
   const nudgeCard = nudge ? <ReferralNudgeCard nudgeKey={nudge.key} title={nudge.title} text={nudge.text} /> : null;
   const first = (me?.displayName ?? (customer?.name ?? "").replace(/^Allianz\s+/i, "")).split(" ")[0];
   const hour = Number(
@@ -91,7 +85,6 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
             <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
             {introCard}
             {erstinfoHint}
-            {updatesCard}
             {nudgeCard}
             <FreePeriodNotices customerId={ctx.customerId} readOnly={ctx.preview} />
             <EmpfehlungHeuteHint ctx={ctx} />
@@ -136,7 +129,6 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
       <LiveRefresh />
       <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
       {erstinfoHint}
-      {updatesCard}
       {nudgeCard}
       <FreePeriodNotices customerId={ctx.customerId} readOnly={ctx.preview} />
             <EmpfehlungHeuteHint ctx={ctx} />

@@ -1,8 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { useState, useTransition } from "react";
-import { Megaphone, X } from "lucide-react";
 import { Badge } from "@/components/ui";
 import { groupByMonth, KIND_LABEL, type UpdateKind, type UpdateView } from "@/lib/neuigkeiten-shared";
 
@@ -64,35 +61,6 @@ export function UpdatesList({ items, unreadIds = [] }: { items: UpdateView[]; un
           </ul>
         </section>
       ))}
-    </div>
-  );
-}
-
-/** Dezente Karte in „Heute“: „Neu: <Titel>“, wegklickbar (gilt dann als gelesen). */
-export function UpdatesHeuteCard({ title, more, dismiss }: { title: string; more: number; dismiss: () => Promise<void> }) {
-  const [hidden, setHidden] = useState(false);
-  const [, start] = useTransition();
-  if (hidden) return null;
-  return (
-    <div className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-4 py-3" data-updates-card>
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-[color:var(--brand-dark)]">
-        <Megaphone className="h-4 w-4" />
-      </span>
-      <Link href="/buyer/neuigkeiten" className="min-w-0 flex-1">
-        <span className="block truncate text-[15px] font-semibold">Neu: {title}</span>
-        <span className="block text-sm text-[color:var(--muted)]">{more > 0 ? `und ${more} weitere Neuigkeit${more === 1 ? "" : "en"}, ansehen` : "Was wir verbessert haben, ansehen"}</span>
-      </Link>
-      <button
-        type="button"
-        aria-label="Hinweis ausblenden"
-        className="rounded-full p-2 text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)]"
-        onClick={() => {
-          setHidden(true);
-          start(() => dismiss());
-        }}
-      >
-        <X className="h-4 w-4" />
-      </button>
     </div>
   );
 }

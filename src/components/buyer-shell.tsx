@@ -394,11 +394,7 @@ function ProfileMenu({
             className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
           >
             <Megaphone className="h-4 w-4" /> Neuigkeiten
-            {updatesUnread > 0 ? (
-              <span className="ml-auto">
-                <Badge n={updatesUnread} />
-              </span>
-            ) : null}
+            {updatesUnread > 0 ? <span className="ml-auto h-2 w-2 rounded-full bg-[color:var(--brand)]" aria-label="Ungelesene Neuigkeiten" /> : null}
           </Link>
           <Link
             href="/buyer/einstellungen"
