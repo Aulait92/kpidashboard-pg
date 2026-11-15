@@ -38,7 +38,7 @@ describe("Präsentation", () => {
     ] });
     const m = markeFuer({ name: "Allianz Agentur Lohmann" });
     const fs = folien(d, ang, m);
-    expect(fs.map((f) => f.id)).toEqual(expect.arrayContaining(["titel", "situation", "risiken", "beispiel", "empfehlung", "leistungen", "beitrag", "entscheidung", "weiter", "danke"]));
+    expect(fs.map((f) => f.id)).toEqual(expect.arrayContaining(["titel", "situation", "risiken", "beispiel", "empfehlung", "beitrag", "entscheidung", "weiter", "danke"]));
     expect(fs.some((f) => f.id.startsWith("vergleich-"))).toBe(true);
     expect(fs.find((f) => f.id === "beitrag")!.html).toContain("7,40");
     expect(fs.every((f) => f.notizen.length > 0)).toBe(true);
@@ -79,7 +79,7 @@ describe("Präsentation", () => {
     const fs = folien({ ...d, formular: [] }, ang, markeFuer({ name: "X" }));
     expect(fs.find((f) => f.id === "risiken")!.html.match(/class="kachel"/g)).toHaveLength(4);
     expect(fs.find((f) => f.id === "empfehlung")!.html.match(/class="angebot empf"/g)).toHaveLength(4);
-    const l = fs.find((f) => f.id === "leistungen")!.html;
+    const l = fs.find((f) => f.id === "empfehlung")!.html;
     expect(l).toContain("Selbstbeteiligung 150 € je Fall");
     expect(l).not.toContain("Selbstbeteiligung keine");
     const b = fs.find((f) => f.id === "beitrag")!.html;
@@ -112,7 +112,7 @@ describe("Präsentation", () => {
     expect(beitragEffektiv(neu.items[0])).toBe(14.6);
     fs = folien({ ...d, lead: { ...d.lead, produkt: "Tierkranken" } }, neu, m);
     expect(fs.find((f) => f.id === "beitrag")!.html).toContain("14,60");
-    expect(fs.find((f) => f.id === "leistungen")!.html).toContain("ohne Zahnbehandlung");
+    expect(fs.find((f) => f.id === "empfehlung")!.html).toContain("ohne Zahnbehandlung");
   });
 
   it("Tarif im Termin wählen: Tabelle wie im Rechner, Empfehlung bleibt, Beitrag folgt der Wahl", () => {
@@ -174,7 +174,7 @@ describe("Präsentation", () => {
     let fs = folien({ ...d, formular: [] }, ang, m);
     const b = fs.find((f) => f.id === "beitrag")!.html;
     expect(b).toContain('class="teil an" data-sparte="2"');
-    expect(fs.find((f) => f.id === "leistungen")!.html).toContain('class="st an" data-tarif="0">Smart');
+    expect(fs.find((f) => f.id === "empfehlung")!.html).toContain('class="st an" data-tarif="0">Smart');
     const ohne = sparteSchalten(ang, 2)!;
     expect(summeEmpfohlen(ohne)).toBe(5.7);
     fs = folien({ ...d, formular: [] }, ohne, m);

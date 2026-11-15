@@ -124,10 +124,17 @@ export function praesentationCss(m: Marke): string {
 .teil .hk{width:24px;height:24px;border-radius:99px;border:2px solid #cbd5e1;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800}
 .teil.an{background:var(--fh);color:#1f2937;border:2px solid var(--fh)}.teil.an .hk{background:var(--f);border-color:var(--f);color:#fff}
 .teil b{color:var(--f);margin-left:2px}.teil small{font-size:16px}
-.stufen{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
-.st{font:inherit;border:1.5px solid #cbd5e1;background:#fff;color:#475569;border-radius:8px;padding:3px 10px;font-size:15px;cursor:pointer}
-.st.an{background:var(--f);border-color:var(--f);color:#fff;font-weight:700}
+.stufen{display:grid;gap:1.5px;width:100%;background:var(--f);border:2px solid var(--f);border-radius:10px;overflow:hidden;margin:8px 0 12px}
+.st{min-width:0;font:inherit;font-size:15px;font-weight:600;padding:7px 4px;border:0;background:#fff;color:var(--f);cursor:pointer;white-space:nowrap}
+.st.an{background:var(--f);color:#fff}
+.st .stern{font-size:11px;margin-left:3px;position:relative;top:-5px}
+.stufe-fest{font-size:18px;font-weight:600;color:var(--f);margin:4px 0 10px}
+.drin .wunsch{font-size:15px}
+.drin .angebot{padding:18px 18px}
+.angebot.einzeln .listen{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.drin .nein{margin-top:6px}
 .drin .tarif{font-size:24px;margin-bottom:4px}.drin li{font-size:18px;margin:0 0 6px}.drin .nein{margin-top:6px}
+.slide button{-webkit-appearance:none;appearance:none;margin:0;line-height:1.2}
 .bausteine{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
 .bs{font:inherit;display:inline-flex;align-items:center;gap:8px;border:2px solid #cbd5e1;background:#fff;color:#475569;border-radius:99px;padding:6px 16px 6px 8px;font-size:18px;cursor:pointer}
 .bs .hk{width:22px;height:22px;border-radius:99px;border:2px solid #cbd5e1;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800}
@@ -247,7 +254,6 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
   const tier = produktCheckliste(d.lead.produkt)?.key === "tier";
   const items = angebote?.items ?? [];
   const empf = items.filter((i) => i.empfohlen);
-  const zeige: AngebotItem[] = empf.length ? empf : items.slice(0, 3);
   // Leistungen und Beitrag: die im Termin gewählte Stufe je Sparte (Standard: Empfehlung)
   const wahl: AngebotItem[] = empf.length || items.some((i) => i.gewaehlt) ? items.filter((i) => i.gewaehlt) : items.slice(0, 3);
   const sparten = (() => {
@@ -325,19 +331,44 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
     notizen: ["Ruhig erzählen, als Geschichte, ohne Angst zu machen. Danach Pause."],
   });
 
+  // Selbstbeteiligung je Sparte (mehrere Sparten), „keine“ weglassen
+  const mitSb = wahl.filter((i) => i.selbstbeteiligung && !/^keine?$/i.test(i.selbstbeteiligung.trim()));
+  const mehrere = new Set(wahl.map((i) => i.sparte)).size > 1;
+  const sb = mehrere ? mitSb.map((i) => `${i.sparte} ${i.selbstbeteiligung}`) : [...new Set(mitSb.map((i) => i.selbstbeteiligung!))];
+  // Stufen als Umschalter (Ole, 15.11.2026): gewählte Stufe gefüllt, Empfehlung mit Stern
+  const stufen = (i: AngebotItem) => {
+    const v = items.filter((x) => x.sparte === i.sparte);
+    return v.length > 1
+      ? `<div class="stufen" style="grid-template-columns:repeat(${Math.min(v.length, 4) === 4 ? 2 : Math.min(v.length, 4)},1fr)">${v
+          .slice(0, 4)
+          .map((x) => `<button type="button" class="st${x.gewaehlt ? " an" : ""}" data-tarif="${items.indexOf(x)}">${e(x.tarif ?? x.sparte)}${x.empfohlen ? `<span class="stern" title="Empfehlung">★</span>` : ""}</button>`)
+          .join("")}</div>`
+      : i.tarif
+        ? `<div class="stufe-fest">${e(i.tarif)}</div>`
+        : "";
+  };
+  const negativ = (i: AngebotItem) => [
+    ...ohneBausteine(i).slice(0, 2),
+    ...i.ausschluesse.slice(0, 2),
+    ...(i.selbstbeteiligung && !/^keine?$/i.test(i.selbstbeteiligung.trim()) ? [`Selbstbeteiligung ${i.selbstbeteiligung}`] : []),
+  ];
+  const liste = (cls: string, xs: string[]) => (xs.length ? `<div class="${cls}"><ul>${xs.map((x) => `<li>${e(x)}</li>`).join("")}</ul></div>` : "");
+  // Empfehlung und „Das ist drin, und das nicht“ auf einer Folie: je Sparte Wunsch, Stufe, Leistungen, Ausschlüsse
+  const karten = wahl
+    .slice(0, 4)
+    .map((i) => {
+      const w = WUNSCH[sparteKey(i.sparte)];
+      const plus = [...i.leistungen.slice(0, wahl.length > 1 ? 3 : 5), ...drinBausteine(i).slice(0, 2)];
+      return `<div class="angebot empf${wahl.length === 1 ? " einzeln" : ""}"><div class="wunsch">${e(a(an, "Du wolltest", "Sie wollten"))}: ${e(w ? a(an, w.du, w.sie) : i.sparte)}</div><div class="tarif">${e(i.sparte)}</div>${stufen(i)}<div class="listen">${liste("ok", plus)}${liste("nein", negativ(i))}</div></div>`;
+    })
+    .join("");
   out.push({
     id: "empfehlung",
     titel: "Unsere Empfehlung",
     html: R(
       `<h2>${e(a(an, "Unsere Empfehlung für dich", "Unsere Empfehlung für Sie"))}</h2>${
-        zeige.length
-          ? `<div class="angebote" style="grid-template-columns:repeat(${Math.min(zeige.length, 4)},1fr)">${zeige
-              .slice(0, 4)
-              .map((i) => {
-                const w = WUNSCH[sparteKey(i.sparte)];
-                return `<div class="angebot empf"><div class="wunsch">${e(a(an, "Du wolltest", "Sie wollten"))}: ${e(w ? a(an, w.du, w.sie) : i.sparte)}</div><div class="tarif">${e(i.sparte)}${i.tarif ? ` ${e(i.tarif)}` : ""}</div>${punkte(i.leistungen.slice(0, 3))}</div>`;
-              })
-              .join("")}</div>`
+        wahl.length
+          ? `<div class="angebote drin" style="grid-template-columns:repeat(${Math.min(wahl.length, 4)},minmax(0,1fr))">${karten}</div>`
           : `<div class="leer">${e(a(an, "Dein persönliches Angebot zeigen wir dir im Gespräch.", "Ihr persönliches Angebot zeigen wir Ihnen im Gespräch."))}</div>`
       }`,
       a(an, "Passt das zu dem, was dir wichtig ist?", "Passt das zu dem, was Ihnen wichtig ist?"),
@@ -345,48 +376,7 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
     notizen: [
       a(an, "„Auf Basis dessen, was du mir gesagt hast, empfehle ich dir …, weil du gesagt hast …“", "„Auf Basis dessen, was Sie mir gesagt haben, empfehle ich Ihnen …, weil Sie gesagt haben …“"),
       "Noch ohne Preis: erst der Nutzen. Die Begründung gehört in die Beratungsdokumentation.",
-    ],
-  });
-
-  const drin = [...new Set(wahl.flatMap((i) => [...i.leistungen.slice(0, 5 - Math.min(drinBausteine(i).length, 3)), ...drinBausteine(i).slice(0, 3)]))].slice(0, 6);
-  const nicht = [...new Set(wahl.flatMap((i) => [...ohneBausteine(i), ...i.ausschluesse]))].slice(0, 4);
-  // Selbstbeteiligung je Sparte (mehrere Sparten), „keine“ weglassen
-  const mitSb = wahl.filter((i) => i.selbstbeteiligung && !/^keine?$/i.test(i.selbstbeteiligung.trim()));
-  const mehrere = new Set(wahl.map((i) => i.sparte)).size > 1;
-  const sb = mehrere ? mitSb.map((i) => `${i.sparte} ${i.selbstbeteiligung}`) : [...new Set(mitSb.map((i) => i.selbstbeteiligung!))];
-  // Mehrere Sparten: je Sparte eine Karte statt einer gemischten Liste
-  // Stufen zum Wechseln, wenn der Kunde mit den Leistungen nicht zufrieden ist
-  const stufen = (i: AngebotItem) => {
-    const v = items.filter((x) => x.sparte === i.sparte);
-    return v.length > 1
-      ? `<div class="stufen">${v.slice(0, 4).map((x) => `<button type="button" class="st${x.gewaehlt ? " an" : ""}" data-tarif="${items.indexOf(x)}">${e(x.tarif ?? x.sparte)}</button>`).join("")}</div>`
-      : "";
-  };
-  const jeSparte = wahl
-    .slice(0, 4)
-    .map((i) => {
-      const neg = [...ohneBausteine(i).slice(0, 2), ...i.ausschluesse.slice(0, 2), ...(i.selbstbeteiligung && !/^keine?$/i.test(i.selbstbeteiligung.trim()) ? [`Selbstbeteiligung ${i.selbstbeteiligung}`] : [])];
-      return `<div class="angebot"><div class="tarif">${e(i.sparte)}</div>${stufen(i)}<div class="ok"><ul>${[...i.leistungen.slice(0, 3), ...drinBausteine(i).slice(0, 2)].map((x) => `<li>${e(x)}</li>`).join("")}</ul></div>${
-        neg.length ? `<div class="nein"><ul>${neg.map((x) => `<li>${e(x)}</li>`).join("")}</ul></div>` : ""
-      }</div>`;
-    })
-    .join("");
-  out.push({
-    id: "leistungen",
-    titel: "Das ist drin",
-    html: R(
-      `<h2>Das ist drin, und das nicht</h2>${
-        mehrere
-          ? `<div class="angebote drin" style="grid-template-columns:repeat(${Math.min(wahl.length, 4)},1fr)">${jeSparte}</div>`
-          : drin.length || nicht.length
-          ? `${wahl[0] ? stufen(wahl[0]) : ""}<div class="zwei"><div class="ok"><ul>${drin.map((x) => `<li>${e(x)}</li>`).join("")}</ul></div><div class="nein"><ul>${[...nicht, ...(sb.length ? [`Selbstbeteiligung: ${sb.join(", ")}`] : [])]
-              .map((x) => `<li>${e(x)}</li>`)
-              .join("")}</ul></div></div>`
-          : `<div class="leer">Die Leistungen gehen wir im Gespräch gemeinsam durch.</div>`
-      }`,
-    ),
-    notizen: [
-      tier ? "Offen sagen: Bekannte Vorerkrankungen sind nicht mitversichert, für bestimmte Leistungen gelten Wartezeiten." : "Ausschlüsse offen ansprechen, das schafft Vertrauen.",
+      tier ? "Offen sagen: Bekannte Vorerkrankungen sind nicht mitversichert, für bestimmte Leistungen gelten Wartezeiten." : "Was nicht versichert ist, offen ansprechen, das schafft Vertrauen.",
       "Fehlt dem Kunden etwas: andere Stufe antippen, Leistungen und Beitrag ändern sich sofort.",
     ],
   });

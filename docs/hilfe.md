@@ -192,12 +192,12 @@ Seiten aus der Liste „Seiten“ unten.
 - **Bausteine im Termin:** Zu jedem Angebot tragen Sie Bausteine mit ihrem Beitrag aus dem Tarifrechner ein (z. B.
   Zahnbehandlung +4,10 € oder höhere Selbstbeteiligung −2,80 €; der Haken heißt „im Angebot enthalten“). In der
   Präsentation tippen Sie einen Baustein auf der Folie an oder ab: Der Beitrag rechnet sich sofort neu, abgewählte
-  Bausteine stehen unter „Das ist drin, und das nicht“. Die gewählte Fassung wird gespeichert und steht auch im PDF.
+  Bausteine stehen auf der Empfehlungsfolie unter „nicht versichert“. Die gewählte Fassung wird gespeichert und steht auch im PDF.
 - **Tarif im Termin wählen:** Je Sparte zeigt die Terminvorbereitung eine Tabelle wie im Tarifrechner: Stufen als Spalten
   (z. B. Basis, Smart, Komfort, Premium), Beitrag, Ihre Empfehlung und Merkmale als Zeilen („75 Mio. €“, „ja“, „nein“). Die Präsentation zeigt dann eine
   Vergleichstabelle wie im Tarifrechner. Mit **Auswählen** wechseln Sie im Termin die Stufe; Ihre Empfehlung bleibt
   markiert, Beitrag und Leistungen richten sich nach der Wahl.
-  Auf „Das ist drin“ wechseln Sie die Stufe ebenfalls. Auf der Beitragsfolie nimmt ein Klick auf ein Produkt es
+  Auf der Empfehlungsfolie (Leistungen und was nicht versichert ist, je Sparte) wechseln Sie die Stufe ebenfalls; der Stern zeigt Ihre Empfehlung. Auf der Beitragsfolie nimmt ein Klick auf ein Produkt es
   heraus, ein zweiter Klick holt es mit Ihrer Empfehlung zurück.
 - **Link für Ihren Kunden:** Unter der Präsentation erstellt **Link erstellen** einen persönlichen Link mit dem Stand aus
   dem Termin, ohne Sprechzettel und ohne Schalter, 14 Tage gültig. Kopieren, per WhatsApp oder E-Mail schicken, bei
