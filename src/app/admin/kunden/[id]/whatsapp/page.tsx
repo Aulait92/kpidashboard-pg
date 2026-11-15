@@ -4,6 +4,9 @@ import { Card, CardHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { AvailabilityCard } from "./availability-card";
+import { D360Assign } from "./d360-assign";
+import { freePartnerChannels } from "@/lib/whatsapp/dialog360-match";
+import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 
 // Reiter „WhatsApp-Assistent“: die WhatsApp-Einstellungen nur für diesen Kunden
 // und die Meta-Gebühren (im Preis enthalten, intern erfasst).
@@ -13,6 +16,7 @@ export default async function KundenWhatsApp({ params, searchParams }: { params:
   return (
     <div className="space-y-5">
       <WhatsAppSettingsPage searchParams={Promise.resolve({ kunde: id, wa })} />
+      <D360Card customerId={id} />
       <AvailabilityCard customerId={id} />
       <div className="grid max-w-5xl gap-5 lg:grid-cols-2">
         <WhatsAppFeesCard customerId={id} admin />
@@ -44,6 +48,22 @@ async function BestandModuleCard({ customerId }: { customerId: string }) {
         <Link href={`/admin/kunden/${customerId}/abrechnung`} className="text-sm font-medium text-[color:var(--brand)] hover:underline">
           Buchen, freischalten und Kontingent unter „Abrechnung“ →
         </Link>
+      </div>
+    </Card>
+  );
+}
+
+/** 360dialog: Nummer nachträglich finden bzw. von Hand zuordnen (lib/whatsapp/dialog360-match.ts). */
+async function D360Card({ customerId }: { customerId: string }) {
+  if (!selfConnectEnabled()) return null;
+  const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { status: true, apiKeyEnc: true } });
+  if (acc?.status === "connected" && acc.apiKeyEnc) return null;
+  const free = await freePartnerChannels().catch(() => []);
+  return (
+    <Card className="max-w-5xl">
+      <CardHeader title="360dialog-Nummer zuordnen" />
+      <div className="px-5 pb-5">
+        <D360Assign customerId={customerId} free={free.slice(0, 20).map((c) => ({ id: c.id, phone: c.phone, name: c.name, clientName: c.clientName, availability: c.availability, createdAt: c.createdAt }))} />
       </div>
     </Card>
   );

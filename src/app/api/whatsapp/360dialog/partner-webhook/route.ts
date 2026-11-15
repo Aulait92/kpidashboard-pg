@@ -26,6 +26,8 @@ export async function POST(req: Request): Promise<Response> {
   }
   if (type.startsWith("channel")) {
     await retryPendingSelfConnect(new Date(Date.now() + 31_000)).catch((err) => reportError(err, "d360-partner-webhook"));
+    // Rücksprung ausgeblieben? Nummern mit unserer Kunden-ID (partner_payload) selbst zuordnen
+    await import("@/lib/whatsapp/dialog360-match").then((m) => m.autoMatchChannels()).catch((err) => reportError(err, "d360-auto-match"));
   }
   // Vorlagen-Status geändert (waba_template_status_changed, Format laut Doku nicht beschrieben):
   // einfach sofort abgleichen statt auf den nächsten Cron-Lauf zu warten.

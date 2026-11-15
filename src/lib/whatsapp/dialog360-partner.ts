@@ -68,13 +68,16 @@ export function verifyState(state: string | null | undefined, now = Date.now()):
 }
 
 /** Link zum 360dialog-Onboarding (Konto anlegen + Meta Embedded Signup). */
-export function onboardingLink(cfg: PartnerConfig, opts: { redirectUrl: string; state: string; email?: string | null; name?: string | null }): string {
+export function onboardingLink(cfg: PartnerConfig, opts: { redirectUrl: string; state: string; email?: string | null; name?: string | null; customerId?: string | null }): string {
   const url = new URL(cfg.onboardingUrl.replace("{partner_id}", encodeURIComponent(cfg.partnerId)));
   url.searchParams.set("redirect_url", opts.redirectUrl);
   url.searchParams.set("state", opts.state);
   url.searchParams.set("lang", "de");
   // Kein plan_selection (15.11.2026): wirkt laut Doku nur bei Partnern mit gestaffelten Tarifen, Standard ist ohnehin
   // „regular“; bei Kunden, die selbst zahlen, lässt es sie den Tarif wählen. Partnerbezahlte Kunden sehen keine Tarifwahl.
+  // Kunden-ID am 360dialog-Kunden speichern (partner_payload): so finden wir die Nummer auch ohne Rücksprung
+  // („Verbindung prüfen“, lib/whatsapp/dialog360-match.ts)
+  if (opts.customerId) url.searchParams.set("partner", opts.customerId);
   if (opts.email) url.searchParams.set("email", opts.email);
   if (opts.name) url.searchParams.set("name", opts.name);
   return url.toString();
@@ -140,4 +143,53 @@ export async function channelInfo(cfg: PartnerConfig, channelId: string): Promis
   } catch {
     return { phone: null, name: null };
   }
+}
+
+/** Nummer (Channel) aus der Partner-API, nur die Felder, die wir zum Zuordnen brauchen. */
+export type PartnerChannel = {
+  id: string;
+  clientId: string | null;
+  clientName: string | null;
+  partnerPayload: string | null;
+  contactEmail: string | null;
+  phone: string | null;
+  name: string | null;
+  availability: string | null;
+  createdAt: string | null;
+};
+
+/** Neueste Nummern des Partners (höchstens `limit`), für „Verbindung prüfen“ und die Zuordnung im Admin. */
+export async function listPartnerChannels(cfg: PartnerConfig, limit = 200): Promise<PartnerChannel[]> {
+  const url = new URL(`${cfg.hubUrl}/api/v2/partners/${encodeURIComponent(cfg.partnerId)}/channels`);
+  url.searchParams.set("limit", String(limit));
+  url.searchParams.set("sort", "-created_at");
+  const res = await fetch(url, { headers: { "X-API-Key": cfg.apiKey, Accept: "application/json" }, signal: AbortSignal.timeout(15_000) });
+  if (!res.ok) throw new Error(`360dialog ${res.status}: ${(await res.text().catch(() => "")).slice(0, 200)}`);
+  const json = (await res.json()) as { partner_channels?: unknown[] };
+  return (json.partner_channels ?? []).map((raw) => parsePartnerChannel(raw)).filter((c): c is PartnerChannel => !!c);
+}
+
+export function parsePartnerChannel(raw: unknown): PartnerChannel | null {
+  const c = raw as {
+    id?: unknown;
+    client_id?: unknown;
+    created_at?: unknown;
+    availability_status?: unknown;
+    setup_info?: { phone_number?: unknown; phone_name?: unknown };
+    client?: { id?: unknown; name?: unknown; partner_payload?: unknown; contact_info?: { email?: unknown } };
+  };
+  const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
+  const id = str(c?.id);
+  if (!id) return null;
+  return {
+    id,
+    clientId: str(c.client_id) ?? str(c.client?.id),
+    clientName: str(c.client?.name),
+    partnerPayload: str(c.client?.partner_payload),
+    contactEmail: str(c.client?.contact_info?.email)?.toLowerCase() ?? null,
+    phone: str(c.setup_info?.phone_number),
+    name: str(c.setup_info?.phone_name),
+    availability: str(c.availability_status),
+    createdAt: str(c.created_at),
+  };
 }

@@ -221,6 +221,10 @@ async function handle(req: Request): Promise<Response> {
   // Bank & Karten: Kontoumsätze täglich abrufen, an Neuverbindung erinnern (nach der Antwort)
   after(() => runBankSync(now).catch((e: unknown) => reportError(e, "cron-bank")));
   // WhatsApp selbst verbunden: API-Keys für Channels nachholen, die beim Redirect noch eingerichtet wurden
+  // 360dialog: Nummern ohne Rücksprung über die Kunden-ID finden (alle 15 Minuten, lib/whatsapp/dialog360-match.ts)
+  if (now.getUTCMinutes() % 15 < 5) {
+    await import("@/lib/whatsapp/dialog360-match").then((m) => m.autoMatchChannels()).catch((e: unknown) => reportError(e, "cron-d360-auto-match"));
+  }
   const whatsappConnect = await retryPendingSelfConnect(now).catch((e: unknown) => {
     reportError(e, "cron-d360-connect");
     return null;

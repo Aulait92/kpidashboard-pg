@@ -1103,6 +1103,10 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
 - Anzeigename abgelehnt: an den Firmennamen (wie im Impressum) anpassen.
 - 360dialog zeigt „Choose a plan“ bzw. „Pending Activation“: nichts kaufen, Fenster schließen, uns schreiben. Der
   Tarif läuft über uns, wir schalten die Nummer frei und verbinden sie.
+- Verbinden bei 360dialog fertig, in der App steht aber nicht „Verbunden“: in der Einrichtung beim Schritt
+  WhatsApp auf **„Verbindung prüfen“** tippen. Die App sucht die Nummer bei 360dialog und verbindet sie. Wartet die
+  Nummer noch auf Freischaltung, holt die App die Verbindung danach selbst nach. (Admin: Kundenakte → WhatsApp →
+  „360dialog-Nummer zuordnen“ mit Liste freier Nummern.)
 - „This phone number belongs to another business“: Die Nummer hängt in einem anderen Meta-Portfolio. Dort
   entfernen oder eine andere Nummer nehmen.
 - Weitere Hinweise aus dem Ablauf: Land auf +49 stellen, Nummer ohne führende 0, nicht „Display Name only“;

@@ -200,3 +200,30 @@ export async function saveErstinfoAction(_prev: ErstinfoState, fd: FormData): Pr
   revalidatePath("/buyer", "layout");
   return { ok: true };
 }
+
+// ─── WhatsApp: „Verbindung prüfen“ (lib/whatsapp/dialog360-match.ts) ───
+
+export type WaCheckState = { ok?: boolean; message?: string; error?: string };
+
+/** Nummer bei 360dialog suchen und nachträglich verbinden, falls der Rücksprung ausblieb. */
+export async function checkWhatsAppConnectionAction(_prev: WaCheckState, _fd: FormData): Promise<WaCheckState> {
+  try {
+    const { ctx } = await requireCustomer();
+    const { checkConnection } = await import("@/lib/whatsapp/dialog360-match");
+    const r = await checkConnection(ctx.customerId, { id: ctx.userId ?? undefined, role: "kunde" });
+    revalidatePath("/buyer/einrichtung");
+    if (r.status === "connected") return { ok: true, message: `Verbunden${r.phone ? `: +${r.phone.replace(/^\+/, "")}` : ""}. Ihre Vorlagen werden jetzt bei Meta eingereicht.` };
+    if (r.status === "pending")
+      return {
+        ok: true,
+        message: r.activation
+          ? "Wir haben Ihre Nummer gefunden. Sie wartet noch auf die Freischaltung bei 360dialog, wir kümmern uns darum und melden uns."
+          : "Wir haben Ihre Nummer gefunden, sie wird gerade eingerichtet. Das dauert meist nur wenige Minuten.",
+      };
+    if (r.status === "not_found") return { error: "Wir finden noch keine Nummer zu Ihrem Konto. Haben Sie das Verbinden bis zum Ende durchlaufen? Sonst starten Sie es oben neu oder schreiben Sie uns." };
+    if (r.status === "ambiguous") return { error: "Wir haben mehrere passende Nummern gefunden. Wir ordnen sie für Sie zu und melden uns." };
+    return { error: "Die Prüfung hat gerade nicht geklappt. Bitte später noch einmal versuchen oder uns schreiben." };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Nicht möglich." };
+  }
+}
