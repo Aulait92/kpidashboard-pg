@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 // damit Claude Zustände prüfen kann, ohne Datenbank-Zugang. Kein freies SQL, keine Geheimnisse,
 // Lead-Daten nur so weit nötig (Name statt Telefon/E-Mail).
 // Absicherung: eigener Lese-Schlüssel OPS_READ_TOKEN (≥ 32 Zeichen) als Bearer-Token.
-//   GET /api/ops/diagnose?q=uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|gedankenstriche|login&email=…
+//   GET /api/ops/diagnose?q=uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|gedankenstriche|login&email=…|meta&page=…
 export const dynamic = "force-dynamic";
 
 function authorized(req: Request): boolean {
@@ -213,7 +213,30 @@ async function login(params: URLSearchParams) {
   };
 }
 
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, gedankenstriche, login };
+/**
+ * Meta-Zugriff prüfen (Ole, 15.11.2026: Seite freigegeben, Prüfung sagt „kein Zugriff“): Berechtigungen des
+ * System-User-Tokens (ohne Token-Wert), ob die Seite unter /me/accounts erscheint und ob Meta für die Seite
+ * ein Seiten-Token und Leadformulare liefert. Nur ja/nein und Meta-Fehlertexte (Tokens geschwärzt).
+ */
+async function meta(params: URLSearchParams) {
+  const { metaDiagnostics } = await import("@/lib/meta-leads");
+  const d = await metaDiagnostics();
+  const pageId = (params.get("page") ?? "").replace(/\D/g, "");
+  const out: Record<string, unknown> = {
+    appName: d.appName,
+    scopes: d.scopes,
+    fehlendeScopes: d.missing,
+    fehler: d.error ?? null,
+    seitenUnterMeAccounts: d.pages.length,
+  };
+  if (pageId) {
+    const { checkPageForDiagnose } = await import("@/lib/selbst-einrichtung");
+    out.seite = { inMeAccounts: d.pages.some((p) => p.id === pageId), ...(await checkPageForDiagnose(pageId)) };
+  }
+  return out;
+}
+
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, gedankenstriche, login, meta };
 
 export async function GET(req: Request): Promise<Response> {
   if (!authorized(req)) return Response.json({ error: "Unauthorized" }, { status: 401 });

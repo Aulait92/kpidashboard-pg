@@ -179,6 +179,17 @@ async function graph<T>(path: string, params: Record<string, string>, accessToke
   }
 }
 
+/** Diagnose (nur ja/nein und Fehlertexte): liefert Meta für die Seite Name, Seiten-Token und Leadformulare? */
+export async function checkPageForDiagnose(pageId: string): Promise<{ gefunden: boolean; name: string | null; seitenToken: boolean; fehler: string | null; leadformulare: boolean | null; leadFehler: string | null }> {
+  const t = token();
+  if (!t) return { gefunden: false, name: null, seitenToken: false, fehler: "META_ACCESS_TOKEN fehlt", leadformulare: null, leadFehler: null };
+  const r = await graph<{ id?: string; name?: string; access_token?: string }>(pageId, { fields: "id,name,access_token" }, t);
+  if (!r.ok) return { gefunden: false, name: null, seitenToken: false, fehler: r.error, leadformulare: null, leadFehler: null };
+  if (!r.data.access_token) return { gefunden: !!r.data.id, name: r.data.name ?? null, seitenToken: false, fehler: null, leadformulare: null, leadFehler: null };
+  const forms = await graph<{ data?: unknown[] }>(`${pageId}/leadgen_forms`, { fields: "id", limit: "1" }, r.data.access_token);
+  return { gefunden: true, name: r.data.name ?? null, seitenToken: true, fehler: null, leadformulare: forms.ok, leadFehler: forms.ok ? null : forms.error };
+}
+
 /** Verständliche Erklärung zu einer Meta-Fehlermeldung (Kundensicht). */
 export function explainMetaError(kind: "adAccount" | "page" | "leads", raw: string): string {
   const r = raw.toLowerCase();
