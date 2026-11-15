@@ -8,7 +8,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/prisma";
 import { audit, type AuditActor } from "@/lib/audit";
 import { reportError } from "@/lib/monitoring";
-import { getAppUrl } from "@/lib/email";
+import { publicBaseOrNull } from "@/lib/public-url";
 import { advisorDisplayName } from "@/lib/whatsapp/template-plan";
 import { personFromCustomerName } from "@/lib/advisor-name";
 import { ansprechpartner, kontaktFromExisting } from "@/lib/lead-anrede";
@@ -66,12 +66,9 @@ const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
 
 export const newToken = () => crypto.randomBytes(18).toString("base64url");
 
+/** Basis der Links für Kunden des Vermittlers: eigene Buchungsadresse, sonst App (lib/public-url.ts). */
 export function appBase(): string {
-  try {
-    return getAppUrl();
-  } catch {
-    return process.env.APP_URL?.replace(/\/$/, "") || "https://app.performancegrowth.de";
-  }
+  return publicBaseOrNull() ?? "https://app.performancegrowth.de";
 }
 export const googleLinkFor = (token: string) => `${appBase()}/empfehlung/g/${token}`;
 export const referralLinkFor = (token: string) => `${appBase()}/empfehlung/${token}`;

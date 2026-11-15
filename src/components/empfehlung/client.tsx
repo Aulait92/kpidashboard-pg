@@ -415,6 +415,7 @@ export function SettingsForm({
   vertreter,
   readOnly,
   vermittlerTyp,
+  linkExample = "https://app.performancegrowth.de/empfehlung/…",
 }: {
   initial: {
     active: boolean;
@@ -434,6 +435,8 @@ export function SettingsForm({
   vertreter: string;
   readOnly: boolean;
   vermittlerTyp?: string | null;
+  /** Beispiel-Link in der Vorschau (eigene Buchungsadresse, lib/public-url.ts) */
+  linkExample?: string;
 }) {
   const [offerKind, setOfferKind] = useState<OfferKind>(initial.offerKind);
   const [offerHeadline, setOfferHeadline] = useState(initial.offerHeadline);
@@ -458,7 +461,7 @@ export function SettingsForm({
     vorname: "Julia",
     // Beispiel mit Anrede aus den Kundendaten: „Guten Tag Frau Schneider“
     anrede: { firstName: "Julia", lastName: "Schneider", salutation: "Frau" },
-    link: focus === "review" ? "https://g.page/r/…/review" : "https://app.performancegrowth.de/empfehlung/…",
+    link: focus === "review" ? "https://g.page/r/…/review" : linkExample,
     vertreter,
   });
   return (

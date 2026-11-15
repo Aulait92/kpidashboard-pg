@@ -7,7 +7,7 @@ import { getOrCreateBookingSlug, PROVIDER_LABELS } from "@/lib/calendar";
 import { BookingLinkCard } from "@/components/booking-link-card";
 import { MicrosoftAdminConsent } from "@/components/microsoft-admin-consent";
 import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
-import { appUrl } from "@/lib/whatsapp/event-text";
+import { bookingPageUrl } from "@/lib/public-url";
 import { prisma } from "@/lib/prisma";
 import { disconnectOwnCalendarAction } from "./actions";
 import { BlockTimes, LeadTimesForm, RemindButton, SourcePicker } from "@/components/calendar-sources";
@@ -54,7 +54,9 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
   const mainConnected = !!setup?.status.native.connected;
   // Buchungsseite des Kundenkontos (Slug entsteht mit der Kalender-Verbindung des Kontos)
   const hasConnection = !!(await prisma.calendarConnection.findUnique({ where: { customerId: ctx.customerId }, select: { id: true } }));
-  const bookingUrl = hasConnection ? `${appUrl() ?? ""}/book/${await getOrCreateBookingSlug(ctx.customerId)}` : null;
+  // Auf der eigenen Buchungsadresse (dein-beratungstermin.de/<slug>), sobald eingerichtet
+  const slug = hasConnection ? await getOrCreateBookingSlug(ctx.customerId) : null;
+  const bookingUrl = slug ? (bookingPageUrl(slug) ?? `/book/${slug}`) : null;
   const gcalNote =
     gcal === "connected" ? (
       <p className="mb-4 font-medium text-emerald-700">Kalender verbunden.</p>

@@ -3,7 +3,7 @@
 
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
-import { getAppUrl } from "@/lib/email";
+import { publicUrlOr } from "@/lib/public-url";
 import {
   ERSTINFO_MAX_BYTES,
   asVermittlerStatus,
@@ -39,13 +39,8 @@ export async function getOrCreateErstinfo(customerId: string) {
 /** Öffentliche Adresse der Erstinformation dieses Kunden (immer erreichbar, auch ohne PDF oder Link). */
 export async function erstinfoUrlFor(customerId: string): Promise<string> {
   const { token } = await getOrCreateErstinfo(customerId);
-  let base = "https://app.performancegrowth.de";
-  try {
-    base = getAppUrl();
-  } catch {
-    /* ohne APP_URL (lokal, Tests): Standardadresse */
-  }
-  return `${base.replace(/\/$/, "")}/erstinformation/${token}`;
+  // Eigene Buchungsadresse, sonst App; ohne APP_URL (lokal, Tests) die Standardadresse
+  return publicUrlOr(`/erstinformation/${token}`);
 }
 
 export type ErstinfoView = {

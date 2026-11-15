@@ -5,7 +5,7 @@
 // Token, nur der Hash liegt im Protokoll (BestandConsentLog.tokenHash).
 
 import crypto from "node:crypto";
-import { getAppUrl } from "@/lib/email";
+import { publicBaseOrNull } from "@/lib/public-url";
 
 const secret = () => process.env.AUTH_SECRET ?? "dev-secret";
 const sig = (v: string) => crypto.createHmac("sha256", secret()).update(`bestand-link:${v}`).digest("base64url").slice(0, 22);
@@ -27,12 +27,9 @@ export function verifyLink(token: string): { kind: LinkKind; id: string } | null
   return { kind: m[1] as LinkKind, id: m[2] };
 }
 
+/** Eigene Buchungsadresse, sonst App-Adresse (lib/public-url.ts). */
 function base(): string {
-  try {
-    return getAppUrl();
-  } catch {
-    return "https://app.performancegrowth.de";
-  }
+  return publicBaseOrNull() ?? "https://app.performancegrowth.de";
 }
 
 export const unsubscribeUrl = (recipientId: string) => `${base()}/abmelden/${signLink("r", recipientId)}`;

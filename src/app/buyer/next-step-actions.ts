@@ -23,7 +23,7 @@ import { planTerminErinnerung } from "@/lib/mail/termin-erinnerung";
 import { STANDARD_VORLAGEN_JE } from "@/lib/mail/vorlagen";
 import { prisma } from "@/lib/prisma";
 import { recordUsage } from "@/lib/usage";
-import { appUrl } from "@/lib/whatsapp/event-text";
+import { bookingPageUrl } from "@/lib/public-url";
 import type { InboxResult, UndoSnapshot } from "@/app/buyer/inbox-actions";
 
 const PREVIEW = "In der Vorschau nur mit Demo-Leads möglich.";
@@ -96,8 +96,8 @@ async function anspracheFor(customerId: string): Promise<Ansprache> {
 
 async function terminlinkFor(customerId: string, leadId: string): Promise<string | null> {
   const cal = await prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true, bookingSlug: true } });
-  const base = appUrl();
-  return cal?.status === "connected" && cal.bookingSlug && base ? `${base}/book/${cal.bookingSlug}?lead=${leadId}` : null;
+  // Persönlicher Link für den Kontakt, auf der eigenen Buchungsadresse (lib/public-url.ts)
+  return cal?.status === "connected" && cal.bookingSlug ? bookingPageUrl(cal.bookingSlug, { lead: leadId }) : null;
 }
 
 // ─── Angaben für die Dialoge ───────────────────────────────────────────────

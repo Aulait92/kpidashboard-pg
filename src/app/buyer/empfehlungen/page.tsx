@@ -278,6 +278,7 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
                 reward: { kind: settings.rewardRaw.kind, amount: settings.rewardRaw.amount, note: settings.rewardRaw.note, trigger: settings.rewardRaw.trigger, confirmed: !!settings.rewardRaw.confirmedAt },
               }}
               vermittlerTyp={customer?.vermittlerTyp ?? null}
+              linkExample={referralLinkFor("…")}
               vertreter={personFromCustomerName(customer?.name ?? "") || vertreter}
               readOnly={ctx.preview}
             />

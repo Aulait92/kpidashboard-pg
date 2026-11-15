@@ -20,6 +20,7 @@ import { loadConsentSettings } from "@/lib/bestand/einwilligung-server";
 import { defaultCampaignMail, imprintFromWebsiteInfo } from "@/lib/bestand/kampagnen-mail";
 import { needsSubmit, templateNotice, templateState, TEMPLATE_STATE_LABEL } from "@/lib/whatsapp/vorlagen-hinweis";
 import { advisorPerson } from "@/lib/lead-anrede";
+import { publicUrlOr } from "@/lib/public-url";
 import { agentConfirmText, isAgencyBound, mayOffer, needsAgentConfirm } from "@/lib/bestand/befugnis";
 
 export const dynamic = "force-dynamic";
@@ -91,7 +92,8 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   const valueSum = Number(value?._sum.premiumTotal ?? 0);
   const eurRound = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
   // Vorschau wie beim Versand: Bestandskunden werden gesiezt, „Guten Tag Frau Muster,“ (Anrede aus dem Bestand)
-  const rest = [occasion === "empfehlung" ? "https://app.performancegrowth.de/empfehlung/…" : (topic ?? "")];
+  const linkExample = publicUrlOr("/empfehlung/…");
+  const rest = [occasion === "empfehlung" ? linkExample : (topic ?? "")];
   const pick = rankTemplates(templates, purpose, "sie", { firstName: "Erika", lastName: "Muster", salutation: "Frau" });
   const preview = pick
     ? renderTemplate(pick.tpl.body, pick.params(rest))
@@ -102,7 +104,7 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   const mailPreview = await campaignMailFor(
     { customerId: ctx.customerId, occasion, topic, mailSubject: null, mailBody: null },
     { id: "vorschau", firstName: "Erika", lastName: "Muster", salutation: "Frau" },
-    { recipientId: "vorschau0", customerName: c.name, imprint, meinname, empfehlungslink: occasion === "empfehlung" ? "https://app.performancegrowth.de/empfehlung/…" : null },
+    { recipientId: "vorschau0", customerName: c.name, imprint, meinname, empfehlungslink: occasion === "empfehlung" ? linkExample : null },
   );
 
   // Startbereit? Je Kanal nur prüfen, wenn er gebraucht wird. WhatsApp-Vorlage darf noch warten (startet nach Freigabe).

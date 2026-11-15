@@ -23,11 +23,11 @@ import {
 } from "@/lib/calendar/microsoft";
 import { decryptSecret } from "@/lib/encryption";
 import {
-  appUrl,
   buildEventDescription,
   eventSummary,
 } from "@/lib/whatsapp/event-text";
 import { sendLeadEmail } from "@/lib/calendar/lead-email";
+import { manageUrlFor } from "@/lib/public-url";
 import { recordLeadProgress } from "@/lib/lead-progress";
 import { sendToBuyersOfCustomer, sendToUser } from "@/lib/push";
 import { notifyLeadPush } from "@/lib/team";
@@ -285,7 +285,8 @@ export async function bookAppointment(opts: {
   const keys = await bookingKeys(opts.customerId, opts.leadId);
   // Geheimer Verwaltungs-Link für den Lead (absagen/verschieben), 144 Bit.
   const manageToken = randomBytes(18).toString("base64url");
-  const manageUrl = `${appUrl() ?? ""}/book/manage/${manageToken}`;
+  // Auf der eigenen Buchungsadresse, falls eingerichtet (lib/public-url.ts)
+  const manageUrl = manageUrlFor(manageToken);
   const start = new Date(opts.start);
   // Dauer: wie übergeben (z. B. beim Verschieben die alte), sonst die eingestellte Termindauer
   const durationMin = opts.durationMin ?? (await durationForKeys(opts.customerId, keys));

@@ -1,6 +1,6 @@
 // Kampagnen-Agenten: Kontext aus der Kundenakte laden und Voraussetzungen prüfen.
 
-import { getAppUrl } from "@/lib/email";
+import { publicUrl } from "@/lib/public-url";
 import { getOrCreateBookingSlug } from "@/lib/calendar";
 import { libraryWinners, winnersBlock } from "@/lib/kampagnen/ad-library";
 import { prisma } from "@/lib/prisma";
@@ -92,7 +92,7 @@ export async function loadCampaignContext(
     needsBooking: c.plan !== "service",
     bookingUrl:
       c.plan !== "service" && c.calendarConnection?.status === "connected"
-        ? `${getAppUrl().replace(/\/$/, "")}/book/${await getOrCreateBookingSlug(c.id)}`
+        ? publicUrl(`/book/${await getOrCreateBookingSlug(c.id)}`)
         : null,
     // Gewinner anderer aus der Meta-Werbebibliothek (ohne Zugang zur Bibliothek: leer)
     libraryWinners: winnersBlock(await libraryWinners(product, { excludePages: [c.name] }).catch(() => [])),

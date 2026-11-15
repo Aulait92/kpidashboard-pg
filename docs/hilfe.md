@@ -267,6 +267,13 @@ Seiten aus der Liste „Seiten“ unten.
 - Buchung über „Termin“ beim Lead (Fenster in der App) oder die Buchungsseite: Beide zeigen nur Ihre Lead-Zeiten (unter „Mein Kalender“),
   die in Ihrem Kalender noch frei sind, Telefon oder Video. Das gilt auch, wenn ein Lead selbst bucht
   oder verschiebt.
+- **Ihr Buchungslink:** steht unter „Mein Kalender“ → „Ihre Buchungsseite“ (Kopieren oder Öffnen). Er lautet jetzt
+  kurz `dein-beratungstermin.de/ihr-name` (neutrale Adresse ohne unseren Namen), z. B. für E-Mail-Signatur, WhatsApp
+  und Ihre Website. Auch alle anderen Seiten für Ihre Kunden laufen dort: Termin verschieben oder absagen,
+  Kalenderdatei, Empfehlung, Einwilligung, Abmelden und Erstinformation. Unten auf diesen Seiten stehen Ihr Impressum
+  und Ihre Datenschutzerklärung (aus Ihrer Website, siehe Einrichtung). Alte Links mit `app.performancegrowth.de/book/…`
+  funktionieren weiter und führen automatisch zur neuen Adresse; im Leadformular bei Meta muss nichts geändert werden.
+  Zum Einbinden auf Ihrer Website per iframe nehmen Sie die lange Form `dein-beratungstermin.de/book/ihr-name`.
 - **Verschieben oder absagen:** auf „Heute“ (Termin antippen → **Verschieben oder absagen**), beim Lead an der
   Termin-Karte (**Verschieben**) oder im Chat. Es öffnet sich ein Fenster direkt in der App (auf dem Handy von unten):
   - Oben steht der aktuelle Termin (Tag, Uhrzeit, Telefonat oder Videocall, Dauer).

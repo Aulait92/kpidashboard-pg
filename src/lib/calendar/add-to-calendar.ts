@@ -8,8 +8,8 @@ import { advisorPerson } from "@/lib/advisor-name";
 import { anredeZeile, asAnsprache } from "@/lib/ansprache";
 import { kontaktFromLead } from "@/lib/lead-anrede";
 import { prisma } from "@/lib/prisma";
+import { manageUrlFor } from "@/lib/public-url";
 import {
-  appUrl,
   customerEventDescription,
   customerEventSummary,
 } from "@/lib/whatsapp/event-text";
@@ -69,7 +69,7 @@ async function loadCustomerEvent(
   // Person (Ole, 14.11.2026): Anzeigename des zuständigen Beraters, sonst „Agentur Susanne Meier“ → „Susanne Meier“
   const advisor = advisorPerson(appt.customer.name, appt.lead?.assignedUser?.displayName) || appt.customer.name;
   const mode = appt.mode === "video" ? "video" : "phone";
-  const manageUrl = `${appUrl() ?? ""}/book/manage/${token}`;
+  const manageUrl = manageUrlFor(token);
   const an = asAnsprache(appt.customer.leadAddress);
   const hi = anredeZeile(an, kontaktFromLead(appt.lead, conv?.contactName ?? null));
   return {

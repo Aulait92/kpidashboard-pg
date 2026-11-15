@@ -1,6 +1,6 @@
 import { getOrCreateBookingSlug, hasRequiredScopes, PROVIDER_LABELS } from "@/lib/calendar";
 import { prisma } from "@/lib/prisma";
-import { appUrl } from "@/lib/whatsapp/event-text";
+import { bookingPageUrl } from "@/lib/public-url";
 
 // Buchungskalender eines Kunden (Admin): Verbindung, Hinweis auf fehlende
 // Berechtigung und Buchungslink für das Meta-Leadformular. Stand früher in der
@@ -11,7 +11,8 @@ export async function CalendarCard({ customerId, anchor }: { customerId: string;
     select: { status: true, provider: true, accountEmail: true, calendarId: true, scope: true },
   });
   const connected = conn?.status === "connected";
-  const bookingUrl = connected ? `${appUrl() ?? ""}/book/${await getOrCreateBookingSlug(customerId)}` : null;
+  const slug = connected ? await getOrCreateBookingSlug(customerId) : null;
+  const bookingUrl = slug ? (bookingPageUrl(slug) ?? `/book/${slug}`) : null;
 
   return (
     <div id={anchor} className="scroll-mt-20 rounded-xl border border-[color:var(--border)] bg-white p-4 text-sm">

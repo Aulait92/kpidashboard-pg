@@ -35,7 +35,7 @@ import { istSpaeter } from "@/lib/mail/termin-erinnerung";
 import { wuenscheVorschlag } from "@/lib/mail/beratung";
 import { LeadMailComposer } from "@/components/lead-mail";
 import { asAnsprache, namePartsFromForm, salutationFromForm } from "@/lib/ansprache";
-import { appUrl } from "@/lib/whatsapp/event-text";
+import { bookingPageUrl } from "@/lib/public-url";
 import { LeadFiles } from "@/components/lead-files";
 import { LeadStammdatenEdit } from "@/components/lead-stammdaten-edit";
 import { applyStammdatenToFields, currentStammdaten, formWithOverrides } from "@/lib/lead-stammdaten";
@@ -310,8 +310,7 @@ export async function LeadDetailBody({
   const ansprache = postfach
     ? asAnsprache((await prisma.customer.findUnique({ where: { id: customerId }, select: { leadAddress: true } }))?.leadAddress)
     : "sie";
-  const base = appUrl();
-  const terminlink = postfach && !nextAppt && cal?.status === "connected" && cal.bookingSlug && base ? `${base}/book/${cal.bookingSlug}?lead=${lead.id}` : null;
+  const terminlink = postfach && !nextAppt && cal?.status === "connected" && cal.bookingSlug ? bookingPageUrl(cal.bookingSlug, { lead: lead.id }) : null;
   let beitrag: string | null = null;
   let provision: string | null = null;
   // Verträge (Cross-Selling): der erste aus dem Abschluss, weitere im Kontakt eingetragen
