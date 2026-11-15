@@ -27,6 +27,7 @@ import { includedPhrase } from "@/lib/seats";
 import { loadReferralSettings } from "@/lib/kollegen";
 import { referralIncentiveSentence } from "@/lib/kollegen-shared";
 import { contractCancelInfo } from "@/lib/vertrag-kuendigung";
+import { helpCallSlots } from "@/lib/help-call";
 import { VertragKuendigen } from "./vertrag-kuendigen";
 
 export const dynamic = "force-dynamic";
@@ -103,6 +104,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const provision = await loadCustomerProvision(ctx.customerId);
   // „Vertrag hier kündigen“: für alle Kunden mit Vertrag (Angebot oder Betreuung), nicht intern
   const cancelInfo = customer.plan !== "internal" && (offer || customer.retainerStart) ? await contractCancelInfo(ctx.customerId) : null;
+  // Anti-Churn: freie 15-Minuten-Termine fürs Kündigungsfenster (nur wenn kündbar und noch nicht gekündigt)
+  const churnSlots = cancelInfo && !cancelInfo.ended && !cancelInfo.requested && !ctx.preview ? await helpCallSlots().catch(() => []) : [];
   const today = todayBerlin();
   const startYmd = customer.retainerStart ? new Intl.DateTimeFormat("sv-SE", { timeZone: TZ }).format(customer.retainerStart) : today;
   const softwareFee = offer ? Number(offer.softwareFee) : customer.plan === "service" ? 0 : 349;
@@ -229,11 +232,15 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 customerName={customer.name}
                 email={ctx.email}
                 readOnly={ctx.preview}
+                slots={churnSlots}
+                hasModules={!!(customer.existingCustomersEnabled || customer.empfehlungEnabled)}
+                canPause={!pause}
               />
             </div>
           ) : null}
         </Card>
 
+        <div id="budget" className="scroll-mt-20" />
         <BudgetCard
           lines={budget.lines}
           upcoming={budget.upcoming.map((u) => ({ ...u, validFrom: u.validFrom.toISOString() }))}
@@ -246,6 +253,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
         <ProductsCard booked={products.booked} bookable={products.bookable} lines={products.lines} ctx={products.ctx} today={today} readOnly={ctx.preview} />
 
+        <div id="pause" className="scroll-mt-20" />
         <PauseCard
           pause={pause ? { status: pause.status, startsAt: pause.startsAt.toISOString(), endsAt: pause.endsAt?.toISOString() ?? null, kind: pause.kind } : null}
           today={today}

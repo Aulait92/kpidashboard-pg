@@ -271,6 +271,8 @@ model Customer {
   conversations            Conversation[]           @relation("ConversationCustomer")
   /// Support-Chats (Support-Nummer), die diesem Kunden zugeordnet sind (lib/whatsapp/support-contacts.ts)
   supportConversations     Conversation[]           @relation("ConversationLinkedCustomer")
+  /// Kündigungsabsichten aus dem Anti-Churn-Flow (lib/anti-churn-server.ts)
+  churnIntents             ChurnIntent[]
   appointments             Appointment[]
   messageTemplates         MessageTemplate[]
   consentOptIns            ConsentOptIn[]
@@ -3609,4 +3611,24 @@ model Erstinformation {
   updatedById    String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+}
+
+/// Anti-Churn (Ole, 15.11.2026): Kunde hat „Vertrag hier kündigen“ geöffnet und einen Grund angegeben.
+/// outcome: offen | alternative (Pause, Budget, Module, Termin, Check, Rückruf gewählt) | gekuendigt
+model ChurnIntent {
+  id         String    @id @default(cuid())
+  customerId String
+  userId     String?
+  reason     String?
+  note       String?
+  offer      String?
+  outcome    String    @default("offen")
+  decidedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, createdAt])
+  @@index([outcome, createdAt])
 }

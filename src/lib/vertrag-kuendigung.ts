@@ -106,6 +106,8 @@ export async function cancelContract(customerId: string, opts: { actor: AuditAct
     const again = await contractCancelInfo(customerId, now);
     return again?.requested ? { ok: true, effectiveIso: again.requested.effectiveIso, receivedAt: again.requested.at, already: true } : { ok: false, error: "Das hat gerade nicht geklappt. Bitte versuchen Sie es noch einmal." };
   }
+  // Anti-Churn: offene Kündigungsabsichten als „gekündigt“ abschließen
+  await import("@/lib/anti-churn-server").then((m) => m.closeChurnIntents(customerId, now)).catch(() => {});
   await audit("contract.cancel", {
     entity: "Customer",
     entityId: customerId,
