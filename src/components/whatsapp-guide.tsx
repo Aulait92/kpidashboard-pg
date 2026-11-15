@@ -174,9 +174,23 @@ export function WhatsAppGuide({
             </div>
           ) : null}
 
+          {canStart && showVideo ? (
+            <div data-whatsapp-video>
+              <h3 className="mb-2 flex items-center gap-2 text-[15px] font-semibold">
+                <PlayCircle className="h-4 w-4 text-[color:var(--brand)]" /> So läuft es ab: {VIDEOS.whatsapp.title}
+              </h3>
+              <IntroVideo kind="whatsapp" />
+            </div>
+          ) : null}
+
+          {/* Video statt langer Schrittliste (Ole, 15.11.2026); die Schritte bleiben zum Nachlesen eingeklappt. */}
           {showSteps && guide.steps.length ? (
-            <div>
-              <h3 className="mb-2 text-[15px] font-semibold">So läuft es ab</h3>
+            canStart && showVideo ? (
+              <details className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-3" data-whatsapp-steps>
+                <summary className="flex cursor-pointer items-center gap-2 text-[15px] font-medium text-[color:var(--brand)]">
+                  <ListChecks className="h-4 w-4" /> Alle Schritte zum Nachlesen ({guide.steps.length})
+                </summary>
+                <div className="mt-3">
               <ol className="space-y-3">
                 {guide.steps.map((s, i) => (
                   <li key={s.title} className="flex gap-3">
@@ -194,18 +208,30 @@ export function WhatsAppGuide({
                   </li>
                 ))}
               </ol>
-            </div>
-          ) : null}
-
-          {canStart && showVideo ? (
-            <details className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-3" data-whatsapp-video>
-              <summary className="flex cursor-pointer items-center gap-2 text-[15px] font-medium text-[color:var(--brand)]">
-                <PlayCircle className="h-4 w-4" /> Erst ansehen: {VIDEOS.whatsapp.title}
-              </summary>
-              <div className="mt-3">
-                <IntroVideo kind="whatsapp" />
+                </div>
+              </details>
+            ) : (
+              <div>
+                <h3 className="mb-2 text-[15px] font-semibold">So läuft es ab</h3>
+              <ol className="space-y-3">
+                {guide.steps.map((s, i) => (
+                  <li key={s.title} className="flex gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[color:var(--surface-sunken,#f1f5f9)] text-xs font-semibold tabular-nums">
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[15px] font-medium">{s.title}</span>
+                        <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", WHERE_CLASS[s.where])}>{WHERE_LABEL[s.where]}</span>
+                      </div>
+                      <p className="mt-0.5 text-sm text-[color:var(--muted)]">{s.text}</p>
+                      {s.pitfall ? <p className="mt-1 text-sm text-amber-800">Falls es hakt: {s.pitfall}</p> : null}
+                    </div>
+                  </li>
+                ))}
+              </ol>
               </div>
-            </details>
+            )
           ) : null}
 
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
