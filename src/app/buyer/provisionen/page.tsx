@@ -57,8 +57,8 @@ export default async function ProvisionenPage() {
       <EigeneProdukte products={provision.products} canEdit={canEdit} />
       <p className="mt-5 px-1 text-sm text-[color:var(--muted)]">
         Aufgaben nach einem Abschluss („Weiteres Produkt anbieten?“, „Police da und erste Zahlung erfolgt?“) schalten Sie unter{" "}
-        <Link href="/buyer/einstellungen#aufgaben" className="font-medium text-[color:var(--brand)] underline">
-          Einstellungen → Aufgaben und Erinnerungen
+        <Link href="/buyer/einstellungen/erinnerungen#aufgaben" className="font-medium text-[color:var(--brand)] underline">
+          Einstellungen → Erinnerungen &amp; Aufgaben
         </Link>
         .
       </p>
