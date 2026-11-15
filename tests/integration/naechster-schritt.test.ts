@@ -15,7 +15,7 @@ vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 const push = vi.fn();
 const mail = vi.fn();
 vi.mock("@/lib/push", async (orig) => ({ ...(await orig<typeof import("@/lib/push")>()), sendToUser: (...a: unknown[]) => push(...a) }));
-vi.mock("@/lib/email", async (orig) => ({ ...(await orig<typeof import("@/lib/email")>()), sendPlainMail: (...a: unknown[]) => mail(...a) }));
+vi.mock("@/lib/email", async (orig) => ({ ...(await orig<typeof import("@/lib/email")>()), sendCustomerMail: (...a: unknown[]) => mail(...a) }));
 const send = vi.fn();
 vi.mock("@/lib/whatsapp/templates", async (orig) => {
   const real = await orig<typeof import("@/lib/whatsapp/templates")>();

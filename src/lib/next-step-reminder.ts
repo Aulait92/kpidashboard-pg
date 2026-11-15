@@ -6,7 +6,7 @@
 // Zuständig: Berater für ihre zugeteilten Leads. Inhaber: eigene und nicht zugeteilte Leads (ohne Team: alle).
 
 import type { Prisma } from "@/generated/prisma/client";
-import { sendPlainMail } from "@/lib/email";
+import { sendCustomerMail } from "@/lib/email";
 import { appUrl } from "@/lib/whatsapp/event-text";
 import { NEXT_STEP_TASK_NOTE, resultMissingWhere, withoutNextStepWhere } from "@/lib/lead-next-step";
 import { prisma } from "@/lib/prisma";
@@ -98,10 +98,27 @@ async function remindUser(
   const t = reminderText(total, resultMissing);
   const url = "/buyer/kontakte?ansicht=ohne-schritt";
   await sendToUser(u.id, { title: t.title, body: t.body, url: "/buyer", tag: `next-step:${day}` }).catch((e) => console.error("[next-step reminder push]", e));
-  await sendPlainMail({
+  // Gestaltete Mail mit Knopf und unserer Signatur (Ole, 15.11.2026; vorher reiner Text ohne Signatur).
+  // Knopf vor dem Abschalt-Hinweis, deshalb beides als eigener HTML-Block.
+  const leadsUrl = base ? `${base}${url}` : null;
+  const settingsUrl = base ? `${base}/buyer/einstellungen` : null;
+  await sendCustomerMail({
     to: u.email,
     subject: t.title,
-    text: `Guten Morgen,\n\n${t.body}${base ? `\n\n${base}${url}` : ""}\n\nDiese Erinnerung können Sie unter Einstellungen abschalten.\n\nIhr performancegrowth-Team`,
+    greeting: "Guten Morgen,",
+    paragraphs: [t.body],
+    html: [
+      leadsUrl
+        ? `<p style="margin:8px 0 24px"><a href="${leadsUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">Leads ansehen</a></p>`
+        : "",
+      `<p style="margin:0;font-size:13px;line-height:1.6;color:#66758f">Diese Erinnerung können Sie unter ${
+        settingsUrl ? `<a href="${settingsUrl}" style="color:#66758f">Einstellungen → Benachrichtigungen</a>` : "Einstellungen → Benachrichtigungen"
+      } abschalten.</p>`,
+    ].join(""),
+    textBlocks: [
+      ...(leadsUrl ? [`Leads ansehen: ${leadsUrl}`, ""] : []),
+      `Diese Erinnerung können Sie unter Einstellungen → Benachrichtigungen abschalten${settingsUrl ? `: ${settingsUrl}` : "."}`,
+    ],
   }).catch((e) => console.error("[next-step reminder mail]", e));
   return true;
 }
