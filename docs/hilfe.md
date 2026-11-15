@@ -1096,6 +1096,14 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
 - „Nummer wird bereits verwendet“: Die Nummer läuft noch in einer WhatsApp-App. Den passenden Weg
   wählen (Business App) oder eine andere Nummer nehmen.
 - Anzeigename abgelehnt: an den Firmennamen (wie im Impressum) anpassen.
+- 360dialog zeigt „Choose a plan“ bzw. „Pending Activation“: nichts kaufen, Fenster schließen, uns schreiben. Der
+  Tarif läuft über uns, wir schalten die Nummer frei und verbinden sie.
+- „This phone number belongs to another business“: Die Nummer hängt in einem anderen Meta-Portfolio. Dort
+  entfernen oder eine andere Nummer nehmen.
+- Weitere Hinweise aus dem Ablauf: Land auf +49 stellen, Nummer ohne führende 0, nicht „Display Name only“;
+  eigenes Portfolio wählen (Meta schlägt manchmal ein fremdes vor); neues Portfolio mit Namen wie im
+  Handelsregister, Kategorie „Finance“, Zeitzone Europe/Berlin; auf der letzten Meta-Seite beide Häkchen zur
+  Weitergabe von Ereignisdaten entfernen.
 - Fehler nach der Rückkehr: Wir bekommen automatisch Bescheid und melden uns. Lieber gemeinsam?
   15-Minuten-Hilfetermin in der Einrichtung buchen.
 
