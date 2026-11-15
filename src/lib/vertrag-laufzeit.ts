@@ -33,6 +33,19 @@ export const nextDayIso = (s: string) => {
   return iso(y, m, d + 1);
 };
 
+/** Ende eines Kalendertags in Berlin = 00:00 Uhr Berliner Zeit am Folgetag (als UTC-Zeitpunkt). */
+export function berlinEndOfDay(dayIso: string): Date {
+  const next = nextDayIso(dayIso);
+  const [y, m, d] = parts(next);
+  // Berlin ist UTC+1 oder UTC+2: den Kandidaten nehmen, der in Berlin genau 00:00 am Folgetag ist
+  for (const offset of [1, 2]) {
+    const t = new Date(Date.UTC(y, m - 1, d, -offset));
+    const local = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(t);
+    if (local === `${next} 00:00`) return t;
+  }
+  return new Date(Date.UTC(y, m - 1, d, -1));
+}
+
 /** TT.MM.JJJJ */
 export const fmtIso = (s: string) => s.split("-").reverse().join(".");
 

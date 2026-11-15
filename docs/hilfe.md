@@ -663,7 +663,8 @@ Seiten aus der Liste „Seiten“ unten.
   Termin: während der Mindestlaufzeit zu deren Ende; ohne bzw. nach der Mindestlaufzeit zum Ende des laufenden
   Abrechnungsmonats (Abrechnungsmonate laufen ab dem Starttag, z. B. 15. bis 14.); bei jährlicher Vorauszahlung zum
   Ende des Zahlungsjahres, wenn die Kündigung spätestens einen Monat vorher eingeht, sonst ein Jahr später. Bis zum
-  Ende läuft alles weiter, Zusatzmodule enden mit dem Vertrag. Spätestens 30 Tage nach Vertragsende werden die Daten
+  Ende läuft alles weiter, Zusatzmodule enden mit dem Vertrag, danach wird nichts mehr abgebucht (die Online-Abrechnung
+  endet automatisch zum Vertragsende). Spätestens 30 Tage nach Vertragsende werden die Daten
   der Leads und Kunden gelöscht. Nur Inhaber. Zurücknehmen oder anderer Termin (z. B. außerordentlich): bitte bei
   uns melden.
 - Vertragsfragen: bitte direkt bei uns melden.

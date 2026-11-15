@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  berlinEndOfDay,
   cancelDate,
   cancelDateText,
   contractSummaryLines,
@@ -27,6 +28,15 @@ describe("periodEndIso (§ 188 BGB)", () => {
     expect(periodEndIso("2027-01-29", 1)).toBe("2027-02-28");
     // Abrechnungsmonate zählen vom Starttag, nicht vom verkürzten Februar
     expect(periodEndIso("2027-01-31", 2)).toBe("2027-03-30");
+  });
+});
+
+describe("berlinEndOfDay", () => {
+  it("00:00 Uhr Berliner Zeit am Folgetag (Sommer- und Winterzeit)", () => {
+    expect(berlinEndOfDay("2027-09-30").toISOString()).toBe("2027-09-30T22:00:00.000Z");
+    expect(berlinEndOfDay("2026-12-14").toISOString()).toBe("2026-12-14T23:00:00.000Z");
+    expect(berlinEndOfDay("2027-03-27").toISOString()).toBe("2027-03-27T23:00:00.000Z");
+    expect(berlinEndOfDay("2027-03-28").toISOString()).toBe("2027-03-28T22:00:00.000Z");
   });
 });
 

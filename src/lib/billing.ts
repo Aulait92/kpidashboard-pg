@@ -1395,3 +1395,90 @@ export async function reconcileSeatBilling(now = new Date()): Promise<{ changed:
   }
   return { changed, errors };
 }
+
+// ─── Vertragsende nach „Vertrag hier kündigen“ (Ole, 15.11.2026) ─────────────
+
+export type ContractEndResult =
+  | { ok: true; changed: string[]; unchanged: string[] }
+  | { ok: false; error: string; changed: string[] };
+
+/**
+ * Alle laufenden Abos und geplanten Abo-Starts des Kunden enden zum Zeitpunkt `endAt` (Stripe `cancel_at`,
+ * keine sofortige Kündigung, keine anteilige Gutschrift). Idempotent: steht `cancel_at` schon auf `endAt`,
+ * passiert nichts.
+ * - Abo ohne Zeitplan bzw. in der letzten Phase: Zeitplan lösen, dann `cancel_at` am Abo
+ * - Zeitplan noch nicht gestartet oder Startpreis-Phase läuft: Phasen bei `endAt` enden lassen, end_behavior „cancel“
+ * Kein laufendes Abo und kein geplanter Start → ok: false (bitte von Hand prüfen).
+ */
+export async function endSubscriptionsAt(stripeCustomerId: string, endAt: Date, now = new Date()): Promise<ContractEndResult> {
+  const stripe = stripeClient();
+  if (!stripe) return { ok: false, error: "Stripe ist nicht eingerichtet.", changed: [] };
+  const ts = Math.floor(endAt.getTime() / 1000);
+  const changed: string[] = [];
+  const unchanged: string[] = [];
+  try {
+    const subs = (await stripe.subscriptions.list({ customer: stripeCustomerId, status: "all", limit: 10 })).data.filter((s) =>
+      ["active", "past_due", "trialing", "unpaid", "incomplete"].includes(s.status),
+    );
+    const handledSchedules = new Set<string>();
+    for (const sub of subs) {
+      const scheduleId = typeof sub.schedule === "string" ? sub.schedule : (sub.schedule?.id ?? null);
+      if (scheduleId) {
+        handledSchedules.add(scheduleId);
+        const schedule = await stripe.subscriptionSchedules.retrieve(scheduleId);
+        const last = schedule.phases[schedule.phases.length - 1];
+        if (schedule.status === "active" && last && last.start_date > now.getTime() / 1000) {
+          // Startpreis-Phase läuft noch: den Zeitplan selbst zum Termin enden lassen
+          if (await endScheduleAt(stripe, schedule, ts)) changed.push(scheduleId);
+          else unchanged.push(scheduleId);
+          continue;
+        }
+        // Letzte Phase läuft: Zeitplan lösen, danach ist das Abo frei änderbar (wie detachSchedule)
+        if (schedule.status === "active") await stripe.subscriptionSchedules.release(scheduleId);
+      }
+      if (sub.cancel_at === ts && !sub.cancel_at_period_end) {
+        unchanged.push(sub.id);
+        continue;
+      }
+      await stripe.subscriptions.update(sub.id, { cancel_at: ts, proration_behavior: "none" }, { idempotencyKey: `contract-end-${sub.id}-${ts}` });
+      changed.push(sub.id);
+    }
+    // Abo-Start noch nicht erreicht (Angebot vor dem Startdatum)
+    const schedules = (await stripe.subscriptionSchedules.list({ customer: stripeCustomerId, limit: 10 })).data.filter(
+      (s) => s.status === "not_started" && !handledSchedules.has(s.id),
+    );
+    for (const s of schedules) {
+      if (await endScheduleAt(stripe, s, ts)) changed.push(s.id);
+      else unchanged.push(s.id);
+    }
+    if (!changed.length && !unchanged.length) return { ok: false, error: "Kein laufendes Stripe-Abo gefunden.", changed };
+    return { ok: true, changed, unchanged };
+  } catch (err) {
+    reportError(err, "billing-contract-end", { stripeCustomer: stripeCustomerId });
+    return { ok: false, error: err instanceof Error ? err.message.slice(0, 300) : String(err), changed };
+  }
+}
+
+/** Zeitplan zum Zeitpunkt `ts` enden lassen (spätere Phasen fallen weg); false = stand schon so. */
+async function endScheduleAt(stripe: Stripe, schedule: Stripe.SubscriptionSchedule, ts: number): Promise<boolean> {
+  const kept = schedule.phases.filter((ph) => ph.start_date < ts);
+  if (!kept.length) {
+    // Vertragsende vor dem Abo-Start: geplanten Start streichen
+    await stripe.subscriptionSchedules.cancel(schedule.id);
+    return true;
+  }
+  const lastKept = kept[kept.length - 1];
+  if (schedule.end_behavior === "cancel" && lastKept.end_date === ts && kept.length === schedule.phases.length) return false;
+  const phases: Stripe.SubscriptionScheduleUpdateParams.Phase[] = kept.map((ph, i) => ({
+    items: ph.items.map((it) => ({
+      price: typeof it.price === "string" ? it.price : it.price.id,
+      quantity: it.quantity ?? 1,
+      ...(it.tax_rates?.length ? { tax_rates: it.tax_rates.map((t) => (typeof t === "string" ? t : t.id)) } : {}),
+    })),
+    start_date: ph.start_date,
+    end_date: i === kept.length - 1 ? ts : ph.end_date,
+    ...(ph.metadata && Object.keys(ph.metadata).length ? { metadata: ph.metadata } : {}),
+  }));
+  await stripe.subscriptionSchedules.update(schedule.id, { phases, end_behavior: "cancel", proration_behavior: "none" });
+  return true;
+}

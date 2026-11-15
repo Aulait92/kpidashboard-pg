@@ -25,7 +25,7 @@ export async function RetainerCard({ customerId, message, failed }: { customerId
         {c.cancelRequestedAt && c.cancelEffectiveAt ? (
           <p className="rounded-[var(--radius-sm)] bg-amber-50 px-3 py-2 text-amber-900" data-admin-kuendigung>
             <b>Vom Kunden gekündigt</b> am {dmy(c.cancelRequestedAt)} ({c.cancelRequestedBy ?? "unbekannt"}) zum <b>{dmy(c.cancelEffectiveAt)}</b>
-            {c.cancelReason ? `. Grund: ${c.cancelReason}` : ""}. Ende unten eintragen und Stripe-Abo zum Termin beenden.
+            {c.cancelReason ? `. Grund: ${c.cancelReason}` : ""}. Ende unten eintragen. Das Stripe-Abo endet automatisch zum Termin, außer die Aufgabe sagt „Stripe bitte von Hand prüfen“.
           </p>
         ) : null}
         <p className="text-[color:var(--muted)]">

@@ -2,7 +2,9 @@
 // Freiwillig nach dem Vorbild von § 312k BGB, obwohl wir nur mit Unternehmern abschließen: Knopf ohne Umwege,
 // Bestätigungsseite mit Termin, Knopf „Jetzt kündigen“, sofortige Bestätigung in Textform (E-Mail) mit
 // Eingang und Vertragsende. Termin nach AGB „Laufzeit und Kündigung“ (lib/vertrag-laufzeit.cancelDate).
-// Ole bekommt Aufgabe und Push: Stripe-Abo zum Termin beenden, retainerEnd setzen, nach Ende Daten löschen.
+// Stripe: alle Abos des Kunden enden automatisch zum Ende des letzten Vertragstags (cancel_at, Ole 15.11.2026);
+// klappt das nicht, bleibt die Kündigung bestehen und die Aufgabe sagt „Stripe bitte von Hand prüfen“.
+// Ole bekommt Aufgabe und Push: retainerEnd setzen, nach Ende Daten löschen.
 
 import { prisma } from "@/lib/prisma";
 import { audit, type AuditActor } from "@/lib/audit";
@@ -10,7 +12,8 @@ import { reportError } from "@/lib/monitoring";
 import { getAppUrl, sendCustomerMail } from "@/lib/email";
 import { customerGreeting } from "@/lib/offer-links";
 import { berlinTodayIso, normalizeTerm, type OfferTerm } from "@/lib/offer-pricing";
-import { cancelDate, cancelDateText, fmtIso, type CancelDate } from "@/lib/vertrag-laufzeit";
+import { berlinEndOfDay, cancelDate, cancelDateText, fmtIso, type CancelDate } from "@/lib/vertrag-laufzeit";
+import { billingEnabled, endSubscriptionsAt } from "@/lib/billing";
 
 const TZ = "Europe/Berlin";
 const berlinIso = (d: Date) => berlinTodayIso(d);
@@ -35,6 +38,8 @@ async function load(customerId: string) {
     select: {
       id: true,
       name: true,
+      isTest: true,
+      stripeCustomerId: true,
       retainerStart: true,
       retainerEnd: true,
       billingInterval: true,
@@ -113,18 +118,22 @@ export async function cancelContract(customerId: string, opts: { actor: AuditAct
   const name = r?.c.name ?? "Kunde";
   const contactId = r?.c.salesContact?.id ?? r?.c.onboarding?.salesContactId ?? null;
   const end = fmtIso(effectiveIso);
+
+  // Stripe: Abo(s) enden zum Ende des letzten Vertragstags (keine sofortige Kündigung, keine Gutschrift)
+  const stripe = await endStripe(customerId, r?.c ?? null, effectiveIso, opts.actor);
   // Ole: Aufgabe in „Heute“ und Push
   await prisma.salesTask
     .create({
       data: {
         contactId,
         type: "SONSTIGES",
-        title: `Kündigung ${name} zum ${end}`,
+        title: `Kündigung ${name} zum ${end}${stripe.manual ? " (Stripe bitte von Hand prüfen)" : ""}`,
         note: [
           `Im Kundenbereich gekündigt am ${fmtIso(berlinIso(now))} ${fmtTime(now)} von ${opts.actor.email ?? "unbekannt"}.`,
           reason ? `Grund: ${reason}` : null,
           `Termin laut AGB: ${end} (${info.next.reason}${info.startIso ? `, Start ${fmtIso(info.startIso)}` : ""}).`,
-          "Zu tun: Stripe-Abo zum Termin beenden, Abrechnung → Betreuungsgebühr Ende setzen, Zusatzmodule beenden. Nach Vertragsende Daten löschen (spätestens 30 Tage, Abrechnung → „Vertragsende: Daten löschen“).",
+          stripe.note,
+          `Zu tun: ${stripe.manual ? "Stripe bitte von Hand prüfen und das Abo zum Termin beenden, " : ""}Abrechnung → Betreuungsgebühr Ende setzen (vorbelegt). Nach Vertragsende Daten löschen (spätestens 30 Tage, Abrechnung → „Vertragsende: Daten löschen“).`,
         ]
           .filter(Boolean)
           .join("\n"),
@@ -133,7 +142,7 @@ export async function cancelContract(customerId: string, opts: { actor: AuditAct
     })
     .catch((err) => reportError(err, "contract-cancel-task", { customer: customerId }));
   const { sendToAdmins } = await import("@/lib/push");
-  await sendToAdmins({ title: `Kündigung: ${name}`, body: `Zum ${end}${reason ? ` · ${reason.slice(0, 80)}` : ""}`, url: `/admin/kunden/${customerId}/abrechnung`, tag: `kuendigung:${customerId}` }).catch(() => {});
+  await sendToAdmins({ title: `Kündigung: ${name}`, body: `Zum ${end}${stripe.manual ? " · Stripe bitte von Hand prüfen" : ""}${reason ? ` · ${reason.slice(0, 80)}` : ""}`, url: `/admin/kunden/${customerId}/abrechnung`, tag: `kuendigung:${customerId}` }).catch(() => {});
 
   // Bestätigung in Textform an Inhaber und die kündigende Person
   const to = [...new Set([...(r?.c.users.map((u) => u.email) ?? []), ...(opts.actor.email ? [opts.actor.email] : [])])];
@@ -160,4 +169,44 @@ export async function cancelContract(customerId: string, opts: { actor: AuditAct
     if (!res.ok) reportError(new Error(res.error), "contract-cancel-mail", { customer: customerId });
   }
   return { ok: true, effectiveIso, receivedAt: now, already: false };
+}
+
+/** Stripe-Abos zum Vertragsende beenden; Ergebnis für Aufgabe, Push und Änderungsprotokoll. */
+async function endStripe(
+  customerId: string,
+  c: { isTest: boolean; stripeCustomerId: string | null } | null,
+  effectiveIso: string,
+  actor: AuditActor,
+): Promise<{ manual: boolean; note: string }> {
+  const endAt = berlinEndOfDay(effectiveIso);
+  let result: { manual: boolean; note: string; details: Record<string, unknown> };
+  if (c?.isTest) {
+    result = { manual: false, note: "Testkunde: kein Stripe-Abo.", details: { skipped: "test" } };
+  } else if (!billingEnabled()) {
+    result = { manual: true, note: "Stripe bitte von Hand prüfen: Online-Abrechnung ist nicht eingerichtet.", details: { skipped: "billing_disabled" } };
+  } else if (!c?.stripeCustomerId) {
+    result = { manual: true, note: "Stripe bitte von Hand prüfen: kein Stripe-Kunde hinterlegt (Abrechnung von Hand?).", details: { skipped: "no_stripe_customer" } };
+  } else {
+    const res = await endSubscriptionsAt(c.stripeCustomerId, endAt);
+    result = res.ok
+      ? {
+          manual: false,
+          note: `Stripe: Abo endet automatisch zum Ende des ${fmtIso(effectiveIso)} (cancel_at ${endAt.toISOString()}${res.changed.length ? `, geändert: ${res.changed.join(", ")}` : ", stand schon so"}).`,
+          details: { ok: true, changed: res.changed, unchanged: res.unchanged },
+        }
+      : {
+          manual: true,
+          note: `Stripe bitte von Hand prüfen: ${res.error}${res.changed.length ? ` (schon geändert: ${res.changed.join(", ")})` : ""}`,
+          details: { ok: false, error: res.error, changed: res.changed },
+        };
+    if (!res.ok) reportError(new Error(`Vertragsende in Stripe: ${res.error}`), "contract-cancel-stripe", { customer: customerId });
+  }
+  await audit("contract.cancel_stripe", {
+    entity: "Customer",
+    entityId: customerId,
+    customerId,
+    details: { endAt: endAt.toISOString(), effective: effectiveIso, manual: result.manual, ...result.details },
+    actor,
+  });
+  return { manual: result.manual, note: result.note };
 }

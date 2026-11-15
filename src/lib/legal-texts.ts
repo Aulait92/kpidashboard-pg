@@ -20,8 +20,9 @@
 // Außerdem: Annahme mit Firma, USt-IdNr. und Bestätigung „Unternehmer (§ 14 BGB)“, Konditionen direkt am Knopf und
 // Auftragsbestätigung; Startpreis und Testphasen mit gesonderter Bestätigung. „Laufzeit und Kündigung“: Fristen mit
 // Beispielen (eindeutiger Kündigungstermin) und Kündigung im Kundenbereich („Vertrag hier kündigen“).
-// Bestehende Kunden werden NICHT automatisch zur Zustimmung aufgefordert (kein Banner); Änderungen gelten für sie
-// erst nach Mitteilung in Textform mit 6 Wochen Widerspruchsfrist (AGB „Änderungen dieser AGB“), siehe docs/datenschutz.md.
+// Kunden werden NICHT automatisch zur Zustimmung aufgefordert (kein Banner). Am 15.11.2026 gab es noch keine Kunden mit
+// angenommenem Vertrag (Ole), eine Mitteilung entfällt; bei späteren Änderungen mit Kunden gilt AGB „Änderungen dieser
+// AGB“ (Mitteilung in Textform, 6 Wochen Widerspruchsfrist), siehe docs/datenschutz.md.
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
