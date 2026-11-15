@@ -2,7 +2,7 @@
 //
 // Ablauf (Ole, 12.11.2026):
 // - Kunde bucht: Tagesbudget, Startwunsch, Pflicht-Häkchen. Status „In Einrichtung“.
-// - Einrichtung (PRICE_LIST.extraProductSetup) kommt sofort als einmalige Position auf die
+// - Einrichtung (PRICE_LIST.extraProductSetupSelfService, seit 12.11. 0 €) kommt, falls > 0, sofort als einmalige Position auf die
 //   nächste Rechnung; Ole bekommt Push + Aufgaben „Kampagne aufsetzen“ (+ WhatsApp-Vorlagen).
 // - Admin setzt in der Kundenakte „Gestartet“: erst dann zählen Budget und Garantie
 //   (CustomerBudget-Eintrag) und der Monatspreis (Stufe + weiteres Produkt) kommt ins Abo
