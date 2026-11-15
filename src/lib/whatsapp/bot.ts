@@ -471,6 +471,9 @@ export async function runBotTurn(conversationId: string): Promise<void> {
     where: { customerId: conversation.customerId },
   });
   if (!agent || !agent.active) return; // Agent (noch) nicht konfiguriert
+  // Ruhendes Konto (Vertrag beendet, lib/ruhend.ts): der Assistent antwortet nicht mehr
+  const owner = await prisma.customer.findUnique({ where: { id: conversation.customerId }, select: { dormantSince: true } });
+  if (owner?.dormantSince) return;
 
   const lead = conversation.leadId
     ? await prisma.lead.findUnique({

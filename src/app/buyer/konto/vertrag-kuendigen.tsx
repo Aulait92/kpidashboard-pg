@@ -4,12 +4,14 @@
 // (Anti-Churn, lib/anti-churn.ts) → Bestätigungsseite mit Termin → „Jetzt kündigen“ → Bestätigung auf der
 // Seite und per E-Mail. Nach dem Vorbild von § 312k BGB, freiwillig auch für Unternehmer: „Direkt zur
 // Kündigung“ bzw. „Trotzdem kündigen“ steht auf jedem Schritt, die Abfrage ist keine Hürde.
+// Auf der Bestätigungsseite: Aufbewahrung der Daten nach Vertragsende (24 Monate, 3 Monate oder sofort, lib/ruhend-shared.ts).
 
 import { useActionState, useState } from "react";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { Button, buttonClass } from "@/components/ui";
 import { CHURN_OFFERS, CHURN_REASONS, churnReasonLabel, offersFor, type ChurnOffer, type ChurnReason } from "@/lib/anti-churn";
+import { RETENTION_CHOICES, RETENTION_DEFAULT, RETENTION_NOTICE, type RetentionChoice } from "@/lib/ruhend-shared";
 import { cancelContractAction, churnHelpCallAction, churnIntentAction, churnOfferAction, type CancelContractState, type ChurnState } from "./actions";
 
 const fmt = (iso: string) => iso.split("-").reverse().join(".");
@@ -39,6 +41,7 @@ export function VertragKuendigen({
   const [step, setStep] = useState<"grund" | "angebot" | "kuendigen">("grund");
   const [reason, setReason] = useState<ChurnReason | null>(null);
   const [note, setNote] = useState("");
+  const [retention, setRetention] = useState<RetentionChoice>(RETENTION_DEFAULT);
   const [state, action, pending] = useActionState<CancelContractState, FormData>(cancelContractAction, {});
   const [intent, intentAction, intentPending] = useActionState<ChurnState, FormData>(churnIntentAction, {});
   const [offerState, offerAction, offerPending] = useActionState<ChurnState, FormData>(churnOfferAction, {});
@@ -71,7 +74,7 @@ export function VertragKuendigen({
           <div className="font-semibold">Gekündigt zum {fmt(done.effectiveIso)}</div>
           <p className="mt-1">
             {requested ? `Eingegangen am ${fmt(requested.atIso)}. ` : "Die Bestätigung ist per E-Mail unterwegs. "}
-            Bis dahin läuft alles wie gewohnt weiter. Haben Sie es sich anders überlegt? Schreiben Sie uns einfach.
+            Bis dahin läuft alles wie gewohnt weiter. Danach ruht Ihr Konto bis zur Löschung, siehe „Ihre Daten nach Vertragsende“. Haben Sie es sich anders überlegt? Schreiben Sie uns einfach.
           </p>
         </div>
       </div>
@@ -181,9 +184,24 @@ export function VertragKuendigen({
           </p>
           <ul className="list-disc space-y-1 pl-5 text-[color:var(--muted)]">
             <li>Bis dahin laufen Kampagnen, Leads und Software wie gewohnt weiter. Zusatzmodule enden mit dem Vertrag.</li>
-            <li>Ihre Daten können Sie bis dahin jederzeit unter „Ihre Daten herunterladen“ exportieren. Spätestens 30 Tage nach Vertragsende löschen wir die Daten Ihrer Leads und Kunden, soweit keine gesetzliche Pflicht zur Aufbewahrung besteht.</li>
             <li>Sie bekommen sofort eine Bestätigung per E-Mail mit Eingang und Vertragsende.</li>
           </ul>
+          <fieldset className="space-y-2 rounded-[var(--radius-md)] border border-[color:var(--border)] p-3" data-aufbewahrung-wahl>
+            <legend className="px-1 font-semibold">Ihre Daten nach Vertragsende</legend>
+            <p>{RETENTION_NOTICE}</p>
+            {RETENTION_CHOICES.map((r) => (
+              <label key={r.key} className="flex items-start gap-2">
+                <input type="radio" name="retention" value={r.key} checked={retention === r.key} onChange={() => setRetention(r.key)} className="mt-0.5 h-4 w-4" />
+                <span>
+                  <span className="font-medium">{r.label}</span>
+                  {retention === r.key ? <span className="block text-[color:var(--muted)]">{r.hint}</span> : null}
+                </span>
+              </label>
+            ))}
+            <p className="text-[color:var(--muted)]">
+              Ihre Daten können Sie jederzeit unter „Ihre Daten herunterladen“ exportieren. Die Wahl können Sie bis zur Löschung im Konto ändern.
+            </p>
+          </fieldset>
           <label className="block">
             <span className="text-[color:var(--muted)]">Grund (freiwillig)</span>
             <textarea

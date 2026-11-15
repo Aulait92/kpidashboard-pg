@@ -27,9 +27,11 @@ export async function getBuyerContext(): Promise<BuyerContext | null> {
   const session = await getCurrentSession();
   if (!session) return null;
   if (session.role === "BUYER" && session.customerId) {
-    const u = await prisma.user.findUnique({ where: { id: session.userId }, select: { teamRole: true, customerId: true } });
+    const u = await prisma.user.findUnique({ where: { id: session.userId }, select: { teamRole: true, customerId: true, customer: { select: { dormantSince: true } } } });
     // Login gelöscht oder Kunde gewechselt → keine Sicht mehr.
     if (!u || u.customerId !== session.customerId) return null;
+    // Ruhendes Konto (Vertrag beendet, lib/ruhend.ts): kein Zugang außer Export und Reaktivierung (getDormantContext)
+    if (u.customer?.dormantSince) return null;
     return {
       customerId: session.customerId,
       email: session.email,
@@ -48,4 +50,21 @@ export async function getBuyerContext(): Promise<BuyerContext | null> {
     if (customer) return { customerId: customer.id, email: session.email, preview: true, userId: null, teamRole: "owner" };
   }
   return null;
+}
+
+export type DormantContext = { customerId: string; email: string; userId: string; teamRole: "owner" | "advisor"; dormantSince: Date };
+
+/**
+ * Login eines ruhenden Kontos (Vertrag beendet, Daten noch aufbewahrt): nur Seite /buyer/ruhend, Datenexport und
+ * Reaktivierung (lib/ruhend.ts). Null für alle anderen (auch für die Admin-Vorschau, die normal weiterläuft).
+ */
+export async function getDormantContext(): Promise<DormantContext | null> {
+  const session = await getCurrentSession();
+  if (!session || session.role !== "BUYER" || !session.customerId) return null;
+  const u = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { teamRole: true, customerId: true, customer: { select: { dormantSince: true, dataDeletedAt: true } } },
+  });
+  if (!u || u.customerId !== session.customerId || !u.customer?.dormantSince || u.customer.dataDeletedAt) return null;
+  return { customerId: session.customerId, email: session.email, userId: session.userId, teamRole: u.teamRole === "advisor" ? "advisor" : "owner", dormantSince: u.customer.dormantSince };
 }

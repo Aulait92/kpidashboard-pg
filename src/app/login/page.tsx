@@ -7,8 +7,11 @@ import { headers } from "next/headers";
 import { activeLoginCards } from "@/lib/login-karten-server";
 import { LOGIN_CARD_HEADER, cardClickHref, parseCardCounter, pickCard, safeInternalPath } from "@/lib/login-karten";
 import { LoginInfoCard } from "@/components/login-info-card";
+import { redirect } from "next/navigation";
+import { getDormantContext } from "@/lib/buyer-context";
+import { dormantTarget } from "@/lib/login-ziel-server";
 
-type SearchParams = Promise<{ next?: string; fehler?: string; schritt?: string; karte?: string; hinweis?: string }>;
+type SearchParams = Promise<{ next?: string; fehler?: string; schritt?: string; karte?: string; hinweis?: string; geloescht?: string }>;
 
 export const metadata = {
   title: "Anmelden | performancegrowth",
@@ -21,6 +24,8 @@ export default async function LoginPage({
 }) {
   const sp = await searchParams;
   const next = safeInternalPath(sp.next) ?? "";
+  // Ruhendes Konto (lib/ruhend.ts): Seiten im Kundenbereich leiten ohne Zugang hierher, also weiter zur Seite für ruhende Konten
+  if (await getDormantContext().catch(() => null)) redirect(dormantTarget(next));
   // Infokarte: nach Klick auf eine Karte (?karte=) dieselbe, sonst reihum (Zähler aus der Middleware)
   const cards = await activeLoginCards();
   const clicked = sp.karte ? (cards.find((c) => c.id === sp.karte) ?? null) : null;
@@ -49,7 +54,11 @@ export default async function LoginPage({
           <div className="mb-7 text-center">
             <h1 className="text-[28px] font-bold leading-tight tracking-tight sm:text-3xl">Willkommen zurück</h1>
             <p className="mt-2 text-[15px] text-[color:var(--muted)]">Schön, dass Sie da sind. Melden Sie sich mit Ihrem Zugang an.</p>
-            {sp.hinweis === "email-geaendert" ? (
+            {sp.geloescht ? (
+              <p className="mt-3 rounded-[var(--radius-md)] bg-emerald-50 px-3 py-2 text-sm text-emerald-900" data-login-geloescht>
+                Ihre Daten sind endgültig gelöscht. Die Bestätigung kommt per E-Mail. Danke für die Zusammenarbeit.
+              </p>
+            ) : sp.hinweis === "email-geaendert" ? (
               <p className="mt-3 rounded-[var(--radius-md)] bg-emerald-50 px-3 py-2 text-sm text-emerald-900" data-login-hinweis>
                 Ihre neue E-Mail-Adresse ist bestätigt. Bitte melden Sie sich jetzt damit an.
               </p>

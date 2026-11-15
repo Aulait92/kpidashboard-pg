@@ -273,9 +273,10 @@ export async function currentPause(customerId: string) {
 
 /** Cron: geplante Pausen starten, abgelaufene beenden. */
 export async function runPauseCron(now = new Date()) {
-  const toStart = await prisma.customerPause.findMany({ where: { status: "planned", startsAt: { lte: now } }, select: { id: true } });
+  // Ruhende Konten (lib/ruhend.ts): Pausen weder starten noch beenden (sonst liefen Anzeigen und Abrechnung wieder an)
+  const toStart = await prisma.customerPause.findMany({ where: { status: "planned", startsAt: { lte: now }, customer: { dormantSince: null } }, select: { id: true } });
   for (const p of toStart) await applyPause(p.id).catch((err) => reportError(err, "pause-cron-apply"));
-  const toEnd = await prisma.customerPause.findMany({ where: { status: "active", endsAt: { lte: now } }, select: { id: true } });
+  const toEnd = await prisma.customerPause.findMany({ where: { status: "active", endsAt: { lte: now }, customer: { dormantSince: null } }, select: { id: true } });
   for (const p of toEnd) await resumePause(p.id).catch((err) => reportError(err, "pause-cron-resume"));
   return { started: toStart.length, ended: toEnd.length };
 }

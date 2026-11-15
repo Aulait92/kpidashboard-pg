@@ -142,6 +142,7 @@ export async function runSoonReminders(now = new Date()): Promise<ReminderResult
     where: {
       status: "booked",
       soonReminderSentAt: null,
+      customer: { dormantSince: null },
       conversationId: { not: null },
       startsAt: { gt: new Date(now.getTime() + 10 * 60 * 1000), lte: new Date(now.getTime() + SOON_MS) },
     },
@@ -215,6 +216,7 @@ export async function runReminders(): Promise<ReminderResult> {
       status: "booked",
       reminderSentAt: null,
       startsAt: { gt: now, lte: new Date(now.getTime() + LEAD_MS) },
+      customer: { dormantSince: null },
     },
     select: {
       id: true,

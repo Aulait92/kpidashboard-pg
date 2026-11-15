@@ -4,7 +4,8 @@
 // Eingang und Vertragsende. Termin nach AGB „Laufzeit und Kündigung“ (lib/vertrag-laufzeit.cancelDate).
 // Stripe: alle Abos des Kunden enden automatisch zum Ende des letzten Vertragstags (cancel_at, Ole 15.11.2026);
 // klappt das nicht, bleibt die Kündigung bestehen und die Aufgabe sagt „Stripe bitte von Hand prüfen“.
-// Ole bekommt Aufgabe und Push: retainerEnd setzen, nach Ende Daten löschen.
+// Ole bekommt Aufgabe und Push. Aufbewahrung nach Vertragsende (Ole, 15.11.2026): 24 Monate (Standard), 3 Monate oder
+// sofort; danach endgültige Löschung, bis dahin ruht das Konto (lib/ruhend.ts). Lebenszyklus „cancelled“ für die Statistik.
 
 import { prisma } from "@/lib/prisma";
 import { audit, type AuditActor } from "@/lib/audit";
@@ -14,6 +15,8 @@ import { customerGreeting } from "@/lib/offer-links";
 import { berlinTodayIso, normalizeTerm, type OfferTerm } from "@/lib/offer-pricing";
 import { berlinEndOfDay, cancelDate, cancelDateText, fmtIso, type CancelDate } from "@/lib/vertrag-laufzeit";
 import { billingEnabled, endSubscriptionsAt } from "@/lib/billing";
+import { normalizeRetention, retentionText, type RetentionChoice } from "@/lib/ruhend-shared";
+import { customerMrr, recordLifecycle, retentionFields } from "@/lib/ruhend";
 
 const TZ = "Europe/Berlin";
 const berlinIso = (d: Date) => berlinTodayIso(d);
@@ -85,7 +88,10 @@ export async function contractCancelInfo(customerId: string, now = new Date()): 
 export type CancelResult = { ok: true; effectiveIso: string; receivedAt: Date; already: boolean } | { ok: false; error: string };
 
 /** Kündigung zum nächstmöglichen Termin. Idempotent: eine zweite Kündigung ändert nichts. */
-export async function cancelContract(customerId: string, opts: { actor: AuditActor; reason?: string | null; now?: Date }): Promise<CancelResult> {
+export async function cancelContract(
+  customerId: string,
+  opts: { actor: AuditActor; reason?: string | null; now?: Date; retention?: RetentionChoice | null },
+): Promise<CancelResult> {
   const now = opts.now ?? new Date();
   const info = await contractCancelInfo(customerId, now);
   if (!info) return { ok: false, error: "Konto nicht gefunden." };
@@ -93,6 +99,7 @@ export async function cancelContract(customerId: string, opts: { actor: AuditAct
   if (info.ended) return { ok: false, error: "Ihr Vertrag ist bereits beendet." };
   const reason = opts.reason?.trim().slice(0, 1000) || null;
   const effectiveIso = info.next.effectiveIso;
+  const retention = normalizeRetention(opts.retention);
   const claimed = await prisma.customer.updateMany({
     where: { id: customerId, cancelRequestedAt: null },
     data: {
@@ -100,6 +107,7 @@ export async function cancelContract(customerId: string, opts: { actor: AuditAct
       cancelEffectiveAt: new Date(`${effectiveIso}T12:00:00Z`),
       cancelRequestedBy: opts.actor.email ?? null,
       cancelReason: reason,
+      ...retentionFields(effectiveIso, retention),
     },
   });
   if (claimed.count === 0) {
@@ -112,9 +120,13 @@ export async function cancelContract(customerId: string, opts: { actor: AuditAct
     entity: "Customer",
     entityId: customerId,
     customerId,
-    details: { effective: effectiveIso, reason: info.next.reason, term: info.term, annual: info.annual, start: info.startIso, note: reason },
+    details: { effective: effectiveIso, reason: info.next.reason, term: info.term, annual: info.annual, start: info.startIso, note: reason, retention },
     actor: opts.actor,
   });
+  await audit("customer.retention", { entity: "Customer", entityId: customerId, customerId, details: { from: null, to: retention, contractEnd: effectiveIso }, actor: opts.actor });
+  // Lebenszyklus: Hauptgrund aus dem Anti-Churn-Schritt (letzte Absicht der letzten 30 Tage)
+  const intent = await prisma.churnIntent.findFirst({ where: { customerId, outcome: "gekuendigt", decidedAt: now }, orderBy: { createdAt: "desc" }, select: { reason: true } }).catch(() => null);
+  await recordLifecycle(customerId, "cancelled", { at: now, mrr: await customerMrr(customerId).catch(() => null), reason, churnReason: intent?.reason ?? null, details: { effective: effectiveIso, retention } });
 
   const r = await load(customerId);
   const name = r?.c.name ?? "Kunde";
@@ -135,7 +147,7 @@ export async function cancelContract(customerId: string, opts: { actor: AuditAct
           reason ? `Grund: ${reason}` : null,
           `Termin laut AGB: ${end} (${info.next.reason}${info.startIso ? `, Start ${fmtIso(info.startIso)}` : ""}).`,
           stripe.note,
-          `Zu tun: ${stripe.manual ? "Stripe bitte von Hand prüfen und das Abo zum Termin beenden, " : ""}Abrechnung → Betreuungsgebühr Ende setzen (vorbelegt). Nach Vertragsende Daten löschen (spätestens 30 Tage, Abrechnung → „Vertragsende: Daten löschen“).`,
+          `Zu tun: ${stripe.manual ? "Stripe bitte von Hand prüfen und das Abo zum Termin beenden, " : ""}Abrechnung → Betreuungsgebühr Ende setzen (vorbelegt). Danach ruht das Konto automatisch (Kampagnen werden pausiert), Löschung nach der gewählten Aufbewahrung (${retention === "24m" ? "24 Monate" : retention === "3m" ? "3 Monate" : "sofort nach Vertragsende"}).`,
         ]
           .filter(Boolean)
           .join("\n"),
@@ -163,7 +175,10 @@ export async function cancelContract(customerId: string, opts: { actor: AuditAct
         `wir bestätigen den Eingang Ihrer Kündigung am ${fmtIso(berlinIso(now))} um ${fmtTime(now)} Uhr.`,
         cancelDateText(info.next, info.startIso),
         "Bis dahin laufen Kampagnen, Leads und Software wie gewohnt weiter. Zusatzmodule enden mit dem Vertrag.",
-        "Ihre Daten können Sie bis dahin jederzeit im Konto unter „Ihre Daten herunterladen“ exportieren. Spätestens 30 Tage nach Vertragsende löschen wir die Daten Ihrer Leads und Kunden, soweit keine gesetzliche Pflicht zur Aufbewahrung besteht.",
+        retention === "24m"
+          ? `Ihre Daten bewahren wir 24 Monate auf, damit Sie jederzeit zurückkommen können. ${retentionText(effectiveIso, retention)} In dieser Zeit ruht Ihr Konto: Sie können sich anmelden, Ihre Daten herunterladen oder Ihr Konto reaktivieren.`
+          : `Sie haben eine frühere Löschung gewählt. ${retentionText(effectiveIso, retention)}`,
+        "Ihre Daten können Sie jederzeit im Konto unter „Ihre Daten herunterladen“ exportieren. Die Aufbewahrung können Sie dort bis zur Löschung ändern. Aufbewahren müssen wir nur, was das Gesetz verlangt, zum Beispiel Verträge und Rechnungen.",
         "Haben Sie es sich anders überlegt oder Fragen zum Vertrag? Antworten Sie einfach auf diese E-Mail.",
       ],
       ...(url ? { button: { label: "Zum Kundenbereich", url } } : {}),

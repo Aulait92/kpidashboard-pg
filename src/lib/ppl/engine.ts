@@ -170,7 +170,8 @@ export async function distribute(poolLeadId: string, now = new Date(), notify = 
     score: pl.score,
     answers: Object.fromEntries(((pl.answers ?? []) as { label: string; value: string }[]).map((a) => [a.label, a.value])),
   };
-  const subs = await prisma.leadSubscription.findMany({ where: { productKey: pl.productKey, active: true }, include: { areas: true } });
+  // Ruhende Konten (lib/ruhend.ts) bekommen keine Leads
+  const subs = await prisma.leadSubscription.findMany({ where: { productKey: pl.productKey, active: true, customer: { dormantSince: null } }, include: { areas: true } });
   const cands: (AreaCandidate & { orderId: string | null; sub: SubRow })[] = [];
   const reasons: string[] = [];
   for (const sub of subs) {

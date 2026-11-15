@@ -15,7 +15,7 @@
 // dokumentierte Verpflichtung der Mitarbeiter (Vorlage docs/vorlage-verpflichtung-203-stgb.md).
 // Folge einer neuen Fassung: Die Seiten /rechtliches/* zeigen den neuen Stand, neue Angebote verweisen darauf.
 // Außerdem: AGB „Kundendaten: Zusicherung und Freistellung“ und „Daten bei Vertragsende“ (Export im Kundenbereich,
-// Löschung spätestens 30 Tage nach Ende), AVV „Pflichten des Auftraggebers“, KI-Kennzeichnung (Art. 50 KI-VO) und
+// Löschung nach Vertragsende, seit dem Nachtrag unten mit Ruhephase), AVV „Pflichten des Auftraggebers“, KI-Kennzeichnung (Art. 50 KI-VO) und
 // „keine Beratung“ in AGB und AVV.
 // Außerdem: Annahme mit Firma, USt-IdNr. und Bestätigung „Unternehmer (§ 14 BGB)“, Konditionen direkt am Knopf und
 // Auftragsbestätigung; Startpreis und Testphasen mit gesonderter Bestätigung. „Laufzeit und Kündigung“: Fristen mit
@@ -29,6 +29,10 @@
 // Kunden werden NICHT automatisch zur Zustimmung aufgefordert (kein Banner). Am 15.11.2026 gab es noch keine Kunden mit
 // angenommenem Vertrag (Ole), eine Mitteilung entfällt; bei späteren Änderungen mit Kunden gilt AGB „Änderungen dieser
 // AGB“ (Mitteilung in Textform, 6 Wochen Widerspruchsfrist), siehe docs/datenschutz.md.
+// 15.11.2026 (gleicher Stand, Ole): Ruhephase nach Vertragsende statt Löschung nach 30 Tagen. Standard: Aufbewahrung
+// 24 Monate als Weisung des Auftraggebers (Art. 28 Abs. 3 lit. g DSGVO), wählbar 3 Monate oder sofort; in der Ruhephase
+// nur Speicherung, Zugang nur für Export und Reaktivierung, danach endgültige Löschung; Abrechnungsdaten nach den
+// gesetzlichen Fristen (lib/ruhend.ts). AGB „Daten bei Vertragsende“ und AVV „Löschung und Rückgabe“, TOMs.
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
@@ -204,11 +208,13 @@ export const AGB: LegalSection[] = [
     ],
   },
   {
-    // Prüfen: Export und Löschung bei Vertragsende, Sperrliste als Hashwerte (15.11.2026)
+    // Prüfen: Export, Ruhephase (Standard 24 Monate) und Löschung nach Vertragsende, Sperrliste als Hashwerte (15.11.2026)
     title: "Daten bei Vertragsende",
     items: [
-      "Der Kunde kann jederzeit einen vollständigen Export seiner Daten im Kundenbereich abrufen (Konto, „Ihre Daten herunterladen“).",
-      "Der Anbieter löscht die personenbezogenen Daten der Leads, Kontakte und Kunden des Kunden spätestens 30 Tage nach Vertragsende. Ausgenommen sind pseudonymisierte Sperrlisteneinträge (Hashwerte) von Personen, die der Werbung widersprochen haben, zur dauerhaften Beachtung des Widerspruchs, sowie Daten, für die eine gesetzliche Pflicht zur Aufbewahrung besteht. Daten in Datensicherungen werden im Rahmen der regulären Rotation gelöscht. Angebote, Verträge und Rechnungen bewahrt der Anbieter nach den gesetzlichen Fristen auf.",
+      "Der Kunde kann jederzeit einen vollständigen Export seiner Daten im Kundenbereich abrufen (Konto, „Ihre Daten herunterladen“), auch nach Vertragsende bis zur Löschung.",
+      "Nach Vertragsende ruht das Konto des Kunden: Der Anbieter speichert die Daten nur noch und verarbeitet sie nicht weiter; Kampagnen, Nachrichten, digitaler Assistent und Abgleiche sind beendet. Der Kunde kann sich anmelden, um seine Daten zu exportieren oder sein Konto zu reaktivieren. Für die Reaktivierung vereinbaren die Parteien die Leistungen und die Vergütung neu.",
+      "Die Daten bewahrt der Anbieter nach Vertragsende 24 Monate auf (Ruhephase). Der Kunde kann bei der Kündigung und danach jederzeit bis zur Löschung im Kundenbereich eine kürzere Aufbewahrung von 3 Monaten oder die Löschung sofort nach Vertragsende wählen oder zur Aufbewahrung von 24 Monaten zurückkehren. Der Anbieter erinnert den Kunden 30 und 7 Tage vor der Löschung per E-Mail.",
+      "Nach Ablauf der gewählten Aufbewahrung löscht der Anbieter die personenbezogenen Daten der Leads, Kontakte und Kunden des Kunden sowie die Zugänge endgültig. Ausgenommen sind pseudonymisierte Sperrlisteneinträge (Hashwerte) von Personen, die der Werbung widersprochen haben, zur dauerhaften Beachtung des Widerspruchs, sowie Daten, für die eine gesetzliche Pflicht zur Aufbewahrung besteht. Daten in Datensicherungen werden im Rahmen der regulären Rotation gelöscht. Angebote, Verträge, Rechnungen und die zugehörigen Abrechnungsdaten bewahrt der Anbieter nach den gesetzlichen Fristen auf; anonyme Kennzahlen ohne Personenbezug bleiben erhalten.",
     ],
   },
   {
@@ -246,7 +252,7 @@ export const AVV: LegalSection[] = [
     title: "Gegenstand und Dauer",
     items: [
       `Dieser Vertrag regelt die Verarbeitung personenbezogener Daten durch die ${PROVIDER.name} („Auftragnehmer“) im Auftrag des Kunden („Auftraggeber“) nach Art. 28 DSGVO im Rahmen der Nutzung der Software und der Leadgenerierung.`,
-      "Die Laufzeit entspricht der Laufzeit des Hauptvertrags.",
+      "Die Laufzeit entspricht der Laufzeit des Hauptvertrags. Die Pflichten aus diesem Vertrag gelten darüber hinaus, solange der Auftragnehmer nach Ende des Hauptvertrags Daten des Auftraggebers aufbewahrt (Abschnitt „Löschung und Rückgabe“).",
     ],
   },
   {
@@ -324,10 +330,13 @@ export const AVV: LegalSection[] = [
     ],
   },
   {
+    // Prüfen: Ruhephase 24 Monate als Weisung des Auftraggebers nach Art. 28 Abs. 3 lit. g DSGVO (Ole, 15.11.2026)
     title: "Löschung und Rückgabe",
     items: [
-      "Der Auftraggeber kann jederzeit einen vollständigen Export seiner Daten im Kundenbereich abrufen.",
-      "Der Auftragnehmer löscht die personenbezogenen Daten spätestens 30 Tage nach Ende des Hauptvertrags und bestätigt die Löschung auf Anfrage in Textform. Ausgenommen sind pseudonymisierte Sperrlisteneinträge (Hashwerte) von Personen, die der Werbung widersprochen haben, zur dauerhaften Beachtung des Widerspruchs, sowie gesetzliche Aufbewahrungspflichten. Daten in Datensicherungen werden im Rahmen der regulären Rotation gelöscht.",
+      "Der Auftraggeber kann jederzeit einen vollständigen Export seiner Daten im Kundenbereich abrufen (Rückgabe), auch nach Ende des Hauptvertrags bis zur Löschung.",
+      "Nach Ende des Hauptvertrags entscheidet der Auftraggeber nach Art. 28 Abs. 3 lit. g DSGVO über Löschung oder Rückgabe. Er weist den Auftragnehmer hiermit an, die personenbezogenen Daten nach Ende des Hauptvertrags 24 Monate aufzubewahren (Ruhephase), damit er die Zusammenarbeit fortsetzen kann. Eine abweichende Weisung erteilt der Auftraggeber im Kundenbereich: Aufbewahrung von 3 Monaten oder Löschung sofort nach Vertragsende; er kann sie bis zur Löschung jederzeit ändern.",
+      "In der Ruhephase speichert der Auftragnehmer die Daten nur und verarbeitet sie nicht weiter. Zugang hat der Auftraggeber nur für den Export und die Reaktivierung seines Kontos. Mit der Reaktivierung endet die Ruhephase und dieser Vertrag gilt für den neuen Hauptvertrag fort.",
+      "Nach Ablauf der gewählten Aufbewahrung löscht der Auftragnehmer die personenbezogenen Daten endgültig, erinnert den Auftraggeber 30 und 7 Tage vorher per E-Mail und bestätigt die Löschung in Textform. Ausgenommen sind pseudonymisierte Sperrlisteneinträge (Hashwerte) von Personen, die der Werbung widersprochen haben, zur dauerhaften Beachtung des Widerspruchs, sowie Daten, für die eine gesetzliche Pflicht zur Aufbewahrung besteht, insbesondere Abrechnungsdaten nach Handels- und Steuerrecht. Daten in Datensicherungen werden im Rahmen der regulären Rotation gelöscht.",
     ],
   },
   {
@@ -348,7 +357,7 @@ export const TOMS: string[] = [
   "Zugangsdaten zu Drittdiensten (z. B. Kalender) werden verschlüsselt gespeichert.",
   "Tägliche und wöchentliche Datensicherungen sowie fortlaufende Sicherung zur zeitpunktgenauen Wiederherstellung.",
   "Versionierte, automatisch getestete Datenbank- und Programmänderungen; Healthchecks, Ausfallüberwachung und Fehlerüberwachung ohne Übermittlung personenbezogener Inhalte. Wiederherstellung aus der Sicherung wird regelmäßig getestet.",
-  "Löschfunktion je Lead für Betroffenenanfragen und vollständige Löschung der Lead-Daten bei Vertragsende.",
+  "Löschfunktion je Lead für Betroffenenanfragen; nach Vertragsende Ruhephase mit reiner Speicherung (kein Zugang außer Export und Reaktivierung, keine automatische Verarbeitung) und automatische, protokollierte Löschung nach der gewählten Aufbewahrung.",
   "Pseudonyme Nutzungsstatistik ohne Lead-Inhalte, automatische Löschung nach 180 Tagen.",
   "Zugriff auf Kundendaten nur durch berechtigte, zur Vertraulichkeit und zur Verschwiegenheit nach § 203 StGB verpflichtete und belehrte Personen und nur, soweit für Betrieb und Support erforderlich.",
 ];

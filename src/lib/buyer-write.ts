@@ -9,8 +9,10 @@ import { prisma } from "@/lib/prisma";
 export async function writableCustomerId(leadId: string): Promise<string | null> {
   const session = await getCurrentSession();
   if (session?.role === "BUYER" && session.customerId) {
-    const u = await prisma.user.findUnique({ where: { id: session.userId }, select: { teamRole: true, customerId: true } });
+    const u = await prisma.user.findUnique({ where: { id: session.userId }, select: { teamRole: true, customerId: true, customer: { select: { dormantSince: true } } } });
     if (!u || u.customerId !== session.customerId) return null;
+    // Ruhendes Konto (lib/ruhend.ts): nichts mehr bearbeiten
+    if (u.customer?.dormantSince) return null;
     if (u.teamRole === "advisor") {
       if (!leadId) return null;
       const own = await prisma.lead.count({ where: { id: leadId, customerId: session.customerId, assignedUserId: session.userId } });

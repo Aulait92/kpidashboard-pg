@@ -1401,7 +1401,8 @@ export async function syncAirtable(): Promise<SyncResult> {
   // Leads und Umsätze bleibt erhalten). In der App angelegte Kunden nie.
   if (bezugFetched && syncedCustomerNames.size > 0) {
     const synced = Array.from(syncedCustomerNames);
-    await prisma.customer.updateMany({ where: { name: { in: synced } }, data: { archived: false } });
+    // Ruhende und endgültig gelöschte Konten (lib/ruhend.ts) bleiben archiviert
+    await prisma.customer.updateMany({ where: { name: { in: synced }, dormantSince: null, dataDeletedAt: null }, data: { archived: false } });
     await prisma.customer.updateMany({
       where: {
         name: { notIn: synced },

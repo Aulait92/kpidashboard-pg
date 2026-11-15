@@ -190,13 +190,34 @@ export async function cancelContractAction(_prev: CancelContractState, fd: FormD
   try {
     const ctx = await customerOnly();
     const { cancelContract } = await import("@/lib/vertrag-kuendigung");
+    const { normalizeRetention } = await import("@/lib/ruhend-shared");
     const res = await cancelContract(ctx.customerId, {
       actor: { id: ctx.userId, email: ctx.email, role: "BUYER" },
       reason: String(fd.get("reason") ?? ""),
+      retention: normalizeRetention(fd.get("retention")),
     });
     if (!res.ok) return { error: res.error };
     revalidatePath("/buyer/konto");
     return { ok: true, effectiveIso: res.effectiveIso, already: res.already };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
+  }
+}
+
+export type RetentionState = { ok?: boolean; error?: string; message?: string };
+
+/** Aufbewahrung nach Vertragsende ändern (Konto, nach der Kündigung; jederzeit bis zur Löschung). */
+export async function retentionAction(_prev: RetentionState, fd: FormData): Promise<RetentionState> {
+  try {
+    const ctx = await customerOnly();
+    const { isRetentionChoice } = await import("@/lib/ruhend-shared");
+    const { setRetentionChoice } = await import("@/lib/ruhend");
+    const raw = fd.get("retention");
+    if (!isRetentionChoice(raw)) return { error: "Bitte wählen Sie eine Aufbewahrung." };
+    const res = await setRetentionChoice(ctx.customerId, raw, { actor: { id: ctx.userId, email: ctx.email, role: "BUYER" } });
+    if (!res.ok) return { error: res.error };
+    revalidatePath("/buyer/konto");
+    return { ok: true, message: "Gespeichert. Die Bestätigung steht im Konto." };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
   }

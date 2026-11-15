@@ -55,7 +55,8 @@ export async function emailLeads(now: Date, onlyCustomerId?: string) {
   const onboardings = await prisma.onboarding.findMany({
     where: {
       status: { not: "cancelled" },
-      customer: { leadEmail: true },
+      // Ruhende Konten (lib/ruhend.ts): keine Lead-Mails
+      customer: { leadEmail: true, dormantSince: null },
       ...(onlyCustomerId ? { customerId: onlyCustomerId } : {}),
     },
     select: { customerId: true, createdAt: true, questionnaire: true, customer: { select: { name: true } } },

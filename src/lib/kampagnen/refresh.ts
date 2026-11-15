@@ -167,7 +167,7 @@ export async function runCreativeRefresh(
   if (!settings.refresh) return out;
   if (!deps.env().meta) return out;
   const sources = await prisma.campaignRun.findMany({
-    where: { kind: "neu", status: "built", customer: { metaAdAccountId: { not: null } }, ...(opts.customerId ? { customerId: opts.customerId } : {}) },
+    where: { kind: "neu", status: "built", customer: { metaAdAccountId: { not: null }, dormantSince: null }, ...(opts.customerId ? { customerId: opts.customerId } : {}) },
     orderBy: { createdAt: "desc" },
     select: { id: true, customerId: true, built: true },
   });

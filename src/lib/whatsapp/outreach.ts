@@ -76,7 +76,8 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
     errors: [],
   };
   const agents = await prisma.agentConfig.findMany({
-    where: { active: true, outreachEnabled: true, ...(onlyCustomerId ? { customerId: onlyCustomerId } : {}) },
+    // Ruhende Konten (Vertrag beendet, lib/ruhend.ts) schreiben niemanden an
+    where: { active: true, outreachEnabled: true, customer: { dormantSince: null }, ...(onlyCustomerId ? { customerId: onlyCustomerId } : {}) },
     select: { customerId: true, outreachDelayMin: true },
   });
 

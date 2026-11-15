@@ -613,6 +613,8 @@ export async function listProductGoalBreakdown(
   now: Date = new Date(),
 ): Promise<ProductGoalBreakdown[]> {
   const rows = await prisma.customerProduct.findMany({
+    // Ruhende Konten (lib/ruhend.ts) zählen nicht mehr in die Lead-Ziele
+    where: { customer: { dormantSince: null } },
     select: {
       leadGoal: true,
       startDate: true,
