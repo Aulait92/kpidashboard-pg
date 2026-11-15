@@ -1,7 +1,6 @@
 // Beratungsstrecke (Ole, 15.11.2026): bebilderte Präsentation je Termin, per Klick aus den bestätigten Angeboten und
-// den Angaben des Kunden. Der Berater teilt sie im Videocall; je Folie ein Sprechzettel (nur für ihn) aus dem
-// Gesprächsleitfaden. Branding nach Gesellschaft (Allianz, AXA, Signal Iduna) bzw. PG; das Logo kommt in einem
-// späteren Schritt von der Agentur- bzw. Maklerseite (vom Berater bestätigt).
+// den Angaben des Kunden. Der Berater teilt sie im Videocall (ohne Sprechzettel, Ole 15.11.2026). Branding nach
+// Gesellschaft (Allianz, AXA, Signal Iduna) bzw. PG, Logo von der Agentur- bzw. Maklerseite (vom Berater bestätigt).
 //
 // Reine Funktionen: Folien als HTML-Fragmente + CSS (gleich für Ansicht und PDF, 1280×720).
 
@@ -23,7 +22,7 @@ export function markeFuer(kunde: { name: string; vermittlerTyp?: string | null }
   return { name, gesellschaft: null, farbe: "#2563eb", farbeHell: "#e5edff", akzent: "#2563eb", logoUrl };
 }
 
-export type Folie = { id: string; titel: string; html: string; notizen: string[] };
+export type Folie = { id: string; titel: string; html: string };
 
 const e = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
@@ -276,11 +275,6 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
       undefined,
       "titel",
     ),
-    notizen: [
-      a(an, "„Schön, dass es klappt. Wir haben etwa 30 Minuten, passt das bei dir noch so?“", "„Schön, dass es klappt. Wir haben etwa 30 Minuten, passt das bei Ihnen noch so?“"),
-      a(an, "„Ich prüfe kurz, ob ich alles richtig verstanden habe, dann zeige ich dir meine Empfehlung, und am Ende sagst du mir ehrlich, ob das passt. Ein Nein ist völlig in Ordnung.“", "„Ich prüfe kurz, ob ich alles richtig verstanden habe, dann zeige ich Ihnen meine Empfehlung, und am Ende sagen Sie mir ehrlich, ob das passt. Ein Nein ist völlig in Ordnung.“"),
-      "Status nennen (Vertreter oder Makler).",
-    ],
   });
 
   const situation = [
@@ -301,11 +295,6 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
       }`,
       a(an, "Haben wir etwas vergessen?", "Haben wir etwas vergessen?"),
     ),
-    notizen: [
-      a(an, "„Stimmt das so? Fehlt etwas?“ Erst nach dem Ja weiter.", "„Stimmt das so? Fehlt etwas?“ Erst nach dem Ja weiter."),
-      "Die Bestätigung gehört in die Beratungsdokumentation.",
-      "Offene Punkte aus der Terminvorbereitung klären.",
-    ],
   });
 
   const top = sparten.slice(0, 4);
@@ -318,7 +307,6 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
         .join("")}</div>`,
       a(an, "Was davon ist dir am wichtigsten?", "Was davon ist Ihnen am wichtigsten?"),
     ),
-    notizen: [tier ? "„Wie würden Sie heute eine Tierarztrechnung über einige tausend Euro bezahlen?“" : "Je Sparte in einem Satz, warum sie zur Situation passt."],
   });
 
   const b = BEISPIEL[sparten[0]] ?? BEISPIEL.haftpflicht;
@@ -328,7 +316,6 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
     html: R(
       `<h2>Ein Beispiel aus dem Alltag</h2><p class="szene">${e(b.szene)}</p><div class="zwei beispiel"><div class="ohne"><b>Ohne Schutz</b><span>${e(b.ohne)}</span></div><div class="mit"><b>Mit Schutz</b><span>${e(b.mit)}</span></div></div>`,
     ),
-    notizen: ["Ruhig erzählen, als Geschichte, ohne Angst zu machen. Danach Pause."],
   });
 
   // Selbstbeteiligung je Sparte (mehrere Sparten), „keine“ weglassen
@@ -373,12 +360,6 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
       }`,
       a(an, "Passt das zu dem, was dir wichtig ist?", "Passt das zu dem, was Ihnen wichtig ist?"),
     ),
-    notizen: [
-      a(an, "„Auf Basis dessen, was du mir gesagt hast, empfehle ich dir …, weil du gesagt hast …“", "„Auf Basis dessen, was Sie mir gesagt haben, empfehle ich Ihnen …, weil Sie gesagt haben …“"),
-      "Noch ohne Preis: erst der Nutzen. Die Begründung gehört in die Beratungsdokumentation.",
-      tier ? "Offen sagen: Bekannte Vorerkrankungen sind nicht mitversichert, für bestimmte Leistungen gelten Wartezeiten." : "Was nicht versichert ist, offen ansprechen, das schafft Vertrauen.",
-      "Fehlt dem Kunden etwas: andere Stufe antippen, Leistungen und Beitrag ändern sich sofort.",
-    ],
   });
 
   // Vergleich je Sparte mit mehreren echten Stufen: Preise erscheinen hier zum ersten Mal
@@ -400,10 +381,6 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
       id: `vergleich-${sparteKey(sparte)}-${out.length}`,
       titel: `Auswahl ${sparte}`,
       html: R(`<h2>${e(a(an, "Deine Auswahl", "Ihre Auswahl"))}: ${e(sparte)}</h2>${html}`),
-      notizen: [
-        "Unterschiede in einem Satz; die empfohlene Stufe mit seinen Worten begründen.",
-        "Wählt der Kunde eine andere Stufe: „Auswählen“ antippen, Beitrag und Leistungen ändern sich sofort.",
-      ],
     });
   }
 
@@ -431,11 +408,6 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
       }`,
       a(an, "Passt das für dich?", "Passt das für Sie?"),
     ),
-    notizen: [
-      "Zahl nennen, dann Pause. Dann: „Passt das in Ihr Budget?“",
-      "Zu teuer? Bausteine antippen oder ein Produkt herausnehmen: Der Beitrag rechnet sich sofort neu. Nochmal antippen holt es zurück.",
-      "Einwände: erst eingrenzen („Angenommen, das wäre gelöst …“), dann das Gefühl benennen, dann sachlich antworten. „Zu teuer“: kleinere Stufe oder Selbstbeteiligung, nie Leistungen schönreden.",
-    ],
   });
 
   const ab = ersterDesMonats(d.termin.startsAt, 1);
@@ -447,11 +419,6 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
       `<h2>${e(a(an, "Deine Entscheidung", "Ihre Entscheidung"))}</h2><div class="entscheidung"><div class="vorschlag"><span>Unser Vorschlag</span><b>Schutz ab ${e(ab)}</b></div><div class="alternative"><span>Oder lieber</span><b>ab ${e(alt)}?</b></div></div>
 <div class="sicher">${icon("haftpflicht", 40)}<span>${e(a(an, "Du hast 14 Tage Widerrufsrecht, ohne Angabe von Gründen.", "Sie haben 14 Tage Widerrufsrecht, ohne Angabe von Gründen."))}</span></div>`,
     ),
-    notizen: [
-      a(an, "„Spricht etwas dagegen, dass wir das heute so festmachen?“", "„Spricht etwas dagegen, dass wir das heute so festmachen?“"),
-      a(an, `„Soll der Schutz ab ${ab} starten oder lieber ab ${alt}?“`, `„Soll der Schutz ab ${ab} starten oder lieber ab ${alt}?“`),
-      "Keine Drucksätze. Noch nicht entschieden: Folgetermin vereinbaren, den sich der Kunde selbst einträgt.",
-    ],
   });
 
   out.push({
@@ -463,7 +430,6 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
 <div class="schritt"><div class="n">2</div><b>Unterlagen</b><span>Kommen per E-Mail, zusammen mit der Beratungsdokumentation.</span></div>
 <div class="schritt"><div class="n">3</div><b>Geschützt</b><span>Ab dem vereinbarten Beginn.</span></div></div>`,
     ),
-    notizen: ["Antrag gleich gemeinsam ausfüllen: Beginn, IBAN, fehlende Angaben.", "Bisheriger Vertrag: Kündigung anbieten (E-Mail-Vorlage „Kündigung alte Versicherung“)."],
   });
 
   out.push({
@@ -478,7 +444,6 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
       undefined,
       "titel",
     ),
-    notizen: ["Erst nach dem Ja: konkret nach Empfehlungen fragen."],
   });
   return out;
 }

@@ -1,17 +1,17 @@
 "use client";
 
 // Präsentationsmodus (Ole, 15.11.2026): Folie skaliert ins Fenster, ← → bzw. Leertaste, Vollbild zum Teilen im
-// Videocall. Sprechzettel unter der Folie oder als zweites Fenster (blättert über BroadcastChannel mit).
+// Videocall. Ohne Sprechzettel (Ole, 15.11.2026).
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { ChevronLeft, ChevronRight, Expand, NotebookText } from "lucide-react";
+import { ChevronLeft, ChevronRight, Expand } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { bausteinAction, tarifAction } from "./actions";
 
-type Folie = { id: string; titel: string; html: string; notizen: string[] };
+type Folie = { id: string; titel: string; html: string };
 
-export function Deck({ id, css, folien: start, nurNotizen, interaktiv = true }: { id: string; css: string; folien: Folie[]; nurNotizen?: boolean; interaktiv?: boolean }) {
+export function Deck({ id, css, folien: start, interaktiv = true }: { id: string; css: string; folien: Folie[]; interaktiv?: boolean }) {
   const [folien, setFolien] = useState(start);
   const [i, setI] = useState(0);
   const [pending, startT] = useTransition();
@@ -36,22 +36,7 @@ export function Deck({ id, css, folien: start, nurNotizen, interaktiv = true }: 
   };
   const [scale, setScale] = useState(0.5);
   const box = useRef<HTMLDivElement>(null);
-  const chan = useRef<BroadcastChannel | null>(null);
-
-  useEffect(() => {
-    const c = new BroadcastChannel(`deck-${id}`);
-    chan.current = c;
-    c.onmessage = (ev) => typeof ev.data === "number" && setI(ev.data);
-    return () => c.close();
-  }, [id]);
-  const go = useCallback(
-    (n: number) => {
-      const next = Math.max(0, Math.min(folien.length - 1, n));
-      setI(next);
-      chan.current?.postMessage(next);
-    },
-    [folien.length],
-  );
+  const go = useCallback((n: number) => setI(Math.max(0, Math.min(folien.length - 1, n))), [folien.length]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") go(i + 1);
@@ -76,21 +61,6 @@ export function Deck({ id, css, folien: start, nurNotizen, interaktiv = true }: 
   }, []);
 
   const f = folien[i];
-  const notizen = (
-    <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-4" data-sprechzettel>
-      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">
-        Sprechzettel · Folie {i + 1} von {folien.length}: {f.titel}
-      </div>
-      <ul className="list-disc space-y-1.5 pl-5 text-[15px]">
-        {f.notizen.map((n) => (
-          <li key={n}>{n}</li>
-        ))}
-      </ul>
-      {folien[i + 1] ? <div className="mt-3 text-xs text-[color:var(--muted)]">Als Nächstes: {folien[i + 1].titel}</div> : null}
-    </div>
-  );
-  if (nurNotizen) return <div className="space-y-3">{notizen}<Nav i={i} n={folien.length} go={go} /></div>;
-
   return (
     <div className="space-y-4">
       <style>{css}</style>
@@ -102,11 +72,7 @@ export function Deck({ id, css, folien: start, nurNotizen, interaktiv = true }: 
         <Button variant="secondary" size="md" icon={Expand} onClick={() => box.current?.requestFullscreen?.()}>
           Vollbild
         </Button>
-        <Button variant="secondary" size="md" icon={NotebookText} onClick={() => window.open(`?notizen=1`, `sprechzettel-${id}`, "width=520,height=640")}>
-          Sprechzettel im eigenen Fenster
-        </Button>
       </div>
-      {notizen}
     </div>
   );
 }

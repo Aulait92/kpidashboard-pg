@@ -1,6 +1,6 @@
-// Terminvorbereitung (Ole, 15.11.2026): Rechner-Reihenfolge, offene Punkte, Leitfaden, PDF-HTML im PG-Design
+// Terminvorbereitung (Ole, 15.11.2026): Rechner-Reihenfolge, offene Punkte, PDF-HTML im PG-Design (ohne Gesprächsleitfaden)
 import { describe, expect, it } from "vitest";
-import { abschnitte, leitfaden, offenePunkte, spartenAus, spartenVon, tierWunsch, unterlagenFuer, vorbereitungHtml, type VorbereitungDaten } from "@/lib/termin-vorbereitung";
+import { abschnitte, offenePunkte, spartenAus, spartenVon, tierWunsch, unterlagenFuer, vorbereitungHtml, type VorbereitungDaten } from "@/lib/termin-vorbereitung";
 
 const base: VorbereitungDaten = {
   lead: { name: "Julia Schneider", telefon: "+49 151 1", email: null, adresse: "Achenseeweg 11a, 12209 Berlin", produkt: "Privatschutz" },
@@ -32,30 +32,21 @@ describe("Terminvorbereitung", () => {
     expect(u.join(" ")).not.toContain("Wohngebäude");
   });
 
-  it("TKV: Rechner-Felder aus dem Formular, Leitfaden mit OP oder Vollschutz", () => {
+  it("TKV: Rechner-Felder aus dem Formular", () => {
     const d = { ...base, lead: { ...base.lead, produkt: "TKV-Katze" }, formular: [{ label: "Tierart", value: "Katze" }, { label: "Haltung", value: "Wohnung" }], angaben: { tarifwunsch: "Vollschutz" } };
     const ab = abschnitte(d);
     expect(ab[0].titel).toBe("Allianz-Rechner Tierkrankenversicherung");
     expect(ab[0].felder.find((f) => f.label === "Tierart")?.wert).toBe("Katze");
     expect(offenePunkte(ab)).toContain("Geburtsdatum des Halters");
-    expect(leitfaden("TKV-Katze").map((s) => s.punkte.join(" ")).join(" ")).toContain("OP-Schutz und Vollschutz");
   });
 
   it("PDF-HTML im PG-Design, ohne Gedankenstriche, Werte escaped", () => {
     const html = vorbereitungHtml({ ...base, lead: { ...base.lead, name: "<b>X</b>" } });
     expect(html).toContain('performance<span>growth</span>');
     expect(html).toContain("#2563eb");
-    expect(html).toContain("Gesprächsleitfaden");
+    expect(html).not.toMatch(/Gesprächsleitfaden|Grundregeln/);
     expect(html).toContain("&lt;b&gt;X&lt;/b&gt;");
     const text = html.replace(/<style>[\s\S]*?<\/style>/, "");
     expect(text).not.toMatch(/[–—]/);
-  });
-
-  it("Leitfaden: Ablauf mit erlaubtem Nein, Richtig-Frage, eine Empfehlung, Abschlussfrage, Widerruf; Grundregeln im PDF", () => {
-    const t = leitfaden("Privatschutz").flatMap((s) => s.punkte).join(" ");
-    for (const x of ["Ein Nein ist völlig in Ordnung", "Richtig?", "Eine klare Empfehlung", "Spricht etwas dagegen", "14 Tage Widerrufsrecht", "Kennen Sie jemanden"]) expect(t).toContain(x);
-    expect(t).not.toMatch(/Garantie|[–—]/);
-    expect(leitfaden("TKV-Katze").flatMap((s) => s.punkte).join(" ")).toContain("Vorerkrankungen sind nicht mitversichert");
-    expect(vorbereitungHtml(base)).toContain("Grundregeln");
   });
 });

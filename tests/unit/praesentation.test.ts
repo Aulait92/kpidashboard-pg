@@ -41,13 +41,13 @@ describe("Präsentation", () => {
     expect(fs.map((f) => f.id)).toEqual(expect.arrayContaining(["titel", "situation", "risiken", "beispiel", "empfehlung", "beitrag", "entscheidung", "weiter", "danke"]));
     expect(fs.some((f) => f.id.startsWith("vergleich-"))).toBe(true);
     expect(fs.find((f) => f.id === "beitrag")!.html).toContain("7,40");
-    expect(fs.every((f) => f.notizen.length > 0)).toBe(true);
+    expect(fs.every((f) => !("notizen" in f))).toBe(true);
     const leer = folien(d, null, m);
     expect(leer.find((f) => f.id === "empfehlung")!.html).toContain("im Gespräch");
     const html = praesentationHtml(fs, m, "Test");
     expect(html).toContain("#003781");
     expect(html.replace(/<style>[\s\S]*?<\/style>/, "")).not.toMatch(/[–—]/);
-    expect(fs.flatMap((f) => f.notizen).join(" ")).not.toMatch(/[–—]|Garantie/);
+    expect(fs.map((f) => f.html).join(" ")).not.toMatch(/Garantie|Sprechzettel/);
   });
 
   it("escaped Kundendaten", () => {

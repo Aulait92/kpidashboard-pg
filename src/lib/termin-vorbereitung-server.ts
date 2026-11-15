@@ -218,7 +218,6 @@ export async function loadKundenPraesentation(token: string, now = new Date()) {
   if (!a?.shareExpiresAt || a.shareExpiresAt <= now || !a.offersConfirmedAt) return null;
   const p = await loadPraesentation(a.id, { customerId: a.customerId, userId: null, teamRole: "owner" });
   if (!p) return null;
-  // Für den Kunden: keine Sprechzettel, keine Schalter
   const folien = p.folien.map((f) => ({ id: f.id, titel: f.titel, html: f.html }));
   return { customerId: a.customerId, name: p.d.lead.name, berater: p.d.termin.berater, marke: p.marke, folien, css: p.css, bis: a.shareExpiresAt };
 }

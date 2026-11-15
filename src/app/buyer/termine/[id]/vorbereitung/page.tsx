@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, ClipboardCheck, FileDown, ListChecks, MessageSquareText, Presentation, Receipt, TriangleAlert } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, FileDown, ListChecks, Presentation, Receipt, TriangleAlert } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { ButtonLink, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { isNewUi } from "@/lib/new-ui";
-import { abschnitte, GRUNDREGELN, leitfaden, offenePunkte, spartenVon, unterlagenFuer } from "@/lib/termin-vorbereitung";
+import { abschnitte, offenePunkte, spartenVon, unterlagenFuer } from "@/lib/termin-vorbereitung";
 import { angeboteAuslesenErlaubt, loadAngebote, loadVorbereitung } from "@/lib/termin-vorbereitung-server";
 import { AngeboteEditor } from "./angebote-editor";
 import { PreparedButton } from "./prepared-button";
@@ -17,7 +17,7 @@ const when = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(d);
 
 // Terminvorbereitung (Ole, 15.11.2026): Angaben in der Reihenfolge des Allianz-Rechners, offene Punkte,
-// Gesprächsleitfaden und PDF im PG-Design. Aufgabe dazu auf „Heute“ bis „Vorbereitet“.
+// PDF im PG-Design (Gesprächsleitfaden entfernt, Ole 15.11.2026). Aufgabe dazu auf „Heute“ bis „Vorbereitet“.
 export default async function TerminVorbereitungPage({ params }: { params: Promise<{ id: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
@@ -26,7 +26,6 @@ export default async function TerminVorbereitungPage({ params }: { params: Promi
   if (!d) notFound();
   const ab = abschnitte(d);
   const offen = offenePunkte(ab);
-  const lf = leitfaden(d.lead.produkt);
   const unterlagen = unterlagenFuer(d.lead.produkt, spartenVon(d));
   const [ang, auslesenErlaubt, newUi] = await Promise.all([loadAngebote(id, ctx), angeboteAuslesenErlaubt(ctx.customerId, d.lead.produkt), isNewUi(ctx.customerId)]);
   return (
@@ -112,31 +111,6 @@ export default async function TerminVorbereitungPage({ params }: { params: Promi
         </Card>
       ) : null}
 
-      <Card className="mb-5" data-leitfaden>
-        <CardHeader title="Gesprächsleitfaden" icon={MessageSquareText} />
-        <div className="mx-5 mt-3.5 rounded-[var(--radius-md)] bg-[color:var(--brand-soft)] px-4 py-3 text-sm" data-grundregeln>
-          <div className="mb-1 font-semibold text-[color:var(--brand-dark)]">Grundregeln</div>
-          <ul className="list-disc space-y-0.5 pl-4">
-            {GRUNDREGELN.map((g) => <li key={g}>{g}</li>)}
-          </ul>
-        </div>
-        <ol className="space-y-3 px-5 py-3.5 text-sm">
-          {lf.map((s, i) => (
-            <li key={s.titel} className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand)] text-xs font-bold text-white">{i + 1}</span>
-              <div>
-                <div className="font-semibold">
-                  {s.titel}
-                  {s.minuten ? <span className="ml-1.5 font-normal text-[color:var(--muted)]">ca. {s.minuten} Min.</span> : null}
-                </div>
-                <ul className="mt-1 list-disc space-y-0.5 pl-4">
-                  {s.punkte.map((p) => <li key={p}>{p}</li>)}
-                </ul>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </Card>
 
       {unterlagen.length ? (
         <Card className="mb-5">

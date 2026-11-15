@@ -12,25 +12,17 @@ import { Deck } from "./deck";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Präsentation | performancegrowth" };
 
-// Beratungsstrecke je Termin (Ole, 15.11.2026): Folien aus Angaben und bestätigten Angeboten, Sprechzettel nur für den Berater.
-export default async function PraesentationPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ notizen?: string }> }) {
+// Beratungsstrecke je Termin (Ole, 15.11.2026): Folien aus Angaben und bestätigten Angeboten (ohne Sprechzettel).
+export default async function PraesentationPage({ params }: { params: Promise<{ id: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   const { id } = await params;
-  const { notizen } = await searchParams;
   const p = await loadPraesentation(id, ctx);
   if (!p) notFound();
   const link = await kundenlinkStand(id, ctx);
   const linkStart = link
     ? { url: publicUrlOr(`/beratung/${link.token}`), bis: new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "numeric", month: "long" }).format(link.bis) }
     : null;
-  if (notizen) {
-    return (
-      <main className="mx-auto w-full max-w-xl flex-1 px-4 py-4">
-        <Deck id={id} css={p.css} folien={p.folien} nurNotizen />
-      </main>
-    );
-  }
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <Link href={`/buyer/termine/${id}/vorbereitung`} className="mb-3 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-[color:var(--brand)] hover:underline">

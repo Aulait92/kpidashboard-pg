@@ -21,7 +21,7 @@ export function Kundenlink({ id, start, bereit }: { id: string; start: { url: st
     <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-4" data-kundenlink-karte>
       <div className="text-sm font-semibold">Link für Ihren Kunden</div>
       <p className="mt-1 text-sm text-[color:var(--muted)]">
-        Ihr Kunde sieht die Präsentation mit der Auswahl aus dem Termin, ohne Sprechzettel und ohne Schalter. Der Link ist 14 Tage gültig.
+        Ihr Kunde sieht die Präsentation mit der Auswahl aus dem Termin, ohne Schalter zum Umstellen. Der Link ist 14 Tage gültig.
       </p>
       {link ? (
         <div className="mt-3 space-y-2">

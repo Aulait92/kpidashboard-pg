@@ -1,8 +1,8 @@
 // Terminvorbereitung (Ole, 15.11.2026): Aufgabe „Termin vorbereiten: Angebot rechnen“ auf „Heute“ und je Termin
 // eine Übersicht (auch als PDF im PG-Design) mit den Angaben in der Reihenfolge des Allianz-Tarifrechners,
-// den offenen Punkten und einem festen Gesprächsleitfaden je Produkt.
+// den offenen Punkten (Gesprächsleitfaden entfernt, Ole 15.11.2026).
 //
-// Reine Funktionen (Abschnitte, offene Punkte, Leitfaden, HTML) ohne Datenbank; Laden in termin-vorbereitung-server.ts.
+// Reine Funktionen (Abschnitte, offene Punkte, HTML) ohne Datenbank; Laden in termin-vorbereitung-server.ts.
 
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
 import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
@@ -14,7 +14,6 @@ export const VORBEREITUNG_VORLAUF_MS = 36 * 60 * 60 * 1000;
 
 export type Feld = { label: string; wert: string | null };
 export type Abschnitt = { titel: string; hinweis?: string; felder: Feld[] };
-export type LeitfadenSchritt = { titel: string; minuten?: number; punkte: string[] };
 
 export type VorbereitungDaten = {
   lead: { name: string; telefon: string | null; email: string | null; adresse: string | null; produkt: string };
@@ -157,112 +156,6 @@ export function offenePunkte(ab: Abschnitt[]): string[] {
   return out;
 }
 
-/**
- * Fester Gesprächsleitfaden je Produkt (geprüfte Texte, keine KI). Überarbeitet nach Vertriebsforschung (Ole,
- * 15.11.2026): Agenda mit erlaubtem Nein (Sandler), Redeanteil unter 50 % (Gong), Zusammenfassen und „Richtig?“
- * vor dem Angebot (Voss; zugleich Bedarfsdokumentation nach § 61 VVG), eine klare Empfehlung statt Tarifliste,
- * drei echte Stufen mit Empfehlung in der Mitte, Beitrag pro Monat neben einem echten Schadenbeispiel, Einwände
- * eingrenzen und benennen, Abschlussfrage auf „Nein“ (Voss), Alternativfrage zum Beginn, Folgetermin selbst
- * eintragen lassen, Empfehlungsfrage nach dem Abschluss. Grenzen: kein künstlicher Zeitdruck (UWG), keine
- * Leistungsversprechen über die Bedingungen hinaus, Ausschlüsse und Wartezeiten offen nennen, Widerruf korrekt.
- */
-export function leitfaden(produkt: string): LeitfadenSchritt[] {
-  const kat = produktCheckliste(produkt)?.key ?? null;
-  const tier = kat === "tier";
-  const ps = kat === "privatschutz";
-  const einstieg: LeitfadenSchritt = {
-    titel: "Einstieg und Ablauf",
-    minuten: 2,
-    punkte: [
-      "„Schön, dass es klappt. Wir haben etwa 30 Minuten, passt das bei Ihnen noch so?“",
-      "Ablauf vereinbaren, Nein ausdrücklich erlauben: „Mein Vorschlag: Ich prüfe kurz, ob ich alles richtig verstanden habe, dann zeige ich Ihnen meine Empfehlung, und am Ende sagen Sie mir ehrlich, ob das für Sie passt oder nicht. Ein Nein ist völlig in Ordnung.“",
-      "Status klar nennen (Vertreter oder Makler); die Erstinformation hat der Kunde schon per WhatsApp bekommen.",
-    ],
-  };
-  const bedarf: LeitfadenSchritt = {
-    titel: "Bedarf bestätigen",
-    minuten: 5,
-    punkte: [
-      tier
-        ? "Mit seinen Worten zusammenfassen: „Sie haben angegeben, dass … und Sie möchten vor allem die Tierarztkosten absichern. Stimmt das so?“"
-        : "Mit seinen Worten zusammenfassen: „Sie haben angegeben, dass … und Sie möchten vor allem … absichern. Stimmt das so?“",
-      tier
-        ? "Eine Frage zur Bedeutung: „Wie würden Sie heute eine Tierarztrechnung über einige tausend Euro bezahlen?“"
-        : "Eine Frage zur Bedeutung: „Was wäre für Sie das Unangenehmste, das passieren könnte?“",
-      "Offene Punkte klären (siehe Seite 1), bestehende Verträge mit Ablauf und Kündigungsfrist.",
-      "Abschließen mit „Richtig?“: „Wenn ich Sie richtig verstehe, geht es Ihnen um … Richtig?“ Erst nach dem Ja weiter. Das ist zugleich Ihre Bedarfsdokumentation.",
-    ],
-  };
-  const empfehlung: LeitfadenSchritt = {
-    titel: "Empfehlung zeigen",
-    minuten: 10,
-    punkte: [
-      tier
-        ? "Eine klare Empfehlung mit Begründung aus seinen Worten: „Auf Basis dessen, was Sie mir gesagt haben, empfehle ich Ihnen …, weil Sie gesagt haben …“"
-        : "Eine klare Empfehlung mit Begründung aus seinen Worten: „Auf Basis dessen, was Sie mir gesagt haben, empfehle ich Ihnen …, weil Sie gesagt haben …“",
-      tier
-        ? "OP-Schutz und Vollschutz nebeneinander zeigen, dazu eine höhere Stufe; empfehlen Sie die Stufe, die zu seinem Wunsch passt. Nur echte, sinnvolle Tarife zeigen."
-        : "Drei echte Stufen zeigen, die passende in der Mitte empfehlen. Nur Tarife, die für den Kunden sinnvoll sind; keine lange Liste.",
-      tier
-        ? "Beitrag pro Monat neben ein echtes Beispiel stellen: „Das sind … € im Monat. Eine OP, etwa am Kreuzband, kostet schnell mehrere tausend Euro.“"
-        : "Beitrag pro Monat neben ein echtes Beispiel stellen: „Das sind … € im Monat.“ Bei Haftpflicht: ein Personenschaden kann in die Millionen gehen; bei Hausrat: Einbruch oder Wasserschaden.",
-      ps ? "Bei mehreren Sparten den Paketvorteil (Allianz PrivatSchutz) zeigen." : "Selbstbeteiligung und Tarifstufe als Stellschrauben für den Beitrag erklären.",
-      tier
-        ? "Offen sagen, damit es später keine Überraschung gibt: Bekannte Vorerkrankungen sind nicht mitversichert, für bestimmte Leistungen gelten Wartezeiten."
-        : "Offen sagen, was nicht versichert ist, damit es später keine Überraschung gibt.",
-      "Zwischendurch fragen statt vortragen: „Wie klingt das für Sie?“",
-    ],
-  };
-  const einwaende: LeitfadenSchritt = {
-    titel: "Einwände",
-    punkte: [
-      "Grundmuster: erst eingrenzen („Angenommen, das wäre gelöst: Wäre das dann der richtige Schutz für Sie?“), dann das Gefühl benennen („Es klingt, als …“), dann sachlich antworten.",
-      "„Muss ich mir überlegen“: „Verständlich. Was genau möchten Sie sich noch überlegen: den Beitrag, den Umfang oder etwas anderes?“",
-      "„Zu teuer“: „Angenommen, der Beitrag passt: Wäre das der richtige Schutz?“ Dann kleinere Stufe oder Selbstbeteiligung, nie Leistungen schönreden.",
-      ...(tier
-        ? [
-            "„Mein Tier ist jung und gesund“: „Genau dann ist der beste Zeitpunkt: Was später als Vorerkrankung bekannt ist, lässt sich nicht mehr versichern, und Wartezeiten laufen dann schon.“",
-            "„Ich lege lieber selbst Geld zurück“: „Das ist vernünftig. Wie lange würde es dauern, bis Sie das Geld für eine OP zurückgelegt haben?“",
-          ]
-        : [
-            "„Ich habe schon eine Versicherung“: „Gut. Darf ich kurz vergleichen, was dort enthalten ist?“ Lücken prüfen (Deckungssumme, Unterversicherung, Schlüsselverlust, Neuwert); wechseln nur nach Blick auf Kündigungsfrist.",
-            "„Die zahlen am Ende sowieso nicht“: „Es klingt, als hätten Sie da schlechte Erfahrungen gemacht.“ Dann Ausschlüsse offen zeigen und erklären, wie ein Schadenfall abläuft.",
-          ]),
-    ],
-  };
-  const abschluss: LeitfadenSchritt = {
-    titel: "Abschluss",
-    minuten: 5,
-    punkte: [
-      "„Spricht etwas dagegen, dass wir das heute so festmachen?“ (ein Nein ist hier die Zustimmung)",
-      "Beginn als Auswahl: „Soll der Schutz zum 1. des nächsten Monats starten oder schon ab sofort?“",
-      "Widerruf korrekt nennen: „Sie haben 14 Tage Widerrufsrecht, ohne Begründung.“",
-      "Antrag gemeinsam ausfüllen: Beginn, IBAN, fehlende Angaben" + (tier ? ", Chipnummer jedes Tieres." : "."),
-      "Bisheriger Vertrag: Kündigung anbieten (E-Mail-Vorlage „Kündigung alte Versicherung“).",
-      "Noch nicht entschieden: Folgetermin vereinbaren und den Kunden bitten, ihn sich gleich selbst einzutragen.",
-    ],
-  };
-  const danach: LeitfadenSchritt = {
-    titel: "Nach dem Termin",
-    punkte: [
-      "Unterlagen und Beratungsdokumentation in Textform schicken: „Schauen Sie bitte kurz rein, ob alles so stimmt, wie wir es besprochen haben.“",
-      "Ergebnis in der App eintragen: Gewonnen, Angebot gesendet oder Verloren; bei Abschluss die Police hochladen.",
-      tier
-        ? "Nach dem Abschluss: „Kennen Sie jemanden mit Hund oder Katze, für den das auch interessant wäre?“"
-        : "Nach dem Abschluss: „Kennen Sie jemanden, für den das auch interessant wäre?“",
-    ],
-  };
-  return [einstieg, bedarf, empfehlung, einwaende, abschluss, danach];
-}
-
-/** Grundregeln für das Gespräch (im PDF und auf der Seite über dem Leitfaden). */
-export const GRUNDREGELN: string[] = [
-  "Mehr zuhören als reden: Ihr Redeanteil unter der Hälfte, lieber eine Frage mehr als ein Monolog.",
-  "Eine klare Empfehlung statt einer Tarifliste.",
-  "Kein Zeitdruck, keine Versprechen über die Bedingungen hinaus; Ausschlüsse und Wartezeiten offen nennen.",
-  "Status klar: Vertreter oder Makler.",
-];
-
 /** Unterlagen je Produkt; bei Privatschutz nur die Sparten-Punkte („bei Hausrat: …“), die gefragt sind. */
 export function unterlagenFuer(produkt: string, sparten?: Sparte[]): string[] {
   const list = produktCheckliste(produkt)?.unterlagen ?? [];
@@ -288,7 +181,6 @@ const DT = (d: Date) =>
 export function vorbereitungHtml(d: VorbereitungDaten): string {
   const ab = abschnitte(d);
   const offen = offenePunkte(ab);
-  const lf = leitfaden(d.lead.produkt);
   const unterlagen = unterlagenFuer(d.lead.produkt, spartenVon(d));
   const e = (s: string) => escapeHtml(s);
   const feld = (f: Feld) =>
@@ -320,19 +212,12 @@ td.v { font-weight: 600; }
 td.offen { color: #b45309; font-weight: 600; }
 .offenbox { background: #fffbeb; border-color: #fde68a; }
 .offenbox h2 { color: #92400e; }
-.regeln { background: #e5edff; border-color: #c7d7fe; }
-.card.lang { break-inside: auto; }
 ul { margin: 0; padding-left: 16px; }
 li { margin: 2px 0; }
-.schritt { display: grid; grid-template-columns: 26px 1fr; gap: 8px; margin-bottom: 8px; break-inside: avoid; }
-.nr { width: 22px; height: 22px; border-radius: 999px; background: #2563eb; color: #fff; font-weight: 700; font-size: 9pt; display: flex; align-items: center; justify-content: center; }
-.schritt b { display: block; }
-.min { color: #66758f; font-weight: 400; font-size: 9pt; }
 .check li { list-style: none; margin-left: -16px; }
 .check li::before { content: "☐  "; color: #2563eb; }
 .zus { font-style: italic; color: #334155; }
 .fuss { margin-top: 14px; color: #9aa4b2; font-size: 7.5pt; display: flex; justify-content: space-between; border-top: 1px solid #e3e9f3; padding-top: 6px; }
-.seite { break-before: page; }
 </style></head><body>
 <div class="kopf"><div class="marke">performance<span>growth</span></div><div class="doc">Terminvorbereitung<br>${e(DT(new Date()))}</div></div>
 <h1>${e(d.lead.name)}</h1>
@@ -351,16 +236,6 @@ li { margin: 2px 0; }
 ${offen.length ? `<div class="card offenbox"><h2>Im Termin klären</h2><ul>${offen.map((o) => `<li>${e(o)}</li>`).join("")}</ul></div>` : ""}
 ${ab.map((s) => `<div class="card"><h2>${e(s.titel)}</h2><table>${s.felder.map(feld).join("")}</table></div>`).join("")}
 ${d.formular.length ? `<div class="card"><h2>Aus dem Leadformular</h2><table>${d.formular.map((f) => feld({ label: f.label, wert: f.value })).join("")}</table></div>` : ""}
-<div class="seite"></div>
-<div class="kopf"><div class="marke">performance<span>growth</span></div><div class="doc">Gesprächsleitfaden<br>${e(d.lead.name)}</div></div>
-<h1>Gesprächsleitfaden</h1><p class="sub">${e(d.lead.produkt)} · etwa 30 Minuten</p>
-<div class="card regeln"><h2>Grundregeln</h2><ul>${GRUNDREGELN.map((g) => `<li>${e(g)}</li>`).join("")}</ul></div>
-<div class="card lang">${lf
-    .map(
-      (s, i) =>
-        `<div class="schritt"><div class="nr">${i + 1}</div><div><b>${e(s.titel)}${s.minuten ? ` <span class="min">ca. ${s.minuten} Min.</span>` : ""}</b><ul>${s.punkte.map((p) => `<li>${e(p)}</li>`).join("")}</ul></div></div>`,
-    )
-    .join("")}</div>
 ${unterlagen.length ? `<div class="card"><h2>Unterlagen, um die der Kunde gebeten wurde</h2><ul class="check">${unterlagen.map((u) => `<li>${e(u)}</li>`).join("")}</ul></div>` : ""}
 <div class="fuss"><span>performancegrowth · vertraulich, nur für die Beratung</span><span>${e(d.lead.name)}</span></div>
 </body></html>`;

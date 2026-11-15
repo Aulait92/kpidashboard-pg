@@ -179,7 +179,7 @@ Seiten aus der Liste „Seiten“ unten.
 - Auf **Heute** steht ab dem Vortag (bei kurzfristigen Buchungen sofort) die Aufgabe **Termine vorbereiten:
   Angebot rechnen** mit jedem anstehenden Termin. Ein Klick öffnet die **Terminvorbereitung**.
 - Dort stehen die Angaben in der Reihenfolge des Allianz-Tarifrechners (je Sparte), die **offenen Punkte**, die Sie
-  im Termin klären, alles aus dem Leadformular, ein **Gesprächsleitfaden** und die Unterlagen, um die der Kunde
+  im Termin klären, alles aus dem Leadformular und die Unterlagen, um die der Kunde
   gebeten wurde. **Als PDF** gibt es das Ganze zum Drucken oder für den zweiten Bildschirm.
 - Haben Sie das Angebot gerechnet, tippen Sie **Vorbereitet**; die Aufgabe verschwindet. Auch im Kontakt am Termin:
   **Vorbereiten**.
@@ -187,8 +187,7 @@ Seiten aus der Liste „Seiten“ unten.
   Monat, wichtigste Leistungen, was nicht versichert ist) und markieren, was Sie empfehlen. Mit **Angebote hochladen** (direkt in der
   Terminvorbereitung, auch mehrere Dateien oder Screenshots aus dem Tarifrechner) liest die App sie aus (Sach-, Haftpflicht-, Rechtsschutz-, Unfall- und Tierversicherungen; bei Kranken, BU oder Leben nicht, wegen möglicher Gesundheitsangaben). Laden Sie nur das Angebot hoch, keine Antragsunterlagen mit Gesundheitsfragen. Nach **Prüfen und bestätigen** öffnet **Präsentation**
   eine bebilderte Beratungsstrecke mit den Angaben Ihres Kunden und Ihren Angeboten, in den Farben Ihrer
-  Gesellschaft. Im Videocall den Bildschirm teilen, **Vollbild**, mit den Pfeiltasten weiter. Der **Sprechzettel**
-  (nur für Sie) steht unter der Folie oder in einem eigenen Fenster, das mitblättert. **Als PDF** zum Nachschicken.
+  Gesellschaft. Im Videocall den Bildschirm teilen, **Vollbild**, mit den Pfeiltasten weiter. **Als PDF** zum Nachschicken.
 - **Bausteine im Termin:** Zu jedem Angebot tragen Sie Bausteine mit ihrem Beitrag aus dem Tarifrechner ein (z. B.
   Zahnbehandlung +4,10 € oder höhere Selbstbeteiligung −2,80 €; der Haken heißt „im Angebot enthalten“). In der
   Präsentation tippen Sie einen Baustein auf der Folie an oder ab: Der Beitrag rechnet sich sofort neu, abgewählte
@@ -200,7 +199,7 @@ Seiten aus der Liste „Seiten“ unten.
   Auf der Empfehlungsfolie (Leistungen und was nicht versichert ist, je Sparte) wechseln Sie die Stufe ebenfalls; der Stern zeigt Ihre Empfehlung. Auf der Beitragsfolie nimmt ein Klick auf ein Produkt es
   heraus, ein zweiter Klick holt es mit Ihrer Empfehlung zurück.
 - **Link für Ihren Kunden:** Unter der Präsentation erstellt **Link erstellen** einen persönlichen Link mit dem Stand aus
-  dem Termin, ohne Sprechzettel und ohne Schalter, 14 Tage gültig. Kopieren, per WhatsApp oder E-Mail schicken, bei
+  dem Termin, ohne Schalter zum Umstellen, 14 Tage gültig. Kopieren, per WhatsApp oder E-Mail schicken, bei
   Bedarf **Link beenden**.
 - **Logo auf der Präsentation:** Unter **Einstellungen → Logo für Präsentationen** holt die App das Logo von Ihrer
   Webseite (bei einer Agentur meist das Logo Ihrer Gesellschaft) oder Sie laden es hoch (PNG, JPG oder SVG, bis 1 MB).

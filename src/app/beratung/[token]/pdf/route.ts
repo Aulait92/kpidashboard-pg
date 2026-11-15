@@ -12,7 +12,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
   const p = await loadKundenPraesentation(token);
   if (!p) return new Response("Dieser Link ist abgelaufen oder ungültig.", { status: 404, headers: { "X-Robots-Tag": "noindex, nofollow" } });
   try {
-    const pdf = await renderHtmlToPdf(praesentationHtml(p.folien.map((f) => ({ ...f, notizen: [] })), p.marke, `Ihre Beratung ${p.name}`));
+    const pdf = await renderHtmlToPdf(praesentationHtml(p.folien, p.marke, `Ihre Beratung ${p.name}`));
     const name = `Beratung-${p.name.replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "") || "Kunde"}.pdf`;
     return new Response(new Uint8Array(pdf), {
       headers: {
