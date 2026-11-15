@@ -38,6 +38,10 @@ export async function POST(req: Request): Promise<Response> {
   }
   const fileName = decodeURIComponent(req.headers.get("x-file-name") ?? `praesentation.${format}`);
   const data = new Uint8Array(await req.arrayBuffer());
+  // Abgeschnittener Body (z. B. Größengrenze der Middleware): nicht speichern
+  if (declared > 0 && data.length !== declared) {
+    return Response.json({ error: `Datei unvollständig angekommen (${data.length} von ${declared} Bytes). Bitte erneut hochladen.` }, { status: 400 });
+  }
   const res = await savePresentation({ audience, format, fileName, data, uploadedById: null });
   if (!res.ok) return Response.json({ error: res.error }, { status: 400 });
   await audit("presentation.upload", {
