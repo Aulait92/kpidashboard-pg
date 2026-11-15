@@ -961,7 +961,9 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
 2. 360dialog (unser WhatsApp-Anbieter): Konto mit E-Mail und Passwort anlegen. Kostenlos, die Nummer
    bleibt Eigentum des Kunden. Danach Seite „About you“: Name bzw. Firmenname, **eigene Handynummer für
    Rückfragen** (nicht die Nummer, die verbunden wird; Vorwahl +49 einstellen), Währung EUR, Häkchen bei
-   Weitergabe der Kontaktdaten und Nutzungsbedingungen, „Continue“. Dann öffnet sich Meta.
+   Weitergabe der Kontaktdaten und Nutzungsbedingungen, „Continue“. Dann die zu verbindende Nummer eingeben;
+   Frage „Is … already on WhatsApp?“: neue Nummer → „No, It's not connected“, WhatsApp Business App →
+   „Yes, Business app“. Dann öffnet sich Meta.
 3. Fenster von Meta: mit Facebook anmelden, „Weiter“.
 4. Unternehmensportfolio auswählen oder neu anlegen. Die Auswahl lässt sich später nicht ändern.
 5. WhatsApp-Profil: Anzeigename und Kategorie. Der Name muss zur Firma passen, z. B. „Max Mustermann

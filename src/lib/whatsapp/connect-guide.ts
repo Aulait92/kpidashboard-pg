@@ -64,7 +64,7 @@ export type PathGuide = {
 const FB_LOGIN = "Ihren Facebook-Login. Sie brauchen Admin-Rechte im Meta-Unternehmensportfolio (Business Manager), also dort, wo auch Ihr Werbekonto liegt.";
 const DESKTOP = "Einen Computer statt des Handys. Erlauben Sie Pop-up-Fenster im Browser.";
 
-const COMMON_START: GuideStep[] = [
+const ACCOUNT_START: GuideStep[] = [
   {
     where: "360dialog",
     title: "Konto bei 360dialog anlegen",
@@ -78,6 +78,17 @@ const COMMON_START: GuideStep[] = [
     pitfall:
       "Bei „Personal WhatsApp Number“ gehört Ihre eigene Handynummer für Rückfragen hin, nicht die Nummer, die Sie verbinden. Stellen Sie links die Vorwahl auf +49 um.",
   },
+];
+
+/** 360dialog fragt vor dem Meta-Fenster, ob die Nummer schon in WhatsApp läuft. */
+const numberQuestion = (answer: string, why: string): GuideStep => ({
+  where: "360dialog",
+  title: "Nummer eingeben und Frage beantworten",
+  text: `Sie geben die Nummer ein, die Ihr Assistent nutzen soll. 360dialog fragt dann „Is … already on WhatsApp?“. Sie wählen: „${answer}“.`,
+  pitfall: why,
+});
+
+const META_START: GuideStep[] = [
   {
     where: "meta",
     title: "Mit Facebook anmelden",
@@ -115,7 +126,9 @@ export const GUIDES: Record<ConnectPath, PathGuide> = {
     minutes: 10,
     checklist: [FB_LOGIN, "Das Telefon zur Nummer, für den Bestätigungscode. Bei Festnetz kommt der Code per Anruf.", DESKTOP, "Etwa 10 Minuten Zeit."],
     steps: [
-      ...COMMON_START,
+      ...ACCOUNT_START,
+      numberQuestion("No, It's not connected", "Die Nummer läuft doch schon in einer WhatsApp-App? Dann wählen Sie oben in der Software den passenden Weg."),
+      ...META_START,
       PROFILE,
       {
         where: "meta",
@@ -141,11 +154,13 @@ export const GUIDES: Record<ConnectPath, PathGuide> = {
       "Etwa 10 Minuten Zeit.",
     ],
     steps: [
-      ...COMMON_START,
+      ...ACCOUNT_START,
+      numberQuestion("Yes, Business app", "Wählen Sie nicht „No, It's not connected“. Sonst schlägt die Bestätigung fehl."),
+      ...META_START,
       {
         where: "meta",
         title: "„Mit der WhatsApp Business App verbunden“ wählen",
-        text: "Meta fragt, ob die Nummer schon in WhatsApp läuft. Sie wählen: „Ja, diese Nummer ist mit der WhatsApp Business App verbunden“.",
+        text: "Fragt Meta noch einmal, ob die Nummer schon in WhatsApp läuft, wählen Sie: „Ja, diese Nummer ist mit der WhatsApp Business App verbunden“.",
         pitfall: "Wählen Sie hier nicht „neue Nummer“. Sonst schlägt die Bestätigung fehl.",
       },
       {
@@ -176,7 +191,9 @@ export const GUIDES: Record<ConnectPath, PathGuide> = {
         text: "In WhatsApp unter Einstellungen → Konto → „Konto löschen“. Danach einige Minuten warten.",
         pitfall: "Das lässt sich nicht rückgängig machen. Wenn Sie die Chats behalten wollen, nehmen Sie lieber den Weg über WhatsApp Business.",
       },
-      ...COMMON_START,
+      ...ACCOUNT_START,
+      numberQuestion("No, It's not connected", "Das WhatsApp-Konto auf der Nummer muss vorher gelöscht sein, sonst schlägt die Bestätigung fehl."),
+      ...META_START,
       PROFILE,
       {
         where: "meta",
