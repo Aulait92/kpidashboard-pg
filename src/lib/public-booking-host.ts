@@ -35,6 +35,12 @@ export function parseBookingUrl(raw: string | null | undefined): BookingHost | n
 /** Seiten für Endkunden (mit Unterseiten). Auf der Buchungsadresse erlaubt, auf der App-Adresse umgeleitet. */
 export const END_CUSTOMER_PREFIXES = ["/book", "/empfehlung", "/einwilligung", "/abmelden", "/erstinformation", "/beratung"] as const;
 
+/**
+ * Live-Demo der Beratungspräsentation (Ole, 15.11.2026): auf der Buchungsadresse unter /demo (intern /demo/beratung),
+ * auf der App-Adresse unter /demo/beratung (keine Umleitung, z. B. eingebettet in die Vertriebspräsentation).
+ */
+export const DEMO_PATH = "/demo/beratung";
+
 /** Was die Seiten auf der Buchungsadresse zusätzlich brauchen (Next.js-Dateien, Icons, Abmelde-Klick, Fehlerberichte). */
 const SUPPORT_PREFIXES = ["/api/abmelden", "/_next", "/icon", "/apple-icon", "/favicon.ico", "/monitoring", "/api/csp-report"] as const;
 
@@ -44,10 +50,12 @@ const SUPPORT_PREFIXES = ["/api/abmelden", "/_next", "/icon", "/apple-icon", "/f
  */
 export const RESERVED_SEGMENTS: ReadonlySet<string> = new Set([
   // Buchungsadresse
-  "book", "empfehlung", "einwilligung", "abmelden", "erstinformation", "beratung", "api", "_next", "icon", "apple-icon", "monitoring",
+  "book", "empfehlung", "einwilligung", "abmelden", "erstinformation", "beratung", "demo", "api", "_next", "icon", "apple-icon", "monitoring",
   // App (nur auf der App-Adresse)
   "admin", "angebot", "buyer", "email-bestaetigen", "empfehlen", "feedback", "forgot-password", "login", "logout", "login-karten",
   "microsoft-freigabe", "rechner", "rechtliches", "reset-password", "sicherheit", "status", "videos", "fonts", "sw", "manifest",
+  // Vertriebspräsentation für Interessenten (eigenes Material, nur auf der App-Adresse)
+  "praesentation",
 ]);
 
 const SLUG_RE = /^[A-Za-z0-9_-]{1,80}$/;
@@ -115,6 +123,8 @@ export function decidePublicHost(input: {
     if (path === "/robots.txt") return { kind: "robots" };
     if (path === "/") return { kind: "rewrite", pathname: "/book" };
     if (END_CUSTOMER_PREFIXES.some((p) => underPrefix(path, p))) return { kind: "serve" };
+    if (path === "/demo" || path === "/demo/") return { kind: "rewrite", pathname: DEMO_PATH };
+    if (underPrefix(path, DEMO_PATH)) return { kind: "serve" };
     if (SUPPORT_PREFIXES.some((p) => underPrefix(path, p))) return { kind: "serve" };
     const m = /^\/([^/]+)\/?$/.exec(path);
     if (m && isShortSlug(m[1])) return { kind: "rewrite", pathname: `/book/${m[1]}` };

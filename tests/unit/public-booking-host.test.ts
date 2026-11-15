@@ -126,6 +126,27 @@ describe("decidePublicHost: alte Links auf der App-Adresse", () => {
   });
 });
 
+describe("Live-Demo und Vertriebspräsentation (Ole, 15.11.2026)", () => {
+  const app = "app.performancegrowth.de";
+  it("Buchungsadresse: /demo zeigt die Demo, /demo/beratung wird ausgeliefert", () => {
+    expect(decide("www.dein-beratungstermin.de", "/demo")).toEqual({ kind: "rewrite", pathname: "/demo/beratung" });
+    expect(decide("www.dein-beratungstermin.de", "/demo/")).toEqual({ kind: "rewrite", pathname: "/demo/beratung" });
+    expect(decide("www.dein-beratungstermin.de", "/demo/beratung")).toEqual({ kind: "serve" });
+    expect(decide("dein-beratungstermin.de", "/demo")).toEqual({ kind: "redirect", location: `${WWW}/demo` });
+  });
+  it("App-Adresse: Demo und Vertriebspräsentation bleiben dort (keine Umleitung)", () => {
+    expect(decide(app, "/demo/beratung")).toEqual({ kind: "pass" });
+    expect(decide(app, "/demo/beratung", { search: "?eingebettet=1" })).toEqual({ kind: "pass" });
+    expect(decide(app, "/praesentation/abcdefghijklmnopqrstuvwxyz")).toEqual({ kind: "pass" });
+  });
+  it("Vertriebspräsentation gibt es auf der Buchungsadresse nicht", () => {
+    expect(decide("www.dein-beratungstermin.de", "/praesentation/abcdefghijklmnopqrstuvwxyz")).toEqual({ kind: "not_found" });
+    expect(decide("www.dein-beratungstermin.de", "/praesentation")).toEqual({ kind: "not_found" });
+    expect(isShortSlug("demo")).toBe(false);
+    expect(isShortSlug("praesentation")).toBe(false);
+  });
+});
+
 describe("Hilfsfunktionen", () => {
   it("jeder Ordner unter src/app ist reserviert (kein Kurzlink überdeckt einen Bereich der App)", () => {
     const dirs = readdirSync(path.resolve(__dirname, "../../src/app"), { withFileTypes: true })

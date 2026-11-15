@@ -10,10 +10,11 @@ type Header = { key: string; value: string };
 type HeaderRule = { source: string; headers: Header[] };
 
 /** Öffentliche Seiten, die (z. B. auf Vermittler-Websites) eingebettet werden dürfen. */
-export const EMBEDDABLE_PATHS = ["/book/:path*", "/rechner"] as const;
+/** /demo: Live-Demo der Beratungspräsentation, eingebettet in die Vertriebspräsentation und ggf. auf der Webseite. */
+export const EMBEDDABLE_PATHS = ["/book/:path*", "/rechner", "/demo/:path*"] as const;
 
-/** Alle Pfade außer /book/… und /rechner (path-to-regexp mit negativem Lookahead). */
-export const NOT_EMBEDDABLE_SOURCE = "/:path((?!book/|rechner(?:/|$)).*)";
+/** Alle Pfade außer /book/…, /rechner und /demo/… (path-to-regexp mit negativem Lookahead). */
+export const NOT_EMBEDDABLE_SOURCE = "/:path((?!book/|rechner(?:/|$)|demo/).*)";
 
 export const CSP_REPORT_PATH = "/api/csp-report";
 

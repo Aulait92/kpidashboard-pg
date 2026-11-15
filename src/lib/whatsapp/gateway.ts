@@ -9,6 +9,7 @@ import { decryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
 import { sendText, type SendResult } from "@/lib/whatsapp/dialog360";
 import { linkLeadToConversation } from "@/lib/whatsapp/lead-link";
+import type { StatusError } from "@/lib/whatsapp/zustellfehler";
 
 const WINDOW_MS = 24 * 60 * 60 * 1000; // 24-Stunden-Service-Fenster
 
@@ -44,6 +45,8 @@ type StatusUpdate = {
   status?: string;
   // Meta-Preisangabe (Abrechnung je Nachricht)
   pricing?: { billable?: boolean; category?: string; pricing_model?: string };
+  // Bei status "failed": Fehler (z. B. 131026 „Message undeliverable“), lib/whatsapp/zustellfehler.ts
+  errors?: StatusError[];
 };
 // Coexistence: Nachrichten, die der Kunde selbst in seiner WhatsApp-Business-
 // App (Handy) an einen Kontakt schickt, kommen als „Echo" (Webhook-Feld
@@ -405,6 +408,13 @@ async function applyStatus(s: StatusUpdate): Promise<void> {
     where: { waMessageId: s.id },
     data: { status: s.status, ...pricing },
   });
+  // Nicht zugestellt: Fehlercode speichern; „kein WhatsApp“ → Lead sofort zum Vermittler (Anruf, E-Mail),
+  // Kampagnen-Empfänger künftig per E-Mail; andere Fehler → Admin-Alarm (lib/whatsapp/kein-whatsapp.ts)
+  if (s.status === "failed") {
+    const { handleFailedStatus } = await import("@/lib/whatsapp/kein-whatsapp");
+    await handleFailedStatus(s.id, s.errors);
+    return;
+  }
   // Bestandskampagnen: Zustellung und Lesebestätigung am Empfänger (Statistik je Kampagne)
   const { applyCampaignStatus } = await import("@/lib/bestand/campaigns");
   await applyCampaignStatus(s.id, s.status);

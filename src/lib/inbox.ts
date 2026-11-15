@@ -47,6 +47,8 @@ export type InboxCallback = {
   reason: string;
   createdAt: string;
   conversationId: string | null;
+  /** Kein WhatsApp: sofort anrufen, ganz oben (lib/whatsapp/kein-whatsapp.ts) */
+  urgent?: boolean;
 };
 export type InboxFollowUp = {
   leadId: string;
@@ -242,7 +244,8 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
       reason: c.attentionReason,
       at: c.attentionAt?.toISOString() ?? null,
     })),
-    callbacks: callbacks.filter((c) => !followUpIds.has(c.id)).map((c) => ({
+    // „Kein WhatsApp“ (urgent) steht immer da, auch neben einer Wiedervorlage, und ganz oben (components/today-inbox.tsx)
+    callbacks: callbacks.filter((c) => c.urgent || !followUpIds.has(c.id)).map((c) => ({
       leadId: c.id,
       name: c.name ?? "Unbekannt",
       source: c.source ?? null,
@@ -250,6 +253,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
       reason: c.reason,
       createdAt: c.createdAt.toISOString(),
       conversationId: c.conversationId,
+      urgent: !!c.urgent,
     })),
     bookingSlug: cal?.status === "connected" ? await getOrCreateBookingSlug(customerId) : null,
     noNextStep: { total: noStep.total, leads: noStep.leads.filter((l) => !outcomeLeadIds.has(l.leadId)) },

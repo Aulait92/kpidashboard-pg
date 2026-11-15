@@ -1,5 +1,8 @@
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { AUDIENCES, FORMATS, listPresentations } from "@/lib/vertrieb/praesentationen";
+import { getAppUrl } from "@/lib/email";
+import { publicBookingOrigin } from "@/lib/public-url";
+import { DEMO_PATH } from "@/lib/public-booking-host";
 import { UnterlagenGrid, type UnterlagenSlot } from "./unterlagen-grid";
 
 export const metadata = { title: "Unterlagen | Vertrieb" };
@@ -15,6 +18,13 @@ export default async function UnterlagenPage() {
       return { audience, format, file: f ? { fileName: f.fileName, size: f.size, uploadedAt: f.uploadedAt.toISOString() } : null };
     }),
   );
+  // Live-Demo der Beratungspräsentation (öffentlich): Buchungsadresse /demo, sonst App-Adresse /demo/beratung
+  let app = "https://app.performancegrowth.de";
+  try {
+    app = getAppUrl().replace(/\/$/, "");
+  } catch {}
+  const booking = publicBookingOrigin();
+  const demo = { haupt: booking ? `${booking}/demo` : `${app}${DEMO_PATH}`, app: `${app}${DEMO_PATH}` };
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6">
       <div>
@@ -24,7 +34,7 @@ export default async function UnterlagenPage() {
           mitschicken.
         </p>
       </div>
-      <UnterlagenGrid slots={slots} />
+      <UnterlagenGrid slots={slots} demo={demo} />
     </div>
   );
 }

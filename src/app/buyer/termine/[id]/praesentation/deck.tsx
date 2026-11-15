@@ -1,94 +1,15 @@
 "use client";
 
-// Präsentationsmodus (Ole, 15.11.2026): Folie skaliert ins Fenster, ← → bzw. Leertaste, Vollbild zum Teilen im
-// Videocall. Ohne Sprechzettel (Ole, 15.11.2026).
+// Präsentationsmodus im Termin (Ole, 15.11.2026): gemeinsames Deck (src/components/folien-deck.tsx), ohne Sprechzettel
+// (Ole, 15.11.2026). Bausteine und Stufen per Klick auf der Folie: sofort umschalten (optimistisch), der Server
+// rechnet und speichert.
 
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { ChevronLeft, ChevronRight, Expand } from "lucide-react";
-import { Button } from "@/components/ui";
-import { useToast } from "@/components/ui/toast";
+import { FolienDeck, type DeckKlick } from "@/components/folien-deck";
 import { bausteinAction, tarifAction } from "./actions";
 
 type Folie = { id: string; titel: string; html: string };
 
-export function Deck({ id, css, folien: start, interaktiv = true }: { id: string; css: string; folien: Folie[]; interaktiv?: boolean }) {
-  const [folien, setFolien] = useState(start);
-  const [i, setI] = useState(0);
-  const [pending, startT] = useTransition();
-  const toast = useToast();
-  // Bausteine per Klick auf der Folie: sofort umschalten (optimistisch), Server rechnet und speichert
-  const onSlideClick = (ev: React.MouseEvent) => {
-    if (!interaktiv || pending) return;
-    const el = (ev.target as HTMLElement).closest<HTMLElement>("[data-baustein],[data-tarif],[data-sparte]");
-    if (!el) return;
-    const tarif = el.dataset.tarif ?? el.dataset.sparte;
-    const [item, b] = (el.dataset.baustein ?? "").split(":").map(Number);
-    const aktiv = !el.classList.contains("an");
-    el.classList.toggle("an", aktiv);
-    startT(async () => {
-      const r = tarif != null ? await tarifAction(id, Number(tarif), el.dataset.sparte != null) : await bausteinAction(id, item, b, aktiv);
-      if (r.ok) setFolien(r.folien);
-      else {
-        el.classList.toggle("an", !aktiv);
-        toast.show({ message: r.error, tone: "error" });
-      }
-    });
-  };
-  const [scale, setScale] = useState(0.5);
-  const box = useRef<HTMLDivElement>(null);
-  const go = useCallback((n: number) => setI(Math.max(0, Math.min(folien.length - 1, n))), [folien.length]);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") go(i + 1);
-      if (e.key === "ArrowLeft" || e.key === "PageUp") go(i - 1);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [i, go]);
-  useEffect(() => {
-    const fit = () => {
-      const el = box.current;
-      if (!el) return;
-      setScale(Math.min(el.clientWidth / 1280, (document.fullscreenElement ? window.innerHeight : el.clientWidth * 0.5625) / 720));
-    };
-    fit();
-    window.addEventListener("resize", fit);
-    document.addEventListener("fullscreenchange", fit);
-    return () => {
-      window.removeEventListener("resize", fit);
-      document.removeEventListener("fullscreenchange", fit);
-    };
-  }, []);
-
-  const f = folien[i];
-  return (
-    <div className="space-y-4">
-      <style>{css}</style>
-      <div ref={box} className="deck relative w-full overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border)] bg-black/5" style={{ aspectRatio: "16 / 9" }} data-deck>
-        <div onClick={onSlideClick} style={{ width: 1280, height: 720, transform: `scale(${scale})`, transformOrigin: "top left" }} dangerouslySetInnerHTML={{ __html: f.html }} />
-      </div>
-      <div className="flex flex-wrap items-center gap-3">
-        <Nav i={i} n={folien.length} go={go} />
-        <Button variant="secondary" size="md" icon={Expand} onClick={() => box.current?.requestFullscreen?.()}>
-          Vollbild
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function Nav({ i, n, go }: { i: number; n: number; go: (n: number) => void }) {
-  return (
-    <div className="inline-flex items-center gap-2">
-      <Button variant="secondary" size="md" icon={ChevronLeft} disabled={i === 0} onClick={() => go(i - 1)}>
-        Zurück
-      </Button>
-      <span className="min-w-[64px] text-center text-sm tabular-nums text-[color:var(--muted)]">
-        {i + 1} / {n}
-      </span>
-      <Button variant="primary" size="md" icon={ChevronRight} disabled={i === n - 1} onClick={() => go(i + 1)}>
-        Weiter
-      </Button>
-    </div>
-  );
+export function Deck({ id, css, folien, interaktiv = true }: { id: string; css: string; folien: Folie[]; interaktiv?: boolean }) {
+  const onKlick = (k: DeckKlick) => (k.tarif != null ? tarifAction(id, k.tarif, k.sparte) : bausteinAction(id, k.item, k.baustein, k.aktiv));
+  return <FolienDeck kanal={`deck-${id}`} css={css} folien={folien} onKlick={interaktiv ? onKlick : undefined} />;
 }

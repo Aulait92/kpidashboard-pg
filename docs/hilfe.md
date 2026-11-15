@@ -247,6 +247,23 @@ Seiten aus der Liste „Seiten“ unten.
   den Termin und fragt die Angaben ab. Was er erfahren hat, steht im Kontakt.
 - Braucht ein Lead Sie (Frage, die der Assistent nicht beantworten soll), landet der Chat unter „Braucht dich“
   und Sie bekommen eine Push-Nachricht.
+- **Leads ohne WhatsApp (seit 15.11.2026):** Der Assistent arbeitet nur über WhatsApp. Meldet WhatsApp, dass die
+  Nummer nicht erreichbar ist (keine WhatsApp-Nummer, sehr alte App oder Nutzungsbedingungen nicht bestätigt), rufen
+  Sie den Lead bitte direkt an. Die App macht dafür sofort Folgendes:
+  - Push „Sofort anrufen: … hat kein WhatsApp“ mit der Nummer an den zuständigen Berater (ohne Zuteilung an alle).
+  - Der Lead steht ganz oben auf **Heute → Anrufen** (und in der Anrufliste) mit „Kein WhatsApp: bitte direkt
+    anrufen“, im Kontakt steht ein roter Hinweis mit Knopf zum Anrufen.
+  - Der Assistent schreibt nicht mehr, auch kein Nachfassen und keine Termin-Nachrichten per WhatsApp. Schritte einer
+    Nachfass-Abfolge werden zu Anruf-Aufgaben.
+  - Hat der Lead eine E-Mail-Adresse angegeben, bekommt er einmal eine kurze E-Mail in Ihrem Namen zu seiner Anfrage
+    mit Ihrem Terminlink (mit Kalender) bzw. der Bitte, einfach zu antworten. Sie geht über Ihr verbundenes Postfach
+    (liegt dann in Ihrem Gesendet-Ordner), sonst über unseren neutralen Absender mit Ihrer Adresse als Antwortadresse.
+    Keine E-Mail, wenn schon ein Termin steht, die E-Mail-Funktionen ausgeschaltet sind oder sich die Adresse abgemeldet
+    hat. Sie steht im Verlauf des Kontakts.
+  - Schreibt der Lead später doch per WhatsApp, gilt der Hinweis nicht mehr und Sie antworten selbst im Chat.
+  - Den Anteil sehen Inhaber unter **Zahlen** („Leads ohne WhatsApp“).
+- Bestandskunden, deren Kampagnen-Nachricht mit „nicht per WhatsApp erreichbar“ zurückkommt, bekommen künftige
+  Kampagnen nur noch per E-Mail, soweit E-Mail für den Anlass erlaubt ist (Einwilligung bzw. § 7 Abs. 3 UWG).
 - **Ansprache (Sie oder Du)**: Standard ist „Sie“. Inhaber stellen das unter **Einstellungen → WhatsApp-Vorlagen**,
   **Einstellungen → E-Mail-Postfach** oder im Einrichtungs-Fragebogen um. Es gilt für den Assistenten,
   WhatsApp-Vorlagen, Termin-Nachrichten, Termin-E-Mails, die Buchungsseite und die E-Mail-Vorlagen.

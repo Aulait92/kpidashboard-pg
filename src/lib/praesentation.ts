@@ -7,7 +7,7 @@
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
 import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
 import { spartenVon, type VorbereitungDaten } from "@/lib/termin-vorbereitung";
-import { beitragEffektiv, summeEmpfohlen, type AngebotItem, type AngeboteDaten } from "@/lib/angebote";
+import { beitragEffektiv, summeEmpfohlen, type AngebotItem, type AngeboteDaten } from "@/lib/angebote-daten";
 import { a, type Ansprache } from "@/lib/ansprache";
 
 export type Marke = { name: string; gesellschaft: string | null; farbe: string; farbeHell: string; akzent: string; logoUrl: string | null };
@@ -183,7 +183,9 @@ function schalter(items: AngebotItem[], i: AngebotItem, mitSparte = false): stri
     .join("")}</div>`;
 }
 const drinBausteine = (i: AngebotItem) => i.bausteine.filter((b) => b.aktiv && b.beitrag > 0).map((b) => b.name);
-const ohneBausteine = (i: AngebotItem) => i.bausteine.filter((b) => !b.aktiv && b.beitrag > 0).map((b) => `ohne ${b.name}`);
+// „Ohne Selbstbeteiligung“ als Baustein: nicht „ohne Ohne …“
+const ohneBausteine = (i: AngebotItem) =>
+  i.bausteine.filter((b) => !b.aktiv && b.beitrag > 0).map((b) => (/^ohne\s/i.test(b.name) ? `${b.name}: nicht gewählt` : `ohne ${b.name}`));
 
 const JA = /^(ja|✓|✔|x|enthalten|inklusive|inkl\.?)$/i;
 const NEIN = /^(nein|\u2014|\u2013|-|nicht enthalten|ohne)$/i;

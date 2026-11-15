@@ -715,16 +715,33 @@ export function campaignText(o: Occasion, kontakt: AnredeKontakt | string, topic
 
 // ─── Zustellstatus (WhatsApp-Webhook) ────────────────────────────────────
 
-/** Status delivered/read/failed einer WhatsApp-Nachricht am Kampagnen-Empfänger speichern. */
-export async function applyCampaignStatus(waMessageId: string, status: string, now = new Date()): Promise<void> {
+/**
+ * Status delivered/read/failed einer WhatsApp-Nachricht am Kampagnen-Empfänger speichern. Bei „failed“ mit
+ * „kein WhatsApp“ (lib/whatsapp/zustellfehler.ts, z. B. 131026) wird der Bestandskunde markiert: künftige
+ * Kampagnen gehen dann nur per E-Mail, soweit die E-Mail-Regeln es erlauben (lib/bestand/einwilligung.ts).
+ * Rückgabe: true, wenn ein Kampagnen-Empfänger betroffen war.
+ */
+export async function applyCampaignStatus(waMessageId: string, status: string, now = new Date(), opts: { code?: number | null } = {}): Promise<boolean> {
   if (status === "delivered") {
-    await prisma.campaignRecipient.updateMany({ where: { waMessageId, deliveredAt: null }, data: { deliveredAt: now } });
+    return (await prisma.campaignRecipient.updateMany({ where: { waMessageId, deliveredAt: null }, data: { deliveredAt: now } })).count > 0;
   } else if (status === "read") {
     await prisma.campaignRecipient.updateMany({ where: { waMessageId, deliveredAt: null }, data: { deliveredAt: now } });
-    await prisma.campaignRecipient.updateMany({ where: { waMessageId, readAt: null }, data: { readAt: now } });
+    return (await prisma.campaignRecipient.updateMany({ where: { waMessageId, readAt: null }, data: { readAt: now } })).count > 0;
   } else if (status === "failed") {
-    await prisma.campaignRecipient.updateMany({ where: { waMessageId, status: "sent" }, data: { status: "failed", reason: "nicht zugestellt" } });
+    const { isNoWhatsAppCode } = await import("@/lib/whatsapp/zustellfehler");
+    const noWa = isNoWhatsAppCode(opts.code);
+    const r = await prisma.campaignRecipient.updateMany({
+      where: { waMessageId, status: "sent" },
+      data: { status: "failed", reason: noWa ? "nicht zugestellt: kein WhatsApp" : opts.code ? `nicht zugestellt (${opts.code})` : "nicht zugestellt" },
+    });
+    if (noWa) {
+      const rows = await prisma.campaignRecipient.findMany({ where: { waMessageId }, select: { existingCustomerId: true } });
+      if (rows.length) await prisma.existingCustomer.updateMany({ where: { id: { in: rows.map((x) => x.existingCustomerId) }, waUnavailableAt: null }, data: { waUnavailableAt: now } });
+      return rows.length > 0;
+    }
+    return r.count > 0;
   }
+  return false;
 }
 
 // ─── Antworten ───────────────────────────────────────────────────────────

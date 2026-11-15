@@ -8,9 +8,11 @@ import { offerSetupDiscount } from "@/lib/offer-pricing";
 import { prisma } from "@/lib/prisma";
 import { customerGreeting, logOfferActivity, offerAdminHref, type OfferTarget } from "@/lib/offer-links";
 import { AUDIENCE_LABEL, getPresentation, isAudience, rechnerUrl, type Audience } from "@/lib/vertrieb/praesentationen";
+import { verkaufsLinkErstellen } from "@/lib/vertrieb/verkaufspraesentation-server";
 
 /** Extras der Angebotsmail: Rechner-Link und/oder Präsentation (PDF) der gewählten Zielgruppe. */
-export type OfferMailExtras = { rechner?: boolean; praesentation?: boolean; audience?: Audience; du?: boolean };
+/** praesentationLink: Link zur Web-Präsentation (/praesentation/<token>, 14 Tage), nur bei Vertriebskontakten. */
+export type OfferMailExtras = { rechner?: boolean; praesentation?: boolean; praesentationLink?: boolean; audience?: Audience; du?: boolean };
 
 async function requireAdmin() {
   const session = await getCurrentSession();
@@ -94,12 +96,21 @@ export async function sendOfferEmailAction(
     attachment = { filename: file.fileName.toLowerCase().endsWith(".pdf") ? file.fileName : `${file.fileName}.pdf`, content: Buffer.from(file.data) };
   }
   const rechner = extras.rechner ? rechnerUrl(getAppUrl(), audience, offer.products) : null;
+  // Link zur Präsentation: aktiven Link verlängern bzw. neu erstellen (Fassung wie gewählt)
+  let praesentationUrl: string | null = null;
+  if (extras.praesentationLink) {
+    if (!offer.salesContactId) return { ok: false, error: "Den Präsentations-Link gibt es nur bei Vertriebskontakten." };
+    const link = await verkaufsLinkErstellen(offer.salesContactId, audience, session.userId);
+    if (!link) return { ok: false, error: "Kontakt nicht gefunden." };
+    praesentationUrl = `${getAppUrl()}/praesentation/${link.token}`;
+  }
   const disc = offerSetupDiscount(offer);
   const res = await sendOfferEmail({
     discount: disc
       ? { label: offer.setupDiscountLabel || "Empfehlungsrabatt", discount: disc.discount, list: disc.list, fee: Number(offer.setupFee), anyTerm: offer.customerChoosesTerm }
       : null,
     rechnerUrl: rechner,
+    praesentationUrl,
     attachment,
     to: offer.email,
     du: !!extras.du,
@@ -117,8 +128,10 @@ export async function sendOfferEmailAction(
   await logOfferActivity(
     offer,
     `Angebot ${offer.number} per E-Mail an ${offer.email} gesendet${
-      rechner || attachment
-        ? ` (mit ${[rechner ? "Rechner-Link" : null, attachment ? `${AUDIENCE_LABEL[audience]}-Präsentation` : null].filter(Boolean).join(" und ")})`
+      rechner || attachment || praesentationUrl
+        ? ` (mit ${[rechner ? "Rechner-Link" : null, attachment ? `${AUDIENCE_LABEL[audience]}-Präsentation` : null, praesentationUrl ? "Präsentations-Link" : null]
+            .filter(Boolean)
+            .join(" und ")})`
         : ""
     }`,
     // Vollständige Mail im Verlauf (Empfänger, Betreff, Anhang, Text)

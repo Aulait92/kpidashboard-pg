@@ -285,6 +285,7 @@ model Customer {
   // Stand der Standard-E-Mail-Vorlagen (lib/mail/vorlagen.ts VORLAGEN_STAND): neue Standards beim nächsten Laden ergänzen
   mailVorlagenStand              Int                       @default(0)
   existingCustomers              ExistingCustomer[]
+  whatsAppErrorAlerts            WhatsAppErrorAlert[]
   manualRevenues                 ManualRevenue[]
   campaigns                      CustomerCampaign[]
   leadSources                    LeadSource[]
@@ -611,6 +612,11 @@ model Lead {
   // (sent | skipped_booked | skipped_contact | no_template | failed: …).
   outreachAt           DateTime?
   outreachStatus       String?
+  // Kein WhatsApp (Ole, 15.11.2026, lib/whatsapp/kein-whatsapp.ts): Die erste Nachricht kam mit „nicht per WhatsApp
+  // erreichbar“ zurück (Meta 131026). Assistent und WhatsApp-Nachfassen aus, Lead oben auf der Anrufliste.
+  // waUnavailableMailAt: die einmalige E-Mail mit Terminlink an den Lead ist raus.
+  waUnavailableAt      DateTime?
+  waUnavailableMailAt  DateTime?
   // „Nur Betreuung“: Lead per E-Mail an den Kunden zugestellt
   emailedAt            DateTime?
   // Meta-Lead-ID (leadgen_id) bei direkt eingegangenen Leads – gegen Dubletten
@@ -1151,6 +1157,10 @@ model Message {
   // gesetzt (lib/whatsapp/ab-test.ts misst darüber die Antwortquote je Fassung).
   purpose         String?
   variant         String?
+  // Zustellfehler aus dem Status-Webhook (statuses[].errors[0]): Meta-Fehlercode und Titel, nur bei status "failed"
+  // (lib/whatsapp/zustellfehler.ts, z. B. 131026 „Message undeliverable“ = Nummer nicht per WhatsApp erreichbar)
+  errorCode       Int?
+  errorTitle      String?
   createdAt       DateTime @default(now())
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -1158,6 +1168,23 @@ model Message {
   @@index([conversationId, createdAt])
   @@index([billable, createdAt])
   @@index([purpose, createdAt])
+}
+
+// Admin-Alarm zu WhatsApp-Zustellfehlern, die nicht „kein WhatsApp“ bedeuten (Zahlung, Vorlage, Limits …):
+// höchstens einer je Kunde, Fehlercode und Tag (Berlin), count zählt weitere Fehler desselben Tages.
+model WhatsAppErrorAlert {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  code       Int
+  day        String // YYYY-MM-DD (Europe/Berlin)
+  title      String?
+  count      Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([customerId, code, day])
+  @@index([createdAt])
 }
 
 // Gebuchter Termin aus dem Bot-Flow (Telefon oder Videocall).
@@ -1522,6 +1549,8 @@ model SalesContact {
   supportConversations Conversation[]
   // Über „Kollegen empfehlen“ von einem Kunden empfohlen
   colleagueReferrals   ColleagueReferral[]
+  /// Links zur Vertriebspräsentation (/praesentation/<token>, 14 Tage)
+  presentationLinks    SalesPresentationLink[]
 
   @@index([altEmails], type: Gin)
   @@index([stage])
@@ -2205,6 +2234,9 @@ model ExistingCustomer {
   widerspruchHinweisSource String?
   widerspruchHinweisText   String?
   lastCampaignAt           DateTime?
+  // Kampagnen-WhatsApp kam mit „nicht per WhatsApp erreichbar“ zurück (Meta 131026): künftige Kampagnen nur noch per
+  // E-Mail, soweit die E-Mail-Regeln es erlauben (lib/bestand/einwilligung.ts)
+  waUnavailableAt          DateTime?
   // Import-Lauf, der den Datensatz angelegt hat (ExistingCustomerImport.id); Aktualisierungen ändern ihn nicht
   importId                 String?
   // Aus einem Lead mit Abschluss übernommen (lib/vertraege.syncLeadToBestand); der Import übernimmt den Eintrag
@@ -3247,6 +3279,34 @@ model SalesPresentation {
   uploadedById String?
 
   @@unique([audience, format])
+}
+
+/// Vertriebspräsentation zum Nachklicken (Ole, 15.11.2026): geheimer Link je Kontakt (/praesentation/<token>),
+/// 14 Tage gültig, vom Admin beendbar. Ein neuer Link verlängert den aktiven (gleicher Token).
+model SalesPresentationLink {
+  id          String                  @id @default(cuid())
+  contactId   String
+  contact     SalesContact            @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  token       String                  @unique
+  // "vertreter" | "makler" (Fassung der Folien)
+  audience    String                  @default("vertreter")
+  expiresAt   DateTime
+  endedAt     DateTime?
+  createdById String?
+  createdAt   DateTime                @default(now())
+  views       SalesPresentationView[]
+
+  @@index([contactId])
+}
+
+/// Aufrufe des Präsentationslinks (ohne IP oder Gerätedaten); Wiederholungen innerhalb von 30 Minuten zählen nicht.
+model SalesPresentationView {
+  id       String                @id @default(cuid())
+  linkId   String
+  link     SalesPresentationLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  viewedAt DateTime              @default(now())
+
+  @@index([linkId, viewedAt])
 }
 
 // Verlauf eines Leads im Kundenbereich (Ole, 13.11.2026): gepostete Notizen und Ereignisse

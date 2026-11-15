@@ -91,6 +91,8 @@ export type ConsentSubject = {
   widerspruchHinweis?: string | null;
   /** Auf der Sperrliste (Hash von E-Mail bzw. Telefon): email = nur E-Mail, all = alle Kanäle. */
   suppressed?: { email?: boolean; all?: boolean };
+  /** Kampagnen-WhatsApp kam mit „kein WhatsApp“ zurück (Meta 131026): künftig nur E-Mail. */
+  waUnavailableAt?: Date | null;
 };
 
 /** Einstellungen des Vermittlers. */
@@ -103,6 +105,7 @@ export type ExclusionReason =
   | "abgemeldet"
   | "keine Mobilnummer"
   | "keine WhatsApp-Einwilligung"
+  | typeof NO_WHATSAPP_REASON
   | "WhatsApp-Einwilligung: nein"
   | "keine E-Mail-Adresse"
   | "E-Mail abgemeldet"
@@ -112,6 +115,9 @@ export type ExclusionReason =
   | "Cross-Selling in eine andere Sparte nur mit Einwilligung"
   | "Geburtstag mit Angebot nur mit Einwilligung"
   | "Empfehlungs- oder Bewertungsbitte nur mit Einwilligung";
+
+/** Nummer ist nicht per WhatsApp erreichbar (frühere Kampagne kam mit 131026 zurück). */
+export const NO_WHATSAPP_REASON = "nicht per WhatsApp erreichbar";
 
 /** Ohne Nachweis zum Widerspruchshinweis greift § 7 Abs. 3 UWG nicht. */
 export const NO_PROOF_REASON = "ohne Nachweis zum Widerspruchshinweis, nur mit Einwilligung";
@@ -138,6 +144,7 @@ const consent = (v: string | null | undefined): ConsentValue => (v === "ja" ? "j
 export function whatsappDecision(s: ConsentSubject): ChannelDecision {
   if (s.optOutAt || s.suppressed?.all) return { ok: false, reason: "abgemeldet" };
   if (!s.phone) return { ok: false, reason: "keine Mobilnummer" };
+  if (s.waUnavailableAt) return { ok: false, reason: NO_WHATSAPP_REASON };
   const c = consent(s.whatsappConsent);
   if (c === "nein") return { ok: false, reason: "WhatsApp-Einwilligung: nein" };
   if (c !== "ja") return { ok: false, reason: "keine WhatsApp-Einwilligung" };
