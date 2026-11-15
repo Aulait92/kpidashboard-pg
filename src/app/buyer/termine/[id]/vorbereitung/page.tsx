@@ -32,20 +32,25 @@ export default async function TerminVorbereitungPage({ params, searchParams }: {
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       {d.leadId ? (
-        <ZurueckLink href={`/buyer/leads/${d.leadId}`} back={von === "kontakt"}>
+        <ZurueckLink href={`${newUi ? "/buyer/kontakte/" : "/buyer/leads/"}${d.leadId}`} back={von === "kontakt"}>
           Zum Kontakt
         </ZurueckLink>
       ) : null}
       <PageHeader title={`Termin vorbereiten: ${d.lead.name}`} subtitle={`${d.lead.produkt} · ${when(d.termin.startsAt)} Uhr · ${d.termin.mode === "video" ? "Videocall" : "Telefonat"}`} />
+      {/* Ziel der Seite ist die Präsentation (UX, Ole 15.11.2026): Hauptknopf; „Vorbereitet“ als Haken daneben */}
       <div className="mb-5 flex flex-wrap items-center gap-3">
-        <PreparedButton id={d.id} prepared={!!d.vorbereitetAm} readOnly={ctx.preview} />
+        <ButtonLink href={`/buyer/termine/${d.id}/praesentation?von=vorbereitung`} variant="primary" size="md" icon={Presentation}>
+          Präsentation
+        </ButtonLink>
         <ButtonLink href={`/api/buyer/termine/${d.id}/vorbereitung`} external variant="secondary" size="md" icon={FileDown}>
           Als PDF
         </ButtonLink>
-        <ButtonLink href={`/buyer/termine/${d.id}/praesentation?von=vorbereitung`} variant="secondary" size="md" icon={Presentation}>
-          Präsentation
-        </ButtonLink>
-        <span className="text-sm text-[color:var(--muted)]">Rechnen Sie das Angebot mit diesen Angaben vor dem Termin.</span>
+        <PreparedButton id={d.id} prepared={!!d.vorbereitetAm} readOnly={ctx.preview} />
+        {offen.length ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-amber-800 ring-1 ring-inset ring-amber-200" data-offene-punkte>
+            <TriangleAlert className="h-4 w-4" /> {offen.length} {offen.length === 1 ? "Angabe" : "Angaben"} im Termin klären
+          </span>
+        ) : null}
       </div>
 
       {ang ? (
@@ -72,15 +77,6 @@ export default async function TerminVorbereitungPage({ params, searchParams }: {
       {d.zusammenfassung ? (
         <Card className="mb-5">
           <p className="px-5 py-3.5 text-sm"><span className="text-[color:var(--muted)]">Assistent: </span>{d.zusammenfassung}</p>
-        </Card>
-      ) : null}
-
-      {offen.length ? (
-        <Card className="mb-5 border-amber-200 bg-amber-50" data-offene-punkte>
-          <CardHeader title="Im Termin klären" icon={TriangleAlert} count={offen.length} />
-          <ul className="list-disc space-y-1 px-9 py-3.5 text-sm text-amber-900">
-            {offen.map((o) => <li key={o}>{o}</li>)}
-          </ul>
         </Card>
       ) : null}
 

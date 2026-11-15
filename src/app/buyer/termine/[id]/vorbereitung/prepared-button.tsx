@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { Check, RotateCcw } from "lucide-react";
+import { Check, Circle } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { setPreparedAction } from "./actions";
@@ -15,13 +15,19 @@ export function PreparedButton({ id, prepared, readOnly }: { id: string; prepare
       const r = await setPreparedAction(id, next);
       toast.show(r.ok ? { message: next ? "Als vorbereitet abgehakt" : "Wieder offen" } : { message: r.error ?? "Fehler", tone: "error" });
     });
-  return prepared ? (
-    <Button variant="secondary" size="md" icon={RotateCcw} disabled={pending || readOnly} onClick={() => run(false)}>
-      Doch nicht vorbereitet
-    </Button>
-  ) : (
-    <Button variant="primary" size="md" icon={Check} disabled={pending || readOnly} onClick={() => run(true)} data-termin-vorbereitet>
-      Vorbereitet
+  // Haken statt Hauptknopf (UX, Ole 15.11.2026): erledigt grün, sonst ruhig; erneuter Klick nimmt es zurück
+  return (
+    <Button
+      variant="secondary"
+      size="md"
+      icon={prepared ? Check : Circle}
+      disabled={pending || readOnly}
+      onClick={() => run(!prepared)}
+      className={prepared ? "border-emerald-300 bg-emerald-50 text-emerald-800" : undefined}
+      title={prepared ? "Antippen, um es zurückzunehmen" : undefined}
+      data-termin-vorbereitet
+    >
+      {prepared ? "Vorbereitet" : "Als vorbereitet abhaken"}
     </Button>
   );
 }

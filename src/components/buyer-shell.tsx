@@ -117,7 +117,7 @@ export function BuyerShell({
     { href: "/buyer/leads", label: "Leads", icon: Users, match: (p) => p.startsWith("/buyer/leads"), badge: noStepBadge },
     { href: "/buyer/kanban", label: "Pipeline", icon: Columns3, match: (p) => p.startsWith("/buyer/kanban") },
     ...(showChats
-      ? [{ href: "/buyer/chats", label: "Chats", icon: MessageCircle, match: (p: string) => p.startsWith("/buyer/chats"), badge: chatBadge }]
+      ? [{ href: "/buyer/chats", label: "Nachrichten", icon: MessageCircle, match: (p: string) => p.startsWith("/buyer/chats"), badge: chatBadge }]
       : []),
     ...(teamRole === "advisor"
       ? []
@@ -319,7 +319,7 @@ function ProfileMenu({
         >
           <div className="border-b border-[color:var(--border)] px-3 py-2">
             <div className="font-semibold">{name}</div>
-            <div className="text-xs text-[color:var(--muted)]">{owner ? (newUi ? "Inhaber-Zugang" : "Dein CRM") : "Berater-Zugang"}</div>
+            <div className="text-xs text-[color:var(--muted)]">{owner ? (newUi ? "Inhaber-Zugang" : "Ihr CRM") : "Berater-Zugang"}</div>
           </div>
           {owner && setupOpen > 0 ? (
             <Link

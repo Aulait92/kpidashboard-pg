@@ -4,8 +4,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { FileText, Paperclip, Presentation, Trash2 } from "lucide-react";
+import { FileText, Paperclip, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui";
 import { FileDrop } from "@/components/ui/file-drop";
 import { useToast } from "@/components/ui/toast";
@@ -32,14 +31,11 @@ export function LeadFiles({
   files,
   defaultKind = "angebot",
   readOnly = false,
-  praesentationTermin,
 }: {
   leadId: string;
   files: LeadFileView[];
   defaultKind?: Kind;
   readOnly?: boolean;
-  /** Termin für die Beratungspräsentation (undefined = kein Hinweis, null = noch kein Termin) */
-  praesentationTermin?: string | null;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -118,21 +114,6 @@ export function LeadFiles({
           </div>
         ) : null}
       </div>
-      {praesentationTermin !== undefined && !readOnly ? (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[color:var(--border)] bg-[color:var(--brand-soft)] px-5 py-2.5 text-sm" data-praesentation-hinweis>
-          <Presentation className="h-4 w-4 shrink-0 text-[color:var(--brand)]" />
-          {praesentationTermin ? (
-            <>
-              <span>Angebote für die Beratungspräsentation laden Sie am besten direkt in der Terminvorbereitung hoch, dort liest die App sie aus.</span>
-              <Link href={`/buyer/termine/${praesentationTermin}/vorbereitung?von=kontakt#angebote`} className="font-medium text-[color:var(--brand)] underline">
-                Terminvorbereitung und Präsentation öffnen
-              </Link>
-            </>
-          ) : (
-            <span>Für eine Beratungspräsentation legen Sie zuerst einen Termin an. Danach laden Sie die Angebote in der Terminvorbereitung hoch.</span>
-          )}
-        </div>
-      ) : null}
       {files.length === 0 ? (
         <p className="px-5 py-4 text-sm text-[color:var(--muted)]">Noch keine Dokumente. Laden Sie hier z. B. das Angebot hoch, das Sie geschickt haben.</p>
       ) : (

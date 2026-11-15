@@ -99,7 +99,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
     const selfConnect = selfConnectEnabled() && ctx.teamRole === "owner";
     return (
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6 sm:px-6">
-        <PageHeader title="Chats" subtitle="WhatsApp-Gespräche mit Ihren Leads" />
+        <PageHeader title="Nachrichten" subtitle="WhatsApp-Gespräche mit Ihren Kontakten" />
         <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-6 text-center shadow-[var(--shadow-sm)]">
           <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand-soft,#eef3ff)] text-[color:var(--brand)]">
             <MessageCircle className="h-6 w-6" />
@@ -270,7 +270,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                 <CalendarClock className="h-4 w-4" /> {formatAppt(a.startsAt)} Uhr
               </div>
               <div className="mt-0.5 text-xs text-blue-800">
-                {a.mode === "video" ? "Videocall" : a.mode === "onsite" ? "Vor Ort" : "Telefonat, du rufst an"}
+                {a.mode === "video" ? "Videocall" : a.mode === "onsite" ? "Vor Ort" : "Telefonat, Sie rufen an"}
               </div>
               <div className="mt-2 flex flex-wrap gap-3 text-xs">
                 {a.meetUrl ? (
@@ -322,8 +322,8 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
       ) : null}
       <div className="hidden sm:block">
         <PageHeader
-          title="Chats"
-          subtitle="WhatsApp-Gespräche mit deinen Leads"
+          title="Nachrichten"
+          subtitle="WhatsApp-Gespräche mit Ihren Kontakten"
         />
       </div>
 
@@ -350,7 +350,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                 href={`/buyer/chats?f=attention${q ? `&q=${encodeURIComponent(q)}` : ""}`}
                 className={`flex-1 rounded-lg px-2 py-1.5 text-center ${filter === "attention" ? "bg-rose-100 text-rose-800" : "text-[color:var(--muted)]"}`}
               >
-                Braucht dich{attentionTotal > 0 ? ` (${attentionTotal})` : ""}
+                Wartet auf Sie{attentionTotal > 0 ? ` (${attentionTotal})` : ""}
               </Link>
             </div>
             <form action="/buyer/chats" className="flex gap-1">
@@ -396,12 +396,12 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                         </span>
                       </div>
                       <p className="truncate text-xs text-[color:var(--muted)]">
-                        {last ? `${last.direction === "outbound" ? (c.botActive ? "Assistent: " : "Du: ") : ""}${last.body ?? ""}` : ""}
+                        {last ? `${last.direction === "outbound" ? (c.botActive ? "Assistent: " : "Sie: ") : ""}${last.body ?? ""}` : ""}
                       </p>
                       <div className="mt-1 flex gap-1.5">
                         {c.needsAttention ? (
                           <span className="rounded-full bg-rose-50 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 ring-1 ring-inset ring-rose-200">
-                            Braucht dich
+                            Wartet auf Sie
                           </span>
                         ) : null}
                         {c.lead?.status ? (
@@ -411,7 +411,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                         ) : null}
                         {!c.botActive ? (
                           <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 ring-1 ring-inset ring-zinc-200">
-                            Du schreibst
+                            Sie schreiben
                           </span>
                         ) : null}
                       </div>
@@ -445,7 +445,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                   <div className="truncate font-bold">{active.contactName ?? formatPhone(active.contactPhone)}</div>
                   <div className={`flex items-center gap-1 text-xs ${active.botActive ? "text-emerald-700" : "text-[color:var(--muted)]"}`}>
                     <Bot className="h-3.5 w-3.5" />
-                    {active.botActive ? "Assistent antwortet" : "Du schreibst selbst"}
+                    {active.botActive ? "Assistent antwortet" : "Sie schreiben selbst"}
                   </div>
                 </div>
                 <a
@@ -485,7 +485,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
               {active.needsAttention ? (
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-900">
                   <span>
-                    <b>Braucht dich:</b> {active.attentionReason ?? "Bitte melde dich beim Lead."}
+                    <b>Wartet auf Sie:</b> {active.attentionReason ?? "Bitte melden Sie sich beim Kontakt."}
                   </span>
                   <form action={markChatDoneBuyerAction}>
                     <input type="hidden" name="conversationId" value={active.id} />
@@ -519,9 +519,9 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                   const outbound = m.direction === "outbound";
                   const who =
                     m.sentBy === "agent"
-                      ? "Du"
+                      ? "Sie"
                       : m.sentBy === "app"
-                        ? "Du (WhatsApp-App)"
+                        ? "Sie (WhatsApp-App)"
                         : m.sentBy === "bot" || m.sentBy === "system"
                           ? "Assistent"
                           : "";
@@ -571,7 +571,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                     </SubmitButton>
                   </div>
                   {active.botActive ? (
-                    <p className="mt-1 px-2 text-[11px] text-[color:var(--muted)]">Wenn du schreibst, pausiert der Assistent in diesem Chat.</p>
+                    <p className="mt-1 px-2 text-[11px] text-[color:var(--muted)]">Wenn Sie schreiben, pausiert der Assistent in diesem Chat.</p>
                   ) : null}
                 </form>
               ) : (

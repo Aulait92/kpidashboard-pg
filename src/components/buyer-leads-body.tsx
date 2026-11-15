@@ -140,6 +140,8 @@ export async function BuyerLeadsBody({
   today.setHours(23, 59, 59, 999);
   const VIEWS: { key: string; label: string; match: (l: BuyerLeadRow) => boolean }[] = [
     { key: "", label: "Alle", match: () => true },
+    // Neu: noch niemand hat gesprochen (wie der Zähler an „Kontakte“)
+    { key: "neu", label: "Neu", match: (l: BuyerLeadRow) => !l.reached && !l.closedAt && (!l.status || l.status === "Neuer Lead") },
     ...(whatsapp ? [{ key: "rueckruf", label: "Rückruf nötig", match: (l: BuyerLeadRow) => !!l.callback }] : []),
     { key: "wiedervorlage", label: "Wiedervorlage fällig", match: (l) => !!l.followUpAt && new Date(l.followUpAt) <= today },
     { key: "ohne-schritt", label: "Ohne nächsten Schritt", match: (l) => !!l.noNextStep },
@@ -184,7 +186,7 @@ export async function BuyerLeadsBody({
       </nav>
       <BuyerLeadsTable
         leads={shown}
-        title={[activeView.key ? activeView.label : "Alle Leads", phase?.label].filter(Boolean).join(" · ")}
+        title={[activeView.key ? activeView.label : "Alle Kontakte", phase?.label].filter(Boolean).join(" · ")}
         statusLabels={WHATSAPP_STATUS_LABELS}
         showLeadCost={!(await loadRetainerConfig(customerId))}
         detailBase={detailBase}

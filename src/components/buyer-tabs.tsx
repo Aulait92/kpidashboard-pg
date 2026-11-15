@@ -24,7 +24,7 @@ const TABS = [
 
 const CHATS_TAB = {
   href: "/buyer/chats",
-  label: "Chats",
+  label: "Nachrichten",
   match: (p: string) => p.startsWith("/buyer/chats"),
 };
 

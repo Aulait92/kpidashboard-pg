@@ -1,4 +1,4 @@
-// Kundenbereich → Zahlen: „Deine Garantie“ (Du-Form). Zeigt Fortschritt und
+// Kundenbereich → Zahlen: „Ihre Garantie“ (Du-Form). Zeigt Fortschritt und
 // Voraussetzungen der Lead-Garantie und der Break-even- (Vertreter) bzw.
 // Vertrags-Garantie (Makler). Nur bei Garantie-Angebot.
 
@@ -12,23 +12,23 @@ function satz(e: GarantieErgebnis, fall: GarantieFallRow | undefined): string {
   const k = e.kennzahlen;
   const monat = k.monat ? monatName(k.monat) : "";
   if (e.status === "nicht_anwendbar") return e.art === "vertrag" ? "Für Vertreter gilt die Break-even-Garantie." : "Für Makler gilt die Vertrags-Garantie.";
-  if (e.status === "nicht_gestartet") return "Startet, sobald deine Anzeigen das erste Mal ausgeliefert werden.";
+  if (e.status === "nicht_gestartet") return "Startet, sobald Ihre Anzeigen das erste Mal ausgeliefert werden.";
   if (e.art === "lead") {
-    if (e.status === "laeuft") return `Mindestens ${k.minLeads} Leads in deinen ersten ${k.tage} aktiven Tagen, sonst sind Betreuung und Software im Folgemonat kostenlos.`;
+    if (e.status === "laeuft") return `Mindestens ${k.minLeads} Leads in Ihren ersten ${k.tage} aktiven Tagen, sonst sind Betreuung und Software im Folgemonat kostenlos.`;
     if (e.status === "erfuellt") return `Geschafft: ${k.leads} Leads in ${k.tage} Tagen.`;
   } else if (e.art === "vertrag") {
-    if (e.status === "laeuft") return `Mindestens ${k.minVertraege} Verträge nach ${k.tage} aktiven Tagen, sonst sind Betreuung und Software kostenlos, bis du sie hast (längstens 6 Monate).`;
+    if (e.status === "laeuft") return `Mindestens ${k.minVertraege} Verträge nach ${k.tage} aktiven Tagen, sonst sind Betreuung und Software kostenlos, bis Sie sie haben (längstens 6 Monate).`;
     if (e.status === "erfuellt") return `Geschafft: ${k.vertraege} Verträge seit Kampagnenstart.`;
     if (e.status === "abgelaufen") return "Der Garantiezeitraum von 6 Monaten ist vorbei.";
   } else {
-    if (e.status === "laeuft") return `Ab Tag ${k.tage} prüfen wir jeden Monat, ob deine Provision deine Kosten deckt. Wenn nicht, betreuen wir dich ohne Betreuungsgebühr weiter (längstens 6 Monate).`;
-    if (e.status === "erfuellt") return "Deine Provision deckt deine Kosten seit Kampagnenstart.";
+    if (e.status === "laeuft") return `Ab Tag ${k.tage} prüfen wir jeden Monat, ob Ihre Provision Ihre Kosten deckt. Wenn nicht, betreuen wir Sie ohne Betreuungsgebühr weiter (längstens 6 Monate).`;
+    if (e.status === "erfuellt") return "Ihre Provision deckt Ihre Kosten seit Kampagnenstart.";
     if (e.status === "abgelaufen") return "Der Garantiezeitraum von 6 Monaten ist vorbei.";
   }
   const alles = GARANTIE_UMFANG[e.art] === "all";
-  if (fall?.status === "gewaehrt") return `${alles ? "Betreuung und Software" : "Betreuung"} im ${monat}: kostenlos, gutgeschrieben auf deiner Rechnung.`;
+  if (fall?.status === "gewaehrt") return `${alles ? "Betreuung und Software" : "Betreuung"} im ${monat}: kostenlos, gutgeschrieben auf Ihrer Rechnung.`;
   if (fall?.status === "abgelehnt") return fall.grund ? `Nicht gewährt: ${fall.grund}` : "Nicht gewährt.";
-  if (e.status === "anspruch") return `${alles ? "Betreuung und Software" : "Betreuung"} im ${monat} ${alles ? "sind" : "ist"} für dich kostenlos. Wir schreiben es dir gut.`;
+  if (e.status === "anspruch") return `${alles ? "Betreuung und Software" : "Betreuung"} im ${monat} ${alles ? "sind" : "ist"} für Sie kostenlos. Wir schreiben es Ihnen gut.`;
   return "Leider fehlen Voraussetzungen für die Garantie:";
 }
 
@@ -39,7 +39,7 @@ export async function GarantieKundeCard({ customerId }: { customerId: string }) 
     <section className="mt-6 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 text-sm shadow-[var(--shadow-sm)]" data-card="ihre-garantie">
       <h2 className="mb-3 flex items-center gap-2 text-base font-semibold">
         <ShieldCheck className="h-5 w-5 text-[color:var(--brand)]" />
-        Deine Garantie
+        Ihre Garantie
       </h2>
       <div className="grid gap-4 md:grid-cols-2">
         {g.ergebnisse.map((e) => {

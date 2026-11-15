@@ -374,7 +374,7 @@ export function TodayInbox({
         <div className={cn("grid grid-cols-2 gap-3 sm:grid-cols-4", newUi && "xl:grid-cols-2")}>
           <Tile icon={MessageCircle} tone="rose" label="Chats" value={chats.length} target="chats" />
           <Tile icon={CalendarClock} tone="brand" label="Termine" value={appointments.length} target="termine" />
-          <Tile icon={Trophy} tone="violet" label="Wie lief's?" value={outcomes.length} target="ergebnis" />
+          <Tile icon={Trophy} tone="violet" label="Wie lief es?" value={outcomes.length} target="ergebnis" />
           <Tile icon={Phone} tone="emerald" label="Anrufen" value={calls.length} target="anrufen" />
         </div>
       )}
@@ -382,7 +382,7 @@ export function TodayInbox({
       {chats.length > 0 ? (
         <Card>
           <div id="chats" className="scroll-mt-20" />
-          <CardHeader icon={MessageCircle} title="Braucht dich" count={chats.length} />
+          <CardHeader icon={MessageCircle} title="Wartet auf Sie" count={chats.length} />
           <ul className="divide-y divide-[color:var(--border)]">
             {chats.map((c) => (
               <TapRow
@@ -469,7 +469,7 @@ export function TodayInbox({
       {outcomes.length > 0 ? (
         <Card>
           <div id="ergebnis" className="scroll-mt-20" />
-          <CardHeader icon={Trophy} title="Wie lief's?" count={outcomes.length} />
+          <CardHeader icon={Trophy} title="Wie lief es?" count={outcomes.length} />
           <ul className="divide-y divide-[color:var(--border)]">
             {outcomes.map((o) => {
               const key = `o:${o.id}`;

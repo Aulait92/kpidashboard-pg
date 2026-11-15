@@ -22,12 +22,12 @@ export function SpeedToLeadCard({
             Speed-to-Lead
           </div>
           <h2 className="mt-0.5 text-lg font-semibold tracking-tight">
-            Wie schnell du reagierst und was es kostet
+            Wie schnell Sie reagieren und was es kostet
           </h2>
         </div>
         <div className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--brand-dark)]">
           <Clock className="h-3.5 w-3.5" />
-          Dein Ø: {formatDuration(data.avgHoursToFirstContact)}
+          Ihr Ø: {formatDuration(data.avgHoursToFirstContact)}
         </div>
       </header>
 
@@ -42,7 +42,7 @@ export function SpeedToLeadCard({
             <div className="mb-4 flex items-start gap-2 rounded-xl bg-emerald-50/60 p-3 text-sm text-emerald-900">
               <TrendingUp className="mt-0.5 h-4 w-4 shrink-0" />
               <div>
-                Bei <strong>{data.bestBucket.label}</strong> Reaktion closet du{" "}
+                Bei <strong>{data.bestBucket.label}</strong> Reaktion schließen Sie{" "}
                 <strong>{formatPercent(data.bestBucket.closingRate)}</strong>,
                 bei <strong>{data.worstBucket.label}</strong> nur{" "}
                 <strong>{formatPercent(data.worstBucket.closingRate)}</strong>.{" "}
@@ -97,7 +97,7 @@ export function SpeedToLeadCard({
                       </span>
                       {isAvg ? (
                         <span className="rounded-full bg-[color:var(--brand)] px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">
-                          dein Ø
+                          Ihr Ø
                         </span>
                       ) : null}
                       {isBest && !isAvg ? (

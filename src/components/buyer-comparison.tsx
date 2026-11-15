@@ -90,7 +90,7 @@ export function BuyerComparison({
       return {
         customerId: r.customerId,
         displayName: isSelf
-          ? "Du"
+          ? "Sie"
           : `Kunde ${letterFor.get(r.customerId) ?? "?"}`,
         isSelf,
         totalLeads: r.totalLeads,
@@ -140,10 +140,10 @@ export function BuyerComparison({
             Benchmark
           </div>
           <h2 className="mt-0.5 text-lg font-semibold tracking-tight">
-            Wie du im Vergleich liegst
+            Wie Sie im Vergleich liegen
           </h2>
           <p className="mt-1 text-xs text-[color:var(--muted)]">
-            Andere Kunden sind anonymisiert. Sortierung bestimmt deinen
+            Andere Kunden sind anonymisiert. Sortierung bestimmt Ihren
             aktuellen Rang.
           </p>
         </div>

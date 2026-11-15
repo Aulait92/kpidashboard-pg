@@ -43,20 +43,48 @@ export function UpdateEntry({ u, unread = false }: { u: UpdateView; unread?: boo
   );
 }
 
-/** Liste nach Monat; `unreadIds` werden mit Punkt markiert. */
+/** Kompakter Eintrag: Titel und Datum, Text zum Aufklappen (ältere Neuigkeiten). */
+function UpdateKompakt({ u }: { u: UpdateView }) {
+  return (
+    <li data-update={u.id}>
+      <details className="group rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3">
+        <summary className="flex cursor-pointer list-none items-center gap-2 text-[15px] font-medium [&::-webkit-details-marker]:hidden">
+          <span className="min-w-0 flex-1 truncate">{u.title}</span>
+          {u.publishedAt ? <span className="shrink-0 text-xs text-[color:var(--muted)]">{dayLabel(u.publishedAt)}</span> : null}
+        </summary>
+        <div className="mt-2 space-y-2 text-[15px] leading-relaxed text-[color:var(--muted)]">
+          <RichText text={u.body} />
+        </div>
+      </details>
+    </li>
+  );
+}
+
+/**
+ * Die neuesten (mindestens 5, alle ungelesenen) ausführlich, ältere nach Monat zugeklappt (UX, Ole 15.11.2026:
+ * die Seite war über 16.000 Pixel lang).
+ */
 export function UpdatesList({ items, unreadIds = [] }: { items: UpdateView[]; unreadIds?: string[] }) {
   if (!items.length) {
     return <p className="rounded-[var(--radius-lg)] border border-dashed border-[color:var(--border)] p-6 text-center text-sm text-[color:var(--muted)]">Noch keine Neuigkeiten.</p>;
   }
   const unread = new Set(unreadIds);
+  const n = Math.max(5, items.filter((u) => unread.has(u.id)).length);
+  const neu = items.slice(0, n);
+  const aelter = items.slice(n);
   return (
     <div className="space-y-6">
-      {groupByMonth(items).map((g) => (
+      <ul className="space-y-3">
+        {neu.map((u) => (
+          <UpdateEntry key={u.id} u={u} unread={unread.has(u.id)} />
+        ))}
+      </ul>
+      {groupByMonth(aelter).map((g) => (
         <section key={g.month}>
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">{g.month}</h2>
-          <ul className="space-y-3">
+          <ul className="space-y-2">
             {g.items.map((u) => (
-              <UpdateEntry key={u.id} u={u} unread={unread.has(u.id)} />
+              <UpdateKompakt key={u.id} u={u} />
             ))}
           </ul>
         </section>

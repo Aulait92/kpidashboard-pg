@@ -1,10 +1,10 @@
 "use client";
 
-import { terminArtKurz, terminArtLabel } from "@/lib/termin-art";
+import { terminArtKurz } from "@/lib/termin-art";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, Ban } from "lucide-react";
+import { Ban } from "lucide-react";
 import {
   StornoDialog,
   type StornogrundOption,
@@ -13,7 +13,6 @@ import { formatDate, formatEUR } from "@/lib/format";
 import { displayProduct, statusToneClass } from "@/lib/products";
 import { cn } from "@/lib/utils";
 import { NextStepButton } from "@/components/next-step";
-import { NEXT_STEP_LABEL } from "@/lib/lead-next-step";
 
 export type { StornogrundOption };
 
@@ -74,7 +73,7 @@ export function BuyerLeadsTable({
   leads,
   showLeadCost = true,
   statusLabels = {},
-  title = "Alle Leads",
+  title = "Alle Kontakte",
   detailBase = "/buyer/leads/",
   detailSuffix = "?from=leads",
 }: {
@@ -95,7 +94,7 @@ export function BuyerLeadsTable({
   if (leads.length === 0) {
     return (
       <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-6 text-sm text-[color:var(--muted)] shadow-[var(--shadow-md)]">
-        Im gewählten Zeitraum sind keine Leads für deinen Account
+        Im gewählten Zeitraum sind keine Leads für Ihr Konto
         eingegangen.
       </div>
     );
@@ -138,8 +137,6 @@ export function BuyerLeadsTable({
                       <div className="mt-1 text-xs font-medium text-violet-700">{followUpText(l.followUpAt)}</div>
                     ) : l.callback ? (
                       <div className="mt-1 text-xs font-medium text-amber-700">Rückruf nötig</div>
-                    ) : l.noNextStep ? (
-                      <div className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-amber-700"><AlertTriangle className="h-3.5 w-3.5" />{NEXT_STEP_LABEL[l.resultMissing ? "result_missing" : "missing"]}</div>
                     ) : null}
                   </div>
                   <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset", statusToneClass(cancelled ? "Storno" : l.status))}>
@@ -148,7 +145,7 @@ export function BuyerLeadsTable({
                 </button>
                 {l.noNextStep ? (
                   <div className="-mt-1 px-4 pb-3">
-                    <NextStepButton leadId={l.id} name={l.name ?? "Lead"} source={l.source} resultMissing={!!l.resultMissing} appointmentId={l.pastAppointmentId ?? null} />
+                    <NextStepButton leadId={l.id} name={l.name ?? "Lead"} source={l.source} resultMissing={!!l.resultMissing} appointmentId={l.pastAppointmentId ?? null} label="Nächsten Schritt festlegen" />
                   </div>
                 ) : null}
               </li>
@@ -163,7 +160,8 @@ export function BuyerLeadsTable({
                 <th className="px-3 py-2.5 text-left">Datum</th>
                 <th className="px-3 py-2.5 text-left">Name</th>
                 {singleProduct ? null : <th className="px-3 py-2.5 text-left">Produkt</th>}
-                <th className="px-3 py-2.5 text-left">Status</th>
+                <th className="px-3 py-2.5 text-left">Phase</th>
+                <th className="px-3 py-2.5 text-left">Nächster Schritt</th>
                 {showLeadCost ? (
                   <th className="px-3 py-2.5 text-right">Lead-Kosten</th>
                 ) : null}
@@ -199,7 +197,6 @@ export function BuyerLeadsTable({
                       </td>
                     )}
                     <td className="px-3 py-2.5">
-                      <div className="flex flex-wrap items-center gap-2">
                         <span
                           className={cn(
                             "inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset",
@@ -208,6 +205,8 @@ export function BuyerLeadsTable({
                         >
                           {statusText(l, statusLabels, cancelled)}
                         </span>
+                    </td>
+                    <td className="px-3 py-2.5">
                         {l.appointment ? (
                           <span className="text-xs text-blue-700">
                             {formatAppt(new Date(l.appointment.startsAt))} Uhr ·{" "}
@@ -218,12 +217,8 @@ export function BuyerLeadsTable({
                         ) : l.callback ? (
                           <span className="text-xs font-medium text-amber-700">Rückruf nötig</span>
                         ) : l.noNextStep ? (
-                          <>
-                            <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700"><AlertTriangle className="h-3.5 w-3.5" />{NEXT_STEP_LABEL[l.resultMissing ? "result_missing" : "missing"]}</span>
-                            <NextStepButton leadId={l.id} name={l.name ?? "Lead"} source={l.source} resultMissing={!!l.resultMissing} appointmentId={l.pastAppointmentId ?? null} />
-                          </>
+                          <NextStepButton leadId={l.id} name={l.name ?? "Lead"} source={l.source} resultMissing={!!l.resultMissing} appointmentId={l.pastAppointmentId ?? null} label="Festlegen" />
                         ) : null}
-                      </div>
                     </td>
                     {showLeadCost ? (
                       <td className="px-3 py-2.5 text-right tabular-nums">

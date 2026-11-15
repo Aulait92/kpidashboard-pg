@@ -1,6 +1,6 @@
 import { LeadLegalCard } from "@/components/lead-legal-card";
 import { isHealthLabel, splitHealthAnswers } from "@/lib/gesundheitsdaten";
-import { terminArtKurz, terminArtLabel } from "@/lib/termin-art";
+import { terminArtLabel } from "@/lib/termin-art";
 import { AlertTriangle, CalendarClock, ClipboardList, MessageCircle, PhoneCall } from "lucide-react";
 import { NextStepButton, NextStepPrompt } from "@/components/next-step";
 import { NEXT_STEP_LABEL, pastOpenAppointmentWhere } from "@/lib/lead-next-step";
@@ -266,7 +266,17 @@ export async function LeadDetailBody({
     nextStepStateOf(lead.id),
     prisma.appointment.findFirst({ where: { leadId: lead.id, ...pastOpenAppointmentWhere(new Date(nowMs())) }, orderBy: { startsAt: "desc" }, select: { id: true } }),
   ]);
-  const qPoints = qualificationPoints(conv?.qualificationData);
+  // Angaben des Assistenten ohne das, was schon im Leadformular steht (UX, Ole 15.11.2026: nicht doppelt)
+  const werteAus = (x: unknown): string[] =>
+    typeof x === "string"
+      ? [x]
+      : Array.isArray(x)
+        ? x.flatMap(werteAus)
+        : x && typeof x === "object"
+          ? Object.values(x as Record<string, unknown>).flatMap(werteAus)
+          : [];
+  const formWerte = new Set([...werteAus(formWithOverrides(lead.formData, lead.contactOverrides)), ...werteAus(fields)].map((v) => v.trim().toLowerCase()));
+  const qPoints = qualificationPoints(conv?.qualificationData).filter((q) => !formWerte.has(q.value.trim().toLowerCase()));
   // Wiedervorlage des Assistenten (schedule_followup), sichtbar unter den Aktionen
   const recallSeq = await prisma.leadSequence.findFirst({ where: { leadId: lead.id, kind: "recall", stoppedAt: null }, select: { nextAt: true, log: true } });
   const recallNote = Array.isArray(recallSeq?.log)
@@ -447,7 +457,7 @@ export async function LeadDetailBody({
         >
           <MessageCircle className="h-4 w-4 shrink-0" />
           <span className="min-w-0 flex-1">
-            <b>Braucht dich:</b> {conv.attentionReason ?? "Bitte beim Lead melden."}
+            <b>Wartet auf Sie:</b> {conv.attentionReason ?? "Bitte beim Kontakt melden."}
           </span>
           <span className="font-semibold">Antworten</span>
         </a>
@@ -475,8 +485,12 @@ export async function LeadDetailBody({
                 <div className="font-semibold">{apptFmt(nextAppt.startsAt)} Uhr</div>
                 <div className="text-xs text-[color:var(--muted)]">{terminArtLabel(nextAppt.mode)}</div>
               </div>
+              <div className="flex w-full flex-wrap gap-2 sm:w-auto">
               <ButtonLink href={`/buyer/termine/${nextAppt.id}/vorbereitung?von=kontakt`} variant="secondary" data-termin-vorbereiten>
                 Vorbereiten
+              </ButtonLink>
+              <ButtonLink href={`/buyer/termine/${nextAppt.id}/praesentation`} variant="secondary" data-termin-praesentation>
+                Präsentation
               </ButtonLink>
               {nextAppt.mode === "video" && nextAppt.meetUrl ? (
                 <ButtonLink href={nextAppt.meetUrl} variant="primary" external>
@@ -488,6 +502,7 @@ export async function LeadDetailBody({
                   Verschieben
                 </RescheduleButton>
               ) : null}
+              </div>
             </div>
           ) : null}
           {conv?.qualificationSummary ? (
@@ -527,7 +542,7 @@ export async function LeadDetailBody({
 
       <LeadSequenceCard leadId={lead.id} readOnly={!!lead.erasedAt} />
 
-      <LeadFiles leadId={lead.id} files={files} defaultKind={won ? "police" : "angebot"} praesentationTermin={won ? undefined : (nextAppt?.id ?? pastAppt?.id ?? null)} />
+      <LeadFiles leadId={lead.id} files={files} defaultKind={won ? "police" : "angebot"} />
 
       <LeadHistory mailReady={!!postfach} leadId={lead.id} initial={history} legacyNote={lead.notes ?? (fields ? (firstString(fields["Notizen"]) ?? null) : null)} />
     </>

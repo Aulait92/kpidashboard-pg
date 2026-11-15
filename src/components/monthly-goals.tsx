@@ -307,8 +307,10 @@ export function MonthlyGoalsCard({
         />
       ) : !anyGoalSet ? (
         <div className="rounded-lg border border-dashed border-[color:var(--border)] p-6 text-center text-sm text-[color:var(--muted)]">
-          Noch keine Ziele für {progress.monthLabel} gesetzt. Klick auf
-          „Ziele setzen“, um loszulegen.
+          <p>Noch keine Ziele für {progress.monthLabel}.</p>
+          <button type="button" onClick={() => setEditing(true)} className="mt-3 inline-flex items-center gap-1 rounded-lg bg-[color:var(--brand)] px-3 py-1.5 text-xs font-semibold text-white">
+            <Pencil className="h-3 w-3" /> Ziele setzen
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

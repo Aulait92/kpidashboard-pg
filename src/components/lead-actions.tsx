@@ -196,9 +196,10 @@ export function LeadHeaderActions(p: Props) {
                   if (won) return;
                   askWin();
                 }}
+                // Ruhig statt Signalfarbe (UX, Ole 15.11.2026): selten gebraucht, ausgefüllt nur im erreichten Zustand
                 className={cn(
-                  "inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-sm)] px-3.5 text-sm font-semibold transition",
-                  won ? "bg-emerald-100 text-emerald-800" : "bg-emerald-600 text-white hover:bg-emerald-700",
+                  "inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-sm)] border px-3 text-sm font-medium transition",
+                  won ? "border-emerald-600 bg-emerald-600 text-white" : "border-[color:var(--border)] bg-white text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50",
                 )}
               >
                 <Trophy className="h-4 w-4" /> Gewonnen
@@ -207,8 +208,8 @@ export function LeadHeaderActions(p: Props) {
                 type="button"
                 onClick={() => setOpen("lost")}
                 className={cn(
-                  "inline-flex h-9 items-center rounded-[var(--radius-sm)] px-3.5 text-sm font-semibold transition",
-                  lost ? "bg-rose-100 text-rose-800" : "bg-rose-600 text-white hover:bg-rose-700",
+                  "inline-flex h-8 items-center rounded-[var(--radius-sm)] border px-3 text-sm font-medium transition",
+                  lost ? "border-rose-600 bg-rose-600 text-white" : "border-[color:var(--border)] bg-white text-[color:var(--muted)] hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700",
                 )}
               >
                 Verloren

@@ -794,6 +794,7 @@ export function NextStepButton({
   appointmentId = null,
   resultMissing = false,
   className,
+  label,
 }: {
   leadId: string;
   name: string;
@@ -801,6 +802,8 @@ export function NextStepButton({
   appointmentId?: string | null;
   resultMissing?: boolean;
   className?: string;
+  /** Beschriftung (Standard: „Nächster Schritt“ bzw. „Ergebnis eintragen“) */
+  label?: string;
 }) {
   const { done } = useStepDone();
   const [open, setOpen] = useState(false);
@@ -820,7 +823,7 @@ export function NextStepButton({
         data-next-step-button
       >
         <Check className="h-3.5 w-3.5" />
-        {resultMissing ? "Ergebnis eintragen" : "Nächster Schritt"}
+        {resultMissing ? "Ergebnis eintragen" : (label ?? "Nächster Schritt")}
       </button>
       {open
         ? createPortal(

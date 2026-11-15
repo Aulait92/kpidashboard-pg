@@ -180,5 +180,5 @@ export function CallOutcomeSheet({
       />
     );
   }
-  return <ActionSheet open onClose={close} title={`Wie lief's mit ${t.name}?`} message="Ein Tipp, den Rest trägt die App ein." actions={actions} />;
+  return <ActionSheet open onClose={close} title={`Wie lief es mit ${t.name}?`} message="Ein Tipp, den Rest trägt die App ein." actions={actions} />;
 }

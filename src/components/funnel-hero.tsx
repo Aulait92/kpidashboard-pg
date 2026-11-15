@@ -70,7 +70,7 @@ export function FunnelHero({ kpis, footer }: { kpis: Kpis; /** Zeile unter dem T
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-4">
         <div>
           <h2 className="text-[15px] font-semibold tracking-tight">
-            Dein Vertriebstrichter
+            Ihr Vertriebstrichter
           </h2>
         </div>
         <div className="flex flex-wrap items-center gap-4 sm:gap-6 sm:text-right">

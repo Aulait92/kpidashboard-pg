@@ -15,8 +15,8 @@ import { LeadBookingHost } from "@/components/lead-booking";
 import type { ShellAbsence } from "@/components/absence-sheet";
 import { berlinYmd, currentOrNextAbsence, toAbsenceView } from "@/lib/absence";
 import { leadScope, memberName } from "@/lib/team";
-import { countWithoutNextStep } from "@/lib/lead-next-step-server";
 import { unreadUpdateCount } from "@/lib/neuigkeiten";
+import { nowMs } from "@/lib/now";
 
 // Gemeinsames Layout für den Buyer-Bereich. Hält den @modal-Parallel-Slot,
 // in den der Lead-Detail-Modal von ALLEN Buyer-Tabs (KPIs, Leads, Pipeline)
@@ -96,15 +96,29 @@ export default async function BuyerLayout({
 
   // Neuigkeiten: ungelesene Einträge des Logins (Vorschau: keine Markierung)
   const updatesUnread = ctx?.userId && !ctx.preview ? await unreadUpdateCount(ctx.userId, ctx.customerId).catch(() => 0) : 0;
-  // Leads ohne nächsten Schritt im eigenen Sichtbereich (Zähler an „Kontakte“)
-  const noStepBadge = ctx ? await countWithoutNextStep(leadScope(ctx)).catch(() => 0) : 0;
+  // Zähler an „Kontakte“ (UX-Überarbeitung, Ole 15.11.2026): neue Kontakte der letzten 30 Tage, mit denen noch niemand
+  // gesprochen hat. Leads ohne nächsten Schritt stehen auf „Heute“ unter „Aufräumen“.
+  const noStepBadge = ctx
+    ? await prisma.lead
+        .count({
+          where: {
+            ...leadScope(ctx),
+            erasedAt: null,
+            closedAt: null,
+            reached: false,
+            OR: [{ status: null }, { status: "Neuer Lead" }],
+            createdAt: { gte: new Date(nowMs() - 30 * 24 * 3600_000) },
+          },
+        })
+        .catch(() => 0)
+    : 0;
 
   return (
     <>
       {previewName ? (
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 bg-amber-400 px-4 py-2 text-sm font-medium text-amber-950">
           <span>
-            Vorschau: Du siehst das CRM von <b>{previewName}</b>, nur lesend
+            Vorschau: Das CRM von <b>{previewName}</b>, nur lesend
             (Demo-Leads lassen sich bearbeiten).
           </span>
           <form action={endPreviewAction}>
