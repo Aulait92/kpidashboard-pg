@@ -64,6 +64,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       seatsIncluded: true,
       seatMonthly: true,
       seatsBilled: true,
+      isTest: true,
       billingInterval: true,
       bestandMonthly: true,
       existingCustomersEnabled: true,
@@ -103,8 +104,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const softwareFee = offer ? Number(offer.softwareFee) : customer.plan === "service" ? 0 : 349;
   const service = customer.plan === "service";
   // Zusätze (weitere aktive Verkäufer, Bestandskunden-Modul) und Zahlweise
-  const seatMonthly = customer.seatMonthly != null ? Number(customer.seatMonthly) : null;
-  const seatsFee = seatMonthly ? customer.seatsBilled * seatMonthly : 0;
+  // Testkunden (Testangebot 0 €) sehen den regulären Platzpreis wie echte Kunden, berechnet wird nichts
+  const seatMonthly = customer.isTest ? PRICE_LIST.seatMonthly : customer.seatMonthly != null ? Number(customer.seatMonthly) : null;
+  const seatsFee = seatMonthly && !customer.isTest ? customer.seatsBilled * seatMonthly : 0;
   const bestandFee = customer.bestandMonthly != null ? Number(customer.bestandMonthly) : 0;
   const empfehlungFee = customer.empfehlungMonthly != null ? Number(customer.empfehlungMonthly) : 0;
   const empfehlungState = moduleState(customer);
@@ -320,7 +322,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                     <UserPlus className="h-4 w-4 text-[color:var(--brand)]" />
                     <span className="font-semibold">Weitere Verkäufer</span>
                     <span className="ml-auto text-[color:var(--muted)]">
-                      {seatMonthly ? `${eur(seatMonthly)} netto/Monat je weiterem Verkäufer` : "nach Sondervereinbarung"}
+                      {seatMonthly ? `${eur(seatMonthly)} netto/Monat je weiterem Verkäufer${customer.isTest ? " (Testkonto: wird nicht berechnet)" : ""}` : "nach Sondervereinbarung"}
                     </span>
                   </div>
                   <p className="text-[color:var(--muted)]">
