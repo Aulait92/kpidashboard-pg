@@ -74,22 +74,26 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
     ? await prisma.whatsAppAccount.findUnique({ where: { customerId: ctx.customerId }, select: { status: true, phoneNumber: true, dialog360ChannelId: true } })
     : null;
   const has = (k: string) => items.some((i) => i.key === k);
+  // Gleiche Reihenfolge wie die Liste oben, die Startseite und die Erinnerungen (SETUP_STEPS)
   const order = [
     "questionnaire",
-    "metaAccess",
+    "app",
     ...(software ? ["calendar", "mailbox"] : []),
+    "provision",
+    "metaAccess",
     ...(waEnabled ? ["whatsapp"] : []),
     ...["bestandImport", "reviewLink", "team"].filter(has),
   ];
+  const isDone = (k: string) => (k === "app" ? appDone : k === "provision" ? provision.confirmed : done(k));
   // „Später“: zum nächsten offenen Schritt nach diesem
   const laterHref = (k: string) => {
-    const next = order.slice(order.indexOf(k) + 1).find((x) => !done(x));
+    const next = order.slice(order.indexOf(k) + 1).find((x) => !isDone(x));
     return next ? `/buyer/einrichtung?schritt=${next}#${next}` : "/buyer";
   };
   const showGoogleMail = googleMailAvailable() && process.env.GOOGLE_MAIL_VERIFIED === "1";
-  let stepNo = software ? 3 : 2;
+  let stepNo = 0;
   const nextNo = () => ++stepNo;
-  const current = order.find((k) => !done(k)) ?? "start";
+  const current = order.find((k) => !isDone(k)) ?? "start";
   // Direkt-Link von der Startseite (?schritt=calendar) klappt diesen Schritt auf.
   const isOpen = (k: string) => current === k || schritt === k;
   const helpUpcoming = ob.helpCallAt && ob.helpCallAt > new Date();
@@ -168,99 +172,23 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
       </Card>
 
       <div className="space-y-5">
-        <Step n={1} title="Kurzer Fragebogen" icon={ClipboardList} done={done("questionnaire")} open={isOpen("questionnaire")} id="questionnaire">
+        <Step n={nextNo()} title="Kurzer Fragebogen" icon={ClipboardList} done={done("questionnaire")} open={isOpen("questionnaire")} id="questionnaire">
           <p className="mb-4 text-sm text-[color:var(--muted)]">Nur noch, wie Sie arbeiten möchten:</p>
           <QuestionnaireForm software={software} initial={(ob.questionnaire ?? {}) as Record<string, never>} readOnly={readOnly} />
         </Step>
 
-        <Step n={2} title="Meta freigeben (Werbekonto und Seite)" icon={KeyRound} done={done("metaAccess")} open={isOpen("metaAccess")} id="metaAccess">
-          <p className="text-sm text-[color:var(--muted)]">So schalten wir die Anzeigen in Ihrem Werbekonto und Leads kommen direkt bei Ihnen an. Das Budget bleibt bei Ihnen.</p>
-          <VideoHint url={video("metaAccess")} />
-          <p className="mt-4 text-[15px] font-medium">So geben Sie uns Zugriff (ca. 3 Minuten)</p>
-          <details className="my-4 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3 text-[15px]">
-            <summary className="cursor-pointer font-medium">Noch kein Business Manager? So legen Sie ihn an</summary>
-            <ol className="mt-3 list-decimal space-y-1.5 pl-5">
-              <li>
-                <a href="https://business.facebook.com/overview" target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
-                  business.facebook.com
-                </a>{" "}
-                öffnen und mit Ihrem privaten Facebook-Profil anmelden (es bleibt unsichtbar für Kunden).
-              </li>
-              <li>
-                <b>Business-Portfolio erstellen</b>: Name Ihrer Agentur, Ihr Name und Ihre geschäftliche E-Mail, dann die
-                E-Mail bestätigen.
-              </li>
-              <li>
-                Unter <b>Einstellungen → Konten → Seiten</b> Ihre Facebook-Seite hinzufügen (gibt es noch keine Seite, dort
-                direkt eine neue anlegen).
-              </li>
-              <li>
-                Unter <b>Einstellungen → Konten → Werbekonten</b> ein Werbekonto hinzufügen oder neu erstellen (Währung EUR,
-                Zeitzone Berlin).
-              </li>
-              <li>
-                Im Werbekonto unter <b>Abrechnung</b> eine Zahlungsmethode (z. B. Kreditkarte) hinterlegen. Darüber zahlen
-                Sie das Werbebudget direkt an Meta.
-              </li>
-              <li>Danach weiter mit den Schritten unten.</li>
-            </ol>
-          </details>
-          <ol className="my-4 list-decimal space-y-1.5 pl-5 text-[15px]">
-            <li>
-              <a href="https://business.facebook.com/settings/partners" target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
-                Meta Business-Einstellungen → Partner
-              </a>{" "}
-              öffnen.
-            </li>
-            <li>
-              <b>Hinzufügen</b> → „Einem Partner Zugriff auf deine Assets gewähren“.
-            </li>
-            <li>
-              Unsere Business-ID eingeben: <b className="select-all">{businessId}</b>
-            </li>
-            <li>
-              Ihr <b>Werbekonto</b> (Kampagnen verwalten) und Ihre <b>Facebook-Seite</b> mit <b>„Volle Kontrolle“</b> auswählen (nötig, damit
-              Leads direkt bei Ihnen ankommen), ggf. auch Instagram, und speichern.
-            </li>
-          </ol>
-          <div className="my-4">
-            <p className="mb-3 text-[15px] font-medium">Dann Werbekonto und Seite eintragen und prüfen</p>
-            <MetaAccessForm
-              initial={{ adAccount: metaInit.adAccount, page: metaInit.page }}
-              lastCheck={(ob.metaCheck ?? null) as MetaCheck | null}
-              readOnly={readOnly}
-            />
-          </div>
-          <div id="hilfetermin" className="mt-5 scroll-mt-20 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4">
-            <p className="text-[15px] font-medium">Klappt etwas nicht? Wir machen es gemeinsam.</p>
-            {helpUpcoming ? (
-              <p className="mt-2 text-[15px]">
-                Ihr Hilfetermin: <b>{timeFmt(ob.helpCallAt!)} Uhr</b> (15 Minuten, Video).
-                {ob.helpCallUrl ? (
-                  <>
-                    {" "}
-                    <a href={ob.helpCallUrl} target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
-                      Zum Video-Call
-                    </a>
-                  </>
-                ) : null}
-              </p>
-            ) : slots.length ? (
-              <>
-                <p className="mb-3 mt-1 text-sm text-[color:var(--muted)]">15 Minuten per Video, wir machen es gemeinsam.</p>
-                <HelpCallPicker slots={slots} readOnly={readOnly} />
-              </>
-            ) : null}
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-[color:var(--muted)]">
-              <span>Schnelle Frage zwischendurch?</span>
-              <HilfeChatButton className="inline-flex items-center gap-1.5 font-semibold text-[color:var(--brand)]" />
-              <span>Sie antwortet sofort, auch abends.</span>
+        <Step n={nextNo()} title="App aufs Handy und Mitteilungen" icon={Smartphone} done={appDone} open={isOpen("app")} id="app">
+          <VideoHint url={video("app")} />
+          <InstallApp appUrl={appHost()} />
+          {!appDone ? (
+            <div className="mt-4">
+              <SkipButton kind="app" readOnly={readOnly} label="Ich nutze die App ohne Handy, Schritt überspringen" />
             </div>
-          </div>
+          ) : null}
         </Step>
 
         {software ? (
-          <Step n={3} title="Kalender und freie Zeiten" icon={CalendarDays} done={done("calendar")} open={isOpen("calendar")} id="calendar">
+          <Step n={nextNo()} title="Kalender und freie Zeiten" icon={CalendarDays} done={done("calendar")} open={isOpen("calendar")} id="calendar">
             <p className="mb-4 text-sm text-[color:var(--muted)]">
               Damit Leads nur Termine bekommen, wenn Sie wirklich Zeit haben.
             </p>
@@ -356,6 +284,104 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           </Step>
         ) : null}
 
+        <Step n={nextNo()} title="Provisionen prüfen (1 Minute)" icon={Percent} done={provision.confirmed} open={isOpen("provision")} id="provision">
+          {/* Typ aus dem angenommenen Angebot bekannt → nicht mehr danach fragen. */}
+          <p className="text-sm text-[color:var(--muted)]">{provisionSetupHint(provision.typ, !!ob.offerId)}</p>
+          <VideoHint url={video("provision")} />
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Link href="/buyer/provisionen" className={buttonClass("secondary", "md")}>
+              Provisionen ansehen
+            </Link>
+            {!provision.confirmed ? <SkipButton kind="provision" readOnly={readOnly} label="Passt so" primary /> : null}
+          </div>
+        </Step>
+
+        <Step n={nextNo()} title="Meta freigeben (Werbekonto und Seite)" icon={KeyRound} done={done("metaAccess")} open={isOpen("metaAccess")} id="metaAccess">
+          <p className="text-sm text-[color:var(--muted)]">So schalten wir die Anzeigen in Ihrem Werbekonto und Leads kommen direkt bei Ihnen an. Das Budget bleibt bei Ihnen.</p>
+          <VideoHint url={video("metaAccess")} />
+          <p className="mt-4 text-[15px] font-medium">So geben Sie uns Zugriff (ca. 3 Minuten)</p>
+          <details className="my-4 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3 text-[15px]">
+            <summary className="cursor-pointer font-medium">Noch kein Business Manager? So legen Sie ihn an</summary>
+            <ol className="mt-3 list-decimal space-y-1.5 pl-5">
+              <li>
+                <a href="https://business.facebook.com/overview" target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
+                  business.facebook.com
+                </a>{" "}
+                öffnen und mit Ihrem privaten Facebook-Profil anmelden (es bleibt unsichtbar für Kunden).
+              </li>
+              <li>
+                <b>Business-Portfolio erstellen</b>: Name Ihrer Agentur, Ihr Name und Ihre geschäftliche E-Mail, dann die
+                E-Mail bestätigen.
+              </li>
+              <li>
+                Unter <b>Einstellungen → Konten → Seiten</b> Ihre Facebook-Seite hinzufügen (gibt es noch keine Seite, dort
+                direkt eine neue anlegen).
+              </li>
+              <li>
+                Unter <b>Einstellungen → Konten → Werbekonten</b> ein Werbekonto hinzufügen oder neu erstellen (Währung EUR,
+                Zeitzone Berlin).
+              </li>
+              <li>
+                Im Werbekonto unter <b>Abrechnung</b> eine Zahlungsmethode (z. B. Kreditkarte) hinterlegen. Darüber zahlen
+                Sie das Werbebudget direkt an Meta.
+              </li>
+              <li>Danach weiter mit den Schritten unten.</li>
+            </ol>
+          </details>
+          <ol className="my-4 list-decimal space-y-1.5 pl-5 text-[15px]">
+            <li>
+              <a href="https://business.facebook.com/settings/partners" target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
+                Meta Business-Einstellungen → Partner
+              </a>{" "}
+              öffnen.
+            </li>
+            <li>
+              <b>Hinzufügen</b> → „Einem Partner Zugriff auf deine Assets gewähren“.
+            </li>
+            <li>
+              Unsere Business-ID eingeben: <b className="select-all">{businessId}</b>
+            </li>
+            <li>
+              Ihr <b>Werbekonto</b> (Kampagnen verwalten) und Ihre <b>Facebook-Seite</b> mit <b>„Volle Kontrolle“</b> auswählen (nötig, damit
+              Leads direkt bei Ihnen ankommen), ggf. auch Instagram, und speichern.
+            </li>
+          </ol>
+          <div className="my-4">
+            <p className="mb-3 text-[15px] font-medium">Dann Werbekonto und Seite eintragen und prüfen</p>
+            <MetaAccessForm
+              initial={{ adAccount: metaInit.adAccount, page: metaInit.page }}
+              lastCheck={(ob.metaCheck ?? null) as MetaCheck | null}
+              readOnly={readOnly}
+            />
+          </div>
+          <div id="hilfetermin" className="mt-5 scroll-mt-20 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4">
+            <p className="text-[15px] font-medium">Klappt etwas nicht? Wir machen es gemeinsam.</p>
+            {helpUpcoming ? (
+              <p className="mt-2 text-[15px]">
+                Ihr Hilfetermin: <b>{timeFmt(ob.helpCallAt!)} Uhr</b> (15 Minuten, Video).
+                {ob.helpCallUrl ? (
+                  <>
+                    {" "}
+                    <a href={ob.helpCallUrl} target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
+                      Zum Video-Call
+                    </a>
+                  </>
+                ) : null}
+              </p>
+            ) : slots.length ? (
+              <>
+                <p className="mb-3 mt-1 text-sm text-[color:var(--muted)]">15 Minuten per Video, wir machen es gemeinsam.</p>
+                <HelpCallPicker slots={slots} readOnly={readOnly} />
+              </>
+            ) : null}
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-[color:var(--muted)]">
+              <span>Schnelle Frage zwischendurch?</span>
+              <HilfeChatButton className="inline-flex items-center gap-1.5 font-semibold text-[color:var(--brand)]" />
+              <span>Sie antwortet sofort, auch abends.</span>
+            </div>
+          </div>
+        </Step>
+
         {waEnabled ? (
           <Step n={nextNo()} title="WhatsApp verbinden" icon={MessageCircle} done={done("whatsapp")} open={isOpen("whatsapp") || !!wa || !!weg} id="whatsapp">
             <VideoHint url={video("whatsapp")} />
@@ -414,29 +440,6 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             {!done("team") ? <StepExits laterHref={laterHref("team")} readOnly={readOnly} skips={[{ kind: "skip:team:spaeter", label: "Mache ich später" }]} /> : null}
           </Step>
         ) : null}
-
-
-        <Step n={nextNo()} title="App aufs Handy und Mitteilungen" icon={Smartphone} done={appDone} open={current === "start" && !fertig && !appDone} id="app">
-          <VideoHint url={video("app")} />
-          <InstallApp appUrl={appHost()} />
-          {!appDone ? (
-            <div className="mt-4">
-              <SkipButton kind="app" readOnly={readOnly} label="Ich nutze die App ohne Handy, Schritt überspringen" />
-            </div>
-          ) : null}
-        </Step>
-
-        <Step n={nextNo()} title="Provisionen prüfen (1 Minute)" icon={Percent} done={provision.confirmed} open={false} id="provision">
-          {/* Typ aus dem angenommenen Angebot bekannt → nicht mehr danach fragen. */}
-          <p className="text-sm text-[color:var(--muted)]">{provisionSetupHint(provision.typ, !!ob.offerId)}</p>
-          <VideoHint url={video("provision")} />
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <Link href="/buyer/provisionen" className={buttonClass("secondary", "md")}>
-              Provisionen ansehen
-            </Link>
-            {!provision.confirmed ? <SkipButton kind="provision" readOnly={readOnly} label="Passt so" primary /> : null}
-          </div>
-        </Step>
 
         <Step n={nextNo()} title="Start" icon={Rocket} done={!!ob.liveAt} open={current === "start" && !!ob.liveAt}>
           <p className="text-sm text-[color:var(--muted)]">
@@ -604,7 +607,7 @@ function WhatsAppStep({
           <div className="mb-4 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3" data-wa-checklist>
             <p className="text-[15px] font-medium">Vorher kurz prüfen:</p>
             <ul className="mt-2 space-y-1.5 text-[15px]">
-              <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" /> Eine Nummer, die <b>nicht</b> in der normalen WhatsApp-App genutzt wird (z. B. zweite SIM, Festnetz oder neue Nummer).</li>
+              <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" /> <span>Eine Nummer, die <b>nicht</b> in der normalen WhatsApp-App genutzt wird (z. B. zweite SIM, Festnetz oder neue Nummer).</span></li>
               <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" /> Sie können an dieser Nummer jetzt eine SMS oder einen Anruf mit Bestätigungscode empfangen.</li>
               <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" /> Sie sind bei Facebook angemeldet und Admin Ihres Business Managers.</li>
             </ul>
