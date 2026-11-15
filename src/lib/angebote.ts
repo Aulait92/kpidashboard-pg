@@ -2,8 +2,10 @@
 // je Angebot Sparte, Gesellschaft, Tarif, Beitrag, Selbstbeteiligung, wichtigste Leistungen und Ausschlüsse aus. Der
 // Vermittler prüft, markiert die Empfehlung und bestätigt; erst dann fließen die Daten in die Präsentation.
 //
-// Datenschutz: Die Angebote enthalten Kundendaten und gehen zum Auslesen an Anthropic. Bis AVV und
-// Datenschutzerklärung ergänzt sind (docs/datenschutz.md, Offene Punkte), nur für Testkunden freigeschaltet.
+// Datenschutz (Ole, 15.11.2026: freigeschaltet nach Prüfung, docs/datenschutz.md): Die Angebote enthalten Kundendaten
+// und gehen zum Auslesen an Anthropic (AVV „Art, Zweck und Umfang“, Anlage 2). Nur Sach-, Haftpflicht-, Rechtsschutz-,
+// Unfall- und Tierversicherungen: Angebote mit Gesundheitsangaben (Kranken, BU, Leben, Pflege) gehen nie an die KI,
+// wie im AVV zugesagt (angebotOhneGesundheitsdaten). Notschalter: ANGEBOTE_AUSLESEN=0.
 
 import Anthropic from "@anthropic-ai/sdk";
 import { reportError } from "@/lib/monitoring";
@@ -16,6 +18,20 @@ const MAX_ITEMS = 20; // z. B. 4 Sparten mit je 4 Stufen (Allianz Basis, Smart, 
  * Bausteine per Klick an oder ab, der Beitrag rechnet sich neu. Negativer Beitrag = Ersparnis (z. B. höhere SB).
  */
 export type Baustein = { name: string; beitrag: number; aktiv: boolean };
+
+const OHNE_GESUNDHEIT = /privatschutz|haftpflicht|hausrat|rechtsschutz|wohngeb|geb(ä|ae)ude|unfall|tier|hund|katze|pferd|kfz|auto|glas|fahrrad/i;
+const GESUNDHEIT = /pkv|kranken(voll|zusatz|versicherung(?!.*tier))|krankenhaus|zahn(?!behandlung)|berufsunf|\bbu\b|dienstunf|grundf(ä|ae)hig|leben|pflege|rente|dread|§\s*204|tarifoptimierung/i;
+
+/**
+ * Darf ein Angebot zu diesem Produkt an die KI? Nur Produkte ohne Gesundheitsangaben einer Person (Art. 9 DSGVO).
+ * Tierkranken ist erlaubt: Gesundheitsdaten von Tieren sind keine personenbezogenen Gesundheitsdaten.
+ */
+export function angebotOhneGesundheitsdaten(produkt: string | null | undefined): boolean {
+  const p = produkt ?? "";
+  if (!OHNE_GESUNDHEIT.test(p)) return false;
+  const ohneTier = p.replace(/tier\s*-?\s*(op|kranken)[\w-]*|(hunde|katzen|pferde)\s*-?\s*(op|kranken)[\w-]*/gi, "");
+  return !GESUNDHEIT.test(ohneTier);
+}
 
 export type AngebotItem = {
   sparte: string;
@@ -195,13 +211,13 @@ export type AngebotDatei = { fileName: string; contentType: string; data: Uint8A
 
 /** Angebote (PDF oder Foto) auslesen. Fehler → { error }. */
 export async function angeboteAuslesen(files: AngebotDatei[]): Promise<AngeboteDaten | { error: string }> {
-  const usable = files.filter((f) => f.contentType === "application/pdf" || f.contentType === "image/png" || f.contentType === "image/jpeg").slice(0, 5);
+  const usable = files.filter((f) => ["application/pdf", "image/png", "image/jpeg", "image/webp"].includes(f.contentType)).slice(0, 5);
   if (!usable.length) return { error: "Kein Angebot als PDF oder Foto gefunden. Laden Sie es im Kontakt unter Dokumente hoch (Art „Angebot“)." };
   if (!process.env.ANTHROPIC_API_KEY) return { error: "Auslesen ist gerade nicht verfügbar." };
   const blocks: Anthropic.ContentBlockParam[] = usable.map((f) =>
     f.contentType === "application/pdf"
       ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: Buffer.from(f.data).toString("base64") }, title: f.fileName }
-      : { type: "image", source: { type: "base64", media_type: f.contentType as "image/png" | "image/jpeg", data: Buffer.from(f.data).toString("base64") } },
+      : { type: "image", source: { type: "base64", media_type: f.contentType as "image/png" | "image/jpeg" | "image/webp", data: Buffer.from(f.data).toString("base64") } },
   );
   try {
     const client = new Anthropic();
@@ -209,7 +225,7 @@ export async function angeboteAuslesen(files: AngebotDatei[]): Promise<AngeboteD
       model: MODEL,
       max_tokens: 2048,
       system:
-        "Du liest Versicherungsangebote für einen Vermittler aus. Übernimm Werte nur aus den Dokumenten, erfinde nichts. Fehlt eine Angabe, setze null bzw. eine leere Liste. Je Tarifstufe bzw. Angebot ein Eintrag. Kurz und sachlich, keine Wertung.",
+        "Du liest Versicherungsangebote für einen Vermittler aus. Übernimm Werte nur aus den Dokumenten, erfinde nichts. Fehlt eine Angabe, setze null bzw. eine leere Liste. Je Tarifstufe bzw. Angebot ein Eintrag. Kurz und sachlich, keine Wertung. Übernimm nur Tarif- und Leistungsdaten: keine Namen, Anschriften, Geburtsdaten, Vertrags- oder Kundennummern und keine Angaben zur Gesundheit von Personen.",
       tools: [{ name: "save_angebote", description: "Speichert die ausgelesenen Angebote.", input_schema: SCHEMA as unknown as Anthropic.Tool.InputSchema }],
       tool_choice: { type: "tool", name: "save_angebote" },
       messages: [{ role: "user", content: [...blocks, { type: "text", text: "Lies diese Angebote aus." }] }],

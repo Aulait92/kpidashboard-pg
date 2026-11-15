@@ -60,6 +60,15 @@ Für jeden Kunden mit AVV (Annahme des Angebots, `Offer.dpaUrl` speichert die ge
   (Beschäftigtendaten des Kunden, wir verarbeiten im Auftrag). Löschung: mit dem Login
   (Kaskade) bzw. bei der endgültigen Löschung nach Vertragsende, spätestens 1 Jahr nach Ende der Abwesenheit (automatisch, täglich);
   keine Lead-Namen darin gespeichert; das Änderungsprotokoll hält den Eintrag 1 Jahr.
+- **Terminvorbereitung, Angebote und Präsentation (15.11.2026):** Der Kunde lädt Angebote im Lead hoch
+  (`LeadFile`, Art „Angebot“) oder trägt sie ein (`Appointment.offersJson`). Auslesen per Anthropic nur für Produkte
+  ohne Gesundheitsangaben einer Person (`angebotOhneGesundheitsdaten`: Privatschutz, Haftpflicht, Hausrat,
+  Rechtsschutz, Wohngebäude, Unfall, Tier; gesperrt für Kranken, BU, Leben, Pflege, § 204). Tierkranken ist erlaubt:
+  Angaben zur Gesundheit eines Tieres sind keine Gesundheitsdaten nach Art. 9. Gespeichert wird nur, was die KI an
+  Tarif-, Beitrags- und Leistungsdaten zurückgibt (Prompt: keine Namen, Anschriften, Geburtsdaten, Nummern,
+  Gesundheitsangaben); der Kunde prüft und bestätigt. Kundenlink `/beratung/<token>`: 24 Zufallsbytes, 14 Tage,
+  beendbar, `noindex`, `no-referrer`, ohne Sprechzettel. Löschung: mit dem Termin bzw. Lead. Notschalter:
+  `ANGEBOTE_AUSLESEN=0`.
 - **Datenarten und Betroffene:** wie AVV § „Art, Zweck und Umfang“. Keine Daten nach Art. 9
   (die Abwesenheits-Kategorie „Krank“ ohne Details ist bewusst so knapp gehalten; siehe oben).
 - **Unterauftragsverarbeiter:** AVV Anlage 2 (`SUBPROCESSORS`).
@@ -73,7 +82,7 @@ Für jeden Kunden mit AVV (Annahme des Angebots, `Offer.dpaUrl` speichert die ge
 | Dienst | Zweck | AVV/DPA abgeschlossen am | Ablage |
 |---|---|---|---|
 | Railway | Hosting, Datenbank (EU, Amsterdam) | | |
-| Anthropic | KI-Assistent, Impressum auslesen | | |
+| Anthropic | KI-Assistent, Impressum auslesen, Angebote auslesen (nur ohne Gesundheitsangaben) | | |
 | Google (Places API) | Öffentliche Unternehmensdaten von Vertriebskontakten abrufen (nur Suchtext: Agentur/Name und Ort; Antwort: öffentlicher Google-Eintrag) | | |
 | 360dialog | WhatsApp Business API; seit 14.11. auch Partner-API für das Selbst-Verbinden der Kundennummer (Konto-/Channel-ID, Telefonnummer, Anzeigename; API-Key verschlüsselt gespeichert) | | |
 | Meta | WhatsApp, Lead-Formulare, Rückmeldung der Lead-Stufen (Conversions API, seit 15.11.2026) | | |
@@ -275,24 +284,17 @@ Interaktion mit Betroffenen“. Falls ja, DSFA je Kunde als Verantwortlicher (Vo
 
 ## 9. Offene Punkte
 
-- [ ] **Angebote auslesen (Terminvorbereitung, 15.11.2026):** Vermittler laden Angebote (PDF/Foto) hoch, die KI liest
-  Sparte, Tarif, Beitrag, Selbstbeteiligung, Leistungen und Ausschlüsse aus. Die Dokumente enthalten Kundendaten
-  (Name, Anschrift, Geburtsdatum; bei Tierkranken Angaben zur Gesundheit des Tieres) und gehen dafür an Anthropic.
-  Bis zur Ergänzung nur für Testkunden aktiv (`Customer.isTest` oder `ANGEBOTE_AUSLESEN=1`). Vorschlag für den
-  Anwalt:
-  - Unterauftragsverarbeiter Anthropic, Zweck ergänzen: „… sowie Auslesen von Versicherungsangeboten, die der Kunde
-    zur Vorbereitung eines Beratungstermins hochlädt (Beiträge, Tarife, Leistungen); keine Nutzung zum Training.“
-  - AVV Anlage Datenarten: „Inhalte hochgeladener Angebote (Kundendaten des Vermittlers, Tarif- und Beitragsdaten)“.
-  - Datenschutzerklärung für Leads (Abschnitt KI-Assistent): Hinweis, dass Angebote zur Aufbereitung für das
-    Beratungsgespräch automatisiert ausgelesen werden können; Rechtsgrundlage Art. 6 Abs. 1 lit. b DSGVO
-    (Anbahnung des Versicherungsvertrags) durch den Vermittler als Verantwortlichen.
-  - Danach `angeboteAuslesenErlaubt` (lib/termin-vorbereitung-server.ts) für alle freigeben.
-- [ ] **Kundenlink zur Beratungspräsentation (15.11.2026):** Der Vermittler erstellt je Termin einen Link
-  (`/beratung/<token>`, 24 Zufallsbytes, 14 Tage gültig, jederzeit beendbar, `noindex`, `no-referrer`). Die Seite zeigt
-  Name des Kunden, Angaben aus dem Gespräch, Angebote und Beiträge, ohne Sprechzettel, ohne Login. Live, da der Vermittler
-  den Link selbst weitergibt (wie das PDF zum Nachschicken). Vorschlag für den Anwalt: Datenschutzerklärung für Leads um
-  einen Satz ergänzen („Ihr Berater kann Ihnen die Präsentation aus dem Beratungsgespräch über einen persönlichen Link
-  bereitstellen; der Link ist 14 Tage gültig.“); Löschkonzept: Token läuft ab, Termindaten folgen der bisherigen Frist.
+- [x] **Angebote auslesen (15.11.2026, auf Oles Wunsch nach Prüfung durch Claude für alle freigeschaltet):**
+  AVV „Art, Zweck und Umfang“ (Abschnitt Terminvorbereitung und Beratungspräsentation), Datenarten und Anlage 2
+  (Anthropic) ergänzt; technisch auf Produkte ohne Gesundheitsangaben begrenzt (siehe Abschnitt 3). Verbleibend für den
+  Anwalt: (1) Reicht die Ergänzung im gleichen AVV-Stand „15.11.2026“ (am 15.11.2026 keine Kunden mit angenommenem
+  Vertrag)? (2) Datenschutzerklärung des Vermittlers: Hinweis auf IT-Dienstleister mit KI genügt Art. 13 Abs. 1 lit. e,
+  oder empfehlen wir den Vermittlern einen Satz? (3) Drittlandtransfer Anthropic (USA): gleiche Grundlage wie für den
+  KI-Assistenten (DPA mit Standardvertragsklauseln) ablegen.
+- [x] **Kundenlink zur Beratungspräsentation (15.11.2026):** Im AVV beschrieben (gleicher Abschnitt). Der Link ist eine
+  Übermittlung an den Betroffenen selbst im Auftrag des Vermittlers. Technik siehe Abschnitt 3. Vorschlag für die
+  Vermittler (freiwillig, z. B. in der Hilfe): „Ihr Berater kann Ihnen die Präsentation aus dem Beratungsgespräch über
+  einen persönlichen Link bereitstellen; der Link ist 14 Tage gültig.“
 - [ ] AVV/DPA mit jedem Dienst abschließen bzw. Nachweis ablegen (Tabelle Abschnitt 3)
 - [ ] AGB/AVV Stand 15.11.2026 (Anwalts-Memo): Anwalt prüft die „Prüfen:“-Stellen in `src/lib/legal-texts.ts`.
       Eine Mitteilung an Bestandskunden mit 6 Wochen Widerspruchsfrist ist **nicht nötig**: Zum Zeitpunkt der Änderung

@@ -27,7 +27,7 @@ export default async function TerminVorbereitungPage({ params }: { params: Promi
   const offen = offenePunkte(ab);
   const lf = leitfaden(d.lead.produkt);
   const unterlagen = unterlagenFuer(d.lead.produkt, spartenVon(d));
-  const [ang, auslesenErlaubt] = await Promise.all([loadAngebote(id, ctx), angeboteAuslesenErlaubt(ctx.customerId)]);
+  const [ang, auslesenErlaubt] = await Promise.all([loadAngebote(id, ctx), angeboteAuslesenErlaubt(ctx.customerId, d.lead.produkt)]);
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       {d.leadId ? (

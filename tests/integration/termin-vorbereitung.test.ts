@@ -1,7 +1,7 @@
 // Terminvorbereitung: Aufgabe auf „Heute“ (36 Std. vorher bis abgehakt), Sichtbereich, Daten aus Lead und Chat.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { angeboteSpeichern, auslesenUndSpeichern, bausteinUmschalten, kundenlinkBeenden, kundenlinkErstellen, kundenlinkStand, loadKundenPraesentation, tarifUmschalten, listVorbereitungen, loadAngebote, loadPraesentation, loadVorbereitung, setPrepared } from "@/lib/termin-vorbereitung-server";
+import { angeboteAuslesenErlaubt, angeboteSpeichern, auslesenUndSpeichern, bausteinUmschalten, kundenlinkBeenden, kundenlinkErstellen, kundenlinkStand, loadKundenPraesentation, tarifUmschalten, listVorbereitungen, loadAngebote, loadPraesentation, loadVorbereitung, setPrepared } from "@/lib/termin-vorbereitung-server";
 import { loadLogoStand, logoBestaetigen, logoEntfernen, logoHochladen } from "@/lib/branding-logo-server";
 import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
 
@@ -56,9 +56,15 @@ describe("Terminvorbereitung", () => {
     const lead = await prisma.lead.create({ data: { customerId, name: "Max Weber", phone: "4915133330002", source: "Privatschutz" } });
     const appt = await prisma.appointment.create({ data: { customerId, leadId: lead.id, mode: "video", status: "booked", startsAt: new Date(Date.now() + 10 * HOUR) } });
     const ctx = { customerId, userId: null, teamRole: "owner" as const };
-    // Kein Testkunde → Auslesen gesperrt (Datenschutz), von Hand eintragen geht
+    // Privatschutz ohne hochgeladenes Angebot: nichts auszulesen; PKV: gesperrt (Gesundheitsangaben), von Hand eintragen geht
     const r = await auslesenUndSpeichern(appt.id, ctx);
     expect(r.ok).toBe(false);
+    expect(await angeboteAuslesenErlaubt(customerId, "Privatschutz")).toBe(true);
+    expect(await angeboteAuslesenErlaubt(customerId, "PKV")).toBe(false);
+    const pkv = await prisma.lead.create({ data: { customerId, name: "Paul PKV", phone: "4915133330009", source: "PKV" } });
+    const apkv = await prisma.appointment.create({ data: { customerId, leadId: pkv.id, mode: "video", status: "booked", startsAt: new Date(Date.now() + 10 * HOUR) } });
+    const rp = await auslesenUndSpeichern(apkv.id, ctx);
+    expect(rp.ok === false && rp.error).toMatch(/Gesundheitsangaben/);
     expect(await angeboteSpeichern(appt.id, ctx, { items: [{ sparte: "Hausrat", tarif: "Komfort", beitragMonat: 8.2, empfohlen: true }] }, false)).toBe(true);
     let p = await loadPraesentation(appt.id, ctx);
     expect(p?.angeboteBestaetigt).toBe(false);

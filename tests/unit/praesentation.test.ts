@@ -1,6 +1,6 @@
 // Beratungsstrecke und Angebote (Ole, 15.11.2026)
 import { describe, expect, it } from "vitest";
-import { bausteinSchalten, beitragEffektiv, cleanAngebote, sparteSchalten, summeEmpfohlen, tarifWaehlen } from "@/lib/angebote";
+import { angebotOhneGesundheitsdaten, bausteinSchalten, beitragEffektiv, cleanAngebote, sparteSchalten, summeEmpfohlen, tarifWaehlen } from "@/lib/angebote";
 import { folien, markeFuer, praesentationHtml } from "@/lib/praesentation";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
 
@@ -184,5 +184,12 @@ describe("Präsentation", () => {
     expect(ohneHp.items.map((i) => i.gewaehlt)).toEqual([false, false, false]);
     expect(sparteSchalten(ohneHp, 1)!.items.map((i) => i.gewaehlt)).toEqual([true, false, false]);
     expect(tarifWaehlen(ohneHp, 1)!.items.map((i) => i.gewaehlt)).toEqual([false, true, false]);
+  });
+
+  it("Auslesen nur für Produkte ohne Gesundheitsangaben von Personen", () => {
+    for (const p of ["Privatschutz", "Privathaftpflicht", "Hausrat", "Rechtsschutz", "Wohngebäude", "Unfallversicherung", "Tierkrankenversicherung Katze", "Hunde-OP-Versicherung", "Tierhalterhaftpflicht", "Pferdehalterhaftpflicht"])
+      expect(angebotOhneGesundheitsdaten(p), p).toBe(true);
+    for (const p of ["PKV", "Private Krankenversicherung", "Krankenzusatzversicherung", "Zahnzusatzversicherung", "Berufsunfähigkeit", "BU", "Risikolebensversicherung", "Pflegezusatz", "PKV Tarifoptimierung § 204", "Altersvorsorge Rente", "", null])
+      expect(angebotOhneGesundheitsdaten(p), String(p)).toBe(false);
   });
 });

@@ -120,7 +120,11 @@ export function AngeboteEditor(p: {
           ) : null}
         </span>
       </div>
-      {!p.auslesenErlaubt ? <p className="text-xs text-[color:var(--muted)]">Automatisches Auslesen ist noch im Test. Tragen Sie die Angebote hier ein.</p> : null}
+      <p className="text-xs text-[color:var(--muted)]" data-auslesen-hinweis>
+        {p.auslesenErlaubt
+          ? "Laden Sie nur das Angebot mit Tarifen und Beiträgen hoch, keine Antragsunterlagen mit Gesundheitsfragen. Die App übernimmt nur Tarif- und Leistungsdaten, keine persönlichen Angaben."
+          : "Für dieses Produkt lesen wir Angebote nicht automatisch aus, weil sie Gesundheitsangaben enthalten können. Tragen Sie die Angebote hier ein."}
+      </p>
       {p.quelle?.length && !p.bestaetigt ? (
         <div className="rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900" data-angebote-pruefen>
           Ausgelesen aus {p.quelle.join(", ")}. Bitte Beiträge und Werte mit dem Angebot vergleichen, Ihre Empfehlung prüfen und dann bestätigen.

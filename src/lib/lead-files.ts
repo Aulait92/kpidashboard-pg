@@ -14,6 +14,8 @@ const TYPES: { ext: string[]; type: string; magic: (b: Uint8Array) => boolean }[
   { ext: ["pdf"], type: "application/pdf", magic: (b) => b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46 },
   { ext: ["png"], type: "image/png", magic: (b) => b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47 },
   { ext: ["jpg", "jpeg"], type: "image/jpeg", magic: (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
+  // WebP (z. B. Screenshots aus dem Tarifrechner im Browser): „RIFF“ … „WEBP“
+  { ext: ["webp"], type: "image/webp", magic: (b) => b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50 },
   { ext: ["docx"], type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", magic: (b) => b[0] === 0x50 && b[1] === 0x4b },
   { ext: ["xlsx"], type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", magic: (b) => b[0] === 0x50 && b[1] === 0x4b },
 ];
@@ -49,7 +51,7 @@ export async function saveLeadFile(input: {
   if (input.data.length > MAX_FILE_BYTES) return { ok: false, error: "Die Datei ist zu groß (höchstens 15 MB)." };
   const fileName = input.fileName.replace(/[\\/\r\n"]/g, "_").slice(0, 160) || "dokument.pdf";
   const contentType = detectType(fileName, input.data);
-  if (!contentType) return { ok: false, error: "Bitte eine PDF-, Bild- (JPG/PNG), Word- oder Excel-Datei hochladen." };
+  if (!contentType) return { ok: false, error: "Bitte eine PDF-, Bild- (JPG/PNG/WebP), Word- oder Excel-Datei hochladen." };
   const count = await prisma.leadFile.count({ where: { leadId: input.leadId } });
   if (count >= 30) return { ok: false, error: "Zu diesem Lead sind schon 30 Dokumente gespeichert. Bitte erst alte löschen." };
   const saved = await prisma.leadFile.create({

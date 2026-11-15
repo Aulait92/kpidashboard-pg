@@ -3,7 +3,7 @@
 import { randomBytes } from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { angeboteAuslesen, bausteinSchalten, cleanAngebote, sparteSchalten, tarifWaehlen, type AngeboteDaten } from "@/lib/angebote";
+import { angebotOhneGesundheitsdaten, angeboteAuslesen, bausteinSchalten, cleanAngebote, sparteSchalten, tarifWaehlen, type AngeboteDaten } from "@/lib/angebote";
 import { folien, markeFuer, praesentationCss } from "@/lib/praesentation";
 import { asAnsprache } from "@/lib/ansprache";
 import { logoDataUri } from "@/lib/branding-logo";
@@ -107,10 +107,15 @@ export async function setPrepared(appointmentId: string, ctx: TeamCtx & { userId
 
 // ─── Angebote zum Termin (lib/angebote.ts) ─────────────────────────────────
 
-/** Angebote auslesen: nur Testkunden, bis AVV/Datenschutz ergänzt sind (docs/datenschutz.md). */
-export async function angeboteAuslesenErlaubt(customerId: string): Promise<boolean> {
+/**
+ * Angebote auslesen (freigeschaltet 15.11.2026, docs/datenschutz.md): nur für Produkte ohne Gesundheitsangaben
+ * (angebotOhneGesundheitsdaten); Notschalter ANGEBOTE_AUSLESEN=0 sperrt es für alle außer Testkunden.
+ */
+export async function angeboteAuslesenErlaubt(customerId: string, produkt: string | null | undefined): Promise<boolean> {
+  if (!angebotOhneGesundheitsdaten(produkt)) return false;
+  if (process.env.ANGEBOTE_AUSLESEN !== "0") return true;
   const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { isTest: true } });
-  return !!c?.isTest || process.env.ANGEBOTE_AUSLESEN === "1";
+  return !!c?.isTest;
 }
 
 export async function loadAngebote(appointmentId: string, ctx: TeamCtx) {
@@ -127,9 +132,10 @@ export async function loadAngebote(appointmentId: string, ctx: TeamCtx) {
 
 /** Angebote aus den hochgeladenen Dateien („Angebot“) des Leads auslesen und unbestätigt speichern. */
 export async function auslesenUndSpeichern(appointmentId: string, ctx: TeamCtx): Promise<{ ok: true; anzahl: number } | { ok: false; error: string }> {
-  if (!(await angeboteAuslesenErlaubt(ctx.customerId))) return { ok: false, error: "Angebote auslesen ist noch im Test. Bitte tragen Sie die Angebote von Hand ein." };
-  const a = await prisma.appointment.findFirst({ where: { id: appointmentId, ...appointmentScope(ctx) }, select: { leadId: true } });
+  const a = await prisma.appointment.findFirst({ where: { id: appointmentId, ...appointmentScope(ctx) }, select: { leadId: true, lead: { select: { source: true } } } });
   if (!a?.leadId) return { ok: false, error: "Termin nicht gefunden." };
+  if (!(await angeboteAuslesenErlaubt(ctx.customerId, a.lead?.source)))
+    return { ok: false, error: "Für dieses Produkt lesen wir Angebote nicht automatisch aus, weil sie Gesundheitsangaben enthalten können. Bitte tragen Sie die Angebote von Hand ein." };
   const files = await prisma.leadFile.findMany({ where: { leadId: a.leadId, kind: "angebot" }, orderBy: { createdAt: "desc" }, take: 5, select: { fileName: true, contentType: true, data: true } });
   const res = await angeboteAuslesen(files.map((f) => ({ fileName: f.fileName, contentType: f.contentType, data: new Uint8Array(f.data) })));
   if ("error" in res) return { ok: false, error: res.error };

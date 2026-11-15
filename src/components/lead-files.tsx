@@ -22,7 +22,7 @@ const LABEL: Record<Kind, string> = { angebot: "Angebot", police: "Police", sons
 export type LeadFileView = { id: string; kind: Kind; fileName: string; size: number; createdAt: string };
 
 /** Wie lib/lead-files.ts (Prüfung am Inhalt bleibt auf dem Server). */
-export const LEAD_FILE_ACCEPT = ".pdf,.png,.jpg,.jpeg,.docx,.xlsx,application/pdf,image/png,image/jpeg";
+export const LEAD_FILE_ACCEPT = ".pdf,.png,.jpg,.jpeg,.webp,.docx,.xlsx,application/pdf,image/png,image/jpeg,image/webp";
 export const LEAD_FILE_MAX_BYTES = 15 * MB;
 const day = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(iso));
 
