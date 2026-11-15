@@ -14,6 +14,9 @@
 // 15.11.2026 (Anwalts-Memo, Ole; neuer Stand „15.11.2026“): AVV: § 203 StGB ausdrücklich bis zu den Unterauftragsverarbeitern,
 // dokumentierte Verpflichtung der Mitarbeiter (Vorlage docs/vorlage-verpflichtung-203-stgb.md).
 // Folge einer neuen Fassung: Die Seiten /rechtliches/* zeigen den neuen Stand, neue Angebote verweisen darauf.
+// Außerdem: AGB „Kundendaten: Zusicherung und Freistellung“ und „Daten bei Vertragsende“ (Export im Kundenbereich,
+// Löschung spätestens 30 Tage nach Ende), AVV „Pflichten des Auftraggebers“, KI-Kennzeichnung (Art. 50 KI-VO) und
+// „keine Beratung“ in AGB und AVV.
 // Bestehende Kunden werden NICHT automatisch zur Zustimmung aufgefordert (kein Banner); Änderungen gelten für sie
 // erst nach Mitteilung in Textform mit 6 Wochen Widerspruchsfrist (AGB „Änderungen dieser AGB“), siehe docs/datenschutz.md.
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
@@ -67,7 +70,9 @@ export const AGB: LegalSection[] = [
     title: "Leistungen: Software",
     items: [
       "Ist im Angebot das Paket mit Software vereinbart, stellt der Anbieter dem Kunden seine Software als Online-Dienst bereit, insbesondere Lead-Verwaltung, Pipeline, Wiedervorlagen, Terminbuchung mit Erinnerungen, Auswertungen und einen digitalen Assistenten auf WhatsApp.",
-      "Der digitale Assistent arbeitet KI-gestützt, gibt sich gegenüber Interessenten als digitaler Assistent zu erkennen und führt keine Versicherungsberatung durch. Er stellt Fragen zur Bedarfsklärung und vereinbart Termine. Beratung und Vermittlung bleiben vollständig beim Kunden, der Gespräche jederzeit selbst übernehmen kann.",
+      // Prüfen: KI-Kennzeichnung nach Art. 50 KI-VO, Rollen Anbieter/Betreiber (Anwalts-Memo, Ole 15.11.2026)
+      "Der digitale Assistent ist ein KI-System. Er weist Interessenten und Kunden des Kunden spätestens mit der ersten Nachricht klar darauf hin, dass sie mit einem KI-System und nicht mit einem Menschen schreiben (Art. 50 Abs. 1 der Verordnung (EU) 2024/1689, KI-Verordnung), gibt sich nie als Mensch aus und beantwortet die Frage danach wahrheitsgemäß. Der Kunde setzt den Assistenten in eigener Verantwortung ein und ändert Nachrichten und Vorlagen nicht so, dass dieser Hinweis entfällt oder verdeckt wird.",
+      "Der digitale Assistent führt keine Versicherungsberatung oder Versicherungsvermittlung durch: Er gibt keine Empfehlungen zu Versicherungsprodukten, nennt keine Tarife oder Beiträge und vergleicht keine Angebote. Er stellt Fragen zur Bedarfsklärung und vereinbart Termine. Beratung und Vermittlung bleiben vollständig beim Kunden, der Gespräche jederzeit selbst übernehmen kann.",
       "Der Anbieter strebt eine Verfügbarkeit von 99 % im Monatsmittel an, ausgenommen angekündigte Wartungen. Für Dienste Dritter (insbesondere Meta/WhatsApp, Kalender- und KI-Anbieter) übernimmt der Anbieter keine Gewähr.",
       "Der Anbieter darf die Software weiterentwickeln, solange die vereinbarten wesentlichen Funktionen erhalten bleiben.",
       // Prüfen: aktive Verkäufer statt Logins (Ole, 14.11.2026)
@@ -154,6 +159,22 @@ export const AGB: LegalSection[] = [
     ],
   },
   {
+    // Prüfen: Zusicherung und Freistellung, vor allem für Ausschließlichkeitsvertreter (Anwalts-Memo, Ole 15.11.2026)
+    title: "Kundendaten: Zusicherung und Freistellung",
+    items: [
+      "Lädt der Kunde Daten seiner Kunden oder Interessenten in die Software (insbesondere Bestandskunden, eigene Kontaktlisten und Leads aus anderen Quellen) oder nutzt er sie dort, etwa für Kampagnen, sichert er zu, dass Upload und Nutzung nach seinem Vermittlervertrag, insbesondere einem Agentur- oder Handelsvertretervertrag mit einem Versicherer, nach seinen berufsrechtlichen Pflichten und nach dem Datenschutz- und Wettbewerbsrecht zulässig sind und dass eine erforderliche Zustimmung des Versicherers vorliegt. Der Kunde ist dafür verantwortlich, für welche Produkte und Zwecke er diese Daten nutzt.",
+      "Der Kunde stellt den Anbieter von Ansprüchen Dritter frei, insbesondere von Versicherern, betroffenen Personen, Mitbewerbern, Verbänden und Behörden, die auf einer Verletzung dieser Zusicherung oder auf einer unzulässigen Ansprache durch den Kunden beruhen. Die Freistellung umfasst die angemessenen Kosten der Rechtsverteidigung. Der Anbieter informiert den Kunden unverzüglich über geltend gemachte Ansprüche, gibt ihm Gelegenheit zur Stellungnahme und erkennt Ansprüche nicht ohne Abstimmung mit dem Kunden an. Die Freistellung gilt nicht, soweit der Anbieter die Verletzung zu vertreten hat.",
+    ],
+  },
+  {
+    // Prüfen: Export und Löschung bei Vertragsende; Export im Kundenbereich ist in Arbeit (15.11.2026)
+    title: "Daten bei Vertragsende",
+    items: [
+      "Der Kunde kann seine Daten (insbesondere Leads, Kontakte, Bestandskunden und Verläufe) bis zum Vertragsende im Kundenbereich exportieren. Auf Wunsch stellt der Anbieter einen Export bereit, wenn der Kunde dies bis zum Vertragsende in Textform verlangt.",
+      "Der Anbieter löscht die personenbezogenen Daten der Leads, Kontakte und Kunden des Kunden spätestens 30 Tage nach Vertragsende, soweit keine gesetzliche Pflicht zur Aufbewahrung besteht. Daten in Datensicherungen werden im Rahmen der regulären Rotation gelöscht. Angebote, Verträge und Rechnungen bewahrt der Anbieter nach den gesetzlichen Fristen auf.",
+    ],
+  },
+  {
     title: "Haftung",
     items: [
       "Der Anbieter haftet unbeschränkt bei Vorsatz und grober Fahrlässigkeit, bei der Verletzung von Leben, Körper oder Gesundheit sowie nach dem Produkthaftungsgesetz.",
@@ -194,7 +215,9 @@ export const AVV: LegalSection[] = [
   {
     title: "Art, Zweck und Umfang der Verarbeitung",
     items: [
-      "Erfassen, Speichern und Organisieren von Leads; Kontaktaufnahme mit Interessenten per WhatsApp und E-Mail im Namen des Auftraggebers, auch durch einen KI-gestützten digitalen Assistenten; Terminvereinbarung und -erinnerung; Auswertungen für den Auftraggeber.",
+      "Erfassen, Speichern und Organisieren von Leads; Kontaktaufnahme mit Interessenten per WhatsApp und E-Mail im Namen des Auftraggebers, auch durch einen digitalen Assistenten, der ein KI-System ist; Terminvereinbarung und -erinnerung; Auswertungen für den Auftraggeber.",
+      // Prüfen: KI-Kennzeichnung im AVV (Art. 50 KI-VO)
+      "Der digitale Assistent kennzeichnet sich gegenüber den Betroffenen spätestens mit der ersten Nachricht als KI-System (Art. 50 Abs. 1 KI-Verordnung). Er berät nicht zu Versicherungsprodukten, nennt keine Tarife oder Beiträge und vergleicht keine Angebote; er klärt den Bedarf und vereinbart Termine. Chatnachrichten werden dazu an den in Anlage 2 genannten KI-Anbieter übermittelt, der sie nicht für eigene Zwecke, insbesondere nicht zum Training, verwendet.",
       // Prüfen: Bestandskunden-Modul im AVV
       "Bei gebuchtem Bestandskunden-Modul zusätzlich: Import, Speicherung und Auswertung der vom Auftraggeber hochgeladenen Bestandskundendaten (z. B. Vertragsarten, Ablaufdaten, Geburtsdatum) und deren Ansprache per WhatsApp im Namen des Auftraggebers. Der Auftraggeber stellt sicher, dass für die Ansprache eine Rechtsgrundlage und, soweit erforderlich, eine Einwilligung vorliegt.",
       // Prüfen: E-Mail-Kampagnen über das Postfach des Auftraggebers (Ole, 14.11.2026)
@@ -234,6 +257,14 @@ export const AVV: LegalSection[] = [
     ],
   },
   {
+    // Prüfen: Zusicherung des Auftraggebers (AO-Vertreter), Anwalts-Memo 15.11.2026
+    title: "Pflichten des Auftraggebers",
+    items: [
+      "Der Auftraggeber ist für die Zulässigkeit der Verarbeitung verantwortlich. Er sichert zu, dass er die Daten, die er in die Software lädt oder dort nutzt (insbesondere Bestandskunden und Leads aus anderen Quellen), nach seinem Vermittlervertrag, insbesondere einem Agentur- oder Handelsvertretervertrag mit einem Versicherer, und nach dem Datenschutzrecht verarbeiten und dem Auftragnehmer überlassen darf und dass eine erforderliche Zustimmung des Versicherers vorliegt.",
+      "Für Ansprüche Dritter aus einer Verletzung dieser Zusicherung gilt die Freistellung nach den AGB (Abschnitt „Kundendaten: Zusicherung und Freistellung“).",
+    ],
+  },
+  {
     title: "Unterauftragsverarbeiter",
     items: [
       "Der Auftraggeber genehmigt die in Anlage 2 genannten Unterauftragsverarbeiter. Über beabsichtigte Änderungen informiert der Auftragnehmer in Textform; der Auftraggeber kann innerhalb von 14 Tagen aus wichtigem datenschutzrechtlichem Grund widersprechen.",
@@ -255,7 +286,8 @@ export const AVV: LegalSection[] = [
   {
     title: "Löschung und Rückgabe",
     items: [
-      "Nach Ende des Hauptvertrags stellt der Auftragnehmer dem Auftraggeber auf Wunsch einen Export der Daten bereit und löscht die Daten innerhalb von 30 Tagen, soweit keine gesetzliche Pflicht zur Aufbewahrung besteht. Daten in Datensicherungen werden im Rahmen der regulären Rotation gelöscht.",
+      "Der Auftraggeber kann die Daten bis zum Ende des Hauptvertrags im Kundenbereich exportieren; auf Wunsch stellt der Auftragnehmer einen Export bereit, wenn der Auftraggeber dies bis zum Vertragsende in Textform verlangt.",
+      "Der Auftragnehmer löscht die Daten spätestens 30 Tage nach Ende des Hauptvertrags, soweit keine gesetzliche Pflicht zur Aufbewahrung besteht, und bestätigt die Löschung auf Anfrage in Textform. Daten in Datensicherungen werden im Rahmen der regulären Rotation gelöscht.",
     ],
   },
   {
