@@ -8,7 +8,7 @@ import { TaskRow } from "@/components/vertrieb/ui";
 import { ContactMore, Fold, StagePicker } from "@/components/vertrieb/contact-controls";
 import { ContactEmails, DuplicateHint } from "@/components/vertrieb/contact-merge";
 import { likelyDuplicates } from "@/lib/vertrieb/contact-merge";
-import { Mail, Phone } from "lucide-react";
+import { Mail, Phone, Presentation } from "lucide-react";
 import { ActivityForm } from "@/components/vertrieb/activity-form";
 import { Collapsible } from "@/components/vertrieb/collapsible";
 import { TaskForm } from "@/components/vertrieb/task-form";
@@ -31,6 +31,9 @@ import { eur as eurOffer } from "@/lib/offer-pricing";
 import { CloseDetailsForm } from "@/components/ui/close-details-on-submit";
 import { audienceForContact, listPresentations } from "@/lib/vertrieb/praesentationen";
 import { FollowupBadge, FollowupCard } from "@/components/vertrieb/followup-card";
+import { aktuellesAngebot, audienceFuer } from "@/lib/vertrieb/verkaufspraesentation";
+import { aktiverVerkaufsLink, verkaufsAufrufe } from "@/lib/vertrieb/verkaufspraesentation-server";
+import { VerkaufsLinkKarte } from "./praesentation/link-karte";
 
 export default async function ContactPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ embedded?: string }> }) {
   const { id } = await params;
@@ -84,6 +87,11 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
   } catch {
     appUrl = "";
   }
+  // Vertriebspräsentation: Link für den Interessenten und Aufrufe
+  const [praesLink, praesAufrufe] = await Promise.all([aktiverVerkaufsLink(c.id), verkaufsAufrufe(c.id)]);
+  const praesFassung = audienceFuer(c, aktuellesAngebot(c.offers));
+  const praesDatum = (d: Date, mitZeit = false) =>
+    new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: mitZeit ? "2-digit" : "numeric", month: mitZeit ? "2-digit" : "long", ...(mitZeit ? { year: "numeric", hour: "2-digit", minute: "2-digit" } : {}) }).format(d);
 
   return (
     <div className="space-y-5">
@@ -139,6 +147,9 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
           <a href={`mailto:${c.email}`} className="btn-ghost">
             <Mail className="h-4 w-4" /> E-Mail
           </a>
+          <Link href={`/admin/vertrieb/kontakte/${c.id}/praesentation`} className="btn-ghost" data-praesentation-knopf>
+            <Presentation className="h-4 w-4" /> Präsentation
+          </Link>
           <ContactMore contactId={c.id} name={shortName(c.name)} url={c.url} linkedinUrl={c.linkedinUrl} duplicates={duplicates} />
         </div>
       </div>
@@ -310,9 +321,16 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
               newOfferHref={`/admin/vertrieb/kontakte/${c.id}/angebot`}
               appUrl={appUrl}
               offers={c.offers.map(toOfferRow)}
-              mail={{ audience: audienceForContact(c), pdf: { vertreter: pdfs.has("vertreter"), makler: pdfs.has("makler") } }}
+              mail={{ audience: audienceForContact(c), pdf: { vertreter: pdfs.has("vertreter"), makler: pdfs.has("makler") }, link: true }}
             />
           </div>
+
+          <VerkaufsLinkKarte
+            contactId={c.id}
+            audience={praesFassung}
+            start={praesLink && appUrl ? { url: `${appUrl}/praesentation/${praesLink.token}`, bis: praesDatum(praesLink.bis) } : null}
+            aufrufe={praesAufrufe.map((d) => praesDatum(d, true))}
+          />
 
           {c.meetings.length > 0 && (
             <section className="card">

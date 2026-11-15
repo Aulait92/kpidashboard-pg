@@ -55,7 +55,7 @@ const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", c
 
 type Audience = "vertreter" | "makler";
 /** Präsentationen (PDF) je Zielgruppe vorhanden? und Vorschlag aus dem Kontakt (Makler/Vertreter). */
-export type OfferMailOptions = { audience: Audience; pdf: Record<Audience, boolean> };
+export type OfferMailOptions = { audience: Audience; pdf: Record<Audience, boolean>; /** Vertriebskontakt: Link zur Web-Präsentation möglich */ link?: boolean };
 
 export function DealOffersCard({
   newOfferHref,
@@ -70,6 +70,7 @@ export function DealOffersCard({
 }) {
   const [mitRechner, setMitRechner] = useState(false);
   const [mitPraesentation, setMitPraesentation] = useState(false);
+  const [mitLink, setMitLink] = useState(false);
   const [audience, setAudience] = useState<Audience>(mail.audience);
   const [du, setDu] = useState(false);
   const pdfDa = mail.pdf[audience];
@@ -149,7 +150,7 @@ export function DealOffersCard({
                     onClick={() =>
                       run(
                         current.id,
-                        () => sendOfferEmailAction(current.id, { rechner: mitRechner, praesentation: mitPraesentation && pdfDa, audience, du }),
+                        () => sendOfferEmailAction(current.id, { rechner: mitRechner, praesentation: mitPraesentation && pdfDa, praesentationLink: !!mail.link && mitLink, audience, du }),
                         `Angebot an ${current.email} gesendet`,
                       )
                     }
@@ -227,6 +228,12 @@ export function DealOffersCard({
                     </Link>
                   ) : null}
                 </div>
+                {mail.link ? (
+                  <label className="flex items-center gap-2" data-praesentation-link>
+                    <input type="checkbox" className="h-4 w-4" checked={mitLink} onChange={(e) => setMitLink(e.target.checked)} />
+                    Link zur Präsentation zum Durchklicken (14 Tage, mit den Preisen aus dem Angebot)
+                  </label>
+                ) : null}
                 <p className="text-xs text-[color:var(--muted)]">Der Rechner öffnet sich mit Budget aus dem Angebot und der gewählten Zielgruppe.</p>
               </div>
             ) : null}

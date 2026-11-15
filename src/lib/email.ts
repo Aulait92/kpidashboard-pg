@@ -201,6 +201,7 @@ export function offerMailTexts(du: boolean) {
         accept: "Du kannst es dort direkt online annehmen oder als PDF herunterladen.",
         rechner: "Mit unserem Rechner siehst du, wie viele Verträge du für dein Budget brauchst und was am Ende übrig bleibt",
         anhang: "Unsere Präsentation findest du zum Nachlesen im Anhang.",
+        praesentation: "Die Präsentation aus unserem Gespräch kannst du hier in Ruhe durchklicken, mit deinen Preisen (14 Tage erreichbar)",
       }
     : {
         subject: "Ihr Angebot von performancegrowth",
@@ -209,6 +210,7 @@ export function offerMailTexts(du: boolean) {
         accept: "Sie können es dort direkt online annehmen oder als PDF herunterladen.",
         rechner: "Mit unserem Rechner sehen Sie, wie viele Verträge Sie für Ihr Budget brauchen und was am Ende übrig bleibt",
         anhang: "Unsere Präsentation finden Sie zum Nachlesen im Anhang.",
+        praesentation: "Die Präsentation aus unserem Gespräch können Sie hier in Ruhe durchklicken, mit Ihren Preisen (14 Tage erreichbar)",
       };
 }
 
@@ -234,6 +236,8 @@ export async function sendOfferEmail(opts: {
   replyTo?: string | null;
   /** Optional: Link zum Rechner (mit Budget/Zielgruppe vorausgefüllt) */
   rechnerUrl?: string | null;
+  /** Optional: Link zur Web-Präsentation (/praesentation/<token>) */
+  praesentationUrl?: string | null;
   /** Optional: Präsentation als PDF-Anhang */
   attachment?: { filename: string; content: Buffer } | null;
   /** Anrede: true = Du-Form, sonst Sie */
@@ -245,6 +249,7 @@ export async function sendOfferEmail(opts: {
   const from = brandFrom(process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>");
   if (!apiKey) return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
   const rechner = opts.rechnerUrl ?? null;
+  const praes = opts.praesentationUrl ?? null;
   const anhang = opts.attachment ?? null;
   const t = offerMailTexts(!!opts.du);
   const until = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(opts.validUntil);
@@ -261,6 +266,7 @@ export async function sendOfferEmail(opts: {
     "",
     ...(discount ? [discount.text, ""] : []),
     ...(rechner ? [`${t.rechner}:`, rechner, ""] : []),
+    ...(praes ? [`${t.praesentation}:`, praes, ""] : []),
     ...(anhang ? [t.anhang, ""] : []),
     signatureText(),
   ].join("\n");
@@ -280,6 +286,7 @@ export async function sendOfferEmail(opts: {
           <p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Angebot ${escapeHtml(opts.number)} · gültig bis ${until}</p>
           ${discount ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#047857">${discount.html}</p>` : ""}
           ${rechner ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.rechner}: <a href="${escapeHtml(rechner)}" style="color:#2563eb;font-weight:600">Zum Rechner</a></p>` : ""}
+          ${praes ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.praesentation}: <a href="${escapeHtml(praes)}" style="color:#2563eb;font-weight:600">Zur Präsentation</a></p>` : ""}
           ${anhang ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.anhang}</p>` : ""}
           ${signatureHtml()}
         </div>`,

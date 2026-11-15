@@ -1522,6 +1522,8 @@ model SalesContact {
   supportConversations Conversation[]
   // Über „Kollegen empfehlen“ von einem Kunden empfohlen
   colleagueReferrals   ColleagueReferral[]
+  /// Links zur Vertriebspräsentation (/praesentation/<token>, 14 Tage)
+  presentationLinks    SalesPresentationLink[]
 
   @@index([altEmails], type: Gin)
   @@index([stage])
@@ -3247,6 +3249,34 @@ model SalesPresentation {
   uploadedById String?
 
   @@unique([audience, format])
+}
+
+/// Vertriebspräsentation zum Nachklicken (Ole, 15.11.2026): geheimer Link je Kontakt (/praesentation/<token>),
+/// 14 Tage gültig, vom Admin beendbar. Ein neuer Link verlängert den aktiven (gleicher Token).
+model SalesPresentationLink {
+  id          String                  @id @default(cuid())
+  contactId   String
+  contact     SalesContact            @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  token       String                  @unique
+  // "vertreter" | "makler" (Fassung der Folien)
+  audience    String                  @default("vertreter")
+  expiresAt   DateTime
+  endedAt     DateTime?
+  createdById String?
+  createdAt   DateTime                @default(now())
+  views       SalesPresentationView[]
+
+  @@index([contactId])
+}
+
+/// Aufrufe des Präsentationslinks (ohne IP oder Gerätedaten); Wiederholungen innerhalb von 30 Minuten zählen nicht.
+model SalesPresentationView {
+  id       String                @id @default(cuid())
+  linkId   String
+  link     SalesPresentationLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  viewedAt DateTime              @default(now())
+
+  @@index([linkId, viewedAt])
 }
 
 // Verlauf eines Leads im Kundenbereich (Ole, 13.11.2026): gepostete Notizen und Ereignisse

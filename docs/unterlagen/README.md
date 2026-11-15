@@ -26,3 +26,20 @@ done; done
 
 Der Header-Wert `dummy` wird vom Netzwerk-Geheimnis der Claude-Umgebung durch den echten Schlüssel ersetzt
 (Railway-Variable `OPS_UPLOAD_TOKEN` am Service „live-app“). Danach mit `GET /api/ops/unterlagen` prüfen.
+
+## Web-Präsentation (Ole, 15.11.2026)
+
+Die Folien gibt es auch als Web-Präsentation (Vollbild, Pfeiltasten, Wischen am Handy, PDF der Zielgruppe), ohne Sprechzettel:
+
+- **Admin → Vertrieb → Kontakt → „Präsentation“**: Fassung nach Angebot (Vertreter/Makler) bzw. Kontakt („Makler“
+  laut Anreicherung), umschaltbar. „Rechnet sich das?“ und „Ihr Paket“ sind HTML-Folien mit Namen und Preisen aus dem
+  aktuellen Angebot des Kontakts, ohne Angebot mit Listenpreisen. Folie 17 zeigt rechts die Live-Demo
+  (`/demo/beratung`, zum Anklicken), Folie 13 das Video des Assistenten.
+- **Link für den Interessenten** (`/praesentation/<token>`, nur App-Adresse): im Kontakt oder als Häkchen beim Versand des
+  Angebots; 14 Tage gültig, verlängerbar, beendbar. Aufrufe stehen im Kontakt („Präsentation geöffnet am …“), eigene
+  Aufrufe als Admin zählen nicht.
+- **Admin → Marketing → Unterlagen**: je Zielgruppe „Web-Präsentation“ mit Listenpreisen (Öffnen, Link kopieren) und der
+  öffentliche Link zur Live-Demo.
+- Neue Fassung der PPTX: `node scripts/vertrieb-folien.mjs` erzeugt `public/praesentation/vertrieb/{vertreter,makler}/NN.webp`
+  und `assistent.mp4` neu; Folienliste und Sonderfolien in `src/lib/vertrieb/verkaufspraesentation.ts` prüfen
+  (Nummern von Rechnung, Paket und Demo).
