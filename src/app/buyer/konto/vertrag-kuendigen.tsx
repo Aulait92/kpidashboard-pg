@@ -64,7 +64,7 @@ export function VertragKuendigen({
           </p>
           <ul className="list-disc space-y-1 pl-5 text-[color:var(--muted)]">
             <li>Bis dahin laufen Kampagnen, Leads und Software wie gewohnt weiter. Zusatzmodule enden mit dem Vertrag.</li>
-            <li>Spätestens 30 Tage nach Vertragsende löschen wir die Daten Ihrer Leads und Kunden, soweit keine gesetzliche Pflicht zur Aufbewahrung besteht.</li>
+            <li>Ihre Daten können Sie bis dahin jederzeit unter „Ihre Daten herunterladen“ exportieren. Spätestens 30 Tage nach Vertragsende löschen wir die Daten Ihrer Leads und Kunden, soweit keine gesetzliche Pflicht zur Aufbewahrung besteht.</li>
             <li>Sie bekommen sofort eine Bestätigung per E-Mail mit Eingang und Vertragsende.</li>
           </ul>
           <label className="block">

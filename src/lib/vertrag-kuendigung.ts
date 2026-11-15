@@ -161,7 +161,7 @@ export async function cancelContract(customerId: string, opts: { actor: AuditAct
         `wir bestätigen den Eingang Ihrer Kündigung am ${fmtIso(berlinIso(now))} um ${fmtTime(now)} Uhr.`,
         cancelDateText(info.next, info.startIso),
         "Bis dahin laufen Kampagnen, Leads und Software wie gewohnt weiter. Zusatzmodule enden mit dem Vertrag.",
-        "Möchten Sie Ihre Daten vorher exportieren, melden Sie sich gern. Spätestens 30 Tage nach Vertragsende löschen wir die Daten Ihrer Leads und Kunden, soweit keine gesetzliche Pflicht zur Aufbewahrung besteht.",
+        "Ihre Daten können Sie bis dahin jederzeit im Konto unter „Ihre Daten herunterladen“ exportieren. Spätestens 30 Tage nach Vertragsende löschen wir die Daten Ihrer Leads und Kunden, soweit keine gesetzliche Pflicht zur Aufbewahrung besteht.",
         "Haben Sie es sich anders überlegt oder Fragen zum Vertrag? Antworten Sie einfach auf diese E-Mail.",
       ],
       ...(url ? { button: { label: "Zum Kundenbereich", url } } : {}),

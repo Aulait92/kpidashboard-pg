@@ -157,7 +157,7 @@ gilt nur für neue Dienste, eine Streichung ist unkritisch, wird aber trotzdem m
 | Passwort-Links | 7 Tage nach Ablauf | automatisch (`pruneTransient`) |
 | Sitzung (Cookie) | 30 Tage | läuft ab; 2FA-Zwischenschritt 10 Minuten |
 | Lead auf Wunsch der betroffenen Person | sofort | Lead öffnen → Mehr → „Daten löschen (Datenschutz)“ (Inhaber oder Admin). Anonymisiert den Lead, löscht Chats, Termine, Einwilligung. Umsatz und Status bleiben ohne Personenbezug |
-| Alle Lead-Daten eines Kunden bei Vertragsende | spätestens 30 Tage nach Ende (AGB „Daten bei Vertragsende“, AVV „Löschung und Rückgabe“, Stand 15.11.2026) | Admin → Kunden → Kunde → Abrechnung → „Vertragsende: Daten löschen“. Vorher exportiert der Kunde selbst im Kundenbereich (**Export im Kundenbereich: in Arbeit**, bis dahin auf Wunsch durch uns). Logins im Reiter „Logins“ löschen |
+| Alle Lead-Daten eines Kunden bei Vertragsende | spätestens 30 Tage nach Ende (AGB „Daten bei Vertragsende“, AVV „Löschung und Rückgabe“, Stand 15.11.2026) | Admin → Kunden → Kunde → Abrechnung → „Vertragsende: Daten löschen“. Vorher exportiert der Kunde selbst (Konto → „Ihre Daten herunterladen“). Ausgenommen: Sperrliste für Widersprüche als Hashwerte (dauerhaft). Logins im Reiter „Logins“ löschen |
 | Leads, Chats, Termine während der Laufzeit | nach Weisung des Kunden | keine automatische Frist (Kunde entscheidet; Vermittler haben eigene Dokumentationspflichten) |
 | Vertriebskontakte ohne Vertrag | **Vorschlag**: 2 Jahre nach letzter Aktivität | noch von Hand (Kontakt → Löschen). Bei Widerspruch sofort |
 | Angebote, Verträge, Rechnungen | 10 Jahre | nicht löschen; Stripe bewahrt Rechnungen auf |

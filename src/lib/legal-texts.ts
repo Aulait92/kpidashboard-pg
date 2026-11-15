@@ -20,6 +20,12 @@
 // Außerdem: Annahme mit Firma, USt-IdNr. und Bestätigung „Unternehmer (§ 14 BGB)“, Konditionen direkt am Knopf und
 // Auftragsbestätigung; Startpreis und Testphasen mit gesonderter Bestätigung. „Laufzeit und Kündigung“: Fristen mit
 // Beispielen (eindeutiger Kündigungstermin) und Kündigung im Kundenbereich („Vertrag hier kündigen“).
+// Außerdem (Zulieferung der anderen Arbeitsstränge, gleicher Stand): Tippgeber ausgeschlossen, Erstinformation und
+// § 34d-Angaben aktuell halten, KI-Hinweis nicht abschaltbar, Rollen nach KI-VO, §§ 61, 62 VVG beim Kunden, eigener
+// Einwilligungstext unverändert, STOPP für alle Kanäle; AVV: Einwilligungsnachweise, Sperrliste, Erstinformation,
+// Gesundheitsangaben nur für den Auftraggeber (nicht an KI oder WhatsApp); Zusicherung gebundener Vertreter, Werberecht
+// Bestandskunden-Modul, Export jederzeit, Sperrliste als Hashwerte über das Vertragsende hinaus, Zusatzmodul
+// Empfehlungen & Bewertungen (Dankeschön höchstens 15 €, Einverständnis vor der Nachfrage).
 // Kunden werden NICHT automatisch zur Zustimmung aufgefordert (kein Banner). Am 15.11.2026 gab es noch keine Kunden mit
 // angenommenem Vertrag (Ole), eine Mitteilung entfällt; bei späteren Änderungen mit Kunden gilt AGB „Änderungen dieser
 // AGB“ (Mitteilung in Textform, 6 Wochen Widerspruchsfrist), siehe docs/datenschutz.md.
@@ -52,6 +58,8 @@ export const AGB: LegalSection[] = [
     items: [
       `Diese Allgemeinen Geschäftsbedingungen gelten für alle Verträge zwischen der ${PROVIDER.name}, ${PROVIDER.street}, ${PROVIDER.city} („Anbieter“) und ihren Kunden über Leadgenerierung und die Nutzung der Software des Anbieters.`,
       "Das Angebot richtet sich ausschließlich an Unternehmer im Sinne von § 14 BGB, insbesondere Versicherungsvermittler. Abweichende Bedingungen des Kunden gelten nur, wenn der Anbieter ihnen ausdrücklich in Textform zustimmt.",
+      // Prüfen: Ausschluss von Tippgebern (Anwalts-Memo, Vermittlerrecht; Ole 15.11.2026)
+      "Die Leistungen richten sich an Versicherungsvermittler mit Erlaubnis bzw. Registrierung nach § 34d GewO. Tippgeber ohne eigene Erlaubnis sind von den Leistungen ausgeschlossen.",
     ],
   },
   {
@@ -77,8 +85,10 @@ export const AGB: LegalSection[] = [
     items: [
       "Ist im Angebot das Paket mit Software vereinbart, stellt der Anbieter dem Kunden seine Software als Online-Dienst bereit, insbesondere Lead-Verwaltung, Pipeline, Wiedervorlagen, Terminbuchung mit Erinnerungen, Auswertungen und einen digitalen Assistenten auf WhatsApp.",
       // Prüfen: KI-Kennzeichnung nach Art. 50 KI-VO, Rollen Anbieter/Betreiber (Anwalts-Memo, Ole 15.11.2026)
-      "Der digitale Assistent ist ein KI-System. Er weist Interessenten und Kunden des Kunden spätestens mit der ersten Nachricht klar darauf hin, dass sie mit einem KI-System und nicht mit einem Menschen schreiben (Art. 50 Abs. 1 der Verordnung (EU) 2024/1689, KI-Verordnung), gibt sich nie als Mensch aus und beantwortet die Frage danach wahrheitsgemäß. Der Kunde setzt den Assistenten in eigener Verantwortung ein und ändert Nachrichten und Vorlagen nicht so, dass dieser Hinweis entfällt oder verdeckt wird.",
-      "Der digitale Assistent führt keine Versicherungsberatung oder Versicherungsvermittlung durch: Er gibt keine Empfehlungen zu Versicherungsprodukten, nennt keine Tarife oder Beiträge und vergleicht keine Angebote. Er stellt Fragen zur Bedarfsklärung und vereinbart Termine. Beratung und Vermittlung bleiben vollständig beim Kunden, der Gespräche jederzeit selbst übernehmen kann.",
+      "Der digitale Assistent ist ein KI-System. Er weist Interessenten und Kunden des Kunden spätestens mit der ersten Nachricht klar darauf hin, dass sie mit einem KI-System und nicht mit einem Menschen schreiben (Art. 50 Abs. 1 der Verordnung (EU) 2024/1689, KI-Verordnung), gibt sich nie als Mensch aus und beantwortet die Frage danach wahrheitsgemäß. Der Hinweis in der ersten Nachricht lässt sich nicht abschalten; der Kunde entfernt oder verdeckt ihn nicht, auch nicht in eigenen Nachrichten und Vorlagen.",
+      // Prüfen: Rollen nach der KI-Verordnung (Anbieter/Betreiber), Anwalt prüft die Einordnung
+      "Nach dem Verständnis der Parteien stellt der Anbieter das KI-System bereit, und der Kunde setzt es in eigener Verantwortung für seine Kommunikation mit Interessenten und Kunden ein (Betreiber im Sinne der KI-Verordnung). Beide Seiten erfüllen die Pflichten, die sie in ihrer jeweiligen Rolle treffen, und unterstützen sich dabei.",
+      "Der digitale Assistent führt keine Versicherungsberatung oder Versicherungsvermittlung durch: Er berät nicht, gibt keine Empfehlungen zu Versicherungsprodukten, nennt keine Tarife, Versicherer oder Preise bzw. Beiträge und vergleicht keine Angebote. Er stellt Fragen zur Bedarfsklärung und vereinbart Termine. Beratung und Vermittlung einschließlich der Befragungs-, Beratungs- und Dokumentationspflichten nach §§ 61, 62 VVG bleiben vollständig beim Kunden, der Gespräche jederzeit selbst übernehmen kann.",
       "Der Anbieter strebt eine Verfügbarkeit von 99 % im Monatsmittel an, ausgenommen angekündigte Wartungen. Für Dienste Dritter (insbesondere Meta/WhatsApp, Kalender- und KI-Anbieter) übernimmt der Anbieter keine Gewähr.",
       "Der Anbieter darf die Software weiterentwickeln, solange die vereinbarten wesentlichen Funktionen erhalten bleiben.",
       // Prüfen: aktive Verkäufer statt Logins (Ole, 14.11.2026)
@@ -90,11 +100,23 @@ export const AGB: LegalSection[] = [
     ],
   },
   {
+    // Prüfen: Dankeschön (§ 48b VAG) und Bewertungsbitten (Anwalts-Memo, Ole 15.11.2026)
+    title: "Zusatzmodul Empfehlungen & Bewertungen",
+    items: [
+      "Der Kunde holt vor der automatischen Nachfrage mit Bewertungs- und Empfehlungsbitte das Einverständnis seines Kunden ein und bestätigt es in der Software.",
+      "Ein Dankeschön für Empfehlungen beträgt höchstens 15 € je Empfehler und Kalenderjahr, wird nicht in bar gewährt, nicht an einen Vertragsabschluss gekoppelt und nie der empfohlenen Person gewährt. Vorgaben des Versicherers beachtet der Kunde selbst.",
+    ],
+  },
+  {
     title: "Mitwirkung des Kunden",
     items: [
       "Der Kunde räumt dem Anbieter Zugriff auf sein Meta-Werbekonto ein, stellt eine Zahlungsmethode bei Meta bereit und verbindet, soweit gebucht, seine WhatsApp-Nummer und seinen Kalender.",
       "Der Kunde bearbeitet die Leads zeitnah, prüft die Werbemittel und Nachrichtenvorlagen vor dem Start und gibt sie frei.",
       "Der Kunde ist für die Einhaltung seiner berufsrechtlichen Pflichten verantwortlich, insbesondere aus § 34d GewO, der Versicherungsvertriebsrichtlinie und den Vorgaben seines Versicherers, einschließlich etwaiger Werberichtlinien.",
+      // Prüfen: Erstinformation, Einwilligungstext, STOPP (Anwalts-Memo, Ole 15.11.2026)
+      "Der Kunde hinterlegt in der Software eine zutreffende Erstinformation nach § 15 VersVermV, seine Registernummer und seinen Status nach § 34d GewO und hält diese Angaben aktuell. Die Software stellt die Erstinformation Interessenten über einen Link zur Verfügung.",
+      "Nutzt der Kunde eigene Lead-Formulare oder Landingpages, verwendet er den vom Anbieter bereitgestellten Einwilligungstext unverändert.",
+      "Widerspricht ein Interessent oder Kunde der Kontaktaufnahme, etwa mit „STOPP“, beachtet die Software den Widerspruch für alle Kanäle (WhatsApp, E-Mail und Kampagnen). Der Kunde beachtet ihn auch außerhalb der Software.",
       "Zugangsdaten sind geheim zu halten. Der Kunde informiert den Anbieter unverzüglich über einen Missbrauchsverdacht.",
     ],
   },
@@ -174,16 +196,19 @@ export const AGB: LegalSection[] = [
     // Prüfen: Zusicherung und Freistellung, vor allem für Ausschließlichkeitsvertreter (Anwalts-Memo, Ole 15.11.2026)
     title: "Kundendaten: Zusicherung und Freistellung",
     items: [
-      "Lädt der Kunde Daten seiner Kunden oder Interessenten in die Software (insbesondere Bestandskunden, eigene Kontaktlisten und Leads aus anderen Quellen) oder nutzt er sie dort, etwa für Kampagnen, sichert er zu, dass Upload und Nutzung nach seinem Vermittlervertrag, insbesondere einem Agentur- oder Handelsvertretervertrag mit einem Versicherer, nach seinen berufsrechtlichen Pflichten und nach dem Datenschutz- und Wettbewerbsrecht zulässig sind und dass eine erforderliche Zustimmung des Versicherers vorliegt. Der Kunde ist dafür verantwortlich, für welche Produkte und Zwecke er diese Daten nutzt.",
-      "Der Kunde stellt den Anbieter von Ansprüchen Dritter frei, insbesondere von Versicherern, betroffenen Personen, Mitbewerbern, Verbänden und Behörden, die auf einer Verletzung dieser Zusicherung oder auf einer unzulässigen Ansprache durch den Kunden beruhen. Die Freistellung umfasst die angemessenen Kosten der Rechtsverteidigung. Der Anbieter informiert den Kunden unverzüglich über geltend gemachte Ansprüche, gibt ihm Gelegenheit zur Stellungnahme und erkennt Ansprüche nicht ohne Abstimmung mit dem Kunden an. Die Freistellung gilt nicht, soweit der Anbieter die Verletzung zu vertreten hat.",
+      "Lädt der Kunde Daten seiner Kunden oder Interessenten in die Software (insbesondere Bestandskunden, eigene Kontaktlisten und Leads aus anderen Quellen) oder nutzt er sie dort, etwa für Kampagnen, sichert er zu, dass Upload und Nutzung nach seinem Vermittlervertrag, nach seinen berufsrechtlichen Pflichten und nach dem Datenschutz- und Wettbewerbsrecht zulässig sind und dass eine erforderliche Zustimmung des Versicherers vorliegt. Der Kunde ist dafür verantwortlich, für welche Produkte und Zwecke er diese Daten nutzt.",
+      "Ist der Kunde gebundener Versicherungsvertreter, sichert er insbesondere zu, dass Upload, Speicherung und Nutzung der übermittelten Kundendaten nach seinem Agenturvertrag und dem Datenschutzrecht zulässig sind.",
+      // Prüfen: Werberecht beim Bestandskunden-Modul (§ 7 UWG), Ole 15.11.2026
+      "Beim Bestandskunden-Modul ist der Kunde für die werberechtlichen Voraussetzungen verantwortlich, insbesondere Einwilligungen und, bei E-Mail-Werbung ohne Einwilligung, den Hinweis auf das Widerspruchsrecht bei Erhebung der Adresse (§ 7 Abs. 3 UWG). Seine Angaben hierzu (Importdatei, Bestätigungen) müssen zutreffen; die Software prüft nur anhand dieser Angaben.",
+      "Der Kunde stellt den Anbieter von Ansprüchen Dritter frei, insbesondere des Versicherers sowie von betroffenen Personen, Mitbewerbern, Verbänden und Behörden, die auf einer Verletzung dieser Zusicherung oder auf einer unzulässigen Ansprache durch den Kunden beruhen. Die Freistellung umfasst die angemessenen Kosten der Rechtsverteidigung. Der Anbieter informiert den Kunden unverzüglich über geltend gemachte Ansprüche, gibt ihm Gelegenheit zur Stellungnahme und erkennt Ansprüche nicht ohne Abstimmung mit dem Kunden an. Die Freistellung gilt nicht, soweit der Anbieter die Verletzung zu vertreten hat.",
     ],
   },
   {
-    // Prüfen: Export und Löschung bei Vertragsende; Export im Kundenbereich ist in Arbeit (15.11.2026)
+    // Prüfen: Export und Löschung bei Vertragsende, Sperrliste als Hashwerte (15.11.2026)
     title: "Daten bei Vertragsende",
     items: [
-      "Der Kunde kann seine Daten (insbesondere Leads, Kontakte, Bestandskunden und Verläufe) bis zum Vertragsende im Kundenbereich exportieren. Auf Wunsch stellt der Anbieter einen Export bereit, wenn der Kunde dies bis zum Vertragsende in Textform verlangt.",
-      "Der Anbieter löscht die personenbezogenen Daten der Leads, Kontakte und Kunden des Kunden spätestens 30 Tage nach Vertragsende, soweit keine gesetzliche Pflicht zur Aufbewahrung besteht. Daten in Datensicherungen werden im Rahmen der regulären Rotation gelöscht. Angebote, Verträge und Rechnungen bewahrt der Anbieter nach den gesetzlichen Fristen auf.",
+      "Der Kunde kann jederzeit einen vollständigen Export seiner Daten im Kundenbereich abrufen (Konto, „Ihre Daten herunterladen“).",
+      "Der Anbieter löscht die personenbezogenen Daten der Leads, Kontakte und Kunden des Kunden spätestens 30 Tage nach Vertragsende. Ausgenommen sind pseudonymisierte Sperrlisteneinträge (Hashwerte) von Personen, die der Werbung widersprochen haben, zur dauerhaften Beachtung des Widerspruchs, sowie Daten, für die eine gesetzliche Pflicht zur Aufbewahrung besteht. Daten in Datensicherungen werden im Rahmen der regulären Rotation gelöscht. Angebote, Verträge und Rechnungen bewahrt der Anbieter nach den gesetzlichen Fristen auf.",
     ],
   },
   {
@@ -237,9 +262,11 @@ export const AVV: LegalSection[] = [
       // Prüfen: Rückmeldung an Meta (Conversions API für CRM, Ole 15.11.2026): Rolle von Meta (Auftragsverarbeiter
       // nach den Meta Business Tools Terms bzw. gemeinsame Verantwortung), § 203 StGB bei Vertragswert ohne Produkt
       "Rückmeldung an Meta (abschaltbar durch den Auftraggeber): Für Leads aus Meta-Lead-Formularen übermittelt der Auftragnehmer im Namen des Auftraggebers an dessen Meta-Dataset die von Meta vergebene Lead-ID, die erreichte Stufe (Lead, Erreicht, Termin vereinbart, Abschluss), den Zeitpunkt und beim Abschluss den Vertragswert (Jahresbeitrag), damit Meta die Auslieferung der Anzeigen des Auftraggebers verbessert. Kontaktdaten (Name, Telefonnummer, E-Mail-Adresse), Gesprächsinhalte und das abgeschlossene Produkt bzw. die Sparte werden nicht übermittelt.",
-      { sub: "Datenarten", text: "Kontaktdaten (Name, Telefonnummer, E-Mail-Adresse, Anschrift), Angaben aus dem Lead-Formular (z. B. Lebenssituation, Versicherungsinteresse), Kommunikationsinhalte (Chatverläufe und E-Mails), Termindaten, Notizen und Status zum Lead, bei gebuchtem Bestandskunden-Modul Vertragsangaben der Bestandskunden (z. B. Sparte, Versicherer, Vertragsnummer, Beitrag, Ablaufdatum) sowie Einwilligungs- und Abmeldestatus, außerdem Nutzungsdaten der Nutzer des Auftraggebers." },
+      // Prüfen: neue Datenarten (Einwilligungsnachweis, Sperrliste, Erstinformation), Ole 15.11.2026
+      { sub: "Datenarten", text: "Kontaktdaten (Name, Telefonnummer, E-Mail-Adresse, Anschrift), Angaben aus dem Lead-Formular (z. B. Lebenssituation, Versicherungsinteresse), Nachweise der Einwilligung aus Lead-Formularen (Zeitpunkt, Formular-ID, Textversion und Wortlaut), Kommunikationsinhalte (Chatverläufe und E-Mails), Termindaten, Notizen und Status zum Lead, Sperrliste der Personen, die der Kontaktaufnahme widersprochen haben (z. B. mit „STOPP“), bei gebuchtem Bestandskunden-Modul Vertragsangaben der Bestandskunden (z. B. Sparte, Versicherer, Vertragsnummer, Beitrag, Ablaufdatum) sowie Einwilligungs- und Abmeldestatus, die Erstinformation des Auftraggebers (PDF, für Interessenten über einen zufällig erzeugten Link unter /erstinformation/ abrufbar), außerdem Nutzungsdaten der Nutzer des Auftraggebers." },
       { sub: "Betroffene", text: "Interessenten und Kunden des Auftraggebers sowie Nutzer des Auftraggebers." },
-      "Besondere Kategorien personenbezogener Daten (Art. 9 DSGVO), insbesondere Gesundheitsdaten, sind nicht Gegenstand der Verarbeitung. Der Auftraggeber fragt solche Daten in Formularen und Gesprächsleitfäden nicht ab.",
+      // Prüfen: Gesundheitsangaben aus Lead-Formularen (Art. 9 DSGVO), Einwilligung, Ole 15.11.2026
+      "Gesundheitsangaben (Art. 9 DSGVO), die Interessenten in Lead-Formularen machen, werden gespeichert und nur dem Auftraggeber angezeigt. Sie werden nicht an den KI-Anbieter übermittelt und nicht in WhatsApp-Nachrichten verwendet (Meta, 360dialog). Der Auftraggeber stellt sicher, dass dafür eine ausdrückliche Einwilligung vorliegt (Art. 9 Abs. 2 lit. a DSGVO), und fragt darüber hinaus keine besonderen Kategorien personenbezogener Daten ab.",
     ],
   },
   {
@@ -272,8 +299,9 @@ export const AVV: LegalSection[] = [
     // Prüfen: Zusicherung des Auftraggebers (AO-Vertreter), Anwalts-Memo 15.11.2026
     title: "Pflichten des Auftraggebers",
     items: [
-      "Der Auftraggeber ist für die Zulässigkeit der Verarbeitung verantwortlich. Er sichert zu, dass er die Daten, die er in die Software lädt oder dort nutzt (insbesondere Bestandskunden und Leads aus anderen Quellen), nach seinem Vermittlervertrag, insbesondere einem Agentur- oder Handelsvertretervertrag mit einem Versicherer, und nach dem Datenschutzrecht verarbeiten und dem Auftragnehmer überlassen darf und dass eine erforderliche Zustimmung des Versicherers vorliegt.",
-      "Für Ansprüche Dritter aus einer Verletzung dieser Zusicherung gilt die Freistellung nach den AGB (Abschnitt „Kundendaten: Zusicherung und Freistellung“).",
+      "Der Auftraggeber ist für die Zulässigkeit der Verarbeitung verantwortlich. Er sichert zu, dass er die Daten, die er in die Software lädt oder dort nutzt (insbesondere Bestandskunden und Leads aus anderen Quellen), nach seinem Vermittlervertrag und nach dem Datenschutzrecht verarbeiten und dem Auftragnehmer überlassen darf und dass eine erforderliche Zustimmung des Versicherers vorliegt.",
+      "Ist der Auftraggeber gebundener Versicherungsvertreter, sichert er zu, dass Upload, Speicherung und Nutzung der übermittelten Kundendaten nach seinem Agenturvertrag und dem Datenschutzrecht zulässig sind, und stellt den Auftragnehmer von Ansprüchen Dritter, insbesondere des Versicherers, frei, die auf einer Verletzung dieser Zusicherung beruhen.",
+      "Im Übrigen gilt für Ansprüche Dritter aus einer Verletzung dieser Zusicherungen die Freistellung nach den AGB (Abschnitt „Kundendaten: Zusicherung und Freistellung“).",
     ],
   },
   {
@@ -298,8 +326,8 @@ export const AVV: LegalSection[] = [
   {
     title: "Löschung und Rückgabe",
     items: [
-      "Der Auftraggeber kann die Daten bis zum Ende des Hauptvertrags im Kundenbereich exportieren; auf Wunsch stellt der Auftragnehmer einen Export bereit, wenn der Auftraggeber dies bis zum Vertragsende in Textform verlangt.",
-      "Der Auftragnehmer löscht die Daten spätestens 30 Tage nach Ende des Hauptvertrags, soweit keine gesetzliche Pflicht zur Aufbewahrung besteht, und bestätigt die Löschung auf Anfrage in Textform. Daten in Datensicherungen werden im Rahmen der regulären Rotation gelöscht.",
+      "Der Auftraggeber kann jederzeit einen vollständigen Export seiner Daten im Kundenbereich abrufen.",
+      "Der Auftragnehmer löscht die personenbezogenen Daten spätestens 30 Tage nach Ende des Hauptvertrags und bestätigt die Löschung auf Anfrage in Textform. Ausgenommen sind pseudonymisierte Sperrlisteneinträge (Hashwerte) von Personen, die der Werbung widersprochen haben, zur dauerhaften Beachtung des Widerspruchs, sowie gesetzliche Aufbewahrungspflichten. Daten in Datensicherungen werden im Rahmen der regulären Rotation gelöscht.",
     ],
   },
   {
@@ -327,7 +355,7 @@ export const TOMS: string[] = [
 
 export const SUBPROCESSORS: { name: string; purpose: string; location: string }[] = [
   { name: "Railway Corporation", purpose: "Hosting von Anwendung und Datenbank", location: "Serverstandort EU (Amsterdam); Unternehmen USA" },
-  { name: "Anthropic, PBC", purpose: "KI-Verarbeitung der Chatnachrichten für den digitalen Assistenten", location: "USA" },
+  { name: "Anthropic, PBC", purpose: "KI-System für den digitalen Assistenten: Verarbeitung der Chatnachrichten (ohne Gesundheitsangaben aus Lead-Formularen, keine Nutzung zum Training)", location: "USA" },
   { name: "360dialog GmbH", purpose: "Anbindung der WhatsApp Business API", location: "Deutschland" },
   { name: "Meta Platforms Ireland Ltd.", purpose: "WhatsApp-Nachrichtenversand; Lead-Formulare; Rückmeldung der Lead-Stufen an das Meta-Dataset des Auftraggebers (Meta-Lead-ID, Stufe, Zeitpunkt, Vertragswert; keine Kontaktdaten, kein Produkt; abschaltbar)", location: "Irland / USA" },
   { name: "Resend (Plus Five Five, Inc.)", purpose: "Versand von E-Mails (z. B. Terminbestätigungen)", location: "USA" },

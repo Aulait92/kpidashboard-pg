@@ -664,8 +664,8 @@ Seiten aus der Liste „Seiten“ unten.
   Abrechnungsmonats (Abrechnungsmonate laufen ab dem Starttag, z. B. 15. bis 14.); bei jährlicher Vorauszahlung zum
   Ende des Zahlungsjahres, wenn die Kündigung spätestens einen Monat vorher eingeht, sonst ein Jahr später. Bis zum
   Ende läuft alles weiter, Zusatzmodule enden mit dem Vertrag, danach wird nichts mehr abgebucht (die Online-Abrechnung
-  endet automatisch zum Vertragsende). Spätestens 30 Tage nach Vertragsende werden die Daten
-  der Leads und Kunden gelöscht. Nur Inhaber. Zurücknehmen oder anderer Termin (z. B. außerordentlich): bitte bei
+  endet automatisch zum Vertragsende). Bis dahin können Sie Ihre Daten unter „Ihre Daten herunterladen“ exportieren; spätestens 30 Tage nach
+  Vertragsende werden die Daten der Leads und Kunden gelöscht (Sperrliste für Widersprüche bleibt pseudonymisiert). Nur Inhaber. Zurücknehmen oder anderer Termin (z. B. außerordentlich): bitte bei
   uns melden.
 - Vertragsfragen: bitte direkt bei uns melden.
 
