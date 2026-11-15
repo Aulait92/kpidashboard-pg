@@ -4,125 +4,125 @@
   "cap": "",
   "text": "Willkommen bei Performance Growth. In den nächsten Minuten zeigen wir Ihnen Schritt für Schritt, wie Sie mit der Software arbeiten.",
   "wav": "/var/tmp/ev/lang_00.wav",
-  "dur": 9.1
+  "dur": 9.8
  },
  {
   "act": "nav",
   "cap": "Die vier Bereiche",
   "text": "Links finden Sie die vier Bereiche: Heute, Kontakte, Nachrichten und Wachstum. Auf dem Handy finden Sie dieselben Bereiche unten am Bildschirmrand.",
   "wav": "/var/tmp/ev/lang_01.wav",
-  "dur": 11.45
+  "dur": 12.3
  },
  {
   "act": "tiles",
   "cap": "Heute: Ihr Startpunkt",
-  "text": "‚Heute‘ ist Ihr Startpunkt. Oben sehen Sie auf einen Blick, wie viele Chats, Termine, Ergebnisse und Anrufe anstehen.",
+  "text": "‚Heute‘ ist Ihr Startpunkt. Ganz oben stehen Termine, für die Sie vorher ein Angebot rechnen. Darunter sehen Sie auf einen Blick, wie viele Chats, Termine, Ergebnisse und Anrufe anstehen.",
   "wav": "/var/tmp/ev/lang_02.wav",
-  "dur": 9.95
+  "dur": 13.3
  },
  {
   "act": "braucht",
   "cap": "Braucht dich",
   "text": "Unter ‚Braucht dich‘ stehen Leads, die geantwortet haben und auf Sie warten. Mit ‚Antworten‘ öffnen Sie direkt den Chat.",
   "wav": "/var/tmp/ev/lang_03.wav",
-  "dur": 9.1
+  "dur": 8.55
  },
  {
   "act": "termin",
   "cap": "Ihre Termine",
   "text": "Bei Ihren Terminen sehen Sie die Zusammenfassung des Assistenten: Lebenssituation, Interesse und Rückfragen. Anrufen oder Videocall starten Sie mit einem Klick.",
   "wav": "/var/tmp/ev/lang_04.wav",
-  "dur": 11.25
+  "dur": 10.85
  },
  {
   "act": "phase",
   "cap": "Phase und Ergebnis",
   "text": "Oben im Kontakt sehen Sie die Phase. Ein Klick ändert sie. Mit ‚Gewonnen‘ oder ‚Verloren‘ schließen Sie einen Lead ab.",
   "wav": "/var/tmp/ev/lang_05.wav",
-  "dur": 9.1
+  "dur": 8.85
  },
  {
   "act": "notizen",
   "cap": "Angaben und Notizen",
   "text": "Darunter stehen alle Angaben aus dem Formular und Ihre Notizen. Auf dem Handy können Sie Notizen einfach diktieren.",
   "wav": "/var/tmp/ev/lang_06.wav",
-  "dur": 7.95
+  "dur": 8.6
  },
  {
   "act": "anrufliste",
   "cap": "Anrufliste",
   "text": "In der Anrufliste stehen Rückrufe und fällige Wiedervorlagen. Überfälliges ist rot markiert. Nach dem Anruf tragen Sie das Ergebnis ein, den Rest erledigt die App.",
   "wav": "/var/tmp/ev/lang_07.wav",
-  "dur": 12.85
+  "dur": 12.05
  },
  {
   "act": "nachrichten",
   "cap": "Nachrichten",
   "text": "Unter ‚Nachrichten‘ finden Sie alle WhatsApp-Gespräche mit Ihren Leads.",
   "wav": "/var/tmp/ev/lang_08.wav",
-  "dur": 4.85
+  "dur": 5.55
  },
  {
   "act": "chat",
   "cap": "Ihr WhatsApp-Assistent",
   "text": "Ihr Assistent schreibt jeden neuen Lead in wenigen Minuten an, in Ihrem Namen. Er stellt die wichtigsten Fragen und bucht den Termin in eine freie Zeit Ihres Kalenders. Bestätigung und Erinnerung schickt er automatisch.",
   "wav": "/var/tmp/ev/lang_09.wav",
-  "dur": 14.65
+  "dur": 15.45
  },
  {
   "act": "selbst",
   "cap": "Selbst schreiben",
   "text": "Möchten Sie selbst antworten, schreiben Sie einfach los. Dann hält sich der Assistent in diesem Chat zurück.",
   "wav": "/var/tmp/ev/lang_10.wav",
-  "dur": 7.5
+  "dur": 6.85
  },
  {
   "act": "kontakte",
   "cap": "Kontakte",
   "text": "Unter ‚Kontakte‘ sehen Sie alle Leads als Liste, mit Suche und Filtern, zum Beispiel ‚Rückruf nötig‘ oder ‚Wiedervorlage fällig‘.",
   "wav": "/var/tmp/ev/lang_11.wav",
-  "dur": 10.95
+  "dur": 10.0
  },
  {
   "act": "pipeline",
   "cap": "Pipeline",
   "text": "In der Pipeline sehen Sie jeden Lead nach Phase. Am Computer ziehen Sie Karten einfach in die nächste Spalte. Bei Abschlüssen zeigt die App Beitrag und geschätzte Provision.",
   "wav": "/var/tmp/ev/lang_12.wav",
-  "dur": 13.35
+  "dur": 11.15
  },
  {
   "act": "wachstum",
   "cap": "Wachstum",
   "text": "Unter ‚Wachstum‘ finden Sie Ihre Zahlen, Ihr Werbebudget und die Hochrechnung für den Monat.",
   "wav": "/var/tmp/ev/lang_13.wav",
-  "dur": 7.05
+  "dur": 7.4
  },
  {
   "act": "zahlen",
   "cap": "Ihre Zahlen",
   "text": "Der Vertriebstrichter zeigt, wie viele Leads Sie erreichen, wie viele einen Termin bekommen und wie viele abschließen. Darunter sehen Sie Ihre Kosten und den Ertrag.",
   "wav": "/var/tmp/ev/lang_14.wav",
-  "dur": 11.35
+  "dur": 11.75
  },
  {
   "act": "kalender",
   "cap": "Mein Kalender",
   "text": "Unter ‚Mein Kalender‘ verbinden Sie Ihren Google- oder Outlook-Kalender und legen fest, wann Leads Termine buchen dürfen. Der Assistent bietet nur diese Zeiten an, und nur, wenn Sie dann frei sind.",
   "wav": "/var/tmp/ev/lang_15.wav",
-  "dur": 13.75
+  "dur": 13.1
  },
  {
   "act": "team",
   "cap": "Team",
   "text": "Arbeiten Sie im Team? Dann laden Sie unter ‚Team‘ Ihre Berater ein. Neue Leads werden automatisch reihum verteilt.",
   "wav": "/var/tmp/ev/lang_16.wav",
-  "dur": 9.5
+  "dur": 8.45
  },
  {
   "act": "outro",
   "cap": "",
   "text": "Wenn Sie Fragen haben, hilft Ihnen die KI-Hilfe unten links sofort weiter, und mit einem Klick erreichen Sie unser Team. Viel Erfolg mit Performance Growth!",
   "wav": "/var/tmp/ev/lang_17.wav",
-  "dur": 12.65
+  "dur": 11.65
  }
 ]

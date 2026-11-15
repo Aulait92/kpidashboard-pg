@@ -20,7 +20,7 @@ KURZ=[
 LANG=[
  ("intro","", "Willkommen bei Performance Growth. In den nächsten Minuten zeigen wir Ihnen Schritt für Schritt, wie Sie mit der Software arbeiten."),
  ("nav","Die vier Bereiche","Links finden Sie die vier Bereiche: Heute, Kontakte, Nachrichten und Wachstum. Auf dem Handy finden Sie dieselben Bereiche unten am Bildschirmrand."),
- ("tiles","Heute: Ihr Startpunkt","‚Heute‘ ist Ihr Startpunkt. Oben sehen Sie auf einen Blick, wie viele Chats, Termine, Ergebnisse und Anrufe anstehen."),
+ ("tiles","Heute: Ihr Startpunkt","‚Heute‘ ist Ihr Startpunkt. Ganz oben stehen Termine, für die Sie vorher ein Angebot rechnen. Darunter sehen Sie auf einen Blick, wie viele Chats, Termine, Ergebnisse und Anrufe anstehen."),
  ("braucht","Braucht dich","Unter ‚Braucht dich‘ stehen Leads, die geantwortet haben und auf Sie warten. Mit ‚Antworten‘ öffnen Sie direkt den Chat."),
  ("termin","Ihre Termine","Bei Ihren Terminen sehen Sie die Zusammenfassung des Assistenten: Lebenssituation, Interesse und Rückfragen. Anrufen oder Videocall starten Sie mit einem Klick."),
  ("phase","Phase und Ergebnis","Oben im Kontakt sehen Sie die Phase. Ein Klick ändert sie. Mit ‚Gewonnen‘ oder ‚Verloren‘ schließen Sie einen Lead ab."),

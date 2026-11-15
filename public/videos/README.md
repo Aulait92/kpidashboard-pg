@@ -1,8 +1,8 @@
 # Erklärvideos Kundenbereich: Sprechertexte
 
-Stimme: OpenAI gpt-4o-mini-tts, Stimme „onyx“. Aufgenommen mit Demo-Daten (neue Oberfläche).
+Stimme: OpenAI gpt-4o-mini-tts, Stimme „onyx“. Aufgenommen mit Demo-Daten (neue Oberfläche). Einführungsvideos neu aufgenommen am 15.11.2026 (Heute mit „Termine vorbereiten“, ohne das ausgeblendete Modul Empfehlungen & Bewertungen).
 
-## Kurzversion (ca. 54 Sek.), für den ersten Login
+## Kurzversion (ca. 56 Sek.), für den ersten Login
 
 - **intro**: Willkommen bei Performance Growth. In einer Minute zeigen wir Ihnen das Wichtigste.
 - **Heute: alles, was heute zu tun ist**: Ihr Startpunkt ist ‚Heute‘. Hier steht alles, was heute zu tun ist: Chats, Termine und Ihre Anrufliste.
@@ -16,7 +16,7 @@ Stimme: OpenAI gpt-4o-mini-tts, Stimme „onyx“. Aufgenommen mit Demo-Daten (n
 
 - **intro**: Willkommen bei Performance Growth. In den nächsten Minuten zeigen wir Ihnen Schritt für Schritt, wie Sie mit der Software arbeiten.
 - **Die vier Bereiche**: Links finden Sie die vier Bereiche: Heute, Kontakte, Nachrichten und Wachstum. Auf dem Handy finden Sie dieselben Bereiche unten am Bildschirmrand.
-- **Heute: Ihr Startpunkt**: ‚Heute‘ ist Ihr Startpunkt. Oben sehen Sie auf einen Blick, wie viele Chats, Termine, Ergebnisse und Anrufe anstehen.
+- **Heute: Ihr Startpunkt**: ‚Heute‘ ist Ihr Startpunkt. Ganz oben stehen Termine, für die Sie vorher ein Angebot rechnen. Darunter sehen Sie auf einen Blick, wie viele Chats, Termine, Ergebnisse und Anrufe anstehen.
 - **Braucht dich**: Unter ‚Braucht dich‘ stehen Leads, die geantwortet haben und auf Sie warten. Mit ‚Antworten‘ öffnen Sie direkt den Chat.
 - **Ihre Termine**: Bei Ihren Terminen sehen Sie die Zusammenfassung des Assistenten: Lebenssituation, Interesse und Rückfragen. Anrufen oder Videocall starten Sie mit einem Klick.
 - **Phase und Ergebnis**: Oben im Kontakt sehen Sie die Phase. Ein Klick ändert sie. Mit ‚Gewonnen‘ oder ‚Verloren‘ schließen Sie einen Lead ab.

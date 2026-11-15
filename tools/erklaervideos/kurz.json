@@ -4,48 +4,48 @@
   "cap": "",
   "text": "Willkommen bei Performance Growth. In einer Minute zeigen wir Ihnen das Wichtigste.",
   "wav": "/var/tmp/ev/kurz_00.wav",
-  "dur": 5.85
+  "dur": 6.15
  },
  {
   "act": "heute",
   "cap": "Heute: alles, was heute zu tun ist",
   "text": "Ihr Startpunkt ist ‚Heute‘. Hier steht alles, was heute zu tun ist: Chats, Termine und Ihre Anrufliste.",
   "wav": "/var/tmp/ev/kurz_01.wav",
-  "dur": 8.9
+  "dur": 7.85
  },
  {
   "act": "termin",
   "cap": "Termin antippen",
   "text": "Tippen Sie auf einen Termin. Sie sehen sofort, was der Assistent schon gefragt hat.",
   "wav": "/var/tmp/ev/kurz_02.wav",
-  "dur": 6.25
+  "dur": 5.2
  },
  {
   "act": "nachrichten_chat",
   "cap": "Nachrichten: Ihr WhatsApp-Assistent",
   "text": "Ihr WhatsApp-Assistent schreibt neue Leads in wenigen Minuten an und bucht Termine direkt in Ihren Kalender.",
   "wav": "/var/tmp/ev/kurz_03.wav",
-  "dur": 7.75
+  "dur": 8.15
  },
  {
   "act": "kontakte_pipeline",
   "cap": "Kontakte: alle Leads im Überblick",
   "text": "Unter ‚Kontakte‘ finden Sie alle Leads, als Liste oder als Pipeline.",
   "wav": "/var/tmp/ev/kurz_04.wav",
-  "dur": 6.05
+  "dur": 6.0
  },
  {
   "act": "wachstum_zahlen",
   "cap": "Wachstum: Ihre Zahlen",
   "text": "Und unter ‚Wachstum‘ sehen Sie, was es Ihnen bringt.",
   "wav": "/var/tmp/ev/kurz_05.wav",
-  "dur": 4.85
+  "dur": 4.2
  },
  {
   "act": "outro",
   "cap": "",
   "text": "Fragen? Die KI-Hilfe unten links ist jederzeit für Sie da. Viel Erfolg!",
   "wav": "/var/tmp/ev/kurz_06.wav",
-  "dur": 6.65
+  "dur": 6.05
  }
 ]

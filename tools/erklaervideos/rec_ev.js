@@ -1,6 +1,7 @@
 const EV=process.env.EV_DIR||'/var/tmp/ev'; require('fs').mkdirSync(EV,{recursive:true});
 const { chromium } = require('playwright');
-const B='http://localhost:3123';
+// Aufruf: APP=http://localhost:3123 [PW_CHROME=/usr/bin/google-chrome] node rec_ev.js kurz|lang
+const B=process.env.APP||'http://localhost:3123';
 const W=1440,H=810;const SC=W/1920;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const INIT=`(()=>{const mk=()=>{ if(document.getElementById('__cur'))return;
@@ -28,6 +29,9 @@ async function smoothScroll(p,sel,dy,ms=1600){await p.evaluate(async([sel,dy,ms]
  await new Promise(r=>{const f=n=>{const t=Math.min(1,(n-st)/ms);const e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;el.scrollTop=s+dy*e;t<1?requestAnimationFrame(f):r()};requestAnimationFrame(f)})},[sel,dy,ms]);}
 async function wheel(p,dy,ms=1600){const n=Math.round(ms/40);for(let i=0;i<n;i++){await p.mouse.wheel(0,dy/n);await sleep(40);}}
 
+async function hoverEl(p,loc,ms=900){const b=await loc.boundingBox({timeout:4000}).catch(()=>null);if(!b)console.log('nobox');if(b)await moveTo(p,b.x+Math.min(b.width/2,120),b.y+b.height/2,ms);}
+async function hoverText(p,t,ms=900){return hoverEl(p,p.getByText(t).first(),ms);}
+const termineItem=p=>p.locator('#termine').locator('..').getByText('Verena Martin').first();
 const CARDS='file://'+__dirname+'/cards/';
 const VERSION=process.argv[2]; const scenes=JSON.parse(require('fs').readFileSync(EV+'/'+VERSION+'.json'));
 async function nav(p,name){await clickLoc(p,p.getByRole('link',{name:new RegExp('^\\s*'+name)}).first());await p.waitForLoadState('networkidle').catch(()=>{});await sleep(900);}
@@ -36,13 +40,14 @@ async function go(p,u){await p.goto(B+u,{waitUntil:'networkidle'}).catch(()=>{})
 const A={
  intro: async p=>{await p.goto(CARDS+'ev_intro_'+VERSION+'.html');await p.evaluate(()=>sessionStorage.clear());},
  outro: async p=>{await p.goto(CARDS+'ev_outro.html');await p.evaluate(()=>{sessionStorage.clear();const c=document.getElementById('__cap');if(c)c.classList.remove('on')});},
- heute: async p=>{await go(p,'/buyer');await sleep(600);await moveTo(p,420*SC,250*SC,900);await sleep(600);await moveTo(p,700*SC,420*SC,900);await sleep(600);await moveTo(p,560*SC,760*SC,900);},
- termin: async p=>{await clickLoc(p,p.getByText('Verena Martin').first());await sleep(1500);await moveTo(p,1400*SC,520*SC,1200);},
+ heute: async p=>{await go(p,'/buyer');await sleep(600);await hoverText(p,'Chats',900);await sleep(600);await hoverText(p,'Braucht dich',900);await sleep(600);await hoverEl(p,termineItem(p),900);},
+ // Termin aus der Karte „Termine“ (oben steht dieselbe Person unter „Termine vorbereiten“)
+ termin: async p=>{await clickLoc(p,termineItem(p));await sleep(1500);await moveTo(p,1400*SC,520*SC,1200);},
  nachrichten_chat: async p=>{await nav(p,'Nachrichten');await clickLoc(p,p.getByText('Eva Pohl').first());await sleep(1200);await moveTo(p,1100*SC,600*SC,1000);},
  kontakte_pipeline: async p=>{await nav(p,'Kontakte');await sleep(600);await clickLoc(p,p.getByText('Pipeline').first());await sleep(1200);await moveTo(p,1300*SC,520*SC,1100);},
  wachstum_zahlen: async p=>{await moveTo(p,110*SC,390*SC,700);await go(p,'/buyer/wachstum');await sleep(900);await clickLoc(p,p.getByText('Alle Zahlen ansehen').first(),700);await p.waitForURL(/zahlen/,{timeout:8000}).catch(()=>{});await sleep(600);await cap(p,CUR);await moveTo(p,900*SC,600*SC,900);},
  nav: async p=>{await go(p,'/buyer');await sleep(500);for(const y of [195,260,325,390]){await moveTo(p,130*SC,y*SC,700);await sleep(650);} },
- tiles: async p=>{await moveTo(p,480*SC,230*SC,900);await sleep(500);await moveTo(p,800*SC,230*SC,700);await sleep(500);await moveTo(p,480*SC,330*SC,700);await sleep(500);await moveTo(p,800*SC,330*SC,700);},
+ tiles: async p=>{await hoverText(p,'Termine vorbereiten: Angebot rechnen',900);await sleep(1400);for(const t of ['Chats',"Wie lief's?",'Anrufen']){await hoverText(p,t,700);await sleep(450);}await hoverEl(p,p.locator('#termine').locator('..').getByText('Termine').first(),700);},
  braucht: async p=>{const l=p.getByText('Franziska Albrecht').first();const b=await l.boundingBox();if(b){await moveTo(p,b.x+60,b.y+10,900);await sleep(900);}const a=p.getByRole('button',{name:/Antworten/}).first();const bb=await a.boundingBox();if(bb)await moveTo(p,bb.x+bb.width/2,bb.y+bb.height/2,900);},
  phase: async p=>{const g=p.getByRole('button',{name:/Gewonnen/}).first();const bb=await g.boundingBox();await moveTo(p,1250*SC,145*SC,900);await sleep(800);if(bb){await moveTo(p,bb.x+bb.width/2,bb.y+bb.height/2,900);await sleep(700);}const v=p.getByRole('button',{name:/Verloren/}).first();const vb=await v.boundingBox();if(vb)await moveTo(p,vb.x+vb.width/2,vb.y+vb.height/2,700);},
  notizen: async p=>{await moveTo(p,1300*SC,600*SC,1000);await sleep(600);const n=p.getByText('Notizen').first();const b=await n.boundingBox();if(b)await moveTo(p,b.x+120,Math.min(b.y+40,H-30),1000);},
@@ -58,9 +63,11 @@ const A={
  team: async p=>{await go(p,'/buyer/team');await sleep(600);await moveTo(p,900*SC,250*SC,900);await sleep(600);await moveTo(p,800*SC,570*SC,900);},
 };
 (async()=>{
- const b=await chromium.launch();
+ const b=await chromium.launch(process.env.PW_CHROME?{executablePath:process.env.PW_CHROME}:{});
  const c0=await b.newContext({viewport:{width:W,height:H},locale:'de-DE',timezoneId:'Europe/Berlin'});
  const q=await c0.newPage();await q.goto(B+'/login');await q.fill('input[type=email]','demo@pg.local');await q.fill('input[type=password]','Demo12345!');await q.click('button[type=submit]');await q.waitForTimeout(5000);
+ await q.goto(B+'/buyer',{waitUntil:'networkidle'}).catch(()=>{});await q.waitForTimeout(1500);
+ for(let i=0;i<4;i++){const l=q.locator('button[aria-label="Video ausblenden"], button[aria-label="Hinweis ausblenden"]').first();if(!(await l.count()))break;await l.click().catch(()=>{});await q.waitForTimeout(900);}
  for(const u of ['/buyer','/buyer/chats','/buyer/kontakte','/buyer/kontakte?modus=pipeline','/buyer/zahlen','/buyer/kalender','/buyer/wachstum','/buyer/team']){await q.goto(B+u,{waitUntil:'networkidle'}).catch(()=>{});}
  const state=await c0.storageState();await c0.close();
  const ctx=await b.newContext({viewport:{width:W,height:H},locale:'de-DE',timezoneId:'Europe/Berlin',storageState:state,recordVideo:{dir:EV+'/raw_'+VERSION,size:{width:W,height:H}}});

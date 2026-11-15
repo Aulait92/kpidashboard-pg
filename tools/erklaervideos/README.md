@@ -23,6 +23,13 @@ Arbeitsverzeichnis für Ton, Rohvideo und Logs: `EV_DIR` (Standard `/var/tmp/ev`
    Kunde muss die neue Oberfläche haben (`Customer.newUi = true`).
 7. `PORT=3123 npx next dev -p 3123` (in einem Git-Worktree unter `.claude/worktrees/…` ohne eigenes `node_modules`: `npx next dev --webpack -p 3123`, Turbopack findet `next` sonst nicht).
 
+### Zusatz für die Einführungsvideos (Stand 15.11.2026)
+
+- Nach `seed.ts`, `wa.ts`, `termin.ts`: `DATABASE_URL=… node local/ev_zustand.mjs` (Erstinformation vollständig, Wiedervorlagen gesetzt), sonst stehen Warnhinweis und „Leads ohne nächsten Schritt“ über allem auf „Heute“.
+- `rec_ev.js` klickt vor der Aufnahme die Hinweiskarten weg (Willkommen-Video, Neuigkeiten, Mitteilungen).
+- Ton gegenhören: `python3 check_oa.py kurz lang` (faster-whisper, erzeugt Szenen mit falsch gehörten Begriffen neu; englisch „Lead“ hört Whisper als „Lied“, das gilt als richtig).
+- Ausgeblendete Module (z. B. „Empfehlungen & Bewertungen“, `EMPFEHLUNG_MODULE_AVAILABLE = false`) nicht zeigen und nicht nennen.
+
 ### Zusatz für „WhatsApp verbinden“ (Stand 15.11.2026)
 
 - Demo-Kunde mit offener Einrichtung: `DATABASE_URL=… node local/wa_einrichtung.mjs` (Login `max.mustermann@gmail.com` / `Demo12345!`, erfundene Daten, Beispielnummer +49 151 23456789).
