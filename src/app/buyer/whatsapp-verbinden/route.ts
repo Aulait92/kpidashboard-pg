@@ -28,6 +28,7 @@ export async function GET(req: Request): Promise<Response> {
     state: signState(ctx.customerId, ctx.userId),
     email: ctx.email,
     name: customer?.name ?? null,
+    customerId: ctx.customerId,
   });
   return NextResponse.redirect(link);
 }

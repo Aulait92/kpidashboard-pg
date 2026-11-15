@@ -26,6 +26,7 @@ import Link from "next/link";
 import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 import { ERROR_HELP, parseConnectPath } from "@/lib/whatsapp/connect-guide";
 import { WhatsAppGuide } from "@/components/whatsapp-guide";
+import { WaCheckButton } from "./wa-check";
 import { LeadTimesForm, SourcePicker } from "@/components/calendar-sources";
 import { loadCalendarSetup } from "@/lib/calendar/setup-view";
 import {
@@ -673,8 +674,10 @@ function WhatsAppStep({
             </ul>
           </div>
           <WhatsAppGuide initialPath={parseConnectPath(weg)} readOnly={readOnly} helpHref="/buyer/einrichtung?schritt=metaAccess#hilfetermin" />
+          <WaCheckButton readOnly={readOnly} />
         </>
       )}
+      {pending ? <WaCheckButton readOnly={readOnly} intro={false} /> : null}
     </>
   );
 }

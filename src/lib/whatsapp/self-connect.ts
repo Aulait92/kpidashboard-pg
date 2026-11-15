@@ -42,7 +42,7 @@ async function adminFollowUp(customerId: string, problem: string): Promise<void>
 }
 
 /** Key für den Channel holen und speichern. Gemeinsam für Redirect und Cron. */
-async function finishChannel(customerId: string, channelId: string, clientId: string | null): Promise<SelfConnectResult> {
+export async function finishChannel(customerId: string, channelId: string, clientId: string | null): Promise<SelfConnectResult> {
   const cfg = partnerConfig();
   if (!cfg) return { status: "error", reason: "Partner-Zugang nicht eingerichtet" };
   const key = await createChannelApiKey(cfg, channelId);
@@ -55,7 +55,7 @@ async function finishChannel(customerId: string, channelId: string, clientId: st
   return { status: "connected", phone: info.phone };
 }
 
-async function onConnected(customerId: string, phone: string | null | undefined): Promise<void> {
+export async function onConnected(customerId: string, phone: string | null | undefined): Promise<void> {
   const name = await customerName(customerId);
   // Vorlagen sofort bei Meta einreichen (Freigabe dauert Minuten bis Stunden).
   if (isSupportCustomer(customerId)) {
