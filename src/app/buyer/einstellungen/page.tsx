@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BellRing, CalendarDays, ChevronRight, Contact, CreditCard, Gift, Mail, Megaphone, MessageSquareText, Percent, ShieldCheck, UsersRound } from "lucide-react";
+import { BellRing, CalendarDays, ChevronRight, Contact, CreditCard, Gift, Mail, Megaphone, MessageSquareText, Percent, Send, ShieldCheck, UsersRound } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { unreadUpdates } from "@/lib/neuigkeiten";
@@ -34,6 +34,7 @@ export default async function EinstellungenPage() {
       items: [
         { href: "/buyer/kalender", icon: CalendarDays, color: "bg-emerald-600", title: "Mein Kalender", text: "Kalender verbinden und Zeiten für Termine festlegen" },
         { href: "/buyer/provisionen", icon: Percent, color: "bg-amber-500", title: "Meine Provisionen", text: "Ihre Sätze, daraus rechnet die App Provision und Zahlen" },
+        { href: "/buyer/einstellungen/meta", icon: Send, color: "bg-indigo-500", title: "Rückmeldung an Meta", text: "Meta lernt aus Ihren Ergebnissen, welche Leads abschließen" },
         { href: "/buyer/postfach", icon: Mail, color: "bg-blue-500", title: "E-Mail-Postfach", text: "Eigenes Postfach verbinden, Signatur, E-Mail-Vorlagen" },
         { href: "/buyer/vorlagen", icon: MessageSquareText, color: "bg-emerald-500", title: "WhatsApp-Vorlagen", text: "Nachrichten, die Ihr Assistent in Ihrem Namen schickt" },
         { href: "/buyer/einstellungen/erinnerungen", icon: BellRing, color: "bg-orange-500", title: "Erinnerungen & Aufgaben", text: "Erinnerung an den nächsten Schritt, Aufgaben nach dem Abschluss" },

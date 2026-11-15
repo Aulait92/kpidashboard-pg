@@ -20,6 +20,7 @@ export const KIND_LABEL: Record<MeasureKind, string> = {
   formular_vorschlag: "Formular (Vorschlag)",
   zielgruppe_vorschlag: "Zielgruppe (Vorschlag)",
   motiv_vorschlag: "Neue Motive (Vorschlag)",
+  conversion_leads_vorschlag: "Conversion Leads (Vorschlag)",
   manuell: "Von Hand",
 };
 
@@ -52,6 +53,8 @@ export function reportText(m: { kind: string; title: string }): string {
       return "Das Anfrageformular nachgeschärft, um die Qualität der Anfragen zu verbessern";
     case "zielgruppe_vorschlag":
       return "Die Zielgruppe der Anzeigen angepasst";
+    case "conversion_leads_vorschlag":
+      return "Die Kampagne so ausgerichtet, dass Meta gezielt nach Leads sucht, die bei Ihnen zu Terminen und Abschlüssen führen";
     default:
       return m.title;
   }

@@ -19,6 +19,7 @@ import { InstallApp } from "@/components/install-app";
 import { getAppUrl } from "@/lib/email";
 import { loadCustomerProvision } from "@/lib/provision-server";
 import { provisionSetupHint } from "@/lib/provision";
+import { META_LERNT } from "@/lib/zahlen-tipps";
 import Link from "next/link";
 import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 import { ERROR_HELP, parseConnectPath } from "@/lib/whatsapp/connect-guide";
@@ -287,6 +288,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         <Step n={nextNo()} title="Provisionen prüfen (1 Minute)" icon={Percent} done={provision.confirmed} open={isOpen("provision")} id="provision">
           {/* Typ aus dem angenommenen Angebot bekannt → nicht mehr danach fragen. */}
           <p className="text-sm text-[color:var(--muted)]">{provisionSetupHint(provision.typ, !!ob.offerId)}</p>
+          {/* Rückmeldung an Meta (lib/capi) */}
+          <p className="mt-2 text-sm text-[color:var(--muted)]">{META_LERNT}</p>
           <VideoHint url={video("provision")} />
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <Link href="/buyer/provisionen" className={buttonClass("secondary", "md")}>

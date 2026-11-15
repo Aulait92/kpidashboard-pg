@@ -22,12 +22,14 @@ export const MEASURE_KINDS = [
   "formular_vorschlag",
   "zielgruppe_vorschlag",
   "motiv_vorschlag",
+  // Rückmeldung an Meta (lib/capi): Kampagne auf „Conversion Leads“ umstellen, nur Vorschlag (nie automatisch)
+  "conversion_leads_vorschlag",
   "manuell",
 ] as const;
 export type MeasureKind = (typeof MEASURE_KINDS)[number];
 
 /** Vorschläge gehen nur an Ole (werden nie automatisch bei Meta umgesetzt). */
-export const SUGGESTION_KINDS: readonly MeasureKind[] = ["formular_vorschlag", "zielgruppe_vorschlag", "motiv_vorschlag"];
+export const SUGGESTION_KINDS: readonly MeasureKind[] = ["formular_vorschlag", "zielgruppe_vorschlag", "motiv_vorschlag", "conversion_leads_vorschlag"];
 export const isSuggestion = (k: string) => (SUGGESTION_KINDS as readonly string[]).includes(k);
 
 export type TargetType = "ad" | "adset" | "campaign" | "account";

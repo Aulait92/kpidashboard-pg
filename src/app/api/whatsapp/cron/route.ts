@@ -31,6 +31,7 @@ import { syncTemplates } from "@/lib/whatsapp/template-submit";
 //   3. Onboarding-Automatik (siehe lib/onboarding-cron.ts)
 //   4. Nachfass-Abfolgen (siehe lib/lead-sequences.ts)
 //   5. Erinnerung „Leads ohne nächsten Schritt“ um 8 Uhr (siehe lib/next-step-reminder.ts)
+//   6. Rückmeldung an Meta (Conversions API für CRM) alle 15 Minuten (siehe lib/capi/server.ts)
 // Per WHATSAPP_WEBHOOK_SECRET gesichert: Header „Authorization: Bearer …“ oder
 // x-cron-token (x-webhook-secret und ?token= nur noch im Übergang, lib/cron-auth.ts).
 export const dynamic = "force-dynamic";
@@ -195,6 +196,11 @@ async function handle(req: Request): Promise<Response> {
   // Optimierung je Werbekonto: Freigegebenes ausführen, wöchentlich planen (wenige Konten je Lauf),
   // Meta-Änderungsprotokoll holen, ab dem 20. Frühwarnung (nach der Antwort, lib/optimierung)
   after(() => import("@/lib/optimierung/server").then((m) => m.runOptimizationCron(now)).catch((e: unknown) => reportError(e, "cron-optimierung")));
+  // Rückmeldung an Meta (Conversions API für CRM): alle 15 Minuten neue Stufen der Meta-Leads erkennen und
+  // senden (nach der Antwort, lib/capi/server.ts)
+  if (now.getUTCMinutes() % 15 < 5) {
+    after(() => import("@/lib/capi/server").then((m) => m.runCapi(now)).catch((e: unknown) => reportError(e, "cron-capi")));
+  }
   // Monatsberichte: ab dem 2. (bis 5., falls ein Lauf ausfällt) ab 7 Uhr, je Lauf wenige Kunden
   // (Claude-Aufrufe), idempotent je Kunde und Monat. Nur „gut“ kann automatisch raus.
   {

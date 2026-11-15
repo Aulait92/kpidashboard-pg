@@ -9,6 +9,7 @@ import { contractProvision } from "@/lib/provision";
 import type { ErtragData } from "@/lib/ertrag";
 import type { TipSignals } from "@/lib/zahlen-tipps";
 import { nextStepRate } from "@/lib/lead-next-step-server";
+import { LOST_STATUSES } from "@/lib/lead-lost";
 
 const DAY = 86_400_000;
 const MIN_LEADS_FOR_RATES = 10;
@@ -25,7 +26,7 @@ async function averageKpis(now: Date): Promise<Kpis | null> {
 
 export async function loadTipSignals(customerId: string, data: ErtragData, now = new Date()): Promise<TipSignals> {
   const since90 = new Date(now.getTime() - 90 * DAY);
-  const [customer, own, avg, paidLeads, notAsked, settings, imported, campaigns, withoutCross, steps] = await Promise.all([
+  const [customer, own, avg, paidLeads, notAsked, settings, imported, campaigns, withoutCross, steps, capiSent, staleMeta] = await Promise.all([
     prisma.customer.findUnique({ where: { id: customerId }, select: { empfehlungEnabled: true, retainerMonthly: true } }),
     computeKpis({ range: { from: since90, to: now }, customerId, origin: "paid" }),
     averageKpis(now),
@@ -44,6 +45,22 @@ export async function loadTipSignals(customerId: string, data: ErtragData, now =
       },
     }),
     nextStepRate(customerId, { now }).catch(() => null),
+    // Rückmeldung an Meta (lib/capi): in den letzten 30 Tagen gesendet? Meta-Leads (14 bis 90 Tage alt) ohne Ergebnis
+    prisma.capiEvent.count({ where: { customerId, status: "sent", sentAt: { gte: new Date(now.getTime() - 30 * DAY) } } }).catch(() => 0),
+    prisma.lead
+      .count({
+        where: {
+          customerId,
+          externalId: { not: null },
+          subscriptionId: null,
+          erasedAt: null,
+          closedAt: null,
+          lostAt: null,
+          createdAt: { gte: since90, lt: new Date(now.getTime() - 14 * DAY) },
+          OR: [{ status: null }, { status: { notIn: [CLOSED_STATUS, "Storno", ...LOST_STATUSES] } }],
+        },
+      })
+      .catch(() => 0),
   ]);
   const leadIds = new Set(data.contracts.map((c) => c.leadId));
   const total = data.contracts.reduce((s, c) => s + contractProvision(c, data.rates).firstYear, 0);
@@ -65,6 +82,8 @@ export async function loadTipSignals(customerId: string, data: ErtragData, now =
     missingPremium,
     withoutNextStep: steps?.withoutNextStep ?? 0,
     nextStepRate: steps?.rate ?? null,
+    capiActive: capiSent > 0,
+    staleMetaLeads: capiSent > 0 ? staleMeta : 0,
     rates: {
       reach: rate(own.reachabilityRate, avg?.reachabilityRate),
       termin: rate(own.terminRate, avg?.terminRate),

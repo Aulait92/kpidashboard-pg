@@ -76,7 +76,7 @@ Für jeden Kunden mit AVV (Annahme des Angebots, `Offer.dpaUrl` speichert die ge
 | Anthropic | KI-Assistent, Impressum auslesen | | |
 | Google (Places API) | Öffentliche Unternehmensdaten von Vertriebskontakten abrufen (nur Suchtext: Agentur/Name und Ort; Antwort: öffentlicher Google-Eintrag) | | |
 | 360dialog | WhatsApp Business API; seit 14.11. auch Partner-API für das Selbst-Verbinden der Kundennummer (Konto-/Channel-ID, Telefonnummer, Anzeigename; API-Key verschlüsselt gespeichert) | | |
-| Meta | WhatsApp, Lead-Formulare | | |
+| Meta | WhatsApp, Lead-Formulare, Rückmeldung der Lead-Stufen (Conversions API, seit 15.11.2026) | | |
 | Resend | E-Mail-Versand | | |
 | Airtable | Lead-Daten (bis Dezember 2026) | | |
 | Zapier | Lead-Übertragung (bis Dezember 2026) | | |
@@ -118,11 +118,32 @@ gilt nur für neue Dienste, eine Streichung ist unkritisch, wird aber trotzdem m
 - **KI:** Antworttext geht zur Einordnung an Anthropic (bereits Unterauftragsverarbeiter), ohne Name/Telefonnummer.
 - **AVV:** Zweck „Nachfrage nach Abschluss, Empfehlungen“ ergänzt (**Prüfen**).
 
+### Rückmeldung an Meta (Conversions API für CRM, seit 15.11.2026)
+
+- **Zweck:** Meta lernt, welche Leads aus den Lead-Formularen des Kunden erreicht werden, einen Termin haben oder
+  abschließen, und optimiert die Auslieferung der Anzeigen des Kunden darauf („Conversion Leads“). Kampagnen stellt
+  die Software nicht selbst um (nur Vorschlag an Ole in der Optimierung).
+- **Daten je Ereignis:** Meta-Lead-ID (leadgen_id, von Meta vergeben), Stufe (Lead, Erreicht, Termin vereinbart,
+  Abschluss), Zeitpunkt, beim Abschluss Jahresbeitrag netto (Summe der Verträge) in EUR. **Keine** Namen,
+  Telefonnummern, E-Mails, Gesprächsinhalte, **kein Produkt bzw. keine Sparte** (§ 203 StGB: die Tatsache eines
+  Vertrags in der Personenversicherung soll nicht erkennbar werden), kein erweiterter Abgleich mit gehashten Daten.
+- **Wer:** nur Leads aus Meta-Lead-Formularen (Lead.externalId mit 15 bis 17 Ziffern), keine Empfehlungen, kein
+  Bestand, keine Pay-per-Lead-Leads; Testkunden senden nie. Empfänger: das Dataset (Pixel) im Werbekonto des Kunden,
+  Meta Platforms Ireland Ltd. (AVV Anlage 2 ergänzt, AVV „Art, Zweck und Umfang“ ergänzt).
+- **Steuerung:** je Kunde abschaltbar durch den Inhaber (`Customer.capiEnabled`, Standard an); bei „aus“ geht nichts
+  mehr raus, Wartendes wird verworfen. DSGVO-Löschung eines Leads: Wartendes wird verworfen.
+- **Speicherung:** Postausgang `CapiEvent` (Lead-Bezug, Stufe, Zeitpunkt, Wert, Status, Fehler ohne Tokens), Löschung
+  nach 13 Monaten automatisch im Lauf (`runCapi`).
+- **Prüfen (Anwalt):** Rolle von Meta (Auftragsverarbeiter nach den Meta Business Tools Terms bzw. gemeinsame
+  Verantwortung nach Art. 26), Rechtsgrundlage beim Kunden (berechtigtes Interesse, Hinweis in der Datenschutzerklärung
+  des Kunden und im Lead-Formular), ob der Vertragswert ohne Produkt mit § 203 StGB vereinbar ist, Standard „an“.
+
 ## 4. Löschkonzept
 
 | Daten | Frist | Wie |
 |---|---|---|
 | Nutzungsmessung (`UsageEvent`) | 180 Tage | automatisch, Cron 03:00 UTC (`pruneUsage`) |
+| Postausgang Rückmeldung an Meta (`CapiEvent`: Lead-Bezug, Stufe, Zeitpunkt, Wert) | 13 Monate | automatisch im Lauf alle 15 Minuten (`runCapi`) |
 | Änderungsprotokoll (`AuditLog`) | 1 Jahr | automatisch (`pruneAudit`) |
 | Messpunkte der Statusseite (`StatusSample`, ohne Personenbezug) | 90 Tage | automatisch je Cron-Lauf (`recordStatusSample`) |
 | Hilfe-Anfragen an das Team (`UsageEvent` Typ `support`: Grund, Kurzfassung ohne Kontaktdaten, Referenz) | 180 Tage | wie Nutzungsmessung (`pruneUsage`) |
@@ -238,6 +259,10 @@ Interaktion mit Betroffenen“. Falls ja, DSFA je Kunde als Verantwortlicher (Vo
 - [ ] Aufbewahrung der Railway-Sicherungen ablesen und im Löschkonzept eintragen
 - [ ] Sentry: Aufbewahrung prüfen, Datenregion EU bestätigen
 - [ ] Anwalt: Rolle bei Pay-per-Lead; Kalt-E-Mails an Vermittler; DSFA-Muss-Liste; AGB/AVV-Fassung 10.11.2026
+- [ ] Anwalt: Rückmeldung an Meta (Conversions API für CRM, 15.11.2026): Rolle von Meta, Rechtsgrundlage, Standard „an“,
+      Vertragswert ohne Produkt und § 203 StGB, Text für die Datenschutzerklärung (Webseite, docs/webseite-offen.md) und
+      Hinweis im Lead-Formular; AVV-Ergänzung in `src/lib/legal-texts.ts` (mit „Prüfen:“ markiert), ob `LEGAL_VERSION`
+      erhöht und Kunden informiert werden müssen
 - [ ] Dezember: Airtable/Zapier aus Anlage 2 streichen, Kunden informieren
 - [ ] Vertriebskontakte: Frist (Vorschlag 2 Jahre) festlegen, danach automatisch löschen
 - [ ] Datenschutzerklärung je Kunde: Die Buchungsseite verlinkt die Datenschutzerklärung von

@@ -10,6 +10,7 @@
 // 14.11.2026: Statt Logins zählen aktive Verkäufer (bekommen Leads); Mitglieder ohne Leads kostenlos.
 // 14.11.2026: AVV: Verschwiegenheit nach § 203 StGB, E-Mail-Kampagnen im Bestandskunden-Modul.
 // 14.11.2026 (Fassung 2): Abschnitt „Testphasen und kostenlose Zeiträume“ (Ole).
+// 15.11.2026: AVV: Rückmeldung an Meta (Conversions API für CRM), Meta in Anlage 2 um die Rückmeldung ergänzt.
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
@@ -193,6 +194,9 @@ export const AVV: LegalSection[] = [
       "Bei gebuchtem Bestandskunden-Modul zusätzlich: Import, Speicherung und Auswertung der vom Auftraggeber hochgeladenen Bestandskundendaten (z. B. Vertragsarten, Ablaufdaten, Geburtsdatum) und deren Ansprache per WhatsApp im Namen des Auftraggebers. Der Auftraggeber stellt sicher, dass für die Ansprache eine Rechtsgrundlage und, soweit erforderlich, eine Einwilligung vorliegt.",
       // Prüfen: E-Mail-Kampagnen über das Postfach des Auftraggebers (Ole, 14.11.2026)
       "Bei gebuchtem Bestandskunden-Modul außerdem: Versand von E-Mail-Kampagnen an Bestandskunden im Namen des Auftraggebers über dessen verbundenes E-Mail-Postfach (z. B. Google, Microsoft oder SMTP) als einzelne E-Mails, einschließlich Verarbeitung von Antworten, Zustellfehlern und Abmeldungen sowie Speicherung des Einwilligungs- und Abmeldestatus je Kunde und Kanal. Der Auftragnehmer verarbeitet dazu die E-Mail-Adresse, den Namen und die für die Kampagne genutzten Vertragsangaben. Abmeldungen werden dauerhaft gespeichert und bei späteren Kampagnen und erneuten Importen berücksichtigt. Inhalte des Postfachs, die nicht zu Kampagnen oder Kontakten aus der Software gehören, werden nicht verarbeitet. Die Verantwortung für die wettbewerbs- und datenschutzrechtliche Zulässigkeit der Ansprache (insbesondere § 7 UWG) verbleibt beim Auftraggeber.",
+      // Prüfen: Rückmeldung an Meta (Conversions API für CRM, Ole 15.11.2026): Rolle von Meta (Auftragsverarbeiter
+      // nach den Meta Business Tools Terms bzw. gemeinsame Verantwortung), § 203 StGB bei Vertragswert ohne Produkt
+      "Rückmeldung an Meta (abschaltbar durch den Auftraggeber): Für Leads aus Meta-Lead-Formularen übermittelt der Auftragnehmer im Namen des Auftraggebers an dessen Meta-Dataset die von Meta vergebene Lead-ID, die erreichte Stufe (Lead, Erreicht, Termin vereinbart, Abschluss), den Zeitpunkt und beim Abschluss den Vertragswert (Jahresbeitrag), damit Meta die Auslieferung der Anzeigen des Auftraggebers verbessert. Kontaktdaten (Name, Telefonnummer, E-Mail-Adresse), Gesprächsinhalte und das abgeschlossene Produkt bzw. die Sparte werden nicht übermittelt.",
       { sub: "Datenarten", text: "Kontaktdaten (Name, Telefonnummer, E-Mail-Adresse, Anschrift), Angaben aus dem Lead-Formular (z. B. Lebenssituation, Versicherungsinteresse), Kommunikationsinhalte (Chatverläufe und E-Mails), Termindaten, Notizen und Status zum Lead, bei gebuchtem Bestandskunden-Modul Vertragsangaben der Bestandskunden (z. B. Sparte, Versicherer, Vertragsnummer, Beitrag, Ablaufdatum) sowie Einwilligungs- und Abmeldestatus, außerdem Nutzungsdaten der Nutzer des Auftraggebers." },
       { sub: "Betroffene", text: "Interessenten und Kunden des Auftraggebers sowie Nutzer des Auftraggebers." },
       "Besondere Kategorien personenbezogener Daten (Art. 9 DSGVO), insbesondere Gesundheitsdaten, sind nicht Gegenstand der Verarbeitung. Der Auftraggeber fragt solche Daten in Formularen und Gesprächsleitfäden nicht ab.",
@@ -271,7 +275,7 @@ export const SUBPROCESSORS: { name: string; purpose: string; location: string }[
   { name: "Railway Corporation", purpose: "Hosting von Anwendung und Datenbank", location: "Serverstandort EU (Amsterdam); Unternehmen USA" },
   { name: "Anthropic, PBC", purpose: "KI-Verarbeitung der Chatnachrichten für den digitalen Assistenten", location: "USA" },
   { name: "360dialog GmbH", purpose: "Anbindung der WhatsApp Business API", location: "Deutschland" },
-  { name: "Meta Platforms Ireland Ltd.", purpose: "WhatsApp-Nachrichtenversand; Lead-Formulare", location: "Irland / USA" },
+  { name: "Meta Platforms Ireland Ltd.", purpose: "WhatsApp-Nachrichtenversand; Lead-Formulare; Rückmeldung der Lead-Stufen an das Meta-Dataset des Auftraggebers (Meta-Lead-ID, Stufe, Zeitpunkt, Vertragswert; keine Kontaktdaten, kein Produkt; abschaltbar)", location: "Irland / USA" },
   { name: "Resend (Plus Five Five, Inc.)", purpose: "Versand von E-Mails (z. B. Terminbestätigungen)", location: "USA" },
   { name: "Formagrid Inc. (Airtable)", purpose: "Lead-Datenhaltung, nur noch bis zur vollständigen Umstellung auf den direkten Lead-Eingang", location: "USA" },
   { name: "Zapier, Inc.", purpose: "Übertragung der Leads aus den Meta-Formularen, nur noch bis zur vollständigen Umstellung auf den direkten Lead-Eingang", location: "USA" },

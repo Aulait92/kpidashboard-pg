@@ -8,6 +8,7 @@ import { closeValueField, contractProvision, premiumFieldForSparte, sparteForSou
 import { encodeSparte } from "@/lib/eigene-produkte";
 import { anteil, EigenesProduktFelder, produktEingabe, sonstigesStandard, type ProduktEingabe } from "@/components/eigenes-produkt-felder";
 import { useEigeneProdukte, useProvisionRates } from "@/components/provision-context";
+import { META_LERNT } from "@/lib/zahlen-tipps";
 
 /** Braucht der Abschluss eine Eingabe? (nein bei festem Provisionsbetrag) */
 export function asksCloseValue(source: string | null | undefined, rates?: ProvisionOverrides): boolean {
@@ -144,6 +145,10 @@ export function AbschlussSheet({
           <span className="text-sm text-[color:var(--muted)]">€</span>
         </div>
         {field.hint ? <p className="text-sm text-[color:var(--muted)]">{field.hint}</p> : null}
+        {/* Rückmeldung an Meta (lib/capi): der Beitrag geht beim Abschluss als Wert an Meta */}
+        <p className="text-xs text-[color:var(--muted)]" data-meta-lernt>
+          {META_LERNT}
+        </p>
         {vorschau && (vorschau.abschluss > 0 || vorschau.trailPerYear > 0) ? (
           <p className="text-sm text-[color:var(--muted)]" data-abschluss-vorschau>
             ≈ {Math.round(vorschau.abschluss).toLocaleString("de-DE")} € Abschlussprovision, ≈ {Math.round(vorschau.trailPerYear).toLocaleString("de-DE")} € Bestand pro Jahr ab dem 2. Jahr

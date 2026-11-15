@@ -100,6 +100,8 @@ async function eraseLeads(customerId: string, leads: LeadRef[]): Promise<EraseRe
     prisma.existingCustomer.deleteMany({ where: { leadId: { in: ids }, consentNote: BESTAND_FROM_LEAD_NOTE } }),
     prisma.existingCustomer.updateMany({ where: { leadId: { in: ids } }, data: { leadId: null } }),
     prisma.leadContract.updateMany({ where: { leadId: { in: ids } }, data: { contractNo: null, insurer: null } }),
+    // Rückmeldung an Meta (lib/capi): nichts mehr senden
+    prisma.capiEvent.updateMany({ where: { leadId: { in: ids }, status: { in: ["queued", "failed"] } }, data: { status: "skipped", error: "Lead gelöscht", nextAttemptAt: null } }),
     prisma.lead.updateMany({
       where: { id: { in: ids } },
       data: {

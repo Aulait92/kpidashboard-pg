@@ -368,6 +368,14 @@ export async function planAccount(accountId: string, opts: { dryRun?: boolean; n
   for (const m of plan.measures) {
     if (m.kind === "motiv_erneuern") m.params.sourceRunId = agents.get(String(m.params.campaignId)) ?? null;
   }
+  // Rückmeldung an Meta (lib/capi): Kriterien für „Conversion Leads“ erfüllt → Vorschlag an Ole (nie automatisch umstellen)
+  if (a.kind === "kunde" && a.customerId) {
+    const cl = await import("@/lib/capi/server").then((m) => m.conversionLeadsSuggestion({ accountId: a.id, customerId: a.customerId! }, now)).catch((e: unknown) => {
+      reportError(e, "optimierung-conversion-leads", { account: a.id });
+      return null;
+    });
+    if (cl) plan.measures.push(cl);
+  }
   result.measures = plan.measures;
   result.warnings = plan.warnings;
   result.stats = {

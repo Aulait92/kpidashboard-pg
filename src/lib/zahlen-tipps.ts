@@ -11,6 +11,9 @@
  */
 export const KOLLEGEN_TIPP_AKTIV = false;
 
+/** Hinweis zur Rückmeldung an Meta (lib/capi), gleicher Satz im Abschluss-Dialog und in der Einrichtung. */
+export const META_LERNT = "Je vollständiger Sie Abschlüsse mit Beitrag eintragen, desto besser lernt Meta, welche Leads abschließen, und desto bessere Leads bekommen Sie.";
+
 export const TIP_DISMISS_DAYS = 30;
 export const MAX_TIPS = 3;
 
@@ -24,7 +27,8 @@ export type TipKey =
   | "terminquote"
   | "abschlussquote"
   | "beitrag"
-  | "naechster_schritt";
+  | "naechster_schritt"
+  | "meta_lernen";
 
 export type Tip = { key: TipKey; title: string; text: string; href: string; cta: string; impact: number };
 
@@ -50,6 +54,9 @@ export type TipSignals = {
   /** Offene Leads ohne nächsten Schritt (lib/lead-next-step.ts) und Quote „mit nächstem Schritt“ (0..1). */
   withoutNextStep?: number;
   nextStepRate?: number | null;
+  /** Rückmeldung an Meta aktiv (lib/capi: in den letzten 30 Tagen gesendet) und Meta-Leads über 14 Tage ohne Ergebnis. */
+  capiActive?: boolean;
+  staleMetaLeads?: number;
   /** Eigene Quoten (bezahlte Leads) und Schnitt aller Kunden; null = zu wenig Daten. */
   rates: {
     reach: { own: number | null; avg: number | null };
@@ -122,10 +129,22 @@ export function candidateTips(s: TipSignals): Tip[] {
     out.push({
       key: "beitrag",
       title: "Abschlüsse vollständig eintragen",
-      text: `Bei ${s.missingPremium} ${s.missingPremium === 1 ? "Abschluss fehlt" : "Abschlüssen fehlt"} der Beitrag. Tragen Sie ihn ein, sonst rechnen wir zu niedrig.`,
+      text: `Bei ${s.missingPremium} ${s.missingPremium === 1 ? "Abschluss fehlt" : "Abschlüssen fehlt"} der Beitrag. Tragen Sie ihn ein, sonst rechnen wir zu niedrig.${s.capiActive ? ` ${META_LERNT}` : ""}`,
       href: "/buyer/leads",
       cta: "Abschlüsse ergänzen",
       impact: s.missingPremium * 0.3 * prov,
+    });
+  }
+  // Rückmeldung an Meta (Ole, 15.11.2026): offene Meta-Leads ohne Ergebnis bremsen das Lernen von Meta
+  const stale = s.staleMetaLeads ?? 0;
+  if (s.capiActive && stale >= 5) {
+    out.push({
+      key: "meta_lernen",
+      title: "Ergebnisse eintragen",
+      text: `${stale} Leads aus Meta warten seit über 14 Tagen auf ein Ergebnis. Tragen Sie Gewonnen oder Verloren ein. ${META_LERNT}`,
+      href: "/buyer/leads",
+      cta: "Leads ansehen",
+      impact: stale * 0.1 * Math.max(closing, 0.05) * prov,
     });
   }
   if (!s.bestandImported || s.bestandCampaigns === 0) {

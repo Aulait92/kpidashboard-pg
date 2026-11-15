@@ -150,6 +150,18 @@ model Customer {
   metaAdAccountId String?
   // Facebook-Seite des Kunden für Lead-Ads (Kampagnen-Agenten); sonst aus LeadSource.pageId
   metaPageId      String?
+  // ─── Rückmeldung an Meta (Conversions API für CRM, „Conversion Leads“; Ole, 15.11.2026, lib/capi) ───
+  // Stufen der Meta-Leads (Lead, Erreicht, Termin vereinbart, Abschluss) an das Dataset senden; Standard an,
+  // nur der Inhaber schaltet (Einstellungen → Rückmeldung an Meta). Testkunden senden nie.
+  capiEnabled          Boolean     @default(true)
+  // Meta-Dataset (Pixel-ID) für die Rückmeldung; automatisch aus act_<metaAdAccountId>/adspixels (erstes) oder im Admin gesetzt
+  metaDatasetId        String?
+  // "auto" | "admin" (von Hand gesetzt, wird nicht automatisch überschrieben)
+  metaDatasetSource    String?
+  // Letzter automatischer Suchversuch und dessen Problem (z. B. kein Dataset, kein Zugriff), Tokens geschwärzt
+  metaDatasetCheckedAt DateTime?
+  metaDatasetError     String?
+  capiEvents           CapiEvent[]
 
   leads            Lead[]
   garantieFaelle   GarantieFall[]
@@ -657,6 +669,8 @@ model Lead {
   referralRewardDoneAt  DateTime?
   // Bewertungs-Wächter: Google-Bewertungen, die diesem Kontakt zugeordnet sind
   googleReviews     GoogleReview[]
+  // Rückmeldung an Meta (lib/capi): Stufen dieses Leads im Postausgang
+  capiEvents        CapiEvent[]
 
   @@index([customerId, createdAt])
   @@index([assignedUserId])
@@ -3475,4 +3489,33 @@ model OptimizationSettings {
   // Globaler Modus: false = Vorschlag (Standard), true = Autopilot
   autopilot Boolean  @default(false)
   updatedAt DateTime @updatedAt
+}
+
+// Postausgang „Rückmeldung an Meta“ (Conversions API für CRM, Ole 15.11.2026, lib/capi): je Lead und Stufe
+// höchstens ein Ereignis mit dem frühesten Zeitpunkt. Gesendet werden nur Meta-Lead-ID, Stufe, Zeitpunkt und
+// beim Abschluss der Jahresbeitrag (keine Kontaktdaten, kein Produkt). Wird nach 13 Monaten gelöscht.
+model CapiEvent {
+  id            String    @id @default(cuid())
+  customerId    String
+  customer      Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  leadId        String
+  lead          Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  // lead | erreicht | termin | abschluss
+  stage         String
+  eventTime     DateTime
+  // Nur Abschluss: Jahresbeitrag netto beim Senden (EUR); null = ohne Beitrag gesendet
+  value         Decimal?  @db.Decimal(12, 2)
+  // queued | sent | failed | skipped
+  status        String    @default("queued")
+  attempts      Int       @default(0)
+  // Fehler (Tokens geschwärzt) bzw. Grund bei skipped (z. B. „zu alt“)
+  error         String?
+  nextAttemptAt DateTime?
+  sentAt        DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([leadId, stage])
+  @@index([customerId, status, createdAt])
+  @@index([status, nextAttemptAt])
 }

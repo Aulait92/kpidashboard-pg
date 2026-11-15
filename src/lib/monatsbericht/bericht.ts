@@ -45,7 +45,7 @@ export type ReportBestandskampagnen = { leads: number; abschluesse: number; prov
 export type ReportTip = { key: string; title: string; text: string; href: string; cta: string };
 
 /** Rohe Maßnahme (intern, Grundlage für die KI-Zusammenfassung). */
-export type RawMeasure = { source: "optimierung" | "manuell" | "meta" | "mediabuyer" | "kampagne" | "budget"; at: string; text: string };
+export type RawMeasure = { source: "optimierung" | "manuell" | "meta" | "mediabuyer" | "kampagne" | "budget" | "capi"; at: string; text: string };
 
 export type ReportModel = {
   version: 2;

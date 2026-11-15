@@ -164,6 +164,9 @@ async function mediaBuyerPoolKeys(customerId: string): Promise<string[]> {
   return [...keys];
 }
 
+/** Zeile unter „Was wir für Sie getan haben“, wenn die Rückmeldung an Meta im Monat aktiv war. */
+export const CAPI_MEASURE_TEXT = "Ihre Ergebnisse (Erreicht, Termin, Abschluss) an Meta zurückgemeldet, damit Meta lernt, welche Anfragen bei Ihnen zum Abschluss führen";
+
 const BUYER_TEXT: Record<string, (label: string) => string> = {
   increase: (l) => `Budget der Kampagne ${l} erhöht, damit genug Anfragen kommen`,
   boost: (l) => `Budget der Kampagne ${l} zum Monatsende erhöht, damit genug Anfragen kommen`,
@@ -180,12 +183,14 @@ const BUYER_TEXT: Record<string, (label: string) => string> = {
  */
 export async function collectMeasures(customerId: string, month: string): Promise<RawMeasure[]> {
   const { from, to } = monthBounds(month);
-  const [executed, activities, runs, budgets, poolKeys] = await Promise.all([
+  const [executed, activities, runs, budgets, poolKeys, capiFirst] = await Promise.all([
     listExecutedMeasures(customerId, from, to, { includePools: true }),
     listMetaActivities(customerId, from, to),
     prisma.campaignRun.findMany({ where: { customerId, status: "built", updatedAt: { gte: from, lt: to } }, select: { product: true, kind: true, updatedAt: true } }),
     prisma.budgetChange.findMany({ where: { customerId, status: "applied", effectiveFrom: { gte: from, lt: to } }, select: { effectiveFrom: true, monthlyBudgetFrom: true, monthlyBudgetTo: true } }),
     mediaBuyerPoolKeys(customerId),
+    // Rückmeldung an Meta (lib/capi): erste im Monat gesendete Rückmeldung
+    prisma.capiEvent.findFirst({ where: { customerId, status: "sent", sentAt: { gte: from, lt: to } }, orderBy: { sentAt: "asc" }, select: { sentAt: true } }),
   ]);
   const buyer = poolKeys.length
     ? await prisma.mediaBuyerAction.findMany({
@@ -209,6 +214,7 @@ export async function collectMeasures(customerId: string, month: string): Promis
   for (const a of acts) push("meta", a.at, `Werbekonto: ${a.label}${(actCount.get(a.label) ?? 0) > 1 ? " (mehrfach)" : ""}`);
   for (const b of buyer) push("mediabuyer", b.createdAt, BUYER_TEXT[b.action](b.poolLabel));
   for (const r of runs) push("kampagne", r.updatedAt, r.kind === "auffrischung" ? `Neue Anzeigenmotive für ${r.product} in die laufende Kampagne gebracht` : `Neue Kampagne mit frischen Anzeigen für ${r.product} aufgesetzt`);
+  if (capiFirst?.sentAt) push("capi", capiFirst.sentAt, CAPI_MEASURE_TEXT);
   for (const b of budgets) push("budget", b.effectiveFrom, b.monthlyBudgetTo > b.monthlyBudgetFrom ? "Werbebudget erhöht" : b.monthlyBudgetTo < b.monthlyBudgetFrom ? "Werbebudget angepasst" : "Budget neu verteilt");
   return out.sort((x, y) => x.at.localeCompare(y.at));
 }

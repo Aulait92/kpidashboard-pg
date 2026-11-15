@@ -5,6 +5,7 @@ import { toggleSourceAction } from "@/app/admin/lead-eingang/actions";
 import { prisma } from "@/lib/prisma";
 import { isStorno } from "@/lib/admin-leads";
 import { MetaAccountCard } from "./meta-account-card";
+import { CapiCard } from "./capi-card";
 
 const fmt = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(d);
@@ -30,6 +31,7 @@ export default async function KundenLeads({ params }: { params: Promise<{ id: st
     <div className="grid gap-5 lg:grid-cols-[2fr_3fr]">
       <div className="space-y-5">
       <MetaAccountCard customerId={id} current={customer?.metaAdAccountId ?? null} />
+      <CapiCard customerId={id} />
       <Card>
         <CardHeader
           title="Leadformulare"

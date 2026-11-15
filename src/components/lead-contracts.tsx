@@ -12,6 +12,7 @@ import { Badge, Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
 import { useEigeneProdukte, useProvisionRates } from "@/components/provision-context";
+import { META_LERNT } from "@/lib/zahlen-tipps";
 import { anteil, EigenesProduktFelder, produktEingabe, sonstigesStandard, type ProduktEingabe } from "@/components/eigenes-produkt-felder";
 import { addContractAction, cancelContractAction, setContractStatusAction, updateContractAction } from "@/app/buyer/vertrag-actions";
 import {
@@ -383,6 +384,9 @@ function ContractSheet({ leadId, id, initial, onClose }: { leadId: string; id: s
             <span className="text-sm text-[color:var(--muted)]">€</span>
           </span>
           {field?.hint ? <span className="mt-1 block text-xs text-[color:var(--muted)]">{field.hint}</span> : null}
+          <span className="mt-1 block text-xs text-[color:var(--muted)]" data-meta-lernt>
+            {META_LERNT}
+          </span>
         </label>
         {leben ? (
           <div className="space-y-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] p-3" data-contract-leben>

@@ -22,6 +22,7 @@ Seiten aus der Liste „Seiten“ unten.
 | /buyer/bestand/import | Kundenliste hochladen | Excel/CSV importieren |
 | /buyer/bestellen | Bestellen | Leads für eine Woche bestellen (bei Pay-per-Lead) |
 | /buyer/vorlagen | WhatsApp-Vorlagen | Welche Nachrichten der Assistent schickt und ob Meta sie freigegeben hat (nur lesen) |
+| /buyer/einstellungen/meta | Rückmeldung an Meta | Ergebnisse der Meta-Leads an Meta zurückmelden (an/aus nur Inhaber), Status, Anteile je Stufe, Empfehlung fürs Optimierungsziel |
 
 ## Einführungsvideos
 
@@ -410,6 +411,30 @@ Seiten aus der Liste „Seiten“ unten.
 - Je mehr Ergebnisse Sie bei Ihren Leads eintragen, desto genauer werden die Zahlen im Bericht.
 - Wir prüfen jeden Bericht vor dem Versand. Manchmal melden wir uns statt eines Berichts lieber persönlich, dann
   besprechen wir den Monat im Gespräch.
+
+## Rückmeldung an Meta (seit 15.11.2026)
+
+- Zu finden unter **Einstellungen → Rückmeldung an Meta** (/buyer/einstellungen/meta). Standardmäßig an, nur der
+  **Inhaber** kann sie aus- und einschalten; Berater sehen die Seite nur.
+- Wofür: Meta erfährt, welche Leads aus Ihren Anzeigen erreicht wurden, einen Termin hatten oder abgeschlossen haben.
+  So lernt Meta, welche Leads abschließen, und sucht gezielter nach ähnlichen Menschen.
+- Was gesendet wird: nur für Leads aus Meta-Formularen die Lead-ID, die Meta selbst vergeben hat, die Stufe (Lead,
+  Erreicht, Termin vereinbart, Abschluss), der Zeitpunkt und beim Abschluss der Jahresbeitrag, falls eingetragen.
+  Nicht gesendet werden Name, Telefonnummer, E-Mail, Gesprächsinhalte und welches Produkt abgeschlossen wurde.
+  Leads aus Empfehlungen, dem Bestand oder anderen Quellen bleiben außen vor.
+- Wann: automatisch etwa alle 15 Minuten. Meta nimmt nur Ergebnisse der letzten 7 Tage an, ältere werden nicht gesendet.
+  Ein Storno nimmt eine gesendete Rückmeldung nicht zurück.
+- „Erreicht“ zählt, sobald der Lead per WhatsApp antwortet oder Sie ihn als erreicht markieren (z. B. über „Wie lief's?“
+  oder die Phase), „Termin vereinbart“ beim ersten Termin, „Abschluss“, wenn Sie den Lead auf Abschluss setzen.
+- Status auf der Seite: Aktiv, Wird eingerichtet (wir verbinden Ihr Werbekonto, Sie müssen nichts tun), Aus oder
+  Testkonto. Darunter die zuletzt gesendeten Rückmeldungen und Probleme in verständlichen Worten.
+- Zahlen für die letzten 30 und 90 Tage: Leads aus Meta-Formularen, Anteil je Stufe innerhalb von 28 Tagen und eine
+  Empfehlung, welche Stufe sich als Optimierungsziel („Conversion Leads“) eignet. Meta braucht dafür etwa 200 Leads im
+  Monat, eine Stufe, die 1 % bis 40 % der Leads innerhalb von 28 Tagen erreichen, und Rückmeldungen für mindestens 60 %
+  der Leads. Ist „Erreicht“ zu häufig, eignet sich eher „Termin vereinbart“. Eine Umstellung der Kampagne stimmen wir
+  vorher mit Ihnen ab, die App stellt nichts selbst um.
+- Tipp: Je vollständiger Sie Abschlüsse mit Beitrag eintragen, desto besser lernt Meta, welche Leads abschließen, und
+  desto bessere Leads bekommen Sie. Tragen Sie bei offenen Leads auch Gewonnen oder Verloren ein.
 
 ## Abschluss und Provision
 - Beim Abschluss fragt die App je nach Produkt nach einem Beitrag, alles freiwillig:

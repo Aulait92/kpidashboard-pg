@@ -2,6 +2,15 @@
 
 Dinge, die Ole später angehen will. Neue Sitzungen bitte hier nachsehen und Ole daran erinnern.
 
+- 15.11.2026: **Rückmeldung an Meta (Conversions API für CRM) einrichten.** Die App sendet je Kunde automatisch
+  (lib/capi, alle 15 Minuten) an das erste Dataset des Werbekontos. In Meta je Kunde: 1. Partnerzugriff auf das
+  Dataset (Pixel) für unseren Business Manager und den Systemnutzer (sonst Fehler „kein Zugriff“, Admin → Kunde →
+  Leads → Rückmeldung an Meta); 2. im Events Manager das CRM-Dataset mit der Facebook-Seite der Lead-Formulare
+  verbinden; 3. CRM-Stufen zuordnen (Lead, Erreicht, Termin vereinbart, Abschluss); 4. sobald der Vorschlag
+  „Kampagne auf Conversion Leads umstellen“ in der Optimierung kommt, Lead-Kampagne mit Leistungsziel
+  „Conversion Leads“ und der vorgeschlagenen Stufe anlegen bzw. umstellen. Offen: automatische Umstellung im
+  Autopilot (bewusst nicht gebaut, nur Vorschlag), Anwalt (docs/datenschutz.md, Offene Punkte), Datenschutzerklärung.
+
 - 14.11.2026: **Calendly ablösen.** Die Später-Follow-ups im Vertrieb schicken vorerst Oles Calendly-Link
   (Vertrieb → Follow-ups → Einstellungen → Buchungslink). Später durch unser eigenes Buchungstool ersetzen
   (eigene Buchungsseite für Oles Vertriebstermine wie /book für Kunden, inkl. Kalender-Sync), dann auch den
