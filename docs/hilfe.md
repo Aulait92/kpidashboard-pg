@@ -17,7 +17,7 @@ Seiten aus der Liste „Seiten“ unten.
 | /buyer/konto | Konto & Rechnungen | Vertrag, Werbebudget ändern, weiteres Produkt buchen, Rechnungen, Zahlungsart, Pause/Urlaub (nur Inhaber) |
 | /buyer/team | Team | Berater einladen, Leads verteilen (nur Inhaber) |
 | /buyer/kalender | Mein Kalender | „Ihr Kalender“ verbinden (ein Kalender je Person), andere Quelle für freie Zeiten (ICS/Allianz), Team-Übersicht für Inhaber, Lead-Zeiten, Zeit blockieren |
-| /buyer/einrichtung | Einrichtung | Fortschritt „Einrichtung x von y“, Fragebogen, Meta freigeben (prüfen/anfragen), Kalender, E-Mail-Postfach, WhatsApp, Kundenliste, Bewertungslink, Team, Einwilligung im Leadformular, App aufs Handy, Provisionen, Hilfetermin |
+| /buyer/einrichtung | Einrichtung | Fortschritt „Einrichtung x von y“, Fragebogen, Erstinformation (Status, Registernummer, PDF oder Link), Meta freigeben (prüfen/anfragen), Kalender, E-Mail-Postfach, WhatsApp, Kundenliste, Bewertungslink, Team, Einwilligung im Leadformular, App aufs Handy, Provisionen, Hilfetermin |
 | /buyer/bestand | Bestand | Bestandskunden und Kampagnen (Zusatzmodul; ohne Modul mit Knopf „Jetzt buchen“, sonst „Modul anfragen“) |
 | /buyer/bestand/import | Kundenliste hochladen | Excel/CSV importieren |
 | /buyer/bestellen | Bestellen | Leads für eine Woche bestellen (bei Pay-per-Lead) |
@@ -137,6 +137,9 @@ Seiten aus der Liste „Seiten“ unten.
   **Postfach verbinden** (ohne verbundenes Postfach), **Stornieren/Reklamieren** (bei gekauften Leads),
   **Daten löschen (DSGVO)** (nur Inhaber).
 - Karte zum nächsten Termin (Videocall, Verschieben oder absagen im Fenster) und die Zusammenfassung des Assistenten.
+- **Einwilligung** (bei Leads aus Meta-Formularen): ob der Lead das Häkchen gesetzt hat, mit Zeitpunkt, Formular, Textversion
+  und Wortlaut. Fehlt es, steht dort rot, dass keine WhatsApp-Nachrichten rausgehen.
+- **Gesundheitsangaben (vertraulich):** aufklappbar, nur für Sie; nicht beim Assistenten und nicht unter „Angaben zum Lead“.
 - Inhaber können unter **Zuständig** den Lead einem Berater geben – der bekommt eine Push-Nachricht.
 - „Angaben zum Lead“: alle Antworten aus dem Formular. Mit **Bearbeiten** (Stift) korrigieren Sie Anrede, Name,
   Telefon, E-Mail und Adresse, zum Beispiel Tippfehler. Die Änderung steht im Verlauf, WhatsApp läuft danach über die
@@ -162,6 +165,12 @@ Seiten aus der Liste „Seiten“ unten.
   freigegebene Vorlagen raus. Dann erscheint „Nachfassen senden“ statt des Textfelds. Antwortet der Kunde,
   können Sie wieder frei schreiben.
 - „Erledigt“ entfernt den Chat aus „Braucht dich“.
+- **„STOPP“:** Schreibt ein Kontakt „STOPP“ (oder „Stop“, „Abmelden“, „Keine Nachrichten mehr“), bekommt er eine kurze
+  Bestätigung und danach keine WhatsApp-Nachrichten mehr: kein Assistent, kein Nachfassen, keine Termin-Nachrichten, keine
+  Kampagnen, auch nicht von Hand. Im Chat steht dann ein roter Hinweis. Schreibt der Kontakt später selbst wieder, können Sie
+  antworten; der Assistent bleibt in diesem Chat aus.
+- Im Verlauf stehen kleine Hinweise, z. B. „Möchte einen Menschen: an Sie übergeben“ oder „Antwort ersetzt: keine Tarif-,
+  Preis- oder Versichereraussagen“. Der ganze Verlauf bleibt für Sie sichtbar.
 - Bei Terminen im Chat: Video-Link, Verschieben, Termin absagen (beides im Fenster, Absagen mit Rückfrage).
 - Rechts bzw. oben: Kontakt, Angaben aus dem Formular, „Lead öffnen“.
 
@@ -182,6 +191,22 @@ Seiten aus der Liste „Seiten“ unten.
   Videocall mit …“ nennt die Person, bei Teams den zuständigen Berater (Anzeigename unter **Team**).
 - Wie sich der Assistent vorstellt und was er fragt, stellen wir für Sie ein. Änderungswünsche gern über
   „Etwas unklar? Feedback“ im Profilmenü oder im Hilfetermin.
+- **KI-Hinweis (seit 15.11.2026, gesetzliche Pflicht):** Die erste Nachricht an jeden neuen Kontakt sagt immer, dass hier
+  der digitale KI-Assistent schreibt, kein Mensch, dass er nicht zu Tarifen berät, Termine mit Ihnen vereinbart und dass man
+  „Mensch“ schreiben kann. Das lässt sich nicht abschalten. Nach mehr als 30 Tagen Pause wiederholt der Assistent den Hinweis kurz.
+  Fragt jemand „Bist du ein Bot?“ oder schreibt „Mensch“ bzw. „Mitarbeiter“, antwortet der Assistent ehrlich, dass er eine KI
+  ist, pausiert in diesem Chat, und Sie bekommen den Chat unter „Braucht dich“ mit einer Mitteilung.
+- **Keine Beratung durch den Assistenten:** Er nennt keine Versicherer, Tarife, Preise oder Beiträge, vergleicht nicht und
+  sagt nichts dazu, was für jemanden passt. Jede Antwort wird vor dem Senden geprüft; fragt ein Lead danach, antwortet er
+  „Das klärt [Ihr Name] im Termin mit Ihnen.“ und bietet einen Termin an.
+- **Erstinformation:** In der ersten Nachricht schickt der Assistent den Link zu Ihrer Erstinformation (§ 15 VersVermV).
+  Hinterlegen unter **Einrichtung → Erstinformation für Ihre Leads**: Status (Makler, Mehrfachvertreter oder
+  Ausschließlichkeitsvertreter), Registernummer (D-XXXX-XXXXX-XX) und Ihre Erstinformation als PDF oder Link. Fehlt etwas,
+  steht oben auf „Heute“ ein Hinweis. Ohne PDF oder Link zeigt der Link Ihre Angaben aus der Einrichtung (Name, Status,
+  Registernummer, Vermittlerregister, Schlichtungsstellen). Tippgeber können den Dienst nicht nutzen, weil der Assistent
+  Termine für einen erlaubten Vermittler vereinbart.
+- **Gesundheitsangaben** aus dem Leadformular (z. B. Vorerkrankungen, Behandlungen, BMI) bekommt der Assistent nicht, und sie
+  gehen nicht per WhatsApp raus. Sie sehen sie im Kontakt unter **Gesundheitsangaben (vertraulich)**.
 
 ## WhatsApp-Vorlagen
 
@@ -193,6 +218,9 @@ Seiten aus der Liste „Seiten“ unten.
 - Status: **In Prüfung bei Meta** (meist Minuten bis wenige Stunden), **Freigegeben** oder
   **Abgelehnt**: dann kümmern wir uns und reichen einen angepassten Text neu ein.
 - Erst wenn „Erste Nachricht an neue Leads“ freigegeben ist, kann der Assistent neue Leads anschreiben.
+- Seit 15.11.2026 enthält die erste Nachricht den vollständigen KI-Hinweis und den Link zur Erstinformation. Die neuen
+  Fassungen reichen wir automatisch ein; bis Meta sie freigibt, geht die bisherige raus und der Assistent ergänzt Hinweis und
+  Link in seiner ersten Antwort.
 - Mit dem Bestandskunden-Modul kommen vier Kampagnen-Vorlagen dazu. Sie haben unten den Knopf
   „Keine Nachrichten mehr“: Wer ihn antippt, bekommt keine Kampagnen mehr (wie bei „STOPP“).
 - **Sie- und Du-Fassungen**: Die Vorlagen des Assistenten gibt es als Du-Fassung („Hallo Julia,“) und als Sie-Fassung
@@ -262,7 +290,7 @@ Seiten aus der Liste „Seiten“ unten.
 ## Einrichtung (neue Kunden)
 
 - Oben steht **„Einrichtung: x von y erledigt“** mit allen Schritten: Login, Fragebogen, App aufs Handy und Mitteilungen, Kalender,
-  E-Mail-Postfach, Provisionen, Meta freigeben, WhatsApp verbinden, Einwilligung im Leadformular, Testlead (den macht performancegrowth).
+  E-Mail-Postfach, Provisionen, Erstinformation, Meta freigeben, WhatsApp verbinden, Einwilligung im Leadformular, Testlead (den macht performancegrowth).
   Nur mit gebuchtem Modul bzw. Team kommen dazu: **Kundenliste hochladen** (Bestandskunden-Modul), **Google-Bewertungslink hinterlegen**
   (Empfehlungen & Bewertungen) und **Team einladen** (weitere Verkäufer gebucht).
   Offene Schritte sind anklickbar. Bei einigen Schritten gibt es ein kurzes Erklärvideo.
@@ -289,8 +317,16 @@ Seiten aus der Liste „Seiten“ unten.
 - **Überspringen mit Grund:** Beim Kalender und bei WhatsApp gibt es **„Meine Gesellschaft erlaubt das nicht“** (WhatsApp auch
   „Ohne WhatsApp arbeiten“). Der Schritt gilt dann als erledigt. Termine tragen Sie im Kontakt unter **Termin → von Hand eintragen**
   ein, Knöpfe ohne Kalender oder WhatsApp erklären beim Antippen, was fehlt.
-- **Einwilligung im Leadformular:** Formulare, die performancegrowth anlegt, enthalten sie automatisch. Bei eigenen Formularen den
-  angezeigten Text als Pflicht-Häkchen einfügen und „Ist in meinem Formular enthalten“ tippen.
+- **Einwilligung im Leadformular:** Formulare, die performancegrowth anlegt, enthalten sie automatisch als Pflicht-Häkchen mit
+  festem Text: „Ich willige ein, dass [Vermittler, Anschrift] mich zu meiner Anfrage per WhatsApp, E-Mail und Telefon kontaktiert.
+  Dabei antwortet zunächst ein KI-gestützter Assistent und vereinbart Termine. Widerruf jederzeit, z. B. mit ‚STOPP‘ oder per
+  E-Mail an [Adresse]. Datenschutzhinweise: [Link].“ Ausgefüllt mit Ihren Angaben zum Kopieren unter **Einrichtung →
+  Erstinformation für Ihre Leads → Einwilligung im Leadformular**. Bei eigenen Formularen genau diesen Text als Pflicht-Häkchen
+  (eigener Hinweis mit Kästchen) einfügen.
+- **Ohne Häkchen:** Hat ein Lead den Hinweis im Formular nicht angehakt, schreibt der Assistent ihn nicht per WhatsApp an (auch
+  kein Nachfassen und keine Termin-Nachrichten per WhatsApp). Er steht auf der Rückrufliste: bitte anrufen oder per E-Mail zu
+  genau dieser Anfrage melden. Schreibt der Lead selbst per WhatsApp, antwortet der Assistent. Formulare ganz ohne Häkchen
+  laufen wie bisher, im Kontakt steht dann „Einwilligung nicht nachgewiesen“.
 - **App aufs Handy:** gilt als erledigt, sobald Mitteilungen auf einem Gerät erlaubt sind.
 - **Erinnerungen:** Bleibt etwas offen, erinnert die App nach 1, 3 und 7 Tagen per E-Mail und Mitteilung. Danach meldet sich
   performancegrowth persönlich. Hilfe jederzeit: 15-Minuten-Hilfetermin in der Einrichtung buchen.
