@@ -214,9 +214,31 @@ Seiten aus der Liste „Seiten“ unten.
   Stunde vorher fragt er noch kurz, ob alles passt (sonst wird verschoben statt verpasst).
 - Verschieben läuft im Chat: In Bestätigung und Erinnerungen steht kein Link mehr, der Lead antwortet einfach
   und der Assistent schlägt neue Zeiten vor. (In der E-Mail-Bestätigung bleibt der Link.)
+- **Knöpfe statt Tippen (seit 15.11.2026):** Wo eine Antwort erwartet wird, hat die Nachricht Schnellantwort-Knöpfe:
+  - Erinnerung am Vortag und kurz vorher: **Ja, passt** (der Termin gilt als bestätigt, der Lead bekommt ein kurzes
+    Danke) oder **Bitte verschieben** (der Assistent schlägt zwei neue Zeiten vor und verschiebt).
+  - Terminbestätigung: **Termin verschieben** und ein kurzer Hinweis, Unterlagen zum Thema bereitzulegen.
+  - Nicht erschienen: „Kein Problem, so etwas passiert. Sollen wir einen neuen Termin finden?“ mit **Ja, neuer Termin**
+    oder **Kein Bedarf mehr**.
+  - Letzte Nachricht einer Nachfass-Abfolge: **Ja, noch aktuell** oder **Nein, danke**.
+  - Nachfassen nach einem Angebot: „Ist für Sie eher der Beitrag oder die Leistung entscheidend?“ mit Knöpfen; der
+    Assistent bietet dann ein kurzes Gespräch mit Ihnen an, ohne Beträge zu nennen.
+  - Tippt ein Lead **Kein Bedarf mehr** oder **Nein, danke**, steht er danach auf **Verloren: Kein Interesse** (Notiz
+    „kein Bedarf“), das Nachfassen endet und er bekommt ein freundliches Danke. Im Verlauf des Kontakts steht das.
+- **Nachfassen mit zwei Terminvorschlägen:** Ist Ihr Kalender verbunden, nennt die Nachfass-Nachricht zwei freie Zeiten
+  (z. B. „Di., 17.11. um 10:00 Uhr oder Mi., 18.11. um 16:00 Uhr“) mit den Knöpfen **Erste Zeit passt**, **Zweite Zeit
+  passt** und **Andere Zeit**. Der Assistent bucht dann genau diese Zeit (er fragt vorher nur, ob Telefon oder Video).
+  Ohne Kalender kommt eine kurze Nachfrage.
 - Bittet ein Lead, sich später zu melden („morgen nochmal“, „nächste Woche“), legt der Assistent sich selbst eine
   **Wiedervorlage** und meldet sich zur vereinbarten Zeit per WhatsApp. Sie sehen sie im Kontakt unter den
   Aktionen („Wiedervorlage vom Assistenten …“); der Lead zählt damit nicht als „ohne nächsten Schritt“.
+- **Erste Nachricht (seit 15.11.2026):** keine Frage, ob der Lead Zeit hat, sondern gleich eine leichte erste Frage
+  zum Produkt mit Knöpfen, z. B. Tierkrankenversicherung „Für welches Tier suchen Sie den Schutz?“ (Hund, Katze),
+  Zahnzusatz „Was ist Ihnen am wichtigsten?“ (Zahnersatz, Prophylaxe, Beides), private Krankenversicherung „Wie sind
+  Sie aktuell beruflich aufgestellt?“ (Angestellt, Selbstständig, Beamter), Privatschutz „Worum geht es Ihnen vor
+  allem?“ (Haftpflicht, Hausrat, Mehreres). Ohne bekanntes Produkt: „Wann erreicht [Ihr Name] Sie am besten für ein
+  kurzes Telefonat?“ (Heute, Morgen, Lieber schriftlich). Die Antwort per Knopf nimmt der Assistent als Antwort auf diese
+  Frage, stellt eine zweite und bietet dann direkt zwei Termine an.
 - Bei Privatschutz und Tierkrankenversicherung gilt: erst der Termin, dann die Fragen. Vor dem Termin klärt der
   Assistent bei Privatschutz nur, worum es genau geht (bei Tieren: welche, wie viele, Tierkranken oder
   Tierhalterhaftpflicht) und wer versichert werden soll, bei Tierkrankenversicherung gar nichts. Die Angaben fürs
@@ -238,18 +260,21 @@ Seiten aus der Liste „Seiten“ unten.
 - Wie sich der Assistent vorstellt und was er fragt, stellen wir für Sie ein. Änderungswünsche gern über
   „Etwas unklar? Feedback“ im Profilmenü oder im Hilfetermin.
 - **KI-Hinweis (seit 15.11.2026, gesetzliche Pflicht):** Die erste Nachricht an jeden neuen Kontakt sagt immer, dass hier
-  der digitale KI-Assistent schreibt, kein Mensch, dass er nicht zu Tarifen berät, Termine mit Ihnen vereinbart und dass man
-  „Mensch“ schreiben kann. Das lässt sich nicht abschalten. Nach mehr als 30 Tagen Pause wiederholt der Assistent den Hinweis kurz.
+  der digitale KI-Assistent schreibt, kein Mensch. Im Erstanschreiben ist der Hinweis kurz („Ich bin der digitale
+  KI-Assistent von [Ihr Name], kein Mensch, …“); schreibt der Lead zuerst, enthält die erste Antwort den ausführlichen
+  Hinweis (berät nicht zu Tarifen, „Mensch“ schreiben). Das lässt sich nicht abschalten. Nach mehr als 30 Tagen Pause wiederholt der Assistent den Hinweis kurz.
   Fragt jemand „Bist du ein Bot?“ oder schreibt „Mensch“ bzw. „Mitarbeiter“, antwortet der Assistent ehrlich, dass er eine KI
   ist, pausiert in diesem Chat, und Sie bekommen den Chat unter „Braucht dich“ mit einer Mitteilung.
 - **Keine Beratung durch den Assistenten:** Er nennt keine Versicherer, Tarife, Preise oder Beiträge, vergleicht nicht und
   sagt nichts dazu, was für jemanden passt. Jede Antwort wird vor dem Senden geprüft; fragt ein Lead danach, antwortet er
   „Das klärt [Ihr Name] im Termin mit Ihnen.“ und bietet einen Termin an.
 - **Erstinformation:** Die Erstinformation (§ 15 VersVermV) muss Ihr Lead beim ersten Kontakt als Dokument bekommen
-  (§ 16 VersVermV), ein Link allein reicht nicht. Deshalb schickt der Assistent sie als **PDF per WhatsApp**: direkt nach
-  seiner ersten Antwort an den Lead (WhatsApp erlaubt Dokumente erst, wenn der Lead geschrieben hat). Bucht ein Lead selbst
-  über die Buchungsseite, hängt das PDF an der **Terminbestätigung per E-Mail**. Der Link zur Erstinformation steht
-  zusätzlich in der ersten Nachricht. Im PDF steht auch, dass der Lead sie auf Wunsch auf Papier bekommt.
+  (§ 16 VersVermV), ein Link allein reicht nicht. Seit 15.11.2026 hängt das **PDF direkt an der ersten WhatsApp**
+  (oben in der Nachricht, „Oben: Erstinformation nach § 15 VersVermV (PDF)“), sobald Meta die neue Vorlage freigegeben
+  hat. Bis dahin, bei noch unvollständiger Erstinformation und wenn der Lead zuerst schreibt, schickt der Assistent das
+  PDF wie bisher nach seiner ersten Antwort (WhatsApp erlaubt freie Dokumente erst, wenn der Lead geschrieben hat). Das
+  PDF geht nie doppelt raus. Bucht ein Lead selbst über die Buchungsseite, hängt das PDF an der **Terminbestätigung per
+  E-Mail**. Im PDF steht auch, dass der Lead sie auf Wunsch auf Papier bekommt.
   - Prüfen unter **Einrichtung → Erstinformation für Ihre Leads**. Vorausgefüllt aus Angebot und Impressum: Status
     (Makler, Mehrfachvertreter oder Ausschließlichkeitsvertreter), Name, Firma, Anschrift, Registernummer
     (D-XXXX-XXXXX-XX), zuständige IHK, Beratung (Standard: ja), Vergütung (Standard: Provision bei Vertretern, Courtage
@@ -278,12 +303,23 @@ Seiten aus der Liste „Seiten“ unten.
 - Status: **In Prüfung bei Meta** (meist Minuten bis wenige Stunden), **Freigegeben** oder
   **Abgelehnt**: dann kümmern wir uns und reichen einen angepassten Text neu ein.
 - Erst wenn „Erste Nachricht an neue Leads“ freigegeben ist, kann der Assistent neue Leads anschreiben.
-- Seit 15.11.2026 enthält die erste Nachricht den vollständigen KI-Hinweis und den Link zur Erstinformation (das PDF
-  folgt nach der ersten Antwort des Leads, siehe Erstinformation). Die neuen
-  Fassungen reichen wir automatisch ein; bis Meta sie freigibt, geht die bisherige raus und der Assistent ergänzt Hinweis und
-  Link in seiner ersten Antwort.
+- **Neue Fassung seit 15.11.2026:** eigene erste Nachricht je Produkt (Tierkrankenversicherung, Zahnzusatz, private
+  Krankenversicherung, Privatschutz, ohne Produkt) mit der ersten Frage, Knöpfen und der Erstinformation als PDF oben
+  in der Nachricht; Knöpfe auch bei Erinnerung, Bestätigung und Nachfassen (siehe Der WhatsApp-Assistent). Die neuen
+  Fassungen reichen wir automatisch ein. Bis Meta sie freigibt, geht die bisherige Fassung raus, Sie müssen nichts tun.
 - Mit dem Bestandskunden-Modul kommen vier Kampagnen-Vorlagen dazu. Sie haben unten den Knopf
-  „Keine Nachrichten mehr“: Wer ihn antippt, bekommt keine Kampagnen mehr (wie bei „STOPP“).
+  „Keine Nachrichten mehr“: Wer ihn antippt, bekommt keine Kampagnen mehr (wie bei „STOPP“). „Lücke schließen“ nennt
+  einen Grund („Viele meiner Kunden haben beim Thema Hausrat eine Lücke, die erst im Schadenfall auffällt. Soll ich in
+  10 Minuten kurz prüfen, ob das bei Ihnen auch so ist?“) mit den Knöpfen **Ja, gern prüfen** und **Kein Bedarf**.
+  „Kein Bedarf“ beantworten wir mit einem kurzen Danke, ohne Lead und ohne Abmeldung.
+- **Wie Sie sich nennen:** In Kampagnen stellen Sie sich passend zu Ihrem Status aus der Erstinformation vor:
+  Ausschließlichkeitsvertreter mit Ihrer Gesellschaft („hier ist Anna Beispiel von der Allianz“), Mehrfachvertreter als
+  „Ihr Versicherungsvertreter“, Makler als „Ihr Versicherungsmakler“. „Versicherungsberater“ verwenden wir nicht, das ist
+  ein eigener Beruf.
+- **Empfehlung:** Die Bitte um Empfehlung nennt das Thema („für den das Thema Tierversicherung gerade auch wichtig
+  ist“) und geht am besten direkt nach einem guten Moment raus, z. B. wenn ein Kunde zufrieden antwortet.
+- **Zwei Fassungen im Test:** Für einzelne Nachrichten testen wir zwei Formulierungen. Jeder Lead bekommt fest eine
+  davon; sobald genug Antworten da sind und eine Fassung klar besser ankommt, wird sie für alle Standard.
 - **Sie- und Du-Fassungen**: Die Vorlagen des Assistenten gibt es als Du-Fassung („Hallo Julia,“) und als Sie-Fassung
   („Guten Tag Frau Schneider,“). Für Kontakte ohne bekannten Nachnamen gibt es eine eigene Sie-Fassung, die mit
   „Guten Tag,“ beginnt. Wir reichen alle Fassungen automatisch bei Meta ein, so greift ein Wechsel der Ansprache
@@ -295,11 +331,11 @@ Seiten aus der Liste „Seiten“ unten.
 ## Automatisches Nachfassen (Abfolgen)
 
 - Standardmäßig an: Die App fasst nach einem Ergebnis selbst nach:
-  - **Nicht erreicht:** sofort eine WhatsApp („Wann passt es dir?“), nach 6 Tagen eine letzte, freundliche
-    WhatsApp. Die Anrufe dazwischen plant der Anrufplan (siehe „Verloren und nicht erreicht“), es kommt keine
+  - **Nicht erreicht:** sofort eine WhatsApp (mit verbundenem Kalender mit zwei konkreten Zeiten zur Auswahl), nach
+    6 Tagen eine letzte, freundliche WhatsApp mit den Knöpfen „Ja, noch aktuell“ und „Nein, danke“. Die Anrufe dazwischen plant der Anrufplan (siehe „Verloren und nicht erreicht“), es kommt keine
     zweite Anruf-Aufgabe dazu. Danach ist Schluss.
-  - **Angebot gesendet:** nach 3 Tagen eine WhatsApp („Konntest du dir das Angebot anschauen?“),
-    nach 7 Tagen eine Anruf-Aufgabe.
+  - **Angebot gesendet:** nach 3 Tagen eine WhatsApp („Konnten Sie sich das Angebot schon anschauen? Ist für Sie
+    eher der Beitrag oder die Leistung entscheidend?“ mit Knöpfen), nach 7 Tagen eine Anruf-Aufgabe.
   - **Nicht erschienen:** sofort eine WhatsApp, ob ihr einen neuen Termin findet (im Chat, ohne Link), nach 2 Tagen eine Anruf-Aufgabe.
   - **Chat ruht:** Antwortet ein Lead dem Assistenten nicht (auf die erste Nachricht oder mitten im Gespräch),
     fasst der Assistent nach 2 Stunden nach, nach 8 Stunden noch einmal, am nächsten Tag ein drittes Mal (nur solange
@@ -752,9 +788,30 @@ Seiten aus der Liste „Seiten“ unten.
   Die Wahl steht in der Bestätigungsmail und lässt sich bis zur Löschung im Konto ändern (Karte „Ihr Vertrag“), auch
   zurück auf 24 Monate. Die Sperrliste für Widersprüche bleibt pseudonymisiert, Verträge und Rechnungen bewahren wir
   nach den gesetzlichen Fristen auf.
-  Vor der Bestätigung fragt die App freiwillig nach dem Hauptgrund und zeigt passende Möglichkeiten (z. B. Pause,
-  Budget senken, Zusatzmodule beenden, 15 Minuten mit uns, Kampagnen-Check, Rückruf). „Direkt zur Kündigung“ bzw.
-  „Trotzdem kündigen“ führt jederzeit mit einem Klick zur Bestätigung.
+  Vor der Bestätigung fragt die App freiwillig nach dem Hauptgrund und zeigt passende Möglichkeiten. „Direkt zur
+  Kündigung“ bzw. „Trotzdem kündigen“ führt jederzeit mit einem Klick zur Bestätigung.
+  **Angebote je Grund (seit 15.11.2026):**
+  - *Zu teuer:* Nachlass auf die Monatsgebühr (Standard 50 % auf die nächsten 2 Monatsrechnungen). Bedingung: Der
+    Vertrag läuft danach noch mindestens 3 Monate; den Tag sehen Sie vor der Annahme, Sie bestätigen ihn mit einem
+    Häkchen. Danach steht er unter „Ihr Vertrag“ (Zeile „Nachlass“) und in der Bestätigungsmail; eine Kündigung wirkt
+    frühestens zu diesem Tag. Alternativ ein kleineres Paket (Werbebudget senken, niedrigere Preisstufe).
+  - *Zu wenige Leads:* Wir starten Ihre Kampagne neu (neue Anzeigen, neue Zielgruppen), dazu ein Monat Betreuung
+    kostenlos (sichtbar auf der nächsten Rechnung).
+  - *Leads passen nicht:* Kostenlose Neuausrichtung (andere Sparte, Region oder Formularfragen; Ihr Wunsch als Text)
+    und wir prüfen Leads mit falschen Daten der letzten 30 Tage für eine Gutschrift.
+  - *Zu wenige Abschlüsse:* Kostenloser Wechsel auf die Sparte mit der besten Abschlussquote über alle unsere Kunden
+    (ohne neue Einrichtungsgebühr).
+  - *Keine Zeit:* Pause ohne Kosten, bis zu 3 Monate: Anzeigen und die ganze Abrechnung ruhen, danach geht es
+    automatisch weiter.
+  - *App passt nicht:* Wir richten die App mit Ihnen ein, 30 Minuten per Video mit Bildschirmfreigabe (Termin direkt
+    wählen).
+  - *Höre auf / wechsle:* Paket „Nur Bestand“ für 149 € netto im Monat: Ihre Daten und das Bestandskunden-Modul mit
+    demselben Kontingent, ohne neue Leads und ohne Betreuung; „Empfehlungen & Bewertungen“ optional für 59 € netto im
+    Monat dazu. Dazu der Hinweis „Kollegen empfehlen“ für Ihren Nachfolger.
+  Rabatte (Nachlass, kostenloser Betreuungsmonat, Gutschrift, Pause ohne Kosten) gibt es erst ab 3 Monaten
+  Vertragsdauer, höchstens einmal in 12 Monaten und nicht bei jährlicher Vorauszahlung; sonst sehen Sie die übrigen
+  Möglichkeiten. 30 Tage nach Vertragsende kommt einmal ein Rückkehrangebot per E-Mail: Konto reaktivieren ohne neue
+  Einrichtungsgebühr.
 - Vertragsfragen: bitte direkt bei uns melden.
 
 ## Konto ruht nach Vertragsende (seit 15.11.2026)
@@ -779,7 +836,7 @@ Seiten aus der Liste „Seiten“ unten.
   im Monat“. „Neu“ heißt: Neues Produkt, wir sammeln gerade Erfahrungswerte. Den Leadpreis sehen Sie nach den ersten Wochen
   in Ihren Zahlen.
 - **Buchen:** „Produkt buchen“ → Tagesbudget wählen (Plus/Minus oder Regler), Start „so bald wie möglich“ oder ab Datum, Häkchen
-  setzen, „Jetzt kostenpflichtig buchen“. Die Vorschau zeigt: einmalig 990 € Einrichtung, monatlich 350 € mehr (netto, ab Start), das
+  setzen, „Jetzt kostenpflichtig buchen“. Die Vorschau zeigt: keine Einrichtungsgebühr, monatlich 350 € mehr (netto, ab Start), das
   neue Werbebudget gesamt pro Monat und – sehr deutlich – wenn dadurch eine andere Betreuungsstufe gilt (wie bei „Budget ändern“).
   Über 10.000 € Werbebudget pro Monat wird daraus eine Anfrage; wir melden uns mit einem individuellen Angebot.
 - **Danach:** Status „In Einrichtung“. Wir richten Kampagne, Leadformular und die Fragen des WhatsApp-Assistenten ein (in der Regel
@@ -1247,16 +1304,27 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
 - **Signatur**: einmal hinterlegen (Name, Agentur, Telefon, Adresse). Sie steht automatisch unter jeder E-Mail an
   Leads – mit und ohne Vorlage. In einer Vorlage kann man die Stelle mit {signatur} selbst festlegen.
 - **Vorlagen** mit Platzhaltern {anrede}, {vorname}, {nachname}, {name}, {produkt}, {terminlink}, {meinname}, {signatur}.
-  Dazu Platzhalter, die das Fenster über eigene Felder füllt: {termin_datum}, {termin_art}, {videolink} (Satz entfällt ohne
-  Link), {termin_unterlagen}, {fehlende_unterlagen}, {melde_datum}, {versicherer}, {vertragsnummer}, {kuendigungstermin},
-  {musterkuendigung}, {wuensche}, {rat}. Sie funktionieren auch in eigenen Vorlagen.
+  Seit 15.11.2026 zusätzlich, automatisch gefüllt: {betreff_name} (vorn im Betreff: „Frau Schneider, “ bzw. „Julia, “,
+  ohne bekannten Namen leer), {ihr_produkt} („Ihrer Zahnzusatzversicherung“, „Ihrem Privatschutz“), {rueckruf_1} und
+  {rueckruf_2} (zwei Rückrufzeiten, z. B. „heute um 17 Uhr“ und „morgen um 10 Uhr“), {anruf_tag} (Wochentag in zwei
+  Werktagen). Dazu Platzhalter, die das Fenster über eigene Felder füllt: {termin_datum}, {termin_art}, {videolink} (Satz
+  entfällt ohne Link), {termin_unterlagen}, {fehlende_unterlagen}, {melde_datum}, {versicherer}, {vertragsnummer},
+  {kuendigungstermin}, {musterkuendigung}, {wuensche}, {rat}, {vorteil_1}, {vorteil_2}, {vorteil_3}. Sie funktionieren
+  auch in eigenen Vorlagen.
   {anrede} richtet sich nach der Ansprache: „Guten Tag Frau Beispiel“ (Sie mit bekannter Anrede; sonst „Guten Tag Anna
   Beispiel“, ohne Nachname „Guten Tag“) oder „Hallo Anna“ (Du).
   Die Standardvorlagen gibt es in beiden Fassungen; beim Wechsel der Ansprache ziehen unveränderte Standardvorlagen mit,
   eigene Texte bleiben.
 - **{terminlink}**: persönlicher Buchungslink für genau diesen Kontakt (Zeiten aus Ihrem Kalender, Buchung landet
   am Kontakt). Steht schon ein Termin an oder ist kein Kalender verbunden, fällt der Satz mit dem Link weg.
-  In „Nicht erreicht“ und „Nachfassen Angebot“ ist er schon drin.
+  In „Nicht erreicht“ und „Nicht erschienen“ ist er schon drin.
+- **Verkaufsstärkere Standardvorlagen (15.11.2026):** jede E-Mail hat ein Ziel und ist kurz, der Betreff nennt Namen und
+  Produkt („Frau Schneider, kurz zu Ihrer Zahnzusatzversicherung“).
+  - **Nicht erreicht**: zwei Rückrufzeiten zur Auswahl plus Terminlink.
+  - **Angebot**: drei Vorteile als Liste, die Sie im Fenster eintragen (nur, was im Angebot steht), und ein fester
+    nächster Schritt: „Ich rufe Sie am Donnerstag kurz an, passt das?“.
+  - **Nachfassen Angebot**: eine konkrete Frage: „Ist für Sie eher der Beitrag oder die Leistung entscheidend?“.
+  - Unveränderte Standardvorlagen bekommen die neue Fassung beim nächsten Öffnen automatisch, selbst geänderte bleiben.
 - Beim Kontakt: Kachel **E-Mail**. Vorlage wählen, anpassen, Dokumente (z. B. das Angebot) anhängen, senden.
   Die E-Mail geht von der eigenen Adresse raus und steht im Verlauf.
 - **Erinnern, falls kein Termin gebucht wird**: Steht der Terminlink in der Mail, legt die App nach dem Senden eine

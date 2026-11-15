@@ -96,7 +96,7 @@ export async function sendTemplateAction(conversationId: string, purpose: string
   if (!conv) return { ok: false, error: "Chat nicht gefunden." };
   const situation = await chooseFollowup(conv.id);
   if (situation.kind === "blocked") return { ok: false, error: situation.reason };
-  const option = (await followupOptions(conv.id)).find((o) => o.purpose === purpose);
+  const option = (await followupOptions(conv.id)).find((o) => o.key === purpose);
   if (!option?.approved) return { ok: false, error: "Für diese Vorlage gibt es noch keine Freigabe von Meta." };
   try {
     await sendWhatsAppNotice({
@@ -104,6 +104,8 @@ export async function sendTemplateAction(conversationId: string, purpose: string
       to: conv.contactPhone,
       purpose: option.purpose,
       params: option.params,
+      legacyParams: option.legacyParams,
+      buttonPayloads: option.buttonPayloads,
       anrede: option.anrede,
       text: option.preview,
       leadId: conv.leadId,

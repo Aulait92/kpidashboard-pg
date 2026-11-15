@@ -141,6 +141,14 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-sequences");
     return { error: e instanceof Error ? e.message : String(e) };
   });
+  // A/B-Tests der Vorlagen: einmal je Stunde prüfen, ob eine Fassung genug Vorsprung hat (lib/whatsapp/ab-test.ts)
+  const abTests =
+    now.getUTCMinutes() < 5
+      ? await import("@/lib/whatsapp/ab-test").then((m) => m.promoteAbWinners(now)).catch((e: unknown) => {
+          reportError(e, "cron-ab-test");
+          return null;
+        })
+      : undefined;
   // Nächster Schritt: tägliche Erinnerung ab 8 Uhr Berlin an den zuständigen Berater (Sperre je Tag und Login)
   const naechsterSchritt = await import("@/lib/next-step-reminder").then((m) => m.runNextStepReminders(now)).catch((e: unknown) => {
     reportError(e, "cron-next-step-reminder");
@@ -255,7 +263,7 @@ async function handle(req: Request): Promise<Response> {
       reportError(e, "cron-support-templates");
       return null;
     });
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, naechsterSchritt, vertraege, terminNachfragen, whatsappConnect, templates, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, abTests, naechsterSchritt, vertraege, terminNachfragen, whatsappConnect, templates, supportTemplates, status });
 }
 
 export const GET = handle;

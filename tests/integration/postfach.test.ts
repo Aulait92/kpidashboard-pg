@@ -50,7 +50,7 @@ describe("Postfach", () => {
     expect(fuelle(v[0].body, w)).not.toContain("{terminlink}");
     expect(fuelle(v[0].body, w)).not.toMatch(/[\u2013\u2014]/);
     expect(fuelle(v[0].body, w)).toContain("Susanne Meier");
-    expect(fuelle(v[0].subject, w)).toBe("Ihre Anfrage: TKV-Katze");
+    expect(fuelle(v[0].subject, w)).toBe("Anna Schmitt, kurz zu Ihrer Katzenversicherung");
     await prisma.mailTemplate.deleteMany({ where: { customerId: c.id } });
   });
 });
@@ -108,14 +108,14 @@ describe("Ansprache, Terminlink und Erinnerung (14.11.2026)", () => {
     // Anrede aus dem Formular: „Guten Tag Frau Pohl,“
     const mitAnrede = fuelle(STANDARD_VORLAGEN_JE.sie[0].body, werteFuer({ name: "Eva Pohl", source: "TKV", salutation: "Frau" }, "Jana", { ansprache: "sie" }));
     expect(mitAnrede.startsWith("Guten Tag Frau Pohl,")).toBe(true);
-    expect(sie).toContain(`Termin aussuchen: ${link}`);
+    expect(sie).toContain(`direkt einen Termin aus: ${link}`);
     const ohneNachname = fuelle(STANDARD_VORLAGEN_JE.sie[0].body, werteFuer({ name: "Eva", source: "TKV" }, "Jana", { ansprache: "sie" }));
     expect(ohneNachname.startsWith("Guten Tag,")).toBe(true);
     expect(ohneNachname).not.toContain("aussuchen");
-    expect(ohneNachname).toContain("Wann passt es Ihnen für ein kurzes Telefonat?");
+    expect(ohneNachname).toContain("Passt Ihnen eine der beiden Zeiten?");
     const du = fuelle(STANDARD_VORLAGEN_JE.du[0].body, werteFuer({ name: "Eva Pohl", source: "TKV" }, "Jana", { ansprache: "du", terminlink: link }));
     expect(du.startsWith("Hallo Eva,")).toBe(true);
-    expect(du).toContain("kannst du dir");
+    expect(du).toContain("such dir hier direkt einen Termin aus");
   });
 
   it("Ansprache wechseln stellt nur unveränderte Standardvorlagen um", async () => {

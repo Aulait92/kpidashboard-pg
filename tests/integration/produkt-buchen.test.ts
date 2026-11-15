@@ -102,6 +102,8 @@ async function setup(extra: { retainer?: number; interval?: string; daily?: numb
 }
 
 describe("Weiteres Produkt buchen", () => {
+  // Einrichtung mit Gebühr nur zum Testen der Stripe-Pfade (live 0 €)
+  const TEST_SETUP = 990;
   const customers: string[] = [];
   const offers: string[] = [];
   const track = (r: { customerId: string; offerId: string }) => (customers.push(r.customerId), offers.push(r.offerId), r);
@@ -110,7 +112,7 @@ describe("Weiteres Produkt buchen", () => {
     requireTestDb();
     process.env.STRIPE_SECRET_KEY = "sk_test_mock";
     // Die Stripe-Pfade der Einrichtung mit einer Gebühr testen (live ist sie 0 €, siehe Test unten)
-    (PRICE_LIST as { extraProductSetupSelfService: number }).extraProductSetupSelfService = PRICE_LIST.extraProductSetup;
+    (PRICE_LIST as { extraProductSetupSelfService: number }).extraProductSetupSelfService = TEST_SETUP;
     await saveCatalogItem("privatschutz", { enabled: true, proven: false, benefit: "Test" });
     await saveCatalogItem("unfall", { enabled: false, proven: false, benefit: "Test" });
   });
@@ -183,7 +185,7 @@ describe("Weiteres Produkt buchen", () => {
     expect(again.ok).toBe(false);
     const setups = stripeState.calls.filter((c) => c.method === "invoiceItem.create");
     expect(setups).toHaveLength(1);
-    expect((setups[0].args[0] as { price_data: { unit_amount: number } }).price_data.unit_amount).toBe(PRICE_LIST.extraProductSetup * 100);
+    expect((setups[0].args[0] as { price_data: { unit_amount: number } }).price_data.unit_amount).toBe(TEST_SETUP * 100);
     expect(stripeState.calls.filter((c) => c.method === "update" || c.method === "create")).toHaveLength(0);
     const b = await prisma.productBooking.findFirstOrThrow({ where: { customerId } });
     expect(b).toMatchObject({ status: "setup", setupStatus: "added", feeStatus: "pending", pricing: "list" });

@@ -49,6 +49,7 @@ async function load(customerId: string) {
       cancelRequestedAt: true,
       cancelEffectiveAt: true,
       cancelRequestedBy: true,
+      retentionCommitUntil: true,
       salesContact: { select: { id: true } },
       onboarding: { select: { offerId: true, salesContactId: true } },
       users: { where: { role: "BUYER", teamRole: "owner" }, select: { email: true } },
@@ -70,7 +71,10 @@ export async function contractCancelInfo(customerId: string, now = new Date()): 
   const term = normalizeTerm(offer?.term);
   const annual = c.billingInterval === "year";
   const todayIso = berlinIso(now);
-  const next = cancelDate({ startIso, term, annual, todayIso });
+  const regular = cancelDate({ startIso, term, annual, todayIso });
+  // Halteangebot: nach angenommenem Nachlass frühestens zum Ende der vereinbarten Mindestlaufzeit
+  const commitIso = c.retentionCommitUntil ? berlinIso(new Date(c.retentionCommitUntil.getTime() - 1)) : null;
+  const next: CancelDate = commitIso && commitIso > regular.effectiveIso ? { ...regular, effectiveIso: commitIso, reason: "halteangebot" } : regular;
   return {
     startIso,
     term,
@@ -114,8 +118,9 @@ export async function cancelContract(
     const again = await contractCancelInfo(customerId, now);
     return again?.requested ? { ok: true, effectiveIso: again.requested.effectiveIso, receivedAt: again.requested.at, already: true } : { ok: false, error: "Das hat gerade nicht geklappt. Bitte versuchen Sie es noch einmal." };
   }
-  // Anti-Churn: offene Kündigungsabsichten als „gekündigt“ abschließen
+  // Anti-Churn: offene Kündigungsabsichten als „gekündigt“ abschließen, angenommene Halteangebote als „trotzdem gekündigt“
   await import("@/lib/anti-churn-server").then((m) => m.closeChurnIntents(customerId, now)).catch(() => {});
+  await import("@/lib/halteangebote-server").then((m) => m.markOffersCancelled(customerId, now)).catch(() => {});
   await audit("contract.cancel", {
     entity: "Customer",
     entityId: customerId,

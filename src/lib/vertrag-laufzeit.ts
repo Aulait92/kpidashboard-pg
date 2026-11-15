@@ -49,7 +49,8 @@ export function berlinEndOfDay(dayIso: string): Date {
 /** TT.MM.JJJJ */
 export const fmtIso = (s: string) => s.split("-").reverse().join(".");
 
-export type CancelReason = "mindestlaufzeit" | "abrechnungsmonat" | "zahlungsjahr" | "kalendermonat";
+// halteangebot: Mindestlaufzeit nach angenommenem Nachlass (lib/halteangebote.ts, Customer.retentionCommitUntil)
+export type CancelReason = "mindestlaufzeit" | "abrechnungsmonat" | "zahlungsjahr" | "kalendermonat" | "halteangebot";
 
 export type CancelDate = {
   /** Letzter Vertragstag (inklusive) */
@@ -110,6 +111,8 @@ export function cancelDateText(c: CancelDate, startIso: string | null): string {
         : `Ihr Vertrag endet am ${end}, zum Ende des Zahlungsjahres (Kündigung bis ${fmtIso(c.deadlineIso!)} möglich).`;
     case "abrechnungsmonat":
       return `Ihr Vertrag endet am ${end}, zum Ende des laufenden Abrechnungsmonats.`;
+    case "halteangebot":
+      return `Ihr Vertrag endet am ${end}, zum Ende der Mindestlaufzeit, die Sie mit dem Nachlass vereinbart haben.`;
     default:
       return `Ihr Vertrag endet am ${end}, zum Ende des laufenden Monats.`;
   }

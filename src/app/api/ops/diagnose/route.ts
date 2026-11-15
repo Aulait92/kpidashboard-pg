@@ -109,6 +109,18 @@ async function gedankenstriche() {
   return { neuigkeiten, vorlagen, signaturen, whatsappVorlagen: whatsapp };
 }
 
+/** Offene Angebote (Entwurf/versendet) mit mehr als einem Produkt: enthalten ggf. noch Setup für weitere Produkte (bis 15.11.2026: 990 € je weiterem). */
+async function angebote() {
+  const rows = await prisma.offer.findMany({
+    where: { status: { in: ["draft", "sent"] } },
+    orderBy: { createdAt: "asc" },
+    select: { number: true, status: true, company: true, contactName: true, products: true, setupFee: true, term: true, createdAt: true },
+  });
+  return rows
+    .map((o) => ({ ...o, produkte: Array.isArray(o.products) ? o.products.length : 0, products: undefined }))
+    .filter((o) => o.produkte > 1);
+}
+
 async function kunden() {
   return prisma.customer.findMany({
     where: { archived: false },
@@ -313,7 +325,7 @@ async function d360webhook() {
   return { baseUrl: base.replace(/\/\/([^/@]*@)/, "//"), baseAusVariable: raw !== undefined, konten: out };
 }
 
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, gedankenstriche, login, meta, capi };
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi };
 
 export async function GET(req: Request): Promise<Response> {
   if (!authorized(req)) return Response.json({ error: "Unauthorized" }, { status: 401 });

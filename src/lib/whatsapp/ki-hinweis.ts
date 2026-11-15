@@ -41,9 +41,17 @@ export function erstinfoPdfText(an: Ansprache, advisor: string): string {
   );
 }
 
-/** Wurde in dieser Unterhaltung schon das PDF der Erstinformation geschickt? */
+/** Markierung im gespeicherten Text einer Vorlage, die das PDF der Erstinformation im Kopf trug (templates.ts). */
+export const ERSTINFO_KOPF = "[Erstinformation als PDF]";
+
+/**
+ * Wurde in dieser Unterhaltung schon das PDF der Erstinformation geschickt? Als eigenes Dokument oder im Kopf des
+ * Erstanschreibens (v4, dann steht ERSTINFO_KOPF am Anfang des gespeicherten Textes). So geht es nie doppelt raus.
+ */
 export function hasErstinfoPdf(messages: { direction?: string | null; kind?: string | null; body?: string | null }[]): boolean {
-  return messages.some((m) => m.direction !== "inbound" && m.kind === "document" && /Erstinformation/.test(m.body ?? ""));
+  return messages.some(
+    (m) => m.direction !== "inbound" && ((m.kind === "document" && /Erstinformation/.test(m.body ?? "")) || (m.kind === "template" && (m.body ?? "").startsWith(ERSTINFO_KOPF))),
+  );
 }
 
 /** Vollständiger Hinweis für die erste freie Nachricht: „Guten Tag Frau Schneider, hier schreibt …“. */

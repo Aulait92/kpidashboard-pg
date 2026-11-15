@@ -11,6 +11,8 @@
 // - Reaktivierung per Klick (Inhaber): Konto sofort wieder aktiv, alle Daten unverändert. Abrechnung und Kampagnen
 //   startet Ole neu (Aufgabe + Push „Reaktivierung: …“), denn ein neuer Vertrag braucht Paket und Preis.
 // - Lebenszyklus (CustomerLifecycleEvent: cancelled, dormant, reactivated, deleted) für Statistik und Kundenakte.
+// - Rückkehrangebot (Halteangebote, Ole 15.11.2026): 30 Tage nach Vertragsende einmal je Kunde eine E-Mail „Konto
+//   reaktivieren ohne neue Einrichtungsgebühr“ (Customer.winbackOfferAt); die Reaktivierungs-Aufgabe nennt es.
 //
 // Nach der endgültigen Löschung bleiben: die Kundenzeile mit Name und Abrechnungsfeldern, Angebote/Verträge,
 // Umsatzzeilen (Revenue, ManualRevenue), Lebenszyklus-Ereignisse mit Beträgen, anonymisierte Lead-Zeilen (Produkt,
@@ -147,16 +149,17 @@ export async function setRetentionChoice(
 
 // ─── Täglicher Cron ──────────────────────────────────────────────────────
 
-export type RetentionCronResult = { dormant: number; reminders: number; deleted: number; errors: string[] };
+export type RetentionCronResult = { dormant: number; reminders: number; winback: number; deleted: number; errors: string[] };
 
 /** `only`: nur diese Kunden (Tests auf einer geteilten Datenbank). */
 export type RetentionScope = { only?: string[] };
 const scoped = (s?: RetentionScope) => (s?.only ? { id: { in: s.only } } : {});
 
 export async function runRetentionCron(now = new Date(), scope?: RetentionScope): Promise<RetentionCronResult> {
-  const res: RetentionCronResult = { dormant: 0, reminders: 0, deleted: 0, errors: [] };
+  const res: RetentionCronResult = { dormant: 0, reminders: 0, winback: 0, deleted: 0, errors: [] };
   res.dormant = await enterDormancy(now, res.errors, scope);
   res.reminders = await sendRetentionReminders(now, res.errors, scope);
+  res.winback = await sendWinbackOffers(now, res.errors, scope);
   res.deleted = await runDueDeletions(now, res.errors, scope);
   return res;
 }
@@ -351,6 +354,66 @@ async function mailReminder(customerId: string, contactId: string | null, delete
   return res.ok;
 }
 
+/**
+ * Rückkehrangebot (Halteangebote, Ole 15.11.2026): `rueckkehrDays` (Standard 30) Tage nach Vertragsende eine E-Mail an
+ * ruhende Konten: „Konto reaktivieren, ohne neue Einrichtungsgebühr“. Einmal je Kunde (winbackOfferAt bleibt auch nach
+ * einer Reaktivierung gesetzt), nicht wenn die Löschung schon fällig ist. Abschaltbar unter Admin → Einstellungen →
+ * Halteangebote.
+ */
+export async function sendWinbackOffers(now = new Date(), errors: string[] = [], scope?: RetentionScope): Promise<number> {
+  const { loadHalteSettings } = await import("@/lib/halteangebote-server");
+  const s = await loadHalteSettings();
+  if (!s.rueckkehrOn) return 0;
+  // Vertragsende (letzter Tag, 12:00 UTC gespeichert) mindestens `rueckkehrDays` Tage her
+  const rows = await prisma.customer.findMany({
+    where: {
+      dormantSince: { not: null },
+      dataDeletedAt: null,
+      winbackOfferAt: null,
+      isTest: false,
+      cancelEffectiveAt: { lte: new Date(now.getTime() - s.rueckkehrDays * 86_400_000) },
+      OR: [{ deleteAfter: null }, { deleteAfter: { gt: now } }],
+      ...scoped(scope),
+    },
+    select: { id: true, cancelEffectiveAt: true, deleteAfter: true, salesContact: { select: { id: true } }, onboarding: { select: { salesContactId: true } } },
+  });
+  let sent = 0;
+  for (const c of rows) {
+    const claimed = await prisma.customer.updateMany({ where: { id: c.id, winbackOfferAt: null }, data: { winbackOfferAt: now } });
+    if (claimed.count === 0) continue;
+    try {
+      const to = await ownerEmails(c.id);
+      let ok = false;
+      if (to.length) {
+        const base = appUrl();
+        const endIso = berlinIso(c.cancelEffectiveAt!);
+        const res = await sendCustomerMail({
+          to,
+          subject: "Ihr Rückkehrangebot: ohne neue Einrichtungsgebühr",
+          greeting: await greetingFor(c.id, c.salesContact?.id ?? c.onboarding?.salesContactId ?? null),
+          paragraphs: [
+            `Ihr Vertrag mit uns endete am ${fmtIso(endIso)}. Ihre Leads, Kunden und Einstellungen sind noch so da, wie Sie sie verlassen haben.`,
+            "Wenn Sie wieder neue Anfragen möchten: Reaktivieren Sie Ihr Konto mit einem Klick, ohne neue Einrichtungsgebühr. Wir melden uns danach, um Paket, Preis und den Start Ihrer Kampagnen mit Ihnen abzustimmen. Kosten entstehen erst, wenn Sie zugestimmt haben.",
+            c.deleteAfter
+              ? `Das Angebot gilt, solange wir Ihre Daten aufbewahren (bis ${fmtIso(berlinIso(new Date(c.deleteAfter.getTime() - 1)))}).`
+              : "Das Angebot gilt, solange wir Ihre Daten aufbewahren.",
+            "Fragen? Antworten Sie einfach auf diese E-Mail.",
+          ],
+          ...(base ? linkBlock([{ label: "Konto reaktivieren", url: `${base}/buyer/ruhend#reaktivieren` }]) : {}),
+        }).catch((err) => ({ ok: false as const, error: err instanceof Error ? err.message : String(err) }));
+        if (!res.ok) reportError(new Error(res.error), "winback-mail", { customer: c.id });
+        ok = res.ok;
+      }
+      if (ok) sent++;
+      await audit("customer.winback_offer", { entity: "Customer", entityId: c.id, customerId: c.id, details: { days: s.rueckkehrDays, sent: ok }, actor: SYSTEM });
+    } catch (err) {
+      reportError(err, "winback", { customer: c.id });
+      errors.push(`rückkehr ${c.id}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+  return sent;
+}
+
 /** Ende der Aufbewahrung erreicht → endgültig löschen (nur ruhende Konten, also nie vor Vertragsende). */
 export async function runDueDeletions(now = new Date(), errors: string[] = [], scope?: RetentionScope): Promise<number> {
   const due = await prisma.customer.findMany({ where: { deleteAfter: { lte: now }, dormantSince: { not: null }, dataDeletedAt: null, ...scoped(scope) }, select: { id: true } });
@@ -456,12 +519,15 @@ export async function reactivateCustomer(customerId: string, opts: { actor: Audi
       cancelEffectiveAt: true,
       cancelReason: true,
       retainerEnd: true,
+      winbackOfferAt: true,
       salesContact: { select: { id: true } },
       onboarding: { select: { salesContactId: true } },
     },
   });
   if (!c) return { ok: false, error: "Konto nicht gefunden." };
   if (c.dataDeletedAt) return { ok: false, error: "Ihre Daten sind bereits gelöscht. Bitte sprechen Sie uns für einen Neustart an." };
+  // Rückkehrangebot verschickt (vor dieser Reaktivierung): ohne neue Einrichtungsgebühr
+  const winback = !!c.winbackOfferAt && !!c.dormantSince && c.winbackOfferAt >= c.dormantSince;
   if (!c.dormantSince) return { ok: true, already: true };
   const claimed = await prisma.customer.updateMany({
     where: { id: customerId, dormantSince: { not: null }, dataDeletedAt: null },
@@ -494,6 +560,7 @@ export async function reactivateCustomer(customerId: string, opts: { actor: Audi
       cancelledAt: (lastCancel?.at ?? c.cancelRequestedAt)?.toISOString() ?? null,
       contractEnd: c.cancelEffectiveAt ? berlinIso(c.cancelEffectiveAt) : null,
       package: pkg,
+      winback,
     },
   });
   await audit("customer.reactivate", { entity: "Customer", entityId: customerId, customerId, details: { dormantDays, mrr, package: pkg }, actor: opts.actor });
@@ -511,6 +578,7 @@ export async function reactivateCustomer(customerId: string, opts: { actor: Audi
             `Konto im Kundenbereich reaktiviert am ${fmtIso(berlinIso(now))} von ${opts.actor.email ?? "unbekannt"} (ruhte ${dormantDays} Tage).`,
             `Bisher: ${pkg}${mrr ? `, ${eur(mrr)} netto im Monat` : ""}.`,
             lastCancel?.churnReason || c.cancelReason ? `Kündigungsgrund damals: ${[lastCancel?.churnReason, c.cancelReason].filter(Boolean).join(", ")}.` : null,
+            winback ? `Rückkehrangebot vom ${fmtIso(berlinIso(c.winbackOfferAt!))}: keine neue Einrichtungsgebühr berechnen.` : null,
             "Zu tun: anrufen, Paket und Preis abstimmen (neues Angebot oder Stripe-Abo), dann Abrechnung → Betreuungsgebühr (Ende entfernen bzw. neu setzen) und Kampagnen wieder starten. Das Konto ist schon aktiv, alle Daten sind da.",
           ]
             .filter(Boolean)

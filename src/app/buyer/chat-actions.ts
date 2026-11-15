@@ -129,6 +129,8 @@ export async function followupBuyerAction(formData: FormData): Promise<void> {
         to: conv.contactPhone,
         purpose: choice.purpose,
         params: choice.params,
+        legacyParams: choice.legacyParams,
+        buttonPayloads: choice.buttonPayloads,
         text: choice.preview,
         leadId: conv.leadId,
         contactName: conv.contactName,

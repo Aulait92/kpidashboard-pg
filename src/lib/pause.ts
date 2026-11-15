@@ -4,7 +4,7 @@
 // per Klick): alles zurück. Die Automatik läuft im zentralen Cron.
 
 import { prisma } from "@/lib/prisma";
-import { pauseBilling, resumeBilling, IntroPhaseError, type BillingPauseState } from "@/lib/billing";
+import { pauseBilling, pauseBillingFully, resumeBilling, IntroPhaseError, type BillingPauseState } from "@/lib/billing";
 import { pauseActiveCampaigns, resumeCampaigns } from "@/lib/meta-ads";
 import { getAppUrl, sendCustomerMail } from "@/lib/email";
 import { customerGreeting, logOfferActivity, setContactCustomerStage } from "@/lib/offer-links";
@@ -62,7 +62,8 @@ export async function planPause(
   customerId: string,
   input: { from: string; until: string | null; reason?: string | null },
   by: "customer" | "admin",
-): Promise<PauseResult> {
+  opts: { free?: boolean } = {},
+): Promise<PauseResult & { pauseId?: string }> {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.from)) return { ok: false, error: "Bitte ein Startdatum wählen." };
   if (!input.until || !/^\d{4}-\d{2}-\d{2}$/.test(input.until)) return { ok: false, error: "Bitte ein Neustart-Datum wählen." };
   if (input.from < todayBerlin()) return { ok: false, error: "Die Pause kann frühestens heute beginnen." };
@@ -83,15 +84,16 @@ export async function planPause(
       endsAt: input.until ? berlinDayStart(input.until) : null,
       reason: input.reason?.trim().slice(0, 300) || null,
       createdBy: by,
+      free: opts.free === true,
     },
   });
-  await audit("pause.plan", { entity: "CustomerPause", entityId: pause.id, customerId, details: { from: input.from, until: input.until, by } });
+  await audit("pause.plan", { entity: "CustomerPause", entityId: pause.id, customerId, details: { from: input.from, until: input.until, by, free: opts.free === true } });
   if (startsAt.getTime() <= Date.now()) {
     await applyPause(pause.id);
   } else {
     await notifyPlanned(pause.id);
   }
-  return { ok: true };
+  return { ok: true, pauseId: pause.id };
 }
 
 async function notifyPlanned(pauseId: string) {
@@ -137,7 +139,8 @@ export async function applyPause(pauseId: string): Promise<void> {
   let billing: BillingPauseState = { method: "none", reason: "Kein Stripe-Kunde" };
   if (customer.stripeCustomerId) {
     try {
-      billing = await pauseBilling(customer.stripeCustomerId);
+      // Halteangebot „Pause ohne Kosten“: ganze Abrechnung ruht, sonst nur die Betreuung
+      billing = p.free ? await pauseBillingFully(customer.stripeCustomerId) : await pauseBilling(customer.stripeCustomerId);
       if (billing.method === "none") problems.push(`Abrechnung prüfen: ${billing.reason}`);
     } catch (err) {
       if (err instanceof IntroPhaseError) problems.push("Abo ist in der Startpreis-Phase: Pause in Stripe von Hand anpassen");
@@ -176,7 +179,7 @@ export async function applyPause(pauseId: string): Promise<void> {
       greeting: await customerGreeting({ salesContactId: contactId, contactName: offer?.contactName ?? null }),
       paragraphs: [
         `Ihre Anzeigen sind ab heute pausiert${p.endsAt ? ` und starten am ${fmt(p.endsAt)} automatisch wieder` : ""}.`,
-        softwareFee > 0
+        softwareFee > 0 && !p.free
           ? `In der Pause berechnen wir nur die Software-Gebühr von ${eur(softwareFee)} netto im Monat, tagesgenau anteilig.`
           : "In der Pause fällt keine Vergütung an.",
         "Sie können die Pause jederzeit im Kundenbereich unter „Konto & Rechnungen“ beenden.",

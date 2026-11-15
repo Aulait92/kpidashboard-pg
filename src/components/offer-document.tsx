@@ -399,7 +399,7 @@ export function OfferDocument({
             <b className="text-[#111827]">{eur2(offer.setupFee)}</b> netto zzgl. 19 % USt.
             <Note>
               {setupIsList
-                ? `${term === "12m" ? "Mit 12 Monaten Laufzeit" : term === "3m" ? "Mit 3 Monaten Laufzeit" : "Ohne Vertragslaufzeit"}${extra ? `, inklusive ${extra} weiteres Produkt${extra > 1 ? "e" : ""}` : ""}`
+                ? `${term === "12m" ? "Mit 12 Monaten Laufzeit" : term === "3m" ? "Mit 3 Monaten Laufzeit" : "Ohne Vertragslaufzeit"}${extra ? (PRICE_LIST.extraProductSetup > 0 ? `, inklusive ${extra} weiteres Produkt${extra > 1 ? "e" : ""}` : `, weitere Produkte ohne Einrichtungsgebühr`) : ""}`
                 : "Sonderkondition"}
             </Note>
           </Tr>

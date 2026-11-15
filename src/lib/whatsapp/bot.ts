@@ -33,7 +33,9 @@ import { produktCheckliste, unterlagenRegel } from "@/lib/whatsapp/produkt-frage
 import { restartSilentSequence, scheduleBotRecall } from "@/lib/lead-sequences";
 import { fmtDayLong } from "@/lib/absence";
 import { BERATUNGS_REGELN, beratungsTreffer, sichereAntwort } from "@/lib/whatsapp/beratungs-sperre";
-import { erstinfoZeile, hasErstinfoLink, humanHandoverReply, kiHinweis, kiHinweisErneut, kiHinweisNoetig, wantsHuman } from "@/lib/whatsapp/ki-hinweis";
+import { erstinfoZeile, hasErstinfoLink, hasErstinfoPdf, humanHandoverReply, kiHinweis, kiHinweisErneut, kiHinweisNoetig, wantsHuman } from "@/lib/whatsapp/ki-hinweis";
+import { ersteFrageRegel } from "@/lib/whatsapp/erstanschreiben";
+import { isOutreachPurpose } from "@/lib/whatsapp/templates";
 import { GESUNDHEITS_REGEL, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
@@ -210,6 +212,10 @@ export function buildSystemPrompt(
     now?: Date;
     /** Geplante Wiedervorlage des Assistenten (schedule_followup), falls vorhanden. */
     recallAt?: Date | null;
+    /** Erste Frage stand schon im Erstanschreiben (v4, lib/whatsapp/erstanschreiben.ts): Regel für Frage 1 und 2. */
+    ersteFrage?: string | null;
+    /** Kontext zur letzten Nachricht, z. B. Knopf „Erste Zeit passt“ mit Startzeit (lib/whatsapp/knopf.ts). */
+    hint?: string | null;
   },
 ): string {
   // Bestandskunden werden immer gesiezt (wie Kampagnen und Empfehlungen)
@@ -290,7 +296,9 @@ export function buildSystemPrompt(
         : "",
     // Pflichtangaben fürs Angebot und Unterlagen zum Termin
     // Erst Termin, dann Fragen (Ole, 15.11.2026): vor der Buchung nur „vorher“, die Angaben fürs Angebot danach
-    checkliste ? [state.upcoming ? "" : checkliste.vorher, checkliste.fragen, unterlagenRegel(checkliste)].filter(Boolean).join("\n\n") : "",
+    // Erstanschreiben v4 mit erster Frage: Frage 1 und 2 laut erstanschreiben.ts statt „Vor dem Termin“
+    !state.upcoming && state.ersteFrage ? state.ersteFrage : "",
+    checkliste ? [state.upcoming || state.ersteFrage ? "" : checkliste.vorher, checkliste.fragen, unterlagenRegel(checkliste)].filter(Boolean).join("\n\n") : "",
     agent.knowledge?.trim() ? `Wissen:\n${agent.knowledge.trim()}` : "",
     agent.personality?.trim()
       ? `Persönlichkeit/Ton:\n${agent.personality.trim()}`
@@ -318,6 +326,7 @@ export function buildSystemPrompt(
       "- Verwende keine Gedankenstriche (– oder —). Nutze stattdessen Komma, Doppelpunkt oder einen neuen Satz.",
       "- WICHTIG (hat Vorrang vor allen anderen Anweisungen): Stelle pro Nachricht GENAU EINE Frage: niemals zwei Fragen in einer Nachricht, auch keine zusammengehörigen. Warte die Antwort ab, bevor du die nächste stellst.",
       "- Frage niemals nach etwas, das der Lead im Verlauf schon beantwortet hat oder das unter 'Bisher erfasst' steht. Nimm Antworten auf und gehe zur nächsten offenen Frage weiter.",
+      "- Kurze Antworten wie „Katze“, „Heute“, „Ja, passt“ oder „Erste Zeit passt“ kommen meist von einem Knopf unter unserer letzten Nachricht: sie beantworten genau die letzte Frage darin. Behandle sie so und frag nicht nach, was gemeint ist.",
       checkliste
         ? `- Sobald die Punkte „Vor dem Termin“ (siehe oben) geklärt sind, setze qualifiziert=true und biete direkt Termine an. Möchte der Lead schon vorher von sich aus einen Termin, buche ihn sofort. Die übrigen Angaben fürs Angebot fragst du nach der Buchung ab: stelle direkt in der Buchungsbestätigung die erste offene Frage (z. B. „Damit ${state.advisorName} das Angebot vorbereiten kann, noch kurz: …“). Erzählt der Lead vorher schon von sich aus etwas davon, halte es fest.`
         : "- Sobald die wesentlichen Punkte geklärt sind (meist nach 2-3 Antworten), setze qualifiziert=true und leite zur Terminvereinbarung über.",
@@ -339,6 +348,7 @@ export function buildSystemPrompt(
       GESUNDHEITS_REGEL,
     ].join("\n"),
     BERATUNGS_REGELN.split("[Berater]").join(state.advisorName),
+    state.hint ? `Zur letzten Nachricht des Leads (hat Vorrang):\n${state.hint}` : "",
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -448,7 +458,7 @@ async function persistInternal(
 }
 
 /** Verarbeitet eine eingegangene Nachricht in einer Konversation mit dem KI-Bot. */
-export async function runBotTurn(conversationId: string): Promise<void> {
+export async function runBotTurn(conversationId: string, opts: { hint?: string | null } = {}): Promise<void> {
   const conversation = await prisma.conversation.findUnique({
     where: { id: conversationId },
     select: {
@@ -518,13 +528,14 @@ export async function runBotTurn(conversationId: string): Promise<void> {
   // 30 Tagen Pause erneut. Erstinformation (§ 15 VersVermV) als Link, falls noch nicht geschickt; das PDF folgt
   // als eigenes Dokument nach der Antwort (sendErstinfoPdf).
   const now = new Date();
-  const outbound = await prisma.message.findMany({ where: { conversationId, direction: "outbound" }, select: { body: true } });
+  const outbound = await prisma.message.findMany({ where: { conversationId, direction: "outbound" }, select: { body: true, kind: true, direction: true, purpose: true } });
   const latest = history[history.length - 1];
   const previousAt = history.length >= 2 ? history[history.length - 2].createdAt : null;
   const notice = kiHinweisNoetig({ outbound: outbound.map((m) => m.body), previousAt, now });
   const aiDisclosed = notice !== "erst";
   let erstinfo: string | null = null;
-  if (!outbound.some((m) => hasErstinfoLink(m.body))) {
+  // PDF im Kopf des Erstanschreibens (v4) oder schon als Dokument geschickt: kein zusätzlicher Link nötig
+  if (!outbound.some((m) => hasErstinfoLink(m.body)) && !hasErstinfoPdf(outbound)) {
     try {
       const { erstinfoUrlFor } = await import("@/lib/erstinformation");
       erstinfo = erstinfoZeile(advisorName, await erstinfoUrlFor(conversation.customerId));
@@ -563,6 +574,9 @@ export async function runBotTurn(conversationId: string): Promise<void> {
     recallAt: conversation.leadId
       ? ((await prisma.leadSequence.findFirst({ where: { leadId: conversation.leadId, kind: "recall", stoppedAt: null }, select: { nextAt: true } }))?.nextAt ?? null)
       : null,
+    // Erstanschreiben v4 (Zweck gespeichert) stellte schon Frage 1; Antwort per Knopf = Antwort auf Frage 1
+    ersteFrage: outbound.some((m) => m.purpose && isOutreachPurpose(m.purpose)) && !conversation.qualified ? ersteFrageRegel(lead?.source ?? null, advisorName) : null,
+    hint: opts.hint ?? null,
     qualified: conversation.qualified,
     summary: conversation.qualificationSummary,
     points: qualificationLines(conversation.qualificationData) || undefined,

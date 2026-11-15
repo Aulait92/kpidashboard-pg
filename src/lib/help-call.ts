@@ -25,23 +25,29 @@ export async function teamCalendarStatus() {
   return { teamId: team.id, connected: conn?.status === "connected", accountEmail: conn?.accountEmail ?? null };
 }
 
-/** Freie 15-Minuten-Slots der nächsten Werktage (9–17 Uhr). */
-export async function helpCallSlots(): Promise<Slot[]> {
+/** Freie Slots der nächsten Werktage (9–17 Uhr), Standard 15 Minuten (Halteangebot „Einrichtung“: 30 Minuten). */
+export async function helpCallSlots(minutes = DURATION_MIN): Promise<Slot[]> {
   const { teamId, connected } = await teamCalendarStatus();
   if (!connected) return [];
-  return suggestSlots(teamId, DURATION_MIN, 12, [9, 10, 11, 12, 13, 14, 15, 16, 17], 8);
+  return suggestSlots(teamId, minutes, 12, [9, 10, 11, 12, 13, 14, 15, 16, 17], 8);
 }
 
 export type HelpCallResult = { ok: true; start: Date; url: string | null } | { ok: false; error: string };
 
-export async function bookHelpCall(customerId: string, startIso: string, topic: string | null): Promise<HelpCallResult> {
+export async function bookHelpCall(
+  customerId: string,
+  startIso: string,
+  topic: string | null,
+  opts: { minutes?: number; summary?: string; description?: string } = {},
+): Promise<HelpCallResult> {
+  const minutes = opts.minutes ?? DURATION_MIN;
   const { teamId, connected } = await teamCalendarStatus();
   if (!connected) return { ok: false, error: "Die Terminbuchung ist gerade nicht verfügbar. Bitte rufen Sie kurz an." };
   const start = new Date(startIso);
   if (Number.isNaN(start.getTime()) || start.getTime() < Date.now() + 30 * 60 * 1000) {
     return { ok: false, error: "Bitte einen späteren Termin wählen." };
   }
-  const end = new Date(start.getTime() + DURATION_MIN * 60 * 1000);
+  const end = new Date(start.getTime() + minutes * 60 * 1000);
   const customer = await prisma.customer.findUnique({
     where: { id: customerId },
     select: {
@@ -64,9 +70,9 @@ export async function bookHelpCall(customerId: string, startIso: string, topic: 
     const event = await adapter.createEvent({
       start,
       end,
-      summary: `performancegrowth: Hilfe bei der Einrichtung (${customer.name})`,
+      summary: opts.summary ?? `performancegrowth: Hilfe bei der Einrichtung (${customer.name})`,
       description: [
-        "15 Minuten per Video mit Bildschirmfreigabe, z. B. für die Freigabe Ihres Meta-Werbekontos.",
+        opts.description ?? "15 Minuten per Video mit Bildschirmfreigabe, z. B. für die Freigabe Ihres Meta-Werbekontos.",
         topic ? `Thema: ${topic}` : "",
       ]
         .filter(Boolean)

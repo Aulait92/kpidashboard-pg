@@ -21,6 +21,7 @@ import {
 } from "./actions";
 import { CalendarCard } from "./calendar-card";
 import { SupportInboxCard } from "./support-card";
+import { AbTestCard } from "./ab-test-card";
 import { SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
 import { AgentSettings, ResubmitTemplateButton, SubmitTemplatesButton, TemplateApproved, TemplateAutoStatus, TemplateEditor } from "./controls";
 
@@ -125,6 +126,8 @@ export default async function WhatsAppSettingsPage({
 
 
       <SupportInboxCard status={sp.support ?? null} />
+
+      <AbTestCard />
 
       <form
         action={addCustomerAction}

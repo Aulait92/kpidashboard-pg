@@ -203,7 +203,7 @@ export function OfferForm({
         </Card>
 
         <Card>
-          <CardHeader title="Produkte und Werbebudget" hint="1. Produkt im Grundpaket, jedes weitere +990 € Setup / +350 € pro Monat" />
+          <CardHeader title="Produkte und Werbebudget" hint="1. Produkt im Grundpaket, jedes weitere +350 € pro Monat (ohne Setup)" />
           <div className="space-y-3 p-5">
             <datalist id="offer-products">
               {PRODUCT_SUGGESTIONS.map((p) => <option key={p} value={p} />)}

@@ -1,8 +1,24 @@
 // Platzhalter in E-Mail-Vorlagen (rein, auch im Browser nutzbar).
 
-import { a, anredeZeile, kontaktParts, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
+import { a, anredeName, anredeZeile, kontaktParts, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
+import { outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
 
-export const PLATZHALTER = ["{anrede}", "{vorname}", "{nachname}", "{name}", "{produkt}", "{terminlink}", "{meinname}", "{signatur}"] as const;
+export const PLATZHALTER = [
+  "{anrede}",
+  "{vorname}",
+  "{nachname}",
+  "{name}",
+  "{produkt}",
+  "{terminlink}",
+  "{meinname}",
+  "{signatur}",
+  // Stand 3 (Ole, 15.11.2026), automatisch gefüllt (werteFuer), im Text änderbar
+  "{betreff_name}",
+  "{ihr_produkt}",
+  "{rueckruf_1}",
+  "{rueckruf_2}",
+  "{anruf_tag}",
+] as const;
 
 /**
  * Platzhalter, die der Dialog „E-Mail schreiben“ aus eigenen Feldern füllt (Ole, 14.11.2026).
@@ -21,6 +37,10 @@ export const ZUSATZ_PLATZHALTER = [
   "{musterkuendigung}",
   "{wuensche}",
   "{rat}",
+  // Angebot: drei Vorteile, die der Vermittler im Dialog einträgt (Ole, 15.11.2026)
+  "{vorteil_1}",
+  "{vorteil_2}",
+  "{vorteil_3}",
 ] as const;
 
 export type ZusatzKey = (typeof ZUSATZ_PLATZHALTER)[number] extends `{${infer K}}` ? K : never;
@@ -37,6 +57,15 @@ export type Werte = {
   anrede?: string;
   /** Persönlicher Buchungslink; leer = Satz mit {terminlink} entfällt (z. B. Termin steht schon) */
   terminlink?: string | null;
+  /** Name vorn im Betreff mit Komma („Frau Schneider, “ bzw. „Anna, “), ohne bekannten Namen leer */
+  betreff_name?: string;
+  /** Produkt mit Possessiv („Ihrer Zahnzusatzversicherung“, „Ihrem Privatschutz“, sonst „Ihrer Anfrage“) */
+  ihr_produkt?: string;
+  /** Zwei Rückrufzeiten („heute um 17 Uhr“, „morgen um 10 Uhr“) */
+  rueckruf_1?: string;
+  rueckruf_2?: string;
+  /** Tag des Anrufs nach dem Angebot („Donnerstag“) */
+  anruf_tag?: string;
 } & Partial<Record<ZusatzKey, string | null>>;
 
 /** Ohne eigene Signatur steht an ihrer Stelle ein schlichter Gruß (Ole, 14.11.2026: Signatur standardmäßig in den Vorlagen). */
@@ -68,13 +97,80 @@ export function fuelle(text: string, w: Werte): string {
     terminlink: () => (w.terminlink ?? "").trim(),
     meinname: () => w.meinname,
     signatur: () => sig,
+    betreff_name: () => w.betreff_name ?? "",
+    ihr_produkt: () => w.ihr_produkt ?? "",
+    rueckruf_1: () => w.rueckruf_1 ?? "",
+    rueckruf_2: () => w.rueckruf_2 ?? "",
+    anruf_tag: () => w.anruf_tag ?? "",
   };
   // Ein Durchgang: eingesetzte Werte (z. B. die Musterkündigung) werden nicht noch einmal ersetzt.
-  return base.replace(/\{([a-z_]+)\}/g, (all, k: string) => {
+  const out = base.replace(/\{([a-z0-9_]+)\}/g, (all, k: string) => {
     if (k in fest) return fest[k]();
     if ((ZUSATZ_PLATZHALTER as readonly string[]).includes(`{${k}}`)) return (w[k as ZusatzKey] ?? "").trim();
     return all;
   });
+  // Betreff ohne bekannten Namen: „Kurz zu Ihrer …“ statt „kurz zu Ihrer …“
+  return text.startsWith("{betreff_name}") ? out.charAt(0).toUpperCase() + out.slice(1) : out;
+}
+
+const BERLIN = "Europe/Berlin";
+const WOCHENTAG = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+
+/** Berliner Kalendertag und Stunde (rein). */
+function berlinTag(d: Date): { dow: number; hour: number; key: string } {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-GB", { timeZone: BERLIN, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23", weekday: "short" })
+      .formatToParts(d)
+      .map((p) => [p.type, p.value]),
+  );
+  const dow = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(parts.weekday);
+  return { dow, hour: Number(parts.hour), key: `${parts.year}-${parts.month}-${parts.day}` };
+}
+
+/** Nächster Werktag (Mo bis Fr) nach heute: Abstand in Tagen. */
+function tageBisWerktag(dow: number, nach = 1): number {
+  let d = 0;
+  let n = 0;
+  while (n < nach) {
+    d++;
+    const w = (dow + d) % 7;
+    if (w !== 0 && w !== 6) n++;
+  }
+  return d;
+}
+
+const tagWort = (abstand: number, dow: number) => (abstand === 1 ? "morgen" : `am ${WOCHENTAG[(dow + abstand) % 7]}`);
+
+/**
+ * Zwei Rückrufzeiten für „Nicht erreicht“ (rein): werktags vor 15 Uhr „heute um 17 Uhr“ und „morgen um 10 Uhr“,
+ * sonst der nächste Werktag um 10 und um 17 Uhr.
+ */
+export function rueckrufZeiten(now = new Date()): [string, string] {
+  const t = berlinTag(now);
+  const werktag = t.dow !== 0 && t.dow !== 6;
+  const next = tageBisWerktag(t.dow);
+  if (werktag && t.hour < 15) return ["heute um 17 Uhr", `${tagWort(next, t.dow)} um 10 Uhr`];
+  const tag = tagWort(next, t.dow);
+  return [`${tag} um 10 Uhr`, `${tag} um 17 Uhr`];
+}
+
+/** Tag des Anrufs nach dem Angebot (rein): zwei Werktage später, als Wochentag („Donnerstag“). */
+export function anrufTag(now = new Date()): string {
+  const t = berlinTag(now);
+  return WOCHENTAG[(t.dow + tageBisWerktag(t.dow, 2)) % 7];
+}
+
+/** „Ihrer Zahnzusatzversicherung“, „Ihrem Privatschutz“; unbekannt → „Ihrer Anfrage“ (rein). */
+export function ihrProdukt(produkt: string | null | undefined, an: Ansprache = "sie"): string {
+  const raw = (produkt ?? "").replace(/\s*\(.*\)\s*$/, "").trim();
+  // Bekannte Produkte mit lesbarem Namen („TKV-Katze“ → „Katzenversicherung“), wie im WhatsApp-Erstanschreiben
+  const p = outreachProdukt(produkt)?.produkt ?? raw;
+  const fem = a(an, "deiner", "Ihrer");
+  const mask = a(an, "deinem", "Ihrem");
+  if (!p || p.length > 40) return `${fem} Anfrage`;
+  if (/(ung|ion|versicherung|rente|vorsorge)$/i.test(p)) return `${fem} ${p}`;
+  if (/(schutz|plan|zusatz|geld|vertrag|tarif)$/i.test(p)) return `${mask} ${p}`;
+  return `${fem} Anfrage zu ${p}`;
 }
 
 /**
@@ -95,19 +191,27 @@ export function fuelleMitSignatur(text: string, w: Werte): string {
 export function werteFuer(
   lead: { name: string | null; source: string | null } & Pick<AnredeKontakt, "firstName" | "lastName" | "salutation">,
   meinname: string,
-  opts: { ansprache?: Ansprache; terminlink?: string | null } = {},
+  opts: { ansprache?: Ansprache; terminlink?: string | null; now?: Date } = {},
 ): Werte {
   const name = (lead.name ?? "").trim();
   const kontakt: AnredeKontakt = { fullName: name, firstName: lead.firstName, lastName: lead.lastName, salutation: lead.salutation };
   const parts = kontaktParts(kontakt);
+  const an = opts.ansprache ?? "sie";
+  const betreffName = anredeName(an, kontakt);
+  const [r1, r2] = rueckrufZeiten(opts.now);
   return {
     vorname: parts.first,
     nachname: parts.last,
     name,
     produkt: (lead.source ?? "").trim() || (opts.ansprache === "du" ? "deine Versicherung" : "Ihre Versicherung"),
     meinname,
-    anrede: anredeZeile(opts.ansprache ?? "sie", kontakt).replace(/,$/, ""),
+    anrede: anredeZeile(an, kontakt).replace(/,$/, ""),
     terminlink: opts.terminlink ?? null,
+    betreff_name: betreffName ? `${betreffName}, ` : "",
+    ihr_produkt: ihrProdukt(lead.source, an),
+    rueckruf_1: r1,
+    rueckruf_2: r2,
+    anruf_tag: anrufTag(opts.now),
   };
 }
 

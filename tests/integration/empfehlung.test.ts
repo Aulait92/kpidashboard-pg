@@ -382,7 +382,9 @@ describe("Empfehlungen & Bewertungen", () => {
     await sendDueReferrals(new Date(NOW.getTime() + 14 * DAY_MS));
     const referrals = state.notices.filter((n) => n.customerId === id && n.purpose === "referral_request");
     expect(referrals.map((n) => n.to)).toEqual([happy.phone]);
-    expect(referrals[0].params[1]).toMatch(/\/empfehlung\/[\w-]+$/);
+    // v4: Thema der Empfehlung vor dem Link; ältere Fassung nur mit Link
+    expect(referrals[0].params[2]).toMatch(/\/empfehlung\/[\w-]+$/);
+    expect(referrals[0].params[1]).toBeTruthy();
   });
 
   it("Empfehlungslink mit Anlass: passender Text, Aufgabe zum Nachfassen (ohne andere Wiedervorlage zu überschreiben)", async () => {

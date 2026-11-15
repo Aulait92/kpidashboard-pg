@@ -1,7 +1,9 @@
 // KI-Kennzeichnung des WhatsApp-Assistenten (KI-VO Art. 50) und harte Sperre gegen Beratung (Vermittlerrecht).
 import { describe, expect, it } from "vitest";
 import {
+  ERSTINFO_KOPF,
   erstinfoZeile,
+  hasErstinfoPdf,
   hasErstinfoLink,
   hasKiHinweis,
   humanHandoverReply,
@@ -12,7 +14,7 @@ import {
 } from "@/lib/whatsapp/ki-hinweis";
 import { beratungsTreffer, sichereAntwort } from "@/lib/whatsapp/beratungs-sperre";
 import { buildSystemPrompt } from "@/lib/whatsapp/bot";
-import { noticeText, TEMPLATE_BODY } from "@/lib/whatsapp/templates";
+import { noticeText, OUTREACH_PURPOSES, TEMPLATE_BODY, TEMPLATE_BODY_B, TEMPLATE_HEADER } from "@/lib/whatsapp/templates";
 import { isStopMessage } from "@/lib/whatsapp/stopp";
 
 const names = { firm: "Agentur Susanne Meier", advisor: "Susanne Meier" };
@@ -36,12 +38,23 @@ describe("KI-Hinweis", () => {
     expect(hasKiHinweis(du)).toBe(true);
   });
 
-  it("steht fest im Erstanschreiben (Vorlage und Freitext), mit Link zur Erstinformation", () => {
-    expect(hasKiHinweis(TEMPLATE_BODY.outreach.sie)).toBe(true);
-    expect(hasKiHinweis(TEMPLATE_BODY.outreach.du)).toBe(true);
-    const t = noticeText("outreach", "sie", names, FRAU, ["https://app.example.de/erstinformation/abcdef12"]);
+  it("steht fest in jedem Erstanschreiben (Vorlage und Freitext, beide A/B-Fassungen); Erstinformation als PDF im Kopf", () => {
+    for (const p of OUTREACH_PURPOSES) {
+      for (const b of [TEMPLATE_BODY[p], TEMPLATE_BODY_B[p]]) {
+        if (!b) continue;
+        expect(hasKiHinweis(b.sie), p).toBe(true);
+        expect(hasKiHinweis(b.du), p).toBe(true);
+      }
+      expect(TEMPLATE_HEADER[p], p).toBe("DOCUMENT");
+    }
+    const t = noticeText("outreach_zahn", "sie", names, FRAU, ["Zahnzusatzversicherung"]);
     expect(hasKiHinweis(t)).toBe(true);
-    expect(hasErstinfoLink(t)).toBe(true);
+    // PDF im Kopf zählt als geschickt (kein zweites PDF nach der ersten Antwort), alter Link-Text nicht
+    expect(hasErstinfoPdf([{ direction: "outbound", kind: "template", body: `${ERSTINFO_KOPF}\nGuten Tag …` }])).toBe(true);
+    expect(hasErstinfoPdf([{ direction: "outbound", kind: "template", body: "Erstinformation zu X als Versicherungsvermittler: https://x.de/erstinformation/abc" }])).toBe(false);
+    expect(hasErstinfoPdf([{ direction: "outbound", kind: "document", body: "Hier ist die Erstinformation …" }])).toBe(true);
+    // Kein Link mehr im Text des Erstanschreibens (PDF im Kopf)
+    expect(hasErstinfoLink(t)).toBe(false);
     expect(erstinfoZeile("Susanne Meier", "https://x.de/erstinformation/abc123")).toBe("Erstinformation zu Susanne Meier als Versicherungsvermittler: https://x.de/erstinformation/abc123");
   });
 

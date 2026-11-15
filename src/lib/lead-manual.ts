@@ -100,22 +100,13 @@ export async function startLeadChat(opts: { leadId: string; customerId: string }
   // Häkchen zur Einwilligung im Leadformular fehlt: kein WhatsApp (lib/einwilligung-leadformular.ts)
   if (lead.waConsent === "nein") return { ok: false, reason: "no_consent", error: "Der Lead hat im Formular nicht in WhatsApp eingewilligt. Bitte anrufen oder per E-Mail zu seiner Anfrage melden." };
 
-  const { NoTemplateError, sendWhatsAppNotice } = await import("@/lib/whatsapp/templates");
-  const { outreachMessage } = await import("@/lib/whatsapp/outreach");
+  const { NoTemplateError } = await import("@/lib/whatsapp/templates");
+  const { sendOutreach } = await import("@/lib/whatsapp/outreach");
   const { anspracheOf } = await import("@/lib/whatsapp/reminders");
   try {
     const an = await anspracheOf(opts.customerId);
-    const { who, params, text } = await outreachMessage({ customerId: opts.customerId, leadId: lead.id, phone: lead.phone, name: lead.name, an });
-    const res = await sendWhatsAppNotice({
-      customerId: opts.customerId,
-      to: lead.phone,
-      purpose: "outreach",
-      params,
-      text,
-      leadId: lead.id,
-      contactName: lead.name,
-      anrede: who.kontakt,
-    });
+    // Erstanschreiben je Produkt mit erster Frage und Erstinformation als PDF (lib/whatsapp/outreach.ts)
+    const res = await sendOutreach({ customerId: opts.customerId, leadId: lead.id, phone: lead.phone, name: lead.name, an, source: lead.source });
     await prisma.lead.update({ where: { id: lead.id }, data: { outreachAt: new Date(), outreachStatus: "sent" } });
     await recordLeadProgress(lead.id, "contact_attempt");
     return { ok: true, conversationId: res.conversationId };

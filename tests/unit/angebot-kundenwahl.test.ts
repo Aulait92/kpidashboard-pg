@@ -26,11 +26,11 @@ const snap = (extra: Partial<OfferChoiceSnapshot> = {}): OfferChoiceSnapshot => 
 });
 
 describe("Kundenwahl: Preise je Laufzeit", () => {
-  it("Setup je Laufzeit aus der Preisliste, weitere Produkte kommen dazu", () => {
+  it("Setup je Laufzeit aus der Preisliste, weitere Produkte ohne Setup", () => {
     expect(setupForChoice("12m", 1)).toBe(990);
     expect(setupForChoice("3m", 1)).toBe(1990);
     expect(setupForChoice("none", 1)).toBe(2490);
-    expect(setupForChoice("3m", 2)).toBe(1990 + 990);
+    expect(setupForChoice("3m", 2)).toBe(1990);
   });
 
   it("Wahl 3 Monate → Setup 1.990 €, Start übernommen", () => {

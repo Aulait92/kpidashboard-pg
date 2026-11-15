@@ -7,7 +7,8 @@ export const PRICE_LIST = {
   /** Mindestlaufzeit 3 Monate (Ole, 11.11.2026). */
   setup3m: 1990,
   setup12m: 990,
-  extraProductSetup: 990,
+  /** Jedes weitere Produkt: keine Einrichtung mehr, nur der Monatsbetrag (Ole, 15.11.2026; vorher 990 €). */
+  extraProductSetup: 0,
   extraProductMonthly: 350,
   /** Einrichtung, wenn ein Bestandskunde ein weiteres Produkt selbst bucht (Ole, 12.11.: entfällt). */
   extraProductSetupSelfService: 0,

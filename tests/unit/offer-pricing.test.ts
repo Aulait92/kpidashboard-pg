@@ -36,10 +36,10 @@ describe("computeOfferPrice", () => {
     expect(normalizeTerm(undefined)).toBe("none");
   });
 
-  it("weiteres Produkt: +990 € Einrichtung, +350 € monatlich", () => {
+  it("weiteres Produkt: keine Einrichtung mehr, +350 € monatlich (Ole, 15.11.2026)", () => {
     const r = computeOfferPrice({ package: "software", term: "12m", products: [p(30), p(30, "Leben")] });
     expect(r.extraProducts).toBe(1);
-    expect(r.setupFee).toBe(990 + 990);
+    expect(r.setupFee).toBe(990);
     expect(r.monthlyFee).toBe(1000 + 350);
   });
 

@@ -289,7 +289,12 @@ export async function notReachedTextsAction(leadId: string): Promise<{ ok: true;
   const hi = anredeZeile(an, kontakt);
   const whatsapp = [
     `${hi} ${a(an, "ich habe gerade versucht, dich anzurufen, leider ohne Erfolg.", "ich habe gerade versucht, Sie anzurufen, leider ohne Erfolg.")}`,
-    a(an, "Wann passt es dir am besten? Antworte einfach hier.", "Wann passt es Ihnen am besten? Antworten Sie einfach hier."),
+    // Zwei konkrete Rückrufzeiten wie in der E-Mail „Nicht erreicht“ (Ole, 15.11.2026)
+    a(
+      an,
+      `Ich versuche es gern noch einmal ${werte.rueckruf_1} oder ${werte.rueckruf_2}. Passt dir eine der beiden Zeiten?`,
+      `Ich versuche es gern noch einmal ${werte.rueckruf_1} oder ${werte.rueckruf_2}. Passt Ihnen eine der beiden Zeiten?`,
+    ),
     link ? a(an, `Oder such dir direkt einen Termin aus: ${link}`, `Oder suchen Sie sich direkt einen Termin aus: ${link}`) : "",
     meinname ? `Viele Grüße\n${meinname}` : "",
   ]

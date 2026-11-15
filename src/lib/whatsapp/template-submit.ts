@@ -18,17 +18,53 @@ import {
   mapRemoteStatus,
   plannedTemplates,
   purposesFor,
+  requestShape,
   templateBodyFor,
   templateNameFor,
   isTemplateRevisionOf,
   TEMPLATE_LANGUAGE,
   TEMPLATE_VERSION,
   templateNamesOf,
+  withoutHeader,
   type LocalStatus,
 } from "@/lib/whatsapp/template-plan";
+import type { CreateTemplateInput } from "@/lib/whatsapp/dialog360";
 
 export { templateNamesOf };
-import { PURPOSE_LABELS, type NoticePurpose, type TemplateForm } from "@/lib/whatsapp/templates";
+import { PURPOSE_LABELS, rolleText, TEMPLATE_HEADER, variantOfName, type NoticePurpose, type TemplateForm, type TemplateNames } from "@/lib/whatsapp/templates";
+
+/**
+ * Namen für die Vorlagentexte samt Selbstbezeichnung nach Status laut Erstinformation ([Rolle]) und Beispiel-PDF
+ * für den Dokument-Kopf des Erstanschreibens (öffentliche PDF-Adresse der Erstinformation dieses Kunden).
+ */
+async function submitContext(customerId: string, customerName: string): Promise<{ names: TemplateNames; documentExample: string | null }> {
+  let role: string | undefined;
+  let documentExample: string | null = null;
+  try {
+    const { erstinfoPdfUrlFor, loadErstinfo } = await import("@/lib/erstinformation");
+    const e = await loadErstinfo(customerId);
+    role = rolleText(e.daten.status, e.daten.versicherer);
+    documentExample = await erstinfoPdfUrlFor(customerId);
+  } catch (err) {
+    reportError(err, "templates-erstinfo", { customer: customerId });
+  }
+  return { names: templateNamesOf(customerName, role), documentExample };
+}
+
+/**
+ * Einreichen; lehnt 360dialog den Antrag mit Dokument-Kopf ab (z. B. Beispiel-PDF nicht abrufbar), einmal ohne Kopf
+ * und Fußzeile. Dann geht das PDF wie bisher nach der ersten Antwort des Leads raus (lib/whatsapp/erstinfo-pdf.ts).
+ */
+async function createWithFallback(apiKey: string, req: CreateTemplateInput): Promise<{ hit: RemoteTemplate; req: CreateTemplateInput }> {
+  try {
+    return { hit: await createTemplate(apiKey, req), req };
+  } catch (err) {
+    if (!requestShape(req).headerFormat) throw err;
+    console.error("[templates] Dokument-Kopf abgelehnt, ohne Kopf", req.name, err instanceof Error ? err.message.slice(0, 200) : err);
+    const plain = withoutHeader(req);
+    return { hit: await createTemplate(apiKey, plain), req: plain };
+  }
+}
 
 export type SubmitSummary = {
   ok: boolean;
@@ -74,8 +110,11 @@ async function applyRemote(
   body: string,
   category: string,
   remote: RemoteTemplate,
-  opts: { submittedAt?: Date },
+  opts: { submittedAt?: Date; shape?: { headerFormat: string | null; buttons: string[] } },
 ): Promise<LocalStatus> {
+  // Kopf und Knöpfe: wie eingereicht, sonst laut Vorlagenliste von 360dialog (z. B. nach verlorenem Datensatz)
+  const known = opts.shape ?? (remote.headerFormat !== undefined ? { headerFormat: remote.headerFormat, buttons: remote.buttons ?? [] } : null);
+  const shape = known ? { headerFormat: known.headerFormat, buttons: known.buttons } : {};
   const status = mapRemoteStatus(remote.status);
   const before = await prisma.messageTemplate.findUnique({
     where: { customerId_name_language: { customerId: customer.id, name, language: TEMPLATE_LANGUAGE } },
@@ -94,12 +133,14 @@ async function applyRemote(
       auto: true,
       submittedAt: opts.submittedAt ?? null,
       rejectionReason: status === "rejected" ? remote.rejectedReason : null,
+      ...shape,
     },
     update: {
       status,
       ...(remote.category ? { category: remote.category.toLowerCase() } : {}),
       rejectionReason: status === "rejected" ? remote.rejectedReason : null,
       ...(opts.submittedAt ? { submittedAt: opts.submittedAt, body } : {}),
+      ...shape,
     },
   });
   if (status === "rejected" && before?.status !== "rejected") {
@@ -140,25 +181,26 @@ export async function submitTemplatesForCustomer(customerId: string, now = new D
     return { ...summary, ok: false, error: msg };
   }
 
-  const names = templateNamesOf(customer.name);
   const purposes = purposesFor({ bestand: customer.existingCustomersEnabled, empfehlung: customer.empfehlungEnabled });
-  // Je Zweck alle Fassungen (Du, Sie, Sie ohne Namen) – unabhängig von der gewählten Ansprache, damit ein
+  // Je Zweck alle Fassungen (Du, Sie, Sie ohne Namen; A/B) – unabhängig von der gewählten Ansprache, damit ein
   // Wechsel sofort greift. Bis eine neue Fassung freigegeben ist, sendet die App die bisherige freigegebene.
   const planned = plannedTemplates(purposes);
-  for (const { purpose, form } of planned) {
+  const missing = planned.some((t) => !findRemote(remote, templateNameFor(t.purpose, TEMPLATE_VERSION, t.form, t.variant)));
+  const { names, documentExample } = missing ? await submitContext(customer.id, customer.name) : { names: templateNamesOf(customer.name), documentExample: null };
+  for (const { purpose, form, variant } of planned) {
     const manual = customer.messageTemplates.find((t) => !t.auto && t.purpose === purpose && (t.status === "approved" || t.status === "pending"));
     if (manual) {
       if (!summary.skipped.includes(purpose)) summary.skipped.push(purpose);
       continue;
     }
-    const name = templateNameFor(purpose, TEMPLATE_VERSION, form);
-    const req = buildTemplateRequest(purpose, names, TEMPLATE_VERSION, form);
-    const body = templateBodyFor(purpose, names, form);
+    const name = templateNameFor(purpose, TEMPLATE_VERSION, form, variant);
+    let req = buildTemplateRequest(purpose, names, TEMPLATE_VERSION, form, { variant, documentExample });
+    const body = templateBodyFor(purpose, names, form, variant);
     let hit = findRemote(remote, name);
     let submittedAt: Date | undefined;
     if (!hit) {
       try {
-        hit = await createTemplate(apiKey, req);
+        ({ hit, req } = await createWithFallback(apiKey, req));
         submittedAt = now;
         summary.submitted.push(name);
       } catch (err) {
@@ -169,14 +211,14 @@ export async function submitTemplatesForCustomer(customerId: string, now = new D
         continue;
       }
     }
-    const status = await applyRemote({ id: customer.id, name: customer.name }, purpose, name, body, req.category, hit, { submittedAt });
+    const status = await applyRemote({ id: customer.id, name: customer.name }, purpose, name, body, req.category, hit, { submittedAt, ...(submittedAt ? { shape: requestShape(req) } : {}) });
     if (status === "approved") summary.approved.push(name);
     else if (status === "rejected") summary.rejected.push(name);
     else summary.pending.push(name);
   }
 
   // Ältere automatisch eingereichte Versionen (andere Namen, z. B. v1) ebenfalls nachziehen.
-  const current = new Set(planned.map((t) => templateNameFor(t.purpose, TEMPLATE_VERSION, t.form)));
+  const current = new Set(planned.map((t) => templateNameFor(t.purpose, TEMPLATE_VERSION, t.form, t.variant)));
   for (const t of customer.messageTemplates.filter((x) => x.auto && !current.has(x.name))) {
     const hit = findRemote(remote, t.name);
     if (!hit) continue;
@@ -237,8 +279,8 @@ export async function syncTemplates(now = new Date(), opts: { force?: boolean; l
     const tpls = acc.customer.messageTemplates;
     const purposes = purposesFor({ bestand: acc.customer.existingCustomersEnabled, empfehlung: acc.customer.empfehlungEnabled });
     // Erledigt, wenn je Zweck jede Fassung freigegeben ist (oder der Admin eine eigene angelegt hat)
-    const settled = plannedTemplates(purposes).every(({ purpose: p, form }) => {
-      const wanted = templateNameFor(p, TEMPLATE_VERSION, form);
+    const settled = plannedTemplates(purposes).every(({ purpose: p, form, variant }) => {
+      const wanted = templateNameFor(p, TEMPLATE_VERSION, form, variant);
       return tpls.some((t) => t.purpose === p && ((t.auto && isTemplateRevisionOf(t.name, wanted) && t.status === "approved") || (!t.auto && (t.status === "approved" || t.status === "pending"))));
     });
     const recent = acc.templatesCheckedAt && now.getTime() - acc.templatesCheckedAt.getTime() < CHECK_INTERVAL_IDLE_MS;
@@ -263,25 +305,29 @@ export async function syncTemplates(now = new Date(), opts: { force?: boolean; l
 export async function resubmitTemplate(customerId: string, purpose: NoticePurpose, now = new Date(), form?: TemplateForm): Promise<{ ok: boolean; name?: string; error?: string }> {
   const [account, customer] = await Promise.all([
     prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { status: true, apiKeyEnc: true } }),
-    prisma.customer.findUnique({ where: { id: customerId }, select: { id: true, name: true, messageTemplates: { where: { purpose }, select: { name: true, status: true } } } }),
+    prisma.customer.findUnique({ where: { id: customerId }, select: { id: true, name: true, messageTemplates: { where: { purpose }, select: { name: true, status: true, headerFormat: true } } } }),
   ]);
   if (!customer || !account || account.status !== "connected" || !account.apiKeyEnc) return { ok: false, error: "WhatsApp ist nicht verbunden" };
-  const names = templateNamesOf(customer.name);
-  const forms = form ? [form] : plannedTemplates([purpose]).map((t) => t.form);
+  const { names, documentExample } = await submitContext(customer.id, customer.name);
+  const planned = plannedTemplates([purpose]).filter((t) => !form || t.form === form);
   // Fassungen, deren letzte Revision abgelehnt bzw. pausiert ist (ohne Angabe: sonst die erste)
   const latest = (base: string) => customer.messageTemplates.filter((t) => isTemplateRevisionOf(t.name, base)).sort((x, y) => revisionNo(y.name) - revisionNo(x.name))[0];
-  const todo = forms.filter((f) => {
-    const l = latest(templateNameFor(purpose, TEMPLATE_VERSION, f));
+  const todo = planned.filter((t) => {
+    const l = latest(templateNameFor(purpose, TEMPLATE_VERSION, t.form, t.variant));
     return !!form || !l || l.status === "rejected" || l.status === "paused";
   });
-  const chosen = todo[0] ?? forms[0];
-  const base = templateNameFor(purpose, TEMPLATE_VERSION, chosen);
+  const chosen = todo[0] ?? planned[0];
+  if (!chosen) return { ok: false, error: "Keine Fassung zum Einreichen" };
+  const base = templateNameFor(purpose, TEMPLATE_VERSION, chosen.form, chosen.variant);
   const existing = customer.messageTemplates.filter((t) => t.name.startsWith(`${base}_r`) && isTemplateRevisionOf(t.name, base)).length;
   const name = `${base}_r${existing + 2}`;
-  const req = { ...buildTemplateRequest(purpose, names, TEMPLATE_VERSION, chosen), name };
+  // Wurde die letzte Revision mit PDF im Kopf abgelehnt: ohne Kopf neu einreichen (das PDF geht dann nach der ersten Antwort)
+  const prev = latest(base);
+  const dropHeader = !!TEMPLATE_HEADER[purpose] && prev?.status === "rejected" && prev.headerFormat === "DOCUMENT";
+  const full = { ...buildTemplateRequest(purpose, names, TEMPLATE_VERSION, chosen.form, { variant: chosen.variant, documentExample: dropHeader ? null : documentExample }), name };
   try {
-    const hit = await createTemplate(decryptSecret(account.apiKeyEnc), req);
-    await applyRemote(customer, purpose, name, templateBodyFor(purpose, names, chosen), req.category, { ...hit, name }, { submittedAt: now });
+    const { hit, req } = await createWithFallback(decryptSecret(account.apiKeyEnc), full);
+    await applyRemote(customer, purpose, name, templateBodyFor(purpose, names, chosen.form, variantOfName(name)), req.category, { ...hit, name }, { submittedAt: now, shape: requestShape(req) });
     return { ok: true, name };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message.slice(0, 200) : "Einreichen fehlgeschlagen" };

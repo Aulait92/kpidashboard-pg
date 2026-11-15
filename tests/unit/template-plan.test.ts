@@ -15,7 +15,7 @@ import {
   templateBodyFor,
   templateNameFor,
 } from "@/lib/whatsapp/template-plan";
-import { OPT_OUT_BUTTON, PURPOSE_PARAMS, SUGGESTED_TEMPLATE_TEXT, TEMPLATE_BUTTONS, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { OPT_OUT_BUTTON, OUTREACH_PURPOSES, PURPOSE_PARAMS, SUGGESTED_TEMPLATE_TEXT, TEMPLATE_BUTTONS, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { inboundBody } from "@/lib/whatsapp/gateway";
 import { SEQUENCES } from "@/lib/lead-sequences";
 
@@ -23,14 +23,18 @@ const ALL = [...CORE_PURPOSES, ...CAMPAIGN_PURPOSES];
 
 describe("Vorlagen-Plan", () => {
   it("Kampagnen-Vorlagen nur mit Bestandskunden-Modul", () => {
-    expect(purposesFor({ bestand: false })).toHaveLength(10);
+    expect(purposesFor({ bestand: false })).toHaveLength(14);
     expect(purposesFor({ bestand: false })).toContain("reschedule");
     expect(purposesFor({ bestand: false })).not.toContain("campaign_review");
-    expect(purposesFor({ bestand: true })).toHaveLength(14);
+    expect(purposesFor({ bestand: true })).toHaveLength(18);
+    expect(purposesFor({ bestand: false })).toEqual(expect.arrayContaining(["outreach_tkv", "outreach_zahn", "outreach_pkv", "outreach_privatschutz"]));
   });
 
-  it("Name: pg_<zweck>_v3[_sie|_sie_ohne_name], nur Kleinbuchstaben/Ziffern/Unterstrich", () => {
-    expect(templateNameFor("outreach")).toBe("pg_outreach_v3");
+  it("Name: pg_<zweck>_v4[_b][_sie|_sie_ohne_name], nur Kleinbuchstaben/Ziffern/Unterstrich", () => {
+    expect(templateNameFor("outreach")).toBe("pg_outreach_v4");
+    expect(templateNameFor("outreach_tkv", undefined, "sie", "b")).toBe("pg_outreach_tkv_v4_b_sie");
+    // Unveränderte Texte behalten ihre Version (keine erneute Einreichung)
+    expect(templateNameFor("referral_thanks", undefined, "sie")).toBe("pg_referral_thanks_v3_sie");
     expect(templateNameFor("outreach", "v3", "sie")).toBe("pg_outreach_v3_sie");
     expect(templateNameFor("outreach", "v2", "sie_ohne_name")).toBe("pg_outreach_v2_sie_ohne_name");
     // Kampagnen gibt es nur gesiezt
@@ -54,10 +58,10 @@ describe("Vorlagen-Plan", () => {
     expect(body).not.toContain("[Berater]");
   });
 
-  it("Antrag: Beispielwerte je Platzhalter, Knöpfe nur bei Kampagnen", () => {
+  it("Antrag: Beispielwerte je Platzhalter, Knöpfe wo eine Antwort erwartet wird, Abmeldeknopf bei Werbung", () => {
     for (const p of ALL) {
       const req = buildTemplateRequest(p, "Anid Brand");
-      const body = req.components[0] as { type: string; text: string; example?: { body_text: string[][] } };
+      const body = req.components.find((c) => (c as { type: string }).type === "BODY") as { type: string; text: string; example?: { body_text: string[][] } };
       expect(body.type).toBe("BODY");
       const vars = body.text.match(/\{\{\d+\}\}/g) ?? [];
       expect(vars.length).toBe(PURPOSE_PARAMS[p].length);
@@ -65,13 +69,27 @@ describe("Vorlagen-Plan", () => {
       else expect(body.example).toBeUndefined();
       const buttons = req.components.find((c) => (c as { type: string }).type === "BUTTONS") as { buttons: { type: string; text: string }[] } | undefined;
       if (CAMPAIGN_PURPOSES.includes(p)) {
-        expect(buttons?.buttons).toEqual([{ type: "QUICK_REPLY", text: OPT_OUT_BUTTON }]);
+        expect(buttons?.buttons.at(-1)).toEqual({ type: "QUICK_REPLY", text: OPT_OUT_BUTTON });
         expect(req.category).toBe("MARKETING");
-      } else {
-        expect(buttons).toBeUndefined();
       }
+      expect(buttons?.buttons.map((b) => b.text), p).toEqual(TEMPLATE_BUTTONS[p]);
+      for (const b of buttons?.buttons ?? []) expect(b.text.length, b.text).toBeLessThanOrEqual(25); // Meta-Grenze für Knopftexte
+      expect((buttons?.buttons ?? []).length).toBeLessThanOrEqual(3);
     }
-    expect(OPT_OUT_BUTTON.length).toBeLessThanOrEqual(25); // Meta-Grenze für Knopftexte
+    // Knöpfe überall, wo eine Antwort erwartet wird
+    for (const p of [...CORE_PURPOSES, ...CAMPAIGN_PURPOSES]) expect(TEMPLATE_BUTTONS[p]?.length, p).toBeGreaterThan(0);
+    expect(TEMPLATE_BUTTONS.reminder).toEqual(["Ja, passt", "Bitte verschieben"]);
+    expect(TEMPLATE_BUTTONS.followup_noshow).toEqual(["Ja, neuer Termin", "Kein Bedarf mehr"]);
+    expect(TEMPLATE_BUTTONS.followup_last).toEqual(["Ja, noch aktuell", "Nein, danke"]);
+    expect(TEMPLATE_BUTTONS.booking_confirmation).toEqual(["Termin verschieben"]);
+    expect(TEMPLATE_BUTTONS.campaign_cross_sell).toEqual(["Ja, gern prüfen", "Kein Bedarf", OPT_OUT_BUTTON]);
+    expect(TEMPLATE_BUTTONS.outreach_tkv).toEqual(["Hund", "Katze"]);
+    expect(TEMPLATE_BUTTONS.outreach).toEqual(["Heute", "Morgen", "Lieber schriftlich"]);
+    // Erstanschreiben: kein „Später“ und keine Erlaubnisfrage
+    for (const p of OUTREACH_PURPOSES) {
+      expect(TEMPLATE_BUTTONS[p]).not.toContain("Später");
+      expect(SUGGESTED_TEMPLATE_TEXT[p]).not.toMatch(/kurz Zeit|darf ich/i);
+    }
   });
 
   it("Texte nach Oles Prüfung: keine Gedankenstriche, kein STOPP-Satz, „Versicherungsberater“", () => {
@@ -81,13 +99,20 @@ describe("Vorlagen-Plan", () => {
       expect(t, p).not.toContain("STOPP");
       expect(t, p).not.toContain("Allianz-Berater");
     }
-    for (const p of ["campaign_cross_sell", "campaign_review", "campaign_renewal"] as const) expect(SUGGESTED_TEMPLATE_TEXT[p]).toContain("Ihr Versicherungsberater");
+    // Selbstbezeichnung nach Status ([Rolle]), nie „Versicherungsberater“ (geschützter Beruf, § 34d Abs. 2 GewO)
+    for (const p of ["campaign_cross_sell", "campaign_review", "campaign_renewal"] as const) expect(SUGGESTED_TEMPLATE_TEXT[p]).toContain("hier ist [Berater][Rolle].");
+    for (const t of Object.values(SUGGESTED_TEMPLATE_TEXT)) expect(t).not.toContain("Versicherungsberater");
     expect(SUGGESTED_TEMPLATE_TEXT.followup_noshow).toBe(
-      "Hallo {{1}}, schade, dass es mit unserem Termin nicht geklappt hat. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin finden? Antworte einfach hier.",
+      "Hallo {{1}}, kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [Berater] finden?",
     );
+    expect(SUGGESTED_TEMPLATE_TEXT.followup_noshow).not.toMatch(/schade/i);
     expect(SUGGESTED_TEMPLATE_TEXT.followup_last).toContain("Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.");
+    expect(SUGGESTED_TEMPLATE_TEXT.campaign_cross_sell).toContain("Viele meiner Kunden haben beim Thema {{2}} eine Lücke, die erst im Schadenfall auffällt. Soll ich in 10 Minuten kurz prüfen, ob das bei Ihnen auch so ist?");
     // Widerspruchs-Knopf nur bei Werbung: Bestandskunden-Kampagnen, Bitte um Empfehlung und Bewertungsbitte
-    for (const p of Object.keys(TEMPLATE_BUTTONS) as NoticePurpose[]) expect([...CAMPAIGN_PURPOSES, ...EMPFEHLUNG_PURPOSES]).toContain(p);
+    for (const p of Object.keys(TEMPLATE_BUTTONS) as NoticePurpose[]) {
+      if (TEMPLATE_BUTTONS[p]!.includes(OPT_OUT_BUTTON)) expect([...CAMPAIGN_PURPOSES, ...EMPFEHLUNG_PURPOSES]).toContain(p);
+      if ([...CAMPAIGN_PURPOSES, "referral_request", "review_request"].includes(p)) expect(TEMPLATE_BUTTONS[p]).toContain(OPT_OUT_BUTTON);
+    }
   });
 
   it("Freitext der Nachfass-Abfolgen ebenfalls ohne Gedankenstriche", () => {

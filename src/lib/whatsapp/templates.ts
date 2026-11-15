@@ -2,7 +2,7 @@
 // WhatsApp erlaubt Freitext nur im 24h-Service-Fenster (nach der letzten
 // Nachricht des Kontakts). Außerhalb muss eine von Meta freigegebene Vorlage
 // verwendet werden. sendWhatsAppNotice wählt automatisch:
-//   Fenster offen → Freitext (identischer Inhalt, keine Vorlagenkosten)
+//   Fenster offen → Freitext (identischer Inhalt, keine Vorlagenkosten), mit Knöpfen als interaktive Nachricht
 //   Fenster zu    → freigegebene Vorlage des Kunden für diesen Zweck
 //
 // Anrede-Zeile (Ole, 14.11.2026; Regel in lib/ansprache.ts → anredeZeile):
@@ -12,16 +12,25 @@
 // Meta erlaubt keine leeren Parameter und keinen Platzhalter ganz am Anfang oder Ende. Ohne
 // Nachnamen gibt es daher keine „Guten Tag {{1}}“-Nachricht mit leerem Wert, sondern die eigene
 // Fassung ohne Namen. Weitere Parameter je Zweck (nach dem Namen): siehe REST_PARAMS.
+//
+// Verkaufsstärker (Ole, 15.11.2026, v4): eine Nachricht, ein Ziel, kurz. Wo eine Antwort erwartet wird, gibt es
+// Schnellantwort-Knöpfe (TEMPLATE_BUTTONS; Antworten verarbeitet lib/whatsapp/knopf.ts). Das Erstanschreiben
+// stellt je Produkt direkt die erste, leichte Frage und trägt die Erstinformation als PDF im Kopf (TEMPLATE_HEADER).
+// Bis zu zwei Fassungen je Vorlage (TEMPLATE_BODY_B) für A/B-Tests (lib/whatsapp/ab-test.ts).
 
 import { decryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
 import { anredeName, anredeZeile, asAnsprache, kontaktParts, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
-import { sendTemplate, sendText } from "@/lib/whatsapp/dialog360";
-import { kiHinweisSatz } from "@/lib/whatsapp/ki-hinweis";
+import { sendButtons, sendTemplate, sendText } from "@/lib/whatsapp/dialog360";
 import { WhatsAppNoConsentError, WhatsAppOptOutError } from "@/lib/whatsapp/stopp";
+import { ERSTINFO_KOPF } from "@/lib/whatsapp/ki-hinweis";
 
 export type NoticePurpose =
   | "outreach"
+  | "outreach_tkv"
+  | "outreach_zahn"
+  | "outreach_pkv"
+  | "outreach_privatschutz"
   | "booking_confirmation"
   | "reminder"
   | "reminder_soon"
@@ -41,13 +50,17 @@ export type NoticePurpose =
   | "referral_update";
 
 export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
-  outreach: "Erstanschreiben",
+  outreach: "Erstanschreiben (ohne Produkt)",
+  outreach_tkv: "Erstanschreiben Tierkrankenversicherung",
+  outreach_zahn: "Erstanschreiben Zahnzusatz",
+  outreach_pkv: "Erstanschreiben private Krankenversicherung",
+  outreach_privatschutz: "Erstanschreiben Privatschutz",
   booking_confirmation: "Buchungsbestätigung",
   reminder: "Termin-Erinnerung",
   reminder_soon: "Termin gleich: passt alles?",
   reschedule: "Termin verschoben",
-  followup: "Nachfassen allgemein (Chat > 24 h still)",
-  followup_nudge: "Nachfassen: zweite kurze Nachfrage (Chat ruht)",
+  followup: "Nachfassen mit zwei Terminvorschlägen",
+  followup_nudge: "Nachfassen: kurze Nachfrage (Chat ruht)",
   followup_offer: "Nachfassen nach Angebot",
   followup_noshow: "Nachfassen nach verpasstem Termin",
   followup_last: "Nachfassen: letzte Nachricht (Abfolge)",
@@ -61,22 +74,27 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   referral_update: "Empfehlungen: Rückmeldung an den Empfehlenden",
 };
 
+/** Erstanschreiben je Produkt (lib/whatsapp/erstanschreiben.ts wählt anhand des Leadformulars). */
+export const OUTREACH_PURPOSES = ["outreach", "outreach_tkv", "outreach_zahn", "outreach_pkv", "outreach_privatschutz"] as const satisfies readonly NoticePurpose[];
+export const isOutreachPurpose = (p: string): boolean => (OUTREACH_PURPOSES as readonly string[]).includes(p);
+
 /**
  * Version der automatisch eingereichten Texte. v2 (14.11.2026): Anrede „Guten Tag Frau Schneider“
  * bei Sie, eigene Fassung ohne Namen, Firma/Berater getrennt. v3 (15.11.2026, KI-Verordnung und
- * Erstinformation): Erstanschreiben mit vollständigem KI-Hinweis („kein Mensch“, „schreiben Sie ‚Mensch‘“)
- * und Link zur Erstinformation, „digitaler KI-Assistent“ in allen Assistenten-Texten. Freigegebene
- * ältere Vorlagen bleiben im Einsatz, bis die neue Fassung freigegeben ist; fehlt darin der Hinweis,
- * holt der Assistent ihn in seiner ersten Antwort nach (lib/whatsapp/ki-hinweis.ts).
+ * Erstinformation): Erstanschreiben mit vollständigem KI-Hinweis und Link zur Erstinformation.
+ * v4 (15.11.2026, verkaufsstärker): erste Frage je Produkt mit Knöpfen, Erstinformation als PDF im Kopf,
+ * Knöpfe überall, wo eine Antwort erwartet wird, Terminvorschläge im Nachfassen. Freigegebene ältere
+ * Vorlagen bleiben im Einsatz, bis die neue Fassung freigegeben ist (rankTemplates, legacyParams).
  */
-export const TEMPLATE_VERSION = "v3";
+export const TEMPLATE_VERSION = "v4";
 
 /**
- * Eigene Textversion je Zweck, wenn sich nur dieser Text ändert (wird neu eingereicht, ohne alle anderen Vorlagen
- * neu einzureichen). Es gilt die höhere von TEMPLATE_VERSION und diesem Wert.
- *   review_request v3 (15.11.2026, zugleich allgemeine v3): neutrale Bitte um eine ehrliche Bewertung mit Abmeldeknopf.
+ * Feste Textversion je Zweck, wenn sich dieser Text mit der allgemeinen Version NICHT geändert hat (dann wird er
+ * nicht neu eingereicht). Es gilt dieser Wert statt TEMPLATE_VERSION.
+ *   review_request v3 (15.11.2026): neutrale Bitte um eine ehrliche Bewertung mit Abmeldeknopf.
+ *   referral_thanks, referral_update v3: unverändert seit v3.
  */
-export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = { review_request: "v3" };
+export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = { review_request: "v3", referral_thanks: "v3", referral_update: "v3" };
 
 /**
  * Zwecke, für die nur die aktuelle Fassung gesendet wird (ältere automatisch eingereichte Fassungen nicht mehr),
@@ -86,23 +104,29 @@ export const CURRENT_VERSION_ONLY: readonly NoticePurpose[] = ["review_request"]
 
 const versionNo = (v: string) => Number(/^v(\d+)$/.exec(v)?.[1] ?? 0);
 
-/** Textversion eines Zwecks (z. B. „v3“). */
+/** Textversion eines Zwecks (z. B. „v4“). */
 export function templateVersionFor(purpose: NoticePurpose): string {
-  const own = PURPOSE_VERSION[purpose];
-  return own && versionNo(own) > versionNo(TEMPLATE_VERSION) ? own : TEMPLATE_VERSION;
+  return PURPOSE_VERSION[purpose] ?? TEMPLATE_VERSION;
 }
 
 /** Fassung einer Vorlage. Kampagnen und Empfehlungen gibt es nur gesiezt. */
 export type TemplateForm = "du" | "sie" | "sie_ohne_name";
 
+/** A/B-Fassung (b nur für Zwecke mit TEMPLATE_BODY_B). */
+export type TemplateVariant = "a" | "b";
+
 /** Weitere Parameter je Zweck (nach dem Namen; Reihenfolge wie im Text). */
 export const REST_PARAMS: Record<NoticePurpose, string[]> = {
-  outreach: ["Erstinformation (Link)"],
+  outreach: [],
+  outreach_tkv: ["Produkt"],
+  outreach_zahn: ["Produkt"],
+  outreach_pkv: ["Produkt"],
+  outreach_privatschutz: ["Produkt"],
   booking_confirmation: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
   reminder: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
   reminder_soon: ["Uhrzeit", "Art", "Link/Hinweis"],
   reschedule: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
-  followup: [],
+  followup: ["Terminvorschlag 1", "Terminvorschlag 2"],
   followup_nudge: [],
   followup_offer: ["Thema (z. B. Hausrat, Haftpflicht)"],
   followup_noshow: [],
@@ -112,7 +136,7 @@ export const REST_PARAMS: Record<NoticePurpose, string[]> = {
   campaign_birthday: [],
   campaign_renewal: ["Vertrag (z. B. KFZ)"],
   review_request: ["Google-Link"],
-  referral_request: ["Empfehlungslink"],
+  referral_request: ["Thema der Empfehlung", "Empfehlungslink"],
   referral_thanks: [],
   referral_update: ["Stand der Empfehlung"],
 };
@@ -120,75 +144,97 @@ export const REST_PARAMS: Record<NoticePurpose, string[]> = {
 /** Bezeichnung des Namensplatzhalters je Fassung. */
 export const NAME_PARAM: Record<"du" | "sie", string> = { du: "Vorname", sie: "Anrede und Nachname" };
 
+// KI-Hinweis im Erstanschreiben (KI-VO Art. 50): kurz, aber eindeutig („digitaler KI-Assistent“, „kein Mensch“).
+const KI_KURZ = { du: "Ich bin der digitale KI-Assistent von [Berater], kein Mensch, und stelle dir zwei kurze Fragen, damit du ein passendes Angebot bekommst.", sie: "Ich bin der digitale KI-Assistent von [Berater], kein Mensch, und stelle Ihnen zwei kurze Fragen, damit Sie ein passendes Angebot bekommen." };
+
 /**
- * Text NACH der Anrede-Zeile. {{2}}, {{3}} … = REST_PARAMS. [Firma] = Kundenname („Buchung bei …“,
- * „Assistent von …“), [Berater] = Person („hier ist …“, „Herzliche Grüße, …“).
- * Ohne „du“: nur gesiezt (Bestandskunden, Empfehlungen).
+ * Text NACH der Anrede-Zeile. {{2}}, {{3}} … = REST_PARAMS. [Firma] = Kundenname („Buchung bei …“),
+ * [Berater] = Person („hier ist …“, „Herzliche Grüße, …“), [Rolle] = Status laut Erstinformation
+ * (z. B. „ von der Allianz“ oder „, Ihr Versicherungsmakler“, rolleText). Ohne „du“: nur gesiezt.
  */
 export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> = {
-  // Erste Nachricht an neue Leads: KI-Hinweis (KI-VO Art. 50) und Erstinformation (§ 15 VersVermV), {{2}} = Link
+  // Erste Nachricht an neue Leads: Dank, kurzer KI-Hinweis, sofort die erste leichte Frage (Knöpfe). Die
+  // Erstinformation (§ 15/16 VersVermV) steht als PDF im Kopf der Vorlage (TEMPLATE_HEADER), nicht als Link.
   outreach: {
-    du: `danke für deine Anfrage! ${kiHinweisSatz("du")} Erstinformation zu [Berater] als Versicherungsvermittler: {{2}} Hast du kurz Zeit für zwei Fragen?`,
-    sie: `vielen Dank für Ihre Anfrage! ${kiHinweisSatz("sie")} Erstinformation zu [Berater] als Versicherungsvermittler: {{2}} Haben Sie kurz Zeit für zwei Fragen?`,
+    du: "danke für deine Anfrage! Ich bin der digitale KI-Assistent von [Berater], kein Mensch, und helfe dir, schnell einen passenden Gesprächstermin zu finden. Wann erreicht [Berater] dich am besten für ein kurzes Telefonat?",
+    sie: "vielen Dank für Ihre Anfrage! Ich bin der digitale KI-Assistent von [Berater], kein Mensch, und helfe Ihnen, schnell einen passenden Gesprächstermin zu finden. Wann erreicht [Berater] Sie am besten für ein kurzes Telefonat?",
   },
+  outreach_tkv: {
+    du: `danke für deine Anfrage zur {{2}}! ${KI_KURZ.du} Für welches Tier suchst du den Schutz?`,
+    sie: `vielen Dank für Ihre Anfrage zur {{2}}! ${KI_KURZ.sie} Für welches Tier suchen Sie den Schutz?`,
+  },
+  outreach_zahn: {
+    du: `danke für deine Anfrage zur {{2}}! ${KI_KURZ.du} Was ist dir am wichtigsten?`,
+    sie: `vielen Dank für Ihre Anfrage zur {{2}}! ${KI_KURZ.sie} Was ist Ihnen am wichtigsten?`,
+  },
+  outreach_pkv: {
+    du: `danke für deine Anfrage zur {{2}}! ${KI_KURZ.du} Wie bist du aktuell beruflich aufgestellt?`,
+    sie: `vielen Dank für Ihre Anfrage zur {{2}}! ${KI_KURZ.sie} Wie sind Sie aktuell beruflich aufgestellt?`,
+  },
+  outreach_privatschutz: {
+    du: `danke für deine Anfrage zum Thema {{2}}! ${KI_KURZ.du} Worum geht es dir vor allem?`,
+    sie: `vielen Dank für Ihre Anfrage zum Thema {{2}}! ${KI_KURZ.sie} Worum geht es Ihnen vor allem?`,
+  },
+  // Service (UTILITY): Bestätigung mit Vorbereitungshinweis und Knopf zum Verschieben
   booking_confirmation: {
-    du: "vielen Dank für deine Buchung bei [Firma]. Dein Termin ist bestätigt: {{2}} ({{3}}). {{4}} Wir freuen uns auf das Gespräch!",
-    sie: "vielen Dank für Ihre Buchung bei [Firma]. Ihr Termin ist bestätigt: {{2}} ({{3}}). {{4}} Wir freuen uns auf das Gespräch!",
+    du: "dein Termin bei [Firma] ist bestätigt: {{2}} ({{3}}). {{4}} Zur Vorbereitung: Leg dir gern deine bisherigen Unterlagen zum Thema bereit, falls vorhanden.",
+    sie: "Ihr Termin bei [Firma] ist bestätigt: {{2}} ({{3}}). {{4}} Zur Vorbereitung: Legen Sie sich gern Ihre bisherigen Unterlagen zum Thema bereit, falls vorhanden.",
   },
   reminder: {
-    du: "hier ist eine kurze Erinnerung an deinen Termin bei [Firma]: {{2}} ({{3}}). {{4}} Bis dann!",
-    sie: "hier ist eine kurze Erinnerung an Ihren Termin bei [Firma]: {{2}} ({{3}}). {{4}} Bis dann!",
+    du: "kurze Erinnerung an deinen Termin bei [Firma]: {{2}} ({{3}}). {{4}} Passt der Termin für dich?",
+    sie: "kurze Erinnerung an Ihren Termin bei [Firma]: {{2}} ({{3}}). {{4}} Passt der Termin für Sie?",
   },
   // Kurz vor dem Termin (Ole, 15.11.2026): passt alles? Lieber verschieben als nicht erscheinen
   reminder_soon: {
-    du: "gleich ist es so weit: Dein Termin bei [Firma] ist um {{2}} ({{3}}). {{4}} Passt bei dir alles? Falls etwas dazwischengekommen ist, antworte kurz hier, dann finden wir eine neue Zeit.",
-    sie: "gleich ist es so weit: Ihr Termin bei [Firma] ist um {{2}} ({{3}}). {{4}} Passt bei Ihnen alles? Falls etwas dazwischengekommen ist, antworten Sie kurz hier, dann finden wir eine neue Zeit.",
+    du: "gleich ist es so weit: Dein Termin bei [Firma] ist um {{2}} ({{3}}). {{4}} Passt bei dir alles?",
+    sie: "gleich ist es so weit: Ihr Termin bei [Firma] ist um {{2}} ({{3}}). {{4}} Passt bei Ihnen alles?",
   },
   reschedule: {
-    du: "dein Termin bei [Firma] musste leider verschoben werden. Die neue Zeit ist {{2}} ({{3}}). {{4}} Vielen Dank für dein Verständnis!",
-    sie: "Ihr Termin bei [Firma] musste leider verschoben werden. Die neue Zeit ist {{2}} ({{3}}). {{4}} Vielen Dank für Ihr Verständnis!",
+    du: "dein Termin bei [Firma] musste leider verschoben werden. Die neue Zeit ist {{2}} ({{3}}). {{4}} Passt dir die neue Zeit?",
+    sie: "Ihr Termin bei [Firma] musste leider verschoben werden. Die neue Zeit ist {{2}} ({{3}}). {{4}} Passt Ihnen die neue Zeit?",
   },
+  // Zwei konkrete freie Zeiten aus dem Kalender (lib/whatsapp/termin-vorschlaege.ts); ohne Kalender followup_nudge
   followup: {
-    du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Passt es dir diese Woche noch für ein kurzes Gespräch? Antworte einfach hier, dann schlage ich dir Zeiten vor.",
-    sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Passt es Ihnen diese Woche noch für ein kurzes Gespräch? Antworten Sie einfach hier, dann schlage ich Ihnen Zeiten vor.",
+    du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Für ein kurzes Gespräch mit [Berater] hätte ich zwei Zeiten frei: {{2}} oder {{3}}. Passt eine davon?",
+    sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Für ein kurzes Gespräch mit [Berater] hätte ich zwei Zeiten frei: {{2}} oder {{3}}. Passt eine davon?",
   },
-  // Zweite kurze Nachfrage einige Stunden nach der ersten, wenn der Chat ruht (lib/lead-sequences.ts „silent“)
   followup_nudge: {
-    du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Sollen wir mit deiner Anfrage weitermachen? Antworte einfach hier, es dauert nur ein paar Minuten.",
-    sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Sollen wir mit Ihrer Anfrage weitermachen? Antworten Sie einfach hier, es dauert nur ein paar Minuten.",
+    du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Sollen wir mit deiner Anfrage weitermachen? Es dauert nur ein paar Minuten.",
+    sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Sollen wir mit Ihrer Anfrage weitermachen? Es dauert nur ein paar Minuten.",
   },
   followup_offer: {
-    du: "hier ist der digitale KI-Assistent von [Firma]. Konntest du dir das Angebot zu {{2}} schon anschauen? Wenn du Fragen hast oder etwas anpassen möchtest, antworte einfach hier.",
-    sie: "hier ist der digitale KI-Assistent von [Firma]. Konnten Sie sich das Angebot zu {{2}} schon anschauen? Wenn Sie Fragen haben oder etwas anpassen möchten, antworten Sie einfach hier.",
+    du: "hier ist der digitale KI-Assistent von [Firma]. Konntest du dir das Angebot zu {{2}} schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
+    sie: "hier ist der digitale KI-Assistent von [Firma]. Konnten Sie sich das Angebot zu {{2}} schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?",
   },
   followup_noshow: {
-    du: "schade, dass es mit unserem Termin nicht geklappt hat. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin finden? Antworte einfach hier.",
-    sie: "schade, dass es mit unserem Termin nicht geklappt hat. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin finden? Antworten Sie einfach hier.",
+    du: "kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [Berater] finden?",
+    sie: "kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [Berater] finden?",
   },
   followup_last: {
-    du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Dann antworte einfach hier. Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
-    sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für Sie noch aktuell? Dann antworten Sie einfach hier. Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
+    du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
+    sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für Sie noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
   },
+  // Cross-Selling mit Grund und konkretem, kleinem nächsten Schritt (Ole, 15.11.2026)
   campaign_cross_sell: {
-    sie: "hier ist [Berater], Ihr Versicherungsberater. Kurze Frage: Sind Sie beim Thema {{2}} schon gut abgesichert? Wenn Sie möchten, schaue ich mir das gern kostenlos mit Ihnen an. Antworten Sie einfach hier.",
+    sie: "hier ist [Berater][Rolle]. Viele meiner Kunden haben beim Thema {{2}} eine Lücke, die erst im Schadenfall auffällt. Soll ich in 10 Minuten kurz prüfen, ob das bei Ihnen auch so ist?",
   },
   campaign_review: {
-    sie: "hier ist [Berater], Ihr Versicherungsberater. Es ist Zeit für einen kurzen Check Ihrer Verträge: Passt noch alles zu Ihrer Situation? Antworten Sie einfach hier, dann finden wir einen Termin.",
+    sie: "hier ist [Berater][Rolle]. Es ist Zeit für Ihren kurzen Jahres-Check: Passt Ihr Schutz noch zu Ihrer aktuellen Situation? Soll ich mir das in 10 Minuten mit Ihnen anschauen?",
   },
   campaign_birthday: {
-    sie: "herzlichen Glückwunsch zum Geburtstag! Alles Gute für das neue Lebensjahr wünscht Ihnen [Berater]. Wenn ich etwas für Sie tun kann, antworten Sie einfach hier.",
+    sie: "herzlichen Glückwunsch zum Geburtstag! Alles Gute für das neue Lebensjahr wünscht Ihnen [Berater].",
   },
   campaign_renewal: {
-    sie: "hier ist [Berater], Ihr Versicherungsberater. Bei Ihrem Vertrag ({{2}}) steht bald ein guter Zeitpunkt an, um Beitrag und Leistung zu prüfen. Soll ich mir das kurz für Sie anschauen? Antworten Sie einfach hier.",
+    sie: "hier ist [Berater][Rolle]. Bei Ihrem Vertrag ({{2}}) steht bald ein guter Zeitpunkt an, um Beitrag und Leistung zu prüfen. Soll ich mir das kurz für Sie anschauen?",
   },
   // Alle bekommen dieselbe Nachricht: erst der direkte Draht, dann die neutrale Bitte um eine ehrliche Bewertung
-  // (kein Gating, nie „5 Sterne“). Abmelden über den Knopf „Keine Nachrichten mehr“ (TEMPLATE_BUTTONS, wie bei
-  // Kampagnen, kein STOPP-Satz in Vorlagen). Version: PURPOSE_VERSION.review_request.
+  // (kein Gating, nie „5 Sterne“). Abmelden über den Knopf „Keine Nachrichten mehr“. Version: PURPOSE_VERSION.
   review_request: {
     sie: "ich hoffe, Sie sind mit Ihrem neuen Vertrag gut versorgt. Wenn etwas nicht passt, antworten Sie mir einfach direkt hier, ich kümmere mich persönlich darum. Außerdem freue ich mich über Ihre ehrliche Bewertung bei Google: {{2}} Herzliche Grüße, [Berater]",
   },
+  // Konkret mit Thema (Ole, 15.11.2026); geht direkt nach einem guten Moment raus (Lob, Gespräch, Abschluss)
   referral_request: {
-    sie: "hier ist [Berater]. Kennen Sie jemanden, dem ich genauso weiterhelfen kann? Über Ihren persönlichen Link kann die Person ganz einfach selbst Kontakt mit mir aufnehmen: {{2}} Vielen Dank für Ihr Vertrauen!",
+    sie: "hier ist [Berater]. Kennen Sie jemanden, für den das Thema {{2}} gerade auch wichtig ist? Über Ihren persönlichen Link kann die Person ganz einfach selbst Kontakt mit mir aufnehmen: {{3}} Vielen Dank für Ihr Vertrauen!",
   },
   referral_thanks: {
     sie: "ich wollte mich noch einmal herzlich für Ihre Empfehlung bedanken. Ich konnte weiterhelfen. Das ist das schönste Lob für meine Arbeit! Herzliche Grüße, [Berater]",
@@ -199,7 +245,35 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
   },
 };
 
+/**
+ * Zweite Fassung für A/B-Tests (gleiche Platzhalter und Knöpfe wie Fassung a). Je Lead fest zugeteilt; nach genug
+ * Volumen wird die bessere Standard (lib/whatsapp/ab-test.ts).
+ */
+export const TEMPLATE_BODY_B: Partial<Record<NoticePurpose, { du?: string; sie: string }>> = {
+  outreach_tkv: {
+    du: "danke für deine Anfrage zur {{2}}! Damit [Berater] dir ein passendes Angebot machen kann, stelle ich dir als digitaler KI-Assistent, kein Mensch, zwei kurze Fragen. Erste Frage: Für welches Tier suchst du den Schutz?",
+    sie: "vielen Dank für Ihre Anfrage zur {{2}}! Damit [Berater] Ihnen ein passendes Angebot machen kann, stelle ich Ihnen als digitaler KI-Assistent, kein Mensch, zwei kurze Fragen. Erste Frage: Für welches Tier suchen Sie den Schutz?",
+  },
+  followup_last: {
+    du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich möchte dich nicht weiter stören: Soll [Berater] sich noch um deine Anfrage kümmern?",
+    sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich möchte Sie nicht weiter stören: Soll [Berater] sich noch um Ihre Anfrage kümmern?",
+  },
+  campaign_cross_sell: {
+    sie: "hier ist [Berater][Rolle]. Beim Thema {{2}} sehe ich oft Lücken, die erst im Schadenfall auffallen. Darf ich in 10 Minuten kurz mit Ihnen prüfen, ob bei Ihnen alles passt?",
+  },
+};
+
 const ALL_PURPOSES = Object.keys(TEMPLATE_BODY) as NoticePurpose[];
+
+/** Fassungen a/b eines Zwecks (b nur mit TEMPLATE_BODY_B). */
+export function variantsFor(purpose: NoticePurpose): TemplateVariant[] {
+  return TEMPLATE_BODY_B[purpose] ? ["a", "b"] : ["a"];
+}
+
+/** A/B-Fassung am Vorlagennamen: pg_outreach_tkv_v4_b_sie → „b“. */
+export function variantOfName(name: string): TemplateVariant {
+  return /_v\d+_b(?:_|$)/.test(name) ? "b" : "a";
+}
 
 /** Gibt es eine Du-Fassung? (Assistent, Termine, Nachfassen; Kampagnen und Empfehlungen siezen immer) */
 export function hasDuVariant(purpose: NoticePurpose): boolean {
@@ -226,12 +300,16 @@ function shiftVars(text: string, by: number): string {
   return text.replace(/\{\{(\d+)\}\}/g, (_, n: string) => `{{${Number(n) + by}}}`);
 }
 
+function bodyOf(purpose: NoticePurpose, variant: TemplateVariant): { du?: string; sie: string } {
+  return (variant === "b" && TEMPLATE_BODY_B[purpose]) || TEMPLATE_BODY[purpose];
+}
+
 /**
- * Vorlagentext einer Fassung (mit [Firma]/[Berater]). Statt einer Fassung geht auch die Ansprache:
+ * Vorlagentext einer Fassung (mit [Firma]/[Berater]/[Rolle]). Statt einer Fassung geht auch die Ansprache:
  * „du“ → Du-Fassung (bzw. Sie, wenn es keine gibt), „sie“ → Sie-Fassung mit Namen.
  */
-export function templateTextFor(purpose: NoticePurpose, form: TemplateForm | Ansprache = "du"): string {
-  const b = TEMPLATE_BODY[purpose];
+export function templateTextFor(purpose: NoticePurpose, form: TemplateForm | Ansprache = "du", variant: TemplateVariant = "a"): string {
+  const b = bodyOf(purpose, variant);
   if (form === "du" && b.du) return `Hallo {{1}}, ${b.du}`;
   if (form === "sie_ohne_name") return `Guten Tag, ${shiftVars(b.sie, -1)}`;
   return `Guten Tag {{1}}, ${b.sie}`;
@@ -260,11 +338,37 @@ export function isSieTemplateName(name: string): boolean {
   return /_sie(_ohne_name)?(_r\d+)?$/.test(name);
 }
 
-/** [Firma] und [Berater] einsetzen. Ein einzelner Name gilt für beide. */
-export type TemplateNames = { firm: string; advisor: string };
+/** [Firma], [Berater] und [Rolle] einsetzen. Ein einzelner Name gilt für Firma und Berater. */
+export type TemplateNames = { firm: string; advisor: string; role?: string };
+/** Ohne bekannten Status: neutral und immer zutreffend. */
+export const ROLLE_STANDARD = ", Ihr Versicherungsvermittler";
 export function fillNames(text: string, names: TemplateNames | string): string {
   const n = typeof names === "string" ? { firm: names, advisor: names } : names;
-  return text.split("[Firma]").join(n.firm).split("[Berater]").join(n.advisor);
+  return text
+    .split("[Firma]")
+    .join(n.firm)
+    .split("[Berater]")
+    .join(n.advisor)
+    .split("[Rolle]")
+    .join((n as TemplateNames).role ?? ROLLE_STANDARD);
+}
+
+/**
+ * Selbstbezeichnung nach Status laut Erstinformation (Ole, 15.11.2026). „Versicherungsberater“ ist ein eigener,
+ * geschützter Beruf (§ 34d Abs. 2 GewO) und passt auf keinen unserer Status. Ausschließlichkeitsvertreter: Name und
+ * Gesellschaft („Anid Brand von der Allianz“), Mehrfachvertreter „Ihr Versicherungsvertreter“, Makler
+ * „Ihr Versicherungsmakler“. Ergebnis wird direkt hinter den Namen gesetzt.
+ */
+export function rolleText(status: string | null | undefined, versicherer: readonly string[] = []): string {
+  if (status === "makler") return ", Ihr Versicherungsmakler";
+  if (status === "mehrfachvertreter") return ", Ihr Versicherungsvertreter";
+  if (status === "vertreter") {
+    const v = (versicherer[0] ?? "").trim();
+    if (!v) return ", Ihr Versicherungsvertreter";
+    if (/^(der|die|das|den|dem)\s/i.test(v)) return ` von ${v.replace(/^die\s/i, "der ")}`;
+    return /verein\b/i.test(v) ? ` vom ${v}` : ` von der ${v}`;
+  }
+  return ROLLE_STANDARD;
 }
 
 /**
@@ -295,33 +399,42 @@ export function templateParams(body: string, an: Ansprache, kontakt: AnredeKonta
   return [first || (an === "du" ? "du" : "zusammen"), ...rest];
 }
 
-type Candidate = { name: string; body: string; auto?: boolean | null };
+type Candidate = { name: string; body: string; auto?: boolean | null; headerFormat?: string | null };
+
+/** Ist der Vorlagenname die aktuelle automatisch eingereichte Fassung dieses Zwecks? */
+export function isCurrentTemplateName(name: string, purpose: NoticePurpose): boolean {
+  return new RegExp(`^pg_${purpose}_${templateVersionFor(purpose)}(?:_|$)`).test(name);
+}
 
 /**
  * Beste freigegebene Vorlage für Ansprache und Kontakt (rein, testbar). Liste: neueste zuerst.
  * Reihenfolge Sie: aktuelle Sie-Fassung mit Namen (nur mit Nachnamen) → Sie ohne Namen → ältere
  * Sie-Fassung → irgendeine. Du: aktuelle Du-Fassung → ältere Du-Fassung → irgendeine.
  * So bleibt bis zur Freigabe der neuen Fassung die bisherige freigegebene im Einsatz.
+ * opts.variant: bevorzugte A/B-Fassung (die andere aktuelle Fassung kommt danach, vor älteren).
+ * opts.documentHeader: false = Vorlagen mit PDF im Kopf ausschließen (kein PDF verfügbar).
  */
 export function rankTemplates<T extends Candidate>(
   list: T[],
   purpose: NoticePurpose,
   ansprache: Ansprache,
   kontakt: AnredeKontakt | null | undefined,
-): { tpl: T; params: (rest: string[]) => string[] } | null {
+  opts: { variant?: TemplateVariant; documentHeader?: boolean } = {},
+): { tpl: T; current: boolean; variant: TemplateVariant; params: (rest: string[]) => string[] } | null {
   const an = effectiveAnsprache(purpose, ansprache);
   const hasName = !!anredeName("sie", kontakt);
   // Unter älteren Fassungen die neueste bevorzugen (v2 vor v1)
   const older = (n: string) => 0.5 - Math.min(Number(/^pg_[a-z_]+?_v(\d+)(?:_|$)/.exec(n)?.[1] ?? 0), 99) / 1000;
-  const current = (n: string) => n.startsWith(`pg_${purpose}_${templateVersionFor(purpose)}`);
   const strict = CURRENT_VERSION_ONLY.includes(purpose);
-  const olderAuto = (n: string) => new RegExp(`^pg_${purpose}_v\\d+`).test(n) && !current(n);
+  const olderAuto = (n: string) => new RegExp(`^pg_${purpose}_v\\d+`).test(n) && !isCurrentTemplateName(n, purpose);
+  const wanted = opts.variant ?? "a";
   const score = (t: T): number | null => {
     if (strict && olderAuto(t.name)) return null; // alter Text darf nicht mehr raus
+    if (opts.documentHeader === false && t.headerFormat === "DOCUMENT") return null;
     const slot = nameSlotOf(t.body);
     if (slot === "anrede" && !hasName) return null; // bräuchte einen Nachnamen
     const sieWording = slot !== "vorname" || isSieTemplateName(t.name) || !hasDuVariant(purpose);
-    const cur = current(t.name) ? 0 : older(t.name);
+    const cur = isCurrentTemplateName(t.name, purpose) ? (variantOfName(t.name) === wanted ? 0 : 0.25) : older(t.name);
     if (an === "du") {
       if (slot === "vorname" && !sieWording) return 0 + cur;
       if (slot !== "vorname") return 2 + cur;
@@ -339,24 +452,75 @@ export function rankTemplates<T extends Candidate>(
   }
   if (!best) return null;
   const tpl = best.tpl;
-  return { tpl, params: (rest) => templateParams(tpl.body, an, kontakt, rest) ?? [...rest] };
+  const current = isCurrentTemplateName(tpl.name, purpose);
+  return { tpl, current, variant: current ? variantOfName(tpl.name) : "a", params: (rest) => templateParams(tpl.body, an, kontakt, rest) ?? [...rest] };
 }
 
 /**
  * Schnellantwort-Knopf für Direktwerbung (Kampagnen an Bestandskunden): Hinweis auf das
  * Widerspruchsrecht (Art. 21 Abs. 4 DSGVO). Ein Klick kommt als Antwort mit diesem Text
  * zurück und wird wie „STOPP“ behandelt (lib/bestand/campaigns.ts → handleCampaignReply).
- * Statische Quick-Reply-Knöpfe brauchen beim Senden keine Parameter.
  */
 export const OPT_OUT_BUTTON = "Keine Nachrichten mehr";
+
+/** Knopftexte (Antworten verarbeitet lib/whatsapp/knopf.ts). Meta: höchstens 25 Zeichen, interaktiv 20. */
+export const KNOPF = {
+  passt: "Ja, passt",
+  verschieben: "Bitte verschieben",
+  terminVerschieben: "Termin verschieben",
+  neuerTermin: "Ja, neuer Termin",
+  keinBedarfMehr: "Kein Bedarf mehr",
+  nochAktuell: "Ja, noch aktuell",
+  neinDanke: "Nein, danke",
+  ersteZeit: "Erste Zeit passt",
+  zweiteZeit: "Zweite Zeit passt",
+  andereZeit: "Andere Zeit",
+  weiter: "Ja, weitermachen",
+  beitrag: "Eher der Beitrag",
+  leistung: "Eher die Leistung",
+  gernPruefen: "Ja, gern prüfen",
+  keinBedarf: "Kein Bedarf",
+  gern: "Ja, gern",
+} as const;
+
+/**
+ * Schnellantwort-Knöpfe je Zweck (statisch in der Vorlage; beim Senden optional mit eigenem Payload, z. B. der
+ * Startzeit eines Terminvorschlags). Werbung trägt immer den Abmeldeknopf.
+ */
 export const TEMPLATE_BUTTONS: Partial<Record<NoticePurpose, string[]>> = {
-  campaign_cross_sell: [OPT_OUT_BUTTON],
-  campaign_review: [OPT_OUT_BUTTON],
+  outreach: ["Heute", "Morgen", "Lieber schriftlich"],
+  outreach_tkv: ["Hund", "Katze"],
+  outreach_zahn: ["Zahnersatz", "Prophylaxe", "Beides"],
+  outreach_pkv: ["Angestellt", "Selbstständig", "Beamter"],
+  outreach_privatschutz: ["Haftpflicht", "Hausrat", "Mehreres"],
+  booking_confirmation: [KNOPF.terminVerschieben],
+  reminder: [KNOPF.passt, KNOPF.verschieben],
+  reminder_soon: [KNOPF.passt, KNOPF.verschieben],
+  reschedule: [KNOPF.passt, KNOPF.verschieben],
+  followup: [KNOPF.ersteZeit, KNOPF.zweiteZeit, KNOPF.andereZeit],
+  followup_nudge: [KNOPF.weiter, KNOPF.keinBedarfMehr],
+  followup_offer: [KNOPF.beitrag, KNOPF.leistung, KNOPF.keinBedarfMehr],
+  followup_noshow: [KNOPF.neuerTermin, KNOPF.keinBedarfMehr],
+  followup_last: [KNOPF.nochAktuell, KNOPF.neinDanke],
+  campaign_cross_sell: [KNOPF.gernPruefen, KNOPF.keinBedarf, OPT_OUT_BUTTON],
+  campaign_review: [KNOPF.gern, KNOPF.keinBedarf, OPT_OUT_BUTTON],
   campaign_birthday: [OPT_OUT_BUTTON],
-  campaign_renewal: [OPT_OUT_BUTTON],
+  campaign_renewal: [KNOPF.gernPruefen, KNOPF.keinBedarf, OPT_OUT_BUTTON],
   referral_request: [OPT_OUT_BUTTON],
   review_request: [OPT_OUT_BUTTON],
 };
+
+/**
+ * Kopf der Vorlage: Erstinformation als PDF (§ 16 VersVermV, dauerhafter Datenträger) im Erstanschreiben.
+ * Beim Einreichen mit Beispiel-PDF, beim Senden mit dem PDF-Link des Kunden (lib/whatsapp/template-plan.ts).
+ */
+export const TEMPLATE_HEADER: Partial<Record<NoticePurpose, "DOCUMENT">> = Object.fromEntries(OUTREACH_PURPOSES.map((p) => [p, "DOCUMENT"]));
+
+/** Fußzeile unter Vorlagen mit PDF im Kopf (Meta: höchstens 60 Zeichen, ohne Platzhalter). */
+export const ERSTINFO_FOOTER = "Oben: Erstinformation nach § 15 VersVermV (PDF)";
+
+/** Markierung im gespeicherten Text, wenn das PDF der Erstinformation im Kopf der Vorlage mitging (ki-hinweis.ts). */
+export const ERSTINFO_HEADER_MARK = ERSTINFO_KOPF;
 
 export class NoTemplateError extends Error {
   constructor(purpose: string) {
@@ -365,12 +529,17 @@ export class NoTemplateError extends Error {
 }
 
 /** Freigegebene Vorlage für Kunde, Zweck und Kontakt samt Parametern (siehe rankTemplates). */
-export async function pickTemplate(customerId: string, purpose: NoticePurpose, kontakt?: AnredeKontakt | null) {
+export async function pickTemplate(
+  customerId: string,
+  purpose: NoticePurpose,
+  kontakt?: AnredeKontakt | null,
+  opts: { variant?: TemplateVariant; documentHeader?: boolean } = {},
+) {
   const [customer, approved] = await Promise.all([
     prisma.customer.findUnique({ where: { id: customerId }, select: { leadAddress: true } }),
     prisma.messageTemplate.findMany({ where: { customerId, purpose, status: "approved" }, orderBy: { updatedAt: "desc" } }),
   ]);
-  return rankTemplates(approved, purpose, asAnsprache(customer?.leadAddress), kontakt ?? null);
+  return rankTemplates(approved, purpose, asAnsprache(customer?.leadAddress), kontakt ?? null, opts);
 }
 
 /**
@@ -396,9 +565,16 @@ export function renderTemplate(body: string, params: string[]): string {
  * Freitext für das offene 24-h-Fenster: Anrede-Zeile nach Regel plus Text der aktuellen Fassung.
  * rest = Werte nach dem Namen (REST_PARAMS).
  */
-export function noticeText(purpose: NoticePurpose, an: Ansprache, names: TemplateNames | string, kontakt: AnredeKontakt | null | undefined, rest: string[]): string {
+export function noticeText(
+  purpose: NoticePurpose,
+  an: Ansprache,
+  names: TemplateNames | string,
+  kontakt: AnredeKontakt | null | undefined,
+  rest: string[],
+  variant: TemplateVariant = "a",
+): string {
   const eff = effectiveAnsprache(purpose, an);
-  const b = TEMPLATE_BODY[purpose];
+  const b = bodyOf(purpose, variant);
   const body = fillNames(eff === "du" && b.du ? b.du : b.sie, names);
   return `${anredeZeile(eff, kontakt)} ${renderTemplate(body, ["", ...rest])}`;
 }
@@ -407,6 +583,31 @@ export function noticeText(purpose: NoticePurpose, an: Ansprache, names: Templat
 export function firstNameOf(name: string | null | undefined): string {
   const first = (name ?? "").trim().split(/\s+/)[0];
   return first || "du";
+}
+
+/** Knöpfe, die als interaktive Nachricht im offenen Fenster gehen (WhatsApp: höchstens 3, je 20 Zeichen). */
+export function interactiveButtons(buttons: readonly string[] | undefined): string[] | null {
+  const list = buttons ?? [];
+  if (!list.length || list.length > 3 || list.some((b) => b.length > 20)) return null;
+  return [...list];
+}
+
+/** Komponenten für den Versand einer Vorlage: Kopf (PDF), Text-Parameter, Knopf-Payloads (rein, testbar). */
+export function templateComponents(opts: {
+  params: string[];
+  document?: { link: string; filename: string } | null;
+  buttonPayloads?: string[] | null;
+  buttonCount?: number;
+}): unknown[] | undefined {
+  const components: unknown[] = [];
+  if (opts.document) components.push({ type: "header", parameters: [{ type: "document", document: { link: opts.document.link, filename: opts.document.filename } }] });
+  // Meta lehnt leere Parameter ab
+  if (opts.params.length) components.push({ type: "body", parameters: opts.params.map((p) => ({ type: "text", text: p.trim() || "-" })) });
+  const payloads = opts.buttonPayloads ?? [];
+  if (payloads.length && payloads.length <= (opts.buttonCount ?? 0)) {
+    payloads.forEach((payload, i) => components.push({ type: "button", sub_type: "quick_reply", index: String(i), parameters: [{ type: "payload", payload }] }));
+  }
+  return components.length ? components : undefined;
 }
 
 /**
@@ -422,13 +623,23 @@ export async function sendWhatsAppNotice(opts: {
    * gewählter Vorlage ersetzt (Vorname, „Frau Schneider“ oder entfällt), siehe rankTemplates.
    */
   params: string[];
+  /** Parameter für ältere freigegebene Fassungen, deren Platzhalter anders belegt sind (z. B. v3 mit Link). */
+  legacyParams?: string[];
   /** Freitext für das offene 24h-Fenster (und Fallback-Inhalt der Inbox). */
   text: string;
   leadId?: string | null;
   contactName?: string | null;
   /** Name und Anrede des Kontakts (sonst nur contactName, Anrede unbekannt). */
   anrede?: AnredeKontakt | null;
-}): Promise<{ mode: "text" | "template"; conversationId: string; messageId?: string | null }> {
+  /** PDF für Vorlagen mit Dokument im Kopf (Erstinformation). Ohne: solche Vorlagen werden übersprungen. */
+  document?: { link: string; filename: string } | null;
+  /** Payloads der Schnellantwort-Knöpfe (z. B. „slot:2026-11-17T09:00:00.000Z“), nur für die aktuelle Fassung. */
+  buttonPayloads?: string[];
+  /** Knöpfe im offenen Fenster (Standard: TEMPLATE_BUTTONS des Zwecks, wenn sie interaktiv passen); [] = keine. */
+  textButtons?: string[];
+  /** A/B-Fassung (Standard: fest je Lead bzw. Nummer zugeteilt, siehe lib/whatsapp/ab-test.ts). */
+  variant?: TemplateVariant;
+}): Promise<{ mode: "text" | "template"; conversationId: string; messageId?: string | null; variant: TemplateVariant | null; documentHeader: boolean }> {
   const account = await prisma.whatsAppAccount.findUnique({
     where: { customerId: opts.customerId },
   });
@@ -464,32 +675,39 @@ export async function sendWhatsAppNotice(opts: {
   let body: string;
   let messageId: string | null;
   let pricingCategory: string | null = null;
+  let variant: TemplateVariant | null = null;
+  let documentHeader = false;
 
   if (windowOpen) {
     mode = "text";
     body = opts.text;
-    messageId = (await sendText(apiKey, opts.to, opts.text)).messageId;
+    const buttons = interactiveButtons(opts.textButtons ?? TEMPLATE_BUTTONS[opts.purpose]);
+    if (buttons) {
+      // Interaktive Knöpfe; die ID trägt den Payload (z. B. Terminvorschlag), sonst den Knopftext
+      const ids = buttons.map((b, i) => opts.buttonPayloads?.[i] ?? b);
+      messageId = (await sendButtons(apiKey, opts.to, opts.text, buttons.map((title, i) => ({ id: ids[i], title })))).messageId;
+    } else {
+      messageId = (await sendText(apiKey, opts.to, opts.text)).messageId;
+    }
   } else {
     const kontakt: AnredeKontakt = opts.anrede ?? { fullName: opts.contactName ?? null };
-    const pick = await pickTemplate(opts.customerId, opts.purpose, kontakt);
+    // A/B-Fassung: fest je Lead bzw. Nummer, nach Entscheidung der Gewinner (lib/whatsapp/ab-test.ts)
+    const wanted = opts.variant ?? (await (await import("@/lib/whatsapp/ab-test")).abVariantFor(opts.purpose, leadId ?? opts.to));
+    const pick = await pickTemplate(opts.customerId, opts.purpose, kontakt, { variant: wanted, documentHeader: !!opts.document });
     if (!pick) throw new NoTemplateError(opts.purpose);
     const { tpl } = pick;
-    // Nur so viele Werte, wie die gewählte Vorlage Platzhalter hat (ältere Fassungen haben z. B. noch keinen Link)
-    const params = pick.params(opts.params.slice(1)).slice(0, placeholderCount(tpl.body));
+    // Ältere Fassung mit anderer Belegung: deren Parameter. Nur so viele Werte, wie die Vorlage Platzhalter hat.
+    const base = !pick.current && opts.legacyParams ? opts.legacyParams : opts.params;
+    const params = pick.params(base.slice(1)).slice(0, placeholderCount(tpl.body));
+    const buttons = Array.isArray(tpl.buttons) ? (tpl.buttons as unknown[]).length : 0;
+    const doc = tpl.headerFormat === "DOCUMENT" ? (opts.document ?? null) : null;
     mode = "template";
     pricingCategory = tpl.category.toLowerCase();
-    body = renderTemplate(tpl.body, params);
-    // Meta lehnt leere Parameter ab
-    const components = params.length
-      ? [
-          {
-            type: "body",
-            parameters: params.map((p) => ({ type: "text", text: p.trim() || "-" })),
-          },
-        ]
-      : undefined;
-    messageId = (await sendTemplate(apiKey, opts.to, tpl.name, tpl.language, components))
-      .messageId;
+    variant = pick.variant;
+    documentHeader = !!doc;
+    body = `${doc ? `${ERSTINFO_HEADER_MARK}\n` : ""}${renderTemplate(tpl.body, params)}`;
+    const components = templateComponents({ params, document: doc, buttonPayloads: pick.current ? opts.buttonPayloads : null, buttonCount: buttons });
+    messageId = (await sendTemplate(apiKey, opts.to, tpl.name, tpl.language, components)).messageId;
   }
 
   const now = new Date();
@@ -525,11 +743,14 @@ export async function sendWhatsAppNotice(opts: {
       waMessageId: messageId,
       status: "sent",
       sentBy: "system",
+      purpose: opts.purpose,
+      // A/B-Messung nur über Vorlagen (Freitext ist der Text des Aufrufers, keine Fassung)
+      variant,
       // Vorlagen kosten (vorläufig); der Status-Webhook liefert Metas endgültige Angabe.
       ...(pricingCategory ? { pricingCategory, billable: true } : {}),
     },
   });
 
   // messageId: für den Zustellstatus am Kampagnen-Empfänger (delivered/read aus dem Webhook)
-  return { mode, conversationId: conversation.id, messageId };
+  return { mode, conversationId: conversation.id, messageId, variant, documentHeader };
 }

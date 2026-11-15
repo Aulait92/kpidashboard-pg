@@ -63,7 +63,7 @@ describe("Rabatt auf die Einrichtung (Preisrechnung)", () => {
     expect(computeOfferPrice({ term: "none", products, setupDiscount: 300 })).toMatchObject({ setupFee: 2190, listSetup: 2490, setupDiscount: 300 });
     expect(computeOfferPrice({ term: "3m", products, setupDiscount: 300 })).toMatchObject({ setupFee: 1690, setupDiscount: 300 });
     expect(computeOfferPrice({ term: "12m", products, setupDiscount: 300 })).toMatchObject({ setupFee: 690, setupDiscount: 300 });
-    expect(setupForChoice("12m", 2, 300)).toBe(990 + 990 - 300);
+    expect(setupForChoice("12m", 2, 300)).toBe(990 - 300);
   });
 
   it("nie unter 0; günstigere Sonderkondition gilt allein (kein Addieren)", () => {

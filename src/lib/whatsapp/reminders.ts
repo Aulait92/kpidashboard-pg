@@ -47,6 +47,11 @@ function linkOrHint(mode: string, meetUrl: string | null, an: Ansprache = "du"):
   return mode === "video" && meetUrl ? meetUrl : a(an, "Wir rufen dich an.", "Wir rufen Sie an.");
 }
 
+/** Kurzer Vorbereitungshinweis in der Bestätigung (wie in der Vorlage v4). */
+function prepHint(an: Ansprache): string {
+  return a(an, "Zur Vorbereitung: Leg dir gern deine bisherigen Unterlagen zum Thema bereit, falls vorhanden.", "Zur Vorbereitung: Legen Sie sich gern Ihre bisherigen Unterlagen zum Thema bereit, falls vorhanden.");
+}
+
 /** Bestätigung nach Buchung (z. B. über die Buchungsseite). */
 export async function sendBookingConfirmation(opts: {
   customerId: string;
@@ -61,27 +66,22 @@ export async function sendBookingConfirmation(opts: {
 }): Promise<void> {
   const an = await anspracheOf(opts.customerId);
   const who = await ansprechpartner({ customerId: opts.customerId, leadId: opts.leadId, phone: opts.to, name: opts.name });
-  // Verschieben per Chat statt per Link (Ole, 15.11.2026): der Assistent verschiebt direkt im Gespräch
-  const manage = ` ${chatHint(an)}`;
-  const params = [
-    firstNameOf(opts.name),
-    formatWhenDE(opts.startsAt),
-    modeLabel(opts.mode),
-    `${linkOrHint(opts.mode, opts.meetUrl, an)}${manage}`,
-  ];
+  // Verschieben per Knopf „Termin verschieben“ (v4) bzw. per Chat (ältere Vorlagen: Satz im Parameter)
+  const params = [firstNameOf(opts.name), formatWhenDE(opts.startsAt), modeLabel(opts.mode), linkOrHint(opts.mode, opts.meetUrl, an)];
+  const legacyParams = [...params.slice(0, 3), `${params[3]} ${chatHint(an)}`];
   // „Guten Tag Frau Schneider, Ihr Videocall mit Susanne Meier ist bestätigt: …“
   const text =
     `${anredeZeile(an, who.kontakt)} ${terminWort(opts.mode, an)} mit ${who.advisor} ist bestätigt: ${params[1]}. ` +
     (opts.mode === "video" && opts.meetUrl
       ? `Hier der Link zum Videocall: ${opts.meetUrl}`
       : a(an, `${who.advisor} ruft dich zur vereinbarten Zeit an.`, `${who.advisor} ruft Sie zur vereinbarten Zeit an.`)) +
-    `\n\n${chatHint(an)}` +
-    " Bis dann! 🙂";
+    `\n\n${prepHint(an)} Bis dann! 🙂`;
   await sendWhatsAppNotice({
     customerId: opts.customerId,
     to: opts.to,
     purpose: "booking_confirmation",
     params,
+    legacyParams,
     text,
     leadId: opts.leadId ?? null,
     contactName: opts.name,
@@ -106,18 +106,26 @@ export async function sendRescheduleNotice(opts: {
   const an = await anspracheOf(opts.customerId);
   const who = await ansprechpartner({ customerId: opts.customerId, leadId: opts.leadId, phone: opts.to, name: opts.name });
   const change = a(an, "Passt dir die Zeit nicht? Antworte einfach hier, dann finden wir eine andere.", "Passt Ihnen die Zeit nicht? Antworten Sie einfach hier, dann finden wir eine andere.");
-  const params = [
-    firstNameOf(opts.name),
-    formatWhenDE(opts.startsAt),
-    modeLabel(opts.mode),
-    [linkOrHint(opts.mode, opts.meetUrl, an), change].filter(Boolean).join(" "),
-  ];
+  // v4: Frage „Passt die neue Zeit?“ mit Knöpfen „Ja, passt“/„Bitte verschieben“; ältere Vorlagen mit Satz im Parameter
+  const params = [firstNameOf(opts.name), formatWhenDE(opts.startsAt), modeLabel(opts.mode), linkOrHint(opts.mode, opts.meetUrl, an)];
+  const legacyParams = [...params.slice(0, 3), `${params[3]} ${change}`];
   const text =
     `${anredeZeile(an, who.kontakt)} wir mussten ${a(an, "deinen", "Ihren")} Termin mit ${who.advisor} leider verschieben. Neue Zeit: ${params[1]} (${params[2]}).` +
-    `\n\n${change}` +
-    `\n\n${a(an, "Danke für dein Verständnis!", "Danke für Ihr Verständnis!")} 🙂`;
+    `\n\n${a(an, "Danke für dein Verständnis! Passt dir die neue Zeit?", "Danke für Ihr Verständnis! Passt Ihnen die neue Zeit?")}`;
   const send = (purpose: "reschedule" | "booking_confirmation") =>
-    sendWhatsAppNotice({ customerId: opts.customerId, to: opts.to, purpose, params, text, leadId: opts.leadId ?? null, contactName: opts.name, anrede: who.kontakt });
+    sendWhatsAppNotice({
+      customerId: opts.customerId,
+      to: opts.to,
+      purpose,
+      params,
+      legacyParams,
+      text,
+      // Rückfall Bestätigungs-Vorlage: Knopf „Termin verschieben“ passt auch zum Freitext
+      textButtons: purpose === "reschedule" ? undefined : [],
+      leadId: opts.leadId ?? null,
+      contactName: opts.name,
+      anrede: who.kontakt,
+    });
   // Außerhalb des 24h-Fensters: Vorlage „Termin verschoben“. Solange sie bei Meta
   // noch nicht freigegeben ist, die Bestätigungs-Vorlage mit der neuen Zeit.
   try {
@@ -167,10 +175,21 @@ export async function runSoonReminders(now = new Date()): Promise<ReminderResult
     const text =
       `${anredeZeile(an, who.kontakt)} gleich ist es so weit: ${terminWort(appt.mode, an)} mit ${who.advisor} ist um ${uhr}.` +
       (appt.mode === "video" && appt.meetUrl ? ` Hier der Link: ${appt.meetUrl}` : ` ${a(an, `${who.advisor} ruft dich an.`, `${who.advisor} ruft Sie an.`)}`) +
-      ` ${a(an, "Passt bei dir alles? Falls etwas dazwischengekommen ist, schreib kurz hier, dann finden wir eine neue Zeit.", "Passt bei Ihnen alles? Falls etwas dazwischengekommen ist, schreiben Sie kurz hier, dann finden wir eine neue Zeit.")}` +
-      "";
+      ` ${a(an, "Passt bei dir alles?", "Passt bei Ihnen alles?")}`;
+    // Knöpfe „Ja, passt“/„Bitte verschieben“ (v4); ältere Erinnerungs-Vorlage mit Satz im Parameter
+    const remParams = [params[0], formatWhenDE(appt.startsAt), params[2], params[3]];
     const send = (purpose: "reminder_soon" | "reminder") =>
-      sendWhatsAppNotice({ customerId: appt.customerId, to: conv.contactPhone, purpose, params: purpose === "reminder" ? [params[0], formatWhenDE(appt.startsAt), params[2], params[3]] : params, text, leadId: appt.leadId, contactName: conv.contactName, anrede: who.kontakt });
+      sendWhatsAppNotice({
+        customerId: appt.customerId,
+        to: conv.contactPhone,
+        purpose,
+        params: purpose === "reminder" ? remParams : params,
+        ...(purpose === "reminder" ? { legacyParams: [...remParams.slice(0, 3), `${remParams[3]} ${chatHint(an)}`] } : {}),
+        text,
+        leadId: appt.leadId,
+        contactName: conv.contactName,
+        anrede: who.kontakt,
+      });
     try {
       // Solange „Kurz vor dem Termin“ bei Meta nicht freigegeben ist: die normale Erinnerungs-Vorlage
       try {
@@ -244,20 +263,16 @@ export async function runReminders(): Promise<ReminderResult> {
 
     const an = await anspracheOf(appt.customerId);
     const who = await ansprechpartner({ customerId: appt.customerId, leadId: appt.leadId, phone: conv.contactPhone, name: conv.contactName });
-    const params = [
-      firstNameOf(conv.contactName),
-      formatWhenDE(appt.startsAt),
-      modeLabel(appt.mode),
-      `${linkOrHint(appt.mode, appt.meetUrl, an)} ${chatHint(an)}`,
-    ];
+    // v4: „Passt der Termin für Sie?“ mit Knöpfen „Ja, passt“/„Bitte verschieben“ (Bestätigung: lib/whatsapp/knopf.ts)
+    const params = [firstNameOf(conv.contactName), formatWhenDE(appt.startsAt), modeLabel(appt.mode), linkOrHint(appt.mode, appt.meetUrl, an)];
+    const legacyParams = [...params.slice(0, 3), `${params[3]} ${chatHint(an)}`];
     // „Guten Tag Frau Schneider, kurze Erinnerung an Ihren Videocall mit Susanne Meier am …“
     const text =
       `${anredeZeile(an, who.kontakt)} kurze Erinnerung an ${terminWort(appt.mode, an, true)} mit ${who.advisor} am ${params[1]}.` +
       (appt.mode === "video" && appt.meetUrl
         ? ` Hier der Link: ${appt.meetUrl}`
         : ` ${a(an, `${who.advisor} ruft dich an.`, `${who.advisor} ruft Sie an.`)}`) +
-      `\n\n${chatHint(an)}` +
-      " Bis dann! 🙂";
+      `\n\n${a(an, "Passt der Termin für dich?", "Passt der Termin für Sie?")}`;
     // WhatsApp + E-Mail; als erledigt gilt die Erinnerung, sobald EIN Kanal
     // zugestellt hat (sonst nächster Cron-Lauf erneut — ohne Doppel-Mails).
     let delivered = false;
@@ -267,6 +282,7 @@ export async function runReminders(): Promise<ReminderResult> {
         to: conv.contactPhone,
         purpose: "reminder",
         params,
+        legacyParams,
         text,
         leadId: appt.leadId,
         contactName: conv.contactName,

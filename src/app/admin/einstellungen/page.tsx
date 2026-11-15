@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, Bot, Calculator, Clock, FileBarChart, Layers, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, Megaphone, MessageCircle, Receipt, Rocket, ShieldCheck, TrendingUp, Wallet, Workflow } from "lucide-react";
+import { Activity, Anchor, Bot, Calculator, Clock, FileBarChart, Layers, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, Megaphone, MessageCircle, Receipt, Rocket, ShieldCheck, TrendingUp, Wallet, Workflow } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { supportConfig } from "@/lib/support";
 import { loadTaxNumber, taxNumberWarning } from "@/lib/invoice-footer";
@@ -31,6 +31,7 @@ const GROUPS = [
       { href: "/admin/monatsberichte", icon: FileBarChart, color: "bg-blue-600", title: "Monatsberichte", text: "Berichte an Kunden: Entwürfe prüfen, senden oder lieber anrufen" },
       { href: "/admin/einstellungen/login", icon: LogIn, color: "bg-indigo-500", title: "Login-Seite", text: "Infokarten neben dem Login: mehrere Karten im Wechsel, mit Klickzahlen" },
       { href: "/admin/einstellungen/status", icon: Activity, color: "bg-emerald-500", title: "Status & Support", text: "Öffentliche Statusseite, Störungsmeldungen, Support-Kontakt im Hilfe-Chat" },
+      { href: "/admin/einstellungen/halteangebote", icon: Anchor, color: "bg-rose-500", title: "Halteangebote", text: "Angebote beim Kündigen je Grund: Nachlass, Neustart, Pause, Nur Bestand, Rückkehrangebot" },
     ],
   },
   {

@@ -560,6 +560,71 @@ export async function resumeBilling(state: BillingPauseState): Promise<void> {
 }
 
 /**
+ * Halteangebot „Pause ohne Kosten“ (lib/halteangebote-server.ts): die ganze Abrechnung ruht (pause_collection „void“:
+ * Rechnungen in der Pause werden nicht eingezogen), Fortsetzen über resumeBilling. Jahreszahlung: ohne Gutschrift (AGB).
+ */
+export async function pauseBillingFully(stripeCustomerId: string): Promise<BillingPauseState> {
+  const stripe = stripeClient();
+  if (!stripe) return { method: "none", reason: "Stripe nicht eingerichtet" };
+  const sub = await activeSubscription(stripe, stripeCustomerId);
+  if (!sub) return { method: "none", reason: "Kein laufendes Abo (startet ggf. erst noch)" };
+  if (sub.items.data.some((i) => i.price.recurring?.interval === "year")) {
+    return { method: "none", reason: "Jährliche Vorauszahlung: Pause ohne Gutschrift" };
+  }
+  await stripe.subscriptions.update(sub.id, { pause_collection: { behavior: "void" } });
+  return { method: "pause_collection", subscriptionId: sub.id };
+}
+
+export type RetentionCouponResult = { ok: true; couponId: string; subscriptionId: string } | { ok: false; note: string };
+
+/**
+ * Halteangebot (lib/halteangebote-server.ts): Nachlass als Stripe-Gutschein am laufenden Abo, Dauer „repeating“ für
+ * `months` Monatsrechnungen. `serviceOnly`: nur auf die Betreuungs-Position (applies_to), z. B. 1 Monat Betreuung
+ * kostenlos. Der Gutschein wird zur Laufzeit angelegt bzw. wiederverwendet (feste ID je Prozent/Monate/Umfang),
+ * vorhandene Rabatte am Abo bleiben. Geht es nicht automatisch (kein Abo, Startpreis-Phase, Jahreszahlung, keine
+ * Betreuungs-Position), kommt ok: false mit Grund; der Aufrufer legt dann eine Aufgabe an.
+ */
+export async function applyRetentionCoupon(
+  stripeCustomerId: string,
+  opts: { percentOff: number; months: number; serviceOnly?: boolean; idempotencyKey: string },
+): Promise<RetentionCouponResult> {
+  const stripe = stripeClient();
+  if (!stripe) return { ok: false, note: "Stripe ist nicht eingerichtet." };
+  const ed = await editableSubscription(stripe, stripeCustomerId);
+  if ("note" in ed) return { ok: false, note: ed.note };
+  const sub = ed.sub;
+  if (intervalOf(sub) === "year") return { ok: false, note: "Jährliche Vorauszahlung: Nachlass bitte von Hand verrechnen." };
+  const service = opts.serviceOnly ? await productId(stripe, "service") : null;
+  if (service && !sub.items.data.some((i) => productOf(i) === service && (i.quantity ?? 1) > 0)) {
+    return { ok: false, note: "Keine Betreuungs-Position im Abo." };
+  }
+  const id = `pg-halten-${service ? "betreuung" : "abo"}-${opts.percentOff}-${opts.months}m`;
+  let couponId: string;
+  try {
+    couponId = (await stripe.coupons.retrieve(id)).id;
+  } catch (err) {
+    if ((err as { code?: string })?.code !== "resource_missing") throw err;
+    couponId = (
+      await stripe.coupons.create(
+        {
+          id,
+          name: service ? `Halteangebot: Betreuung ${opts.percentOff} %` : `Halteangebot: ${opts.percentOff} % Nachlass`,
+          percent_off: opts.percentOff,
+          duration: "repeating",
+          duration_in_months: opts.months,
+          ...(service ? { applies_to: { products: [service] } } : {}),
+          metadata: { pg_kind: "halteangebot" },
+        },
+        { idempotencyKey: `coupon-${id}` },
+      )
+    ).id;
+  }
+  const existing = (sub.discounts ?? []).map((d) => ({ discount: typeof d === "string" ? d : d.id }));
+  await stripe.subscriptions.update(sub.id, { discounts: [...existing, { coupon: couponId }], proration_behavior: "none" }, { idempotencyKey: opts.idempotencyKey });
+  return { ok: true, couponId, subscriptionId: sub.id };
+}
+
+/**
  * Einmaliger Rechnungsposten (z. B. WhatsApp-Gebühren). Ohne Rechnungs-ID
  * bleibt er offen und erscheint auf der nächsten Abo-Rechnung des Kunden.
  */

@@ -96,6 +96,22 @@ export const TEXT_LABELS: Record<TextKey, { title: string; hint: string; needsLi
 
 export const MAX_TEXT = 700;
 
+/**
+ * Thema der Bitte um Empfehlung (Ole, 15.11.2026: konkret statt „jemanden, dem ich weiterhelfen kann“), aus dem
+ * Produkt des Abschlusses bzw. der ersten Sparte des Bestandskunden. Für {{2}} der Vorlage referral_request.
+ */
+export function empfehlungsThema(source: string | null | undefined): string {
+  const s = (source ?? "").trim();
+  if (/\btkv\b|tier|katze|hund|pferd/i.test(s)) return "Tierversicherung";
+  if (/zahn/i.test(s)) return "Zahnzusatzversicherung";
+  if (/\bpkv\b|kranken|wechsel|tarifoptim/i.test(s)) return "Krankenversicherung";
+  if (/privatschutz|haftpflicht|hausrat|rechtsschutz|wohngeb/i.test(s)) return "Privatschutz";
+  if (/sterbegeld/i.test(s)) return "Sterbegeld";
+  if (/kinderspar|sparplan/i.test(s)) return "Vorsorge für Kinder";
+  if (!s || /bestandskunde|empfehlung/i.test(s) || s.length > 40) return "Absicherung";
+  return s.replace(/\s*\(.*\)\s*$/, "");
+}
+
 export function renderText(
   text: string,
   vars: { vorname?: string | null; link?: string | null; vertreter: string; anrede?: AnredeKontakt | null },

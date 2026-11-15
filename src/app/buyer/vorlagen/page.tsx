@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
-import { CheckCircle2, Clock, Info, MessageCircle, TriangleAlert } from "lucide-react";
+import { CheckCircle2, Clock, FileText, Info, MessageCircle, TriangleAlert } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { CUSTOMER_TITLES, exampleRestFor, exampleValuesFor, formOf, previewBodyFor, purposesFor, templateNameFor, templateNamesOf, TEMPLATE_VERSION, isTemplateRevisionOf } from "@/lib/whatsapp/template-plan";
 import { AnspracheForm } from "@/components/ansprache-form";
 import { asAnsprache } from "@/lib/ansprache";
-import { rankTemplates, renderTemplate, TEMPLATE_BUTTONS, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { rankTemplates, renderTemplate, TEMPLATE_BUTTONS, TEMPLATE_HEADER, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +38,7 @@ export default async function VorlagenPage() {
       empfehlungEnabled: true,
       leadAddress: true,
       whatsAppAccount: { select: { status: true } },
-      messageTemplates: { select: { name: true, purpose: true, status: true, body: true, updatedAt: true }, orderBy: { updatedAt: "desc" } },
+      messageTemplates: { select: { name: true, purpose: true, status: true, body: true, headerFormat: true, updatedAt: true }, orderBy: { updatedAt: "desc" } },
     },
   });
   if (!customer) redirect("/buyer");
@@ -62,7 +62,9 @@ export default async function VorlagenPage() {
     const failed = tpl?.status === "rejected" || tpl?.status === "paused";
     const badge: Badge =
       sending && !failed ? { label: tpl ? "Neue Fassung in Prüfung bei Meta" : "Neue Fassung wird eingereicht", cls: "bg-amber-50 text-amber-700", icon: Clock } : badgeFor(tpl?.status ?? null, connected);
-    return { purpose, tpl, text, badge, fallbackText, sie: form !== "du", buttons: TEMPLATE_BUTTONS[purpose as NoticePurpose] ?? [] };
+    // Erstinformation als PDF im Kopf (wie eingereicht; vor dem Einreichen laut Plan)
+    const pdf = !!TEMPLATE_HEADER[purpose] && (tpl ? tpl.headerFormat === "DOCUMENT" : true);
+    return { purpose, tpl, text, badge, fallbackText, pdf, sie: form !== "du", buttons: TEMPLATE_BUTTONS[purpose as NoticePurpose] ?? [] };
   });
 
   return (
@@ -103,6 +105,11 @@ export default async function VorlagenPage() {
                   </div>
                   <div className="mt-3 rounded-[var(--radius-md,12px)] bg-[#efeae2] p-3">
                     <div className="max-w-md rounded-lg rounded-tl-none bg-white px-3 py-2 text-sm leading-relaxed text-slate-900 shadow-sm">
+                      {r.pdf ? (
+                        <div className="mb-2 flex items-center gap-2 rounded-md bg-slate-100 px-2 py-1.5 text-xs text-slate-700">
+                          <FileText className="h-4 w-4 shrink-0" /> Erstinformation.pdf
+                        </div>
+                      ) : null}
                       <div className="mb-1 flex items-center gap-1 text-[11px] font-semibold text-emerald-700">
                         <MessageCircle className="h-3 w-3" /> {names.firm}
                       </div>

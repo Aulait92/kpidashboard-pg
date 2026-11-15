@@ -1,7 +1,8 @@
 import { Card, CardHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { saveRetainerAction } from "./retainer-actions";
-import { CHURN_OFFERS, churnReasonLabel, isChurnOffer } from "@/lib/anti-churn";
+import { CHURN_OFFERS, churnReasonLabel, isChurnOffer, isHalteKind } from "@/lib/anti-churn";
+import { HALTE_LABEL } from "@/lib/halteangebote";
 
 const input = "h-9 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm tabular-nums";
 const dmy = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
@@ -18,6 +19,8 @@ export async function RetainerCard({ customerId, message, failed }: { customerId
   const monthly = c.retainerMonthly != null ? Number(c.retainerMonthly) : null;
   // Anti-Churn: letzte Kündigungsabsichten (Grund, gewählte Alternative, Ergebnis)
   const intents = await prisma.churnIntent.findMany({ where: { customerId }, orderBy: { createdAt: "desc" }, take: 5, select: { id: true, reason: true, note: true, offer: true, outcome: true, createdAt: true } });
+  // Halteangebote (lib/halteangebote-server.ts): angenommen, Stripe automatisch oder von Hand, später gekündigt
+  const halte = await prisma.retentionOffer.findMany({ where: { customerId }, orderBy: { createdAt: "desc" }, take: 5, select: { id: true, kind: true, stripeStatus: true, stripeCouponId: true, commitUntil: true, cancelledLaterAt: true, createdAt: true } });
   return (
     <Card>
       <CardHeader title="Betreuungsgebühr" />
@@ -41,6 +44,21 @@ export async function RetainerCard({ customerId, message, failed }: { customerId
                   {i.note ? ` („${i.note}“)` : ""}
                   {i.offer && isChurnOffer(i.offer) ? `, gewählt: ${CHURN_OFFERS[i.offer].title}` : ""}
                   {i.outcome === "gekuendigt" ? ", danach gekündigt" : i.outcome === "alternative" ? ", geblieben" : ", noch offen"}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        {halte.length ? (
+          <div className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2" data-admin-halteangebote>
+            <div className="mb-1 font-medium">Halteangebote</div>
+            <ul className="space-y-1">
+              {halte.map((h) => (
+                <li key={h.id}>
+                  {dmy(h.createdAt)}: {isHalteKind(h.kind) ? HALTE_LABEL[h.kind] : h.kind}
+                  {h.stripeStatus === "applied" ? `, Stripe automatisch${h.stripeCouponId ? ` (${h.stripeCouponId})` : ""}` : h.stripeStatus === "manual" ? ", Stripe bzw. Gutschrift von Hand (Aufgabe)" : ""}
+                  {h.commitUntil ? `, Mindestlaufzeit bis ${dmy(new Date(h.commitUntil.getTime() - 1))}` : ""}
+                  {h.cancelledLaterAt ? `, trotzdem gekündigt am ${dmy(h.cancelledLaterAt)}` : ""}
                 </li>
               ))}
             </ul>
