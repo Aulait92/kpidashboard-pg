@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { angeboteAuslesen, cleanAngebote } from "@/lib/angebote";
 import { folien, markeFuer, praesentationCss } from "@/lib/praesentation";
 import { asAnsprache } from "@/lib/ansprache";
+import { logoDataUri } from "@/lib/branding-logo";
 import { appointmentScope, type TeamCtx } from "@/lib/team";
 import { displayProduct } from "@/lib/products";
 import { currentStammdaten } from "@/lib/lead-stammdaten";
@@ -151,9 +152,10 @@ export async function loadPraesentation(appointmentId: string, ctx: TeamCtx) {
   if (!d) return null;
   const [ang, kunde] = await Promise.all([
     loadAngebote(appointmentId, ctx),
-    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, vermittlerTyp: true, leadAddress: true } }),
+    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, vermittlerTyp: true, leadAddress: true, brandLogo: true, brandLogoType: true, brandLogoConfirmedAt: true } }),
   ]);
-  const marke = markeFuer({ name: kunde?.name ?? "Ihre Beratung", vermittlerTyp: kunde?.vermittlerTyp });
+  const logo = kunde?.brandLogo && kunde.brandLogoType && kunde.brandLogoConfirmedAt ? logoDataUri(new Uint8Array(kunde.brandLogo), kunde.brandLogoType) : null;
+  const marke = markeFuer({ name: kunde?.name ?? "Ihre Beratung", vermittlerTyp: kunde?.vermittlerTyp }, logo);
   const fs = folien(d, ang?.bestaetigt ? ang.angebote : null, marke, asAnsprache(kunde?.leadAddress));
   return { d, marke, folien: fs, css: praesentationCss(marke), angeboteBestaetigt: !!ang?.bestaetigt };
 }

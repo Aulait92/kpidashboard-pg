@@ -34,10 +34,15 @@ export default async function PraesentationPage({ params, searchParams }: { para
         title={`Präsentation: ${p.d.lead.name}`}
         subtitle={p.angeboteBestaetigt ? "Im Videocall den Bildschirm teilen und auf Vollbild gehen." : "Noch ohne Angebote: Bestätigen Sie Ihre Angebote in der Terminvorbereitung, dann erscheinen sie hier."}
       />
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <ButtonLink href={`/api/buyer/termine/${id}/praesentation`} external variant="secondary" size="md" icon={FileDown}>
           Als PDF
         </ButtonLink>
+        {!p.marke.logoUrl && ctx.teamRole !== "advisor" ? (
+          <Link href="/buyer/einstellungen/branding" className="text-sm font-medium text-[color:var(--brand)] hover:underline" data-logo-hinweis>
+            Eigenes Logo auf die Folien bringen
+          </Link>
+        ) : null}
       </div>
       <Deck id={id} css={p.css} folien={p.folien} />
     </main>

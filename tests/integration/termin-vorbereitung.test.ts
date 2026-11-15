@@ -2,6 +2,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { angeboteSpeichern, auslesenUndSpeichern, listVorbereitungen, loadAngebote, loadPraesentation, loadVorbereitung, setPrepared } from "@/lib/termin-vorbereitung-server";
+import { loadLogoStand, logoBestaetigen, logoEntfernen, logoHochladen } from "@/lib/branding-logo-server";
 import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
 
 const HOUR = 60 * 60 * 1000;
@@ -70,5 +71,28 @@ describe("Terminvorbereitung", () => {
     expect(p?.folien.find((f) => f.id === "beitrag")?.html).toContain("8,20");
     expect(p?.folien.find((f) => f.id === "empfehlung")?.html).not.toContain("8,20");
     expect(await loadPraesentation(appt.id, { customerId: otherId, userId: null, teamRole: "owner" })).toBeNull();
+  });
+
+  it("Logo: hochladen, erst nach Bestätigung auf den Folien, entfernen", async () => {
+    const lead = await prisma.lead.create({ data: { customerId, name: "Lea Logo", phone: "4915133330003", source: "Privatschutz" } });
+    const appt = await prisma.appointment.create({ data: { customerId, leadId: lead.id, mode: "video", status: "booked", startsAt: new Date(Date.now() + 10 * HOUR) } });
+    const ctx = { customerId, userId: null, teamRole: "owner" as const };
+    const svg = new TextEncoder().encode(`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" onload="x()"><rect width="200" height="60" fill="#003781"/></svg>`);
+    expect((await logoHochladen(customerId, "logo.svg", new TextEncoder().encode("kein bild"))).ok).toBe(false);
+    expect((await logoHochladen(customerId, "logo.svg", svg)).ok).toBe(true);
+    let s = await loadLogoStand(customerId);
+    expect(s.bestaetigt).toBe(false);
+    expect(s.dataUri).toMatch(/^data:image\/svg\+xml;base64,/);
+    expect(Buffer.from(s.dataUri!.split(",")[1], "base64").toString()).not.toContain("onload");
+    expect((await loadPraesentation(appt.id, ctx))?.marke.logoUrl).toBeNull();
+    expect(await logoBestaetigen(customerId)).toBe(true);
+    s = await loadLogoStand(customerId);
+    expect(s.bestaetigt).toBe(true);
+    const p = await loadPraesentation(appt.id, ctx);
+    expect(p?.marke.logoUrl).toBe(s.dataUri);
+    expect(p?.folien[0].html).toContain("titellogo");
+    await logoEntfernen(customerId);
+    expect((await loadPraesentation(appt.id, ctx))?.marke.logoUrl).toBeNull();
+    expect(await logoBestaetigen(customerId)).toBe(false);
   });
 });

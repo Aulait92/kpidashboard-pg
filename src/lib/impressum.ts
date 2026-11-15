@@ -45,7 +45,7 @@ export function normalizeUrl(raw: string): URL | null {
 }
 
 /** Löst der Name auf eine interne Adresse auf? (Schutz gegen DNS-Tricks) */
-async function resolvesPrivate(hostname: string): Promise<boolean> {
+export async function resolvesPrivate(hostname: string): Promise<boolean> {
   try {
     const { lookup } = await import("node:dns/promises");
     const addrs = await lookup(hostname, { all: true });

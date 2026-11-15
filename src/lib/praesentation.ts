@@ -69,7 +69,8 @@ export function praesentationCss(m: Marke): string {
 .slide .bar{position:absolute;left:0;top:0;bottom:0;width:14px;background:var(--f)}
 .slide .foot{position:absolute;left:80px;right:80px;bottom:28px;display:flex;justify-content:space-between;align-items:center;color:#66758f;font-size:16px}
 .slide .marke{font-weight:700;color:var(--f);font-size:18px;display:flex;align-items:center;gap:10px}
-.slide .marke img{height:34px;width:auto}
+.slide .marke img{height:34px;width:auto;max-width:180px;object-fit:contain}
+.titellogo{display:block;height:72px;width:auto;max-width:360px;object-fit:contain;margin-bottom:28px}
 .slide h1{font-size:54px;line-height:1.1;margin:0 0 18px;letter-spacing:-.02em;color:var(--f)}
 .slide h2{font-size:42px;line-height:1.15;margin:0 0 28px;letter-spacing:-.015em;color:var(--f)}
 .slide p,.slide li{font-size:24px;line-height:1.45}
@@ -118,6 +119,8 @@ export function praesentationCss(m: Marke): string {
 .beispiel .ohne{background:#fef2f2;color:#7f1d1d}
 .beispiel .mit{background:var(--fh);color:var(--f)}
 .angebot .wunsch{font-size:17px;color:#4b5568;margin-bottom:6px}
+.teile{display:flex;flex-wrap:wrap;gap:12px;margin:22px 0 6px}.teile span{background:var(--fh);color:#1f2937;border-radius:99px;padding:8px 18px;font-size:20px}.teile b{color:var(--f);margin-left:6px}
+.drin .tarif{font-size:24px;margin-bottom:4px}.drin li{font-size:18px;margin:0 0 6px}.drin .nein{margin-top:6px}
 .gross .einheit{font-size:30px;font-weight:600;color:#66758f}
 .entscheidung{display:grid;grid-template-columns:3fr 2fr;gap:24px;margin-bottom:28px}
 .entscheidung>div{border-radius:18px;padding:28px}
@@ -194,7 +197,7 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
     id: "titel",
     titel: "Begrüßung",
     html: R(
-      `<h1>${e(a(an, `Dein Schutz, ${anrede}`, `Ihr Schutz, ${anrede}`))}</h1><p class="sub">${e(d.lead.produkt)} · mit ${e(d.termin.berater)}</p>
+      `${m.logoUrl ? `<img class="titellogo" src="${e(m.logoUrl)}" alt="">` : ""}<h1>${e(a(an, `Dein Schutz, ${anrede}`, `Ihr Schutz, ${anrede}`))}</h1><p class="sub">${e(d.lead.produkt)} · mit ${e(d.termin.berater)}</p>
 <div class="agenda"><div><b>1</b>${e(a(an, "Deine Situation", "Ihre Situation"))}</div><div><b>2</b>Unsere Empfehlung</div><div><b>3</b>So geht es weiter</div></div>
 <p class="hinweis">${e(a(an, "Frag jederzeit dazwischen.", "Fragen Sie jederzeit dazwischen."))}</p>`,
       undefined,
@@ -232,7 +235,7 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
     ],
   });
 
-  const top = sparten.slice(0, 3);
+  const top = sparten.slice(0, 4);
   out.push({
     id: "risiken",
     titel: "Worauf es ankommt",
@@ -261,8 +264,8 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
     html: R(
       `<h2>${e(a(an, "Unsere Empfehlung für dich", "Unsere Empfehlung für Sie"))}</h2>${
         zeige.length
-          ? `<div class="angebote" style="grid-template-columns:repeat(${Math.min(zeige.length, 3)},1fr)">${zeige
-              .slice(0, 3)
+          ? `<div class="angebote" style="grid-template-columns:repeat(${Math.min(zeige.length, 4)},1fr)">${zeige
+              .slice(0, 4)
               .map((i) => {
                 const w = WUNSCH[sparteKey(i.sparte)];
                 return `<div class="angebot empf"><div class="wunsch">${e(a(an, "Du wolltest", "Sie wollten"))}: ${e(w ? a(an, w.du, w.sie) : i.sparte)}</div><div class="tarif">${e(i.sparte)}${i.tarif ? ` ${e(i.tarif)}` : ""}</div>${punkte(i.leistungen.slice(0, 3))}</div>`;
@@ -280,13 +283,28 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
 
   const drin = [...new Set(zeige.flatMap((i) => i.leistungen))].slice(0, 5);
   const nicht = [...new Set(zeige.flatMap((i) => i.ausschluesse))].slice(0, 3);
-  const sb = [...new Set(zeige.map((i) => i.selbstbeteiligung).filter((x): x is string => !!x))];
+  // Selbstbeteiligung je Sparte (mehrere Sparten), „keine“ weglassen
+  const mitSb = zeige.filter((i) => i.selbstbeteiligung && !/^keine?$/i.test(i.selbstbeteiligung.trim()));
+  const mehrere = new Set(zeige.map((i) => i.sparte)).size > 1;
+  const sb = mehrere ? mitSb.map((i) => `${i.sparte} ${i.selbstbeteiligung}`) : [...new Set(mitSb.map((i) => i.selbstbeteiligung!))];
+  // Mehrere Sparten: je Sparte eine Karte statt einer gemischten Liste
+  const jeSparte = zeige
+    .slice(0, 4)
+    .map((i) => {
+      const neg = [...i.ausschluesse.slice(0, 2), ...(i.selbstbeteiligung && !/^keine?$/i.test(i.selbstbeteiligung.trim()) ? [`Selbstbeteiligung ${i.selbstbeteiligung}`] : [])];
+      return `<div class="angebot"><div class="tarif">${e(i.sparte)}</div><div class="ok"><ul>${i.leistungen.slice(0, 3).map((x) => `<li>${e(x)}</li>`).join("")}</ul></div>${
+        neg.length ? `<div class="nein"><ul>${neg.map((x) => `<li>${e(x)}</li>`).join("")}</ul></div>` : ""
+      }</div>`;
+    })
+    .join("");
   out.push({
     id: "leistungen",
     titel: "Das ist drin",
     html: R(
       `<h2>Das ist drin, und das nicht</h2>${
-        drin.length || nicht.length
+        mehrere
+          ? `<div class="angebote drin" style="grid-template-columns:repeat(${Math.min(zeige.length, 4)},1fr)">${jeSparte}</div>`
+          : drin.length || nicht.length
           ? `<div class="zwei"><div class="ok"><ul>${drin.map((x) => `<li>${e(x)}</li>`).join("")}</ul></div><div class="nein"><ul>${[...nicht, ...(sb.length ? [`Selbstbeteiligung: ${sb.join(", ")}`] : [])]
               .map((x) => `<li>${e(x)}</li>`)
               .join("")}</ul></div></div>`
@@ -325,7 +343,14 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
     html: R(
       `<h2>${e(a(an, "Dein Beitrag", "Ihr Beitrag"))}</h2>${
         summe != null
-          ? `<div class="gross">${eur(summe)} <span class="einheit">im Monat</span></div><p class="sub">Das sind rund ${eur(summe / 30)} am Tag.</p>${sb.length ? `<p class="sub">Selbstbeteiligung: ${e(sb.join(", "))}</p>` : ""}`
+          ? `<div class="gross">${eur(summe)} <span class="einheit">im Monat</span></div><p class="sub">Das sind rund ${eur(summe / 30)} am Tag.</p>${
+              mehrere
+                ? `<div class="teile">${zeige
+                    .filter((i) => i.beitragMonat != null)
+                    .map((i) => `<span>${e(i.sparte)} <b>${eur(i.beitragMonat!)}</b></span>`)
+                    .join("")}</div>`
+                : ""
+            }${sb.length ? `<p class="sub">Selbstbeteiligung: ${e(sb.join(", "))}</p>` : ""}`
           : `<div class="leer">${e(a(an, "Deinen Beitrag rechnen wir gemeinsam.", "Ihren Beitrag rechnen wir gemeinsam."))}</div>`
       }`,
       a(an, "Passt das für dich?", "Passt das für Sie?"),

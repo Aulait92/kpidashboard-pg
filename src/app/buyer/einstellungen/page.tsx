@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BellRing, CalendarDays, ChevronRight, Contact, CreditCard, Gift, Mail, Megaphone, MessageSquareText, Percent, Send, ShieldCheck, UsersRound } from "lucide-react";
+import { BellRing, CalendarDays, Image as ImageIcon, ChevronRight, Contact, CreditCard, Gift, Mail, Megaphone, MessageSquareText, Percent, Send, ShieldCheck, UsersRound } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { unreadUpdates } from "@/lib/neuigkeiten";
@@ -38,6 +38,7 @@ export default async function EinstellungenPage() {
         { href: "/buyer/postfach", icon: Mail, color: "bg-blue-500", title: "E-Mail-Postfach", text: "Eigenes Postfach verbinden, Signatur, E-Mail-Vorlagen" },
         { href: "/buyer/vorlagen", icon: MessageSquareText, color: "bg-emerald-500", title: "WhatsApp-Vorlagen", text: "Nachrichten, die Ihr Assistent in Ihrem Namen schickt" },
         { href: "/buyer/einstellungen/erinnerungen", icon: BellRing, color: "bg-orange-500", title: "Erinnerungen & Aufgaben", text: "Erinnerung an den nächsten Schritt, Aufgaben nach dem Abschluss" },
+        ...(owner ? [{ href: "/buyer/einstellungen/branding", icon: ImageIcon, color: "bg-teal-500", title: "Logo für Präsentationen", text: "Ihr Logo von der Webseite für die Beratungspräsentation" }] : []),
         ...(owner ? [{ href: "/buyer/bestand", icon: Contact, color: "bg-sky-500", title: "Bestandskunden", text: "Kundenliste, Lücken und Anlässe, Kampagnen" }] : []),
       ],
     },

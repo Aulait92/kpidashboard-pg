@@ -189,6 +189,10 @@ Seiten aus der Liste „Seiten“ unten.
   eine bebilderte Beratungsstrecke mit den Angaben Ihres Kunden und Ihren Angeboten, in den Farben Ihrer
   Gesellschaft. Im Videocall den Bildschirm teilen, **Vollbild**, mit den Pfeiltasten weiter. Der **Sprechzettel**
   (nur für Sie) steht unter der Folie oder in einem eigenen Fenster, das mitblättert. **Als PDF** zum Nachschicken.
+- **Logo auf der Präsentation:** Unter **Einstellungen → Logo für Präsentationen** holt die App das Logo von Ihrer
+  Webseite (bei einer Agentur meist das Logo Ihrer Gesellschaft) oder Sie laden es hoch (PNG, JPG oder SVG, bis 1 MB).
+  Erst nach Ihrer Bestätigung, dass Sie es verwenden dürfen, erscheint es auf der Titelfolie und im Fuß jeder Folie.
+  Manche Webseiten lassen sich nicht automatisch abrufen; dann einfach hochladen.
 
 ## Der WhatsApp-Assistent
 

@@ -68,4 +68,23 @@ describe("Präsentation", () => {
     expect(du[0].html).toContain("Dein Schutz, Julia");
     expect(du.map((f) => f.html).join(" ")).not.toMatch(/\bSie haben\b|\bIhnen\b/);
   });
+
+  it("vier Sparten: alle Kacheln und Empfehlungen, Leistungen und Selbstbeteiligung je Sparte, Beitrag aufgeschlüsselt", () => {
+    const ang = cleanAngebote({ items: [
+      { sparte: "Privathaftpflicht", tarif: "Top", beitragMonat: 6.8, selbstbeteiligung: "keine", leistungen: ["50 Mio."], empfohlen: true },
+      { sparte: "Rechtsschutz", beitragMonat: 32.4, selbstbeteiligung: "150 € je Fall", leistungen: ["Mietrecht"], empfohlen: true },
+      { sparte: "Unfall", beitragMonat: 18.6, leistungen: ["Invalidität"], empfohlen: true },
+      { sparte: "Tierkranken", beitragMonat: 21.5, selbstbeteiligung: "20 %", leistungen: ["OP"], empfohlen: true },
+    ] });
+    const fs = folien({ ...d, formular: [] }, ang, markeFuer({ name: "X" }));
+    expect(fs.find((f) => f.id === "risiken")!.html.match(/class="kachel"/g)).toHaveLength(4);
+    expect(fs.find((f) => f.id === "empfehlung")!.html.match(/class="angebot empf"/g)).toHaveLength(4);
+    const l = fs.find((f) => f.id === "leistungen")!.html;
+    expect(l).toContain("Selbstbeteiligung 150 € je Fall");
+    expect(l).not.toContain("Selbstbeteiligung keine");
+    const b = fs.find((f) => f.id === "beitrag")!.html;
+    expect(b).toContain("79,30");
+    expect(b).toContain("Rechtsschutz 150 € je Fall, Tierkranken 20 %");
+    expect(b).toMatch(/Unfall <b>18,60/);
+  });
 });

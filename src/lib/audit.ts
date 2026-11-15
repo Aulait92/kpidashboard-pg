@@ -151,6 +151,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "empfehlung.link_sent": "Empfehlungslink verschickt",
   "rechnung.steuernummer": "Steuernummer für Rechnungen geändert",
   "rechnung.kunden": "Pflichtangaben bei Stripe-Kunden aktualisiert",
+  "customer.logo": "Logo für Präsentationen geändert",
 };
 
 export async function audit(
