@@ -412,7 +412,7 @@ function Wachstum({ data, investor }: { data: ZahlenData; investor: boolean }) {
             </div>
           ) : null}
         </Card>
-        <Card title={b ? `MRR-Brücke ${longMonth(b.from).split(" ")[0]} → ${longMonth(b.to).split(" ")[0]}` : "MRR-Brücke"} cap="Woher das Wachstum kommt: neue Kunden, Ausbau, Verkleinerung, Kündigungen (abgeschlossene Monate).">
+        <Card title={b ? `MRR-Brücke ${longMonth(b.from).split(" ")[0]} → ${longMonth(b.to).split(" ")[0]}` : "MRR-Brücke"} cap="Woher das Wachstum kommt: neue Kunden, Ausbau, Reaktivierungen (zurückgekehrte Kunden), Verkleinerung, Kündigungen (abgeschlossene Monate). Details im Reiter „Kündigung & Rückkehr“.">
           {b ? (
             <>
               <BridgeChart b={b} />
@@ -550,6 +550,7 @@ function BridgeChart({ b }: { b: NonNullable<ZahlenData["bridge"]> }) {
     { name: `MRR ${shortMonth(b.from)}`, short: shortMonth(b.from), v: b.start, base: true, n: 0 },
     { name: "Neu", short: "Neu", v: b.neu, base: false, n: b.counts.neu },
     { name: "Ausbau", short: "Ausbau", v: b.ausbau, base: false, n: b.counts.ausbau },
+    { name: "Reaktiviert", short: "Reakt.", v: b.reaktiviert, base: false, n: b.counts.reaktiviert },
     { name: "Verkleinert", short: "Kleiner", v: b.verkleinert, base: false, n: b.counts.verkleinert },
     { name: "Gekündigt", short: "Kündig.", v: b.gekuendigt, base: false, n: b.counts.gekuendigt },
     { name: `MRR ${shortMonth(b.to)}`, short: shortMonth(b.to), v: b.end, base: true, n: 0 },

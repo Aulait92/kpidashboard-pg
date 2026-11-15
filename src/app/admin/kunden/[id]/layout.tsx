@@ -26,6 +26,9 @@ export default async function KundenakteLayout({ children, params }: { children:
       plan: true,
       retainerMonthly: true,
       paymentOverdueSince: true,
+      cancelEffectiveAt: true,
+      dormantSince: true,
+      dataDeletedAt: true,
       salesContact: { select: { customerStage: true } },
       pauses: { where: { status: "active" }, select: { id: true }, take: 1 },
       onboarding: { select: { id: true, liveAt: true } },
@@ -63,6 +66,8 @@ export default async function KundenakteLayout({ children, params }: { children:
           )
         ) : null}
         {c.paymentOverdueSince ? <Badge tone="danger">Zahlung offen</Badge> : null}
+        {/* Lebenszyklus (lib/ruhend.ts): gekündigt, ruht, gelöscht; Details unter „Abrechnung“ */}
+        {c.dataDeletedAt ? <Badge tone="danger">Daten gelöscht</Badge> : c.dormantSince ? <Badge tone="warning">ruht</Badge> : c.cancelEffectiveAt ? <Badge tone="warning">gekündigt</Badge> : null}
         {c.pauses.length ? <Badge tone="warning">pausiert</Badge> : null}
         {referred ? (
           <Link href="/admin/marketing/empfehlungen" title="Über „Kollegen empfehlen“">

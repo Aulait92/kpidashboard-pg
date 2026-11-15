@@ -25,9 +25,11 @@ export function stornoStatsOf(rows: Row[], now: Date): StornoStats {
   return { overall: realStornoQuote(rows, now), bySparte };
 }
 
-async function loadRows(where: { customerId?: string; customer?: { isTest: boolean } }): Promise<Row[]> {
+async function loadRows(where: { customerId?: string; excludeCustomerIds?: string[] }): Promise<Row[]> {
+  // LeadContract hat keine Relation „customer“ (nur customerId): Testkunden per ID ausschließen (Fixes KPIDASHBOARD-PG-A).
+  const customerFilter = where.customerId ? { customerId: where.customerId } : where.excludeCustomerIds?.length ? { customerId: { notIn: where.excludeCustomerIds } } : {};
   const rows = await prisma.leadContract.findMany({
-    where: { ...where, lead: { status: CLOSED_STATUS } },
+    where: { ...customerFilter, lead: { status: CLOSED_STATUS } },
     select: { customerId: true, sparte: true, productName: true, signedAt: true, status: true, cancelledAt: true, cancelReason: true },
   });
   return rows
@@ -43,7 +45,8 @@ export async function customerStornoStats(customerId: string, now = new Date()):
 /** Über alle Kunden: gesamt, je Sparte und je Kunde (nur Kunden mit Verträgen). */
 export async function allStornoStats(now = new Date()): Promise<StornoStats & { byCustomer: StornoRow[] }> {
   // Testkunden zählen nicht (Ole, 15.11.2026)
-  const rows = await loadRows({ customer: { isTest: false } });
+  const testIds = (await prisma.customer.findMany({ where: { isTest: true }, select: { id: true } })).map((c) => c.id);
+  const rows = await loadRows({ excludeCustomerIds: testIds });
   const stats = stornoStatsOf(rows, now);
   const byId = new Map<string, Row[]>();
   for (const r of rows) byId.set(r.customerId, [...(byId.get(r.customerId) ?? []), r]);

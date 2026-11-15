@@ -362,7 +362,8 @@ export async function runCampaigns(now = new Date(), opts: RunOpts = {}): Promis
   for (const p of quotaPaused) {
     if ((await bestandQuota(p.customerId, now)).remaining > 0) await resumeQuotaPausedCampaigns(p.customerId, now);
   }
-  const campaigns = await prisma.customerCampaign.findMany({ where: { status: "running" }, include: { customer: { select: { name: true, existingCustomersEnabled: true, empfehlungEnabled: true } } } });
+  // Ruhende Konten (lib/ruhend.ts): kein Versand
+  const campaigns = await prisma.customerCampaign.findMany({ where: { status: "running", customer: { dormantSince: null } }, include: { customer: { select: { name: true, existingCustomersEnabled: true, empfehlungEnabled: true } } } });
   const ctxCache = new Map<string, { settings: ConsentSettings & Awaited<ReturnType<typeof loadConsentSettings>>; sup: Suppression }>();
   const ctxOf = async (customerId: string) => {
     let v = ctxCache.get(customerId);

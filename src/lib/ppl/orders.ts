@@ -133,7 +133,7 @@ export async function renewOrders(now = new Date()): Promise<{ renewed: number; 
   const { start } = weekRange(now);
   const next = weekRange(now, 1).start;
   const current = await prisma.leadOrder.findMany({
-    where: { periodStart: start, autoRenew: true, status: { in: ["paid", "processing"] }, subscription: { active: true, period: "week", orders: { none: { periodStart: next } } } },
+    where: { periodStart: start, autoRenew: true, status: { in: ["paid", "processing"] }, subscription: { active: true, period: "week", orders: { none: { periodStart: next } }, customer: { dormantSince: null } } },
     include: { subscription: { select: { id: true, customerId: true } } },
   });
   let renewed = 0;

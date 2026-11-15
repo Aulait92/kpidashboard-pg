@@ -166,7 +166,7 @@ export async function processCampaignWishes(now = new Date(), deps: LaunchDeps =
 
   if (!settings.autoLaunch) return out;
   const waiting = await prisma.campaignWish.findMany({
-    where: { status: "waiting", OR: [{ lastCheckedAt: null }, { lastCheckedAt: { lt: new Date(now.getTime() - RECHECK_MS) } }] },
+    where: { status: "waiting", customer: { dormantSince: null }, OR: [{ lastCheckedAt: null }, { lastCheckedAt: { lt: new Date(now.getTime() - RECHECK_MS) } }] },
     orderBy: { createdAt: "asc" },
     take: 5,
   });

@@ -725,8 +725,8 @@ Seiten aus der Liste „Seiten“ unten.
 - **Ihre Daten herunterladen** (unten auf der Seite, seit 15.11.2026): ein ZIP mit Excel-Dateien (CSV, Semikolon):
   Leads mit Formularangaben und Notizen, Abschlüsse, Termine, Chats, Bestandskunden mit Verträgen, Einwilligungen und
   Nachweis zum Widerspruchshinweis, dazu das Einwilligungsprotokoll. Gelöschte Leads sind nicht enthalten. Jeder
-  Download wird protokolliert. Nach Vertragsende löschen wir Ihre Daten innerhalb von 30 Tagen; laden Sie den Export
-  vorher herunter.
+  Download wird protokolliert. Nach Vertragsende bewahren wir Ihre Daten 24 Monate auf (Ihr Konto ruht) und löschen
+  sie danach endgültig; bis dahin können Sie den Export jederzeit herunterladen.
 - **Vertrag kündigen (seit 15.11.2026):** Konto & Rechnungen → Karte „Ihr Vertrag“ → **Vertrag hier kündigen**. Es öffnet
   sich eine Bestätigungsseite mit Vertrag, Art (ordentliche Kündigung zum nächstmöglichen Termin), Ihrer E-Mail und
   dem Tag, an dem der Vertrag endet; Grund freiwillig. Mit **Jetzt kündigen** ist die Kündigung abgeschickt, auf der
@@ -735,13 +735,32 @@ Seiten aus der Liste „Seiten“ unten.
   Abrechnungsmonats (Abrechnungsmonate laufen ab dem Starttag, z. B. 15. bis 14.); bei jährlicher Vorauszahlung zum
   Ende des Zahlungsjahres, wenn die Kündigung spätestens einen Monat vorher eingeht, sonst ein Jahr später. Bis zum
   Ende läuft alles weiter, Zusatzmodule enden mit dem Vertrag, danach wird nichts mehr abgebucht (die Online-Abrechnung
-  endet automatisch zum Vertragsende). Bis dahin können Sie Ihre Daten unter „Ihre Daten herunterladen“ exportieren; spätestens 30 Tage nach
-  Vertragsende werden die Daten der Leads und Kunden gelöscht (Sperrliste für Widersprüche bleibt pseudonymisiert). Nur Inhaber. Zurücknehmen oder anderer Termin (z. B. außerordentlich): bitte bei
-  uns melden.
+  endet automatisch zum Vertragsende). Ihre Daten können Sie jederzeit unter „Ihre Daten herunterladen“ exportieren.
+  Nur Inhaber. Zurücknehmen oder anderer Termin (z. B. außerordentlich): bitte bei uns melden.
+  **Ihre Daten nach Vertragsende** (auf der Bestätigungsseite der Kündigung): „Ihre Daten bewahren wir 24 Monate auf,
+  damit Sie jederzeit zurückkommen können. Danach löschen wir sie endgültig. Sie können auch eine frühere Löschung
+  wählen.“ Zur Wahl: 24 Monate (Standard), 3 Monate oder sofort nach Vertragsende (vorher den Export herunterladen).
+  Die Wahl steht in der Bestätigungsmail und lässt sich bis zur Löschung im Konto ändern (Karte „Ihr Vertrag“), auch
+  zurück auf 24 Monate. Die Sperrliste für Widersprüche bleibt pseudonymisiert, Verträge und Rechnungen bewahren wir
+  nach den gesetzlichen Fristen auf.
   Vor der Bestätigung fragt die App freiwillig nach dem Hauptgrund und zeigt passende Möglichkeiten (z. B. Pause,
   Budget senken, Zusatzmodule beenden, 15 Minuten mit uns, Kampagnen-Check, Rückruf). „Direkt zur Kündigung“ bzw.
   „Trotzdem kündigen“ führt jederzeit mit einem Klick zur Bestätigung.
 - Vertragsfragen: bitte direkt bei uns melden.
+
+## Konto ruht nach Vertragsende (seit 15.11.2026)
+- **Was heißt ruhend?** Ab dem Tag nach dem letzten Vertragstag sind Kampagnen, WhatsApp-Assistent, Erinnerungen und
+  Nachfassen aus. Wir speichern Ihre Daten nur noch und verarbeiten sie nicht weiter.
+- **Anmelden:** Nach der Anmeldung sehen Sie nur die Seite **Ihr Konto ruht** mit drei Möglichkeiten: **Daten
+  exportieren** (ZIP wie im Konto), **Konto reaktivieren** und **Aufbewahrung Ihrer Daten** ändern. Berater sehen nur
+  einen Hinweis; das alles kann nur der Inhaber.
+- **Konto reaktivieren:** Ein Klick, und das Konto ist sofort wieder aktiv, alle Leads, Kunden und Einstellungen sind
+  unverändert da. Wir melden uns, um Paket, Preis und den Start der Kampagnen abzustimmen; Kosten entstehen erst, wenn
+  Sie zugestimmt haben.
+- **Früher löschen:** Unter „Aufbewahrung Ihrer Daten“ 3 Monate oder „Sofort“ wählen. Ist die Frist schon vorbei,
+  löschen wir nach Ihrer Bestätigung sofort endgültig, danach ist keine Wiederherstellung möglich.
+- **Erinnerung:** 30 und 7 Tage vor der Löschung kommt eine E-Mail mit den Links „Daten exportieren“ und „Konto
+  reaktivieren“. Nach der Löschung kommt eine Bestätigung per E-Mail.
 
 ## Weiteres Produkt buchen (nur Inhaber)
 - **Wo:** Konto & Rechnungen → Karte „Produkte“ (auch über Wachstum → „Weitere Sparte dazubuchen“). Dort stehen die gebuchten

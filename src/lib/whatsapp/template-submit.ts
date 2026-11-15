@@ -218,6 +218,8 @@ export async function syncTemplates(now = new Date(), opts: { force?: boolean; l
       customerId: { not: SUPPORT_CUSTOMER_ID },
       status: "connected",
       apiKeyEnc: { not: null },
+      // Ruhende Konten (lib/ruhend.ts): keine Vorlagen einreichen
+      customer: { dormantSince: null },
       ...(opts.force ? {} : { OR: [{ templatesCheckedAt: null }, { templatesCheckedAt: { lt: new Date(now.getTime() - CHECK_INTERVAL_PENDING_MS) } }] }),
     },
     select: {

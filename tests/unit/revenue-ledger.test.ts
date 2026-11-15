@@ -100,7 +100,7 @@ describe("Umsatzbuch: Auswertungen", () => {
   it("MRR-Brücke: neu, Ausbau, verkleinert, gekündigt", () => {
     const b = mrrBridge(rows, "2026-09", "2026-10");
     expect(b).toMatchObject({ start: 400, neu: 300, ausbau: 50, verkleinert: -50, gekuendigt: -50, end: 650 });
-    expect(b.counts).toEqual({ neu: 1, ausbau: 1, verkleinert: 1, gekuendigt: 1 });
+    expect(b.counts).toEqual({ neu: 1, ausbau: 1, reaktiviert: 0, verkleinert: 1, gekuendigt: 1 });
     expect(b.start + b.neu + b.ausbau + b.verkleinert + b.gekuendigt).toBe(b.end);
   });
   it("Kohorten nach Startmonat", () => {

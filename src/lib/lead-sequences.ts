@@ -394,7 +394,8 @@ export type SequenceRunResult = { due: number; sent: number; tasks: number; stop
 export async function runSequences(now = new Date()): Promise<SequenceRunResult> {
   const res: SequenceRunResult = { due: 0, sent: 0, tasks: 0, stopped: 0, waiting: 0, failed: 0 };
   const due = await prisma.leadSequence.findMany({
-    where: { stoppedAt: null, nextAt: { lte: now } },
+    // Ruhende Konten (lib/ruhend.ts): kein Nachfassen
+    where: { stoppedAt: null, nextAt: { lte: now }, lead: { customer: { dormantSince: null } } },
     orderBy: { nextAt: "asc" },
     take: 100,
   });

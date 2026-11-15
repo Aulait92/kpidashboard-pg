@@ -24,13 +24,14 @@ export function EraseCustomerCard({
   const [state, action, pending] = useActionState<EraseCustomerState, FormData>(eraseCustomerDataAction, {});
   return (
     <details className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white">
-      <summary className="cursor-pointer px-5 py-4 text-sm font-semibold">Vertragsende: Daten löschen</summary>
+      <summary className="cursor-pointer px-5 py-4 text-sm font-semibold">Daten endgültig löschen (von Hand)</summary>
       <form action={action} className="space-y-3 border-t border-[color:var(--border)] px-5 py-4 text-sm">
         <p className="text-[color:var(--muted)]">
-          Laut AVV spätestens 30 Tage nach Vertragsende. Anonymisiert alle {leadCount} Leads (Zahlen bleiben) und löscht Chats,
-          Termine, Einwilligungen, Kalender- und Postfach-Verbindungen sowie den Bestand ({bestandCount} Bestandskunden mit Verträgen, Kampagnen,
-          Einwilligungsprotokoll). Die Sperrliste der Abmeldungen (nur verschlüsselt) bleibt. Vorher dem Kunden den Datenexport anbieten (Konto → „Daten
-          herunterladen“, auch in „Als Kunde ansehen“). Logins im Reiter „Logins“ entfernen.
+          Normalerweise automatisch: Nach Vertragsende ruht das Konto und wird nach der gewählten Aufbewahrung (Standard 24 Monate) endgültig gelöscht.
+          Hier nur auf Wunsch des Kunden oder für Altkunden ohne Kündigung im Kundenbereich. Anonymisiert alle {leadCount} Leads (Zahlen bleiben) und löscht
+          Chats, Termine, Einwilligungen, Kalender- und Postfach-Verbindungen, den Bestand ({bestandCount} Bestandskunden mit Verträgen, Kampagnen,
+          Einwilligungsprotokoll), Logins, WhatsApp-Zugang und Vorlagen. Die Sperrliste der Abmeldungen (nur verschlüsselt), Angebote und Umsätze bleiben.
+          Vorher dem Kunden den Datenexport anbieten (Konto → „Daten herunterladen“, auch in „Als Kunde ansehen“).
         </p>
         <p className={lastExport ? "text-emerald-700" : "text-amber-800"} data-erase-export>
           {lastExport ? `Letzter Datenexport: ${lastExport}` : "Noch kein Datenexport heruntergeladen."}

@@ -59,7 +59,7 @@ const SECTIONS: { title: string; points: string[] }[] = [
       "Das Änderungsprotokoll wird nach einem Jahr gelöscht, fehlgeschlagene Anmeldeversuche nach 30 Tagen.",
       "Lead-Rohdaten, die noch keinem Kunden zugeordnet sind, werden nach spätestens 90 Tagen gelöscht.",
       "Einzelne Leads lassen sich auf Wunsch der betroffenen Person sofort löschen (Lead öffnen, Mehr, „Daten löschen“).",
-      "Bei Vertragsende löschen wir alle Lead-Daten spätestens nach 30 Tagen. Auf Wunsch exportieren Sie die Leads vorher.",
+      "Nach Vertragsende ruht Ihr Konto: Wir speichern die Daten nur noch, damit Sie jederzeit zurückkommen können, und löschen sie nach 24 Monaten endgültig. Eine frühere Löschung (nach 3 Monaten oder sofort) wählen Sie selbst. Exportieren können Sie Ihre Daten bis zur Löschung jederzeit.",
       "Fehlerberichte an unsere Fehlerüberwachung enthalten keine personenbezogenen Inhalte.",
     ],
   },

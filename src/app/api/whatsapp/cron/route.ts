@@ -89,6 +89,11 @@ async function handle(req: Request): Promise<Response> {
             return null;
           }),
           transient: await pruneTransient(now).catch(() => null),
+          // Vertragsende: Konto ruht, Erinnerungen 30/7 Tage vor der Löschung, endgültige Löschung (lib/ruhend.ts)
+          retention: await import("@/lib/ruhend").then((m) => m.runRetentionCron(now)).catch((e: unknown) => {
+            reportError(e, "cron-retention");
+            return null;
+          }),
           // Logins im Abo nachziehen (z. B. nach Startpreis-Phase oder Abo-Start)
           seats: await reconcileSeatBilling().catch((e: unknown) => {
             reportError(e, "cron-seats");

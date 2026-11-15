@@ -122,8 +122,10 @@ export async function ingestLead(
   const source = inc.formId ? await prisma.leadSource.findFirst({ where: { formId: inc.formId, active: true } }) : null;
   const customerId = source?.customerId ?? override?.customerId ?? null;
   const productKey = source?.productKey ?? override?.productKey ?? null;
+  // Ruhendes Konto (Vertrag beendet, lib/ruhend.ts): nichts mehr verarbeiten, Lead landet im Lead-Eingang
+  const dormant = customerId ? !!(await prisma.customer.findUnique({ where: { id: customerId }, select: { dormantSince: true } }))?.dormantSince : false;
 
-  if (!customerId || !productKey) {
+  if (!customerId || !productKey || dormant) {
     const payload = inc as unknown as Prisma.InputJsonValue;
     if (inc.externalId) {
       await prisma.unassignedLead.upsert({ where: { externalId: inc.externalId }, create: { externalId: inc.externalId, formId: inc.formId, pageId: inc.pageId, via, payload }, update: {} });
@@ -132,7 +134,7 @@ export async function ingestLead(
     }
     await sendToAdmins({
       title: "📥 Lead ohne Zuordnung",
-      body: `Formular ${inc.formId ?? "unbekannt"}${inc.campaignName ? ` · ${inc.campaignName}` : ""}. Bitte unter Lead-Eingang zuordnen.`,
+      body: `Formular ${inc.formId ?? "unbekannt"}${inc.campaignName ? ` · ${inc.campaignName}` : ""}${dormant ? " · Kunde ruht (Vertrag beendet)" : ""}. Bitte unter Lead-Eingang zuordnen.`,
       url: "/admin/lead-eingang",
       tag: `unassigned:${inc.formId ?? "x"}`,
     }).catch(() => {});

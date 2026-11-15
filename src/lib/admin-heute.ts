@@ -310,6 +310,20 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       later: TOMORROW,
     });
   }
+  // Ruhende Konten mit Löschung in den nächsten 30 Tagen: Chance zur Rückgewinnung (lib/ruhend.ts)
+  for (const r of await dormantDeletionsDue(now).catch(() => [])) {
+    items.push({
+      key: `ruhend:${r.id}`,
+      area: "Kunden",
+      tone: "info",
+      icon: "phone",
+      title: `${name(r.name)} ruht, Löschung am ${r.deleteAfter.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" })}`,
+      detail: [`Chance zur Rückgewinnung: kurz anrufen, „Konto reaktivieren“ ist ein Klick und alle Daten sind noch da`, r.mrr ? `bisher ${eur(r.mrr)} im Monat` : null, r.reason ? `Grund: ${r.reason}` : null].filter(Boolean).join(" · "),
+      action: { label: "Kundenakte", href: `/admin/kunden/${r.id}/abrechnung` },
+      since: r.deleteAfter,
+      later: { label: "In einer Woche", days: 7 },
+    });
+  }
   const progress = await onboardingProgressFor(onboardings.map((o) => o.customerId));
   for (const ob of onboardings) {
     const p = progress.get(ob.customerId);
@@ -653,4 +667,24 @@ export async function loadAdminNavCounts(userId?: string): Promise<{ heute: numb
   } catch {
     return { heute: 0, vertrieb: 0 };
   }
+}
+
+/** Ruhende Konten, deren Löschung in den nächsten 30 Tagen fällig ist (Heute: Rückgewinnung). */
+export async function dormantDeletionsDue(now = new Date()): Promise<{ id: string; name: string; deleteAfter: Date; mrr: number | null; reason: string | null }[]> {
+  const rows = await prisma.customer.findMany({
+    where: { dormantSince: { not: null }, dataDeletedAt: null, isTest: false, deleteAfter: { gt: now, lte: new Date(now.getTime() + 30 * DAY) } },
+    orderBy: { deleteAfter: "asc" },
+    select: {
+      id: true,
+      name: true,
+      deleteAfter: true,
+      lifecycleEvents: { where: { kind: { in: ["dormant", "cancelled"] } }, orderBy: { at: "desc" }, take: 2, select: { kind: true, mrr: true, churnReason: true } },
+    },
+  });
+  const { churnReasonLabel } = await import("@/lib/anti-churn");
+  return rows.map((c) => {
+    const dormant = c.lifecycleEvents.find((e) => e.kind === "dormant");
+    const cancel = c.lifecycleEvents.find((e) => e.kind === "cancelled");
+    return { id: c.id, name: c.name, deleteAfter: c.deleteAfter!, mrr: dormant?.mrr != null ? Number(dormant.mrr) : null, reason: cancel?.churnReason ? churnReasonLabel(cancel.churnReason) : null };
+  });
 }

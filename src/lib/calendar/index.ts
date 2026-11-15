@@ -592,6 +592,8 @@ export async function checkAppointmentResponses(): Promise<ResponseCheckResult> 
       status: "booked",
       calendarEventId: { not: null },
       startsAt: { gt: new Date(now), lt: new Date(now + 60 * 24 * 60 * 60 * 1000) },
+      // Ruhende Konten (lib/ruhend.ts): Kalender nicht mehr abfragen
+      customer: { dormantSince: null },
     },
     select: {
       id: true,

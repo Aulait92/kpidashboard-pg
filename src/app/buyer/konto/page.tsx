@@ -9,7 +9,7 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { billingEnabled, listCustomerInvoices, type CustomerInvoice } from "@/lib/billing";
 import { reportError } from "@/lib/monitoring";
 import { prisma } from "@/lib/prisma";
-import { openPortalAction, paymentSetupAction } from "./actions";
+import { openPortalAction, paymentSetupAction, retentionAction } from "./actions";
 import { ZahlartAuswahl } from "@/components/zahlart-auswahl";
 import { LeadEmailToggle, PauseCard } from "./pause-card";
 import { WhatsAppFeesCard } from "@/components/whatsapp-fees-card";
@@ -29,6 +29,8 @@ import { referralIncentiveSentence } from "@/lib/kollegen-shared";
 import { contractCancelInfo } from "@/lib/vertrag-kuendigung";
 import { helpCallSlots } from "@/lib/help-call";
 import { VertragKuendigen } from "./vertrag-kuendigen";
+import { Aufbewahrung } from "./aufbewahrung";
+import { loadRetentionView } from "@/lib/ruhend";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Konto & Rechnungen | performancegrowth" };
@@ -106,6 +108,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const cancelInfo = customer.plan !== "internal" && (offer || customer.retainerStart) ? await contractCancelInfo(ctx.customerId) : null;
   // Anti-Churn: freie 15-Minuten-Termine fürs Kündigungsfenster (nur wenn kündbar und noch nicht gekündigt)
   const churnSlots = cancelInfo && !cancelInfo.ended && !cancelInfo.requested && !ctx.preview ? await helpCallSlots().catch(() => []) : [];
+  // Nach der Kündigung: Aufbewahrung der Daten nach Vertragsende (änderbar bis zur Löschung)
+  const retention = cancelInfo?.requested ? await loadRetentionView(ctx.customerId) : null;
   const today = todayBerlin();
   const startYmd = customer.retainerStart ? new Intl.DateTimeFormat("sv-SE", { timeZone: TZ }).format(customer.retainerStart) : today;
   const softwareFee = offer ? Number(offer.softwareFee) : customer.plan === "service" ? 0 : 349;
@@ -236,6 +240,12 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 hasModules={!!(customer.existingCustomersEnabled || customer.empfehlungEnabled)}
                 canPause={!pause}
               />
+              {retention?.endIso && retention.choice ? (
+                <div className="mt-4 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4" data-konto-aufbewahrung>
+                  <div className="mb-2 font-semibold">Ihre Daten nach Vertragsende</div>
+                  <Aufbewahrung endIso={retention.endIso} choice={retention.choice} todayIso={today} readOnly={ctx.preview} action={retentionAction} />
+                </div>
+              ) : null}
             </div>
           ) : null}
         </Card>
@@ -477,7 +487,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <div className="space-y-3 px-5 pb-5 text-sm" data-konto-export>
             <p className="text-[color:var(--muted)]">
               Alle Ihre Leads, Abschlüsse, Termine, Chats, Bestandskunden mit Verträgen und das Einwilligungsprotokoll als ZIP mit Excel-Dateien (CSV), zum
-              Beispiel für Ihre Unterlagen oder zum Ende der Zusammenarbeit. Nach Vertragsende löschen wir Ihre Daten innerhalb von 30 Tagen.
+              Beispiel für Ihre Unterlagen oder zum Ende der Zusammenarbeit. Nach Vertragsende bewahren wir Ihre Daten 24 Monate auf, damit Sie jederzeit
+              zurückkommen können, und löschen sie danach endgültig. Eine frühere Löschung können Sie bei der Kündigung wählen.
             </p>
             <a href="/buyer/konto/export" className={buttonClass("secondary", "md")} data-konto-export-download>
               <Download className="h-4 w-4" /> Daten herunterladen (ZIP)

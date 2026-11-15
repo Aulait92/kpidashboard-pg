@@ -19,6 +19,8 @@ const FILTERS = [
   { key: "warnung", label: "Zahlung offen" },
   { key: "onboarding", label: "Onboarding" },
   { key: "pausiert", label: "Pausiert" },
+  // Ruhende Konten (Vertrag beendet, lib/ruhend.ts) sind archiviert und sonst ausgeblendet
+  { key: "ruhend", label: "Ruhend" },
 ] as const;
 
 // Alle Kunden auf einen Blick; Klick öffnet die Kundenakte.
@@ -28,7 +30,7 @@ export default async function KundenUebersicht({ searchParams }: { searchParams:
   const filter = FILTERS.some((f) => f.key === rawFilter) ? rawFilter : "";
   const since = daysAgo(30);
   const customers = await prisma.customer.findMany({
-    where: { plan: { not: "internal" }, archived: false },
+    where: filter === "ruhend" ? { plan: { not: "internal" }, dormantSince: { not: null }, dataDeletedAt: null } : { plan: { not: "internal" }, archived: false },
     orderBy: { name: "asc" },
     select: {
       id: true,
@@ -43,6 +45,7 @@ export default async function KundenUebersicht({ searchParams }: { searchParams:
       _count: { select: { leads: { where: { createdAt: { gte: since } } }, users: { where: { role: "BUYER" } } } },
     },
   });
+  const dormantCount = await prisma.customer.count({ where: { plan: { not: "internal" }, dormantSince: { not: null }, dataDeletedAt: null } });
   const [progress, steps] = await Promise.all([
     onboardingProgressFor(customers.filter((c) => c.onboarding).map((c) => c.id)),
     // Kundenerfolg: Leads mit nächstem Schritt je Kunde, Warnung unter 80 % (lib/lead-next-step.ts)
@@ -65,7 +68,7 @@ export default async function KundenUebersicht({ searchParams }: { searchParams:
       </p>
       <div className="flex gap-1.5 overflow-x-auto" role="group" aria-label="Filter">
         {FILTERS.map((f) => {
-          const n = customers.filter((c) => matches(c, f.key)).length;
+          const n = f.key === "ruhend" ? dormantCount : customers.filter((c) => matches(c, f.key)).length;
           if (f.key && !n) return null;
           const active = f.key === filter;
           return (

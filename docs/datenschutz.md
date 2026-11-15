@@ -58,7 +58,7 @@ Für jeden Kunden mit AVV (Annahme des Angebots, `Offer.dpaUrl` speichert die ge
   Eintrage-Fenster, nicht die Team-Liste, nicht der Admin (dort nur „abwesend bis …“) und nie
   die Leads (Assistent nennt keinen Grund). Betroffene: Inhaber und Berater des Kunden
   (Beschäftigtendaten des Kunden, wir verarbeiten im Auftrag). Löschung: mit dem Login
-  (Kaskade) bzw. bei „Vertragsende: Daten löschen“, spätestens 1 Jahr nach Ende der Abwesenheit (automatisch, täglich);
+  (Kaskade) bzw. bei der endgültigen Löschung nach Vertragsende, spätestens 1 Jahr nach Ende der Abwesenheit (automatisch, täglich);
   keine Lead-Namen darin gespeichert; das Änderungsprotokoll hält den Eintrag 1 Jahr.
 - **Datenarten und Betroffene:** wie AVV § „Art, Zweck und Umfang“. Keine Daten nach Art. 9
   (die Abwesenheits-Kategorie „Krank“ ohne Details ist bewusst so knapp gehalten; siehe oben).
@@ -147,7 +147,7 @@ gilt nur für neue Dienste, eine Streichung ist unkritisch, wird aber trotzdem m
 | Änderungsprotokoll (`AuditLog`) | 1 Jahr | automatisch (`pruneAudit`) |
 | Messpunkte der Statusseite (`StatusSample`, ohne Personenbezug) | 90 Tage | automatisch je Cron-Lauf (`recordStatusSample`) |
 | Hilfe-Anfragen an das Team (`UsageEvent` Typ `support`: Grund, Kurzfassung ohne Kontaktdaten, Referenz) | 180 Tage | wie Nutzungsmessung (`pruneUsage`) |
-| Abwesenheiten (`UserAbsence`) | 1 Jahr nach Ende der Abwesenheit, spätestens mit dem Login bzw. bei Vertragsende | automatisch täglich (`pruneTransient`), mit dem Login (Kaskade) und bei „Vertragsende: Daten löschen“ |
+| Abwesenheiten (`UserAbsence`) | 1 Jahr nach Ende der Abwesenheit, spätestens mit dem Login bzw. bei Vertragsende | automatisch täglich (`pruneTransient`), mit dem Login (Kaskade) und bei der endgültigen Löschung (`finalDeleteCustomer`) |
 | Angaben von Empfohlenen ohne Abschluss („Kollegen empfehlen“, `ColleagueReferral`) | 12 Monate nach Eingang | automatisch täglich 03:00 UTC (`pruneReferrals`): Name, Agentur, E-Mail, Telefon werden entfernt, Zähler und Prämie bleiben |
 | Login-Fehlversuche | 30 Tage | automatisch (`pruneAudit`) |
 | Nachfragen nach Abschluss (`ReviewRequest`: Antworttext, Einordnung, Klicks) | 2 Jahre nach Anlage, sofort mit Lead-Löschung (Art. 17) bzw. Vertragsende | automatisch (`pruneTransient`), `eraseLead`/`eraseCustomerData` |
@@ -157,11 +157,31 @@ gilt nur für neue Dienste, eine Streichung ist unkritisch, wird aber trotzdem m
 | Passwort-Links | 7 Tage nach Ablauf | automatisch (`pruneTransient`) |
 | Sitzung (Cookie) | 30 Tage | läuft ab; 2FA-Zwischenschritt 10 Minuten |
 | Lead auf Wunsch der betroffenen Person | sofort | Lead öffnen → Mehr → „Daten löschen (Datenschutz)“ (Inhaber oder Admin). Anonymisiert den Lead, löscht Chats, Termine, Einwilligung. Umsatz und Status bleiben ohne Personenbezug |
-| Alle Lead-Daten eines Kunden bei Vertragsende | spätestens 30 Tage nach Ende (AGB „Daten bei Vertragsende“, AVV „Löschung und Rückgabe“, Stand 15.11.2026) | Admin → Kunden → Kunde → Abrechnung → „Vertragsende: Daten löschen“. Vorher exportiert der Kunde selbst (Konto → „Ihre Daten herunterladen“). Ausgenommen: Sperrliste für Widersprüche als Hashwerte (dauerhaft). Logins im Reiter „Logins“ löschen |
+| Alle Daten eines Kunden nach Vertragsende (Ruhephase) | Weisung des Kunden: 24 Monate nach dem letzten Vertragstag (Standard), wählbar 3 Monate oder sofort, bis zur Löschung jederzeit änderbar (AGB „Daten bei Vertragsende“, AVV „Löschung und Rückgabe“, Stand 15.11.2026) | Automatisch: Cron täglich 03:00 UTC (`runRetentionCron` in `src/lib/ruhend.ts`): am Tag nach dem Vertragsende ruht das Konto (`Customer.dormantSince`, archiviert, Meta-Kampagnen pausiert, kein Zugang außer Export und Reaktivierung, keine Crons, kein Assistent, keine Kampagnen, keine Abgleiche), Erinnerung 30 und 7 Tage vorher, dann `finalDeleteCustomer`. Von Hand: Admin → Kunden → Kunde → Abrechnung → „Daten endgültig löschen (von Hand)“. Der Kunde exportiert selbst (Konto bzw. Seite „Ihr Konto ruht“). Details unten „Ruhephase und endgültige Löschung“ |
 | Leads, Chats, Termine während der Laufzeit | nach Weisung des Kunden | keine automatische Frist (Kunde entscheidet; Vermittler haben eigene Dokumentationspflichten) |
 | Vertriebskontakte ohne Vertrag | **Vorschlag**: 2 Jahre nach letzter Aktivität | noch von Hand (Kontakt → Löschen). Bei Widerspruch sofort |
 | Angebote, Verträge, Rechnungen | 10 Jahre | nicht löschen; Stripe bewahrt Rechnungen auf |
 | Datensicherungen | Rotation | PITR ca. 4 Wochen; tägliche/wöchentliche Sicherungen laut Railway → Postgres → Backups (**Aufbewahrung dort ablesen und hier eintragen**). Gelöschte Daten verschwinden mit der Rotation |
+
+**Ruhephase und endgültige Löschung (Ole, 15.11.2026, `src/lib/ruhend.ts`):**
+- Gelöscht bzw. anonymisiert (`finalDeleteCustomer`): alles aus `eraseCustomerData` (Leads anonymisiert, Chats,
+  Nachrichten, Termine, Einwilligungen, Kalender- und Postfach-Verbindungen, Abwesenheiten, Bewertungen, Empfehlungslinks,
+  Bestand mit Verträgen, Kampagnen, Importe, Einwilligungsprotokoll), dazu Logins (Kaskade: Kalender, Postfach, Geräte,
+  Abwesenheiten), WhatsApp-Zugang und Assistent, Nachrichten- und Mail-Vorlagen, Leadformular-Zuordnungen,
+  Kalender-Einstellungen, Monatsberichte, Kampagnenwünsche, Erstinformation, Rückmeldungen an Meta, Freitexte der
+  Kündigungsabsichten; Pay-per-Lead-Rohdaten der gelieferten Leads (`PoolLead`) ohne Name, Telefon, E-Mail, Antworten.
+- Bleibt (gesetzliche Aufbewahrung bzw. ohne Personenbezug): Kundenzeile mit Firmenname und Abrechnungsfeldern
+  (Stripe-ID, Preise, Laufzeit, Kündigungsdaten), Angebote/Verträge, Umsatzzeilen (`Revenue`, `ManualRevenue`),
+  Lebenszyklus (`CustomerLifecycleEvent`: gekündigt, ruhend, reaktiviert, gelöscht mit Monatsbetrag und Kündigungsgrund),
+  anonyme Lead-Zeilen (Produkt, Status, Datum, Umsatz), Sperrliste der Abmeldungen (Hashwerte), Vertriebskontakt
+  (eigene Daten von performancegrowth, Frist siehe „Vertriebskontakte“). Rechnungen liegen bei Stripe.
+- In der Ruhephase: keine Verarbeitung außer Speicherung. Crons, Assistent, Termin-Erinnerungen, Nachfassen,
+  Bestandskampagnen, Pausen-Automatik, Pay-per-Lead-Verteilung, Kampagnen-Agenten, Kalender- und Vorlagenabgleich,
+  Rückmeldung an Meta, Monatsberichte und Optimierung überspringen ruhende Konten (`dormantSince` bzw. `archived`).
+  Kommt trotzdem ein Lead über ein Formular des Kunden, landet er nicht beim Kunden, sondern im Lead-Eingang
+  (`UnassignedLead`, Löschfrist wie dort).
+- Nachweis: Änderungsprotokoll (`customer.dormant`, `customer.retention`, `customer.retention_reminder`,
+  `customer.final_erase`, `customer.reactivate`) und Bestätigungsmail an den Inhaber nach der Löschung.
 
 **Airtable (bis zur Abschaltung):** Die App-Löschung erreicht Airtable nicht. Bei Leads
 aus Airtable den Datensatz zusätzlich dort löschen. Der Sync überschreibt einen in der App
@@ -283,6 +303,13 @@ Interaktion mit Betroffenen“. Falls ja, DSFA je Kunde als Verantwortlicher (Vo
       Vertragswert ohne Produkt und § 203 StGB, Text für die Datenschutzerklärung (Webseite, docs/webseite-offen.md) und
       Hinweis im Lead-Formular; AVV-Ergänzung in `src/lib/legal-texts.ts` (mit „Prüfen:“ markiert), ob `LEGAL_VERSION`
       erhöht und Kunden informiert werden müssen
+- [ ] Anwalt: Ruhephase nach Vertragsende (15.11.2026, AGB „Daten bei Vertragsende“, AVV „Löschung und Rückgabe“, mit
+      „Prüfen:“ markiert): (1) Ist die Aufbewahrung von 24 Monaten als Standard-Weisung des Auftraggebers nach Art. 28
+      Abs. 3 lit. g DSGVO verhältnismäßig, oder braucht es eine aktive Wahl bzw. kürzeren Standard? (2) Speicherbegrenzung
+      (Art. 5 Abs. 1 lit. e DSGVO) für Lead-Daten ohne Vertragsschluss während der Ruhephase: Darf der Vermittler Leads,
+      die nie Kunde wurden, 24 Monate aufbewahren lassen, oder sollten diese früher gelöscht werden (z. B. nach 3 Monaten
+      oder mit Ablauf der Einwilligung)? (3) Reicht die Weisung per Auswahl im Kundenbereich (Textform, protokolliert)?
+      (4) Wortlaut der Datenschutzerklärung (docs/webseite-offen.md) und ob Leads über die Ruhephase informiert werden müssen.
 - [ ] Dezember: Airtable/Zapier aus Anlage 2 streichen, Kunden informieren
 - [ ] Vertriebskontakte: Frist (Vorschlag 2 Jahre) festlegen, danach automatisch löschen
 - [ ] Datenschutzerklärung je Kunde: Die Buchungsseite verlinkt die Datenschutzerklärung von

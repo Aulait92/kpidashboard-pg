@@ -448,6 +448,8 @@ export async function resumeCampaignRuns(deps: CampaignDeps = defaultDeps()): Pr
     where: {
       status: { in: ["queued", "running", "building"] },
       updatedAt: { lt: stale },
+      // Ruhende Konten (lib/ruhend.ts): keine Kampagnen bauen
+      customer: { dormantSince: null },
       OR: [{ lockedAt: null }, { lockedAt: { lt: new Date(Date.now() - LOCK_MS) } }],
     },
     orderBy: { createdAt: "asc" },

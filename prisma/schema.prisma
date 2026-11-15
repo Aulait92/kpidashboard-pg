@@ -143,33 +143,47 @@ model Customer {
   // Gesetzt = Kunde zahlt Retainer + eigenes Werbebudget statt Lead-Preis.
   // Im Kunden-Dashboard: Lead-Kosten = Werbespend (eigenes Konto) + Retainer
   // (tagesanteilig ab retainerStart). Taucht NICHT als Agentur-Kosten auf.
-  retainerMonthly Decimal?  @db.Decimal(12, 2)
-  retainerStart   DateTime?
+  retainerMonthly       Decimal?                 @db.Decimal(12, 2)
+  retainerStart         DateTime?
   // Letzter Tag mit Retainer (inklusive), von Hand in Kundenakte → Abrechnung; null = läuft
-  retainerEnd     DateTime?
+  retainerEnd           DateTime?
   // „Vertrag hier kündigen“ im Kundenbereich (Konto & Rechnungen, 15.11.2026): Eingang der Kündigung, letzter
   // Vertragstag laut AGB (lib/vertrag-laufzeit.cancelDate), wer gekündigt hat und optionaler Grund. Ole setzt danach
   // retainerEnd und beendet das Stripe-Abo zum Termin (Aufgabe in „Heute“).
-  cancelRequestedAt DateTime?
-  cancelEffectiveAt DateTime?
-  cancelRequestedBy String?
-  cancelReason      String?
+  cancelRequestedAt     DateTime?
+  cancelEffectiveAt     DateTime?
+  cancelRequestedBy     String?
+  cancelReason          String?
+  // ─── Ruhendes Konto nach Vertragsende (Ole, 15.11.2026, lib/ruhend.ts) ───
+  // Nach Vertragsende ruht das Konto: kein Zugang außer Export und Reaktivierung, keine Verarbeitung außer
+  // Speicherung (Crons, Assistent, Kampagnen, Abgleiche aus). Gesetzt vom täglichen Cron am Tag nach dem Vertragsende.
+  dormantSince          DateTime?
+  // Gewählte Aufbewahrung nach Vertragsende: "24m" (Standard) | "3m" | "sofort"; null = noch nicht gekündigt
+  retentionChoice       String?
+  // Ab hier ist die endgültige Löschung fällig (Ende des Vertragstags + gewählte Monate, Berliner Zeit)
+  deleteAfter           DateTime?
+  // Erinnerungen 30 und 7 Tage vor der Löschung (je einmal; beim Ändern der Aufbewahrung zurückgesetzt)
+  retentionReminder30At DateTime?
+  retentionReminder7At  DateTime?
+  // Endgültig gelöscht (Leads anonymisiert, Logins und Inhalte weg; Abrechnungsdaten bleiben)
+  dataDeletedAt         DateTime?
+  lifecycleEvents       CustomerLifecycleEvent[]
   // Eigenes Meta-Werbekonto des Kunden (nur Ziffern, ohne „act_").
-  metaAdAccountId String?
+  metaAdAccountId       String?
   // Facebook-Seite des Kunden für Lead-Ads (Kampagnen-Agenten); sonst aus LeadSource.pageId
-  metaPageId      String?
+  metaPageId            String?
   // ─── Rückmeldung an Meta (Conversions API für CRM, „Conversion Leads“; Ole, 15.11.2026, lib/capi) ───
   // Stufen der Meta-Leads (Lead, Erreicht, Termin vereinbart, Abschluss) an das Dataset senden; Standard an,
   // nur der Inhaber schaltet (Einstellungen → Rückmeldung an Meta). Testkunden senden nie.
-  capiEnabled          Boolean     @default(true)
+  capiEnabled           Boolean                  @default(true)
   // Meta-Dataset (Pixel-ID) für die Rückmeldung; automatisch aus act_<metaAdAccountId>/adspixels (erstes) oder im Admin gesetzt
-  metaDatasetId        String?
+  metaDatasetId         String?
   // "auto" | "admin" (von Hand gesetzt, wird nicht automatisch überschrieben)
-  metaDatasetSource    String?
+  metaDatasetSource     String?
   // Letzter automatischer Suchversuch und dessen Problem (z. B. kein Dataset, kein Zugriff), Tokens geschwärzt
-  metaDatasetCheckedAt DateTime?
-  metaDatasetError     String?
-  capiEvents           CapiEvent[]
+  metaDatasetCheckedAt  DateTime?
+  metaDatasetError      String?
+  capiEvents            CapiEvent[]
 
   leads            Lead[]
   garantieFaelle   GarantieFall[]
@@ -179,40 +193,40 @@ model Customer {
   customerProducts CustomerProduct[]
 
   // ─── WhatsApp-CRM (Phase 0) ─────────────────────────────────────────
-  onboarding               Onboarding?
-  feedback                 CustomerFeedback[]
-  pauses                   CustomerPause[]
-  absences                 UserAbsence[]
-  whatsAppFees             WhatsAppFeeCharge[]
-  leadSubscriptions        LeadSubscription[]
+  onboarding                     Onboarding?
+  feedback                       CustomerFeedback[]
+  pauses                         CustomerPause[]
+  absences                       UserAbsence[]
+  whatsAppFees                   WhatsAppFeeCharge[]
+  leadSubscriptions              LeadSubscription[]
   // Modul „Bestandskunden-Kampagnen“ (Zusatzmodul; Testkunden kostenlos)
-  existingCustomersEnabled Boolean                   @default(false)
+  existingCustomersEnabled       Boolean                   @default(false)
   // ─── Preise: Berater-Plätze, Zahlweise, Bestandskunden-Modul (seit 11.11.2026) ───
   // Inklusive Logins laut Angebot; null = keine Platz-Abrechnung (Alt-Verträge, individuell)
-  seatsIncluded            Int?
+  seatsIncluded                  Int?
   // Preis je weiterem Login und Monat (netto), aus dem Angebot eingefroren
-  seatMonthly              Decimal?                  @db.Decimal(10, 2)
+  seatMonthly                    Decimal?                  @db.Decimal(10, 2)
   // Zurzeit im Stripe-Abo berechnete weitere Logins (Menge der Platz-Position)
-  seatsBilled              Int                       @default(0)
+  seatsBilled                    Int                       @default(0)
   // "month" | "year" (jährlich im Voraus, Jahresbetrag = (12 − Freimonate) × Monatspreis)
-  billingInterval          String                    @default("month")
+  billingInterval                String                    @default("month")
   // Gebuchtes Bestandskunden-Modul: Monatspreis netto; null = nicht gebucht
-  bestandMonthly           Decimal?                  @db.Decimal(10, 2)
+  bestandMonthly                 Decimal?                  @db.Decimal(10, 2)
   // Bestandsschutz: nutzte das Modul schon vor der Preisliste, bleibt kostenlos freigeschaltet
-  bestandGrandfathered     Boolean                   @default(false)
+  bestandGrandfathered           Boolean                   @default(false)
   // Kunde hat das Modul im Konto angefragt (Admin „Heute“)
-  bestandRequestedAt       DateTime?
+  bestandRequestedAt             DateTime?
   // Modul zum Ende des Abrechnungszeitraums gekündigt: Zugang bis hier, danach schaltet der Cron ab
-  bestandCancelAt          DateTime?
+  bestandCancelAt                DateTime?
   // Kampagnen-Nachrichten je Monat inklusive; null = Standard aus der Preisliste
-  bestandMessageQuota      Int?
+  bestandMessageQuota            Int?
   // Bestandskunden-Modul gratis bis (Empfehlungsprämie); Hinweis 2 Wochen vorher (bestandFreeReminded)
-  bestandFreeUntil         DateTime?
-  bestandFreeReminded      DateTime?
+  bestandFreeUntil               DateTime?
+  bestandFreeReminded            DateTime?
   // Zusatzpakete automatisch nachbuchen (500er-Pakete) bis höchstens so viele € netto je Monat; null = aus (Standard)
-  bestandAutoTopUpMax      Int?
-  bestandPacks             BestandMessagePack[]
-  existingImports          ExistingCustomerImport[]
+  bestandAutoTopUpMax            Int?
+  bestandPacks                   BestandMessagePack[]
+  existingImports                ExistingCustomerImport[]
   // ─── Bestandskampagnen: Einwilligung je Kanal und E-Mail (Ole, 14.11.2026) ───
   // Bestätigung zu § 7 Abs. 3 UWG: Adressen aus Vertragsabschlüssen, Hinweis auf Widerspruch bei Erhebung. Ohne sie gehen ohne Einwilligung keine Mails raus.
   bestandUwgConfirmedAt          DateTime?
@@ -223,7 +237,7 @@ model Customer {
   bestandAgentConfirmedById      String?
   bestandAgentConfirmedVersion   String?
   // Sparten, die der Ausschließlichkeitsvertreter anbietet (Vorschläge „Lücke schließen“ nur dafür); leer = aus dem Bestand
-  bestandSparten                 String[]  @default([])
+  bestandSparten                 String[]                  @default([])
   // Pflichtangaben/Impressum unter jeder Kampagnen-Mail (vorbefüllt aus dem Impressum der Website)
   bestandMailImprint             String?
   // Hinweis „Einwilligungen aus dem pauschalen Import prüfen“ bestätigt
@@ -232,82 +246,82 @@ model Customer {
   bestandOptOuts                 BestandOptOut[]
   // ─── Zusatzmodul „Empfehlungen & Bewertungen“ (seit 12.11.2026) ───
   // Freigeschaltet (Zugang); Abrechnung über empfehlungMonthly bzw. Testphase
-  empfehlungEnabled        Boolean                   @default(false)
+  empfehlungEnabled              Boolean                   @default(false)
   // Berechneter Monatspreis netto; null = (noch) nicht berechnet (Testphase, kostenlos)
-  empfehlungMonthly        Decimal?                  @db.Decimal(10, 2)
+  empfehlungMonthly              Decimal?                  @db.Decimal(10, 2)
   // Testphase bis hier (gesetzt = Testphase wurde genutzt); danach automatisch kostenpflichtig
-  empfehlungTrialEndsAt    DateTime?
-  empfehlungTrialReminded  DateTime?
+  empfehlungTrialEndsAt          DateTime?
+  empfehlungTrialReminded        DateTime?
   // Vom Admin kostenlos freigeschaltet (keine Berechnung)
-  empfehlungFree           Boolean                   @default(false)
+  empfehlungFree                 Boolean                   @default(false)
   // Gekündigt: Zugang bis hier, danach schaltet der Cron ab
-  empfehlungCancelAt       DateTime?
+  empfehlungCancelAt             DateTime?
   // Seit wann aktiv: nur Abschlüsse ab hier lösen Anfragen aus
-  empfehlungSince          DateTime?
+  empfehlungSince                DateTime?
   // Weggeklickte Hinweise auf Zusatzmodule (Schlüssel je Stelle)
-  moduleHintsDismissed     String[]                  @default([])
+  moduleHintsDismissed           String[]                  @default([])
   // Erinnerung „Weiteres Produkt anbieten?“ 3 Wochen nach dem ersten Abschluss (Cross-Selling, Standard an)
-  crossSellReminder        Boolean                   @default(true)
+  crossSellReminder              Boolean                   @default(true)
   // Aufgabe „Police da und erste Zahlung erfolgt?“ 2 Wochen nach dem ersten Abschluss (Standard an)
-  policeReminder           Boolean                   @default(true)
+  policeReminder                 Boolean                   @default(true)
   // Weggeklickte Tipps der Karte „So holen Sie mehr raus“ (/buyer/zahlen): { tippSchlüssel: ISO-Datum }, je 30 Tage
-  zahlenTipsDismissed      Json?
+  zahlenTipsDismissed            Json?
   // Neue Oberfläche des Kundenbereichs (Vertreter-A); pro Kunde im Admin einschaltbar.
-  newUi                    Boolean                   @default(false)
+  newUi                          Boolean                   @default(false)
   // Ansprache von Leads und Kunden in allen Texten (E-Mail, WhatsApp-Assistent, Vorlagen, Termin-Nachrichten): "sie" | "du" (Ole, 14.11.2026)
-  leadAddress              String                    @default("sie")
+  leadAddress                    String                    @default("sie")
   // Branding für Präsentationen (Ole, 15.11.2026): Logo von der Agentur-/Makler-Webseite oder hochgeladen,
   // vom Kunden bestätigt („darf ich verwenden“)
-  brandLogo                Bytes?
-  brandLogoType            String?
-  brandLogoSource          String?
-  brandLogoConfirmedAt     DateTime?
+  brandLogo                      Bytes?
+  brandLogoType                  String?
+  brandLogoSource                String?
+  brandLogoConfirmedAt           DateTime?
   // Stand der Standard-E-Mail-Vorlagen (lib/mail/vorlagen.ts VORLAGEN_STAND): neue Standards beim nächsten Laden ergänzen
-  mailVorlagenStand        Int                       @default(0)
-  existingCustomers        ExistingCustomer[]
-  manualRevenues           ManualRevenue[]
-  campaigns                CustomerCampaign[]
-  leadSources              LeadSource[]
-  salesContact             SalesContact?
-  whatsAppAccount          WhatsAppAccount?
-  calendarConnection       CalendarConnection?
-  agentConfig              AgentConfig?
-  calendarLeadTimes        CalendarLeadTimes[]
-  calendarBlocks           CalendarBlock[]
-  conversations            Conversation[]           @relation("ConversationCustomer")
+  mailVorlagenStand              Int                       @default(0)
+  existingCustomers              ExistingCustomer[]
+  manualRevenues                 ManualRevenue[]
+  campaigns                      CustomerCampaign[]
+  leadSources                    LeadSource[]
+  salesContact                   SalesContact?
+  whatsAppAccount                WhatsAppAccount?
+  calendarConnection             CalendarConnection?
+  agentConfig                    AgentConfig?
+  calendarLeadTimes              CalendarLeadTimes[]
+  calendarBlocks                 CalendarBlock[]
+  conversations                  Conversation[]            @relation("ConversationCustomer")
   /// Support-Chats (Support-Nummer), die diesem Kunden zugeordnet sind (lib/whatsapp/support-contacts.ts)
-  supportConversations     Conversation[]           @relation("ConversationLinkedCustomer")
+  supportConversations           Conversation[]            @relation("ConversationLinkedCustomer")
   /// Kündigungsabsichten aus dem Anti-Churn-Flow (lib/anti-churn-server.ts)
-  churnIntents             ChurnIntent[]
-  appointments             Appointment[]
-  messageTemplates         MessageTemplate[]
-  consentOptIns            ConsentOptIn[]
-  adSpend                  CustomerAdSpend[]
-  budgets                  CustomerBudget[]
-  budgetChanges            BudgetChange[]
-  productBookings          ProductBooking[]
+  churnIntents                   ChurnIntent[]
+  appointments                   Appointment[]
+  messageTemplates               MessageTemplate[]
+  consentOptIns                  ConsentOptIn[]
+  adSpend                        CustomerAdSpend[]
+  budgets                        CustomerBudget[]
+  budgetChanges                  BudgetChange[]
+  productBookings                ProductBooking[]
   // „Kollegen empfehlen“ (B2B-Empfehlungsprogramm, lib/kollegen.ts)
-  referralCode             ReferralCode?
-  colleagueReferrals       ColleagueReferral[]
-  referralNudges           ReferralNudge[]
-  reviewSettings           ReviewSettings?
-  reviewRequests           ReviewRequest[]
-  referralLinks            ReferralLink[]
-  googleBusiness           GoogleBusinessConnection?
-  googleReviews            GoogleReview[]
+  referralCode                   ReferralCode?
+  colleagueReferrals             ColleagueReferral[]
+  referralNudges                 ReferralNudge[]
+  reviewSettings                 ReviewSettings?
+  reviewRequests                 ReviewRequest[]
+  referralLinks                  ReferralLink[]
+  googleBusiness                 GoogleBusinessConnection?
+  googleReviews                  GoogleReview[]
   // Kampagnen-Agenten (lib/kampagnen)
-  campaignRuns             CampaignRun[]
+  campaignRuns                   CampaignRun[]
   // Monatsberichte (lib/monatsbericht): je Kunde abschaltbar
-  monthlyReportsOff        Boolean                   @default(false)
-  monthlyReports           MonthlyReport[]
-  campaignWishes           CampaignWish[]
-  campaignHealth           CampaignHealth[]
-  mailTemplates            MailTemplate[]
+  monthlyReportsOff              Boolean                   @default(false)
+  monthlyReports                 MonthlyReport[]
+  campaignWishes                 CampaignWish[]
+  campaignHealth                 CampaignHealth[]
+  mailTemplates                  MailTemplate[]
   // Automatische Optimierung je Werbekonto (lib/optimierung, seit 18.11.2026)
-  optimizationAccount      OptimizationAccount?
-  optimizationMeasures     OptimizationMeasure[]
+  optimizationAccount            OptimizationAccount?
+  optimizationMeasures           OptimizationMeasure[]
   // Erstinformation nach § 15 VersVermV (Registernummer, PDF oder Link, öffentliche Adresse)
-  erstinformation          Erstinformation?
+  erstinformation                Erstinformation?
 }
 
 // Tagesbudget je Produkt (Kundenbereich → Konto → Werbebudget). Ohne Eintrag gilt das
@@ -665,31 +679,31 @@ model Lead {
   revenues Revenue[]
 
   // ─── WhatsApp-CRM (Phase 0) ─────────────────────────────────────────
-  conversations Conversation[]
-  appointments  Appointment[]
-  sequences     LeadSequence[]
-  history       LeadHistory[]
-  files         LeadFile[]
+  conversations       Conversation[]
+  appointments        Appointment[]
+  sequences           LeadSequence[]
+  history             LeadHistory[]
+  files               LeadFile[]
   // Verträge (Abschlüsse) dieses Leads: der erste aus closedAt/closeValue, dazu Cross-Selling (lib/vertraege.ts)
-  contracts     LeadContract[]
+  contracts           LeadContract[]
   // Erinnerung „Weiteres Produkt anbieten?“ angelegt (einmal je Lead)
   crossSellRemindedAt DateTime?
   // Aufgabe „Police da und erste Zahlung erfolgt?“ gestellt (einmal je Lead)
   policeRemindedAt    DateTime?
   // Kunde mit Abschluss im Bestand (ExistingCustomer.leadId)
-  bestandKunde  ExistingCustomer? @relation("BestandAusLead")
+  bestandKunde        ExistingCustomer? @relation("BestandAusLead")
 
   // Modul „Empfehlungen & Bewertungen“: Anfrage nach dem Abschluss (je Lead eine)
-  reviewRequest     ReviewRequest? @relation("ReviewRequestLead")
+  reviewRequest         ReviewRequest? @relation("ReviewRequestLead")
   // Persönlicher Empfehlungslink dieses Kontakts (als Empfehlender)
-  ownReferralLink   ReferralLink?  @relation("ReferralLinkLead")
+  ownReferralLink       ReferralLink?  @relation("ReferralLinkLead")
   // Lead kam über den Empfehlungslink eines Kunden
-  referralLinkId    String?
-  referralLink      ReferralLink?  @relation("ReferredLeads", fields: [referralLinkId], references: [id], onDelete: SetNull)
+  referralLinkId        String?
+  referralLink          ReferralLink?  @relation("ReferredLeads", fields: [referralLinkId], references: [id], onDelete: SetNull)
   // Dank an den Empfehlenden verschickt (einmal, sobald dieser Lead abgeschlossen ist)
-  referralThankedAt DateTime?
+  referralThankedAt     DateTime?
   // Empfohlene Person erlaubt, dass der Empfehlende eine Rückmeldung bekommt (Empfehlungsseite)
-  referralStatusConsent Boolean @default(false)
+  referralStatusConsent Boolean        @default(false)
   // Letzte Rückmeldung an den Empfehlenden: gemeldet | termin
   referralNotifiedStage String?
   // Dankeschön an den Empfehlenden für diese Empfehlung: offen | erledigt | entfaellt | jahresgrenze (15 € je
@@ -707,9 +721,9 @@ model Lead {
   // „STOPP“ auf die Nachfrage bzw. Bitte: keine weiteren Nachfragen, Bewertungs- oder Empfehlungsbitten
   feedbackOptOutAt      DateTime?
   // Bewertungs-Wächter: Google-Bewertungen, die diesem Kontakt zugeordnet sind
-  googleReviews     GoogleReview[]
+  googleReviews         GoogleReview[]
   // Rückmeldung an Meta (lib/capi): Stufen dieses Leads im Postausgang
-  capiEvents        CapiEvent[]
+  capiEvents            CapiEvent[]
 
   @@index([customerId, createdAt])
   @@index([assignedUserId])
@@ -802,50 +816,50 @@ enum UserRole {
 // Auth-Accounts. Admins sehen das ganze Dashboard, Buyer nur die eigene
 // Customer-Sicht (customerId verknüpft, NULL für Admins).
 model User {
-  id                 String           @id @default(cuid())
+  id                  String              @id @default(cuid())
   // Einführungsvideo auf „Heute“ angesehen oder weggeklickt (Ole, 13.11.2026)
-  introVideoSeenAt   DateTime?
-  email              String           @unique
-  passwordHash       String
-  role               UserRole
-  customerId         String?
-  createdAt          DateTime         @default(now())
-  lastLoginAt        DateTime?
+  introVideoSeenAt    DateTime?
+  email               String              @unique
+  passwordHash        String
+  role                UserRole
+  customerId          String?
+  createdAt           DateTime            @default(now())
+  lastLoginAt         DateTime?
   // Zwei-Faktor-Login (TOTP), vor allem für Admins: Schlüssel verschlüsselt,
   // aktiv ab totpEnabledAt; Notfall-Codes nur als SHA-256-Hash.
-  totpSecretEnc      String?
-  totpEnabledAt      DateTime?
-  totpBackupCodes    String[]         @default([])
+  totpSecretEnc       String?
+  totpEnabledAt       DateTime?
+  totpBackupCodes     String[]            @default([])
   // Sitzungsversion: +1 beendet alle Sitzungen (Passwort-/2FA-Änderung,
   // „Überall abmelden“, Kundenwechsel). Steht als „sv“ im Sitzungs-Cookie.
-  sessionVersion     Int              @default(0)
+  sessionVersion      Int                 @default(0)
   // Neuigkeiten (Kundenbereich): zuletzt gelesen – Einträge danach zählen als ungelesen
-  updatesSeenAt      DateTime?
+  updatesSeenAt       DateTime?
   // Admin → Zahlen → Buchungen zuletzt geöffnet (Hinweis „neue Buchungen“ auf Heute)
-  buchungenSeenAt    DateTime?
+  buchungenSeenAt     DateTime?
   // Team (Großkunden): owner = Inhaber (sieht alles), advisor = Berater (nur eigene Leads)
-  teamRole           String           @default("owner")
-  displayName        String?
+  teamRole            String              @default("owner")
+  displayName         String?
   // Bekommt bei der Verteilung neue Leads
-  receivesLeads      Boolean          @default(true)
-  lastLeadAssignedAt DateTime?
+  receivesLeads       Boolean             @default(true)
+  lastLeadAssignedAt  DateTime?
   // Zuletzt einen Lead zugewiesen bekommen (Verteilung, Zuteilen, Terminbuchung).
   // Platz-Abrechnung (lib/seats.ts): wer heute Leads bekam, zählt heute als aktiver Verkäufer.
-  leadReceivedAt     DateTime?
+  leadReceivedAt      DateTime?
   // Früher: neue Admin-Oberfläche an/aus. Nicht mehr genutzt (alle Admins fest auf der neuen, 18.11.)
-  adminNewUi         Boolean          @default(true)
+  adminNewUi          Boolean             @default(true)
   // /buyer/zahlen, Karte Gewinn: „Inkl. Bestand“ statt „Nur jetzt“ (Wahl je Login)
-  gewinnMitBestand   Boolean          @default(true)
-  adminDismissals    AdminDismissal[]
-  assignedLeads      Lead[]           @relation("LeadAssignee")
-  advisorCalendar    AdvisorCalendar?
-  mailConnection     MailConnection?
+  gewinnMitBestand    Boolean             @default(true)
+  adminDismissals     AdminDismissal[]
+  assignedLeads       Lead[]              @relation("LeadAssignee")
+  advisorCalendar     AdvisorCalendar?
+  mailConnection      MailConnection?
   // E-Mail-Signatur (Ole, 14.11.2026): kommt automatisch unter E-Mails an Leads
-  mailSignature      String?
+  mailSignature       String?
   // Tägliche Erinnerung um 8 Uhr: Leads ohne nächsten Schritt (lib/next-step-reminder.ts); Tag des letzten Laufs (Berlin)
-  nextStepReminder    Boolean          @default(true)
+  nextStepReminder    Boolean             @default(true)
   nextStepReminderDay String?
-  linkedInConnection LinkedInConnection?
+  linkedInConnection  LinkedInConnection?
 
   customer       Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull)
   resetTokens    PasswordResetToken[]
@@ -855,13 +869,13 @@ model User {
   assignedConversations Conversation[]
 
   // Abwesenheiten (Urlaub, Krankheit …) und Vertretungen
-  absences      UserAbsence[] @relation("UserAbsences")
-  substituteFor UserAbsence[] @relation("AbsenceSubstitute")
-  deviceTokens  DeviceToken[]
-  appHandoffs   AppHandoff[]
+  absences            UserAbsence[]        @relation("UserAbsences")
+  substituteFor       UserAbsence[]        @relation("AbsenceSubstitute")
+  deviceTokens        DeviceToken[]
+  appHandoffs         AppHandoff[]
+  emailChangeRequests EmailChangeRequest[]
 
   @@index([customerId])
-  emailChangeRequests EmailChangeRequest[]
 }
 
 // Einmalige Tokens für Passwort-Reset. Nur der SHA-256-Hash wird gespeichert
@@ -1137,38 +1151,38 @@ model Message {
 
 // Gebuchter Termin aus dem Bot-Flow (Telefon oder Videocall).
 model Appointment {
-  id              String    @id @default(cuid())
-  customerId      String
-  leadId          String?
-  conversationId  String?
-  mode            String // phone | video
-  startsAt        DateTime
-  endsAt          DateTime?
-  calendarEventId String?
-  meetUrl         String?
-  status          String    @default("booked") // booked | cancelled | completed | no_show
-  reminderSentAt  DateTime? // gesetzt, sobald die WhatsApp-Erinnerung raus ist
+  id                 String    @id @default(cuid())
+  customerId         String
+  leadId             String?
+  conversationId     String?
+  mode               String // phone | video
+  startsAt           DateTime
+  endsAt             DateTime?
+  calendarEventId    String?
+  meetUrl            String?
+  status             String    @default("booked") // booked | cancelled | completed | no_show
+  reminderSentAt     DateTime? // gesetzt, sobald die WhatsApp-Erinnerung raus ist
   soonReminderSentAt DateTime? // „Gleich ist es so weit, passt alles?“ etwa 1 Std. vorher (Ole, 15.11.2026)
   // Terminvorbereitung (Angebot gerechnet) vom Berater abgehakt (Ole, 15.11.2026)
-  preparedAt      DateTime?
-  preparedById    String?
+  preparedAt         DateTime?
+  preparedById       String?
   // Angebote zum Termin (ausgelesen bzw. eingetragen, vom Berater bestätigt), für die Präsentation (Ole, 15.11.2026)
-  offersJson        Json?
-  offersConfirmedAt DateTime?
+  offersJson         Json?
+  offersConfirmedAt  DateTime?
   // Empfehlungen: nach diesem Termin geprüft, ob der Empfehlungslink rausgeht (einmal je Termin)
-  referralAskedAt DateTime?
+  referralAskedAt    DateTime?
   // Getrennte Einladung für den Berater (interne Infos), gleicher Termin.
   // calendarEventId = Einladung des Leads (kundenfreundlich, ohne Interna).
-  advisorEventId  String?
+  advisorEventId     String?
   // In welchem Kalender der Termin liegt: Kunden-ID oder „user:<id>“ (Berater)
-  calendarKey     String?
+  calendarKey        String?
   // Geheimer Link für den Lead: /book/manage/<token> (absagen/verschieben).
-  manageToken     String?   @unique
-  cancelledAt     DateTime?
+  manageToken        String?   @unique
+  cancelledAt        DateTime?
   // lead | advisor | team (Admin/Kunde im CRM) | system
-  cancelledBy     String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  cancelledBy        String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   lead     Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
@@ -1476,19 +1490,19 @@ model SalesContact {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  offers             Offer[]
-  activities         SalesActivity[]
-  tasks              SalesTask[]
-  campaigns          SalesCampaignLead[]
-  emails             SalesEmail[]
-  followups          SalesFollowup[]
-  linkedinEvents     SalesLinkedInEvent[]
-  meetings           SalesMeeting[]
-  inboundLeads       SalesInboundLead[]
+  offers               Offer[]
+  activities           SalesActivity[]
+  tasks                SalesTask[]
+  campaigns            SalesCampaignLead[]
+  emails               SalesEmail[]
+  followups            SalesFollowup[]
+  linkedinEvents       SalesLinkedInEvent[]
+  meetings             SalesMeeting[]
+  inboundLeads         SalesInboundLead[]
   /// Chats auf der Support-Nummer mit diesem Kontakt (lib/whatsapp/support-contacts.ts)
   supportConversations Conversation[]
   // Über „Kollegen empfehlen“ von einem Kunden empfohlen
-  colleagueReferrals ColleagueReferral[]
+  colleagueReferrals   ColleagueReferral[]
 
   @@index([altEmails], type: Gin)
   @@index([stage])
@@ -1622,21 +1636,21 @@ model SalesFollowup {
 
 // Einstellungen Später-Follow-ups (eine Zeile, id „default“)
 model SalesFollowupSettings {
-  id         String   @id @default("default")
-  enabled    Boolean  @default(true)
+  id         String    @id @default("default")
+  enabled    Boolean   @default(true)
   /// Höchstens so viele Follow-up-Mails je Tag und Postfach
-  perDay     Int      @default(15)
+  perDay     Int       @default(15)
   /// Texte per KI aus Originalmail und Antwort (sonst feste Vorlage)
-  useAi      Boolean  @default(true)
+  useAi      Boolean   @default(true)
   /// Buchungslink für den kurzen Termin (leer = ohne Link)
   bookingUrl String?
   /// Kurzer Bezug auf das Angebot (für KI und Vorlage)
-  pitch      String   @default("Wir sorgen über Meta-Werbung für planbare Kundenanfragen in Ihrer Region. Ein WhatsApp-Assistent meldet sich sofort bei jeder Anfrage und vereinbart Termine für Sie.")
+  pitch      String    @default("Wir sorgen über Meta-Werbung für planbare Kundenanfragen in Ihrer Region. Ein WhatsApp-Assistent meldet sich sofort bei jeder Anfrage und vereinbart Termine für Sie.")
   /// Bestehende Später-Kontakte einmalig eingeplant (wartet auf Freigabe)
   backfillAt DateTime?
   /// Signatur unter jeder Follow-up-Mail (Instantly gibt die Postfach-Signatur nicht heraus); leer = Gruß und Name
   signature  String?
-  updatedAt  DateTime @updatedAt
+  updatedAt  DateTime  @updatedAt
 }
 
 // Rohdaten aus Waalaxy (Webhook), auch nicht zugeordnete – zum Nachvollziehen
@@ -1658,35 +1672,35 @@ model SalesLinkedInEvent {
 
 // Termine aus Calendly (gebucht über Calendly → Google Calendar)
 model SalesMeeting {
-  id            String       @id @default(cuid())
-  contactId     String
-  contact       SalesContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  calendlyUri   String?      @unique // Invitee-URI
-  eventUri      String?
-  title         String
-  startAt       DateTime
-  endAt         DateTime?
-  location      String?
-  joinUrl       String?
-  status        String       @default("GEPLANT") // GEPLANT, ABGESAGT, VERSCHOBEN
-  cancelReason  String?
-  canceledBy    String?
-  rescheduleUrl String?
-  cancelUrl     String?
-  answers       String? // Fragen & Antworten aus dem Buchungsformular
-  utmSource     String?
-  inviteeName   String?
-  inviteeEmail  String?
-  taskId        String?
+  id              String       @id @default(cuid())
+  contactId       String
+  contact         SalesContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  calendlyUri     String?      @unique // Invitee-URI
+  eventUri        String?
+  title           String
+  startAt         DateTime
+  endAt           DateTime?
+  location        String?
+  joinUrl         String?
+  status          String       @default("GEPLANT") // GEPLANT, ABGESAGT, VERSCHOBEN
+  cancelReason    String?
+  canceledBy      String?
+  rescheduleUrl   String?
+  cancelUrl       String?
+  answers         String? // Fragen & Antworten aus dem Buchungsformular
+  utmSource       String?
+  inviteeName     String?
+  inviteeEmail    String?
+  taskId          String?
   /// Aufgabe „Wie lief der Termin?“ nach Terminende (lib/vertrieb/termin-review.ts)
-  reviewTaskId  String?
+  reviewTaskId    String?
   /// WhatsApp-Terminbestätigung von der Support-Nummer (lib/vertrieb/termin-whatsapp.ts):
   /// sent | no_phone | no_account | no_template | opted_out | failed | past
   waConfirmStatus String?
   waConfirmAt     DateTime?
   waConfirmError  String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   @@index([contactId])
   @@index([startAt])
@@ -1850,29 +1864,29 @@ model UserAbsence {
 // Direkter Lead-Eingang (Meta-Webhook oder Zapier-Webhook): welches
 // Meta-Leadformular gehört zu welchem Kunden und Produkt.
 model LeadSource {
-  id              String    @id @default(cuid())
-  formId          String    @unique
-  pageId          String?
-  formName        String?
-  customerId      String
-  customer        Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  id               String    @id @default(cuid())
+  formId           String    @unique
+  pageId           String?
+  formName         String?
+  customerId       String
+  customer         Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   // Produkt-Key wie Lead.source (z. B. „Privatschutz“, „Wechsel“)
-  productKey      String
+  productKey       String
   // Pay-per-Lead: Preis je Lead (netto) → Umsatz in der App; sonst leer
-  leadPrice       Decimal?  @db.Decimal(12, 2)
+  leadPrice        Decimal?  @db.Decimal(12, 2)
   // Optional: Airtable-Bezug für die erlaubten Stornogründe
-  bezugAirtableId String?
+  bezugAirtableId  String?
   // Fragen des Formulars (key → Beschriftung) für lesbare Formularangaben
-  questionLabels  Json?
+  questionLabels   Json?
   // Einwilligungstext im Formular (von unseren Kampagnen-Agenten angelegt): Version und Wortlaut als Nachweis am Lead
-  consentVersion  String?
-  consentText     String?
+  consentVersion   String?
+  consentText      String?
   // Einwilligung beim letzten Lead: "ja" | "nein" | "ohne" (Formular ohne Häkchen → Warnung im Admin)
   lastConsentState String?
-  active          Boolean   @default(true)
-  lastLeadAt      DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  active           Boolean   @default(true)
+  lastLeadAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   @@index([customerId])
 }
@@ -2129,39 +2143,39 @@ model PoolLead {
 // Gesundheitsangaben werden nie importiert. Einwilligung für WhatsApp/E-Mail
 // liegt laut Versicherer (Allianz) vor; dokumentiert mit Importdatum.
 model ExistingCustomer {
-  id             String    @id @default(cuid())
-  customerId     String
-  customer       Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  externalNo     String? // Kundennummer im Versicherer-System
-  firstName      String?
-  lastName       String?
+  id                       String    @id @default(cuid())
+  customerId               String
+  customer                 Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  externalNo               String? // Kundennummer im Versicherer-System
+  firstName                String?
+  lastName                 String?
   // Anrede (Herr | Frau | Divers) und Firma bei Gewerbekunden (Import 14.11.2026)
-  salutation     String?
-  company        String?
-  phone          String? // normalisiert wie WhatsApp (4915…)
-  email          String?
-  birthday       DateTime?
-  street         String?
-  zip            String?
-  city           String?
+  salutation               String?
+  company                  String?
+  phone                    String? // normalisiert wie WhatsApp (4915…)
+  email                    String?
+  birthday                 DateTime?
+  street                   String?
+  zip                      String?
+  city                     String?
   // Sparten, z. B. ["KFZ", "Haftpflicht"] – für Segmente und den Assistenten
-  lines          String[]  @default([])
+  lines                    String[]  @default([])
   // nächster Ablauf/Hauptfälligkeit (z. B. KFZ) für Anlass „Wechsel/Ablauf“
-  nextRenewal    DateTime?
+  nextRenewal              DateTime?
   // Summe der Jahresbeiträge aktiver Verträge (für Sortierung und Beitragsvolumen); null = kein Beitrag bekannt
-  premiumTotal   Decimal?  @db.Decimal(12, 2)
-  consentAt      DateTime? // „Einwilligung laut Versicherer“ (Importdatum); seit 14.11.2026 nur noch Altangabe, maßgeblich sind die Felder je Kanal
-  consentNote    String?
-  optOutAt       DateTime? // „Stopp“ bzw. Abmeldung für alle Kanäle → keine Kampagnen mehr
+  premiumTotal             Decimal?  @db.Decimal(12, 2)
+  consentAt                DateTime? // „Einwilligung laut Versicherer“ (Importdatum); seit 14.11.2026 nur noch Altangabe, maßgeblich sind die Felder je Kanal
+  consentNote              String?
+  optOutAt                 DateTime? // „Stopp“ bzw. Abmeldung für alle Kanäle → keine Kampagnen mehr
   // Einwilligung je Kanal (Ole, 14.11.2026): ja | nein | null = unbekannt. Quelle: import | versicherer_pauschal | formular | vermittler | lead
-  emailConsent          String?
-  emailConsentAt        DateTime?
-  emailConsentSource    String?
-  whatsappConsent       String?
-  whatsappConsentAt     DateTime?
-  whatsappConsentSource String?
+  emailConsent             String?
+  emailConsentAt           DateTime?
+  emailConsentSource       String?
+  whatsappConsent          String?
+  whatsappConsentAt        DateTime?
+  whatsappConsentSource    String?
   // Abmeldung nur für E-Mail (Abmeldelink); optOutAt sperrt alle Kanäle
-  emailOptOutAt         DateTime?
+  emailOptOutAt            DateTime?
   // Nachweis § 7 Abs. 3 UWG (Anwalts-Memo, 15.11.2026): Bei Erhebung der E-Mail-Adresse auf das Widerspruchsrecht
   // hingewiesen? ja | nein | null = unbekannt. Ohne „ja“ gehen E-Mails nur mit Einwilligung raus.
   // Quelle: import (Spalte der Datei) | import_pauschal | bestand_pauschal | vermittler; Text = Wortlaut bzw. Quelle
@@ -2169,14 +2183,14 @@ model ExistingCustomer {
   widerspruchHinweisAt     DateTime?
   widerspruchHinweisSource String?
   widerspruchHinweisText   String?
-  lastCampaignAt DateTime?
+  lastCampaignAt           DateTime?
   // Import-Lauf, der den Datensatz angelegt hat (ExistingCustomerImport.id); Aktualisierungen ändern ihn nicht
-  importId       String?
+  importId                 String?
   // Aus einem Lead mit Abschluss übernommen (lib/vertraege.syncLeadToBestand); der Import übernimmt den Eintrag
-  leadId         String?   @unique
-  lead           Lead?     @relation("BestandAusLead", fields: [leadId], references: [id], onDelete: SetNull)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  leadId                   String?   @unique
+  lead                     Lead?     @relation("BestandAusLead", fields: [leadId], references: [id], onDelete: SetNull)
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 
   contracts    ExistingContract[]
   recipients   CampaignRecipient[]
@@ -2233,22 +2247,22 @@ model ExistingContract {
 }
 
 model CustomerCampaign {
-  id          String    @id @default(cuid())
-  customerId  String
-  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  name        String
+  id           String    @id @default(cuid())
+  customerId   String
+  customer     Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name         String
   // cross_sell | review | birthday | renewal
-  occasion    String
+  occasion     String
   // Segment, z. B. { has: ["KFZ"], lacks: ["Hausrat"] } oder { birthdayDays: 30 }
-  segment     Json
+  segment      Json
   // Thema für die Vorlage (z. B. „Hausrat“), Parameter {{2}}
-  topic       String?
-  dailyLimit  Int       @default(150)
+  topic        String?
+  dailyLimit   Int       @default(150)
   // draft | running | paused | done
-  status      String    @default("draft")
+  status       String    @default("draft")
   // Grund der Pause: kontingent (Kontingent aufgebraucht, läuft nach Paketkauf bzw. im nächsten Monat weiter); null = von Hand o. Ä.
   pausedReason String?
-  createdById String?
+  createdById  String?
   // Kanal (Ole, 14.11.2026): whatsapp_first (WhatsApp bevorzugt, sonst E-Mail) | whatsapp | email
   channelMode  String    @default("whatsapp_first")
   // E-Mail-Fassung (null = Standardtext des Anlasses); Abmeldelink und Pflichtangaben kommen immer automatisch dazu
@@ -2256,10 +2270,10 @@ model CustomerCampaign {
   mailBody     String?
   // Login, über dessen Postfach die Mails rausgehen (Standard: wer die Kampagne gestartet hat)
   senderUserId String?
-  startedAt   DateTime?
-  finishedAt  DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  startedAt    DateTime?
+  finishedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   recipients CampaignRecipient[]
 
@@ -2267,13 +2281,13 @@ model CustomerCampaign {
 }
 
 model CampaignRecipient {
-  id                 String           @id @default(cuid())
+  id                 String              @id @default(cuid())
   campaignId         String
-  campaign           CustomerCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaign           CustomerCampaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   existingCustomerId String
-  existingCustomer   ExistingCustomer @relation(fields: [existingCustomerId], references: [id], onDelete: Cascade)
+  existingCustomer   ExistingCustomer    @relation(fields: [existingCustomerId], references: [id], onDelete: Cascade)
   // queued | sent | replied | failed | skipped
-  status             String           @default("queued")
+  status             String              @default("queued")
   reason             String?
   sentAt             DateTime?
   repliedAt          DateTime?
@@ -2353,22 +2367,22 @@ model BestandOptOut {
 // sofort freigeschaltet, gültig 3 Monate. Verbrauch: erst das Monatskontingent, dann das älteste Paket.
 // Betrag und Kaufdatum für Umsatz (Admin) und Kosten des Kunden (lib/bestand/packs.ts → bestandPackSpend).
 model BestandMessagePack {
-  id                  String              @id @default(cuid())
+  id                  String   @id @default(cuid())
   customerId          String
-  customer            Customer            @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer            Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   messages            Int
   // Netto in EUR
-  amount              Decimal             @db.Decimal(10, 2)
-  purchasedAt         DateTime            @default(now())
+  amount              Decimal  @db.Decimal(10, 2)
+  purchasedAt         DateTime @default(now())
   expiresAt           DateTime
   // kauf (Inhaber im Kundenbereich) | auto (automatisch nachgebucht)
-  source              String              @default("kauf")
+  source              String   @default("kauf")
   createdById         String?
   // Stripe: Rechnungsposten (bzw. Rechnung bei Jahreszahlern); stripeStatus added | invoiced | failed
   stripeInvoiceItemId String?
   stripeInvoiceId     String?
-  stripeStatus        String              @default("added")
-  createdAt           DateTime            @default(now())
+  stripeStatus        String   @default("added")
+  createdAt           DateTime @default(now())
 
   recipients CampaignRecipient[]
 
@@ -2783,72 +2797,72 @@ model ReferralNudge {
 
 // Einstellungen des Empfehlungsprogramms (eine Zeile, id „default“).
 model ReferralSettings {
-  id          String   @id @default("default")
-  enabled     Boolean  @default(true)
+  id            String   @id @default("default")
+  enabled       Boolean  @default(true)
   // month = 1 Monat Betreuung (aktueller Monatspreis des Empfehlers) | fixed = fester Betrag
   // | bestand = Bestandskunden-Modul gratis für rewardMonths Monate (Standard seit 14.11.2026, im Code)
-  rewardKind  String   @default("month")
-  rewardFixed Decimal? @db.Decimal(10, 2)
+  rewardKind    String   @default("month")
+  rewardFixed   Decimal? @db.Decimal(10, 2)
   // Monate Bestandskunden-Modul gratis bei rewardKind bestand (Standard 3)
-  rewardMonths Int?
+  rewardMonths  Int?
   // Hinweise „Kollegen empfehlen“ im Kundenbereich (nach Abschlüssen/Feedback); Standard aus (Ole, 14.11.2026)
-  nudgesEnabled Boolean @default(false)
+  nudgesEnabled Boolean  @default(false)
   // none | setup_free (Einrichtung gratis) | setup_discount (Rabatt auf die Einrichtung, Betrag netto) | custom (eigener Text)
-  benefitKind String   @default("none")
-  benefitText String?
+  benefitKind   String   @default("none")
+  benefitText   String?
   // Betrag des Einrichtungsrabatts (netto) bei benefitKind setup_discount (Standard 500)
   benefitAmount Decimal? @db.Decimal(10, 2)
-  updatedAt   DateTime @updatedAt
+  updatedAt     DateTime @updatedAt
 }
 
 // ─── Zusatzmodul „Empfehlungen & Bewertungen“ ────────────────────────────
 // Einstellungen je Kunde (Vertreter). Texte gelten im offenen 24-h-Fenster;
 // sonst sendet die App die bei Meta freigegebene Vorlage.
 model ReviewSettings {
-  id                 String   @id @default(cuid())
-  customerId         String   @unique
+  id                       String    @id @default(cuid())
+  customerId               String    @unique
   // Vertreter kann das Modul pausieren, ohne es zu kündigen
-  active             Boolean  @default(true)
+  active                   Boolean   @default(true)
   // Link „Bewertung schreiben“ des Google-Unternehmensprofils
-  googleReviewUrl    String?
+  googleReviewUrl          String?
   // Tage nach dem Abschluss: Zufriedenheitsfrage bzw. Bitte um Empfehlung
-  reviewDelayDays    Int      @default(7)
-  referralDelayDays  Int      @default(21)
+  reviewDelayDays          Int       @default(7)
+  referralDelayDays        Int       @default(21)
   // Eigene Texte (null = Standard): Anfrage (direkter Draht + Google-Link),
   // Dank bei positiver Antwort, Antwort bei Kritik, Bitte um Empfehlung
-  reviewText         String?
-  thanksText         String?
-  unhappyText        String?
-  referralText       String?
-  referralThanksText String?
-  praiseReferralText String?
+  reviewText               String?
+  thanksText               String?
+  unhappyText              String?
+  referralText             String?
+  referralThanksText       String?
+  praiseReferralText       String?
   // Playbook (14.11.2026): Empfehlungsangebot für die empfohlene Person.
   // none | ordner | kfz | luecke | custom (eigene Überschrift + Text, ohne Prämien)
-  offerKind          String   @default("ordner")
-  offerHeadline      String?
-  offerText          String?
+  offerKind                String    @default("ordner")
+  offerHeadline            String?
+  offerText                String?
   // Bei Lob direkt den Empfehlungslink mitschicken (statt erst nach referralDelayDays)
-  referralOnPraise   Boolean  @default(true)
+  referralOnPraise         Boolean   @default(true)
   // Rückmeldung an Empfehlende (nur mit Einwilligung der empfohlenen Person)
-  statusUpdates      Boolean  @default(true)
+  statusUpdates            Boolean   @default(true)
   // Aufgabe „Empfehlung nachfassen“ so viele Stunden nach „Empfehlungslink senden“ (0 = aus)
-  followUpHours      Int      @default(48)
+  followUpHours            Int       @default(48)
   // Dankeschön für Empfehlende (Tippgeber-Vergütung), standardmäßig aus. Nie für die empfohlene
   // Person und nie für einen eigenen Vertrag (§ 48b VAG). none | gutschein | spende
-  rewardKind         String   @default("none")
+  rewardKind               String    @default("none")
   // Wert in Euro
-  rewardAmount       Int?
+  rewardAmount             Int?
   // Gutschein: Art (z. B. „Wunschgutschein“); Spende: Empfänger
-  rewardNote         String?
+  rewardNote               String?
   // termin = Termin mit der empfohlenen Person hat stattgefunden | abschluss = Abschluss
-  rewardTrigger      String   @default("termin")
+  rewardTrigger            String    @default("termin")
   // Vertreter hat bestätigt, dass er die Zulässigkeit geprüft hat
-  rewardConfirmedAt  DateTime?
+  rewardConfirmedAt        DateTime?
   // Nach einem stattgefundenen Termin mit einem Kunden (Abschluss/Bestandskunde) automatisch den
   // Empfehlungslink senden, höchstens alle 180 Tage je Kontakt. Standardmäßig aus.
-  referralAfterAppointment Boolean @default(false)
-  updatedAt          DateTime @updatedAt
-  customer           Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  referralAfterAppointment Boolean   @default(false)
+  updatedAt                DateTime  @updatedAt
+  customer                 Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
 }
 
 // Je Abschluss eine Anfrage: dieselbe Nachricht an alle (erst direkter Draht zum
@@ -3246,7 +3260,7 @@ model LeadFile {
   uploadedById String?
   createdAt    DateTime @default(now())
 
-  contracts    LeadContract[]
+  contracts LeadContract[]
 
   @@index([leadId])
 }
@@ -3308,48 +3322,48 @@ model LeadContract {
 // Eigenes Postfach eines Logins (Ole, 13.11.2026): E-Mails an Leads aus der App, gesendet über
 // Google (Gmail), Microsoft (Outlook/365) oder SMTP. Zugangsdaten verschlüsselt.
 model MailConnection {
-  id              String    @id @default(cuid())
-  userId          String    @unique
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  customerId      String
+  id                  String    @id @default(cuid())
+  userId              String    @unique
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customerId          String
   // google | microsoft | smtp
-  provider        String
-  email           String
-  fromName        String?
-  accessTokenEnc  String?
-  refreshTokenEnc String?
-  expiresAt       DateTime?
-  smtpHost        String?
-  smtpPort        Int?
-  smtpUser        String?
-  smtpPassEnc     String?
+  provider            String
+  email               String
+  fromName            String?
+  accessTokenEnc      String?
+  refreshTokenEnc     String?
+  expiresAt           DateTime?
+  smtpHost            String?
+  smtpPort            Int?
+  smtpUser            String?
+  smtpPassEnc         String?
   // ok | error
-  status          String    @default("ok")
-  lastError       String?
+  status              String    @default("ok")
+  lastError           String?
   // Bestandskampagnen per E-Mail: Drosselung (lib/bestand/mail-drossel.ts)
   campaignBackoff     Int       @default(0)
   campaignErrors      Int       @default(0)
   campaignPausedUntil DateTime?
   campaignNextAt      DateTime?
   campaignIssueAt     DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   @@index([customerId])
 }
 
 // E-Mail-Vorlagen eines Kunden (Platzhalter {vorname}, {name}, {produkt}, {meinname}).
 model MailTemplate {
-  id         String   @id @default(cuid())
-  customerId String
-  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  name       String
-  subject    String
-  body       String
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name        String
+  subject     String
+  body        String
   // Welche Standardvorlage (lib/mail/vorlagen.ts, z. B. „nicht_erreicht“); null = eigene Vorlage
   standardKey String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([customerId])
 }
@@ -3357,60 +3371,60 @@ model MailTemplate {
 // LinkedIn: persönliches Profil (Ole, 14.11.2026). KI-Entwürfe nach Reichweite,
 // Freigabe per Klick, Veröffentlichen zur geplanten Uhrzeit (docs/linkedin.md).
 model LinkedInConnection {
-  id             String   @id @default(cuid())
-  userId         String   @unique
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   // urn:li:person:{sub}
   personUrn      String
   name           String?
   accessTokenEnc String
   expiresAt      DateTime
   // gewährte Berechtigungen (z. B. „openid profile w_member_social r_member_postAnalytics“)
-  scopes         String   @default("")
+  scopes         String    @default("")
   // ok | error
-  status         String   @default("ok")
+  status         String    @default("ok")
   lastError      String?
   // Erinnerung „neu verbinden“ (einmal je Ablauf)
   remindedAt     DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
 
 // Einstellungen (eine Zeile, id „default“)
 model LinkedInSettings {
-  id          String   @id @default("default")
-  postsPerDay Int      @default(5)
+  id              String    @id @default("default")
+  postsPerDay     Int       @default(5)
   // Uhrzeiten (deutsche Zeit), kommagetrennt
-  slots       String   @default("07:30,09:30,12:00,15:00,18:00")
-  weekdays    Boolean  @default(true)
+  slots           String    @default("07:30,09:30,12:00,15:00,18:00")
+  weekdays        Boolean   @default(true)
   // Über mich, Zielgruppe, Themen, Tonfall – Grundlage für die Entwürfe
-  about       String   @default("")
-  autoDrafts  Boolean  @default(true)
+  about           String    @default("")
+  autoDrafts      Boolean   @default(true)
   // Zielgruppe (ICP): optimiert wird auf Reichweite in dieser Gruppe, nicht auf Reichweite insgesamt
-  icp         String   @default("Versicherungsvermittler in Deutschland: Ausschließlichkeitsvertreter (z. B. Allianz-Agenturen), Mehrfachagenten und Makler, die mehr Neukunden wollen. Sie verkaufen z. B. Tierkrankenversicherung, Privatschutz und PKV. Wir verkaufen ihnen Leadgenerierung über Meta-Werbung plus unsere Software mit WhatsApp-Assistent, der Leads qualifiziert und Termine bucht.")
+  icp             String    @default("Versicherungsvermittler in Deutschland: Ausschließlichkeitsvertreter (z. B. Allianz-Agenturen), Mehrfachagenten und Makler, die mehr Neukunden wollen. Sie verkaufen z. B. Tierkrankenversicherung, Privatschutz und PKV. Wir verkaufen ihnen Leadgenerierung über Meta-Werbung plus unsere Software mit WhatsApp-Assistent, der Leads qualifiziert und Termine bucht.")
   // Produkt-Schwerpunkt der Posts (Ole, 14.11.2026: Hauptprodukt TKV, PKV nur als Optimierung nach §204 VVG)
-  focus       String   @default("Hauptprodukt ist die Tierkrankenversicherung (Katze und Hund): Die meisten Posts drehen sich darum (Leads, Abschlüsse, Cross-Selling aus TKV-Kunden). PKV nur selten und dann ausschließlich als PKV-Optimierung nach §204 VVG (Tarifwechsel beim eigenen Versicherer), nie als PKV-Neugeschäft. Andere Sparten nur am Rand.")
+  focus           String    @default("Hauptprodukt ist die Tierkrankenversicherung (Katze und Hund): Die meisten Posts drehen sich darum (Leads, Abschlüsse, Cross-Selling aus TKV-Kunden). PKV nur selten und dann ausschließlich als PKV-Optimierung nach §204 VVG (Tarifwechsel beim eigenen Versicherer), nie als PKV-Neugeschäft. Andere Sparten nur am Rand.")
   // Begriffe, an denen die Zielgruppe in den LinkedIn-Zuschauerdaten erkannt wird (Branche, Beruf)
-  icpKeywords String   @default("versicherung, insurance, makler, broker, vermittler, agentur, generalvertret, hauptvertret, finanzberat, financial advisor, allianz, ergo, axa, signal iduna, debeka, hallesche, gothaer")
+  icpKeywords     String    @default("versicherung, insurance, makler, broker, vermittler, agentur, generalvertret, hauptvertret, finanzberat, financial advisor, allianz, ergo, axa, signal iduna, debeka, hallesche, gothaer")
   // Anteil der Zielgruppe an allen Zuschauern (aus dem Profil-Export), Ersatz, wenn je Post nichts vorliegt
   accountIcpShare Float?
   // Trust-Material von Ole (z. B. freigegebene Kundenstimmen, Erfolge) – nur das darf als Fakt/Zitat in Posts
-  trustNotes  String   @default("")
+  trustNotes      String    @default("")
   // Vorlauf: so viele Posting-Tage im Voraus hält die Automatik mit Entwürfen gefüllt (Ole, 14.11.2026)
-  planDays    Int      @default(1)
+  planDays        Int       @default(1)
   // Uhrzeit (deutsche Zeit), ab der die Entwürfe für den nächsten Tag geschrieben werden
-  draftHour   Int      @default(17)
-  lastImportAt DateTime?
+  draftHour       Int       @default(17)
+  lastImportAt    DateTime?
   // Sperre gegen doppeltes Schreiben (Cron alle 5 Minuten, ein Lauf dauert ca. 1–2 Minuten)
-  draftingAt  DateTime?
-  updatedAt   DateTime @updatedAt
+  draftingAt      DateTime?
+  updatedAt       DateTime  @updatedAt
 }
 
 model LinkedInPost {
-  id             String    @id @default(cuid())
+  id             String         @id @default(cuid())
   // entwurf | freigegeben | sendet | veroeffentlicht | verworfen | fehler | importiert
   status         String
-  text           String    @default("")
+  text           String         @default("")
   // Thema in wenigen Worten und was der Post testen soll
   idea           String?
   hypothesis     String?
@@ -3419,7 +3433,7 @@ model LinkedInPost {
   scheduledAt    DateTime?
   publishedAt    DateTime?
   // urn:li:share:… (aus der App) bzw. urn:li:activity:… (aus dem Export)
-  postUrn        String?   @unique
+  postUrn        String?        @unique
   url            String?
   impressions    Int?
   membersReached Int?
@@ -3434,13 +3448,13 @@ model LinkedInPost {
   icpShare       Float?
   // Text-Grafik (Kernaussage groß auf Blau, ohne Illustration), wenn kein Foto/KI-Bild
   graphic        String?
-  useGraphic     Boolean   @default(false)
+  useGraphic     Boolean        @default(false)
   // Foto aus der Fotoablage oder KI-Bild (optional); bei Löschung bleibt der Post ohne Bild
   photoId        String?
   photo          LinkedInPhoto? @relation(fields: [photoId], references: [id], onDelete: SetNull)
   lastError      String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
   @@index([status, scheduledAt])
   @@index([draftDate])
@@ -3683,4 +3697,27 @@ model EmailChangeRequest {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+/// Lebenszyklus eines Kunden für Statistik und Kundenakte (Ole, 15.11.2026, lib/ruhend.ts): gekündigt, ruhend,
+/// reaktiviert, gelöscht. mrr = wiederkehrender Monatsbetrag netto zum Zeitpunkt (Betreuung + Software + Zusätze).
+/// Bleibt nach der endgültigen Löschung (keine Lead-Daten, nur Kunde und Beträge).
+model CustomerLifecycleEvent {
+  id          String   @id @default(cuid())
+  customerId  String
+  // cancelled | dormant | reactivated | deleted
+  kind        String
+  at          DateTime
+  mrr         Decimal? @db.Decimal(12, 2)
+  // Freitext der Kündigung (cancelReason) bzw. Grund der Löschung
+  reason      String?
+  // Hauptgrund aus dem Anti-Churn-Schritt (ChurnIntent.reason, lib/anti-churn.ts)
+  churnReason String?
+  details     Json?
+  createdAt   DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, at])
+  @@index([kind, at])
 }

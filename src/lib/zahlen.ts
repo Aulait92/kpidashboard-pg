@@ -41,6 +41,7 @@ import {
   type Stream,
 } from "@/lib/revenue-ledger";
 import { costsForSicht, rowsForSicht, type Sicht } from "@/lib/zahlen-sicht";
+import { dormantGaps } from "@/lib/lebenszyklus-kpi";
 
 /** Pay-per-Lead startete im Juni 2026 – davor gibt es keine belastbaren Umsätze. */
 export const FIRST_MONTH = "2026-06";
@@ -181,13 +182,16 @@ export async function loadLedger(now = new Date()) {
 
   // Per Garantie kostenlose Monate senken den Umsatz (lib/garantien.ts)
   const granted = await prisma.garantieFall.findMany({ where: { status: "gewaehrt" }, select: { customerId: true, art: true, monat: true } });
+  // Ruhezeiten nach Vertragsende (lib/ruhend.ts): kein Umsatz zwischen „dormant“ und „reactivated“
+  const lifecycle = await prisma.customerLifecycleEvent.findMany({ where: { kind: { in: ["dormant", "reactivated"] } }, select: { customerId: true, kind: true, at: true } });
+  const gaps = dormantGaps(lifecycle.map((e) => ({ ...e, mrr: null, churnReason: null })));
   const retainers: RetainerInput[] = retainerCustomers.map((c) => {
     const offer = c.onboarding?.offerId ? offerById.get(c.onboarding.offerId) : undefined;
     let end: Date | null = null;
     if (c.retainerEnd) end = c.retainerEnd;
     else if (offer?.subscriptionStatus === "canceled") end = offer.updatedAt;
     else if (c.archived) end = lastLeadOf.get(c.id) ?? c.retainerStart ?? null;
-    return retainerInputFor(c, offer, end, granted.filter((g) => g.customerId === c.id));
+    return { ...retainerInputFor(c, offer, end, granted.filter((g) => g.customerId === c.id)), gaps: gaps.get(c.id) ?? [] };
   });
 
   const offerSetups = acceptedOffers
