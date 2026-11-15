@@ -57,8 +57,8 @@ export function contentSecurityPolicy(opts: { dev?: boolean; frameAncestors?: st
 
 export const PERMISSIONS_POLICY = [
   "camera=()",
-  // Diktat (Notizen per Sprache) braucht das Mikrofon – nur eigene Seiten
-  "microphone=(self)",
+  // Mikrofon aus: das Diktieren von Notizen ist entfallen (Ole, 15.11.2026), nichts anderes braucht es
+  "microphone=()",
   "geolocation=()",
   "payment=()",
   "usb=()",

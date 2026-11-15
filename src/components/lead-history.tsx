@@ -2,10 +2,9 @@
 
 // Lead-Verlauf (Ole, 13.11.2026): Notiz schreiben → „Speichern“ → steht als Eintrag im Verlauf,
 // zusammen mit Anrufen, Statuswechseln, Wiedervorlagen, Abschluss und Police.
-// Diktieren läuft über das Mikrofon der Handy-Tastatur (kein eigener Spracherkennungsdienst).
 
-import { useEffect, useRef, useState, useTransition } from "react";
-import { BellRing, CheckCircle2, UserPen, FileCheck2, FileText, Loader2, Mail, Mic, Phone, RefreshCw, StickyNote, Trash2, Trophy } from "lucide-react";
+import { useState, useTransition } from "react";
+import { BellRing, CheckCircle2, UserPen, FileCheck2, FileText, Loader2, Mail, Phone, RefreshCw, StickyNote, Trash2, Trophy } from "lucide-react";
 import { Button, Card } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { addLeadNoteAction, deleteLeadNoteAction, setPolicyDoneAction } from "@/app/buyer/lead-history-actions";
@@ -48,19 +47,12 @@ export function LeadHistory({
   const [history, setHistory] = useState(initial);
   const [text, setText] = useState("");
   const [pending, start] = useTransition();
-  const [touch, setTouch] = useState(false);
-  const [dictateHint, setDictateHint] = useState(false);
-  const area = useRef<HTMLTextAreaElement>(null);
   // Neue Daten vom Server (z. B. nach Wiedervorlage oder Anruf) übernehmen
   const [prevInitial, setPrevInitial] = useState(initial);
   if (initial !== prevInitial) {
     setPrevInitial(initial);
     setHistory(initial);
   }
-  useEffect(() => {
-    const t = setTimeout(() => setTouch(window.matchMedia?.("(pointer: coarse)").matches ?? false), 0);
-    return () => clearTimeout(t);
-  }, []);
 
   const save = () =>
     start(async () => {
@@ -68,7 +60,6 @@ export function LeadHistory({
       if (!res.ok) return toast.show({ message: res.error, tone: "error" });
       setHistory(res.history);
       setText("");
-      setDictateHint(false);
       toast.show({ message: "Notiz gespeichert" });
       emitLeadAction(leadId);
     });
@@ -94,24 +85,11 @@ export function LeadHistory({
             <Mail className="h-4 w-4" /> E-Mail
           </button>
         ) : null}
-        {touch && !readOnly ? (
-          <button
-            type="button"
-            onClick={() => {
-              area.current?.focus();
-              setDictateHint(true);
-            }}
-            className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[color:var(--border-strong)] px-3 text-sm font-medium hover:border-[color:var(--brand)]"
-          >
-            <Mic className="h-4 w-4" /> Diktieren
-          </button>
-        ) : null}
         </div>
       </div>
       {!readOnly ? (
         <div className="border-b border-[color:var(--border)] px-5 py-4">
           <textarea
-            ref={area}
             rows={3}
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -125,11 +103,6 @@ export function LeadHistory({
             className="block w-full resize-y rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2.5 text-base outline-none focus:border-[color:var(--brand)]"
             data-note-input
           />
-          {dictateHint ? (
-            <p className="mt-2 flex items-center gap-2 text-sm text-[color:var(--brand-dark)]">
-              <Mic className="h-4 w-4 shrink-0" /> Tippen Sie in der Tastatur auf das Mikrofon und sprechen Sie. Danach auf „Speichern“.
-            </p>
-          ) : null}
           <div className="mt-2 flex justify-end">
             <Button variant="primary" size="md" disabled={!text.trim() || pending} onClick={save} data-note-save>
               {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}

@@ -144,7 +144,6 @@ Seiten aus der Liste „Seiten“ unten.
 - „Angaben zum Lead“: alle Antworten aus dem Formular. Mit **Bearbeiten** (Stift) korrigieren Sie Anrede, Name,
   Telefon, E-Mail und Adresse, zum Beispiel Tippfehler. Die Änderung steht im Verlauf, WhatsApp läuft danach über die
   neue Nummer, die ursprünglichen Formularantworten bleiben erhalten. Darunter Notizen (speichern sich von selbst).
-- **Diktieren:** Auf dem Handy bei „Notizen“ auf „Diktieren“ tippen, dann unten in der Tastatur auf das Mikrofon und sprechen. Die Spracherkennung macht das Handy selbst, die App schickt keine Aufnahmen an Dritte.
 
 ## Pipeline
 

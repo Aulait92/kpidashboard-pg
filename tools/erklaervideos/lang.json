@@ -44,7 +44,7 @@
  {
   "act": "notizen",
   "cap": "Angaben und Notizen",
-  "text": "Darunter stehen alle Angaben aus dem Formular und Ihre Notizen. Auf dem Handy können Sie Notizen einfach diktieren.",
+  "text": "Darunter stehen alle Angaben aus dem Formular und Ihre Notizen.",
   "wav": "/var/tmp/ev/lang_06.wav",
   "dur": 8.6
  },

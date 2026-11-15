@@ -229,7 +229,7 @@ Mail-Postfach aufbewahren (Nachweis).
 | Begrenzung von Anmeldeversuchen | 10 Fehlversuche je E-Mail in 15 Minuten, 2FA-Code max. 5 Versuche; zusätzlich je IP (`src/lib/rate-limit.ts`) |
 | Sitzungen beenden | Sitzungsversion je Login (`User.sessionVersion`): Passwortänderung, 2FA-Änderung, Kundenwechsel und „Überall abmelden“ beenden alle anderen Sitzungen; gelöschte Logins sind sofort abgemeldet |
 | Drosselung (Rate-Limiting) | `src/lib/rate-limit.ts`: Login, Passwort vergessen, KI-Hilfe, öffentliche Buchung, Angebots-Annahme, CSP-Berichte; Webhooks nur grobe Obergrenze. Im Arbeitsspeicher je Instanz |
-| Sicherheits-Header | `src/lib/security-headers.ts`: HSTS (2 Jahre), nosniff, Referrer-Policy, Permissions-Policy (Kamera aus, Mikrofon nur eigene Seiten), Schutz vor Einbetten (außer Buchungsseite/Rechner), Content-Security-Policy (zunächst „Report-Only“, Berichte an `/api/csp-report`) |
+| Sicherheits-Header | `src/lib/security-headers.ts`: HSTS (2 Jahre), nosniff, Referrer-Policy, Permissions-Policy (Kamera und Mikrofon aus), Schutz vor Einbetten (außer Buchungsseite/Rechner), Content-Security-Policy (zunächst „Report-Only“, Berichte an `/api/csp-report`) |
 | Cron-Aufrufe | Token per Header (`Authorization: Bearer`), nicht mehr in der URL (`docs/sicherheit-cron.md`) |
 | Abhängigkeiten | Dependabot wöchentlich, `npm audit` (hoch/kritisch) bricht die Prüfung ab |
 | Mandantentrennung, Rollen | `leadScope`/`conversationScope`/`appointmentScope` in `src/lib/team.ts`, `writableCustomerId` |

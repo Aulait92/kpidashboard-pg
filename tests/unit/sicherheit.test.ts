@@ -55,7 +55,7 @@ describe("Sicherheits-Header", () => {
     expect(header(all, "Strict-Transport-Security")).toBe("max-age=63072000; includeSubDomains");
     expect(header(all, "X-Content-Type-Options")).toBe("nosniff");
     expect(header(all, "Referrer-Policy")).toBe("strict-origin-when-cross-origin");
-    expect(PERMISSIONS_POLICY).toContain("microphone=(self)");
+    expect(PERMISSIONS_POLICY).toContain("microphone=()");
     expect(PERMISSIONS_POLICY).toContain("camera=()");
   });
 

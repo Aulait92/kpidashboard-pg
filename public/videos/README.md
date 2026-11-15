@@ -14,13 +14,16 @@ Stimme: OpenAI gpt-4o-mini-tts, Stimme „onyx“. Aufgenommen mit Demo-Daten (n
 
 ## Ausführliche Version (ca. 3:20 Min.)
 
+Hinweis (15.11.2026): Das Diktieren von Notizen ist entfallen. Die aufgenommene Datei sagt bei „Angaben und Notizen“
+noch „Auf dem Handy können Sie Notizen einfach diktieren.“, bis zur nächsten Aufnahme.
+
 - **intro**: Willkommen bei Performance Growth. In den nächsten Minuten zeigen wir Ihnen Schritt für Schritt, wie Sie mit der Software arbeiten.
 - **Die vier Bereiche**: Links finden Sie die vier Bereiche: Heute, Kontakte, Nachrichten und Wachstum. Auf dem Handy finden Sie dieselben Bereiche unten am Bildschirmrand.
 - **Heute: Ihr Startpunkt**: ‚Heute‘ ist Ihr Startpunkt. Ganz oben stehen Termine, für die Sie vorher ein Angebot rechnen. Darunter sehen Sie auf einen Blick, wie viele Chats, Termine, Ergebnisse und Anrufe anstehen.
 - **Braucht dich**: Unter ‚Braucht dich‘ stehen Leads, die geantwortet haben und auf Sie warten. Mit ‚Antworten‘ öffnen Sie direkt den Chat.
 - **Ihre Termine**: Bei Ihren Terminen sehen Sie die Zusammenfassung des Assistenten: Lebenssituation, Interesse und Rückfragen. Anrufen oder Videocall starten Sie mit einem Klick.
 - **Phase und Ergebnis**: Oben im Kontakt sehen Sie die Phase. Ein Klick ändert sie. Mit ‚Gewonnen‘ oder ‚Verloren‘ schließen Sie einen Lead ab.
-- **Angaben und Notizen**: Darunter stehen alle Angaben aus dem Formular und Ihre Notizen. Auf dem Handy können Sie Notizen einfach diktieren.
+- **Angaben und Notizen**: Darunter stehen alle Angaben aus dem Formular und Ihre Notizen.
 - **Anrufliste**: In der Anrufliste stehen Rückrufe und fällige Wiedervorlagen. Überfälliges ist rot markiert. Nach dem Anruf tragen Sie das Ergebnis ein, den Rest erledigt die App.
 - **Nachrichten**: Unter ‚Nachrichten‘ finden Sie alle WhatsApp-Gespräche mit Ihren Leads.
 - **Ihr WhatsApp-Assistent**: Ihr Assistent schreibt jeden neuen Lead in wenigen Minuten an, in Ihrem Namen. Er stellt die wichtigsten Fragen und bucht den Termin in eine freie Zeit Ihres Kalenders. Bestätigung und Erinnerung schickt er automatisch.

@@ -57,7 +57,7 @@ Zapier-/Perspective-Webhooks (`/api/leads/eingang`, `/api/leads/pool`,
 
 Alle Antworten tragen Sicherheits-Header (`src/lib/security-headers.ts`, eingebunden in
 `next.config.ts`): HSTS, `nosniff`, Referrer-Policy, Permissions-Policy (Kamera aus,
-Mikrofon nur eigene Seiten), kein `X-Powered-By`. Einbetten in fremde Seiten ist
+Mikrofon aus), kein `X-Powered-By`. Einbetten in fremde Seiten ist
 verboten, außer **Buchungsseite** (`/book/…`) und **Rechner** (`/rechner`), die auf
 Vermittler-Websites per iframe eingebunden sein dürfen.
 
@@ -73,7 +73,7 @@ gelegentlich Rauschen, das kann man ignorieren):
 1. In Railway bei `staging-app` die Variable `CSP_ENFORCE=on` setzen und neu bauen
    lassen (wirkt zur Build-Zeit).
 2. Staging durchklicken: Login (auch Google/Microsoft), Kundenbereich, Admin,
-   Buchungsseite, Angebot annehmen bis Stripe, Rechner, Diktat, Push.
+   Buchungsseite, Angebot annehmen bis Stripe, Rechner, Push.
 3. Dann bei `live-app` ebenfalls `CSP_ENFORCE=on`.
 
 Zurück: Variable löschen und neu deployen.
