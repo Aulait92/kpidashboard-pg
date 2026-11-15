@@ -26,6 +26,7 @@ import {
 import type { FormAnswer } from "@/lib/lead-fields";
 import { buildEventDescription, eventSummary } from "@/lib/whatsapp/event-text";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
+import { sendErstinfoPdf } from "@/lib/whatsapp/erstinfo-pdf";
 import { EMAIL_RE } from "@/lib/whatsapp/phone";
 import { mergeQualificationData, QUALIFICATION_INPUT_SCHEMA, qualificationLines } from "@/lib/whatsapp/qualification";
 import { produktCheckliste, unterlagenRegel } from "@/lib/whatsapp/produkt-fragen";
@@ -511,7 +512,8 @@ export async function runBotTurn(conversationId: string): Promise<void> {
   const firm = who.firm || advisorName;
   const names = { firm, advisor: advisorName };
   // KI-Kennzeichnung (lib/whatsapp/ki-hinweis.ts): vollständiger Hinweis in der ersten Nachricht, nach über
-  // 30 Tagen Pause erneut. Erstinformation (§ 15 VersVermV) als Link, falls noch nicht geschickt.
+  // 30 Tagen Pause erneut. Erstinformation (§ 15 VersVermV) als Link, falls noch nicht geschickt; das PDF folgt
+  // als eigenes Dokument nach der Antwort (sendErstinfoPdf).
   const now = new Date();
   const outbound = await prisma.message.findMany({ where: { conversationId, direction: "outbound" }, select: { body: true } });
   const latest = history[history.length - 1];
@@ -539,6 +541,7 @@ export async function runBotTurn(conversationId: string): Promise<void> {
     await flagAttention(conversation.id, `Möchte mit einem Menschen sprechen: „${(latest.body ?? "").slice(0, 80)}“`);
     const reply = [humanHandoverReply(ansprache, names, who.kontakt, { greet: notice === "erst" }), erstinfo].filter(Boolean).join("\n\n");
     await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: reply, sentBy: "bot" });
+    await sendErstinfoPdf({ conversationId: conversation.id, an: ansprache, advisorName });
     return;
   }
 
@@ -849,6 +852,8 @@ export async function runBotTurn(conversationId: string): Promise<void> {
       body: [...prefix, finalText].join("\n\n"),
       sentBy: "bot",
     });
+    // Erstinformation als PDF (§ 16 VersVermV), einmal je Unterhaltung, sobald das Fenster offen ist (lib/whatsapp/erstinfo-pdf.ts)
+    await sendErstinfoPdf({ conversationId: conversation.id, an: ansprache, advisorName });
     // Antwortet der Lead nicht mehr: nach wenigen Stunden nachfassen (lib/lead-sequences.ts, „Chat ruht“)
     if (conversation.leadId) await restartSilentSequence(conversation.leadId).catch((e) => console.error("[lead-sequences silent]", e));
   }

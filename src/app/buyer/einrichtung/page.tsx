@@ -310,14 +310,15 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         {software && erstinfo ? (
           <Step n={nextNo()} title="Erstinformation für Ihre Leads" icon={FileText} done={done("erstinfo")} open={isOpen("erstinfo")} id="erstinfo">
             <p className="mb-3 text-sm text-[color:var(--muted)]">
-              Als Versicherungsvermittler müssen Sie Ihren Kunden beim ersten Kontakt die Erstinformation geben (§ 15 VersVermV). Wir erstellen sie aus Ihrem
-              Impressum, Ihr Assistent schickt den Link in seiner ersten Nachricht an jeden neuen Lead. Bitte prüfen Sie die Angaben einmal kurz.
+              Als Versicherungsvermittler müssen Sie Ihren Kunden beim ersten Kontakt die Erstinformation geben (§ 15 VersVermV), als PDF. Wir erstellen sie
+              aus Ihrem Angebot und Impressum. Ihr Assistent schickt das PDF jedem neuen Lead per WhatsApp und hängt es an die Terminbestätigung per E-Mail. Bitte
+              prüfen und bestätigen Sie die Angaben einmal.
             </p>
             {erstinfo.vollstaendig ? (
               <div className="mb-3 rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" data-erstinfo-fertig>
-                Ihre Erstinformation ist fertig: {vermittlerStatusLabel(erstinfo.status)} (aus Ihrem Angebot)
+                Ihre Erstinformation ist fertig: {vermittlerStatusLabel(erstinfo.status)}
                 {erstinfo.registerNummer ? `, Registernummer ${erstinfo.registerNummer}` : ""}
-                {erstinfo.url || erstinfo.fileName ? ", eigene Erstinformation hinterlegt" : ", Anschrift aus Ihrem Impressum"}. Sie müssen nichts tun.
+                {erstinfo.fileName ? ", eigenes PDF hinterlegt" : ", aus Ihren Angaben erstellt"}. Sie müssen nichts tun.
               </div>
             ) : (
               <p className="mb-4 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-erstinfo-warnung>
@@ -329,7 +330,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 <summary className="cursor-pointer font-medium text-[color:var(--brand)]">Angaben ändern</summary>
                 <div className="mt-3">
                   <ErstinfoForm
-                    initial={{ status: erstinfo.status, registerNummer: erstinfo.registerNummer, url: erstinfo.url, fileName: erstinfo.fileName }}
+                    initial={{ status: erstinfo.status, registerNummer: erstinfo.registerNummer, fileName: erstinfo.fileName, daten: erstinfo.daten }}
                     impressum={erstinfo.impressum}
                     confirmed
                     readOnly={readOnly}
@@ -338,17 +339,17 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               </details>
             ) : (
               <ErstinfoForm
-                initial={{ status: erstinfo.status, registerNummer: erstinfo.registerNummer, url: erstinfo.url, fileName: erstinfo.fileName }}
+                initial={{ status: erstinfo.status, registerNummer: erstinfo.registerNummer, fileName: erstinfo.fileName, daten: erstinfo.daten }}
                 impressum={erstinfo.impressum}
-                confirmed={!!erstinfo.statusAt}
+                confirmed={!!erstinfo.bestaetigtAt}
                 readOnly={readOnly}
               />
             )}
             {erstinfo.token ? (
               <p className="mt-4 text-sm text-[color:var(--muted)]">
                 So sehen Ihre Leads sie:{" "}
-                <a href={`/erstinformation/${erstinfo.token}`} target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
-                  Erstinformation öffnen
+                <a href={`/erstinformation/${erstinfo.token}/pdf`} target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
+                  PDF öffnen
                 </a>
               </p>
             ) : null}

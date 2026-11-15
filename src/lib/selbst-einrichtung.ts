@@ -559,7 +559,7 @@ const STEP_HINT: Record<string, string> = {
   calendar: "Kalender verbinden",
   whatsapp: "WhatsApp-Nummer verbinden",
   consent: "Einwilligung im Leadformular bestätigen",
-  erstinfo: "Erstinformation hinterlegen (Status, Registernummer, PDF oder Link)",
+  erstinfo: "Erstinformation prüfen und bestätigen (Pflichtangaben oder eigenes PDF)",
 };
 
 /** Erinnerung (Mail + Push) an den Kunden senden. `force` = sofort, unabhängig von Tag 1/3/7 (Admin-Knopf). */

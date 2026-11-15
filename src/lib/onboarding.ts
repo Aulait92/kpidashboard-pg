@@ -6,7 +6,7 @@
 // bzw. direkt bei Annahme, wenn keine Online-Zahlung aktiv ist. Zusätzlich
 // per Knopf am Vertriebskontakt (z. B. für Bestandskunden).
 
-import { erstinfoVollstaendig } from "@/lib/erstinformation-shared";
+import { erstinfoVollstaendig, type ErstinfoWeb } from "@/lib/erstinformation-shared";
 import crypto from "node:crypto";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -319,7 +319,27 @@ const ONBOARDING_CUSTOMER_INCLUDE = {
   whatsAppAccount: { select: { status: true } },
   messageTemplates: { where: { purpose: "outreach", status: "approved" }, select: { id: true }, take: 1 },
   reviewSettings: { select: { googleReviewUrl: true } },
-  erstinformation: { select: { statusAt: true, registerNummer: true, url: true, fileName: true } },
+  erstinformation: {
+    select: {
+      statusAt: true,
+      bestaetigtAt: true,
+      registerNummer: true,
+      url: true,
+      fileName: true,
+      name: true,
+      firma: true,
+      anschrift: true,
+      telefon: true,
+      email: true,
+      versicherer: true,
+      erlaubnis: true,
+      beratung: true,
+      beteiligungen: true,
+      verguetung: true,
+      zuwendungen: true,
+      ihk: true,
+    },
+  },
   _count: { select: { existingCustomers: true } },
 } satisfies Prisma.CustomerInclude;
 
@@ -385,12 +405,12 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
         at: null,
       },
       {
-        // Erstinformation (§ 15 VersVermV): der Assistent schickt den Link in der ersten Nachricht (lib/erstinformation.ts)
+        // Erstinformation (§ 15/16 VersVermV): der Assistent schickt sie als PDF beim ersten Kontakt (lib/erstinformation.ts)
         key: "erstinfo",
-        label: "Erstinformation vollständig (Registernummer und Anschrift aus dem Impressum oder eigene Erstinformation)",
+        label: "Erstinformation vollständig (Pflichtangaben nach § 15 VersVermV bestätigt oder eigenes PDF)",
         owner: "kunde",
-        done: erstinfoVollstaendig(ob.customer.erstinformation, (ob.websiteInfo ?? null) as { registerNumber?: string | null; address?: string | null } | null),
-        at: ob.customer.erstinformation?.statusAt ?? null,
+        done: erstinfoVollstaendig(ob.customer.erstinformation, (ob.websiteInfo ?? null) as ErstinfoWeb, ob.customer),
+        at: ob.customer.erstinformation?.bestaetigtAt ?? null,
       },
       {
         key: "templates",

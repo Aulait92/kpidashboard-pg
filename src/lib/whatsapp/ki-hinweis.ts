@@ -29,6 +29,23 @@ export function erstinfoZeile(advisor: string, url: string): string {
   return `Erstinformation zu ${advisor} als Versicherungsvermittler: ${url}`;
 }
 
+/**
+ * Begleittext zum PDF der Erstinformation (§ 16 VersVermV: dauerhafter Datenträger, Papier auf Wunsch).
+ * Der Link zur Seite steht zusätzlich dahinter.
+ */
+export function erstinfoPdfText(an: Ansprache, advisor: string): string {
+  return a(
+    an,
+    `Hier ist die Erstinformation zu ${advisor} als Versicherungsvermittler als PDF zum Speichern. Auf Wunsch bekommst du sie auch kostenlos auf Papier.`,
+    `Hier ist die Erstinformation zu ${advisor} als Versicherungsvermittler als PDF zum Speichern. Auf Wunsch erhalten Sie sie auch kostenlos auf Papier.`,
+  );
+}
+
+/** Wurde in dieser Unterhaltung schon das PDF der Erstinformation geschickt? */
+export function hasErstinfoPdf(messages: { direction?: string | null; kind?: string | null; body?: string | null }[]): boolean {
+  return messages.some((m) => m.direction !== "inbound" && m.kind === "document" && /Erstinformation/.test(m.body ?? ""));
+}
+
 /** Vollständiger Hinweis für die erste freie Nachricht: „Guten Tag Frau Schneider, hier schreibt …“. */
 export function kiHinweis(an: Ansprache, names: KiNamen, kontakt?: AnredeKontakt | null): string {
   return `${anredeZeile(an, kontakt)} ${fill(KI_HINWEIS_KERN[an], names)}`;

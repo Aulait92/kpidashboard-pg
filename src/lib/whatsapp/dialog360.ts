@@ -69,6 +69,24 @@ export function sendText(
   });
 }
 
+/**
+ * Dokument (z. B. PDF) senden, nur innerhalb des 24-Stunden-Fensters (wie Freitext). Cloud-API-Format
+ * `type: "document"` mit öffentlicher HTTPS-Adresse (`link`); Meta lädt die Datei dort selbst.
+ */
+export function sendDocument(
+  apiKey: string,
+  to: string,
+  doc: { link: string; filename: string; caption?: string },
+): Promise<SendResult> {
+  return postMessage(apiKey, {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to,
+    type: "document",
+    document: { link: doc.link, filename: doc.filename, ...(doc.caption ? { caption: doc.caption } : {}) },
+  });
+}
+
 /** Genehmigte Vorlage senden (Erstansprache / außerhalb des 24h-Fensters). */
 export function sendTemplate(
   apiKey: string,
