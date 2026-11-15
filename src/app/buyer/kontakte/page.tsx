@@ -88,7 +88,7 @@ export default async function KontaktePage({ searchParams }: { searchParams: Sea
               rangeKey={`${range.from.toISOString()}-${range.to.toISOString()}`}
               detailBase="/buyer/kontakte/"
               detailSuffix="?von=pipeline"
-              minBoardWidth={1440}
+              minBoardWidth={960}
             />
           ) : (
             <BuyerLeadsBody

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { CheckCircle2, Clock, FileText, Info, MessageCircle, TriangleAlert } from "lucide-react";
+import { CheckCircle2, ChevronRight, Clock, FileText, Info, MessageCircle, TriangleAlert } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
@@ -81,14 +81,29 @@ export default async function VorlagenPage() {
           <div className="flex gap-3 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 text-sm">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--brand)]" />
             <p className="text-[color:var(--muted)]">
-              WhatsApp erlaubt die erste Nachricht an einen Kontakt nur mit einem Text, den Meta vorher geprüft hat. Das gilt auch, wenn jemand länger als
-              24 Stunden nicht geantwortet hat. Deshalb reichen wir diese Vorlagen für Ihre Nummer bei Meta ein. Antwortet ein Lead, schreibt Ihr Assistent
-              frei weiter. Anrede, Namen und Termine werden beim Senden passend eingesetzt; unten sehen Sie Beispiele.
+              Erste Nachrichten und Nachrichten nach 24 Stunden ohne Antwort prüft Meta vorher; Anrede, Namen und Termine setzt die App beim Senden ein
+              {an === "sie" ? " (ohne Anrede im Formular mit vollem Namen, ohne Nachnamen „Guten Tag,“)" : ""}.
             </p>
           </div>
 
-          <ul className="flex flex-col gap-3">
-            {rows.map((r) => {
+          {/* Nach Anlass gruppiert und zugeklappt (UX, Ole 15.11.2026: die Liste war über 6.000 Pixel lang) */}
+          {GRUPPEN.map((g) => {
+            const inGruppe = rows.filter((r) => gruppeVon(CUSTOMER_TITLES[r.purpose].title) === g);
+            if (!inGruppe.length) return null;
+            const offen = inGruppe.filter((r) => r.badge.label !== "Freigegeben").length;
+            return (
+              <details key={g} className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white" data-vorlagen-gruppe>
+                <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
+                  <span className="min-w-0 flex-1 text-[15px] font-semibold">
+                    {g} <span className="font-normal text-[color:var(--muted)]">· {inGruppe.length}</span>
+                  </span>
+                  <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", offen ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700")}>
+                    {offen ? `${offen} noch nicht freigegeben` : "Alle freigegeben"}
+                  </span>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)] transition group-open:rotate-90" />
+                </summary>
+          <ul className="flex flex-col gap-3 border-t border-[color:var(--border)] p-3">
+            {inGruppe.map((r) => {
               const meta = CUSTOMER_TITLES[r.purpose];
               const Icon = r.badge.icon;
               return (
@@ -131,19 +146,24 @@ export default async function VorlagenPage() {
                       Bis zur Freigabe geht die bisherige Fassung raus: <span className="italic">„{r.fallbackText}“</span>
                     </p>
                   ) : null}
-                  {r.sie ? (
-                    <p className="mt-2 text-xs text-[color:var(--muted)]">
-                      Mit Anrede aus dem Formular: „Guten Tag Frau Schneider“, sonst mit vollem Namen. Ist kein Nachname bekannt, beginnt die Nachricht mit
-                      „Guten Tag,“.
-                    </p>
-                  ) : null}
                 </li>
               );
             })}
           </ul>
+              </details>
+            );
+          })}
           <p className="text-sm text-[color:var(--muted)]">Sie möchten einen Text anders formulieren? Schreiben Sie uns, wir passen ihn an und reichen ihn neu ein.</p>
         </div>
       )}
     </main>
   );
+}
+
+const GRUPPEN = ["Erste Nachricht", "Rund um den Termin", "Nachfassen", "Weitere"] as const;
+function gruppeVon(titel: string): (typeof GRUPPEN)[number] {
+  if (/^Erste Nachricht/i.test(titel)) return "Erste Nachricht";
+  if (/termin/i.test(titel) && !/nachfass|verpasst/i.test(titel)) return "Rund um den Termin";
+  if (/nachfass|nachfrage|verpasst|letzte nachricht|nicht erreicht/i.test(titel)) return "Nachfassen";
+  return "Weitere";
 }

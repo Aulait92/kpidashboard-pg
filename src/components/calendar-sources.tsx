@@ -210,6 +210,8 @@ export function LeadTimesForm({
         <ul className="mt-2 divide-y divide-[color:var(--border)]">
           {DAYS.map(([d, label]) => {
             const ranges = days[d] ?? [];
+            // Beschrifteter Knopf am ersten Tag mit Zeiten (UX, Ole 15.11.2026: das Kopier-Symbol allein wurde übersehen)
+            const ersterTag = DAYS.find(([k]) => (days[k] ?? []).length)?.[0] === d;
             const all = [...new Set(ranges.flatMap((r) => starts(r, step, duration)))].sort();
             return (
               <li key={d} className="flex items-start gap-3 py-3" data-day={d}>
@@ -258,6 +260,11 @@ export function LeadTimesForm({
                       </div>
                     ))
                   )}
+                  {ersterTag && !readOnly && DAYS.filter(([k]) => (days[k] ?? []).length).length > 1 ? (
+                    <button type="button" onClick={() => copyToAll(d)} className="inline-flex items-center gap-1 text-xs font-semibold text-[color:var(--brand)] hover:underline" data-zeiten-uebertragen>
+                      <Copy className="h-3.5 w-3.5" /> Diese Zeiten für alle Tage mit Terminen übernehmen
+                    </button>
+                  ) : null}
                   {ranges.length ? (
                     <p className={`text-xs ${all.length ? "text-[color:var(--muted)]" : "font-medium text-rose-700"}`}>
                       {all.length

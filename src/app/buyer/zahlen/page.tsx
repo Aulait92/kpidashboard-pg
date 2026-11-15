@@ -5,6 +5,8 @@ import { Suspense } from "react";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { BuyerFilterBar } from "@/components/buyer-filter-bar";
 import { PageHeader } from "@/components/buyer-shell";
+import { WerbungKarten } from "@/app/buyer/konto/werbung-karten";
+import { loadBestandVisible } from "@/lib/bestand/sichtbar-server";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { FunnelHero } from "@/components/funnel-hero";
 import { KpiCard, type Delta } from "@/components/kpi-card";
@@ -50,7 +52,7 @@ type SearchParams = Promise<{
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Mein Dashboard | performancegrowth",
+  title: "Wachstum | performancegrowth",
 };
 
 export default async function BuyerPage({
@@ -69,17 +71,16 @@ export default async function BuyerPage({
   const { key: rangeKey, range } = parseRangeFromSearchParams(sp);
   const renderedAt = nowMs();
 
-  const customer = await prisma.customer.findUnique({
-    where: { id: session.customerId },
-    select: { name: true },
-  });
 
   // Vor dem ersten Lead: Hinweis statt Nullen (Ole, 15.11.2026)
   if (await nochOhneLeads(session.customerId)) {
     return (
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-        <PageHeader title="Zahlen" />
+        <PageHeader title="Wachstum" />
         <ZahlenNochLeer customerId={session.customerId} now={renderedAt} />
+        <div className="mt-6 space-y-6">
+          <WerbungKarten customerId={session.customerId} readOnly={session.preview} />
+        </div>
       </main>
     );
   }
@@ -89,12 +90,10 @@ export default async function BuyerPage({
       <AutoRefresh />
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
         <PageHeader
-          title="Zahlen"
+          title="Wachstum"
           subtitle={
             <>
-              Guten Tag, {(customer?.name ?? "").replace(/^Allianz\s+/i, "").split(" ")[0] || "willkommen"} ·{" "}
-              {formatDate(range.from)} bis {formatDate(range.to)} · aktualisiert{" "}
-              <LiveUpdated since={renderedAt} />
+              {formatDate(range.from)} bis {formatDate(range.to)} · aktualisiert <LiveUpdated since={renderedAt} />
             </>
           }
           actions={
@@ -106,11 +105,19 @@ export default async function BuyerPage({
           }
         />
 
-        <p className="-mt-2 mb-4 text-sm">
-          <a href="#monatsberichte" className="inline-flex items-center gap-1 font-medium text-[color:var(--brand)] hover:underline" data-sprung-monatsberichte>
-            Zu Ihren Monatsberichten ↓
-          </a>
-        </p>
+        {/* Eine Seite für Zahlen, Werbebudget, Produkte und Pause (UX, Ole 15.11.2026): Sprungmarken statt Zwischenseite */}
+        <nav className="-mt-2 mb-4 flex flex-wrap gap-x-4 gap-y-1 text-sm" aria-label="Auf dieser Seite">
+          <a href="#budget" className="font-medium text-[color:var(--brand)] hover:underline">Werbebudget</a>
+          <a href="#produkte" className="font-medium text-[color:var(--brand)] hover:underline">Produkte</a>
+          <a href="#pause" className="font-medium text-[color:var(--brand)] hover:underline">Pause</a>
+          <a href="#monatsberichte" className="font-medium text-[color:var(--brand)] hover:underline" data-sprung-monatsberichte>Monatsberichte</a>
+          {(await loadBestandVisible(session.customerId, { preview: session.preview })) ? (
+            <a href="/buyer/bestand" className="font-medium text-[color:var(--brand)] hover:underline">Bestandskunden</a>
+          ) : null}
+          {(await prisma.leadSubscription.count({ where: { customerId: session.customerId, active: true, delivery: "app" } })) > 0 ? (
+            <a href="/buyer/bestellen" className="font-medium text-[color:var(--brand)] hover:underline">Leads bestellen</a>
+          ) : null}
+        </nav>
 
         <EmpfehlungGrowthRow ctx={{ customerId: session.customerId, teamRole: session.teamRole }} />
 
@@ -128,6 +135,10 @@ export default async function BuyerPage({
           <TeamStats customerId={session.customerId} range={range} mitBestand={await loadGewinnMitBestand(session)} />
           <MonatsberichteKunde customerId={session.customerId} />
         </Suspense>
+        <section className="mt-8 space-y-6" aria-label="Werbung und Produkte">
+          <h2 className="text-lg font-semibold tracking-tight">Werbung und Produkte</h2>
+          <WerbungKarten customerId={session.customerId} readOnly={session.preview} />
+        </section>
       </main>
     </PullToRefresh>
   );

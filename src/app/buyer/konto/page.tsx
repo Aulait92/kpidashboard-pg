@@ -1,31 +1,24 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Bell, CreditCard, Download, FileText, Gift, Package, Percent, Puzzle, Star, UserPlus, Users } from "lucide-react";
+import { Bell, CreditCard, Download, FileText, Package, Puzzle, Star, UserPlus, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { FreePeriodNotices } from "@/components/free-period-notices";
 import { Badge, Card, CardHeader, buttonClass } from "@/components/ui";
-import { loadCustomerProvision } from "@/lib/provision-server";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { billingEnabled, listCustomerInvoices, type CustomerInvoice } from "@/lib/billing";
 import { reportError } from "@/lib/monitoring";
 import { prisma } from "@/lib/prisma";
 import { openPortalAction, paymentSetupAction, retentionAction } from "./actions";
 import { ZahlartAuswahl } from "@/components/zahlart-auswahl";
-import { LeadEmailToggle, PauseCard } from "./pause-card";
+import { LeadEmailToggle } from "./pause-card";
 import { WhatsAppFeesCard } from "@/components/whatsapp-fees-card";
 import { ModuleBookButton, ModuleCancelButton } from "@/components/bestand/module-book";
 import { canSelfBookBestand } from "@/lib/bestand/self-service";
 import { annualMultiplier, bestandPacksText, PRICE_LIST } from "@/lib/offer-pricing";
 import { currentPause, todayBerlin } from "@/lib/pause";
-import { budgetState } from "@/lib/budget";
-import { BudgetCard } from "./budget-card";
-import { ProductsCard } from "./produkte-card";
-import { productOverview } from "@/lib/produkt-buchen";
 import { EmpfehlungBookButton, EmpfehlungCancelButton } from "@/components/empfehlung/client";
 import { empfehlungVisible, moduleState, showNewBadge, trialAvailable } from "@/lib/empfehlung/shared";
 import { includedPhrase } from "@/lib/seats";
-import { loadReferralSettings } from "@/lib/kollegen";
-import { referralIncentiveSentence } from "@/lib/kollegen-shared";
 import { contractCancelInfo } from "@/lib/vertrag-kuendigung";
 import { helpCallSlots } from "@/lib/help-call";
 import { VertragKuendigen } from "./vertrag-kuendigen";
@@ -107,9 +100,6 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const showBestand = bestandVisible(customer, { admin: ctx.preview });
   const bestandCheck = showBestand && !customer.existingCustomersEnabled && customer.plan !== "service" ? await canSelfBookBestand(ctx.customerId) : null;
   const pause = await currentPause(ctx.customerId);
-  const budget = await budgetState(ctx.customerId);
-  const products = await productOverview(ctx.customerId);
-  const provision = await loadCustomerProvision(ctx.customerId);
   // „Vertrag hier kündigen“: für alle Kunden mit Vertrag (Angebot oder Betreuung), nicht intern
   const cancelInfo = customer.plan !== "internal" && (offer || customer.retainerStart) ? await contractCancelInfo(ctx.customerId) : null;
   // Anti-Churn: freie 15-Minuten-Termine fürs Kündigungsfenster (nur wenn kündbar und noch nicht gekündigt)
@@ -119,8 +109,6 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   // Halteangebot: angenommener Nachlass und Mindestlaufzeit danach
   const halte = await loadHalteKonto(ctx.customerId).catch(() => null);
   const today = todayBerlin();
-  const startYmd = customer.retainerStart ? new Intl.DateTimeFormat("sv-SE", { timeZone: TZ }).format(customer.retainerStart) : today;
-  const softwareFee = offer ? Number(offer.softwareFee) : customer.plan === "service" ? 0 : 349;
   const service = customer.plan === "service";
   // Zusätze (weitere aktive Verkäufer, Bestandskunden-Modul) und Zahlweise
   // Testkunden (Testangebot 0 €) sehen den regulären Platzpreis wie echte Kunden, berechnet wird nichts
@@ -133,11 +121,6 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const monthlyTotal = monthly != null ? monthly + seatsFee + bestandFee + empfehlungFee : null;
   const annual = customer.billingInterval === "year";
   const yearly = annual && monthlyTotal != null ? monthlyTotal * annualMultiplier(offer?.annualFreeMonths ?? PRICE_LIST.annualFreeMonths) : null;
-  const pauseText = annual
-    ? "Bei jährlicher Vorauszahlung pausieren nur die Anzeigen, eine Gutschrift gibt es dafür nicht."
-    : softwareFee > 0
-      ? `In der Pause zahlen Sie nur ${eur(softwareFee)} netto im Monat.`
-      : "In der Pause zahlen Sie nichts.";
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -270,27 +253,11 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           ) : null}
         </Card>
 
-        <div id="budget" className="scroll-mt-20" />
-        <BudgetCard
-          lines={budget.lines}
-          upcoming={budget.upcoming.map((u) => ({ ...u, validFrom: u.validFrom.toISOString() }))}
-          ctx={budget.ctx}
-          pending={budget.pending ? { monthlyBudgetTo: budget.pending.monthlyBudgetTo, createdAt: budget.pending.createdAt.toISOString() } : null}
-          today={today}
-          readOnly={ctx.preview}
-          estimated={budget.estimated}
-        />
-
-        <ProductsCard booked={products.booked} bookable={products.bookable} lines={products.lines} ctx={products.ctx} today={today} readOnly={ctx.preview} />
-
-        <div id="pause" className="scroll-mt-20" />
-        <PauseCard
-          pause={pause ? { status: pause.status, startsAt: pause.startsAt.toISOString(), endsAt: pause.endsAt?.toISOString() ?? null, kind: pause.kind } : null}
-          today={today}
-          minDate={startYmd > today ? startYmd : today}
-          softwareFeeText={pauseText}
-          readOnly={ctx.preview}
-        />
+        {/* Werbebudget, Produkte und Pause stehen unter „Wachstum“ (UX, Ole 15.11.2026): ein Ort je Thema */}
+        <Link href="/buyer/wachstum#budget" className="flex items-center justify-between rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3 text-[15px] hover:border-[color:var(--brand)]" data-konto-wachstum>
+          <span>Werbebudget, Produkte und Pause</span>
+          <span className="text-sm font-medium text-[color:var(--brand)]">Unter Wachstum</span>
+        </Link>
 
         {customer.whatsAppAccount && !PRICE_LIST.whatsappIncluded ? <WhatsAppFeesCard customerId={ctx.customerId} /> : null}
 
@@ -407,32 +374,6 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             </div>
           </Card>
         ) : null}
-
-        {customer.plan !== "internal" ? (
-          <Card>
-            <CardHeader title="Kollegen empfehlen" icon={Gift} />
-            <div className="flex flex-wrap items-center justify-between gap-3 p-5">
-              <p className="text-sm text-[color:var(--muted)]" data-konto-kollegen>
-                {referralIncentiveSentence(await loadReferralSettings())}
-              </p>
-              <Link href="/buyer/empfehlen" className={buttonClass("secondary", "md")}>
-                Link teilen
-              </Link>
-            </div>
-          </Card>
-        ) : null}
-
-        <Card>
-          <CardHeader title="Meine Provisionen" icon={Percent} />
-          <div className="flex flex-wrap items-center justify-between gap-3 p-5">
-            <p className="text-sm text-[color:var(--muted)]">
-              {provision.typ === "makler" ? "Makler" : "Vertreter"} · {provision.hasCustom ? "eigene Sätze hinterlegt" : "Standardwerte"}. Damit schätzt die App Ihre Provision je Abschluss.
-            </p>
-            <Link href="/buyer/provisionen" className={buttonClass("secondary", "md")}>
-              Provisionen prüfen
-            </Link>
-          </div>
-        </Card>
 
         <Card>
           <CardHeader title="Zahlung und Rechnungsdaten" icon={CreditCard} />

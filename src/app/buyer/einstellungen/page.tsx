@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BellRing, CalendarDays, Image as ImageIcon, ChevronRight, Contact, CreditCard, Gift, Mail, Megaphone, MessageSquareText, Percent, Send, ShieldCheck, UsersRound } from "lucide-react";
+import { BellRing, CalendarDays, Image as ImageIcon, ChevronRight, CreditCard, Gift, Mail, MessageSquareText, Percent, Send, ShieldCheck, UsersRound } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { getBuyerContext } from "@/lib/buyer-context";
-import { unreadUpdates } from "@/lib/neuigkeiten";
-import { loadBestandVisible } from "@/lib/bestand/sichtbar-server";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Einstellungen | performancegrowth" };
@@ -16,16 +14,13 @@ export default async function EinstellungenPage() {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   const owner = ctx.teamRole !== "advisor";
-  // Bestandskunden-Modul vorerst nur mit Schalter oder aktivem Modul (lib/bestand/sichtbar.ts)
-  const bestand = owner && (await loadBestandVisible(ctx.customerId, { preview: ctx.preview }));
-  const unread = ctx.userId && !ctx.preview ? (await unreadUpdates(ctx.userId, ctx.customerId).catch(() => [])).length : 0;
   const groups: { title: string; items: Item[] }[] = [
     {
       title: "Mein Konto",
       items: [
         ...(owner
           ? [
-              { href: "/buyer/konto", icon: CreditCard, color: "bg-blue-600", title: "Konto & Rechnungen", text: "Paket, Werbebudget, Produkte, Zusatzmodule, Rechnungen" },
+              { href: "/buyer/konto", icon: CreditCard, color: "bg-blue-600", title: "Konto & Rechnungen", text: "Vertrag, Zahlung, Rechnungen und Ihre Daten" },
               { href: "/buyer/team", icon: UsersRound, color: "bg-violet-500", title: "Team", text: "Berater einladen und Leads verteilen" },
             ]
           : []),
@@ -42,14 +37,12 @@ export default async function EinstellungenPage() {
         { href: "/buyer/vorlagen", icon: MessageSquareText, color: "bg-emerald-500", title: "WhatsApp-Vorlagen", text: "Nachrichten, die Ihr Assistent in Ihrem Namen schickt" },
         { href: "/buyer/einstellungen/erinnerungen", icon: BellRing, color: "bg-orange-500", title: "Erinnerungen & Aufgaben", text: "Erinnerung an den nächsten Schritt, Aufgaben nach dem Abschluss" },
         ...(owner ? [{ href: "/buyer/einstellungen/branding", icon: ImageIcon, color: "bg-teal-500", title: "Logo für Präsentationen", text: "Ihr Logo von der Webseite für die Beratungspräsentation" }] : []),
-        ...(bestand ? [{ href: "/buyer/bestand", icon: Contact, color: "bg-sky-500", title: "Bestandskunden", text: "Kundenliste, Lücken und Anlässe, Kampagnen" }] : []),
       ],
     },
     {
       title: "Mehr",
       items: [
         ...(owner ? [{ href: "/buyer/empfehlen", icon: Gift, color: "bg-rose-500", title: "Kollegen empfehlen", text: "Kollegen empfehlen und Vorteil sichern" }] : []),
-        { href: "/buyer/neuigkeiten", icon: Megaphone, color: "bg-violet-500", title: "Neuigkeiten", text: "Was wir zuletzt verbessert haben", ...(unread ? { badge: String(unread) } : {}) },
       ],
     },
   ];

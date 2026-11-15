@@ -86,6 +86,8 @@ export async function toggleLeadEmailAction(_prev: PauseFormState, _fd: FormData
     const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { leadEmail: true } });
     await prisma.customer.update({ where: { id: ctx.customerId }, data: { leadEmail: !c?.leadEmail } });
     revalidatePath("/buyer/konto");
+    revalidatePath("/buyer/wachstum");
+    revalidatePath("/buyer/zahlen");
     return { ok: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
@@ -111,6 +113,8 @@ export async function changeBudgetAction(_prev: BudgetFormState, fd: FormData): 
     });
     if (!res.ok) return { error: res.error };
     revalidatePath("/buyer/konto");
+    revalidatePath("/buyer/wachstum");
+    revalidatePath("/buyer/zahlen");
     return {
       ok: true,
       status: res.status,
@@ -143,6 +147,8 @@ export async function bookProductAction(_prev: ProductFormState, fd: FormData): 
     });
     if (!res.ok) return { error: res.error };
     revalidatePath("/buyer/konto");
+    revalidatePath("/buyer/wachstum");
+    revalidatePath("/buyer/zahlen");
     return {
       ok: true,
       status: res.status,
@@ -164,6 +170,8 @@ export async function requestProductEndAction(_prev: ProductFormState, fd: FormD
     const res = await requestProductEnd(ctx.customerId, String(fd.get("product") ?? ""), ctx.userId, { id: ctx.userId, email: ctx.email, role: "BUYER" });
     if (!res.ok) return { error: res.error };
     revalidatePath("/buyer/konto");
+    revalidatePath("/buyer/wachstum");
+    revalidatePath("/buyer/zahlen");
     return { ok: true, message: "Ihre Anfrage ist bei uns. Wir prüfen die Laufzeit und melden uns." };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
@@ -198,6 +206,8 @@ export async function cancelContractAction(_prev: CancelContractState, fd: FormD
     });
     if (!res.ok) return { error: res.error };
     revalidatePath("/buyer/konto");
+    revalidatePath("/buyer/wachstum");
+    revalidatePath("/buyer/zahlen");
     return { ok: true, effectiveIso: res.effectiveIso, already: res.already };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
@@ -217,6 +227,8 @@ export async function retentionAction(_prev: RetentionState, fd: FormData): Prom
     const res = await setRetentionChoice(ctx.customerId, raw, { actor: { id: ctx.userId, email: ctx.email, role: "BUYER" } });
     if (!res.ok) return { error: res.error };
     revalidatePath("/buyer/konto");
+    revalidatePath("/buyer/wachstum");
+    revalidatePath("/buyer/zahlen");
     return { ok: true, message: "Gespeichert. Die Bestätigung steht im Konto." };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };

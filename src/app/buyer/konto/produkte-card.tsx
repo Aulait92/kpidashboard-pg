@@ -46,11 +46,15 @@ export function ProductsCard({ booked, bookable, lines, ctx, today, readOnly }: 
         )}
 
         {bookable.length ? (
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold">Weitere Sparte dazubuchen</h3>
-            <ul className="space-y-2">
+          // Katalog zugeklappt (UX, Ole 15.11.2026): sonst schiebt er Budget und Pause weit nach unten
+          <details className="group space-y-2" data-produkte-katalog>
+            <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-semibold [&::-webkit-details-marker]:hidden">
+              <Plus className="h-4 w-4 text-[color:var(--brand)] transition group-open:rotate-45" />
+              Weitere Sparte dazubuchen <span className="font-normal text-[color:var(--muted)]">· {bookable.length}</span>
+            </summary>
+            <ul className="mt-2 space-y-2">
               {bookable.map((p) => (
-                <li key={p.key} className="flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4" data-bookable={p.key}>
+                <li key={p.key} className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] p-4 sm:flex-row sm:items-center" data-bookable={p.key}>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-semibold">{p.name}</span>
@@ -67,7 +71,7 @@ export function ProductsCard({ booked, bookable, lines, ctx, today, readOnly }: 
                     type="button"
                     disabled={readOnly}
                     onClick={() => (selection(), setPick(p))}
-                    className="inline-flex h-10 items-center gap-1.5 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-4 text-sm font-semibold text-white disabled:opacity-50"
+                    className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-4 text-sm font-semibold text-white disabled:opacity-50 sm:w-auto"
                   >
                     <Plus className="h-4 w-4" /> Produkt buchen
                   </button>
@@ -75,14 +79,14 @@ export function ProductsCard({ booked, bookable, lines, ctx, today, readOnly }: 
               ))}
             </ul>
             {readOnly ? <p className="text-sm text-[color:var(--muted)]">In der Vorschau nicht möglich.</p> : null}
-          </div>
+          </details>
         ) : null}
 
         {!readOnly ? <OtherProductRequest /> : null}
 
         <p className="text-sm text-[color:var(--muted)]">
           Je weiterem Produkt: Einrichtung kostenlos{PRICE_LIST.extraProductSetupSelfService > 0 ? ` (sonst ${eur0(PRICE_LIST.extraProductSetupSelfService)})` : ""}, {eur0(PRICE_LIST.extraProductMonthly)} im Monat zusätzlich (netto). Ihr Werbebudget ändern Sie
-          oben unter <a href="#werbebudget" className="underline">Werbebudget</a>.
+          oben unter <a href="#budget" className="underline">Werbebudget</a>.
         </p>
       </div>
       {pick ? <BookSheet key={pick.key} product={pick} lines={lines} ctx={ctx} today={today} onClose={() => setPick(null)} /> : null}

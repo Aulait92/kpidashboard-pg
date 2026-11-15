@@ -66,7 +66,19 @@ const COLUMN_ACCENTS: Record<string, string> = {
 };
 
 function toColumns(phases: readonly PipelinePhase[]): ColumnDef[] {
-  return phases.map((p) => ({
+  // „Kein Interesse“ und „Disqualifiziert“ als eine Spalte „Verloren“ (UX, Ole 15.11.2026: neun Spalten passten nicht
+  // auf den Bildschirm). Der genaue Status steht als Abzeichen an der Karte; Ablegen öffnet die Grund-Auswahl.
+  const lost = phases.filter((p) => p.key === "kein-interesse" || p.key === "disqualifiziert");
+  const merged: PipelinePhase[] = [];
+  for (const p of phases) {
+    if (p.key === "disqualifiziert" && lost.length > 1) continue;
+    if (p.key === "kein-interesse" && lost.length > 1) {
+      merged.push({ ...p, key: "kein-interesse", label: "Verloren", statuses: lost.flatMap((l) => [...l.statuses]) } as PipelinePhase);
+      continue;
+    }
+    merged.push(p);
+  }
+  return merged.map((p) => ({
     ...p,
     accent: COLUMN_ACCENTS[p.key] ?? "border-t-zinc-300",
   }));

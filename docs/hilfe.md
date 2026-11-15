@@ -9,12 +9,12 @@ Seiten aus der Liste „Seiten“ unten.
 
 | Pfad | Name | Wofür |
 |---|---|---|
-| /buyer | Heute | Was heute zu tun ist: Chats, Termine, „Wie lief's?“, Anrufliste |
+| /buyer | Heute | Was jetzt zu tun ist, nach Dringlichkeit: Wartet auf Sie, Termine (mit Vorbereiten), Wie lief es?, Anrufen, Nächste Tage, Aufräumen |
 | /buyer/leads | Leads | Alle Leads als Liste, mit Filtern und Suche |
 | /buyer/kanban | Pipeline | Alle Leads nach Phase, Karten verschieben |
-| /buyer/chats | Chats | WhatsApp-Gespräche mit Leads |
-| /buyer/zahlen | Zahlen | Kosten, Ertrag, Funnel, Hochrechnung |
-| /buyer/konto | Konto & Rechnungen | Vertrag, Werbebudget ändern, weiteres Produkt buchen, Rechnungen, Zahlungsart, Pause/Urlaub (nur Inhaber) |
+| /buyer/chats | Nachrichten | WhatsApp-Gespräche mit Kontakten |
+| /buyer/wachstum | Wachstum | Zahlen (Kosten, Ertrag, Funnel, Hochrechnung, Monatsberichte), Werbebudget ändern, weiteres Produkt buchen, Pause/Urlaub (nur Inhaber; /buyer/zahlen zeigt dieselbe Seite) |
+| /buyer/konto | Konto & Rechnungen | Vertrag, Benachrichtigungen, Zahlungsart, Rechnungen, Daten herunterladen (nur Inhaber) |
 | /buyer/team | Team | Berater einladen, Leads verteilen (nur Inhaber) |
 | /buyer/kalender | Mein Kalender | „Ihr Kalender“ verbinden (ein Kalender je Person), andere Quelle für freie Zeiten (ICS/Allianz), Team-Übersicht für Inhaber, Lead-Zeiten, Zeit blockieren |
 | /buyer/einrichtung | Einrichtung | Fortschritt „Einrichtung x von y“, Fragebogen, Erstinformation (Pflichtangaben nach § 15 VersVermV prüfen und bestätigen oder eigenes PDF), Meta freigeben (prüfen/anfragen), Kalender, E-Mail-Postfach, WhatsApp, Kundenliste, Bewertungslink, Team, Einwilligung im Leadformular, App aufs Handy, Provisionen, Hilfetermin |
@@ -28,7 +28,7 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Einführungsvideos
 
-- Beim ersten Öffnen von „Heute“ (neue Oberfläche) erscheint oben die Karte „Willkommen! Ihre Software in 1 Minute“
+- Am ersten Tag (noch ohne Leads) erscheint auf „Heute“ die Karte „Willkommen! Ihre Software in 1 Minute“
   mit einem kurzen Rundgang. Nach Ansehen oder Wegklicken (X) erscheint sie nicht mehr.
 - Jederzeit wieder: **Profilmenü → „Einführung ansehen“** (/buyer/einfuehrung). Dort gibt es das Kurzvideo (ca. 1 Minute)
   und für Inhaber zusätzlich die ausführliche Einführung (ca. 3 Minuten: Kontakt öffnen, Anrufliste, selbst schreiben,
@@ -36,10 +36,11 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Aufbau der App
 
-- Oben bzw. auf dem Handy unten die Bereiche: Heute, Leads, Pipeline, Chats, Zahlen. Je nach Vertrag
-  zusätzlich Einrichtung, <!-- bestand-modul -->Bestand, <!-- /bestand-modul -->Bestellen. Kunden ohne WhatsApp-Assistent sehen Übersicht, Leads, Pipeline.
-- Rechts oben das Profilmenü (Initialen): Benachrichtigungen, „Etwas unklar? Feedback“, Mein Kalender,
-  Team und Konto & Rechnungen (nur Inhaber), Impressum, Datenschutz, Sicherheit & Datenschutz, Abmelden.
+- Links (am Rechner) bzw. auf dem Handy unten die Bereiche: **Heute**, **Kontakte** (Liste und Pipeline), **Nachrichten**
+  und **Wachstum** (Zahlen, Werbebudget, Produkte, Pause; nur Inhaber). Je nach Stand zusätzlich Einrichtung.
+  Der rote Zähler an „Kontakte“ zeigt neue Kontakte, mit denen noch niemand gesprochen hat (Ansicht „Neu“).
+- Profilmenü: Einführung ansehen, Neuigkeiten, Einstellungen (Konto & Rechnungen, Team, Kalender, Provisionen,
+  Postfach, Vorlagen, Erinnerungen, Logo, Kollegen empfehlen), Abmelden.
 - Rollen: **Inhaber** sieht alles. **Berater** sehen nur ihre eigenen Leads, keine Zahlen, kein Konto, kein Team.
 - Fast jede Aktion zeigt unten kurz eine Meldung mit „Rückgängig“.
 
@@ -59,17 +60,18 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Heute
 
-- Ganz oben, solange es welche gibt: **X Leads ohne nächsten Schritt** (siehe „Nächster Schritt“). Je Zeile
-  direkt Morgen, In 3 Tagen oder Verloren, mit **Weiter** alle Möglichkeiten (Wiedervorlage, Termin anbieten,
-  Nicht erreicht, Gewonnen, Verloren). „Alle ansehen“ öffnet die Kontakte mit dem Filter „Ohne nächsten Schritt“.
-- Darunter vier Kacheln: Chats, Termine, Wie lief's?, Anrufen. Antippen springt zum Abschnitt.
-- **Braucht dich (Chats):** Leads, die geantwortet haben und auf Sie warten. „Antworten“ oder „Erledigt“.
+- „Heute“ ist nach Dringlichkeit sortiert (seit 16.11.2026), jede Zeile hat einen Hauptknopf; weitere Möglichkeiten
+  öffnen sich beim Antippen der Zeile. Am Rechner erscheint rechts gleich die erste Aufgabe.
+- **Wartet auf Sie:** Kontakte, die geantwortet haben und auf Sie warten. „Antworten“ oder „Erledigt“.
 - **Termine:** Videocall starten, Anrufen, Chat öffnen, Lead öffnen, Verschieben oder absagen (öffnet ein Fenster direkt in der App, siehe „Termine“).
-- **Wie lief's?:** Nach einem Termin tragen Sie das Ergebnis ein: Angebot gesendet, Abschluss (mit Beitrag, siehe unten „Abschluss und Provision“),
+  Steht ein Termin in den nächsten 36 Stunden noch nicht als vorbereitet, zeigt die Zeile **Vorbereiten: Angebot rechnen** (auch unter „Nächste Tage“).
+- **Wie lief es?:** Nach einem Termin tragen Sie das Ergebnis ein: Angebot gesendet, Abschluss (mit Beitrag, siehe unten „Abschluss und Provision“),
   Nicht erschienen (kommt auf die Anrufliste) oder Verloren (mit Grund). Den Rest (Phase, Wiedervorlage) erledigt die App.
 - **Anrufliste:** Rückrufe und fällige Wiedervorlagen, „Überfällig“ markiert. Aktionen: Anrufen, Nicht erreicht,
   Erledigt, Später (Morgen / 3 Tage / 1 Woche / 2 Wochen), Termin buchen, Angebot gesendet, Abschluss,
-  Lead öffnen, Verloren (mit Grund, siehe „Verloren und nicht erreicht“).
+  Lead öffnen, Verloren (mit Grund, siehe „Verloren und nicht erreicht“). Schieben um +1 Tag oder +1 Woche ebenfalls dort.
+- **Aufräumen** (ganz unten, zugeklappt): Kontakte ohne nächsten Schritt (siehe „Nächster Schritt“). **Weiter** öffnet
+  alle Möglichkeiten (Wiedervorlage, Termin anbieten, Nicht erreicht, Gewonnen, Verloren); „In Kontakte ansehen“ öffnet den Filter „Ohne nächsten Schritt“.
 - Ist alles abgearbeitet, steht dort „Alles erledigt“. Neue Aufgaben erscheinen von selbst.
 - Solange noch kein einziger Lead da ist, erklärt „Heute“, wie es losgeht.
 
@@ -161,13 +163,13 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Chats (WhatsApp)
 
-- Liste mit Filter „Alle“ / „Braucht dich“ und Suche.
+- Liste mit Filter „Alle“ / „Wartet auf Sie“ und Suche.
 - **Selbst schreiben:** Sobald Sie antworten, pausiert der Assistent in diesem Chat. Mit dem Schalter
   „Assistent“ schalten Sie ihn für diesen Chat wieder ein oder aus.
 - **24-Stunden-Regel von WhatsApp:** Hat der Kunde länger als 24 Stunden nicht geschrieben, dürfen nur
   freigegebene Vorlagen raus. Dann erscheint „Nachfassen senden“ statt des Textfelds. Antwortet der Kunde,
   können Sie wieder frei schreiben.
-- „Erledigt“ entfernt den Chat aus „Braucht dich“.
+- „Erledigt“ entfernt den Chat aus „Wartet auf Sie“.
 - **„STOPP“:** Schreibt ein Kontakt „STOPP“ (oder „Stop“, „Abmelden“, „Keine Nachrichten mehr“), bekommt er eine kurze
   Bestätigung und danach keine WhatsApp-Nachrichten mehr: kein Assistent, kein Nachfassen, keine Termin-Nachrichten, keine
   Kampagnen, auch nicht von Hand. Im Chat steht dann ein roter Hinweis. Schreibt der Kontakt später selbst wieder, können Sie
@@ -248,7 +250,7 @@ Seiten aus der Liste „Seiten“ unten.
   Buchung ab, die erste Frage gleich in der Bestätigung. Zum Schluss nennt er die Unterlagen für den Termin. Hat der
   Lead direkt über das Leadformular bzw. die Buchungsseite gebucht, meldet sich der Assistent trotzdem, bestätigt
   den Termin und fragt die Angaben ab. Was er erfahren hat, steht im Kontakt.
-- Braucht ein Lead Sie (Frage, die der Assistent nicht beantworten soll), landet der Chat unter „Braucht dich“
+- Braucht ein Lead Sie (Frage, die der Assistent nicht beantworten soll), landet der Chat unter „Wartet auf Sie“
   und Sie bekommen eine Push-Nachricht.
 - **Leads ohne WhatsApp (seit 15.11.2026):** Der Assistent arbeitet nur über WhatsApp. Meldet WhatsApp, dass die
   Nummer nicht erreichbar ist (keine WhatsApp-Nummer, sehr alte App oder Nutzungsbedingungen nicht bestätigt), rufen
@@ -285,7 +287,7 @@ Seiten aus der Liste „Seiten“ unten.
   KI-Assistent von [Ihr Name], kein Mensch, …“); schreibt der Lead zuerst, enthält die erste Antwort den ausführlichen
   Hinweis (berät nicht zu Tarifen, „Mensch“ schreiben). Das lässt sich nicht abschalten. Nach mehr als 30 Tagen Pause wiederholt der Assistent den Hinweis kurz.
   Fragt jemand „Bist du ein Bot?“ oder schreibt „Mensch“ bzw. „Mitarbeiter“, antwortet der Assistent ehrlich, dass er eine KI
-  ist, pausiert in diesem Chat, und Sie bekommen den Chat unter „Braucht dich“ mit einer Mitteilung.
+  ist, pausiert in diesem Chat, und Sie bekommen den Chat unter „Wartet auf Sie“ mit einer Mitteilung.
 - **Keine Beratung durch den Assistenten:** Er nennt keine Versicherer, Tarife, Preise oder Beiträge, vergleicht nicht und
   sagt nichts dazu, was für jemanden passt. Jede Antwort wird vor dem Senden geprüft; fragt ein Lead danach, antwortet er
   „Das klärt [Ihr Name] im Termin mit Ihnen.“ und bietet einen Termin an.
@@ -635,7 +637,7 @@ Seiten aus der Liste „Seiten“ unten.
   Leads aus Empfehlungen, dem Bestand oder anderen Quellen bleiben außen vor.
 - Wann: automatisch etwa alle 15 Minuten. Meta nimmt nur Ergebnisse der letzten 7 Tage an, ältere werden nicht gesendet.
   Ein Storno nimmt eine gesendete Rückmeldung nicht zurück.
-- „Erreicht“ zählt, sobald der Lead per WhatsApp antwortet oder Sie ihn als erreicht markieren (z. B. über „Wie lief's?“
+- „Erreicht“ zählt, sobald der Lead per WhatsApp antwortet oder Sie ihn als erreicht markieren (z. B. über „Wie lief es?“
   oder die Phase), „Termin vereinbart“ beim ersten Termin, „Abschluss“, wenn Sie den Lead auf Abschluss setzen.
 - Status auf der Seite: Aktiv, Wird eingerichtet (wir verbinden Ihr Werbekonto, Sie müssen nichts tun), Aus oder
   Testkonto. Darunter die zuletzt gesendeten Rückmeldungen und Probleme in verständlichen Worten.
@@ -723,7 +725,7 @@ Seiten aus der Liste „Seiten“ unten.
   (120 aktiven Tagen; bei Angeboten vor dem 13.11.2026, 19 Uhr: 90 Tage) unter den Kosten für Werbung und Betreuung, betreuen wir ohne
   Betreuungsgebühr weiter (auf Wunsch mit anderem Produkt), bis es sich rechnet, längstens 6 Monate. Voraussetzung:
   mindestens 20 €/Tag an den aktiven Tagen, mindestens 80 % der Termine wahrgenommen, Ergebnisse bei mindestens 80 % der Leads
-  eingetragen („Wie lief's?“, Abschluss mit Beitrag) und Provisionssätze unter „Meine Provisionen“ hinterlegt.
+  eingetragen („Wie lief es?“, Abschluss mit Beitrag) und Provisionssätze unter „Meine Provisionen“ hinterlegt.
 - **Vertrags-Garantie (nur Makler, statt Break-even):** Sind nach 120 aktiven Tagen (bei Angeboten vor dem 15.11.2026, 23:45 Uhr: 90 Tage)
   weniger als 15 Verträge abgeschlossen,
   sind Betreuung und Software kostenlos (auf Wunsch mit anderem Produkt, ohne Setupgebühr), bis 15 erreicht sind,
@@ -779,7 +781,7 @@ Seiten aus der Liste „Seiten“ unten.
 - Wiedervorlagen und zurückgestellte Rückrufe in der Zeit gehen an die Vertretung, sonst rücken sie auf den
   ersten Werktag nach der Rückkehr (8 Uhr). Der Hinweis dazu hat „Rückgängig“.
 - Allein und mindestens 7 Tage weg: Die App bietet „Anzeigen in dieser Zeit pausieren“ an (die normale Pause
-  aus Konto & Rechnungen, Neustart am Rückkehrtag). Eine Pause verlängert auch den Garantie-Zeitraum.
+  unter Wachstum, Neustart am Rückkehrtag). Eine Pause verlängert auch den Garantie-Zeitraum.
 - Während der Abwesenheit steht oben ein Hinweis „Du bist bis … abwesend“ mit „ändern“ und „beenden“. Früher
   zurück: „beenden“ (oder „Ich bin wieder da“). Eine geplante Abwesenheit lässt sich im Profilmenü ändern
   oder löschen.
@@ -811,7 +813,7 @@ Seiten aus der Liste „Seiten“ unten.
   Abrechnungszeitraums)“; bis dahin nutzbar, die Kündigung lässt sich bis dahin mit „Kündigung zurücknehmen“
   aufheben.
 <!-- /bestand-modul -->
-- **Werbebudget ändern** (Karte „Werbebudget“, auch über Wachstum → „Budget ändern“ und in der Einrichtung beim
+- **Werbebudget ändern** (Wachstum → Karte „Werbebudget“, seit 16.11.2026 nicht mehr im Konto; auch in der Einrichtung beim
   Schritt „Start“): Tagesbudget je Produkt mit Plus/Minus (5-€-Schritte) oder Regler. Die Vorschau zeigt sofort
   das Werbebudget pro Monat (Tagesbudget × 30), die erwarteten Leads pro Monat (mit dem eigenen Leadpreis der
   letzten 30 Tage, sonst mit einem üblichen Leadpreis) und die Betreuungsstufe. Unter 20 € pro Tag erscheint der
@@ -830,7 +832,7 @@ Seiten aus der Liste „Seiten“ unten.
     individuellen Angebot, bis dahin läuft das bisherige Budget.
   - Paket „Nur Betreuung“: Der Monatspreis hängt nicht vom Werbebudget ab.
 - Schalter „Neue Leads per E-Mail“.
-- **Pause/Urlaub** selbst eintragen (Start, Ende, Grund): Anzeigen stoppen, reduzierte Gebühr; Pause jederzeit beenden.
+- **Pause/Urlaub** (Wachstum → Karte „Pause / Urlaub“) selbst eintragen (Start, Ende, Grund): Anzeigen stoppen, reduzierte Gebühr; Pause jederzeit beenden.
   Bei jährlicher Vorauszahlung pausieren nur die Anzeigen, eine Gutschrift gibt es nicht.
 - Kündigung oder Vertragsfragen: bitte direkt bei uns melden.
 - **Ihre Daten herunterladen** (unten auf der Seite, seit 15.11.2026): ein ZIP mit Excel-Dateien (CSV, Semikolon):
@@ -897,7 +899,7 @@ Seiten aus der Liste „Seiten“ unten.
   reaktivieren“. Nach der Löschung kommt eine Bestätigung per E-Mail.
 
 ## Weiteres Produkt buchen (nur Inhaber)
-- **Wo:** Konto & Rechnungen → Karte „Produkte“ (auch über Wachstum → „Weitere Sparte dazubuchen“). Dort stehen die gebuchten
+- **Wo:** Wachstum → Karte „Produkte“, Liste „Weitere Sparte dazubuchen“ zum Aufklappen. Dort stehen die gebuchten
   Produkte mit Tagesbudget und Status („Läuft“, „In Einrichtung“, „Anfrage offen“) und darunter die Sparten, die man dazubuchen kann
   (z. B. Katzenversicherung; weitere wie Hund, Privatschutz, Unfall, Zahnzusatz oder Krankenhauszusatz, sobald wir sie freigeben).
   „Bewährt“ heißt: mit Erfahrungswert, angezeigt als Spanne, z. B. „ca. 20–25 € pro Lead · bei 30 €/Tag ca. 36 bis 45 Leads
@@ -918,7 +920,7 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Kollegen empfehlen (nur Inhaber)
 
-- Wo: Profilmenü → „Kollegen empfehlen“ oder Konto & Rechnungen → Karte „Kollegen empfehlen“. Ganz oben stehen
+- Wo: Einstellungen → „Kollegen empfehlen“. Ganz oben stehen
   zwei Kacheln: was Ihr Kollege bekommt und was Sie bekommen. Die genauen Beträge kommen immer aus unseren aktuellen
   Konditionen (die KI-Hilfe bekommt sie mitgeliefert).
 - Ihr persönlicher Link (`/empfehlen/…`) bleibt immer gleich. Teilen per „Teilen“ (Handy), WhatsApp oder E-Mail mit
@@ -1139,7 +1141,7 @@ Bewertung im Einzelfall liegt bei Ihnen.**
   Echtheitsprüfung.“ Zeigen Sie Bewertungen auf Ihrer eigenen Website, nennen Sie dort ebenfalls die Herkunft.
 - **Antworten:** Die KI liest die Antwort. Kritik oder Beschwerde → sofort Push und die Aufgabe „Kunde unzufrieden –
   bitte heute anrufen“ mit Zitat in „Heute“; die Bitte um Empfehlung geht an diesen Kunden nicht raus. Lob → Dank
-  mit dem persönlichen Empfehlungslink (abschaltbar unter „Der richtige Moment“; ohne zweiten Google-Link). Rückfragen landen als „Braucht dich“ im Chat. Geklärte Kritik markieren Sie in
+  mit dem persönlichen Empfehlungslink (abschaltbar unter „Der richtige Moment“; ohne zweiten Google-Link). Rückfragen landen als „Wartet auf Sie“ im Chat. Geklärte Kritik markieren Sie in
   „Empfehlungen & Bewertungen“ mit „Als geklärt markieren“.
 - **Bitte um Empfehlung:** einige Wochen nach dem Abschluss (Standard 21 Tage), nicht bei Kritik und nicht bei offener
   Aufgabe „unzufrieden“. Der persönliche Link führt Ihren Kunden auf eine Seite zum Teilen (WhatsApp oder Teilen-Knopf).

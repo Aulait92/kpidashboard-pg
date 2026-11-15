@@ -535,7 +535,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           </p>
           <p className="mt-2 text-sm text-[color:var(--muted)]">
             Ihr Werbebudget können Sie jederzeit selbst anpassen:{" "}
-            <Link href="/buyer/konto#werbebudget" className="font-medium text-[color:var(--brand)] underline">
+            <Link href="/buyer/wachstum#budget" className="font-medium text-[color:var(--brand)] underline">
               Budget ändern
             </Link>
           </p>
