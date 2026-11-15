@@ -21,6 +21,7 @@
 import type { HalteKind } from "@/lib/anti-churn";
 import { fmtIso, nextDayIso, periodEndIso } from "@/lib/vertrag-laufzeit";
 import { PRICE_LIST } from "@/lib/offer-pricing";
+import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
 
 // ─── Einstellungen ───────────────────────────────────────────────────────
 
@@ -296,7 +297,7 @@ export function halteOfferView(kind: HalteKind, c: HalteTextContext): OfferView 
       return {
         key: kind,
         title: `Paket „Nur Bestand“ für ${eur(s.nurBestandPrice)} netto im Monat`,
-        text: `Sie behalten Ihre Daten und das Bestandskunden-Modul mit demselben Kontingent (${PRICE_LIST.bestandIncludedMessages.toLocaleString("de-DE")} Kampagnen-Nachrichten im Monat). Keine neuen Leads und keine Betreuung. Das Modul „Empfehlungen & Bewertungen“ können Sie für ${eur(PRICE_LIST.empfehlungModuleMonthly)} netto im Monat dazu behalten. Wir stellen Ihren Vertrag zum nächstmöglichen Termin um und bestätigen Ihnen das.`,
+        text: `Sie behalten Ihre Daten und das Bestandskunden-Modul mit demselben Kontingent (${PRICE_LIST.bestandIncludedMessages.toLocaleString("de-DE")} Kampagnen-Nachrichten im Monat). Keine neuen Leads und keine Betreuung. ${EMPFEHLUNG_MODULE_AVAILABLE ? `Das Modul „Empfehlungen & Bewertungen“ können Sie für ${eur(PRICE_LIST.empfehlungModuleMonthly)} netto im Monat dazu behalten. ` : ""}Wir stellen Ihren Vertrag zum nächstmöglichen Termin um und bestätigen Ihnen das.`,
         cta: "Paket wählen",
         form: "simple",
         ...(c.referralHint ? { hint: { text: c.referralHint, href: "/buyer/empfehlen", label: "Kollegen empfehlen" } } : {}),

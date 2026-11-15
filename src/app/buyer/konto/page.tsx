@@ -22,7 +22,7 @@ import { BudgetCard } from "./budget-card";
 import { ProductsCard } from "./produkte-card";
 import { productOverview } from "@/lib/produkt-buchen";
 import { EmpfehlungBookButton, EmpfehlungCancelButton } from "@/components/empfehlung/client";
-import { moduleState, showNewBadge, trialAvailable } from "@/lib/empfehlung/shared";
+import { empfehlungVisible, moduleState, showNewBadge, trialAvailable } from "@/lib/empfehlung/shared";
 import { includedPhrase } from "@/lib/seats";
 import { loadReferralSettings } from "@/lib/kollegen";
 import { referralIncentiveSentence } from "@/lib/kollegen-shared";
@@ -294,6 +294,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             <div id="zusatzmodule" className="scroll-mt-20" />
             <CardHeader title="Zusatzmodule" icon={Puzzle} />
             <ul className="divide-y divide-[color:var(--border)] text-sm" data-konto-module>
+              {empfehlungVisible(empfehlungState !== "inactive") ? (
               <li className="space-y-3 px-5 py-4" data-konto-empfehlung>
                 <div className="flex flex-wrap items-center gap-2">
                   <Star className="h-4 w-4 text-amber-500" />
@@ -333,6 +334,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                   </div>
                 )}
               </li>
+              ) : null}
               <li className="space-y-3 px-5 py-4" data-konto-bestand>
                 <div className="flex flex-wrap items-center gap-2">
                   <Users className="h-4 w-4 text-[color:var(--brand)]" />

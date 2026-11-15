@@ -10,7 +10,7 @@ import type { TeamCtx } from "@/lib/team";
 import { moduleInfo, recentClosings } from "@/lib/empfehlung/module";
 import { loadEmpfehlungStats, type EmpfehlungStats } from "@/lib/empfehlung/requests";
 import { BAD_REVIEW_TASK } from "@/lib/empfehlung/google-business";
-import { ANNOUNCEMENT_KEY, CANDIDATE_MIN_CLOSINGS, DAY_MS, FEEDBACK_CONSENT_TEXT, HINTS, fmtDate, isUnhappyTask } from "@/lib/empfehlung/shared";
+import { ANNOUNCEMENT_KEY, CANDIDATE_MIN_CLOSINGS, DAY_MS, EMPFEHLUNG_MODULE_AVAILABLE, FEEDBACK_CONSENT_TEXT, HINTS, fmtDate, isUnhappyTask } from "@/lib/empfehlung/shared";
 import { FeedbackConsentToggle, ModuleHint, OptOutToggle, ReferralLinkButton } from "@/components/empfehlung/client";
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -244,7 +244,7 @@ export async function EmpfehlungGrowthRow({ ctx }: { ctx: { customerId: string; 
       </Card>
     );
   }
-  if (ctx.teamRole !== "owner" || info.dismissed.includes(HINTS.zahlen)) return null;
+  if (!EMPFEHLUNG_MODULE_AVAILABLE || ctx.teamRole !== "owner" || info.dismissed.includes(HINTS.zahlen)) return null;
   return (
     <div className="mb-5 flex items-center gap-3 rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-strong)] bg-white px-4 py-3 text-sm" data-empfehlung-locked>
       <Lock className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />

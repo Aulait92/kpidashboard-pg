@@ -22,6 +22,7 @@ import { needsSubmit, templateNotice, templateState, TEMPLATE_STATE_LABEL } from
 import { advisorPerson } from "@/lib/lead-anrede";
 import { publicUrlOr } from "@/lib/public-url";
 import { agentConfirmText, isAgencyBound, mayOffer, needsAgentConfirm } from "@/lib/bestand/befugnis";
+import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -334,9 +335,13 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
           <p className={warnBox}>
             Die Empfehlungsbitte gehört zum Modul „Empfehlungen &amp; Bewertungen“: Jeder Kunde bekommt seinen persönlichen Empfehlungslink, die empfohlene
             Person trägt sich selbst ein und landet als Lead bei Ihnen.{" "}
-            <Link href="/buyer/konto?modul=empfehlung#zusatzmodule" className="font-semibold underline">
-              Modul 30 Tage kostenlos testen
-            </Link>
+            {EMPFEHLUNG_MODULE_AVAILABLE ? (
+              <Link href="/buyer/konto?modul=empfehlung#zusatzmodule" className="font-semibold underline">
+                Modul 30 Tage kostenlos testen
+              </Link>
+            ) : (
+              "Das Modul ist gerade nicht buchbar."
+            )}
           </p>
         ) : null}
         {!locked && notice ? (

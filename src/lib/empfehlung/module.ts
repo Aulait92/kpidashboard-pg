@@ -15,6 +15,7 @@ import { getAppUrl, sendCustomerMail } from "@/lib/email";
 import { customerGreeting } from "@/lib/offer-links";
 import {
   ANNOUNCEMENT_KEY,
+  EMPFEHLUNG_MODULE_AVAILABLE,
   CANDIDATE_MIN_CLOSINGS,
   CANDIDATE_WINDOW_DAYS,
   DAY_MS,
@@ -124,6 +125,7 @@ export async function bookEmpfehlung(customerId: string, opts: { actor?: AuditAc
   const now = opts.now ?? new Date();
   if (!opts.acknowledged) return { ok: false, error: "Bitte bestätigen Sie Preis und Bedingungen." };
   const c = await prisma.customer.findUnique({ where: { id: customerId }, select: MODULE_SELECT });
+  if (c && !EMPFEHLUNG_MODULE_AVAILABLE && moduleState(c, now) === "inactive") return { ok: false, error: "Das Modul ist gerade nicht buchbar." };
   if (!c) return { ok: false, error: "Konto nicht gefunden." };
   if (c.plan === "service") return { ok: false, error: "Das Modul gibt es nur im Paket mit Software." };
   if (c.paymentOverdueSince) return { ok: false, error: "Es ist noch eine Rechnung offen. Bitte melden Sie sich kurz bei uns." };
@@ -328,6 +330,7 @@ export const ANNOUNCEMENT = {
 
 /** Einmalige Ankündigung an alle aktiven Kunden ohne Modul (nur per Knopf, nie automatisch). */
 export async function sendAnnouncement(actor: AuditActor, now = new Date()): Promise<{ ok: true; sent: number } | { ok: false; error: string }> {
+  if (!EMPFEHLUNG_MODULE_AVAILABLE) return { ok: false, error: "Das Modul ist gerade nicht verfügbar (EMPFEHLUNG_MODULE_AVAILABLE)." };
   const existing = await prisma.moduleAnnouncement.findUnique({ where: { key: ANNOUNCEMENT_KEY } });
   if (existing) return { ok: false, error: `Die Ankündigung wurde schon am ${fmtDate(existing.sentAt)} verschickt.` };
   // Erst eintragen (eindeutiger Schlüssel), dann senden: doppelte Klicks senden nicht doppelt

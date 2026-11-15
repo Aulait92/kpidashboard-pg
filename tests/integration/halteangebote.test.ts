@@ -2,6 +2,7 @@
 // Bindung, Pause, Aufgaben, Änderungsprotokoll), Stripe gemockt (Gutschein am Abo, nur Betreuung, pause_collection),
 // Regeln (Kundendauer, einmal in 12 Monaten), Kündigung trotz Angebot, Rückkehrangebot nach Vertragsende.
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
 
 type Item = { id: string; quantity: number; price: { product: string; unit_amount: number; recurring: { interval: string } } };
 type Sub = { id: string; status: string; schedule: null; discounts: string[]; cancel_at: number | null; cancel_at_period_end: boolean; items: { data: Item[] } };
@@ -294,7 +295,7 @@ describe("Halteangebote", () => {
     const row = await prisma.retentionOffer.findFirstOrThrow({ where: { customerId: x.customerId } });
     expect(row).toMatchObject({ kind: "nur_bestand", stripeStatus: "manual", discount: false });
     expect(Number(row.mrrSaved)).toBe(149);
-    expect(view.text).toContain("Empfehlungen & Bewertungen");
+    expect(view.text.includes("Empfehlungen & Bewertungen")).toBe(EMPFEHLUNG_MODULE_AVAILABLE);
     expect((await tasksOf(x.contactId)).some((t) => t.title.includes("Nur Bestand") && t.title.includes("Stripe umstellen"))).toBe(true);
     expect(st.calls).toHaveLength(0);
   });

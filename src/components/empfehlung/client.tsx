@@ -31,7 +31,7 @@ import {
   type ShareState,
   type TestState,
 } from "@/app/buyer/empfehlungen/actions";
-import { DEFAULT_TEXTS, FOLLOWUP_LIMITS, OCCASIONS, OFFER_LIMITS, OFFER_PRESETS, REWARD_LIMITS, REWARD_SAFE_LIMIT, TEXT_LABELS, bookingTerms, offerWarning, renderText, rewardWarning, type Occasion, type OfferKind, type TextKey } from "@/lib/empfehlung/shared";
+import { EMPFEHLUNG_MODULE_AVAILABLE, DEFAULT_TEXTS, FOLLOWUP_LIMITS, OCCASIONS, OFFER_LIMITS, OFFER_PRESETS, REWARD_LIMITS, REWARD_SAFE_LIMIT, TEXT_LABELS, bookingTerms, offerWarning, renderText, rewardWarning, type Occasion, type OfferKind, type TextKey } from "@/lib/empfehlung/shared";
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 const fmtDate = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(iso));
@@ -170,7 +170,12 @@ export function EmpfehlungCancelButton({ cancelAt, trialEndsAt, readOnly, annual
 
 // ─── Hinweise (dezent, einmal wegklickbar) ─────────────────────────────────
 
-export function ModuleHint({ hintKey, title, text, cta = "30 Tage kostenlos testen", href = "/buyer/konto?modul=empfehlung#zusatzmodule", tone = "brand" }: {
+/** Hinweis nur, solange das Modul buchbar ist (lib/empfehlung/shared.ts EMPFEHLUNG_MODULE_AVAILABLE). */
+export function ModuleHint(props: Parameters<typeof ModuleHintInner>[0]) {
+  return EMPFEHLUNG_MODULE_AVAILABLE ? <ModuleHintInner {...props} /> : null;
+}
+
+function ModuleHintInner({ hintKey, title, text, cta = "30 Tage kostenlos testen", href = "/buyer/konto?modul=empfehlung#zusatzmodule", tone = "brand" }: {
   hintKey: string;
   title: string;
   text: string;

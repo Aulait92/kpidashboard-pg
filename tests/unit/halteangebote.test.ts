@@ -1,6 +1,7 @@
 // Halteangebote (Ole, 15.11.2026): Rabatt-Regeln (Kundendauer, 12 Monate), Bindung nach dem Nachlass, Vorschlag der
 // Sparte mit der besten Abschlussquote, Einstellungen, Texte und Statistik.
 import { describe, expect, it } from "vitest";
+import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
 import { HALTE_KINDS } from "@/lib/anti-churn";
 import {
   addMonthsIso,
@@ -125,7 +126,8 @@ describe("Einstellungen, Texte, Statistik", () => {
     expect(halteOfferView("pause_gratis", ctx)).toMatchObject({ form: "pause", pauseFrom: "2026-11-15", pauseMaxUntil: "2027-02-15" });
     expect(halteOfferView("einrichtung", { ...ctx, einrichtungSlots: false }).form).toBe("simple");
     expect(halteOfferView("nur_bestand", ctx).title.replace(/\s/g, " ")).toBe("Paket „Nur Bestand“ für 149 € netto im Monat");
-    expect(halteOfferView("nur_bestand", ctx).text.replace(/\s/g, " ")).toContain("für 59 € netto im Monat dazu");
+    // Empfehlungen-Modul nur erwähnen, solange es buchbar ist (Ole, 15.11.2026: vorerst aus)
+    expect(halteOfferView("nur_bestand", ctx).text.replace(/\s/g, " ").includes("für 59 € netto im Monat dazu")).toBe(EMPFEHLUNG_MODULE_AVAILABLE);
     expect(HALTE_DEFAULTS.nurBestandPrice).toBe(149);
     expect(halteOfferView("nur_bestand", ctx).hint?.href).toBe("/buyer/empfehlen");
   });

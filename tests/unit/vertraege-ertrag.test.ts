@@ -1,6 +1,7 @@
 // Cross-Selling, Abschluss- vs. Bestandsprovision, Gewinn minus Agenturkosten, Empfehlungen im Gewinn,
 // Tipps „So holen Sie mehr raus“ (Ole, 14.11.2026). Reine Funktionen ohne Datenbank.
 import { describe, expect, it } from "vitest";
+import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
 import {
   bestandGrowth,
   bestandInYears,
@@ -275,7 +276,8 @@ describe("Tipps „So holen Sie mehr raus“", () => {
   it("höchstens 3, nach geschätzter Wirkung sortiert, nur Schwachstellen", () => {
     const tips = pickTips(signals, null, now);
     // Wirkung: Empfehlungen 10 × 10 % × 200 € = 200, Erreichbarkeit 40 × 20 Pp. × 12 % × 200 € = 192, Cross-Selling 6 × 15 % × 200 € = 180
-    expect(tips.map((t) => t.key)).toEqual(["empfehlung_an", "erreichbarkeit", "cross_sell"]);
+    // Empfehlungs-Tipp nur, solange das Modul buchbar ist (Ole, 15.11.2026: vorerst aus)
+    expect(tips.map((t) => t.key)).toEqual(EMPFEHLUNG_MODULE_AVAILABLE ? ["empfehlung_an", "erreichbarkeit", "cross_sell"] : ["erreichbarkeit", "cross_sell"]);
     expect(tips.length).toBeLessThanOrEqual(3);
     // Quoten im Schnitt: kein Quoten-Tipp
     expect(candidateTips({ ...signals, rates: { ...signals.rates, reach: { own: 0.7, avg: 0.7 } } }).some((t) => t.key === "erreichbarkeit")).toBe(false);
@@ -292,7 +294,7 @@ describe("Tipps „So holen Sie mehr raus“", () => {
     const d = withDismissed(null, "erreichbarkeit", now);
     expect(isDismissed(d, "erreichbarkeit", new Date(now.getTime() + 29 * 86_400_000))).toBe(true);
     expect(isDismissed(d, "erreichbarkeit", new Date(now.getTime() + 31 * 86_400_000))).toBe(false);
-    expect(pickTips(signals, d, now).map((t) => t.key)).toEqual(["empfehlung_an", "cross_sell"]);
+    expect(pickTips(signals, d, now).map((t) => t.key)).toEqual(EMPFEHLUNG_MODULE_AVAILABLE ? ["empfehlung_an", "cross_sell"] : ["cross_sell"]);
   });
 
   it("Sie-Form, ohne Gedankenstriche und ohne Garantie", () => {
