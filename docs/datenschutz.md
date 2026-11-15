@@ -256,6 +256,9 @@ Interaktion mit Betroffenen“. Falls ja, DSFA je Kunde als Verantwortlicher (Vo
 ## 9. Offene Punkte
 
 - [ ] AVV/DPA mit jedem Dienst abschließen bzw. Nachweis ablegen (Tabelle Abschnitt 3)
+- [ ] § 203 StGB (AVV Stand 15.11.2026): Mitarbeiter vor Beginn mit `docs/vorlage-verpflichtung-203-stgb.md` verpflichten
+      und in der Nachweisliste eintragen; je Unterauftragsverarbeiter Verpflichtung in Textform mit Hinweis auf § 203 Abs. 4 StGB
+      ablegen (DPA oder eigene Erklärung). Anwalt: reichen die Standard-DPAs (Anthropic, Meta, 360dialog, Sentry, Railway)?
 - [ ] Aufbewahrung der Railway-Sicherungen ablesen und im Löschkonzept eintragen
 - [ ] Sentry: Aufbewahrung prüfen, Datenregion EU bestätigen
 - [ ] Anwalt: Rolle bei Pay-per-Lead; Kalt-E-Mails an Vermittler; DSFA-Muss-Liste; AGB/AVV-Fassung 10.11.2026

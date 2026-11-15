@@ -11,10 +11,15 @@
 // 14.11.2026: AVV: Verschwiegenheit nach § 203 StGB, E-Mail-Kampagnen im Bestandskunden-Modul.
 // 14.11.2026 (Fassung 2): Abschnitt „Testphasen und kostenlose Zeiträume“ (Ole).
 // 15.11.2026: AVV: Rückmeldung an Meta (Conversions API für CRM), Meta in Anlage 2 um die Rückmeldung ergänzt.
+// 15.11.2026 (Anwalts-Memo, Ole; neuer Stand „15.11.2026“): AVV: § 203 StGB ausdrücklich bis zu den Unterauftragsverarbeitern,
+// dokumentierte Verpflichtung der Mitarbeiter (Vorlage docs/vorlage-verpflichtung-203-stgb.md).
+// Folge einer neuen Fassung: Die Seiten /rechtliches/* zeigen den neuen Stand, neue Angebote verweisen darauf.
+// Bestehende Kunden werden NICHT automatisch zur Zustimmung aufgefordert (kein Banner); Änderungen gelten für sie
+// erst nach Mitteilung in Textform mit 6 Wochen Widerspruchsfrist (AGB „Änderungen dieser AGB“), siehe docs/datenschutz.md.
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
-export const LEGAL_VERSION = "14.11.2026 (Fassung 2)";
+export const LEGAL_VERSION = "15.11.2026";
 
 export const PROVIDER = {
   name: "Ole Kannapinn UG (haftungsbeschränkt)",
@@ -216,7 +221,12 @@ export const AVV: LegalSection[] = [
       // Prüfen: Verschwiegenheit nach § 203 StGB (Ole, 14.11.2026; Anwalt prüft)
       {
         sub: "Verschwiegenheit nach § 203 StGB",
-        text: "Soweit der Auftraggeber als Versicherungsvermittler einer gesetzlichen Schweigepflicht nach § 203 StGB unterliegt und dem Auftragnehmer dabei fremde Geheimnisse zugänglich werden (z. B. die Tatsache eines Vertrags in der Personenversicherung), wirkt der Auftragnehmer als sonstige mitwirkende Person im Sinne von § 203 Abs. 3 Satz 2 StGB mit. Der Auftragnehmer verpflichtet sich zur Verschwiegenheit über alle Geheimnisse, die ihm dabei bekannt werden, auch über das Ende dieses Vertrags hinaus. Er erhält Kenntnis nur, soweit dies für die vertragliche Leistung erforderlich ist. Der Auftraggeber weist hiermit darauf hin, dass eine unbefugte Offenbarung nach § 203 Abs. 4 StGB strafbar ist. Der Auftragnehmer verpflichtet seine Mitarbeiter und alle weiteren mitwirkenden Personen, die bei der Leistung Kenntnis von solchen Geheimnissen erlangen können, vor Aufnahme der Tätigkeit in Textform zur Verschwiegenheit und belehrt sie über die Strafbarkeit nach § 203 StGB. Unterauftragsverarbeiter werden in gleicher Weise verpflichtet, soweit sie Kenntnis von solchen Geheimnissen erlangen können.",
+        text: "Soweit der Auftraggeber als Versicherungsvermittler einer gesetzlichen Schweigepflicht nach § 203 StGB unterliegt und dem Auftragnehmer dabei fremde Geheimnisse zugänglich werden (z. B. die Tatsache eines Vertrags in der Personenversicherung), wirkt der Auftragnehmer als sonstige mitwirkende Person im Sinne von § 203 Abs. 3 Satz 2 StGB mit. Der Auftragnehmer verpflichtet sich zur Verschwiegenheit über alle Geheimnisse, die ihm dabei bekannt werden, auch über das Ende dieses Vertrags hinaus. Er erhält Kenntnis nur, soweit dies für die vertragliche Leistung erforderlich ist. Der Auftraggeber weist hiermit darauf hin, dass eine unbefugte Offenbarung nach § 203 Abs. 4 StGB strafbar ist. Der Auftragnehmer verpflichtet seine Mitarbeiter und alle weiteren mitwirkenden Personen, die bei der Leistung Kenntnis von solchen Geheimnissen erlangen können, vor Aufnahme der Tätigkeit in Textform zur Verschwiegenheit und belehrt sie über die Strafbarkeit nach § 203 StGB. Die Verpflichtung der Mitarbeiter wird dokumentiert und dem Auftraggeber auf Anfrage nachgewiesen.",
+      },
+      // Prüfen: § 203 StGB bis zu den Unterauftragsverarbeitern (Ole, 15.11.2026; Anwalt: reichen die DPAs der großen Anbieter?)
+      {
+        sub: "Verschwiegenheit der Unterauftragsverarbeiter",
+        text: "Der Auftragnehmer verpflichtet Unterauftragsverarbeiter, soweit sie bei ihrer Leistung Kenntnis von Geheimnissen im Sinne von § 203 StGB erlangen können, in Textform zur Verschwiegenheit und weist sie auf die Strafbarkeit einer unbefugten Offenbarung nach § 203 Abs. 4 StGB hin. Er sorgt dafür, dass Unterauftragsverarbeiter weitere von ihnen eingesetzte Personen in gleicher Weise verpflichten (§ 203 Abs. 4 Satz 2 Nr. 2 StGB). Unterauftragsverarbeiter erhalten Kenntnis nur, soweit dies für ihre Leistung erforderlich ist.",
       },
       "Der Auftragnehmer trifft die technischen und organisatorischen Maßnahmen nach Art. 32 DSGVO gemäß Anlage 1 und passt sie dem Stand der Technik an, ohne das Schutzniveau zu unterschreiten.",
       "Er unterstützt den Auftraggeber bei der Erfüllung der Betroffenenrechte (Art. 12–23 DSGVO) und der Pflichten aus Art. 32–36 DSGVO.",
@@ -227,7 +237,7 @@ export const AVV: LegalSection[] = [
     title: "Unterauftragsverarbeiter",
     items: [
       "Der Auftraggeber genehmigt die in Anlage 2 genannten Unterauftragsverarbeiter. Über beabsichtigte Änderungen informiert der Auftragnehmer in Textform; der Auftraggeber kann innerhalb von 14 Tagen aus wichtigem datenschutzrechtlichem Grund widersprechen.",
-      "Der Auftragnehmer verpflichtet Unterauftragsverarbeiter vertraglich auf ein gleichwertiges Schutzniveau.",
+      "Der Auftragnehmer verpflichtet Unterauftragsverarbeiter vertraglich auf ein gleichwertiges Schutzniveau, einschließlich der Verschwiegenheit nach § 203 StGB, soweit diese einschlägig ist.",
     ],
   },
   {
