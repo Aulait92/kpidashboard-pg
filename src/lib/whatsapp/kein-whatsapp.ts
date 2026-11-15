@@ -18,6 +18,11 @@
 //      sonst über unseren neutralen Absender für Lead-E-Mails (BOOKING_EMAIL_FROM, wie die Terminbestätigung).
 //   5. Andere Fehler (Zahlung, Vorlage, Limits …) sind kein „kein WhatsApp“: Admin-Alarm (Push und Aufgabe),
 //      höchstens einmal je Kunde, Code und Tag (WhatsAppErrorAlert).
+//   6. (Ole, 15.11.2026) Scheitert die Erstnachricht an einen Lead, der nie selbst geschrieben hat, aus einem anderen
+//      Grund, steht er trotzdem sofort auf der Anrufliste („WhatsApp nicht zustellbar“) und der Berater bekommt
+//      einen Push. Der Admin-Alarm bleibt.
+//   7. 131050 (Marketing-Nachrichten abbestellt) zählt als Abmeldung von WhatsApp: Chat gesperrt wie bei „STOPP“
+//      (ohne Bestätigung, sie käme nicht an), Lead auf die Anrufliste, kein Admin-Alarm.
 // Bestandskampagnen: Empfänger mit „kein WhatsApp“ bekommen künftige Kampagnen nur per E-Mail
 // (ExistingCustomer.waUnavailableAt, lib/bestand/campaigns.ts applyCampaignStatus und lib/bestand/einwilligung.ts).
 
@@ -25,7 +30,7 @@ import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
 import { asAnsprache } from "@/lib/ansprache";
 import { formatPhone } from "@/lib/format";
-import { ART_HINWEIS, ART_LABEL, zustellfehlerOf, type StatusError, type Zustellfehler } from "@/lib/whatsapp/zustellfehler";
+import { ART_HINWEIS, ART_LABEL, isWhatsAppOptOutCode, zustellfehlerOf, type StatusError, type Zustellfehler } from "@/lib/whatsapp/zustellfehler";
 import { keinWhatsAppMail } from "@/lib/whatsapp/kein-whatsapp-mail";
 
 /** Grund auf der Anrufliste (Heute, Leads). */
@@ -40,7 +45,7 @@ export function berlinDay(d: Date): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
 }
 
-export type FailedStatusResult = { error: Zustellfehler; lead?: "flagged" | "already" | "skipped"; campaign?: boolean; alarm?: "created" | "counted" | null };
+export type FailedStatusResult = { error: Zustellfehler; lead?: "flagged" | "already" | "skipped"; optOut?: boolean; campaign?: boolean; alarm?: "created" | "counted" | null };
 
 /**
  * Status „failed“ einer ausgehenden Nachricht verarbeiten (Webhook). Fehler an der Nachricht speichern, dann
@@ -68,8 +73,72 @@ export async function handleFailedStatus(waMessageId: string, errors: StatusErro
     }
     return out;
   }
+  if (isWhatsAppOptOutCode(error.code)) {
+    const { applyOptOut } = await import("@/lib/whatsapp/stopp");
+    await applyOptOut(conv.id, { confirm: false, now });
+    out.optOut = true;
+    if (conv.leadId) out.lead = await markLeadOutreachFailed(conv.leadId, conv.id, { now, code: error.code, optOut: true });
+    return out;
+  }
+  if (conv.leadId && (msg.purpose ?? "").startsWith("outreach")) {
+    out.lead = await markLeadOutreachFailed(conv.leadId, conv.id, { now, code: error.code });
+  }
   out.alarm = await adminWhatsAppAlarm(conv.customerId, error, { now, purpose: msg.purpose });
   return out;
+}
+
+/** outreachStatus nach Abmeldung (wie „STOPP“ vor dem Erstanschreiben, Anrufliste zeigt den Grund) */
+const OPTOUT_STATUS = "skipped_optout";
+
+/**
+ * Erstnachricht nicht zugestellt (anderer Grund als „kein WhatsApp“) bzw. 131050: Lead sofort auf die Anrufliste
+ * (outreachStatus „failed: …“ bzw. „skipped_optout“, siehe getCallbackLeads) und Push an den Berater.
+ * Nur, wenn der Lead nie selbst geschrieben hat und noch kein anderer Grund eingetragen ist.
+ */
+export async function markLeadOutreachFailed(
+  leadId: string,
+  conversationId: string,
+  opts: { now?: Date; code?: number | null; optOut?: boolean } = {},
+): Promise<"flagged" | "already" | "skipped"> {
+  const now = opts.now ?? new Date();
+  const inbound = await prisma.message.count({ where: { conversationId, direction: "inbound" } });
+  if (inbound > 0) return "skipped";
+  const lead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: { id: true, customerId: true, name: true, phone: true, source: true, status: true, outreachAt: true, outreachStatus: true, erasedAt: true, waUnavailableAt: true },
+  });
+  if (!lead || lead.erasedAt || lead.waUnavailableAt) return "skipped";
+  const status = opts.optOut ? OPTOUT_STATUS : `failed: Meta ${opts.code ?? "ohne Code"}`;
+  const r = await prisma.lead.updateMany({
+    where: { id: leadId, OR: [{ outreachStatus: null }, { outreachStatus: { in: ["", "sent", "sent_booked", "no_template"] } }] },
+    data: { outreachStatus: status, outreachAt: lead.outreachAt ?? now, callbackSnoozedUntil: null },
+  });
+  if (r.count === 0) return "already";
+
+  const { logLeadHistory } = await import("@/lib/lead-history");
+  await logLeadHistory(
+    leadId,
+    "status",
+    opts.optOut
+      ? "WhatsApp abgemeldet: Der Lead hat Nachrichten von Ihnen bei WhatsApp abbestellt. Der Assistent schreibt nicht mehr, bitte anrufen."
+      : `WhatsApp nicht zustellbar: Die erste Nachricht kam nicht an${opts.code ? ` (Meta ${opts.code})` : ""}. Bitte anrufen.`,
+    { customerId: lead.customerId, userId: null },
+  );
+
+  const open = OPEN_STATUSES.has((lead.status ?? "").trim().toLowerCase());
+  const booked = await prisma.appointment.count({ where: { leadId, status: "booked", startsAt: { gt: now } } });
+  if (!open || booked > 0) return "flagged";
+  const { notifyLeadPush } = await import("@/lib/team");
+  const { displayProduct } = await import("@/lib/products");
+  const name = lead.name?.trim() || "Ein neuer Lead";
+  const parts = [lead.phone ? formatPhone(lead.phone) : null, lead.source ? displayProduct(lead.source) : null].filter(Boolean).join(" · ");
+  await notifyLeadPush(leadId, {
+    title: `Bitte anrufen: ${name}`,
+    body: `${parts ? `${parts}. ` : ""}${opts.optOut ? "Möchte keine WhatsApp-Nachrichten." : "Die WhatsApp-Nachricht kam nicht an."}`,
+    url: `/buyer/leads/${leadId}`,
+    tag: `wa-failed:${leadId}`,
+  });
+  return "flagged";
 }
 
 /**

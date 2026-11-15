@@ -1,6 +1,7 @@
 // Leads ohne WhatsApp sofort zum Vermittler (Ole, 15.11.2026): Status „failed“ 131026 auf das Erstanschreiben
-// → Lead markiert, Assistent aus, Push, E-Mail genau einmal, ganz oben auf der Anrufliste. Andere Codes → nur
-// Admin-Alarm (einmal je Kunde/Code/Tag). Kampagnen-Empfänger mit 131026 → künftig nur E-Mail.
+// → Lead markiert, Assistent aus, Push, E-Mail genau einmal, ganz oben auf der Anrufliste. Andere Codes auf das
+// Erstanschreiben → sofort auf die Anrufliste plus Admin-Alarm (einmal je Kunde/Code/Tag). 131050 → Abmeldung.
+// Kampagnen-Empfänger mit 131026 → künftig nur E-Mail, mit 131050 → WhatsApp-Einwilligung „nein“.
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const pushes: Array<{ to: string; title: string; body: string; url?: string }> = [];
@@ -159,20 +160,22 @@ describe("Kein WhatsApp", () => {
     expect(mails).toHaveLength(0);
   });
 
-  it("andere Codes: kein „kein WhatsApp“, nur Admin-Alarm (einmal je Kunde, Code und Tag)", async () => {
+  it("andere Codes: kein „kein WhatsApp“, aber sofort auf die Anrufliste plus Admin-Alarm (einmal je Kunde, Code und Tag)", async () => {
     const a = await leadWithOutreach();
     const b = await leadWithOutreach();
     await handleInboundPayload(failed(pnid, a.wamid, 131042, "Business eligibility payment issue"));
     await handleInboundPayload(failed(pnid, b.wamid, 131042, "Business eligibility payment issue"));
+    const list = await getCallbackLeads(customerId);
     for (const x of [a, b]) {
       const l = await prisma.lead.findUniqueOrThrow({ where: { id: x.lead.id } });
       expect(l.waUnavailableAt).toBeNull();
-      expect(l.outreachStatus).toBe("sent");
-      expect((await prisma.conversation.findUniqueOrThrow({ where: { id: x.conv.id } })).botActive).toBe(true);
+      expect(l.outreachStatus).toBe("failed: Meta 131042");
+      expect(list.find((c) => c.id === x.lead.id)?.reason).toBe("WhatsApp nicht zustellbar");
     }
     expect((await prisma.message.findUniqueOrThrow({ where: { waMessageId: a.wamid } })).errorCode).toBe(131042);
     expect(mails).toHaveLength(0);
     expect(pushes.filter((x) => x.title.startsWith("Sofort anrufen"))).toHaveLength(0);
+    expect(pushes.filter((x) => x.title === "Bitte anrufen: Nina Winter" && x.to === "buyers")).toHaveLength(2);
     const adminPushes = pushes.filter((x) => x.to === "admins");
     expect(adminPushes).toHaveLength(1);
     expect(adminPushes[0].title).toContain("WhatsApp-Fehler 131042");
@@ -185,6 +188,51 @@ describe("Kein WhatsApp", () => {
     await handleInboundPayload(failed(pnid, c.wamid, 130429, "Rate limit hit"));
     expect(pushes.filter((x) => x.to === "admins")).toHaveLength(2);
     await prisma.salesTask.deleteMany({ where: { note: { contains: customerId } } });
+  });
+
+  it("Fehler an einer späteren Nachricht (nicht Erstanschreiben): Lead bleibt, wie er ist", async () => {
+    const { lead, conv } = await leadWithOutreach();
+    const wamid = `wamid.spaeter-${uid()}`;
+    await prisma.message.create({ data: { conversationId: conv.id, direction: "outbound", kind: "template", body: "Erinnerung", waMessageId: wamid, status: "sent", sentBy: "system", purpose: "followup_nudge" } });
+    await handleInboundPayload(failed(pnid, wamid, 131049, "Meta chose not to deliver"));
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).outreachStatus).toBe("sent");
+    expect(pushes.filter((x) => x.title.startsWith("Bitte anrufen"))).toHaveLength(0);
+  });
+
+  it("131050 (Marketing abbestellt): zählt als Abmeldung, Lead auf die Anrufliste, kein Admin-Alarm", async () => {
+    const { lead, conv, wamid } = await leadWithOutreach();
+    await handleInboundPayload(failed(pnid, wamid, 131050, "Unable to deliver the message. This recipient has chosen to stop receiving marketing messages"));
+    const c = await prisma.conversation.findUniqueOrThrow({ where: { id: conv.id } });
+    expect(c.optedOutAt).not.toBeNull();
+    expect(c.botActive).toBe(false);
+    expect(waSend).not.toHaveBeenCalled(); // keine Bestätigung, sie käme nicht an
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).outreachStatus).toBe("skipped_optout");
+    const list = await getCallbackLeads(customerId);
+    expect(list.find((x) => x.id === lead.id)?.reason).toContain("Möchte keine WhatsApp-Nachrichten");
+    expect(pushes.find((x) => x.title === "Bitte anrufen: Nina Winter")?.body).toContain("Möchte keine WhatsApp-Nachrichten.");
+    expect(pushes.filter((x) => x.to === "admins")).toHaveLength(0);
+    expect(mails).toHaveLength(0);
+  });
+
+  it("Kampagne: 131050 sperrt WhatsApp für den Bestandskunden, nächste Kampagne per E-Mail", async () => {
+    const ec = await prisma.existingCustomer.create({
+      data: { customerId, firstName: "Olga", lastName: "Abmeld", phone: "4915233344466", email: "olga@example.org", whatsappConsent: "ja", emailConsent: "ja" },
+    });
+    const conv = await prisma.conversation.create({ data: { customerId, contactPhone: ec.phone!, status: "open", botActive: false } });
+    const wamid = `wamid.kampagne-${uid()}`;
+    await prisma.message.create({ data: { conversationId: conv.id, direction: "outbound", kind: "template", body: "Hallo", waMessageId: wamid, status: "sent", sentBy: "system", purpose: "campaign_cross_sell" } });
+    const campaign = await prisma.customerCampaign.create({ data: { customerId, name: "Hausrat 2", occasion: "cross_sell", segment: {}, status: "running" } });
+    const r = await prisma.campaignRecipient.create({ data: { campaignId: campaign.id, existingCustomerId: ec.id, status: "sent", sentAt: new Date(), waMessageId: wamid } });
+
+    await handleInboundPayload(failed(pnid, wamid, 131050, "Marketing opt out"));
+    expect(await prisma.campaignRecipient.findUniqueOrThrow({ where: { id: r.id } })).toMatchObject({ status: "failed", reason: "nicht zugestellt: WhatsApp abbestellt" });
+    expect((await prisma.existingCustomer.findUniqueOrThrow({ where: { id: ec.id } })).whatsappConsent).toBe("nein");
+    expect((await prisma.conversation.findUniqueOrThrow({ where: { id: conv.id } })).optedOutAt).not.toBeNull();
+    expect(pushes.filter((x) => x.to === "admins")).toHaveLength(0);
+
+    const { planAudience } = await import("@/lib/bestand/campaigns");
+    const plan = await planAudience(customerId, "cross_sell", {}, { now: new Date(Date.now() + 40 * 86_400_000) });
+    expect(plan.recipients.find((x) => x.id === ec.id)?.channel).toBe("email");
   });
 
   it("Kampagne: Empfänger mit 131026 markiert, nächste Kampagne nur per E-Mail", async () => {

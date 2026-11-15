@@ -728,12 +728,26 @@ export async function applyCampaignStatus(waMessageId: string, status: string, n
     await prisma.campaignRecipient.updateMany({ where: { waMessageId, deliveredAt: null }, data: { deliveredAt: now } });
     return (await prisma.campaignRecipient.updateMany({ where: { waMessageId, readAt: null }, data: { readAt: now } })).count > 0;
   } else if (status === "failed") {
-    const { isNoWhatsAppCode } = await import("@/lib/whatsapp/zustellfehler");
+    const { isNoWhatsAppCode, isWhatsAppOptOutCode } = await import("@/lib/whatsapp/zustellfehler");
     const noWa = isNoWhatsAppCode(opts.code);
+    const optOut = isWhatsAppOptOutCode(opts.code);
     const r = await prisma.campaignRecipient.updateMany({
       where: { waMessageId, status: "sent" },
-      data: { status: "failed", reason: noWa ? "nicht zugestellt: kein WhatsApp" : opts.code ? `nicht zugestellt (${opts.code})` : "nicht zugestellt" },
+      data: {
+        status: "failed",
+        reason: noWa ? "nicht zugestellt: kein WhatsApp" : optOut ? "nicht zugestellt: WhatsApp abbestellt" : opts.code ? `nicht zugestellt (${opts.code})` : "nicht zugestellt",
+      },
     });
+    // 131050 (Ole, 15.11.2026): zählt als Abmeldung von WhatsApp, künftige Kampagnen nur noch per E-Mail (falls erlaubt)
+    if (optOut) {
+      const rows = await prisma.campaignRecipient.findMany({ where: { waMessageId }, select: { existingCustomerId: true } });
+      if (rows.length)
+        await prisma.existingCustomer.updateMany({
+          where: { id: { in: rows.map((x) => x.existingCustomerId) } },
+          data: { whatsappConsent: "nein", whatsappConsentAt: now, whatsappConsentSource: "lead" },
+        });
+      return rows.length > 0;
+    }
     if (noWa) {
       const rows = await prisma.campaignRecipient.findMany({ where: { waMessageId }, select: { existingCustomerId: true } });
       if (rows.length) await prisma.existingCustomer.updateMany({ where: { id: { in: rows.map((x) => x.existingCustomerId) }, waUnavailableAt: null }, data: { waUnavailableAt: now } });
