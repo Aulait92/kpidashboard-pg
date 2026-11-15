@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 // damit Claude Zustände prüfen kann, ohne Datenbank-Zugang. Kein freies SQL, keine Geheimnisse,
 // Lead-Daten nur so weit nötig (Name statt Telefon/E-Mail).
 // Absicherung: eigener Lese-Schlüssel OPS_READ_TOKEN (≥ 32 Zeichen) als Bearer-Token.
-//   GET /api/ops/diagnose?q=uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|gedankenstriche|login&email=…|meta&page=…|capi
+//   GET /api/ops/diagnose?q=uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi
 export const dynamic = "force-dynamic";
 
 function authorized(req: Request): boolean {
@@ -245,7 +245,43 @@ async function capi() {
   return capiDiagnose();
 }
 
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, gedankenstriche, login, meta, capi };
+/**
+ * 360dialog-Nummern unter unserem Partner (Partner-API, neueste zuerst), Ole 15.11.2026: Status je Nummer, um
+ * hängende Verbindungen (z. B. 404 beim Webhook) zu klären. Nur Status-Felder, keine Schlüssel, E-Mail gekürzt.
+ */
+async function d360() {
+  const { partnerConfig } = await import("@/lib/whatsapp/dialog360-partner");
+  const cfg = partnerConfig();
+  if (!cfg) return { fehler: "Partner-Zugang nicht eingerichtet" };
+  const url = new URL(`${cfg.hubUrl}/api/v2/partners/${encodeURIComponent(cfg.partnerId)}/channels`);
+  url.searchParams.set("sort", "-created_at");
+  url.searchParams.set("limit", "10");
+  const res = await fetch(url, { headers: { "X-API-Key": cfg.apiKey, Accept: "application/json" }, signal: AbortSignal.timeout(15_000) });
+  if (!res.ok) return { fehler: `360dialog ${res.status}`, text: (await res.text()).slice(0, 300) };
+  const json = (await res.json()) as { partner_channels?: Record<string, unknown>[] };
+  const mask = (e: unknown) => (typeof e === "string" ? e.replace(/^(.).*(@.*)$/, "$1…$2") : null);
+  const pick = (o: unknown, keys: string[]) =>
+    o && typeof o === "object" ? Object.fromEntries(keys.filter((k) => k in (o as object)).map((k) => [k, (o as Record<string, unknown>)[k]])) : null;
+  return (json.partner_channels ?? []).map((c) => {
+    const client = c.client as Record<string, unknown> | undefined;
+    return {
+      id: c.id,
+      created_at: c.created_at,
+      status: c.status,
+      availability_status: c.availability_status,
+      account_mode: c.account_mode,
+      is_migrated: c.is_migrated,
+      terminated_at: c.terminated_at,
+      setup_info: pick(c.setup_info, ["phone_number", "phone_name"]),
+      waba_account: pick(c.waba_account, ["id", "status", "external_id", "on_behalf_of_business_info", "fb_account_status", "namespace"]),
+      integration: pick(c.integration, ["state", "app_id", "enabled"]),
+      client: client ? { id: client.id, name: client.name, status: client.status, partner_payload: client.partner_payload, email: mask((client.contact_info as Record<string, unknown> | undefined)?.email) } : null,
+      felder: Object.keys(c),
+    };
+  });
+}
+
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, gedankenstriche, login, meta, capi };
 
 export async function GET(req: Request): Promise<Response> {
   if (!authorized(req)) return Response.json({ error: "Unauthorized" }, { status: 401 });
