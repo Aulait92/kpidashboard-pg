@@ -71,10 +71,10 @@ const DESKTOP = "Einen Computer statt des Handys. Erlauben Sie Pop-up-Fenster im
 const ACCOUNT_START: GuideStep[] = [
   {
     where: "360dialog",
-    title: "Konto bei 360dialog anlegen",
-    text: "Sie landen direkt bei der Registrierung von 360dialog, unserem WhatsApp-Anbieter. Sie legen ein Konto mit E-Mail und Passwort an („Sign up“). Das ist kostenlos, die Nummer bleibt Ihre. Prüfen Sie oben auf der Seite, dass performancegrowth als Partner genannt ist.",
+    title: "Konto bei 360dialog: Einladung annehmen",
+    text: "Wir legen Ihr Konto bei 360dialog, unserem WhatsApp-Anbieter, für Sie an. Sie bekommen eine E-Mail von 360dialog und legen darüber Ihr Passwort fest. Das ist kostenlos, die Nummer bleibt Ihre. Danach tippen Sie hier auf „Weiter: WhatsApp verbinden“ und melden sich bei 360dialog an („Log in“).",
     pitfall:
-      "Nicht mit Facebook oder Google anmelden: Das kann in einem alten Konto eines anderen Anbieters landen (z. B. Superchat). Werden Sie nach einem Tarif oder einer Währung zum Bezahlen gefragt oder sehen Sie fremde Firmen oder Nummern, brechen Sie ab und melden Sie sich bei uns. Starten Sie immer über den Knopf in unserer App, nicht direkt auf der Website von 360dialog. Sie haben schon ein eigenes Konto bei 360dialog? Dann wählen Sie auf der Seite „Log in“.",
+      "Nicht mit Facebook oder Google anmelden: Das kann in einem alten Konto eines anderen Anbieters landen (z. B. Superchat). Werden Sie nach einem Tarif oder einer Währung zum Bezahlen gefragt oder sehen Sie fremde Firmen oder Nummern, brechen Sie ab und melden Sie sich bei uns. Bitte kein eigenes Konto über „Sign up“ registrieren, sonst landet es nicht bei uns. Starten Sie immer über den Knopf in unserer App, nicht direkt auf der Website von 360dialog. Sie haben schon ein Konto bei 360dialog mit dieser E-Mail? Dann melden Sie sich einfach an.",
   },
   {
     where: "360dialog",
