@@ -30,7 +30,8 @@ import {
   followUpNote,
   funnelHint,
   isSelfReferral,
-  REWARD_WAIT_DAYS,
+  REWARD_SAFE_LIMIT,
+  berlinYear,
   referralBlocker,
   renderText,
   resolveOffer,
@@ -39,6 +40,7 @@ import {
   rewardLabel,
   rewardSentence,
   rewardTaskNote,
+  rewardWithinLimit,
   sendingWindow,
   statusUpdateLine,
   statusUpdateText,
@@ -523,10 +525,47 @@ export async function sendReferralUpdates(now = new Date()): Promise<number> {
   return sent;
 }
 
+/** Alle Empfehlungslinks derselben Person (Link als Kontakt und als Bestandskunde, verknüpft über ExistingCustomer.leadId). */
+async function referrerLinkIds(link: { id: string; leadId: string | null; existingCustomerId: string | null }): Promise<string[]> {
+  const leadIds = new Set<string>();
+  const ecIds = new Set<string>();
+  if (link.leadId) {
+    leadIds.add(link.leadId);
+    const ec = await prisma.existingCustomer.findUnique({ where: { leadId: link.leadId }, select: { id: true } });
+    if (ec) ecIds.add(ec.id);
+  }
+  if (link.existingCustomerId) {
+    ecIds.add(link.existingCustomerId);
+    const ec = await prisma.existingCustomer.findUnique({ where: { id: link.existingCustomerId }, select: { leadId: true } });
+    if (ec?.leadId) leadIds.add(ec.leadId);
+  }
+  const links = await prisma.referralLink.findMany({
+    where: { OR: [...(leadIds.size ? [{ leadId: { in: [...leadIds] } }] : []), ...(ecIds.size ? [{ existingCustomerId: { in: [...ecIds] } }] : []), { id: link.id }] },
+    select: { id: true },
+  });
+  return [...new Set([link.id, ...links.map((l) => l.id)])];
+}
+
+/** Summe der Dankeschöns (vorgemerkt oder übergeben) dieses Empfehlers im Kalenderjahr von „at“ (Berlin). */
+export async function rewardUsedInYear(linkIds: string[], at: Date, fallbackAmount: number): Promise<number> {
+  const year = berlinYear(at);
+  const rows = await prisma.lead.findMany({
+    where: {
+      referralLinkId: { in: linkIds },
+      referralRewardStatus: { in: ["offen", "erledigt"] },
+      referralRewardDueAt: { gte: new Date(Date.UTC(year - 1, 11, 30)), lt: new Date(Date.UTC(year + 1, 0, 2)) },
+    },
+    select: { referralRewardDueAt: true, referralRewardAmount: true },
+  });
+  return rows.filter((r) => r.referralRewardDueAt && berlinYear(r.referralRewardDueAt) === year).reduce((n, r) => n + (r.referralRewardAmount ?? fallbackAmount), 0);
+}
+
 /**
- * Dankeschön für Empfehlende: sobald der Anlass erreicht ist (Termin stattgefunden bzw. Abschluss),
- * wird es als „offen“ vorgemerkt und der Vertreter bekommt eine Aufgabe. Übergeben wird von Hand.
- * Nie für Selbstempfehlungen, nie über den allgemeinen Link, nie für die empfohlene Person.
+ * Dankeschön für Empfehlende: sobald ein Gespräch mit der empfohlenen Person stattgefunden hat, wird es als
+ * „offen“ vorgemerkt (mit Betrag) und der Vertreter bekommt eine Aufgabe. Übergeben wird von Hand. Nie für
+ * Selbstempfehlungen, nie über den allgemeinen Link, nie für die empfohlene Person, nicht an einen Abschluss
+ * gekoppelt. Höchstens REWARD_SAFE_LIMIT € je Empfehler und Kalenderjahr (§ 48b VAG): Würde die Grenze
+ * überschritten, gibt es keins („jahresgrenze“).
  */
 export async function planReferralRewards(now = new Date()): Promise<number> {
   const customers = await prisma.reviewSettings.findMany({
@@ -546,14 +585,27 @@ export async function planReferralRewards(now = new Date()): Promise<number> {
         erasedAt: null,
         // nur Empfehlungen, die nach dem Einschalten des Dankeschöns kamen
         createdAt: { gte: c.rewardConfirmedAt },
-        ...(reward.trigger === "abschluss" ? { status: CLOSED } : { OR: [{ status: CLOSED }, { appointments: { some: { status: "completed" } } }] }),
+        // Gespräch hat stattgefunden (ein Abschluss setzt ein Gespräch voraus, ist aber nicht die Bedingung)
+        OR: [{ status: CLOSED }, { appointments: { some: { status: "completed" } } }],
       },
-      select: { id: true, closedAt: true, referralLink: { select: { lead: { select: { id: true, name: true, followUpAt: true, erasedAt: true } }, existingCustomer: { select: { firstName: true, lastName: true } } } } },
+      select: {
+        id: true,
+        referralLink: { select: { id: true, leadId: true, existingCustomerId: true, lead: { select: { id: true, name: true, followUpAt: true, erasedAt: true } }, existingCustomer: { select: { firstName: true, lastName: true } } } },
+      },
       take: PER_RUN,
     });
     for (const l of leads) {
-      const dueAt = reward.trigger === "abschluss" ? new Date((l.closedAt ?? now).getTime() + REWARD_WAIT_DAYS * DAY_MS) : now;
-      const claimed = await prisma.lead.updateMany({ where: { id: l.id, referralRewardStatus: null }, data: { referralRewardStatus: "offen", referralRewardDueAt: dueAt } });
+      const dueAt = now;
+      // Jahresgrenze je Empfehler (alle seine Links zusammen)
+      const used = l.referralLink ? await rewardUsedInYear(await referrerLinkIds(l.referralLink), dueAt, reward.amount) : 0;
+      if (!rewardWithinLimit(used, reward.amount)) {
+        await prisma.lead.updateMany({ where: { id: l.id, referralRewardStatus: null }, data: { referralRewardStatus: "jahresgrenze", referralRewardDueAt: dueAt } });
+        continue;
+      }
+      const claimed = await prisma.lead.updateMany({
+        where: { id: l.id, referralRewardStatus: null },
+        data: { referralRewardStatus: "offen", referralRewardDueAt: dueAt, referralRewardAmount: Math.min(reward.amount, REWARD_SAFE_LIMIT) },
+      });
       if (claimed.count === 0) continue;
       planned++;
       // Aufgabe in „Heute“ am Kontakt des Empfehlenden, wenn dort keine andere Wiedervorlage steht
@@ -577,6 +629,7 @@ export async function openRewards(customerId: string) {
       id: true,
       name: true,
       referralRewardDueAt: true,
+      referralRewardAmount: true,
       referralLink: { select: { lead: { select: { id: true, name: true } }, existingCustomer: { select: { firstName: true, lastName: true } } } },
     },
   });
@@ -586,7 +639,8 @@ export async function openRewards(customerId: string) {
     recommender: r.referralLink?.lead?.name ?? ([r.referralLink?.existingCustomer?.firstName, r.referralLink?.existingCustomer?.lastName].filter(Boolean).join(" ") || "Kunde"),
     recommenderLeadId: r.referralLink?.lead?.id ?? null,
     dueAt: r.referralRewardDueAt,
-    label: settings.reward ? rewardLabel(settings.reward) : "Dankeschön",
+    // Betrag, der beim Vormerken galt (Einstellung kann sich seitdem geändert haben)
+    label: settings.reward ? rewardLabel({ ...settings.reward, amount: r.referralRewardAmount ?? settings.reward.amount }) : "Dankeschön",
   }));
 }
 

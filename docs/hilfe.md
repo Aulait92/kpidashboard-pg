@@ -913,11 +913,16 @@ Bewertung im Einzelfall liegt bei Ihnen.**
   heute nicht um Empfehlung bitten. 4. Verbindlich machen: „Ich melde mich in zwei Tagen kurz und erzähle, ob sich
   schon jemand gemeldet hat.“ Die Aufgabe dafür legt die App an. Bei kurzen Kontakten (Schaden, Rückruf) reicht:
   guten Moment benennen, nach der Zufriedenheit fragen, Link senden.
-- **Dankeschön für Empfehlende (optional, standardmäßig aus):** Gutschein oder Spende, vorher angekündigt auf der
-  Seite Ihres Kunden. Fällig nach einem stattgefundenen Gespräch oder 30 Tage nach dem Abschluss; die App erinnert
-  Sie, Sie übergeben selbst und haken unter „Offene Dankeschöns“ ab. Es geht nie an die empfohlene Person und nicht
-  bei Selbstempfehlung. Bis 15 € je Vertrag und Jahr ist es unkritisch; darüber bitte vorher mit Ihrem Versicherer
-  oder Ihrer Rechtsberatung klären (§ 48b VAG). Die App gibt dazu keine Rechtsberatung.
+- **Dankeschön für Empfehlende (optional, standardmäßig aus):** Gutschein oder Spende (kein Bargeld), vorher
+  angekündigt auf der Seite Ihres Kunden. Fällig, sobald ein Gespräch mit der empfohlenen Person stattgefunden hat,
+  **nicht an einen Abschluss gekoppelt** (seit 15.11.2026; die Einstellung „nach dem Abschluss“ gibt es nicht mehr).
+  Die App erinnert Sie, Sie übergeben selbst und haken unter „Offene Dankeschöns“ ab. Es geht nie an die empfohlene
+  Person und nicht bei Selbstempfehlung. **Höchstens 15 € je Empfehler und Kalenderjahr** (§ 48b VAG): Der Wert ist
+  auf 15 € begrenzt, und die App zählt alle Dankeschöns eines Empfehlers im Jahr zusammen (auch über seinen Link als
+  Bestandskunde). Würde die Grenze überschritten, merkt die App für diese Empfehlung kein Dankeschön vor. Die App gibt
+  dazu keine Rechtsberatung; beachten Sie auch die Vorgaben Ihres Versicherers.
+- **Keine Nachrichten an Bekannte über die App:** Ihr Kunde teilt seinen Link selbst (WhatsApp, Teilen-Menü), oder die
+  empfohlene Person meldet sich über den Link bzw. per WhatsApp selbst. Die App schreibt Bekannte nie von sich aus an.
 - **Empfehlungslink senden:** In jedem Kontakt mit Abschluss (und bei Bestandskunden) gibt es den Knopf
   „Empfehlungslink senden“ – jederzeit nutzbar, z. B. nach einem guten Gespräch. Ohne WhatsApp-Verbindung erscheint
   der Text zum Kopieren oder Teilen. In der Kundenliste unter „Bestand“ öffnet der Knopf ein kleines Fenster:

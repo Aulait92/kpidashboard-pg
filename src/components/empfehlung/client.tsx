@@ -30,7 +30,7 @@ import {
   type ShareState,
   type TestState,
 } from "@/app/buyer/empfehlungen/actions";
-import { DEFAULT_TEXTS, FOLLOWUP_LIMITS, OCCASIONS, OFFER_LIMITS, OFFER_PRESETS, REWARD_LIMITS, REWARD_SAFE_LIMIT, REWARD_WAIT_DAYS, TEXT_LABELS, bookingTerms, offerWarning, renderText, rewardWarning, type Occasion, type OfferKind, type TextKey } from "@/lib/empfehlung/shared";
+import { DEFAULT_TEXTS, FOLLOWUP_LIMITS, OCCASIONS, OFFER_LIMITS, OFFER_PRESETS, REWARD_LIMITS, REWARD_SAFE_LIMIT, TEXT_LABELS, bookingTerms, offerWarning, renderText, rewardWarning, type Occasion, type OfferKind, type TextKey } from "@/lib/empfehlung/shared";
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 const fmtDate = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(iso));
@@ -623,13 +623,7 @@ export function SettingsForm({
                   className="mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3"
                 />
               </label>
-              <label className="block">
-                <span className="font-medium">Fällig, wenn</span>
-                <select name="rewardTrigger" defaultValue={initial.reward.trigger} className="mt-1 h-10 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3">
-                  <option value="termin">ein Gespräch stattgefunden hat</option>
-                  <option value="abschluss">ein Abschluss zustande kam ({REWARD_WAIT_DAYS} Tage danach)</option>
-                </select>
-              </label>
+              <p className="block self-end pb-2 text-sm text-[color:var(--muted)]">Fällig, sobald ein Gespräch stattgefunden hat (nicht an einen Abschluss gekoppelt).</p>
             </>
           ) : null}
         </div>
@@ -637,9 +631,10 @@ export function SettingsForm({
           <>
             {rewardWarn ? <p className="rounded-[var(--radius-sm)] bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">{rewardWarn}</p> : null}
             <p className="text-sm text-[color:var(--muted)]">
-              Rechtlicher Rahmen: Zuwendungen an Versicherungsnehmer sind nach § 48b VAG nur bis {REWARD_SAFE_LIMIT} € je Vertrag und Jahr unkritisch. Eine Vergütung
-              für den reinen Tipp ist davon im Regelfall nicht erfasst, bei eigenen Kunden aber im Einzelfall zu prüfen. Wer sich selbst empfiehlt, bekommt kein
-              Dankeschön. Beachten Sie auch die Vorgaben Ihres Versicherers. Das ist keine Rechtsberatung.
+              Rechtlicher Rahmen (§ 48b VAG): höchstens {REWARD_SAFE_LIMIT} € je Empfehler und Kalenderjahr, die App zählt alle Dankeschöns eines Empfehlers
+              zusammen und merkt keins mehr vor, wenn die Grenze überschritten würde. Kein Bargeld, nur Gutschein oder Spende. Nichts für die empfohlene Person
+              und keine Kopplung an einen Vertragsabschluss. Wer sich selbst empfiehlt, bekommt kein Dankeschön. Beachten Sie auch die Vorgaben Ihres
+              Versicherers. Das ist keine Rechtsberatung.
             </p>
             <label className="flex items-start gap-2">
               <input type="checkbox" name="rewardConfirmed" defaultChecked={initial.reward.confirmed} required className="mt-0.5 h-4 w-4" />

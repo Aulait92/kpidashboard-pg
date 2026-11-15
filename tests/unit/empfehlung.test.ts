@@ -24,6 +24,8 @@ import {
   resolveReward,
   rewardSentence,
   rewardWarning,
+  rewardWithinLimit,
+  berlinYear,
   signatureLine,
   statusUpdateLine,
   statusUpdateText,
@@ -223,21 +225,38 @@ describe("Empfehlungen – Angebot, Anlässe, Trichter, Dankeschön (14.11.2026)
     expect(funnelHint({ linksSent: 20, linksOpened: 12, visitors: 40, leads: 10, closings: 6 }).stage).toBe("ok");
   });
 
-  it("Dankeschön: standardmäßig aus, nur mit Bestätigung, Hinweis über 15 €", () => {
+  it("Dankeschön: standardmäßig aus, nur mit Bestätigung, höchstens 15 €, kein Bargeld, nicht an einen Abschluss gekoppelt", () => {
     expect(resolveReward({ rewardKind: "none", rewardAmount: 15 })).toBeNull();
     expect(validateReward("none", null, "", false)).toBeNull();
     expect(validateReward("gutschein", 15, "", false)).toMatch(/bestätigen/);
     expect(validateReward("gutschein", 15, "", true)).toBeNull();
     expect(validateReward("gutschein", 0, "", true)).toMatch(/Wert/);
-    expect(validateReward("spende", 20, "", true)).toMatch(/Spende/);
+    expect(validateReward("gutschein", 16, "", true)).toMatch(/höchstens 15 € je Empfehler und Kalenderjahr/);
+    expect(validateReward("spende", 10, "", true)).toMatch(/Spende/);
+    expect(validateReward("gutschein", 10, "Bargeld", true)).toMatch(/kein Bargeld/);
+    expect(validateReward("gutschein", 10, "Überweisung aufs Konto", true)).toMatch(/kein Bargeld/);
+    expect(validateReward("gutschein", 10, "Wunschgutschein, dankbar", true)).toBeNull();
     expect(rewardWarning("gutschein", REWARD_SAFE_LIMIT)).toBeNull();
     expect(rewardWarning("gutschein", 50)).toMatch(/15 €/);
     expect(rewardWarning("none", 50)).toBeNull();
-    const r = resolveReward({ rewardKind: "spende", rewardAmount: 20, rewardNote: "das Tierheim", rewardTrigger: "abschluss" })!;
-    expect(rewardSentence(r, "Max Muster")).toBe("Wird aus Ihrer Empfehlung ein Kunde, spendet Max Muster als Dankeschön 20 € an das Tierheim.");
+    // Über 15 € gilt nicht (Altwerte werden per Migration auf 15 € gesetzt); „Abschluss“ gilt als „Gespräch“
+    expect(resolveReward({ rewardKind: "spende", rewardAmount: 20, rewardNote: "das Tierheim" })).toBeNull();
+    const r = resolveReward({ rewardKind: "spende", rewardAmount: 10, rewardNote: "das Tierheim", rewardTrigger: "abschluss" })!;
+    expect(r.trigger).toBe("termin");
+    expect(rewardSentence(r, "Max Muster")).toBe(
+      "Kommt ein Gespräch mit Ihrer Empfehlung zustande, spendet Max Muster als Dankeschön 10 € an das Tierheim. Insgesamt höchstens 15 € im Kalenderjahr, unabhängig von einem Vertragsabschluss.",
+    );
     const g = resolveReward({ rewardKind: "gutschein", rewardAmount: 15, rewardNote: "Wunschgutschein" })!;
-    expect(g.trigger).toBe("termin");
     expect(rewardSentence(g, "Max Muster")).toContain("Wunschgutschein über 15 €");
+  });
+
+  it("Jahresgrenze je Empfehler: Summe im Kalenderjahr (Berlin), kein Teilbetrag", () => {
+    expect(rewardWithinLimit(0, 15)).toBe(true);
+    expect(rewardWithinLimit(10, 5)).toBe(true);
+    expect(rewardWithinLimit(10, 10)).toBe(false);
+    expect(rewardWithinLimit(15, 1)).toBe(false);
+    expect(berlinYear(new Date("2026-12-31T23:30:00Z"))).toBe(2027);
+    expect(berlinYear(new Date("2026-12-31T22:30:00Z"))).toBe(2026);
   });
 
   it("Mit Dankeschön dürfen eigene Empfehlungstexte es nennen, die Google-Nachfrage nie", () => {

@@ -93,7 +93,8 @@ export async function saveSettingsAction(_prev: SettingsState, fd: FormData): Pr
     rewardKind,
     rewardAmount: rewardActive ? Math.round(Number(fd.get("rewardAmount"))) : null,
     rewardNote: rewardActive ? rewardNote || null : null,
-    rewardTrigger: fd.get("rewardTrigger") === "abschluss" ? "abschluss" : "termin",
+    // Nicht an einen Abschluss gekoppelt (§ 48b VAG, Anwalts-Memo 15.11.2026): immer „Gespräch fand statt“
+    rewardTrigger: "termin",
     googleReviewUrl,
     reviewDelayDays: clampDelay(fd.get("reviewDelayDays"), DEFAULT_DELAYS.review),
     referralDelayDays: clampDelay(fd.get("referralDelayDays"), DEFAULT_DELAYS.referral),

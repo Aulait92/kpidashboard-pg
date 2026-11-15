@@ -677,10 +677,12 @@ model Lead {
   referralStatusConsent Boolean @default(false)
   // Letzte Rückmeldung an den Empfehlenden: gemeldet | termin
   referralNotifiedStage String?
-  // Dankeschön an den Empfehlenden für diese Empfehlung: offen | erledigt | entfaellt
+  // Dankeschön an den Empfehlenden für diese Empfehlung: offen | erledigt | entfaellt | jahresgrenze (15 € je
+  // Empfehler und Kalenderjahr erreicht, § 48b VAG). Betrag in € beim Vormerken (zählt für die Jahresgrenze)
   referralRewardStatus  String?
   referralRewardDueAt   DateTime?
   referralRewardDoneAt  DateTime?
+  referralRewardAmount  Int?
   // Bewertungs-Wächter: Google-Bewertungen, die diesem Kontakt zugeordnet sind
   googleReviews     GoogleReview[]
   // Rückmeldung an Meta (lib/capi): Stufen dieses Leads im Postausgang

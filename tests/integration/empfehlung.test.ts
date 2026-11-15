@@ -434,6 +434,37 @@ describe("Empfehlungen & Bewertungen", () => {
     expect(await openRewards(id)).toHaveLength(0);
   });
 
+  it("Dankeschön: höchstens 15 € je Empfehler und Kalenderjahr, über alle Links derselben Person gezählt (§ 48b VAG)", async () => {
+    const id = await activeModule();
+    await prisma.reviewSettings.update({ where: { customerId: id }, data: { rewardKind: "gutschein", rewardAmount: 10, rewardNote: "Wunschgutschein", rewardTrigger: "termin", rewardConfirmedAt: new Date(NOW.getTime() - 10 * DAY_MS) } });
+    const rec = await closedLead(id, `49151${String(Math.floor(Math.random() * 1e8)).padStart(8, "0")}`, "Gabi Grenze", 25);
+    const contactLink = await prisma.referralLink.create({ data: { customerId: id, leadId: rec.id, token: `tok-lim-${uid()}-abcdef` } });
+    // Dieselbe Person als Bestandskundin mit eigenem Link (verknüpft über leadId)
+    const ec = await prisma.existingCustomer.create({ data: { customerId: id, firstName: "Gabi", lastName: "Grenze", leadId: rec.id } });
+    const bestandLink = await prisma.referralLink.create({ data: { customerId: id, existingCustomerId: ec.id, token: `tok-lib-${uid()}-abcdef` } });
+    const refer = async (token: string, name: string, at: Date) => {
+      await submitReferral(token, { name, phone: `4915${uid()}${Math.floor(Math.random() * 90 + 10)}`, email: null, topic: null, message: null, consent: true }, at);
+      const l = await prisma.lead.findFirstOrThrow({ where: { customerId: id, name } });
+      await prisma.appointment.create({ data: { customerId: id, leadId: l.id, mode: "phone", startsAt: at, status: "completed" } });
+      return l;
+    };
+    const a = await refer(contactLink.token, "Erster Tipp", NOW);
+    const b = await refer(bestandLink.token, "Zweiter Tipp", new Date(NOW.getTime() + 1000));
+    expect(await planReferralRewards(NOW)).toBe(1);
+    const [ra, rb] = await Promise.all([prisma.lead.findUniqueOrThrow({ where: { id: a.id } }), prisma.lead.findUniqueOrThrow({ where: { id: b.id } })]);
+    expect([ra.referralRewardStatus, ra.referralRewardAmount]).toEqual(["offen", 10]);
+    // 10 € + 10 € > 15 € → kein zweites Dankeschön, auch nicht über den Bestands-Link
+    expect(rb.referralRewardStatus).toBe("jahresgrenze");
+    expect(await openRewards(id)).toHaveLength(1);
+    // Neues Kalenderjahr: wieder möglich
+    const nextYear = new Date("2027-01-05T10:00:00Z");
+    const c2 = await refer(contactLink.token, "Dritter Tipp", nextYear);
+    expect(await planReferralRewards(nextYear)).toBe(1);
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: c2.id } })).referralRewardStatus).toBe("offen");
+    // Die empfohlene Person bekommt nie etwas: kein Dankeschön-Satz auf ihrer Seite, der Text gilt nur dem Empfehlenden
+    expect((await loadReferralPage(contactLink.token))!.rewardText).toContain("höchstens 15 € im Kalenderjahr");
+  });
+
   it("WhatsApp-Knopf: Anfrage mit Code → Lead „Empfehlung“ am Chat, ohne Erstanschreiben; ohne Code oder bei bekanntem Kontakt nichts", async () => {
     const id = await activeModule();
     await prisma.whatsAppAccount.create({ data: { customerId: id, status: "connected", phoneNumber: "+49 30 1234567" } });

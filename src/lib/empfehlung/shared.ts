@@ -469,19 +469,24 @@ export function funnelHint(f: Funnel): FunnelHint {
 }
 
 // ─── Dankeschön für Empfehlende (Tippgeber-Vergütung) ───────────────────────
-// Standardmäßig aus. Rechtlicher Rahmen (Stand 11/2026, keine Rechtsberatung):
-//  • § 48b VAG verbietet Sondervergütungen an Versicherungsnehmer; Tippgeber sind laut BaFin im
-//    Regelfall nicht erfasst. Ist der Tippgeber zugleich Kunde, ist die Zahlung trotzdem daran zu messen.
-//  • Geringwertig und damit unkritisch: bis 15 € je Versicherungsverhältnis und Kalenderjahr.
-//  • Nie für die empfohlene Person, nie für einen eigenen Vertrag, keine Schein-Empfehlungen.
-// Deshalb: Vertreter bestätigt die Prüfung, über 15 € gibt es einen deutlichen Hinweis,
-// Selbstempfehlungen bekommen kein Dankeschön, ausgezahlt wird von Hand (Aufgabe in der App).
+// Standardmäßig aus. Rechtlicher Rahmen (Anwalts-Memo 15.11.2026, keine Rechtsberatung):
+//  • § 48b VAG gilt für Versicherer und Vermittler, das Dankeschön wird dem Vermittler zugerechnet.
+//  • Geringwertig: bis 15 € je Versicherungsverhältnis und Kalenderjahr. Bis zur anwaltlichen Klärung zählen wir
+//    streng: höchstens 15 € je EMPFEHLER und Kalenderjahr (Europe/Berlin), über alle seine Empfehlungen zusammen.
+//  • Kein Bargeld (nur Gutschein oder Spende), nie für die empfohlene Person, nicht an einen Abschluss gekoppelt
+//    (fällig, sobald ein Gespräch stattgefunden hat), keine Schein-Empfehlungen (Selbstempfehlung: nichts).
+// Ausgezahlt wird von Hand (Aufgabe in der App); die App merkt sich je Dankeschön den Betrag
+// (Lead.referralRewardAmount) und vergibt keins mehr, wenn die Jahresgrenze überschritten würde (Status „jahresgrenze“).
 
 export type RewardKind = "none" | "gutschein" | "spende";
-export type RewardTrigger = "termin" | "abschluss";
+/** Nur noch „termin“ (Gespräch fand statt). „abschluss“ gab es bis 15.11.2026 und gilt jetzt als „termin“. */
+export type RewardTrigger = "termin";
 export const REWARD_KINDS: RewardKind[] = ["none", "gutschein", "spende"];
+/** Harte Obergrenze je Empfehler und Kalenderjahr (€). */
 export const REWARD_SAFE_LIMIT = 15;
-export const REWARD_LIMITS = { min: 1, max: 500, note: 60 } as const;
+export const REWARD_LIMITS = { min: 1, max: REWARD_SAFE_LIMIT, note: 60 } as const;
+/** Bargeld bzw. Geldüberweisung ist ausgeschlossen. */
+const CASH = /(^|[^a-zäöüß])(bar|bargeld|cash|geld|überweisung|ueberweisung|paypal|auszahlung)($|[^a-zäöüß])/i;
 /** Bei „Abschluss“: frühestens so viele Tage danach übergeben (Widerrufsfrist). */
 export const REWARD_WAIT_DAYS = 30;
 export const REWARD_TASK = "Dankeschön für Empfehlung übergeben";
@@ -496,25 +501,40 @@ export function resolveReward(s: RewardSettings): ResolvedReward | null {
   if (kind === "none" || !REWARD_KINDS.includes(kind) || !Number.isFinite(amount) || amount < REWARD_LIMITS.min || amount > REWARD_LIMITS.max) return null;
   const note = (s.rewardNote ?? "").trim();
   if (kind === "spende" && !note) return null;
-  return { kind, amount, note, trigger: s.rewardTrigger === "abschluss" ? "abschluss" : "termin" };
+  return { kind, amount, note, trigger: "termin" };
 }
 
 export function validateReward(kind: string, amountRaw: unknown, note: string, confirmed: boolean): string | null {
   if (!REWARD_KINDS.includes(kind as RewardKind)) return "Bitte eine Art wählen.";
   if (kind === "none") return null;
   const amount = Math.round(Number(amountRaw));
-  if (!Number.isFinite(amount) || amount < REWARD_LIMITS.min || amount > REWARD_LIMITS.max) return `Bitte einen Wert zwischen ${REWARD_LIMITS.min} und ${REWARD_LIMITS.max} € eingeben.`;
+  if (!Number.isFinite(amount) || amount < REWARD_LIMITS.min || amount > REWARD_LIMITS.max)
+    return `Bitte einen Wert zwischen ${REWARD_LIMITS.min} und ${REWARD_LIMITS.max} € eingeben (höchstens ${REWARD_SAFE_LIMIT} € je Empfehler und Kalenderjahr).`;
   if (note.trim().length > REWARD_LIMITS.note) return `Bitte höchstens ${REWARD_LIMITS.note} Zeichen.`;
   if (kind === "spende" && !note.trim()) return "Bitte angeben, an wen die Spende geht.";
+  if (CASH.test(note)) return "Bitte kein Bargeld und keine Geldüberweisung, sondern einen Gutschein oder eine Spende.";
   if (!confirmed) return "Bitte bestätigen Sie, dass Sie die Zulässigkeit für sich geprüft haben.";
   return null;
 }
 
-/** Hinweis über der Geringwertigkeitsgrenze (kein Fehler). */
+/** Hinweis bei einem Wert über der Grenze (wird beim Speichern ohnehin abgelehnt). */
 export function rewardWarning(kind: string, amountRaw: unknown): string | null {
   const amount = Math.round(Number(amountRaw));
   if (kind === "none" || !Number.isFinite(amount) || amount <= REWARD_SAFE_LIMIT) return null;
-  return `Über ${REWARD_SAFE_LIMIT} € ist das nur als Vergütung für den Tipp zulässig, nicht als Vorteil für einen eigenen Vertrag. Empfiehlt ein Bestandskunde, ist die Rechtslage nicht eindeutig: bitte mit Ihrem Versicherer oder Ihrer Rechtsberatung klären. Bis ${REWARD_SAFE_LIMIT} € im Jahr sind Sie auf der sicheren Seite.`;
+  return `Höchstens ${REWARD_SAFE_LIMIT} € je Empfehler und Kalenderjahr (§ 48b VAG). Die App zählt alle Dankeschöns eines Empfehlers im Jahr zusammen.`;
+}
+
+/** Kalenderjahr in Berlin (für die Jahresgrenze). */
+export function berlinYear(d: Date): number {
+  return Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", year: "numeric" }).format(d));
+}
+
+/**
+ * Jahresgrenze je Empfehler: bisher in diesem Kalenderjahr vorgemerkte bzw. übergebene Beträge (used) plus das
+ * neue Dankeschön dürfen höchstens REWARD_SAFE_LIMIT ergeben. Kein Teilbetrag: angekündigt ist ein fester Wert.
+ */
+export function rewardWithinLimit(used: number, amount: number): boolean {
+  return amount > 0 && used + amount <= REWARD_SAFE_LIMIT;
 }
 
 const eurInt = (n: number) => `${n} €`;
@@ -524,10 +544,11 @@ export function rewardLabel(r: ResolvedReward): string {
 }
 /** Satz auf der Seite des Empfehlenden (vorher angekündigt, nicht als Überraschung). */
 export function rewardSentence(r: ResolvedReward, vertreter: string): string {
-  const when = r.trigger === "abschluss" ? "Wird aus Ihrer Empfehlung ein Kunde" : "Kommt ein Gespräch mit Ihrer Empfehlung zustande";
+  const when = "Kommt ein Gespräch mit Ihrer Empfehlung zustande";
+  const limit = ` Insgesamt höchstens ${eurInt(REWARD_SAFE_LIMIT)} im Kalenderjahr, unabhängig von einem Vertragsabschluss.`;
   return r.kind === "spende"
-    ? `${when}, spendet ${vertreter} als Dankeschön ${eurInt(r.amount)} an ${r.note}.`
-    : `${when}, bedankt sich ${vertreter} bei Ihnen mit ${r.note ? `einem ${r.note}` : "einem Gutschein"} über ${eurInt(r.amount)}.`;
+    ? `${when}, spendet ${vertreter} als Dankeschön ${eurInt(r.amount)} an ${r.note}.${limit}`
+    : `${when}, bedankt sich ${vertreter} bei Ihnen mit ${r.note ? `einem ${r.note}` : "einem Gutschein"} über ${eurInt(r.amount)}.${limit}`;
 }
 export function rewardTaskNote(r: ResolvedReward, recommender: string | null | undefined): string {
   return `${REWARD_TASK}: ${rewardLabel(r)}${recommender?.trim() ? ` für ${recommender.trim()}` : ""}.`;
