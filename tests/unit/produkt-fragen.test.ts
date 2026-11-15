@@ -109,6 +109,8 @@ describe("Tiere: Anzahl und je Tier, kein Tarifwunsch", () => {
     const tkv = produktCheckliste("TKV-Katze")!;
     expect(tkv.fragen).toContain("Bei mehreren nimmst du jede Katze einzeln auf");
     for (const c of [ps, tkv]) expect(c.fragen).not.toContain("Was beim Tarif am wichtigsten ist");
+    // Tierhalterhaftpflicht nach dem Allianz-Rechner: Hund/Pferd, Anzahl, Rasse je Tier, Schäden 5 Jahre
+    for (const t of ["Nur Tierhalterhaftpflicht", "Rasse jedes Tieres", "Widerristhöhe ab 45 cm", "Tierhalter-Haftpflichtschäden"]) expect(ps.fragen).toContain(t);
   });
 });
 });
