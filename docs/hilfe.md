@@ -913,11 +913,12 @@ Seiten aus der Liste „Seiten“ unten.
   (2.490 € → 2.190 €, 1.990 € → 1.690 €, 990 € → 690 €). Der Rabatt steht als eigene Zeile „Empfehlungsrabatt“
   im Angebot und auf der Rechnung. Er gilt für neue Kontakte innerhalb von 12 Monaten nach der Empfehlung, nicht
   für Selbstempfehlungen, bestehende Kunden oder Kontakte, die schon vorher ein Angebot von uns hatten.
-- Ihr Dankeschön: derzeit **3 Monate das Bestandskunden-Modul gratis**. Haben Sie das Modul noch nicht, schalten
-  wir es frei; die 3 Monatsbeiträge schreiben wir Ihnen gut (verrechnet mit Ihren nächsten Rechnungen). 2 Wochen
-  vor Ende der Gratiszeit bekommen Sie einen Hinweis; danach läuft das Modul zum normalen Preis weiter, abbestellen
-  können Sie es jederzeit unter Konto & Rechnungen. Haben Sie das Modul schon, schreiben wir Ihnen 3 Monatsbeiträge
-  gut. Jede weitere Empfehlung zählt zusätzlich (je 3 Monate).
+- Ihr Dankeschön: derzeit **300 € netto Gutschrift je Kollege, der Kunde wird**. Wir schreiben sie Ihnen auf Ihre
+  nächste Rechnung gut. Ist die Rechnung kleiner, verrechnen wir den Rest automatisch mit den folgenden Rechnungen.
+  Jede weitere Empfehlung zählt wieder, ohne Obergrenze: 3 Kollegen sind 900 €.
+- Haben Sie früher als Dankeschön das Bestandskunden-Modul gratis bekommen, läuft diese Gratiszeit wie zugesagt bis
+  zum genannten Tag weiter. Wir erinnern Sie vorher; danach läuft das Modul zum normalen Preis weiter, abbestellen
+  können Sie es jederzeit unter **Konto & Rechnungen**.
 - Das Dankeschön gilt, sobald der Kollege sein Angebot angenommen und die erste Zahlung geleistet hat. Sie bekommen
   dazu eine Push-Nachricht und eine E-Mail. Eine Empfehlung an sich selbst oder die eigene Agentur zählt nicht; ist
   der Kollege schon Kunde, gibt es keine Prämie.

@@ -7,7 +7,7 @@ import { ReferralShare } from "@/components/kollegen";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { ensureReferralCode, loadReferralSettings, referralsForCustomer, referralUrl, referrerByCode } from "@/lib/kollegen";
-import { STAGE_LABEL, benefitSentence, defaultShareText, referralIncentiveSentence, referralOfferLines, rewardSentence, type ReferralStage } from "@/lib/kollegen-shared";
+import { STAGE_LABEL, benefitSentence, defaultShareText, referralOfferLines, rewardSentence, type ReferralStage } from "@/lib/kollegen-shared";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Kollegen empfehlen | performancegrowth" };
@@ -62,15 +62,14 @@ export default async function KollegenEmpfehlenPage() {
           <div className="rounded-[var(--radius-lg)] border border-[color:var(--brand)]/30 bg-[color:var(--brand-soft,#EFF6FF)] p-4" data-kollegen-kachel="sie">
             <div className="text-sm font-medium text-[color:var(--brand)]">Sie</div>
             <div className="mt-1 text-xl font-semibold tracking-tight">{lines.sie}</div>
-            <div className="mt-0.5 text-xs text-[color:var(--muted)]">wird mit Ihrer Rechnung verrechnet, sobald Ihr Kollege Kunde ist</div>
+            <div className="mt-0.5 text-xs text-[color:var(--muted)]">je Kollege, der Kunde wird, auf Ihrer nächsten Rechnung</div>
           </div>
         </div>
 
         <Card>
           <CardHeader title="Ihr Dankeschön" icon={Gift} />
           <div className="space-y-2 p-5 text-[15px]" data-kollegen-praemie>
-            <p className="font-medium">{referralIncentiveSentence(settings)}</p>
-            <p className="text-[color:var(--muted)]">{rewardSentence(settings, monthly)}</p>
+            <p className="font-medium">{rewardSentence(settings, monthly)}</p>
             {benefit ? <p className="text-[color:var(--muted)]">Auf der Seite Ihres Kollegen steht: „{benefit}“</p> : null}
             <p className="text-sm text-[color:var(--muted)]">
               So geht&apos;s: Link teilen → Ihr Kollege fragt ein Erstgespräch an → wird er Kunde und ist seine erste Zahlung da, schreiben wir Ihnen die Prämie automatisch gut.

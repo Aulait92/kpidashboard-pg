@@ -2852,8 +2852,8 @@ model ReferralNudge {
 model ReferralSettings {
   id            String   @id @default("default")
   enabled       Boolean  @default(true)
-  // month = 1 Monat Betreuung (aktueller Monatspreis des Empfehlers) | fixed = fester Betrag
-  // | bestand = Bestandskunden-Modul gratis für rewardMonths Monate (Standard seit 14.11.2026, im Code)
+  // month = 1 Monat Betreuung (aktueller Monatspreis des Empfehlers) | fixed = fester Betrag je Empfehlung
+  // (Standard seit 15.11.2026: 300 € netto, im Code) | bestand = Bestandskunden-Modul gratis für rewardMonths Monate
   rewardKind    String   @default("month")
   rewardFixed   Decimal? @db.Decimal(10, 2)
   // Monate Bestandskunden-Modul gratis bei rewardKind bestand (Standard 3)

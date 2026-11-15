@@ -197,10 +197,12 @@ export function candidateTips(s: TipSignals): Tip[] {
     out.push({
       key: "kollegen",
       title: "Kollegen empfehlen",
-      text: `Empfehlen Sie uns Kollegen: Ihre Prämie${s.kollegenPraemie ? ` von ${eur0(s.kollegenPraemie)} netto` : ""} wird mit Ihrer Rechnung verrechnet.`,
+      text: s.kollegenPraemie
+        ? `Empfehlen Sie uns Kollegen: Für jeden, der Kunde wird, schreiben wir Ihnen ${eur0(s.kollegenPraemie)} netto auf Ihre nächste Rechnung gut.`
+        : "Empfehlen Sie uns Kollegen: Für jeden, der Kunde wird, gibt es eine Prämie auf Ihre Rechnung.",
       href: "/buyer/empfehlen",
       cta: "Kollegen empfehlen",
-      impact: (s.kollegenPraemie ?? 500) * 0.1,
+      impact: (s.kollegenPraemie ?? 300) * 0.1,
     });
   }
   return out;

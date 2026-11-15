@@ -27,8 +27,11 @@ Kunden (Vermittler) empfehlen performancegrowth an Kollegen. Code: `src/lib/koll
 ## Einstellungen
 
 Admin → Einstellungen → „Kollegen empfehlen“: an/aus, Hinweise im Kundenbereich an/aus (Standard aus, Programm wird
-vorerst nicht aktiv beworben), Prämie (Standard seit 14.11.2026: Bestandskunden-Modul N Monate gratis, Standard 3;
-alternativ 1 Monat Betreuung = aktueller `retainerMonthly` des Empfehlers oder fester Betrag), Neukunden-Vorteil
+vorerst nicht aktiv beworben), Prämie (Standard seit 15.11.2026: fester Betrag 300 € netto je Empfehlung, die Kunde wird, ohne Obergrenze;
+vorher 14.11.2026 bis 15.11.2026: Bestandskunden-Modul N Monate gratis, Standard 3, weiter wählbar; alternativ
+1 Monat Betreuung = aktueller `retainerMonthly` des Empfehlers). Datenmigration
+`20261118704800_empfehlung_praemie_300`: Oles Einstellung auf 300 € umgestellt, nur wenn sie noch auf dem alten
+Standard (3 Monate Modul) stand, Neukunden-Vorteil
 (keiner / Einrichtung gratis, im Angebot vorbelegt / Rabatt auf die Einrichtung als Betrag netto, rechnet automatisch /
 eigener Text, wird nicht gerechnet).
 
@@ -44,7 +47,13 @@ Empfehlungsrabatt (lib/kollegen.ts `referralSetupDiscount`, lib/offer-pricing.ts
 - Offene Angebote nachziehen: Vertrieb → Empfehlungen → „Offene Angebote an Empfohlene“ (Liste = Trockenlauf,
   Knopf übernimmt).
 
-Prämie „Bestandskunden-Modul gratis“ (lib/kollegen.ts `grantBestandReward`): Modul nicht gebucht → `setBestandModule`
+Prämie „fester Betrag“ (lib/kollegen.ts `grantCreditReward`): negativer Rechnungsposten über `addGarantieGutschrift`
+(netto, USt. wird mit gemindert) auf der nächsten Rechnung; ist die Rechnung kleiner, legt Stripe den Rest als
+Guthaben (Customer Balance) an und verrechnet ihn mit den folgenden Rechnungen. Einmal je Empfehlung: Status
+`none` → `processing` (nur wer umstellt, bucht) und Stripe-Idempotenzschlüssel `garantie-empfehlung-<id>`.
+
+Prämie „Bestandskunden-Modul gratis“ (lib/kollegen.ts `grantBestandReward`, nur noch wenn im Admin gewählt; laufende
+Gratiszeiten aus früheren Prämien enden wie zugesagt, inkl. Hinweis vorher): Modul nicht gebucht → `setBestandModule`
 „book“ und N Monatsbeiträge als Gutschrift, `Customer.bestandFreeUntil` = heute + N Monate (Hinweis 14 Tage vorher,
 `remindBestandFreeEnd` im täglichen Cron). Modul gebucht → N Monatsbeiträge gutschreiben (läuft eine Gratiszeit, wird
 sie verlängert). Modul kostenlos (Bestandsschutz, inklusive, Makler mit 0 €) → Admin-Aufgabe. Übersicht: Vertrieb → Empfehlungen (Top-Empfehler, neuer Monatsumsatz, Prämien, offene manuelle Prämien).

@@ -39,6 +39,7 @@ import {
   referralStage,
   rewardAmount,
   rewardShort,
+  REWARD_CARRY_OVER,
   type NudgeKey,
   type ReferralSettingsLike,
   type ReferralStage,
@@ -383,10 +384,10 @@ async function thankReferrer(customerId: string, referredLabel: string, amount: 
       gift
         ? `Als Dankeschön bekommen Sie ${gift}.`
         : amount != null
-          ? `Als Dankeschön schreiben wir Ihnen ${eur(amount)} netto gut. Die Gutschrift wird mit Ihrer nächsten Rechnung verrechnet.`
+          ? `Als Dankeschön schreiben wir Ihnen ${eur(amount)} netto auf Ihre nächste Rechnung gut. ${REWARD_CARRY_OVER}`
           : "Als Dankeschön schreiben wir Ihnen Ihre Prämie gut.",
       ...(giftTerms ? [giftTerms] : []),
-      "Kennen Sie noch weitere Kollegen? Ihr persönlicher Link bleibt gültig.",
+      "Kennen Sie noch weitere Kollegen? Jede weitere Empfehlung zählt wieder, Ihr persönlicher Link bleibt gültig.",
     ],
     ...(appLink("/buyer/empfehlen") ? { button: { label: "Zu „Kollegen empfehlen“", url: appLink("/buyer/empfehlen")! } } : {}),
   }).catch((err) => reportError(err, "referral-thanks-mail"));
@@ -481,7 +482,12 @@ async function grantBestandReward(customerId: string, settings: ReferralSettings
 
 const fmtDay = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
 
-/** Geld-Prämie (1 Monat Betreuung bzw. fester Betrag) als Gutschrift. */
+/**
+ * Geld-Prämie (fester Betrag, Standard 300 € seit 15.11.2026, bzw. 1 Monat Betreuung) als Gutschrift: negativer
+ * Rechnungsposten (netto, USt. wird mit gemindert) auf der nächsten Rechnung; ist die Rechnung kleiner, legt Stripe
+ * den Rest als Guthaben (Customer Balance) an und verrechnet ihn mit den folgenden. Einmal je Empfehlung
+ * (Status „none“ → „processing“ in rewardReferralForOffer, Stripe-Idempotenzschlüssel je Empfehlung), ohne Obergrenze.
+ */
 async function grantCreditReward(
   referrer: { retainerMonthly: unknown; stripeCustomerId: string | null },
   settings: ReferralSettingsLike,

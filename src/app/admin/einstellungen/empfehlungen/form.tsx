@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { DEFAULT_REWARD_MONTHS, DEFAULT_SETUP_DISCOUNT, referralIncentiveSentence } from "@/lib/kollegen-shared";
+import { DEFAULT_REWARD_FIXED, DEFAULT_REWARD_MONTHS, DEFAULT_SETUP_DISCOUNT, referralIncentiveSentence } from "@/lib/kollegen-shared";
 import { saveReferralSettingsAction, type ReferralSettingsState } from "./actions";
 
 const input =
@@ -50,6 +50,16 @@ export function ReferralSettingsForm({
       <fieldset className="space-y-2">
         <legend className="text-base mb-1 font-semibold">Prämie für den Empfehler</legend>
         <label className="flex items-start gap-2 text-[15px]">
+          <input type="radio" name="rewardKind" value="fixed" checked={rewardKind === "fixed"} onChange={() => setRewardKind("fixed")} className="mt-1" />
+          <span>
+            Fester Betrag je Empfehlung (netto, Standard {DEFAULT_REWARD_FIXED} €)
+            <span className="block text-sm text-[color:var(--muted)]">Gutschrift auf die nächste Rechnung, Rest mit den folgenden verrechnet. Jede Empfehlung zählt, ohne Obergrenze.</span>
+          </span>
+        </label>
+        {rewardKind === "fixed" ? (
+          <input name="rewardFixed" inputMode="decimal" defaultValue={initial.rewardFixed ?? DEFAULT_REWARD_FIXED} placeholder={String(DEFAULT_REWARD_FIXED)} className={`${input} max-w-[200px]`} aria-label="Prämie je Empfehlung in Euro netto" />
+        ) : null}
+        <label className="flex items-start gap-2 text-[15px]">
           <input type="radio" name="rewardKind" value="bestand" checked={rewardKind === "bestand"} onChange={() => setRewardKind("bestand")} className="mt-1" />
           <span>
             Bestandskunden-Modul gratis (Monate)
@@ -75,13 +85,6 @@ export function ReferralSettingsForm({
             <span className="block text-sm text-[color:var(--muted)]">Gutschrift in Höhe seines aktuellen Monatspreises (netto, ohne Zusätze)</span>
           </span>
         </label>
-        <label className="flex items-start gap-2 text-[15px]">
-          <input type="radio" name="rewardKind" value="fixed" checked={rewardKind === "fixed"} onChange={() => setRewardKind("fixed")} className="mt-1" />
-          <span>Fester Betrag (netto)</span>
-        </label>
-        {rewardKind === "fixed" ? (
-          <input name="rewardFixed" inputMode="decimal" defaultValue={initial.rewardFixed ?? ""} placeholder="z. B. 500" className={`${input} max-w-[200px]`} />
-        ) : null}
         <p className="text-sm text-[color:var(--muted)]">
           Gebucht wird automatisch als Gutschrift in Stripe, sobald der Neukunde angenommen und die erste Zahlung geleistet hat. Ohne Stripe-Konto entsteht
           die Aufgabe „Prämie manuell gutschreiben“.

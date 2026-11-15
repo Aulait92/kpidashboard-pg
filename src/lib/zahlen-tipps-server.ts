@@ -10,8 +10,18 @@ import type { ErtragData } from "@/lib/ertrag";
 import type { TipSignals } from "@/lib/zahlen-tipps";
 import { nextStepRate } from "@/lib/lead-next-step-server";
 import { LOST_STATUSES } from "@/lib/lead-lost";
+import { DEFAULT_SETTINGS } from "@/lib/kollegen-shared";
 
 const DAY = 86_400_000;
+
+/** Prämie je Empfehlung (netto) für den Tipp; ohne gespeicherte Einstellung gilt der Standard (300 €). */
+function kollegenPraemie(settings: { rewardKind: string; rewardFixed: unknown } | null, retainer: unknown): number | null {
+  const kind = settings?.rewardKind ?? DEFAULT_SETTINGS.rewardKind;
+  const fixed = settings ? (settings.rewardFixed != null ? Number(settings.rewardFixed) : null) : DEFAULT_SETTINGS.rewardFixed;
+  if (kind === "fixed") return fixed != null && fixed > 0 ? fixed : null;
+  if (kind === "month") return retainer != null ? Number(retainer) : null;
+  return null;
+}
 const MIN_LEADS_FOR_RATES = 10;
 
 let avgCache: { at: number; kpis: Kpis } | null = null;
@@ -74,8 +84,7 @@ export async function loadTipSignals(customerId: string, data: ErtragData, now =
     empfehlungEnabled: !!customer?.empfehlungEnabled,
     notAskedForReferral: customer?.empfehlungEnabled ? notAsked : 0,
     kollegenEnabled: settings?.enabled ?? true,
-    kollegenPraemie:
-      settings?.rewardKind === "fixed" && settings.rewardFixed != null ? Number(settings.rewardFixed) : customer?.retainerMonthly != null ? Number(customer.retainerMonthly) : null,
+    kollegenPraemie: kollegenPraemie(settings, customer?.retainerMonthly ?? null),
     bestandImported: imported > 0,
     bestandCampaigns: campaigns,
     withoutCrossSell: withoutCross,

@@ -63,8 +63,10 @@ export const normalizeBenefitKind = (k: unknown): BenefitKind => (BENEFIT_KINDS.
 export const DEFAULT_SETUP_DISCOUNT = 300;
 /** Obergrenze im Formular (Schutz vor Tippfehlern). */
 export const MAX_SETUP_DISCOUNT = 10000;
-/** Standard: so viele Monate Bestandskunden-Modul gratis als Prämie (Ole, 14.11.2026). */
+/** Monate Bestandskunden-Modul gratis bei Prämie „bestand“ (Standard der Option, Ole 14.11.2026). */
 export const DEFAULT_REWARD_MONTHS = 3;
+/** Standard-Prämie für den Empfehler: fester Betrag (netto, EUR) als Gutschrift je Empfehlung (Ole, 15.11.2026). */
+export const DEFAULT_REWARD_FIXED = 300;
 export const MAX_REWARD_MONTHS = 24;
 
 export type ReferralSettingsLike = {
@@ -81,11 +83,12 @@ export type ReferralSettingsLike = {
   nudgesEnabled?: boolean;
 };
 
+// Standard seit 15.11.2026 (Ole): 300 € netto Gutschrift je Empfehlung, die Kunde wird (vorher 3 Monate Bestandskunden-Modul).
 export const DEFAULT_SETTINGS: ReferralSettingsLike = {
   enabled: true,
-  rewardKind: "bestand",
-  rewardFixed: null,
-  rewardMonths: DEFAULT_REWARD_MONTHS,
+  rewardKind: "fixed",
+  rewardFixed: DEFAULT_REWARD_FIXED,
+  rewardMonths: null,
   benefitKind: "none",
   benefitText: null,
   benefitAmount: null,
@@ -112,10 +115,14 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: n % 1 ? 2 : 0 }).format(n);
 const months = (n: number) => (n === 1 ? "1 Monat" : `${n} Monate`);
 
+/** Rest einer Gutschrift, die höher ist als die nächste Rechnung (Stripe verrechnet ihn mit den folgenden). */
+export const REWARD_CARRY_OVER = "Ist die Rechnung kleiner, verrechnen wir den Rest automatisch mit den folgenden Rechnungen.";
+
 /** Prämie in klaren Worten (für Kundenbereich, Mails, KI-Hilfe). */
 export function rewardSentence(settings: ReferralSettingsLike, referrerMonthly: number | null): string {
   if (settings.rewardKind === "fixed" && settings.rewardFixed) {
-    return `Wird ein empfohlener Kollege Kunde, schreiben wir Ihnen ${eur(settings.rewardFixed)} netto auf Ihre nächste Rechnung gut.`;
+    const n = round2(settings.rewardFixed);
+    return `Wird ein empfohlener Kollege Kunde, schreiben wir Ihnen ${eur(n)} netto auf Ihre nächste Rechnung gut. ${REWARD_CARRY_OVER} Jede weitere Empfehlung zählt wieder: 3 Kollegen sind ${eur(round2(3 * n))}.`;
   }
   if (settings.rewardKind === "bestand") {
     const n = rewardMonthsOf(settings);
@@ -145,16 +152,16 @@ export function benefitSentence(settings: ReferralSettingsLike, referrerName?: s
   return null;
 }
 
-/** Prämie für den Empfehler, kurz: „3 Monate Bestandskunden-Modul gratis“, „1 Monat gratis“ bzw. „150 € Gutschrift“. */
+/** Prämie für den Empfehler, kurz: „300 € Gutschrift“, „3 Monate Bestandskunden-Modul gratis“ bzw. „1 Monat gratis“. */
 export function rewardShort(settings: ReferralSettingsLike): string {
   if (settings.rewardKind === "fixed" && settings.rewardFixed != null && settings.rewardFixed > 0) return `${eur(round2(settings.rewardFixed))} Gutschrift`;
   if (settings.rewardKind === "bestand") return `${months(rewardMonthsOf(settings))} Bestandskunden-Modul gratis`;
   return "1 Monat gratis";
 }
 
-/** Prämie im Satz: „3 Monate das Bestandskunden-Modul gratis“, „einen Monat Betreuung gratis“, „150 € Gutschrift“. */
+/** Prämie im Satz: „300 € auf Ihre nächste Rechnung gutgeschrieben“, „3 Monate das Bestandskunden-Modul gratis“, „einen Monat Betreuung gratis“. */
 function rewardPhrase(settings: ReferralSettingsLike): string {
-  if (settings.rewardKind === "fixed" && settings.rewardFixed != null && settings.rewardFixed > 0) return `${eur(round2(settings.rewardFixed))} Gutschrift`;
+  if (settings.rewardKind === "fixed" && settings.rewardFixed != null && settings.rewardFixed > 0) return `${eur(round2(settings.rewardFixed))} auf Ihre nächste Rechnung gutgeschrieben`;
   if (settings.rewardKind === "bestand") return `${months(rewardMonthsOf(settings))} das Bestandskunden-Modul gratis`;
   return "einen Monat Betreuung gratis";
 }
@@ -171,7 +178,7 @@ export function benefitShort(settings: ReferralSettingsLike): string | null {
 /**
  * Beide Kurztexte für Kacheln/Infokarten (z. B. /buyer/empfehlen, Login-Infokarte):
  * kollege = Vorteil des Empfohlenen (null = keiner), sie = Prämie des Empfehlers.
- * Mit Oles Einstellung: { kollege: "300 € weniger Einrichtung", sie: "3 Monate Bestandskunden-Modul gratis" }.
+ * Mit Oles Einstellung: { kollege: "300 € weniger Einrichtung", sie: "300 € Gutschrift" }.
  */
 export function referralOfferLines(settings: ReferralSettingsLike): { kollege: string | null; sie: string } {
   return { kollege: benefitShort(settings), sie: rewardShort(settings) };
@@ -179,7 +186,7 @@ export function referralOfferLines(settings: ReferralSettingsLike): { kollege: s
 
 /**
  * Satz für Hinweise, Mails und KI-Hilfe (an den Empfehler), z. B.
- * „Ihr Kollege spart 300 € bei der Einrichtung. Sie bekommen 3 Monate das Bestandskunden-Modul gratis.“
+ * „Ihr Kollege spart 300 € bei der Einrichtung. Sie bekommen 300 € auf Ihre nächste Rechnung gutgeschrieben.“
  */
 export function referralIncentiveSentence(settings: ReferralSettingsLike): string {
   const sie = `Sie bekommen ${rewardPhrase(settings)}.`;

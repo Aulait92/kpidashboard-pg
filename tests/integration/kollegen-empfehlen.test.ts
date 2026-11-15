@@ -135,7 +135,7 @@ describe("Kollegen empfehlen", () => {
     }) as unknown as Stripe.Event;
 
   it("erste Zahlung des Neukunden → genau eine Gutschrift beim Empfehler", async () => {
-    // Diese Tests prüfen die Prämie „1 Monat Betreuung“ (Standard seit 14.11.2026: Bestandskunden-Modul)
+    // Diese Tests prüfen die Prämie „1 Monat Betreuung“ (Standard seit 15.11.2026: 300 € je Empfehlung)
     await prisma.referralSettings.upsert({ where: { id: "default" }, create: { id: "default", rewardKind: "month" }, update: { rewardKind: "month" } });
     const r = await submitReferral(form(`zahlt-${tag}@kollegen-agentur.test`));
     const contactId = r.ok ? r.contactId! : "";
@@ -154,8 +154,39 @@ describe("Kollegen empfehlen", () => {
     expect(await prisma.auditLog.count({ where: { action: "referral.reward", entityId: ref.id } })).toBe(1);
   });
 
+  it("Standard seit 15.11.2026: 300 € netto je Empfehlung, die Kunde wird; jede weitere zählt wieder, je Empfehlung genau einmal", async () => {
+    await prisma.referralSettings.deleteMany({}); // keine gespeicherte Einstellung → Code-Standard
+    // eigener Empfehler (der Code oben ist durch die Tests davor nahe am Stundenlimit)
+    const empf = await makeCustomer({ retainerMonthly: 1400, stripeCustomerId: `cus_std_${tag}` });
+    customers.push(empf.id);
+    await makeBuyer(empf.id, "owner");
+    const stdCode = await ensureReferralCode(empf.id);
+    const won: string[] = [];
+    for (const name of ["eins", "zwei"]) {
+      const r = await submitReferral({ ...form(`std-${name}-${tag}@kollegen-agentur.test`), code: stdCode });
+      expect(r.ok).toBe(true);
+      const contactId = r.ok ? r.contactId! : "";
+      won.push(contactId);
+      const n = uid();
+      await new Promise((res) => setTimeout(res, 5));
+      const offer = await wonOffer(contactId, n);
+      await handleStripeEvent(invoicePaid(`evt_s1_${n}`, offer.stripeSubscriptionId!));
+      await handleStripeEvent(invoicePaid(`evt_s2_${n}`, offer.stripeSubscriptionId!)); // Folgezahlung: keine zweite Prämie
+    }
+    expect(credit.calls).toHaveLength(2);
+    expect(credit.calls.every((c) => c.stripeCustomerId === `cus_std_${tag}` && c.amountEur === 300)).toBe(true);
+    const refs = await prisma.colleagueReferral.findMany({ where: { contactId: { in: won } } });
+    expect(new Set(credit.calls.map((c) => c.fallId))).toEqual(new Set(refs.map((r) => `empfehlung-${r.id}`)));
+    for (const ref of refs) {
+      expect(ref.rewardStatus).toBe("credited");
+      expect(Number(ref.rewardAmount)).toBe(300);
+    }
+    // Bestandskunden-Modul bleibt unberührt (keine Gratiszeit durch die neue Prämie)
+    expect((await prisma.customer.findUniqueOrThrow({ where: { id: empf.id }, select: { bestandFreeUntil: true } })).bestandFreeUntil).toBeNull();
+  });
+
   it("ohne Stripe-Kunde des Empfehlers → Admin-Aufgabe „Prämie manuell gutschreiben“", async () => {
-    // Diese Tests prüfen die Prämie „1 Monat Betreuung“ (Standard seit 14.11.2026: Bestandskunden-Modul)
+    // Diese Tests prüfen die Prämie „1 Monat Betreuung“ (Standard seit 15.11.2026: 300 € je Empfehlung)
     await prisma.referralSettings.upsert({ where: { id: "default" }, create: { id: "default", rewardKind: "month" }, update: { rewardKind: "month" } });
     const other = await makeCustomer({ retainerMonthly: 1000 });
     customers.push(other.id);

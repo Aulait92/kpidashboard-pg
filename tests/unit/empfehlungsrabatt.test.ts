@@ -1,5 +1,6 @@
 // Kollegen empfehlen (Ole, 14.11.2026): Rabatt auf die Einrichtung für Empfohlene,
-// Prämie „Bestandskunden-Modul gratis“ für Empfehler, Texte aus den Einstellungen.
+// Prämie für Empfehler (seit 15.11.2026 Standard: 300 € Gutschrift je Empfehlung; „Bestandskunden-Modul gratis“
+// weiter wählbar), Texte aus den Einstellungen.
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_SETTINGS,
@@ -17,29 +18,39 @@ import {
 import { applySetupDiscount, computeOfferPrice, offerSetupDiscount, resolveOfferChoice, setupForChoice } from "@/lib/offer-pricing";
 
 const nb = (s: string) => s.replace(/ /g, " ");
-const ole: ReferralSettingsLike = { ...DEFAULT_SETTINGS, benefitKind: "setup_discount", benefitAmount: 300, rewardKind: "bestand", rewardMonths: 3 };
+const ole: ReferralSettingsLike = { ...DEFAULT_SETTINGS, benefitKind: "setup_discount", benefitAmount: 300 };
+const bestand: ReferralSettingsLike = { ...ole, rewardKind: "bestand", rewardFixed: null, rewardMonths: 3 };
 const products = [{ name: "TKV-Katze", dailyBudget: 30 }];
 
 describe("Texte aus den Einstellungen", () => {
   it("Oles Einstellung: zwei Kurztexte und der Satz", () => {
-    expect(referralOfferLines(ole)).toEqual({ kollege: "300 € weniger Einrichtung", sie: "3 Monate Bestandskunden-Modul gratis" });
-    expect(nb(referralIncentiveSentence(ole))).toBe("Ihr Kollege spart 300 € bei der Einrichtung. Sie bekommen 3 Monate das Bestandskunden-Modul gratis.");
+    expect(nb(referralOfferLines(ole).sie)).toBe("300 € Gutschrift");
+    expect(nb(referralOfferLines(ole).kollege!)).toBe("300 € weniger Einrichtung");
+    expect(nb(referralIncentiveSentence(ole))).toBe("Ihr Kollege spart 300 € bei der Einrichtung. Sie bekommen 300 € auf Ihre nächste Rechnung gutgeschrieben.");
+    expect(nb(rewardSentence(ole, 1400))).toBe(
+      "Wird ein empfohlener Kollege Kunde, schreiben wir Ihnen 300 € netto auf Ihre nächste Rechnung gut. Ist die Rechnung kleiner, verrechnen wir den Rest automatisch mit den folgenden Rechnungen. Jede weitere Empfehlung zählt wieder: 3 Kollegen sind 900 €.",
+    );
+    expect(nb(referralIncentiveSentence({ ...ole, benefitKind: "none" }))).toBe("Sie bekommen 300 € auf Ihre nächste Rechnung gutgeschrieben, sobald Ihr Kollege Kunde wird.");
     expect(nb(benefitSentence(ole)!)).toBe("Als Empfehlung sparen Sie 300 € bei der Einrichtung.");
     expect(nb(benefitSentence(ole, "Erna Empfehler")!)).toBe("Als Empfehlung von Erna Empfehler sparen Sie 300 € bei der Einrichtung.");
     expect(nb(defaultShareText("Erna", "https://x.test/empfehlen/abc", ole))).toContain("Über diesen Link gibt es 300 € Rabatt auf die Einrichtung.");
   });
 
-  it("andere Prämienarten: 1 Monat gratis bzw. fester Betrag", () => {
+  it("andere Prämienarten: Bestandskunden-Modul, 1 Monat gratis bzw. anderer Betrag", () => {
+    expect(referralOfferLines(bestand).sie).toBe("3 Monate Bestandskunden-Modul gratis");
+    expect(nb(referralIncentiveSentence(bestand))).toBe("Ihr Kollege spart 300 € bei der Einrichtung. Sie bekommen 3 Monate das Bestandskunden-Modul gratis.");
     expect(referralOfferLines({ ...ole, rewardKind: "month" }).sie).toBe("1 Monat gratis");
     expect(nb(referralOfferLines({ ...ole, rewardKind: "fixed", rewardFixed: 150 }).sie)).toBe("150 € Gutschrift");
-    expect(referralOfferLines({ ...ole, rewardMonths: 1 }).sie).toBe("1 Monat Bestandskunden-Modul gratis");
+    expect(referralOfferLines({ ...bestand, rewardMonths: 1 }).sie).toBe("1 Monat Bestandskunden-Modul gratis");
+    expect(nb(rewardSentence({ ...ole, rewardFixed: 250 }, null))).toContain("3 Kollegen sind 750 €");
     expect(referralOfferLines({ ...ole, benefitKind: "none" }).kollege).toBeNull();
     expect(referralOfferLines({ ...ole, benefitKind: "custom", benefitText: "Ein Gratis-Workshop" }).kollege).toBe("Ein Gratis-Workshop");
   });
 
-  it("Code-Standard: Prämie Bestandskunden-Modul 3 Monate, Hinweise aus", () => {
-    expect(DEFAULT_SETTINGS.rewardKind).toBe("bestand");
-    expect(DEFAULT_SETTINGS.rewardMonths).toBe(3);
+  it("Code-Standard: Prämie 300 € je Empfehlung (fester Betrag), Hinweise aus", () => {
+    expect(DEFAULT_SETTINGS.rewardKind).toBe("fixed");
+    expect(DEFAULT_SETTINGS.rewardFixed).toBe(300);
+    expect(rewardAmount(DEFAULT_SETTINGS, 1400)).toBe(300);
     expect(DEFAULT_SETTINGS.nudgesEnabled).toBe(false);
     // Betragsoption ohne Betrag → Standard 300 €
     expect(setupDiscountAmount({ ...DEFAULT_SETTINGS, benefitKind: "setup_discount" })).toBe(300);
@@ -47,13 +58,13 @@ describe("Texte aus den Einstellungen", () => {
   });
 
   it("Prämienbetrag „bestand“ = Monate × Modulpreis; Satz nennt die Monate", () => {
-    expect(rewardAmount(ole, 1400, 149)).toBe(447);
-    expect(rewardAmount(ole, 1400, null)).toBeNull();
-    expect(rewardSentence(ole, null)).toContain("3 Monate das Bestandskunden-Modul gratis");
+    expect(rewardAmount(bestand, 1400, 149)).toBe(447);
+    expect(rewardAmount(bestand, 1400, null)).toBeNull();
+    expect(rewardSentence(bestand, null)).toContain("3 Monate das Bestandskunden-Modul gratis");
   });
 
   it("keine Gedankenstriche in den erzeugten Texten", () => {
-    const texts = [referralIncentiveSentence(ole), benefitSentence(ole, "X")!, rewardSentence(ole, 1000), referralOfferLines(ole).kollege!, referralOfferLines(ole).sie, setupDiscountLabel("Erna Empfehler")];
+    const texts = [referralIncentiveSentence(ole), benefitSentence(ole, "X")!, rewardSentence(ole, 1000), rewardSentence(bestand, 1000), referralIncentiveSentence(bestand), referralOfferLines(ole).kollege!, referralOfferLines(ole).sie, setupDiscountLabel("Erna Empfehler")];
     for (const t of texts) expect(t).not.toMatch(/[–—]| - /);
   });
 });
