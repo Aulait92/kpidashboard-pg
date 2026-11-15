@@ -11,7 +11,7 @@ export async function ErstinfoHeuteHint({ customerId, owner }: { customerId: str
     <div className="mb-5 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-erstinfo-heute>
       <AlertTriangle className="h-4 w-4 shrink-0" />
       <span className="min-w-0 flex-1">
-        <b>Erstinformation nicht vollständig.</b> Ihr Assistent schickt neuen Leads Ihre Erstinformation als PDF (§ 15 VersVermV), bis dahin nur den Link. Es fehlt noch: {e.fehlt.join(", ")}.
+        <b>Erstinformation unvollständig:</b> es fehlt {e.fehlt.join(", ")}.
         {owner ? null : " Bitte den Inhaber des Kontos bitten, sie zu ergänzen."}
       </span>
       {owner ? (

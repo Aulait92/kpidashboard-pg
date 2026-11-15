@@ -1,15 +1,17 @@
 "use client";
 
 import { openLeadBooking } from "@/components/lead-booking";
-import { terminArtKurz, terminArtLabel } from "@/lib/termin-art";
+import { terminArtLabel } from "@/lib/termin-art";
 
 import { fmtDay, LaterDateSheet } from "@/components/later-date-sheet";
 import { useProvisionRates } from "@/components/provision-context";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import {
   AlertTriangle,
   BellRing,
+  Calculator,
   CalendarDays,
   CalendarClock,
   CalendarPlus,
@@ -39,7 +41,6 @@ import {
   type InboxResult,
 } from "@/app/buyer/inbox-actions";
 import { useToast } from "@/components/ui/toast";
-import { cn } from "@/lib/utils";
 import { Button, ButtonLink, Card, CardHeader, EmptyState } from "@/components/ui";
 import { ActionSheet, TapRow, type SheetAction } from "@/components/ui/sheet";
 import type { InboxData } from "@/lib/inbox";
@@ -96,8 +97,11 @@ export function TodayInbox({
   newUi = false,
   leadHref = "/buyer/leads/{id}",
   selectedLeadId = null,
+  zuVorbereiten = [],
 }: {
   data: InboxData;
+  /** Termine, die noch vorbereitet werden müssen (Angebot rechnen): Link „Vorbereiten“ in der Zeile */
+  zuVorbereiten?: string[];
   /** Neue Oberfläche: Details rechts (Desktop), Anrufmodus, „Wie lief's?“ nach jedem Anruf. */
   newUi?: boolean;
   /** Ziel „Lead öffnen“; {id} wird ersetzt. */
@@ -125,6 +129,7 @@ export function TodayInbox({
     router.push(leadUrl(leadId), { scroll: false });
     return true;
   };
+  const vorbereiten = new Set(zuVorbereiten);
   const toast = useToast();
   const [, startTransition] = useTransition();
   const [hidden, setHidden] = useState<Set<string>>(new Set());
@@ -293,92 +298,11 @@ export function TodayInbox({
 
   return (
     <div className="space-y-6">
-      {noStep.length > 0 ? (
-        <div data-no-next-step>
-        <Card className="border-amber-200">
-          <div id="ohne-schritt" className="scroll-mt-20" />
-          <CardHeader
-            icon={AlertTriangle}
-            title={`${noStepTotal} ${noStepTotal === 1 ? "Lead" : "Leads"} ohne nächsten Schritt`}
-            actions={
-              <ButtonLink href={noStepHref} variant="ghost">
-                Alle ansehen
-              </ButtonLink>
-            }
-          />
-          <p className="border-b border-[color:var(--border)] px-5 pb-3 text-sm text-[color:var(--muted)]">
-            Jeder Lead braucht eine Wiedervorlage, einen Termin oder ein Ergebnis: Gewonnen oder Verloren.
-          </p>
-          <ul className="divide-y divide-[color:var(--border)]">
-            {(showAll ? noStep : noStep.slice(0, 5)).map((l) => {
-              const key = `n:${l.leadId}`;
-              const openStep = () => setSheet({ kind: "step", key, leadId: l.leadId, name: l.name, source: l.source, appointmentId: l.appointmentId });
-              return (
-                <TapRow key={l.leadId} className={sel(l.leadId)} onTap={() => openDetailOnDesktop(l.leadId) || openStep()}>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium">{l.name}</div>
-                    <p className="truncate text-xs text-[color:var(--muted)]">
-                      <span className="font-medium text-amber-700">{NEXT_STEP_LABEL[l.resultMissing ? "result_missing" : "missing"]}</span>
-                      {` · ${l.status ?? "Offen"}, ${since(l.statusChangedAt)}`}
-                    </p>
-                    <span className="mt-1.5 flex flex-wrap gap-1" onClick={stop} data-no-step-actions>
-                      {[
-                        { days: 1, label: "Morgen", msg: "morgen" },
-                        { days: 3, label: "In 3 Tagen", msg: "in 3 Tagen" },
-                      ].map((b) => (
-                        <button
-                          key={b.days}
-                          type="button"
-                          onClick={() => run(key, `${l.name}: ${b.msg} wieder`, () => setFollowUpResult(l.leadId, { days: b.days }))}
-                          className="rounded-full border border-[color:var(--border)] px-2.5 py-0.5 text-xs font-semibold text-[color:var(--muted)] hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
-                        >
-                          {b.label}
-                        </button>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => setSheet({ kind: "lost", key, leadId: l.leadId, name: l.name, appointmentId: l.appointmentId })}
-                        className="rounded-full border border-rose-200 px-2.5 py-0.5 text-xs font-semibold text-rose-700 hover:bg-rose-50"
-                      >
-                        Verloren
-                      </button>
-                    </span>
-                  </div>
-                  <span onClick={stop}>
-                    <Button variant="primary" icon={ChevronRight} onClick={openStep}>
-                      {l.resultMissing ? "Ergebnis" : "Weiter"}
-                    </Button>
-                  </span>
-                  {more}
-                </TapRow>
-              );
-            })}
-          </ul>
-          {noStep.length > 5 && !showAll ? (
-            <button
-              type="button"
-              onClick={() => setShowAll(true)}
-              className="w-full border-t border-[color:var(--border)] py-2.5 text-xs font-semibold text-[color:var(--brand)] hover:bg-[color:var(--surface-sunken)]"
-            >
-              Alle {noStep.length} anzeigen
-            </button>
-          ) : null}
-        </Card>
-        </div>
-      ) : null}
       {nothing ? (
         <Card>
           <EmptyState icon={Check} title="Alles erledigt" text="Neue Aufgaben erscheinen hier von selbst." />
         </Card>
-      ) : (
-        <div className={cn("grid grid-cols-2 gap-3 sm:grid-cols-4", newUi && "xl:grid-cols-2")}>
-          <Tile icon={MessageCircle} tone="rose" label="Chats" value={chats.length} target="chats" />
-          <Tile icon={CalendarClock} tone="brand" label="Termine" value={appointments.length} target="termine" />
-          <Tile icon={Trophy} tone="violet" label="Wie lief es?" value={outcomes.length} target="ergebnis" />
-          <Tile icon={Phone} tone="emerald" label="Anrufen" value={calls.length} target="anrufen" />
-        </div>
-      )}
-
+      ) : null}
       {chats.length > 0 ? (
         <Card>
           <div id="chats" className="scroll-mt-20" />
@@ -446,6 +370,11 @@ export function TodayInbox({
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-medium">{a.name}</div>
                     <p className="truncate text-xs text-[color:var(--muted)]">{a.summary ?? terminArtLabel(a.mode)}</p>
+                    {vorbereiten.has(a.id) ? (
+                      <Link href={`/buyer/termine/${a.id}/vorbereitung`} onClick={stop} className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:underline" data-termin-vorbereiten>
+                        <Calculator className="h-3.5 w-3.5" /> Vorbereiten: Angebot rechnen
+                      </Link>
+                    ) : null}
                   </div>
                   <span onClick={stop}>
                     {video && a.meetUrl ? (
@@ -539,22 +468,6 @@ export function TodayInbox({
                     {c.overdue ? <span className="font-medium text-rose-600">Überfällig · </span> : null}
                     {c.reason}
                   </p>
-                  {/* Direkt schieben (Ole, 13.11.2026): +1 Tag / +1 Woche */}
-                  <span className="mt-1.5 flex gap-1" onClick={stop} data-call-shift>
-                    {[
-                      { days: 1, label: "+1 Tag", msg: "morgen" },
-                      { days: 5, label: "+1 Woche", msg: "in 1 Woche" },
-                    ].map((b) => (
-                      <button
-                        key={b.days}
-                        type="button"
-                        onClick={() => run(c.key, `${c.name}: ${b.msg} wieder`, () => setFollowUpResult(c.leadId, { days: b.days }))}
-                        className="rounded-full border border-[color:var(--border)] px-2.5 py-0.5 text-xs font-semibold text-[color:var(--muted)] hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
-                      >
-                        {b.label}
-                      </button>
-                    ))}
-                  </span>
                 </div>
                 {c.phone ? (
                   <span
@@ -586,6 +499,7 @@ export function TodayInbox({
 
       {data.upcoming.length > 0 ? (
         <UpcomingCard
+          vorbereiten={vorbereiten}
           items={data.upcoming}
           open={(id) => openDetailOnDesktop(id) || router.push(leadUrl(id))}
           shift={(it, days) =>
@@ -599,6 +513,54 @@ export function TodayInbox({
         />
       ) : null}
 
+      {noStep.length > 0 ? (
+        // Aufräumen (UX, Ole 15.11.2026): wichtig, aber nicht dringend, daher ganz unten und zugeklappt
+        <details data-no-next-step className="group overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[var(--shadow-md)]">
+          <div id="ohne-schritt" className="scroll-mt-20" />
+          <summary className="flex cursor-pointer list-none items-center gap-2.5 px-5 py-3.5 [&::-webkit-details-marker]:hidden">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+            <span className="min-w-0 flex-1 text-[15px] font-semibold">
+              Aufräumen: {noStepTotal} {noStepTotal === 1 ? "Kontakt" : "Kontakte"} ohne nächsten Schritt
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)] transition group-open:rotate-90" />
+          </summary>
+          <ul className="divide-y divide-[color:var(--border)] border-t border-[color:var(--border)]">
+            {(showAll ? noStep : noStep.slice(0, 5)).map((l) => {
+              const key = `n:${l.leadId}`;
+              const openStep = () => setSheet({ kind: "step", key, leadId: l.leadId, name: l.name, source: l.source, appointmentId: l.appointmentId });
+              return (
+                <TapRow key={l.leadId} className={sel(l.leadId)} onTap={() => openDetailOnDesktop(l.leadId) || openStep()}>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">{l.name}</div>
+                    <p className="truncate text-xs text-[color:var(--muted)]">
+                      <span className="font-medium text-amber-700">{NEXT_STEP_LABEL[l.resultMissing ? "result_missing" : "missing"]}</span>
+                      {` · ${l.status ?? "Offen"}, ${since(l.statusChangedAt)}`}
+                    </p>
+                  </div>
+                  <span onClick={stop}>
+                    <Button variant="primary" icon={ChevronRight} onClick={openStep}>
+                      {l.resultMissing ? "Ergebnis" : "Weiter"}
+                    </Button>
+                  </span>
+                  {more}
+                </TapRow>
+              );
+            })}
+          </ul>
+          {noStep.length > 5 && !showAll ? (
+            <button
+              type="button"
+              onClick={() => setShowAll(true)}
+              className="w-full border-t border-[color:var(--border)] py-2.5 text-xs font-semibold text-[color:var(--brand)] hover:bg-[color:var(--surface-sunken)]"
+            >
+              Alle {noStep.length} anzeigen
+            </button>
+          ) : null}
+          <Link href={noStepHref} className="block border-t border-[color:var(--border)] py-2.5 text-center text-xs font-semibold text-[color:var(--brand)] hover:bg-[color:var(--surface-sunken)]">
+            In Kontakte ansehen
+          </Link>
+        </details>
+      ) : null}
       {current && callMode ? (
         <CallModePanel
           item={current}
@@ -694,7 +656,9 @@ function UpcomingCard({
   items,
   open,
   shift,
+  vorbereiten,
 }: {
+  vorbereiten: Set<string>;
   items: InboxData["upcoming"];
   open: (leadId: string) => void;
   shift: (it: InboxData["upcoming"][number], days: number) => void;
@@ -731,6 +695,11 @@ function UpcomingCard({
                   <p className="truncate text-xs text-[color:var(--muted)]">
                     {it.kind === "termin" ? `Termin ${time(it.at)} Uhr · ${it.note ?? ""}` : `Wiedervorlage${it.note ? ` · ${it.note}` : ""}`}
                   </p>
+                  {it.kind === "termin" && vorbereiten.has(it.key.slice(2)) ? (
+                    <Link href={`/buyer/termine/${it.key.slice(2)}/vorbereitung`} onClick={(e) => e.stopPropagation()} className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:underline" data-termin-vorbereiten>
+                      <Calculator className="h-3.5 w-3.5" /> Vorbereiten: Angebot rechnen
+                    </Link>
+                  ) : null}
                 </div>
                 {it.kind === "wiedervorlage" && it.leadId ? (
                   <span className="flex shrink-0 gap-1" onClick={(e) => e.stopPropagation()}>
@@ -765,33 +734,6 @@ function UpcomingCard({
         </button>
       ) : null}
     </Card>
-  );
-}
-
-function Tile({
-  icon: Icon,
-  tone,
-  label,
-  value,
-  target,
-}: {
-  icon: typeof Phone;
-  tone: "rose" | "brand" | "violet" | "emerald";
-  label: string;
-  value: number;
-  target: string;
-}) {
-  const color = { rose: "text-rose-600", brand: "text-blue-600", violet: "text-violet-600", emerald: "text-emerald-600" }[tone];
-  return (
-    <a
-      href={value ? `#${target}` : undefined}
-      className={`rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-4 py-3 shadow-[var(--shadow-sm)] transition ${value ? "hover:border-[color:var(--border-strong)]" : "pointer-events-none"}`}
-    >
-      <div className="flex items-center gap-1.5 text-xs text-[color:var(--muted)]">
-        <Icon className="h-3.5 w-3.5" /> {label}
-      </div>
-      <div className={`mt-1 text-2xl font-semibold tabular-nums ${value ? color : "text-[color:var(--muted)]"}`}>{value}</div>
-    </a>
   );
 }
 

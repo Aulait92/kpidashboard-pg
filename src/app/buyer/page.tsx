@@ -17,7 +17,7 @@ import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { ReferralNudgeCard } from "@/components/kollegen";
 import { loadReferralNudge } from "@/lib/kollegen";
 import { ErstinfoHeuteHint } from "@/components/erstinformation-hint";
-import { TerminVorbereitungCard } from "@/components/termin-vorbereitung-card";
+import { listVorbereitungen } from "@/lib/termin-vorbereitung-server";
 
 // Startseite des Kundenbereichs für alle Kunden: „Heute" – eine
 // Aufgabenliste (Termine, Ergebnisse, Chats, Rückrufe), die man leer
@@ -52,14 +52,24 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
       </main>
     );
   }
-  const [data, customer, me, nudge] = await Promise.all([
+  const [data, customer, me, nudge, vorb] = await Promise.all([
     loadInbox(ctx),
     prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true } }),
     ctx.teamRole === "advisor" && ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true } }) : null,
     // „Kollegen empfehlen“ nach positiven Momenten (nur Inhaber, nicht in der Vorschau)
     ctx.teamRole === "owner" && !ctx.preview ? loadReferralNudge(ctx.customerId).catch(() => null) : null,
+    listVorbereitungen(ctx).catch(() => []),
   ]);
-  const nudgeCard = nudge ? <ReferralNudgeCard nudgeKey={nudge.key} title={nudge.title} text={nudge.text} /> : null;
+  // Termine, die noch vorzubereiten sind (Angebot rechnen): Link direkt in der Terminzeile statt eigener Karte
+  const zuVorbereiten = vorb.map((v) => v.id);
+  // Hinweise, die nicht dringend sind, stehen unter den Aufgaben (UX, Ole 15.11.2026)
+  const hinweise = (
+    <div className="mt-6 space-y-4">
+      {nudge ? <ReferralNudgeCard nudgeKey={nudge.key} title={nudge.title} text={nudge.text} /> : null}
+      <FreePeriodNotices customerId={ctx.customerId} readOnly={ctx.preview} />
+      <EmpfehlungHeuteHint ctx={ctx} />
+    </div>
+  );
   const first = (me?.displayName ?? (customer?.name ?? "").replace(/^Allianz\s+/i, "")).split(" ")[0];
   const hour = Number(
     new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", hourCycle: "h23" }).format(new Date()),
@@ -77,29 +87,35 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     // Kontakt. Handy/Tablet: Liste → Kontakt (Zurück „Heute“).
     const { lead } = await searchParams;
     const selected = lead && /^[\w-]{1,64}$/.test(lead) ? lead : null;
+    // Desktop ohne Auswahl: rechts gleich die erste Aufgabe statt einer leeren Fläche (UX, Ole 15.11.2026)
+    const ersteAufgabe =
+      data.appointments.find((a) => a.leadId)?.leadId ??
+      data.outcomes[0]?.leadId ??
+      data.callbacks.find((c) => c.urgent)?.leadId ??
+      data.followUps[0]?.leadId ??
+      data.callbacks[0]?.leadId ??
+      data.noNextStep.leads[0]?.leadId ??
+      null;
+    const rechts = selected ?? ersteAufgabe;
     return (
       <main className="w-full flex-1 px-4 py-6 sm:px-6 lg:px-8">
         <LiveRefresh />
         <div className="xl:grid xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] xl:items-start xl:gap-6">
           <section className={selected ? "hidden xl:block" : undefined}>
             <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
-            {introCard}
             {erstinfoHint}
-            {nudgeCard}
-            <FreePeriodNotices customerId={ctx.customerId} readOnly={ctx.preview} />
-            <EmpfehlungHeuteHint ctx={ctx} />
-            <TerminVorbereitungCard ctx={ctx} />
-            <TodayInbox data={data} newUi leadHref="/buyer?lead={id}" selectedLeadId={selected} />
+            <TodayInbox data={data} newUi leadHref="/buyer?lead={id}" selectedLeadId={rechts} zuVorbereiten={zuVorbereiten} />
+            {hinweise}
           </section>
           <section
             className={
-              selected
-                ? "xl:sticky xl:top-6 xl:max-h-[calc(100dvh-3rem)] xl:overflow-y-auto xl:rounded-[var(--radius-lg)] xl:border xl:border-[color:var(--border)] xl:bg-white xl:p-5"
+              rechts
+                ? `${selected ? "" : "hidden "}xl:sticky xl:top-6 xl:max-h-[calc(100dvh-3rem)] xl:overflow-y-auto xl:rounded-[var(--radius-lg)] xl:border xl:border-[color:var(--border)] xl:bg-white xl:p-5 xl:block`
                 : "hidden xl:sticky xl:top-6 xl:block"
             }
             aria-label="Kontakt"
           >
-            {selected ? (
+            {rechts ? (
               <>
                 <Link
                   href="/buyer"
@@ -109,7 +125,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
                   <ArrowLeft className="h-4 w-4" />
                   Heute
                 </Link>
-                <LeadDetailBody leadId={selected} team={ctx} newUi />
+                <LeadDetailBody leadId={rechts} team={ctx} newUi />
               </>
             ) : (
               <div className="flex min-h-[320px] flex-col items-center justify-center rounded-[var(--radius-lg)] border border-dashed border-[color:var(--border-strong)] px-6 text-center text-[color:var(--muted)]">
@@ -129,11 +145,8 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
       <LiveRefresh />
       <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
       {erstinfoHint}
-      {nudgeCard}
-      <FreePeriodNotices customerId={ctx.customerId} readOnly={ctx.preview} />
-            <EmpfehlungHeuteHint ctx={ctx} />
-      <TerminVorbereitungCard ctx={ctx} />
-      <TodayInbox data={data} />
+      <TodayInbox data={data} zuVorbereiten={zuVorbereiten} />
+      {hinweise}
     </main>
   );
 }
