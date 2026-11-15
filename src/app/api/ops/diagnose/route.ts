@@ -276,12 +276,44 @@ async function d360() {
       waba_account: pick(c.waba_account, ["id", "status", "external_id", "on_behalf_of_business_info", "fb_account_status", "namespace"]),
       integration: pick(c.integration, ["state", "app_id", "enabled"]),
       client: client ? { id: client.id, name: client.name, status: client.status, partner_payload: client.partner_payload, email: mask((client.contact_info as Record<string, unknown> | undefined)?.email) } : null,
+      has_inbox: c.has_inbox,
+      hub_status: c.hub_status,
+      version: c.version,
+      is_oba: c.is_oba,
+      is_on_biz_app: c.is_on_biz_app,
+      settings_keys: c.settings && typeof c.settings === "object" ? Object.keys(c.settings) : null,
       felder: Object.keys(c),
     };
   });
 }
 
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, gedankenstriche, login, meta, capi };
+/**
+ * Webhook-Probe (nur lesend): GET /v1/configs/webhook mit dem gespeicherten Key jedes 360dialog-Kontos.
+ * Zeigt Basis-Adresse (ohne Pfad-Geheimnisse), Status-Code und Antwort gekürzt, nie den Key.
+ */
+async function d360webhook() {
+  const { decryptSecret } = await import("@/lib/encryption");
+  const raw = process.env.DIALOG360_BASE_URL;
+  const base = raw ?? "https://waba-v2.360dialog.io";
+  const accounts = await prisma.whatsAppAccount.findMany({ where: { apiKeyEnc: { not: null } }, select: { id: true, status: true, phoneNumber: true, apiKeyEnc: true, customer: { select: { name: true } } } });
+  const out = [];
+  for (const a of accounts) {
+    const key = decryptSecret(a.apiKeyEnc!);
+    const probe = async (path: string) => {
+      try {
+        const r = await fetch(`${base}${path}`, { headers: { "D360-API-KEY": key }, signal: AbortSignal.timeout(10_000) });
+        const t = (await r.text()).replace(/token=[^&"\s]+/g, "token=…").slice(0, 300);
+        return { status: r.status, body: t };
+      } catch (e) {
+        return { error: e instanceof Error ? e.message.slice(0, 120) : "Fehler" };
+      }
+    };
+    out.push({ kunde: a.customer.name, status: a.status, nummer: a.phoneNumber, configsWebhook: await probe("/v1/configs/webhook"), wabaWebhook: await probe("/waba_webhook"), phoneNumbers: await probe("/phone_numbers") });
+  }
+  return { baseUrl: base.replace(/\/\/([^/@]*@)/, "//"), baseAusVariable: raw !== undefined, konten: out };
+}
+
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, gedankenstriche, login, meta, capi };
 
 export async function GET(req: Request): Promise<Response> {
   if (!authorized(req)) return Response.json({ error: "Unauthorized" }, { status: 401 });
