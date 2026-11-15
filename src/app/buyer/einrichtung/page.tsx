@@ -28,6 +28,7 @@ import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 import { ERROR_HELP, parseConnectPath } from "@/lib/whatsapp/connect-guide";
 import { WhatsAppGuide } from "@/components/whatsapp-guide";
 import { WaCheckButton, WaResetButton } from "./wa-check";
+import { WaInvited } from "./wa-invited";
 import { LeadTimesForm, SourcePicker } from "@/components/calendar-sources";
 import { loadCalendarSetup } from "@/lib/calendar/setup-view";
 import {
@@ -467,7 +468,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         {waEnabled ? (
           <Step n={nextNo()} title="WhatsApp verbinden" icon={MessageCircle} done={done("whatsapp")} open={isOpen("whatsapp") || !!wa || !!weg} id="whatsapp">
             <VideoHint url={video("whatsapp")} />
-            <WhatsAppStep wa={wa} weg={weg} account={waAccount} done={done("whatsapp")} readOnly={readOnly} />
+            <WhatsAppStep wa={wa} weg={weg} account={waAccount} done={done("whatsapp")} readOnly={readOnly} email={ctx.email} />
             {!done("whatsapp") ? (
               <StepExits
                 laterHref={laterHref("whatsapp")}
@@ -647,16 +648,20 @@ function WhatsAppStep({
   account,
   done,
   readOnly,
+  email,
 }: {
+  email: string;
   wa?: string;
   weg?: string;
   account: { status: string; phoneNumber: string | null; dialog360ChannelId: string | null } | null;
   done: boolean;
   readOnly: boolean;
 }) {
-  const msg = wa ? WA_MESSAGES[wa] : undefined;
+  const invitedNow = !done && account?.status === "invited";
+  // Bei offener Einladung erklärt der Schritt selbst alles, die grüne Meldung wäre doppelt.
+  const msg = wa && !(wa === "invited" && invitedNow) ? WA_MESSAGES[wa] : undefined;
   const pending = !done && account?.status === "pending" && !!account.dialog360ChannelId;
-  const invited = !done && account?.status === "invited";
+  const invited = invitedNow;
   return (
     <>
       {msg ? <p className={`mb-3 text-sm font-medium ${msg.ok ? "text-emerald-700" : "text-rose-700"}`}>{msg.text}</p> : null}
@@ -680,18 +685,8 @@ function WhatsAppStep({
           </p>
         </div>
       ) : invited ? (
-        <div className="space-y-3 text-[15px]" data-wa-invited>
-          <p className="font-medium">Ihr Konto bei 360dialog ist angelegt, so geht es weiter:</p>
-          <ol className="list-decimal space-y-1.5 pl-5">
-            <li>
-              Öffnen Sie die E-Mail von 360dialog (an Ihre Login-Adresse) und legen Sie über den Link Ihr Passwort fest. Keine E-Mail? Bitte auch im Spam-Ordner nachsehen.
-            </li>
-            <li>Kommen Sie dann hierher zurück und tippen Sie auf „Weiter: WhatsApp verbinden“. Sie melden sich bei 360dialog an und verbinden Ihre Nummer im Fenster von Meta.</li>
-          </ol>
-          <a href="/buyer/whatsapp-verbinden?weiter=1" className={buttonClass("primary", "md")} data-wa-weiter>
-            Weiter: WhatsApp verbinden
-          </a>
-          <p className="text-sm text-[color:var(--muted)]">Bitte nicht selbst ein neues Konto bei 360dialog registrieren, Ihr Konto ist schon da.</p>
+        <div>
+          <WaInvited email={email} readOnly={readOnly} />
           <WaCheckButton readOnly={readOnly} />
           <WaResetButton readOnly={readOnly} />
         </div>
