@@ -551,6 +551,7 @@ function waConfirmLabel(status: string): string {
     no_template: "nicht gesendet, Vorlage noch nicht freigegeben",
     failed: "fehlgeschlagen",
     past: "nicht gesendet, Termin schon vorbei",
+    opted_out: "nicht gesendet, Kontakt hat STOPP geschrieben",
   };
   return labels[status] ?? status;
 }

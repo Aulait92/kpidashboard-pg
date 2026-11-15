@@ -126,6 +126,9 @@ export async function sendTerminConfirmation(
       select: { status: true },
     });
     if (tpl?.status !== "approved") return await mark("no_template");
+    // „STOPP“ geschrieben: keine Nachrichten mehr an diese Nummer (lib/whatsapp/stopp.ts)
+    const prior = await prisma.conversation.findUnique({ where: { customerId_contactPhone: { customerId: SUPPORT_CUSTOMER_ID, contactPhone: phone } }, select: { optedOutAt: true } });
+    if (prior?.optedOutAt) return await mark("opted_out");
 
     const name = inv.name?.trim() || [m.contact.firstName, m.contact.lastName].filter(Boolean).join(" ") || null;
     const params = terminParams({ name, startAt: m.startAt, loc, rescheduleUrl: inv.reschedule_url ?? null });

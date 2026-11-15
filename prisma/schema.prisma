@@ -1652,7 +1652,7 @@ model SalesMeeting {
   /// Aufgabe „Wie lief der Termin?“ nach Terminende (lib/vertrieb/termin-review.ts)
   reviewTaskId  String?
   /// WhatsApp-Terminbestätigung von der Support-Nummer (lib/vertrieb/termin-whatsapp.ts):
-  /// sent | no_phone | no_account | no_template | failed | past
+  /// sent | no_phone | no_account | no_template | opted_out | failed | past
   waConfirmStatus String?
   waConfirmAt     DateTime?
   waConfirmError  String?
