@@ -1,7 +1,7 @@
 // Terminvorbereitung: Aufgabe auf „Heute“ (36 Std. vorher bis abgehakt), Sichtbereich, Daten aus Lead und Chat.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { listVorbereitungen, loadVorbereitung, setPrepared } from "@/lib/termin-vorbereitung-server";
+import { angeboteSpeichern, auslesenUndSpeichern, listVorbereitungen, loadAngebote, loadPraesentation, loadVorbereitung, setPrepared } from "@/lib/termin-vorbereitung-server";
 import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
 
 const HOUR = 60 * 60 * 1000;
@@ -49,5 +49,25 @@ describe("Terminvorbereitung", () => {
     expect(await listVorbereitungen(ctx, now)).toHaveLength(0);
     expect(await setPrepared(soon.id, ctx, false)).toBe(true);
     expect(await listVorbereitungen(ctx, now)).toHaveLength(1);
+  });
+
+  it("Angebote: speichern, bestätigen, Präsentation mit Allianz-Marke; Auslesen nur für Testkunden", async () => {
+    const lead = await prisma.lead.create({ data: { customerId, name: "Max Weber", phone: "4915133330002", source: "Privatschutz" } });
+    const appt = await prisma.appointment.create({ data: { customerId, leadId: lead.id, mode: "video", status: "booked", startsAt: new Date(Date.now() + 10 * HOUR) } });
+    const ctx = { customerId, userId: null, teamRole: "owner" as const };
+    // Kein Testkunde → Auslesen gesperrt (Datenschutz), von Hand eintragen geht
+    const r = await auslesenUndSpeichern(appt.id, ctx);
+    expect(r.ok).toBe(false);
+    expect(await angeboteSpeichern(appt.id, ctx, { items: [{ sparte: "Hausrat", tarif: "Komfort", beitragMonat: 8.2, empfohlen: true }] }, false)).toBe(true);
+    let p = await loadPraesentation(appt.id, ctx);
+    expect(p?.angeboteBestaetigt).toBe(false);
+    expect(p?.folien.find((f) => f.id === "empfehlung")?.html).toContain("im Gespräch");
+    await prisma.customer.update({ where: { id: customerId }, data: { name: "Allianz Agentur Lohmann" } });
+    expect(await angeboteSpeichern(appt.id, ctx, (await loadAngebote(appt.id, ctx))!.angebote, true)).toBe(true);
+    p = await loadPraesentation(appt.id, ctx);
+    expect(p?.angeboteBestaetigt).toBe(true);
+    expect(p?.marke.gesellschaft).toBe("Allianz");
+    expect(p?.folien.find((f) => f.id === "empfehlung")?.html).toContain("8,20");
+    expect(await loadPraesentation(appt.id, { customerId: otherId, userId: null, teamRole: "owner" })).toBeNull();
   });
 });

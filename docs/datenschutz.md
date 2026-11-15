@@ -255,6 +255,18 @@ Interaktion mit Betroffenen“. Falls ja, DSFA je Kunde als Verantwortlicher (Vo
 
 ## 9. Offene Punkte
 
+- [ ] **Angebote auslesen (Terminvorbereitung, 15.11.2026):** Vermittler laden Angebote (PDF/Foto) hoch, die KI liest
+  Sparte, Tarif, Beitrag, Selbstbeteiligung, Leistungen und Ausschlüsse aus. Die Dokumente enthalten Kundendaten
+  (Name, Anschrift, Geburtsdatum; bei Tierkranken Angaben zur Gesundheit des Tieres) und gehen dafür an Anthropic.
+  Bis zur Ergänzung nur für Testkunden aktiv (`Customer.isTest` oder `ANGEBOTE_AUSLESEN=1`). Vorschlag für den
+  Anwalt:
+  - Unterauftragsverarbeiter Anthropic, Zweck ergänzen: „… sowie Auslesen von Versicherungsangeboten, die der Kunde
+    zur Vorbereitung eines Beratungstermins hochlädt (Beiträge, Tarife, Leistungen); keine Nutzung zum Training.“
+  - AVV Anlage Datenarten: „Inhalte hochgeladener Angebote (Kundendaten des Vermittlers, Tarif- und Beitragsdaten)“.
+  - Datenschutzerklärung für Leads (Abschnitt KI-Assistent): Hinweis, dass Angebote zur Aufbereitung für das
+    Beratungsgespräch automatisiert ausgelesen werden können; Rechtsgrundlage Art. 6 Abs. 1 lit. b DSGVO
+    (Anbahnung des Versicherungsvertrags) durch den Vermittler als Verantwortlichen.
+  - Danach `angeboteAuslesenErlaubt` (lib/termin-vorbereitung-server.ts) für alle freigeben.
 - [ ] AVV/DPA mit jedem Dienst abschließen bzw. Nachweis ablegen (Tabelle Abschnitt 3)
 - [ ] AGB/AVV Stand 15.11.2026 (Anwalts-Memo): Anwalt prüft die „Prüfen:“-Stellen in `src/lib/legal-texts.ts`.
       Eine Mitteilung an Bestandskunden mit 6 Wochen Widerspruchsfrist ist **nicht nötig**: Zum Zeitpunkt der Änderung

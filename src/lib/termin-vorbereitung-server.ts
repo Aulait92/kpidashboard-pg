@@ -1,6 +1,9 @@
 // Terminvorbereitung laden (Datenbank), siehe lib/termin-vorbereitung.ts.
 
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { angeboteAuslesen, cleanAngebote } from "@/lib/angebote";
+import { folien, markeFuer, praesentationCss } from "@/lib/praesentation";
 import { appointmentScope, type TeamCtx } from "@/lib/team";
 import { displayProduct } from "@/lib/products";
 import { currentStammdaten } from "@/lib/lead-stammdaten";
@@ -97,4 +100,59 @@ export async function setPrepared(appointmentId: string, ctx: TeamCtx & { userId
     data: prepared ? { preparedAt: new Date(), preparedById: ctx.userId ?? null } : { preparedAt: null, preparedById: null },
   });
   return n.count > 0;
+}
+
+// ─── Angebote zum Termin (lib/angebote.ts) ─────────────────────────────────
+
+/** Angebote auslesen: nur Testkunden, bis AVV/Datenschutz ergänzt sind (docs/datenschutz.md). */
+export async function angeboteAuslesenErlaubt(customerId: string): Promise<boolean> {
+  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { isTest: true } });
+  return !!c?.isTest || process.env.ANGEBOTE_AUSLESEN === "1";
+}
+
+export async function loadAngebote(appointmentId: string, ctx: TeamCtx) {
+  const a = await prisma.appointment.findFirst({
+    where: { id: appointmentId, ...appointmentScope(ctx) },
+    select: { offersJson: true, offersConfirmedAt: true, leadId: true },
+  });
+  if (!a) return null;
+  const dateien = a.leadId
+    ? await prisma.leadFile.findMany({ where: { leadId: a.leadId, kind: "angebot" }, orderBy: { createdAt: "desc" }, select: { id: true, fileName: true } })
+    : [];
+  return { angebote: cleanAngebote(a.offersJson), bestaetigt: a.offersConfirmedAt, dateien };
+}
+
+/** Angebote aus den hochgeladenen Dateien („Angebot“) des Leads auslesen und unbestätigt speichern. */
+export async function auslesenUndSpeichern(appointmentId: string, ctx: TeamCtx): Promise<{ ok: true; anzahl: number } | { ok: false; error: string }> {
+  if (!(await angeboteAuslesenErlaubt(ctx.customerId))) return { ok: false, error: "Angebote auslesen ist noch im Test. Bitte tragen Sie die Angebote von Hand ein." };
+  const a = await prisma.appointment.findFirst({ where: { id: appointmentId, ...appointmentScope(ctx) }, select: { leadId: true } });
+  if (!a?.leadId) return { ok: false, error: "Termin nicht gefunden." };
+  const files = await prisma.leadFile.findMany({ where: { leadId: a.leadId, kind: "angebot" }, orderBy: { createdAt: "desc" }, take: 5, select: { fileName: true, contentType: true, data: true } });
+  const res = await angeboteAuslesen(files.map((f) => ({ fileName: f.fileName, contentType: f.contentType, data: new Uint8Array(f.data) })));
+  if ("error" in res) return { ok: false, error: res.error };
+  await prisma.appointment.update({ where: { id: appointmentId }, data: { offersJson: res as unknown as Prisma.InputJsonValue, offersConfirmedAt: null } });
+  return { ok: true, anzahl: res.items.length };
+}
+
+/** Angebote speichern (geprüft vom Berater); bestaetigen = für die Präsentation freigeben. */
+export async function angeboteSpeichern(appointmentId: string, ctx: TeamCtx, raw: unknown, bestaetigen: boolean): Promise<boolean> {
+  const d = cleanAngebote(raw);
+  const n = await prisma.appointment.updateMany({
+    where: { id: appointmentId, ...appointmentScope(ctx) },
+    data: { offersJson: d as unknown as Prisma.InputJsonValue, offersConfirmedAt: bestaetigen && d.items.length ? new Date() : null },
+  });
+  return n.count > 0;
+}
+
+/** Daten für die Präsentation: Termin, bestätigte Angebote, Marke des Kunden. */
+export async function loadPraesentation(appointmentId: string, ctx: TeamCtx) {
+  const d = await loadVorbereitung(appointmentId, ctx);
+  if (!d) return null;
+  const [ang, kunde] = await Promise.all([
+    loadAngebote(appointmentId, ctx),
+    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, vermittlerTyp: true } }),
+  ]);
+  const marke = markeFuer({ name: kunde?.name ?? "Ihre Beratung", vermittlerTyp: kunde?.vermittlerTyp });
+  const fs = folien(d, ang?.bestaetigt ? ang.angebote : null, marke);
+  return { d, marke, folien: fs, css: praesentationCss(marke), angeboteBestaetigt: !!ang?.bestaetigt };
 }

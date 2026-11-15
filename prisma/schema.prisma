@@ -1146,6 +1146,9 @@ model Appointment {
   // Terminvorbereitung (Angebot gerechnet) vom Berater abgehakt (Ole, 15.11.2026)
   preparedAt      DateTime?
   preparedById    String?
+  // Angebote zum Termin (ausgelesen bzw. eingetragen, vom Berater bestätigt), für die Präsentation (Ole, 15.11.2026)
+  offersJson        Json?
+  offersConfirmedAt DateTime?
   // Empfehlungen: nach diesem Termin geprüft, ob der Empfehlungslink rausgeht (einmal je Termin)
   referralAskedAt DateTime?
   // Getrennte Einladung für den Berater (interne Infos), gleicher Termin.

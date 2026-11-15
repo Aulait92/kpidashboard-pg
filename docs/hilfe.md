@@ -183,6 +183,12 @@ Seiten aus der Liste „Seiten“ unten.
   gebeten wurde. **Als PDF** gibt es das Ganze zum Drucken oder für den zweiten Bildschirm.
 - Haben Sie das Angebot gerechnet, tippen Sie **Vorbereitet**; die Aufgabe verschwindet. Auch im Kontakt am Termin:
   **Vorbereiten**.
+- **Angebote und Präsentation:** In der Terminvorbereitung tragen Sie Ihre Angebote ein (Sparte, Tarif, Beitrag pro
+  Monat, wichtigste Leistungen, was nicht versichert ist) und markieren, was Sie empfehlen. Laden Sie das Angebot im
+  Kontakt hoch, kann die App es auch auslesen (noch im Test). Nach **Prüfen und bestätigen** öffnet **Präsentation**
+  eine bebilderte Beratungsstrecke mit den Angaben Ihres Kunden und Ihren Angeboten, in den Farben Ihrer
+  Gesellschaft. Im Videocall den Bildschirm teilen, **Vollbild**, mit den Pfeiltasten weiter. Der **Sprechzettel**
+  (nur für Sie) steht unter der Folie oder in einem eigenen Fenster, das mitblättert. **Als PDF** zum Nachschicken.
 
 ## Der WhatsApp-Assistent
 

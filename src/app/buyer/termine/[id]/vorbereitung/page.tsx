@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, ClipboardCheck, FileDown, ListChecks, MessageSquareText, TriangleAlert } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, FileDown, ListChecks, MessageSquareText, Presentation, Receipt, TriangleAlert } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { ButtonLink, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { abschnitte, GRUNDREGELN, leitfaden, offenePunkte, spartenVon, unterlagenFuer } from "@/lib/termin-vorbereitung";
-import { loadVorbereitung } from "@/lib/termin-vorbereitung-server";
+import { angeboteAuslesenErlaubt, loadAngebote, loadVorbereitung } from "@/lib/termin-vorbereitung-server";
+import { AngeboteEditor } from "./angebote-editor";
 import { PreparedButton } from "./prepared-button";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +27,7 @@ export default async function TerminVorbereitungPage({ params }: { params: Promi
   const offen = offenePunkte(ab);
   const lf = leitfaden(d.lead.produkt);
   const unterlagen = unterlagenFuer(d.lead.produkt, spartenVon(d));
+  const [ang, auslesenErlaubt] = await Promise.all([loadAngebote(id, ctx), angeboteAuslesenErlaubt(ctx.customerId)]);
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       {d.leadId ? (
@@ -39,8 +41,30 @@ export default async function TerminVorbereitungPage({ params }: { params: Promi
         <ButtonLink href={`/api/buyer/termine/${d.id}/vorbereitung`} external variant="secondary" size="md" icon={FileDown}>
           Als PDF
         </ButtonLink>
+        <ButtonLink href={`/buyer/termine/${d.id}/praesentation`} variant="secondary" size="md" icon={Presentation}>
+          Präsentation
+        </ButtonLink>
         <span className="text-sm text-[color:var(--muted)]">Rechnen Sie das Angebot mit diesen Angaben vor dem Termin.</span>
       </div>
+
+      {ang ? (
+        <Card className="mb-5" data-termin-angebote>
+          <CardHeader
+            title="Ihre Angebote für die Präsentation"
+            icon={Receipt}
+            hint={ang.bestaetigt ? "Bestätigt" : ang.angebote.items.length ? "Noch nicht bestätigt" : undefined}
+          />
+          <AngeboteEditor
+            id={d.id}
+            items={ang.angebote.items}
+            bestaetigt={!!ang.bestaetigt}
+            dateien={ang.dateien}
+            auslesenErlaubt={auslesenErlaubt}
+            readOnly={ctx.preview}
+            leadHref={d.leadId ? `/buyer/leads/${d.leadId}#dokumente` : null}
+          />
+        </Card>
+      ) : null}
 
       {d.zusammenfassung ? (
         <Card className="mb-5">
