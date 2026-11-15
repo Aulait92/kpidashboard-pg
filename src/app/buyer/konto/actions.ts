@@ -201,3 +201,67 @@ export async function cancelContractAction(_prev: CancelContractState, fd: FormD
     return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
   }
 }
+
+// ─── Anti-Churn vor der Kündigung (lib/anti-churn.ts): Grund, Alternative, Termin ───
+
+export type ChurnState = { ok?: boolean; error?: string; intentId?: string; message?: string };
+
+/** Grund gewählt (freiwillig): Absicht speichern, Alternativen zeigt der Client. */
+export async function churnIntentAction(_prev: ChurnState, fd: FormData): Promise<ChurnState> {
+  try {
+    const ctx = await customerOnly();
+    const { isChurnReason } = await import("@/lib/anti-churn");
+    const { recordChurnIntent } = await import("@/lib/anti-churn-server");
+    const raw = fd.get("reason");
+    const res = await recordChurnIntent(ctx.customerId, {
+      reason: isChurnReason(raw) ? raw : null,
+      note: String(fd.get("note") ?? ""),
+      actor: { id: ctx.userId, email: ctx.email, role: "BUYER" },
+    });
+    return { ok: true, intentId: res.id };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
+  }
+}
+
+/** Alternative gewählt (Pause, Budget, Module springen auf der Seite; Check und Rückruf erzeugen eine Aufgabe). */
+export async function churnOfferAction(_prev: ChurnState, fd: FormData): Promise<ChurnState> {
+  try {
+    const ctx = await customerOnly();
+    const { isChurnOffer } = await import("@/lib/anti-churn");
+    const { chooseChurnOffer } = await import("@/lib/anti-churn-server");
+    const offer = fd.get("offer");
+    if (!isChurnOffer(offer) || offer === "termin") return { error: "Ungültige Auswahl." };
+    const res = await chooseChurnOffer(ctx.customerId, String(fd.get("intentId") ?? ""), offer, { id: ctx.userId, email: ctx.email, role: "BUYER" });
+    if (!res.ok) return { error: res.error };
+    const message =
+      offer === "check"
+        ? "Danke! Wir prüfen Ihre Kampagne und melden uns innerhalb von zwei Werktagen mit konkreten Änderungen."
+        : offer === "rueckruf"
+          ? "Danke! Wir rufen Sie innerhalb eines Werktags an."
+          : undefined;
+    return { ok: true, message };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
+  }
+}
+
+/** 15-Minuten-Termin statt Kündigung (Teamkalender, wie der Hilfetermin in der Einrichtung). */
+export async function churnHelpCallAction(_prev: ChurnState, fd: FormData): Promise<ChurnState> {
+  try {
+    const ctx = await customerOnly();
+    const { churnReasonLabel } = await import("@/lib/anti-churn");
+    const { chooseChurnOffer } = await import("@/lib/anti-churn-server");
+    const { bookHelpCall } = await import("@/lib/help-call");
+    const intentId = String(fd.get("intentId") ?? "");
+    const intent = await prisma.churnIntent.findFirst({ where: { id: intentId, customerId: ctx.customerId }, select: { reason: true } });
+    const res = await bookHelpCall(ctx.customerId, String(fd.get("start") ?? ""), `Statt Kündigung: ${churnReasonLabel(intent?.reason)}`);
+    if (!res.ok) return { error: res.error };
+    await chooseChurnOffer(ctx.customerId, intentId, "termin", { id: ctx.userId, email: ctx.email, role: "BUYER" });
+    revalidatePath("/buyer", "layout");
+    const when = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(res.start);
+    return { ok: true, message: `Gebucht: ${when} Uhr, 15 Minuten per Video. Die Einladung kommt per E-Mail.` };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
+  }
+}

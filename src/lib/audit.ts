@@ -80,6 +80,8 @@ export const AUDIT_LABEL: Record<string, string> = {
   "offer.accept": "Angebot angenommen",
   "contract.cancel": "Vertrag gekündigt (Kunde, Kundenbereich)",
   "contract.cancel_stripe": "Stripe-Abo zum Vertragsende beendet (cancel_at)",
+  "contract.cancel_intent": "Kündigungsabsicht mit Grund (Anti-Churn)",
+  "contract.cancel_alternative": "Alternative statt Kündigung gewählt (Anti-Churn)",
   "contact.delete": "Vertriebskontakt gelöscht",
   "contact.merge": "Vertriebskontakte zusammengeführt",
   "bank.connect": "Bankkonto verbunden",

@@ -1,6 +1,7 @@
 import { Card, CardHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { saveRetainerAction } from "./retainer-actions";
+import { CHURN_OFFERS, churnReasonLabel, isChurnOffer } from "@/lib/anti-churn";
 
 const input = "h-9 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm tabular-nums";
 const dmy = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
@@ -15,6 +16,8 @@ export async function RetainerCard({ customerId, message, failed }: { customerId
   if (!c) return null;
   const offer = c.onboarding?.offerId ? await prisma.offer.findFirst({ where: { id: c.onboarding.offerId, status: "accepted" }, select: { number: true } }) : null;
   const monthly = c.retainerMonthly != null ? Number(c.retainerMonthly) : null;
+  // Anti-Churn: letzte Kündigungsabsichten (Grund, gewählte Alternative, Ergebnis)
+  const intents = await prisma.churnIntent.findMany({ where: { customerId }, orderBy: { createdAt: "desc" }, take: 5, select: { id: true, reason: true, note: true, offer: true, outcome: true, createdAt: true } });
   return (
     <Card>
       <CardHeader title="Betreuungsgebühr" />
@@ -27,6 +30,21 @@ export async function RetainerCard({ customerId, message, failed }: { customerId
             <b>Vom Kunden gekündigt</b> am {dmy(c.cancelRequestedAt)} ({c.cancelRequestedBy ?? "unbekannt"}) zum <b>{dmy(c.cancelEffectiveAt)}</b>
             {c.cancelReason ? `. Grund: ${c.cancelReason}` : ""}. Ende unten eintragen. Das Stripe-Abo endet automatisch zum Termin, außer die Aufgabe sagt „Stripe bitte von Hand prüfen“.
           </p>
+        ) : null}
+        {intents.length ? (
+          <div className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2" data-admin-churn>
+            <div className="mb-1 font-medium">Kündigungsabsichten</div>
+            <ul className="space-y-1">
+              {intents.map((i) => (
+                <li key={i.id}>
+                  {dmy(i.createdAt)}: {churnReasonLabel(i.reason)}
+                  {i.note ? ` („${i.note}“)` : ""}
+                  {i.offer && isChurnOffer(i.offer) ? `, gewählt: ${CHURN_OFFERS[i.offer].title}` : ""}
+                  {i.outcome === "gekuendigt" ? ", danach gekündigt" : i.outcome === "alternative" ? ", geblieben" : ", noch offen"}
+                </li>
+              ))}
+            </ul>
+          </div>
         ) : null}
         <p className="text-[color:var(--muted)]">
           {offer

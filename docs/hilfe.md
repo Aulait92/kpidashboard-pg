@@ -671,6 +671,9 @@ Seiten aus der Liste „Seiten“ unten.
   endet automatisch zum Vertragsende). Bis dahin können Sie Ihre Daten unter „Ihre Daten herunterladen“ exportieren; spätestens 30 Tage nach
   Vertragsende werden die Daten der Leads und Kunden gelöscht (Sperrliste für Widersprüche bleibt pseudonymisiert). Nur Inhaber. Zurücknehmen oder anderer Termin (z. B. außerordentlich): bitte bei
   uns melden.
+  Vor der Bestätigung fragt die App freiwillig nach dem Hauptgrund und zeigt passende Möglichkeiten (z. B. Pause,
+  Budget senken, Zusatzmodule beenden, 15 Minuten mit uns, Kampagnen-Check, Rückruf). „Direkt zur Kündigung“ bzw.
+  „Trotzdem kündigen“ führt jederzeit mit einem Klick zur Bestätigung.
 - Vertragsfragen: bitte direkt bei uns melden.
 
 ## Weiteres Produkt buchen (nur Inhaber)
