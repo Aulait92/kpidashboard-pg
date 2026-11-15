@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PROVISION_PRODUCTS, closeValueField, closeValueLabel, effectiveRates, estimatedProvision, includesTrail, parseCustomRates, productKeyFor, productsForTyp, ruleFor, standardRate, sumProvision } from "@/lib/provision";
+import { PROVISION_PRODUCTS, closeValueField, closeValueLabel, effectiveRates, estimatedProvision, includesTrail, parseCustomRates, productKeyFor, productsForTyp, ruleFor, spartenAuswahl, standardRate, sumProvision } from "@/lib/provision";
 
 describe("Provision je Abschluss", () => {
   it("PKV-Tarifoptimierung (§ 204 VVG): Honorar = Ersparnis × 6, ohne Angabe 100 € Ersparnis", () => {
@@ -124,10 +124,14 @@ describe("Provision je Abschluss", () => {
     expect(errors).toHaveLength(2);
   });
 
-  it("PKV-Tarifoptimierung nur bei Maklern in der Produktliste, PKV-Neugeschäft bei beiden", () => {
-    expect(productsForTyp("vertreter").map((p) => p.key).slice(0, 2)).toEqual(["pkv", "privatschutz"]);
-    expect(productsForTyp("vertreter").some((p) => p.key === "pkv_tarif")).toBe(false);
-    expect(productsForTyp("makler").map((p) => p.key).slice(0, 3)).toEqual(["pkv", "pkv_tarif", "privatschutz"]);
+  it("PKV nur als Tarifoptimierung (§ 204 VVG) und nur bei Maklern, PKV-Neugeschäft bei keinem", () => {
+    expect(productsForTyp("vertreter").map((p) => p.key)[0]).toBe("privatschutz");
+    expect(productsForTyp("vertreter").some((p) => p.key === "pkv_tarif" || p.key === "pkv")).toBe(false);
+    expect(productsForTyp("makler").map((p) => p.key).slice(0, 2)).toEqual(["pkv_tarif", "privatschutz"]);
+    expect(productsForTyp("makler").some((p) => p.key === "pkv")).toBe(false);
+    // Auswahl beim Abschluss: ohne Neugeschäft, außer der Vertrag hat die Sparte schon
+    expect(spartenAuswahl().some((s) => s.key === "pkv")).toBe(false);
+    expect(spartenAuswahl("pkv").some((s) => s.key === "pkv")).toBe(true);
     // Vertreter mit Tarifoptimierungs-Lead: Standard, kein Fehler
     expect(estimatedProvision("PKV-Tarifoptimierung", null, effectiveRates("vertreter"))).toBe(600);
   });

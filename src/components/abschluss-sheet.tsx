@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
-import { closeValueField, contractProvision, premiumFieldForSparte, sparteForSource, SPARTEN, type ProvisionOverrides, type SparteKey } from "@/lib/provision";
+import { closeValueField, contractProvision, premiumFieldForSparte, sparteForSource, spartenAuswahl, type ProvisionOverrides, type SparteKey } from "@/lib/provision";
 import { encodeSparte } from "@/lib/eigene-produkte";
 import { anteil, EigenesProduktFelder, produktEingabe, sonstigesStandard, type ProduktEingabe } from "@/components/eigenes-produkt-felder";
 import { useEigeneProdukte, useProvisionRates } from "@/components/provision-context";
@@ -111,9 +111,9 @@ export function AbschlussSheet({
               data-abschluss-sparte
             >
               <option value="">Bitte wählen</option>
-              {SPARTEN.map((s) => (
+              {spartenAuswahl(sparte).map((s) => (
                 <option key={s.key} value={s.key}>
-                  {s.key === "sonstiges" ? "Sonstiges (eigenes Produkt)" : s.label}
+                  {s.key === "sonstiges" ? "Anderes Produkt (neu anlegen)" : s.label}
                 </option>
               ))}
               {products.length ? (

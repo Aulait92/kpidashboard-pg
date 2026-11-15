@@ -426,14 +426,13 @@ Seiten aus der Liste „Seiten“ unten.
     Beitragssumme) ≈ 720 € Abschlussprovision und ≈ 14 € Bestand pro Jahr. Laufzeit, Alter und Endalter oder die
     Beitragssumme direkt tragen Sie am Vertrag ein; ohne Angabe: BU bis Alter 67 (ohne Alter 30 Jahre) und 80 € im
     Monat, Kindersparplan 18 Jahre und 50 €, Leben bzw. Rente 30 Jahre und 100 €.
-  - PKV-Neugeschäft: „Monatsbeitrag netto“. Provision ≈ 9 Monatsbeiträge (höchstens 9,9 nach § 50 VAG: 3,3 % der
-    Bruttobeitragssumme über 25 Jahre); ohne Angabe 2.500 €.
-  - **PKV-Tarifoptimierung (§ 204 VVG):** „Monatliche Ersparnis des Kunden“. Statt Abschlussprovision ein **Honorar
+  - **PKV-Tarifoptimierung (§ 204 VVG, nur Makler):** „Monatliche Ersparnis des Kunden“. Statt Abschlussprovision ein **Honorar
     (vom Kunden)** = Ersparnis × 6 Monate (änderbar) oder ein fester Betrag; ohne Angabe 100 € Ersparnis. Keine
     Bestandsprovision. Das Honorar zählt im Gewinn als Ertrag. Bitte mit Ihrer Honorarvereinbarung abgleichen.
   - **Empfehlungen, Bestandskunden und unbekannte Produkte:** Die App fragt zuerst die **Sparte** (z. B. Katze,
     Privatschutz/Haftpflicht, Hausrat) und rechnet dann mit dem Satz dieser Sparte.
-  - **Eigenes Produkt (Sparte „Sonstiges“):** Wählen Sie „Sonstiges (eigenes Produkt)“, tragen Sie das **Produkt** ein
+  - **Eigenes Produkt:** Unter **Meine Provisionen → Ihre eigenen Produkte → Produkt hinzufügen** legen Sie weitere
+    Produkte mit Ihren Sätzen direkt an. Oder beim Abschluss: Wählen Sie „Anderes Produkt (neu anlegen)“, tragen Sie das **Produkt** ein
     (z. B. Hausrat Plus, Kfz Flotte, Rechtsschutz Gewerbe) und die Sätze: **Abschluss in %** und **Bestand in % pro
     Jahr** (ab dem 2. Jahr), jeweils vom Jahresbeitrag. Die Vorschau rechnet sofort mit („≈ … € Abschlussprovision,
     ≈ … € Bestand pro Jahr“). Das Produkt wird gespeichert und steht beim nächsten Abschluss unter „Ihre Produkte“
@@ -444,7 +443,7 @@ Seiten aus der Liste „Seiten“ unten.
 - **Mehrere Verträge pro Kunde (Cross-Selling):** Im Kontakt mit Abschluss steht unter „Verträge“ der erste Abschluss.
   Mit **Weiteren Abschluss eintragen** kommen weitere Verträge dazu: Sparte (Katze, Hund, Pferd,
   Privatschutz/Haftpflicht, Unfall, Hausrat, Wohngebäude, Rechtsschutz, Kindersparplan, KFZ, Leben/Rente, BU,
-  PKV-Neugeschäft, PKV-Tarifoptimierung, Sonstiges), Beitrag, Datum, optional Versicherer, Vertragsnummer und die
+  PKV-Tarifoptimierung, eigene Produkte), Beitrag, Datum, optional Versicherer, Vertragsnummer und die
   Police als Dokument; bei Leben/BU auch Laufzeit bzw. Alter und Endalter oder die Beitragssumme. Jeder Vertrag rechnet
   mit dem Satz seiner Sparte. **Bearbeiten** und **Löschen** (nur weitere Verträge) gehen direkt in der Liste; jeder
   Schritt steht im Verlauf. Abschlüsse und Abschlussquote zählen weiter Kunden, nicht Verträge.
@@ -471,8 +470,7 @@ Seiten aus der Liste „Seiten“ unten.
   - Sach und KFZ: Abschlussprovision in %, Bestandsprovision in % pro Jahr, typischer Jahresbeitrag (über 0 €).
   - Leben/Rente, BU, Kindersparplan: Abschlussprovision in ‰ der Beitragssumme, Bestandsprovision in % vom
     Jahresbeitrag, typischer Monatsbeitrag, Laufzeit, Endalter (optional) und Stornohaftungszeit in Monaten.
-  - PKV-Neugeschäft: Monatsbeiträge (höchstens 9,9, § 50 VAG) und Betrag ohne Beitragsangabe.
-  - PKV-Tarifoptimierung: Honorar als Monate Ersparnis oder fester Betrag, Ersparnis ohne Angabe.
+  - PKV-Tarifoptimierung (nur Makler): Honorar als Monate Ersparnis oder fester Betrag, Ersparnis ohne Angabe.
   - **Stornoquote pro Jahr** (0 bis 50 %, Standard 10 %), optional je Sparte. Damit rechnen alle Prognosen: Bestand in
     5 Jahren, „So wächst Ihr Bestand“, Gewinn „Inkl. Bestand“ und der Monatsbericht. Sobald Sie 20 Verträge haben,
     steht darunter „Ihre tatsächliche Quote: … Übernehmen?“.

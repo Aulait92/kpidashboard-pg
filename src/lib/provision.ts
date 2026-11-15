@@ -184,6 +184,11 @@ export const SPARTEN: readonly Sparte[] = [
   { key: "sonstiges", label: "Sonstiges", rateKey: "sonstiges", bestandLine: "Sonstiges", related: ["privatschutz", "unfall"] },
 ];
 
+/** Sparten-Auswahl beim Eintragen: ohne PKV-Neugeschäft (nicht im Angebot), außer ein älterer Vertrag hat sie schon. */
+export function spartenAuswahl(current?: string | null): readonly Sparte[] {
+  return SPARTEN.filter((s) => s.key !== "pkv" || s.key === current);
+}
+
 // Tarifoptimierung zuerst: Lead.source „Wechsel“ (intern) bzw. „PKV-Wechsel“ heißt nach außen
 // „PKV-Tarifoptimierung“ (lib/products.displayProduct). „Neugeschäft“ ist das PKV-Neugeschäft.
 const SPARTE_RULES: [RegExp, SparteKey][] = [
@@ -549,9 +554,14 @@ export function includesTrail(overrides?: ProvisionOverrides): boolean {
   );
 }
 
-/** Produkte, die ein Vermittlertyp überhaupt anbieten kann (PKV-Tarifoptimierung nur Makler). */
+/**
+ * Produkte, die ein Vermittlertyp überhaupt anbieten kann: PKV nur als Tarifoptimierung nach § 204 VVG
+ * und nur für Makler. PKV-Neugeschäft bieten wir nicht an (Ole, 15.11.2026); die Regel bleibt nur,
+ * damit ältere Einträge weiter rechnen.
+ */
 export function productsForTyp(typ: VermittlerTyp) {
-  return PROVISION_PRODUCTS.filter((p) => typ === "makler" || p.key !== "pkv_tarif");
+  // „Sonstiges“ nicht als eigene Karte: weitere Produkte legt der Kunde unter „Ihre eigenen Produkte“ an
+  return PROVISION_PRODUCTS.filter((p) => p.key !== "pkv" && p.key !== "sonstiges" && (typ === "makler" || p.key !== "pkv_tarif"));
 }
 
 // ─── Provision je Vertrag (Cross-Selling, Bestandsprovision) ───────────────

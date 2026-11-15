@@ -21,7 +21,7 @@ import {
   premiumFactor,
   premiumFieldForSparte,
   sparteKind,
-  SPARTEN,
+  spartenAuswahl,
   suggestedChargeback,
   type CancelReason,
   type SparteKey,
@@ -357,9 +357,9 @@ function ContractSheet({ leadId, id, initial, onClose }: { leadId: string; id: s
           <span className="text-sm text-[color:var(--muted)]">Sparte</span>
           <select required value={selectValue} onChange={(e) => chooseSparte(e.target.value)} className={inputCls} data-contract-sparte>
             <option value="">Bitte wählen</option>
-            {SPARTEN.map((s) => (
+            {spartenAuswahl(selectValue).map((s) => (
               <option key={s.key} value={s.key}>
-                {s.key === "sonstiges" ? "Sonstiges (eigenes Produkt)" : s.label}
+                {s.key === "sonstiges" ? "Anderes Produkt (neu anlegen)" : s.label}
               </option>
             ))}
             {products.length ? (
