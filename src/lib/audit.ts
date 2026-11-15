@@ -93,6 +93,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "cost.rule": "Kostenregel geändert",
   "agent.active": "WhatsApp-Assistent an/aus",
   "whatsapp.self_connect": "WhatsApp selbst verbunden (360dialog)",
+  "whatsapp.d360_invite": "360dialog-Konto unter unserem Partner angelegt und eingeladen",
   "agent.sequences": "Automatisch nachfassen an/aus",
   "lead.sequence_stop": "Automatisches Nachfassen gestoppt",
   "leadsource.assign": "Leadformular zugeordnet",

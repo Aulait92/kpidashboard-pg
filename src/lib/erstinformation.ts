@@ -82,7 +82,12 @@ export async function loadErstinfo(customerId: string): Promise<ErstinfoView> {
       }
     : null;
   const registerNummer = e?.registerNummer ?? impressum?.registerNumber ?? null;
-  const fehlt = erstinfoFehlt({ status: !!e?.statusAt, registerNummer: !!e?.registerNummer, dokument: !!(e?.url || e?.fileName), anschrift: !!impressum?.address });
+  // Registernummer aus dem Impressum übernehmen (öffentliche Seite und Assistent lesen den Datensatz)
+  if (!e?.registerNummer && impressum?.registerNumber) {
+    await getOrCreateErstinfo(customerId).catch(() => null);
+    await prisma.erstinformation.update({ where: { customerId }, data: { registerNummer: impressum.registerNumber } }).catch(() => null);
+  }
+  const fehlt = erstinfoFehlt({ registerNummer: !!registerNummer, dokument: !!(e?.url || e?.fileName), anschrift: !!impressum?.address });
   return {
     token: e?.token ?? null,
     status: asVermittlerStatus(c?.vermittlerTyp),

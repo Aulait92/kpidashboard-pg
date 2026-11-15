@@ -6,6 +6,7 @@
 // bzw. direkt bei Annahme, wenn keine Online-Zahlung aktiv ist. Zusätzlich
 // per Knopf am Vertriebskontakt (z. B. für Bestandskunden).
 
+import { erstinfoVollstaendig } from "@/lib/erstinformation-shared";
 import crypto from "node:crypto";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -381,12 +382,9 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
       {
         // Erstinformation (§ 15 VersVermV): der Assistent schickt den Link in der ersten Nachricht (lib/erstinformation.ts)
         key: "erstinfo",
-        label: "Erstinformation hinterlegt (Status, Registernummer, PDF oder Link)",
+        label: "Erstinformation vollständig (Registernummer und Anschrift aus dem Impressum oder eigene Erstinformation)",
         owner: "kunde",
-        done: (() => {
-          const e = ob.customer.erstinformation;
-          return !!e?.statusAt && !!e.registerNummer && !!(e.url || e.fileName);
-        })(),
+        done: erstinfoVollstaendig(ob.customer.erstinformation, (ob.websiteInfo ?? null) as { registerNumber?: string | null; address?: string | null } | null),
         at: ob.customer.erstinformation?.statusAt ?? null,
       },
       {

@@ -71,13 +71,13 @@ export function verifyState(state: string | null | undefined, now = Date.now()):
 }
 
 /** Link zum 360dialog-Onboarding (Konto anlegen + Meta Embedded Signup). */
-export function onboardingLink(cfg: PartnerConfig, opts: { redirectUrl: string; state: string; email?: string | null; name?: string | null; customerId?: string | null }): string {
+export function onboardingLink(cfg: PartnerConfig, opts: { redirectUrl: string; state: string; email?: string | null; name?: string | null; customerId?: string | null; next?: "signup" | "login" }): string {
   const url = new URL(cfg.onboardingUrl.replace("{partner_id}", encodeURIComponent(cfg.partnerId)));
   url.searchParams.set("redirect_url", opts.redirectUrl);
   url.searchParams.set("state", opts.state);
   url.searchParams.set("lang", "de");
   // Nicht angemeldete Nutzer direkt zur Registrierung (statt Login-Seite), im Kontext unseres Partners
-  url.searchParams.set("next", "signup");
+  url.searchParams.set("next", opts.next ?? "signup");
   // Kein plan_selection (15.11.2026): wirkt laut Doku nur bei Partnern mit gestaffelten Tarifen, Standard ist ohnehin
   // „regular“; bei Kunden, die selbst zahlen, lässt es sie den Tarif wählen. Partnerbezahlte Kunden sehen keine Tarifwahl.
   // Kunden-ID am 360dialog-Kunden speichern (partner_payload): so finden wir die Nummer auch ohne Rücksprung
@@ -197,4 +197,54 @@ export function parsePartnerChannel(raw: unknown): PartnerChannel | null {
     availability: str(c.availability_status),
     createdAt: str(c.created_at),
   };
+}
+
+export type CreateClientResult = { kind: "ok"; clientId: string } | { kind: "exists" } | { kind: "error"; status: number; message: string };
+
+/**
+ * 360dialog-Kunden unter unserem Partner anlegen und einladen (Partner-API „Account Sharing“, Ole 15.11.2026):
+ * POST /api/v2/partners/<PARTNER_ID>/account_sharing/clients { email, name, send_client_email, is_initial_onboarding_client }.
+ * 360dialog schickt die Einladung (Passwort festlegen). Danach meldet sich der Kunde an und verbindet die Nummer
+ * über den Partner-Link, ohne die allgemeine Registrierung (die den Partner verliert). Kunden-ID als partner_payload.
+ */
+export async function createPartnerClient(cfg: PartnerConfig, input: { email: string; name: string; customerId: string }): Promise<CreateClientResult> {
+  const base = `${cfg.hubUrl}/api/v2/partners/${encodeURIComponent(cfg.partnerId)}`;
+  let res: Response;
+  try {
+    res = await fetch(`${base}/account_sharing/clients`, {
+      method: "POST",
+      headers: { "X-API-Key": cfg.apiKey, "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ email: input.email, name: input.name.slice(0, 120), send_client_email: true, is_initial_onboarding_client: true }),
+      signal: AbortSignal.timeout(15_000),
+    });
+  } catch (err) {
+    return { kind: "error", status: 0, message: err instanceof Error ? err.message.slice(0, 200) : "Netzwerkfehler" };
+  }
+  const text = await res.text();
+  if (!res.ok) {
+    let message = text.slice(0, 300);
+    try {
+      message = (JSON.parse(text) as { meta?: { developer_message?: string } }).meta?.developer_message?.slice(0, 300) ?? message;
+    } catch {
+      /* Rohtext */
+    }
+    // E-Mail hat schon ein Konto bei 360dialog: dann anmelden statt anlegen
+    if (res.status === 409 || /already|exist/i.test(message)) return { kind: "exists" };
+    return { kind: "error", status: res.status, message };
+  }
+  let clientId: string | null = null;
+  try {
+    clientId = (JSON.parse(text) as { id?: string }).id ?? null;
+  } catch {
+    clientId = null;
+  }
+  if (!clientId) return { kind: "error", status: res.status, message: "Antwort ohne Kunden-ID" };
+  // Kunden-ID als Merkmal hinterlegen (für „Verbindung prüfen“); Fehler hier sind nicht schlimm
+  await fetch(`${base}/clients/${encodeURIComponent(clientId)}`, {
+    method: "PATCH",
+    headers: { "X-API-Key": cfg.apiKey, "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ partner_payload: input.customerId }),
+    signal: AbortSignal.timeout(10_000),
+  }).catch(() => null);
+  return { kind: "ok", clientId };
 }

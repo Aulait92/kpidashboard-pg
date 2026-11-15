@@ -13,6 +13,7 @@ import { prisma } from "@/lib/prisma";
 import { HelpCallPicker, MetaAccessForm, QuestionnaireForm, SkipButton, StepExits } from "./forms";
 import { ErstinfoForm } from "./erstinfo-form";
 import { loadErstinfo } from "@/lib/erstinformation";
+import { vermittlerStatusLabel } from "@/lib/erstinformation-shared";
 import { SmtpForm } from "@/app/buyer/postfach/forms";
 import { googleMailAvailable, microsoftMailAvailable } from "@/lib/mail/postfach";
 import { appInstalled, loadSetupSettings, setupSteps, videoEmbedUrl, type MetaCheck, type SetupStepKey } from "@/lib/selbst-einrichtung";
@@ -311,17 +312,37 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               Als Versicherungsvermittler müssen Sie Ihren Kunden beim ersten Kontakt die Erstinformation geben (§ 15 VersVermV). Wir erstellen sie aus Ihrem
               Impressum, Ihr Assistent schickt den Link in seiner ersten Nachricht an jeden neuen Lead. Bitte prüfen Sie die Angaben einmal kurz.
             </p>
-            {!erstinfo.vollstaendig ? (
+            {erstinfo.vollstaendig ? (
+              <div className="mb-3 rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" data-erstinfo-fertig>
+                Ihre Erstinformation ist fertig: {vermittlerStatusLabel(erstinfo.status)} (aus Ihrem Angebot)
+                {erstinfo.registerNummer ? `, Registernummer ${erstinfo.registerNummer}` : ""}
+                {erstinfo.url || erstinfo.fileName ? ", eigene Erstinformation hinterlegt" : ", Anschrift aus Ihrem Impressum"}. Sie müssen nichts tun.
+              </div>
+            ) : (
               <p className="mb-4 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-erstinfo-warnung>
                 Es fehlt noch: {erstinfo.fehlt.join(", ")}.
               </p>
-            ) : null}
-            <ErstinfoForm
-              initial={{ status: erstinfo.statusAt ? erstinfo.status : null, registerNummer: erstinfo.registerNummer, url: erstinfo.url, fileName: erstinfo.fileName }}
-              impressum={erstinfo.impressum}
-              confirmed={!!erstinfo.statusAt}
-              readOnly={readOnly}
-            />
+            )}
+            {erstinfo.vollstaendig ? (
+              <details className="text-sm">
+                <summary className="cursor-pointer font-medium text-[color:var(--brand)]">Angaben ändern</summary>
+                <div className="mt-3">
+                  <ErstinfoForm
+                    initial={{ status: erstinfo.status, registerNummer: erstinfo.registerNummer, url: erstinfo.url, fileName: erstinfo.fileName }}
+                    impressum={erstinfo.impressum}
+                    confirmed
+                    readOnly={readOnly}
+                  />
+                </div>
+              </details>
+            ) : (
+              <ErstinfoForm
+                initial={{ status: erstinfo.status, registerNummer: erstinfo.registerNummer, url: erstinfo.url, fileName: erstinfo.fileName }}
+                impressum={erstinfo.impressum}
+                confirmed={!!erstinfo.statusAt}
+                readOnly={readOnly}
+              />
+            )}
             {erstinfo.token ? (
               <p className="mt-4 text-sm text-[color:var(--muted)]">
                 So sehen Ihre Leads sie:{" "}
@@ -616,6 +637,7 @@ const WA_MESSAGES: Record<string, { ok: boolean; text: string }> = {
   state: { ok: false, text: "Der Link war abgelaufen. Bitte noch einmal auf „WhatsApp verbinden“ tippen." },
   forbidden: { ok: false, text: "Das kann nur der Inhaber des Kontos." },
   off: { ok: false, text: "Das Verbinden ist gerade nicht verfügbar. Wir richten WhatsApp gemeinsam mit Ihnen ein." },
+  invited: { ok: true, text: "Ihr Konto bei 360dialog ist angelegt. Bitte öffnen Sie jetzt die E-Mail von 360dialog und legen Sie Ihr Passwort fest." },
 };
 
 /** Schritt „WhatsApp verbinden“: Erklärung, Knopf zum 360dialog-Onboarding, Status. */
@@ -634,6 +656,7 @@ function WhatsAppStep({
 }) {
   const msg = wa ? WA_MESSAGES[wa] : undefined;
   const pending = !done && account?.status === "pending" && !!account.dialog360ChannelId;
+  const invited = !done && account?.status === "invited";
   return (
     <>
       {msg ? <p className={`mb-3 text-sm font-medium ${msg.ok ? "text-emerald-700" : "text-rose-700"}`}>{msg.text}</p> : null}
@@ -655,6 +678,21 @@ function WhatsAppStep({
           <p className="text-sm text-[color:var(--muted)]">
             Ihr Assistent schreibt neue Leads ab dem Start über diese Nummer an. Alle Gespräche finden Sie unter „Chats“.
           </p>
+        </div>
+      ) : invited ? (
+        <div className="space-y-3 text-[15px]" data-wa-invited>
+          <p className="font-medium">Ihr Konto bei 360dialog ist angelegt, so geht es weiter:</p>
+          <ol className="list-decimal space-y-1.5 pl-5">
+            <li>
+              Öffnen Sie die E-Mail von 360dialog (an Ihre Login-Adresse) und legen Sie über den Link Ihr Passwort fest. Keine E-Mail? Bitte auch im Spam-Ordner nachsehen.
+            </li>
+            <li>Kommen Sie dann hierher zurück und tippen Sie auf „Weiter: WhatsApp verbinden“. Sie melden sich bei 360dialog an und verbinden Ihre Nummer im Fenster von Meta.</li>
+          </ol>
+          <a href="/buyer/whatsapp-verbinden?weiter=1" className={buttonClass("primary", "md")} data-wa-weiter>
+            Weiter: WhatsApp verbinden
+          </a>
+          <p className="text-sm text-[color:var(--muted)]">Bitte nicht selbst ein neues Konto bei 360dialog registrieren, Ihr Konto ist schon da.</p>
+          <WaCheckButton readOnly={readOnly} />
         </div>
       ) : msg?.ok ? null : pending ? (
         <p className="text-sm font-medium text-amber-700">

@@ -5,7 +5,7 @@
 
 import { useActionState, useState } from "react";
 import { CheckCircle2, Loader2 } from "lucide-react";
-import { TIPPGEBER_HINWEIS, VERMITTLER_STATUS } from "@/lib/erstinformation-shared";
+import { TIPPGEBER_HINWEIS, VERMITTLER_STATUS, vermittlerStatusLabel } from "@/lib/erstinformation-shared";
 import { saveErstinfoAction, type ErstinfoState } from "./actions";
 
 const input =
@@ -58,8 +58,13 @@ export function ErstinfoForm({
           <p className="mt-2 text-xs text-[color:var(--muted)]">Stimmt etwas nicht? Dann bitte im Impressum Ihrer Website korrigieren oder uns kurz schreiben.</p>
         </div>
       ) : null}
-      <fieldset>
-        <legend className="text-sm font-medium">Ihr Status als Vermittler</legend>
+      <details className="rounded-[var(--radius-md)] border border-[color:var(--border)] px-4 py-3" open={!status}>
+        <summary className="cursor-pointer text-sm font-medium">
+          Ihr Status: {status && status !== "tippgeber" ? vermittlerStatusLabel(status) : "bitte wählen"}
+          {status ? <span className="font-normal text-[color:var(--muted)]"> (aus Ihrem Angebot, nur bei Bedarf ändern)</span> : null}
+        </summary>
+      <fieldset className="mt-3">
+        <legend className="sr-only">Ihr Status als Vermittler</legend>
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
           {VERMITTLER_STATUS.map((s) => (
             <label
@@ -78,6 +83,7 @@ export function ErstinfoForm({
         </div>
         <p className="mt-2 text-xs text-[color:var(--muted)]">Der Status bestimmt auch die vorausgefüllten Provisionssätze (Makler oder Vertreter).</p>
       </fieldset>
+      </details>
       {tippgeber ? (
         <p className="rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-tippgeber-hinweis>
           {TIPPGEBER_HINWEIS}
@@ -123,7 +129,7 @@ export function ErstinfoForm({
               className="inline-flex h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 text-[15px] font-semibold text-white transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60"
             >
               {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {fromImpressum ? "Angaben stimmen" : "Speichern"}
+              Speichern
             </button>
             {state.ok ? (
               <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
