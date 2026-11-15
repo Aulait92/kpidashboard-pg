@@ -62,4 +62,14 @@ describe("Lead-Eingang", () => {
     expect(b.leadId).toBe(a.leadId);
     expect(await prisma.lead.count({ where: { externalId: inc.externalId! } })).toBe(1);
   });
+
+  it("ruhendes Konto (Vertrag beendet): Lead landet im Posteingang, nicht beim Kunden", async () => {
+    await prisma.customer.update({ where: { id: customerId }, data: { dormantSince: new Date() } });
+    const inc = lead({ formId });
+    const res = await ingestLead(inc, "meta");
+    expect(res.status).toBe("unassigned");
+    expect(await prisma.lead.count({ where: { externalId: inc.externalId! } })).toBe(0);
+    await prisma.unassignedLead.deleteMany({ where: { externalId: inc.externalId! } });
+    await prisma.customer.update({ where: { id: customerId }, data: { dormantSince: null } });
+  });
 });

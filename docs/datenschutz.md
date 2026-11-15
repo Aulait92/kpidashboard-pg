@@ -175,6 +175,11 @@ gilt nur für neue Dienste, eine Streichung ist unkritisch, wird aber trotzdem m
   Lebenszyklus (`CustomerLifecycleEvent`: gekündigt, ruhend, reaktiviert, gelöscht mit Monatsbetrag und Kündigungsgrund),
   anonyme Lead-Zeilen (Produkt, Status, Datum, Umsatz), Sperrliste der Abmeldungen (Hashwerte), Vertriebskontakt
   (eigene Daten von performancegrowth, Frist siehe „Vertriebskontakte“). Rechnungen liegen bei Stripe.
+- In der Ruhephase: keine Verarbeitung außer Speicherung. Crons, Assistent, Termin-Erinnerungen, Nachfassen,
+  Bestandskampagnen, Pausen-Automatik, Pay-per-Lead-Verteilung, Kampagnen-Agenten, Kalender- und Vorlagenabgleich,
+  Rückmeldung an Meta, Monatsberichte und Optimierung überspringen ruhende Konten (`dormantSince` bzw. `archived`).
+  Kommt trotzdem ein Lead über ein Formular des Kunden, landet er nicht beim Kunden, sondern im Lead-Eingang
+  (`UnassignedLead`, Löschfrist wie dort).
 - Nachweis: Änderungsprotokoll (`customer.dormant`, `customer.retention`, `customer.retention_reminder`,
   `customer.final_erase`, `customer.reactivate`) und Bestätigungsmail an den Inhaber nach der Löschung.
 
