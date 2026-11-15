@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Terminvorbereitung Entwurf</title>
+<!--
+  Entwurf neue Terminvorbereitung (/buyer/termine/[id]/vorbereitung), 15.11.2026.
+  Statisch, nicht mit der App verbunden. Tokens aus src/app/globals.css, Folien-CSS aus src/lib/praesentation.ts
+  (Allianz-Marke). Alle Tarife, Merkmale und Beiträge sind Beispieldaten, nicht geprüft.
+  Grenzen (gemessen, siehe docs/ux/2026-11-15-aufraeumen-und-terminvorbereitung.md): 3 Tarife, 5 Merkmale,
+  2 Bausteine je Vergleichsfolie; Kurznamen: Tarif 18, Merkmal 28, Wert 16 Zeichen.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --background:#f5f8ff;--foreground:#0b1220;--brand:#2563eb;--brand-dark:#1d4ed8;--brand-soft:#e5edff;
+  --card:#fff;--border:#e6ecf5;--muted:#5b6883;--surface:#fff;--surface-sunken:#f7f9fc;--border-strong:#d6dee9;
+  --success:#059669;--warning:#d97706;--danger:#e11d48;
+  --radius-sm:8px;--radius-md:12px;--radius-lg:16px;
+  --shadow-sm:0 1px 2px rgba(15,23,42,.05);
+  --shadow-md:0 1px 2px rgba(15,23,42,.04),0 8px 24px -12px rgba(15,23,42,.12);
+  --shadow-lg:0 12px 32px -8px rgba(15,23,42,.18);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+.gitter>.card{margin-top:0!important}
+html,body{margin:0}
+body{
+  background:radial-gradient(1200px 600px at 90% -10%,#dbe7ff 0%,transparent 60%),radial-gradient(900px 500px at -10% 10%,#eaf1ff 0%,transparent 60%),var(--background);
+  color:var(--foreground);font-family:Geist,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:14px;line-height:1.45;
+}
+button,input{font:inherit;color:inherit}
+svg.i{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.muted{color:var(--muted)}
+/* Entwurfs-Leiste (nicht Teil der App) */
+.entwurf{position:relative;z-index:70;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:6px 16px;background:#fff7e6;border-bottom:1px dashed #f0b44c;font-size:12px;color:#7a4b00}
+.entwurf b{font-weight:600}
+.entwurf .seg{display:inline-flex;border:1px solid #f0b44c;border-radius:99px;overflow:hidden}
+.entwurf .seg button{border:0;background:transparent;padding:2px 10px;cursor:pointer;font-size:12px;color:#7a4b00}
+.entwurf .seg button.an{background:#f0b44c;color:#fff}
+/* Rahmen wie BuyerShell */
+.shell{min-height:100dvh}
+aside.nav{position:fixed;left:0;top:0;bottom:0;width:240px;background:#fff;border-right:1px solid var(--border);padding:49px 12px 20px;display:flex;flex-direction:column}
+.logo{display:flex;align-items:center;gap:8px;padding:0 8px;margin-bottom:20px;font-weight:600;font-size:15px}
+.logo span.m{width:28px;height:28px;border-radius:6px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center}
+.logo em{font-style:normal;color:var(--brand)}
+.suche{display:flex;align-items:center;gap:8px;height:38px;border:1px solid var(--border);border-radius:var(--radius-md);padding:0 12px;color:var(--muted);margin-bottom:16px}
+.navi a{display:flex;align-items:center;gap:12px;height:44px;padding:0 12px;border-radius:var(--radius-md);font-size:15px;font-weight:500;color:var(--foreground);text-decoration:none}
+.navi a.an{background:var(--brand-soft);color:var(--brand-dark)}
+.navi .badge{margin-left:auto;background:var(--danger);color:#fff;font-size:11px;font-weight:700;border-radius:99px;min-width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center}
+.kopf-handy{display:none}
+main{margin-left:240px;padding:24px 32px 64px}
+.wrap{max-width:1080px;margin:0 auto}
+a.zurueck{display:inline-flex;align-items:center;gap:6px;min-height:36px;color:var(--brand);font-weight:500;text-decoration:none;font-size:14px}
+/* Seitenkopf */
+.seitenkopf{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;margin:4px 0 20px}
+h1{font-size:24px;font-weight:600;margin:0;letter-spacing:-.01em}
+.termin{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:99px;background:#fff;border:1px solid var(--border);font-size:13px;font-weight:500}
+.chip.brand{background:var(--brand-soft);border-color:var(--brand-soft);color:var(--brand-dark)}
+.chip.ok{background:#ecfdf5;border-color:#ecfdf5;color:#047857}
+.aktionen{display:flex;gap:8px;align-items:center;flex:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:#fff;font-weight:600;font-size:14px;cursor:pointer;box-shadow:var(--shadow-sm);white-space:nowrap}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dark)}
+.btn.ghost{background:transparent;border-color:transparent;box-shadow:none;color:var(--muted)}
+.btn.ghost:hover{background:var(--surface-sunken)}
+.btn.ghost.an{color:#047857}
+.btn.sm{height:32px;padding:0 10px;font-size:13px}
+.linkbtn{border:0;background:none;padding:0;color:var(--brand);font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+/* Karten */
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-md)}
+.card+.card,.gitter+.card,.card+.gitter{margin-top:20px}
+.card-kopf{display:flex;align-items:center;gap:8px;padding:14px 20px;border-bottom:1px solid var(--border)}
+.card-kopf h2{font-size:15px;font-weight:600;margin:0}
+.card-kopf .zahl{color:var(--muted);font-weight:500}
+.card-kopf .rechts{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13px}
+.card-inhalt{padding:14px 20px}
+.gitter{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+ul.punkte{margin:0;padding:0;list-style:none}
+ul.punkte li{display:flex;gap:10px;padding:5px 0}
+ul.punkte li::before{content:"";flex:0 0 6px;height:6px;border-radius:99px;background:var(--brand);margin-top:8px}
+.quelle{font-size:13px;color:var(--muted);margin-top:6px}
+/* Checkliste */
+.check{display:flex;align-items:center;gap:10px;padding:6px 0;cursor:pointer;user-select:none}
+.check .box{width:20px;height:20px;border-radius:6px;border:2px solid var(--border-strong);display:flex;align-items:center;justify-content:center;flex:none;background:#fff}
+.check.an .box{background:var(--success);border-color:var(--success);color:#fff}
+.check.an span.t{color:var(--muted);text-decoration:line-through}
+/* Angebote */
+.sparten{display:flex;gap:6px;flex-wrap:wrap;padding:12px 20px 0}
+.tab{height:34px;padding:0 14px;border-radius:99px;border:1px solid var(--border);background:#fff;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.tab.an{background:var(--foreground);color:#fff;border-color:var(--foreground)}
+.tab small{font-weight:500;opacity:.75}
+.tab.neu{border-style:dashed;color:var(--muted);font-weight:500}
+.angebote{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:20px;padding:16px 20px 20px}
+.drop{border:2px dashed var(--border-strong);border-radius:var(--radius-md);padding:12px 14px;display:flex;align-items:center;gap:12px;color:var(--muted);background:var(--surface-sunken);cursor:pointer;transition:.15s}
+.drop:hover,.drop.ueber{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-dark)}
+.drop b{color:var(--foreground);font-weight:600}
+.datei{display:flex;align-items:center;gap:10px;margin-top:8px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px}
+.datei .bar{flex:1;height:4px;border-radius:99px;background:var(--border);overflow:hidden;max-width:160px}
+.datei .bar i{display:block;height:100%;background:var(--brand);width:0;transition:width .25s}
+.tarife{display:grid;gap:10px;margin-top:14px}
+.tkarte{border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;background:#fff;transition:.15s}
+.tkarte.aus{background:var(--surface-sunken);opacity:.7}
+.tkarte.empf{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand) inset}
+.tarif-zeile{display:flex;align-items:center;gap:10px}
+.ges{width:34px;height:34px;border-radius:8px;background:#e6eef7;color:#003781;font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;flex:none}
+.tname{min-width:0;flex:1}
+.tname b{display:block;font-size:15px}
+.tname span{font-size:12px;color:var(--muted)}
+.stern{width:34px;height:34px;border-radius:8px;border:1px solid transparent;background:none;cursor:pointer;color:#a3adbf;display:flex;align-items:center;justify-content:center}
+.stern.an{color:#f59e0b}
+.stern.an svg{fill:#f59e0b}
+.beitrag{display:flex;align-items:center;gap:6px;margin-top:10px;flex-wrap:wrap}
+.geld{display:flex;align-items:center;height:38px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:#fff;padding:0 10px;width:130px}
+.geld input{border:0;outline:0;width:100%;text-align:right;font-weight:600;font-variant-numeric:tabular-nums;font-size:15px;background:transparent}
+.geld.leer{border-color:#f5c26b;background:#fffbeb}
+.geld:focus-within{border-color:var(--brand);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.mini-seg{display:inline-flex;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;height:30px}
+.mini-seg button{border:0;background:#fff;padding:0 10px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer}
+.mini-seg button.an{background:var(--brand-soft);color:var(--brand-dark)}
+.schalter{position:relative;width:38px;height:22px;border-radius:99px;background:#cbd5e1;border:0;cursor:pointer;flex:none;transition:.15s}
+.schalter::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:99px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:.15s}
+.schalter.an{background:var(--brand)}
+.schalter.an::after{left:19px}
+.zeigen{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}
+.bst{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.bs{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px 0 6px;border-radius:99px;border:1px solid var(--border-strong);background:#fff;font-size:13px;cursor:pointer}
+.bs .hk{width:18px;height:18px;border-radius:99px;border:2px solid var(--border-strong);display:flex;align-items:center;justify-content:center}
+.bs.an{border-color:var(--brand);background:var(--brand-soft)}
+.bs.an .hk{background:var(--brand);border-color:var(--brand);color:#fff}
+.bs small{color:var(--muted);font-variant-numeric:tabular-nums}
+.auswahl{margin-top:16px;border-top:1px solid var(--border);padding-top:14px}
+.auswahl-kopf{display:flex;align-items:center;gap:8px;font-weight:600}
+.zaehler{margin-left:auto;font-size:12px;font-weight:600;border-radius:99px;padding:2px 8px;background:var(--surface-sunken);color:var(--muted)}
+.zaehler.voll{background:#ecfdf5;color:#047857}
+.mchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.mc{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 6px 0 10px;border-radius:99px;font-size:13px;border:1px solid var(--brand);background:var(--brand-soft);color:var(--brand-dark);font-weight:500}
+.mc .n{font-size:11px;font-weight:700;opacity:.7}
+.mc button{border:0;background:none;cursor:pointer;color:inherit;display:flex;padding:2px;border-radius:99px}
+.mc.frei{border:1px dashed var(--border-strong);background:#fff;color:var(--foreground);padding:0 10px;cursor:pointer}
+.mc.frei:hover{border-color:var(--brand);color:var(--brand-dark)}
+details.mehr>summary{list-style:none;cursor:pointer;color:var(--muted);font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:4px;margin-top:8px}
+details.mehr>summary::-webkit-details-marker{display:none}
+details.mehr[open]>summary svg{transform:rotate(180deg)}
+.picker{margin-top:12px;border:1px solid var(--border);border-radius:var(--radius-md);padding:12px;background:var(--surface-sunken)}
+.picker .such{display:flex;align-items:center;gap:8px;height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:#fff;padding:0 10px}
+.picker .such input{border:0;outline:0;flex:1;background:transparent}
+.gesfilter{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px}
+.gf{height:28px;padding:0 10px;border-radius:99px;border:1px solid var(--border-strong);background:#fff;font-size:12px;font-weight:600;cursor:pointer}
+.gf.an{background:var(--foreground);color:#fff;border-color:var(--foreground)}
+.gf.fest{cursor:default;background:#e6eef7;border-color:#e6eef7;color:#003781}
+.kat{display:grid;gap:4px;margin-top:8px}
+.kat label{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:var(--radius-sm);cursor:pointer;background:#fff;border:1px solid var(--border)}
+.kat label.gesperrt{opacity:.5;cursor:not-allowed}
+.kat label small{margin-left:auto;color:var(--muted);font-size:12px}
+.vorschau-wrap{position:sticky;top:48px;align-self:start}
+.vorschau-titel{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;margin-bottom:8px}
+.vorschau-titel .muted{font-weight:500;margin-left:auto}
+.vorschau{position:relative;width:100%;aspect-ratio:16/9;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow-md);background:#fff}
+.vorschau>.deck{position:absolute;left:0;top:0;transform-origin:top left}
+.summe{display:flex;align-items:baseline;gap:8px;margin-top:12px;padding:10px 12px;border-radius:var(--radius-md);background:var(--surface-sunken);font-size:13px}
+.summe b{font-size:18px;font-variant-numeric:tabular-nums}
+.gespeichert{display:inline-flex;align-items:center;gap:4px;color:var(--muted);font-size:12px}
+.gespeichert.blitz{color:#047857}
+/* Mehr zum Kunden */
+details.kunde{margin-top:20px}
+details.kunde>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:14px 20px;font-weight:600;font-size:15px}
+details.kunde>summary::-webkit-details-marker{display:none}
+details.kunde>summary .rechts{margin-left:auto;text-align:right;color:var(--muted);font-weight:500;font-size:13px;display:flex;gap:6px;align-items:center}
+details.kunde[open]>summary .rechts svg{transform:rotate(180deg)}
+.kunde-inhalt{border-top:1px solid var(--border);padding:6px 20px 16px;display:grid;grid-template-columns:1fr 1fr;gap:4px 28px}
+.kunde-inhalt h3{font-size:13px;font-weight:600;margin:12px 0 4px;color:var(--muted)}
+dl.kv{display:grid;grid-template-columns:140px 1fr;gap:4px 12px;margin:0;font-size:14px}
+dl.kv dt{color:var(--muted)}
+dl.kv dd{margin:0;font-weight:500}
+.chat{display:grid;gap:6px;font-size:13px}
+.chat div{max-width:88%;padding:6px 10px;border-radius:12px;background:var(--surface-sunken)}
+.chat div.ich{justify-self:end;background:#dcfce7}
+/* Toast */
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);opacity:0;background:var(--foreground);color:#fff;border-radius:var(--radius-md);padding:10px 14px;display:flex;gap:14px;align-items:center;box-shadow:var(--shadow-lg);transition:.2s;z-index:80;font-size:14px;pointer-events:none}
+.toast.an{opacity:1;transform:translateX(-50%);pointer-events:auto}
+.toast button{border:0;background:none;color:#93c5fd;font-weight:600;cursor:pointer}
+/* Dialog eigener Tarif */
+.dlg-bg{position:fixed;inset:0;background:rgba(11,18,32,.35);display:none;align-items:center;justify-content:center;z-index:90;padding:16px}
+.dlg-bg.an{display:flex}
+.dlg{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:100%;max-width:440px;padding:20px}
+.dlg h3{margin:0 0 4px;font-size:16px}
+.feld{display:grid;gap:4px;margin-top:12px;font-size:13px}
+.feld input{height:38px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px}
+/* Handy-Leiste */
+.aktionsleiste{display:none}
+nav.unten{display:none}
+
+/* ─── Folien-CSS aus src/lib/praesentation.ts (Auszug, Allianz) ─── */
+.deck{--f:#003781;--fh:#e6eef7;--a:#003781;font-family:Inter,ui-sans-serif,system-ui,sans-serif;color:#0b1220;line-height:1.2} /* Vorschlag: feste Zeilenhöhe, damit App, Kundenlink und PDF gleich hoch rendern */
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;background:#fff;box-sizing:border-box;padding:64px 80px 80px}
+.slide .bar{position:absolute;left:0;top:0;bottom:0;width:14px;background:var(--f)}
+.slide .foot{position:absolute;left:80px;right:80px;bottom:28px;display:flex;justify-content:space-between;align-items:center;color:#66758f;font-size:16px}
+.slide .marke{font-weight:700;color:var(--f);font-size:18px}
+.slide h2{font-size:42px;line-height:1.15;margin:0 0 28px;letter-spacing:-.015em;color:var(--f)}
+.alle{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:18px;color:#334155;margin:-6px 0 14px}.alle b{color:#0b1220}
+.vgl{width:100%;border-collapse:separate;border-spacing:0;font-size:19px}
+.vgl th,.vgl td{padding:10px 14px;border-bottom:1px solid #e3e9f3;text-align:center;vertical-align:middle}
+.vgl tbody th{text-align:left;font-weight:600;color:#1f2937;width:28%}
+.vgl thead th{position:relative;padding-top:22px;border-bottom:2px solid #e3e9f3}
+.vgl thead .tarif{font-size:24px;font-weight:700}.vgl thead .preis{font-size:30px;font-weight:800;color:var(--f)}.vgl thead .preis small{display:block;font-size:15px;font-weight:500;color:#66758f;margin-top:-2px}
+.vgl thead .preis.fehlt{font-size:20px;color:#b45309;font-weight:700}
+.vgl .badge{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--f);color:#fff;font-size:14px;font-weight:700;padding:3px 12px;border-radius:99px;white-space:nowrap}
+.vgl .gew{background:var(--fh)}
+.vgl .ja-z{color:#16a34a;font-weight:800;font-size:22px}.vgl .nein-z{display:inline-block;width:18px;height:2px;background:#94a3b8;vertical-align:middle}
+.vgl .wahl{display:inline-block;margin-top:12px;border:2px solid var(--f);background:#fff;color:var(--f);border-radius:10px;padding:6px 16px;font-size:17px;font-weight:700}
+.vgl .wahl.an{background:var(--f);color:#fff}
+.vgl .fbs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.vgl .fb{display:inline-flex;align-items:center;gap:8px;border:2px solid #cbd5e1;background:#fff;color:#475569;border-radius:99px;padding:4px 12px 4px 6px;font-size:15px}
+.vgl .fb .hk{width:22px;height:22px;border-radius:99px;border:2px solid #cbd5e1;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800}
+.vgl .fb.an{border-color:var(--f);color:#0b1220}.vgl .fb.an .hk{background:var(--f);border-color:var(--f);color:#fff}
+.vgl .fb small{color:#66758f;font-size:14px}
+.leer-folie{color:#66758f;font-size:24px;border:2px dashed #cbd5e1;border-radius:18px;padding:40px;text-align:center}
+
+/* ─── Handy ─── */
+@media (max-width:767px){
+  aside.nav{display:none}
+  .entwurf{font-size:11px;padding:6px 12px}
+  .kopf-handy{display:flex;position:sticky;top:0;z-index:40;height:56px;align-items:center;gap:8px;padding:0 16px;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+  .kopf-handy .m{width:28px;height:28px;border-radius:6px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center}
+  .kopf-handy .r{margin-left:auto;display:flex;gap:10px;align-items:center}
+  .kopf-handy .av{width:32px;height:32px;border-radius:99px;background:var(--brand-soft);color:var(--brand-dark);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+  main{margin-left:0;padding:12px 16px 170px}
+  .seitenkopf{display:block;margin-bottom:14px}
+  .seitenkopf .aktionen{display:none}
+  .gitter{grid-template-columns:1fr;gap:14px}
+  .card+.card,.gitter+.card,.card+.gitter{margin-top:14px}
+  .card-kopf,.card-inhalt{padding-left:16px;padding-right:16px}
+  .sparten{padding:12px 16px 0}
+  .angebote{grid-template-columns:1fr;padding:14px 16px 16px}
+  .vorschau-wrap{position:static}
+  .kunde-inhalt{grid-template-columns:1fr;padding:6px 16px 16px}
+  details.kunde>summary{padding:14px 16px}
+  details.kunde>summary .rechts .t{display:none}
+  dl.kv{grid-template-columns:120px 1fr}
+  .drop .desk{display:none}
+  .aktionsleiste{display:flex;position:fixed;left:0;right:0;bottom:64px;z-index:45;gap:8px;padding:10px 16px;background:rgba(255,255,255,.96);border-top:1px solid var(--border);backdrop-filter:blur(8px)}
+  .aktionsleiste .btn.primary{flex:1;height:44px;font-size:15px}
+  .aktionsleiste .btn.ghost{height:44px;width:44px;padding:0;border:1px solid var(--border);background:#fff}
+  .aktionsleiste .btn.ghost.an{background:#ecfdf5;border-color:#a7f3d0}
+  nav.unten{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:45;background:rgba(255,255,255,.96);border-top:1px solid var(--border);height:64px}
+  nav.unten a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;font-weight:500;color:var(--muted);text-decoration:none}
+  nav.unten a.an{color:var(--brand)}
+  nav.unten svg.i{width:24px;height:24px}
+  .toast{bottom:140px}
+}
+@media (min-width:768px){ .nur-handy{display:none!important} }
+@media (max-width:767px){ .nur-desk{display:none!important} }
+</style>
+</head>
+<body>
+
+<div class="entwurf" role="note">
+  <b>Entwurf</b><span>nicht mit der App verbunden · Tarife und Beiträge sind Beispieldaten</span>
+  <span style="margin-left:auto;display:inline-flex;gap:6px;align-items:center">Ansicht als
+    <span class="seg" id="rolle"><button class="an" data-r="vertreter">Allianz-Vertreter</button><button data-r="makler">Makler</button></span>
+  </span>
+</div>
+
+<div class="shell">
+  <aside class="nav">
+    <div class="logo"><span class="m"><svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px;stroke-width:2.75"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg></span><span>performance<em>growth</em></span></div>
+    <div class="suche"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Kontakt suchen</div>
+    <nav class="navi">
+      <a href="#"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/></svg>Heute</a>
+      <a href="#" class="an"><svg class="i" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>Kontakte</a>
+      <a href="#"><svg class="i" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>Nachrichten<span class="badge">1</span></a>
+      <a href="#"><svg class="i" viewBox="0 0 24 24"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg>Wachstum</a>
+    </nav>
+  </aside>
+
+  <header class="kopf-handy">
+    <span class="m"><svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px;stroke-width:2.75"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg></span>
+    <div class="r"><svg class="i" viewBox="0 0 24 24" style="width:20px;height:20px"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span class="av">MB</span></div>
+  </header>
+
+  <main>
+   <div class="wrap">
+    <a class="zurueck" href="#"><svg class="i" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>Verena Martin</a>
+
+    <!-- Kopf: wer, wann, wie, was. Eine Hauptaktion. -->
+    <div class="seitenkopf">
+      <div>
+        <h1>Termin mit Verena Martin</h1>
+        <div class="termin">
+          <span class="chip brand"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Mo., 16. Nov., 10:00 Uhr</span>
+          <span class="chip"><svg class="i" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2Z"/></svg>Telefon · 0151 0000052</span>
+          <span class="chip">Privatschutz</span>
+          <span class="chip ok" id="vorbereitet-chip" hidden><svg class="i" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Vorbereitet</span>
+        </div>
+      </div>
+      <div class="aktionen">
+        <button class="btn ghost" data-vorbereitet><svg class="i" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span>Als vorbereitet markieren</span></button>
+        <button class="btn primary" data-praesentation><svg class="i" viewBox="0 0 24 24"><path d="M2 3h20M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3M7 21l5-5 5 5"/></svg>Präsentation öffnen</button>
+      </div>
+    </div>
+
+    <div class="gitter">
+      <section class="card">
+        <div class="card-kopf"><h2>Das will der Kunde</h2></div>
+        <div class="card-inhalt">
+          <ul class="punkte">
+            <li>Hausrat und Rechtsschutz, hat bisher keine Verträge</li>
+            <li>Paar, Kinder aus dem Haus: beide sollen versichert sein</li>
+            <li>Termin im Chat direkt zugesagt</li>
+            <li>Möchte telefonisch beraten werden</li>
+          </ul>
+          <div class="quelle">Aus Formular und WhatsApp-Chat</div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-kopf"><h2>Noch klären im Termin</h2><span class="zahl" id="offen-zahl">5</span></div>
+        <div class="card-inhalt" id="checkliste">
+          <div class="check"><span class="box"></span><span class="t">Wer wird mitversichert? Geburtsdaten</span></div>
+          <div class="check"><span class="box"></span><span class="t">Adresse und PLZ</span></div>
+          <div class="check"><span class="box"></span><span class="t">Wohnfläche, Haus oder Wohnung</span></div>
+          <div class="check"><span class="box"></span><span class="t">Schäden in den letzten 5 Jahren</span></div>
+          <div class="check"><span class="box"></span><span class="t">Beruf: öffentlicher Dienst, selbstständig?</span></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Angebote: Tarife aus dem Katalog, nur der Beitrag ist kundenabhängig -->
+    <section class="card" style="margin-top:20px">
+      <div class="card-kopf"><h2>Angebote</h2><div class="rechts"><span class="gespeichert" id="gespeichert"><svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M20 6 9 17l-5-5"/></svg>Automatisch gespeichert</span></div></div>
+      <div class="sparten" id="sparten"></div>
+      <div class="angebote">
+        <div>
+          <div class="drop" id="drop" tabindex="0">
+            <svg class="i" viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+            <span><b>Angebot ablegen</b> <span class="desk">(PDF, gern mehrere)</span><span class="nur-handy">: Datei oder Foto wählen</span><br><span style="font-size:12px">Beiträge und Bausteinpreise werden automatisch übernommen.</span></span>
+            <input type="file" id="datei" accept=".pdf,image/*" multiple hidden>
+          </div>
+          <div id="dateien"></div>
+
+          <div class="tarife" id="tarife"></div>
+
+          <div class="auswahl">
+            <div class="auswahl-kopf">Merkmale auf der Folie <span class="zaehler" id="m-zaehler">5 von 5</span></div>
+            <div class="mchips" id="m-an"></div>
+            <details class="mehr" id="m-mehr"><summary>Weitere Merkmale <svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="m6 9 6 6 6-6"/></svg></summary><div class="mchips" id="m-aus"></div></details>
+          </div>
+          <div class="auswahl">
+            <div class="auswahl-kopf">Bausteine auf der Folie <span class="zaehler" id="b-zaehler">2 von 2</span></div>
+            <div class="mchips" id="b-an"></div>
+            <details class="mehr"><summary>Weitere Bausteine <svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="m6 9 6 6 6-6"/></svg></summary><div class="mchips" id="b-aus"></div></details>
+          </div>
+
+          <details class="mehr" id="picker-d" style="margin-top:14px"><summary style="font-size:14px;color:var(--brand)"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Tarife ändern</summary>
+            <div class="picker">
+              <div class="such"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input id="suche" placeholder="Tarif suchen"></div>
+              <div class="gesfilter" id="gesfilter"></div>
+              <div class="kat" id="katalog"></div>
+              <div style="margin-top:10px;font-size:13px" class="muted">Tarif fehlt? <button class="linkbtn" id="eigener">Eigenen Tarif anlegen</button></div>
+            </div>
+          </details>
+        </div>
+
+        <div class="vorschau-wrap">
+          <div class="vorschau-titel"><svg class="i" viewBox="0 0 24 24"><path d="M2 3h20M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3M7 21l5-5 5 5"/></svg>So sieht die Folie aus <span class="muted" id="folie-nr">Folie 6 von 11</span></div>
+          <div class="vorschau" id="vorschau"><div class="deck" id="deck"></div></div>
+          <div class="summe"><span class="muted">Empfehlung gesamt</span><b id="summe">0,00 €</b><span class="muted">im Monat</span></div>
+        </div>
+      </div>
+    </section>
+
+    <details class="card kunde">
+      <summary>Mehr zum Kunden <span class="rechts"><span class="t">Kontakt, Formular, Chat, Verträge</span> <svg class="i" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></summary>
+      <div class="kunde-inhalt">
+        <div>
+          <h3>Kontakt</h3>
+          <dl class="kv"><dt>Telefon</dt><dd>+49 151 0000052</dd><dt>E-Mail</dt><dd>verena.martin@example.com</dd><dt>Ansprache</dt><dd>Sie</dd></dl>
+          <h3>Aus dem Formular</h3>
+          <dl class="kv"><dt>Lebenssituation</dt><dd>Paar, Kinder aus dem Haus</dd><dt>Interesse</dt><dd>Hausrat, Rechtsschutz</dd><dt>Eingegangen</dt><dd>14.11.2026</dd></dl>
+          <h3>Bestehende Verträge</h3>
+          <p style="margin:0">Keine</p>
+        </div>
+        <div>
+          <h3>WhatsApp-Chat (Auszug)</h3>
+          <div class="chat">
+            <div class="ich">Sollen wir Sie beide versichern oder nur Sie?</div>
+            <div>Ja, für uns beide</div>
+            <div class="ich">Passt Ihnen Montag um 10 Uhr am Telefon?</div>
+            <div>Perfekt, danke</div>
+          </div>
+          <p style="margin:8px 0 0"><button class="linkbtn">Ganzen Chat öffnen</button></p>
+          <h3>Sonst</h3>
+          <p style="margin:0;display:grid;gap:6px"><button class="linkbtn" style="justify-content:flex-start">Unterlagen, um die gebeten wurde (4)</button><button class="linkbtn" style="justify-content:flex-start">Als PDF herunterladen</button><button class="linkbtn" style="justify-content:flex-start">Eigenes Logo auf die Folien bringen</button></p>
+        </div>
+      </div>
+    </details>
+   </div>
+  </main>
+
+  <div class="aktionsleiste">
+    <button class="btn ghost" data-vorbereitet aria-label="Als vorbereitet markieren" title="Als vorbereitet markieren"><svg class="i" viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M20 6 9 17l-5-5"/></svg></button>
+    <button class="btn primary" data-praesentation><svg class="i" viewBox="0 0 24 24"><path d="M2 3h20M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3M7 21l5-5 5 5"/></svg>Präsentation öffnen</button>
+  </div>
+  <nav class="unten">
+    <a href="#"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>Heute</a>
+    <a href="#" class="an"><svg class="i" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Kontakte</a>
+    <a href="#"><svg class="i" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>Nachrichten</a>
+    <a href="#"><svg class="i" viewBox="0 0 24 24"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg>Wachstum</a>
+  </nav>
+</div>
+
+<div class="toast" id="toast"><span id="toast-text"></span><button id="toast-undo">Rückgängig</button></div>
+
+<div class="dlg-bg" id="dlg">
+  <div class="dlg" role="dialog" aria-labelledby="dlg-t">
+    <h3 id="dlg-t">Eigenen Tarif anlegen</h3>
+    <div class="muted" style="font-size:13px">Nur für Sie sichtbar. Wir prüfen, ob er in den Katalog kommt.</div>
+    <div class="drop" style="margin-top:12px"><svg class="i" viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg><span><b>Angebot oder Bedingungen ablegen</b><br><span style="font-size:12px">Die Merkmale werden vorausgefüllt.</span></span></div>
+    <div class="feld"><span>Gesellschaft</span><input value="Allianz"></div>
+    <div class="feld"><span>Tarifname</span><input placeholder="z. B. Hausrat Best"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px"><button class="btn ghost" id="dlg-zu">Abbrechen</button><button class="btn primary" id="dlg-ok">Anlegen</button></div>
+  </div>
+</div>
+
+<script>
+// ─── Beispieldaten (nicht geprüft). Katalog: Tarife und Merkmale fest, nur der Beitrag hängt vom Kunden ab. ───
+const LIMIT = { tarife: 3, merkmale: 5, bausteine: 2 }; // gemessen an der Vergleichsfolie (praesentation.ts)
+const KAT = {
+  hausrat: { name: "Hausrat",
+    schema: [["vs","Versicherungssumme"],["gf","Grobe Fahrlässigkeit"],["fahrrad","Fahrraddiebstahl"],["elementar","Elementarschäden"],["wert","Wertsachen"],["online","Online-Betrug"],["kfz","Diebstahl aus dem Auto"],["blitz","Überspannung"],["hotel","Hotelkosten"],["aussen","Außenversicherung"]],
+    standard: ["gf","fahrrad","elementar","wert","online"],
+    bausteine: [["fahrrad","Fahrraddiebstahl"],["elementar","Elementarschäden"],["glas","Glasbruch"],["sb","Selbstbeteiligung 250 €"]],
+    tarife: [
+      { id:"az-hr-b", ges:"Allianz", name:"Basis", w:{vs:"65.000 €",gf:"nein",fahrrad:"nein",elementar:"nein",wert:"10 %",online:"nein",kfz:"nein",blitz:"nein",hotel:"50 Tage",aussen:"3 Monate"}, bp:{fahrrad:2.9,elementar:3.4,glas:1.5,sb:-1.2} },
+      { id:"az-hr-s", ges:"Allianz", name:"Smart", w:{vs:"65.000 €",gf:"bis 10.000 €",fahrrad:"nein",elementar:"nein",wert:"20 %",online:"nein",kfz:"nein",blitz:"ja",hotel:"100 Tage",aussen:"3 Monate"}, bp:{fahrrad:2.4,elementar:3.1,glas:1.3,sb:-1.6} },
+      { id:"az-hr-k", ges:"Allianz", name:"Komfort", w:{vs:"65.000 €",gf:"voll",fahrrad:"bis 1.000 €",elementar:"nein",wert:"30 %",online:"bis 1.000 €",kfz:"bis 1.000 €",blitz:"ja",hotel:"200 Tage",aussen:"6 Monate"}, bp:{fahrrad:2.4,elementar:3.1,glas:1.3,sb:-1.9} },
+      { id:"az-hr-p", ges:"Allianz", name:"Premium", w:{vs:"65.000 €",gf:"voll",fahrrad:"bis 3.000 €",elementar:"ja",wert:"40 %",online:"bis 5.000 €",kfz:"bis 2.500 €",blitz:"ja",hotel:"unbegrenzt",aussen:"12 Monate"}, bp:{fahrrad:1.9,glas:1.3,sb:-2.3} },
+      { id:"axa-hr-k", ges:"AXA", name:"Komfort", w:{vs:"65.000 €",gf:"voll",fahrrad:"bis 500 €",elementar:"nein",wert:"25 %",online:"nein",kfz:"bis 500 €",blitz:"ja",hotel:"150 Tage",aussen:"6 Monate"}, bp:{fahrrad:2.6,elementar:3.3,glas:1.4} },
+      { id:"si-hr-p", ges:"SIGNAL IDUNA", name:"Top", w:{vs:"65.000 €",gf:"voll",fahrrad:"bis 2.000 €",elementar:"ja",wert:"30 %",online:"bis 2.500 €",kfz:"bis 1.000 €",blitz:"ja",hotel:"200 Tage",aussen:"12 Monate"}, bp:{fahrrad:2.2,glas:1.2} },
+      { id:"ir-hr-x", ges:"InterRisk", name:"XXL", w:{vs:"65.000 €",gf:"voll",fahrrad:"bis 5.000 €",elementar:"ja",wert:"40 %",online:"bis 5.000 €",kfz:"bis 2.500 €",blitz:"ja",hotel:"unbegrenzt",aussen:"12 Monate"}, bp:{fahrrad:1.8,glas:1.1} },
+    ] },
+  rechtsschutz: { name: "Rechtsschutz",
+    schema: [["summe","Versicherungssumme"],["sb","Selbstbeteiligung"],["warte","Wartezeit"],["opfer","Opfer-Rechtsschutz"],["straf","Straf-Rechtsschutz"],["mediation","Mediation"],["telefon","Telefonberatung"],["bereiche","Lebensbereiche"]],
+    standard: ["summe","sb","warte","opfer","straf"],
+    bausteine: [["verkehr","Verkehr"],["wohnen","Wohnen als Mieter"],["beruf","Beruf"]],
+    tarife: [
+      { id:"az-rs-s", ges:"Allianz", name:"Smart", w:{summe:"1 Mio. €",sb:"250 €",warte:"3 Monate",opfer:"nein",straf:"nein",mediation:"ja",telefon:"ja",bereiche:"Privat, Beruf"}, bp:{verkehr:4.2,wohnen:3.6,beruf:0} },
+      { id:"az-rs-k", ges:"Allianz", name:"Komfort", w:{summe:"2 Mio. €",sb:"150 €",warte:"3 Monate",opfer:"ja",straf:"nein",mediation:"ja",telefon:"ja",bereiche:"Privat, Beruf"}, bp:{verkehr:4.2,wohnen:3.6,beruf:0} },
+      { id:"az-rs-p", ges:"Allianz", name:"Premium", w:{summe:"unbegrenzt",sb:"150 €",warte:"3 Monate",opfer:"ja",straf:"ja",mediation:"ja",telefon:"ja",bereiche:"Privat, Beruf"}, bp:{verkehr:4.2,wohnen:3.6,beruf:0} },
+      { id:"arag-rs-p", ges:"ARAG", name:"Premium", w:{summe:"unbegrenzt",sb:"150 €",warte:"3 Monate",opfer:"ja",straf:"ja",mediation:"ja",telefon:"ja",bereiche:"Privat, Beruf"}, bp:{verkehr:4.6,wohnen:3.9} },
+      { id:"adv-rs-k", ges:"ADVOCARD", name:"Komfort", w:{summe:"2 Mio. €",sb:"150 €",warte:"3 Monate",opfer:"ja",straf:"nein",mediation:"ja",telefon:"ja",bereiche:"Privat, Beruf"}, bp:{verkehr:4.1,wohnen:3.4} },
+    ] },
+};
+const WEITERE_SPARTEN = ["Privathaftpflicht","Wohngebäude","Tierhalterhaftpflicht","Unfall"];
+const KURZ = { Allianz:"AZ", AXA:"AXA", "SIGNAL IDUNA":"SI", InterRisk:"IR", ARAG:"AR", ADVOCARD:"ADV" };
+
+// Zustand je Sparte: gewählte Tarife (≤3) mit Beitrag, Empfehlung, Anzeigen, Bausteine
+const S = {
+  aktiv: "hausrat", rolle: "vertreter", gesFilter: new Set(["Allianz"]),
+  sp: {
+    hausrat: { tarife: [ {id:"az-hr-s",beitrag:"8,90",jahr:false,zeigen:true,bs:{fahrrad:false}}, {id:"az-hr-k",beitrag:"11,40",jahr:false,zeigen:true,bs:{fahrrad:true}}, {id:"az-hr-p",beitrag:"15,80",jahr:false,zeigen:true,bs:{}} ], empf:"az-hr-k", merkmale:["gf","fahrrad","elementar","wert","online"], bausteine:["fahrrad","elementar"] },
+    rechtsschutz: { tarife: [ {id:"az-rs-s",beitrag:"",jahr:false,zeigen:true,bs:{verkehr:true}}, {id:"az-rs-k",beitrag:"",jahr:false,zeigen:true,bs:{verkehr:true}}, {id:"az-rs-p",beitrag:"",jahr:false,zeigen:true,bs:{verkehr:true}} ], empf:"az-rs-k", merkmale:["summe","sb","warte","opfer","straf"], bausteine:["verkehr","wohnen"] },
+  },
+};
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const zahl = (s) => { const n = Number(String(s).replace(/\./g,"").replace(",", ".")); return Number.isFinite(n) && String(s).trim() ? n : null; };
+const eur = (n) => new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(n);
+const kat = () => KAT[S.aktiv];
+const tarifVon = (id) => Object.values(KAT).flatMap((k) => k.tarife).find((t) => t.id === id);
+const mName = (k) => kat().schema.find((m) => m[0] === k)[1];
+const bName = (k) => kat().bausteine.find((b) => b[0] === k)[1];
+function monat(sp, t) {
+  const b = zahl(t.beitrag); if (b == null) return null;
+  const grund = t.jahr ? b / 12 : b;
+  const tt = tarifVon(t.id);
+  return grund + Object.entries(t.bs).filter(([k, an]) => an && tt.bp[k] != null).reduce((s, [k]) => s + tt.bp[k], 0);
+}
+
+// ─── Gespeichert-Hinweis und Toast ───
+let saveT;
+function gespeichert() {
+  const g = $("#gespeichert"); g.classList.add("blitz"); g.lastChild.textContent = "Gespeichert";
+  clearTimeout(saveT); saveT = setTimeout(() => { g.classList.remove("blitz"); g.lastChild.textContent = "Automatisch gespeichert"; }, 1200);
+}
+let toastT, undoFn;
+function toast(text, undo) {
+  $("#toast-text").textContent = text; undoFn = undo; $("#toast-undo").style.display = undo ? "" : "none";
+  $("#toast").classList.add("an"); clearTimeout(toastT); toastT = setTimeout(() => $("#toast").classList.remove("an"), 4000);
+}
+$("#toast-undo").onclick = () => { if (undoFn) undoFn(); $("#toast").classList.remove("an"); };
+
+// ─── Sparten-Tabs (aus dem Formular vorausgewählt) ───
+function renderSparten() {
+  const tabs = Object.keys(S.sp).map((k) => {
+    const sp = S.sp[k]; const e = sp.tarife.find((t) => t.id === sp.empf); const m = e ? monat(sp, e) : null;
+    return `<button class="tab${k === S.aktiv ? " an" : ""}" data-sp="${k}">${KAT[k].name}${m != null ? ` <small>${eur(m)}</small>` : ` <small>Beitrag fehlt</small>`}</button>`;
+  }).join("");
+  $("#sparten").innerHTML = tabs + `<button class="tab neu" id="sparte-neu"><svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg>Sparte</button>`;
+  $("#sparten").querySelectorAll("[data-sp]").forEach((b) => (b.onclick = () => { S.aktiv = b.dataset.sp; alles(); }));
+  $("#sparte-neu").onclick = () => toast(`Weitere Sparten: ${WEITERE_SPARTEN.join(", ")}`);
+}
+
+// ─── Tarifkarten ───
+function renderTarife() {
+  const sp = S.sp[S.aktiv];
+  $("#tarife").innerHTML = sp.tarife.map((t, i) => {
+    const tt = tarifVon(t.id); const empf = sp.empf === t.id; const leer = zahl(t.beitrag) == null;
+    const bs = sp.bausteine.filter((k) => tt.bp[k] != null).map((k) => `<button class="bs${t.bs[k] ? " an" : ""}" data-i="${i}" data-b="${k}"><span class="hk">${t.bs[k] ? "✓" : ""}</span>${esc(bName(k))} <small>${tt.bp[k] < 0 ? "−" : "+"}${eur(Math.abs(tt.bp[k]))}</small></button>`).join("");
+    const m = monat(sp, t);
+    return `<div class="tkarte${empf ? " empf" : ""}${t.zeigen ? "" : " aus"}">
+      <div class="tarif-zeile"><span class="ges">${KURZ[tt.ges] ?? tt.ges.slice(0,3)}</span>
+        <span class="tname"><b>${esc(tt.name)}</b><span>${esc(tt.ges)} · ${kat().name} · Stand 11/2026</span></span>
+        <button class="stern${empf ? " an" : ""}" data-stern="${i}" title="${empf ? "Ihre Empfehlung" : "Als Empfehlung markieren"}" aria-label="Empfehlung"><svg class="i" viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg></button>
+      </div>
+      <div class="beitrag">
+        <label class="geld${leer ? " leer" : ""}"><input inputmode="decimal" data-beitrag="${i}" value="${esc(t.beitrag)}" placeholder="Beitrag" aria-label="Beitrag ${esc(tt.name)}"><span class="muted" style="margin-left:4px">€</span></label>
+        <span class="mini-seg"><button class="${t.jahr ? "" : "an"}" data-jahr="${i}:0">Monat</button><button class="${t.jahr ? "an" : ""}" data-jahr="${i}:1">Jahr</button></span>
+        ${m != null && (t.jahr || Object.values(t.bs).some(Boolean)) ? `<span class="muted" style="font-size:12px">${eur(m)} im Monat</span>` : ""}
+        <span class="zeigen" style="margin-left:auto">In Präsentation <button class="schalter${t.zeigen ? " an" : ""}" data-zeigen="${i}" aria-label="In Präsentation zeigen"></button></span>
+      </div>
+      ${bs ? `<div class="bst">${bs}</div>` : ""}
+    </div>`;
+  }).join("") || `<div class="muted" style="padding:12px 0">Noch kein Tarif gewählt. <button class="linkbtn" onclick="document.getElementById('picker-d').open=true">Tarife wählen</button></div>`;
+  $("#tarife").querySelectorAll("[data-stern]").forEach((b) => (b.onclick = () => { sp.empf = sp.tarife[+b.dataset.stern].id; gespeichert(); alles(); }));
+  $("#tarife").querySelectorAll("[data-zeigen]").forEach((b) => (b.onclick = () => { const t = sp.tarife[+b.dataset.zeigen]; t.zeigen = !t.zeigen; gespeichert(); alles(); }));
+  $("#tarife").querySelectorAll("[data-jahr]").forEach((b) => (b.onclick = () => { const [i, j] = b.dataset.jahr.split(":"); sp.tarife[+i].jahr = j === "1"; gespeichert(); alles(); }));
+  $("#tarife").querySelectorAll("[data-b]").forEach((b) => (b.onclick = () => { const t = sp.tarife[+b.dataset.i]; t.bs[b.dataset.b] = !t.bs[b.dataset.b]; gespeichert(); alles(); }));
+  $("#tarife").querySelectorAll("[data-beitrag]").forEach((inp) => (inp.oninput = () => {
+    sp.tarife[+inp.dataset.beitrag].beitrag = inp.value; inp.parentElement.classList.toggle("leer", zahl(inp.value) == null);
+    gespeichert(); renderVorschau(); renderSparten();
+  }));
+}
+
+// ─── Merkmale und Bausteine: Grenze, KI-Vorauswahl, Tausch per Klick ───
+function renderAuswahl() {
+  const sp = S.sp[S.aktiv]; const k = kat();
+  const an = sp.merkmale; const aus = k.schema.map((m) => m[0]).filter((x) => !an.includes(x));
+  $("#m-zaehler").textContent = `${an.length} von ${LIMIT.merkmale}`; $("#m-zaehler").classList.toggle("voll", an.length === LIMIT.merkmale);
+  $("#m-an").innerHTML = an.map((x, i) => `<span class="mc"><span class="n">${i + 1}</span>${esc(mName(x))}<button data-weg="${x}" aria-label="Entfernen"><svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>`).join("");
+  $("#m-aus").innerHTML = aus.map((x) => `<button class="mc frei" data-dazu="${x}">${an.length >= LIMIT.merkmale ? "⇄ " : "+ "}${esc(mName(x))}</button>`).join("") + `<span class="muted" style="font-size:12px;align-self:center;margin-left:4px">Ihre Standardauswahl: Einstellungen › Meine Merkmale</span>`;
+  $("#m-an").querySelectorAll("[data-weg]").forEach((b) => (b.onclick = () => { sp.merkmale = an.filter((x) => x !== b.dataset.weg); gespeichert(); alles(); }));
+  $("#m-aus").querySelectorAll("[data-dazu]").forEach((b) => (b.onclick = () => {
+    const neu = b.dataset.dazu; const vorher = [...sp.merkmale];
+    if (sp.merkmale.length < LIMIT.merkmale) sp.merkmale.push(neu);
+    else { const raus = sp.merkmale[sp.merkmale.length - 1]; sp.merkmale[sp.merkmale.length - 1] = neu; toast(`${mName(neu)} statt ${mName(raus)}`, () => { sp.merkmale = vorher; alles(); }); }
+    gespeichert(); alles(); $("#m-mehr").open = true;
+  }));
+  const ban = sp.bausteine; const baus = k.bausteine.map((b) => b[0]).filter((x) => !ban.includes(x));
+  $("#b-zaehler").textContent = `${ban.length} von ${LIMIT.bausteine}`; $("#b-zaehler").classList.toggle("voll", ban.length === LIMIT.bausteine);
+  $("#b-an").innerHTML = ban.map((x) => `<span class="mc">${esc(bName(x))}<button data-bweg="${x}" aria-label="Entfernen"><svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>`).join("");
+  $("#b-aus").innerHTML = baus.map((x) => `<button class="mc frei" data-bdazu="${x}">${ban.length >= LIMIT.bausteine ? "⇄ " : "+ "}${esc(bName(x))}</button>`).join("");
+  $("#b-an").querySelectorAll("[data-bweg]").forEach((b) => (b.onclick = () => { sp.bausteine = ban.filter((x) => x !== b.dataset.bweg); gespeichert(); alles(); }));
+  $("#b-aus").querySelectorAll("[data-bdazu]").forEach((b) => (b.onclick = () => {
+    const neu = b.dataset.bdazu; const vorher = [...sp.bausteine];
+    if (sp.bausteine.length < LIMIT.bausteine) sp.bausteine.push(neu);
+    else { const raus = sp.bausteine[sp.bausteine.length - 1]; sp.bausteine[sp.bausteine.length - 1] = neu; toast(`${bName(neu)} statt ${bName(raus)}`, () => { sp.bausteine = vorher; alles(); }); }
+    gespeichert(); alles();
+  }));
+}
+
+// ─── Tarifkatalog: Vertreter sieht nur seine Gesellschaft, Makler filtert nach Gesellschaften ───
+function renderKatalog() {
+  const sp = S.sp[S.aktiv]; const k = kat(); const q = $("#suche").value.trim().toLowerCase();
+  const alleGes = [...new Set(k.tarife.map((t) => t.ges))];
+  $("#gesfilter").innerHTML = S.rolle === "vertreter"
+    ? `<span class="gf fest">Allianz</span><span class="muted" style="font-size:12px;align-self:center">Tarife Ihrer Gesellschaft</span>`
+    : alleGes.map((g) => `<button class="gf${S.gesFilter.has(g) ? " an" : ""}" data-g="${esc(g)}">${esc(g)}</button>`).join("");
+  $("#gesfilter").querySelectorAll("[data-g]").forEach((b) => (b.onclick = () => { S.gesFilter.has(b.dataset.g) ? S.gesFilter.delete(b.dataset.g) : S.gesFilter.add(b.dataset.g); renderKatalog(); }));
+  const liste = k.tarife.filter((t) => (S.rolle === "vertreter" ? t.ges === "Allianz" : S.gesFilter.has(t.ges)) && (!q || `${t.ges} ${t.name}`.toLowerCase().includes(q)));
+  const voll = sp.tarife.length >= LIMIT.tarife;
+  $("#katalog").innerHTML = liste.map((t) => {
+    const an = sp.tarife.some((x) => x.id === t.id); const gesperrt = !an && voll;
+    return `<label class="${gesperrt ? "gesperrt" : ""}"><input type="checkbox" data-kat="${t.id}" ${an ? "checked" : ""} ${gesperrt ? "disabled" : ""}> <b>${esc(t.name)}</b> <span class="muted">${esc(t.ges)}</span><small>${gesperrt ? "höchstens 3 auf einer Folie" : "Stand 11/2026"}</small></label>`;
+  }).join("") || `<div class="muted">Kein Tarif gefunden.</div>`;
+  $("#katalog").querySelectorAll("[data-kat]").forEach((c) => (c.onchange = () => {
+    const id = c.dataset.kat;
+    if (c.checked) sp.tarife.push({ id, beitrag: "", jahr: false, zeigen: true, bs: {} });
+    else { sp.tarife = sp.tarife.filter((x) => x.id !== id); if (sp.empf === id) sp.empf = sp.tarife[Math.floor(sp.tarife.length / 2)]?.id ?? null; }
+    gespeichert(); alles();
+  }));
+}
+$("#suche").oninput = renderKatalog;
+
+// ─── Live-Vorschau der Vergleichsfolie (gleiches Markup wie praesentation.ts) ───
+const zelle = (w) => (!w || /^(nein|-)$/i.test(w) ? `<span class="nein-z"></span>` : /^ja$/i.test(w) ? `<span class="ja-z">✓</span>` : esc(w));
+function renderVorschau() {
+  const sp = S.sp[S.aktiv]; const k = kat();
+  const v = sp.tarife.filter((t) => t.zeigen).slice(0, LIMIT.tarife);
+  let inhalt;
+  if (!v.length) inhalt = `<div class="leer-folie">Ihr persönliches Angebot zeigen wir Ihnen im Gespräch.</div>`;
+  else {
+    const tt = v.map((t) => tarifVon(t.id));
+    const gleich = sp.merkmale.filter((m) => tt.every((x) => (x.w[m] ?? "nein").toLowerCase() === (tt[0].w[m] ?? "nein").toLowerCase()) && v.length > 1);
+    const alleZeile = [...new Set([...k.schema.map((m) => m[0]).filter((m) => m === k.schema[0][0] && tt.every((x) => x.w[m] === tt[0].w[m])), ...gleich])]
+      .filter((m) => !/^nein$/i.test(tt[0].w[m] ?? "nein")).slice(0, 3)
+      .map((m) => (/^ja$/i.test(tt[0].w[m]) ? mName(m) : `${mName(m)} ${tt[0].w[m]}`));
+    const zeilen = sp.merkmale.filter((m) => !gleich.includes(m));
+    const col = (t) => (t.id === sp.empf ? ` class="gew"` : "");
+    const bsZeile = sp.bausteine.length ? `<tr><th>Bausteine</th>${v.map((t, i) => `<td${col(t)}><div class="fbs">${sp.bausteine.filter((b) => tt[i].bp[b] != null).map((b) => `<span class="fb${t.bs[b] ? " an" : ""}"><span class="hk">${t.bs[b] ? "✓" : ""}</span>${esc(bName(b))} <small>${tt[i].bp[b] < 0 ? "−" : "+"}${eur(Math.abs(tt[i].bp[b]))}</small></span>`).join("")}</div></td>`).join("")}</tr>` : "";
+    inhalt = `${alleZeile.length ? `<div class="alle"><b>In allen Tarifen:</b> ${alleZeile.map((x) => `<span>✓ ${esc(x)}</span>`).join("")}</div>` : ""}
+      <table class="vgl"><thead><tr><th></th>${v.map((t, i) => { const m = monat(sp, t); return `<th${col(t)}>${t.id === sp.empf ? `<span class="badge">Passt zu Ihnen</span>` : ""}<div class="tarif">${esc(tt[i].name)}</div>${m != null ? `<div class="preis">${eur(m)} <small>im Monat</small></div>` : `<div class="preis fehlt">Beitrag fehlt</div>`}<div class="wahl${t.id === sp.empf ? " an" : ""}">${t.id === sp.empf ? "✓ Ausgewählt" : "Auswählen"}</div></th>`; }).join("")}</tr></thead>
+      <tbody>${zeilen.map((m) => `<tr><th>${esc(mName(m))}</th>${v.map((t, i) => `<td${col(t)}>${zelle(tt[i].w[m])}</td>`).join("")}</tr>`).join("")}${bsZeile}</tbody></table>`;
+  }
+  $("#deck").innerHTML = `<section class="slide"><div class="bar"></div><h2>Ihre Auswahl: ${esc(k.name)}</h2>${inhalt}<div class="foot"><span class="marke">Allianz Max Berger</span><span>Allianz</span></div></section>`;
+  skalieren();
+  // Summe der Empfehlungen
+  const summe = Object.values(S.sp).reduce((s, x) => { const e = x.tarife.find((t) => t.id === x.empf); const m = e ? monat(x, e) : null; return s + (m ?? 0); }, 0);
+  $("#summe").textContent = eur(summe);
+  $("#folie-nr").textContent = S.aktiv === "hausrat" ? "Folie 6 von 11" : "Folie 7 von 11";
+}
+function skalieren() { const b = $("#vorschau"); $("#deck").style.transform = `scale(${b.clientWidth / 1280})`; }
+new ResizeObserver(skalieren).observe($("#vorschau"));
+
+// ─── Angebot ablegen: Fortschritt an der Datei, kein weiterer Klick ───
+const PREISE = { hausrat: ["8,90","11,40","15,80","9,60"], rechtsschutz: ["24,60","31,20","38,90","33,10"] };
+function dateienAnnehmen(namen) {
+  namen.forEach((name) => {
+    const row = document.createElement("div"); row.className = "datei";
+    row.innerHTML = `<svg class="i" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(name)}</span><span class="bar"><i></i></span><span class="muted st">Wird gelesen</span>`;
+    $("#dateien").appendChild(row);
+    let p = 0; const iv = setInterval(() => {
+      p += 20; row.querySelector(".bar i").style.width = p + "%";
+      if (p >= 100) {
+        clearInterval(iv);
+        // Die KI liest nur Beiträge und Bausteinpreise und ordnet sie den Katalogtarifen zu (über alle Sparten)
+        const treffer = [];
+        for (const [k, sp] of Object.entries(S.sp)) {
+          let n = 0;
+          sp.tarife.forEach((t, i) => { if (zahl(t.beitrag) == null) { t.beitrag = PREISE[k]?.[i] ?? "12,00"; n++; } });
+          if (n) treffer.push(`${n} × ${KAT[k].name}`);
+        }
+        row.querySelector(".bar").remove();
+        row.querySelector(".st").innerHTML = treffer.length ? `<span style="color:#047857">✓ Beiträge übernommen: ${treffer.join(", ")}</span>` : `<span class="muted">Keine neuen Beiträge gefunden</span>`;
+        gespeichert(); alles();
+      }
+    }, 220);
+  });
+}
+const drop = $("#drop");
+drop.onclick = () => $("#datei").click();
+$("#datei").onchange = (e) => { dateienAnnehmen([...e.target.files].map((f) => f.name)); e.target.value = ""; };
+drop.ondragover = (e) => { e.preventDefault(); drop.classList.add("ueber"); };
+drop.ondragleave = () => drop.classList.remove("ueber");
+drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove("ueber"); dateienAnnehmen([...e.dataTransfer.files].map((f) => f.name)); };
+
+// ─── Kopf-Aktionen ───
+let vorbereitet = false;
+document.querySelectorAll("[data-vorbereitet]").forEach((b) => (b.onclick = () => {
+  vorbereitet = !vorbereitet;
+  document.querySelectorAll("[data-vorbereitet]").forEach((x) => { x.classList.toggle("an", vorbereitet); const s = x.querySelector("span"); if (s) s.textContent = vorbereitet ? "Vorbereitet" : "Als vorbereitet markieren"; });
+  $("#vorbereitet-chip").hidden = !vorbereitet;
+  toast(vorbereitet ? "Als vorbereitet markiert" : "Markierung entfernt");
+}));
+document.querySelectorAll("[data-praesentation]").forEach((b) => (b.onclick = () => toast("Im Entwurf nicht verbunden: öffnet /buyer/termine/[id]/praesentation")));
+$("#checkliste").querySelectorAll(".check").forEach((c) => (c.onclick = () => {
+  c.classList.toggle("an"); c.querySelector(".box").textContent = c.classList.contains("an") ? "✓" : "";
+  $("#offen-zahl").textContent = $("#checkliste").querySelectorAll(".check:not(.an)").length; gespeichert();
+}));
+$("#eigener").onclick = () => $("#dlg").classList.add("an");
+$("#dlg-zu").onclick = () => $("#dlg").classList.remove("an");
+$("#dlg-ok").onclick = () => { $("#dlg").classList.remove("an"); toast("Eigener Tarif angelegt, nur für Sie sichtbar"); };
+$("#rolle").querySelectorAll("button").forEach((b) => (b.onclick = () => {
+  S.rolle = b.dataset.r; $("#rolle").querySelectorAll("button").forEach((x) => x.classList.toggle("an", x === b));
+  S.gesFilter = new Set(S.rolle === "makler" ? ["Allianz", "AXA", "SIGNAL IDUNA", "InterRisk", "ARAG", "ADVOCARD"] : ["Allianz"]);
+  $("#picker-d").open = true; renderKatalog();
+}));
+
+function alles() { renderSparten(); renderTarife(); renderAuswahl(); renderKatalog(); renderVorschau(); }
+alles();
+if (location.hash === "#makler") $("#rolle").querySelector('[data-r="makler"]').click();
+if (location.hash === "#rechtsschutz") { S.aktiv = "rechtsschutz"; alles(); }
+</script>
+</body>
+</html>
