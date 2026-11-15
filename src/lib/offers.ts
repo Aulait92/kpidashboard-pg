@@ -4,7 +4,7 @@
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { getAppUrl, sendCustomerMail } from "@/lib/email";
-import { EMAIL_RE } from "@/lib/whatsapp/phone";
+import { LOGIN_EMAIL_RE, normalizeLoginEmail } from "@/lib/login-email";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 import {
@@ -120,8 +120,8 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
     .filter((p) => p.name);
   if (!input.contactName.trim()) throw new Error("Bitte einen Ansprechpartner angeben.");
   // E-Mail ist Pflicht: Ohne sie entsteht nach der Zahlung kein Login für den Kunden.
-  const email = input.email?.trim().toLowerCase() ?? "";
-  if (!EMAIL_RE.test(email) || email.endsWith(".invalid")) throw new Error("Bitte eine gültige E-Mail-Adresse des Empfängers angeben.");
+  const email = normalizeLoginEmail(input.email ?? "");
+  if (!LOGIN_EMAIL_RE.test(email) || email.endsWith(".invalid")) throw new Error("Bitte eine gültige E-Mail-Adresse des Empfängers angeben.");
   if (products.length === 0) throw new Error("Bitte mindestens ein Produkt angeben.");
 
   const pkg: OfferPackage = input.package === "service" ? "service" : "software";

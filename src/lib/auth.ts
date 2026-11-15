@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { jwtVerify, SignJWT } from "jose";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { normalizeLoginEmail } from "@/lib/login-email";
 
 export const SESSION_COOKIE = "kpi_session";
 const COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 30; // 30 Tage
@@ -152,10 +153,10 @@ export async function verifyPassword(
 // Credentials zu ADMIN_EMAIL/ADMIN_PASSWORD passen, wird der Admin-User
 // transparent angelegt. So braucht der Owner keinen Setup-Schritt.
 async function bootstrapAdminIfNeeded(email: string, password: string) {
-  const envEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const envEmail = normalizeLoginEmail(process.env.ADMIN_EMAIL ?? "");
   const envPassword = process.env.ADMIN_PASSWORD;
   if (!envEmail || !envPassword) return null;
-  if (email.toLowerCase() !== envEmail) return null;
+  if (normalizeLoginEmail(email) !== envEmail) return null;
   if (password !== envPassword) return null;
 
   const adminExists = await prisma.user.findFirst({
@@ -295,7 +296,7 @@ export async function login(
   emailRaw: string,
   password: string,
 ): Promise<LoginResult> {
-  const email = emailRaw.trim().toLowerCase();
+  const email = normalizeLoginEmail(emailRaw);
   if (!email || !password) {
     return { ok: false, error: "Email und Passwort erforderlich." };
   }
@@ -356,7 +357,7 @@ export async function issuePasswordResetToken(
   emailRaw: string,
   ttlMs: number = RESET_TOKEN_TTL_MS,
 ): Promise<{ rawToken: string; userId: string } | null> {
-  const email = emailRaw.trim().toLowerCase();
+  const email = normalizeLoginEmail(emailRaw);
   if (!email) return null;
   const user = await prisma.user.findUnique({
     where: { email },
@@ -461,10 +462,22 @@ export async function takeSsoState(): Promise<SsoState | null> {
   }
 }
 
+/**
+ * Google meldet bei Gmail immer die Hauptadresse (ole@gmail.com), nie den Alias ole+1@gmail.com.
+ * Post an den Alias landet im selben Postfach, der Inhaber könnte das Passwort also ohnehin
+ * zurücksetzen. Darum: genau ein Login mit „+“-Alias derselben Gmail-Adresse → dieser Login.
+ */
+async function gmailPlusLogin(email: string) {
+  const m = /^([^+@]+)@(gmail\.com|googlemail\.com)$/.exec(email);
+  if (!m) return null;
+  const hits = await prisma.user.findMany({ where: { email: { startsWith: `${m[1]}+`, endsWith: `@${m[2]}` } }, take: 2 });
+  return hits.length === 1 ? hits[0] : null;
+}
+
 /** Login mit vom Anbieter bestätigter E-Mail. Mit aktivem 2FA folgt der Code-Schritt. */
 export async function loginWithVerifiedEmail(emailRaw: string, method: "google" | "microsoft"): Promise<LoginResult> {
-  const email = emailRaw.trim().toLowerCase();
-  const user = await prisma.user.findUnique({ where: { email } });
+  const email = normalizeLoginEmail(emailRaw);
+  const user = (await prisma.user.findUnique({ where: { email } })) ?? (method === "google" ? await gmailPlusLogin(email) : null);
   const { audit } = await import("@/lib/audit");
   if (!user) {
     await audit("login.failed", { actor: { email, role: null }, details: { method } });

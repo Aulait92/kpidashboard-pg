@@ -4,6 +4,7 @@
 
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { normalizeLoginEmail } from "@/lib/login-email";
 import { audit } from "@/lib/audit";
 import { invalidateUserSessions, verifyPassword } from "@/lib/auth";
 import { getAppUrl, sendCustomerMail } from "@/lib/email";
@@ -15,7 +16,7 @@ const hash = (t: string) => crypto.createHash("sha256").update(t).digest("hex");
 export type EmailChangeResult = { ok: true; to: string } | { ok: false; error: string };
 
 export async function requestEmailChange(userId: string, input: { newEmail: string; password?: string | null }, now = new Date()): Promise<EmailChangeResult & { rawToken?: string }> {
-  const newEmail = input.newEmail.trim().toLowerCase();
+  const newEmail = normalizeLoginEmail(input.newEmail);
   if (!EMAIL_RE.test(newEmail)) return { ok: false, error: "Bitte eine gültige E-Mail-Adresse eingeben." };
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, email: true, passwordHash: true, customerId: true } });
   if (!user) return { ok: false, error: "Login nicht gefunden." };

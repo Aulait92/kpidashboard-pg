@@ -19,7 +19,7 @@ import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 import { offerProducts } from "@/components/offer-document";
 import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
-import { EMAIL_RE } from "@/lib/whatsapp/phone";
+import { validLoginEmail } from "@/lib/login-email";
 
 const DAY = 24 * 60 * 60 * 1000;
 const INVITE_TTL_MS = 7 * DAY;
@@ -134,9 +134,9 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
   // 2) Login für den Kunden (Passwort setzt er selbst über den Einladungslink).
   // Reihenfolge: Angebot, Vertriebskontakt, Stripe-Checkout (Rückfall, falls das Angebot ohne E-Mail war).
   const clean = (v: string | null | undefined) => {
-    const e = v?.trim().toLowerCase();
+    const e = validLoginEmail(v);
     // Platzhalter wie linkedin-…@ohne-email.invalid (Kontakte ohne E-Mail) taugen nicht für einen Login.
-    return e && EMAIL_RE.test(e) && !e.endsWith(".invalid") ? e : null;
+    return e && !e.endsWith(".invalid") ? e : null;
   };
   const email = clean(offer.email) || clean(contact?.email) || clean(opts.checkoutEmail) || null;
   if (email && !clean(offer.email)) {

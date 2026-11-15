@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { hashPassword, issuePasswordResetToken } from "@/lib/auth";
 import { buildResetUrl, sendBuyerInviteEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
+import { normalizeLoginEmail } from "@/lib/login-email";
 
 // Betriebs-API: Buyer-Logins (Kunden-CRM) anlegen — ohne Admin-Session.
 // Absicherung: Bearer-Token = ADMIN_API_TOKEN (≥ 32 Zeichen, konstante
@@ -59,7 +60,7 @@ export async function POST(req: Request): Promise<Response> {
     email?: unknown;
     customerId?: unknown;
   };
-  const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+  const email = normalizeLoginEmail(body.email);
   const customerId = typeof body.customerId === "string" ? body.customerId : "";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !customerId) {
     return Response.json(
