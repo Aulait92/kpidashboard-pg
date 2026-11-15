@@ -1,0 +1,22 @@
+{
+  "gesellschaft": "Allianz",
+  "name": "Privatschutz",
+  "linien": ["Komfort", "Premium"],
+  "mindestLaufzeitJahre": null,
+  "sparten": ["haftpflicht", "hausrat", "rechtsschutz", "wohngebaeude", "katze-kranken", "katze-op", "hund-kranken", "hund-op", "tierhalter-hund", "tierhalter-pferd", "unfall"],
+  "staffel": [
+    { "anzahl": 2, "prozent": 5 },
+    { "anzahl": 3, "prozent": 10 },
+    { "anzahl": 4, "prozent": 15 },
+    { "anzahl": 5, "prozent": 20, "abAnzahl": true }
+  ],
+  "quelle": "https://www.allianz.de/recht-und-eigentum/privatschutz/",
+  "stand": "2026-11-15",
+  "offen": [
+    "Staffel laut Produktseite: 5 % bei zwei, 10 % bei drei, 15 % bei vier, 20 % bei fünf oder mehr Versicherungen gegenüber dem Einzelabschluss; bis zu sieben Versicherungen kombinierbar.",
+    "Linien: Online-Bündel nur im Tarif Komfort oder Premium; Produktsteckbriefe nennen Preisvorteile für Komfort und Premium.",
+    "Mindestlaufzeit 3 Jahre ist auf der Seite nicht als Bedingung genannt; die Preisbeispiele (Stand 10/2026) rechnen mit 3 Jahren Vertragslaufzeit bei Einzelberechnung.",
+    "Tierkrankenversicherung ist als eine Versicherung genannt (Katze, Hund, Pferd); ob Kranken- und OP-Schutz getrennt zählen, ist nicht belegt.",
+    "Beispielpakete: Bronze (Hausrat, Haftpflicht) 5 %, Silber (plus Rechtsschutz) 10 %, Gold (plus Wohngebäude) 15 %, jeweils im Komfort-Tarif."
+  ]
+}

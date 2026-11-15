@@ -69,6 +69,40 @@ describe("Tarifkatalog: Schema", () => {
   });
 });
 
+describe("Tarifkatalog: Bündelrabatte (buendel.json)", () => {
+  for (const g of GESELLSCHAFTEN) {
+    const pfad = join(ROOT, g, "buendel.json");
+    let roh: string | null = null;
+    try {
+      roh = readFileSync(pfad, "utf8");
+    } catch {
+      roh = null;
+    }
+    if (roh == null) continue;
+    it(`${g}/buendel.json`, () => {
+      const b = JSON.parse(roh as string) as {
+        gesellschaft: string;
+        sparten: string[];
+        staffel: Array<{ anzahl: number; prozent: number }>;
+        quelle: string;
+        stand: string;
+        offen: string[];
+      };
+      expect(b.gesellschaft).toBeTruthy();
+      expect(b.quelle).toMatch(/^https:\/\//);
+      expect(b.stand).toMatch(/^\d{4}-\d{2}(-\d{2})?$/);
+      for (const s of b.sparten) expect(sparten.has(s), `Sparte ${s}`).toBe(true);
+      const anz = b.staffel.map((x) => x.anzahl);
+      expect(anz, "Staffel aufsteigend").toEqual([...anz].sort((a, c) => a - c));
+      for (const x of b.staffel) expect(x.prozent).toBeGreaterThan(0);
+      for (const [p, t] of texte(b)) {
+        if (p === "quelle") continue;
+        expect(hatGedankenstrich(t), `${g}/buendel.json ${p}: „${t}“`).toBe(false);
+      }
+    });
+  }
+});
+
 describe("Tarifkatalog: Gesellschaftsdateien", () => {
   it("gibt es", () => {
     expect(dateien.length).toBeGreaterThan(0);

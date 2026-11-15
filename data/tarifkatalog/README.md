@@ -53,7 +53,12 @@ Ordner: `allianz`, `axa`, `signal-iduna`.
 - `inAllenTarifen`: höchstens 3 kurze Punkte, die in jeder Stufe gleich sind.
 - Zusätzlich gegenüber dem ursprünglichen Format (additiv, darf ignoriert werden): `empfehlung`, `quellen` (alle
   verwendeten Dokumente der Gesellschaft, bei Allianz Rechtsschutz auch Oles Rechner-Screenshot).
-- `buendel.json` je Gesellschaft (falls vorhanden): Bündel- bzw. Kombirabatte, eigenes Format, siehe Datei.
+- `buendel.json` je Gesellschaft: Bündel- bzw. Kombirabatte.
+  `{ "gesellschaft", "name", "linien": ["Komfort","Premium"], "mindestLaufzeitJahre": 3 | null, "sparten": [...],
+  "staffel": [{ "anzahl": 2, "prozent": 5 }, …], "quelle", "stand", "offen": [] }`. Ein Staffeleintrag mit
+  `"abAnzahl": true` gilt für diese und jede höhere Anzahl. Leere `staffel` = nicht veröffentlicht (Grund in `offen`).
+  Stand: Allianz Staffel belegt (2: 5 %, 3: 10 %, 4: 15 %, ab 5: 20 %, Linien Komfort und Premium, Mindestlaufzeit nicht
+  als Bedingung genannt); AXA und SIGNAL IDUNA veröffentlichen keine Staffel.
 
 ## Quellenregel
 - Nur öffentliche Quellen der Gesellschaft: Produktseite mit Tarifvergleich, Produktsteckbrief, Produktinformationsblatt
