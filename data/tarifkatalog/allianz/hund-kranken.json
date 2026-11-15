@@ -1,0 +1,125 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "hund-kranken",
+  "produkt": "Tierkrankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl",
+    "Lebenslanger Schutz ohne Höchstalter",
+    "Bildgebende Diagnostik vor der OP"
+  ],
+  "tarife": [
+    {
+      "name": "Tierkranken Basis Vollschutz",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "bis 100 %, SB wählbar",
+        "got": "2-fach",
+        "jhl": "2.500 €",
+        "vorsorge": "nein",
+        "zahn": "nein",
+        "kastration": "nein",
+        "physio": "nein",
+        "nachbehandlung": "bis 20 Tage",
+        "sb": "0, 10 oder 20 %",
+        "wartezeit": "3 Monate",
+        "ausland": "12 Monate weltweit",
+        "ohneOp": "bis 1.000 €"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "wechsel": "optional"
+      },
+      "quelle": "https://www.allianz.de/gesundheit/hundekrankenversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Tierkranken Smart Vollschutz",
+      "kurz": "Smart",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "bis 100 %, SB wählbar",
+        "got": "bis 4-fach (Notfall)",
+        "jhl": "5.000 €",
+        "vorsorge": "bis 50 €",
+        "zahn": "bis 1.000 €",
+        "kastration": "bis 300 €",
+        "physio": "bis 150 €",
+        "nachbehandlung": "bis 20 Tage",
+        "sb": "0, 10 oder 20 %",
+        "wartezeit": "3 Monate",
+        "ausland": "12 Monate weltweit",
+        "ohneOp": "bis 2.000 €"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "wechsel": "optional"
+      },
+      "quelle": "https://www.allianz.de/gesundheit/hundekrankenversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Tierkranken Komfort Vollschutz",
+      "kurz": "Komfort",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %, SB wählbar",
+        "got": "bis 4-fach (Notfall)",
+        "jhl": "10.000 €",
+        "vorsorge": "bis 100 €",
+        "zahn": "bis 2.500 €",
+        "kastration": "bis 1.000 €",
+        "physio": "bis 500 €",
+        "nachbehandlung": "bis 30 Tage",
+        "sb": "0, 10 oder 20 %",
+        "wartezeit": "3 Monate",
+        "ausland": "12 Monate weltweit",
+        "ohneOp": "bis 4.000 €"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "wechsel": "optional"
+      },
+      "quelle": "https://www.allianz.de/gesundheit/hundekrankenversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Tierkranken Premium Vollschutz",
+      "kurz": "Premium",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "bis 100 %, SB wählbar",
+        "got": "bis 4-fach (Notfall)",
+        "jhl": "unbegrenzt",
+        "vorsorge": "bis 100 €",
+        "zahn": "bis 5.000 €",
+        "kastration": "bis 2.500 €",
+        "physio": "bis 500 €",
+        "nachbehandlung": "bis 30 Tage",
+        "sb": "0, 10 oder 20 %",
+        "wartezeit": "3 Monate",
+        "ausland": "12 Monate weltweit",
+        "ohneOp": "bis 8.000 €"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "wechsel": "optional"
+      },
+      "quelle": "https://www.allianz.de/gesundheit/hundekrankenversicherung/",
+      "stand": "2026-11-15"
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/gesundheit/hundekrankenversicherung/",
+    "https://goa-eportale.allianz.de/MMS/--2/MMS--2338Z0.pdf.download.pdf"
+  ],
+  "offen": [
+    "Allianz kennzeichnet keine Empfehlung; Komfort als mittlere Stufe gesetzt.",
+    "Erstattung: 100 % ohne Selbstbeteiligung, mit SB 10 % (max. 500 €) bzw. 20 % (max. 1.000 €) je Rechnung."
+  ]
+}

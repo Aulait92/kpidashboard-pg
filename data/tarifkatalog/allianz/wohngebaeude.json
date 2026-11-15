@@ -1,0 +1,142 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Feuer, Blitz und Überspannung",
+    "Leitungswasser, Rohrbruch und Frost",
+    "Sturm und Hagel"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "elementar": "optional",
+        "ableitung": "nein",
+        "pv": "nein",
+        "kosten": "bis 50.000 €",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "fugen": "nein",
+        "vandalismus": "nein",
+        "tiere": "nein",
+        "allgefahren": "nein",
+        "sb": "wählbar 150 bis 10.000 €"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "technik": "nein",
+        "oeltank": "optional",
+        "hausHaftpflicht": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.allianz.de/recht-und-eigentum/wohngebaeudeversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Wohngebäude Smart",
+      "kurz": "Smart",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "nein",
+        "pv": "nein",
+        "kosten": "bis 200.000 €",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "fugen": "nein",
+        "vandalismus": "nein",
+        "tiere": "nein",
+        "allgefahren": "nein",
+        "sb": "wählbar 150 bis 10.000 €"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "technik": "nein",
+        "oeltank": "optional",
+        "hausHaftpflicht": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.allianz.de/recht-und-eigentum/wohngebaeudeversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Wohngebäude Komfort",
+      "kurz": "Komfort",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "bis 50.000 €",
+        "pv": "50.000 € mit Baustein",
+        "kosten": "unbegrenzt",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "fugen": "ja",
+        "vandalismus": "50.000 € mit Baustein",
+        "tiere": "50.000 € mit Baustein",
+        "allgefahren": "nein",
+        "sb": "wählbar 150 bis 10.000 €"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "technik": "optional",
+        "oeltank": "optional",
+        "hausHaftpflicht": "optional",
+        "notfall": "inklusive"
+      },
+      "quelle": "https://www.allianz.de/recht-und-eigentum/wohngebaeudeversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Wohngebäude Premium",
+      "kurz": "Premium",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "ja",
+        "ableitung": "unbegrenzt",
+        "pv": "bis 100.000 €",
+        "kosten": "unbegrenzt",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "fugen": "ja",
+        "vandalismus": "bis 100.000 €",
+        "tiere": "bis 100.000 €",
+        "allgefahren": "bis 100.000 €",
+        "sb": "wählbar 150 bis 10.000 €"
+      },
+      "bausteine": {
+        "elementar": "inklusive",
+        "glas": "inklusive",
+        "technik": "inklusive",
+        "oeltank": "optional",
+        "hausHaftpflicht": "optional",
+        "notfall": "inklusive"
+      },
+      "quelle": "https://www.allianz.de/recht-und-eigentum/wohngebaeudeversicherung/",
+      "stand": "2026-11-15"
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/recht-und-eigentum/wohngebaeudeversicherung/",
+    "https://goa-eportale.allianz.de/MMS/--2/MMS--2017Z0.pdf.download.pdf"
+  ],
+  "offen": [
+    "Photovoltaik und Wärmepumpe sind in jedem Tarif gegen die Grundgefahren versichert; der Wert beschreibt nur die erweiterte Deckung (Beschädigung, Diebstahl).",
+    "Mietausfall: laut Produktseite bis 24 Monate, Höhe je Stufe über Kosten nach Schaden begrenzt; nicht einzeln erfasst.",
+    "Empfehlung: Komfort ist auf allianz.de als Beliebt markiert."
+  ]
+}
