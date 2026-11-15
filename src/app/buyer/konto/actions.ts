@@ -223,23 +223,35 @@ export async function retentionAction(_prev: RetentionState, fd: FormData): Prom
   }
 }
 
-// ─── Anti-Churn vor der Kündigung (lib/anti-churn.ts): Grund, Alternative, Termin ───
+// ─── Anti-Churn vor der Kündigung (lib/anti-churn.ts): Grund, Alternative, Termin, Halteangebote ───
 
-export type ChurnState = { ok?: boolean; error?: string; intentId?: string; message?: string };
+export type ChurnState = {
+  ok?: boolean;
+  error?: string;
+  intentId?: string;
+  message?: string;
+  /** Angebote zum Grund mit aktuellen Werten (lib/halteangebote-server.churnOfferViews) */
+  offers?: import("@/lib/halteangebote").OfferView[];
+  /** Freie Termine für „Wir richten die App für Sie ein“ */
+  einrichtungSlots?: { start: string }[];
+};
 
-/** Grund gewählt (freiwillig): Absicht speichern, Alternativen zeigt der Client. */
+/** Grund gewählt (freiwillig): Absicht speichern, passende Angebote mit aktuellen Werten zurückgeben. */
 export async function churnIntentAction(_prev: ChurnState, fd: FormData): Promise<ChurnState> {
   try {
     const ctx = await customerOnly();
     const { isChurnReason } = await import("@/lib/anti-churn");
     const { recordChurnIntent } = await import("@/lib/anti-churn-server");
     const raw = fd.get("reason");
+    const reason = isChurnReason(raw) ? raw : null;
     const res = await recordChurnIntent(ctx.customerId, {
-      reason: isChurnReason(raw) ? raw : null,
+      reason,
       note: String(fd.get("note") ?? ""),
       actor: { id: ctx.userId, email: ctx.email, role: "BUYER" },
     });
-    return { ok: true, intentId: res.id };
+    const { churnOfferViews } = await import("@/lib/halteangebote-server");
+    const views = await churnOfferViews(ctx.customerId, reason);
+    return { ok: true, intentId: res.id, offers: views.offers, einrichtungSlots: views.einrichtungSlots };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
   }
@@ -252,14 +264,15 @@ export async function churnOfferAction(_prev: ChurnState, fd: FormData): Promise
     const { isChurnOffer } = await import("@/lib/anti-churn");
     const { chooseChurnOffer } = await import("@/lib/anti-churn-server");
     const offer = fd.get("offer");
-    if (!isChurnOffer(offer) || offer === "termin") return { error: "Ungültige Auswahl." };
+    const { isHalteKind } = await import("@/lib/anti-churn");
+    if (!isChurnOffer(offer) || offer === "termin" || isHalteKind(offer)) return { error: "Ungültige Auswahl." };
     const res = await chooseChurnOffer(ctx.customerId, String(fd.get("intentId") ?? ""), offer, { id: ctx.userId, email: ctx.email, role: "BUYER" });
     if (!res.ok) return { error: res.error };
     const message =
       offer === "check"
-        ? "Danke! Wir prüfen Ihre Kampagne und melden uns innerhalb von zwei Werktagen mit konkreten Änderungen."
+        ? "Danke! Wir prüfen Ihre Kampagne und melden uns innerhalb von zwei Werktagen mit konkreten Änderungen. Ihr Vertrag läuft unverändert weiter."
         : offer === "rueckruf"
-          ? "Danke! Wir rufen Sie innerhalb eines Werktags an."
+          ? "Danke! Wir rufen Sie innerhalb eines Werktags an. Ihr Vertrag läuft unverändert weiter."
           : undefined;
     return { ok: true, message };
   } catch (e) {
@@ -281,7 +294,32 @@ export async function churnHelpCallAction(_prev: ChurnState, fd: FormData): Prom
     await chooseChurnOffer(ctx.customerId, intentId, "termin", { id: ctx.userId, email: ctx.email, role: "BUYER" });
     revalidatePath("/buyer", "layout");
     const when = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(res.start);
-    return { ok: true, message: `Gebucht: ${when} Uhr, 15 Minuten per Video. Die Einladung kommt per E-Mail.` };
+    return { ok: true, message: `Gebucht: ${when} Uhr, 15 Minuten per Video. Die Einladung kommt per E-Mail. Ihr Vertrag läuft unverändert weiter.` };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
+  }
+}
+
+/** Halteangebot annehmen (Nachlass, Neustart, Neuausrichtung, Spartenwechsel, Pause ohne Kosten, Einrichtung, Nur Bestand). */
+export async function halteOfferAction(_prev: ChurnState, fd: FormData): Promise<ChurnState> {
+  try {
+    const ctx = await customerOnly();
+    const { isHalteKind } = await import("@/lib/anti-churn");
+    const { acceptHalteOffer } = await import("@/lib/halteangebote-server");
+    const kind = fd.get("offer");
+    if (!isHalteKind(kind)) return { error: "Ungültige Auswahl." };
+    const str = (k: string) => {
+      const v = fd.get(k);
+      return typeof v === "string" && v.trim() ? v.trim() : null;
+    };
+    const res = await acceptHalteOffer(
+      ctx.customerId,
+      { intentId: String(fd.get("intentId") ?? ""), kind, note: str("note"), start: str("start"), from: str("from"), until: str("until"), confirmed: fd.get("confirm") === "on" },
+      { id: ctx.userId, email: ctx.email, role: "BUYER" },
+    );
+    if (!res.ok) return { error: res.error };
+    revalidatePath("/buyer", "layout");
+    return { ok: true, message: res.message };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Das hat nicht geklappt." };
   }

@@ -31,6 +31,8 @@ import { helpCallSlots } from "@/lib/help-call";
 import { VertragKuendigen } from "./vertrag-kuendigen";
 import { Aufbewahrung } from "./aufbewahrung";
 import { loadRetentionView } from "@/lib/ruhend";
+import { loadHalteKonto } from "@/lib/halteangebote-server";
+import { fmtIso } from "@/lib/vertrag-laufzeit";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Konto & Rechnungen | performancegrowth" };
@@ -110,6 +112,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const churnSlots = cancelInfo && !cancelInfo.ended && !cancelInfo.requested && !ctx.preview ? await helpCallSlots().catch(() => []) : [];
   // Nach der Kündigung: Aufbewahrung der Daten nach Vertragsende (änderbar bis zur Löschung)
   const retention = cancelInfo?.requested ? await loadRetentionView(ctx.customerId) : null;
+  // Halteangebot: angenommener Nachlass und Mindestlaufzeit danach
+  const halte = await loadHalteKonto(ctx.customerId).catch(() => null);
   const today = todayBerlin();
   const startYmd = customer.retainerStart ? new Intl.DateTimeFormat("sv-SE", { timeZone: TZ }).format(customer.retainerStart) : today;
   const softwareFee = offer ? Number(offer.softwareFee) : customer.plan === "service" ? 0 : 349;
@@ -203,6 +207,17 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
               <>
                 <dt className="text-[color:var(--muted)]">Start</dt>
                 <dd>{date(customer.retainerStart)}</dd>
+              </>
+            ) : null}
+            {halte ? (
+              <>
+                <dt className="text-[color:var(--muted)]">Nachlass</dt>
+                <dd data-konto-halteangebot>
+                  {halte.percentOff && halte.months
+                    ? `${halte.percentOff} % auf ${halte.months === 1 ? "eine Monatsrechnung" : `${halte.months} Monatsrechnungen`}${halte.acceptedIso ? ` (angenommen am ${fmtIso(halte.acceptedIso)})` : ""}. `
+                    : ""}
+                  Mindestlaufzeit bis {fmtIso(halte.commitIso)}.
+                </dd>
               </>
             ) : null}
             {offer ? (

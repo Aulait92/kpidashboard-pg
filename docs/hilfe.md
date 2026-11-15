@@ -786,9 +786,30 @@ Seiten aus der Liste „Seiten“ unten.
   Die Wahl steht in der Bestätigungsmail und lässt sich bis zur Löschung im Konto ändern (Karte „Ihr Vertrag“), auch
   zurück auf 24 Monate. Die Sperrliste für Widersprüche bleibt pseudonymisiert, Verträge und Rechnungen bewahren wir
   nach den gesetzlichen Fristen auf.
-  Vor der Bestätigung fragt die App freiwillig nach dem Hauptgrund und zeigt passende Möglichkeiten (z. B. Pause,
-  Budget senken, Zusatzmodule beenden, 15 Minuten mit uns, Kampagnen-Check, Rückruf). „Direkt zur Kündigung“ bzw.
-  „Trotzdem kündigen“ führt jederzeit mit einem Klick zur Bestätigung.
+  Vor der Bestätigung fragt die App freiwillig nach dem Hauptgrund und zeigt passende Möglichkeiten. „Direkt zur
+  Kündigung“ bzw. „Trotzdem kündigen“ führt jederzeit mit einem Klick zur Bestätigung.
+  **Angebote je Grund (seit 15.11.2026):**
+  - *Zu teuer:* Nachlass auf die Monatsgebühr (Standard 50 % auf die nächsten 2 Monatsrechnungen). Bedingung: Der
+    Vertrag läuft danach noch mindestens 3 Monate; den Tag sehen Sie vor der Annahme, Sie bestätigen ihn mit einem
+    Häkchen. Danach steht er unter „Ihr Vertrag“ (Zeile „Nachlass“) und in der Bestätigungsmail; eine Kündigung wirkt
+    frühestens zu diesem Tag. Alternativ ein kleineres Paket (Werbebudget senken, niedrigere Preisstufe).
+  - *Zu wenige Leads:* Wir starten Ihre Kampagne neu (neue Anzeigen, neue Zielgruppen), dazu ein Monat Betreuung
+    kostenlos (sichtbar auf der nächsten Rechnung).
+  - *Leads passen nicht:* Kostenlose Neuausrichtung (andere Sparte, Region oder Formularfragen; Ihr Wunsch als Text)
+    und wir prüfen Leads mit falschen Daten der letzten 30 Tage für eine Gutschrift.
+  - *Zu wenige Abschlüsse:* Kostenloser Wechsel auf die Sparte mit der besten Abschlussquote über alle unsere Kunden
+    (ohne neue Einrichtungsgebühr).
+  - *Keine Zeit:* Pause ohne Kosten, bis zu 3 Monate: Anzeigen und die ganze Abrechnung ruhen, danach geht es
+    automatisch weiter.
+  - *App passt nicht:* Wir richten die App mit Ihnen ein, 30 Minuten per Video mit Bildschirmfreigabe (Termin direkt
+    wählen).
+  - *Höre auf / wechsle:* Paket „Nur Bestand“ für 149 € netto im Monat: Ihre Daten und das Bestandskunden-Modul mit
+    demselben Kontingent, ohne neue Leads und ohne Betreuung; „Empfehlungen & Bewertungen“ optional für 59 € netto im
+    Monat dazu. Dazu der Hinweis „Kollegen empfehlen“ für Ihren Nachfolger.
+  Rabatte (Nachlass, kostenloser Betreuungsmonat, Gutschrift, Pause ohne Kosten) gibt es erst ab 3 Monaten
+  Vertragsdauer, höchstens einmal in 12 Monaten und nicht bei jährlicher Vorauszahlung; sonst sehen Sie die übrigen
+  Möglichkeiten. 30 Tage nach Vertragsende kommt einmal ein Rückkehrangebot per E-Mail: Konto reaktivieren ohne neue
+  Einrichtungsgebühr.
 - Vertragsfragen: bitte direkt bei uns melden.
 
 ## Konto ruht nach Vertragsende (seit 15.11.2026)

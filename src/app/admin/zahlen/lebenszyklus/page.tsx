@@ -185,6 +185,55 @@ export default async function LebenszyklusPage() {
         </Card>
 
         <Card>
+          <CardHeader title="Halteangebote" count={d.halte.accepted || undefined} />
+          <div className="overflow-x-auto px-5 pb-5" data-lebenszyklus-halte>
+            <p className="mb-3 text-sm">
+              {d.halte.accepted} angenommen, geretteter Monatsbetrag {eur(d.halte.savedMrr)}, davon später trotzdem gekündigt: {d.halte.cancelledLater} (
+              {eur(d.halte.savedMrr - d.halte.stillSavedMrr)}). Rückkehrangebote: {d.winback.sent} verschickt, {d.winback.reactivated} danach reaktiviert.
+            </p>
+            {d.halte.accepted ? (
+              <div className="grid gap-4 lg:grid-cols-2">
+                {[
+                  { title: "Je Grund", rows: d.halte.byReason },
+                  { title: "Je Angebot", rows: d.halte.byKind },
+                ].map((t) => (
+                  <table key={t.title} className="w-full text-[13px] tabular-nums">
+                    <thead className="text-[color:var(--muted)]">
+                      <tr>
+                        <th className="py-1.5 pr-2 text-left font-medium">{t.title}</th>
+                        <th className={th}>Angenommen</th>
+                        <th className={th}>MRR gerettet</th>
+                        <th className={th}>Später gekündigt</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {t.rows.map((r) => (
+                        <tr key={r.key} className="border-t border-[color:var(--border)]">
+                          <td className="py-1.5 pr-2">{r.label}</td>
+                          <td className={td}>{r.accepted}</td>
+                          <td className={td}>{eur(r.savedMrr)}</td>
+                          <td className={`${td} ${r.cancelledLater ? "text-rose-700" : ""}`}>{r.cancelledLater}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-[color:var(--muted)]">Noch keine angenommenen Halteangebote.</p>
+            )}
+            <p className="mt-3 text-xs text-[color:var(--muted)]">
+              MRR gerettet = Monatsbetrag, der nach dem Angebot weiterläuft (bei „Nur Bestand“ dessen Preis), zum Zeitpunkt der Annahme. Später gekündigt =
+              nach der Annahme trotzdem über „Vertrag hier kündigen“ gekündigt. Einstellungen unter{" "}
+              <Link href="/admin/einstellungen/halteangebote" className="underline">
+                Einstellungen → Halteangebote
+              </Link>
+              .
+            </p>
+          </div>
+        </Card>
+
+        <Card>
           <CardHeader title="Ruhende Konten" count={d.dormant.length || undefined} />
           <div className="overflow-x-auto px-5 pb-5">
             {d.dormant.length ? (

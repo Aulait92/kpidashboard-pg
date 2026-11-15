@@ -33,6 +33,9 @@
 // 24 Monate als Weisung des Auftraggebers (Art. 28 Abs. 3 lit. g DSGVO), wählbar 3 Monate oder sofort; in der Ruhephase
 // nur Speicherung, Zugang nur für Export und Reaktivierung, danach endgültige Löschung; Abrechnungsdaten nach den
 // gesetzlichen Fristen (lib/ruhend.ts). AGB „Daten bei Vertragsende“ und AVV „Löschung und Rückgabe“, TOMs.
+// 15.11.2026 (gleicher Stand, Ole): AGB „Angebote vor einer Kündigung“ (Halteangebote, lib/halteangebote.ts): Rabatt-
+// bedingungen, Mindestlaufzeit nach einem Nachlass, Pause ohne Vergütung, Paket „Nur Bestand“, Gutschrift nur nach Prüfung, kein Anspruch,
+// Rückkehrangebot; in „Laufzeit und Kündigung“ der Verweis auf die Mindestlaufzeit nach einem Nachlass.
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
@@ -161,6 +164,20 @@ export const AGB: LegalSection[] = [
     ],
   },
   {
+    // Prüfen: Halteangebote vor einer Kündigung (Ole, 15.11.2026), insbesondere Mindestlaufzeit nach einem Nachlass (§ 307 BGB)
+    title: "Angebote vor einer Kündigung",
+    items: [
+      "Der Anbieter kann dem Kunden vor einer Kündigung, insbesondere im Kundenbereich unter „Vertrag hier kündigen“, Angebote machen, etwa einen Nachlass auf die monatliche Vergütung, einen kostenlosen Monat der Betreuung, eine Pause ohne Vergütung, eine Neuausrichtung der Kampagne oder einen Wechsel des Pakets. Es gelten die bei der Annahme genannten Bedingungen; der Anbieter bestätigt sie im Kundenbereich und bei einem Nachlass zusätzlich per E-Mail.",
+      { sub: "Rabattbedingungen", text: "Ein Nachlass gilt für die genannte Zahl von Monatsrechnungen ab der nächsten Rechnung und bezieht sich auf die monatliche Vergütung einschließlich vereinbarter Zusätze. Er wird nicht ausgezahlt und nicht auf andere Zeiträume übertragen. Bei jährlicher Vorauszahlung wird kein Nachlass auf die Monatsgebühr angeboten." },
+      { sub: "Mindestlaufzeit nach einem Nachlass", text: "Ist ein Nachlass an eine weitere Laufzeit geknüpft, läuft der Vertrag mindestens bis zu dem bei der Annahme genannten Tag. Er ergibt sich aus dem laufenden Abrechnungsmonat, den rabattierten Abrechnungsmonaten und der genannten Zahl weiterer Abrechnungsmonate (Beispiel: Start am 01.08., Annahme am 15.11., Nachlass für 2 Monate, danach 3 Monate: Mindestlaufzeit bis 30.04. des Folgejahres). Eine Kündigung ist jederzeit möglich, wirkt aber frühestens zu diesem Tag." },
+      { sub: "Pause ohne Vergütung", text: "Wird eine Pause ohne Vergütung vereinbart, entfällt für ihre Dauer die gesamte Vergütung. Sie dauert höchstens die bei der Annahme genannte Zahl von Monaten und verlängert eine vereinbarte Mindestlaufzeit nicht." },
+      { sub: "Paket „Nur Bestand“", text: "Wählt der Kunde das Paket „Nur Bestand“, umfasst der Vertrag ab dem nächstmöglichen Kündigungstermin des bisherigen Pakets nur noch die Speicherung seiner Daten und das Bestandskunden-Modul mit dessen Kontingent zu dem bei der Annahme genannten Preis, ohne Leadgenerierung und ohne Betreuung. Das Modul „Empfehlungen & Bewertungen“ kann gegen den im Kundenbereich genannten Aufpreis dazugebucht werden. Im Übrigen gelten die Regeln zu Zusatzmodulen und „Laufzeit und Kündigung“ ohne Mindestlaufzeit." },
+      "Gutschriften für Leads mit fehlerhaften Angaben erfolgen nur nach Prüfung durch den Anbieter und in der von ihm bestätigten Höhe.",
+      "Ein Anspruch auf solche Angebote besteht nicht. Der Anbieter kann sie von einer Mindestdauer der Kundenbeziehung abhängig machen und Nachlässe und vergleichbare Vorteile auf einmal innerhalb von 12 Monaten begrenzen.",
+      "Nach Vertragsende kann der Anbieter ein Angebot zur Rückkehr ohne neue Einrichtungsgebühr machen. Ein neuer Vertrag kommt erst zustande, wenn der Kunde Paket und Preis zugestimmt hat.",
+    ],
+  },
+  {
     title: "Laufzeit und Kündigung",
     items: [
       { sub: "Ohne Vertragslaufzeit", text: "Der Vertrag läuft unbefristet und kann von beiden Seiten zum Ende des jeweiligen Abrechnungsmonats in Textform gekündigt werden." },
@@ -172,6 +189,7 @@ export const AGB: LegalSection[] = [
       // Prüfen: eindeutiger Kündigungstermin und Kündigung im Kundenbereich (Anwalts-Memo, Ole 15.11.2026)
       { sub: "Fristen", text: "Start ist das im Angebot genannte oder bei der Annahme gewählte Startdatum. Ein Abrechnungsmonat beginnt am Starttag bzw. an demselben Kalendertag der Folgemonate und endet mit dem Tag davor; fehlt dieser Tag in einem Monat, endet er mit dem Monatsletzten (Beispiel: Start am 15.03., Abrechnungsmonate 15.03. bis 14.04., 15.04. bis 14.05. usw.). Eine Mindestlaufzeit von 3 bzw. 12 Monaten endet entsprechend (Beispiel: Start am 15.03.2027, 3 Monate bis 14.06.2027). Eine Kündigung während der Mindestlaufzeit wirkt zu deren Ende, danach zum Ende des Abrechnungsmonats, in dem sie zugeht. Bei jährlicher Vorauszahlung muss die Kündigung spätestens einen Monat vor Ende des Zahlungsjahres zugehen (Beispiel: Zahlungsjahr bis 14.03.2028, Kündigung bis 14.02.2028), sonst wirkt sie zum Ende des folgenden Zahlungsjahres." },
       { sub: "Form der Kündigung", text: "Die Kündigung erfolgt in Textform (z. B. E-Mail) oder im Kundenbereich unter „Konto & Rechnungen“ über „Vertrag hier kündigen“. Dort sieht der Kunde vor dem Absenden den Termin, zu dem der Vertrag endet. Der Anbieter bestätigt den Eingang der Kündigung und das Vertragsende unverzüglich per E-Mail." },
+      "Hat der Kunde einen Nachlass mit Mindestlaufzeit angenommen (Abschnitt „Angebote vor einer Kündigung“), wirkt eine ordentliche Kündigung frühestens zum Ende dieser Mindestlaufzeit.",
       "Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt unberührt. Die Setupgebühr wird bei Vertragsende nicht erstattet.",
     ],
   },
