@@ -332,3 +332,24 @@ describe("Erstinformation in der Einrichtung", () => {
     expect(onboardingChecklist(ob2, null).find((i) => i.key === "erstinfo")?.done).toBe(false);
   });
 });
+
+describe("Schon über die Buchungsseite gebucht (z. B. Meta-Leadformular)", () => {
+  it("Privatschutz: Assistent meldet sich trotzdem; andere Produkte ohne Angaben-Katalog: kein Erstanschreiben", async () => {
+    const mk = async (phone: string, source: string) => {
+      const lead = await prisma.lead.create({ data: { customerId, name: "Julia Schneider", phone, status: "Neuer Lead", source } });
+      const conv = await prisma.conversation.create({ data: { customerId, leadId: lead.id, contactPhone: phone, contactName: "Julia Schneider" } });
+      await prisma.appointment.create({ data: { customerId, leadId: lead.id, conversationId: conv.id, mode: "phone", status: "booked", startsAt: new Date(Date.now() + 2 * 86_400_000) } });
+      return lead;
+    };
+    await prisma.messageTemplate.create({
+      data: { customerId, name: "pg_outreach_v3_sie", language: "de", purpose: "outreach", category: "marketing", status: "approved", auto: true, body: "Guten Tag {{1}}, vielen Dank für Ihre Anfrage! Erstinformation: {{2}} Haben Sie kurz Zeit für zwei Fragen?" },
+    });
+    const ps = await mk("4917622220011", "Privatschutz");
+    const tkv = await mk("4917622220012", "TKV-Katze");
+    await runOutreach(customerId);
+    expect(sent.some((s) => s.to === "4917622220011")).toBe(true);
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: ps.id } })).outreachStatus).toBe("sent_booked");
+    expect(sent.some((s) => s.to === "4917622220012")).toBe(false);
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: tkv.id } })).outreachStatus).toBe("skipped_booked");
+  });
+});

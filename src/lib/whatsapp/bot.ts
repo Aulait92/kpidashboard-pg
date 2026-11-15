@@ -238,7 +238,7 @@ export function buildSystemPrompt(
     ? [
         `BEREITS GEBUCHTER TERMIN: ${formatSlotDE(state.upcoming.startsAt.toISOString())} Uhr (${terminArtLabel(state.upcoming.mode)})${state.upcoming.meetUrl ? `, Video-Link: ${state.upcoming.meetUrl}` : ""}.`,
         checkliste
-          ? "Dieser Lead hat schon einen Termin. Buche keinen zusätzlichen Termin (kein book_appointment). Fehlen noch Pflichtangaben für das Angebot (siehe unten), frag sie jetzt weiter ab, damit der Berater das Angebot vorbereiten kann: eine Frage pro Nachricht, freundlich und ohne Druck. Möchte der Lead nicht, ist das in Ordnung."
+          ? "Dieser Lead hat schon einen Termin (ggf. selbst über die Buchungsseite bzw. das Leadformular gebucht). Buche keinen zusätzlichen Termin (kein book_appointment). Hast du den Termin in diesem Chat noch nicht selbst bestätigt, bestätige ihn in deiner nächsten Nachricht kurz mit Datum und Uhrzeit. Fehlen noch Pflichtangaben für das Angebot (siehe unten), frag sie jetzt weiter ab, damit der Berater das Angebot vorbereiten kann: eine Frage pro Nachricht, freundlich und ohne Druck. Möchte der Lead nicht, ist das in Ordnung."
           : "Dieser Lead hat schon einen Termin. Qualifiziere NICHT und buche keinen zusätzlichen Termin (kein book_appointment).",
         "Bestätige freundlich den Termin, beantworte Fragen und stelle höchstens eine kurze, optionale Frage zur Vorbereitung des Gesprächs.",
         "Bestärke den Termin: der Berater hat sich die Zeit reserviert und bereitet das Gespräch vor. Kommt etwas dazwischen, lieber verschieben als ausfallen lassen.",

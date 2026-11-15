@@ -185,7 +185,8 @@ Seiten aus der Liste „Seiten“ unten.
   **Wiedervorlage** und meldet sich zur vereinbarten Zeit per WhatsApp. Sie sehen sie im Kontakt unter den
   Aktionen („Wiedervorlage vom Assistenten …“); der Lead zählt damit nicht als „ohne nächsten Schritt“.
 - Bei Privatschutz fragt er die Angaben fürs Angebot ab. Bucht ein Lead schon vorher einen Termin, fragt der
-  Assistent die fehlenden Angaben nach der Buchung weiter ab.
+  Assistent die fehlenden Angaben nach der Buchung weiter ab. Hat der Lead direkt über das Leadformular bzw. die
+  Buchungsseite gebucht, meldet sich der Assistent trotzdem, bestätigt den Termin und fragt die Angaben ab.
 - Braucht ein Lead Sie (Frage, die der Assistent nicht beantworten soll), landet der Chat unter „Braucht dich“
   und Sie bekommen eine Push-Nachricht.
 - **Ansprache (Sie oder Du)**: Standard ist „Sie“. Inhaber stellen das unter **Einstellungen → WhatsApp-Vorlagen**,

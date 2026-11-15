@@ -77,3 +77,12 @@ describe("Wiedervorlage vom Assistenten", () => {
     expect(parseBerlinTime("morgen")).toBeNull();
   });
 });
+
+describe("Termin schon gebucht (Buchungsseite/Leadformular)", () => {
+  it("bestätigt den Termin und fragt die Angaben weiter ab", () => {
+    const p = buildSystemPrompt(agent, "Privatschutz", { ...base, upcoming: { startsAt: new Date("2026-11-20T10:00:00Z"), mode: "phone", meetUrl: null } });
+    expect(p).toContain("selbst über die Buchungsseite bzw. das Leadformular gebucht");
+    expect(p).toContain("bestätige ihn in deiner nächsten Nachricht kurz mit Datum und Uhrzeit");
+    expect(p).toContain("Pflichtangaben für das Angebot");
+  });
+});

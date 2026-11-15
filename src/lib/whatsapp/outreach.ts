@@ -18,6 +18,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { firstNameOf, NoTemplateError, noticeText, sendWhatsAppNotice } from "@/lib/whatsapp/templates";
 import { restartSilentSequence } from "@/lib/lead-sequences";
+import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
 import { anspracheOf } from "@/lib/whatsapp/reminders";
 import { ansprechpartner } from "@/lib/lead-anrede";
 import type { Ansprache } from "@/lib/ansprache";
@@ -98,7 +99,7 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
         },
         OR: OUTREACH_STATUSES.map((s) => ({ status: s })),
       },
-      select: { id: true, name: true, phone: true, waConsent: true },
+      select: { id: true, name: true, phone: true, waConsent: true, source: true },
       take: 50,
     });
 
@@ -126,7 +127,11 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
         continue;
       }
 
-      if (await hasAppointment(lead.id, conv?.id)) {
+      // Schon über die Buchungsseite (z. B. Meta-Leadformular) gebucht: Bei Produkten mit Angaben fürs Angebot
+      // (lib/whatsapp/produkt-fragen) meldet sich der Assistent trotzdem, bestätigt den Termin im Gespräch und
+      // fragt die Angaben ab (Ole, 15.11.2026). Sonst wie bisher kein Erstanschreiben.
+      const booked = await hasAppointment(lead.id, conv?.id);
+      if (booked && !produktCheckliste(lead.source)) {
         await prisma.lead.update({
           where: { id: lead.id },
           data: { outreachAt: new Date(), outreachStatus: "skipped_booked" },
@@ -164,7 +169,7 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
         });
         await prisma.lead.update({
           where: { id: lead.id },
-          data: { outreachAt: new Date(), outreachStatus: "sent" },
+          data: { outreachAt: new Date(), outreachStatus: booked ? "sent_booked" : "sent" },
         });
         // WhatsApp-Erstanschreiben = Kontaktversuch (Zeit bis Erstkontakt).
         await recordLeadProgress(lead.id, "contact_attempt");
