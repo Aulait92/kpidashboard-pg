@@ -132,6 +132,9 @@
         { "key": "wohnung", "label": "Haftpflicht für eine vermietete Wohnung", "kurz": "Vermietete Wohnung" },
         { "key": "delikt", "label": "Schäden durch deliktunfähige Kinder", "kurz": "Deliktunfähigkeit" },
         { "key": "hausbesitz", "label": "Selbst genutztes Haus (Haus- und Grundbesitz)", "kurz": "Hausbesitz" },
+        { "key": "auto", "label": "Schäden an geliehenen oder gemieteten Autos", "kurz": "Geliehenes Auto" },
+        { "key": "tiere", "label": "Hund oder Pferd mitversichern", "kurz": "Hund oder Pferd" },
+        { "key": "cyber", "label": "Cyber (Urheberrecht, Cyber-Mobbing)", "kurz": "Cyber" },
         { "key": "sb0", "label": "Ohne Selbstbeteiligung", "kurz": "Ohne SB" }
       ]
     },
@@ -163,7 +166,8 @@
         { "key": "glas", "label": "Glasbruch", "kurz": "Glas" },
         { "key": "internet", "label": "Internetschutz (Online-Betrug)", "kurz": "Internetschutz" },
         { "key": "notfall", "label": "Notfall-Service Zuhause", "kurz": "Notfall-Service" },
-        { "key": "reise", "label": "Reisegepäck", "kurz": "Reisegepäck" }
+        { "key": "reise", "label": "Reisegepäck und Sachen unterwegs", "kurz": "Unterwegs" },
+        { "key": "smarthome", "label": "Smart Home (vernetzte Geräte, Allgefahren)", "kurz": "Smart Home" }
       ]
     },
     {
@@ -220,6 +224,8 @@
         { "key": "glas", "label": "Glasbruch Gebäude", "kurz": "Glas" },
         { "key": "technik", "label": "Haus- und Technikschutz", "kurz": "Haus- und Technik" },
         { "key": "erneuerbar", "label": "Erneuerbare Energien (Photovoltaik, Wärmepumpe)", "kurz": "Erneuerbare Energien" },
+        { "key": "smarthome", "label": "Smart Home (Haustechnik, Photovoltaik)", "kurz": "Smart Home" },
+        { "key": "ableitung", "label": "Ableitungsrohre auf und außerhalb des Grundstücks", "kurz": "Ableitungsrohre" },
         { "key": "oeltank", "label": "Öltank-Haftpflicht", "kurz": "Öltank" },
         { "key": "hausHaftpflicht", "label": "Haus- und Grundbesitzer-Haftpflicht", "kurz": "Haus-Haftpflicht" },
         { "key": "notfall", "label": "Notfall-Service Zuhause", "kurz": "Notfall-Service" }

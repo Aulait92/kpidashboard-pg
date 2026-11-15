@@ -1,0 +1,71 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "rechtsschutz",
+  "produkt": "Rechtsschutz für das Privatleben (ALLRECHT)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Privat, Beruf, Verkehr und Wohnen",
+    "Telefonische Rechtsberatung (JuraFon)",
+    "Mediation"
+  ],
+  "tarife": [
+    {
+      "name": "Rechtsschutz Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "ja",
+        "privat": "ja",
+        "privatPlus": "nein",
+        "sb": "wählbar 0 bis 1.000 €",
+        "opfer": "ja",
+        "straf": "ja, erweitert",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/privatrechtsschutzversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Rechtsschutz Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "ja",
+        "privat": "ja",
+        "privatPlus": "ja",
+        "sb": "wählbar 0 bis 1.000 €",
+        "opfer": "ja",
+        "straf": "ja, erweitert",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/privatrechtsschutzversicherung/",
+      "stand": "2026-11-15"
+    }
+  ],
+  "quellen": [
+    "https://www.signal-iduna.de/produkte/privatrechtsschutzversicherung/",
+    "https://www.signal-iduna.de/content/dam/si-documents/6/68/68917xx.pdf.coredownload.inline.pdf"
+  ],
+  "offen": [
+    "Versicherer ist ALLRECHT (DEURAG, SIGNAL IDUNA Gruppe). Flyer Rechtsschutz Privatleben Stand 09/2025.",
+    "Versicherungssumme, Strafkaution und Wartezeit nicht belegt.",
+    "Die Produktseite nennt auch eine Linie Pur; Leistungen dazu nicht veröffentlicht.",
+    "Premium zusätzlich: Kapitalanlagen, Erbrecht, Bauherren-Rechtsschutz; Ehe- und Unterhalts-Rechtsschutz über Premium plus.",
+    "SB fest 0, 150, 250, 500 oder 1.000 € oder SB-Vario.",
+    "Empfehlung: Flyer weist BASIS als Kundenempfehlung aus."
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Mietsachschäden bis zur Deckungssumme",
+    "Schutz als privater Bauherr",
+    "Personen-, Sach- und Vermögensschäden"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht Pur",
+      "kurz": "Pur",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "forderungsausfall": "ab 5.000 € Schaden",
+        "schluessel": "bis 2.500 €",
+        "delikt": "bis 5.000 €, SB 500 €",
+        "geliehen": "bis 2.500 €",
+        "miete": "ja",
+        "neuwert": "nein",
+        "drohne": "nein",
+        "nebenberuf": "nein"
+      },
+      "bausteine": {
+        "dienst": "nein",
+        "auto": "nein",
+        "tiere": "nein",
+        "cyber": "nein"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/privathaftpflicht/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Privathaftpflicht Basis",
+      "kurz": "Basis",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "ab 2.500 € Schaden",
+        "schluessel": "bis 25.000 €",
+        "delikt": "bis 500.000 €",
+        "geliehen": "bis 25.000 €",
+        "miete": "ja",
+        "neuwert": "nein",
+        "drohne": "nein",
+        "nebenberuf": "nein"
+      },
+      "bausteine": {
+        "dienst": "optional",
+        "auto": "optional",
+        "tiere": "optional",
+        "cyber": "optional"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/privathaftpflicht/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Privathaftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "75 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja",
+        "delikt": "bis 1 Mio. €",
+        "geliehen": "ja",
+        "miete": "ja",
+        "neuwert": "bis 3.000 €, 1 Jahr alt",
+        "drohne": "ja",
+        "nebenberuf": "ja"
+      },
+      "bausteine": {
+        "dienst": "optional",
+        "auto": "optional",
+        "tiere": "optional",
+        "cyber": "optional",
+        "oeltank": "inklusive",
+        "wohnung": "inklusive"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/privathaftpflicht/",
+      "stand": "2026-11-15"
+    }
+  ],
+  "quellen": [
+    "https://www.signal-iduna.de/produkte/privathaftpflicht/"
+  ],
+  "offen": [
+    "Deliktunfähige Personen: Basis Personenschäden bis 50 Mio. €, Premium bis 75 Mio. €; Wert zeigt die Grenze für Sachschäden.",
+    "Laut Hinweis der Seite gilt in Basis und Premium für Personen- und Sachschäden 15 Mio. € je Schadensfall und geschädigter Person; Verhältnis zur Deckungssumme bitte prüfen.",
+    "Pur leistet nicht bei Schäden innerhalb der Versichertengemeinschaft.",
+    "Gefälligkeitsschäden, Ehrenamt, Selbstbeteiligung nicht im Tarifvergleich.",
+    "Bauherr: Pur bis 50.000 € Bausumme, Basis und Premium ohne Grenze laut Tabelle.",
+    "SIGNAL IDUNA kennzeichnet keine Empfehlung; Basis als mittlere Stufe gesetzt."
+  ]
+}

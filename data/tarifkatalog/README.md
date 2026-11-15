@@ -47,7 +47,9 @@ Ordner: `allianz`, `axa`, `signal-iduna`.
   nicht wählbar). Fehlt ein Baustein, ist es nicht belegt.
 - `kurz`: Stufenname ohne Produkt, höchstens 14 Zeichen. `stufe` aufsteigend ab 1, höchstens 4 Stufen je Datei.
 - `empfohlen`: genau die Stufe, die die Gesellschaft hervorhebt („Beliebtester Tarif“, „Empfehlung“), sonst die mittlere
-  Stufe (bei 4 Stufen die dritte). Woher die Empfehlung kommt, steht in `empfehlung`: `Gesellschaft` oder `mittlere Stufe`.
+  Stufe (bei 4 Stufen die dritte). Woher die Empfehlung kommt, steht in `empfehlung`: `Gesellschaft`, `mittlere Stufe`
+  oder `keine` (zwei Stufen ohne Markierung der Gesellschaft: kein Tarif hat `empfohlen: true`). Höchstens ein Tarif je Datei.
+- Ein Tarif ohne Stufen (eine Gesellschaft hat nur einen Tarif) steht als einzige Stufe 1 mit Kurzname „Tarif“.
 - `inAllenTarifen`: höchstens 3 kurze Punkte, die in jeder Stufe gleich sind.
 - Zusätzlich gegenüber dem ursprünglichen Format (additiv, darf ignoriert werden): `empfehlung`, `quellen` (alle
   verwendeten Dokumente der Gesellschaft, bei Allianz Rechtsschutz auch Oles Rechner-Screenshot).
@@ -66,17 +68,17 @@ vollständig = alle Standardmerkmale belegt; teilweise = Standardmerkmale fehlen
 
 | Sparte | Allianz | AXA | SIGNAL IDUNA |
 |---|---|---|---|
-| katze-kranken | vollständig (4 Stufen) | fehlt (kein Produkt auf axa.de) | fehlt |
-| katze-op | vollständig (4 Stufen) | fehlt (kein Produkt auf axa.de) | fehlt |
-| hund-kranken | vollständig (4 Stufen) | fehlt (kein Produkt auf axa.de) | fehlt |
-| hund-op | vollständig (4 Stufen) | fehlt (kein Produkt auf axa.de) | fehlt |
-| haftpflicht | vollständig (4 Stufen) | teilweise (3 Stufen, geliehene Sachen L offen) | fehlt |
-| hausrat | vollständig (4 Stufen) | teilweise (3 Stufen, einfacher Diebstahl offen) | fehlt |
-| rechtsschutz | vollständig (4 Stufen) | teilweise (3 Stufen, Strafkaution offen) | fehlt |
-| wohngebaeude | vollständig (4 Stufen) | vollständig (2 Stufen) | fehlt |
-| tierhalter-hund | vollständig (3 Stufen) | vollständig (1 Tarif) | fehlt |
-| tierhalter-pferd | vollständig (3 Stufen) | teilweise (1 Tarif, nur Summe) | fehlt |
-| unfall | vollständig (4 Stufen) | vollständig (3 Stufen) | fehlt |
+| katze-kranken | vollständig (4 Stufen) | fehlt (kein Produkt auf axa.de) | fehlt (kein Produkt auf signal-iduna.de) |
+| katze-op | vollständig (4 Stufen) | fehlt (kein Produkt auf axa.de) | fehlt (kein Produkt auf signal-iduna.de) |
+| hund-kranken | vollständig (4 Stufen) | fehlt (kein Produkt auf axa.de) | fehlt (kein Produkt auf signal-iduna.de) |
+| hund-op | vollständig (4 Stufen) | fehlt (kein Produkt auf axa.de) | fehlt (kein Produkt auf signal-iduna.de) |
+| haftpflicht | vollständig (4 Stufen) | teilweise (3 Stufen, geliehene Sachen L offen) | vollständig (3 Stufen) |
+| hausrat | vollständig (4 Stufen) | teilweise (3 Stufen, einfacher Diebstahl offen) | teilweise (3 Stufen, einfacher Diebstahl offen) |
+| rechtsschutz | vollständig (4 Stufen) | teilweise (3 Stufen, Strafkaution offen) | teilweise (2 Stufen, Summe und Strafkaution offen) |
+| wohngebaeude | vollständig (4 Stufen) | vollständig (2 Stufen) | vollständig (2 Stufen) |
+| tierhalter-hund | vollständig (3 Stufen) | vollständig (1 Tarif) | teilweise (2 Stufen, Flyer 2012) |
+| tierhalter-pferd | vollständig (3 Stufen) | teilweise (1 Tarif, nur Summe) | teilweise (2 Stufen, Flyer 2012) |
+| unfall | vollständig (4 Stufen) | vollständig (3 Stufen) | teilweise (2 Stufen, Summen individuell) |
 
 ### Allianz
 - Quelle ist jeweils der Tarifvergleich der Produktseite auf allianz.de (Abruf 15.11.2026), dazu der Produktsteckbrief.
@@ -102,6 +104,16 @@ vollständig = alle Standardmerkmale belegt; teilweise = Standardmerkmale fehlen
 - Empfehlung: AXA markiert nur bei Wohngebäude eine Spalte als „Bestseller“ (laut Seitenquelltext BOXFLEX, bitte am
   Bildschirm gegenprüfen); sonst mittlere Stufe.
 
+### SIGNAL IDUNA
+- Quelle: Tariftabellen der Produktseiten auf signal-iduna.de (Abruf 15.11.2026); Rechtsschutz zusätzlich der
+  ALLRECHT-Flyer „Rechtsschutz für das Privatleben“ (Stand 09/2025), Tierhalter der verlinkte Flyer (Stand 09/2012).
+- Stufen: Haftpflicht und Hausrat Pur, Basis, Premium; Rechtsschutz (ALLRECHT), Wohngebäude und Unfall Basis, Premium;
+  Tierhalter-Haftpflicht Optimal, Exklusiv (für Hund und Pferd gleich, alternativ Baustein Tiere in der Privathaftpflicht).
+- **Keine Tierkranken- oder Tier-OP-Versicherung auf signal-iduna.de** (alle Produktadressen 404, keine Fundstelle).
+- Empfehlung: nur Rechtsschutz (Flyer: BASIS als Kundenempfehlung). Haftpflicht und Hausrat: Basis als mittlere Stufe.
+  Bei zwei Stufen ohne Markierung (Wohngebäude, Unfall, Tierhalter) ist keine Empfehlung gesetzt
+  (`empfehlung: "keine"`, kein Tarif mit `empfohlen: true`); der Vermittler setzt den Stern selbst.
+
 ## Offen (wichtigste Lücken)
 - Allianz Hausrat: Überspannung, Hotelkosten, Außenversicherung, Diebstahl aus dem Auto, Selbstbeteiligung stehen nicht
   im aktuellen Tarifvergleich.
@@ -109,4 +121,8 @@ vollständig = alle Standardmerkmale belegt; teilweise = Standardmerkmale fehlen
 - Allianz Pferd: Fohlen, Ausland nicht belegt.
 - AXA: keine Tierkrankenversicherung; Pferdehaftpflicht nur mit Deckungssumme, Fohlen, Forderungsausfall belegt;
   Rechtsschutz ohne Strafkaution und SB; Haftpflicht L geliehene Sachen widersprüchlich (10.000 € bzw. 20.000 €).
+- SIGNAL IDUNA: keine Tierkrankenversicherung; Tierhalter nur aus einem Flyer von 2012 (Aktualität bestätigen);
+  Rechtsschutz ohne Versicherungssumme und Strafkaution; Unfall-Summen werden individuell gewählt.
+- Keine der drei Gesellschaften veröffentlicht ein Bündel mit festen Stufen für alle Sparten; die Stufennamen
+  unterscheiden sich je Sparte (z. B. AXA Tarif S/M/L, Topschutz, BOXFLEX).
 - Details je Datei unter `offen`.

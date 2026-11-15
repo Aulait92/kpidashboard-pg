@@ -1,0 +1,62 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "unfall",
+  "produkt": "Unfallversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Progression wählbar (250, 500, 750)",
+    "Reha-Plus-Paket",
+    "Sofortleistung bei Schwerverletzungen"
+  ],
+  "tarife": [
+    {
+      "name": "Unfallversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "progression": "wählbar 250, 500, 750 %",
+        "unfallrente": "versicherbar",
+        "khtg": "versicherbar",
+        "todesfall": "versicherbar",
+        "sofort": "ja",
+        "kosmetik": "bis 250.000 €",
+        "bergung": "bis 250.000 €",
+        "zecken": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.signal-iduna.de/produkte/unfallversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Unfallversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "progression": "wählbar 250, 500, 750 %",
+        "abGrad": "ab 1 %",
+        "unfallrente": "versicherbar",
+        "khtg": "versicherbar",
+        "todesfall": "versicherbar",
+        "sofort": "ja",
+        "kosmetik": "bis 500.000 €",
+        "bergung": "bis 500.000 €",
+        "zecken": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.signal-iduna.de/produkte/unfallversicherung/",
+      "stand": "2026-11-15"
+    }
+  ],
+  "quellen": [
+    "https://www.signal-iduna.de/produkte/unfallversicherung/"
+  ],
+  "offen": [
+    "SIGNAL IDUNA bietet zwei Stufen (Basis, Premium).",
+    "Invaliditätssumme, Unfallrente, Krankenhaustagegeld und Todesfallsumme werden individuell gewählt; Höhe nicht im Tarifvergleich.",
+    "Leistung ab 1 % Invalidität ist für die Premium-Bedingungen belegt, für Basis nicht ausdrücklich.",
+    "Reha-Management bis 15.000 € (Basis) bzw. 30.000 € (Premium); Baustein Turbo (volle Leistung ab 50 % Invalidität).",
+    "Keine Empfehlung markiert, bei zwei Stufen keine gesetzt."
+  ]
+}
