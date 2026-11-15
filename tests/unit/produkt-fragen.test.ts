@@ -89,7 +89,7 @@ describe("Termin schon gebucht (Buchungsseite/Leadformular)", () => {
 });
 
 describe("TKV: Gesundheit per Chat, Geburtsdatum des Halters", () => {
-  it("fragt Gesundheit 24 Monate, Geburtsdatum Tier und Halter, Tarifwunsch; nicht bei Hundefutter", () => {
+  it("fragt Gesundheit 24 Monate, OP oder voll, Geburtsdatum Halter, mehrere Katzen einzeln; nicht bei Hundefutter", () => {
     const c = produktCheckliste("TKV-Katze")!;
     for (const s of ["24 Monaten", "Geburtsdatum des Halters", "Wohnungskatze oder Freigänger", "OP-Schutz", "volle Krankenversicherung", "Tarif", "Zähne"]) expect(c.fragen).toContain(s);
     expect(c.unterlagen.join(" ")).toContain("Chipnummer");
@@ -100,4 +100,15 @@ describe("TKV: Gesundheit per Chat, Geburtsdatum des Halters", () => {
     expect(p).toContain("Pflichtangaben für das Angebot (Tierkrankenversicherung)");
     expect(p).not.toContain("meist nach 2-3 Antworten");
   });
+
+describe("Tiere: Anzahl und je Tier, kein Tarifwunsch", () => {
+  it("Privatschutz fragt Tierart und Anzahl zuerst, dann je Tier; TKV nimmt mehrere Katzen einzeln auf", () => {
+    const ps = produktCheckliste("Privatschutz")!;
+    expect(ps.fragen).toContain("welche Tiere es sind (Katze, Hund oder Pferd) und wie viele");
+    expect(ps.fragen).toContain("jedes Tier einzeln");
+    const tkv = produktCheckliste("TKV-Katze")!;
+    expect(tkv.fragen).toContain("Bei mehreren nimmst du jede Katze einzeln auf");
+    for (const c of [ps, tkv]) expect(c.fragen).not.toContain("Was beim Tarif am wichtigsten ist");
+  });
+});
 });
