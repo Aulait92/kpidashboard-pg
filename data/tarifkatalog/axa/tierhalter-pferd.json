@@ -1,0 +1,35 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Pferdehaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Fohlen mitversichert",
+    "Forderungsausfall",
+    "Schäden durch tierische Ausscheidungen"
+  ],
+  "tarife": [
+    {
+      "name": "Pferdehaftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "bis 60 Mio. €",
+        "fohlen": "ja",
+        "forderungsausfall": "ja",
+        "ausland": "vorübergehend"
+      },
+      "bausteine": {},
+      "quelle": "https://www.axa.de/pk/haftpflicht/p/tierhalter-haftpflicht",
+      "stand": "2026-11-15"
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/haftpflicht/p/tierhalter-haftpflicht"
+  ],
+  "offen": [
+    "Pferdehaftpflicht nur über AXA-Betreuer, kein Online-Tarifvergleich; nur wenige Leistungen auf axa.de genannt.",
+    "Selbstbeteiligung, Mietsachschäden, Reitbeteiligung und Fremdreiter, Flurschäden nicht belegt."
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "unfall",
+  "produkt": "Unfallversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Leistung schon ab 1 % Invalidität",
+    "Kosmetische OP und Bergung bis 50.000 €",
+    "Keine Gesundheitsprüfung"
+  ],
+  "tarife": [
+    {
+      "name": "Unfallversicherung S Basis abgedeckt",
+      "kurz": "Tarif S",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar, z. B. 100.000 €",
+        "progression": "225 %",
+        "abGrad": "ab 1 %",
+        "unfallrente": "nein",
+        "khtg": "nein",
+        "maxInvaliditaet": "225.000 €",
+        "todesfall": "nein",
+        "sofort": "10 %, max. 10.000 €",
+        "kosmetik": "bis 50.000 €",
+        "bergung": "bis 50.000 €",
+        "zecken": "ja"
+      },
+      "bausteine": {
+        "rente": "optional"
+      },
+      "quelle": "https://www.axa.de/pk/existenzsicherung/p/unfallversicherung",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Unfallversicherung M Gut versichert",
+      "kurz": "Tarif M",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "grundsumme": "wählbar, z. B. 100.000 €",
+        "progression": "350 %",
+        "abGrad": "ab 1 %",
+        "unfallrente": "nein",
+        "khtg": "nein",
+        "maxInvaliditaet": "350.000 €",
+        "todesfall": "5.000 €",
+        "sofort": "10 %, max. 10.000 €",
+        "kosmetik": "bis 50.000 €",
+        "bergung": "bis 50.000 €",
+        "zecken": "ja"
+      },
+      "bausteine": {
+        "rente": "optional"
+      },
+      "quelle": "https://www.axa.de/pk/existenzsicherung/p/unfallversicherung",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Unfallversicherung L Rundum versichert",
+      "kurz": "Tarif L",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar, z. B. 100.000 €",
+        "progression": "600 %",
+        "abGrad": "ab 1 %",
+        "unfallrente": "500 € im Monat",
+        "khtg": "10 € je Tag",
+        "maxInvaliditaet": "600.000 €",
+        "todesfall": "10.000 €",
+        "sofort": "10 %, max. 10.000 €",
+        "kosmetik": "bis 50.000 €",
+        "bergung": "bis 50.000 €",
+        "zecken": "ja"
+      },
+      "bausteine": {
+        "rente": "inklusive"
+      },
+      "quelle": "https://www.axa.de/pk/existenzsicherung/p/unfallversicherung",
+      "stand": "2026-11-15"
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/existenzsicherung/p/unfallversicherung",
+    "https://www.axa.de/site/axa-de/get/documents_E-1914602880/axade/medien/privatkunden/existenzsicherung/unfallversicherung/leistungen-unfallversicherung-erwachsene.pdf"
+  ],
+  "offen": [
+    "Höchstleistung bei Vollinvalidität bezogen auf 100.000 € Grundsumme (Beispiel der Produktseite).",
+    "Unfallrente laut Produktseite optional vereinbar; ob in S und M einzeln wählbar, nicht ausdrücklich je Stufe belegt.",
+    "Kapitalturbo (volle Summe ab 50 % Invalidität) nur telefonisch abschließbar.",
+    "Verbesserte Gliedertaxe nicht belegt.",
+    "AXA kennzeichnet keine Empfehlung; Tarif M als mittlere Stufe gesetzt."
+  ]
+}

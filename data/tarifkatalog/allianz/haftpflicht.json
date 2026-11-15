@@ -1,0 +1,144 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "haftpflicht",
+  "produkt": "Privat-Haftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Personen-, Sach- und Vermögensschäden",
+    "Mietsachschäden",
+    "Abwehr unberechtigter Forderungen"
+  ],
+  "tarife": [
+    {
+      "name": "Privat-Haftpflicht Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "15 Mio. €",
+        "forderungsausfall": "nein",
+        "schluessel": "nein",
+        "delikt": "nein",
+        "geliehen": "nein",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "mallorca": "nein",
+        "rabattretter": "nein",
+        "drohne": "nein",
+        "nebenberuf": "nein",
+        "ehrenamt": "ja",
+        "sb": "wählbar, z. B. 150 €"
+      },
+      "bausteine": {
+        "dienst": "optional",
+        "oeltank": "optional",
+        "wohnung": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://www.allianz.de/recht-und-eigentum/haftpflichtversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Privat-Haftpflicht Smart",
+      "kurz": "Smart",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "bis 50.000 €",
+        "delikt": "bis 50.000 €",
+        "geliehen": "bis 50.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "mallorca": "ja",
+        "rabattretter": "nein",
+        "drohne": "nein",
+        "nebenberuf": "nein",
+        "ehrenamt": "ja",
+        "sb": "wählbar, z. B. 150 €"
+      },
+      "bausteine": {
+        "dienst": "optional",
+        "oeltank": "optional",
+        "wohnung": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://www.allianz.de/recht-und-eigentum/haftpflichtversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Privat-Haftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "vs": "75 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja",
+        "delikt": "ja",
+        "geliehen": "bis 75.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 7.500 €, 1 Jahr alt",
+        "mallorca": "ja",
+        "rabattretter": "nein",
+        "drohne": "bis 7,5 Mio. €",
+        "nebenberuf": "ja",
+        "ehrenamt": "ja",
+        "sb": "wählbar, z. B. 150 €"
+      },
+      "bausteine": {
+        "dienst": "optional",
+        "oeltank": "optional",
+        "wohnung": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://www.allianz.de/recht-und-eigentum/haftpflichtversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Privat-Haftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "vs": "100 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja",
+        "delikt": "ja",
+        "geliehen": "ja",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "ja, bis 2 Jahre alt",
+        "mallorca": "ja",
+        "rabattretter": "ja",
+        "drohne": "ja",
+        "nebenberuf": "ja",
+        "ehrenamt": "ja",
+        "sb": "wählbar, z. B. 150 €"
+      },
+      "bausteine": {
+        "dienst": "optional",
+        "oeltank": "optional",
+        "wohnung": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://www.allianz.de/recht-und-eigentum/haftpflichtversicherung/",
+      "stand": "2026-11-15"
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/recht-und-eigentum/haftpflichtversicherung/",
+    "https://goa-eportale.allianz.de/MMS/--2/MMS--2107Z0.pdf.download.pdf",
+    "https://goa-cdeportale.allianz.de/content/dam/onemarketing/dechap/dlc/MMS/--9/MMS--9152Z0.pdf.dws.download.pdf"
+  ],
+  "offen": [
+    "Allianz kennzeichnet keine Empfehlung; Komfort als mittlere Stufe gesetzt (wie bei Hausrat, Wohngebäude, Rechtsschutz).",
+    "Gefälligkeitsschäden, Ehrenamt, Mietsachschäden und wählbare SB aus dem Leistungsvergleich (Bedingungen 09/2023, Vertriebsinformation MMS--9152Z0); Produktseite und Steckbrief 06/2025 bestätigen Summen und Stufenunterschiede.",
+    "Deliktunfähige Kinder: nur bei Familien und Singles mit Kind relevant.",
+    "Wählbare SB-Stufen außer 150 € nicht belegt."
+  ]
+}

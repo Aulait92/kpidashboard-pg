@@ -1,0 +1,101 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Einbruchdiebstahl, Raub, Vandalismus",
+    "Feuer, Blitzschlag, Explosion",
+    "Sturm und Hagel"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat S Grundschutz",
+      "kurz": "Tarif S",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "wert": "10 %, max. 5.000 €",
+        "fahrrad": "nein",
+        "elementar": "nein",
+        "online": "nein",
+        "vs": "650 €/m²",
+        "bargeld": "bis 500 €",
+        "auto": "nein",
+        "ueberspannung": "nein",
+        "sb": "wählbar, z. B. 300 €"
+      },
+      "bausteine": {
+        "fahrrad": "nein",
+        "elementar": "nein",
+        "glas": "nein",
+        "reise": "nein"
+      },
+      "quelle": "https://www.axa.de/pk/haus-wohnung/p/hausratversicherung",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Hausrat M Gut versichert",
+      "kurz": "Tarif M",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "wert": "40 %, max. 30.000 €",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "bis 1.000 €",
+        "vs": "650 €/m²",
+        "bargeld": "bis 500 €",
+        "auto": "bis 1.000 €",
+        "ueberspannung": "ja",
+        "sb": "wählbar, z. B. 300 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "reise": "optional"
+      },
+      "quelle": "https://www.axa.de/pk/haus-wohnung/p/hausratversicherung",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Hausrat L Top-Schutz",
+      "kurz": "Tarif L",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "50 %, max. 30.000 €",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "bis 1.000 €",
+        "vs": "650 €/m²",
+        "bargeld": "bis 2.000 €",
+        "auto": "bis 2.500 €",
+        "ueberspannung": "ja",
+        "sb": "wählbar, z. B. 300 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "reise": "optional"
+      },
+      "quelle": "https://www.axa.de/pk/haus-wohnung/p/hausratversicherung",
+      "stand": "2026-11-15"
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/haus-wohnung/p/hausratversicherung"
+  ],
+  "offen": [
+    "Einfacher Diebstahl, Diebstahl im Garten, Hotelkosten und Außenversicherung stehen nicht im Tarifvergleich.",
+    "Elementar ist nur telefonisch bzw. beim Betreuer abschließbar.",
+    "Phishing: Produktseite nennt bis 1.000 € je Schaden; ob der Tarif L mehr leistet, ist nicht belegt.",
+    "Selbstbeteiligung: Rechenbeispiel der Produktseite mit 300 €; weitere Stufen nicht belegt.",
+    "AXA kennzeichnet keine Empfehlung; Tarif M als mittlere Stufe gesetzt."
+  ]
+}

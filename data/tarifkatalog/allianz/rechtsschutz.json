@@ -1,0 +1,130 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "rechtsschutz",
+  "produkt": "Rechtsschutzversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Telefonische Rechtsberatung, auch in nicht versicherten Fällen",
+    "Kostenübernahme bei Rechtsstreitigkeiten",
+    "Mediation für außergerichtliche Schlichtung"
+  ],
+  "tarife": [
+    {
+      "name": "Rechtsschutz Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "1 Mio. €",
+        "beruf": "nein",
+        "verkehr": "ja",
+        "wohnen": "nein",
+        "kaution": "100.000 €",
+        "privat": "ja",
+        "privatPlus": "nein",
+        "vsWelt": "100.000 €, unbefristet",
+        "sb": "wählbar 0 bis 1.000 €",
+        "wartezeit": "3 Monate",
+        "opfer": "ja",
+        "straf": "ja",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.allianz.de/recht-und-eigentum/rechtsschutzversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Rechtsschutz Smart",
+      "kurz": "Smart",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "3 Mio. €",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "nein",
+        "kaution": "300.000 €",
+        "privat": "ja",
+        "privatPlus": "nein",
+        "vsWelt": "300.000 €, unbefristet",
+        "sb": "wählbar 0 bis 1.000 €",
+        "wartezeit": "3 Monate",
+        "opfer": "ja",
+        "straf": "ja",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.allianz.de/recht-und-eigentum/rechtsschutzversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Rechtsschutz Komfort",
+      "kurz": "Komfort",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "vs": "5 Mio. €",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "ja",
+        "kaution": "500.000 €",
+        "privat": "ja",
+        "privatPlus": "nein",
+        "vsWelt": "500.000 €, unbefristet",
+        "sb": "wählbar 0 bis 1.000 €",
+        "wartezeit": "3 Monate",
+        "opfer": "ja",
+        "straf": "ja",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.allianz.de/recht-und-eigentum/rechtsschutzversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Rechtsschutz Premium",
+      "kurz": "Premium",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "ja",
+        "kaution": "1 Mio. €",
+        "privat": "ja",
+        "privatPlus": "ja",
+        "vsWelt": "1 Mio. €, unbefristet",
+        "sb": "wählbar 0 bis 1.000 €",
+        "wartezeit": "3 Monate",
+        "opfer": "ja",
+        "straf": "ja, erweitert",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.allianz.de/recht-und-eigentum/rechtsschutzversicherung/",
+      "stand": "2026-11-15"
+    }
+  ],
+  "quellen": [
+    "Allianz-Rechner (Screenshot Ole, 15.11.2026)",
+    "https://www.allianz.de/recht-und-eigentum/rechtsschutzversicherung/"
+  ],
+  "offen": [
+    "Absicherung als Kombischutz oder nur Verkehr wählbar; im Katalog ist der Kombischutz erfasst.",
+    "Wartezeit 3 Monate gilt für Privat, Beruf und Wohnen; im Verkehr keine Wartezeit.",
+    "Empfehlung Komfort laut Allianz-Rechner (Screenshot Ole)."
+  ]
+}

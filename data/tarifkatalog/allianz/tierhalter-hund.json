@@ -1,0 +1,95 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehalter-Haftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Forderungsausfall",
+    "Bergung des verunglückten Tieres",
+    "Hundesport und Deckakt"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalter-Haftpflicht Smart",
+      "kurz": "Smart",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "sb": "wählbar, z. B. 150 €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "bis Ende Folgejahr",
+        "forderungsausfall": "ja",
+        "geliehen": "bis 50.000 €",
+        "neuwert": "nein",
+        "tiergefahr": "nein",
+        "nebenberuf": "nein",
+        "ausland": "vorübergehend, weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.allianz.de/recht-und-eigentum/hundehaftpflichtversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Tierhalter-Haftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "75 Mio. €",
+        "sb": "wählbar, z. B. 150 €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "bis Ende Folgejahr",
+        "forderungsausfall": "ja",
+        "geliehen": "bis 75.000 €",
+        "neuwert": "bis 7.500 €, 1 Jahr alt",
+        "tiergefahr": "nein",
+        "nebenberuf": "ja",
+        "ausland": "vorübergehend, weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.allianz.de/recht-und-eigentum/hundehaftpflichtversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Tierhalter-Haftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "100 Mio. €",
+        "sb": "wählbar, z. B. 150 €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "bis Ende Folgejahr",
+        "forderungsausfall": "ja",
+        "geliehen": "ja",
+        "neuwert": "ja, bis 2 Jahre alt",
+        "tiergefahr": "ja",
+        "nebenberuf": "ja",
+        "ausland": "vorübergehend, weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.allianz.de/recht-und-eigentum/hundehaftpflichtversicherung/",
+      "stand": "2026-11-15"
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/recht-und-eigentum/hundehaftpflichtversicherung/",
+    "https://goa-cdeportale.allianz.de/MMS/--2/MMS--2108Z0.pdf.download.pdf",
+    "https://goa-cdeportale.allianz.de/content/dam/onemarketing/dechap/dlc/MMS/--9/MMS--9156Z0.pdf.dws.download.pdf"
+  ],
+  "offen": [
+    "Allianz bietet drei Stufen (Smart, Komfort, Premium), keine Basis-Stufe.",
+    "Welpen (beitragsfrei im Geburtsjahr bis Ende des folgenden Versicherungsjahres), fremde Hüter und wählbare SB aus der Kurzinformation 09/2023 (MMS--9156Z0); die Produktseite bestätigt Summen und Stufenunterschiede.",
+    "Allianz kennzeichnet keine Empfehlung; Komfort als mittlere Stufe gesetzt."
+  ]
+}

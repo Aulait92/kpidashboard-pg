@@ -1,0 +1,110 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "unfall",
+  "produkt": "Unfallversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Progression 500",
+    "Persönlicher Unfallberater rund um die Uhr",
+    "Reha-Leistungen bis 10.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Unfallversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "60.000 €",
+        "progression": "500 %",
+        "abGrad": "ab 50 %",
+        "unfallrente": "nein",
+        "khtg": "nein",
+        "maxInvaliditaet": "300.000 €",
+        "todesfall": "nein",
+        "sofort": "nein",
+        "kosmetik": "bis 100.000 €",
+        "bergung": "bis 100.000 €",
+        "zecken": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/vorsorge/unfallversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Unfallversicherung Smart",
+      "kurz": "Smart",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "60.000 €",
+        "progression": "500 %",
+        "abGrad": "ab 20 %",
+        "unfallrente": "nein",
+        "khtg": "nein",
+        "maxInvaliditaet": "300.000 €",
+        "todesfall": "nein",
+        "sofort": "10 %, max. 25.000 €",
+        "kosmetik": "bis 100.000 €",
+        "bergung": "bis 100.000 €",
+        "zecken": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/vorsorge/unfallversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Unfallversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "grundsumme": "60.000 €",
+        "progression": "500 %",
+        "abGrad": "ab 1 %",
+        "unfallrente": "250 € im Monat",
+        "khtg": "5 € je Tag",
+        "maxInvaliditaet": "300.000 €",
+        "todesfall": "10.000 €",
+        "sofort": "10 %, max. 25.000 €",
+        "kosmetik": "bis 100.000 €",
+        "bergung": "bis 100.000 €",
+        "zecken": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/vorsorge/unfallversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Unfallversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "100.000 €",
+        "progression": "500 %",
+        "abGrad": "ab 1 %",
+        "unfallrente": "750 € im Monat",
+        "khtg": "15 € je Tag",
+        "maxInvaliditaet": "500.000 €",
+        "todesfall": "40.000 €",
+        "sofort": "10 %, max. 25.000 €",
+        "kosmetik": "bis 100.000 €",
+        "bergung": "bis 100.000 €",
+        "zecken": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/vorsorge/unfallversicherung/",
+      "stand": "2026-11-15"
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/vorsorge/unfallversicherung/",
+    "https://goa-eportale.allianz.de/MMS/--2/MMS--2465Z0.pdf.download.pdf"
+  ],
+  "offen": [
+    "Invaliditätssumme, Unfallrente und Krankenhaustagegeld wie im Tarifvergleich der Produktseite; ob sie im Rechner frei wählbar sind, ist nicht belegt.",
+    "Verbesserte Gliedertaxe nicht belegt.",
+    "Allianz kennzeichnet keine Empfehlung; Komfort als mittlere Stufe gesetzt."
+  ]
+}

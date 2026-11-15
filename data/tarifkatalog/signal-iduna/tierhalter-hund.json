@@ -1,0 +1,52 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "tierhalter-hund",
+  "produkt": "Tierhalter-Haftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Bis zu 3 oder 6 Tiere in einem Vertrag",
+    "Alle Tierarten versicherbar",
+    "Tierhüter mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalter-Haftpflicht Optimal",
+      "kurz": "Optimal",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "5 Mio. €",
+        "fremdhueter": "ja",
+        "ausland": "EU unbegr., sonst 1 Jahr"
+      },
+      "bausteine": {},
+      "quelle": "https://www.signal-iduna.de/produkte/tierhalterhaftpflicht/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Tierhalter-Haftpflicht Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "15 Mio. €",
+        "fremdhueter": "ja",
+        "ausland": "EU unbegr., sonst 1 Jahr"
+      },
+      "bausteine": {},
+      "quelle": "https://www.signal-iduna.de/produkte/tierhalterhaftpflicht/",
+      "stand": "2026-11-15"
+    }
+  ],
+  "quellen": [
+    "https://www.signal-iduna.de/produkte/tierhalterhaftpflicht/",
+    "https://www.signal-iduna.de/content/dam/si-documents/5/58/58078xx.pdf.coredownload.inline.pdf"
+  ],
+  "offen": [
+    "Quelle ist der Flyer Tierhalter-Haftpflicht (Stand 09/2012), der auf der aktuellen Produktseite verlinkt ist; ob die Varianten Optimal und Exklusiv so noch angeboten werden, bitte bei SIGNAL IDUNA bestätigen.",
+    "Hund oder Pferd lassen sich alternativ als Baustein Tiere in die Privathaftpflicht (Basis, Premium) einschließen.",
+    "Exklusiv: 15 Mio. € pauschal, höchstens 8 Mio. € je geschädigter Person; Vermögensschäden je 1 Mio. €.",
+    "Keine Empfehlung markiert, bei zwei Stufen keine gesetzt.",
+    "Selbstbeteiligung, Mietsachschäden, Welpen und Forderungsausfall nicht belegt."
+  ]
+}

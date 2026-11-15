@@ -1,0 +1,69 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Feuer, Blitzschlag, Überspannung",
+    "Leitungswasser, Rohrbruch",
+    "Sturm und Hagel"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 10.000 €",
+        "elementar": "optional",
+        "ableitung": "optional, bis 6.000 €",
+        "pv": "optional (Smart Home)",
+        "kosten": "Hotel bis 100 Tage",
+        "ueberspannung": "ja",
+        "vandalismus": "nein"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "ableitung": "optional",
+        "smarthome": "optional"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/wohngebaeudeversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Wohngebäude Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "optional, bis 6.000 €",
+        "pv": "optional (Smart Home)",
+        "kosten": "Hotel bis 365 Tage",
+        "ueberspannung": "ja",
+        "vandalismus": "ja"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "ableitung": "optional",
+        "smarthome": "optional"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/wohngebaeudeversicherung/",
+      "stand": "2026-11-15"
+    }
+  ],
+  "quellen": [
+    "https://www.signal-iduna.de/produkte/wohngebaeudeversicherung/"
+  ],
+  "offen": [
+    "SIGNAL IDUNA bietet zwei Stufen (Basis, Premium).",
+    "Hotelkosten: Basis 100 € je Tag bis 100 Tage, Premium 500 € je Tag bis 365 Tage; weitere Kosten nach Schaden nicht belegt.",
+    "Photovoltaik bis 150 kWp gegen die Grundgefahren mitversichert; erweiterter Schutz über den Baustein Smart Home.",
+    "Gleitender Neuwert, Mietausfall, Marder, Allgefahren und Selbstbeteiligung nicht belegt.",
+    "Keine Empfehlung markiert, bei zwei Stufen keine gesetzt."
+  ]
+}

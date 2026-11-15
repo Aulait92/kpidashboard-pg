@@ -1,0 +1,86 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Pferdehalter-Haftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Forderungsausfall",
+    "Mietsachschäden an Stall, Box und Koppel",
+    "Reitbeteiligung und Hüter mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalter-Haftpflicht Smart",
+      "kurz": "Smart",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "sb": "wählbar, z. B. 150 €",
+        "miete": "ja",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "forderungsausfall": "ja",
+        "geliehen": "bis 50.000 €",
+        "neuwert": "nein",
+        "tiergefahr": "nein",
+        "nebenberuf": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/recht-und-eigentum/pferdehaftpflichtversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Tierhalter-Haftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "75 Mio. €",
+        "sb": "wählbar, z. B. 150 €",
+        "miete": "ja",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "forderungsausfall": "ja",
+        "geliehen": "bis 75.000 €",
+        "neuwert": "bis 7.500 €, 1 Jahr alt",
+        "tiergefahr": "nein",
+        "nebenberuf": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/recht-und-eigentum/pferdehaftpflichtversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Tierhalter-Haftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "100 Mio. €",
+        "sb": "wählbar, z. B. 150 €",
+        "miete": "ja",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "forderungsausfall": "ja",
+        "geliehen": "ja",
+        "neuwert": "ja, bis 2 Jahre alt",
+        "tiergefahr": "ja",
+        "nebenberuf": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/recht-und-eigentum/pferdehaftpflichtversicherung/",
+      "stand": "2026-11-15"
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/recht-und-eigentum/pferdehaftpflichtversicherung/",
+    "https://goa-cdeportale.allianz.de/MMS/--2/MMS--2108Z0.pdf.download.pdf"
+  ],
+  "offen": [
+    "Allianz bietet drei Stufen (Smart, Komfort, Premium), keine Basis-Stufe.",
+    "Fohlen und Auslandsschutz für Pferde nicht belegt.",
+    "Ob die Selbstbeteiligung ganz abwählbar ist (Ohne SB), ist für Pferde nicht belegt; Produktseite nennt Selbstbeteiligung frei wählbar.",
+    "Allianz kennzeichnet keine Empfehlung; Komfort als mittlere Stufe gesetzt."
+  ]
+}

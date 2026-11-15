@@ -1,0 +1,130 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Feuer, Leitungswasser, Sturm, Hagel",
+    "Einbruchdiebstahl, Raub, Vandalismus",
+    "Ersatz zum Neuwert"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "wert": "20 %, max. 40.000 €",
+        "diebstahl": "nein",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "vs": "650 €/m²",
+        "bargeld": "1.000 €",
+        "garten": "nein",
+        "allgefahren": "nein"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.allianz.de/recht-und-eigentum/hausratversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Hausrat Smart",
+      "kurz": "Smart",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis Versicherungssumme",
+        "wert": "30 %, max. 60.000 €",
+        "diebstahl": "bis 1.000 €",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "vs": "650 €/m²",
+        "bargeld": "2.000 €",
+        "garten": "bis 1.000 €",
+        "allgefahren": "nein"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.allianz.de/recht-und-eigentum/hausratversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Hausrat Komfort",
+      "kurz": "Komfort",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "gf": "bis Versicherungssumme",
+        "wert": "40 % der Summe",
+        "diebstahl": "bis 5.000 €",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "vs": "650 €/m²",
+        "bargeld": "2.000 €",
+        "garten": "bis 10.000 €",
+        "allgefahren": "Beschädigung 5.000 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional",
+        "notfall": "inklusive"
+      },
+      "quelle": "https://www.allianz.de/recht-und-eigentum/hausratversicherung/",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Hausrat Premium",
+      "kurz": "Premium",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis Versicherungssumme",
+        "wert": "50 %, max. 200.000 €",
+        "diebstahl": "bis Versicherungssumme",
+        "fahrrad": "Fahrrad-Kasko optional",
+        "elementar": "ja",
+        "online": "optional",
+        "vs": "900 €/m²",
+        "bargeld": "5.000 €",
+        "garten": "bis Versicherungssumme",
+        "allgefahren": "ja"
+      },
+      "bausteine": {
+        "elementar": "inklusive",
+        "glas": "optional",
+        "internet": "optional",
+        "notfall": "inklusive"
+      },
+      "quelle": "https://www.allianz.de/recht-und-eigentum/hausratversicherung/",
+      "stand": "2026-11-15"
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/recht-und-eigentum/hausratversicherung/",
+    "https://goa-eportale.allianz.de/MMS/--2/MMS--2009Z0.pdf.download.pdf"
+  ],
+  "offen": [
+    "Tarifvergleich der Produktseite hat Stand 10/2026 (neue Tarifgeneration); der Leistungsvergleich 09/2023 weicht ab (z. B. Premium 1.300 €/m²) und wurde deshalb nicht verwendet.",
+    "Überspannung, Hotelkosten, Außenversicherung, Diebstahl aus dem Auto und Selbstbeteiligung stehen nicht im aktuellen Tarifvergleich.",
+    "Premium: Fahrradschutz bei Diebstahl nicht wählbar, stattdessen Fahrrad-Kasko; ob einfacher Fahrraddiebstahl im Premium schon enthalten ist, ist nicht belegt.",
+    "Empfehlung: Komfort ist auf allianz.de als Beliebtester Tarif markiert."
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Personen-, Sach- und Vermögensschäden",
+    "Ehrenamtliche Tätigkeit",
+    "Fahrräder und Pedelecs bis 25 km/h"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht S Grundschutz",
+      "kurz": "Tarif S",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "5 Mio. €",
+        "forderungsausfall": "nein",
+        "schluessel": "nein",
+        "delikt": "nein",
+        "miete": "bis 500.000 €",
+        "gefaelligkeit": "nein",
+        "neuwert": "nein",
+        "mallorca": "nein",
+        "rabattretter": "nein",
+        "drohne": "nein",
+        "nebenberuf": "nein",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "delikt": "nein",
+        "oeltank": "nein",
+        "hausbesitz": "optional"
+      },
+      "quelle": "https://www.axa.de/pk/haftpflicht/p/private-haftpflichtversicherung",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Privathaftpflicht M Gut versichert",
+      "kurz": "Tarif M",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "30 Mio. €",
+        "forderungsausfall": "bis 30 Mio. €",
+        "schluessel": "bis 30.000 €",
+        "delikt": "optional, bis 30.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "mallorca": "ja",
+        "rabattretter": "nein",
+        "drohne": "bis 500 g",
+        "nebenberuf": "ja",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "delikt": "optional",
+        "oeltank": "optional",
+        "hausbesitz": "optional"
+      },
+      "quelle": "https://www.axa.de/pk/haftpflicht/p/private-haftpflichtversicherung",
+      "stand": "2026-11-15"
+    },
+    {
+      "name": "Privathaftpflicht L Top-Schutz",
+      "kurz": "Tarif L",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "60 Mio. €",
+        "forderungsausfall": "bis 60 Mio. €",
+        "schluessel": "bis 30.000 €",
+        "delikt": "optional, bis 50.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 2.500 €",
+        "mallorca": "ja",
+        "rabattretter": "ja",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "ja",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "delikt": "optional",
+        "oeltank": "optional",
+        "hausbesitz": "optional"
+      },
+      "quelle": "https://www.axa.de/pk/haftpflicht/p/private-haftpflichtversicherung",
+      "stand": "2026-11-15"
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/haftpflicht/p/private-haftpflichtversicherung",
+    "https://www.axa.de/site/axa-de/get/documents_E2048717472/axade/medien/privatkunden/haftpflicht-und-recht/private%20haftpflichtversicherung/privathaftpflicht-leistungen-im-ueberblick.pdf"
+  ],
+  "offen": [
+    "Online-Tarife S, M, L von axa.de; Merkmale je Stufe aus der Produktübersicht Leistungen im Überblick (PDF ohne Datum).",
+    "Geliehene und gemietete Sachen im Tarif L: Produktseite nennt bis 10.000 €, Produktübersicht bis 20.000 €; daher nicht erfasst.",
+    "Deliktunfähige Kinder: in M und L als Baustein Deliktunfähigkeit (Personenschäden bis Deckungssumme, Sachschäden bis 30.000 € bzw. 50.000 €).",
+    "Selbstbeteiligung: Höhe und Wahlmöglichkeit nicht belegt.",
+    "Ob AXA-Vertreter neben den Online-Tarifen andere Haftpflicht-Stufen (BOXflex) anbieten, ist auf axa.de nicht als Tarifvergleich veröffentlicht.",
+    "AXA kennzeichnet keine Empfehlung; Tarif M als mittlere Stufe gesetzt."
+  ]
+}
