@@ -30,19 +30,19 @@ const TKV = /\btkv\b|tierkranken|tier-?op|katze/i;
  * der Vermittler für den Antrag. Nach dem Allianz-Tarifrechner Tierkranken (Screenshot von Ole): Tierart,
  * Geschlecht, Name, Geburtsdatum, Rasse, Haltung (Wohnung/Freigänger), Krankheiten, Unfallfolgen, Symptome,
  * Beeinträchtigungen, Verhaltensauffälligkeiten oder Befunde in den letzten 24 Monaten und betroffene Bereiche.
+ * Haltung und Adresse/PLZ liefert das Meta-Formular; genaues Geburtsdatum des Tieres ist nicht nötig, zum Termin
+ * reicht die Chipnummer (Ole, 15.11.2026).
  */
 function tierCheckliste(): ProduktCheckliste {
   return {
     key: "tier",
     fragen: [
       "Pflichtangaben für das Angebot (Tierkrankenversicherung). Es sind die Angaben, die der Allianz-Tarifrechner und der Antrag brauchen, damit der Berater im Termin direkt ein Angebot rechnen kann.",
-      "- Kläre vor qualifiziert=true die folgenden Punkte, aber nur, was noch nicht bekannt ist (Leadformular, Verlauf, 'Bisher erfasst'). Tierart, Rasse, Name, Geschlecht, Geburtsmonat und -jahr und Haltung kommen meist schon aus dem Formular: dann nicht erneut fragen.",
+      "- Kläre vor qualifiziert=true die folgenden Punkte, aber nur, was noch nicht bekannt ist (Leadformular, Verlauf, 'Bisher erfasst'). Tierart, Rasse, Name, Geschlecht, Geburtsmonat und -jahr, Haltung (Wohnungskatze oder Freigänger) und die Adresse kommen aus dem Formular: nicht erneut fragen.",
       "- Weiter genau eine Frage pro Nachricht, gern mit kurzer Auswahl. Bei mehreren Tieren die Angaben je Tier.",
       "  • Gesundheit des Tieres: Hatte oder hat es in den letzten 24 Monaten Krankheiten, Unfallfolgen, Symptome, Beeinträchtigungen, Verhaltensauffälligkeiten oder Befunde, die noch keine Behandlung brauchen? Erst ja oder nein fragen; bei ja, welche Bereiche betroffen sind (z. B. Zähne, Haut und Fell, Augen, Ohren, Magen und Darm, Gelenke bzw. Bewegungsapparat, Herz, Harnorgane) (angaben.tier)",
-      "  • Genaues Geburtsdatum des Tieres, falls das Formular nur Monat und Jahr hat (angaben.tier)",
-      "  • Bei Katzen: Wohnungskatze oder Freigänger, falls nicht bekannt (angaben.tier)",
+      "  • Genaues Geburtsdatum des Tieres: nur nebenbei, wenn es sich ergibt. Monat und Jahr aus dem Formular reichen, nicht extra fragen (angaben.tier)",
       "  • Geburtsdatum des Halters, also des Leads (für den Antrag) (angaben.geburt)",
-      "  • Postleitzahl, falls nicht aus dem Formular bekannt (angaben.plz)",
       "  • Besteht schon eine Tierversicherung, und wenn ja, wann läuft sie ab (angaben.vorhanden)",
       "  • Welcher Schutz gewünscht ist: nur Operationen (OP-Schutz) oder volle Krankenversicherung, also auch Tierarztbehandlungen ohne OP. Neutral fragen, ohne zu empfehlen (angaben.tarifwunsch)",
       "  • Was beim Tarif am wichtigsten ist: günstiger Preis, bestes Preis-Leistungs-Verhältnis oder bestmöglicher Schutz (angaben.tarifwunsch)",
@@ -52,8 +52,7 @@ function tierCheckliste(): ProduktCheckliste {
       "- Versicherungssumme, Selbstbeteiligung und Preise fragst du nicht ab und nennst du nicht: das macht der Berater im Termin.",
     ].join("\n"),
     unterlagen: [
-      "Heimtierausweis bzw. Impfpass und Chipnummer",
-      "Befunde bzw. Tierarztrechnungen der letzten 24 Monate, falls das Tier behandelt wurde",
+      "Chipnummer des Tieres",
       "bisherige Police mit Ablaufdatum, falls vorhanden",
       "IBAN für den Beitragseinzug, falls direkt abgeschlossen werden soll",
     ],
@@ -74,7 +73,7 @@ export function produktCheckliste(product: string | null | undefined): ProduktCh
       "- Für alle Sparten:",
       "  • Wer versichert werden soll: nur der Lead, mit Partner, mit Kind(ern) oder die ganze Familie (angaben.versichern)",
       "  • Geburtsdatum des Leads (angaben.geburt)",
-      "  • Adresse: kommt normalerweise schon aus dem Leadformular, dann nicht fragen. Fehlt sie: Postleitzahl, bei Hausrat und Wohngebäude mit Straße und Hausnummer (angaben.plz)",
+      "  • Adresse und Postleitzahl kommen aus dem Leadformular: nicht fragen.",
       "  • Bestehende Verträge in diesen Sparten: bei welcher Gesellschaft, wann sie ablaufen bzw. ob schon gekündigt; bei Wohngebäude auch, ob in den letzten 5 Jahren eine Gebäudeversicherung bestand (angaben.vorhanden)",
       "  • Was beim Tarif am wichtigsten ist: günstiger Preis, bestes Preis-Leistungs-Verhältnis oder bestmöglicher Schutz (angaben.tarifwunsch)",
       "- Vorschäden in den letzten 5 Jahren, jeweils mit Anzahl (angaben.vorschaeden):",
@@ -85,7 +84,7 @@ export function produktCheckliste(product: string | null | undefined): ProduktCh
       "- Nur Hausrat: Wohnfläche in m², ständig bewohnt, im Einfamilien- oder Mehrfamilienhaus (angaben.wohnflaeche)",
       "- Nur Rechtsschutz: welche Lebensbereiche (Privat, Beruf, Verkehr, Wohnen oder nur ein Teil davon) (angaben.bereiche); ob der Lead oder sein Partner im öffentlichen Dienst, selbstständig oder Geschäftsführer ist (angaben.beruf). Hinweis: eine selbstständige Tätigkeit ist im Privat-Rechtsschutz nicht mitversichert, das klärt der Berater.",
       "- Nur Wohngebäude (angaben.gebaeude): Wohnfläche und Baujahr; Anzahl Wohneinheiten (eine, zwei, drei oder mehr); Nutzung (selbst bewohnt, ganz oder teilweise vermietet, leerstehend, Ferienhaus); Besonderheiten (Flachdach, Dach aus Naturschiefer, Holz, Reet oder Stroh, Außenwände überwiegend aus Holz, Keller mit oder ohne Wohnfläche, Schwimmbad); Heizung und Haustechnik (Gas, Öl, Fernwärme, Pellets, Wärmepumpe, Solarthermie, Photovoltaik); weitere Gebäude auf dem Grundstück außer Garage oder Carport, mit ungefährer Fläche",
-      "- Nur Tierkranken bzw. Tierhalterhaftpflicht (angaben.tier): Tierart, Name, männlich oder weiblich, Geburtsdatum, Rasse; bei Katzen Wohnungskatze oder Freigänger; Krankheiten, Unfallfolgen, Symptome oder Befunde in den letzten 24 Monaten und welche Bereiche betroffen waren (z. B. Zähne, Haut, Gelenke)",
+      "- Nur Tierkranken bzw. Tierhalterhaftpflicht (angaben.tier): Tierart, Name, männlich oder weiblich, Alter bzw. Geburtsjahr (genaues Datum nicht nötig), Rasse; bei Katzen Wohnungskatze oder Freigänger; Krankheiten, Unfallfolgen, Symptome oder Befunde in den letzten 24 Monaten und welche Bereiche betroffen waren (z. B. Zähne, Haut, Gelenke)",
       "- Nur Unfall: ausgeübter Beruf bzw. Tätigkeit und riskante Sportarten (angaben.beruf)",
       "- Haftpflicht: frage zusätzlich, ob ein Hund im Haushalt lebt (Tierhalterhaftpflicht) (angaben.tier)",
       "- Weiß der Lead etwas nicht oder möchte es nicht sagen: nicht nachbohren, als „offen“ festhalten und weitermachen. Wird es dem Lead zu viel (kurze oder genervte Antworten), biete direkt den Termin an und lass den Rest offen; der Berater klärt ihn im Termin.",
@@ -98,7 +97,7 @@ export function produktCheckliste(product: string | null | undefined): ProduktCh
       "IBAN für den Beitragseinzug, falls direkt abgeschlossen werden soll",
       "bei Hausrat: Wohnfläche und ungefährer Wert von Fahrrädern bzw. E-Bikes",
       "bei Wohngebäude: bisherige Gebäudepolice sowie Baujahr und Wohnfläche (z. B. aus Kaufvertrag oder Bauunterlagen)",
-      "bei Tieren: Tierpass bzw. Chipnummer und Befunde bzw. Rechnungen zu Behandlungen der letzten 24 Monate",
+      "bei Tieren: Chipnummer",
     ],
   };
 }

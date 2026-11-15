@@ -243,7 +243,7 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Automatisches Nachfassen (Abfolgen)
 
-- Standardmäßig an (für neue Kunden): Die App fasst nach einem Ergebnis selbst nach:
+- Standardmäßig an: Die App fasst nach einem Ergebnis selbst nach:
   - **Nicht erreicht:** sofort eine WhatsApp („Wann passt es dir?“), nach 6 Tagen eine letzte, freundliche
     WhatsApp. Die Anrufe dazwischen plant der Anrufplan (siehe „Verloren und nicht erreicht“), es kommt keine
     zweite Anruf-Aufgabe dazu. Danach ist Schluss.
