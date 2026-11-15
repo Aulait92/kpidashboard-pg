@@ -63,7 +63,7 @@ async function D360Card({ customerId }: { customerId: string }) {
     <Card className="max-w-5xl">
       <CardHeader title="360dialog-Nummer zuordnen" />
       <div className="px-5 pb-5">
-        <D360Assign customerId={customerId} free={free.slice(0, 20).map((c) => ({ id: c.id, phone: c.phone, name: c.name, clientName: c.clientName, availability: c.availability, createdAt: c.createdAt }))} />
+        <D360Assign customerId={customerId} resettable={acc ? (acc.status === "invited" ? "Einladung von 360dialog verschickt" : acc.status === "pending" ? "Nummer wird eingerichtet" : acc.status) : null} free={free.slice(0, 20).map((c) => ({ id: c.id, phone: c.phone, name: c.name, clientName: c.clientName, availability: c.availability, createdAt: c.createdAt }))} />
       </div>
     </Card>
   );
