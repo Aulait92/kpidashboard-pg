@@ -14,6 +14,7 @@ type Value = "ja" | "nein" | null;
 const sel = "mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm";
 const LABEL: Record<string, string> = { ja: "ja", nein: "nein", unbekannt: "unbekannt" };
 
+/** uwg = E-Mail nach § 7 Abs. 3 UWG möglich (Bestätigung des Vermittlers und Nachweis zum Widerspruchshinweis für diesen Kunden). */
 export function ConsentBadges({ email, whatsapp, emailOptOut, uwg }: { email: Value; whatsapp: Value; emailOptOut: boolean; uwg: boolean }) {
   const chip = (label: string, tone: "ok" | "mid" | "no") => (
     <span
@@ -35,6 +36,7 @@ export function ConsentRowAction({
   name,
   email,
   whatsapp,
+  hinweis = null,
   mailAllowed,
   readOnly,
 }: {
@@ -42,6 +44,8 @@ export function ConsentRowAction({
   name: string;
   email: Value;
   whatsapp: Value;
+  /** Nachweis zum Hinweis auf das Widerspruchsrecht bei Erhebung der Adresse */
+  hinweis?: Value;
   mailAllowed: boolean;
   readOnly: boolean;
 }) {
@@ -78,6 +82,28 @@ export function ConsentRowAction({
                   </label>
                 </div>
               ))}
+            </div>
+            <div className="space-y-2 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2" data-hinweis-edit>
+              <label className="block text-xs font-medium text-[color:var(--muted)]">
+                Bei Erhebung der E-Mail auf das Widerspruchsrecht hingewiesen? (jetzt: {LABEL[hinweis ?? "unbekannt"]})
+                <select name="hinweis" defaultValue="keep" className={sel}>
+                  <option value="keep">unverändert</option>
+                  <option value="ja">ja</option>
+                  <option value="nein">nein</option>
+                  <option value="unbekannt">unbekannt</option>
+                </select>
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block text-xs font-medium text-[color:var(--muted)]">
+                  Wortlaut oder Quelle
+                  <input name="hinweisText" maxLength={500} placeholder="z. B. Antrag vom 3.5.2024" className={sel} />
+                </label>
+                <label className="block text-xs font-medium text-[color:var(--muted)]">
+                  Datum (optional)
+                  <input type="date" name="hinweisAt" className={sel} />
+                </label>
+              </div>
+              <p className="text-xs text-[color:var(--muted)]">Ohne diesen Nachweis gehen E-Mails an diesen Kunden nur mit Einwilligung raus (§ 7 Abs. 3 UWG).</p>
             </div>
             {saved.error ? <p className="text-rose-700">{saved.error}</p> : null}
             {saved.ok ? <p className="text-emerald-700">{saved.message}</p> : null}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
-import { Mail, Megaphone, MessageCircle, Scale, Send } from "lucide-react";
+import { Download, Mail, Megaphone, MessageCircle, Scale, Send } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { Button, ButtonLink, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
@@ -182,6 +182,15 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
                 {counts.emailUwg ? <div className="text-xs text-[color:var(--muted)]">davon {de(counts.emailUwg)} ohne Einwilligung (§ 7 Abs. 3 UWG)</div> : null}
               </div>
             </div>
+            {counts.noProof > 0 ? (
+              <p className={warnBox} data-campaign-noproof>
+                <b>{de(counts.noProof)} ohne Nachweis, nur mit Einwilligung:</b> Für diese Kunden fehlt der Nachweis, dass sie bei der Erhebung der E-Mail-Adresse
+                auf ihr Widerspruchsrecht hingewiesen wurden. Ohne Einwilligung bekommen sie deshalb keine E-Mail.{" "}
+                <Link href="/buyer/bestand/einwilligungen" className="font-semibold underline">
+                  Nachweis eintragen
+                </Link>
+              </p>
+            ) : null}
             {excluded.length ? (
               <div data-campaign-excluded>
                 <p className="font-medium">Nicht dabei ({de(counts.excludedTotal)}):</p>
@@ -199,12 +208,29 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
               {occasion === "cross_sell" ? `Kunden mit ${segment.has?.join(", ")} und ohne ${segment.lacks?.join(", ")}. ` : ""}
               Ebenfalls nicht dabei: alle, die in den letzten 30 Tagen schon angeschrieben wurden.{" "}
               {isSameNeedOccasion(occasion)
-                ? "Dieser Anlass betrifft bestehende Verträge: Per E-Mail geht er auch ohne Einwilligung, wenn Sie die Bestätigung zu § 7 Abs. 3 UWG abgegeben haben."
+                ? "Dieser Anlass betrifft bestehende Verträge: Per E-Mail geht er auch ohne Einwilligung, wenn Sie die Bestätigung zu § 7 Abs. 3 UWG abgegeben haben und für den Kunden der Nachweis zum Widerspruchshinweis vorliegt."
                 : `${NEEDS_CONSENT_REASON[occasion]}.`}{" "}
               <Link href="/buyer/bestand/einwilligungen" className="underline">
                 Einwilligungen &amp; Versand
               </Link>
             </p>
+            {counts.excludedTotal > 0 || counts.noProof > 0 ? (
+              <div className="rounded-[var(--radius-md)] border border-[color:var(--brand)] bg-[color:var(--brand-soft)] px-4 py-3" data-campaign-consent-cta>
+                <p className="font-semibold">Mehr Kunden erreichen: Einwilligung einholen</p>
+                <p className="mt-1">
+                  Mit Einwilligung dürfen Sie zu jedem Anlass schreiben, auch per WhatsApp. Jeder Kunde hat einen persönlichen Link, über den er selbst zustimmt.
+                  Geben Sie ihn im Termin, im Jahresgespräch oder per Serienbrief weiter.
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <a href="/buyer/bestand/einwilligungslinks" className="inline-flex h-9 items-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-3 font-medium" data-campaign-consent-links>
+                    <Download className="h-4 w-4" /> Einwilligungslinks (CSV)
+                  </a>
+                  <Link href="/buyer/bestand/einwilligungen" className="inline-flex h-9 items-center rounded-[var(--radius-md)] px-3 font-medium underline">
+                    Einwilligungen &amp; Versand
+                  </Link>
+                </div>
+              </div>
+            ) : null}
             {valueSum > 0 ? (
               <div className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-4 py-3" data-campaign-value>
                 <p>
@@ -224,6 +250,9 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
               <label className="block text-xs font-medium text-[color:var(--muted)]">
                 Thema in der Nachricht
                 <input name="topic" defaultValue={topic ?? ""} className="mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 text-sm text-[color:var(--foreground)]" />
+                {occasion === "renewal" ? (
+                  <span className="mt-1 block font-normal">Jede Nachricht nennt die Sparte des Vertrags, der bei diesem Kunden abläuft. Das Thema hier gilt nur, wenn sie fehlt.</span>
+                ) : null}
               </label>
             ) : null}
             <label className="block text-xs font-medium text-[color:var(--muted)]">
@@ -273,6 +302,12 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
                 <pre className="mt-2 whitespace-pre-wrap font-sans text-[13px] leading-relaxed">{mailPreview.text}</pre>
               </div>
               <p className="text-xs text-[color:var(--muted)]">
+                {counts.emailUwg > 0 ? (
+                  <>
+                    <b>{de(counts.emailUwg)} E-Mails gehen ohne Einwilligung nach § 7 Abs. 3 UWG raus:</b> Schreiben Sie darin nur zum bestehenden Vertrag, nicht zu
+                    anderen Produkten.{" "}
+                  </>
+                ) : null}
                 Persönliche Einzelmail über Ihr Postfach{avail.mailbox ? ` (${avail.mailbox.email})` : ""}, Text und schlichtes HTML ohne Tracking. Abmeldelink und Ihre Pflichtangaben
                 stehen immer unten. Antworten landen in Ihrem Postfach: Tragen Sie sie in der Kampagne unter „Antwort zuordnen“ ein, dann wird daraus ein Lead.
               </p>

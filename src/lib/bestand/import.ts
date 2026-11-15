@@ -64,6 +64,10 @@ export type ImportResult = {
   withPhone: number;
   /** Auf Kunden der Sperrliste übertragene Abmeldungen (Abmeldung gilt auch nach erneutem Import) */
   suppressed: number;
+  /** Kunden mit E-Mail und Nachweis zum Widerspruchshinweis nach diesem Import (Datei oder Bestätigung) */
+  hinweis: number;
+  /** Kunden mit E-Mail ohne Nachweis und ohne Einwilligung: per E-Mail nur nach einer Einwilligung */
+  ohneNachweis: number;
 };
 
 /**
@@ -74,10 +78,29 @@ export type ImportResult = {
 export type BulkConsent = { email?: boolean; whatsapp?: boolean };
 
 /**
+ * Pauschale Bestätigung je Import (§ 7 Abs. 3 UWG): Alle Kunden dieser Liste wurden bei der Erhebung ihrer E-Mail-
+ * Adresse auf ihr Widerspruchsrecht hingewiesen. text = Wortlaut bzw. Quelle des Hinweises (Pflicht), at = seit wann
+ * (optional). Angaben aus der Datei gehen vor, ein „nein“ wird nie überschrieben.
+ */
+export type BulkHinweis = { text: string; at: Date | null };
+
+/** Wortlaut der pauschalen Bestätigung (wird so protokolliert). */
+export function hinweisStatement(h: BulkHinweis, count: number): string {
+  const since = h.at ? ` (Hinweis gegeben seit ${h.at.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })})` : "";
+  return `Vermittler bestätigt beim Import: Alle Kunden dieser Liste wurden bei der Erhebung ihrer E-Mail-Adresse klar darauf hingewiesen, dass sie der Verwendung für Werbung jederzeit widersprechen können${since}. Wortlaut bzw. Quelle: „${h.text}“. Übernommen für ${count} Kunden ohne eigene Angabe.`;
+}
+
+/**
  * Zeilen übernehmen. Eine Zeile je Kunde oder je Vertrag – Kunden werden zusammengeführt.
  * importId: Import-Lauf (ExistingCustomerImport), wird nur bei neu angelegten Kunden gesetzt.
  */
-export async function importRows(customerId: string, rows: Row[], m: Mapping, now = new Date(), opts: { importId?: string; consent?: BulkConsent; actorUserId?: string | null } = {}): Promise<ImportResult> {
+export async function importRows(
+  customerId: string,
+  rows: Row[],
+  m: Mapping,
+  now = new Date(),
+  opts: { importId?: string; consent?: BulkConsent; hinweis?: BulkHinweis | null; actorUserId?: string | null; fileName?: string | null } = {},
+): Promise<ImportResult> {
   // Offensichtlich falsche Zuordnung (z. B. E-Mail-Spalte als Telefon) nie übernehmen
   const blocker = mappingBlocker(rows, m);
   if (blocker) throw new Error(blocker);
@@ -94,11 +117,15 @@ export async function importRows(customerId: string, rows: Row[], m: Mapping, no
     skipped: g.skipped,
     withPhone: 0,
     suppressed: 0,
+    hinweis: 0,
+    ohneNachweis: 0,
   };
   const bulk = opts.consent ?? {};
   const consentNote = `Einwilligung laut Versicherer (Import ${now.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })})`;
   const savedIds: string[] = [];
   const bulkCount = { email: 0, whatsapp: 0 };
+  const hinweisCount = { file: 0, fileNein: 0, bulk: 0 };
+  const bulkHinweis = opts.hinweis?.text.trim() ? { text: opts.hinweis.text.trim().slice(0, 500), at: opts.hinweis.at } : null;
   for (const a of g.groups.values()) {
     // Stornierte und ruhende Verträge zählen nicht für Sparten (Lücken), Ablauf und Beitragsvolumen
     const active = a.contracts.filter((c) => isActiveContract(c.status));
@@ -118,7 +145,7 @@ export async function importRows(customerId: string, rows: Row[], m: Mapping, no
       ? ((await prisma.existingCustomer.findUnique({ where: { customerId_externalNo: { customerId, externalNo: a.externalNo } }, select: { id: true } })) ?? (await byContact()))
       : await byContact();
     const before = existing
-      ? await prisma.existingCustomer.findUnique({ where: { id: existing.id }, select: { emailConsent: true, whatsappConsent: true } })
+      ? await prisma.existingCustomer.findUnique({ where: { id: existing.id }, select: { emailConsent: true, whatsappConsent: true, widerspruchHinweis: true } })
       : null;
     const consentData: Prisma.ExistingCustomerUpdateInput = {};
     for (const ch of ["email", "whatsapp"] as const) {
@@ -133,12 +160,28 @@ export async function importRows(customerId: string, rows: Row[], m: Mapping, no
         bulkCount[ch]++;
       }
     }
+    // Nachweis zum Widerspruchshinweis: Datei vor pauschaler Bestätigung, „nein“ wird nie überschrieben
+    const hinweisData: Prisma.ExistingCustomerUpdateInput = {};
+    if (a.widerspruchHinweis) {
+      Object.assign(hinweisData, {
+        widerspruchHinweis: a.widerspruchHinweis,
+        widerspruchHinweisAt: a.widerspruchHinweis === "ja" ? (a.widerspruchHinweisAt ?? now) : now,
+        widerspruchHinweisSource: "import",
+        widerspruchHinweisText: `Spalte „${m.widerspruchHinweis ?? ""}“${opts.fileName ? ` der Datei „${opts.fileName}“` : " der Importdatei"}`.slice(0, 500),
+      });
+      if (a.widerspruchHinweis === "ja") hinweisCount.file++;
+      else hinweisCount.fileNein++;
+    } else if (bulkHinweis && a.email && before?.widerspruchHinweis !== "nein" && before?.widerspruchHinweis !== "ja") {
+      Object.assign(hinweisData, { widerspruchHinweis: "ja", widerspruchHinweisAt: bulkHinweis.at ?? now, widerspruchHinweisSource: "import_pauschal", widerspruchHinweisText: bulkHinweis.text });
+      hinweisCount.bulk++;
+    }
     const data = {
       externalNo: a.externalNo, salutation: a.salutation, firstName: a.firstName, lastName: a.lastName, company: a.company, phone: a.phone, email: a.email,
       birthday: a.birthday, street: a.street, zip: a.zip, city: a.city, lines, nextRenewal: upcoming, premiumTotal,
       // Altangabe consentAt nur noch bei ausdrücklicher Bestätigung (maßgeblich sind die Felder je Kanal)
       ...(bulk.email || bulk.whatsapp ? { consentAt: now, consentNote } : {}),
       ...consentData,
+      ...hinweisData,
     };
     const saved = existing
       ? await prisma.existingCustomer.update({ where: { id: existing.id }, data })
@@ -174,6 +217,41 @@ export async function importRows(customerId: string, rows: Row[], m: Mapping, no
   // Abmeldungen gelten dauerhaft: Sperrliste auf alle übernommenen Kunden anwenden (auch neu angelegte Doppel)
   const { applySuppression, logConsent } = await import("@/lib/bestand/einwilligung-server");
   res.suppressed = await applySuppression(customerId, savedIds, now);
+  // Nachweis zum Widerspruchshinweis protokollieren (Datei bzw. pauschale Bestätigung mit Wortlaut)
+  if (hinweisCount.file || hinweisCount.fileNein) {
+    await logConsent({
+      customerId,
+      existingCustomerId: null,
+      channel: "email",
+      action: "gesetzt",
+      source: "widerspruchshinweis",
+      text: `Nachweis zum Widerspruchshinweis aus der Importdatei (Spalte „${m.widerspruchHinweis ?? ""}“): ${hinweisCount.file} ja, ${hinweisCount.fileNein} nein.`,
+      actorUserId: opts.actorUserId ?? null,
+      at: now,
+    });
+  }
+  if (bulkHinweis) {
+    await logConsent({
+      customerId,
+      existingCustomerId: null,
+      channel: "email",
+      action: "gesetzt",
+      source: "widerspruchshinweis",
+      text: hinweisStatement(bulkHinweis, hinweisCount.bulk),
+      actorUserId: opts.actorUserId ?? null,
+      at: now,
+    });
+  }
+  if (savedIds.length) {
+    const [withProof, withoutProof] = await Promise.all([
+      prisma.existingCustomer.count({ where: { id: { in: savedIds }, email: { not: null }, widerspruchHinweis: "ja" } }),
+      prisma.existingCustomer.count({
+        where: { id: { in: savedIds }, email: { not: null }, emailConsent: null, optOutAt: null, emailOptOutAt: null, OR: [{ widerspruchHinweis: null }, { widerspruchHinweis: "nein" }] },
+      }),
+    ]);
+    res.hinweis = withProof;
+    res.ohneNachweis = withoutProof;
+  }
   // Pauschale Bestätigung einmal je Kanal protokollieren (Zeitpunkt, Text, Anzahl)
   for (const ch of ["email", "whatsapp"] as const) {
     if (!bulk[ch]) continue;

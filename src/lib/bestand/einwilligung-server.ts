@@ -53,8 +53,9 @@ export type SubjectFields = {
   emailOptOutAt: Date | null;
   emailConsent: string | null;
   whatsappConsent: string | null;
+  widerspruchHinweis?: string | null;
 };
-export const SUBJECT_SELECT = { phone: true, email: true, optOutAt: true, emailOptOutAt: true, emailConsent: true, whatsappConsent: true } as const;
+export const SUBJECT_SELECT = { phone: true, email: true, optOutAt: true, emailOptOutAt: true, emailConsent: true, whatsappConsent: true, widerspruchHinweis: true } as const;
 
 /** Angaben für die Entscheidung inklusive Sperrliste. */
 export function subjectOf(ec: SubjectFields, sup: Suppression): ConsentSubject {
@@ -197,6 +198,32 @@ export async function setConsent(
     address: channel === "email" ? ec.email : ec.phone,
     ip: opts.ip,
     userAgent: opts.userAgent,
+    actorUserId: opts.actorUserId,
+  });
+}
+
+/** Nachweis zum Widerspruchshinweis je Kunde setzen (Vermittler), mit Protokoll. */
+export async function setHinweis(
+  existingCustomerId: string,
+  value: ConsentValue,
+  opts: { at?: Date | null; text?: string | null; actorUserId?: string | null; customerId?: string },
+): Promise<void> {
+  const ec = await prisma.existingCustomer.findUnique({ where: { id: existingCustomerId }, select: { id: true, customerId: true, email: true } });
+  if (!ec || (opts.customerId && ec.customerId !== opts.customerId)) throw new Error("Kunde nicht gefunden.");
+  await prisma.existingCustomer.update({
+    where: { id: ec.id },
+    data: value
+      ? { widerspruchHinweis: value, widerspruchHinweisAt: opts.at ?? new Date(), widerspruchHinweisSource: "vermittler", widerspruchHinweisText: opts.text ?? null }
+      : { widerspruchHinweis: null, widerspruchHinweisAt: null, widerspruchHinweisSource: null, widerspruchHinweisText: null },
+  });
+  await logConsent({
+    customerId: ec.customerId,
+    existingCustomerId: ec.id,
+    channel: "email",
+    action: "gesetzt",
+    source: "widerspruchshinweis",
+    text: value === "ja" ? `Hinweis auf das Widerspruchsrecht bei Erhebung der Adresse: ja. Wortlaut bzw. Quelle: „${opts.text ?? ""}“` : value === "nein" ? "Hinweis auf das Widerspruchsrecht bei Erhebung der Adresse: nein" : "Nachweis zum Widerspruchshinweis auf unbekannt gesetzt",
+    address: ec.email,
     actorUserId: opts.actorUserId,
   });
 }

@@ -9,7 +9,8 @@ import { FIELDS, detectMapping, importRows, isBlockedColumn, mappingBlocker, par
 import { createCampaign, OCCASIONS, recordEmailReply, type EmailReplyKind, type Occasion, type Segment } from "@/lib/bestand/campaigns";
 import { QUOTA_REACHED } from "@/lib/bestand/quota";
 import { asChannelMode } from "@/lib/bestand/einwilligung";
-import { requestConsent, setConsent } from "@/lib/bestand/einwilligung-server";
+import { logConsent, requestConsent, setConsent, setHinweis } from "@/lib/bestand/einwilligung-server";
+import { hinweisStatement } from "@/lib/bestand/import";
 import { PRICE_LIST } from "@/lib/offer-pricing";
 import { PROVIDER } from "@/lib/legal-texts";
 import { sendCustomerMail } from "@/lib/email";
@@ -94,11 +95,14 @@ export async function runImportAction(_prev: ImportState, fd: FormData): Promise
     // „Alle Kunden dieser Liste haben eingewilligt“ je Kanal nur mit ausdrücklicher Bestätigung
     const consent = { email: fd.get("bulk_email") === "on", whatsapp: fd.get("bulk_whatsapp") === "on" };
     if ((consent.email || consent.whatsapp) && fd.get("bulk_confirm") !== "on") return { error: "Bitte bestätigen Sie die Einwilligungen ausdrücklich oder lassen Sie sie auf „unbekannt“." };
+    // Hinweis auf das Widerspruchsrecht (§ 7 Abs. 3 UWG): pauschal je Import nur mit Wortlaut bzw. Quelle und ausdrücklicher Bestätigung
+    const hinweis = parseHinweisForm(fd, "hinweis");
+    if ("error" in hinweis) return { error: hinweis.error };
     // Import-Lauf festhalten: neu angelegte Kunden tragen seine ID (für „Letzten Import rückgängig machen“)
     const run = await prisma.existingCustomerImport.create({ data: { customerId: ctx.customerId, createdById: ctx.userId, fileName, rows: rows.length } });
     let r;
     try {
-      r = await importRows(ctx.customerId, rows, mapping, new Date(), { importId: run.id, consent, actorUserId: ctx.userId });
+      r = await importRows(ctx.customerId, rows, mapping, new Date(), { importId: run.id, consent, hinweis: hinweis.value, actorUserId: ctx.userId, fileName });
     } catch (err) {
       // Nichts angelegt → Lauf wieder weg; teilweise angelegt → Lauf bleibt (lässt sich rückgängig machen)
       if (!(await prisma.existingCustomer.count({ where: { customerId: ctx.customerId, importId: run.id } }))) {
@@ -115,11 +119,27 @@ export async function runImportAction(_prev: ImportState, fd: FormData): Promise
         `${de(r.customers)} Kunden übernommen (${de(r.created)} neu, ${de(r.updated)} aktualisiert) mit ${de(r.contracts)} Verträgen, ${de(r.withPhone)} mit Mobilnummer.` +
         (r.inactiveContracts ? ` ${de(r.inactiveContracts)} Verträge sind storniert oder ruhend und zählen nicht für Chancen.` : "") +
         (r.skipped ? ` ${de(r.skipped)} Zeilen ohne Kundennummer, Telefon und E-Mail übersprungen.` : "") +
-        (r.suppressed ? ` ${de(r.suppressed)} Kunden hatten sich früher abgemeldet und bleiben gesperrt.` : ""),
+        (r.suppressed ? ` ${de(r.suppressed)} Kunden hatten sich früher abgemeldet und bleiben gesperrt.` : "") +
+        (r.ohneNachweis ? ` ${de(r.ohneNachweis)} Kunden ohne Nachweis zum Widerspruchshinweis: per E-Mail nur mit Einwilligung.` : ""),
     };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Import fehlgeschlagen." };
   }
+}
+
+/**
+ * Formular „Hinweis auf das Widerspruchsrecht“ (Import und Bestand): an = Kästchen, Wortlaut bzw. Quelle
+ * (mind. 10 Zeichen), Datum optional, ausdrückliche Bestätigung. value null = nicht angekreuzt.
+ */
+function parseHinweisForm(fd: FormData, prefix: string): { value: { text: string; at: Date | null } | null } | { error: string } {
+  if (fd.get(`${prefix}_bulk`) !== "on") return { value: null };
+  const text = String(fd.get(`${prefix}_text`) ?? "").replace(/\s+/g, " ").trim().slice(0, 500);
+  if (text.length < 10) return { error: "Bitte geben Sie Wortlaut oder Quelle des Hinweises auf das Widerspruchsrecht an (z. B. „Antrag Kfz, Abschnitt Datenschutz“)." };
+  if (fd.get(`${prefix}_confirm`) !== "on") return { error: "Bitte bestätigen Sie den Hinweis auf das Widerspruchsrecht ausdrücklich oder lassen Sie das Kästchen leer." };
+  const raw = String(fd.get(`${prefix}_date`) ?? "");
+  const at = ISO_DAY.test(raw) ? new Date(`${raw}T12:00:00Z`) : null;
+  if (at && at.getTime() > Date.now()) return { error: "Das Datum des Hinweises darf nicht in der Zukunft liegen." };
+  return { value: { text, at } };
 }
 
 export type UndoState = { ok?: boolean; error?: string; message?: string };
@@ -304,8 +324,52 @@ export async function setConsentAction(_prev: SettingsState, fd: FormData): Prom
       const at = ISO_DAY.test(dateRaw) ? new Date(`${dateRaw}T12:00:00Z`) : null;
       await setConsent(id, channel, value, { source: "vermittler", at, actorUserId: ctx.userId, customerId: ctx.customerId });
     }
+    // Nachweis zum Widerspruchshinweis je Kunde (ja mit Wortlaut bzw. Quelle)
+    const hRaw = String(fd.get("hinweis") ?? "keep");
+    if (hRaw !== "keep") {
+      const value = hRaw === "ja" ? "ja" : hRaw === "nein" ? "nein" : null;
+      const text = String(fd.get("hinweisText") ?? "").replace(/\s+/g, " ").trim().slice(0, 500);
+      if (value === "ja" && text.length < 5) return { error: "Bitte Wortlaut oder Quelle des Hinweises angeben (z. B. „Antrag vom 3.5.2024“)." };
+      const dateRaw = String(fd.get("hinweisAt") ?? "");
+      const at = ISO_DAY.test(dateRaw) ? new Date(`${dateRaw}T12:00:00Z`) : null;
+      await setHinweis(id, value, { at, text: text || null, actorUserId: ctx.userId, customerId: ctx.customerId });
+    }
     revalidatePath("/buyer/bestand");
     return { ok: true, message: "Gespeichert." };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Speichern fehlgeschlagen." };
+  }
+}
+
+/**
+ * Nachweis zum Widerspruchshinweis für alle bisherigen Kunden mit E-Mail ohne Angabe (§ 7 Abs. 3 UWG): nur mit
+ * Wortlaut bzw. Quelle und ausdrücklicher Bestätigung, protokolliert. Ein „nein“ bleibt.
+ */
+export async function bulkHinweisAction(_prev: SettingsState, fd: FormData): Promise<SettingsState> {
+  try {
+    const ctx = await ownerCtx();
+    const h = parseHinweisForm(fd, "hinweis");
+    if ("error" in h) return { error: h.error };
+    if (!h.value) return { error: "Bitte das Kästchen ankreuzen, wenn der Hinweis für alle diese Kunden vorliegt." };
+    const now = new Date();
+    const r = await prisma.existingCustomer.updateMany({
+      where: { customerId: ctx.customerId, email: { not: null }, widerspruchHinweis: null },
+      data: { widerspruchHinweis: "ja", widerspruchHinweisAt: h.value.at ?? now, widerspruchHinweisSource: "bestand_pauschal", widerspruchHinweisText: h.value.text },
+    });
+    await logConsent({
+      customerId: ctx.customerId,
+      existingCustomerId: null,
+      channel: "email",
+      action: "gesetzt",
+      source: "widerspruchshinweis",
+      text: hinweisStatement(h.value, r.count).replace("beim Import", "für den Bestand").replace("dieser Liste", "mit E-Mail-Adresse"),
+      actorUserId: ctx.userId,
+      at: now,
+    });
+    await audit("bestand.widerspruchshinweis", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId, details: { count: r.count, text: h.value.text } });
+    revalidatePath("/buyer/bestand");
+    revalidatePath("/buyer/bestand/einwilligungen");
+    return { ok: true, message: `Nachweis für ${r.count.toLocaleString("de-DE")} Kunden gespeichert.` };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Speichern fehlgeschlagen." };
   }

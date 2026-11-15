@@ -5,10 +5,12 @@
 // von § 7 Abs. 2 Nr. 2 und Abs. 3 UWG):
 //   1. Mit Einwilligung für den Kanal: alle Anlässe.
 //   2. Ohne Einwilligung, aber mit der Bestätigung des Vermittlers zu § 7 Abs. 3 UWG (Adresse aus einem
-//      Vertragsabschluss, Hinweis auf das Widerspruchsrecht bei der Erhebung): nur Anlässe zum selben Bedarf
-//      bzw. Vertrag (Ablauf/Wechsel, Jahresgespräch als Vertragscheck). Kein Cross-Selling in andere Sparten,
-//      kein Geburtstag mit Angebot, keine Empfehlungs- oder Bewertungsbitte (BGH, 10.07.2018: auch Werbung).
-//      Das gilt nur für E-Mail.
+//      Vertragsabschluss) UND dem Nachweis je Kunde, dass bei der Erhebung der Adresse auf das Widerspruchsrecht
+//      hingewiesen wurde (ExistingCustomer.widerspruchHinweis, seit 15.11.2026; fehlt er, greift Abs. 3 nicht,
+//      BGH VI ZR 225/17): nur Anlässe zum selben Bedarf bzw. Vertrag (Ablauf/Wechsel, Jahresgespräch als
+//      Vertragscheck). Kein Cross-Selling in andere Sparten (auch nicht zwischen Sachsparten, solange das nicht
+//      anwaltlich geklärt ist), kein Geburtstag mit Angebot, keine Empfehlungs- oder Bewertungsbitte (BGH,
+//      10.07.2018: auch Werbung). Das gilt nur für E-Mail.
 //   3. WhatsApp strikt: Die WhatsApp Business Messaging Policy von Meta verlangt ein Opt-in vor geschäftlichen
 //      Erstnachrichten. Ohne WhatsApp-Einwilligung keine WhatsApp-Kampagne, auch nicht im § 7 Abs. 3-Modus.
 //   4. Abmeldung („Stopp“, Abmeldelink) und „nein“ schließen immer aus, sofort und dauerhaft.
@@ -58,6 +60,16 @@ export function isSameNeedOccasion(o: Occasion): boolean {
   return o === "renewal" || o === "review";
 }
 
+/**
+ * „Ähnliche“ Ware im Sinne von § 7 Abs. 3 Nr. 2 UWG (eng): nur dieselbe Sparte. Haftpflicht → Zahnzusatz (Kranken)
+ * ist nicht ähnlich, Sachsparten untereinander (Hausrat, Wohngebäude, Haftpflicht) gelten bis zur anwaltlichen
+ * Klärung ebenfalls nicht als ähnlich. Sparten wie in lib/bestand/rows.normalizeLine.
+ */
+export function isSimilarLine(owned: string, offered: string): boolean {
+  const n = (s: string) => s.trim().toLowerCase();
+  return !!n(owned) && n(owned) === n(offered) && n(offered) !== "sonstiges";
+}
+
 /** Warum ein Anlass ohne Einwilligung nicht geht (für Vorschau und Hilfe). */
 export const NEEDS_CONSENT_REASON: Record<Occasion, string | null> = {
   renewal: null,
@@ -75,6 +87,8 @@ export type ConsentSubject = {
   emailOptOutAt: Date | null;
   emailConsent: string | null;
   whatsappConsent: string | null;
+  /** Nachweis: bei Erhebung der E-Mail-Adresse auf das Widerspruchsrecht hingewiesen (ja | nein | null = unbekannt). */
+  widerspruchHinweis?: string | null;
   /** Auf der Sperrliste (Hash von E-Mail bzw. Telefon): email = nur E-Mail, all = alle Kanäle. */
   suppressed?: { email?: boolean; all?: boolean };
 };
@@ -94,9 +108,27 @@ export type ExclusionReason =
   | "E-Mail abgemeldet"
   | "E-Mail-Einwilligung: nein"
   | "keine E-Mail-Einwilligung, Bestätigung zu § 7 Abs. 3 UWG fehlt"
+  | typeof NO_PROOF_REASON
   | "Cross-Selling in eine andere Sparte nur mit Einwilligung"
   | "Geburtstag mit Angebot nur mit Einwilligung"
   | "Empfehlungs- oder Bewertungsbitte nur mit Einwilligung";
+
+/** Ohne Nachweis zum Widerspruchshinweis greift § 7 Abs. 3 UWG nicht. */
+export const NO_PROOF_REASON = "ohne Nachweis zum Widerspruchshinweis, nur mit Einwilligung";
+
+/** Hat dieser Kunde einen Nachweis, dass er bei der Erhebung der Adresse auf sein Widerspruchsrecht hingewiesen wurde? */
+export function hasUwgProof(s: Pick<ConsentSubject, "widerspruchHinweis">): boolean {
+  return s.widerspruchHinweis === "ja";
+}
+
+/**
+ * Für die Zählung „X ohne Nachweis, nur mit Einwilligung“: Kunde mit E-Mail, nicht abgemeldet, Einwilligung
+ * unbekannt und ohne Nachweis zum Widerspruchshinweis (per E-Mail also nur nach einer Einwilligung erreichbar).
+ */
+export function lacksUwgProof(s: ConsentSubject): boolean {
+  if (!s.email || s.optOutAt || s.emailOptOutAt || s.suppressed?.all || s.suppressed?.email) return false;
+  return consent(s.emailConsent) === null && !hasUwgProof(s);
+}
 
 export type ChannelDecision = { ok: true; basis: LegalBasis } | { ok: false; reason: ExclusionReason };
 
@@ -124,6 +156,7 @@ export function emailDecision(s: ConsentSubject, occasion: Occasion, settings: C
   const needs = NEEDS_CONSENT_REASON[occasion];
   if (needs) return { ok: false, reason: needs as ExclusionReason };
   if (!settings.uwgConfirmed) return { ok: false, reason: "keine E-Mail-Einwilligung, Bestätigung zu § 7 Abs. 3 UWG fehlt" };
+  if (!hasUwgProof(s)) return { ok: false, reason: NO_PROOF_REASON };
   return { ok: true, basis: "uwg7_3" };
 }
 
@@ -153,13 +186,22 @@ export type AudienceCounts = {
   email: number;
   /** davon per E-Mail nach § 7 Abs. 3 UWG (ohne Einwilligung) */
   emailUwg: number;
+  /** nicht per WhatsApp erreicht und ohne Nachweis zum Widerspruchshinweis: per E-Mail nur mit Einwilligung */
+  noProof: number;
   excluded: Partial<Record<ExclusionReason, number>>;
   excludedTotal: number;
 };
 
-/** Zählung für die Vorschau: je Kanal erreichbar und warum andere ausgeschlossen sind. */
-export function countAudience(choices: ChannelChoice[]): AudienceCounts {
-  const out: AudienceCounts = { whatsapp: 0, email: 0, emailUwg: 0, excluded: {}, excludedTotal: 0 };
+/**
+ * Zählung für die Vorschau: je Kanal erreichbar und warum andere ausgeschlossen sind. subjects (gleiche
+ * Reihenfolge wie choices) zählt zusätzlich, wer ohne Nachweis zum Widerspruchshinweis nur mit Einwilligung geht.
+ */
+export function countAudience(choices: ChannelChoice[], subjects: ConsentSubject[] = []): AudienceCounts {
+  const out: AudienceCounts = { whatsapp: 0, email: 0, emailUwg: 0, noProof: 0, excluded: {}, excludedTotal: 0 };
+  choices.forEach((c, i) => {
+    const s = subjects[i];
+    if (s && c.channel !== "whatsapp" && lacksUwgProof(s)) out.noProof++;
+  });
   for (const c of choices) {
     if (c.channel === "whatsapp") out.whatsapp++;
     else if (c.channel === "email") {
@@ -181,8 +223,16 @@ export function consentRequestByMailAllowed(s: ConsentSubject, settings: Consent
   if (s.optOutAt || s.suppressed?.all || !s.email || s.emailOptOutAt || s.suppressed?.email) return false;
   const c = consent(s.emailConsent);
   if (c === "nein") return false;
-  return c === "ja" || settings.uwgConfirmed;
+  return c === "ja" || (settings.uwgConfirmed && hasUwgProof(s));
 }
+
+/** Quelle des Nachweises zum Widerspruchshinweis (für Protokoll und Anzeige). */
+export const HINWEIS_SOURCE_LABEL: Record<string, string> = {
+  import: "aus der Importdatei",
+  import_pauschal: "Bestätigung beim Import",
+  bestand_pauschal: "Bestätigung für den Bestand",
+  vermittler: "von Hand",
+};
 
 /** Text der Einwilligungs-Abfrage (wird so protokolliert). */
 export function consentQuestion(advisor: string, channels: Channel[]): string {

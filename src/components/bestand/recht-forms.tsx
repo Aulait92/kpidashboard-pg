@@ -4,7 +4,7 @@
 
 import { useActionState } from "react";
 import { Button } from "@/components/ui";
-import { bulkConsentAction, legacyConsentAction, saveBestandRechtAction, type SettingsState } from "@/app/buyer/bestand/actions";
+import { bulkConsentAction, bulkHinweisAction, legacyConsentAction, saveBestandRechtAction, type SettingsState } from "@/app/buyer/bestand/actions";
 
 const Msg = ({ s }: { s: SettingsState }) => (s.error ? <p className="text-rose-700">{s.error}</p> : s.message ? <p className="text-emerald-700">{s.message}</p> : null);
 
@@ -15,14 +15,15 @@ export function RechtForm({ uwg, uwgAt, imprint, readOnly }: { uwg: boolean; uwg
       <label className="flex items-start gap-2">
         <input type="checkbox" name="uwg" defaultChecked={uwg} className="mt-0.5 h-4 w-4" data-uwg-confirm />
         <span>
-          <b>Bestätigung zu § 7 Abs. 3 UWG:</b> Die E-Mail-Adressen meiner Bestandskunden stammen aus Vertragsabschlüssen. Ich habe die Kunden bei der Erhebung
-          der Adresse klar darauf hingewiesen, dass sie der Werbung jederzeit widersprechen können, ohne dass dafür andere als die Übermittlungskosten
-          entstehen. Den Hinweis mit Abmeldelink enthält jede Kampagnen-Mail automatisch.
+          <b>Bestätigung zu § 7 Abs. 3 UWG:</b> Die E-Mail-Adressen meiner Bestandskunden habe ich im Zusammenhang mit dem Abschluss ihrer Verträge erhalten.
+          Ich bewerbe per E-Mail ohne Einwilligung nur eigene, ähnliche Leistungen zum selben Bedarf. Den Hinweis auf das Widerspruchsrecht mit Abmeldelink
+          enthält jede Kampagnen-Mail automatisch.
           {uwg && uwgAt ? <span className="block text-xs text-[color:var(--muted)]">Bestätigt am {uwgAt}</span> : null}
         </span>
       </label>
       <p className="text-xs text-[color:var(--muted)]">
-        Ohne Einwilligung gehen dann nur E-Mails zum selben Bedarf bzw. Vertrag raus (Ablauf oder Wechsel, Vertragscheck im Jahresgespräch). Kein Cross-Selling in
+        Zusätzlich braucht jeder Kunde einen Nachweis, dass er schon bei der Erhebung der Adresse auf sein Widerspruchsrecht hingewiesen wurde (beim Import,
+        unten für alle oder je Kunde). Ohne Einwilligung gehen dann nur E-Mails zum selben Bedarf bzw. Vertrag raus (Ablauf oder Wechsel, Vertragscheck im Jahresgespräch). Kein Cross-Selling in
         andere Sparten, kein Geburtstag mit Angebot, keine Empfehlungs- oder Bewertungsbitte. WhatsApp nie ohne Einwilligung.
       </p>
       <label className="block text-xs font-medium text-[color:var(--muted)]">
@@ -96,6 +97,45 @@ export function BulkForm({ unknownEmail, unknownWhatsapp, readOnly }: { unknownE
       <Msg s={state} />
       <Button type="submit" size="md" disabled={readOnly || pending}>
         Alle haben eingewilligt
+      </Button>
+    </form>
+  );
+}
+
+/** Nachweis zum Widerspruchshinweis für alle bisherigen Kunden ohne Angabe (Wortlaut Pflicht, ausdrücklich bestätigt). */
+export function HinweisBulkForm({ missing, readOnly }: { missing: number; readOnly: boolean }) {
+  const [state, action, pending] = useActionState<SettingsState, FormData>(bulkHinweisAction, {});
+  return (
+    <form action={action} className="space-y-3 text-sm" data-hinweis-form>
+      <p>
+        Für <b>{missing.toLocaleString("de-DE")} Kunden</b> mit E-Mail-Adresse fehlt der Nachweis, dass sie bei der Erhebung der Adresse auf ihr Widerspruchsrecht
+        hingewiesen wurden. Ohne diesen Nachweis greift § 7 Abs. 3 UWG nicht: E-Mails an sie gehen nur mit Einwilligung raus.
+      </p>
+      <input type="hidden" name="hinweis_bulk" value="on" />
+      <label className="block text-xs font-medium text-[color:var(--muted)]">
+        Wortlaut oder Quelle des Hinweises (Pflicht, wird protokolliert)
+        <textarea
+          name="hinweis_text"
+          rows={2}
+          maxLength={500}
+          placeholder="z. B. Antragsformulare seit 2021, Abschnitt Datenschutz: „Sie können der Verwendung Ihrer E-Mail-Adresse für Werbung jederzeit widersprechen.“"
+          className="mt-1 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2 text-sm text-[color:var(--foreground)]"
+        />
+      </label>
+      <label className="block text-xs font-medium text-[color:var(--muted)]">
+        Hinweis gegeben seit (optional)
+        <input type="date" name="hinweis_date" className="mt-1 h-10 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 text-sm text-[color:var(--foreground)]" />
+      </label>
+      <label className="flex items-start gap-2 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
+        <input type="checkbox" name="hinweis_confirm" className="mt-0.5" data-hinweis-confirm />
+        <span>
+          Ich bestätige ausdrücklich, dass <b>alle</b> diese Kunden bei der Erhebung ihrer E-Mail-Adresse so auf ihr Widerspruchsrecht hingewiesen wurden und ich
+          das auf Anfrage nachweisen kann. Trifft das nur auf einen Teil zu, tragen Sie den Nachweis bitte je Kunde ein oder beim nächsten Import als Spalte.
+        </span>
+      </label>
+      <Msg s={state} />
+      <Button type="submit" size="md" disabled={readOnly || pending || missing === 0}>
+        Nachweis speichern
       </Button>
     </form>
   );

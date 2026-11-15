@@ -21,6 +21,7 @@ export const FIELDS = {
   city: "Ort",
   emailConsent: "E-Mail-Einwilligung",
   whatsappConsent: "WhatsApp-Einwilligung",
+  widerspruchHinweis: "Hinweis auf Widerspruchsrecht",
   line: "Sparte/Produkt",
   contractNo: "Vertragsnummer",
   insurer: "Versicherer",
@@ -54,6 +55,11 @@ export const FIELD_GROUPS: { title: string; hint: string; fields: { key: FieldKe
       { key: "city", label: "Ort" },
       { key: "emailConsent", label: "E-Mail-Einwilligung", hint: "ja, nein oder Datum; leer = unbekannt" },
       { key: "whatsappConsent", label: "WhatsApp-Einwilligung", hint: "ja, nein oder Datum; ohne sie keine WhatsApp-Kampagne" },
+      {
+        key: "widerspruchHinweis",
+        label: "Hinweis auf Widerspruchsrecht (bei Erhebung der E-Mail)",
+        hint: "ja, nein oder Datum; ohne Nachweis E-Mails nur mit Einwilligung",
+      },
     ],
   },
   {
@@ -88,6 +94,8 @@ const SYNONYMS: Record<FieldKey, string[]> = {
   city: ["ort", "wohnort", "stadt"],
   emailConsent: ["emaileinwilligung", "einwilligungemail", "mailwerbung", "emailwerbung", "werbeeinwilligungemail", "optinemail", "emailoptin"],
   whatsappConsent: ["whatsappeinwilligung", "einwilligungwhatsapp", "whatsappwerbung", "optinwhatsapp", "whatsappoptin", "messengereinwilligung"],
+  // Bewusst nicht „Widerspruch“ allein: so heißt oft die Spalte, in der ein Kunde der Werbung widersprochen hat
+  widerspruchHinweis: ["widerspruchshinweis", "hinweiswiderspruch", "hinweisaufwiderspruch", "hinweiswiderspruchsrecht", "hinweisaufdaswiderspruchsrecht", "uwghinweis"],
   line: ["sparte", "produkt", "vertrag", "tarif", "produktname", "sparten", "vertragsart"],
   contractNo: ["vertragsnummer", "vertragsnr", "versicherungsscheinnummer", "versicherungsscheinnr", "vsnr", "policennummer", "policennr", "polizzennummer", "scheinnummer"],
   insurer: ["versicherer", "gesellschaft", "versicherungsgesellschaft", "risikotrager", "anbieter"],
@@ -110,7 +118,7 @@ export function detectMapping(headers: string[]): Mapping {
   const used = new Set<string>();
   // Genauere Felder zuerst (Vertragsnummer vor Kundennummer-Teiltreffern, Jahresbeitrag vor „Beitrag“)
   const order: FieldKey[] = [
-    "emailConsent", "whatsappConsent",
+    "widerspruchHinweis", "emailConsent", "whatsappConsent",
     "contractNo", "externalNo", "salutation", "firstName", "fullName", "lastName", "company", "phone", "email", "birthday", "street", "zip", "city",
     "insurer", "annualPremium", "contractStatus", "startDate", "renewalDate", "line",
   ];
@@ -249,6 +257,9 @@ export type GroupedCustomer = {
   emailConsentAt: Date | null;
   whatsappConsent: "ja" | "nein" | null;
   whatsappConsentAt: Date | null;
+  /** Nachweis: bei Erhebung der E-Mail auf das Widerspruchsrecht hingewiesen (aus der Datei), mit Datum falls angegeben */
+  widerspruchHinweis: "ja" | "nein" | null;
+  widerspruchHinweisAt: Date | null;
   contracts: GroupedContract[];
 };
 
@@ -266,7 +277,7 @@ export type GroupResult = {
   withoutName: number;
   withEmail: number;
   /** Einwilligungen aus der Datei je Kanal */
-  consent: { emailJa: number; emailNein: number; whatsappJa: number; whatsappNein: number };
+  consent: { emailJa: number; emailNein: number; whatsappJa: number; whatsappNein: number; hinweisJa: number; hinweisNein: number };
   /** Kunden mit Personenversicherung (Kranken, BU, Leben/Vorsorge, Unfall, Pflege): Hinweis § 203 StGB */
   withPersonLines: number;
 };
@@ -328,6 +339,8 @@ export function groupRows(rows: Row[], m: Mapping): GroupResult {
       emailConsentAt: null,
       whatsappConsent: null,
       whatsappConsentAt: null,
+      widerspruchHinweis: null,
+      widerspruchHinweisAt: null,
       contracts: [],
     };
     // Einwilligung je Kanal (erste Angabe je Kunde gilt; „nein“ geht vor)
@@ -340,6 +353,16 @@ export function groupRows(rows: Row[], m: Mapping): GroupResult {
       acc[key] = v;
       if (v === "ja") acc[ch === "email" ? "emailConsentAt" : "whatsappConsentAt"] ??= parseDate(raw);
       else acc[ch === "email" ? "emailConsentAt" : "whatsappConsentAt"] = null;
+    }
+    // Nachweis zum Widerspruchshinweis (wie Einwilligung: „nein“ geht vor)
+    {
+      const raw = get(r, "widerspruchHinweis");
+      const v = parseConsent(raw);
+      if (v && acc.widerspruchHinweis !== "nein") {
+        acc.widerspruchHinweis = v;
+        if (v === "ja") acc.widerspruchHinweisAt ??= parseDate(raw);
+        else acc.widerspruchHinweisAt = null;
+      }
     }
     acc.phone ??= phone;
     acc.email ??= email;
@@ -375,7 +398,7 @@ export function groupRows(rows: Row[], m: Mapping): GroupResult {
   let withoutName = 0;
   let withEmail = 0;
   let withPersonLines = 0;
-  const consent = { emailJa: 0, emailNein: 0, whatsappJa: 0, whatsappNein: 0 };
+  const consent = { emailJa: 0, emailNein: 0, whatsappJa: 0, whatsappNein: 0, hinweisJa: 0, hinweisNein: 0 };
   for (const g of groups.values()) {
     contracts += g.contracts.length;
     if (!g.firstName && !g.lastName) withoutName++;
@@ -385,6 +408,8 @@ export function groupRows(rows: Row[], m: Mapping): GroupResult {
     if (g.emailConsent === "nein") consent.emailNein++;
     if (g.whatsappConsent === "ja") consent.whatsappJa++;
     if (g.whatsappConsent === "nein") consent.whatsappNein++;
+    if (g.widerspruchHinweis === "ja") consent.hinweisJa++;
+    if (g.widerspruchHinweis === "nein") consent.hinweisNein++;
     for (const c of g.contracts) {
       if (!isActiveContract(c.status)) inactiveContracts++;
       else if (c.annualPremium != null) premiumTotal += c.annualPremium;
@@ -444,6 +469,8 @@ const CONTENT_CHECKS: Partial<Record<FieldKey, ContentCheck>> = {
   birthday: { ok: IS_DATE, problem: "sind kein Datum" },
   startDate: { ok: IS_DATE, problem: "sind kein Datum" },
   renewalDate: { ok: IS_DATE, problem: "sind kein Datum" },
+  // Nachweis nur aus eindeutigen Werten (ja, nein, Datum), damit keine andere Spalte als Nachweis durchgeht
+  widerspruchHinweis: { ok: (v) => parseConsent(v) !== null, problem: "sind weder ja, nein noch ein Datum" },
 };
 
 /** So viele gefüllte Werte je Spalte werden geprüft. */

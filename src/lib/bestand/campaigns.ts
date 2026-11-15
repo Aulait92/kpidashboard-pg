@@ -144,12 +144,15 @@ export function planFromCandidates(
   now: Date,
 ): AudiencePlan {
   const inSeg = cands.filter((c) => inSegment(c, occasion, seg, now));
-  const choices = inSeg.map((c) => ({ c, choice: chooseChannel(mode, subjectOf(c, sup), occasion, settings) }));
+  const choices = inSeg.map((c) => {
+    const subject = subjectOf(c, sup);
+    return { c, subject, choice: chooseChannel(mode, subject, occasion, settings) };
+  });
   const recipients: PlannedRecipient[] = [];
   for (const { c, choice } of choices) {
     if (choice.channel) recipients.push({ id: c.id, channel: choice.channel, basis: choice.basis, premiumTotal: c.premiumTotal == null ? null : Number(c.premiumTotal) });
   }
-  return { recipients, counts: countAudience(choices.map((x) => x.choice)), segment: inSeg.length };
+  return { recipients, counts: countAudience(choices.map((x) => x.choice), choices.map((x) => x.subject)), segment: inSeg.length };
 }
 
 export async function planAudience(
@@ -440,12 +443,13 @@ async function sendWhatsAppPart(
     try {
       // {empfehlungslink}: persönlicher Link je Bestandskunde
       const referral = c.occasion === "empfehlung" ? await referralCampaignParts(c.customerId, ec.id, first, kontakt) : null;
+      const topic = await recipientTopic(c, ec);
       const sent = await sendWhatsAppNotice({
         customerId: c.customerId,
         to: ec.phone!,
         purpose: OCCASIONS[c.occasion as Occasion].purpose as Parameters<typeof sendWhatsAppNotice>[0]["purpose"],
-        params: referral ? [first || "Hallo", referral.url] : [first || "Hallo", c.topic ?? ""],
-        text: referral ? referral.text : campaignText(c.occasion as Occasion, kontakt, c.topic),
+        params: referral ? [first || "Hallo", referral.url] : [first || "Hallo", topic ?? ""],
+        text: referral ? referral.text : campaignText(c.occasion as Occasion, kontakt, topic),
         contactName: displayName(ec),
         anrede: kontakt,
       });
@@ -593,7 +597,7 @@ async function sendMailPart(
     if (!first) await sleep(innerGap(rand()));
     first = false;
     const referral = c.occasion === "empfehlung" ? await referralCampaignParts(c.customerId, ec.id, ec.firstName?.split(/\s+/)[0] || "", kontaktFromExisting(ec)) : null;
-    const mail = await campaignMailFor(c, ec, { recipientId: r.id, customerName: c.customer.name, imprint, meinname, empfehlungslink: referral?.url ?? null });
+    const mail = await campaignMailFor({ ...c, topic: await recipientTopic(c, ec) }, ec, { recipientId: r.id, customerName: c.customer.name, imprint, meinname, empfehlungslink: referral?.url ?? null });
     const messageId = `bk-${r.id}@${(mb.email.split("@")[1] ?? "mail").toLowerCase()}`;
     const result = await sendViaPostfach(mb.userId, {
       to: ec.email!,
@@ -630,6 +634,23 @@ async function sendMailPart(
     if (outcome !== "ok") break;
   }
   return out;
+}
+
+/**
+ * Thema je Empfänger. Ablauf/Wechsel: die Sparte des Vertrags, der als Nächstes abläuft (statt eines Themas für
+ * alle). So geht es nur um den eigenen Vertrag des Kunden, wie es § 7 Abs. 3 UWG für E-Mails ohne Einwilligung
+ * verlangt (derselbe Bedarf). Sonst das Thema der Kampagne.
+ */
+async function recipientTopic(c: { occasion: string; topic: string | null }, ec: { id: string; nextRenewal: Date | null }): Promise<string | null> {
+  if (c.occasion !== "renewal" || !ec.nextRenewal) return c.topic;
+  const due = await prisma.existingContract.findFirst({ where: { existingCustomerId: ec.id, renewalDate: ec.nextRenewal }, select: { line: true }, orderBy: { id: "asc" } });
+  return renewalTopic(due?.line ?? null, c.topic);
+}
+
+/** Thema für Ablauf/Wechsel aus der Sparte des ablaufenden Vertrags (rein). */
+export function renewalTopic(line: string | null, fallback: string | null): string | null {
+  if (!line || line === "Sonstiges") return fallback;
+  return TOPIC_LABEL[line] ?? line;
 }
 
 /** Mitternacht Berliner Zeit des heutigen Tages. */

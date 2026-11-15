@@ -15,6 +15,7 @@ export function ImportFlow() {
   const [result, runImport, importing] = useActionState<ImportState, FormData>(runImportAction, {});
   const fileRef = useRef<HTMLInputElement>(null);
   const [bulk, setBulk] = useState({ email: false, whatsapp: false });
+  const [hinweisBulk, setHinweisBulk] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   // Zuordnung je Datei (neu erkannt, sobald eine andere Datei geprüft wurde)
   const [edits, setEdits] = useState<{ key: AnalyzeState; mapping: Mapping } | null>(null);
@@ -164,6 +165,11 @@ export function ImportFlow() {
                       {de(live.consent.whatsappNein)} nein
                     </p>
                   ) : null}
+                  {mapping.widerspruchHinweis ? (
+                    <p className="mt-1 text-[color:var(--muted)]" data-import-hinweis-counts>
+                      Hinweis auf Widerspruchsrecht laut Datei: {de(live.consent.hinweisJa)} ja, {de(live.consent.hinweisNein)} nein
+                    </p>
+                  ) : null}
                   {live.withoutName ? (
                     <p className="mt-1 text-[color:var(--muted)]" data-import-nameless>
                       {de(live.withoutName)} Kunden ohne Namen, werden neutral angesprochen.
@@ -201,7 +207,7 @@ export function ImportFlow() {
                 <legend className="px-1 font-semibold">Einwilligung in Werbung</legend>
                 <p className="text-[color:var(--muted)]">
                   Angaben aus der Datei (Spalten E-Mail- bzw. WhatsApp-Einwilligung) gelten immer. Ohne Angabe bleibt die Einwilligung „unbekannt“: Dann geht keine
-                  WhatsApp-Kampagne raus, E-Mails nur zum selben Vertrag nach § 7 Abs. 3 UWG.
+                  WhatsApp-Kampagne raus, E-Mails nur zum selben Vertrag nach § 7 Abs. 3 UWG und nur mit Nachweis zum Hinweis auf das Widerspruchsrecht (unten).
                 </p>
                 <label className="flex items-start gap-2">
                   <input type="checkbox" name="bulk_email" className="mt-0.5 h-4 w-4" checked={bulk.email} onChange={(e) => setBulk({ ...bulk, email: e.target.checked })} />
@@ -219,6 +225,43 @@ export function ImportFlow() {
                       kann. Ein „nein“ aus der Datei oder eine Abmeldung bleibt bestehen.
                     </span>
                   </label>
+                ) : null}
+              </fieldset>
+              <fieldset className="space-y-2 rounded-[var(--radius-md)] border border-[color:var(--border)] px-4 py-3" data-import-hinweis>
+                <legend className="px-1 font-semibold">Hinweis auf das Widerspruchsrecht (E-Mail ohne Einwilligung)</legend>
+                <p className="text-[color:var(--muted)]">
+                  Ohne Einwilligung dürfen Sie Bestandskunden per E-Mail nur anschreiben, wenn Sie sie schon bei der Erhebung der E-Mail-Adresse darauf hingewiesen
+                  haben, dass sie der Werbung jederzeit widersprechen können (§ 7 Abs. 3 UWG). Ohne diesen Nachweis gehen E-Mails nur mit Einwilligung raus.
+                  {mapping.widerspruchHinweis ? " Angaben aus der Spalte der Datei gelten immer." : " Sie können dafür auch oben eine Spalte zuordnen."}
+                </p>
+                <label className="flex items-start gap-2">
+                  <input type="checkbox" name="hinweis_bulk" className="mt-0.5 h-4 w-4" checked={hinweisBulk} onChange={(e) => setHinweisBulk(e.target.checked)} data-import-hinweis-bulk />
+                  <span>Alle Kunden dieser Liste wurden bei der Erhebung ihrer E-Mail-Adresse auf ihr Widerspruchsrecht hingewiesen</span>
+                </label>
+                {hinweisBulk ? (
+                  <div className="space-y-2 rounded-[var(--radius-sm)] bg-amber-50 px-3 py-2 text-amber-900">
+                    <label className="block text-xs font-medium">
+                      Wortlaut oder Quelle des Hinweises (Pflicht, wird protokolliert)
+                      <textarea
+                        name="hinweis_text"
+                        rows={2}
+                        maxLength={500}
+                        placeholder="z. B. Antragsformular Kfz, Abschnitt Datenschutz: „Sie können der Verwendung Ihrer E-Mail-Adresse für Werbung jederzeit widersprechen.“"
+                        className="mt-1 w-full rounded-[var(--radius-sm)] border border-amber-200 bg-white px-3 py-2 text-sm text-[color:var(--foreground)]"
+                      />
+                    </label>
+                    <label className="block text-xs font-medium">
+                      Hinweis gegeben seit (optional)
+                      <input type="date" name="hinweis_date" className="mt-1 h-10 rounded-[var(--radius-sm)] border border-amber-200 bg-white px-3 text-sm text-[color:var(--foreground)]" />
+                    </label>
+                    <label className="flex items-start gap-2">
+                      <input type="checkbox" name="hinweis_confirm" className="mt-0.5 h-4 w-4" />
+                      <span>
+                        Ich bestätige ausdrücklich, dass dieser Hinweis für alle Kunden der Liste bei der Erhebung der Adresse gegeben wurde und ich das auf Anfrage
+                        nachweisen kann. Ein „nein“ aus der Datei bleibt bestehen.
+                      </span>
+                    </label>
+                  </div>
                 ) : null}
               </fieldset>
               {live?.withPersonLines ? (

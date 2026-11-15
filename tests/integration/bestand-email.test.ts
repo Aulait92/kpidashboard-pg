@@ -100,16 +100,18 @@ describe("Bestandskampagnen per E-Mail und Einwilligung", () => {
     const { c } = await setup({ uwg: true });
     customers.push(c.id);
     await ec(c.id, { email: `a${uid()}@kunde.test`, emailConsent: "ja" });
-    await ec(c.id, { email: `b${uid()}@kunde.test` }); // § 7 Abs. 3
+    await ec(c.id, { email: `b${uid()}@kunde.test`, widerspruchHinweis: "ja" }); // § 7 Abs. 3 mit Nachweis
+    await ec(c.id, { email: `d${uid()}@kunde.test` }); // ohne Nachweis zum Widerspruchshinweis: nur mit Einwilligung
     await ec(c.id, { phone: "4915100000001", whatsappConsent: "ja" }); // WhatsApp, aber nicht verbunden
     await ec(c.id, { email: `c${uid()}@kunde.test`, emailOptOutAt: NOW });
     const renewal = await planAudience(c.id, "renewal", { renewalDays: 60 }, { now: NOW, waAvailable: false });
-    expect(renewal.counts).toMatchObject({ whatsapp: 0, email: 2, emailUwg: 1, excludedTotal: 2 });
+    expect(renewal.counts).toMatchObject({ whatsapp: 0, email: 2, emailUwg: 1, noProof: 1, excludedTotal: 3 });
     expect(renewal.counts.excluded["E-Mail abgemeldet"]).toBe(1);
+    expect(renewal.counts.excluded["ohne Nachweis zum Widerspruchshinweis, nur mit Einwilligung"]).toBe(1);
     // Cross-Selling ohne Einwilligung nicht per E-Mail
     const cross = await planAudience(c.id, "cross_sell", { has: ["KFZ"], lacks: ["Hausrat"] }, { now: NOW, waAvailable: false });
     expect(cross.counts).toMatchObject({ email: 1, emailUwg: 0 });
-    expect(cross.counts.excluded["Cross-Selling in eine andere Sparte nur mit Einwilligung"]).toBe(1);
+    expect(cross.counts.excluded["Cross-Selling in eine andere Sparte nur mit Einwilligung"]).toBe(2);
   });
 
   it("WhatsApp strikt: ohne Opt-in nicht geplant, Widerruf vor dem Versand → übersprungen", async () => {

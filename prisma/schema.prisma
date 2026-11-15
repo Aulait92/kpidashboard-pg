@@ -2119,6 +2119,13 @@ model ExistingCustomer {
   whatsappConsentSource String?
   // Abmeldung nur für E-Mail (Abmeldelink); optOutAt sperrt alle Kanäle
   emailOptOutAt         DateTime?
+  // Nachweis § 7 Abs. 3 UWG (Anwalts-Memo, 15.11.2026): Bei Erhebung der E-Mail-Adresse auf das Widerspruchsrecht
+  // hingewiesen? ja | nein | null = unbekannt. Ohne „ja“ gehen E-Mails nur mit Einwilligung raus.
+  // Quelle: import (Spalte der Datei) | import_pauschal | bestand_pauschal | vermittler; Text = Wortlaut bzw. Quelle
+  widerspruchHinweis       String?
+  widerspruchHinweisAt     DateTime?
+  widerspruchHinweisSource String?
+  widerspruchHinweisText   String?
   lastCampaignAt DateTime?
   // Import-Lauf, der den Datensatz angelegt hat (ExistingCustomerImport.id); Aktualisierungen ändern ihn nicht
   importId       String?

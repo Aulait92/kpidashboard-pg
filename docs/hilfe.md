@@ -805,11 +805,19 @@ Bewertung im Einzelfall liegt bei Ihnen.**
   Meta verlangt ein Opt-in vor geschäftlichen Nachrichten).
 - **E-Mail mit Einwilligung:** alle Anlässe.
 - **E-Mail ohne Einwilligung** nur als Bestandskundenwerbung nach § 7 Abs. 3 UWG: Sie bestätigen einmalig unter
-  **Bestand → Einwilligungen & Versand**, dass die Adressen aus Vertragsabschlüssen stammen und die Kunden auf ihr
-  Widerspruchsrecht hingewiesen wurden. Dann gehen ohne Einwilligung nur Anlässe zum **selben Bedarf bzw. Vertrag**
-  raus: Ablauf oder Wechsel, Vertragscheck im Jahresgespräch. **Nicht:** Cross-Selling in andere Sparten (z. B.
-  Hausrat an Kfz-Kunden), Geburtstag mit Angebot, Empfehlungs- oder Bewertungsbitte. Ohne Bestätigung gehen ohne
-  Einwilligung keine Mails raus.
+  **Bestand → Einwilligungen & Versand**, dass die Adressen aus Vertragsabschlüssen stammen. **Zusätzlich braucht
+  jeder Kunde einen Nachweis** (seit 15.11.2026), dass er schon **bei der Erhebung der E-Mail-Adresse** auf sein
+  Widerspruchsrecht hingewiesen wurde (ja/nein, Datum, Wortlaut oder Quelle). Ohne diesen Nachweis greift § 7 Abs. 3
+  nicht: E-Mails an diesen Kunden gehen **nur mit Einwilligung** raus. Den Nachweis tragen Sie ein: beim Import als
+  Spalte „Hinweis auf Widerspruchsrecht“ (ja, nein oder Datum) oder als Bestätigung für die ganze Liste (nur mit
+  Wortlaut bzw. Quelle des Hinweises und ausdrücklichem Häkchen, wird protokolliert), unter **Bestand → Einwilligungen
+  & Versand → Hinweis auf das Widerspruchsrecht** für alle bisherigen Kunden, oder je Kunde (Schild-Knopf).
+  Kampagnenvorschau, „Rechtlich erreichbar je Anlass“ und der Hinweis oben auf „Bestand“ zeigen „X ohne Nachweis, nur
+  mit Einwilligung“. Mit Nachweis gehen ohne Einwilligung nur Anlässe zum **selben Bedarf bzw. Vertrag** raus:
+  Ablauf oder Wechsel des eigenen Vertrags (die Nachricht nennt die Sparte des Vertrags, der bei diesem Kunden
+  abläuft), Vertragscheck im Jahresgespräch. **Nicht:** Cross-Selling in andere Sparten (z. B. Zahnzusatz an
+  Haftpflichtkunden, auch nicht zwischen Sachsparten wie Hausrat und Wohngebäude), Geburtstag mit Angebot, Empfehlungs-
+  oder Bewertungsbitte. Ohne Bestätigung gehen ohne Einwilligung keine Mails raus.
 - **Einwilligung im Import:** Die Spalten „E-Mail-Einwilligung“ und „WhatsApp-Einwilligung“ (ja, nein oder Datum)
   lassen sich zuordnen. Ohne Angabe bleibt die Einwilligung „unbekannt“. „Alle Kunden dieser Liste haben
   eingewilligt“ geht je Kanal nur mit ausdrücklicher Bestätigung (z. B. laut Versicherer); ein „nein“ wird dabei nie
@@ -820,7 +828,10 @@ Bewertung im Einzelfall liegt bei Ihnen.**
   E-Mail. Bitte prüfen Sie das unter **Bestand → Einwilligungen & Versand**: „Passt so“ oder die Einwilligungen auf
   „unbekannt“ setzen (nur WhatsApp oder beide).
 - **Einwilligung einholen:** In der Kundenliste (Schild-Knopf) erstellt „Link erstellen“ einen persönlichen Link mit
-  Text, z. B. für nach dem Termin, dem Abschluss oder dem Jahresgespräch. Der Kunde wählt auf einer Seite in Ihrem
+  Text, z. B. für nach dem Termin, dem Abschluss oder dem Jahresgespräch. Alle Links auf einmal: **Bestand →
+  Einwilligungen & Versand → Einwilligung einholen → „Einwilligungslinks als Liste (CSV)“** (Kunden ohne Angabe mit
+  Anschrift, Kontakt und persönlichem Link, z. B. für einen Serienbrief); derselbe Knopf steht in jeder
+  Kampagnenvorschau, sobald Kunden fehlen. Sie geben die Links selbst weiter. Der Kunde wählt auf einer Seite in Ihrem
   Namen, ob Sie ihn per E-Mail und bzw. oder WhatsApp informieren dürfen; bei E-Mail bestätigt er per Link
   (Double-Opt-in). Protokolliert werden Zeitpunkt, Text, Kanal und IP. Die Bitte per E-Mail zu senden geht nur bei
   Kunden, die Sie per E-Mail anschreiben dürfen, denn sie ist selbst Werbung.

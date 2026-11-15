@@ -110,3 +110,17 @@ describe("Bestand-Import: Vertragsfelder, Gruppierung, Warnung (14.11.2026)", ()
     expect(w?.text).toContain("kein einziger Kunde");
   });
 });
+
+describe("Spalte „Hinweis auf Widerspruchsrecht“ (§ 7 Abs. 3 UWG)", () => {
+  it("wird erkannt, eine Spalte „Werbewiderspruch“ (Kunde hat widersprochen) aber nie als Nachweis", async () => {
+    const { mappingIssues } = await import("@/lib/bestand/rows");
+    expect(detectMapping(["Kd-Nr", "E-Mail", "Hinweis Widerspruchsrecht"]).widerspruchHinweis).toBe("Hinweis Widerspruchsrecht");
+    expect(detectMapping(["Kd-Nr", "E-Mail", "Widerspruchshinweis am"]).widerspruchHinweis).toBe("Widerspruchshinweis am");
+    expect(detectMapping(["Kd-Nr", "E-Mail", "Werbewiderspruch"]).widerspruchHinweis).toBeUndefined();
+    expect(detectMapping(["Kd-Nr", "E-Mail", "Widerspruch"]).widerspruchHinweis).toBeUndefined();
+    // Unpassende Inhalte sperren den Import
+    const rows = [{ H: "Antrag 2024" }, { H: "siehe Akte" }, { H: "ja" }];
+    expect(mappingIssues(rows, { widerspruchHinweis: "H" }).some((i) => i.field === "widerspruchHinweis" && i.block)).toBe(true);
+    expect(mappingIssues([{ H: "ja" }, { H: "01.02.2024" }], { widerspruchHinweis: "H" })).toEqual([]);
+  });
+});

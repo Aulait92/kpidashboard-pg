@@ -87,7 +87,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
   };
 
   const now = new Date();
-  const [total, withPhone, withEmail, optOut, volume, provision, consentSettings, suppression, legacy] = await Promise.all([
+  const [total, withPhone, withEmail, optOut, volume, provision, consentSettings, suppression, legacy, noProof] = await Promise.all([
     prisma.existingCustomer.count({ where: { customerId } }),
     // WhatsApp nur mit Opt-in (Ole, 14.11.2026)
     prisma.existingCustomer.count({ where: { customerId, phone: { not: null }, optOutAt: null, whatsappConsent: "ja" } }),
@@ -98,6 +98,10 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
     loadConsentSettings(customerId),
     loadSuppression(customerId),
     prisma.existingCustomer.count({ where: { customerId, OR: [{ whatsappConsentSource: "versicherer_pauschal" }, { emailConsentSource: "versicherer_pauschal" }] } }),
+    // Ohne Nachweis zum Widerspruchshinweis (§ 7 Abs. 3 UWG): per E-Mail nur mit Einwilligung
+    prisma.existingCustomer.count({
+      where: { customerId, email: { not: null }, emailConsent: null, optOutAt: null, emailOptOutAt: null, OR: [{ widerspruchHinweis: null }, { widerspruchHinweis: "nein" }] },
+    }),
   ]);
   // Beitragsvolumen aktiver Verträge und grobe Bestandsprovision (Satz für Sach/Privatschutz aus „Meine Provisionen“)
   const premiumSum = Number(volume._sum.premiumTotal ?? 0);
@@ -171,13 +175,15 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
           </Link>
         </div>
       ) : null}
-      {total && ((legacy > 0 && !consentSettings.legacyReviewedAt) || !consentSettings.uwgConfirmed) ? (
+      {total && ((legacy > 0 && !consentSettings.legacyReviewedAt) || !consentSettings.uwgConfirmed || noProof > 0) ? (
         <div className="mb-5 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-bestand-consent-notice>
           <ShieldCheck className="h-4 w-4 shrink-0" />
           <span className="min-w-0 flex-1">
             {legacy > 0 && !consentSettings.legacyReviewedAt
               ? `Bitte prüfen: Für ${legacy.toLocaleString("de-DE")} Kunden gilt die Einwilligung aus Ihrer pauschalen Bestätigung beim Import („laut Versicherer“) für WhatsApp und E-Mail.`
-              : "Ohne Einwilligung gehen E-Mails nur nach § 7 Abs. 3 UWG raus. Dafür fehlt noch Ihre Bestätigung."}
+              : !consentSettings.uwgConfirmed
+                ? "Ohne Einwilligung gehen E-Mails nur nach § 7 Abs. 3 UWG raus. Dafür fehlt noch Ihre Bestätigung."
+                : `${noProof.toLocaleString("de-DE")} Kunden ohne Nachweis zum Hinweis auf das Widerspruchsrecht: E-Mails an sie gehen nur mit Einwilligung.`}
           </span>
           <ButtonLink href="/buyer/bestand/einwilligungen" variant="primary">
             Einwilligungen prüfen
@@ -439,7 +445,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                               email={(e.emailConsent as "ja" | "nein" | null) ?? null}
                               whatsapp={(e.whatsappConsent as "ja" | "nein" | null) ?? null}
                               emailOptOut={!!e.emailOptOutAt}
-                              uwg={consentSettings.uwgConfirmed}
+                              uwg={consentSettings.uwgConfirmed && e.widerspruchHinweis === "ja"}
                             />
                           </span>
                         ) : null}
@@ -470,6 +476,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                       name={title}
                       email={(e.emailConsent as "ja" | "nein" | null) ?? null}
                       whatsapp={(e.whatsappConsent as "ja" | "nein" | null) ?? null}
+                      hinweis={(e.widerspruchHinweis as "ja" | "nein" | null) ?? null}
                       mailAllowed={consentRequestByMailAllowed(subjectOf(e, suppression), consentSettings)}
                       readOnly={ctx.preview}
                     />

@@ -1,10 +1,21 @@
 // Bestandskampagnen (Ole, 14.11.2026): Kanalwahl, Einwilligung je Anlass, WhatsApp strikt, Drosselung,
 // Antworten, Trichter je Kanal, 60-Tage-Zuordnung, Provision je Sparte, Texte und Vorlagen-Hinweise. Ohne Datenbank.
 import { describe, expect, it } from "vitest";
-import { chooseChannel, consentRequestByMailAllowed, countAudience, emailDecision, parseConsent, whatsappDecision, type ConsentSubject } from "@/lib/bestand/einwilligung";
+import {
+  chooseChannel,
+  consentRequestByMailAllowed,
+  countAudience,
+  emailDecision,
+  isSimilarLine,
+  lacksUwgProof,
+  NO_PROOF_REASON,
+  parseConsent,
+  whatsappDecision,
+  type ConsentSubject,
+} from "@/lib/bestand/einwilligung";
 import { afterSend, bounceCheck, effectiveDailyLimit, inMailWindow, isBounceError, mailSlots, providerDailyLimit, type ThrottleState } from "@/lib/bestand/mail-drossel";
 import { buildCampaignMail, campaignMailFooter, defaultCampaignMail, fillCampaignMail, imprintFromWebsiteInfo, ohneGedankenstriche } from "@/lib/bestand/kampagnen-mail";
-import { classifyCampaignReply, effectiveMode, inSegment } from "@/lib/bestand/campaigns";
+import { classifyCampaignReply, effectiveMode, inSegment, renewalTopic } from "@/lib/bestand/campaigns";
 import { attributeContract, attributeToCampaign, contractOrigin } from "@/lib/lead-herkunft";
 import { ertragOf, funnelOf, groupStats, quote, type CampaignStats, type FunnelRecipient } from "@/lib/bestand/statistik";
 import { summarizeProvision } from "@/lib/ertrag";
@@ -20,6 +31,8 @@ const subject = (o: Partial<ConsentSubject> = {}): ConsentSubject => ({
   emailOptOutAt: null,
   emailConsent: null,
   whatsappConsent: null,
+  // Standard: Nachweis zum Widerspruchshinweis liegt vor (eigene Tests für „fehlt“)
+  widerspruchHinweis: "ja",
   ...o,
 });
 const UWG = { uwgConfirmed: true };
@@ -81,6 +94,57 @@ describe("Einwilligung je Anlass (§ 7 Abs. 3 UWG nur zum selben Bedarf)", () =>
     expect(consentRequestByMailAllowed(subject({ emailConsent: "nein" }), UWG)).toBe(false);
     expect(consentRequestByMailAllowed(subject({ emailOptOutAt: D("2026-11-01") }), UWG)).toBe(false);
   });
+  it("Ohne Nachweis zum Widerspruchshinweis greift § 7 Abs. 3 nicht: E-Mail nur mit Einwilligung, Bitte um Einwilligung nicht per E-Mail", () => {
+    const ohne = subject({ widerspruchHinweis: null });
+    expect(emailDecision(ohne, "renewal", UWG)).toEqual({ ok: false, reason: NO_PROOF_REASON });
+    expect(emailDecision(subject({ widerspruchHinweis: "nein" }), "review", UWG)).toEqual({ ok: false, reason: NO_PROOF_REASON });
+    expect(emailDecision(subject({ widerspruchHinweis: null, emailConsent: "ja" }), "renewal", UWG)).toEqual({ ok: true, basis: "einwilligung" });
+    expect(consentRequestByMailAllowed(ohne, UWG)).toBe(false);
+    expect(lacksUwgProof(ohne)).toBe(true);
+    expect(lacksUwgProof(subject())).toBe(false);
+    expect(lacksUwgProof(subject({ widerspruchHinweis: null, emailConsent: "ja" }))).toBe(false);
+    expect(lacksUwgProof(subject({ widerspruchHinweis: null, email: null }))).toBe(false);
+    expect(lacksUwgProof(subject({ widerspruchHinweis: null, emailOptOutAt: D("2026-11-01") }))).toBe(false);
+  });
+  it("Zählung „X ohne Nachweis, nur mit Einwilligung“ (nicht für Kunden, die WhatsApp bekommen)", () => {
+    const subs = [subject({ widerspruchHinweis: null }), subject({ widerspruchHinweis: null, whatsappConsent: "ja" }), subject(), subject({ widerspruchHinweis: null, emailConsent: "ja" })];
+    const c = countAudience(
+      subs.map((s) => chooseChannel("whatsapp_first", s, "renewal", UWG)),
+      subs,
+    );
+    expect(c).toMatchObject({ whatsapp: 1, email: 2, emailUwg: 1, noProof: 1, excludedTotal: 1, excluded: { [NO_PROOF_REASON]: 1 } });
+  });
+  it("§ 7 Abs. 3 eng: nur dieselbe Sparte ist ähnlich; Cross-Selling ohne Einwilligung nie, auch mit Nachweis", () => {
+    expect(isSimilarLine("KFZ", "KFZ")).toBe(true);
+    expect(isSimilarLine("Haftpflicht", "Kranken")).toBe(false); // Haftpflicht → Zahnzusatz
+    expect(isSimilarLine("Hausrat", "Wohngebäude")).toBe(false); // Sachsparten untereinander nur mit Einwilligung
+    expect(isSimilarLine("Haftpflicht", "Hausrat")).toBe(false);
+    expect(isSimilarLine("Sonstiges", "Sonstiges")).toBe(false);
+    expect(emailDecision(subject(), "cross_sell", UWG)).toMatchObject({ ok: false });
+    expect(emailDecision(subject(), "birthday", UWG)).toMatchObject({ ok: false });
+  });
+  it("Ablauf/Wechsel nennt die Sparte des eigenen ablaufenden Vertrags", () => {
+    expect(renewalTopic("KFZ", "Hausrat")).toBe("Kfz-Versicherung");
+    expect(renewalTopic("Tier", null)).toBe("Tier");
+    expect(renewalTopic(null, "Hausrat")).toBe("Hausrat");
+    expect(renewalTopic("Sonstiges", null)).toBeNull();
+  });
+  it("Import: Spalte „Hinweis auf Widerspruchsrecht“ (ja, nein, Datum; „nein“ geht vor)", () => {
+    const g = groupRows(
+      [
+        { Nr: "1", Mail: "a@test.local", Hinweis: "ja", Sparte: "KFZ" },
+        { Nr: "1", Mail: "a@test.local", Hinweis: "nein", Sparte: "Hausrat" },
+        { Nr: "2", Mail: "b@test.local", Hinweis: "03.05.2024", Sparte: "KFZ" },
+        { Nr: "3", Mail: "c@test.local", Hinweis: "", Sparte: "KFZ" },
+      ],
+      { externalNo: "Nr", email: "Mail", widerspruchHinweis: "Hinweis", line: "Sparte" },
+    );
+    expect(g.groups.get("1")?.widerspruchHinweis).toBe("nein");
+    expect(g.groups.get("2")?.widerspruchHinweis).toBe("ja");
+    expect(g.groups.get("2")?.widerspruchHinweisAt?.toISOString().slice(0, 10)).toBe("2024-05-03");
+    expect(g.groups.get("3")?.widerspruchHinweis).toBeNull();
+    expect(g.consent).toMatchObject({ hinweisJa: 1, hinweisNein: 1 });
+  });
   it("Importwerte: ja, nein, Datum, leer", () => {
     expect(["ja", "X", "1", "true", "01.02.2024", "2024-02-01"].map(parseConsent)).toEqual(["ja", "ja", "ja", "ja", "ja", "ja"]);
     expect(["nein", "0", "keine", "widerrufen"].map(parseConsent)).toEqual(["nein", "nein", "nein", "nein"]);
@@ -98,7 +162,7 @@ describe("Einwilligung je Anlass (§ 7 Abs. 3 UWG nur zum selben Bedarf)", () =>
     expect(a.whatsappConsent).toBe("ja");
     expect(a.whatsappConsentAt?.toISOString().slice(0, 10)).toBe("2025-03-01");
     expect(g.groups.get("2")!.emailConsent).toBeNull();
-    expect(g.consent).toEqual({ emailJa: 0, emailNein: 1, whatsappJa: 1, whatsappNein: 0 });
+    expect(g.consent).toEqual({ emailJa: 0, emailNein: 1, whatsappJa: 1, whatsappNein: 0, hinweisJa: 0, hinweisNein: 0 });
     expect(g.withPersonLines).toBe(1);
   });
 });
