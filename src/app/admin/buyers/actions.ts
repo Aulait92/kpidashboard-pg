@@ -190,3 +190,23 @@ export async function deleteBuyerAccount(formData: FormData) {
   revalidatePath("/admin/buyers");
   revalidatePath("/admin/kunden", "layout");
 }
+
+/** Login-E-Mail eines Kunden-Logins ändern (Ole, 15.11.2026, z. B. Testkunde mit frischer Adresse). */
+export async function changeBuyerEmail(_prev: CreateBuyerState, formData: FormData): Promise<CreateBuyerState> {
+  await requireAdmin();
+  const userId = String(formData.get("userId") ?? "");
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!userId || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Bitte eine gültige E-Mail-Adresse eingeben." };
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, email: true, role: true, customerId: true } });
+  if (!user || user.role !== "BUYER") return { error: "Kunden-Login nicht gefunden." };
+  if (user.email === email) return { ok: true, createdEmail: email };
+  const taken = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+  if (taken) return { error: "Diese E-Mail-Adresse hat schon einen Login." };
+  await prisma.user.update({ where: { id: userId }, data: { email } });
+  // E-Mail steht im Sitzungs-Cookie → neu anmelden lassen
+  await invalidateUserSessions(userId);
+  await audit("user.email_change", { entity: "User", entityId: userId, customerId: user.customerId, details: { from: user.email, to: email } });
+  revalidatePath("/admin/buyers");
+  revalidatePath("/admin/kunden", "layout");
+  return { ok: true, createdEmail: email };
+}

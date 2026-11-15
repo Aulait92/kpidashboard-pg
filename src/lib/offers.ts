@@ -54,7 +54,7 @@ export type OfferFormInput = {
   /** Modul „Empfehlungen & Bewertungen“ dazubuchen. */
   empfehlungModule?: boolean;
   /** Vertreter (Standard) oder Makler: bestimmt die Garantien. */
-  vermittlerTyp?: "vertreter" | "makler";
+  vermittlerTyp?: "vertreter" | "mehrfachvertreter" | "makler";
   /**
    * Testangebot (Ole, 15.11.2026): alles 0 €, Annahme ohne Zahlung, legt einen Testkunden an
    * (zählt nicht in Admin-Zahlen und Abrechnung, später löschbar).
@@ -121,7 +121,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
   if (products.length === 0) throw new Error("Bitte mindestens ein Produkt angeben.");
 
   const pkg: OfferPackage = input.package === "service" ? "service" : "software";
-  const vermittlerTyp = input.vermittlerTyp === "makler" ? "makler" : "vertreter";
+  const vermittlerTyp = input.vermittlerTyp === "makler" ? "makler" : input.vermittlerTyp === "mehrfachvertreter" ? "mehrfachvertreter" : "vertreter";
   if (!input.startDate || !/^\d{4}-\d{2}-\d{2}$/.test(input.startDate)) {
     throw new Error("Bitte ein Startdatum angeben – ab dann läuft die Monatsgebühr.");
   }

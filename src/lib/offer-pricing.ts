@@ -70,7 +70,8 @@ export const normalizeTerm = (t: unknown): OfferTerm => (t === "12m" || t === "3
 export const setupForTerm = (t: OfferTerm): number =>
   t === "12m" ? PRICE_LIST.setup12m : t === "3m" ? PRICE_LIST.setup3m : PRICE_LIST.setupNoTerm;
 /** Vertreter oder Makler: bestimmt die Garantien (Break-even bzw. Vertrags-Garantie). */
-export type OfferVermittler = "vertreter" | "makler";
+/** Mehrfachvertreter rechnet wie Vertreter (Preise, Break-even-Garantie), Status geht in die Erstinformation. */
+export type OfferVermittler = "vertreter" | "mehrfachvertreter" | "makler";
 export type OfferPackage = "software" | "service";
 export type OfferProduct = { name: string; dailyBudget: number };
 

@@ -82,7 +82,12 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
         data: {
           plan: pkg,
           // Mehrfachvertreter (Erstinformation) bleibt bei einem Vertreter-Angebot erhalten
-          vermittlerTyp: offer.vermittlerTyp === "makler" ? "makler" : (await prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerTyp: true } }))?.vermittlerTyp === "mehrfachvertreter" ? "mehrfachvertreter" : "vertreter",
+          vermittlerTyp:
+            offer.vermittlerTyp === "makler" || offer.vermittlerTyp === "mehrfachvertreter"
+              ? offer.vermittlerTyp
+              : (await prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerTyp: true } }))?.vermittlerTyp === "mehrfachvertreter"
+                ? "mehrfachvertreter"
+                : "vertreter",
           ...(pkg === "software" ? { newUi: true } : {}),
           retainerMonthly: offer.monthlyFee,
           retainerStart: offer.startDate,
@@ -97,7 +102,7 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
           // Testangebot → Testkunde (zählt nicht in Admin-Zahlen und Abrechnung, später löschbar)
           isTest: offer.isTest,
           // Vertreter oder Makler aus dem Angebot übernehmen (Provisionen, Rechner, Budget-Empfehlung)
-          vermittlerTyp: offer.vermittlerTyp === "makler" ? "makler" : "vertreter",
+          vermittlerTyp: offer.vermittlerTyp === "makler" || offer.vermittlerTyp === "mehrfachvertreter" ? offer.vermittlerTyp : "vertreter",
           // Neue Kunden mit Software starten direkt in der neuen Oberfläche (Ole, 11.11.).
           newUi: pkg === "software",
           retainerMonthly: offer.monthlyFee,

@@ -155,11 +155,12 @@ export function OfferForm({
         </Card>
 
         <Card>
-          <CardHeader title="Kunde ist …" hint="Makler: Vertrags-Garantie statt Break-even-Garantie" />
-          <div className="grid grid-cols-2 gap-2 p-5" role="radiogroup" aria-label="Vertreter oder Makler">
+          <CardHeader title="Kunde ist …" hint="Makler: Vertrags-Garantie statt Break-even-Garantie. Der Status geht auch in die Erstinformation." />
+          <div className="grid gap-2 p-5 sm:grid-cols-3" role="radiogroup" aria-label="Vertreter, Mehrfachvertreter oder Makler">
             {(
               [
-                ["vertreter", "Vertreter", "Abschlussprovision · Break-even-Garantie"],
+                ["vertreter", "Vertreter (AO)", "Abschlussprovision · Break-even-Garantie"],
+                ["mehrfachvertreter", "Mehrfachvertreter", "wie Vertreter · Break-even-Garantie"],
                 ["makler", "Makler", "Bestandscourtage · Vertrags-Garantie"],
               ] as const
             ).map(([k, t, s]) => (

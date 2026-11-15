@@ -7,7 +7,7 @@ import { startPreviewAction } from "@/app/buyer/preview-actions";
 import { Badge, Button } from "@/components/ui";
 import { ActionSheet, Sheet, type SheetAction } from "@/components/ui/sheet";
 import { ToastProvider, useToast } from "@/components/ui/toast";
-import { deleteBuyerAccount, resetBuyerPassword, sendBuyerAccessLink } from "./actions";
+import { changeBuyerEmail, deleteBuyerAccount, resetBuyerPassword, sendBuyerAccessLink } from "./actions";
 import { ReassignCustomerForm } from "./buyer-management";
 
 export type LoginRow = {
@@ -149,14 +149,16 @@ function RowActions({ r }: { r: LoginRow }) {
   const toast = useToast();
   const router = useRouter();
   const send = useSendLink();
-  const [open, setOpen] = useState<"menu" | "password" | "delete" | null>(null);
+  const [open, setOpen] = useState<"menu" | "password" | "email" | "delete" | null>(null);
   const [password, setPassword] = useState("");
+  const [newEmail, setNewEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const title = r.displayName ?? r.email;
 
   const actions: SheetAction[] = [
     { label: "Passwort setzen", icon: KeyRound, onSelect: () => setTimeout(() => setOpen("password"), 0) },
+    { label: "E-Mail-Adresse ändern", icon: Mail, onSelect: () => setTimeout(() => setOpen("email"), 0) },
     {
       label: r.lastLogin ? "Link zum Passwort ändern senden" : "Einladung erneut senden",
       icon: Mail,
@@ -168,6 +170,7 @@ function RowActions({ r }: { r: LoginRow }) {
   const close = () => {
     setOpen(null);
     setPassword("");
+    setNewEmail("");
     setError(null);
   };
 
@@ -180,6 +183,18 @@ function RowActions({ r }: { r: LoginRow }) {
       }
       close();
       toast.show({ message: `Neues Passwort für ${r.email} gesetzt` });
+      router.refresh();
+    });
+
+  const saveEmail = () =>
+    start(async () => {
+      const res = await changeBuyerEmail({}, fd({ userId: r.id, email: newEmail }));
+      if (res.error) {
+        setError(res.error);
+        return;
+      }
+      close();
+      toast.show({ message: `Login-E-Mail geändert: ${res.createdEmail}` });
       router.refresh();
     });
 
@@ -237,6 +252,31 @@ function RowActions({ r }: { r: LoginRow }) {
           {error ? <p className="text-xs font-medium text-rose-700">{error}</p> : null}
           <Button type="submit" variant="primary" size="md" className="w-full" disabled={pending || password.length < 8}>
             {pending ? "Speichert…" : "Passwort speichern"}
+          </Button>
+        </form>
+      </Sheet>
+      <Sheet open={open === "email"} onClose={close} title="E-Mail-Adresse ändern" message={`${r.email} · der Login meldet sich danach mit der neuen Adresse an, Passwort bleibt.`}>
+        <form
+          className="space-y-3 px-5 py-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            saveEmail();
+          }}
+        >
+          <label className="block">
+            <span className="text-xs font-medium text-[color:var(--muted)]">Neue E-Mail-Adresse</span>
+            <input
+              type="email"
+              autoFocus
+              required
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
+            />
+          </label>
+          {error ? <p className="text-xs font-medium text-rose-700">{error}</p> : null}
+          <Button type="submit" variant="primary" size="md" className="w-full" disabled={pending || !newEmail.includes("@")}>
+            {pending ? "Speichert…" : "E-Mail speichern"}
           </Button>
         </form>
       </Sheet>
