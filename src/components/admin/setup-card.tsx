@@ -90,13 +90,14 @@ export async function SetupCard({ customerId, notice }: { customerId: string; no
           <p className="font-medium">Erstinformation</p>
           <p className="mt-1 text-xs">
             {vermittlerStatusLabel(erstinfo.status)}
-            {erstinfo.statusAt ? "" : " (nicht bestätigt)"} · Registernummer {erstinfo.registerNummer ?? "fehlt"} ·{" "}
-            {erstinfo.url ? "Link" : erstinfo.fileName ? "PDF" : "kein Dokument"}
+            {erstinfo.bestaetigtAt ? "" : " (nicht bestätigt)"} · Registernummer {erstinfo.registerNummer ?? "fehlt"} ·{" "}
+            {erstinfo.fileName ? "eigenes PDF" : "PDF aus den Angaben"}
+            {erstinfo.fehlt.length ? ` · fehlt: ${erstinfo.fehlt.join(", ")}` : " · vollständig"}
             {erstinfo.token ? (
               <>
                 {" · "}
-                <a href={`/erstinformation/${erstinfo.token}`} target="_blank" rel="noreferrer" className="underline">
-                  öffentliche Seite
+                <a href={`/erstinformation/${erstinfo.token}/pdf`} target="_blank" rel="noreferrer" className="underline">
+                  PDF
                 </a>
               </>
             ) : null}

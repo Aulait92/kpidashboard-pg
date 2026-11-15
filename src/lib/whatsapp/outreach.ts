@@ -23,6 +23,7 @@ import { anspracheOf } from "@/lib/whatsapp/reminders";
 import { ansprechpartner } from "@/lib/lead-anrede";
 import type { Ansprache } from "@/lib/ansprache";
 import { erstinfoUrlFor } from "@/lib/erstinformation";
+import { sendErstinfoPdf } from "@/lib/whatsapp/erstinfo-pdf";
 
 /**
  * Parameter und Freitext für das Erstanschreiben: Vorname, Link zur Erstinformation (§ 15 VersVermV);
@@ -157,7 +158,7 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
 
       try {
         const { who, params, text } = await outreachMessage({ customerId: agent.customerId, leadId: lead.id, phone, name: lead.name, an });
-        await sendWhatsAppNotice({
+        const notice = await sendWhatsAppNotice({
           customerId: agent.customerId,
           to: phone,
           purpose: "outreach",
@@ -167,6 +168,11 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
           contactName: lead.name,
           anrede: who.kontakt,
         });
+        // Fenster offen (Freitext): Erstinformation gleich als PDF hinterher (§ 16 VersVermV). Nach einer Vorlage ist
+        // das Fenster zu; dann folgt das PDF mit der ersten Antwort des Assistenten (lib/whatsapp/erstinfo-pdf.ts).
+        if (notice.mode === "text") {
+          await sendErstinfoPdf({ conversationId: notice.conversationId, an, advisorName: who.advisor || who.firm });
+        }
         await prisma.lead.update({
           where: { id: lead.id },
           data: { outreachAt: new Date(), outreachStatus: booked ? "sent_booked" : "sent" },

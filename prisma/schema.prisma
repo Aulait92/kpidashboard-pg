@@ -3611,6 +3611,28 @@ model Erstinformation {
   registerNummer String?
   // Status (Customer.vermittlerTyp) in der Einrichtung bestätigt
   statusAt       DateTime?
+  // Pflichtangaben nach § 15 Abs. 1 VersVermV (Ole, 15.11.2026). null = Vorschlag aus Impressum/Angebot
+  // (lib/erstinformation-shared.ts erstinfoDaten), gespeichert wird beim Bestätigen in der Einrichtung.
+  name           String?
+  firma          String?
+  anschrift      String?
+  telefon        String?
+  email          String?
+  // Versicherer: Ausschließlichkeitsvertreter genau einer, Mehrfachvertreter mindestens einer
+  versicherer    String[]  @default([])
+  // Nur Mehrfachvertreter: "abs1" (eigene Erlaubnis) | "abs7" (gebunden, Produkte nicht in Konkurrenz)
+  erlaubnis      String?
+  beratung       Boolean   @default(true)
+  // Beteiligungen über 10 % (Nr. 10/11); null = keine
+  beteiligungen  String?
+  // provision | courtage | honorar (mehrere = Verknüpfung); leer = Vorschlag nach Status
+  verguetung     String[]  @default([])
+  zuwendungen    Boolean   @default(false)
+  // Zuständige IHK (Registrierungsstelle)
+  ihk            String?
+  // Angaben vom Vermittler geprüft und gespeichert (Pflicht für „vollständig“)
+  bestaetigtAt   DateTime?
+  // Eigener Link (alt): gilt nicht mehr als Erstinformation, § 16 VersVermV verlangt einen dauerhaften Datenträger
   url            String?
   fileName       String?
   contentType    String?

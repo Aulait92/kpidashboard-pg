@@ -125,7 +125,12 @@ async function sendLeadEmailInner(
   if (!ev) return { sent: false, reason: "not_found" };
 
   const who = await ansprechpartner({ customerId: appt.customerId, leadId: appt.leadId, phone: conv?.contactPhone, name: conv?.contactName });
-  const c = content(kind, ev, who.kontakt, asAnsprache(appt.customer?.leadAddress));
+  const an = asAnsprache(appt.customer?.leadAddress);
+  const c = content(kind, ev, who.kontakt, an);
+  // Erstinformation als PDF-Anhang an der Terminbestätigung (§ 16 VersVermV: dauerhafter Datenträger; bucht der
+  // Lead selbst, ist das oft der erste Kontakt). Nur vollständige Erstinformationen (lib/erstinformation.ts).
+  const erstinfo = kind === "booked" ? await erstinfoAnhang(appt.customerId) : null;
+  if (erstinfo) c.lines.push(erstinfoMailZeile(an, ev.advisorName));
   const displayName = ev.advisorName.replace(/["<>]/g, "");
   const icsUrl = `${new URL(ev.manageUrl).origin}/book/manage/${ev.token}/ics`;
 
@@ -164,14 +169,19 @@ async function sendLeadEmailInner(
     subject: c.subject,
     html,
     text,
-    ...(c.calendar
+    ...(c.calendar || erstinfo
       ? {
           attachments: [
-            {
-              filename: "termin.ics",
-              content: Buffer.from(buildIcs(ev), "utf8"),
-              contentType: "text/calendar; charset=utf-8",
-            },
+            ...(c.calendar
+              ? [
+                  {
+                    filename: "termin.ics",
+                    content: Buffer.from(buildIcs(ev), "utf8"),
+                    contentType: "text/calendar; charset=utf-8",
+                  },
+                ]
+              : []),
+            ...(erstinfo ? [{ filename: erstinfo.fileName, content: Buffer.from(erstinfo.bytes), contentType: "application/pdf" }] : []),
           ],
         }
       : {}),
@@ -181,6 +191,26 @@ async function sendLeadEmailInner(
     return { sent: false, reason: error.message ?? "send_failed" };
   }
   return { sent: true };
+}
+
+/** Satz zum Anhang mit der Erstinformation (beide Fassungen, ohne Gedankenstriche). */
+export function erstinfoMailZeile(an: Ansprache, advisor: string): string {
+  return a(
+    an,
+    `Im Anhang findest du die Erstinformation zu ${advisor} als Versicherungsvermittler (PDF). Auf Wunsch bekommst du sie auch kostenlos auf Papier.`,
+    `Im Anhang finden Sie die Erstinformation zu ${advisor} als Versicherungsvermittler (PDF). Auf Wunsch erhalten Sie sie auch kostenlos auf Papier.`,
+  );
+}
+
+async function erstinfoAnhang(customerId: string): Promise<{ bytes: Uint8Array; fileName: string } | null> {
+  try {
+    const { erstinfoBereit, erstinfoDokument } = await import("@/lib/erstinformation");
+    if (!(await erstinfoBereit(customerId))) return null;
+    return await erstinfoDokument({ customerId });
+  } catch (err) {
+    console.error("[lead email] Erstinformation", err instanceof Error ? err.message : err);
+    return null;
+  }
 }
 
 /** Antworten des Leads gehen an den Kunden: hinterlegte Berater-Adresse, sonst die Login-Adresse des Inhabers. */

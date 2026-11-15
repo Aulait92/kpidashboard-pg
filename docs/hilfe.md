@@ -17,7 +17,7 @@ Seiten aus der Liste „Seiten“ unten.
 | /buyer/konto | Konto & Rechnungen | Vertrag, Werbebudget ändern, weiteres Produkt buchen, Rechnungen, Zahlungsart, Pause/Urlaub (nur Inhaber) |
 | /buyer/team | Team | Berater einladen, Leads verteilen (nur Inhaber) |
 | /buyer/kalender | Mein Kalender | „Ihr Kalender“ verbinden (ein Kalender je Person), andere Quelle für freie Zeiten (ICS/Allianz), Team-Übersicht für Inhaber, Lead-Zeiten, Zeit blockieren |
-| /buyer/einrichtung | Einrichtung | Fortschritt „Einrichtung x von y“, Fragebogen, Erstinformation (Status, Registernummer, PDF oder Link), Meta freigeben (prüfen/anfragen), Kalender, E-Mail-Postfach, WhatsApp, Kundenliste, Bewertungslink, Team, Einwilligung im Leadformular, App aufs Handy, Provisionen, Hilfetermin |
+| /buyer/einrichtung | Einrichtung | Fortschritt „Einrichtung x von y“, Fragebogen, Erstinformation (Pflichtangaben nach § 15 VersVermV prüfen und bestätigen oder eigenes PDF), Meta freigeben (prüfen/anfragen), Kalender, E-Mail-Postfach, WhatsApp, Kundenliste, Bewertungslink, Team, Einwilligung im Leadformular, App aufs Handy, Provisionen, Hilfetermin |
 | /buyer/bestand | Bestand | Bestandskunden und Kampagnen (Zusatzmodul; ohne Modul mit Knopf „Jetzt buchen“, sonst „Modul anfragen“) |
 | /buyer/bestand/import | Kundenliste hochladen | Excel/CSV importieren |
 | /buyer/bestellen | Bestellen | Leads für eine Woche bestellen (bei Pay-per-Lead) |
@@ -228,12 +228,26 @@ Seiten aus der Liste „Seiten“ unten.
 - **Keine Beratung durch den Assistenten:** Er nennt keine Versicherer, Tarife, Preise oder Beiträge, vergleicht nicht und
   sagt nichts dazu, was für jemanden passt. Jede Antwort wird vor dem Senden geprüft; fragt ein Lead danach, antwortet er
   „Das klärt [Ihr Name] im Termin mit Ihnen.“ und bietet einen Termin an.
-- **Erstinformation:** In der ersten Nachricht schickt der Assistent den Link zu Ihrer Erstinformation (§ 15 VersVermV).
-  Hinterlegen unter **Einrichtung → Erstinformation für Ihre Leads**: Status (Makler, Mehrfachvertreter oder
-  Ausschließlichkeitsvertreter), Registernummer (D-XXXX-XXXXX-XX) und Ihre Erstinformation als PDF oder Link. Fehlt etwas,
-  steht oben auf „Heute“ ein Hinweis. Ohne PDF oder Link zeigt der Link Ihre Angaben aus der Einrichtung (Name, Status,
-  Registernummer, Vermittlerregister, Schlichtungsstellen). Tippgeber können den Dienst nicht nutzen, weil der Assistent
-  Termine für einen erlaubten Vermittler vereinbart.
+- **Erstinformation:** Die Erstinformation (§ 15 VersVermV) muss Ihr Lead beim ersten Kontakt als Dokument bekommen
+  (§ 16 VersVermV), ein Link allein reicht nicht. Deshalb schickt der Assistent sie als **PDF per WhatsApp**: direkt nach
+  seiner ersten Antwort an den Lead (WhatsApp erlaubt Dokumente erst, wenn der Lead geschrieben hat). Bucht ein Lead selbst
+  über die Buchungsseite, hängt das PDF an der **Terminbestätigung per E-Mail**. Der Link zur Erstinformation steht
+  zusätzlich in der ersten Nachricht. Im PDF steht auch, dass der Lead sie auf Wunsch auf Papier bekommt.
+  - Prüfen unter **Einrichtung → Erstinformation für Ihre Leads**. Vorausgefüllt aus Angebot und Impressum: Status
+    (Makler, Mehrfachvertreter oder Ausschließlichkeitsvertreter), Name, Firma, Anschrift, Registernummer
+    (D-XXXX-XXXXX-XX), zuständige IHK, Beratung (Standard: ja), Vergütung (Standard: Provision bei Vertretern, Courtage
+    bei Maklern; Honorar und Kombinationen möglich), andere Zuwendungen (Standard: nein) und Beteiligungen über 10 %
+    (Standard: keine). Einmal **Angaben bestätigen**, erst dann gilt die Erstinformation als vollständig.
+  - **Ausschließlichkeitsvertreter** tragen genau einen Versicherer ein („Für welchen Versicherer sind Sie tätig?“), im
+    Dokument steht dann z. B. „gebundener Versicherungsvertreter nach § 34d Abs. 7 Satz 1 Nr. 1 GewO, tätig
+    ausschließlich für die Allianz Versicherungs-AG“. **Mehrfachvertreter** tragen alle Versicherer ein (einer je Zeile)
+    und wählen, ob sie eine eigene Erlaubnis nach § 34d Abs. 1 GewO haben oder gebunden nach Abs. 7 sind (nur bei
+    Produkten, die nicht in Konkurrenz stehen). **Makler**: „Versicherungsmakler mit Erlaubnis nach § 34d Abs. 1 GewO“.
+  - Eigene Vorlage: Ausschließlichkeitsvertreter haben meist eine fertige Erstinformation ihrer Gesellschaft. Laden Sie
+    das PDF hoch, dann schickt der Assistent genau dieses Dokument (die Angaben im Formular sind dann freiwillig, die
+    Registernummer bleibt Pflicht).
+  - Fehlt etwas, steht oben auf „Heute“ ein Hinweis, und der Assistent schickt bis dahin nur den Link, kein PDF.
+    Tippgeber können den Dienst nicht nutzen, weil der Assistent Termine für einen erlaubten Vermittler vereinbart.
 - **Gesundheitsangaben** aus dem Leadformular (z. B. Vorerkrankungen, Behandlungen, BMI) bekommt der Assistent nicht, und sie
   gehen nicht per WhatsApp raus. Sie sehen sie im Kontakt unter **Gesundheitsangaben (vertraulich)**.
 
@@ -247,7 +261,8 @@ Seiten aus der Liste „Seiten“ unten.
 - Status: **In Prüfung bei Meta** (meist Minuten bis wenige Stunden), **Freigegeben** oder
   **Abgelehnt**: dann kümmern wir uns und reichen einen angepassten Text neu ein.
 - Erst wenn „Erste Nachricht an neue Leads“ freigegeben ist, kann der Assistent neue Leads anschreiben.
-- Seit 15.11.2026 enthält die erste Nachricht den vollständigen KI-Hinweis und den Link zur Erstinformation. Die neuen
+- Seit 15.11.2026 enthält die erste Nachricht den vollständigen KI-Hinweis und den Link zur Erstinformation (das PDF
+  folgt nach der ersten Antwort des Leads, siehe Erstinformation). Die neuen
   Fassungen reichen wir automatisch ein; bis Meta sie freigibt, geht die bisherige raus und der Assistent ergänzt Hinweis und
   Link in seiner ersten Antwort.
 - Mit dem Bestandskunden-Modul kommen vier Kampagnen-Vorlagen dazu. Sie haben unten den Knopf

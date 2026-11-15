@@ -1,17 +1,26 @@
 // Erstinformation des Vermittlers (§ 15/16 VersVermV; Ole, 15.11.2026): speichern, öffentliche Adresse
-// /erstinformation/<token>, Stand für Einrichtung und „Heute“. Reine Regeln: erstinformation-shared.ts.
+// /erstinformation/<token>, PDF (hochgeladen oder aus den Angaben erzeugt) unter /erstinformation/<token>/pdf,
+// Stand für Einrichtung und „Heute“. Reine Regeln und Texte: erstinformation-shared.ts.
 
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { publicUrlOr } from "@/lib/public-url";
+import { asAnsprache, type Ansprache } from "@/lib/ansprache";
 import {
   ERSTINFO_MAX_BYTES,
-  asVermittlerStatus,
+  asVerguetung,
+  erstinfoAbschnitte,
+  erstinfoDateiname,
+  erstinfoDaten,
   erstinfoFehlt,
   isPdf,
   normalizeErstinfoUrl,
   normalizeRegisterNummer,
+  papierHinweis,
+  parseVersicherer,
   statusFromImpressum,
+  type ErstinfoDaten,
+  type ErstinfoWeb,
   type VermittlerStatus,
 } from "@/lib/erstinformation-shared";
 
@@ -43,15 +52,46 @@ export async function erstinfoUrlFor(customerId: string): Promise<string> {
   return publicUrlOr(`/erstinformation/${token}`);
 }
 
+/** Öffentliche Adresse des PDFs (für das WhatsApp-Dokument; Meta lädt es von dort). */
+export async function erstinfoPdfUrlFor(customerId: string): Promise<string> {
+  return `${await erstinfoUrlFor(customerId)}/pdf`;
+}
+
+const RECORD_SELECT = {
+  token: true,
+  statusAt: true,
+  bestaetigtAt: true,
+  registerNummer: true,
+  name: true,
+  firma: true,
+  anschrift: true,
+  telefon: true,
+  email: true,
+  versicherer: true,
+  erlaubnis: true,
+  beratung: true,
+  beteiligungen: true,
+  verguetung: true,
+  zuwendungen: true,
+  ihk: true,
+  url: true,
+  fileName: true,
+  size: true,
+  updatedAt: true,
+} as const;
+
 export type ErstinfoView = {
   token: string | null;
   status: VermittlerStatus;
   statusAt: Date | null;
+  bestaetigtAt: Date | null;
   registerNummer: string | null;
   url: string | null;
   fileName: string | null;
   size: number | null;
   updatedAt: Date | null;
+  /** Pflichtangaben (gespeichert bzw. Vorschlag aus Impressum und Angebot) */
+  daten: ErstinfoDaten;
   fehlt: string[];
   vollstaendig: boolean;
   /** Angaben aus dem Impressum der Website (zum Gegenprüfen) */
@@ -60,13 +100,10 @@ export type ErstinfoView = {
 
 export async function loadErstinfo(customerId: string): Promise<ErstinfoView> {
   const [c, e] = await Promise.all([
-    prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerTyp: true, onboarding: { select: { websiteInfo: true } } } }),
-    prisma.erstinformation.findUnique({
-      where: { customerId },
-      select: { token: true, statusAt: true, registerNummer: true, url: true, fileName: true, size: true, updatedAt: true },
-    }),
+    prisma.customer.findUnique({ where: { id: customerId }, select: { name: true, vermittlerTyp: true, onboarding: { select: { websiteInfo: true } } } }),
+    prisma.erstinformation.findUnique({ where: { customerId }, select: RECORD_SELECT }),
   ]);
-  const web = (c?.onboarding?.websiteInfo ?? null) as { companyName?: string | null; address?: string | null; registerType?: string | null; registerNumber?: string | null } | null;
+  const web = (c?.onboarding?.websiteInfo ?? null) as ErstinfoWeb;
   const impressum = web
     ? {
         companyName: web.companyName?.trim() || null,
@@ -82,16 +119,19 @@ export async function loadErstinfo(customerId: string): Promise<ErstinfoView> {
     await getOrCreateErstinfo(customerId).catch(() => null);
     await prisma.erstinformation.update({ where: { customerId }, data: { registerNummer: impressum.registerNumber } }).catch(() => null);
   }
-  const fehlt = erstinfoFehlt({ registerNummer: !!registerNummer, dokument: !!(e?.url || e?.fileName), anschrift: !!impressum?.address });
+  const daten = erstinfoDaten(e, web, { name: c?.name, vermittlerTyp: c?.vermittlerTyp });
+  const fehlt = erstinfoFehlt(daten, { upload: !!e?.fileName, bestaetigt: !!e?.bestaetigtAt });
   return {
     token: e?.token ?? null,
-    status: asVermittlerStatus(c?.vermittlerTyp),
+    status: daten.status,
     statusAt: e?.statusAt ?? null,
+    bestaetigtAt: e?.bestaetigtAt ?? null,
     registerNummer,
     url: e?.url ?? null,
     fileName: e?.fileName ?? null,
     size: e?.size ?? null,
     updatedAt: e?.updatedAt ?? null,
+    daten,
     fehlt,
     vollstaendig: fehlt.length === 0,
     impressum,
@@ -107,6 +147,22 @@ export async function erstinfoRelevant(customerId: string): Promise<boolean> {
 export type SaveErstinfoInput = {
   status: string;
   registerNummer: string;
+  /** Pflichtangaben (§ 15 Abs. 1 VersVermV); ohne eigenes PDF Pflicht */
+  name?: string | null;
+  firma?: string | null;
+  anschrift?: string | null;
+  telefon?: string | null;
+  email?: string | null;
+  /** Ein Versicherer je Zeile */
+  versicherer?: string | null;
+  erlaubnis?: string | null;
+  beratung?: boolean;
+  /** null/leer = keine Beteiligungen über 10 % */
+  beteiligungen?: string | null;
+  verguetung?: string[];
+  zuwendungen?: boolean;
+  ihk?: string | null;
+  /** Eigener Link (alt, nur noch zusätzlich gespeichert) */
   url?: string | null;
   file?: { name: string; data: Uint8Array } | null;
   /** Hochgeladenes PDF entfernen */
@@ -114,9 +170,12 @@ export type SaveErstinfoInput = {
   userId?: string | null;
 };
 
+const txt = (v: string | null | undefined, max: number) => (v ?? "").replace(/\r\n?/g, "\n").trim().slice(0, max);
+
 export async function saveErstinfo(customerId: string, input: SaveErstinfoInput): Promise<{ ok: true } | { ok: false; error: string }> {
   if (input.status === "tippgeber") return { ok: false, error: "tippgeber" };
   if (!["makler", "mehrfachvertreter", "vertreter"].includes(input.status)) return { ok: false, error: "Bitte Ihren Status wählen." };
+  const status = input.status as VermittlerStatus;
   const reg = normalizeRegisterNummer(input.registerNummer);
   if (!reg) return { ok: false, error: "Bitte die Registernummer im Format D-XXXX-XXXXX-XX eingeben (steht im Vermittlerregister bzw. auf Ihrer IHK-Urkunde)." };
   const url = input.url?.trim() ? normalizeErstinfoUrl(input.url) : null;
@@ -127,16 +186,37 @@ export async function saveErstinfo(customerId: string, input: SaveErstinfoInput)
     if (!isPdf(file.data)) return { ok: false, error: "Bitte ein PDF hochladen." };
   }
   const { id } = await getOrCreateErstinfo(customerId);
-  const current = await prisma.erstinformation.findUniqueOrThrow({ where: { id }, select: { fileName: true, url: true } });
-  const hasDoc = !!(file || url || (current.fileName && !input.removeFile));
-  // Eigene Erstinformation ist freiwillig (Ole, 15.11.2026): ohne erstellen wir sie aus dem Impressum, dafür muss die Anschrift bekannt sein
-  if (!hasDoc) {
-    const web = (await prisma.onboarding.findUnique({ where: { customerId }, select: { websiteInfo: true } }))?.websiteInfo as { address?: string | null } | null | undefined;
-    if (!web?.address?.trim()) {
-      return { ok: false, error: "Wir haben Ihre Anschrift noch nicht aus dem Impressum. Bitte laden Sie Ihre Erstinformation als PDF hoch oder tragen Sie den Link dazu ein." };
-    }
+  const current = await prisma.erstinformation.findUniqueOrThrow({ where: { id }, select: { fileName: true } });
+  const upload = !!(file || (current.fileName && !input.removeFile));
+
+  const versicherer = status === "makler" ? [] : parseVersicherer(input.versicherer);
+  const data = {
+    name: txt(input.name, 160),
+    firma: txt(input.firma, 160),
+    anschrift: txt(input.anschrift, 400),
+    telefon: txt(input.telefon, 60),
+    email: txt(input.email, 160),
+    versicherer,
+    erlaubnis: status === "mehrfachvertreter" ? (input.erlaubnis === "abs7" ? "abs7" : "abs1") : null,
+    beratung: input.beratung ?? true,
+    beteiligungen: txt(input.beteiligungen, 1000) || null,
+    verguetung: asVerguetung(input.verguetung),
+    zuwendungen: input.zuwendungen ?? false,
+    ihk: txt(input.ihk, 160),
+  };
+  // Ohne eigenes PDF erzeugen wir die Erstinformation aus den Angaben: dann alle Pflichtangaben prüfen
+  if (status === "vertreter" && versicherer.length > 1) {
+    return { ok: false, error: "Als Ausschließlichkeitsvertreter tragen Sie bitte genau einen Versicherer ein. Für mehrere Versicherer wählen Sie „Mehrfachvertreter“." };
   }
-  const status = input.status as VermittlerStatus;
+  if (!upload) {
+    if (!data.name) return { ok: false, error: "Bitte Ihren Vor- und Nachnamen eintragen." };
+    if (!data.anschrift) return { ok: false, error: "Bitte Ihre betriebliche Anschrift eintragen." };
+    if (status === "vertreter" && versicherer.length !== 1) return { ok: false, error: "Bitte eintragen, für welchen Versicherer Sie tätig sind." };
+    if (status === "mehrfachvertreter" && versicherer.length < 1) return { ok: false, error: "Bitte mindestens einen Versicherer eintragen, für den Sie tätig sind (einen je Zeile)." };
+    if (!data.verguetung.length) return { ok: false, error: "Bitte die Art Ihrer Vergütung wählen." };
+    if (!data.ihk) return { ok: false, error: "Bitte Ihre zuständige IHK eintragen (z. B. IHK München und Oberbayern)." };
+  }
+
   const before = await prisma.customer.findUnique({ where: { id: customerId }, select: { name: true, vermittlerTyp: true } });
   if (before && before.vermittlerTyp !== status) {
     await prisma.customer.update({ where: { id: customerId }, data: { vermittlerTyp: status } });
@@ -151,11 +231,14 @@ export async function saveErstinfo(customerId: string, input: SaveErstinfoInput)
       }).catch(() => {});
     }
   }
+  const now = new Date();
   await prisma.erstinformation.update({
     where: { id },
     data: {
+      ...data,
       registerNummer: reg,
-      statusAt: new Date(),
+      statusAt: now,
+      bestaetigtAt: now,
       url,
       updatedById: input.userId ?? null,
       ...(file
@@ -166,4 +249,59 @@ export async function saveErstinfo(customerId: string, input: SaveErstinfoInput)
     },
   });
   return { ok: true };
+}
+
+/** Erstinformation-Daten über den öffentlichen Token (Seite und PDF). */
+export async function loadErstinfoByToken(token: string) {
+  if (!/^[A-Za-z0-9_-]{6,64}$/.test(token)) return null;
+  const e = await prisma.erstinformation.findUnique({
+    where: { token },
+    select: { ...RECORD_SELECT, customerId: true, customer: { select: { name: true, vermittlerTyp: true, leadAddress: true, onboarding: { select: { websiteInfo: true } } } } },
+  });
+  if (!e) return null;
+  const daten = erstinfoDaten(e, (e.customer.onboarding?.websiteInfo ?? null) as ErstinfoWeb, e.customer);
+  return {
+    customerId: e.customerId,
+    fileName: e.fileName,
+    updatedAt: e.updatedAt,
+    an: asAnsprache(e.customer.leadAddress),
+    daten,
+    vollstaendig: erstinfoFehlt(daten, { upload: !!e.fileName, bestaetigt: !!e.bestaetigtAt }).length === 0,
+  };
+}
+
+const stand = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
+
+/** Erzeugtes PDF aus den Angaben (pdf-lib, ohne Browser). */
+export async function erstinfoPdfAusDaten(daten: ErstinfoDaten, an: Ansprache, updatedAt: Date | null): Promise<Uint8Array> {
+  const { textPdf } = await import("@/lib/mail/text-pdf");
+  return textPdf({
+    titel: "Erstinformation",
+    kopf: ["Angaben nach § 15 Versicherungsvermittlungsverordnung (VersVermV)"],
+    bloecke: erstinfoAbschnitte(daten),
+    fuss: `${papierHinweis(an)}${updatedAt ? `\nStand: ${stand(updatedAt)}` : ""}`,
+    autor: daten.firma || daten.name || undefined,
+  });
+}
+
+/**
+ * Das PDF, das Leads bekommen (§ 16 VersVermV: dauerhafter Datenträger): hochgeladenes PDF (z. B. Vorlage der
+ * Gesellschaft), sonst aus den Angaben erzeugt. null = Token unbekannt.
+ */
+export async function erstinfoDokument(where: { token: string } | { customerId: string }): Promise<{ bytes: Uint8Array; fileName: string; vollstaendig: boolean } | null> {
+  const token = "token" in where ? where.token : (await getOrCreateErstinfo(where.customerId)).token;
+  const info = await loadErstinfoByToken(token);
+  if (!info) return null;
+  if (info.fileName) {
+    const f = await prisma.erstinformation.findUnique({ where: { token }, select: { data: true, fileName: true } });
+    if (f?.data) return { bytes: new Uint8Array(f.data), fileName: f.fileName ?? "Erstinformation.pdf", vollstaendig: info.vollstaendig };
+  }
+  const bytes = await erstinfoPdfAusDaten(info.daten, info.an, info.updatedAt);
+  return { bytes, fileName: erstinfoDateiname(info.daten.firma || info.daten.name), vollstaendig: info.vollstaendig };
+}
+
+/** Ist die Erstinformation dieses Kunden vollständig (darf als PDF an Leads gehen)? */
+export async function erstinfoBereit(customerId: string): Promise<boolean> {
+  const e = await loadErstinfo(customerId).catch(() => null);
+  return !!e?.vollstaendig;
 }
