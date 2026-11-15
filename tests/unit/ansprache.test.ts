@@ -331,7 +331,8 @@ describe("Weitere Texte an Leads und Kunden", () => {
   it("E-Mail-Vorlagen: {anrede} je Ansprache und Anrede", () => {
     const sie = werteFuer({ name: "Julia Schneider", source: null, salutation: "Frau" }, "Susanne Meier", { ansprache: "sie" });
     expect(fuelle("{anrede},\n\nText", sie)).toBe("Guten Tag Frau Schneider,\n\nText");
-    expect(werteFuer({ name: "Julia Schneider", source: null }, "S", { ansprache: "sie" }).anrede).toBe("Guten Tag Julia Schneider");
+    // E-Mails ohne bekannte Anrede neutral (Ole, 15.11.2026), nicht „Guten Tag Julia Schneider“
+    expect(werteFuer({ name: "Julia Schneider", source: null }, "S", { ansprache: "sie" }).anrede).toBe("Guten Tag");
     expect(werteFuer({ name: "Julia", source: null, salutation: "Frau" }, "S", { ansprache: "sie" }).anrede).toBe("Guten Tag");
     expect(werteFuer({ name: "Julia Schneider", source: null, salutation: "Frau" }, "S", { ansprache: "du" }).anrede).toBe("Hallo Julia");
     expect(werteFuer({ name: "Julia Schneider", source: null }, "S").nachname).toBe("Schneider");
