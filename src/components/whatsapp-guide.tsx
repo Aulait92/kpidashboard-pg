@@ -193,19 +193,7 @@ export function WhatsAppGuide({
                 <div className="mt-3">
               <ol className="space-y-3">
                 {guide.steps.map((s, i) => (
-                  <li key={s.title} className="flex gap-3">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[color:var(--surface-sunken,#f1f5f9)] text-xs font-semibold tabular-nums">
-                      {i + 1}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[15px] font-medium">{s.title}</span>
-                        <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", WHERE_CLASS[s.where])}>{WHERE_LABEL[s.where]}</span>
-                      </div>
-                      <p className="mt-0.5 text-sm text-[color:var(--muted)]">{s.text}</p>
-                      {s.pitfall ? <p className="mt-1 text-sm text-amber-800">Falls es hakt: {s.pitfall}</p> : null}
-                    </div>
-                  </li>
+                  <GuideStepItem key={s.title} step={s} n={i + 1} />
                 ))}
               </ol>
                 </div>
@@ -215,19 +203,7 @@ export function WhatsAppGuide({
                 <h3 className="mb-2 text-[15px] font-semibold">So läuft es ab</h3>
               <ol className="space-y-3">
                 {guide.steps.map((s, i) => (
-                  <li key={s.title} className="flex gap-3">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[color:var(--surface-sunken,#f1f5f9)] text-xs font-semibold tabular-nums">
-                      {i + 1}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[15px] font-medium">{s.title}</span>
-                        <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", WHERE_CLASS[s.where])}>{WHERE_LABEL[s.where]}</span>
-                      </div>
-                      <p className="mt-0.5 text-sm text-[color:var(--muted)]">{s.text}</p>
-                      {s.pitfall ? <p className="mt-1 text-sm text-amber-800">Falls es hakt: {s.pitfall}</p> : null}
-                    </div>
-                  </li>
+                  <GuideStepItem key={s.title} step={s} n={i + 1} />
                 ))}
               </ol>
               </div>
@@ -308,5 +284,28 @@ function Choice<T extends string>({
         })}
       </div>
     </div>
+  );
+}
+
+/** Ein Schritt der Anleitung, mit Bildschirmfoto zum Vergrößern (Ole, 15.11.2026). */
+function GuideStepItem({ step: s, n }: { step: GuideStep; n: number }) {
+  return (
+    <li className="flex gap-3">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[color:var(--surface-sunken,#f1f5f9)] text-xs font-semibold tabular-nums">{n}</span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[15px] font-medium">{s.title}</span>
+          <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", WHERE_CLASS[s.where])}>{WHERE_LABEL[s.where]}</span>
+        </div>
+        <p className="mt-0.5 text-sm text-[color:var(--muted)]">{s.text}</p>
+        {s.pitfall ? <p className="mt-1 text-sm text-amber-800">Falls es hakt: {s.pitfall}</p> : null}
+        {s.image ? (
+          <a href={s.image.src} target="_blank" rel="noopener noreferrer" className="mt-2 block max-w-md" title="Zum Vergrößern antippen" data-guide-image>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={s.image.src} alt={s.image.alt} loading="lazy" className="w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] shadow-sm" />
+          </a>
+        ) : null}
+      </div>
+    </li>
   );
 }

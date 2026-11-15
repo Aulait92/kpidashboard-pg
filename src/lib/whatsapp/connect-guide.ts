@@ -48,7 +48,11 @@ export type GuideStep = {
   pitfall?: string;
   /** Wo der Schritt passiert – für die Farbe/Beschriftung im Kasten. */
   where: "app" | "360dialog" | "meta" | "whatsapp";
+  /** Bildschirmfoto aus einem echten Durchlauf (public/anleitung/whatsapp, Ole 15.11.2026). */
+  image?: { src: string; alt: string };
 };
+
+const IMG = "/anleitung/whatsapp";
 
 export type PathGuide = {
   /** Kurzer Hinweis oben (Empfehlung oder Warnung). */
@@ -72,6 +76,7 @@ const ACCOUNT_START: GuideStep[] = [
   {
     where: "360dialog",
     title: "Konto bei 360dialog: Einladung annehmen",
+    image: { src: `${IMG}/01-einladung.webp`, alt: "E-Mail von 360dialog mit dem Knopf „Join 360Dialog Hub“" },
     text: "Wir legen Ihr Konto bei 360dialog, unserem WhatsApp-Anbieter, für Sie an. Sie bekommen eine E-Mail von 360dialog und legen darüber Ihr Passwort fest. Das ist kostenlos, die Nummer bleibt Ihre. Danach tippen Sie hier auf „Weiter: WhatsApp verbinden“ und melden sich bei 360dialog an („Log in“). Zur Sicherheit fragt 360dialog dann „Verify it's you“ und schickt eine zweite E-Mail mit einem Code: Code eintragen und auf „Continue“ tippen.",
     pitfall:
       "Nicht mit Facebook oder Google anmelden: Das kann in einem alten Konto eines anderen Anbieters landen (z. B. Superchat). Werden Sie nach einem Tarif oder einer Währung zum Bezahlen gefragt oder sehen Sie fremde Firmen oder Nummern, brechen Sie ab und melden Sie sich bei uns. Bitte kein eigenes Konto über „Sign up“ registrieren, sonst landet es nicht bei uns. Starten Sie immer über den Knopf in unserer App, nicht direkt auf der Website von 360dialog. Sie haben schon ein Konto bei 360dialog mit dieser E-Mail? Dann melden Sie sich einfach an.",
@@ -95,6 +100,7 @@ const ACCOUNT_START: GuideStep[] = [
 const numberQuestion = (answer: string, why: string): GuideStep => ({
   where: "360dialog",
   title: "Nummer eingeben und Frage beantworten",
+  image: { src: `${IMG}/04-schon-bei-whatsapp.webp`, alt: "360dialog fragt, ob die Nummer schon bei WhatsApp ist" },
   text: `Sie geben die Nummer ein, die Ihr Assistent nutzen soll: Land auf Deutschland (+49) umstellen (vorbelegt ist oft USA +1), Nummer ohne führende 0. Nicht „Display Name only“ wählen. 360dialog fragt dann „Is … already on WhatsApp?“. Sie wählen: „${answer}“.`,
   pitfall: why,
 });
@@ -111,7 +117,8 @@ const META_START: GuideStep[] = [
   {
     where: "meta",
     title: "Mit Facebook anmelden",
-    text: "Es öffnet sich ein Fenster von Meta (Facebook). Sie melden sich an und klicken auf „Weiter“.",
+    text: "360dialog zeigt „Meta Business Signup“. Klicken Sie unten rechts auf „Embedded Signup“. Es öffnet sich ein Fenster von Meta (Facebook): Sie melden sich an und klicken auf „Continue“ bzw. „Weiter“.",
+    image: { src: `${IMG}/06-meta-signup.webp`, alt: "360dialog: Meta Business Signup mit dem Knopf „Embedded Signup“" },
     pitfall: "Kein Fenster zu sehen? Der Browser hat es blockiert. Pop-ups für die Seite erlauben und noch einmal klicken.",
   },
   {
