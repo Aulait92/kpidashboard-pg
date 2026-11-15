@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { LeadLegalFooter } from "@/components/lead-legal-footer";
 import { headers } from "next/headers";
 import { CheckCircle2 } from "lucide-react";
 import { AdvisorHeader } from "@/components/empfehlung/advisor-header";
@@ -25,7 +26,7 @@ export default async function UnsubscribePage({ params, searchParams }: { params
     );
   }
   return (
-    <Shell advisor={t.advisor}>
+    <Shell customerId={t.customerId} advisor={t.advisor}>
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200">
         <CheckCircle2 className="h-6 w-6" />
       </div>
@@ -49,11 +50,14 @@ export default async function UnsubscribePage({ params, searchParams }: { params
   );
 }
 
-function Shell({ children, advisor }: { children: React.ReactNode; advisor?: string }) {
+function Shell({ children, advisor, customerId }: { children: React.ReactNode; advisor?: string; customerId?: string | null }) {
   return (
-    <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6 sm:py-10">
-      {advisor ? <AdvisorHeader name={advisor} /> : null}
-      <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-md)] sm:p-7">{children}</div>
-    </main>
+    <>
+      <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6 sm:py-10">
+        {advisor ? <AdvisorHeader name={advisor} /> : null}
+        <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-md)] sm:p-7">{children}</div>
+      </main>
+      <LeadLegalFooter customerId={customerId} />
+    </>
   );
 }

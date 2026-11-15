@@ -307,7 +307,7 @@ export async function submitConsentForm(existingCustomerId: string, input: Conse
 }
 
 /** Bestätigungslink (Double-Opt-in) geklickt: E-Mail-Einwilligung gilt ab jetzt. */
-export async function confirmDoi(token: string, meta: { ip: string | null; userAgent: string | null }, now = new Date()): Promise<{ ok: true; advisor: string } | { ok: false }> {
+export async function confirmDoi(token: string, meta: { ip: string | null; userAgent: string | null }, now = new Date()): Promise<{ ok: true; advisor: string; customerId: string } | { ok: false }> {
   if (!/^[A-Za-z0-9_-]{20,64}$/.test(token)) return { ok: false };
   const log = await prisma.bestandConsentLog.findUnique({ where: { tokenHash: hashToken(token) } });
   if (!log || !log.existingCustomerId || log.channel !== "email") return { ok: false };
@@ -324,7 +324,7 @@ export async function confirmDoi(token: string, meta: { ip: string | null; userA
     if (log.address) await prisma.bestandOptOut.deleteMany({ where: { customerId: ec.customerId, kind: "email", hash: optOutHash("email", log.address) } });
     await logConsent({ customerId: ec.customerId, existingCustomerId: ec.id, channel: "email", action: "bestaetigt", source: "formular", text: log.text, address: log.address, ip: meta.ip, userAgent: meta.userAgent, at: now });
   }
-  return { ok: true, advisor: advisorPerson(ec.customer.name, null) };
+  return { ok: true, advisor: advisorPerson(ec.customer.name, null), customerId: ec.customerId };
 }
 
 /**

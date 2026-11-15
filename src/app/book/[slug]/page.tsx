@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LeadLegalFooter } from "@/components/lead-legal-footer";
 import { a, asAnsprache, type Ansprache } from "@/lib/ansprache";
 import { CheckCircle2, Clock, Phone, Video } from "lucide-react";
 import { buttonClass } from "@/components/ui";
@@ -99,7 +100,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
 
   if (!conn || conn.status !== "connected") {
     return (
-      <Shell>
+      <Shell customerId={conn?.customerId}>
         <h1 className="text-xl font-bold">Online-Buchung nicht verfügbar</h1>
         <p className="mt-2 text-sm text-[color:var(--muted)]">
           Dieser Buchungslink ist ungültig oder derzeit deaktiviert.
@@ -119,7 +120,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
     });
     if (appt) {
       return (
-        <Shell>
+        <Shell customerId={conn?.customerId}>
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200">
             <CheckCircle2 className="h-6 w-6" />
           </div>
@@ -189,7 +190,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
   const error = sp.err ? (ERRORS[sp.err] ?? ERRORS.error) : null;
 
   return (
-    <Shell>
+    <Shell customerId={conn?.customerId}>
       <div className="flex items-center gap-3">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-sm font-bold text-[color:var(--brand-dark)]">
           {advisor
@@ -350,13 +351,16 @@ export default async function BookingPage({ params, searchParams }: Props) {
   );
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ children, customerId }: { children: React.ReactNode; customerId?: string | null }) {
   return (
-    <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6 sm:py-10">
-      <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-md)] sm:p-7">
-        {children}
-      </div>
-    </main>
+    <>
+      <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6 sm:py-10">
+        <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-md)] sm:p-7">
+          {children}
+        </div>
+      </main>
+      <LeadLegalFooter customerId={customerId} />
+    </>
   );
 }
 

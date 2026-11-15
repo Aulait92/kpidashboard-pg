@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LeadLegalFooter } from "@/components/lead-legal-footer";
 import { a, asAnsprache, type Ansprache } from "@/lib/ansprache";
 import { CheckCircle2, Video } from "lucide-react";
 import { buttonClass } from "@/components/ui";
@@ -89,7 +90,7 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
 
   if (appt.status === "cancelled") {
     return (
-      <Shell>
+      <Shell customerId={appt.customerId}>
         <h1 className="text-xl font-bold">
           {sp.done === "cancelled" ? a(an, "Dein Termin ist abgesagt", "Ihr Termin ist abgesagt") : "Dieser Termin wurde abgesagt"}
         </h1>
@@ -110,7 +111,7 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
 
   if (appt.startsAt.getTime() <= nowMs()) {
     return (
-      <Shell>
+      <Shell customerId={appt.customerId}>
         <h1 className="text-xl font-bold">Termin liegt in der Vergangenheit</h1>
         <p className="mt-2 text-sm text-[color:var(--muted)]">
           {kind} mit {advisor} am {when}.
@@ -134,7 +135,7 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
   const error = sp.err ? (ERRORS[sp.err] ?? ERRORS.error) : null;
 
   return (
-    <Shell>
+    <Shell customerId={appt.customerId}>
       {sp.done === "rescheduled" ? (
         <div className="mb-4 flex items-start gap-2 rounded-[var(--radius-sm)] bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-emerald-200">
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> {a(an, "Dein Termin wurde verschoben. Trag die neue Zeit am besten gleich in deinen Kalender ein.", "Ihr Termin wurde verschoben. Tragen Sie die neue Zeit am besten gleich in Ihren Kalender ein.")}
@@ -211,12 +212,15 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
   );
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ children, customerId }: { children: React.ReactNode; customerId?: string | null }) {
   return (
-    <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6 sm:py-10">
-      <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-md)] sm:p-7">
-        {children}
-      </div>
-    </main>
+    <>
+      <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6 sm:py-10">
+        <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-md)] sm:p-7">
+          {children}
+        </div>
+      </main>
+      <LeadLegalFooter customerId={customerId} />
+    </>
   );
 }

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -15,7 +16,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
+const APP_METADATA: Metadata = {
   title: "performancegrowth",
   description: "Leads, Termine und Abschlüsse für Versicherungsvermittler",
   applicationName: "performancegrowth",
@@ -28,6 +29,18 @@ export const metadata: Metadata = {
     telephone: false,
   },
 };
+
+// Seiten für Endkunden (Buchung, Empfehlung, …, auch auf der eigenen Buchungsadresse): ohne Markennamen
+// im Kopf der Seite (Ole, 15.11.2026). Kennzeichen setzt src/middleware.ts.
+const LEAD_METADATA: Metadata = {
+  title: "Terminbuchung",
+  formatDetection: { telephone: false },
+};
+
+export async function generateMetadata(): Promise<Metadata> {
+  const h = await headers();
+  return h.get("x-bare-layout") === "lead" ? LEAD_METADATA : APP_METADATA;
+}
 
 export const viewport: Viewport = {
   themeColor: "#2563eb",

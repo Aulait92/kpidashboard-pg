@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { LeadLegalFooter } from "@/components/lead-legal-footer";
 import { CheckCircle2, ShieldCheck } from "lucide-react";
 import { AdvisorHeader } from "@/components/empfehlung/advisor-header";
 import { buttonClass } from "@/components/ui";
@@ -38,7 +39,7 @@ export default async function ConsentPage({ params, searchParams }: { params: Pr
   }
   if (sp.ok) {
     return (
-      <Shell advisor={page.advisor}>
+      <Shell customerId={page.customerId} advisor={page.advisor}>
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200">
           <CheckCircle2 className="h-6 w-6" />
         </div>
@@ -57,7 +58,7 @@ export default async function ConsentPage({ params, searchParams }: { params: Pr
   }
   const action = submitConsentAction.bind(null, token);
   return (
-    <Shell advisor={page.advisor}>
+    <Shell customerId={page.customerId} advisor={page.advisor}>
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)]/10 text-[color:var(--brand)]">
         <ShieldCheck className="h-6 w-6" />
       </div>
@@ -122,11 +123,14 @@ export default async function ConsentPage({ params, searchParams }: { params: Pr
   );
 }
 
-function Shell({ children, advisor }: { children: React.ReactNode; advisor?: string }) {
+function Shell({ children, advisor, customerId }: { children: React.ReactNode; advisor?: string; customerId?: string | null }) {
   return (
-    <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6 sm:py-10">
-      {advisor ? <AdvisorHeader name={advisor} /> : null}
-      <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-md)] sm:p-7">{children}</div>
-    </main>
+    <>
+      <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6 sm:py-10">
+        {advisor ? <AdvisorHeader name={advisor} /> : null}
+        <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-md)] sm:p-7">{children}</div>
+      </main>
+      <LeadLegalFooter customerId={customerId} />
+    </>
   );
 }

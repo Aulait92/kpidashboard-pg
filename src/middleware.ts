@@ -1,6 +1,7 @@
 import { jwtVerify } from "jose";
 import { NextResponse, type NextRequest } from "next/server";
 import { LOGIN_CARD_COOKIE, LOGIN_CARD_HEADER, nextCardCounter, parseCardCounter } from "@/lib/login-karten";
+import { PUBLIC_NOT_FOUND_HTML, PUBLIC_ROBOTS_TXT, decidePublicHost, requestHost } from "@/lib/public-booking-host";
 
 const SESSION_COOKIE = "kpi_session";
 
@@ -82,9 +83,58 @@ function legacyRedirect(req: NextRequest): NextResponse | null {
   }
 }
 
+/** Seiten der Endkunden: Kennzeichen für das Layout (ohne performancegrowth-Kopfzeile, Fußzeile des Vermittlers). */
+function leadHeaders(req: NextRequest): Headers {
+  const headers = new Headers(req.headers);
+  headers.set("x-bare-layout", "lead");
+  return headers;
+}
+
+const NO_INDEX = "noindex, nofollow";
+
+/**
+ * Eigene Buchungsadresse (PUBLIC_BOOKING_URL, Ole 15.11.2026): dort nur die Seiten der Endkunden,
+ * alles andere 404; www ↔ ohne www und alte App-Links per 308 auf die Buchungsadresse.
+ * Regeln: src/lib/public-booking-host.ts (getestet in tests/unit/public-booking-host.test.ts).
+ */
+function bookingHost(req: NextRequest): NextResponse | null {
+  const d = decidePublicHost({
+    host: requestHost(req.headers),
+    pathname: req.nextUrl.pathname,
+    search: req.nextUrl.search,
+    method: req.method,
+    bookingUrl: process.env.PUBLIC_BOOKING_URL,
+    hasSession: req.cookies.has(SESSION_COOKIE),
+  });
+  switch (d.kind) {
+    case "pass":
+      return null;
+    case "redirect":
+      return NextResponse.redirect(d.location, 308);
+    case "robots":
+      return new NextResponse(PUBLIC_ROBOTS_TXT, { headers: { "content-type": "text/plain; charset=utf-8", "X-Robots-Tag": NO_INDEX } });
+    case "not_found":
+      return new NextResponse(PUBLIC_NOT_FOUND_HTML, { status: 404, headers: { "content-type": "text/html; charset=utf-8", "X-Robots-Tag": NO_INDEX } });
+    case "rewrite": {
+      const url = req.nextUrl.clone();
+      url.pathname = d.pathname;
+      const res = NextResponse.rewrite(url, { request: { headers: leadHeaders(req) } });
+      res.headers.set("X-Robots-Tag", NO_INDEX);
+      return res;
+    }
+    case "serve": {
+      const res = NextResponse.next({ request: { headers: leadHeaders(req) } });
+      res.headers.set("X-Robots-Tag", NO_INDEX);
+      return res;
+    }
+  }
+}
+
 export async function middleware(req: NextRequest) {
   const moved = legacyRedirect(req);
   if (moved) return moved;
+  const booking = bookingHost(req);
+  if (booking) return booking;
   const { pathname } = req.nextUrl;
   // Seiten für Endkunden der Vermittler (Terminbuchung, Empfehlung): ohne performancegrowth-Kopfzeile
   // und mit neutralem Footer – die Seite gehört dem Vermittler (Ole, 14.11.2026).
@@ -96,9 +146,9 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/einwilligung/") ||
     pathname.startsWith("/erstinformation/")
   ) {
-    const headers = new Headers(req.headers);
-    headers.set("x-bare-layout", "lead");
-    return NextResponse.next({ request: { headers } });
+    const res = NextResponse.next({ request: { headers: leadHeaders(req) } });
+    res.headers.set("X-Robots-Tag", NO_INDEX);
+    return res;
   }
   // Lead-Seiten ohne Dashboard-Header rendern (SiteHeader liest das Flag).
   if (
