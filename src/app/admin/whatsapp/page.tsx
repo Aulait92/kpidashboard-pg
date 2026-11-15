@@ -32,6 +32,9 @@ import { qualificationPoints } from "@/lib/whatsapp/qualification";
 import { firstNameOf, PURPOSE_LABELS, PURPOSE_PARAMS, renderTemplate, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { toggleBotAction } from "./actions";
 import { AdminRescheduleButton, ChatComposer, type Snippet } from "./chat-client";
+import { SupportAssign } from "./support-assign";
+import { isSupportCustomer } from "@/lib/whatsapp/support-inbox";
+import { refreshSupportLinks, SUPPORT_BADGE_SELECT, SUPPORT_KINDS, supportBadge, supportKindWhere, type SupportBadge, type SupportKind } from "@/lib/whatsapp/support-contacts";
 import { SubmitButton } from "@/components/submit-button";
 import { buttonClass } from "@/components/ui";
 import { cn } from "@/lib/utils";
@@ -52,7 +55,21 @@ type SearchParams = Promise<{
   tab?: string;
   q?: string;
   gcal?: string;
+  /** Support-Nummer: support | kunde | interessent | unbekannt */
+  art?: string;
 }>;
+
+const ART_FILTERS: { key: SupportKind | "support" | ""; label: string }[] = [{ key: "", label: "Alle" }, { key: "support", label: "Support-Nummer" }, ...SUPPORT_KINDS];
+
+const BADGE_TONE: Record<SupportKind, string> = {
+  kunde: "bg-emerald-50 text-emerald-800 ring-emerald-200",
+  interessent: "bg-sky-50 text-sky-800 ring-sky-200",
+  unbekannt: "bg-zinc-100 text-zinc-600 ring-zinc-200",
+};
+
+function SupportBadgeChip({ badge }: { badge: SupportBadge }) {
+  return <span className={`inline-flex shrink-0 items-center rounded-full px-1.5 py-px text-xs font-medium ring-1 ring-inset ${BADGE_TONE[badge.kind]}`} data-support-kind={badge.kind}>{badge.label}</span>;
+}
 
 const TZ = "Europe/Berlin";
 const fmt = (d: Date, opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("de-DE", { timeZone: TZ, ...opts }).format(d);
@@ -142,10 +159,14 @@ export default async function AdminWhatsAppPage({ searchParams }: { searchParams
   const qDigits = q.replace(/\D/g, "");
   const activeId = sp.c ?? null;
   const now = nowMs();
+  const art = ART_FILTERS.some((f) => f.key && f.key === sp.art) ? (sp.art as SupportKind | "support") : null;
+  // Support-Chats ohne frische Zuordnung über die Telefonnummer nachziehen (Kunde/Interessent)
+  await refreshSupportLinks(new Date(now)).catch(() => 0);
 
   const conversations = await prisma.conversation.findMany({
     where: {
       status: tab,
+      ...(art ? { AND: [supportKindWhere(art)] } : {}),
       ...(q
         ? {
             OR: [
@@ -164,7 +185,9 @@ export default async function AdminWhatsAppPage({ searchParams }: { searchParams
       botActive: true,
       needsAttention: true,
       lastMessageAt: true,
+      customerId: true,
       customer: { select: { name: true } },
+      ...SUPPORT_BADGE_SELECT,
       messages: {
         where: { direction: { in: ["inbound", "outbound"] } },
         orderBy: { createdAt: "desc" },
@@ -176,7 +199,8 @@ export default async function AdminWhatsAppPage({ searchParams }: { searchParams
 
   const active = activeId ? await prisma.conversation.findUnique({ where: { id: activeId }, select: ACTIVE_SELECT }) : null;
 
-  const linkFor = (id: string) => `/admin/whatsapp?tab=${tab}&c=${id}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
+  const artQs = art ? `&art=${art}` : "";
+  const linkFor = (id: string) => `/admin/whatsapp?tab=${tab}&c=${id}${artQs}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
 
   return (
     <main className="mx-auto w-full max-w-[1500px] flex-1 px-4 py-6 sm:px-6">
@@ -217,7 +241,7 @@ export default async function AdminWhatsAppPage({ searchParams }: { searchParams
             {STATUS_TABS.map((t) => (
               <Link
                 key={t.key}
-                href={`/admin/whatsapp?tab=${t.key}`}
+                href={`/admin/whatsapp?tab=${t.key}${artQs}`}
                 className={`rounded-full px-3 py-1 text-xs font-semibold ${
                   t.key === tab
                     ? "bg-[color:var(--foreground)] text-white"
@@ -228,8 +252,22 @@ export default async function AdminWhatsAppPage({ searchParams }: { searchParams
               </Link>
             ))}
           </div>
+          <div className="flex flex-wrap gap-1 px-3 pb-2" data-art-filter>
+            {ART_FILTERS.map((f) => (
+              <Link
+                key={f.key || "alle"}
+                href={`/admin/whatsapp?tab=${tab}${f.key ? `&art=${f.key}` : ""}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
+                className={`rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${
+                  (art ?? "") === f.key ? "bg-[color:var(--brand)] text-white ring-[color:var(--brand)]" : "text-[color:var(--muted)] ring-[color:var(--border)] hover:bg-[color:var(--brand-soft)]/40"
+                }`}
+              >
+                {f.label}
+              </Link>
+            ))}
+          </div>
           <form className="px-3 pb-2">
             <input type="hidden" name="tab" value={tab} />
+            {art ? <input type="hidden" name="art" value={art} /> : null}
             <input
               name="q"
               defaultValue={q}
@@ -263,7 +301,11 @@ export default async function AdminWhatsAppPage({ searchParams }: { searchParams
                         <span className="shrink-0 text-xs text-[color:var(--muted)]">{c.lastMessageAt ? shortTime(c.lastMessageAt, now) : ""}</span>
                       </div>
                       <div className="flex items-center gap-1.5 py-0.5">
-                        <span className="truncate text-xs text-[color:var(--muted)]">{c.customer?.name ?? "Ohne Kunde"}</span>
+                        {isSupportCustomer(c.customerId) ? (
+                          <SupportBadgeChip badge={supportBadge(c)} />
+                        ) : (
+                          <span className="truncate text-xs text-[color:var(--muted)]">{c.customer?.name ?? "Ohne Kunde"}</span>
+                        )}
                         <span
                           className={`inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-px text-xs font-medium ${
                             c.botActive ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-600"
@@ -289,7 +331,7 @@ export default async function AdminWhatsAppPage({ searchParams }: { searchParams
           {!active ? (
             <div className="flex flex-1 items-center justify-center p-6 text-sm text-[color:var(--muted)]">Wähle links eine Konversation.</div>
           ) : (
-            <ActiveChat active={active} now={now} backHref={`/admin/whatsapp?tab=${tab}${q ? `&q=${encodeURIComponent(q)}` : ""}`} />
+            <ActiveChat active={active} now={now} backHref={`/admin/whatsapp?tab=${tab}${artQs}${q ? `&q=${encodeURIComponent(q)}` : ""}`} />
           )}
         </section>
 
@@ -318,6 +360,8 @@ const ACTIVE_SELECT = {
   qualified: true,
   qualificationSummary: true,
   qualificationData: true,
+  contactLinkManual: true,
+  ...SUPPORT_BADGE_SELECT,
   customer: { select: { id: true, name: true } },
   lead: { select: { id: true, source: true, status: true, formData: true, email: true, createdAt: true } },
   messages: {
@@ -569,7 +613,9 @@ async function LeadPanel({ active, now }: { active: Active; now: number }) {
         </div>
       </div>
 
-      {!team.anyConnected ? (
+      {isSupportCustomer(active.customerId) ? <SupportWho active={active} /> : null}
+
+      {!team.anyConnected && !isSupportCustomer(active.customerId) ? (
         <div className="px-5 pb-4">
           <Link
             href={`/admin/kunden/${active.customerId}/whatsapp#kalender`}
@@ -734,5 +780,31 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       </dt>
       <dd className="min-w-0 break-words font-medium text-[color:var(--foreground)]">{children}</dd>
     </div>
+  );
+}
+
+/** Support-Nummer: Wer ist das? Kunde, Interessent oder unbekannt, mit Link und Zuordnen. */
+function SupportWho({ active }: { active: Active }) {
+  const badge = supportBadge(active);
+  return (
+    <section className={SECTION} data-support-who>
+      <h3 className={SECTION_TITLE}>Wer schreibt?</h3>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <SupportBadgeChip badge={badge} />
+        {badge.detail ? (
+          badge.href ? (
+            <Link href={badge.href} className="text-sm font-medium hover:underline">
+              {badge.detail}
+            </Link>
+          ) : (
+            <span className="text-sm">{badge.detail}</span>
+          )
+        ) : (
+          <span className="text-sm text-[color:var(--muted)]">Nummer bei keinem Vertriebskontakt hinterlegt</span>
+        )}
+        {active.contactLinkManual ? <span className="text-xs text-[color:var(--muted)]">(von Hand)</span> : null}
+      </div>
+      <SupportAssign conversationId={active.id} manual={active.contactLinkManual} linked={badge.kind !== "unbekannt"} />
+    </section>
   );
 }

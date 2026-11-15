@@ -334,6 +334,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
                         {m.joinUrl ? <a href={m.joinUrl} target="_blank" rel="noreferrer" className="text-sky-700 hover:underline">Meeting-Link ↗</a> : m.location && <span>{m.location}</span>}
                         {m.utmSource && <span>Quelle: {m.utmSource}</span>}
                         {m.cancelReason && <span>Grund: {m.cancelReason}</span>}
+                        {m.waConfirmStatus ? <span data-wa-confirm={m.waConfirmStatus}>WhatsApp-Bestätigung: {waConfirmLabel(m.waConfirmStatus)}</span> : null}
                       </div>
                       {m.answers && <p className="mt-1 whitespace-pre-wrap text-xs text-slate-500">{m.answers}</p>}
                     </li>
@@ -539,4 +540,17 @@ function enrichedLine(raw: unknown): string | null {
   if (e.website?.at) parts.push(`Website ${fmtDate(new Date(e.website.at))}`);
   if (e.google?.at) parts.push(`Google ${fmtDate(new Date(e.google.at))}${e.google.status && e.google.status !== "gefunden" ? ` (${e.google.status})` : ""}`);
   return parts.length ? `Zuletzt ergänzt: ${parts.join(" · ")}` : null;
+}
+
+/** Status der WhatsApp-Terminbestätigung (lib/vertrieb/termin-whatsapp.ts). */
+function waConfirmLabel(status: string): string {
+  const labels: Record<string, string> = {
+    sent: "gesendet",
+    no_phone: "nicht gesendet, keine Handynummer",
+    no_account: "nicht gesendet, Support-Nummer nicht verbunden",
+    no_template: "nicht gesendet, Vorlage noch nicht freigegeben",
+    failed: "fehlgeschlagen",
+    past: "nicht gesendet, Termin schon vorbei",
+  };
+  return labels[status] ?? status;
 }

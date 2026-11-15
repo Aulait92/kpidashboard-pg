@@ -256,7 +256,9 @@ model Customer {
   agentConfig              AgentConfig?
   calendarLeadTimes        CalendarLeadTimes[]
   calendarBlocks           CalendarBlock[]
-  conversations            Conversation[]
+  conversations            Conversation[]           @relation("ConversationCustomer")
+  /// Support-Chats (Support-Nummer), die diesem Kunden zugeordnet sind (lib/whatsapp/support-contacts.ts)
+  supportConversations     Conversation[]           @relation("ConversationLinkedCustomer")
   appointments             Appointment[]
   messageTemplates         MessageTemplate[]
   consentOptIns            ConsentOptIn[]
@@ -1045,10 +1047,18 @@ model Conversation {
   attentionAt          DateTime?
   windowExpiresAt      DateTime? // Ende des 24h-Service-Fensters
   lastMessageAt        DateTime?
+  // Nur Support-Nummer (Ole, 15.11.2026): Zuordnung des Gegenübers zu Vertriebskontakt bzw. Kunde,
+  // daraus „Kunde“ oder „Interessent“ (lib/whatsapp/support-contacts.ts). Manuell gesetzt bleibt sie stehen.
+  salesContactId       String?
+  linkedCustomerId     String?
+  contactLinkManual    Boolean   @default(false)
+  contactMatchedAt     DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
-  customer        Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer        Customer         @relation("ConversationCustomer", fields: [customerId], references: [id], onDelete: Cascade)
+  salesContact    SalesContact?    @relation(fields: [salesContactId], references: [id], onDelete: SetNull)
+  linkedCustomer  Customer?        @relation("ConversationLinkedCustomer", fields: [linkedCustomerId], references: [id], onDelete: SetNull)
   whatsAppAccount WhatsAppAccount? @relation(fields: [whatsAppAccountId], references: [id], onDelete: SetNull)
   lead            Lead?            @relation(fields: [leadId], references: [id], onDelete: SetNull)
   assignedUser    User?            @relation(fields: [assignedUserId], references: [id], onDelete: SetNull)
@@ -1056,6 +1066,8 @@ model Conversation {
 
   @@unique([customerId, contactPhone])
   @@index([customerId, status, lastMessageAt])
+  @@index([salesContactId])
+  @@index([linkedCustomerId])
 }
 
 // Einzelne Nachricht in einer Konversation (ein- oder ausgehend).
@@ -1419,6 +1431,8 @@ model SalesContact {
   linkedinEvents     SalesLinkedInEvent[]
   meetings           SalesMeeting[]
   inboundLeads       SalesInboundLead[]
+  /// Chats auf der Support-Nummer mit diesem Kontakt (lib/whatsapp/support-contacts.ts)
+  supportConversations Conversation[]
   // Über „Kollegen empfehlen“ von einem Kunden empfohlen
   colleagueReferrals ColleagueReferral[]
 
@@ -1612,6 +1626,11 @@ model SalesMeeting {
   taskId        String?
   /// Aufgabe „Wie lief der Termin?“ nach Terminende (lib/vertrieb/termin-review.ts)
   reviewTaskId  String?
+  /// WhatsApp-Terminbestätigung von der Support-Nummer (lib/vertrieb/termin-whatsapp.ts):
+  /// sent | no_phone | no_account | no_template | failed | past
+  waConfirmStatus String?
+  waConfirmAt     DateTime?
+  waConfirmError  String?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 

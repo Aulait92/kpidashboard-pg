@@ -26,3 +26,10 @@ Dinge, die Ole später angehen will. Neue Sitzungen bitte hier nachsehen und Ole
   hält die Rechte). Ole hat Superchat und 360dialog-Support angeschrieben. Danach: Umzug neu starten (PIN-Frage
   „Yes“), Testnachricht prüfen, SUPPORT_WHATSAPP_NUMBER=+4915679811535 in Produktion setzen, Superchat aus den
   Partnern entfernen, Anzeigename „performancegrowth“ über 360dialog eskalieren. Nicht „Re-onboard (Deletion)“ wählen.
+  15.11.2026 vorbereitet: Support-Chats sind als Kunde / Interessent / Unbekannt markiert (über die Telefonnummer
+  des Vertriebskontakts, Filter in Admin → WhatsApp, „Zuordnen“ von Hand). Neue Calendly-Buchungen bekommen von der
+  Support-Nummer eine WhatsApp-Bestätigung (Vorlage pg_vertrieb_termin_v1, Sie-Form, nur Bestätigung, Erinnerung
+  macht Calendly). Die Vorlage reicht der Cron von selbst ein, sobald die Nummer verbunden ist; bis zur Freigabe
+  steht am Termin „Vorlage noch nicht freigegeben“. Nummer kommt aus Calendly (SMS-Erinnerungsnummer oder Frage
+  „Telefon/Handy/WhatsApp“), sonst vom Kontakt. Im Calendly-Formular eine Pflichtfrage nach der Handynummer mit
+  Hinweis „Bestätigung per WhatsApp“ ergänzen.

@@ -234,7 +234,14 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-templates");
     return null;
   });
-  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, naechsterSchritt, vertraege, terminNachfragen, whatsappConnect, templates, status });
+  // Support-Nummer: Vorlage für die Terminbestätigung im Vertrieb einreichen bzw. Freigabe nachziehen
+  const supportTemplates = await import("@/lib/vertrieb/termin-whatsapp")
+    .then((m) => m.syncSupportTemplates(now))
+    .catch((e: unknown) => {
+      reportError(e, "cron-support-templates");
+      return null;
+    });
+  return Response.json({ ok: true, outreach, responses, reminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, naechsterSchritt, vertraege, terminNachfragen, whatsappConnect, templates, supportTemplates, status });
 }
 
 export const GET = handle;

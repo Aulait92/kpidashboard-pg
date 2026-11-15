@@ -116,3 +116,36 @@ export async function sendTemplateAction(conversationId: string, purpose: string
   revalidatePath("/admin/whatsapp");
   return { ok: true };
 }
+
+// ─── Support-Nummer: Chat einem Vertriebskontakt bzw. Kunden zuordnen (Ole, 15.11.2026) ───
+
+export type SupportAssignState = { ok?: boolean; error?: string; candidates?: { type: "contact" | "customer"; id: string; label: string }[] };
+
+/** Suchen und zuordnen: genau ein Treffer → sofort zuordnen, mehrere → zur Auswahl; „pick“ ordnet direkt zu. */
+export async function assignSupportContactAction(_prev: SupportAssignState, fd: FormData): Promise<SupportAssignState> {
+  await requireAdmin();
+  const { assignSupportConversation, findAssignCandidates } = await import("@/lib/whatsapp/support-contacts");
+  const conversationId = String(fd.get("conversationId") ?? "");
+  if (!conversationId) return { error: "Chat fehlt." };
+  if (fd.get("unlink")) {
+    await assignSupportConversation(conversationId, null);
+    revalidatePath("/admin/whatsapp");
+    return { ok: true };
+  }
+  const pick = String(fd.get("pick") ?? "");
+  if (pick) {
+    const [type, id] = pick.split(":");
+    if ((type !== "contact" && type !== "customer") || !id) return { error: "Ungültige Auswahl." };
+    const ok = await assignSupportConversation(conversationId, { type, id });
+    revalidatePath("/admin/whatsapp");
+    return ok ? { ok: true } : { error: "Zuordnung nicht möglich." };
+  }
+  const candidates = await findAssignCandidates(String(fd.get("q") ?? ""));
+  if (!candidates.length) return { error: "Nichts gefunden. Name, Firma oder E-Mail eingeben." };
+  if (candidates.length === 1) {
+    await assignSupportConversation(conversationId, candidates[0]);
+    revalidatePath("/admin/whatsapp");
+    return { ok: true };
+  }
+  return { candidates };
+}

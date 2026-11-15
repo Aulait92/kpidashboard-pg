@@ -34,6 +34,8 @@ type Invitee = {
   rescheduled?: boolean;
   cancel_url?: string | null;
   reschedule_url?: string | null;
+  /** Nummer für SMS-Erinnerungen (falls im Event-Typ aktiviert); für die WhatsApp-Bestätigung genutzt */
+  text_reminder_number?: string | null;
   questions_and_answers?: { question: string; answer: string }[];
   tracking?: { utm_source?: string | null; utm_medium?: string | null; utm_campaign?: string | null } | null;
   cancellation?: { reason?: string | null; canceled_by?: string | null; canceler_type?: string | null } | null;
@@ -186,7 +188,16 @@ export async function handleCalendlyWebhook(body: { event?: string; payload?: In
       if (!uuid || !process.env.CALENDLY_TOKEN) return { ignored: "no scheduled_event" };
       inv.scheduled_event = (await api<{ resource: ScheduledEvent }>(`/scheduled_events/${uuid}`)).resource;
     }
-    return { result: await recordBooking(inv, inv.scheduled_event) };
+    const result = await recordBooking(inv, inv.scheduled_event);
+    // Neue Buchung: Bestätigung per WhatsApp von der Support-Nummer (lib/vertrieb/termin-whatsapp.ts)
+    if (result === "new") {
+      const m = await prisma.salesMeeting.findUnique({ where: { calendlyUri: inv.uri }, select: { id: true } });
+      if (m) {
+        const { sendTerminConfirmation } = await import("@/lib/vertrieb/termin-whatsapp");
+        await sendTerminConfirmation(m.id, inv, inv.scheduled_event.location ?? null);
+      }
+    }
+    return { result };
   }
   if (body.event === "invitee.canceled") return { result: await recordCancellation(inv) };
   return { ignored: body.event };

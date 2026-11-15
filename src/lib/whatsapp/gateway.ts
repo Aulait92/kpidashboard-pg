@@ -221,6 +221,12 @@ async function persistInbound(
 
   // Support-Postfach: Push an die Admins, Chat unter Admin → WhatsApp, sonst nichts
   if (support) {
+    // Kunde oder Interessent? (lib/whatsapp/support-contacts.ts)
+    if (!conversation.contactLinkManual && !conversation.salesContactId && !conversation.linkedCustomerId) {
+      await import("@/lib/whatsapp/support-contacts")
+        .then((sc) => sc.linkSupportConversation(conversation.id, now))
+        .catch((e) => console.error("[whatsapp support link]", e));
+    }
     await prisma.conversation.update({
       where: { id: conversation.id },
       data: { needsAttention: true, attentionReason: (body ? `Support: ${body}` : "Support-Nachricht").slice(0, 200), attentionAt: now },
